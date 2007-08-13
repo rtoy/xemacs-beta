@@ -166,6 +166,18 @@ char pot_etags_version[] = "@(#) pot revision number is 12.28";
 #define	intoken(c)	(_itk[CHAR(c)]) /* c can be in token */
 #define	endtoken(c)	(_etk[CHAR(c)]) /* c ends tokens */
 
+#ifdef INFODOCK
+#undef OO_BROWSER
+#define OO_BROWSER 1
+#endif
+
+#ifdef OO_BROWSER
+#define set_construct(construct) \
+  if (!oo_browser_construct) oo_browser_construct = construct
+void oo_browser_clear_all_globals();
+void oo_browser_clear_some_globals();
+void oo_browser_check_and_clear_structtype();
+#endif
 
 /*
  *	xnew, xrnew -- allocate, reallocate storage
@@ -199,6 +211,9 @@ typedef struct
 typedef struct node_st
 {				/* sorting structure		*/
   char *name;			/* function or type name	*/
+#ifdef OO_BROWSER
+  short int construct;		/* Construct type for the OO-Browser */
+#endif
   char *file;			/* file name			*/
   bool is_func;			/* use pattern or line no	*/
   bool been_warned;		/* set if noticed dup		*/
@@ -207,6 +222,24 @@ typedef struct node_st
   char *pat;			/* search pattern		*/
   struct node_st *left, *right;	/* left and right sons		*/
 } node;
+
+#ifdef OO_BROWSER
+/* If you add to this array, you must add a corresponding entry to the
+   following enum. */
+static char *oo_browser_default_classes[] =
+  /* Lack of square brackets around some of these entries are intentional. */
+  {"null", "class", "method", "[constant]", "[enumeration]", "[enum_label]",
+   "extern", "[function]", "[macro]", "objc", "[structure]", "[type]",
+   "[union]", "[variable]"};
+
+/* If you add to this enum, you must add a corresponding entry to the
+   preceding array. */
+enum oo_browser_constructs {C_NULL, C_CLASS, C_METHOD, C_CONSTANT, C_ENUMERATION,
+                            C_ENUM_LABEL, C_EXTERN, C_FUNCTION, C_MACRO,
+                            C_OBJC, C_STRUCTURE, C_TYPE, C_UNION, C_VARIABLE};
+
+enum oo_browser_constructs oo_browser_construct = C_NULL;
+#endif
 
 /*
  * A `linebuffer' is a structure which holds a line of text.
@@ -353,6 +386,9 @@ bool no_warnings;		/* -w: suppress warnings */
 bool cxref_style;		/* -x: create cxref style output */
 bool cplusplus;			/* .[hc] means C++, not C */
 bool noindentypedefs;		/* -I: ignore indentation in C */
+#ifdef OO_BROWSER
+bool oo_browser_format;		/* -O: OO-Browser tags format */
+#endif
 
 #ifdef LONG_OPTIONS
 struct option longopts[] =
@@ -374,6 +410,9 @@ struct option longopts[] =
   { "no-members",		no_argument,	   &members, FALSE },
   { "no-warn",			no_argument,	   NULL,     'w'   },
   { "output",			required_argument, NULL,     'o'   },
+#ifdef OO_BROWSER
+  { "oo-browser",		no_argument,	   NULL,     'O'   },
+#endif
 #ifdef ETAGS_REGEXPS  
   { "regex",			required_argument, NULL,     'r'   },
   { "no-regex",			no_argument,	   NULL,     'R'   },
@@ -626,6 +665,10 @@ Relative ones are stored relative to the output file's directory.");
 #endif /* ETAGS_REGEXPS */
   puts ("-o FILE, --output=FILE\n\
         Write the tags to FILE.");
+#ifdef OO_BROWSER
+  puts ("-O, --oo-browser\n\
+	Generate a specialized tags format used only by the Altrasoft OO-Browser.");
+#endif
   puts ("-I, --ignore-indentation\n\
         Don't rely on indentation quite as much as normal.  Currently,\n\
         this means not to assume that a closing brace in the first\n\
@@ -867,9 +910,17 @@ main (argc, argv)
       char *optstring;
 
 #ifdef ETAGS_REGEXPS
+#ifndef OO_BROWSER
       optstring = "-aCdDf:Il:o:r:RStTi:BuvxwVhH";
 #else
+      optstring = "-aCdDf:Il:o:r:RStTi:BOuvxwVhH";
+#endif
+#else
+#ifndef OO_BROWSER
       optstring = "-aCdDf:Il:o:StTi:BuvxwVhH";
+#else
+      optstring = "-aCdDf:Il:o:StTi:BOuvxwVhH";
+#endif
 #endif /* ETAGS_REGEXPS */
 
 #ifndef LONG_OPTIONS
@@ -912,6 +963,11 @@ main (argc, argv)
 	    }
 	  tagfile = optarg;
 	  break;
+#ifdef OO_BROWSER
+	case 'O':
+	  oo_browser_format = TRUE;
+	  break;
+#endif
 	case 'I':
 	case 'S':		/* for backward compatibility */
 	  noindentypedefs = TRUE;
@@ -1055,11 +1111,21 @@ main (argc, argv)
 #else
 	      this_file = argbuffer[i].what;
 #endif
+#ifdef OO_BROWSER
+	      oo_browser_clear_all_globals();
+#endif
 	      /* Input file named "-" means read file names from stdin
 		 (one per line) and use them. */
 	      if (streq (this_file, "-"))
 		while (readline_internal (&filename_lb, stdin) > 0)
+#ifdef OO_BROWSER
+		  {
+		    oo_browser_clear_some_globals();
+#endif
 		  process_file (filename_lb.buffer);
+#ifdef OO_BROWSER
+		  }
+#endif
 	      else
 		process_file (this_file);
 #ifdef VMS
@@ -1235,6 +1301,11 @@ process_file (file)
 	     to the directory of the tags file. */
 	  filename = relative_filename (file, tagfiledir);
 	}
+#ifdef OO_BROWSER
+      if (oo_browser_format)
+	fprintf (tagf, "\f\n%s\n", filename);
+      else
+#endif
       fprintf (tagf, "\f\n%s,%d\n", filename, total_size_of_entries (head));
       free (filename);
       put_entries (head);
@@ -1414,6 +1485,13 @@ pfnote (name, is_func, linestart, linelen, lno, cno)
   else
     np->pat = savenstr (linestart, linelen);
 
+#ifdef OO_BROWSER
+  if (oo_browser_format)
+    np->construct = oo_browser_construct;
+  oo_browser_construct = C_NULL;
+  oo_browser_check_and_clear_structtype();
+#endif
+
   add_node (np, &head);
 }
 
@@ -1459,7 +1537,12 @@ new_pfnote (name, namelen, is_func, linestart, linelen, lno, cno)
 	  cp = linestart + linelen - namelen;
 	  if (notinname (linestart[linelen-1]))
 	    cp -= 1;				/* rule #4 */
+#ifdef OO_BROWSER
+	  if (!oo_browser_format
+	      && cp >= linestart		/* rule #2 */
+#else
 	  if (cp >= linestart			/* rule #2 */
+#endif
 	      && (cp == linestart
 		  || notinname (cp[-1]))	/* rule #3 */
 	      && strneq (name, cp, namelen))	/* rule #2 */
@@ -1561,6 +1644,13 @@ add_node (np, cur_node_p)
     }
 }
 
+#ifdef OO_BROWSER
+/* Default class name for the current OO-Browser tag. */
+static char *oo_browser_class;
+/* Prefix character to use in OO-Browser listings for the current tag. */
+static char oo_browser_prefix;
+#endif
+
 void
 put_entries (np)
      register node *np;
@@ -1577,12 +1667,56 @@ put_entries (np)
 
   if (!CTAGS)
     {
+#ifdef OO_BROWSER
+      if (oo_browser_format)
+        {
+          /* Omit C++ `class' and `method' entries as well as Objective-C
+             entries from this OO-Browser tags file since the browser handles
+             them independently of this file.  Omit `extern' variable declarations
+             as they are unused by the OO-Browser. */
+          if (np->construct != C_CLASS
+              && np->construct != C_METHOD
+              && np->construct != C_EXTERN
+              && np->construct != C_OBJC)
+            {
+              oo_browser_class = oo_browser_default_classes[np->construct];
+              switch (np->construct)
+                {
+                case C_CONSTANT:
+                case C_ENUMERATION:
+                case C_ENUM_LABEL:
+                case C_STRUCTURE:
+                case C_TYPE:
+                case C_UNION:
+                case C_VARIABLE:
+                  oo_browser_prefix = '=';
+                  break;
+                case C_FUNCTION:
+                case C_MACRO:
+                  oo_browser_prefix = '-';
+                  break;
+                }
+              if (np->name != NULL)
+                fprintf (tagf, "%s@%c %s@%s\n",
+                         oo_browser_class, oo_browser_prefix,
+                         np->name, np->pat);
+              else
+                fprintf (tagf, "%s@%c ???@%s\n",
+                         oo_browser_class, oo_browser_prefix, np->pat);
+            }
+        }
+      else
+        {
+#endif
       if (np->name != NULL)
 	fprintf (tagf, "%s\177%s\001%d,%ld\n",
 		 np->pat, np->name, np->lno, np->cno);
       else
 	fprintf (tagf, "%s\177%d,%ld\n",
 		 np->pat, np->lno, np->cno);
+#ifdef OO_BROWSER
+	}
+#endif
     }
   else
     {
@@ -1681,6 +1815,9 @@ enum sym_type
   st_C_ignore,
   st_C_javastruct,
   st_C_struct, st_C_enum, st_C_define, st_C_typedef, st_C_typespec
+#ifdef OO_BROWSER
+  , st_C_union, st_C_class, st_C_extern, st_C_inline
+#endif
 };
 
 /* Feed stuff between (but not including) %[ and %] lines to:
@@ -1698,14 +1835,15 @@ friend,		C_PLPL,	st_C_ignore
 extends,  	C_JAVA,	st_C_javastruct
 implements,  	C_JAVA,	st_C_javastruct
 interface,	C_JAVA, st_C_struct
-class,  	C_PLPL,	st_C_struct
+class,  	C_PLPL,	st_C_class
 namespace,	C_PLPL,	st_C_struct
 domain, 	C_STAR,	st_C_struct
-union,  	0,	st_C_struct
+union,  	0,	st_C_union
 struct, 	0,	st_C_struct
 enum,    	0,	st_C_enum
 typedef, 	0,	st_C_typedef
 define,  	0,	st_C_define
+inline,		0,	st_C_inline
 bool,		C_PLPL,	st_C_typespec
 long,    	0,	st_C_typespec
 short,   	0,	st_C_typespec
@@ -1717,7 +1855,7 @@ signed,  	0,	st_C_typespec
 unsigned,	0,	st_C_typespec
 auto,    	0,	st_C_typespec
 void,    	0,	st_C_typespec
-extern,  	0,	st_C_typespec
+extern,  	0,	st_C_extern
 static,  	0,	st_C_typespec
 const,   	0,	st_C_typespec
 volatile,	0,	st_C_typespec
@@ -1736,125 +1874,115 @@ PSEUDO,		0,	st_C_gnumacro
 %]
 and replace lines between %< and %> with its output. */
 /*%<*/
-/* starting time is 10:15:51 */
-/* C code produced by gperf version 2.1 (K&R C version) */
+/* C code produced by gperf version 2.5 (GNU C++ version) */
 /* Command-line: gperf -c -k 1,3 -o -p -r -t  */
-
-
 struct C_stab_entry { char *name; int c_ext; enum sym_type type; };
 
+#define TOTAL_KEYWORDS 41
 #define MIN_WORD_LENGTH 3
 #define MAX_WORD_LENGTH 15
-#define MIN_HASH_VALUE 11
-#define MAX_HASH_VALUE 117
-/*
-   40 keywords
-  107 is the maximum key range
-*/
+#define MIN_HASH_VALUE 19
+#define MAX_HASH_VALUE 100
+/* maximum key range = 82, duplicates = 0 */
 
-static int
+static unsigned int
 hash (str, len)
      register char *str;
-     register unsigned int len;
+     register int unsigned len;
 {
-  static unsigned char hash_table[] =
+  static unsigned char asso_values[] =
     {
-     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
-     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
-     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
-     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
-     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
-     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
-     117, 117, 117, 117,   1, 117, 117, 117,   2,  42,
-      16, 117, 117, 117, 117, 117, 117, 117, 117, 117,
-       5, 117, 117,  21,  54, 117, 117, 117, 117, 117,
-     117, 117, 117, 117, 117, 117, 117,  24,  19,  43,
-       2,  35,   3,  10, 117,  26, 117, 117,   9,  20,
-      35,   9,  61, 117,  40,  52,  10,  57,   3, 117,
-     117, 117, 117, 117, 117, 117, 117, 117
-  };
-  return len + hash_table[(int) str[2]] + hash_table[(int) str[0]];
+     101, 101, 101, 101, 101, 101, 101, 101, 101, 101,
+     101, 101, 101, 101, 101, 101, 101, 101, 101, 101,
+     101, 101, 101, 101, 101, 101, 101, 101, 101, 101,
+     101, 101, 101, 101, 101, 101, 101, 101, 101, 101,
+     101, 101, 101, 101, 101, 101, 101, 101, 101, 101,
+     101, 101, 101, 101, 101, 101, 101, 101, 101, 101,
+     101, 101, 101, 101,  25, 101, 101, 101,  31,  33,
+      46, 101, 101, 101, 101, 101, 101, 101, 101, 101,
+      60, 101, 101,  43,   1, 101, 101, 101, 101, 101,
+     101, 101, 101, 101, 101, 101, 101,  11,  17,   4,
+      44,  63,  31,   8, 101,  29, 101, 101,  14,  15,
+      44,   5,  13, 101,  38,  15,  25,  33,  55, 101,
+     101, 101, 101, 101, 101, 101, 101, 101,
+    };
+  return len + asso_values[str[2]] + asso_values[str[0]];
 }
 
-struct C_stab_entry * in_word_set PP ((char *str, unsigned int len));
 struct C_stab_entry *
 in_word_set (str, len)
      register char *str;
      register unsigned int len;
 {
-
-  static struct C_stab_entry  wordlist[] =
+  static struct C_stab_entry wordlist[] =
     {
       {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"",}, {"",}, 
-      {"define",   	0,	st_C_define},
-      {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"float",    	0,	st_C_typespec},
-      {"",}, {"",}, 
-      {"volatile", 	0,	st_C_typespec},
-      {"",}, {"",}, 
-      {"DEFUN", 		0,	st_C_gnumacro},
-      {"",}, {"",}, {"",}, {"",}, 
-      {"domain",  	C_STAR,	st_C_struct},
-      {"",}, {"",}, {"",}, 
-      {"bool", 		C_PLPL,	st_C_typespec},
-      {"void",     	0,	st_C_typespec},
-      {"",}, 
-      {"friend", 		C_PLPL,	st_C_ignore},
-      {"@implementation", 0,	st_C_objimpl},
-      {"mutable", 	C_PLPL,	st_C_typespec},
-      {"auto",     	0,	st_C_typespec},
-      {"int",      	0,	st_C_typespec},
-      {"@end", 		0,	st_C_objend},
-      {"",}, {"",}, {"",}, {"",}, 
-      {"interface", 	C_JAVA, st_C_struct},
-      {"@interface", 	0,	st_C_objprot},
-      {"",}, 
-      {"long",     	0,	st_C_typespec},
-      {"SYSCALL", 	0,	st_C_gnumacro},
-      {"@protocol", 	0,	st_C_objprot},
-      {"extern",   	0,	st_C_typespec},
-      {"extends",   	C_JAVA,	st_C_javastruct},
-      {"PSEUDO", 		0,	st_C_gnumacro},
       {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"",}, 
-      {"namespace", 	C_PLPL,	st_C_struct},
-      {"double",   	0,	st_C_typespec},
-      {"short",    	0,	st_C_typespec},
-      {"",}, 
-      {"signed",   	0,	st_C_typespec},
+      {"",},       {"char",             0,      st_C_typespec},
+      {"class",         C_PLPL, st_C_class},
+      {"",}, {"",}, {"",}, 
+      {"package",       C_JAVA, st_C_ignore},
+      {"short",         0,      st_C_typespec},
+      {"bool",          C_PLPL, st_C_typespec},
       {"",}, {"",}, 
-      {"char",     	0,	st_C_typespec},
-      {"class",   	C_PLPL,	st_C_struct},
-      {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"typedef",  	0,	st_C_typedef},
-      {"typename", 	C_PLPL,	st_C_typespec},
+      {"signed",        0,      st_C_typespec},
       {"",}, {"",}, 
-      {"static",   	0,	st_C_typespec},
-      {"const",    	0,	st_C_typespec},
-      {"",}, {"",}, {"",}, {"",}, 
-      {"union",   	0,	st_C_struct},
-      {"",}, {"",}, {"",}, {"",}, 
-      {"import", 		C_JAVA,	st_C_ignore},
-      {"",}, {"",}, 
-      {"enum",     	0,	st_C_enum},
-      {"implements",   	C_JAVA,	st_C_javastruct},
-      {"struct",  	0,	st_C_struct},
-      {"",}, {"",}, 
-      {"ENTRY", 		0,	st_C_gnumacro},
-      {"",}, {"",}, 
-      {"explicit", 	C_PLPL,	st_C_typespec},
+      {"static",        0,      st_C_typespec},
       {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"package", 	C_JAVA,	st_C_ignore},
-      {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"unsigned", 	0,	st_C_typespec},
+      {"ENTRY",                 0,      st_C_gnumacro},
+      {"auto",          0,      st_C_typespec},
+      {"float",         0,      st_C_typespec},
+      {"",}, {"",}, {"",}, 
+      {"typedef",       0,      st_C_typedef},
+      {"typename",      C_PLPL, st_C_typespec},
+      {"mutable",       C_PLPL, st_C_typespec},
+      {"import",                C_JAVA, st_C_ignore},
+      {"inline",                0,      st_C_inline},
+      {"",}, {"",}, 
+      {"implements",    C_JAVA, st_C_javastruct},
+      {"const",         0,      st_C_typespec},
+      {"",}, 
+      {"@implementation", 0,    st_C_objimpl},
+      {"unsigned",      0,      st_C_typespec},
+      {"int",           0,      st_C_typespec},
+      {"",}, 
+      {"struct",        0,      st_C_struct},
+      {"",}, {"",}, 
+      {"long",          0,      st_C_typespec},
+      {"interface",     C_JAVA, st_C_struct},
+      {"",}, 
+      {"domain",        C_STAR, st_C_struct},
+      {"friend",                C_PLPL, st_C_ignore},
+      {"union",         0,      st_C_union},
+      {"namespace",     C_PLPL, st_C_struct},
+      {"",}, {"",}, {"",}, 
+      {"@protocol",     0,      st_C_objprot},
+      {"@end",          0,      st_C_objend},
+      {"",}, {"",}, {"",}, 
+      {"volatile",      0,      st_C_typespec},
+      {"",}, 
+      {"@interface",    0,      st_C_objprot},
+      {"",}, 
+      {"define",        0,      st_C_define},
+      {"DEFUN",                 0,      st_C_gnumacro},
+      {"double",        0,      st_C_typespec},
+      {"explicit",      C_PLPL, st_C_typespec},
+      {"",}, {"",}, {"",}, 
+      {"void",          0,      st_C_typespec},
+      {"",}, {"",}, {"",}, {"",}, 
+      {"SYSCALL",       0,      st_C_gnumacro},
+      {"extern",        0,      st_C_extern},
+      {"extends",       C_JAVA, st_C_javastruct},
+      {"",}, {"",}, {"",}, 
+      {"PSEUDO",                0,      st_C_gnumacro},
+      {"enum",          0,      st_C_enum},
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
     {
       register int key = hash (str, len);
 
-      if (key <= MAX_HASH_VALUE && key >= MIN_HASH_VALUE)
+      if (key <= MAX_HASH_VALUE && key >= 0)
         {
           register char *s = wordlist[key].name;
 
@@ -1864,7 +1992,6 @@ in_word_set (str, len)
     }
   return 0;
 }
-/* ending time is 10:15:52 */
 /*%>*/
 
 enum sym_type C_symtype PP ((char *str, int len, int c_ext));
@@ -1933,6 +2060,16 @@ enum
 char *structtag = "<uninited>";
 enum sym_type structtype;
 
+#ifdef OO_BROWSER
+void
+oo_browser_check_and_clear_structtype()
+{
+  /* Allow for multiple enum_label tags. */
+  if (structtype != st_C_enum)
+    structtype = st_none;
+}
+#endif
+
 /*
  * When objdef is different from onone, objtag is the name of the class.
  */
@@ -1969,7 +2106,6 @@ enum
   oignore			/* wait for @end */
 } objdef;
 
-
 /*
  * Use this structure to keep info about the token read, and how it
  * should be tagged.  Used by the make_C_tag function to build a tag.
@@ -2002,6 +2138,26 @@ bool yacc_rules;
  * methodlen is the length of the method name stored in token_name.
  */
 int methodlen;
+
+#ifdef OO_BROWSER
+void
+oo_browser_clear_all_globals()
+{
+  /* Initialize globals so there is no carry over between files. */
+  oo_browser_construct = C_NULL;
+  fvdef = fvnone; typdef = tnone; structdef = snone;
+  definedef = dnone; objdef = onone;
+  structtype = st_none;
+  next_token_is_func = yacc_rules = FALSE;
+}
+
+void
+oo_browser_clear_some_globals()
+{
+  oo_browser_construct = C_NULL;
+  structtype = st_none;
+}
+#endif
 
 /*
  * consider_token ()
@@ -2039,6 +2195,33 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
 {
   enum sym_type toktype = C_symtype (str, len, c_ext);
 
+#ifdef OO_BROWSER
+  switch (toktype)
+    {
+      case st_C_struct:
+        set_construct(C_STRUCTURE);
+        break;
+      case st_C_union:
+        set_construct(C_UNION);
+        break;
+      case st_C_class:
+        set_construct(C_CLASS);
+        break;
+      case st_C_enum:
+        set_construct(C_ENUMERATION);
+        break;
+      case st_C_typedef:
+        set_construct(C_TYPE);
+        break;
+      case st_C_extern:
+        set_construct(C_EXTERN);
+        break;
+      case st_C_inline:
+        set_construct(C_FUNCTION);
+        break;
+    }
+#endif
+
   /*
    * Advance the definedef state machine.
    */
@@ -2063,7 +2246,55 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
        * and constantypedefs is FALSE.
        */
       definedef = dignorerest;
+#ifndef OO_BROWSER
       *is_func_or_var = (c == '(');
+#else
+      {
+        char *p = str + len * sizeof(char);
+
+        if (*p == '(')
+          /* This must be a macro since there is no
+             whitespace between the opening parenthesis
+             and the definition name. */
+          *is_func_or_var = TRUE;
+        else
+          {
+            *is_func_or_var = FALSE;
+
+            /* Handle possible whitespace between macro tag and opening
+               parenthesis and ensure this is an actual macro.
+               -- Bob Weiner, Altrasoft, 11/19/1997 */
+            while (*p && isspace(*p)) p++;
+            if (*p) c = *p;
+
+            /* Skip over nested parentheses. */
+            if (c == '(')
+              {
+                short depth = 1;
+
+                while (*++p && depth > 0 && *p != '\n')
+                  {
+                    switch (*p)
+                      {
+                      case '(':
+                        depth++; break;
+                      case ')':
+                        depth--; break;
+                      }
+                  }
+
+                /* If this is a macro, we have just passed
+                   the arguments and there will be more on
+                   the line before the NULL character that marks
+                   the end of the line token. */
+                while (*p == ' ' || *p == '\t') p++;
+                if (*p) *is_func_or_var = TRUE;
+              }
+          }
+      }
+
+      set_construct((*is_func_or_var) ? C_MACRO : C_CONSTANT);
+#endif
       if (!*is_func_or_var && !constantypedefs)
 	return FALSE;
       else
@@ -2093,10 +2324,17 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
 	{
 	case st_none:
 	case st_C_typespec:
+#ifdef OO_BROWSER
+	case st_C_extern:
+#endif
 	  typdef = tend;
 	  break;
 	case st_C_struct:
 	case st_C_enum:
+#ifdef OO_BROWSER
+	case st_C_union:
+	case st_C_class:
+#endif
 	  break;
 	}
       /* Do not return here, so the structdef stuff has a chance. */
@@ -2107,6 +2345,11 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
 	case st_C_typespec:
 	case st_C_struct:
 	case st_C_enum:
+#ifdef OO_BROWSER
+	case st_C_extern:
+	case st_C_union:
+	case st_C_class:
+#endif
 	  return FALSE;
 	}
       return TRUE;
@@ -2130,6 +2373,11 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
       return FALSE;
     case st_C_struct:
     case st_C_enum:
+#ifdef OO_BROWSER
+    case st_C_union:
+    case st_C_class:
+    case st_C_extern:
+#endif
       if (typdef == ttypedseen
 	  || (typedefs_and_cplusplus && cblev == 0 && structdef == snone))
 	{
@@ -2143,7 +2391,13 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
     {
       /* Save the tag for struct/union/class, for functions and variables
 	 that may be defined inside. */
+#ifndef OO_BROWSER
       if (structtype == st_C_struct)
+#else
+      if (structtype == st_C_struct
+	  || structtype == st_C_union
+	  || structtype == st_C_class)
+#endif
 	structtag = savenstr (str, len);
       else
 	structtag = "<enum>";
@@ -2192,9 +2446,15 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
       switch (toktype)
 	{
 	case st_C_objprot:
+#ifdef OO_BROWSER
+	  set_construct(C_OBJC);
+#endif
 	  objdef = oprotocol;
 	  return FALSE;
 	case st_C_objimpl:
+#ifdef OO_BROWSER
+	  set_construct(C_OBJC);
+#endif
 	  objdef = oimplementation;
 	  return FALSE;
 	}
@@ -2261,6 +2521,9 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
   switch (toktype)
     {
     case st_C_typespec:
+#ifdef OO_BROWSER
+    case st_C_extern:
+#endif
       if (fvdef != finlist && fvdef != fignore  && fvdef != vignore)
         fvdef = fvnone;		/* should be useless */
       return FALSE;
@@ -2269,7 +2532,14 @@ consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
       return FALSE;
     case st_none:
       if (constantypedefs && structdef == sinbody && structtype == st_C_enum)
+#ifdef OO_BROWSER
+        {
+	  oo_browser_construct = C_ENUM_LABEL;
+#endif
 	return TRUE;
+#ifdef OO_BROWSER
+	}
+#endif
       if (fvdef == fvnone)
 	{
 	  fvdef = fvnameseen;	/* function or variable */
@@ -2546,6 +2816,9 @@ C_entries (c_ext, inf)
 		       */
 		      lp += 2;
 		      toklen += 3;
+#ifdef OO_BROWSER
+		      set_construct(C_METHOD);
+#endif
 		    }
 		  else
 		    {
@@ -2569,6 +2842,9 @@ C_entries (c_ext, inf)
 				       newlb.buffer + tokoff, toklen);
 			      token_name.len = len;
 			      tok.named = TRUE;
+#ifdef OO_BROWSER
+			      oo_browser_construct = C_METHOD;
+#endif
 			    }
 			  else if (objdef == ocatseen)
 			    /* Objective C category */
@@ -2582,12 +2858,18 @@ C_entries (c_ext, inf)
 			      strcat (token_name.buffer, ")");
 			      token_name.len = len;
 			      tok.named = TRUE;
+#ifdef OO_BROWSER
+			      oo_browser_construct = C_OBJC;
+#endif
 			    }
 			  else if (objdef == omethodtag
 				   || objdef == omethodparm)
 			    /* Objective C method */
 			    {
 			      tok.named = TRUE;
+#ifdef OO_BROWSER
+			      oo_browser_construct = C_OBJC;
+#endif
 			    }
 			  else
 			    {
@@ -2597,10 +2879,23 @@ C_entries (c_ext, inf)
 			      token_name.buffer[toklen] = '\0';
 			      token_name.len = toklen;
 			      /* Name macros. */
+#ifdef OO_BROWSER
+			      /* Also name #define constants,
+				 enumerations and enum_labels.
+				 -- Bob Weiner, Altrasoft */
+			      tok.named
+				      = (structdef == stagseen
+					 || typdef == tend
+					 || definedef == dignorerest
+					 || (oo_browser_format
+					     && (oo_browser_construct == C_ENUMERATION
+					     || oo_browser_construct == C_ENUM_LABEL)));
+#else
 			      tok.named = (structdef == stagseen
 					   || typdef == tend
 					   || (funorvar
 					       && definedef == dignorerest));
+#endif
 			    }
 			  tok.lineno = lineno;
 			  tok.linelen = tokoff + toklen + 1;
@@ -2640,6 +2935,9 @@ C_entries (c_ext, inf)
 		      fvdef = finlist;
 		      continue;
 		    case flistseen:
+#ifdef OO_BROWSER
+		      set_construct(C_MACRO);
+#endif
 		      make_C_tag (TRUE); /* a function */
 		      fvdef = fignore;
 		      break;
@@ -2710,6 +3008,9 @@ C_entries (c_ext, inf)
 	    switch (typdef)
 	      {
 	      case tend:
+#ifdef OO_BROWSER
+		set_construct(C_TYPE);
+#endif
 		make_C_tag (FALSE); /* a typedef */
 		/* FALLTHRU */
 	      default:
@@ -2720,8 +3021,30 @@ C_entries (c_ext, inf)
 	    case fignore:
 	      break;
 	    case fvnameseen:
+#ifndef OO_BROWSER
 	      if ((globals && cblev == 0) || (members && cblev == 1))
 		make_C_tag (FALSE); /* a variable */
+#else
+	      if (constantypedefs && structdef == snone)
+		{
+		  tok.named = TRUE;
+		  switch (structtype)
+		    {
+		      case st_C_enum:
+			set_construct(C_ENUMERATION);
+			break;
+		      case st_C_class:
+			set_construct(C_CLASS);
+			break;
+		      default:
+			set_construct(C_VARIABLE);
+			break;
+		    }
+		  make_C_tag (FALSE);
+		  /* Force reset of st_C_enum structtype value. */
+		  structtype = st_none;
+		}
+#endif
 	      /* FALLTHRU */
 	    default:
 	      fvdef = fvnone;
@@ -2765,6 +3088,9 @@ C_entries (c_ext, inf)
 	    break;
 	  if (cblev == 0 && typdef == tend)
 	    {
+#ifdef OO_BROWSER
+	      set_construct(C_TYPE);
+#endif
 	      typdef = tignore;
 	      make_C_tag (FALSE);	/* a typedef */
 	      break;
@@ -2776,8 +3102,30 @@ C_entries (c_ext, inf)
 	    case vignore:
 	      break;
 	    case fvnameseen:
+#ifndef OO_BROWSER
 	      if ((globals && cblev == 0) || (members && cblev == 1))
 		make_C_tag (FALSE); /* a variable */
+#else
+	      if (constantypedefs && structdef == snone)
+	        {
+		  tok.named = TRUE;
+		  switch (structtype)
+		    {
+		      case st_C_enum:
+			set_construct(C_ENUMERATION);
+			break;
+		      case st_C_class:
+			set_construct(C_CLASS);
+			break;
+		      default:
+			set_construct(C_VARIABLE);
+			break;
+		    }
+		  make_C_tag (FALSE);
+		  /* Force reset of st_C_enum structtype value. */
+		  structtype = st_none;
+		}
+#endif
 	      /* FALLTHRU */
 	    default:
 	      fvdef = fvnone;
@@ -2801,6 +3149,9 @@ C_entries (c_ext, inf)
 		    {
 		      /* This handles constructs like:
 			 typedef void OperatorFun (int fun); */
+#ifdef OO_BROWSER
+		      set_construct(C_TYPE);
+#endif
 		      make_C_tag (FALSE);
 		      typdef = tignore;
 		    }
@@ -2835,6 +3186,9 @@ C_entries (c_ext, inf)
 		}
 	      if (cblev == 0 && typdef == tend)
 		{
+#ifdef OO_BROWSER
+		  set_construct(C_TYPE);
+#endif
 		  typdef = tignore;
 		  make_C_tag (FALSE); /* a typedef */
 		}
@@ -2862,6 +3216,12 @@ C_entries (c_ext, inf)
 	  switch (fvdef)
 	    {
 	    case flistseen:
+#ifdef OO_BROWSER
+	      set_construct(C_FUNCTION);
+	      /* Ensure function name is recorded.
+		 -- Bob Weiner, Altrasoft */
+	      tok.named = TRUE;
+#endif
 	      make_C_tag (TRUE); /* a function */
 	      /* FALLTHRU */
 	    case fignore:
@@ -2917,6 +3277,11 @@ C_entries (c_ext, inf)
 
 	      structdef = snone;
 	      structtag = "<error>";
+#ifdef OO_BROWSER
+	      /* Next line added to avoid any state carryover between
+		 functions. -- Bob Weiner, Altrasoft, 11/19/1997 */
+	      fvdef = fvnone; oo_browser_construct = C_NULL;
+#endif
 	    }
 	  break;
 	case '=':
@@ -2929,8 +3294,31 @@ C_entries (c_ext, inf)
 	    case vignore:
 	      break;
 	    case fvnameseen:
+#ifndef OO_BROWSER
 	      if ((globals && cblev == 0) || (members && cblev == 1))
 		make_C_tag (FALSE); /* a variable */
+#else
+	      if (constantypedefs)
+		{
+		  tok.named = TRUE;
+                  switch (structtype)
+                    {
+                      case st_C_enum:
+                        set_construct(C_ENUMERATION);
+                        break;
+                      case st_C_class:
+                        set_construct(C_CLASS);
+                        break;
+                      default:
+                        /* a global variable */
+                        set_construct(C_VARIABLE);
+                        break;
+                    }
+		  make_C_tag (FALSE);
+                  /* Force reset of st_C_enum structtype value. */
+                  structtype = st_none;
+		}
+#endif
 	      /* FALLTHRU */
 	    default:
 	      fvdef = vignore;

@@ -129,11 +129,12 @@ This variable is relevant only if `backup-by-copying' is nil."
   :group 'backup)
 
 (defvar backup-enable-predicate
-  '(lambda (name)
-     (not (or (string-match "^/tmp/" name)
+  #'(lambda (name)
+     (not (or (null name)
+	      (string-match "^/tmp/" name)
 	      (let ((tmpdir (temp-directory)))
 		(and tmpdir
-		     (string-match (concat "^" (regexp-quote tmpdir) "/")
+		     (string-match (concat "\\`" (regexp-quote tmpdir) "/")
 				   tmpdir))))))
   "Predicate that looks at a file name and decides whether to make backups.
 Called with an absolute file name as argument, it returns t to enable backup.")
@@ -2454,7 +2455,7 @@ prints a message in the minibuffer.  Instead, use `set-buffer-modified-p'."
   (set-buffer-modified-p arg))
 
 (defun toggle-read-only (&optional arg)
-  "Change whether this buffer is visiting its file read-only.
+  "Toggle the current buffer's read-only status.
 With arg, set read-only iff arg is positive."
   (interactive "_P")
   (setq buffer-read-only

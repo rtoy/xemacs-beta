@@ -20,23 +20,6 @@
    redefining struct timeval and struct timezone. */
 #define __TIMEVAL__
 
-#if 0 /* RMSmacs */
-/* #### It appears that the FSF version of hpux8.h handles both
-   R4 and R5, while the XEmacs one handles only R4.  Someone
-   fix this up. */
-
-/* dob@inel.gov says HPUX 8.07 needs this.  He was using X11R5, I think.  */
-#define LIBX11_SYSTEM "-lXext"
-
-#define LIB_X11_LIB "-L/usr/lib/X11R5 -L/usr/lib/X11R4 -lX11"
-#define C_SWITCH_X_SYSTEM "-I/usr/include/X11R5 -I/usr/include/X11R4"
-#define LD_SWITCH_X_DEFAULT "-L/usr/lib/X11R5 -L/usr/lib/X11R4"
-#endif
-
-/* XEmacs change -- changed LIBX11_SYSTEM and C_SWITCH_X_SYSTEM */
-#define C_SWITCH_X_SYSTEM "-I/usr/include/X11R4 -I/usr/include/Motif1.1"
-#define LD_SWITCH_X_SYSTEM "-L/usr/lib/X11R4 -L/usr/lib/Motif1.1"
-
 /* Don't use shared libraries.  unexec doesn't handle them.
    Note GCC automatically passes -a archive to ld, and it has its own
    conflicting -a.  */

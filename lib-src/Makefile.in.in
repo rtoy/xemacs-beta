@@ -53,7 +53,7 @@ archlibdir=@archlibdir@
 configuration=@configuration@
 ## ==================== Utility Programs for the Build =================
 
-INSTALL = @INSTALL@
+INSTALL = @install_pp@ @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
@@ -252,7 +252,7 @@ regex.o: ${srcdir}/../src/regex.c ${srcdir}/../src/regex.h
 	$(CC) -c `echo $(cflags) | sed 's/-Demacs/ /'` \
 		-DINHIBIT_STRING_HEADER ${srcdir}/../src/regex.c
 
-etags_args = -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
+etags_args = -DOO_BROWSER -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
 	-DVERSION='"${version}"' ${srcdir}/etags.c \
 	$(GETOPTOBJS) regex.o $(ldflags)
 etags_deps   = ${srcdir}/etags.c $(GETOPTDEPS) regex.o ../src/config.h

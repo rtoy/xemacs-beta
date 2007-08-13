@@ -57,6 +57,12 @@
 (defvar packages-package-list nil
   "database of loaded packages and version numbers")
 
+(defvar packages-hierarchy-depth 1
+  "Depth of package hierarchies.")
+
+(defvar packages-load-path-depth 1
+  "Depth of load-path search in package hierarchies.")
+
 (defvar early-packages nil
   "Packages early in the load path.")
 
@@ -77,7 +83,9 @@
 
 (defvar package-locations
   (list
-   (list "~/.xemacs"         'early #'(lambda () t))
+   (list (paths-construct-path '("~" ".xemacs"))
+                             'early #'(lambda () t))
+   (list "site-packages"     'late  #'(lambda () t))
    (list "mule-packages"     'late  #'(lambda () (featurep 'mule)))
    (list "packages"          'late  #'(lambda () t))
    (list "infodock-packages" 'late  #'(lambda () (featurep 'infodock))))
@@ -216,7 +224,7 @@ they can be perused for their useful information."
   ;; Source directory may not be initialized yet.
   ;; (print (prin1-to-string load-path))
   (if (null source-directory)
-      (setq source-directory (concat (car load-path) "./")))
+      (setq source-directory (car load-path)))
   (let ((files (directory-files (file-name-as-directory source-directory)
 				t ".*"))
 	file autolist)
@@ -224,8 +232,10 @@ they can be perused for their useful information."
     ;; (print (prin1-to-string files))
     (while (setq file (car-safe files))
       (if (and (file-directory-p file)
-	       (file-exists-p (concat file "/" autoload-file-name)))
-	  (setq autolist (cons (concat file "/" autoload-file-name)
+	       (file-exists-p (concat (file-name-as-directory file)
+				      autoload-file-name)))
+	  (setq autolist (cons (concat (file-name-as-directory file)
+				       autoload-file-name)
 			       autolist)))
       (setq files (cdr files)))
     autolist))
@@ -278,13 +288,6 @@ is run.  Don't call it or you'll be sorry."
 	  (t nil)))
       (setq autoload-list (cdr autoload-list)))))
 
-;; The following function cannot be called from a bare temacs
-(defun packages-reload-dumped-lisp ()
-  "Reload new or updated dumped lisp files (with exceptions).
-This is an extremely dangerous function to call at any time."
-  ;; Nothing for the moment
-  nil)
-
 ;; Data-directory is really a list now.  Provide something to search it for
 ;; directories.
 
@@ -295,7 +298,7 @@ If no DIR-LIST is supplied, it defaults to `data-directory-list'."
     (setq dir-list data-directory-list))
   (let (found found-dir)
     (while (and (null found-dir) dir-list)
-      (setq found (concat (car dir-list) name "/")
+      (setq found (file-name-as-directory (concat (car dir-list) name))
 	    found-dir (file-directory-p found))
       (or found-dir
 	  (setq found nil))
@@ -329,15 +332,16 @@ This function is basically a wrapper over `locate-file'."
 (defun packages-find-packages-in-directories (directories)
   "Find all packages underneath directories in DIRECTORIES."
   (paths-find-recursive-path directories
+			     packages-hierarchy-depth
 			     (append paths-version-control-bases
 				     packages-special-bases)))
 
 (defun packages-split-path (path)
-  "Split PATH at \"/\", return pair with two components.
+  "Split PATH at \"\", return pair with two components.
 The second component is shared with PATH."
   (let ((reverse-tail '())
 	(rest path))
-    (while (and rest (null (string-equal "/" (car rest))))
+    (while (and rest (null (string-equal "" (car rest))))
       (setq reverse-tail (cons (car rest) reverse-tail))
       (setq rest (cdr rest)))
     (if (null rest)
@@ -346,7 +350,7 @@ The second component is shared with PATH."
 
 (defun packages-split-package-path (package-path)
   "Split up PACKAGE-PATH into early, late and last components.
-The separation is by \"/\" components.
+The separation is by \"\" components.
 This returns (LIST EARLY-PACKAGES LATE-PACKAGES LAST-PACKAGES)."
   ;; When in doubt, it's late
   (let* ((stuff (packages-split-path package-path))
@@ -377,38 +381,36 @@ This returns (LIST EARLY-PACKAGES LATE-PACKAGES LAST-PACKAGES)."
 For the format of PACKAGE-LOCATIONS, see the global variable of the same name.
 TIME is either 'EARLY, 'LATE, or 'LAST.
 DEFAULT is a default list of packages."
-  (let ((packages '()))
-    (while package-locations
-      (packages-deconstruct 
-       (car package-locations)
-       #'(lambda (name a-time thunk)
-	   (if (and (eq time a-time)
-		    (funcall thunk))
-	       (setq packages
-		     (nconc packages
-			    (packages-find-packages-by-name roots name))))))
-      (setq package-locations (cdr package-locations)))
-    (paths-uniq-append packages
-		       default)))
+  (or default
+      (let ((packages '()))
+	(while package-locations
+	  (packages-deconstruct 
+	   (car package-locations)
+	   #'(lambda (name a-time thunk)
+	       (if (and (eq time a-time)
+			(funcall thunk))
+		   (setq packages
+			 (nconc packages
+				(packages-find-packages-by-name roots name))))))
+	  (setq package-locations (cdr package-locations)))
+	packages)))
 
-(defun packages-find-packages (roots &optional inhibit)
+(defun packages-find-packages (roots)
   "Find the packages."
-  (if inhibit
-      (list '() '() '())
-    (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
-      (if envvar-value
-	  (packages-split-package-path envvar-value)
-	(packages-deconstruct
-	 (packages-split-package-path configure-package-path)
-	 #'(lambda (configure-early-packages
-		    configure-late-packages
-		    configure-last-packages)
-	     (list (packages-find-packages-at-time roots package-locations 'early
-						   configure-early-packages)
-		   (packages-find-packages-at-time roots package-locations 'late
-						   configure-late-packages)
-		   (packages-find-packages-at-time roots package-locations 'last
-						   configure-last-packages))))))))
+  (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
+    (if envvar-value
+	(packages-split-package-path (paths-decode-directory-path envvar-value))
+      (packages-deconstruct
+       (packages-split-package-path configure-package-path)
+       #'(lambda (configure-early-packages
+		  configure-late-packages
+		  configure-last-packages)
+	   (list (packages-find-packages-at-time roots package-locations 'early
+						 configure-early-packages)
+		 (packages-find-packages-at-time roots package-locations 'late
+						 configure-late-packages)
+		 (packages-find-packages-at-time roots package-locations 'last
+						 configure-last-packages)))))))
 
 (defun packages-find-package-library-path (packages suffixes)
   "Construct a path into a component of the packages hierarchy.
@@ -419,7 +421,7 @@ SUFFIXES is a list of names of package subdirectories to look for."
 	  #'append
 	  (mapcar #'(lambda (package)
 		      (mapcar #'(lambda (suffix)
-				  (concat package suffix))
+				  (file-name-as-directory (concat package suffix)))
 			      suffixes))
 		  packages))))
     (paths-directories-which-exist directories)))
@@ -428,18 +430,21 @@ SUFFIXES is a list of names of package subdirectories to look for."
   "Construct the load-path component for packages.
 PACKAGES is a list of package directories."
   (paths-find-recursive-load-path
-   (packages-find-package-library-path packages '("lisp/"))))
+   (packages-find-package-library-path packages
+				       '("lisp"))
+   packages-load-path-depth))
 
 (defun packages-find-package-exec-path (packages)
   (packages-find-package-library-path packages
-				   (list (concat "bin/" system-configuration "/")
-					 "lib-src/")))
+				      (list (paths-construct-path
+					     (list "bin" system-configuration))
+					    "lib-src")))
 
 (defun packages-find-package-info-path (packages)
-  (packages-find-package-library-path packages '("info/")))
+  (packages-find-package-library-path packages '("info")))
 
 (defun packages-find-package-data-path (packages)
-  (packages-find-package-library-path packages '("etc/")))
+  (packages-find-package-library-path packages '("etc")))
 
 ;; Loading package initialization files
 
@@ -448,14 +453,13 @@ PACKAGES is a list of package directories."
 BASE is the base name of the files."
   (mapc #'(lambda (dir)
 	    (let ((file-name (expand-file-name base dir)))
-	      (if (file-exists-p file-name)
-		  (condition-case error
-		      (load file-name)
-		    (error
-		     (warn (format "Autoload error in: %s:\n\t%s"
-				   file-name
-				   (with-output-to-string
-				     (display-error error nil)))))))))
+	      (condition-case error
+		  (load file-name t t)
+		(error
+		 (warn (format "Autoload error in: %s:\n\t%s"
+			       file-name
+			       (with-output-to-string
+				 (display-error error nil))))))))
 	package-load-path))
 
 (defun packages-load-package-auto-autoloads (package-load-path)
@@ -478,7 +482,7 @@ Call HANDLE on each file off definitions of PACKAGE-LISP there."
 			(mapc #'(lambda (base)
 				  (funcall handle base))
 			      package-lisp))))))
-	  package-load-path))
+	package-load-path))
 
 (defun packages-load-package-dumped-lisps (package-load-path)
   "Load dumped-lisp.el files along a load path.

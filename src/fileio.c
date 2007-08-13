@@ -111,15 +111,6 @@ int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Qfile_name_handler_alist;
 
-/* Syncing with FSF 19.34.6 note: although labelled as NT-specific, these
-   two lisp variables are compiled in even when not defined(DOS_NT).
-   Need to check if we should bracket them between #ifdef's.
-   --marcpa */
-/* On NT, specifies the directory separator character, used (eg.) when
-   expanding file names.  This can be bound to / or \.
-
-   This needs to be initialized statically, because file name functions
-   are called during initialization.  */
 Lisp_Object Vdirectory_sep_char;
 
 /* These variables describe handlers that have "already" had a chance
@@ -533,15 +524,23 @@ get a current directory to run processes in.
 static char *
 file_name_as_directory (char *out, char *in)
 {
-  int size = strlen (in) - 1;
+  int size = strlen (in);
 
-  strcpy (out, in);
-
-  /* For Unix syntax, Append a slash if necessary */
-  if (!IS_ANY_SEP (out[size]))
+  if (size == 0)
     {
-      out[size + 1] = DIRECTORY_SEP;
-      out[size + 2] = '\0';
+      out[0] = '.';
+      out[1] = DIRECTORY_SEP;
+      out[2] = '\0';
+    }
+  else
+    {
+      strcpy (out, in);
+      /* Append a slash if necessary */
+      if (!IS_ANY_SEP (out[size-1]))
+	{
+	  out[size] = DIRECTORY_SEP;
+	  out[size + 1] = '\0';
+	}
     }
 #ifdef WINDOWSNT
   CORRECT_DIR_SEPS (out);
@@ -555,7 +554,8 @@ This operation exists because a directory is also a file, but its name as
 a directory is different from its name as a file.
 The result can be used as the value of `default-directory'
 or passed as second argument to `expand-file-name'.
-For a Unix-syntax file name, just appends a slash.
+For a Unix-syntax file name, just appends a slash,
+except for (file-name-as-directory \"\") => \"./\".
 */
        (file))
 {
@@ -644,18 +644,11 @@ In Unix-syntax, this function just removes the final slash.
 
 /* Fmake_temp_name used to be a simple wrapper around mktemp(), but it
    proved too broken for our purposes (it supported only 26 or 62
-   unique names under some implementations).  For instance, the stupid
-   limit broke Gnus Incoming* files generation.
+   unique names under some implementations).  For example, this
+   arbitrary limit broke generation of Gnus Incoming* files.
 
-   NB, this implementation is better than what one usually finds in
-   libc.  --hniksic */
-
-#define MTN_RANDOM(x) ((int) (random () % x))
-#define MTN_INC(var, limit) (var = ((var == (limit) - 1) ? 0 : (var + 1)))
-#define MTN_LOOP(var, limit, keep)				\
-for (keep = var = MTN_RANDOM (limit), MTN_INC (var, limit);	\
-     var != keep;						\
-     MTN_INC (var, limit))
+   This implementation is better than what one usually finds in libc.
+   --hniksic */
 
 DEFUN ("make-temp-name", Fmake_temp_name, 1, 1, 0, /*
 Generate temporary file name starting with PREFIX.
@@ -677,13 +670,13 @@ have been passed through `expand-file-name'.
     'g','h','i','j','k','l','m','n',
     'o','p','q','r','s','t','u','v',
     'w','x','y','z','0','1','2','3',
-    '4','5','6','7','8','9','-','_'
-  };
+    '4','5','6','7','8','9','-','_' };
+  static unsigned count, count_initialized_p;
+
   Lisp_Object val;
   Bytecount len;
-  int pid;
-  int i, j, k, keep1, keep2, keep3;
   Bufbyte *p, *data;
+  unsigned pid;
 
   CHECK_STRING (prefix);
 
@@ -698,8 +691,8 @@ have been passed through `expand-file-name'.
      the code that uses (make-temp-name "") instead of
      (make-temp-name "./").
 
-     3) It might yield unexpected results in the presence of EFS and
-     file name handlers.  */
+     3) It might yield unexpected (to stat(2)) results in the presence
+     of EFS and file name handlers.  */
 
   len = XSTRING_LENGTH (prefix);
   val = make_uninit_string (len + 6);
@@ -712,51 +705,46 @@ have been passed through `expand-file-name'.
      three are incremented if the file already exists.  This ensures
      262144 unique file names per PID per PREFIX.  */
 
-  pid = (int)getpid ();
+  pid = (unsigned)getpid ();
   *p++ = tbl[pid & 63], pid >>= 6;
   *p++ = tbl[pid & 63], pid >>= 6;
   *p++ = tbl[pid & 63], pid >>= 6;
 
-  /* Here we employ some trickery to minimize useless stat'ing when
-     this function is invoked many times successively with the same
-     PREFIX.  Instead of looping from 0 to 63, each of the variables
-     is assigned a random number less than 64, and is incremented up
-     to 63 and back to zero, until the initial value is reached again.
-
-     In other words, MTN_LOOP (i, 64, keep1) is equivalent to
-     for (i = 0; i < 64; i++) with the difference that the beginning
-     value needn't be 0 -- all that matters is that i is guaranteed to
-     loop through all the values in the [0, 64) range.  */
-  MTN_LOOP (i, 64, keep1)
+  /* Here we try to minimize useless stat'ing when this function is
+     invoked many times successively with the same PREFIX.  We achieve
+     this by initializing count to a random value, and incrementing it
+     afterwards.  */
+  if (!count_initialized_p)
     {
-      p[0] = tbl[i];
-      MTN_LOOP (j, 64, keep2)
+      count = (unsigned)time (NULL);
+      count_initialized_p = 1;
+    }
+
+  while (1)
+    {
+      struct stat ignored;
+      unsigned num = count++;
+
+      p[0] = tbl[num & 63], num >>= 6;
+      p[1] = tbl[num & 63], num >>= 6;
+      p[2] = tbl[num & 63], num >>= 6;
+
+      if (stat ((const char *) data, &ignored) < 0)
 	{
-	  p[1] = tbl[j];
-	  MTN_LOOP (k, 64, keep3)
-	    {
-	      struct stat ignored;
-	      p[2] = tbl[k];
-	      if (stat (data, &ignored) < 0)
-		{
-		  /* We want to return only if errno is ENOENT.  */
-		  if (errno == ENOENT)
-		    return val;
-		  else
-		    /* The error here is dubious, but there is little
-		       else we can do.  The alternatives are to return
-		       nil, which is as bad as (and in many cases
-		       worse than) throwing the error, or to ignore
-		       the error, which will likely result in looping
-		       through 262144 stat's, which is not only SLOW,
-		       but also useless since it will fallback to the
-		       errow below, anyway.  */
-		    report_file_error
-		      ("Cannot create temporary name for prefix",
-		       list1 (prefix));
-		  /* not reached */
-		}
-	    }
+	  /* We want to return only if errno is ENOENT.  */
+	  if (errno == ENOENT)
+	    return val;
+	  else
+	    /* The error here is dubious, but there is little else we
+	       can do.  The alternatives are to return nil, which is
+	       as bad as (and in many cases worse than) throwing the
+	       error, or to ignore the error, which will likely result
+	       in looping through 262144 stat's, which is not only
+	       dog-slow, but also useless since it will fallback to
+	       the errow below, anyway.  */
+	    report_file_error ("Cannot create temporary name for prefix",
+			       list1 (prefix));
+	  /* not reached */
 	}
     }
   signal_simple_error ("Cannot create temporary name for prefix", prefix);
@@ -1149,7 +1137,7 @@ See also the function `substitute-in-file-name'.
       /* Get rid of any slash at the end of newdir, unless newdir is
 	 just // (an incomplete UNC name).  */
       length = strlen ((char *) newdir);
-      if (length > 0 && IS_DIRECTORY_SEP (newdir[length - 1])
+      if (length > 1 && IS_DIRECTORY_SEP (newdir[length - 1])
 #ifdef WINDOWSNT
 	  && !(length == 2 && IS_DIRECTORY_SEP (newdir[0]))
 #endif
@@ -3333,7 +3321,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
        but who knows about all the other machines with NFS?)  */
     /* On VMS and APOLLO, must do the stat after the close
        since closing changes the modtime.  */
-#if 0 /* !defined (VMS) && !defined (APOLLO) */
+#if 1 /* !defined (VMS) && !defined (APOLLO) */
     fstat (desc, &st);
 #endif
 
@@ -3352,7 +3340,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   }
 
 
-#if 1 /* defined (VMS) || defined (APOLLO) */
+#if 0 /* defined (VMS) || defined (APOLLO) */
   stat ((char *) XSTRING_DATA (fn), &st);
 #endif
 
@@ -4313,5 +4301,5 @@ This variable affects the built-in functions only on Windows,
 on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
-  Vdirectory_sep_char = make_char('/');
+  Vdirectory_sep_char = make_char(DIRECTORY_SEP);
 }

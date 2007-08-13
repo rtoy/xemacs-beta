@@ -21,29 +21,23 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* A shared object may have the following symbols defined:
-      syms_of
-      vars_of
-      complex_vars_of
-   They are called in that order.  Each takes and returns void
-   arguments.
+/* A shared object must have the symbol `emacs_initialize' defined.
+   It should contain initialization of functions, symbols, etc. and
+   their loading into Lisp-land.  The function will be called without
+   arguments and is not expected to return any.
 
    All of this needs lots and LOTS of work.  Some things to work on:
 
-   1) A good foreign interface.  We probably need to get rid of
-   syms_of and similar junk, and define a more normal interfacing to
-   the outside world, e.g. an init_emacs_module() function.  See below
-   for more discussion about it.  Also, we need a modules/ directory
-   with a few nice sample modules, a sample Makefile, etc. so people
-   can start hacking.
+   1) A good foreign interface.  This is probably tough, because it
+   implies drawing a new border between "external" and "internal"
+   stuff (traditionally, Lisp code was external, while C was
+   internal).  Also, we need a modules/ directory with a few nice
+   sample modules, a sample Makefile, etc. so people can start
+   hacking.
 
-   2) I'm getting coredumps very often -- practically every time I
-   compile without USE_MINIMAL_TAGBITS, and even with it sometimes.  I
-   wasn't able to resolve these.
-
-   3) All of this is sooo simple-minded.  As it gets more complex,
+   2) All of this is sooo simple-minded.  As it gets more complex,
    we'll have to look at how others have done similar things
-   (e.g. Perl and Zsh 3.1), to avoid botching it up.  */
+   (e.g. Perl 5 and Zsh 3.1), to avoid botching it up.  */
 
 #include <config.h>
 #include "lisp.h"
@@ -51,23 +45,13 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdll.h"
 #include <errno.h>
 
-static void
-maybe_call_library_function (dll_handle *handle, CONST char *funcname)
-{
-  void (*function)(void) = (void (*)(void)) dll_function (handle, funcname);
-  if (function)
-    (*function) ();
-}
-
 DEFUN ("dll-open", Fdll_open, 1, 1, "FShared object: ", /*
 Load LIBRARY as a shared object file.
 
 After the LIBRARY is dynamically linked with the executable, the
-following functions are called:
-
-  syms_of(),		containing definitions of symbols and subr's;
-  vars_of(),		containing definitions of variables;
-  complex_vars_of(),	containing complex definitions of variables.
+`emacs_initialize' function will be called without arguments.  It
+should define all the symbols, subr's and variables the module
+introduces.
 
 After this point, any lisp symbols defined in the shared object are
 available for use.
@@ -76,6 +60,7 @@ available for use.
 {
   /* This function can GC */
   dll_handle *handle;
+  void (*function) (void);
   CONST char *filename;
 
   CHECK_STRING (library);
@@ -91,23 +76,14 @@ available for use.
 			   library, build_translated_string (dll_error (handle))));
     }
 
-  /* #### This looks unnecessary here, because at this time one
-     initialization function is fully sufficient.  However, I am not
-     removing this support, since we may wish to add mechanisms for
-     static linking, which would have invoke these function via normal
-     paths.
+  /* #### Perhaps emacs_initialize() should return a Lisp_Object, so
+     we can return it?  */
 
-     #### But then this is not sufficient, because one could as well
-     honor specifier_vars_of_foo(), etc.  Maybe we should scrap it
-     after all.
-
-     #### What if one of the first two functions signal an error?
-     Should we take care to execute the other two?  My fingers are
-     getting itchy!  */
-
-  maybe_call_library_function (handle, "syms_of");
-  maybe_call_library_function (handle, "vars_of");
-  maybe_call_library_function (handle, "complex_vars_of");
+  function = (void (*)(void)) dll_function (handle, "emacs_initialize");
+  if (!function)
+    signal_simple_error ("Shared library does not define `emacs_initialize'",
+			 library);
+  (*function) ();
 
   return Qnil;
 }

@@ -124,6 +124,7 @@ char *alloca();
 #undef AIXV3
 #undef _POSIX_SOURCE
 #undef _BSD_SOURCE
+#undef _SVID_SOURCE
 #undef X_LOCALE
 #undef NARROWPROTO
 /* The following should always be defined, no matter what xmkmf thinks. */
@@ -204,6 +205,7 @@ char *alloca();
 
 /* Have shared library support */
 #undef HAVE_DLOPEN
+#undef HAVE_DLERROR
 #undef HAVE_SHL_LOAD
 #undef HAVE_DLD_INIT
 #undef HAVE_SHLIB
@@ -776,5 +778,14 @@ on various systems. */
 #ifdef REAL_MAIL_USE_LOCKF
 #define MAIL_USE_LOCKF
 #endif
+
+#undef LISPDIR_USER_DEFINED
+#undef PACKAGE_PATH_USER_DEFINED
+#undef SITELISPDIR_USER_DEFINED
+#undef ARCHLIBDIR_USER_DEFINED
+#undef ETCDIR_USER_DEFINED
+#undef LOCKDIR_USER_DEFINED
+#undef INFODIR_USER_DEFINED
+#undef INFOPATH_USER_DEFINED
 
 #endif /* _SRC_CONFIG_H_ */

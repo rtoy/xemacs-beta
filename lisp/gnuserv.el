@@ -1,7 +1,7 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.10
+;; Version: 3.11
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
 ;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
@@ -751,19 +751,22 @@ called to dispose of the buffer after marking it as done.
 Files that match `gnuserv-temp-file-regexp' are considered temporary and
 are saved unconditionally and backed up if `gnuserv-make-temp-file-backup'
 is non-nil.  They are disposed of using `gnuserv-done-temp-file-function'
-(also bound to `kill-buffer' by default).
+\(also bound to `kill-buffer' by default).
 
 When all of a client's buffers are marked as \"done\", the client is notified."
   (interactive "P")
   (when (null count)
     (setq count 1))
   (cond ((numberp count)
-	 (let (next)
-	   (while (natnump (decf count))
+	 (while (natnump (decf count))
+	   (let ((frame (selected-frame)))
 	     (gnuserv-buffer-done (current-buffer))
-	     (setq next (gnuserv-next-buffer))
-	     (when next
-	       (switch-to-buffer next)))))
+	     (when (eq frame (selected-frame))
+	       ;; Switch to the next gnuserv buffer.  However, do this
+	       ;; only if we remain in the same frame.
+	       (let ((next (gnuserv-next-buffer)))
+		 (when next
+		   (switch-to-buffer next)))))))
 	(count
 	   (let* ((buf (current-buffer))
 		  (clients (gnuserv-buffer-clients buf)))

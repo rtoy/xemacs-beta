@@ -124,4 +124,4 @@ for dir in $dirs; do
 	$EMACS -batch -q -no-site-file -l autoload -f batch-update-directory $dir
 done
 
-eval "$make_special_commands"
+# eval "$make_special_commands"

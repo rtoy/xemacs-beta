@@ -1328,7 +1328,7 @@ event_stream_wakeup_pending_p (int id, int async_p)
 extern int poll_for_quit_id;
 #endif
 
-#ifndef SIGCHLD
+#if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
 extern int poll_for_sigchld_id;
 #endif
 
@@ -1337,7 +1337,8 @@ event_stream_deal_with_async_timeout (int interval_id)
 {
   /* This function can GC */
   Lisp_Object humpty, dumpty;
-#if (!defined (SIGIO) && !defined (DONT_POLL_FOR_QUIT)) || !defined (SIGCHLD)
+#if ((!defined (SIGIO) && !defined (DONT_POLL_FOR_QUIT)) \
+     || defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD))
   int id =
 #endif
     event_stream_resignal_wakeup (interval_id, 1, &humpty, &dumpty);
@@ -1351,7 +1352,7 @@ event_stream_deal_with_async_timeout (int interval_id)
     }
 #endif
 
-#if !defined (SIGCHLD)
+#if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
   if (id == poll_for_sigchld_id)
     {
       kick_status_notify ();

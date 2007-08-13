@@ -34,7 +34,11 @@
   (when (and (featurep 'x)
 	     (or (eq locale 'global)
 		 (eq 'x (device-or-frame-type locale))))
-    (x-init-scrollbar-from-resources locale)))
+    (x-init-scrollbar-from-resources locale))
+  (when (and (featurep 'mswindows)
+	     (or (eq locale 'global)
+		 (eq 'mswindows (device-or-frame-type locale))))
+    (mswindows-init-scrollbar-metrics locale)))
 
 ;;
 ;; vertical scrollbar functions

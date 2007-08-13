@@ -1050,36 +1050,33 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
     return 0;
   }
 
-  /* Have to apply Font to a GC to get its values.
-   * We'll borrow the desktop window becuase its the only window that we
-   * know about that is guaranteed to exist when this gets called
-   */ 
   {
-    HWND hwnd;
     HDC hdc;
     HFONT holdfont;
     TEXTMETRIC metrics;
 
-    hwnd = GetDesktopWindow();
-    assert(hdc = GetDC(hwnd));	/* XXX FIXME: can this temporarily fail? */
-    holdfont = SelectObject(hdc, f->data);
-    if (!holdfont)
-    {
-      mswindows_finalize_font_instance (f);
-      maybe_signal_simple_error ("Couldn't map font", f->name, Qfont, errb);
-      return 0;
-    }
-    GetTextMetrics(hdc, &metrics);
-    SelectObject(hdc, holdfont);
-    ReleaseDC(hwnd, hdc);
-    f->width = (unsigned short) metrics.tmAveCharWidth;
-    f->height = (unsigned short) metrics.tmHeight;
-    f->ascent = (unsigned short) metrics.tmAscent;
-    f->descent = (unsigned short) metrics.tmDescent;
-    f->proportional_p = (metrics.tmPitchAndFamily & TMPF_FIXED_PITCH);
+    hdc = CreateCompatibleDC (NULL);
+    if (hdc)
+      {
+	holdfont = SelectObject(hdc, f->data);
+	if (holdfont)
+	  {
+	    GetTextMetrics (hdc, &metrics);
+	    SelectObject(hdc, holdfont);
+	    DeleteDC (hdc);
+	    f->width = (unsigned short) metrics.tmAveCharWidth;
+	    f->height = (unsigned short) metrics.tmHeight;
+	    f->ascent = (unsigned short) metrics.tmAscent;
+	    f->descent = (unsigned short) metrics.tmDescent;
+	    f->proportional_p = (metrics.tmPitchAndFamily & TMPF_FIXED_PITCH);
+	    return 1;
+	  }
+	DeleteDC (hdc);
+      }
+    mswindows_finalize_font_instance (f);
+    maybe_signal_simple_error ("Couldn't map font", f->name, Qfont, errb);
   }
-
-  return 1;
+  return 0;
 }
 
 #if 0

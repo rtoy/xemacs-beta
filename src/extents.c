@@ -3231,15 +3231,11 @@ decode_extent (Lisp_Object extent_obj, unsigned int flags)
 
   assert (!NILP (obj) || extent_detached_p (extent));
 
-  if (NILP (obj) && (flags & DE_MUST_HAVE_BUFFER))
+  if ((NILP (obj) && (flags & DE_MUST_HAVE_BUFFER))
+      || (extent_detached_p (extent) && (flags & DE_MUST_BE_ATTACHED)))
     {
       signal_simple_error ("extent doesn't belong to a buffer or string",
 			   extent_obj);
-    }
-
-  if (extent_detached_p (extent) && (flags & DE_MUST_BE_ATTACHED))
-    {
-      signal_simple_error ("extent cannot be detached", extent_obj);
     }
 
   return extent;

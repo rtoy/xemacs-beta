@@ -1,3 +1,129 @@
+1998-04-17  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* toolbar.el: Remove (featurep 'x) test from
+	toolbar-make-button-list
+
+1998-04-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* gnuserv.el (gnuserv-edit): Switch to the next gnuserv buffer
+	only if in the same frame.
+
+1998-04-17  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* packages.el (package-locations): Added site-packages hierarchy.
+
+	* setup-paths.el (paths-default-info-directories): Introduced and
+	used.
+
+	* packages.el, setup-paths.el: Set various path searching depths
+	to 1.
+
+	* packages.el (packages-hierarchy-depth): 
+	(packages-load-path-depth): Introduced and used.
+
+	* setup-paths.el (paths-load-path-depth): Introduced and used.
+
+	* find-paths.el (paths-find-recursive-path): Added max-depth
+	parameter.
+
+1998-04-15  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* setup-paths.el (paths-construct-info-path): Removed 
+	dependency on behavior of (file-name-as-directory "").
+
+1998-04-09  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* ldap.el (ldap-search): Adapt to the new low-level API using ldap 
+	lisp objects
+
+1998-04-14  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* dump-paths.el, startup.el: Added handling for --debug-paths.
+
+1998-04-15  William M. Perry  <wmperry@aventail.com>
+
+	* wid-edit.el: We cannot just set the help-echo or balloon-help
+	  properties for an extent based on the :help-echo widget
+	  property, since help-echo and balloon-help cause an EXTENT to
+	  get passed in, where :help-echo functions are expecting a WIDGET 
+
+1998-04-15  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* scrollbar.el (init-scrollbar-from-resources): Call
+	mswindows-init-scrollbar-metrics when appropriate.
+
+Thu Apr 16 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* dumped-lisp.el: dump x-toolbar for window system
+
+	* msw-init.el (init-post-mswindows-win): enable toolbars if we
+	have support and xpm.
+
+1998-04-16  SL Baur  <steve@altair.xemacs.org>
+
+	* files.el (toggle-read-only): Fix docstring.
+	From Didier Verna <verna@inf.enst.fr>
+
+1998-04-14  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* startup.el (normal-top-level): Load autoload-file-name without
+	specifying an extension---some people only auto-autoload.el.gz.
+
+1998-04-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* files.el (backup-enable-predicate): Don't bomb on NAME being
+	nil.
+
+1998-04-13  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* find-paths.el, packages.el: Now prefers configure'd paths.
+	This shouldn't cause any of the originally anticipated problems as
+	the current paths architecture will not define the various
+	configure-xxx variables if they're not specified on the configure
+	command line.
+
+	* find-paths.el, setup-paths.el, packages.el: Removed all
+	mentionings of "/" as a path separator.
+	Used paths-construct-path throughout.
+
+	* find-paths.el (paths-construct-path): Created to assemble paths
+	from directory components.
+
+	* setup-paths.el, packages.el: Used paths-decode-directory-path
+	instead of decode-path-internal.
+
+	* find-paths.el: Removed unused (and bogus) paths-find-emacs-path
+	and associates.
+	(paths-decode-directory-path) Created.
+
+	* setup-paths.el: Changed configure-exec-path to
+	configure-exec-directory.
+
+1998-04-11  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* packages.el (packages-find-packages): Fixed decoding of
+	EMACSPACKAGEPATH.
+
+	* startup.el: -no-packages -> -no-early-packages.
+
+	(packages-load-package-lisps): Fixed loading of auto-autoload
+	files.
+
+	* startup.el (normal-top-level): Fixed loading of core
+	auto-autoload.
+
+	* obsolete.el: Un-obsoleted site-directory.  Sigh.
+
+	* startup.el, packages.el, dump-paths.el: Added proper settings
+	for site-directory and lisp-directory variables.
+
+	* startup.el, loadup.el: Renamed inhibit-update-autoloads to
+	inhibit-package-autoloads and fixed handling of it.
+
+	* startup.el, packages.el, dump-paths.el, loadup.el: Fixed
+	handling of former inhibit-package-init, now
+	inhibit-early-packages, to make -vanilla etc. work.
+
 1998-04-10  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* code-process.el (start-process): Fallback to 'undecided instead

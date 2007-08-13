@@ -57,11 +57,6 @@ Boston, MA 02111-1307, USA.  */
 #define LINKER "cc"
 #endif
 
-/* This is safe since we already assumed HAVE_SOCKETS
-   if using X windows.  */
-#undef LIBX11_SYSTEM
-#define LIBX11_SYSTEM "-lpt -lnls -lnsl_s -lc_s -lsocket"
-
 #ifdef HAVE_SOCKETS
 #define LIBS_SYSTEM "-lsocket -lPW"
 

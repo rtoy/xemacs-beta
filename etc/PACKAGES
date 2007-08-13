@@ -2,7 +2,7 @@
 * Introduction to XEmacs Packages
 =================================
 
-As of XEmacs 20.5, XEmacs is no longer distributed in a large
+As of XEmacs 21.0, XEmacs is no longer distributed in a large
 monolithic distribution.  The distribution has been broken up into
 separate units called packages.  In the general case, one may install
 and uninstall various packages freely without having to modify the
@@ -92,7 +92,7 @@ space savings).
 
 You must have GNU cp, GNU ginstall (or a BSD compatible install
 program) GNU make (3.75 or later preferred), makeinfo (1.68 from
-texinfo-3.11 or later required), GNU tar and XEmacs 20.5 :-).  The
+texinfo-3.11 or later required), GNU tar and XEmacs 21.0 :-).  The
 source packages will untar into a correct directory structure.  At
 the top level you must have XEmacs.rules and package-compile.el.
 These files are available from the XEmacs FTP site from the same

@@ -44,184 +44,245 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <dlfcn.h>
 
 #ifndef RTLD_LAZY
-#define RTLD_LAZY 1
+# define RTLD_LAZY 1
 #endif /* RTLD_LAZY isn't defined under FreeBSD - ick */
 
 #ifndef RTLD_GLOBAL
-#define RTLD_GLOBAL 0
+# define RTLD_GLOBAL 0
 #endif
 
-int dll_init(CONST char *arg) {
-  return(0);
+int
+dll_init (CONST char *arg)
+{
+  return 0;
 }
 
-dll_handle dll_open(CONST char *fname) {
-  return((dll_handle)dlopen(fname,RTLD_LAZY|RTLD_GLOBAL));
+dll_handle
+dll_open (CONST char *fname)
+{
+  return (dll_handle)dlopen (fname, RTLD_LAZY | RTLD_GLOBAL);
 }
 
-int dll_close(dll_handle h) {
-  return(dlclose((void *)h));
+int
+dll_close (dll_handle h)
+{
+  return dlclose((void *)h);
 }
 
-dll_func dll_function(dll_handle h,CONST char *n) {
+dll_func
+dll_function (dll_handle h, CONST char *n)
+{
 #ifdef DLSYM_NEEDS_UNDERSCORE
-    char buf[1024];
-    *buf = '_';
-    (void)strcpy(buf + 1, n);
-    n = buf;
+  char *buf = alloca_array (char, strlen (n) + 2);
+  *buf = '_';
+  (void)strcpy(buf + 1, n);
+  n = buf;
 #endif
-  return((dll_func)dlsym((void *)h,n));
+  return (dll_func)dlsym ((void *)h, n);
 }
 
-dll_var dll_variable(dll_handle h,CONST char *n) {
-  return((dll_var)dlsym((void *)h,n));
+dll_var
+dll_variable (dll_handle h, CONST char *n)
+{
+  return (dll_var)dlsym ((void *)h, n);
 }
 
-CONST char *dll_error(dll_handle h) {
+CONST char *
+dll_error (dll_handle h)
+{
 #ifdef HAVE_DLERROR
-  return((CONST char *)dl_error());
+  return (CONST char *)dlerror ();
 #else
-  return("Shared library error");
+  return "Shared library error";
 #endif
 }
 
 #elif defined(HAVE_SHL_LOAD)
 /* This is the HP/UX version */
 #include <dl.h>
-int dll_init(CONST char *arg) {
-  return(0);
+int
+dll_init (CONST char *arg)
+{
+  return 0;
 }
 
-dll_handle dll_open(CONST char *fname) {
-  shl_t h = shl_load(fname,BIND_DEFERRED,0L);
+dll_handle
+dll_open (CONST char *fname)
+{
+  shl_t h = shl_load (fname, BIND_DEFERRED,0L);
   shl_t *hp = NULL;
 
-  if (h) {
-    hp = (shl_t *)malloc(sizeof(shl_t));
-    if (!hp) {
-      shl_unload(h);
-    } else {
-      *hp = h;
+  if (h)
+    {
+      hp = (shl_t *)malloc (sizeof (shl_t));
+      if (!hp)
+	shl_unload(h);
+      else
+	*hp = h;
     }
-  }
-  return((dll_handle)hp);
+  return (dll_handle)hp;
 }
 
-int dll_close(dll_handle h) {
+int
+dll_close (dll_handle h)
+{
   shl_t hp = *((shl_t *)h);
-  free(hp);
-  return (shl_unload(h));
+  free (hp);
+  return shl_unload(h);
 }
 
-dll_func dll_function(dll_handle h,CONST char *n) {
+dll_func
+dll_function (dll_handle h, CONST char *n)
+{
   long handle = 0L;
 
-  if (shl_findsym((shl_t *)h,n,TYPE_PROCEDURE,&handle))
-    return(NULL);
+  if (shl_findsym ((shl_t *)h, n, TYPE_PROCEDURE, &handle))
+    return NULL;
 
-  return((dll_func)handle);
+  return (dll_func)handle;
 }
 
-dll_var dll_variable(dll_handle h,CONST char *n) {
+dll_var
+dll_variable (dll_handle h, CONST char *n)
+{
   long handle = 0L;
 
-  if (shl_findsym((shl_t *)h,n,TYPE_DATA,&handle))
-    return(NULL);
+  if (shl_findsym ((shl_t *)h, n, TYPE_DATA, &handle))
+    return NULL;
 
-  return((dll_var)handle);
+  return (dll_var)handle;
 }
 
-CONST char *dll_error(dll_handle h) {
-  return("Generic shared library error");
+CONST char *
+dll_error (dll_handle h)
+{
+  /* #### WTF?!  Shouldn't this at least attempt to get strerror or
+     something?  --hniksic */
+  return "Generic shared library error";
 }
 
 #elif defined(HAVE_INIT_DLD)
 #include <dld.h>
-int dll_init(CONST char *arg) {
-  char *real_exe = dld_find_executable(arg);
+int
+dll_init (CONST char *arg)
+{
+  char *real_exe = dld_find_executable (arg);
   int rc;
 
-  rc = dld_init(real_exe);
-  if (rc) {
-    dld_perror (exe);
-    return(-1);
-  }
-  return(0);
+  rc = dld_init (real_exe);
+  if (rc)
+    {
+      dld_perror (exe);
+      return -1;
+    }
+  return 0;
 }
 
-dll_handle dll_open(CONST char *fname) {
-  rc = dld_link(fname);
-  if (rc) {
-    return (NULL);
-  }
-  return((dll_handle)1);
+dll_handle
+dll_open (CONST char *fname)
+{
+  rc = dld_link (fname);
+  if (rc)
+    return NULL;
+
+  return (dll_handle)1;
 }
 
-int dll_close(dll_handle h) {
+int
+dll_close (dll_handle h)
+{
   /* *sigh* DLD is pretty lame and doesn't return a handle that you can use
   ** later on to free the file - you have to remember the filename and
   ** use that as the unlinker.  We should eventually keep a linked list
   ** of loaded modules and then use the node pointer as the unique id
   ** for the shared library.  Wheeee.  But not now.
   */
-  return(1);
+  return 1;
 }
 
-DLL_FUNC dll_function(dll_handle h,CONST char *n) {
-  return (dld_get_func(n));
+DLL_FUNC
+dll_function (dll_handle h, CONST char *n)
+{
+  return dld_get_func(n);
 }
 
-DLL_FUNC dll_variable(dll_handle h,CONST char *n) {
-  return (dld_get_symbol(n));
+DLL_FUNC
+dll_variable (dll_handle h, CONST char *n)
+{
+  return dld_get_symbol(n);
 }
 #elif defined(_WINDOWS) || defined(WIN32)
-int dll_init(CONST char *arg) {
-  return(0);
+int
+dll_init (CONST char *arg)
+{
+  return 0;
 }
 
-dll_handle dll_open(CONST char *fname) {
-  return((dll_handle)LoadLibrary(fname));
+dll_handle
+dll_open (CONST char *fname)
+{
+  return (dll_handle)LoadLibrary (fname);
 }
 
-int dll_close(dll_handle h) {
-  return(FreeLibrary(h));
+int
+dll_close (dll_handle h)
+{
+  return FreeLibrary (h);
 }
 
-dll_func dll_function(dll_handle h,CONST char *n) {
-  return((dll_func)GetProcAddress(h,n));
+dll_func
+dll_function (dll_handle h, CONST char *n)
+{
+  return (dll_func)GetProcAddress (h,n);
 }
 
-dll_func dll_variable(dll_handle h,CONST char *n) {
-  return((dll_func)GetProcAddress(h,n));
+dll_func
+dll_variable (dll_handle h, CONST char *n)
+{
+  return (dll_func)GetProcAddress (h,n);
 }
 
-CONST char *dll_error(dll_handle h) {
-  return("Windows DLL Error");
+CONST char *
+dll_error (dll_handle h)
+{
+  return "Windows DLL Error";
 }
 #else
 /* Catchall if we don't know about this systems method of dynamic loading */
-int dll_init(CONST char *arg) {
-  return(-1);
+int
+dll_init (CONST char *arg)
+{
+  return -1;
 }
 
-dll_handle dll_open(CONST char *fname) {
-  return(NULL);
+dll_handle
+dll_open (CONST char *fname)
+{
+  return NULL;
 }
 
-int dll_close(dll_handle h) {
-  return(0);
+int
+dll_close (dll_handle h)
+{
+  return 0;
 }
 
-dll_func dll_function(dll_handle h,CONST char *n) {
-  return(NULL);
+dll_func
+dll_function (dll_handle h, CONST char *n)
+{
+  return NULL;
 }
 
-dll_func dll_variable(dll_handle h,CONST char *n) {
-  return(NULL);
+dll_func
+dll_variable (dll_handle h, CONST char *n)
+{
+  return NULL;
 }
 
-CONST char *dll_error(dll_handle h) {
-  return("Shared libraries not implemented on this system.");
+CONST char *
+dll_error (dll_handle h)
+{
+  return "Shared libraries not implemented on this system";
 }
 #endif /* System conditionals */
 

@@ -177,22 +177,28 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
 
   if (LSTREAMP (function))
     {
-      /* Lstream_write() could easily cause GC inside of it, if the
-	 stream is a print-stream. (It will call output_string()
-	 recursively.) This is probably the fastest way to fix this
-	 problem. (alloca() is very fast on machines that have it
-	 built-in, and you avoid some nasty problems with recursion
-	 that could result from using a static buffer somewhere.)
-
-	 The other possibility is to inhibit GC, but that of course
-	 would require an unwind-protect, which is usually a lot
-	 slower than the small amount of memcpy()ing that happens
-	 here. */
       if (STRINGP (reloc))
 	{
-	  Bufbyte *copied = (Bufbyte *) alloca (len);
-	  memcpy (copied, newnonreloc + offset, len);
-	  Lstream_write (XLSTREAM (function), copied, len);
+	  /* Protect against Lstream_write() causing a GC and
+	     relocating the string.  For small strings, we do it by
+	     alloc'ing the string and using a copy; for large strings,
+	     we inhibit GC.  Now that print_streams are dead, this
+	     case should happen very rarely anyway.  */
+	  if (len < 65536)
+	    {
+	      Bufbyte *copied = alloca_array (Bufbyte, len);
+	      memcpy (copied, newnonreloc + offset, len);
+	      Lstream_write (XLSTREAM (function), copied, len);
+	    }
+	  else
+	    {
+	      int speccount = specpdl_depth ();
+	      record_unwind_protect (restore_gc_inhibit,
+				     make_int (gc_currently_forbidden));
+	      gc_currently_forbidden = 1;
+	      Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
+	      unbind_to (speccount, Qnil);
+	    }
 	}
       else
 	Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
@@ -247,70 +253,6 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
   UNGCPRO;
 }
 
-struct print_stream
-{
-  FILE *file;
-  Lisp_Object fun;
-};
-
-#define get_print_stream(stream) \
-  ((struct print_stream *) Lstream_data (stream))
-
-DEFINE_LSTREAM_IMPLEMENTATION ("print", lstream_print,
-			       sizeof (struct print_stream));
-
-static Lisp_Object
-make_print_output_stream (FILE *file, Lisp_Object fun)
-{
-  Lstream *str = Lstream_new (lstream_print, "w");
-  struct print_stream *ps = get_print_stream (str);
-  Lisp_Object val;
-
-  Lstream_set_character_mode (str);
-  ps->file = file;
-  ps->fun = fun;
-  XSETLSTREAM (val, str);
-  return val;
-}
-
-/* #### This isn't being used anywhere at the moment.  Is it supposed
-   to be? */
-#if 0
-static void
-reset_print_stream (Lstream *str, FILE *file, Lisp_Object fun)
-{
-  struct print_stream *ps = get_print_stream (str);
-
-  Lstream_reopen (str);
-  ps->file = file;
-  ps->fun = fun;
-}
-#endif
-
-static Lisp_Object
-print_marker (Lisp_Object obj, void (*markobj) (Lisp_Object))
-{
-  return get_print_stream (XLSTREAM (obj))->fun;
-}
-
-static int
-print_writer (Lstream *stream, CONST unsigned char *data, size_t size)
-{
-  struct print_stream *ps = get_print_stream (stream);
-
-  if (ps->file)
-    {
-      write_string_to_stdio_stream (ps->file, 0, data, 0, size,
-				    FORMAT_TERMINAL);
-      /* Make sure it really gets written now. */
-      if (print_unbuffered)
-	fflush (ps->file);
-    }
-  else
-    output_string (ps->fun, data, Qnil, 0, size);
-  return size;
-}
-
 static Lisp_Object
 canonicalize_printcharfun (Lisp_Object printcharfun)
 {
@@ -326,33 +268,21 @@ canonicalize_printcharfun (Lisp_Object printcharfun)
   return printcharfun;
 }
 
+/* Now that print_streams are dead, I wonder if the following two
+   functions are needed as separate entities.  */
 
 static Lisp_Object
 print_prepare (Lisp_Object printcharfun)
 {
-  FILE *stdio_stream = 0;
-
   /* Emacs won't print whilst GCing, but an external debugger might */
   if (gc_in_progress)
     return Qnil;
 
   printcharfun = canonicalize_printcharfun (printcharfun);
-  if (NILP (printcharfun))
-    {
-      stdio_stream = stdout;
-    }
-#if 0 /* Don't bother */
-  else if (SUBRP (indirect_function (printcharfun, 0))
-           && (XSUBR (indirect_function (printcharfun, 0))
-               == Sexternal_debugging_output))
-    {
-      stdio_stream = stderr;
-    }
-#endif
   if (!CONSP (Vprint_gensym))
     Vprint_gensym_alist = Qnil;
 
-  return make_print_output_stream (stdio_stream, printcharfun);
+  return printcharfun;
 }
 
 static void
@@ -364,8 +294,6 @@ print_finish (Lisp_Object stream)
 
   if (!CONSP (Vprint_gensym))
     Vprint_gensym_alist = Qnil;
-
-  Lstream_delete (XLSTREAM (stream));
 }
 
 #if 1 /* Prefer space over "speed" */
@@ -548,12 +476,11 @@ second argument NOESCAPE is non-nil.
        (object, noescape))
 {
   /* This function can GC */
-  Lisp_Object result = Qnil;
   Lstream *stream;
   struct gcpro gcpro1;
 
   /* We avoid creating a new stream for every invocation of
-     prin1_to_string, for better memory usage.  */
+     prin1_to_string, for better memory usage.  #### Is it necessary?  */
 
   if (NILP (Vprin1_to_string_stream))
     Vprin1_to_string_stream = make_resizing_buffer_output_stream ();
@@ -563,12 +490,15 @@ second argument NOESCAPE is non-nil.
   /* In case a caller forgot to protect. */
   GCPRO1 (object);
   print_depth = 0;
+  if (!CONSP (Vprint_gensym))
+    Vprint_gensym_alist = Qnil;
   print_internal (object, Vprin1_to_string_stream, NILP (noescape));
+  if (!CONSP (Vprint_gensym))
+    Vprint_gensym_alist = Qnil;
   Lstream_flush (stream);
   UNGCPRO;
-  result = make_string (resizing_buffer_stream_ptr (stream),
-			Lstream_byte_count (stream));
-  return result;
+  return make_string (resizing_buffer_stream_ptr (stream),
+		      Lstream_byte_count (stream));
 }
 
 DEFUN ("princ", Fprinc, 1, 2, 0, /*
@@ -624,9 +554,6 @@ Convert an error value (ERROR-SYMBOL . DATA) to an error message.
   (data))
 {
   /* This function can GC */
-
-  /* This should maybe use Vprin1_to_string_stream...  However, it's
-     called sufficiently rarely, so I don't think it should matter.  */
   Lisp_Object stream = make_resizing_buffer_output_stream ();
   struct gcpro gcpro1;
   GCPRO1 (stream);
@@ -1003,6 +930,39 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   return;
 }
 
+/* Print NUMBER to BUFFER.  The digits are first written in reverse
+   order (the least significant digit first), and are then reversed.
+   This is equivalent to sprintf(buffer, "%ld", number), only much
+   faster.  */
+void
+long_to_string (char *buffer, long number)
+{
+  char *p;
+  int i, l;
+
+  if (number < 0)
+    {
+      *buffer++ = '-';
+      number = -number;
+    }
+  p = buffer;
+  /* Print the digits to the string.  */
+  do
+    {
+      *p++ = number % 10 + '0';
+      number /= 10;
+    }
+  while (number);
+  /* And reverse them.  */
+  l = p - buffer - 1;
+  for (i = l/2; i >= 0; i--)
+    {
+      char c = buffer[i];
+      buffer[i] = buffer[l - i];
+      buffer[l - i] = c;
+    }
+  buffer[l + 1] = '\0';
+}
 
 static void
 default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
@@ -1087,7 +1047,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Int:
 #endif
       {
-	sprintf (buf, "%ld", (long) XINT (obj));
+	long_to_string (buf, XINT (obj));
 	write_c_string (buf, printcharfun);
 	break;
       }
@@ -1715,13 +1675,6 @@ syms_of_print (void)
 #ifndef standalone
   DEFSUBR (Fwith_output_to_temp_buffer);
 #endif /* not standalone */
-}
-
-void
-lstream_type_create_print (void)
-{
-  LSTREAM_HAS_METHOD (print, writer);
-  LSTREAM_HAS_METHOD (print, marker);
 }
 
 void

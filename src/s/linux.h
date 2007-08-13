@@ -85,7 +85,13 @@ Boston, MA 02111-1307, USA.  */
 /* Linux has crt0.o in a non-standard place */
 #define START_FILES "pre-crt0.o /usr/lib/crt0.o"
 #else
+/**/
+#if	defined(__linux__) && defined(powerpc)	/*Added by Fukui*/
+#define START_FILES		/*Added by Fukui*/
+#else				/*Added by Fukui*/
+
 #define START_FILES "pre-crt0.o /usr/lib/crt1.o /usr/lib/crti.o"
+#endif				/*Added by Fukui*/
 #endif
 
 /* This is needed for sysdep.c */

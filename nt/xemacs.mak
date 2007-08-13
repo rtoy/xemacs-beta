@@ -42,6 +42,12 @@ HAVE_X=0
 !if !defined(HAVE_MULE)
 HAVE_MULE=0
 !endif
+!if !defined(HAVE_XPM)
+HAVE_XPM=0
+!endif
+!if !defined(HAVE_TOOLBARS)
+HAVE_TOOLBARS=$(HAVE_XPM)
+!endif
 !if !defined(HAVE_MSW_C_DIRED)
 HAVE_MSW_C_DIRED=1
 !endif
@@ -67,6 +73,12 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=0
 !if $(HAVE_X) && !defined(X11_DIR)
 !error Please specify root directory for your X11 installation: X11_DIR=path
 !endif
+!if $(HAVE_MSW) && $(HAVE_XPM) && !defined(XPM_DIR)
+!error Please specify root directory for your XPM installation: XPM_DIR=path
+!endif
+!if $(HAVE_MSW) && $(HAVE_TOOLBARS) && !$(HAVE_XPM)
+!error Toolbars require XPM support
+!endif
 
 #
 # Handle GUNG_HO
@@ -91,6 +103,12 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !endif
 !if $(HAVE_MULE)
 !message Compiling in MULE.
+!endif
+!if $(HAVE_XPM)
+!message Compiling in support for XPM images.
+!endif
+!if $(HAVE_TOOLBARS)
+!message Compiling in support for toolbars.
 !endif
 !if $(HAVE_MSW_C_DIRED)
 # Define HAVE_MSW_C_DIRED to be non-zero if you want Xemacs to use C
@@ -130,10 +148,23 @@ X_LIBS=-libpath:$(X11_DIR)\lib Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X1
 
 !if $(HAVE_MSW)
 MSW_DEFINES=-DHAVE_MS_WINDOWS -DHAVE_SCROLLBARS -DHAVE_MENUBARS
+MSW_INCLUDES=
+MSW_LIBS=
 !if $(HAVE_MSW_C_DIRED)
-MSW_C_DIRED_DEFINES=-DHAVE_MSW_C_DIRED
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_MSW_C_DIRED
 MSW_C_DIRED_SRC=$(XEMACS)\src\dired-msw.c
 MSW_C_DIRED_OBJ=$(OUTDIR)\dired-msw.obj
+!endif
+!if $(HAVE_XPM)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_XPM -DFOR_MSW
+MSW_INCLUDES=$(MSW_INCLUDES) -I$(XPM_DIR) -I$(XPM_DIR)\lib
+MSW_LIBS=$(MSW_LIBS) $(XPM_DIR)\lib\Xpm.lib
+!endif
+!if $(HAVE_TOOLBARS)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
+MSW_TOOLBAR_SRC=$(XEMACS)\src\toolbar.c $(XEMACS)\src\toolbar-msw.c
+MSW_TOOLBAR_OBJ=$(OUTDIR)\toolbar.obj $(OUTDIR)\toolbar-msw.obj
+MSW_LIBS=$(MSW_LIBS) comctl32.lib
 !endif
 !endif
 
@@ -150,9 +181,9 @@ DEBUG_FLAGS= -debugtype:both -debug:full
 
 # Generic variables
 
-INCLUDES=$(X_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib -I"$(MSVCDIR)\include"
+INCLUDES=$(X_INCLUDES) $(MSW_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib -I"$(MSVCDIR)\include"
 
-DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) $(MSW_C_DIRED_DEFINES) \
+DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) \
 	-DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs \
 	-DHAVE_CONFIG_H -D_DEBUG
 
@@ -391,7 +422,8 @@ DOC_SRC7=\
  $(XEMACS)\src\redisplay-msw.c \
  $(XEMACS)\src\scrollbar-msw.c \
  $(XEMACS)\src\select-msw.c \
- $(MSW_C_DIRED_SRC)
+ $(MSW_C_DIRED_SRC) \
+ $(MSW_TOOLBAR_SRC)
 !endif
 
 !if $(HAVE_MULE)
@@ -440,9 +472,9 @@ TEMACS_DIR=$(XEMACS)\src
 TEMACS=$(TEMACS_DIR)\temacs.exe
 TEMACS_BROWSE=$(TEMACS_DIR)\temacs.bsc
 TEMACS_SRC=$(XEMACS)\src
-TEMACS_LIBS=$(LASTFILE) $(LWLIB) $(X_LIBS) kernel32.lib user32.lib gdi32.lib \
- winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib \
- uuid.lib wsock32.lib winmm.lib libc.lib
+TEMACS_LIBS=$(LASTFILE) $(LWLIB) $(X_LIBS) $(MSW_LIBS) \
+ kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib \
+ shell32.lib ole32.lib oleaut32.lib uuid.lib wsock32.lib winmm.lib libc.lib
 TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS) -base:0x1000000\
  -stack:0x800000 -entry:_start -subsystem:console\
  -pdb:$(TEMACS_DIR)\temacs.pdb -map:$(TEMACS_DIR)\temacs.map \
@@ -494,7 +526,8 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\redisplay-msw.obj \
 	$(OUTDIR)\scrollbar-msw.obj \
 	$(OUTDIR)\select-msw.obj \
-	$(MSW_C_DIRED_OBJ)
+	$(MSW_C_DIRED_OBJ) \
+	$(MSW_TOOLBAR_OBJ)
 !endif
 
 

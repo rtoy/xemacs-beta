@@ -63,7 +63,7 @@ int dont_check_for_quit;
 int poll_for_quit_id;
 #endif
 
-#ifndef SIGCHLD
+#if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
 int poll_for_sigchld_id;
 #endif
 
@@ -552,7 +552,7 @@ reset_poll_for_quit (void)
 #endif /* not SIGIO and not DONT_POLL_FOR_QUIT */
 }
 
-#ifndef SIGCHLD
+#if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
 
 static void
 init_poll_for_sigchld (void)
@@ -640,9 +640,17 @@ init_signals_very_early (void)
       /* Don't catch these signals in batch mode if not initialized.
 	 On some machines, this sets static data that would make
 	 signal fail to work right when the dumped Emacs is run.  */
-      signal (SIGHUP,  fatal_error_signal);
+#ifdef SIGHUP
+      /* If we've been nohup'ed, keep it that way.  */
+      if (signal (SIGHUP,  fatal_error_signal) == SIG_IGN)
+	signal (SIGHUP, SIG_IGN);
+#endif
+#ifdef SIGQUIT
       signal (SIGQUIT, fatal_error_signal);
+#endif
+#ifdef SIGILL
       signal (SIGILL,  fatal_error_signal);
+#endif
 #ifdef SIGTRAP
       signal (SIGTRAP, fatal_error_signal);
 #endif
@@ -770,7 +778,7 @@ init_interrupts_late (void)
 #endif
     }
 
-#ifndef SIGCHLD
+#if defined(HAVE_UNIX_PROCESSES) && !defined(SIGCHLD)
   init_poll_for_sigchld ();
 #endif
 

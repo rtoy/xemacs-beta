@@ -47,7 +47,7 @@ Lisp_Object Qnatnum;
 
 Lisp_Object Qconsole_type, Qdevice_class;
 
-Lisp_Object Vuser_defined_tags;
+static Lisp_Object Vuser_defined_tags;
 
 typedef struct specifier_type_entry specifier_type_entry;
 struct specifier_type_entry
@@ -63,18 +63,20 @@ typedef struct
 
 specifier_type_entry_dynarr *the_specifier_type_entry_dynarr;
 
-Lisp_Object Vspecifier_type_list;
+static Lisp_Object Vspecifier_type_list;
 
-Lisp_Object Vcached_specifiers;
+static Lisp_Object Vcached_specifiers;
 /* Do NOT mark through this, or specifiers will never be GC'd. */
-Lisp_Object Vall_specifiers;
+static Lisp_Object Vall_specifiers;
+
+static Lisp_Object Vreveal_ghoste_specifiers;
 
 /* #### The purpose of this is to check for inheritance loops
    in specifiers that can inherit from other specifiers, but it's
    not yet implemented.
 
    #### Look into this for 19.14. */
-Lisp_Object_dynarr current_specifiers;
+static Lisp_Object_dynarr current_specifiers;
 
 static void recompute_cached_specifier_everywhere (Lisp_Object specifier);
 
@@ -184,8 +186,10 @@ mark_specifier (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (specifier->frame_specs));
   ((markobj) (specifier->window_specs));
   ((markobj) (specifier->buffer_specs));
+  ((markobj) (specifier->magic_parent));
   ((markobj) (specifier->fallback));
-  MAYBE_SPECMETH (specifier, mark, (obj, markobj));
+  if (!GHOST_SPECIFIER_P (XSPECIFIER (obj)))
+    MAYBE_SPECMETH (specifier, mark, (obj, markobj));
   return Qnil;
 }
 
@@ -219,13 +223,20 @@ prune_specifiers (int (*obj_marked_p) (Lisp_Object))
     {
       if (! ((*obj_marked_p) (rest)))
 	{
+	  struct Lisp_Specifier* sp = XSPECIFIER (rest);
+	  /* A bit of assertion that we're removing both parts of the
+             magic one altogether */
+	  assert (!GC_MAGIC_SPECIFIER_P(sp)
+		  || (GC_BODILY_SPECIFIER_P(sp) && (*obj_marked_p)(sp->fallback))
+		  || (GC_GHOST_SPECIFIER_P(sp) && (*obj_marked_p)(sp->magic_parent)));
 	  /* This specifier is garbage.  Remove it from the list. */
 	  if (GC_NILP (prev))
-	    Vall_specifiers = XSPECIFIER (rest)->next_specifier;
+	    Vall_specifiers = sp->next_specifier;
 	  else
-	    XSPECIFIER (prev)->next_specifier =
-	      XSPECIFIER (rest)->next_specifier;
+	    XSPECIFIER (prev)->next_specifier = sp->next_specifier;
 	}
+      else
+	prev = rest;
     }
 }
 
@@ -266,7 +277,7 @@ finalize_specifier (void *header, int for_disksave)
 {
   struct Lisp_Specifier *sp = (struct Lisp_Specifier *) header;
   /* don't be snafued by the disksave finalization. */
-  if (!for_disksave && sp->caching)
+  if (!for_disksave && !GC_GHOST_SPECIFIER_P(sp) && sp->caching)
     {
       xfree (sp->caching);
       sp->caching = 0;
@@ -293,6 +304,7 @@ specifier_equal (Lisp_Object o1, Lisp_Object o2, int depth)
      internal_equal (s1->frame_specs,  s2->frame_specs,  depth) &&
      internal_equal (s1->window_specs, s2->window_specs, depth) &&
      internal_equal (s1->buffer_specs, s2->buffer_specs, depth));
+  /* #### Why do not compare fallbacks here? */
 
   if (retval && HAS_SPECMETH_P (s1, equal))
     retval = SPECMETH (s1, equal, (o1, o2, depth - 1));
@@ -320,8 +332,13 @@ specifier_hash (Lisp_Object obj, int depth)
 static size_t
 sizeof_specifier (CONST void *header)
 {
-  CONST struct Lisp_Specifier *p = (CONST struct Lisp_Specifier *) header;
-  return sizeof (*p) + p->methods->extra_data_size - 1;
+  if (GHOST_SPECIFIER_P ((struct Lisp_Specifier *) header))
+    return sizeof (struct Lisp_Specifier);
+  else
+    {
+      CONST struct Lisp_Specifier *p = (CONST struct Lisp_Specifier *) header;
+      return sizeof (*p) + p->methods->extra_data_size - 1;
+    }
 }
 
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
@@ -389,13 +406,13 @@ add_entry_to_specifier_type_list (Lisp_Object symbol,
 }
 
 static Lisp_Object
-make_specifier (struct specifier_methods *spec_meths)
+make_specifier_internal (struct specifier_methods *spec_meths,
+			 size_t data_size, int call_create_meth)
 {
   Lisp_Object specifier;
-  struct gcpro gcpro1;
   struct Lisp_Specifier *sp = (struct Lisp_Specifier *)
     alloc_lcrecord (sizeof (struct Lisp_Specifier) +
-		    spec_meths->extra_data_size - 1, lrecord_specifier);
+		    data_size - 1, lrecord_specifier);
 
   sp->methods = spec_meths;
   sp->global_specs = Qnil;
@@ -404,16 +421,48 @@ make_specifier (struct specifier_methods *spec_meths)
   sp->window_specs = make_weak_list (WEAK_LIST_KEY_ASSOC);
   sp->buffer_specs = Qnil;
   sp->fallback = Qnil;
+  sp->magic_parent = Qnil;
   sp->caching = 0;
   sp->next_specifier = Vall_specifiers;
 
   XSETSPECIFIER (specifier, sp);
   Vall_specifiers = specifier;
 
-  GCPRO1 (specifier);
-  MAYBE_SPECMETH (XSPECIFIER (specifier), create, (specifier));
-  UNGCPRO;
+  if (call_create_meth)
+    {
+      struct gcpro gcpro1;
+      GCPRO1 (specifier);
+      MAYBE_SPECMETH (XSPECIFIER (specifier), create, (specifier));
+      UNGCPRO;
+    }
   return specifier;
+}
+
+static Lisp_Object
+make_specifier (struct specifier_methods *meths)
+{
+  return make_specifier_internal (meths, meths->extra_data_size, 1);
+}
+
+Lisp_Object
+make_magic_specifier (Lisp_Object type)
+{
+  /* This function can GC */
+  struct specifier_methods *meths = decode_specifier_type (type, ERROR_ME);
+  Lisp_Object bodily, ghost;
+  struct gcpro gcpro1;
+
+  bodily = make_specifier (meths);
+  GCPRO1 (bodily);
+  ghost  = make_specifier_internal (meths, 0, 0);
+  UNGCPRO;
+
+  /* Connect guys together */
+  XSPECIFIER(bodily)->magic_parent = Qt;
+  XSPECIFIER(bodily)->fallback = ghost;
+  XSPECIFIER(ghost)->magic_parent = bodily;
+
+  return bodily;
 }
 
 DEFUN ("make-specifier", Fmake_specifier, 1, 1, 0, /*
@@ -1188,6 +1237,49 @@ decode_how_to_add_specification (Lisp_Object how_to_add)
   return SPEC_PREPEND;		/* not reached */
 }
 
+/* Given a specifier object SPEC, return its bodily specifier for a
+   ghost specifier, otherwise return the object itself
+*/
+static Lisp_Object
+bodily_specifier (Lisp_Object spec)
+{
+  return (GHOST_SPECIFIER_P (XSPECIFIER (spec))
+	  ? XSPECIFIER(spec)->magic_parent : spec);
+}
+
+/* Given a specifier object SPEC, return a specifier to be operated on
+   by external lisp function. This is a ghost specifier for a magic
+   specifier when and only when Vreveal_ghoste_specifiers is non-nil,
+   otherwise SPEC itself.
+*/
+static Lisp_Object
+maybe_ghost_specifier (Lisp_Object spec)
+{
+  return (!NILP (Vreveal_ghoste_specifiers)
+	  && BODILY_SPECIFIER_P (XSPECIFIER (spec))
+	  ? XSPECIFIER(spec)->fallback : spec);
+}
+
+/* Helper function which unwind protects the value of
+   Vreveal_ghoste_specifiers, then sets it to non-nil value */
+
+static Lisp_Object
+restore_reveal_value (Lisp_Object val)
+{
+  Vreveal_ghoste_specifiers = val;
+  return val;
+}
+
+int
+reveal_ghost_specifiers_protected (void)
+{
+  int depth = specpdl_depth ();
+  record_unwind_protect (restore_reveal_value,
+			 Vreveal_ghoste_specifiers);
+  Vreveal_ghoste_specifiers = Qt;
+  return depth;
+}
+
 /* This gets hit so much that the function call overhead had a
    measurable impact (according to Quantify).  #### We should figure
    out the frequency with which this is called with the various types
@@ -1382,7 +1474,8 @@ specifier_remove_spec (Lisp_Object specifier, Lisp_Object locale,
     }
 
   if (was_removed)
-    MAYBE_SPECMETH (XSPECIFIER (specifier), after_change, (specifier, locale));
+    MAYBE_SPECMETH (XSPECIFIER (specifier), after_change,
+		    (bodily_specifier (specifier), locale));
 }
 
 static void
@@ -1428,7 +1521,7 @@ specifier_remove_locale_type (Lisp_Object specifier,
 
       if (was_removed)
 	MAYBE_SPECMETH (XSPECIFIER (specifier), after_change,
-			(specifier, XCAR (spec)));
+			(bodily_specifier (specifier), XCAR (spec)));
     }
 }
 
@@ -1502,7 +1595,8 @@ build_up_processed_list (Lisp_Object specifier, Lisp_Object locale,
       /* call the will-add method; it may GC */
       sub_inst_list = HAS_SPECMETH_P (sp, going_to_add) ?
 	SPECMETH (sp, going_to_add,
-		  (specifier, locale, tag_set, instantiator)) :
+		  (bodily_specifier (specifier), locale,
+		   tag_set, instantiator)) :
 	Qt;
       if (EQ (sub_inst_list, Qt))
 	/* no change here. */
@@ -1576,7 +1670,8 @@ specifier_add_spec (Lisp_Object specifier, Lisp_Object locale,
   UNGCPRO;
 
   /* call the after-change method */
-  MAYBE_SPECMETH (sp, after_change, (specifier, locale));
+  MAYBE_SPECMETH (sp, after_change,
+		  (bodily_specifier (specifier), locale));
 }
 
 static void
@@ -1761,7 +1856,8 @@ with the function `specifier-spec-list' or `specifier-specs'.
 
   inst_list = list1 (Fcons (tag_set, instantiator));
   GCPRO1 (inst_list);
-  specifier_add_spec (specifier, locale, inst_list, add_meth);
+  specifier_add_spec (maybe_ghost_specifier (specifier),
+		      locale, inst_list, add_meth);
   recompute_cached_specifier_everywhere (specifier);
   RETURN_UNGCPRO (Qnil);
 }
@@ -1812,10 +1908,22 @@ more convenient and should be used instead.
       Lisp_Object locale    = XCAR (specification);
       Lisp_Object inst_list = XCDR (specification);
 
-      specifier_add_spec (specifier, locale, inst_list, add_meth);
+      specifier_add_spec (maybe_ghost_specifier (specifier),
+			  locale, inst_list, add_meth);
     }
   recompute_cached_specifier_everywhere (specifier);
   return Qnil;
+}
+
+void
+add_spec_to_ghost_specifier (Lisp_Object specifier, Lisp_Object instantiator,
+			     Lisp_Object locale, Lisp_Object tag_set,
+			     Lisp_Object how_to_add)
+{
+  int depth = reveal_ghost_specifiers_protected ();
+  Fadd_spec_to_specifier (specifier, instantiator, locale,
+			  tag_set, how_to_add);
+  unbind_to (depth, Qnil);
 }
 
 struct specifier_spec_list_closure
@@ -1905,7 +2013,8 @@ to be returned.
   CHECK_SPECIFIER (specifier);
   cl.head = cl.tail = Qnil;
   GCPRO2 (cl.head, cl.tail);
-  map_specifier (specifier, locale, specifier_spec_list_mapfun,
+  map_specifier (maybe_ghost_specifier (specifier),
+		 locale, specifier_spec_list_mapfun,
 		 tag_set, exact_p, &cl);
   UNGCPRO;
   return cl.head;
@@ -1949,7 +2058,8 @@ in Lisp programs, and is as follows:
       tag_set = decode_specifier_tag_set (tag_set);
       tag_set = canonicalize_tag_set (tag_set);
       RETURN_UNGCPRO
-	(specifier_get_external_inst_list (specifier, locale,
+	(specifier_get_external_inst_list (maybe_ghost_specifier (specifier),
+					   locale,
 					   locale_type_from_locale (locale),
 					   tag_set, !NILP (exact_p),
 					   1, 1));
@@ -1999,10 +2109,19 @@ to be removed.
        (specifier, locale, tag_set, exact_p))
 {
   CHECK_SPECIFIER (specifier);
-  map_specifier (specifier, locale, remove_specifier_mapfun, tag_set,
-		 exact_p, 0);
+  map_specifier (maybe_ghost_specifier (specifier), locale,
+		 remove_specifier_mapfun, tag_set, exact_p, 0);
   recompute_cached_specifier_everywhere (specifier);
   return Qnil;
+}
+
+void
+remove_ghost_specifier (Lisp_Object specifier, Lisp_Object locale,
+			Lisp_Object tag_set, Lisp_Object exact_p)
+{
+  int depth = reveal_ghost_specifiers_protected ();
+  Fremove_specifier (specifier, locale, tag_set, exact_p);
+  unbind_to (depth, Qnil);
 }
 
 struct copy_specifier_closure
@@ -2089,10 +2208,10 @@ the same as in `add-spec-to-specifier'.
 
   cl.dest = dest;
   GCPRO1 (dest);
-  map_specifier (specifier, locale, copy_specifier_mapfun,
-		 tag_set, exact_p, &cl);
+  map_specifier (maybe_ghost_specifier (specifier), locale,
+		 copy_specifier_mapfun, tag_set, exact_p, &cl);
   UNGCPRO;
-  recompute_cached_specifier_everywhere (specifier);
+  recompute_cached_specifier_everywhere (dest);
   return dest;
 }
 
@@ -2185,9 +2304,13 @@ set_specifier_fallback (Lisp_Object specifier, Lisp_Object fallback)
 	  !NILP (Fvalid_inst_list_p (fallback, Fspecifier_type (specifier))));
   if (SPECIFIERP (fallback))
     assert (EQ (Fspecifier_type (specifier), Fspecifier_type (fallback)));
-  sp->fallback = fallback;
+  if (BODILY_SPECIFIER_P (sp))
+    GHOST_SPECIFIER(sp)->fallback = fallback;
+  else
+    sp->fallback = fallback;
   /* call the after-change method */
-  MAYBE_SPECMETH (sp, after_change, (specifier, Qfallback));
+  MAYBE_SPECMETH (sp, after_change,
+		  (bodily_specifier (specifier), Qfallback));
   recompute_cached_specifier_everywhere (specifier);
 }
 
@@ -2458,7 +2581,8 @@ See also `specifier-matching-instance'.
   CHECK_SPECIFIER (specifier);
   domain = decode_domain (domain);
 
-  instance = specifier_instance (specifier, Qunbound, domain, ERROR_ME, 0,
+  instance = specifier_instance (maybe_ghost_specifier (specifier),
+				 Qunbound, domain, ERROR_ME, 0,
 				 !NILP (no_fallback), Qzero);
   return UNBOUNDP (instance) ? default_ : instance;
 }
@@ -2495,8 +2619,9 @@ dependent on the particular type of specifier.  Here are some examples:
 				   ERROR_ME);
   domain = decode_domain (domain);
 
-  instance = specifier_instance (specifier, matchspec, domain, ERROR_ME, 0,
-				 !NILP (no_fallback), Qzero);
+  instance = specifier_instance (maybe_ghost_specifier (specifier),
+				 matchspec, domain, ERROR_ME,
+				 0, !NILP (no_fallback), Qzero);
   return UNBOUNDP (instance) ? default_ : instance;
 }
 
@@ -2519,11 +2644,12 @@ you should not use this function; use `specifier-instance' instead.
   check_valid_domain (domain);
   check_valid_inst_list (inst_list, sp->methods, ERROR_ME);
   GCPRO1 (built_up_list);
-  built_up_list = build_up_processed_list (specifier, domain, inst_list);
+  built_up_list = build_up_processed_list (maybe_ghost_specifier (specifier),
+					   domain, inst_list);
   if (!NILP (built_up_list))
-    val = specifier_instance_from_inst_list (specifier, Qunbound, domain,
-					     built_up_list, ERROR_ME, 0,
-					     Qzero);
+    val = specifier_instance_from_inst_list (maybe_ghost_specifier (specifier),
+					     Qunbound, domain, built_up_list,
+					     ERROR_ME, 0, Qzero);
   UNGCPRO;
   return UNBOUNDP (val) ? default_ : val;
 }
@@ -2553,11 +2679,12 @@ works.
   check_valid_domain (domain);
   check_valid_inst_list (inst_list, sp->methods, ERROR_ME);
   GCPRO1 (built_up_list);
-  built_up_list = build_up_processed_list (specifier, domain, inst_list);
+  built_up_list = build_up_processed_list (maybe_ghost_specifier (specifier),
+					   domain, inst_list);
   if (!NILP (built_up_list))
-    val = specifier_instance_from_inst_list (specifier, matchspec, domain,
-					     built_up_list, ERROR_ME, 0,
-					     Qzero);
+    val = specifier_instance_from_inst_list (maybe_ghost_specifier (specifier),
+					     matchspec, domain, built_up_list,
+					     ERROR_ME, 0, Qzero);
   UNGCPRO;
   return UNBOUNDP (val) ? default_ : val;
 }
@@ -2584,6 +2711,7 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
 			Lisp_Object oldval))
 {
   struct Lisp_Specifier *sp = XSPECIFIER (specifier);
+  assert (!GHOST_SPECIFIER_P (sp));
 
   if (!sp->caching)
     sp->caching = xnew_and_zero (struct specifier_caching);
@@ -2592,6 +2720,8 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
   sp->caching->offset_into_struct_frame = struct_frame_offset;
   sp->caching->value_changed_in_frame = value_changed_in_frame;
   Vcached_specifiers = Fcons (specifier, Vcached_specifiers);
+  if (BODILY_SPECIFIER_P (sp))
+    GHOST_SPECIFIER(sp)->caching = sp->caching;
   recompute_cached_specifier_everywhere (specifier);
 }
 
@@ -2601,6 +2731,8 @@ recompute_one_cached_specifier_in_window (Lisp_Object specifier,
 {
   Lisp_Object window;
   Lisp_Object newval, *location;
+
+  assert (!GHOST_SPECIFIER_P (XSPECIFIER (specifier)));
 
   XSETWINDOW (window, w);
 
@@ -2627,6 +2759,8 @@ recompute_one_cached_specifier_in_frame (Lisp_Object specifier,
 {
   Lisp_Object frame;
   Lisp_Object newval, *location;
+
+  assert (!GHOST_SPECIFIER_P (XSPECIFIER (specifier)));
 
   XSETFRAME (frame, f);
 
@@ -2688,6 +2822,8 @@ static void
 recompute_cached_specifier_everywhere (Lisp_Object specifier)
 {
   Lisp_Object frmcons, devcons, concons;
+
+  specifier = bodily_specifier (specifier);
 
   if (!XSPECIFIER (specifier)->caching)
     return;
@@ -2993,4 +3129,7 @@ vars_of_specifier (void)
 
   Vuser_defined_tags = Qnil;
   staticpro (&Vuser_defined_tags);
+
+  Vreveal_ghoste_specifiers = Qnil;
+  staticpro (&Vreveal_ghoste_specifiers);
 }

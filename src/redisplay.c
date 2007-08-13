@@ -5479,10 +5479,13 @@ redisplay_window (Lisp_Object window, int skip_selected)
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   Lisp_Object old_buffer = w->buffer;
+  Lisp_Object the_buffer = w->buffer;
   struct buffer *b;
   int echo_active = 0;
   int startp = 1;
   int pointm;
+  int old_startp = 1;
+  int old_pointm = 1;
   int selected_in_its_frame;
   int selected_globally;
   int skip_output = 0;
@@ -5526,14 +5529,19 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   if (MINI_WINDOW_P (w) && echo_area_active (f))
     {
-      w->buffer = Vecho_area_buffer;
+      w->buffer = the_buffer = Vecho_area_buffer;
       echo_active = 1;
     }
 
   b = XBUFFER (w->buffer);
 
   if (echo_active)
-    pointm = 1;
+    {
+      old_pointm = selected_globally
+                   ? BUF_PT (b)
+                   : marker_position (w->pointm[CURRENT_DISP]);
+      pointm = 1;
+    }
   else
     {
       if (selected_globally)
@@ -5550,7 +5558,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	    pointm = BUF_ZV (b);
 	}
     }
-  Fset_marker (w->pointm[DESIRED_DISP], make_int (pointm), old_buffer);
+  Fset_marker (w->pointm[DESIRED_DISP], make_int (pointm), the_buffer);
 
   /* If the buffer has changed we have to invalid all of our face
      cache elements. */
@@ -5580,7 +5588,10 @@ redisplay_window (Lisp_Object window, int skip_selected)
     }
 
   if (echo_active)
-    startp = 1;
+    {
+      old_startp = marker_position (w->start[CURRENT_DISP]);
+      startp = 1;
+    }
   else
     {
       startp = marker_position (w->start[CURRENT_DISP]);
@@ -5589,7 +5600,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
       else if (startp > BUF_ZV (b))
 	startp = BUF_ZV (b);
     }
-  Fset_marker (w->start[DESIRED_DISP], make_int (startp), old_buffer);
+  Fset_marker (w->start[DESIRED_DISP], make_int (startp), the_buffer);
 
   truncation_changed = (find_window_mirror (w)->truncate_win !=
 			window_truncation_on (w));
@@ -5613,7 +5624,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	    BUF_SET_PT (b, pointm);
 
 	  Fset_marker (w->pointm[DESIRED_DISP], make_int (pointm),
-		       old_buffer);
+		       the_buffer);
 
 	  /* #### BUFU amounts of overkil just to get the cursor
              location marked properly.  FIX ME FIX ME FIX ME */
@@ -5779,8 +5790,12 @@ regeneration_done:
 
   /* Must do this before calling redisplay_output_window because it
      sets some markers on the window. */
-  if (MINI_WINDOW_P (w) && echo_area_active (f))
-    w->buffer = old_buffer;
+  if (echo_active)
+    {
+      w->buffer = old_buffer;
+      Fset_marker (w->pointm[DESIRED_DISP], make_int (old_pointm), old_buffer);
+      Fset_marker (w->start[DESIRED_DISP], make_int (old_startp), old_buffer);
+    }
 
   /* These also have to be set before calling redisplay_output_window
      since it sets the CURRENT_DISP values based on them. */
@@ -6266,7 +6281,7 @@ window_line_number (struct window *w, int type)
 
   line = buffer_line_number (b, pos, 1);
 
-  sprintf (window_line_number_buf, "%ld", (long)(line + 1));
+  long_to_string (window_line_number_buf, line + 1);
 
   return window_line_number_buf;
 }
@@ -6316,7 +6331,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	  }
 
 	buf = alloca_array (char, size);
-	sprintf (buf, "%d", col);
+	long_to_string (buf, col);
 
 	Dynarr_add_many (mode_spec_bufbyte_string,
 			 (CONST Bufbyte *) buf, strlen (buf));

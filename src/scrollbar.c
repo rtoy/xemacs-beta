@@ -541,11 +541,13 @@ init_frame_scrollbars (struct frame *f)
 
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
+      int depth = reveal_ghost_specifiers_protected ();
       Lisp_Object frame;
       XSETFRAME (frame, f);
       call_critical_lisp_code (XDEVICE (FRAME_DEVICE (f)),
 			       Qinit_scrollbar_from_resources,
 			       frame);
+      unbind_to (depth, Qnil);
     }
 }
 
@@ -554,11 +556,13 @@ init_device_scrollbars (struct device *d)
 {
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
+      int depth = reveal_ghost_specifiers_protected ();
       Lisp_Object device;
       XSETDEVICE (device, d);
       call_critical_lisp_code (d,
 			       Qinit_scrollbar_from_resources,
 			       device);
+      unbind_to (depth, Qnil);
     }
 }
 
@@ -567,9 +571,11 @@ init_global_scrollbars (struct device *d)
 {
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
+      int depth = reveal_ghost_specifiers_protected ();
       call_critical_lisp_code (d,
 			       Qinit_scrollbar_from_resources,
 			       Qglobal);
+      unbind_to (depth, Qnil);
     }
 }
 
@@ -928,7 +934,7 @@ specifier_vars_of_scrollbar (void)
 *Width of vertical scrollbars.
 This is a specifier; use `set-specifier' to change it.
 */ );
-  Vscrollbar_width = Fmake_specifier (Qnatnum);
+  Vscrollbar_width = make_magic_specifier (Qnatnum);
   set_specifier_fallback
     (Vscrollbar_width,
      list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_WIDTH))));
@@ -944,7 +950,7 @@ This is a specifier; use `set-specifier' to change it.
 *Height of horizontal scrollbars.
 This is a specifier; use `set-specifier' to change it.
 */ );
-  Vscrollbar_height = Fmake_specifier (Qnatnum);
+  Vscrollbar_height = make_magic_specifier (Qnatnum);
   set_specifier_fallback
     (Vscrollbar_height,
      list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_HEIGHT))));

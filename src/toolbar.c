@@ -1733,6 +1733,10 @@ See `default-toolbar-height' for more information.
 #ifdef HAVE_X_WINDOWS
   fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)), fb);
 #endif
+#ifdef HAVE_MS_WINDOWS
+  fb = Fcons (Fcons (list1 (Qmswindows), 
+		     make_int (MSWINDOWS_DEFAULT_TOOLBAR_HEIGHT)), fb);
+#endif
   if (!NILP (fb))
     set_specifier_fallback (Vdefault_toolbar_height, fb);
 
@@ -1742,6 +1746,10 @@ See `default-toolbar-height' for more information.
 #endif
 #ifdef HAVE_X_WINDOWS
   fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)), fb);
+#endif
+#ifdef HAVE_MS_WINDOWS
+  fb = Fcons (Fcons (list1 (Qmswindows), 
+		     make_int (MSWINDOWS_DEFAULT_TOOLBAR_WIDTH)), fb);
 #endif
   if (!NILP (fb))
     set_specifier_fallback (Vdefault_toolbar_width, fb);
@@ -1853,6 +1861,9 @@ See `default-toolbar-height' for more information.
 #endif
 #ifdef HAVE_X_WINDOWS
   fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
+#endif
+#ifdef HAVE_MS_WINDOWS
+  fb = Fcons (Fcons (list1 (Qmswindows), make_int (MSWINDOWS_DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
 #endif
   if (!NILP (fb))
     set_specifier_fallback (Vdefault_toolbar_border_width, fb);

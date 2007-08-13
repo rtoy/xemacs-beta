@@ -95,11 +95,11 @@
   ;; Path setup
   (let ((package-preloaded-file-list
 	 (packages-collect-package-dumped-lisps late-package-load-path)))
-
+ 
     (setq preloaded-file-list
-	  (append package-preloaded-file-list
-		  preloaded-file-list
-		  packages-hardcoded-lisp)))
+ 	  (append package-preloaded-file-list
+ 		  preloaded-file-list
+ 		  packages-hardcoded-lisp)))
 
   (load (concat default-directory "../site-packages") t t)
   (setq preloaded-file-list

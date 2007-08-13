@@ -260,8 +260,9 @@ The value is measured in seconds.  This only applies if
   :type 'number
   :group 'keyboard)
 
-;;; This is implemented differently in GNU Emacs.
-;;; We can't support both properly until we have Lisp magic variables.
+;That damn RMS went off and implemented something differently, after
+;we had already implemented it.  We can't support both properly until
+;we have Lisp magic variables.
 ;(defvar suggest-key-bindings t
 ;  "*FSFmacs equivalent of `teach-extended-commands-*'.
 ;Provided for compatibility only.

@@ -36,6 +36,8 @@ Boston, MA 02111-1307, USA.  */
 #include <lber.h>
 #include <ldap.h>
 
+#include "eldap.h"
+
 #ifdef HAVE_NS_LDAP
 #define HAVE_LDAP_SET_OPTION 1
 #define HAVE_LDAP_GET_ERRNO 1
@@ -44,12 +46,14 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_LDAP_GET_ERRNO
 #endif
 
-static Lisp_Object Vldap_default_base;
-static Lisp_Object Vldap_default_host;
 
-/* ldap-search-internal plist keywords */
-static Lisp_Object Qhost, Qfilter, Qattributes, Qattrsonly, Qbase, Qscope,
-  Qauth, Qbinddn, Qpasswd, Qderef, Qtimelimit, Qsizelimit;
+
+static int ldap_default_port;
+static Lisp_Object Vldap_default_base;
+
+/* ldap-open plist keywords */
+static Lisp_Object Qport, Qauth, Qbinddn, Qpasswd, Qderef, Qtimelimit,
+  Qsizelimit;
 /* Search scope limits */
 static Lisp_Object Qbase, Qonelevel, Qsubtree;
 /* Authentication methods */
@@ -62,19 +66,153 @@ static Lisp_Object Qkrbv42;
 /* Deref policy */
 static Lisp_Object Qnever, Qalways, Qfind;
 
-DEFUN ("ldap-search-internal", Fldap_search_internal, 1, 1, 0, /*
-Perform a search on a LDAP server.
-SEARCH-PLIST is a property list describing the search request.
+static Lisp_Object Qldapp;
+
+
+/************************************************************************/
+/*                         Utility Functions                            */
+/************************************************************************/
+
+static void
+signal_ldap_error (LDAP *ld)
+{
+#if HAVE_LDAP_GET_ERRNO
+  signal_simple_error
+    ("LDAP error",
+     build_string (ldap_err2string (ldap_get_lderrno (ld, NULL, NULL))));
+#else
+  signal_simple_error ("LDAP error",
+                       build_string (ldap_err2string (ld->ld_errno)));
+#endif
+}
+
+
+/************************************************************************/
+/*                          The ldap Lisp object                        */
+/************************************************************************/
+
+/*
+ * Structure records pertinent information about an open LDAP connection.
+ */
+
+struct Lisp_LDAP
+{
+  /* lcrecord header */
+  struct lcrecord_header header;
+  /* The LDAP connection handle used by the LDAP API */
+  LDAP *ld;
+  /* Name of the host we connected to */
+  Lisp_Object host;
+  /* Status of the LDAP connection.
+     This is a symbol: open or closed */
+  Lisp_Object status_symbol;
+};
+
+
+
+static Lisp_Object
+mark_ldap (Lisp_Object obj, void (*markobj) (Lisp_Object))
+{
+  struct Lisp_LDAP *ldap = XLDAP (obj);
+  ((markobj) (ldap->host));
+  return ldap->status_symbol;
+}
+
+static void
+print_ldap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  char buf[16];
+
+  struct Lisp_LDAP *ldap = XLDAP (obj);
+
+  if (print_readably)
+    error ("printing unreadable object #<ldap %s>",
+           XSTRING_DATA (ldap->host));
+
+  if (!escapeflag)
+    {
+      print_internal (ldap->host, printcharfun, 0);
+    }
+  else
+    {
+      write_c_string (GETTEXT ("#<ldap "), printcharfun);
+      print_internal (ldap->host, printcharfun, 1);
+      write_c_string (" state:",printcharfun);
+      print_internal (ldap->status_symbol, printcharfun, 1);
+      sprintf (buf, " 0x%x>", ldap);
+      write_c_string (buf, printcharfun);
+    }
+}
+
+static struct Lisp_LDAP *
+allocate_ldap (void)
+{
+  struct Lisp_LDAP *ldap =
+    alloc_lcrecord_type (struct Lisp_LDAP, lrecord_ldap);
+
+  ldap->ld = (LDAP *) NULL;
+  ldap->host = Qnil;
+  ldap->status_symbol = Qnil;
+  return ldap;
+}
+
+DEFINE_LRECORD_IMPLEMENTATION ("ldap", ldap,
+                               mark_ldap, print_ldap, NULL,
+                               NULL, NULL, struct Lisp_LDAP);
+
+
+
+
+/************************************************************************/
+/*                        Basic ldap accessors                          */
+/************************************************************************/
+
+DEFUN ("ldapp", Fldapp, 1, 1, 0, /*
+Return t if OBJECT is a LDAP connection.
+*/
+       (object))
+{
+  return LDAPP (object) ? Qt : Qnil;
+}
+
+
+DEFUN ("ldap-host", Fldap_host, 1, 1, 0, /*
+Return the server host of the connection LDAP, as a string.
+*/
+       (ldap))
+{
+  CHECK_LDAP (ldap);
+  return (XLDAP (ldap))->host;
+}
+
+
+
+DEFUN ("ldap-status", Fldap_status, 1, 1, 0, /*
+Return the status of the connection LDAP.
+This is a symbol, one of these:
+
+open   -- for a LDAP connection that is open.
+closed -- for a LDAP connection that is closed.
+*/
+       (ldap))
+{
+  CHECK_LDAP (ldap);
+  return (XLDAP (ldap))->status_symbol;
+}
+
+
+
+/************************************************************************/
+/*                  Opening/Closing a LDAP connection                   */
+/************************************************************************/
+
+
+DEFUN ("ldap-open", Fldap_open, 1, 2, 0, /*
+Open a LDAP connection to HOST.
+PLIST is a plist containing additional parameters for the connection.
 Valid keys in that list are:
-  `host' is a string naming one or more (blank separated) LDAP servers to
-to try to connect to. Each host name may optionally be of the form host:port.
-  `filter' is a filter string for the search as described in RFC 1558
-  `attributes' is a list of strings indicating which attributes to retrieve
-for each matching entry. If nil return all available attributes.
-  `attrsonly' if non-nil indicates that only the attributes are retrieved, not
-the associated values.
-  `base' is the base for the search as described in RFC 1779.
-  `scope' is one of the three symbols `subtree', `base' or `onelevel'.
+  `port' the TCP port to use for the connection if different from
+`ldap-default-port'.
   `auth' is the authentication method to use, possible values depend on
 the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   `binddn' is the distinguished name of the user to bind as (in RFC 1779 syntax).
@@ -82,115 +220,40 @@ the LDAP library XEmacs was compiled with: `simple', `krbv41' and `krbv42'.
   `deref' is one of the symbols `never', `always', `search' or `find'.
   `timelimit' is the timeout limit for the connection in seconds.
   `sizelimit' is the maximum number of matches to return.
-The function returns a list of matching entries.  Each entry is itself
-an alist of attribute/values.
 */
-       (search_plist))
+       (host, plist))
 {
- /* This function calls lisp */
+  /* This function can call lisp */
 
-  /* Vars for query */
+  struct Lisp_LDAP *lisp_ldap;
   LDAP *ld;
-  LDAPMessage *res, *e;
-  BerElement *ptr;
-  char *a;
-  int i, rc, err;
-
-  char *ldap_host = NULL;
-  char *ldap_filter = NULL;
-  char **ldap_attributes = NULL;
-  int  ldap_attrsonly = 0;
-  char *ldap_base = NULL;
-  int  ldap_scope = LDAP_SCOPE_SUBTREE;
+  int   ldap_port = 0;
   int  ldap_auth = LDAP_AUTH_SIMPLE;
   char *ldap_binddn = NULL;
   char *ldap_passwd = NULL;
   int  ldap_deref = LDAP_DEREF_NEVER;
   int  ldap_timelimit = 0;
   int  ldap_sizelimit = 0;
+  int err;
 
-  char **vals = NULL;
-  int  matches;
+  Lisp_Object ldap, list, keyword, value;
+  struct gcpro gcpro1;
 
-  Lisp_Object list, entry, result, keyword, value;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  ldap =  Qnil;
+  GCPRO1 (ldap);
 
-  list = entry = result = keyword = value = Qnil;
-  GCPRO5 (list, entry, result, keyword, value);
+  CHECK_STRING (host);
 
-
-  EXTERNAL_PROPERTY_LIST_LOOP(list, keyword, value, search_plist)
+  EXTERNAL_PROPERTY_LIST_LOOP(list, keyword, value, plist)
     {
-      /* Host */
-      if (EQ (keyword, Qhost))
+      /* TCP Port */
+      if (EQ (keyword, Qport))
         {
-          CHECK_STRING (value);
-          ldap_host = alloca (XSTRING_LENGTH (value) + 1);
-          strcpy (ldap_host, (char *)XSTRING_DATA (value));
-        }
-      /* Filter */
-      else if (EQ (keyword, Qfilter))
-        {
-          CHECK_STRING (value);
-          ldap_filter = alloca (XSTRING_LENGTH (value) + 1);
-          strcpy (ldap_filter, (char *)XSTRING_DATA (value));
-        }
-      /* Attributes */
-      else if (EQ (keyword, Qattributes))
-        {
-          if (! NILP (value))
-            {
-              Lisp_Object attr_left = value;
-              struct gcpro ngcpro1;
-
-              NGCPRO1 (attr_left);
-              CHECK_CONS (value);
-
-              ldap_attributes = alloca ((XINT (Flength (value)) + 1)*sizeof (char *));
-
-              for (i=0; !NILP (attr_left); i++) {
-                CHECK_STRING (XCAR (attr_left));
-                ldap_attributes[i] = alloca (XSTRING_LENGTH (XCAR (attr_left)) + 1);
-                strcpy(ldap_attributes[i],
-                       (char *)(XSTRING_DATA( XCAR (attr_left))));
-                attr_left = XCDR (attr_left);
-              }
-              ldap_attributes[i] = NULL;
-              NUNGCPRO;
-            }
-        }
-      /* Attributes Only */
-      else if (EQ (keyword, Qattrsonly))
-        {
-          CHECK_SYMBOL (value);
-          ldap_attrsonly = NILP (value) ? 0 : 1;
-        }
-      /* Base */
-      else if (EQ (keyword, Qbase))
-        {
-          if (!NILP (value))
-            {
-              CHECK_STRING (value);
-              ldap_base = alloca (XSTRING_LENGTH (value) + 1);
-              strcpy (ldap_base, (char *)XSTRING_DATA (value));
-            }
-        }
-      /* Scope */
-      else if (EQ (keyword, Qscope))
-        {
-          CHECK_SYMBOL (value);
-
-          if (EQ (value, Qbase))
-            ldap_scope = LDAP_SCOPE_BASE;
-          else if (EQ (value, Qonelevel))
-            ldap_scope = LDAP_SCOPE_ONELEVEL;
-          else if (EQ (value, Qsubtree))
-            ldap_scope = LDAP_SCOPE_SUBTREE;
-          else
-            signal_simple_error ("Invalid scope", value);
+          CHECK_INT (value);
+          ldap_port = XINT (value);
         }
       /* Authentication method */
-      else if (EQ (keyword, Qauth))
+      if (EQ (keyword, Qauth))
         {
           CHECK_SYMBOL (value);
 
@@ -210,22 +273,16 @@ an alist of attribute/values.
       /* Bind DN */
       else if (EQ (keyword, Qbinddn))
         {
-          if (!NILP (value))
-            {
-              CHECK_STRING (value);
-              ldap_binddn = alloca (XSTRING_LENGTH (value) + 1);
-              strcpy (ldap_binddn, (char *)XSTRING_DATA (value));
-            }
+          CHECK_STRING (value);
+          ldap_binddn = alloca (XSTRING_LENGTH (value) + 1);
+          strcpy (ldap_binddn, (char *)XSTRING_DATA (value));
         }
       /* Password */
       else if (EQ (keyword, Qpasswd))
         {
-          if (!NILP (value))
-            {
-              CHECK_STRING (value);
-              ldap_passwd = alloca (XSTRING_LENGTH (value) + 1);
-              strcpy (ldap_passwd, (char *)XSTRING_DATA (value));
-            }
+          CHECK_STRING (value);
+          ldap_passwd = alloca (XSTRING_LENGTH (value) + 1);
+          strcpy (ldap_passwd, (char *)XSTRING_DATA (value));
         }
       /* Deref */
       else if (EQ (keyword, Qderef))
@@ -245,67 +302,41 @@ an alist of attribute/values.
       /* Timelimit */
       else if (EQ (keyword, Qtimelimit))
         {
-          if (!NILP (value))
-            {
-              CHECK_INT (value);
-              ldap_timelimit = XINT (value);
-            }
+          CHECK_INT (value);
+          ldap_timelimit = XINT (value);
         }
       /* Sizelimit */
       else if (EQ (keyword, Qsizelimit))
         {
-          if (!NILP (value))
-            {
-              CHECK_INT (value);
-              ldap_sizelimit = XINT (value);
-            }
+          CHECK_INT (value);
+          ldap_sizelimit = XINT (value);
         }
     }
 
-  /* Use ldap-default-base if no default base was given */
-  if (ldap_base == NULL && !NILP (Vldap_default_base))
+  if (ldap_port == 0)
     {
-      CHECK_STRING (Vldap_default_base);
-      ldap_base = alloca (XSTRING_LENGTH (Vldap_default_base) + 1);
-      strcpy (ldap_base, (char *)XSTRING_DATA (Vldap_default_base));
+      ldap_port = ldap_default_port;
     }
-
-  /* Use ldap-default-host if no host was given */
-  if (ldap_host == NULL && !NILP (Vldap_default_host))
-    {
-      CHECK_STRING (Vldap_default_host);
-      ldap_host = alloca (XSTRING_LENGTH (Vldap_default_host) + 1);
-      strcpy (ldap_host, (char *)XSTRING_DATA (Vldap_default_host));
-    }
-
-  if (ldap_filter == NULL)
-    error ("Empty search filter");
-
-  /* Garbage collect before connecting (if using UMich lib).
-     This is ugly, I know, but without this, the UMich LDAP library 3.3
-     frequently reports "Can't contact LDAP server".  I really need to
-     check what happens inside that lib. Anyway this should be harmless to
-     XEmacs and makes things work. */
-#if defined (HAVE_UMICH_LDAP)
-  garbage_collect_1 ();
-#endif
 
   /* Connect to the server and bind */
-  message ("Connecting to %s...", ldap_host);
-  if ( (ld = ldap_open (ldap_host, LDAP_PORT)) == NULL )
-     signal_simple_error_2 ("Failed connecting to host",
-                            build_string (ldap_host),
-                            lisp_strerror (errno));
+  ld = ldap_open ((char *)XSTRING_DATA (host), ldap_port);
+  if (ld == NULL )
+    signal_simple_error_2 ("Failed connecting to host",
+                           host,
+                           lisp_strerror (errno));
+
 
 #if HAVE_LDAP_SET_OPTION
   if (ldap_set_option (ld, LDAP_OPT_DEREF, (void *)&ldap_deref) != LDAP_SUCCESS)
-    error ("Failed to set deref option");
-  if (ldap_set_option (ld, LDAP_OPT_TIMELIMIT, (void *)&ldap_timelimit) != LDAP_SUCCESS)
-    error ("Failed to set timelimit option");
-  if (ldap_set_option (ld, LDAP_OPT_SIZELIMIT, (void *)&ldap_sizelimit) != LDAP_SUCCESS)
-    error ("Failed to set sizelimit option");
+    signal_ldap_error (ld);
+  if (ldap_set_option (ld, LDAP_OPT_TIMELIMIT,
+                       (void *)&ldap_timelimit) != LDAP_SUCCESS)
+    signal_ldap_error (ld);
+  if (ldap_set_option (ld, LDAP_OPT_SIZELIMIT,
+                       (void *)&ldap_sizelimit) != LDAP_SUCCESS)
+    signal_ldap_error (ld);
   if (ldap_set_option (ld, LDAP_OPT_REFERRALS, LDAP_OPT_ON) != LDAP_SUCCESS)
-    error ("Failed to set referral option");
+    signal_ldap_error (ld);
 #else /* HAVE_LDAP_SET_OPTION */
   ld->ld_deref = ldap_deref;
   ld->ld_timelimit = ldap_timelimit;
@@ -317,31 +348,164 @@ an alist of attribute/values.
 #endif /* LDAP_REFERRALS */
 #endif /* HAVE_LDAP_SET_OPTION */
 
-  message ("Binding to %s...", ldap_host);
-  if ( (err = (ldap_bind_s (ld, ldap_binddn, ldap_passwd, ldap_auth ))) != LDAP_SUCCESS )
+  /* ldap_bind_s calls select and may be wedged by spurious signals */
+  slow_down_interrupts ();
+  err = ldap_bind_s (ld, ldap_binddn, ldap_passwd, ldap_auth);
+  speed_up_interrupts ();
+  if (err != LDAP_SUCCESS)
     signal_simple_error ("Failed binding to the server",
                          build_string (ldap_err2string (err)));
 
-  /* Perform the search */
-  message ("Searching with LDAP on %s...", ldap_host);
-  if ( ldap_search (ld, ldap_base, ldap_scope, ldap_filter,
-                      ldap_attributes, ldap_attrsonly) == -1)
+  lisp_ldap = allocate_ldap ();
+  lisp_ldap->ld = ld;
+  lisp_ldap->host = host;
+  lisp_ldap->status_symbol = Qopen;
+  XSETLDAP (ldap,lisp_ldap);
+
+  UNGCPRO;
+  return ldap;
+}
+
+
+
+DEFUN ("ldap-close", Fldap_close, 1, 1, 0, /*
+Close an LDAP connection.
+Return t if the connection was actually closed or nil if
+it was already closed before the call
+*/
+      (ldap))
+{
+  CHECK_LDAP (ldap);
+  if ( EQ ((XLDAP (ldap))->status_symbol, Qopen) )
     {
-      ldap_unbind (ld);
-#if HAVE_LDAP_GET_ERRNO
-      signal_simple_error ("Error during LDAP search",
-                           build_string (ldap_err2string (ldap_get_lderrno (ld, NULL, NULL))));
-#else
-      signal_simple_error ("Error during LDAP search",
-                           build_string (ldap_err2string (ld->ld_errno)));
-#endif
+      ldap_unbind ((XLDAP (ldap))->ld);
+      (XLDAP (ldap))->status_symbol = Qclosed;
+      return Qt;
+    }
+  return Qnil;
+}
+
+
+
+/************************************************************************/
+/*                  Working on a LDAP connection                        */
+/************************************************************************/
+
+DEFUN ("ldap-search-internal", Fldap_search_internal, 2, 6, 0, /*
+Perform a search on an open LDAP connection.
+LDAP is an LDAP connection object created with `ldap-open'.
+FILTER is a filter string for the search as described in RFC 1558
+BASE is the distinguished name at which to start the search
+SCOPE is an integer or a symbol indicating the scope of the search
+ Possible values are `ldap-scope-base', `ldap-scope-onelevel' or
+ `ldap-scope-subtree'
+ATTRS is a list of strings indicating which attributes to retrieve
+ for each matching entry. If nil return all available attributes.
+If ATTRSONLY is non-nil then only the attributes are retrieved, not
+the associated values
+The function returns a list of matching entries.  Each entry is itself
+an alist of attribute/values.
+*/
+       (ldap, filter, base, scope, attrs, attrsonly))
+{
+  /* This function can call lisp */
+
+  /* Vars for query */
+  LDAP *ld;
+  LDAPMessage *res, *e;
+  BerElement *ptr;
+  char *a;
+  int i, rc, err;
+
+  char **vals = NULL;
+  int  matches;
+
+  int  ldap_scope = LDAP_SCOPE_SUBTREE;
+  char **ldap_attributes = NULL;
+
+  Lisp_Object list, entry, result;
+  struct gcpro gcpro1, gcpro2, gcpro3;
+
+  list = entry = result = Qnil;
+  GCPRO3(list, entry, result);
+
+  /* Do all the parameter checking  */
+  CHECK_LIVE_LDAP (ldap);
+  ld = (XLDAP (ldap))->ld;
+
+  /* Filter */
+  CHECK_STRING (filter);
+
+  /* Search base */
+  if (NILP (base))
+    {
+      base = Vldap_default_base;
+    }
+  if (!NILP (base))
+    {
+      CHECK_STRING (Vldap_default_base);
+    }
+
+  /* Search scope */
+  if (!NILP (scope))
+    {
+      CHECK_SYMBOL (scope);
+      if (EQ (scope, Qbase))
+        ldap_scope = LDAP_SCOPE_BASE;
+      else if (EQ (scope, Qonelevel))
+        ldap_scope = LDAP_SCOPE_ONELEVEL;
+      else if (EQ (scope, Qsubtree))
+        ldap_scope = LDAP_SCOPE_SUBTREE;
+      else
+        signal_simple_error ("Invalid scope", scope);
+    }
+
+  /* Attributes to search */
+  if (!NILP (attrs))
+    {
+      Lisp_Object attr_left = attrs;
+      struct gcpro ngcpro1;
+
+      NGCPRO1 (attr_left);
+      CHECK_CONS (attrs);
+
+      ldap_attributes = alloca ((XINT (Flength (attrs)) + 1)*sizeof (char *));
+
+      for (i=0; !NILP (attr_left); i++) {
+        CHECK_STRING (XCAR (attr_left));
+        ldap_attributes[i] = alloca (XSTRING_LENGTH (XCAR (attr_left)) + 1);
+        strcpy(ldap_attributes[i],
+               (char *)(XSTRING_DATA( XCAR (attr_left))));
+        attr_left = XCDR (attr_left);
+      }
+      ldap_attributes[i] = NULL;
+      NUNGCPRO;
+    }
+
+  /* Attributes only ? */
+  CHECK_SYMBOL (attrsonly);
+
+
+  /* Perform the search */
+  if (ldap_search (ld,
+                   NILP (base) ? "" : (char *) XSTRING_DATA (base),
+                   ldap_scope,
+                   NILP (filter) ? "" : (char *) XSTRING_DATA (filter),
+                   ldap_attributes,
+                   NILP (attrsonly) ? 0 : 1)
+       == -1)
+    {
+      signal_ldap_error (ld);
     }
 
   /* Build the results list */
   matches = 0;
 
-  while ( (rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &res))
-          == LDAP_RES_SEARCH_ENTRY )
+  /* ldap_result calls select() and can get wedged by EINTR signals */
+  slow_down_interrupts ();
+  rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &res);
+  speed_up_interrupts ();
+  while ( rc == LDAP_RES_SEARCH_ENTRY )
     {
       matches ++;
       e = ldap_first_entry (ld, res);
@@ -368,32 +532,23 @@ an alist of attribute/values.
       result = Fcons (Fnreverse (entry),
                       result);
       ldap_msgfree (res);
+
+      slow_down_interrupts ();
+      rc = ldap_result (ld, LDAP_RES_ANY, 0, NULL, &res);
+      speed_up_interrupts ();
     }
 
   if (rc == -1)
     {
-#if HAVE_LDAP_GET_ERRNO
-      signal_simple_error ("Error retrieving result",
-                           build_string (ldap_err2string (ldap_get_lderrno (ld, NULL, NULL))));
-#else
-      signal_simple_error ("Error retrieving result",
-                           build_string (ldap_err2string (ld->ld_errno)));
-#endif
+      signal_ldap_error (ld);
     }
 
   if ((rc = ldap_result2error (ld, res, 0)) != LDAP_SUCCESS)
     {
-#if HAVE_LDAP_GET_ERRNO
-      signal_simple_error ("Error on result",
-                           build_string (ldap_err2string (ldap_get_lderrno (ld, NULL, NULL))));
-#else
-      signal_simple_error ("Error on result",
-                           build_string (ldap_err2string (ld->ld_errno)));
-#endif
+      signal_ldap_error (ld);
     }
 
   ldap_msgfree (res);
-  ldap_unbind (ld);
   message ("Done.");
 
   result = Fnreverse (result);
@@ -407,40 +562,27 @@ an alist of attribute/values.
 void
 syms_of_eldap (void)
 {
-  DEFSUBR(Fldap_search_internal);
+  defsymbol (&Qldapp, "ldapp");
 
-  defsymbol (&Qhost, "host");
-  defsymbol (&Qfilter, "filter");
-  defsymbol (&Qattributes, "attributes");
-  defsymbol (&Qattrsonly, "attrsonly");
-  defsymbol (&Qbase, "base");
-  defsymbol (&Qscope, "scope");
-  defsymbol (&Qauth, "auth");
-  defsymbol (&Qbinddn, "binddn");
-  defsymbol (&Qpasswd, "passwd");
-  defsymbol (&Qderef, "deref");
-  defsymbol (&Qtimelimit, "timelimit");
-  defsymbol (&Qsizelimit, "sizelimit");
-  defsymbol (&Qonelevel, "onelevel");
-  defsymbol (&Qsubtree, "subtree");
-#ifdef LDAP_AUTH_KRBV41
-  defsymbol (&Qkrbv41, "krbv41");
-#endif
-#ifdef LDAP_AUTH_KRBV42
-  defsymbol (&Qkrbv42, "krbv42");
-#endif
-  defsymbol (&Qnever, "never");
-  defsymbol (&Qalways, "always");
-  defsymbol (&Qfind, "find");
+  DEFSUBR (Fldapp);
+  DEFSUBR (Fldap_host);
+  DEFSUBR (Fldap_status);
+  DEFSUBR (Fldap_open);
+  DEFSUBR (Fldap_close);
+  DEFSUBR (Fldap_search_internal);
 }
 
 void
 vars_of_eldap (void)
 {
-  Fprovide (intern ("ldap-internal"));
+  Fprovide (intern ("ldap"));
 
-  DEFVAR_LISP ("ldap-default-host", &Vldap_default_host /*
-Default LDAP host.
+  ldap_default_port = LDAP_PORT;
+  Vldap_default_base =  Qnil;
+
+  DEFVAR_INT ("ldap-default-port", &ldap_default_port /*
+Default TCP port for LDAP connections.
+Initialized from the LDAP library. Default value is 389.
 */ );
 
   DEFVAR_LISP ("ldap-default-base", &Vldap_default_base /*
@@ -450,6 +592,6 @@ For instance, "o=ACME, c=US" limits the search to the
 Acme organization in the United States.
 */ );
 
-  Vldap_default_host =  Qnil;
-  Vldap_default_base =  Qnil;
 }
+
+

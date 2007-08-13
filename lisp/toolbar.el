@@ -38,8 +38,7 @@
 
 (defun toolbar-make-button-list (up &optional down disabled cap-up cap-down cap-disabled)
   "Call make-glyph on each arg and return a list of the results."
-  (if (featurep 'x)
-      (let ((up-glyph (make-glyph up))
+  (let ((up-glyph (make-glyph up))
 	    (down-glyph (and down (make-glyph down)))
 	    (disabled-glyph (and disabled (make-glyph disabled)))
 	    (cap-up-glyph (and cap-up (make-glyph cap-up)))
@@ -57,8 +56,7 @@
 		  (list up-glyph down-glyph disabled-glyph)
 		(if down-glyph
 		    (list up-glyph down-glyph)
-		  (list up-glyph)))))))
-    nil))
+		  (list up-glyph))))))))
 
 (defun init-toolbar-location ()
   (if (not toolbar-icon-directory)

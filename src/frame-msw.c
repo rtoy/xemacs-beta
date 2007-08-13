@@ -38,6 +38,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame.h"
 #include "redisplay.h"
+#include "window.h"
 
 #define MSWINDOWS_FRAME_STYLE (WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW)
 #define MSWINDOWS_POPUP_STYLE (WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP \
@@ -68,7 +69,7 @@ Lisp_Object Qinitially_unmapped, Qpopup;
 
 /* This does not need to be GC protected, as it holds a
    frame Lisp_Object already protected by Fmake_frame */
-Lisp_Object mswindows_frame_being_created;
+Lisp_Object Vmswindows_frame_being_created;
 
 /* Geometry, in characters, as specified by proplist during frame
    creation. Memebers are set to -1 for unspecified */
@@ -130,8 +131,11 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   FRAME_MSWINDOWS_DATA(f)->ignore_next_lbutton_up = 0;
   FRAME_MSWINDOWS_DATA(f)->ignore_next_rbutton_up = 0;
   FRAME_MSWINDOWS_DATA(f)->sizing = 0;
-
   FRAME_MSWINDOWS_MENU_HASHTABLE(f) = Qnil;
+#ifdef HAVE_TOOLBARS
+  FRAME_MSWINDOWS_TOOLBAR_HASHTABLE(f) = Fmake_hashtable (make_int (50), 
+							  Qequal);
+#endif
 
   /* Will initialize these in WM_SIZE handler. We cannot do it now,
      because we do not know what is CW_USEDEFAULT height and width */
@@ -175,7 +179,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 
   XSETFRAME (frame_obj, f);
 
-  mswindows_frame_being_created = frame_obj;
+  Vmswindows_frame_being_created = frame_obj;
 
   hwnd = CreateWindowEx (exstyle,
 			 XEMACS_CLASS,
@@ -186,7 +190,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 			 rect_default.width, rect_default.height,
 			 hwnd_parent, NULL, NULL, NULL);
 
-  mswindows_frame_being_created = Qnil;
+  Vmswindows_frame_being_created = Qnil;
 
   if (hwnd == NULL)
     error ("System call to create frame failed");
@@ -235,6 +239,9 @@ static void
 mswindows_mark_frame (struct frame *f, void (*markobj) (Lisp_Object))
 {
   ((markobj) (FRAME_MSWINDOWS_MENU_HASHTABLE (f)));
+#ifdef HAVE_TOOLBARS
+  ((markobj) (FRAME_MSWINDOWS_TOOLBAR_HASHTABLE (f)));
+#endif
 }
 
 static void
@@ -304,6 +311,36 @@ mswindows_make_frame_invisible (struct frame *f)
 }
 
 static int
+mswindows_frame_totally_visible_p (struct frame *f)
+{
+  RECT rc_me, rc_other, rc_temp;
+  HWND hwnd = FRAME_MSWINDOWS_HANDLE(f);
+
+  /* We test against not a whole window rectangle, only agaist its
+     client part. So, if non-client are is covered and client area is
+     not, we return true. */
+  GetClientRect (hwnd, &rc_me);
+  MapWindowPoints (hwnd, HWND_DESKTOP, (LPPOINT)&rc_me, 2);
+
+  /* First see if we're off the desktop */
+  GetWindowRect (GetDesktopWindow(), &rc_other);
+  UnionRect(&rc_temp, &rc_me, &rc_other);
+  if (!EqualRect (&rc_temp, &rc_other))
+    return 0;
+  
+  /* Then see if any window above us obscures us */
+  while ((hwnd = GetWindow (hwnd, GW_HWNDPREV)) != NULL)
+    if (IsWindowVisible (hwnd))
+      {
+	GetWindowRect (hwnd, &rc_other);
+	if (IntersectRect(&rc_temp, &rc_me, &rc_other))
+	  return 0;
+      }
+
+  return 1;
+}
+
+static int
 mswindows_frame_visible_p (struct frame *f)
 {
   return IsWindowVisible (FRAME_MSWINDOWS_HANDLE(f))
@@ -333,16 +370,7 @@ mswindows_set_frame_icon (struct frame *f)
     {
       if (!XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon))
 	{
-	  ICONINFO x_icon;
-
-	  x_icon.fIcon=TRUE;
-	  x_icon.xHotspot=XIMAGE_INSTANCE_PIXMAP_HOTSPOT_X (f->icon);
-	  x_icon.yHotspot=XIMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (f->icon);
-	  x_icon.hbmMask=XIMAGE_INSTANCE_MSWINDOWS_BITMAP (f->icon);
-	  x_icon.hbmColor=XIMAGE_INSTANCE_MSWINDOWS_MASK (f->icon);
-
-	  XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon)=
-	    CreateIconIndirect (&x_icon);
+	  mswindows_create_icon_from_image(f->icon, f, 16);
 	}
       
       SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HICON, 
@@ -359,6 +387,59 @@ mswindows_set_frame_pointer (struct frame *f)
 		 XIMAGE_INSTANCE_X_CURSOR (f->pointer));
   XSync (XtDisplay (FRAME_X_TEXT_WIDGET (f)), 0);
 #endif
+}
+
+
+static void
+mswindows_set_mouse_position (struct window *w, int x, int y)
+{
+  struct frame *f = XFRAME (w->frame);
+  POINT pt;
+
+  pt.x = w->pixel_left + x;
+  pt.y = w->pixel_top  + y;
+  ClientToScreen (FRAME_MSWINDOWS_HANDLE(f), &pt);
+  SetCursorPos (pt.x, pt.y);
+}
+
+static int
+mswindows_get_mouse_position (struct device *d, Lisp_Object *frame, int *x, int *y)
+{
+  POINT pt;
+  HWND hwnd;
+
+  GetCursorPos (&pt);
+
+  /* What's under cursor? */
+  hwnd = WindowFromPoint (pt);
+  if (hwnd == NULL)
+    return 0;
+
+  /* Get grandest parent of the window */
+  {
+    HWND hwnd_parent;
+    while ((hwnd_parent = GetParent (hwnd)) != NULL)
+      hwnd = hwnd_parent;
+  }
+
+  /* Make sure it belongs to us */
+  if (GetWindowThreadProcessId (hwnd, NULL) != GetCurrentThreadId ())
+    return 0;
+
+  /* And that the window is an XEmacs frame */
+  {
+    char class_name [sizeof(XEMACS_CLASS) + 1];
+    if (!GetClassName (hwnd, class_name, sizeof(XEMACS_CLASS))
+	|| strcmp (class_name, XEMACS_CLASS) != 0)
+      return 0;
+  }
+
+  /* Yippie! */
+  ScreenToClient (hwnd, &pt);
+  VOID_TO_LISP (*frame, GetWindowLong (hwnd, XWL_FRAMEOBJ));
+  *x = pt.x;
+  *y = pt.y;
+  return 1;
 }
 
 static void
@@ -589,8 +670,8 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, mark_frame);
   CONSOLE_HAS_METHOD (mswindows, focus_on_frame);
   CONSOLE_HAS_METHOD (mswindows, delete_frame);
-/*  CONSOLE_HAS_METHOD (mswindows, get_mouse_position); */
-/*  CONSOLE_HAS_METHOD (mswindows, set_mouse_position); */
+  CONSOLE_HAS_METHOD (mswindows, get_mouse_position);
+  CONSOLE_HAS_METHOD (mswindows, set_mouse_position);
   CONSOLE_HAS_METHOD (mswindows, raise_frame);
   CONSOLE_HAS_METHOD (mswindows, lower_frame);
   CONSOLE_HAS_METHOD (mswindows, make_frame_visible);
@@ -605,7 +686,7 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, set_title_from_bufbyte);
 /*  CONSOLE_HAS_METHOD (mswindows, set_icon_name_from_bufbyte); */
   CONSOLE_HAS_METHOD (mswindows, frame_visible_p);
-/*  CONSOLE_HAS_METHOD (mswindows, frame_totally_visible_p); */
+  CONSOLE_HAS_METHOD (mswindows, frame_totally_visible_p);
   CONSOLE_HAS_METHOD (mswindows, frame_iconified_p);
   CONSOLE_HAS_METHOD (mswindows, set_frame_pointer); 
   CONSOLE_HAS_METHOD (mswindows, set_frame_icon); 
@@ -621,8 +702,8 @@ syms_of_frame_mswindows (void)
 void
 vars_of_frame_mswindows (void)
 {
-  mswindows_frame_being_created = Qnil;
-  staticpro (&mswindows_frame_being_created);
+  /* Needn't staticpro -- see comment above.  */
+  Vmswindows_frame_being_created = Qnil;
 
   DEFVAR_LISP ("default-mswindows-frame-plist", &Vdefault_mswindows_frame_plist /*
 Plist of default frame-creation properties for mswindows frames.

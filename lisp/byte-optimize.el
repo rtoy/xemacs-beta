@@ -148,7 +148,8 @@
 ;; modify the interpreter to obey this (unless the loader was hacked 
 ;; in some grody way, but that's a really bad idea.)
 ;;
-;; Opinions are mixed on the following paragraph.  -slb.
+;; HA!  RMS removed the following paragraph from his version of
+;; byte-opt.el.
 ;;
 ;; Really the Right Thing is to make lexical scope the default across
 ;; the board, in the interpreter and compiler, and just FIX all of 

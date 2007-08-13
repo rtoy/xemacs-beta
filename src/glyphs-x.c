@@ -35,10 +35,10 @@ Boston, MA 02111-1307, USA.  */
    Improved GIF/JPEG support added by Bill Perry for 19.14
    Cleanup/simplification of error handling by Ben Wing for 19.14
    Pointer/icon overhaul, more restructuring by Ben Wing for 19.14
-   GIF support changed to external GIFlib 3.1 by Jareth Hein for 20.5
-   Many changes for color work and optimizations by Jareth Hein for 20.5
-   Switch of GIF/JPEG/PNG to new EImage intermediate code by Jareth Hein for 20.5
-   TIFF code by Jareth Hein for 20.5
+   GIF support changed to external GIFlib 3.1 by Jareth Hein for 21.0
+   Many changes for color work and optimizations by Jareth Hein for 21.0
+   Switch of GIF/JPEG/PNG to new EImage intermediate code by Jareth Hein for 21.0
+   TIFF code by Jareth Hein for 21.0
 
    TODO:
    Convert images.el to C and stick it in here?
@@ -95,13 +95,7 @@ Lisp_Object Q_mask_file, Q_mask_data, Q_hotspot_x, Q_hotspot_y;
 Lisp_Object Q_foreground, Q_background;
 
 #ifdef HAVE_XPM
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (xpm);
-Lisp_Object Qxpm;
 Lisp_Object Q_color_symbols;
-void mswindows_xpm_instantiate (Lisp_Object image_instance, 
-				Lisp_Object instantiator,
-				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-				int dest_mask, Lisp_Object domain);
 #endif
 
 #ifdef HAVE_XFACE
@@ -149,19 +143,6 @@ static void cursor_font_instantiate (Lisp_Object image_instance,
 /************************************************************************/
 /*                      image instance methods                          */
 /************************************************************************/
-static DOESNT_RETURN
-signal_image_error (CONST char *reason, Lisp_Object frob)
-{
-  signal_error (Qimage_conversion_error,
-		list2 (build_translated_string (reason), frob));
-}
-
-static DOESNT_RETURN
-signal_image_error_2 (CONST char *reason, Lisp_Object frob0, Lisp_Object frob1)
-{
-  signal_error (Qimage_conversion_error,
-		list3 (build_translated_string (reason), frob0, frob1));
-}
 
 /************************************************************************/
 /* convert from a series of RGB triples to an XImage formated for the   */
@@ -1335,28 +1316,6 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
  *                             XPM                                    *
  **********************************************************************/
 
-static void
-check_valid_xpm_color_symbols (Lisp_Object data)
-{
-  Lisp_Object rest;
-
-  for (rest = data; !NILP (rest); rest = XCDR (rest))
-    {
-      if (!CONSP (rest) ||
-	  !CONSP (XCAR (rest)) ||
-	  !STRINGP (XCAR (XCAR (rest))) ||
-	  (!STRINGP (XCDR (XCAR (rest))) &&
-	   !COLOR_SPECIFIERP (XCDR (XCAR (rest)))))
-	signal_simple_error ("Invalid color symbol alist", data);
-    }
-}
-
-static void
-xpm_validate (Lisp_Object instantiator)
-{
-  file_or_data_must_be_present (instantiator);
-}
-
 static Lisp_Object
 pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
 {
@@ -1437,42 +1396,8 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
   return Qnil; /* not reached */
 }
 
-Lisp_Object Vxpm_color_symbols;
-
-static Lisp_Object
-evaluate_xpm_color_symbols (void)
-{
-  Lisp_Object rest, results = Qnil;
-  struct gcpro gcpro1, gcpro2;
-
-  GCPRO2 (rest, results);
-  for (rest = Vxpm_color_symbols; !NILP (rest); rest = XCDR (rest))
-    {
-      Lisp_Object name, value, cons;
-
-      CHECK_CONS (rest);
-      cons = XCAR (rest);
-      CHECK_CONS (cons);
-      name = XCAR (cons);
-      CHECK_STRING (name);
-      value = XCDR (cons);
-      CHECK_CONS (value);
-      value = XCAR (value);
-      value = Feval (value);
-      if (NILP (value))
-	continue;
-      if (!STRINGP (value) && !COLOR_SPECIFIERP (value))
-	signal_simple_error
-	  ("Result from xpm-color-symbols eval must be nil, string, or color",
-	   value);
-      results = Fcons (Fcons (name, value), results);
-    }
-  UNGCPRO;			/* no more evaluation */
-  return results;
-}
-
-static Lisp_Object
-xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
+Lisp_Object
+x_xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
 {
   Lisp_Object file = Qnil;
   Lisp_Object color_symbols;
@@ -1526,15 +1451,6 @@ xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
     free_alist (alist);
     RETURN_UNGCPRO (result);
   }
-}
-
-static int
-xpm_possible_dest_types (void)
-{
-  return
-    IMAGE_MONO_PIXMAP_MASK  |
-    IMAGE_COLOR_PIXMAP_MASK |
-    IMAGE_POINTER_MASK;
 }
 
  /* xpm 3.2g and better has XpmCreatePixmapFromBuffer()...
@@ -1630,15 +1546,15 @@ xpm_free (XpmAttributes *xpmattrs)
   XpmFreeAttributes (xpmattrs);
 }
 
-static void
-xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask, Lisp_Object domain)
+void
+x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+				   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+				   int dest_mask, Lisp_Object domain)
 {
   /* This function can GC */
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
-  Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   Display *dpy;
   Screen *xs;
   Colormap cmap;
@@ -1653,12 +1569,6 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   enum image_instance_type type;
   int force_mono;
   unsigned int w, h;
-#ifdef HAVE_MS_WINDOWS
-  if (DEVICE_MSWINDOWS_P (XDEVICE (device)))
-    return mswindows_xpm_instantiate(image_instance, instantiator, 
-				     pointer_fg, pointer_bg, 
-				     dest_mask, domain);
-#endif
 
   if (!DEVICE_X_P (XDEVICE (device)))
     signal_simple_error ("Not an X device", device);
@@ -4602,10 +4512,6 @@ syms_of_glyphs_x (void)
   defkeyword (&Q_hotspot_y, ":hotspot-y");
   defkeyword (&Q_foreground, ":foreground");
   defkeyword (&Q_background, ":background");
-
-#ifdef HAVE_XPM
-  defkeyword (&Q_color_symbols, ":color-symbols");
-#endif
 }
 
 void
@@ -4709,19 +4615,6 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_VALID_KEYWORD (tiff, Q_file, check_valid_string);
 #endif
 
-#ifdef HAVE_XPM
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (xpm, "xpm");
-
-  IIFORMAT_HAS_METHOD (xpm, validate);
-  IIFORMAT_HAS_METHOD (xpm, normalize);
-  IIFORMAT_HAS_METHOD (xpm, possible_dest_types);
-  IIFORMAT_HAS_METHOD (xpm, instantiate);
-
-  IIFORMAT_VALID_KEYWORD (xpm, Q_data, check_valid_string);
-  IIFORMAT_VALID_KEYWORD (xpm, Q_file, check_valid_string);
-  IIFORMAT_VALID_KEYWORD (xpm, Q_color_symbols, check_valid_xpm_color_symbols);
-#endif
-
 #ifdef HAVE_XFACE
   INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (xface, "xface");
 
@@ -4766,23 +4659,6 @@ vars_of_glyphs_x (void)
 
 #ifdef HAVE_TIFF
   Fprovide (Qtiff);
-#endif
-
-#ifdef HAVE_XPM
-  Fprovide (Qxpm);
-
-  DEFVAR_LISP ("xpm-color-symbols", &Vxpm_color_symbols /*
-Definitions of logical color-names used when reading XPM files.
-Elements of this list should be of the form (COLOR-NAME FORM-TO-EVALUATE).
-The COLOR-NAME should be a string, which is the name of the color to define;
-the FORM should evaluate to a `color' specifier object, or a string to be
-passed to `make-color-instance'.  If a loaded XPM file references a symbolic
-color called COLOR-NAME, it will display as the computed color instead.
-
-The default value of this variable defines the logical color names
-\"foreground\" and \"background\" to be the colors of the `default' face.
-*/ );
-  Vxpm_color_symbols = Qnil; /* initialized in x-faces.el */
 #endif
 
 #ifdef HAVE_XFACE

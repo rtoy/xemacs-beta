@@ -654,8 +654,8 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	      if (spec->precision >= 0)
 		{
 		  strcat (constructed_spec, ".");
-		  sprintf (constructed_spec + strlen (constructed_spec), "%d",
-			   spec->precision);
+		  long_to_string (constructed_spec + strlen (constructed_spec),
+				  spec->precision);
 		}
 	      sprintf (constructed_spec + strlen (constructed_spec), "%c", ch);
 

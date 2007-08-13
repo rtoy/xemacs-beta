@@ -4,7 +4,8 @@
 ==============
 
 This file presents some general information about XEmacs.  It is
-primarily about the evolution of XEmacs and its release history.
+primarily about the changes in recent XEmacs versions and its release
+history.
 
 Use `C-c C-f' to move to the next equal level of outline, and
 `C-c C-b' to move to previous equal level.  `C-h m' will give more
@@ -42,7 +43,7 @@ colormap.
 ** The `imenu' package has been ported to XEmacs.
 
 ** `echo-keystrokes' can now be a floating-point number, so that you
-can set it to values smaller than one second.
+can set it to intervals shorter than one second.
 
    (setq echo-keystrokes 0.1)
 
@@ -135,8 +136,8 @@ is now calculated.  This information is stored in
 well as the new function `profile-call-count-results'.
 
 ** The `make-event' function now supports the TYPE and PLIST
-arguments, which can be used to create many various events from Lisp.
-See the documentation for details.
+arguments, which can be used to create various events from Lisp.  See
+the documentation for details.
 
 ** `function-interactive' is a new function that returns the
 interactive specification of a funcallable object.
@@ -153,7 +154,7 @@ automatically applies `format' to its arguments.
 a formatted warning, with a non-default CLASS or LABEL.
 
 ** Specifiers and symbols whose value is a specifier are now allowed
-as modeline specifications.  #### Provide an example.
+as modeline specifications.
 
 ** defcustom now accepts the keyword `:version'.  Use this to specify
 in which version of Emacs a certain variable's default value changed.
@@ -162,7 +163,7 @@ For example,
    (defcustom foo-max 34 "*Maximum number of foo's allowed."
      :type 'integer
      :group 'foo
-     :version "20.5")
+     :version "21.0")
 
 This information is used to control the customize-changed-options
 command.
@@ -176,18 +177,16 @@ the buffers where `line-number-mode' is in effect.
 be used.  This should result in better performance on Linux systems
 with libc6.
 
-** The code XEmacs uses to assemble its various paths into the directory
-   hierarchy has been completely rewritten to support the package system.
+** The code XEmacs uses to assemble its various paths into the
+directory hierarchy has been rewritten to support the package system.
 
-*** Since site-lisp is now off by default, the variable `site-directory'
-    is now obsolete.  Code that depends on its value is probably wrong.
-    In a default setup, it is set to nil.
+*** site-lisp is now longer part of the load-path by default.
+Its use is deprecated, but you can specify --with-site-lisp=yes at the
+configure command line to get it back.
 
-*** `Info-default-directory-list' is obsolete.
-    It never served any useful function anyway.
-
-    If you want to change the path which XEmacs uses to search for
-    info files, set `Info-directory-list' instead.
+*** `Info-default-directory-list' is now obsolete.  If you want to
+change the path which XEmacs uses to search for info files, set
+`Info-directory-list' instead.
 
 
 * Changes in XEmacs 20.4

@@ -42,34 +42,6 @@
 */
 #endif
 
-/* According to ngorelic@speclab.cr.usgs.gov,
-   references to the X11R4 directories in these variables
-   (inherited from hpux8.h)
-   cause the wrong libraries to be found,
-   and the options to specify the X11R5 directories are unnecessary
-   since the R5 files are found without them.  */
-#undef LIB_X11_LIB
-#undef C_SWITCH_X_SYSTEM
-#undef LD_SWITCH_X_SYSTEM
-/* However, HPUX 9 has Motif includes in a strange place.
-   So search that place.  These definitions assume that X11R5 is being
-   used -- if X11R4 is used, "s/hpux9-x11r4.h" gets loaded instead.  */
-/* XEmacs change: Change LD_SWITCH_X_DEFAULT to LD_SWITCH_X_SYSTEM.
-   #### Why do we need to make this change? */
-#define C_SWITCH_X_SYSTEM "-I/usr/include/X11R5 -I/usr/include/Motif1.2"
-#define LD_SWITCH_X_SYSTEM "-L/usr/lib/X11R5 -L/usr/lib/Motif1.2"
-
-#ifndef HAVE_LIBXMU
-/* HP-UX doesn't supply Xmu.  */
-#define LIBXMU
-
-/* Unfortunately without libXmu we cannot support EditRes.  */
-#define NO_EDITRES
-#endif
-
-/* zoo@armadillo.com says we don't need -lXext in HPUX 9.  */
-#undef LIBX11_SYSTEM
-
 /* XEmacs: apparently rint() is totally broken in HPUX 9. */
 #undef HAVE_RINT
 

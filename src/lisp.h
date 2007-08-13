@@ -1311,8 +1311,8 @@ XCHAR_OR_INT (Lisp_Object obj)
 
 /*********** pure space ***********/
 
-#define CHECK_IMPURE(obj) \
-  do { if (purified (obj)) pure_write_error (); } while (0)
+#define CHECK_IMPURE(obj)					\
+  do { if (purified (obj)) pure_write_error (obj); } while (0)
 
 /*********** structures ***********/
 
@@ -1894,14 +1894,6 @@ struct overhead_stats
 
 #endif /* MEMORY_USAGE_STATS */
 
-/* Some systems (e.g., NT) use a different path separator than Unix,
-   in addition to a device separator.  Default the path separator
-   to '/', and don't test for a device separator in IS_ANY_SEP.  */
-
-#ifdef WINDOWSNT
-extern Lisp_Object Vdirectory_sep_char;
-#endif
-
 #ifndef DIRECTORY_SEP
 #define DIRECTORY_SEP '/'
 #endif
@@ -2005,7 +1997,7 @@ char *egetenv (CONST char *);
 void stuff_buffered_input (Lisp_Object);
 
 /* Defined in data.c */
-DECLARE_DOESNT_RETURN (pure_write_error (void));
+DECLARE_DOESNT_RETURN (pure_write_error (Lisp_Object));
 DECLARE_DOESNT_RETURN (args_out_of_range (Lisp_Object, Lisp_Object));
 DECLARE_DOESNT_RETURN (args_out_of_range_3 (Lisp_Object, Lisp_Object,
 					    Lisp_Object));
@@ -2359,6 +2351,7 @@ void write_string_1 (CONST Bufbyte *, Bytecount, Lisp_Object);
 void print_cons (Lisp_Object, Lisp_Object, int);
 void print_vector (Lisp_Object, Lisp_Object, int);
 void print_string (Lisp_Object, Lisp_Object, int);
+void long_to_string (char *, long);
 void print_internal (Lisp_Object, Lisp_Object, int);
 void print_symbol (Lisp_Object, Lisp_Object, int);
 void print_float (Lisp_Object, Lisp_Object, int);

@@ -35,7 +35,6 @@ Boston, MA 02111-1307, USA.  */
 /* Message handlers. Called from window procedure */
 Lisp_Object mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame* frm);
 Lisp_Object mswindows_handle_wm_initmenu (HMENU hmenu, struct frame* f);
-Lisp_Object mswindows_handle_wm_exitmenuloop (struct frame* f);
 Lisp_Object mswindows_handle_wm_command (struct frame* f, WORD command);
 
 #endif /* HAVE_MENUBARS */

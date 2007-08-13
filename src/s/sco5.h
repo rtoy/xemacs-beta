@@ -55,12 +55,6 @@ Boston, MA 02111-1307, USA.  */
 #define LINKER "gcc"
 #endif
 
-#undef LIBX11_SYSTEM
-#define LIBX11_SYSTEM "-lsocket"
-
-#undef LIB_X11_LIB
-#define LIB_X11_LIB "-lX11 -lgen"
-
 #define LIBS_SYSTEM "-lsocket -lPW -lgen -lcrypt -lmalloc"
 
 #ifndef MAXPATHLEN

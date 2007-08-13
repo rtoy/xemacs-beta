@@ -371,18 +371,20 @@ internal_self_insert (Emchar c1, int noautofill)
 
       if (WORD_SYNTAX_P (syntax_table, c2))
 	{
+#if 1
+	  Fexpand_abbrev ();
+#else  /* FSFmacs */
 	  Lisp_Object sym = Fexpand_abbrev ();
 
+	  /* I think this is too bogus to add.  The function should
+             have a way of examining the character to be inserted, so
+             it can decide whether to insert it or not.  We should
+             design it better than that.  */
+
 	  /* Here FSFmacs remembers MODIFF, compares it after
-             Fexpand_abbrev() finishes, and updates HAIRY.
+             Fexpand_abbrev() finishes, and updates HAIRY.  */
 
-	     A synch with Emacs 20.2.  I'm not sure if it's too bogus
-	     to copy, but I guess it can be useful.  If we expanded an
-	     abbrev which has a hook, and the hook has a non-nil
-	     `no-self-insert' property, return right away -- don't
-	     really self-insert.
-
-	     NOTE: we cannot simply check for Vlast_abbrev, because
+	  /* NOTE: we cannot simply check for Vlast_abbrev, because
 	     Fexpand_abbrev() can bail out before setting it to
 	     anything meaningful, leaving us stuck with an old value.
 	     Thus Fexpand_abbrev() was extended to return the actual
@@ -396,6 +398,7 @@ internal_self_insert (Emchar c1, int noautofill)
 	      if (!NILP (prop))
 		return;
 	    }
+#endif /* FSFmacs */
         }
     }
   if ((c1 == ' ' || c1 == '\n')

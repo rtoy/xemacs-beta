@@ -8,7 +8,7 @@
 @titlepage
 @title XEmacs FAQ
 @subtitle Frequently asked questions about XEmacs
-@subtitle Last Modified: $Date: 1998/04/07 05:39:30 $
+@subtitle Last Modified: $Date: 1998/04/18 23:25:13 $
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@666.com>
@@ -1459,7 +1459,7 @@ remember as well.
 @end quotation
 
 @quotation
-XEmacs 20.5 will unbundle the lisp hierarchy and allow the installer
+XEmacs 21 will unbundle the lisp hierarchy and allow the installer
 to choose exactly how much support code gets installed.
 @end quotation
 

@@ -2068,10 +2068,10 @@ class, and resources are not compatible between the two Emacsen.  This
 sharing of the application class often leads to trouble if you want to
 run both variants.
 
-Starting with XEmacs 20.5, XEmacs will use the class @samp{XEmacs} if it
-finds any XEmacs resources in the resource database when the X
-connection is initialized.  Otherwise, it will use the class @samp{Emacs}
-for backwards compatability.  The variable @var{x-emacs-application-class}
+Starting with XEmacs 21, XEmacs uses the class @samp{XEmacs} if it finds
+any XEmacs resources in the resource database when the X connection is
+initialized.  Otherwise, it will use the class @samp{Emacs} for
+backwards compatability.  The variable @var{x-emacs-application-class}
 may be consulted to determine the application class being used.
 
 The examples in this section assume the application class is @samp{Emacs}.

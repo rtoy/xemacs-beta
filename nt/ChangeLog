@@ -1,3 +1,15 @@
+1998-04-17  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* README: Documented new msvc build procedure, including XPM
+	support.
+
+	* xemacs.mak: Added XPM and TOOLBARS support for native msvc
+	build.
+
+	* xpm.mak: New file
+	Makefile for building xpm library under msvc. Hopefully this
+	will be part of future xpm distributions.
+
 1998-04-10  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* config.h: Do not USE_ASSERTION when DEBUG_XEMACS is not

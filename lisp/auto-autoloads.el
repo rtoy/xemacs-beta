@@ -155,7 +155,7 @@ Run `byte-compile-file' on the files remaining on the command line.
 Use this from the command line, with `-batch';
 it won't work in an interactive Emacs.
 Each file is processed even if an error occurred previously.
-For example, invoke \"emacs -batch -f batch-byte-compile $emacs/ ~/*.el\"" nil nil)
+For example, invoke \"xemacs -batch -f batch-byte-compile $emacs/ ~/*.el\"" nil nil)
 
 (autoload 'batch-byte-recompile-directory-norecurse "bytecomp" "\
 Same as `batch-byte-recompile-directory' but without recursion." nil nil)
@@ -503,7 +503,7 @@ and then returning foo." nil 'macro)
 ;;;### (autoloads (config-value config-value-hash-table) "config" "lisp/config.el")
 
 (autoload 'config-value-hash-table "config" "\
-Returns hashtable of configuration parameters and their values." nil nil)
+Return hashtable of configuration parameters and their values." nil nil)
 
 (autoload 'config-value "config" "\
 Return the value of the configuration parameter CONFIG_SYMBOL." nil nil)
@@ -1038,7 +1038,7 @@ Return non-nil if a gnuserv process is running from this XEmacs session." nil ni
 (autoload 'gnuserv-start "gnuserv" "\
 Allow this Emacs process to be a server for client processes.
 This starts a gnuserv communications subprocess through which
-client \"editors\" (gnuclient and gnudoit) can send editing commands to 
+client \"editors\" (gnuclient and gnudoit) can send editing commands to
 this Emacs job.  See the gnuserv(1) manual page for more details.
 
 Prefix arg means just kill any existing server communications subprocess." t nil)
@@ -1098,6 +1098,14 @@ Interactively set the variable on the current line." t nil)
 ;;;***
 
 ;;;### (autoloads (Info-elisp-ref Info-emacs-key Info-goto-emacs-key-command-node Info-goto-emacs-command-node Info-emacs-command Info-search Info-visit-file Info-goto-node Info-query info) "info" "lisp/info.el")
+
+(defvar Info-directory-list nil "\
+List of directories to search for Info documentation files.
+
+The first directory in this list, the \"dir\" file there will become
+the (dir)Top node of the Info documentation tree.  If you wish to
+modify the info search path, use `M-x customize-variable,
+Info-directory-list' to do so.")
 
 (autoload 'info "info" "\
 Enter Info, the documentation browser.
@@ -1175,7 +1183,7 @@ Install a single file Lisp package into XEmacs package hierarchy.
 `file' should be the full path to the lisp file to install.
 `destdir' should be a simple directory name.
 The optional `pkg-dir' can be used to override the default package hierarchy
-\(last package-path)." t nil)
+\(car (last late-packages))." t nil)
 
 (autoload 'package-admin-add-binary-package "package-admin" "\
 Install a pre-bytecompiled XEmacs package into package hierarchy." t nil)

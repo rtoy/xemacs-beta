@@ -100,6 +100,9 @@ the user's init file.")
 (defconst initial-major-mode 'lisp-interaction-mode
   "Major mode command symbol to use for the initial *scratch* buffer.")
 
+(defvar emacs-roots nil
+  "List of plausible roots of the XEmacs hierarchy.")
+
 (defvar init-file-user nil
   "Identity of user whose `~/.xemacs/init.el' file is or was read.
 The value is nil if no init file is being used; otherwise, it may be either
@@ -211,10 +214,10 @@ remaining command-line args are in the variable `command-line-args-left'.")
   -unmapped             Do not map the initial frame.
   -no-site-file         Do not load the site-specific init file (site-start.el).
   -no-init-file         Do not load the user-specific init file (~/.emacs).
-  -no-packages		Do not process the package path.
+  -no-early-packages	Do not process early packages.
   -no-autoloads		Do not load global symbol files (auto-autoloads) at
 			startup.  Also implies `-vanilla'.
-  -vanilla		Equivalent to -q -no-site-file -no-packages.
+  -vanilla		Equivalent to -q -no-site-file -no-early-packages.
   -q                    Same as -no-init-file.
   -user <user>          Load user's init file instead of your own.
   -u <user>             Same as -user.\n")
@@ -373,20 +376,35 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 
     (startup-set-invocation-environment)
 
-    (let ((roots (paths-find-emacs-roots invocation-directory
-					 invocation-name)))
-      (if (null roots)
+    (let ((debug-paths (or debug-paths
+			   (and (getenv "EMACSDEBUGPATHS")
+				t))))
+
+      (setq emacs-roots (paths-find-emacs-roots invocation-directory
+						invocation-name))
+    
+      (if debug-paths
+	  (princ (format "emacs-roots:\n%S\n" emacs-roots)
+		 'external-debugging-output))
+    
+      (if (null emacs-roots)
 	  (startup-find-roots-warning)
-	(startup-setup-paths roots
-			     inhibit-package-init
-			     inhibit-site-lisp))
+	(startup-setup-paths emacs-roots
+			     inhibit-early-packages
+			     inhibit-site-lisp
+			     debug-paths))
       (startup-setup-paths-warning))
 
-    (if (not inhibit-package-init)
+    (if (not inhibit-autoloads)
+	(load (expand-file-name (file-name-sans-extension autoload-file-name)
+				lisp-directory) nil t))
+    
+    (if (not inhibit-autoloads)
 	(progn
 	  (packages-load-package-auto-autoloads last-package-load-path)
 	  (packages-load-package-auto-autoloads late-package-load-path)
-	  (packages-load-package-auto-autoloads early-package-load-path)))
+	  (if (not inhibit-early-packages)
+	      (packages-load-package-auto-autoloads early-package-load-path))))
 
     (unwind-protect
 	(command-line)
@@ -484,17 +502,16 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	(setq init-file-user nil))
        ((string= arg "-no-site-file")
 	(setq site-start-file nil))
-       ((or (string= arg "-no-packages")
-	    (string= arg "--no-packages"))
-	(setq inhibit-package-init t))
+       ((or (string= arg "-no-early-packages")
+	    (string= arg "--no-early-packages"))
+	(setq inhibit-early-packages t))
        ((or (string= arg "-vanilla")
 	    (string= arg "--vanilla")
 	    ;; Some work on this one already done in emacs.c.
 	    (string= arg "-no-autoloads")
 	    (string= arg "--no-autoloads"))
 	(setq init-file-user nil
-	      site-start-file nil
-	      inhibit-package-init t))
+	      site-start-file nil))
        ((or (string= arg "-u")
 	    (string= arg "-user"))
 	(setq init-file-user (pop args)))
@@ -502,6 +519,9 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	(setq init-file-debug t))
        ((string= arg "-unmapped")
 	(setq initial-frame-unmapped-p t))
+       ((or (string= arg "-debug-paths")
+	    (string= arg "--debug-paths"))
+	t)
        ((or (string= arg "--") (string= arg "-"))
 	(while args
 	  (push (pop args) new-args)))
@@ -630,20 +650,6 @@ First try .xemacs/init, then try .emacs, but only load one of the two."
 
 ;;; Load user's init file and default ones.
 (defun load-init-file ()
-  ;; Disabled for now
-  (unless inhibit-update-dumped-lisp
-    (packages-reload-dumped-lisp))
-
-;;  (unless inhibit-update-autoloads
-;;    (packages-reload-autoloads))
-  (unless inhibit-update-autoloads
-    (let ((dir load-path))
-      (while dir
-	(condition-case nil
-	    (load (expand-file-name "auto-autoloads" (car dir)) nil t)
-	  (t nil))
-	(pop dir))))
-
   (run-hooks 'before-init-hook)
 
   ;; Run the site-start library if it exists.  The point of this file is
@@ -1010,52 +1016,115 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 	;; don't let /tmp_mnt/... get into the load-path or exec-path.
 	(abbreviate-file-name invocation-directory)))
 
-(defun startup-setup-paths (roots &optional inhibit-packages inhibit-site-lisp)
+(defun startup-setup-paths (roots &optional
+				  inhibit-early-packages inhibit-site-lisp
+				  debug-paths)
   "Setup all the various paths.
 ROOTS is a list of plausible roots of the XEmacs directory hierarchy.
 If INHIBIT-PACKAGES is non-NIL, don't do packages.
 If INHIBIT-SITE-LISP is non-NIL, don't do site-lisp.
+If DEBUG-PATHS is non-NIL, print paths as they are detected.
 It's idempotent, so call this as often as you like!"
 
   (apply #'(lambda (early late last)
-	     (setq early-packages early)
+	     (setq early-packages (and (not inhibit-early-packages)
+				       early))
 	     (setq late-packages late)
 	     (setq last-packages last))
-	 (packages-find-packages roots inhibit-packages))
+	 (packages-find-packages roots))
 
   (setq early-package-load-path (packages-find-package-load-path early-packages))
   (setq late-package-load-path (packages-find-package-load-path late-packages))
   (setq last-package-load-path (packages-find-package-load-path last-packages))
 
+  (if debug-paths
+      (progn
+	(princ (format "configure-package-path:\n%S\n" configure-package-path)
+	       'external-debugging-output)
+	(princ (format "early-packages and early-package-load-path:\n%S\n%S\n"
+		       early-packages early-package-load-path)
+	       'external-debugging-output)
+	(princ (format "late-packages and late-package-load-path:\n%S\n%S\n"
+		       late-packages late-package-load-path)
+	       'external-debugging-output)
+	(princ (format "last-packages and last-package-load-path:\n%S\n%S\n"
+		       last-packages last-package-load-path)
+	       'external-debugging-output)))
+
+  (setq lisp-directory (paths-find-lisp-directory roots))
+
+  (if debug-paths
+      (princ (format "lisp-directory:\n%S\n" lisp-directory)
+	     'external-debugging-output))
+
+  (setq site-directory (and (null inhibit-site-lisp)
+			    (paths-find-site-lisp-directory roots)))
+
+  (if (and debug-paths (null inhibit-site-lisp))
+      (princ (format "site-directory:\n%S\n" site-directory)
+	     'external-debugging-output))
+
   (setq load-path (paths-construct-load-path roots
 					     early-package-load-path
 					     late-package-load-path
 					     last-package-load-path
-					     inhibit-site-lisp))
+					     lisp-directory
+					     site-directory))
 
   (setq Info-directory-list
 	(paths-construct-info-path roots
 				   early-packages late-packages last-packages))
 
+  
+  (if debug-paths
+      (princ (format "Info-directory-list:\n%S\n" Info-directory-list)
+	     'external-debugging-output))
+
   (if (boundp 'lock-directory)
       (progn
 	(setq lock-directory (paths-find-lock-directory roots))
-	(setq superlock-file (paths-find-superlock-file lock-directory))))
+	(setq superlock-file (paths-find-superlock-file lock-directory))
+	
+	(if debug-paths
+	    (progn
+	      (princ (format "lock-directory:\n%S\n" lock-directory)
+		     'external-debugging-output)
+	      (princ (format "superlock-file:\n%S\n" superlock-file)
+		     'external-debugging-output)))))
 
   (setq exec-directory (paths-find-exec-directory roots))
+
+  (if debug-paths
+      (princ (format "exec-directory:\n%s\n" exec-directory)
+	     'external-debugging-output))
 
   (setq exec-path
 	(paths-construct-exec-path roots exec-directory
 				   early-packages late-packages last-packages))
+
+  (if debug-paths
+      (princ (format "exec-path:\n%S\n" exec-path)
+	     'external-debugging-output))
   
   (setq doc-directory (paths-find-doc-directory roots))
 
+  (if debug-paths
+      (princ (format "doc-directory:\n%S\n" doc-directory)
+	     'external-debugging-output))
+
   (setq data-directory (paths-find-data-directory roots))
+
+  (if debug-paths
+      (princ (format "data-directory:\n%S\n" data-directory)
+	     'external-debugging-output))
 
   (setq data-directory-list (paths-construct-data-directory-list data-directory
 								 early-packages
 								 late-packages
-								 last-packages)))
+								 last-packages))
+  (if debug-paths
+      (princ (format "data-directory-list:\n%S\n" data-directory-list)
+	     'external-debugging-output)))
 
 (defun startup-find-roots-warning ()
   (save-excursion

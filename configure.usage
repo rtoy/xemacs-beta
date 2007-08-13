@@ -3,8 +3,9 @@ Usage: configure [--OPTION[=VALUE] ...] [CONFIGURATION]
 Set compilation and installation parameters for XEmacs, and report.
 
 Note that for most of the following options, you can explicitly enable
-them using `--OPTION=yes' and explicitly disable them using `--OPTION=no'.
+them using `--OPTION=yes' and explicitly disable them using `--OPTION=no'.  
 This is especially useful for auto-detected options.
+The option `--without-FEATURE' is a synonym for `--with-FEATURE=no'.
 
 Options marked with a (*) are auto-detected.
 

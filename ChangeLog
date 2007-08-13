@@ -1,3 +1,48 @@
+1998-04-18  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-21.0-beta36 is released.
+
+Fri Apr 17 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: enable install pre-processing for mswindows
+
+Fri Apr 17 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+	
+	* Makefile.in.in: add install_pp to install incantation.
+
+	* installexe.sh: new file. Add .exe to install targets if the
+	result is executable.
+
+Fri Apr 17 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+	
+	* Makefile.in: add install_pp to install incantation.
+
+1998-04-14  Itay Ben-Yaacov <pezz@www-mail.huji.ac.il>
+
+	* configure.in: Large echo split into a few smaller ones,
+	so the cygnus sh.exe does not crash.
+
+Thu Apr 16 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: enable toolbar checking for mswindows build
+
+1998-04-06  Martin Buchholz  <martin@xemacs.org>
+
+	* config.h.in: Add _SVID_SOURCE to list of xmkmf #defines.  
+	Used (at least) by RedHat 4.2.
+
+1998-04-11  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* etc/xemacs.1: -no-packages -> -no-early-packages.
+
+	* etc/NEWS: Clarified site-lisp status.
+
+	* configure.in: Re-instated src/paths.h generation from
+	src/paths.h.in.
+
+	* Makefile.in (top_distclean): Remove site-lisp on `make
+	distclean'.
+
 1998-04-10  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta35 is released.

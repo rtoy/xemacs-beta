@@ -154,17 +154,6 @@ char *ptsname ();
   if (ioctl (xforkin, I_PUSH, "ttcompat") == -1) 	\
     fatal ("ioctl I_PUSH ttcompat: errno %d\n", errno);
 
-/* Undo the SVr3 X11 library definition */
-#undef LIB_X11_LIB
-
-/* The definition of this in s-usg5-3.h is not needed in 5.4.  */
-/* liblnsl_s should never be used.  The _s suffix implies a shared
-   library, as opposed to a DLL.  Share libraries were used in SVR3, and are
-   available only in order to allow SVR3 binaries to run.  They should not be
-   linked in to new binaries. -- caraway!pinkas@caraway.intel.com.  */
-#undef LIBX10_SYSTEM
-#undef LIBX11_SYSTEM
-
 /* Tell x11term.c and keyboard.c we have the system V streams feature.  */
 #define SYSV_STREAMS
 /* On Some SysV System , w3 freeze. If freeze your xemacs , Add below definition */

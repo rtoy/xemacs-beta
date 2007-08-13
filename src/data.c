@@ -128,9 +128,9 @@ PREDICATE.  At that point, the gotten value is returned.
 }
 
 DOESNT_RETURN
-pure_write_error (void)
+pure_write_error (Lisp_Object obj)
 {
-  error ("Attempt to modify read-only object");
+  signal_simple_error ("Attempt to modify read-only object", obj);
 }
 
 DOESNT_RETURN
@@ -1202,7 +1202,7 @@ NUM may be an integer or a floating point number.
     }
 #endif /* LISP_FLOAT_TYPE */
 
-  sprintf (buffer, "%ld", (long) (XINT (num)));
+  long_to_string (buffer, XINT (num));
   return build_string (buffer);
 }
 

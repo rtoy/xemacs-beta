@@ -289,7 +289,7 @@ dnl Maximum number of lines to put in a shell here document.
 ac_max_here_lines=12
 ])dnl
 AC_INIT(src/lisp.h)dnl
-AC_CONFIG_HEADER(src/config.h src/paths.h lwlib/config.h)
+AC_CONFIG_HEADER(src/config.h lwlib/config.h)
 dnl Remove any more than one leading "." element from the path name.
 dnl If we do not remove them, then another "./" will be prepended to
 dnl the file name each time we use config.status, and the program name
@@ -325,6 +325,7 @@ libdir='${exec_prefix}/lib'
 mandir='${prefix}/man/man1'
 infodir='${datadir}/xemacs-${version}/info'
 infopath=''
+install_pp=''
 lispdir='${datadir}/xemacs-${version}/lisp'
 sitelispdir='${datadir}/xemacs/site-lisp'
 pkgdir='${datadir}/xemacs-${version}/lisp'
@@ -1571,6 +1572,8 @@ configure___ [$2]=no
 ])
 
 
+echo > $tempcname
+
 echo '
 #define NOT_C_CODE
 #define C_SWITCH_SITE
@@ -1587,6 +1590,9 @@ CPP_to_sh(LIBS_SYSTEM,  libs_system)
 CPP_to_sh(LIBS_TERMCAP, libs_termcap)
 CPP_to_sh(LIB_STANDARD, libs_standard)
 
+' >> $tempcname
+echo '
+
 CPP_to_sh(OBJECTS_MACHINE, objects_machine)
 CPP_to_sh(OBJECTS_SYSTEM,  objects_system)
 
@@ -1599,6 +1605,9 @@ CPP_to_sh(LD_SWITCH_SYSTEM,   ld_switch_system)
 CPP_to_sh(UNEXEC, unexec, unexec.o)
 
 CPP_to_sh(LD_SWITCH_SHARED, ld_switch_shared, -c)
+
+' >> $tempcname
+echo '
 
 #ifdef ORDINARY_LINK
 #define LD "$(CC) $(CFLAGS)"
@@ -1617,6 +1626,9 @@ configure___ ld=LD
 
 CPP_to_sh(LIB_GCC, lib_gcc)
 CPP_to_sh(LD_TEXT_START_ADDR, ld_text_start_addr)
+
+' >> $tempcname
+echo '
 
 #if ! defined (ORDINARY_LINK) && !defined (START_FILES)
 #ifdef NO_REMAP
@@ -1640,7 +1652,7 @@ CPP_boolean_to_sh(TERMINFO, have_terminfo)
 CPP_boolean_to_sh(MAIL_USE_FLOCK, mail_use_flock)
 CPP_boolean_to_sh(MAIL_USE_LOCKF, mail_use_lockf)
 
-' > $tempcname
+' >> $tempcname
 dnl The value of CPP is a quoted variable reference, so we need to do this
 dnl to get its actual value...
 CPP=`eval "echo $CPP"`
@@ -2346,24 +2358,29 @@ if test "$with_msw" != "no"; then
   AC_CHECK_LIB(gdi32,main,with_msw=yes)
   if test "$with_msw" = "yes"; then
     AC_DEFINE(HAVE_MS_WINDOWS)
-    XE_APPEND(-lshell32 -lgdi32 -luser32, libs_system)
+    install_pp="$blddir/lib-src/installexe.sh"
+    XE_APPEND(-lshell32 -lgdi32 -luser32 -lcomctl32, libs_system)
     if test "$window_system" != x11; then
  	window_system=msw
 	test "$with_scrollbars" != "no" && with_scrollbars=msw \
 	    && XE_ADD_OBJS(scrollbar-msw.o)
 	test "$with_menubars"   != "no" && with_menubars=msw \
 	    && XE_ADD_OBJS(menubar-msw.o)
+	test "$with_toolbars"   != "no" && with_toolbars=msw \
+	    && XE_ADD_OBJS(toolbar-msw.o)
 	with_dialogs=msw
-	with_toolbars=no
     else
 	test "$with_scrollbars"   != "no" && XE_ADD_OBJS(scrollbar-msw.o)
 	test "$with_menubars"   != "no" && XE_ADD_OBJS(menubar-msw.o)
+	test "$with_toolbars"   != "no" && XE_ADD_OBJS(toolbar-msw.o)
     fi
     const_is_losing=no
     with_file_coding=yes
     XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o glyphs-msw.o)
   fi
 fi
+
+AC_SUBST(install_pp)
 
 test -z "$window_system" && window_system="none"
 
@@ -3366,6 +3383,7 @@ if test "$with_shlib" = "yes"; then
   XE_ADD_OBJS(dll.o)
   test ! -z "$DLL_LIB" && XE_PREPEND(-l${DLL_LIB}, LIBS)
   XE_MAKE_SHAREDLIB
+  AC_CHECK_FUNCS(dlerror)
   ld_dynamic_link_flags=
   dnl Fill this in with other values as this gets more testing
   case "$opsys" in
@@ -3836,7 +3854,7 @@ for file in $internal_makefile_list; do
     file="src/Makefile.in:src/Makefile.in.in:src/depend"
   ac_output_files="${ac_output_files+$ac_output_files }$file"
 done
-ac_output_files="$ac_output_files src/paths.h.in lib-src/config.values"
+ac_output_files="$ac_output_files src/paths.h lib-src/config.values"
 
 AC_OUTPUT($ac_output_files,
 [for dir in $MAKE_SUBDIR; do

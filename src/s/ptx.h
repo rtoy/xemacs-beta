@@ -30,9 +30,6 @@ Boston, MA 02111-1307, USA.  */
 #include "usg5-3.h"
 
 /* Undo these defines because they are incorrect or need to be changed.  */
-#undef LIB_X11_LIB
-#undef LIBX10_SYSTEM
-#undef LIBX11_SYSTEM
 #undef USG_SHARED_LIBRARIES
 
 /* PTX has System V streams.  */
@@ -48,7 +45,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_X_WINDOWS
 
-#define LIBX11_SYSTEM "-lsocket -linet -lnsl"
 /* This is also defined so that lib-src/profile can link.  */
 #define LIBS_SYSTEM "-lseq"
 

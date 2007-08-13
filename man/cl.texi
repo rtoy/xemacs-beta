@@ -3411,7 +3411,7 @@ this is initialized with 0, but this package initializes it with a
 random (time-dependent) value to avoid trouble when two files that
 each used @code{gensym} in their compilation are loaded together.
 
-@strong{XEmacs note:} As of XEmacs 20.5, an uninterned symbol remains
+@strong{XEmacs note:} As of XEmacs 21.0, an uninterned symbol remains
 uninterned even after being dumped to bytecode.  Older versions of Emacs
 didn't distinguish the printed representation of interned and uninterned
 symbols, so their names had to be treated more carefully.

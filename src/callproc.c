@@ -215,7 +215,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     current_dir = Funhandled_file_name_directory (current_dir);
     current_dir = expand_and_dir_to_file (current_dir, Qnil);
 #if 0
-    /* reportedly causes problems with ange-ftp-visited-files */
+    /* This is in FSF, but it breaks everything in the presence of
+       ange-ftp-visited files, so away with it.  */
     if (NILP (Ffile_accessible_directory_p (current_dir)))
       report_file_error ("Setting current directory",
                          Fcons (current_buffer->directory, Qnil));

@@ -18,7 +18,3 @@
 
 /* XEmacs: from dkeller@VNET.IBM.COM */
 #define BROKEN_SIGIO
-
-/* Bill Woodward <wpwood@austin.ibm.com> says:
-   libIM *must* precede libXm, to avoid getting aixLoadIM error messages.  */
-#define LIB_MOTIF "-lIM -lXm"

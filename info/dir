@@ -38,12 +38,12 @@ XEmacs 21.0
 ===========
 * Info::	Documentation browsing system.
 * XEmacs::	The extensible user-friendly self-documenting text editor.
-		This manual is for XEmacs 20.5.
+		This manual is for XEmacs 21.0.
 * Lispref::	XEmacs Lisp technical reference.
-		This manual is for XEmacs 20.5.
+		This manual is for XEmacs 21.0.
 * New-Users-Guide::
-	        XEmacs User's Guide for XEmacs 20.5.
-* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 20.5.
+	        XEmacs User's Guide for XEmacs 21.0.
+* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 21.0.
 * Internals::	Guide to the internals of XEmacs.
 
 Local Packages:

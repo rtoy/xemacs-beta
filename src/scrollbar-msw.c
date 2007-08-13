@@ -27,11 +27,12 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "console-msw.h"
-#include "scrollbar-msw.h"
-
-#include "frame.h"
-#include "window.h"
 #include "events.h"
+#include "frame.h"
+#include "scrollbar-msw.h"
+#include "scrollbar.h"
+#include "specifier.h"
+#include "window.h"
 
 /* This has really different semantics in Windows than in Motif.
    There's no corresponding method; we just do not change slider
@@ -255,7 +256,28 @@ mswindows_compute_scrollbar_instance_usage (struct device *d,
 }
 
 #endif /* MEMORY_USAGE_STATS */
+
+/************************************************************************/
+/*          Device-specific ghost specifiers initialization             */
+/************************************************************************/
 
+DEFUN ("mswindows-init-scrollbar-metrics", Fmswindows_init_scrollbar_metrics, 1, 1, 0, /*
+*/
+       (locale))
+{
+  if (DEVICEP (locale))
+    {
+      add_spec_to_ghost_specifier (Vscrollbar_width,
+				   make_int (GetSystemMetrics (SM_CXVSCROLL)),
+				   locale, Qmswindows, Qnil);
+      add_spec_to_ghost_specifier (Vscrollbar_height,
+				   make_int (GetSystemMetrics (SM_CYHSCROLL)),
+				   locale, Qmswindows, Qnil);
+    }
+  return Qnil;
+}
+
+
 /************************************************************************/
 /*                            initialization                            */
 /************************************************************************/
@@ -272,6 +294,12 @@ console_type_create_scrollbar_mswindows (void)
 #ifdef MEMORY_USAGE_STATS
   CONSOLE_HAS_METHOD (mswindows, compute_scrollbar_instance_usage);
 #endif
+}
+
+void
+syms_of_scrollbar_mswindows(void)
+{
+  DEFSUBR (Fmswindows_init_scrollbar_metrics);
 }
 
 void

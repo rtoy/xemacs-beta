@@ -16,8 +16,6 @@
 /* If using Roell's X server, define X11R4 */
 #ifdef X11R4			/* Roell's X server */
 #define select sys_select /* Emacs select() not good enough? */
-#undef LIBX11_SYSTEM
-#define LIBX11_SYSTEM "-lpt"
 #endif /* X11R4 */
 
 /* ESIX does not need <sys/sioctl.h>, but needs <sys/ptem.h> */

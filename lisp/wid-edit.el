@@ -294,6 +294,23 @@ new value."
   :type 'boolean
   :group 'widgets)
 
+(defun widget-echo-this-extent (extent)
+  (let* ((widget (or (extent-property extent 'button)
+		     (extent-property extent 'field)
+		     (extent-property extent 'glyph-widget)))
+	 (help-echo (and widget (widget-get widget :help-echo))))
+    (and (functionp help-echo)
+	 (setq help-echo (funcall help-echo widget)))
+    (when (stringp help-echo)
+      (display-message 'help-echo help-echo))))
+
+(defsubst widget-handle-help-echo (extent help-echo)
+  (set-extent-property extent 'balloon-help help-echo)
+  (set-extent-property extent 'help-echo help-echo)
+  (when (functionp help-echo)
+    (set-extent-property extent 'balloon-help 'widget-echo-this-extent)
+    (set-extent-property extent 'help-echo 'widget-echo-this-extent)))
+
 (defun widget-specify-field (widget from to)
   "Specify editable button for WIDGET between FROM and TO."
   (save-excursion
@@ -321,8 +338,7 @@ new value."
     (set-extent-property extent 'button-or-field t)
     (set-extent-property extent 'keymap map)
     (set-extent-property extent 'face face)
-    (set-extent-property extent 'balloon-help help-echo)
-    (set-extent-property extent 'help-echo help-echo)))
+    (widget-handle-help-echo extent help-echo)))
 
 (defun widget-specify-button (widget from to)
   "Specify button for WIDGET between FROM and TO."
@@ -337,8 +353,7 @@ new value."
     (set-extent-property extent 'button widget)
     (set-extent-property extent 'button-or-field t)
     (set-extent-property extent 'mouse-face widget-mouse-face)
-    (set-extent-property extent 'balloon-help help-echo)
-    (set-extent-property extent 'help-echo help-echo)
+    (widget-handle-help-echo extent help-echo)
     (set-extent-property extent 'face face)
     (set-extent-property extent 'keymap map)))
 
@@ -412,6 +427,7 @@ new value."
 (defun widget-activation-widget-mapper (extent action)
   "Activate or deactivate EXTENT's widget (button or field).
 Suitable for use with `map-extents'."
+  (message "FUCK")
   (ecase action
     (:activate
      (decf (extent-property extent :inactive-count))
@@ -434,6 +450,7 @@ Suitable for use with `map-extents'."
   nil)
 
 (defun widget-activation-glyph-mapper (extent action)
+  (message "FUCK")
   (let ((activate-p (if (eq action :activate) t nil)))
     (if activate-p
 	(decf (extent-property extent :inactive-count))
@@ -478,7 +495,7 @@ Suitable for use with `map-extents'."
 (defun widget-specify-active (widget)
   "Make WIDGET active for user modifications."
   (let ((inactive (widget-get widget :inactive)))
-    (when inactive
+    (when (and inactive (not (extent-detached-p inactive)))
       ;; Reactivate the buttons and fields covered by the extent.
       (map-extents 'widget-activation-widget-mapper
 		   inactive nil nil :activate nil 'button-or-field)
@@ -764,8 +781,7 @@ glyphs used when the widget is pushed and inactive, respectively."
     (unless (or (stringp help-echo) (null help-echo))
       (setq help-echo 'widget-mouse-help))
     (when help-echo
-      (set-extent-property extent 'balloon-help help-echo)
-      (set-extent-property extent 'help-echo help-echo)))
+      (widget-handle-help-echo extent help-echo)))
   (when widget
     (widget-put widget :glyph-up glyph)
     (when down (widget-put widget :glyph-down down))

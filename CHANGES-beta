@@ -1,4 +1,30 @@
 							-*- indented-text -*-
+to 21.0 beta36 "Philippine"
+-- Xpm for MS Windows from Jonathan Harris
+-- print stream fix from Hrvoje Niksic
+-- etags.c fix from Andreas Jaeger
+-- dll fixes from Hrvoje Niksic
+-- etags.c synched with InfoDock
+-- ghost specifiers from Kirill Katsnelson
+-- DLL fix from Hrvoje Niksic
+-- cygwin installation fix from Andy Piper
+-- cygwin process fix from Andy Piper
+-- More startup changes from Michael Sperber
+-- new version of LDAP code from Oscar Figueiredo
+-- path debugging patches from Michael Sperber
+-- more fixes from Hrvoje Niksic
+-- miscellaneous patches from Kirill Katsnelson
+-- Toolbar support for MS Windows from Andy Piper
+-- Changes by FUKUI Kaoru for PPC/Linux
+-- various fixes from Martin Buchholz
+-- various patches from Hrvoje Niksic
+-- s/*.h cleanup from Olivier Galibert
+-- display fixes from Greg Klanderman
+-- More MS Windows process patches from Kirill Katsnelson
+-- More path searching fixes from Michael Sperber
+-- path searching changes from Michael Sperber
+-- MS Windows fixes from Kirill Katsnelson
+
 to 21.0 beta35 "Peacock Goat"
 -- info fixes from Oscar Figueiredo
 -- Various fixes from Hrvoje Niksic
@@ -11,7 +37,7 @@ to 21.0 beta35 "Peacock Goat"
 -- glyphs-x.c cleanup from Colin Rafferty
 -- MS windows fixes from Kirill Katsnelson
 -- toolbar clean up from Jeff Miller
--- Hunt the Wumpus 64 bit cleanness patches from Oliver Graf
+-- Hunt the Wumpus 64 bit cleanness patches from Olivier Galibert
 -- miscellaneous bug fixes
 -- info updates from Oscar Figueiredo
 -- Various patches from Andreas Jaegar, Olivier Galibert, Karl Hegbloom,

@@ -45,8 +45,13 @@ struct nt_process_data
 /* Process helpers							 */
 /*-----------------------------------------------------------------------*/
 
-/* #### Ok, a pretty frame is here, and a nifty text is in. Now,
-   any function around here to be put here? Yahoooo.... */
+/* This one breaks process abstraction. Prototype is in console-msw.h,
+   used by select_process method in event-msw.c */
+HANDLE
+get_nt_process_handle (struct Lisp_Process *p)
+{
+  return (NT_DATA (p)->h_process);
+}
 
 /*-----------------------------------------------------------------------*/
 /* Process methods							 */

@@ -113,7 +113,7 @@ static Lisp_Object current_hashtable;
    (If only toolbars will be implemented as common controls) */
 #define MENU_ITEM_ID_MIN 0x8000
 #define MENU_ITEM_ID_MAX 0xFFFF
-#define MENU_ITEM_ID_BITS(x) ((x) & 0x7FFF | 0x8000)
+#define MENU_ITEM_ID_BITS(x) (((x) & 0x7FFF) | 0x8000)
 static HMENU top_level_menu;
 
 #define MAX_MENUITEM_LENGTH 128
@@ -644,9 +644,8 @@ mswindows_handle_wm_command (struct frame* f, WORD id)
   /* Needs good bump also, for WM_COMMAND may have been dispatched from
      mswindows_need_event, which will block again despite new command
      event has arrived */
-  mswindows_enqueue_magic_event (FRAME_MSWINDOWS_HANDLE(f),
-				 XM_BUMPQUEUE);
-  
+  mswindows_bump_queue ();
+
   UNGCPRO; /* command */
   return Qt;
 }
@@ -689,14 +688,6 @@ mswindows_handle_wm_initmenu (HMENU hmenu, struct frame* f)
       wm_initmenu_frame = f;
       return mswindows_protect_modal_loop (unsafe_handle_wm_initmenu, Qnil);
     }
-  return Qt;
-}
-
-/* #### This function goes away. Removing it now may
-   interfere with pending patch 980128-jhar */
-Lisp_Object
-mswindows_handle_wm_exitmenuloop (struct frame* f)
-{
   return Qt;
 }
 

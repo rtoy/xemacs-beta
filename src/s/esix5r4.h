@@ -10,7 +10,6 @@
 # undef LIB_STANDARD
 # define LIB_STANDARD "-lc"
 #else
-# define LIB_X11_LIB "-lsocket -lc -lX11"
 # undef LIB_STANDARD
 # ifdef ORDINARY_LINK
 #   define LIB_STANDARD "-lnsl -lns -lelf /usr/ucblib/libucb.a"

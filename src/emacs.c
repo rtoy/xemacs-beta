@@ -126,9 +126,9 @@ Lisp_Object Vinvocation_directory;
 Lisp_Object Vinstallation_directory;
 #endif
 
-Lisp_Object Vexec_path, Vconfigure_exec_path;
-Lisp_Object Vexec_directory;
-Lisp_Object Vconfigure_lisp_directory;
+Lisp_Object Vexec_path;
+Lisp_Object Vexec_directory, Vconfigure_exec_directory;
+Lisp_Object Vlisp_directory, Vconfigure_lisp_directory;
 Lisp_Object Vconfigure_package_path;
 Lisp_Object Vdata_directory, Vconfigure_data_directory;
 Lisp_Object Vdoc_directory, Vconfigure_doc_directory;
@@ -137,6 +137,7 @@ Lisp_Object Vdata_directory_list;
 Lisp_Object Vinfo_directory, Vconfigure_info_directory;
 Lisp_Object Vsite_directory, Vconfigure_site_directory;
 Lisp_Object Vconfigure_info_path;
+Lisp_Object Vinternal_error_checking;
 
 /* The default base directory XEmacs is installed under. */
 Lisp_Object Vconfigure_prefix_directory;
@@ -189,14 +190,14 @@ int noninteractive1;
 /* Nonzero means don't perform site-lisp searches at startup */
 int inhibit_site_lisp;
 
-/* Nonzero means don't perform package searches at startup */
-int inhibit_package_init;
+/* Nonzero means don't respect early packages at startup */
+int inhibit_early_packages;
 
-/* Nonzero means don't reload changed dumped lisp files at startup */
-int inhibit_update_dumped_lisp;
+/* Nonzero means don't load package autoloads at startup */
+int inhibit_autoloads;
 
-/* Nonzero means don't reload changed or new auto-autoloads files at startup */
-int inhibit_update_autoloads;
+/* Nonzero means print debug information about path searching */
+int debug_paths;
 
 /* Save argv and argc.  */
 char **initial_argv;
@@ -671,25 +672,28 @@ main_1 (int argc, char **argv, char **envp, int restart)
   if (argmatch (argv, argc, "-batch", "--batch", 5, NULL, &skip_args))
     {
 #if 0 /* I don't think this is correct. */
-      inhibit_update_autoloads = 1;
-      inhibit_update_dumped_lisp = 1;
+      inhibit_autoloads = 1;
 #endif
       noninteractive = 1;
     }
 
-  /* Partially handle -no-autoloads, -no-packages and -vanilla.  Packages */
+  if (argmatch (argv, argc, "-debug-paths", "--debug-paths",
+		11, NULL, &skip_args))
+      debug_paths = 1;
+
+  /* Partially handle -no-autoloads, -no-early-packages and -vanilla.  Packages */
   /* are searched prior to the rest of the command line being parsed in */
   /* startup.el */
-  if (argmatch (argv, argc, "-no-packages", "--no-packages",
+  if (argmatch (argv, argc, "-no-early-packages", "--no-early-packages",
 		6, NULL, &skip_args))
     {
-      inhibit_package_init = 1;
+      inhibit_early_packages = 1;
       skip_args--;
     }
   if (argmatch (argv, argc, "-vanilla", "--vanilla",
 		7, NULL, &skip_args))
     {
-      inhibit_package_init = 1;
+      inhibit_early_packages = 1;
       skip_args--;
     }
 
@@ -697,9 +701,14 @@ main_1 (int argc, char **argv, char **envp, int restart)
 		7, NULL, &skip_args))
     {
       /* Inhibit everything */
-      inhibit_package_init = 1;
-      inhibit_update_autoloads = 1;
-      inhibit_update_dumped_lisp = 1;
+      inhibit_autoloads = 1;
+      skip_args--;
+    }
+
+  if (argmatch (argv, argc, "-debug-paths", "--debug-paths",
+		6, NULL, &skip_args))
+    {
+      debug_paths = 1;
       skip_args--;
     }
 
@@ -967,6 +976,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MENUBARS
       syms_of_menubar_mswindows ();
 #endif
+#ifdef HAVE_SCROLLBARS
+      syms_of_scrollbar_mswindows ();
+#endif
 #ifdef HAVE_MSW_C_DIRED
       syms_of_dired_mswindows ();
 #endif
@@ -1080,6 +1092,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MENUBARS
       console_type_create_menubar_mswindows ();
 #endif
+#ifdef HAVE_TOOLBARS
+      console_type_create_toolbar_mswindows ();
+#endif
 #endif
 
       /* Now initialize the specifier types and associated symbols.
@@ -1147,7 +1162,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef FILE_CODING
       lstream_type_create_mule_coding ();
 #endif
-      lstream_type_create_print ();
 #ifdef HAVE_MS_WINDOWS
       lstream_type_create_mswindows_selectable ();
 #endif
@@ -1672,6 +1686,7 @@ static struct standard_args standard_args[] =
   { "-t", "--terminal", 95, 1 },
   { "-nw", "--no-windows", 90, 0 },
   { "-batch", "--batch", 85, 0 },
+  { "-debug-paths", "--debug-paths", 82, 0 },
   { "-help", "--help", 80, 0 },
   { "-version", "--version", 75, 0 },
   { "-V", 0, 75, 0 },
@@ -1687,10 +1702,11 @@ static struct standard_args standard_args[] =
   { "-vanilla", "--vanilla", 50, 0 },
   { "-no-autoloads", "--no-autoloads", 50, 0 },
   { "-no-site-file", "--no-site-file", 40, 0 },
-  { "-no-packages", "--no-packages", 35, 0 },
+  { "-no-early-packages", "--no-early-packages", 35, 0 },
   { "-u", "--user", 30, 1 },
   { "-user", 0, 30, 1 },
   { "-debug-init", "--debug-init", 20, 0 },
+  { "-debug-paths", "--debug-paths", 20, 0 },
 
   /* Xt options: */
   { "-i", "--icon-type", 15, 0 },
@@ -2450,8 +2466,7 @@ decode_path (CONST char *path)
     {
       p = strchr (path, SEPCHAR);
       if (!p) p = path + strlen (path);
-      lpath = Fcons (Ffile_name_as_directory(make_string ((CONST Bufbyte *) path,
-							  p - path)),
+      lpath = Fcons (make_string ((CONST Bufbyte *) path, p - path),
 		     lpath);
       if (*p)
 	path = p + 1;
@@ -2665,8 +2680,16 @@ Codename of this version of Emacs (a string).
 Non-nil means XEmacs is running without interactive terminal.
 */ );
 
-  DEFVAR_BOOL ("inhibit-package-init", &inhibit_package_init /*
-Set to non-nil when the package-path should not be searched at startup.
+  DEFVAR_BOOL ("inhibit-early-packages", &inhibit_early_packages /*
+Set to non-nil when the early packages should not be respected at startup.
+*/ );
+
+  DEFVAR_BOOL ("inhibit-autoloads", &inhibit_autoloads /*
+Set to non-nil when autoloads should not be loaded at startup.
+*/ );
+
+  DEFVAR_BOOL ("debug-paths", &debug_paths /*
+Set to non-nil when debug information about paths should be printed.
 */ );
 
   DEFVAR_BOOL ("inhibit-site-lisp", &inhibit_site_lisp /*
@@ -2675,16 +2698,6 @@ Set to non-nil when the site-lisp should not be searched at startup.
 #ifdef INHIBIT_SITE_LISP
   inhibit_site_lisp = 1;
 #endif
-
-  DEFVAR_BOOL ("inhibit-update-dumped-lisp", &inhibit_update_dumped_lisp /*
-Set to non-nil when modified dumped lisp should not be reloaded at startup.
-*/ );
-  inhibit_update_dumped_lisp = 1;
-
-  DEFVAR_BOOL ("inhibit-update-autoloads", &inhibit_update_autoloads /*
-Set to non-nil when modified or new autoloads files should not be reloaded.
-*/ );
-  inhibit_update_autoloads = 0;
 
   DEFVAR_INT ("emacs-priority", &emacs_priority /*
 Priority for XEmacs to run at.
@@ -2696,6 +2709,39 @@ before you compile XEmacs, to enable the code for this feature.
 */ );
   emacs_priority = 0;
 
+  DEFVAR_CONST_LISP ("internal-error-checking", &Vinternal_error_checking /*
+Internal error checking built-in into this instance of XEmacs.
+This is a list of symbols, initialized at build-time.  Legal symbols
+are:
+
+extents		- check extents prior to each extent change;
+typecheck	- check types strictly, aborting in case of error;
+malloc		- check operation of malloc;
+gc		- check garbage collection;
+bufpos		- check buffer positions.
+*/ );
+  Vinternal_error_checking = Qnil;
+#ifdef ERROR_CHECK_EXTENTS
+  Vinternal_error_checking = Fcons (intern ("extents"),
+				    Vinternal_error_checking);
+#endif
+#ifdef ERROR_CHECK_TYPECHECK
+  Vinternal_error_checking = Fcons (intern ("typecheck"),
+				    Vinternal_error_checking);
+#endif
+#ifdef ERROR_CHECK_MALLOC
+  Vinternal_error_checking = Fcons (intern ("malloc"),
+				    Vinternal_error_checking);
+#endif
+#ifdef ERROR_CHECK_GC
+  Vinternal_error_checking = Fcons (intern ("gc"),
+				    Vinternal_error_checking);
+#endif
+#ifdef ERROR_CHECK_BUFPOS
+  Vinternal_error_checking = Fcons (intern ("bufpos"),
+				    Vinternal_error_checking);
+#endif
+  Vinternal_error_checking = Fpurecopy (Vinternal_error_checking);
 }
 
 void
@@ -2707,24 +2753,31 @@ Each element is a string (directory name) or nil (try default directory).
 */ );
   Vexec_path = Qnil;
 
-  DEFVAR_LISP ("configure-exec-path", &Vconfigure_exec_path /*
-For internal use by the build procedure only.
-configure's idea of what EXEC-PATH will be.
-*/ );
-#ifdef PATH_EXEC
-  Vconfigure_exec_path = decode_path (PATH_EXEC);
-#else
-  Vconfigure_exec_path = Qnil;
-#endif
-
   DEFVAR_LISP ("exec-directory", &Vexec_directory /*
 *Directory of architecture-dependent files that come with XEmacs,
 especially executable programs intended for XEmacs to invoke.
 */ );
   Vexec_directory = Qnil;
 
+  DEFVAR_LISP ("configure-exec-directory", &Vconfigure_exec_directory /*
+For internal use by the build procedure only.
+configure's idea of what EXEC-DIRECTORY will be.
+*/ );
+#ifdef PATH_EXEC
+  Vconfigure_exec_directory = Ffile_name_as_directory
+    (build_string ((char *) PATH_EXEC));
+#else
+  Vconfigure_exec_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("lisp-directory", &Vlisp_directory /*
+*Directory of core Lisp files that come with XEmacs.
+*/ );
+  Vlisp_directory = Qnil;
+
   DEFVAR_LISP ("configure-lisp-directory", &Vconfigure_lisp_directory /*
-Directory of core Lisp files that come with XEmacs.
+For internal use by the build procedure only.
+configure's idea of what LISP-DIRECTORY will be.
 */ );
 #ifdef PATH_LOADSEARCH
   Vconfigure_lisp_directory = Ffile_name_as_directory
@@ -2780,6 +2833,11 @@ configure's idea of what LOCK-DIRECTORY will be.
   Vconfigure_lock_directory = Qnil;
 #endif
 #endif /* CLASH_DETECTION */
+
+  DEFVAR_LISP ("site-directory", &Vsite_directory /*
+*Directory of site-specific Lisp files that come with XEmacs.
+*/ );
+  Vsite_directory = Qnil;
 
   DEFVAR_LISP ("configure-site-directory", &Vconfigure_site_directory /*
 For internal use by the build procedure only.

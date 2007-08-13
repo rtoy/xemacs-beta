@@ -248,12 +248,6 @@ Boston, MA 02111-1307, USA.  */
 
 #endif /* ELF */
 
-/* Extra stuff which probably should be someplace else but is here out
-   of expediency. */
-
-#define LIB_X11_LIB "-lX11"
-#define LIB_MOTIF "-lXm -lgen"
-
 /* Formerly "BSD_PGRPS" */
 
 #define SIGIO_REQUIRES_SEPARATE_PROCESS_GROUP

@@ -147,7 +147,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 		 anymore.  The crashes in this function were reported
 		 because MAXNAMLEN was used to remember the *whole*
 		 statbuf, instead of using MAXPATHLEN.  This should be
-		 tested after 20.5 is released.  */
+		 tested after 21.0 is released.  */
 
 	      /* We normally use the buffer created by alloca.
 		 However, if the file name we get too big, we'll use a

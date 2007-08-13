@@ -150,8 +150,8 @@ one version of a package available.")
 
 (defvar package-get-remote
   '(
-    ("ftp.xemacs.org" "/pub/xemacs/beta/xemacs-20.5/packages/binary-packages")
-    ("ftp.xemacs.org" "/pub/xemacs/beta/xemacs-20.5/packages/single-file-packages")
+    ("ftp.xemacs.org" "/pub/xemacs/beta/xemacs-21.0/packages/binary-packages")
+    ("ftp.xemacs.org" "/pub/xemacs/beta/xemacs-21.0/packages/single-file-packages")
     ("ftp.xemacs.org" "/pub/xemacs/package"))
   "*List of remote sites to contact for downloading packages.
 List format is '(site-name directory-on-site).  Each site is tried in

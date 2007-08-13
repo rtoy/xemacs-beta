@@ -521,7 +521,7 @@ tt_message_arg_ival_string (Tt_message m, int n)
   int value;
 
   check_status (tt_message_arg_ival (m, n, &value));
-  sprintf (buf, "%d", value);
+  long_to_string (buf, value);
   return build_string (buf);
 }
 

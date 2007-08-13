@@ -316,10 +316,6 @@ See `set-frame-properties' for built-in property names."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; paths
 
-(defvar site-directory nil
-  "This used to be the location of the site-lisp directory.")
-(make-obsolete-variable 'site-directory "call paths-find-site-lisp-directory instead.")
-
 (defvar Info-default-directory-list nil
   "This used to be the initial value of Info-directory-list.
 If you want to change the locations where XEmacs looks for info files,

@@ -38,10 +38,6 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "imgproc.h"
 
-#ifdef HAVE_XPM
-#include <X11/xpm.h>
-#endif
-
 #ifdef FILE_CODING
 #include "file-coding.h"
 #endif
@@ -194,6 +190,7 @@ static Lisp_Object
 locate_pixmap_file (Lisp_Object name)
 {
   /* This function can GC if IN_REDISPLAY is false */
+  Lisp_Object found;
 
   /* Check non-absolute pathnames with a directory component relative to
      the search path; that's the way Xt does it. */
@@ -209,23 +206,17 @@ locate_pixmap_file (Lisp_Object name)
 	return Qnil;
     }
 
-  if (!NILP (Vmswindows_bitmap_file_path))
-  {
-    Lisp_Object found;
-    if (locate_file (Vmswindows_bitmap_file_path, name, "", &found, R_OK) < 0)
-      {
-	Lisp_Object temp = list1 (Vdata_directory);
-	struct gcpro gcpro1;
+  if (locate_file (Vmswindows_bitmap_file_path, name, "", &found, R_OK) < 0)
+    {
+      Lisp_Object temp = list1 (Vdata_directory);
+      struct gcpro gcpro1;
 
-	GCPRO1 (temp);
-	locate_file (temp, name, "", &found, R_OK);
-	UNGCPRO;
-      }
+      GCPRO1 (temp);
+      locate_file (temp, name, "", &found, R_OK);
+      UNGCPRO;
+    }
     
-    return found;
-  }
-  else
-    return Qnil;
+  return found;
 }
 
 /* If INSTANTIATOR refers to inline data, return Qnil.
@@ -366,19 +357,129 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = bmp_info->bmiHeader.biBitCount;
 }
 
+void
+mswindows_create_icon_from_image(Lisp_Object image, struct frame* f, int size)
+{
+  HBITMAP mask, bmp;
+  HDC hcdc = FRAME_MSWINDOWS_CDC (f);
+  HDC hdcDst = CreateCompatibleDC (hcdc);  
+  ICONINFO x_icon;
+  
+  if (size!=16 && size!=32)
+    {
+      signal_simple_error("Icons must be 16x16 or 32x32", image);
+    }
+
+#if 0
+  iIconWidth = GetSystemMetrics(SM_CXICON);
+  iIconHeight = GetSystemMetrics(SM_CYICON);
+#endif
+
+  SelectObject(hcdc, XIMAGE_INSTANCE_MSWINDOWS_BITMAP (image)); 
+
+  bmp = CreateCompatibleBitmap(hcdc, size, size);
+  DeleteObject( SelectObject(hdcDst, bmp) );
+  
+  if (!StretchBlt(hdcDst, 0, 0, size, size,
+		  hcdc, 0, 0, 
+		  XIMAGE_INSTANCE_PIXMAP_WIDTH (image), 
+		  XIMAGE_INSTANCE_PIXMAP_HEIGHT (image), 
+		  SRCCOPY))
+    {
+      printf("StretchBlt failed\n");
+    }
+  
+  if (!(mask = CreateBitmap(size, size, 1, 1, NULL)))
+    {
+      printf("CreateBitmap() failed\n");
+    }
+  if (!SelectObject(hdcDst, mask)
+      ||
+      !SelectObject(hcdc, bmp))
+    {
+      printf("SelectObject() failed\n");
+    }
+  
+  if (!BitBlt(hdcDst, 0, 0, size, size,
+	     hcdc, 0, 0, 
+	     NOTSRCCOPY))
+    {
+      printf("BitBlt failed\n");
+    }
+
+  SelectObject(hdcDst, 0);
+  SelectObject(hcdc, 0);
+  /*   PatBlt(hdcDst, 0, 0, size, size, WHITENESS);*/
+  
+  x_icon.fIcon=TRUE;
+  x_icon.xHotspot=XIMAGE_INSTANCE_PIXMAP_HOTSPOT_X (image);
+  x_icon.yHotspot=XIMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (image);
+  x_icon.hbmMask=mask;
+  x_icon.hbmColor=bmp;
+  
+  XIMAGE_INSTANCE_MSWINDOWS_ICON (image)=
+    CreateIconIndirect (&x_icon);
+  XIMAGE_INSTANCE_MSWINDOWS_MASK (image)=mask;
+  
+  DeleteDC(hdcDst);
+}
+
+int
+mswindows_resize_dibitmap_instance (struct Lisp_Image_Instance* ii,
+				    struct frame* f,
+				    int newx, int newy)
+{
+  HBITMAP newbmp;
+  HDC hcdc = FRAME_MSWINDOWS_CDC (f);
+  HDC hdcDst = CreateCompatibleDC (hcdc);  
+  
+  SelectObject(hcdc, IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii)); 
+  
+  newbmp = CreateCompatibleBitmap(hcdc, newx, newy);
+
+  DeleteObject( SelectObject(hdcDst, newbmp) );
+  
+  if (!StretchBlt(hdcDst, 0, 0, newx, newy,
+		  hcdc, 0, 0, 
+		  IMAGE_INSTANCE_PIXMAP_WIDTH (ii), 
+		  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii), 
+		  SRCCOPY))
+    {
+      return FALSE;
+    }
+  
+  SelectObject(hdcDst, 0);
+  SelectObject(hcdc, 0);
+  
+  if (IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii))
+    DeleteObject (IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii));
+  if (IMAGE_INSTANCE_MSWINDOWS_MASK (ii))
+    DeleteObject (IMAGE_INSTANCE_MSWINDOWS_MASK (ii));
+
+  IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = newbmp;
+  IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = newbmp;
+  IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = newx;
+  IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = newy;
+
+  DeleteDC(hdcDst);
+
+  return TRUE;
+}
+
 /**********************************************************************
  *                               XPM                                  *
  **********************************************************************/
 
 #ifdef HAVE_XPM
 static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
-			 unsigned char** data,
-			 int* width, int* height,
-			 COLORREF bg)
+			  unsigned char** data,
+			  int* width, int* height,
+			  int* x_hot, int* y_hot,
+			  COLORREF bg)
 {
   XpmImage xpmimage;
   XpmInfo xpminfo;
-  int result, i;
+  int result, i, transp_idx, maskbpline;
   unsigned char* dptr;
   unsigned int* sptr;
   COLORREF color; /* the american spelling virus hits again .. */
@@ -386,7 +487,8 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
 
   xzero (xpmimage);
   xzero (xpminfo);
-  
+  xpminfo.valuemask=XpmHotspot;
+
   result = XpmCreateXpmImageFromBuffer ((char*)buffer,
 				       &xpmimage,
 				       &xpminfo);
@@ -413,8 +515,11 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
   
   *width = xpmimage.width;
   *height = xpmimage.height;
-
+  maskbpline = (int)(~3UL & (unsigned long)
+		     (((~7UL & (unsigned long)(*width + 7)) / 8) + 3));
+  
   *data = xnew_array_and_zero (unsigned char, *width * *height * 3);
+
   if (!*data)
     {
       XpmFreeXpmImage (&xpmimage);
@@ -437,7 +542,8 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
 				/* pick up transparencies */
       if (!strcmp (xpmimage.colorTable[i].c_color,"None"))
 	{
-	  colortbl[i]=bg;
+	  colortbl[i]=bg; /* PALETTERGB(0,0,0); */
+	  transp_idx=i;
 	}
       else
 	{
@@ -459,10 +565,19 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
       *dptr++=GetBValue (color); /* blue */
     }
 
+  *x_hot=xpminfo.x_hotspot;
+  *y_hot=xpminfo.y_hotspot;
+
   XpmFreeXpmImage (&xpmimage);
   XpmFreeXpmInfo (&xpminfo);
   xfree (colortbl);
   return TRUE;
+}
+
+Lisp_Object
+mswindows_xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
+{
+  return simple_image_type_normalize (inst, console_type, Qxpm);
 }
 
 void
@@ -476,7 +591,7 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   CONST Extbyte		*bytes;
   Extcount 		len;
   unsigned char		*eimage;
-  int			width, height;
+  int			width, height, x_hot, y_hot;
   BITMAPINFO*		bmp_info;
   unsigned char*	bmp_data;
   int			bmp_bits;
@@ -498,7 +613,7 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
 
   /* convert to an eimage to make processing easier */
   if (!xpm_to_eimage (image_instance, bytes, &eimage, &width, &height,
-		     bkcolor))
+		      &x_hot, &y_hot, bkcolor))
     {
       signal_simple_error ("XPM to EImage conversion failed", 
 			   image_instance);
@@ -508,7 +623,6 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   if (!(bmp_info=EImage2DIBitmap (device, width, height, eimage,
 				 &bmp_bits, &bmp_data)))
     {
-      xfree (eimage);
       signal_simple_error ("XPM to EImage conversion failed",
 			   image_instance);
     }
@@ -518,6 +632,9 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   init_image_instance_from_dibitmap (ii, bmp_info, dest_mask,
 				     bmp_data, bmp_bits, instantiator);
 
+  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), x_hot);
+  XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), y_hot);
+  
   xfree (bmp_info);
   xfree (bmp_data);
 }
@@ -743,4 +860,3 @@ void
 complex_vars_of_glyphs_mswindows (void)
 {
 }
-

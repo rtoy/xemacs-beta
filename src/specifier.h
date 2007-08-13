@@ -24,6 +24,66 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_SPECIFIER_H_
 #define _XEMACS_SPECIFIER_H_
 
+/*
+  MAGIC SPECIFIERS
+  ================
+
+  Magic specifiers are used to provide fallback values for window
+  system provided specifications, reflecting user preferences on the
+  window system, such as default fonts, colors, scrollbar thickness
+  etc.
+
+  A magic specifier consists of two specifier objects. The first one
+  behaves like a normal specifier in all sences. The second one, a
+  ghost specifier, is a fallback value for the first one.
+
+  Ghost specifiers have the following properties:
+  - Have back pointers to their parent specifiers.
+  - Do not have instance data. Instead, they share parent's instance
+    data.
+  - Have the same methods structure pointer.
+  - Share parent's caching scheme.
+  - Store fallback value instead of their parent.
+
+  Ghost specifiers normally are not modifiable at the lisp level, and
+  only used to supply fallback instance values. Although, under
+  certain rare conditions, all functions that modify specifiers
+  operate on ghost objects. This behavior is controlled by the global
+  variable Vreveal_ghoste_specifiers. It is not exposed to lisp, and
+  is set during calls to lisp functions which initialize global,
+  device and frame defaults, such as
+  init-{global,frame,device}-{faces,toolbars,etc}.
+
+  Thus, values supplied by resources or other means of a window system 
+  stored in externally unmodifiable ghost objects. Regular lisp code
+  may thus freely modify the normal part of a magic specifier, and
+  removing a specification for a particular domain causes the
+  specification to consider ghost-provided fallback values, or its own 
+  fallback value.
+
+  Rules of conduct for magic specifiers
+  -------------------------------------
+  1. All functions exposed to lisp operate on a ghost specifier when
+     Vreveal_ghoste_specifiers is non-nil. This includes both
+     modifying and non-modifying functions, such as
+     Fspecifier_instance, for symmetry and consistency.
+  2. These functions deal with the above condition internally, passing 
+     mangled specifier pointer to internal functions. The internal
+     functions always work on a specifier passed, and do not regard
+     the value of Vreveal_ghoste_specifiers.
+  3. recompute_*() functions always operate on the whole specifier
+     when passed only a ghost object, by substituting it with their
+     parent bodily object.
+  4. All specifier methods, except for instantiate method, are passed
+     the bodily object of the magic specifier. Instantiate method is
+     passed the specifier being instantiated.
+  5. Only bodily objects are passed to set_specifier_caching function, 
+     and only these may be cached.
+  6. All specifiers are added to Vall_specifiers list, both bodily and 
+     ghost. The pair of objects is always removed from the list at the 
+     same time.
+*/
+
 struct specifier_methods
 {
   CONST char *name;
@@ -31,21 +91,36 @@ struct specifier_methods
 
   /* Implementation specific methods: */
 
-  /* #### Document me */
-  /* Create method */
+  /* Create method: Initialize specifier data. Optional. */
   void (*create_method) (Lisp_Object specifier);
-  /* Mark method */
+
+  /* Mark method: Mark any lisp object within specifier data
+     structure. Not required if no specifier data are Lisp_Objects. */
   void (*mark_method) (Lisp_Object specifier, void (*markobj) (Lisp_Object));
-  /* Equal method */
+
+  /* Equal method: Compare two specifiers. This is called after
+     ensuring that the two specifiers are of the same type, and habe
+     the same specs.  Quit is inhibited during the call so it is safe
+     to call internal_equal().
+
+     If this function is not present, specifiers considered equal when
+     the above conditions are met, i.e. as if the method returned
+     non-zero. */
   int (*equal_method) (Lisp_Object sp1, Lisp_Object sp2, int depth);
-  /* Hash method */
+
+  /* Hash method: Hash specifier instance data. This has to hash only
+    data structure of the specifier, as specs are hashed by the core
+    code.
+
+     If this function is not present, hashing behaves as if it
+     returned zero. */
   unsigned long (*hash_method) (Lisp_Object specifier, int depth);
 
   /* Validate method: Given an instantiator, verify that it's
      valid for this specifier type.  If not, signal an error.
 
-     If this function is not present, all instantiators are
-     considered valid. */
+     If this function is not present, all instantiators are considered
+     valid. */
   void (*validate_method) (Lisp_Object instantiator);
 
   /* Validate-matchspec method: Given a matchspec, verify that it's
@@ -55,15 +130,33 @@ struct specifier_methods
      valid.  Note that this differs from validate_method(). */
   void (*validate_matchspec_method) (Lisp_Object matchspec);
 
-  /* Instantiate method */
+  /* Instantiate method: Return SPECIFIER instance in DOMAIN,
+     specified by INSTANTIATOR.  MATCHSPEC specifies an additional
+     constraints on the instance value (see the docstring for
+     Fspecifier_matching_instance function). MATCHSPEC is passed
+     Qunbound when no matching constraints are imposed. The method is
+     called via call_with_suspended_errors(), so allowed to eval
+     safely.
+
+     DEPTH is a lisp integer denoting current depth of instantiation
+     calls.  #### WTF a method can do with this?
+
+     This method must presume that both INSTANTIATOR and MATCSPEC are
+     already validated by the corresponding validate_* methods, and
+     may abort if they are invalid.
+
+     Return value is an instance, which is returned immediately to the
+     caller, or Qunbound to continue instantiation lookup chain.
+
+     If this function is not present, INSTANTIATOR is used as the
+     specifier instance.  This is the usual case for "simple"
+     specifiers, like integer and boolean. */
   Lisp_Object (*instantiate_method) (Lisp_Object specifier,
 				     Lisp_Object matchspec,
 				     Lisp_Object domain,
 				     Lisp_Object instantiator,
-				     /* always an integer, but encapsulated
-					as a Lisp_Object so it can be called
-					from call_with_suspended_errors() */
 				     Lisp_Object depth);
+
   /* Going-to-add method: Called when an instantiator is about
      to be added to a specifier.  This function can specify
      that different instantiators should be used instead by
@@ -72,13 +165,21 @@ struct specifier_methods
      instantiator has been copied with copy-tree, so feel
      free to reuse parts of it to create a new instantiator.
      The tag-set, however, is not copied and is not canonicalized
-     (that will be done on the result of this function).
-     */
+     (that will be done on the result of this function). */
   Lisp_Object (*going_to_add_method) (Lisp_Object specifier,
 				      Lisp_Object locale,
 				      Lisp_Object tag_set,
 				      Lisp_Object instantiator);
-  /* After-change method */
+
+  /* After-change method: Called when the SPECIFIER has just been
+     changed in LOCALE.  The method is called upon:
+     * Removing and adding specs to/from the specifier;
+     * Changing the specifier fallback.
+
+     #### The method may have called more than once per each specifier
+     change.
+
+     #### Do not still know if this can safely eval. */
   void (*after_change_method) (Lisp_Object specifier,
 			       Lisp_Object locale);
 
@@ -111,7 +212,16 @@ struct Lisp_Specifier
   Lisp_Object buffer_specs;
 
   struct specifier_caching *caching;
+
+  /* This can be either nil, for a plain, non-magic specifier object,
+     t for the normal part of the magic specifier, or #<specifier> for
+     the ghost part of the magic specifier, a pointer to its parent
+     object */
+  Lisp_Object magic_parent;
+  
+  /* Fallback value. For magic specifiers, it is a pointer to the ghost. */
   Lisp_Object fallback;
+
   /* type-specific extra data attached to a specifier */
   char data[1];
 };
@@ -147,6 +257,13 @@ error_check_##type##_specifier_data (struct Lisp_Specifier *sp);	\
 INLINE struct type##_specifier *					\
 error_check_##type##_specifier_data (struct Lisp_Specifier *sp)		\
 {									\
+  if (SPECIFIERP (sp->magic_parent))					\
+    {									\
+      assert (SPECIFIER_TYPE_P (sp, type));				\
+      sp = XSPECIFIER (sp->magic_parent);				\
+    }									\
+  else									\
+    assert (NILP (sp->magic_parent) || EQ (sp->magic_parent, Qt));	\
   assert (SPECIFIER_TYPE_P (sp, type));					\
   return (struct type##_specifier *) sp->data;				\
 }									\
@@ -183,12 +300,35 @@ do {									\
 #define SPECIFIER_TYPE_P(sp, type) \
   ((sp)->methods == type##_specifier_methods)
 
+/* Any of the two of the magic spec */
+#define MAGIC_SPECIFIER_P(sp) \
+  (!NILP((sp)->magic_parent))
+/* Normal part of the magic specifier */
+#define BODILY_SPECIFIER_P(sp) \
+  (EQ ((sp)->magic_parent, Qt))
+/* Ghost part of the magic specifier */
+#define GHOST_SPECIFIER_P(sp) \
+  (SPECIFIERP((sp)->magic_parent))
+/* The same three, when used in GC */
+#define GC_MAGIC_SPECIFIER_P(sp) \
+  (!GC_NILP((sp)->magic_parent))
+#define GC_BODILY_SPECIFIER_P(sp) \
+  (GC_EQ ((sp)->magic_parent, Qt))
+#define GC_GHOST_SPECIFIER_P(sp) \
+  (GC_SPECIFIERP((sp)->magic_parent))
+
+#define GHOST_SPECIFIER(sp) \
+  (XSPECIFIER ((sp)->fallback))
+
 #ifdef ERROR_CHECK_TYPECHECK
 # define SPECIFIER_TYPE_DATA(sp, type) \
    error_check_##type##_specifier_data (sp)
 #else
-# define SPECIFIER_TYPE_DATA(sp, type) \
-  ((struct type##_specifier *) (sp)->data)
+# define SPECIFIER_TYPE_DATA(sp, type)		\
+  ((struct type##_specifier *)			\
+    (GHOST_SPECIFIER_P(sp)			\
+     ? XSPECIFIER((sp)->magic_parent)->data	\
+     : (sp)->data))
 #endif
 
 /* #### Need to create ERROR_CHECKING versions of these. */
@@ -250,6 +390,7 @@ EXFUN (Fvalid_specifier_locale_p, 1);
 
 extern Lisp_Object Qfallback, Qnatnum;
 
+Lisp_Object make_magic_specifier (Lisp_Object type);
 Lisp_Object decode_locale_list (Lisp_Object locale);
 extern enum spec_add_meth
 decode_how_to_add_specification (Lisp_Object how_to_add);
@@ -270,6 +411,16 @@ void set_specifier_fallback (Lisp_Object specifier,
 			     Lisp_Object fallback);
 void recompute_all_cached_specifiers_in_window (struct window *w);
 void recompute_all_cached_specifiers_in_frame (struct frame *f);
+
+/* Counterparts of Fadd_spec_to_specifier and Fremove_specifier,
+   which operate directly on ghost objects */
+void add_spec_to_ghost_specifier (Lisp_Object specifier, Lisp_Object instantiator,
+				  Lisp_Object locale, Lisp_Object tag_set,
+				  Lisp_Object how_to_add);
+void remove_ghost_specifier (Lisp_Object specifier, Lisp_Object locale,
+			     Lisp_Object tag_set, Lisp_Object exact_p);
+
+int reveal_ghost_specifiers_protected (void);
 
 void cleanup_specifiers (void);
 void prune_specifiers (int (*obj_marked_p) (Lisp_Object));

@@ -5,7 +5,7 @@
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: Jan 1998
-;; Version: $Revision: 1.2 $
+;; Version: $Revision: 1.3 $
 ;; Keywords: help comm
 
 ;; This file is part of XEmacs
@@ -36,10 +36,13 @@
 ;;; Code:
 
 (eval-when '(load eval)
-  (require 'ldap-internal))
+  (require 'ldap))
+
+(defvar ldap-default-host nil
+  "*Default LDAP server.")
 
 (defvar ldap-host-parameters-alist nil
-  "An alist describing per host options to use for LDAP transactions
+  "*An alist describing per host options to use for LDAP transactions
 The list has the form ((HOST OPTION OPTION ...) (HOST OPTION OPTION ...))
 HOST is the name of an LDAP server. OPTIONs are cons cells describing
 parameters for the server.  Valid options are:
@@ -73,20 +76,22 @@ the associated values.
 Additional search parameters can be specified through 
 `ldap-host-parameters-alist' which see."
   (interactive "sFilter:")
-  (let (host-alist)
+  (let (host-alist res ldap)
     (if (null host)
 	(setq host ldap-default-host))
     (if (null host)
 	(error "No LDAP host specified"))
     (setq host-alist
 	  (assoc host ldap-host-parameters-alist))
-    (ldap-search-internal (append
-			   (list 'host host
-				 'filter filter
-				 'attributes attributes 
-				 'attrsonly attrsonly)
-			   (alist-to-plist host-alist)))
-    ))
+    (message "Opening LDAP connection to %s..." host)
+    (setq ldap (ldap-open host (alist-to-plist host-alist)))
+    (message "Searching with LDAP on %s..." host)
+    (setq res (ldap-search-internal ldap filter 
+				    (cdr (assq 'base host-alist))
+				    (cdr (assq 'scope host-alist))
+				    attributes attrsonly))
+    (ldap-close ldap)
+    res))
 
 		
 

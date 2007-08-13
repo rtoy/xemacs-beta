@@ -649,80 +649,84 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
   return vmotion_1 (w, orig, vtarget, ret_vpos, NULL);
 }
 
+/* Helper for Fvertical_motion and Fvertical_motion_pixels.
+ * Share as much code as possible so these stay synched.
+ */
+static
+Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
+                               int pixels)
+{
+  Bufpos bufpos;
+  Bufpos orig;
+  int selected;
+  int *vpos, *vpix;
+  int value=0;
+  struct window *w;
+
+  if (NILP (window))
+    window = Fselected_window (Qnil);
+
+  CHECK_WINDOW (window);
+  CHECK_INT (lines);
+
+  selected = (EQ (window, Fselected_window (Qnil)));
+
+  w = XWINDOW (window);
+
+  orig = selected ? BUF_PT (XBUFFER (w->buffer))
+                  : marker_position (w->pointm[CURRENT_DISP]);
+
+  vpos = pixels ? NULL   : &value;
+  vpix = pixels ? &value : NULL;
+
+  bufpos = vmotion_1 (w, orig, XINT (lines), vpos, vpix);
+
+  /* Note that the buffer's point is set, not the window's point. */
+  if (selected) 
+    BUF_SET_PT (XBUFFER (w->buffer), bufpos);
+  else
+    set_marker_restricted (w->pointm[CURRENT_DISP],
+			   make_int(bufpos),
+			   w->buffer);
+
+  return make_int (value);
+}
+
 DEFUN ("vertical-motion", Fvertical_motion, 1, 2, 0, /*
 Move to start of frame line LINES lines down.
 If LINES is negative, this is moving up.
-
-The optional second argument WINDOW specifies the window to use for
-parameters such as width, horizontal scrolling, and so on.
+Optional second argument is WINDOW to move in,
 the default is the selected window.
+
+Sets point to position found; this may be start of line
+or just the start of a continuation line.
+Returns number of lines moved; may be closer to zero than LINES
+if beginning or end of buffer was reached.
+
 Note that `vertical-motion' sets WINDOW's buffer's point, not
 WINDOW's point. (This differs from FSF Emacs, which buggily always
 sets current buffer's point, regardless of WINDOW.)
-
-Sets point to position found; this may be start of line
- or just the start of a continuation line.
-Returns number of lines moved; may be closer to zero than LINES
- if beginning or end of buffer was reached.
-Optional second argument is WINDOW to move in.
 */
        (lines, window))
 {
-  if (NILP (window))
-    window = Fselected_window (Qnil);
-  CHECK_WINDOW (window);
-  {
-    Bufpos bufpos;
-    int vpos;
-    struct window *w  = XWINDOW (window);
-
-    CHECK_INT (lines);
-
-    bufpos = vmotion (XWINDOW (window), BUF_PT (XBUFFER (w->buffer)),
-		      XINT (lines), &vpos);
-
-    /* Note that the buffer's point is set, not the window's point. */
-    BUF_SET_PT (XBUFFER (w->buffer), bufpos);
-
-    return make_int (vpos);
-  }
+  return vertical_motion_1 (lines, window, /* pixels = */ 0);
 }
 
 DEFUN ("vertical-motion-pixels", Fvertical_motion_pixels, 1, 2, 0, /*
 Move to start of frame line LINES lines down.
 If LINES is negative, this is moving up.
+Optional second argument is WINDOW to move in,
+the default is the selected window.
 
 This function is identical in behavior to `vertical-motion'
 except that the vertical pixel height of the motion which
 took place is returned instead of the actual number of lines
 moved.  A motion of zero lines returns the height of the
 current line.
-
-The optional second argument WINDOW specifies the window to use 
-for parameters such as width, horizontal scrolling, and so on.  
-The default is the selected window.  Note that this function
-sets WINDOW's buffer's point, not WINDOW's point.
 */
        (lines, window))
 {
-  if (NILP (window))
-    window = Fselected_window (Qnil);
-  CHECK_WINDOW (window);
-  {
-    Bufpos bufpos;
-    int vpix;
-    struct window *w  = XWINDOW (window);
-
-    CHECK_INT (lines);
-
-    bufpos = vmotion_1 (XWINDOW (window), BUF_PT (XBUFFER (w->buffer)),
-		      XINT (lines), NULL, &vpix);
-
-    /* Note that the buffer's point is set, not the window's point. */
-    BUF_SET_PT (XBUFFER (w->buffer), bufpos);
-
-    return make_int (vpix);
-  }
+  return vertical_motion_1 (lines, window, /* pixels = */ 1);
 }
 
 

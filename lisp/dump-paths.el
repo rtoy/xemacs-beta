@@ -29,18 +29,44 @@
 ;; This sets up the various paths for continuing loading files for
 ;; dumping.
 
-(let ((roots (paths-find-emacs-roots invocation-directory
+(let ((debug-paths (or debug-paths
+		      (and (getenv "EMACSDEBUGPATHS")
+			   t)))
+      (roots (paths-find-emacs-roots invocation-directory
 				     invocation-name)))
 
-  (let ((stuff (packages-find-packages roots inhibit-package-init)))
+  (if debug-paths
+      (princ (format "XEmacs thinks the roots of its hierarchy are:\n%S\n"
+		     roots)))
+
+  (let ((stuff (packages-find-packages roots)))
     (setq late-packages (car (cdr stuff))))
 
   (setq late-package-load-path (packages-find-package-load-path late-packages))
+
+  (if debug-paths
+      (progn
+	(princ (format "configure-package-path:\n%S\n" configure-package-path)
+	       'external-debugging-output)
+	(princ (format "late-packages and late-package-load-path:\n%S\n%S\n"
+		       late-packages late-package-load-path)
+	       'external-debugging-output)))
+
+  (setq lisp-directory (paths-find-lisp-directory roots))
+  (if debug-paths
+      (princ (format "lisp-directory:\n%S\n" lisp-directory)
+	     'external-debugging-output))
+  (setq site-directory (and (null inhibit-site-lisp)
+			    (paths-find-site-lisp-directory roots)))
+  (if (and debug-paths (null inhibit-site-lisp))
+      (princ (format "site-directory:\n%S\n" site-directory)
+	     'external-debugging-output))
 
   (setq load-path (paths-construct-load-path roots
 					     '()
 					     late-package-load-path
 					     '()
-					     inhibit-site-lisp)))
+					     lisp-directory
+					     site-directory)))
 
 ;;; dump-paths.el ends here

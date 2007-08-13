@@ -884,7 +884,7 @@ If FROM or TO is negative, it counts from the end.
 The resulting subsequence is always the same type as the original
  sequence.
 If SEQ is a string, relevant parts of the string-extent-data are copied
- in the new string.
+ to the new string.
 */
        (seq, from, to))
 {
@@ -900,10 +900,12 @@ If SEQ is a string, relevant parts of the string-extent-data are copied
     }
 
   len = XINT (Flength (seq));
+
   CHECK_INT (from);
   f = XINT (from);
   if (f < 0)
     f = len + f;
+
   if (NILP (to))
     t = len;
   else
@@ -929,7 +931,7 @@ If SEQ is a string, relevant parts of the string-extent-data are copied
       return result;
     }
 
-  if (CONSP (seq))
+  if (LISTP (seq))
     {
       Lisp_Object result = Qnil;
       int i;
@@ -3125,7 +3127,7 @@ changing the value of `foo'.
 	{
 	  /* Found the first cons, which will be our return value.  */
 	  Lisp_Object last = val;
-	  
+
 	  for (argnum++; argnum < nargs; argnum++)
 	    {
 	      Lisp_Object next = args[argnum];

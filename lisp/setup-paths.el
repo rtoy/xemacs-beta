@@ -38,6 +38,16 @@
 
 ;;; Code:
 
+(defvar paths-load-path-depth 1
+  "Depth of load-path searches in core Lisp paths.")
+
+(defvar paths-default-info-directories
+  (list (paths-construct-path '("usr" "local" "info")
+			      (char-to-string directory-sep-char))
+	(paths-construct-path '("usr" "info")
+			      (char-to-string directory-sep-char)))
+  "Directories appended to the end of the info path by default.")
+
 (defun paths-find-site-lisp-directory (roots)
   "Find the site Lisp directory of the XEmacs hierarchy."
   (paths-find-site-directory roots "site-lisp"
@@ -52,21 +62,20 @@
 
 (defun paths-construct-load-path
   (roots early-package-load-path late-package-load-path last-package-load-path
-	 &optional inhibit-site-lisp)
+	 lisp-directory
+	 &optional site-lisp-directory)
   "Construct the load path."
   (let* ((envvar-value (getenv "EMACSLOADPATH"))
-	 (env-load-path (and envvar-value
-			     (decode-path-internal envvar-value)))
-	 (site-lisp-directory
-	  (and (null inhibit-site-lisp)
-	       (paths-find-site-lisp-directory roots)))
+	 (env-load-path
+	  (and envvar-value
+	       (paths-decode-directory-path envvar-value 'drop-empties)))
 	 (site-lisp-load-path
 	  (and site-lisp-directory
-	       (paths-find-recursive-load-path (list site-lisp-directory))))
-	 (lisp-directory (paths-find-lisp-directory roots))
+	       (paths-find-recursive-load-path (list site-lisp-directory)
+					       paths-load-path-depth)))
 	 (lisp-load-path
-	  (and lisp-directory
-	       (paths-find-recursive-load-path (list lisp-directory)))))
+	  (paths-find-recursive-load-path (list lisp-directory)
+					  paths-load-path-depth)))
     (append env-load-path
 	    early-package-load-path
 	    site-lisp-load-path
@@ -89,11 +98,11 @@
       (packages-find-package-info-path late-packages)
       (packages-find-package-info-path last-packages)
       (and info-path-envval
-	   (decode-path-internal info-path-envval)))
+	   (paths-decode-directory-path info-path-envval 'drop-empties)))
      (and (not info-path-envval)
 	  (paths-uniq-append
 	   (paths-directories-which-exist configure-info-path)
-	   (paths-directories-which-exist '("/usr/local/info/" "/usr/info/")))))))
+	   (paths-directories-which-exist paths-default-info-directories))))))
 
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory."
@@ -116,7 +125,7 @@
 
 (defun paths-find-exec-directory (roots)
   "Find the binary directory."
-  (paths-find-architecture-directory roots "lib-src"))
+  (paths-find-architecture-directory roots "lib-src" configure-exec-directory))
 
 (defun paths-construct-exec-path (roots exec-directory
 				  early-packages late-packages last-packages)
@@ -124,14 +133,13 @@
   (append
    (let ((path-envval (getenv "PATH")))
      (if path-envval
-	 (decode-path-internal path-envval)))
+	 (paths-decode-directory-path path-envval 'drop-empties)))
    (packages-find-package-exec-path early-packages)
    (packages-find-package-exec-path late-packages)
    (packages-find-package-exec-path last-packages)
    (let ((emacspath-envval (getenv "EMACSPATH")))
-     (if emacspath-envval
-	 (decode-path-internal emacspath-envval)
-       (paths-directories-which-exist configure-exec-path)))
+     (and emacspath-envval
+	  (decode-path-internal emacspath-envval)))
    (and exec-directory
 	(list exec-directory))))
 

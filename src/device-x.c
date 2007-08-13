@@ -126,15 +126,23 @@ get_device_from_display (Display *dpy)
 {
   struct device *d = get_device_from_display_1 (dpy);
 
+#if !defined(INFODOCK)
+# define FALLBACK_RESOURCE_NAME "xemacs"
+# else
+# define FALLBACK_RESOURCE_NAME "infodock"
+#endif
+
   if (!d) {
     /* This isn't one of our displays.  Let's crash? */
     stderr_out
       ("\n%s: Fatal X Condition.  Asked about display we don't own: \"%s\"\n",
        (STRINGP (Vinvocation_name) ?
-	(char *) XSTRING_DATA (Vinvocation_name) : "xemacs"),
+	(char *) XSTRING_DATA (Vinvocation_name) : FALLBACK_RESOURCE_NAME),
        DisplayString (dpy) ? DisplayString (dpy) : "???");
     abort();
   }
+
+#undef FALLBACK_RESOURCE_NAME
 
   return d;
 }
@@ -224,43 +232,68 @@ x_init_device_class (struct device *d)
     DEVICE_CLASS (d) = Qmono;
 }
 
-static int
-have_xemacs_resources_in_xrdb (CONST char *disp_name)
+/*
+ * Figure out what application name to use for xemacs
+ *
+ * Since we have decomposed XtOpenDisplay into XOpenDisplay and
+ * XtDisplayInitialize, we no longer get this for free.
+ *
+ * If there is a `-name' argument in argv, use that.
+ * Otherwise use the last component of argv[0].
+ *
+ * I have removed the gratuitous use of getenv("RESOURCE_NAME")
+ * which was in X11R5, but left the matching of any prefix of `-name'.
+ * Finally, if all else fails, return `xemacs', as it is more
+ * appropriate (X11R5 returns `main').
+ */
+static char *
+compute_x_app_name (int argc, char **argv)
 {
-  Display *dpy;
-  char *xdefs, *key;
-  int len, found;
+  int i;
+  char *ptr;
 
-  /*
-  ** This function figures out whether the user has any resources of the
-  ** form "XEmacs.foo" or "XEmacs*foo".
-  **
-  ** Currently we only consult the display's global resources; to look
-  ** for screen specific resources, we would need to also consult:
-  ** xdefs = XScreenResourceString(ScreenOfDisplay(dpy, scrno));
-  */
+  for (i = 1; i < argc - 1; i++)
+    if (!strncmp(argv[i], "-name", max (2, strlen (argv[1]))))
+      return argv[i+1];
+
+  if (argc > 0 && argv[0] && *argv[0])
+    return (ptr = strrchr (argv[0], '/')) ? ++ptr : argv[0];
+
+  return "xemacs";
+}
+
+/*
+ * This function figures out whether the user has any resources of the
+ * form "XEmacs.foo" or "XEmacs*foo".
+ *
+ * Currently we only consult the display's global resources; to look
+ * for screen specific resources, we would need to also consult:
+ * xdefs = XScreenResourceString(ScreenOfDisplay(dpy, scrno));
+ */
+static int
+have_xemacs_resources_in_xrdb (Display *dpy)
+{
+  char *xdefs, *key;
+  int len;
 
   key = "XEmacs";
-  len = strlen(key);
+  len = strlen (key);
 
-  dpy = XOpenDisplay(disp_name);
+  if (!dpy)
+    return 0;
 
-  if (!dpy) return 0;
+  xdefs = XResourceManagerString (dpy);      /* don't free - owned by X */
+  while (xdefs && *xdefs)
+    {
+      if (strncmp (xdefs, key, len) == 0  &&
+          (xdefs[len] == '*' || xdefs[len] == '.'))
+        return 1;
 
-  xdefs = XResourceManagerString(dpy);       /* don't free - owned by X */
-  for (found = 0; xdefs && *xdefs; ) {
-    if (strncmp(xdefs, key, len) == 0  &&
-        (xdefs[len] == '*' || xdefs[len] == '.')) {
-      found = 1;
-      break;
+      while (*xdefs && *xdefs++ != '\n')     /* find start of next entry.. */
+        ;
     }
 
-    while (*xdefs && *xdefs++ != '\n')       /* find start of next entry.. */
-      ;
-  }
-
-  XCloseDisplay(dpy);
-  return found;
+  return 0;
 }
 
 /* Only the characters [-_A-Za-z0-9] are allowed in the individual
@@ -312,23 +345,16 @@ x_init_device (struct device *d, Lisp_Object props)
 
   GET_C_STRING_CTEXT_DATA_ALLOCA (display, disp_name);
 
-  if (STRINGP (Vx_emacs_application_class) &&
-      XSTRING_LENGTH (Vx_emacs_application_class) > 0)
-    GET_C_STRING_CTEXT_DATA_ALLOCA (Vx_emacs_application_class, app_class);
-  else {
-    app_class = (NILP (Vx_emacs_application_class)  &&
-                 have_xemacs_resources_in_xrdb (disp_name))
-                ? "XEmacs"
-                : "Emacs";
-    /* need to update Vx_emacs_application_class: */
-    Vx_emacs_application_class = build_string (app_class);
-  }
-
+  /*
+   * Break apart the old XtOpenDisplay call into XOpenDisplay and
+   * XtDisplayInitialize so we can figure out whether there
+   * are any XEmacs resources in the resource database before
+   * we intitialize Xt.  This is so we can automagically support
+   * both `Emacs' and `XEmacs' application classes.
+   */
   slow_down_interrupts ();
-  /* The Xt code can't deal with signals here.  Yuck. */
-  dpy = DEVICE_X_DISPLAY (d) =
-    XtOpenDisplay (Xt_app_con, disp_name, NULL, app_class, emacs_options,
-                   XtNumber (emacs_options), &argc, argv);
+  /* May not be needed but XtOpenDisplay could not deal with signals here. */
+  dpy = DEVICE_X_DISPLAY (d) = XOpenDisplay (disp_name);
   speed_up_interrupts ();
 
   if (dpy == 0)
@@ -336,6 +362,27 @@ x_init_device (struct device *d, Lisp_Object props)
       suppress_early_error_handler_backtrace = 1;
       signal_simple_error ("X server not responding\n", display);
     }
+
+  if (STRINGP (Vx_emacs_application_class) &&
+      XSTRING_LENGTH (Vx_emacs_application_class) > 0)
+    GET_C_STRING_CTEXT_DATA_ALLOCA (Vx_emacs_application_class, app_class);
+  else
+    {
+      app_class = (NILP (Vx_emacs_application_class)  &&
+                   have_xemacs_resources_in_xrdb (dpy))
+                  ? "XEmacs"
+                  : "Emacs";
+      /* need to update Vx_emacs_application_class: */
+      Vx_emacs_application_class = build_string (app_class);
+    }
+
+  slow_down_interrupts ();
+  /* May not be needed but XtOpenDisplay could not deal with signals here.
+     Yuck. */
+  XtDisplayInitialize (Xt_app_con, dpy, compute_x_app_name (argc, argv),
+                       app_class, emacs_options,
+                       XtNumber (emacs_options), &argc, argv);
+  speed_up_interrupts ();
 
   screen = DefaultScreen(dpy);
   if (NILP (Vdefault_x_device))

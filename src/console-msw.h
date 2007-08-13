@@ -40,6 +40,11 @@ Boston, MA 02111-1307, USA.  */
 #include "ddeml.h"	/* DDE management library */
 #ifndef __CYGWIN32__
 #include "shellapi.h"	/* FileManager/Explorer drag and drop */
+#include "commctrl.h"
+#endif
+
+#ifdef HAVE_XPM
+#include <X11/xpm.h>
 #endif
 
 /*
@@ -119,6 +124,11 @@ struct mswindows_frame
 
   /* Coordinates of last click event, screen-relative */
   POINTS last_click_point;
+#ifdef HAVE_TOOLBARS
+  HWND htoolbar;
+  /* Toolbar hashtable. See toolbar-msw.c */
+  Lisp_Object toolbar_hashtable;
+#endif
 
   /* Menu hashtable. See menubar-msw.c */
   Lisp_Object menu_hashtable;
@@ -145,9 +155,11 @@ struct mswindows_frame
 #define FRAME_MSWINDOWS_DATA(f) FRAME_TYPE_DATA (f, mswindows)
 
 #define FRAME_MSWINDOWS_HANDLE(f)	  (FRAME_MSWINDOWS_DATA (f)->hwnd)
+#define FRAME_MSWINDOWS_TOOLBAR(f)	  (FRAME_MSWINDOWS_DATA (f)->htoolbar)
 #define FRAME_MSWINDOWS_DC(f)		  (FRAME_MSWINDOWS_DATA (f)->hdc)
 #define FRAME_MSWINDOWS_CDC(f)		  (FRAME_MSWINDOWS_DATA (f)->cdc)
 #define FRAME_MSWINDOWS_MENU_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->menu_hashtable)
+#define FRAME_MSWINDOWS_TOOLBAR_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->toolbar_hashtable)
 #define FRAME_MSWINDOWS_MENU_CHECKSUM(f)  (FRAME_MSWINDOWS_DATA (f)->menu_checksum)
 #define FRAME_MSWINDOWS_TITLE_CHECKSUM(f) (FRAME_MSWINDOWS_DATA (f)->title_checksum)
 #define FRAME_MSWINDOWS_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)
@@ -197,15 +209,18 @@ HDDEDATA CALLBACK mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 					  HSZ hszTopic, HSZ hszItem, HDDEDATA hdata,
 					  DWORD dwData1, DWORD dwData2);
 
-void mswindows_enqueue_dispatch_event (Lisp_Object event);
-void mswindows_enqueue_magic_event (HWND hwnd, UINT message);
+void mswindows_bump_queue (void);
 Lisp_Object mswindows_cancel_dispatch_event (struct Lisp_Event* event);
 Lisp_Object mswindows_pump_outstanding_events (void);
 Lisp_Object mswindows_protect_modal_loop (Lisp_Object (*bfun) (Lisp_Object barg),
 					  Lisp_Object barg);
 void mswindows_unmodalize_signal_maybe (void);
 
-/* #### This wants to go to lisp.h */
+#ifdef HAVE_WIN32_PROCESSES
+HANDLE get_nt_process_handle (struct Lisp_Process *p);
+#endif
+
+extern Lisp_Object Vmswindows_frame_being_created;
 typedef struct
 {
   int left;

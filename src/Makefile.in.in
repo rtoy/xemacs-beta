@@ -658,7 +658,7 @@ clean: mostlyclean versionclean
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: clean
-	$(RM) config.h paths.h paths.h.in Emacs.ad.h \
+	$(RM) config.h paths.h Emacs.ad.h \
 	  Makefile Makefile.in TAGS xemacs.*
 realclean: distclean
 versionclean:
@@ -667,7 +667,7 @@ extraclean: realclean
 	$(RM) *~ \#* m/*~ m/\#* s/*~ s/\#*
 
 .PHONY : lock unlock
-SOURCES = *.[chm] *.pswm [sm]/* COPYING paths.h.in.in Makefile.in.in \
+SOURCES = *.[chm] *.pswm [sm]/* COPYING paths.h.in Makefile.in.in \
 	config.h.in README COPYING ChangeLog
 unlock:
 	chmod u+w $(SOURCES)

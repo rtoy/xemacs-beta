@@ -54,7 +54,7 @@ Boston, MA 02111-1307, USA.  */
 #include "systime.h"
 
 #include "events-mod.h"
-
+#include <io.h>
 #include <errno.h>
 
 #ifdef BROKEN_CYGWIN
@@ -141,9 +141,19 @@ static int mswindows_pending_timers_count;
 #define NTPIPE_SLURP_STREAM_DATA(stream) \
   LSTREAM_TYPE_DATA (stream, ntpipe_slurp)
 
-struct ntpipe_slurp_stream
+/* This structure is allocated by the main thread, and is deallocated
+   in the thread upon exit.  There are situations when a thread
+   remains blocked for a long time, much longer than the lstream
+   exists. For exmaple, "start notepad" command is issued from the
+   shell, then the shell is closed by C-c C-d. Although the shell
+   process exits, its output pipe will not get closed until the
+   notepad process exits also, because it inherits the pipe form the
+   shell. In this case, we abandon the thread, and let it live until
+   all such processes exit. While struct ntpipe_slurp_stream is
+   deallocated in this case, ntpipe_slurp_stream_shared_data are not. */
+
+struct ntpipe_slurp_stream_shared_data
 {
-  LPARAM user_data;	/* Any user data stored in the stream object	 */
   HANDLE hev_thread;	/* Our thread blocks on this, signaled by caller */
 			/* This is a manual-reset object. 		 */
   HANDLE hev_caller;	/* Caller blocks on this, and we signal it	 */
@@ -151,20 +161,62 @@ struct ntpipe_slurp_stream
   HANDLE hev_unsleep;	/* Pipe read delay is canceled if this is set	 */
 			/* This is a manual-reset object. 		 */
   HANDLE hpipe;		/* Pipe read end handle.			 */
-  HANDLE hthread;	/* Reader thread handle.			 */
-  BYTE   onebyte;	/* One byte buffer read by thread		 */
-  DWORD  die_p;		/* Thread must exit ASAP if non-zero		 */
+  LONG   die_p;		/* Thread must exit ASAP if non-zero		 */
   BOOL   eof_p   : 1;	/* Set when thread saw EOF			 */
   BOOL   error_p : 1;   /* Read error other than EOF/broken pipe	 */
+  BOOL	 inuse_p : 1;	/* this structure is in use			 */
+  LONG   lock_count;    /* Client count of this struct, 0=safe to free   */
+  BYTE   onebyte;	/* One byte buffer read by thread		 */
+};
+
+#define MAX_SLURP_STREAMS 32
+struct ntpipe_slurp_stream_shared_data 
+shared_data_block[MAX_SLURP_STREAMS]={0};
+
+struct ntpipe_slurp_stream
+{
+  LPARAM user_data;	/* Any user data stored in the stream object	 */
+  struct ntpipe_slurp_stream_shared_data* thread_data;
 };
 
 DEFINE_LSTREAM_IMPLEMENTATION ("ntpipe-input", lstream_ntpipe_slurp,
 			       sizeof (struct ntpipe_slurp_stream));
 
+/* This function is thread-safe, and is called from either thread
+   context. It serializes freeing shared dtata structure */
+static void
+slurper_free_shared_data_maybe (struct ntpipe_slurp_stream_shared_data* s)
+{
+  if (InterlockedDecrement (&s->lock_count) == 0)
+    {
+      /* Destroy events */
+      CloseHandle (s->hev_thread);
+      CloseHandle (s->hev_caller);
+      CloseHandle (s->hev_unsleep);
+      s->inuse_p = 0;
+    }
+}
+
+static struct ntpipe_slurp_stream_shared_data*
+slurper_allocate_shared_data()
+{
+  int i=0;
+  for (i=0; i<MAX_SLURP_STREAMS; i++)
+    {
+      if (!shared_data_block[i].inuse_p)
+	{
+	  shared_data_block[i].inuse_p=1;
+	  return &shared_data_block[i];
+	}
+    }
+  return (struct ntpipe_slurp_stream_shared_data*)0;
+}
+
 static DWORD WINAPI
 slurp_thread (LPVOID vparam)
 {
-  struct ntpipe_slurp_stream *s = (struct ntpipe_slurp_stream*)vparam;
+  struct ntpipe_slurp_stream_shared_data *s =
+    (struct ntpipe_slurp_stream_shared_data*)vparam;
 
   for (;;)
     {
@@ -192,7 +244,7 @@ slurp_thread (LPVOID vparam)
 	 error/eof indication. Before we do, allow internal pipe
 	 buffer to accumulate little bit more data. 
 	 Reader function pulses this event before waiting for
-	 a character, to avoid pipde delay, and to get the byte
+	 a character, to avoid pipe delay, and to get the byte
 	 immediately. */
       if (!s->die_p)
 	WaitForSingleObject (s->hev_unsleep, PIPE_READ_DELAY);
@@ -210,6 +262,8 @@ slurp_thread (LPVOID vparam)
       WaitForSingleObject (s->hev_thread, INFINITE);
     }
 
+  slurper_free_shared_data_maybe (s);
+
   return 0;
 }
 
@@ -220,35 +274,43 @@ make_ntpipe_input_stream (HANDLE hpipe, LPARAM param)
   Lstream *lstr = Lstream_new (lstream_ntpipe_slurp, "r");
   struct ntpipe_slurp_stream* s = NTPIPE_SLURP_STREAM_DATA (lstr);
   DWORD thread_id_unused;
+  HANDLE hthread;
 
   /* We deal only with pipes, for we're using PeekNamedPipe api */
   assert (GetFileType (hpipe) == FILE_TYPE_PIPE);
 
-  s->die_p = 0;
-  s->eof_p = FALSE;
-  s->error_p = FALSE;
-  s->hpipe = hpipe;
-  s->user_data = param;
+  s->thread_data = slurper_allocate_shared_data();
 
-  /* Create reader thread. This could fail, so do not 
-     create events until thread is created */
-  s->hthread = CreateThread (NULL, 0, slurp_thread, (LPVOID)s,
-			     CREATE_SUSPENDED, &thread_id_unused);
-  if (s->hthread == NULL)
+  /* Create reader thread. This could fail, so do not create events
+     until thread is created */
+  hthread = CreateThread (NULL, 0, slurp_thread, (LPVOID)s->thread_data,
+			  CREATE_SUSPENDED, &thread_id_unused);
+  if (hthread == NULL)
     {
       Lstream_delete (lstr);
+      s->thread_data->inuse_p=0;
       return Qnil;
     }
 
+  /* Shared data are initially owned by both main and slurper
+     threads. */
+  s->thread_data->lock_count = 2;
+  s->thread_data->die_p = 0;
+  s->thread_data->eof_p = FALSE;
+  s->thread_data->error_p = FALSE;
+  s->thread_data->hpipe = hpipe;
+  s->user_data = param;
+
   /* hev_thread is a manual-reset event, initially signaled */
-  s->hev_thread = CreateEvent (NULL, TRUE, TRUE, NULL);
+  s->thread_data->hev_thread = CreateEvent (NULL, TRUE, TRUE, NULL);
   /* hev_caller is a manual-reset event, initially nonsignaled */
-  s->hev_caller = CreateEvent (NULL, TRUE, FALSE, NULL);
+  s->thread_data->hev_caller = CreateEvent (NULL, TRUE, FALSE, NULL);
   /* hev_unsleep is a manual-reset event, initially nonsignaled */
-  s->hev_unsleep = CreateEvent (NULL, TRUE, FALSE, NULL);
+  s->thread_data->hev_unsleep = CreateEvent (NULL, TRUE, FALSE, NULL);
 
   /* Now let it go */
-  ResumeThread (s->hthread);
+  ResumeThread (hthread);
+  CloseHandle (hthread);
 
   lstr->flags |= LSTREAM_FL_CLOSE_AT_DISKSAVE;
   XSETLSTREAM (obj, lstr);
@@ -266,23 +328,25 @@ static HANDLE
 get_ntpipe_input_stream_waitable (Lstream *stream)
 {
   struct ntpipe_slurp_stream* s = NTPIPE_SLURP_STREAM_DATA(stream);
-  return s->hev_caller;
+  return s->thread_data->hev_caller;
 }
 
 static int 
 ntpipe_slurp_reader (Lstream *stream, unsigned char *data, size_t size)
 {
   /* This function must be called from the main thread only */
-  struct ntpipe_slurp_stream* s = NTPIPE_SLURP_STREAM_DATA(stream);
+  struct ntpipe_slurp_stream_shared_data* s = 
+    NTPIPE_SLURP_STREAM_DATA(stream)->thread_data;
 
   if (!s->die_p)
     {
       DWORD wait_result;
-      /* Disallow pipe read delay for the thread: we need a character ASAP */
+      /* Disallow pipe read delay for the thread: we need a character
+         ASAP */
       SetEvent (s->hev_unsleep);
   
-      /* Check if we have a character ready. Give it a short delay, for
-	 the thread to awake from pipe delay, just ion case*/
+      /* Check if we have a character ready. Give it a short delay,
+	 for the thread to awake from pipe delay, just ion case*/
       wait_result = WaitForSingleObject (s->hev_caller, 2);
 
       /* Revert to the normal sleep behavior. */
@@ -308,59 +372,54 @@ ntpipe_slurp_reader (Lstream *stream, unsigned char *data, size_t size)
   if (s->error_p || s->die_p)
     return -1;
 
-  /* Ok, there were no error neither eof - we've got a byte from the pipe */
+  /* Ok, there were no error neither eof - we've got a byte from the
+     pipe */
   *(data++) = s->onebyte;
   --size;
 
-  if (size > 0)
-    {
-      DWORD bytes_available, bytes_read;
+  {
+    DWORD bytes_read = 0;
+    if (size > 0)
+      {
+	DWORD bytes_available;
 
-      /* If the api call fails, return at least one byte already read.
-	 ReadFile in thread will return error */
-      if (!PeekNamedPipe (s->hpipe, NULL, 0, NULL, &bytes_available, NULL))
-	return 1;
+	/* If the api call fails, return at least one byte already
+	   read.  ReadFile in thread will return error */
+	if (PeekNamedPipe (s->hpipe, NULL, 0, NULL, &bytes_available, NULL))
+	  {
 
-      /* Fetch available bytes. The same consideration applies, so do
-         not check for errors. ReadFile in the thread will fail if the
-         next call fails. */
-      ReadFile (s->hpipe, data, min (bytes_available, size), &bytes_read, NULL);
-
-      /* Now we can unblock thread, so it attempts to read more */
-      SetEvent (s->hev_thread);
-      return bytes_read + 1;
-    }
-  else
-    {
-      SetEvent (s->hev_thread);
-      return 1;
-    }
+	    /* Fetch available bytes. The same consideration applies,
+	       so do not check for errors. ReadFile in the thread will
+	       fail if the next call fails. */
+	    if (bytes_available)
+	      ReadFile (s->hpipe, data, min (bytes_available, size),
+			&bytes_read, NULL);
+	  }
+      
+	/* Now we can unblock thread, so it attempts to read more */
+	SetEvent (s->hev_thread);
+	return bytes_read + 1;
+      }
+  }
 }
 
 static int 
 ntpipe_slurp_closer (Lstream *stream)
 {
   /* This function must be called from the main thread only */
-  struct ntpipe_slurp_stream* s = NTPIPE_SLURP_STREAM_DATA(stream);
+  struct ntpipe_slurp_stream_shared_data* s = 
+    NTPIPE_SLURP_STREAM_DATA(stream)->thread_data;
 
   /* Force thread to stop */
   InterlockedIncrement (&s->die_p);
 
-  /* Break the pipe, in case the thread still blocked on read */
-  CloseHandle (s->hpipe);
-
-  /* Set events which could possibly block slurper */
+  /* Set events which could possibly block slurper. Let it finish soon
+     or later. */
   SetEvent (s->hev_unsleep);
   SetEvent (s->hev_thread);
 
-  /* Wait while thread terminates */
-  WaitForSingleObject (s->hthread, INFINITE);
-  CloseHandle (s->hthread);
-
-  /* Destroy events */
-  CloseHandle (s->hev_thread);
-  CloseHandle (s->hev_caller);
-  CloseHandle (s->hev_unsleep);
+  /* Unlock and maybe free shared data */
+  slurper_free_shared_data_maybe (s);
 
   return 0;
 }
@@ -381,6 +440,8 @@ init_slurp_stream (void)
 #define NTPIPE_SHOVE_STREAM_DATA(stream) \
   LSTREAM_TYPE_DATA (stream, ntpipe_shove)
 
+#define MAX_SHOVE_BUFFER_SIZE 128
+     
 struct ntpipe_shove_stream
 {
   LPARAM user_data;	/* Any user data stored in the stream object	 */
@@ -388,10 +449,10 @@ struct ntpipe_shove_stream
 			/* This is an auto-reset object. 		 */
   HANDLE hpipe;		/* Pipe write end handle.			 */
   HANDLE hthread;	/* Reader thread handle.			 */
-  LPVOID buffer;	/* Buffer being written				 */
+  char	 buffer[MAX_SHOVE_BUFFER_SIZE];	/* Buffer being written		 */
   DWORD  size;		/* Number of bytes to write			 */
-  DWORD  die_p;		/* Thread must exit ASAP if non-zero		 */
-  DWORD  idle_p;	/* Non-zero if thread is waiting for job	 */
+  LONG   die_p;		/* Thread must exit ASAP if non-zero		 */
+  LONG   idle_p;	/* Non-zero if thread is waiting for job	 */
   BOOL   error_p : 1;   /* Read error other than EOF/broken pipe	 */
   BOOL   blocking_p : 1;/* Last write attempt would cause blocking	 */
 };
@@ -422,9 +483,6 @@ shove_thread (LPVOID vparam)
 	  s->error_p = TRUE;
 	  InterlockedIncrement (&s->die_p);
 	}
-
-      /* free it */
-      LocalFree ((HLOCAL)s->buffer);
 
       if (s->die_p)
 	break;
@@ -486,11 +544,9 @@ ntpipe_shove_writer (Lstream *stream, const unsigned char *data, size_t size)
   if (s->blocking_p)
     return 0;
 
-  /* Make a copy of data to be written. We intentionally avoid using
-     xalloc/xfree, because gnu malloc is not thread-safe */
-  s->buffer = (LPVOID) LocalAlloc (LMEM_FIXED, size);
-  if (s->buffer == NULL)
-    return -1;
+  if (size>MAX_SHOVE_BUFFER_SIZE)
+    return 0;
+
   memcpy (s->buffer, data, size);
   s->size = size;
 
@@ -577,7 +633,7 @@ mswindows_user_event_p (struct Lisp_Event* sevt)
 /* 
  * Add an emacs event to the proper dispatch queue
  */
-void
+static void
 mswindows_enqueue_dispatch_event (Lisp_Object event)
 {
   int user_p = mswindows_user_event_p (XEVENT(event));
@@ -587,12 +643,23 @@ mswindows_enqueue_dispatch_event (Lisp_Object event)
 		 user_p ? &mswindows_u_dispatch_event_queue_tail :
 		 	&mswindows_s_dispatch_event_queue_tail);
 
-  /* This one does not go to window procedure, hence does not
-     generate XM_BUMPQUEUE magic event! */
+  /* Avoid blocking on WaitMessage */
   PostMessage (NULL, XM_BUMPQUEUE, 0, 0);
 }
 
 void
+mswindows_bump_queue (void)
+{
+  /* Bump queue, by putting in an empty event */
+  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+  struct Lisp_Event* event = XEVENT (emacs_event);
+
+  event->event_type = empty_event;
+
+  mswindows_enqueue_dispatch_event (emacs_event);
+}
+
+static void
 mswindows_enqueue_magic_event (HWND hwnd, UINT message)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
@@ -915,8 +982,6 @@ mswindows_pump_outstanding_events (void)
   return result;
 }
 
-
-
 static void 
 mswindows_drain_windows_queue ()
 {
@@ -1031,10 +1096,12 @@ mswindows_need_event (int badly_p)
 	    /* None. This means that the process handle itself has signaled.
 	       Remove the handle from the wait vector, and make status_ntoify
 	       note the exited process */
-	    CloseHandle (mswindows_waitable_handles[ix]);
 	    mswindows_waitable_handles [ix] =
 	      mswindows_waitable_handles [--mswindows_waitable_count];
 	    kick_status_notify ();
+	    /* Have to return something: there may be no accompanying
+	       process event */
+	    mswindows_bump_queue ();
 	  }
       }
   } /* while */
@@ -1187,7 +1254,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   case WM_CLOSE:
     fobj = mswindows_find_frame (hwnd);
     enqueue_misc_user_event (fobj, Qeval, list3 (Qdelete_frame, fobj, Qt));
-    mswindows_enqueue_magic_event (hwnd, XM_BUMPQUEUE);
+    mswindows_bump_queue ();
     break;
 
   case WM_KEYDOWN:
@@ -1611,7 +1678,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
     msframe->sizing = 0;
     /* Queue noop event */
-    mswindows_enqueue_magic_event (hwnd, XM_BUMPQUEUE);
+    mswindows_bump_queue ();
     return 0;
 
 #ifdef HAVE_SCROLLBARS
@@ -1654,12 +1721,6 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       }
     break;
 
-  case WM_EXITMENULOOP:
-    if (UNBOUNDP (mswindows_handle_wm_exitmenuloop (
-			XFRAME (mswindows_find_frame (hwnd)))))
-      SendMessage (hwnd, WM_CANCELMODE, 0, 0);
-    break;
-
 #endif /* HAVE_MENUBARS */
 
   case WM_COMMAND:
@@ -1667,13 +1728,14 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       WORD id = LOWORD (wParam);
       frame = XFRAME (mswindows_find_frame (hwnd));
 
-#ifdef HAVE_MENUBARS
-      if (!NILP (mswindows_handle_wm_command (frame, id)))
+#ifdef HAVE_TOOLBARS
+      if (!NILP (mswindows_handle_toolbar_wm_command (frame, id)))
 	break;
 #endif
 
-#ifdef HAVE_TOOLBARS
-      /* O Toolbar Implementor, this place may have something for you!;*/
+#ifdef HAVE_MENUBARS
+      if (!NILP (mswindows_handle_wm_command (frame, id)))
+	break;
 #endif
 
       /* Bite me - a spurious command. This cannot happen. */
@@ -1929,8 +1991,8 @@ mswindows_find_frame (HWND hwnd)
       /* We are in progress of frame creation. Return the frame
 	 being created, as it still not remembered in the window
 	 extra storage. */
-      assert (!NILP (mswindows_frame_being_created));
-      return mswindows_frame_being_created;
+      assert (!NILP (Vmswindows_frame_being_created));
+      return Vmswindows_frame_being_created;
     }
   VOID_TO_LISP (f, l);
   return f;
@@ -2039,10 +2101,6 @@ emacs_mswindows_handle_magic_event (struct Lisp_Event *emacs_event)
     }
     break;
 
-  case XM_BUMPQUEUE:
-    /* This is a nice event, when we're in need to queue *something* */
-    break;
-
   case XM_MAPFRAME:
   case XM_UNMAPFRAME:
     {
@@ -2074,52 +2132,24 @@ get_process_input_waitable (struct Lisp_Process *process)
   return get_ntpipe_input_stream_waitable (XLSTREAM (instr));
 }
 
-static HANDLE
-get_process_handle (struct Lisp_Process *p)
-{
-  /* #### The guess is that cygwin uses the same algorithm for
-     computing pids: negate if less than zero, '95 case */
-  Lisp_Object process, pid;
-  XSETPROCESS (process, p);
-  pid = Fprocess_id (process);
-  if (INTP (pid))
-    {
-      HANDLE hproc;
-      int ipid = XINT (pid);
-      if (ipid < 0)
-	ipid = -ipid;
-      hproc = OpenProcess (SYNCHRONIZE, FALSE, ipid);
-      /* #### This is WRONG! The process migh have ended before we got here. */
-      /* assert  (hproc != NULL); */
-      /* Instead, we fake "a signaled hadle", which will trigger
-	 immediately upon entering the message loop */
-      if (hproc = NULL)
-	hproc = CreateEvent (NULL, TRUE, TRUE, NULL);
-      return hproc;
-    }
-  else
-    return NULL;
-}
-
 static void
 emacs_mswindows_select_process (struct Lisp_Process *process)
 {
   HANDLE hev = get_process_input_waitable (process);
-  HANDLE hprocess;
 
   if (!add_waitable_handle (hev))
     error ("Too many active processes");
 
-  hprocess = get_process_handle (process);
-  if (hprocess)
-    {
-      if (!add_waitable_handle (hprocess))
-	{
-	  remove_waitable_handle (hev);
-	  CloseHandle (hprocess);
-	  error ("Too many active processes");
-	}
-    }
+#ifdef HAVE_WIN32_PROCESSES
+  {
+    HANDLE hprocess = get_nt_process_handle (process);
+    if (!add_waitable_handle (hprocess))
+      {
+	remove_waitable_handle (hev);
+	error ("Too many active processes");
+      }
+  }
+#endif
 }
 
 static void
@@ -2144,6 +2174,11 @@ emacs_mswindows_unselect_console (struct console *con)
 static void
 emacs_mswindows_quit_p (void)
 {
+  /* Quit cannot happen in modal loop: all program
+     input is dedicated to Windows. */
+  if (mswindows_in_modal_loop)
+    return;
+
   /* Drain windows queue. This sets up number of quit
      characters in in the queue */
   mswindows_drain_windows_queue ();
@@ -2191,8 +2226,10 @@ emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
 #elif defined (HAVE_UNIX_PROCESSES)
   /* We are passed UNIX fds. This must be Cygwin.
      Fetch os handles */
-  hin = inhandle >= 0 ? get_osfhandle ((int)inhandle) : INVALID_HANDLE_VALUE;
-  hout = outhandle >= 0 ? get_sfhandle ((int)outhandle) : INVALID_HANDLE_VALUE;
+  hin = inhandle >= 0 ? (HANDLE)get_osfhandle ((int)inhandle) : INVALID_HANDLE_VALUE;
+  hout = outhandle >= 0 ? (HANDLE)get_osfhandle ((int)outhandle) : INVALID_HANDLE_VALUE;
+  fdi=(int)inhandle;
+  fdo=(int)outhandle;
 #else
 #error "So, WHICH kind of processes do you want?"
 #endif
@@ -2201,9 +2238,25 @@ emacs_mswindows_create_stream_pair (void* inhandle, void* outhandle,
 	       ? make_ntpipe_input_stream (hin, fdi)
 	       : Qnil);
 
+#ifdef HAVE_WIN32_PROCESSES
   *outstream = (hout != INVALID_HANDLE_VALUE
 		? make_ntpipe_output_stream (hout, fdo)
 		: Qnil);
+#elif defined (HAVE_UNIX_PROCESSES)
+  *outstream = (fdo >= 0
+		? make_filedesc_output_stream (fdo, 0, -1, LSTR_BLOCKED_OK)
+		: Qnil);
+
+#if defined(HAVE_UNIX_PROCESSES) && defined(HAVE_PTYS)
+  /* FLAGS is process->pty_flag for UNIX_PROCESSES */
+  if (flags && fdo >= 0)
+    {
+      Bufbyte eof_char = get_eof_char (fdo);
+      int pty_max_bytes = get_pty_max_bytes (fdo);
+      filedesc_stream_set_pty_flushing (XLSTREAM(*outstream), pty_max_bytes, eof_char);
+    }
+#endif
+#endif
 
   return (NILP (*instream) ? USID_ERROR
 	  : HANDLE_TO_USID (get_ntpipe_input_stream_waitable (XLSTREAM (*instream))));
@@ -2218,7 +2271,7 @@ emacs_mswindows_delete_stream_pair (Lisp_Object instream,
   int in = (NILP(instream) ? -1
 	    : get_ntpipe_input_stream_param (XLSTREAM (instream)));
   int out = (NILP(outstream) ? -1
-	     : get_ntpipe_output_stream_param (XLSTREAM (outstream)));
+	     : filedesc_stream_fd (XLSTREAM (outstream)));
 
   if (in >= 0)
     close (in);

@@ -81,7 +81,7 @@ else
 fi
 
 echon "Checking directories..."
-dirs=
+dirs=lisp/
 for dir in lisp/*; do
 	if test -d $dir \
 		-a $dir != lisp/CVS \

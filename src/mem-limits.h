@@ -62,7 +62,10 @@ extern int etext, __data_start; weak_symbol (__data_start)
 #endif
 
 #if defined(__bsdi__) || defined(__NetBSD__) || defined(__linux__)
+#if defined(__linux__) && defined (powerpc)	/*Added by Fukui*/
+#else					/*Added by Fukui*/
 #define BSD4_2
+#endif					/*Added by Fukui*/
 #endif
 
 #ifndef BSD4_2
@@ -70,7 +73,10 @@ extern int etext, __data_start; weak_symbol (__data_start)
 #ifndef MSDOS
 #ifndef WINDOWSNT
 #ifndef __CYGWIN32__
+#if defined(__linux__) && defined(powerpc)	/*Added Kaoru Fukui*/
+#else						/*Added Kaoru Fukui*/
 #include <sys/vlimit.h>
+#endif				/*Added by Fukui*/
 #endif /* not __CYGWIN32__ */
 #endif /* not WINDOWSNT */
 #endif /* not MSDOS */

@@ -122,6 +122,7 @@ void syms_of_ralloc (void);
 void syms_of_rangetab (void);
 void syms_of_redisplay (void);
 void syms_of_scrollbar (void);
+void syms_of_scrollbar_mswindows(void);
 void syms_of_search (void);
 void syms_of_select_mswindows (void);
 void syms_of_signal (void);

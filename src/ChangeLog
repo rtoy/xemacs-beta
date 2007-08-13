@@ -1,3 +1,405 @@
+1998-04-17  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* console-msw.h:
+	Added "commctrl.h" and "X11/xpm.h" includes to support toolbars
+	and XPM.
+
+	* glyphs-msw.c:
+	Removed (!NILP (Vmswindows_bitmap_file_path)) check in
+	locate_pixmap_file() so that lookups of absolute paths don't fail
+	if this is unset.
+	Added new mswindows_xpm_normalize();
+
+	* glyphs.h:
+	* glyphs.c:
+	* glyphs-x.c:
+	Moved generic XPM support out of glyphs-x.c into glyphs.c.
+	Functions moved:
+	signal_image_error, signal_image_error_2,
+	check_valid_xpm_color_symbols, evaluate_xpm_color_symbols,
+	xpm_possible_dest_types.
+	xpm_normalize and xpm_instantiate in glyphs.c just call the
+	appropriate x_ or mswindows_ funtion in glyphs-x.c or
+	glyphs-msw.c.
+
+	* toolbar-msw.c:
+	Don't assert on empty toolbar.
+
+	* toolbar.c:
+	* toolbar.h:
+	Adjusted mswindows default toolbar height/widths so redisplay is
+	correct.
+
+1998-04-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* tooltalk.c (tt_message_arg_ival_string): Ditto.
+
+	* redisplay.c (window_line_number): Ditto.
+	(decode_mode_spec): Ditto.
+
+	* glyphs.c (print_image_instance): Ditto.
+
+	* doprnt.c (emacs_doprnt_1): Ditto.
+
+	* data.c (Fnumber_to_string): Use long_to_string().
+
+	* lisp.h: Declare long_to_string().
+
+	* print.c (Fprin1_to_string): Do the Vprint_gensym_alist stunt.
+
+	* emacs.c (main_1): Don't create print stream.
+
+	* print.c: Removed print_stream implementation.
+	(print_prepare): Don't create a print_stream.
+	(long_to_string): New function, from GNU Wget.
+	(print_internal): Use it.
+	(output_string): alloca() copies only for strings smaller than
+	65536 bytes; else, inhibit gc.
+
+1998-04-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* config.h.in: Check for DLERROR.
+
+	* sysdll.c: Cosmetic changes.
+
+1998-04-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* sysdll.c (dll_error): It's `dlerror', not `dl_error'.
+
+1998-04-17  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* specifier.c (prune_specifiers): Fix for Vall_specifiers
+	corruption.
+
+	* specifier.h: Fixed GC_* macros to utilize GC_EQ, as suggested by
+	Steve.
+
+1998-04-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* dll.c (Fdll_open): Simplify interface.
+
+	* sysdll.c: Allocate BUF dynamically.
+
+	* cmds.c (internal_self_insert): Removed `no-self-insert' hack.
+
+Fri Apr 17 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* event-msw.c: don't use LocalAlloc()/LocalFree(). With unix
+	processes use a filestream for output. This makes subprocess
+	support work under cygwin.
+
+1998-04-17  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* fileio.c (vars_of_fileio): Resurreced directory-sep-char to be
+	DIRECTORY_SEP instead of hardwired "/".
+
+1998-04-16  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* fileio.c (file_name_as_directory): Now returns "./" (or NT
+	equivalent) for "".
+
+1998-04-09  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c: Fully rewritten introducing a new opaque LDAP Lisp
+	data type.
+
+	* eldap.h: Ditto
+
+1998-04-17  Olivier Galibert  <galibert@pobox.com>
+
+	* fileio.c (vars_of_fileio): Finish directory_sep_char removal.
+
+1998-04-14  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* emacs.c (main_1): Added option --debug-paths and analogous
+	variable.
+
+1998-04-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* frame-msw.c (Vmswindows_frame_being_created): Don't staticpro.
+
+	* console-msw.h, event-msw.c, frame-msw.c: Renamed
+	mswindows_frame_being_created to Vmswindows_frame_being_created.
+
+1998-04-12  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* fileio.c: Removed Vdirectory_sep_char variable.
+
+	* lisp.h: Removed extern decl for the above.
+
+1998-04-16  SL Baur  <steve@altair.xemacs.org>
+
+	* indent.c (vertical_motion_1): set_marker_restricted takes
+	Lisp_Objects.
+
+1998-04-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* md5.c (Fmd5): Correctly rename argument.
+
+	* print.c (Fprin1_to_string): Remove useless variable.
+
+1998-04-13  Greg Klanderman  <greg@alphatech.com>
+
+	* indent.c (vertical_motion_1): new helper function to share
+	common code between Fvertical_motion and Fvertical_motion_pixels.
+	Properly handle the WINDOW argument as the doc string indicates it 
+	should.  Update docstrings to be more clear and concise.
+	(Fvertical_motion): use vertical_motion_1.
+	(Fvertical_motion_pixels): use vertical_motion_1.
+
+1998-04-15  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* specifier.h: Introduced magic specifiers. Please read comments
+	in specifier.h.
+
+	* specifier.c: Reworked many functions to support magic
+	specifiers.
+
+	* scrollbar.c (specifier_vars_of_scrollbar): Made magic specifiers 
+	Vscrollbar_width and Vscrollbar_height.
+	(init_frame_scrollbars): Enabled critical lisp code operate on
+	ghost specifiers.
+	(init_device_scrollbars): Ditto.
+	(init_global_scrollbars): Ditto.
+
+	* scrollbar-msw.c (Fmswindows_init_scrollbar_metrics): Scrollbar
+	init function, called from init-scrollbars-from-resuorce in
+	lisp/scrollbar.c 
+	(syms_of_scrollbar_mswindows): DEFSUBR it.
+
+	* emacs.c (main_1): Called syms_of_scrollbar_mswindows()
+
+	* symsinit.h: Declared syms_of_scrollbar_mswindows()
+
+Thu Apr 16 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* frame-msw.c:
+	* console-msw.h: add toolbars to frame parameters.
+
+	* emacs.c: call console_type_create_mswindows_toolbar
+
+	* event-msw.c: call toolbar handling code in main event loop.
+
+	* glyphs-msw.c (mswindows_create_icon_from_image)
+	(mswindows_resize_dibitmap_instance): new functions. Remove mask
+	stuff from various others.
+
+	* redisplay-msw.c:
+	* menubar-msw.c: warning elimination.
+
+	* toolbar-msw.c: new file. Reasonable implementation of toolbars
+	for mswindows. Some features are not complete.
+
+	* toolbar.c: enable toolbar parameters for mswindows.
+
+	* toolbar.h: choose slightly different toolbar defaults for
+	mswindows.
+
+1998-04-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lisp.h (CHECK_IMPURE): Use it.
+
+	* data.c (pure_write_error): Accept an argument.
+
+	* emacs.c (vars_of_emacs): New variable `internal-error-checking'; 
+	initialize it.
+
+1998-04-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Fmake_temp_name): Avoid random(); simplify.
+
+1998-04-13  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* emacs.c (complex_vars_of_emacs): Changed configure-exec-path to
+	configure-exec-directory.
+	(decode_path): Doesn't call file-name-as-directory no more as
+	empty components would lead to evil behavior.
+
+1998-04-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* extents.c (decode_extent): Unify the error message.
+
+1998-04-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* md5.c (Fmd5): Simplify; use only input and encoding streams.
+	(Fmd5): Separate coding guesswork into md5_coding_system().
+	(Fmd5): Don't close the stream; deleting it is enough.
+
+1998-04-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Finsert_file_contents_internal): Prefer fstat() over
+	stat.
+
+1998-04-15  Martin Buchholz  <martin@xemacs.org>
+
+	* fns.c (Fsubseq): Make (subseq nil 0 0) return nil, not #*.
+
+1998-04-16  SL Baur  <steve@altair.xemacs.org>
+
+	* device-x.c (get_device_from_display): Use "infodock" as the
+	fallback name when running as InfoDock.
+
+1998-04-14  Greg Klanderman  <greg@alphatech.com>
+
+	* device-x.c (compute_x_app_name): New function needed to compute
+	application name to use now that XtOpenDisplay is decomposed into
+	XOpenDisplay and XtDisplayInitialize.
+	(x_init_device): use it.
+
+1998-04-06  Greg Klanderman  <greg@alphatech.com>
+
+	* device-x.c (have_xemacs_resources_in_xrdb): adhere to coding
+	standards and avoid opening display twice by breaking
+	XtOpenDisplay into XOpenDisplay and XtDisplayInitialize. 
+	(x_init_device): Ditto.
+
+1998-04-15  Olivier Galibert  <galibert@pobox.com>
+
+	* s/aix3-2-5.h: Ditto.
+
+	* s/aix4-1.h: Ditto.
+
+	* s/aix4-2.h: Ditto.
+
+	* s/bsd386.h: Ditto.
+
+	* s/bsdos2-1.h: Ditto.
+
+	* s/dgux.h: Ditto.
+
+	* s/esix.h: Ditto.
+
+	* s/esix5r4.h: Ditto.
+
+	* s/hpux8.h: Ditto.
+
+	* s/hpux9-shr.h: Ditto.
+
+	* s/hpux9-x11r4.h: Ditto.
+
+	* s/hpux9.h: Ditto.
+
+	* s/hpux9shxr4.h: Ditto.
+
+	* s/isc3-0.h: Ditto.
+
+	* s/isc4-0.h: Ditto.
+
+	* s/ptx.h: Ditto.
+
+	* s/sco4.h: Ditto.
+
+	* s/sco5.h: Ditto.
+
+	* s/usg5-3.h: Ditto.
+
+	* s/usg5-4-2.h: Ditto.
+
+	* s/usg5-4.h: Kill a bunch of now autodetected defines.
+
+1998-04-05  Greg Klanderman  <greg@alphatech.com>
+
+	* window.c (Fwindow_displayed_pixel_height): rename more
+	appropriately as window-text-pixel-height.
+	(syms_of_window): Update the DEFSUBR.
+	(Fwindow_text_pixel_width): New function for completeness.
+	(Fwindow_text_pixel_edges): New function.
+	(syms_of_window): DEFSUBR 2 new functions.
+
+1998-04-13  Greg Klanderman  <greg@alphatech.com>
+
+	* redisplay.c (redisplay_window): When echo area is active, and we 
+	swap in the echo area buffer, restore the minibuffer's pointm and
+	startp when we restore the minibuffer to the window.  This avoids
+	having the minibuffer point randomly change when it is active but
+	not selected and a message is shown.
+
+1998-04-16  Hrvoje Niksic <hniksic@srce.hr>
+
+	* md5.c: replaced RSA reference code with GNU textutils implementation.
+
+1998-04-14  Martin Buchholz  <martin@xemacs.org>
+
+	* signal.c (init_signals_very_early): Make `nohup xemacs &' work.
+	Wrap #ifdefs around uses of SIGQUIT and SIGILL.
+
+1998-04-12  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* objects-msw.c (mswindows_initialize_font_instance): Fixed assert
+	abuse; proper cleanup on GDI error.
+
+1998-04-14  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* console-msw.h: Declared get_nt_process_handle() and
+	mswindows_bump_queue().
+	Removed declarations for mswindows_enqueue_dispatch_event() and
+	mswindows_enqueue_magic_event().
+
+	* event-msw.c (emacs_mswindows_create_stream_pair): Casts on
+	handle types and get_osfhandle() return type. From Andy Piper.
+	(emacs_mswindows_select_process): Get Win32 process handle
+	directly from process lrecord.
+	(get_process_handle): Removed function.
+	(emacs_mswindows_handle_magic_event): Removed handling of 
+	XM_BUMPQUEUE magic event.
+	(mswindows_wnd_proc): Removed handling of WM_EXITMENULOOP message, 
+	which called a do-nothing handler in menubar-msw.c
+	(mswindows_wnd_proc, WM_EXITSIZEMOVE): Queue an empty event
+	instead of magic event, via mswindows_bump_queue().
+	(mswindows_wnd_proc, WM_CLOSE): Ditto.
+	(mswindows_need_event): Call mswindows_bump_queue() upon process
+	termination, in case process pipe does not get closed along.
+	Do not close process handle.
+	(mswindows_bump_queue): Added function.
+	(mswindows_enqueue_dispatch_event): Made static.
+	(ntpipe_slurp_*): Revamped the slurp thread implementation so the
+	stream does not expect the thread to terminate when stream is closed.
+	(ntpipe_slurp_reader): Fixed an attempt to read zero bytes from
+	the pipe.
+
+	* event-stream.c (event_stream_deal_with_async_timeout):
+	Conditionalized timer-based polling for finished processes on
+	HAVE_UNIX_PROCESSES. 
+
+	* menubar-msw.c (mswindows_handle_wm_command): Queued proper bump
+	queue event.
+	(mswindows_handle_wm_exitmenuloop): Removed function.
+	
+	* menubar-msw.h: Removed unused function prototype.
+
+	* process-nt.c (get_nt_process_handle): Added function.
+
+	* signal.c (init_poll_for_sigchld): Conditionalized on
+	HAVE_UNIX_PROCESSES. 
+
+1998-04-13  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* frame-msw.c: Implemented the following methods:
+	mswindows_get_mouse_position()
+	mswindows_set_mouse_position()
+	mswindows_frame_totally_visible_p()
+
+1998-04-11  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* emacs.c: Renamed inhibit-package-init to inhibit-early-packages
+	to better reflect its semantics.
+	Renamed inhibit-update-autoloads to inhibit-package-autoloads.
+	(complex_vars_of_emacs): Added site-directory and lisp-directory.
+	-no-packages -> no-early-packages.
+
+	* Makefile.in.in: Reflected reinstatement of paths.h.in.
+
+	* paths.h.in: Reinstated.
+
+	* paths.h.in.in: Removed.
+
+	* config.h.in: Moved configure path and directory options from
+	paths.h.in.in.
+
+1998-04-11  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* event-msw.c (emacs_mswindows_quit_p): don't recurse.
+
 1998-04-10  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* callproc.c (init_callproc): Correctly initialize

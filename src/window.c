@@ -64,7 +64,6 @@ static int window_char_height_to_pixel_height (struct window *w,
 					       int include_gutters_p);
 static void change_window_height (struct window *w, int delta, int widthflag,
                                   int inpixels);
-static int window_displayed_pixel_height (struct window *);
 
 /* Thickness of shadow border around 3d modelines. */
 Lisp_Object Vmodeline_shadow_thickness;
@@ -1316,14 +1315,16 @@ This includes the window's modeline and horizontal scrollbar (if any).
   return make_int (decode_window (window)->pixel_height);
 }
 
-DEFUN ("window-displayed-pixel-height", Fwindow_displayed_pixel_height, 0, 1, 0, /*
-Return the height in pixels of the buffer-displaying portion of WINDOW.
-Unlike `window-pixel-height', the space occupied by the gutters
-\(modeline, horizontal scrollbar, ...) is not counted.
+DEFUN ("window-text-pixel-height", Fwindow_text_pixel_height, 0, 1, 0, /*
+Return the height in pixels of the text-displaying portion of WINDOW.
+Unlike `window-pixel-height', the space occupied by the modeline and
+horizontal scrollbar, if any, is not counted.
 */
      (window))
 {
-  return make_int (window_displayed_pixel_height (decode_window (window)));
+  struct window *w = decode_window (window);
+
+  return make_int (WINDOW_TEXT_HEIGHT (w));
 }
 
 DEFUN ("window-width", Fwindow_width, 0, 1, 0, /*
@@ -1341,6 +1342,18 @@ Return the width of WINDOW in pixels.  Defaults to current window.
        (window))
 {
   return make_int (decode_window (window)->pixel_width);
+}
+
+DEFUN ("window-text-pixel-width", Fwindow_text_pixel_width, 0, 1, 0, /*
+Return the width in pixels of the text-displaying portion of WINDOW.
+Unlike `window-pixel-width', the space occupied by the vertical
+scrollbar or divider, if any, is not counted.  
+*/
+     (window))
+{
+  struct window *w = decode_window (window);
+
+  return make_int (WINDOW_TEXT_WIDTH (w));
 }
 
 DEFUN ("window-hscroll", Fwindow_hscroll, 0, 1, 0, /*
@@ -1408,7 +1421,7 @@ NCOL should be zero or positive.
   return ncol;
 }
 
-#if 0 /* bogus crock */
+#if 0 /* bogus FSF crock */
 
 xxDEFUN ("window-redisplay-end-trigger",
 	 Fwindow_redisplay_end_trigger, 0, 1, 0, /*
@@ -1453,6 +1466,26 @@ The frame toolbars and menubars are considered to be outside of this area.
 		make_int (top),
 		make_int (left + w->pixel_width),
 		make_int (top + w->pixel_height));
+}
+
+DEFUN ("window-text-pixel-edges", Fwindow_text_pixel_edges, 0, 1, 0, /*
+Return a list of the pixel edge coordinates of the text area of WINDOW.
+Returns the list \(LEFT TOP RIGHT BOTTOM), all relative to 0, 0 at the
+top left corner of the window.
+*/
+       (window))
+{
+  struct window *w = decode_window (window);
+
+  int left   = window_left_gutter_width (w, /* modeline = */ 0);
+  int top    = window_top_gutter_height (w);
+  int right  = WINDOW_WIDTH (w) - window_right_gutter_width (w, 0);
+  int bottom = WINDOW_HEIGHT (w) - window_bottom_gutter_height (w);
+
+  return list4 (make_int (left),
+		make_int (top),
+		make_int (right),
+		make_int (bottom));
 }
 
 DEFUN ("window-point", Fwindow_point, 0, 1, 0, /*
@@ -3583,18 +3616,6 @@ window_displayed_height (struct window *w)
   return num_lines;
 }
 
-/*
- * Return height in pixels of buffer-displaying portion of window w.
- * Does not include the gutters (modeline, scrollbars, ...)
- */
-int
-window_displayed_pixel_height (struct window *w)
-{
-  return (WINDOW_HEIGHT (w)
-          - window_top_gutter_height (w)
-          - window_bottom_gutter_height (w));
-}
-
 static int
 window_pixel_width (Lisp_Object window)
 {
@@ -5497,21 +5518,23 @@ syms_of_window (void)
   DEFSUBR (Fwindow_frame);
   DEFSUBR (Fwindow_height);
   DEFSUBR (Fwindow_displayed_height);
-  DEFSUBR (Fwindow_displayed_pixel_height);
   DEFSUBR (Fwindow_width);
   DEFSUBR (Fwindow_pixel_height);
   DEFSUBR (Fwindow_pixel_width);
+  DEFSUBR (Fwindow_text_pixel_height);
+  DEFSUBR (Fwindow_text_pixel_width);
   DEFSUBR (Fwindow_hscroll);
 #ifdef MODELINE_IS_SCROLLABLE
   DEFSUBR (Fmodeline_hscroll);
   DEFSUBR (Fset_modeline_hscroll);
 #endif /* MODELINE_IS_SCROLLABLE */
-#if 0 /* bogus crock */
+#if 0 /* bogus FSF crock */
   DEFSUBR (Fwindow_redisplay_end_trigger);
   DEFSUBR (Fset_window_redisplay_end_trigger);
 #endif
   DEFSUBR (Fset_window_hscroll);
   DEFSUBR (Fwindow_pixel_edges);
+  DEFSUBR (Fwindow_text_pixel_edges);
   DEFSUBR (Fwindow_point);
   DEFSUBR (Fwindow_start);
   DEFSUBR (Fwindow_end);

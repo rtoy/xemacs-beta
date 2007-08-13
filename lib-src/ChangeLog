@@ -1,3 +1,27 @@
+1998-04-18  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* etags.c (C_entries): Add parentheses.
+
+	* etags-vmslib.c: Remove.  It's not needed anymore.
+
+Fri Apr 17 12:59:35 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* installexe.sh: New file.
+
+1998-04-17  Olivier Galibert  <galibert@pobox.com>
+
+	* etags.c (print_help): Correct typo.
+
+1998-04-16  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Add -DOO_BROWSER to etags arguments.
+
+	* etags.c: Synch with InfoDock.
+
+	* update-autoloads.sh: Don't attempt to eval `make-special' stuffs
+	anymore.  They are no longer used.
+	* update-custom.sh: Always check in lisp/.
+
 1998-03-18  Jan Vroonhof  <vroonhof@math.ethz.ch>
 
 	* gnuclient.c (main): Do not copy string unnecessary in (too)

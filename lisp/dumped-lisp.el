@@ -140,12 +140,12 @@
 
 	;; Specialized language support
 	#+(and mule CANNA) "canna-leim"
-;; Egg/Its is now a package with its own dumped-lisp.el file
+;; Egg/Its is now a package
 ;	#+(and mule wnn) "egg-leim"
 ;	#+(and mule wnn) "egg-kwnn-leim"
 ;	#+(and mule wnn) "egg-cwnn-leim"
 ;	#+mule "egg-sj3-leim"
-;; SKK is now a package with its own dumped-lisp.el file
+;; SKK is now a package
 ;	#+mule "skk-leim"
 
 ;; Set up the XEmacs environment for Mule.
@@ -169,7 +169,7 @@
 	#+(and x scrollbar) "x-scrollbar"
 	#+x "x-misc"
 	#+x "x-init"
-	#+(and (not infodock) x toolbar) "x-toolbar"
+	#+(and (not infodock) window-system toolbar) "x-toolbar"
 	#+x "x-win-xfree86"
 	#+x "x-win-sun"
 ;; preload the mswindows code.

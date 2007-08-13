@@ -471,7 +471,9 @@ Lisp_Object Vccl_program_table;
     else				      	      	\
       {					      	      	\
 	Bufbyte work[MAX_EMCHAR_LEN];	      	      	\
-	int len = set_charptr_emchar (work, ch);	\
+	int len = ( ch < 256 ) ?			\
+          simple_set_charptr_emchar (work, ch) :	\
+          non_ascii_set_charptr_emchar (work, ch);	\
 	Dynarr_add_many (destination, work, len);      	\
       }					      	      	\
   } while (0)

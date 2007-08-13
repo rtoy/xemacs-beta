@@ -8,13 +8,6 @@
 #undef LIBS_SYSTEM
 #define LIBS_SYSTEM "-lsocket -lnsl -lelf -lgen"
 
-/* Use libw.a along with X11R6 Xt.  */
-#define NEED_LIBW
-
-/* ryanr@ellingtn.ftc.nrcs.usda.gov (Richard Anthony Ryan) says -lXimp
-   is needed in UNIX_SV ... 4.2 1.1.2.  */
-#define LIB_MOTIF "-lXm -lXimp"
-
 #define VFORK_RETURN_TYPE pid_t
 
 /* XEmacs change (since getwd is auto-determined) */

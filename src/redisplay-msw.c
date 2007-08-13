@@ -554,7 +554,9 @@ mswindows_output_pixmap (struct window *w, struct display_line *dl,
 			 int cursor_start, int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
+#if 0
   HDC hdc = FRAME_MSWINDOWS_DC (f);
+#endif
   struct Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   Lisp_Object window;
 

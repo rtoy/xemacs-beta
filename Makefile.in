@@ -181,7 +181,7 @@ archlibdir=@archlibdir@
 ## ==================== Utility Programs for the Build ====================
 
 ## Allow the user to specify the install program.
-INSTALL = @INSTALL@
+INSTALL = @install_pp@ @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
@@ -330,7 +330,7 @@ pkg-src/tree-x/Makefile: ${srcdir}/pkg-src/tree-x/Makefile.in.in config.status
 src/config.h: ${srcdir}/src/config.h.in
 	./config.status && touch $@
 
-src/paths.h: ${srcdir}/src/paths.h.in.in
+src/paths.h: ${srcdir}/src/paths.h.in
 	./config.status && touch $@
 
 lwlib/config.h: ${srcdir}/lwlib/config.h.in
@@ -526,7 +526,7 @@ top_distclean=\
 	done ; \
 	$(RM) core .sbinit Makefile lock/*; \
 	$(RM) lisp/finder-inf.el* Installation.el Installation.elc; \
-	$(RM) packages mule-packages
+	$(RM) packages mule-packages site-lisp
 
 distclean: FRC.distclean
 	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done

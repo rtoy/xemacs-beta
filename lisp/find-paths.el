@@ -39,16 +39,22 @@
 (defvar paths-version-control-bases '("RCS" "CVS" "SCCS")
   "File bases associated with version control.")
 
-(defun paths-find-recursive-path (directories &optional exclude)
+(defun paths-find-recursive-path (directories &optional max-depth exclude)
   "Return a list of the directory hierarchy underneath DIRECTORIES.
-The returned list is sorted by pre-order and lexicographically."
+The returned list is sorted by pre-order and lexicographically.
+MAX-DEPTH limits the depth of the search to MAX-DEPTH level,
+if it is a number.  If MAX-DEPTH is NIL, the search depth is unlimited.
+EXCLUDE is a list of directory names to exclude from the search."
   (let ((path '()))
     (while directories
       (let ((directory (file-name-as-directory
 			(expand-file-name
 			 (car directories)))))
 	(if (file-directory-p directory)
-	    (let ((raw-dirs (directory-files directory nil "^[^-.]" nil 'dirs-only))
+	    (let ((raw-dirs
+		   (if (equal 0 max-depth)
+		       '()
+		     (directory-files directory nil "^[^-.]" nil 'dirs-only)))
 		  (reverse-dirs '()))
 
 	      (while raw-dirs
@@ -59,27 +65,32 @@ The returned list is sorted by pre-order and lexicographically."
 		(setq raw-dirs (cdr raw-dirs)))
 
 	      (let ((sub-path
-		     (paths-find-recursive-path (reverse reverse-dirs) exclude)))
+		     (paths-find-recursive-path (reverse reverse-dirs)
+						(if (numberp max-depth)
+						    (- max-depth 1)
+						  max-depth)
+						exclude)))
 		(setq path (nconc path
 				  (list directory)
 				  sub-path))))))
       (setq directories (cdr directories)))
     path))
 
-(defun paths-find-recursive-load-path (directories)
+(defun paths-find-recursive-load-path (directories &optional max-depth)
   "Construct a recursive load path underneath DIRECTORIES."
-  (paths-find-recursive-path directories paths-version-control-bases))
+  (paths-find-recursive-path directories
+			     max-depth  paths-version-control-bases))
 
 (defun paths-emacs-root-p (directory)
   "Check if DIRECTORY is a plausible installation root for XEmacs."
   (or
    ;; installed
-   (file-directory-p (concat directory "lib/xemacs"))
+   (file-directory-p (paths-construct-path (list directory "lib" "xemacs")))
    ;; in-place
    (and 
-    (file-directory-p (concat directory "lib-src"))
-    (file-directory-p (concat directory "lisp"))
-    (file-directory-p (concat directory "src")))))
+    (file-directory-p (paths-construct-path (list directory "lib-src")))
+    (file-directory-p (paths-construct-path (list directory "lisp")))
+    (file-directory-p (paths-construct-path (list directory "src"))))))
 
 (defun paths-chase-symlink (file-name)
   "Chase a symlink until the bitter end."
@@ -98,13 +109,28 @@ The returned list is sorted by pre-order and lexicographically."
 					invocation-name)))
 	 (executable-directory (file-name-directory executable-file-name))
 	 (maybe-root-1 (file-name-as-directory
-			(expand-file-name ".." executable-directory)))
+			(paths-construct-path '("..") executable-directory)))
 	 (maybe-root-2 (file-name-as-directory
-			(expand-file-name "../.." executable-directory))))
+			(paths-construct-path '(".." "..") executable-directory))))
     (or (and (paths-emacs-root-p maybe-root-1)
 	     maybe-root-1)
 	(and (paths-emacs-root-p maybe-root-2)
 	     maybe-root-2))))
+
+(defun paths-construct-path (components &optional expand-directory)
+  "Convert list of path components COMPONENTS into a path.
+If EXPAND-DIRECTORY is non-NIL, use it as a directory to feed
+to EXPAND-FILE-NAME."
+  (let* ((reverse-components (reverse components))
+	 (last-component (car reverse-components))
+	 (first-components (reverse (cdr reverse-components)))
+	 (path
+	  (apply #'concat
+		 (append (mapcar #'file-name-as-directory first-components)
+			 (list last-component)))))
+    (if expand-directory
+	(expand-file-name path expand-directory)
+      path)))
 
 (defun paths-construct-emacs-directory (root suffix base)
   "Construct a directory name within the XEmacs hierarchy."
@@ -122,11 +148,12 @@ SUFFIX is the subdirectory from there.
 BASE is the base to look for.
 ENVVAR is the name of the environment variable that might also
 specify the directory.
-DEFAULT is a fall-back value."
-  (let ((envvar-value (and envvar (getenv envvar))))
-    (if (and envvar-value
-	     (file-directory-p envvar-value))
-	(file-name-as-directory envvar-value)
+DEFAULT is the preferred value."
+  (let ((preferred-value (or (and envvar (getenv envvar))
+			     default)))
+    (if (and preferred-value
+	     (file-directory-p preferred-value))
+	(file-name-as-directory preferred-value)
       (catch 'gotcha
 	(while roots
 	  (let* ((root (car roots))
@@ -139,19 +166,24 @@ DEFAULT is a fall-back value."
 		(if (file-directory-p path)
 		    (throw 'gotcha path)))))
 	  (setq roots (cdr roots)))
-	(if (and default
-		 (file-directory-p default))
-	    (file-name-as-directory default)
-	  nil)))))
+	nil))))
 
 (defun paths-find-site-directory (roots base &optional envvar default)
   "Find a site-specific directory in the XEmacs hierarchy."
-  (paths-find-emacs-directory roots "lib/xemacs/" base envvar default))
+  (paths-find-emacs-directory roots
+			      (file-name-as-directory
+			       (paths-construct-path '("lib" "xemacs")))
+			      base
+			      envvar default))
 
 (defun paths-find-version-directory (roots base &optional envvar default)
   "Find a version-specific directory in the XEmacs hierarchy."
   (paths-find-emacs-directory roots
-			      (concat "lib/xemacs-" (construct-emacs-version) "/")
+			      (file-name-as-directory
+			       (paths-construct-path
+				(list "lib"
+				      (concat "xemacs-"
+					      (construct-emacs-version)))))
 			      base
 			      envvar default))
 
@@ -189,22 +221,6 @@ DEFAULT is a fall-back value."
 					       (match-beginning 1) (match-end 1)))))
 	  (setq paths-path-emacs-version version)
 	  version)))))
-  
-(defun paths-find-emacs-path (roots suffix base &optional envvar default)
-  "Find a path in the XEmacs hierarchy.
-ROOTS must be a list of installation roots.
-SUFFIX is the subdirectory from there.
-BASE is the base to look for.
-ENVVAR is the name of the environment variable that might also
-specify the path.
-DEFAULT is a fall-back value."
-  (let ((envvar-value (and envvar (getenv envvar))))
-    (if envvar-value
-	(decode-path-internal envvar-value)
-      (let ((directory (paths-find-emacs-directory roots base suffix)))
-	(if (and directory (file-directory-p directory))
-	    (list directory)
-	  (paths-directories-which-exist default))))))
 
 (defun paths-directories-which-exist (directories)
   "Return the directories among DIRECTORIES."
@@ -227,17 +243,33 @@ DEFAULT is a fall-back value."
     (append list-1
 	    (reverse reverse-survivors))))
 
-(defun paths-find-site-path (roots base &optional envvar default)
-  "Find a path underneath the site hierarchy."
-  (paths-find-emacs-path roots "lib/xemacs/" base envvar default))
+(defun paths-delete (predicate list)
+  "Delete all matches of PREDICATE from LIST."
+  (let ((reverse-result '()))
+    (while list
+      (if (not (funcall predicate (car list)))
+	  (setq reverse-result (cons (car list) reverse-result)))
+      (setq list (cdr list)))
+    (nreverse reverse-result)))
 
-(defun paths-find-version-path (roots base &optional envvar default)
-  "Find a path underneath the site hierarchy."
-  (paths-find-emacs-path roots
-			 (concat "lib/xemacs-" (construct-emacs-version) "/")
-			 base
-			 envvar default))
-		   
+(defun paths-decode-directory-path (string &optional drop-empties)
+  "Split STRING at path separators into a directory list.
+Non-\"\" comonents are converted into directory form.
+If DROP-EMPTIES is non-NIL, \"\" components are dropped from the output.
+Otherwise, they are left alone."
+  (let* ((components (decode-path-internal string))
+	 (directories
+	  (mapcar #'(lambda (component)
+		      (if (string-equal "" component)
+			  component
+			(file-name-as-directory component)))
+		  components)))
+    (if drop-empties
+	(paths-delete #'(lambda (component)
+			  (string-equal "" component))
+		      directories)
+      directories)))
+
 (defun paths-find-emacs-roots (invocation-directory
 			       invocation-name)
   "Find all plausible installation roots for XEmacs."
