@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.44
+;; Version: 1.46
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -27,10 +27,7 @@ If FRAME is omitted or nil, use the selected frame."
     (color-instance-rgb-components (make-color-instance color))))
 
 ;; Overwrite Emacs definition.
-(defun custom-facep (face) 
-  "Face symbol or object."
-  (or (facep face)
-      (find-face face)))
+(defalias 'custom-facep 'find-face)
 
 ;; Support for special XEmacs font attributes.
 (autoload 'font-create-object "font" nil)

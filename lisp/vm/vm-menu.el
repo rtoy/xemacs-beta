@@ -269,29 +269,108 @@
 	   ["Send, Keep Composing" vm-mail-send (vm-menu-can-send-mail-p)]
 	   ["Cancel" kill-buffer t]
 	   "----"
-	   "Go to Field:"
-	   "----"
-	   ["      To:" mail-to t]
-	   ["      Subject:" mail-subject	t]
-	   ["      CC:" mail-cc t]
-	   ["      BCC:" mail-bcc t]
-	   ["      Reply-To:" mail-replyto t]
-	   ["      Text" mail-text t]
-	   "----"
 	   ["Yank Original" vm-menu-yank-original vm-reply-list]
-	   ["Fill Yanked Message" mail-fill-yanked-message t]
-	   ["Insert Signature"	mail-signature t]
-	   ["Insert File..." insert-file t]
-	   ["Insert Buffer..."	insert-buffer t]
 	   "----"
-	   "MIME:"
+	   (append
+	    (if (vm-menu-fsfemacs-menus-p)
+		(list "Send Using MIME..."
+		      "Send Using MIME..."
+		      "---"
+		      "---")
+	      (list "Send Using MIME..."))
+	    (list
+	     ["Use MIME"
+	      (set (make-local-variable 'vm-send-using-mime) t)
+	      :active t
+	      :style radio
+	      :selected vm-send-using-mime]
+	     ["Don't use MIME"
+	      (set (make-local-variable 'vm-send-using-mime) nil)
+	      :active t
+	      :style radio
+	      :selected (not vm-send-using-mime)]))
+	   (append
+	    (if (vm-menu-fsfemacs-menus-p)
+		(list "Fragment Messages Larger Than ..."
+		      "Fragment Messages Larger Than ..."
+		      "---"
+		      "---")
+	      (list "Fragment Messages Larger Than ..."))
+	    (list ["Infinity, i.e., don't fragment"
+		   (set (make-local-variable 'vm-mime-max-message-size) nil)
+		   :active vm-send-using-mime
+		   :style radio
+		   :selected (eq vm-mime-max-message-size nil)]
+		  ["50000 bytes"
+		   (set (make-local-variable 'vm-mime-max-message-size)
+			50000)
+		   :active vm-send-using-mime
+		   :style radio
+		   :selected (eq vm-mime-max-message-size 50000)]
+		  ["100000 bytes"
+		   (set (make-local-variable 'vm-mime-max-message-size)
+			100000)
+		   :active vm-send-using-mime
+		   :style radio
+		   :selected (eq vm-mime-max-message-size 100000)]
+		  ["200000 bytes"
+		   (set (make-local-variable 'vm-mime-max-message-size)
+			200000)
+		   :active vm-send-using-mime
+		   :style radio
+		   :selected (eq vm-mime-max-message-size 200000)]
+		  ["500000 bytes"
+		   (set (make-local-variable 'vm-mime-max-message-size)
+			500000)
+		   :active vm-send-using-mime
+		   :style radio
+		   :selected (eq vm-mime-max-message-size 500000)]
+		  ["1000000 bytes"
+		   (set (make-local-variable 'vm-mime-max-message-size)
+			1000000)
+		   :active vm-send-using-mime
+		   :style radio
+		   :selected (eq vm-mime-max-message-size 1000000)]
+		  ["2000000 bytes"
+		   (set (make-local-variable 'vm-mime-max-message-size)
+			2000000)
+		   :active vm-send-using-mime
+		   :style radio
+		   :selected (eq vm-mime-max-message-size 2000000)]))
+	   (append
+	    (if (vm-menu-fsfemacs-menus-p)
+		(list "Encode 8-bit Characters Using ..."
+		      "Encode 8-bit Characters Using ..."
+		      "---"
+		      "---")
+	      (list "Encode 8-bit Characters Using ..."))
+	    (list
+	     ["Nothing, i.e., send unencoded"
+	      (set (make-local-variable 'vm-mime-8bit-text-transfer-encoding)
+		   '8bit)
+	      :active vm-send-using-mime
+	      :style radio
+	      :selected (eq vm-mime-8bit-text-transfer-encoding '8bit)]
+	     ["Quoted-Printable"
+	      (set (make-local-variable 'vm-mime-8bit-text-transfer-encoding)
+		   'quoted-printable)
+	      :active vm-send-using-mime
+	      :style radio
+	      :selected (eq vm-mime-8bit-text-transfer-encoding
+			    'quoted-printable)]
+	     ["BASE64"
+	      (set (make-local-variable 'vm-mime-8bit-text-transfer-encoding)
+		   'base64)
+	      :active vm-send-using-mime
+	      :style radio
+	      :selected (eq vm-mime-8bit-text-transfer-encoding 'base64)]))
 	   "----"
-	   ["      Attach File..."	vm-mime-attach-file vm-send-using-mime]
-	   ["      Attach MIME File..." vm-mime-attach-mime-file vm-send-using-mime]
-	   ["      Encode MIME, But Don't Send" vm-mime-encode-composition
+	   ["Attach File..."	vm-mime-attach-file vm-send-using-mime]
+	   ["Attach MIME File..." vm-mime-attach-mime-file vm-send-using-mime]
+	   ["Encode MIME, But Don't Send" vm-mime-encode-composition
 	    (and vm-send-using-mime
 		 (null (vm-mail-mode-get-header-contents "MIME-Version:")))]
-	   ["      Preview MIME Before Sending" vm-mime-preview-composition
+	   ["Preview MIME Before Sending" vm-mime-preview-composition
 	    vm-send-using-mime]
 	   ))))
 
@@ -475,7 +554,7 @@ set to the command name so that window configuration will be done."
       (let ((headers '("to" "cc" "bcc" "resent-to" "resent-cc" "resent-bcc"))
 	    h)
 	(while headers
-	  (setq h (mail-fetch-field (car headers)))
+	  (setq h (vm-mail-mode-get-header-contents (car headers)))
 	  (and (stringp h) (string-match "[^ \t\n,]" h)
 	       (throw 'done t))
 	  (setq headers (cdr headers)))
@@ -839,20 +918,12 @@ set to the command name so that window configuration will be done."
 	 ;; Poorly.
 	 ;;(define-key vm-mail-mode-map [menu-bar mail]
 	 ;;  (cons "Mail" vm-menu-fsfemacs-mail-menu))
+	 (defvar mail-mode-map)
+	 (define-key mail-mode-map [menu-bar mail]
+	   (cons "Mail" vm-menu-fsfemacs-mail-menu))
 	 (if vm-popup-menu-on-mouse-3
 	     (define-key vm-mail-mode-map [down-mouse-3]
-	       'vm-menu-popup-mode-menu))
-	 ;; replace some FSF Emacs menubar menu commands so the
-	 ;; user gets the VM version.  Catch errors; we don't
-	 ;; care enough about this to make VM crash if the
-	 ;; menubar entry names change.
-	 (condition-case nil
-	     (progn
-	       (define-key vm-mail-mode-map [menubar mail send]
-		 'vm-mail-send-and-exit)
-	       (define-key vm-mail-mode-map [menubar mail send-stay]
-		 'vm-mail-send))
-	   (error nil)))))
+	       'vm-menu-popup-mode-menu)))))
 
 (defun vm-menu-install-menus ()
   (cond ((consp vm-use-menus)
@@ -1008,7 +1079,7 @@ set to the command name so that window configuration will be done."
 (defun vm-menu-hm-make-folder-menu ()
   "Makes a menu with the mail folders of the directory `vm-folder-directory'."
   (interactive)
-  (vm-unsaved-message "Building folders menu...")
+  (message "Building folders menu...")
   (let ((folder-list (vm-menu-hm-tree-make-file-list vm-folder-directory))
 	(inbox-list (if (listp (car vm-spool-files))
 			(mapcar 'car vm-spool-files)
@@ -1065,7 +1136,7 @@ set to the command name so that window configuration will be done."
 		      "----"
 		      ["Rebuild Folders Menu" vm-menu-hm-make-folder-menu vm-folder-directory]
 		      ))))
-  (vm-unsaved-message "Building folders menu... done")
+  (message "Building folders menu... done")
   (vm-menu-hm-install-menu))
 
 (defun vm-menu-hm-install-menu ()

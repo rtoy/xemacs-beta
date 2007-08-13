@@ -919,9 +919,9 @@ vm-folder-type is initialized here."
 	  (setq tail-cons (cdr tail-cons)))
 	(vm-increment n)
 	(if (zerop (% n modulus))
-	    (vm-unsaved-message "Parsing messages... %d" n)))
+	    (message "Parsing messages... %d" n)))
       (if (>= n modulus)
-	  (vm-unsaved-message "Parsing messages... done"))
+	  (message "Parsing messages... done"))
       (if (and (not (= last-end (point-max)))
 	       (not (eq vm-folder-type 'unknown)))
 	  (progn
@@ -1255,10 +1255,10 @@ vm-folder-type is initialized here."
 	      ((vm-unread-flag (car mp))
 	       (vm-increment vm-unread-count)))
 	(if (zerop (% vm-total-count modulus))
-	    (vm-unsaved-message "Reading attributes... %d" vm-total-count))
+	    (message "Reading attributes... %d" vm-total-count))
 	(setq mp (cdr mp)))
       (if (>= vm-total-count modulus)
-	  (vm-unsaved-message "Reading attributes... done"))
+	  (message "Reading attributes... done"))
       (if (null message-list)
 	  (setq vm-totals (list vm-modification-counter
 				vm-total-count
@@ -1457,7 +1457,7 @@ vm-folder-type is initialized here."
 	     (and got (or (not (equal vis vm-visible-headers))
 			  (not (equal invis vm-invisible-header-regexp)))
 		  (let ((mp vm-message-list))
-		    (vm-unsaved-message "Discarding visible header info...")
+		    (message "Discarding visible header info...")
 		    (while mp
 		      (vm-set-vheaders-regexp-of (car mp) nil)
 		      (vm-set-vheaders-of (car mp) nil)
@@ -1483,7 +1483,7 @@ vm-folder-type is initialized here."
 	(vm-skip-past-leading-message-separator)
 	(if (re-search-forward vm-message-order-header-regexp lim t)
 	    (progn
-	      (vm-unsaved-message "Reordering messages...")
+	      (message "Reordering messages...")
 	      (setq order (read (current-buffer))
 		    list-length (length vm-message-list)
 		    v (make-vector (max list-length (length order)) nil))
@@ -1500,7 +1500,7 @@ vm-folder-type is initialized here."
 					       vm-message-list))
 		(vm-set-numbering-redo-start-point t)
 		(vm-reverse-link-messages))
-	      (vm-unsaved-message "Reordering messages... done")))))))
+	      (message "Reordering messages... done")))))))
 
 ;; Read the header that gives the folder's cached summary format
 ;; If the current summary format is different, then the cached
@@ -2114,7 +2114,7 @@ The folder is not altered and Emacs is still visiting it."
     (if (and (not no-change) (not virtual))
 	(progn
 	  ;; this could take a while, so give the user some feedback
-	  (vm-unsaved-message "Quitting...")
+	  (message "Quitting...")
 	  (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
 	      (vm-change-all-new-to-unread))))
     (if (and (buffer-modified-p)
@@ -2122,7 +2122,7 @@ The folder is not altered and Emacs is still visiting it."
 	     (not no-change)
 	     (not virtual))
 	(vm-save-folder))
-    (vm-unsaved-message "")
+    (message "")
     (let ((summary-buffer vm-summary-buffer)
 	  (pres-buffer vm-presentation-buffer-handle)
 	  (mail-buffer (current-buffer)))
@@ -2195,13 +2195,20 @@ The folder is not altered and Emacs is still visiting it."
   (if (integerp vm-mail-check-interval)
       (if timer
 	  (timer-set-time timer (current-time) vm-mail-check-interval)
-	(set-itimer-restart current-itimer vm-mail-check-interval)))
+	(set-itimer-restart current-itimer vm-mail-check-interval))
+    ;; user has changed the variable value to a something that
+    ;; isn't a number, make the timer go away.
+    (if timer
+	(cancel-timer timer)
+      (set-itimer-restart current-itimer nil)))
   (let ((b-list (buffer-list))
+	(found-one nil)
 	oldval)
     (while (and (not (input-pending-p)) b-list)
       (save-excursion
 	(set-buffer (car b-list))
 	(if (and (eq major-mode 'vm-mode)
+		 (setq found-one t)
 		 (not vm-block-new-mail))
 	    (progn
 	      (setq oldval vm-spooled-mail-waiting)
@@ -2210,7 +2217,12 @@ The folder is not altered and Emacs is still visiting it."
 		  (progn
 		    (intern (buffer-name) vm-buffers-needing-display-update)
 		    (vm-update-summary-and-mode-line))))))
-      (setq b-list (cdr b-list)))))
+      (setq b-list (cdr b-list)))
+    ;; make the timer go away if we didn't encounter a vm-mode buffer.
+    (if (and (not found-one) (null b-list))
+	(if timer
+	    (cancel-timer timer)
+	  (set-itimer-restart current-itimer nil)))))
 
 ;; support for numeric vm-auto-get-new-mail
 ;; if timer argument is present, this means we're using the Emacs
@@ -2222,12 +2234,19 @@ The folder is not altered and Emacs is still visiting it."
   (if (integerp vm-auto-get-new-mail)
       (if timer
 	  (timer-set-time timer (current-time) vm-auto-get-new-mail)
-	(set-itimer-restart current-itimer vm-auto-get-new-mail)))
-  (let ((b-list (buffer-list)))
+	(set-itimer-restart current-itimer vm-auto-get-new-mail))
+    ;; user has changed the variable value to a something that
+    ;; isn't a number, make the timer go away.
+    (if timer
+	(cancel-timer timer)
+      (set-itimer-restart current-itimer nil)))
+  (let ((b-list (buffer-list))
+	(found-one nil))
     (while (and (not (input-pending-p)) b-list)
       (save-excursion
 	(set-buffer (car b-list))
 	(if (and (eq major-mode 'vm-mode)
+		 (setq found-one t)
 		 (not (and (not (buffer-modified-p))
 			   buffer-file-name
 			   (file-newer-than-file-p
@@ -2244,7 +2263,12 @@ The folder is not altered and Emacs is still visiting it."
 		       (vm-thoughtfully-select-message))
 		  (vm-preview-current-message)
 		(vm-update-summary-and-mode-line)))))
-      (setq b-list (cdr b-list)))))
+      (setq b-list (cdr b-list)))
+    ;; make the timer go away if we didn't encounter a vm-mode buffer.
+    (if (and (not found-one) (null b-list))
+	(if timer
+	    (cancel-timer timer)
+	  (set-itimer-restart current-itimer nil)))))
 
 ;; support for numeric vm-flush-interval
 ;; if timer argument is present, this means we're using the Emacs
@@ -2345,7 +2369,7 @@ folder."
     (if (buffer-modified-p)
 	(let (mp (newlist nil))
 	  ;; stuff the attributes of messages that need it.
-	  (vm-unsaved-message "Stuffing attributes...")
+	  (message "Stuffing attributes...")
 	  (vm-stuff-folder-attributes nil)
 	  ;; stuff bookmark and header variable values
 	  (if vm-message-list
@@ -2358,7 +2382,7 @@ folder."
 		(vm-stuff-summary)
 		(and vm-message-order-changed
 		     (vm-stuff-message-order))))
-	  (vm-unsaved-message "Saving...")
+	  (message "Saving...")
 	  (let ((vm-inhibit-write-file-hook t))
 	    (save-buffer prefix))
 	  (vm-set-buffer-modified-p nil)
@@ -2394,7 +2418,7 @@ run vm-expunge-folder followed by vm-save-folder."
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
       (progn
-	(vm-unsaved-message "Expunging...")
+	(message "Expunging...")
 	(vm-expunge-folder t)))
   (vm-save-folder prefix))
 
@@ -2782,9 +2806,9 @@ spool files."
 	 (if (not (eq major-mode 'vm-mode))
 	     (vm-mode))
 	 (if (consp (car (vm-spool-files)))
-	     (vm-unsaved-message "Checking for new mail for %s..."
+	     (message "Checking for new mail for %s..."
 		      (or buffer-file-name (buffer-name)))
-	   (vm-unsaved-message "Checking for new mail..."))
+	   (message "Checking for new mail..."))
 	 (let (totals-blurb)
 	   (if (and (vm-get-spooled-mail t) (vm-assimilate-new-messages t))
 	       (progn
@@ -2801,7 +2825,7 @@ spool files."
 		 (message "No new mail for %s"
 			  (or buffer-file-name (buffer-name)))
 	       (message "No new mail."))
-	     (and (interactive-p) (sit-for 4) (vm-unsaved-message "")))))
+	     (and (interactive-p) (sit-for 4) (message "")))))
 	(t
 	 (let ((buffer-read-only nil)
 	       folder mcount totals-blurb)
@@ -2970,7 +2994,7 @@ spool files."
 	(while (and (sit-for 4) lines)
 	  (message (substitute-command-keys (car lines)))
 	  (setq lines (cdr lines)))))
-  (vm-unsaved-message ""))
+  (message ""))
 
 (defun vm-load-init-file (&optional interactive)
   (interactive "p")
@@ -3167,7 +3191,7 @@ Interactively TYPE will be read from the minibuffer."
 	 ;; process slower.
 	 (setq mp (cdr mp) n (1+ n))
 	 (if (zerop (% n modulus))
-	     (vm-unsaved-message "Converting... %d" n))))))
+	     (message "Converting... %d" n))))))
   (vm-clear-modification-flag-undos)
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-update-summary-and-mode-line)

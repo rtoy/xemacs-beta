@@ -3771,16 +3771,29 @@ re_search (struct re_pattern_buffer *bufp, CONST char *string, int size,
 		      regs, size);
 }
 
+#ifndef emacs
+/* Snarfed from src/lisp.h, needed for compiling [ce]tags. */
+# define bytecount_to_charcount(ptr, len) (len)
+# define charcount_to_bytecount(ptr, len) (len)
+typedef int Charcount;
+#endif
 
 /* Using the compiled pattern in BUFP->buffer, first tries to match the
    virtual concatenation of STRING1 and STRING2, starting first at index
    STARTPOS, then at STARTPOS + 1, and so on.
+
+   With MULE, STARTPOS is a byte position, not a char position.  And the
+   search will increment STARTPOS by the width of the current leading
+   character.
    
    STRING1 and STRING2 have length SIZE1 and SIZE2, respectively.
    
    RANGE is how far to scan while trying to match.  RANGE = 0 means try
    only at STARTPOS; in general, the last start tried is STARTPOS +
    RANGE.
+
+   With MULE, RANGE is a byte position, not a char position.  The last
+   start tried is the character starting <= STARTPOS + RANGE.
    
    In REGS, return the indices of the virtual concatenation of STRING1
    and STRING2 that matched the entire BUFP->buffer and its contained
@@ -3813,8 +3826,13 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
     
   /* Fix up RANGE if it might eventually take us outside
      the virtual concatenation of STRING1 and STRING2.  */
+#if 0
   if (endpos < -1)
     range = -1 - startpos;
+#else
+  if (endpos < 0)
+    range = 0 - startpos;
+#endif
   else if (endpos > total_size)
     range = total_size - startpos;
 
@@ -3862,25 +3880,33 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 	  /* whose stupid idea was it anyway to make this
 	     function take two strings to match?? */
 	  int lim = 0;
-	  unsigned char *p;
+	  register CONST unsigned char *d;
 	  int irange = range;
+
 	  if (startpos < size1 && startpos + range >= size1)
 	    lim = range - (size1 - startpos);
 
-	  p = ((unsigned char *)
-	       &(startpos >= size1 ? string2 - size1 : string1)[startpos]);
-	  p--;
+	  d = ((CONST unsigned char *)
+	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
+	  DEC_CHARPTR(d);
 
 	  if (translate)
-	    {
-	      while (range > lim && translate[*p++] != '\n')
-		range--;
-	    }
+#ifdef MULE
+	    while (range > lim && (*d >= 0x80 || translate[*d] != '\n'))
+#else
+	    while (range > lim && translate[*d] != '\n')
+#endif
+	      {
+		INC_CHARPTR(d);
+		range -= charcount_to_bytecount (d, 1);
+	      }
 	  else
-	    {
-	      while (range > lim && *p++ != '\n')
-		range--;
-	    }
+	    while (range > lim && *d != '\n')
+	      {
+		INC_CHARPTR(d);
+		range -= charcount_to_bytecount (d, 1);
+	      }
+
 	  startpos += irange - range;
 	}
 #endif /* REGEX_BEGLINE_CHECK */
@@ -3893,35 +3919,47 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 	{
 	  if (range > 0)	/* Searching forwards.  */
 	    {
-	      register CONST char *d;
+	      register CONST unsigned char *d;
 	      register int lim = 0;
 	      int irange = range;
 
               if (startpos < size1 && startpos + range >= size1)
                 lim = range - (size1 - startpos);
 
-	      d = (startpos >= size1 ? string2 - size1 : string1) + startpos;
+	      d = ((CONST unsigned char *)
+		   (startpos >= size1 ? string2 - size1 : string1) + startpos);
    
               /* Written out as an if-else to avoid testing `translate'
                  inside the loop.  */
 	      if (translate)
-                while (range > lim
-                       && !fastmap[(unsigned char)
-				   translate[(unsigned char) *d++]])
-                  range--;
+#ifdef MULE
+                while (range > lim && *d < 0x80 && !fastmap[translate[*d]])
+#else
+                while (range > lim && !fastmap[translate[*d]])
+#endif
+		  {
+		    range -= charcount_to_bytecount (d, 1);
+		    INC_CHARPTR(d);
+		  }
 	      else
-                while (range > lim && !fastmap[(unsigned char) *d++])
-                  range--;
+                while (range > lim && !fastmap[*d])
+		  {
+		    range -= charcount_to_bytecount (d, 1);
+		    INC_CHARPTR(d);
+		  }
 
 	      startpos += irange - range;
 	    }
 	  else				/* Searching backwards.  */
 	    {
-	      register char c = (size1 == 0 || startpos >= size1
-                                 ? string2[startpos - size1] 
-                                 : string1[startpos]);
-
+	      register unsigned char c = (size1 == 0 || startpos >= size1
+					  ? string2[startpos - size1] 
+					  : string1[startpos]);
+#ifdef MULE
+	      if (c < 0x80 && !fastmap[(unsigned char) TRANSLATE (c)])
+#else
 	      if (!fastmap[(unsigned char) TRANSLATE (c)])
+#endif
 		goto advance;
 	    }
 	}
@@ -3951,17 +3989,28 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 
     advance:
       if (!range) 
-        break;
-      else if (range > 0) 
-        {
-          range--; 
-          startpos++;
-        }
-      else
-        {
-          range++; 
-          startpos--;
-        }
+	break;
+      else {
+	register CONST unsigned char *d;
+	Charcount d_size;
+
+	d = ((CONST unsigned char *)
+	     (startpos >= size1 ? string2 - size1 : string1) + startpos);
+
+	if (range > 0) 
+	  {
+	    d_size = charcount_to_bytecount (d, 1);
+	    range -= d_size;
+	    startpos += d_size;
+	  }
+	else
+	  {
+	    DEC_CHARPTR(d);
+	    d_size = charcount_to_bytecount (d, 1);
+	    range += d_size;
+	    startpos -= d_size;
+	  }
+      }
     }
   return -1;
 } /* re_search_2 */
@@ -5075,10 +5124,19 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
                   = *p2 == (unsigned char) endline ? '\n' : p2[2];
 #endif
 
+#if 1
+                /* dmoore@ucsd.edu - emacs 19.34 uses this: */
+
                 if ((re_opcode_t) p1[3] == exactn
-		    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[4]
-			  && (p2[1 + p1[4] / BYTEWIDTH]
-			      & (1 << (p1[4] % BYTEWIDTH)))))
+                    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[5]
+                          && (p2[2 + p1[5] / BYTEWIDTH]
+                              & (1 << (p1[5] % BYTEWIDTH)))))
+#else
+                if ((re_opcode_t) p1[3] == exactn
+                    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[4]
+                          && (p2[1 + p1[4] / BYTEWIDTH]
+                              & (1 << (p1[4] % BYTEWIDTH)))))
+#endif
                   {
   		    p[-3] = (unsigned char) pop_failure_jump;
                     DEBUG_PRINT3 ("  %c != %c => pop_failure_jump.\n",

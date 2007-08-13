@@ -2,7 +2,7 @@
 ;;;
 ;;; Keywords: hypermedia languages help docs wp
 ;;;
-;;; $Id: hm--html-mode.el,v 1.3 1997/02/24 01:13:27 steve Exp $
+;;; $Id: hm--html-mode.el,v 1.4 1997/02/27 06:08:09 steve Exp $
 ;;;
 ;;; Copyright (C) 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -53,6 +53,14 @@
 ;;;	(setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
 ;;;				        auto-mode-alist))
 ;;;
+;;;	But you can also use the hm--html-minor-mode as an addition to
+;;;	the psgml html modes. For that you've to put the following line in
+;;;	your .emacs:
+;;;	(add-hook 'html-mode-hook 'hm--html-minor-mode)
+;;;
+;;;	Note: This works only in an XEmacs version greater than 19.14 and
+;;;	also not in the XEmacs 20.0.
+;;;
 ;;;	Look at the file hm--html-configuration for further installation
 ;;;     points.
 ;;;	
@@ -63,13 +71,19 @@
 (require 'adapt)
 (require 'hm--date)
 (require 'hm--html)
+
 (eval-when-compile
   (require 'hm--html-configuration))
+
 (hm--html-load-config-files)
 (require 'hm--html-indentation)
+(require 'hm--html-keys)
+
+(defvar hm--html-minor-mode nil
+  "Non-nil, if the `hm--html-minor-mode' is active.")
+
 (require 'hm--html-menu)
 (require 'hm--html-drag-and-drop)
-(require 'hm--html-keys)
 
 
 ;;; The package version
@@ -77,7 +91,7 @@
 
 (defconst hm--html-menus-package-name "hm--html-menus")
 
-(defconst hm--html-menus-package-version "5.2")
+(defconst hm--html-menus-package-version "5.3")
   
 
 ;;; Generate the help buffer faces
@@ -132,6 +146,7 @@ if that value is non-nil."
   (setq comment-start "<!--" comment-end "-->")
   (make-local-variable 'sentence-end)
   (setq sentence-end "[<>.?!][]\"')}]*\\($\\| $\\|\t\\|  \\)[ \t\n]*")
+  (make-local-variable 'indent-line-function)
   (setq indent-line-function 'hm--html-indent-line)
   (setq idd-actions hm--html-idd-actions)
   (hm--install-html-menu hm--html-mode-pulldown-menu-name)
@@ -204,10 +219,6 @@ of `hm--html-region-mode'."
 
 
 ;;; hm--html-minor-mode
-
-(defvar hm--html-minor-mode nil
-  "Non-nil, if the `hm--html-minor-mode' is active.")
-
 (make-variable-buffer-local 'hm--html-minor-mode)
 
 (add-minor-mode 'hm--html-minor-mode " HM-HTML" hm--html-minor-mode-map)

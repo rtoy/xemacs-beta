@@ -646,9 +646,9 @@ x_update_frame_menubar_internal (struct frame *f)
      || (!EQ (XFRAME_MENUBAR_DATA (f)->last_menubar_buffer,
 	      XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer)));
 
-  int menubar_was_visible = XtIsManaged (FRAME_X_MENUBAR_WIDGET (f));
-  int menubar_will_be_visible = menubar_was_visible;
-  int menubar_visibility_changed;
+  Boolean menubar_was_visible = XtIsManaged (FRAME_X_MENUBAR_WIDGET (f));
+  Boolean menubar_will_be_visible = menubar_was_visible;
+  Boolean menubar_visibility_changed;
   Cardinal new_num_top_widgets = 1; /* for the menubar */
   Widget container = FRAME_X_CONTAINER_WIDGET (f);
   

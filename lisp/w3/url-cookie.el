@@ -1,7 +1,7 @@
 ;;; url-cookie.el --- Netscape Cookie support
 ;; Author: wmperry
-;; Created: 1997/01/26 00:40:23
-;; Version: 1.10
+;; Created: 1997/02/18 23:34:20
+;; Version: 1.11
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -297,12 +297,13 @@
 	 (secure (and (assoc* "secure" args :test 'url-header-comparison) t))
 	 (domain (or (cdr-safe (assoc* "domain" args :test
 				       'url-header-comparison))
-		     url-current-server))
+		     (url-host url-current-object)))
 	 (expires (cdr-safe (assoc* "expires" args :test
 				    'url-header-comparison)))
 	 (path (or (cdr-safe (assoc* "path" args :test
 				     'url-header-comparison))
-		   (file-name-directory url-current-file)))
+		   (file-name-directory
+		    (url-filename url-current-object))))
 	 (rest nil))
     (while args
       (if (not (member (downcase (car (car args)))
@@ -330,10 +331,10 @@
      ((and url-cookie-confirmation
 	   (not (funcall url-confirmation-func
 			 (format "Allow %s to set a cookie? "
-				 url-current-server))))
+				 (url-host url-current-object)))))
       ;; user wants to be asked, and declined.
       nil)
-     ((url-cookie-host-can-set-p url-current-server domain)
+     ((url-cookie-host-can-set-p (url-host url-current-object) domain)
       ;; Cookie is accepted by the user, and passes our security checks
       (let ((cur nil))
 	(while rest
@@ -351,6 +352,6 @@
 		      (concat "%s tried to set a cookie for domain %s\n"
 			      "Permission denied - cookie rejected.\n"
 			      "Set-Cookie: %s")
-		      url-current-server domain str))))))
+		      (url-host url-current-object) domain str))))))
 
 (provide 'url-cookie)

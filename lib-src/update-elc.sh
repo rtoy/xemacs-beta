@@ -94,7 +94,7 @@ make_special hyperbole elc
 make_special oobr HYPB_ELC='' elc
 make_special eos -k		# not stricly necessary...
 make_special ilisp elc
-make_special auctex
+make_special auctex some
 
 ignore_pattern=''
 for dir in $ignore_dirs ; do

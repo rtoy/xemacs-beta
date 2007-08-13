@@ -28,6 +28,7 @@ Boston, MA 02111-1307, USA.  */
    configure time. */
 #ifndef PURESIZE
 
+#if 0
 /* Basic amount of purespace to use, in the absence of extra
    things configured in. */
 
@@ -130,6 +131,10 @@ Boston, MA 02111-1307, USA.  */
 		  (SYSTEM_PURESIZE_EXTRA) + (MULE_PURESIZE_EXTRA) +	  \
 		  (TOOLTALK_PURESIZE_EXTRA) + (ENERGIZE_PURESIZE_EXTRA) + \
 		  (SUNPRO_PURESIZE_EXTRA))
+#endif
+
+/* Computed by XEmacs */
+# include <PURESIZE.h>
 
 #endif /* !PURESIZE */
 

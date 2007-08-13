@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.44
+;; Version: 1.46
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -84,7 +84,10 @@ into the buffer visible in the event's window."
   :link '(url-link :tag "Development Page" 
 		   "http://www.dina.kvl.dk/~abraham/custom/")
   :prefix "widget-"
-  :group 'emacs)
+  :group 'help
+  :group 'extensions
+  :group 'faces
+  :group 'hypermedia)
 
 (defface widget-documentation-face '((((class color)
 				       (background dark))
@@ -1120,6 +1123,8 @@ With optional ARG, move across that many fields."
     (if (and (fboundp 'make-gui-button)
 	     (fboundp 'make-glyph)
 	     widget-push-button-gui
+	     (fboundp 'device-on-window-system-p)
+	     (device-on-window-system-p)
 	     (string-match "XEmacs" emacs-version))
 	(progn 
 	  (unless gui

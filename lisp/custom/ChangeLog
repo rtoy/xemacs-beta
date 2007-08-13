@@ -1,3 +1,33 @@
+Wed Feb 26 22:17:38 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.46 released.
+
+Wed Feb 26 12:27:21 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (emacs): Moved to custom-edit.el.
+	(customize): Ditto.
+	* custom-edit.el: Added customization groups for all finder
+	keywords. 
+	(customize): Add to the appropriate groups.
+	* widget-edit.el (widgets): Ditto.
+	* custom.texi (Usage for Package Authors): Documented it.
+
+	* widget-edit.el (widget-push-button-value-create): Use
+	`device-on-window-system-p' instead of `device-type'.
+
+	* Version 1.45 released.
+
+Wed Feb 26 12:26:30 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget-edit.el (widget-push-button-value-create): Check that
+	(device-type) is x.
+	Reported by "Tomasz J. Cholewo" <tjchol01@mecca.spd.louisville.edu>.
+	
+Sun Feb 23 21:48:43 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom-edit.el (customize-face): By default, customize all
+	faces.  
+
 Thu Feb 20 11:55:45 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.44 released.

@@ -27,17 +27,24 @@
 
 ;;; Code:
 
+(defun set-keyboard-coding-system (coding-system)
+  "Set the coding system used for TTY keyboard input. Currently broken."
+  (interactive "zkeyboard-coding-system: ")
+  (get-coding-system coding-system) ; correctness check
+  (setq keyboard-coding-system coding-system)
+  (redraw-modeline t))
+
 (defun set-terminal-coding-system (coding-system)
-  "Set the coding system used for TTY display output."
+  "Set the coding system used for TTY display output. Currently broken."
   (interactive "zterminal-coding-system: ")
-  (get-coding-system coding-system) ;; correctness check
+  (get-coding-system coding-system) ; correctness check
   (setq terminal-coding-system coding-system)
   (redraw-modeline t))
 
 (defun set-pathname-coding-system (coding-system)
   "Set the coding system used for file system path names."
   (interactive "zPathname-coding-system: ")
-  (get-coding-system coding-system) ;; correctness check
+  (get-coding-system coding-system) ; correctness check
   (setq pathname-coding-system coding-system))
 
 (defun what-coding-system (start end &optional arg)
@@ -109,33 +116,29 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 
 (defun coding-system-charset (coding-system register)
   "Return the 'charset property of CODING-SYSTEM for the specified REGISTER."
-  (cond ((not (integerp register))
-	 (signal 'wrong-type-argument (list 'integerp register)))
-	((= register 0)
-	 (coding-system-property coding-system 'charset-g0))
-	((= register 1)
-	 (coding-system-property coding-system 'charset-g1))
-	((= register 2)
-	 (coding-system-property coding-system 'charset-g2))
-	((= register 3)
-	 (coding-system-property coding-system 'charset-g3))
-	(t
-	 (signal 'args-out-of-range (list register 0 3)))))
+  (unless (integerp register)
+    (signal 'wrong-type-argument (list 'integerp register)))
+  (coding-system-property
+   coding-system
+   (case register
+     (0 'charset-g0)
+     (1 'charset-g1)
+     (2 'charset-g2)
+     (3 'charset-g3)
+     (t (signal 'args-out-of-range (list register 0 3))))))
 
 (defun coding-system-force-on-output (coding-system register)
   "Return the 'force-on-output property of CODING-SYSTEM for the specified REGISTER."
-  (cond ((not (integerp register))
-	 (signal 'wrong-type-argument (list 'integerp register)))
-	((= register 0)
-	 (coding-system-property coding-system 'force-g0-on-output))
-	((= register 1)
-	 (coding-system-property coding-system 'force-g1-on-output))
-	((= register 2)
-	 (coding-system-property coding-system 'force-g2-on-output))
-	((= register 3)
-	 (coding-system-property coding-system 'force-g3-on-output))
-	(t
-	 (signal 'args-out-of-range (list register 0 3)))))
+  (unless (integerp register)
+    (signal 'wrong-type-argument (list 'integerp register)))
+  (coding-system-property
+   coding-system
+   (case register
+     (0 'force-g0-on-output)
+     (1 'force-g1-on-output)
+     (2 'force-g2-on-output)
+     (3 'force-g3-on-output)
+     (t (signal 'args-out-of-range (list register 0 3))))))
 
 (defun coding-system-short (coding-system)
   "Return the 'short property of CODING-SYSTEM."
@@ -157,13 +160,13 @@ Does not modify STR.  Returns the encoded string on successful conversion."
   "Return the 'lock-shift property of CODING-SYSTEM."
   (coding-system-property coding-system 'lock-shift))
 
-(defun coding-system-use-japanese-jisx0201-roman (coding-system)
-  "Return the 'use-japanese-jisx0201-roman property of CODING-SYSTEM."
-  (coding-system-property coding-system 'use-japanese-jisx0201-roman))
+;;(defun coding-system-use-japanese-jisx0201-roman (coding-system)
+;;  "Return the 'use-japanese-jisx0201-roman property of CODING-SYSTEM."
+;;  (coding-system-property coding-system 'use-japanese-jisx0201-roman))
 
-(defun coding-system-use-japanese-jisx0208-1978 (coding-system)
-  "Return the 'use-japanese-jisx0208-1978 property of CODING-SYSTEM."
-  (coding-system-property coding-system 'use-japanese-jisx0208-2978))
+;;(defun coding-system-use-japanese-jisx0208-1978 (coding-system)
+;;  "Return the 'use-japanese-jisx0208-1978 property of CODING-SYSTEM."
+;;  (coding-system-property coding-system 'use-japanese-jisx0208-2978))
 
 (defun coding-system-no-iso6429 (coding-system)
   "Return the 'no-iso6429 property of CODING-SYSTEM."
@@ -193,6 +196,10 @@ Does not modify STR.  Returns the encoded string on successful conversion."
    eol-type lf
    mnemonic "CText"
    ))
+
+;;; iso-8859-1 and ctext are aliases.
+
+(copy-coding-system 'ctext 'iso-8859-1)
 
 (make-coding-system
  'iso-2022-ss2-8 'iso2022

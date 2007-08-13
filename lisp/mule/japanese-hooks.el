@@ -180,7 +180,8 @@
     (set-default-file-coding-system  'euc-japan)
     (setq keyboard-coding-system     'euc-japan)
     (setq terminal-coding-system     'euc-japan)
-    (set-charset-registry 'ascii "JISX0201")
+    (when (eq 'x (device-type (selected-device)))
+      (x-use-halfwidth-roman-font 'japanese-jisx0208 "jisx0201"))
     
     (when (eq system-type 'ms-dos)
       ;; Shift-JIS is the standard coding system under Japanese MS-DOS

@@ -184,12 +184,12 @@
       (cond ((symbolp browser)
 	     (funcall browser url))
 	    ((stringp browser)
-	     (vm-unsaved-message "Sending URL to %s..." browser)
+	     (message "Sending URL to %s..." browser)
 	     (vm-run-background-command browser url)
-	     (vm-unsaved-message "Sending URL to %s... done" browser))))))
+	     (message "Sending URL to %s... done" browser))))))
 
 (defun vm-mouse-send-url-to-netscape (url &optional new-netscape new-window)
-  (vm-unsaved-message "Sending URL to Netscape...")
+  (message "Sending URL to Netscape...")
   (if new-netscape
       (vm-run-background-command vm-netscape-program url)
     (or (equal 0 (vm-run-command vm-netscape-program "-remote" 
@@ -197,10 +197,10 @@
 					 (if new-window ", new-window" "")
 					 ")")))
 	(vm-mouse-send-url-to-netscape url t new-window)))
-  (vm-unsaved-message "Sending URL to Netscape... done"))
+  (message "Sending URL to Netscape... done"))
 
 (defun vm-mouse-send-url-to-mosaic (url &optional new-mosaic new-window)
-  (vm-unsaved-message "Sending URL to Mosaic...")
+  (message "Sending URL to Mosaic...")
   (if (null new-mosaic)
       (let ((pid-file "~/.mosaicpid")
 	    (work-buffer " *mosaic work*")
@@ -216,7 +216,7 @@
 	       ;; newline convention used should be the local
 	       ;; one, whatever that is.
 	       (setq buffer-file-type nil)
-	       (and (fboundp 'set-file-coding-system)
+	       (and (vm-xemacs-mule-p)
 		    (set-file-coding-system 'no-conversion nil))
 	       (write-region (point-min) (point-max)
 			     (concat "/tmp/Mosaic." pid)
@@ -228,7 +228,7 @@
 	       (setq new-mosaic t)))))
   (if new-mosaic
       (vm-run-background-command vm-mosaic-program url))
-  (vm-unsaved-message "Sending URL to Mosaic... done"))
+  (message "Sending URL to Mosaic... done"))
 
 
 (defun vm-mouse-install-mouse ()
@@ -253,7 +253,11 @@
 ;; return (exit-status . stderr-string) on nonzero exit status
 (defun vm-run-command-on-region (start end output-buffer command
 				       &rest arg-list)
-  (let ((tempfile nil) status errstring)
+  (let ((tempfile nil)
+	;; for DOS/Windows command to tell it that its input is
+	;; binary.
+	(binary-process-input t)
+	status errstring)
     (unwind-protect
 	(progn
 	  (setq tempfile (vm-make-tempfile-name))
@@ -263,11 +267,15 @@
 		       (list output-buffer tempfile)
 		       nil arg-list))
 	  (cond ((equal status 0) t)
-		((zerop (save-excursion
-			  (set-buffer (find-file-noselect tempfile))
-			  (buffer-size)))
+		;; even if exit status non-zero, if there was no
+		;; diagnostic output the command probablyt
+		;; succeeded.  I have tried just use exit status
+		;; as the failure criteria and users complained.
+		((equal (nth 7 (file-attributes tempfile)) 0)
+		 (message "%s exited non-zero (code %s)" command status)
 		 t)
 		(t (save-excursion
+		     (message "%s exited non-zero (code %s)" command status)
 		     (set-buffer (find-file-noselect tempfile))
 		     (setq errstring (buffer-string))
 		     (kill-buffer nil)

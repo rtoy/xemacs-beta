@@ -343,10 +343,12 @@ variable vm-virtual-folder-alist for more information."
 
 (defun vm-next-command-uses-marks ()
   "Does nothing except insure that the next VM command will operate only
-on the marked messages in the current folder."
+on the marked messages in the current folder.  This only works for
+commands bound to key, menu or button press events.  M-x vm-command will
+not work."
   (interactive)
   (setq this-command 'vm-next-command-uses-marks)
-  (vm-unsaved-message "Next command uses marks...")
+  (message "Next command uses marks...")
   (vm-display nil nil '(vm-next-command-uses-marks)
 	      '(vm-next-command-uses-marks)))
 

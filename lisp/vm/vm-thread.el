@@ -94,9 +94,9 @@ will be visible."
 				(aref (symbol-value subject-sym) 2))))))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (vm-unsaved-message "Building threads... %d" n)))
+	  (message "Building threads... %d" n)))
     (if (> n modulus)
-	(vm-unsaved-message "Building threads... done"))))
+	(message "Building threads... done"))))
 
 (defun vm-thread-mark-for-summary-update (message-list)
   (while message-list

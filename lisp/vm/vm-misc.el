@@ -108,7 +108,7 @@ The new version of the list, minus the deleted strings, is returned."
 	    ;; writing out message separators
 	    (setq buffer-file-type nil)
 	    ;; Tell XEmacs/MULE to pick the correct newline conversion.
-	    (and (fboundp 'set-file-coding-system)
+	    (and (vm-xemacs-mule-p)
 		 (set-file-coding-system 'no-conversion nil))
 	    (write-region (point-min) (point-max) where t 'quiet))
 	(and temp-buffer (kill-buffer temp-buffer))))))
@@ -349,8 +349,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (defun vm-xemacs-mule-p ()
   (and (vm-xemacs-p)
+       (featurep 'mule)
        (fboundp 'set-file-coding-system)
-       (fboundp 'decode-coding-region)))
+       (fboundp 'get-coding-system)))
 
 (defun vm-fsfemacs-19-p ()
   (and (string-match "^19" emacs-version)
@@ -501,10 +502,6 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	((fboundp 'make-extent)
 	 (let ((o (make-extent start end)))
 	   (set-extent-property o 'face face)))))
-
-(defun vm-unsaved-message (&rest args)
-  (let ((message-log-max nil))
-    (apply (function message) args)))
 
 (defun vm-default-buffer-substring-no-properties (beg end &optional buffer)
   (let ((s (if buffer

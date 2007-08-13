@@ -1,4 +1,20 @@
 							-*- indented-text -*-
+to 20.1 beta3
+-- Customized edit-faces Courtesy of Jens Lautenbacher
+-- W3-3.0.62
+-- AUCTeX-9.7k
+-- mic-paren.el-1.3 Courtesy of Mikael Sjödin
+-- hm--html-menus-5.3
+-- custom-1.46
+-- site-load.el preconfigured to work with DOC string generation
+-- regex.c MULE bugfix Courtesy of David Moore
+-- python-mode.el-2.90
+-- balloon-help-1.04
+-- xrdb-mode.el-1.21
+-- itimer.el-1.01 Courtesy of Kyle Jones
+-- Miscellaneous bug fixes.
+-- Dynamic computation of PURESIZE during build
+
 to 20.1 beta2
 -- First cut at MS Windows NT support Courtesy of David Hobley
 -- itimer.el-1.01 Courtesy of Kyle Jones
@@ -13,7 +29,8 @@ to 20.1 beta2
 -- hyperbole-4.021 Courtesy of Bob Weiner
 -- Restoration of reportmail.el Courtesy of jwz
 -- Restoration of passwd.el Courtesy of jwz
--- AUC TeX-9.7i Courtesy of Per Abrahamsen
+-- AUC TeX-9.7i Courtesy of Per Abrahamsen (Contributed code integrated
+       courtesy of Soren Dayton)
 -- viper-2.93 Courtesy of Michael Kifer
 -- ediff-2.64 Courtesy of Michael Kifer
 -- edmacro.el-3.05

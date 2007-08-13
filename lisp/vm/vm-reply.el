@@ -719,7 +719,10 @@ you can change the recipient address before resending the message."
 	    (replace-match "")
 	  (goto-char (point-max)))
 	(insert ?\n mail-header-separator ?\n)
-	(mail-position-on-field "To")
+	(goto-char (point-min))
+	(if vm-mail-header-from
+	    (insert "Resent-From: " vm-mail-header-from ?\n))
+	(mail-position-on-field "Resent-To")
 	(setq default-directory dir)))
   (run-hooks 'vm-resend-bounced-message-hook)
   (run-hooks 'vm-mail-mode-hook))
@@ -825,7 +828,7 @@ only marked messages will be put into the digest."
 	(goto-char (match-end 0))
 	(setq start (point-marker)
 	      header-end (match-beginning 0)))
-      (vm-unsaved-message "Building %s digest..." vm-digest-send-type)
+      (message "Building %s digest..." vm-digest-send-type)
       (cond ((equal vm-digest-send-type "mime")
 	     (setq boundary (vm-mime-encapsulate-messages
 			     mlist vm-mime-digest-headers
@@ -853,7 +856,7 @@ only marked messages will be put into the digest."
       (setq mp mlist)
       (if prefix
 	  (progn
-	    (vm-unsaved-message "Building digest preamble...")
+	    (message "Building digest preamble...")
 	    (while mp
 	      (let ((vm-summary-uninteresting-senders nil))
 		(insert (vm-sprintf 'vm-digest-preamble-format (car mp)) "\n"))
@@ -971,7 +974,6 @@ found, the current buffer remains selected."
 	  mode-popup-menu (and vm-use-menus vm-popup-menu-on-mouse-3
 			       (vm-menu-support-possible-p)
 			       (vm-menu-mode-menu)))
-    ;; sets up popup menu for FSF Emacs
     (and vm-use-menus (vm-menu-support-possible-p)
 	 (vm-menu-install-mail-mode-menu))
     (if (fboundp 'mail-aliases-setup) ; use mail-abbrevs.el if present

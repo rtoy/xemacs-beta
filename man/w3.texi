@@ -71,7 +71,9 @@ are preserved on all copies.
 @end titlepage
 @page
 @ifinfo
-@node Top, Getting Started,, (DIR)
+@node Top, Getting Started, (dir), (dir)
+@top W3
+
 Users can browse the World Wide Web from within Emacs by using Emacs-W3.
 All of the widely used (and even some not very widely used) @sc{url}
 schemes are supported, and it is very easy to add new methods as the
@@ -83,7 +85,7 @@ encouraged to @i{Web-enable} their applications and daily work routines
 with the library.
 
 Emacs-W3 is completely customizable, both from Emacs-Lisp and from
-stylesheets @xref{Style Sheets}  If there is any aspect of Emacs-W3 that
+stylesheets @xref{Stylesheets}  If there is any aspect of Emacs-W3 that
 cannot be modified to your satisfaction, please send mail to the
 @t{w3-beta@@indiana.edu} mailing list with any suggestions.
 @xref{Reporting Bugs}
@@ -93,11 +95,11 @@ cannot be modified to your satisfaction, please send mail to the
 * Basic Usage::                 Basic movement and usage of Emacs-W3.
 * Compatibility::               Explanation of compatibility with
                                 other browsers.
-* Stylesheets::	                How to control the look of web pages
+* Stylesheets::                 How to control the look of web pages
 * Supported URLs::              What @sc{URL} schemes are supported.
 * MIME Support::                Support for @sc{mime}
 * Security::                    Various security methods supported
-* Non-Unix Operating Systems::	Special considerations necessary to get
+* Non-Unix Operating Systems::  Special considerations necessary to get
                                 up and running correctly under non-unix
                                 OS's.
 * Speech Integration::          Outputting to a speech synthesizer.
@@ -144,6 +146,7 @@ to do some customization.
 
 @node Downloading, Building and Installing, Getting Started, Getting Started
 @section Downloading
+
 :: WORK :: What you need, and why
 :: WORK :: Where to download Emacs, XEmacs, various platforms
 :: WORK :: Where to download Emacs-W3
@@ -151,6 +154,7 @@ to do some customization.
 
 @node Building and Installing, Startup Files, Downloading, Getting Started
 @section Building and Installing
+
 :: WORK :: Document makefile variables
 :: WORK :: Document what gets installed where, why
 
@@ -158,18 +162,20 @@ to do some customization.
 @section Startup Files
 @cindex Startup files
 @cindex Default stylesheet
+
 :: WORK :: startup files
 This section should document where emacs-w3 looks for its startup files,
 and what each one does.  'profile' 'stylesheet' 'hotlist' 'history' etc.
 
-@node Preferences Panel, , Startup Files, Getting Started
+@node Preferences Panel,  , Startup Files, Getting Started
 @section Preferences Panel
 @cindex Preferences
 @kindex M-x w3-preferences-edit
+
 :: WORK :: pref panel
 This should document the quick preferences panel.  M-x w3-preferences-edit
 
-@node Basic Usage, Movement , Getting Started, Top
+@node Basic Usage, Compatibility, Getting Started, Top
 @chapter Basic Usage
 @cindex Basic Usage
 @kindex space
@@ -205,16 +211,16 @@ hypertext link @b{under the cursor}.
 There are several areas that the keybindings fall into: movement,
 information, action, and miscellaneous.
 
-@ifinfo
 @menu
-* Movement::		Moving around in the buffer.
-* Information::		Getting information about a document.
-* Action::		Following links, printing, etc.
-* Miscellaneous::	Everything else.
+* Movement::                    Moving around in the buffer.
+* Information::                 Getting information about a document.
+* Action::                      Following links, printing, etc.
+* Miscellaneous::               Everything else.
 @end menu
-@end ifinfo
+
 @node Movement, Information, Basic Usage, Basic Usage
 @section Movement
+
 All the standard Emacs bindings for movement are still in effect, with a
 few additions for convenience.
 
@@ -273,6 +279,7 @@ Bury this buffer, but don't kill it
 
 @node Information, Action, Movement, Basic Usage
 @section Information
+
 These functions relate information about one or more links on the
 current document.
 
@@ -321,6 +328,7 @@ the current window-system's clipboard, if possible.
 
 @node Action, Miscellaneous, Information, Basic Usage
 @section Action
+
 First, here are the keys and functions that bring up a new hypertext
 page, usually creating a new buffer.
 @table @kbd
@@ -460,8 +468,9 @@ Takes one step forward along the path in the current history.  Has no
 effect if at the end of the session history.
 @end table
 
-@node Miscellaneous, Compatibility, Action, Basic Usage
+@node Miscellaneous,  , Action, Basic Usage
 @section Miscellaneous
+
 @table @kbd
 @kindex M-m
 @findex w3-mail-current-document
@@ -563,16 +572,15 @@ a @code{completing-read} on only the links that have that type of
 relationship.
 @end table
 
-@node Compatibility, Emulation, Miscellaneous, Top
+@node Compatibility, Stylesheets, Basic Usage, Top
 @chapter Compatibility with other Browsers
 Due to the popularity of several other browsers, Emacs-W3 offers an easy
 transition to its much better way of life.  This ranges from being able
 to share the same preferences files and disk cache to actually emulating
 the keybindings used in other browsers.
 
-@ifinfo
 @menu
-* Emulation::			Emacs-W3 can emulate the keybindings and
+* Emulation::                   Emacs-W3 can emulate the keybindings and
 				other behaviours of other browsers.
 * Hotlist Handling::            A hotlist is an easy way to keep track of
 				interesting Web pages without having to
@@ -580,10 +588,10 @@ the keybindings used in other browsers.
 * Session History::             Keeping a history of documents visited
 				in one Emacs sessions allows the use of
 				'forward' and 'back' buttons easily.
-* Global History::		Keeping a history of all the places ever
+* Global History::              Keeping a history of all the places ever
 				visited on the web.
 @end menu
-@end ifinfo
+
 @node Emulation, Hotlist Handling, Compatibility, Compatibility
 @section Emulation
 @cindex Browser emulation
@@ -595,6 +603,7 @@ the keybindings used in other browsers.
 @findex w3-netscape-emulation-minor-mode
 @findex w3-lynx-emulation-minor-mode
 @vindex w3-mode-hook
+
 :: WORK :: Document lynx emulation
 @table @bullet
 @item Down arrow
@@ -724,6 +733,7 @@ Uh, turn this into pretty tables about what keys are emulated.
 
 @node Hotlist Handling, Session History, Emulation, Compatibility
 @section Hotlist Handling
+
 :: WORK :: Document that it supports different types of hotlist formats
 :: WORK :: Make sure everything hotlist related can be accessed via 'h'
 In order to avoid having to traverse many documents to get to the same
@@ -792,12 +802,15 @@ Appends another hotlist file to the one currently in memory.
 @node Session History, Global History, Hotlist Handling, Compatibility
 @section History
 @cindex History Lists
+
 Almost all web browsers keep track of the @sc{url}s followed from a page, so
 that it can provide @b{forward} and @b{back} buttons to keep a @i{path}
 of @sc{url}s that can be traversed easily.
+
 @vindex url-keep-history
 If the variable @code{url-keep-history} is @code{t}, then Emacs-W3
 keeps a list of all the @sc{url}s visited in a session.
+
 @findex w3-show-history
 To view a listing of the history for this session of Emacs-W3, use
 @code{M-x w3-show-history} from any buffer, and Emacs-W3 generates an
@@ -817,8 +830,9 @@ backwards very easily along the path taken to reach a particular
 document.  To go forward, use the function @code{w3-forward-in-history},
 to go backward, use the function @code{w3-backward-in-history}.
 
-@node Global History, Stylesheets, Session History, Compatibility
+@node Global History,  , Session History, Compatibility
 @section Global History
+
 :: WORK :: Document that the global history can have diff. formats
 Most web browsers also support the idea of a ``history'' of @sc{url}s the
 user has visited, and it displays them in a different style than normal
@@ -848,7 +862,7 @@ partial @sc{url}.  This is very useful, especially for very long @sc{url}s that
 are not in a hotlist, or for seeing all the pages from a particular web
 site before choosing which to retrieve.
 
-@node Stylesheets, Terminology, Global History, Top
+@node Stylesheets, Supported URLs, Compatibility, Top
 @chapter Stylesheets
 The way in which Emacs-W3 formats a document is very customizable.  All
 formatting is now controlled by a default stylesheet set by the user
@@ -868,7 +882,6 @@ through the @sc{CSS1} specification.  Please note that a lot of the text
 in the following sections comes directly from the specification as
 well.
 
-@ifinfo
 @menu
 * Terminology::                 Terms used in the rest of this chapter.
 * Basic Concepts::              Why are stylesheets useful?  Getting started.
@@ -877,7 +890,6 @@ well.
 * Properties::                  What properties you can set on elements.
 * Units::                       What you can set them to.
 @end menu
-@end ifinfo
 
 @node Terminology, Basic Concepts, Stylesheets, Stylesheets
 @section Terminology
@@ -978,6 +990,7 @@ The priority of a rule.
 
 @node Basic Concepts, Pseudo-Classes/Elements, Terminology, Stylesheets
 @section Basic Concepts
+
 Designing simple style sheets is easy. One needs only to know a little
 HTML and some basic desktop publishing terminology. E.g., to set the
 text color of 'H1' elements to blue, one can say:
@@ -1000,6 +1013,7 @@ all HTML element types are possible selectors.
 
 @node Pseudo-Classes/Elements, The Cascade, Basic Concepts, Stylesheets
 @section Pseudo-Classes/Elements
+
 In @sc{css1}, style is normally attached to an element based on its
 position in the document structure. This simple model is sufficient for
 a wide variety of styles, but doesn't cover some common effects. The
@@ -1208,7 +1222,7 @@ overridden by subsequent style sheet rules. In a transition phase, this
 policy will make it easier for stylistic attributes to coexist with
 style sheets.
 
-@node Properties, Font Properties, The Cascade, Stylesheets
+@node Properties, Units, The Cascade, Stylesheets
 @section Properties
 
 In the text below, the allowed values for each property are listed
@@ -1269,7 +1283,6 @@ explicitly set in a stylesheet.
 @item Percentage values: @tab What a percentage value applies to when given.
 @end multitable
 
-@ifinfo
 @menu
 * Font Properties::             Selecting fonts, styles, and sizes.
 * Colors and Backgrounds::      Controlling colors, front and back.
@@ -1279,10 +1292,10 @@ explicitly set in a stylesheet.
 * Media Selection::             Conditionalize stylesheets on media-type.
 * Speech Properties::           Speech output controlled by stylesheets.
 @end menu
-@end ifinfo
 
-@node Font Properties, font-family, Properties, Properties
+@node Font Properties, Colors and Backgrounds, Properties, Properties
 @subsection Font Properties
+
 Setting font properties will be among the most common uses of style
 sheets.  Unfortunately, there exists no well-defined and universally
 accepted taxonomy for classifying fonts, and terms that apply to one
@@ -1293,7 +1306,6 @@ being @b{Oblique}, @b{Slanted}, @b{Incline}, @b{Cursive} or
 selection properties to a specific font.
 
 The properties defined by CSS1 are described in the following sections.
-@ifinfo
 @menu
 * font-family::                 Groups of fonts.
 * font-style::                  Normal, italic, or oblique?
@@ -1302,7 +1314,6 @@ The properties defined by CSS1 are described in the following sections.
 * font-size::                   How big is yours?
 * font::                        Shorthand for all of the above.
 @end menu
-@end ifinfo
 
 @node font-family, font-style, Font Properties, Font Properties
 @subsubsection font-family
@@ -1543,7 +1554,7 @@ Examples:
 If the suggested scaling factor of 1.5 is used, the last three
 declarations are identical.
 
-@node font, Colors and Backgrounds, font-size, Font Properties
+@node font,  , font-size, Font Properties
 @subsubsection font
 
 @multitable @columnfractions .2 .8
@@ -1587,8 +1598,9 @@ size) and the 'font-family' ('fantasy'). It follows that the keyword
 'normal' applies to the two remaining properties: 'font-style' and
 'font-weight'.
 
-@node Colors and Backgrounds, color, font, Properties
+@node Colors and Backgrounds, Text Properties, Font Properties, Properties
 @subsection Colors and Backgrounds
+
 These properties describe the color (often called foreground color) and
 background of an element (i.e. the surface onto which the content is
 rendered). One can set a background color and/or a background image. The
@@ -1603,20 +1615,19 @@ default because of the initial 'transparent' value on
 NOTE: Currently, Emacs-W3 can only show background images under XEmacs.
 Emacs 19 doesn't have the support in its display code yet.
 
-@ifinfo
 @menu
-* color::		        Foreground colors.
-* background-color::		Background colors.
-* background-image::		Background images.
-* background-repeat::		Controlling repeating of background images.
-* background-attachment::	Where background images are drawn.
-* background-position::		Where background images are drawn.
-* background::		        Shorthand for all background properties.
+* color::                       Foreground colors.
+* background-color::            Background colors.
+* background-image::            Background images.
+* background-repeat::           Controlling repeating of background images.
+* background-attachment::       Where background images are drawn.
+* background-position::         Where background images are drawn.
+* background::                  Shorthand for all background properties.
 @end menu
-@end ifinfo
 
 @node color, background-color, Colors and Backgrounds, Colors and Backgrounds
 @subsubsection color
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <color>
 @item Initial: @tab User specific
@@ -1637,6 +1648,7 @@ See @ref{Color Units} for a description of possible color values.
 
 @node background-color, background-image, color, Colors and Backgrounds
 @subsubsection background-color
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <color> | transparent
 @item Initial: @tab transparent
@@ -1653,6 +1665,7 @@ This property sets the background color of an element.
 
 @node background-image, background-repeat, background-color, Colors and Backgrounds
 @subsubsection background-image
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <url> | none
 @item Initial: @tab none
@@ -1673,18 +1686,22 @@ overlaid on top of the background color.
 
 @node background-repeat, background-attachment, background-image, Colors and Backgrounds
 @subsubsection background-repeat
+
 This property is not supported at all under Emacs-W3.
 
 @node background-attachment, background-position, background-repeat, Colors and Backgrounds
 @subsubsection background-attachment
+
 This property is not supported at all under Emacs-W3.
 
 @node background-position, background, background-attachment, Colors and Backgrounds
 @subsubsection background-position
+
 This property is not supported at all under Emacs-W3.
 
-@node background, Text Properties, background-position, Colors and Backgrounds
+@node background,  , background-position, Colors and Backgrounds
 @subsubsection background
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <background-color> || <background-image> || <background-repeat> || <background-attachment> || <background-position>
 @item Initial: @tab not defined for shorthand properties
@@ -1712,10 +1729,9 @@ properties. In the first rule of the above example, only a value for
 are set to their initial value. In the second rule, all individual
 properties have been specified.
 
-@node Text Properties, word-spacing, background, Properties
+@node Text Properties, Box Properties, Colors and Backgrounds, Properties
 @subsection Text Properties
 
-@ifinfo
 @menu
 * word-spacing::                
 * letter-spacing::              
@@ -1726,10 +1742,10 @@ properties have been specified.
 * text-indent::                 
 * line-height::                 
 @end menu
-@end ifinfo
 
 @node word-spacing, letter-spacing, Text Properties, Text Properties
 @subsubsection word-spacing
+
 @multitable @columnfractions .2 .8
 @item Supported Values: @tab normal
 @item Unsupported Values: @tab <length>
@@ -1757,8 +1773,9 @@ Emacs.  It may  be implemented in the future.
 
 @node letter-spacing, text-decoration, word-spacing, Text Properties
 @subsubsection letter-spacing
+
 @multitable @columnfractions .2 .8
-@item Supported Values: normal
+@item Supported Values: @tab normal
 @item Unsupported Values: @tab <length>
 @item Initial: @tab normal
 @item Applies to: @tab all elements
@@ -1782,8 +1799,9 @@ would be increased by '0.1em'.
 NOTE: Emacs-W3 cannot currently support this, due to limitations in
 Emacs.  It may be implemented in the future.
 
-@node text-decoration, vertical-align, letter-spacing , Text Properties
+@node text-decoration, vertical-align, letter-spacing, Text Properties
 @subsubsection text-decoration
+
 @multitable @columnfractions .2 .8
 @item Supported Values: @tab none | underline | line-through | blink
 @item Unsupported Values: @tab overline 
@@ -1820,10 +1838,12 @@ yet.
 
 @node vertical-align, text-transform, text-decoration, Text Properties
 @subsubsection vertical-align
+
 This is currently unsupported in Emacs-W3.
 
 @node text-transform, text-align, vertical-align, Text Properties
 @subsubsection text-transform
+
 @multitable @columnfractions .2 .8
 @item Supported Values: @tab none
 @item Unsupported Values: @tab capitalize | uppercase | lowercase
@@ -1858,6 +1878,7 @@ send me patches.
 
 @node text-align, text-indent, text-transform, Text Properties
 @subsubsection text-align
+
 @multitable @columnfractions .2 .8
 @item Value: @tab left | right | center | justify
 @item Initial: @tab User specific
@@ -1880,19 +1901,23 @@ relative to the width of the element, not the canvas.
 
 @node text-indent, line-height, text-align, Text Properties
 @subsubsection text-indent
+
 Not currently implemented in Emacs-W3.
 
-@node line-height, Box Properties, text-indent, Text Properties
+@node line-height,  , text-indent, Text Properties
 @subsubsection line-height
+
 Not currently implemented in Emacs-W3.
 
-@node Box Properties, Classification, line-height, Properties
+@node Box Properties, Classification, Text Properties, Properties
 @subsection Box Properties
+
 @multitable @columnfractions .2 .8
 @end multitable
 
-@node Classification, display, Box Properties, Properties
+@node Classification, Media Selection, Box Properties, Properties
 @subsection Classification
+
 These properties classify elements into categories more than they set
 specific visual parameters.
 
@@ -1903,19 +1928,18 @@ tree. However, they will only be have effect on elements with a
 'display' value of 'list-item'. In HTML this is typically the case for
 the 'LI' element.
 
-@ifinfo 
 @menu
-* display::
-* white-space::
-* list-style-type::
-* list-style-image::
-* list-style-position::
-* list-style::
+* display::                     
+* white-space::                 
+* list-style-type::             
+* list-style-image::            
+* list-style-position::         
+* list-style::                  
 @end menu
-@end ifinfo
 
 @node display, white-space, Classification, Classification
 @subsubsection display
+
 @multitable @columnfractions .2 .8
 @item Value: @tab block | inline | list-item | none
 @item Extensions: @tab line
@@ -1957,6 +1981,7 @@ slight deviation from the specification.
 
 @node white-space, list-style-type, display, Classification
 @subsubsection white-space
+
 @multitable @columnfractions .2 .8
 @item Value: @tab normal | pre | nowrap
 @item Initial: @tab normal
@@ -1977,6 +2002,7 @@ only through BR elements):
 
 @node list-style-type, list-style-image, white-space, Classification
 @subsubsection list-style-type
+
 @multitable @columnfractions .2 .8
 @item Value: @tab disc | circle | square | decimal | lower-roman | upper-roman | lower-alpha | upper-alpha | none
 @item Initial: @tab disc
@@ -1998,6 +2024,7 @@ Fo example:
 
 @node list-style-image, list-style-position, list-style-type, Classification
 @subsubsection list-style-image
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <url> | none
 @item Initial: @tab none
@@ -2018,6 +2045,7 @@ NOTE: This is currently unimplemented in Emacs-W3.
 
 @node list-style-position, list-style, list-style-image, Classification
 @subsubsection list-style-position
+
 @multitable @columnfractions .2 .8
 @item Supported Values: @tab outside
 @item Unsupported Values: @tab inside
@@ -2031,10 +2059,11 @@ The value of 'list-style-position' determines how the list-item marker
 is drawn with regard to the content. For a formatting example see
 section 4.1.3.
 
-@node list-style, Media Selection, list-style-position, Classification
+@node list-style,  , list-style-position, Classification
 @subsubsection list-style
+
 @multitable @columnfractions .2 .8
-@item Value: <keyword> || <position> || <url>
+@item Value: @tab <keyword> || <position> || <url>
 @item Initial: @tab not defined for shorthand properties
 @item Applies to: @tab elements with 'display' value 'list-item'
 @item Inherited: @tab yes
@@ -2092,8 +2121,9 @@ A URL value can be combined with any other value:
 In the example above, the 'disc' will be used when the image is
 unavailable.
 
-@node Media Selection, Speech Properties, list-style, Properties
+@node Media Selection, Speech Properties, Classification, Properties
 @subsection Media Selection
+
 To specify that a stylesheet declaration should only apply when using a
 certain media type (ie: different font families preferred when printing
 versus on-screen presentation), the declarations should be wrapped in
@@ -2141,8 +2171,9 @@ The stylesheet will only be applied if the user is running in XEmacs 19.
 The default value, the style sheet applies to all output devices
 @end table
 
-@node Speech Properties, volume, Media Selection, Properties
+@node Speech Properties,  , Media Selection, Properties
 @subsection Speech Properties
+
 Those of us who are sighted are accustomed to visual presentation of
 @sc{html} documents, frequently on a bitmapped display. This is not the
 only possible presentation method, however. Aural presentation, using a
@@ -2170,31 +2201,30 @@ Allows browsers to optionally implement both aural and visual views to
 produce truly multimodal documents.
 @end itemize
 
-@ifinfo
 @menu
-* volume::
-* pause-before::
-* pause-after::
-* pause::
-* cue-before::
-* cue-after::
-* cue::
-* play-during::
-* speed::
-* voice-family::
-* pitch::
-* pitch-range::
-* stress::
-* richness::
-* speak-punctuation::
-* speak-date::
-* speak-numeral::
-* speak-time::
+* volume::                      
+* pause-before::                
+* pause-after::                 
+* pause::                       
+* cue-before::                  
+* cue-after::                   
+* cue::                         
+* play-during::                 
+* speed::                       
+* voice-family::                
+* pitch::                       
+* pitch-range::                 
+* stress::                      
+* richness::                    
+* speak-punctuation::           
+* speak-date::                  
+* speak-numeral::               
+* speak-time::                  
 @end menu
-@end ifinfo
 
 @node volume, pause-before, Speech Properties, Speech Properties
 @subsubsection volume
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <percentage> | mute | x-soft | soft | medium | loud | x-loud
 @item Initial: @tab medium
@@ -2251,6 +2281,7 @@ mapping the 0 and 100 points suitably at the client side.
 
 @node pause-before, pause-after, volume, Speech Properties
 @subsubsection pause-before
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <time> | <percentage>
 @item Initial: @tab UA specific
@@ -2271,6 +2302,7 @@ changes in speed.
 
 @node pause-after, pause, pause-before, Speech Properties
 @subsubsection pause-after
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <time> | <percentage>
 @item Applies to: @tab all elements
@@ -2283,6 +2315,7 @@ the same way as 'pause-before'.
 
 @node pause, cue-before, pause-after, Speech Properties
 @subsubsection pause
+
 @multitable @columnfractions .2 .8
 @item Value: @tab [<time> | <percentage> ]@{1,2@};
 @item Applies to: @tab all elements
@@ -2304,6 +2337,7 @@ Examples:
 
 @node cue-before, cue-after, pause, Speech Properties
 @subsubsection cue-before
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <url> | none
 @item Initial: @tab none
@@ -2324,14 +2358,17 @@ Examples:
 
 @node cue-after, cue, cue-before, Speech Properties
 @subsubsection cue-after
+
 @xref{cue-before}
 
 @node cue, play-during, cue-after, Speech Properties
 @subsubsection cue
+
 @xref{cue-before}
 
 @node play-during, speed, cue, Speech Properties
 @subsubsection cue-during
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <url> | mix | none
 @item Initial: @tab mix
@@ -2350,6 +2387,7 @@ Examples:
 
 @node speed, voice-family, play-during, Speech Properties
 @subsubsection speed
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <words-per-minute> | x-slow | slow | medium | fast | x-fast | faster | slower
 @item Initial: @tab medium
@@ -2362,6 +2400,7 @@ keyword values are allowed (compare with @ref{font-weight}).
 
 @node voice-family, pitch, speed, Speech Properties
 @subsubsection voice-family
+
 @multitable @columnfractions .2 .8
 @item Value: @tab [[<specific-voice> | <generic-voice>],]* [<specific-voice> | <generic-voice>]
 @item Initial: @tab device-specific
@@ -2384,16 +2423,19 @@ Examples
 
 @node pitch, pitch-range, voice-family, Speech Properties
 @subsubsection pitch
+
 @multitable @columnfractions .2 .8
 @end multitable
 
 @node pitch-range, stress, pitch, Speech Properties
 @subsubsection pitch-range
+
 @multitable @columnfractions .2 .8
 @end multitable
 
 @node stress, richness, pitch-range, Speech Properties
 @subsubsection stress
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <percentage>
 @item Initial: @tab medium
@@ -2413,6 +2455,7 @@ is provided to allow developers to exploit higher-end auditory displays.
 
 @node richness, speak-punctuation, stress, Speech Properties
 @subsubsection richness
+
 @multitable @columnfractions .2 .8
 @item Value: @tab <percentage>
 @item Initial: @tab medium (50%)
@@ -2429,6 +2472,7 @@ reducing richness produces a soft, mellifluous voice.
 
 @node speak-punctuation, speak-date, richness, Speech Properties
 @subsubsection speak-punctuation
+
 @multitable @columnfractions .2 .8
 @item Value: @tab code | none
 @item Initial: @tab none
@@ -2443,6 +2487,7 @@ pauses.
 
 @node speak-date, speak-numeral, speak-punctuation, Speech Properties
 @subsubsection speak-date
+
 @multitable @columnfractions .2 .8
 @item Value: @tab myd | dmy | ymd | none
 @item Initial: @tab none
@@ -2459,6 +2504,7 @@ gives semantic information about the content.
 
 @node speak-numeral, speak-time, speak-date, Speech Properties
 @subsubsection speak-numeral
+
 @multitable @columnfractions .2 .8
 @item Value: @tab digits | continous
 @item Initial: @tab none
@@ -2466,8 +2512,9 @@ gives semantic information about the content.
 @item Inherited: @tab yes
 @end multitable
 
-@node speak-time, Units, speak-numeral, Speech Properties
+@node speak-time,  , speak-numeral, Speech Properties
 @subsubsection speak-time
+
 @multitable @columnfractions .2 .8
 @item Value: @tab 24 | 12 | none
 @item Initial: @tab none
@@ -2475,19 +2522,17 @@ gives semantic information about the content.
 @item Inherited: @tab yes
 @end multitable
 
-@node Units, Length Units, speak-time, Stylesheets
+@node Units,  , Properties, Stylesheets
 @section Units
 
-@ifinfo
 @menu
-* Length Units::
-* Percentage Units::
-* Color Units::
-* URLs::
-* Angle Units::
-* Time Units::
+* Length Units::                
+* Percentage Units::            
+* Color Units::                 
+* URLs::                        
+* Angle Units::                 
+* Time Units::                  
 @end menu
-@end ifinfo
 
 @node Length Units, Percentage Units, Units, Units
 @subsection Length Units
@@ -2503,6 +2548,7 @@ gives semantic information about the content.
 
 @node Angle Units, Time Units, URLs, Units
 @subsection Angle Units
+
 These are the legal angle units:
 @itemize @bullet
 @item
@@ -2513,8 +2559,9 @@ grad
 rad: radians
 @end itemize
 
-@node Time Units, Supported URLs, Angle Units, Units
+@node Time Units,  , Angle Units, Units
 @subsection Time Units
+
 These are the legal time units:
 
 @itemize @bullet
@@ -2524,17 +2571,67 @@ ms: milliseconds
 s: seconds
 @end itemize
 
-@node Supported URLs, MIME Support, Time Units, Top
+@node Supported URLs, MIME Support, Stylesheets, Top
 @chapter Supported URLs
 
 ::WORK:: List supported URL types, specific RFCs, etc.
 
-@ifinfo
 @menu
+* file::                        Local file access.
+* ftp::                         Remote file access via ftp.
+* nfs::                         Remote file access via NFS.
+* info::                        Access to the Emacs Info system.
+* http/https::                  @sc{http/1.0} support.
+* mailto::                      Sending simple electronic mail.
+* news/nntp/snews::             Reading and sending Usenet news.
+* rlogin/telnet/tn3270::        Legacy host connections.
+* irc::                         Internet Relay Chat.
+* data::                        Embedding the data within the URL itself.
+* mailserver::                  Slightly more complicated electronic mail.
+* gopher::                      Gopher and Gopher+.
+* finger::                      The old favorite.
 @end menu
-@end ifinfo
 
-@node MIME Support, Adding MIME types based on file extensions, Supported URLs, Top
+@node file, ftp, Supported URLs, Supported URLs
+@section file
+
+@node ftp, nfs, file, Supported URLs
+@section ftp
+
+@node nfs, info, ftp, Supported URLs
+@section nfs
+
+@node info, http/https, nfs, Supported URLs
+@section info
+
+@node http/https, mailto, info, Supported URLs
+@section http/https
+
+@node mailto, news/nntp/snews, http/https, Supported URLs
+@section mailto
+
+@node news/nntp/snews, rlogin/telnet/tn3270, mailto, Supported URLs
+@section news/nntp/snews
+
+@node rlogin/telnet/tn3270, irc, news/nntp/snews, Supported URLs
+@section rlogin/telnet/tn3270
+
+@node irc, data, rlogin/telnet/tn3270, Supported URLs
+@section irc
+
+@node data, mailserver, irc, Supported URLs
+@section data
+
+@node mailserver, gopher, data, Supported URLs
+@section mailserver
+
+@node gopher, finger, mailserver, Supported URLs
+@section gopher
+
+@node finger,  , gopher, Supported URLs
+@section finger
+
+@node MIME Support, Security, Supported URLs, Top
 @chapter MIME Support
 @sc{mime} is an emerging standard for multimedia mail.  It offers a very
 flexible typing mechanism.  The type of a file or message is specified
@@ -2552,19 +2649,18 @@ and not have the client second-guess it based on file extensions.  @sc{html}
 files can now be named @file{something.png} (not a great idea, but
 possible).
 
-@ifinfo
 @menu
 * Adding MIME types based on file extensions::  How to map file
                                                 extensions onto MIME
                                                 types (e.g., @samp{.png ->
                                                 image/png)}.
-* Specifying Viewers::  How to specify external and internal viewers
+* Specifying Viewers::          How to specify external and internal viewers
                         for files that Emacs-W3 cannot handle natively.
 @end menu
-@end ifinfo
 
 @node Adding MIME types based on file extensions, Specifying Viewers, MIME Support, MIME Support
 @section Adding MIME types based on file extensions
+
 @vindex mm-mime-extensions
 For some protocols however, it is still necessary to guess the content
 of a file based on the file extension.  This type of guess-work should
@@ -2619,8 +2715,9 @@ type/subtype is the MIME-like type of the document. ext* is any number
 of space-separated filename extensions which correspond to the MIME
 type.
 
-@node Specifying Viewers, ,Adding MIME types based on file extensions, MIME Support
+@node Specifying Viewers,  , Adding MIME types based on file extensions, MIME Support
 @section Specifying Viewers
+
 Not all files look as they should when parsed as an @sc{html} document
 (whitespace is stripped, paragraphs are reformatted, and lots of little
 changes that make the document look unrecognizable).  Files may be
@@ -2639,7 +2736,7 @@ an assoc list of information about the viewer.  Please see the @sc{url}
 documentation for more specific information on what this assoc list
 should look like.
 
-@node Security, Non-Unix Operating Systems, , Top
+@node Security, Non-Unix Operating Systems, MIME Support, Top
 @chapter Security
 @cindex Security
 @cindex Paranoia
@@ -2678,17 +2775,16 @@ Communications @footnote{http://www.netscape.com/}.  Emacs-W3 supports
 have been installed.@xref{Installing SSL}
 @end table
 
-@node Non-Unix Operating Systems, VMS, Security, Top
+@node Non-Unix Operating Systems, Speech Integration, Security, Top
 @chapter Non-Unix Operating Systems
 @cindex Non-Unix Operating Systems
-@ifinfo
+
 @menu
-* VMS::                 The wonderful world of VAX|AXP-VMS!
-* OS/2::                The next-best thing to Unix.
-* MS-DOS::              The wonderful world of MS-DOG!
-* Windows::             Windows NT, Chicago/Windows 95.
+* VMS::                         The wonderful world of VAX|AXP-VMS!
+* OS/2::                        The next-best thing to Unix.
+* MS-DOS::                      The wonderful world of MS-DOG!
+* Windows::                     Windows NT, Chicago/Windows 95.
 @end menu
-@end ifinfo
 
 @node VMS, OS/2, Non-Unix Operating Systems, Non-Unix Operating Systems
 @section VMS
@@ -2696,12 +2792,14 @@ have been installed.@xref{Installing SSL}
 @cindex AXP-VMS
 @cindex Digital VMS
 @cindex VMS
+
 :: WORK :: VMS Specific instriuctions
 
 @node OS/2, MS-DOS, VMS, Non-Unix Operating Systems
 @section OS/2
 @cindex OS/2
 @cindex Warp
+
 :: WORK :: OS/2 Specific instructions
 
 @node MS-DOS, Windows, OS/2, Non-Unix Operating Systems
@@ -2710,102 +2808,42 @@ have been installed.@xref{Installing SSL}
 @cindex Microsloth
 @cindex DOS
 @cindex MS-DOG
+
 :: WORK :: DOS Specific instructions
 
-@node Windows, Speech Integration , MS-DOS, Non-Unix Operating Systems
+@node Windows,  , MS-DOS, Non-Unix Operating Systems
 @section Windows
 @cindex Windows (32-Bit)
 @cindex 32-Bit Windows
 @cindex Microsloth
 @cindex Windows '95
+
 :: WORK :: 32bit Windows Specific instructions
 
-@node Speech Integration, Advanced Features, Windows, Top
+@node Speech Integration, Advanced Features, Non-Unix Operating Systems, Top
 @chapter Speech Integration
+
 :: WORK :: Emacspeak integration
 
-@node Advanced Features, Style Sheets, Speech Integration, Top
+@node Advanced Features, More Help, Speech Integration, Top
 @chapter Advanced Features
 
-@ifinfo
 @menu
-* Style Sheets::        Formatting control, the right way
-* Disk Caching::        Improving performance by using a local disk cache
-* Interfacing to Mail/News::	How to make VM understand hypertext links
-* Debugging HTML::      How to make Emacs-W3 display warnings about invalid
-                        @sc{html}/@sc{html}+ constructs.
-* Native WAIS Support:: How to make Emacs-W3 understand WAIS links without
-                        using a gateway.
-* Rating Links::        How to make Emacs-W3 put an 'interestingness' value
-                        next to each link.
-* Gopher Plus Support:: How Emacs-W3 makes use of the Gopher+ protocol.
-* Hooks::               Various hooks to use throughout Emacs-W3
-* Other Variables::     Miscellaneous variables that control the real
-                        guts of Emacs-W3.
+* Disk Caching::                Improving performance by using a local disk cache
+* Interfacing to Mail/News::    How to make VM understand hypertext links
+* Debugging HTML::              How to make Emacs-W3 display warnings about invalid
+                                @sc{html}/@sc{html}+ constructs.
+* Hooks::                       Various hooks to use throughout Emacs-W3
+* Other Variables::             Miscellaneous variables that control the real
+                                guts of Emacs-W3.
 @end menu
-@end ifinfo
 
-@node Style Sheets, Disk Caching, Advanced Features, Advanced Features
-@section Style Sheets
-@cindex Formatting control
-@cindex Style sheets
-@cindex Look and Feel
-@cindex Layout control
-@cindex Experimental style sheet mechanism
-Emacs-W3 currently supports the experimental style sheet mechanism
-proposed by H&kon W. Lie of the W3 Consortium.  This allows for the
-author to specify what a document should look like, and yet allow the
-end user to override any of the stylistic changes.  This allows for
-people with special needs (most notably the visually impaired) to
-override style bindings that could make a document totally
-unreadable.
-
-@example
-<style notation="css">
-/* This is a comment
-** These will be ignored, up to the terminating */
-
-h1 @{ align: center,
-     color: yellow,
-     background: red,
-     font-size: 24pt
-   @}
-h2 @{ align: right,
-     font-family: palatino,
-     font-size: 18pt
-   @}
-</style>
-@end example
-
-:: WORK :: Much more information on stylesheets
-
-@cindex <style>
-To include a stylesheet into a document, simply use the <style> tag.
-Use the @b{notation} attribute to specify what language the stylesheet
-is specified in.  The default is @b{css}.  The data between the <style>
-and </style> tags is the stylsheet proper - no @sc{html} parsing is done to
-this data - it is treated similar to an <XMP> section of text.  To
-reference an external stylesheet, use the <link> tag.
-@example
-<link rel="stylesheet" href="/bill.style">
-@end example
-If these two mechanisms are mixed, then the @sc{url} is resolved first, and
-the contents of the <style> tag take precedence if there are any
-conflicting directives.
-
-@cindex DSSSL
-@cindex DSSSL-lite
-In the future, DSSSL and DSSSL-lite will be supported as valid
-stylesheet languages, but not in this release.  For more information on
-DSSSL-lite see http://www.falch.no/~pepper/DSSSL-Lite/ - for more
-information on full DSSSL, see
-ftp://ftp.jclark.com/pub/dsssl/dsssl.ps.gz
-
-@node Disk Caching, Interfacing to Mail/News, Style Sheets, Advanced Features
+@node Disk Caching, Interfacing to Mail/News, Advanced Features, Advanced Features
 @section Disk Caching
 @cindex Caching
 @cindex Persistent Cache
 @cindex Disk Cache
+
 A cache stores the information on a page on the local machine.  When
 requesting a page that is in the cache, Emacs-W3 can retrieve the page
 from the cache more quickly than retrieving the page again from its
@@ -2891,6 +2929,7 @@ recommend this method of creating the cache filename.
 @cindex Using Emacs-W3 with Gnus
 @cindex RMAIL
 @cindex Using Emacs-W3 with RMAIL
+
 More and more people are including @sc{url}s in their signatures, and within
 the body of mail messages.  It can get quite tedious to type these into
 the minibuffer to follow one. 
@@ -2912,13 +2951,14 @@ trick.
 	     (define-key rmail-mode-map "\r"      'w3-maybe-follow-link))))
 @end example
 
-@node Debugging HTML, Native WAIS Support, Interfacing to Mail/News, Advanced Features
+@node Debugging HTML, Hooks, Interfacing to Mail/News, Advanced Features
 @section Debugging HTML
 @cindex Debugging
 @cindex Invalid HTML
 @cindex Bad HTML
 @vindex w3-debug-buffer
 @vindex w3-debug-html
+
 For those people that are adventurous, or are just as anal as I am about
 people writing valid @sc{html}, set the variable @code{w3-debug-html} to
 @code{t} and see what happens.
@@ -2930,64 +2970,10 @@ message is displayed.
 :: WORK :: Need to list the different values w3-debug-html can have, and
 :: WORK :: what they do ::
 
-@node Native WAIS Support, Rating Links, Debugging HTML, Advanced Features
-@section Native WAIS Support
-This version of Emacs-W3 supports native WAIS querying (earlier
-versions required the use of a gateway program).  In order to use the
-native WAIS support, a working @dfn{waisq} binary is required.  I
-recommend the distribution from think.com -
-ftp://think.com/wais/wais-8-b6.1.tar.Z is a good place to start.
-
-@vindex url-waisq-prog
-@vindex url-wais-gateway-server
-@vindex url-wais-gateway-port
-The variable @code{url-waisq-prog} must point to this executable, and
-one of @code{url-wais-gateway-server} or @code{url-wais-gateway-port}
-should be @code{nil}.
-
-When a WAIS @sc{url} is encountered, a form will be automatically generated
-and displayed.  After typing in the search term, the query will be sent
-to the server by running the @code{url-waisq-prog} in a subprocess.  The
-results will be converted into @sc{html} and displayed.
-
-@node Rating Links, Gopher Plus Support, Native WAIS Support, Advanced Features
-@section Rating Links
-The @code{w3-link-info-display-function} variable can be used to 'rate' a @sc{url}
-when it shows up in an @sc{html} page.  If non-@code{nil}, then this should
-be a list specifying (or a symbol specifying the name) of a function.
-This function should expect one argument, a fully specified @sc{url}, and
-should return a string.  This string is inserted after the link
-text.
-
-If a user has decided that all links served from blort.com are too laden
-with images, and wants to be warned that a link points at this host,
-they could do something like this:
-
-@example
-(defun check-url (url)
-  (if (string-match "://[^/]blort.com" url)
-     "[SLOW!]" ""))
-
-(setq w3-link-info-display-function 'check-url)
-@end example
-
-So that all links pointing to any site at blort.com shows up as "Some
-link[SLOW!]" instead of just "Some link".
-
-@node Gopher Plus Support, Hooks, Rating Links, Advanced Features
-@section Gopher+ Support
-@cindex Gopher+
-The gopher+ support in Emacs-W3 is limited to the conversion of ASK
-blocks into @sc{html} 3.0 forms, and the usage of the content-length given by
-the gopher+ server to give a nice status bar on the bottom of the
-screen.
-
-This will hopefully be extended to include the Gopher+ method of
-content-type negotiation, but this may be a while.
-
-@node Hooks, Other Variables, Gopher Plus Support, Advanced Features
+@node Hooks, Other Variables, Debugging HTML, Advanced Features
 @section Hooks
 @cindex Hooks
+
 These are the various hooks that can be used to customize some of
 Emacs-W3's behavior.  They are arranged in the order in which they would
 happen when retrieving a document.  All of these are functions (or lists
@@ -3017,8 +3003,9 @@ before any inlined images are downloaded and converted.
 These hooks are run after displaying a document's source
 @end table
 
-@node Other Variables, , Hooks, Advanced Features
+@node Other Variables,  , Hooks, Advanced Features
 @section Miscellaneous variables
+
 There are lots of variables that control the real nitty-gritty of Emacs-W3
 that the beginning user probably shouldn't mess with.  Here they are.
 
@@ -3116,13 +3103,9 @@ binary, x-compress, x-hqx, and quoted-printable.
 An assoc list of file extensions and the appropriate uncompression
 programs for each.  This is used to build the Accept-encoding header for
 @sc{http}/1.0 requests.
-@item url-waisq-prog
-@vindex url-waisq-prog
-Name of the waisq executable on this system.  This should be the
-@file{waisq} program from think.com's wais8-b5.1 distribution.
 @end table
 
-@node More Help, Future Directions, , Top
+@node More Help, Future Directions, Advanced Features, Top
 @chapter More Help
 @cindex Relevant Newsgroups
 @cindex Newsgroups
@@ -3431,7 +3414,7 @@ directly.
                            ("no_proxy" . "^.*\\(aventail\\|seanet\\)\.com")))
 @end example
 
-@node Installing SSL, Mailcap Files, Proxy Gateways, Top 
+@node Installing SSL, Mailcap Files, Proxy Gateways, Top
 @appendix Installing SSL
 @cindex HTTP/1.0 Authentication
 @cindex Secure Sockets Layer
@@ -3609,81 +3592,8 @@ document.
 @node General Index, Key Index, Down with DoubleClick, Top
 @appendix General Index
 @printindex fn
-@node Key Index, , General Index, Top
+@node Key Index,  , General Index, Top
 @appendix Key Index
 @printindex ky
 @contents
 @bye
-
-@c @node Supported Protocols, , Stylesheets, Introduction
-@c @chapter Supported Protocols
-@c @cindex Network Protocols
-@c @cindex Protocols Supported
-@c @cindex Supported Protocols
-@c Emacs-W3 supports the following protocols
-@c @table @b
-@c @item Usenet News
-@c Can either display an entire newsgroup or specific articles by
-@c Message-ID: header.  Instead of rewriting a newsreader, this integrates
-@c with the Gnus newsreader.  It requires at least Gnus 5.0, but it is
-@c always safest to use the latest version.  Gnus supports some very
-@c advanced features, including virtual newsgroups, mail and news
-@c integration, and reading news from multiple servers.  @inforef{Gnus,
-@c Top,gnus}, for more info.
-
-@c To be more in line with the other @sc{url} schemes, the hostname and port of
-@c an @sc{nntp} server can be specified.  @sc{url}s of the form
-@c news://hostname:port/messageID work, but might not work in some other
-@c browsers.
-
-@c @item @sc{http}
-@c Supports the @sc{http}/0.9, @sc{http}/1.0, and parts of the @sc{http}/1.1 protocols.
-@c @item Gopher
-@c Support for all gopher types, including CSO queries.
-@c @item Gopher+
-@c Support for Gopher+ retrievals. Support for converting ASK blocks into
-@c HTML forms and submitting them back to the server.
-@c @item @sc{ftp}
-@c @sc{ftp} is handled by either ange-ftp or efs.
-@c @inforef{Ange-FTP,Top,ange-ftp}, for more information on Ange-FTP, or
-@c @inforef{EFS, Top,efs}, for information on EFS.
-@c @item Local files
-@c Local files are of course handled, and MIME content-types are derived
-@c from the file extensions.
-@c @item telnet, tn3270, rlogin
-@c Telnet, tn3270, and rogin are handled by running the appropriate program
-@c in an emacs buffer, or running an external process.
-@c @item mailto
-@c Causes a mail message to be started to a specific address.  Supports the
-@c Netscape @i{extensions} to specify arbitrary headers on the message.
-@c @item data
-@c A quick and easy way to `inline' small pieces of information that you do
-@c not necessarily want to download over the net separately.  Can speed up
-@c display of small icons, stylesheet information, etc.  See the internet
-@c draft draft-masinter-url-data-02.txt for more information.
-@c @item mailserver
-@c A more powerful version of mailto, which allows the author to specify
-@c the subject and body text of the mail message.  This type of link is
-@c never fully executed without user confirmation, because it is possible
-@c to insert insulting or threatening (and possibly illegal) data into the
-@c message.  The mail message is displayed, and the user must confirm the
-@c message before it is sent.
-@c @item x-exec
-@c A @sc{url} can cause a local executable to be run, and its output interpreted
-@c as if it had come from an @sc{http} server.  This is very useful, but is
-@c still an experimental protocol, hence the X- prefix.  This @sc{url} protocol
-@c is deprecated, but might be useful in the future.
-@c @item @sc{nfs}
-@c Retrieves information over @sc{nfs}.  This requires that your operating
-@c system support auto-mounting of @sc{nfs} volumes.
-@c @item finger
-@c Retrieves information about a user via the 'finger' protocol.
-@c @item Info
-@c Creates a link to an GNU-style info file.  @inforef{Info,Top,info}, for more
-@c information on the Info format.
-@c @item SSL
-@c SSL requires a set of patches to the Emacs C code and SSLRef 2.0, or an
-@c external program to run in a subprocess (similar to the @file{tcp.el}
-@c package that comes with GNUS.  @xref{Installing SSL}
-@c @end table
-

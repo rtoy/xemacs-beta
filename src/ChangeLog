@@ -1,3 +1,38 @@
+Wed Feb 26 10:24:40 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: make-docfile takes a "-i" parameter to pass
+	site-loaded lisp files.
+
+	* alloc.c (report_pure_usage): Adjust restart message.
+
+Tue Feb 25 10:58:12 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Add PURESIZE.h to special treatment in vpath.
+
+	* alloc.c (PURESIZE_h): New function.
+	(report_pure_usage): Use it.  If PURESIZE is not the right amount,
+	use the correct value.
+
+	* puresize.h: Use dynamic computation of PURESIZE.
+
+	* PURESIZE.h: New file.
+
+	* fns.c (Frandom): Fix docstring.
+
+Mon Feb 24 17:35:05 1997  Jonathan Edwards  <edwards@intranet.com>
+
+	* process.c (record_exited_processes): Fix obvious typo in
+	checking for SIGCLD.
+	
+Sun Feb 23 01:45:49 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* scrollbar.c (update_scrollbar_instance): Fix for
+	all-hail-xemacs scrollbar drag bug.
+
+	* scrollbar.c (Fscrollbar_to_bottom): Now calls Frecenter(-3)
+	as end-of-buffer does, instead of hostile Frecenter(0).  Makes
+	C-button-1 on down-arrow friendlier.
+
 Sun Feb 23 16:56:17 1997  David Hobley  <david@spook-le0.cia.com.au>
 	Initial MS Windows NT support.
 	* unexnt.c: New file.

@@ -35,8 +35,8 @@ CORE = docomp.el
 URLSOURCES = \
 	url-nfs.el url-file.el url-cookie.el url-parse.el url-irc.el	\
 	url-gopher.el url-http.el url-mail.el url-misc.el url-news.el	\
-	url-pgp.el url-vars.el url-wais.el url-auth.el mm.el md5.el	\
-	url-gw.el ssl.el base64.el url.el socks.el
+	url-vars.el url-auth.el mm.el md5.el url-gw.el ssl.el base64.el	\
+	url.el socks.el url-cache.el
 
 CUSTOMSOURCES = # widget.el widget-edit.el
 CUSTOMOBJECTS = $(CUSTOMSOURCES:.el=.elc)
@@ -48,7 +48,8 @@ SOURCES = \
 	w3-style.el w3-keyword.el w3-forms.el w3-emulate.el		\
 	w3-auto.el w3-menu.el w3-mouse.el w3-toolbar.el	w3-prefs.el	\
 	w3-speak.el w3-latex.el w3-parse.el w3-display.el w3-print.el	\
-	w3-about.el w3-hot.el w3-e19.el w3-xemac.el w3.el
+	w3-about.el w3-hot.el w3-e19.el w3-xemac.el w3.el w3-script.el	\
+	w3-jscript.el w3-elisp.el
 
 OBJECTS = $(SOURCES:.el=.elc)
 

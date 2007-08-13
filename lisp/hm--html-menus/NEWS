@@ -1,6 +1,31 @@
+25.02.97
+	Fixed two bugs, which occured during loading the mode
+	after the psgml-html-mode.
+	In the minor mode, the HM--HTML menu will now be added before
+	the HTML menu.
+	Due to a patch of psgm-html.el it is now possible to call the minor
+	mode from a hook variable in the html-mode and the html3-mode.
+	-- BUILDED the version 5.3 of the package --
+22.02.97
+	Fixed 'hm--html-add-strikethru-to-region'.
+	Changed `hm--html-view-www-package-docu' for the new location
+	of the package documentation.
+	Moved all functions, which added obsolete or non HTML 3.2 elements,
+	to hm--html-not-standard.el. This file is not used by default.
+	Therefore this mode fulfils now the whole HTML 3.2 standard!
+	Added keybindings for new html functions.
+	Changed some old keybindings.
+	Moved the menu items for inserting HTML comments to the
+	"Formating Paragraphs" menu.
+	Fixed a bug in the function `hm--html-add-meta'.
+	The variable `indent-line-function' is now local in all
+	hm--html-mode buffers. This fixed the bug, that the hm--html-mode
+	had set the indentation function to `hm--html-indent-line' global.
+	Added the html elements STYLE and SCRIPT.
+	-- 23:20: My doughter Sarah Madeleine is born! --
 18.02.97
 	Fixed a compilation bug.
-	-- BUILDED the version 5.2 of the package
+	-- BUILDED the version 5.2 of the package --
 17.02.97
 	Changed the function `hm--html-read-alignment' according to the
 	HTML version 3.2.
@@ -22,7 +47,7 @@
 	variable `hm--html-disable-indentation' to t.
 	Fixed the long annoying bug, that the directory in the pop up
 	frame for selecting the template file was wrong in most cases.
-	-- BUILDED the version 5.1 of the package
+	-- BUILDED the version 5.1 of the package --
 11.02.97:
 	Changed the whole indentation stuff. It is now all working -
 	with the exceptions, that the list `hm--html-tag-name-alist'
@@ -111,7 +136,7 @@
 	Added the drag and drop command to the pop up menus.
 15.08.96:
 	The items of the menu "Set popup menu" are now radio items.
-	-- BUILDED the version 5.0 of the package
+	-- BUILDED the version 5.0 of the package --
 03.08.96:
 	Applied a patch from Jerry G. DeLapp <jgd@lanl.gov> to
 	`html-font-lock-keywords'.
@@ -209,7 +234,7 @@
 01.03.96:
 	Added the function `tmpl-insert-template-file'.
 18.02.96:
-	-- BUILDED the version 4.16 of the package
+	-- BUILDED the version 4.16 of the package --
 17.02.96:
 	Added the mailto link.
 03.02.96:

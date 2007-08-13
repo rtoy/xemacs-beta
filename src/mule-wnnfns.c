@@ -903,8 +903,8 @@ Return list of yomi, kanji, comment, hindo, hinshi.
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   lb = lb_wnn_server_type[snum];
   if (!wnnfns_buf[snum]) return Qnil;
-  if ((int)(info_buf =  jl_word_info (wnnfns_buf[snum],
-				      XINT (no), XINT (serial))) <= 0)
+  if ((info_buf =  jl_word_info (wnnfns_buf[snum],
+				 XINT (no), XINT (serial))) != NULL)
     {
       return Qnil;
     }
@@ -2064,7 +2064,7 @@ yes_or_no (unsigned char *s)
      Lisp_Object yes, str;
 
      str = make_string (mbuf, len);
-     yes = call1(Qyes_or_no_p, EQ(str, Qnil));
+     yes = call1(Qyes_or_no_p, str);
      if (NILP (yes)) return 0;
      else return (1);
   }

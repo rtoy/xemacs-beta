@@ -1,3 +1,9 @@
+Wed Feb 26 18:17:59 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* make-docfile.c (next_extra_elc): New function.
+	(main): Use it.  Implementation of `-i' parameter to pass a list
+	of site-loaded lisp files.
+
 Wed Feb 19 18:24:49 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh: Added lisp/auctex.

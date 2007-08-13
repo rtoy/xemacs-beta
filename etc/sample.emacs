@@ -288,7 +288,7 @@
 		   (t nil))))
     (cond (bg
 	   (let ((def (color-name (face-background 'default)))
-		 (faces (list-faces)))
+		 (faces (face-list)))
 	     (while faces
 	       (let ((obg (face-background (car faces))))
 		 (if (and obg (equal def (color-name obg)))
@@ -368,7 +368,9 @@
 ;; constructed using the environment variables USER and DOMAINNAME
 ;; (e.g. turner@lanl.gov), if set.
 
-(if (and running-xemacs (< emacs-major-version 20) (>= emacs-minor-version 15))
+(if (and running-xemacs
+	 (or (and (= emacs-major-version 20) (>= emacs-minor-version 1))
+	     (and (= emacs-major-version 19) (>= emacs-minor-version 15))))
     (progn
       (message "Loading and configuring bundled packages... efs")
       (require 'efs-auto)
@@ -380,22 +382,20 @@
 		 (getenv "DOMAINNAME"))
 	    (setq efs-generate-anonymous-password
 		  (concat (getenv "USER")"@"(getenv "DOMAINNAME")))))
-      (setq efs-auto-save 1)
-      ))
-(if (and running-xemacs (< emacs-major-version 20) (< emacs-minor-version 15))
-    (progn
-      (message "Loading and configuring bundled packages... ange-ftp")
-      (require 'ange-ftp)
-      (if (getenv "USER")
-	  (setq ange-ftp-default-user (getenv "USER")))
-      (if (getenv "EMAIL_ADDRESS")
-	  (setq ange-ftp-generate-anonymous-password (getenv "EMAIL_ADDRESS"))
-	(if (and (getenv "USER")
-		 (getenv "DOMAINNAME"))
-	    (setq ange-ftp-generate-anonymous-password
-		  (concat (getenv "USER")"@"(getenv "DOMAINNAME")))))
-      (setq ange-ftp-auto-save 1)
-      )
+      (setq efs-auto-save 1))
+  (progn
+    (message "Loading and configuring bundled packages... ange-ftp")
+    (require 'ange-ftp)
+    (if (getenv "USER")
+	(setq ange-ftp-default-user (getenv "USER")))
+    (if (getenv "EMAIL_ADDRESS")
+	(setq ange-ftp-generate-anonymous-password (getenv "EMAIL_ADDRESS"))
+      (if (and (getenv "USER")
+	       (getenv "DOMAINNAME"))
+	  (setq ange-ftp-generate-anonymous-password
+		(concat (getenv "USER")"@"(getenv "DOMAINNAME")))))
+    (setq ange-ftp-auto-save 1)
+    )
   )
 
 

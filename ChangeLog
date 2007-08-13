@@ -1,3 +1,10 @@
+Wed Feb 26 22:12:12 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (top_distclean): Reset src/PURESIZE.h for
+	distribution.
+
+	* XEmacs 20.1-b3 is released.
+
 Sun Feb 23 17:10:09 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.1-b2 is released.
@@ -5,6 +12,23 @@ Sun Feb 23 17:10:09 1997  Steven L Baur  <steve@altair.xemacs.org>
 Sat Feb 22 14:29:44 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 19-15-b'95 is released.
+
+Fri Feb 21 22:29:51 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* etc/toolbar/workshop-cap-up.xpm:  Moved caption up one pixel.
+
+	* lwlib/xlwscrollbar.c : Fix many scrollbar bugs:
+	- "knob" renamed to "slider"
+	- leftmost pixel wasn't sensitive to button clicks, while righmost
+	  pixel was.
+	- many glitches fixed if Emacs*XlwScrollBar.ArrowPosition:same:
+	  - goobers on top of up-arrow removed.
+	  - up-arrow would not always be redrawn when necessary
+	  - slider drag would be `off' by size of up-arrow
+	- horizontal and vertical scrollbars didn't use exactly the same
+	  dimensions.
+	- slider was never drawn if XlwScrollBar.shadowThickness was 0.
+	- Now up- and down-arrows actually work near beginning/end of buffer!
 
 Thu Feb 20 12:40:57 1997  Jan Vroonhof <vroonhof@math.ethz.ch>
 

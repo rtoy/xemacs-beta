@@ -1,7 +1,7 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/02/08 05:29:22
-;; Version: 1.10
+;; Created: 1997/02/19 00:52:07
+;; Version: 1.12
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,7 +36,7 @@
       (kill-buffer url-working-buffer))
   (let* ((data (url-generic-parse-url url))
 	 (fname (url-filename data))
-	 (node (or (url-target data) "Top")))
+	 (node (url-unhex-string (or (url-target data) "Top"))))
     (if (and fname node)
 	(Info-goto-node (concat "(" fname ")" node))
       (error "Malformed url: %s" url))))
@@ -126,84 +126,7 @@
   (let (
 	(urlobj (url-generic-parse-url url))
 	(proxyobj (url-generic-parse-url url-using-proxy)))
-    (url-http url-using-proxy url)
-    (setq url-current-type (url-type urlobj)
-	  url-current-user (url-user urlobj)
-	  url-current-port (or (url-port urlobj)
-			       (cdr-safe (assoc url-current-type
-						url-default-ports)))
-	  url-current-server (url-host urlobj)
-	  url-current-file (url-filename urlobj))))
-
-(defun url-x-exec (url)
-  ;; Handle local execution of scripts.
-  (set-buffer (get-buffer-create url-working-buffer))
-  (erase-buffer)
-  (string-match "x-exec:/+\\([^/]+\\)\\(/.*\\)" url)
-  (let ((process-environment process-environment)
-	(executable (url-match url 1))
-	(path-info (url-match url 2))
-	(query-string nil)
-	(safe-paths url-local-exec-path)
-	(found nil)
-	(y nil)
-	)
-    (setq url-current-server executable
-	  url-current-file path-info)
-    (if (string-match "\\(.*\\)\\?\\(.*\\)" path-info)
-	(setq query-string (url-match path-info 2)
-	      path-info (url-match path-info 1)))
-    (while (and safe-paths (not found))
-      (setq y (expand-file-name executable (car safe-paths))
-	    found (and (file-exists-p y) (file-executable-p y) y)
-	    safe-paths (cdr safe-paths)))
-    (if (not found)
-	(url-retrieve (concat "www://error/nofile/" executable))
-      (setq process-environment
-	    (append
-	     (list
-	      "SERVER_SOFTWARE=x-exec/1.0"
-	      (concat "SERVER_NAME=" (system-name))
-	      "GATEWAY_INTERFACE=CGI/1.1"
-	      "SERVER_PROTOCOL=HTTP/1.0"
-	      "SERVER_PORT="
-	      (concat "REQUEST_METHOD=" url-request-method)
-	      (concat "HTTP_ACCEPT="
-		      (mapconcat
-		       (function
-			(lambda (x)
-			  (cond
-			   ((= x ?\n) (setq y t) "")
-			   ((= x ?:) (setq y nil) ",")
-			   (t (char-to-string x))))) url-mime-accept-string
-		       ""))
-	      (concat "PATH_INFO=" (url-unhex-string path-info))
-	      (concat "PATH_TRANSLATED=" (url-unhex-string path-info))
-	      (concat "SCRIPT_NAME=" executable)
-	      (concat "QUERY_STRING=" (url-unhex-string query-string))
-	      (concat "REMOTE_HOST=" (system-name)))
-	     (if (assoc "content-type" url-request-extra-headers)
-		 (concat "CONTENT_TYPE=" (cdr
-					  (assoc "content-type"
-						 url-request-extra-headers))))
-	     (if url-request-data
-		 (concat "CONTENT_LENGTH=" (length url-request-data)))
-	     process-environment))
-      (and url-request-data (insert url-request-data))
-      (setq y (call-process-region (point-min) (point-max) found t t))
-      (goto-char (point-min))
-      (delete-region (point) (progn (skip-chars-forward " \t\n") (point)))
-      (cond
-       ((url-mime-response-p) nil)	; Its already got an HTTP/1.0 header
-       ((null y)			; Weird exit status, whassup?
-	(insert "HTTP/1.0 404 Not Found\n"
-		"Server: " url-package-name "/x-exec\n"))	
-       ((= 0 y)				; The shell command was successful
-	(insert "HTTP/1.0 200 Document follows\n"
-		"Server: " url-package-name "/x-exec\n"))	
-       (t				; Non-zero exit status is bad bad bad
-	(insert "HTTP/1.0 404 Not Found\n"
-		"Server: " url-package-name "/x-exec\n"))))))
+    (url-http url-using-proxy url)))
 
 ;; ftp://ietf.org/internet-drafts/draft-masinter-url-data-02.txt
 (defun url-data (url)

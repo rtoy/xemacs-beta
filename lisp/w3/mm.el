@@ -173,15 +173,6 @@
 				       ("type" . "application/postscript")
 				       ("test" . (not (getenv "DISPLAY")))
 				       ("copiousoutput")))
-		      ("x-www-pem-reply" .
-		       (("viewer" . (w3-decode-pgp/pem "pem"))
-			("test"   . (fboundp 'w3-decode-pgp/pem))
-			("type"   . "application/x-www-pem-reply")
-			))
-		      ("x-www-pgp-reply" .
-		       (("viewer" . (w3-decode-pgp/pem "pgp"))
-			("test"   . (fboundp 'w3-decode-pgp/pem))
-			("type" . "application/x-www-pgp-reply")))
 		      ))
     ("audio"       . (
 		      ("x-mpeg" . (("viewer" . "maplay %s")

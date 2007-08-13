@@ -88,8 +88,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* New resources that Motif does not have.
    Maybe we should use a different prefix. */
+
+/* "knob" is obsolete; use "slider" instead. */
 #define XmNknobStyle		"knobStyle"
 #define XmCKnobStyle		"KnobStyle"
+
+#define XmNsliderStyle		"sliderStyle"
+#define XmCSliderStyle		"SliderStyle"
 
 #define XmNarrowPosition	"arrowPosition"
 #define XmCArrowPosition	"ArrowPosition"
@@ -114,7 +119,7 @@ enum {
     XmHORIZONTAL
 };
 
-#endif /* _Xm_h */
+#endif /* ! _Xm_h */
 
 extern WidgetClass xlwScrollBarWidgetClass;
 

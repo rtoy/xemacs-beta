@@ -98,7 +98,8 @@
     (set-default-file-coding-system 'euc-korea)
     (setq keyboard-coding-system     'euc-korea)
     (setq terminal-coding-system     'euc-korea)
-    (set-charset-registry 'ascii "ksc5636")
+    (when (eq 'x (device-type (selected-device)))
+      (x-use-halfwidth-roman-font 'korean-ksc5601 "ksc5636"))
 
     ;; EGG specific setup 97.02.05 jhod
     (when (featurep 'egg)

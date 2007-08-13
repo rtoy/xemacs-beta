@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/15 23:38:52
-;; Version: 1.91
+;; Created: 1997/02/22 15:18:42
+;; Version: 1.97
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +30,7 @@
 ;;; Variable definitions for w3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst w3-version-number
-  (let ((x "p3.0.60"))
+  (let ((x "p3.0.62"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -38,7 +38,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/02/15 23:38:52"))
+(defconst w3-version-date (let ((x "1997/02/22 15:18:42"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -82,6 +82,27 @@ default to  the hypertext documentation for W3 at Indiana University.")
 
 (defvar w3-display-frames nil
   "*Fetch frames - not optimal.")
+
+(defvar w3-frame-labels '("FRAME(" . ")")
+  "Strings surrounding a frame name")
+
+(defvar w3-frame-regexp "FRAME(\\([^)]+\\))"
+  "Regexp for finding a frame hyperlink")
+
+(defvar w3-frameset-structure nil
+  "Frameset structure")
+
+(defvar w3-frameset-dimensions nil
+  "Frameset dimensions")
+
+(defvar w3-frame-name nil
+  "Frame name")
+
+(defvar w3-base-target nil
+  "Base target name")
+
+(defvar w3-target-window-distances nil
+  "Target window distances")
 
 (defvar w3-do-incremental-display nil
   "*Whether to do incremental display of pages or not.")
@@ -685,16 +706,12 @@ returns.")
     w3-form-elements
     url-current-callback-func
     url-current-content-length
-    url-current-file
     url-current-mime-encoding
     url-current-mime-headers
     url-current-mime-type
     url-current-mime-viewer
-    url-current-port
+    url-current-object
     url-current-referer
-    url-current-server
-    url-current-type
-    url-current-user
     w3-current-parse
     w3-current-isindex
     w3-current-last-buffer
@@ -707,6 +724,10 @@ returns.")
     w3-form-labels
     w3-id-positions
     w3-imagemaps
+    w3-base-target
+    w3-target-window-distances
+    w3-frameset-structure
+    w3-frameset-dimensions
     )
   "A list of variables that should be preserved when entering w3-mode.")
 
@@ -735,6 +756,7 @@ returns.")
 (make-variable-buffer-local 'w3-base-alist)
 (make-variable-buffer-local 'w3-last-tag)
 (make-variable-buffer-local 'w3-last-fill-pos)
+(make-variable-buffer-local 'w3-frame-name)
 (make-variable-buffer-local 'w3-active-faces)
 (make-variable-buffer-local 'w3-netscape-emulation-minor-mode)
 (make-variable-buffer-local 'w3-lynx-emulation-minor-mode)
@@ -814,6 +836,7 @@ returns.")
 
 ;; Widget navigation
 (define-key w3-mode-map [tab]         'w3-widget-forward)
+(define-key w3-mode-map "\t"          'w3-widget-forward)
 (define-key w3-mode-map "\M-\t"       'w3-widget-backward)
 (define-key w3-mode-map [backtab]     'w3-widget-backward)
 (define-key w3-mode-map [(shift tab)] 'w3-widget-backward)

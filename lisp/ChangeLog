@@ -1,3 +1,27 @@
+Wed Feb 26 18:09:56 1997  Andreas Jaeger <aj@arthur.pfalz.de>
+
+	* x11/x-menubar.el (default-menubar): `FAQ' should be `FAQ
+	(local)' in Help menu.
+
+Mon Feb 24 18:33:38 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* mule/mule-debug.el (describe-coding-system): Ported from
+	Mule to XEmacs.
+
+	* mule/mule-x-init.el (x-use-halfwidth-roman-font): New
+	function:
+	 "Maybe set charset registry of the 'ascii charset to ROMAN-REGISTRY.
+
+	Do this only if:
+	 - the current display is an X device
+	 - the displayed width of FULLWIDTH-CHARSET is twice the displayed
+	   width of the 'ascii charset, but only when using ROMAN-REGISTRY.
+
+	Traditionally, Asian characters have been displayed so that they
+	occupy exactly twice the screen space of ASCII (`halfwidth')
+	characters.  On many systems, e.g. Sun CDE systems, this can only be
+	achieved by using a national variant roman font to display ASCII."
+
 Sun Feb 23 12:56:28 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* edebug/edebug.el: Synch up with Emacs 19.34.

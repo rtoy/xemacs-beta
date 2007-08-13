@@ -83,6 +83,7 @@ vpath %.h @srcdir@
 vpath config.h
 vpath paths.h
 vpath Emacs.ad.h
+vpath PURESIZE.h
 #else
 VPATH=@srcdir@
 #endif
@@ -1360,7 +1361,8 @@ ${libsrc}DOC: ${libsrc}make-docfile
 ${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${mule_obj_src} ${lisp}
 #endif
 	rm -f ${libsrc}DOC
-	${libsrc}make-docfile -d ${srcdir} ${obj_src} ${mule_obj_src} \
+	${libsrc}make-docfile -d ${srcdir} -i ${lispdir}site-packages \
+		${obj_src} ${mule_obj_src} \
 	        ${mallocdocsrc} ${rallocdocsrc} ${lispdir}version.el \
 		${lisp} > ${libsrc}DOC
 
@@ -2070,7 +2072,7 @@ alloc.o: extents.h
 alloc.o: frame.h
 alloc.o: frameslots.h
 alloc.o: glyphs.h
-alloc.o: puresize.h
+alloc.o: puresize.h PURESIZE.h
 alloc.o: redisplay.h
 alloc.o: scrollbar.h
 alloc.o: specifier.h
@@ -3249,7 +3251,7 @@ profile.o: systime.h
 pure.o: blocktype.h
 pure.o: config.h
 pure.o: dynarr.h
-pure.o: puresize.h
+pure.o: puresize.h PURESIZE.h
 ralloc.o: blocktype.h
 ralloc.o: config.h
 ralloc.o: dynarr.h

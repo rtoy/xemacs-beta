@@ -1,7 +1,7 @@
 ;;; url-auth.el --- Uniform Resource Locator authorization modules
 ;; Author: wmperry
-;; Created: 1997/01/19 01:17:29
-;; Version: 1.5
+;; Created: 1997/02/18 23:34:14
+;; Version: 1.6
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -54,7 +54,7 @@ instead of the pathname inheritance method."
   (let* ((href (if (stringp url)
 		   (url-generic-parse-url url)
 		 url))
-	 (server (or (url-host href) url-current-server))
+	 (server (url-host href))
 	 (port (or (url-port href) "80"))
 	 (path (url-filename href))
 	 user pass byserv retval data)
@@ -134,7 +134,7 @@ instead of hostname:portnum."
       (let* ((href (if (stringp url)
 		       (url-generic-parse-url url)
 		     url))
-	     (server (or (url-host href) url-current-server))
+	     (server (url-host href))
 	     (port (or (url-port href) "80"))
 	     (path (url-filename href))
 	     user pass byserv retval data)

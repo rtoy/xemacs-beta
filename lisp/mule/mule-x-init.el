@@ -26,6 +26,42 @@
 
 ;;; Code:
 
+;;; Work around what is arguably a Sun CDE bug.
+
+(defun x-use-halfwidth-roman-font (fullwidth-charset roman-registry)
+  "Maybe set charset registry of the 'ascii charset to ROMAN-REGISTRY.
+
+Do this only if:
+ - the current display is an X device
+ - the displayed width of FULLWIDTH-CHARSET is twice the displayed
+   width of the 'ascii charset, but only when using ROMAN-REGISTRY.
+
+Traditionally, Asian characters have been displayed so that they
+occupy exactly twice the screen space of ASCII (`halfwidth')
+characters.  On many systems, e.g. Sun CDE systems, this can only be
+achieved by using a national variant roman font to display ASCII."
+  (let ((charset-font-width
+	 (lambda (charset)
+	   (font-instance-width
+	    (face-font-instance 'default (selected-device) charset))))
+
+	(twice-as-wide
+	 (lambda (cs1 cs2)
+	   (let ((width1 (funcall charset-font-width cs1))
+		 (width2 (funcall charset-font-width cs2)))
+	     (and width1 width2 (eq (+ width1 width1) width2))))))
+
+    (when (eq 'x (device-type))
+      (condition-case nil
+	  (unless (funcall twice-as-wide 'ascii fullwidth-charset)
+	    (set-charset-registry 'ascii roman-registry)
+	    (unless (funcall twice-as-wide 'ascii fullwidth-charset)
+	      ;; Restore if roman-registry didn't help
+	      (set-charset-registry 'ascii "iso8859-1")))
+	(error (set-charset-registry 'ascii "iso8859-1"))))))
+
+;;;;
+
 (defvar mule-x-win-initted nil)
 
 (defun init-mule-x-win ()

@@ -6,8 +6,8 @@
 ;;         1992-1994 Tim Peters
 ;; Maintainer:    python-mode@python.org
 ;; Created:       Feb 1992
-;; Version:       2.89
-;; Last Modified: 1997/01/30 20:16:18
+;; Version:       2.90
+;; Last Modified: 1997/02/24 03:37:22
 ;; Keywords: python languages oop
 
 ;; This software is provided as-is, without express or implied
@@ -208,7 +208,7 @@ equal <number>, `tab-width' is set to <number>, a message saying so is
 displayed in the echo area, and if `py-beep-if-tab-change' is non-nil
 the Emacs bell is also rung as a warning.")
 
-(defconst python-font-lock-keywords
+(defvar python-font-lock-keywords
   (let* ((keywords '("and"        "break"      "class"
 		     "continue"   "def"        "del"        "elif"
 		     "else:"      "except"     "except:"    "exec"
@@ -234,6 +234,8 @@ the Emacs bell is also rung as a warning.")
        1 font-lock-function-name-face)
      ))
   "Additional expressions to highlight in Python mode.")
+(put 'python-mode 'font-lock-defaults '(python-font-lock-keywords))
+
 
 (defvar imenu-example--python-show-method-args-p nil 
   "*Controls echoing of arguments of functions & methods in the imenu buffer.
@@ -716,7 +718,6 @@ py-beep-if-tab-change\t\tring the bell if tab-width is changed"
   (setq major-mode             'python-mode
 	mode-name              "Python"
 	local-abbrev-table     python-mode-abbrev-table
-	font-lock-defaults     '(python-font-lock-keywords)
 	paragraph-separate     "^[ \t]*$"
 	paragraph-start        "^[ \t]*$"
 	require-final-newline  t
@@ -2411,7 +2412,7 @@ local bindings to py-newline-and-indent."))
       nil)))
 
 
-(defconst py-version "2.89"
+(defconst py-version "2.90"
   "`python-mode' version number.")
 (defconst py-help-address "python-mode@python.org"
   "Address accepting submission of bug reports.")

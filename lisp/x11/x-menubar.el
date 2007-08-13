@@ -554,7 +554,7 @@
 	:selected (eq browse-url-browser-function 'browse-url-grail)]
       )
       "-----"
-      ["Edit Faces..." edit-faces t]
+      ["Edit Faces..." cu-edit-faces t]
       ("Font"   :filter font-menu-family-constructor)
       ("Size"	:filter font-menu-size-constructor)
       ("Weight"	:filter font-menu-weight-constructor)
@@ -610,7 +610,7 @@
        ["Splash"		xemacs-splash-buffer	t])
       "-----"
       ("XEmacs FAQ"
-       ["FAQ"			xemacs-local-faq	t]
+       ["FAQ (local)"		xemacs-local-faq	t]
        ["FAQ via WWW" 		xemacs-www-faq	t]
        ["Home Page"		xemacs-www-page		t])
       ("Samples"
@@ -1037,6 +1037,12 @@ items by redefining the function `format-buffers-menu-line'."
 
 ;;; The Options menu
 
+(defvar options-save-faces nil
+  "if t, save-options will save all the face information.
+Set to nil to avoid this. This is recommended on XEmacs 19.15
+and above as we have a much more powerful (read: working) way 
+of changing and saving faces via cu-edit-faces.el & custom.el.")
+
 (defconst options-menu-saved-forms
   ;; This is really quite a kludge, but it gets the job done.
   ;;
@@ -1163,29 +1169,30 @@ items by redefining the function `format-buffers-menu-line'."
      ;; Setting this in lisp conflicts with X resources.  Bad move.  --Stig 
      ;; (list 'set-face-font ''default (face-font-name 'default))
      ;; (list 'set-face-font ''modeline (face-font-name 'modeline))
+     (if options-save-faces
+	 (cons 'progn
+	       (mapcar #'(lambda (face)
+			   `(make-face ',face))
+		       (face-list))))
 
-     (cons 'progn
-	   (mapcar #'(lambda (face)
-		       `(make-face ',face))
-		   (face-list)))
-
-     (cons 'progn
-	   (apply 'nconc
-		  (mapcar
-		   #'(lambda (face)
-		       (delq nil
-			     (mapcar
-			      #'(lambda (property)
-				  (if (specifier-spec-list
-				       (face-property face property))
-				      `(add-spec-list-to-specifier
-					(face-property ',face ',property)
-					',(save-options-specifier-spec-list
-					   face property))))
-			      (delq 'display-table
-				    (copy-sequence
-				     built-in-face-specifiers)))))
-		   (face-list))))
+     (if options-save-faces
+	 (cons 'progn
+	       (apply 'nconc
+		      (mapcar
+		       #'(lambda (face)
+			   (delq nil
+				 (mapcar
+				  #'(lambda (property)
+				      (if (specifier-spec-list
+					   (face-property face property))
+					  `(add-spec-list-to-specifier
+					    (face-property ',face ',property)
+					    ',(save-options-specifier-spec-list
+					       face property))))
+				  (delq 'display-table
+					(copy-sequence
+					 built-in-face-specifiers)))))
+		       (face-list)))))
 
      ;; Mule-specific:
      (if (featurep 'mule)

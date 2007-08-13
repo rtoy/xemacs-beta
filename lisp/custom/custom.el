@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.44
+;; Version: 1.46
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -493,18 +493,6 @@ See `defface' for the format of SPEC."
 	(setq args (cdr (cdr args)))))))
 
 ;;; Meta Customization
-
-(defgroup emacs nil
-  "Customization of the One True Editor."
-  :link '(custom-manual "(emacs)Top"))
-
-(defgroup customize '((widgets custom-group))
-  "Customization of the Customization support."
-  :link '(custom-manual "(custom)Top")
-  :link '(url-link :tag "Development Page" 
-		   "http://www.dina.kvl.dk/~abraham/custom/")
-  :prefix "custom-"
-  :group 'emacs)
 
 (defcustom custom-define-hook nil
   "Hook called after defining each customize option."

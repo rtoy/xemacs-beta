@@ -206,6 +206,14 @@ a:link   {
            insert-before: "[[";
            insert-after: "]]"
          }
+
+input:text,
+input:integer,
+input:float,
+input:url,
+input:text    { insert-before: "[{"; insert-after: "}]"; }
+select { insert-before: "[{"; insert-after: "}]"; }
+
 } // @media tty
 
 

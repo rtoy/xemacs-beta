@@ -155,7 +155,7 @@
     (toggle-read-only 0)
 
     (let ((rest (if who-to-load (list who-to-load)
-		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle)))
+		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi)))
 	  (got-error nil))
       (while rest
 	(let* ((who (car rest))
@@ -205,7 +205,7 @@
   (goto-char (point-max))
   (insert "\n   ")
 
-  (let ((rest '(steve mrb cthomp wing stig linebreak jwz mly vladimir linebreak baw piper bw linebreak wmperry kyle))
+  (let ((rest '(steve mrb cthomp wing stig linebreak jwz mly vladimir linebreak baw piper bw linebreak wmperry kyle larsi))
 	(got-error nil))
     (while rest
       (if (eq (car rest) 'linebreak)
@@ -291,6 +291,7 @@
 	  ('steve "About Steve Baur")
 	  ('mrb "About Martin Buchholz")
 	  ('kyle "About Kyle Jones")
+	  ('larsi "About Lars Magne Ingebrigtsen")
 	  ('others "About Everyone")
 	  ('features "New XEmacs Features")
 	  ('history "XEmacs History")
@@ -755,6 +756,24 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'larsi)
+	  (about-face "Lars Magne Ingebrigtsen" 'bold)
+	  (insert " <larsi@ifi.uio.no>
+
+	Author of Gnus the Usenet news and Mail reading package in
+	the standard XEmacs distribution, and contributor of various
+	enhancements and portability fixes.  Lars is a student at the
+	Institute of Informatics at the University of Oslo.  He is
+	currently plumbing away at his majors work at the Institute of
+	Physics, working on an SCI project connected with CASCADE and
+	CERN and stuff.
+	See \"http://www.ifi.uio.no/~larsi/\".")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -815,6 +834,16 @@
 	thus, you can use VM concurrently with other UNIX mail
 	readers such as Berkeley Mail and ELM.
 	See \"http://www.wonderworks.com/kyle/\"
+
+	") (about-xref "Lars Magne Ingebrigtsen" 'larsi "Find out more about Lars Magne Ingebrigtsen") (insert " <larsi@ifi.uio.no>
+	Author of Gnus the Usenet news and Mail reading package in
+	the standard XEmacs distribution, and contributor of various
+	enhancements and portability fixes.  Lars is a student at the
+	Institute of Informatics at the University of Oslo.  He is
+	currently plumbing away at his majors work at the Institute of
+	Physics, working on an SCI project connected with CASCADE and
+	CERN and stuff.
+	See \"http://www.ifi.uio.no/~larsi/\"
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	Unofficial maintainer of the xemacs-beta list of extant bugs
@@ -949,7 +978,6 @@
 	  Stephan Herrmann <sh@first.gmd.de>
 	  Charles Hines <chuck_hines@VNET.IBM.COM>
 	  David Hughes <djh@harston.cv.com>
-	  Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 	  Andrew Innes <andrewi@harlequin.co.uk>
 	  Markku Jarvinen <Markku.Jarvinen@simpukka.funet.fi>
 	  Robin Jeffries <robin.jeffries@sun.com>

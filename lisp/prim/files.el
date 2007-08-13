@@ -1431,7 +1431,7 @@ for current buffer."
 	;; Parse the -*- line into the `result' alist.
 	(cond ((not (search-forward "-*-" end t))
 	       ;; doesn't have one.
-	       nil)
+	       (setq force t))
 	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+\\)\\([ \t]*-\\*-\\)")
 	       ;; Antiquated form: "-*- ModeName -*-".
 	       (setq result

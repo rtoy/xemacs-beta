@@ -405,7 +405,7 @@ update_scrollbar_instance (struct window *w, int vertical,
   struct device *d = XDEVICE (f->device);
   struct buffer *b = XBUFFER (w->buffer);
   Bufpos start_pos, end_pos, sb_pos;
-  int scrollbar_width = window_scrollbar_width (w);
+  int scrollbar_width  = window_scrollbar_width  (w);
   int scrollbar_height = window_scrollbar_height (w);
 
   int new_line_increment = -1, new_page_increment = -1;
@@ -451,37 +451,38 @@ update_scrollbar_instance (struct window *w, int vertical,
   new_line_increment = 1;
   new_page_increment = 1;
 
-  if (!DEVMETH_OR_GIVEN (d, inhibit_scrollbar_thumb_size_change, (), 0))
-    {
-      int x_offset, y_offset;
+  /* We used to check for inhibit_scrollbar_slider_size_change here,
+     but that seems bogus.  */
+  {
+    int x_offset, y_offset;
 
-      /* Scrollbars are always the farthest from the text area. */
-      if (vertical)
-	{
-	  x_offset = (f->scrollbar_on_left
-		      ? WINDOW_LEFT (w)
-		      : WINDOW_RIGHT (w) - scrollbar_width);
-	  y_offset = WINDOW_TEXT_TOP (w) + f->scrollbar_y_offset;
-	}
-      else
-	{
-	  x_offset = WINDOW_TEXT_LEFT (w);
-	  y_offset = f->scrollbar_y_offset +
-	    (f->scrollbar_on_top
-	     ? WINDOW_TOP (w)
-	     : WINDOW_TEXT_BOTTOM (w) + window_bottom_toolbar_height (w));
-	}
+    /* Scrollbars are always the farthest from the text area. */
+    if (vertical)
+      {
+	x_offset = (f->scrollbar_on_left
+		    ? WINDOW_LEFT (w)
+		    : WINDOW_RIGHT (w) - scrollbar_width);
+	y_offset = WINDOW_TEXT_TOP (w) + f->scrollbar_y_offset;
+      }
+    else
+      {
+	x_offset = WINDOW_TEXT_LEFT (w);
+	y_offset = f->scrollbar_y_offset +
+	  (f->scrollbar_on_top
+	   ? WINDOW_TOP (w)
+	   : WINDOW_TEXT_BOTTOM (w) + window_bottom_toolbar_height (w));
+      }
 
-      new_x = x_offset;
-      new_y = y_offset;
-    }
+    new_x = x_offset;
+    new_y = y_offset;
+  }
 
   /* A disabled scrollbar has its slider sized to the entire height of
      the scrollbar.  Currently the minibuffer scrollbar is
      disabled. */
   if (!MINI_WINDOW_P (w) && vertical)
     {
-      if (!DEVMETH_OR_GIVEN (d, inhibit_scrollbar_thumb_size_change, (), 0))
+      if (!DEVMETH_OR_GIVEN (d, inhibit_scrollbar_slider_size_change, (), 0))
 	{
 	  new_minimum = BUF_BEGV (b);
 	  new_maximum = max (BUF_ZV (b), new_minimum + 1);
@@ -514,7 +515,7 @@ update_scrollbar_instance (struct window *w, int vertical,
       new_slider_size = wcw;
       new_slider_position = min (w->hscroll, max_slide);
     }
-  else
+  else /* MINI_WINDOW_P (w) */
     {
       new_minimum = 1;
       new_maximum = 2;
@@ -777,16 +778,15 @@ behavior.
 }
 
 DEFUN ("scrollbar-to-top", Fscrollbar_to_top, 1, 1, 0, /*
-Function called when the user gives the \"to-top\" scrollbar action.
-(The way this is done can vary from scrollbar to scrollbar.). One argument,
-the scrollbar's window.  You can advise this function to change the
+Function called when the user invokes the \"to-top\" scrollbar action.
+The way this is done can vary from scrollbar to scrollbar, but
+C-button1 on the up-arrow is very common. One argument, the
+scrollbar's window.  You can advise this function to change the
 scrollbar behavior.
 */
        (window))
 {
-  Lisp_Object orig_pt;
-
-  orig_pt = Fwindow_point (window);
+  Lisp_Object orig_pt = Fwindow_point (window);
   Fset_window_point (window, Fpoint_min (Fwindow_buffer (window)));
   Frecenter (Qzero, window);
   scrollbar_reset_cursor (window, orig_pt);
@@ -795,25 +795,24 @@ scrollbar behavior.
 }
 
 DEFUN ("scrollbar-to-bottom", Fscrollbar_to_bottom, 1, 1, 0, /*
-Function called when the user gives the \"to-bottom\" scrollbar action.
-(The way this is done can vary from scrollbar to scrollbar.). One argument,
-the scrollbar's window.  You can advise this function to change the
+Function called when the user invokes the \"to-bottom\" scrollbar action.
+The way this is done can vary from scrollbar to scrollbar, but
+C-button1 on the down-arrow is very common. One argument, the
+scrollbar's window.  You can advise this function to change the
 scrollbar behavior.
 */
        (window))
 {
-  Lisp_Object orig_pt;
-
-  orig_pt = Fwindow_point (window);
+  Lisp_Object orig_pt = Fwindow_point (window);
   Fset_window_point (window, Fpoint_max (Fwindow_buffer (window)));
-  Frecenter (Qzero, window);
+  Frecenter (make_int (-3), window);
   scrollbar_reset_cursor (window, orig_pt);
   zmacs_region_stays = 1;
   return Qnil;
 }
 
 DEFUN ("scrollbar-vertical-drag", Fscrollbar_vertical_drag, 1, 1, 0, /*
-Function called when the user drags the vertical scrollbar thumb.
+Function called when the user drags the vertical scrollbar slider.
 One argument, a cons containing the scrollbar's window and a value
 between point-min and point-max.  You can advise this function to
 change the scrollbar behavior.
@@ -850,7 +849,9 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
 
   w = XWINDOW (window);
   wcw = window_char_width (w, 0) - 1;
-  max_len = w->max_line_len + 1;
+  /* ### We should be able to scroll further right as long as there is
+     a visible truncation glyph.  This calculation for max is bogus.  */
+  max_len = w->max_line_len + 2;
 
   if (EQ (value, Qmax) || (XINT (value) > (max_len - wcw)))
     hscroll = max_len - wcw;

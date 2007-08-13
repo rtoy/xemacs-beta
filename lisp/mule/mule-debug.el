@@ -44,100 +44,94 @@
      "NAME                 REGISTRY        BYTES CHARS FINAL GRAPHIC DIR\n")
     (princ
      "--------------------------------------------------------------------")
-    (mapcar
-     (lambda (name)
-       (let ((charset (get-charset name)))
-	 (princ (format
-		 "%20s %15s %5d %5d %5d %7d %s\n"
-		 name
-		 (charset-registry  charset)
-		 (charset-dimension charset)
-		 (charset-chars     charset)
-		 (charset-final     charset)
-		 (charset-graphic   charset)
-		 (charset-direction charset)))
-	 (princ "        ")
-	 (princ "%s\n" (charset-doc-string charset))))
-     (charset-list))
+    (dolist (charset (charset-list))
+      (setq charset (get-charset charset))
+      (princ (format
+	      "%20s %15s %5d %5d %5d %7d %s\n"
+	      (charset-name charset)
+	      (charset-registry  charset)
+	      (charset-dimension charset)
+	      (charset-chars     charset)
+	      (charset-final     charset)
+	      (charset-graphic   charset)
+	      (charset-direction charset)))
+      (princ "        ")
+      (princ "%s\n" (charset-doc-string charset)))))
 
-    (princ "## CCL PROGRAM TO CONVERT INTERNAL TO EXTERNAL CODE\n")
-    (princ "NAME                 CCL-PROGRAMS\n")
-    (mapcar
-     (lambda (name)
-       (let ((ccl (charset-ccl-program name)))
-	 (if ccl
-	     (let ((i 0) (len (length ccl)))
-	       (princ (format "%20s " name))
-	       (while (< i len)
-		 (princ (format " %x" (aref ccl i)))
-		 (setq i (1+ i)))
-	       (princ "\n")))))
-     (charset-list))
-    ))
+;    (princ "## CCL PROGRAM TO CONVERT INTERNAL TO EXTERNAL CODE\n")
+;    (princ "NAME                 CCL-PROGRAMS\n")
+;    (mapcar
+;     (lambda (name)
+;       (let ((ccl (charset-ccl-program name)))
+;	 (if ccl
+;	     (let ((i 0) (len (length ccl)))
+;	       (princ (format "%20s " name))
+;	       (while (< i len)
+;		 (princ (format " %x" (aref ccl i)))
+;		 (setq i (1+ i)))
+;	       (princ "\n")))))
+;     (charset-list))
+;    ))
 
-(defun describe-designation (flags graphic)
-  (let ((lc (aref flags graphic))
-	lc1)
-    (if (integerp lc) (setq lc1 (if (> lc 0) lc (- lc))))
-    (princ (format "  G%d -- %s"
-		   graphic
-		   (or (and lc1 (char-description lc1))
-		       (and (eq lc t) "never used")
-		       "none")))
-    (princ (if (and lc1 (< lc 0))
-	       " (explicit designation required)\n"
-	     "\n"))))
-;; end of patch
-
+(defun describe-designation (cs register)
+  (let ((charset
+	 (coding-system-property
+	  cs (intern (format "charset-g%d" register))))
+	(force
+	 (coding-system-property
+	  cs (intern (format "force-g%d-on-output" register)))))
+    (princ
+     (format
+      "  G%d: %s%s\n"
+      register
+      (cond ((null charset) "never used")
+	    ((eq t charset) "none")
+	    (t (charset-name charset)))
+      (if force " (explicit designation required)" "")))))
+	
 ;;;###autoload
 (defun describe-coding-system (cs)
   "Display documentation of the coding-system CS."
   (interactive "zCoding-system: ")
-  (get-coding-system cs);; correctness check
+  (setq cs (get-coding-system cs))
   (with-output-to-temp-buffer "*Help*"
-    (princ "Coding-system ")
-    (princ cs)
-    (princ " [")
-    (princ (coding-system-mnemonic cs))
-    (princ "]: \n")
-    (if (not cs) nil
-      (princ "  ")
-      (princ (coding-system-doc-string cs))
-      (princ "\nType: ")
-      (let ((type (coding-system-type cs)))
-	(princ type)
-	(cond ((eq type 'iso2022)
-	       (princ "ISO-2022]\n")
-	       (princ "Initial designations:\n")
-	       (describe-designation coding-system 0)
-	       (describe-designation coding-system 1)
-	       (describe-designation coding-system 2)
-	       (describe-designation coding-system 3)
-	       (princ "Other Form: \n")
-	       (princ (if (aref flags 4) "ShortForm" "LongForm"))
-	       (if (aref flags 5) (princ ", ASCII@EOL"))
-	       (if (aref flags 6) (princ ", ASCII@CNTL"))
-	       (princ (if (aref flags 7) ", 7bit" ", 8bit"))
-	       (if (aref flags 8) (princ ", UseLockingShift"))
-	       (if (aref flags 9) (princ ", UseRoman"))
-	       (if (aref flags 10) (princ ", UseOldJIS"))
-	       (if (aref flags 11) (princ ", No ISO6429"))
-	       (princ ".\n"))
-	      ((eq type 'big5)
-	       (princ (if flags "Big-ETen\n" "Big-HKU\n")))
-	      ))
-      (princ "\nEOL-Type: ")
-      (let ((eol-type (coding-system-eol-type cs)))
-	(cond ((null eol-type)
-	       (princ "null (= LF)\n"))
-	      ((vectorp eol-type)
-	       (princ "Automatic selection from ")
-	       (princ eol-type)
-	       (princ "\n"))
-	      ((eq eol-type 1) (princ "LF\n"))
-	      ((eq eol-type 2) (princ "CRLF\n"))
-	      ((eq eol-type 3) (princ "CR\n"))
-	      (t (princ "invalid\n"))))
+    (princ (format "Coding-system %s [%s]:\n"
+		   (coding-system-name cs)
+		   (coding-system-mnemonic cs)))
+    (princ (format "  %s\n" (coding-system-doc-string cs)))
+    (let ((type (coding-system-type cs)))
+      (princ "Type: ") (princ type) (terpri)
+      (case type
+	('iso2022
+	 (princ "\nInitial designations:\n")
+	 (dolist (register '(0 1 2 3))
+	   (describe-designation cs register))
+	 (princ "\nOther properties: \n")
+	 (dolist (prop '(short no-ascii-eol no-ascii-cntl seven lock-shift no-iso6429))
+	   (princ (format "  %s: " (symbol-name prop)))
+	   (princ (coding-system-property cs prop))
+	   (terpri)))
+	 ;;(princ "  short: ") (princ (coding-system-short))
+	 ;;(princ (if (aref flags 4) "ShortForm" "LongForm"))
+	 ;;(if (aref flags 5) (princ ", ASCII@EOL"))
+	 ;;(if (aref flags 6) (princ ", ASCII@CNTL"))
+	 ;;(princ (if (coding-system-seven cs) ", 7bit" ", 8bit"))
+	 ;;(if (aref flags 8) (princ ", UseLockingShift"))
+	 ;;(if (aref flags 9) (princ ", UseRoman"))
+	 ;;(if (aref flags 10) (princ ", UseOldJIS"))
+	 ;;(if (aref flags 11) (princ ", No ISO6429"))
+	 ;;(terpri))
+	
+	('big5
+	 ;;(princ (if flags "Big-ETen\n" "Big-HKU\n")))
+	 ))
+      (princ (format "\nEOL-Type: %s\n"
+		     (case (coding-system-eol-type cs)
+		       ('nil   "null (= LF)")
+		       ('lf   "LF")
+		       ('crlf "CRLF")
+		       ('cr   "CR")
+		       (t     "invalid"))))
       )))
 
 ;;;###autoload

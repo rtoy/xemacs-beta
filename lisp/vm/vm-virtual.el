@@ -102,7 +102,9 @@
 			    (find-file-noselect folder)))))
 	     (set-buffer (or (and (bufferp folder) folder)
 			     (vm-get-file-buffer folder)
-			     (find-file-noselect folder)))
+			     (let ((inhibit-local-variables t)
+				   (enable-local-variables nil))
+			       (find-file-noselect folder))))
 	     (if (eq major-mode 'vm-virtual-mode)
 		 (setq virtual t
 		       real-buffers-used

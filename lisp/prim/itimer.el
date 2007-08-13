@@ -55,7 +55,7 @@
 ;;
 ;; See the doc strings of these functions for more information.
 
-(defvar itimer-version "1.01"
+(defvar itimer-version "1.02"
   "Version number of the itimer package.")
 
 (defvar itimer-list nil
@@ -701,16 +701,23 @@ x      start a new itimer
 				    'itimer-timer-driver nil nil))))
 
 (defun itimer-time-difference (t1 t2)
-  ;; ignore high 16 bits since we will never be dealing with
-  ;; times that long.
-  (setq t1 (cdr t1)
-	t2 (cdr t2))
-  (let ((usecs (- (nth 1 t1) (nth 1 t2)))
-	(secs (- (car t1) (car t2))))
-     (if (< usecs 0)
-	 (setq secs (1- secs)
-	       usecs (+ usecs 1000000)))
-     (+ secs (/ usecs (if (featurep 'lisp-float-type) 1e6 1000000)))))
+  (let (usecs secs 65536-secs)
+    (setq usecs (- (nth 2 t1) (nth 2 t2)))
+    (if (< usecs 0)
+	(setq carry 1
+	      usecs (+ usecs 1000000))
+      (setq carry 0))
+    (setq secs (- (nth 1 t1) (nth 1 t2) carry))
+    (if (< secs 0)
+	(setq carry 1
+	      secs (+ secs 65536))
+      (setq carry 0))
+    (setq 65536-secs (- (nth 0 t1) (nth 0 t2) carry))
+    ;; loses for interval larger than the maximum signed Lisp integer.
+    ;; can't really be helped.
+    (+ (* 65536-secs 65536)
+       secs
+       (/ usecs (if (featurep 'lisp-float-type) 1e6 1000000)))))
 
 (defun itimer-timer-driver (&rest ignored)
   ;; inhibit quit because if the user quits at an inopportune

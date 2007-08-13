@@ -546,13 +546,14 @@ by func-menu, then do something along the lines of the following:
 ;;; Lisp
 ;;;
 ;;; Vladimir Alexiev <vladimir@cs.ualberta.ca>
+;;; JTL: 24. Feb. 97 added "/" as part of function names
 (defvar fume-function-name-regexp-lisp
   (concat
    "^[ \t]*"                            ; Allow whitespace   |(or (fboundp 'foo)
                                         ;  for the construct |    (defun foo ()
    "(\\(def[^vc][a-z]*\\)"              ; Allow (def* except (defvar, (defconst
    "\\s-+"                              ; At least one whitespace
-   "'?[#:?A-Za-z0-9_+>-]+"              ; Allow (defalias 'foo 'bar)
+   "'?[#:?/A-Za-z0-9_+>-]+"             ; Allow (defalias 'foo 'bar)
    "\\s-*"                              ; Whitespace
    "\\(nil\\|(\\)"                      ; nil or (arg list
    )

@@ -2278,8 +2278,8 @@ reap_exited_processes (void)
 static void
 record_exited_processes (int block_sigchld)
 {
-  if (block_sigchld)
 #ifdef EMACS_BLOCK_SIGNAL
+  if (block_sigchld)
     EMACS_BLOCK_SIGNAL (SIGCHLD);
 #endif
 

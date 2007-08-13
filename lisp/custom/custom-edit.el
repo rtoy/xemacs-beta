@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.44
+;; Version: 1.46
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -21,6 +21,189 @@
   :custom-magic :custom-state :custom-level :custom-form
   :custom-set :custom-save :custom-reset-current :custom-reset-saved 
   :custom-reset-factory)
+
+;;; Customization Groups.
+
+(defgroup emacs nil
+  "Customization of the One True Editor."
+  :link '(custom-manual "(emacs)Top"))
+
+;; Most of these groups are stolen from `finder.el',
+(defgroup editing nil
+  "Basic text editing facilities."
+  :group 'emacs)
+
+(defgroup abbrev nil
+  "Abbreviation handling, typing shortcuts, macros."
+  :tag "Abbreviations"
+  :group 'editing)
+
+(defgroup matching nil
+  "Various sorts of searching and matching."
+  :group 'editing)
+
+(defgroup emulations nil
+  "Emulations of other editors."
+  :group 'editing)
+
+(defgroup mouse nil
+  "Mouse support."
+  :group 'editing)
+
+(defgroup outlines nil
+  "Support for hierarchical outlining."
+  :group 'editing)
+
+(defgroup external nil
+  "Interfacing to external utilities."
+  :group 'emacs)
+
+(defgroup bib nil
+  "Code related to the `bib' bibliography processor."
+  :tag "Bibliography"
+  :group 'external)
+
+(defgroup processes nil
+  "Process, subshell, compilation, and job control support."
+  :group 'external
+  :group 'development)
+
+(defgroup programming nil
+  "Support for programming in other languages."
+  :group 'emacs)
+
+(defgroup languages nil
+  "Specialized modes for editing programming languages."
+  :group 'programming)
+
+(defgroup lisp nil
+  "Lisp support, including Emacs Lisp."
+  :group 'languages
+  :group 'development)
+
+(defgroup c nil
+  "Support for the C language and related languages."
+  :group 'languages)
+
+(defgroup tools nil
+  "Programming tools."
+  :group 'programming)
+
+(defgroup oop nil
+  "Support for object-oriented programming."
+  :group 'programming)
+
+(defgroup applications nil
+  "Applications written in Emacs."
+  :group 'emacs)
+
+(defgroup calendar nil
+  "Calendar and time management support."
+  :group 'applications)
+
+(defgroup mail nil
+  "Modes for electronic-mail handling."
+  :group 'applications)
+
+(defgroup news nil
+  "Support for netnews reading and posting."
+  :group 'applications)
+
+(defgroup games nil
+  "Games, jokes and amusements."
+  :group 'applications)
+
+(defgroup development nil
+  "Support for further development of Emacs."
+  :group 'emacs)
+
+(defgroup docs nil
+  "Support for Emacs documentation."
+  :group 'development)
+
+(defgroup extensions nil
+  "Emacs Lisp language extensions."
+  :group 'development)
+
+(defgroup internal nil
+  "Code for Emacs internals, build process, defaults."
+  :group 'development)
+
+(defgroup maint nil
+  "Maintenance aids for the Emacs development group."
+  :tag "Maintenance"
+  :group 'development)
+
+(defgroup environment nil
+  "Fitting Emacs with its environment."
+  :group 'emacs)
+
+(defgroup comm nil
+  "Communications, networking, remote access to files."
+  :tag "Communication"
+  :group 'environment)
+
+(defgroup hardware nil
+  "Support for interfacing with exotic hardware."
+  :group 'environment)
+
+(defgroup terminals nil
+  "Support for terminal types."
+  :group 'environment)
+
+(defgroup unix nil
+  "Front-ends/assistants for, or emulators of, UNIX features."
+  :group 'environment)
+
+(defgroup vms nil
+  "Support code for vms."
+  :group 'environment)
+
+(defgroup i18n nil
+  "Internationalization and alternate character-set support."
+  :group 'environment
+  :group 'editing)
+
+(defgroup frames nil
+  "Support for Emacs frames and window systems."
+  :group 'environment)
+
+(defgroup data nil
+  "Support editing files of data."
+  :group 'emacs)
+
+(defgroup wp nil
+  "Word processing."
+  :group 'emacs)
+
+(defgroup tex nil
+  "Code related to the TeX formatter."
+  :group 'wp)
+
+(defgroup faces nil
+  "Support for multiple fonts."
+  :group 'emacs)
+
+(defgroup hypermedia nil
+  "Support for links between text or other media types."
+  :group 'emacs)
+
+(defgroup help nil
+  "Support for on-line help systems."
+  :group 'emacs)
+
+(defgroup local nil
+  "Code local to your site."
+  :group 'emacs)
+
+(defgroup customize '((widgets custom-group))
+  "Customization of the Customization support."
+  :link '(custom-manual "(custom)Top")
+  :link '(url-link :tag "Development Page" 
+		   "http://www.dina.kvl.dk/~abraham/custom/")
+  :prefix "custom-"
+  :group 'help
+  :group 'faces)
 
 ;;; Utilities.
 
@@ -261,15 +444,24 @@ when the action is chosen.")
   (custom-buffer-create (list (list symbol 'custom-variable))))
 
 ;;;###autoload
-(defun customize-face (symbol)
-  "Customize FACE."
-  (interactive (list (completing-read "Customize face: " 
+(defun customize-face (&optional symbol)
+  "Customize SYMBOL, which should be a face name or nil.
+If SYMBOL is nil, customize all faces."
+  (interactive (list (completing-read "Customize face: (default all) " 
 				      obarray 'custom-facep)))
-  (if (stringp symbol)
-      (setq symbol (intern symbol)))
-  (unless (symbolp symbol)
-    (error "Should be a symbol %S" symbol))
-  (custom-buffer-create (list (list symbol 'custom-face))))
+  (if (or (null symbol) (and (stringp symbol) (zerop (length symbol))))
+      (let ((found nil))
+	(message "Looking for faces...")
+	(mapcar (lambda (symbol)
+		  (setq found (cons (list symbol 'custom-face) found)))
+		(face-list))
+	(message "Creating customization buffer...")
+	(custom-buffer-create found))
+    (if (stringp symbol)
+	(setq symbol (intern symbol)))
+    (unless (symbolp symbol)
+      (error "Should be a symbol %S" symbol))
+    (custom-buffer-create (list (list symbol 'custom-face)))))
 
 ;;;###autoload
 (defun customize-customized ()
