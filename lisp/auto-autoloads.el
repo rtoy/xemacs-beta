@@ -740,7 +740,7 @@ With prefix argument, enable European character display iff arg is positive." t 
 
 ;;;***
 
-;;;### (autoloads (tags-apropos list-tags tags-query-replace tags-search tags-loop-continue next-file tag-complete-symbol find-tag-other-window find-tag visit-tags-table) "etags" "lisp/etags.el")
+;;;### (autoloads (pop-tag-mark tags-apropos list-tags tags-query-replace tags-search tags-loop-continue next-file tag-complete-symbol find-tag-other-window find-tag visit-tags-table) "etags" "lisp/etags.el")
 
 (autoload 'visit-tags-table "etags" "\
 Tell tags commands to use tags table file FILE when all else fails.
@@ -839,6 +839,11 @@ Display list of tags in FILE." t nil)
 (autoload 'tags-apropos "etags" "\
 Display list of all tags in tag table REGEXP matches." t nil)
 (define-key esc-map "*" 'pop-tag-mark)
+
+(autoload 'pop-tag-mark "etags" "\
+Go to last tag position.
+`find-tag' maintains a mark-stack seperate from the \\[set-mark-command] mark-stack.
+This function pops (and moves to) the tag at the top of this stack." t nil)
 
 ;;;***
 

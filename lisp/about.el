@@ -80,7 +80,7 @@
     (martin   "Martin Buchholz"   "martin@xemacs.org")
     (ograf    "Oliver Graf"       "ograf@fga.de")
     (pez      "Peter Pezaris"	  "pez@dwwc.com")
-    (piper    "Andy Piper"        "andyp@parallax.co.uk")
+    (piper    "Andy Piper"        "andy@xemacs.org")
     (rickc    "Rick Campbell"     "rickc@lehman.com")
     (rossini  "Anthony Rossini"	  "rossini@stat.sc.edu")
     (vin      "Vin Shelton"	  "acs@acm.org")
@@ -116,7 +116,7 @@
     (marcpa    . "http://www.positron911.com/products/power.htm")
     (ograf     . "http://www.fga.de/~ograf/")
     (pez       . "http://www.dwwc.com/")
-    (piper     . "http://www.parallax.co.uk/~andyp")
+    (piper     . "http://www.xemacs.freeserve.co.uk/")
     (vin       . "http://www.upa.org/")
     (stigb     . "http://www.tihlde.hist.no/~stigb/")
     (wget      . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
@@ -283,7 +283,7 @@ developers responsible for this release are:\n\n")
 			     :value who)
 	      (widget-insert (format "  <%s>\n" address)))))
       ;; Setup persons responsible for this release.
-      (mapc 'setup-person '(slb hniksic kyle martin))
+      (mapc 'setup-person '(slb hniksic kyle martin piper))
       (widget-insert "\n\t* ")
       (widget-create 'link :help-echo "A legion of XEmacs hackers"
 		     :action 'about-hackers

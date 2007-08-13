@@ -144,12 +144,13 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   bitmap_pad = ((depth > 16) ? 32 :
 		(depth >  8) ? 16 :
 		8);
-  byte_cnt = bitmap_pad >> 3;
   
   outimg = XCreateImage (dpy, vis,
 			 depth, ZPixmap, 0, 0, width, height,
 			 bitmap_pad, 0);
   if (!outimg) return NULL;
+
+  byte_cnt = outimg->bits_per_pixel >> 3;
 
   data = (unsigned char *) xmalloc (outimg->bytes_per_line * height);
   if (!data)

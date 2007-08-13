@@ -2758,11 +2758,11 @@ directory_is_current_directory (char *pwd)
   GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA (pwd, pwd_internal);
 
   return (IS_DIRECTORY_SEP (*pwd_internal)
-	  && stat (pwd_internal, &pwdstat) == 0
-	  && stat ("."         , &dotstat) == 0
+	  && stat ((char *) pwd_internal, &pwdstat) == 0
+	  && stat (".", &dotstat) == 0
 	  && dotstat.st_ino == pwdstat.st_ino
 	  && dotstat.st_dev == pwdstat.st_dev
-	  && (int) strlen (pwd_internal) < MAXPATHLEN);
+	  && (int) strlen ((char *) pwd_internal) < MAXPATHLEN);
 }
 
 void
@@ -2794,7 +2794,7 @@ init_initial_directory (void)
 	initial_directory[len + 1] = '\0';
       }
   }
-  
+
   /* XEmacs change: store buffer's default directory
      using prefered (i.e. as defined at compile-time)
      directory separator. --marcpa */

@@ -1,3 +1,40 @@
+1999-03-01  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.64 is released
+
+1999-02-22  Andy Piper  <andy@xemacs.org>
+
+	* frame-msw.c (mswindows_make_frame_visible): use SW_SHOW rather
+	than SW_SHOWNORMAL to prevent resizing of maximised frames.
+	(mswindows_raise_frame): remove comment.
+
+1999-02-23  SL Baur  <steve@xemacs.org>
+
+	* glyphs-x.c (convert_EImage_to_XImage): Remove unused variable.
+
+1999-02-17  Kazuo Oishi <oishi@ae.agr.yamaguchi-u.ac.jp>
+
+	* glyphs-x.c (cononvert_EImage_to_XImage): correct 
+	bytes per pixel counting.
+
+1999-02-15  Andy Piper  <andy@xemacs.org>
+
+	* s/cygwin32.h (BROKEN_SIGIO): don't define this as it causes
+	major lockups.
+
+1999-02-10  Martin Buchholz  <martin@xemacs.org>
+
+	* s/bsdos4.h: New file.  Port to BSDI BSD/OS 4.0.
+	* xintrinsic.h:  Redo CONST support for X11 R4 compatibility.
+
+1999-02-02  Gleb Arshinov  <gleb@cs.stanford.edu>
+
+	* process-nt.c (nt_send_process): 
+ 	Fix for process-send-region/process-send-string breaking when size
+	of the input > 128 chars: change maximum chunk size for process
+	stream from 512 to 128, thus guaranteeing that ntpipe_shove_writer
+	succeeds.
+
 1999-02-02  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.63 is released

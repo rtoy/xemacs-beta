@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 21.0 "20 minutes to Nikko"
+-- Dialog box fix from Jan Vroonhof
+-- prevent minimization of maximized frame from Andy Piper
+-- miscellaneous patches from Andy Piper and Gleb Arshinov
+-- miscellaneous patches from Charles Waldman and Adrian Aichner
+-- Mule dump time files remerged from mule-base package
+-- Documentation fixes from Jan Vroonhof
+-- 24bit color image fix from Kazuo OISHI
+-- various build fixes from Martin Buchholz
+
 to 21.0 "Pyrenean63"
 -- miscellaneous bug fixes
 
