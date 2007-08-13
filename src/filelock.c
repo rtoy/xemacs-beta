@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
-#include "paths.h"
+#include <paths.h>
 
 #include "sysfile.h"
 #include "sysdir.h"

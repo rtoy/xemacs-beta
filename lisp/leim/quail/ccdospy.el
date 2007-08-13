@@ -8,13 +8,13 @@
 
 ;;; Start of the header of original TIT dictionary.
 
-;; # $Id: ccdospy.el,v 1.2 1997/06/06 00:57:08 steve Exp $
+;; # $Id: ccdospy.el,v 1.3 1997/06/11 19:25:53 steve Exp $
 ;; # HANZI input table for cxterm
 ;; # To be used by cxterm, convert me to .cit format first
 ;; # .cit version 1
 ;; ENCODE:	GB
 ;; MULTICHOICE:	YES
-;; PROMPT:	$A::WVJdHk!KKuP4F4Rt!K(B# 
+;; PROMPT:	$A::WVJdHk!KKuP4F4Rt!K# (B
 ;; #
 ;; COMMENT $AKuP4F4Rt7=08(B ($AT4SZ(B CCDOS)
 ;; COMMENT
@@ -52,7 +52,7 @@
 
 (quail-define-package "quail-ccdospy" "Chinese-GB" "$AKuP4F4Rt(B"
  nil
-"$A::WVJdHk!KKuP4F4Rt!K(B# 
+"$A::WVJdHk!KKuP4F4Rt!K# (B
  $AKuP4F4Rt7=08(B ($AT4SZ(B CCDOS)
 
  $AP!P4S"NDWVD84z1m!8F4Rt!97{:E#,5+HgOB!8F4Rt!9TrSCR;<|1mJ>(B:

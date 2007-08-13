@@ -615,6 +615,6 @@ If FRAME is omitted or nil, use the selected frame."
 
 ;; Two loser functions which shouldn't be used.
 (make-obsolete 'following-char 'char-after)
-(make-obsolete 'preceding-char 'char-after)
+(make-obsolete 'preceding-char 'char-before)
 
 ;;; obsolete.el ends here

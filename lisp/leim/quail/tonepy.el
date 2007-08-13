@@ -8,13 +8,13 @@
 
 ;;; Start of the header of original TIT dictionary.
 
-;; # $Id: tonepy.el,v 1.2 1997/06/06 00:57:10 steve Exp $
+;; # $Id: tonepy.el,v 1.3 1997/06/11 19:25:56 steve Exp $
 ;; # HANZI input table for cxterm
 ;; # To be used by cxterm, convert me to .cit format first
 ;; # .cit version 1
 ;; ENCODE:	GB
 ;; MULTICHOICE:	YES
-;; PROMPT:	$A::WVJdHk!K4x5wF4Rt!K(B# 
+;; PROMPT:	$A::WVJdHk!K4x5wF4Rt!K# (B
 ;; #
 ;; COMMENT	$A4x5wF4Rt7=08(B
 ;; COMMENT
@@ -48,7 +48,7 @@
 
 (quail-define-package "quail-tonepy" "Chinese-GB" "$A4x5wF4Rt(B"
  t
-"$A::WVJdHk!K4x5wF4Rt!K(B# 
+"$A::WVJdHk!K4x5wF4Rt!K# (B
 	$A4x5wF4Rt7=08(B
 
  $AP!P4S"NDWVD84z1m!8F4Rt!97{:E#,(B \"u(yu) $ATrSC(B u: $A1mJ>!C(B

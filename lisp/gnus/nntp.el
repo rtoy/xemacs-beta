@@ -189,7 +189,7 @@ server there that you can connect to.  See also `nntp-open-connection-function'"
   (save-excursion
     (set-buffer (process-buffer process))
     (goto-char (point-min))
-    (while (or (not (memq (following-char) '(?2 ?3 ?4 ?5)))
+    (while (or (not (memq (char-after) '(?2 ?3 ?4 ?5)))
 	       (looking-at "480"))
       (when (looking-at "480")
 	(erase-buffer)

@@ -272,6 +272,10 @@ syntax table.
 {
   struct Lisp_Char_Table *mirrortab;
 
+  if (NILP(ch))
+    {
+      return Qnil;
+    }
   CHECK_CHAR_COERCE_INT (ch);
   table = check_syntax_table (table, current_buffer->syntax_table);
   mirrortab = XCHAR_TABLE (XCHAR_TABLE (table)->mirror_table);

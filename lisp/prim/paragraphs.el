@@ -1,6 +1,6 @@
 ;;; paragraphs.el --- paragraph and sentence parsing.
 
-;; Copyright (C) 1985, 86, 87, 91, 94, 95 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 87, 91, 94, 95, 97 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: wp
@@ -28,6 +28,9 @@
 
 ;; This package provides the paragraph-oriented commands documented in the
 ;; XEmacs Reference Manual.
+
+;; 06/11/1997 - Use char-(after|before) instead of
+;;  (following|preceding)-char. -slb
 
 ;;; Code:
 
@@ -283,7 +286,7 @@ negative arg -N means kill forward to Nth end of paragraph."
 (defun end-of-paragraph-text ()
   (let ((opoint (point)))
     (forward-paragraph 1)
-    (if (eq (preceding-char) ?\n) (forward-char -1))
+    (if (eq (char-before (point)) ?\n) (forward-char -1))
     (if (<= (point) opoint)
 	(progn
 	  (forward-char 1)

@@ -57,6 +57,9 @@
 ;; Mule-2.3, and could probably use some feature additions (like additional wrap
 ;; styles, etc)
 
+;; 97/06/11 Steve Baur (steve@altair.xemacs.org) Convert use of
+;;  (preceding|following)-char to char-(after|before).
+
 ;;; Code:
 
 (defgroup editing-basics nil
@@ -204,7 +207,7 @@ With argument, join this line to following line."
   (interactive "*P")
   (beginning-of-line)
   (if arg (forward-line 1))
-  (if (eq (preceding-char) ?\n)
+  (if (eq (char-before (point)) ?\n)
       (progn
 	(delete-region (point) (1- (point)))
 	;; If the second line started with the fill prefix,
@@ -241,7 +244,7 @@ Leave one space or none, according to the context."
   (if abbrev-mode ; XEmacs
       (expand-abbrev))
   (skip-chars-backward " \t")
-  (if (= (following-char) ? )
+  (if (eq (char-after (point)) ? ) ; XEmacs
       (forward-char 1)
     (insert ? ))
   (delete-region (point) (progn (skip-chars-forward " \t") (point))))
@@ -339,7 +342,7 @@ and KILLP is t if a prefix arg was specified."
   (let ((count arg))
     (save-excursion
       (while (and (> count 0) (not (bobp)))
-	(if (= (preceding-char) ?\t)
+	(if (eq (char-before (point)) ?\t) ; XEmacs
 	    (let ((col (current-column)))
 	      (forward-char -1)
 	      (setq col (- col (current-column)))
@@ -353,34 +356,63 @@ and KILLP is t if a prefix arg was specified."
   (and overwrite-mode (not (eolp))
        (save-excursion (insert-char ?\  arg))))
 
-(defcustom delete-erases-forward nil
+(defcustom delete-key-deletes-forward nil
   "If non-nil, the DEL key will erase one character forwards.
 If nil, the DEL key will erase one character backwards."
   :type 'boolean
   :group 'editing-basics)
 
-(defcustom backspace-or-delete-hook nil
-  "Hook that is run prior to executing the backspace-or-delete function.
-Return a non-nil value to indicate that the editing chore has been
-handled and the backspace-or-delete function will exit without doing
-anything else."
-  :type 'hook)
-  
-(defun backspace-or-delete (arg)
+(defun backward-or-forward-delete-char (arg)
   "Delete either one character backwards or one character forwards.
-Controlled by the state of `delete-erases-forward' and whether the
+Controlled by the state of `delete-key-deletes-forward' and whether the
+BackSpace keysym even exists on your keyboard.  If you don't have a
+BackSpace keysym, the delete key should always delete one character
+backwards."
+  (interactive "*p")
+  (if (and delete-key-deletes-forward
+	   (or (eq 'tty (device-type))
+	       (x-keysym-on-keyboard-p "BackSpace")))
+      (delete-char arg)
+    (delete-backward-char arg)))
+
+(defun backward-or-forward-kill-word (arg)
+  "Delete either one word backwards or one word forwards.
+Controlled by the state of `delete-key-deletes-forward' and whether the
+BackSpace keysym even exists on your keyboard.  If you don't have a
+BackSpace keysym, the delete key should always delete one character
+backwards."
+  (interactive "*p")
+  (if (and delete-key-deletes-forward
+	   (or (eq 'tty (device-type))
+	       (x-keysym-on-keyboard-p "BackSpace")))
+      (kill-word arg)
+    (backward-kill-word arg)))
+
+(defun backward-or-forward-kill-sentence (arg)
+    "Delete either one sentence backwards or one sentence forwards.
+Controlled by the state of `delete-key-deletes-forward' and whether the
 BackSpace keysym even exists on your keyboard.  If you don't have a
 BackSpace keysym, the delete key should always delete one character
 backwards."
   (interactive "*P")
-  (unless (run-hook-with-args 'backspace-or-delete-hook arg)
-    (if zmacs-region-active-p
-	(kill-region (point) (mark))
-      (if (and delete-erases-forward
-	       (or (eq 'tty (device-type))
-		   (x-keysym-on-keyboard-p "BackSpace")))
-	  (delete-char (prefix-numeric-value arg))
-	(delete-backward-char (prefix-numeric-value arg))))))
+  (if (and delete-key-deletes-forward
+	   (or (eq 'tty (device-type))
+	       (x-keysym-on-keyboard-p "BackSpace")))
+      (kill-sentence arg)
+    (backward-kill-sentence (prefix-numeric-value arg))))
+
+(defun backward-or-forward-kill-sexp (arg)
+    "Delete either one sexpr backwards or one sexpr forwards.
+Controlled by the state of `delete-key-deletes-forward' and whether the
+BackSpace keysym even exists on your keyboard.  If you don't have a
+BackSpace keysym, the delete key should always delete one character
+backwards."
+  (interactive "*p")
+  (if (and delete-key-deletes-forward
+	   (or (eq 'tty (device-type))
+	       (x-keysym-on-keyboard-p "BackSpace")))
+      (kill-sexp arg)
+    (backward-kill-sexp arg)))
 
 (defun zap-to-char (arg char)
   "Kill up to and including ARG'th occurrence of CHAR.
@@ -586,7 +618,7 @@ and the greater of them is not at the start of a line."
   "Print info on cursor position (on screen and within buffer)."
   ;; XEmacs change
   (interactive "_")
-  (let* ((char (following-char))
+  (let* ((char (char-after (point))) ; XEmacs
 	 (beg (point-min))
 	 (end (point-max))
          (pos (point))
@@ -2354,7 +2386,7 @@ Setting this variable automatically makes it local to the current buffer.")
 			(= (point) fill-point))
 		      ;; 97/3/14 jhod: Kinsoku processing
 		      ;(indent-new-comment-line)
-		      (let ((spacep (memq (preceding-char) '(?\  ?\t))))
+		      (let ((spacep (memq (char-before (point)) '(?\  ?\t))))
 			(indent-new-comment-line)
 			;; if user type space explicitly, leave SPC
 			;; even if there is no WAN.
@@ -2363,7 +2395,7 @@ Setting this variable automatically makes it local to the current buffer.")
 			      (goto-char fill-point)
 			      ;; put SPC except that there is SPC
 			      ;; already or there is sentence end.
-			      (or (memq (following-char) '(?\  ?\t))
+			      (or (memq (char-after (point)) '(?\  ?\t))
 				  (fill-end-of-sentence-p)
 				  (insert ?\ )))))
 		    (save-excursion

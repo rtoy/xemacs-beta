@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 #include "lstream.h"
 #include "opaque.h"
-#include "paths.h"
+#include <paths.h>
 #endif
 #ifdef MULE
 #include "mule-coding.h"

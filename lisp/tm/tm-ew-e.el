@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.2 $
+;; Version: $Revision: 1.3 $
 ;; Keywords: encoded-word, MIME, multilingual, header, mail, news
 
 ;; This file is part of tm (Tools for MIME).
@@ -35,7 +35,7 @@
 ;;;
 
 (defconst tm-ew-e/RCS-ID
-  "$Id: tm-ew-e.el,v 1.2 1997/02/15 22:21:29 steve Exp $")
+  "$Id: tm-ew-e.el,v 1.3 1997/06/11 19:26:16 steve Exp $")
 (defconst mime-eword/encoder-version (get-version-string tm-ew-e/RCS-ID))
 
 
@@ -120,7 +120,7 @@ when Subject field is encoded by `mime/encode-message-header'.
 ;;;
 
 (defun tm-eword::char-type (chr)
-  (if (or (= chr 32)(= chr ?\t))
+  (if (or (= chr ?  )(= chr ?\t))
       nil
     (char-charset chr)
     ))
@@ -367,7 +367,7 @@ when Subject field is encoded by `mime/encode-message-header'.
 		(setq ret (tm-eword::encode-string-1 2 rwl))
 		(setq str (car ret))
 		))
-	(cond ((eq special 32)
+	(cond ((eq special ? )
 	       (if (string= str "(")
 		   (setq ps t)
 		 (setq dest (concat dest " "))
@@ -383,7 +383,7 @@ when Subject field is encoded by `mime/encode-message-header'.
 		 )
 	       )))
       (cond ((string= str " ")
-	     (setq special 32)
+	     (setq special ? )
 	     )
 	    ((string= str "(")
 	     (setq special ?\()

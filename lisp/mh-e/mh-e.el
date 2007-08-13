@@ -63,7 +63,7 @@
 ;;; Modified by James Larus, BBN, July 1984 and UCB, 1984 & 1985.
 ;;; Rewritten for GNU Emacs, James Larus 1985.  larus@ginger.berkeley.edu
 ;;; Modified by Stephen Gildea 1988.  gildea@lcs.mit.edu
-(defconst mh-e-RCS-id "$Id: mh-e.el,v 1.2 1997/04/19 23:21:00 steve Exp $")
+(defconst mh-e-RCS-id "$Id: mh-e.el,v 1.3 1997/06/11 19:25:57 steve Exp $")
 
 ;;; Code:
 
@@ -150,6 +150,12 @@ Normally \"inc\".  This file is searched for relative to
 the mh-progs directory unless it is an absolute pathname."
   :type 'string
   :group 'mh)
+
+(defcustom mh-folder-coding-system 'ctext
+  "*Coding-system to decode folder."
+  :type 'coding-system
+  :group 'mh)
+(make-variable-buffer-local 'mh-folder-coding-system)
 
 (defcustom mh-print-background nil
   "*Print messages in the background if non-nil.
@@ -884,10 +890,11 @@ The value of mh-folder-mode-hook is called when a new folder is set up."
 	  (goto-char (point-max))
 	(erase-buffer))
       (setq scan-start (point))
-      (mh-exec-cmd-output mh-scan-prog nil
-			  "-noclear" "-noheader"
-			  "-width" (window-width)
-			  folder range)
+      (let ((coding-system-for-read mh-folder-coding-system))
+	(mh-exec-cmd-output mh-scan-prog nil
+			    "-noclear" "-noheader"
+			    "-width" (window-width)
+			    folder range))
       (goto-char scan-start)
       (cond ((looking-at "scan: no messages in")
 	     (keep-lines mh-valid-scan-line)) ; Flush random scan lines

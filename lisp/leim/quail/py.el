@@ -8,13 +8,13 @@
 
 ;;; Start of the header of original TIT dictionary.
 
-;; # $Id: py.el,v 1.2 1997/06/06 00:57:09 steve Exp $
+;; # $Id: py.el,v 1.3 1997/06/11 19:25:55 steve Exp $
 ;; # HANZI input table for cxterm
 ;; # To be used by cxterm, convert me to .cit format first
 ;; # .cit version 1
 ;; ENCODE:	GB
 ;; MULTICHOICE:	YES
-;; PROMPT:	$A::WVJdHk!KF4Rt!K(B# 
+;; PROMPT:	$A::WVJdHk!KF4Rt!K# (B
 ;; #
 ;; COMMENT	$AF4Rt7=08(B
 ;; COMMENT
@@ -47,7 +47,7 @@
 
 (quail-define-package "quail-py" "Chinese-GB" "$AF4Rt(B"
  t
-"$A::WVJdHk!KF4Rt!K(B# 
+"$A::WVJdHk!KF4Rt!K# (B
 	$AF4Rt7=08(B
 
  $AP!P4S"NDWVD84z1m!8F4Rt!97{:E#,(B \"u(yu) $ATrSC(B u: $A1mJ>!C(B

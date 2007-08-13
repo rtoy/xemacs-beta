@@ -1,6 +1,6 @@
 ;;; indent.el --- indentation commands for XEmacs
 
-;; Copyright (C) 1985, 1992, 1993, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1992, 1993, 1995, 1997 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: lisp languages tools
@@ -28,6 +28,8 @@
 
 ;; Commands for making and changing indentation in text.  These are
 ;; described in the XEmacs Reference Manual.
+
+;; 06/11/1997 - Convert (preceding|following)-char to char-(before|after) -slb
 
 ;;; Code:
 
@@ -433,7 +435,7 @@ You can add or remove colons and then do \\<edit-tab-stops-map>\\[edit-tab-stops
 The variable `tab-stop-list' is a list of columns at which there are tab stops.
 Use \\[edit-tab-stops] to edit them interactively."
   (interactive)
-  (and abbrev-mode (= (char-syntax (preceding-char)) ?w)
+  (and abbrev-mode (eq (char-syntax (char-before (point))) ?w)
        (expand-abbrev))
   (let ((tabs tab-stop-list))
     (while (and tabs (>= (current-column) (car tabs)))
@@ -460,11 +462,11 @@ Use \\[edit-tab-stops] to edit them interactively."
 	    (goto-char before)
 	    ;; If we just added a tab, or moved over one,
 	    ;; delete any superfluous spaces before the old point.
-	    (if (and (eq (preceding-char) ?\ )
-		     (eq (following-char) ?\t))
+	    (if (and (eq (char-before (point)) ?\ )
+		     (eq (char-after (point)) ?\t))
 		(let ((tabend (* (/ (current-column) tab-width) tab-width)))
 		  (while (and (> (current-column) tabend)
-			      (eq (preceding-char) ?\ ))
+			      (eq (char-before (point)) ?\ ))
 		    (forward-char -1))
 		  (delete-region (point) before))))))))
 

@@ -8,13 +8,13 @@
 
 ;;; Start of the header of original TIT dictionary.
 
-;; # $Id: punct.el,v 1.2 1997/06/06 00:57:09 steve Exp $
+;; # $Id: punct.el,v 1.3 1997/06/11 19:25:53 steve Exp $
 ;; # HANZI input table for cxterm
 ;; # To be used by cxterm, convert me to .cit format first
 ;; # .cit version 1
 ;; ENCODE:	GB
 ;; MULTICHOICE:	YES
-;; PROMPT:	$A::WVJdHk!K1j5c7{:E!K(B# 
+;; PROMPT:	$A::WVJdHk!K1j5c7{:E!K# (B
 ;; #
 ;; COMMENT	Copyright 1991 by Yongguang Zhang.
 ;; COMMENT Permission to use/modify/copy for any purpose is hereby granted.
@@ -51,7 +51,7 @@
 
 (quail-define-package "quail-punct" "Chinese-GB" "$A1j5c7{:E(B"
  nil
-"$A::WVJdHk!K1j5c7{:E!K(B# 
+"$A::WVJdHk!K1j5c7{:E!K# (B
 	Copyright 1991 by Yongguang Zhang.
  Permission to use/modify/copy for any purpose is hereby granted.
  Absolutely no fee and no warranties.

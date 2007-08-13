@@ -1052,10 +1052,10 @@ This should be the author's full name minus an optional title."
 	(let ((bos 0)
 	      (eos (1- (length namestring))))
 	  (while (and (<= bos eos)
-		      (memq (aref namestring bos) '(32 ?\t)))
+		      (memq (aref namestring bos) '(?\  ?\t)))
 	    (setq bos (1+ bos)))
 	  (while (and (> eos bos)
-		      (memq (aref namestring eos) '(32 ?\t)))
+		      (memq (aref namestring eos) '(?\  ?\t)))
 	    (setq eos (1- eos)))
 	  (substring namestring bos (1+ eos))))))
 

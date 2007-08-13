@@ -104,7 +104,7 @@ static CONST String x_fallback_resources[] =
      in ../etc/Emacs.ad.  These resources are consulted only if no
      app-defaults file is found at all.
    */
-#include "Emacs.ad.h"
+#include <Emacs.ad.h>
   0
 };
 

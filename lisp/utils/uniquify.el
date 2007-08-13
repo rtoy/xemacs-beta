@@ -359,7 +359,7 @@ but no others."
 ;;; Hooks from the rest of Emacs
 
 (cond
- ((string-match "^19" emacs-version)
+ ((string-match "^\\(19\\|20\\)" emacs-version)
   ;; Emacs 19 (Emacs or XEmacs)
 
   ;; The logical place to put all this code is in generate-new-buffer-name.

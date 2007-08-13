@@ -1,3 +1,160 @@
+1997-06-11  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/help.el (function-called-at-point): Use char-(after|before)
+	instead of (following|preceding)-char.
+	(variable-at-point): Ditto.
+
+	* prim/simple.el (delete-indentation): Use char-(after|before)
+	instead of (following|preceding)-char.
+	(just-one-space): Ditto.
+	(backward-delete-char-untabify): Ditto.
+	(do-auto-fill): Ditto.
+
+	* prim/paragraphs.el (end-of-paragraph-text): Use char-before
+	instead of preceding-char.
+
+	* prim/misc.el (copy-from-above-command): Use char-(after|before)
+	instead of (following|preceding)-char.
+
+	* prim/obsolete.el (preceding-char): Correct a typo.
+
+	* prim/minibuf.el (minibuffer-electric-slash): Use char-(after|before)
+	instead of (following|preceding)-char.
+	(minibuffer-electric-tilde): Ditto.
+
+	* prim/lisp.el (insert-parentheses): Use char-(after|before)
+	instead of (following|preceding)-char.
+
+	* prim/indent.el (tab-to-tab-stop): Use char-(after|before)
+	instead of (following|preceding)-char.
+	(move-to-tab-stop): Ditto.
+
+	* prim/fill.el (fill-end-of-sentence-p): Use
+	char-after/char-before instead of following-char/preceding-char.
+	(canonically-space-region): Ditto.
+	(fill-region-as-paragraph): Ditto.
+	(fill-region): Change (= char char) to (eq char char).
+
+	* prim/debug.el (debugger-frame-number): Use char-after not
+	following-char.
+	(debugger-frame): Ditto.
+	(debugger-frame-clear): Ditto.
+
+	* prim/case-table.el (invert-case): Use char-after not
+	following-char.
+	Clean up comments.
+
+	* prim/syntax.el (symbol-near-point): Use char-before not
+	preceding-char.
+
+	* prim/window.el (window-list): Update DOCstring.
+	From Noah Friedman <friedman@splode.com>
+
+	* utils/uniquify.el (toplevel): Make version test match XEmacs v20.
+
+	* tm/tm-ew-e.el: Clean up Ebola infection.
+
+	* x11/x-compose.el: Various corrections
+	From Heiko Muenkel <muenkel@tnt.uni-hannover.de>
+
+1997-06-10  Gary D. Foster  <Gary.Foster@corp.sun.com>
+	
+	* lisp/modes/view-less.el: Changed \177 bindings to 'delete
+	* lisp/modes/help.el: Changed \177 bindings to 'delete
+
+1997-06-10  Gary D. Foster  <Gary.Foster@corp.sun.com>
+
+	* lisp/prim/keydefs.el: Changed all 'delete key bindings to point to
+	  the `backward-or-forward-foo' functions.
+	* lisp/prim/simple.el:
+	- Renamed `delete-erases-forward' to `delete-key-deletes-forward'.
+	- Removed `backspace-or-delete-hook'
+	- Renamed `backspace-or-delete' to `backward-or-forward-delete-char'
+	- Added functions: `backward-or-forward-kill-word'
+	 `backward-or-forward-kill-sentence'
+	 `backward-or-forward-kill-sexp'
+	- Removed the zmacs hacks from all the `b-or-f-foo' functions and
+	  began playing nicely with pending-del.
+	* lisp/modes/cc-mode.el:
+	* lisp/modes/cperl-mode.el: Fixed references to delete functions
+	  to use the new names.
+	
+1997-06-11  Karl M Hegbloom  <karlheg@inetarena.com>
+
+	* ilisp/ilisp-def.el (toplevel):  Changed `ilisp-prefix' from
+	"C-z" to "C-c" because of conflict with global key binding for
+	`iconify-frame'.
+
+1997-06-11  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/window.el (window-list): New function.
+	Suggested by Noah Friedman <friedman@splode.com>
+	Modified by Hrvoje Niksic <hniksic@srce.hr>
+
+	* utils/mail-extr.el (mail-extract-address-components): Replace
+	preceding-char with char-before.
+
+	* utils/passwd.el (read-passwd-map): Clean up Ebola BS.
+
+1997-06-10  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/supercite.el (sc-attribs-extract-namestring): Clean up
+	Ebola -- replace literal 32 with `?\ '.
+
+	* utils/mail-extr.el (mail-extr-voodoo): Clean up Ebola -- replace
+	`following-char' with `char-after'.
+
+1997-06-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/subr.el (split-string): Make PATTERN optional.
+
+1997-06-11  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule/language/misc-lang.el, mule/mule-load.el,
+	mule/ipa-hooks.el: Use lisp/mule/language/misc-lang.el instead of
+	lisp/mule/ipa-hooks.el; mule/ipa-hooks.el was deleted.
+
+1997-06-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule/language/thai-util.el, mule/thai.el: Use
+	lisp/mule/language/thai-util.el instead of lisp/mule/thai.el;
+	lisp/mule/thai.el was deleted.
+
+	* custom/wid-edit.el: Add widget `coding-system' for mule.
+
+	* mule/thai-hooks.el, mule/mule-load.el: Use
+	lisp/mule/language/thai.el instead of lisp/mule/thai-hooks.el;
+	lisp/mule/thai-hooks.el was deleted.
+
+	* mule/language/thai.el: modified for XEmacs.
+
+1997-06-09  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule/language/misc-lang.el, mule/language/thai-util.el,
+	mule/language/thai.el, mule/language/tibetan.el,
+	mule/language/vietnamese.el, mule/language/japan-util.el,
+	mule/language/japanese.el, mule/language/korean.el,
+	mule/language/lao-util.el, mule/language/lao.el,
+	mule/language/english.el, mule/language/ethiopic.el,
+	mule/language/european.el, mule/language/greek.el,
+	mule/language/hebrew.el, mule/language/indian.el,
+	mule/language/chinese.el, mule/language/cyrillic.el,
+	mule/language/devanagari.el, mule/language/china-util.el: imported
+	from Emacs/mule-19.34.94-zeta.
+
+	* mule/mule-load.el, mule/chinese-hooks.el, mule/chinese.el,
+	mule/cyrillic-hooks.el, mule/european-hooks.el,
+	mule/greek-hooks.el, mule/japanese-hooks.el, mule/korean-hooks.el:
+	chinese-hooks.el, chinese.el, cyrillic-hooks.el,
+	european-hooks.el, greek-hooks.el, japanese-hooks.el and
+	korean-hooks.el were deleted.
+
+1997-06-08  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* apel/emu-x20.el (mime-charset-coding-system-alist): iso-8859-1,
+	hz-gb-2312, cn-gb-2312, gb2312, cn-big5 and koi8-r were defined as
+	coding-system.
+
 1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/keydefs.el, modes/cc-mode.el, modes/cperl-mode.el,
@@ -28,6 +185,13 @@
 	coding-system for compression.
 	Suggested by Katsumi Yamaoka <yamaoka@ga.sony.co.jp>
 
+1997-06-04  Gary D. Foster  <Gary.Foster@corp.sun.com>
+
+	* lisp/modes/cc-mode.el: Modified `c-electric-delete' to honor the 
+	  desired delete direction in both normal and "hungry" modes.
+	* lisp/modes/cperl-mode.el: Modified `cperl-electric-backspace' to 
+	  honor the desired delete direction.
+
 1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
 	* x11/x-menubar.el (default-menubar): Add menu for Mule.
@@ -39,6 +203,18 @@
 
 	* leim/quail.el: to avoid compiling warnings about overlay.el.
 
+1997-05-16  Gary D. Foster  <Gary.Foster@corp.sun.com>
+
+	* lisp/prim/simple.el: Created `backspace-or-delete' function and
+	  `backspace-or-delete-hook'
+	* lisp/prim/keydefs.el: Changed \177 bindings to point to new
+	  delete function.
+	* lisp/modes/*.el: Removed conflicting \177 bindings.
+	* lisp/modes/cc-mode.el: Modified `c-electric-delete' to use new
+	  delete bindings.
+	* lisp/modes/cperl-mode.el: Modified `cperl-electric-backspace' to 
+	  use new delete bindings.
+	
 1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
 	* leim/quail.el: to sync with quail.el of Emacs-19.34.94-epsilon.

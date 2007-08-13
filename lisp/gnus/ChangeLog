@@ -1,3 +1,12 @@
+1997-06-10  Steven L Baur  <steve@altair.xemacs.org>
+
+	* nntp.el (nntp-wait-for): Replace following-char with char-after.
+
+1997-06-07  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* smiley.el (smiley-deformed-regexp-alist): Add Japanese smiley
+	faces.
+
 1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
 
 	* gnus-msg.el (gnus-extended-version): Put XEmacs codename in

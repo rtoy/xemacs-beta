@@ -1,7 +1,10 @@
 ;;; case-table.el --- code to extend the character set and support case tables.
-;; Keywords: i18n
 
-;; Copyright (C) 1988, 1993 Free Software Foundation, Inc.
+;; Copyright (C) 1988, 1993, 1997 Free Software Foundation, Inc.
+
+;; Author: Howard Gayle
+;; Maintainer: XEmacs Development Team
+;; Keywords: i18n
 
 ;; This file is part of XEmacs.
 
@@ -22,12 +25,16 @@
 
 ;;; Synched up with: Not synched with FSF.
 
+;;; Commentary:
+
 ;; Written by:
 ;; TN/ETX/TX/UMG Howard Gayle        UUCP : seismo!enea!erix!howard
 ;; Telefonaktiebolaget L M Ericsson  Phone: +46 8 719 55 65
 ;; Ericsson Telecom     	     Telex: 14910 ERIC S
 ;; S-126 25 Stockholm                FAX  : +46 8 719 64 82
 ;; Sweden
+
+;;; Code:
 
 ;;;###autoload
 (defun describe-buffer-case-table ()
@@ -66,7 +73,7 @@ Negative arg inverts characters before point but does not move."
       (progn (setq count (min (1- (point)) (- count)))
 	     (forward-char (- count))))
   (while (> count 0)
-    (let ((ch (following-char)))
+    (let ((ch (char-after)))
       (cond ((/= (upcase ch) ch)
 	     (insert (upcase ch))
 	     (delete-char 1))
@@ -115,3 +122,5 @@ SYNTAX should be \" \", \"w\", \".\" or \"_\"."
   (modify-syntax-entry c syntax text-mode-syntax-table))
 
 (provide 'case-table)
+
+;;; case-table.el ends here

@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 20.3 beta6.
+-- Configure updates courtesy of Martin Buchholz
+-- Mule updates courtesy of MORIOKA Tomohiko
+-- Lots of Ebola cleanup, but much remains.
+-- Miscellaneous bug fixes.
+
 to 20.3 beta5.
 -- Configure patches continued from Martin Buchholz
 -- Miscellaneous Bug Fixes from various people (see ChangeLogs)

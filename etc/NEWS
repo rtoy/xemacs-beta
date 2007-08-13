@@ -124,11 +124,11 @@ On consoles that display only one frame at a time (e.g. TTY consoles),
 creating a new frame with `C-x 5 2' also raises and selects that
 frame.  The behavior of window system frames is unchanged.
 
-** C-x n d now runs the new command narrow-to-defun,
+** `C-x n d' now runs the new command `narrow-to-defun',
 which narrows the accessible parts of the buffer to just
 the current defun.
 
-** The new command C-x 4 0 (kill-buffer-and-window) kills the
+** The new command `C-x 4 0' (kill-buffer-and-window) kills the
 current buffer and deletes the selected window.  It asks for
 confirmation first.
 
@@ -192,8 +192,15 @@ at least M times and as many as N times.
 ** Autoconf 2 is supported, making XEmacs more conforming to
 conventions used by other free software.
 
-** tty-erase-char is a new variable that reports which character
-was set up as the terminal's erase character at the tim Emacs was started.
+** `tty-erase-char' is a new variable that reports which character
+was set up as the terminal's erase character at the tim Emacs was
+started.
+
+** The TIME argument to `format-time-string' is now optional and
+defaults to the current time.
+
+** The PATTERN argument to `split-string' is now optional and defaults
+to whitespace ("[ \f\t\n\r\v]+").
 
 
 

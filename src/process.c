@@ -2600,19 +2600,19 @@ status_notify (void)
 	     when a process becomes runnable.  */
 	  else if (!EQ (symbol, Qrun) && !NILP (p->buffer))
 	    {
-	      Lisp_Object old_read_only = Qnil;
-	      Lisp_Object old = Fcurrent_buffer ();
-	      Bufpos opoint;
-              struct gcpro ngcpro1, ngcpro2;
+	      int speccount = specpdl_depth ();
 
 	      /* Avoid error if buffer is deleted
 		 (probably that's why the process is dead, too) */
 	      if (!BUFFER_LIVE_P (XBUFFER (p->buffer)))
 		continue;
 
-              NGCPRO2 (old, old_read_only);
+	      record_unwind_protect (save_excursion_restore,
+				     save_excursion_save ());
 	      Fset_buffer (p->buffer);
-	      opoint = BUF_PT (current_buffer);
+	      record_unwind_protect (save_excursion_restore,
+				     save_excursion_save ());
+	      specbind(Qbuffer_read_only, Qnil);
 	      /* Insert new output into buffer
 		 at the current end-of-output marker,
 		 thus preserving logical ordering of input and output.  */
@@ -2620,24 +2620,13 @@ status_notify (void)
 		BUF_SET_PT (current_buffer, marker_position (p->mark));
 	      else
 		BUF_SET_PT (current_buffer, BUF_ZV (current_buffer));
-	      if (BUF_PT (current_buffer) <= opoint)
-		opoint += (string_char_length (XSTRING (msg))
-                           + string_char_length (XSTRING (p->name))
-                           + 10);
-
-	      old_read_only = current_buffer->read_only;
-	      current_buffer->read_only = Qnil;
 	      buffer_insert_c_string (current_buffer, "\nProcess ");
 	      Finsert (1, &p->name);
 	      buffer_insert_c_string (current_buffer, " ");
 	      Finsert (1, &msg);
-	      current_buffer->read_only = old_read_only;
 	      Fset_marker (p->mark, make_int (BUF_PT (current_buffer)),
 			   p->buffer);
-
-	      BUF_SET_PT (current_buffer, opoint);
-	      Fset_buffer (old);
-              NUNGCPRO;
+	      unbind_to(speccount, Qnil);
 	    }
 	}
     } /* end for */

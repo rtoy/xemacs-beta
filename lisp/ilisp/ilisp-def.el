@@ -60,7 +60,7 @@
 	    (defvar (, variable) (, default) (, documentation)))))
 
 ;;;%%Simple customization
-(defvar ilisp-prefix "\C-z" "Prefix sequence for ilisp commands.")
+(defvar ilisp-prefix "\C-c" "Prefix sequence for ilisp commands.")
 
 (deflocal ilisp-program nil
   "*Program and arguments for invoking an inferior LISP.  The program

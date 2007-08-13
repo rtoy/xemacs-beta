@@ -72,6 +72,10 @@ t enables all messages")
 (put 'delete-char 'pending-delete 'supersede)
 (put 'c-electric-delete 'pending-delete 'supersede)
 
+;; Support the XEmacs 20.3 'delete functions
+
+(put 'backward-or-forward-delete-char 'pending-delete 'supersede)
+
 ;; Don't delete for these.  They're more problematic than helpful.
 ;;
 ;; (put 'newline-and-indent 'pending-delete t)

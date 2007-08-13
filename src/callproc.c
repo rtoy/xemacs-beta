@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #include "commands.h"
 #include "insdel.h"
 #include "lstream.h"
-#include "paths.h"
+#include <paths.h>
 #include "process.h"
 #include "sysdep.h"
 #include "window.h"

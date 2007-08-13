@@ -53,7 +53,13 @@
 ;; two alists below.
 
 (defcustom smiley-deformed-regexp-alist
-  '(("\\(:-*[<«]+\\)\\W" 1 "FaceAngry.xpm")
+  '(("\\(\\^_?\\^;;;\\)\\W" 1 "Face_ase3.xbm")
+    ("\\(\\^_?\\^;;\\)\\W" 1 "Face_ase2.xbm")
+    ("\\(\\^_?\\^;\\)\\W" 1 "Face_ase.xbm")
+    ("\\(\\^_?\\^\\)\\W" 1 "Face_smile.xbm")
+    ("\\(\\;_;\\)\\W" 1 "Face_weep.xbm")
+    ("\\(\\T_T\\)\\W" 1 "Face_weep.xbm")
+    ("\\(:-*[<«]+\\)\\W" 1 "FaceAngry.xpm")
     ("\\(:-+\\]+\\)\\W" 1 "FaceGoofy.xpm")
     ("\\(:-*D\\)\\W" 1 "FaceGrinning.xpm")
     ("\\(:-*[)>}»]+\\)\\W" 1 "FaceHappy.xpm")

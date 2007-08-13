@@ -153,6 +153,7 @@ NOTE-END */
 
 /* this brings in alloca() if we're using cc */
 #ifdef USG
+#if 0 /* mrb: -lPW is now autodetected, anyways */
 #ifndef LIB_STANDARD
 #ifdef USG5_4
 #define LIB_STANDARD -lc
@@ -160,8 +161,11 @@ NOTE-END */
 #define LIB_STANDARD -lPW -lc
 #endif /* not USG5_4 */
 #endif /* LIB_STANDARD */
+#endif /* 0 */
 
+#if 0 /* ALLOCA is now autodetected */
 #define HAVE_ALLOCA
+#endif
 #define NO_REMAP 
 #define TEXT_START 0
 #endif /* USG */

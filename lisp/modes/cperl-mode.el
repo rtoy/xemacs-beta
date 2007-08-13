@@ -32,7 +32,7 @@
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 
-;; $Id: cperl-mode.el,v 1.9 1997/06/10 03:19:09 steve Exp $
+;; $Id: cperl-mode.el,v 1.10 1997/06/11 19:25:59 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -1560,8 +1560,8 @@ If not, or if we are not at the end of marking range, would self-insert."
 	(setq p (point))
 	(skip-chars-backward " \t\n")
 	(delete-region (point) p))
-    (if (fboundp 'backspace-or-delete)
-	(backspace-or-delete (prefix-numeric-value arg))
+    (if (fboundp 'backward-or-forward-delete-char)
+	(backward-or-forward-delete-char (prefix-numeric-value arg))
       (backward-delete-char-untabify (prefix-numeric-value arg)))))
 
 (defun cperl-inside-parens-p ()

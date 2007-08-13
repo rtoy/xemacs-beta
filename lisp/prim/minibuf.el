@@ -33,6 +33,9 @@
 
 ;; Written by Richard Mlynarik 2-Oct-92
 
+;; 06/11/1997 -  Use char-(after|before) instead of
+;;  (following|preceding)-char. -slb
+
 ;;; Code:
 
 (defgroup minibuffer nil
@@ -194,7 +197,7 @@ in `substitute-in-file-name'."
   ;; by Stig@hackvan.com
   (interactive)
   (and minibuffer-electric-file-name-behavior
-       (eq ?/ (preceding-char))
+       (eq ?/ (char-before (point)))
        (not (eq (point) (1+ (point-min)))) ; permit `//hostname/path/to/file'
        (not (eq ?: (char-after (- (point) 2))))	; permit `http://url/goes/here'
        (delete-region (point-min) (point)))
@@ -203,7 +206,7 @@ in `substitute-in-file-name'."
 (defun minibuffer-electric-tilde ()
   (interactive)
   (and minibuffer-electric-file-name-behavior
-       (eq ?/ (preceding-char))
+       (eq ?/ (char-before (point)))
        ;; permit URL's with //, for e.g. http://hostname/~user
        (not (save-excursion (search-backward "//" nil t)))
        (delete-region (point-min) (point)))

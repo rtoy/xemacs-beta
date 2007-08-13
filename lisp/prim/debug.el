@@ -1,6 +1,6 @@
 ;;; debug.el --- debuggers and related commands for XEmacs
 
-;; Copyright (C) 1985, 1986, 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985-6, 1993-4, 1997 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keyword: lisp, tools
@@ -26,7 +26,10 @@
 
 ;;; Commentary:
 
-;; NB: There are lots of formatting changes in the XEmacs version. -sb
+;; NB: There are lots of formatting changes in the XEmacs version. -slb
+
+;; 06/11/1997 - Converted to use char-after instead of broken
+;;  following-char. -slb
 
 ;; This is a major mode documented in the Emacs manual.
 
@@ -313,7 +316,7 @@ will be used, such as in a debug on exit from a frame."
       (forward-line 1)
       (while (progn
 	       (forward-char 2)
-	       (if (= (following-char) ?\()
+	       (if (eq (char-after (point)) ?\()
 		   (forward-sexp 1)
 		 (forward-sexp 2))
 	       (forward-line 1)
@@ -328,7 +331,7 @@ Applies to the frame whose line point is on in the backtrace."
   (beginning-of-line)
   (let ((level (debugger-frame-number)))
     (backtrace-debug (+ level debugger-frame-offset) t))
-  (if (= (following-char) ? )
+  (if (eq (char-after (point)) ? )
       (let ((buffer-read-only nil))
 	(delete-char 1)
 	(insert ?*)))
@@ -341,7 +344,7 @@ Applies to the frame whose line point is on in the backtrace."
   (beginning-of-line)
   (let ((level (debugger-frame-number)))
     (backtrace-debug (+ level debugger-frame-offset) nil))
-  (if (= (following-char) ?*)
+  (if (eq (char-after (point)) ?*)
       (let ((buffer-read-only nil))
 	(delete-char 1)
 	(insert ? )))

@@ -207,8 +207,6 @@ ldflags = -L. $(LWLIB_LDFLAGS) $(ld_switch_all)
 /* Fix linking if compiled with GCC.  */
 #ifdef __GNUC__
 
-#if __GNUC__ > 1
-
 /* Versions of GCC >= 2.0 put their library, libgcc.a, in obscure
    places that are difficult to figure out at make time.  Fortunately,
    these same versions allow you to pass arbitrary flags on to the
@@ -235,13 +233,6 @@ ldflags = -L. $(LWLIB_LDFLAGS) $(ld_switch_all)
 
 GNULIB_VAR = LIB_GCC
 
-#else /* __GNUC__ < 2 */
-
-#ifndef LIB_GCC
-#define LIB_GCC "/usr/local/lib/gcc-gnulib"
-#endif /* LIB_GCC */
-GNULIB_VAR = `if [ -f LIB_GCC ] ; then echo LIB_GCC; else echo; fi`
-#endif /* __GNUC__ < 2 */
 #else /* ! defined (__GNUC__) */
 GNULIB_VAR =
 
@@ -437,16 +428,17 @@ mule_lisp=\
  ${lispdir}mule/kinsoku.elc\
  ${mule_x11_lisp}\
  ${lispdir}mule/arabic-hooks.elc\
- ${lispdir}mule/chinese-hooks.elc\
- ${lispdir}mule/cyrillic-hooks.elc\
+ ${lispdir}language/chinese.elc\
+ ${lispdir}language/cyrillic.elc\
+ ${lispdir}language/english.elc \
  ${lispdir}mule/ethiopic-hooks.elc\
- ${lispdir}mule/european-hooks.elc\
- ${lispdir}mule/greek-hooks.elc\
+ ${lispdir}language/european.elc\
+ ${lispdir}language/greek.elc\
  ${lispdir}mule/hebrew-hooks.elc\
- ${lispdir}mule/ipa-hooks.elc\
- ${lispdir}mule/japanese-hooks.elc\
- ${lispdir}mule/korean-hooks.elc\
- ${lispdir}mule/thai-hooks.elc\
+ ${lispdir}language/japanese.elc\
+ ${lispdir}language/korean.elc\
+ ${lispdir}language/misc-lang.elc\
+ ${lispdir}language/thai.elc\
  ${lispdir}mule/vietnamese-hooks-1${null}.elc\
  ${lispdir}mule/vietnamese-hooks-2${null}.elc
 #else

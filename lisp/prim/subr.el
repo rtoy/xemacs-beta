@@ -307,8 +307,10 @@ Otherwise treat \\ in NEWTEXT string as special:
 			 newtext ""))))))
     (concat rtn-str (substring str start))))
 
-(defun split-string (string pattern)
+(defun split-string (string &optional pattern)
   "Return a list of substrings of STRING which are separated by PATTERN."
+  (or pattern
+      (setq pattern "[ \f\t\n\r\v]+"))
   (let (parts (start 0))
     (while (string-match pattern string start)
       (setq parts (cons (substring string start (match-beginning 0)) parts)

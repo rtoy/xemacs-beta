@@ -8,13 +8,13 @@
 
 ;;; Start of the header of original TIT dictionary.
 
-;; # $Id: sw.el,v 1.2 1997/06/06 00:57:10 steve Exp $
+;; # $Id: sw.el,v 1.3 1997/06/11 19:25:55 steve Exp $
 ;; # HANZI input table for cxterm
 ;; # To be used by cxterm, convert me to .cit format first
 ;; # .cit version 1
 ;; ENCODE:	GB
 ;; MULTICHOICE:	YES
-;; PROMPT:	$A::WVJdHk!KJWN2!K(B# 
+;; PROMPT:	$A::WVJdHk!KJWN2!K# (B
 ;; #
 ;; COMMENT	($AT4SZ(B CCDOS)
 ;; COMMENT	$AJiP48C::WVJ15D!8JW1J!9<0!8N21J!9!#@}Hg#,!>B@!?JWN21J=TN*!8?Z!9#,9JTZ(B
@@ -98,7 +98,7 @@
    (99 . "$AJ,MA(B")
    (98 . "$AZ"I=(B")
    (97 . "$APDSV(B"))
-"$A::WVJdHk!KJWN2!K(B# 
+"$A::WVJdHk!KJWN2!K# (B
 	($AT4SZ(B CCDOS)
 	$AJiP48C::WVJ15D!8JW1J!9<0!8N21J!9!#@}Hg#,!>B@!?JWN21J=TN*!8?Z!9#,9JTZ(B
  $A!8JWN2!9D#J=VPSC(B ff0 $AH}<|JdHk!##((B f $A<|TZ!8JWN2!9D#J=VP1mJ>!8?Z!9#)(B

@@ -58,8 +58,7 @@ NOTE-END  */
 
 #define SEGMENT_MASK (SEGSIZ - 1)
 
-#ifndef __NetBSD__
-#ifndef __linux__
+#if ! defined (__NetBSD__) && ! defined (__linux__)
 /* This really belongs in s/sun.h.  */
 
 /* Say that the text segment of a.out includes the header;
@@ -72,5 +71,4 @@ NOTE-END  */
 
 #define A_TEXT_SEEK(HDR) (N_TXTOFF (hdr) + sizeof (hdr))
 
-#endif /* __linux__ */
-#endif /* __NetBSD__ */
+#endif /* not Linux or NetBSD */

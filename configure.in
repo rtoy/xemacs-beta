@@ -603,7 +603,7 @@ for i in "$@"; do
    -no-recursion | --no-recursion | --no-recursio | --no-recursi \
    | --no-recurs | --no-recur | --no-recu | --no-rec | --no-re | --no-r) ;;
    *)
-   quoted_i="`echo $i | sed $quoted_sed_magic`"
+   quoted_i="`echo '' $i | sed -e 's:^ ::' -e $quoted_sed_magic`"
    quoted_arguments="$quoted_arguments '$quoted_i'" ;;
    esac
 done
@@ -749,7 +749,7 @@ while test $# != 0; do
 	  with_database_berkdb=no
 	  with_database_dbm=no
 	  with_database_gnudbm=no
-	  for x in `echo "$val" | sed 's/,/ /'` ; do
+	  for x in `echo "$val" | sed -e 's/,/ /'` ; do
 	    case "$x" in
 		no ) ;;
 		b | be | ber | berk | berkd | berkdb )  with_database_berkdb=yes ;;
@@ -814,7 +814,7 @@ while test $# != 0; do
 	  dnl Example: --error-checking=all,noextents,nobufpos
 	  dnl Example: --error-checking=none,malloc,gc
 
-	  for x in `echo "$val" | sed 's/,/ /'` ; do
+	  for x in `echo "$val" | sed -e 's/,/ /'` ; do
 	    case "$x" in
 	      dnl all and none are only permitted as the first in the list.
 	      n | no | non | none ) new_default=no ;;
@@ -942,7 +942,7 @@ test "$extra_verbose" = "yes" && verbose=yes
 
 dnl Allow use of either ":" or spaces for lists of directories
 define(COLON_TO_SPACE,
-  [case "[$1]" in *:* [)] [$1]="`echo $[$1] | sed 's/:/ /g'`";; esac])dnl
+  [case "[$1]" in *:* [)] [$1]="`echo '' $[$1] | sed -e 's:^ ::' -e 's/:/ /g'`";; esac])dnl
 COLON_TO_SPACE(site_includes)
 COLON_TO_SPACE(site_libraries)
 COLON_TO_SPACE(site_runtime_libraries)
@@ -1830,8 +1830,8 @@ dnl XE_COMPUTE_RUNPATH()
 define([XE_COMPUTE_RUNPATH],[
 if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   dnl Remove runtime paths from current ld switches
-  ld_switch_site="`echo $ld_switch_site     | sed \"s/${dash_r}[[^ ]]*//\"`"
-  ld_switch_x_site="`echo $ld_switch_x_site | sed \"s/${dash_r}[[^ ]]*//\"`"
+  ld_switch_site=`echo   '' $ld_switch_site   | sed -e 's:^ ::' -e "s/${dash_r}[[^ ]]*//"`
+  ld_switch_x_site=`echo '' $ld_switch_x_site | sed -e 's:^ ::' -e "s/${dash_r}[[^ ]]*//"`
   dnl PRINT_VAR(ld_switch_site, ld_switch_x_site)
 
   dnl Fix up Runtime path
@@ -1846,7 +1846,7 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
     xe_runpath_link='${CC-cc} -o conftest -v $CFLAGS '"$xe_ldflags"' conftest.$ac_ext 2>&1 1>/dev/null'
     for arg in `eval "$xe_runpath_link" | grep ' -L'`; do
       case "$arg" in P,* | -L* | -R* )
-        for dir in `echo "$arg" | sed -e 's/^..//' -e 'y/:/ /'`; do
+        for dir in `echo '' "$arg" | sed -e 's:^ ::' -e 's/^..//' -e 'y/:/ /'`; do
           XE_ADD_RUNPATH_DIR("$dir")
         done ;;
       esac
@@ -1855,7 +1855,7 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   else
     dnl Add all directories with .so files to runpath
     for arg in $ld_switch_site $ld_switch_x_site; do
-      case "$arg" in -L*) XE_ADD_RUNPATH_DIR(`echo "$arg" | sed 's/^-L//'`);; esac
+      case "$arg" in -L*) XE_ADD_RUNPATH_DIR(`echo '' "$arg" | sed -e 's:^ ::' -e 's/^-L//'`);; esac
     done
     dnl Sometimes /opt/SUNWdt/lib is the only installed Motif available
     case "$canonical" in  *-solaris2.[[1-4]]* )
@@ -1961,14 +1961,21 @@ dnl define SIZEOF_TYPE
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
+if test "$ac_cv_sizeof_long" = 0; then
+  echo ""
+  echo "*** PANIC *** Configure tests are not working - compiler is broken."
+  echo "*** PANIC *** Please examine config.log for compilation errors."
+  exit 1
+fi
 
 dnl check for long file names
 AC_SYS_LONG_FILE_NAMES
 
-dnl other checks for UNIX variants
-
-dnl -lm might be required for some X libraries to link with later
+dnl -lm is required by LISP_FLOAT_TYPE, among other things
 AC_CHECK_LIB(m, sqrt)
+
+dnl -lPW might be needed on some systems
+AC_CHECK_LIB(PW, main)
 
 dnl Floating operation support is now unconditional
 AC_DEFINE(LISP_FLOAT_TYPE)
@@ -2070,7 +2077,7 @@ if test "$with_x11" = "yes"; then
   dnl Try to find Motif/CDE/Tooltalk dirs
   dnl These take precedence over other X libs/includes, so PRE-pend
   for lib_dir in "/usr/dt/lib" "/usr/lib/Motif1.2" "/usr/lib/Motif1.1"; do
-    inc_dir="`echo $lib_dir | sed 's/lib/include/'`"
+    inc_dir=`echo $lib_dir | sed -e 's/lib/include/'`
     if test -d "$lib_dir" -a -d "$inc_dir"; then
       case "$x_libraries" in *"$lib_dir"* ) ;; *)
         x_libraries="$lib_dir $x_libraries"
@@ -2177,6 +2184,27 @@ if test "$with_x11" = "yes"; then
   dnl Autodetect -lXaw
   AC_CHECK_LIB(Xaw, XawScrollbarSetThumb, have_xaw=yes, have_xaw=no)
 
+  dnl Autodetect -DNARROWPROTO
+  AC_MSG_CHECKING(for NARROWPROTO)
+  rm -fr conftestdir
+  if mkdir conftestdir; then
+    cd conftestdir
+    cat > Imakefile <<'EOF'
+xetest:
+	@echo 'proto_defines="${PROTO_DEFINES}"'
+EOF
+    if (xmkmf) >/dev/null 2>/dev/null && test -f Makefile; then
+      # GNU make sometimes prints "make[1]: Entering...", which would confuse us.
+      eval `${MAKE-make} xetest 2>/dev/null | grep -v make`
+      case "$proto_defines" in *NARROWPROTO* ) narrowproto=yes ;; esac
+    fi
+    cd ..
+    rm -fr conftestdir
+  fi
+  test -z "$narrowproto" && narrowproto=no
+  AC_MSG_RESULT($narrowproto)
+  test "$narrowproto" = "yes" && AC_DEFINE(NARROWPROTO)
+
 fi dnl $with_x11 = yes
 
 test -z "$window_system" && window_system="none"
@@ -2212,14 +2240,16 @@ case "$x_libraries" in *X11R4* )
 esac
 
 dnl Autodetect Xauth
+dnl -lXau is only used by gnuclient, so use a special variable for Xauth X libs
 test -z "$with_xauth" && test "$window_system" = "none" && with_xauth=no
 test -z "$with_xauth" && { AC_CHECK_HEADER(X11/Xauth.h,          ,with_xauth=no) }
 test -z "$with_xauth" && { AC_CHECK_LIB(Xau, XauGetAuthByAddr,[:],with_xauth=no) }
 test -z "$with_xauth" && with_xauth=yes
 if test "$with_xauth" = "yes"; then
   AC_DEFINE(HAVE_XAUTH)
-  XE_PREPEND(-lXau, libs_x)
+  XE_SPACE(libs_xauth, $X_EXTRA_LIBS -lXau $libs_x $X_PRE_LIBS)
 fi
+AC_SUBST(libs_xauth)
 
 dnl Autodetect OffiX
 test -z "$with_offix" && { AC_CHECK_HEADER(OffiX/DragAndDrop.h, , with_offix=no) }
@@ -2299,9 +2329,16 @@ if test "$with_gif" = "yes"; then
 fi
 
 dnl Autodetect Xpm
-test -z "$with_xpm" && { AC_CHECK_HEADER(X11/xpm.h,   ,with_xpm=no) }
-test -z "$with_xpm" && { AC_CHECK_LIB(Xpm, XpmFree,[:],with_xpm=no) }
-test -z "$with_xpm" && with_xpm=yes
+AC_MSG_CHECKING(for Xpm)
+xe_check_libs=-lXpm
+test -z "$with_xpm" && { AC_TRY_RUN([#include <X11/xpm.h>
+int main(int argc, char *argv[]) {
+return (XpmIncludeVersion != XpmLibraryVersion()) ||
+        XpmIncludeVersion < 30406;
+}], with_xpm=yes, with_xpm=no)
+}
+xe_check_libs=
+AC_MSG_RESULT($with_xpm)
 if test "$with_xpm" = "yes"; then
   AC_DEFINE(HAVE_XPM)
   XE_PREPEND(-lXpm, libs_x)
@@ -2462,8 +2499,8 @@ if test "$with_mule" = "yes" ; then
 
   dnl Autodetect WNN
   test "$with_wnn6" = "yes" && with_wnn=yes # wnn6 implies wnn support
-  test -z "$with_wnn" && { AC_CHECK_HEADER(wnn/jllib.h, ,with_wnn=no) }
-  test -z "$with_wnn" && { AC_CHECK_LIB(wnn,jl_dic_list_e, ,[:],with_wnn=no) }
+  test -z "$with_wnn" && { AC_CHECK_HEADER(wnn/jllib.h,      ,with_wnn=no) }
+  test -z "$with_wnn" && { AC_CHECK_LIB(wnn,jl_dic_list_e,[:],with_wnn=no) }
   test -z "$with_wnn" && with_wnn=yes
   if test "$with_wnn" = "yes"; then
     AC_DEFINE(HAVE_WNN)
@@ -2704,10 +2741,10 @@ if test  -z "$version"; then
   echo "$progname: can't find current emacs version in \"$file\"." >&2
   exit 1
 fi
-beta=`sed -ne 's/^.*XEmacs Lucid (beta\([[0-9]][[0-9]]*\)).*$/\1/p' "$file"`
+beta=`sed -ne 's/^.*beta.*(beta\([[0-9]][[0-9]]*\)).*$/\1/p' "$file"`
 test -n "$beta" && version="${version}-b${beta}"
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
-main_1_id="`echo main_1_xemacs_${version}_${canonical} | sed 'y/.-/__/'`"
+main_1_id=`echo main_1_xemacs_${version}_${canonical} | sed 'y/.-/__/'`
 AC_DEFINE_UNQUOTED(main_1, $main_1_id)
 
 
@@ -3295,9 +3332,9 @@ dnl This has to be called in order for this variable to get into config.status
 AC_SUBST(internal_makefile_list)
 # Remove any trailing slashes in these variables.
 test -n "$prefix" &&
-  prefix=`echo "$prefix" | sed 's,\([[^/]]\)/*$,\1,'`
+  prefix=`echo '' "$prefix" | sed -e 's:^ ::' -e 's,\([[^/]]\)/*$,\1,'`
 test -n "$exec_prefix" &&
-  exec_prefix=`echo "$exec_prefix" | sed 's,\([[^/]]\)/*$,\1,'`
+  exec_prefix=`echo '' "$exec_prefix" | sed -e 's:^ ::' -e 's,\([[^/]]\)/*$,\1,'`
 
 dnl Build Makefile.in's from Makefile.in.in's
 dnl except ./Makefile from $srcdir/Makefile.in

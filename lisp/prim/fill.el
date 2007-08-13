@@ -30,6 +30,8 @@
 
 ;; 97/3/14 Jareth Hein (jhod@po.iijnet.or.jp) added functions for kinsoku (asian text
 ;; line break processing)
+;; 97/06/11 Steve Baur (steve@altair.xemacs.org) converted broken
+;;  following-char/preceding-char calls to char-after/char-before.
 
 ;;; Code:
 
@@ -110,7 +112,7 @@ This function is used when `adaptive-fill-regexp' does not match.")
 (defun fill-end-of-sentence-p ()
   (save-excursion
     (skip-chars-backward " ]})\"'")
-    (memq (preceding-char) '(?. ?? ?!))))
+    (memq (char-before (point)) '(?. ?? ?!))))
 
 (defun current-fill-column ()
   "Return the fill-column to use for this line.
@@ -164,10 +166,10 @@ Remove indentation from each line."
 	  (save-excursion
 	    (skip-chars-backward " ]})\"'")
 	    (cond ((and sentence-end-double-space
-			(memq (preceding-char) '(?. ?? ?!)))  2)
+			(memq (char-before (point)) '(?. ?? ?!)))  2)
 		  ((and colon-double-space
-			(= (preceding-char) ?:))  2)
-		  ((char-equal (preceding-char) ?\n)  0)
+			(eq (char-before (point)) ?:))  2)
+		  ((char-equal (char-before (point)) ?\n)  0)
 		  (t 1))))
        (match-end 0)))
     ;; Make sure sentences ending at end of line get an extra space.
@@ -383,7 +385,7 @@ space does not end a sentence, so don't break a line there."
 			(forward-char -1))
 		      (prog2		; check previous char.
 			  (forward-char -1)
-			  (or (eq (following-char) ?\ )
+			  (or (eq (char-after (point)) ?\ )
 			      (looking-at word-across-newline))
 			(forward-char)))
 		  nil
@@ -425,8 +427,8 @@ space does not end a sentence, so don't break a line there."
 		;; avoid putting it at the end of the line.
 		(if sentence-end-double-space
 		    (while (and (> (point) (+ linebeg 2))
-				(eq (preceding-char) ?\ )
-				(not (eq (following-char) ?\ ))
+				(eq (char-before (point)) ?\ )
+				(not (eq (char-after (point)) ?\ ))
 				(eq (char-after (- (point) 2)) ?\.))
 		      (forward-char -2)
 		      ;; 97/3/14 jhod: Kinsoku
@@ -463,7 +465,7 @@ space does not end a sentence, so don't break a line there."
 			;; end patch
 			(setq first nil)))
 		  ;; Normally, move back over the single space between the words.
-		  (if (eq (preceding-char) ?\ )
+		  (if (eq (char-before (point)) ?\ )
 		      (forward-char -1)))
 		;; If the left margin and fill prefix by themselves
 		;; pass the fill-column, keep at least one word.
@@ -510,7 +512,7 @@ space does not end a sentence, so don't break a line there."
 		      ;; (4) '.' | SPC + SPC		--> '.' + NL
 		      ;; (5)     | SPC*			--> NL
 		      (let ((start (point))	; 92.6.30 by K.Handa
-			    (ch (following-char)))
+			    (ch (char-after (point))))
 			(if (and (= ch ? )
 				 (progn		; not case (0) -- 92.6.30 by K.Handa
 				   (skip-chars-forward " \t")
@@ -530,7 +532,7 @@ space does not end a sentence, so don't break a line there."
 				  (progn	; case (3)
 				    (goto-char (1+ start))
 				    (and (not (eobp))
-					 (/= (following-char) ? )
+					 (not (eq (char-after (point)) ? ))
 					 (fill-end-of-sentence-p)))))
 			    ;; We should keep one SPACE before NEWLINE. (1),(2),(3)
 			    (goto-char (1+ start))
@@ -620,7 +622,7 @@ space does not end a sentence, so don't break a line there."
 	      (progn 
 		(while (and (setq end (text-property-any (point) (point-max)
 							 'hard t))
-			    (not (= ?\n (char-after end)))
+			    (not (eq ?\n (char-after end)))
 			    (not (= end (point-max))))
 		  (goto-char (1+ end)))
 		(setq end (if end (min (point-max) (1+ end)) (point-max)))

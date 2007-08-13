@@ -4,6 +4,8 @@
 
 ;; Author: Jamie Zawinski <jwz@netscape.com>
 ;; Maintainer: XEmacs Development Team
+;; Changed: 11 Jun 1997 by Heiko Muenkel <muenkel@tnt.uni-hannover.de>
+;;	The degree sign couldn't be inserted with the old version.
 ;; Keywords: i18n
 
 ;; This file is part of XEmacs.
@@ -113,6 +115,13 @@
 ;;
 ;;;this doesn't work yet###autoload
 (define-key global-map [multi-key]	'compose-key)
+
+;; The following is necessary, because one can't rebind [degree]
+;; and use it to insert the degree sign!
+(defun compose-insert-degree ()
+  "Inserts a degree sign."
+  (interactive)
+  (insert ?\260))
 
 ;; The "Dead" keys:
 ;;
@@ -339,7 +348,7 @@
 (define-key compose-circumflex-map "!"	[brokenbar])
 (define-key compose-circumflex-map "-"	[macron])
 (define-key compose-circumflex-map "_"	[macron])
-(define-key compose-circumflex-map "0"	[degree])
+(define-key compose-circumflex-map "0"	'compose-insert-degree)
 (define-key compose-circumflex-map "1"	[onesuperior])
 (define-key compose-circumflex-map "2"	[twosuperior])
 (define-key compose-circumflex-map "3"	[threesuperior])
@@ -367,7 +376,7 @@
 
 (set-keymap-name compose-ring-map 'compose-ring-map)
 (set-keymap-default-binding compose-ring-map 'self-insert-command)
-(define-key compose-ring-map " "	[degree])
+(define-key compose-ring-map " "	'compose-insert-degree)
 (define-key compose-ring-map "A"	[Aring])
 (define-key compose-ring-map "a"	[aring])
 
@@ -383,7 +392,7 @@
 (define-key compose-map " ~"	"~")
 (define-key compose-map "  "	[nobreakspace])
 (define-key compose-map " \""	[diaeresis])
-(define-key compose-map " *"	[degree])
+(define-key compose-map " *"	'compose-insert-degree)
 
 (define-key compose-map "!!"	[exclamdown])
 (define-key compose-map "!^"	[brokenbar])
@@ -437,7 +446,7 @@
 (define-key compose-map "0c"	[copyright])
 (define-key compose-map "0R"	[registered])
 (define-key compose-map "0r"	[registered])
-(define-key compose-map "0^"	[degree])
+(define-key compose-map "0^"	'compose-insert-degree)
 
 (define-key compose-map "1^"	[onesuperior])
 (define-key compose-map "14"	[onequarter])

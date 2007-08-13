@@ -1148,11 +1148,11 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 		 (or (save-excursion
 		       (mail-extr-safe-move-sexp -1)
 		       (mail-extr-skip-whitespace-backward)
-		       (eq ?. (preceding-char)))
+		       (eq ?. (char-before)))
 		     (insert-before-markers
 		      (if (save-excursion
 			    (mail-extr-skip-whitespace-backward)
-			    (eq ?. (preceding-char)))
+			    (eq ?. (char-before)))
 			  ""
 			".")
 		      "uucp"))
@@ -1188,7 +1188,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 		   (mail-extr-safe-move-sexp -1)
 		   (setq domain-pos (point))
 		   (mail-extr-skip-whitespace-backward)
-		   (setq \.-pos (eq ?. (preceding-char))))
+		   (setq \.-pos (eq ?. (char-before))))
 		 (cond ((and \.-pos
 			     ;; #### string consing
 			     (let ((s (intern-soft
@@ -1530,16 +1530,16 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 	       (looking-at mail-extr-full-name-suffix-pattern))
 	  (mail-extr-skip-whitespace-backward)
 	  (setq suffix-flag (point))
-	  (if (eq ?, (following-char))
+	  (if (eq ?, (char-after))
 	      (forward-char 1)
 	    (insert ?,))
 	  ;; Enforce at least one space after comma
-	  (or (eq ?\  (following-char))
+	  (or (eq ?\  (char-after))
 	      (insert ?\ ))
 	  (mail-extr-skip-whitespace-forward)
-	  (cond ((memq (following-char) '(?j ?J ?s ?S))
+	  (cond ((memq (char-after) '(?j ?J ?s ?S))
 		 (capitalize-word 1)
-		 (if (eq (following-char) ?.)
+		 (if (eq (char-after) ?.)
 		     (forward-char 1)
 		   (insert ?.)))
 		(t
@@ -1554,26 +1554,26 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 	  (setq begin-again-flag t))
 	 
 	 ;; Check for initial last name followed by comma
-	 ((and (eq ?, (following-char))
+	 ((and (eq ?, (char-after))
 	       (eq word-count 1))
 	  (forward-char 1)
 	  (setq last-name-comma-flag t)
-	  (or (eq ?\  (following-char))
+	  (or (eq ?\  (char-after))
 	      (insert ?\ )))
-	 
+
 	 ;; Stop before trailing comma-separated comment
 	 ;; THIS CASE MUST BE AFTER THE PRECEDING CASES.
 	 ;; *** This case is redundant???
-	 ;;((eq ?, (following-char))
+	 ;;((eq ?, (char-after))
 	 ;; (setq name-done-flag t))
 	 
 	 ;; Delete parenthesized/quoted comment/nickname
-	 ((memq (following-char) '(?\( ?\{ ?\[ ?\" ?\' ?\`))
+	 ((memq (char-after) '(?\( ?\{ ?\[ ?\" ?\' ?\`))
 	  (setq cbeg (point))
 	  (set-syntax-table mail-extr-address-text-comment-syntax-table)
-	  (cond ((memq (following-char) '(?\' ?\`))
+	  (cond ((memq (char-after) '(?\' ?\`))
 		 (or (search-forward "'" nil t
-				     (if (eq ?\' (following-char)) 2 1))
+				     (if (eq ?\' (char-after)) 2 1))
 		     (mail-extr-delete-char 1)))
 		(t
 		 (or (mail-extr-safe-move-sexp 1)
@@ -1601,7 +1601,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 	 
 	 ;; Handle & substitution
 	 ((and (or (bobp)
-		   (eq ?\  (preceding-char)))
+		   (eq ?\  (char-before)))
 	       (looking-at "&\\( \\|\\'\\)"))
 	  (mail-extr-delete-char 1)
 	  (capitalize-region
@@ -1616,7 +1616,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 	 ;; Handle *Stupid* VMS date stamps
 	 ((looking-at mail-extr-stupid-vms-date-stamp-pattern)
 	  (replace-match "" t))
-	 
+
 	 ;; Handle Chinese characters.
 	 ((looking-at mail-extr-hz-embedded-gb-encoded-chinese-pattern)
 	  (goto-char (match-end 0))
@@ -1658,28 +1658,28 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 	 
 	 ;; Fixup initials
 	 ((looking-at mail-extr-initial-pattern)
-	  (or (eq (following-char) (upcase (following-char)))
+	  (or (eq (char-after) (upcase (char-after)))
 	      (setq lower-case-flag t))
 	  (forward-char 1)
-	  (if (eq ?. (following-char))
+	  (if (eq ?. (char-after))
 	      (forward-char 1)
 	    (insert ?.))
-	  (or (eq ?\  (following-char))
+	  (or (eq ?\  (char-after))
 	      (insert ?\ ))
 	  (setq word-found-flag t))
-	 
+
 	 ;; Handle BITNET LISTSERV list names.
 	 ((and (eq word-count 0)
 	       (looking-at mail-extr-listserv-list-name-pattern))
 	  (narrow-to-region (match-beginning 1) (match-end 1))
 	  (setq word-found-flag t)
 	  (setq name-done-flag t))
-	 
+
 	 ;; Regular name words
 	 ((looking-at mail-extr-name-pattern)
 	  (setq name-beg (point))
 	  (setq name-end (match-end 0))
-	  
+
 	  ;; Certain words will be dropped if they are at the end.
 	  (and (>= word-count 2)
 	       (not lower-case-flag)
@@ -1746,7 +1746,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 	     (search-forward ",")
 	     (setq name-end (1- (point)))
 	     (goto-char (or suffix-flag (point-max)))
-	     (or (eq ?\  (preceding-char))
+	     (or (eq ?\  (char-before))
 		 (insert ?\ ))
 	     (insert-buffer-substring (current-buffer) (point-min) name-end)
 	     (goto-char name-end)
@@ -1757,7 +1757,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
       ;; *** This is probably completly unneeded now.
       ;;(goto-char (point-max))
       ;;(skip-chars-backward mail-extr-non-end-name-chars)
-      ;;(if (eq ?. (following-char))
+      ;;(if (eq ?. (char-after))
       ;;    (forward-char 1))
       ;;(narrow-to-region (point)
       ;;                  (progn

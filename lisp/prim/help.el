@@ -1,4 +1,5 @@
 ;;; help.el --- help commands for XEmacs.
+
 ;; Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
@@ -28,6 +29,9 @@
 ;; This code implements XEmacs's on-line help system, the one invoked by
 ;;`M-x help-for-help'.
  
+;; 06/11/1997 -- Converted to use char-after instead of broken
+;;  following-char. -slb
+
 ;;; Code:
 
 ;#### FSFmacs 
@@ -181,6 +185,7 @@ Commands:
   )
 
 (define-key help-mode-map "q" 'help-mode-quit)
+(define-key help-mode-map 'delete 'scroll-down)
 
 (defun help-mode-quit ()
   "Exits from help mode, possibly restoring the previous window configuration."
@@ -755,8 +760,8 @@ The number of messages shown is controlled by `view-lossage-message-count'."
 		(save-excursion
 		  (set-syntax-table emacs-lisp-mode-syntax-table)
 		  (or (not (zerop (skip-syntax-backward "_w")))
-		      (eq (char-syntax (following-char)) ?w)
-		      (eq (char-syntax (following-char)) ?_)
+		      (eq (char-syntax (char-after (point))) ?w)
+		      (eq (char-syntax (char-after (point))) ?_)
 		      (forward-sexp -1))
 		  (skip-chars-forward "`'")
 		  (let ((obj (read (current-buffer))))
@@ -991,8 +996,8 @@ unless the function is autoloaded."
 	    (save-excursion
 	      (set-syntax-table emacs-lisp-mode-syntax-table)
 	      (or (not (zerop (skip-syntax-backward "_w")))
-		  (eq (char-syntax (following-char)) ?w)
-		  (eq (char-syntax (following-char)) ?_)
+		  (eq (char-syntax (char-after (point))) ?w)
+		  (eq (char-syntax (char-after (point))) ?_)
 		  (forward-sexp -1))
 	      (skip-chars-forward "'")
 	      (let ((obj (read (current-buffer))))

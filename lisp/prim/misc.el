@@ -1,6 +1,6 @@
 ;;; misc.el --- miscellaneous functions for XEmacs
 
-;; Copyright (C) 1989 Free Software Foundation, Inc.
+;; Copyright (C) 1989, 1997 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 
@@ -23,6 +23,9 @@
 
 ;;; Synched up with: FSF 19.34.
 
+;; 06/11/1997 - Use char-(after|before) instead of
+;;  (following|preceding)-char. -slb
+
 ;;; Code:
 
 (defun copy-from-above-command (&optional arg)
@@ -44,7 +47,7 @@ The characters copied are inserted in the buffer before point."
       ;; If current column winds up in middle of a tab,
       ;; copy appropriate number of "virtual" space chars.
       (if (< cc (current-column))
-	  (if (= (preceding-char) ?\t)
+	  (if (eq (char-before (point)) ?\t)
 	      (progn
 		(setq string (make-string (min n (- (current-column) cc)) ?\ ))
 		(setq n (- n (min n (- (current-column) cc)))))

@@ -2839,6 +2839,86 @@ and a negative argument disables it." t nil)
 
 ;;;***
 
+;;;### (autoloads (encode-hz-buffer encode-hz-region decode-hz-buffer decode-hz-region) "china-util" "language/china-util.el")
+
+(autoload 'decode-hz-region "china-util" "\
+Decode HZ/ZW encoded text in the current region.
+Return the length of resulting text." t nil)
+
+(autoload 'decode-hz-buffer "china-util" "\
+Decode HZ/ZW encoded text in the current buffer." t nil)
+
+(autoload 'encode-hz-region "china-util" "\
+Encode the text in the current region to HZ.
+Return the length of resulting text." t nil)
+
+(autoload 'encode-hz-buffer "china-util" "\
+Encode the text in the current buffer to HZ." t nil)
+
+;;;***
+
+;;;### (autoloads (read-hiragana-string japanese-zenkaku-region japanese-hankaku-region japanese-hiragana-region japanese-katakana-region japanese-zenkaku japanese-hankaku japanese-hiragana japanese-katakana) "japan-util" "language/japan-util.el")
+
+(autoload 'japanese-katakana "japan-util" "\
+Convert argument to Katakana and return that.
+The argument may be a character or string.  The result has the same type.
+The argument object is not altered--the value is a copy.
+Optional argument HANKAKU t means to convert to `hankaku' Katakana
+ (`japanese-jisx0201-kana'), in which case return value
+ may be a string even if OBJ is a character if two Katakanas are
+ necessary to represent OBJ." nil nil)
+
+(autoload 'japanese-hiragana "japan-util" "\
+Convert argument to Hiragana and return that.
+The argument may be a character or string.  The result has the same type.
+The argument object is not altered--the value is a copy." nil nil)
+
+(autoload 'japanese-hankaku "japan-util" "\
+Convert argument to `hankaku' and return that.
+The argument may be a character or string.  The result has the same type.
+The argument object is not altered--the value is a copy.
+Optional argument ASCII-ONLY non-nil means to return only ASCII character." nil nil)
+
+(autoload 'japanese-zenkaku "japan-util" "\
+Convert argument to `zenkaku' and return that.
+The argument may be a character or string.  The result has the same type.
+The argument object is not altered--the value is a copy." nil nil)
+
+(autoload 'japanese-katakana-region "japan-util" "\
+Convert Japanese `hiragana' chars in the region to `katakana' chars.
+Optional argument HANKAKU t means to convert to `hankaku katakana' character
+of which charset is `japanese-jisx0201-kana'." t nil)
+
+(autoload 'japanese-hiragana-region "japan-util" "\
+Convert Japanese `katakana' chars in the region to `hiragana'  chars." t nil)
+
+(autoload 'japanese-hankaku-region "japan-util" "\
+Convert Japanese `zenkaku' chars in the region to `hankaku' chars.
+`Zenkaku' chars belong to `japanese-jisx0208'
+`Hankaku' chars belong to `ascii' or `japanese-jisx0201-kana'.
+Optional argument ASCII-ONLY non-nil means to convert only to ASCII char." t nil)
+
+(autoload 'japanese-zenkaku-region "japan-util" "\
+Convert hankaku' chars in the region to Japanese `zenkaku' chars.
+`Zenkaku' chars belong to `japanese-jisx0208'
+`Hankaku' chars belong to `ascii' or `japanese-jisx0201-kana'." t nil)
+
+(autoload 'read-hiragana-string "japan-util" "\
+Read a Hiragana string from the minibuffer, prompting with string PROMPT.
+If non-nil, second arg INITIAL-INPUT is a string to insert before reading." nil nil)
+
+;;;***
+
+;;;### (autoloads (thai-compose-buffer thai-compose-region) "thai-util" "language/thai-util.el")
+
+(autoload 'thai-compose-region "thai-util" "\
+Compose Thai characters in the region." t nil)
+
+(autoload 'thai-compose-buffer "thai-util" "\
+Compose Thai characters in the current buffer." t nil)
+
+;;;***
+
 ;;;### (autoloads (quail-use-package) "quail" "leim/quail.el")
 
 (autoload 'quail-use-package "quail" "\
@@ -3838,7 +3918,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.31 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.32 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5180,7 +5260,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.31 $
+vhdl-mode $Revision: 1.32 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5200,7 +5280,7 @@ Key bindings:
 
 ;;;### (autoloads (auto-view-mode view-major-mode view-mode view-minor-mode view-buffer-other-window view-file-other-window view-buffer view-file) "view-less" "modes/view-less.el")
 
-(defvar view-minor-mode-map (let ((map (make-keymap))) (set-keymap-name map 'view-minor-mode-map) (suppress-keymap map) (define-key map "-" 'negative-argument) (define-key map " " 'scroll-up) (define-key map "f" 'scroll-up) (define-key map "b" 'scroll-down) (define-key map 'backspace 'scroll-down) (define-key map "" 'view-scroll-lines-up) (define-key map "\n" 'view-scroll-lines-up) (define-key map "e" 'view-scroll-lines-up) (define-key map "j" 'view-scroll-lines-up) (define-key map "y" 'view-scroll-lines-down) (define-key map "k" 'view-scroll-lines-down) (define-key map "d" 'view-scroll-some-lines-up) (define-key map "u" 'view-scroll-some-lines-down) (define-key map "r" 'recenter) (define-key map "t" 'toggle-truncate-lines) (define-key map "N" 'view-buffer) (define-key map "E" 'view-file) (define-key map "P" 'view-buffer) (define-key map "!" 'shell-command) (define-key map "|" 'shell-command-on-region) (define-key map "=" 'what-line) (define-key map "?" 'view-search-backward) (define-key map "h" 'view-mode-describe) (define-key map "s" 'view-repeat-search) (define-key map "n" 'view-repeat-search) (define-key map "/" 'view-search-forward) (define-key map "\\" 'view-search-backward) (define-key map "g" 'view-goto-line) (define-key map "G" 'view-last-windowful) (define-key map "%" 'view-goto-percent) (define-key map "p" 'view-goto-percent) (define-key map "m" 'point-to-register) (define-key map "'" 'register-to-point) (define-key map "C" 'view-cleanup-backspaces) (define-key map "" 'view-quit) (define-key map "" 'view-quit-toggle-ro) (define-key map "q" 'view-quit) map))
+(defvar view-minor-mode-map (let ((map (make-keymap))) (set-keymap-name map 'view-minor-mode-map) (suppress-keymap map) (define-key map "-" 'negative-argument) (define-key map " " 'scroll-up) (define-key map "f" 'scroll-up) (define-key map "b" 'scroll-down) (define-key map 'backspace 'scroll-down) (define-key map 'delete 'scroll-down) (define-key map "" 'view-scroll-lines-up) (define-key map "\n" 'view-scroll-lines-up) (define-key map "e" 'view-scroll-lines-up) (define-key map "j" 'view-scroll-lines-up) (define-key map "y" 'view-scroll-lines-down) (define-key map "k" 'view-scroll-lines-down) (define-key map "d" 'view-scroll-some-lines-up) (define-key map "u" 'view-scroll-some-lines-down) (define-key map "r" 'recenter) (define-key map "t" 'toggle-truncate-lines) (define-key map "N" 'view-buffer) (define-key map "E" 'view-file) (define-key map "P" 'view-buffer) (define-key map "!" 'shell-command) (define-key map "|" 'shell-command-on-region) (define-key map "=" 'what-line) (define-key map "?" 'view-search-backward) (define-key map "h" 'view-mode-describe) (define-key map "s" 'view-repeat-search) (define-key map "n" 'view-repeat-search) (define-key map "/" 'view-search-forward) (define-key map "\\" 'view-search-backward) (define-key map "g" 'view-goto-line) (define-key map "G" 'view-last-windowful) (define-key map "%" 'view-goto-percent) (define-key map "p" 'view-goto-percent) (define-key map "m" 'point-to-register) (define-key map "'" 'register-to-point) (define-key map "C" 'view-cleanup-backspaces) (define-key map "" 'view-quit) (define-key map "" 'view-quit-toggle-ro) (define-key map "q" 'view-quit) map))
 
 (defvar view-mode-map (let ((map (copy-keymap view-minor-mode-map))) (set-keymap-name map 'view-mode-map) map))
 

@@ -8,13 +8,13 @@
 
 ;;; Start of the header of original TIT dictionary.
 
-;; # $Id: qj.el,v 1.2 1997/06/06 00:57:09 steve Exp $
+;; # $Id: qj.el,v 1.3 1997/06/11 19:25:55 steve Exp $
 ;; # HANZI input table for cxterm
 ;; # To be used by cxterm, convert me to .cit format first
 ;; # .cit version 1
 ;; ENCODE:	GB
 ;; MULTICHOICE:	NO
-;; PROMPT:	$A::WVJdHk!KH+=G!K(B# 
+;; PROMPT:	$A::WVJdHk!KH+=G!K# (B
 ;; #
 ;; COMMENT Copyright 1991 by Yongguang Zhang.      (ygz@cs.purdue.edu)
 ;; COMMENT Permission to use/modify/copy for any purpose is hereby granted.
@@ -33,7 +33,7 @@
 
 (quail-define-package "quail-qj" "Chinese-GB" "$AH+=G(B"
  nil
-"$A::WVJdHk!KH+=G!K(B# 
+"$A::WVJdHk!KH+=G!K# (B
  Copyright 1991 by Yongguang Zhang.      (ygz@cs.purdue.edu)
  Permission to use/modify/copy for any purpose is hereby granted.
  Absolutely no warranties.

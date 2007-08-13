@@ -31,6 +31,10 @@ Boston, MA 02111-1307, USA.  */
 #undef i386
 #undef linux
 
+/* For performance and consistency, no built-in rules */
+.SUFFIXES:
+.SUFFIXES: .c .o .i .h
+
 srcdir=@srcdir@
 
 SHELL=/bin/sh
@@ -66,11 +70,9 @@ ENERGIZEP = -DENERGIZE
 EZ_SUBDIR = ez_dialog
 #endif
 
-lwlib_objs=@lwlib_objs@
+objs = lwlib.o lwlib-utils.o lwlib-config.o $(EZ_OBJS) @lwlib_objs@
 
-OBJS = lwlib.o lwlib-utils.o lwlib-config.o $(EZ_OBJS) ${lwlib_objs}
-
-all:: $(EZ_SUBDIR) liblw.a
+all: $(EZ_SUBDIR) liblw.a
 
 c_switch_general=@c_switch_general@
 c_switch_window_system=@c_switch_window_system@
@@ -82,13 +84,20 @@ ld_libs_general=@ld_libs_general@
 ld_libs_window_system=@ld_libs_window_system@
 ld_libs_all=@ld_libs_all@
 
+cppflags = $(CPPFLAGS) -I. $(c_switch_all) $(ENERGIZEP)
+cflags = $(CFLAGS) $(cppflags)
+
 ALL_CFLAGS= $(CFLAGS) $(CPPFLAGS) -I. $(c_switch_all) $(ENERGIZEP)
 .c.o:
-	$(CC) -c $(ALL_CFLAGS) $<
+	$(CC) -c $(cflags) $<
 
-liblw.a: $(OBJS)
+/* Create preprocessor output (debugging purposes only) */
+.c.i:
+	$(CC) -P $(cppflags) $<
+
+liblw.a: $(objs)
 	$(RM) $@
-	$(AR) $@ $(OBJS)
+	$(AR) $@ $(objs)
 	-test -n "$(RANLIB)" && $(RANLIB) $@
 
 #ifdef ENERGIZE
@@ -96,6 +105,7 @@ ez_dialog:
 	cd energize && $(MAKE) $(MFLAGS)
 #endif
 
+.PHONY : mostlyclean clean distclean realclean extraclean
 FRC.mostlyclean:
 mostlyclean: FRC.mostlyclean
 	rm -f liblw.a liblw_pure_*.a *.o

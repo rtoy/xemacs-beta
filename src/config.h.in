@@ -71,7 +71,9 @@ Boston, MA 02111-1307, USA.  */
 #ifndef FUNCPROTO
 #define FUNCPROTO 15
 #endif
-#endif
+/* Required for most XFree86 systems */
+#undef NARROWPROTO
+#endif /* HAVE_X_WINDOWS */
 
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
 #if defined (HAVE_X_WINDOWS) /* || defined (HAVE_NEXTSTEP) */

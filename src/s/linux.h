@@ -173,7 +173,8 @@ Boston, MA 02111-1307, USA.  */
    At least XawScrollbarSetThumb needs this. */ 
 #define C_SWITCH_SYSTEM -DFUNCPROTO=11 -DNARROWPROTO -D_BSD_SOURCE
 #endif
-#define C_SWITCH_SYSTEM -DNARROWPROTO -D_BSD_SOURCE
+     /* #define C_SWITCH_SYSTEM -DNARROWPROTO -D_BSD_SOURCE */
+#define _BSD_SOURCE 1
 #endif
 
 
@@ -287,11 +288,10 @@ Boston, MA 02111-1307, USA.  */
 # define GETPGRP_NEEDS_ARG
 #endif
 
-/*#ifdef __ELF__*/
-#if 0	/* This is broken -sb */
+#ifdef __ELF__
 /* mrb - Ordinary link is simple and effective */
 #define ORDINARY_LINK
-#undef START_FILES
 #undef LIB_STANDARD
+#undef START_FILES
 #undef LIB_GCC
 #endif /* __ELF__ */

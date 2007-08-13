@@ -1,3 +1,94 @@
+1997-06-11  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-b6 is released.
+
+	* configure.in (GNU_MALLOC): Check for (-l)PW instead of (-l)-lPW.
+	Suggested by Martin Buchholz  <mrb@eng.sun.com>
+
+1997-06-11  Martin Buchholz  <mrb@eng.sun.com>
+
+	* src/Makefile.in: 
+	* lwlib/Makefile.in: 
+	* lib-src/Makefile.in: 
+	* Makefile.in: More Makefile cleanup
+	- add .PHONY targets where necessary
+	- remove most builtin rules using .SUFFIXES
+	- -lXau only gets used for linking gnuserv binaries
+	- No VPATH for root Makefile
+	- remove gcc v1 support
+	* configure.in: 
+	- A new test to autodetect need to define NARROWPROTO,
+	  needed by XFree86
+	- Consistently use idiom foo=`echo '' $foo | sed -s 's:^ ::' -e ...`
+	- Immediately exit if SIZEOF_* tests fail.
+	- Check for libPW
+	- Use more sophisticated Xpm test that confirms xpm.h and libXpm
+	  are in sync.
+	* src/s/linux.h: 
+	* src/m/intel386.h: Yet another attempt to clean up linux defines.
+
+1997-06-10  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lib-src/pop.c: Correct incantation for pop.h.
+	From Martin Buchholz <mrb@Eng.Sun.COM>
+
+Tue Jun 10 15:11:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in (beta): Correct test looking for Beta number.
+
+1997-06-11  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* src/Makefile.in.in, mule/language/misc-lang.el,
+	mule/mule-load.el, mule/ipa-hooks.el: Use
+	lisp/mule/language/misc-lang.el instead of lisp/mule/ipa-hooks.el;
+	mule/ipa-hooks.el was deleted.
+
+1997-06-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Use lisp/mule/language/thai-util.el instead of
+	lisp/mule/thai.el.
+
+	* lisp/custom/wid-edit.el: Add widget `coding-system' for mule.
+
+	* lisp/mule/thai-hooks.el, lisp/mule/mule-load.el: Use
+	lisp/mule/language/thai.el instead of lisp/mule/thai-hooks.el.
+
+	* lisp/mule/language/thai.el: modified for XEmacs.
+
+1997-06-09  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/mule/mule-load.el, src/Makefile.in.in: Use
+	lisp/mule/language/chinese.el, lisp/mule/language/cyrillic.el,
+	lisp/mule/language/european.el, lisp/mule/language/greek.el,
+	lisp/mule/language/japanese.el and lisp/mule/language/korean.el
+	instead of lisp/mule/chinese-hooks.el,
+	lisp/mule/cyrillic-hooks.el, lisp/mule/european-hooks.el,
+	lisp/mule/greek-hooks.el, lisp/mule/japanese-hooks.el and
+	lisp/mule/korean-hooks.el.
+
+	* lisp/mule/language/*.el was imported from
+	Emacs/mule-19.34.94-zeta.
+
+	* Use lisp/mule/language/china-util.el instead of
+	lisp/mule/chinese.el.
+
+1997-06-08  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/apel/emu-x20.el (mime-charset-coding-system-alist):
+	iso-8859-1, hz-gb-2312, cn-gb-2312, gb2312, cn-big5 and koi8-r
+	were defined as coding-system.
+
+1997-06-08  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* etc/smilies/Face_smile.xbm, etc/smilies/Face_weep.xbm,
+	etc/smilies/Face_ase2.xbm, etc/smilies/Face_ase3.xbm,
+	etc/smilies/Face_ase.xbm: Add Japanese smiley faces.
+
+1997-06-07  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/gnus/smiley.el (smiley-deformed-regexp-alist): Add Japanese
+	smiley faces.
+
 1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-b5 is released.

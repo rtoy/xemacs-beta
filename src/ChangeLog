@@ -1,3 +1,44 @@
+1997-06-11  Steven L Baur  <steve@altair.xemacs.org>
+
+	* syntax.c (Fchar_syntax): Handle case of being passed nil.
+
+	* data.c (eq_with_ebola_notice): Add more legitimate places in the 
+	bytecompiler that should not get Ebola notices.
+
+Tue Jun 10 00:34:40 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* process.c (status_notify):
+	  Use record_unwind_protect and save_excursion_restore to
+	  handle the point and buffer restoration.  Cleaner.  Doesn't
+	  crash the editor if before/after-change-functions change
+	  things behind our back.
+
+1997-06-10  Steven L Baur  <steve@altair.xemacs.org>
+
+	* data.c (vars_of_data): Set Ebola warning backtrace limit to 16.
+	(eq_with_ebola_notice): Bypass Ebola warnings for special
+	bytecompiler functions where they are 100% spurioius.
+
+1997-06-11  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile.in.in: Use lisp/mule/language/misc-lang.el instead of
+	lisp/mule/ipa-hooks.el.
+
+1997-06-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile.in.in: Use lisp/mule/language/thai.elc instead of
+	lisp/mule/thai-hooks.elc.
+
+1997-06-09  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile.in.in: Use lisp/mule/language/chinese.el,
+	lisp/mule/language/cyrillic.el, lisp/mule/language/european.el,
+	lisp/mule/language/greek.el, lisp/mule/language/japanese.el and
+	lisp/mule/language/korean.el instead of
+	lisp/mule/chinese-hooks.el, lisp/mule/cyrillic-hooks.el,
+	lisp/mule/european-hooks.el, lisp/mule/greek-hooks.el,
+	lisp/mule/japanese-hooks.el and lisp/mule/korean-hooks.el.
+
 1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
 
 	* keymap.c: Declare Fextent_in_region_p.

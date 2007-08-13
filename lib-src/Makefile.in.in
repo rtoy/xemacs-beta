@@ -415,19 +415,13 @@ make-po: ${srcdir}/make-po.c
 
 /* Why oh why does HP not include half of the standard X distribution? */
 
-#ifdef HAVE_XAUTH
-cflags_gnuserv = $(CFLAGS) $(lib_src_cppflags) $(c_switch_all)
-ldflags_gnuserv = $(LDFLAGS) $(ld_switch_all) $(ld_libs_all)
-#else
-cflags_gnuserv = ${cflags}
-ldflags_gnuserv = ${ldflags}
-#endif
+ldflags_gnuserv = $(LDFLAGS) $(ld_switch_all) @libs_xauth@ $(ld_libs_general)
 gnuslib.o: ${srcdir}/gnuslib.c ${srcdir}/gnuserv.h ../src/config.h
-	$(CC) -c ${cflags_gnuserv} ${srcdir}/gnuslib.c
+	$(CC) -c ${cflags} ${srcdir}/gnuslib.c
 gnuclient: ${srcdir}/gnuclient.c gnuslib.o ${srcdir}/gnuserv.h
-	$(CC) ${cflags_gnuserv} -o gnuclient ${srcdir}/gnuclient.c gnuslib.o $(ldflags_gnuserv)
+	$(CC) ${cflags} -o $@ ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv}
 gnuserv: ${srcdir}/gnuserv.c gnuslib.o ${srcdir}/gnuserv.h
-	$(CC) ${cflags_gnuserv} -o gnuserv ${srcdir}/gnuserv.c gnuslib.o $(ldflags_gnuserv)
+	$(CC) ${cflags} -o $@ ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv}
 
 /* mmencode binary is used by tm - but is really part of the metamail package */
 /* mmencode.c was merged copy of mmencode.c and codes.c of metamail */

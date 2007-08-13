@@ -342,4 +342,31 @@ or if the window is the only window of its frame."
 	(kill-buffer buffer))
     (error "Aborted")))
 
+;;; New with XEmacs 20.3
+;;; Suggested by Noah Friedman, and tuned by Hrvoje Niksic.
+(defun window-list (&optional minibuf all-frames device)
+  "Return a list of existing windows.
+If the optional argument MINIBUF is non-nil, then include minibuffer
+windows in the result.
+
+By default, only the windows in the selected frame are returned.
+The optional argument ALL-FRAMES changes this behavior:
+ALL-FRAMES = `visible' means include windows on all visible frames.
+ALL-FRAMES = 0 means include windows on all visible and iconified frames.
+ALL-FRAMES = t means include windows on all frames including invisible frames.
+Anything else means restrict to the selected frame.
+The optional fourth argument DEVICE further clarifies which frames to
+search as specified by ALL-FRAMES.  This value is only meaningful if
+ALL-FRAMES is non-nil.
+If nil or omitted, search only the selected device.
+If a device, search frames only on that device.
+If a device type, search frames only on devices of that type.
+Any other non-nil value means search frames on all devices."
+  (let ((wins nil))
+    (walk-windows (lambda (win)
+                    (push win wins))
+                  minibuf all-frames device)
+    wins))
+
+
 ;;; window.el ends here

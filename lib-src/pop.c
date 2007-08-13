@@ -51,7 +51,7 @@ Boston, MA 02111-1307, USA.  */
 #define SEND(s,buf,len,flags) write(s,buf,len)
 #define CLOSESOCKET(s) close(s)
 #endif
-#include <pop.h>
+#include "pop.h"
 
 #ifdef sun
 #include <malloc.h>

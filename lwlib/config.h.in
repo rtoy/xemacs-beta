@@ -52,6 +52,9 @@ Boston, MA 02111-1307, USA.  */
 #define FUNCPROTO 15
 #endif
 
+/* Required for most XFree86 systems */
+#undef NARROWPROTO
+
 /* widget feature definitions */
 #undef LWLIB_MENUBARS_LUCID
 #undef LWLIB_MENUBARS_MOTIF

@@ -481,8 +481,8 @@ placed on the same line as the block comment starter (i.e. the text
 This hook gets called after a line is indented by the mode."
   :type 'hook
   :group 'cc-indent)
-(defcustom c-delete-function (if (fboundp 'backspace-or-delete)
-				 'backspace-or-delete
+(defcustom c-delete-function (if (fboundp 'backward-or-forward-delete-char)
+				 'backward-or-forward-delete-char
 			       'backward-delete-char-untabify)
   "*Function called by `c-electric-delete' when deleting characters."
   :type 'function
@@ -1952,8 +1952,8 @@ function in the variable `c-delete-function' is called."
 	  (c-in-literal))
       (funcall c-delete-function (prefix-numeric-value arg))
     (let ((here (point)))
-      (if (and (boundp 'delete-erases-forward)
-	       delete-erases-forward)
+      (if (and (boundp 'delete-key-deletes-forward)
+	       delete-key-deletes-forward)
 	  (skip-chars-forward " \t\n")
 	(skip-chars-backward " \t\n"))
       (if (/= (point) here)

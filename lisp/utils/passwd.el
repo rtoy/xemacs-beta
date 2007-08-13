@@ -69,7 +69,7 @@ or nil, meaning echo nothing."
 
     (while (< i 127)
       (aset s 0 i)
-      (or (and (boundp 'meta-prefix-char) (eq i meta-prefix-char))
+      (or (and (boundp 'meta-prefix-char) (eq (int-char i) meta-prefix-char))
 	  (define-key map s 'self-insert-command))
       (setq i (1+ i)))
 

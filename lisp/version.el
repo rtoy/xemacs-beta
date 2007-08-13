@@ -25,11 +25,11 @@
 (defconst emacs-version "20.3"
   "Version numbers of this version of XEmacs.")
 
-(defconst xemacs-codename "Zagreb"
+(defconst xemacs-codename "Moscow"
   "Release nickname, primarily useful for trial prereleases.
 Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
-(defconst xemacs-betaname "(beta5)"
+(defconst xemacs-betaname "(beta6)"
   "Non-nil when this is a test (beta) version of XEmacs.
 Warning, this variable did not exist in XEmacs versions prior to 20.3")
 

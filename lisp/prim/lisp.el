@@ -28,6 +28,9 @@
 
 ;; Lisp editing commands to go with Lisp major mode.
 
+;; 06/11/1997 - Use char-(after|before) instead of
+;;  (following|preceding)-char. -slb
+
 ;;; Code:
 
 ;; Note that this variable is used by non-lisp modes too.
@@ -257,7 +260,7 @@ before and after, depending on the surrounding characters."
 	((< arg 0) (forward-sexp arg) (setq arg (- arg))))
   (and parens-require-spaces
        (not (bobp))
-       (memq (char-syntax (preceding-char)) '(?w ?_ ?\) ))
+       (memq (char-syntax (char-before (point))) '(?w ?_ ?\) ))
        (insert " "))
   (insert ?\()
   (save-excursion
@@ -265,7 +268,7 @@ before and after, depending on the surrounding characters."
     (insert ?\))
     (and parens-require-spaces
 	 (not (eobp))
-	 (memq (char-syntax (following-char)) '(?w ?_ ?\( ))
+	 (memq (char-syntax (char-after (point))) '(?w ?_ ?\( ))
 	 (insert " "))))
 
 (defun move-past-close-and-reindent ()
@@ -298,7 +301,7 @@ function definitions, values or properties are considered."
 		    (if emacs-lisp-mode-syntax-table
 			(set-syntax-table emacs-lisp-mode-syntax-table))
 		    (backward-sexp 1)
-		    (while (= (char-syntax (following-char)) ?\')
+		    (while (eq (char-syntax (char-after (point))) ?\')
 		      (forward-char 1))
 		    (point))
 		(set-syntax-table buffer-syntax)))
