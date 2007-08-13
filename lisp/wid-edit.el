@@ -674,7 +674,7 @@ automatically."
   :type 'boolean)
 
 (defcustom widget-image-conversion
-  '((xpm ".xpm") (gif ".gif") (png ".png") (jpeg ".jpg" ".jpeg")
+  '((png ".png") (xpm ".xpm") (gif ".gif") (jpeg ".jpg" ".jpeg")
     (xbm ".xbm"))
   "Conversion alist from image formats to file name suffixes."
   :group 'widgets

@@ -91,9 +91,6 @@ int load_warn_when_source_only;
 /* Whether Fload_internal() should ignore .elc files when no suffix is given */
 int load_ignore_elc_files;
 
-/* Directory in which the sources were found.  */
-Lisp_Object Vsource_directory;
-
 /* Search path for files to be loaded. */
 Lisp_Object Vload_path;
 
@@ -3153,12 +3150,6 @@ Non-nil means `load' should force-load all dynamic doc strings.
 This is useful when the file being loaded is a temporary copy.
 */ );
   load_force_doc_strings = 0;
-
-  DEFVAR_LISP ("source-directory", &Vsource_directory /*
-Directory in which XEmacs sources were found when XEmacs was built.
-You cannot count on them to still be there!
-*/ );
-  Vsource_directory = Qnil;
 
   /* See read_escape().  */
 #if 0

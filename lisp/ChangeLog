@@ -1,3 +1,26 @@
+1998-08-22  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre11 is released.
+
+1998-08-22  SL Baur  <steve@altair.xemacs.org>
+
+	* wid-edit.el (widget-image-conversion): Push priority of PNGs to
+	highest.
+
+1998-08-19  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* loadup.el: 
+	* make-docfile.el: 
+	* update-elc.el: Don't set `source-directory' (now defunct as a
+	global variable) no more.
+
+	* packages.el (packages-list-autoloads): Made `source-directory'
+	(now defunct as a global variable) a parameter.
+
+1998-08-22  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre10 is released.
+
 1998-08-13  Carsten Leonhardt  <leo@arioch.oche.de>
 
 	* about.el (about-hackers): new email

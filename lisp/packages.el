@@ -223,14 +223,10 @@ is used instead of `load-path'."
       (setq path (cdr path)))
     autoloads))
 
-(defun packages-list-autoloads ()
+(defun packages-list-autoloads (source-directory)
   "List autoload files in (what will be) the normal lisp search path.
 This function is used during build to find where the global symbol files so
 they can be perused for their useful information."
-  ;; Source directory may not be initialized yet.
-  ;; (print (prin1-to-string load-path))
-  (if (null source-directory)
-      (setq source-directory (car load-path)))
   (let ((files (directory-files (file-name-as-directory source-directory)
 				t ".*"))
 	file autolist)

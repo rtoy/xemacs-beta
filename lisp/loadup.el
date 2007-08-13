@@ -64,7 +64,6 @@
 	;; the package path.
 	;; #### This code is duplicated in two other places.
 	(let ((temp-path (expand-file-name "." (car load-path))))
-	  (setq source-directory temp-path)
 	  (setq load-path (nconc (mapcar
 				  #'(lambda (i) (concat i "/"))
 				  (directory-files temp-path t "^[^-.]"

@@ -563,9 +563,9 @@ contributed to the XEmacs development from late 1994 to early
     (slb
      (widget-insert "\
 I took over the maintenance of XEmacs in November of 1996 (it
-seemed like a good idea at the time ...).  In real life I am a
-network administrator and Unix systems programmer for Calag.com,
-Inc. a small, but growing ISP in California.
+seemed like a good idea at the time).  In real life I am now
+contracting on a free-lance basis with much of my time being covered
+by Altrasoft.
 
 My main hobby while not maintaining XEmacs or working is ...
 you have got to be kidding ...")

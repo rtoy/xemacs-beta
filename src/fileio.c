@@ -2288,7 +2288,7 @@ See also `file-exists-p' and `file-attributes'.
   if (!NILP (handler))
     RETURN_UNGCPRO (call2 (handler, Qfile_readable_p, abspath));
 
-#ifdef WINDOWSNT
+#if defined(WINDOWSNT) || defined(__CYGWIN32__)
   /* Under MS-DOS and Windows, open does not work for directories.  */
   UNGCPRO;
   if (access (XSTRING_DATA (abspath), 0) == 0)

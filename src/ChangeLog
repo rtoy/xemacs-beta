@@ -1,3 +1,20 @@
+1998-08-22  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre11 is released.
+
+1998-08-19  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* lread.c (vars_of_lread): Removed `source-directory' variable.
+
+1998-08-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Ffile_readable_p): Apply the DOS/Windows logic to
+	Cygwin.
+
+1998-08-22  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre10 is released.
+
 1998-08-16  Martin Buchholz  <martin@xemacs.org>
 
 	* fns.c (Fremrassq, remrassq_no_quit):

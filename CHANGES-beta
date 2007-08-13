@@ -1,4 +1,9 @@
 							-*- indented-text -*-
+to 21.0 pre11 "Finnish Landrace"
+-- Update of PROBLEMS by Marcus Thiessel
+-- startup fixes from Michael Sperber
+-- file-readable-p fix from Hrvoje Niksic
+
 to 21.0 pre10 "Erzgeberg"
 -- configure cleanup from Jareth Hein.
 -- JPEG, GIF MS Windows native build procedure fixes from Jeff Sparkes
