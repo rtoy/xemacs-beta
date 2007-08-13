@@ -612,6 +612,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
   /* ralloc can only be used if using the GNU memory allocator. */
   init_ralloc ();
+#elif defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
+  if (initialized)
+    init_ralloc();
 #endif
 
 #ifdef HAVE_SOCKS

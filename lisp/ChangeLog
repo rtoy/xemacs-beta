@@ -1,3 +1,76 @@
+1998-09-05  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre12 is released.
+
+1998-09-03  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* list-mode.el: `display-completion-list': added new/optional
+	  keyword `:completion-string', which allows the programmer to
+	  change the "Possible completions are:" prompt.
+
+	* menubar-items.el: Added new pulldown menu-pick to start up the 
+	  visual package browser/installer:
+
+		Options->Customize->List Packages
+
+	* package-admin.el: Added hooks for installing under both Unix
+	  and MS Windows.  Does additional error checking.  No longer
+	  calls "add-big-package.sh" to install packages under Unix; now 
+	  calls gunzip & tar directly.
+
+	* package-get.el: Added ability to install packages from files
+	  on a local disk/CDROM.  Now deletes any existing package lisp
+	  directory.  Does completion on available packages when
+	  querying for package names.  Will also search for .tgz files
+	  in addition for .tar.gz files.  Tries to reload
+	  auto-autoloads, as a convenience when loading new packages,
+	  and also tries to add any new package paths to `load-path'.
+ 	  Changed all occurences of `concat' to use `expand-file-name'.
+
+	* package-ui.el: New file which implements the main visual
+	  package browser/installer, which is started via a menu pick or 
+	  M-x pui-list packages.
+
+1998-09-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* startup.el (load-init-file): spelling fix.
+
+1998-09-02  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* startup.el (normal-top-level): Load auto-autoload files
+	covariantly with their precedence.
+
+1998-08-26  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* menubar-items.el (default-menubar): Remove "Font Weight"
+	option, there is currently no custom equivalent.. Customize-faces
+	is "Edit faces".
+
+	* x-font-menu.el (font-menu-set-font): Use customize to set
+	default face.
+
+	* faces.el (face-spec-update-all-matching): New function.
+
+	* cus-face.el (custom-set-face-update-spec): New function.
+	Interface to customize faces from elisp.
+
+	(custom-face-value-create): Show the customized settings if set
+	but not saved.
+
+1998-08-26  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	(custom-face-value-create): Show the customized settings if set
+	but not saved.
+
+1998-08-31  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* keydefs.el (global-map): Add FSF 20.3 binding of
+	query-replace-regexp.
+
+1998-08-26  SL Baur  <steve@altair.xemacs.org>
+
+	* obsolete.el (column-number-start-at-one): Make obsolete.
+
 1998-08-22  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre11 is released.

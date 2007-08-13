@@ -164,12 +164,16 @@ CONFIG_ERROR=1
 !message Specified XPM directory does not contain "$(XPM_DIR)\lib\Xpm.lib"
 CONFIG_ERROR=1
 !endif
-!if $(HAVE_MSW) && $(HAVE_PNG) && !defined(PNG_DIR) && !defined(ZLIB_DIR)
-!message Please specify root directory for your PNG and ZLIB installation: PNG_DIR=path ZLIB_DIR=path
+!if $(HAVE_MSW) && $(HAVE_PNG) && !defined(PNG_DIR)
+!message Please specify root directory for your PNG installation: PNG_DIR=path
 CONFIG_ERROR=1
 !endif
 !if $(HAVE_MSW) && $(HAVE_PNG) && defined(PNG_DIR) && !exist("$(PNG_DIR)\libpng.lib")
 !message Specified PNG directory does not contain "$(PNG_DIR)\libpng.lib"
+CONFIG_ERROR=1
+!endif
+!if $(HAVE_MSW) && $(HAVE_PNG) && !defined(ZLIB_DIR)
+!message Please specify root directory for your ZLIB installation: ZLIB_DIR=path
 CONFIG_ERROR=1
 !endif
 !if $(HAVE_MSW) && $(HAVE_PNG) && defined(ZLIB_DIR) && !exist("$(ZLIB_DIR)\zlib.lib")

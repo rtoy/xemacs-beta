@@ -1,3 +1,19 @@
+1998-09-05  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre12 is released.
+
+1998-09-05  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/check_cygwin_setup.sh: grammar fix.
+
+1998-09-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* etc/check_cygwin_setup.sh: fix a couple of buglets.
+
+1998-08-23  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* etc/sample.emacs: Enable sound support on mswindows devices.
+
 1998-08-22  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre11 is released.

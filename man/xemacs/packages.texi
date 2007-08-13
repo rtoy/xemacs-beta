@@ -72,14 +72,19 @@ a file called
 number.)  The core distribution contains the sources of XEmacs and a
 minimal set of Emacs Lisp files, which are in the subdirectory named
 @file{lisp}.  This subdirectory used to contain all Emacs Lisp files
-distributed with XEmacs.
+distributed with XEmacs.  Now, to conserve disk space, most
+non-essential packages were made optional.
 
 @subsection Choosing the Packages You Need
 
 The available packages can currently be found in the same ftp directory
 where you grabbed the core distribition from, and are located in the
-subdirectory @file{binary-packages}. Package file names follow the
-naming convention @file{<package-name>-<version>-pkg.tar.gz}.
+subdirectory @file{packages/binary-packages}.  Package file names follow
+the naming convention @file{<package-name>-<version>-pkg.tar.gz}.
+
+If you have EFS @ref{(EFS)}, packages can be installed over the network.
+Alternatively, if you have copies of the packages locally, you can
+install packages from a local disk or CDROM.
 
 The file @file{etc/PACKAGES} in the core distribution contains a list of
 the packages available at the time of the XEmacs release.  Packages are
@@ -89,40 +94,151 @@ also listed on the @code{Options} menu under:
 	Options->Customize->Emacs->Packages
 @end example
 
-If you have EFS @ref{(EFS)}, installed and configured packages can be
-installed completely from the menubar.
+However, don't select any of these menu picks unless you actually want 
+to install the given package (and have properly configured your system 
+to do so).
 
-Hint to system administrators of multi-user systems: it might be a good
-idea to install all packages and not to interfer with the wishes of your
-users.
-
-@subsection Installing packages and XEmacs
-
-The easiest and most correct way to install a package is to do:
+You can also get a list of available packages, and whether or not they
+are installed, using the visual package browser and installer.  You can
+access it via the menus:
 
 @example
-M-x package-admin-add-binary-package <return>
+	Options->Customize->List Packages
 @end example
 
-input the location of the package tarball and XEmacs will do the rest
-for you.  If you have the EFS package installed and configured you can
-select package from the customize menu, set their state to on and then
-do:
+Or, you can get to it via the keyboard:
+
+@example
+M-x pui-list-packages
+@end example
+
+Hint to system administrators of multi-user systems: it might be a good
+idea to install all packages and not interfere with the wishes of your
+users.
+
+@subsection XEmacs and Installing Packages
+
+Normally, packages are installed over the network, using EFS
+@ref{(EFS)}.  However, you may not have network access, or you may
+already have some or all of the packages on a local disk, such as a
+CDROM.  If you want to install from a local disk, you must first tell
+XEmacs where to find the package binaries.  This is done by adding a line
+like the following to your @file{.emacs} file:
+
+@example
+(setq package-get-remote (cons (list nil "/my/path/to/package/binaries")
+                               package-get-remote))
+@end example
+
+Here, you'd change @code{"/my/path/to/package/binaries"} to be the path
+to your local package binaries.  Next, restart XEmacs, and you're ready
+to go (advanced users can just re-evaluate the sexp).
+
+If you're going to install over the network, you only have to insure
+that EFS @ref{(EFS)} works, and that it can get outside a firewall, if
+you happen to be behind one.  You shouldn't have to do anything else;
+XEmacs already knows where to go.
+
+The easiest way to install a package is to use the visual package
+browser and installer, using the menu pick:
+
+@example
+	Options->Customize->List Packages
+@end example
+
+You can also access it using the keyboard:
+
+@example
+M-x pui-list-packages
+@end example
+
+The visual package browser will then display a list of all packages.
+Help information will be displayed at the very bottom of the buffer; you
+may have to scroll down to see it.  You can also press @kbd{?} to get
+the same help.  From this buffer, you can tell the package status by the
+character in the first column:
+
+@table @kbd
+@item -
+The package has not been installed.
+@item *
+The package has been installed, but a newer version is available.  The
+current version is out-of-date.
+@item +
+The package has been marked for installation/update.
+@end table
+
+If there is no character in the first column, the package has been
+installed and is up-to-date.
+
+From here, you can select or unselect packages for installation using
+the @key{RET} key, or using the @kbd{Mouse-2} or @kbd{Mouse-3} buttons.
+Once you've finished selecting the packages, you can press the @kbd{x}
+key to actually install the packages.  Note that you will have to
+restart XEmacs for XEmacs to recognize any new packages.
+
+Key summary:
+
+@table @kbd
+@item ?
+Display simple help.
+@item @key{RET}
+@itemx @key{Mouse-2}
+@itemx @key{Mouse-3}
+Toggle between selecting and unselecting a package for installation.
+@item x
+Install selected packages.
+@item @key{SPC}
+View, in the minibuffer, additional information about the package, such
+as the package date (not the build date) and the package author.  Moving 
+the mouse over a package name will also do the same thing.
+@item v
+Toggle between verbose and non-verbose package display.
+@item g
+Refresh the package display.
+@item q
+Kill the package buffer.
+@end table
+
+Moving the mouse over a package will also cause additional information
+about the package to be displayed in the minibuffer.
+
+@subsection Other package installation interfaces
+
+For an alternative package interface, you can select packages from the
+customize menus, under:
+
+@example
+	Options->Customize->Emacs->Packages-> ...
+@end example
+
+Set their state to on, and then do:
 
 @example
 	Options->Customize->Update Packages
 @end example
 
 This will automatically retrieve the packages you have selected from the
-XEmacs ftp site and install them into XEmacs. Additionally it will
-update any packages you already have installed to the newest version.
-Note that if a package is newly installed you will have to restart
-XEmacs for the change to take effect.
+XEmacs ftp site or your local disk, and install them into
+XEmacs.  Additionally it will update any packages you already have
+installed to the newest version.  Note that if a package is newly
+installed you will have to restart XEmacs for the change to take effect.
+
+You can also install packages manually, using:
+
+@example
+M-x package-get-all <return>
+@end example
+
+Enter the name of the package (e.g., @code{prog-modes}), and XEmacs
+will search for the latest version (as listed in the lisp file
+@file{lisp/package-get-base.el}), and install it and any packages that
+it depends upon.
 
 @node Building Packages, , Using Packages, Packages
 @comment  node-name,  next,  previous,  up
 
-Source packages are available from the @file{source-packages}
+Source packages are available from the @file{packages/source-packages}
 subdirectory of your favorite XEmacs distribution site.  Alternatively,
 they are available via CVS from @file{cvs.xemacs.org}.  Look at
 @file{http://cvs.xemacs.org} for instructions.

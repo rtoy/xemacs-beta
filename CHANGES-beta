@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 21.0 pre12 "Irish Goat"
+-- visual package installer from Darryl Okahata
+-- miscellaneous bug fixes from various people
+-- miscellaneous fixes from Hrvoje Niksic
+-- regexp docs from Karl Hegbloom
+
 to 21.0 pre11 "Finnish Landrace"
 -- Update of PROBLEMS by Marcus Thiessel
 -- startup fixes from Michael Sperber

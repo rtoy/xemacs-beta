@@ -1256,6 +1256,39 @@ If FRAME is nil, return the default frame properties."
 	 (setq default-custom-frame-properties
 	       (extract-custom-frame-properties (selected-frame))))))
 
+(defun face-spec-update-all-matching (spec display plist)
+  "Update all entries in the face spec that could match display to
+have the entries from the new plist and return the new spec"
+  (mapcar
+   (lambda (e)
+     (let ((entries (car e))
+	   (options (cadr e))
+	   (match t)
+	   dplist
+	   (new-options plist)
+	   )
+       (unless (eq display t)
+	 (mapc (lambda (arg)
+		 (setq dplist (plist-put dplist (car arg) (cadr arg))))
+	       display))
+       (unless (eq entries t)
+	 (mapc (lambda (arg)
+		 (setq match (and match (eq (cadr arg)
+					    (plist-get
+					      dplist (car arg)
+					      (cadr arg))))))
+	       entries))
+       (if (not match)
+	   e
+	 (while new-options
+	   (setq options
+		 (plist-put options (car new-options) (cadr new-options)))
+	   (setq new-options (cddr new-options)))
+	 (list entries options))))
+   (copy-sequence spec)))
+       
+		    
+
 (defun face-spec-set-match-display (display &optional frame)
   "Return non-nil if DISPLAY matches FRAME.
 DISPLAY is part of a spec such as can be used in `defface'.

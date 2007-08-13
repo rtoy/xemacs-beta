@@ -402,10 +402,10 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
     
     (if (not inhibit-autoloads)
 	(progn
-	  (packages-load-package-auto-autoloads last-package-load-path)
-	  (packages-load-package-auto-autoloads late-package-load-path)
 	  (if (not inhibit-early-packages)
-	      (packages-load-package-auto-autoloads early-package-load-path))))
+	      (packages-load-package-auto-autoloads early-package-load-path))
+	  (packages-load-package-auto-autoloads late-package-load-path)
+	  (packages-load-package-auto-autoloads last-package-load-path)))
 
     (unwind-protect
 	(command-line)
@@ -680,7 +680,7 @@ If this is nil, no message will be displayed.")
 	   (message "Error in init file: %s" (error-message-string error))
 	   (display-warning 'initialization
 	     (format "\
-An error has occured while loading %s:
+An error has occurred while loading %s:
 
 %s
 

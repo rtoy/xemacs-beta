@@ -728,8 +728,11 @@ winsock_writer (Lstream *stream, CONST unsigned char *data, size_t size)
   
   {
     ResetEvent (str->ov.hEvent);
-    
-    if (WriteFile ((HANDLE)str->s, data, size, NULL, &str->ov)
+
+    /* Docs indicate that 4th parameter to WriteFile can be NULL since this is
+     * an overlapped operation. This fails on Win95 with winsock 1.x so we
+     * supply a spare address which is ignored by Win95 anyway. Sheesh. */
+    if (WriteFile ((HANDLE)str->s, data, size, (LPDWORD)&str->buffer, &str->ov)
 	|| GetLastError() == ERROR_IO_PENDING)
       str->pending_p = 1;
     else

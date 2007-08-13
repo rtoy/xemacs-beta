@@ -1,3 +1,17 @@
+1998-09-05  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre12 is released.
+
+1998-08-31  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* xemacs.mak: Detect failure to supply PNG_DIR or XLIB_DIR
+	  when building with PNG support.
+
+1998-08-31  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* README: Document the PNG, ZLIB, JPEG, TIFF and GIF build
+	  options.
+
 1998-08-22  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre11 is released.

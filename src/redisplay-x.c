@@ -2252,6 +2252,9 @@ x_flash (struct device *d)
 		  w->pixel_width, w->pixel_height);
   XSync (dpy, False);
 
+#ifdef HAVE_POLL
+  poll (0, 0, 100);
+#else /* !HAVE_POLL */
 #ifdef HAVE_SELECT
   {
     int usecs = 100000;
@@ -2262,9 +2265,6 @@ x_flash (struct device *d)
     select (0, 0, 0, 0, &tv);
   }
 #else
-#ifdef HAVE_POLL
-  poll (0, 0, 100);
-#else /* !HAVE_POLL */
   bite me
 #endif /* HAVE_POLL */
 #endif /* HAVE_SELECT */

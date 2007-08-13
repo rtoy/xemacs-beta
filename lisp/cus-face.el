@@ -146,6 +146,14 @@ If FRAME is nil, use the default face."
 	(error nil)))
     result))
 
+(defsubst custom-face-get-spec (symbol)
+  (or (get symbol 'customized-face)
+      (get symbol 'saved-face)
+      (get symbol 'face-defface-spec)
+      ;; Attempt to construct it.
+      (list (list t (face-custom-attributes-get
+		     symbol (selected-frame))))))
+
 (defun custom-set-face-bold (face value &optional frame)
   "Set the bold property of FACE to VALUE."
   (if value
@@ -214,6 +222,14 @@ If FRAME is nil, use the default face."
 	 ;; Gag
 	 (fontobj (font-create-object font)))
     (font-family fontobj)))
+
+(defun custom-set-face-update-spec (face display plist)
+  "Customize the FACE for display types matching DISPLAY, merging
+  in the new items from PLIST"
+  (let ((spec (face-spec-update-all-matching (custom-face-get-spec face)
+					     display plist)))
+    (put face 'customized-face spec)
+    (face-spec-set face spec)))
 
 ;;; Initializing.
 

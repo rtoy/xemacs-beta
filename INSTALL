@@ -85,6 +85,9 @@ searched for in the path
 This may be changed by specifying a different value with the
 --package-path configuration option.
 
+IMPORTANT NOTE: In a future version of XEmacs, the user-specific
+package hierarchy will move from ~/.xemacs to ~/.xemacs/packages.
+
 4) In the top level directory of the XEmacs distribution, run the
    program `configure' as follows:
 

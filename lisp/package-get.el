@@ -155,20 +155,94 @@ one version of a package available.")
     ("ftp.xemacs.org" "/pub/xemacs/package"))
   "*List of remote sites to contact for downloading packages.
 List format is '(site-name directory-on-site).  Each site is tried in
-order until the package is found.")
+order until the package is found.  As a special case, `site-name' can be
+`nil', in which case `directory-on-site' is treated as a local directory.")
 
 (defvar package-get-remove-copy nil
   "*After copying and installing a package, if this is T, then remove the
 copy.  Otherwise, keep it around.")
+
+(defun package-get-rmtree (directory)
+  "Delete a directory and all of its contents, recursively.
+This is a feeble attempt at making a portable rmdir."
+  (let ( (orig-default-directory default-directory) files dirs dir)
+    (unwind-protect
+	(progn
+	  (setq directory (file-name-as-directory directory))
+	  (setq files (directory-files directory nil nil nil t))
+	  (setq dirs (directory-files directory nil nil nil 'dirs))
+	  (while dirs
+	    (setq dir (car dirs))
+	    (if (file-symlink-p dir)	;; just in case, handle symlinks
+		(delete-file dir)
+	      (if (not (or (string-equal dir ".") (string-equal dir "..")))
+		  (package-get-rmtree (expand-file-name dir directory))))
+	    (setq dirs (cdr dirs))
+	    )
+	  (setq default-directory directory)
+	  (condition-case err
+	      (progn
+		(while files
+		  (delete-file (car files))
+		  (setq files (cdr files))
+		  )
+		(delete-directory directory)
+		)
+	    (file-error
+	     (message "%s: %s: \"%s\"" (nth 1 err) (nth 2 err) (nth 3 err)))
+	    )
+	  )
+      (progn
+	(setq default-directory orig-default-directory)
+	))
+    ))
 
 ;;;###autoload
 (defun package-get-update-all ()
   "Fetch and install the latest versions of all currently installed packages."
   (interactive)
   ;; Load a fresh copy
-  (mapcar (lambda (pkg)
-	    (package-get (car pkg) nil 'never))
-          packages-package-list))
+  (catch 'exit
+    (mapcar (lambda (pkg)
+	      (if (not (package-get (car pkg) nil 'never))
+		  (throw 'exit nil)		;; Bail out if error detected
+		  ))
+	    packages-package-list)))
+
+(defun package-get-interactive-package-query (get-version package-symbol)
+  "Perform interactive querying for package and optional version.
+Query for a version if GET-VERSION is non-nil.  Return package name as
+a symbol instead of a string if PACKAGE-SYMBOL is non-nil.
+The return value is suitable for direct passing to `interactive'."
+  (let ( (table (mapcar '(lambda (item)
+			   (let ( (name (symbol-name (car item))) )
+			     (cons name name)
+			     ))
+			package-get-base)) 
+	 package package-symbol default-version version)
+    (save-window-excursion
+      (setq package (completing-read "Package: " table nil t))
+      (setq package-symbol (intern package))
+      (if get-version
+	  (progn
+	    (setq default-version 
+		  (package-get-info-prop 
+		   (package-get-info-version
+		    (package-get-info-find-package package-get-base
+						   package-symbol) nil)
+		   'version))
+	    (while (string=
+		    (setq version (read-string "Version: " default-version))
+		    "")
+	      )
+	    (if package-symbol
+		(list package-symbol version)
+	      (list package version))
+	    )
+	(if package-symbol
+	    (list package-symbol)
+	  (list package)))
+      )))
 
 ;;;###autoload
 (defun package-get-all (package version &optional fetched-packages)
@@ -176,38 +250,87 @@ copy.  Otherwise, keep it around.")
 Uses `package-get-base' to determine just what is required and what
 package provides that functionality.  If VERSION is nil, retrieves
 latest version.  Optional argument FETCHED-PACKAGES is used to keep
-track of packages already fetched."
-  (interactive "sPackage: \nsVersion: ")
+track of packages already fetched.
+
+Returns nil upon error."
+  (interactive (package-get-interactive-package-query t nil))
   (let* ((the-package (package-get-info-find-package package-get-base
 						     package))
 	 (this-package (package-get-info-version
 			the-package version))
 	 (this-requires (package-get-info-prop this-package 'requires))
 	 )
-    (setq version (package-get-info-prop this-package 'version))
-    (unless (package-get-installedp package version)
-      (package-get package version))
-    (setq fetched-packages
-	  (append (list package)
-		  (package-get-info-prop this-package 'provides)
-		  fetched-packages))
-    ;; grab everything that this package requires plus recursively
-    ;; grab everything that the requires require.  Keep track
-    ;; in `fetched-packages' the list of things provided -- this
-    ;; keeps us from going into a loop
-    (while this-requires
-      (if (not (member (car this-requires) fetched-packages))
-	  (let* ((reqd-package (package-get-package-provider
-				(car this-requires)))
-		 (reqd-version (cadr reqd-package))
-		 (reqd-name (car reqd-package)))
-	    (if (null reqd-name)
-		(error "Unable to find a provider for %s" (car this-requires)))
-	    (setq fetched-packages
-		  (package-get-all reqd-name reqd-version fetched-packages)))
-	)
-      (setq this-requires (cdr this-requires)))
+    (catch 'exit
+      (setq version (package-get-info-prop this-package 'version))
+      (unless (package-get-installedp package version)
+	(if (not (package-get package version))
+	    (progn
+	      (setq fetched-packages nil)
+	      (throw 'exit nil))))
+      (setq fetched-packages
+	    (append (list package)
+		    (package-get-info-prop this-package 'provides)
+		    fetched-packages))
+      ;; grab everything that this package requires plus recursively
+      ;; grab everything that the requires require.  Keep track
+      ;; in `fetched-packages' the list of things provided -- this
+      ;; keeps us from going into a loop
+      (while this-requires
+	(if (not (member (car this-requires) fetched-packages))
+	    (let* ((reqd-package (package-get-package-provider
+				  (car this-requires)))
+		   (reqd-version (cadr reqd-package))
+		   (reqd-name (car reqd-package)))
+	      (if (null reqd-name)
+		  (error "Unable to find a provider for %s"
+			 (car this-requires)))
+	      (if (not (setq fetched-packages
+			     (package-get-all reqd-name reqd-version
+					      fetched-packages)))
+		  (throw 'exit nil)))
+	  )
+	(setq this-requires (cdr this-requires)))
+      )
     fetched-packages
+    ))
+
+(defun package-get-load-package-file (lispdir file)
+  (let (pathname)
+    (setq pathname (expand-file-name file lispdir))
+    (condition-case err
+	(progn
+	  (load pathname t)
+	  t)
+      (t
+       (message "Error loading package file \"%s\" %s!" pathname err)
+       nil))
+    ))
+
+(defun package-get-init-package (lispdir)
+  "Initialize the package.
+This really assumes that the package has never been loaded.  Updating
+a newer package can cause problems, due to old, obsolete functions in
+the old package.
+
+Return `t' upon complete success, `nil' if any errors occurred."
+  (progn
+    (if (and lispdir
+	     (file-accessible-directory-p lispdir))
+	(progn
+	  ;; Add lispdir to load-path if it doesn't already exist.
+	  ;; NOTE: this does not take symlinks, etc., into account.
+	  (if (let ( (dirs load-path) )
+		(catch 'done
+		  (while dirs
+		    (if (string-equal (car dirs) lispdir)
+			(throw 'done nil))
+		    (setq dirs (cdr dirs))
+		    )
+		  t))
+	      (setq load-path (cons lispdir load-path)))
+	  (package-get-load-package-file lispdir "auto-autoloads")
+	  t)
+      nil)
     ))
 
 ;;;###autoload
@@ -228,60 +351,151 @@ order so one is better off listing easily reached sites first.
 
 Once the package is retrieved, its md5 checksum is computed.  If that
 sum does not match that stored in `package-get-base' for this version
-of the package, an error is signalled."
-  (interactive "xPackage List: ")
+of the package, an error is signalled.
+
+Returns `t' upon success, the symbol `error' if the package was
+successfully installed but errors occurred during initialization, or
+`nil' upon error."
+  (interactive (package-get-interactive-package-query nil t))
   (let* ((this-package
 	  (package-get-info-version
 	   (package-get-info-find-package package-get-base
 					  package) version))
 	 (found nil)
 	 (search-dirs package-get-remote)
-	 (filename (package-get-info-prop this-package 'filename)))
+	 (base-filename (package-get-info-prop this-package 'filename))
+	 (package-status t)
+	 filenames full-package-filename package-lispdir)
     (if (null this-package)
 	(error "Couldn't find package %s with version %s"
 	       package version))
-    (if (null filename)
+    (if (null base-filename)
 	(error "No filename associated with package %s, version %s"
 	       package version))
+    (if (null install-dir)
+	(setq install-dir (package-admin-get-install-dir nil)))
+
+    ;; Contrive a list of possible package filenames.
+    ;; Ugly.  Is there a better way to do this?
+    (setq filenames (cons base-filename nil))
+    (if (string-match "^\\(..*\\)\.tar\.gz$" base-filename)
+	(setq filenames (cons (concat (match-string 1 base-filename) ".tgz")
+			      filenames)))
+
     (setq version (package-get-info-prop this-package 'version))
     (unless (and (eq conflict 'never)
 		 (package-get-installedp package version))
-      ;; Find the package from search list in package-get-remote
+      ;; Find the package from the search list in package-get-remote
       ;; and copy it into the staging directory.  Then validate
       ;; the checksum.  Finally, install the package.
-      (while (and search-dirs
-		  (not (file-exists-p (package-get-staging-dir filename))))
-	(if (file-exists-p (package-get-remote-filename
-			    (car search-dirs) filename))
-	    (copy-file (package-get-remote-filename (car search-dirs) filename)
-		       (package-get-staging-dir filename))
-	  (setq search-dirs (cdr search-dirs))
+      (catch 'done
+	(let (search-filenames current-dir-entry host dir current-filename)
+	  ;; In each search directory ...
+	  (while search-dirs
+	    (setq current-dir-entry (car search-dirs)
+		  host (car current-dir-entry)
+		  dir (car (cdr current-dir-entry))
+		  search-filenames filenames)
+
+	    ;; Look for one of the possible package filenames ...
+	    (while search-filenames
+	      (setq current-filename (car search-filenames))
+	      (if (null host)
+		  (progn
+		    ;; No host means look on the current system.
+		    (setq full-package-filename
+			  (substitute-in-file-name
+			   (expand-file-name current-filename
+					     (file-name-as-directory dir))))
+		    )
+		;; If the file exists on the remote system ...
+		(if (file-exists-p (package-get-remote-filename
+				    current-dir-entry current-filename))
+		    (progn
+		      ;; Get it
+		      (setq full-package-filename
+			    (package-get-staging-dir current-filename))
+		      (message "Retrieving package `%s' ..." 
+			       current-filename)
+		      (sit-for 0)
+		      (copy-file (package-get-remote-filename current-dir-entry
+							      current-filename)
+				 ))))
+	      ;; If we found it, we're done.
+	      (if (file-exists-p full-package-filename)
+		  (throw 'done nil))
+	      ;; Didn't find it.  Try the next possible filename.
+	      (setq search-filenames (cdr search-filenames))
+	      )
+	    ;; Try looking in the next possible directory ...
+	    (setq search-dirs (cdr search-dirs))
+	    )
 	  ))
-      (if (not (file-exists-p (package-get-staging-dir filename)))
-	  (error "Unable to find file %s" filename))
+
+      (if (or (not full-package-filename)
+	      (not (file-exists-p full-package-filename)))
+	  (error "Unable to find file %s" base-filename))
       ;; Validate the md5 checksum
       ;; Doing it with XEmacs removes the need for an external md5 program
+      (message "Validating checksum for `%s'..." package) (sit-for 0)
       (with-temp-buffer
 	;; What ever happened to i-f-c-literally
 	(let (file-name-handler-alist)
-	  (insert-file-contents-internal (package-get-staging-dir filename)))
+	  (insert-file-contents-internal full-package-filename))
 	(if (not (string= (md5 (current-buffer))
 			  (package-get-info-prop this-package
 						 'md5sum)))
-	    (error "Package %s does not match md5 checksum" filename)))
-      (message "Retrieved package %s" filename) (sit-for 0)
+	    (error "Package %s does not match md5 checksum" base-filename)))
+
+      ;; Now delete old lisp directory, if any
+      ;;
+      ;; Gads, this is ugly.  However, we're not supposed to use `concat'
+      ;; in the name of portability.
+      (if (and (setq package-lispdir (expand-file-name "lisp" install-dir))
+	       (setq package-lispdir (expand-file-name (symbol-name package)
+						       package-lispdir))
+	       (file-accessible-directory-p package-lispdir))
+	  (progn
+	    (message "Removing old lisp directory \"%s\" ..." package-lispdir)
+	    (sit-for 0)
+	    (package-get-rmtree package-lispdir)
+	    ))
+
+      (message "Installing package `%s' ..." package) (sit-for 0)
       (let ((status
-	     (package-admin-add-binary-package
-	      (package-get-staging-dir filename)
-              install-dir)))
-	(when (not (= status 0))
-	  (message "Package failed.")
-	  (switch-to-buffer package-admin-temp-buffer)))
-      (sit-for 0)
-      (message "Added package") (sit-for 0)
+	     (package-admin-add-binary-package full-package-filename
+					       install-dir)))
+	(if (= status 0)
+	    (progn
+	      ;; clear messages so that only messages from
+	      ;; package-get-init-package are seen, below.
+	      (clear-message)
+	      (if (package-get-init-package package-lispdir)
+		  (progn
+		    (message "Added package `%s'" package)
+		    (sit-for 0)
+		    )
+		(progn
+		  ;; display message only if there isn't already one.
+		  (if (not (current-message))
+		      (progn
+			(message "Added package `%s' (errors occurred)"
+				 package)
+			(sit-for 0)
+			))
+		  (if package-status
+		      (setq package-status 'errors))
+		  ))
+	      )
+	  (message "Installation of package %s failed." base-filename)
+	  (sit-for 0)
+	  (switch-to-buffer package-admin-temp-buffer)
+	  (setq package-status nil)
+	  ))
       (setq found t))
     (if (and found package-get-remove-copy)
-	(delete-file (package-get-staging-dir filename)))
+	(delete-file full-package-filename))
+    package-status
     ))
 
 (defun package-get-info-find-package (which name)
@@ -306,7 +520,7 @@ from a version returned by `package-get-info-version'."
   `package-get-info-find-package'.  If VERSION is nil, then return the 
   first (aka most recent) version.  Use `package-get-info-find-prop'
   to retrieve a particular property from the value returned by this."
-  (interactive "xPackage Info: \nsVersion: ")
+  (interactive (package-get-interactive-package-query t t))
   (while (and version package (not (string= (plist-get (car package) 'version) version)))
     (setq package (cdr package)))
   (if package (car package)))
@@ -347,9 +561,9 @@ Creates `package-get-dir'  it it doesn't exist."
   (interactive "FPackage filename: ")
   (if (not (file-exists-p package-get-dir))
       (make-directory package-get-dir))
-  (concat 
-   (file-name-as-directory package-get-dir)
-   (file-name-nondirectory (or (nth 2 (efs-ftp-path filename)) filename))))
+  (expand-file-name
+   (file-name-nondirectory (or (nth 2 (efs-ftp-path filename)) filename))
+   (file-name-as-directory package-get-dir)))
        
 
 (defun package-get-remote-filename (search filename)
@@ -460,10 +674,12 @@ Entries in the customization file are retrieved from package-get-base.el."
   (let ((custom-buffer (find-file-noselect 
 			(or (package-get-file-installed-p 
 			     "package-get-custom.el")
-			    (concat (file-name-directory 
-				     (package-get-file-installed-p 
-				      "package-get-base.el"))
-				    "package-get-custom.el"))))
+			    (expand-file-name
+			     "package-get-custom.el"
+			     (file-name-directory 
+			      (package-get-file-installed-p 
+			       "package-get-base.el"))
+			     ))))
 	(pkg-groups nil))
 
     ;; clear existing stuff

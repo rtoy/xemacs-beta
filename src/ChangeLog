@@ -1,3 +1,41 @@
+1998-09-05  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre12 is released.
+
+1998-09-02  Andy Piper  <andyp@parallax.co.uk>
+
+	* emacs.c (main_1): init_ralloc() if initialised and we have REL_ALLOC
+
+	* ralloc.c: uncomment __morecore.
+
+1998-09-92  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c(winsock_writer): Supply a dummy 4th argument to
+	  WriteFile() to fix a winsock 1.x bug on Win95.
+
+1998-08-26  Gunnar Evermann  <Gunnar.Evermann@nats.informatik.uni-hamburg.de>
+
+	* frame-x.c (x_delete_frame): Flush the X output buffer after
+	calling XtDestroyWidget to ensure that the windows are really
+	killed right now. 
+
+1998-08-26  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* menubar-x.c (my_run_hook): New unused function.
+	(pre_activate_callback): Use run_hook for Qactivate_menubar_hook,
+	since we ignore the results of the contained functions anyway.
+
+1998-08-26  P. E. Jareth Hein  <jareth@camelot.co.jp>
+
+	* glyphs-eimage.c (gif_instantiate): Fix a crash in handling
+	interlaced GIF files that are smaller than 4 lines high...
+
+1998-08-31  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* macros.c (Fend_kbd_macro): Remove trailing period from error
+	message.
+	(Fexecute_kbd_macro): Ditto.
+
 1998-08-22  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre11 is released.

@@ -38,6 +38,10 @@ See the Info documentation under "Packages" for more information.
 See the file `etc/PACKAGES' in the distribution for a partial list of
 packages available at the time of the 21.0 release.
 
+IMPORTANT NOTE: XEmacs currently expects the user-specific package
+hierarchy in ~/.xemacs.  This will probably change to
+~/.xemacs/packages in a future version of XEmacs.
+
 ** XEmacs is now supported under Microsoft Windows 95/98 and Windows
 NT operating systems.  For starters, look at the XEmacs on Windows FAQ
 at <URL:http://jagor.srce.hr/~hniksic/xemacs-on-windows-faq.txt>.  To
@@ -321,12 +325,22 @@ make DLLs are in the modules subdirectory of the XEmacs source
 distribution.
 
 Please note that XEmacs is a GPL'ed program and there are restrictions
-on what kinds of binaries can be distributed with it.  In particular,
+on what kinds of binaries that can be linked with it.  In particular,
 proprietary DLLs without source cannot be distributed.  See the file
-COPYING for more detail.s
+COPYING for more details.
 
 * Lisp and internal changes in XEmacs 21.0
 ==========================================
+
+** There is a new configure option '--with-clash-detection' to
+   enable/disable 'lockdir' based clash detection. (Actually, it has
+   been there since 20.4, but was not documented then). The
+   implementation based on a central locking directory can cause
+   severe slowdowns on networked file systems. Therefore the default
+   has been changed to build with clash detection disabled, pending
+   reimplementation of the feature (most likely compatible with the
+   new implementation in recent FSF verions and Interleaf) in an
+   upcoming version.
 
 ** It is now possible to build XEmacs with support for 31-bit Lisp
 integers (normally, Lisp integers are only 28 bits wide on 32-bit
