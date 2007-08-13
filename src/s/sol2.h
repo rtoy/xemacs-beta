@@ -18,25 +18,6 @@
 
 #define POSIX
 
-/* FSF uses LD_SWITCH_X_SITE_AUX in the following definitions to deal with
-   the -R flags.  While the intention is good, it doesn't seem to work that
-   well -- Solaris is just too damn screwy.  So we go ahead and let
-   configure have special checks for Solaris. */
-
-/* Here is how to find X Windows.  The -R option says where
-   to find X windows at run time.  */
-#define LD_SWITCH_SYSTEM_RPATH -R/usr/dt/lib:/opt/SUNWdt/lib:/usr/openwin/lib
-#ifdef __GNUC__
-#define LD_SWITCH_SYSTEM -Xlinker LD_SWITCH_SYSTEM_RPATH
-#else 
-#define LD_SWITCH_SYSTEM  LD_SWITCH_SYSTEM_RPATH
-#endif
-
-/* XEmacs change -- Sun CC needs this to default to ANSI */
-#ifdef __SUNPRO_C
-#define C_SWITCH_SYSTEM -Xa
-#endif /* __SUNPRO_C */
-
 #ifndef NOT_C_CODE
 /* The standard Solaris library nsl has this function in it which is
    supposed to only be in the BSD compat stuff.  Yuck.  Of course,
@@ -69,7 +50,7 @@ int utimes (char *file, struct timeval *tvp);
  */
 
 #undef LIBS_SYSTEM
-#define LIBS_SYSTEM -lsocket -lnsl -lkvm -lelf -lgen -ldl
+#define LIBS_SYSTEM -lsocket -lnsl -lelf -lgen -ldl
 
 /* XEmacs change -- Mark Borges says this is needed. */
 #define LIBS_TERMCAP -ltermlib 
@@ -79,10 +60,9 @@ int utimes (char *file, struct timeval *tvp);
  */
 #if defined (NOT_C_CODE) && defined (ENERGIZE)
 
-# define LIB_INTL -L/usr/openwin/lib -lintl -lw
 # define LIBS_DEBUG
 # undef LIBS_SYSTEM
-# define LIBS_SYSTEM -lsocket -lnsl -lintl -lelf -lkvm -lgen -ldl
+# define LIBS_SYSTEM -lsocket -lnsl -lelf -lgen -ldl
 # define START_FILES
 # define LD_CMD $(CC)
 

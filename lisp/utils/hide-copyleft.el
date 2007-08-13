@@ -1,41 +1,63 @@
-;;; -*- Mode:Emacs-Lisp -*-
+;;; hide-copyleft.el --- hide obnoxious copyright prologs
 
-;;; "hide-copyleft.el" by Jamie Zawinski <jwz@lucid.com>, 19-jan-91.
-;;; Last modified  7-sep-91.
-;;;
-;;; I sometimes find it tiresome to have fifteen lines of copyright notice at
-;;; the beginning of each file.  Meta-< does not take you to the beginning of
-;;; the code, it takes you a windowfull or two away, which can be tedious on
-;;; slow terminal lines.
-;;;
-;;; I know what the copyright notice says; so this code makes all but the first
-;;; line of it be invisible, by using Emacs's selective-display feature.  The
-;;; text is still present and unmodified, but it is invisible.
-;;;
-;;; Elide the copyright notice with "Meta-X hide-copyleft-region".  Make it
-;;; visible again with "Control-U Meta-X hide-copyleft-region".  Or, if you're
-;;; sure you're not gonna get sued, you can do something like this in your
-;;; .emacs file:
-;;;
-;;;            (autoload 'hide-copyleft-region "hide-copyleft" nil t)
-;;;            (autoload 'unhide-copyleft-region "hide-copyleft" nil t)
-;;;            (setq emacs-lisp-mode-hook 'hide-copyleft-region
-;;;                  c-mode-hook 'hide-copyleft-region)
-;;;
-;;; This code (obviously) has quite specific knowledge of the wording of the 
-;;; various copyrights I've run across.  Let me know if you find one on which
-;;; it fails.
+;; Copyright (C) 1997 Sun Microsystems.
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc. 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Commentary:
+
+;; Written by Jamie Zawinski <jwz@netscape.com>, 19-jan-91.
+;; Minor fixes by Martin Buchholz, 14-may-97.
+;; Last modified  14-may-97.
+;;
+;; I sometimes find it tiresome to have fifteen lines of copyright notice at
+;; the beginning of each file.  Meta-< does not take you to the beginning of
+;; the code, it takes you a windowfull or two away, which can be tedious on
+;; slow terminal lines.
+;;
+;; I know what the copyright notice says; so this code makes all but the first
+;; line of it be invisible, by using Emacs's selective-display feature.  The
+;; text is still present and unmodified, but it is invisible.
+;;
+;; Elide the copyright notice with "Meta-X hide-copyleft-region".  Make it
+;; visible again with "Control-U Meta-X hide-copyleft-region".  Or, if you're
+;; sure you're not gonna get sued, you can do something like this in your
+;; .emacs file:
+;;
+;;       (autoload 'hide-copyleft-region   "hide-copyleft" nil t)
+;;       (autoload 'unhide-copyleft-region "hide-copyleft" nil t)
+;;       (add-hook 'emacs-lisp-mode-hook 'hide-copyleft-region)
+;;       (add-hook 'c-mode-hook 'hide-copyleft-region)
+;;
+;; This code (obviously) has quite specific knowledge of the wording of the 
+;; various copyrights I've run across.  Let me know if you find one on which
+;; it fails.
 
 (defvar copylefts-to-hide
   ;; There are some extra backslashes in these strings to prevent this code
   ;; from matching the definition of this list as the copyright notice!
   '(;; GNU
     ("free software\; you can redistribute it" .
-     "notice must be preserved on all")
+     "notice must be\ preserved on all")
     ("free software\; you can redistribute it" .
-     "copy of the GNU General Public License.*\n?.*\n?.*\n?.*\n?02139,")
+     "copy of the GNU General Public License.*\n?.*\n?.*\n?.*\n?.*\\(02139,\\|02111-1307\\)")
     ("distributed in the hope that it will be useful\," .
-     "notice must be preserved on all")
+     "notice must be\ preserved on all")
     ("free software\; you can redistribute it" .
      "General Public License for more details\\.")
     ;; X11
@@ -62,6 +84,7 @@
 The first one found is hidden, so order is significant.")
 
 
+;;;###autoload
 (defun hide-copyleft-region (&optional arg)
   "Make the legal drivel at the front of this file invisible.  Unhide it again
 with C-u \\[hide-copyleft-region]."
@@ -75,7 +98,7 @@ with C-u \\[hide-copyleft-region]."
 	(let ((mod-p (buffer-modified-p))
 	      (buffer-read-only nil)
 	      (rest copylefts-to-hide)
-	      pair start end max)
+	      pair start end)
 	  (widen)
 	  (goto-char (point-min))
 	  (while (and rest (not pair))
@@ -107,6 +130,7 @@ with C-u \\[hide-copyleft-region]."
 	  (setq selective-display t)
 	  (set-buffer-modified-p mod-p)))))))
 
+;;;###autoload
 (defun unhide-copyleft-region ()
   "If the legal nonsense at the top of this file is elided, make it visible again."
   (save-excursion

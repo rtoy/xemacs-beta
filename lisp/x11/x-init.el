@@ -179,13 +179,17 @@
     (define-key global-map 'menu	'popup-mode-menu)
     ;;(define-key global-map '(shift menu) 'x-goto-menubar) ;NYI
 
-    ;; This runs after the first frame has been created (we can't
-    ;; talk to the X server before that) but before the
-    ;; site-start-file or .emacs file, so sites and users have a
-    ;; chance to override it.
-    (add-hook 'before-init-hook 'x-initialize-keyboard)
-
     (setq post-x-win-initted t)))
+
+
+(when (featurep 'x)
+  (add-hook
+   'create-console-hook
+   (lambda (console)
+     (letf (((selected-console) console))
+       (when (eq 'x (console-type console))
+	 (x-initialize-keyboard))))))
+
 
 (defun make-frame-on-display (display &optional props)
   "Create a frame on the X display named DISPLAY.

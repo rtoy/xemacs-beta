@@ -587,8 +587,6 @@ syms_of_mule_ccl (void)
 #else  /* not emacs */
 #ifdef standalone
 
-#include <alloca.h>
-
 #define INBUF_SIZE 1024
 #define MAX_CCL_CODE_SIZE 4096
 

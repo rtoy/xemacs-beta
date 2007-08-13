@@ -122,7 +122,7 @@ report_file_error (CONST char *string, Lisp_Object data)
 
   /* mrb: #### Needs to be fixed at a lower level; errstring needs to
      be MULEized.  The following at least prevents a crash... */
-  Lisp_Object errstring = build_ext_string (strerror (errno), FORMAT_BINARY);
+  Lisp_Object errstring = build_ext_string (strerror (errno), FORMAT_NATIVE);
 
   /* System error messages are capitalized.  Downcase the initial
      unless it is followed by a slash.  */

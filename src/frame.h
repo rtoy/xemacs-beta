@@ -59,6 +59,11 @@ struct frame
   int pixheight;
   int pixwidth;
 
+#ifdef HAVE_TTY
+  /* The count of frame number.  This applies to TTY frames only. */
+  int order_count;
+#endif
+
   /* Width of the internal border.  This is a line of background color
      just inside the window's border.  It is normally only non-zero on
      X frames, but we put it here to avoid introducing window system
@@ -540,6 +545,7 @@ void hold_frame_size_changes (void);
 void unhold_one_frame_size_changes (struct frame *f);
 void unhold_frame_size_changes (void);
 void select_frame_1 (Lisp_Object frame);
+void select_frame_2 (Lisp_Object frame);
 struct frame *selected_frame (void);
 struct frame *device_selected_frame (struct device *d);
 struct frame *decode_frame (Lisp_Object frame);

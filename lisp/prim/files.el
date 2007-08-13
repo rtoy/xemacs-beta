@@ -314,7 +314,7 @@ Not actually set up until the first time you use it.")
 (defun parse-colon-path (cd-path)
   "Explode a colon-separated list of paths into a string list."
   (and cd-path
-       (let (cd-list cd-list (cd-start 0) cd-colon)
+       (let (cd-list (cd-start 0) cd-colon)
 	 (setq cd-path (concat cd-path path-separator))
 	 (while (setq cd-colon (string-match path-separator cd-path cd-start))
 	   (setq cd-list
@@ -1090,71 +1090,72 @@ run `normal-mode' explicitly."
                          (prin1-to-string err))))))
 
 (defvar auto-mode-alist
-  (mapcar
-   'purecopy
-   '(("\\.te?xt\\'" . text-mode)
-     ("\\.[ch]\\'" . c-mode)
-     ("\\.ltx\\'" . latex-mode)
-     ("\\.el\\'" . emacs-lisp-mode)
-     ("\\.l\\(i?sp\\)?\\'" . lisp-mode)
-     ("\\.f\\(or\\)?\\'" . fortran-mode)
-     ("\\.p\\(as\\)?\\'" . pascal-mode)
-     ("\\.ad[abs]\\'" . ada-mode)
-     ("\\.p[lm]\\'" . perl-mode)
-     ("\\.\\([CH]\\|cc\\|hh\\)\\'" . c++-mode)
-     ("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode)
-     ("\\.java\\'" . java-mode)
-     ("\\.ma?k\\'" . makefile-mode)
-     ("[Mm]akefile\\(.in\\)?\\(.in\\)?\\'" . makefile-mode)
+  '(("\\.te?xt\\'" . text-mode)
+    ("\\.[ch]\\'" . c-mode)
+    ("\\.ltx\\'" . latex-mode)
+    ("\\.el\\'" . emacs-lisp-mode)
+    ("\\.l\\(i?sp\\)?\\'" . lisp-mode)
+    ("\\.f\\(or\\)?\\'" . fortran-mode)
+    ("\\.p\\(as\\)?\\'" . pascal-mode)
+    ("\\.ad[abs]\\'" . ada-mode)
+    ("\\.p[lm]\\'" . perl-mode)
+    ("\\.\\([CH]\\|cc\\|hh\\)\\'" . c++-mode)
+    ("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode)
+    ("\\.java\\'" . java-mode)
 ;;; Less common extensions come here
 ;;; so more common ones above are found faster.
-     ("\\.texi\\(nfo\\)?\\'" . texinfo-mode)
-     ("\\.[sS]\\'" . asm-mode)
-     ("[Cc]hange.?[Ll]og?\\(.[0-9]+\\)?\\'" . change-log-mode)
-     ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
-     ("\\.scm\\(\\.[0-9]*\\)?\\'" . scheme-mode)
-     ("\\.py\\'" . python-mode)
-     ("\\.e\\'" . eiffel-mode)
-     ("\\.mss\\'" . scribe-mode)
-     ("\\.m\\([mes]\\|an\\)\\'" . nroff-mode)
-     ("\\.icn\\'" . icon-mode)
+    ("\\.texi\\(nfo\\)?\\'" . texinfo-mode)
+    ("\\.[sS]\\'" . asm-mode)
+    ("[Cc]hange.?[Ll]og?\\(.[0-9]+\\)?\\'" . change-log-mode)
+    ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
+    ("\\.scm\\(\\.[0-9]*\\)?\\'" . scheme-mode)
+    ("\\.py\\'" . python-mode)
+    ("\\.e\\'" . eiffel-mode)
+    ("\\.mss\\'" . scribe-mode)
+    ("\\.m\\([mes]\\|an\\)\\'" . nroff-mode)
+    ("\\.icn\\'" . icon-mode)
 ;;; The following should come after the ChangeLog pattern
 ;;; for the sake of ChangeLog.1, etc.
 ;;; and after the .scm.[0-9] pattern too.
-     ("\\.[12345678]\\'" . nroff-mode)
-     ("\\.[tT]e[xX]\\'" . tex-mode)
-     ("\\.\\(sty\\|cls\\|bbl\\)\\'" . latex-mode)
-     ("\\.bib\\'" . bibtex-mode)
-     ("\\.article\\'" . text-mode)
-     ("\\.letter\\'" . text-mode)
-     ("\\.\\(tcl\\|exp\\)\\'" . tcl-mode)
-     ("\\.wrl\\'" . vrml-mode)
-     ("\\.f90\\'" . f90-mode)
-     ("\\.awk\\'" . awk-mode)
-     ("\\.prolog\\'" . prolog-mode)
-     ("\\.tar\\'" . tar-mode)
-     ("\\.\\(arc\\|zip\\|lzh\\|zoo\\)\\'" . archive-mode)
-     ;; Mailer puts message to be edited in
-     ;; /tmp/Re.... or Message
-     ("^/tmp/Re" . text-mode)
-     ("/Message[0-9]*\\'" . text-mode)
-     ("/drafts/[0-9]+\\'" . mh-letter-mode)
-     ;; some news reader is reported to use this
-     ("^/tmp/fol/" . text-mode)
-     ("\\.y\\'" . c-mode)
-     ("\\.lex\\'" . c-mode)
-     ("\\.oak\\'" . scheme-mode)
-     ("\\.s?html?\\'" . html-mode)
-     ("\\.htm?l?3\\'" . html3-mode)
-     ("\\.\\(sgml?\\|dtd\\)\\'" . sgml-mode)
-     ("\\.c?ps\\'" . postscript-mode)
-     ;; .emacs following a directory delimiter
-     ;; in either Unix or VMS syntax.
-     ("[]>:/]\\..*emacs\\'" . emacs-lisp-mode)
-     ;; _emacs following a directory delimiter
-     ;; in MsDos syntax
-     ("[:/]_emacs\\'" . emacs-lisp-mode)
-     ("\\.ml\\'" . lisp-mode)))
+    ("\\.[12345678]\\'" . nroff-mode)
+    ("\\.[tT]e[xX]\\'" . tex-mode)
+    ("\\.\\(sty\\|cls\\|bbl\\)\\'" . latex-mode)
+    ("\\.bib\\'" . bibtex-mode)
+    ("\\.article\\'" . text-mode)
+    ("\\.letter\\'" . text-mode)
+    ("\\.\\(tcl\\|exp\\)\\'" . tcl-mode)
+    ("\\.wrl\\'" . vrml-mode)
+    ("\\.f90\\'" . f90-mode)
+    ("\\.awk\\'" . awk-mode)
+    ("\\.prolog\\'" . prolog-mode)
+    ("\\.tar\\'" . tar-mode)
+    ("\\.\\(arc\\|zip\\|lzh\\|zoo\\)\\'" . archive-mode)
+    ;; Mailer puts message to be edited in
+    ;; /tmp/Re.... or Message
+    ("^/tmp/Re" . text-mode)
+    ("/Message[0-9]*\\'" . text-mode)
+    ("/drafts/[0-9]+\\'" . mh-letter-mode)
+    ;; some news reader is reported to use this
+    ("^/tmp/fol/" . text-mode)
+    ("\\.y\\'" . c-mode)
+    ("\\.lex\\'" . c-mode)
+    ("\\.oak\\'" . scheme-mode)
+    ("\\.s?html?\\'" . html-mode)
+    ("\\.htm?l?3\\'" . html3-mode)
+    ("\\.\\(sgml?\\|dtd\\)\\'" . sgml-mode)
+    ("\\.c?ps\\'" . postscript-mode)
+    ;; .emacs following a directory delimiter
+    ;; in either Unix or VMS syntax.
+    ("[]>:/]\\..*emacs\\'" . emacs-lisp-mode)
+    ;; _emacs following a directory delimiter
+    ;; in MsDos syntax
+    ("[:/]_emacs\\'" . emacs-lisp-mode)
+    ("\\.m4\\'" . m4-mode)
+    ("configure\\.in\\'" . autoconf-mode)
+    ("\\.ml\\'" . lisp-mode)
+    ("\\.ma?k\\'" . makefile-mode)
+    ("[Mm]akefile\\(\\.\\|\\'\\)" . makefile-mode)
+    )
   "Alist of filename patterns vs. corresponding major mode functions.
 Each element looks like (REGEXP . FUNCTION) or (REGEXP FUNCTION NON-NIL).
 \(NON-NIL stands for anything that is not nil; the value does not matter.)
@@ -1166,17 +1167,15 @@ calling FUNCTION (if it's not nil), we delete the suffix that matched
 REGEXP and search the list again for another match.")
 
 (defconst interpreter-mode-alist
-  (mapcar 'purecopy
-          '(("^#!.*csh"	  . sh-mode)
-            ("^#!.*sh\\b" . ksh-mode)
-            ("^#!.*\\b\\(scope\\|wish\\|tcl\\|expect\\)" . tcl-mode)
-            ("perl"   . perl-mode)
-            ("python" . python-mode)
-            ("awk\\b" . awk-mode)
-            ("rexx"   . rexx-mode)
-            ("scm"    . scheme-mode)
-            ("^:"     . ksh-mode)
-            ))
+  '(("^#!.*csh"	  . sh-mode)
+    ("^#!.*sh\\b" . ksh-mode)
+    ("^#!.*\\b\\(scope\\|wish\\|tcl\\|expect\\)" . tcl-mode)
+    ("perl"   . perl-mode)
+    ("python" . python-mode)
+    ("awk\\b" . awk-mode)
+    ("rexx"   . rexx-mode)
+    ("scm"    . scheme-mode)
+    ("^:"     . ksh-mode))
   "Alist mapping interpreter names to major modes.
 This alist is used to guess the major mode of a file based on the
 contents of the first line.  This line often contains something like:

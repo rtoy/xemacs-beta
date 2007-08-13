@@ -32,29 +32,35 @@ Boston, MA 02111-1307, USA.  */
 #undef NeXT
 #undef i386
 
-#ifdef USE_GNU_MAKE
 /* For performance and consistency, no built-in rules */
 .SUFFIXES:
-#endif
 .SUFFIXES: .c .o .i .h
 dot = .
 /* On Xenix and the IBM RS6000, double-dot gets screwed up.  */
 lispdir = ${srcdir}/$(dot)$(dot)/lisp/
 libsrc = $(dot)$(dot)/lib-src/
 etcdir = $(dot)$(dot)/etc/
-/* This allows you to put the Mule files in a separate location.
-   Change this if you so desire. */
-muledirfromsrc = $(dot)
-MULESRCDIR = ${srcdir}/${muledirfromsrc}
 
 /* Here are the things that we expect ../configure to edit. */
 srcdir=@srcdir@
 CC=@CC@
 CPP=@CPP@
 CFLAGS=@CFLAGS@
-C_SWITCH_SYSTEM=@c_switch_system@
+CPPFLAGS=@CPPFLAGS@
+LDFLAGS=@LDFLAGS@
+
+c_switch_general=@c_switch_general@
+c_switch_window_system=@c_switch_window_system@
+c_switch_all=@c_switch_all@
+ld_switch_general=@ld_switch_general@
+ld_switch_window_system=@ld_switch_window_system@
+ld_switch_all=@ld_switch_all@
+ld_libs_general=@ld_libs_general@
+ld_libs_window_system=@ld_libs_window_system@
+ld_libs_all=@ld_libs_all@
+
+extra_objs=@extra_objs@
 LN_S=@LN_S@
-native_sound_lib=@native_sound_lib@
 
 /* just to be sure the sh is used */
 SHELL=/bin/sh
@@ -88,23 +94,6 @@ vpath puresize_adjust.h
 VPATH=@srcdir@
 #endif
 
-#ifdef USE_LCC
-/* Why is this here?
-# undef LIB_STANDARD
-# define LIB_STANDARD
-*/
-# define LCCFLAGS -Xa -wucp -XW'[Oo]ld style func dcl' $(ENERGIZEP)
-#ifdef NEW_LCC
-# define LCCLINK -Xdbx
-#else
-# define LCCLINK
-#endif
-# define ORDINARY_LINK
-#else
-# define LCCFLAGS
-# define LCCLINK
-#endif
-
 /* On some machines #define register is done in config;
    do not let it interfere with this file.  */
 #undef register
@@ -112,10 +101,6 @@ VPATH=@srcdir@
 /* On some systems we may not be able to use the system make command. */
 #ifdef MAKE_COMMAND
 MAKE = MAKE_COMMAND
-#endif
-
-#ifdef C_COMPILER
-CC = C_COMPILER
 #endif
 
 /* Some machines do not have the standard C libraries in the usual place. */
@@ -134,33 +119,6 @@ CC = C_COMPILER
 #define LIBS_DEBUG -lg
 #endif
 
-/* Some s/*.h files define this to request special libraries.  */
-#ifndef LIBS_SYSTEM
-#define LIBS_SYSTEM
-#endif
-
-/* Some m/*.h files define this to request special libraries.  */
-#ifndef LIBS_MACHINE
-#define LIBS_MACHINE
-#endif
-
-#ifndef LIB_MATH
-# ifdef LISP_FLOAT_TYPE
-#  define LIB_MATH -lm
-# else /* ! defined (LISP_FLOAT_TYPE) */
-#  define LIB_MATH
-# endif /* ! defined (LISP_FLOAT_TYPE) */
-#endif /* LIB_MATH */
-
-/* Some s/*.h files define this to request special switches in ld.  */
-#ifndef LD_SWITCH_SYSTEM
-#if !defined (__GNUC__) && (defined(COFF_ENCAPSULATE) || (defined (BSD) && !defined (COFF)))
-#define LD_SWITCH_SYSTEM -X
-#else /* ! defined(COFF_ENCAPSULATE) || (defined (BSD) && !defined (COFF)) */
-#define LD_SWITCH_SYSTEM
-#endif /* ! defined(COFF_ENCAPSULATE) || (defined (BSD) && !defined (COFF)) */
-#endif /* LD_SWITCH_SYSTEM */
-
 #ifndef LD_SWITCH_CALL_SHARED
 #define LD_SWITCH_CALL_SHARED
 #endif /* define a call_shared switch */
@@ -169,56 +127,10 @@ CC = C_COMPILER
 #define LD_SWITCH_SHARED -c
 #endif /* define a shared switch */
 
-/* Some m/*.h files define this to request special switches in ld.  */
-#ifndef LD_SWITCH_MACHINE
-#define LD_SWITCH_MACHINE
-#endif
-
-/* Some m/*.h files define this to request special switches in cc.  */
-#ifndef C_SWITCH_MACHINE
-#define C_SWITCH_MACHINE
-#endif
-
-/* Some s/*.h files define this to request special switches in cc.  */
-#ifndef C_SWITCH_SYSTEM
-#define C_SWITCH_SYSTEM
-#endif
-
-/* These macros are for switches specifically related to X Windows.  */
-#ifndef C_SWITCH_X_MACHINE
-#define C_SWITCH_X_MACHINE
-#endif
-
-#ifndef C_SWITCH_X_SYSTEM
-#define C_SWITCH_X_SYSTEM
-#endif
-
-#ifndef C_SWITCH_X_SITE
-#define C_SWITCH_X_SITE
-#endif
-
-#ifndef LD_SWITCH_X_SYSTEM
-#define LD_SWITCH_X_SYSTEM
-#endif
-
-#ifndef LD_SWITCH_X_SITE
-#define LD_SWITCH_X_SITE
-#endif
-
-/* These can be passed in from config.h to define special load and
-   compile switches needed by individual sites */
-#ifndef LD_SWITCH_SITE
-#define LD_SWITCH_SITE
-#endif
-
-#ifndef C_SWITCH_SITE
-#define C_SWITCH_SITE
-#endif
-
 #ifndef ORDINARY_LINK
 
 #ifndef CRT0_COMPILE
-#define CRT0_COMPILE $(CC) -c $(ALL_CFLAGS) C_SWITCH_ASM 
+#define CRT0_COMPILE $(CC) -c $(cflags) C_SWITCH_ASM 
 #endif
 
 #ifndef START_FILES
@@ -261,394 +173,62 @@ STARTFILES =
 #define C_SWITCH_ASM
 #endif
 
-ILD=/cadillac1/code/bin.sun4/ild
-
 PURIFY_PROG=purify
 PURIFY_FLAGS=-chain-length=16 -ignore-signals=SIGPOLL -log-file=puremacs.log \
              -messages=batch -show-directory=yes -windows=yes \
              -cache-dir=. -always-use-cache-dir=yes
-QUANTIFY_PROG=quantify
-QUANTIFY_FLAGS=-windows=no -record-data=no
 PURECOV_PROG=purecov
 #ifdef  QUANTIFY
-#define QUANTIFY_INCLUDES -I/local/include
-#define QUANTIFY_LIBS /local/lib/quantify_stubs.a
-#else
-#define QUANTIFY_INCLUDES
-#define QUANTIFY_LIBS
-#endif
-
-/* Figure out whether the system cpp can handle long names.
-   Do it by testing it right now.
-   If it loses, arrange to use the GNU cpp.  */
-
-#define LONGNAMEBBBFOOX
-#ifdef LONGNAMEBBBARFOOX
-/* Installed cpp fails to distinguish those names!  */
-/* Arrange to compile the GNU cpp later on */
-#define NEED_CPP
-/* Cause cc to invoke the cpp that comes with Emacs,
-   which will be in a file named localcpp.  */
-MYCPPFLAG= -Blocal
-/* LOCALCPP is the local one or nothing.
-   CPP is the local one or the standardone.  */
-LOCALCPP= localcpp
-#else
-MYCPPFLAGS=
-LOCALCPP=
-#endif /* ! defined (LONGNAMEBBBARFOOX) */
+quantify_prog  = quantify
+quantify_flags = -windows=no -record-data=no
+quantify_includes = -I/local/include
+quantify_libs = /local/lib/quantify_stubs.a
+#endif /* QUANTIFY */
 
 #ifdef SHORTNAMES
 SHORT= shortnames
-#else
-SHORT=
 #endif
 
 #ifdef HAVE_NATIVE_SOUND
-# if defined (SOLARIS2)
-#   define SOUND_CFLAGS		C_SWITCH_SITE -I/usr/demo/SOUND/include
-#   define SOUND_OBJS		sunplay.o
-# elif defined (SPARC)
-#   define SOUND_CFLAGS	C_SWITCH_SITE -I/usr/demo/SOUND
-#   define SOUND_OBJS		sunplay.o
-# elif defined (IRIX4) || defined (IRIX5) || defined (IRIX6)
-#   define SOUND_CFLAGS
-#   define SOUND_OBJS		sgiplay.o
-# elif defined (hp9000s800)
-#   ifdef USE_GCC
-#     define SOUND_CFLAGS	-Dconst= -Dvolatile= -I/usr/audio/examples
-#   else /* ! USE_GCC */
-#     define SOUND_CFLAGS	+e -I/usr/audio/examples 
-#   endif /* USE_GCC */
-#   define SOUND_OBJS		hpplay.o
-# elif defined (LINUX) || defined(__FreeBSD__) || defined (__bsdi__)
-#   define SOUND_CFLAGS
-#   define SOUND_OBJS		linuxplay.o
-# else
-  ERROR!!  HAVE\_NATIVE\_SOUND can only be defined on Solaris, SunOS, SGI, hp9000s800, or FreeBSD, BSD/I, Linux
-# endif /* OS */
-#else /* !HAVE_NATIVE_SOUND */
-# define SOUND_CFLAGS
-# define SOUND_OBJS
-#endif /* ! HAVE_NATIVE_SOUND */
-
-#ifdef HAVE_NAS_SOUND
-# define NAS_CFLAGS C_SWITCH_SITE 
-# define NAS_LIBS -laudio
-# define NAS_OBJS nas.o
-#else
-# define NAS_CFLAGS
-# define NAS_LIBS
-# define NAS_OBJS
-#endif /* HAVE_NAS_SOUND */
-
-#ifdef ENERGIZE
-CONN_DIR=../connection
-# define ENERGIZE_INCLUDES -I${I_DIR_PREFIX}${CONN_DIR}
-# define ENERGIZE_LDFLAGS -L${CONN_DIR}
-# if defined(ENERGIZE_3)
-#  define ENERGIZE_LIBS -lenergize
-# elif defined (ENERGIZE_2)
-#  define ENERGIZE_LIBS -lconn
-# else
-#  define ENERGIZE_LIBS -lconn
-# endif
-#else /* !ENERGIZE */
-# define ENERGIZE_INCLUDES
-# define ENERGIZE_LDFLAGS
-# define ENERGIZE_LIBS
-#endif /* !ENERGIZE */
-
-#ifdef HAVE_SOCKS
-# define SOCKS_LIBS -lsocks
-#else /* !HAVE_SOCKS */
-# define SOCKS_LIBS
-#endif /* !HAVE_SOCKS */
-
-#ifdef HAVE_GIF
-# define GIF_OBJS dgif_lib.o gif_err.o gifalloc.o
-#else
-# define GIF_OBJS
+sound_cflags=@sound_cflags@
 #endif
 
-#ifdef HAVE_PNG
-# ifdef HAVE_PNG_GNUZ
-PNG_LIBS = -lpng -lgz
-# else
-PNG_LIBS = -lpng -lz
-# endif
-#endif /* HAVE_PNG */
+LWLIB_SRCDIR = ${srcdir}/$(dot)$(dot)/lwlib
 
-#if defined (HAVE_LIBKSTAT) && defined (HAVE_KSTAT_H)
-LIB_KSTAT = -lkstat
-#endif /* KSTAT */
+#ifdef HAVE_X_WINDOWS
+LWLIB_BUILDDIR = $(dot)$(dot)/lwlib
 
-#ifdef HAVE_DATABASE
+LWLIB_LDFLAGS  = -L$(LWLIB_BUILDDIR)
+LWLIB_LIBS     =  -llw
+LWLIB_CPPFLAGS = -I$(LWLIB_SRCDIR)
+LWLIB_DEPS = $(LWLIB_BUILDDIR)/liblw.a
 
-# define DATABASE_OBJS database.o
+x_objs = balloon_help.o balloon-x.o console-x.o device-x.o event-Xt.o frame-x.o \
+	 glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o
 
-# if !defined (DATABASE_DBM_LIBS)
-#  if defined (HAVE_GNU_DBM) && defined (HAVE_LIBGDBM)
-#   define DATABASE_DBM_LIBS -lgdbm
-#  elif defined (HAVE_DBM) && defined (HAVE_LIBDBM)
-#   define DATABASE_DBM_LIBS -ldbm
-#  else
-#   define DATABASE_DBM_LIBS
-#  endif
-# endif
+#ifdef AIX4
+LIBI18N = -li18n
+#endif /* AIX4 */
 
-# if !defined (DATABASE_DB_LIBS)
-#  if defined (HAVE_BERKELEY_DB) && defined (HAVE_LIBDB)
-#   define DATABASE_DB_LIBS -ldb
-#  else
-#   define DATABASE_DB_LIBS
-#  endif
-# endif
-
-# define DATABASE_LIBS DATABASE_DBM_LIBS DATABASE_DB_LIBS
-
-#else /* not HAVE_DATABASE */
-
-# define DATABASE_OBJS
-# define DATABASE_LIBS
-
-#endif /* not HAVE_DATABASE */
-
-#ifdef HAVE_JPEG
-JPEG_LIBS = -ljpeg
-#endif
-
-#define NO_GNU_LINKER
-
-#ifdef DYNODUMP
-#ifdef __GNUC__
-#undef NO_GNU_LINKER
-#define NO_GNU_LINKER -fno-gnu-linker
-#endif
-DYNODUMPBUILDDIR = $(dot)$(dot)/dynodump
-#define DYNODUMP_DEPS $(DYNODUMPBUILDDIR)/dynodump.so
-#else
-#define DYNODUMP_DEPS
-#endif
-
-#ifdef MULE
-#define MULE_INC -I${MULESRCDIR}
-#else
-#define MULE_INC
-#endif
-
-/* If you want to debug, you can add C_DEBUG_SWITCH to this list.
-   If you want to optimize, you can add C_OPTIMIZE_SWITCH to the list.  */
+X11_libs= $(LIBX11_LIBS) $(libx11_intl) $(LIBI18N)
+#endif /* HAVE_X_WINDOWS */
 
 /* -Demacs is needed to make some files produce the correct version
-   for use in Emacs.
+   for use in Emacs. */
 
-   -DHAVE_CONFIG_H is needed for some other files to take advantage of
-   the information in "config.h".  */
+src_cppflags=-Demacs -I${srcdir} $(LWLIB_CPPFLAGS) $(CPPFLAGS)
+cppflags = -I. $(c_switch_all) $(src_cppflags)
 
-/* C_SWITCH_X_SITE must come before C_SWITCH_X_MACHINE and C_SWITCH_X_SYSTEM
-   since it may have -I options that should override those two.  */
+cflags= $(CFLAGS) $(cppflags)
 
-CPPFLAGS=-Demacs -DHAVE_CONFIG_H $(MYCPPFLAG) -I. \
-	   -I${srcdir} MULE_INC LCCFLAGS C_SWITCH_MACHINE C_SWITCH_SYSTEM \
-	   C_SWITCH_SITE C_SWITCH_X_SITE C_SWITCH_X_MACHINE \
-	   C_SWITCH_X_SYSTEM $(LIBX11_INCLUDES) QUANTIFY_INCLUDES 
-ALL_CFLAGS=$(CPPFLAGS) ${CFLAGS}
-
-#ifdef NEED_XILDOFF
-#define XILDOFF -xildoff
-#else
-#define XILDOFF
-#endif
-
-LDFLAGS = LD_SWITCH_SITE LD_SWITCH_X_SITE LD_SWITCH_SYSTEM \
-	  LD_SWITCH_X_SYSTEM LD_SWITCH_MACHINE \
-	  -L. $(LIBX11_LDFLAGS) ENERGIZE_LDFLAGS XILDOFF NO_GNU_LINKER
+ldflags = $(ld_switch_all) -L. $(no_gnu_linker) $(LWLIB_LDFLAGS)
 
 .c.o:
-	$(CC) -c $(ALL_CFLAGS) $<
+	$(CC) -c $(cflags) $<
 
 /* Create preprocessor output (debugging purposes only) */
 .c.i:
-	$(CC) -P $(CPPFLAGS) $<
-
-
-#ifndef LIBX11_MACHINE
-#define LIBX11_MACHINE
-#endif
-
-#ifndef LIBX11_SYSTEM
-#define LIBX11_SYSTEM
-#endif
-
-LWLIBSRCDIR = ${srcdir}/$(dot)$(dot)/lwlib
-
-#ifdef HAVE_X_WINDOWS
-
-#ifdef HAVE_TOOLBARS
-#define TOOLBAR_X_OBJS toolbar-x.o
-#else
-#define TOOLBAR_X_OBJS
-#endif
-
-#ifdef HAVE_MENUBARS
-#define MENUBAR_X_OBJS menubar-x.o
-#else
-#define MENUBAR_X_OBJS
-#endif
-
-#ifdef HAVE_SCROLLBARS
-#define SCROLLBAR_X_OBJS scrollbar-x.o
-#else
-#define SCROLLBAR_X_OBJS
-#endif
-
-#ifdef HAVE_DIALOGS
-#define DIALOG_X_OBJS dialog-x.o
-#else
-#define DIALOG_X_OBJS
-#endif
-
-#if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
-#define GUI_X_OBJS gui-x.o
-#else
-#define GUI_X_OBJS
-#endif
-
-#ifndef HAVE_XIM
-#define INPUT_METHOD_X_OBJS input-method-xfs.o
-#elif defined(XIM_MOTIF)
-#define INPUT_METHOD_X_OBJS input-method-motif.o
-#else
-#define INPUT_METHOD_X_OBJS input-method-xlib.o
-#endif
-
-#define XOBJS console-x.o device-x.o DIALOG_X_OBJS event-Xt.o frame-x.o \
-	      glyphs-x.o GUI_X_OBJS MENUBAR_X_OBJS objects-x.o redisplay-x.o \
-              SCROLLBAR_X_OBJS TOOLBAR_X_OBJS INPUT_METHOD_X_OBJS xgccache.o \
-	      xselect.o \
-	      balloon_help.o
-#define BALLOONOBJS balloon-x.o
-#ifdef HAVE_XMU
-#define XMU_OBJS
-XMU_LIB = -lXmu
-#else
-#define XMU_OBJS xmu.o
-#endif
-
-/* LWLIBSRCDIR is defined above regardless of X being used or not.
-   This avoids having to conditionalize the dependencies on lwlib.h */
-LWLIBBUILDDIR = $(dot)$(dot)/lwlib
-
-LIBX11_LDFLAGS = -L$(LWLIBBUILDDIR)
-LIBX11_INCLUDES = -I$(LWLIBSRCDIR)
-
-#ifdef HAVE_XPM
-/* Force the Xpm library to be statically linked, always, if at Sun. */
-# ifdef USAGE_TRACKING
-    XPM_LIBS = -Bstatic -lXpm -Bdynamic
-# else
-    XPM_LIBS = -lXpm
-# endif /* at Sun */
-#endif /* HAVE_XPM */
-
-#ifdef HAVE_XFACE
-XFACE_LIBS = -lcompface
-#endif /* HAVE_XFACE */
-
-#ifdef USAGE_TRACKING
-/* Force the ut library to be statically linked, always. */
-# if defined (SOLARIS2) || defined (SUNOS4)
-    USAGE_TRACKING_LIBS = -Bstatic -lut -Bdynamic
-# else
-    USAGE_TRACKING_LIBS = -lut
-# endif /* SOLARIS2 || SUNOS4 */
-#else
-USAGE_TRACKING_LIBS =
-#endif /* USAGE_TRACKING */
-
-
-#ifdef LWLIB_USES_MOTIF
-TOOLKIT_LIBS = -lXm
-#ifdef LWLIB_USES_ATHENA
-TOOLKIT_LIBS = -lXm -lXaw
-#endif /* LWLIB_USES_ATHENA */
-#else /* ! LWLIB_USES_MOTIF */
-TOOLKIT_LIBS = -lXaw
-#endif /* ! LWLIB_USES_MOTIF */
-
-LIBX11_LIBS = -llw $(TOOLKIT_LIBS) $(XPM_LIBS) $(XFACE_LIBS) $(JPEG_LIBS) $(PNG_LIBS) $(USAGE_TRACKING_LIBS) 
-
-#ifdef AIX4
-# define LIBI18N -li18n
-#else
-# define LIBI18N
-#endif /* AIX4 */
-
-#if (defined(LINUX) && defined(HAVE_CDE))
-# define LIBX11_INTL -lXintl
-#else
-# define LIBX11_INTL
-#endif
-
-#ifdef THIS_IS_X11R6
-#ifdef NEED_LIBW
-LIBW= -lw
-#else
-LIBW=
-#endif
-LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lSM -lICE $(LIBW) -lXext LIBX11_INTL -lX11 LIBX11_MACHINE LIBX11_SYSTEM LIBI18N
-#else
-LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lXext LIBX11_INTL -lX11 LIBX11_MACHINE LIBX11_SYSTEM LIBI18N
-#endif
-
-#else
-# define XOBJS
-# define XMU_OBJS
-# define BALLOONOBJS
-#endif /* HAVE_X_WINDOWS */
-
-/* We should be able to deal with Canna and Wnn in tty mode once MULE is */
-/* ported to tty, right? */
-#ifdef MULE
-
-/* We ignore mule-mcpath.o for the moment. */
-
-# ifdef HAVE_CANNA
-#  define CANNA_OBJS mule-canna.o
-#  define CANNA_OBJ_SRC ${muledirfromsrc}/mule-canna.c
-#  define LIB_CANNA -lcanna -lRKC
-# else
-#  define CANNA_OBJS
-#  define CANNA_OBJ_SRC
-#  define LIB_CANNA
-# endif
-# ifdef HAVE_WNN
-#  define WNN_OBJS mule-wnnfns.o
-#  define WNN_OBJ_SRC ${muledirfromsrc}/mule-wnnfns.c
-#  define LIB_WNN -lwnn
-# else
-#  define WNN_OBJS
-#  define WNN_OBJ_SRC
-#  define LIB_WNN
-# endif
-/* Chuck says that you have to have at least one specified actual
-   object file per line. */
-mule_objs=	mule.o mule-ccl.o CANNA_OBJS \
-		WNN_OBJS mule-charset.o mule-coding.o
-mule_obj_src=	${muledirfromsrc}/mule.c \
-		${muledirfromsrc}/mule-ccl.c CANNA_OBJ_SRC \
-		WNN_OBJ_SRC ${muledirfromsrc}/mule-charset.c \
-		${muledirfromsrc}/mule-coding.c
-
-#else /* not MULE */
-
-mule_objs=
-mule_obj_src=
-#define LIB_CANNA
-#define LIB_WNN
-
-#endif /* not MULE */
+	$(CC) -P $(cppflags) $<
 
 #ifndef ORDINARY_LINK
 /* Fix linking if compiled with GCC.  */
@@ -697,6 +277,13 @@ GNULIB_VAR =
 GNULIB_VAR =
 #endif /* not ORDINARY_LINK */
 
+/* A macro which other sections of the makefile can redefine to munge the
+   flags before they are passed to LD.  This is helpful if you have
+   redefined LD to something odd, like "gcc".  */
+#ifndef YMF_PASS_LDFLAGS
+#define YMF_PASS_LDFLAGS(flags) flags
+#endif
+
 /* Specify address for ld to start loading at,
    if requested by configuration.  */
 #ifdef LD_TEXT_START_ADDR
@@ -719,13 +306,6 @@ LD=ld
 #endif /* ! defined (COFF_ENCAPSULATE) */
 #endif /* not ORDINARY_LINK */
 
-/* A macro which other sections of the makefile can redefine to munge the
-   flags before they are passed to LD.  This is helpful if you have
-   redefined LD to something odd, like "gcc".  */
-#ifndef YMF_PASS_LDFLAGS
-#define YMF_PASS_LDFLAGS(flags) flags
-#endif
-
 /* Allow config.h to specify a replacement file for unexec.c.  */
 #ifndef UNEXEC
 #define UNEXEC unexec.o
@@ -736,167 +316,58 @@ LD=ld
 
 #ifdef ENERGIZE
 # ifdef EMACS_BTL
-   BTLDIR=$(srcdir)/../btl
-#  define BTLOBJS cadillac-btl.o cadillac-btl-process.o cadillac-btl-asm.o \
-		  cadillac-btl-emacs.o
-# else
-#  define BTLOBJS
-# endif /* BTL */
+BTL_dir=$(srcdir)/../btl
+BTL_objs = cadillac-btl.o cadillac-btl-process.o cadillac-btl-asm.o cadillac-btl-emacs.o
+# endif /* EMACS_BTL */
 # if defined(FREE_CHECKING) || defined(DEBUG_INPUT_BLOCKING) || defined(DEBUG_GCPRO)
-#  define FREECHECKOBJS free-hook.o
-# else  /* !FREE */
-#  define FREECHECKOBJS
-# endif /* !FREE */
-# define ENERGIZE_OBJS energize.o FREECHECKOBJS
-#else /* !ENERGIZE */
-# define ENERGIZE_OBJS
-# define BTLOBJS
-#endif /* !ENERGIZE */
-
-#ifdef HAVE_REALPATH
-#define REALPATH_OBJS
-#else
-#define REALPATH_OBJS realpath.o
-#endif
-
-#ifdef TOOLTALK
-# define TOOLTALK_OBJS tooltalk.o
-# if (defined (IRIX5) || defined (HPUX) || defined (POWERPC) || defined (AIX4) || defined (LINUX) || (defined (OSF1) && defined (DEC_ALPHA)))
-#  define LIB_TOOLTALK -ltt
-# else
-#  if (defined (SPARC) && !defined (USG))
-#    define LIB_TOOLTALK -ltt -lI18N
-#  else
-#    if ((defined (SPARC) || defined(INTEL386)) && defined (USG))
-#      define LIB_TOOLTALK -ltt -lce
-#    else
-#      undef TOOLTALK
-#      define TOOLTALK_OBJS
-#      define LIB_TOOLTALK
-#    endif /* ((SPARC || INTEL386) && USG) */
-#  endif /* ! (SPARC && !USG) */
-# endif /* !IRIX5 */
-#else /* !TOOLTALK */
-# define TOOLTALK_OBJS
-# define LIB_TOOLTALK
-#endif /* !TOOLTALK */
-
-#ifdef HAVE_CDE
-#  if (defined (OSF1) && defined (DEC_ALPHA))
-#    define LIB_CDE -lDtSvc -ltt -lcxx
-#  else
-#    define LIB_CDE -lDtSvc -ltt
-#  endif /* (defined (OSF1) && defined (DEC_ALPHA)) */
-#else
-#  define LIB_CDE
-#endif
-
-#ifdef HAVE_OFFIX_DND
-#  define LIB_OFFIX_DND -lDnd
-#else
-#  define LIB_OFFIX_DND
-#endif
-
-#if (defined(LIB_INTL) && (!(defined(I18N3) || defined(I18N4))))
-  /* this should be defined by s- files, but we should not use it unless
-     I18N3 or I18N4 are defined. */
-# undef LIB_INTL
-#endif
-
-#ifndef LIB_INTL
-# define LIB_INTL
-#endif
+freecheck_objs = free-hook.o
+# endif /* FREE */
+energize_objs = energize.o $(freecheck_objs)
+#endif /* ENERGIZE */
 
 #ifdef MOCKLISP_SUPPORT
-# define MOCKLISPOBJS mocklisp.o
-#else
-# define MOCKLISPOBJS
-#endif
-
-#ifdef DEBUG_XEMACS
-# define DEBUG_OBJS debug.o
-#else
-# define DEBUG_OBJS
-#endif
-
-#ifdef SUNPRO
-# define SUNPRO_OBJS sunpro.o
-#else
-# define SUNPRO_OBJS
+mocklisp_objs = mocklisp.o
 #endif
 
 #ifdef HAVE_TTY
-#define TTY_OBJS console-tty.o device-tty.o event-tty.o frame-tty.o \
+tty_objs = console-tty.o device-tty.o event-tty.o frame-tty.o \
 		 objects-tty.o redisplay-tty.o cm.o
-#else
-#define TTY_OBJS
-#endif
-
-#ifdef HAVE_TOOLBARS
-#define TOOLBAR_OBJS toolbar.o
-#else
-#define TOOLBAR_OBJS
-#endif
-#ifdef HAVE_MENUBARS
-#define MENUBAR_OBJS menubar.o
-#else
-#define MENUBAR_OBJS
-#endif
-#ifdef HAVE_SCROLLBARS
-#define SCROLLBAR_OBJS scrollbar.o
-#else
-#define SCROLLBAR_OBJS
-#endif
-#ifdef HAVE_DIALOGS
-#define DIALOG_OBJS dialog.o
-#else
-#define DIALOG_OBJS
-#endif
-#if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
-#define GUI_OBJS gui.o
-#else
-#define GUI_OBJS
 #endif
 
 #ifdef HAVE_UNIXOID_EVENT_LOOP
-#define EVENT_UNIXOID_OBJS event-unixoid.o
-#else
-#define EVENT_UNIXOID_OBJS
+event_unixoid_objs = event-unixoid.o
 #endif
 
 /* lastfile must follow all files whose initialized data areas should
-   be dumped as pure by dump-emacs.
- */
+   be dumped as pure by dump-emacs. */
 
 /* NOTE: The last line cannot be all macros, because make will barf
    if they all come out null. */
 
-objs=	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
-	callint.o callproc.o casefiddle.o casetab.o chartab.o cmdloop.o \
-	cmds.o console.o console-stream.o \
-	data.o DATABASE_OBJS DEBUG_OBJS device.o DIALOG_OBJS dired.o doc.o \
-	doprnt.o dynarr.o \
-	editfns.o elhash.o emacs.o ENERGIZE_OBJS eval.o events.o \
-	event-stream.o EVENT_UNIXOID_OBJS extents.o \
-	faces.o fileio.o filelock.o filemode.o floatfns.o fns.o font-lock.o \
-	frame.o \
-	general.o getloadavg.o GIF_OBJS glyphs.o GUI_OBJS \
-	hash.o \
-	indent.o inline.o insdel.o intl.o \
-	keymap.o $(RTC_PATCH_O) \
-	lread.o lstream.o \
-	macros.o marker.o md5.o MENUBAR_OBJS minibuf.o MOCKLISPOBJS \
-	NAS_OBJS \
+objs =	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
+	callint.o callproc.o casefiddle.o casetab.o chartab.o \
+	cmdloop.o cmds.o console.o console-stream.o data.o \
+	device.o dired.o \
+	doc.o doprnt.o dynarr.o editfns.o elhash.o emacs.o \
+	$(energize_objs) eval.o events.o $(extra_objs) \
+	event-stream.o $(event_unixoid_objs) extents.o faces.o \
+	fileio.o filelock.o filemode.o floatfns.o fns.o font-lock.o \
+	frame.o general.o getloadavg.o glyphs.o \
+	$(gui_objs) hash.o indent.o inline.o insdel.o intl.o \
+	keymap.o $(RTC_patch_objs) lread.o lstream.o macros.o \
+	marker.o md5.o minibuf.o $(mocklisp_objs) \
 	objects.o opaque.o \
-	print.o process.o profile.o pure.o \
-	rangetab.o REALPATH_OBJS redisplay.o redisplay-output.o regex.o \
-	SCROLLBAR_OBJS search.o signal.o sound.o SOUND_OBJS specifier.o \
-	strftime.o SUNPRO_OBJS symbols.o syntax.o sysdep.o \
-	TOOLBAR_OBJS TOOLTALK_OBJS TTY_OBJS \
-	undo.o UNEXEC \
-	XOBJS XMU_OBJS BALLOONOBJS \
-	window.o
+	print.o process.o profile.o pure.o rangetab.o \
+	redisplay.o redisplay-output.o regex.o \
+	search.o signal.o sound.o \
+	specifier.o strftime.o symbols.o syntax.o \
+	sysdep.o $(tty_objs) undo.o \
+	UNEXEC $(x_objs) window.o
 
+/* The following is being done in configure.in now - mrb */
+#undef LIBS_TERMCAP
+#define LIBS_TERMCAP
+#if 0
 #ifdef HAVE_TTY
 #  ifdef HAVE_NCURSES
 /* If your machine needs -ltermcap, define LIBS_TERMCAP to include
@@ -925,14 +396,11 @@ termcapobjs = tparam.o
 #  undef LIBS_TERMCAP
 #  define LIBS_TERMCAP
 #endif /* !HAVE_TTY */
-
+#endif /* 0 */
 
 #ifdef REL_ALLOC
-rallocobjs = ralloc.o
 rallocdocsrc = ralloc.c
-#else
-rallocobjs =
-rallocdocsrc =
+rallocobjs = ralloc.o
 #endif
 
 #ifndef SYSTEM_MALLOC
@@ -940,29 +408,23 @@ rallocdocsrc =
 #  ifdef ERROR_CHECK_MALLOC
 mallocobjs = gmalloc.o free-hook.o vm-limit.o
 mallocdocsrc = free-hook.c
-#  else
+#  else /* New GNU malloc, sans error checking */
 mallocobjs = gmalloc.o vm-limit.o
 mallocdocsrc =
-#  endif
+#  endif /* ERROR_CHECK_MALLOC */
 # else /* Old GNU malloc */
 mallocobjs = malloc.o
 mallocdocsrc =
 # endif /* Old GNU malloc */
-#else
+#else /* SYSTEM_MALLOC */
 mallocobjs =
 mallocdocsrc =
 #endif /* SYSTEM_MALLOC */
 
-#ifdef FORCE_ALLOCA_H
-allocaobjs = alloca.o
-#else /* !FORCE_ALLOCA_H */
-allocaobjs = @ALLOCA@
-#endif /* !FORCE_ALLOCA_H */
-
 #ifdef HAVE_X_WINDOWS
 
 # ifdef EXTERNAL_WIDGET
-#  define EXTERNAL_WIDGET_OBJS ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
+external_widget_objs = ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 
 /* Now we try to figure out how to link a shared library.
    If we cannot figure it out, leave EXTW_LINK undefined and a shared
@@ -983,7 +445,7 @@ allocaobjs = @ALLOCA@
 #  endif /* not IRIX */
 # else /* not USG5 */
 #  if defined (DEC_ALPHA) && defined (OSF1)
-#   define EXTW_LINK(objs, output) $(LD) $(LDFLAGS) LD_SWITCH_SHARED -d objs -o output $(LIBES)
+#   define EXTW_LINK(objs, output) $(LD) $(ldflags) LD_SWITCH_SHARED -d objs -o output $(LIBES)
 #  else /* !(DEC_ALPHA && OSF1) */
 #   define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
 #  endif /* !(DEC_ALPHA && OSF1) */
@@ -1007,21 +469,14 @@ allocaobjs = @ALLOCA@
 #    define OTHER_FILES MOTIF_OTHER_FILES \
 		        libextcli_Xt.a libextcli_Xlib.a
 #  endif
-# else  /* !EXTERNAL_WIDGET */
-#  define EXTERNAL_WIDGET_OBJS
-# endif /* !EXTERNAL_WIDGET */
+# endif /* EXTERNAL_WIDGET */
 
-# define LIBX11_OBJS EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o EXTERNAL_WIDGET_OBJS
-# define LWLIB_DEPS $(LWLIBBUILDDIR)/liblw.a
-
-#else /* !X */
-# define LIBX11_OBJS
-# define LWLIB_DEPS
-#endif
+X11_objs = EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o $(external_widget_objs)
+#endif /* HAVE_X_WINDOWS */
 
 /* define otherobjs as list of object files that make-docfile
    should not be told about.  */
-otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(allocaobjs) LIBX11_OBJS
+otherobjs = $(termcapobjs) $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
 
 #ifdef LISP_FLOAT_TYPE
 #define FLOAT_LISP ${lispdir}prim/float-sup.elc
@@ -1246,12 +701,9 @@ otherlisp= ${lispdir}bytecomp/bytecomp.elc \
 	   ${lispdir}bytecomp/byte-optimize.elc \
 	   ${lispdir}utils/advice.elc
 
-LIBES = NAS_LIBS ${native_sound_lib} SOCKS_LIBS ENERGIZE_LIBS LIB_CDE LIB_OFFIX_DND \
-	LIB_TOOLTALK $(LIBX) \
-	LIBS_SYSTEM LIBS_MACHINE LIBS_TERMCAP \
-	LIB_CANNA LIB_WNN LIB_INTL QUANTIFY_LIBS $(LIB_KSTAT) \
-	DATABASE_LIBS LIBS_DEBUG $(GNULIB_VAR) LIB_MATH LIB_STANDARD \
-	$(GNULIB_VAR)
+LIBES = $(LWLIB_LIBS) $(energize_libs) $(quantify_libs) \
+	LIBS_DEBUG $(GNULIB_VAR) LIB_STANDARD \
+	$(GNULIB_VAR) $(ld_libs_all)
 
 /* Enable recompilation of certain other files depending on system type.  */
 
@@ -1270,20 +722,15 @@ LIBES = NAS_LIBS ${native_sound_lib} SOCKS_LIBS ENERGIZE_LIBS LIB_CDE LIB_OFFIX_
 
 all: xemacs OTHER_FILES
 
-/* "make release" to build "xemacs" with an incremented version number;
-   "make xemacs" to just build "xemacs" without incrementing the version. */
-
 #ifdef I18N3
-modir = ${etcdir}
-# define MOFILE ${modir}emacs.mo
-#else
-# define MOFILE
+mo_dir = ${etcdir}
+mo_file = ${mo_dir}emacs.mo
 #endif
 
 LOADPATH =  EMACSLOADPATH="${lispdir}prim"  
 DUMPENV = $(LOADPATH)
 
-release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
+release: temacs ${lisp} ${libsrc}DOC $(mo_file) OTHER_FILES
 #ifdef CANNOT_DUMP
 	ln temacs xemacs
 #else
@@ -1311,7 +758,7 @@ release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
-xemacs: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
+xemacs: temacs ${libsrc}DOC ${lisp} $(mo_file) OTHER_FILES
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
 	@if [ ! -f SATISFIED ]; then \
@@ -1319,30 +766,29 @@ xemacs: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
 	fi
 	@/bin/rm -f SATISFIED
 
-xemacs-no-site-file: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
+xemacs-no-site-file: temacs ${libsrc}DOC ${lisp} $(mo_file) OTHER_FILES
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump no-site-file
-	@if [ ! -f SATISFIED ]; then \
-		$(MAKE) xemacs-no-site-file; \
-	fi
+	@test ! -f SATISFIED && $(MAKE) xemacs-no-site-file
 	@/bin/rm -f SATISFIED
 
 obj_src = $(objs:.o=.c)
 
 #ifdef DYNODUMP
-$(DYNODUMPBUILDDIR)/dynodump.so: force
-	cd ${DYNODUMPBUILDDIR} && ${MAKE} ${MFLAGS}
-#endif
+dynodump_builddir = $(dot)$(dot)/dynodump
+dynodump_deps = $(dynodump_builddir)/dynodump.so
+$(dynodump_builddir)/dynodump.so: force
+	cd ${dynodump_builddir} && ${MAKE} ${MFLAGS}
+#endif /* DYNODUMP */
 
 #ifdef NO_DOC_FILE
 ${libsrc}DOC: ${libsrc}make-docfile
 #else
-${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${mule_obj_src} ${lisp}
+${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${lisp}
 #endif
 	rm -f ${libsrc}DOC
 	${libsrc}make-docfile -d ${srcdir} -i ${libsrc}../site-packages \
-		${obj_src} ${mule_obj_src} \
-	        ${mallocdocsrc} ${rallocdocsrc} ${lispdir}version.el \
+		${obj_src} ${mallocdocsrc} ${rallocdocsrc} ${lispdir}version.el \
 		${lisp} > ${libsrc}DOC
 
 dump_elcs: dump-elcs
@@ -1370,14 +816,14 @@ all-elc all-elcs:
    msgfmt=		 msgfmt
 #endif
 
-${modir}emacs.po: ${libsrc}make-msgfile ${libsrc}make-po ${objs} ${mule_objs} ${lisp}
-	${libsrc}make-msgfile -o ${libsrc}messages ${objs} ${mule_objs} ${lisp} ${otherlisp}
+${mo_dir}emacs.po: ${libsrc}make-msgfile ${libsrc}make-po ${objs} ${lisp}
+	${libsrc}make-msgfile -o ${libsrc}messages ${objs} ${lisp} ${otherlisp}
 	cd ${libsrc} && ${xgettext} ${xgettext_args}
-	rm -f ${modir}emacs.po
-	cd ${libsrc} && ${libsrc}make-po -a ${modir}emacs.po DOC
+	rm -f ${mo_dir}emacs.po
+	cd ${libsrc} && ${libsrc}make-po -a ${mo_dir}emacs.po DOC
 
-${modir}emacs.mo: ${modir}emacs.po
-	cd ${modir} && ${msgfmt} -o emacs.mo emacs.po
+${mo_dir}emacs.mo: ${mo_dir}emacs.po
+	cd ${mo_dir} && ${msgfmt} -o emacs.mo emacs.po
 
 ${libsrc}make-msgfile:
 	cd ${libsrc} && ${MAKE} ${MFLAGS} make-msgfile
@@ -1393,10 +839,7 @@ ${libsrc}make-docfile:
 /* Lint Section */
 LINT.c=$(LINT) $(LINTFLAGS) $(LINTINCLUDES) 
 LINTFILES= $(objs:.o=.ln)
-LINTINCLUDES = -Demacs -DHAVE_CONFIG_H $(MYCPPFLAG) -I. \
-	   -I${srcdir} LCCFLAGS C_SWITCH_MACHINE C_SWITCH_SYSTEM \
-	   C_SWITCH_SITE C_SWITCH_X_SITE C_SWITCH_X_MACHINE \
-	   C_SWITCH_X_SYSTEM $(LIBX11_INCLUDES)
+LINTINCLUDES = $(cppflags)
 /* LINTFLAGS= -fd -m -p -s -u -v -x */
 LINTFLAGS= -fd -m -s -u -v -x
 lint: $(LINTFILES)
@@ -1404,36 +847,37 @@ lint: $(LINTFILES)
 /* end of Lint Section */
 
 force:
-$(LWLIBBUILDDIR)/liblw.a: force
-	cd ${LWLIBBUILDDIR} && ${MAKE} ${MFLAGS}
+$(LWLIB_BUILDDIR)/liblw.a: force
+	cd ${LWLIB_BUILDDIR} && ${MAKE} ${MFLAGS}
 
 /* Some systems define this to cause parallel Make-ing.  */
 #ifndef MAKE_PARALLEL
 #define MAKE_PARALLEL
 #endif
 
-#define TEMACS_DEPS       MAKE_PARALLEL $(LOCALCPP) $(SHORT) $(STARTFILES) \
-			  ${objs} ${mule_objs} ${otherobjs} OBJECTS_SYSTEM \
-			  OBJECTS_MACHINE LWLIB_DEPS DYNODUMP_DEPS prefix-args
+temacs_deps = \
+	MAKE_PARALLEL $(LOCALCPP) $(SHORT) $(STARTFILES) \
+	${objs} ${otherobjs} OBJECTS_SYSTEM OBJECTS_MACHINE \
+	$(LWLIB_DEPS) $(dynodump_deps) prefix-args
 
-#define TEMACS_LINK_ARGS  YMF_PASS_LDFLAGS \
-		(${STARTFLAGS} ${LDFLAGS} LD_SWITCH_CALL_SHARED) -o $@ \
-		${STARTFILES} ${objs} ${mule_objs} ${otherobjs} OBJECTS_SYSTEM \
-		OBJECTS_MACHINE ${LIBES}
+temacs_link_args = \
+	YMF_PASS_LDFLAGS(${STARTFLAGS} ${ldflags} LD_SWITCH_CALL_SHARED) \
+	-o $@ ${STARTFILES} ${objs} ${otherobjs} \
+	OBJECTS_SYSTEM OBJECTS_MACHINE ${LIBES}
 
-temacs_deps: TEMACS_DEPS
+temacs_deps: $(temacs_deps)
 
-temacs: TEMACS_DEPS
-	$(LD) LCCLINK TEMACS_LINK_ARGS
+temacs: $(temacs_deps)
+	$(LD) $(temacs_link_args)
 
-cemacs: TEMACS_DEPS
-	$(LD) $(ENERGIZEP) TEMACS_LINK_ARGS
+cemacs: $(temacs_deps)
+	$(LD) $(temacs_link_args)
 
 rtc_patch.o:
 	rtc_patch_area -o $@
 
-rtcmacs: TEMACS_DEPS rtc_patch.o
-	rm -f temacs; $(MAKE) $(MAKE_FLAGS) temacs RTC_PATCH_O=rtc_patch.o
+rtcmacs: $(temacs_deps) rtc_patch.o
+	rm -f temacs; $(MAKE) $(MAKE_FLAGS) temacs RTC_patch_objs=rtc_patch.o
 	mv temacs rtcmacs
 
 rtcrun: rtcmacs
@@ -1446,34 +890,33 @@ rtcrun: rtcmacs
 	runargs -batch -l loadup.el run-temacs -q; \
 	run' rtcmacs
 
-puremacs: TEMACS_DEPS
-	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) TEMACS_LINK_ARGS
+puremacs: $(temacs_deps)
+	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args)
 
-quantmacs: TEMACS_DEPS
-	$(QUANTIFY_PROG) $(QUANTIFY_FLAGS) $(LD) TEMACS_LINK_ARGS
+quantmacs: $(temacs_deps)
+	$(quantify_prog) $(quantify_flags) $(LD) $(temacs_link_args)
 
-covmacs: TEMACS_DEPS
-	$(PURECOV_PROG) $(LD) TEMACS_LINK_ARGS
+covmacs: $(temacs_deps)
+	$(PURECOV_PROG) $(LD) $(temacs_link_args)
 
 TopLevelEmacsShell.o : ${srcdir}/EmacsShell-sub.c
-	$(CC) -c $(ALL_CFLAGS) -DDEFINE_TOP_LEVEL_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
+	$(CC) -c $(cflags) -DDEFINE_TOP_LEVEL_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
 	mv EmacsShell-sub.o TopLevelEmacsShell.o
 
 TransientEmacsShell.o : ${srcdir}/EmacsShell-sub.c TopLevelEmacsShell.o
-	$(CC) -c $(ALL_CFLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
+	$(CC) -c $(cflags) -DDEFINE_TRANSIENT_EMACS_SHELL ${srcdir}/EmacsShell-sub.c
 	mv EmacsShell-sub.o TransientEmacsShell.o
 
-#ifdef EXTERNAL_WIDGET
-
+/* Position-independent code for shared library creation */
 #if USE_GCC
-# define PIC_ARG -fpic
-#else
-# ifdef IRIX
-#  define PIC_ARG -KPIC
+pic_arg = -fpic
+#elif defined (IRIX)
+pic_arg = -KPIC
 # else
-#  define PIC_ARG -K pic
-# endif
+pic_arg = -K pic
 #endif
+
+#ifdef EXTERNAL_WIDGET
 
 # define EXTERNAL_CLIENT_MOTIF_OBJS_SHARED ExternalClient-Xm-shared.o extw-Xt-shared.o extw-Xlib-shared.o
 # define EXTERNAL_CLIENT_XT_OBJS_SHARED    ExternalClient-Xt-shared.o extw-Xt-shared.o extw-Xlib-shared.o
@@ -1484,46 +927,46 @@ TransientEmacsShell.o : ${srcdir}/EmacsShell-sub.c TopLevelEmacsShell.o
 
 /* Add dependencies so things work right with a parallel make */ 
 ExternalClient-Xm-shared.o: ${srcdir}/ExternalClient.c ExternalClient-Xt-shared.o ExternalClient-Xm-nonshared.o
-	$(CC) -c PIC_ARG $(ALL_CFLAGS) -DEXTW_USES_MOTIF ${srcdir}/ExternalClient.c
+	$(CC) -c $(pic_arg) $(cflags) -DEXTW_USES_MOTIF ${srcdir}/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xm-shared.o
 
 ExternalClient-Xt-shared.o: ${srcdir}/ExternalClient.c ExternalClient-Xt-nonshared.o
-	$(CC) -c PIC_ARG $(ALL_CFLAGS) ${srcdir}/ExternalClient.c
+	$(CC) -c $(pic_arg) $(cflags) ${srcdir}/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xt-shared.o
 
 ExternalClient-Xlib-shared.o: ${srcdir}/ExternalClient-Xlib.c ExternalClient-Xlib-nonshared.o
-	$(CC) -c PIC_ARG $(ALL_CFLAGS) ${srcdir}/ExternalClient-Xlib.c
+	$(CC) -c $(pic_arg) $(cflags) ${srcdir}/ExternalClient-Xlib.c
 	mv ExternalClient-Xlib.o ExternalClient-Xlib-shared.o
 
 ExternalClient-Xm-nonshared.o: ${srcdir}/ExternalClient.c ExternalClient-Xt-nonshared.o
-	$(CC) -c $(ALL_CFLAGS) -DEXTW_USES_MOTIF ${srcdir}/ExternalClient.c
+	$(CC) -c $(cflags) -DEXTW_USES_MOTIF ${srcdir}/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xm-nonshared.o
 
 ExternalClient-Xt-nonshared.o: ${srcdir}/ExternalClient.c
-	$(CC) -c $(ALL_CFLAGS) ${srcdir}/ExternalClient.c
+	$(CC) -c $(cflags) ${srcdir}/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xt-nonshared.o
 
 ExternalClient-Xlib-nonshared.o: ${srcdir}/ExternalClient-Xlib.c
-	$(CC) -c $(ALL_CFLAGS) ${srcdir}/ExternalClient-Xlib.c
+	$(CC) -c $(cflags) ${srcdir}/ExternalClient-Xlib.c
 	mv ExternalClient-Xlib.o ExternalClient-Xlib-nonshared.o
 
 /* We compile the common files twice (once with PIC and once without)
    because on some systems, compiling with PIC but not linking into
    a shared library messes things up. */
 extw-Xt-shared.o: ${srcdir}/extw-Xt.c extw-Xt-nonshared.o
-	$(CC) -c PIC_ARG $(ALL_CFLAGS) ${srcdir}/extw-Xt.c
+	$(CC) -c $(pic_arg) $(cflags) ${srcdir}/extw-Xt.c
 	mv extw-Xt.o extw-Xt-shared.o
 
 extw-Xlib-shared.o: ${srcdir}/extw-Xlib.c extw-Xlib-nonshared.o
-	$(CC) -c PIC_ARG $(ALL_CFLAGS) ${srcdir}/extw-Xlib.c
+	$(CC) -c $(pic_arg) $(cflags) ${srcdir}/extw-Xlib.c
 	mv extw-Xlib.o extw-Xlib-shared.o
 
 extw-Xt-nonshared.o: ${srcdir}/extw-Xt.c
-	$(CC) -c $(ALL_CFLAGS) ${srcdir}/extw-Xt.c
+	$(CC) -c $(cflags) ${srcdir}/extw-Xt.c
 	mv extw-Xt.o extw-Xt-nonshared.o
 
 extw-Xlib-nonshared.o: ${srcdir}/extw-Xlib.c
-	$(CC) -c $(ALL_CFLAGS) ${srcdir}/extw-Xlib.c
+	$(CC) -c $(cflags) ${srcdir}/extw-Xlib.c
 	mv extw-Xlib.o extw-Xlib-nonshared.o
 
 libextcli_Xm.a: EXTERNAL_CLIENT_MOTIF_OBJS_NONSHARED
@@ -1546,19 +989,19 @@ libextcli_Xt.so.1: EXTERNAL_CLIENT_XT_OBJS_SHARED
 libextcli_Xlib.so.1: EXTERNAL_CLIENT_XLIB_OBJS_SHARED
 	EXTW_LINK(EXTERNAL_CLIENT_XLIB_OBJS_SHARED, libextcli_Xlib.so.1)
 
-#endif
+#endif /* EXTW_LINK */
 
 #endif /* EXTERNAL_WIDGET */
 
 prefix-args: ${srcdir}/prefix-args.c config.h
-	$(CC) $(ALL_CFLAGS) ${srcdir}/prefix-args.c -o prefix-args
+	$(CC) $(cflags) ${srcdir}/prefix-args.c -o prefix-args
 
 /* These are needed for C compilation, on the systems that need them */
 #ifdef NEED_CPP
 CPP = ./localcpp
 localcpp:
 	cd ${cppdir} && ${MAKE} ${MFLAGS} EMACS=-DEMACS
-	ln ${cppdir}cpp localcpp  /* Name where ALL_CFLAGS will refer to it */
+	ln ${cppdir}cpp localcpp  /* Name where cflags will refer to it */
 /* cc appears to be cretinous and require all of these to exist
    if -B is specified -- we cannot use one local pass and let the
    others be the standard ones.  What a loser.
@@ -1614,8 +1057,7 @@ xemacs-version.h: ../lisp/version.el
    whenever emacs was #defined, but that's not appropriate for all
    users of alloca in Emacs.  Check out ../lib-src/getopt.c.  */
 alloca.o : ${srcdir}/alloca.c
-	$(CC) -c $(CPPFLAGS) -Dfree=xfree -Dmalloc=xmalloc \
-	$(ALL_CFLAGS) $<
+	$(CC) -c -Dfree=xfree -Dmalloc=xmalloc $(cflags) $<
 #else
 #ifndef HAVE_ALLOCA
 alloca.o : ${srcdir}/alloca.s config.h
@@ -1626,7 +1068,7 @@ alloca.o : ${srcdir}/alloca.s config.h
    since some assemblers barf on them.  Use a different basename for the
    output file, since some stupid compilers (Green Hill) use that
    name for the intermediate assembler file. */
-	$(CPP) $(CPPFLAGS) $(ALL_CFLAGS) allocatem.c | \
+	$(CPP) $(cppflags) allocatem.c | \
 	sed -e 's///' -e 's/^#.*//' | \
 	sed -n -e '/^..*$$/p' > allocax.s
 	-rm -f alloca.o
@@ -1637,71 +1079,32 @@ alloca.o : ${srcdir}/alloca.s config.h
 #endif /* HAVE_ALLOCA */
 #endif /* ! defined (C_ALLOCA) */
 
-#ifdef USE_LCC  /* lcc doesn't do asm() yet */
-ecrt0.o: ${srcdir}/ecrt0.c
-	gcc -c -g -Demacs $<
-#endif /* USE_LCC */
-
 #ifdef EMACS_BTL
-BTL_INCLUDES=-I$(BTLDIR)
-# define BTL_COMPILE \
-	-DEMACS_BTL -D`lucid-arch` -I. $(BTL_INCLUDES) $(BTLDIR)/$(@:.o=.c)
+BTL_includes = -I$(BTL_dir)
+BTL_compile = -DEMACS_BTL -D`lucid-arch` -I. $(BTL_includes) $(BTL_dir)/$(@:.o=.c)
 
 cadillac-btl.o cadillac-btl-process.o cadillac-btl-emacs.o:
-	$(CC) $(CFLAGS) -c BTL_COMPILE
-# ifndef USE_LCC
+	$(CC) $(CFLAGS) -c $(BTL_compile)
 cadillac-btl-asm.o:
-	$(CC) $(CFLAGS) -c BTL_COMPILE
-# else  /* lcc doesn't do asm() yet */
-cadillac-btl-asm.o:
-	gcc -O -g       -c BTL_COMPILE
-# endif /* lcc */
+	$(CC) $(CFLAGS) -c $(BTL_compile)
 #endif /* EMACS_BTL */
 
 #ifdef ENERGIZE
 energize.o: ${srcdir}/energize.c
-	$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) ENERGIZE_INCLUDES $(BTL_INCLUDES) $<
+	$(CC) -c $(cppflags) $(cflags) $(BTL_includes) $<
 #endif /* ENERGIZE */
 
 #ifdef HAVE_NATIVE_SOUND
-# if defined (SUNOS4) || defined (SOLARIS2)
 sunplay.o: ${srcdir}/sunplay.c
-	$(CC) -c $(ALL_CFLAGS) SOUND_CFLAGS $<
-# endif /* SUNOS4 or SOLARIS2 */
-# ifdef hp9000s800
+	$(CC) -c  $(sound_cflags) $(cflags) $<
 hpplay.o: ${srcdir}/hpplay.c
-	$(CC) -c -Demacs $(ALL_CFLAGS) SOUND_CFLAGS $<
-# endif /* hp9000s800 */
+	$(CC) -c -Demacs $(sound_cflags) $(cflags) $<
 #endif /* HAVE_NATIVE_SOUND */
-
-#ifdef HAVE_NAS_SOUND
-nas.o: ${srcdir}/nas.c
-	$(CC) -c $(ALL_CFLAGS) NAS_CFLAGS $<
-#endif /* HAVE_NAS_SOUND */
-
-#ifdef MULE
-
-mule-canna.o: ${MULESRCDIR}/mule-canna.c
-	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-canna.c
-mule-wnnfns.o: ${MULESRCDIR}/mule-wnnfns.c
-	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-wnnfns.c
-mule.o: ${MULESRCDIR}/mule.c
-	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule.c
-mule-ccl.o: ${MULESRCDIR}/mule-ccl.c
-	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-ccl.c
-mule-charset.o: ${MULESRCDIR}/mule-charset.c
-	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-charset.c
-mule-coding.o: ${MULESRCDIR}/mule-coding.c
-	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-coding.c
-
-#endif
 
 /* System-specific programs to be made.
    OTHER_FILES, OBJECTS_SYSTEM and OBJECTS_MACHINE
    select which of these should be compiled.  */
 
-${libsrc}emacstool: ${libsrc}emacstool.c
-	cd ${libsrc} && ${MAKE} ${MFLAGS} emacstool
 mostlyclean:
 	rm -f temacs puremacs quantmacs prefix-args xmakefile* core depend.* \#* *.o
 	rm -f ${libsrc}DOC
@@ -1733,31 +1136,11 @@ relock:
 /*** Dependency processing using GCC ***/
 
 .c.dep:
-	$(CC) -MM $(ALL_CFLAGS) $< > $*.dep
+	$(CC) -MM $(cflags) $< > $*.dep
 
 .SUFFIXES: .dep
 
 obj_dep = $(objs:.o=.dep)
-mule_obj_dep = $(mule_objs:.o=.dep)
-
-#ifdef MULE
-
-/* Ugh, there should be a better way of handling this. */
-
-mule-canna.dep: ${MULESRCDIR}/mule-canna.c
-	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-canna.c > mule-canna.dep
-mule-wnnfns.dep: ${MULESRCDIR}/mule-wnnfns.c
-	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-wnnfns.c > mule-wnnfns.dep
-mule.dep: ${MULESRCDIR}/mule.c
-	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule.c > mule.dep
-mule-ccl.dep: ${MULESRCDIR}/mule-ccl.c
-	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-ccl.c > mule-ccl.dep
-mule-charset.dep: ${MULESRCDIR}/mule-charset.c
-	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-charset.c > mule-charset.dep
-mule-coding.dep: ${MULESRCDIR}/mule-coding.c
-	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-coding.c > mule-coding.dep
-
-#endif /* MULE */
 
 gnu-depend: $(obj_dep)
 	/* #### Needs a bit of work: it doesn't see the object files that
@@ -1771,7 +1154,7 @@ gnu-depend: $(obj_dep)
 depend:
 	: > depend.tmp
 	makedepend -f depend.tmp -Dsubprocesses -DMOCKLISP_SUPPORT \
-		   -DHAVE_X_WINDOWS -DMULE -- $(CPPFLAGS) $(ALL_CFLAGS) \
+		   -DHAVE_X_WINDOWS -DMULE -- $(cppflags) $(cflags) \
 		   -- *.c
 	sh ${libsrc}process-depends.sh < depend.tmp > depend.out
 	egrep '^mule|[^a-zA-Z]mule' depend.out > /tmp/depend1.$$
@@ -1820,19 +1203,19 @@ extw-Xlib-nonshared.o: extw-Xlib.h
 extw-Xt-nonshared.o: config.h
 extw-Xt-nonshared.o: extw-Xlib.h
 extw-Xt-nonshared.o: extw-Xt.h
-#endif
+#endif /* EXTERNAL_WIDGET */
 
 #ifdef EMACS_BTL
-cadillac-btl.o: $(BTLDIR)/cadillac-btl.c
-cadillac-btl.o: $(BTLDIR)/cadillac-btl.h
-cadillac-btl.o: $(BTLDIR)/cadillac-btl-extern.h
-cadillac-btl-asm.o: $(BTLDIR)/cadillac-btl-asm.c
-cadillac-btl-asm.o: $(BTLDIR)/cadillac-btl.h
-cadillac-btl-asm.o: $(BTLDIR)/cadillac-btl-extern.h
-cadillac-btl-emacs.o: $(BTLDIR)/cadillac-btl-extern.h
-cadillac-btl-process.o: $(BTLDIR)/cadillac-btl-process.c
-cadillac-btl-process.o: $(BTLDIR)/cadillac-btl.h
-cadillac-btl-process.o: $(BTLDIR)/cadillac-btl-extern.h
+cadillac-btl.o: $(BTL_dir)/cadillac-btl.c
+cadillac-btl.o: $(BTL_dir)/cadillac-btl.h
+cadillac-btl.o: $(BTL_dir)/cadillac-btl-extern.h
+cadillac-btl-asm.o: $(BTL_dir)/cadillac-btl-asm.c
+cadillac-btl-asm.o: $(BTL_dir)/cadillac-btl.h
+cadillac-btl-asm.o: $(BTL_dir)/cadillac-btl-extern.h
+cadillac-btl-emacs.o: $(BTL_dir)/cadillac-btl-extern.h
+cadillac-btl-process.o: $(BTL_dir)/cadillac-btl-process.c
+cadillac-btl-process.o: $(BTL_dir)/cadillac-btl.h
+cadillac-btl-process.o: $(BTL_dir)/cadillac-btl-extern.h
 #endif /* EMACS_BTL */
 
 /* (makedepend definitely misbehaves on these) */
@@ -1915,12 +1298,14 @@ md5.o: mule-charset.h
 menubar-x.o: mule-charset.h
 minibuf.o: mule-charset.h
 mocklisp.o: mule-charset.h
+#ifdef HAVE_CANNA
 mule-canna.o: blocktype.h
 mule-canna.o: buffer.h
 mule-canna.o: bufslots.h
 mule-canna.o: config.h
 mule-canna.o: dynarr.h
 mule-canna.o: mule-charset.h
+#endif /* HAVE_CANNA */
 mule-ccl.o: blocktype.h
 mule-ccl.o: buffer.h
 mule-ccl.o: bufslots.h
@@ -1947,6 +1332,7 @@ mule-coding.o: insdel.h
 mule-coding.o: lstream.h
 mule-coding.o: mule-charset.h
 mule-coding.o: mule-coding.h
+#if 0
 mule-mcpath.o: blocktype.h
 mule-mcpath.o: buffer.h
 mule-mcpath.o: bufslots.h
@@ -1954,6 +1340,8 @@ mule-mcpath.o: config.h
 mule-mcpath.o: dynarr.h
 mule-mcpath.o: mule-charset.h
 mule-mcpath.o: sysfile.h
+#endif /* obsolete */
+#ifdef HAVE_WNN
 mule-wnnfns.o: blocktype.h
 mule-wnnfns.o: buffer.h
 mule-wnnfns.o: bufslots.h
@@ -1963,6 +1351,7 @@ mule-wnnfns.o: mule-charset.h
 mule-wnnfns.o: redisplay.h
 mule-wnnfns.o: scrollbar.h
 mule-wnnfns.o: window.h
+#endif /* HAVE_WNN */
 mule.o: blocktype.h
 mule.o: config.h
 mule.o: dynarr.h
@@ -1995,7 +1384,7 @@ window.o: mule-charset.h
 xselect.o: mule-charset.h
 #endif /* MULE */
 
-EmacsFrame.o: $(LWLIBSRCDIR)/lwlib.h
+EmacsFrame.o: $(LWLIB_SRCDIR)/lwlib.h
 EmacsFrame.o: EmacsFrame.h
 EmacsFrame.o: EmacsFrameP.h
 EmacsFrame.o: EmacsManager.h
@@ -2283,10 +1672,12 @@ data.o: bytecode.h
 data.o: config.h
 data.o: dynarr.h
 data.o: sysfloat.h
+#ifdef HAVE_DATABASE
 database.o: blocktype.h
 database.o: config.h
 database.o: database.h
 database.o: dynarr.h
+#endif /* HAVE_DATABASE */
 debug.o: blocktype.h
 debug.o: bytecode.h
 debug.o: config.h
@@ -2314,7 +1705,7 @@ device-tty.o: sysdep.h
 device-tty.o: systime.h
 device-tty.o: systty.h
 device-tty.o: toolbar.h
-device-x.o: $(LWLIBSRCDIR)/lwlib.h
+device-x.o: $(LWLIB_SRCDIR)/lwlib.h
 device-x.o: blocktype.h
 device-x.o: buffer.h
 device-x.o: bufslots.h
@@ -2367,7 +1758,7 @@ device.o: toolbar.h
 device.o: window.h
 dgif_lib.o: config.h
 dgif_lib.o: gif_lib.h
-dialog-x.o: $(LWLIBSRCDIR)/lwlib.h
+dialog-x.o: $(LWLIB_SRCDIR)/lwlib.h
 dialog-x.o: EmacsFrame.h
 dialog-x.o: EmacsManager.h
 dialog-x.o: EmacsShell.h
@@ -2480,7 +1871,7 @@ eval.o: conslots.h
 eval.o: console.h
 eval.o: dynarr.h
 eval.o: opaque.h
-event-Xt.o: $(LWLIBSRCDIR)/lwlib.h
+event-Xt.o: $(LWLIB_SRCDIR)/lwlib.h
 event-Xt.o: Emacs.ad.h
 event-Xt.o: EmacsFrame.h
 event-Xt.o: blocktype.h
@@ -2723,7 +2114,7 @@ frame-tty.o: scrollbar.h
 frame-tty.o: specifier.h
 frame-tty.o: systty.h
 frame-tty.o: toolbar.h
-frame-x.o: $(LWLIBSRCDIR)/lwlib.h
+frame-x.o: $(LWLIB_SRCDIR)/lwlib.h
 frame-x.o: EmacsFrame.h
 frame-x.o: EmacsFrameP.h
 frame-x.o: EmacsManager.h
@@ -2794,7 +2185,7 @@ gif_err.o: config.h
 gif_err.o: gif_lib.h
 gifalloc.o: config.h
 gifalloc.o: gif_lib.h
-glyphs-x.o: $(LWLIBSRCDIR)/lwlib.h
+glyphs-x.o: $(LWLIB_SRCDIR)/lwlib.h
 glyphs-x.o: ${srcdir}/${etcdir}xemacs.xbm
 glyphs-x.o: bitmaps.h
 glyphs-x.o: blocktype.h
@@ -2842,7 +2233,7 @@ glyphs.o: toolbar.h
 glyphs.o: window.h
 gmalloc.o: config.h
 gmalloc.o: getpagesize.h
-gui-x.o: $(LWLIBSRCDIR)/lwlib.h
+gui-x.o: $(LWLIB_SRCDIR)/lwlib.h
 gui-x.o: blocktype.h
 gui-x.o: buffer.h
 gui-x.o: bufslots.h
@@ -2893,7 +2284,7 @@ indent.o: scrollbar.h
 indent.o: specifier.h
 indent.o: toolbar.h
 indent.o: window.h
-inline.o: $(LWLIBSRCDIR)/lwlib.h
+inline.o: $(LWLIB_SRCDIR)/lwlib.h
 inline.o: blocktype.h
 inline.o: buffer.h
 inline.o: bufslots.h
@@ -3053,7 +2444,7 @@ md5.o: bufslots.h
 md5.o: config.h
 md5.o: dynarr.h
 md5.o: insdel.h
-menubar-x.o: $(LWLIBSRCDIR)/lwlib.h
+menubar-x.o: $(LWLIB_SRCDIR)/lwlib.h
 menubar-x.o: EmacsFrame.h
 menubar-x.o: EmacsManager.h
 menubar-x.o: EmacsShell.h
@@ -3282,7 +2673,7 @@ redisplay-tty.o: systime.h
 redisplay-tty.o: systty.h
 redisplay-tty.o: toolbar.h
 redisplay-tty.o: window.h
-redisplay-x.o: $(LWLIBSRCDIR)/lwlib.h
+redisplay-x.o: $(LWLIB_SRCDIR)/lwlib.h
 redisplay-x.o: EmacsFrame.h
 redisplay-x.o: EmacsFrameP.h
 redisplay-x.o: blocktype.h
@@ -3347,7 +2738,7 @@ regex.o: config.h
 regex.o: dynarr.h
 regex.o: regex.h
 regex.o: syntax.h
-scrollbar-x.o: $(LWLIBSRCDIR)/lwlib.h
+scrollbar-x.o: $(LWLIB_SRCDIR)/lwlib.h
 scrollbar-x.o: EmacsFrame.h
 scrollbar-x.o: EmacsManager.h
 scrollbar-x.o: blocktype.h
@@ -3499,7 +2890,7 @@ termcap.o: console.h
 termcap.o: device.h
 termcap.o: dynarr.h
 terminfo.o: config.h
-toolbar-x.o: $(LWLIBSRCDIR)/lwlib.h
+toolbar-x.o: $(LWLIB_SRCDIR)/lwlib.h
 toolbar-x.o: EmacsFrame.h
 toolbar-x.o: EmacsFrameP.h
 toolbar-x.o: EmacsManager.h

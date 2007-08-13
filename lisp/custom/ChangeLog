@@ -1,3 +1,365 @@
+Tue May 13 16:05:34 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.97 released.
+
+Fri May  9 12:33:34 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-field-value-get): Add workaround for XEmacs
+	bug with `buffer-substring-no-properties'.
+
+	* widget.texi (atoms): Documented `function', `variable', and
+	`regexp' widgets. 
+
+Thu May  8 14:35:48 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (defcustom): Don't wrap in `eval-and-compile'.
+
+	* wid-edit.el (widget-value-convert-widget): Don't convert :value
+	here. 
+
+	* cus-edit.el (custom-buffer-create-internal): New kludge for
+	making bib and eob read-only in XEmacs.
+	Kludge by Hrvoje Niksic <hniksic@srce.hr>.
+
+	* wid-edit.el: Also allow prompt when field value is invalid.
+
+	* cus-edit.el (custom-redraw): Fix repositioning for when column
+	is zero.
+
+Mon May  5 12:55:14 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (x): New group.
+
+Mon Apr 28 13:10:48 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-boolean-prompt-value): Always ask.
+
+	* cus-edit.el (custom-variable-value-create): Remove unreferenced
+	variable. 
+	* wid-edit.el (widget-field-action): Ditto.
+	(widget-regexp-match): Ditto.
+
+	* Version 1.96 released.
+
+Mon Apr 28 12:19:24 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-variable-action): Don't update state if it
+	is modified.
+
+	* widget.el (:mouse-down-action): New keyword.
+	* wid-edit.el (button-release-event-p): New function.
+	(widget-keymap): Don't bind mouse up events.
+	(widget-button-pressed-face): New face.
+	(widget-button-click): Wait for up event, give feedback.
+	(default): Use `:mouse-down-action'.
+	(menu-choice): Ditto.
+	(widget-choice-mouse-down-action): New function.
+	(widget-info-link-action): Removed kludge to steal up event. 
+	* cus-edit.el (widget-magic-mouse-down-action): New function.
+	(custom-magic-value-create): Use it.
+	(custom-buffer-create-internal): Removed kludge to steal up event.
+
+Sun Apr 27 12:05:12 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.95 released.
+
+Sun Apr 27 11:10:03 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:glyph-up, :glyph-down, :glyph-inactive): New
+	keywords. 
+	* wid-edit.el (widget-glyph-insert-glyph): Support optional `down'
+	and `inactive' glyphs.
+	(widget-push-button-value-create): Ditto.
+	(widget-glyph-click): New function.
+	(widget-button1-click): Use it.
+	(widget-button-click): Use it.
+
+Sat Apr 26 19:26:45 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.94 released.
+
+Sat Apr 26 16:39:58 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-buffer-create): Accept optional buffer NAME.
+	(custom-buffer-create-other-window): ditto.
+ 	(customize, customize-other-window, customize-variable,
+	customize-variable-other-window, customize-face,
+	customize-face-other-window, customize-customized,
+	customize-saved, customize-apropos, custom-face-menu-create,
+	custom-variable-menu-create, boolean, custom-menu-create): Updated
+	caller. 
+
+	* Version 1.93 released.
+
+	* cus-edit.el (custom-variable-action): Reset magic state.
+	(custom-variable-menu): Allow `Reset to Current' on `changed'
+	items. 
+
+	* wid-edit.el (widget-choice-toggle): New option.
+	(widget-choice-action): Use it.
+
+	* cus-edit.el (custom-group-menu): Only test state to see if the
+	item is enabled. 
+
+	* cus-face.el (custom-background-mode): Use `const', not
+	`choice-item'. 
+	(custom-face-attributes): Use tags for toggling booleans, not the
+	value. 
+
+	* wid-edit.el (character): Use `characterp' when available.
+
+Fri Apr 25 17:05:52 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:prompt-match): New keyword.
+	(:prompt-history): New keyword.
+	(:prompt-internal): New keyword.
+	* wid-edit.el (widget-field-prompt-internal): New function.
+	(widget-field-prompt-value): New function.
+	(editable-field): Use them.
+	(widget-field-action): Ditto.
+	(widget-symbol-prompt-value-history): New variable.
+	(widget-symbol-prompt-internal): New function.
+	(symbol): Use them.
+	(widget-variable-prompt-value-history): New variable.
+	(variable): Use them.
+	(widget-function-prompt-value-history): New variable.
+	(function): Use them.
+
+	* wid-edit.el (boolean): Use tag to toggle.
+	(character, sexp, symbol, file, string): Inactive tag.
+
+	* wid-edit.el (widget-choice-prompt-value): New function.
+	(choice, radio): Use it.
+	(widget-prompt-value): Prepend widget type to prompt.
+
+	* wid-edit.el (widget-parent-action): Renamed from
+	`widget-choice-item-action'. 
+	(choice-item): Updated widget.
+	* cus-edit.el (custom-magic): Ditto.
+	* widget.texi (Defining New Widgets): Documented it.
+
+	* wid-edit.el (widget-children-validate): Renamed from
+	`widget-editable-list-validate'.
+	(editable-list, group): Updated widgets.
+	* cus-edit.el (custom, face): Ditto.
+	* widget.texi (Basic Types): Documented it.
+
+	* wid-edit.el (widget-value-value-get): Renamed from
+	`widget-item-value-get'. 
+	(item): Updated widget.
+	* cus-edit.el (face, custom): Ditto.
+	* widget.texi (Defining New Widgets): Documented it.
+
+	* wid-edit.el (widget-value-convert-widget): Renamed from
+	`widget-item-convert-widget'.
+	(item, editable-field): Updated widgets.
+	* cus-edit.el (face): Ditto.
+	* widget.texi (Defining New Widgets): Documented it.
+
+	* widget.texi (Defining New Widgets): Documented
+	`widget-types-convert-widget' and `widget-children-value-delete'. 
+
+	* custom.texi (User Commands): Documented new commands.
+	
+Thu Apr 24 18:58:54 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+
+Wed Apr 23 20:16:09 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (define-widget): Return name.  
+	Patch by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+
+Tue Apr 22 14:36:09 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el, cus-edit.el: Replaced `copy-list' with
+	`copy-sequence'. 
+	Patch by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+	
+Mon Apr 21 19:01:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.90 released.
+
+Mon Apr 21 09:03:34 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el: (custom-set-value): New command.
+	(custom-set-variable): New command.
+	(customize-saved): Renamed from `customize-customized'.
+	(customize-customized): New command.
+	(custom-save-customized): New command.
+
+	* widget.el (:prompt-value): New keyword.
+
+	* wid-edit.el (widget-prompt-value): New function.
+	(default): Use it.
+	(widget-default-prompt-value): New function.
+	(const): Use it.
+	(widget-const-prompt-value): New function.
+	(string): Use it.
+	(widget-string-prompt-value-history): New variable.
+	(widget-string-prompt-value): New function.
+	(file): Use it.
+	(widget-file-prompt-value): New function.
+	(sexp): Use it.
+	(widget-sexp-prompt-value-history): New variable.
+	(widget-sexp-prompt-value): New function.
+	(boolean): Use it.
+	(widget-boolean-prompt-value): New function.
+
+Sat Apr 19 10:08:56 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-variable-prompt): Limit completion to user
+	options.  Allow non-match input.
+
+	* wid-edit.el (character): Give error if the length of the field
+	isn't exactly 1.
+
+Fri Apr 18 19:55:04 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el, wid-edit.el, wid-browse.el, custom.el, cus-face.el,
+	cus-edit.el (cl):  Require cl inside an `eval-when-compile'.
+
+Thu Apr 17 18:55:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-regexp-validate): New function.
+	(regexp): Use it.
+	(widget-regexp-match): New function.
+	(regexp): Use it.
+	
+	* cus-edit.el (custom-variable-action): Use `custom-toggle-hide'.
+	(custom-face-action): Ditto.
+	(custom-group-action): Ditto.
+
+	* Version 1.89 released.
+
+Thu Apr 17 11:23:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-toggle-hide): New function.
+	(custom-level-action): Use it.
+	(custom-group-menu): Ditto.
+	(custom-face-menu): Ditto.
+	(custom-variable-menu): Ditto.
+
+	* cus-edit.el (custom-redraw): Goto old line and column instead of
+	old character position.  This is more tolerant for changes.
+
+	* wid-edit.el (widget-choice-action): Only notify parent if
+	something was chosen.
+
+	* widget.texi (Sexp Types): Documented `function-item' and
+	`variable-item'. 
+	(group): New subsection.
+	(Widget Browser): New section.
+	(Widget Minor Mode): New sextion.
+
+	* wid-edit.el: Moved widget minor mode support to
+	`wid-browse.el'. 
+
+	* custom.el (custom-declare-group): Make sure initial members
+	aren't duplicated even if the `defgroup' is evaluated twice. 
+
+	* custom.el (custom-declare-variable): Use `append' instead of
+	`copy-list'.
+
+	* widget.texi (checklist): Documented `:greedy'.
+
+Wed Apr 16 19:24:47 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.88 released.
+
+Wed Apr 16 13:28:37 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-minor-mode): New variable and command.
+	(widget-minor-mode-map): New variable.
+	Add to `'minor-mode-alist' and `minor-mode-map-alist'.
+	* widget.el: Added autoload.
+
+	* wid-edit.el (widget-specify-inactive): Set priority.
+
+	* wid-edit.el (widget-move): Skip inactive widgets.
+
+	* cus-edit.el (custom-display-unselected-match): Matched too many 
+        displays.  
+
+	* Version 1.87 released.
+
+Wed Apr 16 00:15:26 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-field-face): Changed default background
+	color. 
+
+	* custom.el (custom-declare-variable): Set `custom-get' the right
+	place.
+
+	* cus-edit.el (custom-magic): Don't notify the parent.
+
+	* cus-edit.el (custom-variable-menu): Allow more actions on
+	`changed' and `rogue' states.
+
+	* custom.el (custom-initialize-set): New function.
+	(custom-initialize-reset): New function.
+	(custom-initialize-changed): New function.
+	(custom-declare-variable): Use `custom-initialize-set' as
+	default for `:initialize'.
+
+	* Version 1.86 released.
+
+Wed Apr 16 00:02:19 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-save-variables): Save :require symbols.
+
+	* Version 1.85 released.
+
+Tue Apr 15 11:56:16 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (:initialize, :set, :get, :request): New keywords. 
+	(custom-declare-variable): Support them.
+	(custom-set-variables): Ditto.
+	(defcustom): Document them.
+	(custom-initialize-default): New function.
+	* custom.texi (Declaring Variables): Documented them.
+	* cus-edit.el (custom-variable-value-create): Support them.
+	(custom-variable-set): Ditto.
+	(custom-variable-save): Ditto.
+	(custom-variable-reset-saved): Ditto.
+	(custom-variable-reset-factory): Ditto.
+	(custom-variable-state-set): Ditto.
+
+	* cus-edit.el (custom-menu-filter): New function.
+	(custom-variable-menu): New format.
+	(custom-variable-action): Use it.
+	(custom-face-menu): New format.
+	(custom-face-action): Use it.
+	(custom-group-menu): New format.
+	(custom-group-action): Use it.
+
+	* wid-edit.el (widget-choose): Accept unselectable items.
+
+	* wid-edit.el (widget-default-create): Clear undo buffer.
+	(widget-default-delete): Ditto.
+
+	* cus-edit.el (customize-other-window): New function.
+
+	* cus-face.el (custom-frame-parameter): Replace
+	`frame-parameter'. 
+	(custom-background-mode, custom-extract-frame-properties,
+	custom-get-frame-properties): Updated callers.
+
+	* custom.el: Minor doc fixes from RMS.
+
+	* cus-face.el (custom-declare-face): Protest when dumping defface
+	in Emacs.
+
+	* wid-edit.el (widget-info-link-action): Steal mouse up event.
+
+	* wid-edit.el (widget-specify-insert): Use old style backquote.
+	Patch by "William M. Perry" <wmperry@aventail.com>.
+	
+Sun Apr 13 19:19:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.texi (Declaring Faces): Documentation property symbol is 
+	`face-documentation'. 
+
 Sat Apr 12 18:31:22 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.84 released.

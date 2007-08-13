@@ -36,12 +36,12 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 * Info::	Documentation browsing system.
 * XEmacs::	The extensible user-friendly self-documenting text editor.
-		This manual is for XEmacs 20.2.
+		This manual is for XEmacs 20.3.
 * Lispref::	XEmacs Lisp technical reference.
-		This manual is for XEmacs 20.2.
+		This manual is for XEmacs 20.3.
 * New-Users-Guide::
-	        XEmacs User's Guide for XEmacs 20.2.
-* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 20.2.
+	        XEmacs User's Guide for XEmacs 20.3.
+* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 20.3.
 * Internals::	Guide to the internals of XEmacs.
 * send-pr::	Submitting Bug Reports
 * gnats::	GNU Problem Report Management System

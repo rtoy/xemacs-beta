@@ -1,6 +1,6 @@
 ;;; Abbrev-expansion of mail aliases.
 ;;; Copyright (C) 1985-1994 Free Software Foundation, Inc.
-;;; Created: 19 oct 90, Jamie Zawinski <jwz@lucid.com>
+;;; Created: 19 oct 90, Jamie Zawinski <jwz@netscape.com>
 ;;; Modified: 5 apr 92, Roland McGrath <roland@gnu.ai.mit.edu>
 ;;; Last change  4-may-94. jwz
 

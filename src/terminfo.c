@@ -48,12 +48,7 @@ char *UP, *BC, PC;
    format is different too.
 */
 
-#ifdef HAVE_NCURSES_CURSES_H
-#include <ncurses/curses.h>
-#else
-#include <curses.h>
-#endif
-#if !(defined (__GNUC__) && defined (SOLARIS2))
+#include CURSES_H_PATH
 /* Sun, in their infinite lameness, supplies (possibly) broken headers
    even under Solaris.  GCC feels it necessary to correct things by
    supplying its own headers.  Unfortunately, if you build GCC under
@@ -63,11 +58,8 @@ char *UP, *BC, PC;
    is equally lame in that it supplies "fixed" headers for curses.h
    but not term.h.) However, it seems to work to just not include
    term.h under Solaris, so we try that.  KLUDGE! */
-#ifdef HAVE_NCURSES_TERM_H
-#include <ncurses/term.h>
-#else
-#include <term.h>
-#endif
+#if !(defined (__GNUC__) && defined (SOLARIS2))
+#include TERM_H_PATH
 #endif
 
 extern void *xmalloc (int size);

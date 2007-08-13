@@ -37,7 +37,7 @@
 ;;
 ;;   for i in 0 1 2 3 4 5 6 7 8 9 Add Subtract Multiply Divide Decimal ; do
 ;;     echo "keysym KP-$i = KP-$i"
-;;   done
+;;   done | xmodmap
 ;;
 ;;   Clearly, as a good X11 citizen, we can't do this.
 ;;

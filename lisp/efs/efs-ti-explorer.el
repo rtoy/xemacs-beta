@@ -6,7 +6,7 @@
 ;; Version:      #Revision: 1.1 $
 ;; RCS:          
 ;; Description:  Explorer support for efs
-;; Author:       Jamie Zawinski <jwz@lucid.com>
+;; Author:       Jamie Zawinski <jwz@netscape.com>
 ;; Created:      Thu Dec 17 15:04:14 1992
 ;; Modified:     Sun Nov 27 18:42:47 1994 by sandy on gandalf
 ;; Language:     Emacs-Lisp

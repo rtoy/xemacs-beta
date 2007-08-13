@@ -25,17 +25,6 @@
 /* Make process_send_signal work by "typing" a signal character on the pty.  */
 #define SIGNALS_VIA_CHARACTERS
 
-/* Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used. */
-#define HAVE_ALLOCA
-#undef C_ALLOCA
-
-#ifndef NOT_C_CODE
-#ifndef __GNUC__
-#include <alloca.h>
-#endif
-#endif
-
 /* SGI has all the fancy wait stuff, but we can't include sys/wait.h
    because it defines BIG_ENDIAN and LITTLE_ENDIAN (ugh!.)  Instead
    we'll just define WNOHANG right here.

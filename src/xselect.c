@@ -2218,19 +2218,18 @@ A value of 0 means wait as long as necessary.  This is initialized from the
 void
 Xatoms_of_xselect (struct device *d)
 {
-#define ATOM(x) XInternAtom (DEVICE_X_DISPLAY (d), (x), False)
-#define ATOMIZE(x) DEVICE_XATOM_##x (d) = ATOM(#x)
+  Display *D = DEVICE_X_DISPLAY (d);
 
   /* Non-predefined atoms that we might end up using a lot */
-  ATOMIZE (CLIPBOARD);
-  ATOMIZE (TIMESTAMP);
-  ATOMIZE (TEXT);
-  ATOMIZE (DELETE);
-  ATOMIZE (MULTIPLE);
-  ATOMIZE (INCR);
-  ATOMIZE (TARGETS);
-  ATOMIZE (NULL);
-  ATOMIZE (ATOM_PAIR);
-  ATOMIZE (COMPOUND_TEXT);
-  DEVICE_XATOM_EMACS_TMP (d) = ATOM ("_EMACS_TMP_");
+  DEVICE_XATOM_CLIPBOARD     (d) = XInternAtom (D, "CLIPBOARD",     False);
+  DEVICE_XATOM_TIMESTAMP     (d) = XInternAtom (D, "TIMESTAMP",     False);
+  DEVICE_XATOM_TEXT          (d) = XInternAtom (D, "TEXT",          False);
+  DEVICE_XATOM_DELETE        (d) = XInternAtom (D, "DELETE",        False);
+  DEVICE_XATOM_MULTIPLE      (d) = XInternAtom (D, "MULTIPLE",      False);
+  DEVICE_XATOM_INCR          (d) = XInternAtom (D, "INCR",          False);
+  DEVICE_XATOM_TARGETS       (d) = XInternAtom (D, "TARGETS",       False);
+  DEVICE_XATOM_NULL          (d) = XInternAtom (D, "NULL",          False);
+  DEVICE_XATOM_ATOM_PAIR     (d) = XInternAtom (D, "ATOM_PAIR",     False);
+  DEVICE_XATOM_COMPOUND_TEXT (d) = XInternAtom (D, "COMPOUND_TEXT", False);
+  DEVICE_XATOM_EMACS_TMP     (d) = XInternAtom (D, "_EMACS_TMP_",   False);
 }

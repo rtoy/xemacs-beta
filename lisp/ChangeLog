@@ -1,3 +1,40 @@
+Fri Apr 25 13:21:46 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* apropos.el (apropos): Add support for customization groups. 
+	(apropos-print): Ditto.
+
+Sat May 17 19:56:31 1997  Glynn Clements <glynn@sensei.co.uk>
+
+	* packages/man.el (manual-entry):  Strip out stderr output.
+
+Sun May 11 18:24:25 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
+
+	* lisp/prim/modeline.el: new mouse-drag-modeline function.
+	Allows bottommost modeline to be dragged.
+
+Sat May 17 03:41:11 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* cl/cl-macs.el: A whole bunch of XEmacs specific setf methods
+	from Hrvoje Niksic.
+
+	* prim/files.el (auto-mode-alist): Don't copy to purespace.
+	(interpreter-mode-alist): Ditto.
+
+Fri May 16 21:43:35 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/info.el (Info-button1-follows-hyperlink): New variable.
+	(Info-maybe-follow-clicked-node): Use it.
+
+	* prim/simple.el (transpose-preceding-chars): New function.
+
+Wed Apr 23 16:04:22 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/loaddefs.el (debug-ignored-errors): Initialize.
+
+Fri May 16 20:37:35 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* version.el: Update minor version number.
+
 Mon May 12 13:47:37 1997  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
 
 	* tm/tm-vm.el: Provide for vm-unsaved-message having been removed

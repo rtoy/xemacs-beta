@@ -732,6 +732,7 @@ unexec (char *new_name, char *old_name, unsigned int data_start,
 	  /* Now copy over what we have in the memory now. */
 	  memcpy (NEW_SECTION_H (nn).sh_offset + new_base,
 		  (caddr_t) OLD_SECTION_H (n).sh_addr,
+		  /* #### mrb: should be old_bss_size instead? */
 		  new_data2_size);
 	  nn++;
 	}

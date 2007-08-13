@@ -130,6 +130,7 @@ input methods to relay state information to the user.
   
       Vminibuf_preprompt = LISP_GETTEXT (preprompt);
     }
+  return Qnil;
 }
 
 DEFUN ("read-minibuffer-internal", Fread_minibuffer_internal, 1, 1, 0, /*
@@ -622,18 +623,19 @@ the symbol from the obarray.
    implement some braindamage in FSF which we aren't including. --cet */
 
 #if 0
-xxDEFUN ("minibuffer-prompt", Fminibuffer_prompt, Sminibuffer_prompt, 0, 0, 0,
-  "Return the prompt string of the currently-active minibuffer.\n"
-"If no minibuffer is active, return nil.")
-  ()
+xxDEFUN ("minibuffer-prompt", Fminibuffer_prompt, 0, 0, 0, /*
+Return the prompt string of the currently-active minibuffer.
+If no minibuffer is active, return nil.
+*/
+	 ())
 {
   return (Fcopy_sequence (Vminibuf_prompt));
 }
 
-xxDEFUN ("minibuffer-prompt-width", Fminibuffer_prompt_width,
-  Sminibuffer_prompt_width, 0, 0, 0,
-  "Return the display width of the minibuffer prompt.")
-  ()
+xxDEFUN ("minibuffer-prompt-width", Fminibuffer_prompt_width, 0, 0, 0, /*
+Return the display width of the minibuffer prompt.
+*/
+	 ())
 {
   return (make_int (minibuf_prompt_width));
 }

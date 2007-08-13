@@ -343,7 +343,7 @@ If BUFFER is not specified, the current buffer will be used."
     window-list))
 
 (defun buffer-in-multiple-windows-p (&optional buffer)
-  "Returns t if BUFFER is in multiple windows.
+  "Return t if BUFFER is in multiple windows.
 If BUFFER is not specified, the current buffer will be used."
   (setq buffer (or buffer
 		   (get-buffer buffer)

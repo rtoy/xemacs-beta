@@ -75,8 +75,3 @@
 
 /* XEmacs: apparently rint() is totally broken in HPUX 9. */
 #undef HAVE_RINT
-
-/* XEmacs addition */
-#ifndef OBJECTS_SYSTEM
-#define OBJECTS_SYSTEM strcat.o
-#endif

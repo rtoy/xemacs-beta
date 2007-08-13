@@ -1,695 +1,653 @@
-; Lisp Interface code between GNU Emacs and gnuserv.
-;
-; This file is part of GNU Emacs.
-;
-; Copying is permitted under those conditions described by the GNU
-; General Public License.
-;
-; Copyright (C) 1989-1996  Free Software Foundation, Inc.
-;
-; Author: Andy Norman (ange@hplb.hpl.hp.com) based on
-;         'lisp/server.el' from the 18.52 GNU Emacs distribution.
-;
-; Please mail bugs and suggestions to the author at the above address.
-;
+;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
+;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
+
+;; Version: 3.1
+;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
+;;         Hrvoje Niksic <hniksic@srce.hr>
+;; Keywords: environment, processes, terminals
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
 ;;; Synched up with: Not in FSF.
 
-; Updated for XEmacs, GNU Emacs 19 and Epoch V4 to use multiple frames
-; by Bob Weiner, <weiner@mot.com>, 1/20/94.  (Still works with Emacs V18, too.)
-;    Modified 'server-process-filter' to use \^D as end of request terminator
-;      as gnuclient and gnudoit have been modified to send.  This permits
-;      multi-line requests.
-;    Modified 'server-make-window-visible' to work with multiple frames.
-;    Modified 'server-find-file' to display in a separate frame when possible.
-;    Modified 'server-edit' to delete newly created frame when used to
-;      terminate an edit and to signal an error if called within a
-;      non-server-edit buffer.
-; Bob Weiner, <weiner@mot.com>, 5/9/94.
-;    Added 'server-done-function' variable.  Made default value 'kill-buffer'
-;    instead of 'bury-buffer' as in original gnuserv.el.
-;
-; Darrell Kindred <dkindred+@cmu.edu> May/1994
-; Updated to allow multi-line return values:
-;    - output to gnuserv is "m/n:xxx" where m is the client number,
-;      n is the length of the data, and xxx is the data itself, followed 
-;      by newline
-;
-; Arup Mukherjee <arup+@cmu.edu> May/1994
-; Updated for XEmacs 19.10, and others:
-;    - use find-file-other-screen if present
-;    - new variable gnuserv-frame can be set to a frame or screen which
-;      is used for all edited files. 
-;    - check to see if server.el is already loaded and complain if it is, since
-;      gnuserv.el can't coexist with server.el
-;    - rename server-start to gnuserv-start, although server-start remains as
-;      an alias. This allows gnuserv-start to be autoloaded from gnuserv.el
-;    - changed server-get-buffer to take into account that in newer emacsen,
-;      get buffer returns nil on deleted buffers.
-;    - only try to create/delete frames or screens if window-system is non-nil 
-;      (otherwise things don't work w/ emacs19 on a dumb terminal)
-;
-; Ben Wing <wing@666.com> sometime in 1995
-; Updated to allow `gnuattach'-type connections to the existing TTY
-;
-; Ben Wing <wing@666.com> May/1996
-; patch to get TTY terminal type correct.
-;
-; Jan Vroonhof <vroonhof@math.ethz.ch> July/1996
-; ported the server-temp-file-regexp feature from server.el
-; ported server hooks from server.el
-; ported kill-*-query functions from server.el (and made it optional)
-; synced other behaviour with server.el
+;;; Commentary:
+ 
+;; Gnuserv is run when Emacs needs to operate as a server for other
+;; processes.  Specifically, any number of files can be attached for
+;; editing to a running XEmacs process using the `gnuclient' program.
+
+;; Use `M-x gnuserv-start' to start the server and `gnuclient files'
+;; to load them to XEmacs.  When you are done with a buffer, press
+;; `C-x #' (`M-x gnuserv-edit').  You can put (gnuserv-start) to your
+;; .emacs, and enable `gnuclient' as your Unix "editor".  When all the
+;; buffers for a client have been edited and exited with
+;; `gnuserv-edit', the client "editor" will return to the program that
+;; invoked it.
+
+;; Your editing commands and Emacs' display output go to and from the
+;; terminal or X display in the usual way.  If you are running under
+;; X, a new X frame will be open for each gnuclient.  If you are on a
+;; TTY, this TTY will be attached as a new device to the running
+;; XEmacs, and will be removed once you are done with the buffer.
+
+;; To evaluate a Lisp form in a running Emacs, use the `gnudoit'
+;; utility.  For example `gnudoit "(+ 2 3)"' will print `5', whereas
+;; `gnudoit "(gnus)"' will fire up your favorite newsreader.  Like
+;; gnuclient, `gnudoit' requires the server to be started prior to
+;; using it.
+
+;; For more information you can refer to man pages of gnuclient,
+;; gnudoit and gnuserv, distributed with XEmacs.
+
+;; gnuserv.el was originally written by Andy Norman as an improvement
+;; ver William Sommerfeld's server.el.  Since then, a number of people
+;; have worked on it, including Bob Weiner, Darell Kindred, Arup
+;; Mukherjee, Ben Wing and Jan Vroonhof.  It was completely rewritten
+;; (labeled as version 3) by Hrvoje Niksic in May 1997.
+
+;; Jan Vroonhof <vroonhof@math.ethz.ch> July/1996
+;; ported the server-temp-file-regexp feature from server.el
+;; ported server hooks from server.el
+;; ported kill-*-query functions from server.el (and made it optional)
+;; synced other behaviour with server.el
+;;
+;; Jan Vroonhof
+;;     Customized.
+;;
+;; Hrvoje Niksic <hniksic@srce.hr> May/1997
+;;     Completely rewritten.  Now uses `defstruct' and other CL stuff
+;;     to define clients cleanly.  Dave, thanks!
 
 
+;;; Code:
+
+(defconst gnuserv-rcs-version
+  "$Id: gnuserv.el,v 1.8 1997/05/18 03:40:06 steve Exp $")
 
 (defgroup gnuserv nil
-  "Lisp interface between Emacs and gnuserv"
-  :prefix "server-"
+  "The gnuserv suite of programs to talk to Emacs from outside."
+  :group 'environment
   :group 'processes
   :group 'terminals)
 
 
-(defconst gnuserv-rcs-header-id "!Header: gnuserv.el,v 2.1 95/02/16 12:00:16 arup alpha !")
-
-
-;; server.el and gnuserv.el can't coexist because of conflicting defvar's and
-;; function names. 
-
-(if (and (boundp 'server-buffer-clients)
-	 (not (featurep 'gnuserv)))
-    (error "Can't run gnuserv because server.el appears to be loaded already"))
-
 ;;;###autoload
-(defvar gnuserv-frame nil
-  "*If non-nil, the frame to be used to display all edited files.
+(defcustom gnuserv-frame nil
+  "*The frame to be used to display all edited files.
 If nil, then a new frame is created for each file edited.
-This variable has no effect in XEmacs versions older than 19.9.")
+If t, then the currently selected frame will be used.
+If a function, then this will be called with a symbol `x' or `tty' as the
+only argument, and its return value will be interpreted as above."
+  :tag "Gnuserv Frame"
+  :type '(radio (const :tag "Create new frame each time" nil)
+		(const :tag "Use selected frame" t)
+	        (function-item :tag "Use main Emacs frame"
+			       gnuserv-main-frame-function)
+		(function-item :tag "Use visible frame, otherwise create new"
+			       gnuserv-visible-frame-function)
+		(function-item :tag "Create special Gnuserv frame and use it"
+			       gnuserv-special-frame-function)
+		(function :tag "Other"))
+   :group 'gnuserv)
 
-(defcustom server-done-function 'kill-buffer 
-  "*A function of one argument, a buffer, which removes the buffer after editing.
-Functions such as 'kill-buffer' and 'bury-buffer' are good values. See also
-`server-done-temp-file-function'"
+(defcustom gnuserv-done-function 'kill-buffer 
+  "*Function used to remove a buffer after editing.
+It is called with one BUFFER argument.  Functions such as 'kill-buffer' and
+'bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
+  :type '(radio (function-item kill-buffer)
+		(function-item bury-buffer)
+		(function :tag "Other"))
+  :group 'gnuserv)
+
+(defcustom gnuserv-done-temp-file-function 'kill-buffer
+  "*Function used to remove a temporary buffer after editing.
+It is called with one BUFFER argument.  Functions such as 'kill-buffer' and
+ 'bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
+  :type '(radio (function-item kill-buffer)
+		(function-item bury-buffer)
+		(function :tag "Other"))
+  :group 'gnuserv)
+
+(defcustom gnuserv-find-file-function 'find-file
+  "*Function to visit a file with.
+It takes one argument, a file name to visit."
   :type 'function
   :group 'gnuserv)
 
-(defcustom server-done-temp-file-function 'kill-buffer
-  "*A function of one argument, a buffer, which removes the buffer after editing a
-temporary file. Functions such as 'kill-buffer' and 'bury-buffer' are
-good values. See also `server-done-function'"
-  :type 'function
+(defcustom gnuserv-view-file-function 'view-file
+  "*Function to view a file with.
+It takes one argument, a file name to view."
+  :type '(radio (function-item view-file)
+		(function-item find-file-read-only)
+		(function :tag "Other"))
   :group 'gnuserv)
 
-(defcustom server-program "gnuserv"
-  "*The program to use as the edit server"
+(defcustom gnuserv-program "gnuserv"
+  "*Program to use as the editing server."
   :type 'string
   :group 'gnuserv)
 
-
-(defcustom server-visit-hook nil
-  "*List of hooks to call when visiting a file for the Emacs server."
+(defcustom gnuserv-visit-hook nil
+  "*Hook run after visiting a file."
   :type 'hook
   :group 'gnuserv)
 
-;; defined by server.el but obsolete?
-;; (defvar server-switch-hook nil
-;;  "*List of hooks to call when switching to a buffer for the Emacs server.")
-
-(defcustom server-done-hook nil
-  "*List of hooks to call when done editing a buffer for the Emacs server."
+(defcustom gnuserv-done-hook nil
+  "*Hook run when done editing a buffer for the Emacs server.
+The hook functions are called after the file has been visited, with the
+current buffer set to the visiting buffer."
   :type 'hook
   :group 'gnuserv)
 
-
-(defvar server-process nil 
-  "The current server process")
-
-(defvar server-string ""
-  "The last input string from the server")
-
-(defvar server-kill-last-frame nil
-  "set to t to kill last frame")
-
-(defvar current-client nil
-  "The client we are currently talking to")
-
-(defvar server-clients nil
-  "List of current server clients.
-Each element is (CLIENTID BUFFER...) where CLIENTID is an integer
-that can be given to the server process to identify a client.
-When a buffer is killed, it is removed from this list.")
-
-(defcustom server-kill-quietly nil
-  "If this variable is set then don't confirm kills of buffers with
-clients attached"
+(defcustom gnuserv-kill-quietly nil
+  "*Non-nil means to kill buffers with clients attached without requiring confirmation."
   :type 'boolean
   :group 'gnuserv)
 
-
-(defvar server-buffer-clients nil
-  "List of client ids for clients requesting editing of the current buffer.")
-
-(defcustom server-temp-file-regexp "^/tmp/Re\\|/draft$"
-  "*Regexp which should match filenames of temporary files
-which are deleted and reused after each edit
-by the programs that invoke the emacs server."
+(defcustom gnuserv-temp-file-regexp "^/tmp/Re\\|/draft$"
+  "*Regexp which should match filenames of temporary files deleted
+and reused by the programs that invoke the Emacs server."
   :type 'regexp
   :group 'gnuserv)
 
-(defcustom server-make-temp-file-backup nil
-  "Non-nil makes the server backup temporary files also"
-  :type 'regexp
+(defcustom gnuserv-make-temp-file-backup nil
+  "*Non-nil makes the server backup temporary files also."
+  :type 'boolean
   :group 'gnuserv)
 
-(make-variable-buffer-local 'server-buffer-clients)
-(setq-default server-buffer-clients nil)
-(or (assq 'server-buffer-clients minor-mode-alist)
-    (setq minor-mode-alist (cons '(server-buffer-clients " Server") 
-				 minor-mode-alist)))
+
+;; The old functions are provided as aliases, to avoid breaking .emacs
+;; files.  However, they are obsolete and should be avoided.
 
-(defun server-temp-file-p (buffer)
+(defvaralias 'server-frame 'gnuserv-frame)
+(defvaralias 'server-done-function 'gnuserv-done-function)
+(defvaralias 'server-done-temp-file-function 'gnuserv-done-temp-file-function)
+(defvaralias 'server-find-file-function 'gnuserv-find-file-function)
+(defvaralias 'server-program 'gnuserv-program)
+(defvaralias 'server-visit-hook 'gnuserv-visit-hook)
+(defvaralias 'server-done-hook 'gnuserv-done-hook)
+(defvaralias 'server-kill-quietly 'gnuserv-kill-quietly)
+(defvaralias 'server-temp-file-regexp 'gnuserv-temp-file-regexp)
+(defvaralias 'server-make-temp-file-backup 'gnuserv-make-temp-file-backup)
+
+
+;;; Internal variables:
+
+(defstruct gnuclient
+  "An object that encompasses several buffers in one.
+Normally, a client connecting to Emacs will be assigned an id, and
+will request editing of several files.
+
+ID       - Client id (integer).
+BUFFERS  - List of buffers that \"belong\" to the client.
+           NOTE: one buffer can belong to several clients.
+DEVICE   - The device this client is on.  If the device was also created.
+           by a client, it will be placed to `gnuserv-devices' list.
+FRAME    - Frame created by the client, or nil if the client didn't
+           create a frame.
+
+All the slots default to nil."
+  (id nil)
+  (buffers nil)
+  (device nil)
+  (frame nil))
+
+(defvar gnuserv-process nil 
+  "The current gnuserv process.")
+
+(defvar gnuserv-string ""
+  "The last input string from the server.")
+
+(defvar gnuserv-current-client nil
+  "The client we are currently talking to.")
+
+(defvar gnuserv-clients nil
+  "List of current gnuserv clients.
+Each element is a gnuclient structure that identifies a client.")
+
+(defvar gnuserv-devices nil
+  "List of devices created by clients.")
+
+(defvar gnuserv-special-frame nil
+  "Frame created specially for Server.")
+
+;; We want the client-infested buffers to have some modeline
+;; identification, so we'll make a "minor mode".
+(defvar gnuserv-minor-mode nil)
+(make-variable-buffer-local 'gnuserv-mode)
+(pushnew '(gnuserv-minor-mode " Server") minor-mode-alist)
+
+
+;; Sample gnuserv-frame functions
+
+(defun gnuserv-main-frame-function (type)
+  "Returns a sensible value for the main Emacs frame."
+  (if (eq type 'x)
+      (car (frame-list))
+    nil))
+
+(defun gnuserv-visible-frame-function (type)
+  "Returns a frame if there is a frame that is truly visible, nil otherwise.
+This is meant in the X sense, so it will not return frames that are on another
+visual screen.  Totally visible frames are preferred.  If none found, return nil."
+  (if (eq type 'x)
+      (cond ((car (filtered-frame-list 'frame-totally-visible-p
+				       (selected-device))))
+	    ((car (filtered-frame-list (lambda (frame)
+					 ;; eq t as in not 'hidden
+					 (eq t (frame-visible-p frame)))
+				       (selected-device)))))
+    nil))
+
+(defun gnuserv-special-frame-function (type)
+  "Creates a special frame for Gnuserv and returns it on later invocations."
+  (unless (frame-live-p gnuserv-special-frame)
+    (setq gnuserv-special-frame (make-frame)))
+  gnuserv-special-frame)
+
+
+;;; Communication functions
+
+(defun gnuserv-sentinel (proc msg)
+  (case (process-status proc)
+    (exit (message "Gnuserv subprocess exited; restarting")
+	  ;; This will also kill all the existing clients.
+	  (gnuserv-start-1))
+    (closed (message "Gnuserv subprocess closed"))
+    (signal (message "Gnuserv subprocess killed"))))
+
+(defun gnuserv-process-filter (proc string)
+  "Process gnuserv client requests to execute Emacs commands."
+  (setq gnuserv-string (concat gnuserv-string string))
+  ;; C-d means end of request.
+  (when (string-match "\C-d$" gnuserv-string)
+    (cond ((string-match "^[0-9]+" gnuserv-string) ; client request id
+	   (let ((header (read-from-string gnuserv-string)))
+	     ;; Set the client we are talking to.
+	     (setq gnuserv-current-client (car header))
+	     ;; Evaluate the expression
+	     (condition-case oops
+		 (eval (car (read-from-string gnuserv-string (cdr header))))
+	       ;; In case of an error, write the description to the
+	       ;; client, and then signal it.
+	       (error (setq gnuserv-string "")
+		      (gnuserv-write-to-client gnuserv-current-client oops)
+		      (setq gnuserv-current-client nil)
+		      (signal (car oops) (cdr oops)))
+	       (quit (setq gnuserv-string "")
+		     (gnuserv-write-to-client gnuserv-current-client oops)
+		     (setq gnuserv-current-client nil)
+		     (signal 'quit nil)))
+	     (setq gnuserv-string "")))
+	  (t
+	   (error "%s: invalid response from gnuserv" gnuserv-string)
+	   (setq gnuserv-string "")))))
+
+(defun gnuserv-write-to-client (client-id form)
+  "Write the given form to the given client via the gnuserv process."
+  (when (eq (process-status gnuserv-process) 'run)
+    (let* ((result (format "%s" form))
+	   (s      (format "%s/%d:%s\n" client-id
+			   (length result) result)))
+      (process-send-string gnuserv-process s))))
+
+
+;; The following two functions are helper functions, used by
+;; gnuclient.
+
+(defun gnuserv-eval (form)
+  "Evaluate form and return result to client."
+  (gnuserv-write-to-client gnuserv-current-client (eval form))
+  (setq gnuserv-current-client nil))
+
+(defun gnuserv-eval-quickly (form)
+  "Let client know that we've received the request, and then eval the form.
+This order is important as not to keep the client waiting."
+  (gnuserv-write-to-client gnuserv-current-client nil)
+  (setq gnuserv-current-client nil)
+  (eval form))
+
+
+;; "Execute" a client connection, called by gnuclient.  This is the
+;; backbone of gnuserv.el.
+(defun gnuserv-edit-files (type list &optional flags)
+  "For each (line-number . file) pair in LIST, edit the file at line-number.
+The visited buffers are memorized, so that when \\[gnuserv-edit] is invoked
+in such a buffer, or when it is killed, or the client's device deleted, the
+client will be invoked that the edit is finished.
+
+TYPE should either be a (tty TTY TERM PID) list, or (x DISPLAY) list.
+If FLAGS is `quick', just edit the files in Emacs.
+If FLAGS is `view', view the files read-only."
+  (or (not flags)
+      (memq flags '(quick view))
+      (error "Invalid flag %s" flags))
+  (let* ((old-device-num (length (device-list)))
+	 (new-frame nil)
+	 (dest-frame (if (functionp gnuserv-frame)
+			 (funcall gnuserv-frame (car type))
+		       gnuserv-frame))
+	 ;; The gnuserv-frame dependencies are ugly.
+	 (device (cond ((frame-live-p dest-frame)
+			(frame-device dest-frame))
+		       ((null dest-frame)
+			(case (car type)
+			  (tty (apply 'make-tty-device (cdr type)))
+			  (x   (make-x-device (cadr type)))
+			  (t   (error "Invalid device type"))))
+		       (t
+			(selected-device))))
+	 (frame (cond ((frame-live-p dest-frame)
+		       dest-frame)
+		      ((null dest-frame)
+		       (setq new-frame (make-frame nil device))
+		       new-frame)
+		      (t (selected-frame))))
+	 (client (make-gnuclient :id gnuserv-current-client
+				 :device device
+				 :frame new-frame)))
+    (setq gnuserv-current-client nil)
+    ;; If the device was created by this client, push it to the list.
+    (and (/= old-device-num (length (device-list)))
+	 (push device gnuserv-devices))
+    ;; Visit all the listed files.
+    (while list
+      (let ((line (caar list)) (path (cdar list)))
+	(select-frame frame)
+	;; Visit the file.
+	(funcall (if (eq flags 'view)
+		     gnuserv-view-file-function
+		   gnuserv-find-file-function)
+		 path)
+	(goto-line line)
+	(run-hooks 'gnuserv-visit-hook)
+	;; Don't memorize the quick and view buffers.
+	(when (null flags)
+	  (pushnew (current-buffer) (gnuclient-buffers client))
+	  (setq gnuserv-minor-mode t))
+	(pop list)))
+    (cond ((and flags (device-on-window-system-p device))
+	   ;; Exit if on X device, and quick or view.	   
+	   ;; NOTE: if the client is to finish now, it must absolutely
+	   ;; /not/ be included to the list of clients.  This way the
+	   ;; client-ids should be unique.
+	   (gnuserv-write-to-client (gnuclient-id client) nil))
+	  (t
+	   ;; Else, the client gets a vote.
+	   (push client gnuserv-clients)
+	   ;; Explain buffer exit options.  If dest-frame is nil, the
+	   ;; user can exit via `delete-frame'.  OTOH, if FLAGS are
+	   ;; nil and there are some buffers, the user can exit via
+	   ;; `gnuserv-edit'.
+	   (if (and (null flags)
+		    (gnuclient-buffers client))
+	       (message (substitute-command-keys
+			 "Type `\\[gnuserv-edit]' to finish editing"))
+	     (or dest-frame
+		 (message (substitute-command-keys
+			   "Type `\\[delete-frame]' to finish editing"))))))))
+
+
+;;; Functions that hook into Emacs in various way to enable operation
+
+;; Defined later.
+(add-hook 'kill-emacs-hook 'gnuserv-kill-all-clients t)
+
+;; A helper function; used by others.
+(defun gnuserv-buffer-clients (buffer)
+  "Returns a list of clients to which BUFFER belongs."
+  (let ((client gnuserv-clients)
+	res)
+    (while client
+      (if (memq buffer (gnuclient-buffers (car client)))
+	  (push (car client) res))
+      (pop client))
+    res))
+
+;; This function makes sure that a killed buffer is deleted off the
+;; list for the particular client.
+;;
+;; This hooks into `kill-buffer-hook'.  It is *not* a replacement for
+;; `kill-buffer' (thanks God).
+(defun gnuserv-kill-buffer-function ()
+  "Remove the buffer from the buffer lists of all the clients it belongs to.
+Any client that remains \"empty\" after the removal is informed that the
+editing has ended."
+  (let* ((buf (current-buffer))
+	 (clients (gnuserv-buffer-clients buf)))
+    (while clients
+      (callf2 delq buf (gnuclient-buffers (car clients)))
+      ;; If no more buffers, kill the client.
+      (when (null (gnuclient-buffers (car clients)))
+	(gnuserv-kill-client (car clients)))
+      (pop clients))))
+
+(add-hook 'kill-buffer-hook 'gnuserv-kill-buffer-function)
+
+;; Ask for confirmation before killing a buffer that belongs to a
+;; living client.
+(defun gnuserv-kill-buffer-query-function ()
+  (or gnuserv-kill-quietly
+      (not (gnuserv-buffer-clients (current-buffer)))
+      (yes-or-no-p
+       (format "Buffer %s belongs to gnuserv client(s); kill anyway? "
+	       (current-buffer)))))
+
+(add-hook 'kill-buffer-query-functions
+	  'gnuserv-kill-buffer-query-function)
+
+(defun gnuserv-kill-emacs-query-function ()
+  (or gnuserv-kill-quietly
+      (not (some 'gnuclient-buffers gnuserv-clients))
+      (yes-or-no-p "Gnuserv buffers still have clients; exit anyway? ")))
+
+(add-hook 'kill-emacs-query-functions
+	  'gnuserv-kill-emacs-query-function)
+
+;; If the device of a client is to be deleted, the client should die
+;; as well.  This is why we hook into `delete-device-hook'.
+(defun gnuserv-check-device (device)
+  (when (memq device gnuserv-devices)
+    (let ((client gnuserv-clients))
+      (while client
+	(when (eq device (gnuclient-device (car client)))
+	  ;; we must make sure that the server kill doesn't result in
+	  ;; killing the device, because it would cause a device-dead
+	  ;; error when `delete-device' tries to do the job later.
+	  (gnuserv-kill-client (car client) t))
+	(pop client)))
+    (callf2 delq device gnuserv-devices)))
+
+(add-hook 'delete-device-hook 'gnuserv-check-device)
+
+(defun gnuserv-temp-file-p (buffer)
   "Return non-nil if BUFFER contains a file considered temporary.
 These are files whose names suggest they are repeatedly
 reused to pass information to another program.
 
-The variable `server-temp-file-regexp' controls which filenames
+The variable `gnuserv-temp-file-regexp' controls which filenames
 are considered temporary."
   (and (buffer-file-name buffer)
-       (string-match server-temp-file-regexp (buffer-file-name buffer))))
+       (string-match gnuserv-temp-file-regexp (buffer-file-name buffer))))
 
+(defun gnuserv-kill-client (client &optional leave-frame)
+  "Kill the gnuclient CLIENT.
+This will do away with all the associated buffers.  If LEAVE-FRAME,
+the function will not remove the frames associated with the client."
+  ;; Order is important: first delete client from gnuserv-clients, to
+  ;; prevent gnuserv-buffer-done-1 calling us recursively.
+  (callf2 delq client gnuserv-clients)
+  ;; Process the buffers.
+  (mapc 'gnuserv-buffer-done-1 (gnuclient-buffers client))
+  (unless leave-frame
+    (let ((device (gnuclient-device client)))
+      ;; kill frame created by this client (if any), unless
+      ;; specifically requested otherwise.
+      ;;
+      ;; note: last frame on a device will not be deleted here.
+    (when (and (gnuclient-frame client)
+	       (frame-live-p (gnuclient-frame client))
+	       (second (device-frame-list device)))
+      (delete-frame (gnuclient-frame client)))
+    ;; If the device is live, created by a client, and no longer used
+    ;; by any client, delete it.
+    (when (and (device-live-p device)
+	       (memq device gnuserv-devices)
+	       (second (device-list))
+	       (not (member* device gnuserv-clients
+			     :key 'gnuclient-device)))
+      ;; `gnuserv-check-device' will remove it from `gnuserv-devices'.
+      (delete-device device))))
+  ;; Notify the client.
+  (gnuserv-write-to-client (gnuclient-id client) nil))
 
-(defun server-log (string)
-  "If a *server* buffer exists, write STRING to it for logging purposes."
-  (if (get-buffer "*server*")
-      (save-excursion
-	(set-buffer "*server*")
-	(goto-char (point-max))
-	(insert string)
-	(or (bolp) (newline)))))
+;; Do away with the buffer.
+(defun gnuserv-buffer-done-1 (buffer)
+  (let ((clients (gnuserv-buffer-clients buffer)))
+    (while clients
+      (callf2 delq buffer (gnuclient-buffers (car clients)))
+      (when (null (gnuclient-buffers (car clients)))
+	(gnuserv-kill-client (car clients)))
+      (pop clients))
+    ;; Get rid of the buffer
+    (save-excursion
+      (set-buffer buffer)
+      (run-hooks 'gnuserv-done-hook)
+      (setq gnuserv-minor-mode nil)
+      (funcall (if (gnuserv-temp-file-p buffer)
+		   gnuserv-done-temp-file-function
+		 gnuserv-done-function)
+	       buffer))))
 
+
+;;; Higher-level functions
 
-(defun server-sentinel (proc msg)
-  (cond ((eq (process-status proc) 'exit)
-	 (server-log (message "Server subprocess exited")))
-	((eq (process-status proc) 'signal)
-	 (server-log (message "Server subprocess killed")))))
+;; Choose a `next' server buffer, according to several criteria, and
+;; return it.  If none appropriate are found, return nil.
+(defun gnuserv-next-buffer ()
+  (let* ((frame (selected-frame))
+	 (device (selected-device))
+	 client)
+    (cond
+     ;; If we have a client belonging to this frame, return
+     ;; the first buffer from it.
+     ((setq client
+	    (car (member* frame gnuserv-clients :key 'gnuclient-frame)))
+      (car (gnuclient-buffers client)))
+     ;; Else, look for a device.
+     ((and
+       (memq (selected-device) gnuserv-devices)
+       (setq client
+	     (car (member* device gnuserv-clients :key 'gnuclient-device))))
+      (car (gnuclient-buffers client)))
+     ;; Else, try to find just any client, and return its first buffer.
+     (gnuserv-clients
+      (car (gnuclient-buffers (car gnuserv-clients))))
+      ;; Oh, give up.
+     (t nil))))
 
+(defun gnuserv-buffer-done (buffer)
+  "Mark BUFFER as \"done\" for its client(s).
+Calls `gnuserv-done-function' and returns another gnuserv buffer as a
+suggestion for the new current buffer."
+  ;; Check whether this is the real thing.
+  (unless (gnuserv-buffer-clients buffer)
+    (error "%s does not belong to a gnuserv client" buffer))
+  ;; Backup/ask query.
+  (if (gnuserv-temp-file-p buffer)
+      ;; For a temp file, save, and do NOT make a non-numeric backup
+      ;; Why does server.el explicitly back up temporary files?
+      (let ((version-control nil)
+	    (buffer-backed-up (not gnuserv-make-temp-file-backup)))
+	(save-buffer))
+    (if (and (buffer-modified-p)
+	     (y-or-n-p (concat "Save file " buffer-file-name "? ")))
+	(save-buffer buffer)))
+  (gnuserv-buffer-done-1 buffer)
+  (gnuserv-next-buffer))
 
-(defun server-process-display-error (string)
-  "Whenever a gnuserv error is reported, display it in a pop-up window."
-  (let ((cur (selected-window))
-	(pop-up-windows t))
-    (pop-to-buffer (get-buffer-create "*server*"))
-    (set-window-start (selected-window) (point))
-    (server-log string)
-    (select-window cur)))
+;; Called by `gnuserv-start-1' to clean everything.  Hooked into
+;; `kill-emacs-hook', too.
+(defun gnuserv-kill-all-clients ()
+  "Kill all the gnuserv clients.  Ruthlessly."
+  (mapc 'gnuserv-kill-client gnuserv-clients))
 
+;; Actually start the process.  Kills all the clients before-hand.
+(defun gnuserv-start-1 (&optional leave-dead)
+  (gnuserv-kill-all-clients)
+  (when gnuserv-process
+    (set-process-sentinel gnuserv-process nil)
+    (condition-case ()
+	(delete-process gnuserv-process)
+      (error nil)))
+  ;; If we already had a server, clear out associated status.
+  (unless leave-dead
+    (setq gnuserv-string "")
+    (setq gnuserv-current-client nil)
+    (let ((process-connection-type t))
+      (setq gnuserv-process 
+	    (start-process "gnuserv" nil gnuserv-program)))
+    (set-process-sentinel gnuserv-process 'gnuserv-sentinel)
+    (set-process-filter gnuserv-process 'gnuserv-process-filter)
+    (process-kill-without-query gnuserv-process)))
 
-(defun server-process-filter (proc string)
-  "Process client gnuserv requests to execute Emacs commands."
-  (setq server-string (concat server-string string))
-  (if (string-match "\^D$" server-string) ; requests end with ctrl-D
-      (if (string-match "^[0-9]+" server-string) ; client request id
-	(progn
-	  (server-log server-string)
-	  (let ((header (read-from-string server-string)))
-	    (setq current-client (car header))
-	    (condition-case oops
-		(eval (car (read-from-string server-string 
-					     (cdr header))))
-	      (error (setq server-string "")
-		     (server-write-to-client current-client oops)
-		     (setq current-client nil)
-		     (signal (car oops) (cdr oops)))
-	      (quit (setq server-string "")
-		    (server-write-to-client current-client oops)
-		    (setq current-client nil)
-		    (signal 'quit nil)))
-	    (setq server-string "")))
-	(progn				;error string from server
-	  (server-process-display-error server-string)
-	  (setq server-string "")))))
-
-
-(defun server-release-outstanding-buffers ()
-  "Release all buffers that have clients waiting for them to be finished."
-  (interactive)
-  (while server-clients
-    (let ((buffer (nth 1 (car server-clients)))) ; for all buffers...
-      (server-buffer-done buffer)))) ; destructively modifies server-clients
+
+;;; User-callable functions:
 
 ;;;###autoload
 (defun gnuserv-start (&optional leave-dead)
   "Allow this Emacs process to be a server for client processes.
-This starts a server communications subprocess through which
+This starts a gnuserv communications subprocess through which
 client \"editors\" (gnuclient and gnudoit) can send editing commands to 
-this Emacs job. See the gnuserv(1) manual page for more details.
+this Emacs job.  See the gnuserv(1) manual page for more details.
 
 Prefix arg means just kill any existing server communications subprocess."
   (interactive "P")
   ;; kill it dead!
-  (if server-process
-      (progn
-	(server-release-outstanding-buffers)
-	(set-process-sentinel server-process nil)
-	(condition-case ()
-	    (delete-process server-process)
-	  (error nil))))
-  ;; If we already had a server, clear out associated status.
-  (if leave-dead
-      nil
-    (if server-process
-	(server-log (message "Restarting server")))
-    (setq server-string "")
-    (setq current-client nil)
-    (let ((process-connection-type t))
-      (setq server-process 
-	    (start-process "server" nil server-program)))
-    (set-process-sentinel server-process 'server-sentinel)
-    (set-process-filter server-process 'server-process-filter)
-    (process-kill-without-query server-process)))
+  (and gnuserv-process
+       (not leave-dead)
+       (message "Restarting gnuserv"))
+  (gnuserv-start-1 leave-dead))
 
-;; make gnuserv-start an alias to server-start, for backward compatibility
-(fset 'server-start (function gnuserv-start))
+;;;###autoload
+(defun gnuserv-edit (&optional arg)
+  "Mark the current gnuserv editing buffer as \"done\", and switch to next one.
 
-; Can gnuserv handle commands in close succesion? (See server.el line 283) JV
-(defun server-write-to-client (client form)
-  "Write the given form to the given client via the server process."
-  (if (and client
-	   (eq (process-status server-process) 'run))
-      (let* ((result (format "%s" form))
-	     (s      (format "%s/%d:%s\n" client (length result) result)))
-	(process-send-string server-process s)
-	(server-log s))))
+The `gnuserv-done-function' is used to dispose of the buffer after marking it
+as done; it is `kill-buffer' by default.
 
-(defun server-eval (form)
-  "Evaluate form and return result to client."
-  (server-write-to-client current-client (eval form))
-  (setq current-client nil))
+Files that match `gnuserv-temp-file-regexp' are considered temporary and
+are saved unconditionally and backed up if `gnuserv-make-temp-file-backup'
+is non-nil.  They are disposed of using `gnuserv-done-temp-file-function'.
 
+When all of a client's buffers are marked as \"done\", the client is notified.
 
-(defun server-eval-quickly (form)
-  "Let client know that we've received the request, but eval the form
-afterwards in order to not keep the client waiting."
-  (server-write-to-client current-client nil)
-  (setq current-client nil)
-  (eval form))
-
-(defun server-make-window-visible ()
-  "Try to make this window even more visible."
-  (cond
-   ;; XEmacs can (in theory) raise any kind of frame
-   ((fboundp 'raise-frame)
-    (raise-frame (selected-frame)))
-   ((not (and (boundp 'window-system) window-system))
-    nil)
-   ((fboundp 'deiconify-screen)
-    (deiconify-screen (selected-screen))
-    (raise-screen (selected-screen)))
-   ((fboundp 'mapraised-screen)
-    (mapraised-screen))
-   ((fboundp 'x-remap-window)
-    (x-remap-window)
-    ;; give window chance to re-display text
-    (accept-process-output))))
-
-(defun server-tty-find-file (tty termtype pid file)
-  (let ((device (make-tty-device tty termtype pid )))
-    (select-frame (make-frame nil device))
-    (if (not file)
-	(switch-to-buffer (get-buffer-create "*scratch*"))
-      (find-file file)))
-  (run-hooks 'server-visit-hook))
-
-(defun server-find-file (file)
-  "Edit file FILENAME.
-Switch to a buffer visiting file FILENAME,
-creating one if none already exists."
-  (let ((obuf (get-file-buffer file))
-	;; XEmacs addition.
-	(force-dialog-box-use t))
-    (if (and obuf (set-buffer obuf))
-	(if (file-exists-p file)
-	    (if (or (not (verify-visited-file-modtime obuf))
-		    (buffer-modified-p obuf))
-		(revert-buffer t nil))
-	  (if (y-or-n-p
-	       (concat "File no longer exists: "
-		       file
-		       ", write buffer to file? "))
-	      (write-file file))))
-    (cond ((and window-system
-		gnuserv-frame (fboundp 'frame-live-p)    ;; v19 & XEmacs 19.12+
-		(frame-live-p gnuserv-frame))
-	   (select-frame gnuserv-frame)
-	   (find-file file))
-
-	  ((and window-system
-		gnuserv-frame (fboundp 'live-screen-p)   ;; XEmacs 19.9+
-		(live-screen-p gnuserv-frame))
-	   (select-screen gnuserv-frame)          
-	   (find-file file))
-	  
-	  ((and window-system
-		(fboundp 'select-frame))                 ;; v19 & XEmacs 19.12+
-	   (select-frame (make-frame))
-	   (find-file file))
-
-	  ((and window-system
-		(fboundp 'select-screen)                 ;; XEmacs 19.10+
-		(fboundp 'make-screen))
-	   (select-screen (make-screen))
-	   (find-file file))
-	  
-	  ((and (eq window-system 'x)                    ;; XEmacs 19.9-
-		(fboundp 'select-screen)
-		(fboundp 'x-create-screen))
-	   (select-screen (x-create-screen nil))
-	   (find-file file))
-
-	  ((and window-system
-		(fboundp 'create-screen))                ;; epoch
-	   (if (screenp gnuserv-frame)
-	       (progn (select-screen gnuserv-frame)
-		      (find-file file))
-	     (select-screen (create-screen (find-file-noselect file)))))
-
-	  (t (find-file file))))                          ;; emacs18+
-     (run-hooks 'server-visit-hook))                        
-
-
-(defun server-edit-files-quickly (list)
-  "For each (line-number . file) pair in LIST, edit the file at line-number.
-Unlike (server-edit-files), no information is saved about clients waiting on
-edits to this buffer."
-  (server-write-to-client current-client nil)
-  (setq current-client nil)
-  (while list
-    (let ((line (car (car list)))
-	  (path (cdr (car list))))
-      (server-find-file path)
-      (server-make-window-visible)
-      (goto-line line))
-    (setq list (cdr list))))
-
-
-(defun server-edit-files (list)
-  "For each (line-number . file) pair in LIST, edit the file at line-number.
-Save enough information for (server-kill-buffer) to inform the client when
-the edit is finished."
-  (while list
-    (let ((line (car (car list)))
-	  (path (cdr (car list))))
-      (server-find-file path)
-      (server-make-window-visible)
-      (let ((old-clients (assq current-client server-clients))
-	    (buffer (current-buffer)))
-	(goto-line line)
-	(setq server-buffer-clients
-	      (cons current-client server-buffer-clients))
-	(if old-clients			;client already waiting for buffers?
-	    (nconc old-clients (list buffer)) ;yes -- append this one as well
-	  (setq server-clients		;nope -- make a new record
-		(cons (list current-client buffer)
-		      server-clients)))))
-      (setq list (cdr list)))
-  (message (substitute-command-keys
-	    (if (and (boundp 'infodock-version) window-system)
-		"Type {\\[server-edit]} or select Frame/Delete to finish edit."
-	      "When done with a buffer, type \\[server-edit]."))))
-
-(defun server-tty-edit-files (tty termtype pid list)
-  "For each (line-number . file) pair in LIST, edit the file at line-number.
-Save enough information for (server-kill-buffer) to inform the client when
-the edit is finished."
-  (or list (setq list '((1 . nil))))
-  (while list
-    (let ((line (car (car list)))
-	  (path (cdr (car list))))
-      (server-tty-find-file tty termtype pid path)
-      (server-make-window-visible)
-      (let ((old-clients (assq current-client server-clients))
-	    (buffer (current-buffer)))
-	(goto-line line)
-	(setq server-buffer-clients
-	      (cons current-client server-buffer-clients))
-	(if old-clients			;client already waiting for buffers?
-	    (nconc old-clients (list buffer)) ;yes -- append this one as well
-	  (setq server-clients		;nope -- make a new record
-		(cons (list current-client buffer)
-		      server-clients)))))
-      (setq list (cdr list)))
-  (message (substitute-command-keys
-	    (if (and (boundp 'infodock-version) window-system)
-		"Type {\\[server-edit]} or select Frame/Delete to finish edit."
-	      "When done with a buffer, type \\[server-edit]."))))
-
-(defun server-get-buffer (buffer)
-  "One arg, a BUFFER or a buffer name.  Return the buffer object even if killed.
-Signal an error if there is no record of BUFFER."
-  (if (null buffer)
-      (current-buffer)
-    (let ((buf (get-buffer buffer)))
-      (if (null buf)
-	  (if (bufferp buffer)
-	      buffer
-	    (if (stringp buffer)
-		(error "No buffer named %s" buffer)
-	      (error "Invalid buffer argument")))
-	buf))))
-
-(defun server-kill-buffer (buffer)
-  "Kill the BUFFER.  The argument may be a buffer object or buffer name. 
-NOTE: This function has been enhanced to allow for remote editing
-in the following way:
-
-If the buffer is waited upon by one or more clients, and a client is
-not waiting for other buffers to be killed, then the client is told
-that the buffer has been killed."
-  (interactive "bKill buffer ")
-  (setq buffer (server-get-buffer buffer))
-  (if (buffer-name buffer)
-      (save-excursion
-	(set-buffer buffer)
-	(let ((old-clients server-clients))
-	  (server-real-kill-buffer buffer) ;try to kill it
-	  (if (buffer-name buffer)	;succeeded in killing?
-	      nil			;nope
-	    (while old-clients
-	      (let ((client (car old-clients)))
-		(delq buffer client)
-		(if (cdr client)	;pending buffers?
-		    nil			;yep
-		  (server-write-to-client (car client) nil) ;nope, tell client
-		  (setq server-clients (delq client server-clients))))
-	      (setq old-clients (cdr old-clients)))
-	    t)))))
-
-
-;; Ask before killing a server buffer.
-;; It was suggested to release its client instead,
-;; but I think that is dangerous--the client would proceed
-;; using whatever is on disk in that file. -- rms.
-(defun server-kill-buffer-query-function ()
-  (or server-kill-quietly
-      (not server-buffer-clients)
-      (yes-or-no-p (format "Buffer `%s' still has clients; kill it? "
-			   (buffer-name (current-buffer))))))
-
-(add-hook 'kill-buffer-query-functions
- 	  'server-kill-buffer-query-function)
-
-(defun server-kill-emacs-query-function ()
-  (let (live-client
-	(tail server-clients))
-    ;; See if any clients have any buffers that are still alive.
-    (while tail
-      (if (memq t (mapcar 'stringp (mapcar 'buffer-name (cdr (car tail)))))
-	  (setq live-client t))
-      (setq tail (cdr tail)))
-    (or server-kill-quietly
-        (not live-client)
-	(yes-or-no-p "Server buffers still have clients; exit anyway? "))))
-
-(add-hook 'kill-emacs-query-functions 'server-kill-emacs-query-function)
-
-
-(defun server-kill-all-local-variables ()
-  "Eliminate all the buffer-local variable values of the current buffer.
-This buffer will then see the default values of all variables.
-NOTE: This function has been modified to ignore the variable 
-server-buffer-clients."
-  (let ((clients server-buffer-clients))
-    (server-real-kill-all-local-variables)
-    (if clients
-	(setq server-buffer-clients clients))))
-
-
-(or (fboundp 'server-real-kill-buffer)
-  (fset 'server-real-kill-buffer (symbol-function 'kill-buffer)))
-
-(fset 'kill-buffer 'server-kill-buffer)
-
-(or (fboundp 'server-real-kill-all-local-variables)
-    (fset 'server-real-kill-all-local-variables
-	  (symbol-function 'kill-all-local-variables)))
-
-(fset 'kill-all-local-variables 'server-kill-all-local-variables)
-
-
-(defun server-buffer-done (buffer)
-  "Mark BUFFER as \"done\" for its client(s).
-Buries the buffer, and returns another server buffer as a suggestion for the
-new current buffer."
-  ; Note we do NOT return a list with a killed flag, doesn't seem usefull to me. JV
-  (let ((next-buffer nil)
-	(old-clients server-clients))
-    (while old-clients
-      (let ((client (car old-clients)))
-	(or next-buffer 
-	    (setq next-buffer (nth 1 (memq buffer client))))
-	(delq buffer client)
-	;; Delete all dead buffers from CLIENT.  (Why? JV , copyed from server.el)
-	(let ((tail client))
-	  (while tail
-	    (and (bufferp (car tail))
-		 (null (buffer-name (car tail)))
-		 (delq (car tail) client))
-	    (setq tail (cdr tail))))
-	;; If client now has no pending buffers,
-	;; tell it that it is done, and forget it entirely.
-	(if (cdr client)
-	    nil
-	  (if (buffer-name buffer)
-	      (save-excursion
-		(set-buffer buffer)
-		(setq server-buffer-clients nil)
-		(run-hooks 'server-done-hook)))
-	  ; Order is important here --
-	  ; server-kill-buffer tries to notify clients that
-	  ; they are done, too, but if we try and notify twice,
-	  ; we are h0zed -- Hunter Kelly 3/3/97
-	  (setq server-clients (delq client server-clients))
-	  (if (server-temp-file-p buffer)
- 	      (funcall server-done-temp-file-function buffer)
- 	    (funcall server-done-function buffer))
-	  (server-write-to-client (car client) nil)))
-      (setq old-clients (cdr old-clients)))
-    next-buffer))
-
-
-(defun mh-draft-p (buffer)
-  "Return non-nil if this BUFFER is an mh <draft> file. Since MH deletes 
-draft *BEFORE* it is edited, the server treats them specially."
- ;; This may not be appropriately robust for all cases.
-  (string= (buffer-name buffer) "draft"))
-
-
-(defun server-done ()
-  "Offer to save current buffer and mark it as \"done\" for clients.
-Also bury it, and return a suggested new current buffer."
-  (let ((buffer (current-buffer)))
-    (if server-buffer-clients
-	(progn
- 	  (if (mh-draft-p buffer);; Does this comflict with temp-file ? JV
- 	      (progn (save-buffer)
-		     (write-region (point-min) (point-max)
-				   (concat buffer-file-name "~"))
-		     (kill-buffer buffer))
-	    (if (server-temp-file-p buffer)
-		;; For a temp file, save, and do NOT make a non-numeric backup
-		;; Why does server.el explicitly back up temporary files?
-		(let ((version-control nil)
-		      (buffer-backed-up (not server-make-temp-file-backup)))
-		  (save-buffer))
-	      (if (and (buffer-modified-p)
-		       (y-or-n-p (concat "Save file " buffer-file-name "? ")))
-		  (save-buffer buffer))))
-	  (server-buffer-done buffer)))))
-
-
-(defun server-edit (&optional arg)
-  "Switch to next server editing
-buffer and mark current one as \"done\". If a server buffer is
-current, it is marked \"done\" and optionally saved. MH <draft> files
-are always saved and backed up, no questions asked. Files that match
-server-temp-file-regexp are considered temporary and are saved
-unconditionally and
-backed up if server-make-temp-file-backup is non-nil. When all of a
-client's buffers are marked as \"done\", the client is notified.
-
-If invoked with a prefix argument, or if there is no server process running, 
-starts server process and that is all.  Invoked by \\[server-edit].
-
-If `server-kill-last-frame' is t, then the final frame will be killed."
+If invoked with a prefix argument, or if there is no gnuserv process
+running, only starts server process.  Invoked with \\[gnuserv-edit]."
   (interactive "P")
-  (if (or arg
-	  (not server-process)
-	  (memq (process-status server-process) '(signal exit)))
-      (server-start nil)
-    (if server-buffer-clients
-	(progn (server-done-and-switch)
-	       (cond ((fboundp 'console-type)        ;; XEmacs 19.14+
-		      (or (and (equal (console-type) 'x)
-			       gnuserv-frame
-			       (frame-live-p gnuserv-frame))
-			  (condition-case ()
-			      (delete-frame (selected-frame)
-					    server-kill-last-frame)
-			    (error 
-			     (message "Not deleting last visible frame...")))))
-		     ((or (not window-system) 
-			  (and gnuserv-frame 
-			       (or (and (fboundp 'frame-live-p)
-					(frame-live-p gnuserv-frame))
-				   (and (fboundp 'live-screen-p)
-					(live-screen-p gnuserv-frame))
-				   (and (fboundp 'create-screen)
-					(screenp gnuserv-frame)))))
-		      ())                                   ;; do nothing
-		     ((fboundp 'delete-frame)
-		      (delete-frame (selected-frame) t))
-		     ((fboundp 'delete-screen)
-		      (delete-screen))))
-      (error 
-       "(server-edit): Use only on buffers created by external programs.")
-      )))
+  (if (or arg (not gnuserv-process)
+	  (memq (process-status gnuserv-process) '(signal exit)))
+      (gnuserv-start)
+    (switch-to-buffer (or (gnuserv-buffer-done (current-buffer))
+			  (current-buffer)))))
 
-(defun server-switch-buffer-internal (next-buffer always)
-  "Switch to NEXT-BUFFER if a live buffer, otherwise switch to another buffer
-with gnuserv clients. If no such buffer is available, we switch to
-another normal buffer if `always' is non-nil!"
-  ;; switching 
-  (if next-buffer
-      (if (and (bufferp next-buffer)
-	       (buffer-name next-buffer))
-	  (switch-to-buffer next-buffer)
-	;; If NEXT-BUFFER is a dead buffer,
-	;; remove the server records for it
-	;; and try the next surviving server buffer.
-	(server-switch-buffer-internal
-	 (server-buffer-done next-buffer) always))
-      (if server-clients
-	  (server-switch-buffer-internal (nth 1 (car server-clients)) always)
-	(if always
-	    (switch-to-buffer (other-buffer))))))
-
-;; For compatability
-(defun server-switch-buffer (next-buffer)
-  (server-switch-buffer-internal next-buffer t))
-
-;; The below function calles server-done and switches to the next
-;; sensible buffer. This implementation works regardless of the values
-;; of server-*-function and doens't need the tail recursion
-;; variable passing of server.el. It is more transparant too. JV
-(defun server-done-and-switch ()
-  "Be done with the current buffer and switch to another server buffer
-  if there is one, otherwise just switch buffer"
-  (let ((old-current (current-buffer)))
-    (server-switch-buffer-internal (server-done) nil)
-    (if (eq old-current (current-buffer))
-	(switch-to-buffer (other-buffer)))))
-
-(global-set-key "\C-x#" 'server-edit)
+;;;###autoload
+(global-set-key "\C-x#" 'gnuserv-edit)
 
 (provide 'gnuserv)
 

@@ -14,10 +14,6 @@
 #undef HAVE_RANDOM
 #define HPUX10
 #define FORCE_ALLOCA_H
-/* XEmacs addition */
-#ifndef OBJECTS_SYSTEM
-#define OBJECTS_SYSTEM strcat.o
-#endif
 /* AlainF 20-Jul-1996 -- fixes for 10.10, untested for 10.0x */
 /* Fix kernel file name for 10.10 */
 #undef KERNEL_FILE

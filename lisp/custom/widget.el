@@ -4,8 +4,25 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.84
+;; Version: 1.97
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
+
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 ;;
@@ -27,8 +44,11 @@
 	     (set (car keywords) (car keywords)))
 	 (setq keywords (cdr keywords)))))))
 
-(define-widget-keywords :text-format :deactivate :active :inactive 
-  :activate :sibling-args :delete-button-args
+(define-widget-keywords :mouse-down-action :glyph-up :glyph-down
+  :glyph-inactive  
+  :prompt-internal :prompt-history :prompt-match
+  :prompt-value :text-format :deactivate :active  
+  :inactive :activate :sibling-args :delete-button-args
   :insert-button-args :append-button-args :button-args 
   :tag-glyph :off-glyph :on-glyph :valid-regexp
   :secret :sample-face :sample-face-get :case-fold :widget-doc 
@@ -49,9 +69,11 @@
   (autoload 'widget-apply "wid-edit")
   (autoload 'widget-create "wid-edit")
   (autoload 'widget-insert "wid-edit")
+  (autoload 'widget-prompt-value "wid-edit")
   (autoload 'widget-browse "wid-browse" nil t)
   (autoload 'widget-browse-other-window "wid-browse" nil t)
-  (autoload 'widget-browse-at "wid-browse" nil t))
+  (autoload 'widget-browse-at "wid-browse" nil t)
+  (autoload 'widget-minor-mode "wid-browse" nil t))
 
 (defun define-widget (name class doc &rest args)
   "Define a new widget type named NAME from CLASS.
@@ -68,7 +90,8 @@ create identical widgets:
 
 The third argument DOC is a documentation string for the widget."
   (put name 'widget-type (cons class args))
-  (put name 'widget-documentation doc))
+  (put name 'widget-documentation doc)
+  name)
 
 ;;; The End.
 

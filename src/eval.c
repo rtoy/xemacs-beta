@@ -2485,6 +2485,18 @@ signal_quit (void)
 }
 
 
+DEFUN ("strerror", Fstrerror, 1, 1, 0, /*
+Return the error string associated with integer ERRNUM.
+This function is an interface to strerror(3).
+The returned string may or may not be translated.
+*/
+       (errnum))
+{
+  CHECK_INT (errnum);
+  return build_ext_string (strerror (XINT (errnum)), FORMAT_NATIVE);
+}
+
+
 /**********************************************************************/
 /*                            User commands                           */
 /**********************************************************************/
@@ -2521,17 +2533,10 @@ Also, a symbol satisfies `commandp' if its function definition does so.
   /* Emacs primitives are interactive if their DEFUN specifies an
      interactive spec.  */
   if (SUBRP (fun))
-    {
-      if (XSUBR (fun)->prompt)
-	return Qt;
-      else
-	return Qnil;
-    }
+    return XSUBR (fun)->prompt ? Qt : Qnil;
 
-  else if (COMPILED_FUNCTIONP (fun))
-    {
-      return (((XCOMPILED_FUNCTION (fun)->flags.interactivep) ? Qt : Qnil));
-    }
+  if (COMPILED_FUNCTIONP (fun))
+    return XCOMPILED_FUNCTION (fun)->flags.interactivep ? Qt : Qnil;
 
   /* Strings and vectors are keyboard macros.  */
   if (VECTORP (fun) || STRINGP (fun))
@@ -5134,6 +5139,7 @@ syms_of_eval (void)
   DEFSUBR (Fcall_with_condition_handler);
   DEFSUBR (Fsignal);
   DEFSUBR (Finteractive_p);
+  DEFSUBR (Fstrerror);
   DEFSUBR (Fcommandp);
   DEFSUBR (Fcommand_execute);
   DEFSUBR (Fautoload);

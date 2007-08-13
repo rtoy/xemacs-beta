@@ -5,7 +5,7 @@
 ;; Copyright (C) 1995 Ben Wing.
 
 ;; Keywords: extensions, wp, faces
-;; Author: Jamie Zawinski <jwz@lucid.com>
+;; Author: Jamie Zawinski <jwz@netscape.com>
 ;; Modified: Ben Wing <wing@666.com> -- many of the Lisp functions below
 ;;           were completely broken.
 ;;

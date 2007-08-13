@@ -639,8 +639,27 @@ void
 select_frame_1 (Lisp_Object frame)
 {
   struct frame *f = XFRAME (frame);
+
+  /* If on a TTY, selecting a frame must raise it.  */
+#ifdef HAVE_TTY
+  if (FRAME_TTY_P (f))
+    FRAMEMETH(f, raise_frame, (f));  /* tty_raise_frame will call
+					select_frame_2, so we can skip
+					it. */
+  else
+    select_frame_2 (frame);
+#else
+  select_frame_2 (frame);
+#endif
+}
+
+/* Called from tty_raise_frame. */
+void
+select_frame_2 (Lisp_Object frame)
+{
+  struct frame *f = XFRAME (frame);
   Lisp_Object old_selected_frame = Fselected_frame (Qnil);
-  
+
   if (EQ (frame, old_selected_frame))
     return;
 
@@ -711,7 +730,7 @@ device_selected_frame (struct device *d)
 
 #if 0 /* FSFmacs */
 
-xxDEFUN ("handle-switch-frame", Fhandle_switch_frame, Shandle_switch_frame, 1, 2, "e" /*
+xxDEFUN ("handle-switch-frame", Fhandle_switch_frame, 1, 2, "e", /*
 Handle a switch-frame event EVENT.
 Switch-frame events are usually bound to this function.
 A switch-frame event tells Emacs that the window manager has requested
@@ -720,8 +739,8 @@ This function selects the selected window of the frame of EVENT.
 
 If EVENT is frame object, handle it as if it were a switch-frame event
 to that frame.
-*/ )
-     (Lisp_Object frame, Lisp_Object no_enter)
+*/
+	 (frame, no_enter))
 {
   /* Preserve prefix arg that the command loop just cleared.  */
   XCONSOLE (Vselected_console)->prefix_arg = Vcurrent_prefix_arg;
@@ -732,11 +751,11 @@ to that frame.
 }
 
 /* A load of garbage. */  
-xxDEFUN ("ignore-event", Fignore_event, Signore_event, 0, 0, "" /*
+xxDEFUN ("ignore-event", Fignore_event, 0, 0, "", /*
 Do nothing, but preserve any prefix argument already specified.
 This is a suitable binding for iconify-frame and make-frame-visible.
-*/ )
-     ()
+*/
+	 ())
 {
   struct console *c = XCONSOLE (Vselected_console);
 
@@ -744,7 +763,7 @@ This is a suitable binding for iconify-frame and make-frame-visible.
   return Qnil;
 }
 
-#endif
+#endif /* 0 */
 
 DEFUN ("selected-frame", Fselected_frame, 0, 1, 0, /*
 Return the frame that is now selected on device DEVICE.
@@ -966,6 +985,7 @@ next_frame_internal (Lisp_Object frame, Lisp_Object frametype,
 {
   int passed = 0;
   int started_over = 0;
+  Lisp_Object tmp_frametype;
 
   /* If this frame is dead, it won't be in frame_list, and we'll loop
      forever.  Forestall that.  */
@@ -1013,7 +1033,18 @@ next_frame_internal (Lisp_Object frame, Lisp_Object frametype,
 		  if (EQ (f, frame))
 		    return f;
 
-		  if (frame_matches_frametype (f, frametype))
+		  tmp_frametype = frametype;
+		  if (FRAME_TTY_P (XFRAME (f)))
+		    {
+		      /* Only one TTY frame is visible at a time, but
+                         next-frame and similar should still find
+                         them.  */
+		      if (EQ (frametype, Qvisible)
+			  || EQ (frametype, Qvisible_nomini)
+			  || EQ (frametype, Qvisible_iconic_nomini))
+			tmp_frametype = Qnil;
+		    }
+		  if (frame_matches_frametype (f, tmp_frametype))
 		    return f;
 		}
 	      
@@ -1043,6 +1074,7 @@ prev_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
 {
   Lisp_Object devcons, concons;
   Lisp_Object prev;
+  Lisp_Object tmp_frametype;
 
   /* If this frame is dead, it won't be in frame_list, and we'll loop
      forever.  Forestall that.  */
@@ -1067,7 +1099,17 @@ prev_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
 	  /* Decide whether this frame is eligible to be returned,
 	     according to frametype.  */
 
-	  if (frame_matches_frametype (f, frametype))
+	  tmp_frametype = frametype;
+	  if (FRAME_TTY_P (XFRAME (f)))
+	    {
+	      /* Only one TTY frame is visible at a time, but
+		 next-frame and similar should still find them.  */
+	      if (EQ (frametype, Qvisible)
+		  || EQ (frametype, Qvisible_nomini)
+		  || EQ (frametype, Qvisible_iconic_nomini))
+		tmp_frametype = Qnil;
+	    }
+	  if (frame_matches_frametype (f, tmp_frametype))
 	    prev = f;
 
 	}
@@ -2594,6 +2636,15 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
     abort ();
 
   XSETFRAME (frame, f);
+
+  /*
+   * If the frame has been initialized and the new height and width
+   * are the same as the current height and width, then just return.
+   */
+  if (f->init_finished &&
+      newheight == FRAME_HEIGHT (f) && newwidth == FRAME_WIDTH (f))
+    return;
+
   default_face_height_and_width (frame, &font_height, &font_width);
 
   /* This size-change overrides any pending one for this frame.  */
@@ -2942,7 +2993,7 @@ vars_of_frame (void)
   staticpro (&Vframe_being_created);
 
 #ifdef HAVE_CDE
-  Vfeatures = Fcons (intern ("cde"), Vfeatures);
+  Fprovide (intern ("cde"));
 #endif
 
 #if 0 /* FSFmacs stupidity */

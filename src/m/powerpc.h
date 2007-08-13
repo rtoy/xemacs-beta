@@ -54,24 +54,3 @@ Boston, MA 02111-1307, USA.  */
 /* Convert that into an integer that is 100 for a load average of 1.0  */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
-
-/* Define C_ALLOCA if this machine does not support a true alloca
-   and the one written in C should be used instead.
-   Define HAVE_ALLOCA to say that the system provides a properly
-   working alloca function and it should be used.
-   Define neither one if an assembler-language alloca
-   in the file alloca.s should be used.  */
-
-#define HAVE_ALLOCA
-#ifndef NOT_C_CODE
-#if __GNUC__ < 2 /* Modern versions of GCC handle alloca directly.  */
-#include <alloca.h>
-#endif
-#endif
-
-/* Solaris defines alloca to __builtin_alloca & does not provide a prototype */
-#ifdef __SUNPRO_C
-#  ifndef NOT_C_CODE
-#    include <alloca.h>
-#  endif
-#endif

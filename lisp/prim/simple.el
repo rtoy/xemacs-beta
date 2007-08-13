@@ -1825,6 +1825,17 @@ If no argument and at end of line, the previous two chars are exchanged."
   (and (null arg) (eolp) (forward-char -1))
   (transpose-subr 'forward-char (prefix-numeric-value arg)))
 
+;;; A very old implementation of transpose-chars from the old days ...
+(defun transpose-preceding-chars (arg)
+  "Interchange characters before point.
+With prefix arg ARG, effect is to take character before point
+and drag it forward past ARG other characters (backward if ARG negative).
+If no argument and not at start of line, the previous two chars are exchanged."
+  (interactive "*P")
+  (and (null arg) (not (bolp)) (forward-char -1))
+  (transpose-subr 'forward-char (prefix-numeric-value arg)))
+
+
 (defun transpose-words (arg)
   "Interchange words around point, leaving point at end of them.
 With prefix arg ARG, effect is to take word before or around point

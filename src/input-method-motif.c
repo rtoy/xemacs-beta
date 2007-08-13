@@ -146,7 +146,7 @@ XIM_init_frame (struct frame *f)
 
   fontlistEntry = XmFontListEntryCreate(XmFONTLIST_DEFAULT_TAG,
 					XmFONT_IS_FONTSET,
-					xim_resources.fontset);
+					(XtPointer) xim_resources.fontset);
   fontlist = XmFontListAppendEntry (NULL, fontlistEntry);
   XmImRegister (w, 0);
   XmImVaSetValues (w,

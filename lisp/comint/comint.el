@@ -645,7 +645,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
   (append menu (comint-make-history-menu)))
 
 (defun comint-make-history-menu ()
-  (if (or (not (ring-p comint-input-ring))
+  (if (or (not (ringp comint-input-ring))
 	  (ring-empty-p comint-input-ring))
       nil
     (let ((menu nil)
@@ -904,7 +904,7 @@ See also `comint-read-input-ring'."
 (defun comint-dynamic-list-input-ring ()
   "List in help buffer the buffer's input history."
   (interactive)
-  (if (or (not (ring-p comint-input-ring))
+  (if (or (not (ringp comint-input-ring))
 	  (ring-empty-p comint-input-ring))
       (message "No history")
     (let ((history nil)
@@ -991,7 +991,7 @@ Moves relative to `comint-input-ring-index'."
 (defun comint-previous-matching-input-string-position (regexp arg &optional start)
   "Return the index matching REGEXP ARG places along the input ring.
 Moves relative to START, or `comint-input-ring-index'."
-  (if (or (not (ring-p comint-input-ring))
+  (if (or (not (ringp comint-input-ring))
 	  (ring-empty-p comint-input-ring))
       (error "No history"))
   (let* ((len (ring-length comint-input-ring))
@@ -1258,7 +1258,7 @@ Argument 0 is the command name."
   (let ((argpart "[^ \n\t\"'`]+\\|\\(\"[^\"]*\"\\|'[^']*'\\|`[^`]*`\\)")
 	(args ()) (pos 0)
 	(count 0)
-	beg str value quotes)
+	beg str quotes)
     ;; Build a list of all the args until we have as many as we want.
     (while (and (or (null mth) (<= count mth))
 		(string-match argpart string pos))
@@ -1385,7 +1385,7 @@ Similarly for Soar, Scheme, etc."
 	    (insert ?\n))
 	  (if (and (funcall comint-input-filter history)
 		   (or (null comint-input-ignoredups)
-		       (not (ring-p comint-input-ring))
+		       (not (ringp comint-input-ring))
 		       (ring-empty-p comint-input-ring)
 		       (not (string-equal (ring-ref comint-input-ring 0)
 					  history))))
@@ -2149,9 +2149,19 @@ inside of a \"[...]\" (see `skip-chars-forward')."
 	  (progn (store-match-data (list (point) here))
 		 (match-string 0))))))
 
+(defun comint-extract-current-pathname ()
+  "Return the file name at point.
+`@' or `.' are not valid characters at the end of the filename."
+  (save-excursion
+    (re-search-forward "@?\\([^-A-Za-z0-9_,/+%.~]\\|$\\)")
+    (goto-char (match-beginning 0))
+    (re-search-backward
+     "[^-A-Za-z0-9_,/+%.@~][-A-Za-z0-9_,/+%.@~]+[-A-Za-z0-9_+%~]"
+     nil t)
+    (buffer-substring (1+ (match-beginning 0)) (match-end 0))))
 
 (defun comint-match-partial-filename ()
-  "Return the filename at point, or nil if non is found.
+  "Return the filename at point, or nil if none is found.
 Environment variables are substituted.  See `comint-word'."
   (let ((filename (comint-word "~/A-Za-z0-9+@:_.$#%,={}-")))
     (and filename (substitute-in-file-name (comint-unquote-filename filename)))))
@@ -2636,7 +2646,6 @@ to interpret them."
 		(point)))
 	 (end (save-excursion (end-of-line) (point)))
 	 (res (or (comint-extract-source-location beg end)
-		  ;; #### comint-extract-current-pathname doesn't exist
 		  (let ((file (comint-extract-current-pathname)))
 		    (and file
 			 (list file nil nil nil

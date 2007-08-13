@@ -911,20 +911,20 @@ cause problems this is set to nil by default.
 void
 Xatoms_of_objects_x (struct device *d)
 {
-#define ATOM(x) XInternAtom (DEVICE_X_DISPLAY (d), (x), False)
-#define ATOMIZE(x) DEVICE_XATOM_##x (d) = ATOM(#x)
-  ATOMIZE (FOUNDRY);
-  ATOMIZE (FAMILY_NAME);
-  ATOMIZE (WEIGHT_NAME);
-  ATOMIZE (SLANT);
-  ATOMIZE (SETWIDTH_NAME);
-  ATOMIZE (ADD_STYLE_NAME);
-  ATOMIZE (PIXEL_SIZE);
-  ATOMIZE (POINT_SIZE);
-  ATOMIZE (RESOLUTION_X);
-  ATOMIZE (RESOLUTION_Y);
-  ATOMIZE (SPACING);
-  ATOMIZE (AVERAGE_WIDTH);
-  ATOMIZE (CHARSET_REGISTRY);
-  ATOMIZE (CHARSET_ENCODING);
+  Display *D = DEVICE_X_DISPLAY (d);
+  
+  DEVICE_XATOM_FOUNDRY         (d) = XInternAtom (D, "FOUNDRY",         False);
+  DEVICE_XATOM_FAMILY_NAME     (d) = XInternAtom (D, "FAMILY_NAME",     False);
+  DEVICE_XATOM_WEIGHT_NAME     (d) = XInternAtom (D, "WEIGHT_NAME",     False);
+  DEVICE_XATOM_SLANT           (d) = XInternAtom (D, "SLANT",           False);
+  DEVICE_XATOM_SETWIDTH_NAME   (d) = XInternAtom (D, "SETWIDTH_NAME",   False);
+  DEVICE_XATOM_ADD_STYLE_NAME  (d) = XInternAtom (D, "ADD_STYLE_NAME",  False);
+  DEVICE_XATOM_PIXEL_SIZE      (d) = XInternAtom (D, "PIXEL_SIZE",      False);
+  DEVICE_XATOM_POINT_SIZE      (d) = XInternAtom (D, "POINT_SIZE",      False);
+  DEVICE_XATOM_RESOLUTION_X    (d) = XInternAtom (D, "RESOLUTION_X",    False);
+  DEVICE_XATOM_RESOLUTION_Y    (d) = XInternAtom (D, "RESOLUTION_Y",    False);
+  DEVICE_XATOM_SPACING         (d) = XInternAtom (D, "SPACING",         False);
+  DEVICE_XATOM_AVERAGE_WIDTH   (d) = XInternAtom (D, "AVERAGE_WIDTH",   False);
+  DEVICE_XATOM_CHARSET_REGISTRY(d) = XInternAtom (D, "CHARSET_REGISTRY",False);
+  DEVICE_XATOM_CHARSET_ENCODING(d) = XInternAtom (D, "CHARSET_ENCODING",False);
 }

@@ -32,7 +32,9 @@ static char rcsid [] = "!Header: gnudoit.c,v 2.1 95/02/16 11:59:02 arup alpha !"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 
 #if !defined(SYSV_IPC) && !defined(UNIX_DOMAIN_SOCKETS) && !defined(INTERNET_DOMAIN_SOCKETS)
 int
@@ -115,10 +117,10 @@ main (int argc, char *argv[])
 #endif /* SYSV_IPC */
 
   if (qflg) {
-    send_string(s,"(server-eval-quickly '(progn ");
+    send_string(s,"(gnuserv-eval-quickly '(progn ");
   }
   else {
-    send_string(s,"(server-eval '(progn ");
+    send_string(s,"(gnuserv-eval '(progn ");
   };
 
   if (optind < argc) {

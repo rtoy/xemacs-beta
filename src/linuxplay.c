@@ -61,13 +61,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#ifdef __FreeBSD__
-#  include <machine/soundcard.h>
-#elif defined(__bsdi__)
-#  include <sys/soundcard.h>
-#else
-#  include <linux/soundcard.h>
-#endif
+#include SOUNDCARD_H_PATH /* Path computed by configure */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

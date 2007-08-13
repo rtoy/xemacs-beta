@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.84
+;; Version: 1.97
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -15,7 +15,7 @@
 
 (require 'custom)
 
-(eval-and-compile (require 'cl))
+(eval-when-compile (require 'cl))
 
 ;;; Compatibility.
 
@@ -38,12 +38,18 @@
 				   'face-font))
 
 (eval-and-compile
-  (unless (fboundp 'frame-property)
-    ;; XEmacs function missing in Emacs.
-    (defun frame-property (frame property &optional default)
-      "Return FRAME's value for property PROPERTY."
-      (or (cdr (assq property (frame-parameters frame)))
-	  default)))
+  (cond ((fboundp 'frame-property)
+	 ;; XEmacs.
+	 (defalias 'custom-frame-parameter 'frame-property))
+	((fboundp 'frame-parameter)
+	 ;; Emacs 19.35.
+	 (defalias 'custom-frame-parameter 'frame-parameter))
+	(t
+	 ;; Old emacsen.
+	 (defun custom-frame-parameter (frame property &optional default)
+	   "Return FRAME's value for property PROPERTY."
+	   (or (cdr (assq property (frame-parameters frame)))
+	       default))))
 
   (unless (fboundp 'face-doc-string)
     ;; XEmacs function missing in Emacs.
@@ -146,12 +152,12 @@ Does nothing when the variable initialize-face-resources is nil."
 ;;    (interactive (list (read-face-name "Reverse face: ")))
 ;;    (let ((fg (or (face-foreground face frame)
 ;;		  (face-foreground 'default frame)
-;;		  (frame-property (or frame (selected-frame))
+;;		  (custom-frame-parameter (or frame (selected-frame))
 ;;				  'foreground-color)
 ;;		  "black"))
 ;;	  (bg (or (face-background face frame)
 ;;		  (face-background 'default frame)
-;;		  (frame-property (or frame (selected-frame))
+;;		  (custom-frame-parameter (or frame (selected-frame))
 ;;				  'background-color)
 ;;		  "white")))
 ;;      (set-face-foreground face bg frame)
@@ -163,9 +169,9 @@ Set this to the symbol dark if your background color is dark, light if
 your background is light, or nil (default) if you want Emacs to
 examine the brightness for you."
   :group 'customize
-  :type '(choice (choice-item dark) 
-		 (choice-item light)
-		 (choice-item :tag "default" nil)))
+  :type '(choice (const dark) 
+		 (const light)
+		 (const :tag "default" nil)))
 
 (defun custom-background-mode (frame)
   "Kludge to detect background mode for FRAME."
@@ -177,7 +183,7 @@ examine the brightness for you."
 	 (mode (cond (bg-resource
 		      (intern (downcase bg-resource)))
 		     ((and (setq color (condition-case ()
-					   (or (frame-property
+					   (or (custom-frame-parameter
 						frame
 						'background-color)
 					       (custom-face-background
@@ -201,16 +207,16 @@ examine the brightness for you."
 	(list 'type (device-type (frame-device frame))
 	      'class (device-class (frame-device frame))
 	      'background (or custom-background-mode
-			      (frame-property frame
+			      (custom-frame-parameter frame
 					      'background-mode)
 			      (custom-background-mode frame))))
     ;; Emacs.
     (defun custom-extract-frame-properties (frame)
       "Return a plist with the frame properties of FRAME used by custom."
       (list 'type window-system
-	    'class (frame-property frame 'display-type)
+	    'class (custom-frame-parameter frame 'display-type)
 	    'background (or custom-background-mode
-			    (frame-property frame 'background-mode)
+			    (custom-frame-parameter frame 'background-mode)
 			    (custom-background-mode frame))))))  
 
 ;;; Declaring a face.
@@ -218,11 +224,13 @@ examine the brightness for you."
 ;;;###autoload
 (defun custom-declare-face (face spec doc &rest args)
   "Like `defface', but FACE is evaluated as a normal argument."
-  (when (fboundp 'load-gc)
+  (when (or (fboundp 'load-gc)		;XEmacs.
+	    ;; Emacs.
+	    (and (boundp purify-flag) purify-flag))
     ;; This should be allowed, somehow.
     (error "Attempt to declare a face during dump"))
-  (unless (get face 'factory-face)
-    (put face 'factory-face spec)
+  (unless (get face 'face-defface-spec)
+    (put face 'face-defface-spec spec)
     (when (fboundp 'facep)
       (unless (custom-facep face)
 	;; If the user has already created the face, respect that.
@@ -247,16 +255,16 @@ examine the brightness for you."
 ;;; Font Attributes.
 
 (defconst custom-face-attributes
-  '((:bold (toggle :format "Bold: %[%v%]\n"
+  '((:bold (toggle :format "%[Bold%]: %v\n"
 		   :help-echo "Control whether a bold font should be used.")
 	   custom-set-face-bold 
 	   custom-face-bold)
-    (:italic (toggle :format "Italic: %[%v%]\n"
+    (:italic (toggle :format "%[Italic%]: %v\n"
 		     :help-echo "\
 Control whether an italic font should be used.")
 	     custom-set-face-italic
 	     custom-face-italic)
-    (:underline (toggle :format "Underline: %[%v%]\n"
+    (:underline (toggle :format "%[Underline%]: %v\n"
 			:help-echo "\
 Control whether the text should be underlined.")
 		set-face-underline-p
@@ -405,7 +413,7 @@ Name of font family to use (e.g. times).")
 Text size (e.g. 9pt or 2mm).")
 			 custom-set-face-font-size
 			 custom-face-font-size)
-		  (:strikethru (toggle :format "Strikethru: %[%v%]\n"
+		  (:strikethru (toggle :format "%[Strikethru%]: %v\n"
 				      :help-echo "\
 Control whether the text should be strikethru.")
 			       set-face-strikethru-p
@@ -413,6 +421,16 @@ Control whether the text should be strikethru.")
 		custom-face-attributes)))
 
 ;;; Frames.
+
+(defun face-spec-set (face spec &optional frame)
+  "Set FACE to the attributes to the first matching entry in SPEC.
+Iff optional FRAME is non-nil, set it for that frame only.
+See `defface' for information about SPEC.
+
+Clear all existing attributes first."
+  (when (fboundp 'copy-face)
+    (copy-face 'custom-face-empty face frame))
+  (custom-face-display-set face spec frame))
 
 (defun custom-face-display-set (face spec &optional frame)
   "Set FACE to the attributes to the first matching entry in SPEC.
@@ -424,7 +442,7 @@ See `defface' for information about SPEC."
 	     (display (nth 0 entry))
 	     (atts (nth 1 entry)))
 	(setq spec (cdr spec))
-	(when (custom-display-match-frame display frame)
+	(when (face-spec-set-match-display display frame)
 	  ;; Avoid creating frame local duplicates of the global face.
 	  (unless (and frame (eq display (get face 'custom-face-display)))
 	    (apply 'custom-face-attributes-set face frame atts))
@@ -443,7 +461,7 @@ See `defface' for a list of valid keys and values for the plist.")
 If FRAME is nil, return the default frame properties."
   (cond (frame
 	 ;; Try to get from cache.
-	 (let ((cache (frame-property frame 'custom-properties)))
+	 (let ((cache (custom-frame-parameter frame 'custom-properties)))
 	   (unless cache
 	     ;; Oh well, get it then.
 	     (setq cache (custom-extract-frame-properties frame))
@@ -456,7 +474,7 @@ If FRAME is nil, return the default frame properties."
 	 (setq custom-default-frame-properties
 	       (custom-extract-frame-properties (selected-frame))))))
 
-(defun custom-display-match-frame (display frame)
+(defun face-spec-set-match-display (display frame)
   "Non-nil iff DISPLAY matches FRAME.
 If FRAME is nil, the current FRAME is used."
   ;; This is a kludge to get started, we really should use specifiers!
@@ -503,7 +521,7 @@ If FRAME is nil, the current FRAME is used."
 If FRAME is nil or omitted, initialize them for all frames."
   (mapcar (lambda (symbol)
 	    (let ((spec (or (get symbol 'saved-face)
-			    (get symbol 'factory-face))))
+			    (get symbol 'face-defface-spec))))
 	      (when spec 
 		(custom-face-display-set symbol spec frame)
 		(initialize-face-resources symbol frame))))
@@ -545,9 +563,7 @@ See `defface' for the format of SPEC."
 	    (when now
 	      (put face 'force-face t))
 	    (when (or now (custom-facep face))
-	      (when (fboundp 'copy-face)
-		(copy-face 'custom-face-empty face))
-	      (custom-face-display-set face spec))
+	      (face-spec-set face spec))
 	    (setq args (cdr args)))
 	;; Old format, a plist of FACE SPEC pairs.
 	(let ((face (nth 0 args))

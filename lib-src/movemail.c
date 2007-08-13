@@ -134,7 +134,7 @@ extern int errno;
 #endif
 char *strerror ();
 
-void fatal ();
+void fatal (char *, char*);
 void error ();
 void pfatal_with_name ();
 void pfatal_and_delete ();

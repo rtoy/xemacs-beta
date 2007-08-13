@@ -17,6 +17,10 @@
 #endif /* 0 */
 
 #undef LD_SWITCH_SYSTEM
+#undef C_SWITCH_SYSTEM
+
+#if 0 /* mrb */
+#undef LD_SWITCH_SYSTEM
 #ifndef __GNUC__
 #define LD_SWITCH_SYSTEM -L /usr/ccs/lib LD_SWITCH_X_SITE_AUX -R /usr/openwin/lib -L /usr/openwin/lib -R /usr/dt/lib -L /usr/dt/lib
 #else /* GCC */
@@ -30,6 +34,7 @@
 /* Gregory Neil Shapiro <gshapiro@hhmi.org> reports the Motif header files
    are in this directory on Solaris 2.4.  */
 #define C_SWITCH_X_SYSTEM -I/usr/dt/include
+#endif
 
 /* XEmacs addition: Raymond Toy says XEmacs completely misses SIGCHLD
    when compiled with GCC 2.7.0 (but not, apparently, with SunPro C?),

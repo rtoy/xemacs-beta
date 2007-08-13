@@ -65,7 +65,7 @@ which is intended to be used for global environment specification.")
 (defvar buffer-file-coding-system-alist
   '(("\\.\\(el\\|emacs\\|info\\(-[0-9]+\\)?\\|texi\\)$" . iso-2022-8)
     ("\\(ChangeLog\\|CHANGES-beta\\)$" . iso-2022-8)
-    ("\\.\\(gz\\|Z\\)$" . no-conversion)
+    ("\\.\\(gz\\|Z\\)$" . binary)
     ("/spool/mail/.*$" . convert-mbox-coding-system))
   "Alist specifying the coding system used for particular files.
 Each element of the alist is a cons of a regexp, specifying the files

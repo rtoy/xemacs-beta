@@ -18,7 +18,7 @@
 
 #define LIBS_DEBUG
 #define LIB_X11_LIB -L/usr/X11/lib -lX11
-#define LIBS_SYSTEM -lutil -lkvm -lcompat
+#define LIBS_SYSTEM -lutil -lcompat
 
 #define HAVE_GETLOADAVG
 

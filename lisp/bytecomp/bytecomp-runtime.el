@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
 
-;; Author: Jamie Zawinski <jwz@lucid.com>
+;; Author: Jamie Zawinski <jwz@netscape.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
 ;; Keywords: internal
 

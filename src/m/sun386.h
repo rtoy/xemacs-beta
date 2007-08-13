@@ -88,9 +88,3 @@ NOTE-END  */
 #undef RUN_TIME_REMAP
 #undef UNEXEC
 #define UNEXEC unexec.o
-
-#ifdef USG
-/* USG detects Solaris.  j.w.hawtin@lut.ac.uk says Solaris 2.1
-   on the 386 needs this.  */
-#define LIBS_MACHINE -lkvm
-#endif

@@ -146,7 +146,9 @@ tty_asynch_device_change (void)
 	continue;
 
       get_tty_device_size (d, &width, &height);
-      if (width > 0 && height > 0)
+      if (width > 0 && height > 0
+	  && (CONSOLE_TTY_DATA (con)->width != width
+	      || CONSOLE_TTY_DATA (con)->height != height))
 	{
 	  CONSOLE_TTY_DATA (con)->width = width;
 	  CONSOLE_TTY_DATA (con)->height = height;

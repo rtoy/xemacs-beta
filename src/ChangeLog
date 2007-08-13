@@ -1,3 +1,26 @@
+Sun May 11 13:38:46 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
+
+	* src/frame.c (change_frame_size_1):
+	  return without doing anything if the frame has benn
+	  initialized and the new frame size is same as the
+	  current frame size.
+
+Sat May 17 19:35:48 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* device-tty.c (tty_asynch_device_change): Make
+	`no-redraw-on-reenter' work.  Patch from Hrvoje Niksic.
+
+Wed Apr 23 16:03:20 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* eval.c (skip_debugger): New function.
+	(signal_call_debugger): Use it.
+
+Sat May 17 23:39:03 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* frame-tty.c: Support multiple frames.
+
+	* redisplay.c (decode_mode_spec): New coding `%N'.
+
 Sun May 11 23:36:08 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* buffer.c: Rename Vdelete_auto_save_files to coding standards.

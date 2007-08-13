@@ -458,7 +458,7 @@ Returns t if checkout was successful, nil otherwise."
 
 ;; #### - sync with fsf menus
 (defconst vc-menu
-  '("VC"
+  '("Version Control"
     :filter vc-menu-filter
     ["" 		           vc-next-action		buffer-file-name nil]
     ;; ^^^ this gets changed to checkin, checkout, register, or steal

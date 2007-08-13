@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include <X11/Xlib.h>
-#include <tt_c.h>
+#include TT_C_H_PATH
 
 #include "buffer.h"
 #include "elhash.h"

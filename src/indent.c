@@ -439,13 +439,13 @@ Returns the actual column that it moved to.
   last_known_column_point = BUF_PT (buf);
   last_known_column_modified = BUF_MODIFF (buf);
 
-  return (make_int (col));
+  return make_int (col);
 }
 
 #if 0 /* #### OK boys, this function needs to be present, I think.
 	 It was there before the 19.12 redisplay rewrite. */
 
-xxDEFUN ("compute-motion", Fcompute_motion, Scompute_motion, 7, 7, 0 /*
+xxDEFUN ("compute-motion", Fcompute_motion, 7, 7, 0, /*
   "Scan through the current buffer, calculating screen position.
 Scan the current buffer forward from offset FROM,
 assuming it is at position FROMPOS--a cons of the form (HPOS . VPOS)--
@@ -484,10 +484,8 @@ of a certain window, pass the window's starting location as FROM
 and the window's upper-left coordinates as FROMPOS.
 Pass the buffer's (point-max) as TO, to limit the scan to the end of the
 visible section of the buffer, and pass LINE and COL as TOPOS.
-*/ )
-  (from, frompos, to, topos, width, offsets, window)
-     Lisp_Object from, frompos, to, topos;
-     Lisp_Object width, offsets, window;
+*/
+	 (from, frompos, to, topos, width, offsets, window))
 {
   Lisp_Object bufpos, hpos, vpos, prevhpos, contin;
   struct position *pos;
@@ -525,12 +523,8 @@ visible section of the buffer, and pass LINE and COL as TOPOS.
   XSETINT (vpos, pos->vpos);
   XSETINT (prevhpos, pos->prevhpos);
 
-  return list5 (bufpos,
-		hpos,
-		vpos,
-		prevhpos,
+  return list5 (bufpos, hpos, vpos, prevhpos,
 		pos->contin ? Qt : Qnil);
-
 }
 
 #endif /* 0 */

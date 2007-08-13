@@ -61,6 +61,10 @@ Boston, MA 02111-1307, USA.  */
 #include "mule-coding.h"
 #endif
 
+#ifdef HAVE_TTY
+#include "console-tty.h"
+#endif
+
 /* Note: We have to be careful throughout this code to properly handle
    and differentiate between Bufbytes and Emchars.
 
@@ -5765,6 +5769,20 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       /* print value of mode-name (obsolete) */
     case 'm':
       obj = b->mode_name;
+      break;
+
+      /* print hyphen and frame number, if != 1 */
+    case 'N':
+#ifdef HAVE_TTY
+      {
+	struct frame *f = XFRAME (w->frame);
+	if (FRAME_TTY_P (f) && f->order_count > 1)
+	  {
+	    str = alloca (10);
+	    sprintf (str, "-%d", f->order_count);
+	  }
+      }
+#endif
       break;
 
       /* print Narrow if appropriate */

@@ -73,8 +73,8 @@ get_time (void)
   return time_string;
 }
 
-void
-main (void)
+int
+main (int argc, char *argv[])
 {
   int c;
   while ((c = getchar ()) != EOF)
@@ -94,5 +94,5 @@ main (void)
       while (c != '\n' && c != EOF)
 	c = getchar ();
     }
-  exit (1);
+  return 1;
 }

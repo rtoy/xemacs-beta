@@ -2,13 +2,6 @@
 
 #include "decosf1-3.h"
 
-/* XEmacs change from Carl D. Roth <roth@cse.ucsc.edu>
-
-/* we have a working alloca */
-# ifndef NOT_C_CODE
-# include <alloca.h>
-# endif
-
 /* It seems that read() and write() are affected, but not open() and
    close() */
 

@@ -711,9 +711,36 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-buffer-create customize-apropos customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-save-customized custom-buffer-create-other-window custom-buffer-create customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize-other-window customize custom-set-variable custom-set-value) "cus-edit" "custom/cus-edit.el")
+
+(autoload 'custom-set-value "cus-edit" "\
+Set VARIABLE to VALUE.  VALUE is a Lisp object.
+
+If VARIABLE has a `variable-interactive' property, that is used as if
+it were the arg to `interactive' (which see) to interactively read the value.
+
+If VARIABLE has a `custom-type' property, it must be a widget and the
+`:prompt-value' property of that widget will be used for reading the value." t nil)
+
+(autoload 'custom-set-variable "cus-edit" "\
+Set the default for VARIABLE to VALUE.  VALUE is a Lisp object.
+
+If VARIABLE has a `custom-set' property, that is used for setting
+VARIABLE, otherwise `set-default' is used.
+
+The `customized-value' property of the VARIABLE will be set to a list
+with a quoted VALUE as its sole list member.
+
+If VARIABLE has a `variable-interactive' property, that is used as if
+it were the arg to `interactive' (which see) to interactively read the value.
+
+If VARIABLE has a `custom-type' property, it must be a widget and the
+`:prompt-value' property of that widget will be used for reading the value. " t nil)
 
 (autoload 'customize "cus-edit" "\
+Customize SYMBOL, which must be a customization group." t nil)
+
+(autoload 'customize-other-window "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
 
 (autoload 'customize-variable "cus-edit" "\
@@ -731,7 +758,10 @@ If SYMBOL is nil, customize all faces." t nil)
 Show customization buffer for FACE in other window." t nil)
 
 (autoload 'customize-customized "cus-edit" "\
-Customize all already customized user options." t nil)
+Customize all user options set since the last save in this session." t nil)
+
+(autoload 'customize-saved "cus-edit" "\
+Customize all already saved user options." t nil)
 
 (autoload 'customize-apropos "cus-edit" "\
 Customize all user options matching REGEXP.
@@ -740,9 +770,20 @@ user-settable." t nil)
 
 (autoload 'custom-buffer-create "cus-edit" "\
 Create a buffer containing OPTIONS.
+Optional NAME is the name of the buffer.
 OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
 SYMBOL is a customization option, and WIDGET is a widget for editing
 that option." nil nil)
+
+(autoload 'custom-buffer-create-other-window "cus-edit" "\
+Create a buffer containing OPTIONS.
+Optional NAME is the name of the buffer.
+OPTIONS should be an alist of the form ((SYMBOL WIDGET)...), where
+SYMBOL is a customization option, and WIDGET is a widget for editing
+that option." nil nil)
+
+(autoload 'custom-save-customized "cus-edit" "\
+Save all user options which have been set in this session." t nil)
 
 (autoload 'custom-save-all "cus-edit" "\
 Save all customizations in `custom-file'." nil nil)
@@ -781,7 +822,7 @@ See `defface' for the format of SPEC." nil nil)
 
 ;;;***
 
-;;;### (autoloads (widget-browse-other-window widget-browse widget-browse-at) "wid-browse" "custom/wid-browse.el")
+;;;### (autoloads (widget-minor-mode widget-browse-other-window widget-browse widget-browse-at) "wid-browse" "custom/wid-browse.el")
 
 (autoload 'widget-browse-at "wid-browse" "\
 Browse the widget under point." t nil)
@@ -792,13 +833,21 @@ Create a widget browser for WIDGET." t nil)
 (autoload 'widget-browse-other-window "wid-browse" "\
 Show widget browser for WIDGET in other window." t nil)
 
+(autoload 'widget-minor-mode "wid-browse" "\
+Togle minor mode for traversing widgets.
+With arg, turn widget mode on if and only if arg is positive." t nil)
+
 ;;;***
 
-;;;### (autoloads (widget-delete widget-create widget-apply) "wid-edit" "custom/wid-edit.el")
+;;;### (autoloads (widget-delete widget-create widget-prompt-value widget-apply) "wid-edit" "custom/wid-edit.el")
 
 (autoload 'widget-apply "wid-edit" "\
 Apply the value of WIDGET's PROPERTY to the widget itself.
 ARGS are passed as extra arguments to the function." nil nil)
+
+(autoload 'widget-prompt-value "wid-edit" "\
+Prompt for a value matching WIDGET, using PROMPT.
+The current value is assumed to be VALUE, unless UNBOUND is non-nil." nil nil)
 
 (autoload 'widget-create "wid-edit" "\
 Create widget of TYPE.  
@@ -2987,6 +3036,15 @@ Special commands:
 
 ;;;***
 
+;;;### (autoloads (autoconf-mode) "autoconf-mode" "modes/autoconf-mode.el")
+
+(autoload 'autoconf-mode "autoconf-mode" "\
+A major-mode to edit autoconf input files like configure.in
+\\{autoconf-mode-map}
+" t nil)
+
+;;;***
+
 ;;;### (autoloads (awk-mode) "awk-mode" "modes/awk-mode.el")
 
 (autoload 'awk-mode "awk-mode" "\
@@ -3631,7 +3689,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.27 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.28 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -3739,15 +3797,6 @@ Installation:
          (setq ksh-match-and-tell t)
          (setq ksh-align-to-keyword t)	;; Turn on keyword alignment
 	 )))" t nil)
-
-;;;***
-
-;;;### (autoloads (m4-mode) "m4-mode" "modes/m4-mode.el")
-
-(autoload 'm4-mode "m4-mode" "\
-A major-mode to edit m4 macro files
-\\{m4-mode-map}
-" t nil)
 
 ;;;***
 
@@ -4991,7 +5040,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.27 $
+vhdl-mode $Revision: 1.28 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -6337,20 +6386,34 @@ When using CVS you have additional commands
 
 ;;;***
 
-;;;### (autoloads (gnuserv-start) "gnuserv" "packages/gnuserv.el")
+;;;### (autoloads (gnuserv-edit gnuserv-start) "gnuserv" "packages/gnuserv.el")
 
-(defvar gnuserv-frame nil "\
-*If non-nil, the frame to be used to display all edited files.
-If nil, then a new frame is created for each file edited.
-This variable has no effect in XEmacs versions older than 19.9.")
+(defcustom gnuserv-frame nil "*The frame to be used to display all edited files.\nIf nil, then a new frame is created for each file edited.\nIf t, then the currently selected frame will be used.\nIf a function, then this will be called with a symbol `x' or `tty' as the\nonly argument, and its return value will be interpreted as above." :tag "Gnuserv Frame" :type '(radio (const :tag "Create new frame each time" nil) (const :tag "Use selected frame" t) (function-item :tag "Use main Emacs frame" gnuserv-main-frame-function) (function-item :tag "Use visible frame, otherwise create new" gnuserv-visible-frame-function) (function-item :tag "Create special Gnuserv frame and use it" gnuserv-special-frame-function) (function :tag "Other")) :group 'gnuserv)
 
 (autoload 'gnuserv-start "gnuserv" "\
 Allow this Emacs process to be a server for client processes.
-This starts a server communications subprocess through which
+This starts a gnuserv communications subprocess through which
 client \"editors\" (gnuclient and gnudoit) can send editing commands to 
-this Emacs job. See the gnuserv(1) manual page for more details.
+this Emacs job.  See the gnuserv(1) manual page for more details.
 
 Prefix arg means just kill any existing server communications subprocess." t nil)
+
+(autoload 'gnuserv-edit "gnuserv" "\
+Mark the current gnuserv editing buffer as \"done\", and switch to next one.
+
+The `gnuserv-done-function' is used to dispose of the buffer after marking it
+as done; it is `kill-buffer' by default.
+
+Files that match `gnuserv-temp-file-regexp' are considered temporary and
+are saved unconditionally and backed up if `gnuserv-make-temp-file-backup'
+is non-nil.  They are disposed of using `gnuserv-done-temp-file-function'.
+
+When all of a client's buffers are marked as \"done\", the client is notified.
+
+If invoked with a prefix argument, or if there is no gnuserv process
+running, only starts server process.  Invoked with \\[gnuserv-edit]." t nil)
+
+(global-set-key "#" 'gnuserv-edit)
 
 ;;;***
 
@@ -8991,6 +9054,17 @@ Visit a file in Forms mode." t nil)
 
 (autoload 'forms-find-file-other-window "forms" "\
 Visit a file in Forms mode in other window." t nil)
+
+;;;***
+
+;;;### (autoloads (unhide-copyleft-region hide-copyleft-region) "hide-copyleft" "utils/hide-copyleft.el")
+
+(autoload 'hide-copyleft-region "hide-copyleft" "\
+Make the legal drivel at the front of this file invisible.  Unhide it again
+with C-u \\[hide-copyleft-region]." t nil)
+
+(autoload 'unhide-copyleft-region "hide-copyleft" "\
+If the legal nonsense at the top of this file is elided, make it visible again." nil nil)
 
 ;;;***
 

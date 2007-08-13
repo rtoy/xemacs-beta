@@ -243,7 +243,7 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 			     (substring args-string (match-end 0))))
 
 		   (message "%s (running...)" args-string)
-		   (apply 'call-process Manual-program nil t nil args)
+		   (apply 'call-process Manual-program nil '(t nil) nil args)
 
 		   (if (< (buffer-size) 200)
 		       (progn

@@ -106,7 +106,7 @@
 	(add-menu-button '("Help") ["SPARCworks..." eos::sw-intro t])
 	(add-submenu nil
 		     (append '("SPARCworks") (copy-tree eos::short-menu))
-		     "VC"
+		     "Version Control"
 		     )
 	)))
 

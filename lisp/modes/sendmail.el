@@ -1005,10 +1005,8 @@ back to the user from the mailer."
 	  t)
       (or soft
 	  (progn (goto-char end)
-		 ;; #### FSF has the next two clauses reversed.
-		 ;; which is correct?
-		 (skip-chars-backward "\n")
-		 (insert "\n" field ": ")))
+		 (insert "\n" field ": ")
+		 (skip-chars-backward "\n")))
       nil)))
 
 (defun mail-text ()

@@ -27,16 +27,22 @@ Boston, MA 02111-1307, USA.  */
 #undef unix
 #undef sgi
 #undef NeXT
+#undef mips
+#undef i386
+#undef linux
 
 srcdir=@srcdir@
-C_SWITCH_X_SITE=@C_SWITCH_X_SITE@
-C_SWITCH_SITE=@C_SWITCH_SITE@
+/* C_SWITCH_X_SITE=@C_SWITCH_X_SITE@ */
+/* C_SWITCH_SITE=@C_SWITCH_SITE@ */
+
 
 SHELL=/bin/sh
 
 CC=@CC@
-CFLAGS=@CFLAGS@
 CPP=@CPP@
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@
+CPPFLAGS=@CPPFLAGS@
 RANLIB=@RANLIB@
 
 RM = rm -f
@@ -213,9 +219,17 @@ all:: $(EZ_SUBDIR) liblw.a
 all::
 #endif
 
-ALL_CFLAGS = -I. C_SWITCH_MACHINE C_SWITCH_SITE C_SWITCH_X_SITE \
-	     C_SWITCH_X_MACHINE C_SWITCH_X_SYSTEM \
-	     C_SWITCH_SYSTEM NEED_LUCID NEED_MOTIF NEED_ATHENA \
+c_switch_general=@c_switch_general@
+c_switch_window_system=@c_switch_window_system@
+c_switch_all=@c_switch_all@
+ld_switch_general=@ld_switch_general@
+ld_switch_window_system=@ld_switch_window_system@
+ld_switch_all=@ld_switch_all@
+ld_libs_general=@ld_libs_general@
+ld_libs_window_system=@ld_libs_window_system@
+ld_libs_all=@ld_libs_all@
+
+ALL_CFLAGS = -I. $(c_switch_all) NEED_LUCID NEED_MOTIF NEED_ATHENA \
 	     LWLIB_MENUBARS LWLIB_SCROLLBARS LWLIB_DIALOGS \
 	     $(ENERGIZEP) ${CFLAGS} CONST_FLAG
 .c.o:

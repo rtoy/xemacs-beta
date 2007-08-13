@@ -51,8 +51,13 @@ static char rcsid [] = "!Header: gnuserv.c,v 2.1 95/02/16 11:58:27 arup alpha !"
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif /* HAVE_STRING_H */
 
 #if !defined(SYSV_IPC) && !defined(UNIX_DOMAIN_SOCKETS) && \
     !defined(INTERNET_DOMAIN_SOCKETS)
@@ -74,25 +79,25 @@ int ipc_wpid = 0;		/* watchdog task pid */
   ipc_exit -- clean up the queue id and queue, then kill the watchdog task
               if it exists. exit with the given status.
 */
-void ipc_exit(stat)
-     int stat;
+void
+ipc_exit (int stat)
 {
-  msgctl(ipc_qid,IPC_RMID,0);
+  msgctl (ipc_qid,IPC_RMID,0);
   
-  if (ipc_wpid != 0)
-    kill(ipc_wpid,SIGKILL);
+  if  (ipc_wpid != 0)
+    kill (ipc_wpid, SIGKILL);
 
-  exit(stat);
+  exit (stat);
 } /* ipc_exit */
 
 
 /*
   ipc_handle_signal -- catch the signal given and clean up.
 */
-void ipc_handle_signal(sig)
-     int sig;
+void
+ipc_handle_signal(int sig)
 {
-  ipc_exit(0);
+  ipc_exit (0);
 } /* ipc_handle_signal */
 
 
@@ -100,21 +105,26 @@ void ipc_handle_signal(sig)
   ipc_spawn_watchdog -- spawn a watchdog task to clean up the message queue should the
 			server process die.
 */
-void ipc_spawn_watchdog()
+void
+ipc_spawn_watchdog (void)
 {
-  if ((ipc_wpid = fork()) == 0) { /* child process */
-    int ppid = getppid();	/* parent's process id */
+  if ((ipc_wpid = fork ()) == 0)
+    { /* child process */
+      int ppid = getppid ();	/* parent's process id */
 
-    setpgrp();			/* gnu kills process group on exit */
-    
-    while (1) {
-      if (kill(ppid,0) < 0) {	/* ppid is no longer valid, parent may have died */
-	ipc_exit(0);
-      } /* if */
+      setpgrp();		/* gnu kills process group on exit */
 
-      sleep(10);		/* have another go later */
-    } /* while */
-  } /* if */
+      while (1)
+	{
+	  if (kill (ppid, 0) < 0) /* ppid is no longer valid, parent
+				     may have died */
+	    {
+	      ipc_exit (0);
+	    } /* if */
+
+	  sleep(10);		/* have another go later */
+	} /* while */
+    } /* if */
 
 } /* ipc_spawn_watchdog */
 
@@ -122,34 +132,35 @@ void ipc_spawn_watchdog()
 /*
   ipc_init -- initialize server, setting the global msqid that can be listened on.
 */
-void ipc_init(msgpp)
-     struct msgbuf **msgpp;
+void
+ipc_init (struct msgbuf **msgpp)
 {
   key_t key;			/* messge key */
   char buf[GSERV_BUFSZ];	/* pathname for key */
 
-  sprintf(buf,"/tmp/gsrv%d",(int)geteuid());
-  creat(buf,0600);
-  key = ftok(buf,1);
+  sprintf (buf,"/tmp/gsrv%d",(int)geteuid ());
+  creat (buf,0600);
+  key = ftok (buf,1);
 
-  if ((ipc_qid = msgget(key,0600|IPC_CREAT)) == -1) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to create msg queue\n",progname);
-    ipc_exit(1);
-  } /* if */
+  if ((ipc_qid = msgget (key,0600|IPC_CREAT)) == -1)
+    {
+      perror (progname);
+      fprintf (stderr, "%s: unable to create msg queue\n", progname);
+      ipc_exit (1);
+    } /* if */
 
-  ipc_spawn_watchdog();
+  ipc_spawn_watchdog ();
 
-  signal(SIGTERM,ipc_handle_signal);
-  signal(SIGINT,ipc_handle_signal);
+  signal (SIGTERM,ipc_handle_signal);
+  signal (SIGINT,ipc_handle_signal);
 
-  if ((*msgpp = (struct msgbuf *) 
-                malloc(sizeof **msgpp + GSERV_BUFSZ)) == NULL) {
-    fprintf(stderr,
-	    "%s: unable to allocate space for message buffer\n",progname);
-    ipc_exit(1);
-  } /* if */
-
+  if ((*msgpp = (struct msgbuf *)
+       malloc (sizeof **msgpp + GSERV_BUFSZ)) == NULL)
+    {
+      fprintf (stderr,
+	       "%s: unable to allocate space for message buffer\n", progname);
+      ipc_exit(1);
+    } /* if */
 } /* ipc_init */
 
 
@@ -158,8 +169,8 @@ void ipc_init(msgpp)
   			to the GNU Emacs process, then wait for its reply and
 			pass that on to the client.
 */
-void handle_ipc_request(msgp)
-     struct msgbuf *msgp;	/* message buffer */
+void
+handle_ipc_request (struct msgbuf *msgp)
 {
   struct msqid_ds msg_st;	/* message status */
   char buf[GSERV_BUFSZ];
@@ -168,91 +179,100 @@ void handle_ipc_request(msgp)
   int offset = 0;
   int total = 1;                /* # bytes that will actually be sent off */
 
-  if ((len = msgrcv(ipc_qid,msgp,GSERV_BUFSZ-1,1,0)) < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to receive\n",progname);
-    ipc_exit(1);
-  } /* if */
+  if ((len = msgrcv (ipc_qid, msgp, GSERV_BUFSZ - 1, 1, 0)) < 0)
+    {
+      perror (progname);
+      fprintf (stderr, "%s: unable to receive\n", progname);
+      ipc_exit (1);
+    } /* if */
 
-  msgctl(ipc_qid,IPC_STAT,&msg_st);
-  strncpy(buf,msgp->mtext,len);
+  msgctl (ipc_qid, IPC_STAT, &msg_st);
+  strncpy (buf, msgp->mtext, len);
   buf[len] = '\0';		/* terminate */
   
-  printf("%d %s",ipc_qid,buf);
-  fflush(stdout);
+  printf ("%d %s", ipc_qid, buf);
+  fflush (stdout);
 
   /* now for the response from gnu */
   msgp->mtext[0] = '\0';
 
 #if 0
-  if ((len = read(0,buf,GSERV_BUFSZ-1)) < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to read\n",progname);
-    ipc_exit(1);
+  if ((len = read(0,buf,GSERV_BUFSZ-1)) < 0)
+    {
+      perror (progname);
+      fprintf (stderr, "%s: unable to read\n", progname);
+      ipc_exit (1);
   } /* if */
-      
-  sscanf(buf,"%d:%[^\n]\n",&junk,msgp->mtext);
-#else 
+
+  sscanf (buf, "%d:%[^\n]\n", &junk, msgp->mtext);
+#else
 
   /* read in "n/m:" (n=client fd, m=message length) */
 
   while (offset < (GSERV_BUFSZ-1) && 
-	 ((len = read(0,buf+offset,1)) > 0) &&
-	 buf[offset] != ':') {
-    offset += len;
-  }
+	 ((len = read (0, buf + offset, 1)) > 0) &&
+	 buf[offset] != ':')
+    {
+      offset += len;
+    }
 
-  if (len < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to read\n",progname);
-    exit(1);
-  }
-      
-  /* parse the response from emacs, getting client fd & result length */
-  buf[offset] = '\0';
-  sscanf(buf,"%d/%d", &s, &result_len);
-
-  while (result_len > 0) {
-    if ((len = read(0,buf,min2(result_len, GSERV_BUFSZ - 1))) < 0) {
-      perror(progname);
-      fprintf(stderr,"%s: unable to read\n",progname);
+  if (len < 0)
+    {
+      perror (progname);
+      fprintf (stderr, "%s: unable to read\n", progname);
       exit(1);
     }
 
-    /* Send this string off, but only if we have enough space */ 
+  /* parse the response from emacs, getting client fd & result length */
+  buf[offset] = '\0';
+  sscanf (buf, "%d/%d", &s, &result_len);
 
-    if (GSERV_BUFSZ > total) {
-      if (total + len <= GSERV_BUFSZ)
-	buf[len] = 0;
-      else 
-	buf[GSERV_BUFSZ - total] = 0;
+  while (result_len > 0)
+    {
+      if ((len = read(0, buf, min2 (result_len, GSERV_BUFSZ - 1))) < 0)
+	{
+	  perror (progname);
+	  fprintf (stderr, "%s: unable to read\n", progname);
+	  exit (1);
+	}
 
-      send_string(s,buf);
-      total += strlen(buf);
+      /* Send this string off, but only if we have enough space */ 
+
+      if (GSERV_BUFSZ > total)
+	{
+	  if (total + len <= GSERV_BUFSZ)
+	    buf[len] = 0;
+	  else
+	    buf[GSERV_BUFSZ - total] = 0;
+
+	  send_string(s,buf);
+	  total += strlen(buf);
+	}
+
+      result_len -= len;
     }
 
-    result_len -= len;
-  }
-
   /* eat the newline */
-  while ((len = read(0,buf,1)) == 0)
+  while ((len = read (0,buf,1)) == 0)
     ;
-  if (len < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to read\n",progname);
-    exit(1);
-  }
-  if (buf[0] != '\n') {
-    fprintf(stderr,"%s: garbage after result [%c]\n",progname, buf[0]);
-    exit(1);
-  }
+  if (len < 0)
+    {
+      perror(progname);
+      fprintf (stderr,"%s: unable to read\n", progname);
+      exit (1);
+    }
+  if (buf[0] != '\n')
+    {
+      fprintf (stderr,"%s: garbage after result [%c]\n", progname, buf[0]);
+      exit (1);
+    }
 #endif
 
   /* Send a response back to the client. */
 
   msgp->mtype = msg_st.msg_lspid;
-  if (msgsnd(ipc_qid,msgp,strlen(msgp->mtext)+1,0) < 0)
-    perror("msgsend(gnuserv)");
+  if (msgsnd (ipc_qid,msgp,strlen(msgp->mtext)+1,0) < 0)
+    perror ("msgsend(gnuserv)");
 
 } /* handle_ipc_request */
 #endif /* SYSV_IPC */
@@ -336,15 +356,17 @@ handle_response (void)
   /* eat the newline */
   while ((len = read(0,buf,1)) == 0)
     ;
-  if (len < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to read\n",progname);
-    exit(1);
-  }
-  if (buf[0] != '\n') {
-    fprintf(stderr,"%s: garbage after result\n",progname);
-    exit(1);
-  }
+  if (len < 0)
+    {
+      perror(progname);
+      fprintf(stderr,"%s: unable to read\n",progname);
+      exit(1);
+    }
+  if (buf[0] != '\n')
+    {
+      fprintf(stderr,"%s: garbage after result\n",progname);
+      exit(1);
+    }
   /* send the newline */
   buf[1] = '\0';
   send_string(s,buf);
@@ -384,30 +406,40 @@ timed_read (int fd, char *buf, int max, int timeout, int one_line)
   FD_ZERO(&rmask);
   FD_SET(fd, &rmask);
   
-  do {
-    r = select(fd + 1, &rmask, NULL, NULL, &tv);
+  do
+    {
+      r = select(fd + 1, &rmask, NULL, NULL, &tv);
 
-    if (r > 0) {
-      if (read (fd, &c, 1) == 1 ){
-	*buf++ = c;
-	++nbytes;
-      } else {
-	printf ("read error on socket\004\n");
-	return -1;
-      }
-    } else if (r == 0) {
-      printf ("read timed out\004\n");
-      return -1;
-    } else {
-      printf ("error in select\004\n");
-      return -1;
-    }
-  } while ((nbytes < max) &&  !(one_line && (c == '\n')));
+      if (r > 0)
+	{
+	  if (read (fd, &c, 1) == 1 )
+	    {
+	      *buf++ = c;
+	      ++nbytes;
+	    }
+	  else
+	    {
+	      printf ("read error on socket\004\n");
+	      return -1;
+	    }
+	}
+      else if (r == 0)
+	{
+	  printf ("read timed out\004\n");
+	  return -1;
+	}
+      else
+	{
+	  printf ("error in select\004\n");
+	  return -1;
+	}
+    } while ((nbytes < max) &&  !(one_line && (c == '\n')));
 
   --buf;
-  if (one_line && *buf == '\n') {
-    *buf = 0;
-  }
+  if (one_line && *buf == '\n')
+    {
+      *buf = 0;
+    }
 
   return nbytes;
 }
@@ -427,44 +459,48 @@ permitted (u_long host_addr, int fd)
   char buf[1024];
   int  auth_data_len;
 
-  if (fd > 0) {
-    /* we are checking permission on a real connection */
+  if (fd > 0)
+    {
+      /* we are checking permission on a real connection */
 
-    /* Read auth protocol name */
+      /* Read auth protocol name */
   
-    if (timed_read(fd, auth_protocol, AUTH_NAMESZ, AUTH_TIMEOUT, 1) <= 0)
-      return FALSE;
+      if (timed_read(fd, auth_protocol, AUTH_NAMESZ, AUTH_TIMEOUT, 1) <= 0)
+	return FALSE;
 
-    if (strcmp (auth_protocol, DEFAUTH_NAME) &&
-	strcmp (auth_protocol, MCOOKIE_NAME)) {
-      printf ("authentication protocol (%s) from client is invalid...\n", 
-	      auth_protocol);
-      printf ("... Was the client an old version of gnuclient/gnudoit?\004\n");
+      if (strcmp (auth_protocol, DEFAUTH_NAME) &&
+	  strcmp (auth_protocol, MCOOKIE_NAME))
+	{
+	  printf ("authentication protocol (%s) from client is invalid...\n", 
+		  auth_protocol);
+	  printf ("... Was the client an old version of gnuclient/gnudoit?\004\n");
       
-      return FALSE;
-    }
+	  return FALSE;
+	}
 
-    if (!strcmp(auth_protocol, MCOOKIE_NAME)) {
+      if (!strcmp(auth_protocol, MCOOKIE_NAME))
+	{
 
-      /*
-       * doing magic cookie auth
-       */
+	  /*
+	   * doing magic cookie auth
+	   */
 
-      if (timed_read(fd, buf, 10, AUTH_TIMEOUT, 1) <= 0)
-	return FALSE;
+	  if (timed_read(fd, buf, 10, AUTH_TIMEOUT, 1) <= 0)
+	    return FALSE;
 
-      auth_data_len = atoi(buf);
+	  auth_data_len = atoi(buf);
 
-      if (timed_read(fd, buf, auth_data_len, AUTH_TIMEOUT, 0) != auth_data_len)
-	return FALSE;
+	  if (timed_read(fd, buf, auth_data_len, AUTH_TIMEOUT, 0) != auth_data_len)
+	    return FALSE;
       
 #ifdef AUTH_MAGIC_COOKIE
-      if (server_xauth && server_xauth->data &&
-	  !memcmp(buf, server_xauth->data, auth_data_len)) {
-	return TRUE;
-      }
+	  if (server_xauth && server_xauth->data &&
+	      !memcmp(buf, server_xauth->data, auth_data_len))
+	    {
+	      return TRUE;
+	    }
 #else 
-      printf ("client tried Xauth, but server is not compiled with Xauth\n");
+	  printf ("client tried Xauth, but server is not compiled with Xauth\n");
 #endif
       
       /*
@@ -472,15 +508,15 @@ permitted (u_long host_addr, int fd)
        * protocol....
        */
 
-      printf ("Xauth authentication failed, trying GNU_SECURE auth...\004\n");
+	  printf ("Xauth authentication failed, trying GNU_SECURE auth...\004\n");
+
+	}
+    
+      /* Other auth protocols go here, and should execute only if the
+       * auth_protocol name matches.
+       */
 
     }
-    
-    /* Other auth protocols go here, and should execute only if the
-     * auth_protocol name matches.
-     */
-
-  }
 
 
   /* Now, try the old GNU_SECURE stuff... */
@@ -508,18 +544,19 @@ add_host (u_long host_addr)
   int key;
   struct entry *new_entry;
   
-  if (!permitted(host_addr, -1)) {
-    if ((new_entry = (struct entry *) malloc(sizeof(struct entry))) == NULL) {
-      fprintf(stderr,"%s: unable to malloc space for permitted host entry\n",
-	      progname);
-      exit(1);
-    } /* if */
+  if (!permitted(host_addr, -1))
+    {
+      if ((new_entry = (struct entry *) malloc(sizeof(struct entry))) == NULL) {
+	fprintf(stderr,"%s: unable to malloc space for permitted host entry\n",
+		progname);
+	exit(1);
+      } /* if */
 
-    new_entry->host_addr = host_addr;
-    key = HASH(host_addr) % TABLE_SIZE;
-    new_entry->next = permitted_hosts[key];
-    permitted_hosts[key] = new_entry;
-  } /* if */
+      new_entry->host_addr = host_addr;
+      key = HASH(host_addr) % TABLE_SIZE;
+      new_entry->next = permitted_hosts[key];
+      permitted_hosts[key] = new_entry;
+    } /* if */
 
 } /* add_host */
 
@@ -547,11 +584,12 @@ setup_table (void)
 
   gethostname(hostname,HOSTNAMSZ);
 
-  if ((host_addr = internet_addr(hostname)) == -1) {
-    fprintf(stderr,"%s: unable to find %s in /etc/hosts or from YP", 
-	    progname,hostname);
-    exit(1);
-  } /* if */
+  if ((host_addr = internet_addr(hostname)) == -1)
+    {
+      fprintf(stderr,"%s: unable to find %s in /etc/hosts or from YP", 
+	      progname,hostname);
+      exit(1);
+    } /* if */
 
 #ifdef AUTH_MAGIC_COOKIE
   
@@ -569,14 +607,16 @@ setup_table (void)
 #endif 
 
   if (((file_name = getenv("GNU_SECURE")) != NULL &&    /* security file  */
-       (host_file = fopen(file_name,"r")) != NULL)) {	/* opened ok */
-    while ((fscanf(host_file,"%s",hostname) != EOF))	/* find a host */
-      if ((host_addr = internet_addr(hostname)) != -1) {/* get its addr */
-	add_host(host_addr);				/* add the addr */
-        hosts++;
-      }
-    fclose(host_file);
-  } /* if */
+       (host_file = fopen(file_name,"r")) != NULL))	/* opened ok */
+    {
+      while ((fscanf(host_file,"%s",hostname) != EOF))	/* find a host */
+	if ((host_addr = internet_addr(hostname)) != -1)/* get its addr */
+	  {
+	    add_host(host_addr);				/* add the addr */
+	    hosts++;
+	  }
+      fclose(host_file);
+    } /* if */
 
   return hosts;
 } /* setup_table */
@@ -615,27 +655,30 @@ internet_init (void)
     server.sin_port = sp->s_port;
   
   /* Create the listen socket. */
-  if ((ls = socket (AF_INET,SOCK_STREAM, 0)) == -1) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to create socket\n",progname);
-    exit(1);
-  } /* if */
+  if ((ls = socket (AF_INET,SOCK_STREAM, 0)) == -1)
+    {
+      perror(progname);
+      fprintf(stderr,"%s: unable to create socket\n",progname);
+      exit(1);
+    } /* if */
   
   /* Bind the listen address to the socket. */
-  if (bind(ls,(struct sockaddr *) &server,sizeof(struct sockaddr_in)) == -1) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to bind socket\n",progname);
-    exit(1);
-  } /* if */
+  if (bind(ls,(struct sockaddr *) &server,sizeof(struct sockaddr_in)) == -1)
+    {
+      perror(progname);
+      fprintf(stderr,"%s: unable to bind socket\n",progname);
+      exit(1);
+    } /* if */
 
   /* Initiate the listen on the socket so remote users
    * can connect. 
    */
-  if (listen(ls,20) == -1) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to listen\n",progname);
-    exit(1);
-  } /* if */
+  if (listen(ls,20) == -1)
+    {
+      perror(progname);
+      fprintf(stderr,"%s: unable to listen\n",progname);
+      exit(1);
+    } /* if */
 
   return(ls);
 
@@ -655,20 +698,22 @@ handle_internet_request (int ls)
 
   memset((char *)&peer,0,sizeof(struct sockaddr_in));
 
-  if ((s = accept(ls,(struct sockaddr *)&peer,&addrlen)) == -1) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to accept\n",progname);
-    exit(1);
-  } /* if */
+  if ((s = accept(ls,(struct sockaddr *)&peer,&addrlen)) == -1)
+    {
+      perror(progname);
+      fprintf(stderr,"%s: unable to accept\n",progname);
+      exit(1);
+    } /* if */
     
   /* Check that access is allowed - if not return crud to the client */
-  if (!permitted(peer.sin_addr.s_addr, s)) {
-    send_string(s,"gnudoit: Connection refused\ngnudoit: unable to connect to remote");
-    close(s);
+  if (!permitted(peer.sin_addr.s_addr, s))
+    {
+      send_string(s,"gnudoit: Connection refused\ngnudoit: unable to connect to remote");
+      close(s);
 
-    printf("Refused connection from %s\004\n", inet_ntoa(peer.sin_addr));
-    return;
-  } /* if */
+      printf("Refused connection from %s\004\n", inet_ntoa(peer.sin_addr));
+      return;
+    } /* if */
 
   echo_request(s);
   
@@ -688,24 +733,27 @@ unix_init (void)
   struct sockaddr_un server; 	/* unix socket address */
   int bindlen;
 
-  if ((ls = socket(AF_UNIX,SOCK_STREAM, 0)) < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to create socket\n",progname);
-    exit(1);
-  } /* if */
+  if ((ls = socket(AF_UNIX,SOCK_STREAM, 0)) < 0)
+    {
+      perror(progname);
+      fprintf(stderr,"%s: unable to create socket\n",progname);
+      exit(1);
+    } /* if */
 
   /* Set up address structure for the listen socket. */
 #ifdef HIDE_UNIX_SOCKET
   sprintf(server.sun_path,"/tmp/gsrvdir%d",(int)geteuid());
-  if (mkdir(server.sun_path, 0700) < 0) {
-    /* assume it already exists, and try to set perms */
-    if (chmod(server.sun_path, 0700) < 0) {
-      perror(progname);
-      fprintf(stderr,"%s: can't set permissions on %s\n",
-	      progname, server.sun_path);
-      exit(1);
+  if (mkdir(server.sun_path, 0700) < 0)
+    {
+      /* assume it already exists, and try to set perms */
+      if (chmod(server.sun_path, 0700) < 0)
+	{
+	  perror(progname);
+	  fprintf(stderr,"%s: can't set permissions on %s\n",
+		  progname, server.sun_path);
+	  exit(1);
+	}
     }
-  }
   strcat(server.sun_path,"/gsrv");
   unlink(server.sun_path);	/* remove old file if it exists */
 #else /* HIDE_UNIX_SOCKET */
@@ -724,11 +772,12 @@ unix_init (void)
   bindlen = strlen (server.sun_path) + sizeof (server.sun_family);
 #endif
  
-  if (bind(ls,(struct sockaddr *)&server,bindlen) < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to bind socket\n",progname);
-    exit(1);
-  } /* if */
+  if (bind(ls,(struct sockaddr *)&server,bindlen) < 0)
+    {
+      perror(progname);
+      fprintf(stderr,"%s: unable to bind socket\n",progname);
+      exit(1);
+    } /* if */
 
   chmod(server.sun_path,0700);	/* only this user can send commands */
 
@@ -769,10 +818,11 @@ handle_unix_request (int ls)
 
   server.sun_family = AF_UNIX;
 
-  if ((s = accept(ls,(struct sockaddr *)&server,&len)) < 0) {
-    perror(progname);
-    fprintf(stderr,"%s: unable to accept\n",progname);
-  } /* if */
+  if ((s = accept(ls,(struct sockaddr *)&server,&len)) < 0)
+    {
+      perror(progname);
+      fprintf(stderr,"%s: unable to accept\n",progname);
+    } /* if */
 
   echo_request(s);
   
@@ -834,11 +884,12 @@ main(argc,argv)
       FD_SET(ils, &rmask);
     
     if (select(max2(fileno(stdin),max2(uls,ils)) + 1, &rmask, 
-	       (fd_set *)NULL, (fd_set *)NULL, (struct timeval *)NULL) < 0) {
-      perror(progname);
-      fprintf(stderr,"%s: unable to select\n",progname);
-      exit(1);
-    } /* if */
+	       (fd_set *)NULL, (fd_set *)NULL, (struct timeval *)NULL) < 0)
+      {
+	perror(progname);
+	fprintf(stderr,"%s: unable to select\n",progname);
+	exit(1);
+      } /* if */
 
 #ifdef UNIX_DOMAIN_SOCKETS
     if (uls > 0 && FD_ISSET(uls, &rmask))

@@ -1139,15 +1139,15 @@ bytind_to_bufpos (struct buffer *buf, Bytind x)
 
    GB_ALLOW_PAST_ACCESSIBLE
 
-     The allowable range for the position is the entire buffer
-     (BEG and Z), rather than the accessible portion.  For strings,
-     this flag has no effect.
+     Allow positions to range over the entire buffer (BUF_BEG to BUF_Z),
+     rather than just the accessible portion (BUF_BEGV to BUF_ZV).
+     For strings, this flag has no effect.
 
    GB_COERCE_RANGE
 
-     If the position is outside the allowable range, return
-     the lower or upper bound of the range, whichever is closer
-     to the specified position.
+     If the position is outside the allowable range, return the lower
+     or upper bound of the range, whichever is closer to the specified
+     position.
 
    GB_NO_ERROR_IF_BAD
 
@@ -1198,10 +1198,8 @@ get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
 
   CHECK_INT_COERCE_MARKER (pos);
   ind = XINT (pos);
-  min_allowed = (flags & GB_ALLOW_PAST_ACCESSIBLE) ?
-    BUF_BEG (b) : BUF_BEGV (b);
-  max_allowed = (flags & GB_ALLOW_PAST_ACCESSIBLE) ?
-    BUF_Z (b) : BUF_ZV (b);
+  min_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_BEG (b) : BUF_BEGV (b);
+  max_allowed = flags & GB_ALLOW_PAST_ACCESSIBLE ? BUF_Z   (b) : BUF_ZV   (b);
     
   if (ind < min_allowed || ind > max_allowed)
     {

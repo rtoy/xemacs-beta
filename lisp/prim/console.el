@@ -1,7 +1,7 @@
 ;;; console.el --- miscellaneous console functions not written in C
 
-;;;; Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
-;;;; Copyright (C) 1995, 1996 Ben Wing
+;; Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
+;; Copyright (C) 1995, 1996 Ben Wing
 
 ;; Keywords: internal
 
@@ -24,6 +24,10 @@
 
 ;;; Synched up with: Not in FSF.
 
+;;; Commentary:
+
+;;; Code:
+
 (defun quit-char (&optional console)
   "Return the character that causes a QUIT to happen.
 This is normally C-g.  Optional arg CONSOLE specifies the console
@@ -34,8 +38,10 @@ that the information is returned for; nil means the current console."
   "Resume the consoles with a controlling process of PID."
   (mapc (lambda (c) 
 	  (if (and (eq (console-type c) 'tty)
-		   (= pid (console-tty-controlling-process c)))
+		   (eq pid (console-tty-controlling-process c)))
 	      (resume-console c)))
 	(console-list))
   ; documentation for mapc lies!
   nil)
+
+;;; console.el ends here

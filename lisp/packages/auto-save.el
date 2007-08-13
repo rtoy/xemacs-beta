@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          auto-save.el
-;; Version:       $Revision: 1.4 $
+;; Version:       $Revision: 1.5 $
 ;; RCS:           
 ;; Description:   Safer autosaving with support for efs and /tmp.
 ;;                This version of auto-save is designed to work with efs,
@@ -11,7 +11,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst auto-save-version (substring "$Revision: 1.4 $" 11 -2)
+(defconst auto-save-version (substring "$Revision: 1.5 $" 11 -2)
   "Version number of auto-save.")
 
 ;;; Copyright (C) 1992 by Sebastian Kremer <sk@thp.uni-koeln.de>
@@ -84,7 +84,7 @@
 ;;;; ACKNOWLEDGEMENT ===================================================
 
 ;;; This code is loosely derived from autosave-in-tmp.el by Jamie
-;;; Zawinski <jwz@lucid.com> (the version I had was last modified 22
+;;; Zawinski <jwz@netscape.com> (the version I had was last modified 22
 ;;; dec 90 jwz) and code submitted to ange-ftp-lovers on Sun, 5 Apr
 ;;; 92 23:20:47 EDT by drw@BOURBAKI.MIT.EDU (Dale R. Worley).
 ;;; auto-save.el tries to cover the functionality of those two

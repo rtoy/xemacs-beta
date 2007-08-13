@@ -3298,15 +3298,14 @@ init_xemacs_process (void)
       proc_buffered_char[i] = -1;
     }
 }
+
 #if 0
 
-xxDEFUN ("process-connection", Fprocess_connection, Sprocess_connection,
-	 0, 1, 0 /*
+xxDEFUN ("process-connection", Fprocess_connection, 0, 1, 0, /*
 Return the connection type of `PROCESS'.  This can be nil (pipe),
 t or pty (pty) or stream (socket connection).
-*/ )
-  (process)
-     Lisp_Object process;
+*/
+	 (process))
 {
   return XPROCESS (process)->type;
 }

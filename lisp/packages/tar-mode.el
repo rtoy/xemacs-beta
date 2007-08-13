@@ -3,7 +3,7 @@
 
 ;;; File:		tar-mode.el
 ;;; Description:	simple editing of tar files from GNU emacs
-;;; Author:		Jamie Zawinski <jwz@lucid.com>
+;;; Author:		Jamie Zawinski <jwz@netscape.com>
 ;;; Created:		4 Apr 1990
 ;;; Version:		1.31, 15 Dec 93
 

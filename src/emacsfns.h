@@ -605,6 +605,7 @@ Lisp_Object maybe_signal_simple_continuable_error_2 (CONST char *reason,
 						     Lisp_Object class,
 						     Error_behavior errb);
 Lisp_Object Fprogn (Lisp_Object args);
+Lisp_Object Fstrerror (Lisp_Object errnum);
 Lisp_Object Fcommandp (Lisp_Object obj);
 Lisp_Object Feval (Lisp_Object form);
 Lisp_Object Fapply (int nargs, Lisp_Object *args);

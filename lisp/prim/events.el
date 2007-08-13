@@ -2,8 +2,8 @@
 
 ;;;; Copyright (C) 1996 Ben Wing.
 
-;; Maintainer:
-;; Keywords: internal
+;; Maintainer: Martin Buchholz
+;; Keywords: internal event
 
 ;; This file is part of XEmacs.
 
@@ -43,63 +43,68 @@ This will be nil for some types of events (e.g. keyboard and eval events)."
   (fw-frame (event-channel event)))
 
 (defun event-buffer (event)
-  "Given a mouse-motion, button-press, or button-release event, return
-the buffer on which that event occurred.  This will be nil for non-mouse
-events.  If event-over-text-area-p is nil, this will also be nil."
+  "Return the buffer of the window over which mouse event EVENT occurred.
+Return nil unless both (mouse-event-p EVENT) and
+(event-over-text-area-p EVENT) are non-nil."
   (let ((window (event-window event)))
     (and (windowp window) (window-buffer window))))
 
 (defalias 'allocate-event 'make-event)
 
-(defun key-press-event-p (obj)
-  "True if OBJ is a key-press event object."
-  (and (event-live-p obj) (eq 'key-press (event-type obj))))
 
-(defun button-press-event-p (obj)
-  "True if OBJ is a mouse-button-press event object."
-  (and (event-live-p obj) (eq 'button-press (event-type obj))))
+(defun key-press-event-p (object)
+  "Return t if OBJECT is a key-press event."
+  (and (event-live-p object) (eq 'key-press (event-type object))))
 
-(defun button-release-event-p (obj)
-  "True if OBJ is a mouse-button-release event object."
-  (and (event-live-p obj) (eq 'button-release (event-type obj))))
+(defun button-press-event-p (object)
+  "Return t if OBJECT is a mouse button-press event."
+  (and (event-live-p object) (eq 'button-press (event-type object))))
 
-(defun button-event-p (obj)
-  "True if OBJ is a button-press or button-release event object."
-  (or (button-press-event-p obj) (button-release-event-p obj)))
+(defun button-release-event-p (object)
+  "Return t if OBJECT is a mouse button-release event."
+  (and (event-live-p object) (eq 'button-release (event-type object))))
 
-(defun motion-event-p (obj)
-  "True if OBJ is a mouse-motion event object."
-  (and (event-live-p obj) (eq 'motion (event-type obj))))
+(defun button-event-p (object)
+  "Return t if OBJECT is a mouse button-press or button-release event."
+  (and (event-live-p object)
+       (memq (event-type object) '(button-press button-release))
+       t))
 
-(defun mouse-event-p (obj)
- "True if OBJ is a button-press, button-release, or mouse-motion event object."
-  (or (button-event-p obj) (motion-event-p obj)))
+(defun motion-event-p (object)
+  "Return t if OBJECT is a mouse motion event."
+  (and (event-live-p object) (eq 'motion (event-type object))))
 
-(defun process-event-p (obj)
-  "True if OBJ is a process-output event object."
-  (and (event-live-p obj) (eq 'process (event-type obj))))
+(defun mouse-event-p (object)
+  "Return t if OBJECT is a mouse button-press, button-release or motion event."
+  (and (event-live-p object)
+       (memq (event-type object) '(button-press button-release motion))
+       t))
 
-(defun timeout-event-p (obj)
-  "True if OBJ is a timeout event object."
-  (and (event-live-p obj) (eq 'timeout (event-type obj))))
+(defun process-event-p (object)
+  "Return t if OBJECT is a process-output event."
+  (and (event-live-p object) (eq 'process (event-type object))))
 
-(defun eval-event-p (obj)
-  "True if OBJ is an eval event object."
-  (and (event-live-p obj) (eq 'eval (event-type obj))))
+(defun timeout-event-p (object)
+  "Return t if OBJECT is a timeout event."
+  (and (event-live-p object) (eq 'timeout (event-type object))))
 
-(defun misc-user-event-p (obj)
-  "True if OBJ is a misc-user event object.
+(defun eval-event-p (object)
+  "Return t if OBJECT is an eval event."
+  (and (event-live-p object) (eq 'eval (event-type object))))
+
+(defun misc-user-event-p (object)
+  "Return t if OBJECT is a misc-user event.
 A misc-user event is a user event that is not a keypress or mouse click;
 normally this means a menu selection or scrollbar action."
-  (and (event-live-p obj) (eq 'misc-user (event-type obj))))
+  (and (event-live-p object) (eq 'misc-user (event-type object))))
 
 ;; You could just as easily use event-glyph but we include this for
 ;; consistency.
 
-(defun event-over-glyph-p (event)
-  "Given a mouse-motion, button-press, or button-release event, return
-t if the event is over a glyph.  Otherwise, return nil."
-  (not (null (event-glyph event))))
+(defun event-over-glyph-p (object)
+  "Return t if OBJECT is a mouse event occurring over a glyph.
+Mouse events are events of type button-press, button-release or motion."
+  (and (event-live-p object) (event-glyph object) t))
 
 (defun keyboard-translate (&rest pairs)
   "Translate character or keysym FROM to TO at a low level.
@@ -107,8 +112,7 @@ Multiple FROM-TO pairs may be specified.
 
 See `keyboard-translate-table' for more information."
   (while pairs
-    (puthash (car pairs) (car (cdr pairs)) keyboard-translate-table)
-    (setq pairs (cdr (cdr pairs)))))
+    (puthash (pop pairs) (pop pairs) keyboard-translate-table)))
 
 (put 'backspace 'ascii-character ?\b)
 (put 'delete    'ascii-character ?\177)

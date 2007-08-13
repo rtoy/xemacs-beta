@@ -34,7 +34,7 @@
 #undef LIBS_SYSTEM
 #ifdef NOT_C_CODE
 # undef LIBS_SYSTEM
-# define LIBS_SYSTEM -lsocket -lnsl -lintl -lkvm -lelf -lgen
+# define LIBS_SYSTEM -lsocket -lnsl -lintl -lelf -lgen
 #else
-# define LIBS_SYSTEM -lsocket -lnsl -lkvm -lelf -lgen
+# define LIBS_SYSTEM -lsocket -lnsl -lelf -lgen
 #endif

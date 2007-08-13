@@ -422,6 +422,11 @@ The last should be a world-writable \"public\" annotations file."
   :type '(repeat file)
   :group 'info)
 
+(defcustom Info-button1-follows-hyperlink nil
+  "*Non-nil means mouse button1 click will follow hyperlink."
+  :type 'boolean
+  :group 'info)
+
 (defvar Info-standalone nil
   "Non-nil if Emacs was started solely as an Info browser.")
 
@@ -1945,7 +1950,8 @@ At end of the node's text, moves to the next node."
 Like M, F, N, P or U command.  At end of the node's text, moves to the
 next node.  No error is given if there is no node to follow."
   (interactive "@e")
-  (and (event-point event)
+  (and Info-button1-follows-hyperlink
+       (event-point event)
        (Info-follow-nearest-node
 	(max (progn
 	       (select-window (event-window event))

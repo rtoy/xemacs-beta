@@ -3,7 +3,7 @@
 ;;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
 ;;; Copyright (C) 1995, 1996 Ben Wing.
 
-;; Author: Jamie Zawinski <jwz@lucid.com>
+;; Author: Jamie Zawinski <jwz@netscape.com>
 ;; Modified by:  Chuck Thompson <cthomp@cs.uiuc.edu>
 ;; Modified by:  Ben Wing <wing@spg.amdahl.com>
 

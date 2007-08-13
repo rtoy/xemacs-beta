@@ -21,36 +21,52 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: Not in FSF. */
 
 /* Written by Bill Perry */
+/* Hacked on by Martin Buchholz */
 
 #include <config.h>
 #include "lisp.h"
 #include <errno.h>
 
-#ifdef HAVE_DATABASE
-#include <database.h>         /* Our include file     */
-#ifdef HAVE_BERKELEY_DB
-#include <db.h>                       /* Berkeley db access   */
-#endif
-#ifdef HAVE_DBM
-#include <ndbm.h>
-#endif
+#ifndef HAVE_DATABASE
+#error database.c being compiled, but HAVE_DATABASE not defined!
+#endif /* HAVE_DATABASE */
 
-Lisp_Object Qdatabasep;
-#ifdef HAVE_DBM
-Lisp_Object Qdbm;
-#endif
+#include <database.h>         /* Our include file */
+
 #ifdef HAVE_BERKELEY_DB
+/* Work around Berkeley DB's use of int types which are defined
+   slightly differently in the not quite yet standard <inttypes.h>.
+   See db.h for details of why we're resorting to this... */
+#ifdef HAVE_INTTYPES_H
+#define __BIT_TYPES_DEFINED__
+#include <inttypes.h>
+typedef uint8_t  u_int8_t;
+typedef uint16_t u_int16_t;
+typedef uint32_t u_int32_t;
+#ifdef WE_DONT_NEED_QUADS
+typedef uint64_t u_int64_t;
+#endif /* WE_DONT_NEED_QUADS */
+#endif /* HAVE_INTTYPES_H */
+#include DB_H_PATH              /* Berkeley db's header file */
 Lisp_Object Qberkeley_db;
 Lisp_Object Qhash;
 Lisp_Object Qbtree;
 Lisp_Object Qrecno;
-#endif
+#endif /* HAVE_BERKELEY_DB */
+
+#ifdef HAVE_DBM
+#include <ndbm.h>
+Lisp_Object Qdbm;
+#endif /* HAVE_DBM */
+
+Lisp_Object Qdatabasep;
 
 typedef enum { DB_DBM, DB_BERKELEY, DB_UNKNOWN } XEMACS_DB_TYPE;
 
 struct database_struct;
+typedef struct database_struct database_struct;
 
-typedef struct _DB_FUNCS
+typedef struct
 {
   CONST char * (*get_subtype) (struct database_struct *);
   CONST char * (*get_type) (struct database_struct *);
@@ -74,6 +90,9 @@ struct database_struct
   int dberrno;
   void *db_handle;
   DB_FUNCS *funcs;
+#ifdef MULE
+  Lisp_Object coding_system;
+#endif
 };
 
 #define XDATABASE(x) XRECORD (x, database, struct database_struct)
@@ -102,6 +121,9 @@ new_database (void)
   dbase->mode = 0;
   dbase->dberrno = 0;
   dbase->type = DB_UNKNOWN;
+#ifdef MULE
+  dbase->coding_system = Fget_coding_system (Qbinary);
+#endif
   return (dbase);
 }
 
@@ -322,8 +344,7 @@ new_dbm_file (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
 static Lisp_Object
 dbm_lasterr (struct database_struct *dbp)
 {
-  char *temp = strerror (dbp->dberrno);
-  return (make_string ((unsigned char *) temp, strlen (temp)));
+  return Fstrerror (make_int (dbp->dberrno));
 }
 
 static void
@@ -405,8 +426,7 @@ berkdb_open (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
 static Lisp_Object
 berkdb_lasterr (struct database_struct *dbp)
 {
-  char *temp = strerror (dbp->dberrno);
-  return (make_string ((unsigned char *) temp, strlen (temp)));
+  return Fstrerror (make_int (dbp->dberrno));
 }
 
 static Lisp_Object
@@ -519,10 +539,7 @@ Return the last error associated with database OBJ.
   struct database_struct *db;
 
   if (NILP (obj))
-    {
-      char *temp = strerror (errno);
-      return (make_string ((unsigned char *) temp, strlen (temp)));
-    }
+    return Fstrerror (make_int (errno));
   
   CHECK_DATABASE (obj);
   db = XDATABASE (obj);
@@ -741,4 +758,3 @@ vars_of_dbm (void)
   Fprovide (Qberkeley_db);
 #endif
 }
-#endif /* HAVE_DATABASE */

@@ -3,8 +3,8 @@
 ;;; Copyright (C) 1986, 1991-1994 Free Software Foundation, Inc.
 
 ;; Author: Doug Cutting <doug@csli.stanford.edu>
-;;	Jamie Zawinski <jwz@lucid.com>
-;; Maintainer: Jamie Zawinski <jwz@lucid.com>
+;;	Jamie Zawinski <jwz@netscape.com>
+;; Maintainer: Jamie Zawinski <jwz@netscape.com>
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -34,7 +34,7 @@
 
 ;;
 ;; Original version by Doug Cutting (doug@csli.stanford.edu)
-;; Substantially modified by Jamie Zawinski <jwz@lucid.com> for
+;; Substantially modified by Jamie Zawinski for
 ;; the new lapcode-based byte compiler.
 
 ;;; Code:

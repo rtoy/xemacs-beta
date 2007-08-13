@@ -493,6 +493,10 @@ version 19.14 released June 23, 1996.
 version 20.0 released February 9, 1997.
 @item
 version 19.15 released March 28, 1997.
+@item
+version 20.1 (not released to the net) April 15, 1997.
+@item
+version 20.2 released May 16, 1997.
 @end itemize
 
 @node GNU Emacs 19

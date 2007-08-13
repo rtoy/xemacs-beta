@@ -1,65 +1,66 @@
-!!    Japanese localization resources for XEmacs.
-!! @(#)Emacs	1.3 96/09/22
-!!    Copyright (C) 1996 Sun Microsystems, Inc.
+!    Japanese localization resources for XEmacs.
+! @(#)Emacs	1.3 96/09/22
+!    Copyright (C) 1996 Sun Microsystems, Inc.
 !!
-!! This file is part of XEmacs.
-!! 
-!! XEmacs is free software; you can redistribute it and/or modify it
-!! under the terms of the GNU General Public License as published by the
-!! Free Software Foundation; either version 2, or (at your option) any
-!! later version.
-!! XEmacs is distributed in the hope that it will be useful, but WITHOUT
-!! ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-!! FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-!! for more details.
-!! You should have received a copy of the GNU General Public License
-!! along with XEmacs; see the file COPYING.  If not, write to the
-!! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-!! Boston, MA 02111-1307, USA.
-!! Copyright (C) 1996 Sun Microsystems Inc.
-!! Japanese Resources to be placed in etc/app-defaults/ja/Emacs
-!! for xemacs-mule.
-!! pulldown menu internationalization.  The first line of the file
-!! "Emacs*XlwMenu.resourceLabels: True" has to be there to make sure
-!! all the labelString will be read and displayed by X.
+! This file is part of XEmacs.
+! 
+! XEmacs is free software; you can redistribute it and/or modify it
+! under the terms of the GNU General Public License as published by the
+! Free Software Foundation; either version 2, or (at your option) any
+! later version.
+! XEmacs is distributed in the hope that it will be useful, but WITHOUT
+! ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+! FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+! You should have received a copy of the GNU General Public License
+! along with XEmacs; see the file COPYING.  If not, write to the
+! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+! Boston, MA 02111-1307, USA.
+! Copyright (C) 1996 Sun Microsystems Inc.
+! Japanese Resources to be placed in etc/app-defaults/ja/Emacs
+! for xemacs-mule.
+! pulldown menu internationalization.  The first line of the file
+! "Emacs*XlwMenu.resourceLabels: True" has to be there to make sure
+! all the labelString will be read and displayed by X.
 Emacs*XlwMenu.resourceLabels: True
 
-!! Starting below here are menu label string which can be translated to
-!! different languages. 
-!! Example: Emacs*XlwMenu.file.labelString: File  
-!! Characters before the ":" sign, "Example: Emacs*XlwMenu.file.labelString"
-!! can not be changed. They must stay exactly the way they are.
-!! The only string to be translated is the string, "File".
-!! Some resource names such as "file", "quit" have been used in several
-!! places.  However, each of them only has to be translated once in this X
-!! resource file.
 
-!! Fonts for the window frame and menus
+! CDE doesn't require this but OpenWindows does.
 Emacs*fontList: \
 -*-gothic-medium-r-normal--14-120-75-75-c-*-*-*:
 !! FontSet for the window frame and menus when you use USE_XFONTSET
 Emacs*fontSet: -*-fixed-medium-r-normal--14-*
 
-!!!! Default Menubar Top Level
+! Starting below here are menu label string which can be translated to
+! different languages. 
+! Example: Emacs*XlwMenu.file.labelString: File  
+! Characters before the ":" sign, "Example: Emacs*XlwMenu.file.labelString"
+! can not be changed. They must stay exactly the way they are.
+! The only string to be translated is the string, "File".
+! Some resource names such as "file", "quit" have been used in several
+! places.  However, each of them only has to be translated once in this X
+! resource file.
+
+!!! Default Menubar Top Level
 
 ! Emacs*XlwMenu.file.labelString:	File
 Emacs*XlwMenu.file.labelString:	ファイル
 ! Emacs*XlwMenu.edit.labelString:	Edit
 Emacs*XlwMenu.edit.labelString:	編集
 ! Emacs*XlwMenu.apps.labelString:	Apps
-! Emacs*XlwMenu.apps.labelString:
+Emacs*XlwMenu.apps.labelString:	アプリ
 ! Emacs*XlwMenu.options.labelString:	Options
 Emacs*XlwMenu.options.labelString:	オプション
 ! Emacs*XlwMenu.buffers.labelString:	Buffers
-Emacs*XlwMenu.buffers.labelString:	バッファー間...
+Emacs*XlwMenu.buffers.labelString:	バッファ
 ! Emacs*XlwMenu.tools.labelString:	Tools
 Emacs*XlwMenu.tools.labelString:	ツール
 ! Emacs*XlwMenu.help.labelString:	Help
 Emacs*XlwMenu.help.labelString:	ヘルプ
 ! Emacs*XlwMenu.load_emacs.labelString:	Load .emacs
-! Emacs*XlwMenu.load_emacs.labelString:
+Emacs*XlwMenu.load_emacs.labelString: .emacs 読み込み
 
-!!! File menu
+!! File menu
 
 ! Emacs*XlwMenu.open___.labelString:	Open...
 Emacs*XlwMenu.open___.labelString:	開く...
@@ -72,19 +73,19 @@ Emacs*XlwMenu.insertFile___.labelString:	ファイル挿入...
 ! Emacs*XlwMenu.viewFile___.labelString:	View File...
 Emacs*XlwMenu.viewFile___.labelString:	ファイル表示...
 ! Emacs*XlwMenu.save.labelString:	Save
-Emacs*XlwMenu.save.labelString:	保存
+Emacs*XlwMenu.save.labelString:	保存:
 ! Emacs*XlwMenu.saveAs___.labelString:	Save As...
 Emacs*XlwMenu.saveAs___.labelString:	新規保存...
 ! Emacs*XlwMenu.saveSomeBuffers.labelString:	Save Some Buffers
-Emacs*XlwMenu.saveSomeBuffers.labelString:	バッファーのいくつかを保存
+Emacs*XlwMenu.saveSomeBuffers.labelString:	バッファをいくつか保存
 ! Emacs*XlwMenu.printBuffer.labelString:	Print Buffer
-Emacs*XlwMenu.printBuffer.labelString:	バッファーを印刷
+Emacs*XlwMenu.printBuffer.labelString:	バッファを印刷:
 ! Emacs*XlwMenu.prettyPrintBuffer.labelString:	Pretty-Print Buffer
-Emacs*XlwMenu.prettyPrintBuffer.labelString:	バッファーを清書印刷
+Emacs*XlwMenu.prettyPrintBuffer.labelString:	バッファを清書印刷:
 ! Emacs*XlwMenu.newFrame.labelString:	New Frame
 Emacs*XlwMenu.newFrame.labelString:	新規フレーム
 ! Emacs*XlwMenu.frameOnOtherDisplay___.labelString:	Frame on Other Display...
-Emacs*XlwMenu.frameOnOtherDisplay___.labelString:	他のディスプレーにフレーム
+Emacs*XlwMenu.frameOnOtherDisplay___.labelString:	他のディスプレーにフレーム...
 ! Emacs*XlwMenu.deleteFrame.labelString:	Delete Frame
 Emacs*XlwMenu.deleteFrame.labelString:	フレーム削除
 ! Emacs*XlwMenu.splitWindow.labelString:	Split Window
@@ -94,13 +95,13 @@ Emacs*XlwMenu.unSplitKeepThis.labelString:	ウィンドウ分割解除、これを保持
 ! Emacs*XlwMenu.unSplitKeepOthers.labelString:	Un-Split (Keep Others)
 Emacs*XlwMenu.unSplitKeepOthers.labelString:	ウィンドウ分割解除、他方を保持
 ! Emacs*XlwMenu.revertBuffer.labelString:	Revert Buffer
-Emacs*XlwMenu.revertBuffer.labelString:	バッファー復元
+Emacs*XlwMenu.revertBuffer.labelString:	バッファ復元:
 ! Emacs*XlwMenu.deleteBuffer.labelString:	Delete Buffer
-Emacs*XlwMenu.deleteBuffer.labelString:	バッファー削除
+Emacs*XlwMenu.deleteBuffer.labelString:	バッファ削除:
 ! Emacs*XlwMenu.exitXEmacs.labelString:	Exit XEmacs
 Emacs*XlwMenu.exitXEmacs.labelString:	XEmacs 終了
 
-!!! Edit menu
+!! Edit menu
 
 ! Emacs*XlwMenu.undo.labelString:	Undo
 Emacs*XlwMenu.undo.labelString:	元に戻す
@@ -113,7 +114,7 @@ Emacs*XlwMenu.paste.labelString:	ペースト
 ! Emacs*XlwMenu.clear.labelString:	Clear
 Emacs*XlwMenu.clear.labelString:	消去
 ! Emacs*XlwMenu.search___.labelString:	Search...
-Emacs*XlwMenu.search___.labelString:	検索
+Emacs*XlwMenu.search___.labelString:	検索...
 ! Emacs*XlwMenu.searchBackward___.labelString:	Search Backward...
 Emacs*XlwMenu.searchBackward___.labelString:	後方検索...
 ! Emacs*XlwMenu.replace___.labelString:	Replace...
@@ -157,61 +158,61 @@ Emacs*XlwMenu.saveBookmarksAs___.labelString:	しおりリスト別名保存...
 ! Emacs*XlwMenu.loadABookmarkFile.labelString:	Load a bookmark file
 Emacs*XlwMenu.loadABookmarkFile.labelString:	しおりファイル読み込み
 
-!!! Apps menu
+!! Apps menu
 
 ! Emacs*XlwMenu.readMailVM___.labelString:	Read Mail (VM)...
-! Emacs*XlwMenu.readMailVM___.labelString:
+Emacs*XlwMenu.readMailVM___.labelString:	メールを読む (VM)...
 ! Emacs*XlwMenu.readMailMH___.labelString:	Read Mail (MH)...
-! Emacs*XlwMenu.readMailMH___.labelString:
+Emacs*XlwMenu.readMailMH___.labelString:	メールを読む (MH)...
 ! Emacs*XlwMenu.sendMail___.labelString:	Send mail...
-! Emacs*XlwMenu.sendMail___.labelString:
+Emacs*XlwMenu.sendMail___.labelString:	メールを送る...
 ! Emacs*XlwMenu.usenetNews.labelString:	Usenet News
-! Emacs*XlwMenu.usenetNews.labelString:
+Emacs*XlwMenu.usenetNews.labelString:	ネットニュース
 ! Emacs*XlwMenu.browseTheWeb.labelString:	Browse the Web
-! Emacs*XlwMenu.browseTheWeb.labelString:
+Emacs*XlwMenu.browseTheWeb.labelString:	WWW をブラウズ
 ! Emacs*XlwMenu.gopher.labelString:	Gopher
-! Emacs*XlwMenu.gopher.labelString:
+Emacs*XlwMenu.gopher.labelString:	Gopher
 ! Emacs*XlwMenu.hyperbole___.labelString:	Hyperbole...
-! Emacs*XlwMenu.hyperbole___.labelString:
+Emacs*XlwMenu.hyperbole___.labelString:	Hyperbole...
 ! Emacs*XlwMenu.spellCheckBuffer.labelString:	Spell-Check Buffer
-! Emacs*XlwMenu.spellCheckBuffer.labelString:
+Emacs*XlwMenu.spellCheckBuffer.labelString:	バッファをスペルチェック
 ! Emacs*XlwMenu.emulateVI.labelString:	Emulate VI
-! Emacs*XlwMenu.emulateVI.labelString:
+Emacs*XlwMenu.emulateVI.labelString:	vi を模倣
 ! Emacs*XlwMenu.calendar.labelString:	Calendar
-! Emacs*XlwMenu.calendar.labelString:
+Emacs*XlwMenu.calendar.labelString:	カレンダー
 ! Emacs*XlwMenu.games.labelString:	Games
-! Emacs*XlwMenu.games.labelString:
+Emacs*XlwMenu.games.labelString:	ゲーム
 ! Emacs*XlwMenu.3MonthCalendar.labelString:	3-Month Calendar
-! Emacs*XlwMenu.3MonthCalendar.labelString:
+Emacs*XlwMenu.3MonthCalendar.labelString:	3 か月カレンダー
 ! Emacs*XlwMenu.diary.labelString:	Diary
-! Emacs*XlwMenu.diary.labelString:
+Emacs*XlwMenu.diary.labelString:	日記
 ! Emacs*XlwMenu.holidays.labelString:	Holidays
-! Emacs*XlwMenu.holidays.labelString:
+Emacs*XlwMenu.holidays.labelString:	祝日
 ! Emacs*XlwMenu.phasesOfTheMoon.labelString:	Phases of the Moon
-! Emacs*XlwMenu.phasesOfTheMoon.labelString:
+Emacs*XlwMenu.phasesOfTheMoon.labelString:	月齢
 ! Emacs*XlwMenu.sunriseSunset.labelString:	Sunrise/Sunset
-! Emacs*XlwMenu.sunriseSunset.labelString:
+Emacs*XlwMenu.sunriseSunset.labelString:	日の出と日の入り
 ! Emacs*XlwMenu.quoteFromZippy.labelString:	Quote from Zippy
-! Emacs*XlwMenu.quoteFromZippy.labelString:
+Emacs*XlwMenu.quoteFromZippy.labelString:	Zippy の格言
 ! Emacs*XlwMenu.psychoanalyst.labelString:	Psychoanalyst
-! Emacs*XlwMenu.psychoanalyst.labelString:
+Emacs*XlwMenu.psychoanalyst.labelString:	精神分析
 ! Emacs*XlwMenu.psychoanalyzeZippy.labelString:	Psychoanalyze Zippy!
-! Emacs*XlwMenu.psychoanalyzeZippy.labelString:
+Emacs*XlwMenu.psychoanalyzeZippy.labelString:	Zippy を精神分析!
 ! Emacs*XlwMenu.randomFlames.labelString:	Random Flames
-! Emacs*XlwMenu.randomFlames.labelString:
+Emacs*XlwMenu.randomFlames.labelString:	誹謗中傷
 ! Emacs*XlwMenu.dunnetAdventure.labelString:	Dunnet (Adventure)
-! Emacs*XlwMenu.dunnetAdventure.labelString:
+Emacs*XlwMenu.dunnetAdventure.labelString:	Dunnet (アドベンチャー)
 ! Emacs*XlwMenu.towersOfHanoi.labelString:	Towers of Hanoi
-! Emacs*XlwMenu.towersOfHanoi.labelString:
+Emacs*XlwMenu.towersOfHanoi.labelString:	ハノイの塔
 ! Emacs*XlwMenu.gameOfLife.labelString:	Game of Life
-! Emacs*XlwMenu.gameOfLife.labelString:
+Emacs*XlwMenu.gameOfLife.labelString:	ライフ
 ! Emacs*XlwMenu.multiplicationPuzzle.labelString:	Multiplication Puzzle
-! Emacs*XlwMenu.multiplicationPuzzle.labelString:
+Emacs*XlwMenu.multiplicationPuzzle.labelString:	掛け算パズル
 
-!!! Options menu
+!! Options menu
 
 ! Emacs*XlwMenu.readOnly.labelString:	Read Only
-Emacs*XlwMenu.readOnly.labelString:	読み込み専用
+Emacs*XlwMenu.readOnly.labelString:	読み取り専用
 ! Emacs*XlwMenu.editingOptions.labelString:	Editing Options
 Emacs*XlwMenu.editingOptions.labelString:	編集オプション
 ! Emacs*XlwMenu.generalOptions.labelString:	General Options
@@ -219,7 +220,7 @@ Emacs*XlwMenu.generalOptions.labelString:	一般的オプション
 ! Emacs*XlwMenu.printingOptions.labelString:	Printing Options
 Emacs*XlwMenu.printingOptions.labelString:	印刷オプション
 ! Emacs*XlwMenu.otherWindowLocation.labelString:	"Other Window" Location
-Emacs*XlwMenu.otherWindowLocation.labelString:	「他ウィンドウ」の表示位置
+Emacs*XlwMenu.otherWindowLocation.labelString:	「他ウィンドウ」表示位置
 ! Emacs*XlwMenu.syntaxHighlighting.labelString:	Syntax Highlighting
 Emacs*XlwMenu.syntaxHighlighting.labelString:	構文強調表示
 ! Emacs*XlwMenu.parenHighlighting.labelString:	Paren Highlighting
@@ -245,7 +246,7 @@ Emacs*XlwMenu.languageEnvironment.labelString:	言語環境
 ! Emacs*XlwMenu.saveOptions.labelString:	Save Options
 Emacs*XlwMenu.saveOptions.labelString:	オプションを保存
 
-!!! Options -> Editing
+!! Options -> Editing
 
 ! Emacs*XlwMenu.overstrike.labelString:	Overstrike
 Emacs*XlwMenu.overstrike.labelString:	上書き
@@ -256,11 +257,11 @@ Emacs*XlwMenu.caseMatchingReplace.labelString:	置換時に大文字小文字を区別
 ! Emacs*XlwMenu.autoDeleteSelection.labelString:	Auto Delete Selection
 Emacs*XlwMenu.autoDeleteSelection.labelString:	セレクションの自動削除
 ! Emacs*XlwMenu.activeRegions.labelString:	Active Regions
-Emacs*XlwMenu.activeRegions.labelString:	活性領域(?)
+Emacs*XlwMenu.activeRegions.labelString:	活動状態領域
 ! Emacs*XlwMenu.mousePasteAtTextCursor.labelString:	Mouse Paste At Text Cursor
 Emacs*XlwMenu.mousePasteAtTextCursor.labelString:	テキストカーソル位置にペースト
 
-!!! Options -> General
+!! Options -> General
 
 ! Emacs*XlwMenu.teachExtendedCommands.labelString:	Teach Extended Commands
 Emacs*XlwMenu.teachExtendedCommands.labelString:	拡張コマンドのキー割当表示
@@ -269,7 +270,7 @@ Emacs*XlwMenu.debugOnError.labelString:	エラー時にデバッグ
 ! Emacs*XlwMenu.debugOnQuit.labelString:	Debug On Quit
 Emacs*XlwMenu.debugOnQuit.labelString:	終了時にデバッグ
 
-!!! Options -> Printing Options
+!! Options -> Printing Options
 
 ! Emacs*XlwMenu.commandLineSwitchesForLprLp___.labelString:	Command-Line Switches for `lpr'/`lp'...
 Emacs*XlwMenu.commandLineSwitchesForLprLp___.labelString:	lp/lpr 用コマンドオプション
@@ -278,14 +279,14 @@ Emacs*XlwMenu.prettyPrintWithColor.labelString:	色付きの清書
 ! Emacs*XlwMenu.prettyPrintPaperSize.labelString:	Pretty-Print Paper Size
 Emacs*XlwMenu.prettyPrintPaperSize.labelString:	清書用紙サイズ
 
-!!! Options -> Printing Options -> Pretty-Print Paper Size
+!! Options -> Printing Options -> Pretty-Print Paper Size
 
 ! Emacs*XlwMenu.letter.labelString:	Letter
 Emacs*XlwMenu.letter.labelString:	レター
 ! Emacs*XlwMenu.legal.labelString:	Legal
 Emacs*XlwMenu.legal.labelString:	リーガル
 
-!!! Options -> Other Window
+!! Options -> Other Window
 
 ! Emacs*XlwMenu.alwaysInSameFrame.labelString:	Always in Same Frame
 Emacs*XlwMenu.alwaysInSameFrame.labelString:	常に同一フレーム
@@ -300,20 +301,20 @@ Emacs*XlwMenu.otherFrame5FramesMax.labelString:	他フレーム (最大 5 個)
 ! Emacs*XlwMenu.alwaysCreateNewFrame.labelString:	Always Create New Frame
 Emacs*XlwMenu.alwaysCreateNewFrame.labelString:	常に新規フレームを作成
 ! Emacs*XlwMenu.tempBuffersAlwaysInSameFrame.labelString:	Temp Buffers Always in Same Frame
-Emacs*XlwMenu.tempBuffersAlwaysInSameFrame.labelString:	一時バッファーは常に同一フレーム
+Emacs*XlwMenu.tempBuffersAlwaysInSameFrame.labelString:	一時バッファは常に同一フレーム
 ! Emacs*XlwMenu.tempBuffersLikeOtherBuffers.labelString:	Temp Buffers Like Other Buffers
-Emacs*XlwMenu.tempBuffersLikeOtherBuffers.labelString:	一時バッファーも他バッファーと同様
+Emacs*XlwMenu.tempBuffersLikeOtherBuffers.labelString:	一時バッファも他バッファと同様
 
-!!! Options -> Syntax Highlighting
+!! Options -> Syntax Highlighting
 
 ! Emacs*XlwMenu.inThisBuffer.labelString:	In This Buffer
-Emacs*XlwMenu.inThisBuffer.labelString:	このバッファー内で
+Emacs*XlwMenu.inThisBuffer.labelString:	このバッファ内で
 ! Emacs*XlwMenu.automatic.labelString:	Automatic
 Emacs*XlwMenu.automatic.labelString:	自動
 ! Emacs*XlwMenu.fonts.labelString:	Fonts
 Emacs*XlwMenu.fonts.labelString:	フォント
 ! Emacs*XlwMenu.colors.labelString:	Colors
-Emacs*XlwMenu.colors.labelString:	カラー
+Emacs*XlwMenu.colors.labelString:	色
 ! Emacs*XlwMenu.least.labelString:	Least
 Emacs*XlwMenu.least.labelString:	最低
 ! Emacs*XlwMenu.more.labelString:	More
@@ -327,18 +328,18 @@ Emacs*XlwMenu.lazy.labelString:	簡易
 ! Emacs*XlwMenu.caching.labelString:	Caching
 Emacs*XlwMenu.caching.labelString:	キャッシュ
 
-!!! Options -> Paren Highlighting
+!! Options -> Paren Highlighting
 
 ! Emacs*XlwMenu.none.labelString:	None
 Emacs*XlwMenu.none.labelString:	なし
 ! Emacs*XlwMenu.blinkingParen.labelString:	Blinking Paren
-Emacs*XlwMenu.blinkingParen.labelString:	括弧を点滅
+Emacs*XlwMenu.blinkingParen.labelString:	点滅する括弧
 ! Emacs*XlwMenu.steadyParen.labelString:	Steady Paren
-Emacs*XlwMenu.steadyParen.labelString:	強固な(?)括弧
+Emacs*XlwMenu.steadyParen.labelString:	安定した括弧
 ! Emacs*XlwMenu.expression.labelString:	Expression
 Emacs*XlwMenu.expression.labelString:	式
 
-!!! Options -> Frame Appearance
+!! Options -> Frame Appearance
 
 ! Emacs*XlwMenu.scrollbars.labelString:	Scrollbars
 Emacs*XlwMenu.scrollbars.labelString:	スクロールバー
@@ -351,22 +352,22 @@ Emacs*XlwMenu.barCursor.labelString:	棒状カーソル
 ! Emacs*XlwMenu.blinkingCursor.labelString:	Blinking Cursor
 Emacs*XlwMenu.blinkingCursor.labelString:	カーソル点滅
 
-!!! Options -> Menubar Appearance
+!! Options -> Menubar Appearance
 
 ! Emacs*XlwMenu.buffersMenuLength___.labelString:	Buffers Menu Length...
-Emacs*XlwMenu.buffersMenuLength___.labelString:	バファーメニューの長さ...
+Emacs*XlwMenu.buffersMenuLength___.labelString:	バッファメニューの長さ...
 ! Emacs*XlwMenu.multiOperationBuffersSubMenus.labelString:	Multi-Operation Buffers Sub-Menus
-Emacs*XlwMenu.multiOperationBuffersSubMenus.labelString:	複数操作バッファーサブメニュー
+Emacs*XlwMenu.multiOperationBuffersSubMenus.labelString:	複数操作バッファサブメニュー
 ! Emacs*XlwMenu.buffersMenuSorting.labelString:	Buffers Menu Sorting
-Emacs*XlwMenu.buffersMenuSorting.labelString:	バッファーメニュー表示順
+Emacs*XlwMenu.buffersMenuSorting.labelString:	バッファメニュー表示順
 ! Emacs*XlwMenu.submenusForBufferGroups.labelString:	Submenus for Buffer Groups
-Emacs*XlwMenu.submenusForBufferGroups.labelString:	バッファーグループ毎にサブメニュー
+Emacs*XlwMenu.submenusForBufferGroups.labelString:	バッファグループ毎にサブメニュー
 ! Emacs*XlwMenu.frameLocalFontMenu.labelString:	Frame-Local Font Menu
 Emacs*XlwMenu.frameLocalFontMenu.labelString:	フレーム付属フォントメニュー
 ! Emacs*XlwMenu.ignoreScaledFonts.labelString:	Ignore Scaled Fonts
 Emacs*XlwMenu.ignoreScaledFonts.labelString:	スケールされたフォントを無視
 
-!!! Options -> Menubar Appearance -> Buffers Menu Sorting
+!! Options -> Menubar Appearance -> Buffers Menu Sorting
 
 ! Emacs*XlwMenu.mostRecentlyUsed.labelString:	Most Recently Used
 Emacs*XlwMenu.mostRecentlyUsed.labelString:	最近の利用順
@@ -375,7 +376,7 @@ Emacs*XlwMenu.alphabetically.labelString:	名前の順
 ! Emacs*XlwMenu.byMajorModeThenAlphabetically.labelString: By Major Mode, Then Alphabetically
 Emacs*XlwMenu.byMajorModeThenAlphabetically.labelString:	主モード毎に名前順
 
-!!! Options -> Toolbar Appearance
+!! Options -> Toolbar Appearance
 
 ! Emacs*XlwMenu.visible.labelString:	Visible
 Emacs*XlwMenu.visible.labelString:	表示
@@ -392,7 +393,7 @@ Emacs*XlwMenu.left.labelString:	左
 ! Emacs*XlwMenu.right.labelString:	Right
 Emacs*XlwMenu.right.labelString:	右
 
-!!! Options -> Open URLs with
+!! Options -> Open URLs with
 
 ! Emacs*XlwMenu.emacsW3.labelString:	Emacs-W3
 ! Emacs*XlwMenu.emacsW3.labelString:
@@ -411,7 +412,7 @@ Emacs*XlwMenu.right.labelString:	右
 ! Emacs*XlwMenu.grail.labelString:	Grail
 ! Emacs*XlwMenu.grail.labelString:
 
-!!! Options -> Language Environment
+!! Options -> Language Environment
 
 ! Emacs*XlwMenu.arabic.labelString:	Arabic
 Emacs*XlwMenu.arabic.labelString:	アラビア語
@@ -436,28 +437,28 @@ Emacs*XlwMenu.thai.labelString:	タイ語
 ! Emacs*XlwMenu.vietnamese.labelString:	Vietnamese
 Emacs*XlwMenu.vietnamese.labelString:	ベトナム語
 
-!!! Buffers menu
+!! Buffers menu
 
 ! Emacs*XlwMenu.listAllBuffers.labelString:	List All Buffers
-Emacs*XlwMenu.listAllBuffers.labelString:	バッファー一覧表示
+Emacs*XlwMenu.listAllBuffers.labelString:	バッファ一覧表示
 
-!!! below are Buffers submenus
+!! below are Buffers submenus
 
 ! Emacs*XlwMenu.switchToBuffer.labelString:	Switch to Buffer
-Emacs*XlwMenu.switchToBuffer.labelString:	バッファーに切り替え
+Emacs*XlwMenu.switchToBuffer.labelString:	バッファに切り替え
 ! Emacs*XlwMenu.switchToBufferOtherFrame.labelString:	Switch to Buffer, Other Frame
-Emacs*XlwMenu.switchToBufferOtherFrame.labelString:	他フレームのバッファーに切り替え
+Emacs*XlwMenu.switchToBufferOtherFrame.labelString:	他フレームのバッファに切り替え
 ! Emacs*XlwMenu.saveBuffer.labelString:	Save Buffer
-Emacs*XlwMenu.saveBuffer.labelString:	バッファー保存
+Emacs*XlwMenu.saveBuffer.labelString:	バッファ保存
 
-!!! Tools menu
+!! Tools menu
 
 ! Emacs*XlwMenu.startWorkShop.labelString:	Start WorkShop
 Emacs*XlwMenu.startWorkShop.labelString:	WorkShop 起動
 ! Emacs*XlwMenu.grep___.labelString:	Grep...
-! Emacs*XlwMenu.grep___.labelString:
+Emacs*XlwMenu.grep___.labelString: grep...
 ! Emacs*XlwMenu.compile___.labelString:	Compile...
-Emacs*XlwMenu.compile___.labelString:	コンパイル
+Emacs*XlwMenu.compile___.labelString:	コンパイル...
 ! Emacs*XlwMenu.shell.labelString:	Shell
 Emacs*XlwMenu.shell.labelString:	シェル
 ! Emacs*XlwMenu.shellCommand___.labelString:	Shell Command...
@@ -469,7 +470,7 @@ Emacs*XlwMenu.debugGDB___.labelString:	デバッグ (gdb)...
 ! Emacs*XlwMenu.debugDBX___.labelString:	Debug (DBX)...
 Emacs*XlwMenu.debugDBX___.labelString:	デバッグ (dbx)...
 ! Emacs*XlwMenu.vC.labelString:	VC
-! Emacs*XlwMenu.vC.labelString:
+Emacs*XlwMenu.vC.labelString:	バージョン管理 (VC)
 ! Emacs*XlwMenu.compare.labelString:	Compare
 Emacs*XlwMenu.compare.labelString:	比較
 ! Emacs*XlwMenu.merge.labelString:	Merge
@@ -481,53 +482,57 @@ Emacs*XlwMenu.oOBrowser___.labelString:	OO ブラウザ...
 ! Emacs*XlwMenu.tags.labelString:	Tags
 Emacs*XlwMenu.tags.labelString:	タグ
 
-!!! Tools -> VC
+!! Tools -> VC
 
 ! Emacs*XlwMenu.registerFile.labelString:	Register File
-! Emacs*XlwMenu.registerFile.labelString:
+Emacs*XlwMenu.registerFile.labelString:	ファイル登録:
+! Emacs*XlwMenu.checkInFile.labelString:	Check in File
+Emacs*XlwMenu.checkInFile.labelString:	チェックイン:
+! Emacs*XlwMenu.checkOutFile.labelString:	Check out File
+Emacs*XlwMenu.checkOutFile.labelString:	チェックアウト:
 ! Emacs*XlwMenu.showStatusOf.labelString:	Show status of
-! Emacs*XlwMenu.showStatusOf.labelString:
+Emacs*XlwMenu.showStatusOf.labelString:	状態表示
 ! Emacs*XlwMenu.revertToLastRevision.labelString:	Revert to Last Revision
-! Emacs*XlwMenu.revertToLastRevision.labelString:
+Emacs*XlwMenu.revertToLastRevision.labelString:	最後の版を復元
 ! Emacs*XlwMenu.cancelLastCheckin.labelString:	Cancel Last Checkin
-! Emacs*XlwMenu.cancelLastCheckin.labelString:
+Emacs*XlwMenu.cancelLastCheckin.labelString:	最後のチェックイン取り消し
 ! Emacs*XlwMenu.renameFile.labelString:	Rename File
-! Emacs*XlwMenu.renameFile.labelString:
+Emacs*XlwMenu.renameFile.labelString: ファイル名称変更:
 ! Emacs*XlwMenu.diffAgainstLastVersion.labelString:	Diff Against Last Version
-! Emacs*XlwMenu.diffAgainstLastVersion.labelString:
+Emacs*XlwMenu.diffAgainstLastVersion.labelString: 最新の版との差分
 ! Emacs*XlwMenu.diffBetweenRevisions___.labelString:	Diff Between Revisions...
-! Emacs*XlwMenu.diffBetweenRevisions___.labelString:
+Emacs*XlwMenu.diffBetweenRevisions___.labelString: 版の間の差分...
 ! Emacs*XlwMenu.visitOtherVersion___.labelString:	Visit Other Version...
-! Emacs*XlwMenu.visitOtherVersion___.labelString:
+Emacs*XlwMenu.visitOtherVersion___.labelString: 他の版を訪問...
 ! Emacs*XlwMenu.showEditHistory.labelString:	Show Edit History
-! Emacs*XlwMenu.showEditHistory.labelString:
+Emacs*XlwMenu.showEditHistory.labelString:	編集履歴を表示
 ! Emacs*XlwMenu.listLockedFilesAnyUser.labelString:	List Locked Files Any User
-! Emacs*XlwMenu.listLockedFilesAnyUser.labelString:
+Emacs*XlwMenu.listLockedFilesAnyUser.labelString: ロックされたファイルをリスト
 ! Emacs*XlwMenu.createSnapshot.labelString:	Create Snapshot
-! Emacs*XlwMenu.createSnapshot.labelString:
+Emacs*XlwMenu.createSnapshot.labelString:	スナップショット作成
 ! Emacs*XlwMenu.retrieveSnapshot.labelString:	Retrieve Snapshot
-! Emacs*XlwMenu.retrieveSnapshot.labelString:
+Emacs*XlwMenu.retrieveSnapshot.labelString:	スナップショット取得
 ! Emacs*XlwMenu.cVSUpdateDirectory.labelString:	CVS Update Directory
-! Emacs*XlwMenu.cVSUpdateDirectory.labelString:
+Emacs*XlwMenu.cVSUpdateDirectory.labelString:	CVS 更新ディレクトリ
 
-!!! Tools -> Compare
+!! Tools -> Compare
 
 ! Emacs*XlwMenu.twoFiles___.labelString:	Two Files...
 Emacs*XlwMenu.twoFiles___.labelString:	2 ファイル間...
 ! Emacs*XlwMenu.twoBuffers___.labelString:	Two Buffers...
-Emacs*XlwMenu.twoBuffers___.labelString:	2 バッファー間...
+Emacs*XlwMenu.twoBuffers___.labelString:	2 バッファ間...
 ! Emacs*XlwMenu.threeFiles___.labelString:	Three Files...
 Emacs*XlwMenu.threeFiles___.labelString:	3 ファイル間...
 ! Emacs*XlwMenu.threeBuffers___.labelString:	Three Buffers...
-Emacs*XlwMenu.threeBuffers___.labelString:	3 バッファー間...
+Emacs*XlwMenu.threeBuffers___.labelString:	3 バッファ間...
 ! Emacs*XlwMenu.twoDirectories___.labelString:	Two Directories...
 Emacs*XlwMenu.twoDirectories___.labelString:	2 ディレクトリ間...
 ! Emacs*XlwMenu.threeDirectories___.labelString:	Three Directories...
 Emacs*XlwMenu.threeDirectories___.labelString:	3 ディレクトリ間...
 ! Emacs*XlwMenu.fileWithRevision___.labelString:	File with Revision...
-Emacs*XlwMenu.fileWithRevision___.labelString:	改訂版ファイル...
+Emacs*XlwMenu.fileWithRevision___.labelString:	ファイルと版...
 ! Emacs*XlwMenu.directoryRevisions___.labelString:	Directory Revisions...
-Emacs*XlwMenu.directoryRevisions___.labelString:	改訂版ディレクトリ...
+Emacs*XlwMenu.directoryRevisions___.labelString:	版ディレクトリ...
 ! Emacs*XlwMenu.windowsWordByWord___.labelString:	Windows Word-by-word...
 Emacs*XlwMenu.windowsWordByWord___.labelString:	ウィンドウを単語ごとに...
 ! Emacs*XlwMenu.windowsLineByLine___.labelString:	Windows Line-by-line...
@@ -536,65 +541,74 @@ Emacs*XlwMenu.windowsLineByLine___.labelString:	ウィンドウを行ごとに...
 Emacs*XlwMenu.regionsWordByWord___.labelString:	領域を単語ごとに...
 ! Emacs*XlwMenu.regionsLineByLine___.labelString:	Regions Line-by-line...
 Emacs*XlwMenu.regionsLineByLine___.labelString:	領域を行ごとに...
-! Emacs*XlwMenu.listEdiffSessions___.labelString:	List Ediff Sessions...
-Emacs*XlwMenu.listEdiffSessions___.labelString:	ediff セッション一覧...
-! Emacs*XlwMenu.ediffManual___.labelString:	Ediff Manual...
-Emacs*XlwMenu.ediffManual___.labelString:	ediff マニュアル...
 
-!!! Tools -> Merge
+!! Tools -> Merge
 
 ! Emacs*XlwMenu.files___.labelString:	Files...
 Emacs*XlwMenu.files___.labelString:	ファイル間...
 ! Emacs*XlwMenu.filesWithAncestor___.labelString:	Files with Ancestor...
 Emacs*XlwMenu.filesWithAncestor___.labelString:	共通祖先のファイル...
 ! Emacs*XlwMenu.buffers___.labelString:	Buffers...
-Emacs*XlwMenu.buffers___.labelString:	バッファー間...
+Emacs*XlwMenu.buffers___.labelString:	バッファ間...
 ! Emacs*XlwMenu.buffersWithAncestor___.labelString:	Buffers with Ancestor...
-Emacs*XlwMenu.buffersWithAncestor___.labelString:	バッファーを先祖と...
+Emacs*XlwMenu.buffersWithAncestor___.labelString:	バッファを先祖と...
 ! Emacs*XlwMenu.directories___.labelString:	Directories...
 Emacs*XlwMenu.directories___.labelString:	ディレクトリ間...
 ! Emacs*XlwMenu.directoriesWithAncestor___.labelString:	Directories with Ancestor...
 Emacs*XlwMenu.directoriesWithAncestor___.labelString:	ディレクトリを先祖と...
 ! Emacs*XlwMenu.revisions___.labelString:	Revisions...
-Emacs*XlwMenu.revisions___.labelString:	改訂版間...
+Emacs*XlwMenu.revisions___.labelString:	版間...
 ! Emacs*XlwMenu.revisionsWithAncestor___.labelString:	Revisions with Ancestor...
-Emacs*XlwMenu.revisionsWithAncestor___.labelString:	改訂版を先祖と...
+Emacs*XlwMenu.revisionsWithAncestor___.labelString:	版を先祖と...
 ! Emacs*XlwMenu.directoryRevisionsWithAncestor___.labelString:	Directory Revisions with Ancestor...
-Emacs*XlwMenu.directoryRevisionsWithAncestor___.labelString:	改訂版ディレクトリを先祖と...
+Emacs*XlwMenu.directoryRevisionsWithAncestor___.labelString:	版ディレクトリを先祖と...
 
-!!! Tools -> Apply Patch
+!! Tools -> Apply Patch
 
 ! Emacs*XlwMenu.toAFile___.labelString:	To a file...
 Emacs*XlwMenu.toAFile___.labelString:	ファイルに対して...
 ! Emacs*XlwMenu.toABuffer___.labelString:	To a buffer...
-Emacs*XlwMenu.toABuffer___.labelString:	バッファーに対して...
+Emacs*XlwMenu.toABuffer___.labelString:	バッファに対して...
 
-!!! Tools -> Tags
+!! Tools -> Ediff Miscellanea
+
+! Emacs*XlwMenu.ediffMiscellanea.labelString:	Ediff Miscellanea
+Emacs*XlwMenu.ediffMiscellanea.labelString:	Ediff 関係
+! Emacs*XlwMenu.listEdiffSessions___.labelString:	List Ediff Sessions...
+Emacs*XlwMenu.listEdiffSessions___.labelString:	Ediff セッション一覧...
+! Emacs*XlwMenu.ediffManual___.labelString:	Ediff Manual...
+Emacs*XlwMenu.ediffManual___.labelString:	Ediff マニュアル...
+! Emacs*XlwMenu.useSeparateFrameForEdiffControlBuffer___.labelString:	Use separate frame for Ediff control buffer...
+Emacs*XlwMenu.useSeparateFrameForEdiffControlBuffer___.labelString:	Ediff 制御バッファ用に別フレームを使用
+! Emacs*XlwMenu.useAToolbarWithEdiffControlBuffer.labelString:	Use a toolbar with Ediff control buffer
+Emacs*XlwMenu.useAToolbarWithEdiffControlBuffer.labelString:	ツールバーを Ediff 制御バッファと共に使用
+
+!! Tools -> Tags
 
 ! Emacs*XlwMenu.findTag___.labelString:	Find Tag...
-! Emacs*XlwMenu.findTag___.labelString:
+Emacs*XlwMenu.findTag___.labelString: タグを探す...
 ! Emacs*XlwMenu.findOtherWindow___.labelString:	Find Other Window...
-! Emacs*XlwMenu.findOtherWindow___.labelString:
+Emacs*XlwMenu.findOtherWindow___.labelString:	他ウィンドウで探す...
 ! Emacs*XlwMenu.nextTag___.labelString:	Next Tag...
-! Emacs*XlwMenu.nextTag___.labelString:
+Emacs*XlwMenu.nextTag___.labelString:	次のタグ...
 ! Emacs*XlwMenu.nextOtherWindow___.labelString:	Next Other Window...
-! Emacs*XlwMenu.nextOtherWindow___.labelString:
+Emacs*XlwMenu.nextOtherWindow___.labelString:	他ウィンドウで次を...
 ! Emacs*XlwMenu.nextFile.labelString:	Next File
-! Emacs*XlwMenu.nextFile.labelString:
+Emacs*XlwMenu.nextFile.labelString:	次のファイル
 ! Emacs*XlwMenu.tagsSearch___.labelString:	Tags Search...
-! Emacs*XlwMenu.tagsSearch___.labelString:
+Emacs*XlwMenu.tagsSearch___.labelString:	タグを検索...
 ! Emacs*XlwMenu.tagsReplace___.labelString:	Tags Replace...
-! Emacs*XlwMenu.tagsReplace___.labelString:
+Emacs*XlwMenu.tagsReplace___.labelString:	タグを置換...
 ! Emacs*XlwMenu.continueSearchReplace.labelString:	Continue Search/Replace
-! Emacs*XlwMenu.continueSearchReplace.labelString:
+Emacs*XlwMenu.continueSearchReplace.labelString:	検索/置換を続行
 ! Emacs*XlwMenu.popStack.labelString:	Pop stack
-! Emacs*XlwMenu.popStack.labelString:
+Emacs*XlwMenu.popStack.labelString:	スタックをポップ
 ! Emacs*XlwMenu.apropos___.labelString:	Apropos...
-! Emacs*XlwMenu.apropos___.labelString:
+Emacs*XlwMenu.apropos___.labelString:	適切検索...
 ! Emacs*XlwMenu.setTagsTableFile___.labelString:	Set Tags Table File...
-! Emacs*XlwMenu.setTagsTableFile___.labelString:
+Emacs*XlwMenu.setTagsTableFile___.labelString:	タグテーブルファイルを設定...
 
-!!! Help menu
+!! Help menu
 
 ! Emacs*XlwMenu.aboutXEmacs___.labelString:	About XEmacs...
 Emacs*XlwMenu.aboutXEmacs___.labelString:	XEmacs について...
@@ -609,7 +623,7 @@ Emacs*XlwMenu.xEmacsTutorial.labelString:	XEmacs 自習書
 ! Emacs*XlwMenu.xEmacsNews.labelString:	XEmacs News
 Emacs*XlwMenu.xEmacsNews.labelString:	XEmacs ニュース
 ! Emacs*XlwMenu.sample.labelString:	Sample
-Emacs*XlwMenu.sample.labelString:	の例
+Emacs*XlwMenu.sample.labelString:	例:
 ! Emacs*XlwMenu.infoDetailedDocs.labelString:	Info (Detailed Docs)
 Emacs*XlwMenu.infoDetailedDocs.labelString:	Info (詳細ドキュメント)
 ! Emacs*XlwMenu.lookupInInfo.labelString:	Lookup in Info
@@ -619,7 +633,7 @@ Emacs*XlwMenu.packageBrowser.labelString:	パッケージ閲覧
 ! Emacs*XlwMenu.describeMode.labelString:	Describe Mode
 Emacs*XlwMenu.describeMode.labelString:	モード記述
 ! Emacs*XlwMenu.aproposDocumentation___.labelString:	Apropos Documentation...
-Emacs*XlwMenu.aproposDocumentation___.labelString:	ドキュメントに対する apropos...
+Emacs*XlwMenu.aproposDocumentation___.labelString:	ドキュメントで適切検索...
 ! Emacs*XlwMenu.recentKeystrokesMessages.labelString:	Recent Keystrokes/Messages
 Emacs*XlwMenu.recentKeystrokesMessages.labelString:	最新キーストローク/メッセージ
 ! Emacs*XlwMenu.describeKeyMouse___.labelString:	Describe Key/Mouse...
@@ -638,8 +652,10 @@ Emacs*XlwMenu.whereIsCommand___.labelString:	コマンドのありか...
 Emacs*XlwMenu.unixManual___.labelString:	Unix マニュアル...
 ! Emacs*XlwMenu.misc.labelString:	Misc
 Emacs*XlwMenu.misc.labelString:	その他
+! Emacs*XlwMenu.customize___.labelString:	Customize..
+Emacs*XlwMenu.customize___.labelString:	カスタム化...
 
-!!! Help -> Lookup in Info
+!! Help -> Lookup in Info
 
 ! Emacs*XlwMenu.keyMouseBinding___.labelString:	Key/Mouse Binding...
 Emacs*XlwMenu.keyMouseBinding___.labelString:	キー/マウス 割り当て...
@@ -650,18 +666,18 @@ Emacs*XlwMenu.elispFunction___.labelString:	Elisp 関数...
 ! Emacs*XlwMenu.topic___.labelString:	Topic...
 Emacs*XlwMenu.topic___.labelString:	トピック...
 
-!!! Help -> Misc
+!! Help -> Misc
 
 ! Emacs*XlwMenu.describeNoWarranty.labelString:	Describe No Warranty
-! Emacs*XlwMenu.describeNoWarranty.labelString:
+Emacs*XlwMenu.describeNoWarranty.labelString: 無保障の記述
 ! Emacs*XlwMenu.describeXEmacsLicense.labelString:	Describe XEmacs License
-! Emacs*XlwMenu.describeXEmacsLicense.labelString:
+Emacs*XlwMenu.describeXEmacsLicense.labelString: XEmacs ライセンスを表示
 ! Emacs*XlwMenu.gettingTheLatestVersion.labelString:	Getting the Latest Version
-! Emacs*XlwMenu.gettingTheLatestVersion.labelString:
+Emacs*XlwMenu.gettingTheLatestVersion.labelString: 最新版の入手方法
 
-!!!! WorkShop
+!!! WorkShop
 
-!!! WorkShop menu
+!! WorkShop menu
 
 ! Emacs*XlwMenu.workShop.labelString:	WorkShop
 ! Emacs*XlwMenu.workShop.labelString:
@@ -672,80 +688,80 @@ Emacs*XlwMenu.breakpoints.labelString:	ブレークポイント
 ! Emacs*XlwMenu.program.labelString:	Program
 Emacs*XlwMenu.program.labelString:	プログラム
 ! Emacs*XlwMenu.step.labelString:	Step
-! Emacs*XlwMenu.step.labelString:
+Emacs*XlwMenu.step.labelString:	ステップ
 ! Emacs*XlwMenu.stack.labelString:	Stack
-! Emacs*XlwMenu.stack.labelString:
+Emacs*XlwMenu.stack.labelString:	スタック
 ! Emacs*XlwMenu.evaluate.labelString:	Evaluate
-! Emacs*XlwMenu.evaluate.labelString:
+Emacs*XlwMenu.evaluate.labelString:	評価
 ! Emacs*XlwMenu.browse.labelString:	Browse
-! Emacs*XlwMenu.browse.labelString:
+Emacs*XlwMenu.browse.labelString:	ブラウズ
 ! Emacs*XlwMenu.fix.labelString:	Fix
-! Emacs*XlwMenu.fix.labelString:
+Emacs*XlwMenu.fix.labelString:	修正
 ! Emacs*XlwMenu.quitWorkShop.labelString:	Quit WorkShop
-! Emacs*XlwMenu.quitWorkShop.labelString:
+Emacs*XlwMenu.quitWorkShop.labelString:	WorkShop 終了
 
-!!! WorkShop -> Build
+!! WorkShop -> Build
 
 ! Emacs*XlwMenu.currentTarget.labelString:	Current Target
-! Emacs*XlwMenu.currentTarget.labelString:
+Emacs*XlwMenu.currentTarget.labelString:	現ターゲットを
 ! Emacs*XlwMenu.buildThisFile.labelString:	Build This File
-! Emacs*XlwMenu.buildThisFile.labelString:
+Emacs*XlwMenu.buildThisFile.labelString:	このファイルを
 
-!!! WorkShop -> Breakpoints
+!! WorkShop -> Breakpoints
 
 ! Emacs*XlwMenu.stopAt.labelString:	Stop At
-! Emacs*XlwMenu.stopAt.labelString:
+Emacs*XlwMenu.stopAt.labelString:	選択行
 ! Emacs*XlwMenu.stopInSelected.labelString:	Stop In Selected
-! Emacs*XlwMenu.stopInSelected.labelString:
+Emacs*XlwMenu.stopInSelected.labelString:	選択関数内
 ! Emacs*XlwMenu.deleteBreakpointAt.labelString:	Delete Breakpoint At
-! Emacs*XlwMenu.deleteBreakpointAt.labelString:
+Emacs*XlwMenu.deleteBreakpointAt.labelString:	選択行から削除
 
-!!! WorkShop -> Program
+!! WorkShop -> Program
 
 ! Emacs*XlwMenu.start.labelString:	Start
-! Emacs*XlwMenu.start.labelString:
+Emacs*XlwMenu.start.labelString:	開始
 ! Emacs*XlwMenu.go.labelString:	Go
-! Emacs*XlwMenu.go.labelString:
+Emacs*XlwMenu.go.labelString:	継続
 ! Emacs*XlwMenu.interrupt.labelString:	Interrupt
-! Emacs*XlwMenu.interrupt.labelString:
+Emacs*XlwMenu.interrupt.labelString:	割り込み
 
-!!! WorkShop -> Step
+!! WorkShop -> Step
 
 ! Emacs*XlwMenu.into.labelString:	Into
-! Emacs*XlwMenu.into.labelString:
+Emacs*XlwMenu.into.labelString:	イン (step)
 ! Emacs*XlwMenu.over.labelString:	Over
-! Emacs*XlwMenu.over.labelString:
+Emacs*XlwMenu.over.labelString:	オーバー (next)
 ! Emacs*XlwMenu.out.labelString:	Out
-! Emacs*XlwMenu.out.labelString:
+Emacs*XlwMenu.out.labelString:	アウト (step out)
 
-!!! WorkShop -> Stack
+!! WorkShop -> Stack
 
 ! Emacs*XlwMenu.up.labelString:	Up
-! Emacs*XlwMenu.up.labelString:
+Emacs*XlwMenu.up.labelString:	上へ
 ! Emacs*XlwMenu.down.labelString:	Down
-! Emacs*XlwMenu.down.labelString:
+Emacs*XlwMenu.down.labelString:	下へ
 ! Emacs*XlwMenu.pop.labelString:	Pop
-! Emacs*XlwMenu.pop.labelString:
+Emacs*XlwMenu.pop.labelString:	ポップ
 ! Emacs*XlwMenu.popToCurrentFrame.labelString:	Pop to Current Frame
-! Emacs*XlwMenu.popToCurrentFrame.labelString:
+Emacs*XlwMenu.popToCurrentFrame.labelString:	現フレームまでポップ
 
-!!! WorkShop -> Evaluate
+!! WorkShop -> Evaluate
 
 ! Emacs*XlwMenu.selected.labelString:	Selected
-! Emacs*XlwMenu.selected.labelString:
+Emacs*XlwMenu.selected.labelString:	選択項目
 ! Emacs*XlwMenu.asPointer.labelString:	As Pointer
-! Emacs*XlwMenu.asPointer.labelString:
+Emacs*XlwMenu.asPointer.labelString:	ポインタとして
 
-!!! WorkShop -> Browse
+!! WorkShop -> Browse
 
 ! Emacs*XlwMenu.referencesToSelected.labelString:	References to Selected
-! Emacs*XlwMenu.referencesToSelected.labelString:
+Emacs*XlwMenu.referencesToSelected.labelString:	選択項目への参照
 ! Emacs*XlwMenu.definitionOfSelected.labelString:	Definition of Selected
-! Emacs*XlwMenu.definitionOfSelected.labelString:
+Emacs*XlwMenu.definitionOfSelected.labelString:	選択項目の定義
 
-!!!! Modes:
+!!! Modes:
 
-!!!! Lisp-interaction mode and Lisp mode
+!!! Lisp-interaction mode and Lisp mode
 
 ! Emacs*XlwMenu.lispInteractionMenu.labelString:	Lisp Interaction Menu
 ! Emacs*XlwMenu.lispInteractionMenu.labelString:
@@ -778,7 +794,7 @@ Emacs*XlwMenu.program.labelString:	プログラム
 ! Emacs*XlwMenu.byteRecompileDirectory___.labelString:	Byte-recompile Directory...
 ! Emacs*XlwMenu.byteRecompileDirectory___.labelString:
 
-!!! C mode
+!! C mode
 
 ! Emacs*XlwMenu.c.labelString:	C
 ! Emacs*XlwMenu.c.labelString:
@@ -801,17 +817,17 @@ Emacs*XlwMenu.program.labelString:	プログラム
 ! Emacs*XlwMenu.forwardStatement.labelString:	Forward Statement
 ! Emacs*XlwMenu.forwardStatement.labelString:
 
-!!! C++ mode
+!! C++ mode
 
 ! Emacs*XlwMenu.cPP.labelString:	C++
 ! Emacs*XlwMenu.cPP.labelString:
 
-!!! Java mode
+!! Java mode
 
 ! Emacs*XlwMenu.java.labelString:	Java
 ! Emacs*XlwMenu.java.labelString:
 
-!!! Ada mode
+!! Ada mode
 
 ! Emacs*XlwMenu.ada.labelString:	Ada
 ! Emacs*XlwMenu.ada.labelString:
@@ -857,7 +873,7 @@ Emacs*XlwMenu.compile.labelString:	コンパイル
 ! Emacs*XlwMenu.otherFile.labelString:	Other File
 ! Emacs*XlwMenu.otherFile.labelString:
 
-!!! Default edit popup menu
+!! Default edit popup menu
 
 ! Emacs*XlwMenu.xEmacsCommands.labelString:	XEmacs Commands
 Emacs*XlwMenu.xEmacsCommands.labelString:	XEmacs コマンド
@@ -866,7 +882,7 @@ Emacs*XlwMenu.selectBlock.labelString:	ブロック選択
 ! Emacs*XlwMenu.unsplitWindow.labelString:	Unsplit Window
 Emacs*XlwMenu.unsplitWindow.labelString:	ウィンドウ分割解除
 
-!!! Default modeline popup menu
+!! Default modeline popup menu
 
 ! Emacs*XlwMenu.windowCommandsFor.labelString:	Window Commands for
 ! Emacs*XlwMenu.windowCommandsFor.labelString:
@@ -885,7 +901,7 @@ Emacs*XlwMenu.unsplitWindow.labelString:	ウィンドウ分割解除
 ! Emacs*XlwMenu.f90.labelString:	F90
 ! Emacs*XlwMenu.f90.labelString:
 
-!!! F90 menu
+!! F90 menu
 
 ! Emacs*XlwMenu.indentSubprogram.labelString:	Indent Subprogram
 ! Emacs*XlwMenu.indentSubprogram.labelString:
@@ -924,7 +940,7 @@ Emacs*XlwMenu.unsplitWindow.labelString:	ウィンドウ分割解除
 ! Emacs*XlwMenu.toggleAutoFill.labelString:	Toggle auto-fill
 ! Emacs*XlwMenu.toggleAutoFill.labelString:
 
-!!!! Makefile mode
+!!! Makefile mode
 
 ! Emacs*XlwMenu.makefile.labelString:	Makefile
 ! Emacs*XlwMenu.makefile.labelString:
@@ -939,7 +955,7 @@ Emacs*XlwMenu.unsplitWindow.labelString:	ウィンドウ分割解除
 ! Emacs*XlwMenu.popUpMakefileBrowser.labelString:	Pop up Makefile Browser
 ! Emacs*XlwMenu.popUpMakefileBrowser.labelString:
 
-!!!! Shell mode main menubar
+!!! Shell mode main menubar
 
 ! Emacs*XlwMenu.comint1.labelString:	Comint1
 ! Emacs*XlwMenu.comint1.labelString:
@@ -948,7 +964,7 @@ Emacs*XlwMenu.unsplitWindow.labelString:	ウィンドウ分割解除
 ! Emacs*XlwMenu.history.labelString:	History
 ! Emacs*XlwMenu.history.labelString:
 
-!!! (Shell mode) Comint1 menu
+!! (Shell mode) Comint1 menu
 
 ! Emacs*XlwMenu.previousMatchingCurrentInput.labelString:	Previous Matching Current Input
 ! Emacs*XlwMenu.previousMatchingCurrentInput.labelString:
@@ -1007,14 +1023,14 @@ Emacs*XlwMenu.unsplitWindow.labelString:	ウィンドウ分割解除
 ! Emacs*XlwMenu.sendEOF.labelString:	Send EOF
 ! Emacs*XlwMenu.sendEOF.labelString:
 
-!!! (Shell mode) History menu
+!! (Shell mode) History menu
 
 ! Emacs*XlwMenu.expandHistoryBeforePoint.labelString:	Expand History Before Point
 ! Emacs*XlwMenu.expandHistoryBeforePoint.labelString:
 ! Emacs*XlwMenu.listInputHistory.labelString:	List Input History
 ! Emacs*XlwMenu.listInputHistory.labelString:
 
-!!! Info mode menu
+!! Info mode menu
 
 ! Emacs*XlwMenu.info.labelString:	Info
 ! Emacs*XlwMenu.info.labelString:
@@ -1034,16 +1050,16 @@ Emacs*XlwMenu.unsplitWindow.labelString:	ウィンドウ分割解除
 Emacs*XlwMenu.___more___.labelString:	もっと
 
 
-!!!! Gnus
+!!! Gnus
 
-!!! (Gnus Group mode) Main menu
+!! (Gnus Group mode) Main menu
 
 ! Emacs*XlwMenu.group.labelString:	Group
 ! Emacs*XlwMenu.group.labelString:
 ! Emacs*XlwMenu.groups.labelString:	Groups
 ! Emacs*XlwMenu.groups.labelString:
 
-!!! (Gnus Group mode) Group menu
+!! (Gnus Group mode) Group menu
 
 ! Emacs*XlwMenu.read.labelString:	Read
 ! Emacs*XlwMenu.read.labelString:
@@ -1076,7 +1092,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.selectQuick.labelString:	Select quick
 ! Emacs*XlwMenu.selectQuick.labelString:
 
-!!! (Gnus Group mode) Groups menu
+!! (Gnus Group mode) Groups menu
 
 ! Emacs*XlwMenu.listing.labelString:	Listing
 ! Emacs*XlwMenu.listing.labelString:
@@ -1099,7 +1115,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.readADirectoryAsAGroup___.labelString:	Read a directory as a group...
 ! Emacs*XlwMenu.readADirectoryAsAGroup___.labelString:
 
-!!! (Gnus Group mode) Groups -> Listing
+!! (Gnus Group mode) Groups -> Listing
 
 ! Emacs*XlwMenu.listUnreadSubscribedGroups.labelString:	List unread subscribed groups
 ! Emacs*XlwMenu.listUnreadSubscribedGroups.labelString:
@@ -1124,7 +1140,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.listActiveFile.labelString:	List active file
 ! Emacs*XlwMenu.listActiveFile.labelString:
 
-!!! (Gnus Group mode) Groups -> Sort
+!! (Gnus Group mode) Groups -> Sort
 
 ! Emacs*XlwMenu.defaultSort.labelString:	Default sort
 ! Emacs*XlwMenu.defaultSort.labelString:
@@ -1141,7 +1157,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.sortByName.labelString:	Sort by name
 ! Emacs*XlwMenu.sortByName.labelString:
 
-!!! (Gnus Group mode) Groups -> Mark
+!! (Gnus Group mode) Groups -> Mark
 
 ! Emacs*XlwMenu.markGroup.labelString:	Mark group
 ! Emacs*XlwMenu.markGroup.labelString:
@@ -1158,7 +1174,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.executeCommand.labelString:	Execute command
 ! Emacs*XlwMenu.executeCommand.labelString:
 
-!!! (Gnus Group mode) Groups -> Subscribe
+!! (Gnus Group mode) Groups -> Subscribe
 
 ! Emacs*XlwMenu.subscribeToAGroup.labelString:	Subscribe to a group
 ! Emacs*XlwMenu.subscribeToAGroup.labelString:
@@ -1169,7 +1185,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.killAllGroupsOnLevel___.labelString:	Kill all groups on level...
 ! Emacs*XlwMenu.killAllGroupsOnLevel___.labelString:
 
-!!! (Gnus Group mode) Groups -> Foreign groups
+!! (Gnus Group mode) Groups -> Foreign groups
 
 ! Emacs*XlwMenu.makeAForeignGroup.labelString:	Make a foreign group
 ! Emacs*XlwMenu.makeAForeignGroup.labelString:
@@ -1192,19 +1208,19 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.deleteGroup.labelString:	Delete group
 ! Emacs*XlwMenu.deleteGroup.labelString:
 
-!!! (Gnus Group mode) Groups -> Editing groups
+!! (Gnus Group mode) Groups -> Editing groups
 
 ! Emacs*XlwMenu.parameters.labelString:	Parameters
 ! Emacs*XlwMenu.parameters.labelString:
 ! Emacs*XlwMenu.selectMethod.labelString:	Select method
 ! Emacs*XlwMenu.selectMethod.labelString:
 
-!!! (Gnus Group mode) Groups -> Score file
+!! (Gnus Group mode) Groups -> Score file
 
 ! Emacs*XlwMenu.flushCache.labelString:	Flush cache
 ! Emacs*XlwMenu.flushCache.labelString:
 
-!!! (Gnus Group mode) Groups -> Move
+!! (Gnus Group mode) Groups -> Move
 
 ! Emacs*XlwMenu.next.labelString:	Next
 ! Emacs*XlwMenu.next.labelString:
@@ -1225,7 +1241,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.bestUnreadGroup.labelString:	Best unread group
 ! Emacs*XlwMenu.bestUnreadGroup.labelString:
 
-!!! (Gnus Group mode) Misc menu
+!! (Gnus Group mode) Misc menu
 
 ! Emacs*XlwMenu.sendABugReport.labelString:	Send a bug report
 ! Emacs*XlwMenu.sendABugReport.labelString:
@@ -1276,7 +1292,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.exitWithoutSaving.labelString:	Exit without saving
 ! Emacs*XlwMenu.exitWithoutSaving.labelString:
 
-!!! (Gnus Group mode) Misc -> SOUP
+!! (Gnus Group mode) Misc -> SOUP
 
 ! Emacs*XlwMenu.packReplies.labelString:	Pack replies
 ! Emacs*XlwMenu.packReplies.labelString:
@@ -1289,7 +1305,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.brewSOUP.labelString:	Brew SOUP
 ! Emacs*XlwMenu.brewSOUP.labelString:
 
-!!!! (Gnus Article mode) Main menubar
+!!! (Gnus Article mode) Main menubar
 
 ! Emacs*XlwMenu.score.labelString:	Score
 ! Emacs*XlwMenu.score.labelString:
@@ -1300,7 +1316,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.post.labelString:	Post
 ! Emacs*XlwMenu.post.labelString:
 
-!!! (Gnus Article mode) Misc menu
+!! (Gnus Article mode) Misc menu
 
 ! Emacs*XlwMenu.scrollArticle.labelString:	Scroll article
 ! Emacs*XlwMenu.scrollArticle.labelString:
@@ -1325,7 +1341,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.exit.labelString:	Exit
 ! Emacs*XlwMenu.exit.labelString:
 
-!!! (Gnus Article mode) Misc -> Mark
+!! (Gnus Article mode) Misc -> Mark
 
 ! Emacs*XlwMenu.various.labelString:	Various
 ! Emacs*XlwMenu.various.labelString:
@@ -1334,7 +1350,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.processMark.labelString:	Process mark
 ! Emacs*XlwMenu.processMark.labelString:
 
-!!! (Gnus Article mode) Misc -> Mark -> Read
+!! (Gnus Article mode) Misc -> Mark -> Read
 
 ! Emacs*XlwMenu.markAsRead.labelString:	Mark as read
 ! Emacs*XlwMenu.markAsRead.labelString:
@@ -1353,7 +1369,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.markExcluded.labelString:	Mark excluded
 ! Emacs*XlwMenu.markExcluded.labelString:
 
-!!! (Gnus Article mode) Misc -> Mark -> Various
+!! (Gnus Article mode) Misc -> Mark -> Various
 
 ! Emacs*XlwMenu.tick.labelString:	Tick
 ! Emacs*XlwMenu.tick.labelString:
@@ -1366,7 +1382,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.removeBookmark.labelString:	Remove bookmark
 ! Emacs*XlwMenu.removeBookmark.labelString:
 
-!!! (Gnus Article mode) Misc -> Mark -> Limit
+!! (Gnus Article mode) Misc -> Mark -> Limit
 
 ! Emacs*XlwMenu.marks___.labelString:	Marks...
 ! Emacs*XlwMenu.marks___.labelString:
@@ -1389,7 +1405,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.showExpunged.labelString:	Show expunged
 ! Emacs*XlwMenu.showExpunged.labelString:
 
-!!! (Gnus Article mode) Misc -> Mark -> Process mark
+!! (Gnus Article mode) Misc -> Mark -> Process mark
 
 ! Emacs*XlwMenu.setMark.labelString:	Set mark
 ! Emacs*XlwMenu.setMark.labelString:
@@ -1412,7 +1428,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.unmarkThread.labelString:	Unmark thread
 ! Emacs*XlwMenu.unmarkThread.labelString:
 
-!!! (Gnus Article mode) Misc -> Scroll Article
+!! (Gnus Article mode) Misc -> Scroll Article
 
 ! Emacs*XlwMenu.pageForward.labelString:	Page forward
 ! Emacs*XlwMenu.pageForward.labelString:
@@ -1421,7 +1437,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.lineForward.labelString:	Line forward
 ! Emacs*XlwMenu.lineForward.labelString:
 
-!!! (Gnus Article mode) Misc -> Move
+!! (Gnus Article mode) Misc -> Move
 
 ! Emacs*XlwMenu.nextUnreadArticle.labelString:	Next unread article
 ! Emacs*XlwMenu.nextUnreadArticle.labelString:
@@ -1452,7 +1468,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.popArticleOffHistory.labelString:	Pop article off history
 ! Emacs*XlwMenu.popArticleOffHistory.labelString:
 
-!!! (Gnus Article mode) Misc -> Sort
+!! (Gnus Article mode) Misc -> Sort
 
 ! Emacs*XlwMenu.sortByNumber.labelString:	Sort by number
 ! Emacs*XlwMenu.sortByNumber.labelString:
@@ -1463,28 +1479,28 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.sortByDate.labelString:	Sort by date
 ! Emacs*XlwMenu.sortByDate.labelString:
 
-!!! (Gnus Article mode) Misc -> Help
+!! (Gnus Article mode) Misc -> Help
 
 ! Emacs*XlwMenu.fetchGroupFAQ.labelString:	Fetch group FAQ
 ! Emacs*XlwMenu.fetchGroupFAQ.labelString:
 ! Emacs*XlwMenu.describeGroup.labelString:	Describe group
 ! Emacs*XlwMenu.describeGroup.labelString:
 
-!!! (Gnus Article mode) Misc -> Cache
+!! (Gnus Article mode) Misc -> Cache
 
 ! Emacs*XlwMenu.enterArticle.labelString:	Enter article
 ! Emacs*XlwMenu.enterArticle.labelString:
 ! Emacs*XlwMenu.removeArticle.labelString:	Remove article
 ! Emacs*XlwMenu.removeArticle.labelString:
 
-!!! (Gnus Article mode) Misc -> Modes
+!! (Gnus Article mode) Misc -> Modes
 
 ! Emacs*XlwMenu.pickAndRead.labelString:	Pick and read
 ! Emacs*XlwMenu.pickAndRead.labelString:
 ! Emacs*XlwMenu.binary.labelString:	Binary
 ! Emacs*XlwMenu.binary.labelString:
 
-!!! (Gnus Article mode) Misc -> Exit
+!! (Gnus Article mode) Misc -> Exit
 
 ! Emacs*XlwMenu.catchupAndExit.labelString:	Catchup and exit
 ! Emacs*XlwMenu.catchupAndExit.labelString:
@@ -1505,7 +1521,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.rescanGroup.labelString:	Rescan group
 ! Emacs*XlwMenu.rescanGroup.labelString:
 
-!!! (Gnus Article mode) Score menu
+!! (Gnus Article mode) Score menu
 
 ! Emacs*XlwMenu.enterScore___.labelString:	Enter score...
 ! Emacs*XlwMenu.enterScore___.labelString:
@@ -1532,7 +1548,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.lowerScore___.labelString:	Lower score...
 ! Emacs*XlwMenu.lowerScore___.labelString:
 
-!!! (Gnus Article mode) Score -> Mark
+!! (Gnus Article mode) Score -> Mark
 
 ! Emacs*XlwMenu.killBelow.labelString:	Kill below
 ! Emacs*XlwMenu.killBelow.labelString:
@@ -1541,7 +1557,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.clearAbove.labelString:	Clear above
 ! Emacs*XlwMenu.clearAbove.labelString:
 
-!!! (Gnus Article mode) Article menu
+!! (Gnus Article mode) Article menu
 
 ! Emacs*XlwMenu.hide.labelString:	Hide
 ! Emacs*XlwMenu.hide.labelString:
@@ -1578,7 +1594,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.redisplay.labelString:	Redisplay
 ! Emacs*XlwMenu.redisplay.labelString:
 
-!!! (Gnus Article mode) Article -> Hide
+!! (Gnus Article mode) Article -> Hide
 
 ! Emacs*XlwMenu.all.labelString:	All
 ! Emacs*XlwMenu.all.labelString:
@@ -1593,10 +1609,10 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.boringHeaders.labelString:	Boring headers
 ! Emacs*XlwMenu.boringHeaders.labelString:
 
-!!! (Gnus Article mode) Article -> Highlight
+!! (Gnus Article mode) Article -> Highlight
 
 
-!!! (Gnus Article mode) Article -> Date
+!! (Gnus Article mode) Article -> Date
 
 ! Emacs*XlwMenu.local.labelString:	Local
 ! Emacs*XlwMenu.local.labelString:
@@ -1607,7 +1623,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.lapsed.labelString:	Lapsed
 ! Emacs*XlwMenu.lapsed.labelString:
 
-!!! (Gnus Article mode) Article -> Filter
+!! (Gnus Article mode) Article -> Filter
 
 ! Emacs*XlwMenu.wordWrap.labelString:	Word wrap
 ! Emacs*XlwMenu.wordWrap.labelString:
@@ -1634,7 +1650,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.toggleHeader.labelString:	Toggle header
 ! Emacs*XlwMenu.toggleHeader.labelString:
 
-!!! (Gnus Article mode) Article -> Output
+!! (Gnus Article mode) Article -> Output
 
 ! Emacs*XlwMenu.saveInDefaultFormat.labelString:	Save in default format
 ! Emacs*XlwMenu.saveInDefaultFormat.labelString:
@@ -1655,7 +1671,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.addToSOUPPacket.labelString:	Add to SOUP packet
 ! Emacs*XlwMenu.addToSOUPPacket.labelString:
 
-!!! (Gnus Article mode) Article -> Backend
+!! (Gnus Article mode) Article -> Backend
 
 ! Emacs*XlwMenu.respoolArticle___.labelString:	Respool article...
 ! Emacs*XlwMenu.respoolArticle___.labelString:
@@ -1676,7 +1692,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.deleteExpirableArticles.labelString:	Delete expirable articles
 ! Emacs*XlwMenu.deleteExpirableArticles.labelString:
 
-!!! (Gnus Article mode) Article -> Extract
+!! (Gnus Article mode) Article -> Extract
 
 ! Emacs*XlwMenu.uudecode.labelString:	Uudecode
 ! Emacs*XlwMenu.uudecode.labelString:
@@ -1691,7 +1707,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.postscript.labelString:	Postscript
 ! Emacs*XlwMenu.postscript.labelString:
 
-!!! (Gnus Article mode) Threads menu
+!! (Gnus Article mode) Threads menu
 
 ! Emacs*XlwMenu.toggleThreading.labelString:	Toggle threading
 ! Emacs*XlwMenu.toggleThreading.labelString:
@@ -1722,7 +1738,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.rethreadCurrent.labelString:	Rethread current
 ! Emacs*XlwMenu.rethreadCurrent.labelString:
 
-!!! (Gnus Article mode) Post menu
+!! (Gnus Article mode) Post menu
 
 ! Emacs*XlwMenu.postAnArticle.labelString:	Post an article
 ! Emacs*XlwMenu.postAnArticle.labelString:
@@ -1755,14 +1771,14 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.customize___.labelString:	Customize...
 ! Emacs*XlwMenu.customize___.labelString:
 
-!!!  Message mode main menu
+!!  Message mode main menu
 
 ! Emacs*XlwMenu.message.labelString:	Message
 ! Emacs*XlwMenu.message.labelString:
 ! Emacs*XlwMenu.mIMEEdit.labelString:	MIME-Edit
 ! Emacs*XlwMenu.mIMEEdit.labelString:
 
-!!! (Message mode) Message menu
+!! (Message mode) Message menu
 
 ! Emacs*XlwMenu.goToField.labelString:	Go to Field:
 ! Emacs*XlwMenu.goToField.labelString:
@@ -1807,7 +1823,7 @@ Emacs*XlwMenu.___more___.labelString:	もっと
 ! Emacs*XlwMenu.abortMessage.labelString:	Abort Message
 ! Emacs*XlwMenu.abortMessage.labelString:
  
-!!! (Tools for MIME) MIME-editmenu
+!! (Tools for MIME) MIME-editmenu
 
 ! Emacs*XlwMenu.describeMIMEEditorMode.labelString:	Describe MIME editor mode
 ! Emacs*XlwMenu.describeMIMEEditorMode.labelString:
@@ -1853,9 +1869,9 @@ Emacs*XlwMenu.insertFile.labelString:	ファイル挿入...
 ! Emacs*XlwMenu.toggleTransferLevel.labelString:
 
 
-!!!! VM
+!!! VM
 
-!!! (VM send-mode) Mail menu
+!! (VM send-mode) Mail menu
 
 ! Emacs*XlwMenu.mail.labelString:	Mail
 ! Emacs*XlwMenu.mail.labelString:
@@ -1877,7 +1893,7 @@ Emacs*XlwMenu.insertFile.labelString:	ファイル挿入...
 ! Emacs*XlwMenu.insertBuffer___.labelString:	Insert Buffer...
 ! Emacs*XlwMenu.insertBuffer___.labelString:
 
-!!! (VM view-mail) Main menu
+!! (VM view-mail) Main menu
 
 ! Emacs*XlwMenu.folder.labelString:	Folder
 ! Emacs*XlwMenu.folder.labelString:
@@ -1894,7 +1910,7 @@ Emacs*XlwMenu.insertFile.labelString:	ファイル挿入...
 ! Emacs*XlwMenu.xEmacs.labelString:	XEmacs
 ! Emacs*XlwMenu.xEmacs.labelString:
 
-!!! (VM view-mail) Folder menu
+!! (VM view-mail) Folder menu
 
 ! Emacs*XlwMenu.manipulateFolders.labelString:	Manipulate Folders
 ! Emacs*XlwMenu.manipulateFolders.labelString:
@@ -1922,7 +1938,7 @@ Emacs*XlwMenu.search.labelString:	検索
 ! Emacs*XlwMenu.visit.labelString:	Visit:
 ! Emacs*XlwMenu.visit.labelString:
 
-!!! (VM view-mail) Motion menu
+!! (VM view-mail) Motion menu
 
 ! Emacs*XlwMenu.pageUp.labelString:	Page Up
 ! Emacs*XlwMenu.pageUp.labelString:
@@ -1955,7 +1971,7 @@ Emacs*XlwMenu.search.labelString:	検索
 ! Emacs*XlwMenu.goToParentMessage.labelString:	Go to Parent Message
 ! Emacs*XlwMenu.goToParentMessage.labelString:
 
-!!! (VM view-mail) Send menu
+!! (VM view-mail) Send menu
 
 ! Emacs*XlwMenu.compose.labelString:	Compose
 ! Emacs*XlwMenu.compose.labelString:
@@ -1979,7 +1995,7 @@ Emacs*XlwMenu.search.labelString:	検索
 ! Emacs*XlwMenu.sendDigestRFC1153.labelString:	Send Digest (RFC1153)
 ! Emacs*XlwMenu.sendDigestRFC1153.labelString:
 
-!!! (VM view-mail) Mark menu
+!! (VM view-mail) Mark menu
 
 ! Emacs*XlwMenu.nextCommandUsesMarks___.labelString:	Next Command Uses Marks...
 ! Emacs*XlwMenu.nextCommandUsesMarks___.labelString:
@@ -2004,14 +2020,14 @@ Emacs*XlwMenu.search.labelString:	検索
 ! Emacs*XlwMenu.unmarkThreadSubtree.labelString:	Unmark Thread Subtree
 ! Emacs*XlwMenu.unmarkThreadSubtree.labelString:
 
-!!! (VM view-mail) Label menu
+!! (VM view-mail) Label menu
 
 ! Emacs*XlwMenu.addLabel.labelString:	Add Label
 ! Emacs*XlwMenu.addLabel.labelString:
 ! Emacs*XlwMenu.removeLabel.labelString:	Remove Label
 ! Emacs*XlwMenu.removeLabel.labelString:
 
-!!! (VM view-mail) Sort menu
+!! (VM view-mail) Sort menu
 
 ! Emacs*XlwMenu.byMultipleFields___.labelString:	By Multiple Fields...
 ! Emacs*XlwMenu.byMultipleFields___.labelString:
@@ -2042,7 +2058,7 @@ Emacs*XlwMenu.search.labelString:	検索
 ! Emacs*XlwMenu.revertToPhysicalOrder.labelString:	Revert to Physical Order
 ! Emacs*XlwMenu.revertToPhysicalOrder.labelString:
 
-!!! (VM view-mail) Virtual menu
+!! (VM view-mail) Virtual menu
 
 ! Emacs*XlwMenu.visitVirtualFolder.labelString:	Visit Virtual Folder
 ! Emacs*XlwMenu.visitVirtualFolder.labelString:
@@ -2051,7 +2067,7 @@ Emacs*XlwMenu.search.labelString:	検索
 ! Emacs*XlwMenu.applyVirtualFolder.labelString:	Apply Virtual Folder
 ! Emacs*XlwMenu.applyVirtualFolder.labelString:
 
-!!! (VM view-mail) Dispose menu
+!! (VM view-mail) Dispose menu
 
 ! Emacs*XlwMenu.forward.labelString:	Forward
 ! Emacs*XlwMenu.forward.labelString:
@@ -2074,7 +2090,7 @@ Emacs*XlwMenu.search.labelString:	検索
 ! Emacs*XlwMenu.burstMessageAsDigest.labelString:	Burst Message as Digest
 ! Emacs*XlwMenu.burstMessageAsDigest.labelString:
 
-!!! (VM view-mail) Help menu
+!! (VM view-mail) Help menu
 
 ! Emacs*XlwMenu.whatNow.labelString:	What Now?
 ! Emacs*XlwMenu.whatNow.labelString:
@@ -2084,34 +2100,34 @@ Emacs*XlwMenu.search.labelString:	検索
 ! Emacs*XlwMenu.quitWithoutSaving.labelString:
 
 
-!!!! W3
+!!! W3
 
-!!! W3 File Menu
+!! W3 File Menu
 
 ! Emacs*XlwMenu.view.labelString:	View
-! Emacs*XlwMenu.view.labelString:
+Emacs*XlwMenu.view.labelString:	表示
 ! Emacs*XlwMenu.bookmark.labelString:	Bookmark
 Emacs*XlwMenu.bookmark.labelString:	しおり
 ! Emacs*XlwMenu.style.labelString:	Style
-! Emacs*XlwMenu.style.labelString:
+Emacs*XlwMenu.style.labelString:	スタイル
 ! Emacs*XlwMenu.openLocation___.labelString:	Open Location...
-! Emacs*XlwMenu.openLocation___.labelString:
+Emacs*XlwMenu.openLocation___.labelString:	指定場所を開く...
 ! Emacs*XlwMenu.openFile___.labelString:	Open File...
-! Emacs*XlwMenu.openFile___.labelString:
+Emacs*XlwMenu.openFile___.labelString:	ファイルを開く...
 ! Emacs*XlwMenu.openInNewWindow___.labelString:	Open in New Window...
 Emacs*XlwMenu.openInNewWindow___.labelString:	新規ウィンドウに開く...
 ! Emacs*XlwMenu.newWindow.labelString:	New Window
-! Emacs*XlwMenu.newWindow.labelString:
+Emacs*XlwMenu.newWindow.labelString:	新規ウィンドウ
 ! Emacs*XlwMenu.printAs___.labelString:	Print As...
-! Emacs*XlwMenu.printAs___.labelString:
+Emacs*XlwMenu.printAs___.labelString:	指定書式で印刷...
 ! Emacs*XlwMenu.mailDocument___.labelString:	Mail Document...
-! Emacs*XlwMenu.mailDocument___.labelString:
+Emacs*XlwMenu.mailDocument___.labelString:	ドキュメントをメール...
 ! Emacs*XlwMenu.addAnnotation.labelString:	Add Annotation
-! Emacs*XlwMenu.addAnnotation.labelString:
+Emacs*XlwMenu.addAnnotation.labelString:	注釈を追加
 ! Emacs*XlwMenu.close.labelString:	Close
-! Emacs*XlwMenu.close.labelString:
+Emacs*XlwMenu.close.labelString:	閉じる
 
-!!! (W3) File -> Save As
+!! (W3) File -> Save As
 
 ! Emacs*XlwMenu.hTML.labelString:	HTML
 ! Emacs*XlwMenu.hTML.labelString:
@@ -2122,24 +2138,24 @@ Emacs*XlwMenu.openInNewWindow___.labelString:	新規ウィンドウに開く...
 ! Emacs*XlwMenu.postScript.labelString:	PostScript
 ! Emacs*XlwMenu.postScript.labelString:
 
-!!! (W3) File -> Print As
+!! (W3) File -> Print As
 
 ! Emacs*XlwMenu.hTMLSource.labelString:	HTML Source
 ! Emacs*XlwMenu.hTMLSource.labelString:
 ! Emacs*XlwMenu.laTeXD.labelString:	LaTeX'd
 ! Emacs*XlwMenu.laTeXD.labelString:
 
-!!! (W3) File -> Mail Document
+!! (W3) File -> Mail Document
 
 ! Emacs*XlwMenu.laTeXSource.labelString:	LaTeX Source
 ! Emacs*XlwMenu.laTeXSource.labelString:
 
-!!! (W3) Edit menu
+!! (W3) Edit menu
 
 ! Emacs*XlwMenu.searchAgain___.labelString:	Search Again...
 ! Emacs*XlwMenu.searchAgain___.labelString:
 
-!!! (W3) View menu
+!! (W3) View menu
 
 ! Emacs*XlwMenu.documentInformation.labelString:	Document Information
 ! Emacs*XlwMenu.documentInformation.labelString:
@@ -2156,7 +2172,7 @@ Emacs*XlwMenu.openInNewWindow___.labelString:	新規ウィンドウに開く...
 ! Emacs*XlwMenu.showURLAtPoint.labelString:	Show URL At Point
 ! Emacs*XlwMenu.showURLAtPoint.labelString:
 
-!!! (W3) Go menu
+!! (W3) Go menu
 
 ! Emacs*XlwMenu.backward.labelString:	Backward
 ! Emacs*XlwMenu.backward.labelString:
@@ -2167,18 +2183,20 @@ Emacs*XlwMenu.openInNewWindow___.labelString:	新規ウィンドウに開く...
 ! Emacs*XlwMenu.links.labelString:	Links
 ! Emacs*XlwMenu.links.labelString:
 
-!!! (W3) Bookmarks menu
+!! (W3) Bookmarks menu
 
 ! Emacs*XlwMenu.viewBookmarks___.labelString:	View Bookmarks...
 Emacs*XlwMenu.viewBookmarks___.labelString:	しおりリストを表示...
 ! Emacs*XlwMenu.addBookmark.labelString:	Add Bookmark
 Emacs*XlwMenu.addBookmark.labelString:	しおりを追加
 ! Emacs*XlwMenu.deleteBookmark.labelString:	Delete Bookmark
+Emacs*XlwMenu.deleteBookmark.labelString:	しおりを削除
 ! Emacs*XlwMenu.renameBookmark.labelString:	Rename Bookmark
+Emacs*XlwMenu.renameBookmark.labelString:	しおりの名称変更
 ! Emacs*XlwMenu.appendBookmarkList.labelString:	Append Bookmark List
 Emacs*XlwMenu.appendBookmarkList.labelString:	しおりリストを追加
 
-!!! (W3) Options menu
+!! (W3) Options menu
 
 ! Emacs*XlwMenu.editPreferences.labelString:	Edit Preferences
 ! Emacs*XlwMenu.editPreferences.labelString:
@@ -2201,7 +2219,7 @@ Emacs*XlwMenu.appendBookmarkList.labelString:	しおりリストを追加
 ! Emacs*XlwMenu.useCacheOnly.labelString:	Use Cache Only
 ! Emacs*XlwMenu.useCacheOnly.labelString:
 
-!!! (W3) Style menu
+!! (W3) Style menu
 
 ! Emacs*XlwMenu.allowDocumentStylesheets.labelString:	Allow Document Stylesheets
 ! Emacs*XlwMenu.allowDocumentStylesheets.labelString:
@@ -2212,7 +2230,7 @@ Emacs*XlwMenu.appendBookmarkList.labelString:	しおりリストを追加
 ! Emacs*XlwMenu.reloadStylesheets.labelString:	Reload Stylesheets
 ! Emacs*XlwMenu.reloadStylesheets.labelString:
 
-!!! (W3) Help menu
+!! (W3) Help menu
 
 ! Emacs*XlwMenu.aboutEmacsW3.labelString:	About Emacs-w3
 ! Emacs*XlwMenu.aboutEmacsW3.labelString:

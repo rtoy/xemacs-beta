@@ -2159,16 +2159,16 @@ quit_char_predicate (Display *display, XEvent *event, XPointer data)
   Bool *critical = (Bool *) data;
   Lisp_Object keysym;
 
-  if (critical) *critical = False;
-  if (event->type != KeyPress) return 0;
-  if (! x_any_window_to_frame (d, event->xany.window)) return 0;
-  if (event->xkey.state
-      & (xd->MetaMask | xd->HyperMask | xd->SuperMask | xd->AltMask))
+  if (critical)
+    *critical = False;
+  if ((event->type != KeyPress) ||
+      (! x_any_window_to_frame (d, event->xany.window)) ||
+      (event->xkey.state
+       & (xd->MetaMask | xd->HyperMask | xd->SuperMask | xd->AltMask)))
     return 0;
 
   /* This duplicates some code that exists elsewhere, but it's relatively
-     fast and doesn't cons.
-   */
+     fast and doesn't cons. */
   keysym = x_to_emacs_keysym (&event->xkey, 1);
   if (NILP (keysym)) return 0;
   if (CHAR_OR_CHAR_INTP (keysym))
@@ -2331,7 +2331,7 @@ emacs_Xt_event_pending_p (int user_p)
 #endif
 
   /* This function used to simply check whether there were any X
-     events (or is user_p was 1, it iterated over all the pending
+     events (or if user_p was 1, it iterated over all the pending
      X events using XCheckIfEvent(), looking for keystrokes and
      button events).  That worked in the old cheesoid event loop,
      which didn't go through XtAppDispatchEvent(), but it doesn't

@@ -163,14 +163,13 @@ allocate_x_device_struct (struct device *d)
 static void
 Xatoms_of_device_x (struct device *d)
 {
-  Display *display = DEVICE_X_DISPLAY (d);
-#define ATOM(x) XInternAtom (display, (x), False)
+  Display *D = DEVICE_X_DISPLAY (d);
 
-  DEVICE_XATOM_WM_PROTOCOLS (d) = ATOM ("WM_PROTOCOLS");
-  DEVICE_XATOM_WM_DELETE_WINDOW (d) = ATOM ("WM_DELETE_WINDOW");
-  DEVICE_XATOM_WM_SAVE_YOURSELF (d) = ATOM ("WM_SAVE_YOURSELF");
-  DEVICE_XATOM_WM_TAKE_FOCUS (d) = ATOM ("WM_TAKE_FOCUS");
-  DEVICE_XATOM_WM_STATE (d) = ATOM ("WM_STATE");
+  DEVICE_XATOM_WM_PROTOCOLS    (d) = XInternAtom (D, "WM_PROTOCOLS",    False);
+  DEVICE_XATOM_WM_DELETE_WINDOW(d) = XInternAtom (D, "WM_DELETE_WINDOW",False);
+  DEVICE_XATOM_WM_SAVE_YOURSELF(d) = XInternAtom (D, "WM_SAVE_YOURSELF",False);
+  DEVICE_XATOM_WM_TAKE_FOCUS   (d) = XInternAtom (D, "WM_TAKE_FOCUS",   False);
+  DEVICE_XATOM_WM_STATE        (d) = XInternAtom (D, "WM_STATE",        False);
 }
 
 static void
@@ -281,7 +280,7 @@ x_init_device (struct device *d, Lisp_Object props)
     if (!access (path, R_OK))
       XrmCombineFileDatabase (path, &db, False);
   }
-#endif
+#endif /* MULE */
 
   if (NILP (DEVICE_NAME (d)))
     DEVICE_NAME (d) = display;

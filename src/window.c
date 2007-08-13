@@ -791,19 +791,12 @@ int
 window_needs_vertical_divider (struct window *w)
 {
 #ifdef HAVE_SCROLLBARS
-  struct frame *f = XFRAME (w->frame);
-
-  if (!window_scrollbar_width (w))
-    {
-      if (f->scrollbar_on_left)
-	return (!window_is_leftmost (w));
-      else
-	return (!window_is_rightmost (w));
-    }
-  else
-    return 0;
+  return (!window_scrollbar_width (w) &&
+	  ((XFRAME (w->frame)->scrollbar_on_left) ?
+	   !window_is_leftmost  (w) :
+	   !window_is_rightmost (w)));
 #else
-  return (!window_is_leftmost (w));
+  return !window_is_leftmost (w);
 #endif /* HAVE_SCROLLBARS */
 }
 
@@ -1397,7 +1390,8 @@ NCOL should be zero or positive.
 
 #if 0 /* bogus RMS crock */
 
-xxDEFUN ("window-redisplay-end-trigger", Fwindow_redisplay_end_trigger, 0, 1, 0 /*
+xxDEFUN ("window-redisplay-end-trigger",
+	 Fwindow_redisplay_end_trigger, 0, 1, 0, /*
 Return WINDOW's redisplay end trigger value.
 See `set-window-redisplay-end-trigger' for more information.
 */
@@ -1406,7 +1400,8 @@ See `set-window-redisplay-end-trigger' for more information.
   return decode_window (window)->redisplay_end_trigger;
 }
 
-xxDEFUN ("set-window-redisplay-end-trigger", Fset_window_redisplay_end_trigger, 2, 2, 0 /*
+xxDEFUN ("set-window-redisplay-end-trigger",
+	 Fset_window_redisplay_end_trigger, 2, 2, 0, /*
 Set WINDOW's redisplay end trigger value to VALUE.
 VALUE should be a buffer position (typically a marker) or nil.
 If it is a buffer position, then if redisplay in WINDOW reaches a position
@@ -1430,10 +1425,9 @@ The frame toolbars and menubars are considered to be outside of this area.
 {
   struct window *w = decode_window (window);
   struct frame *f = XFRAME (w->frame);
-  int left, top;
 
-  left = w->pixel_left - FRAME_LEFT_BORDER_END (f);
-  top = w->pixel_top - FRAME_TOP_BORDER_END (f);
+  int left = w->pixel_left - FRAME_LEFT_BORDER_END (f);
+  int top  = w->pixel_top  - FRAME_TOP_BORDER_END  (f);
 
   return list4 (make_int (left),
 		make_int (top),
@@ -1566,10 +1560,7 @@ non-nil means yes.
 {
   register struct window *w = decode_window (window);
 
-  if (NILP (arg))
-    w->dedicated = Qnil;
-  else
-    w->dedicated = Qt;
+  w->dedicated = NILP (arg) ? Qnil : Qt;
 
   return w->dedicated;
 }
@@ -2726,9 +2717,7 @@ If WINDOW is nil, the selected window is assumed.
 */
        (window))
 {
-  struct window *w = decode_window (window);
-
-  return (make_int (window_left_margin_width (w)));
+  return make_int (window_left_margin_width (decode_window (window)));
 }
 
 DEFUN ("window-right-margin-pixel-width",
@@ -2738,9 +2727,7 @@ If WINDOW is nil, the selected window is assumed.
 */
        (window))
 {
-  struct window *w = decode_window (window);
-
-  return (make_int (window_right_margin_width (w)));
+  return make_int (window_right_margin_width (decode_window (window)));
 }
 
 DEFUN ("delete-other-windows", Fdelete_other_windows, 0, 1, "", /*
@@ -3046,7 +3033,7 @@ BUFFER can be a buffer or buffer name.
      but to fix set-window-configuration. */
 #if 0
   else if (EQ (tem, buffer))
-    return (Qnil);
+    return Qnil;
 #endif
   else if (! EQ (tem, Qt))	/* w->buffer is t when the window
 				   is first being set up.  */
@@ -3414,17 +3401,15 @@ selected window.
 */
        (n, side, window))
 {
-  struct window *w = decode_window (window);
   CHECK_INT (n);
-  change_window_height (w, -XINT (n), !NILP (side));
+  change_window_height (decode_window (window), -XINT (n), !NILP (side));
   return Qnil;
 }
 
 static int
 window_pixel_height (Lisp_Object window)
 {
-  struct window *w = XWINDOW (window);
-  return WINDOW_HEIGHT (w);
+  return WINDOW_HEIGHT (XWINDOW (window));
 }
 
 static int
@@ -3547,7 +3532,7 @@ window_displayed_height (struct window *w)
                  scrolling on clipped lines just know off the clipped
                  line and return .*/
 	      if (scroll_on_clipped_lines && dl->clip)
-		return (num_lines - 1);
+		return num_lines - 1;
 	      ypos1 = dl->ypos + dl->descent - dl->clip;
 	    }
 	}
@@ -3573,8 +3558,7 @@ window_displayed_height (struct window *w)
 static int
 window_pixel_width (Lisp_Object window)
 {
-  struct window *w = XWINDOW (window);
-  return WINDOW_WIDTH (w);
+  return WINDOW_WIDTH (XWINDOW (window));
 }
 
 static int
@@ -4134,8 +4118,7 @@ Default for ARG is window width minus 2.
   else
     arg = Fprefix_numeric_value (arg);
 
-  return
-    Fset_window_hscroll (window, make_int (w->hscroll + XINT (arg)));
+  return Fset_window_hscroll (window, make_int (w->hscroll + XINT (arg)));
 }
 
 DEFUN ("scroll-right", Fscroll_right, 0, 1, "_P", /*
@@ -4152,8 +4135,7 @@ Default for ARG is window width minus 2.
   else
     arg = Fprefix_numeric_value (arg);
 
-  return
-    Fset_window_hscroll (window, make_int (w->hscroll - XINT (arg)));
+  return Fset_window_hscroll (window, make_int (w->hscroll - XINT (arg)));
 }
 
 DEFUN ("recenter", Frecenter, 0, 2, "_P", /*
@@ -4272,7 +4254,7 @@ If WINDOW is nil, the selected window is used.
 	  retval = line_at_center (w, CMOTION_DISP, start, BUF_PT (b));
 	}
 
-      return (make_int (retval));
+      return make_int (retval);
     }
   else
     {
@@ -4411,7 +4393,7 @@ compute_window_mirror_usage (struct window_mirror *mir,
       compute_scrollbar_instance_usage (d, mir->scrollbar_horizontal_instance,
 					ovstats);
   }
-#endif
+#endif /* HAVE_SCROLLBARS */
   stats->other_redisplay +=
     compute_display_line_dynarr_usage (mir->current_display_lines, ovstats);
   stats->other_redisplay +=
@@ -4581,7 +4563,7 @@ mark_window_config (Lisp_Object obj, void (*markobj) (Lisp_Object))
       ((markobj) (s->mark));
       ((markobj) (s->dedicated));
     }
-  return (Qnil);
+  return Qnil;
 }
 
 static int
@@ -4617,38 +4599,22 @@ print_window_config (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 static int
 saved_window_equal (struct saved_window *win1, struct saved_window *win2)
 {
-  if (!EQ (win1->window, win2->window))
-    return 0;
-  else if (!EQ (win1->buffer, win2->buffer))
-    return 0;
-  else if (NILP (Fequal (win1->start, win2->start)))
-    return 0;
-  else if (NILP (Fequal (win1->pointm, win2->pointm)))
-    return 0;
-  else if (NILP (Fequal (win1->sb_point, win2->sb_point)))
-    return 0;
-  else if (NILP (Fequal (win1->mark, win2->mark)))
-    return 0;
-  else if (win1->pixel_left != win2->pixel_left)
-    return 0;
-  else if (win1->pixel_top != win2->pixel_top)
-    return 0;
-  else if (win1->pixel_width != win2->pixel_width)
-    return 0;
-  else if (win1->pixel_height != win2->pixel_height)
-    return 0;
-  else if (win1->hscroll != win2->hscroll)
-    return 0;
-  else if (win1->parent_index != win2->parent_index)
-    return 0;
-  else if (win1->prev_index != win2->prev_index)
-    return 0;
-  else if (!EQ (win1->dedicated, win2->dedicated))
-    return 0;
-  else if (win1->start_at_line_beg != win2->start_at_line_beg)
-    return 0;
-
-  return 1;
+  return
+    EQ (win1->window, win2->window) &&
+    EQ (win1->buffer, win2->buffer) &&
+    !NILP (Fequal (win1->start,    win2->start)) &&
+    !NILP (Fequal (win1->pointm,   win2->pointm)) &&
+    !NILP (Fequal (win1->sb_point, win2->sb_point)) &&
+    !NILP (Fequal (win1->mark,     win2->mark)) &&
+    win1->pixel_left   == win2->pixel_left &&
+    win1->pixel_top    == win2->pixel_top &&
+    win1->pixel_width  == win2->pixel_width &&
+    win1->pixel_height == win2->pixel_height &&
+    win1->hscroll      == win2->hscroll &&
+    win1->parent_index == win2->parent_index &&
+    win1->prev_index   == win2->prev_index &&
+    EQ (win1->dedicated, win2->dedicated) &&
+    win1->start_at_line_beg == win2->start_at_line_beg;
 }
 
 /* Returns a boolean indicating whether the two given configurations
@@ -4666,24 +4632,17 @@ window_config_equal (Lisp_Object conf1, Lisp_Object conf2)
   fig1 = XWINDOW_CONFIGURATION (conf1);
   fig2 = XWINDOW_CONFIGURATION (conf2);
 
-  if (fig1->saved_windows_count != fig2->saved_windows_count)
-    return 0;
-  else if (!EQ (fig1->current_window, fig2->current_window))
-    return 0;
-  else if (!EQ (fig1->current_buffer, fig2->current_buffer))
-    return 0;
-  else if (!EQ (fig1->root_window, fig2->root_window))
-    return 0;
-  else if (!EQ (fig1->minibuf_scroll_window, fig2->minibuf_scroll_window))
-    return 0;
-  else if (fig1->frame_width != fig2->frame_width)
-    return 0;
-  else if (fig1->frame_height != fig2->frame_height)
-    return 0;
+  if (!((fig1->saved_windows_count == fig2->saved_windows_count) &&
+	EQ (fig1->current_window,        fig2->current_window) &&
+	EQ (fig1->current_buffer,        fig2->current_buffer) &&
+	EQ (fig1->root_window,           fig2->root_window) &&
+	EQ (fig1->minibuf_scroll_window, fig2->minibuf_scroll_window) &&
 #ifdef ENERGIZE
-  else if (!EQ (fig1->p_sheet_buffer, fig2->p_sheet_buffer))
-    return 0;
+	EQ (fig1->p_sheet_buffer,        fig2->p_sheet_buffer) &&
 #endif
+	fig1->frame_width  == fig2->frame_width &&
+	fig1->frame_height == fig2->frame_height))
+    return 0;
 
   for (i = 0; i < fig1->saved_windows_count; i++)
     {
@@ -4700,7 +4659,7 @@ T if OBJECT is a window-configuration object.
 */
        (obj))
 {
-  return (WINDOW_CONFIGURATIONP (obj) ? Qt : Qnil);
+  return WINDOW_CONFIGURATIONP (obj) ? Qt : Qnil;
 }
 
 /*
@@ -5127,7 +5086,7 @@ by `current-window-configuration' (which see).
 
   UNGCPRO;
 
-  return (Qnil);
+  return Qnil;
 }
 
 /* Mark all subwindows of a window as deleted.  The argument
@@ -5167,10 +5126,8 @@ saved_window_index (Lisp_Object window, struct window_config *config, int lim)
   for (j = 0; j < lim; j++)
     {
       if (EQ (SAVED_WINDOW_N (config, j)->window, window))
-	{
-	  return (j);
+	return j;
 	}
-    }
   abort ();
   return 0;	/* suppress compiler warning */
 }
@@ -5302,7 +5259,7 @@ its value is -not- saved.
   }
 #endif
   save_window_save (FRAME_ROOT_WINDOW (f), config, 0);
-  return (result);
+  return result;
 }
 
 Lisp_Object

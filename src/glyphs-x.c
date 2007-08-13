@@ -208,7 +208,6 @@ x_image_instance_equal (struct Lisp_Image_Instance *p1,
     case IMAGE_POINTER:
       if (IMAGE_INSTANCE_X_NPIXELS (p1) != IMAGE_INSTANCE_X_NPIXELS (p2))
 	return 0;
-      break;
 #if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
@@ -233,8 +232,8 @@ x_image_instance_hash (struct Lisp_Image_Instance *p, int depth)
 #if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
-#endif
       return 0;
+#endif
     default:
       return 0;
     }

@@ -21,42 +21,65 @@ Synched up with: FSF 19.30.
 BUILDING AND INSTALLATION:
 
 1) Make sure your system has enough swapping space allocated to handle
-a program whose pure code is 900k bytes and whose data area is at
-least 400k and can reach 8Mb or more.  If the swapping space is
-insufficient, you will get an error in the command `temacs -batch -l
-loadup dump', found in `./src/Makefile.in.in', or possibly when
-running the final dumped XEmacs.
+   a program whose pure code is 900k bytes and whose data area is at
+   least 400k and can reach 8Mb or more.  If the swapping space is
+   insufficient, you will get an error in the command `temacs -batch
+   -l loadup dump', found in `./src/Makefile.in.in', or possibly when
+   running the final dumped XEmacs.
  
-Building XEmacs requires about 88 Mb of disk space (including the XEmacs
-sources).  Once installed, XEmacs occupies about 50 Mb in the file system
-where it is installed; this includes the executable files, Lisp libraries,
-miscellaneous data files, and on-line documentation. The amount of storage
-of the Lisp directories may be reduced by compressing the .el files. If
-the building and installation take place in different directories, then
-the installation procedure momentarily requires 88+50 Mb.
+Building XEmacs requires about 88 Mb of disk space (including the
+XEmacs sources).  Once installed, XEmacs occupies about 50 Mb in the
+file system where it is installed; this includes the executable files,
+Lisp libraries, miscellaneous data files, and on-line documentation. 
+The amount of storage of the Lisp directories may be reduced by
+compressing the .el files. If the building and installation take place
+in different directories, then the installation procedure temporarily
+requires 88+50 Mb.
 
-XEmacs requires an ANSI C compiler, such as LCC or GCC.
+XEmacs requires an ANSI C compiler, such as GCC.
 
-2) Consult `./etc/MACHINES' to see what configuration name you should
-give to the `configure' program.  That file offers hints for
-getting around some possible installation problems.
 
-3) In the top directory of the XEmacs distribution, run the program
-`configure' as follows:
+2) Decide on what other software packages you would like to use with
+XEmacs, but are not yet available on your system.  On some systems,
+Motif and CDE are optional additions.  On Solaris, the SUNWaudmo
+package enables native sound support.  There are also a number of free
+software packages that XEmacs can use.  If these are not yet available
+on your system, obtain, build and install those external packages
+before building XEmacs.  The packages XEmacs can use are:
 
-    ./configure CONFIGURATION-NAME [--OPTION[=VALUE]] ...
+   Xaw3d, XPM, JPEG, compface, PNG, zlib, OffiX, GNU DBM, Berkeley DB,
+   socks, term, NAS, Canna, Wnn.
 
-The CONFIGURATION-NAME argument should be a configuration name given
-in `./etc/MACHINES'.  If omitted, `configure' will try to guess your
-system type; if it cannot, you must find the appropriate configuration
-name in `./etc/MACHINES' and specify it explicitly.
+You can get (most of) them from the XEmacs ftp site at
+ftp://ftp.xemacs.org/pub/aux
+
+If you want users on other systems to be able to use the XEmacs you
+have built, try to build those packages so that the generated
+libraries are statically linked.
+
+Use the --site-includes and --site-libraries options when building
+XEmacs to allow configure to find the external software packages.
+
+
+3) In the top level directory of the XEmacs distribution, run the
+   program `configure' as follows:
+
+    ./configure [CONFIGURATION-NAME] [--OPTION[=VALUE]] ...
+
+Usually, you should let `configure' (actually the shell script
+`config.guess') guess your system type, by omitting the
+CONFIGURATION-NAME argument.  If you like to experiment, specify a
+configuration name in the form MACHINE-VENDOR-OPSYS, for example:
+
+sparc-sun-solaris2.6
+
+See config.guess and configure.in for valid values for MACHINE,
+VENDOR, and OPSYS.  Also check `./etc/MACHINES' for advice on building
+on particular machines.
 
 If you don't want X support, specify `--with-x=no'.  If you omit this
-option, `configure' will try to figure out for itself whether your
-system has X, and arrange to use it if present.
-
-Additional support can be included for the NeXTstep system by
-specifying the flag `--with-ns'.  This is not yet fully supported.
+option, `configure' will try to autodetect whether your system has X,
+and arrange to use it if present.
 
 The `--x-includes=DIR' and `--x-libraries=DIR' options tell the build
 process where the compiler should look for the include files and
@@ -67,25 +90,27 @@ Window System files installed in unusual places.
 The `--site-includes=DIR' and `--site-libraries=DIR' options allow you
 to specify additional places the compiler should look for include
 files and object libraries.  You may specify multiple DIR's by
-enclosing the list in quotes.  On some systems (noticeably Solaris) you
-may need to use `--site-runtime-libraries=DIR'.  This will add -R
-versions of each path in addition to the -L versions.
+enclosing the list in quotes.  All the external packages you want to
+use with XEmacs (e.g. xpm, wnn, ...) described later should have their 
+include and library directories defined using these options.
+
+The `--site-runtime-libraries=DIR' option specifies additional
+directories to search for shared libraries at run time.  This may be
+necessary on some systems, or if you expect some of the libraries used 
+to build XEmacs to be in a different directory at run time than at
+build time.  Usually this will add a `-R' to each directory specified
+and use that when linking XEmacs.
 
 The `--with-gcc' option specifies that the build process should
-compile XEmacs using GCC.  The `--with-lcc' option specifies that the
-build process should compile XEmacs using Lucid C.  The `--compiler'
-option allows you to specify some other compiler to be used to compile
-XEmacs.  It is compatible with both the `--with-gcc' and `--with-lcc'
-options, so if the compiler that you specify is a special version of
-either gcc or lcc, then use the appropriate --with-gcc or --with-lcc
-flag as well as the --compiler flag.  If none of these flags is
-specified, `configure' will search for GCC in your load path, and use
-it if present.  If you don't want to use GCC, specify `--with-gcc=no'
-and the compiler will then default to 'cc'.
+compile XEmacs using GCC.  The `--compiler' option allows you to
+specify some other compiler to be used to compile XEmacs.  If neither
+option is specified, the environment variable CC is used instead.
+Otherwise the compiler will then default to 'cc'.
 
 The `--cflags' option specifies the CFLAGS the build process should
-use when compiling XEmacs.  If not used CFLAGS defaults to "-g -O" for
-gcc and "-g" for all other compilers.
+use when compiling XEmacs.  Otherwise the value of the environment
+variable CFLAGS is consulted.  If that is also undefined, CFLAGS
+defaults to "-g -O" for gcc and "-g" for all other compilers.
 
 The `--with-gnu-make' option specifies that Makefiles should be
 written to take advantage of special features of GNU Make.  GNU Make
@@ -111,7 +136,7 @@ should put XEmacs and its data files.  This defaults to `/usr/local'.
 - XEmacs (and the other utilities users run) go in PREFIXDIR/bin
   (unless the `--exec-prefix' option says otherwise).
 - The architecture-independent files go in PREFIXDIR/lib/xemacs-VERSION
-  (where VERSION is the version number of XEmacs, like `19.14').
+  (where VERSION is the version number of XEmacs, like `20.3').
 - The architecture-dependent files go in
   PREFIXDIR/lib/xemacs-VERSION/CONFIGURATION
   (where CONFIGURATION is the configuration name, like mips-dec-ultrix4.2),
@@ -127,40 +152,41 @@ EXECDIR/bin should be a directory that is normally in users' PATHs.
 
 For example, the command
 
-    ./configure mips-dec-ultrix --with-x
+    ./configure mips-dec-ultrix --with-x11=yes
 
 configures XEmacs to build for a DECstation running Ultrix, with
 support for the X11 window system.
 
-The `--run-in-place' option will make the installed binaries reference
-the source tree for the elisp files.
-
 The `--with-menubars=TYPE' option allows you to specify which X
 toolkit you wish to use for the menubar.  The valid options are
-`lucid', `motif' and `none'.  The default is `lucid' which is a
+`lucid', `motif' and `no'.  The default is `lucid' which is a
 Motif-lookalike menubar.  We highly recommend its usage over the real
 Motif menubar. (In fact, the Motif menubar is currently broken.)  If
-`none' is specified then support for menubars will not be compiled in.
+`no' is specified then support for menubars will not be compiled in.
 
 The `--with-scrollbars=TYPE' option allows you to specify which X
 toolkit you wish to use for the scrollbars.  The valid options are
-`lucid', `motif', `athena', `athena3d', and `none'.  The default is
-`lucid' which is a Motif-lookalike scrollbar.  If `none' is specified
+`lucid', `motif', `athena', `athena3d', and `no'.  The default is
+`lucid' which is a Motif-lookalike scrollbar.  If `no' is specified
 then support for scrollbars will not be compiled in.
 
 The `--with-dialogs=TYPE' option allows you to specify which X toolkit
 you wish to use for the scrollbars.  The valid options are `athena',
-`motif, and `none.  The `lucid' option is accepted and will result in
+`motif, and `no.  The `lucid' option is accepted and will result in
 the `athena' toolkit being used.  If the Motif toolkit can be found
 the default is `motif'.  Otherwise, the default is `athena'.  If
-`none' is specified then support for dialog boxes will not be compiled
+`no' is specified then support for dialog boxes will not be compiled
 in.
 
 The `--with-toolbars' option allows you to enable or disable toolbar
 support.  The default is `yes' as long as support for a windowing
 system is included.
 
-The `--with-xpm' option specifies that XEmacs should support X
+The `--with-gif' option specifies that XEmacs should support GIF image
+conversion.  No extra libraries are required.  This options defaults
+to `yes'.
+
+The `--with-xpm' option specifies that XEmacs should support X11
 Pixmaps.  `configure' will attempt to detect if you have the Xpm
 libraries and define `--with-xpm' for you.
 
@@ -168,23 +194,18 @@ The `--with-xface' option specifies that XEmacs should support
 X-Faces.  `configure' will attempt to detect if you have the compface
 library and define `--with-xface' for you.
 
-The `--with-gif' option specifies that XEmacs should support GIF image
-conversion.  No extra libraries are required.  This options defaults
-to `yes'.
-
 The `--with-jpeg' option specifies that XEmacs should support JPEG
 image conversion.  This option requires libjpeg from the Independent
 JPEG Group which is available on the XEmacs ftp site.  `configure'
 will attempt to detect if you have libjpeg and define `--with-jpeg'
 for you.
 
-The `--with-png option specifies that XEmacs should support PNG image
-conversion.  The valid options at `yes', `no' and `gnuz'.  This option
+The `--with-png' option specifies that XEmacs should support PNG image
+conversion.  The valid options are `yes' and `no'.  This option
 requires libpng which is available on the XEmacs ftp site.  This
-option also requires a decompression library, either libz or libgz.
-The default is to use libz.  Specify `gnuz' as the option to use libgz
-instead.  `configure' will attempt to detect if you have libpng and
-define `--with-png' for you.
+option also requires a decompression library, either libz or
+libgz.  XEmacs will detect whether libz is available, and use that,
+else it will use libgz.
 
 The `--with-database' option specifies that XEmacs should be built
 with additional database support.  The valid options are `no' or a
@@ -193,7 +214,7 @@ comma-separated list of one or more of `dbm', `gnudbm' or `berkdb'.
 files and define `--with-database' for you.
 
 The `--with-socks' option specifies that XEmacs should be built with
-SOCKS support.
+SOCKS support.  This requires the libsocks library.
 
 The `--with-term' option specifies that XEmacs should be built with
 TERM support.  TERM is a way to multiplex serial lines over a simple
@@ -206,14 +227,15 @@ with ToolTalk support for interconnecting with other applications.
 ToolTalk is not yet supported on all architectures.
 
 The `--with-sparcworks' option specifies that XEmacs should be built
-with support for Sun Sparcworks 3.0.1 and up.  This functionality is
-only of use on SunOS 4.1.x and Solaris 2.x systems.
+with support for Sun Sparcworks 3.0.1 and up (including Sun WorkShop).
+This functionality is only of use on SunOS 4.1.x and Solaris 2.x
+systems.
 
-The `--with-cde option allows you to enable or disable CDE drag and
+The `--with-cde' option allows you to enable or disable CDE drag and
 drop support.  `configure' will attempt to detect this option and
 define `--with-cde' for you.
 
-The `--with-offix option allows you to enable or disable OffiX drag and
+The `--with-offix' option allows you to enable or disable OffiX drag and
 drop support.  `configure' will attempt to detect this option and
 define `--with-offix' for you.
 
@@ -223,8 +245,8 @@ purchased Energize, specifying this option won't gain you anything.)
 Currently this doesn't work.
 
 The `--external-widget' option specifies that XEmacs should be built
-with support for being used as a widget.  This functionality should be
-considered beta.
+with support for being used as a widget by other X11 applications.
+This functionality should be considered beta.
 
 The `--with-mocklisp' option specifies that XEmacs should be built
 with support for Mocklisp.  Do not use this option unless you have a
@@ -240,29 +262,25 @@ parameter is deprecated and, in fact, ignored.
 The `--with-sound=TYPE' option specifies that XEmacs should be built
 with sound support.  Native (`--with-sound=native') sound support is
 currently available only on Sun SparcStations, SGI's, HP9000s, and
-Linux.  Network Audio Support (NAS) (`--with-sound=nas' or
-`--with-sound=both') is an extension to X that you may or may not have
-for your system.  For NAS, you will probably need to provide the paths
-to the nas include and library directories to configure.  `configure'
-will attempt to determine if your configuration supports sound and
+systems (such as Linux) with soundcard.h.  Network Audio Support (NAS)
+(`--with-sound=nas' or `--with-sound=both') is an extension to X that
+you may or may not have for your system.  For NAS, you will probably
+need to provide the paths to the nas include and library directories
+to configure.  If `--with-sound' is not specified, `configure' will
+attempt to determine if your configuration supports native sound and
 define --with-sound for you.  If your native sound library is not in a
-standard location you can specify where it is with the
-`--native-sound-lib=LIB' flag.  For Linux, `/dev/audio' is required
-for SunAudio files and `/dev/dsp' is required for raw data and WAVE
-format files.
+standard location you can specify it with the `--native-sound-lib=LIB'
+flag.  For Linux, `/dev/audio' is required for SunAudio files and
+`/dev/dsp' is required for raw data and WAVE format files.
 
 The `--rel-alloc' option can be used to either enable or disable use
 of the relocating allocator.  Generally, it's best to go with the
 default configuration for your system.
 
 The `--use-system-malloc' option can be use to either enable or
-disable use of the relocating allocator.  Generally, it's best to go
-with the default configuration for your system.  Note that on many
-systems using the system malloc disables the use of the relocating
-allocator.
-
-The `--with-epoch' option enables functionality taken from Epoch.
-Currently this doesn't work.
+disable use of the system malloc.  Generally, it's best to go with the
+default configuration for your system.  Note that on many systems
+using the system malloc disables the use of the relocating allocator.
 
 The `--debug' and `--error-checking' options are intended for use only
 by the developers.  `--debug' adds code to be compiled in for
@@ -271,40 +289,46 @@ many of the commonly used macros.
 
 The `--verbose' and `--extra-verbose' options are intended for use
 only by the developers.  `--verbose' causes the results of all
-configure tests to be displayed.  `--extra-verbose' also displays the
-output of any compiler invocations done by configure.
+configure tests to be displayed.  `--extra-verbose' displays
+additional information, useful for debugging.  Another help for
+determining configure failures is the file `config.log', which
+contains the results of the compile and link tests used by configure.
+
+The `--with-mule' option enables (MUlti-Lingual Emacs) support, needed
+to suport non-Latin-1 (including Asian) languages.  The Mule support
+is not yet as stable or efficient as the `Latin1' support.   The
+following options require Mule support:
+
+The `--with-xim' option enables use of the X11 XIM mechanism to allow
+an input method to input text into XEmacs.  The input method is shared
+among all the X applications sharing an X display and using the same
+language.  The XIM support comes in 2 flavors: motif, and xlib.  If
+Motif support (the XmIm* set of functions) is available, it is
+preferred when available.  The xlib XIM support does not work quite as
+well, so by default if the XmIm* routines are autodetected, then the
+default is `--with-xim=motif', else `--with-xim=no'.
+
+The `--with-canna' option enables the use of the Canna Japanese input
+method.
 
 The `--with-wnn' and `--with-wnn6' options are for compiling with the
-Wnn multi-language input method.  `--with-wnn' is for compiling
-against Wnn-4.2 the free version of WNN.  This is beta level code.
-`--with-wnn6' is for compiling against WNN6 the commercial version of
-WNN.  This is alpha level code and very lightly tested at present.
+Wnn multi-language input method.  `--with-wnn' is for compiling with
+Wnn-4.2, the free version of WNN.  This is beta level code. 
+`--with-wnn6' is for compiling against WNN6, the commercial version
+of WNN.  This is alpha level code and very lightly tested at present.
 
-The `--wnn-includes=DIR' and `wnn-libraries=DIR' options are provided
-for specifying information about where to find WNN include directories
-and WNN libraries.  Currently you need to specify wnn-includes in most
-installations of Wnn-4.2.
+`configure' doesn't do any compilation or installation itself.  It
+just creates the files that influence those things: `./src/config.h',
+and all the Makefile's in the build tree.
 
 The `--with-pop', `--with-hesiod', and `--with-kerberos' options are used
 in conjunction with movemail.  As of XEmacs 20.1, movemail is identical
 to the one used in Emacs.
 
-`configure' doesn't do any compilation or installation
-itself.  It just creates the files that influence those things:
-`./Makefile', `src/Makefile', `lwlib/Makefile', `lib-src/Makefile',
-`man/Makefile', `dynodump/Makefile', and `./src/config.h'.  For
-details on exactly what it does, see the section called `CONFIGURATION
-BY HAND', below.
-
 When it is done, `configure' prints a description of what it did and
 creates a shell script `config.status' which, when run, recreates the
 same configuration.  If `configure' exits with an error after
 disturbing the status quo, it removes `config.status'.
-
-The work of `configure' can be done by editing various files in the
-distribution, but using `configure' is supposed to be simpler.  See
-the section called "CONFIGURATION BY HAND" below if you want to do the
-configuration yourself.
 
 4) Look at `./lisp/paths.el'; if some of those values are not right
 for your system, set up the file `./lisp/site-init.el' with XEmacs

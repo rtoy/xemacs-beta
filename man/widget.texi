@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.84
+Version: 1.97
 
 @menu
 * Introduction::                
@@ -24,7 +24,10 @@ Version: 1.84
 * Sexp Types::                  
 * Widget Properties::           
 * Defining New Widgets::        
-* Widget Wishlist.::            
+* Widget Browser::              
+* Widget Minor Mode::           
+* Utilities::                   
+* Widget Wishlist::             
 @end menu
 
 @node  Introduction, User Interface, Top, Top
@@ -229,9 +232,10 @@ usually created by the @code{link} widget.
 Activating one of these will convert it to the other.  This is useful
 for implementing multiple-choice fields.  You can create it wit
 @item The @samp{@b{( )}} and @samp{@b{(*)}} buttons.
-Only one radio button in a @code{radio-button-choice} widget can be selected at any
-time.  When you push one of the unselected radio buttons, it will be
-selected and the previous selected radio button will become unselected. 
+Only one radio button in a @code{radio-button-choice} widget can be
+selected at any time.  When you push one of the unselected radio
+buttons, it will be selected and the previous selected radio button will
+become unselected.
 @item The @samp{@b{[Apply Form]}} @samp{@b{[Reset Form]}} buttons.
 These are explicit buttons made with the @code{push-button} widget.  The main
 difference from the @code{link} widget is that the buttons are will be
@@ -528,6 +532,12 @@ widgets current value is valid for the widget.  Otherwise, it should
 return the widget containing the invalid data, and set that widgets
 @code{:error} property to a string explaining the error.
 
+The following predefined function can be used:
+
+@defun widget-children-validate widget
+All the @code{:children} of @var{widget} must be valid.
+@end defun
+
 @item :tab-order
 Specify the order in which widgets are traversed with
 @code{widget-forward} or @code{widget-backward}.  This is only partially
@@ -585,6 +595,7 @@ If non-nil, allow glyphs to appear on displayes where they are supported.
 * checkbox::                    
 * checklist::                   
 * editable-list::               
+* group::                       
 @end menu
 
 @node link, url-link, Basic Types, Basic Types
@@ -921,6 +932,13 @@ Replace with the checkbox.
 Insert a literal @samp{%}. 
 @end table
 
+@item :greedy
+Usually, a checklist will only match if the items are in the exact
+sequence given in the specification.  By setting @code{:greedy} to
+non-nil, it will allow the items to come in any sequence.  However, if
+you extract the value they will be in the sequence given in the
+checklist. I.e. the original sequence is forgotten.
+
 @item button-args
 A list of keywords to pass to the checkboxes.  Useful for setting
 e.g. the @samp{:help-echo} for each checkbox.
@@ -935,7 +953,7 @@ The widgets representing each type.
 The list of types. 
 @end table
 
-@node editable-list,  , checklist, Basic Types
+@node editable-list, group, checklist, Basic Types
 @comment  node-name,  next,  previous,  up
 @subsection The @code{editable-list} Widget
 
@@ -945,7 +963,7 @@ Syntax:
 TYPE ::= (editable-list [KEYWORD ARGUMENT]... TYPE)
 @end example
 
-The value is a list, where each member represent one widget of type
+The value is a list, where each member represents one widget of type
 @var{type}. 
 
 The following extra properties are recognized.
@@ -987,30 +1005,43 @@ List whose car is the type of the list elements.
 
 @end table
 
+@node group,  , editable-list, Basic Types
+@comment  node-name,  next,  previous,  up
+@subsection The @code{group} Widget
+
+This widget simply group other widget together.
+
+Syntax:
+
+@example
+TYPE ::= (group [KEYWORD ARGUMENT]... TYPE...)
+@end example
+
+The value is a list, with one member for each @var{type}.  
+
 @node Sexp Types, Widget Properties, Basic Types, Top
 @comment
 @section Sexp Types
 
 A number of widgets for editing s-expressions (lisp types) are also
-available.  These basically fall in three categories: @dfn{atoms},
-@dfn{composite types}, and @dfn{generic}.
+available.  These basically fall in the following categories.
 
 @menu
+* constants::                   
 * generic::                     
 * atoms::                       
 * composite::                   
 @end menu
 
-@node generic, atoms, Sexp Types, Sexp Types
+@node constants, generic, Sexp Types, Sexp Types
 @comment  node-name,  next,  previous,  up
-@subsection The Generic Widget.
+@subsection The Constant Widgets.
 
-The @code{const} and @code{sexp} widgets can contain any lisp
-expression.  In the case of the @code{const} widget the user is
+The @code{const} widget can contain any lisp expression, but the user is
 prohibited from editing edit it, which is mainly useful as a component
 of one of the composite widgets.
 
-The syntax for the generic widgets is
+The syntax for the @code{const} widget is
 
 @example
 TYPE ::= (const [KEYWORD ARGUMENT]...  [ VALUE ])
@@ -1023,6 +1054,33 @@ property and can be any s-expression.
 This will display any valid s-expression in an immutable part of the
 buffer. 
 @end deffn
+
+There are two variations of the @code{const} widget, namely
+@code{variable-item} and @code{function-item}.  These should contain a
+symbol with a variable or function binding.  The major difference from
+the @code{const} widget is that they will allow the user to see the
+variable or function documentation for the symbol.
+
+@deffn Widget variable-item
+An immutable symbol that is bound as a variable.
+@end deffn
+
+@deffn Widget function-item
+An immutable symbol that is bound as a function.
+@end deffn
+
+@node generic, atoms, constants, Sexp Types
+@comment  node-name,  next,  previous,  up
+@subsection Generic Sexp Widget.
+
+The @code{sexp} widget can contain any lisp expression, and allows the
+user to edit it inline in the buffer.
+
+The syntax for the @code{sexp} widget is
+
+@example
+TYPE ::= (sexp [KEYWORD ARGUMENT]...  [ VALUE ])
+@end example
 
 @deffn Widget sexp
 This will allow you to edit any valid s-expression in an editable buffer
@@ -1057,6 +1115,10 @@ All the atom widgets take the same keyword arguments as the
 Allows you to edit a string in an editable field.
 @end deffn
 
+@deffn Widget regexp
+Allows you to edit a regular expression in an editable field.
+@end deffn
+
 @deffn Widget character
 Allows you to enter a character in an editable field.
 @end deffn
@@ -1081,6 +1143,14 @@ Similar to the @code{file} widget.
 
 @deffn Widget symbol
 Allows you to edit a lisp symbol in an editable field.
+@end deffn
+
+@deffn Widget function
+Allows you to edit a lambda expression, or a function name with completion.
+@end deffn
+
+@deffn Widget variable
+Allows you to edit a variable name, with completion.
 @end deffn
 
 @deffn Widget integer
@@ -1116,8 +1186,8 @@ value of the first component and the cdr is the value of the second
 component.  There must be exactly two components. 
 @end deffn
 
-@deffn Widget lisp
-The value of a @code{lisp} widget is a list containing the value of
+@deffn Widget list
+The value of a @code{list} widget is a list containing the value of
 each of its component.
 @end deffn
 
@@ -1258,7 +1328,7 @@ ancestors have been deactivated.   Do not attempt to set the
 @code{:deactivated} keywords instead.
 
 
-@node Defining New Widgets, Widget Wishlist., Widget Properties, Top
+@node Defining New Widgets, Widget Browser, Widget Properties, Top
 @comment  node-name,  next,  previous,  up
 @section Defining New Widgets
 
@@ -1308,6 +1378,16 @@ type.  It takes a widget type as an argument, and returns the converted
 widget type.  When a widget is created, this function is called for the
 widget type and all the widgets parent types, most derived first. 
 
+The following predefined functions can be used here:
+
+@defun widget-types-convert-widget widget
+Convert @code{:args} as widget types in @var{widget}.
+@end defun
+
+@defun widget-value-convert-widget widget
+Initialize @code{:value} from @code{:args} in @var{widget}.
+@end defun
+
 @item :value-to-internal
 Function to convert the value to the internal format.  The function
 takes two arguments, a widget and an external value, and returns the
@@ -1342,6 +1422,22 @@ It will be called with the widget as its argument.  It doesn't have to
 remove the text, but it should release markers and delete nested widgets
 if such has been used.
 
+The following predefined function can be used here:
+
+@defun widget-children-value-delete widget
+Delete all @code{:children} and @code{:buttons} in @var{widget}.
+@end defun
+
+@item :value-get 
+Function to extract the value of a widget, as it is displayed in the
+buffer. 
+
+The following predefined function can be used here:
+
+@defun widget-value-value-get widget
+Return the @code{:value} property of @var{widget}.
+@end defun
+
 @item :format-handler
 Function to handle unknown @samp{%} escapes in the format string.  It
 will be called with the widget and the escape character as arguments.
@@ -1350,21 +1446,97 @@ You can set this to allow your widget to handle non-standard escapes.
 You should end up calling @code{widget-default-format-handler} to handle
 unknown escape sequences, which will handle the @samp{%h} and any future
 escape sequences, as well as give an error for unknown escapes.
+
+@item :action
+Function to handle user initiated events.  By default, @code{:notify}
+the parent. 
+
+The following predefined function can be used here:
+
+@defun widget-parent-action widget &optional event
+Tell @code{:parent} of @var{widget} to handle the @code{:action}.@br
+Optional @var{event} is the event that triggered the action.
+@end defun
+
+@item :prompt-value
+Function to prompt for a value in the minibuffer.  The function should
+take four arguments, @var{widget}, @var{prompt}, @var{value}, and
+@var{unbound} and should return a value for widget entered by the user.
+@var{prompt} is the prompt to use.  @var{value} is the default value to
+use, unless @var{unbound} is non-nil in which case there are no default
+value.  The function should read the value using the method most natural
+for this widget, and does not have to check that it matches.
 @end table
 
 If you want to define a new widget from scratch, use the @code{default}
 widget as its base.
 
-@deffn Widget default [ keyword argument ]
+@deffn Widget default 
 Widget used as a base for other widgets. 
 
 It provides most of the functionality that is referred to as ``by
 default'' in this text. 
 @end deffn
 
-@node  Widget Wishlist.,  , Defining New Widgets, Top
+@node Widget Browser, Widget Minor Mode, Defining New Widgets, Top
 @comment  node-name,  next,  previous,  up
-@section Wishlist.
+@section Widget Browser
+
+There is a separate package to browse widgets.  This is intended to help
+programmers who want to examine the content of a widget.  The browser
+shows the value of each keyword, but uses links for certain keywords
+such as `:parent', which avoids printing cyclic structures.
+
+@deffn Command widget-browse WIDGET
+Create a widget browser for WIDGET.
+When called interactively, prompt for WIDGET.
+@end deffn
+
+@deffn Command widget-browse-other-window WIDGET
+Create a widget browser for WIDGET and show it in another window.
+When called interactively, prompt for WIDGET.
+@end deffn
+
+@deffn Command widget-browse-at POS
+Create a widget browser for the widget at POS.
+When called interactively, use the position of point.
+@end deffn
+
+@node  Widget Minor Mode, Utilities, Widget Browser, Top
+@comment  node-name,  next,  previous,  up
+@section Widget Minor Mode
+
+There is a minor mode for manipulating widgets in major modes that
+doesn't provide any support for widgets themselves.  This is mostly
+intended to be useful for programmers doing experiments. 
+
+@deffn Command widget-minor-mode
+Togle minor mode for traversing widgets.
+With arg, turn widget mode on if and only if arg is positive.
+@end deffn
+
+@defvar widget-minor-mode-keymap
+Keymap used in @code{widget-minor-mode}.
+@end defvar
+
+@node  Utilities, Widget Wishlist, Widget Minor Mode, Top
+@comment  node-name,  next,  previous,  up
+@section Utilities.
+
+@defun widget-prompt-value widget prompt [ value unbound ]
+Prompt for a value matching @var{widget}, using @var{prompt}.@br
+The current value is assumed to be @var{value}, unless @var{unbound} is
+non-nil.@refill
+@end defun
+
+@defun widget-get-sibling widget
+Get the item @var{widget} is assumed to toggle.@br
+This is only meaningful for radio buttons or checkboxes in a list.
+@end defun
+
+@node  Widget Wishlist,  , Utilities, Top
+@comment  node-name,  next,  previous,  up
+@section Wishlist
 
 @itemize @bullet
 @item 
@@ -1378,57 +1550,43 @@ whether you want to add or delete an item (@sc{rms} wanted to git rid of
 the ugly buttons, the dash is my idea).
 
 @item
-Widgets such as @code{file} and @code{symbol} should prompt with completion. 
-
-@item
 The @code{menu-choice} tag should be prettier, something like the abbreviated
 menus in Open Look.
 
 @item
-The functions used in many widgets, like
-@code{widget-item-convert-widget}, should not have names that are
-specific to the first widget where I happended to use them.
-
-@item
-Flag to make @code{widget-move} skip a specified button.
-
-@item
-Document `helper' functions for defining new widgets.
-
-@item
-Activate the item this is below the mouse when the button is
-released, not the item this is below the mouse when the button is
-pressed.  Dired and grep gets this right.  Give feedback if possible.
-
-@item
-Use @samp{@@deffn Widget} to document widgets. 
-
-@item
-Document global keywords in one place.  
-
-Document keywords particular to a specific widget in the widget
-definition.
-
-Document the `default' widget first. 
-
-Split, when needed, keywords into those useful for normal
-customization, those primarily useful when deriving, and those who
-represent runtime information. 
-
-@item
-Figure out terminology and @sc{api} for the class/type/object/super
-stuff. 
-
-Perhaps the correct model is delegation?
-
-@item
-Document @code{widget-browse}.
+Finish @code{:tab-order}.
 
 @item
 Make indentation work with glyphs and propertional fonts.
 
 @item
-Add object and class hierarchies to the browser.
+Add commands to show overview of object and class hierarchies to the
+browser. 
+
+@item 
+Find a way to disable mouse highlight for inactive widgets.
+
+@item
+Find a way to make glyphs look inactive.
+
+@item
+Add @code{property-list} widget.
+
+@item
+Add @code{association-list} widget.
+
+@item
+Add @code{key-binding} widget.
+
+@item
+Add @code{widget} widget for editing widget specifications.
+
+@item
+Find clean way to implement variable length list.
+See @code{TeX-printer-list} for an explanation.
+
+@item 
+@kbd{C-h} in @code{widget-prompt-value} should give type specific help.
 
 @end itemize
 

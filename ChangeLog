@@ -1,3 +1,15 @@
+Sat May 17 20:30:54 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-b1 is released.
+
+Fri May 16 20:38:19 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* info/dir (Packages): Update minor version number.
+
+	* etc/README: Update minor version number.
+
+	* README: Update minor version number.
+
 Tue May 13 20:35:52 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs-20.2 is released.

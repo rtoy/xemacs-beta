@@ -1402,20 +1402,19 @@ Execute BUFFER as Lisp code.
 }
 
 #if 0
-xxDEFUN ("eval-current-buffer", Feval_current_buffer, Seval_current_buffer, 0, 1, "" /*
+xxDEFUN ("eval-current-buffer", Feval_current_buffer, 0, 1, "", /*
 Execute the current buffer as Lisp code.
 Programs can pass argument PRINTFLAG which controls printing of output:
 nil means discard it; anything else is stream for print.
 
 If there is no error, point does not move.  If there is an error,
 point remains at the end of the last character read from the buffer.
-*/ )
-  (printflag)
-     Lisp_Object printflag;
+*/
+	 (printflag))
 {
   code omitted;
 }
-#endif
+#endif /* 0 */
 
 DEFUN ("eval-region", Feval_region, 2, 3, "r", /*
 Execute the region as Lisp code.

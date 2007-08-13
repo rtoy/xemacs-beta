@@ -63,7 +63,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bit-vector", bit_vector,
 static Lisp_Object
 mark_bit_vector (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  return (Qnil);
+  return Qnil;
 }
 
 static void
@@ -172,19 +172,15 @@ static Charcount
 length_with_bytecode_hack (Lisp_Object seq)
 {
   if (!COMPILED_FUNCTIONP (seq))
-    return (XINT (Flength (seq)));
+    return XINT (Flength (seq));
   else
     {
       struct Lisp_Compiled_Function *b = XCOMPILED_FUNCTION (seq);
-      int intp = b->flags.interactivep;
-      int domainp = b->flags.domainp;
       
-      if (intp)
-	return (COMPILED_INTERACTIVE + 1);
-      else if (domainp)
-	return (COMPILED_DOMAIN + 1);
-      else
-	return (COMPILED_DOC_STRING + 1);
+      return (b->flags.interactivep ? COMPILED_INTERACTIVE :
+	      b->flags.domainp      ? COMPILED_DOMAIN :
+	      COMPILED_DOC_STRING)
+	+ 1;
     }
 }
 
@@ -210,11 +206,11 @@ Return the length of vector, bit vector, list or string SEQUENCE.
 
  retry:
   if (STRINGP (obj))
-    return (make_int (string_char_length (XSTRING (obj))));
+    return make_int (string_char_length (XSTRING (obj)));
   else if (VECTORP (obj))
-    return (make_int (vector_length (XVECTOR (obj))));
+    return make_int (vector_length (XVECTOR (obj)));
   else if (BIT_VECTORP (obj))
-    return (make_int (bit_vector_length (XBIT_VECTOR (obj))));
+    return make_int (bit_vector_length (XBIT_VECTOR (obj)));
   else if (CONSP (obj))
     {
       for (i = 0, tail = obj; !NILP (tail); i++)
@@ -1198,7 +1194,7 @@ assoc_no_quit (Lisp_Object key, Lisp_Object list)
 {
   int speccount = specpdl_depth ();
   specbind (Qinhibit_quit, Qt);
-  return (unbind_to (speccount, Fassoc (key, list)));
+  return unbind_to (speccount, Fassoc (key, list));
 }
 
 DEFUN ("assq", Fassq, 2, 2, 0, /*
@@ -1571,7 +1567,7 @@ remassoc_no_quit (Lisp_Object key, Lisp_Object list)
 {
   int speccount = specpdl_depth ();
   specbind (Qinhibit_quit, Qt);
-  return (unbind_to (speccount, Fremassoc (key, list)));
+  return unbind_to (speccount, Fremassoc (key, list));
 }
 
 DEFUN ("remassq", Fremassq, 2, 2, 0, /*
@@ -2885,14 +2881,14 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
  do_cdr:
   QUIT;
   if (EQ_WITH_EBOLA_NOTICE (o1, o2))
-    return (1);
+    return 1;
   /* Note that (equal 20 20.0) should be nil */
   else if (XTYPE (o1) != XTYPE (o2)) 
-    return (0);
+    return 0;
   else if (CONSP (o1))
     {
       if (!internal_equal (Fcar (o1), Fcar (o2), depth + 1))
-        return (0);
+        return 0;
       o1 = Fcdr (o1);
       o2 = Fcdr (o2);
       goto do_cdr;
@@ -2904,26 +2900,26 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
       int indecks;
       int len = vector_length (XVECTOR (o1));
       if (len != vector_length (XVECTOR (o2)))
-	return (0);
+	return 0;
       for (indecks = 0; indecks < len; indecks++)
 	{
 	  Lisp_Object v1, v2;
 	  v1 = vector_data (XVECTOR (o1)) [indecks];
 	  v2 = vector_data (XVECTOR (o2)) [indecks];
 	  if (!internal_equal (v1, v2, depth + 1))
-            return (0);
+            return 0;
 	}
-      return (1);
+      return 1;
     }
 #endif /* !LRECORD_VECTOR */
   else if (STRINGP (o1))
     {
       Bytecount len = XSTRING_LENGTH (o1);
       if (len != XSTRING_LENGTH (o2))
-	return (0);
+	return 0;
       if (memcmp (XSTRING_DATA (o1), XSTRING_DATA (o2), len))
-	return (0);
-      return (1);
+	return 0;
+      return 1;
     }
   else if (LRECORDP (o1))
     {
@@ -2931,15 +2927,15 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	*imp1 = XRECORD_LHEADER (o1)->implementation,
 	*imp2 = XRECORD_LHEADER (o2)->implementation;
       if (imp1 != imp2)
-	return (0);
+	return 0;
       else if (imp1->equal == 0)
 	/* EQ-ness of the objects was noticed above */
-	return (0);
+	return 0;
       else
-	return ((imp1->equal) (o1, o2, depth));
+	return (imp1->equal) (o1, o2, depth);
     }
 
-  return (0);
+  return 0;
 }
 
 /* Note that we may be calling sub-objects that will use
@@ -2955,14 +2951,14 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
  do_cdr:
   QUIT;
   if (HACKEQ_UNSAFE (o1, o2))
-    return (1);
+    return 1;
   /* Note that (equal 20 20.0) should be nil */
   else if (XTYPE (o1) != XTYPE (o2)) 
-    return (0);
+    return 0;
   else if (CONSP (o1))
     {
       if (!internal_old_equal (Fcar (o1), Fcar (o2), depth + 1))
-        return (0);
+        return 0;
       o1 = Fcdr (o1);
       o2 = Fcdr (o2);
       goto do_cdr;
@@ -2974,26 +2970,26 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
       int indecks;
       int len = vector_length (XVECTOR (o1));
       if (len != vector_length (XVECTOR (o2)))
-	return (0);
+	return 0;
       for (indecks = 0; indecks < len; indecks++)
 	{
 	  Lisp_Object v1, v2;
 	  v1 = vector_data (XVECTOR (o1)) [indecks];
 	  v2 = vector_data (XVECTOR (o2)) [indecks];
 	  if (!internal_old_equal (v1, v2, depth + 1))
-            return (0);
+            return 0;
 	}
-      return (1);
+      return 1;
     }
 #endif /* !LRECORD_VECTOR */
   else if (STRINGP (o1))
     {
       Bytecount len = XSTRING_LENGTH (o1);
       if (len != XSTRING_LENGTH (o2))
-	return (0);
+	return 0;
       if (memcmp (XSTRING_DATA (o1), XSTRING_DATA (o2), len))
-	return (0);
-      return (1);
+	return 0;
+      return 1;
     }
   else if (LRECORDP (o1))
     {
@@ -3001,15 +2997,15 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	*imp1 = XRECORD_LHEADER (o1)->implementation,
 	*imp2 = XRECORD_LHEADER (o2)->implementation;
       if (imp1 != imp2)
-	return (0);
+	return 0;
       else if (imp1->equal == 0)
 	/* EQ-ness of the objects was noticed above */
-	return (0);
+	return 0;
       else
 	return ((imp1->equal) (o1, o2, depth));
     }
 
-  return (0);
+  return 0;
 }
 
 DEFUN ("equal", Fequal, 2, 2, 0, /*
@@ -3021,7 +3017,7 @@ Numbers are compared by value.  Symbols must match exactly.
 */
        (o1, o2))
 {
-  return ((internal_equal (o1, o2, 0)) ? Qt : Qnil);
+  return internal_equal (o1, o2, 0) ? Qt : Qnil;
 }
 
 DEFUN ("old-equal", Fold_equal, 2, 2, 0, /*
@@ -3035,7 +3031,7 @@ Do not use it.
 */
        (o1, o2))
 {
-  return (internal_old_equal (o1, o2, 0) ? Qt : Qnil);
+  return internal_old_equal (o1, o2, 0) ? Qt : Qnil;
 }
 
 
@@ -3368,7 +3364,7 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
   tem = Fmemq (feature, Vfeatures);
   LOADHIST_ATTACH (Fcons (Qrequire, feature));
   if (!NILP (tem))
-    return (feature);
+    return feature;
   else
     {
       int speccount = specpdl_depth ();
@@ -3387,7 +3383,7 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
 
       /* Once loading finishes, don't undo it.  */
       Vautoload_queue = Qt;
-      return (unbind_to (speccount, feature));
+      return unbind_to (speccount, feature);
     }
 }
 

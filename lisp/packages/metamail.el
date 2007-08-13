@@ -3,7 +3,7 @@
 ;; Copyright (C) 1993, 1996  Masanobu UMEDA
 
 ;; Author: Masanobu UMEDA <umerin@mse.kyutech.ac.jp>
-;; Version: $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/metamail.el,v 1.3 1997/03/16 03:05:29 steve Exp $
+;; Version: $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/metamail.el,v 1.4 1997/05/18 03:40:08 steve Exp $
 ;; Keywords: mail, news, mime, multimedia
 
 ;; This file is part of XEmacs.
@@ -53,11 +53,21 @@
 
 ;;; Code:
 
-(defvar metamail-program-name "metamail"
-  "*Metamail program name.")
+(defgroup metamail nil
+  "Metamail interface for Emacs."
+  :group 'mail
+  :group 'hypermedia
+  :group 'processes)
 
-(defvar metamail-mailer-name "emacs"
-  "*Mailer name set to MM_MAILER environment variable.")
+(defcustom metamail-program-name "metamail"
+  "*Metamail program name."
+  :type 'string
+  :group 'metamail)
+
+(defcustom metamail-mailer-name "emacs"
+  "*Mailer name set to MM_MAILER environment variable."
+  :type 'string
+  :group 'metamail)
 
 (defvar metamail-environment '("KEYHEADS=*" "MM_QUIET=1")
   "*Environment variables passed to `metamail'.
@@ -65,13 +75,15 @@ It must be a list of strings that have the format ENVVARNAME=VALUE.
 It is not expected to be altered globally by `set' or `setq'.
 Instead, change its value temporary using `let' or `let*' form.")
 
-(defvar metamail-switches '("-x" "-d" "-z")
+(defcustom metamail-switches '("-x" "-d" "-z")
   "*Switches for `metamail' program.
 `-z' is required to remove zap file.
 It is not expected to be altered globally by `set' or `setq'.
 Instead, change its value temporary using `let' or `let*' form.
 `-m MAILER' argument is automatically generated from the
-`metamail-mailer-name' variable.")
+`metamail-mailer-name' variable."
+  :type '(repeat (string :tag "Switch"))
+  :group 'metamail)
 
 ;;;###autoload
 (defun metamail-interpret-header ()

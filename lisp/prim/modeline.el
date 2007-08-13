@@ -46,86 +46,130 @@ buffer list and clicking on the right half cycles backward."
   :group 'modeline)
 
 (defun mouse-drag-modeline (event)
-  "Resize the window by dragging the modeline.
-This should be bound to a mouse button in `modeline-map'."
+  "Resize a window by dragging its modeline.
+This command should be bound to a button-press event in modeline-map.
+Holding down a mouse button and moving the mouse up and down will
+make the clicked-on window taller or shorter."
   (interactive "e")
   (or (button-press-event-p event)
       (error "%s must be invoked by a mouse-press" this-command))
   (or (event-over-modeline-p event)
       (error "not over a modeline"))
-  (let ((depress-line (event-y event))
-	(mouse-down t)
-	(window (event-window event))
-	(old-window (selected-window))
-	(def-line-height (face-height 'default))
-	(prior-drag-modeline-event-time 0)
-	delta)
-    (while mouse-down
+  (let ((done nil)
+	(depress-line (event-y event))
+	(start-event-frame (event-frame event))
+	(start-event-window (event-window event))
+	(start-nwindows (count-windows t))
+	(last-timestamp 0)
+	default-line-height
+	modeline-height
+	should-enlarge-minibuffer
+	event min-height minibuffer y top bot edges wconfig growth)
+    (setq minibuffer (minibuffer-window start-event-frame)
+	  default-line-height (face-height 'default start-event-window)
+	  min-height (* window-min-height default-line-height)
+	  modeline-height
+	    (if (specifier-instance has-modeline-p start-event-window)
+		(+ (face-height 'modeline start-event-window)
+		   (* 2 (specifier-instance modeline-shadow-thickness
+					    start-event-window)))
+	      (* 2 (specifier-instance modeline-shadow-thickness
+				       start-event-window))))
+    (if (not (eq (window-frame minibuffer) start-event-frame))
+	(setq minibuffer nil))
+    (if (and (null minibuffer) (one-window-p t))
+	(error "Attempt to resize sole window"))
+    ;; if this is the bottommost ordinary window, then to
+    ;; move its modeline the minibuffer must be enlarged.
+    (setq should-enlarge-minibuffer
+	  (and minibuffer (window-lowest-p start-event-window)))
+    ;; loop reading events
+    (while (not done)
       (setq event (next-event event))
-      (cond ((motion-event-p event)
-	     (if (window-lowest-p window)
-		 (error "can't drag bottommost modeline"))
-	     (cond ((> (- (event-timestamp event)
-			  prior-drag-modeline-event-time)
-		       drag-modeline-event-lag)
-
-	       (setq prior-drag-modeline-event-time (event-timestamp event))
-
-	       (if (event-over-modeline-p event)
-		   (setq delta 0)
-		 (setq delta (- (event-y-pixel event)
-				(nth 3 (window-pixel-edges window))))
-		 (if (> delta 0)
-		     (setq delta (+ delta def-line-height)))
-		 (setq delta (/ delta def-line-height)))
-
-	       ;; cough sputter hack kludge.  It shouldn't be possible
-	       ;; to get in here when we are over the minibuffer.  But
-	       ;; it is happening and that cause next-vertical-window to
-	       ;; return nil which does not lead to window-height returning
-	       ;; anything remotely resembling a sensible value.  So catch
-	       ;; the situation and die a happy death.
-	       ;;
-	       ;; Oh, and the BLAT FOOP error messages suck as well but
-	       ;; I don't know what should be there.  This should be
-	       ;; looked at again when the new redisplay is done.
-	       (if (not (next-vertical-window window))
-		   (error "Try again: dragging in minibuffer does nothing"))
-	       (cond ((and (> delta 0)
-			   (<= (- (window-height (next-vertical-window window))
-				  delta)
-			       window-min-height))
-		      (setq delta (- (window-height
-				      (next-vertical-window window))
-				     window-min-height))
-		      (if (< delta 0) (error "BLAT")))
-		     ((and (< delta 0)
-			   (< (+ (window-height window) delta)
-			      window-min-height))
-		      (setq delta (- window-min-height
-				     (window-height window)))
-		      (if (> delta 0) (error "FOOP"))))
-	       (if (= delta 0)
-		   nil
-		 (select-window window)
-		 (enlarge-window delta)
-		 ;; The call to enlarge-window may have caused the old
-		 ;; window to disappear.  Don't try and select it in
-		 ;; that case.
-		 (if (window-live-p old-window)
-		     (select-window old-window))
-		 (sit-for 0)
-		 ))))
+      ;; requeue event and quit if this is a misc-user, eval or
+      ;;   keypress event.
+      ;; quit if this is a button press or release event, or if the event
+      ;;   occurred in some other frame.
+      ;; drag if this is a mouse motion event and the time
+      ;;   between this event and the last event is greater than
+      ;;   drag-modeline-event-lag.
+      ;; do nothing if this is any other kind of event.
+      (cond ((or (misc-user-event-p event)
+		 (key-press-event-p event)
+		 (eval-event-p event))
+	     (setq unread-command-events (nconc unread-command-events
+						(list event))
+		   done t))
 	    ((button-release-event-p event)
-	     (setq mouse-down nil)
+	     (setq done t)
 	     (if modeline-click-swaps-buffers
 		 (mouse-release-modeline event depress-line)))
-	    ((or (button-press-event-p event)
-		 (key-press-event-p event))
-	     (error ""))
+	    ((button-event-p event)
+	     (setq done t))
+	    ((timeout-event-p event)
+	     nil)
+	    ((not (motion-event-p event))
+	     (dispatch-event event))
+	    ((not (eq start-event-frame (event-frame event)))
+	     (setq done t))
+	    ((< (abs (- (event-timestamp event) last-timestamp))
+		drag-modeline-event-lag)
+	     nil)
 	    (t
-	     (dispatch-event event)))
-      )))
+	     (setq last-timestamp (event-timestamp event)
+		   y (event-y-pixel event)
+		   edges (window-pixel-edges start-event-window)
+		   top (nth 1 edges)
+		   bot (nth 3 edges))
+	     ;; scale back a move that would make the
+	     ;; window too short.
+	     (cond ((< (- y top (- modeline-height)) min-height)
+		    (setq y (+ top min-height (- modeline-height)))))
+	     ;; compute size change needed
+	     (setq growth (- y bot (/ (- modeline-height) 2))
+		   wconfig (current-window-configuration))
+	     ;; grow/shrink minibuffer?
+	     (if should-enlarge-minibuffer
+		 (progn
+		   ;; yes.  scale back shrinkage if it
+		   ;; would make the minibuffer less than 1
+		   ;; line tall.
+		   ;;
+		   ;; also flip the sign of the computed growth,
+		   ;; since if we want to grow the window with the
+		   ;; modeline we need to shrink the minibuffer
+		   ;; and vice versa.
+		   (if (and (> growth 0)
+			    (< (- (window-pixel-height minibuffer)
+				  growth)
+			       default-line-height))
+		       (setq growth
+			     (- (window-pixel-height minibuffer)
+				default-line-height)))
+		     (setq growth (- growth))))
+	     ;; window grow and shrink by lines not pixels, so
+	     ;; divide the pixel height by the height of the
+	     ;; default face.
+	     (setq growth (/ growth default-line-height))
+	     ;; grow/shrink the window
+	     (enlarge-window growth nil (if should-enlarge-minibuffer
+					    minibuffer
+					  start-event-window))
+	     ;; if this window's growth caused another
+	     ;; window to be deleted because it was too
+	     ;; short, rescind the change.
+	     ;;
+	     ;; if size change caused space to be stolen
+	     ;; from a window above this one, rescind the
+	     ;; change, but only if we didn't grow/shrink
+	     ;; the minibuffer.  minibuffer size changes
+	     ;; can cause all windows to shrink... no way
+	     ;; around it.
+	     (if (or (/= start-nwindows (count-windows t))
+		     (and (not should-enlarge-minibuffer)
+			  (/= top (nth 1 (window-pixel-edges
+					  start-event-window)))))
+		 (set-window-configuration wconfig)))))))
 
 ;; from Bob Weiner (bob_weiner@pts.mot.com)
 (defun mouse-release-modeline (event line-num)
@@ -389,7 +433,8 @@ Example:  (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 		     "button2 cycles to the next buffer")
 
 (defconst modeline-buffer-identification
-  (list (cons modeline-buffer-id-left-extent (purecopy "XEmacs:"))
+  (list (cons modeline-buffer-id-left-extent (purecopy "XEmacs%N:"))
+					; this used to be "XEmacs:"
 	(cons modeline-buffer-id-right-extent (purecopy " %17b")))
   "Modeline control for identifying the buffer being displayed.
 Its default value is \"XEmacs: %17b\" (NOT!).  Major modes that edit things

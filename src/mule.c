@@ -113,15 +113,12 @@ vars_of_mule (void)
   re_short_flag = 0;
 #endif /* MULE_REGEXP */
 
-  Vfeatures = Fcons (intern ("mule"), Vfeatures);
+  Fprovide (intern ("mule"));
 
 #ifdef HAVE_EGG
-  Vfeatures = Fcons (intern ("egg"), Vfeatures);
+  Fprovide (intern ("egg"));
 #endif
 #ifdef HAVE_WNN
-  Vfeatures = Fcons (intern ("wnn"), Vfeatures);
-#endif
-#ifdef HAVE_SJ3
-  Vfeatures = Fcons (intern "sj3"), Vfeatures);
+  Fprovide (intern ("wnn"));
 #endif
 }

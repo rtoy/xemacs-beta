@@ -73,6 +73,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifdef TOOLTALK
-#include <tt_c.h>
+#include TT_C_H_PATH
 #include "tooltalk.h"
 #endif

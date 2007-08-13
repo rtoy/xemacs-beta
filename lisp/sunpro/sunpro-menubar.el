@@ -171,7 +171,7 @@
       (progn
 	(if (equal sccs-or-vc-menus 'sccs)
 	    (delete-menu-item '("SCCS"))
-	  (delete-menu-item '("VC")))
+	  (delete-menu-item '("Version Control")))
 	(delete-menu-item '("SPARCworks"))
 	(delete-menu-item '("Options" "SPARCworks"))
 	(delete-menu-item '("Options" "-----! before save options"))
@@ -182,13 +182,13 @@
       (eos::start)
       (if (equal sccs-or-vc-menus 'sccs)
 	  (progn
-	    (delete-menu-item '("VC"))
+	    (delete-menu-item '("Version Control"))
 	    (require 'sccs)
 	    (add-menu '() "SCCS" (cdr sccs-menu)))
 	(progn
 	  (require 'vc)
 	  (delete-menu-item '("SCCS"))
-	  (add-menu '() "VC" vc-default-menu)))
+	  (add-menu '() "Version Control" vc-default-menu)))
       (setq programmer-menus-p t))))
 
 (defun sunpro-build-buffers-menu-hook ()

@@ -58,6 +58,9 @@ struct tty_console
   int height;
   int width;
 
+  /* The count of frame number. */
+  int frame_count;
+
   /* flags indicating presence, absence or value of various features */
   struct
     {

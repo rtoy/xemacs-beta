@@ -87,7 +87,11 @@
 #if __FreeBSD__ == 1
 #define BSD 199103
 #elif __FreeBSD__ == 2
-#define BSD 199306
+#if __FreeBSD_version < 199701
+# define BSD 199306
+#else
+# define BSD 199506
+#endif
 #elif __FreeBSD__ == 3
 #define BSD 199506
 #endif

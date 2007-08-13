@@ -202,11 +202,9 @@ Convert arg STRING to a character, the first character of that string.
 
   p = XSTRING (str);
   if (string_length (p) != 0)
-    {
-      return (make_char (string_char (p, 0)));
-    }
+    return make_char (string_char (p, 0));
   else                          /* #### Gag me! */
-    return (Qzero);
+    return Qzero;
 }
 
 
@@ -226,8 +224,7 @@ If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
-  struct buffer *b = decode_buffer (buffer, 1);
-  return (make_int (BUF_PT (b)));
+  return make_int (BUF_PT (decode_buffer (buffer, 1)));
 }
 
 DEFUN ("point-marker", Fpoint_marker, 0, 2, 0, /*
@@ -294,7 +291,7 @@ Return value of POSITION, as an integer.
   Bufpos n = get_buffer_pos_char (b, position, GB_COERCE_RANGE);
   BUF_SET_PT (b, n);
   atomic_extent_goto_char_p = 1;
-  return (make_int (n));
+  return make_int (n);
 }
 
 static Lisp_Object
@@ -310,9 +307,9 @@ region_limit (int beginningp, struct buffer *b)
   m = Fmarker_position (b->mark);
   if (NILP (m)) error ("There is no region now");
   if (!!(BUF_PT (b) < XINT (m)) == !!beginningp)
-    return (make_int (BUF_PT (b)));
+    return make_int (BUF_PT (b));
   else
-    return (m);
+    return m;
 }
 
 DEFUN ("region-beginning", Fregion_beginning, 0, 1, 0, /*
@@ -330,7 +327,7 @@ If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
-  return (region_limit (0, decode_buffer (buffer, 1)));
+  return region_limit (0, decode_buffer (buffer, 1));
 }
 
 /* Whether to use lispm-style active-regions */
@@ -532,8 +529,7 @@ If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
-  struct buffer *b = decode_buffer (buffer, 1);
-  return (make_int (BUF_ZV (b)));
+  return make_int (BUF_ZV (decode_buffer (buffer,1)));
 }
 
 DEFUN ("point-max-marker", Fpoint_max_marker, 0, 1, 0, /*
@@ -701,12 +697,12 @@ ignored and this function returns the login name for that UID, or nil.
         user_name = (char *) getenv ("USER");
 #endif /* WINDOWSNT */
       if (user_name)
-	return (build_string (user_name));
+	return build_string (user_name);
       else
 	pw = (struct passwd *) getpwuid (geteuid ());
     }
   /* #### - I believe this should return nil instead of "unknown" when pw==0 */
-  return (pw ? build_string (pw->pw_name) : Qnil);
+  return pw ? build_string (pw->pw_name) : Qnil;
 }
 
 DEFUN ("user-real-login-name", Fuser_real_login_name, 0, 0, 0, /*
@@ -1052,7 +1048,7 @@ This feature lets (apply 'encode-time (decode-time ...)) work.
 Out-of-range values for SEC, MINUTE, HOUR, DAY, or MONTH are allowed;
 for example, a DAY of 0 means the day preceding the given month.
 Year numbers less than 100 are treated just like other year numbers.
-If you want them to stand for years in this century, you must do that yourself
+If you want them to stand for years in this century, you must do that yourself.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1060,19 +1056,13 @@ If you want them to stand for years in this century, you must do that yourself
   struct tm tm;
   Lisp_Object zone = (nargs > 6) ? args[nargs - 1] : Qnil;
 
-  CHECK_INT (args[0]);	/* second */
-  CHECK_INT (args[1]);	/* minute */
-  CHECK_INT (args[2]);	/* hour */
-  CHECK_INT (args[3]);	/* day */
-  CHECK_INT (args[4]);	/* month */
-  CHECK_INT (args[5]);	/* year */
+  CHECK_INT (*args); tm.tm_sec  = XINT (*args++);	/* second */
+  CHECK_INT (*args); tm.tm_min  = XINT (*args++);	/* minute */
+  CHECK_INT (*args); tm.tm_hour = XINT (*args++);	/* hour */
+  CHECK_INT (*args); tm.tm_mday = XINT (*args++);	/* day */
+  CHECK_INT (*args); tm.tm_mon  = XINT (*args++) - 1;	/* month */
+  CHECK_INT (*args); tm.tm_year = XINT (*args++) - 1900;/* year */
 
-  tm.tm_sec = XINT (args[0]);
-  tm.tm_min = XINT (args[1]);
-  tm.tm_hour = XINT (args[2]);
-  tm.tm_mday = XINT (args[3]);
-  tm.tm_mon = XINT (args[4]) - 1;
-  tm.tm_year = XINT (args[5]) - 1900;
   tm.tm_isdst = -1;
 
   if (CONSP (zone))

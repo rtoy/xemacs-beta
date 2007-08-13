@@ -1,6 +1,7 @@
 /* TTY frame functions.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995  Free Software Foundation, Inc.
    Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1997  Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -21,11 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* Written by Ben Wing. */
-
-/* #### This file is just a stub.  It should be possible to have more
-   than one frame on a tty, with only one frame being "active" (displayed)
-   at a time. */
+/* Written by Ben Wing.
+   Multi-frame support added by Hrvoje Niksic. */
 
 #include <config.h>
 #include "lisp.h"
@@ -33,25 +31,47 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 #include "frame.h"
 
+
+/* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_tty_frame_plist;
 
+/* The count of frame number. */
+static int tty_frame_count;
+
+static void tty_make_frame_visible (struct frame *);
+static void tty_make_frame_invisible (struct frame *);
+
+
 static void
 tty_init_frame_1 (struct frame *f, Lisp_Object props)
 {
   struct device *d = XDEVICE (FRAME_DEVICE (f));
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
-  if (!NILP (DEVICE_FRAME_LIST (d)))
-    error ("Only one frame allowed on TTY devices");
 
-  f->name = build_string ("emacs");
+  ++CONSOLE_TTY_DATA (c)->frame_count;
+  f->order_count = CONSOLE_TTY_DATA (c)->frame_count;
   f->height = CONSOLE_TTY_DATA (c)->height;
   f->width = CONSOLE_TTY_DATA (c)->width;
-  f->visible = 1;
 #ifdef HAVE_SCROLLBARS
   f->scrollbar_on_left = 1;
   f->scrollbar_on_top = 0;
 #endif
+}
+
+static void
+tty_init_frame_3 (struct frame *f)
+{
+  struct device *d = XDEVICE (FRAME_DEVICE (f));
+  Lisp_Object tail = DEVICE_FRAME_LIST (d);
+
+  while (CONSP (tail))
+    {
+      tty_make_frame_invisible (decode_frame (XCAR (tail)));
+      tail = XCDR (tail);
+    }
+  select_frame_2 (make_frame (f));
   SET_FRAME_CLEAR (f);
+  tty_make_frame_visible (f);
 }
 
 static void
@@ -59,7 +79,7 @@ tty_after_init_frame (struct frame *f, int first_on_device,
 		      int first_on_console)
 {
   if (first_on_console)
-      call1 (Qinit_post_tty_win, FRAME_CONSOLE (f));
+    call1 (Qinit_post_tty_win, FRAME_CONSOLE (f));
 }
 
 /* Change from withdrawn state to mapped state. */
@@ -71,20 +91,72 @@ tty_make_frame_visible (struct frame *f)
       SET_FRAME_CLEAR(f);
       f->visible = 1;
     }
-  
 }
 
 /* Change from mapped state to withdrawn state. */
 static void
 tty_make_frame_invisible (struct frame *f)
 {
-    f->visible = 0;
+  f->visible = 0;
 }
 
 static int
 tty_frame_visible_p (struct frame *f)
 {
-  return FRAME_VISIBLE_P(f);
+  return FRAME_VISIBLE_P (f);
+}
+
+/* Raise the frame.  This means that it becomes visible, and all the
+   others become invisible.  */
+static void
+tty_raise_frame (struct frame *f)
+{
+  struct device *d = XDEVICE (FRAME_DEVICE (f));
+  Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
+  Lisp_Object tail = frame_list;
+
+  while (CONSP (tail))
+    {
+      if (decode_frame (XCAR (tail)) != f)
+	tty_make_frame_invisible (XFRAME (XCAR (tail)));
+      tail = XCDR (tail);
+    }
+  select_frame_2 (make_frame (f));
+  tty_make_frame_visible (f);
+}
+
+/* Lower the frame.  This means that it becomes invisible, while the
+   one after it in the frame list becomes visible.  */
+static void
+tty_lower_frame (struct frame *f)
+{
+  struct device *d = XDEVICE (FRAME_DEVICE (f));
+  Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
+  Lisp_Object tail;
+  Lisp_Object new;
+
+  if (!FRAME_VISIBLE_P (f))
+    return;
+
+  tail = frame_list;
+  while (CONSP (tail))
+    {
+      if (decode_frame (XCAR (tail)) == f)
+	break;
+      tail = XCDR (tail);
+    }
+  if (!CONSP (tail))
+    {
+      error ("Cannot find frame to lower");
+    }
+
+  tty_make_frame_invisible (f);
+  if (CONSP (XCDR (tail)))
+    new = XCAR (XCDR (tail));
+  else
+    new = XCAR (frame_list);
+  tty_make_frame_visible (XFRAME (new));
+  select_frame_2 (new);
 }
 
 
@@ -96,10 +168,13 @@ void
 console_type_create_frame_tty (void)
 {
   CONSOLE_HAS_METHOD (tty, init_frame_1);
+  CONSOLE_HAS_METHOD (tty, init_frame_3);
   CONSOLE_HAS_METHOD (tty, after_init_frame);
   CONSOLE_HAS_METHOD (tty, make_frame_visible);
   CONSOLE_HAS_METHOD (tty, make_frame_invisible);
   CONSOLE_HAS_METHOD (tty, frame_visible_p);
+  CONSOLE_HAS_METHOD (tty, raise_frame);
+  CONSOLE_HAS_METHOD (tty, lower_frame);
 }
 
 void

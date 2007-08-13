@@ -42,6 +42,8 @@ Boston, MA 02111-1307, USA.  */
 
 #endif /* not standalone */
 
+static void print_error_message (Lisp_Object data, Lisp_Object stream);
+
 Lisp_Object Vstandard_output, Qstandard_output;
 
 /* The subroutine object for external-debugging-output is kept here
@@ -601,7 +603,7 @@ Convert an error value (ERROR-SYMBOL . DATA) to an error message.
   Lisp_Object original, printcharfun, value;
   struct gcpro gcpro1;
 
-  print_error_message (obj, Vprin1_to_string_buffer, NULL);
+  print_error_message (obj, Vprin1_to_string_buffer);
 
   set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
   value = Fbuffer_substring (Fpoint_min(Fcurrent_buffer()),
@@ -619,8 +621,7 @@ Convert an error value (ERROR-SYMBOL . DATA) to an error message.
 /* Print an error message for the error DATA
    onto Lisp output stream STREAM (suitable for the print functions).  */
 
-print_error_message (data, stream)
-     Lisp_Object data, stream;
+static void print_error_message (Lisp_Object data, Lisp_Object stream)
 {
   Lisp_Object errname, errmsg, file_error, tail;
   struct gcpro gcpro1;

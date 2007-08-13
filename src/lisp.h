@@ -256,10 +256,8 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef QUANTIFY
 #include "quantify.h"
-#define QUANTIFY_START_RECORDING					\
-  do { quantify_start_recording_data (); } while (0)
-#define QUANTIFY_STOP_RECORDING						\
-  do { quantify_stop_recording_data (); } while (0)
+#define QUANTIFY_START_RECORDING quantify_start_recording_data ()
+#define QUANTIFY_STOP_RECORDING  quantify_stop_recording_data  ()
 #else /* !QUANTIFY */
 #define QUANTIFY_START_RECORDING
 #define QUANTIFY_STOP_RECORDING
@@ -546,6 +544,8 @@ enum external_data_format
      an 8-bit no-lock-shift ISO2022 coding system. */
   FORMAT_CTEXT
 };
+
+#define FORMAT_NATIVE FORMAT_FILENAME
 
 enum run_hooks_condition
 {

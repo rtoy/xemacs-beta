@@ -56,11 +56,8 @@ SHELL = /bin/sh
 
 CC=@CC@
 CPP=@CPP@
-C_SWITCH_SYSTEM=@c_switch_system@
 LN_S=@LN_S@
 CFLAGS=@CFLAGS@
-C_SWITCH_X_SITE=@C_SWITCH_X_SITE@
-LD_SWITCH_X_SITE=@LD_SWITCH_X_SITE@
 YACC=@YACC@
 
 ### These help us choose version- and architecture-specific directories
@@ -73,9 +70,6 @@ version=@version@
 ### This should be the name of the configuration we're building XEmacs
 ### for, like `mips-dec-ultrix' or `sparc-sun-sunos'.
 configuration=@configuration@
-
-### Libraries which should be edited into lib-src/Makefile.
-libsrc_libs=@libsrc_libs@
 
 # ==================== Where To Install Things ====================
 
@@ -205,13 +199,13 @@ INSTALL_DATA = @INSTALL_DATA@
 # Subdirectories to make recursively.  `lisp' is not included
 # because the compiled lisp files are part of the distribution
 # and you cannot remake them without installing XEmacs first.
-MAKE_SUBDIR = lib-src lwlib dynodump src
+MAKE_SUBDIR = @MAKE_SUBDIR@
 
 # Subdirectories that can be made recursively.
 SUBDIR = ${MAKE_SUBDIR} man
 
-# The makefiles of the directories in $SUBDIR.
-SUBDIR_MAKEFILES = lib-src/Makefile lwlib/Makefile dynodump/Makefile src/Makefile
+# The makefiles of the directories in ${MAKE_SUBDIR}.
+SUBDIR_MAKEFILES = @SUBDIR_MAKEFILES@
 
 # Subdirectories to install, and where they'll go.
 # lib-src's makefile knows how to install it, so we don't do that here.

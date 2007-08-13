@@ -23,6 +23,7 @@ Boston, MA 02111-1307, USA.  */
 #undef __STRICT_BSD__ /* ick */
 #endif
 
+#include <config.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -31,34 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/StringDefs.h>
 #include "lwlib-internal.h"
 #include "lwlib-utils.h"
-
-#if defined(__GNUC__) && !defined(alloca)
-#define alloca __builtin_alloca
-#endif
-
-#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__) && !defined(sinix) && !defined(WINDOWSNT) && !defined(_SEQUENT_)
-#include <alloca.h>
-#endif
-
-#ifdef WINDOWSNT
-/* NT has an _alloca function prototyped in malloc.h --marcpa */
-#include <malloc.h>
-#endif
-
-
-#ifdef __SUNPRO_C
-void *__builtin_alloca (unsigned int);
-#endif
-
-#if defined(_AIX)
-#pragma alloca
-#endif
-
-#ifdef BROKEN_SUNOS_HEADERS
-extern void *	memset (void *, int, int);
-extern int	strcasecmp (char *, char *);
-extern int      fprintf (FILE *, CONST char *, ...);
-#endif
 
 #ifdef NEED_LUCID
 #include "lwlib-Xlw.h"

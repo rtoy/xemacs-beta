@@ -93,27 +93,6 @@ NOTE-END */
 /* This is totally uncalibrated. */
 #define LOAD_AVE_CVT(x) ((int) (((double) (x)) * 100.0 / FSCALE))
 
-/* J.W.Hawtin@lut.ac.uk say Solaris 2.4 as well as Solaris 2.1 on X86
-   requires -lkvm as well */
-#define LIBS_MACHINE -lkvm
-
-#ifndef SOLARIS2_4
-/* J.W.hawtin@lut.ac.uk says Solaris 2.1 on the X86 has FSCALE defined in a
-   system header. */
-
-#else /* SOLARIS2_4 */
-#ifndef __GNUC__
-#if 0 /* wisner@gryphon.com says this screws up cpp */
-#define C_SWITCH_MACHINE -Xa
-#endif
-#ifndef NOT_C_CODE
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif /* HAVE_ALLOCA_H */
-#endif /* not NOT_C_CODE */
-#endif /* not __GNUC__ */
-#endif /* SOLARIS2_4 */
-
 /* configure thinks solaris X86 has gethostname, but it does not work,
    so undefine it.  */
 #undef HAVE_GETHOSTNAME

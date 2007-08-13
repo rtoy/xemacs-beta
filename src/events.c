@@ -63,7 +63,7 @@ Lisp_Object Qbutton_event_p;
 Lisp_Object Qmouse_event_p;
 Lisp_Object Qprocess_event_p;
 
-Lisp_Object Qkey_press, Qbutton_press, Qbutton_release, Qmisc_user;
+Lisp_Object Qkey_press, Qbutton_press, Qbutton_release, Qmisc_user, Qempty;
 Lisp_Object Qascii_character;
 
 /* #### Ad-hoc hack.  Should be part of define_lrecord_implementation */
@@ -185,25 +185,18 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	break;
       }
     case process_event:
-      {
 	write_c_string ("#<process-event ", printcharfun);
 	print_internal (XEVENT (obj)->event.process.process, printcharfun, 1);
 	break;
-      }
     case timeout_event:
-      {
 	write_c_string ("#<timeout-event ", printcharfun);
 	print_internal (XEVENT (obj)->event.timeout.object, printcharfun, 1);
 	break;
-      }
     case empty_event:
-      {
 	write_c_string ("#<empty-event", printcharfun);
 	break;
-      }
     case misc_user_event:
     case eval_event:
-      {
 	write_c_string ("#<", printcharfun);
 	if (XEVENT (obj)->event_type == misc_user_event)
 	  write_c_string ("misc-user", printcharfun);
@@ -215,18 +208,13 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	print_internal (XEVENT (obj)->event.eval.object, printcharfun, 1);
 	write_c_string (")", printcharfun);
 	break;
-      }
     case dead_event:
-      {
 	write_c_string ("#<DEALLOCATED-EVENT", printcharfun);
 	break;
-      }
     default:
-      {
 	write_c_string ("#<UNKNOWN-EVENT-TYPE", printcharfun);
 	break;
       }
-    }
   write_c_string (">", printcharfun);
 }
   
@@ -242,53 +230,39 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   switch (e1->event_type)
     {
     case process_event:
-      return (EQ (e1->event.process.process,
-		  e2->event.process.process));
+      return EQ (e1->event.process.process, e2->event.process.process);
     
     case timeout_event:
-      if (NILP (Fequal (e1->event.timeout.function,
-			e2->event.timeout.function)))
-	return 0;
-      if (NILP (Fequal (e1->event.timeout.object,
-			e2->event.timeout.object)))
-	return 0;
-      return 1;
+      return (!NILP (Fequal (e1->event.timeout.function,
+			     e2->event.timeout.function)) &&
+	      !NILP (Fequal (e1->event.timeout.object,
+			     e2->event.timeout.object)));
     
     case key_press_event:
-      return ((EQ (e1->event.key.keysym,
-                   e2->event.key.keysym)
-               && (e1->event.key.modifiers
-                   == e2->event.key.modifiers)));
+      return (EQ (e1->event.key.keysym, e2->event.key.keysym) &&
+	      (e1->event.key.modifiers == e2->event.key.modifiers));
 
     case button_press_event:
     case button_release_event:
-      return (((e1->event.button.button
-                == e2->event.button.button)
-               && (e1->event.button.modifiers
-                   == e2->event.button.modifiers)));
+      return (e1->event.button.button    == e2->event.button.button &&
+	      e1->event.button.modifiers == e2->event.button.modifiers);
 
     case pointer_motion_event:
-      return ((e1->event.motion.x == e2->event.motion.x
-               && e1->event.motion.y == e2->event.motion.y));
+      return (e1->event.motion.x == e2->event.motion.x &&
+	      e1->event.motion.y == e2->event.motion.y);
 
     case misc_user_event:
     case eval_event:
-      if (NILP (Fequal (e1->event.eval.function,
-			e2->event.eval.function)))
-	return 0;
-      if (NILP (Fequal (e1->event.eval.object,
-			e2->event.eval.object)))
-	return 0;
-      return 1;
+      return (!NILP (Fequal (e1->event.eval.function,
+			     e2->event.eval.function)) &&
+	      !NILP (Fequal (e1->event.eval.object,
+			     e2->event.eval.object)));
 
     case magic_eval_event:
-      if (e1->event.magic_eval.internal_function !=
-	  e2->event.magic_eval.internal_function)
-	return 0;
-      if (NILP (Fequal (e1->event.magic_eval.object,
-			e2->event.magic_eval.object)))
-	return 0;
-      return 1;
+      return (e1->event.magic_eval.internal_function ==
+	      e2->event.magic_eval.internal_function &&
+	      !NILP (Fequal (e1->event.magic_eval.object,
+			     e2->event.magic_eval.object)));
 
     case magic_event:
       {
@@ -299,12 +273,16 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 #ifdef HAVE_X_WINDOWS
 	/* XEvent is actually a union which means that we can't just use == */
 	if (CONSOLE_X_P (XCONSOLE (console)))
-	  return (!memcmp ((XEvent *) &e1->event.magic.underlying_x_event,
+	  return !memcmp ((XEvent *) &e1->event.magic.underlying_x_event,
 			   (XEvent *) &e2->event.magic.underlying_x_event,
-			   sizeof (e1->event.magic.underlying_x_event)));
+			  sizeof (e1->event.magic.underlying_x_event));
 #endif
+#ifdef HAVE_TTY
+	if (CONSOLE_TTY_P (XCONSOLE (console)))
 	return (e1->event.magic.underlying_tty_event ==
 		e2->event.magic.underlying_tty_event);
+#endif
+	return 1;
       }
 
     case empty_event:      /* Empty and deallocated events are equal. */
@@ -960,7 +938,7 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
     case eval_event:		strcpy (buf, "eval"); 	return;
     case process_event:		strcpy (buf, "process");return;
     case timeout_event:		strcpy (buf, "timeout");return;
-    case empty_event:		strcpy (buf, "EMPTY-EVENT"); return;
+    case empty_event:		strcpy (buf, "empty"); return;
     case dead_event:		strcpy (buf, "DEAD-EVENT");  return;
     default:
       abort ();
@@ -1023,7 +1001,7 @@ True if OBJECT is an event object.
 */
        (object))
 {
-  return ((EVENTP (object)) ? Qt : Qnil);
+  return EVENTP (object) ? Qt : Qnil;
 }
 
 DEFUN ("event-live-p", Fevent_live_p, 1, 1, 0, /*
@@ -1031,18 +1009,17 @@ True if OBJECT is an event object that has not been deallocated.
 */
        (object))
 {
-  return ((EVENTP (object) && XEVENT (object)->event_type != dead_event)
-	  ? Qt : Qnil);
+  return EVENTP (object) && XEVENT (object)->event_type != dead_event ?
+    Qt : Qnil;
 }
 
 #if 0 /* debugging functions */
 
-xxDEFUN ("event-next", Fevent_next, Sevent_next, 1, 1, 0 /*
+xxDEFUN ("event-next", Fevent_next, 1, 1, 0, /*
 Return the event object's `next' event, or nil if it has none.
 The `next-event' field is changed by calling `set-next-event'.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+	 (event))
 {
   struct Lisp_Event *e;
   CHECK_LIVE_EVENT (event);
@@ -1050,12 +1027,11 @@ The `next-event' field is changed by calling `set-next-event'.
   return XEVENT_NEXT (event);
 }
 
-xxDEFUN ("set-event-next", Fset_event_next, Sset_event_next, 2, 2, 0 /*
+xxDEFUN ("set-event-next", Fset_event_next, 2, 2, 0, /*
 Set the `next event' of EVENT to NEXT-EVENT.
 NEXT-EVENT must be an event object or nil.
-*/ )
-     (event, next_event)
-     Lisp_Object event, next_event;
+*/
+	 (event, next_event))
 {
   Lisp_Object ev;
 
@@ -1078,7 +1054,7 @@ NEXT-EVENT must be an event object or nil.
 			     next_event));
     }
   XSET_EVENT_NEXT (event, next_event);
-  return (next_event);
+  return next_event;
 }
 
 #endif /* 0 */
@@ -1105,30 +1081,14 @@ empty		The event has been allocated but not assigned.
   CHECK_LIVE_EVENT (event);
   switch (XEVENT (event)->event_type)
     {
-    case key_press_event:
-      return Qkey_press;
-
-    case button_press_event:
-      return Qbutton_press;
-
-    case button_release_event:
-      return Qbutton_release;
-
-    case misc_user_event:
-      return Qmisc_user;
-
-    case pointer_motion_event:
-      return Qmotion;
-
-    case process_event:
-      return Qprocess;
-
-    case timeout_event:
-      return Qtimeout;
-
-    case eval_event:
-      return Qeval;
-
+    case key_press_event:	return Qkey_press;
+    case button_press_event:	return Qbutton_press;
+    case button_release_event:	return Qbutton_release;
+    case misc_user_event:	return Qmisc_user;
+    case pointer_motion_event:	return Qmotion;
+    case process_event:		return Qprocess;
+    case timeout_event:		return Qtimeout;
+    case eval_event:		return Qeval;
     case magic_event:
     case magic_eval_event:
       return Qmagic;
@@ -1143,7 +1103,7 @@ empty		The event has been allocated but not assigned.
 }
 
 DEFUN ("event-timestamp", Fevent_timestamp, 1, 1, 0, /*
-Return the timestamp of the given event object.
+Return the timestamp of the event object EVENT.
 */
        (event))
 {
@@ -1168,17 +1128,17 @@ Return the timestamp of the given event object.
 }
 
 DEFUN ("event-key", Fevent_key, 1, 1, 0, /*
-Return the Keysym of the given key-press event.
-This will be the ASCII code of a printing character, or a symbol.
+Return the Keysym of the key-press event EVENT.
+This will be a character if the event is associated with one, else a symbol.
 */
        (event))
 {
   CHECK_EVENT_TYPE (event, key_press_event, Qkey_press_event_p);
-  return (XEVENT (event)->event.key.keysym);
+  return XEVENT (event)->event.key.keysym;
 }
 
 DEFUN ("event-button", Fevent_button, 1, 1, 0, /*
-Return the button-number of the given mouse-button-press event.
+Return the button-number of the given button-press or button-release event.
 */
        (event))
 {
@@ -1274,10 +1234,10 @@ event_x_y_pixel_internal (Lisp_Object event, int *x, int *y, int relative)
 }
 
 DEFUN ("event-window-x-pixel", Fevent_window_x_pixel, 1, 1, 0, /*
-Return the X position in pixels of the given mouse event.
+Return the X position in pixels of mouse event EVENT.
 The value returned is relative to the window the event occurred in.
-This will signal an error if the event is not a mouse-motion, button-press,
-or button-release event.  See also `event-x-pixel'.
+This will signal an error if the event is not a mouse event.
+See also `mouse-event-p' and `event-x-pixel'.
 */
        (event))
 {
@@ -1292,10 +1252,10 @@ or button-release event.  See also `event-x-pixel'.
 }
 
 DEFUN ("event-window-y-pixel", Fevent_window_y_pixel, 1, 1, 0, /*
-Return the Y position in pixels of the given mouse event.
+Return the Y position in pixels of mouse event EVENT.
 The value returned is relative to the window the event occurred in.
-This will signal an error if the event is not a mouse-motion, button-press,
-or button-release event.  See also `event-y-pixel'.
+This will signal an error if the event is not a mouse event.
+See also `mouse-event-p' and `event-y-pixel'.
 */
        (event))
 {
@@ -1310,10 +1270,10 @@ or button-release event.  See also `event-y-pixel'.
 }
 
 DEFUN ("event-x-pixel", Fevent_x_pixel, 1, 1, 0, /*
-Return the X position in pixels of the given mouse event.
+Return the X position in pixels of mouse event EVENT.
 The value returned is relative to the frame the event occurred in.
-This will signal an error if the event is not a mouse-motion, button-press,
-or button-release event.  See also `event-window-x-pixel'.
+This will signal an error if the event is not a mouse event.
+See also `mouse-event-p' and `event-window-x-pixel'.
 */
        (event))
 {
@@ -1328,10 +1288,10 @@ or button-release event.  See also `event-window-x-pixel'.
 }
 
 DEFUN ("event-y-pixel", Fevent_y_pixel, 1, 1, 0, /*
-Return the Y position in pixels of the given mouse event.
+Return the Y position in pixels of mouse event EVENT.
 The value returned is relative to the frame the event occurred in.
-This will signal an error if the event is not a mouse-motion, button-press,
-or button-release event.  See also `event-window-y-pixel'.
+This will signal an error if the event is not a mouse event.
+See also `mouse-event-p' `event-window-y-pixel'.
 */
        (event))
 {
@@ -1454,56 +1414,44 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
 }
 
 DEFUN ("event-over-text-area-p", Fevent_over_text_area_p, 1, 1, 0, /*
-Return whether the given mouse event occurred over the text area of a window.
+Return t if the mouse event EVENT occurred over the text area of a window.
 The modeline is not considered to be part of the text area.
 */
        (event))
 {
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-  if (result == OVER_TEXT || result == OVER_NOTHING)
-    return Qt;
-  else
-    return Qnil;
+  return result == OVER_TEXT || result == OVER_NOTHING ? Qt : Qnil;
 }
 
 DEFUN ("event-over-modeline-p", Fevent_over_modeline_p, 1, 1, 0, /*
-Return whether the given mouse event occurred over the modeline of a window.
+Return t if the mouse event EVENT occurred over the modeline of a window.
 */
        (event))
 {
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-  if (result == OVER_MODELINE)
-    return Qt;
-  else
-    return Qnil;
+  return result == OVER_MODELINE ? Qt : Qnil;
 }
 
 DEFUN ("event-over-border-p", Fevent_over_border_p, 1, 1, 0, /*
-Return whether the given mouse event occurred over an internal border.
+Return t if the mouse event EVENT occurred over an internal border.
 */
        (event))
 {
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-  if (result == OVER_BORDER)
-    return Qt;
-  else
-    return Qnil;
+  return result == OVER_BORDER ? Qt : Qnil;
 }
 
 DEFUN ("event-over-toolbar-p", Fevent_over_toolbar_p, 1, 1, 0, /*
-Return whether the given mouse event occurred over a toolbar.
+Return t if the mouse event EVENT occurred over a toolbar.
 */
        (event))
 {
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-  if (result == OVER_TOOLBAR)
-    return Qt;
-  else
-    return Qnil;
+  return result == OVER_TOOLBAR ? Qt : Qnil;
 }
 
 struct console *
@@ -1519,7 +1467,7 @@ event_console_or_selected (Lisp_Object event)
 }
 
 DEFUN ("event-channel", Fevent_channel, 1, 1, 0, /*
-Return the channel that the given event occurred on.
+Return the channel that the event EVENT occurred on.
 This will be a frame, device, console, or nil for some types
 of events (e.g. eval events).
 */
@@ -1530,14 +1478,13 @@ of events (e.g. eval events).
 }
 
 DEFUN ("event-window", Fevent_window, 1, 1, 0, /*
-Return the window of the given mouse event.
+Return the window over which mouse event EVENT occurred.
 This may be nil if the event occurred in the border or over a toolbar.
-The modeline is considered to be in the window it represents.
+The modeline is considered to be within the window it describes.
 */
        (event))
 {
   struct window *w;
-  Lisp_Object window;
 
   event_pixel_translation (event, 0, 0, 0, 0, &w, 0, 0, 0, 0, 0);
 
@@ -1545,15 +1492,17 @@ The modeline is considered to be in the window it represents.
     return Qnil;
   else
     {
+      Lisp_Object window;
+
       XSETWINDOW (window, w);
       return window;
     }
 }
 
 DEFUN ("event-point", Fevent_point, 1, 1, 0, /*
-Return the character position of the given mouse event.
+Return the character position of the mouse event EVENT.
 If the event did not occur over a window, or did not occur over text,
-then this returns nil.  Otherwise, it returns an index into the buffer
+then this returns nil.  Otherwise, it returns a position in the buffer
 visible in the event's window.
 */
        (event))
@@ -1563,16 +1512,11 @@ visible in the event's window.
 
   event_pixel_translation (event, 0, 0, 0, 0, &w, &bufp, 0, 0, 0, 0);
 
-  if (!w)
-    return Qnil;
-  else if (!bufp)
-    return Qnil;
-  else
-    return make_int (bufp);
+  return w && bufp ? make_int (bufp) : Qnil;
 }
 
 DEFUN ("event-closest-point", Fevent_closest_point, 1, 1, 0, /*
-Return the character position of the given mouse event.
+Return the character position closest to the mouse event EVENT.
 If the event did not occur over a window or over text, return the
 closest point to the location of the event.  If the Y pixel position
 overlaps a window and the X pixel position is to the left of that
@@ -1580,8 +1524,8 @@ window, the closest point is the beginning of the line containing the
 Y position.  If the Y pixel position overlaps a window and the X pixel
 position is to the right of that window, the closest point is the end
 of the line containing the Y position.  If the Y pixel position is
-above a window, return 0.  If it is below a window, return the value
-of (window-end).
+above a window, return 0.  If it is below the last character in a window,
+return the value of (window-end).
 */
        (event))
 {
@@ -1589,14 +1533,11 @@ of (window-end).
 
   event_pixel_translation (event, 0, 0, 0, 0, 0, 0, &bufp, 0, 0, 0);
 
-  if (!bufp)
-    return Qnil;
-  else
-    return make_int (bufp);
+  return bufp ? make_int (bufp) : Qnil;
 }
 
 DEFUN ("event-x", Fevent_x, 1, 1, 0, /*
-Return the X position of the given mouse event in characters.
+Return the X position of the mouse event EVENT in characters.
 This is relative to the window the event occurred over.
 */
        (event))
@@ -1609,7 +1550,7 @@ This is relative to the window the event occurred over.
 }
 
 DEFUN ("event-y", Fevent_y, 1, 1, 0, /*
-Return the Y position of the given mouse event in characters.
+Return the Y position of the mouse event EVENT in characters.
 This is relative to the window the event occurred over.
 */
        (event))
@@ -1636,14 +1577,11 @@ is buffer-local, and you must use EVENT's buffer when retrieving
 
   event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, &mbufp, 0, 0);
 
-  if (mbufp < 0)
-    return Qnil;
-  else
-    return make_int (mbufp);
+  return mbufp < 0 ? Qnil : make_int (mbufp);
 }
 
 DEFUN ("event-glyph", Fevent_glyph, 1, 1, 0, /*
-Return the glyph that the given mouse event occurred over, or nil.
+Return the glyph that the mouse event EVENT occurred over, or nil.
 */
        (event))
 {
@@ -1652,16 +1590,11 @@ Return the glyph that the given mouse event occurred over, or nil.
 
   event_pixel_translation (event, 0, 0, 0, 0, &w, 0, 0, 0, &glyph, 0);
 
-  if (!w)
-    return Qnil;
-  else if (GLYPHP (glyph))
-    return glyph;
-  else
-    return Qnil;
+  return w && GLYPHP (glyph) ? glyph : Qnil;
 }
 
 DEFUN ("event-glyph-extent", Fevent_glyph_extent, 1, 1, 0, /*
-Return the extent of the glyph that the given mouse event occurred over.
+Return the extent of the glyph that the mouse event EVENT occurred over.
 If the event did not occur over a glyph, nil is returned.
 */
        (event))
@@ -1671,12 +1604,7 @@ If the event did not occur over a glyph, nil is returned.
 
   event_pixel_translation (event, 0, 0, 0, 0, &w, 0, 0, 0, 0, &extent);
 
-  if (!w)
-    return Qnil;
-  else if (EXTENTP (extent))
-    return extent;
-  else
-    return Qnil;
+  return w && EXTENTP (extent) ? extent : Qnil;
 }
 
 DEFUN ("event-glyph-x-pixel", Fevent_glyph_x_pixel, 1, 1, 0, /*
@@ -1692,10 +1620,7 @@ nil is returned.
 
   event_pixel_translation (event, 0, 0, &obj_x, 0, &w, 0, 0, 0, 0, &extent);
 
-  if (w && EXTENTP (extent))
-    return make_int (obj_x);
-  else
-    return Qnil;
+  return w && EXTENTP (extent) ? make_int (obj_x) : Qnil;
 }
 
 DEFUN ("event-glyph-y-pixel", Fevent_glyph_y_pixel, 1, 1, 0, /*
@@ -1711,34 +1636,24 @@ nil is returned.
 
   event_pixel_translation (event, 0, 0, 0, &obj_y, &w, 0, 0, 0, 0, &extent);
 
-  if (w && EXTENTP (extent))
-    return make_int (obj_y);
-  else
-    return Qnil;
+  return w && EXTENTP (extent) ? make_int (obj_y) : Qnil;
 }
 
 DEFUN ("event-toolbar-button", Fevent_toolbar_button, 1, 1, 0, /*
-Return the toolbar button that the given mouse event occurred over.
-If the event did not occur over a toolbar, nil is returned.
+Return the toolbar button that the mouse event EVENT occurred over.
+If the event did not occur over a toolbar button, nil is returned.
 */
        (event))
 {
 #ifdef HAVE_TOOLBARS
   Lisp_Object button;
-  int result;
 
-  result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, &button, 0);
+  int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, &button, 0);
 
-  if (result == OVER_TOOLBAR)
-    {
-      if (TOOLBAR_BUTTONP (button))
-	return button;
-      else
+  return result == OVER_TOOLBAR && TOOLBAR_BUTTONP (button) ? button : Qnil;
+#else
 	return Qnil;
-    }
-  else
 #endif
-    return Qnil;
 }
 
 DEFUN ("event-process", Fevent_process, 1, 1, 0, /*
@@ -1747,7 +1662,7 @@ Return the process of the given process-output event.
        (event))
 {
   CHECK_EVENT_TYPE (event, process_event, Qprocess_event_p);
-  return (XEVENT (event)->event.process.process);
+  return XEVENT (event)->event.process.process;
 }
 
 DEFUN ("event-function", Fevent_function, 1, 1, 0, /*
@@ -1846,7 +1761,10 @@ This is in the form of a property list (alternating keyword/value pairs).
 
     case magic_eval_event:
     case magic_event:
+      break;
+
     case empty_event:
+      RETURN_UNGCPRO (Qnil);
       break;
 
     default:
@@ -1918,6 +1836,7 @@ syms_of_events (void)
   defsymbol (&Qbutton_press, "button-press");
   defsymbol (&Qbutton_release, "button-release");
   defsymbol (&Qmisc_user, "misc-user");
+  defsymbol (&Qempty, "empty");
   defsymbol (&Qascii_character, "ascii-character");
 }
 
