@@ -1,3 +1,32 @@
+1999-12-14  Martin Buchholz <martin@xemacs.org>
+
+	* XEmacs 21.2.24 is released.
+
+1999-12-13  Martin Buchholz  <martin@xemacs.org>
+
+	* sound.c (vars_of_sound): Provide esd-sound if HAVE_ESD_SOUND
+
+	* nas.c: Fix compiler warnings.  Ansify.  C++ compilation support.
+
+1999-12-13  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* input-method-xlib.c: Make sure src/ does not use Athena, except
+	indirectly through lwlib.
+
+1999-12-13  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* dbxrc (pobj):	Add opaque_ptr, remove opaque_list.
+
+1999-12-10  Shenghuo ZHU <zsh@cs.rochester.edu>
+
+	* file-coding.c (add_coding_system_to_list_mapper): 
+	- (coding-system-list) should list aliases correctly.
+
+1999-12-07  Andy Piper  <andy@xemacs.org>
+
+	* fileio.c (vars_of_fileio): directory separator fix from Mike Alexander.
+	* windowsnt.h (ditto):
+
 1999-11-27  Adrian Aichner  <aichner@ecf.teradyne.com>
 
 	* sysfile.h: Encapsulate `fstat' for Windows NT just like stat to
