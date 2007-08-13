@@ -184,6 +184,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   char *bufptr = buf;
   int bufsize = 16384;
   int speccount = specpdl_depth ();
+  struct gcpro gcpro1;
   char **new_argv
     = (char **) alloca ((max (2, nargs - 2)) * sizeof (char *));
   
@@ -223,8 +224,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     GCPRO2 (current_dir, path);   /* Caller gcprotects args[] */
     current_dir = current_buffer->directory;
-    current_dir = expand_and_dir_to_file
-      (Funhandled_file_name_directory (current_dir), Qnil);
+    current_dir = Funhandled_file_name_directory (current_dir);
+    current_dir = expand_and_dir_to_file (current_dir, Qnil);
 #if 0
   /* I don't know how RMS intends this crock of shit to work, but it
      breaks everything in the presence of ange-ftp-visited files, so
@@ -238,11 +239,16 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
   if (nargs >= 2 && ! NILP (args[1]))
     {
+      struct gcpro gcpro1;
+      GCPRO1 (current_buffer->directory);
       infile = Fexpand_file_name (args[1], current_buffer->directory);
+      UNGCPRO;
       CHECK_STRING (infile);
     }
   else
     infile = build_string (NULL_DEVICE);
+
+  GCPRO1 (infile);		/* Fexpand_file_name might trash it */
 
   if (nargs >= 3)
     {
@@ -280,6 +286,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     }
   else 
     buffer = Qnil;
+
+  UNGCPRO;
 
   display = ((nargs >= 4) ? args[3] : Qnil);
 

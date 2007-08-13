@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 19.15
+-- W3-3.0.74
+-- Documentation updates
+-- miscellaneous bug fixes
+-- cc-mode-4.388
+-- Custom-1.67
+-- Gnus-5.4.37
+
 to 19.15 beta104
 -- EFS fixes courtesy of Michael Sperber
 -- time.el-1.6

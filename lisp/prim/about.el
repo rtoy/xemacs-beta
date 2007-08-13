@@ -232,6 +232,19 @@
 ;    (or got-error (message nil)))
 ;  )
 
+(defvar about-xref-alist
+  '((w3-xemacs   . "http://www.xemacs.org/")
+    (w3-jamie    . "http://www.netscape.com/people/jwz/")
+    (w3-baw      . "http://www.python.org/~bwarsaw/")
+    (w3-python   . "http://www.python.org/ftp/emacs/")
+    (w3-infodock . "http://www.infodock.com")
+    (w3-kyle     . "http://www.wonderworks.com/kyle/")
+    (w3-larsi    . "http://www.ifi.uio.no/~larsi/")
+    (w3-hrvoje   . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
+    ;; add more here
+    )
+  "Mappings between xref symbols and URLs")
+
 (defun about-xemacs-xref ()
   (interactive "@")
   (let* ((e (or current-mouse-event last-input-event))
@@ -252,7 +265,7 @@
 	(setq prev-page 'about)
       ;; Kill the sub-buffers when going back to the top, so that we
       ;; don't hold pointers to the bitmaps longer than necessary.
-      (if (not (eq xref 'w3-jamie))
+      (if (not (assq xref about-xref-alist))
 	  (progn
 	    (kill-buffer (current-buffer))
 	    (setq prev-page 'others))))
@@ -261,11 +274,9 @@
       (about-xemacs))
      ((eq xref 'info)
       (info))
-     ((or (eq xref 'w3-xemacs) (eq xref 'w3-jamie))
+     ((assq xref about-xref-alist)
       (funcall browse-url-browser-function
-	       (if (eq xref 'w3-xemacs)
-		   "http://www.xemacs.org/"
-		 "http://www.netscape.com/people/jwz/")))
+	       (cdr (assq xref about-xref-alist))))
      ((eq xref 'kill-buffer)
       (kill-buffer (current-buffer)))
      ((eq xref 'news)
@@ -299,6 +310,7 @@
 			       ((eq xref 'others) "About Everyone")
 			       ((eq xref 'features) "New XEmacs Features")
 			       ((eq xref 'history) "XEmacs History")
+			       (t (error "Can't follow xref: %s" xref))
 			       )))
       (delete-other-windows)
       (buffer-disable-undo (current-buffer))
@@ -648,16 +660,23 @@
 	  (about-face "Barry Warsaw" 'bold)
 	  (insert " <bwarsaw@python.org>
 
-	Author of cc-mode for C++, C, and Objective-C editing, and
-	Supercite for mail and news citing.  Also various and sundry other
-	Emacs utilities, fixes, enhancements and kludgery as whimsy,
-	boredom, and ToT dictate (but not necessarily in that order).
-
-	See \"http://www.python.org/~bwarsaw\".
+	Author of CC Mode, for C, C++, Objective-C, and Java editing,
+	and Supercite for mail and news citing.  Also various and
+	sundry other Emacs packages, utilities, fixes, enhancements
+	and kludgery as whimsy, boredom, and ToT dictate (but not
+	necessarily in that order).  See also:\n
+                ")
+	  (about-xref "http://www.python.org/~bwarsaw/" 'w3-baw
+		      "Visit Barry's WWW page")
+	  (insert "\n	and:
+                ")
+	  (about-xref "http://www.python.org/ftp/emacs/" 'w3-python
+		      "Visit the CC Mode distribution")
+	  (insert "\n\n
 
 	Daddy
 	© 1994 Warsaw
-	========
+	=============
 	Drive me Daddy, drive me quick
 	Push my pedal, shift my stick
 	Fill me up with golden gas
@@ -683,7 +702,10 @@
 	framework for software engineers.  It runs atop XEmacs and is
 	available from his firm, InfoDock Associates, which offers custom
         development and support packages for corporate users of XEmacs,
-        GNU Emacs and InfoDock.  See \"http://www.infodock.com\".
+        GNU Emacs and InfoDock.  See ")
+	  (about-xref "http://www.infodock.com" 'w3-infodock
+		      "Visit the Infodock WWW page")
+	  (insert "
 	His interests include user interfaces, information management,
 	CASE tools, communications and enterprise integration.")
 
@@ -749,9 +771,10 @@
 	uses the standard UNIX mailbox format for its folders;
 	thus, you can use VM concurrently with other UNIX mail
 	readers such as Berkeley Mail and ELM.
-	See \"http://www.wonderworks.com/kyle/\".")
-
-	  (insert "\n\n\tClick ")
+	See ")
+	  (about-xref "http://www.wonderworks.com/kyle/" 'w3-kyle
+		      "Visit Kyle's WWW page")
+	  (insert ". \n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
 	  (insert " to go back to the previous page.\n")
 	  )
@@ -767,9 +790,11 @@
 	currently plumbing away at his majors work at the Institute of
 	Physics, working on an SCI project connected with CASCADE and
 	CERN and stuff.
-	See \"http://www.ifi.uio.no/~larsi/\".")
+	See ")
+	  (about-xref "http://www.ifi.uio.no/~larsi/" 'w3-larsi
+		      "Visit Lars' WWW page")
 
-	  (insert "\n\n\tClick ")
+	  (insert ". \n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
 	  (insert " to go back to the previous page.\n")
 	  )
@@ -819,10 +844,19 @@
 	  and back-seat contributor for several of it's major packages.
 
 	") (about-xref "Barry Warsaw" 'baw "Find out more about Barry Warsaw") (insert " <bwarsaw@python.org>
-	  Author of cc-mode for C++, C, and Objective-C editing, and
-	  Supercite for mail and news citing.  Also various and sundry other
-	  Emacs utilities, fixes, enhancements and kludgery as whimsy,
-	  boredom, and ToT dictate (but not necessarily in that order).
+	  Author of CC Mode for C, C++, Objective-C and Java editing,
+	  and Supercite for mail and news citing.  Also various and
+	  sundry other Emacs packages, utilities, fixes, enhancements
+	  and kludgery as whimsy, boredom, and ToT dictate (but not
+	  necessarily in that order).  See also:
+                ")
+	  (about-xref "http://www.python.org/~bwarsaw/" 'w3-baw
+		      "Visit Barry's WWW page")
+	  (insert "\n	  and:
+                ")
+	  (about-xref "http://www.python.org/ftp/emacs/" 'w3-python
+		      "Visit Barry's Emacs Goodies page")
+	  (insert "
 
 	") (about-xref "Andy Piper" 'piper "Find out more about Andy Piper") (insert " <andyp@parallax.co.uk>
 	  Created the prototype for the toolbars.  Has been the first to make
@@ -835,7 +869,10 @@
 	  framework for software engineers.  It runs atop XEmacs and is
 	  available from his firm, InfoDock Associates, which offers custom
           development and support packages for corporate users of XEmacs,
-          GNU Emacs and InfoDock.  See \"http://www.infodock.com\".
+          GNU Emacs and InfoDock.  See ")
+	(about-xref "http://www.infodock.com" 'w3-infodock
+		    "Visit the Infodock WWW page")
+	(insert ".
 	  His interests include user interfaces, information management,
  	  CASE tools, communications and enterprise integration.
 
@@ -852,7 +889,10 @@
 	  uses the standard UNIX mailbox format for its folders;
 	  thus, you can use VM concurrently with other UNIX mail
 	  readers such as Berkeley Mail and ELM.
-	  See \"http://www.wonderworks.com/kyle/\".
+	  See ")
+	(about-xref "http://www.wonderworks.com/kyle/" 'w3-kyle
+		    "Visit Kyle's WWW page")
+	(insert ".
 
 	") (about-xref "Lars Magne Ingebrigtsen" 'larsi "Find out more about Lars Magne Ingebrigtsen") (insert " <larsi@ifi.uio.no>
 	  Author of Gnus the Usenet news and Mail reading package in
@@ -862,16 +902,19 @@
 	  currently plumbing away at his majors work at the Institute of
 	  Physics, working on an SCI project connected with CASCADE and
 	  CERN and stuff.
-	  See \"http://www.ifi.uio.no/~larsi/\"
+	  See ")
+	(about-xref "http://www.ifi.uio.no/~larsi/" 'w3-larsi
+		    "Visit Lars' WWW page")
+	(insert ".
 
 	") (about-xref "Jens Lautenbacher" 'jens "Find out more about Jens Lautenbacher") (insert " <jens@lemcbed.lem.uni-karlsruhe.de>
-	I'm currently working at the University of Karlsruhe, Germany
-	on getting my diploma thesis on Supersymmetry (uuh, that's
-	physics) done.  After that (and all the remaining exams) I'm
-	looking forward to make a living out of my hobbies --
-	computers (and graphics). But because I have no deadline for
-	the exams and XEmacs betas are released at a high rate this
-	may take some time...
+	  I'm currently working at the University of Karlsruhe, Germany
+	  on getting my diploma thesis on Supersymmetry (uuh, that's
+	  physics) done.  After that (and all the remaining exams) I'm
+	  looking forward to make a living out of my hobbies --
+	  computers (and graphics). But because I have no deadline for
+	  the exams and XEmacs betas are released at a high rate this
+	  may take some time...
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	  Unofficial maintainer of the xemacs-beta list of extant
@@ -932,7 +975,10 @@
 	  In his free time he is helping develop free software (especially
 	  XEmacs, as well as GNU software) and is writing his own -- he has
 	  written a small network mirroring utility Wget, see
-	  \"ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/\".
+	  ")
+	(about-xref "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/"
+		    'w3-hrvoje "Visit Hrvoje's Wget distribution")
+	(insert "
 
 	In addition to those just mentioned, the following people have
 	spent a great deal of effort providing feedback, testing beta

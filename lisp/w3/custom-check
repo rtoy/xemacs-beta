@@ -4,13 +4,8 @@ if [ -z "$HOME" ]; then
     HOME=`(cd ; pwd)`
 fi
 
-if [ -n "$WIDGETDIR" ]; then
-    echo "WIDGETDIR environment variable set, good good" 
-    exit 0
-fi
-
-WITH=`${EMACS} -batch -l ${HOME}/.emacs -eval '(princ (locate-library "custom"))' | cut -f3- |xargs dirname`
-WITHOUT=`${EMACS} -batch -eval '(princ (locate-library "custom"))' | cut -f3- |xargs dirname`
+WITH=`   ${EMACS} -batch -l ${HOME}/.emacs             -eval '(princ (file-truename (locate-library "custom")))'`
+WITHOUT=`${EMACS} -batch -q -no-site-file -l docomp.el -eval '(princ (file-truename (locate-library "custom")))'`
 
 if [ "${WITH}" = "${WITHOUT}" ]; then
     exit 0

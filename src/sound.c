@@ -75,11 +75,13 @@ where WAV files are also supported.
 */
        (file, volume, device))
 {
-  /* This function can GC */
+  /* This function can call lisp */
   int vol;
 #if defined (HAVE_NATIVE_SOUND) || defined (HAVE_NAS_SOUND)
   struct device *d = decode_device (device);
 #endif
+  struct gcpro gcpro1;
+
   CHECK_STRING (file);
   if (NILP (volume))
     vol = bell_volume;
@@ -89,12 +91,14 @@ where WAV files are also supported.
       vol = XINT (volume);
     }
 
+  GCPRO1 (file);
   file = Fexpand_file_name (file, Qnil);
   if (NILP (Ffile_readable_p (file)))
     if (NILP (Ffile_exists_p (file)))
       error ("file does not exist.");
     else
       error ("file is unreadable.");
+  UNGCPRO;
 
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d))

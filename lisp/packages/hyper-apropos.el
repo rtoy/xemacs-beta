@@ -157,6 +157,8 @@ being initialized."
 			    ;; movement
 			    (define-key map " "     'scroll-up)
 			    (define-key map "b"     'scroll-down)
+			    (define-key map [delete] 'scroll-down)
+			    (define-key map [backspace] 'scroll-down)
 			    (define-key map "/"     'isearch-forward)
 			    (define-key map "?"     'isearch-backward)
 			    ;; follow links
@@ -182,6 +184,8 @@ being initialized."
 		       ;; slightly different scrolling...
 		       (define-key map " "     'hypropos-scroll-up)
 		       (define-key map "b"     'hypropos-scroll-down)
+		       (define-key map [delete] 'hypropos-scroll-down)
+		       (define-key map [backspace] 'hypropos-scroll-down)
 		       ;; act on the current line...
 		       (define-key map "w"     'hypropos-where-is)
 		       (define-key map "i"     'hypropos-invoke-fn)

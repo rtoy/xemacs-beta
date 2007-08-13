@@ -1,7 +1,7 @@
-;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
+;;; w3-menu.el --- Mouse specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/13 23:05:39
-;; Version: 1.7
+;; Created: 1997/03/23 03:08:58
+;; Version: 1.8
 ;; Keywords: mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -1210,7 +1210,7 @@ with `delete-process'.
 */
        (bufname))
 {
-  /* This function can GC */
+  /* This function can call lisp */
   Lisp_Object buf;
   REGISTER struct buffer *b;
   struct gcpro gcpro1, gcpro2;
@@ -1378,7 +1378,26 @@ with `delete-process'.
 	&& BUF_SAVE_MODIFF (b) < b->auto_save_modified)
       {
 	if (!NILP (Vdelete_auto_save_files))
-	  internal_delete_file (b->auto_save_file_name);
+	  {
+	    /* deleting the auto save file might kill b! */
+	    /* #### dmoore - fix this crap, we do this same gcpro and
+	       buffer liveness check multiple times.  Let's get a
+	       macro or something for it. */
+	    GCPRO1 (buf);
+	    internal_delete_file (b->auto_save_file_name);
+	    UNGCPRO;
+	    b = XBUFFER (buf);
+	    
+	    if (!BUFFER_LIVE_P (b))
+	      return Qnil;
+
+	    if (b == current_buffer)
+	      {
+		Fset_buffer (Fother_buffer (buf, Qnil, Qnil));
+		if (b == current_buffer)
+		  return Qnil;
+	      }
+	  }
       }
 
     uninit_buffer_markers (b);

@@ -780,7 +780,7 @@ a new format, when variables have changed, etc."
       (goto-char (point-min))
       (when (re-search-forward " \\[Lucid\\]" nil t)
 	(delete-region (match-beginning 0) (match-end 0)))
-      (when (re-search-forward "[^(].*-.*-" nil t)
+      (when (re-search-forward "[^(][^)]*-[^)]*-" nil t)
 	(delete-region (1+ (match-beginning 0)) (match-end 0))
 	(insert "("))
       (goto-char (point-max))

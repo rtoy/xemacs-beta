@@ -1,7 +1,7 @@
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1997/03/11 15:40:22
-;; Version: 1.23
+;; Created: 1997/03/25 23:35:03
+;; Version: 1.25
 ;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -158,37 +158,6 @@
 		    'src (widget-get widget 'src)
 		    'ismap server-map)))
 
-(defun widget-image-emacspeak-tty-imagemap (usemap)
-  (let* ((default nil)
-	 (href nil)
-	 (tag nil)
-	 (options (delete
-		   nil
-		   (mapcar
-		    (function
-		     (lambda (x)
-		       (if (eq (aref x 0) 'default)
-			   (setq default (aref x 2)))
-		       (if (and (not default) (stringp (aref x 2)))
-			   (setq default (aref x 2)))
-		       (setq tag (or (aref x 3) (aref x 2))
-			     href (aref x 2))
-		       (and (stringp tag)
-			    (stringp href)
-			    (list 'a
-				  (list
-				   (cons 'href href)
-				   (cons
-				    'class
-				    (list
-				     (if (url-have-visited-url href)
-					 ":visited" ":link"))))
-				  (list tag)))))
-		    usemap))))
-    (w3-display-node (list 'table '((border . "1"))
-			   (w3-display-chop-into-table
-			    (list nil nil options) 3)))))
-
 (defun widget-image-value-create (widget)
   ;; Insert the printed representation of the value
   (let (
@@ -218,35 +187,33 @@
 	  (goto-char where)
 	  (cond
 	   (client-map
-	    (if (featurep 'emacspeak)
-		(widget-image-emacspeak-tty-imagemap client-map)
-	      (let* ((default nil)
-		     (href nil)
-		     (tag nil)
-		     (options (mapcar
-			       (function
-				(lambda (x)
-				  (if (eq (aref x 0) 'default)
-				      (setq default (aref x 2)))
-				  (if (and (not default) (stringp (aref x 2)))
-				      (setq default (aref x 2)))
-				  (list 'choice-item
-					:format "%[%t%]"
-					:tag (or (aref x 3) (aref x 2))
-					:value (aref x 2)))) client-map)))
-		(setq real-widget
-		      (apply 'widget-create 'menu-choice
-			     :tag (or (widget-get widget :tag) "Imagemap")
-			     :notify (widget-get widget :notify)
-			     :action (widget-get widget :action)
-			     :value default
-			     :parent widget
-			     :help-echo 'widget-image-summarize
-			     options)))))
+	    (let* ((default nil)
+		   (href nil)
+		   (tag nil)
+		   (options (mapcar
+			     (function
+			      (lambda (x)
+				(if (eq (aref x 0) 'default)
+				    (setq default (aref x 2)))
+				(if (and (not default) (stringp (aref x 2)))
+				    (setq default (aref x 2)))
+				(list 'choice-item
+				      :format "%[%t%]"
+				      :tag (or (aref x 3) (aref x 2))
+				      :value (aref x 2)))) client-map)))
+	      (setq real-widget
+		    (apply 'widget-create 'menu-choice
+			   :tag (or (widget-get widget :tag) "Imagemap")
+			   :notify (widget-get widget :notify)
+			   :action (widget-get widget :action)
+			   :value default
+			   :parent widget
+			   :help-echo 'widget-image-summarize
+			   options))))
 	   ((and server-map (stringp href))
 	    (setq real-widget
 		  (widget-image-create-subwidget
-		   'push-button
+		   'item :format "%[%t%]"
 		   :tag alt
 		   :delete 'widget-default-delete
 		   :value href
@@ -255,7 +222,8 @@
 	   (href
 	    (setq real-widget
 		  (widget-image-create-subwidget
-		   'push-button :tag (or alt "Image")
+		   'item :format "%[%t%]"
+		   :tag (or alt "Image")
 		   :value href
 		   :delete 'widget-default-delete
 		   :action (widget-get widget :action)
@@ -263,7 +231,8 @@
 	   (alt
 	    (setq real-widget
 		  (widget-image-create-subwidget
-		   'push-button :tag alt :format "%[%t%]"
+		   'item :format "%[%t%]"
+		   :tag alt 
 		   :tab-order -1
 		   :delete 'widget-default-delete
 		   :action (widget-get widget :action)

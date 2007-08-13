@@ -80,11 +80,6 @@ FORCE :
 		-f texinfo-format-buffer -f save-buffer
 	-mv vm.info* ../info
 
-../info/efs.info : efs.texi
-	-$(EMACS) $(EMACSFLAGS) -insert efs.texi -l texinfmt \
-		-f texinfo-format-buffer -f save-buffer
-	-mv efs.info* ../info
-
 PERL = perl
 TEXI2DVI = texi2dvi
 

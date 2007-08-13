@@ -7842,7 +7842,7 @@ of the directory in efs's internal cache."
 
 ;;; Getting directory listings.
 
-(defun efs-directory-files (directory &optional full match nosort)
+(defun efs-directory-files (directory &optional full match nosort &rest ignored-for-now)
   ;; Returns directory-files for remote directories.
   ;; NOSORT is a V19 arg.
   (let* ((directory (expand-file-name directory))

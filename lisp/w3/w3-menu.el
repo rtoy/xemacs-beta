@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/18 00:45:01
-;; Version: 1.34
+;; Created: 1997/03/22 17:31:47
+;; Version: 1.35
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,8 +45,8 @@
 (defvar w3-links-menu nil "Menu for w3-mode in XEmacs.")
 (make-variable-buffer-local 'w3-links-menu)
 
-(defvar w3-use-menus '(file edit view go bookmark options buffers style
-			    emacs nil help)
+(defcustom w3-use-menus '(file edit view go bookmark options buffers style
+			       emacs nil help)
   "*Non-nil value causes W3 to provide a menu interface.
 A value that is a list causes W3 to install its own menubar.
 A value of 1 causes W3 to install a \"W3\" item in the Emacs menubar.
@@ -75,7 +75,20 @@ menubar.
 
 NOTE!  The current port of Emacs to Windows NT/95 does not support
 buttons in the menubar, so the 'emacs' keyword is currently ignored
-on that platform.")
+on that platform."
+  :group 'w3-menus
+  :type '(set (const :tag "File related commands" :value file)
+	      (const :tag "Standard editing commands" :value edit)
+	      (const :tag "View document information" :value view)
+	      (const :tag "Navigation" :value go)
+	      (const :tag "Bookmarks" :value bookmark)
+	      (const :tag "Options" :value options)
+	      (const :tag "Buffer list" :value buffers)
+	      (const :tag "Stylesheet information" :value style)
+	      (const :tag "Search engines" :value search)
+	      (const :tag "Toggle to default menus" :value emacs)
+	      (const :tag "Separator" :value nil)
+	      (const :tag "Help" :value help)))
 
 (defun w3-menu-hotlist-constructor (menu-items)
   (or (cdr w3-html-bookmarks)

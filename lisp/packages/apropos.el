@@ -562,9 +562,7 @@ found."
 	  (apropos-print-doc 'describe-variable 2
 			     "Variable" do-keys)
 	  (apropos-print-doc 'apropos-describe-plist 3
-			     "Plist" nil))))
-    (when temp-buffer-shrink-to-fit
-      (shrink-window-if-larger-than-buffer (get-buffer-window "*Apropos*"))))
+			     "Plist" nil)))))
   (prog1 apropos-accumulator
     (setq apropos-accumulator ())))	; permit gc
 

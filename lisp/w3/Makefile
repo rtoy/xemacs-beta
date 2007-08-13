@@ -36,7 +36,7 @@ URLSOURCES = \
 	url-nfs.el url-file.el url-cookie.el url-parse.el url-irc.el	\
 	url-gopher.el url-http.el url-mail.el url-misc.el url-news.el	\
 	url-vars.el url-auth.el mm.el md5.el url-gw.el ssl.el base64.el	\
-	url.el socks.el url-cache.el
+	url.el socks.el url-cache.el url-ns.el
 
 CUSTOMSOURCES = # widget.el widget-edit.el
 CUSTOMOBJECTS = $(CUSTOMSOURCES:.el=.elc)
@@ -65,9 +65,6 @@ w3:	check-custom docomp.el $(OBJECTS)
 	@echo Build of w3 complete...
 
 xemacs-w3:	docomp.el $(OBJECTS)
-	@echo Build of w3 complete...
-
-xemacs-w3: docomp.el $(OBJECTS)
 	@echo Build of w3 complete...
 
 all:	w3.info w3

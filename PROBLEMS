@@ -1,3 +1,4 @@
+-*- mode:outline; minor-mode:outl-mouse -*-
 This file describes various problems that have been encountered
 in compiling, installing and running XEmacs.
 
@@ -1718,3 +1719,12 @@ defined as a union on some rare architectures.
 
 This problem will not happen if the m-...h file for your type
 of machine defines NO_UNION_TYPE.  That is the recommended setting now.
+
+* On Irix 5.x and 6.x, the dumped XEmacs (xemacs) core dumps when executed 
+  on another machine, or after newer SGI IRIX patches have been installed.
+
+The xemacs binary must be executed with the same "libc.so" file which was used 
+when the xemacs binary was dumped.  Some SGI IRIX patches updates this file.
+Make sure that all machines using the xemacs binary are using the same
+set of IRIX patches.  If xemacs core dumps after a patch upgrade then you 
+will have to redump it from temacs.

@@ -116,7 +116,7 @@ energize_version='no'
 native_sound_lib=''
 # make normal error-checking be the default in alpha and beta versions, so
 # that bugs get noticed.  Change this for released versions.
-error_check_default='yes'
+error_check_default='no'
 error_check_extents=$error_check_default
 error_check_typecheck=$error_check_default
 error_check_bufpos=$error_check_default
@@ -286,7 +286,7 @@ Additional features:
 Debugging options:
 
 --debug			Compile with support for debugging XEmacs.
-			(Causes code-size increase but no loss of speed.)
+			(Causes code-size increase and little loss of speed.)
 --error-checking=TYPE[,TYPE]...
 			Compile with internal error-checking added.
 			Causes noticeable loss of speed.  Valid types

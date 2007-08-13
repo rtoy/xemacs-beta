@@ -12,7 +12,7 @@
 @c site: http://www.cs.indiana.edu/elisp/w3/docs.html
 @c
 @setfilename w3.info
-@settitle Emacs-W3 User's Manual
+@settitle Emacs/W3 User's Manual
 @iftex
 @finalout
 @end iftex
@@ -27,10 +27,10 @@
 @dircategory World Wide Web
 @dircategory GNU Emacs Lisp
 @direntry
-* W3: (w3).                       Emacs-W3 World Wide Web browser.
+* W3: (w3).                       Emacs/W3 World Wide Web browser.
 @end direntry
 @ifinfo
-This file documents the Emacs-W3 World Wide Web browser.
+This file documents the Emacs/W3 World Wide Web browser.
 
 Copyright (C) 1993, 1994, 1995, 1996 William M. Perry
 Copyright (C) 1996, 1997 Free Software Foundation
@@ -50,10 +50,10 @@ notice identical to this one except for the removal of this paragraph
 @c
 @titlepage
 @sp 6
-@center @titlefont{Emacs-W3}
+@center @titlefont{Emacs/W3}
 @center @titlefont{User's Manual}
 @sp 4
-@center Third Edition, Emacs-W3 Version 3.0
+@center Third Edition, Emacs/W3 Version 3.0
 @sp 1
 @center February 1997
 @sp 5
@@ -74,25 +74,25 @@ are preserved on all copies.
 @node Top, Getting Started, (dir), (dir)
 @top W3
 
-Users can browse the World Wide Web from within Emacs by using Emacs-W3.
+Users can browse the World Wide Web from within Emacs by using Emacs/W3.
 All of the widely used (and even some not very widely used) @sc{url}
 schemes are supported, and it is very easy to add new methods as the
 need arises.
 
-Emacs-W3 provides some core functionality that can be readily re-used
+Emacs/W3 provides some core functionality that can be readily re-used
 from any program in Emacs.  Users and other package writers are
 encouraged to @i{Web-enable} their applications and daily work routines
 with the library.
 
-Emacs-W3 is completely customizable, both from Emacs-Lisp and from
-stylesheets @xref{Stylesheets}  If there is any aspect of Emacs-W3 that
+Emacs/W3 is completely customizable, both from Emacs-Lisp and from
+stylesheets @xref{Stylesheets}  If there is any aspect of Emacs/W3 that
 cannot be modified to your satisfaction, please send mail to the
 @t{w3-beta@@indiana.edu} mailing list with any suggestions.
 @xref{Reporting Bugs}
 
 @menu
-* Getting Started::             Getting up and running with Emacs-W3
-* Basic Usage::                 Basic movement and usage of Emacs-W3.
+* Getting Started::             Getting up and running with Emacs/W3
+* Basic Usage::                 Basic movement and usage of Emacs/W3.
 * Compatibility::               Explanation of compatibility with
                                 other browsers.
 * Stylesheets::                 How to control the look of web pages
@@ -109,9 +109,9 @@ cannot be modified to your satisfaction, please send mail to the
 * Future Directions::           Plans for future revisions
 
 Appendices:
-* Reporting Bugs::              How to report a bug in Emacs-W3.
+* Reporting Bugs::              How to report a bug in Emacs/W3.
 * Dealing with Firewalls::      How to get around your firewall.
-* Proxy Gateways::              Using a proxy gateway with Emacs-W3.
+* Proxy Gateways::              Using a proxy gateway with Emacs/W3.
 * Installing SSL::              Turning on @sc{ssl} support.
 * Mailcap Files::               An explanation of Mailcap files.
 * Down with DoubleClick::       Annoyed by advertisements?  Read this!
@@ -129,10 +129,10 @@ Indices:
 @kindex M-x w3
 @vindex w3-default-homepage
 @findex w3
-If installed correctly, starting Emacs-W3 is quite painless.  Just type
+If installed correctly, starting Emacs/W3 is quite painless.  Just type
 @kbd{M-x w3} in a running Emacs session.  This will retrieve the default
 page that has been configured (@pxref{Preferences Panel}) - by default the
-documentation for Emacs-W3 at Indiana University.
+documentation for Emacs/W3 at Indiana University.
 
 If the default page is not retrieved correctly at startup, you will have
 to do some customization (@pxref{Preferences Panel}).
@@ -174,7 +174,7 @@ press the @kbd{q} key.
 @end table
 
 @menu
-* Downloading::                 Where to download Emacs-W3.
+* Downloading::                 Where to download Emacs/W3.
 * Building and Installing::     Compiling and installing from source.
 * Startup Files::               What is where, and why.
 * Preferences Panel::           Quick configuration of common options.
@@ -185,7 +185,7 @@ press the @kbd{q} key.
 
 :: WORK :: What you need, and why
 :: WORK :: Where to download Emacs, XEmacs, various platforms
-:: WORK :: Where to download Emacs-W3
+:: WORK :: Where to download Emacs/W3
 :: WORK :: Where to download related utilities (netpbm, xv, gimp, etc.)
 
 @node Building and Installing, Startup Files, Downloading, Getting Started
@@ -200,7 +200,7 @@ press the @kbd{q} key.
 @cindex Default stylesheet
 
 :: WORK :: startup files
-This section should document where emacs-w3 looks for its startup files,
+This section should document where Emacs/W3 looks for its startup files,
 and what each one does.  'profile' 'stylesheet' 'hotlist' 'history' etc.
 
 @node Preferences Panel,  , Startup Files, Getting Started
@@ -219,14 +219,14 @@ This should document the quick preferences panel.  M-x w3-preferences-edit
 @kindex return
 @kindex tab
 @kindex M-tab
-Emacs-W3 is similar to the Info package all Emacs users hold near and
+Emacs/W3 is similar to the Info package all Emacs users hold near and
 dear to their hearts (@xref{Top,,Info,info, The Info Manual}, for a
 description of Info).  Basically, @kbd{space} and @kbd{backspace}
 control scrolling, and @kbd{return} or the middle mouse button follows a
 hypertext link.  The @kbd{tab} and @kbd{Meta-tab} keys maneuver around the
 various links on the page.
 
-@b{NOTE:} Starting with Emacs-W3 3.0, form entry areas in a page can be
+@b{NOTE:} Starting with Emacs/W3 3.0, form entry areas in a page can be
 typed directly into.  This is one of the main differences in navigation
 from version 2.0.  If you are used to using the @kbd{f} and @kbd{b} keys
 to navigate around a buffer, I suggest training yourself to always use
@@ -238,8 +238,8 @@ non-graphic terminals (VT100, DOS window, etc.).  On a graphics
 terminal, the links are in shown in different colors.
 @xref{Stylesheets} for information on how to change this.
 
-There are approximately 50 keys bound to special Emacs-W3 functions.
-The basic rule of thumb regarding keybindings in Emacs-W3 is that a
+There are approximately 50 keys bound to special Emacs/W3 functions.
+The basic rule of thumb regarding keybindings in Emacs/W3 is that a
 lowercase key takes an action on the @b{current document}, and an
 uppercase key takes an action on the document pointed to by the
 hypertext link @b{under the cursor}.
@@ -438,7 +438,7 @@ not consulted.
 @findex w3-fetch
 @item C-o
 Prompts for a @sc{url} in the minibuffer, and attempts to fetch
-it.  If there are any errors, or Emacs-W3 cannot understand the type of link
+it.  If there are any errors, or Emacs/W3 cannot understand the type of link
 requested, the errors are displayed in a hypertext buffer.
 @kindex o
 @findex w3-open-local
@@ -447,7 +447,7 @@ requested, the errors are displayed in a hypertext buffer.
 Opens a local file, interactively.  This prompts for a local file name
 to open.  The file must exist, and may be a directory.  If the requested
 file is a directory and @code{url-use-hypertext-dired} is @code{nil},
-then a dired-mode buffer is displayed.  If non@code{nil}, then Emacs-W3
+then a dired-mode buffer is displayed.  If non@code{nil}, then Emacs/W3
 automatically generates a hypertext listing of the directory.  The
 hypertext mode is the default, so that all the keys and functions remain
 the same.
@@ -462,14 +462,14 @@ Source, or Binary.
 @findex w3-show-history-list
 @vindex w3-keep-history
 @item Hv
-If @code{url-keep-history} is non-@code{nil}, then Emacs-W3 keeps track
+If @code{url-keep-history} is non-@code{nil}, then Emacs/W3 keeps track
 of all the @sc{url}s visited in an Emacs session.  This function takes all
 the links that are in that internal list, and formats them as hypertext
 links in a list.
 @end table
 
 @cindex Buffer movement
-And here are the commands to move around between Emacs-W3 buffers:
+And here are the commands to move around between Emacs/W3 buffers:
 
 @table @kbd
 @kindex l
@@ -610,13 +610,13 @@ relationship.
 
 @node Compatibility, Stylesheets, Basic Usage, Top
 @chapter Compatibility with other Browsers
-Due to the popularity of several other browsers, Emacs-W3 offers an easy
+Due to the popularity of several other browsers, Emacs/W3 offers an easy
 transition to its much better way of life.  This ranges from being able
 to share the same preferences files and disk cache to actually emulating
 the keybindings used in other browsers.
 
 @menu
-* Emulation::                   Emacs-W3 can emulate the keybindings and
+* Emulation::                   Emacs/W3 can emulate the keybindings and
 				other behaviours of other browsers.
 * Hotlist Handling::            A hotlist is an easy way to keep track of
 				interesting Web pages without having to
@@ -773,7 +773,7 @@ Uh, turn this into pretty tables about what keys are emulated.
 :: WORK :: Document that it supports different types of hotlist formats
 :: WORK :: Make sure everything hotlist related can be accessed via 'h'
 In order to avoid having to traverse many documents to get to the same
-document over and over, Emacs-W3 supports a ``hotlist'' like Mosaic.  This is
+document over and over, Emacs/W3 supports a ``hotlist'' like Mosaic.  This is
 a file that contains @sc{url}s and aliases.  Hotlists allow quick access to any
 document in the Web, providing it has been visited and added to the hotlist.
 The variable @code{w3-hotlist-file} determines where this information
@@ -844,12 +844,12 @@ that it can provide @b{forward} and @b{back} buttons to keep a @i{path}
 of @sc{url}s that can be traversed easily.
 
 @vindex url-keep-history
-If the variable @code{url-keep-history} is @code{t}, then Emacs-W3
+If the variable @code{url-keep-history} is @code{t}, then Emacs/W3
 keeps a list of all the @sc{url}s visited in a session.
 
 @findex w3-show-history
-To view a listing of the history for this session of Emacs-W3, use
-@code{M-x w3-show-history} from any buffer, and Emacs-W3 generates an
+To view a listing of the history for this session of Emacs/W3, use
+@code{M-x w3-show-history} from any buffer, and Emacs/W3 generates an
 @sc{html} document showing every @sc{url} visited since Emacs started (or
 cleared the history list), and then format it.  Any of the links can
 be chosen and followed to the original document.  To clear the history
@@ -859,7 +859,7 @@ list, choose 'Clear History' from the 'Options' menu.
 @findex w3-backward-in-history
 @findex w3-fetch
 Another twist on the history list mechanism is the fact that all
-Emacs-W3 buffers remember what @sc{url}, buffer, and buffer position of the
+Emacs/W3 buffers remember what @sc{url}, buffer, and buffer position of the
 last document, and also keeps track of the next location jumped @b{to}
 from that buffer.  This means that the user can go forwards and
 backwards very easily along the path taken to reach a particular
@@ -876,7 +876,7 @@ user has visited, and it displays them in a different style than normal
 
 @vindex url-keep-history
 @vindex url-global-history-file
-If the variable @code{url-keep-history} is @code{t}, then Emacs-W3
+If the variable @code{url-keep-history} is @code{t}, then Emacs/W3
 keeps a list of all the @sc{url}s visited in a session.  The file is
 automatically written to disk when exiting emacs.  The list is added to
 those already in the file specified by @code{url-global-history-file},
@@ -886,12 +886,12 @@ If any @sc{url} in the list is found in the file, it is not saved, but new
 ones are added at the end of the file.
 
 The function that saves the global history list is smart enough to
-notice what style of history list is being used (Netscape, Emacs-W3, or
+notice what style of history list is being used (Netscape, Emacs/W3, or
 XMosaic), and writes out the new additions appropriately.
 
 @cindex Completion of URLs
 @cindex Usefulness of global history
-One of the nice things about keeping a global history files is that Emacs-W3
+One of the nice things about keeping a global history files is that Emacs/W3
 can use it as a completion table.  When doing @kbd{M-x w3-fetch}, pressing
 the @kbd{tab} or @kbd{space} key will show all completions for a
 partial @sc{url}.  This is very useful, especially for very long @sc{url}s that
@@ -900,12 +900,12 @@ site before choosing which to retrieve.
 
 @node Stylesheets, Supported URLs, Compatibility, Top
 @chapter Stylesheets
-The way in which Emacs-W3 formats a document is very customizable.  All
+The way in which Emacs/W3 formats a document is very customizable.  All
 formatting is now controlled by a default stylesheet set by the user
-with the @code{w3-default-stylesheet} variable.  Emacs-W3 currently
+with the @code{w3-default-stylesheet} variable.  Emacs/W3 currently
 supports the @sc{W3C} recommendation for Cascading Style Sheets, Level 1
 (commonly known as @sc{CSS1}) with a few experimental items from other
-W3C proposals.  Wherever Emacs-W3 diverges from the specification, it
+W3C proposals.  Wherever Emacs/W3 diverges from the specification, it
 will be clearly documented, and will be changed once a full standard is
 available.
 
@@ -913,7 +913,7 @@ Support for @sc{DSSSL} is progressing, but spare time is at an all-time
 low.  If anyone would like to help, please contact the author.
 
 The following sections closely parallel the @sc{CSS1} specification so
-it should be very easy to look up what Emacs-W3 supports when browsing
+it should be very easy to look up what Emacs/W3 supports when browsing
 through the @sc{CSS1} specification.  Please note that a lot of the text
 in the following sections comes directly from the specification as
 well.
@@ -1068,7 +1068,7 @@ Pseudo-elements are used to address sub-parts of elements, while
 pseudo-classes allow style sheets to differentiate between different
 element types.
 
-The only support pseudo-classes in Emacs-W3 are on the anchor tag
+The only support pseudo-classes in Emacs/W3 are on the anchor tag
 (<a>...</a>).
 
 User agents commonly display newly visited anchors differently from
@@ -1309,9 +1309,9 @@ Other than the value the following information is also shown.
 
 @multitable @columnfractions .20 .8
 @item Supported Values: @tab If this is present, it lists the parts of
-the specification that Emacs-W3 currently supports.
+the specification that Emacs/W3 currently supports.
 @item Unsupported Values: @tab If this is present, it represents the
-parts of the specifcation that Emacs-W3 does not support.
+parts of the specifcation that Emacs/W3 does not support.
 @item Initial: @tab The default value for the property, unless
 explicitly set in a stylesheet.
 @item Applies to: @tab What type of elements this property can be attached to.
@@ -1648,7 +1648,7 @@ inherit, but the parent element's background will shine through by
 default because of the initial 'transparent' value on
 'background-color'.
 
-NOTE: Currently, Emacs-W3 can only show background images under XEmacs.
+NOTE: Currently, Emacs/W3 can only show background images under XEmacs.
 Emacs 19 doesn't have the support in its display code yet.
 
 @menu
@@ -1723,17 +1723,17 @@ overlaid on top of the background color.
 @node background-repeat, background-attachment, background-image, Colors and Backgrounds
 @subsubsection background-repeat
 
-This property is not supported at all under Emacs-W3.
+This property is not supported at all under Emacs/W3.
 
 @node background-attachment, background-position, background-repeat, Colors and Backgrounds
 @subsubsection background-attachment
 
-This property is not supported at all under Emacs-W3.
+This property is not supported at all under Emacs/W3.
 
 @node background-position, background, background-attachment, Colors and Backgrounds
 @subsubsection background-position
 
-This property is not supported at all under Emacs-W3.
+This property is not supported at all under Emacs/W3.
 
 @node background,  , background-position, Colors and Backgrounds
 @subsubsection background
@@ -1804,7 +1804,7 @@ spacing may also be influenced by justification (which is a value of the
 Here, the word-spacing between each word in 'H1' elements would be
 increased by '1em'.
 
-NOTE: Emacs-W3 cannot currently support this, due to limitations in
+NOTE: Emacs/W3 cannot currently support this, due to limitations in
 Emacs.  It may  be implemented in the future.
 
 @node letter-spacing, text-decoration, word-spacing, Text Properties
@@ -1832,7 +1832,7 @@ justification (which is a value of the 'align' property).
 Here, the letter-spacing between each character in 'BLOCKQUOTE' elements
 would be increased by '0.1em'.
 
-NOTE: Emacs-W3 cannot currently support this, due to limitations in
+NOTE: Emacs/W3 cannot currently support this, due to limitations in
 Emacs.  It may be implemented in the future.
 
 @node text-decoration, vertical-align, letter-spacing, Text Properties
@@ -1875,7 +1875,7 @@ yet.
 @node vertical-align, text-transform, text-decoration, Text Properties
 @subsubsection vertical-align
 
-This is currently unsupported in Emacs-W3.
+This is currently unsupported in Emacs/W3.
 
 @node text-transform, text-align, vertical-align, Text Properties
 @subsubsection text-transform
@@ -1908,7 +1908,7 @@ The actual transformation in each case is human language dependent.
 
 The example above would put 'H1' elements in uppercase text.
 
-NOTE: This capability was in the previous version of Emacs-W3, but has
+NOTE: This capability was in the previous version of Emacs/W3, but has
 not been reimplemented in the new display code yet.  Please feel free to
 send me patches.
 
@@ -1938,12 +1938,12 @@ relative to the width of the element, not the canvas.
 @node text-indent, line-height, text-align, Text Properties
 @subsubsection text-indent
 
-Not currently implemented in Emacs-W3.
+Not currently implemented in Emacs/W3.
 
 @node line-height,  , text-indent, Text Properties
 @subsubsection line-height
 
-Not currently implemented in Emacs-W3.
+Not currently implemented in Emacs/W3.
 
 @node Box Properties, Classification, Text Properties, Properties
 @subsection Box Properties
@@ -2008,11 +2008,11 @@ children elements and the surrounding box.
 
 The last rule turns off the display of images.
 
-A value of 'line' results in a single line break.  Emacs-W3 needs this
+A value of 'line' results in a single line break.  Emacs/W3 needs this
 extension to be able to fully specify the behaviour of @sc{br} and
 @sc{hr} elements within a stylesheet.
 
-NOTE: Emacs-W3 defaults to using 'inline' for this property, which is a
+NOTE: Emacs/W3 defaults to using 'inline' for this property, which is a
 slight deviation from the specification.
 
 @node white-space, list-style-type, display, Classification
@@ -2073,7 +2073,7 @@ This property sets the image that will be used as the list-item
 marker. When the image is available it will replace the marker set with
 the 'list-style-type' marker.
 
-NOTE: This is currently unimplemented in Emacs-W3.
+NOTE: This is currently unimplemented in Emacs/W3.
 
 @example
   UL @{ list-style-image: url(http://png.com/ellipse.png) @}
@@ -2691,7 +2691,7 @@ possible).
                                                 types (e.g., @samp{.png ->
                                                 image/png)}.
 * Specifying Viewers::          How to specify external and internal viewers
-                        for files that Emacs-W3 cannot handle natively.
+                        for files that Emacs/W3 cannot handle natively.
 @end menu
 
 @node Adding MIME types based on file extensions, Specifying Viewers, MIME Support, MIME Support
@@ -2718,14 +2718,14 @@ over-ridden.  Regular expressions can @b{NOT} be used.
 @cindex mime-types file
 @findex mm-parse-mimetypes
 Both Mosaic and the NCSA @sc{http} daemon rely on a separate file for mapping
-file extensions to MIME types.  Instead of having the users of Emacs-W3
+file extensions to MIME types.  Instead of having the users of Emacs/W3
 duplicate this in lisp, this file can be parsed using the
 @code{url-parse-mimetypes} function.  This function is called each time
 w3 is loaded.  It tries to locate mimetype files in several places. If
 the environment variable @code{MIMETYPES} is nonempty, then this is
 assumed to specify a UNIX-like path of mimetype files (this is a colon
 separated string of pathnames).  If the @code{MIMETYPES} environment
-variable is empty, then Emacs-W3 looks for these files:
+variable is empty, then Emacs/W3 looks for these files:
 
 @enumerate
 @item
@@ -2777,7 +2777,7 @@ should look like.
 @cindex Security
 @cindex Paranoia
 There are an increasing number of ways to authenticate a user to a web
-service.  Emacs-W3 tries to support as many as possible.  Emacs-W3
+service.  Emacs/W3 tries to support as many as possible.  Emacs/W3
 currently supports:
 
 @table @b
@@ -2806,7 +2806,7 @@ archive@footnote{One is ftp://ds.internic.net/internet-drafts}.
 @cindex Exportability
 @cindex Export Restrictions
 SSL is the @code{Secure Sockets Layer} interface developed by Netscape
-Communications @footnote{http://www.netscape.com/}.  Emacs-W3 supports
+Communications @footnote{http://www.netscape.com/}.  Emacs/W3 supports
 @sc{http} transfers over an SSL encrypted channel, if the appropriate files
 have been installed.@xref{Installing SSL}
 @end table
@@ -2867,11 +2867,11 @@ have been installed.@xref{Installing SSL}
 @menu
 * Disk Caching::                Improving performance by using a local disk cache
 * Interfacing to Mail/News::    How to make VM understand hypertext links
-* Debugging HTML::              How to make Emacs-W3 display warnings about invalid
+* Debugging HTML::              How to make Emacs/W3 display warnings about invalid
                                 @sc{html}/@sc{html}+ constructs.
-* Hooks::                       Various hooks to use throughout Emacs-W3
+* Hooks::                       Various hooks to use throughout Emacs/W3
 * Other Variables::             Miscellaneous variables that control the real
-                                guts of Emacs-W3.
+                                guts of Emacs/W3.
 @end menu
 
 @node Disk Caching, Interfacing to Mail/News, Advanced Features, Advanced Features
@@ -2881,13 +2881,13 @@ have been installed.@xref{Installing SSL}
 @cindex Disk Cache
 
 A cache stores the information on a page on the local machine.  When
-requesting a page that is in the cache, Emacs-W3 can retrieve the page
+requesting a page that is in the cache, Emacs/W3 can retrieve the page
 from the cache more quickly than retrieving the page again from its
 location out on the network.  With a well-populated cache, browsing the
 web is dramatically faster.
 
-The first time a page is requested, Emacs-W3 retrieves the page from the
-network.  When requesting a page that is in the cache, Emacs-W3 checks
+The first time a page is requested, Emacs/W3 retrieves the page from the
+network.  When requesting a page that is in the cache, Emacs/W3 checks
 to see if the page has changed since it was last retrieved from the
 remote machine.  If it has not changed, the local copy is used, saving
 the transmission of the file over the network.
@@ -2916,7 +2916,7 @@ crontab(5) or at(1) for more information)
 @vindex url-standalone-mode
 With a large cache of documents on the local disk, it can be very handy
 when traveling, or any other time the network connection is not active
-(a laptop with a dial-on-demand PPP connection, etc).  Emacs-W3 can rely
+(a laptop with a dial-on-demand PPP connection, etc).  Emacs/W3 can rely
 solely on its cache, and avoid checking to see if the page has changed
 on the remote server.  In the case of a dial-on-demand PPP connection,
 this will keep the phone line free as long as possible, only bringing up
@@ -2930,11 +2930,11 @@ non-@code{nil}, or choose the `Use Cache Only' menu item (under
 @section Interfacing to Mail/News
 @cindex Interfacing to Mail/News
 @cindex VM
-@cindex Using Emacs-W3 with VM
+@cindex Using Emacs/W3 with VM
 @cindex GNUS
-@cindex Using Emacs-W3 with Gnus
+@cindex Using Emacs/W3 with Gnus
 @cindex RMAIL
-@cindex Using Emacs-W3 with RMAIL
+@cindex Using Emacs/W3 with RMAIL
 
 More and more people are including @sc{url}s in their signatures, and within
 the body of mail messages.  It can get quite tedious to type these into
@@ -2970,7 +2970,7 @@ people writing valid @sc{html}, set the variable @code{w3-debug-html} to
 @code{t} and see what happens.
 
 
-If a Emacs-W3 thinks it has encountered invalid @sc{html}, then a debugging
+If a Emacs/W3 thinks it has encountered invalid @sc{html}, then a debugging
 message is displayed.
 
 :: WORK :: Need to list the different values w3-debug-html can have, and
@@ -2981,7 +2981,7 @@ message is displayed.
 @cindex Hooks
 
 These are the various hooks that can be used to customize some of
-Emacs-W3's behavior.  They are arranged in the order in which they would
+Emacs/W3's behavior.  They are arranged in the order in which they would
 happen when retrieving a document.  These are all 'normal hooks' in
 standard Emacs-terminology, meaning they are functions (or lists of
 functions) that are called consecutively.
@@ -2990,7 +2990,7 @@ functions) that are called consecutively.
 @vindex w3-load-hook
 @item w3-load-hook
 These hooks are run the first time a @sc{url} is fetched.  All the
-Emacs-W3 variables are initialized before this hook is run.
+Emacs/W3 variables are initialized before this hook is run.
 @item w3-mode-hook
 These hooks are run after a buffer has been parsed and displayed, but
 before any inlined images are downloaded and converted.
@@ -3001,7 +3001,7 @@ These hooks are run after displaying a document's source.
 @node Other Variables,  , Hooks, Advanced Features
 @section Miscellaneous variables
 
-There are lots of variables that control the real nitty-gritty of Emacs-W3
+There are lots of variables that control the real nitty-gritty of Emacs/W3
 that the beginning user probably shouldn't mess with.  Here they are.
 
 @table @code
@@ -3020,7 +3020,7 @@ answer is gotten.  Defaults to @code{'yes-or-no-p}.
 @vindex w3-default-action
 A lisp symbol specifying what action to take for files with extensions
 that are not in the @code{mm-mime-extensions} assoc list.  This is
-useful in case Emacs-W3 ever run across files with weird extensions
+useful in case Emacs/W3 ever run across files with weird extensions
 (.foo, .README, .READMEFIRST, etc.).  In most circumstances, this should
 not be required anymore.
 
@@ -3055,7 +3055,7 @@ default value as its second argument.
 Determines what happens when @code{w3-fetch} is called on a document
 that has already been loaded into another buffer.  Possible values are:
 @code{nil}, @code{yes}, and @code{no}.  @code{nil} will ask the user if
-Emacs-W3 should reuse the buffer (this is the default value).  A value of
+Emacs/W3 should reuse the buffer (this is the default value).  A value of
 @code{yes} means assume the user wants to always reuse the buffer.  A
 value of @code{no} means assume the user always wants to re-fetch the
 document.
@@ -3105,9 +3105,9 @@ programs for each.  This is used to build the Accept-encoding header for
 @cindex Relevant Newsgroups
 @cindex Newsgroups
 @cindex Support
-For more help on Emacs-W3, please send me mail
+For more help on Emacs/W3, please send me mail
 (@i{wmperry@@cs.indiana.edu}).  Several discussion lists have also been
-created for Emacs-W3.  To subscribe, send mail to
+created for Emacs/W3.  To subscribe, send mail to
 @i{majordomo@@indiana.edu}, with the body of the message 'subscribe
 @var{listname} @var{<email addres>}'.  All other mail should go to
 @i{<listname>@@indiana.edu}.
@@ -3115,17 +3115,17 @@ created for Emacs-W3.  To subscribe, send mail to
 
 @itemize @bullet
 @item
-w3-announce -- this list is for anyone interested in Emacs-W3, and
+w3-announce -- this list is for anyone interested in Emacs/W3, and
 should in general only be used by me.  The gnu.emacs.sources newsgroup
 and a few other mailing lists are included on this.  Please only use
-this list for major package releases related to Emacs-W3.
+this list for major package releases related to Emacs/W3.
 (@i{www-announce@@w3.org} is included on this list).
 @item
-w3-beta -- this list is for beta testers of Emacs-W3.  These brave souls test
+w3-beta -- this list is for beta testers of Emacs/W3.  These brave souls test
 out not-quite stable code.
 @item
 w3-dev -- a list consisting of myself and a few other people who are
-interested in the internals of Emacs-W3, and doing active development work.
+interested in the internals of Emacs/W3, and doing active development work.
 Pretty dead right now, but I hope it will grow.
 @end itemize
 
@@ -3163,15 +3163,15 @@ right now.
 @cindex Bugs
 @cindex Contacting the author
 
-If any bugs are discovered in Emacs-W3, please report them to the
+If any bugs are discovered in Emacs/W3, please report them to the
 mailing list @t{w3-beta@@indiana.edu} - this is where the brave souls
-who beta test the latest versions of Emacs-W3 reside, and are generally
+who beta test the latest versions of Emacs/W3 reside, and are generally
 very responsive to bug reports.
 
 @kindex w
-Please make sure to use the bug submission feature of Emacs-W3, so that
+Please make sure to use the bug submission feature of Emacs/W3, so that
 all relevant information will be sent along with your bug report.  By
-default this is bound to the `@key{w}' key when in an Emacs-W3 buffer,
+default this is bound to the `@key{w}' key when in an Emacs/W3 buffer,
 or you can use @key{M-x w3-submit-bug} from anywhere within Emacs.
 
 For problems that are causing emacs to signal and error, please send a
@@ -3215,7 +3215,7 @@ sufficient.
 It is becoming more and more common to be behind a firewall or some
 other system that restricts your outbound network activity, especially
 if you are like me and away from the wonderful world of academia.
-Emacs-W3 has several different methods to get around firewalls (not to
+Emacs/W3 has several different methods to get around firewalls (not to
 worry though - none of them should get you in trouble with the local
 @sc{mis} department.)
 
@@ -3271,7 +3271,7 @@ as he is responsible for the original support.
 @end table
 
 @vindex url-gateway-local-host-regexp
-Emacs-W3 has support for using the gateway mechanism for certain
+Emacs/W3 has support for using the gateway mechanism for certain
 domains, and directly connecting to others.  The variable
 @code{url-gateway-local-host-regexp} controls this behaviour.  This is a
 regular expression @footnote{Please see the full Emacs distribution for
@@ -3280,7 +3280,7 @@ not require the use of a gateway.  If @code{nil}, then all connections
 are made through the gateway.
 
 @vindex url-gateway-method
-Emacs-W3 supports several methods of getting around gateways.  The
+Emacs/W3 supports several methods of getting around gateways.  The
 variable @code{url-gateway-method} controls which of these methods is
 used.  This variable can have several values (use these as symbol names,
 not strings), ie: @samp{(setq url-gateway-method 'telnet)}.  Possible
@@ -3346,12 +3346,12 @@ more information.
 @c This probably shouldn't be documented
 
 @item native
-This means that Emacs-W3 should use the builtin networking code of
+This means that Emacs/W3 should use the builtin networking code of
 Emacs.  This should be used only if there is no firewall, or the Emacs
 source has already been hacked to get around the firewall.
 @end table
 
-Emacs-W3 should now be able to get outside the local network.  If none
+Emacs/W3 should now be able to get outside the local network.  If none
 of this makes sense, its probably my fault.  Please check with the
 network administrators to see if they have a program that does most of
 this already, since somebody somewhere at the company has probably been
@@ -3389,7 +3389,7 @@ Asterisks can be used as a wildcard.  For example:
 NO_PROXY=*.aventail.com,home.com,*.seanet.com
 @end example
 
-tells Emacs-W3 to contact all machines in the @b{aventail.com} and
+tells Emacs/W3 to contact all machines in the @b{aventail.com} and
 @b{seanet.com} domains directly, as well as the machine named
 @b{home.com}.
 
@@ -3417,7 +3417,7 @@ directly.
 @cindex Gag Puke Retch
 @cindex Exportability
 @cindex Export Restrictions
-In order to use SSL in Emacs-W3, an implementation of SSL is necessary.
+In order to use SSL in Emacs/W3, an implementation of SSL is necessary.
 These are the implementations that I am aware of:
 
 @table @code
@@ -3432,7 +3432,7 @@ US by a non-US citizen.  More information can be found at
 ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
 @end table
 
-Currently, an external in order to use SSL from within Emacs-W3.  This
+Currently, an external in order to use SSL from within Emacs/W3.  This
 program should be able to take command line parameters for the hostname
 and port number to connect to, and read/write to standard input/output
 (similar to telnet, but without the annoying status messages).  
@@ -3470,13 +3470,13 @@ NCSA Mosaic and almost all other WWW browsers rely on a separate file
 for mapping MIME types to external viewing programs.  This takes some of
 the burden off of browser developers, so each browser does not have to
 support all image formats, or postscript, etc.  Instead of having the
-users of Emacs-W3 duplicate this in lisp, this file can be parsed using
+users of Emacs/W3 duplicate this in lisp, this file can be parsed using
 the @code{mm-parse-mailcaps} function.  This function is called each
-time Emacs-W3 is loaded.  It tries to locate mimetype files in several
+time Emacs/W3 is loaded.  It tries to locate mimetype files in several
 places. If the environment variable @code{MAILCAPS} is nonempty, then
 this is assumed to specify a UNIX-like path of mimetype files (this is a
 colon separated string of pathnames).  If the @code{MAILCAPS}
-environment variable is empty, then Emacs-W3 looks for these
+environment variable is empty, then Emacs/W3 looks for these
 files:
 
 @enumerate

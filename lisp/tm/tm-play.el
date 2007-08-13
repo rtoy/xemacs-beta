@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/9/26 (separated from tm-view.el)
-;; Version: $Id: tm-play.el,v 1.7 1997/03/22 05:29:24 steve Exp $
+;; Version: $Id: tm-play.el,v 1.8 1997/03/26 04:34:05 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -423,7 +423,8 @@
 ;;; @ rot13-47
 ;;;
 
-(require 'view)
+(unless (boundp 'view-mode-map)
+  (require 'view))
 
 (defconst mime-view-text/plain-mode-map (copy-keymap view-mode-map))
 (define-key mime-view-text/plain-mode-map

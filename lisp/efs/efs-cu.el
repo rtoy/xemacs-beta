@@ -359,6 +359,7 @@ The EXPLICIT-ARGS are bound when the continuation function is set."
 		       (user-login-name))))
 	(efs-set-user host user)))))
 
+;;;###autoload
 (defun efs-ftp-path (path)
   "Parse PATH according to efs-path-regexp.
 Returns a list (HOST USER PATH), or nil if PATH does not match the format."

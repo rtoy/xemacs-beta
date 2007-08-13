@@ -3005,13 +3005,11 @@ absolute one."
       (error "Apparently circular symlink path"))))
 
 ;; Suggested by Michael Kifer <kifer@CS.SunySB.EDU>
-(defun file-remote-p (file)
-  "Test whether file resides on the local system.
-The special value 'unknown is returned if no remote file access package
-has been loaded."
-  (cond ((featurep 'ange-ftp) (ange-ftp-ftp-path file-name))
-        (t (require 'efs)
-	   (efs-ftp-path file-name))))
+(defun file-remote-p (file-name)
+  "Test whether FILE-NAME is looked for on a remote system."
+  (cond ((not allow-remote-paths) nil)
+	((featurep 'ange-ftp) (ange-ftp-ftp-path file-name))
+	(t (efs-ftp-path file-name))))
 
 ;; Written in C in FSF
 (defun insert-file-contents (filename &optional visit beg end replace)

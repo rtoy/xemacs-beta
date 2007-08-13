@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.65
+;; Version: 1.67
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -1077,7 +1077,9 @@ With optional ARG, move across that many fields."
 	(inhibit-read-only t)
 	after-change-functions)
     (widget-apply widget :value-delete)
-    (delete-region from to)
+    (when (< from to)
+      ;; Kludge: this doesn't need to be true for empty formats.
+      (delete-region from to))
     (set-marker from nil)
     (set-marker to nil)))
 
@@ -1967,7 +1969,7 @@ With optional ARG, move across that many fields."
 	    (setq children (cdr children)))
 	  (setcdr children (cons child (cdr children)))))))
   (widget-setup)
-  (widget-apply widget :notify widget))
+ widget (widget-apply widget :notify widget))
 
 (defun widget-editable-list-delete-at (widget child)
   ;; Delete child from list of children.

@@ -762,7 +762,7 @@ force_auto_save_soon (void)
 static void
 maybe_do_auto_save (void)
 {
-  /* This function can GC */
+  /* This function can call lisp */
   keystrokes_since_auto_save++;
   if (auto_save_interval > 0 &&
       keystrokes_since_auto_save > max (auto_save_interval, 20) &&
@@ -1968,7 +1968,7 @@ The returned event will be one of the following types:
 */
        (event, prompt))
 {
-  /* This function can GC */
+  /* This function can call lisp */
   /* #### We start out using the selected console before an event
      is received, for echoing the partially completed command.
      This is most definitely wrong -- there needs to be a separate

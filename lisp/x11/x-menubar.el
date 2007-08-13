@@ -1404,7 +1404,8 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
 		 (items (cdr mode-popup-menu))
 		 filters)
 	    ;; Strip keywords from local menu for attaching them at the top
-	    (while (not (vectorp (car items)))
+	    (while (and items
+			(symbolp (car items)))
 	      (setq items (append filters (list (car items))))
 	      (setq items (cdr items)))
 	    ;; If filters contains a keyword already present in

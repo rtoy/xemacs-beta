@@ -376,7 +376,9 @@ int stop_character; /* #### not currently implemented */
 static SIGTYPE
 interrupt_signal (int sig)
 {
-  /* This function can GC (?!) */
+  /* This function can call lisp */
+  /* #### we should NOT be calling lisp from a signal handler, boys
+     and girls */
   /* Must preserve main program's value of errno.  */
   int old_errno = errno;
 

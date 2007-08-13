@@ -384,7 +384,9 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 ;; good way to fix it, though.  -hniksic
 (defun isearch-mode-help ()
   (interactive "_")
-  (describe-function 'isearch-forward)
+  (let ((w (selected-window)))
+    (describe-function 'isearch-forward)
+    (select-window w))
   (isearch-update))
 
 

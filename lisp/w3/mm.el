@@ -123,6 +123,12 @@
 		      )
      )
     ("application" . (
+		      ("x-x509-ca-cert" . (("viewer" . ssl-view-site-cert)
+					   ("test" . (fboundp 'ssl-view-site-cert))
+					   ("type" . "application/x-x509-ca-cert")))
+		      ("x-x509-user-cert" . (("viewer" . ssl-view-user-cert)
+					     ("test" . (fboundp 'ssl-view-user-cert))
+					     ("type" . "application/x-x509-user-cert")))
 		      ("octet-stream" . (("viewer" . mm-save-binary-file)
 					 ("type" ."application/octet-stream")))
 		      ("dvi"        . (("viewer" . "open %s")

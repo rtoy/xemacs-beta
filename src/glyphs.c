@@ -386,6 +386,7 @@ face_must_be_present (Lisp_Object instantiator)
 Lisp_Object
 make_string_from_file (Lisp_Object file)
 {
+  /* This function can call lisp */
   int count = specpdl_depth ();
   Lisp_Object temp_buffer;
   struct gcpro gcpro1;

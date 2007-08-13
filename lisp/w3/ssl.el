@@ -1,7 +1,7 @@
 ;;; ssl.el,v --- ssl functions for emacsen without them builtin
 ;; Author: wmperry
-;; Created: 1997/03/15 00:29:34
-;; Version: 1.11
+;; Created: 1997/03/26 00:04:40
+;; Version: 1.13
 ;; Keywords: comm
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -85,10 +85,10 @@ This means a directory of pem encoded certificates with hash symlinks."
   :type 'string)
 
 (defcustom ssl-program-arguments
-  '("-quiet"
+  '(;;"-quiet"
     "-host" host
     "-port" service
-    "-verify" ssl-certificate-verification-depth
+    "-verify" (int-to-string ssl-certificate-verification-depth)
     "-CApath" ssl-certificate-directory
     )
   "*Arguments that should be passed to the program `ssl-program-name'.
@@ -154,7 +154,7 @@ Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
 specifying a port number to connect to."
   (if (integerp service) (setq service (int-to-string service)))
-  (let* ((process-connection-type t)
+  (let* ((process-connection-type nil)
 	 (port service)
 	 (proc (eval
 		(`

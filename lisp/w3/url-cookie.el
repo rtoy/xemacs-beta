@@ -1,7 +1,7 @@
 ;;; url-cookie.el --- Netscape Cookie support
 ;; Author: wmperry
-;; Created: 1997/03/19 00:42:23
-;; Version: 1.14
+;; Created: 1997/03/26 00:06:01
+;; Version: 1.15
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -374,12 +374,6 @@
       (let ((cur nil))
 	(while rest
 	  (setq cur (pop rest))
-	  ;; Oh gross, this is for microsoft & netscape.
-	  ;; Fuck them fuck them fuchk them fuck them.
-	  (if (string-match "^\\([^=]+\\)=\\(.*\\)" (cdr cur))
-	      (setq rest (cons (cons (match-string 1 (cdr cur))
-				     (match-string 2 (cdr cur))) rest)
-		    cur (cons (car cur) "")))
 	  (url-cookie-store (car cur) (cdr cur)
 			    expires domain path secure))))
      (t

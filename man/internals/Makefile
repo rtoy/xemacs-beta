@@ -19,6 +19,7 @@
 
 VERSION=1.0
 NAME=internals
+MAKEINFO = makeinfo
 manual = xemacs-internals-manual-19-$(VERSION)
 
 # Uncomment this line for permuted index.
@@ -32,7 +33,7 @@ all : info
 info : ../../info/$(NAME).info
 
 ../../info/$(NAME).info: $(srcs) index.texi
-	makeinfo $(NAME).texi
+	$(MAKEINFO) $(NAME).texi
 
 dvi : $(NAME).dvi
 

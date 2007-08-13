@@ -1,3 +1,23 @@
+Mon Mar 24 18:36:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.67 released.
+
+Mon Mar 24 18:19:05 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-save-all): Added autoload.
+
+	* Version 1.66 released.
+
+Mon Mar 24 18:09:04 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-default-delete): Added workaround for bug
+	with empty `:format'.
+
+Thu Mar 20 12:33:59 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.texi (The Init File): Explain that `custom-file' is not
+	automatically loaded.
+
 Tue Mar 18 14:42:31 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.65 released.

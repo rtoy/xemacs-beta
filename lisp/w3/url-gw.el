@@ -1,7 +1,7 @@
 ;;; url-gw.el --- Gateway munging for URL loading
 ;; Author: wmperry
-;; Created: 1997/02/10 01:00:01
-;; Version: 1.5
+;; Created: 1997/03/24 15:13:19
+;; Version: 1.6
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -106,7 +106,7 @@ linked Emacs under SunOS 4.x")
 (defun url-open-rlogin (name buffer host service)
   "Open a connection using rsh."
   (if (not (stringp service))
-      (setq service (into-to-string service)))
+      (setq service (int-to-string service)))
   (let ((proc (if url-gateway-rlogin-user-name
 		  (start-process
 		   name buffer "rsh"
@@ -129,7 +129,7 @@ linked Emacs under SunOS 4.x")
 ;; Stolen from red gnus nntp.el
 (defun url-open-telnet (name buffer host service)
   (if (not (stringp service))
-      (setq service (into-to-string service)))
+      (setq service (int-to-string service)))
   (save-excursion
     (set-buffer (get-buffer-create buffer))
     (erase-buffer)

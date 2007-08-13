@@ -757,7 +757,11 @@ init_MHASH_table (void)
 static int
 MHASH (VM_ADDR addr)
 {
+#if (LONGBITS == 64)
+  unsigned long int addr_shift = (unsigned long int)(addr) >> USELESS_LOWER_ADDRESS_BITS;
+#else
   unsigned int addr_shift = (unsigned int)(addr) >> USELESS_LOWER_ADDRESS_BITS;
+#endif
   int hval = addr_shift % MHASH_PRIME; /* We could have addresses which are -ve 
 					  when converted to signed ints */
   return ((hval >= 0) ? hval : MHASH_PRIME + hval);

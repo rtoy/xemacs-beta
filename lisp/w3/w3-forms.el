@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/03/18 23:20:04
-;; Version: 1.79
+;; Created: 1997/03/25 23:33:51
+;; Version: 1.81
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,7 +49,7 @@
 
 (defvar w3-form-keymap
   (let ((map (copy-keymap global-map))
-	(eol-loc (where-is-internal 'end-of-line nil t)))
+	(eol-loc (where-is-internal 'end-of-line global-map t)))
     (if widget-keymap
 	(cl-map-keymap (function
 			(lambda (key binding)
@@ -100,6 +100,17 @@
 (defsubst w3-form-element-set-widget        (obj val) (aset obj 8 val))
 (defsubst w3-form-element-set-plist         (obj val) (aset obj 9 val))
 
+(defvar w3-form-valid-key-sizes
+  '(
+    ("1024 (Premium)" . 1024)
+    ("896 (Regular)" . 896)
+    ("768 (Unleaded)" . 768)
+    ("512 (Low Grade)" . 512)
+    ("508 (Woos)" . 508)
+    ("256 (Test Grade)" . 256)
+    )
+  "An assoc list of available key sizes and meaningful descriptions.")
+   
 (defun w3-form-determine-size (el size)
   (case (w3-form-element-type el)
     (checkbox 3)
@@ -125,6 +136,12 @@
 				(lambda (x y)
 				  (>= (length (car x))
 				      (length (car y)))))))))))
+    (keygen
+     (+ (length "Key Length: ")
+	(apply 'max
+	       (mapcar (function (lambda (pair)
+				   (length (car pair))))
+		       w3-form-valid-key-sizes))))
     (otherwise (or size 22))))    
  
 ;;###autoload
@@ -348,32 +365,21 @@
 		 :must-match t
 		 :value (w3-form-element-value el)))
 
-(defvar w3-form-valid-key-sizes
-  '(
-    ("1024 (Premium)" . 1024)
-    ("896 (Regular)" . 896)
-    ("768 (Unleaded)" . 768)
-    ("512 (Low Grade)" . 512)
-    ("508 (Woos)" . 508)
-    ("256 (Test Grade)" . 256)
-    )
-  "An assoc list of available key sizes and meaningful descriptions.")
-   
 (defun w3-form-create-keygen-list (el face)
-  (let ((tmp w3-form-valid-key-sizes)
-	(longest 0)
-	(options nil))
-    (while tmp
-      (if (> (length (caar tmp)) longest)
-	  (setq longest (length (caar tmp))))
-      (setq options (cons (list 'choice-item :tag (caar tmp)
-				:value (cdar tmp)) options)
-	    tmp (cdr tmp)))
+  (let* ((size (apply 'max (mapcar (function (lambda (pair) (length (car pair)))) 
+				   w3-form-valid-key-sizes)))
+	 (options (mapcar (function (lambda (pair)
+				      (list 'choice-item
+					    :format "%[%t%]" 
+					    :menu-tag-get `(lambda (zed) ,(car pair))
+					    :tag (mule-truncate-string (car pair) size ? )
+					    :value (cdr pair))))
+			  w3-form-valid-key-sizes)))
     (apply 'widget-create 'menu-choice
 	   :value 1024
 	   :ignore-case t
 	   :tag "Key Length"
-	   :size (1+ longest)
+	   :size size
 	   :button-face face
 	   :value-face face
 	   options)))
@@ -795,9 +801,15 @@ This can be used as the :help-echo property of all w3 form entry widgets."
 			   (assoc (widget-value widget)
 				  (w3-form-element-options formobj)))))
 		   (keygen
-		    (cons (w3-form-element-name formobj)
-			  (format "Should create a %d bit RSA key"
-				  (widget-value widget))))
+		    (condition-case ()
+			(require 'ssl)
+		      (error (error "Not configured for SSL, please read the info pages.")))
+		    (if (fboundp 'ssl-req-user-cert) nil
+		      (error "This version of SSL isn't capable of requesting certificates."))
+		    (let ((challenge (plist-get (w3-form-element-plist formobj) 'challenge))
+			  (size (widget-value widget)))
+		      (cons (w3-form-element-name formobj)
+			    (ssl-req-user-cert size challenge))))
 		   ((multiline hidden)
 		    (cons (w3-form-element-name formobj)
 			  (w3-form-element-value formobj)))

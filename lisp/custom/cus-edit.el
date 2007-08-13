@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.65
+;; Version: 1.67
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -517,6 +517,7 @@ that option."
   (custom-mode)
   (widget-insert "This is a customization buffer.
 Push RET or click mouse-2 on the word ")
+  ;; (put-text-property 1 2 'start-open nil)
   (widget-create 'info-link 
 		 :tag "help"
 		 :help-echo "Read the online help."
@@ -1763,6 +1764,7 @@ Leave point at the location of the call, or after the last expression."
       (unless (eolp)
 	(princ "\n")))))
 
+;;;###autoload
 (defun custom-save-all ()
   "Save all customizations in `custom-file'."
   (custom-save-variables)

@@ -83,7 +83,7 @@ strong,em { color: red         }
 
        p  { display: block }
  pre,xmp  { display: block; white-space: pre; }
-blockquote{ display: block; margin-left: 5; margin-right: 5; }
+blockquote{ display: block; margin-left: 5em; margin-right: 5em; }
 
 /*
 ** How to draw form elements.
@@ -114,8 +114,8 @@ input:image   { text-decoration: none; }
       dir { display: block;     }
      menu { display: block;     }
        dt { font-weight: bold; display: list-item }
-       dd { display: list-item; margin-left: 5; }
-       li { display: list-item; margin-left: 5; }
+       dd { display: list-item; margin-left: 5em; }
+       li { display: list-item; margin-left: 5em; }
     ul li { list-style: circle; }
     ol li { list-style: decimal; }
 

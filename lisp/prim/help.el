@@ -347,8 +347,6 @@ If FUNCTION is nil, applies `message' to it, thus printing it."
 This just displays the buffer in another window, rather than selecting
 the window.")
 
-(defvar help-window-max-height .5
-  "*Proportion of frame to use for help windows.")
 ;; Use this function for displaying help when C-h something is pressed
 ;; or in similar situations.  Do *not* use it when you are displaying
 ;; a help message and then prompting for input in the minibuffer --
@@ -390,14 +388,7 @@ the window.")
                       (substitute-command-keys "Type \\[delete-other-windows] to remove help window, \\[scroll-other-window] to scroll the help.")))
                     (t
                      (message
-                      (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))
-	      (when temp-buffer-shrink-to-fit
-		(let* ((help-window-size (round (* help-window-max-height
-					    (frame-height (window-frame helpwin)))))
-		       (size (window-displayed-height helpwin)))
-		  (if (< size help-window-size)
-		      (enlarge-window (- help-window-size size) nil helpwin)))
-		(shrink-window-if-larger-than-buffer helpwin))))))))
+                      (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))))))))
 
 (defun describe-key (key)
   "Display documentation of the function invoked by KEY.

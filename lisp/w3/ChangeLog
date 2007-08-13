@@ -1,4 +1,123 @@
+Tue Mar 25 16:06:28 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.74 released
+
+Tue Mar 25 15:31:56 1997  Greg Stark <gsstark@great-white>
+
+* url-cookie.el (url-cookie-handle-set-cookie): don't deal with #!%@ed
+  microsoft web site cookies - they break good, clean, wholesome sites
+  like yahoo's stock pages.
+
+* ssl.el (ssl-program-arguments): Make sure everything gets turned into a
+  string, not an integer.
+  (open-ssl-stream): use a pipe instead of a pty if possible (why?)
+
+* w3-display.el (w3-display-node): Added back in <keygen> support
+
+* w3.el (w3-notify-when-ready): protect against bad buffer switching
+  (minibuffer as active window lossage, etc)
+
+* w3-toolbar.el (w3-toolbar-make-buttons): Don't warn about toolbar
+  directory on Emacsen that can't do toolbars!
+
+* Emacs-W3 3.0.73 released
+
+* w3-display.el (w3-get-face-info): Allow passing in a second argument
+  that means 'check this attribute of the html tag if you don't find
+  something in the stylesheet'.  This automatically enables <font color>
+  and <table|td|tr bgcolor>.
+
+Tue Mar 25 06:45:02 1997  T. V. Raman <raman@Adobe.COM>
+
+* w3-forms.el (w3-form-keymap): patch to avoid lossage with emacspeak &
+  using terminal.el
+
+Tue Mar 25 06:45:02 1997  William M. Perry  <wmperry@aventail.com>
+
+* ssl.el (ssl-program-arguments): Removed -quiet switch, since it requires
+  patches to s_client
+
+Mon Mar 24 10:56:11 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.72 released
+
+* w3-display.el (w3-display-node): Better handling of body and html style
+  attributes in XEmacs
+
+* w3.el (w3-mode): Removed call to kill-all-local-variables, as it
+  nukes buffer-local faces as well.
+
+* css.el (css-expand-length): Don't choke and use the wrong damn thing to
+  base percentages off of on percentage heights (ie: font-size: 80%)
+
+Mon Mar 24 07:12:52 1997  Gerry S Hayes <sumner@CMU.EDU>
+
+* url-gw.el (url-open-telnet): Fixed stupid typo into-to-string ->
+  int-to-string
+  (url-open-rlogin): Ditto.
+
+Sun Mar 23 09:43:24 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-table-ascii-border-chars): Use a '+' in the ascii art
+  version of table borders.
+
+Sat Mar 22 00:45:34 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-menu.el (w3-use-menus): Customized this variable
+
+* w3-display.el (w3-display-node): Don't run multiline text area's default
+  value through w3-normalize-spaces
+
+Thu Mar 20 23:44:50 1997  Greg Stark  <gsstark@mit.edu>
+
+* w3-cus.el (w3-use-terminal-characters): New variable
+  (w3-use-terminal-characters-on-tty): New variable
+  (w3-use-terminal-glyphs): New variable
+  (w3-horizontal-rule-char): Make setting it to nil allow use of graphic
+  characters (also means people can avoid using graphic charactes for
+  horizontal rules if they wish)
+* w3-display.el (w3-handle-image): clean up whitespace in alt tags
+  (w3-table-glyph-border-chars): New variable
+  (w3-table-graphic-border-chars): New variable
+  (w3-terminal-properties): New variable
+  (w3-insert-terminal-char): New inline function
+  (w3-horizontal-rule-char): New inline function 
+  (w3-setup-terminal-chars): Set up all of these and make using graphic
+  characters work on XEmacs using text properties (and optionally use text
+  properties on FSF Emacs too). 
+  (w3-table-hack-borders): Remove, obsoleted by w3-setup-terminal-chars
+  (w3-table-unhack-borders): don't have to fiddle with
+  w3-horizontal-rule-char any more.
+  (w3-display-table): Use w3-insert-terminal-char
+  (w3-size-of-tree):  Use w3-horizontal-rule-char
+  (w3-display-node):  Use w3-horizontal-rule-char, w3-insert-terminal-char,
+  uhm, i'm not sure if it was correct to remove the handle-content
+* w3-forms.el (w3-fixup-eol-faces): try to remove mouse-face from end-of-lines as
+  well, uhm, this doesn't seem to work though. 
+  (w3-form-determine-size): add keygen 
+  (w3-form-encode-helper): add keygen support for the day when the ssl code
+  itself is released. 
+* w3-widget.el (widget-image-value-create): use 'item widgets instead of
+  'push-button widgets and specify the format ourselves so we don't get
+  widget.el's arbitrary formatting.
+* w3.el (w3-do-setup): call w3-setup-terminal-chars to make nice tables and
+  horizontal rules the default at least under X.
+* mm.el added x-x509-ca-cert and x-x509-user-cert viewers but the tests
+  will fail so no one should should see this change until i release the
+  functions.
+	
+Fri Mar 21 18:52:31 1997  William M. Perry  <wmperry@aventail.com>
+
+* css.el (css-expand-length): Better support for percentage values in
+  lengths
+
+Thu Mar 20 06:22:29 1997  Istvan Marko <istvan@cmdmail.amd.com>
+
+* Added slot for no_proxy settings under the preferences panel
+
 Thu Mar 20 06:22:29 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.71 released
 
 * w3-parse.el:Added more transitions for error handling of raw 'td' or
   'th' outside of a 'tr' in tablebody.

@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/03/20 15:45:21
-;; Version: 1.66
+;; Created: 1997/03/25 00:00:34
+;; Version: 1.68
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/03/20 15:45:21|1.66|Location Undetermined
+;;; 1997/03/25 00:00:34|1.68|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,6 +97,7 @@
 (autoload 'url-telnet "url-misc")
 (autoload 'url-tn3270 "url-misc")
 (autoload 'url-proxy "url-misc")
+(autoload 'url-netrek "url-misc")
 (autoload 'url-news "url-news")
 (autoload 'url-nntp "url-news")
 
@@ -907,6 +908,7 @@ dumped with emacs."
     (url-register-protocol 'nntp       nil 'url-identity-expander "119")
     (url-register-protocol 'irc        nil 'url-identity-expander "6667")
     (url-register-protocol 'data       nil 'url-identity-expander)
+    (url-register-protocol 'netrek     nil 'url-identity-expander)
     (url-register-protocol 'rlogin)
     (url-register-protocol 'telnet)
     (url-register-protocol 'tn3270)

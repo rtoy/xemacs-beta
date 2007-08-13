@@ -126,11 +126,11 @@ track changes to GNU Emacs while also working to add new features.
 @node Q1.0.2, Q1.0.3, Q1.0.1, Introduction
 @section What is the current version of XEmacs?
 
-The current version is 19.15, released in January, 1997.
+The current version is 19.15, released in March, 1997.
 
 It has been decided that XEmacs 19.15 will be the final release of v19.
-XEmacs 19.15 is scheduled for release in mid January.  After a brief
-period of further testing, XEmacs v20 will be released shortly after
+XEmacs 19.15 is scheduled for release in late March.  After a brief
+period of further testing, XEmacs v20.1 will be released shortly after
 that.
 
 @node Q1.0.3, Q1.0.4, Q1.0.2, Introduction
@@ -277,9 +277,20 @@ Screen snapshots are available in the WWW version of the FAQ.
 @section Is there a port of XEmacs to Microsoft ('95 or NT)?
 
 The closest is @dfn{Win-Emacs}, which is based on Lucid Emacs 19.6.
-Available from <URL:http://www.pearlsoft.com/>.  Someone at Microsoft
-expressed some interest in working on a port of 19.14 to NT, but never
-went any farther.
+Available from <URL:http://www.pearlsoft.com/>.
+
+There are some people actively working on a NT port of v20.1: David
+Hobley started the port.  Marc Paquette
+@example
+<marcpa@@cam.org>
+@end example
+has also became part of this effort.
+
+Email the beta list
+@example
+<xemacs-beta@@xemacs.org>
+@end example
+if you are interested in helping.
 
 There's a port of GNU Emacs (not XEmacs) at
 @example

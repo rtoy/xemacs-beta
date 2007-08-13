@@ -16,7 +16,10 @@ the "Bugs" section of the XEmacs manual for more information on how to
 report bugs.  (The file `BUGS' in this directory explains how you can
 find and read that section using the Info files that come with
 XEmacs.)  See `etc/MAILINGLISTS' for more information on mailing lists
-relating to XEmacs and other GNU products.
+relating to XEmacs and other GNU products.  You should also read part
+II of the XEmacs FAQ, the latest version of which is available on the
+World Wide Web at:
+	http://www.xemacs.org/faq/
 
 The file `configure' is a shell script to acclimate XEmacs to the
 oddities of your processor and operating system.  It will create a

@@ -75,7 +75,7 @@ permission notice identical to this one.
 
 Indices:
 * Concept Index::               
-* Variable and command index::  
+* Variable and function index::  
 @end menu
 
 
@@ -842,7 +842,7 @@ If the @code{<user>@@} is omitted, then EFS will use a default user.  If
 a login token is specified in your @file{.netrc} file, then this will be
 used as the default user for @code{<host>}.  Otherwise, it is determined
 based on the value of the variable @code{efs-default-user}.
-@vindex{efs-default-user}
+@vindex efs-default-user
 
 This EFS path syntax can be customised to a certain extent by changing a
 number of variables.  To
@@ -855,8 +855,8 @@ internal workings of EFS.
 
 A password is required for each host / user pair.  This will be prompted
 for when needed, unless already set by calling @code{efs-set-passwd},
-@findex{efs-set-passwd} or specified in a @emph{valid} @file{~/.netrc}
-file.
+@findex efs-set-passwd
+or specified in a @emph{valid} @file{~/.netrc} file.
 
 When EFS prompts for a password, it provides defaults from its cache of
 currently known passwords.  The defaults are ordered such that passwords
@@ -865,7 +865,7 @@ currently underway have priority. You can cycle through your list of
 defaults with @kbd{C-n} to cycle forwards and @kbd{C-p} to cycle
 backwards. The list is circular.
 
-@subsection Passwords for user @t{anonymous}
+@subsection Passwords for anonymous user
 
 Passwords for the user @t{anonymous} (or @t{ftp}) are handled specially.
 The variable @code{efs-generate-anonymous-password} controls what
@@ -1091,7 +1091,7 @@ non-@code{nil}, EFS will prompt the user for the transfer type to use
 for every FTP transfer.  Having this set all the time is annoying, but
 it is useful to give special treatment to a small set of files.  There
 is also a variable @code{efs-text-file-name-regexp}.  This is tested 
-@vindex {efs-text-file-name-regexp}
+@vindex efs-text-file-name-regexp
 before @code{efs-binary-file-name-regexp}, so if you set
 @code{efs-text-file-name-regexp} to a non-trivial regular expression,
 and @code{efs-binary-file-name-regexp} to @samp{".*"}, the result will
@@ -1671,7 +1671,7 @@ handle this.)
 @end enumerate
 
 
-@node Concept Index, Variable and command index, Bugs, Top
+@node Concept Index, Variable and function index, Bugs, Top
 @comment  node-name,  next,  previous,  up
 @unnumbered Concept Index
 
