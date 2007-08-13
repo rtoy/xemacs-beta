@@ -59,9 +59,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include <setjmp.h>
 
-/* Set to 1 if you wish to implement this feature */
-# define HAVE_SUBWINDOWS 0
-
 #define LISP_DEVICE_TO_X_SCREEN(dev)					\
   XDefaultScreenOfDisplay (DEVICE_X_DISPLAY (XDEVICE (dev)))
 
@@ -1062,7 +1059,9 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #include "jerror.h"
 
 /* The in-core jpeg code doesn't work, so I'm avoiding it for now.  -sb  */
-#define USE_TEMP_FILES_FOR_JPEG_IMAGES 1
+/* Late-breaking update, we're going to give it a try, I think it's */
+/* fixed now -sb */
+/* #define USE_TEMP_FILES_FOR_JPEG_IMAGES 1 */
 
 static void
 jpeg_validate (Lisp_Object instantiator)
@@ -1183,8 +1182,16 @@ METHODDEF(boolean)
 METHODDEF boolean
 #endif
 our_fill_input_buffer (j_decompress_ptr cinfo) {
-  ERREXIT(cinfo,JERR_INPUT_EOF);
-  return FALSE;
+  /* Insert a fake EOI marker */
+  struct jpeg_source_mgr *src = (struct jpeg_source_mgr *) cinfo->src;
+  static JOCTET buffer[2];
+
+  buffer[0] = (JOCTET) 0xFF;
+  buffer[1] = (JOCTET) JPEG_EOI;
+
+  src->next_input_byte = buffer;
+  src->bytes_in_buffer = 2;
+  return TRUE;
 }
 
 #if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
@@ -1193,6 +1200,18 @@ METHODDEF(void)
 METHODDEF void
 #endif
 our_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
+  struct jpeg_source_mgr *src = NULL;
+
+  src = (struct jpeg_source_mgr *) cinfo->src;
+
+  if (!src) {
+    return;
+  } else if (num_bytes > src->bytes_in_buffer) {
+    num_bytes = (long)src->bytes_in_buffer;
+  }
+
+  src->bytes_in_buffer -= num_bytes;
+  src->next_input_byte += num_bytes;
 }
 
 #if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)

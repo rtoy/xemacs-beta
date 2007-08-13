@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/03/15 00:31:11
-;; Version: 1.78
+;; Created: 1997/03/18 23:20:04
+;; Version: 1.79
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -887,7 +887,6 @@ spaces.  Die Die Die."
     (lambda (char)
       (cond
        ((= char ?  ) "+")
-       ((memq char '(?: ?/)) (char-to-string char))
        ((memq char url-unreserved-chars) (char-to-string char))
        (t (upcase (format "%%%02x" char))))))
     (mule-encode-string chunk) ""))

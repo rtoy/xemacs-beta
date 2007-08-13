@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/18 01:10:33
-;; Version: 1.109
+;; Created: 1997/03/20 18:03:49
+;; Version: 1.112
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,7 +33,7 @@
 (require 'w3-cus)			; Grab everything that is customized
 
 (defconst w3-version-number
-  (let ((x "p3.0.69"))
+  (let ((x "p3.0.71"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -41,7 +41,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/03/18 01:10:33"))
+(defconst w3-version-date (let ((x "1997/03/20 18:03:49"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -364,17 +364,8 @@ the URL of the link.")
   "*A buffer-local variable holding positions and urls of images within
 the buffer.")
 
-(defvar w3-frame-labels '("FRAME(" . ")")
-  "Strings surrounding a frame name")
-
-(defvar w3-frame-regexp "FRAME(\\([^)]+\\))"
-  "Regexp for finding a frame hyperlink")
-
 (defvar w3-frameset-structure nil
-  "Frameset structure")
-
-(defvar w3-frameset-dimensions nil
-  "Frameset dimensions")
+  "Frameset structure, heap of '(frameset ({cols|rows} \"<dimensions>\")) and '(<frame name> <href>)")
 
 (defvar w3-frame-name nil
   "Frame name")
@@ -475,7 +466,6 @@ returns.")
     w3-base-target
     w3-target-window-distances
     w3-frameset-structure
-    w3-frameset-dimensions
     )
   "A list of variables that should be preserved when entering w3-mode.")
 

@@ -26,7 +26,7 @@
 (defconst emacs-version "19.15" "\
 Version numbers of this version of Emacs.")
 
-(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta101)")))
+(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta102)")))
 
 (defconst emacs-major-version
   (progn (or (string-match "^[0-9]+" emacs-version)

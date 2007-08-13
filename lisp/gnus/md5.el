@@ -11,7 +11,7 @@
 ;; This is a direct translation into Emacs LISP of the reference C
 ;; implementation of the MD5 Message-Digest Algorithm written by RSA
 ;; Data Security, Inc.
-;;
+;; 
 ;; The algorithm takes a message (that is, a string of bytes) and
 ;; computes a 16-byte checksum or "digest" for the message.  This digest
 ;; is supposed to be cryptographically strong in the sense that if you
@@ -20,7 +20,7 @@
 ;; space of messages.  However, the robustness of the algorithm has not
 ;; been proven, and a similar algorithm (MD4) was shown to be unsound,
 ;; so treat with caution!
-;;
+;; 
 ;; The C algorithm uses 32-bit integers; because GNU Emacs
 ;; implementations provide 28-bit integers (with 24-bit integers on
 ;; versions prior to 19.29), the code represents a 32-bit integer as the
@@ -33,12 +33,12 @@
 
 ;; To compute the MD5 Message Digest for a message M (represented as a
 ;; string or as a vector of bytes), call
-;;
+;; 
 ;;   (md5-encode M)
-;;
+;; 
 ;; which returns the message digest as a vector of 16 bytes.  If you
 ;; need to supply the message in pieces M1, M2, ... Mn, then call
-;;
+;; 
 ;;   (md5-init)
 ;;   (md5-update M1)
 ;;   (md5-update M2)
@@ -50,17 +50,17 @@
 
 ;; Copyright (C) 1995 by Gareth Rees
 ;; Derived from the RSA Data Security, Inc. MD5 Message-Digest Algorithm
-;;
+;; 
 ;; md5.el is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the
 ;; Free Software Foundation; either version 2, or (at your option) any
 ;; later version.
-;;
+;; 
 ;; md5.el is distributed in the hope that it will be useful, but WITHOUT
 ;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 ;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 ;; for more details.
-;;
+;; 
 ;; The original copyright notice is given below, as required by the
 ;; licence for the original code.  This code is distributed under *both*
 ;; RSA's original licence and the GNU General Public Licence.  (There
@@ -155,9 +155,9 @@ Returns a vector of 16 bytes containing the message digest."
 ;; for rounds 1, 2, 3 and 4 respectively.  Each function follows this
 ;; pattern of computation (where ROTATE(x,y) means rotate 32-bit value x
 ;; by y bits to the left):
-;;
+;; 
 ;;   FF(a,b,c,d,x,s,ac) = ROTATE(a + F(b,c,d) + x + ac,s) + b
-;;
+;; 
 ;; so we use the macro `md5-make-step' to construct each one.  The
 ;; helper functions F, G, H and I operate on 16-bit numbers; the full
 ;; operation splits its inputs, operates on the halves separately and
@@ -190,7 +190,7 @@ Returns a vector of 16 bytes containing the message digest."
 (md5-make-step md5-II md5-I)
 
 (defun md5-init ()
-  "Initialize the state of the message-digest routines."
+  "Initialise the state of the message-digest routines."
   (aset md5-bits 0 0)
   (aset md5-bits 1 0)
   (aset md5-bits 2 0)
@@ -360,51 +360,49 @@ Returns a vector of 16 bytes containing the message digest."
      c (md5-II c d a b (aref in  2) 15 '(10967 . 53947))
      b (md5-II b c d a (aref in  9) 21 '(60294 . 54161)))
 
-    (aset md5-buffer 0 (md5-add (aref md5-buffer 0) a))
-    (aset md5-buffer 1 (md5-add (aref md5-buffer 1) b))
-    (aset md5-buffer 2 (md5-add (aref md5-buffer 2) c))
-    (aset md5-buffer 3 (md5-add (aref md5-buffer 3) d))))
+     (aset md5-buffer 0 (md5-add (aref md5-buffer 0) a))
+     (aset md5-buffer 1 (md5-add (aref md5-buffer 1) b))
+     (aset md5-buffer 2 (md5-add (aref md5-buffer 2) c))
+     (aset md5-buffer 3 (md5-add (aref md5-buffer 3) d))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Here begins the merger with the XEmacs API and the md5.el from the URL
 ;;; package.  Courtesy wmperry@spry.com
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(eval-and-compile
-  (unless (fboundp 'md5)
-    (defun md5 (object &optional start end)
-      "Return the MD5 (a secure message digest algorithm) of an object.
+(defun md5 (object &optional start end)
+  "Return the MD5 (a secure message digest algorithm) of an object.
 OBJECT is either a string or a buffer.
 Optional arguments START and END denote buffer positions for computing the
 hash of a portion of OBJECT."
-      (let ((buffer nil))
-	(unwind-protect
-	    (save-excursion
-	      (setq buffer (generate-new-buffer " *md5-work*"))
-	      (set-buffer buffer)
-	      (cond
-	       ((bufferp object)
-		(insert-buffer-substring object start end))
-	       ((stringp object)
-		(insert (if (or start end)
-			    (substring object start end)
-			  object)))
-	       (t nil))
-	      (prog1
-		  (if (<= (point-max) md5-maximum-internal-length)
-		      (mapconcat
-		       (function (lambda (node) (format "%02x" node)))
-		       (md5-encode (buffer-string))
-		       "")
-		    (call-process-region (point-min) (point-max)
-					 (or shell-file-name "/bin/sh")
-					 t buffer nil
-					 "-c" md5-program)
-		    ;; MD5 digest is 32 chars long
-		    ;; mddriver adds a newline to make neaten output for tty
-		    ;; viewing, make sure we leave it behind.
-		    (buffer-substring (point-min) (+ (point-min) 32)))
-		(kill-buffer buffer)))
-	  (and buffer (kill-buffer buffer) nil))))))
+ (let ((buffer nil))
+    (unwind-protect
+	(save-excursion
+	  (setq buffer (generate-new-buffer " *md5-work*"))
+	  (set-buffer buffer)
+	  (cond
+	   ((bufferp object)
+	    (insert-buffer-substring object start end))
+	   ((stringp object)
+	    (insert (if (or start end)
+			(substring object start end)
+		      object)))
+	   (t nil))
+	  (prog1
+	      (if (<= (point-max) md5-maximum-internal-length)
+		  (mapconcat
+		   (function (lambda (node) (format "%02x" node)))
+		   (md5-encode (buffer-string))
+		   "")
+		(call-process-region (point-min) (point-max)
+				     (or shell-file-name "/bin/sh")
+				     t buffer nil
+				     "-c" md5-program)
+		;; MD5 digest is 32 chars long
+		;; mddriver adds a newline to make neaten output for tty
+		;; viewing, make sure we leave it behind.
+		(buffer-substring (point-min) (+ (point-min) 32)))
+	    (kill-buffer buffer)))
+      (and buffer (kill-buffer buffer) nil))))
 
 (provide 'md5)
 

@@ -237,6 +237,9 @@ uniquely identifying the person.")
   "*Whether to throw away information in UUCP addresses
 by translating things like \"foo!bar!baz@host\" into \"baz@bar.UUCP\".")
 
+(defvar mail-extr-mailbox-match-case-fold t
+  "*Non-nil if mailbox and name matching should ignore case.")
+
 ;;----------------------------------------------------------------------
 ;; what orderings are meaningful?????
 ;;(defvar mail-operator-precedence-list '(?! ?% ?@))
@@ -1412,7 +1415,10 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 					mbox-beg mbox-end)
 	       (while (and names-match-flag
 			   (< i buffer-length))
-		 (or (eq (downcase (char-after (+ i (point-min))))
+		 (or (eq (let ((c (char-after (+ i (point-min)))))
+			   (if mail-extr-mailbox-match-case-fold
+			       (downcase c)
+			     c))
 			 (downcase
 			  (char-after (+ i buffer-length (point-min)))))
 		     (setq names-match-flag nil))

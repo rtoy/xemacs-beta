@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/03/18 01:08:13
-;; Version: 1.65
+;; Created: 1997/03/20 15:45:21
+;; Version: 1.66
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/03/18 01:08:13|1.65|Location Undetermined
+;;; 1997/03/20 15:45:21|1.66|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1337,7 +1337,7 @@ and decoding any MIME content-transfer-encoding used."
 
 (defun url-default-callback (buf)
   (url-download-minor-mode nil)
-  (url-store-in-cache)
+  (url-store-in-cache buf)
   (cond
    ((save-excursion (set-buffer buf)
 		    (and url-current-callback-func

@@ -3678,7 +3678,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.15 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.16 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4440,7 +4440,7 @@ scribe-electric-parenthesis
 
 ;;;***
 
-;;;### (autoloads (mail-other-frame mail-other-window mail mail-mode) "sendmail" "modes/sendmail.el")
+;;;### (autoloads (mail-other-frame mail-other-window mail mail-mode user-mail-address) "sendmail" "modes/sendmail.el")
 
 (defvar mail-from-style 'angles "\
 *Specifies how \"From:\" fields look.
@@ -4500,6 +4500,9 @@ nil means use indentation.")
 (defvar mail-signature nil "\
 *Text inserted at end of mail buffer when a message is initialized.
 If t, it means to insert the contents of the file `mail-signature-file'.")
+
+(autoload 'user-mail-address "sendmail" "\
+Query the user for his mail address, unless it is already known." t nil)
 
 (autoload 'mail-mode "sendmail" "\
 Major mode for editing mail to be sent.
@@ -4950,7 +4953,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.15 $
+vhdl-mode $Revision: 1.16 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

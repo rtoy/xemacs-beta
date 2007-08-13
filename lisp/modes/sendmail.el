@@ -295,20 +295,29 @@ actually occur.")
   :group 'message
   :type 'boolean)
 
+;;;###autoload
 (defun user-mail-address ()
   "Query the user for his mail address, unless it is already known."
   (interactive)
-  (when query-user-mail-address
-    (setq user-mail-address
-	  (read-string "Your mail address? " (cons user-mail-address 0)))
-    (setq query-user-mail-address nil)
-    ;; TODO: Run sanity check from Gnus here.
-    (when (y-or-n-p "Save address for future sessions? ")
-      (put 'user-mail-address 'saved-value
-	   (list user-mail-address))
-      (put 'query-user-mail-address 'saved-value '(nil))
-      (custom-save-all)))
-  user-mail-address)
+  (when (and (not noninteractive) query-user-mail-address)
+    (let ((addr (or user-mail-address
+		    (concat (user-login-name) "@"
+				    (or mail-host-address
+					(system-name))))))
+      (setq user-mail-address
+	    (read-string "Your mail address? " (cons addr 0)))
+      (setq query-user-mail-address nil)
+      ;; TODO: Run sanity check from Gnus here.
+      (when (y-or-n-p "Save address for future sessions? ")
+	(put 'user-mail-address 'saved-value
+	     (list user-mail-address))
+	(put 'query-user-mail-address 'saved-value '(nil))
+	(custom-save-all)))
+    (if user-mail-address
+	user-mail-address
+      (setq user-mail-address (concat (user-login-name) "@"
+				      (or mail-host-address
+					  (system-name)))))))
 
 (defun mail-setup (to subject in-reply-to cc replybuffer actions)
   (or mail-default-reply-to

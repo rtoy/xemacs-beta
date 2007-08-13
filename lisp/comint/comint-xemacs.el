@@ -31,7 +31,7 @@
 
 ;;; Code:
 
-(defgroup 'comint nil
+(defgroup comint nil
   "General command interpreter in a window stuff."
   :group 'processes)
 

@@ -64,6 +64,12 @@ EXTRAS = w3-sysdp.el
 w3:	check-custom docomp.el $(OBJECTS)
 	@echo Build of w3 complete...
 
+xemacs-w3:	docomp.el $(OBJECTS)
+	@echo Build of w3 complete...
+
+xemacs-w3: docomp.el $(OBJECTS)
+	@echo Build of w3 complete...
+
 all:	w3.info w3
 
 install: all

@@ -1530,6 +1530,7 @@ skip-chars-forward."
                            nil
                            (((tbody) *close)
                             ;; error handling
+                            ((td th) tr *same error)
                             ((%body.content) tr *same error))
                            nil)])
         (end-tag-omissible . t))
@@ -2116,7 +2117,7 @@ Returns a data structure containing the parsed information."
         ;; character, or end of buffer.
         (cond
 
-         ((= ?< (char-after (point)))
+         ((eq ?< (char-after (point)))
 
           ;; We are looking at a tag, comment, markup declaration, SGML marked
           ;; section, SGML processing instruction, or non-markup "<".
@@ -2610,7 +2611,7 @@ Returns a data structure containing the parsed information."
               (or (setq content (w3-element-content w3-p-d-current-element))
                   ;; *** Strictly speaking, in SGML the record end is
                   ;; carriage return, not line feed.
-                  (if (= ?\n (char-after between-tags-start))
+                  (if (eq ?\n (char-after between-tags-start))
                       (setq between-tags-start (1+ between-tags-start))))
               (if (= between-tags-start (point))
                   ;; Do nothing.

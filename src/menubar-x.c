@@ -358,7 +358,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
       assert (hack_wv->type == INCREMENTAL_TYPE);
       VOID_TO_LISP (submenu_desc, hack_wv->call_data);
       wv = menu_item_descriptor_to_widget_value (submenu_desc, SUBMENU_TYPE,
-						 1, 1);
+						 1, 0);
       if (!wv)
 	{
 	  wv = xmalloc_widget_value ();

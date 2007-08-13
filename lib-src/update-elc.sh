@@ -155,7 +155,7 @@ echo Gnus done.
 # and gee w3 has its own makefile as well
 # (no especial need to use it, though)
 echo Compiling W3...
-( cd lisp/w3 ; ${MAKE:-make} EMACS=$REAL )
+( cd lisp/w3 ; ${MAKE:-make} EMACS=$REAL xemacs-w3 )
 echo W3 done.
 
 # Hyperbole has to be different as well.  What is it with these big packages?

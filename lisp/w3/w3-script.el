@@ -1,7 +1,7 @@
 ;;; w3-script.el --- Scripting support
 ;; Author: wmperry
-;; Created: 1997/03/08 01:28:33
-;; Version: 1.6
+;; Created: 1997/03/20 14:22:28
+;; Version: 1.7
 ;; Keywords: hypermedia, scripting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,9 +44,15 @@
 ;; onabort		; User cancelled loading an image
 ;; onerror		; Error occurred loading an image
 
-(defvar w3-do-scripting t
+(defgroup w3-scripting nil
+  "When, where, how, and why to enable client-side scripting."
+  :group 'w3)
+
+(defcustom w3-do-scripting nil
   "*Whether to handle client-side scripting or not.
-If you are ultra-paranoid, set this to `nil'")
+If you are adventurous, set this to `t'"
+  :group 'w3-scripting
+  :type 'boolean)
 
 (defvar w3-current-scripting-language 'elisp)
 (make-variable-buffer-local 'w3-current-scripting-language)

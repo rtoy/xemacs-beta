@@ -615,6 +615,7 @@ after, and will not be true at any time before.")
   (setq init-file-loaded t)
 
   ;; Do this here in case the init file sets mail-host-address.
+  ;; Don't do this here unless noninteractive, it is frequently wrong. -sb
   (or user-mail-address
       (setq user-mail-address (concat (user-login-name) "@"
 				      (or mail-host-address

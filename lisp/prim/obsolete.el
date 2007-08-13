@@ -607,4 +607,8 @@ If FRAME is omitted or nil, use the selected frame."
   (color-instance-rgb-components (make-color-instance color)))
 (make-compatible 'x-color-values 'color-instance-rgb-components)
 
+;; Two loser functions which shouldn't be used.
+(make-obsolete 'following-char 'char-after)
+(make-obsolete 'preceding-char 'char-after)
+
 ;;; obsoloete.el ends here

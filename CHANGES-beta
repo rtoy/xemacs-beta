@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 19.15 beta102
+-- preceding-char, following-char are obsolete and broken, do not use them
+-- miscellaneous bug fixes
+-- W3-3.0.71
+-- Gnus-5.4.33
+-- corrections to lib-src script setup in --srcdir configuration
+-- corrections to stripping subwindows code
+
 to 19.15 beta101
 -- itimer.el-1.05
 -- hyperbole-4.023

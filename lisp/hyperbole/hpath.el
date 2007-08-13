@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     1-Nov-91 at 00:44:23
-;; LAST-MOD:      9-Mar-97 at 01:38:33 by Bob Weiner
+;; LAST-MOD:     20-Mar-97 at 11:52:51 by Bob Weiner
 
 ;;; ************************************************************************
 ;;; Public variables
@@ -560,7 +560,7 @@ groupings:
   (if (looking-at "\\(URL:\\)?\\([a-zA-Z][a-zA-Z]+\\)://?\\([^@/: \t\n\^M]+@\\)?\\([^/:@ \t\n\^M\"`']+\\)\\(:[0-9]+\\)?\\([/~][^]@ \t\n\^M\"`'\)\}>]*\\)?")
       (save-excursion
 	(goto-char (match-end 0))
-	(skip-chars-backward ".?#!*()")
+	(skip-chars-backward ".,?#!*()")
 	(buffer-substring (match-beginning 2) (point)))))
 
 (defun hpath:url-p (obj)

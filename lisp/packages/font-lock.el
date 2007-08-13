@@ -770,8 +770,10 @@ This can take a while for large buffers."
     (setq font-lock-old-extent nil)))
 
 (defun font-lock-pre-idle-hook ()
-  (if font-lock-old-extent
-      (font-lock-fontify-glumped-region)))
+  (condition-case nil
+      (if font-lock-old-extent
+	  (font-lock-fontify-glumped-region))
+    (error (warn "Error caught in `font-lock-pre-idle-hook'"))))
 
 (defvar font-lock-always-fontify-immediately nil
   "Set this to non-nil to disable font-lock deferral.")
@@ -2261,9 +2263,11 @@ The name is assumed to begin with a capital letter.")
 	       '(2 font-lock-reference-face)
 	       (list (concat
 		      "\\=\\.\\(" java-font-lock-identifier-regexp "\\)")
-		     nil nil '(1 (if (= (char-after (match-end 0)) ?.)
-				     'font-lock-reference-face
-				   'font-lock-type-face))))
+		     nil nil '(1 (let ((c (char-after (match-end 0))))
+				   (if (and (characterp c)
+					    (= c ?.))
+				       'font-lock-reference-face
+				     'font-lock-type-face)))))
 
 	 ;; Constructors:
 	 (list (concat

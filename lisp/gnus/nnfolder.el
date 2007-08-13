@@ -375,6 +375,8 @@ time saver for large mailboxes.")
        (forward-line -1)
        (while (re-search-backward (concat "^" nnfolder-article-marker) nil t)
 	 (delete-region (point) (progn (forward-line 1) (point))))
+       (when nnmail-cache-accepted-message-ids
+	 (nnmail-cache-insert (nnmail-fetch-field "message-id")))
        (setq result
 	     (car (nnfolder-save-mail
 		   (if (stringp group)
@@ -384,7 +386,9 @@ time saver for large mailboxes.")
      (when last
        (save-excursion
 	 (nnfolder-possibly-change-folder (or (caar art-group) group))
-	 (nnfolder-save-buffer))))
+	 (nnfolder-save-buffer)
+	 (when nnmail-cache-accepted-message-ids
+	   (nnmail-cache-close)))))
     (nnmail-save-active nnfolder-group-alist nnfolder-active-file)
     (unless result
       (nnheader-report 'nnfolder "Couldn't store article"))
@@ -643,7 +647,8 @@ time saver for large mailboxes.")
 	(let ((delim (concat "^" message-unix-mail-delimiter))
 	      (marker (concat "\n" nnfolder-article-marker))
 	      (number "[0-9]+")
-	      (active (cadr (assoc group nnfolder-group-alist)))
+	      (active (or (cadr (assoc group nnfolder-group-alist))
+			  (cons 1 0)))
 	      (scantime (assoc group nnfolder-scantime-alist))
 	      (minid (lsh -1 -1))
 	      maxid start end newscantime
@@ -676,10 +681,8 @@ time saver for large mailboxes.")
 	  (when (not (or nnfolder-distrust-mbox
 			 (< maxid 2)))
 	    (goto-char (point-max))
-	    (if (not (re-search-backward marker nil t))
-		(goto-char (point-min))
-	      (when (not (nnmail-search-unix-mail-delim))
-		(goto-char (point-min)))))
+	    (unless (re-search-backward marker nil t)
+	      (goto-char (point-min))))
 
 	  ;; Keep track of the active number on our own, and insert it back
 	  ;; into the active list when we're done.  Also, prime the pump to

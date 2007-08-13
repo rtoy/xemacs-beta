@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/03/17 20:09:50
-;; Version: 1.148
+;; Created: 1997/03/18 23:20:40
+;; Version: 1.150
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1668,13 +1668,9 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	    (frameset
 	     (if w3-display-frames
 		 (progn
-		   (push 'frameset w3-frameset-structure)
-		   (let ((cols (assq 'cols args))
-			 (rows (assq 'rows args)))
-		     (if rows
-			 (setq w3-frameset-dimensions (push rows w3-frameset-dimensions)))
-		     (if cols
-			 (setq w3-frameset-dimensions (push cols w3-frameset-dimensions))))
+		   (push (list 'frameset
+			       (or (assq 'cols args) (assq 'rows args)))
+			 w3-frameset-structure)
 		   (w3-handle-content node))
 	       (w3-handle-content node)))
 	    (frame
@@ -1685,7 +1681,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 				  (w3-get-attribute 'title)
 				  (w3-get-attribute 'alt)
 				  "Unknown frame name")))
-		   (push 'frame w3-frameset-structure)
+		   (push (list 'frame name href) w3-frameset-structure)
 		   (w3-handle-content
 		    (list tag args
 			  (list
@@ -1694,10 +1690,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 				  (list 'a
 					(cons (cons 'href href)
 					      args)
-					(list
-					 (car w3-frame-labels)
-					 name
-					 (cdr w3-frame-labels)))))))))
+					(list "Fetch frame: " name))))))))
 	       (w3-handle-empty-tag)))
 	    (noframes
 	     (if w3-display-frames
@@ -1918,17 +1911,18 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 			       (lambda (n)
 				 (setq tmp (w3-normalize-spaces
 					    (apply 'concat (nth 2 n)))
-				       tmp (cons tmp
-						 (or
-						  (cdr-safe
-						   (assq 'value (nth 1 n)))
-						  tmp)))
+				       tmp (vector tmp
+						   (or
+						    (cdr-safe
+						     (assq 'value (nth 1 n)))
+						    tmp)
+						   (assq 'selected (nth 1 n))))
 				 (if (assq 'selected (nth 1 n))
-				     (setq value (car tmp)))
+				     (setq value (aref tmp 0)))
 				 tmp))
 			      (nth 2 node))))
 	       (if (not value)
-		   (setq value (caar options)))
+		   (setq value (aref (car options) 0)))
 	       (setq plist (plist-put plist 'value value))
 	       (if multiple
 		   (progn
@@ -1941,11 +1935,18 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 				      (list 'input
 					    (list (cons 'name name)
 						  (cons 'type "checkbox")
-						  (cons 'value (car opt))))
-				      " " (car opt) (list 'br nil nil)))))
+						  (cons (if (aref opt 2)
+							    'checked
+							  '__bogus__) "yes")
+						  (cons 'value (aref opt 1))))
+				      " " (aref opt 0) (list 'br nil nil)))))
 			    options))
 		     (setq node (list 'p nil options))
 		     (w3-handle-content node))
+		 (setq options (mapcar (function
+					(lambda (x)
+					  (cons (aref x 0) (aref x 1))))
+				       options))
 		 (setq plist (plist-put plist 'type 'option)
 		       plist (plist-put plist 'options options))
 		 (w3-form-add-element plist w3-active-faces)
@@ -2119,7 +2120,15 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	  (cl-puthash url (buffer-name) url-history-list)
 	  (if (fboundp 'w3-shuffle-history-menu)
 	      (w3-shuffle-history-menu)))))
-  )
+  (w3-maybe-fetch-frames))
+
+(defun w3-maybe-fetch-frames ()
+  (if w3-frameset-structure
+      (cond ((or (eq w3-display-frames t)
+		 (and (eq w3-display-frames 'ask)
+		      (y-or-n-p "Fetch frames? ")))
+	     (w3-frames)
+	     t))))
 
 (defun w3-frames (&optional new-frame)
   "Set up and fetch W3 frames. With optional prefix, do so in a new frame."
@@ -2128,57 +2137,49 @@ Should be run before restoring w3-table-border-chars to ascii characters."
       (let ((w3-display-frames t))
 	(w3-refresh-buffer)))
   (let* ((old-asynch url-be-asynchronous)
-	 (structure (reverse w3-frameset-structure))
-	 (dims (or (reverse w3-frameset-dimensions)
-		   t)))
+	 (structure (reverse w3-frameset-structure)))
     (if new-frame
 	(select-frame (make-frame-command)))
-    (goto-char (point-min))
     (setq-default url-be-asynchronous nil)
     ;; set up frames
-    (while (and structure dims)
-      (let* ((current-dims (list (car dims)))
-	     (cols (cdr-safe (assq 'cols current-dims)))
-	     (rows (cdr-safe (assq 'rows current-dims))))
-	(if (eq (car structure) 'frameset)
-	    (pop structure))
-	;; columns ?
-	(if cols
-	    (setq cols (w3-decode-frameset-dimensions cols (window-width)))
-	  ;; rows ?
-	  (if rows
-	      (setq rows (w3-decode-frameset-dimensions rows (window-height)))
-	    ;; default: columns of equal width
-	    (let ((nb-windows 0))
-	      (save-excursion
-		(while (re-search-forward w3-frame-regexp nil t)
-		  (setq nb-windows (1+ nb-windows))))
-	      (let ((fwidth (/ (window-width) nb-windows)))
-		(while (> nb-windows 0)
-		  (push fwidth cols)
-		  (setq nb-windows (1- nb-windows)))))))
-	(while (eq (car structure) 'frame)
-	  (if (re-search-forward w3-frame-regexp nil t)
-	      (progn
-		(if (cdr cols)
-		    (split-window-horizontally (min (car cols)
-						    (- (window-width) 12)))
-		  (if (cdr rows)
-		      (split-window-vertically (min (car rows)
-						    (- (window-height) 12)))))
-		(pop cols)
-		(pop rows)
-		(goto-char (+ (match-beginning 0) 5))
-		(let ((name (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-		      (w3-notify 'semibully))
-		  (w3-widget-button-press)
-		  (setq w3-frame-name name
-			w3-target-window-distances nil))
-		(other-window 1)))
-	  (pop structure)))
-      (if (consp dims)
-	  (pop dims)
-	(setq dims nil)))
+    (while structure
+      (if (eq (car (car structure)) 'frameset)
+	  (let* ((current-dims (cdr (car structure)))
+		 (cols (cdr-safe (assq 'cols current-dims)))
+		 (rows (cdr-safe (assq 'rows current-dims))))
+	    (pop structure)
+	    ;; columns ?
+	    (if cols
+		(setq cols (w3-decode-frameset-dimensions cols (window-width) window-min-width))
+	      ;; rows ?
+	      (if rows
+		  (setq rows (w3-decode-frameset-dimensions rows (window-height) window-min-height))
+		;; default: columns of equal width
+		(let ((nb-windows 0)
+		      (frames structure))
+		  (while (and frames (eq (car (car frames)) 'frame))
+		      (setq nb-windows (1+ nb-windows)))
+		  (let ((fwidth (/ (window-width) nb-windows)))
+		    (while (> nb-windows 0)
+		      (push fwidth cols)
+		      (setq nb-windows (1- nb-windows)))))))
+	    (while (eq (car (car structure)) 'frame)
+	      (cond ((cdr cols)
+		     (split-window-horizontally (car cols))
+		     (pop cols))
+		    ((cdr rows)
+		     (split-window-vertically (car rows))
+		     (pop rows)))
+	      (let ((href (nth 2 (car structure)))
+		    (name (nth 1 (car structure)))
+		    (url-working-buffer url-default-working-buffer) ; in case url-multiple-p is t
+		    (w3-notify 'semibully))
+		(w3-fetch href)
+		(setq w3-frame-name name
+		      w3-target-window-distances nil))
+	      (other-window 1)
+	      (pop structure)))
+	(pop structure)))
     ;; compute target window distances
     (let ((origin-buffer (current-buffer))
 	  (stop nil))
@@ -2221,7 +2222,7 @@ If FRAME is omitted, the selected frame is used.
 For a terminal screen, the value is always 1."
       (font-width (face-font 'default frame))))
 
-(defun w3-decode-frameset-dimensions (dims available-dimension)
+(defun w3-decode-frameset-dimensions (dims available-dimension min-dim)
   "Returns numbers of lines or columns in Emacs, computed from specified frameset dimensions"
   (let ((dimensions nil))
     (if dims
@@ -2245,7 +2246,7 @@ For a terminal screen, the value is always 1."
 			    ;; absolute number: pixel height
 			    (push (max (1+ (/ (car (read-from-string match))
 					      (frame-char-height)))
-				       window-min-height)
+				       min-dim)
 				  dimensions)))
 		     (setq remaining-available-dimension
 			   (- remaining-available-dimension (car dimensions)))))))

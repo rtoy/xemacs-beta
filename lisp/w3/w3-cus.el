@@ -1,7 +1,7 @@
 ;;; w3-cus.el --- Customization support for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/14 21:35:54
-;; Version: 1.4
+;; Created: 1997/03/18 20:30:34
+;; Version: 1.5
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -114,9 +114,16 @@ menus to get to them."
 
 ;;; Display related variables
 (defcustom w3-display-frames nil
-  "*Fetch frames - not optimal."
+  "*Fetch frames - can be:
+nil		no frame display whatsoever
+'as-links	display frame hyperlinks, but do not fetch them
+'ask		display frame hyperlinks and ask whether to fetch them
+t		display frame hyperlinks and fetch them."
   :group 'w3-display
-  :type 'boolean)
+  :type '(choice (const :tag "Do not display frames" :value nil)
+		 (const :tag "Show hyperlinks" :value as-links)
+		 (const :tag "Show hyperlinks, ask whether to retrieve them" :value ask)
+		 (const :tag "Automatically retrieve frames" :value t)))
 
 (defcustom w3-do-incremental-display nil
   "*Whether to do incremental display of pages or not."
