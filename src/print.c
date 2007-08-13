@@ -1602,7 +1602,11 @@ debug_short_backtrace (int length)
 	}
       if (COMPILED_FUNCTIONP (*bt->function))
 	{
+#if defined(COMPILED_FUNCTION_ANNOTATION_HACK)
 	  Lisp_Object ann = Fcompiled_function_annotation (*bt->function);
+#else
+	  Lisp_Object ann = Qnil;
+#endif
 	  if (!NILP (ann))
 	    {
 	      stderr_out ("<compiled-function from ");

@@ -2636,11 +2636,12 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
             case ')':
               if (syntax & RE_NO_BK_PARENS) goto normal_backslash;
 
-              if (COMPILE_STACK_EMPTY)
+              if (COMPILE_STACK_EMPTY) {
                 if (syntax & RE_UNMATCHED_RIGHT_PAREN_ORD)
                   goto normal_backslash;
                 else
                   FREE_STACK_RETURN (REG_ERPAREN);
+	      }
 
             handle_close:
               if (fixup_alt_jump)
@@ -2656,11 +2657,12 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
                 }
 
               /* See similar code for backslashed left paren above.  */
-              if (COMPILE_STACK_EMPTY)
+              if (COMPILE_STACK_EMPTY) {
                 if (syntax & RE_UNMATCHED_RIGHT_PAREN_ORD)
                   goto normal_char;
                 else
                   FREE_STACK_RETURN (REG_ERPAREN);
+	      }
 
               /* Since we just checked for an empty stack above, this
                  ``can't happen''.  */

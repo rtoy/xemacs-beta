@@ -39,7 +39,8 @@ Boston, MA 02111-1307, USA.  */
 #define COMPILED_INTERACTIVE 5
 #define COMPILED_DOMAIN 6
 
-#define COMPILED_FUNCTION_ANNOTATION_HACK
+/* It doesn't make sense to have this and also have load-history */
+/* #define COMPILED_FUNCTION_ANNOTATION_HACK */
 
 struct Lisp_Compiled_Function
 {

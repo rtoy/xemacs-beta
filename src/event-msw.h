@@ -60,7 +60,7 @@ Lisp_Object mswindows_protect_modal_loop (Lisp_Object (*bfun) (Lisp_Object barg)
 					  Lisp_Object barg);
 void mswindows_unmodalize_signal_maybe (void);
 void mswindows_enqueue_dispatch_event (Lisp_Object event);
-
+void mswindows_enqueue_magic_event (HWND hwnd, UINT message);
 
 extern int mswindows_quit_chars_count;
 

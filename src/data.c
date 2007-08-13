@@ -971,7 +971,8 @@ an integer returned instead of a string.
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
 
-DEFUN ("compiled-function-annotation", Fcompiled_function_annotation, 1, 1, 0, /*
+/* Remove the `xx' if you wish to restore this feature */
+xxDEFUN ("compiled-function-annotation", Fcompiled_function_annotation, 1, 1, 0, /*
 Return the annotation of the compiled-function object, or nil.
 The annotation is a piece of information indicating where this
 compiled-function object came from.  Generally this will be

@@ -962,7 +962,7 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
 
   /* We need to read at least the header information before we can start
      doing anything */
-  if (!data || length < HEADERSZ)
+  if (!data || length < HEADERSZ) {
     if (fd < 0) return;
     else {
       length = read(fd,linuxplay_sndbuf,SNDBUFSZ);
@@ -970,6 +970,7 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
 	return;
       data   = linuxplay_sndbuf;
       length = SNDBUFSZ; }
+  }
 
   ffmt = analyze_format(data,&fmt,&speed,&tracks,&parsesndfile);
 

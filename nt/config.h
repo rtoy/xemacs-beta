@@ -640,19 +640,23 @@ on various systems. */
 #define LONGBITS (8 * SIZEOF_LONG)
 #endif
 
-#ifdef HAVE_INLINE
-# if defined (__GNUC__)
-#  if defined (DONT_EXTERN_INLINE_FUNCTIONS)
-#   define INLINE inline
-#  else
-#   define INLINE extern inline
-#  endif
-# else
-#  define INLINE static inline
-# endif
-#else
+/* MSVC version >= 2.x without /Za supports __inline */
+#if (_MSC_VER < 900) || defined(__STDC__)
 # define INLINE static
+#else
+# define INLINE __inline
 #endif
+
+/* MSVC warnings no-no crap. When adding one to this section,
+   1. Think twice
+   2. Insert textual description of the warning.
+   3. Think twice. Undo still works  */
+#if (_MSC_VER >= 800)
+
+/* 'expression' : signed/unsigned mismatch */
+#pragma warning ( disable : 4018 )
+
+#endif /* compiler understands #pragma warning*/
 
 /* We want to avoid saving the signal mask if possible, because
    that necessitates a system call. */

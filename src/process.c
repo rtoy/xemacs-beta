@@ -1887,11 +1887,12 @@ void
 set_process_filter (Lisp_Object proc, Lisp_Object filter, int filter_does_read)
 {
   CHECK_PROCESS (proc);
-  if (PROCESS_LIVE_P (proc))
+  if (PROCESS_LIVE_P (proc)) {
     if (EQ (filter, Qt))
       event_stream_unselect_process (XPROCESS (proc));
     else
       event_stream_select_process (XPROCESS (proc));
+  }
 
   XPROCESS (proc)->filter = filter;
   XPROCESS (proc)->filter_does_read = filter_does_read;

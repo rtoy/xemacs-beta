@@ -830,7 +830,7 @@ unless the function is autoloaded."
   :type 'boolean
   :group 'help-appearance)
 
-(defun describe-function-find-file (function)
+(defun describe-symbol-find-file (function)
   (let ((files load-history)
 	file)
     (while files
@@ -839,6 +839,9 @@ unless the function is autoloaded."
 		files nil))
       (setq files (cdr files)))
     file))
+(define-obsolete-function-alias
+  'describe-function-find-file
+  'describe-symbol-find-file)
 
 (defun describe-function (function)
   "Display the full documentation of FUNCTION (a symbol).
@@ -969,11 +972,13 @@ part of the documentation of internal subroutines."
 			   (symbol-name def)))
 		(format "an alias for `%s', " (symbol-name def)))))
       (setq def (symbol-function def)))
-    (if (compiled-function-p def)
+    (if (and (fboundp 'compiled-function-annotation)
+	     (compiled-function-p def))
 	(setq file-name (compiled-function-annotation def)))
     (if (eq 'macro (car-safe def))
 	(setq fndef (cdr def)
 	      file-name (and (compiled-function-p (cdr def))
+			     (fboundp 'compiled-function-annotation)
 			     (compiled-function-annotation (cdr def)))
 	      macrop t)
       (setq fndef def))
@@ -1014,7 +1019,7 @@ part of the documentation of internal subroutines."
     (if autoload-file
 	(princ (format "  -- autoloads from \"%s\"\n" autoload-file)))
     (or file-name
-	(setq file-name (describe-function-find-file function)))
+	(setq file-name (describe-symbol-find-file function)))
     (if file-name
 	(princ (format "  -- loaded from \"%s\"\n" file-name)))
 ;;     (terpri)
@@ -1171,7 +1176,7 @@ Use `pp-internal' if defined, otherwise `cl-prettyprint'"
 	    (princ (format "%s" aliases)))
 	(princ (built-in-variable-doc variable))
 	(princ ".\n")
-	(let ((file-name (describe-function-find-file variable)))
+	(let ((file-name (describe-symbol-find-file variable)))
 	     (if file-name
 		 (princ (format "  -- loaded from \"%s\"\n" file-name))))
 	(princ "\nValue: ")

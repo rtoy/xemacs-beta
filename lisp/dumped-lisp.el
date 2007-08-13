@@ -192,5 +192,6 @@
 ;;	#+sparcworks "sun-eos-debugger"
 ;;	#+sparcworks "sun-eos-debugger-extra"
 ;;	#+sparcworks "sun-eos-menubar"
+	"loadhist"		; Must be dumped before loaddefs is loaded
 	"loaddefs"		; <=== autoloads get loaded here
 ))

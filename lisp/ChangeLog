@@ -1,3 +1,28 @@
+1997-12-29  Colin Rafferty  <colin@xemacs.org>
+
+	* packages.el (packages-find-packages-1): Made it signal a warning 
+	for an error in an auto-autoload.el file.
+
+1997-12-30  SL Baur  <steve@altair.xemacs.org>
+
+	* x-menubar.el (buffers-menu-submenus-for-groups-p): Replace sexp
+	tag with const.
+	From Aki Vehtari <Aki.Vehtari@hut.fi>
+
+	* dumped-lisp.el (preloaded-file-list): Dump loadhist with XEmacs.
+
+	* loadhist.el (unload-feature): Remove autoload.
+
+1997-12-28  SL Baur  <steve@altair.xemacs.org>
+
+	* loadhist.el: Unpackaged.
+
+	* help.el (describe-symbol-find-file): Rename
+	`describe-function-find-file' and make old name obsolete.
+	(describe-function-1): Use it.
+	(describe-function-1): Guard reference to
+	`compiled-function-annotation'.
+
 1997-12-27  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
 
 	* help.el (help-mode-bury): Now a call to `help-mode-quit' with

@@ -1209,9 +1209,11 @@ build_load_history (int loading, Lisp_Object source)
   REGISTER Lisp_Object tem, tem2;
   int foundit;
 
+#if !defined(LOADHIST_DUMPED)
   /* Don't bother recording anything for preloaded files.  */
   if (purify_flag)
     return;
+#endif
 
   tail = Vload_history;
   prev = Qnil;

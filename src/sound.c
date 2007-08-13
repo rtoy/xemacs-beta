@@ -90,10 +90,12 @@ where WAV files are also supported.
   GCPRO1 (file);
   file = Fexpand_file_name (file, Qnil);
   if (NILP (Ffile_readable_p (file)))
+    {
     if (NILP (Ffile_exists_p (file)))
       error ("file does not exist.");
     else
       error ("file is unreadable.");
+    }
   UNGCPRO;
 
 #ifdef HAVE_NAS_SOUND

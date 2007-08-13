@@ -224,10 +224,15 @@ This is an internal function.  Do not call it after startup."
 			      (append dumped-lisp-packages package-lisp)))))))
 
 	(if user-package
-	    (condition-case nil
+	    (condition-case error
 		(load (concat package "/lisp/"
-			      (file-name-sans-extension autoload-file-name)))
-	      (t nil)))
+			      (file-name-sans-extension autoload-file-name))
+		      t)
+	      (error
+	       (warn (format "Autoload error in: %s/lisp/:\n\t%s"
+			     package
+			     (with-output-to-string
+			       (display-error error nil)))))))
 	(let ((dirs (directory-files (concat package "/lisp/")
 				     t "^[^-.]" nil 'dirs-only))
 	      dir)
@@ -254,15 +259,20 @@ This is an internal function.  Do not call it after startup."
 				  (append dumped-lisp-packages package-lisp)))))))
 
 	    (if user-package
-		(condition-case nil
+		(condition-case error
 		    (progn
 ;		      (print
 ;		       (concat dir "/"
 ;			       (file-name-sans-extension autoload-file-name)))
 		      (load
 		       (concat dir "/"
-			       (file-name-sans-extension autoload-file-name))))
-		  (t nil)))
+			       (file-name-sans-extension autoload-file-name))
+		       t))
+		  (error
+		   (warn (format "Autoload error in: %s/:\n\t%s"
+				 dir
+				 (with-output-to-string
+				   (display-error error nil)))))))
 	    (packages-find-packages-1 dir path-only append-p user-package)
 	    (setq dirs (cdr dirs)))))))
 

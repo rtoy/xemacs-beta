@@ -96,12 +96,11 @@ Boston, MA 02111-1307, USA.  */
 #define EMPTY_ITEM_ID ((UINT)LISP_TO_VOID (Qunbound))
 #define EMPTY_ITEM_NAME "(empty)"
 
-/* Qnil when there's no popup being tracked, or a descriptor
-   for the popup. gcpro'ed */
-static Lisp_Object current_tracking_popup;
+/* Current menu (bar or popup) descriptor. gcpro'ed */
+static Lisp_Object current_menudesc;
 
-/* Current popup has table. Qnil when no popup. gcpro'ed */
-static Lisp_Object current_popup_hash_table;
+/* Current menubar or popup hashtable. gcpro'ed */
+static Lisp_Object current_hashtable;
 
 /* Bound by menubar.el */
 static Lisp_Object Qfind_menu_item;
@@ -166,7 +165,7 @@ gui_parse_button_descriptor (Lisp_Object desc, Lisp_Object *name,
   *plist = Qnil;
 
   if (length < 3)
-    signal_simple_error ("button descriptors must be at least 3 long", desc);
+    signal_simple_error ("Button descriptors must be at least 3 long", desc);
 
   /* length 3:		[ "name" callback active-p ]
      length 4:		[ "name" callback active-p suffix ]
@@ -191,7 +190,7 @@ gui_parse_button_descriptor (Lisp_Object desc, Lisp_Object *name,
       int i;
       if (length & 1)
 	signal_simple_error (
-		"button descriptor has an odd number of keywords and values",
+		"Button descriptor has an odd number of keywords and values",
 			     desc);
 
       for (i = 2; i < length;)
@@ -199,7 +198,7 @@ gui_parse_button_descriptor (Lisp_Object desc, Lisp_Object *name,
 	  Lisp_Object key = contents [i++];
 	  Lisp_Object val = contents [i++];
 	  if (!KEYWORDP (key))
-	    signal_simple_error_2 ("not a keyword", key, desc);
+	    signal_simple_error_2 ("Not a keyword", key, desc);
 	  internal_plist_put (plist, key, val);
 	}
     }    
@@ -447,6 +446,44 @@ empty_menu (HMENU menu, int add_empty_p)
     AppendMenu (menu, MF_STRING | MF_GRAYED, EMPTY_ITEM_ID, EMPTY_ITEM_NAME);
 }
 
+/*
+ * The idea of checksumming is that we must hash minimal object
+ * which is neccessarily changes when the item changes. For separator
+ * this is a constant, for grey strings and submenus these are hashes
+ * of names, since sumbenus are unpopulated until opened so always
+ * equal otherwise. For items, this is a full hash value of a callback,
+ * because a callback may me a form which can be changed only somewhere
+ * in depth.
+ */
+static unsigned long
+checksum_menu_item (Lisp_Object item)
+{
+  if (STRINGP (item))
+    {
+      /* Separator or unselectable text - hash as a string + 13 */
+      if (separator_string_p (XSTRING_DATA (item)))
+	return 13;
+      else
+	return internal_hash (item, 0) + 13;
+    }
+  else if (CONSP (item))
+    {
+      /* Submenu - hash by its string name + 0 */
+      return internal_hash (XCAR(item), 0);
+    }
+  else if (VECTORP (item))
+    {
+      /* An ordinary item - hash its name and callback form. */
+      Lisp_Object plist, name, callback;
+      gui_parse_button_descriptor (item, &name, &callback, &plist);
+      return HASH2 (internal_hash (name, 0),
+		    internal_hash (callback, 0));
+    }
+ 
+  /* An error - will be caught later */
+  return 0;
+}
+
 static void
 populate_menu_add_item (HMENU menu, Lisp_Object path,
 			Lisp_Object hash_tab, Lisp_Object item, int flush_right)
@@ -480,7 +517,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       HMENU submenu;
 	
       if (!STRINGP (subname))
-	signal_simple_error ("menu name (first element) must be a string", item);
+	signal_simple_error ("Menu name (first element) must be a string", item);
 
       item = gui_parse_menu_keywords (XCDR (item), &plist);
       GCPRO1 (plist);
@@ -557,7 +594,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
     }
   else
     {
-      signal_simple_error ("ill-constructed menu descriptor", item);
+      signal_simple_error ("Ill-constructed menu descriptor", item);
     }
 
   if (flush_right)
@@ -566,16 +603,29 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
   InsertMenuItem (menu, UINT_MAX, TRUE, &item_info);
 }  
 
-static void
-populate_menu (HMENU menu, Lisp_Object path, Lisp_Object descriptor,
-	       Lisp_Object hash_tab, int bar_p)
+/*
+ * This function is called from populate_menu and checksum_menu.
+ * When called to populate, MENU is a menu handle, PATH is a
+ * list of strings representing menu path from root to this submenu,
+ * DESCRIPTOR is a menu descriptor, HASH_TAB is a hashtable associated
+ * with root menu, BAR_P indicates whether this called for a menubar or
+ * a popup, and POPULATE_P is non-zero. Return value must be ignored.
+ * When called to checksum, DESCRIPTOR has the same meaning, POPULATE_P
+ * is zero, PATH must be Qnil, and the rest of parameters is ignored.
+ * Return value is the menu checksum.
+ */
+static unsigned long
+populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object descriptor,
+			     Lisp_Object hash_tab, int bar_p, int populate_p)
 {
   Lisp_Object menu_name, plist, item_desc;
   int deep_p, flush_right;
   struct gcpro gcpro1;
+  unsigned long checksum = 0;
 
   /* Will initially contain only "(empty)" */
-  empty_menu (menu, 1);
+  if (populate_p)
+    empty_menu (menu, 1);
 
   /* PATH set to nil indicates top-level popup or menubar */
   deep_p = !NILP (path);
@@ -584,7 +634,7 @@ populate_menu (HMENU menu, Lisp_Object path, Lisp_Object descriptor,
     top_level_menu = menu;
 
   if (!CONSP(descriptor))
-    signal_simple_error ("menu descriptor must be a list", descriptor);
+    signal_simple_error ("Menu descriptor must be a list", descriptor);
 
   if (STRINGP (XCAR (descriptor)))
     {
@@ -595,7 +645,7 @@ populate_menu (HMENU menu, Lisp_Object path, Lisp_Object descriptor,
     {
       menu_name = Qnil;
       if (deep_p) /* Not a popup or bar */
-	signal_simple_error ("menu must have a name", descriptor);
+	signal_simple_error ("Menu must have a name", descriptor);
     }
 
   /* Fetch keywords prepending the item list */
@@ -612,26 +662,48 @@ populate_menu (HMENU menu, Lisp_Object path, Lisp_Object descriptor,
 	{
 	  if (bar_p)
 	    flush_right = 1;
+	  if (!populate_p)
+	    checksum = HASH2 (checksum, Qnil);
 	}
-      else
+      else if (populate_p)
 	populate_menu_add_item (menu, path, hash_tab,
 				XCAR (item_desc), flush_right);
+      else
+	checksum = HASH2 (checksum,
+			  checksum_menu_item (XCAR (item_desc)));
     }
   
-  /* Remove the "(empty)" item, if there are other ones */
-  if (GetMenuItemCount (menu) > 1)
-    RemoveMenu (menu, EMPTY_ITEM_ID, MF_BYCOMMAND);
-
-  /* Add the header to the popup, if told so. The same as in X - an
-     insensitive item, and a separator (Seems to me, there were
-     two separators in X... In Windows this looks ugly, anywats. */
-  if (!bar_p && !deep_p && popup_menu_titles && !NILP(menu_name))
+  if (populate_p)
     {
-      InsertMenu (menu, 0, MF_BYPOSITION | MF_STRING | MF_DISABLED,
-		  0, XSTRING_DATA(menu_name));
-      InsertMenu (menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-      SetMenuDefaultItem (menu, 0, MF_BYPOSITION);
+      /* Remove the "(empty)" item, if there are other ones */
+      if (GetMenuItemCount (menu) > 1)
+	RemoveMenu (menu, EMPTY_ITEM_ID, MF_BYCOMMAND);
+
+      /* Add the header to the popup, if told so. The same as in X - an
+	 insensitive item, and a separator (Seems to me, there were
+	 two separators in X... In Windows this looks ugly, anywats. */
+      if (!bar_p && !deep_p && popup_menu_titles && !NILP(menu_name))
+	{
+	  InsertMenu (menu, 0, MF_BYPOSITION | MF_STRING | MF_DISABLED,
+		      0, XSTRING_DATA(menu_name));
+	  InsertMenu (menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+	  SetMenuDefaultItem (menu, 0, MF_BYPOSITION);
+	}
     }
+  return checksum;
+}
+
+static void
+populate_menu (HMENU menu, Lisp_Object path, Lisp_Object descriptor,
+			     Lisp_Object hash_tab, int bar_p)
+{
+  populate_or_checksum_helper (menu, path, descriptor, hash_tab, bar_p, 1);
+}
+
+static unsigned long
+checksum_menu (Lisp_Object descriptor)
+{
+  return populate_or_checksum_helper (NULL, Qnil, descriptor, Qunbound, 0, 0);
 }
 
 static Lisp_Object
@@ -666,6 +738,7 @@ update_frame_menubar_maybe (struct frame* f)
     {
       /* Menubar has gone */
       FRAME_MSWINDOWS_MENU_HASHTABLE(f) = Qnil;
+      SetMenu (FRAME_MSWINDOWS_HANDLE (f), NULL);
       DestroyMenu (menubar);
       DrawMenuBar (FRAME_MSWINDOWS_HANDLE (f));
       return;
@@ -684,12 +757,9 @@ update_frame_menubar_maybe (struct frame* f)
       return;
     }
 
-  /* Now we have to check if the menubar has really changed */
-  /* #### For now we do not though */
-
-  /* We cannot re-create the menu, cause WM_INITMENU does not like that.
-     We'll clear it instead. */
-  empty_menu (menubar, 0);
+  /* Now we bail out if the menubar has not changed */
+  if (FRAME_MSWINDOWS_MENU_CHECKSUM(f) == checksum_menu (desc))
+    return;
 
 populate:
   /* Come with empty hash table */
@@ -704,6 +774,8 @@ populate:
 		 FRAME_MSWINDOWS_MENU_HASHTABLE(f), 1);
   SetMenu (FRAME_MSWINDOWS_HANDLE (f), menubar);
   DrawMenuBar (FRAME_MSWINDOWS_HANDLE (f));
+
+  FRAME_MSWINDOWS_MENU_CHECKSUM(f) = checksum_menu (desc);
 }
 
 static void
@@ -715,8 +787,8 @@ prune_menubar (struct frame *f)
     return;
 
   /* #### If a filter function has set desc to Qnil, this abort()
-     triggers. To resolve, we must prevent explicitely filters from
-     mangling with te active menu. In apply_filter probably?
+     triggers. To resolve, we must prevent filters explicitely from
+     mangling with the active menu. In apply_filter probably?
      Is copy-tree on the whole menu too expensive? */
   if (NILP(desc))
     /* abort(); */
@@ -742,13 +814,9 @@ static void
 menu_cleanup (struct frame *f)
 {
   /* This function can GC */
-  if (!NILP (current_tracking_popup))
-    {
-      current_tracking_popup = Qnil;
-      current_popup_hash_table = Qnil;
-    }
-  else
-    prune_menubar (f);
+  current_menudesc = Qnil;
+  current_hashtable = Qnil;
+  prune_menubar (f);
 }
   
 
@@ -761,37 +829,32 @@ unsafe_handle_wm_initmenupopup_1 (HMENU menu, struct frame* f)
   /* This function can call lisp, beat dogs and stick chewing gum to
      everything! */
 
-  Lisp_Object path, desc, hash_tab;
+  Lisp_Object path, desc;
   struct gcpro gcpro1;
 
-  if (!NILP (current_tracking_popup))
-    {
-      desc = current_tracking_popup;
-      hash_tab = current_popup_hash_table;
-    }
-  else
-    {
-      desc = current_frame_menubar (f);
-      hash_tab = FRAME_MSWINDOWS_MENU_HASHTABLE(f);
-    }
-
   /* Find which guy is going to explode */
-  path = Fgethash (hmenu_to_lisp_object (menu), hash_tab, Qunbound);
+  path = Fgethash (hmenu_to_lisp_object (menu), current_hashtable, Qunbound);
   assert (!UNBOUNDP (path));
+#ifdef DEBUG_XEMACS
+  /* Allow to continue in a debugger after assert - not so fatal */
+  if (UNBOUNDP (path))
+    error ("internal menu error");
+#endif
 
   /* Now find a desc chunk for it. If none, then probably menu open
      hook has played too much games around stuff */
+  desc = current_menudesc;
   if (!NILP (path))
     {
       desc = find_menu (desc, path);
       if (NILP (desc))
-	signal_simple_error ("this menu does not exist any more", path);
+	signal_simple_error ("This menu does not exist any more", path);
     }
 
   /* Now, stuff it */
   /* DESC may be generated by filter, so we have to gcpro it */
   GCPRO1 (desc);
-  populate_menu (menu, path, desc, hash_tab, 0);
+  populate_menu (menu, path, desc, current_hashtable, 0);
   UNGCPRO;
   return Qt;
 }
@@ -806,11 +869,15 @@ unsafe_handle_wm_initmenu_1 (struct frame* f)
   /* We simply ignore return value. In any case, we construct the bar
      on the fly */
   run_hook (Vactivate_menubar_hook);
-  
+
   update_frame_menubar_maybe (f);
+
+  current_menudesc = current_frame_menubar (f);
+  current_hashtable = FRAME_MSWINDOWS_MENU_HASHTABLE(f);
+  assert (HASHTABLEP (current_hashtable));
+
   return Qt;
 }
-
 
 #ifdef KKM_DOES_NOT_LIKE_UNDOCS_SOMETIMES
 
@@ -836,15 +903,10 @@ Lisp_Object
 mswindows_handle_wm_command (struct frame* f, WORD id)
 {
   /* Try to map the command id through the proper hash table */
-  Lisp_Object hash_tab, command, funcsym, frame;
+  Lisp_Object command, funcsym, frame;
   struct gcpro gcpro1;
 
-  if (!NILP (current_tracking_popup))
-    hash_tab = current_popup_hash_table;
-  else
-    hash_tab = FRAME_MSWINDOWS_MENU_HASHTABLE(f);
-
-  command = Fgethash (make_int (id), hash_tab, Qunbound);
+  command = Fgethash (make_int (id), current_hashtable, Qunbound);
   if (UNBOUNDP (command))
     {
       menu_cleanup (f);
@@ -858,23 +920,21 @@ mswindows_handle_wm_command (struct frame* f, WORD id)
   menu_cleanup (f);
 
   /* Ok, this is our one. Enqueue it. */
-#if 0
-  if (SYMBOLP (command))
-    Fcall_interactively (command, Qnil, Qnil);
-  else if (CONSP (command))
-    Feval (command);
-  else
-    signal_simple_error ("illegal callback", command);
-#endif
   if (SYMBOLP (command))
       funcsym = Qcall_interactively;
   else if (CONSP (command))
       funcsym = Qeval;
   else
-    signal_simple_error ("illegal callback", command);
+    signal_simple_error ("Illegal callback", command);
 
   XSETFRAME (frame, f);
   enqueue_misc_user_event (frame, funcsym, command);
+
+  /* Needs good bump also, for WM_COMMAND may have been dispatched from
+     mswindows_need_event, which will block again despite new command
+     event has arrived */
+  mswindows_enqueue_magic_event (FRAME_MSWINDOWS_HANDLE(f),
+				 XM_BUMPQUEUE);
   
   UNGCPRO; /* command */
   return Qt;
@@ -918,10 +978,15 @@ mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame* frm)
 }
 
 Lisp_Object
-mswindows_handle_wm_initmenu (struct frame* f)
+mswindows_handle_wm_initmenu (HMENU hmenu, struct frame* f)
 {
-  wm_initmenu_frame = f;
-  return mswindows_protect_modal_loop (unsafe_handle_wm_initmenu, Qnil);
+  /* Handle only frame menubar, ignore if from popup or system menu */
+  if (GetMenu (FRAME_MSWINDOWS_HANDLE(f)) == hmenu)
+    {
+      wm_initmenu_frame = f;
+      return mswindows_protect_modal_loop (unsafe_handle_wm_initmenu, Qnil);
+    }
+  return Qt;
 }
 
 Lisp_Object
@@ -992,12 +1057,13 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   if (SYMBOLP (menu_desc))
     menu_desc = Fsymbol_value (menu_desc);
 
-  current_tracking_popup = menu_desc;
-  current_popup_hash_table = Fmake_hashtable (make_int(10), Qequal);
+  current_menudesc = menu_desc;
+  current_hashtable = Fmake_hashtable (make_int(10), Qequal);
   menu = create_empty_popup_menu();
-  Fputhash (hmenu_to_lisp_object (menu), Qnil, current_popup_hash_table);
+  Fputhash (hmenu_to_lisp_object (menu), Qnil, current_hashtable);
   
-  ok = TrackPopupMenu (menu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
+  ok = TrackPopupMenu (menu,
+		       TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON,
 		       pt.x, pt.y, 0,
 		       FRAME_MSWINDOWS_HANDLE (f), NULL);
 
@@ -1009,7 +1075,7 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   /* This is probably the only real reason for failure */
   if (!ok) {
     menu_cleanup (f);
-    signal_simple_error ("cannot track popup menu while in menu",
+    signal_simple_error ("Cannot track popup menu while in menu",
 			 menu_desc);
   }
 }
@@ -1035,11 +1101,11 @@ console_type_create_menubar_mswindows (void)
 void
 vars_of_menubar_mswindows (void)
 {
-  current_tracking_popup = Qnil;
-  current_popup_hash_table = Qnil;
+  current_menudesc = Qnil;
+  current_hashtable = Qnil;
 
-  staticpro (&current_tracking_popup);
-  staticpro (&current_popup_hash_table);
+  staticpro (&current_menudesc);
+  staticpro (&current_hashtable);
 
   Fprovide (intern ("mswindows-menubars"));
 }

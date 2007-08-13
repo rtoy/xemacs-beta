@@ -1152,6 +1152,15 @@ This command is designed to be used whether you are already in Info or not." t n
 
 ;;;***
 
+;;;### (autoloads (unload-feature) "loadhist" "lisp/loadhist.el")
+
+(autoload 'unload-feature "loadhist" "\
+Unload the library that provided FEATURE, restoring all its autoloads.
+If the feature is required by any other loaded code, and optional FORCE
+is nil, raise an error." t nil)
+
+;;;***
+
 ;;;### (autoloads (package-admin-add-binary-package package-admin-add-single-file-package) "package-admin" "lisp/package-admin.el")
 
 (autoload 'package-admin-add-single-file-package "package-admin" "\
@@ -1345,6 +1354,28 @@ Load and install some sound files as beep-types, using
 `load-sound-file'.  This only works if you're on display 0 of the
 console of a machine with native sound support or running a NetAudio
 server and XEmacs has the necessary sound support compiled in." t nil)
+
+;;;***
+
+;;;### (autoloads (ask-user-about-supersession-threat ask-user-about-lock) "userlock" "lisp/userlock.el")
+
+(autoload 'ask-user-about-lock "userlock" "\
+Ask user what to do when he wants to edit FILE but it is locked by USER.
+This function has a choice of three things to do:
+  do (signal 'file-locked (list FILE USER))
+    to refrain from editing the file
+  return t (grab the lock on the file)
+  return nil (edit the file even though it is locked).
+You can rewrite it to use any criterion you like to choose which one to do." nil nil)
+
+(autoload 'ask-user-about-supersession-threat "userlock" "\
+Ask a user who is about to modify an obsolete buffer what to do.
+This function has two choices: it can return, in which case the modification
+of the buffer will proceed, or it can (signal 'file-supersession (file)),
+in which case the proposed buffer modification will not be made.
+
+You can rewrite this to use any criterion you like to choose which one to do.
+The buffer in question is current when this function is called." nil nil)
 
 ;;;***
 

@@ -1,3 +1,60 @@
+1997-12-29  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* msw-proc.c (mswindows_enqueue_magic_event): Made extern. User by 
+	menubar-msw.c
+
+	* event-msw.h: Prototype for mswindows_enqueue_magic_event
+
+	* event-msw.c (mswindows_wm_timer_callback): Fixed counter of
+	outstanding timer events (decremented only when KillTimer
+	succeeds)
+	(emacs_mswindows_remove_timeout): Ditto
+
+	* console-msw.h: Added frame structure field for menu checksum
+
+	* menubar-msw.c: Miscellaneous patches and bug fixes.
+
+1997-12-30  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (main): Clarify calls to main_1.
+
+	* data.c (Fcompiled_function_annotation): Hide DEFUN from
+	make-docfile.
+
+	* emacs.c (main_1): The invocation name requires recomputing when
+	running after dumping.
+
+1997-12-29  SL Baur  <steve@altair.xemacs.org>
+
+	* free-hook.c (check_free): Added explicit braces to avoid
+	dangling else clause.
+	* sound.c (Fplay_sound_file): Ditto.
+	* process.c (set_process_filter): Ditto.
+	* linuxplay.c (linux_play_data_or_file): Ditto.
+	* regex.c (regex_compile): Ditto.
+
+1997-12-28  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (main_1): Fix logic to run in place when XEmacs is a
+	login shell.
+	(main_1): New parameter restart.
+	(main): Use it.
+
+	* bytecode.h: Disable COMPILED_FUNCTION_ANNOTATION_HACK.
+
+	* print.c (debug_short_backtrace): Guard call to
+	Fcompiled_function_annotation.
+
+	* alloc.c (disksave_object_finalization): Don't zero out
+	load-history if history of pure symbols is desired.
+
+	* lread.c (build_load_history): If LOADHIST_DUMPED is defined, add 
+	pure symbols to load-history.
+
+	* emacsfns.h: New symbols added -- LOADHIST_DUMPED, define to get
+	a history of dumped lisp.  LOADHIST_BUILTIN, define to get a
+	history of symbols defined in C source.
+
 1997-12-23  Andy Piper <andyp@parallax.co.uk>
 
 	* Conditionals to enable XEmacs to compile (not run!) under

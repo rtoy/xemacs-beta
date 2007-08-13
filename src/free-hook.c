@@ -222,6 +222,7 @@ check_free (void *ptr)
 					       (void **) &size);
 
       if (!present)
+	{
 	/* This can only happen if you try to free something that didn't
 	   come from malloc */
 	if (strict_free_check)
@@ -232,8 +233,10 @@ check_free (void *ptr)
 	    __malloc_hook = check_malloc;
 	    goto end;
 	  }
+	}
 
       if (size < 0)
+	{
 	/* This happens when you free twice */
 	if (strict_free_check)
 	  abort ();
@@ -243,6 +246,7 @@ check_free (void *ptr)
 	    __malloc_hook = check_malloc;
 	    goto end;
 	  }
+	}
       puthash (ptr, (void *)-size, pointer_table);
 #ifdef UNMAPPED_FREE
       /* Round up size to an even number of pages. */

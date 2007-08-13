@@ -989,7 +989,7 @@ If this is an integer, do not build submenus if the number of buffers
 is not larger than this value."
   :type '(choice (const :tag "No Subgroups" nil)
 		 (integer :tag "Max. submenus" 10)
-		 (sexp :format "%t\n" :tag "Allow Subgroups"))
+		 (const :tag "Allow Subgroups" t))
   :group 'buffers-menu)
 
 (defcustom buffers-menu-switch-to-buffer-function 'switch-to-buffer

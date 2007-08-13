@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 20.5 beta15 "British Alpine"
+-- autoloads are now loaded into impure storage and can be deleted at runtime
+-- loadhist.el is now dumped with XEmacs
+-- XEmacs running in place as a login shell now works
+-- loadhist.el unpackaged
+-- COMPILED_FUNCTION_ANNOTATION disabled
+-- Added new compile time symbols -- LOADHIST_DUMPED and LOADHIST_BUILTIN
+   adapted from code originally by Tomasz Cholewo
+
 to 20.5 beta14 "Booted Goat"
 -- help.el update courtesy of Jens Petersen
 -- Image error handling courtesy of Jareth Hein

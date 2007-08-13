@@ -1411,6 +1411,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Juan E. Villacis" "jvillaci@cs.indiana.edu")
        (print-short "Jan Vroonhof" "vroonhof@math.ethz.ch")
        (print-short "Vladimir Vukicevic" "vladimir@intrepid.com")
+       (print-short "Charles G. Waldman" "cgw@pgt.com")
        (print-short "David Walte" "djw18@cornell.edu")
        (print-short "Peter Ware" "ware@cis.ohio-state.edu")
        (print-short "Yoav Weiss" "yoav@zeus.datasrv.co.il")

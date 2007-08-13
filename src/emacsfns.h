@@ -1396,7 +1396,12 @@ Lisp_Object Flocate_file_clear_hashing (Lisp_Object path);
 int isfloat_string (CONST char *);
 
 /* Well, I've decided to enable this. -- ben */
+/* And I've decided to make it work right.  -- sb */
 #define LOADHIST
+/* Define the following symbol to enable load history of dumped files */
+#define LOADHIST_DUMPED
+/* Define the following symbol to enable load history of C source */
+#define LOADHIST_BUILTIN
 
 #ifdef LOADHIST /* this is just a stupid idea */
 #define LOADHIST_ATTACH(x) \

@@ -1,5 +1,5 @@
 #!/bin/sh
 emacs_major_version=20
 emacs_minor_version=5
-emacs_beta_version=14
-xemacs_codename="Booted Goat"
+emacs_beta_version=15
+xemacs_codename="British Alpine"

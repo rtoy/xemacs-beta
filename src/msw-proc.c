@@ -81,7 +81,7 @@ static int timeout_mswindows_id;
 /* Enqueue helpers                                                            */
 /*----------------------------------------------------------------------------*/
 
-static void
+void
 mswindows_enqueue_magic_event (HWND hwnd, UINT message)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
@@ -627,6 +627,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 #ifdef HAVE_MENUBARS
   case WM_INITMENU:
     if (UNBOUNDP (mswindows_handle_wm_initmenu (
+			(HMENU) wParam,
 			XFRAME (mswindows_find_frame (hwnd)))))
       SendMessage (hwnd, WM_CANCELMODE, 0, 0);
     break;

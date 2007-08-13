@@ -346,8 +346,6 @@ dynodump: FRC.dynodump
 FRC.src FRC.lib-src FRC.lwlib FRC.dynodump pkg-src/FRC.tree-x:
 FRC.lisp.finder-inf.el:
 
-.RECURSIVE: ${SUBDIR}
-
 ${SUBDIR}: ${SUBDIR_MAKEFILES} ${GENERATED_HEADERS} FRC
 	cd $@ && $(RECURSIVE_MAKE) all
 

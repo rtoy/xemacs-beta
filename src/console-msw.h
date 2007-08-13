@@ -77,8 +77,11 @@ struct mswindows_frame
   /* Coordinates of last click event, screen-relative */
   POINTS last_click_point;
 
-  /* Menu hashtable. See menubar-msw.h */
-  Lisp_Object hash_table;
+  /* Menu hashtable. See menubar-msw.c */
+  Lisp_Object menu_hashtable;
+
+  /* Menu checksum. See menubar-msw.c */
+  unsigned int menu_checksum;
 
   /* Misc flags */
   int button2_need_lbutton : 1;
@@ -91,9 +94,10 @@ struct mswindows_frame
 
 #define FRAME_MSWINDOWS_DATA(f) FRAME_TYPE_DATA (f, mswindows)
 
-#define FRAME_MSWINDOWS_HANDLE(f)	(FRAME_MSWINDOWS_DATA (f)->hwnd)
-#define FRAME_MSWINDOWS_DC(f)		(FRAME_MSWINDOWS_DATA (f)->hdc)
-#define FRAME_MSWINDOWS_MENU_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->hash_table)
+#define FRAME_MSWINDOWS_HANDLE(f)	  (FRAME_MSWINDOWS_DATA (f)->hwnd)
+#define FRAME_MSWINDOWS_DC(f)		  (FRAME_MSWINDOWS_DATA (f)->hdc)
+#define FRAME_MSWINDOWS_MENU_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->menu_hashtable)
+#define FRAME_MSWINDOWS_MENU_CHECKSUM(f)  (FRAME_MSWINDOWS_DATA (f)->menu_checksum)
 
 /*
  * Redisplay functions

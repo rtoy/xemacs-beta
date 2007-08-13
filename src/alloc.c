@@ -4192,7 +4192,10 @@ disksave_object_finalization (void)
   Vexec_path = Qnil;
   Vload_path = Qnil;
   /* Vdump_load_path = Qnil; */
+#if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \
+			   defined(LOADHIST_BUILTIN))
   Vload_history = Qnil;
+#endif
   Vshell_file_name = Qnil;
 
   garbage_collect_1 ();
