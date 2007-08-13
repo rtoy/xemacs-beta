@@ -83,14 +83,14 @@ set the clipboard.")
 This will do nothing under anything other than X.")
 
 (defun get-selection-no-error (&optional type data-type)
-  "Return the value of a Windows selection.
+  "Return the value of a window-system selection.
 The argument TYPE (default `PRIMARY') says which selection,
 and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
 says how to convert the data. Returns NIL if there is no selection"
-  (condition-case err (get-selection type data-type) (t nil)))
+  (condition-case nil (get-selection type data-type) (t nil)))
 
 (defun get-selection (&optional type data-type)
-  "Return the value of a Windows selection.
+  "Return the value of a window-system selection.
 The argument TYPE (default `PRIMARY') says which selection,
 and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
 says how to convert the data. If there is no selection an error is signalled."
@@ -105,23 +105,33 @@ says how to convert the data. If there is no selection an error is signalled."
 		    (get-selection type (cdr data-type))
 		  (signal (car err) (cdr err)))))
 	   (get-selection-internal type data-type))))
-    (when (and (consp text) (symbolp (car text)))
-      (setq text (cdr text)))
-    (when (not (stringp text))
-      (error "Selection is not a string: %S" text))
     text))
 
 ;; FSFmacs calls this `x-set-selection', and reverses the
-;; arguments (duh ...).  This order is more logical.
-(defun own-selection (data &optional type)
-  "Make an Windows selection of type TYPE and value DATA.
+;; first two arguments (duh ...).  This order is more logical.
+(defun own-selection (data &optional type how-to-add data-type)
+  "Make a window-system selection of type TYPE and value DATA.
 The argument TYPE (default `PRIMARY') says which selection,
-and DATA specifies the contents.  DATA may be a string,
-a symbol, an integer (or a cons of two integers or list of two integers).
+and DATA specifies the contents.  DATA may be any lisp data type
+that can be converted using the function corresponding to DATA-TYPE
+in `select-converter-alist'---strings are the usual choice, but
+other types may be permissible depending on the DATA-TYPE parameter
+(if DATA-TYPE is not supplied, the default behavior is window
+system specific, but strings are always accepted).
+HOW-TO-ADD may be any of the following:
+
+  'replace-all or nil -- replace all data in the selection.
+  'replace-existing   -- replace data for specified DATA-TYPE only.
+  'append or t        -- append data to existing DATA-TYPE data.
+
+DATA-TYPE is the window-system specific data type identifier
+(see `register-selection-data-type' for more information).
 
 The selection may also be a cons of two markers pointing to the same buffer,
 or an overlay.  In these cases, the selection is considered to be the text
-between the markers *at whatever time the selection is examined*.
+between the markers *at whatever time the selection is examined* (note
+that the window system clipboard does not necessarily duplicate this
+behavior - it doesn't on mswindows for example).
 Thus, editing done in the buffer after you specify the selection
 can alter the effective value of the selection.
 
@@ -131,36 +141,32 @@ Interactively, the text of the region is used as the selection value."
   (interactive (if (not current-prefix-arg)
 		   (list (read-string "Store text for pasting: "))
 		 (list (substring (region-beginning) (region-end)))))
-  ;FSFmacs huh??  It says:
-  ;; "This is for temporary compatibility with pre-release Emacs 19."
-  ;(if (stringp type)
-  ;    (setq type (intern type)))
-  (or (valid-simple-selection-p data)
-      (and (vectorp data)
-	   (let ((valid t)
-		 (i (1- (length data))))
-	     (while (>= i 0)
-	       (or (valid-simple-selection-p (aref data i))
-		   (setq valid nil))
-	       (setq i (1- i)))
-	     valid))
-      (signal 'error (list "invalid selection" data)))
-  (or type (setq type 'PRIMARY))
-  (if (null data)
-      (disown-selection-internal type)
-    (own-selection-internal type data)
-    (when (and (eq type 'PRIMARY)
-	       selection-sets-clipboard)
-      (own-selection-internal 'CLIPBOARD data)))
-  (cond ((eq type 'PRIMARY)
-	 (setq primary-selection-extent
-	       (select-make-extent-for-selection
-		data primary-selection-extent)))
-	((eq type 'SECONDARY)
-	 (setq secondary-selection-extent
-	       (select-make-extent-for-selection
-		data secondary-selection-extent))))
-  (setq zmacs-region-stays t)
+  ;; calling own-selection-internal will mess this up, so preserve it.
+  (let ((zmacs-region-stays zmacs-region-stays))
+					;FSFmacs huh??  It says:
+    ;; "This is for temporary compatibility with pre-release Emacs 19."
+					;(if (stringp type)
+					;    (setq type (intern type)))
+    (or type (setq type 'PRIMARY))
+    (if (null data)
+	(disown-selection-internal type)
+      (own-selection-internal type data how-to-add data-type)
+      (when (and (eq type 'PRIMARY)
+		 selection-sets-clipboard)
+	 (own-selection-internal 'CLIPBOARD data how-to-add data-type)))
+    (cond ((eq type 'PRIMARY)
+	   (setq primary-selection-extent
+		 (select-make-extent-for-selection
+		  data primary-selection-extent)))
+	  ((eq type 'SECONDARY)
+	   (setq secondary-selection-extent
+		 (select-make-extent-for-selection
+		  data secondary-selection-extent)))))
+  ;; zmacs-region-stays is for commands, not low-level functions.
+  ;; when behaving as the latter, we better not set it, or we will
+  ;; cause unwanted sticky-region behavior in kill-region and friends.
+  (if (interactive-p)
+  (setq zmacs-region-stays t))
   data)
 
 (defun dehilight-selection (selection)
@@ -184,8 +190,9 @@ Interactively, the text of the region is used as the selection value."
 
 (setq lost-selection-hooks 'dehilight-selection)
 
-(defun own-clipboard (string)
-  "Paste the given string to the window system Clipboard."
+(defun own-clipboard (string &optional push)
+  "Paste the given string to the window system Clipboard.
+See `interprogram-cut-function' for more information."
   (own-selection string 'CLIPBOARD))
 
 (defun disown-selection (&optional secondary-p)
@@ -289,6 +296,9 @@ secondary selection instead of the primary selection."
 
 ;; moved from x-select.el
 (defun valid-simple-selection-p (data)
+  "An obsolete function that tests whether something was a valid simple
+selection using the old XEmacs selection support. You shouldn't use this
+any more, because just about anything could be a valid selection now."
   (or (stringp data)
       ;FSFmacs huh?? (symbolp data)
       (integerp data)
@@ -350,11 +360,40 @@ secondary selection instead of the primary selection."
       (disown-selection nil)
       )))
 
+
 ;;; Functions to convert the selection into various other selection
-;;; types.  Every selection type that emacs handles is implemented
-;;; this way, except for TIMESTAMP, which is a special case. These are
-;;; all moved from x-select.el
+;;; types.
 
+;; These next three functions get called by C code...
+(defun select-convert-in (selection type value)
+  "Attempt to convert the specified external VALUE to the specified DATA-TYPE,
+for the specified SELECTION. Return nil if this is impossible, or a
+suitable internal representation otherwise."
+  (when value
+    (let ((handler-fn (cdr (assq type selection-converter-in-alist))))
+      (when handler-fn
+	(apply handler-fn (list selection type value))))))
+
+(defun select-convert-out (selection type value)
+  "Attempt to convert the specified internal VALUE for the specified DATA-TYPE
+and SELECTION. Return nil if this is impossible, or a suitable external
+representation otherwise."
+  (when value
+    (let ((handler-fn (cdr (assq type selection-converter-out-alist))))
+      (when handler-fn
+	(apply handler-fn (list selection type value))))))
+
+(defun select-coerce (selection type value)
+  "Attempt to convert the specified internal VALUE to a representation
+suitable for return from `get-selection' in the specified DATA-TYPE. Return
+nil if this is impossible, or a suitable representation otherwise."
+  (when value
+    (let ((handler-fn (cdr (assq type selection-coercion-alist))))
+      (when handler-fn
+	(apply handler-fn (list selection type value))))))
+
+;; The rest of the functions on this "page" are conversion handlers,
+;; append handlers and buffer-kill handlers.
 (defun select-convert-to-text (selection type value)
   (cond ((stringp value)
 	 value)
@@ -380,9 +419,17 @@ secondary selection instead of the primary selection."
 	     (buffer-substring (car value) (cdr value)))))
 	(t nil)))
 
+(defun select-coerce-to-text (selection type value)
+  (select-convert-to-text selection type value))
+
+(defun select-convert-from-text (selection type value)
+  (when (stringp value)
+    value))
+
 (defun select-convert-to-string (selection type value)
   (let ((outval (select-convert-to-text selection type value)))
-    ;; force the string to be not in Compound Text format.
+    ;; force the string to be not in Compound Text format. This grubby
+    ;; hack will go soon, to be replaced by a more general mechanism.
     (if (stringp outval)
 	(cons 'STRING outval)
       outval)))
@@ -410,6 +457,9 @@ secondary selection instead of the primary selection."
 	(cons (ash value -16) (logand value 65535))
       nil)))
 
+(defun select-convert-from-length (selection type value)
+  (select-convert-to-length selection type value))
+
 (defun select-convert-to-targets (selection type value)
   ;; return a vector of atoms, but remove duplicates first.
   (let* ((all (cons 'TIMESTAMP (mapcar 'car selection-converter-alist)))
@@ -417,8 +467,6 @@ secondary selection instead of the primary selection."
     (while rest
       (cond ((memq (car rest) (cdr rest))
 	     (setcdr rest (delq (car rest) (cdr rest))))
-	    ((eq (car (cdr rest)) '_EMACS_INTERNAL)  ; shh, it's a secret
-	     (setcdr rest (cdr (cdr rest))))
 	    (t
 	     (setq rest (cdr rest)))))
     (apply 'vector all)))
@@ -440,6 +488,10 @@ secondary selection instead of the primary selection."
 	 (buffer-file-name (or (marker-buffer (car value))
 			       (error "selection is in a killed buffer"))))
 	(t nil)))
+
+(defun select-convert-from-filename (selection type value)
+  (when (stringp value)
+    value))
 
 (defun select-convert-to-charpos (selection type value)
   (let (a b tmp)
@@ -546,7 +598,7 @@ secondary selection instead of the primary selection."
   (user-full-name))
 
 (defun select-convert-to-class (selection type size)
-  x-emacs-application-class)
+  (symbol-value 'x-emacs-application-class))
 
 ;; We do not try to determine the name Emacs was invoked with,
 ;; because it is not clean for a program's behavior to depend on that.
@@ -558,13 +610,139 @@ secondary selection instead of the primary selection."
   (and (integerp value)
        (cons (ash value -16) (logand value 65535))))
 
+;; Can convert from the following integer representations
+;;
+;;    integer
+;;    (integer . integer)
+;;    (integer integer)
+;;    (list [integer|(integer . integer)]*)
+;;    (vector [integer|(integer . integer)]*)
+;;
+;; Cons'd integers get cleaned up a little.
+
+(defun select-convert-from-integer (selection type value)
+  (cond ((integerp value)		; Integer
+	 value)
+	
+	((and (consp value)		; (integer . integer)
+	      (integerp (car value))
+	      (integerp (cdr value)))
+	 (if (eq (car value) 0)
+	     (cdr value)
+	   (if (and (eq (car value) -1)
+		    (< (cdr value) 0))
+	       (cdr value)
+	     value)))
+	
+	((and (listp value)		; (integer integer)
+	      (eq (length value) 2)
+	      (integerp (car value))
+	      (integerp (cadr value)))
+	 (if (eq (car value) 0)
+	     (cadr value)
+	   (if (and (eq (car value) -1)
+		    (< (cdr value) 0))
+	       (- (cadr value))
+	     (cons (car value) (cadr value)))))
+	
+	((listp value)			; list
+	 (if (cdr value)
+	     (mapcar '(lambda (x)
+			(select-convert-from-integer selection type x))
+		     value)
+	   (select-convert-from-integer selection type (car value))))
+	
+	((vectorp value)		; vector
+	 (if (eq (length value) 1)
+	     (select-convert-from-integer selection type (aref value 0))
+	   (mapvector '(lambda (x)
+			(select-convert-from-integer selection type x))
+		     value)))
+	
+	(t nil)
+	))
+
 (defun select-convert-to-atom (selection type value)
   (and (symbolp value) value))
 
-(defun select-convert-to-identity (selection type value) ; used internally
-  (vector value))
+;;; CF_xxx conversions
+(defun select-convert-from-cf-text (selection type value)
+  (replace-in-string (if (string-match "\0" value)
+			 (substring value 0 (match-beginning 0))
+		       value)
+		     "\\(\r\n\\|\n\r\\)" "\n" t))
 
-(setq selection-converter-alist
+(defun select-convert-to-cf-text (selection type value)
+  (let ((text (select-convert-to-text selection type value)))
+    (concat (replace-in-string text "\n" "\r\n" t) "\0")))
+
+;;; Appenders
+(defun select-append-to-text (selection type value1 value2)
+  (let ((text1 (select-convert-to-text selection 'STRING value1))
+	(text2 (select-convert-to-text selection 'STRING value2)))
+    (if (and text1 text2)
+	(concat text1 text2)
+      nil)))
+
+(defun select-append-to-string (selection type value1 value2)
+  (select-append-to-text selection type value1 value2))
+
+(defun select-append-to-compound-text (selection type value1 value2)
+  (select-append-to-text selection type value1 value2))
+
+(defun select-append-to-cf-text (selection type value1 value2)
+  (let ((text1 (select-convert-from-cf-text selection 'CF_TEXT value1))
+	(text2 (select-convert-from-cf-text selection 'CF_TEXT value2)))
+    (if (and text1 text2)
+	(select-convert-to-cf-text selection type (concat text1 text2))
+      nil)))
+
+(defun select-append-default (selection type value1 value2)
+;; This appender gets used if the type is "nil" - i.e. default.
+;; It should probably have more cases implemented than it does - e.g.
+;; appending numbers to strings, etc...
+  (cond ((and (stringp value1) (stringp value2))
+	 (select-append-to-string selection 'STRING value1 value2))
+	(t nil)))
+
+;;; Buffer kill handlers
+
+(defun select-buffer-killed-default (selection type value buffer)
+;; This handler gets used if the type is "nil".
+  (cond ((extentp value)
+	 (if (eq (extent-object value) buffer)
+	     ; If this selection is on the clipboard, grab it quick
+	     (when (eq selection 'CLIPBOARD)
+	       (save-excursion
+		 (set-buffer (extent-object value))
+		 (save-restriction
+		  (widen)
+		  (buffer-substring (extent-start-position value)
+				    (extent-end-position value)))))
+	   value))
+	((markerp value)
+	 (unless (eq (marker-buffer value) buffer)
+	   value))
+	((and (consp value)
+	      (markerp (car value))
+	      (markerp (cdr value)))
+	 (if (or (eq (marker-buffer (car value)) buffer)
+		 (eq (marker-buffer (cdr value)) buffer))
+	     ; If this selection is on the clipboard, grab it quick
+	     (when (eq selection 'CLIPBOARD)
+	       (save-excursion
+		 (set-buffer (marker-buffer (car value)))
+		 (save-restriction
+		   (widen)
+		   (buffer-substring (car value) (cdr value)))))
+	     value))
+	(t value)))
+
+(defun select-buffer-killed-text (selection type value buffer)
+  (select-buffer-killed-default selection type value buffer))
+	
+;; Types listed in here can be selections of XEmacs
+(setq selection-converter-out-alist
       '((TEXT . select-convert-to-text)
 	(STRING . select-convert-to-string)
 	(COMPOUND_TEXT . select-convert-to-compound-text)
@@ -583,7 +761,62 @@ secondary selection instead of the primary selection."
 	(NAME . select-convert-to-name)
 	(ATOM . select-convert-to-atom)
 	(INTEGER . select-convert-to-integer)
-	(_EMACS_INTERNAL . select-convert-to-identity)
+	(CF_TEXT . select-convert-to-cf-text)
 	))
+
+;; Types listed here can be selections foreign to XEmacs
+(setq selection-converter-in-alist
+      '(; Specific types that get handled by generic converters
+	(COMPOUND_TEXT . select-convert-from-text)
+	(SOURCE_LOC . select-convert-from-text)
+	(OWNER_OS . select-convert-from-text)
+	(HOST_NAME . select-convert-from-text)
+	(USER . select-convert-from-text)
+	(CLASS . select-convert-from-text)
+	(NAME . select-convert-from-text)
+	; Generic types
+	(INTEGER . select-convert-from-integer)
+	(TEXT . select-convert-from-text)
+	(STRING . select-convert-from-text)
+	(LENGTH . select-convert-from-length)
+	(FILE_NAME . select-convert-from-filename)
+	(CF_TEXT . select-convert-from-cf-text)
+	))
+
+;; Types listed here have special coercion functions that can munge
+;; other types. This can also be used to add special features - e.g.
+;; being able to pass a region or a cons of markers to own-selection,
+;; but getting the *current* text in the region back when calling
+;; get-selection.
+;;
+;; Any function listed in here *will be called* whenever a value of
+;; its type is retrieved from the internal selection cache, or when
+;; no suitable values could be found in which case XEmacs looks for
+;; values with types listed in selection-coercible-types.
+(setq selection-coercion-alist
+      '((TEXT . select-coerce-to-text)
+	(STRING . select-coerce-to-text)
+	(COMPOUND_TEXT . select-coerce-to-text)
+	(CF_TEXT . select-coerce-to-text)))
+
+;; Types listed here can be appended by own-selection
+(setq selection-appender-alist
+      '((nil . select-append-default)
+	(TEXT . select-append-to-text)
+	(STRING . select-append-to-string)
+	(COMPOUND_TEXT . select-append-to-compound-text)
+	(CF_TEXT . select-append-to-cf-text)
+	))
+
+;; Types listed here have buffer-kill handlers
+(setq selection-buffer-killed-alist
+      '((nil . select-buffer-killed-default)
+	(TEXT . select-buffer-killed-text)
+	(STRING . select-buffer-killed-text)
+	(COMPOUND_TEXT . select-buffer-killed-text)
+	(CF_TEXT . select-buffer-killed-text)))
+
+;; Lists of types that are coercible (can be converted to other types)
+(setq selection-coercible-types '(TEXT STRING COMPOUND_TEXT))
 
 ;;; select.el ends here

@@ -1,7 +1,7 @@
 ;;; lisp-mode.el --- Lisp mode, and its idiosyncratic commands.
 
 ;; Copyright (C) 1985, 1996, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Tinker Systems
+;; Copyright (C) 1995 Tinker Systems.
 
 ;; Maintainer: FSF
 ;; Keywords: lisp, languages, dumped
@@ -32,8 +32,6 @@
 ;; The base major mode for editing Lisp code (used also for Emacs Lisp).
 ;; This mode is documented in the Emacs manual
 
-;; July/05/97 slb Converted to use easymenu.
-
 ;;; Code:
 
 (defgroup lisp nil
@@ -45,56 +43,91 @@
 (defvar emacs-lisp-mode-syntax-table nil)
 (defvar lisp-mode-abbrev-table nil)
 
-;; XEmacs change
-(defvar lisp-interaction-mode-popup-menu nil)
-(defvar lisp-interaction-mode-popup-menu-1
-  (purecopy '("Lisp-Interaction"
-	      ["Evaluate Last S-expression" eval-last-sexp]
-	      ["Evaluate Entire Buffer"     eval-current-buffer]
-	      ["Evaluate Region"	eval-region
-	       :active (region-exists-p)]
-	      "---"
-	      ["Evaluate This Defun"      eval-defun]
-	      ;; FSF says "Instrument Function for Debugging"
-	      ["Debug This Defun"         edebug-defun]
-	      "---"
-	      ["Trace a Function"   trace-function-background]
-	      ["Untrace All Functions"    untrace-all
-	       :active (fboundp 'untrace-all)]
-	      "---"
-	      ["Comment Out Region"	comment-region
-	       :active (region-exists-p)]
-	      ["Indent Region"		indent-region
-	       :active (region-exists-p)]
-	      ["Indent Line"		lisp-indent-line]
-	      "---"
-	      ["Debug On Error" (setq debug-on-error (not debug-on-error))
-	       :style toggle :selected debug-on-error]
-	      ["Debug On Quit" (setq debug-on-quit (not debug-on-quit))
-	       :style toggle :selected debug-on-quit]
-	      ["Debug on Signal" (setq debug-on-signal (not debug-on-signal))
-	       :style toggle :selected debug-on-signal]
-	      )))
+(defun construct-lisp-mode-menu (popup-p emacs-lisp-p)
+  (flet ((popup-wrap (form)
+	   (if popup-p `(menu-call-at-event ',form) form)))
+    `(,@(if emacs-lisp-p
+	  `(["%_Byte-Compile This File" ,(popup-wrap
+					  'emacs-lisp-byte-compile)]
+	    ["B%_yte-Compile/Load This File"
+	     ,(popup-wrap 'emacs-lisp-byte-compile-and-load)]
+	    ["Byte-%_Recompile Directory..."
+	     ,(popup-wrap 'byte-recompile-directory)]
+	    "---"))
+	["%_Evaluate Region or Defun"
+	 ,(popup-wrap '(if (region-exists-p)
+			   (call-interactively 'eval-region)
+			 (call-interactively 'eval-defun)))]
+	["Evaluate %_Whole Buffer" ,(popup-wrap 'eval-current-buffer)]
+	["Evaluate Last %_S-expression" ,(popup-wrap 'eval-last-sexp)]
+	"---"
+	,@(if popup-p
+	    '(["%_Find Function"
+	       (find-function (menu-call-at-event '(function-at-point)))
+	       :suffix (let ((fun (menu-call-at-event '(function-at-point))))
+			 (if fun (symbol-name fun) ""))
+	       :active (and (fboundp 'find-function)
+			    (menu-call-at-event '(function-at-point)))]
+	      ["%_Find Variable"
+	       (find-variable (menu-call-at-event '(variable-at-point)))
+	       :suffix (let ((fun (menu-call-at-event '(variable-at-point))))
+			 (if fun (symbol-name fun) ""))
+	       :active (and (fboundp 'find-variable)
+			    (menu-call-at-event '(variable-at-point)))]
+	      ["%_Help on Function"
+	       (describe-function (menu-call-at-event '(function-at-point)))
+	       :suffix (let ((fun (menu-call-at-event '(function-at-point))))
+			 (if fun (symbol-name fun) ""))
+	       :active (and (fboundp 'describe-function)
+			    (menu-call-at-event '(function-at-point)))]
+	      ["%_Help on Variable"
+	       (describe-variable (menu-call-at-event '(variable-at-point)))
+	       :suffix (let ((fun (menu-call-at-event '(variable-at-point))))
+			 (if fun (symbol-name fun) ""))
+	       :active (and (fboundp 'describe-variable)
+			    (menu-call-at-event '(variable-at-point)))])
+	    '(["Find %_Function..." find-function
+	       :active (fboundp 'find-function)]
+	      ["Find %_Variable..." find-variable
+	       :active (fboundp 'find-variable)]
+	      ["%_Help on Function..." describe-function
+	       :active (fboundp 'describe-function)]
+	      ["Hel%_p on Variable..." describe-variable
+	       :active (fboundp 'describe-variable)]))
+	"---"
+	["Instrument This Defun for %_Debugging" ,(popup-wrap 'edebug-defun)]
+	["%_Trace Function..." trace-function-background]
+	["%_Untrace All Functions" untrace-all
+	 :active (fboundp 'untrace-all)]
+	"---"
+	["%_Comment Out Region" comment-region :active (region-exists-p)]
+	"---"
+	["%_Indent Region or Balanced Expression"
+	 ,(popup-wrap '(if (region-exists-p)
+			   (call-interactively 'indent-region)
+			 (call-interactively 'indent-sexp)))]
+	["I%_ndent Defun"
+	 ,(popup-wrap '(progn
+			 (beginning-of-defun)
+			 (indent-sexp)))]
+	"---"
+	"Look for debug-on-error under Options->Troubleshooting"
+	)))
 
-(defvar emacs-lisp-mode-popup-menu nil)
-(defvar emacs-lisp-mode-popup-menu-1
-  (purecopy
-   (nconc
-    '("Emacs-Lisp"
-      ["Byte-compile This File" emacs-lisp-byte-compile]
-      ["Byte-compile/load This" emacs-lisp-byte-compile-and-load]
-      ["Byte-recompile Directory..." byte-recompile-directory]
-      "---")
-    (cdr lisp-interaction-mode-popup-menu-1))))
+(defvar lisp-interaction-mode-popup-menu
+  (cons "Lisp-Interaction" (construct-lisp-mode-menu t nil)))
+
+(defvar emacs-lisp-mode-popup-menu
+  (cons "Emacs-Lisp" (construct-lisp-mode-menu t t)))
 
 ;Don't have a menubar entry in Lisp Interaction mode.  Otherwise, the
 ;*scratch* buffer has a Lisp menubar item!  Very confusing.
-;(defvar lisp-interaction-mode-menubar-menu
-;  (purecopy (cons "Lisp" (cdr lisp-interaction-mode-popup-menu))))
+;Jan Vroonhof really wants this, so it's back.  --ben
+(defvar lisp-interaction-mode-menubar-menu
+  (cons "%_Lisp" (construct-lisp-mode-menu nil nil)))
 
-(defvar emacs-lisp-mode-menubar-menu nil)
-(defvar emacs-lisp-mode-menubar-menu-1
-  (purecopy (cons "Lisp" (cdr emacs-lisp-mode-popup-menu-1))))
+(defvar emacs-lisp-mode-menubar-menu
+  (cons "%_Lisp" (construct-lisp-mode-menu nil t)))
 
 (if (not emacs-lisp-mode-syntax-table)
     (let ((i 0))
@@ -274,19 +307,15 @@ if that value is non-nil."
   (set-syntax-table emacs-lisp-mode-syntax-table)
   ;; XEmacs changes
   (setq major-mode 'emacs-lisp-mode
-	;; mode-popup-menu emacs-lisp-mode-popup-menu
+	mode-popup-menu emacs-lisp-mode-popup-menu
 	mode-name "Emacs-Lisp")
-  ;; (if (and (featurep 'menubar)
-           ;; current-menubar)
-      ;; (progn
+  (if (and (featurep 'menubar)
+           current-menubar)
+      (progn
 	;; make a local copy of the menubar, so our modes don't
 	;; change the global menubar
-	;; (set-buffer-menubar current-menubar)
-	;; (add-submenu nil emacs-lisp-mode-menubar-menu)))
-  (unless emacs-lisp-mode-popup-menu
-    (easy-menu-define emacs-lisp-mode-popup-menu emacs-lisp-mode-map ""
-		      emacs-lisp-mode-popup-menu-1))
-  (easy-menu-add emacs-lisp-mode-popup-menu)
+	(set-buffer-menubar current-menubar)
+	(add-submenu nil emacs-lisp-mode-menubar-menu)))
   (lisp-mode-variables nil)
   (run-hooks 'emacs-lisp-mode-hook))
 
@@ -366,15 +395,14 @@ if that value is non-nil."
   (use-local-map lisp-interaction-mode-map)
   (setq major-mode 'lisp-interaction-mode)
   (setq mode-name "Lisp Interaction")
-  ;; XEmacs change
-  ;; (setq mode-popup-menu lisp-interaction-mode-popup-menu)
-  (unless lisp-interaction-mode-popup-menu
-    (easy-menu-define lisp-interaction-mode-popup-menu
-		      lisp-interaction-mode-map
-		      ""
-		      lisp-interaction-mode-popup-menu-1))
-  (easy-menu-add lisp-interaction-mode-popup-menu)
-
+  (setq mode-popup-menu lisp-interaction-mode-popup-menu)
+  (if (and (featurep 'menubar)
+           current-menubar)
+      (progn
+	;; make a local copy of the menubar, so our modes don't
+	;; change the global menubar
+	(set-buffer-menubar current-menubar)
+	(add-submenu nil lisp-interaction-mode-menubar-menu)))
   (set-syntax-table emacs-lisp-mode-syntax-table)
   (lisp-mode-variables nil)
   (run-hooks 'lisp-interaction-mode-hook))
@@ -671,8 +699,16 @@ of the start of the containing expression."
       (let ((function (buffer-substring (point)
 					(progn (forward-sexp 1) (point))))
 	    method)
-	(setq method (or (get (intern-soft function) 'lisp-indent-function)
-			 (get (intern-soft function) 'lisp-indent-hook)))
+	(if (condition-case nil
+		(save-excursion
+		  (backward-up-list 1)
+		  (backward-up-list 1)
+		  (backward-up-list 1)
+		  (looking-at "(flet\\s-"))
+	      (error nil))
+	    (setq method 'defun)
+	  (setq method (or (get (intern-soft function) 'lisp-indent-function)
+			   (get (intern-soft function) 'lisp-indent-hook))))
 	(cond ((or (eq method 'defun)
 		   (and (null method)
 			(> (length function) 3)
@@ -753,6 +789,7 @@ of the start of the containing expression."
 (put 'save-excursion 'lisp-indent-function 0)
 (put 'save-window-excursion 'lisp-indent-function 0)
 (put 'save-selected-window 'lisp-indent-function 0)
+(put 'with-selected-window 'lisp-indent-function 1)
 (put 'save-selected-frame 'lisp-indent-function 0)
 (put 'with-selected-frame 'lisp-indent-function 1)
 (put 'save-restriction 'lisp-indent-function 0)
@@ -760,6 +797,7 @@ of the start of the containing expression."
 (put 'let 'lisp-indent-function 1)
 (put 'let* 'lisp-indent-function 1)
 (put 'let-specifier 'lisp-indent-function 1)
+(put 'flet 'lisp-indent-function 1)
 (put 'while 'lisp-indent-function 1)
 (put 'if 'lisp-indent-function 2)
 (put 'catch 'lisp-indent-function 1)

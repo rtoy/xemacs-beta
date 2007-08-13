@@ -53,17 +53,12 @@ Boston, MA 02111-1307, USA.  */
    invoking them correctly. */
 /* # include <curses.h> */
 /* # include <term.h> */
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern int tgetent (CONST char *, CONST char *);
-extern int tgetflag (CONST char *);
-extern int tgetnum (CONST char *);
-extern char *tgetstr (CONST char *, char **);
-extern void tputs (CONST char *, int, void (*)(int));
-#ifdef __cplusplus
-}
-#endif
+EXTERN_C int tgetent (const char *, const char *);
+EXTERN_C int tgetflag (const char *);
+EXTERN_C int tgetnum (const char *);
+EXTERN_C char *tgetstr (const char *, char **);
+EXTERN_C void tputs (const char *, int, void (*)(int));
+
 #define FORCE_CURSOR_UPDATE(c) send_string_to_tty_console (c, 0, 0)
 #define OUTPUTN(c, a, n)			\
   do {						\
@@ -107,7 +102,7 @@ static void term_get_fkeys (Lisp_Object keymap, char **address);
  column, so we use emchar_string_displayed_columns().
  ****************************************************************************/
 static int
-tty_text_width (struct frame *f, struct face_cachel *cachel, CONST Emchar *str,
+tty_text_width (struct frame *f, struct face_cachel *cachel, const Emchar *str,
 		Charcount len)
 {
   return emchar_string_displayed_columns (str, len);
@@ -138,40 +133,40 @@ tty_eol_cursor_width (void)
 }
 
 /*****************************************************************************
- tty_output_begin
+ tty_frame_output_begin
 
  Perform any necessary initialization prior to an update.
  ****************************************************************************/
 #ifdef DEBUG_XEMACS
-void tty_output_begin (struct device *d);
+void tty_frame_output_begin (struct frame *f);
 void
 #else
 static void
 #endif
-tty_output_begin (struct device *d)
+tty_frame_output_begin (struct frame *f)
 {
 #ifndef HAVE_TERMIOS
   /* Termcap requires `ospeed' to be a global variable so we have to
      always set it for whatever tty console we are actually currently
      working with. */
-  ospeed = DEVICE_TTY_DATA (d)->ospeed;
+  ospeed = DEVICE_TTY_DATA (XDEVICE (FRAME_DEVICE (f)))->ospeed;
 #endif
 }
 
 /*****************************************************************************
- tty_output_end
+ tty_frame_output_end
 
  Perform any necessary flushing of queues when an update has completed.
  ****************************************************************************/
 #ifdef DEBUG_XEMACS
-void tty_output_end (struct device *d);
+void tty_frame_output_end (struct frame *f);
 void
 #else
 static void
 #endif
-tty_output_end (struct device *d)
+tty_frame_output_end (struct frame *f)
 {
-  struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
+  struct console *c = XCONSOLE (FRAME_CONSOLE (f));
 
   CONSOLE_TTY_CURSOR_X (c) = CONSOLE_TTY_FINAL_CURSOR_X (c);
   CONSOLE_TTY_CURSOR_Y (c) = CONSOLE_TTY_FINAL_CURSOR_Y (c);
@@ -333,79 +328,28 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 					       window, ERROR_ME_NOT, 1);
 
 	      if (IMAGE_INSTANCEP (instance))
-		switch (XIMAGE_INSTANCE_TYPE (instance))
-		  {
-		  case IMAGE_TEXT:
+		{
+		  switch (XIMAGE_INSTANCE_TYPE (instance))
 		    {
-		      Bufbyte *temptemp;
-		      Lisp_Object string =
-			XIMAGE_INSTANCE_TEXT_STRING (instance);
-		      Bytecount len = XSTRING_LENGTH (string);
+		    case IMAGE_MONO_PIXMAP:
+		    case IMAGE_COLOR_PIXMAP:
+		    case IMAGE_SUBWINDOW:
+		    case IMAGE_WIDGET:
+		      /* just do nothing here */
+		      break;
 
-		      /* In the unlikely instance that a garbage-collect
-			 occurs during encoding, we at least need to
-			 copy the string.
-			 */
-		      temptemp = (Bufbyte *) alloca (len);
-		      memcpy (temptemp, XSTRING_DATA (string), len);
-		      {
-			int i;
+		    case IMAGE_NOTHING:
+		      /* nothing is as nothing does */
+		      break;
 
-			/* Now truncate the first rb->object.dglyph.xoffset
-			   columns. */
-			for (i = 0; i < rb->object.dglyph.xoffset;)
-			  {
-#ifdef MULE
-			    Emchar ch = charptr_emchar (temptemp);
-			    i += XCHARSET_COLUMNS (CHAR_CHARSET (ch));
-#else
-			    i++; /* telescope this */
-#endif
-			    INC_CHARPTR (temptemp);
-			  }
-
-			/* If we truncated one column too many, then
-			   add a space at the beginning. */
-			if (i > rb->object.dglyph.xoffset)
-			  {
-			    assert (i > 0);
-			    *--temptemp = ' ';
-			    i--;
-			  }
-			len -= i;
-		      }
-
-		      tty_output_bufbyte_string (w, dl, temptemp, len,
-						 xpos, findex, 0);
-
-		      if (xpos >= cursor_start
-			  && (cursor_start <
-			      xpos + (bufbyte_string_displayed_columns
-				      (temptemp, len))))
-			{
-			  cmgoto (f, dl->ypos - 1, cursor_start);
-			}
+		    case IMAGE_TEXT:
+		    case IMAGE_POINTER:
+		    default:
+		      abort ();
 		    }
-		    break;
-
-		  case IMAGE_MONO_PIXMAP:
-		  case IMAGE_COLOR_PIXMAP:
-		  case IMAGE_SUBWINDOW:
-		  case IMAGE_WIDGET:
-		  case IMAGE_LAYOUT:
-		    /* just do nothing here */
-		    break;
-
-		  case IMAGE_POINTER:
-		    abort ();
-
-		  case IMAGE_NOTHING:
-		    /* nothing is as nothing does */
-		    break;
-
-		  default:
-		    abort ();
-		  }
+		  IMAGE_INSTANCE_OPTIMIZE_OUTPUT
+		    (XIMAGE_INSTANCE (instance)) = 0;
+		}
 
 	      xpos += rb->width;
 	      elt++;
@@ -566,7 +510,7 @@ tty_clear_frame (struct frame *f)
       clear_to_end (f);
 #else
       /* #### Not implemented. */
-      fprintf (stderr, "Not yet.\n");
+      stderr_out ("Not yet.\n");
 #endif
     }
   tty_turn_off_frame_face (f, Vdefault_face);
@@ -937,7 +881,13 @@ reset_tty_modes (struct console *c)
   OUTPUT1_IF (c, TTY_SD (c).keypad_off);
   OUTPUT1_IF (c, TTY_SD (c).cursor_normal);
   OUTPUT1_IF (c, TTY_SD (c).end_motion);
-  tty_output_end (XDEVICE (CONSOLE_SELECTED_DEVICE (c)));
+
+  {
+    Lisp_Object frm = CONSOLE_SELECTED_FRAME (c);
+
+    if (!NILP (frm))
+      tty_frame_output_end (XFRAME (frm));
+  }
 }
 
 /*****************************************************************************
@@ -964,7 +914,7 @@ tty_redisplay_shutdown (struct console *c)
 
 	  /* And then stick the cursor there. */
 	  tty_set_final_cursor_coords (f, f->height, 0);
-	  tty_output_end (XDEVICE (dev));
+	  tty_frame_output_end (f);
 	}
     }
 }
@@ -975,7 +925,7 @@ tty_redisplay_shutdown (struct console *c)
 
 
 /* FLAGS - these don't need to be console local since only one console
- 	   can be being updated at a time. */
+	   can be being updated at a time. */
 static int insert_mode_on;		/* nonzero if in insert mode */
 static int standout_mode_on;		/* nonzero if in standout mode */
 static int underline_mode_on;		/* nonzero if in underline mode */
@@ -1109,12 +1059,12 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
   CONSOLE_TTY_DATA (c)->term_entry_buffer = (char *) xmalloc (2044);
   bufptr = CONSOLE_TTY_DATA (c)->term_entry_buffer;
 
-#if !defined(WIN32)
+#ifdef SIGTTOU
   /* SIGTT* don't exist under win32 */
   EMACS_BLOCK_SIGNAL (SIGTTOU);
 #endif
   status = tgetent (entry_buffer, terminal_type);
-#if !defined(WIN32)
+#ifdef SIGTTOU
   EMACS_UNBLOCK_SIGNAL (SIGTTOU);
 #endif
 #if 0
@@ -1305,8 +1255,8 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
 
 struct fkey_table
 {
-  CONST char *cap;
-  CONST char *name;
+  const char *cap;
+  const char *name;
 };
 
   /* Termcap capability names that correspond directly to X keysyms.
@@ -1448,8 +1398,8 @@ term_get_fkeys_1 (Lisp_Object function_key_map)
      "k;", and if it is present, assuming that "k0" denotes F0, otherwise F10.
   */
   {
-    CONST char *k_semi  = tgetstr ("k;", address);
-    CONST char *k0      = tgetstr ("k0", address);
+    const char *k_semi  = tgetstr ("k;", address);
+    const char *k0      = tgetstr ("k0", address);
 
     if (k_semi)
       Fdefine_key (function_key_map, build_ext_string (k_semi, Qbinary),
@@ -1541,8 +1491,8 @@ console_type_create_redisplay_tty (void)
   CONSOLE_HAS_METHOD (tty, clear_to_window_end);
   CONSOLE_HAS_METHOD (tty, clear_region);
   CONSOLE_HAS_METHOD (tty, clear_frame);
-  CONSOLE_HAS_METHOD (tty, output_begin);
-  CONSOLE_HAS_METHOD (tty, output_end);
+  CONSOLE_HAS_METHOD (tty, frame_output_begin);
+  CONSOLE_HAS_METHOD (tty, frame_output_end);
   CONSOLE_HAS_METHOD (tty, flash);
   CONSOLE_HAS_METHOD (tty, ring_bell);
   CONSOLE_HAS_METHOD (tty, set_final_cursor_coords);

@@ -66,7 +66,7 @@ struct file_coding_dump {
 static const struct lrecord_description fcd_description_1[] = {
   { XD_LISP_OBJECT_ARRAY, offsetof (struct file_coding_dump, coding_category_system), CODING_CATEGORY_LAST + 1 },
 #ifdef MULE
-  { XD_LISP_OBJECT_ARRAY, offsetof (struct file_coding_dump, ucs_to_mule_table), 65536 },
+  { XD_LISP_OBJECT_ARRAY, offsetof (struct file_coding_dump, ucs_to_mule_table), countof (fcd->ucs_to_mule_table) },
 #endif
   { XD_END }
 };
@@ -176,67 +176,67 @@ EXFUN (Fcopy_coding_system, 2);
 #ifdef MULE
 struct detection_state;
 static int detect_coding_sjis (struct detection_state *st,
-			       CONST unsigned char *src,
+			       const unsigned char *src,
 			       unsigned int n);
 static void decode_coding_sjis (Lstream *decoding,
-				CONST unsigned char *src,
+				const unsigned char *src,
 				unsigned_char_dynarr *dst,
 				unsigned int n);
 static void encode_coding_sjis (Lstream *encoding,
-				CONST unsigned char *src,
+				const unsigned char *src,
 				unsigned_char_dynarr *dst,
 				unsigned int n);
 static int detect_coding_big5 (struct detection_state *st,
-			       CONST unsigned char *src,
+			       const unsigned char *src,
 			       unsigned int n);
 static void decode_coding_big5 (Lstream *decoding,
-				CONST unsigned char *src,
+				const unsigned char *src,
 				unsigned_char_dynarr *dst, unsigned int n);
 static void encode_coding_big5 (Lstream *encoding,
-				CONST unsigned char *src,
+				const unsigned char *src,
 				unsigned_char_dynarr *dst, unsigned int n);
 static int detect_coding_ucs4 (struct detection_state *st,
-			       CONST unsigned char *src,
+			       const unsigned char *src,
 			       unsigned int n);
 static void decode_coding_ucs4 (Lstream *decoding,
-				CONST unsigned char *src,
+				const unsigned char *src,
 				unsigned_char_dynarr *dst, unsigned int n);
 static void encode_coding_ucs4 (Lstream *encoding,
-				CONST unsigned char *src,
+				const unsigned char *src,
 				unsigned_char_dynarr *dst, unsigned int n);
 static int detect_coding_utf8 (struct detection_state *st,
-			       CONST unsigned char *src,
+			       const unsigned char *src,
 			       unsigned int n);
 static void decode_coding_utf8 (Lstream *decoding,
-				CONST unsigned char *src,
+				const unsigned char *src,
 				unsigned_char_dynarr *dst, unsigned int n);
 static void encode_coding_utf8 (Lstream *encoding,
-				CONST unsigned char *src,
+				const unsigned char *src,
 				unsigned_char_dynarr *dst, unsigned int n);
 static int postprocess_iso2022_mask (int mask);
 static void reset_iso2022 (Lisp_Object coding_system,
 			   struct iso2022_decoder *iso);
 static int detect_coding_iso2022 (struct detection_state *st,
-				  CONST unsigned char *src,
+				  const unsigned char *src,
 				  unsigned int n);
 static void decode_coding_iso2022 (Lstream *decoding,
-				   CONST unsigned char *src,
+				   const unsigned char *src,
 				   unsigned_char_dynarr *dst, unsigned int n);
 static void encode_coding_iso2022 (Lstream *encoding,
-				   CONST unsigned char *src,
+				   const unsigned char *src,
 				   unsigned_char_dynarr *dst, unsigned int n);
 #endif /* MULE */
 static void decode_coding_no_conversion (Lstream *decoding,
-					 CONST unsigned char *src,
+					 const unsigned char *src,
 					 unsigned_char_dynarr *dst,
 					 unsigned int n);
 static void encode_coding_no_conversion (Lstream *encoding,
-					 CONST unsigned char *src,
+					 const unsigned char *src,
 					 unsigned_char_dynarr *dst,
 					 unsigned int n);
-static void mule_decode (Lstream *decoding, CONST unsigned char *src,
+static void mule_decode (Lstream *decoding, const unsigned char *src,
 			 unsigned_char_dynarr *dst, unsigned int n);
-static void mule_encode (Lstream *encoding, CONST unsigned char *src,
+static void mule_encode (Lstream *encoding, const unsigned char *src,
 			 unsigned_char_dynarr *dst, unsigned int n);
 
 typedef struct codesys_prop codesys_prop;
@@ -732,7 +732,7 @@ nil or 'undecided
      JIS (the Japanese encoding commonly used for e-mail), EUC (the
      standard Unix encoding for Japanese and other languages), and
      Compound Text (the encoding used in X11).  You can specify more
-     specific information about the conversion with the FLAGS argument.
+     specific information about the conversion with the PROPS argument.
 'big5
      Big5 (the encoding commonly used for Taiwanese).
 'ccl
@@ -882,7 +882,6 @@ if TYPE is 'ccl:
        (name, type, doc_string, props))
 {
   Lisp_Coding_System *codesys;
-  Lisp_Object rest, key, value;
   enum coding_system_type ty;
   int need_to_setup_eol_systems = 1;
 
@@ -914,92 +913,94 @@ if TYPE is 'ccl:
     CHECK_STRING (doc_string);
   CODING_SYSTEM_DOC_STRING (codesys) = doc_string;
 
-  EXTERNAL_PROPERTY_LIST_LOOP (rest, key, value, props)
-    {
-      if (EQ (key, Qmnemonic))
-	{
-          if (!NILP (value))
-	    CHECK_STRING (value);
-	  CODING_SYSTEM_MNEMONIC (codesys) = value;
-	}
+  {
+    EXTERNAL_PROPERTY_LIST_LOOP_3 (key, value, props)
+      {
+	if (EQ (key, Qmnemonic))
+	  {
+	    if (!NILP (value))
+	      CHECK_STRING (value);
+	    CODING_SYSTEM_MNEMONIC (codesys) = value;
+	  }
 
-      else if (EQ (key, Qeol_type))
-	{
-	  need_to_setup_eol_systems = NILP (value);
-	  if (EQ (value, Qt))
-	    value = Qnil;
-	  CODING_SYSTEM_EOL_TYPE (codesys) = symbol_to_eol_type (value);
-	}
+	else if (EQ (key, Qeol_type))
+	  {
+	    need_to_setup_eol_systems = NILP (value);
+	    if (EQ (value, Qt))
+	      value = Qnil;
+	    CODING_SYSTEM_EOL_TYPE (codesys) = symbol_to_eol_type (value);
+	  }
 
-      else if (EQ (key, Qpost_read_conversion)) CODING_SYSTEM_POST_READ_CONVERSION (codesys) = value;
-      else if (EQ (key, Qpre_write_conversion)) CODING_SYSTEM_PRE_WRITE_CONVERSION (codesys) = value;
+	else if (EQ (key, Qpost_read_conversion)) CODING_SYSTEM_POST_READ_CONVERSION (codesys) = value;
+	else if (EQ (key, Qpre_write_conversion)) CODING_SYSTEM_PRE_WRITE_CONVERSION (codesys) = value;
 #ifdef MULE
-      else if (ty == CODESYS_ISO2022)
-	{
+	else if (ty == CODESYS_ISO2022)
+	  {
 #define FROB_INITIAL_CHARSET(charset_num) \
   CODING_SYSTEM_ISO2022_INITIAL_CHARSET (codesys, charset_num) = \
     ((EQ (value, Qt) || EQ (value, Qnil)) ? value : Fget_charset (value))
 
-	  if      (EQ (key, Qcharset_g0)) FROB_INITIAL_CHARSET (0);
-	  else if (EQ (key, Qcharset_g1)) FROB_INITIAL_CHARSET (1);
-	  else if (EQ (key, Qcharset_g2)) FROB_INITIAL_CHARSET (2);
-	  else if (EQ (key, Qcharset_g3)) FROB_INITIAL_CHARSET (3);
+	    if      (EQ (key, Qcharset_g0)) FROB_INITIAL_CHARSET (0);
+	    else if (EQ (key, Qcharset_g1)) FROB_INITIAL_CHARSET (1);
+	    else if (EQ (key, Qcharset_g2)) FROB_INITIAL_CHARSET (2);
+	    else if (EQ (key, Qcharset_g3)) FROB_INITIAL_CHARSET (3);
 
 #define FROB_FORCE_CHARSET(charset_num) \
   CODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (codesys, charset_num) = !NILP (value)
 
-	  else if (EQ (key, Qforce_g0_on_output)) FROB_FORCE_CHARSET (0);
-	  else if (EQ (key, Qforce_g1_on_output)) FROB_FORCE_CHARSET (1);
-	  else if (EQ (key, Qforce_g2_on_output)) FROB_FORCE_CHARSET (2);
-	  else if (EQ (key, Qforce_g3_on_output)) FROB_FORCE_CHARSET (3);
+	    else if (EQ (key, Qforce_g0_on_output)) FROB_FORCE_CHARSET (0);
+	    else if (EQ (key, Qforce_g1_on_output)) FROB_FORCE_CHARSET (1);
+	    else if (EQ (key, Qforce_g2_on_output)) FROB_FORCE_CHARSET (2);
+	    else if (EQ (key, Qforce_g3_on_output)) FROB_FORCE_CHARSET (3);
 
 #define FROB_BOOLEAN_PROPERTY(prop) \
   CODING_SYSTEM_ISO2022_##prop (codesys) = !NILP (value)
 
-	  else if (EQ (key, Qshort))         FROB_BOOLEAN_PROPERTY (SHORT);
-	  else if (EQ (key, Qno_ascii_eol))  FROB_BOOLEAN_PROPERTY (NO_ASCII_EOL);
-	  else if (EQ (key, Qno_ascii_cntl)) FROB_BOOLEAN_PROPERTY (NO_ASCII_CNTL);
-	  else if (EQ (key, Qseven))         FROB_BOOLEAN_PROPERTY (SEVEN);
-	  else if (EQ (key, Qlock_shift))    FROB_BOOLEAN_PROPERTY (LOCK_SHIFT);
-	  else if (EQ (key, Qno_iso6429))    FROB_BOOLEAN_PROPERTY (NO_ISO6429);
-	  else if (EQ (key, Qescape_quoted)) FROB_BOOLEAN_PROPERTY (ESCAPE_QUOTED);
+	    else if (EQ (key, Qshort))         FROB_BOOLEAN_PROPERTY (SHORT);
+	    else if (EQ (key, Qno_ascii_eol))  FROB_BOOLEAN_PROPERTY (NO_ASCII_EOL);
+	    else if (EQ (key, Qno_ascii_cntl)) FROB_BOOLEAN_PROPERTY (NO_ASCII_CNTL);
+	    else if (EQ (key, Qseven))         FROB_BOOLEAN_PROPERTY (SEVEN);
+	    else if (EQ (key, Qlock_shift))    FROB_BOOLEAN_PROPERTY (LOCK_SHIFT);
+	    else if (EQ (key, Qno_iso6429))    FROB_BOOLEAN_PROPERTY (NO_ISO6429);
+	    else if (EQ (key, Qescape_quoted)) FROB_BOOLEAN_PROPERTY (ESCAPE_QUOTED);
 
-	  else if (EQ (key, Qinput_charset_conversion))
-	    {
-	      codesys->iso2022.input_conv =
-		Dynarr_new (charset_conversion_spec);
-	      parse_charset_conversion_specs (codesys->iso2022.input_conv,
-					      value);
-	    }
-	  else if (EQ (key, Qoutput_charset_conversion))
-	    {
-	      codesys->iso2022.output_conv =
-		Dynarr_new (charset_conversion_spec);
-	      parse_charset_conversion_specs (codesys->iso2022.output_conv,
-					      value);
-	    }
-	  else
-	    signal_simple_error ("Unrecognized property", key);
-	}
-      else if (EQ (type, Qccl))
-	{
-	  if (EQ (key, Qdecode))
-	    {
-	      CHECK_VECTOR (value);
-	      CODING_SYSTEM_CCL_DECODE (codesys) = value;
-	    }
-	  else if (EQ (key, Qencode))
-	    {
-	      CHECK_VECTOR (value);
-	      CODING_SYSTEM_CCL_ENCODE (codesys) = value;
-	    }
-	  else
-	    signal_simple_error ("Unrecognized property", key);
-	}
+	    else if (EQ (key, Qinput_charset_conversion))
+	      {
+		codesys->iso2022.input_conv =
+		  Dynarr_new (charset_conversion_spec);
+		parse_charset_conversion_specs (codesys->iso2022.input_conv,
+						value);
+	      }
+	    else if (EQ (key, Qoutput_charset_conversion))
+	      {
+		codesys->iso2022.output_conv =
+		  Dynarr_new (charset_conversion_spec);
+		parse_charset_conversion_specs (codesys->iso2022.output_conv,
+						value);
+	      }
+	    else
+	      signal_simple_error ("Unrecognized property", key);
+	  }
+	else if (EQ (type, Qccl))
+	  {
+	    if (EQ (key, Qdecode))
+	      {
+		CHECK_VECTOR (value);
+		CODING_SYSTEM_CCL_DECODE (codesys) = value;
+	      }
+	    else if (EQ (key, Qencode))
+	      {
+		CHECK_VECTOR (value);
+		CODING_SYSTEM_CCL_ENCODE (codesys) = value;
+	      }
+	    else
+	      signal_simple_error ("Unrecognized property", key);
+	  }
 #endif /* MULE */
-      else
-	signal_simple_error ("Unrecognized property", key);
-    }
+	else
+	  signal_simple_error ("Unrecognized property", key);
+      }
+  }
 
   if (need_to_setup_eol_systems)
     setup_eol_coding_systems (codesys);
@@ -1071,6 +1072,7 @@ Return the coding-system symbol for which symbol ALIAS is an alias.
     return aliasee;
   else
     signal_simple_error ("Symbol is not a coding system alias", alias);
+  return Qnil;		/* To keep the compiler happy */
 }
 
 static Lisp_Object
@@ -1217,7 +1219,7 @@ subsidiary_coding_system (Lisp_Object coding_system, eol_type_t type)
     case EOL_LF:   new_coding_system = CODING_SYSTEM_EOL_LF   (cs); break;
     case EOL_CR:   new_coding_system = CODING_SYSTEM_EOL_CR   (cs); break;
     case EOL_CRLF: new_coding_system = CODING_SYSTEM_EOL_CRLF (cs); break;
-    default:       abort ();
+    default:       abort (); return Qnil;
     }
 
   return NILP (new_coding_system) ? coding_system : new_coding_system;
@@ -1626,7 +1628,7 @@ mask_has_at_most_one_bit_p (int mask)
 }
 
 static eol_type_t
-detect_eol_type (struct detection_state *st, CONST unsigned char *src,
+detect_eol_type (struct detection_state *st, const unsigned char *src,
 		 unsigned int n)
 {
   int c;
@@ -1671,7 +1673,7 @@ detect_eol_type (struct detection_state *st, CONST unsigned char *src,
 */
 
 static int
-detect_coding_type (struct detection_state *st, CONST Extbyte *src,
+detect_coding_type (struct detection_state *st, const Extbyte *src,
 		    unsigned int n, int just_do_eol)
 {
   int c;
@@ -2109,7 +2111,7 @@ struct decoding_stream
 static ssize_t decoding_reader (Lstream *stream,
 				unsigned char *data, size_t size);
 static ssize_t decoding_writer (Lstream *stream,
-				CONST unsigned char *data, size_t size);
+				const unsigned char *data, size_t size);
 static int decoding_rewinder   (Lstream *stream);
 static int decoding_seekable_p (Lstream *stream);
 static int decoding_flusher    (Lstream *stream);
@@ -2204,7 +2206,7 @@ decoding_reader (Lstream *stream, unsigned char *data, size_t size)
 }
 
 static ssize_t
-decoding_writer (Lstream *stream, CONST unsigned char *data, size_t size)
+decoding_writer (Lstream *stream, const unsigned char *data, size_t size)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (stream);
   ssize_t retval;
@@ -2239,6 +2241,13 @@ reset_decoding_stream (struct decoding_stream *str)
     }
   str->counter = 0;
 #endif /* MULE */
+  if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_AUTODETECT
+      || CODING_SYSTEM_EOL_TYPE (str->codesys) == EOL_AUTODETECT)
+    {
+      xzero (str->decst);
+      str->decst.eol_type = EOL_AUTODETECT;
+      str->decst.mask = ~0;
+    }
   str->flags = str->ch = 0;
 }
 
@@ -2314,7 +2323,7 @@ set_decoding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
 
 static Lisp_Object
 make_decoding_stream_1 (Lstream *stream, Lisp_Object codesys,
-			CONST char *mode)
+			const char *mode)
 {
   Lstream *lstr = Lstream_new (lstream_decoding, mode);
   struct decoding_stream *str = DECODING_STREAM_DATA (lstr);
@@ -2357,7 +2366,7 @@ make_decoding_output_stream (Lstream *stream, Lisp_Object codesys)
    be used for both reading and writing. */
 
 static void
-mule_decode (Lstream *decoding, CONST unsigned char *src,
+mule_decode (Lstream *decoding, const unsigned char *src,
 	     unsigned_char_dynarr *dst, unsigned int n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
@@ -2563,7 +2572,7 @@ struct encoding_stream
 };
 
 static ssize_t encoding_reader (Lstream *stream, unsigned char *data, size_t size);
-static ssize_t encoding_writer (Lstream *stream, CONST unsigned char *data,
+static ssize_t encoding_writer (Lstream *stream, const unsigned char *data,
 				size_t size);
 static int encoding_rewinder   (Lstream *stream);
 static int encoding_seekable_p (Lstream *stream);
@@ -2659,7 +2668,7 @@ encoding_reader (Lstream *stream, unsigned char *data, size_t size)
 }
 
 static ssize_t
-encoding_writer (Lstream *stream, CONST unsigned char *data, size_t size)
+encoding_writer (Lstream *stream, const unsigned char *data, size_t size)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (stream);
   ssize_t retval;
@@ -2770,7 +2779,7 @@ set_encoding_stream_coding_system (Lstream *lstr, Lisp_Object codesys)
 
 static Lisp_Object
 make_encoding_stream_1 (Lstream *stream, Lisp_Object codesys,
-			CONST char *mode)
+			const char *mode)
 {
   Lstream *lstr = Lstream_new (lstream_encoding, mode);
   struct encoding_stream *str = ENCODING_STREAM_DATA (lstr);
@@ -2801,7 +2810,7 @@ make_encoding_output_stream (Lstream *stream, Lisp_Object codesys)
    Store the encoded data into DST. */
 
 static void
-mule_encode (Lstream *encoding, CONST unsigned char *src,
+mule_encode (Lstream *encoding, const unsigned char *src,
 	     unsigned_char_dynarr *dst, unsigned int n)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
@@ -2948,7 +2957,7 @@ text.  BUFFER defaults to the current buffer if unspecified.
   ((c) >= 0xA1 && (c) <= 0xDF)
 
 static int
-detect_coding_sjis (struct detection_state *st, CONST unsigned char *src,
+detect_coding_sjis (struct detection_state *st, const unsigned char *src,
 		    unsigned int n)
 {
   int c;
@@ -2973,7 +2982,7 @@ detect_coding_sjis (struct detection_state *st, CONST unsigned char *src,
 /* Convert Shift-JIS data to internal format. */
 
 static void
-decode_coding_sjis (Lstream *decoding, CONST unsigned char *src,
+decode_coding_sjis (Lstream *decoding, const unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
@@ -3030,7 +3039,7 @@ decode_coding_sjis (Lstream *decoding, CONST unsigned char *src,
 /* Convert internally-formatted data to Shift-JIS. */
 
 static void
-encode_coding_sjis (Lstream *encoding, CONST unsigned char *src,
+encode_coding_sjis (Lstream *encoding, const unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
@@ -3234,7 +3243,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
 } while (0)
 
 static int
-detect_coding_big5 (struct detection_state *st, CONST unsigned char *src,
+detect_coding_big5 (struct detection_state *st, const unsigned char *src,
 		    unsigned int n)
 {
   int c;
@@ -3260,7 +3269,7 @@ detect_coding_big5 (struct detection_state *st, CONST unsigned char *src,
 /* Convert Big5 data to internal format. */
 
 static void
-decode_coding_big5 (Lstream *decoding, CONST unsigned char *src,
+decode_coding_big5 (Lstream *decoding, const unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
@@ -3310,7 +3319,7 @@ decode_coding_big5 (Lstream *decoding, CONST unsigned char *src,
 /* Convert internally-formatted data to Big5. */
 
 static void
-encode_coding_big5 (Lstream *encoding, CONST unsigned char *src,
+encode_coding_big5 (Lstream *encoding, const unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
@@ -3435,13 +3444,13 @@ Return T on success, NIL on failure.
 */
        (code, character))
 {
-  unsigned int c;
+  size_t c;
 
   CHECK_CHAR (character);
-  CHECK_INT (code);
+  CHECK_NATNUM (code);
   c = XINT (code);
 
-  if (c < sizeof (fcd->ucs_to_mule_table))
+  if (c < countof (fcd->ucs_to_mule_table))
     {
       fcd->ucs_to_mule_table[c] = character;
       return Qt;
@@ -3453,7 +3462,7 @@ Return T on success, NIL on failure.
 static Lisp_Object
 ucs_to_char (unsigned long code)
 {
-  if (code < sizeof (fcd->ucs_to_mule_table))
+  if (code < countof (fcd->ucs_to_mule_table))
     {
       return fcd->ucs_to_mule_table[code];
     }
@@ -3577,7 +3586,7 @@ encode_ucs4 (Lisp_Object charset,
 }
 
 static int
-detect_coding_ucs4 (struct detection_state *st, CONST unsigned char *src,
+detect_coding_ucs4 (struct detection_state *st, const unsigned char *src,
 		    unsigned int n)
 {
   while (n--)
@@ -3602,7 +3611,7 @@ detect_coding_ucs4 (struct detection_state *st, CONST unsigned char *src,
 }
 
 static void
-decode_coding_ucs4 (Lstream *decoding, CONST unsigned char *src,
+decode_coding_ucs4 (Lstream *decoding, const unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
@@ -3638,7 +3647,7 @@ decode_coding_ucs4 (Lstream *decoding, CONST unsigned char *src,
 }
 
 static void
-encode_coding_ucs4 (Lstream *encoding, CONST unsigned char *src,
+encode_coding_ucs4 (Lstream *encoding, const unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
@@ -3651,7 +3660,7 @@ encode_coding_ucs4 (Lstream *encoding, CONST unsigned char *src,
   /* flags for handling composite chars.  We do a little switcharoo
      on the source while we're outputting the composite char. */
   unsigned int saved_n = 0;
-  CONST unsigned char *saved_src = NULL;
+  const unsigned char *saved_src = NULL;
   int in_composite = 0;
 
  back_to_square_n:
@@ -3777,7 +3786,7 @@ encode_coding_ucs4 (Lstream *encoding, CONST unsigned char *src,
 /************************************************************************/
 
 static int
-detect_coding_utf8 (struct detection_state *st, CONST unsigned char *src,
+detect_coding_utf8 (struct detection_state *st, const unsigned char *src,
 		    unsigned int n)
 {
   while (n--)
@@ -3812,7 +3821,7 @@ detect_coding_utf8 (struct detection_state *st, CONST unsigned char *src,
 }
 
 static void
-decode_coding_utf8 (Lstream *decoding, CONST unsigned char *src,
+decode_coding_utf8 (Lstream *decoding, const unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
@@ -3926,7 +3935,7 @@ encode_utf8 (Lisp_Object charset,
 }
 
 static void
-encode_coding_utf8 (Lstream *encoding, CONST unsigned char *src,
+encode_coding_utf8 (Lstream *encoding, const unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
@@ -3940,7 +3949,7 @@ encode_coding_utf8 (Lstream *encoding, CONST unsigned char *src,
   /* flags for handling composite chars.  We do a little switcharoo
      on the source while we're outputting the composite char. */
   unsigned int saved_n = 0;
-  CONST unsigned char *saved_src = NULL;
+  const unsigned char *saved_src = NULL;
   int in_composite = 0;
 
  back_to_square_n:
@@ -4549,6 +4558,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	  {
 	    /* Can this ever be reached? -slb */
 	    abort();
+	    return 0;
 	  }
 
 	cs = CHARSET_BY_ATTRIBUTES (type, c,
@@ -4644,7 +4654,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 }
 
 static int
-detect_coding_iso2022 (struct detection_state *st, CONST unsigned char *src,
+detect_coding_iso2022 (struct detection_state *st, const unsigned char *src,
 		       unsigned int n)
 {
   int mask;
@@ -4835,7 +4845,7 @@ ensure_correct_direction (int direction, Lisp_Coding_System *codesys,
 /* Convert ISO2022-format data to internal format. */
 
 static void
-decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
+decode_coding_iso2022 (Lstream *decoding, const unsigned char *src,
 		       unsigned_char_dynarr *dst, unsigned int n)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
@@ -5076,8 +5086,8 @@ static void
 iso2022_designate (Lisp_Object charset, unsigned char reg,
 		   struct encoding_stream *str, unsigned_char_dynarr *dst)
 {
-  static CONST char inter94[] = "()*+";
-  static CONST char inter96[] = ",-./";
+  static const char inter94[] = "()*+";
+  static const char inter96[] = ",-./";
   unsigned int type;
   unsigned char final;
   Lisp_Object old_charset = str->iso2022.charset[reg];
@@ -5161,7 +5171,7 @@ ensure_shift_out (struct encoding_stream *str, unsigned_char_dynarr *dst)
 /* Convert internally-formatted data to ISO2022 format. */
 
 static void
-encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
+encode_coding_iso2022 (Lstream *encoding, const unsigned char *src,
 		       unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char charmask, c;
@@ -5179,7 +5189,7 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
   /* flags for handling composite chars.  We do a little switcharoo
      on the source while we're outputting the composite char. */
   unsigned int saved_n = 0;
-  CONST unsigned char *saved_src = NULL;
+  const unsigned char *saved_src = NULL;
   int in_composite = 0;
 #endif /* ENABLE_COMPOSITE_CHARS */
 
@@ -5470,7 +5480,7 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
    contain all 256 possible byte values and that are not to be
    interpreted as being in any particular decoding. */
 static void
-decode_coding_no_conversion (Lstream *decoding, CONST unsigned char *src,
+decode_coding_no_conversion (Lstream *decoding, const unsigned char *src,
 			     unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
@@ -5495,7 +5505,7 @@ decode_coding_no_conversion (Lstream *decoding, CONST unsigned char *src,
 }
 
 static void
-encode_coding_no_conversion (Lstream *encoding, CONST unsigned char *src,
+encode_coding_no_conversion (Lstream *encoding, const unsigned char *src,
 			     unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
@@ -5557,8 +5567,9 @@ encode_coding_no_conversion (Lstream *encoding, CONST unsigned char *src,
 void
 syms_of_file_coding (void)
 {
-  deferror (&Qcoding_system_error, "coding-system-error",
-	    "Coding-system error", Qio_error);
+  INIT_LRECORD_IMPLEMENTATION (coding_system);
+
+  DEFERROR_STANDARD (Qcoding_system_error, Qio_error);
 
   DEFSUBR (Fcoding_system_p);
   DEFSUBR (Ffind_coding_system);
@@ -5825,9 +5836,9 @@ complex_vars_of_file_coding (void)
 
 #ifdef MULE
   {
-    unsigned int i;
+    size_t i;
 
-    for (i = 0; i < 65536; i++)
+    for (i = 0; i < countof (fcd->ucs_to_mule_table); i++)
       fcd->ucs_to_mule_table[i] = Qnil;
   }
   staticpro (&mule_to_ucs_table);

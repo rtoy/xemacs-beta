@@ -1210,7 +1210,8 @@ Obsolete."
       (set yank-pointer-name
 	   (setq yank-pointer
 		 (mod (+ (or yank-pointer 0)
-			 (if advance -1 1))
+			 ;; XEmacs change
+			 (if advance -1 (if yank-pointer 1 0)))
 		      length)))
       (setq isearch-string (nth yank-pointer ring)
 	    isearch-message (mapconcat 'isearch-text-char-description
@@ -1883,8 +1884,7 @@ uppercase letters and `search-caps-disable-folding' is t."
   ;; buffer.
   (mapc #'delete-extent isearch-highlight-extents)
   (setq isearch-highlight-extents nil)
-  (setq isearch-highlight-all-start nil
-	isearch-window-end nil
+  (setq isearch-window-end nil
 	isearch-highlight-last-string nil))
 
 (defun isearch-highlight-all-update ()

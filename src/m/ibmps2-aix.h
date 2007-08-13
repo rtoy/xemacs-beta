@@ -30,11 +30,6 @@ NOTE-START
   work with certain new X window managers, and may be suboptimal.
 NOTE-END */
 
-/* Define WORD_MACHINE if addresses and such have
- * to be corrected before they can be used as byte counts.  */
-
-/* #define WORD_MACHINE */
-
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    Ones defined so far include vax, m68000, ns16000, pyramid,
@@ -64,15 +59,6 @@ so disable it for them.  */
 
 /* #define CANNOT_DUMP */
 
-/* Define VIRT_ADDR_VARIES if the virtual addresses of
-   pure and impure space as loaded can vary, and even their
-   relative order cannot be relied on.
-
-   Otherwise Emacs assumes that text space precedes data space,
-   numerically.  */
-
-/* #define VIRT_ADDR_VARIES */
-
 /* Define addresses, macros, change some setup for dump */
 
 #define NO_REMAP
@@ -85,11 +71,6 @@ so disable it for them.  */
 #define DATA_START 0x00800000
 #define DATA_END 0
 
-/* The data segment in this machine always starts at address 0x00800000.
-   An address of data cannot be stored correctly in a Lisp object;
-   we always lose the high bits.  We must tell XPNTR to add them back.  */
-
-#define DATA_SEG_BITS 0x00800000
 #endif
 
 #if 0 /* I refuse to promulgate a recommendation that would make

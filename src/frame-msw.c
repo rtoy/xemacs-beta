@@ -58,7 +58,7 @@ Boston, MA 02111-1307, USA.  */
 #define POPUP_WIDTH 30
 #define POPUP_HEIGHT 10
 
-/* Default popup size, in characters */
+/* Default regular frame size, in characters */
 #define DEFAULT_FRAME_WIDTH 80
 #define DEFAULT_FRAME_HEIGHT 35
 
@@ -81,6 +81,21 @@ Lisp_Object Vmswindows_frame_being_created;
 /*-----                    DISPLAY FRAME                          -----*/
 /*---------------------------------------------------------------------*/
 
+HWND
+mswindows_get_selected_frame_hwnd (void)
+{
+  Lisp_Object frame, device;
+
+  device = Ffind_device (Qnil, Qmswindows);
+  if (NILP (device))
+    return NULL;
+  frame = DEVICE_SELECTED_FRAME (XDEVICE (device));
+  if (NILP (frame))
+    return NULL;
+
+  return FRAME_MSWINDOWS_HANDLE (XFRAME (frame));
+}
+
 static void
 mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 {
@@ -95,7 +110,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   /* Pick up relevant properties */
   initially_unmapped = Fplist_get (props, Qinitially_unmapped, Qnil);
   name = Fplist_get (props, Qname, Qnil);
-  
+
   popup = Fplist_get (props, Qpopup, Qnil);
   if (EQ (popup, Qt))
     popup = Fselected_frame (Qnil);
@@ -121,25 +136,23 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 
   FRAME_MSWINDOWS_TARGET_RECT (f)->left = NILP (left) ? -1 : abs (XINT (left));
   FRAME_MSWINDOWS_TARGET_RECT (f)->top = NILP (top) ? -1 : abs (XINT (top));
-  FRAME_MSWINDOWS_TARGET_RECT (f)->width = NILP (width) ? -1 : 
+  FRAME_MSWINDOWS_TARGET_RECT (f)->width = NILP (width) ? -1 :
     abs (XINT (width));
-  FRAME_MSWINDOWS_TARGET_RECT (f)->height = NILP (height) ? -1 : 
+  FRAME_MSWINDOWS_TARGET_RECT (f)->height = NILP (height) ? -1 :
     abs (XINT (height));
-      
+
   /* Misc frame stuff */
-  FRAME_MSWINDOWS_DATA(f)->button2_need_lbutton = 0;
-  FRAME_MSWINDOWS_DATA(f)->button2_need_rbutton = 0;
-  FRAME_MSWINDOWS_DATA(f)->button2_is_down = 0;
-  FRAME_MSWINDOWS_DATA(f)->ignore_next_lbutton_up = 0;
-  FRAME_MSWINDOWS_DATA(f)->ignore_next_rbutton_up = 0;
-  FRAME_MSWINDOWS_DATA(f)->sizing = 0;
   FRAME_MSWINDOWS_MENU_HASH_TABLE(f) = Qnil;
 #ifdef HAVE_TOOLBARS
-  FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE(f) = 
+  FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE(f) =
     make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
 #endif
   /* hashtable of instantiated glyphs on the frame. */
-  FRAME_MSWINDOWS_WIDGET_HASH_TABLE (f) = 
+  FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f) =
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
+  FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f) =
+    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
+  FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f) =
     make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
   /* Will initialize these in WM_SIZE handler. We cannot do it now,
      because we do not know what is CW_USEDEFAULT height and width */
@@ -175,6 +188,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
       rect_default.top = rect.top + POPUP_OFFSET;
       char_to_real_pixel_size (f, POPUP_WIDTH, POPUP_HEIGHT,
 			       &rect_default.width, &rect_default.height);
+      FRAME_MSWINDOWS_POPUP (f) = 1;
     }
 
   AdjustWindowRectEx(&rect, style, ADJR_MENUFLAG, exstyle);
@@ -186,9 +200,9 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   hwnd = CreateWindowEx (exstyle,
 			 XEMACS_CLASS,
 			 STRINGP(f->name) ? XSTRING_DATA(f->name) :
-			 (STRINGP(name) ? 
-			  (CONST Extbyte*)XSTRING_DATA(name) : 
-			  (CONST Extbyte*)XEMACS_CLASS),
+			 (STRINGP(name) ?
+			  (const Extbyte*)XSTRING_DATA(name) :
+			  (const Extbyte*)XEMACS_CLASS),
 			 style,
 			 rect_default.left, rect_default.top,
 			 rect_default.width, rect_default.height,
@@ -197,14 +211,19 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   Vmswindows_frame_being_created = Qnil;
 
   if (hwnd == NULL)
-    error ("System call to create frame failed");
-			   
+    invalid_operation ("System call to create frame failed",
+		       STRINGP (f->name) ? f->name :
+		       STRINGP (name) ? name :
+		       Qunbound);
+
   FRAME_MSWINDOWS_HANDLE(f) = hwnd;
 
   SetWindowLong (hwnd, XWL_FRAMEOBJ, (LONG)LISP_TO_VOID(frame_obj));
   FRAME_MSWINDOWS_DC(f) = GetDC (hwnd);
-  FRAME_MSWINDOWS_CDC(f) = CreateCompatibleDC (FRAME_MSWINDOWS_CDC(f));
   SetTextAlign (FRAME_MSWINDOWS_DC(f), TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
+
+  if (FRAME_MSWINDOWS_POPUP (f))
+    mswindows_register_popup_frame (frame_obj);
 }
 
 static void
@@ -216,7 +235,7 @@ mswindows_init_frame_2 (struct frame *f, Lisp_Object props)
          since we don't have X resources. This may change if we look
          at the registry. Even so these values can get overridden
          later.*/
-      XEMACS_RECT_WH dest = { -1, -1, DEFAULT_FRAME_WIDTH, 
+      XEMACS_RECT_WH dest = { -1, -1, DEFAULT_FRAME_WIDTH,
 			      DEFAULT_FRAME_HEIGHT };
       mswindows_size_frame_internal (f, &dest);
     }
@@ -228,7 +247,7 @@ mswindows_init_frame_3 (struct frame *f)
 {
   /* Don't do this earlier or we get a WM_PAINT before the frame is ready.
    * The SW_x parameter in the first call that an app makes to ShowWindow is
-   * ignored, and the parameter specified in the caller's STARTUPINFO is 
+   * ignored, and the parameter specified in the caller's STARTUPINFO is
    * substituted instead. That parameter is SW_HIDE if we were started by
    * runemacs, so call this twice. #### runemacs is evil */
   ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
@@ -242,7 +261,7 @@ mswindows_after_init_frame (struct frame *f, int first_on_device,
 		            int first_on_console)
 {
   /* Windows, unlike X, is very synchronous. After the initial
-     frame is created, it will never be displayed, except for 
+     frame is created, it will never be displayed, except for
      hollow border, unless we start pumping messages. Load progress
      messages show in the bottom of the hollow frame, which is ugly.
      We redisplay the initial frame here, so modeline and root window
@@ -259,7 +278,9 @@ mswindows_mark_frame (struct frame *f)
 #ifdef HAVE_TOOLBARS
   mark_object (FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f));
 #endif
-  mark_object (FRAME_MSWINDOWS_WIDGET_HASH_TABLE (f));
+  mark_object (FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f));
+  mark_object (FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f));
+  mark_object (FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f));
 }
 
 static void
@@ -273,7 +294,9 @@ mswindows_delete_frame (struct frame *f)
 {
   if (f->frame_data)
     {
-      DeleteDC(FRAME_MSWINDOWS_CDC(f));
+      Lisp_Object frame;
+      XSETFRAME (frame, f);
+      mswindows_unregister_popup_frame (frame);
       ReleaseDC(FRAME_MSWINDOWS_HANDLE(f), FRAME_MSWINDOWS_DC(f));
       DestroyWindow(FRAME_MSWINDOWS_HANDLE(f));
       xfree (f->frame_data);
@@ -297,7 +320,7 @@ mswindows_set_frame_size (struct frame *f, int width, int height)
   if (IsIconic (FRAME_MSWINDOWS_HANDLE(f)) || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
     ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
 
-  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL,
 		0, 0, rect.right-rect.left, rect.bottom-rect.top,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING | SWP_NOMOVE);
 }
@@ -305,13 +328,13 @@ mswindows_set_frame_size (struct frame *f, int width, int height)
 static void
 mswindows_set_frame_position (struct frame *f, int xoff, int yoff)
 {
-  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL,
 		xoff, yoff, 0, 0,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING | SWP_NOSIZE);
 }
 
 static void
-mswindows_make_frame_visible (struct frame *f) 
+mswindows_make_frame_visible (struct frame *f)
 {
   if (!FRAME_VISIBLE_P(f))
     ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
@@ -322,7 +345,7 @@ mswindows_make_frame_visible (struct frame *f)
 }
 
 static void
-mswindows_make_frame_invisible (struct frame *f) 
+mswindows_make_frame_invisible (struct frame *f)
 {
   if (!FRAME_VISIBLE_P(f))
     return;
@@ -348,7 +371,7 @@ mswindows_frame_totally_visible_p (struct frame *f)
   UnionRect(&rc_temp, &rc_me, &rc_other);
   if (!EqualRect (&rc_temp, &rc_other))
     return 0;
-  
+
   /* Then see if any window above us obscures us */
   while ((hwnd = GetWindow (hwnd, GW_HWNDPREV)) != NULL)
     if (IsWindowVisible (hwnd))
@@ -391,11 +414,11 @@ mswindows_set_frame_icon (struct frame *f)
     {
       if (!XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon))
 	{
-	  mswindows_initialize_image_instance_icon (XIMAGE_INSTANCE (f->icon), 
+	  mswindows_initialize_image_instance_icon (XIMAGE_INSTANCE (f->icon),
 						    FALSE);
 	}
-      
-      SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HICON, 
+
+      SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HICON,
 		    (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon));
     }
 }
@@ -481,7 +504,19 @@ mswindows_lower_frame (struct frame *f)
 }
 
 static void
-mswindows_set_title_from_bufbyte (struct frame *f, Bufbyte *title) 
+mswindows_enable_frame (struct frame *f)
+{
+  EnableWindow (FRAME_MSWINDOWS_HANDLE (f), TRUE);
+}
+
+static void
+mswindows_disable_frame (struct frame *f)
+{
+  EnableWindow (FRAME_MSWINDOWS_HANDLE (f), FALSE);
+}
+
+static void
+mswindows_set_title_from_bufbyte (struct frame *f, Bufbyte *title)
 {
   unsigned int new_checksum = hash_string (title, strlen (title));
   if (new_checksum != FRAME_MSWINDOWS_TITLE_CHECKSUM(f))
@@ -552,7 +587,7 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      if (STRINGP (val))
 		{
 		  Lisp_Object frm, font_spec;
-		  
+
 		  XSETFRAME (frm, f);
 		  font_spec = Fget (Fget_face (Qdefault), Qfont, Qnil);
 
@@ -589,9 +624,9 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 
   /* Now we've extracted the properties, apply them.
      Do not apply geometric properties during frame creation. This
-     is excessive anyways, and this loses becuase WM_SIZE has not
+     is excessive anyways, and this loses because WM_SIZE has not
      been sent yet, so frame width and height fields are not initialized.
-     
+
      unfortunately WM_SIZE loses as well since the resize is only
      applied once and the first time WM_SIZE is applied not everything
      is initialised in the frame (toolbars for instance). enabling
@@ -610,13 +645,12 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 
 void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
 {
-  RECT rect;
+  RECT rect, ws_rect;
   int pixel_width, pixel_height;
   int size_p = (dest->width >=0 || dest->height >=0);
   int move_p = (dest->top >=0 || dest->left >=0);
-  struct device* d = XDEVICE (FRAME_DEVICE (f));
   char_to_real_pixel_size (f, dest->width, dest->height, &pixel_width, &pixel_height);
-  
+
   if (dest->width < 0)
     pixel_width = FRAME_PIXWIDTH (f);
   if (dest->height < 0)
@@ -627,7 +661,7 @@ void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
     dest->left = rect.left;
   if (dest->top < 0)
     dest->top = rect.top;
-  
+
   rect.left = rect.top = 0;
   rect.right = pixel_width;
   rect.bottom = pixel_height;
@@ -637,40 +671,52 @@ void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
 		      GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
 		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
 
-  /* resize and move the window so that it fits on the screen. This is
+  /* resize and move the window so that it fits in the workspace. This is
   not restrictive since this will happen later anyway in WM_SIZE.  We
   have to do this after adjusting the rect to account for menubar
   etc. */
+  mswindows_get_workspace_coords (&ws_rect);
   pixel_width = rect.right - rect.left;
   pixel_height = rect.bottom - rect.top;
-  if (pixel_width > DEVICE_MSWINDOWS_HORZRES(d))
+  if (pixel_width > ws_rect.right - ws_rect.left)
     {
-      pixel_width = DEVICE_MSWINDOWS_HORZRES(d);
+      pixel_width = ws_rect.right - ws_rect.left;
       size_p=1;
     }
-  if (pixel_height > DEVICE_MSWINDOWS_VERTRES(d))
+  if (pixel_height > ws_rect.bottom - ws_rect.top)
     {
-      pixel_height = DEVICE_MSWINDOWS_VERTRES(d);
+      pixel_height = ws_rect.bottom - ws_rect.top;
       size_p=1;
     }
 
-  /* adjust position so window is on screen */
-  if (dest->left + pixel_width > DEVICE_MSWINDOWS_HORZRES(d))
+  /* adjust position so window is in workspace */
+  if (dest->left + pixel_width > ws_rect.right)
     {
-      dest->left = DEVICE_MSWINDOWS_HORZRES(d) - pixel_width;
+      dest->left = ws_rect.right - pixel_width;
       move_p=1;
     }
-  if (dest->top + pixel_height > DEVICE_MSWINDOWS_VERTRES(d))
+  if (dest->left < ws_rect.left)
     {
-      dest->top = DEVICE_MSWINDOWS_VERTRES(d) - pixel_height;
+      dest->left = ws_rect.left;
       move_p=1;
     }
 
-  if (IsIconic (FRAME_MSWINDOWS_HANDLE(f)) 
+  if (dest->top + pixel_height > ws_rect.bottom)
+    {
+      dest->top = ws_rect.bottom - pixel_height;
+      move_p=1;
+    }
+  if (dest->top < ws_rect.top)
+    {
+      dest->top = ws_rect.top;
+      move_p=1;
+    }
+
+  if (IsIconic (FRAME_MSWINDOWS_HANDLE(f))
       || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
     ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
 
-  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL,
 		dest->left, dest->top, pixel_width, pixel_height,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING
 		| (size_p ? 0 : SWP_NOSIZE)
@@ -709,15 +755,38 @@ mswindows_frame_size_fixed_p (struct frame *f)
 /*-----                    PRINTER FRAME                          -----*/
 /*---------------------------------------------------------------------*/
 
-EXFUN (Fset_frame_properties, 2);
+/*
+ * With some driver/os combination (I discovered this with HP drivers
+ * under W2K), DC geometry is reset upon StartDoc and EndPage
+ * calls. This is called every time one of these calls is made.
+ */
+static void
+apply_dc_geometry (struct frame* f)
+{
+  HDC hdc = DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f)));
+  SetTextAlign (hdc, TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
+  SetViewportOrgEx (hdc, FRAME_MSPRINTER_PIXLEFT(f),
+		    FRAME_MSPRINTER_PIXTOP(f), NULL);
+}
+
+void
+msprinter_start_page (struct frame *f)
+{
+  if (!FRAME_MSPRINTER_PAGE_STARTED (f))
+    {
+      FRAME_MSPRINTER_PAGE_STARTED (f) = 1;
+      StartPage (DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f))));
+      apply_dc_geometry (f);
+    }
+}
 
 static void
 error_frame_unsizable (struct frame *f)
 {
   Lisp_Object frame;
   XSETFRAME (frame, f);
-  signal_simple_error ("Cannot resize frame (margins)"
-		       " after print job has started.", frame);
+  invalid_change ("Cannot resize frame (margins) after print job has started.",
+		  frame);
 }
 
 static void
@@ -730,14 +799,11 @@ maybe_error_if_job_active (struct frame *f)
 static void
 msprinter_init_frame_1 (struct frame *f, Lisp_Object props)
 {
-  HDC hdc = DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f)));
-  Lisp_Object frame_obj = Qnil;
-
   /* Make sure this is the only frame on device. Windows printer can
      handle only one job at a time. */
   if (!NILP (DEVICE_FRAME_LIST (XDEVICE (FRAME_DEVICE (f)))))
-    error ("Only one frame (print job) at a time is allowed on "
-	   "this printer device.");
+    invalid_operation ("Only one frame (print job) at a time is allowed on "
+		       "this printer device", FRAME_DEVICE (f));
 
   f->frame_data = xnew_and_zero (struct msprinter_frame);
 
@@ -750,10 +816,6 @@ msprinter_init_frame_1 (struct frame *f, Lisp_Object props)
   /* Negative for "uinspecified" */
   FRAME_MSPRINTER_CHARWIDTH(f) = -1;
   FRAME_MSPRINTER_CHARHEIGHT(f) = -1;
-
-  /* nil is for "system default" for these properties. */
-  FRAME_MSPRINTER_ORIENTATION(f) = Qnil;
-  FRAME_MSPRINTER_DUPLEX(f) = Qnil;
 }
 
 static void
@@ -761,55 +823,27 @@ msprinter_init_frame_3 (struct frame *f)
 {
   DOCINFO di;
   struct device *device = XDEVICE (FRAME_DEVICE (f));
-  HDC hdc = DEVICE_MSPRINTER_HDC (device);
+  HDC hdc;
   int frame_left, frame_top, frame_width, frame_height;
 
-  /* Change printer parameters */
-  {
-    DEVMODE* devmode = msprinter_get_devmode_copy (device);
-    devmode->dmFields = 0;
-
-    if (!NILP (FRAME_MSPRINTER_ORIENTATION(f)))
-      {
-	devmode->dmFields = DM_ORIENTATION;
-	if (EQ (FRAME_MSPRINTER_ORIENTATION(f), Qportrait))
-	  devmode->dmOrientation = DMORIENT_PORTRAIT;
-	else if (EQ (FRAME_MSPRINTER_ORIENTATION(f), Qlandscape))
-	  devmode->dmOrientation = DMORIENT_LANDSCAPE;
-	else
-	  abort();
-      }
-
-    if (!NILP (FRAME_MSPRINTER_DUPLEX(f)))
-      {
-	devmode->dmFields = DM_DUPLEX;
-	if (EQ (FRAME_MSPRINTER_DUPLEX(f), Qnone))
-	  devmode->dmDuplex = DMDUP_SIMPLEX;
-	if (EQ (FRAME_MSPRINTER_DUPLEX(f), Qvertical))
-	  devmode->dmDuplex = DMDUP_VERTICAL;
-	if (EQ (FRAME_MSPRINTER_DUPLEX(f), Qhorizontal))
-	  devmode->dmDuplex = DMDUP_HORIZONTAL;
-	else
-	  abort();
-      }
-
-    msprinter_apply_devmode (device, devmode);
-  }
+  /* DC might be recreated in msprinter_apply_devmode,
+     so do not initialize until now */
+  hdc = DEVICE_MSPRINTER_HDC (device);
 
   /* Compute geometry properties */
   frame_left = (MulDiv (GetDeviceCaps (hdc, LOGPIXELSX),
 			FRAME_MSPRINTER_LEFT_MARGIN(f), 1440)
 		- GetDeviceCaps (hdc, PHYSICALOFFSETX));
-  
+
   if (FRAME_MSPRINTER_CHARWIDTH(f) > 0)
     {
       char_to_real_pixel_size (f, FRAME_MSPRINTER_CHARWIDTH(f), 0,
 			       &frame_width, NULL);
-      FRAME_MSPRINTER_RIGHT_MARGIN(f) = 
+      FRAME_MSPRINTER_RIGHT_MARGIN(f) =
 	MulDiv (GetDeviceCaps (hdc, PHYSICALWIDTH)
 		- (frame_left + frame_width), 1440,
 		GetDeviceCaps (hdc, LOGPIXELSX));
-    }		
+    }
   else
     frame_width = (GetDeviceCaps (hdc, PHYSICALWIDTH)
 		   - frame_left
@@ -825,11 +859,11 @@ msprinter_init_frame_3 (struct frame *f)
       char_to_real_pixel_size (f, 0, FRAME_MSPRINTER_CHARHEIGHT(f),
 			       NULL, &frame_height);
 
-      FRAME_MSPRINTER_BOTTOM_MARGIN(f) = 
+      FRAME_MSPRINTER_BOTTOM_MARGIN(f) =
 	MulDiv (GetDeviceCaps (hdc, PHYSICALHEIGHT)
 		- (frame_top + frame_height), 1440,
 		GetDeviceCaps (hdc, LOGPIXELSY));
-    }		
+    }
   else
     frame_height = (GetDeviceCaps (hdc, PHYSICALHEIGHT)
 		    - frame_top
@@ -838,13 +872,16 @@ msprinter_init_frame_3 (struct frame *f)
 
   /* Geometry sanity checks */
   if (!frame_pixsize_valid_p (f, frame_width, frame_height))
-    error ("Area inside print margins has shrunk to naught.");
+    invalid_operation ("Area inside print margins has shrunk to naught",
+		       STRINGP (f->name) ? f->name : Qunbound);
 
   if (frame_left < 0
       || frame_top < 0
       || frame_left + frame_width > GetDeviceCaps (hdc, HORZRES)
       || frame_top + frame_height > GetDeviceCaps (hdc, VERTRES))
-    error ("Print area is ouside of the printer's hardware printable area.");
+    invalid_operation ("Print area is ouside of the printer's "
+		       "hardware printable area",
+		       STRINGP (f->name) ? f->name : Qunbound);
 
   /* Apply XEmacs frame geometry and layout windows */
   {
@@ -855,10 +892,8 @@ msprinter_init_frame_3 (struct frame *f)
     change_frame_size (f, rows, columns, 0);
   }
 
-  /* Apply DC geometry */
-  SetTextAlign (hdc, TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
-  SetViewportOrgEx (hdc, frame_left, frame_top, NULL);
-  SetWindowOrgEx (hdc, 0, 0, NULL);
+  FRAME_MSPRINTER_PIXLEFT(f) = frame_left;
+  FRAME_MSPRINTER_PIXTOP(f) = frame_top;
 
   /* Start print job */
   di.cbSize = sizeof (di);
@@ -870,10 +905,12 @@ msprinter_init_frame_3 (struct frame *f)
   di.fwType = 0;
 
   if (StartDoc (hdc, &di) <= 0)
-    error ("Cannot start print job");
+    invalid_operation ("Cannot start print job",
+		       STRINGP (f->name) ? f->name : Qunbound);
+
+  apply_dc_geometry (f);
 
   /* Finish frame setup */
-  FRAME_MSPRINTER_CDC(f) = CreateCompatibleDC (hdc);
   FRAME_MSPRINTER_JOB_STARTED (f) = 1;
   FRAME_VISIBLE_P(f) = 0;
 }
@@ -881,12 +918,6 @@ msprinter_init_frame_3 (struct frame *f)
 static void
 msprinter_mark_frame (struct frame *f)
 {
-  /* NOTE: These need not be marked as long as we allow only c-defined
-     symbols for their values.  Although, marking these is safer than
-     expensive.  [I know a proof to the theorem postulating that a
-     gator is longer than greener. Ask me. -- kkm] */
-  mark_object (FRAME_MSPRINTER_ORIENTATION (f));
-  mark_object (FRAME_MSPRINTER_DUPLEX (f));
 }
 
 static void
@@ -894,10 +925,11 @@ msprinter_delete_frame (struct frame *f)
 {
   if (f->frame_data)
     {
+      HDC hdc = DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f)));
+      if (FRAME_MSPRINTER_PAGE_STARTED (f))
+	EndPage (hdc);
       if (FRAME_MSPRINTER_JOB_STARTED (f))
-	EndDoc (DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f))));
-      if (FRAME_MSPRINTER_CDC(f))
-	DeleteDC(FRAME_MSPRINTER_CDC(f));
+	EndDoc (hdc);
       xfree (f->frame_data);
     }
 
@@ -915,10 +947,6 @@ msprinter_frame_property (struct frame *f, Lisp_Object property)
     return make_int (FRAME_MSPRINTER_RIGHT_MARGIN(f));
   else if (EQ (Qbottom_margin, property))
     return make_int (FRAME_MSPRINTER_BOTTOM_MARGIN(f));
-  else if (EQ (Qorientation, property))
-    return FRAME_MSPRINTER_ORIENTATION(f);
-  else if (EQ (Qduplex, property))
-    return FRAME_MSPRINTER_DUPLEX(f);
   else
     return Qunbound;
 }
@@ -927,16 +955,13 @@ static int
 msprinter_internal_frame_property_p (struct frame *f, Lisp_Object property)
 {
   return (EQ (Qleft_margin, property) || EQ (Qtop_margin, property) ||
-	  EQ (Qright_margin, property) || EQ (Qbottom_margin, property) ||
-	  EQ (Qorientation, property) || EQ (Qduplex, property));
+	  EQ (Qright_margin, property) || EQ (Qbottom_margin, property));
 }
 
 static Lisp_Object
 msprinter_frame_properties (struct frame *f)
 {
   Lisp_Object props = Qnil;
-  props = cons3 (Qorientation, FRAME_MSPRINTER_ORIENTATION(f), props);
-  props = cons3 (Qduplex, FRAME_MSPRINTER_DUPLEX(f), props);
   props = cons3 (Qbottom_margin,
 		 make_int (FRAME_MSPRINTER_BOTTOM_MARGIN(f)), props);
   props = cons3 (Qright_margin,
@@ -951,7 +976,6 @@ msprinter_frame_properties (struct frame *f)
 static void
 msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 {
-  BOOL size_changed_p = FALSE;
   Lisp_Object tail;
 
   /* Extract the properties from plist */
@@ -1004,29 +1028,6 @@ msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      CHECK_NATNUM (val);
 	      FRAME_MSPRINTER_BOTTOM_MARGIN(f) = XINT (val);
 	    }
-	  else if (EQ (prop, Qorientation))
-	    {
-	      maybe_error_if_job_active (f);
-	      CHECK_SYMBOL (val);
-	      if (!NILP(val) &&
-		  !EQ (val, Qportrait) &&
-		  !EQ (val, Qlandscape))
-		signal_simple_error ("Page orientation can only be "
-				     "'portrait or 'landscape", val);
-	      FRAME_MSPRINTER_ORIENTATION(f) = val;
-	    }
-	  else if (EQ (prop, Qduplex))
-	    {
-	      maybe_error_if_job_active (f);
-	      CHECK_SYMBOL (val);
-	      if (!NILP(val) &&
-		  !EQ (val, Qnone) &&
-		  !EQ (val, Qvertical) &&
-		  !EQ (val, Qhorizontal))
-		signal_simple_error ("Duplex can only be 'none, "
-				     "'vertical or 'horizontal", val);
-	      FRAME_MSPRINTER_DUPLEX(f) = val;
-	    }
 	}
     }
 }
@@ -1038,12 +1039,25 @@ msprinter_set_frame_size (struct frame *f, int width, int height)
   error_frame_unsizable (f);
 }
 
+static void
+msprinter_eject_page (struct frame *f)
+{
+  /* #### Should we eject empty pages? */
+  if (FRAME_MSPRINTER_PAGE_STARTED (f))
+    {
+      FRAME_MSPRINTER_PAGE_STARTED (f) = 0;
+      EndPage (DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f))));
+      apply_dc_geometry (f);
+    }
+}
+
+
 void
 console_type_create_frame_mswindows (void)
 {
   /* Display frames */
   CONSOLE_HAS_METHOD (mswindows, init_frame_1);
-  CONSOLE_HAS_METHOD (mswindows, init_frame_2); 
+  CONSOLE_HAS_METHOD (mswindows, init_frame_2);
   CONSOLE_HAS_METHOD (mswindows, init_frame_3);
   CONSOLE_HAS_METHOD (mswindows, after_init_frame);
   CONSOLE_HAS_METHOD (mswindows, mark_frame);
@@ -1053,6 +1067,8 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, set_mouse_position);
   CONSOLE_HAS_METHOD (mswindows, raise_frame);
   CONSOLE_HAS_METHOD (mswindows, lower_frame);
+  CONSOLE_HAS_METHOD (mswindows, enable_frame);
+  CONSOLE_HAS_METHOD (mswindows, disable_frame);
   CONSOLE_HAS_METHOD (mswindows, make_frame_visible);
   CONSOLE_HAS_METHOD (mswindows, make_frame_invisible);
   CONSOLE_HAS_METHOD (mswindows, iconify_frame);
@@ -1067,8 +1083,8 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, frame_visible_p);
   CONSOLE_HAS_METHOD (mswindows, frame_totally_visible_p);
   CONSOLE_HAS_METHOD (mswindows, frame_iconified_p);
-  CONSOLE_HAS_METHOD (mswindows, set_frame_pointer); 
-  CONSOLE_HAS_METHOD (mswindows, set_frame_icon); 
+  CONSOLE_HAS_METHOD (mswindows, set_frame_pointer);
+  CONSOLE_HAS_METHOD (mswindows, set_frame_icon);
   CONSOLE_HAS_METHOD (mswindows, get_frame_parent);
   CONSOLE_HAS_METHOD (mswindows, update_frame_external_traits);
   CONSOLE_HAS_METHOD (mswindows, frame_size_fixed_p);
@@ -1083,6 +1099,7 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (msprinter, frame_properties);
   CONSOLE_HAS_METHOD (msprinter, set_frame_properties);
   CONSOLE_HAS_METHOD (msprinter, set_frame_size);
+  CONSOLE_HAS_METHOD (msprinter, eject_page);
 }
 
 void
@@ -1104,11 +1121,11 @@ vars_of_frame_mswindows (void)
 
   DEFVAR_LISP ("mswindows-use-system-frame-size-defaults", &Vmswindows_use_system_frame_size_defaults /*
 Controls whether to use system or XEmacs defaults for frame size.
-If nil then reasonable defaults are used for intial frame sizes. If t
+If nil then reasonable defaults are used for initial frame sizes. If t
 then the system will choose default sizes for the frame.
 */ );
   Vmswindows_use_system_frame_size_defaults = Qnil;
-  
+
   DEFVAR_LISP ("default-mswindows-frame-plist", &Vdefault_mswindows_frame_plist /*
 Plist of default frame-creation properties for mswindows frames.
 These override what is specified in `default-frame-plist', but are
@@ -1166,7 +1183,7 @@ set at any time, except as otherwise noted):
   top-margin			typographical unit of measurement,
   right-margin                  equal to 1/1440 of an inch, or 1/20 of a
   bottom-margin			point, and roughly equal to 7/400 of a
-				millimeter. If not specifified, each margin
+				millimeter. If not specified, each margin
 				defaults to one inch (25.4 mm).
 
      MARGINS NOTE. right-margin and bottom-margin are overridden by
@@ -1180,17 +1197,6 @@ set at any time, except as otherwise noted):
 
 	  (setq default-frame-plist '(height 55 'width 80)
 		default-msprinter-frame-plist '(height nil 'width nil))
-
-
-  orientation                   Printer page orientation. Can be 'nil,
-				indicating system default, 'portrait
-				or 'landscape.
-
-  duplex			Duplex printing mode, subject to printer
-				support. Can be 'nil for the device default,
-				'none for simplex printing, 'vertical or
-				'horizontal for duplex page bound along
-				the corresponding page direction.
 
 See also `default-frame-plist', which specifies properties which apply
 to all frames, not just mswindows frames.

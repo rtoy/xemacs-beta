@@ -22,6 +22,8 @@
 
 #define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
 
+#define INTERRUPTIBLE_OPEN
+
 #define LIBS_DEBUG
 /* FreeBSD 2.2 or later */
 #ifndef __FreeBSD_version
@@ -95,7 +97,6 @@
 
 #endif /* not __ELF__ */
 
-#define HAVE_GETLOADAVG
 /* #define NO_TERMIO */ /* detected in configure */
 #define DECLARE_GETPWUID_WITH_UID_T
 

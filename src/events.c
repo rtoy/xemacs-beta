@@ -37,17 +37,6 @@ Boston, MA 02111-1307, USA.  */
 #include "keymap.h" /* for key_desc_list_to_event() */
 #include "redisplay.h"
 #include "window.h"
-
-#ifdef WINDOWSNT
-/* Hmm, under unix we want X modifiers, under NT we want X modifiers if
-   we are running X and Windows modifiers otherwise.
-   gak. This is a kludge until we support multiple native GUIs!
-*/
-#undef MOD_ALT
-#undef MOD_CONTROL
-#undef MOD_SHIFT
-#endif
-
 #include "events-mod.h"
 
 /* Where old events go when they are explicitly deallocated.
@@ -87,7 +76,7 @@ deinitialize_event (Lisp_Object ev)
     ((int *) event) [i] = 0xdeadbeef;
   event->event_type = dead_event;
   event->channel = Qnil;
-  set_lheader_implementation (&(event->lheader), &lrecord_event);
+  set_lheader_implementation (&event->lheader, &lrecord_event);
   XSET_EVENT_NEXT (ev, Qnil);
 }
 
@@ -96,7 +85,7 @@ void
 zero_event (Lisp_Event *e)
 {
   xzero (*e);
-  set_lheader_implementation (&(e->lheader), &lrecord_event);
+  set_lheader_implementation (&e->lheader, &lrecord_event);
   e->event_type = empty_event;
   e->next = Qnil;
   e->channel = Qnil;
@@ -142,7 +131,7 @@ mark_event (Lisp_Object obj)
 }
 
 static void
-print_event_1 (CONST char *str, Lisp_Object obj, Lisp_Object printcharfun)
+print_event_1 (const char *str, Lisp_Object obj, Lisp_Object printcharfun)
 {
   char buf[255];
   write_c_string (str, printcharfun);
@@ -429,7 +418,6 @@ WARNING: the event object returned may be a reused one; see the function
 */
        (type, plist))
 {
-  Lisp_Object tail, keyword, value;
   Lisp_Object event = Qnil;
   Lisp_Event *e;
   EMACS_INT coord_x = 0, coord_y = 0;
@@ -460,7 +448,7 @@ WARNING: the event object returned may be a reused one; see the function
          (e.g. CHANNEL), which we don't want in empty events.  */
       e->event_type = empty_event;
       if (!NILP (plist))
-	error ("Cannot set properties of empty event");
+	syntax_error ("Cannot set properties of empty event", plist);
       UNGCPRO;
       return event;
     }
@@ -483,7 +471,7 @@ WARNING: the event object returned may be a reused one; see the function
   else
     {
       /* Not allowed: Qprocess, Qtimeout, Qmagic, Qeval, Qmagic_eval.  */
-      signal_simple_error ("Invalid event type", type);
+      invalid_argument ("Invalid event type", type);
     }
 
   EVENT_CHANNEL (e) = Qnil;
@@ -491,164 +479,169 @@ WARNING: the event object returned may be a reused one; see the function
   plist = Fcopy_sequence (plist);
   Fcanonicalize_plist (plist, Qnil);
 
-#define WRONG_EVENT_TYPE_FOR_PROPERTY(type, prop)			\
-  error_with_frob (prop, "Invalid property for %s event",		\
-		   string_data (symbol_name (XSYMBOL (type))))
+#define WRONG_EVENT_TYPE_FOR_PROPERTY(event_type, prop) \
+  syntax_error_2 ("Invalid property for event type", prop, event_type)
 
-  EXTERNAL_PROPERTY_LIST_LOOP (tail, keyword, value, plist)
-    {
-      if (EQ (keyword, Qchannel))
-	{
-	  if (e->event_type == key_press_event)
-	    {
-	      if (!CONSOLEP (value))
-		value = wrong_type_argument (Qconsolep, value);
-	    }
-	  else
-	    {
-	      if (!FRAMEP (value))
-		value = wrong_type_argument (Qframep, value);
-	    }
-	  EVENT_CHANNEL (e) = value;
-	}
-      else if (EQ (keyword, Qkey))
-	{
-	  switch (e->event_type)
-	    {
-	    case key_press_event:
-	      if (!SYMBOLP (value) && !CHARP (value))
-		signal_simple_error ("Invalid event key", value);
-	      e->event.key.keysym = value;
-	      break;
-	    default:
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
-	      break;
-	    }
-	}
-      else if (EQ (keyword, Qbutton))
-	{
-	  CHECK_NATNUM (value);
-	  check_int_range (XINT (value), 0, 7);
+  {
+    EXTERNAL_PROPERTY_LIST_LOOP_3 (keyword, value, plist)
+      {
+	if (EQ (keyword, Qchannel))
+	  {
+	    if (e->event_type == key_press_event)
+	      {
+		if (!CONSOLEP (value))
+		  value = wrong_type_argument (Qconsolep, value);
+	      }
+	    else
+	      {
+		if (!FRAMEP (value))
+		  value = wrong_type_argument (Qframep, value);
+	      }
+	    EVENT_CHANNEL (e) = value;
+	  }
+	else if (EQ (keyword, Qkey))
+	  {
+	    switch (e->event_type)
+	      {
+	      case key_press_event:
+		if (!SYMBOLP (value) && !CHARP (value))
+		  syntax_error ("Invalid event key", value);
+		e->event.key.keysym = value;
+		break;
+	      default:
+		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+		break;
+	      }
+	  }
+	else if (EQ (keyword, Qbutton))
+	  {
+	    CHECK_NATNUM (value);
+	    check_int_range (XINT (value), 0, 7);
 
-	  switch (e->event_type)
-	    {
-	    case button_press_event:
-	    case button_release_event:
-	      e->event.button.button = XINT (value);
-	      break;
-	    case misc_user_event:
-	      e->event.misc.button = XINT (value);
-	      break;
-	    default:
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
-	      break;
-	    }
-	}
-      else if (EQ (keyword, Qmodifiers))
-	{
-	  int modifiers = 0;
-	  Lisp_Object sym;
+	    switch (e->event_type)
+	      {
+	      case button_press_event:
+	      case button_release_event:
+		e->event.button.button = XINT (value);
+		break;
+	      case misc_user_event:
+		e->event.misc.button = XINT (value);
+		break;
+	      default:
+		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+		break;
+	      }
+	  }
+	else if (EQ (keyword, Qmodifiers))
+	  {
+	    int modifiers = 0;
 
-	  EXTERNAL_LIST_LOOP_2 (sym, value)
-	    {
-	      if      (EQ (sym, Qcontrol)) modifiers |= MOD_CONTROL;
-	      else if (EQ (sym, Qmeta))    modifiers |= MOD_META;
-	      else if (EQ (sym, Qsuper))   modifiers |= MOD_SUPER;
-	      else if (EQ (sym, Qhyper))   modifiers |= MOD_HYPER;
-	      else if (EQ (sym, Qalt))     modifiers |= MOD_ALT;
-	      else if (EQ (sym, Qsymbol))  modifiers |= MOD_ALT;
-	      else if (EQ (sym, Qshift))   modifiers |= MOD_SHIFT;
-	      else
-		signal_simple_error ("Invalid key modifier", sym);
-	    }
+	    EXTERNAL_LIST_LOOP_2 (sym, value)
+	      {
+		if      (EQ (sym, Qcontrol)) modifiers |= XEMACS_MOD_CONTROL;
+		else if (EQ (sym, Qmeta))    modifiers |= XEMACS_MOD_META;
+		else if (EQ (sym, Qsuper))   modifiers |= XEMACS_MOD_SUPER;
+		else if (EQ (sym, Qhyper))   modifiers |= XEMACS_MOD_HYPER;
+		else if (EQ (sym, Qalt))     modifiers |= XEMACS_MOD_ALT;
+		else if (EQ (sym, Qsymbol))  modifiers |= XEMACS_MOD_ALT;
+		else if (EQ (sym, Qshift))   modifiers |= XEMACS_MOD_SHIFT;
+		else if (EQ (sym, Qbutton1))   modifiers |= XEMACS_MOD_BUTTON1;
+		else if (EQ (sym, Qbutton2))   modifiers |= XEMACS_MOD_BUTTON2;
+		else if (EQ (sym, Qbutton3))   modifiers |= XEMACS_MOD_BUTTON3;
+		else if (EQ (sym, Qbutton4))   modifiers |= XEMACS_MOD_BUTTON4;
+		else if (EQ (sym, Qbutton5))   modifiers |= XEMACS_MOD_BUTTON5;
+		else
+		  syntax_error ("Invalid key modifier", sym);
+	      }
 
-	  switch (e->event_type)
-	    {
-	    case key_press_event:
-	      e->event.key.modifiers = modifiers;
-	      break;
-	    case button_press_event:
-	    case button_release_event:
-	      e->event.button.modifiers = modifiers;
-	      break;
-	    case pointer_motion_event:
-	      e->event.motion.modifiers = modifiers;
-	      break;
-	    case misc_user_event:
-	      e->event.misc.modifiers = modifiers;
-	      break;
-	    default:
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
-	      break;
-	    }
-	}
-      else if (EQ (keyword, Qx))
-	{
-	  switch (e->event_type)
-	    {
-	    case pointer_motion_event:
-	    case button_press_event:
-	    case button_release_event:
-	    case misc_user_event:
-	      /* Allow negative values, so we can specify toolbar
-		 positions.  */
-	      CHECK_INT (value);
-	      coord_x = XINT (value);
-	      break;
-	    default:
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
-	      break;
-	    }
-	}
-      else if (EQ (keyword, Qy))
-	{
-	  switch (e->event_type)
-	    {
-	    case pointer_motion_event:
-	    case button_press_event:
-	    case button_release_event:
-	    case misc_user_event:
-	      /* Allow negative values; see above. */
-	      CHECK_INT (value);
-	      coord_y = XINT (value);
-	      break;
-	    default:
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
-	      break;
-	    }
-	}
-      else if (EQ (keyword, Qtimestamp))
-	{
-	  CHECK_NATNUM (value);
-	  e->timestamp = XINT (value);
-	}
-      else if (EQ (keyword, Qfunction))
-	{
-	  switch (e->event_type)
-	    {
-	    case misc_user_event:
-	      e->event.eval.function = value;
-	      break;
-	    default:
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
-	      break;
-	    }
-	}
-      else if (EQ (keyword, Qobject))
-	{
-	  switch (e->event_type)
-	    {
-	    case misc_user_event:
-	      e->event.eval.object = value;
-	      break;
-	    default:
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
-	      break;
-	    }
-	}
-      else
-	signal_simple_error_2 ("Invalid property", keyword, value);
-    }
+	    switch (e->event_type)
+	      {
+	      case key_press_event:
+		e->event.key.modifiers = modifiers;
+		break;
+	      case button_press_event:
+	      case button_release_event:
+		e->event.button.modifiers = modifiers;
+		break;
+	      case pointer_motion_event:
+		e->event.motion.modifiers = modifiers;
+		break;
+	      case misc_user_event:
+		e->event.misc.modifiers = modifiers;
+		break;
+	      default:
+		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+		break;
+	      }
+	  }
+	else if (EQ (keyword, Qx))
+	  {
+	    switch (e->event_type)
+	      {
+	      case pointer_motion_event:
+	      case button_press_event:
+	      case button_release_event:
+	      case misc_user_event:
+		/* Allow negative values, so we can specify toolbar
+		   positions.  */
+		CHECK_INT (value);
+		coord_x = XINT (value);
+		break;
+	      default:
+		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+		break;
+	      }
+	  }
+	else if (EQ (keyword, Qy))
+	  {
+	    switch (e->event_type)
+	      {
+	      case pointer_motion_event:
+	      case button_press_event:
+	      case button_release_event:
+	      case misc_user_event:
+		/* Allow negative values; see above. */
+		CHECK_INT (value);
+		coord_y = XINT (value);
+		break;
+	      default:
+		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+		break;
+	      }
+	  }
+	else if (EQ (keyword, Qtimestamp))
+	  {
+	    CHECK_NATNUM (value);
+	    e->timestamp = XINT (value);
+	  }
+	else if (EQ (keyword, Qfunction))
+	  {
+	    switch (e->event_type)
+	      {
+	      case misc_user_event:
+		e->event.eval.function = value;
+		break;
+	      default:
+		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+		break;
+	      }
+	  }
+	else if (EQ (keyword, Qobject))
+	  {
+	    switch (e->event_type)
+	      {
+	      case misc_user_event:
+		e->event.eval.object = value;
+		break;
+	      default:
+		WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+		break;
+	      }
+	  }
+	else
+	  syntax_error_2 ("Invalid property", keyword, value);
+      }
+  }
 
   /* Insert the channel, if missing. */
   if (NILP (EVENT_CHANNEL (e)))
@@ -691,19 +684,25 @@ WARNING: the event object returned may be a reused one; see the function
     {
     case key_press_event:
       if (UNBOUNDP (e->event.key.keysym))
-	error ("A key must be specified to make a keypress event");
+	syntax_error ("A key must be specified to make a keypress event",
+		      plist);
       break;
     case button_press_event:
       if (!e->event.button.button)
-	error ("A button must be specified to make a button-press event");
+	syntax_error
+	  ("A button must be specified to make a button-press event",
+	   plist);
       break;
     case button_release_event:
       if (!e->event.button.button)
-	error ("A button must be specified to make a button-release event");
+	syntax_error
+	  ("A button must be specified to make a button-release event",
+	   plist);
       break;
     case misc_user_event:
       if (NILP (e->event.misc.function))
-	error ("A function must be specified to make a misc-user event");
+	syntax_error ("A function must be specified to make a misc-user event",
+		      plist);
       break;
     default:
       break;
@@ -977,7 +976,7 @@ character_to_event (Emchar c, Lisp_Event *event, struct console *con,
 		    int use_console_meta_flag, int do_backspace_mapping)
 {
   Lisp_Object k = Qnil;
-  unsigned int m = 0;
+  int m = 0;
   if (event->event_type == dead_event)
     error ("character-to-event called with a deallocated event!");
 
@@ -996,21 +995,21 @@ character_to_event (Emchar c, Lisp_Event *event, struct console *con,
 	  break;
 	case 1: /* top bit is meta */
 	  c -= 128;
-	  m = MOD_META;
+	  m = XEMACS_MOD_META;
 	  break;
 	default: /* this is a real character */
 	  break;
 	}
     }
-  if (c < ' ') c += '@', m |= MOD_CONTROL;
-  if (m & MOD_CONTROL)
+  if (c < ' ') c += '@', m |= XEMACS_MOD_CONTROL;
+  if (m & XEMACS_MOD_CONTROL)
     {
       switch (c)
 	{
-	case 'I': k = QKtab;	  m &= ~MOD_CONTROL; break;
-	case 'J': k = QKlinefeed; m &= ~MOD_CONTROL; break;
-	case 'M': k = QKreturn;	  m &= ~MOD_CONTROL; break;
-	case '[': k = QKescape;	  m &= ~MOD_CONTROL; break;
+	case 'I': k = QKtab;	  m &= ~XEMACS_MOD_CONTROL; break;
+	case 'J': k = QKlinefeed; m &= ~XEMACS_MOD_CONTROL; break;
+	case 'M': k = QKreturn;	  m &= ~XEMACS_MOD_CONTROL; break;
+	case '[': k = QKescape;	  m &= ~XEMACS_MOD_CONTROL; break;
 	default:
 #if defined(HAVE_TTY)
 	  if (do_backspace_mapping &&
@@ -1018,9 +1017,9 @@ character_to_event (Emchar c, Lisp_Event *event, struct console *con,
 	      c - '@' == XCHAR (con->tty_erase_char))
 	    {
 	      k = QKbackspace;
-	      m &= ~MOD_CONTROL;
+	      m &= ~XEMACS_MOD_CONTROL;
 	    }
-#endif /* defined(HAVE_TTY) && !defined(__CYGWIN32__) */
+#endif /* defined(HAVE_TTY) && !defined(CYGWIN) */
 	  break;
 	}
       if (c >= 'A' && c <= 'Z') c -= 'A'-'a';
@@ -1029,7 +1028,7 @@ character_to_event (Emchar c, Lisp_Event *event, struct console *con,
   else if (do_backspace_mapping &&
 	   CHARP (con->tty_erase_char) && c == XCHAR (con->tty_erase_char))
     k = QKbackspace;
-#endif /* defined(HAVE_TTY) && !defined(__CYGWIN32__) */
+#endif /* defined(HAVE_TTY) && !defined(CYGWIN) */
   else if (c == 127)
     k = QKdelete;
   else if (c == ' ')
@@ -1067,7 +1066,7 @@ event_to_character (Lisp_Event *event,
       return -1;
     }
   if (!allow_extra_modifiers &&
-      event->event.key.modifiers & (MOD_SUPER|MOD_HYPER|MOD_ALT))
+      event->event.key.modifiers & (XEMACS_MOD_SUPER|XEMACS_MOD_HYPER|XEMACS_MOD_ALT))
     return -1;
   if (CHAR_OR_CHAR_INTP (event->event.key.keysym))
     c = XCHAR_OR_CHAR_INT (event->event.key.keysym);
@@ -1086,7 +1085,7 @@ event_to_character (Lisp_Event *event,
   else
     return -1;
 
-  if (event->event.key.modifiers & MOD_CONTROL)
+  if (event->event.key.modifiers & XEMACS_MOD_CONTROL)
     {
       if (c >= 'a' && c <= 'z')
 	c -= ('a' - 'A');
@@ -1104,7 +1103,7 @@ event_to_character (Lisp_Event *event,
 	if (! allow_extra_modifiers) return -1;
     }
 
-  if (event->event.key.modifiers & MOD_META)
+  if (event->event.key.modifiers & XEMACS_MOD_META)
     {
       if (! allow_meta) return -1;
       if (c & 0200) return -1;		/* don't allow M-oslash (overlap) */
@@ -1244,13 +1243,13 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
         key = event->event.key.keysym;
         /* Hack. */
         if (! brief && CHARP (key) &&
-            mod & (MOD_CONTROL | MOD_META | MOD_SUPER | MOD_HYPER))
+            mod & (XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER | XEMACS_MOD_HYPER))
 	{
 	  int k = XCHAR (key);
 	  if (k >= 'a' && k <= 'z')
 	    key = make_char (k - ('a' - 'A'));
 	  else if (k >= 'A' && k <= 'Z')
-	    mod |= MOD_SHIFT;
+	    mod |= XEMACS_MOD_SHIFT;
 	}
         break;
       }
@@ -1266,7 +1265,7 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
       }
     case magic_event:
       {
-        CONST char *name = NULL;
+        const char *name = NULL;
 
 #ifdef HAVE_X_WINDOWS
 	{
@@ -1289,15 +1288,16 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
     case dead_event:		strcpy (buf, "DEAD-EVENT"); return;
     default:
       abort ();
+      return;
     }
 #define modprint1(x)  do { strcpy (buf, (x)); buf += sizeof (x)-1; } while (0)
 #define modprint(x,y) do { if (brief) modprint1 (y); else modprint1 (x); } while (0)
-  if (mod & MOD_CONTROL) modprint ("control-", "C-");
-  if (mod & MOD_META)    modprint ("meta-",    "M-");
-  if (mod & MOD_SUPER)   modprint ("super-",   "S-");
-  if (mod & MOD_HYPER)   modprint ("hyper-",   "H-");
-  if (mod & MOD_ALT)	 modprint ("alt-",     "A-");
-  if (mod & MOD_SHIFT)   modprint ("shift-",   "Sh-");
+  if (mod & XEMACS_MOD_CONTROL) modprint ("control-", "C-");
+  if (mod & XEMACS_MOD_META)    modprint ("meta-",    "M-");
+  if (mod & XEMACS_MOD_SUPER)   modprint ("super-",   "S-");
+  if (mod & XEMACS_MOD_HYPER)   modprint ("hyper-",   "H-");
+  if (mod & XEMACS_MOD_ALT)	modprint ("alt-",     "A-");
+  if (mod & XEMACS_MOD_SHIFT)   modprint ("shift-",   "Sh-");
   if (mouse_p)
     {
       modprint1 ("button");
@@ -1314,7 +1314,7 @@ format_event_object (char *buf, Lisp_Event *event, int brief)
     }
   else if (SYMBOLP (key))
     {
-      CONST char *str = 0;
+      const char *str = 0;
       if (brief)
 	{
 	  if      (EQ (key, QKlinefeed))  str = "LFD";
@@ -1452,6 +1452,10 @@ empty		The event has been allocated but not assigned.
 
 DEFUN ("event-timestamp", Fevent_timestamp, 1, 1, 0, /*
 Return the timestamp of the event object EVENT.
+Timestamps are measured in milliseconds since the start of the window system.
+They are NOT related to any current time measurement.
+They should be compared with `event-timestamp<'.
+See also `current-event-timestamp'.
 */
        (event))
 {
@@ -1461,6 +1465,28 @@ Return the timestamp of the event object EVENT.
    */
   return make_int (((1L << (VALBITS - 1)) - 1) &
 		      XEVENT (event)->timestamp);
+}
+
+#define TIMESTAMP_HALFSPACE (1L << (VALBITS - 2))
+
+DEFUN ("event-timestamp<", Fevent_timestamp_lessp, 2, 2, 0, /*
+Return true if timestamp TIME1 is earlier than timestamp TIME2.
+This correctly handles timestamp wrap.
+See also `event-timestamp' and `current-event-timestamp'.
+*/
+       (time1, time2))
+{
+  EMACS_INT t1, t2;
+
+  CHECK_NATNUM (time1);
+  CHECK_NATNUM (time2);
+  t1 = XINT (time1);
+  t2 = XINT (time2);
+
+  if (t1 < t2)
+    return t2 - t1 < TIMESTAMP_HALFSPACE ? Qt : Qnil;
+  else
+    return t1 - t2 < TIMESTAMP_HALFSPACE ? Qnil : Qt;
 }
 
 #define CHECK_EVENT_TYPE(e,t1,sym) do {		\
@@ -1520,9 +1546,9 @@ Return the button-number of the given button-press or button-release event.
 }
 
 DEFUN ("event-modifier-bits", Fevent_modifier_bits, 1, 1, 0, /*
-Return a number representing the modifier keys which were down
+Return a number representing the modifier keys and buttons which were down
 when the given mouse or keyboard event was produced.
-See also the function event-modifiers.
+See also the function `event-modifiers'.
 */
        (event))
 {
@@ -1546,21 +1572,67 @@ See also the function event-modifiers.
 }
 
 DEFUN ("event-modifiers", Fevent_modifiers, 1, 1, 0, /*
-Return a list of symbols, the names of the modifier keys
+Return a list of symbols, the names of the modifier keys and buttons
 which were down when the given mouse or keyboard event was produced.
-See also the function event-modifier-bits.
+See also the function `event-modifier-bits'.
+
+The possible symbols in the list are
+
+`shift':     The Shift key.  Will not appear, in general, on key events
+             where the keysym is an ASCII character, because using Shift
+             on such a character converts it into another character rather
+             than actually just adding a Shift modifier.
+
+`control':   The Control key.
+
+`meta':      The Meta key.  On PC's and PC-style keyboards, this is generally
+             labelled \"Alt\"; Meta is a holdover from early Lisp Machines and
+             such, propagated through the X Window System.  On Sun keyboards,
+             this key is labelled with a diamond.
+
+`alt':       The \"Alt\" key.  Alt is in quotes because this does not refer
+             to what it obviously should refer to, namely the Alt key on PC
+             keyboards.  Instead, it refers to the key labelled Alt on Sun
+             keyboards, and to no key at all on PC keyboards.
+
+`super':     The Super key.  Most keyboards don't have any such key, but
+             under X Windows using `xmodmap' you can assign any key (such as
+             an underused right-shift, right-control, or right-alt key) to
+             this key modifier.  No support currently exists under MS Windows
+             for generating these modifiers.
+
+`hyper':     The Hyper key.  Works just like the Super key.
+
+`button1':   The mouse buttons.  This means that the specified button was held
+`button2':   down at the time the event occurred.  NOTE: For button-press
+`button3':   events, the button that was just pressed down does NOT appear in
+`button4':   the modifiers.
+`button5':
+
+Button modifiers are currently ignored when defining and looking up key and
+mouse strokes in keymaps.  This could be changed, which would allow a user to
+create button-chord actions, use a button as a key modifier and do other
+clever things.
 */
        (event))
 {
   int mod = XINT (Fevent_modifier_bits (event));
   Lisp_Object result = Qnil;
-  if (mod & MOD_SHIFT)   result = Fcons (Qshift, result);
-  if (mod & MOD_ALT)	 result = Fcons (Qalt, result);
-  if (mod & MOD_HYPER)   result = Fcons (Qhyper, result);
-  if (mod & MOD_SUPER)   result = Fcons (Qsuper, result);
-  if (mod & MOD_META)    result = Fcons (Qmeta, result);
-  if (mod & MOD_CONTROL) result = Fcons (Qcontrol, result);
-  return result;
+  struct gcpro gcpro1;
+
+  GCPRO1 (result);
+  if (mod & XEMACS_MOD_SHIFT)   result = Fcons (Qshift, result);
+  if (mod & XEMACS_MOD_ALT)	result = Fcons (Qalt, result);
+  if (mod & XEMACS_MOD_HYPER)   result = Fcons (Qhyper, result);
+  if (mod & XEMACS_MOD_SUPER)   result = Fcons (Qsuper, result);
+  if (mod & XEMACS_MOD_META)    result = Fcons (Qmeta, result);
+  if (mod & XEMACS_MOD_CONTROL) result = Fcons (Qcontrol, result);
+  if (mod & XEMACS_MOD_BUTTON1) result = Fcons (Qbutton1, result);
+  if (mod & XEMACS_MOD_BUTTON2) result = Fcons (Qbutton2, result);
+  if (mod & XEMACS_MOD_BUTTON3) result = Fcons (Qbutton3, result);
+  if (mod & XEMACS_MOD_BUTTON4) result = Fcons (Qbutton4, result);
+  if (mod & XEMACS_MOD_BUTTON5) result = Fcons (Qbutton5, result);
+  RETURN_UNGCPRO (Fnreverse (result));
 }
 
 static int
@@ -1595,7 +1667,7 @@ event_x_y_pixel_internal (Lisp_Object event, int *x, int *y, int relative)
       w = find_window_by_pixel_pos (*x, *y, f->root_window);
 
       if (!w)
-	return 1;	/* #### What should really happen here. */
+	return 1;	/* #### What should really happen here? */
 
       *x -= w->pixel_left;
       *y -= w->pixel_top;
@@ -2188,6 +2260,8 @@ This is in the form of a property list (alternating keyword/value pairs).
 void
 syms_of_events (void)
 {
+  INIT_LRECORD_IMPLEMENTATION (event);
+
   DEFSUBR (Fcharacter_to_event);
   DEFSUBR (Fevent_to_character);
 
@@ -2200,6 +2274,7 @@ syms_of_events (void)
   DEFSUBR (Fevent_properties);
 
   DEFSUBR (Fevent_timestamp);
+  DEFSUBR (Fevent_timestamp_lessp);
   DEFSUBR (Fevent_key);
   DEFSUBR (Fevent_button);
   DEFSUBR (Fevent_modifier_bits);

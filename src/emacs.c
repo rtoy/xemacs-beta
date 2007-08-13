@@ -2,6 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1992, 1993, 1994
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
+   Copyright (C) 2000 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -21,6 +22,141 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.28. */
+
+/* Capsule summary of the various releases of Lucid Emacs/XEmacs and
+   FSF/GNU Emacs.  Provided here for use in cross-referencing version
+   releases and dates in comments, esp. in the authorship comments at
+   the beginning of each file.  More information about history can be
+   found in the beginning of the Internals Manual and in the About page.
+
+
+-- A time line for Lucid Emacs/XEmacs is
+
+version 19.0 shipped with Energize 1.0, April 1992.
+version 19.1 released June 4, 1992.
+version 19.2 released June 19, 1992.
+version 19.3 released September 9, 1992.
+version 19.4 released January 21, 1993.
+version 19.5 was a repackaging of 19.4 with a few bug fixes and
+  shipped with Energize 2.0.  Never released to the net.
+version 19.6 released April 9, 1993.
+version 19.7 was a repackaging of 19.6 with a few bug fixes and
+  shipped with Energize 2.1.  Never released to the net.
+version 19.8 released September 6, 1993.
+version 19.9 released January 12, 1994.
+version 19.10 released May 27, 1994.
+version 19.11 (first XEmacs) released September 13, 1994.
+version 19.12 released June 23, 1995.
+version 19.13 released September 1, 1995.
+version 19.14 released June 23, 1996.
+version 20.0 released February 9, 1997.
+version 19.15 released March 28, 1997.
+version 20.1 (not released to the net) April 15, 1997.
+version 20.2 released May 16, 1997.
+version 19.16 released October 31, 1997.
+version 20.3 (the first stable version of XEmacs 20.x) released
+  November 30, 1997.
+version 20.4 released February 28, 1998.
+
+
+-- A time line for GNU Emacs version 19 is
+
+version 19.7 (beta) (first beta release) released ??????; prob. late May 1993.
+version 19.8 (beta) released May 27, 1993.
+version 19.9 (beta) released May 27, 1993.
+version 19.10 (beta) released May 30, 1993.
+version 19.11 (beta) released June 1, 1993.
+version 19.12 (beta) released June 2, 1993.
+version 19.13 (beta) released June 8, 1993.
+version 19.14 (beta) released June 17, 1993.
+version 19.15 (beta) released June 19, 1993.
+version 19.16 (beta) released July 6, 1993.
+version 19.17 (beta) released late July, 1993.
+version 19.18 (beta) released August 9, 1993.
+version 19.19 (beta) released August 15, 1993.
+version 19.20 (beta) released November 17, 1993.
+version 19.21 (beta) released November 17, 1993.
+version 19.22 (beta) released November 28, 1993.
+version 19.23 (beta) released May 17, 1994.
+version 19.24 (beta) released May 16, 1994.
+version 19.25 (beta) released June 3, 1994.
+version 19.26 (beta) released September 11, 1994.
+version 19.27 (beta) released September 14, 1994.
+version 19.28 (first ``official'' release) released November 1, 1994.
+version 19.29 released June 21, 1995.
+version 19.30 released November 24, 1995.
+version 19.31 released May 25, 1996.
+version 19.32 released July 31, 1996.
+version 19.33 released August 11, 1996.
+version 19.34 released August 21, 1996.
+version 19.34b released September 6, 1996.
+
+
+-- A time line for GNU Emacs version 20 is
+
+version 20.1 released September 17, 1997.
+version 20.2 released September 20, 1997.
+version 20.3 released August 19, 1998.
+
+
+-- A time line for GNU Emacs version 18 and older is
+
+GNU Emacs version 15 (15.34) was released sometime in 1984 or 1985 and
+  shared some code with a version of Emacs written by James Gosling (the
+  same James Gosling who later created the Java language).
+GNU Emacs version 16 (first released version was 16.56) was released on
+  July 15, 1985.  All Gosling code was removed due to potential copyright
+  problems with the code.
+version 16.57: released on September 16, 1985.
+versions 16.58, 16.59: released on September 17, 1985.
+version 16.60: released on September 19, 1985.  These later version 16's
+  incorporated patches from the net, esp. for getting Emacs to work under
+  System V.
+version 17.36 (first official v17 release) released on December 20, 1985.
+  Included a TeX-able user manual.  First official unpatched version that
+   worked on vanilla System V machines.
+version 17.43 (second official v17 release) released on January 25, 1986.
+version 17.45 released on January 30, 1986.
+version 17.46 released on February 4, 1986.
+version 17.48 released on February 10, 1986.
+version 17.49 released on February 12, 1986.
+version 17.55 released on March 18, 1986.
+version 17.57 released on March 27, 1986.
+version 17.58 released on April 4, 1986.
+version 17.61 released on April 12, 1986.
+version 17.63 released on May 7, 1986.
+version 17.64 released on May 12, 1986.
+version 18.24 (a beta version) released on October 2, 1986.
+version 18.30 (a beta version) released on November 15, 1986.
+version 18.31 (a beta version) released on November 23, 1986.
+version 18.32 (a beta version) released on December 7, 1986.
+version 18.33 (a beta version) released on December 12, 1986.
+version 18.35 (a beta version) released on January 5, 1987.
+version 18.36 (a beta version) released on January 21, 1987.
+January 27, 1987: The Great Usenet Renaming.  net.emacs is now comp.emacs.
+version 18.37 (a beta version) released on February 12, 1987.
+version 18.38 (a beta version) released on March 3, 1987.
+version 18.39 (a beta version) released on March 14, 1987.
+version 18.40 (a beta version) released on March 18, 1987.
+version 18.41 (the first ``official'' release) released on March 22, 1987.
+version 18.45 released on June 2, 1987.
+version 18.46 released on June 9, 1987.
+version 18.47 released on June 18, 1987.
+version 18.48 released on September 3, 1987.
+version 18.49 released on September 18, 1987.
+version 18.50 released on February 13, 1988.
+version 18.51 released on May 7, 1988.
+version 18.52 released on September 1, 1988.
+version 18.53 released on February 24, 1989.
+version 18.54 released on April 26, 1989.
+version 18.55 released on August 23, 1989.  This is the earliest version
+  that is still available by FTP.
+version 18.56 released on January 17, 1991.
+version 18.57 released late January, 1991.
+version 18.58 released ?????.
+version 18.59 released October 31, 1992.
+
+*/
 
 /* Note: It is necessary to specify <config.h> and not "config.h" in
    order for the --srcdir type of compilation to work properly.
@@ -44,6 +180,15 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"
 
+#ifdef PDUMP
+#include "dump-id.h"
+#include "dumper.h"
+#endif
+
+#ifndef SEPCHAR
+#define SEPCHAR ':'
+#endif
+
 #ifdef QUANTIFY
 #include <quantify.h>
 #endif
@@ -58,17 +203,17 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifdef TOOLTALK
-#include TT_C_H_PATH
+#include TT_C_H_FILE
 #endif
 
-#if defined (WINDOWSNT)
-#include <windows.h>
+#if defined (WIN32_NATIVE)
+#include "nt.h"
 #endif
 
 /* For PATH_EXEC */
 #include <paths.h>
 
-#ifdef HEAP_IN_DATA
+#if defined (HEAP_IN_DATA) && !defined(PDUMP)
 void report_sheap_usage (int die_if_pure_storage_exceeded);
 #endif
 
@@ -161,8 +306,10 @@ Lisp_Object Vconfigure_exec_prefix_directory, Vconfigure_prefix_directory;
    priority. */
 int emacs_priority;
 
-/* If non-zero a filter or a sentinel is running.  Tested to save the match
-   data on the first attempt to change it inside asynchronous code. */
+/* Some FSF junk with running_asynch_code, to preserve the match
+   data.  Not necessary because we don't call process filters
+   asynchronously (i.e. from within QUIT). */
+/* #### Delete this when merging the rest of my code */
 int running_asynch_code;
 
 /* If non-zero, a window-system was specified on the command line. */
@@ -171,7 +318,7 @@ int display_arg;
 /* Type of display specified.  We cannot use a Lisp symbol here because
    Lisp symbols may not initialized at the time that we set this
    variable. */
-CONST char *display_use;
+const char *display_use;
 
 /* If non-zero, then the early error handler will only print the error
    message and exit. */
@@ -191,13 +338,30 @@ uintptr_t bss_end = 0;
 /* Number of bytes of writable memory we can expect to be able to get */
 unsigned int lim_data;
 
+/* WARNING!
+
+   Some LISP-visible command-line options are set by XEmacs _before_ the
+   data is dumped in building a --pdump XEmacs, but used _after_ it is
+   restored in normal operation.  Thus the restored values overwrite the
+   values XEmacs is getting at run-time.  Such variables must be saved
+   before loading the dumpfile, and restored afterward.
+
+   This is done immediately before and after pdump_load() in main_1().
+   See that function for the current list of protected variables.
+
+   Note that if the variable is never DEFVAR'd, saving/restoring is not
+   needed.
+*/
+
 /* Nonzero means running XEmacs without interactive terminal.  */
 
 int noninteractive;
 
 /* Value of Lisp variable `noninteractive'.
    Normally same as C variable `noninteractive'
-   but nothing terrible happens if user sets this one.  */
+   but nothing terrible happens if user sets this one.
+
+   Shadowed from the pdumper by `noninteractive'. */
 
 int noninteractive1;
 
@@ -213,11 +377,15 @@ int inhibit_early_packages;
 /* Nonzero means don't load package autoloads at startup */
 int inhibit_autoloads;
 
+/* Nonzero means don't load the dump file (ignored if not PDUMP)  */
+
+int nodumpfile;
+
 /* Nonzero means print debug information about path searching */
 int debug_paths;
 
 /* Save argv and argc.  */
-static char **initial_argv;
+static Extbyte **initial_argv;
 static int initial_argc;
 
 static void sort_args (int argc, char **argv);
@@ -228,35 +396,126 @@ Lisp_Object Qsave_buffers_kill_emacs;
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 
-/* Signal code for the fatal signal that was received */
-static int fatal_error_code;
 
-/* Nonzero if handling a fatal error already */
-static int fatal_error_in_progress;
+/* Ben's capsule summary about expected and unexpected exits from XEmacs.
 
-static void shut_down_emacs (int sig, Lisp_Object stuff);
+   Expected exits occur when the user directs XEmacs to exit, for example
+   by pressing the close button on the only frame in XEmacs, or by typing
+   C-x C-c.  This runs `save-buffers-kill-emacs', which saves any necessary
+   buffers, and then exits using the primitive `kill-emacs'.
+
+   However, unexpected exits occur in a few different ways:
+
+     -- a memory access violation or other hardware-generated exception
+        occurs.  This is the worst possible problem to deal with, because
+        the fault can occur while XEmacs is in any state whatsoever, even
+        quite unstable ones.  As a result, we need to be *extremely* careful
+        what we do.
+     -- we are using one X display (or if we've used more, we've closed the
+        others already), and some hardware or other problem happens and
+        suddenly we've lost our connection to the display.  In this situation,
+	things are not so dire as in the last one; our code itself isn't
+	trashed, so we can continue execution as normal, after having set
+	things up so that we can exit at the appropriate time.  Our exit
+	still needs to be of the emergency nature; we have no displays, so
+	any attempts to use them will fail.  We simply want to auto-save
+	(the single most important thing to do during shut-down), do minimal
+	cleanup of stuff that has an independent existence outside of XEmacs,
+	and exit.
+
+	Currently, both unexpected exit scenarios described above set
+	preparing_for_armageddon to indicate that nonessential and possibly
+	dangerous things should not be done, specifically:
+
+	-- no garbage collection.
+	-- no hooks are run.
+	-- no messages of any sort from autosaving.
+	-- autosaving tries harder, ignoring certain failures.
+	-- existing frames are not deleted.
+
+	(Also, all places that set preparing_for_armageddon also
+	set dont_check_for_quit.  This happens separately because it's
+	also necessary to set other variables to make absolutely sure
+	no quitting happens.)
+
+	In the first scenario above (the access violation), we also set
+	fatal_error_in_progress.  This causes more things to not happen:
+
+	-- assertion failures do not abort.
+	-- printing code does not do code conversion or gettext when
+	   printing to stdout/stderr.
+*/
+
+/* Nonzero if handling a fatal error already. */
+int fatal_error_in_progress;
+
+/* Non-nil means we're going down, so we better not run any hooks
+   or do other non-essential stuff. */
+int preparing_for_armageddon;
+
+
+static JMP_BUF run_temacs_catch;
+
+static int run_temacs_argc;
+static char **run_temacs_argv;
+static char *run_temacs_args;
+static size_t run_temacs_argv_size;
+static size_t run_temacs_args_size;
+
+static void shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save);
+
+static void
+ensure_no_quitting_from_now_on (void)
+{
+  /* make sure no quitting from now on!! */
+  dont_check_for_quit = 1;
+  Vinhibit_quit = Qt;
+  Vquit_flag = Qnil;
+}
 
 /* Handle bus errors, illegal instruction, etc. */
 SIGTYPE
 fatal_error_signal (int sig)
 {
-  fatal_error_code = sig;
-  signal (sig, SIG_DFL);
+  fatal_error_in_progress++;
+  preparing_for_armageddon = 1;
+
+  ensure_no_quitting_from_now_on ();
+
   /* Unblock the signal so that if the same signal gets sent in the
      code below, we avoid a deadlock. */
-  EMACS_UNBLOCK_SIGNAL (fatal_error_code);
+  EMACS_UNBLOCK_SIGNAL (sig);
 
-  /* If fatal error occurs in code below, avoid infinite recursion.  */
-  if (! fatal_error_in_progress)
+  /* Only try auto-saving first time through.  If we crash in auto-saving,
+     don't do it again. */
+  if (fatal_error_in_progress == 1)
     {
-      fatal_error_in_progress = dont_check_for_quit = 1;
-      shut_down_emacs (sig, Qnil);
+      Fdo_auto_save (Qt, Qnil); /* do this before anything hazardous */
+      /* Do this so that the variable has the same value of 2 regardless of
+	 whether we made it through auto-saving correctly. */
+      fatal_error_in_progress++;
+    }
+  else if (fatal_error_in_progress == 2)
+    stderr_out ("WARNING: Unable to auto-save your files properly.\n"
+		"Some or all may in fact have been auto-saved.\n"
+		"\n");
+
+  /* Now, reset our signal handler, so the next time, we just die.
+     Don't do this before auto-saving. */
+  signal (sig, SIG_DFL);
+
+  /* Keep in mind that there's more than one signal that we can crash
+     on. */
+  /* If fatal error occurs in code below, avoid infinite recursion.  */
+  if (fatal_error_in_progress <= 2)
+    {
+      shut_down_emacs (sig, Qnil, 1);
       stderr_out ("\nLisp backtrace follows:\n\n");
       Fbacktrace (Qexternal_debugging_output, Qt);
 # if 0	/* This is evil, rarely useful, and causes grief in some cases. */
       /* Check for Sun-style stack printing via /proc */
       {
-        CONST char *pstack = "/usr/proc/bin/pstack";
+        const char *pstack = "/usr/proc/bin/pstack";
         if (access (pstack, X_OK) == 0)
           {
             char buf[100];
@@ -269,65 +528,96 @@ fatal_error_signal (int sig)
 # endif
     }
   /* Signal the same code; this time it will really be fatal. */
-  kill (getpid (), fatal_error_code);
+  kill (getpid (), sig);
   SIGRETURN;
 }
+
+#ifdef _MSC_VER
+
+static DWORD
+mswindows_handle_hardware_exceptions (DWORD code)
+{
+  if (code != STATUS_ACCESS_VIOLATION && code != STATUS_ILLEGAL_INSTRUCTION
+      && code != STATUS_PRIVILEGED_INSTRUCTION
+      && code != STATUS_DATATYPE_MISALIGNMENT)
+    return EXCEPTION_CONTINUE_SEARCH;
+
+  /* I don't know if this filter is still wrapped in the outer __try, but
+     it doesn't hurt to have another one. --ben
+     And it lets us control more exactly what we really want to do in such
+     a situation. */
+  __try
+    {
+      fatal_error_in_progress++;
+      preparing_for_armageddon = 1;
+
+      ensure_no_quitting_from_now_on ();
+
+      /* Only try auto-saving first time through.  If we crash in auto-saving,
+	 don't do it again. */
+      if (fatal_error_in_progress == 1)
+	{
+	  Fdo_auto_save (Qt, Qnil); /* do this before anything hazardous */
+	  /* Do this so that the variable has the same value of 2 regardless of
+	     whether we made it through auto-saving correctly. */
+	  fatal_error_in_progress++;
+	}
+      else if (fatal_error_in_progress == 2)
+	stderr_out ("WARNING: Unable to auto-save your files properly.\n"
+		    "Some or all may in fact have been auto-saved.\n"
+		    "\n");
+
+      /* If fatal error occurs in code below, avoid infinite recursion.  */
+      if (fatal_error_in_progress <= 2)
+	{
+	  shut_down_emacs (-1, Qnil, 1);
+	  stderr_out ("\nLisp backtrace follows:\n\n");
+	  Fbacktrace (Qexternal_debugging_output, Qt);
+	}
+    }
+  /* VC++ documentation says that
+     GetExceptionCode() cannot be called inside the filter itself. */
+
+  /*  __except (mswindows_handle_hardware_exceptions (GetExceptionCode ())) {}
+
+     The line above is original.  Unfortunately, when an error is tripped
+     inside of the handler (e.g. during Fbacktrace()), and the handler for
+     the handler is invoked, it correctly notices that something is amiss
+     and it should just return -- but it returns EXCEPTION_CONTINUE_SEARCH,
+     which causes the debugger to be invoked debugging the handler code in
+     this function -- and WITH THE STACK UNWOUND so that you see main()
+     calling mswindows_handle_hardware_exceptions(), calling Fbacktrace(),
+     and a crash a couple of frames in -- AND NO SIGN OF THE ORIGINAL CRASH!
+
+     There's some real weirdness going on in the stack handling -- unlike
+     in Unix, where further crashes just keep adding to the stack, it seems
+     that under the structured-exception-handling, the stack can actually
+     bounce back and forth between the full stack at the location of the
+     exception and the unwound stack at the place where the __try clause was
+     established.  I don't completely understand it.  What I do know is that
+     returning EXCEPTION_EXECUTE_HANDLER on nested crash has the effect of
+     aborting execution of the handler and going back to the outer filter
+     function, which returns EXCEPTION_CONTINUE_SEARCH and everything is
+     hunky-dorey -- your debugger sees a crash at the right location with
+     the right stack.
+
+     I'm leaving in the trickier Unix-like code in the handler; someone who
+     understands better than me how the stack works in these handlers could
+     fix it up more.  As it is, it works pretty well, so I'm not likely to
+     touch it more. --ben
+  */
+
+  __except (EXCEPTION_EXECUTE_HANDLER) {}
+
+
+  /* pretend we didn't handle this, so that the debugger is invoked and/or
+     the normal GPF box appears. */
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+#endif /* _MSC_VER */
+
 
-
-DOESNT_RETURN
-fatal (CONST char *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-
-  fprintf (stderr, "\nXEmacs: ");
-  vfprintf (stderr, GETTEXT (fmt), args);
-  fprintf (stderr, "\n");
-
-  va_end (args);
-  fflush (stderr);
-  exit (1);
-}
-
-/* #### The following two functions should be replaced with
-   calls to emacs_doprnt_*() functions, with STREAM set to send out
-   to stdout or stderr.  This is the only way to ensure that
-   I18N3 works properly (many implementations of the *printf()
-   functions, including the ones included in glibc, do not implement
-   the %###$ argument-positioning syntax). */
-
-/* exactly equivalent to fprintf (stderr, fmt, ...) except that it calls
-   GETTEXT on the format string. */
-
-int
-stderr_out (CONST char *fmt, ...)
-{
-  int retval;
-  va_list args;
-  va_start (args, fmt);
-
-  retval = vfprintf (stderr, GETTEXT (fmt), args);
-
-  va_end (args);
-  /* fflush (stderr); */
-  return retval;
-}
-
-/* exactly equivalent to fprintf (stdout, fmt, ...) except that it calls
-   GETTEXT on the format string. */
-
-int
-stdout_out (CONST char *fmt, ...)
-{
-  int retval;
-  va_list args;
-  va_start (args, fmt);
-
-  retval = vfprintf (stdout, GETTEXT (fmt), args);
-
-  va_end (args);
-  return retval;
-}
 
 #ifdef SIGDANGER
 
@@ -350,7 +640,7 @@ memory_warning_signal (int sig)
 /* Code for dealing with Lisp access to the Unix command line */
 
 static Lisp_Object
-make_arg_list_1 (int argc, char **argv, int skip_args)
+make_arg_list_1 (int argc, Extbyte **argv, int skip_args)
 {
   Lisp_Object result = Qnil;
   REGISTER int i;
@@ -359,21 +649,30 @@ make_arg_list_1 (int argc, char **argv, int skip_args)
     {
       if (i == 0 || i > skip_args)
 	{
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	  if (i == 0)
 	    {
 	      /* Do not trust to what crt0 has stuffed into argv[0] */
-	      char full_exe_path [MAX_PATH];
+	      char full_exe_path[MAX_PATH];
+	      Lisp_Object fullpath;
+
 	      GetModuleFileName (NULL, full_exe_path, MAX_PATH);
-	      result = Fcons (build_ext_string (full_exe_path, Qfile_name),
-			      result);
+	      fullpath = build_ext_string (full_exe_path, Qmswindows_tstr);
+	      result = Fcons (fullpath, result);
 #if defined(HAVE_SHLIB)
-	      (void)dll_init(full_exe_path);
+	      {
+		Extbyte *fullpathext;
+
+		LISP_STRING_TO_EXTERNAL (fullpath, fullpathext,
+				  Qdll_filename_encoding);
+		(void) dll_init (fullpathext);
+	      }
 #endif
 	    }
 	  else
 #endif
-	    result = Fcons (build_ext_string (argv [i], Qfile_name),
+	    result = Fcons (build_ext_string (argv[i],
+					      Qcommand_argument_encoding),
 			    result);
 	}
     }
@@ -381,7 +680,7 @@ make_arg_list_1 (int argc, char **argv, int skip_args)
 }
 
 Lisp_Object
-make_arg_list (int argc, char **argv)
+make_arg_list (int argc, Extbyte **argv)
 {
   return make_arg_list_1 (argc, argv, 0);
 }
@@ -389,21 +688,19 @@ make_arg_list (int argc, char **argv)
 /* Calling functions are also responsible for calling free_argc_argv
    when they are done with the generated list. */
 void
-make_argc_argv (Lisp_Object argv_list, int *argc, char ***argv)
+make_argc_argv (Lisp_Object argv_list, int *argc, Extbyte ***argv)
 {
   Lisp_Object next;
   int n = XINT (Flength (argv_list));
   REGISTER int i;
-  *argv = (char**) xmalloc ((n+1) * sizeof (char*));
+  *argv = (Extbyte**) xmalloc ((n+1) * sizeof (Extbyte*));
 
   for (i = 0, next = argv_list; i < n; i++, next = XCDR (next))
     {
-      CONST char *temp;
+      const Extbyte *temp;
       CHECK_STRING (XCAR (next));
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (next),
-			  C_STRING_ALLOCA, temp,
-			  Qnative);
+      LISP_STRING_TO_EXTERNAL (XCAR (next), temp, Qcommand_argument_encoding);
       (*argv) [i] = xstrdup (temp);
     }
   (*argv) [n] = 0;
@@ -411,7 +708,7 @@ make_argc_argv (Lisp_Object argv_list, int *argc, char ***argv)
 }
 
 void
-free_argc_argv (char **argv)
+free_argc_argv (Extbyte **argv)
 {
   int elt = 0;
 
@@ -424,7 +721,7 @@ free_argc_argv (char **argv)
 }
 
 static void
-init_cmdargs (int argc, char **argv, int skip_args)
+init_cmdargs (int argc, Extbyte **argv, int skip_args)
 {
   initial_argv = argv;
   initial_argc = argc;
@@ -455,15 +752,6 @@ Return the directory name in which the Emacs executable was located.
 				   can't deal with this.  It's a potential
 				   bug that needs to be looked at. */
 # undef RUN_TIME_REMAP
-#endif
-
-#if defined (MULE) && defined (MSDOS) && defined (EMX)
-/* Setup all of files be input/output'ed with binary translation mode. */
-asm ("	.text");
-asm ("L_setbinmode:");
-asm ("	movl	$1, __fmode_bin");
-asm ("	ret");
-asm ("	.stabs	\"___CTOR_LIST__\", 23, 0, 0, L_setbinmode");
 #endif
 
 /* Test whether the next argument in ARGV matches SSTR or a prefix of
@@ -569,7 +857,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
    * But hey, it solves all NS related memory problems, so who's
    * complaining? */
   if (initialized && malloc_jumpstart (malloc_cookie) != 0)
-    fprintf (stderr, "malloc jumpstart failed!\n");
+    stderr_out ("malloc jumpstart failed!\n");
 #endif /* NeXT */
 
   /*
@@ -587,23 +875,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
   sort_args (argc, argv);
 
-  /* Map in shared memory, if we are using that.  */
-#ifdef HAVE_SHM
-  if (argmatch (argv, argc, "-nl", "--no-shared-memory", 6, NULL, &skip_args))
-    {
-      map_in_data (0);
-      /* The shared memory was just restored, which clobbered this.  */
-      skip_args = 1;
-    }
-  else
-    {
-      map_in_data (1);
-      /* The shared memory was just restored, which clobbered this.  */
-      skip_args = 0;
-    }
-#endif /* HAVE_SHM */
-
-#if (defined (MSDOS) && defined (EMX)) || defined (WIN32) || defined (_SCO_DS)
+#if defined (WIN32_NATIVE) || defined (_SCO_DS)
   environ = envp;
 #endif
 
@@ -636,15 +908,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
     memory_warnings (0, malloc_warning);
 #endif	/* not SYSTEM_MALLOC */
 
-#ifdef MSDOS
-  /* We do all file input/output as binary files.  When we need to translate
-     newlines, we do that manually.  */
-  _fmode = O_BINARY;
-  (stdin) ->_flag &= ~_IOTEXT;
-  (stdout)->_flag &= ~_IOTEXT;
-  (stderr)->_flag &= ~_IOTEXT;
-#endif /* MSDOS */
-
 #ifdef SET_EMACS_PRIORITY
   if (emacs_priority != 0)
     nice (-emacs_priority);
@@ -660,6 +923,17 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #else
   inhibit_window_system = 1;
 #endif
+
+  /* Handle the -sd/--show-dump-id switch, which means show the hex dump_id and quit */
+  if (argmatch (argv, argc, "-sd", "--show-dump-id", 9, NULL, &skip_args))
+    {
+#ifdef PDUMP
+      printf ("%08x\n", dump_id);
+#else
+      printf ("*ERROR**\n");
+#endif
+      exit (0);
+    }
 
   /* Handle the -t switch, which specifies filename to use as terminal */
   {
@@ -681,6 +955,12 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	inhibit_window_system = 1;	/* -t => -nw */
       }
   }
+
+  /* Handle the --no-dump-file/-nd switch, which means don't load the dump file (ignored when not using pdump) */
+  if (argmatch (argv, argc, "-nd", "--no-dump-file", 7, NULL, &skip_args))
+    {
+      nodumpfile = 1;
+    }
 
   /* Handle -nw switch */
   if (argmatch (argv, argc, "-nw", "--no-windows", 6, NULL, &skip_args))
@@ -853,9 +1133,52 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef PDUMP
   if (restart)
     initialized = 1;
-  else {
-    initialized = pdump_load ();
-    purify_flag = !initialized;
+  else if (nodumpfile) {
+    initialized = 0;
+    purify_flag = 1;
+  } else {
+
+    /* Keep command options from getting stomped.
+
+       Some LISP-visible options are changed by XEmacs _after_ the data is
+       dumped in building a --pdump XEmacs, but _before_ it is restored in
+       normal operation.  Thus the restored values overwrite the values
+       XEmacs is getting at run-time.  Such variables must be saved here,
+       and restored after loading the dumped data.
+
+       Boy, this is ugly, but how else to do it?
+    */
+
+    /* noninteractive1 is protected by noninteractive, which is not
+       LISP-visible */
+    int inhibit_early_packages_save = inhibit_early_packages;
+    int inhibit_autoloads_save      = inhibit_autoloads;
+    int debug_paths_save            = debug_paths;
+#ifdef INHIBIT_SITE_LISP
+    int inhibit_site_lisp_save      = inhibit_site_lisp;
+#endif
+#ifdef INHIBIT_SITE_MODULES
+    int inhibit_site_modules_save   = inhibit_site_modules;
+#endif
+
+    initialized = pdump_load (argv[0]);
+
+    /* Now unstomp everything */
+    noninteractive1        = noninteractive;
+    inhibit_early_packages = inhibit_early_packages_save;
+    inhibit_autoloads      = inhibit_autoloads_save;
+    debug_paths            = debug_paths_save;
+#ifdef INHIBIT_SITE_LISP
+    inhibit_site_lisp      = inhibit_site_lisp_save;
+#endif
+#ifdef INHIBIT_SITE_MODULES
+    inhibit_site_modules   = inhibit_site_modules_save;
+#endif
+
+    if (initialized)
+      run_temacs_argc = -1;
+    else
+      purify_flag = 1;
   }
 #else
   if (!initialized)
@@ -873,11 +1196,11 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
       /* Initialize Qnil, Qt, Qunbound, and the
 	 obarray.  After this, symbols can be
-	 interned.  This depends on init_alloc_once(). */
+	 interned.  This depends on init_alloc_once_early(). */
       init_symbols_once_early ();
 
       /* Declare the basic symbols pertaining to errors,
-	 So that deferror() can be called. */
+	 So that DEFERROR*() can be called. */
       init_errors_once_early ();
 
       /* Make sure that opaque pointers can be created. */
@@ -886,12 +1209,13 @@ main_1 (int argc, char **argv, char **envp, int restart)
       /* Now declare all the symbols and define all the Lisp primitives.
 
 	 The *only* thing that the syms_of_*() functions are allowed to do
-	 is call one of the following three functions:
+	 is call one of the following:
 
-	 defsymbol()
+	 INIT_LRECORD_IMPLEMENTATION()
+	 defsymbol(), DEFSYMBOL(), or DEFSYMBOL_MULTIWORD_PREDICATE()
 	 defsubr() (i.e. DEFSUBR)
-	 deferror()
-	 defkeyword()
+	 deferror(), DEFERROR(), or DEFERROR_STANDARD()
+	 defkeyword() or DEFKEYWORD()
 
 	 Order does not matter in these functions.
 	 */
@@ -945,9 +1269,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_glyphs ();
       syms_of_glyphs_eimage ();
       syms_of_glyphs_widget ();
-#if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       syms_of_gui ();
-#endif
       syms_of_gutter ();
       syms_of_indent ();
       syms_of_intl ();
@@ -1004,7 +1326,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 
 #ifdef HAVE_X_WINDOWS
+#ifdef HAVE_BALLOON_HELP
       syms_of_balloon_x ();
+#endif
       syms_of_device_x ();
 #ifdef HAVE_DIALOGS
       syms_of_dialog_x ();
@@ -1029,6 +1353,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MS_WINDOWS
       syms_of_console_mswindows ();
       syms_of_device_mswindows ();
+      syms_of_dialog_mswindows ();
       syms_of_frame_mswindows ();
       syms_of_objects_mswindows ();
       syms_of_select_mswindows ();
@@ -1040,13 +1365,16 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_SCROLLBARS
       syms_of_scrollbar_mswindows ();
 #endif
+#endif	/* HAVE_MS_WINDOWS */
 #ifdef HAVE_MSW_C_DIRED
       syms_of_dired_mswindows ();
 #endif
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
       syms_of_ntproc ();
 #endif
-#endif	/* HAVE_MS_WINDOWS */
+#if defined (WIN32_NATIVE) || defined (CYGWIN)
+      syms_of_win32 ();
+#endif
 
 #ifdef MULE
       syms_of_mule ();
@@ -1096,7 +1424,11 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 
 #ifdef HAVE_GPM
-	  syms_of_gpmevent ();
+      syms_of_gpmevent ();
+#endif
+
+#ifdef HAVE_POSTGRESQL
+      syms_of_postgresql ();
 #endif
 
       /* Now create the subtypes for the types that have them.
@@ -1279,7 +1611,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 using a global variable that has been initialized
 	   earlier on in the same function
 
-	 Any of the object-creating functions on alloc.c: e.g.
+	 Any of the object-creating functions in alloc.c: e.g.
 
 	 make_pure_*()
 	 make_string()
@@ -1352,9 +1684,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_glyphs ();
       vars_of_glyphs_eimage ();
       vars_of_glyphs_widget ();
-#if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui ();
-#endif
       vars_of_gutter ();
       vars_of_indent ();
       vars_of_insdel ();
@@ -1381,7 +1711,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_SHLIB
       vars_of_module ();
 #endif
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
       vars_of_nt ();
       vars_of_ntproc ();
 #endif
@@ -1424,7 +1754,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 
 #ifdef HAVE_X_WINDOWS
+#ifdef HAVE_BALLOON_HELP
       vars_of_balloon_x ();
+#endif
       vars_of_device_x ();
 #ifdef HAVE_DIALOGS
       vars_of_dialog_x ();
@@ -1494,8 +1826,12 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_eldap ();
 #endif
 
+#ifdef HAVE_POSTGRESQL
+      vars_of_postgresql();
+#endif
+
 #ifdef HAVE_GPM
-	  vars_of_gpmevent ();
+      vars_of_gpmevent ();
 #endif
 
       /* Now initialize any specifier variables.  We do this later
@@ -1695,6 +2031,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       reinit_vars_of_event_stream ();
       reinit_vars_of_events ();
       reinit_vars_of_extents ();
+      reinit_vars_of_fileio ();
       reinit_vars_of_font_lock ();
       reinit_vars_of_glyphs ();
       reinit_vars_of_glyphs_widget ();
@@ -1707,7 +2044,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
       reinit_vars_of_objects ();
       reinit_vars_of_print ();
-      reinit_vars_of_redisplay ();
       reinit_vars_of_search ();
       reinit_vars_of_undo ();
       reinit_vars_of_window ();
@@ -1765,7 +2101,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
   init_initial_directory();		/* get the directory to use for the
 					   "*scratch*" buffer, etc. */
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   /*
    * For Win32, call init_environment() now, so that environment/registry
    * variables will be properly entered into Vprocess_environment.
@@ -1780,16 +2116,11 @@ main_1 (int argc, char **argv, char **envp, int restart)
 			   first because many of the functions below
 			   call egetenv() to get environment variables. */
   init_lread ();	/* Set up the Lisp reader. */
-#ifdef MSDOS
-  /* Call early 'cause init_environment needs it.  */
-  init_dosfns ();
-  /* Set defaults for several environment variables.  */
-  init_environment (argc, argv, skip_args);
-#endif
-  init_cmdargs (argc, argv, skip_args);	/* Create list Vcommand_line_args */
+  init_cmdargs (argc, (Extbyte **) argv,
+		skip_args);	/* Create list Vcommand_line_args */
   init_buffer ();	/* Set default directory of *scratch* buffer */
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   init_ntproc();
 #endif
 
@@ -1803,13 +2134,16 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef SUNPRO
   init_sunpro (); /* Set up Sunpro usage tracking */
 #endif
+#if defined (WIN32_NATIVE) || defined (CYGWIN)
+  init_win32 ();
+#endif
 #if defined (HAVE_NATIVE_SOUND) && defined (hp9000s800)
   init_hpplay ();
 #endif
 #ifdef HAVE_TTY
   init_device_tty ();
 #endif
-  init_console_stream (); /* Create the first console */
+  init_console_stream (restart); /* Create the first console */
 
   /* try to get the actual pathname of the exec file we are running */
   if (!restart)
@@ -1845,7 +2179,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
     Vinvocation_directory = Ffile_name_directory (Vinvocation_directory);
   }
 
-#if defined(HAVE_SHLIB) && !defined(WINDOWSNT)
+#if defined(HAVE_SHLIB) && !defined(WIN32_NATIVE)
   /* This is Unix only.  MS Windows NT has a library call that does
      The Right Thing on that system.  Rumor has it, this must be
      called for GNU dld in temacs and xemacs.  */
@@ -1903,17 +2237,18 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
 struct standard_args
 {
-  CONST char * CONST name;
-  CONST char * CONST longname;
+  const char *name;
+  const char *longname;
   int priority;
   int nargs;
 };
 
-static struct standard_args standard_args[] =
+static const struct standard_args standard_args[] =
 {
   /* Handled by main_1 above: */
-  { "-nl", "--no-shared-memory", 100, 0 },
-  { "-t", "--terminal", 95, 1 },
+  { "-sd", "--show-dump-id", 105, 0 },
+  { "-t", "--terminal", 100, 1 },
+  { "-nd", "--no-dump-file", 95, 0 },
   { "-nw", "--no-windows", 90, 0 },
   { "-batch", "--batch", 85, 0 },
   { "-debug-paths", "--debug-paths", 82, 0 },
@@ -2108,14 +2443,6 @@ sort_args (int argc, char **argv)
   xfree (priority);
 }
 
-static JMP_BUF run_temacs_catch;
-
-static int run_temacs_argc;
-static char **run_temacs_argv;
-static char *run_temacs_args;
-static size_t run_temacs_argv_size;
-static size_t run_temacs_args_size;
-
 DEFUN ("running-temacs-p", Frunning_temacs_p, 0, 0, 0, /*
 True if running temacs.  This means we are in the dumping stage.
 This is false during normal execution of the `xemacs' program, and
@@ -2143,11 +2470,11 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
      (int nargs, Lisp_Object *args))
 {
   int ac;
-  CONST Extbyte *wampum;
+  const Extbyte *wampum;
   int namesize;
   int total_len;
   Lisp_Object orig_invoc_name = Fcar (Vcommand_line_args);
-  CONST Extbyte **wampum_all = alloca_array (CONST Extbyte *, nargs);
+  const Extbyte **wampum_all = alloca_array (const Extbyte *, nargs);
   int *wampum_all_len  = alloca_array (int, nargs);
 
   assert (!gc_in_progress);
@@ -2190,7 +2517,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   unbind_to (0, Qnil); /* this closes loadup.el */
   purify_flag = 0;
   run_temacs_argc = nargs + 1;
-#ifdef HEAP_IN_DATA
+#if defined (HEAP_IN_DATA) && !defined(PDUMP)
   report_sheap_usage (0);
 #endif
   LONGJMP (run_temacs_catch, 1);
@@ -2201,6 +2528,16 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 int
 main (int argc, char **argv, char **envp)
 {
+
+#ifdef _MSC_VER
+  /* Under VC++, access violations and the like are not sent through
+     the standard signal() mechanism.  Rather, they need to be handled
+     using the Microsoft "structured exception handling" mechanism,
+     which vaguely resembles the C++ mechanisms. */
+  __try
+  {
+#endif
+
   int     volatile vol_argc = argc;
   char ** volatile vol_argv = argv;
   char ** volatile vol_envp = envp;
@@ -2276,7 +2613,7 @@ main (int argc, char **argv, char **envp)
 
 	 06/20/96 robertl@dgii.com */
       {
-	extern char *_environ;
+	extern char **_environ;
 	if ((unsigned) environ == 0)
 	  environ=_environ;
       }
@@ -2296,7 +2633,7 @@ main (int argc, char **argv, char **envp)
       int rc = malloc_set_state (malloc_state_ptr);
       if (rc != 0)
 	{
-	  fprintf (stderr, "malloc_set_state failed, rc = %d\n", rc);
+	  stderr_out ("malloc_set_state failed, rc = %d\n", rc);
 	  abort ();
 	}
 #if 0
@@ -2318,6 +2655,14 @@ main (int argc, char **argv, char **envp)
   run_temacs_argc = -1;
 
   main_1 (vol_argc, vol_argv, vol_envp, restarted);
+
+#ifdef _MSC_VER
+  }
+  /* VC++ documentation says that
+     GetExceptionCode() cannot be called inside the filter itself. */
+  __except (mswindows_handle_hardware_exceptions (GetExceptionCode ())) {}
+#endif
+
   return 0; /* unreached */
 }
 
@@ -2362,9 +2707,7 @@ all of which are called before XEmacs is actually killed.
   if (!preparing_for_armageddon && !noninteractive)
     run_hook (Qkill_emacs_hook);
 
-  /* make sure no quitting from now on!! */
-  dont_check_for_quit = 1;
-  Vinhibit_quit = Qt;
+  ensure_no_quitting_from_now_on ();
 
   if (!preparing_for_armageddon)
     {
@@ -2378,7 +2721,7 @@ all of which are called before XEmacs is actually killed.
 	 be too dangerous), and if we get a crash somewhere within
 	 this loop, we'll still autosave and won't try this again. */
 
-      LIST_LOOP_DELETING(concons, nextcons, Vconsole_list)
+      LIST_LOOP_DELETING (concons, nextcons, Vconsole_list)
 	{
 	  /* There is very little point in deleting the stream console.
 	     It uses stdio, which should flush any buffered output and
@@ -2392,7 +2735,17 @@ all of which are called before XEmacs is actually killed.
 
   UNGCPRO;
 
-  shut_down_emacs (0, STRINGP (arg) ? arg : Qnil);
+#ifdef HAVE_MS_WINDOWS
+  /* If we displayed a message on the console, then we must allow the
+     user to see this message.  This may be unnecessary, but can't hurt,
+     and we can't necessarily check arg; e.g. xemacs --help kills with
+     argument 0. */
+  if (mswindows_message_outputted)
+    Fmswindows_message_box (build_string ("Messages outputted.  XEmacs is exiting."),
+			    Qnil, Qnil);
+#endif
+
+  shut_down_emacs (0, STRINGP (arg) ? arg : Qnil, 0);
 
 #if defined(GNU_MALLOC)
   __free_hook =
@@ -2415,45 +2768,54 @@ all of which are called before XEmacs is actually killed.
 
    If SIG is a signal number, print a message for it.
 
-   This is called by fatal signal handlers, X protocol error handlers,
-   and Fkill_emacs.  */
+   This is called by fatal signal handlers and Fkill_emacs.  It used to
+   be called by X protocol error handlers, but instead they now call
+   Fkill_emacs. */
 static void
-shut_down_emacs (int sig, Lisp_Object stuff)
+shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 {
   /* This function can GC */
   /* Prevent running of hooks and other non-essential stuff
      from now on.  */
   preparing_for_armageddon = 1;
 
-  /* In case frames or windows are screwed up, avoid assertion
-     failures here */
-  Vinhibit_quit = Qt;
+  ensure_no_quitting_from_now_on ();
 
 #ifdef QUANTIFY
   quantify_stop_recording_data ();
 #endif /* QUANTIFY */
 
-#if 0
   /* This is absolutely the most important thing to do, so make sure
      we do it now, before anything else.  We might have crashed and
      be in a weird inconsistent state, and potentially anything could
      set off another protection fault and cause us to bail out
      immediately. */
-  /* I'm not removing the code entirely, yet.  We have run up against
+  /* Steve writes the following:
+
+     [[I'm not removing the code entirely, yet.  We have run up against
      a spate of problems in diagnosing crashes due to crashes within
      crashes.  It has very definitely been determined that code called
      during auto-saving cannot work if XEmacs crashed inside of GC.
      We already auto-save on an itimer so there cannot be too much
      unsaved stuff around, and if we get better crash reports we might
-     be able to get more problems fixed so I'm disabling this.  -slb */
-  Fdo_auto_save (Qt, Qnil); /* do this before anything hazardous */
-#endif
+     be able to get more problems fixed so I'm disabling this.  -slb]]
+
+     and DISABLES AUTO-SAVING ENTIRELY during crashes!  Way way bad idea.
+
+     Instead let's just be more intelligent about avoiding crashing
+     when possible, esp. nested crashes.
+  */
+  if (!no_auto_save)
+    Fdo_auto_save (Qt, Qnil); /* do this before anything hazardous */
 
   fflush (stdout);
   reset_all_consoles ();
   if (sig && sig != SIGTERM)
     {
-      stderr_out ("\nFatal error (%d).\n", sig);
+      if (sig == -1)
+	stderr_out ("\nFatal error.\n\n");
+      else
+	stderr_out ("\nFatal error (%d).\n\n", sig);
       stderr_out
 	("Your files have been auto-saved.\n"
 	 "Use `M-x recover-session' to recover them.\n"
@@ -2472,6 +2834,7 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 #endif
 	 "*MAKE SURE* to include the information in the command\n"
 	 "M-x describe-installation.\n"
+#ifndef _MSC_VER
 	 "\n"
 	 "If at all possible, *please* try to obtain a C stack backtrace;\n"
 	 "it will help us immensely in determining what went wrong.\n"
@@ -2480,9 +2843,12 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	 "directory in which you started the editor, or maybe in your home\n"
 	 "directory), and type\n"
 	 "\n"
-	 "  gdb ");
+	 "  gdb "
+#endif
+	 );
+#ifndef _MSC_VER
       {
-	CONST char *name;
+	const char *name;
 	char *dir = 0;
 
 	/* Now try to determine the actual path to the executable,
@@ -2507,6 +2873,7 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	 "(If you don't have GDB on your system, you might have DBX,\n"
 	 "or XDB, or SDB.  A similar procedure should work for all of\n"
 	 "these.  Ask your system administrator if you need more help.)\n");
+#endif /* _MSC_VER */
     }
 
   stuff_buffered_input (stuff);
@@ -2534,45 +2901,6 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 extern char my_edata[];
 #endif
 
-#ifdef HAVE_SHM
-
-DEFUN ("dump-emacs-data", Fdump_emacs_data, 1, 1, 0, /*
-Dump current state of XEmacs into data file FILENAME.
-This function exists on systems that use HAVE_SHM.
-*/
-       (intoname))
-{
-  /* This function can GC */
-  int opurify;
-  struct gcpro gcpro1;
-  GCPRO1 (intoname);
-
-  CHECK_STRING (intoname);
-  intoname = Fexpand_file_name (intoname, Qnil);
-
-  opurify = purify_flag;
-  purify_flag = 0;
-
-  fflush (stderr);
-  fflush (stdout);
-
-  disksave_object_finalization ();
-  release_breathing_space ();
-
-  /* Tell malloc where start of impure now is */
-  /* Also arrange for warnings when nearly out of space.  */
-#ifndef SYSTEM_MALLOC
-  memory_warnings (my_edata, malloc_warning);
-#endif
-  UNGCPRO;
-  map_out_data (XSTRING_DATA (intoname));
-
-  purify_flag = opurify;
-
-  return Qnil;
-}
-
-#else /* not HAVE_SHM */
 extern void disable_free_hook (void);
 
 DEFUN ("dump-emacs", Fdump_emacs, 2, 2, 0, /*
@@ -2613,7 +2941,7 @@ and announce itself normally when it is run.
   opurify = purify_flag;
   purify_flag = 0;
 
-#ifdef HEAP_IN_DATA
+#if defined (HEAP_IN_DATA) && !defined(PDUMP)
   report_sheap_usage (1);
 #endif
 
@@ -2633,30 +2961,14 @@ and announce itself normally when it is run.
 
   UNGCPRO;
 
-#if defined (MSDOS) && defined (EMX)
-  {
-    int fd = open ((char *) XSTRING_DATA (intoname),
-                   O_WRONLY|O_CREAT|O_TRUNC, S_IREAD|S_IWRITE);
-    if (!fd) {
-      error ("Failure operating on %s", XSTRING_DATA (intoname));
-    } else {
-      _core (fd);
-      close (fd);
-    }
-  }
-#else /* not MSDOS and EMX */
   {
     char *intoname_ext;
     char *symname_ext;
 
-    TO_EXTERNAL_FORMAT (LISP_STRING, intoname,
-			C_STRING_ALLOCA, intoname_ext,
-			Qfile_name);
+    LISP_STRING_TO_EXTERNAL (intoname, intoname_ext, Qfile_name);
 
     if (STRINGP (symname))
-      TO_EXTERNAL_FORMAT (LISP_STRING, symname,
-			  C_STRING_ALLOCA, symname_ext,
-			  Qfile_name);
+      LISP_STRING_TO_EXTERNAL (symname, symname_ext, Qfile_name);
     else
       symname_ext = 0;
 
@@ -2681,33 +2993,27 @@ and announce itself normally when it is run.
 #endif
 #endif /* not PDUMP */
   }
-#endif /* not MSDOS and EMX */
 
   purify_flag = opurify;
 
   return Qnil;
 }
 
-#endif /* not HAVE_SHM */
-
 #endif /* not CANNOT_DUMP */
 
-#ifndef SEPCHAR
-#define SEPCHAR ':'
-#endif
 
 /* Split STRING into a list of substrings.  The substrings are the
    parts of original STRING separated by SEPCHAR.  */
 static Lisp_Object
-split_string_by_emchar_1 (CONST Bufbyte *string, Bytecount size,
+split_string_by_emchar_1 (const Bufbyte *string, Bytecount size,
 			  Emchar sepchar)
 {
   Lisp_Object result = Qnil;
-  CONST Bufbyte *end = string + size;
+  const Bufbyte *end = string + size;
 
   while (1)
     {
-      CONST Bufbyte *p = string;
+      const Bufbyte *p = string;
       while (p < end)
 	{
 	  if (charptr_emchar (p) == sepchar)
@@ -2730,7 +3036,7 @@ split_string_by_emchar_1 (CONST Bufbyte *string, Bytecount size,
    converted using Qfile_name), and sepchar is hardcoded to SEPCHAR
    (':' or whatever).  */
 Lisp_Object
-decode_path (CONST char *path)
+decode_path (const char *path)
 {
   Bytecount newlen;
   Bufbyte *newpath;
@@ -2750,9 +3056,9 @@ decode_path (CONST char *path)
 }
 
 Lisp_Object
-decode_env_path (CONST char *evarname, CONST char *default_)
+decode_env_path (const char *evarname, const char *default_)
 {
-  CONST char *path = 0;
+  const char *path = 0;
   if (evarname)
     path = egetenv (evarname);
   if (!path)
@@ -2814,17 +3120,75 @@ Non-nil return value means XEmacs is running without interactive terminal.
 #ifdef USE_ASSERTIONS
 /* This highly dubious kludge ... shut up Jamie, I'm tired of your slagging. */
 
-DOESNT_RETURN
-assert_failed (CONST char *file, int line, CONST char *expr)
-{
-  stderr_out ("Fatal error: assertion failed, file %s, line %d, %s\n",
-	      file, line, expr);
+static int in_assert_failed;
+static const char *assert_failed_file;
+static int assert_failed_line;
+static const char *assert_failed_expr;
+
+#ifdef fprintf
+#undef fprintf
+#endif
+
 #undef abort	/* avoid infinite #define loop... */
-#if defined (WINDOWSNT) && defined (DEBUG_XEMACS)
-  DebugBreak ();
-#elif !defined (ASSERTIONS_DONT_ABORT)
+
+#if defined (WIN32_NATIVE) && defined (DEBUG_XEMACS)
+#define enter_debugger() DebugBreak ()
+#else
+#define enter_debugger()
+#endif
+
+void
+assert_failed (const char *file, int line, const char *expr)
+{
+  /* If we're already crashing, let's not crash again.  This might be
+     critical to getting auto-saving working properly. */
+  if (fatal_error_in_progress)
+    return;
+
+  /* We are extremely paranoid so we sensibly deal with recursive
+     assertion failures. */
+  in_assert_failed++;
+
+  if (in_assert_failed >= 4)
+    _exit (-1);
+  else if (in_assert_failed == 3)
+    {
+      enter_debugger ();
+      _exit (-1);
+    }
+  else if (in_assert_failed == 2)
+    {
+      /* Not stderr_out(), which does additional things and may trigger
+	 a recursive assertion failure.  fprintf was undeffed above, in
+	 case it was encapsulated. */
+      fprintf (stderr,
+	       "Fatal error: recursive assertion failure, "
+	       "file %s, line %d, %s\n",
+	       file, line, expr);
+      fprintf (stderr,
+	       "Original assertion failure: file %s, line %d, %s\n",
+	       assert_failed_file, assert_failed_line, assert_failed_expr);
+    }
+  else
+    {
+      assert_failed_file = file;
+      assert_failed_line = line;
+      assert_failed_expr = expr;
+
+      if (!initialized)
+	fprintf (stderr,
+		 "Fatal error: assertion failed, file %s, line %d, %s\n",
+		 file, line, expr);
+      else
+	stderr_out ("Fatal error: assertion failed, file %s, line %d, %s\n",
+		    file, line, expr);
+    }
+
+  enter_debugger ();
+#if !defined (ASSERTIONS_DONT_ABORT)
   abort ();
 #endif
+  in_assert_failed = 0;
 }
 #endif /* USE_ASSERTIONS */
 
@@ -2863,11 +3227,7 @@ void
 syms_of_emacs (void)
 {
 #ifndef CANNOT_DUMP
-#ifdef HAVE_SHM
-  DEFSUBR (Fdump_emacs_data);
-#else
   DEFSUBR (Fdump_emacs);
-#endif
 #endif /* !CANNOT_DUMP */
 
   DEFSUBR (Frun_emacs_from_temacs);
@@ -3014,6 +3374,11 @@ Codename of this version of Emacs (a string).
 #endif
   Vxemacs_codename = build_string (XEMACS_CODENAME);
 
+  /* Lisp variables which contain command line flags.
+
+     The portable dumper stomps on these; they must be saved and restored
+     if they are processed before the call to pdump_load() in main_1().
+  */
   DEFVAR_BOOL ("noninteractive", &noninteractive1 /*
 Non-nil means XEmacs is running without interactive terminal.
 */ );
@@ -3064,6 +3429,8 @@ typecheck	- check types strictly, aborting in case of error;
 malloc		- check operation of malloc;
 gc		- check garbage collection;
 bufpos		- check buffer positions.
+
+quick-build     - user has requested the "quick-build" configure option.
 */ );
   Vinternal_error_checking = Qnil;
 #ifdef ERROR_CHECK_EXTENTS
@@ -3084,6 +3451,10 @@ bufpos		- check buffer positions.
 #endif
 #ifdef ERROR_CHECK_BUFPOS
   Vinternal_error_checking = Fcons (intern ("bufpos"),
+				    Vinternal_error_checking);
+#endif
+#ifdef QUICK_BUILD
+  Vinternal_error_checking = Fcons (intern ("quick-build"),
 				    Vinternal_error_checking);
 #endif
 
@@ -3108,7 +3479,7 @@ following: dot, lockf, flock, locking, mmdf.
     Vmail_lock_methods = Fcons (intern ("locking"), Vmail_lock_methods);
 #endif
   }
-  
+
   DEFVAR_CONST_LISP ("configure-mail-lock-method", &Vconfigure_mail_lock_method /*
 Mail spool locking method suggested by configure.  This is one
 of the symbols in MAIL-LOCK-METHODS.
@@ -3224,7 +3595,8 @@ configure's idea of what the package path will be.
 *Directory of architecture-independent files that come with XEmacs,
 intended for XEmacs to use.
 Use of this variable in new code is almost never correct.  See the
-function `locate-data-directory' and the variable `data-directory-list'.
+functions `locate-data-file' and `locate-data-directory' and the variable
+`data-directory-list'.
 */ );
   Vdata_directory = Qnil;
 
@@ -3244,19 +3616,6 @@ configure's idea of what DATA-DIRECTORY will be.
 or were installed as packages, and are intended for XEmacs to use.
 */ );
   Vdata_directory_list = Qnil;
-
-#ifdef CLASH_DETECTION
-  DEFVAR_LISP ("configure-lock-directory", &Vconfigure_lock_directory /*
-For internal use by the build procedure only.
-configure's idea of what LOCK-DIRECTORY will be.
-*/ );
-#ifdef PATH_LOCK
-  Vconfigure_lock_directory = Ffile_name_as_directory
-    (build_string ((char *) PATH_LOCK));
-#else
-  Vconfigure_lock_directory = Qnil;
-#endif
-#endif /* CLASH_DETECTION */
 
   DEFVAR_LISP ("site-directory", &Vsite_directory /*
 *Directory of site-specific Lisp files that come with XEmacs.
@@ -3355,7 +3714,7 @@ The configured initial path for info documentation.
 #if defined(__sgi) && !defined(PDUMP)
 /* This is so tremendously ugly I'd puke. But then, it works.
  * The target is to override the static constructor from the
- * libiflPNG.so library which is maskerading as libz, and
+ * libiflPNG.so library which is masquerading as libz, and
  * cores on us when re-started from the dumped executable.
  * This will have to go for 21.1  -- OG.
  */

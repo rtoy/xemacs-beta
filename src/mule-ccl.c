@@ -181,18 +181,18 @@ Lisp_Object Vccl_program_table;
 
 #define CCL_WriteConstJump	0x08 /* Write constant and jump:
 					1:A--D--D--R--E--S--S-000XXXXX
-					2:CONST
+					2:const
 					------------------------------
-					write (CONST);
+					write (const);
 					IC += ADDRESS;
 					*/
 
 #define CCL_WriteConstReadJump	0x09 /* Write constant, read, and jump:
 					1:A--D--D--R--E--S--S-rrrXXXXX
-					2:CONST
+					2:const
 					3:A--D--D--R--E--S--S-rrrYYYYY
 					-----------------------------
-					write (CONST);
+					write (const);
 					IC += 2;
 					read (reg[rrr]);
 					IC += ADDRESS;
@@ -430,7 +430,7 @@ Lisp_Object Vccl_program_table;
 					extended_command (rrr,RRR,Rrr,ARGS)
 				      */
 
-/* 
+/*
    Here after, Extended CCL Instructions.
    Bit length of extended command is 14.
    Therefore, the instruction code range is 0..16384(0x3fff).
@@ -489,7 +489,7 @@ Lisp_Object Vccl_program_table;
 					3:MAP-ID1
 					4:MAP-ID2
 					...
-				     */ 
+				     */
 
 /* Map the code in reg[rrr] by MAPs starting from the Nth (N =
    reg[RRR]) map.
@@ -560,7 +560,7 @@ Lisp_Object Vccl_program_table;
    where
 	STARTPOINT is an offset to be used for indexing a map,
 	ENDPOINT is a maximum index number of a map,
-	VAL and VALn is a number, nil, t, or lambda.  
+	VAL and VALn is a number, nil, t, or lambda.
 
    Valid index range of a map of type (a) is:
 	STARTPOINT <= index < STARTPOINT + map_size - 1
@@ -752,11 +752,11 @@ struct ccl_prog_stack
     int ic;			/* Instruction Counter.  */
   };
 
-/* For the moment, we only support depth 256 of stack.  */ 
+/* For the moment, we only support depth 256 of stack.  */
 static struct ccl_prog_stack ccl_prog_stack_struct[256];
 
 int
-ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
+ccl_driver (struct ccl_program *ccl, const unsigned char *source,
 	    unsigned_char_dynarr *destination, int src_bytes,
 	    int *consumed, int conversion_mode)
 {
@@ -765,7 +765,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
   int code = -1; /* init to illegal value,  */
   int field1, field2;
   Lisp_Object *ccl_prog = ccl->prog;
-  CONST unsigned char *src = source, *src_end = src + src_bytes;
+  const unsigned char *src = source, *src_end = src + src_bytes;
   int jump_address = 0; /* shut up the compiler */
   int i, j, op;
   int stack_idx = ccl->stack_idx;
@@ -1137,7 +1137,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
 		    src++;
 		    goto ccl_read_multibyte_character_suspend;
 		  }
-	      
+
 		i = *src++;
 #if 0
 		if (i == LEADING_CODE_COMPOSITION)
@@ -1283,7 +1283,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
 	      SPLIT_CHAR (op, reg[RRR], i, j);
 	      if (j != -1)
 		i = (i << 7) | j;
-	      
+
 	      reg[rrr] = i;
 	      break;
 
@@ -1309,7 +1309,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
 	      SPLIT_CHAR (op, reg[RRR], i, j);
 	      if (j != -1)
 		i = (i << 7) | j;
-	      
+
 	      reg[rrr] = i;
 	      break;
 
@@ -1370,7 +1370,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
 			else
 			  continue;
 		      }
-		    else 
+		    else
 		      continue;
 
 		    if (NILP (content))
@@ -1402,7 +1402,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
 		ic = fin_ic;
 	      }
 	      break;
-	      
+
 	    case CCL_MapMultiple:
 	      {
 		Lisp_Object map, content, attrib, value;
@@ -1479,7 +1479,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
 			else
 			  continue;
 		      }
-		    else 
+		    else
 		      continue;
 
 		    if (NILP (content))
@@ -1575,7 +1575,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source,
 	      }
 	      break;
 #endif
-	      
+
 	    default:
 	      CCL_INVALID_CMD;
 	    }
@@ -1768,7 +1768,7 @@ As side effect, each element of REGISTER holds the value of
 		  ? XINT (XVECTOR_DATA (reg)[i])
 		  : 0);
 
-  ccl_driver (&ccl, (CONST unsigned char *)0, (unsigned_char_dynarr *)0,
+  ccl_driver (&ccl, (const unsigned char *)0, (unsigned_char_dynarr *)0,
 	      0, (int *)0, CCL_MODE_ENCODING);
   QUIT;
   if (ccl.status != CCL_STAT_SUCCESS)
@@ -1919,7 +1919,7 @@ Return index number of the registered CCL program.
    The rest elements are mapped numbers.
    Symbol t means to map to an original number before mapping.
    Symbol nil means that the corresponding element is empty.
-   Symbol lambda menas to terminate mapping here.
+   Symbol lambda means to terminate mapping here.
 */
 
 DEFUN ("register-code-conversion-map", Fregister_code_conversion_map,
@@ -1936,7 +1936,7 @@ Return index number of the registered map.")
 
   CHECK_SYMBOL (symbol, 0);
   CHECK_VECTOR (map, 1);
-  
+
   for (i = 0; i < len; i++)
     {
       Lisp_Object slot = XVECTOR (Vcode_conversion_map_vector)->contents[i];

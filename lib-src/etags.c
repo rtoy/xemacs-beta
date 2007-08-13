@@ -29,16 +29,21 @@ Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
  *	Regexp tags by Tom Tromey.
  *
  *	Francesco Potorti` (pot@gnu.org) is the current maintainer.
- *	Ansified by Martin Buchholz, 19991105.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 13.33";
+char pot_etags_version[] = "@(#) pot revision number is 13.44";
 
 #define	TRUE	1
 #define	FALSE	0
 
 #ifndef DEBUG
 # define DEBUG FALSE
+#endif
+
+#if defined(__STDC__) && (__STDC__ || defined(__SUNPRO_C))
+# define P_(proto) proto
+#else
+# define P_(proto) ()
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -54,48 +59,39 @@ char pot_etags_version[] = "@(#) pot revision number is 13.33";
 # define _GNU_SOURCE 1		/* enables some compiler checks on GNU */
 #endif
 
-#ifdef MSDOS
-# include <fcntl.h>
-# include <sys/param.h>
-# include <io.h>
-# ifndef HAVE_CONFIG_H
-#   define DOS_NT
-#   include <sys/config.h>
-# endif
-#endif /* MSDOS */
-
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 # include <stdlib.h>
 # include <fcntl.h>
 # include <string.h>
+# include <direct.h>
 # include <io.h>
 # define MAXPATHLEN _MAX_PATH
-# ifdef HAVE_CONFIG_H
-#   undef HAVE_NTGUI
-# else
-#   define DOS_NT
-# endif /* not HAVE_CONFIG_H */
 # ifndef HAVE_GETCWD
 #   define HAVE_GETCWD
 # endif /* undef HAVE_GETCWD */
-#endif /* WINDOWSNT */
-
-#if !defined (WINDOWSNT) && defined (STDC_HEADERS)
-#include <stdlib.h>
-#include <string.h>
-#endif
+#else /* !WIN32_NATIVE */
+# ifdef STDC_HEADERS
+#  include <stdlib.h>
+#  include <string.h>
+# else
+    extern char *getenv ();
+# endif
+#endif /* !WIN32_NATIVE */
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #else
-# ifdef HAVE_GETCWD
-    extern char *getcwd ();
+# if defined (HAVE_GETCWD) && !defined (WIN32_NATIVE)
+    extern char *getcwd (char *buf, size_t size);
 # endif
 #endif /* HAVE_UNISTD_H */
 
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#ifndef errno
+  extern int errno;
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -175,7 +171,7 @@ char pot_etags_version[] = "@(#) pot revision number is 13.33";
 
 typedef int bool;
 
-typedef void Lang_function ();
+typedef void Lang_function P_((FILE *));
 
 typedef struct
 {
@@ -220,74 +216,80 @@ typedef struct
 /* Many compilers barf on this:
 	Lang_function Ada_funcs;
    so let's write it this way */
-void Ada_funcs (FILE *inf);
-void Asm_labels (FILE *inf);
-void C_entries (int c_ext, FILE *inf);
-void default_C_entries (FILE *inf);
-void plain_C_entries (FILE *inf);
-void Cjava_entries (FILE *inf);
-void Cobol_paragraphs (FILE *inf);
-void Cplusplus_entries (FILE *inf);
-void Cstar_entries (FILE *inf);
-void Erlang_functions (FILE *inf);
-void Fortran_functions (FILE *inf);
-void Yacc_entries (FILE *inf);
-void Lisp_functions (FILE *inf);
-void Pascal_functions (FILE *inf);
-void Perl_functions (FILE *inf);
-void Postscript_functions (FILE *inf);
-void Prolog_functions (FILE *inf);
-void Python_functions (FILE *inf);
-void Scheme_functions (FILE *inf);
-void TeX_functions (FILE *inf);
-void just_read_file (FILE *inf);
+static void Ada_funcs P_((FILE *));
+static void Asm_labels P_((FILE *));
+static void C_entries P_((int c_ext, FILE *));
+static void default_C_entries P_((FILE *));
+static void plain_C_entries P_((FILE *));
+static void Cjava_entries P_((FILE *));
+static void Cobol_paragraphs P_((FILE *));
+static void Cplusplus_entries P_((FILE *));
+static void Cstar_entries P_((FILE *));
+static void Erlang_functions P_((FILE *));
+static void Fortran_functions P_((FILE *));
+static void Yacc_entries P_((FILE *));
+static void Lisp_functions P_((FILE *));
+static void Pascal_functions P_((FILE *));
+static void Perl_functions P_((FILE *));
+static void Postscript_functions P_((FILE *));
+static void Prolog_functions P_((FILE *));
+static void Python_functions P_((FILE *));
+static void Scheme_functions P_((FILE *));
+static void TeX_functions P_((FILE *));
+static void just_read_file P_((FILE *));
 
-compressor *get_compressor_from_suffix (char *file, char **extptr);
-language *get_language_from_name (char *name);
-language *get_language_from_interpreter (char *interpreter);
-language *get_language_from_suffix (char *file);
-int total_size_of_entries (register node *np);
-long readline (linebuffer *lbp, FILE *stream);
-long readline_internal (linebuffer *lbp, register FILE *stream);
-void get_tag (register char *bp);
+static void print_language_names P_((void));
+static void print_version P_((void));
+static void print_help P_((void));
+int main P_((int, char **));
+static int number_len P_((long));
+
+static compressor *get_compressor_from_suffix P_((char *, char **));
+static language *get_language_from_name P_((char *));
+static language *get_language_from_interpreter P_((char *));
+static language *get_language_from_suffix P_((char *));
+static int total_size_of_entries P_((node *));
+static long readline P_((linebuffer *, FILE *));
+static long readline_internal P_((linebuffer *, FILE *));
+static void get_tag P_((char *));
 
 #ifdef ETAGS_REGEXPS
-void analyse_regex (char *regex_arg, bool ignore_case);
-void add_regex (char *regexp_pattern, bool ignore_case, language *lan);
-void free_patterns (void);
+static void analyse_regex P_((char *, bool));
+static void add_regex P_((char *, bool, language *));
+static void free_patterns P_((void));
 #endif /* ETAGS_REGEXPS */
-void error (const char *s1, const char *s2);
-void suggest_asking_for_help (void);
-void fatal (char *s1, char *s2);
-void pfatal (char *s1);
-void add_node (node *np, node **cur_node_p);
+static void error P_((const char *, const char *));
+static void suggest_asking_for_help P_((void));
+static void fatal P_((char *, char *));
+static void pfatal P_((char *));
+static void add_node P_((node *, node **));
 
-void init (void);
-void initbuffer (linebuffer *lbp);
-void find_entries (char *file, FILE *inf);
-void free_tree (register node *np);
-void pfnote (char *name, bool is_func, char *linestart, int linelen, int lno, long int cno);
-void new_pfnote (char *name, int namelen, bool is_func, char *linestart, int linelen, int lno, long int cno);
-void process_file (char *file);
-void put_entries (register node *np);
-void takeprec (void);
+static void init P_((void));
+static void initbuffer P_((linebuffer *));
+static void find_entries P_((char *, FILE *));
+static void free_tree P_((node *));
+static void pfnote P_((char *, bool, char *, int, int, long));
+static void new_pfnote P_((char *, int, bool, char *, int, int, long));
+static void process_file P_((char *));
+static void put_entries P_((node *));
+static void takeprec P_((void));
 
-char *concat (char *s1, char *s2, char *s3);
-char *skip_spaces (char *cp);
-char *skip_non_spaces (char *cp);
-char *savenstr (char *cp, int len);
-char *savestr (char *cp);
-char *etags_strchr (const char *sp, int c);
-char *etags_strrchr (const char *sp, int c);
-char *etags_getcwd (void);
-char *relative_filename (char *file, char *dir);
-char *absolute_filename (char *file, char *dir);
-char *absolute_dirname (char *file, char *dir);
-bool filename_is_absolute (char *fn);
-void canonicalize_filename (register char *fn);
-void grow_linebuffer (linebuffer *lbp, int toksize);
-long *xmalloc (unsigned int size);
-long *xrealloc (char *ptr, unsigned int size);
+static char *concat P_((char *, char *, char *));
+static char *skip_spaces P_((char *));
+static char *skip_non_spaces P_((char *));
+static char *savenstr P_((char *, int));
+static char *savestr P_((char *));
+static char *etags_strchr P_((const char *, int));
+static char *etags_strrchr P_((const char *, int));
+static char *etags_getcwd P_((void));
+static char *relative_filename P_((char *, char *));
+static char *absolute_filename P_((char *, char *));
+static char *absolute_dirname P_((char *, char *));
+static bool filename_is_absolute P_((char *f));
+static void canonicalize_filename P_((char *));
+static void grow_linebuffer P_((linebuffer *, int));
+static long *xmalloc P_((unsigned int));
+static long *xrealloc P_((char *, unsigned int));
 
 
 char searchar = '/';		/* use /.../ searches */
@@ -320,7 +322,7 @@ struct
 bool _wht[CHARS], _nin[CHARS], _itk[CHARS], _btk[CHARS], _etk[CHARS];
 char
   /* white chars */
-  *white = " \f\t\n\r",
+  *white = " \f\t\n\r\v",
   /* not in a name */
   *nonam = " \f\t\n\r(=,[;",
   /* token ending chars */
@@ -562,19 +564,16 @@ Fortran is tried first; if no tags are found, C is tried next.\n\
 Compressed files are supported using gzip and bzip2.");
 }
 
-#ifdef XEMACS
-# define EMACS_NAME "XEmacs"
-#else
+#ifndef EMACS_NAME
 # define EMACS_NAME "GNU Emacs"
 #endif
-
 #ifndef VERSION
-# define VERSION "20"
+# define VERSION "21"
 #endif
 static void
 print_version ()
 {
-  printf ("%s (" EMACS_NAME " %s)\n", (CTAGS) ? "ctags" : "etags", VERSION);
+  printf ("%s (%s %s)\n", (CTAGS) ? "ctags" : "etags", EMACS_NAME, VERSION);
   puts ("Copyright (C) 1999 Free Software Foundation, Inc. and Ken Arnold");
   puts ("This program is distributed under the same terms as Emacs");
 
@@ -762,7 +761,7 @@ typedef struct	{
 #include	<rmsdef.h>
 #include	<descrip.h>
 #define		OUTSIZE	MAX_FILE_SPEC_LEN
-short
+static short
 fn_exp (out, in)
      vspec *out;
      char *in;
@@ -807,7 +806,7 @@ fn_exp (out, in)
   v1.01 nmm 19-Aug-85 gfnames - return in successive calls the
   name of each file specified by the provided arg expanding wildcards.
 */
-char *
+static char *
 gfnames (arg, p_error)
      char *arg;
      bool *p_error;
@@ -871,9 +870,9 @@ main (argc, argv)
   bool got_err;
 #endif
 
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
   _fmode = O_BINARY;   /* all of files are treated as binary files */
-#endif /* DOS_NT */
+#endif /* WIN32_NATIVE */
 
   progname = argv[0];
   nincluded_files = 0;
@@ -1057,12 +1056,12 @@ main (argc, argv)
       if (streq (tagfile, "-"))
 	{
 	  tagf = stdout;
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
 	  /* Switch redirected `stdout' to binary mode (setting `_fmode'
 	     doesn't take effect until after `stdout' is already open). */
 	  if (!isatty (fileno (stdout)))
 	    setmode (fileno (stdout), O_BINARY);
-#endif /* DOS_NT */
+#endif /* WIN32_NATIVE */
 	}
       else
 	tagf = fopen (tagfile, append_to_tagfile ? "a" : "w");
@@ -1183,7 +1182,7 @@ main (argc, argv)
  * and EXTPTR is not significant.
  * Idea by Vladimir Alexiev <vladimir@cs.ualberta.ca>
  */
-compressor *
+static compressor *
 get_compressor_from_suffix (file, extptr)
      char *file;
      char **extptr;
@@ -1192,7 +1191,7 @@ get_compressor_from_suffix (file, extptr)
   char *slash, *suffix;
 
   /* This relies on FN to be after canonicalize_filename,
-     so we don't need to consider backslashes on DOS_NT.  */
+     so we don't need to consider backslashes on WIN32_NATIVE.  */
   slash = etags_strrchr (file, '/');
   suffix = etags_strrchr (file, '.');
   if (suffix == NULL || suffix < slash)
@@ -1202,22 +1201,17 @@ get_compressor_from_suffix (file, extptr)
   suffix += 1;
   /* Let those poor souls who live with DOS 8+3 file name limits get
      some solace by treating foo.cgz as if it were foo.c.gz, etc.
-     Only the first do loop is run if not MSDOS */
-#ifdef MSDOS
+ */
   do
     {
       for (compr = compressors; compr->suffix != NULL; compr++)
 	if (streq (compr->suffix, suffix))
 	  return compr;
+      if (1) /* !MSDOS */
+	break;			/* do it only once: not really a loop */
       if (extptr != NULL)
 	*extptr = ++suffix;
     } while (*suffix != '\0');
-#else
-  for (compr = compressors; compr->suffix != NULL; compr++)
-    if (streq (compr->suffix, suffix))
-      return compr;
-#endif
-
   return NULL;
 }
 
@@ -1226,7 +1220,7 @@ get_compressor_from_suffix (file, extptr)
 /*
  * Return a language given the name.
  */
-language *
+static language *
 get_language_from_name (name)
      char *name;
 {
@@ -1249,7 +1243,7 @@ get_language_from_name (name)
 /*
  * Return a language given the interpreter name.
  */
-language *
+static language *
 get_language_from_interpreter (interpreter)
      char *interpreter;
 {
@@ -1272,7 +1266,7 @@ get_language_from_interpreter (interpreter)
 /*
  * Return a language given the file name.
  */
-language *
+static language *
 get_language_from_suffix (file)
      char *file;
 {
@@ -1296,7 +1290,7 @@ get_language_from_suffix (file)
 /*
  * This routine is called on each file argument.
  */
-void
+static void
 process_file (file)
      char *file;
 {
@@ -1360,21 +1354,7 @@ process_file (file)
 	      compressed_name = concat (file, ".", compr->suffix);
 	      if (stat (compressed_name, &stat_buf) != 0)
 		{
-#ifdef MSDOS
-		  char *suf = compressed_name + strlen (file);
-		  size_t suflen = strlen (compr->suffix) + 1;
-		  for ( ; suf[1]; suf++, suflen--)
-		    {
-		      memmove (suf, suf + 1, suflen);
-		      if (stat (compressed_name, &stat_buf) == 0)
-			{
-			  real_name = compressed_name;
-			  break;
-			}
-		    }
-		  if (real_name != NULL)
-		    break;
-#endif
+		  /* XEmacs: delete MSDOS code */
 		  free (compressed_name);
 		  compressed_name = NULL;
 		}
@@ -1454,7 +1434,7 @@ process_file (file)
  * subscripted by the chars in "white" are set to TRUE.  Thus "_wht"
  * of a char is TRUE if it is the string "white", else FALSE.
  */
-void
+static void
 init ()
 {
   register char *sp;
@@ -1464,13 +1444,12 @@ init ()
     iswhite(i) = notinname(i) = begtoken(i) = intoken(i) = endtoken(i) = FALSE;
   for (sp = white; *sp != '\0'; sp++) iswhite (*sp) = TRUE;
   for (sp = nonam; *sp != '\0'; sp++) notinname (*sp) = TRUE;
-  for (sp = begtk; *sp != '\0'; sp++) begtoken (*sp) = TRUE;
-  for (sp = midtk; *sp != '\0'; sp++) intoken (*sp) = TRUE;
-  for (sp = endtk; *sp != '\0'; sp++) endtoken (*sp) = TRUE;
-  iswhite('\0') = iswhite('\n');
   notinname('\0') = notinname('\n');
+  for (sp = begtk; *sp != '\0'; sp++) begtoken (*sp) = TRUE;
   begtoken('\0') = begtoken('\n');
+  for (sp = midtk; *sp != '\0'; sp++) intoken (*sp) = TRUE;
   intoken('\0') = intoken('\n');
+  for (sp = endtk; *sp != '\0'; sp++) endtoken (*sp) = TRUE;
   endtoken('\0') = endtoken('\n');
 }
 
@@ -1480,7 +1459,7 @@ init ()
  */
 node *last_node = NULL;
 
-void
+static void
 find_entries (file, inf)
      char *file;
      FILE *inf;
@@ -1567,7 +1546,7 @@ find_entries (file, inf)
 }
 
 /* Record a tag. */
-void
+static void
 pfnote (name, is_func, linestart, linelen, lno, cno)
      char *name;		/* tag name, or NULL if unnamed */
      bool is_func;		/* tag is a function */
@@ -1637,7 +1616,7 @@ pfnote (name, is_func, linestart, linelen, lno, cno)
  * `nonam'.
  */
 #define traditional_tag_style TRUE
-void
+static void
 new_pfnote (name, namelen, is_func, linestart, linelen, lno, cno)
      char *name;		/* tag name, or NULL if unnamed */
      int namelen;		/* tag length */
@@ -1679,7 +1658,7 @@ new_pfnote (name, namelen, is_func, linestart, linelen, lno, cno)
  * free_tree ()
  *	recurse on left children, iterate on right children.
  */
-void
+static void
 free_tree (np)
      register node *np;
 {
@@ -1704,7 +1683,7 @@ free_tree (np)
  *	add_node is the only function allowed to add nodes, so it can
  *	maintain state.
  */
-void
+static void
 add_node (np, cur_node_p)
      node *np, **cur_node_p;
 {
@@ -1762,7 +1741,7 @@ add_node (np, cur_node_p)
     }
 }
 
-void
+static void
 put_entries (np)
      register node *np;
 {
@@ -1846,7 +1825,7 @@ number_len (num)
  * is irrelevant with the new tags.el, but is still supplied for
  * backward compatibility.
  */
-int
+static int
 total_size_of_entries (np)
      register node *np;
 {
@@ -1883,6 +1862,10 @@ enum sym_type
   st_C_operator,
   st_C_struct, st_C_extern, st_C_enum, st_C_define, st_C_typedef, st_C_typespec
 };
+
+static unsigned int hash P_((const char *, unsigned int));
+static struct C_stab_entry * in_word_set P_((const char *, unsigned int));
+static enum sym_type C_symtype P_((char *, int, int));
 
 /* Feed stuff between (but not including) %[ and %] lines to:
       gperf -c -k 1,3 -o -p -r -t
@@ -2245,6 +2228,9 @@ bool yacc_rules;
  */
 int methodlen;
 
+static bool consider_token P_((char *, int, int, int, int, int, bool *));
+static void make_C_tag P_((bool));
+
 /*
  * consider_token ()
  *	checks to see if the current token is at the start of a
@@ -2267,7 +2253,7 @@ static bool
 consider_token (str, len, c, c_ext, cblev, parlev, is_func_or_var)
      register char *str;	/* IN: token pointer */
      register int len;		/* IN: token length */
-     register char c;		/* IN: first char after the token */
+     register int c;		/* IN: first char after the token */
      int c_ext;			/* IN: C extensions mask */
      int cblev;			/* IN: curly brace level */
      int parlev;		/* IN: parenthesis level */
@@ -2597,7 +2583,7 @@ make_C_tag (isfun)
 }
 
 
-void
+static void
 C_entries (c_ext, inf)
      int c_ext;			/* extension of C */
      FILE *inf;			/* input file */
@@ -2819,7 +2805,7 @@ C_entries (c_ext, inf)
 			      if (*lp != '\0')
 				lp += 1;
 			      while (*lp != '\0'
-				     && !isspace (*lp) && *lp != '(')
+				     && !iswhite (*lp) && *lp != '(')
 				lp += 1;
 			      c = *lp++;
 			      toklen += lp - oldlp;
@@ -3270,7 +3256,7 @@ C_entries (c_ext, inf)
  * Process either a C++ file or a C file depending on the setting
  * of a global flag.
  */
-void
+static void
 default_C_entries (inf)
      FILE *inf;
 {
@@ -3278,7 +3264,7 @@ default_C_entries (inf)
 }
 
 /* Always do plain ANSI C. */
-void
+static void
 plain_C_entries (inf)
      FILE *inf;
 {
@@ -3286,7 +3272,7 @@ plain_C_entries (inf)
 }
 
 /* Always do C++. */
-void
+static void
 Cplusplus_entries (inf)
      FILE *inf;
 {
@@ -3294,7 +3280,7 @@ Cplusplus_entries (inf)
 }
 
 /* Always do Java. */
-void
+static void
 Cjava_entries (inf)
      FILE *inf;
 {
@@ -3302,7 +3288,7 @@ Cjava_entries (inf)
 }
 
 /* Always do C*. */
-void
+static void
 Cstar_entries (inf)
      FILE *inf;
 {
@@ -3310,7 +3296,7 @@ Cstar_entries (inf)
 }
 
 /* Always do Yacc. */
-void
+static void
 Yacc_entries (inf)
      FILE *inf;
 {
@@ -3333,7 +3319,7 @@ Yacc_entries (inf)
  * Read a file, but do no processing.  This is used to do regexp
  * matching on files that have no language defined.
  */
-void
+static void
 just_read_file (inf)
      FILE *inf;
 {
@@ -3344,6 +3330,10 @@ just_read_file (inf)
 }
 
 /* Fortran parsing */
+
+static bool tail P_((char *));
+static void takeprec P_((void));
+static void getit P_((FILE *));
 
 static bool
 tail (cp)
@@ -3361,7 +3351,7 @@ tail (cp)
   return FALSE;
 }
 
-void
+static void
 takeprec ()
 {
   dbp = skip_spaces (dbp);
@@ -3374,14 +3364,14 @@ takeprec ()
       dbp += 3;
       return;
     }
-  if (!isdigit (*dbp))
+  if (!isdigit ((unsigned char) *dbp))
     {
       --dbp;			/* force failure */
       return;
     }
   do
     dbp++;
-  while (isdigit (*dbp));
+  while (isdigit ((unsigned char) *dbp));
 }
 
 static void
@@ -3402,7 +3392,7 @@ getit (inf)
       dbp += 6;
       dbp = skip_spaces (dbp);
     }
-  if (!isalpha (*dbp) && *dbp != '_' && *dbp != '$')
+  if (!isalpha ((unsigned char) *dbp) && *dbp != '_' && *dbp != '$')
     return;
   for (cp = dbp + 1; *cp != '\0' && intoken (*cp); cp++)
     continue;
@@ -3411,7 +3401,7 @@ getit (inf)
 }
 
 
-void
+static void
 Fortran_functions (inf)
      FILE *inf;
 {
@@ -3488,6 +3478,9 @@ Fortran_functions (inf)
  * Philippe Waroquiers <philippe.waroquiers@eurocontrol.be>, 1998-04-24
  * Ada parsing
  */
+
+static void adagetit P_((FILE *, char *));
+
 /* Once we are positioned after an "interesting" keyword, let's get
    the real tag value necessary. */
 static void
@@ -3540,7 +3533,7 @@ adagetit (inf, name_qualifier)
 	  dbp = skip_spaces (dbp);
 	  for (cp = dbp;
 	       (*cp != '\0'
-		&& (isalpha (*cp) || isdigit (*cp) || *cp == '_' || *cp == '.'));
+		&& (isalpha ((unsigned char) *cp) || isdigit ((unsigned char) *cp) || *cp == '_' || *cp == '.'));
 	       cp++)
 	    continue;
 	  if (cp == dbp)
@@ -3557,7 +3550,7 @@ adagetit (inf, name_qualifier)
     }
 }
 
-void
+static void
 Ada_funcs (inf)
      FILE *inf;
 {
@@ -3654,7 +3647,7 @@ Ada_funcs (inf)
  * Unix and microcontroller assembly tag handling
  * look for '^[a-zA-Z_.$][a-zA_Z0-9_.$]*[: ^I^J]'
  */
-void
+static void
 Asm_labels (inf)
      FILE *inf;
 {
@@ -3664,13 +3657,13 @@ Asm_labels (inf)
     {
       /* If first char is alphabetic or one of [_.$], test for colon
 	 following identifier. */
-      if (isalpha (*cp) || *cp == '_' || *cp == '.' || *cp == '$')
+      if (isalpha ((unsigned char) *cp) || *cp == '_' || *cp == '.' || *cp == '$')
  	{
  	  /* Read past label. */
 	  cp++;
- 	  while (isalnum (*cp) || *cp == '_' || *cp == '.' || *cp == '$')
+ 	  while (isalnum ((unsigned char) *cp) || *cp == '_' || *cp == '.' || *cp == '$')
  	    cp++;
- 	  if (*cp == ':' || isspace (*cp))
+ 	  if (*cp == ':' || iswhite (*cp))
  	    {
  	      /* Found end of label, so copy it and add it to the table. */
  	      pfnote (savenstr(lb.buffer, cp-lb.buffer), TRUE,
@@ -3686,7 +3679,7 @@ Asm_labels (inf)
  * Perl sub names: look for /^sub[ \t\n]+[^ \t\n{]+/
  * Perl variable names: /^(my|local).../
  */
-void
+static void
 Perl_functions (inf)
      FILE *inf;
 {
@@ -3696,14 +3689,14 @@ Perl_functions (inf)
     {
       if (*cp++ == 's'
 	  && *cp++ == 'u'
-	  && *cp++ == 'b' && isspace (*cp++))
+	  && *cp++ == 'b' && iswhite (*cp++))
 	{
 	  cp = skip_spaces (cp);
  	  if (*cp != '\0')
  	    {
 	      char *sp = cp;
  	      while (*cp != '\0'
-		     && !isspace (*cp) && *cp != '{' && *cp != '(')
+		     && !iswhite (*cp) && *cp != '{' && *cp != '(')
 		cp++;
 	      pfnote (savenstr (sp, cp-sp), TRUE,
  		      lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
@@ -3719,7 +3712,7 @@ Perl_functions (inf)
 			&& *cp++ == 'c'
 			&& *cp++ == 'a'
 			&& *cp++ == 'l'))
-		&& (*cp == '(' || isspace (*cp)))
+		&& (*cp == '(' || iswhite (*cp)))
  	{
  	  /* After "my" or "local", but before any following paren or space. */
  	  char *varname = NULL;
@@ -3728,7 +3721,7 @@ Perl_functions (inf)
  	  if (*cp == '$' || *cp == '@' || *cp == '%')
  	    {
  	      char* varstart = ++cp;
- 	      while (isalnum (*cp) || *cp == '_')
+ 	      while (isalnum ((unsigned char) *cp) || *cp == '_')
  		cp++;
  	      varname = savenstr (varstart, cp-varstart);
  	    }
@@ -3752,7 +3745,7 @@ Perl_functions (inf)
  * Python support by Eric S. Raymond <esr@thyrsus.com>
  * Look for /^def[ \t\n]+[^ \t\n(:]+/ or /^class[ \t\n]+[^ \t\n(:]+/
  */
-void
+static void
 Python_functions (inf)
      FILE *inf;
 {
@@ -3762,10 +3755,10 @@ Python_functions (inf)
     {
       if (*cp++ == 'd'
 	  && *cp++ == 'e'
-	  && *cp++ == 'f' && isspace (*cp++))
+	  && *cp++ == 'f' && iswhite (*cp++))
 	{
 	  cp = skip_spaces (cp);
-	  while (*cp != '\0' && !isspace (*cp) && *cp != '(' && *cp != ':')
+	  while (*cp != '\0' && !iswhite (*cp) && *cp != '(' && *cp != ':')
 	    cp++;
 	  pfnote (NULL, TRUE,
 		  lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
@@ -3776,10 +3769,10 @@ Python_functions (inf)
 	  && *cp++ == 'l'
 	  && *cp++ == 'a'
 	  && *cp++ == 's'
-	  && *cp++ == 's' && isspace (*cp++))
+	  && *cp++ == 's' && iswhite (*cp++))
 	{
 	  cp = skip_spaces (cp);
-	  while (*cp != '\0' && !isspace (*cp) && *cp != '(' && *cp != ':')
+	  while (*cp != '\0' && !iswhite (*cp) && *cp != '(' && *cp != ':')
 	    cp++;
 	  pfnote (NULL, TRUE,
 		  lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
@@ -3792,7 +3785,7 @@ Python_functions (inf)
  * We could look for anything that could be a paragraph name.
  * i.e. anything that starts in column 8 is one word and ends in a full stop.
  */
-void
+static void
 Cobol_paragraphs (inf)
      FILE *inf;
 {
@@ -3805,10 +3798,10 @@ Cobol_paragraphs (inf)
       bp += 8;
 
       /* If eoln, compiler option or comment ignore whole line. */
-      if (bp[-1] != ' ' || !isalnum (bp[0]))
+      if (bp[-1] != ' ' || !isalnum ((unsigned char) bp[0]))
         continue;
 
-      for (ep = bp; isalnum (*ep) || *ep == '-'; ep++)
+      for (ep = bp; isalnum ((unsigned char) *ep) || *ep == '-'; ep++)
 	continue;
       if (*ep++ == '.')
 	pfnote (savenstr (bp, ep-bp), TRUE,
@@ -3825,7 +3818,7 @@ Cobol_paragraphs (inf)
  *  "forward" immediately following the procedure statement; if found,
  *  the tag is skipped.
  */
-void
+static void
 Pascal_functions (inf)
      FILE *inf;
 {
@@ -4002,6 +3995,11 @@ Pascal_functions (inf)
  * lisp tag functions
  *  look for (def or (DEF, quote or QUOTE
  */
+
+static int L_isdef P_((char *));
+static int L_isquote P_((char *));
+static void L_getit P_((void));
+
 static int
 L_isdef (strp)
      register char *strp;
@@ -4020,7 +4018,7 @@ L_isquote (strp)
 	  && (*++strp == 'o' || *strp == 'O')
 	  && (*++strp == 't' || *strp == 'T')
 	  && (*++strp == 'e' || *strp == 'E')
-	  && isspace (*++strp));
+	  && iswhite (*++strp));
 }
 
 static void
@@ -4040,7 +4038,7 @@ L_getit ()
   }
 
   for (cp = dbp /*+1*/;
-       *cp != '\0' && *cp != '(' && !isspace(*cp) && *cp != ')';
+       *cp != '\0' && *cp != '(' && !iswhite(*cp) && *cp != ')';
        cp++)
     continue;
   if (cp == dbp)
@@ -4050,7 +4048,7 @@ L_getit ()
 	  lb.buffer, cp - lb.buffer + 1, lineno, linecharno);
 }
 
-void
+static void
 Lisp_functions (inf)
      FILE *inf;
 {
@@ -4069,7 +4067,7 @@ Lisp_functions (inf)
 	      /* Check for (foo::defmumble name-defined ... */
 	      do
 		dbp++;
-	      while (*dbp != '\0' && !isspace (*dbp)
+	      while (*dbp != '\0' && !iswhite (*dbp)
 		     && *dbp != ':' && *dbp != '(' && *dbp != ')');
 	      if (*dbp == ':')
 		{
@@ -4096,7 +4094,7 @@ Lisp_functions (inf)
  * Also look at "defineps" for PSWrap
  * suggested by Masatake YAMATO <masata-y@is.aist-nara.ac.jp>
  */
-void
+static void
 Postscript_functions (inf)
      FILE *inf;
 {
@@ -4131,7 +4129,7 @@ Postscript_functions (inf)
  * look for (set! xyzzy
  */
 
-void
+static void
 Scheme_functions (inf)
      FILE *inf;
 {
@@ -4146,7 +4144,7 @@ Scheme_functions (inf)
 	{
 	  bp = skip_non_spaces (bp);
 	  /* Skip over open parens and white space */
-	  while (isspace (*bp) || *bp == '(')
+	  while (iswhite (*bp) || *bp == '(')
 	    bp++;
 	  get_tag (bp);
 	}
@@ -4155,7 +4153,7 @@ Scheme_functions (inf)
 	  && (bp[2] == 'E' || bp[2] == 'e')
 	  && (bp[3] == 'T' || bp[3] == 't')
 	  && (bp[4] == '!' || bp[4] == '!')
-	  && (isspace (bp[5])))
+	  && (iswhite (bp[5])))
 	{
 	  bp = skip_non_spaces (bp);
 	  bp = skip_spaces (bp);
@@ -4184,9 +4182,9 @@ char *TEX_defenv = "\
 :chapter:section:subsection:subsubsection:eqno:label:ref:cite:bibitem\
 :part:appendix:entry:index";
 
-void TEX_mode (FILE *inf);
-struct TEX_tabent *TEX_decode_env (char *evarname, char *defenv);
-int TEX_Token (char *cp);
+static void TEX_mode P_((FILE *));
+static struct TEX_tabent *TEX_decode_env P_((char *, char *));
+static int TEX_Token P_((char *));
 
 char TEX_esc = '\\';
 char TEX_opgrp = '{';
@@ -4195,7 +4193,7 @@ char TEX_clgrp = '}';
 /*
  * TeX/LaTeX scanning loop.
  */
-void
+static void
 TeX_functions (inf)
      FILE *inf;
 {
@@ -4242,7 +4240,7 @@ TeX_functions (inf)
 
 /* Figure out whether TeX's escapechar is '\\' or '!' and set grouping
    chars accordingly. */
-void
+static void
 TEX_mode (inf)
      FILE *inf;
 {
@@ -4277,7 +4275,7 @@ TEX_mode (inf)
 
 /* Read environment and prepend it to the default string.
    Build token table. */
-struct TEX_tabent *
+static struct TEX_tabent *
 TEX_decode_env (evarname, defenv)
      char *evarname;
      char *defenv;
@@ -4334,7 +4332,7 @@ TEX_decode_env (evarname, defenv)
    Otherwise return -1.
    Keep the capital `T' in `token' for dumb truncating compilers
    (this distinguishes it from `TEX_toktab' */
-int
+static int
 TEX_Token (cp)
      char *cp;
 {
@@ -4352,11 +4350,11 @@ TEX_Token (cp)
  * Assumes that the predicate starts at column 0.
  * Only the first clause of a predicate is added.
  */
-int prolog_pred (char *s, char *last);
-void prolog_skip_comment (linebuffer *plb, FILE *inf);
-int prolog_atom (char *s, int pos);
+static int prolog_pred P_((char *, char *));
+static void prolog_skip_comment P_((linebuffer *, FILE *));
+static int prolog_atom P_((char *, int));
 
-void
+static void
 Prolog_functions (inf)
      FILE *inf;
 {
@@ -4372,7 +4370,7 @@ Prolog_functions (inf)
     {
       if (cp[0] == '\0')	/* Empty line */
 	continue;
-      else if (isspace (cp[0])) /* Not a predicate */
+      else if (iswhite (cp[0])) /* Not a predicate */
 	continue;
       else if (cp[0] == '/' && cp[1] == '*')	/* comment. */
 	prolog_skip_comment (&lb, inf);
@@ -4392,7 +4390,7 @@ Prolog_functions (inf)
 }
 
 
-void
+static void
 prolog_skip_comment (plb, inf)
      linebuffer *plb;
      FILE *inf;
@@ -4420,7 +4418,7 @@ prolog_skip_comment (plb, inf)
  * Return the size of the name of the predicate, or 0 if no header
  * was found.
  */
-int
+static int
 prolog_pred (s, last)
      char *s;
      char *last;		/* Name of last clause. */
@@ -4461,7 +4459,7 @@ prolog_pred (s, last)
  * - A quoted arbitrary string. Single quotes can escape themselves.
  *   Backslash quotes everything.
  */
-int
+static int
 prolog_atom (s, pos)
      char *s;
      int pos;
@@ -4470,11 +4468,11 @@ prolog_atom (s, pos)
 
   origpos = pos;
 
-  if (islower(s[pos]) || (s[pos] == '_'))
+  if (islower((unsigned char) s[pos]) || (s[pos] == '_'))
     {
       /* The atom is unquoted. */
       pos++;
-      while (isalnum(s[pos]) || (s[pos] == '_'))
+      while (isalnum((unsigned char) s[pos]) || (s[pos] == '_'))
 	{
 	  pos++;
 	}
@@ -4518,11 +4516,11 @@ prolog_atom (s, pos)
  *
  * Assumes that Erlang functions start at column 0.
  */
-int erlang_func (char *s, char *last);
-void erlang_attribute (char *s);
-int erlang_atom (char *s, int pos);
+static int erlang_func P_((char *, char *));
+static void erlang_attribute P_((char *));
+static int erlang_atom P_((char *, int));
 
-void
+static void
 Erlang_functions (inf)
      FILE *inf;
 {
@@ -4538,7 +4536,7 @@ Erlang_functions (inf)
     {
       if (cp[0] == '\0')	/* Empty line */
 	continue;
-      else if (isspace (cp[0])) /* Not function nor attribute */
+      else if (iswhite (cp[0])) /* Not function nor attribute */
 	continue;
       else if (cp[0] == '%')	/* comment */
 	continue;
@@ -4577,7 +4575,7 @@ Erlang_functions (inf)
  * Return the size of the name of the function, or 0 if no function
  * was found.
  */
-int
+static int
 erlang_func (s, last)
      char *s;
      char *last;		/* Name of last clause. */
@@ -4615,7 +4613,7 @@ erlang_func (s, last)
  * -define(Foo(M, N), M+N).
  * -record(graph, {vtab = notable, cyclic = true}).
  */
-void
+static void
 erlang_attribute (s)
      char *s;
 {
@@ -4642,7 +4640,7 @@ erlang_attribute (s)
  * Consume an Erlang atom (or variable).
  * Return the number of bytes consumed, or -1 if there was an error.
  */
-int
+static int
 erlang_atom (s, pos)
      char *s;
      int pos;
@@ -4651,11 +4649,11 @@ erlang_atom (s, pos)
 
   origpos = pos;
 
-  if (isalpha (s[pos]) || s[pos] == '_')
+  if (isalpha ((unsigned char) s[pos]) || s[pos] == '_')
     {
       /* The atom is unquoted. */
       pos++;
-      while (isalnum (s[pos]) || s[pos] == '_')
+      while (isalnum ((unsigned char) s[pos]) || s[pos] == '_')
 	pos++;
       return pos - origpos;
     }
@@ -4689,6 +4687,11 @@ erlang_atom (s, pos)
 }
 
 #ifdef ETAGS_REGEXPS
+
+static char *scan_separators P_((char *));
+static void analyse_regex P_((char *, bool));
+static void add_regex P_((char *, bool, language *));
+static char *substitute P_((char *, char *, struct re_registers *));
 
 /* Take a string like "/blah/" and turn it into "blah", making sure
    that the first and last characters are the same, and handling
@@ -4735,7 +4738,7 @@ scan_separators (name)
 
 /* Look at the argument of --regex or --no-regex and do the right
    thing.  Same for each line of a regexp file. */
-void
+static void
 analyse_regex (regex_arg, ignore_case)
      char *regex_arg;
      bool ignore_case;
@@ -4805,7 +4808,7 @@ analyse_regex (regex_arg, ignore_case)
 
 /* Turn a name, which is an ed-style (but Emacs syntax) regular
    expression, into a real regular expression by compiling it. */
-void
+static void
 add_regex (regexp_pattern, ignore_case, lang)
      char *regexp_pattern;
      bool ignore_case;
@@ -4836,6 +4839,10 @@ add_regex (regexp_pattern, ignore_case, lang)
   patbuf->fastmap = NULL;
   patbuf->buffer = NULL;
   patbuf->allocated = 0;
+
+#if 0 /* useful when debugging windows quoting convention problems */
+  printf ("Compiling regex pattern: %s\n", regexp_pattern);
+#endif
 
   err = re_compile_pattern (regexp_pattern, strlen (regexp_pattern), patbuf);
   if (err != NULL)
@@ -4875,7 +4882,7 @@ substitute (in, out, regs)
   for (t = etags_strchr (out, '\\');
        t != NULL;
        t = etags_strchr (t + 2, '\\'))
-    if (isdigit (t[1]))
+    if (isdigit ((unsigned char) t[1]))
       {
 	dig = t[1] - '0';
 	diglen = regs->end[dig] - regs->start[dig];
@@ -4888,7 +4895,7 @@ substitute (in, out, regs)
   result = xnew (size + 1, char);
 
   for (t = result; *out != '\0'; out++)
-    if (*out == '\\' && isdigit (*++out))
+    if (*out == '\\' && isdigit ((unsigned char) *++out))
       {
 	/* Using "dig2" satisfies my debugger.  Bleah. */
 	dig = *out - '0';
@@ -4907,7 +4914,7 @@ substitute (in, out, regs)
 }
 
 /* Deallocate all patterns. */
-void
+static void
 free_patterns ()
 {
   pattern *pp;
@@ -4922,7 +4929,7 @@ free_patterns ()
   return;
 }
 
-void
+static void
 get_tag (bp)
      register char *bp;
 {
@@ -4932,7 +4939,7 @@ get_tag (bp)
     return;
   /* Go till you get to white space or a syntactic break */
   for (cp = bp + 1;
-       *cp != '\0' && *cp != '(' && *cp != ')' && !isspace (*cp);
+       *cp != '\0' && *cp != '(' && *cp != ')' && !iswhite (*cp);
        cp++)
     continue;
   pfnote (savenstr (bp, cp-bp), TRUE,
@@ -4941,7 +4948,7 @@ get_tag (bp)
 
 #endif /* ETAGS_REGEXPS */
 /* Initialize a linebuffer for use */
-void
+static void
 initbuffer (lbp)
      linebuffer *lbp;
 {
@@ -4959,7 +4966,7 @@ initbuffer (lbp)
  * platforms (for text files, it translates CR-NL to NL as it reads in the
  * file).
  */
-long
+static long
 readline_internal (lbp, stream)
      linebuffer *lbp;
      register FILE *stream;
@@ -4994,7 +5001,7 @@ readline_internal (lbp, stream)
 	  if (p > buffer && p[-1] == '\r')
 	    {
 	      p -= 1;
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
 	     /* Assume CRLF->LF translation will be performed by Emacs
 		when loading this file, so CRs won't appear in the buffer.
 		It would be cleaner to compensate within Emacs;
@@ -5023,7 +5030,7 @@ readline_internal (lbp, stream)
  * Like readline_internal, above, but in addition try to match the
  * input line against relevant regular expressions.
  */
-long
+static long
 readline (lbp, stream)
      linebuffer *lbp;
      FILE *stream;
@@ -5084,7 +5091,7 @@ readline (lbp, stream)
  * Return a pointer to a space of size strlen(cp)+1 allocated
  * with xnew where the string CP has been copied.
  */
-char *
+static char *
 savestr (cp)
      char *cp;
 {
@@ -5095,7 +5102,7 @@ savestr (cp)
  * Return a pointer to a space of size LEN+1 allocated with xnew where
  * the string CP has been copied for at most the first LEN characters.
  */
-char *
+static char *
 savenstr (cp, len)
      char *cp;
      int len;
@@ -5111,11 +5118,13 @@ savenstr (cp, len)
 /*
  * Return the ptr in sp at which the character c last
  * appears; NULL if not found
+ *
+ * Identical to POSIX strrchr, included for portability.
  */
-char *
+static char *
 etags_strrchr (sp, c)
-     const char *sp;
-     int c;
+     register const char *sp;
+     register int c;
 {
   register const char *r;
 
@@ -5125,49 +5134,51 @@ etags_strrchr (sp, c)
       if (*sp == c)
 	r = sp;
   } while (*sp++);
-  return (char *) r;
+  return (char *)r;
 }
 
 
 /*
  * Return the ptr in sp at which the character c first
  * appears; NULL if not found
+ *
+ * Identical to POSIX strchr, included for portability.
  */
-char *
+static char *
 etags_strchr (sp, c)
-     const char *sp;
-     int c;
+     register const char *sp;
+     register int c;
 {
   do
     {
       if (*sp == c)
-	return (char *) sp;
+	return (char *)sp;
     } while (*sp++);
   return NULL;
 }
 
 /* Skip spaces, return new pointer. */
-char *
+static char *
 skip_spaces (cp)
      char *cp;
 {
-  while (isspace (*cp))		/* isspace('\0')==FALSE */
+  while (iswhite (*cp))
     cp++;
   return cp;
 }
 
 /* Skip non spaces, return new pointer. */
-char *
+static char *
 skip_non_spaces (cp)
      char *cp;
 {
-  while (!iswhite (*cp))	/* iswhite('\0')==TRUE */
+  while (*cp != '\0' && !iswhite (*cp))
     cp++;
   return cp;
 }
 
 /* Print error message and exit.  */
-void
+static void
 fatal (s1, s2)
      char *s1, *s2;
 {
@@ -5175,7 +5186,7 @@ fatal (s1, s2)
   exit (BAD);
 }
 
-void
+static void
 pfatal (s1)
      char *s1;
 {
@@ -5183,7 +5194,7 @@ pfatal (s1)
   exit (BAD);
 }
 
-void
+static void
 suggest_asking_for_help ()
 {
   fprintf (stderr, "\tTry `%s %s' for a complete list of options.\n",
@@ -5198,7 +5209,7 @@ suggest_asking_for_help ()
 }
 
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
-void
+static void
 error (s1, s2)
      const char *s1, *s2;
 {
@@ -5209,7 +5220,7 @@ error (s1, s2)
 
 /* Return a newly-allocated string whose contents
    concatenate those of s1, s2, s3.  */
-char *
+static char *
 concat (s1, s2, s3)
      char *s1, *s2, *s3;
 {
@@ -5226,7 +5237,7 @@ concat (s1, s2, s3)
 
 /* Does the same work as the system V getcwd, but does not need to
    guess the buffer size in advance. */
-char *
+static char *
 etags_getcwd ()
 {
 #ifdef HAVE_GETCWD
@@ -5246,19 +5257,6 @@ etags_getcwd ()
   return path;
 
 #else /* not HAVE_GETCWD */
-#ifdef MSDOS
-  char *p, path[MAXPATHLEN + 1]; /* Fixed size is safe on MSDOS.  */
-
-  getwd (path);
-
-  for (p = path; *p != '\0'; p++)
-    if (*p == '\\')
-      *p = '/';
-    else
-      *p = lowcase (*p);
-
-  return strdup (path);
-#else /* not MSDOS */
   linebuffer path;
   FILE *pipe;
 
@@ -5269,13 +5267,12 @@ etags_getcwd ()
   pclose (pipe);
 
   return path.buffer;
-#endif /* not MSDOS */
 #endif /* not HAVE_GETCWD */
 }
 
 /* Return a newly allocated string containing the file name of FILE
    relative to the absolute directory DIR (which should end with a slash). */
-char *
+static char *
 relative_filename (file, dir)
      char *file, *dir;
 {
@@ -5289,7 +5286,7 @@ relative_filename (file, dir)
   while (*fp++ == *dp++)
     continue;
   fp--, dp--;			/* back to the first differing char */
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
   if (fp == afn && afn[0] != '/') /* cannot build a relative name */
     return afn;
 #endif
@@ -5315,7 +5312,7 @@ relative_filename (file, dir)
 
 /* Return a newly allocated string containing the absolute file name
    of FILE given DIR (which should end with a slash). */
-char *
+static char *
 absolute_filename (file, dir)
      char *file, *dir;
 {
@@ -5323,7 +5320,7 @@ absolute_filename (file, dir)
 
   if (filename_is_absolute (file))
     res = savestr (file);
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
   /* We don't support non-absolute file names with a drive
      letter, like `d:NAME' (it's too much hassle).  */
   else if (file[1] == ':')
@@ -5347,8 +5344,8 @@ absolute_filename (file, dir)
 	      while (cp >= res && !filename_is_absolute (cp));
 	      if (cp < res)
 		cp = slashp;	/* the absolute name begins with "/.." */
-#ifdef DOS_NT
-	      /* Under MSDOS and NT we get `d:/NAME' as absolute
+#ifdef WIN32_NATIVE
+	      /* Under Windows we get `d:/NAME' as absolute
 		 file name, so the luser could say `d:/../NAME'.
 		 We silently treat this as `d:/NAME'.  */
 	      else if (cp[0] != '/')
@@ -5377,7 +5374,7 @@ absolute_filename (file, dir)
 /* Return a newly allocated string containing the absolute
    file name of dir where FILE resides given DIR (which should
    end with a slash). */
-char *
+static char *
 absolute_dirname (file, dir)
      char *file, *dir;
 {
@@ -5398,25 +5395,25 @@ absolute_dirname (file, dir)
 
 /* Whether the argument string is an absolute file name.  The argument
    string must have been canonicalized with canonicalize_filename. */
-bool
+static bool
 filename_is_absolute (fn)
      char *fn;
 {
   return (fn[0] == '/'
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
 	  || (isalpha(fn[0]) && fn[1] == ':' && fn[2] == '/')
 #endif
 	  );
 }
 
 /* Translate backslashes into slashes.  Works in place. */
-void
+static void
 canonicalize_filename (fn)
      register char *fn;
 {
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
   /* Canonicalize drive letter case.  */
-  if (islower (fn[0]))
+  if (islower (fn[0]) && fn[1] == ':')
     fn[0] = toupper (fn[0]);
   /* Convert backslashes to slashes.  */
   for (; *fn != '\0'; fn++)
@@ -5429,7 +5426,7 @@ canonicalize_filename (fn)
 }
 
 /* Increase the size of a linebuffer. */
-void
+static void
 grow_linebuffer (lbp, toksize)
      linebuffer *lbp;
      int toksize;
@@ -5440,7 +5437,7 @@ grow_linebuffer (lbp, toksize)
 }
 
 /* Like malloc but get fatal error if memory is exhausted.  */
-long *
+static long *
 xmalloc (size)
      unsigned int size;
 {
@@ -5450,7 +5447,7 @@ xmalloc (size)
   return result;
 }
 
-long *
+static long *
 xrealloc (ptr, size)
      char *ptr;
      unsigned int size;

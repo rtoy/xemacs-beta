@@ -65,7 +65,7 @@ extern const struct struct_description console_methods_description;
 
 struct console_methods
 {
-  CONST char *name;	/* Used by print_console, print_device, print_frame */
+  const char *name;	/* Used by print_console, print_device, print_frame */
   Lisp_Object symbol;
   Lisp_Object predicate_symbol;
 
@@ -91,13 +91,22 @@ struct console_methods
   void (*delete_device_method) (struct device *);
   void (*mark_device_method) (struct device *);
   void (*asynch_device_change_method) (void);
-  Lisp_Object (*device_system_metrics_method) (struct device *, enum device_metrics);
+  Lisp_Object (*device_system_metrics_method) (struct device *,
+                                               enum device_metrics);
   unsigned int (*device_implementation_flags_method) (void);
-  Lisp_Object (*own_selection_method)(Lisp_Object selection_name, Lisp_Object selection_value);
-  void (*disown_selection_method)(Lisp_Object selection_name, Lisp_Object timeval);
-    Lisp_Object (*get_foreign_selection_method) (Lisp_Object selection_symbol,
-						 Lisp_Object target_type);
-  Lisp_Object (*selection_exists_p_method)(Lisp_Object selection_name);
+  Lisp_Object (*own_selection_method)(Lisp_Object selection_name,
+                                      Lisp_Object selection_value,
+                                      Lisp_Object how_to_add,
+                                      Lisp_Object selection_type);
+  void (*disown_selection_method)(Lisp_Object selection_name,
+                                  Lisp_Object timeval);
+  Lisp_Object (*get_foreign_selection_method) (Lisp_Object selection_symbol,
+                                               Lisp_Object target_type);
+  Lisp_Object (*selection_exists_p_method)(Lisp_Object selection_name,
+                                           Lisp_Object selection_type);
+  Lisp_Object (*available_selection_types_method)(Lisp_Object selection_name);
+  Lisp_Object (*register_selection_data_type_method)(Lisp_Object type_name);
+  Lisp_Object (*selection_data_type_name_method)(Lisp_Object type);
 
   /* frame methods */
   Lisp_Object *device_specific_frame_props;
@@ -111,6 +120,8 @@ struct console_methods
   void (*focus_on_frame_method) (struct frame *);
   void (*raise_frame_method) (struct frame *);
   void (*lower_frame_method) (struct frame *);
+  void (*enable_frame_method) (struct frame *);
+  void (*disable_frame_method) (struct frame *);
   int (*get_mouse_position_method) (struct device *d, Lisp_Object *frame,
 				    int *x, int *y);
   void (*set_mouse_position_method) (struct window *w, int x, int y);
@@ -135,12 +146,13 @@ struct console_methods
   Lisp_Object (*get_frame_parent_method) (struct frame *f);
   void (*update_frame_external_traits_method) (struct frame *f, Lisp_Object name);
   int (*frame_size_fixed_p_method) (struct frame *f);
+  void (*eject_page_method) (struct frame *f);
 
   /* redisplay methods */
   int (*left_margin_width_method) (struct window *);
   int (*right_margin_width_method) (struct window *);
   int (*text_width_method) (struct frame *f, struct face_cachel *cachel,
-			    CONST Emchar *str, Charcount len);
+			    const Emchar *str, Charcount len);
   void (*output_display_block_method) (struct window *, struct display_line *,
 				       int, int, int, int, int, int, int);
   int (*divider_height_method) (void);
@@ -151,8 +163,10 @@ struct console_methods
 			       int, int, int, int,
 			       Lisp_Object, Lisp_Object, Lisp_Object);
   void (*clear_frame_method) (struct frame *);
-  void (*output_begin_method) (struct device *);
-  void (*output_end_method) (struct device *);
+  void (*window_output_begin_method) (struct window *);
+  void (*frame_output_begin_method) (struct frame *);
+  void (*window_output_end_method) (struct window *);
+  void (*frame_output_end_method) (struct frame *);
   int (*flash_method) (struct device *);
   void (*ring_bell_method) (struct device *, int volume, int pitch,
 			    int duration);
@@ -207,7 +221,7 @@ struct console_methods
 					   Lisp_Object charset);
   int (*font_spec_matches_charset_method) (struct device *d,
 					   Lisp_Object charset,
-					   CONST Bufbyte *nonreloc,
+					   const Bufbyte *nonreloc,
 					   Lisp_Object reloc,
 					   Bytecount offset,
 					   Bytecount length);
@@ -222,7 +236,8 @@ struct console_methods
   void (*map_subwindow_method) (Lisp_Image_Instance *, int x, int y,
 				struct display_glyph_area* dga);
   void (*resize_subwindow_method) (Lisp_Image_Instance *, int w, int h);
-  void (*update_subwindow_method) (Lisp_Image_Instance *);
+  void (*redisplay_subwindow_method) (Lisp_Image_Instance *);
+  void (*redisplay_widget_method) (Lisp_Image_Instance *);
   int (*image_instance_equal_method) (Lisp_Image_Instance *,
 				      Lisp_Image_Instance *,
 				      int depth);
@@ -281,7 +296,9 @@ struct console_methods
 
 #ifdef HAVE_DIALOGS
   /* dialog methods */
-  void (*popup_dialog_box_method) (struct frame *, Lisp_Object dbox_desc);
+  Lisp_Object (*make_dialog_box_internal_method) (struct frame *,
+						  Lisp_Object type,
+						  Lisp_Object keys);
 #endif
 };
 
@@ -451,9 +468,9 @@ DECLARE_LRECORD (console, struct console);
 #define CONSOLE_TYPE_P(con, type) EQ (CONSOLE_TYPE (con), Q##type)
 
 #ifdef ERROR_CHECK_TYPECHECK
-INLINE struct console *
+INLINE_HEADER struct console *
 error_check_console_type (struct console *con, Lisp_Object sym);
-INLINE struct console *
+INLINE_HEADER struct console *
 error_check_console_type (struct console *con, Lisp_Object sym)
 {
   assert (EQ (CONSOLE_TYPE (con), sym));

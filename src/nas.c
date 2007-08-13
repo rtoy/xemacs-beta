@@ -68,14 +68,29 @@
 #include <unistd.h>
 #endif
 
+/* NAS <= 1.2p5 defines {BIG,LITTLE}_ENDIAN in <audio/fileutil.h>,
+   conflicting with GNU libc (at least); newer versions avoid this
+   name space pollution.
 
+   DO NOT USE THOSE MACROS in this file.  Use NAS_{BIG,LITTLE}_ENDIAN.
+
+   It would be slightly more reliable to do this via configure, but that
+   seems unnecessarily complex.
+*/
 #undef LITTLE_ENDIAN
 #undef BIG_ENDIAN
+
 #include <audio/audiolib.h>
 #include <audio/soundlib.h>
 #include <audio/snd.h>
 #include <audio/wave.h>
 #include <audio/fileutil.h>
+
+/* NAS <= 1.2p5 <audio/fileutil.h> doesn't define the NAS_ versions */
+#ifndef NAS_LITTLE_ENDIAN
+#define NAS_LITTLE_ENDIAN LITTLE_ENDIAN
+#define NAS_BIG_ENDIAN BIG_ENDIAN
+#endif
 
 #ifdef emacs
 
@@ -108,7 +123,6 @@
 
 #else /* !emacs */
 #    define warn(str) fprintf (stderr, "%s\n", (str))
-#    define CONST const
 #endif /* emacs */
 
 #ifdef XTOOLKIT
@@ -624,7 +638,7 @@ CatchErrorAndJump (AuServer *old_aud,
 /* Create a name from the sound. */
 
 static char *
-NameFromData (CONST char *buf,
+NameFromData (const char *buf,
 	      int len)
 
 {
@@ -668,7 +682,7 @@ NameFromData (CONST char *buf,
  */
 
 static SndInfo *
-SndOpenDataForReading (CONST char *data,
+SndOpenDataForReading (const char *data,
 		       int length)
 
 {
@@ -683,7 +697,7 @@ SndOpenDataForReading (CONST char *data,
 
   memcpy (&si->h, data, sizeof (SndHeader));
 
-  if (LITTLE_ENDIAN)
+  if (NAS_LITTLE_ENDIAN)
     {
       char            n;
     
@@ -744,11 +758,11 @@ static size_t file_posn;
 /* The length of the "file" */
 static size_t file_len;
 /* The actual "file" data. */
-static CONST void* file_data;
+static const void* file_data;
 
 /* Like fopen, but for a buffer in memory */
 static void
-dopen (CONST void* data, size_t length)
+dopen (const void* data, size_t length)
 {
    file_data = data;
    file_len = length;
@@ -835,7 +849,7 @@ readChunk (RiffChunk *c)
     char            n;
 
     if ((status = dread(c, sizeof(RiffChunk), 1)))
-	if (BIG_ENDIAN)
+	if (NAS_BIG_ENDIAN)
 	    swapl(&c->ckSize, n);
 
     return status;
@@ -845,7 +859,7 @@ readChunk (RiffChunk *c)
    read the wave data from a buffer in memory. */
 
 static WaveInfo *
-WaveOpenDataForReading (CONST char *data,
+WaveOpenDataForReading (const char *data,
 			int length)
 {
     RiffChunk       ck;
@@ -921,18 +935,18 @@ WaveOpenDataForReading (CONST char *data,
 	{
 	    AuInt32            dummy;
 
-	    wi->format = DataReadS(BIG_ENDIAN);
-	    wi->channels = DataReadS(BIG_ENDIAN);
-	    wi->sampleRate = DataReadL(BIG_ENDIAN);
+	    wi->format = DataReadS(NAS_BIG_ENDIAN);
+	    wi->channels = DataReadS(NAS_BIG_ENDIAN);
+	    wi->sampleRate = DataReadL(NAS_BIG_ENDIAN);
 
 	    /* we don't care about the next two fields */
-	    dummy = DataReadL(BIG_ENDIAN);
-	    dummy = DataReadS(BIG_ENDIAN);
+	    dummy = DataReadL(NAS_BIG_ENDIAN);
+	    dummy = DataReadS(NAS_BIG_ENDIAN);
 
 	    if (wi->format != RIFF_WAVE_FORMAT_PCM)
 		Err();
 
-	    wi->bitsPerSample = DataReadS(BIG_ENDIAN);
+	    wi->bitsPerSample = DataReadS(NAS_BIG_ENDIAN);
 
 	    /* skip any other format specific fields */
 	    dseek(PAD2(ck.ckSize - 16), 1);

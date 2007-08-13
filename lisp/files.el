@@ -873,23 +873,31 @@ If there is no such live buffer, return nil."
 (defun insert-file-contents-literally (filename &optional visit beg end replace)
   "Like `insert-file-contents', q.v., but only reads in the file.
 A buffer may be modified in several ways after reading into the buffer due
-to advanced Emacs features, such as file-name-handlers, format decoding,
-find-file-hooks, etc.
+to advanced Emacs features, such as format decoding, character code
+conversion,find-file-hooks, automatic uncompression, etc.
+
   This function ensures that none of these modifications will take place."
-  (let ((file-name-handler-alist nil)
-	(format-alist nil)
-	(after-insert-file-functions nil)
-	(find-buffer-file-type-function
-	 (if (fboundp 'find-buffer-file-type)
-	     (symbol-function 'find-buffer-file-type)
-	   nil)))
-    (unwind-protect
-	(progn
-	  (fset 'find-buffer-file-type (lambda (filename) t))
-	  (insert-file-contents filename visit beg end replace))
-      (if find-buffer-file-type-function
-	  (fset 'find-buffer-file-type find-buffer-file-type-function)
-	(fmakunbound 'find-buffer-file-type)))))
+  (let ((wrap-func (find-file-name-handler filename
+					   'insert-file-contents-literally)))
+    (if wrap-func 
+	(funcall wrap-func 'insert-file-contents-literally filename
+		 visit beg end replace)
+      (let ((file-name-handler-alist nil)
+	    (format-alist nil)
+	    (after-insert-file-functions nil)
+	    (coding-system-for-read 'binary)
+	    (coding-system-for-write 'binary)
+	    (find-buffer-file-type-function
+	     (if (fboundp 'find-buffer-file-type)
+		 (symbol-function 'find-buffer-file-type)
+	       nil)))
+	(unwind-protect
+	    (progn
+	      (fset 'find-buffer-file-type (lambda (filename) t))
+	      (insert-file-contents filename visit beg end replace))
+	  (if find-buffer-file-type-function
+	      (fset 'find-buffer-file-type find-buffer-file-type-function)
+	    (fmakunbound 'find-buffer-file-type)))))))
 
 (defun find-file-noselect (filename &optional nowarn rawfile)
   "Read file FILENAME into a buffer and return the buffer.
@@ -1028,7 +1036,8 @@ If RAWFILE is non-nil, the file is read literally."
 		  (setq buf (current-buffer))))
 	    (t
 	     (kill-buffer buf)
-	     (signal (car data) (cdr data))))))
+	     (signal (car data) (cdr data))))
+	))
       buf)))
 
 ;; FSF has `insert-file-literally' and `find-file-literally' here.
@@ -1169,6 +1178,7 @@ run `normal-mode' explicitly."
     ("/\\.\\(?:bash_\\|z\\)?\\(profile\\|login\\|logout\\)\\'" . sh-mode)
     ("/\\.\\(?:[ckz]sh\\|bash\\|tcsh\\|es\\|xinit\\|startx\\)rc\\'" . sh-mode)
     ("/\\.\\(?:[kz]shenv\\|xsession\\)\\'" . sh-mode)
+    ("\\.m?spec$" .sh-mode)
     ;; The following come after the ChangeLog pattern for the sake of
     ;; ChangeLog.1, etc. and after the .scm.[0-9] pattern too.
     ("\\.[12345678]\\'" . nroff-mode)
@@ -1193,7 +1203,9 @@ run `normal-mode' explicitly."
     ("\\.lex\\'" . c-mode)
     ("\\.m\\'" . objc-mode)
     ("\\.oak\\'" . scheme-mode)
-    ("\\.s?html?\\'" . html-mode)
+    ("\\.[sj]?html?\\'" . html-mode)
+    ("\\.jsp\\'" . html-mode)
+    ("\\.xml\\'" . xml-mode)
     ("\\.htm?l?3\\'" . html3-mode)
     ("\\.\\(?:sgml?\\|dtd\\)\\'" . sgml-mode)
     ("\\.c?ps\\'" . postscript-mode)
@@ -1203,7 +1215,7 @@ run `normal-mode' explicitly."
     ("\\.m4\\'" . autoconf-mode)
     ("configure\\.in\\'" . autoconf-mode)
     ("\\.ml\\'" . lisp-mode)
-    ("\\.ma?k\\'" . makefile-mode)
+    ("\\.ma?ke?\\'" . makefile-mode)
     ("[Mm]akefile\\(\\.\\|\\'\\)" . makefile-mode)
     ("\\.X\\(defaults\\|environment\\|resources\\|modmap\\)\\'" . xrdb-mode)
     ;; #### The following three are Unix-specific (but do we care?)
@@ -1539,7 +1551,7 @@ for current buffer."
 	(cond ((not (search-forward "-*-" end t))
 	       ;; doesn't have one.
 	       (setq force t))
-	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+\\)\\([ \t]*-\\*-\\)")
+	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+?\\)\\([ \t]*-\\*-\\)")
 	       ;; Antiquated form: "-*- ModeName -*-".
 	       (setq result
 		     (list (cons 'mode
@@ -1831,7 +1843,7 @@ with a prefix argument, you will be prompted for the coding system."
 					  (buffer-local-variables)))
 			       nil nil (buffer-name)))
 	 t
-	 (if (and current-prefix-arg (featurep 'mule))
+	 (if (and current-prefix-arg (featurep 'file-coding))
 	     (read-coding-system "Coding system: "))))
   (and (eq (current-buffer) mouse-grabbed-buffer)
        (error "Can't write minibuffer window"))
@@ -2080,9 +2092,8 @@ If the value is nil, don't make a backup."
   "Convert FILENAME to be relative to DIRECTORY (default: default-directory).
 This function returns a relative file name which is equivalent to FILENAME
 when used with that default directory as the default.
-If this is impossible (which can happen on MSDOS and Windows
-when the file name and directory use different drive names)
-then it returns FILENAME."
+If this is impossible (which can happen on MS Windows when the file name
+and directory use different drive names) then it returns FILENAME."
   (save-match-data
     (let ((fname (expand-file-name filename)))
       (setq directory (file-name-as-directory
@@ -2459,7 +2470,7 @@ Optional second argument EXITING means ask about certain non-file buffers
 			       (recursive-edit)
 			       ;; Return nil to ask about BUF again.
 			       nil)
-		       "display the current buffer"))))
+		       "%_Display Buffer"))))
 	 (abbrevs-done
 	  (and save-abbrevs abbrevs-changed
 	       (progn

@@ -39,6 +39,23 @@
   "Modeline customizations."
   :group 'environment)
 
+(defcustom modeline-3d-p ;; added for the options menu
+  (let ((thickness
+	 (specifier-instance modeline-shadow-thickness)))
+    (and (integerp thickness)
+	 (> thickness 0)))
+  "Whether the default toolbar is globally visible. This option can be
+customized through the options menu."
+  :group 'display
+  :type 'boolean
+  :set #'(lambda (var val)
+	   (if val
+	       (set-specifier modeline-shadow-thickness 2)
+	     (set-specifier modeline-shadow-thickness 0))
+	   (redraw-modeline t)
+	   (setq modeline-3d-p val))
+  )
+
 (defcustom drag-divider-event-lag 150
   "*The pause (in msecs) between divider drag events before redisplaying.
 If this value is too small, dragging will be choppy because redisplay cannot
@@ -79,7 +96,23 @@ a scrollbar for its own text, which then moves in the opposite direction."
 		  (set-glyph-image modeline-pointer-glyph "fleur" 'global 'x))
 		 (t
 		  (set-glyph-image modeline-pointer-glyph "sb_v_double_arrow"
-				   'global 'x)))))
+				   'global 'x))))
+	 (when (featurep 'mswindows)
+	   (cond ((eq val t)
+		  (set-glyph-image modeline-pointer-glyph
+				   [mswindows-resource :resource-type cursor
+						       :resource-id "SizeAll"]
+				   'global 'mswindows))
+		 ((eq val 'scrollbar)
+		  (set-glyph-image modeline-pointer-glyph
+				   [mswindows-resource :resource-type cursor
+						       :resource-id "Normal"]
+				   'global 'mswindows))
+		 (t
+		  (set-glyph-image modeline-pointer-glyph
+				   [mswindows-resource :resource-type cursor
+						       :resource-id "SizeNS"]
+				   'global 'mswindows)))))
   :group 'modeline)
 
 (defun mouse-drag-modeline (event)
@@ -559,8 +592,13 @@ parentheses on the modeline."
 					; this used to be "XEmacs:"
 	(cons modeline-buffer-id-right-extent (purecopy " %17b")))
   "Modeline control for identifying the buffer being displayed.
-Its default value is \"XEmacs: %17b\" (NOT!).  Major modes that edit things
-other than ordinary files may change this (e.g. Info, Dired,...)")
+Its default value is
+
+  (list (cons modeline-buffer-id-left-extent (purecopy \"XEmacs%N:\"))
+	(cons modeline-buffer-id-right-extent (purecopy \" %17b\")))
+
+Major modes that edit things other than ordinary files may change this
+(e.g. Info, Dired,...).")
 (make-variable-buffer-local 'modeline-buffer-identification)
 
 ;; These are for the sake of minor mode menu.  #### All of this is

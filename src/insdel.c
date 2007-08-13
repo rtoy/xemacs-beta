@@ -200,7 +200,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include <limits.h>
 
 #include "buffer.h"
 #include "device.h"
@@ -304,65 +303,64 @@ do						\
    the equivalent length in characters. */
 
 Charcount
-bytecount_to_charcount (CONST Bufbyte *ptr, Bytecount len)
+bytecount_to_charcount (const Bufbyte *ptr, Bytecount len)
 {
   Charcount count = 0;
-  CONST Bufbyte *end = ptr + len;
+  const Bufbyte *end = ptr + len;
 
-#if (LONGBITS == 32 || LONGBITS == 64)
+#if SIZEOF_LONG == 8
+# define STRIDE_TYPE long
+# define HIGH_BIT_MASK 0x8080808080808080UL
+#elif SIZEOF_LONG_LONG == 8 && !(defined (i386) || defined (__i386__))
+# define STRIDE_TYPE long long
+# define HIGH_BIT_MASK 0x8080808080808080ULL
+#elif SIZEOF_LONG == 4
+# define STRIDE_TYPE long
+# define HIGH_BIT_MASK 0x80808080UL
+#else
+# error Add support for 128-bit systems here
+#endif
 
-# if (LONGBITS == 32)
-#  define LONG_BYTES 4
-#  define ALIGN_MASK 0xFFFFFFFCU
-#  define HIGH_BIT_MASK 0x80808080U
-# else
-#  define LONG_BYTES 8
-#  define ALIGN_MASK 0xFFFFFFFFFFFFFFF8UL
-   /* I had a dream, I was being overrun with early Intel processors ... */
-#  define HIGH_BIT_MASK 0x8080808080808080UL
-# endif
+#define ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
+#define ALIGN_MASK (~ ALIGN_BITS)
+#define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
+#define STRIDE sizeof (STRIDE_TYPE)
 
-  /* When we have a large number of bytes to scan, we can be trickier
-     and significantly faster by scanning them in chunks of the CPU word
-     size (assuming that they're all ASCII -- we cut out as soon as
-     we find something non-ASCII). */
-  if (len >= 12)
-    {
-      /* Determine the section in the middle of the string that's
-	 amenable to this treatment.  Everything has to be aligned
-	 on CPU word boundaries. */
-      CONST Bufbyte *aligned_ptr =
-	(CONST Bufbyte *) (((unsigned long) (ptr + LONG_BYTES - 1)) &
-			   ALIGN_MASK);
-      CONST Bufbyte *aligned_end =
-	(CONST Bufbyte *) (((unsigned long) end) & ALIGN_MASK);
-
-      /* Handle unaligned stuff at the beginning. */
-      while (ptr < aligned_ptr)
-	{
-	  if (!BYTE_ASCII_P (*ptr))
-	    goto bail;
-	  count++, ptr++;
-	}
-      /* Now do it. */
-      while (ptr < aligned_end)
-	{
-
-	  if ((* (unsigned long *) ptr) & HIGH_BIT_MASK)
-	    goto bail;
-	  ptr += LONG_BYTES;
-	  count += LONG_BYTES;
-	}
-    }
-
-#endif /* LONGBITS == 32 || LONGBITS == 64 */
-
- bail:
   while (ptr < end)
     {
-      count++;
-      INC_CHARPTR (ptr);
+      if (BYTE_ASCII_P (*ptr))
+	{
+	  /* optimize for long stretches of ASCII */
+	  if (! ALIGNED (ptr))
+	    ptr++, count++;
+	  else
+	    {
+	      const unsigned STRIDE_TYPE *ascii_end =
+		(const unsigned STRIDE_TYPE *) ptr;
+	      /* This loop screams, because we can typically
+		 detect ASCII characters 8 at a time. */
+	      while ((const Bufbyte *) ascii_end + STRIDE <= end
+		     && !(*ascii_end & HIGH_BIT_MASK))
+		ascii_end++;
+	      if ((Bufbyte *) ascii_end == ptr)
+		ptr++, count++;
+	      else
+		{
+		  count += (Bufbyte *) ascii_end - ptr;
+		  ptr = (Bufbyte *) ascii_end;
+		}
+	    }
+	}
+      else
+	{
+	  /* optimize for successive characters from the same charset */
+	  Bufbyte leading_byte = *ptr;
+	  size_t bytes = REP_BYTES_BY_FIRST_BYTE (leading_byte);
+	  while ((ptr < end) && (*ptr == leading_byte))
+	    ptr += bytes, count++;
+	}
     }
+
 #ifdef ERROR_CHECK_BUFPOS
   /* Bomb out if the specified substring ends in the middle
      of a character.  Note that we might have already gotten
@@ -378,9 +376,9 @@ bytecount_to_charcount (CONST Bufbyte *ptr, Bytecount len)
    the equivalent length in bytes. */
 
 Bytecount
-charcount_to_bytecount (CONST Bufbyte *ptr, Charcount len)
+charcount_to_bytecount (const Bufbyte *ptr, Charcount len)
 {
-  CONST Bufbyte *newptr = ptr;
+  const Bufbyte *newptr = ptr;
 
   while (len > 0)
     {
@@ -1196,6 +1194,7 @@ bytind_to_bufpos (struct buffer *buf, Bytind x)
 Bufpos
 get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
 {
+  /* Does not GC */
   Bufpos ind;
   Bufpos min_allowed, max_allowed;
 
@@ -1245,6 +1244,7 @@ void
 get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
 		       Bufpos *from_out, Bufpos *to_out, unsigned int flags)
 {
+  /* Does not GC */
   Bufpos min_allowed, max_allowed;
 
   min_allowed = (flags & GB_ALLOW_PAST_ACCESSIBLE) ?
@@ -2371,7 +2371,7 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 /************************************************************************/
 
 void
-fixup_internal_substring (CONST Bufbyte *nonreloc, Lisp_Object reloc,
+fixup_internal_substring (const Bufbyte *nonreloc, Lisp_Object reloc,
 			  Bytecount offset, Bytecount *len)
 {
   assert ((nonreloc && NILP (reloc)) || (!nonreloc && STRINGP (reloc)));
@@ -2379,7 +2379,7 @@ fixup_internal_substring (CONST Bufbyte *nonreloc, Lisp_Object reloc,
   if (*len < 0)
     {
       if (nonreloc)
-	*len = strlen ((CONST char *) nonreloc) - offset;
+	*len = strlen ((const char *) nonreloc) - offset;
       else
 	*len = XSTRING_LENGTH (reloc) - offset;
     }
@@ -2413,7 +2413,7 @@ fixup_internal_substring (CONST Bufbyte *nonreloc, Lisp_Object reloc,
 
 Charcount
 buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
-			CONST Bufbyte *nonreloc, Lisp_Object reloc,
+			const Bufbyte *nonreloc, Lisp_Object reloc,
 			Bytecount offset, Bytecount length,
 			int flags)
 {
@@ -2578,7 +2578,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
 
 Charcount
 buffer_insert_raw_string_1 (struct buffer *buf, Bufpos pos,
-			    CONST Bufbyte *nonreloc, Bytecount length,
+			    const Bufbyte *nonreloc, Bytecount length,
 			    int flags)
 {
   /* This function can GC */
@@ -2602,12 +2602,12 @@ buffer_insert_lisp_string_1 (struct buffer *buf, Bufpos pos, Lisp_Object str,
 /* Insert the null-terminated string S (in external format). */
 
 Charcount
-buffer_insert_c_string_1 (struct buffer *buf, Bufpos pos, CONST char *s,
+buffer_insert_c_string_1 (struct buffer *buf, Bufpos pos, const char *s,
 			  int flags)
 {
   /* This function can GC */
-  CONST char *translated = GETTEXT (s);
-  return buffer_insert_string_1 (buf, pos, (CONST Bufbyte *) translated, Qnil,
+  const char *translated = GETTEXT (s);
+  return buffer_insert_string_1 (buf, pos, (const Bufbyte *) translated, Qnil,
 				 0, strlen (translated), flags);
 }
 
@@ -3073,15 +3073,22 @@ barf_if_buffer_read_only (struct buffer *buf, Bufpos from, Bufpos to)
 }
 
 void
-find_charsets_in_bufbyte_string (unsigned char *charsets, CONST Bufbyte *str,
+find_charsets_in_bufbyte_string (unsigned char *charsets, const Bufbyte *str,
 				 Bytecount len)
 {
 #ifndef MULE
   /* Telescope this. */
   charsets[0] = 1;
 #else
-  CONST Bufbyte *strend = str + len;
+  const Bufbyte *strend = str + len;
   memset (charsets, 0, NUM_LEADING_BYTES);
+
+  /* #### SJT doesn't like this. */
+  if (len == 0)
+    {
+      charsets[XCHARSET_LEADING_BYTE (Vcharset_ascii) - 128] = 1;
+      return;
+    }
 
   while (str < strend)
     {
@@ -3092,7 +3099,7 @@ find_charsets_in_bufbyte_string (unsigned char *charsets, CONST Bufbyte *str,
 }
 
 void
-find_charsets_in_emchar_string (unsigned char *charsets, CONST Emchar *str,
+find_charsets_in_emchar_string (unsigned char *charsets, const Emchar *str,
 				Charcount len)
 {
 #ifndef MULE
@@ -3102,6 +3109,14 @@ find_charsets_in_emchar_string (unsigned char *charsets, CONST Emchar *str,
   int i;
 
   memset (charsets, 0, NUM_LEADING_BYTES);
+
+  /* #### SJT doesn't like this. */
+  if (len == 0)
+    {
+      charsets[XCHARSET_LEADING_BYTE (Vcharset_ascii) - 128] = 1;
+      return;
+    }
+
   for (i = 0; i < len; i++)
     {
       charsets[CHAR_LEADING_BYTE (str[i]) - 128] = 1;
@@ -3110,10 +3125,10 @@ find_charsets_in_emchar_string (unsigned char *charsets, CONST Emchar *str,
 }
 
 int
-bufbyte_string_displayed_columns (CONST Bufbyte *str, Bytecount len)
+bufbyte_string_displayed_columns (const Bufbyte *str, Bytecount len)
 {
   int cols = 0;
-  CONST Bufbyte *end = str + len;
+  const Bufbyte *end = str + len;
 
   while (str < end)
     {
@@ -3130,7 +3145,7 @@ bufbyte_string_displayed_columns (CONST Bufbyte *str, Bytecount len)
 }
 
 int
-emchar_string_displayed_columns (CONST Emchar *str, Charcount len)
+emchar_string_displayed_columns (const Emchar *str, Charcount len)
 {
 #ifdef MULE
   int cols = 0;
@@ -3148,10 +3163,10 @@ emchar_string_displayed_columns (CONST Emchar *str, Charcount len)
 /* NOTE: Does not reset the Dynarr. */
 
 void
-convert_bufbyte_string_into_emchar_dynarr (CONST Bufbyte *str, Bytecount len,
+convert_bufbyte_string_into_emchar_dynarr (const Bufbyte *str, Bytecount len,
 					   Emchar_dynarr *dyn)
 {
-  CONST Bufbyte *strend = str + len;
+  const Bufbyte *strend = str + len;
 
   while (str < strend)
     {
@@ -3162,10 +3177,10 @@ convert_bufbyte_string_into_emchar_dynarr (CONST Bufbyte *str, Bytecount len,
 }
 
 Charcount
-convert_bufbyte_string_into_emchar_string (CONST Bufbyte *str, Bytecount len,
+convert_bufbyte_string_into_emchar_string (const Bufbyte *str, Bytecount len,
 					   Emchar *arr)
 {
-  CONST Bufbyte *strend = str + len;
+  const Bufbyte *strend = str + len;
   Charcount newlen = 0;
   while (str < strend)
     {

@@ -29,7 +29,10 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <fcntl.h>
 #include <config.h>
 #include <string.h>
+
+#define DONT_ENCAPSULATE /* filenames are external in unex*.c */
 #include "sysfile.h"
+
 #define PERROR(arg) perror(arg);exit(-1) 
 
 #ifndef HAVE_A_OUT_H
@@ -39,7 +42,6 @@ unexec (char *, char *, void *, void *,	void *)
 }
 #else
 
-#undef CONST
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
@@ -83,6 +85,9 @@ if (lseek(a_out, 0, SEEK_CUR) != a) \
   exit(-1); \
 }
 
+void
+unexec (char *out_name, char *in_name, void *start_data, 
+	void * d1, void * d2);
 /* Dump out .data and .bss sections into a new executable.  */
 void unexec (char *out_name, char *in_name, void *start_data, 
 	     void * d1,	void * d2)

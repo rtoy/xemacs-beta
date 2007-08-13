@@ -269,7 +269,7 @@ If FORM is not a macro call, it is returned unchanged.
 Otherwise, the macro is expanded and the expansion is considered
 in place of FORM.  When a non-macro-call results, it is returned.
 
-The second optional arg ENVIRONMENT species an environment of macro
+The second optional arg ENVIRONMENT specifies an environment of macro
 definitions to shadow the loaded ones for use in file byte-compilation."
   (let ((cl-macro-environment cl-env))
     (while (progn (setq cl-macro (funcall cl-old-macroexpand cl-macro cl-env))
@@ -317,6 +317,23 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 
 (defvar *gensym-counter* (* (logand (cl-random-time) 1023) 100))
 
+(defun gensym (&optional arg)
+  "Generate a new uninterned symbol.
+The name is made by appending a number to PREFIX, default \"G\"."
+  (let ((prefix (if (stringp arg) arg "G"))
+	(num (if (integerp arg) arg
+	       (prog1 *gensym-counter*
+		 (setq *gensym-counter* (1+ *gensym-counter*))))))
+    (make-symbol (format "%s%d" prefix num))))
+
+(defun gentemp (&optional arg)
+  "Generate a new interned symbol with a unique name.
+The name is made by appending a number to PREFIX, default \"G\"."
+  (let ((prefix (if (stringp arg) arg "G"))
+	name)
+    (while (intern-soft (setq name (format "%s%d" prefix *gensym-counter*)))
+      (setq *gensym-counter* (1+ *gensym-counter*)))
+    (intern name)))
 
 ;;; Numbers.
 
@@ -733,6 +750,8 @@ FUNC is not added if it already appears on the list stored in HOOK."
 (defun cl-hack-byte-compiler ()
   (if (and (not cl-hacked-flag) (fboundp 'byte-compile-file-form))
       (progn
+	(when (not (fboundp 'cl-compile-time-init))
+	  (load "cl-macs" nil t))
 	(cl-compile-time-init)   ; in cl-macs.el
 	(setq cl-hacked-flag t))))
 

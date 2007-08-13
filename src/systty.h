@@ -94,9 +94,9 @@ Boston, MA 02111-1307, USA.  */
 #  include <fcntl.h>
 # endif
 
-#elif defined (DOS_NT)
+#elif defined (WIN32_NATIVE)
 
-/*****             (3) The MSDOS/NT way              *****/
+/*****             (3) The WIN32_NATIVE way              *****/
 
 /* Nothing doing */
 
@@ -124,7 +124,7 @@ Boston, MA 02111-1307, USA.  */
 /* Generally useful to include this file: */
 
 /* But Sun OS has broken include files and doesn't want it included */
-#if !defined (DOS_NT) && !defined (WIN32) && !defined (SUNOS4)
+#if !defined (WIN32_NATIVE) && !defined (SUNOS4)
 # include <sys/ioctl.h>
 #endif
 /* UNIPLUS systems may have FIONREAD.  */
@@ -246,54 +246,33 @@ Boston, MA 02111-1307, USA.  */
 /*       Manipulate a terminal's current (foreground) process group     */
 /* -------------------------------------------------------------------- */
 
-/* EMACS_HAVE_TTY_PGRP is true if we can get and set the tty's current
-   controlling process group.
+/* EMACS_GET_TTY_PGRP(int FD, pid_t *PGID) sets *PGID to the terminal
+   FD's current foreground process group.  Return -1 if there is an error.
 
-   EMACS_GET_TTY_PGRP(int FD, int *PGID) sets *PGID the terminal FD's
-   current process group.  Return -1 if there is an error.
+   EMACS_SET_TTY_PGRP(int FD, pid_t *PGID) sets the terminal FD's current
+   foreground process group to *PGID.  Return -1 if there is an error.
 
-   EMACS_SET_TTY_PGRP(int FD, int *PGID) sets the terminal FD's
-   current process group to *PGID.  Return -1 if there is an error.  */
+   We prefer using the ioctl (BSD) interface instead of its Posix
+   replacement tgetpgrp/tcsetpgrp since that is documented as being
+   restricted to processes sharing the same controlling tty. */
 
-/* HPUX tty process group stuff doesn't work, says the anonymous voice
-   from the past.  */
-/* But HPUX people say it does, so I've removed it.  --ben */
-# ifdef TIOCGPGRP
-#  define EMACS_HAVE_TTY_PGRP
-# else
-#  ifdef HAVE_TERMIOS
-#   define EMACS_HAVE_TTY_PGRP
-#  endif
-# endif
+#if defined (TIOCGPGRP)
 
-#ifdef EMACS_HAVE_TTY_PGRP
+#define EMACS_GET_TTY_PROCESS_GROUP(fd, pgid) ioctl (fd, TIOCGPGRP, pgid)
+#define EMACS_SET_TTY_PROCESS_GROUP(fd, pgid) ioctl (fd, TIOCSPGRP, pgid)
 
-#if defined (HAVE_TERMIOS) && ! defined (BSD_TERMIOS)
+#elif defined (HAVE_TCGETPGRP)
 
-/* Resist the urge to insert needless extra parentheses. */
-#define EMACS_GET_TTY_PGRP(fd, pgid) (*(pgid) = tcgetpgrp (fd))
-#define EMACS_SET_TTY_PGRP(fd, pgid) tcsetpgrp (fd, *(pgid))
+#define EMACS_GET_TTY_PROCESS_GROUP(fd, pgid) (*(pgid) = tcgetpgrp (fd))
+#define EMACS_SET_TTY_PROCESS_GROUP(fd, pgid) tcsetpgrp (fd, *(pgid))
 
-#elif defined (TIOCSPGRP)
-
-#define EMACS_GET_TTY_PGRP(fd, pgid) (ioctl ((fd), TIOCGPGRP, (pgid)))
-#define EMACS_SET_TTY_PGRP(fd, pgid) (ioctl ((fd), TIOCSPGRP, (pgid)))
-
-#endif
-
-#endif /* EMACS_HAVE_TTY_PGRP */
-
-#ifndef EMACS_GET_TTY_PGRP
+#else
 
 /* Just ignore this for now and hope for the best */
-#define EMACS_GET_TTY_PGRP(fd, pgid) 0
-#define EMACS_SET_TTY_PGRP(fd, pgif) 0
+#define EMACS_GET_TTY_PROCESS_GROUP(fd, pgid) 0
+#define EMACS_SET_TTY_PROCESS_GROUP(fd, pgif) 0
 
 #endif
-
-/* XEmacs interim backward-compatibility */
-#define EMACS_GET_TTY_PROCESS_GROUP EMACS_GET_TTY_PGRP
-#define EMACS_SET_TTY_PROCESS_GROUP EMACS_SET_TTY_PGRP
 
 /* EMACS_GETPGRP (arg) returns the process group of the terminal.  */
 
@@ -333,7 +312,7 @@ Boston, MA 02111-1307, USA.  */
    No big loss -- it just means that ^Z won't work right
    if we're run from sh. */
 #  define EMACS_SET_PROCESS_GROUP(pg)
-#elif defined(__MINGW32__)
+#elif defined(MINGW)
 #  define EMACS_SEPARATE_PROCESS_GROUP()
 #else
 /* Under NeXTstep, a process group of 0 is not the same as specifying
@@ -384,11 +363,11 @@ struct emacs_tty {
 #ifdef HAVE_TERMIO
   struct termio main;
 #else /* !HAVE_TERMIO */
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
   int main;
-#else  /* not DOS_NT */
+#else  /* not WIN32_NATIVE */
   struct sgttyb main;
-#endif /* not DOS_NT */
+#endif /* not WIN32_NATIVE */
 #endif /* !HAVE_TERMIO */
 #endif /* !HAVE_TCATTR */
 
@@ -428,11 +407,11 @@ int emacs_set_tty (int fd, struct emacs_tty *settings, int flushp);
 #define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
 
 #else /* neither HAVE_TERMIO nor HAVE_TERMIOS */
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
 #define EMACS_TTY_TABS_OK(p) 0
-#else /* not DOS_NT */
+#else /* not WIN32_NATIVE */
 #define EMACS_TTY_TABS_OK(p) (((p)->main.sg_flags & XTABS) != XTABS)
-#endif /* not DOS_NT */
+#endif /* not WIN32_NATIVE */
 
 #endif /* not def HAVE_TERMIO */
 #endif /* not def HAVE_TERMIOS */

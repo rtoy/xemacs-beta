@@ -32,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "xintrinsic.h"
 #include "../lwlib/lwlib.h"
+#include "../lwlib/lwlib-utils.h"
 
 /****************************************************************************
  *                         Image-Instance Object                            *
@@ -96,7 +97,7 @@ struct x_subwindow_data
       Window parent_window;
       Window clip_window;
     } sub;
-    struct 
+    struct
     {
       Widget clip_window;
       Position x_offset;
@@ -122,6 +123,11 @@ struct x_subwindow_data
   (X_SUBWINDOW_INSTANCE_DATA (i)->data.wid.id)
 #define IMAGE_INSTANCE_X_CLIPWIDGET(i) \
   (X_SUBWINDOW_INSTANCE_DATA (i)->data.wid.clip_window)
+#define IMAGE_INSTANCE_X_SUBWINDOW_ID(i) \
+  (* (Window *) & IMAGE_INSTANCE_SUBWINDOW_ID (i))
+#define IMAGE_INSTANCE_X_WIDGET_ID(i) \
+  (* (Widget *) & IMAGE_INSTANCE_SUBWINDOW_ID (i))
+
 #define XIMAGE_INSTANCE_X_SUBWINDOW_PARENT(i) \
   IMAGE_INSTANCE_X_SUBWINDOW_PARENT (XIMAGE_INSTANCE (i))
 #define XIMAGE_INSTANCE_X_SUBWINDOW_DISPLAY(i) \
@@ -136,10 +142,14 @@ struct x_subwindow_data
   IMAGE_INSTANCE_X_CLIPWIDGET (XIMAGE_INSTANCE (i))
 #define XIMAGE_INSTANCE_X_CLIPWINDOW(i) \
   IMAGE_INSTANCE_X_CLIPWINDOW (XIMAGE_INSTANCE (i))
-#define IMAGE_INSTANCE_X_SUBWINDOW_ID(i) \
-  ((Window) IMAGE_INSTANCE_SUBWINDOW_ID (i))
-#define IMAGE_INSTANCE_X_WIDGET_ID(i) \
-  ((Widget) IMAGE_INSTANCE_SUBWINDOW_ID (i))
+#define XIMAGE_INSTANCE_X_WIDGET_ID(i) \
+  IMAGE_INSTANCE_X_WIDGET_ID (XIMAGE_INSTANCE (i))
+
+#define DOMAIN_X_WIDGET(domain) \
+  ((IMAGE_INSTANCEP (domain) && \
+  X_SUBWINDOW_INSTANCE_DATA (XIMAGE_INSTANCE (domain))) ? \
+   XIMAGE_INSTANCE_X_WIDGET_ID (domain) : \
+   FRAME_X_CONTAINER_WIDGET (f) (DOMAIN_XFRAME (domain)))
 
 #endif /* HAVE_X_WINDOWS */
 #endif /* INCLUDED_glyphs_x_h_ */

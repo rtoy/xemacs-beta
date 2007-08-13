@@ -98,7 +98,7 @@ allocate_line_number_cache (struct buffer *b)
 }
 
 /* Flag LINE_NUMBER_BEGV (b) as dirty.  Do it only if the line number
-   cache is already initialized.  */ 
+   cache is already initialized.  */
 void
 narrow_line_number_cache (struct buffer *b)
 {
@@ -158,7 +158,7 @@ invalidate_line_number_cache (struct buffer *b, Bufpos pos)
    This will do nothing if the cache is uninitialized.  */
 void
 insert_invalidate_line_number_cache (struct buffer *b, Bufpos pos,
-				     CONST Bufbyte *nonreloc, Bytecount length)
+				     const Bufbyte *nonreloc, Bytecount length)
 {
   if (NILP (b->text->line_number_cache))
     return;

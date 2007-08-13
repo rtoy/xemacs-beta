@@ -67,6 +67,7 @@ void syms_of_device_tty (void);
 void syms_of_device_mswindows (void);
 void syms_of_device_x (void);
 void syms_of_device (void);
+void syms_of_dialog_mswindows (void);
 void syms_of_dialog_x (void);
 void syms_of_dialog (void);
 void syms_of_dired (void);
@@ -152,7 +153,9 @@ void syms_of_widget (void);
 void syms_of_window (void);
 void syms_of_select_x (void);
 void syms_of_eldap (void);
+void syms_of_postgresql (void);
 void syms_of_gpmevent (void);
+void syms_of_win32 (void);
 
 /* Initialize the console types (dump-time but for reinit_). */
 
@@ -290,6 +293,7 @@ void vars_of_extents (void);
 void reinit_vars_of_extents (void);
 void vars_of_faces (void);
 void vars_of_fileio (void);
+void reinit_vars_of_fileio (void);
 void vars_of_filelock (void);
 void vars_of_floatfns (void);
 void vars_of_font_lock (void);
@@ -337,6 +341,7 @@ void vars_of_mule_ccl(void);
 void vars_of_mule_charset (void);
 void vars_of_file_coding (void);
 void vars_of_mule_wnn (void);
+void reinit_vars_of_mule_wnn (void);
 void vars_of_nt (void);
 void vars_of_ntproc (void);
 void vars_of_objects (void);
@@ -376,6 +381,7 @@ void reinit_vars_of_window (void);
 void vars_of_select_x (void);
 void reinit_vars_of_select_x (void);
 void vars_of_eldap (void);
+void vars_of_postgresql (void);
 void vars_of_gpmevent (void);
 
 /* Initialize specifier variables (dump-time only). */
@@ -428,9 +434,8 @@ void reinit_eval (void);
 
 void init_buffer (void);
 void init_callproc (void);
-void init_console_stream (void);
+void init_console_stream (int reinit);
 void init_device_tty (void);
-void init_dosfns (void);
 void init_editfns (void);
 void init_environment (void);
 void init_event_Xt_late (void);
@@ -446,5 +451,6 @@ void init_ntproc (void); /* #### delete me, please! */
 void init_xemacs_process (void);
 void init_redisplay (void);
 void init_sunpro (void);
+void init_win32 (void);
 
 #endif /* INCLUDED_symsinit_h_ */

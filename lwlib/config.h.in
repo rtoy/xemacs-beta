@@ -29,15 +29,18 @@ Boston, MA 02111-1307, USA.  */
 #undef NEED_ATHENA
 #undef NEED_LUCID
 
-/* The path to the Athena widgets - the usual value is `X11/Xaw' */
-#undef ATHENA_H_PATH
+/* The exact path to the Athena header files depends on which `flavor'
+   of Athena is being used - hence configure defines them for us. */
 
-/* For use in #include statements.
-   You can't use macros directly within the <> of a #include statement.
-   The multiply nested macros are necessary to make old gcc's happy. */
-#define INCLUDE_GLUE_2(dirname,basename) <##dirname##/##basename##>
-#define INCLUDE_GLUE_1(dirname,basename) INCLUDE_GLUE_2(dirname,basename)
-#define ATHENA_INCLUDE(header_file) INCLUDE_GLUE_1(ATHENA_H_PATH,header_file)
-
+#undef ATHENA_Scrollbar_h_
+#undef ATHENA_Dialog_h_
+#undef ATHENA_Form_h_
+#undef ATHENA_Command_h_
+#undef ATHENA_Label_h_
+#undef ATHENA_LabelP_h_
+#undef ATHENA_Toggle_h_
+#undef ATHENA_ToggleP_h_
+#undef ATHENA_AsciiText_h_
+#undef ATHENA_XawInit_h_
 
 #endif /* _LWLIB_CONFIG_H_ */

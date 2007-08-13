@@ -218,14 +218,14 @@ EXFUN (Fread_from_string, 3);
 
 
 static DOESNT_RETURN
-syntax_error (CONST char *string)
+read_syntax_error (const char *string)
 {
   signal_error (Qinvalid_read_syntax,
 		list1 (build_translated_string (string)));
 }
 
 static Lisp_Object
-continuable_syntax_error (CONST char *string)
+continuable_read_syntax_error (const char *string)
 {
   return Fsignal (Qinvalid_read_syntax,
 		  list1 (build_translated_string (string)));
@@ -259,9 +259,9 @@ readchar (Lisp_Object readcharfun)
 #ifdef DEBUG_XEMACS /* testing Mule */
       static int testing_mule = 0; /* Change via debugger */
       if (testing_mule) {
-        if (c >= 0x20 && c <= 0x7E) fprintf (stderr, "%c", c);
-        else if (c == '\n')         fprintf (stderr, "\\n\n");
-        else                        fprintf (stderr, "\\%o ", c);
+        if (c >= 0x20 && c <= 0x7E) stderr_out ("%c", c);
+        else if (c == '\n')         stderr_out ("\\n\n");
+        else                        stderr_out ("\\%o ", c);
       }
 #endif
       return c;
@@ -623,7 +623,7 @@ encoding detection or end-of-line detection.
 	      int result;
 	      /* temporarily hack the 'c' off the end of the filename */
 	      foundstr[foundlen - 1] = '\0';
-	      result = stat (foundstr, &s2);
+	      result = xemacs_stat (foundstr, &s2);
 	      if (result >= 0 &&
 		  (unsigned) s1.st_mtime < (unsigned) s2.st_mtime)
               {
@@ -676,7 +676,7 @@ encoding detection or end-of-line detection.
   {
     /* Lisp_Object's must be malloc'ed, not stack-allocated */
     Lisp_Object lispstream = Qnil;
-    CONST int block_size = 8192;
+    const int block_size = 8192;
     struct gcpro ngcpro1;
 
     NGCPRO1 (lispstream);
@@ -978,12 +978,12 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
   else
     {
       /* Case c) */
-      CONST char *nsuffix = (CONST char *) XSTRING_DATA (suffixes);
+      const char *nsuffix = (const char *) XSTRING_DATA (suffixes);
 
       while (1)
 	{
 	  char *esuffix = (char *) strchr (nsuffix, ':');
-	  int lsuffix = ((esuffix) ? (esuffix - nsuffix) : strlen (nsuffix));
+	  int lsuffix = esuffix ? esuffix - nsuffix : strlen (nsuffix);
 
 	  /* Concatenate path element/specified name with the suffix.  */
 	  strncpy (fn + fn_len, nsuffix, lsuffix);
@@ -1014,7 +1014,7 @@ locate_file_in_directory_mapper (char *fn, void *arg)
   struct stat st;
 
   /* Ignore file if it's a directory.  */
-  if (stat (fn, &st) >= 0
+  if (xemacs_stat (fn, &st) >= 0
       && (st.st_mode & S_IFMT) != S_IFDIR)
     {
       /* Check that we can access or open it.  */
@@ -1029,7 +1029,7 @@ locate_file_in_directory_mapper (char *fn, void *arg)
 	  if (closure->storeptr)
 	    *closure->storeptr = build_string (fn);
 
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
 	  /* If we actually opened the file, set close-on-exec flag
 	     on the new descriptor so that subprocesses can't whack
 	     at it.  */
@@ -1230,7 +1230,7 @@ locate_file (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
       int found = 0;
 
       /* If this path element is relative, we have to look by hand. */
-      if (NILP (Ffile_name_absolute_p (pathel)))
+      if (NILP (pathel) || NILP (Ffile_name_absolute_p (pathel)))
 	{
 	  val = locate_file_in_directory (pathel, str, suffixes, storeptr,
 					  mode);
@@ -1870,7 +1870,7 @@ read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
   return Lstream_byte_count (XLSTREAM (Vread_buffer_stream)) - 1;
 }
 
-static Lisp_Object parse_integer (CONST Bufbyte *buf, Bytecount len, int base);
+static Lisp_Object parse_integer (const Bufbyte *buf, Bytecount len, int base);
 
 static Lisp_Object
 read_atom (Lisp_Object readcharfun,
@@ -1950,10 +1950,10 @@ read_atom (Lisp_Object readcharfun,
 
 
 static Lisp_Object
-parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
+parse_integer (const Bufbyte *buf, Bytecount len, int base)
 {
-  CONST Bufbyte *lim = buf + len;
-  CONST Bufbyte *p = buf;
+  const Bufbyte *lim = buf + len;
+  const Bufbyte *p = buf;
   EMACS_UINT num = 0;
   int negativland = 0;
 
@@ -2120,17 +2120,17 @@ read_structure (Lisp_Object readcharfun)
 
   GCPRO2 (orig_list, already_seen);
   if (c != '(')
-    RETURN_UNGCPRO (continuable_syntax_error ("#s not followed by paren"));
+    RETURN_UNGCPRO (continuable_read_syntax_error ("#s not followed by paren"));
   list = read_list (readcharfun, ')', 0, 0);
   orig_list = list;
   {
     int len = XINT (Flength (list));
     if (len == 0)
-      RETURN_UNGCPRO (continuable_syntax_error
+      RETURN_UNGCPRO (continuable_read_syntax_error
 		      ("structure type not specified"));
     if (!(len & 1))
       RETURN_UNGCPRO
-	(continuable_syntax_error
+	(continuable_read_syntax_error
 	 ("structures must have alternating keyword/value pairs"));
   }
 
@@ -2696,10 +2696,10 @@ retry:
 #define EXP_INT 16
 
 int
-isfloat_string (CONST char *cp)
+isfloat_string (const char *cp)
 {
   int state = 0;
-  CONST Bufbyte *ucp = (CONST Bufbyte *) cp;
+  const Bufbyte *ucp = (const Bufbyte *) cp;
 
   if (*ucp == '+' || *ucp == '-')
     ucp++;
@@ -2767,9 +2767,9 @@ sequence_reader (Lisp_Object readcharfun,
 	unreadchar (readcharfun, ch);
 #ifdef FEATUREP_SYNTAX
       if (ch == ']')
-	syntax_error ("\"]\" in a list");
+	read_syntax_error ("\"]\" in a list");
       else if (ch == ')')
-	syntax_error ("\")\" in a vector");
+	read_syntax_error ("\")\" in a vector");
 #endif
       state = ((conser) (readcharfun, state, len));
     }
@@ -2809,15 +2809,15 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
 	  goto done;
 	}
       else if (ch == ']')
-	syntax_error ("']' in a list");
+	read_syntax_error ("']' in a list");
       else if (ch == ')')
-	syntax_error ("')' in a vector");
+	read_syntax_error ("')' in a vector");
       else
 #endif
       if (ch != '.')
 	signal_simple_error ("BUG! Internal reader error", elt);
       else if (!s->allow_dotted_lists)
-	syntax_error ("\".\" in a vector");
+	read_syntax_error ("\".\" in a vector");
       else
 	{
 	  if (!NILP (s->tail))
@@ -2835,7 +2835,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
 		  goto done;
 		}
 	    }
-	  syntax_error (". in wrong context");
+	  read_syntax_error (". in wrong context");
 	}
     }
 
@@ -3030,7 +3030,7 @@ read_compiled_function (Lisp_Object readcharfun, Emchar terminator)
   len = XINT (Flength (stuff));
   if (len < COMPILED_STACK_DEPTH + 1 || len > COMPILED_DOMAIN + 1)
     return
-      continuable_syntax_error ("#[...] used with wrong number of elements");
+      continuable_read_syntax_error ("#[...] used with wrong number of elements");
 
   for (iii = 0; CONSP (stuff); iii++)
     {

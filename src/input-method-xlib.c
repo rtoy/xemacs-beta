@@ -126,6 +126,10 @@ static Boolean xim_initted = False;
 
 static XIMStyle best_style (XIMStyles *user, XIMStyles *xim);
 
+/* #### it appears this prototype is missing from the X11R6.4 includes,
+   at least the XFree86 version ... */
+char * XSetIMValues(XIM, ...);
+
 void
 Initialize_Locale (void)
 {
@@ -246,7 +250,11 @@ XIM_init_device (struct device *d)
 #ifdef THIS_IS_X11R6
   DEVICE_X_XIM (d) = NULL;
   XRegisterIMInstantiateCallback (DEVICE_X_DISPLAY (d), NULL, NULL, NULL,
-				  IMInstantiateCallback, (XPointer) d);
+				  IMInstantiateCallback,
+				  /* The sixth parameter is of type
+				     XPointer in XFree86 but (XPointer *)
+				     on most other X11's. */
+				  (void *) d);
   return;
 #else
   Display *dpy = DEVICE_X_DISPLAY (d);
@@ -333,7 +341,6 @@ XIM_init_frame (struct frame *f)
 
   if (!xim)
     {
-      xim_info ("X Input Method open failed. Waiting for an XIM to be enabled.\n");
       return;
     }
 
@@ -609,9 +616,9 @@ EmacsXtCvtStringToXIMStyles (
 #define STYLE_INFO(style) { style, #style, sizeof(#style) }
   static struct XIMStyleInfo
   {
-    CONST XIMStyle style;
-    CONST char   * CONST name;
-    CONST int      namelen;
+    const XIMStyle style;
+    const char   * const name;
+    const int      namelen;
   } emacs_XIMStyleInfo[] = {
     STYLE_INFO (XIMPreeditPosition|XIMStatusArea),
     STYLE_INFO (XIMPreeditPosition|XIMStatusNothing),
@@ -627,9 +634,9 @@ EmacsXtCvtStringToXIMStyles (
 
   char *s   = (char *) fromVal->addr;
   char *end = s + fromVal->size;
-  XIMStyles * CONST p = (XIMStyles *) toVal->addr;
-  CONST char * CONST delimiter = " \t\n\r:;," ;
-  CONST int  max_styles = XtNumber(emacs_XIMStyleInfo);
+  XIMStyles * const p = (XIMStyles *) toVal->addr;
+  const char * const delimiter = " \t\n\r:;," ;
+  const int  max_styles = XtNumber(emacs_XIMStyleInfo);
   int i;
   char *c;
 

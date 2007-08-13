@@ -22,23 +22,23 @@ Boston, MA 02111-1307, USA.  */
 
 /* The purpose of this file is so that there is at least one actual
    definition of each inline function.  This is needed under GCC.  The
-   reason is that under GCC we declare our inline functions `extern
-   inline', which causes the inlined version to get used only for
+   reason is that under GCC we declare our inline functions `inline
+   extern', which causes the inlined version to get used only for
    inlining, and in other cases to generate an external reference to
    the function.  This is more efficient than declaring our inline
-   functions `static inline', which (in many cases) would cause a separate
+   functions `inline static', which (in many cases) would cause a separate
    version of the function to get inserted into every source file that
-   included the corresponding header file.
+   included the corresponding header file.  See internals.texi.
 
    Some compilers that recognize `inline' may not do the same
-   `extern inline' business, so on those we just do `static inline'.
+   `inline extern' business, so on those we just do `inline static'.
    */
 
 /* Note to maintainers: This file contains a list of all header files
    that use the INLINE macro, either directly, or by using DECLARE_LRECORD.
-   i.e. the output of ``grep -l -w 'DECLARE_LRECORD|INLINE' *.h'' */
+   i.e. the output of ``grep -l -w 'DECLARE_LRECORD|INLINE_HEADER' *.h'' */
 
-#define DONT_EXTERN_INLINE_FUNCTIONS
+#define DONT_EXTERN_INLINE_HEADER_FUNCTIONS
 
 #include <config.h>
 #include "lisp.h"
@@ -53,6 +53,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame.h"
 #include "glyphs.h"
+#include "gui.h"
 #include "keymap.h"
 #include "lstream.h"
 #include "objects.h"
@@ -67,6 +68,10 @@ Boston, MA 02111-1307, USA.  */
 #include "eldap.h"
 #endif
 
+#ifdef HAVE_POSTGRESQL
+#include "postgresql.h"
+#endif
+
 #ifdef HAVE_TOOLBARS
 #include "toolbar.h"
 #endif
@@ -78,6 +83,10 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_X_WINDOWS
 #include "glyphs-x.h"
 #include "gui-x.h"
+#endif
+
+#ifdef HAVE_MS_WINDOWS
+#include "console-msw.h"
 #endif
 
 #ifdef FILE_CODING

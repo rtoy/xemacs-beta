@@ -38,8 +38,8 @@
 ;;   (this goes for any package loaded before `subr.el'.)
 ;;
 ;; - not to use macros, because they are not yet available (and this
-;;   file must be loadable uncompiled.)  This rules out CL-style
-;;   macros like `when', for instance.
+;;   file must be loadable uncompiled.)  Built in macros, such as
+;;   `when' and `unless' are fine, of course.
 ;;
 ;; - not to use `defcustom'.  If you must add user-customizable
 ;;   variables here, use `defvar', and add the variable to
@@ -350,7 +350,7 @@ This function is basically a wrapper over `locate-file'."
   ;; make sure paths-find-version-directory and paths-find-site-directory
   ;; don't both pick up version-independent directories ...
   (let ((version-directory (paths-find-version-directory roots base nil nil t))
-	(site-directory (paths-find-site-directory roots base)))
+	(site-directory (paths-find-site-directory roots base nil nil t)))
     (paths-uniq-append
      (and version-directory (list version-directory))
      (and site-directory (list site-directory)))))

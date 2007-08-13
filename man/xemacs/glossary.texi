@@ -261,7 +261,7 @@ echo area, accompanied by a beep.
 keyboards lacking a @key{META} key.  Unlike the @key{META} key (which,
 like the @key{SHIFT} key, is held down while another character is
 typed), the @key{ESC} key is pressed and released, and applies to the
-next character typed. 
+next character typed.
 
 @item Fill Prefix
 The fill prefix is a string that Emacs enters at the beginning
@@ -278,7 +278,7 @@ screen.  When running Emacs under X, you can have multiple frames,
 each corresponding to a top-level X window and each looking like
 the screen on a TTY.  Each frame contains one or more non-overlapping
 Emacs windows (possibly with associated scrollbars, under X), an
-echo area, and (under X) possibly a menubar.
+echo area, and (under X) possibly a menubar, toolbar, and/or gutter.
 
 @item Global
 Global means `independent of the current environment; in effect
@@ -568,7 +568,7 @@ allow quoting.  @xref{Basic,Quoting,Basic Editing}.
 @item Read-only Buffer
 A read-only buffer is one whose text you are not allowed to change.
 Normally Emacs makes buffers read-only when they contain text which
-has a special significance to Emacs, such asDired buffers.
+has a special significance to Emacs, such as Dired buffers.
 Visiting a file that is write-protected also makes a read-only buffer.
 @xref{Buffers}.
 
@@ -621,7 +621,7 @@ Emacs, you have to save it.  @xref{Saving}.
 
 @item Scrolling
 Scrolling means shifting the text in the Emacs window to make a
-different part ot the buffer visible.  @xref{Display,Scrolling}.
+different part of the buffer visible.  @xref{Display,Scrolling}.
 
 @item Searching
 Searching means moving point to the next occurrence of a specified
@@ -682,7 +682,7 @@ definitions in one or more other files.  @xref{Tags}.
 A termscript file contains a record of all characters Emacs sent to
 the terminal.  It is used for tracking down bugs in Emacs redisplay.
 Emacs does not make a termscript file unless explicitly instructed to do
-so. 
+so.
 @xref{Bugs}.
 
 @item Text
@@ -749,7 +749,7 @@ display the contents of one buffer (q.v.@:) at any time.
 @xref{Windows}, for commands to control the use of windows. Note that if
 you are running Emacs under X, terminology can be confusing: Each Emacs
 frame occupies a separate X window and can, in turn, be divided into
-different subwindows. 
+different subwindows.
 
 @item Word Abbrev
 Synonymous with `abbrev'.

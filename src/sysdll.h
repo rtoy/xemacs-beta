@@ -26,9 +26,9 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 extern "C" {
 #endif
 
-#if defined(WIN32)
+#if defined(WIN32_NATIVE)
 #define DLLEXPORT __declspec(dllexport)
-#elif defined(_WINDOWS)
+#elif defined(WIN16)
 #define DLLEXPORT FAR PASCAL _EXPORT
 #else
 #define DLLEXPORT
@@ -38,16 +38,21 @@ typedef void * dll_handle;
 typedef void * dll_func;
 typedef void * dll_var;
 
-int dll_init(CONST char *);
+int dll_init(const char *);
 int dll_shutdown(void);
-dll_handle dll_open(CONST char *);
+dll_handle dll_open(const char *);
 int dll_close(dll_handle);
-dll_func dll_function(dll_handle,CONST char *);
-dll_var dll_variable(dll_handle,CONST char *);
-CONST char *dll_error(dll_handle);
+dll_func dll_function(dll_handle,const char *);
+dll_var dll_variable(dll_handle,const char *);
+const char *dll_error(dll_handle);
 
 #ifdef __cplusplus
 }
 #endif
+
+/* More stand-ins ... */
+
+#define Qdll_filename_encoding Qfile_name
+#define Qdll_function_name_encoding Qnative
 
 #endif /* INCLUDED_sysdll_h_ */

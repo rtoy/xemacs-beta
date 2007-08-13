@@ -27,8 +27,9 @@ Boston, MA 02111-1307, USA.  */
 #ifndef INCLUDED_gui_h_
 #define INCLUDED_gui_h_
 
-int separator_string_p (CONST char *s);
+int separator_string_p (const Bufbyte *s);
 void get_gui_callback (Lisp_Object, Lisp_Object *, Lisp_Object *);
+int gui_item_equal_sans_selected (Lisp_Object obj1, Lisp_Object obj2, int depth);
 
 extern int popup_up_p;
 
@@ -43,6 +44,7 @@ struct Lisp_Gui_Item
   struct lcrecord_header header;
   Lisp_Object name;		/* String */
   Lisp_Object callback;		/* Symbol or form */
+  Lisp_Object callback_ex;	/* Form taking context arguments */
   Lisp_Object suffix;		/* String */
   Lisp_Object active;		/* Form */
   Lisp_Object included;		/* Form */
@@ -52,6 +54,7 @@ struct Lisp_Gui_Item
   Lisp_Object selected;		/* Form */
   Lisp_Object keys;		/* String */
   Lisp_Object accelerator;	/* Char or Symbol  */
+  Lisp_Object value;		/* Anything you like */
 };
 
 DECLARE_LRECORD (gui_item, Lisp_Gui_Item);
@@ -61,10 +64,6 @@ DECLARE_LRECORD (gui_item, Lisp_Gui_Item);
 #define CHECK_GUI_ITEM(x) CHECK_RECORD (x, gui_item)
 #define CONCHECK_GUI_ITEM(x) CONCHECK_RECORD (x, gui_item)
 
-extern Lisp_Object Q_accelerator, Q_active, Q_config, Q_filter, Q_included;
-extern Lisp_Object Q_keys, Q_selected, Q_suffix, Qradio, Qtoggle;
-extern Lisp_Object Q_key_sequence, Q_label, Q_callback;
-
 void gui_item_add_keyval_pair (Lisp_Object,
 			       Lisp_Object key, Lisp_Object val,
 			       Error_behavior errb);
@@ -73,6 +72,7 @@ Lisp_Object gui_parse_item_keywords_no_errors (Lisp_Object item);
 void gui_add_item_keywords_to_plist (Lisp_Object plist, Lisp_Object gui_item);
 int  gui_item_active_p (Lisp_Object);
 int  gui_item_selected_p (Lisp_Object);
+Lisp_Object gui_item_list_find_selected (Lisp_Object gui_item_list);
 int  gui_item_included_p (Lisp_Object, Lisp_Object into);
 Lisp_Object gui_item_accelerator (Lisp_Object gui_item);
 Lisp_Object gui_name_accelerator (Lisp_Object name);
@@ -85,6 +85,9 @@ unsigned int gui_item_display_flush_right (Lisp_Object gui_item,
 Lisp_Object allocate_gui_item (void);
 void gui_item_init (Lisp_Object gui_item);
 Lisp_Object parse_gui_item_tree_children (Lisp_Object list);
+Lisp_Object copy_gui_item_tree (Lisp_Object arg);
+
+extern Lisp_Object Qmenu_no_selection_hook, Qdelete_dialog_box_hook;
 
 /* this is mswindows biased but reasonably safe I think */
 #define GUI_ITEM_ID_SLOTS 8

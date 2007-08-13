@@ -1,16 +1,7 @@
 #ifndef INCLUDED_lwlib_h_
 #define INCLUDED_lwlib_h_
 
-#undef CONST
-
 #include <X11/Intrinsic.h>
-
-/* To eliminate use of `const' in the lwlib sources, define CONST_IS_LOSING. */
-#ifdef CONST_IS_LOSING
-# define CONST
-#else
-# define CONST const
-#endif
 
 #if defined (LWLIB_MENUBARS_LUCID) || defined (LWLIB_MENUBARS_MOTIF) || defined (LWLIB_MENUBARS_ATHENA)
 #define NEED_MENUBARS
@@ -193,13 +184,13 @@ extern int lw_menu_active;
 #include "xlwtabs.h"
 #endif
 
-void  lw_register_widget (CONST char* type, CONST char* name, LWLIB_ID id,
+void  lw_register_widget (const char* type, const char* name, LWLIB_ID id,
 			  widget_value* val, lw_callback pre_activate_cb,
 			  lw_callback selection_cb,
 			  lw_callback post_activate_cb);
 Widget lw_get_widget (LWLIB_ID id, Widget parent, Boolean pop_up_p);
 Widget lw_make_widget (LWLIB_ID id, Widget parent, Boolean pop_up_p);
-Widget lw_create_widget (CONST char* type, CONST char* name, LWLIB_ID id,
+Widget lw_create_widget (const char* type, const char* name, LWLIB_ID id,
 			 widget_value* val, Widget parent, Boolean pop_up_p,
 			 lw_callback pre_activate_cb,
 			 lw_callback selection_cb,
@@ -221,6 +212,7 @@ void lw_pop_down_all_widgets (LWLIB_ID id);
 void lw_add_value_args_to_args (widget_value* wv, ArgList addto, int* offset);
 void lw_add_widget_value_arg (widget_value* wv, String name, XtArgVal value);
 void lw_copy_widget_value_args (widget_value* copy, widget_value* val);
+widget_value * copy_widget_value_tree (widget_value *val, change_type change);
 
 widget_value *malloc_widget_value (void);
 void free_widget_value (widget_value *);
@@ -234,5 +226,7 @@ void lw_set_keyboard_focus (Widget parent, Widget w);
 
  /* Silly Energize hack to invert the "sheet" button */
 void lw_show_busy (Widget w, Boolean busy);
+
+void lw_remove_accelerator_spec (char *val);
 
 #endif /* INCLUDED_lwlib_h_ */

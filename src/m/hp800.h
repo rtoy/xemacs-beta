@@ -24,11 +24,6 @@ Boston, MA 02111-1307, USA.  */
    operating system this machine is likely to run.
    USUAL-OPSYS="hpux"  */
 
-/* Define WORD_MACHINE if addresses and such have
- * to be corrected before they can be used as byte counts.  */
-
-#undef WORD_MACHINE
-
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    Ones defined so far include vax, m68000, ns16000, pyramid,
@@ -37,13 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #	define hp9000s800
 #endif
 
-/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
-   the bit field into an int.  In other words, if bit fields
-   are always unsigned.
-
-   If you use NO_UNION_TYPE, this flag does not matter.  */
-
-#define EXPLICIT_SIGN_EXTEND
 
 #ifdef __hpux
 /* Now define a symbol for the cpu type, if your compiler
@@ -69,15 +57,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef CANNOT_DUMP
 
-/* Define VIRT_ADDR_VARIES if the virtual addresses of
-   pure and impure space as loaded can vary, and even their
-   relative order cannot be relied on.
-
-   Otherwise Emacs assumes that text space precedes data space,
-   numerically.  */
-
-#define VIRT_ADDR_VARIES
-
 /* Define C_ALLOCA if this machine does not support a true alloca
    and the one written in C should be used instead.
    Define HAVE_ALLOCA to say that the system provides a properly
@@ -93,8 +72,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 /* the data segment on this machine always starts at address 0x40000000. */
-
-#define DATA_SEG_BITS 0x40000000
 
 #ifdef DATA_START
 #undef DATA_START

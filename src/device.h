@@ -220,6 +220,7 @@ struct device
 DECLARE_LRECORD (device, struct device);
 #define XDEVICE(x) XRECORD (x, device, struct device)
 #define XSETDEVICE(x, p) XSETRECORD (x, p, device)
+#define wrap_device(p) wrap_object (p)
 #define DEVICEP(x) RECORDP (x, device)
 #define CHECK_DEVICE(x) CHECK_RECORD (x, device)
 #define CONCHECK_DEVICE(x) CONCHECK_RECORD (x, device)
@@ -238,9 +239,9 @@ DECLARE_LRECORD (device, struct device);
 #define DEVICE_TYPE_P(d, type)	EQ (DEVICE_TYPE (d), Q##type)
 
 #ifdef ERROR_CHECK_TYPECHECK
-INLINE struct device *
+INLINE_HEADER struct device *
 error_check_device_type (struct device *d, Lisp_Object sym);
-INLINE struct device *
+INLINE_HEADER struct device *
 error_check_device_type (struct device *d, Lisp_Object sym)
 {
   assert (EQ (DEVICE_TYPE (d), sym));
@@ -270,6 +271,47 @@ error_check_device_type (struct device *d, Lisp_Object sym)
 	(type##_console_methods->predicate_symbol, x);	\
   } while (0)
 
+#define DEVICE_DISPLAY_P(dev)				\
+  (DEVICE_LIVE_P (dev) &&				\
+   (MAYBE_INT_DEVMETH (dev,				\
+		       device_implementation_flags, ())	\
+    & XDEVIMPF_IS_A_PRINTER) ? 0 : 1)
+
+#define CHECK_DISPLAY_DEVICE(dev)			\
+  do {							\
+    CHECK_DEVICE (dev);					\
+    if (!(DEVICEP (dev)					\
+          && DEVICE_DISPLAY_P (XDEVICE (dev))))		\
+      dead_wrong_type_argument (Qdisplay, dev);		\
+  } while (0)
+
+#define CONCHECK_DISPLAY_DEVICE(dev)			\
+  do {							\
+    CONCHECK_DEVICE (dev);				\
+    if (!(DEVICEP (dev)					\
+          && DEVICE_DISPLAY_P (XDEVICE (dev))))		\
+      wrong_type_argument (Qdisplay, dev);		\
+  } while (0)
+
+#define DEVICE_PRINTER_P(dev)				\
+  (DEVICE_LIVE_P (dev) && !DEVICE_DISPLAY_P (dev))
+
+#define CHECK_PRINTER_DEVICE(dev)			\
+  do {							\
+    CHECK_DEVICE (dev);					\
+    if (!(DEVICEP (dev)					\
+          && DEVICE_PRINTER_P (XDEVICE (dev))))		\
+      dead_wrong_type_argument (Qprinter, dev);		\
+  } while (0)
+
+#define CONCHECK_PRINTER_DEVICE(dev)			\
+  do {							\
+    CONCHECK_DEVICE (dev);				\
+    if (!(DEVICEP (dev)					\
+          && DEVICE_PRINTER_P (XDEVICE (dev))))		\
+      wrong_type_argument (Qprinter, dev);		\
+  } while (0)
+
 /* #### These should be in the device-*.h files but there are
    too many places where the abstraction is broken.  Need to
    fix. */
@@ -294,6 +336,7 @@ error_check_device_type (struct device *d, Lisp_Object sym)
 
 EXFUN (Fdevice_console, 1);
 EXFUN (Fdevice_name, 1);
+EXFUN (Ffind_device, 2);
 EXFUN (Fmake_device, 3);
 EXFUN (Fselected_device, 1);
 
@@ -385,6 +428,8 @@ int valid_device_class_p (Lisp_Object class);
 #define MARK_DEVICE_WINDOWS_STRUCTURE_CHANGED(d)	\
   ((void) (windows_structure_changed = (d)->windows_structure_changed = 1))
 
+/* #### unify this with DOMAIN_DEVICE once the latter has image instances
+   expunged from it. */
 /* This turns out to be used heavily so we make it a macro to make it
    inline.  Also, the majority of the time the object will turn out to
    be a window so we move it from being checked last to being checked

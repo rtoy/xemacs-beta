@@ -36,6 +36,7 @@ struct mswindows_image_instance_data
 {
   HBITMAP* bitmaps;
   HICON icon;
+  int real_width, real_height;
 };
 
 #define MSWINDOWS_IMAGE_INSTANCE_DATA(i) \
@@ -48,9 +49,13 @@ struct mswindows_image_instance_data
 #define IMAGE_INSTANCE_MSWINDOWS_BITMAP_SLICES(i) \
      (MSWINDOWS_IMAGE_INSTANCE_DATA (i)->bitmaps)
 #define IMAGE_INSTANCE_MSWINDOWS_MASK(i) \
-     (HBITMAP)(IMAGE_INSTANCE_PIXMAP_MASK (i))
+     (*(HBITMAP*)&(IMAGE_INSTANCE_PIXMAP_MASK (i)))		/* Make it lvalue */
 #define IMAGE_INSTANCE_MSWINDOWS_ICON(i) \
      (MSWINDOWS_IMAGE_INSTANCE_DATA (i)->icon)
+#define IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_WIDTH(i) \
+     (MSWINDOWS_IMAGE_INSTANCE_DATA (i)->real_width)
+#define IMAGE_INSTANCE_MSWINDOWS_BITMAP_REAL_HEIGHT(i) \
+     (MSWINDOWS_IMAGE_INSTANCE_DATA (i)->real_height)
 
 #define XIMAGE_INSTANCE_MSWINDOWS_BITMAP(i) \
   IMAGE_INSTANCE_MSWINDOWS_BITMAP (XIMAGE_INSTANCE (i))
@@ -91,13 +96,20 @@ struct mswindows_subwindow_data
 };
 
 #define MSWINDOWS_SUBWINDOW_DATA(i) \
-((struct mswindows_subwindow_data *) (i)->data)
-
+  ((struct mswindows_subwindow_data *) (i)->data)
 #define IMAGE_INSTANCE_MSWINDOWS_CLIPWINDOW(i) \
      (MSWINDOWS_SUBWINDOW_DATA (i)->clip_window)
 
+#define XIMAGE_INSTANCE_MSWINDOWS_SUBWINDOW_DATA(i) \
+  MSWINDOWS_SUBWINDOW_DATA (XIMAGE_INSTANCE (i))
 #define XIMAGE_INSTANCE_MSWINDOWS_CLIPWINDOW(i) \
   IMAGE_INSTANCE_MSWINDOWS_CLIPWINDOW (XIMAGE_INSTANCE (i))
+
+#define DOMAIN_MSWINDOWS_HANDLE(domain) \
+  ((IMAGE_INSTANCEP (domain) && \
+  XIMAGE_INSTANCE_MSWINDOWS_SUBWINDOW_DATA (domain)) ? \
+   XWIDGET_INSTANCE_MSWINDOWS_HANDLE (domain) : \
+   FRAME_MSWINDOWS_HANDLE (DOMAIN_XFRAME (domain)))
 
 #endif /* HAVE_MS_WINDOWS */
 

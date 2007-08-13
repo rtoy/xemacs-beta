@@ -3,6 +3,7 @@
 ;; Copyright (C) 1985, 1986, 1992, 1994-5, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2000 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped
@@ -117,7 +118,9 @@ one.
 This function does nothing if HOOK is already local in the current
 buffer.
 
-Do not use `make-local-variable' to make a hook variable buffer-local."
+Do not use `make-local-variable' to make a hook variable buffer-local.
+
+See also `add-local-hook' and `remove-local-hook'."
   (if (local-variable-p hook (current-buffer)) ; XEmacs
       nil
     (or (boundp hook) (set hook nil))
@@ -139,7 +142,11 @@ To make a hook variable buffer-local, always use
 
 HOOK should be a symbol, and FUNCTION may be any valid function.  If
 HOOK is void, it is first set to nil.  If HOOK's value is a single
-function, it is changed to a list of functions."
+function, it is changed to a list of functions.
+
+You can remove this hook yourself using `remove-hook'.
+
+See also `add-local-hook' and `add-one-shot-hook'."
   (or (boundp hook) (set hook nil))
   (or (default-boundp hook) (set-default hook nil))
   ;; If the hook value is a single function, turn it into a list.
@@ -185,25 +192,114 @@ To make a hook variable buffer-local, always use
 	  (null (symbol-value hook))	;value is nil, or
 	  (null function))		;function is nil, then
       nil				;Do nothing.
-    (if (or local
-	    ;; Detect the case where make-local-variable was used on a hook
-	    ;; and do what we used to do.
-	    (and (local-variable-p hook (current-buffer))
-		 (not (memq t (symbol-value hook)))))
-	(let ((hook-value (symbol-value hook)))
-	  (if (and (consp hook-value) (not (functionp hook-value)))
-	      (if (member function hook-value)
-		  (setq hook-value (delete function (copy-sequence hook-value))))
-	    (if (equal hook-value function)
-		(setq hook-value nil)))
-	  (set hook hook-value))
-      (let ((hook-value (default-value hook)))
-	(if (and (consp hook-value) (not (functionp hook-value)))
-	    (if (member function hook-value)
-		(setq hook-value (delete function (copy-sequence hook-value))))
-	  (if (equal hook-value function)
-	      (setq hook-value nil)))
-	(set-default hook hook-value)))))
+    (flet ((hook-remove
+	    (function hook-value)
+	    (flet ((hook-test
+		    (fn hel)
+		    (or (equal fn hel)
+			(and (symbolp hel)
+			     (equal fn
+				    (get hel 'one-shot-hook-fun))))))
+	      (if (and (consp hook-value)
+		       (not (functionp hook-value)))
+		  (if (member* function hook-value :test 'hook-test)
+		      (setq hook-value
+			    (delete* function (copy-sequence hook-value)
+				     :test 'hook-test)))
+		(if (equal hook-value function)
+		    (setq hook-value nil)))
+	      hook-value)))
+      (if (or local
+	      ;; Detect the case where make-local-variable was used on a hook
+	      ;; and do what we used to do.
+	      (and (local-variable-p hook (current-buffer))
+		   (not (memq t (symbol-value hook)))))
+	  (set hook (hook-remove function (symbol-value hook)))
+	(set-default hook (hook-remove function (default-value hook)))))))
+
+;; XEmacs addition
+;; #### we need a coherent scheme for indicating compatibility info,
+;; so that it can be programmatically retrieved.
+(defun add-local-hook (hook function &optional append)
+  "Add to the local value of HOOK the function FUNCTION.
+This modifies only the buffer-local value for the hook (which is
+automatically make buffer-local, if necessary), not its default value.
+FUNCTION is not added if already present.
+FUNCTION is added (if necessary) at the beginning of the hook list
+unless the optional argument APPEND is non-nil, in which case
+FUNCTION is added at the end.
+
+HOOK should be a symbol, and FUNCTION may be any valid function.  If
+HOOK is void, it is first set to nil.  If HOOK's value is a single
+function, it is changed to a list of functions.
+
+You can remove this hook yourself using `remove-local-hook'.
+
+See also `add-hook' and `make-local-hook'."
+  (make-local-hook hook)
+  (add-hook hook function append t))
+
+;; XEmacs addition
+(defun remove-local-hook (hook function)
+  "Remove from the local value of HOOK the function FUNCTION.
+This modifies only the buffer-local value for the hook, not its default
+value. (Nothing happens if the hook is not buffer-local.)
+HOOK should be a symbol, and FUNCTION may be any valid function.  If
+FUNCTION isn't the value of HOOK, or, if FUNCTION doesn't appear in the
+list of hooks to run in HOOK, then nothing is done.  See `add-hook'.
+
+See also `add-local-hook' and `make-local-hook'."
+  (if (local-variable-p hook (current-buffer))
+      (remove-hook hook function t)))
+
+(defun add-one-shot-hook (hook function &optional append local)
+  "Add to the value of HOOK the one-shot function FUNCTION.
+FUNCTION will automatically be removed from the hook the first time
+after it runs (whether to completion or to an error).
+FUNCTION is not added if already present.
+FUNCTION is added (if necessary) at the beginning of the hook list
+unless the optional argument APPEND is non-nil, in which case
+FUNCTION is added at the end.
+
+HOOK should be a symbol, and FUNCTION may be any valid function.  If
+HOOK is void, it is first set to nil.  If HOOK's value is a single
+function, it is changed to a list of functions.
+
+You can remove this hook yourself using `remove-hook'.
+
+See also `add-hook', `add-local-hook', and `add-local-one-shot-hook'."
+  (let ((sym (gensym)))
+    (fset sym `(lambda (&rest args)
+		 (unwind-protect
+		     (apply ',function args)
+		   (remove-hook ',hook ',sym ',local))))
+    (put sym 'one-shot-hook-fun function)
+    (add-hook hook sym append local)))
+
+(defun add-local-one-shot-hook (hook function &optional append)
+  "Add to the local value of HOOK the one-shot function FUNCTION.
+FUNCTION will automatically be removed from the hook the first time
+after it runs (whether to completion or to an error).
+FUNCTION is not added if already present.
+FUNCTION is added (if necessary) at the beginning of the hook list
+unless the optional argument APPEND is non-nil, in which case
+FUNCTION is added at the end.
+
+The optional fourth argument, LOCAL, if non-nil, says to modify
+the hook's buffer-local value rather than its default value.
+This makes no difference if the hook is not buffer-local.
+To make a hook variable buffer-local, always use
+`make-local-hook', not `make-local-variable'.
+
+HOOK should be a symbol, and FUNCTION may be any valid function.  If
+HOOK is void, it is first set to nil.  If HOOK's value is a single
+function, it is changed to a list of functions.
+
+You can remove this hook yourself using `remove-local-hook'.
+
+See also `add-hook', `add-local-hook', and `add-local-one-shot-hook'."
+  (make-local-hook hook)
+  (add-one-shot-hook hook function append t))
 
 (defun add-to-list (list-var element)
   "Add to the value of LIST-VAR the element ELEMENT if it isn't there yet.
@@ -222,12 +318,6 @@ other hooks, such as major mode hooks, can do the job."
   "Function or functions to be called when a buffer is killed.
 The value of this variable may be buffer-local.
 The buffer about to be killed is current when this hook is run.")
-
-;; called by Frecord_buffer()
-(defvar record-buffer-hook nil
-  "Function or functions to be called when a buffer is recorded.
-The value of this variable may be buffer-local.
-The buffer being recorded is passed as an argument to the hook.")
 
 ;; in C in FSFmacs
 (defvar kill-emacs-hook nil
@@ -261,6 +351,15 @@ SYMBOL's value, function, and property lists."
       (setplist new (copy-list (symbol-plist symbol))))
     new))
 
+(defun set-symbol-value-in-buffer (sym val buffer)
+  "Set the value of SYM to VAL in BUFFER.  Useful with buffer-local variables.
+If SYM has a buffer-local value in BUFFER, or will have one if set, this
+function allows you to set the local value.
+
+NOTE: At some point, this will be moved into C and will be very fast."
+  (with-current-buffer buffer
+    (set sym val)))
+      
 ;;;; String functions.
 
 ;; XEmacs
@@ -268,48 +367,31 @@ SYMBOL's value, function, and property lists."
   "Replace all matches in STR for REGEXP with NEWTEXT string,
  and returns the new string.
 Optional LITERAL non-nil means do a literal replacement.
-Otherwise treat \\ in NEWTEXT string as special:
-  \\& means substitute original matched text,
-  \\N means substitute match for \(...\) number N,
-  \\\\ means insert one \\."
+Otherwise treat `\\' in NEWTEXT as special:
+  `\\&' in NEWTEXT means substitute original matched text.
+  `\\N' means substitute what matched the Nth `\\(...\\)'.
+       If Nth parens didn't match, substitute nothing.
+  `\\\\' means insert one `\\'.
+  `\\u' means upcase the next character.
+  `\\l' means downcase the next character.
+  `\\U' means begin upcasing all following characters.
+  `\\L' means begin downcasing all following characters.
+  `\\E' means terminate the effect of any `\\U' or `\\L'."
   (check-argument-type 'stringp str)
   (check-argument-type 'stringp newtext)
-  (let ((rtn-str "")
-	(start 0)
-	(special)
-	match prev-start)
-    (while (setq match (string-match regexp str start))
-      (setq prev-start start
-	    start (match-end 0)
-	    rtn-str
-	    (concat
-	      rtn-str
-	      (substring str prev-start match)
-	      (cond (literal newtext)
-		    (t (mapconcat
-			(lambda (c)
-			  (if special
-			      (progn
-				(setq special nil)
-				(cond ((eq c ?\\) "\\")
-				      ((eq c ?&)
-				       (substring str
-						  (match-beginning 0)
-						  (match-end 0)))
-				      ((and (>= c ?0) (<= c ?9))
-				       (if (> c (+ ?0 (length
-						       (match-data))))
-					   ;; Invalid match num
-					   (error "Invalid match num: %c" c)
-					 (setq c (- c ?0))
-					 (substring str
-						    (match-beginning c)
-						    (match-end c))))
-				      (t (char-to-string c))))
-			    (if (eq c ?\\) (progn (setq special t) nil)
-			      (char-to-string c))))
-			 newtext ""))))))
-    (concat rtn-str (substring str start))))
+  (if (> (length str) 50)
+      (with-temp-buffer
+	(insert str)
+	(goto-char 1)
+	  (while (re-search-forward regexp nil t)
+	    (replace-match newtext t literal))
+	  (buffer-string))
+  (let ((start 0) newstr)
+    (while (string-match regexp str start)
+      (setq newstr (replace-match newtext t literal str)
+	    start (+ (match-end 0) (- (length newstr) (length str)))
+	    str newstr))
+    str)))
 
 (defun split-string (string &optional pattern)
   "Return a list of substrings of STRING which are separated by PATTERN.
@@ -345,7 +427,8 @@ If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
   "Collect output to `standard-output' while evaluating FORMS and return
 it as a string."
   ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu> w/ mods from Stig
-  `(with-current-buffer (get-buffer-create " *string-output*")
+  `(with-current-buffer (get-buffer-create
+			 (generate-new-buffer-name " *string-output*"))
      (setq buffer-read-only nil)
      (buffer-disable-undo (current-buffer))
      (erase-buffer)
@@ -399,16 +482,10 @@ See also `with-temp-file' and `with-output-to-string'."
   "With the contents of the current buffer being STR, run BODY.
 Returns the new contents of the buffer, as modified by BODY.
 The original current buffer is restored afterwards."
-  `(let ((tempbuf (get-buffer-create " *string-as-buffer-contents*")))
-     (with-current-buffer tempbuf
-       (unwind-protect
-	   (progn
-	     (buffer-disable-undo (current-buffer))
-	     (erase-buffer)
-	     (insert ,str)
-	     ,@body
-	     (buffer-string))
-	 (erase-buffer tempbuf)))))
+  `(with-temp-buffer
+     (insert ,str)
+     ,@body
+     (buffer-string)))
 
 (defun insert-face (string face)
   "Insert STRING and highlight with FACE.  Return the extent created."
@@ -511,25 +588,126 @@ Analogous to (setq LAX-PLIST (lax-plist-remprop LAX-PLIST PROP))."
 
 ;;; Error functions
 
-(defun error (&rest args)
-  "Signal an error, making error message by passing all args to `format'.
-This error is not continuable: you cannot continue execution after the
-error using the debugger `r' command.  See also `cerror'."
-  (while t
-    (apply 'cerror args)))
+(defun error (datum &rest args)
+  "Signal a non-continuable error.
+DATUM should normally be an error symbol, i.e. a symbol defined using
+`define-error'.  ARGS will be made into a list, and DATUM and ARGS passed
+as the two arguments to `signal', the most basic error handling function.
 
-(defun cerror (&rest args)
+This error is not continuable: you cannot continue execution after the
+error using the debugger `r' command.  See also `cerror'.
+
+The correct semantics of ARGS varies from error to error, but for most
+errors that need to be generated in Lisp code, the first argument
+should be a string describing the *context* of the error (i.e. the
+exact operation being performed and what went wrong), and the remaining
+arguments or \"frobs\" (most often, there is one) specify the
+offending object(s) and/or provide additional details such as the exact
+error when a file error occurred, e.g.:
+
+-- the buffer in which an editing error occurred.
+-- an invalid value that was encountered. (In such cases, the string
+   should describe the purpose or \"semantics\" of the value [e.g. if the
+   value is an argument to a function, the name of the argument; if the value
+   is the value corresponding to a keyword, the name of the keyword; if the
+   value is supposed to be a list length, say this and say what the purpose
+   of the list is; etc.] as well as specifying why the value is invalid, if
+   that's not self-evident.)
+-- the file in which an error occurred. (In such cases, there should be a
+   second frob, probably a string, specifying the exact error that occurred.
+   This does not occur in the string that precedes the first frob, because
+   that frob describes the exact operation that was happening.
+
+For historical compatibility, DATUM can also be a string.  In this case,
+DATUM and ARGS are passed together as the arguments to `format', and then
+an error is signalled using the error symbol `error' and formatted string.
+Although this usage of `error' is very common, it is deprecated because it
+totally defeats the purpose of having structured errors.  There is now
+a rich set of defined errors you can use:
+
+error
+  syntax-error
+    invalid-read-syntax
+    list-formation-error
+      malformed-list
+        malformed-property-list
+      circular-list
+        circular-property-list
+
+  invalid-argument
+    wrong-type-argument
+    args-out-of-range
+    wrong-number-of-arguments
+    invalid-function
+    no-catch
+
+  invalid-state
+    void-function
+    cyclic-function-indirection
+    void-variable
+    cyclic-variable-indirection
+
+  invalid-operation
+    invalid-change
+      setting-constant
+    editing-error
+      beginning-of-buffer
+      end-of-buffer
+      buffer-read-only
+    io-error
+      end-of-file
+    arith-error
+      range-error
+      domain-error
+      singularity-error
+      overflow-error
+      underflow-error
+
+The five most common errors you will probably use or base your new
+errors off of are `syntax-error', `invalid-argument', `invalid-state',
+`invalid-operation', and `invalid-change'.  Note the semantic differences:
+
+-- `syntax-error' is for errors in complex structures: parsed strings, lists,
+   and the like.
+-- `invalid-argument' is for errors in a simple value.  Typically, the entire
+   value, not just one part of it, is wrong.
+-- `invalid-state' means that some settings have been changed in such a way
+   that their current state is unallowable.  More and more, code is being
+   written more carefully, and catches the error when the settings are being
+   changed, rather than afterwards.  This leads us to the next error:
+-- `invalid-change' means that an attempt is being made to change some settings
+   into an invalid state.  `invalid-change' is a type of `invalid-operation'.
+-- `invalid-operation' refers to all cases where code is trying to do something
+   that's disallowed.  This includes file errors, buffer errors (e.g. running
+   off the end of a buffer), `invalid-change' as just mentioned, and
+   arithmetic errors.
+
+See also `cerror', `signal', and `signal-error'."
+  (while t (apply
+	    'cerror datum args)))
+
+(defun cerror (datum &rest args)
   "Like `error' but signals a continuable error."
-  (signal 'error (list (apply 'format args))))
+  (cond ((stringp datum)
+	 (signal 'error (list (apply 'format datum args))))
+	((defined-error-p datum)
+	 (signal datum args))
+	(t
+	 (error 'invalid-argument "datum not string or error symbol" datum))))
 
 (defmacro check-argument-type (predicate argument)
   "Check that ARGUMENT satisfies PREDICATE.
-If not, signal a continuable `wrong-type-argument' error until the
-returned value satisfies PREDICATE, and assign the returned value
-to ARGUMENT."
-  `(if (not (,(eval predicate) ,argument))
-       (setq ,argument
-	     (wrong-type-argument ,predicate ,argument))))
+This is a macro, and ARGUMENT is not evaluated.  If ARGUMENT is an lvalue,
+this function signals a continuable `wrong-type-argument' error until the
+returned value satisfies PREDICATE, and assigns the returned value
+to ARGUMENT.  Otherwise, this function signals a non-continuable
+`wrong-type-argument' error if the returned value does not satisfy PREDICATE."
+  (if (symbolp argument)
+      `(if (not (,(eval predicate) ,argument))
+	   (setq ,argument
+		 (wrong-type-argument ,predicate ,argument)))
+    `(if (not (,(eval predicate) ,argument))
+	 (signal-error 'wrong-type-argument (list ,predicate ,argument)))))
 
 (defun signal-error (error-symbol data)
   "Signal a non-continuable error.  Args are ERROR-SYMBOL, and associated DATA.
@@ -560,6 +738,10 @@ yourself.]"
   (let ((conds (get inherits-from 'error-conditions)))
     (or conds (signal-error 'error (list "Not an error symbol" error-sym)))
     (put error-sym 'error-conditions (cons error-sym conds))))
+
+(defun defined-error-p (sym)
+  "Returns non-nil if SYM names a currently-defined error."
+  (and (symbolp sym) (not (null (get sym 'error-conditions)))))
 
 ;;;; Miscellanea.
 
@@ -636,6 +818,12 @@ If FUNCTION is not interactive, nil will be returned."
 		spec)))
 	(t
 	 (error "Non-funcallable object: %s" function))))
+
+(defun function-allows-args (function n)
+  "Return whether FUNCTION can be called with N arguments."
+  (and (<= (function-min-args function) n)
+       (or (null (function-max-args function))
+	   (<= n (function-max-args function)))))
 
 ;; This function used to be an alias to `buffer-substring', except
 ;; that FSF Emacs 20.4 added a BUFFER argument in an incompatible way.

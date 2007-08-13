@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;; Copyright (C) 1996 Ben Wing.
+;; Copyright (C) 1996, 2000 Ben Wing.
 
 ;; Author: Roland McGrath <roland@gnu.ai.mit.edu>
 ;; Keywords: maint
@@ -87,6 +87,8 @@ the section of autoloads for a file.")
 (defvar generate-autoload-section-trailer "\n;;;***\n"
   "String which indicates the end of the section of autoloads for a file.")
 
+(defvar autoload-package-name nil)
+
 ;;; Forms which have doc-strings which should be printed specially.
 ;;; A doc-string-elt property of ELT says that (nth ELT FORM) is
 ;;; the doc-string in FORM.
@@ -114,9 +116,11 @@ the section of autoloads for a file.")
 (defun autoload-trim-file-name (file)
   "Returns a relative pathname of FILE including the last directory."
   (setq file (expand-file-name file))
-  (file-relative-name file (file-name-directory
-			    (directory-file-name
-			     (file-name-directory file)))))
+  (replace-in-string
+   (file-relative-name file (file-name-directory
+			     (directory-file-name
+			      (file-name-directory file))))
+   "\\\\" "/"))
 
 ;;;###autoload
 (defun generate-file-autoloads (file &optional funlist)
@@ -339,7 +343,7 @@ are used."
   "Generic filename to put autoloads into.
 Unless you are an XEmacs maintainer, it is probably unwise to change this.")
 
-(defvar autoload-target-directory "../lisp/prim/"
+(defvar autoload-target-directory "../lisp/"
   "Directory to put autoload declaration file into.
 Unless you know what you're doing, don't mess with this.")
 
@@ -349,11 +353,15 @@ Unless you know what you're doing, don't mess with this.")
 		    data-directory)
   "*File `update-file-autoloads' puts autoloads into.
 A .el file can set this in its local variables section to make its
-autoloads go somewhere else.")
+autoloads go somewhere else.
+
+Note that `batch-update-directory' binds this variable to its own value,
+generally the file named `autoload-file-name' in the directory being
+updated.")
 
 (defconst cusload-file-name "custom-load.el"
-  "Generic filename ot put custom loads into.
-Unless you are an XEmacs maintainr, it is probably unwise to change this.")
+  "Generic filename to put custom loads into.
+Unless you are an XEmacs maintainer, it is probably unwise to change this.")
 
 ;;;###autoload
 (defun update-file-autoloads (file)
@@ -458,7 +466,9 @@ This function refuses to update autoloads files."
 (defun update-autoloads-from-directory (dir)
   "Update `generated-autoload-file' with all the current autoloads from DIR.
 This runs `update-file-autoloads' on each .el file in DIR.
-Obsolete autoload entries for files that no longer exist are deleted."
+Obsolete autoload entries for files that no longer exist are deleted.
+Note that, if this function is called from `batch-update-directory',
+`generated-autoload-file' was rebound in that function."
   (interactive "DUpdate autoloads for directory: ")
   (setq dir (expand-file-name dir))
   (let ((simple-dir (file-name-as-directory
@@ -534,18 +544,25 @@ on the command line."
 
 (defvar autoload-package-name nil)
 
+;; #### this function is almost identical to, but subtly different from,
+;; batch-update-autoloads.  Both of these functions, unfortunately, are
+;; used in various build scripts in xemacs-packages.  They should be
+;; merged. (However, it looks like no scripts pass more than one arg,
+;; making merging easy.) --ben
+
 ;;;###autoload
 (defun batch-update-directory ()
-  "Update the autoloads for the directory on the command line.
-Runs `update-file-autoloads' on each file in the given directory, must
-be used only with -batch and kills XEmacs on completion."
+  "Update the autoloads for the directories on the command line.
+Runs `update-file-autoloads' on each file in the given directory, and must
+be used only with -batch."
   (unless noninteractive
     (error "batch-update-directory is to be used only with -batch"))
   (let ((defdir default-directory)
 	(enable-local-eval nil))	; Don't query in batch mode.
     (dolist (arg command-line-args-left)
       (setq arg (expand-file-name arg defdir))
-      (let ((generated-autoload-file (concat arg "/" autoload-file-name)))
+      (let ((generated-autoload-file (expand-file-name autoload-file-name
+							arg)))
 	(cond
 	 ((file-directory-p arg)
 	  (message "Updating autoloads in directory %s..." arg)
@@ -560,6 +577,36 @@ be used only with -batch and kills XEmacs on completion."
       ;; (kill-emacs 0)
       )
     (setq command-line-args-left nil)))
+
+;; #### i created the following.  this one and the last should be merged into
+;; batch-update-autoloads and batch-update-one-directory. --ben
+
+;;;###autoload
+(defun batch-update-one-directory ()
+  "Update the autoloads for a single directory on the command line.
+Runs `update-file-autoloads' on each file in the given directory, and must
+be used only with -batch."
+  (unless noninteractive
+    (error "batch-update-directory is to be used only with -batch"))
+  (let ((defdir default-directory)
+	(enable-local-eval nil))	; Don't query in batch mode.
+    (let ((arg (car command-line-args-left)))
+      (setq command-line-args-left (cdr command-line-args-left))
+      (setq arg (expand-file-name arg defdir))
+      (let ((generated-autoload-file (expand-file-name autoload-file-name
+							arg)))
+	(cond
+	 ((file-directory-p arg)
+	  (message "Updating autoloads in directory %s..." arg)
+	  (update-autoloads-from-directory arg))
+	 (t (error "No such file or directory: %s" arg)))
+	(fixup-autoload-buffer (concat (if autoload-package-name
+					   autoload-package-name
+					 (file-name-nondirectory arg))
+				"-autoloads"))
+	(save-some-buffers t))
+      ;; (message "Done")
+      )))
 
 (provide 'autoload)
 

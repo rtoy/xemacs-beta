@@ -28,11 +28,6 @@ Boston, MA 02111-1307, USA.  */
    operating system this machine is likely to run.
    USUAL-OPSYS="irix3-3"  */
 
-/* Define WORD_MACHINE if addresses and such have
- * to be corrected before they can be used as byte counts.  */
-
-#undef WORD_MACHINE
-
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    Ones defined so far include vax, m68000, ns16000, pyramid,
@@ -54,14 +49,6 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_NATIVE_SOUND
 #endif
 
-/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
-   the bit field into an int.  In other words, if bit fields
-   are always unsigned.
-
-   If you use NO_UNION_TYPE, this flag does not matter.  */
-
-#define EXPLICIT_SIGN_EXTEND
-
 /* Data type of load average, as read out of kmem.  */
 
 #define LOAD_AVE_TYPE long	/* This doesn't quite work on the 4D */
@@ -80,15 +67,6 @@ Boston, MA 02111-1307, USA.  */
    and temacs will do (load "loadup") automatically unless told otherwise.  */
 
 #undef CANNOT_DUMP
-
-/* Define VIRT_ADDR_VARIES if the virtual addresses of
-   pure and impure space as loaded can vary, and even their
-   relative order cannot be relied on.
-
-   Otherwise Emacs assumes that text space precedes data space,
-   numerically.  */
-
-/* #define VIRT_ADDR_VARIES */
 
 /* Define C_ALLOCA if this machine does not support a true alloca
    and the one written in C should be used instead.
@@ -116,15 +94,7 @@ Boston, MA 02111-1307, USA.  */
 #define UNEXEC "unexelfsgi.o"
 
 #define TEXT_START 0x400000
-
-/*
- * DATA_SEG_BITS forces that bit to be or'd in with any pointers which
- * are trying to access pure strings (as gnu-emacs only allows 24 bits
- * for the value field of a LISP_OBJECT).
- */
-
 #define DATA_START 0x10000000
-#define DATA_SEG_BITS	0x10000000
 
 #undef LIBS_MACHINE
 /* -lsun in case using Yellow Pages for passwords.  */

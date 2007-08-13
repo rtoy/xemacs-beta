@@ -39,12 +39,12 @@ typedef Widget
 
 typedef struct _widget_creation_entry
 {
-  CONST char*			type;
+  const char*			type;
   widget_creation_function	function;
 } widget_creation_entry;
 
 /* update all other instances of a widget.  Can be used in a callback when
-   a wiget has been used by the user */
+   a widget has been used by the user */
 void
 lw_internal_update_other_instances (Widget widget, XtPointer closure,
 				    XtPointer call_data);

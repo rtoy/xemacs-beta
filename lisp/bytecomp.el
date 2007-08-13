@@ -3,13 +3,14 @@
 ;;; Copyright (C) 1985-1987, 1991-1994 Free Software Foundation, Inc.
 ;;; Copyright (C) 1996 Ben Wing.
 
-;; Author: Jamie Zawinski <jwz@jwz.org>
+;; Authors: Jamie Zawinski <jwz@jwz.org>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
-;; Keywords: internal
+;;	Ben Wing <ben@xemacs.org>
+;;	Martin Buchholz <martin@xemacs.org>
+;;	Richard Stallman <rms@gnu.org>
+;; Keywords: internal lisp
 
-;; Subsequently modified by RMS and others.
-
-(defconst byte-compile-version (purecopy  "2.26 XEmacs; 1998-10-07."))
+(defconst byte-compile-version (purecopy  "2.27 XEmacs; 2000-09-12."))
 
 ;; This file is part of XEmacs.
 
@@ -33,8 +34,15 @@
 ;;; Commentary:
 
 ;; The Emacs Lisp byte compiler.  This crunches lisp source into a
-;; sort of p-code which takes up less space and can be interpreted
-;; faster.  The user entry points are byte-compile-file,
+;; sort of p-code (`bytecode') which takes up less space and can be
+;; interpreted faster.  First, the source code forms are converted to
+;; an intermediate form, `lapcode' [`LAP' == `Lisp Assembly Program']
+;; which is much easier to manipulate than bytecode.  Then the lapcode
+;; is converted to bytecode, which can be considered to be actual
+;; machine language.  Optimizations can occur at either the source
+;; level or the lapcode level.
+
+;; The user entry points are byte-compile-file,
 ;; byte-recompile-directory and byte-compile-buffer.
 
 ;;; Code:
@@ -938,7 +946,9 @@ otherwise pop it")
    (concat "!! "
 	   (format (if (cdr error-info) "%s (%s)" "%s")
 		   (get (car error-info) 'error-message)
-		   (prin1-to-string (cdr error-info))))))
+		   (prin1-to-string (cdr error-info)))))
+  (if stack-trace-on-error
+      (backtrace nil t)))
 
 ;;; Used by make-obsolete.
 (defun byte-compile-obsolete (form)
@@ -1320,11 +1330,11 @@ otherwise pop it")
 	      (point-max byte-compile-log-buffer))))
 
        (unwind-protect
-	   (condition-case error-info
-	       (progn ,@body)
-	     (error
-	      (byte-compile-report-error error-info)))
-
+	   (call-with-condition-handler
+	       #'(lambda (error-info)
+		   (byte-compile-report-error error-info))
+	       #'(lambda ()
+		   (progn ,@body)))
 	 ;; Always set point in log to start of interesting output.
 	 (with-current-buffer byte-compile-log-buffer
 	   (let ((show-begin
@@ -1355,7 +1365,7 @@ otherwise pop it")
   "Recompile every `.el' file in DIRECTORY that already has a `.elc' file.
 Files in subdirectories of DIRECTORY are processed also."
   (interactive "DByte force recompile (directory): ")
-  (byte-recompile-directory directory nil t))
+  (byte-recompile-directory directory nil nil t))
 
 ;;;###autoload
 (defun byte-recompile-directory (directory &optional arg norecursion force)
@@ -1986,12 +1996,14 @@ list that represents a doc string reference.
     ;; No doc string, so we can compile this as a normal form.
     (byte-compile-keep-pending form 'byte-compile-normal-call)))
 
-(put 'defvar   'byte-hunk-handler 'byte-compile-file-form-defvar)
-(put 'defconst 'byte-hunk-handler 'byte-compile-file-form-defvar)
-(defun byte-compile-file-form-defvar (form)
+(put 'defvar   'byte-hunk-handler 'byte-compile-file-form-defvar-or-defconst)
+(put 'defconst 'byte-hunk-handler 'byte-compile-file-form-defvar-or-defconst)
+(defun byte-compile-file-form-defvar-or-defconst (form)
+  ;; (defvar|defconst VAR [VALUE [DOCSTRING]])
   (if (> (length form) 4)
-      (byte-compile-warn "%s used with too many args (%s)"
-			 (car form) (nth 1 form)))
+      (byte-compile-warn
+       "%s %s called with %d arguments, but accepts only %s"
+       (car form) (nth 1 form) (length (cdr form)) 3))
   (if (and (> (length form) 3) (not (stringp (nth 3 form))))
       (byte-compile-warn "Third arg to %s %s is not a string: %s"
 			 (car form) (nth 1 form) (nth 3 form)))
@@ -3711,7 +3723,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler-1 defun)
 (byte-defop-compiler-1 defmacro)
 (byte-defop-compiler-1 defvar)
-(byte-defop-compiler-1 defconst byte-compile-defvar)
+(byte-defop-compiler-1 defvar   byte-compile-defvar-or-defconst)
+(byte-defop-compiler-1 defconst byte-compile-defvar-or-defconst)
 (byte-defop-compiler-1 autoload)
 ;; According to Mly this can go now that lambda is a macro
 ;(byte-defop-compiler-1 lambda byte-compile-lambda-form)
@@ -3739,32 +3752,38 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		   (list 'quote (cons 'macro (eval code))))))
 	 (list 'quote (nth 1 form)))))
 
-(defun byte-compile-defvar (form)
-  ;; This is not used for file-level defvar/consts with doc strings:
-  ;; byte-compile-file-form-defvar will be used in that case.
-  (let ((var (nth 1 form))
+(defun byte-compile-defvar-or-defconst (form)
+  ;; This is not used for file-level defvar/defconsts with doc strings:
+  ;; byte-compile-file-form-defvar-or-defconst will be used in that case.
+  ;; (defvar|defconst VAR [VALUE [DOCSTRING]])
+  (let ((fun (nth 0 form))
+	(var (nth 1 form))
 	(value (nth 2 form))
 	(string (nth 3 form)))
-    (if (> (length form) 4)
-	(byte-compile-warn "%s used with too many args" (car form)))
-    (if (memq 'free-vars byte-compile-warnings)
-	(setq byte-compile-bound-variables
-	      (cons (cons var byte-compile-global-bit)
-		    byte-compile-bound-variables)))
+    (when (> (length form) 4)
+      (byte-compile-warn
+       "%s %s called with %d arguments, but accepts only %s"
+       fun var (length (cdr form)) 3))
+    (when (memq 'free-vars byte-compile-warnings)
+      (push (cons var byte-compile-global-bit) byte-compile-bound-variables))
     (byte-compile-body-do-effect
-     (list (if (cdr (cdr form))
-	       (if (eq (car form) 'defconst)
-		   (list 'setq var value)
-		 (list 'or (list 'boundp (list 'quote var))
-		       (list 'setq var value))))
-	   ;; Put the defined variable in this library's load-history entry
-	   ;; just as a real defvar would.
-	   (list 'setq 'current-load-list
-		 (list 'cons (list 'quote var)
-		       'current-load-list))
-	   (if string
-	       (list 'put (list 'quote var) ''variable-documentation string))
-	   (list 'quote var)))))
+     (list
+      ;; Put the defined variable in this library's load-history entry
+      ;; just as a real defvar would, but only in top-level forms.
+      (when (null byte-compile-current-form)
+	`(push ',var current-load-list))
+      (when (> (length form) 3)
+	(when (and string (not (stringp string)))
+	  (byte-compile-warn "Third arg to %s %s is not a string: %s"
+			     fun var string))
+	`(put ',var 'variable-documentation ,string))
+      (if (cdr (cdr form))		; `value' provided
+	  (if (eq fun 'defconst)
+	      ;; `defconst' sets `var' unconditionally.
+	      `(setq ,var ,value)
+	    ;; `defvar' sets `var' only when unbound.
+	    `(if (not (boundp ',var)) (setq ,var ,value))))
+      `',var))))
 
 (defun byte-compile-autoload (form)
   (and (byte-compile-constp (nth 1 form))
@@ -4037,26 +4056,41 @@ For example, invoke \"xemacs -batch -f batch-byte-compile $emacs/ ~/*.el\""
       (error "`batch-byte-compile' is to be used only with -batch"))
   (let ((error nil))
     (while command-line-args-left
-      (if (file-directory-p (expand-file-name (car command-line-args-left)))
-	  (let ((files (directory-files (car command-line-args-left)))
-		source dest)
-	    (while files
-	      (if (and (string-match emacs-lisp-file-regexp (car files))
-		       (not (auto-save-file-name-p (car files)))
-		       (setq source (expand-file-name
-				     (car files)
-				     (car command-line-args-left)))
-		       (setq dest (byte-compile-dest-file source))
-		       (file-exists-p dest)
-		       (file-newer-than-file-p source dest))
-		  (if (null (batch-byte-compile-1 source))
-		      (setq error t)))
-	      (setq files (cdr files))))
-	(if (null (batch-byte-compile-1 (car command-line-args-left)))
-	    (setq error t)))
-      (setq command-line-args-left (cdr command-line-args-left)))
+      (if (null (batch-byte-compile-one-file))
+	  (setq error t)))
     (message "Done")
     (kill-emacs (if error 1 0))))
+
+;;;###autoload
+(defun batch-byte-compile-one-file ()
+  "Run `byte-compile-file' on a single file remaining on the command line.
+Use this from the command line, with `-batch';
+it won't work in an interactive Emacs."
+  ;; command-line-args-left is what is left of the command line (from
+  ;; startup.el)
+  (defvar command-line-args-left)	;Avoid 'free variable' warning
+  (if (not noninteractive)
+      (error "`batch-byte-compile-one-file' is to be used only with -batch"))
+  (let (error
+	(file-to-process (car command-line-args-left)))
+    (setq command-line-args-left (cdr command-line-args-left))
+    (if (file-directory-p (expand-file-name file-to-process))
+	(let ((files (directory-files file-to-process))
+	      source dest)
+	  (while files
+	    (if (and (string-match emacs-lisp-file-regexp (car files))
+		     (not (auto-save-file-name-p (car files)))
+		     (setq source (expand-file-name
+				   (car files)
+				   file-to-process))
+		     (setq dest (byte-compile-dest-file source))
+		     (file-exists-p dest)
+		     (file-newer-than-file-p source dest))
+		(if (null (batch-byte-compile-1 source))
+		    (setq error t)))
+	    (setq files (cdr files)))
+	  (null error))
+      (batch-byte-compile-1 file-to-process))))
 
 (defun batch-byte-compile-1 (file)
   (condition-case err

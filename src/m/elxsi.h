@@ -28,11 +28,6 @@ Boston, MA 02111-1307, USA.  */
 /* This file was modified by Matt Crawford <matt@tank.uchicago.edu>
    to work under Elxsi's 12.0 release of BSD unix. */
 
-/* Define WORD_MACHINE if addresses and such have
- * to be corrected before they can be used as byte counts.  */
-
-/*#define WORD_MACHINE */
-
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    vax, m68000, ns16000, pyramid, orion, tahoe and APOLLO
@@ -41,15 +36,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef elxsi
 #define elxsi
 #endif
-
-/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
-   the bit field into an int.  In other words, if bit fields
-   are always unsigned.
-
-   If you use NO_UNION_TYPE, this flag does not matter.  */
-
-#define EXPLICIT_SIGN_EXTEND
-
 
 /* Name of kernel load average variable */
 
@@ -73,15 +59,6 @@ Boston, MA 02111-1307, USA.  */
    Dumping should work now.  */
 
 /* #define CANNOT_DUMP */
-
-/* Define VIRT_ADDR_VARIES if the virtual addresses of
-   pure and impure space as loaded can vary, and even their
-   relative order cannot be relied on.
-
-   Otherwise Emacs assumes that text space precedes data space,
-   numerically.  */
-
-/* #define VIRT_ADDR_VARIES */
 
 /* Define C_ALLOCA if this machine does not support a true alloca
    and the one written in C should be used instead.

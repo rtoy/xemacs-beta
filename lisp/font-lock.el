@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1992-1995, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
-;; Copyright (C) 1996 Ben Wing.
+;; Copyright (C) 1996, 2000 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@jwz.org>, for the LISPM Preservation Society.
 ;; Minimally merged with FSF 19.34 by Barry Warsaw <bwarsaw@python.org>
@@ -178,8 +178,8 @@ The size is measured in characters.  This affects `font-lock-fontify-region'
 but not `font-lock-fontify-buffer'. (In other words, when you first visit
 a file and it gets fontified, you will see status messages no matter what
 size the file is.  However, if you do something else like paste a
-chunk of text or revert a buffer, you will see status messages only if the
-changed region is large enough.)
+chunk of text, you will see status messages only if the changed region is
+large enough.)
 
 Note that setting `font-lock-verbose' to nil disables the status
 messages entirely."
@@ -318,95 +318,123 @@ megabyte for buffers in `rmail-mode', and size is irrelevant otherwise."
 
 ;;;###autoload
 (defvar font-lock-keywords nil
-  "A list of the keywords to highlight.
-Each element should be of the form:
+  "A list defining the keywords for `font-lock-mode' to highlight.
 
- MATCHER
- (MATCHER . MATCH)
- (MATCHER . FACENAME)
- (MATCHER . HIGHLIGHT)
- (MATCHER HIGHLIGHT ...)
- (eval . FORM)
+ FONT-LOCK-KEYWORDS := List of FONT-LOCK-FORM's.
 
-where HIGHLIGHT should be either MATCH-HIGHLIGHT or MATCH-ANCHORED.
+ FONT-LOCK-FORM     :== MATCHER
+                      | (MATCHER . MATCH)
+                      | (MATCHER . FACE-FORM)
+                      | (MATCHER . HIGHLIGHT)
+                      | (MATCHER HIGHLIGHT ...)
+                      | (eval . FORM)
 
-FORM is an expression, whose value should be a keyword element,
-evaluated when the keyword is (first) used in a buffer.  This feature
-can be used to provide a keyword that can only be generated when Font
-Lock mode is actually turned on.
+ MATCHER            :== A string containing a regexp.
+                      | A variable containing a regexp to search for.
+                      | A function to call to make the search.
+                        It is called with one arg, the limit of the search,
+                        and should leave MATCH results in the XEmacs global
+                        match data.
+
+ MATCH              :== An integer match subexpression number from MATCHER.
+
+ FACE-FORM           :== The symbol naming a defined face.
+                      | Expression whos value is the face name to use.  If you
+                        want FACE-FORM to be a symbol that evaluates to a face,
+                        use a form like \"(progn sym)\".
+
+ HIGHLIGHT          :== MATCH-HIGHLIGHT
+                      | MATCH-ANCHORED
+
+ FORM               :== Expression returning a FONT-LOCK-FORM, evaluated when
+                        the FONT-LOCK-FORM is first used in a buffer.  This
+                        feature can be used to provide a FONT-LOCK-FORM that
+                        can only be generated when Font Lock mode is actually
+                        turned on.
+
+ MATCH-HIGHLIGHT    :== (MATCH FACE-FORM OVERRIDE LAXMATCH)
+
+ OVERRIDE           :== t        - overwrite existing fontification
+                      | 'keep    - only parts not already fontified are
+                                   highlighted.
+                      | 'prepend - merge faces, this fontification has
+                                   precedence over existing
+                      | 'append  - merge faces, existing fontification has
+                                   precedence over
+                                   this face.
+
+ LAXMATCH           :== If non-nil, no error is signalled if there is no MATCH
+                        in MATCHER.
+
+ MATCH-ANCHORED     :== (ANCHOR-MATCHER PRE-MATCH-FORM \\
+                                          POST-MATCH-FORM MATCH-HIGHLIGHT ...)
+
+ ANCHOR-MATCHER     :== Like a MATCHER, except that the limit of the search
+                        defaults to the end of the line after PRE-MATCH-FORM
+                        is evaluated.  However, if PRE-MATCH-FORM returns a
+                        position greater than the end of the line, that
+                        position is used as the limit of the search.  It is
+                        generally a bad idea to return a position greater than
+                        the end of the line, i.e., cause the ANCHOR-MATCHER
+                        search to span lines.
+
+ PRE-MATCH-FORM     :== Evaluated before the ANCHOR-MATCHER is used, therefore
+                        can be used to initialize before, ANCHOR-MATCHER is
+                        used.  Typically, PRE-MATCH-FORM is used to move to
+                        some position relative to the original MATCHER, before
+                        starting with the ANCHOR-MATCHER.
+
+ POST-MATCH-FORM    :== Like PRE-MATCH-FORM, but used to clean up after the
+                        ANCHOR-MATCHER.  It might be used to move, before
+                        resuming with MATCH-ANCHORED's parent's MATCHER.
+
+For example, an element of the first form highlights (if not already highlighted):
+
+  \"\\\\<foo\\\\>\"                    Discrete occurrences of \"foo\" in the value
+                                 of the variable `font-lock-keyword-face'.
+
+  (\"fu\\\\(bar\\\\)\" . 1)            Substring \"bar\" within all occurrences of
+                                 \"fubar\" in the value of
+                                 `font-lock-keyword-face'.
+
+  (\"fubar\" . fubar-face)         Occurrences of \"fubar\" in the value of
+                                 `fubar-face'.
+
+  (\"foo\\\\|bar\" 0 foo-bar-face t) Occurrences of either \"foo\" or \"bar\" in the
+                                 value of `foo-bar-face', even if already
+                                 highlighted.
+
+  (fubar-match 1 fubar-face)     The first subexpression within all
+                                 occurrences of whatever the function
+                                 `fubar-match' finds and matches in the value
+                                 of `fubar-face'.
+
+  (\"\\\\<anchor\\\\>\" (0 anchor-face) (\"\\\\<item\\\\>\" nil nil (0 item-face)))
+   -------------- ---------------  ------------ --- --- -------------
+       |            |               |            |   |          |
+   MATCHER          |         ANCHOR-MATCHER     |   +------+ MATCH-HIGHLIGHT
+             MATCH-HIGHLIGHT                 PRE-MATCH-FORM |
+                                                           POST-MATCH-FORM
+
+  Discrete occurrences of \"anchor\" in the value of `anchor-face', and
+  subsequent discrete occurrences of \"item\" (on the same line) in the value
+  of `item-face'.  (Here PRE-MATCH-FORM and POST-MATCH-FORM are nil.
+  Therefore \"item\" is initially searched for starting from the end of the
+  match of \"anchor\", and searching for subsequent instance of \"anchor\"
+  resumes from where searching for \"item\" concluded.)
 
 For highlighting single items, typically only MATCH-HIGHLIGHT is required.
-However, if an item or (typically) items is to be highlighted following the
-instance of another item (the anchor) then MATCH-ANCHORED may be required.
-
-MATCH-HIGHLIGHT should be of the form:
-
- (MATCH FACENAME OVERRIDE LAXMATCH)
-
-Where MATCHER can be either the regexp to search for, a variable
-containing the regexp to search for, or the function to call to make
-the search (called with one argument, the limit of the search).  MATCH
-is the subexpression of MATCHER to be highlighted.  FACENAME is either
-a symbol naming a face, or an expression whose value is the face name
-to use.  If you want FACENAME to be a symbol that evaluates to a face,
-use a form like \"(progn sym)\".
-
-OVERRIDE and LAXMATCH are flags.  If OVERRIDE is t, existing fontification may
-be overwritten.  If `keep', only parts not already fontified are highlighted.
-If `prepend' or `append', existing fontification is merged with the new, in
-which the new or existing fontification, respectively, takes precedence.
-If LAXMATCH is non-nil, no error is signalled if there is no MATCH in MATCHER.
-
-For example, an element of the form highlights (if not already highlighted):
-
- \"\\\\\\=<foo\\\\\\=>\"		Discrete occurrences of \"foo\" in the value of the
-			variable `font-lock-keyword-face'.
- (\"fu\\\\(bar\\\\)\" . 1)	Substring \"bar\" within all occurrences of \"fubar\" in
-			the value of `font-lock-keyword-face'.
- (\"fubar\" . fubar-face)	Occurrences of \"fubar\" in the value of `fubar-face'.
- (\"foo\\\\|bar\" 0 foo-bar-face t)
-			Occurrences of either \"foo\" or \"bar\" in the value
-			of `foo-bar-face', even if already highlighted.
-
-MATCH-ANCHORED should be of the form:
-
- (MATCHER PRE-MATCH-FORM POST-MATCH-FORM MATCH-HIGHLIGHT ...)
-
-Where MATCHER is as for MATCH-HIGHLIGHT with one exception; see below.
-PRE-MATCH-FORM and POST-MATCH-FORM are evaluated before the first, and after
-the last, instance MATCH-ANCHORED's MATCHER is used.  Therefore they can be
-used to initialize before, and cleanup after, MATCHER is used.  Typically,
-PRE-MATCH-FORM is used to move to some position relative to the original
-MATCHER, before starting with MATCH-ANCHORED's MATCHER.  POST-MATCH-FORM might
-be used to move, before resuming with MATCH-ANCHORED's parent's MATCHER.
-
-For example, an element of the form highlights (if not already highlighted):
-
- (\"\\\\\\=<anchor\\\\\\=>\" (0 anchor-face) (\"\\\\\\=<item\\\\\\=>\" nil nil (0 item-face)))
-
- Discrete occurrences of \"anchor\" in the value of `anchor-face', and subsequent
- discrete occurrences of \"item\" (on the same line) in the value of `item-face'.
- (Here PRE-MATCH-FORM and POST-MATCH-FORM are nil.  Therefore \"item\" is
- initially searched for starting from the end of the match of \"anchor\", and
- searching for subsequent instance of \"anchor\" resumes from where searching
- for \"item\" concluded.)
-
-The above-mentioned exception is as follows.  The limit of the MATCHER search
-defaults to the end of the line after PRE-MATCH-FORM is evaluated.
-However, if PRE-MATCH-FORM returns a position greater than the position after
-PRE-MATCH-FORM is evaluated, that position is used as the limit of the search.
-It is generally a bad idea to return a position greater than the end of the
-line, i.e., cause the MATCHER search to span lines.
-
-Note that the MATCH-ANCHORED feature is experimental; in the future, we may
-replace it with other ways of providing this functionality.
+However, if an item or (typically) several items are to be highlighted
+following the instance of another item (the anchor) then MATCH-ANCHORED may be
+required.
 
 These regular expressions should not match text which spans lines.  While
-\\[font-lock-fontify-buffer] handles multi-line patterns correctly, updating
-when you edit the buffer does not, since it considers text one line at a time.
+\\[font-lock-fontify-buffer] handles multi-line patterns correctly, updating when you
+edit the buffer does not, since it considers text one line at a time.
 
-Be very careful composing regexps for this list;
-the wrong pattern can dramatically slow things down!")
+Be very careful composing regexps for this list; the wrong pattern can
+dramatically slow things down!
+")
 ;;;###autoload
 (make-variable-buffer-local 'font-lock-keywords)
 
@@ -552,25 +580,55 @@ This is normally set via `font-lock-defaults'.")
 
 ;; #### barf gag retch.  Horrid FSF lossage that we need to
 ;; keep around for compatibility with font-lock-keywords that
-;; forget to properly quote their faces.
+;; forget to properly quote their faces.  I tried just let-binding
+;; them when we eval the face expression, but that failes because
+;; some	files actually use the variables directly in their init code
+;; without quoting them. --ben
 (defvar font-lock-comment-face 'font-lock-comment-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 (defvar font-lock-doc-string-face 'font-lock-doc-string-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 (defvar font-lock-string-face 'font-lock-string-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 (defvar font-lock-keyword-face 'font-lock-keyword-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 (defvar font-lock-function-name-face 'font-lock-function-name-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 (defvar font-lock-variable-name-face 'font-lock-variable-name-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 (defvar font-lock-type-face 'font-lock-type-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 (defvar font-lock-reference-face 'font-lock-reference-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 (defvar font-lock-preprocessor-face 'font-lock-preprocessor-face
-  "Don't even think of using this.")
+  "This variable should not be set.
+It is present only for horrid FSF compatibility reasons.
+The corresponding face should be set using `edit-faces' or the
+`set-face-*' functions.")
 
 (defconst font-lock-face-list
   '(font-lock-comment-face
@@ -584,11 +642,10 @@ This is normally set via `font-lock-defaults'.")
     font-lock-preprocessor-face
     font-lock-warning-face))
 
-;; #### There should be an emulation for the old font-lock-use-*
-;; settings!
-
 (defface font-lock-comment-face
   '((((class color) (background dark)) (:foreground "gray80"))
+    ;; blue4 is hardly different from black on windows.
+    (((class color) (background light) (type mswindows)) (:foreground "blue"))
     (((class color) (background light)) (:foreground "blue4"))
     (((class grayscale) (background light))
      (:foreground "DimGray" :bold t :italic t))
@@ -620,6 +677,8 @@ on the major mode's symbol."
 
 (defface font-lock-keyword-face
   '((((class color) (background dark)) (:foreground "cyan"))
+    ;; red4 is hardly different from black on windows.
+    (((class color) (background light) (type mswindows)) (:foreground "red"))
     (((class color) (background light)) (:foreground "red4"))
     (((class grayscale) (background light)) (:foreground "LightGray" :bold t))
     (((class grayscale) (background dark)) (:foreground "DimGray" :bold t))
@@ -629,6 +688,11 @@ on the major mode's symbol."
 
 (defface font-lock-function-name-face
   '((((class color) (background dark)) (:foreground "aquamarine"))
+    ;; brown4 is hardly different from black on windows.
+    ;; I changed it to red because IMO it's pointless and ugly to
+    ;; use a million slightly different colors for niggly syntactic
+    ;; differences. --ben
+    (((class color) (background light) (type mswindows)) (:foreground "red"))
     (((class color) (background light)) (:foreground "brown4"))
     (t (:bold t :underline t)))
   "Font Lock mode face used to highlight function names."
@@ -823,28 +887,21 @@ See the variable `font-lock-keywords' for customization."
     (set (make-local-variable 'font-lock-mode) on-p)
     (cond (on-p
 	   (font-lock-set-defaults-1)
-	   (make-local-hook 'before-revert-hook)
-	   (make-local-hook 'after-revert-hook)
-	   ;; If buffer is reverted, must clean up the state.
-	   (add-hook 'before-revert-hook 'font-lock-revert-setup nil t)
-	   (add-hook 'after-revert-hook 'font-lock-revert-cleanup nil t)
 	   (run-hooks 'font-lock-mode-hook)
 	   (cond (font-lock-fontified
 		  nil)
 		 ((or (null maximum-size) (<= (buffer-size) maximum-size))
 		  (font-lock-fontify-buffer))
 		 (font-lock-verbose
-		  (lmessage 'command "Fontifying %s... buffer too big."
-		    (buffer-name)))))
+		  (progress-feedback-with-label
+		   'font-lock
+		   "Fontifying %s... buffer too big." 'abort
+		   (buffer-name)))))
 	  (font-lock-fontified
 	   (setq font-lock-fontified nil)
-	   (remove-hook 'before-revert-hook 'font-lock-revert-setup t)
-	   (remove-hook 'after-revert-hook 'font-lock-revert-cleanup t)
 	   (font-lock-unfontify-region (point-min) (point-max))
 	   (font-lock-thing-lock-cleanup))
 	  (t
-	   (remove-hook 'before-revert-hook 'font-lock-revert-setup t)
-	   (remove-hook 'after-revert-hook 'font-lock-revert-cleanup t)
 	   (font-lock-thing-lock-cleanup)))
     (redraw-modeline)))
 
@@ -967,45 +1024,46 @@ This can take a while for large buffers."
 (defun font-lock-unfontify-region (beg end &optional loudly)
   (funcall font-lock-unfontify-region-function beg end loudly))
 
-;; #### In these functions, the FSF is careful to do
-;; (save-restriction
-;;   (widen)
-;; before anything else.  Should we copy?
 (defun font-lock-default-fontify-buffer ()
   (interactive)
-  (let ((was-on font-lock-mode)
-	(font-lock-verbose (or font-lock-verbose (interactive-p)))
-	(font-lock-message-threshold 0)
-	(aborted nil))
-    ;; Turn it on to run hooks and get the right font-lock-keywords.
-    (or was-on (font-lock-mode 1))
-    (font-lock-unfontify-region (point-min) (point-max) t)
-;;    (buffer-syntactic-context-flush-cache)
+  ;; if we don't widen, then the C code will fail to
+  ;; realize that we're inside a comment.
+  (save-restriction
+    (widen)
+    (let ((was-on font-lock-mode)
+	  (font-lock-verbose (or font-lock-verbose (interactive-p)))
+	  (font-lock-message-threshold 0)
+	  (aborted nil))
+      ;; Turn it on to run hooks and get the right font-lock-keywords.
+      (or was-on (font-lock-mode 1))
+      (font-lock-unfontify-region (point-min) (point-max) t)
+      ;;    (buffer-syntactic-context-flush-cache)
     
-    ;; If a ^G is typed during fontification, abort the fontification, but
-    ;; return normally (do not signal.)  This is to make it easy to abort
-    ;; fontification if it's taking a long time, without also causing the
-    ;; buffer not to pop up.  If a real abort is desired, the user can ^G
-    ;; again.
-    ;;
-    ;; Possibly this should happen down in font-lock-fontify-region instead
-    ;; of here, but since that happens from the after-change-hook (meaning
-    ;; much more frequently) I'm afraid of the bad consequences of stealing
-    ;; the interrupt character at inopportune times.
-    ;;
-    (condition-case nil
-	(save-excursion
-	  (font-lock-fontify-region (point-min) (point-max)))
-      (quit
-       (setq aborted t)))
+      ;; If a ^G is typed during fontification, abort the fontification, but
+      ;; return normally (do not signal.)  This is to make it easy to abort
+      ;; fontification if it's taking a long time, without also causing the
+      ;; buffer not to pop up.  If a real abort is desired, the user can ^G
+      ;; again.
+      ;;
+      ;; Possibly this should happen down in font-lock-fontify-region instead
+      ;; of here, but since that happens from the after-change-hook (meaning
+      ;; much more frequently) I'm afraid of the bad consequences of stealing
+      ;; the interrupt character at inopportune times.
+      ;;
+      (condition-case nil
+	  (save-excursion
+	    (font-lock-fontify-region (point-min) (point-max)))
+	(t
+	 (setq aborted t)))
 
-    (or was-on		; turn it off if it was off.
-	(let ((font-lock-fontified nil)) ; kludge to prevent defontification
-	  (font-lock-mode 0)))
-    (set (make-local-variable 'font-lock-fontified) t)
-    (when (and aborted font-lock-verbose)
-	(lmessage 'command  "Fontifying %s... aborted." (buffer-name))))
-  (run-hooks 'font-lock-after-fontify-buffer-hook))
+      (or was-on			; turn it off if it was off.
+	  (let ((font-lock-fontified nil)) ; kludge to prevent defontification
+	    (font-lock-mode 0)))
+      (set (make-local-variable 'font-lock-fontified) t)
+      (when (and aborted font-lock-verbose)
+	(progress-feedback-with-label 'font-lock "Fontifying %s... aborted."
+				      'abort (buffer-name))))
+    (run-hooks 'font-lock-after-fontify-buffer-hook)))
 
 (defun font-lock-default-unfontify-buffer ()
   (font-lock-unfontify-region (point-min) (point-max))
@@ -1043,7 +1101,8 @@ This can take a while for large buffers."
 (defun font-lock-default-unfontify-region (beg end &optional maybe-loudly)
   (when (and maybe-loudly font-lock-verbose
 	     (>= (- end beg) font-lock-message-threshold))
-    (lmessage 'progress "Fontifying %s..." (buffer-name)))
+    (progress-feedback-with-label 'font-lock "Fontifying %s..." 0
+				  (buffer-name)))
   (let ((modified (buffer-modified-p))
 	(buffer-undo-list t) (inhibit-read-only t)
 	buffer-file-name buffer-file-truename)
@@ -1051,10 +1110,7 @@ This can take a while for large buffers."
     (and (not modified) (buffer-modified-p) (set-buffer-modified-p nil))))
 
 ;; Following is the original FSF version (similar to our original
-;; version, before all the crap I added below).
-;;
-;; Probably that crap should either be fixed up so it works better,
-;; or tossed away.
+;; version, before the deferred stuff was added).
 ;;
 ;; I think that lazy-lock v2 tries to do something similar.
 ;; Those efforts should be merged.
@@ -1068,111 +1124,99 @@ This can take a while for large buffers."
 ;	(progn (goto-char beg) (beginning-of-line) (point))
 ;	(progn (goto-char end) (forward-line 1) (point))))))
 
-(defvar font-lock-old-extent nil)
-(defvar font-lock-old-len 0)
+(defvar font-lock-always-fontify-immediately nil
+  "Set this to non-nil to disable font-lock deferral.
+Otherwise, changes to existing text will not be processed until the
+next redisplay cycle, avoiding excessive fontification when many
+buffer modifications are performed or a buffer is reverted.")
 
-(defun font-lock-fontify-glumped-region ()
-  ;; even if something goes wrong in the fontification, mark the glumped
-  ;; region as fontified; otherwise, the same error might get signaled
-  ;; after every command.
-  (unwind-protect
-      ;; buffer/extent may be deleted.
-      (if (and (extent-live-p font-lock-old-extent)
-	       (buffer-live-p (extent-object font-lock-old-extent)))
-	  (save-excursion
-	    (set-buffer (extent-object font-lock-old-extent))
-	    (font-lock-after-change-function-1
-	     (extent-start-position font-lock-old-extent)
-	     (extent-end-position font-lock-old-extent)
-	     font-lock-old-len)))
-    (detach-extent font-lock-old-extent)
-    (setq font-lock-old-extent nil)))
+(defvar font-lock-pending-extent-table (make-hash-table :weakness 'key))
+(defvar font-lock-range-table (make-range-table))
 
 (defun font-lock-pre-idle-hook ()
-  (condition-case nil
-      (if font-lock-old-extent
-	  (font-lock-fontify-glumped-region))
-    (error (warn "Error caught in `font-lock-pre-idle-hook'"))))
-
-(defvar font-lock-always-fontify-immediately nil
-  "Set this to non-nil to disable font-lock deferral.")
+  (condition-case font-lock-error
+      (if (> (hash-table-count font-lock-pending-extent-table) 0)
+	  (font-lock-fontify-pending-extents))
+    (error (warn "Error caught in `font-lock-pre-idle-hook': %s"
+		 font-lock-error))))
 
 ;;; called when any modification is made to buffer text.  This function
-;;; attempts to glump adjacent changes together so that excessive
-;;; fontification is avoided.  This function could easily be adapted
-;;; to other after-change-functions.
+;;; remembers the changed ranges until the next redisplay, at which point
+;;; the extents are merged and pruned, and the resulting ranges fontified.
+;;; This function could easily be adapted to other after-change-functions.
 
 (defun font-lock-after-change-function (beg end old-len)
-  (let ((obeg (and font-lock-old-extent
-		   (extent-start-position font-lock-old-extent)))
-	(oend (and font-lock-old-extent
-		   (extent-end-position font-lock-old-extent)))
-	(bc-end (+ beg old-len)))
-
-    ;; If this change can't be merged into the glumped one,
-    ;; we need to fontify the glumped one right now.
-    (if (and font-lock-old-extent
-	     (or (not (eq (current-buffer)
-			  (extent-object font-lock-old-extent)))
-		 (< bc-end obeg)
-		 (> beg oend)))
-	(font-lock-fontify-glumped-region))
-  
-    (if font-lock-old-extent
-	;; Update glumped region.
-	(progn
-	  ;; Any characters in the before-change region that are
-	  ;; outside the glumped region go into the glumped
-	  ;; before-change region.
-	  (if (> bc-end oend)
-	      (setq font-lock-old-len (+ font-lock-old-len (- bc-end oend))))
-	  (if (> obeg beg)
-	      (setq font-lock-old-len (+ font-lock-old-len (- obeg beg))))
-	  ;; New glumped region is the union of the glumped region
-	  ;; and the new region.
-	  (set-extent-endpoints font-lock-old-extent
-				(min obeg beg)
-				(max oend end)))
-
-      ;; No glumped region, so create one.
-      (setq font-lock-old-extent (make-extent beg end))
-      (set-extent-property font-lock-old-extent 'detachable nil)
-      (set-extent-property font-lock-old-extent 'end-open nil)
-      (setq font-lock-old-len old-len))
-
+  (when font-lock-mode
+    (let ((ex (make-extent beg end)))
+      (set-extent-property ex 'detachable nil)
+      (set-extent-property ex 'end-open nil)
+      (let ((exs (gethash (current-buffer) font-lock-pending-extent-table)))
+	(push ex exs)
+	(puthash (current-buffer) exs font-lock-pending-extent-table)))
     (if font-lock-always-fontify-immediately
-	(font-lock-fontify-glumped-region))))
+	(font-lock-fontify-pending-extents))))
 
-(defun font-lock-after-change-function-1 (beg end old-len)
-  (if (null font-lock-mode)
-      nil
-    (save-excursion
-      (save-restriction
-	;; if we don't widen, then fill-paragraph (and any command that
-	;; operates on a narrowed region) confuses things, because the C
-	;; code will fail to realize that we're inside a comment.
-	(widen)
-	(save-match-data
-	  (let ((zmacs-region-stays zmacs-region-stays)) ; protect from change!
-	    (goto-char beg)
-	    ;; Maybe flush the internal cache used by syntactically-sectionize.
-	    ;; (It'd be nice if this was more automatic.)  Any deletions mean
-	    ;; the cache is invalid, and insertions at beginning or end of line
-	    ;; mean that the bol cache might be invalid.
-;;	    (if (or (> old-len 0) (bobp) (= (preceding-char) ?\n))
-;;		(buffer-syntactic-context-flush-cache))
-
-	    ;; Always recompute the whole line.
-	    (goto-char end)
-	    (forward-line 1)
-	    (setq end (point))
-	    (goto-char beg)
-	    (beginning-of-line)
-	    (setq beg (point))
-	    ;; Rescan between start of line from `beg' and start of line after
-	    ;; `end'.
-	    (font-lock-fontify-region beg end)))))))
-
+(defun font-lock-fontify-pending-extents ()
+  ;; ah, the beauty of mapping functions.
+  ;; this function is actually shorter than the old version, which handled
+  ;; only one buffer and one contiguous region!
+  (save-match-data
+    (maphash
+     #'(lambda (buffer exs)
+	 ;; remove first, to avoid infinite reprocessing if error
+	 (remhash buffer font-lock-pending-extent-table)
+	 (when (buffer-live-p buffer)
+	   (clear-range-table font-lock-range-table)
+	   (with-current-buffer buffer
+	     (save-excursion
+	       (save-restriction
+		 ;; if we don't widen, then the C code will fail to
+		 ;; realize that we're inside a comment.
+		 (widen)
+		 (let ((zmacs-region-stays
+			zmacs-region-stays)) ; protect from change!
+		   (mapc
+		    #'(lambda (ex)
+			;; paranoia.
+			(when (and (extent-live-p ex)
+				   (not (extent-detached-p ex)))
+			  ;; first expand the ranges to full lines, because
+			  ;; that is what will be fontified; then use a
+			  ;; range table to merge the ranges.
+			  (let* ((beg (extent-start-position ex))
+				 (end (extent-end-position ex))
+				 (beg (progn (goto-char beg)
+					     (beginning-of-line)
+					     (point)))
+				 (end (progn (goto-char end)
+					     (forward-line 1)
+					     (point))))
+			    (detach-extent ex)
+			    (put-range-table beg end t
+					     font-lock-range-table))))
+		    exs)
+		   (map-range-table
+		    #'(lambda (beg end val)
+			;; Maybe flush the internal cache used by
+			;; syntactically-sectionize.  (It'd be nice if this
+			;; was more automatic.)  Any deletions mean the
+			;; cache is invalid, and insertions at beginning or
+			;; end of line mean that the bol cache might be
+			;; invalid.
+			;; #### This code has been commented out for some time
+			;; now and is bit-rotting.  Someone should look into
+			;; this.
+;;			(if (or change-was-deletion (bobp)
+;;				(= (preceding-char) ?\n))
+;;			    (buffer-syntactic-context-flush-cache))
+			;; #### This creates some unnecessary progress gauges.
+;;			(if (and (= beg (point-min))
+;;				 (= end (point-max)))
+;;			    (font-lock-fontify-buffer)
+;;			  (font-lock-fontify-region beg end)))
+			(font-lock-fontify-region beg end))
+		    font-lock-range-table)))))))
+     font-lock-pending-extent-table)))
 
 ;; Syntactic fontification functions.
 
@@ -1305,8 +1349,9 @@ START should be at the beginning of a line."
       nil
     (when (and font-lock-verbose
 	       (>= (- end start) font-lock-message-threshold))
-      (lmessage 'progress "Fontifying %s... (syntactically...)"
-	(buffer-name)))
+      (progress-feedback-with-label 'font-lock
+				    "Fontifying %s... (syntactically)" 5
+				    (buffer-name)))
     (font-lock-unfontify-region start end loudly)
     (goto-char start)
     (if (> end (point-max)) (setq end (point-max)))
@@ -1489,18 +1534,22 @@ LIMIT can be modified by the value of its PRE-MATCH-FORM."
 START should be at the beginning of a line."
   (let ((loudly (and font-lock-verbose
 		     (>= (- end start) font-lock-message-threshold))))
-    (let ((case-fold-search font-lock-keywords-case-fold-search)
-	  (keywords (cdr (if (eq (car-safe font-lock-keywords) t)
-			     font-lock-keywords
-			   (font-lock-compile-keywords))))
-	  (bufname (buffer-name)) (count 0)
-	  keyword matcher highlights)
+    (let* ((case-fold-search font-lock-keywords-case-fold-search)
+	   (keywords (cdr (if (eq (car-safe font-lock-keywords) t)
+			      font-lock-keywords
+			    (font-lock-compile-keywords))))
+	   (bufname (buffer-name)) 
+	   (progress 5) (old-progress 5)
+	   (iter 0)
+	   (nkeywords (length keywords))
+	   keyword matcher highlights)
       ;;
       ;; Fontify each item in `font-lock-keywords' from `start' to `end'.
+      ;; In order to measure progress accurately we need to know how
+      ;; many keywords we have and how big the region is. Then progress
+      ;; is ((pos - start)/ (end - start) * nkeywords 
+      ;; 	+ iteration / nkeywords) * 100
       (while keywords
-	(when loudly (lmessage 'progress "Fontifying %s... (regexps..%s)"
-		       bufname
-		       (make-string (setq count (1+ count)) ?.)))
 	;;
 	;; Find an occurrence of `matcher' from `start' to `end'.
 	(setq keyword (car keywords) matcher (car keyword))
@@ -1509,6 +1558,15 @@ START should be at the beginning of a line."
 		    (if (stringp matcher)
 			(re-search-forward matcher end t)
 		      (funcall matcher end)))
+	  ;; calculate progress
+	  (setq progress
+		(+ (/ (* (- (point) start) 95) (* (- end start) nkeywords))
+		   (/ (* iter 95) nkeywords) 5))
+	  (when (and loudly (> progress old-progress))
+	    (progress-feedback-with-label 'font-lock
+					  "Fontifying %s... (regexps)"
+					  progress bufname))
+	  (setq old-progress progress)
 	  ;; Apply each highlight to this instance of `matcher', which may be
 	  ;; specific highlights or more keywords anchored to `matcher'.
 	  (setq highlights (cdr keyword))
@@ -1522,8 +1580,11 @@ START should be at the beginning of a line."
 		  (and end (goto-char end)))
 	      (font-lock-fontify-anchored-keywords (car highlights) end))
 	    (setq highlights (cdr highlights))))
+	(setq iter (1+ iter))
 	(setq keywords (cdr keywords))))
-    (if loudly (lmessage 'progress "Fontifying %s... done." (buffer-name)))))
+    (if loudly
+	(progress-feedback-with-label 'font-lock "Fontifying %s... " 100
+				      (buffer-name)))))
 
 
 ;; Various functions.
@@ -1546,19 +1607,6 @@ START should be at the beginning of a line."
 	 (fast-lock-after-fontify-buffer))
 	((and (boundp 'lazy-lock-mode) lazy-lock-mode)
 	 (lazy-lock-after-fontify-buffer))))
-
-;; If the buffer is about to be reverted, it won't be fontified afterward.
-(defun font-lock-revert-setup ()
-  (setq font-lock-fontified nil))
-
-;; If the buffer has just been reverted, normally that turns off
-;; Font Lock mode.  So turn the mode back on if necessary.
-;; sb 1999-03-03 -- The above comment no longer appears to be operative as
-;; the first call to normal-mode *will* restore the font-lock state and
-;; this call forces a second font-locking to occur when reverting a buffer,
-;; which is wasteful at best.
-;(defalias 'font-lock-revert-cleanup 'turn-on-font-lock)
-(defun font-lock-revert-cleanup ())
 
 
 ;; Various functions.
@@ -1839,30 +1887,39 @@ START should be at the beginning of a line."
     ;;
     ;; Control structures.  ELisp and CLisp combined.
     ;;
-    ;;(regexp-opt
-    ;;  '("cond" "if" "while" "let" "let*" "prog" "progn" "prog1"
-    ;;    "prog2" "progv" "catch" "throw" "save-restriction"
-    ;;    "save-excursion" "save-window-excursion"
-    ;;    "save-current-buffer" "with-current-buffer"
-    ;;    "with-temp-file" "with-temp-buffer" "with-output-to-string"
-    ;;    "with-string-as-buffer-contents"
-    ;;    "save-selected-window" "save-match-data" "unwind-protect"
-    ;;    "condition-case" "track-mouse" "autoload"
-    ;;    "eval-after-load" "eval-and-compile" "eval-when-compile"
-    ;;    "when" "unless" "do" "dolist" "dotimes" "flet" "labels"
-    ;;    "lambda" "return" "return-from"))
     (cons
      (concat
       "(\\("
-      "autoload\\|c\\(atch\\|ond\\(ition-case\\)?\\)\\|do\\(list\\|"
-      "times\\)?\\|eval-\\(a\\(fter-load\\|nd-compile\\)\\|when-compile\\)\\|"
-      "flet\\|if\\|l\\(a\\(bels\\|mbda\\)\\|et\\*?\\)\\|"
-      "prog[nv12\\*]?\\|return\\(-from\\)?\\|save-\\(current-buffer\\|"
-      "excursion\\|match-data\\|restriction\\|selected-window\\|"
-      "window-excursion\\)\\|t\\(hrow\\|rack-mouse\\)\\|un\\(less\\|"
-      "wind-protect\\)\\|w\\(h\\(en\\|ile\\)\\|ith-\\(current-buffer\\|"
-      "output-to-string\\|string-as-buffer-contents\\|temp-\\(buffer\\|"
-      "file\\)\\)\\)"
+      ;; beginning of generated stuff
+      ;; to regenerate, use the regexp-opt below, then delete the outermost
+      ;; grouping, then use the macro below to break up the string.
+      ;; (regexp-opt
+      ;;   '("cond" "if" "while" "let" "let*" "prog" "progn" "prog1"
+      ;;     "prog2" "progv" "catch" "throw" "save-restriction"
+      ;;     "save-excursion" "save-window-excursion"
+      ;;     "save-current-buffer" "with-current-buffer"
+      ;;     "save-selected-window" "with-selected-window"
+      ;;     "save-selected-frame" "with-selected-frame"
+      ;;     "with-temp-file" "with-temp-buffer" "with-output-to-string"
+      ;;     "with-string-as-buffer-contents"
+      ;;     "save-match-data" "unwind-protect" "call-with-condition-handler"
+      ;;     "condition-case" "track-mouse" "autoload"
+      ;;     "eval-after-load" "eval-and-compile" "eval-when-compile"
+      ;;     "when" "unless" "do" "dolist" "dotimes" "flet" "labels"
+      ;;     "lambda" "block" "return" "return-from" "loop") t)
+      ;; (setq last-kbd-macro
+      ;;   (read-kbd-macro "\" C-7 C-1 <right> C-r \\\\| 3*<right> \" RET"))
+      "autoload\\|block\\|c\\(?:a\\(?:ll-with-condition-handler\\|tch\\)\\|"
+      "ond\\(?:ition-case\\)?\\)\\|do\\(?:list\\|times\\)?\\|"
+      "eval-\\(?:a\\(?:fter-load\\|nd-compile\\)\\|when-compile\\)\\|flet\\|"
+      "if\\|l\\(?:a\\(?:bels\\|mbda\\)\\|et\\*?\\|oop\\)\\|prog[12nv]?\\|"
+      "return\\(?:-from\\)?\\|save-\\(?:current-buffer\\|excursion\\|"
+      "match-data\\|restriction\\|selected-\\(?:frame\\|window\\)\\|"
+      "window-excursion\\)\\|t\\(?:hrow\\|rack-mouse\\)\\|un\\(?:less\\|"
+      "wind-protect\\)\\|w\\(?:h\\(?:en\\|ile\\)\\|ith-\\(?:current-buffer\\|"
+      "output-to-string\\|s\\(?:elected-\\(?:frame\\|window\\)\\|"
+      "tring-as-buffer-contents\\)\\|temp-\\(?:buffer\\|file\\)\\)\\)"
+      ;; end of generated stuff
       "\\)\\>") 1)
     ;;
     ;; Feature symbols as references.
@@ -2294,19 +2351,19 @@ This adds highlighting of Java documentation tags, such as @see.")
          "\\|long\\|short\\|void\\)\\>")
   "Regexp which should match a primitive type.")
 
-(let ((capital-letter "A-Z\300-\326\330-\337")
-      (letter "a-zA-Z_$\300-\326\330-\366\370-\377")
-      (digit  "0-9"))
 (defvar java-font-lock-identifier-regexp
-  (concat "\\<\\([" letter "][" letter digit "]*\\)\\>")
+  (let ((letter "a-zA-Z_$\300-\326\330-\366\370-\377")
+	(digit  "0-9"))
+    (concat "\\<\\([" letter "][" letter digit "]*\\)\\>"))
   "Regexp which should match all Java identifiers.")
 
 (defvar java-font-lock-class-name-regexp
-  (concat "\\<\\([" capital-letter "][" letter digit "]*\\)\\>")
+  (let ((capital-letter "A-Z\300-\326\330-\337")
+	(letter "a-zA-Z_$\300-\326\330-\366\370-\377")
+	(digit  "0-9"))
+    (concat "\\<\\([" capital-letter "][" letter digit "]*\\)\\>"))
   "Regexp which should match a class or an interface name.
 The name is assumed to begin with a capital letter.")
-)
-
 
 (let ((java-modifier-regexp
        (concat "\\<\\(abstract\\|const\\|final\\|native\\|"
@@ -2339,8 +2396,9 @@ The name is assumed to begin with a capital letter.")
 	 '("\\<\\(false\\|null\\|true\\)\\>" (1 font-lock-keyword-face))
 
 	 ;; Class names:
-	 (list (concat "\\<class\\>\\s *" java-font-lock-identifier-regexp)
-	       1 'font-lock-function-name-face)
+	 (list (concat "\\<\\(class\\|interface\\)\\>\\s *"
+		       java-font-lock-identifier-regexp)
+	       2 'font-lock-function-name-face)
         
 	 ;; Package declarations:
 	 (list (concat "\\<\\(package\\|import\\)\\>\\s *"
@@ -2478,8 +2536,8 @@ The name is assumed to begin with a capital letter.")
  
 	 (list
 
-	  ;; Java doc tags
-	  '("@\\(author\\|exception\\|throws\\|deprecated\\|param\\|return\\|see\\|since\\|version\\)\\s "
+	  ;; Javadoc tags
+	  '("@\\(author\\|deprecated\\|exception\\|throws\\|param\\|return\\|see\\|since\\|version\\|serial\\|serialData\\|serialField\\)\\s "
 	    0 font-lock-keyword-face t)
 
 	  ;; Doc tag - Parameter identifiers
@@ -2487,34 +2545,30 @@ The name is assumed to begin with a capital letter.")
 		1 'font-lock-variable-name-face t)
 
 	  ;; Doc tag - Exception types
-	  (list (concat "@exception\\s +"
+	  (list (concat "@\\(exception\\|throws\\)\\s +"
 			java-font-lock-identifier-regexp)
-		'(1 (if (equal (char-after (match-end 0)) ?.)
+		'(2 (if (equal (char-after (match-end 0)) ?.)
 			font-lock-reference-face font-lock-type-face) t)
 		(list (concat "\\=\\." java-font-lock-identifier-regexp)
 		      '(goto-char (match-end 0)) nil
 		      '(1 (if (equal (char-after (match-end 0)) ?.)
 			      'font-lock-reference-face 'font-lock-type-face) t)))
     
-	  ;; Doc tag - Exception types
-	  (list (concat "@exception\\s +"
-			java-font-lock-identifier-regexp)
-		'(1 (if (equal (char-after (match-end 0)) ?.)
-			font-lock-reference-face font-lock-type-face) t)
-		(list (concat "\\=\\." java-font-lock-identifier-regexp)
-		      '(goto-char (match-end 0)) nil
-		      '(1 (if (equal (char-after (match-end 0)) ?.)
-			      'font-lock-reference-face 'font-lock-type-face) t)))
-
 	  ;; Doc tag - Cross-references, usually to methods 
 	  '("@see\\s +\\(\\S *[^][ \t\n\r\f(){},.;:]\\)"
 	    1 font-lock-function-name-face t)
     
-	  ;; Doc tag - Links
-	  '("{@link\\s +\\([^}]*\\)}"
+	  ;; Doc tag - docRoot (1.3)
+	  '("\\({ *@docRoot *}\\)"
+	    0 font-lock-keyword-face t)
+	  ;; Doc tag - beaninfo, unofficial but widely used, even by Sun
+	  '("\\(@beaninfo\\)"
 	    0 font-lock-keyword-face t)
 	  ;; Doc tag - Links
-	  '("{@link\\s +\\(\\S +\\s +\\S +\\)}"
+	  '("{ *@link\\s +\\([^}]+\\)}"
+	    0 font-lock-keyword-face t)
+	  ;; Doc tag - Links
+	  '("{ *@link\\s +\\(\\(\\S +\\)\\|\\(\\S +\\s +\\S +\\)\\) *}"
 	    1 font-lock-function-name-face t)
     
 	  )))

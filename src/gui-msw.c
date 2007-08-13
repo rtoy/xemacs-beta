@@ -22,11 +22,13 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "gui.h"
+#include "console-msw.h"
 #include "redisplay.h"
+#include "gui.h"
+#include "glyphs.h"
 #include "frame.h"
 #include "elhash.h"
-#include "console-msw.h"
+#include "events.h"
 #include "buffer.h"
 
 /*
@@ -36,76 +38,63 @@ Boston, MA 02111-1307, USA.  */
  * command if we return nil
  */
 Lisp_Object
-mswindows_handle_gui_wm_command (struct frame* f, HWND ctrl, DWORD id)
+mswindows_handle_gui_wm_command (struct frame* f, HWND ctrl, LPARAM id)
 {
   /* Try to map the command id through the proper hash table */
-  Lisp_Object data, fn, arg, frame;
+  Lisp_Object callback, callback_ex, image_instance, frame, event;
+
+  XSETFRAME (frame, f);
 
   /* #### make_int should assert that --kkm */
   assert (XINT (make_int (id)) == id);
 
-  data = Fgethash (make_int (id), 
-		   FRAME_MSWINDOWS_WIDGET_HASH_TABLE (f), Qnil);
-  
-  if (NILP (data) || UNBOUNDP (data))
+  image_instance = Fgethash (make_int (id), 
+			     FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f), Qnil);
+  /* It is possible for a widget action to cause it to get out of sync
+     with its instantiator. Thus it is necessary to signal this
+     possibility. */
+  if (IMAGE_INSTANCEP (image_instance))
+    XIMAGE_INSTANCE_WIDGET_ACTION_OCCURRED (image_instance) = 1;
+  callback = Fgethash (make_int (id), 
+		       FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f), Qnil);
+  callback_ex = Fgethash (make_int (id), 
+			  FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f), Qnil);
+
+  if (!NILP (callback_ex) && !UNBOUNDP (callback_ex))
+    {
+      event = Fmake_event (Qnil, Qnil);
+
+      XEVENT (event)->event_type = misc_user_event;
+      XEVENT (event)->channel = frame;
+      XEVENT (event)->timestamp = GetTickCount ();
+      XEVENT (event)->event.eval.function = Qeval;
+      XEVENT (event)->event.eval.object =
+	list4 (Qfuncall, callback_ex, image_instance, event);
+    }
+  else if (NILP (callback) || UNBOUNDP (callback))
     return Qnil;
+  else
+    {
+      Lisp_Object fn, arg;
 
-  MARK_SUBWINDOWS_STATE_CHANGED;
-  /* Ok, this is our one. Enqueue it. */
-  get_gui_callback (data, &fn, &arg);
-  XSETFRAME (frame, f);
-  mswindows_enqueue_misc_user_event (frame, fn, arg);
+      event = Fmake_event (Qnil, Qnil);
 
+      get_gui_callback (callback, &fn, &arg);
+      XEVENT (event)->event_type = misc_user_event;
+      XEVENT (event)->channel = frame;
+      XEVENT (event)->timestamp = GetTickCount ();
+      XEVENT (event)->event.eval.function = fn;
+      XEVENT (event)->event.eval.object = arg;
+    }
+
+  mswindows_enqueue_dispatch_event (event);
+  /* The result of this evaluation could cause other instances to change so 
+     enqueue an update callback to check this. */
+  enqueue_magic_eval_event (update_widget_instances, frame);
   return Qt;
-}
-
-DEFUN ("mswindows-shell-execute", Fmswindows_shell_execute, 2, 4, 0, /*
-Get Windows to perform OPERATION on DOCUMENT.
-This is a wrapper around the ShellExecute system function, which
-invokes the application registered to handle OPERATION for DOCUMENT.
-OPERATION is typically \"open\", \"print\" or \"explore\" (but can be
-nil for the default action), and DOCUMENT is typically the name of a
-document file or URL, but can also be a program executable to run or
-a directory to open in the Windows Explorer.
-
-If DOCUMENT is a program executable, PARAMETERS can be a string
-containing command line parameters, but otherwise should be nil.
-
-SHOW-FLAG can be used to control whether the invoked application is hidden
-or minimized.  If SHOW-FLAG is nil, the application is displayed normally,
-otherwise it is an integer representing a ShowWindow flag:
-
-  0 - start hidden
-  1 - start normally
-  3 - start maximized
-  6 - start minimized
-*/
-       (operation, document, parameters, show_flag))
-{
-  Lisp_Object current_dir;
-
-  CHECK_STRING (document);
-
-  /* Encode filename and current directory.  */
-  current_dir = current_buffer->directory;
-  if ((int) ShellExecute (NULL,
-			  (STRINGP (operation) ?
-			   XSTRING (operation)->data : NULL),
-			  XSTRING (document)->data,
-			  (STRINGP (parameters) ?
-			   XSTRING (parameters)->data : NULL),
-			  XSTRING (current_dir)->data,
-			  (INTP (show_flag) ?
-			   XINT (show_flag) : SW_SHOWDEFAULT))
-      > 32)
-    return Qt;
-
-  error ("ShellExecute failed");
-  return Qnil;
 }
 
 void
 syms_of_gui_mswindows (void)
 {
-  DEFSUBR (Fmswindows_shell_execute);
 }

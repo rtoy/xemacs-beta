@@ -87,7 +87,7 @@ extern const struct struct_description specifier_methods_description;
 
 struct specifier_methods
 {
-  CONST char *name;
+  const char *name;
   Lisp_Object predicate_symbol;
 
   /* Implementation specific methods: */
@@ -152,7 +152,7 @@ struct specifier_methods
      name specifier_instance) to avoid creating "external"
      specification loops.
 
-     This method must presume that both INSTANTIATOR and MATCSPEC are
+     This method must presume that both INSTANTIATOR and MATCHSPEC are
      already validated by the corresponding validate_* methods, and
      may abort if they are invalid.
 
@@ -267,9 +267,9 @@ extern const struct lrecord_description specifier_empty_extra_description[];
 #ifdef ERROR_CHECK_TYPECHECK
 #define DECLARE_SPECIFIER_TYPE(type)					\
 extern struct specifier_methods * type##_specifier_methods;		\
-INLINE struct type##_specifier *					\
+INLINE_HEADER struct type##_specifier *					\
 error_check_##type##_specifier_data (Lisp_Specifier *sp);		\
-INLINE struct type##_specifier *					\
+INLINE_HEADER struct type##_specifier *					\
 error_check_##type##_specifier_data (Lisp_Specifier *sp)		\
 {									\
   if (SPECIFIERP (sp->magic_parent))					\
@@ -282,9 +282,9 @@ error_check_##type##_specifier_data (Lisp_Specifier *sp)		\
   assert (SPECIFIER_TYPE_P (sp, type));					\
   return (struct type##_specifier *) sp->data;				\
 }									\
-INLINE Lisp_Specifier *							\
+INLINE_HEADER Lisp_Specifier *						\
 error_check_##type##_specifier_type (Lisp_Object obj);			\
-INLINE Lisp_Specifier *							\
+INLINE_HEADER Lisp_Specifier *						\
 error_check_##type##_specifier_type (Lisp_Object obj)			\
 {									\
   Lisp_Specifier *sp = XSPECIFIER (obj);				\
@@ -293,11 +293,11 @@ error_check_##type##_specifier_type (Lisp_Object obj)			\
 }									\
 DECLARE_NOTHING
 #else
-#define DECLARE_SPECIFIER_TYPE(type)				\
+#define DECLARE_SPECIFIER_TYPE(type)					\
 extern struct specifier_methods * type##_specifier_methods
 #endif /* ERROR_CHECK_TYPECHECK */
 
-#define DEFINE_SPECIFIER_TYPE(type)			\
+#define DEFINE_SPECIFIER_TYPE(type)					\
 struct specifier_methods * type##_specifier_methods
 
 #define INITIALIZE_SPECIFIER_TYPE(type, obj_name, pred_sym) do {	\
@@ -305,12 +305,12 @@ struct specifier_methods * type##_specifier_methods
   type##_specifier_methods->name = obj_name;				\
   type##_specifier_methods->extra_description =				\
     specifier_empty_extra_description;					\
-  defsymbol_nodump (&type##_specifier_methods->predicate_symbol, pred_sym);	\
-  add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);	\
-  dumpstruct (&type##_specifier_methods, &specifier_methods_description); \
+  defsymbol_nodump (&type##_specifier_methods->predicate_symbol, pred_sym); \
+  add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);	    \
+  dumpstruct (&type##_specifier_methods, &specifier_methods_description);   \
 } while (0)
 
-#define REINITIALIZE_SPECIFIER_TYPE(type) do {	\
+#define REINITIALIZE_SPECIFIER_TYPE(type) do {				\
   staticpro_nodump (&type##_specifier_methods->predicate_symbol);	\
 } while (0)
 
@@ -366,7 +366,7 @@ do {									\
 # define XSETSPECIFIER_TYPE(x, p, type) XSETSPECIFIER (x, p)
 #endif /* ERROR_CHECK_TYPE_CHECK */
 
-#define SPECIFIER_TYPEP(x, type)				\
+#define SPECIFIER_TYPEP(x, type)			\
   (SPECIFIERP (x) && SPECIFIER_TYPE_P (XSPECIFIER (x), type))
 #define CHECK_SPECIFIER_TYPE(x, type) do {		\
   CHECK_SPECIFIER (x);					\
@@ -413,6 +413,48 @@ struct specifier_caching
 				  Lisp_Object oldval);
 };
 
+/* #### get image instances out of domains! */
+
+/* #### I think the following should abort() rather than return nil
+   when an invalid domain is given; much more likely we'll catch design
+   errors early. --ben */
+
+/* This turns out to be used heavily so we make it a macro to make it
+   inline.  Also, the majority of the time the object will turn out to
+   be a window so we move it from being checked last to being checked
+   first. */
+#define DOMAIN_DEVICE(obj)					\
+   (WINDOWP (obj) ? WINDOW_DEVICE (XWINDOW (obj))		\
+  : (FRAMEP  (obj) ? FRAME_DEVICE (XFRAME (obj))		\
+  : (DEVICEP (obj) ? obj					\
+  : (IMAGE_INSTANCEP (obj) ? image_instance_device (obj)	\
+  : Qnil))))
+
+#define DOMAIN_FRAME(obj)				\
+   (WINDOWP (obj) ? WINDOW_FRAME (XWINDOW (obj))	\
+  : (FRAMEP  (obj) ? obj				\
+  : (IMAGE_INSTANCEP (obj) ? image_instance_frame (obj)	\
+  : Qnil)))
+
+#define DOMAIN_WINDOW(obj)					\
+   (WINDOWP (obj) ? obj						\
+  : (IMAGE_INSTANCEP (obj) ? image_instance_window (obj)	\
+  : Qnil))
+
+#define DOMAIN_LIVE_P(obj)					\
+   (WINDOWP (obj) ? WINDOW_LIVE_P (XWINDOW (obj))		\
+  : (FRAMEP  (obj) ? FRAME_LIVE_P (XFRAME (obj))		\
+  : (DEVICEP (obj) ? DEVICE_LIVE_P (XDEVICE (obj))		\
+  : (IMAGE_INSTANCEP (obj) ? image_instance_live_p (obj)	\
+  : 0))))
+
+#define DOMAIN_XDEVICE(obj)			\
+  (XDEVICE (DOMAIN_DEVICE (obj)))
+#define DOMAIN_XFRAME(obj)			\
+  (XFRAME (DOMAIN_FRAME (obj)))
+#define DOMAIN_XWINDOW(obj)			\
+  (XWINDOW (DOMAIN_WINDOW (obj)))
+
 EXFUN (Fcopy_specifier, 6);
 EXFUN (Fmake_specifier, 1);
 EXFUN (Fset_specifier_dirty_flag, 1);
@@ -426,6 +468,7 @@ Lisp_Object decode_locale_list (Lisp_Object locale);
 extern enum spec_add_meth
 decode_how_to_add_specification (Lisp_Object how_to_add);
 Lisp_Object decode_specifier_tag_set (Lisp_Object tag_set);
+Lisp_Object decode_domain (Lisp_Object domain);
 
 void add_entry_to_specifier_type_list (Lisp_Object symbol,
 				       struct specifier_methods *meths);

@@ -56,6 +56,7 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "frame.h"
 #include "opaque.h"
+#include "window.h"
 
 #include "sysfile.h"
 
@@ -118,7 +119,8 @@ jpeg_validate (Lisp_Object instantiator)
 }
 
 static Lisp_Object
-jpeg_normalize (Lisp_Object inst, Lisp_Object console_type)
+jpeg_normalize (Lisp_Object inst, Lisp_Object console_type,
+		Lisp_Object dest_mask)
 {
   return simple_image_type_normalize (inst, console_type, Qjpeg);
 }
@@ -372,7 +374,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    CONST Extbyte *bytes;
+    const Extbyte *bytes;
     Extcount len;
 
     /* #### This is a definite problem under Mule due to the amount of
@@ -480,7 +482,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Step 6.5: Create the pixmap and set up the image instance */
   /* now instantiate */
-  MAYBE_DEVMETH (XDEVICE (ii->device),
+  MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
 		 init_image_instance_from_eimage,
 		 (ii, cinfo.output_width, cinfo.output_height, 1,
 		  unwind.eimage, dest_mask,
@@ -514,7 +516,8 @@ gif_validate (Lisp_Object instantiator)
 }
 
 static Lisp_Object
-gif_normalize (Lisp_Object inst, Lisp_Object console_type)
+gif_normalize (Lisp_Object inst, Lisp_Object console_type,
+	       Lisp_Object dest_mask)
 {
   return simple_image_type_normalize (inst, console_type, Qgif);
 }
@@ -580,12 +583,12 @@ gif_memory_close(VoidPtr data)
 
 struct gif_error_struct
 {
-  CONST char *err_str;		/* return the error string */
+  const char *err_str;		/* return the error string */
   jmp_buf setjmp_buffer;	/* for return to caller */
 };
 
 static void
-gif_error_func(CONST char *err_str, VoidPtr error_ptr)
+gif_error_func(const char *err_str, VoidPtr error_ptr)
 {
   struct gif_error_struct *error_data = (struct gif_error_struct*)error_ptr;
 
@@ -706,7 +709,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       }
 
     /* now instantiate */
-    MAYBE_DEVMETH (XDEVICE (ii->device),
+    MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
 		   init_image_instance_from_eimage,
 		   (ii, width, height, unwind.giffile->ImageCount, unwind.eimage, dest_mask,
 		    instantiator, domain));
@@ -756,7 +759,8 @@ png_validate (Lisp_Object instantiator)
 }
 
 static Lisp_Object
-png_normalize (Lisp_Object inst, Lisp_Object console_type)
+png_normalize (Lisp_Object inst, Lisp_Object console_type,
+	       Lisp_Object dest_mask)
 {
   return simple_image_type_normalize (inst, console_type, Qpng);
 }
@@ -769,7 +773,7 @@ png_possible_dest_types (void)
 
 struct png_memory_storage
 {
-  CONST Extbyte *bytes;		/* The data       */
+  const Extbyte *bytes;		/* The data       */
   Extcount len;			/* How big is it? */
   int index;			/* Where are we?  */
 };
@@ -789,7 +793,7 @@ png_read_from_memory(png_structp png_ptr, png_bytep data,
 
 struct png_error_struct
 {
-  CONST char *err_str;
+  const char *err_str;
   jmp_buf setjmp_buffer;	/* for return to caller */
 };
 
@@ -893,7 +897,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* Initialize the IO layer and read in header information */
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    CONST Extbyte *bytes;
+    const Extbyte *bytes;
     Extcount len;
 
     assert (!NILP (data));
@@ -949,9 +953,9 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	  rgblist = MAYBE_LISP_DEVMETH (XDEVICE (c->device),
 					color_instance_rgb_components,
 					(c));
-	  my_background.red = XINT (XCAR (rgblist));
-	  my_background.green = XINT (XCAR (XCDR (rgblist)));
-	  my_background.blue = XINT (XCAR (XCDR (XCDR (rgblist))));
+	  my_background.red = (unsigned short) XINT (XCAR (rgblist));
+	  my_background.green = (unsigned short) XINT (XCAR (XCDR (rgblist)));
+	  my_background.blue = (unsigned short) XINT (XCAR (XCDR (XCDR (rgblist))));
 	}
 
       if (png_get_bKGD (png_ptr, info_ptr, &image_background))
@@ -1017,7 +1021,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   }
 
   /* now instantiate */
-  MAYBE_DEVMETH (XDEVICE (ii->device),
+  MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
 		 init_image_instance_from_eimage,
 		 (ii, width, height, 1, unwind.eimage, dest_mask,
 		  instantiator, domain));
@@ -1042,7 +1046,8 @@ tiff_validate (Lisp_Object instantiator)
 }
 
 static Lisp_Object
-tiff_normalize (Lisp_Object inst, Lisp_Object console_type)
+tiff_normalize (Lisp_Object inst, Lisp_Object console_type,
+		Lisp_Object dest_mask)
 {
   return simple_image_type_normalize (inst, console_type, Qtiff);
 }
@@ -1170,7 +1175,7 @@ struct tiff_error_struct
 static struct tiff_error_struct tiff_err_data;
 
 static void
-tiff_error_func(CONST char *module, CONST char *fmt, ...)
+tiff_error_func(const char *module, const char *fmt, ...)
 {
   va_list vargs;
 
@@ -1187,7 +1192,7 @@ tiff_error_func(CONST char *module, CONST char *fmt, ...)
 }
 
 static void
-tiff_warning_func(CONST char *module, CONST char *fmt, ...)
+tiff_warning_func(const char *module, const char *fmt, ...)
 {
   va_list vargs;
 #ifdef HAVE_VSNPRINTF
@@ -1254,7 +1259,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     mem_struct.len = len;
     mem_struct.index = 0;
 
-    unwind.tiff = TIFFClientOpen ("memfile", "r", &mem_struct,
+    unwind.tiff = TIFFClientOpen ("memfile", "r", (thandle_t) &mem_struct,
 				  (TIFFReadWriteProc)tiff_memory_read,
 				  (TIFFReadWriteProc)tiff_memory_write,
 				  tiff_memory_seek, tiff_memory_close, tiff_memory_size,
@@ -1299,7 +1304,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   }
 
   /* now instantiate */
-  MAYBE_DEVMETH (XDEVICE (ii->device),
+  MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
 		 init_image_instance_from_eimage,
 		 (ii, width, height, 1, unwind.eimage, dest_mask,
 		  instantiator, domain));

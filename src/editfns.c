@@ -28,9 +28,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 #include "buffer.h"
 #include "commands.h"
@@ -603,26 +600,72 @@ If BUFFER is nil, the current buffer is assumed.
   return make_char (BUF_FETCH_CHAR (b, n));
 }
 
+#if !defined(WINDOWSNT) && !defined(MSDOS)
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <limits.h>
+#endif
 
 DEFUN ("temp-directory", Ftemp_directory, 0, 0, 0, /*
 Return the pathname to the directory to use for temporary files.
-On NT/MSDOS, this is obtained from the TEMP or TMP environment variables,
+On MS Windows, this is obtained from the TEMP or TMP environment variables,
 defaulting to / if they are both undefined.
 On Unix it is obtained from TMPDIR, with /tmp as the default
 */
        ())
 {
   char *tmpdir;
-#if defined(WINDOWSNT) || defined(MSDOS)
+#if defined(WIN32_NATIVE)
   tmpdir = getenv ("TEMP");
   if (!tmpdir)
     tmpdir = getenv ("TMP");
   if (!tmpdir)
     tmpdir = "/";
-#else /* WINDOWSNT || MSDOS */
+#else /* WIN32_NATIVE */
  tmpdir = getenv ("TMPDIR");
  if (!tmpdir)
+    {
+      struct stat st;
+      int myuid = getuid();
+      static char path[5 /* strlen ("/tmp/") */ + 1 + _POSIX_PATH_MAX];
+
+      strcpy (path, "/tmp/");
+      strncat (path, user_login_name (NULL), _POSIX_PATH_MAX);
+      if (lstat(path, &st) < 0 && errno == ENOENT)
+	{
+	  mkdir(path, 0700);	/* ignore retval -- checked next anyway. */
+	}
+      if (lstat(path, &st) == 0 && st.st_uid == myuid && S_ISDIR(st.st_mode))
+	{
+	  tmpdir = path;
+	}
+      else
+	{
+	  strcpy(path, getenv("HOME")); strncat(path, "/tmp/", _POSIX_PATH_MAX);
+	  if (stat(path, &st) < 0 && errno == ENOENT)
+	    {
+	      int fd;
+	      char warnpath[1+_POSIX_PATH_MAX];
+	      mkdir(path, 0700);	/* ignore retvals */
+	      strcpy(warnpath, path);
+	      strncat(warnpath, ".created_by_xemacs", _POSIX_PATH_MAX);
+	      if ((fd = open(warnpath, O_WRONLY|O_CREAT, 0644)) > 0)
+		{
+		  write(fd, "XEmacs created this directory because /tmp/<yourname> was unavailable -- \nPlease check !\n", 89);
+		  close(fd);
+		}
+	    }
+	  if (stat(path, &st) == 0 && S_ISDIR(st.st_mode))
+	    {
+	      tmpdir = path;
+	    }
+	  else
+	    {
    tmpdir = "/tmp";
+	    }
+	}
+    }
 #endif
 
   return build_ext_string (tmpdir, Qfile_name);
@@ -681,7 +724,7 @@ user_login_name (uid_t *uid)
       char *user_name = getenv ("LOGNAME");
       if (!user_name)
 	user_name = getenv (
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 			    "USERNAME" /* it's USERNAME on NT */
 #else
 			    "USER"
@@ -692,7 +735,7 @@ user_login_name (uid_t *uid)
       else
 	{
 	  struct passwd *pw = getpwuid (geteuid ());
-#ifdef __CYGWIN32__
+#ifdef CYGWIN
 	  /* Since the Cygwin environment may not have an /etc/passwd,
 	     return "unknown" instead of the null if the username
 	     cannot be determined.
@@ -716,14 +759,7 @@ This ignores the environment variables LOGNAME and USER, so it differs from
   struct passwd *pw = getpwuid (getuid ());
   /* #### - I believe this should return nil instead of "unknown" when pw==0 */
 
-#ifdef MSDOS
-  /* We let the real user name default to "root" because that's quite
-     accurate on MSDOG and because it lets Emacs find the init file.
-     (The DVX libraries override the Djgpp libraries here.)  */
-  Lisp_Object tem = build_string (pw ? pw->pw_name : "root");/* no gettext */
-#else
   Lisp_Object tem = build_string (pw ? pw->pw_name : "unknown");/* no gettext */
-#endif
   return tem;
 }
 
@@ -764,7 +800,7 @@ value of `user-full-name' is returned.
   user_name = (STRINGP (user) ? user : Fuser_login_name (user));
   if (!NILP (user_name))	/* nil when nonexistent UID passed as arg */
     {
-      CONST char *user_name_ext;
+      const char *user_name_ext;
 
       /* Fuck me.  getpwnam() can call select() and (under IRIX at least)
 	 things get wedged if a SIGIO arrives during this time. */
@@ -779,10 +815,10 @@ value of `user-full-name' is returned.
   /* #### - Stig sez: this should return nil instead of "unknown" when pw==0 */
   /* Ben sez: bad idea because it's likely to break something */
 #ifndef AMPERSAND_FULL_NAME
-  p = ((pw) ? USER_FULL_NAME : "unknown"); /* don't gettext */
+  p = pw ? USER_FULL_NAME : "unknown"; /* don't gettext */
   q = strchr (p, ',');
 #else
-  p = ((pw) ? USER_FULL_NAME : "unknown"); /* don't gettext */
+  p = pw ? USER_FULL_NAME : "unknown"; /* don't gettext */
   q = strchr (p, ',');
 #endif
   tem = ((!NILP (user) && !pw)
@@ -822,17 +858,25 @@ uncache_home_directory (void)
 				   of a few bytes */
 }
 
+/* !!#### not Mule correct. */
+
 /* Returns the home directory, in external format */
 Extbyte *
 get_home_directory (void)
 {
+  /* !!#### this is hopelessly bogus.  Rule #1: Do not make any assumptions
+     about what format an external string is in.  Could be Unicode, for all
+     we know, and then all the operations below are totally bogus.
+     Instead, convert all data to internal format *right* at the juncture
+     between XEmacs and the outside world, the very moment we first get
+     the data.  --ben */
   int output_home_warning = 0;
 
   if (cached_home_directory == NULL)
     {
       if ((cached_home_directory = (Extbyte *) getenv("HOME")) == NULL)
 	{
-#if defined(WINDOWSNT) && !defined(__CYGWIN32__)
+#if defined(WIN32_NATIVE)
 	  char *homedrive, *homepath;
 
 	  if ((homedrive = getenv("HOMEDRIVE")) != NULL &&
@@ -847,7 +891,9 @@ get_home_directory (void)
 	    }
 	  else
 	    {
-# if 1
+# if 0 /* changed by ben.  This behavior absolutely stinks, and the
+	  possibility being addressed here occurs quite commonly.
+	  Using the current directory makes absolutely no sense. */
 	      /*
 	       * Use the current directory.
 	       * This preserves the existing XEmacs behavior, but is different
@@ -855,12 +901,12 @@ get_home_directory (void)
 	       */
 	      if (initial_directory[0] != '\0')
 		{
-		  cached_home_directory = initial_directory;
+		  cached_home_directory = (Extbyte*) initial_directory;
 		}
 	      else
 		{
 		  /* This will probably give the wrong value */
-		  cached_home_directory = getcwd (NULL, 0);
+		  cached_home_directory = (Extbyte*) getcwd (NULL, 0);
 		}
 # else
 	      /*
@@ -870,7 +916,7 @@ get_home_directory (void)
 	      output_home_warning = 1;
 # endif
 	    }
-#else	/* !WINDOWSNT */
+#else	/* !WIN32_NATIVE */
 	  /*
 	   * Unix, typically.
 	   * Using "/" isn't quite right, but what should we do?
@@ -879,7 +925,7 @@ get_home_directory (void)
 	   */
 	  cached_home_directory = (Extbyte *) "/";
 	  output_home_warning = 1;
-#endif	/* !WINDOWSNT */
+#endif	/* !WIN32_NATIVE */
 	}
       if (initialized && output_home_warning)
 	{
@@ -1004,9 +1050,9 @@ time_to_lisp (time_t the_time)
   return Fcons (make_int (item >> 16), make_int (item & 0xffff));
 }
 
-size_t emacs_strftime (char *string, size_t max, CONST char *format,
-		       CONST struct tm *tm);
-static long difftm (CONST struct tm *a, CONST struct tm *b);
+size_t emacs_strftime (char *string, size_t max, const char *format,
+		       const struct tm *tm);
+static long difftm (const struct tm *a, const struct tm *b);
 
 
 DEFUN ("format-time-string", Fformat_time_string, 1, 2, 0, /*
@@ -1073,7 +1119,7 @@ characters appearing in the day and month names may be incorrect.
       char *buf = (char *) alloca (size);
       *buf = 1;
       if (emacs_strftime (buf, size,
-			  (CONST char *) XSTRING_DATA (format_string),
+			  (const char *) XSTRING_DATA (format_string),
 			  localtime (&value))
 	  || !*buf)
 	return build_ext_string (buf, Qbinary);
@@ -1220,24 +1266,26 @@ and from `file-attributes'.
        (specified_time))
 {
   time_t value;
-  char buf[30];
-  char *tem;
+  char *the_ctime;
+  size_t len;
 
   if (! lisp_to_time (specified_time, &value))
     value = -1;
-  tem = (char *) ctime (&value);
+  the_ctime = ctime (&value);
 
-  strncpy (buf, tem, 24);
-  buf[24] = 0;
+  /* ctime is documented as always returning a "\n\0"-terminated
+     26-byte American time string, but let's be careful anyways. */
+  for (len = 0; the_ctime[len] != '\n' && the_ctime[len] != '\0'; len++)
+    ;
 
-  return build_ext_string (buf, Qbinary);
+  return make_ext_string ((Extbyte *) the_ctime, len, Qbinary);
 }
 
 #define TM_YEAR_ORIGIN 1900
 
 /* Yield A - B, measured in seconds.  */
 static long
-difftm (CONST struct tm *a, CONST struct tm *b)
+difftm (const struct tm *a, const struct tm *b)
 {
   int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
   int by = b->tm_year + (TM_YEAR_ORIGIN - 1);
@@ -2513,6 +2561,8 @@ zmacs-activate-region. Setting this to true lets a command be non-intrusive.
 See the variable `zmacs-regions'.
 
 The same effect can be achieved using the `_' interactive specification.
+
+`zmacs-region-stays' is reset to nil before each command is executed.
 */ );
   zmacs_region_stays = 0;
 

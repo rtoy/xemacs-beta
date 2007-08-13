@@ -26,7 +26,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #ifndef INCLUDED_ntheap_h_
 #define INCLUDED_ntheap_h_
 
-#include <windows.h>
+#include "syswindows.h"
 
 /*
  * Heap related stuff.
@@ -51,7 +51,7 @@ extern int    	      nt_minor_version;
 
 /* To prevent zero-initialized variables from being placed into the bss
    section, use non-zero values to represent an uninitialized state.  */
-#define UNINIT_PTR ((void *) 0xF0A0F0A0)
+#define UNINIT_PTR ((unsigned char*) 0xF0A0F0A0)
 #define UNINIT_LONG (0xF0A0F0A0L)
 
 /* Emulation of Unix sbrk().  */
@@ -75,29 +75,5 @@ extern void cache_system_info (void);
 /* Round ADDRESS up to be aligned with ALIGN.  */
 extern unsigned char *round_to_next (unsigned char *address, 
 				     unsigned long align);
-
-/* ----------------------------------------------------------------- */
-/* Useful routines for manipulating memory-mapped files. */
-
-typedef struct file_data {
-    CONST char    *name;
-    unsigned long  size;
-    HANDLE         file;
-    HANDLE         file_mapping;
-    unsigned char *file_base;
-} file_data;
-
-#define OFFSET_TO_RVA(var,section) \
-	  (section->VirtualAddress + ((DWORD)(var) - section->PointerToRawData))
-
-#define RVA_TO_OFFSET(var,section) \
-	  (section->PointerToRawData + ((DWORD)(var) - section->VirtualAddress))
-
-#define RVA_TO_PTR(var,section,filedata) \
-	  ((void *)(RVA_TO_OFFSET(var,section) + (filedata).file_base))
-
-int open_input_file (file_data *p_file, CONST char *name);
-int open_output_file (file_data *p_file, CONST char *name, unsigned long size);
-void close_file_data (file_data *p_file);
 
 #endif /* INCLUDED_ntheap_h_ */

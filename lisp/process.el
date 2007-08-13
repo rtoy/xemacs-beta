@@ -1,7 +1,7 @@
 ;;; process.el --- commands for subprocesses; split out of simple.el
 
 ;; Copyright (C) 1985-7, 1993,4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995 Ben Wing.
+;; Copyright (C) 1995, 2000 Ben Wing.
 
 ;; Author: Ben Wing
 ;; Maintainer: XEmacs Development Team
@@ -25,6 +25,13 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30.
+
+;;; Authorship:
+
+;; Created 1995 by Ben Wing during Mule work -- some commands split out
+;; of simple.el and wrappers of *-internal functions created so they could
+;; be redefined in a Mule world.
+;; Lisp definition of call-process-internal added Mar. 2000 by Ben Wing.
 
 ;;; Commentary:
 
@@ -66,6 +73,110 @@ Wildcards and redirection are handled as usual in the shell."
   ;; but that failed to handle (...) and semicolon, etc.
   (start-process name buffer shell-file-name shell-command-switch
 		 (mapconcat #'identity args " ")))
+
+(defun call-process-internal (program &optional infile buffer display &rest args)
+  "Call PROGRAM synchronously in separate process, with coding-system specified.
+Arguments are
+ (PROGRAM &optional INFILE BUFFER DISPLAY &rest ARGS).
+The program's input comes from file INFILE (nil means `/dev/null').
+Insert output in BUFFER before point; t means current buffer;
+ nil for BUFFER means discard it; 0 means discard and don't wait.
+BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
+REAL-BUFFER says what to do with standard output, as above,
+while STDERR-FILE says what to do with standard error in the child.
+STDERR-FILE may be nil (discard standard error output),
+t (mix it with ordinary output), or a file name string.
+
+Fourth arg DISPLAY non-nil means redisplay buffer as output is inserted.
+Remaining arguments are strings passed as command arguments to PROGRAM.
+
+If BUFFER is 0, `call-process' returns immediately with value nil.
+Otherwise it waits for PROGRAM to terminate and returns a numeric exit status
+ or a signal description string.
+If you quit, the process is killed with SIGINT, or SIGKILL if you
+ quit again."
+  ;; #### remove windows-nt check when this is ready for prime time.
+  (if (or (noninteractive) (not (eq 'windows-nt system-type)))
+      (apply 'old-call-process-internal program infile buffer display args)
+    (let (proc inbuf errbuf discard)
+      (unwind-protect
+	  (progn
+	    (when infile
+	      (setq infile (expand-file-name infile))
+	      (setq inbuf (generate-new-buffer "*call-process*"))
+	      (with-current-buffer inbuf
+               ;; Make sure this works with jka-compr
+               (let ((file-name-handler-alist nil))
+                 (insert-file-contents-internal infile nil nil nil nil
+                                                'binary))))
+	    (let ((stderr (if (consp buffer) (second buffer) t)))
+	      (if (consp buffer) (setq buffer (car buffer)))
+	      (setq buffer
+		    (cond ((null buffer) nil)
+			  ((eq buffer t) (current-buffer))
+			  ;; use integerp for compatibility with existing
+			  ;; call-process rmsism.
+			  ((integerp buffer) (setq discard t) nil)
+			  (t (get-buffer-create buffer))))
+	      (when (and stderr (not (eq t stderr)))
+		(setq stderr (expand-file-name stderr))
+		(setq errbuf (generate-new-buffer "*call-process*")))
+	      (setq proc
+		    (apply 'start-process-internal "*call-process*"
+			   buffer
+			   ;#### not implemented until my new process
+			   ;changes go in.
+			   ;(if (eq t stderr) buffer (list buffer errbuf))
+			   program args))
+	      (if buffer
+		  (set-marker (process-mark proc) (point buffer) buffer))
+	      (unwind-protect
+		  (prog1
+		    (catch 'call-process-done
+		      (when (not discard)
+			(set-process-sentinel
+			 proc
+			 #'(lambda (proc status)
+			     (cond ((eq 'exit (process-status proc))
+				    (set-process-sentinel proc nil)
+				    (throw 'call-process-done
+					   (process-exit-status proc)))
+				   ((eq 'signal (process-status proc))
+				    (set-process-sentinel proc nil)
+				    (throw 'call-process-done status))))))
+		      (when inbuf
+			(process-send-region proc 1
+					     (1+ (buffer-size inbuf)) inbuf))
+		      (process-send-eof proc)
+		      (when discard
+			;; we're trying really really hard to emulate
+			;; the old call-process.
+			(if errbuf
+			    (set-process-sentinel
+			     proc
+			     `(lambda (proc status)
+				(write-region-internal
+				 1 (1+ (buffer-size))
+				 ,stderr
+				 nil 'major-rms-kludge-city nil
+				 coding-system-for-write))))
+			(setq errbuf nil)
+			(setq proc nil)
+			(throw 'call-process-done nil))
+		      (while t
+			(accept-process-output proc)
+			(if display (sit-for 0))))
+		    (when errbuf
+		      (with-current-buffer errbuf
+			(write-region-internal 1 (1+ (buffer-size)) stderr
+					       nil 'major-rms-kludge-city nil
+					       coding-system-for-write))))
+		(if proc (set-process-sentinel proc nil)))))
+	(if inbuf (kill-buffer inbuf))
+	(if errbuf (kill-buffer errbuf))
+	(condition-case nil
+	    (if (and proc (process-live-p proc)) (kill-process proc))
+	  (error nil))))))
 
 (defun call-process (program &optional infile buffer displayp &rest args)
   "Call PROGRAM synchronously in separate process.
@@ -310,7 +421,7 @@ Fifth argument PROTOCOL is a network protocol.  Currently 'tcp
  (Transmission Control Protocol) and 'udp (User Datagram Protocol) are
  supported.  When omitted, 'tcp is assumed.
 
-Ouput via `process-send-string' and input via buffer or filter (see
+Output via `process-send-string' and input via buffer or filter (see
 `set-process-filter') are stream-oriented.  That means UDP datagrams are
 not guaranteed to be sent and received in discrete packets. (But small
 datagrams around 500 bytes that are not truncated by `process-send-string'
@@ -320,8 +431,21 @@ lost packets."
 
 (defun shell-quote-argument (argument)
   "Quote an argument for passing as argument to an inferior shell."
-  (if (eq system-type 'windows-nt)
-      (nt-quote-process-args (list shell-file-name argument))
+  (if (and (eq system-type 'windows-nt)
+	   (let ((progname (downcase (file-name-nondirectory
+				      shell-file-name))))
+	     (or (equal progname "command.com")
+		 (equal progname "cmd.exe"))))
+      ;; the expectation is that you can take the result of
+      ;; shell-quote-argument and pass it to as an arg to
+      ;; (start-process shell-quote-argument ...) and have it end
+      ;; up as-is in the program's argv[] array.  to do this, we
+      ;; need to protect against both the shell's and the program's
+      ;; quoting conventions (and our own conventions in
+      ;; mswindows-construct-process-command-line!).  Putting quotes
+      ;; around shell metachars gets through the last two, and applying
+      ;; the normal VC runtime quoting works with practically all apps.
+      (mswindows-quote-one-vc-runtime-arg argument t)
     ;; Quote everything except POSIX filename characters.
     ;; This should be safe enough even for really weird shells.
     (let ((result "") (start 0) end)

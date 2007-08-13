@@ -140,10 +140,10 @@ This function is the process handler for the GPM connection.
 	/* Whow, wouldn't named defines be NICE!?!?! */
 	modifiers = 0;
 
-	if (ev.modifiers & 1)   modifiers |= MOD_SHIFT;
-	if (ev.modifiers & 2)   modifiers |= MOD_META;
-	if (ev.modifiers & 4)   modifiers |= MOD_CONTROL;
-	if (ev.modifiers & 8)   modifiers |= MOD_META;
+	if (ev.modifiers & 1)   modifiers |= XEMACS_MOD_SHIFT;
+	if (ev.modifiers & 2)   modifiers |= XEMACS_MOD_META;
+	if (ev.modifiers & 4)   modifiers |= XEMACS_MOD_CONTROL;
+	if (ev.modifiers & 8)   modifiers |= XEMACS_MOD_META;
 
 	if (ev.buttons & GPM_B_LEFT)
 	{
@@ -309,7 +309,7 @@ tty_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type
 }
 
 static Lisp_Object
-tty_selection_exists_p (Lisp_Object selection)
+tty_selection_exists_p (Lisp_Object selection, Lisp_Object selection_type)
 {
 	return (Qt);
 }
@@ -317,7 +317,8 @@ tty_selection_exists_p (Lisp_Object selection)
 
 #if 0
 static Lisp_Object
-tty_own_selection (Lisp_Object selection_name, Lisp_Object selection_value)
+tty_own_selection (Lisp_Object selection_name, Lisp_Object selection_value,
+		   Lisp_Object how_to_add, Lisp_Object selection_type)
 {
 	/* There is no way to do this cleanly - the GPM selection
 	** 'protocol' (actually the TIOCLINUX ioctl) requires a start and
@@ -569,7 +570,7 @@ Toggle accepting of GPM mouse events.
 	conn.maxMod = ((1<<KG_SHIFT)|(1<<KG_ALT)|(1<<KG_CTRL));
 
 	/* Reset some silly static variables so that multiple Gpm_Open()
-	** calls have even a sligh chance of working
+	** calls have even a slight chance of working
 	*/
 	gpm_tried = 0;
 	gpm_flag = 0;

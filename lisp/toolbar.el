@@ -57,10 +57,10 @@ customized through the options menu."
   "The location of the default toolbar. It can be 'top, 'bottom, 'left or
 'right. This option can be customized through the options menu."
   :group 'display
-  :type '(choice (const :tag "top" 'top)
-		 (const :tag "bottom" 'bottom)
-		 (const :tag "left" 'left)
-		 (const :tag "right" 'right))
+  :type '(choice (const :tag "top" top)
+		 (const :tag "bottom" bottom)
+		 (const :tag "left" left)
+		 (const :tag "right" right))
   :set #'(lambda (var val)
 	   (set-default-toolbar-position val)
 	   (setq default-toolbar-position val))
@@ -123,6 +123,9 @@ customized through the options menu."
 (defvar last-pressed-toolbar-button nil)
 (defvar toolbar-active nil)
 
+(defvar toolbar-blank-press-function nil
+  "Function to call if a blank area of the toolbar is pressed.")
+
 ;;
 ;; It really sucks that we also have to tie onto
 ;; default-mouse-motion-handler to make sliding buttons work right.
@@ -143,9 +146,8 @@ an argument if press is over a blank area of the toolbar."
 	  (setq last-pressed-toolbar-button button))
       ;; Added by Bob Weiner, Motorola Inc., 10/6/95, to handle
       ;; presses on blank portions of toolbars.
-      (and (boundp 'toolbar-blank-press-function)
-	   (functionp toolbar-blank-press-function)
-	   (funcall toolbar-blank-press-function event)))))
+      (when (functionp toolbar-blank-press-function)
+	(funcall toolbar-blank-press-function event)))))
 
 (defun release-and-activate-toolbar-button (event)
   "Release a toolbar button and activate its callback.
@@ -197,5 +199,22 @@ as an argument if release is over a blank area of the toolbar."
 (defun release-previous-toolbar-button (event)
   (setq zmacs-region-stays t)
   (release-toolbar-button-internal event nil))
+
+(defun make-toolbar-specifier (spec-list)
+  "Return a new `toolbar' specifier object with the given specification list.
+SPEC-LIST can be a list of specifications (each of which is a cons of a
+locale and a list of instantiators), a single instantiator, or a list
+of instantiators.  See `make-specifier' for more information about
+specifiers.
+
+Toolbar specifiers are used to specify the format of a toolbar.
+The values of the variables `default-toolbar', `top-toolbar',
+`left-toolbar', `right-toolbar', and `bottom-toolbar' are always
+toolbar specifiers.
+
+Valid toolbar instantiators are called \"toolbar descriptors\"
+and are lists of vectors.  See `default-toolbar' for a description
+of the exact format."
+  (make-specifier-and-init 'toolbar spec-list))
 
 ;;; toolbar.el ends here

@@ -61,6 +61,7 @@ See the samples for more details.
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -109,7 +110,7 @@ main (int argc, char *argv[])
 #endif
 static void *xmalloc (size_t);
 static void fatal (char *, char *);
-static void add_to_argv (CONST char *);
+static void add_to_argv (const char *);
 static void do_compile_mode (void);
 static void do_link_mode (void);
 static void do_init_mode (void);
@@ -120,16 +121,19 @@ static void do_init_mode (void);
 #define ELLCC_LINK_MODE         1
 #define ELLCC_INIT_MODE         2
 
-int ellcc_mode = ELLCC_COMPILE_MODE;
-char *progname;
-char *mod_name = (char *)0, *mod_version = (char *)0, *mod_title = (char *)0;
-char *mod_output = (char *)0;
-int verbose = 0;
-char **exec_argv;
-int exec_argc = 1, *exec_args;
-int real_argc = 0;
-int prog_argc;
-char **prog_argv;
+static int ellcc_mode = ELLCC_COMPILE_MODE;
+static char *progname;
+static char *mod_name = NULL;
+static char *mod_version = NULL;
+static char *mod_title = NULL;
+static char *mod_output = NULL;
+static int verbose = 0;
+static char **exec_argv;
+static int exec_argc = 1;
+static int *exec_args;
+static int real_argc = 0;
+static int prog_argc;
+static char **prog_argv;
 
 /*
  * We allow the user to over-ride things in the environment
@@ -149,7 +153,7 @@ main (int argc, char *argv[])
   prog_argc = argc;
   prog_argv = argv;
 
-#if defined(MSDOS) || defined(WINDOWSNT)
+#if defined(WIN32_NATIVE)
   tmp = strrchr (argv[0], '\\');
   if (tmp != (char *)0)
     tmp++;
@@ -346,12 +350,12 @@ fatal (char *s1, char *s2)
  * arguments, taking quoting into account. This can get ugly.
  */
 static void
-add_to_argv (CONST char *str)
+add_to_argv (const char *str)
 {
   int sm = 0;
-  CONST char *s = (CONST char *)0;
+  const char *s = (const char *)0;
 
-  if ((str == (CONST char *)0) || (str[0] == '\0'))
+  if ((str == (const char *)0) || (str[0] == '\0'))
     return;
 
   while (*str)
@@ -378,7 +382,7 @@ add_to_argv (CONST char *str)
               exec_argv[real_argc][l] = '\0';
               real_argc++;
               sm = 0; /* Back to start state */
-              s = (CONST char *)0;
+              s = (const char *)0;
               break;
             }
           else if (*str == '\\')
@@ -423,14 +427,14 @@ add_to_argv (CONST char *str)
         }
     }
 
-  if (s != (CONST char *)0)
+  if (s != (const char *)0)
     {
       int l = str-s;
       exec_argv[real_argc] = xnew (l+2, char);
       strncpy (exec_argv[real_argc], s, l);
       exec_argv[real_argc][l] = '\0';
       real_argc++;
-      s = (CONST char *)0;
+      s = (const char *)0;
     }
 }
 

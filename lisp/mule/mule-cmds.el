@@ -47,11 +47,9 @@
 (define-key mule-keymap "r" 'toggle-display-direction)	 ; XEmacs
 (define-key mule-keymap "l" 'set-language-environment)
 
-(define-key help-map "\C-L" 'describe-language-support)
 (define-key help-map "L" 'describe-language-environment)
 (define-key help-map "\C-\\" 'describe-input-method)
 (define-key help-map "I" 'describe-input-method)
-(define-key help-map "C" 'describe-coding-system)
 (define-key help-map "h" 'view-hello-file)
 
 ;; Menu for XEmacs were moved to menubar-items.el.
@@ -99,7 +97,7 @@ They means `lf', `crlf', and `cr' respectively."
       (let ((base (coding-system-base coding-system)))
         (if (not eol-type)
             base
-          (if (= eol-type orig-eol-type)
+          (if (eq eol-type orig-eol-type)
               coding-system
             (setq orig-eol-type (coding-system-eol-type base))
             (if (null orig-eol-type)
@@ -164,9 +162,9 @@ This sets the following coding systems:
   ;; that they could reset the terminal coding system.
   ;; (unless (and (eq window-system 'pc) coding-system)
   ;;   (setq default-terminal-coding-system coding-system))
-  (setq terminal-coding-system coding-system)
+  (set-terminal-coding-system coding-system)
   ;;(setq default-keyboard-coding-system coding-system)
-  (setq keyboard-coding-system coding-system)
+  (set-keyboard-coding-system coding-system)
   ;;(setq default-process-coding-system (cons coding-system coding-system))
   ;; Refer to coding-system-for-read and coding-system-for-write
   ;; so that C-x RET c works.
@@ -613,7 +611,8 @@ ALIST is an alist of KEY and INFO values.  See the documentation of
 	  (eval-after-load
 	      "menubar-items.elc"
 	    `(add-menu-button
-	      '("Mule" "Describe Language Support")
+	      '("%_Edit" "%_Multilingual (\"Mule\")"
+		"%_Describe Language Support")
 	      (vector ,lang-env
 		      '(describe-language-environment ,lang-env)
 		      t))))
@@ -624,11 +623,12 @@ ALIST is an alist of KEY and INFO values.  See the documentation of
       (eval-after-load
 	  "menubar-items.elc"
 	`(add-menu-button
-	  '("Mule" "Set Language Environment")
+	  '("%_Edit" "%_Multilingual (\"Mule\")"
+	    "%_Set Language Environment")
 	  (vector ,lang-env
 		  '(set-language-environment ,lang-env)
 		  t))))
-
+    
     (while alist
       (set-language-info lang-env (car (car alist)) (cdr (car alist)))
       (setq alist (cdr alist)))))
@@ -996,7 +996,7 @@ at point in the current buffer.
 But, if this flag is non-nil, it displays them in echo area instead.")
 
 (defvar input-method-exit-on-invalid-key nil
-  "This flag controls the behaviour of an input method on invalid key input.
+  "This flag controls the behavior of an input method on invalid key input.
 Usually, when a user types a key which doesn't start any character
 handled by the input method, the key is handled by turning off the
 input method temporarily.  After that key, the input method is re-enabled.

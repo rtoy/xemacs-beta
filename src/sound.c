@@ -37,12 +37,11 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "sysdep.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#include "sysfile.h"
 
 #ifdef HAVE_NATIVE_SOUND
-# include <netdb.h>
+# include "sysproc.h"
+# include "nativesound.h"
 #endif
 
 #ifdef HAVE_ESD_SOUND
@@ -58,11 +57,6 @@ Lisp_Object Vsynchronous_sounds;
 Lisp_Object Vnative_sound_only_on_console;
 Lisp_Object Q_volume, Q_pitch, Q_duration, Q_sound;
 
-/* These are defined in the appropriate file (sunplay.c, sgiplay.c,
-   or hpplay.c). */
-
-extern void play_sound_file (char *name, int volume);
-extern void play_sound_data (unsigned char *data, int length, int volume);
 
 #ifdef HAVE_NAS_SOUND
 extern int nas_play_sound_file (char *name, int volume);
@@ -126,9 +120,7 @@ Windows the sound file must be in WAV format.
     {
       char *fileext;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, file,
-			  C_STRING_ALLOCA, fileext,
-			  Qfile_name);
+      LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
       /* #### NAS code should allow specification of a device. */
       if (nas_play_sound_file (fileext, vol))
 	return Qnil;
@@ -139,11 +131,15 @@ Windows the sound file must be in WAV format.
   if (DEVICE_CONNECTED_TO_ESD_P (d))
     {
       char *fileext;
+      int result;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, file,
-			  C_STRING_ALLOCA, fileext,
-			  Qfile_name);
-      if (esd_play_sound_file (fileext, vol))
+      LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
+
+      /* #### ESD uses alarm(). But why should we also stop SIGIO? */
+      stop_interrupts ();
+      result = esd_play_sound_file (fileext, vol);
+      start_interrupts ();
+      if (result)
        return Qnil;
     }
 #endif /* HAVE_ESD_SOUND */
@@ -151,11 +147,9 @@ Windows the sound file must be in WAV format.
 #ifdef HAVE_NATIVE_SOUND
   if (NILP (Vnative_sound_only_on_console) || DEVICE_ON_CONSOLE_P (d))
     {
-      CONST char *fileext;
+      const char *fileext;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, file,
-			  C_STRING_ALLOCA, fileext,
-			  Qfile_name);
+      LISP_STRING_TO_EXTERNAL (file, fileext, Qfile_name);
       /* The sound code doesn't like getting SIGIO interrupts.
 	 Unix sucks! */
       stop_interrupts ();
@@ -317,7 +311,7 @@ See the variable `sound-alist'.
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d) && STRINGP (sound))
     {
-      CONST Extbyte *soundext;
+      const Extbyte *soundext;
       Extcount soundextlen;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound,
@@ -333,11 +327,18 @@ See the variable `sound-alist'.
     {
       Extbyte *soundext;
       Extcount soundextlen;
+      int succes;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound, ALLOCA, (soundext, soundextlen),
 			  Qbinary);
-      if (esd_play_sound_data (soundext, soundextlen, vol))
-       return Qnil;
+      
+      /* #### ESD uses alarm(). But why should we also stop SIGIO? */
+      stop_interrupts ();
+      succes = esd_play_sound_data (soundext, soundextlen, vol);
+      start_interrupts ();
+      QUIT;
+      if(succes)
+        return Qnil;
     }
 #endif /* HAVE_ESD_SOUND */
 
@@ -345,18 +346,20 @@ See the variable `sound-alist'.
   if ((NILP (Vnative_sound_only_on_console) || DEVICE_ON_CONSOLE_P (d))
       && STRINGP (sound))
     {
-      CONST Extbyte *soundext;
+      const Extbyte *soundext;
       Extcount soundextlen;
+      int succes;
 
       TO_EXTERNAL_FORMAT (LISP_STRING, sound,
 			  ALLOCA, (soundext, soundextlen),
 			  Qbinary);
       /* The sound code doesn't like getting SIGIO interrupts. Unix sucks! */
       stop_interrupts ();
-      play_sound_data ((unsigned char*)soundext, soundextlen, vol);
+      succes = play_sound_data ((unsigned char*)soundext, soundextlen, vol);
       start_interrupts ();
       QUIT;
-      return Qnil;
+      if (succes)
+        return Qnil;
     }
 #endif  /* HAVE_NATIVE_SOUND */
 
@@ -404,7 +407,7 @@ device).
   
   if (d == last_bell_device && now-last_bell_time < bell_inhibit_time)
     return Qnil;
-  else if (visible_bell && DEVMETH (d, flash, (d)))
+  else if (!NILP (Vvisible_bell) && DEVMETH (d, flash, (d)))
     ;
   else
     Fplay_sound (sound, Qnil, device);
@@ -447,13 +450,11 @@ Return t if connected to NAS server for sounds on DEVICE.
 static void
 init_nas_sound (struct device *d)
 {
-  char *error;
-
 #ifdef HAVE_X_WINDOWS
   if (DEVICE_X_P (d))
     {
-      error = nas_init_play (DEVICE_X_DISPLAY (d));
-      DEVICE_CONNECTED_TO_NAS_P (d) = !error;
+      char *err_message = nas_init_play (DEVICE_X_DISPLAY (d));
+      DEVICE_CONNECTED_TO_NAS_P (d) = !err_message;
       /* Print out the message? */
     }
 #endif /* HAVE_X_WINDOWS */
@@ -645,7 +646,7 @@ of sounds.  Otherwise, sounds are always played synchronously.
   DEFVAR_LISP ("native-sound-only-on-console", &Vnative_sound_only_on_console /*
 Non-nil value means play sounds only if XEmacs is running
 on the system console.
-Nil means always always play sounds, even if running on a non-console tty
+Nil means always play sounds, even if running on a non-console tty
 or a secondary X display.
 
 This variable only applies to native sound support.

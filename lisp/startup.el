@@ -20,7 +20,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -107,16 +107,29 @@ the user's init file.")
 (defvar user-init-directory-base ".xemacs"
   "Base of directory where user-installed init files may go.")
 
-(defvar user-init-file-base-list (append
-				  '(".emacs.elc" ".emacs.el" ".emacs")
-				  (and (eq system-type 'windows-nt)
-				       '("_emacs.elc" "_emacs.el" "_emacs")))
-  "List of allowed init files.  The first one found takes precedence.")
-
 (defvar user-init-directory
   (file-name-as-directory
    (paths-construct-path (list "~" user-init-directory-base)))
   "Directory where user-installed init files may go.")
+
+(defvar user-init-file-base "init.el"
+  "Default name of the user init file if uncompiled.
+This should be used for migration purposes only.")
+
+(defvar user-init-file-base-list '("init.elc" "init.el")
+  "List of allowed init files in the user's init directory.
+The first one found takes precedence.")
+
+(defvar user-home-init-file-base-list
+  (append '(".emacs.elc" ".emacs.el" ".emacs")
+	  (and (eq system-type 'windows-nt)
+	       '("_emacs.elc" "_emacs.el" "_emacs")))
+  "List of allowed init files in the user's home directory.
+The first one found takes precedence.")
+
+(defvar load-home-init-file nil
+  "Non-nil if XEmacs should load the init file from the home directory.
+Otherwise, XEmacs will offer migration to the init directory.")
 
 (defvar load-user-init-file-p t
   "Non-nil if XEmacs should load the user's init file.")
@@ -146,13 +159,17 @@ is less convenient.")
 ;;We do that if this regexp matches the locale name
 ;;specified by the LC_ALL, LC_CTYPE and LANG environment variables.")
 
-(defvar mail-host-address nil
-  "*Name of this machine, for purposes of naming users.")
+(defcustom mail-host-address nil
+  "*Name of this machine, for purposes of naming users."
+  :type 'string
+  :group 'mail)
 
-(defvar user-mail-address nil
+(defcustom user-mail-address nil
   "*Full mailing address of this user.
 This is initialized based on `mail-host-address',
-after your init file is read, in case it sets `mail-host-address'.")
+after your init file is read, in case it sets `mail-host-address'."
+  :type 'string
+  :group 'mail)
 
 (defvar auto-save-list-file-prefix "~/.saves-"
   "Prefix for generating auto-save-list-file-name.
@@ -369,10 +386,9 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	(princ "\n\n" stream)))
     (when (not suppress-early-error-handler-backtrace)
       (backtrace stream t)))
+  (if (fboundp 'mswindows-message-box)
+      (mswindows-message-box "Initialization error"))
   (kill-emacs -1))
-
-(defvar lock-directory)
-(defvar superlock-file)
 
 (defun normal-top-level ()
   (if command-line-processed
@@ -448,6 +464,9 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
       (when window-setup-hook
 	(run-hooks 'window-setup-hook))
       (setq window-setup-hook nil))
+
+    (if load-user-init-file-p
+	(maybe-migrate-user-init-file))
     ;;####FSFmacs junk
     ;;      (or menubar-bindings-done
     ;;	  (precompute-menubar-bindings))
@@ -531,10 +550,13 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
  	    (string= arg "-user"))
 	(let* ((user (pop args))
 	       (home-user (concat "~" user)))
-	  (setq user-init-file (find-user-init-file home-user)
-		user-init-directory (file-name-as-directory
+	  (setq user-init-directory (file-name-as-directory
 				     (paths-construct-path
-				      (list home-user user-init-directory-base))))))
+				      (list home-user user-init-directory-base))))
+	  (setq user-init-file
+		(find-user-init-file user-init-directory home-user))
+	  (setq custom-file
+		(make-custom-file-name user-init-file))))
        ((string= arg "-debug-init")
 	(setq init-file-debug t))
        ((string= arg "-unmapped")
@@ -638,20 +660,94 @@ If this is nil, no message will be displayed.")
 	    (setq term (substring term 0 hyphend))
 	  (setq term nil))))))
 
-(defun find-user-init-file (&optional directory)
+(defun find-user-init-directory-init-file (&optional init-directory)
+  "Determine the user's init file if in the init directory."
+  (let ((init-directory (or init-directory user-init-directory)))
+    (catch 'found
+      (dolist (file user-init-file-base-list)
+	(let ((expanded (expand-file-name file init-directory)))
+	  (when (file-readable-p expanded)
+	    (throw 'found expanded)))))))
+
+(defun find-user-home-directory-init-file (&optional home-directory)
+  "Determine the user's init file if in the home directory."
+  (let ((home-directory (or home-directory "~")))
+    (catch 'found
+      (dolist (file user-home-init-file-base-list)
+	(let ((expanded (expand-file-name file home-directory)))
+	  (when (file-readable-p expanded)
+	    (throw 'found expanded))))
+      nil)))
+
+(defun find-user-init-file (&optional init-directory home-directory)
   "Determine the user's init file."
-  (unless directory
-    (setq directory "~"))
-  (dolist (file user-init-file-base-list)
-    (let ((expanded (paths-construct-path (list directory file))))
-      (when (file-exists-p expanded)
-	(return expanded)))))
+  (if load-home-init-file
+      (find-user-home-directory-init-file home-directory)
+    (or (find-user-init-directory-init-file init-directory)
+	(find-user-home-directory-init-file home-directory))))
+
+(defun maybe-migrate-user-init-file ()
+  "Ask user if she wants to migrate the init file(s) to new location."
+  (if (and (not load-home-init-file)
+	   (not (find-user-init-directory-init-file user-init-directory))
+	   (stringp user-init-file)
+	   (file-readable-p user-init-file))
+      (if (with-output-to-temp-buffer (help-buffer-name nil)
+	    (progn
+	      (princ "XEmacs recommends that the initialization code in
+")
+	      (princ user-init-file)
+	      (princ "
+be migrated to the ")
+	      (princ user-init-directory)
+	      (princ " directory.  XEmacs can
+perform the migration automatically.
+
+After the migration, init.el/init.elc holds user-written
+initialization code.  Moreover the customize settings will be in
+custom.el.
+
+If you choose not to do this now, XEmacs will not ask you this
+question in the future.  However, you can still make XEmacs
+perform the migration at any time with M-x migrate-user-init-file.")
+	      (show-temp-buffer-in-current-frame standard-output)
+	      (yes-or-no-p-minibuf (concat "Migrate init file to "
+					   user-init-directory
+					   "? "))))
+	  (migrate-user-init-file)
+	(customize-save-variable 'load-home-init-file t))))
+
+(defun migrate-user-init-file ()
+  "Migrate the init file from the home directory."
+  (interactive)
+  (if (not (file-exists-p user-init-directory))
+      (progn
+	(message "Creating %s directory..." user-init-directory)
+	(make-directory user-init-directory)))
+  (message "Migrating custom file...")
+  (custom-migrate-custom-file (make-custom-file-name user-init-file
+						     'force-new))
+  (message "Moving init file...")
+  (rename-file user-init-file
+	       (expand-file-name user-init-file-base
+				 user-init-directory))
+  (message "Migration done."))
 
 (defun load-user-init-file ()
-  "This function actually reads the init file, .emacs."
+  "This function actually reads the init file."
   (if (not user-init-file)
-      (setq user-init-file (find-user-init-file)))
-  (load user-init-file t t t)
+      (setq user-init-file
+	    (find-user-init-file user-init-directory)))
+  (if (and user-init-file
+	   (file-readable-p user-init-file))
+      (load user-init-file t t t))
+  (if (not custom-file)
+      (setq custom-file (make-custom-file-name user-init-file)))
+  (if (and custom-file
+	   (or (not user-init-file)
+	       (not (string= custom-file user-init-file)))
+	   (file-readable-p custom-file))
+      (load custom-file t t t))
   (unless inhibit-default-init
     (let ((inhibit-startup-message nil))
       ;; Users are supposed to be told their rights.
@@ -679,8 +775,9 @@ If this is nil, no message will be displayed.")
 	 (if (eq init-file-debug t) 'startup init-file-debug)))
     (let ((debug-on-error debug-on-error-initial))
       (if (and load-user-init-file-p init-file-debug)
-	  ;; Do this without a condition-case if the user wants to debug.
-	  (load-user-init-file)
+	  (progn
+	    ;; Do this without a condition-case if the user wants to debug.
+	    (load-user-init-file))
 	(condition-case error
 	    (progn
 	      (if load-user-init-file-p
@@ -777,7 +874,7 @@ a new format, when variables have changed, etc."
 	  (file-count 0)
 	  (line nil)
 	  (end-of-options nil)
-	  first-file-buffer file-p arg tem)
+	  file-p arg tem)
       (while command-line-args-left
 	(setq arg (pop command-line-args-left))
 	(cond
@@ -804,8 +901,8 @@ a new format, when variables have changed, etc."
 	  (incf file-count)
 	  (setq arg (expand-file-name arg dir))
 	  (cond
-	   ((= file-count 1) (setq first-file-buffer
-				   (progn (find-file arg) (current-buffer))))
+	   ((= file-count 1)
+	    (find-file arg))
 	   (noninteractive (find-file arg))
 	   (t (find-file-other-window arg)))
 	  (when line
@@ -1146,18 +1243,6 @@ It's idempotent, so call this as often as you like!"
       (princ (format "Info-directory-list:\n%S\n" Info-directory-list)
 	     'external-debugging-output))
 
-  (if (boundp 'lock-directory)
-      (progn
-	(setq lock-directory (paths-find-lock-directory roots))
-	(setq superlock-file (paths-find-superlock-file lock-directory))
-
-	(if debug-paths
-	    (progn
-	      (princ (format "lock-directory:\n%S\n" lock-directory)
-		     'external-debugging-output)
-	      (princ (format "superlock-file:\n%S\n" superlock-file)
-		     'external-debugging-output)))))
-
   (setq exec-directory (paths-find-exec-directory roots))
 
   (if debug-paths
@@ -1205,20 +1290,15 @@ It's idempotent, so call this as often as you like!"
     (princ (buffer-string) 'external-debugging-output)))
 
 (defun startup-setup-paths-warning ()
-  (let ((lock (if (boundp 'lock-directory) lock-directory 't))
-	(warnings '()))
-    (if (and (stringp lock) (null (file-directory-p lock)))
-	(setq lock nil))
+  (let ((warnings '()))
     (cond
      ((null (and lisp-directory exec-directory data-directory doc-directory
-		 load-path
-		 lock))
+		 load-path))
       (save-excursion
 	(set-buffer (get-buffer-create " *warning-tmp*"))
 	(erase-buffer)
 	(buffer-disable-undo (current-buffer))
 	(if (null lisp-directory) (push "lisp-directory" warnings))
-	(if (null lock)           (push "lock-directory" warnings))
 	(if (null exec-directory) (push "exec-directory" warnings))
 	(if (null data-directory) (push "data-directory" warnings))
 	(if (null doc-directory)  (push "doc-directory"  warnings))

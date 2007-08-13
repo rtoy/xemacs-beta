@@ -460,14 +460,10 @@ update_scrollbar_instance (struct window *w, int vertical,
 	if (!NILP (w->scrollbar_on_left_p))
 	  {
 	    x_offset = WINDOW_LEFT (w);
-	    if (window_is_leftmost (w))
-	      x_offset += FRAME_LEFT_GUTTER_BOUNDS (f);
 	  }
-	else 
+	else
 	  {
 	    x_offset = WINDOW_RIGHT (w) - scrollbar_width;
-	    if (window_is_rightmost (w))
-	      x_offset -= FRAME_RIGHT_GUTTER_BOUNDS (f);
 	    if (window_needs_vertical_divider (w))
 	      x_offset -= window_divider_width (w);
 	  }
@@ -481,8 +477,6 @@ update_scrollbar_instance (struct window *w, int vertical,
 	if (!NILP (w->scrollbar_on_top_p))
 	  {
 	    y_offset += WINDOW_TOP (w);
-	    if (window_is_highest (w))
-	      y_offset += FRAME_TOP_GUTTER_BOUNDS (f);
 	  }
 	else
 	  {
@@ -741,26 +735,26 @@ behavior.
      with their standard behaviors.  It is not possible to hide the
      differences down in lwlib because knowledge of XEmacs buffer and
      cursor motion routines is necessary. */
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
-    defined (LWLIB_SCROLLBARS_ATHENA3D) || defined(HAVE_MS_WINDOWS)
-  window_scroll (window, Qnil, -1, ERROR_ME_NOT);
-#else /* Athena */
-  {
-    Bufpos bufpos;
-    Lisp_Object value = Fcdr (object);
 
-    CHECK_INT (value);
-    Fmove_to_window_line (Qzero, window);
-    /* can't use Fvertical_motion() because it moves the buffer point
-       rather than the window's point.
+  if (NILP (XCDR (object)))
+    window_scroll (window, Qnil, -1, ERROR_ME_NOT);
+  else
+    {
+      Bufpos bufpos;
+      Lisp_Object value = Fcdr (object);
 
-       #### It does?  Why does it take a window argument then? */
-    bufpos = vmotion (XWINDOW (window), XINT (Fwindow_point (window)),
-		      XINT (value), 0);
-    Fset_window_point (window, make_int (bufpos));
-    Fcenter_to_window_line (Qzero, window);
-  }
-#endif /* Athena */
+      CHECK_INT (value);
+      Fmove_to_window_line (Qzero, window);
+      /* can't use Fvertical_motion() because it moves the buffer point
+	 rather than the window's point.
+
+	 #### It does?  Why does it take a window argument then? */
+      bufpos = vmotion (XWINDOW (window), XINT (Fwindow_point (window)),
+			XINT (value), 0);
+      Fset_window_point (window, make_int (bufpos));
+      Fcenter_to_window_line (Qzero, window);
+    }
+
   zmacs_region_stays = 1;
   return Qnil;
 }
@@ -782,17 +776,17 @@ behavior.
      with their standard behaviors.  It is not possible to hide the
      differences down in lwlib because knowledge of XEmacs buffer and
      cursor motion routines is necessary. */
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
-    defined (LWLIB_SCROLLBARS_ATHENA3D) || defined (HAVE_MS_WINDOWS)
-  window_scroll (window, Qnil, 1, ERROR_ME_NOT);
-#else /* Athena */
-  {
-    Lisp_Object value = Fcdr (object);
-    CHECK_INT (value);
-    Fmove_to_window_line (value, window);
-    Fcenter_to_window_line (Qzero, window);
-  }
-#endif /* Athena */
+
+  if (NILP (XCDR (object)))
+    window_scroll (window, Qnil, 1, ERROR_ME_NOT);
+  else
+    {
+      Lisp_Object value = Fcdr (object);
+      CHECK_INT (value);
+      Fmove_to_window_line (value, window);
+      Fcenter_to_window_line (Qzero, window);
+    }
+
   zmacs_region_stays = 1;
   return Qnil;
 }
@@ -1010,7 +1004,7 @@ This is a specifier; use `set-specifier' to change it.
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vscrollbar_on_left_p = Fmake_specifier (Qboolean);
-  
+
   {
     /* Kludge. Under X, we want athena scrollbars on the left,
        while all other scrollbars go on the right by default. */

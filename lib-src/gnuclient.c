@@ -27,6 +27,17 @@ Boston, MA 02111-1307, USA.
  Please mail bugs and suggestions to the XEmacs maintainer.
 */
 
+/* #### This file should be a windows-mode, not console-mode program under
+   Windows. (i.e. its entry point should be WinMain.) gnuattach functionality,
+   to the extent it's used at all, should be retrieved using a script that
+   calls the i.exe wrapper program, to obtain stdio handles.
+
+   #### For that matter, both the functionality of gnuclient and gnuserv
+   should be merged into XEmacs itself using a -remote arg, just like
+   Netscape and other modern programs.
+
+   --ben */
+
 /*
  * This file incorporates new features added by Bob Weiner <weiner@mot.com>,
  * Darrell Kindred <dkindred@cmu.edu> and Arup Mukherjee <arup@cmu.edu>.
@@ -48,7 +59,6 @@ static char rcsid [] = "!Header: gnuclient.c,v 2.2 95/12/12 01:39:21 wing nene !
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#define DONT_ENCAPSULATE
 #include <sysfile.h>
 
 #ifdef HAVE_STRING_H
@@ -121,7 +131,7 @@ pass_signal_to_emacs (int sig)
 }
 
 void
-initialize_signals ()
+initialize_signals (void)
 {
   /* Set up signal handler to pass relevant signals to emacs process.
      We used to send SIGSEGV, SIGBUS, SIGPIPE, SIGILL and others to
@@ -190,7 +200,7 @@ filename_expand (char *fullpath, char *filename)
        /* Absolute (unix-style) pathname.  Do nothing */
        strcat (fullpath, filename);
      }
-#ifdef  __CYGWIN32__
+#ifdef  CYGWIN
   else if (filename[0] && filename[0] == '\\' &&
            filename[1] && filename[1] == '\\')
     {
@@ -215,7 +225,7 @@ filename_expand (char *fullpath, char *filename)
       /* Assume relative Unix style path.  Get the current directory
        and prepend it.  FIXME: need to fix the case of DOS paths like
        "\foo", where we need to get the current drive. */
-      
+
       strcat (fullpath, get_current_working_directory ());
       len = strlen (fullpath);
 
@@ -231,13 +241,13 @@ filename_expand (char *fullpath, char *filename)
 /* Encase the string in quotes, escape all the backslashes and quotes
    in string.  */
 static char *
-clean_string (CONST char *s)
+clean_string (const char *s)
 {
   int i = 0;
   char *p, *res;
 
   {
-    CONST char *const_p;
+    const char *const_p;
     for (const_p = s; *const_p; const_p++, i++)
       {
 	if (*const_p == '\\' || *const_p == '\"')
@@ -293,7 +303,7 @@ clean_string (CONST char *s)
 
 /* A strdup imitation. */
 static char *
-my_strdup (CONST char *s)
+my_strdup (const char *s)
 {
   char *new_s = (char *) malloc (strlen (s) + 1);
   if (new_s)
@@ -451,11 +461,11 @@ main (int argc, char *argv[])
     {
       fprintf (stderr,
 #ifdef INTERNET_DOMAIN_SOCKETS
-	       "usage: %s [-nw] [-display display] [-q] [-v] [-l library]\n"
+	       "Usage: %s [-nw] [-display display] [-q] [-v] [-l library]\n"
                "       [-batch] [-f function] [-eval form]\n"
 	       "       [-h host] [-p port] [-r remote-path] [[+line] file] ...\n",
 #else /* !INTERNET_DOMAIN_SOCKETS */
-	       "usage: %s [-nw] [-q] [-v] [-l library] [-f function] [-eval form] "
+	       "Usage: %s [-nw] [-q] [-v] [-l library] [-f function] [-eval form] "
 	       "[[+line] path] ...\n",
 #endif /* !INTERNET_DOMAIN_SOCKETS */
 	       progname);
@@ -563,7 +573,7 @@ main (int argc, char *argv[])
 		       progname);
 	      exit (1);
 	    }
-      /* Don't do disconnect_from_server becasue we have already read
+      /* Don't do disconnect_from_server because we have already read
 	 data, and disconnect doesn't do anything else. */
 #ifndef INTERNET_DOMAIN_SOCKETS
 	  if (connect_type == (int) CONN_IPC)

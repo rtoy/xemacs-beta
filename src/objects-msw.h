@@ -50,7 +50,7 @@ struct mswindows_color_instance_data
    combinations.  Only the one at index 0, neither underlined nor
    struk through is created with the font instance. Other fonts are
    created as necessary during redisplay, using the one at index 0
-   as protptype */
+   as prototype */
 #define MSWINDOWS_NUM_FONT_VARIANTS 4
 struct mswindows_font_instance_data
 {
@@ -69,8 +69,10 @@ struct mswindows_font_instance_data
 /* If font creation during redisplay fails, then the following
    value is used to prevent future attempts to create this font.
    Redisplay uses the "main" font when encounters this value */
-#define MSWINDOWS_BAD_HFONT INVALID_HANDLE_VALUE
+#define MSWINDOWS_BAD_HFONT ((HFONT)INVALID_HANDLE_VALUE)
 
 HFONT mswindows_get_hfont (Lisp_Font_Instance* f, int under, int strike);
+
+Lisp_Object mswindows_color_to_string (COLORREF color);
 
 #endif /* INCLUDED_objects_msw_h_ */

@@ -81,7 +81,7 @@
 	 #'(lambda (n p f)
 	     (list 'put (list 'quote n) (list 'quote p)
 		   (list 'function (cons 'lambda f))))))
-   (car (or features (setq features (list 'cl-kludge))))))
+   'xemacs))
 
 
 ;;; Initialization.
@@ -104,31 +104,6 @@
 	      (funcall cl-old-bc-file-form form)))))
   (put 'eql 'byte-compile 'cl-byte-compile-compiler-macro)
   (run-hooks 'cl-hack-bytecomp-hook))
-
-
-;;; Symbols.
-
-(defvar *gensym-counter*)
-
-;;;###autoload
-(defun gensym (&optional arg)
-  "Generate a new uninterned symbol.
-The name is made by appending a number to PREFIX, default \"G\"."
-  (let ((prefix (if (stringp arg) arg "G"))
-	(num (if (integerp arg) arg
-	       (prog1 *gensym-counter*
-		 (setq *gensym-counter* (1+ *gensym-counter*))))))
-    (make-symbol (format "%s%d" prefix num))))
-
-;;;###autoload
-(defun gentemp (&optional arg)
-  "Generate a new interned symbol with a unique name.
-The name is made by appending a number to PREFIX, default \"G\"."
-  (let ((prefix (if (stringp arg) arg "G"))
-	name)
-    (while (intern-soft (setq name (format "%s%d" prefix *gensym-counter*)))
-      (setq *gensym-counter* (1+ *gensym-counter*)))
-    (intern name)))
 
 
 ;;; Program structure.
@@ -1438,10 +1413,10 @@ values.  For compatibility, (values A B C) is a synonym for (list A B C)."
   (cond ((eq (car-safe spec) 'special)
 	 (if (boundp 'byte-compile-bound-variables)
 	     (setq byte-compile-bound-variables
-		   ;; todo: this should compute correct binding bits vs. 0
-		   (append (mapcar #'(lambda (v) (cons v 0))
-				   (cdr spec))
-			   byte-compile-bound-variables))))
+		   (append
+		    (mapcar #'(lambda (v) (cons v byte-compile-global-bit))
+			    (cdr spec))
+		    byte-compile-bound-variables))))
 
 	((eq (car-safe spec) 'inline)
 	 (while (setq spec (cdr spec))
@@ -1794,6 +1769,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf x-get-cut-buffer x-store-cut-buffer t)   ; groan.
 (defsetf x-get-secondary-selection x-own-secondary-selection t)
 (defsetf x-get-selection x-own-selection t)
+(defsetf get-selection own-selection t)
 
 ;;; More complex setf-methods.
 ;;; These should take &environment arguments, but since full arglists aren't
@@ -2746,6 +2722,9 @@ surrounded by (block NAME ...)."
 
 (define-compiler-macro get* (sym prop &optional default)
   (list 'get sym prop default))
+
+(define-compiler-macro getf (sym prop &optional default)
+  (list 'plist-get sym prop default))
 
 (define-compiler-macro typep (&whole form val type)
   (if (cl-const-expr-p type)

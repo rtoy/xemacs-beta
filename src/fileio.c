@@ -24,7 +24,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include <limits.h>
 
 #include "buffer.h"
 #include "events.h"
@@ -54,24 +53,13 @@ Boston, MA 02111-1307, USA.  */
 #endif /* HPUX_PRE_8_0 */
 #endif /* HPUX */
 
-#ifdef WINDOWSNT
-#define NOMINMAX 1
-#include <direct.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#endif /* not WINDOWSNT */
-
-#ifdef WINDOWSNT
-#define CORRECT_DIR_SEPS(s) \
-  do { if ('/' == DIRECTORY_SEP) dostounix_filename (s); \
-    else unixtodos_filename (s); \
-  } while (0)
+#ifdef WIN32_NATIVE
 #define IS_DRIVE(x) isalpha (x)
 /* Need to lower-case the drive letter, or else expanded
    filenames will sometimes compare inequal, because
    `expand-file-name' doesn't always down-case the drive letter.  */
 #define DRIVE_LETTER(x) tolower (x)
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
 int lisp_to_time (Lisp_Object, time_t *);
 Lisp_Object time_to_lisp (time_t);
@@ -135,7 +123,7 @@ EXFUN (Frunning_temacs_p, 0);
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
-report_file_error (CONST char *string, Lisp_Object data)
+report_file_error (const char *string, Lisp_Object data)
 {
   /* #### dmoore - This uses current_buffer, better make sure no one
      has GC'd the current buffer.  File handlers are giving me a headache
@@ -148,7 +136,7 @@ report_file_error (CONST char *string, Lisp_Object data)
 }
 
 void
-maybe_report_file_error (CONST char *string, Lisp_Object data,
+maybe_report_file_error (const char *string, Lisp_Object data,
 			 Lisp_Object class, Error_behavior errb)
 {
   /* Optimization: */
@@ -164,14 +152,14 @@ maybe_report_file_error (CONST char *string, Lisp_Object data,
 /* signal a file error when errno does not contain a meaningful value. */
 
 DOESNT_RETURN
-signal_file_error (CONST char *string, Lisp_Object data)
+signal_file_error (const char *string, Lisp_Object data)
 {
   signal_error (Qfile_error,
                 list2 (build_translated_string (string), data));
 }
 
 void
-maybe_signal_file_error (CONST char *string, Lisp_Object data,
+maybe_signal_file_error (const char *string, Lisp_Object data,
 			 Lisp_Object class, Error_behavior errb)
 {
   /* Optimization: */
@@ -183,7 +171,7 @@ maybe_signal_file_error (CONST char *string, Lisp_Object data,
 }
 
 DOESNT_RETURN
-signal_double_file_error (CONST char *string1, CONST char *string2,
+signal_double_file_error (const char *string1, const char *string2,
 			  Lisp_Object data)
 {
   signal_error (Qfile_error,
@@ -193,7 +181,7 @@ signal_double_file_error (CONST char *string1, CONST char *string2,
 }
 
 void
-maybe_signal_double_file_error (CONST char *string1, CONST char *string2,
+maybe_signal_double_file_error (const char *string1, const char *string2,
 				Lisp_Object data, Lisp_Object class,
 				Error_behavior errb)
 {
@@ -208,7 +196,7 @@ maybe_signal_double_file_error (CONST char *string1, CONST char *string2,
 }
 
 DOESNT_RETURN
-signal_double_file_error_2 (CONST char *string1, CONST char *string2,
+signal_double_file_error_2 (const char *string1, const char *string2,
 			    Lisp_Object data1, Lisp_Object data2)
 {
   signal_error (Qfile_error,
@@ -218,7 +206,7 @@ signal_double_file_error_2 (CONST char *string1, CONST char *string2,
 }
 
 void
-maybe_signal_double_file_error_2 (CONST char *string1, CONST char *string2,
+maybe_signal_double_file_error_2 (const char *string1, const char *string2,
 				  Lisp_Object data1, Lisp_Object data2,
 				  Lisp_Object class, Error_behavior errb)
 {
@@ -289,7 +277,7 @@ read_allowing_quit (int fildes, void *buf, size_t size)
 }
 
 ssize_t
-write_allowing_quit (int fildes, CONST void *buf, size_t size)
+write_allowing_quit (int fildes, const void *buf, size_t size)
 {
   QUIT;
   return sys_write_1 (fildes, buf, size, 1);
@@ -412,7 +400,7 @@ Given a Unix syntax file name, returns a string ending in slash.
 */
        (file))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC.  GC checked 2000-07-28 ben */
   Bufbyte *beg;
   Bufbyte *p;
   Lisp_Object handler;
@@ -432,7 +420,7 @@ Given a Unix syntax file name, returns a string ending in slash.
   p = beg + XSTRING_LENGTH (file);
 
   while (p != beg && !IS_ANY_SEP (p[-1])
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	 /* only recognize drive specifier at beginning */
 	 && !(p[-1] == ':' && p == beg + 2)
 #endif
@@ -440,14 +428,14 @@ Given a Unix syntax file name, returns a string ending in slash.
 
   if (p == beg)
     return Qnil;
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   /* Expansion of "c:" to drive and default directory.  */
   /* (NT does the right thing.)  */
   if (p == beg + 2 && beg[1] == ':')
     {
       /* MAXPATHLEN+1 is guaranteed to be enough space for getdefdir.  */
-      Bufbyte *res = alloca (MAXPATHLEN + 1);
-      if (getdefdir (toupper (*beg) - 'A' + 1, res))
+      Bufbyte *res = (Bufbyte*) alloca (MAXPATHLEN + 1);
+      if (_getdcwd (toupper (*beg) - 'A' + 1, (char *)res, MAXPATHLEN))
 	{
 	  char *c=((char *) res) + strlen ((char *) res);
 	  if (!IS_DIRECTORY_SEP (*c))
@@ -459,7 +447,7 @@ Given a Unix syntax file name, returns a string ending in slash.
 	  p = beg + strlen ((char *) beg);
 	}
     }
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
   return make_string (beg, p - beg);
 }
 
@@ -471,7 +459,7 @@ or the entire name if it contains no slash.
 */
        (file))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC.  GC checked 2000-07-28 ben */
   Bufbyte *beg, *p, *end;
   Lisp_Object handler;
 
@@ -487,7 +475,7 @@ or the entire name if it contains no slash.
   end = p = beg + XSTRING_LENGTH (file);
 
   while (p != beg && !IS_ANY_SEP (p[-1])
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	 /* only recognize drive specifier at beginning */
 	 && !(p[-1] == ':' && p == beg + 2)
 #endif
@@ -507,7 +495,7 @@ get a current directory to run processes in.
 */
   (filename))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC.  GC checked 2000-07-28 ben */
   Lisp_Object handler;
 
   /* If the file name has special constructs in it,
@@ -524,6 +512,7 @@ get a current directory to run processes in.
 static char *
 file_name_as_directory (char *out, char *in)
 {
+  /* This function cannot GC */
   int size = strlen (in);
 
   if (size == 0)
@@ -556,7 +545,7 @@ except for (file-name-as-directory \"\") => \"./\".
 */
        (file))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC.  GC checked 2000-07-28 ben */
   char *buf;
   Lisp_Object handler;
 
@@ -581,17 +570,18 @@ except for (file-name-as-directory \"\") => \"./\".
  */
 
 static int
-directory_file_name (CONST char *src, char *dst)
+directory_file_name (const char *src, char *dst)
 {
+  /* This function cannot GC */
   long slen = strlen (src);
   /* Process as Unix format: just remove any final slash.
      But leave "/" unchanged; do not change it to "".  */
   strcpy (dst, src);
   if (slen > 1
       && IS_DIRECTORY_SEP (dst[slen - 1])
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
       && !IS_ANY_SEP (dst[slen - 2])
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
       )
     dst[slen - 1] = 0;
   return 1;
@@ -606,7 +596,7 @@ In Unix-syntax, this function just removes the final slash.
 */
        (directory))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC.  GC checked 2000-07-28 ben */
   char *buf;
   Lisp_Object handler;
 
@@ -635,8 +625,10 @@ In Unix-syntax, this function just removes the final slash.
    This implementation is better than what one usually finds in libc.
    --hniksic */
 
+static unsigned int temp_name_rand;
+
 DEFUN ("make-temp-name", Fmake_temp_name, 1, 1, 0, /*
-Generate temporary file name starting with PREFIX.
+Generate a temporary file name starting with PREFIX.
 The Emacs process number forms part of the result, so there is no
 danger of generating a name being used by another process.
 
@@ -646,7 +638,8 @@ be an absolute file name.
 */
        (prefix))
 {
-  static char tbl[64] = {
+  static const char tbl[64] =
+  {
     'A','B','C','D','E','F','G','H',
     'I','J','K','L','M','N','O','P',
     'Q','R','S','T','U','V','W','X',
@@ -654,13 +647,12 @@ be an absolute file name.
     'g','h','i','j','k','l','m','n',
     'o','p','q','r','s','t','u','v',
     'w','x','y','z','0','1','2','3',
-    '4','5','6','7','8','9','-','_' };
-  static unsigned count, count_initialized_p;
+    '4','5','6','7','8','9','-','_'
+  };
 
   Lisp_Object val;
   Bytecount len;
   Bufbyte *p, *data;
-  unsigned pid;
 
   CHECK_STRING (prefix);
 
@@ -686,44 +678,37 @@ be an absolute file name.
 
   /* VAL is created by adding 6 characters to PREFIX.  The first three
      are the PID of this process, in base 64, and the second three are
-     incremented if the file already exists.  This ensures 262144
-     unique file names per PID per PREFIX.  */
+     a pseudo-random number seeded from process startup time.  This
+     ensures 262144 unique file names per PID per PREFIX per machine.  */
 
-  pid = (unsigned)getpid ();
-  *p++ = tbl[pid & 63], pid >>= 6;
-  *p++ = tbl[pid & 63], pid >>= 6;
-  *p++ = tbl[pid & 63], pid >>= 6;
+  {
+    unsigned int pid = (unsigned int) getpid ();
+    *p++ = tbl[(pid >>  0) & 63];
+    *p++ = tbl[(pid >>  6) & 63];
+    *p++ = tbl[(pid >> 12) & 63];
+  }
 
   /* Here we try to minimize useless stat'ing when this function is
      invoked many times successively with the same PREFIX.  We achieve
-     this by initializing count to a random value, and incrementing it
-     afterwards.  */
-  if (!count_initialized_p)
-    {
-      count = (unsigned)time (NULL);
-      /* Dumping temacs with a non-zero count_initialized_p wouldn't
-         make much sense.  */
-      if (NILP (Frunning_temacs_p ()))
-	count_initialized_p = 1;
-    }
+     this by using a very pseudo-random number generator to generate
+     file names unique to this process, with a very long cycle. */
 
   while (1)
     {
       struct stat ignored;
-      unsigned num = count;
 
-      p[0] = tbl[num & 63], num >>= 6;
-      p[1] = tbl[num & 63], num >>= 6;
-      p[2] = tbl[num & 63], num >>= 6;
+      p[0] = tbl[(temp_name_rand >>  0) & 63];
+      p[1] = tbl[(temp_name_rand >>  6) & 63];
+      p[2] = tbl[(temp_name_rand >> 12) & 63];
 
       /* Poor man's congruential RN generator.  Replace with ++count
          for debugging.  */
-      count += 25229;
-      count %= 225307;
+      temp_name_rand += 25229;
+      temp_name_rand %= 225307;
 
       QUIT;
 
-      if (stat ((CONST char *) data, &ignored) < 0)
+      if (xemacs_stat ((const char *) data, &ignored) < 0)
 	{
 	  /* We want to return only if errno is ENOENT.  */
 	  if (errno == ENOENT)
@@ -757,23 +742,27 @@ See also the function `substitute-in-file-name'.
 */
        (name, default_directory))
 {
-  /* This function can GC */
+  /* This function can GC.  GC-checked 2000-07-11 ben */
   Bufbyte *nm;
 
   Bufbyte *newdir, *p, *o;
   int tlen;
   Bufbyte *target;
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   int drive = 0;
   int collapse_newdir = 1;
 #else
   struct passwd *pw;
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
   int length;
   Lisp_Object handler;
-#ifdef __CYGWIN32__
+#ifdef CYGWIN
   char *user;
 #endif
+  struct gcpro gcpro1, gcpro2;
+
+  /* both of these get set below */
+  GCPRO2 (name, default_directory);
 
   CHECK_STRING (name);
 
@@ -781,8 +770,11 @@ See also the function `substitute-in-file-name'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (name, Qexpand_file_name);
   if (!NILP (handler))
-    return call3_check_string (handler, Qexpand_file_name, name,
-			       default_directory);
+    {
+      UNGCPRO;
+      return call3_check_string (handler, Qexpand_file_name, name,
+				 default_directory);
+    }
 
   /* Use the buffer's default-directory if DEFAULT_DIRECTORY is omitted.  */
   if (NILP (default_directory))
@@ -794,7 +786,10 @@ See also the function `substitute-in-file-name'.
     {
       handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
-	return call3 (handler, Qexpand_file_name, name, default_directory);
+	{
+	  UNGCPRO;
+	  return call3 (handler, Qexpand_file_name, name, default_directory);
+	}
     }
 
   o = XSTRING_DATA (default_directory);
@@ -813,26 +808,21 @@ See also the function `substitute-in-file-name'.
       /* Save time in some common cases - as long as default_directory
 	 is not relative, it can be canonicalized with name below (if it
 	 is needed at all) without requiring it to be expanded now.  */
-#ifdef WINDOWSNT
-      /* Detect MSDOS file names with drive specifiers.  */
+#ifdef WIN32_NATIVE
+      /* Detect Windows file names with drive specifiers.  */
       && ! (IS_DRIVE (o[0]) && (IS_DEVICE_SEP (o[1]) && IS_DIRECTORY_SEP (o[2])))
       /* Detect Windows file names in UNC format.  */
       && ! (IS_DIRECTORY_SEP (o[0]) && IS_DIRECTORY_SEP (o[1]))
 
-#else /* not WINDOWSNT */
+#else /* not WIN32_NATIVE */
 
       /* Detect Unix absolute file names (/... alone is not absolute on
-	 DOS or Windows).  */
+	 Windows).  */
       && ! (IS_DIRECTORY_SEP (o[0]))
-#endif /* not WINDOWSNT */
+#endif /* not WIN32_NATIVE */
       )
-    {
-      struct gcpro gcpro1;
 
-      GCPRO1 (name);
-      default_directory = Fexpand_file_name (default_directory, Qnil);
-      UNGCPRO;
-    }
+    default_directory = Fexpand_file_name (default_directory, Qnil);
 
 #ifdef FILE_SYSTEM_CASE
   name = FILE_SYSTEM_CASE (name);
@@ -842,15 +832,15 @@ See also the function `substitute-in-file-name'.
     into name should be safe during all of this, though. */
   nm = XSTRING_DATA (name);
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   /* We will force directory separators to be either all \ or /, so make
      a local copy to modify, even if there ends up being no change. */
-  nm = strcpy (alloca (strlen (nm) + 1), nm);
+  nm = strcpy ((char *)alloca (strlen ((char *)nm) + 1), (char *)nm);
 
   /* Find and remove drive specifier if present; this makes nm absolute
      even if the rest of the name appears to be relative. */
   {
-    Bufbyte *colon = strrchr (nm, ':');
+    Bufbyte *colon = (Bufbyte *) strrchr ((char *)nm, ':');
 
     if (colon)
       /* Only recognize colon as part of drive specifier if there is a
@@ -880,14 +870,14 @@ See also the function `substitute-in-file-name'.
      "//somedir".  */
   if (drive && IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
     nm++;
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
   /* If nm is absolute, look for /./ or /../ sequences; if none are
      found, we can probably return right away.  We will avoid allocating
      a new string if name is already fully expanded.  */
   if (
       IS_DIRECTORY_SEP (nm[0])
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
       && (drive || IS_DIRECTORY_SEP (nm[1]))
 #endif
       )
@@ -918,7 +908,7 @@ See also the function `substitute-in-file-name'.
 	}
       if (!lose)
 	{
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	  /* Make sure directories are all separated with / or \ as
 	     desired, but avoid allocation of a new string when not
 	     required. */
@@ -935,12 +925,12 @@ See also the function `substitute-in-file-name'.
 	      XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
 	      XSTRING_DATA (name)[1] = ':';
 	    }
-	  return name;
-#else /* not WINDOWSNT */
+	  RETURN_UNGCPRO (name);
+#else /* not WIN32_NATIVE */
 	  if (nm == XSTRING_DATA (name))
-	    return name;
-	  return build_string ((char *) nm);
-#endif /* not WINDOWSNT */
+	    RETURN_UNGCPRO (name);
+	  RETURN_UNGCPRO (build_string ((char *) nm));
+#endif /* not WIN32_NATIVE */
 	}
     }
 
@@ -977,7 +967,7 @@ See also the function `substitute-in-file-name'.
 				Qfile_name);
 
 	  nm++;
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	  collapse_newdir = 0;
 #endif
 	}
@@ -996,7 +986,7 @@ See also the function `substitute-in-file-name'.
 	     multiple user profiles users defined, each with its HOME.
 	     Therefore, the following should be reworked to handle
 	     this case.  */
-#ifdef  WINDOWSNT
+#ifdef  WIN32_NATIVE
 	  /* Now if the file given is "~foo/file" and HOME="c:/", then
 	     we want the file to be named "c:/file" ("~foo" becomes
 	     "c:/").  The variable o has "~foo", so we can use the
@@ -1005,8 +995,8 @@ See also the function `substitute-in-file-name'.
 	  newdir = (Bufbyte *) get_home_directory();
 	  dostounix_filename (newdir);
 	  nm += strlen(o) + 1;
-#else  /* not WINDOWSNT */
-#ifdef __CYGWIN32__
+#else  /* not WIN32_NATIVE */
+#ifdef CYGWIN
 	  if ((user = user_login_name (NULL)) != NULL)
 	    {
 	      /* Does the user login name match the ~name? */
@@ -1018,7 +1008,7 @@ See also the function `substitute-in-file-name'.
 	    }
           if (! newdir)
             {
-#endif /* __CYGWIN32__ */
+#endif /* CYGWIN */
 	  /* Jamie reports that getpwnam() can get wedged by SIGIO/SIGALARM
 	     occurring in it. (It can call select()). */
 	  slow_down_interrupts ();
@@ -1029,17 +1019,17 @@ See also the function `substitute-in-file-name'.
 	      newdir = (Bufbyte *) pw -> pw_dir;
 	      nm = p;
 	    }
-#ifdef __CYGWIN32__
+#ifdef CYGWIN
 	    }
 #endif
-#endif /* not WINDOWSNT */
+#endif /* not WIN32_NATIVE */
 
 	  /* If we don't find a user of that name, leave the name
 	     unchanged; don't move nm forward to p.  */
 	}
     }
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   /* On DOS and Windows, nm is absolute if a drive name was specified;
      use the drive's current directory as the prefix if needed.  */
   if (!newdir && drive)
@@ -1048,7 +1038,7 @@ See also the function `substitute-in-file-name'.
       if (!IS_DIRECTORY_SEP (nm[0]))
 	{
 	  newdir = alloca (MAXPATHLEN + 1);
-	  if (!getdefdir (toupper (drive) - 'A' + 1, newdir))
+	  if (!_getdcwd (toupper (drive) - 'A' + 1, newdir, MAXPATHLEN))
 	    newdir = NULL;
 	}
       if (!newdir)
@@ -1061,13 +1051,13 @@ See also the function `substitute-in-file-name'.
 	  newdir[3] = 0;
 	}
     }
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
   /* Finally, if no prefix has been specified and nm is not absolute,
      then it must be expanded relative to default_directory. */
 
   if (1
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
       /* /... alone is not absolute on DOS and Windows. */
       && !IS_DIRECTORY_SEP (nm[0])
 #else
@@ -1078,12 +1068,12 @@ See also the function `substitute-in-file-name'.
       newdir = XSTRING_DATA (default_directory);
     }
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   if (newdir)
     {
       /* First ensure newdir is an absolute name. */
       if (
-	  /* Detect MSDOS file names with drive specifiers.  */
+	  /* Detect Windows file names with drive specifiers.  */
 	  ! (IS_DRIVE (newdir[0])
 	     && IS_DEVICE_SEP (newdir[1]) && IS_DIRECTORY_SEP (newdir[2]))
 	  /* Detect Windows file names in UNC format.  */
@@ -1113,7 +1103,7 @@ See also the function `substitute-in-file-name'.
 	  newdir = alloca (MAXPATHLEN + 1);
 	  if (drive)
 	    {
-	      if (!getdefdir (toupper (drive) - 'A' + 1, newdir))
+	      if (!_getdcwd (toupper (drive) - 'A' + 1, newdir, MAXPATHLEN))
 		newdir = "/";
 	    }
 	  else
@@ -1144,7 +1134,7 @@ See also the function `substitute-in-file-name'.
 	    newdir = "";
 	}
     }
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
   if (newdir)
     {
@@ -1152,7 +1142,7 @@ See also the function `substitute-in-file-name'.
 	 just // (an incomplete UNC name).  */
       length = strlen ((char *) newdir);
       if (length > 1 && IS_DIRECTORY_SEP (newdir[length - 1])
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	  && !(length == 2 && IS_DIRECTORY_SEP (newdir[0]))
 #endif
 	  )
@@ -1169,14 +1159,14 @@ See also the function `substitute-in-file-name'.
 
   /* Now concatenate the directory and name to new space in the stack frame */
   tlen += strlen ((char *) nm) + 1;
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   /* Add reserved space for drive name.  (The Microsoft x86 compiler
      produces incorrect code if the following two lines are combined.)  */
   target = (Bufbyte *) alloca (tlen + 2);
   target += 2;
-#else  /* not WINDOWSNT */
+#else  /* not WIN32_NATIVE */
   target = (Bufbyte *) alloca (tlen);
-#endif /* not WINDOWSNT */
+#endif /* not WIN32_NATIVE */
   *target = 0;
 
   if (newdir)
@@ -1225,7 +1215,7 @@ See also the function `substitute-in-file-name'.
 	    ++o;
 	  p += 3;
 	}
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
       /* if drive is set, we're not dealing with an UNC, so
 	 multiple dir-seps are redundant (and reportedly cause trouble
 	 under win95) */
@@ -1238,7 +1228,7 @@ See also the function `substitute-in-file-name'.
 	}
     }
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   /* At last, set drive name, except for network file name.  */
   if (drive)
     {
@@ -1251,14 +1241,10 @@ See also the function `substitute-in-file-name'.
       assert (IS_DIRECTORY_SEP (target[0]) && IS_DIRECTORY_SEP (target[1]));
     }
   CORRECT_DIR_SEPS (target);
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
-  return make_string (target, o - target);
+  RETURN_UNGCPRO (make_string (target, o - target));
 }
-
-#if 0 /* FSFmacs */
-/* another older version of expand-file-name; */
-#endif
 
 DEFUN ("file-truename", Ffile_truename, 1, 2, 0, /*
 Return the canonical name of the given FILE.
@@ -1270,9 +1256,8 @@ No component of the resulting pathname will be a symbolic link, as
 */
        (filename, default_))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC.  GC checked 2000-07-28 ben. */
   Lisp_Object expanded_name;
-  Lisp_Object handler;
   struct gcpro gcpro1;
 
   CHECK_STRING (filename);
@@ -1283,11 +1268,15 @@ No component of the resulting pathname will be a symbolic link, as
     return Qnil;
 
   GCPRO1 (expanded_name);
-  handler = Ffind_file_name_handler (expanded_name, Qfile_truename);
-  UNGCPRO;
 
-  if (!NILP (handler))
-    return call2_check_string (handler, Qfile_truename, expanded_name);
+  {
+    Lisp_Object handler =
+      Ffind_file_name_handler (expanded_name, Qfile_truename);
+
+    if (!NILP (handler))
+      RETURN_UNGCPRO
+	(call2_check_string (handler, Qfile_truename, expanded_name));
+  }
 
   {
     char resolved_path[MAXPATHLEN];
@@ -1301,7 +1290,7 @@ No component of the resulting pathname will be a symbolic link, as
     p = path;
     if (elen > MAXPATHLEN)
       goto toolong;
-    
+
     /* Try doing it all at once. */
     /* !! Does realpath() Mule-encapsulate?
        Answer: Nope! So we do it above */
@@ -1312,14 +1301,25 @@ No component of the resulting pathname will be a symbolic link, as
 	   It claims to return a useful value in the "error" case, but since
 	   there is no indication provided of how far along the pathname
 	   the function went before erring, there is no way to use the
-	   partial result returned.  What a piece of junk. */
+	   partial result returned.  What a piece of junk.
+
+	   The above comment refers to historical versions of
+	   realpath().  The Unix98 specs state:
+
+	   "On successful completion, realpath() returns a
+	   pointer to the resolved name. Otherwise, realpath()
+	   returns a null pointer and sets errno to indicate the
+	   error, and the contents of the buffer pointed to by
+	   resolved_name are undefined."
+
+	   Since we depend on undocumented semantics of various system realpath()s,
+	   we just use our own version in realpath.c. */
 	for (;;)
 	  {
 	    p = (Extbyte *) memchr (p + 1, '/', elen - (p + 1 - path));
 	    if (p)
 	      *p = 0;
 
-	    /* memset (resolved_path, 0, sizeof (resolved_path)); */
 	    if (xrealpath ((char *) path, resolved_path))
 	      {
 		if (p)
@@ -1337,7 +1337,8 @@ No component of the resulting pathname will be a symbolic link, as
 		/* "On failure, it returns NULL, sets errno to indicate
 		   the error, and places in resolved_path the absolute pathname
 		   of the path component which could not be resolved." */
-		if (p)
+
+ 		if (p)
 		  {
 		    int plen = elen - (p - path);
 
@@ -1358,17 +1359,20 @@ No component of the resulting pathname will be a symbolic link, as
       }
 
     {
+      Lisp_Object resolved_name;
       int rlen = strlen (resolved_path);
       if (elen > 0 && XSTRING_BYTE (expanded_name, elen - 1) == '/'
           && !(rlen > 0 && resolved_path[rlen - 1] == '/'))
 	{
 	  if (rlen + 1 > countof (resolved_path))
 	    goto toolong;
-	  resolved_path[rlen] = '/';
-	  resolved_path[rlen + 1] = 0;
-	  rlen = rlen + 1;
+	  resolved_path[rlen++] = '/';
+	  resolved_path[rlen] = '\0';
 	}
-      return make_ext_string ((Bufbyte *) resolved_path, rlen, Qbinary);
+      TO_INTERNAL_FORMAT (DATA, (resolved_path, rlen),
+			  LISP_STRING, resolved_name,
+			  Qfile_name);
+      RETURN_UNGCPRO (resolved_name);
     }
 
   toolong:
@@ -1377,7 +1381,7 @@ No component of the resulting pathname will be a symbolic link, as
   lose:
     report_file_error ("Finding truename", list1 (expanded_name));
   }
-  return Qnil;	/* suppress compiler warning */
+  RETURN_UNGCPRO (Qnil);
 }
 
 
@@ -1392,7 +1396,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 */
        (string))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC.  GC checked 2000-07-28 ben. */
   Bufbyte *nm;
 
   Bufbyte *s, *p, *o, *x, *endp;
@@ -1419,12 +1423,12 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   for (p = nm; p != endp; p++)
     {
       if ((p[0] == '~'
-#if defined (WINDOWSNT) || defined (__CYGWIN32__)
+#if defined (WIN32_NATIVE) || defined (CYGWIN)
 	   /* // at start of file name is meaningful in WindowsNT systems */
 	   || (IS_DIRECTORY_SEP (p[0]) && p - 1 != nm)
-#else /* not (WINDOWSNT || __CYGWIN32__) */
+#else /* not (WIN32_NATIVE || CYGWIN) */
 	   || IS_DIRECTORY_SEP (p[0])
-#endif /* not (WINDOWSNT || __CYGWIN32__) */
+#endif /* not (WIN32_NATIVE || CYGWIN) */
 	   )
 	  && p != nm
 	  && (IS_DIRECTORY_SEP (p[-1])))
@@ -1432,7 +1436,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  nm = p;
 	  substituted = 1;
 	}
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
       /* see comment in expand-file-name about drive specifiers */
       else if (IS_DRIVE (p[0]) && p[1] == ':'
 	       && p > nm && IS_DIRECTORY_SEP (p[-1]))
@@ -1440,7 +1444,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  nm = p;
 	  substituted = 1;
 	}
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
     }
 
   /* See if any variables are substituted into the string
@@ -1480,9 +1484,9 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	target = (Bufbyte *) alloca (s - o + 1);
 	strncpy ((char *) target, (char *) o, s - o);
 	target[s - o] = 0;
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	strupr (target); /* $home == $HOME etc.  */
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
 	/* Get variable value */
 	o = (Bufbyte *) egetenv ((char *) target);
@@ -1531,9 +1535,9 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	target = (Bufbyte *) alloca (s - o + 1);
 	strncpy ((char *) target, (char *) o, s - o);
 	target[s - o] = 0;
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	strupr (target); /* $home == $HOME etc.  */
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
 	/* Get variable value */
 	o = (Bufbyte *) egetenv ((char *) target);
@@ -1550,16 +1554,16 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 
   for (p = xnm; p != x; p++)
     if ((p[0] == '~'
-#if defined (WINDOWSNT)
+#if defined (WIN32_NATIVE)
 	 || (IS_DIRECTORY_SEP (p[0]) && p - 1 != xnm)
-#else /* not WINDOWSNT */
+#else /* not WIN32_NATIVE */
 	 || IS_DIRECTORY_SEP (p[0])
-#endif /* not WINDOWSNT */
+#endif /* not WIN32_NATIVE */
 	 )
 	/* don't do p[-1] if that would go off the beginning --jwz */
 	&& p != nm && p > xnm && IS_DIRECTORY_SEP (p[-1]))
       xnm = p;
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
     else if (IS_DRIVE (p[0]) && p[1] == ':'
 	     && p > nm && IS_DIRECTORY_SEP (p[-1]))
 	xnm = p;
@@ -1568,12 +1572,13 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   return make_string (xnm, x - xnm);
 
  badsubst:
-  error ("Bad format environment-variable substitution");
+  syntax_error ("Bad format environment-variable substitution", string);
  missingclose:
-  error ("Missing \"}\" in environment-variable substitution");
+  syntax_error ("Missing \"}\" in environment-variable substitution",
+		string);
  badvar:
-  error ("Substituting nonexistent environment variable \"%s\"",
-	 target);
+  syntax_error_2 ("Substituting nonexistent environment variable",
+		  string, build_string (target));
 
   /* NOTREACHED */
   return Qnil;	/* suppress compiler warning */
@@ -1585,7 +1590,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 Lisp_Object
 expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
 {
-  /* This function can call lisp */
+  /* This function can call Lisp.  GC checked 2000-07-28 ben */
   Lisp_Object abspath;
   struct gcpro gcpro1;
 
@@ -1611,15 +1616,15 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
    If the file does not exist, STATPTR->st_mode is set to 0.  */
 
 static void
-barf_or_query_if_file_exists (Lisp_Object absname, CONST char *querystring,
+barf_or_query_if_file_exists (Lisp_Object absname, const char *querystring,
 			      int interactive, struct stat *statptr)
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can call Lisp.  GC checked 2000-07-28 ben */
   struct stat statbuf;
 
   /* stat is a good way to tell whether the file exists,
      regardless of what access permissions it has.  */
-  if (stat ((char *) XSTRING_DATA (absname), &statbuf) >= 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (absname), &statbuf) >= 0)
     {
       Lisp_Object tem;
 
@@ -1629,7 +1634,7 @@ barf_or_query_if_file_exists (Lisp_Object absname, CONST char *querystring,
 	  struct gcpro gcpro1;
 
 	  prompt = emacs_doprnt_string_c
-	    ((CONST Bufbyte *) GETTEXT ("File %s already exists; %s anyway? "),
+	    ((const Bufbyte *) GETTEXT ("File %s already exists; %s anyway? "),
 	     Qnil, -1, XSTRING_DATA (absname),
 	     GETTEXT (querystring));
 
@@ -1668,7 +1673,7 @@ A prefix arg makes KEEP-TIME non-nil.
 */
        (filename, newname, ok_if_already_exists, keep_time))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can call Lisp.  GC checked 2000-07-28 ben */
   int ifd, ofd, n;
   char buf[16 * 1024];
   struct stat st, out_st;
@@ -1710,8 +1715,10 @@ A prefix arg makes KEEP-TIME non-nil.
       args[1] = Qnil; args[2] = Qnil;
       NGCPRO1 (*args);
       ngcpro1.nvars = 3;
-      if (XSTRING_BYTE (newname, XSTRING_LENGTH (newname) - 1) != '/')
-	args[i++] = build_string ("/");
+      if (!IS_DIRECTORY_SEP (XSTRING_BYTE (newname,
+					   XSTRING_LENGTH (newname) - 1)))
+
+	args[i++] = Fchar_to_string (Vdirectory_sep_char);
       args[i++] = Ffile_name_nondirectory (filename);
       newname = Fconcat (i, args);
       NUNGCPRO;
@@ -1721,7 +1728,7 @@ A prefix arg makes KEEP-TIME non-nil.
       || INTP (ok_if_already_exists))
     barf_or_query_if_file_exists (newname, "copy to it",
 				  INTP (ok_if_already_exists), &out_st);
-  else if (stat ((CONST char *) XSTRING_DATA (newname), &out_st) < 0)
+  else if (xemacs_stat ((const char *) XSTRING_DATA (newname), &out_st) < 0)
     out_st.st_mode = 0;
 
   ifd = interruptible_open ((char *) XSTRING_DATA (filename), O_RDONLY | OPEN_BINARY, 0);
@@ -1734,7 +1741,7 @@ A prefix arg makes KEEP-TIME non-nil.
      copyable by us. */
   input_file_statable_p = (fstat (ifd, &st) >= 0);
 
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
   if (out_st.st_mode != 0
       && st.st_dev == out_st.st_dev && st.st_ino == out_st.st_ino)
     {
@@ -1784,19 +1791,19 @@ A prefix arg makes KEEP-TIME non-nil.
       report_file_error ("I/O error", list1 (newname));
 
     if (input_file_statable_p)
-    {
-      if (!NILP (keep_time))
       {
-        EMACS_TIME atime, mtime;
-        EMACS_SET_SECS_USECS (atime, st.st_atime, 0);
-        EMACS_SET_SECS_USECS (mtime, st.st_mtime, 0);
-        if (set_file_times ((char *) XSTRING_DATA (newname), atime,
-			    mtime))
-	  report_file_error ("I/O error", list1 (newname));
+	if (!NILP (keep_time))
+	  {
+	    EMACS_TIME atime, mtime;
+	    EMACS_SET_SECS_USECS (atime, st.st_atime, 0);
+	    EMACS_SET_SECS_USECS (mtime, st.st_mtime, 0);
+	    if (set_file_times ((char *) XSTRING_DATA (newname), atime,
+				mtime))
+	      report_file_error ("I/O error", list1 (newname));
+	  }
+	chmod ((const char *) XSTRING_DATA (newname),
+	       st.st_mode & 07777);
       }
-      chmod ((CONST char *) XSTRING_DATA (newname),
-	     st.st_mode & 07777);
-    }
 
     /* We'll close it by hand */
     XCAR (ofd_locative) = Qnil;
@@ -1832,7 +1839,7 @@ Create a directory.  One argument, a file name string.
     {
       return Fsignal (Qfile_error,
 		      list3 (build_translated_string ("Creating directory"),
-			     build_translated_string ("pathame too long"),
+			     build_translated_string ("pathname too long"),
 			     dirname_));
     }
   strncpy (dir, (char *) XSTRING_DATA (dirname_),
@@ -1874,8 +1881,8 @@ Delete a directory.  One argument, a file name or directory name string.
 }
 
 DEFUN ("delete-file", Fdelete_file, 1, 1, "fDelete file: ", /*
-Delete specified file.  One argument, a file name string.
-If file has multiple names, it continues to exist with the other names.
+Delete the file named FILENAME (a string).
+If FILENAME has multiple names, it continues to exist with the other names.
 */
        (filename))
 {
@@ -1972,13 +1979,10 @@ This is what happens in interactive use with M-x.
 				  INTP (ok_if_already_exists), 0);
 
 /* Syncing with FSF 19.34.6 note: FSF does not have conditional code for
-   WINDOWSNT here; I've removed it.  --marcpa */
+   WIN32_NATIVE here; I've removed it.  --marcpa */
 
-    /* FSFmacs only calls rename() here under BSD 4.1, and calls
-       link() and unlink() otherwise, but that's bogus.  Sometimes
-       rename() succeeds where link()/unlink() fail, and we have
-       configure check for rename() and emulate using link()/unlink()
-       if necessary. */
+  /* We have configure check for rename() and emulate using
+     link()/unlink() if necessary. */
   if (0 > rename ((char *) XSTRING_DATA (filename),
 		  (char *) XSTRING_DATA (newname)))
     {
@@ -2043,10 +2047,10 @@ This is what happens in interactive use with M-x.
 /* But FSF #defines link as sys_link which is supplied in nt.c. We can't do
    that because sysfile.h defines sys_link depending on ENCAPSULATE_LINK.
    Reverted to previous behavior pending a working fix. (jhar) */
-#if defined(WINDOWSNT)
+#if defined(WIN32_NATIVE)
   /* Windows does not support this operation.  */
   report_file_error ("Adding new name", Flist (2, &filename));
-#else /* not defined(WINDOWSNT) */
+#else /* not defined(WIN32_NATIVE) */
 
   unlink ((char *) XSTRING_DATA (newname));
   if (0 > link ((char *) XSTRING_DATA (filename),
@@ -2055,13 +2059,12 @@ This is what happens in interactive use with M-x.
       report_file_error ("Adding new name",
 			 list2 (filename, newname));
     }
-#endif /* defined(WINDOWSNT) */
+#endif /* defined(WIN32_NATIVE) */
 
   UNGCPRO;
   return Qnil;
 }
 
-#ifdef S_IFLNK
 DEFUN ("make-symbolic-link", Fmake_symbolic_link, 2, 3,
        "FMake symbolic link to file: \nFMake symbolic link to file %s: \np", /*
 Make a symbolic link to FILENAME, named LINKNAME.  Both args strings.
@@ -2073,6 +2076,7 @@ This happens for interactive use with M-x.
        (filename, linkname, ok_if_already_exists))
 {
   /* This function can GC.  GC checked 1997.06.04. */
+  /* XEmacs change: run handlers even if local machine doesn't have symlinks */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
@@ -2100,6 +2104,7 @@ This happens for interactive use with M-x.
     RETURN_UNGCPRO (call4 (handler, Qmake_symbolic_link, filename,
 			   linkname, ok_if_already_exists));
 
+#ifdef S_IFLNK
   if (NILP (ok_if_already_exists)
       || INTP (ok_if_already_exists))
     barf_or_query_if_file_exists (linkname, "make it a link",
@@ -2112,10 +2117,11 @@ This happens for interactive use with M-x.
       report_file_error ("Making symbolic link",
 			 list2 (filename, linkname));
     }
+#endif /* S_IFLNK */
+
   UNGCPRO;
   return Qnil;
 }
-#endif /* S_IFLNK */
 
 #ifdef HPUX_NET
 
@@ -2134,8 +2140,8 @@ Open a network connection to PATH using LOGIN as the login string.
   /* netunam, being a strange-o system call only used once, is not
      encapsulated. */
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, path,  C_STRING_ALLOCA, path_ext,  Qfile_name);
-  TO_EXTERNAL_FORMAT (LISP_STRING, login, C_STRING_ALLOCA, login_ext, Qnative);
+  LISP_STRING_TO_EXTERNAL (path, path_ext, Qfile_name);
+  LISP_STRING_TO_EXTERNAL (login, login_ext, Qnative);
 
   netresult = netunam (path_ext, login_ext);
 
@@ -2155,7 +2161,7 @@ On Unix, this is a name starting with a `/' or a `~'.
   CHECK_STRING (filename);
   ptr = XSTRING_DATA (filename);
   return (IS_DIRECTORY_SEP (*ptr) || *ptr == '~'
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	  || (IS_DRIVE (*ptr) && ptr[1] == ':' && IS_DIRECTORY_SEP (ptr[2]))
 #endif
 	  ) ? Qt : Qnil;
@@ -2166,37 +2172,37 @@ On Unix, this is a name starting with a `/' or a `~'.
 static int
 check_executable (char *filename)
 {
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   struct stat st;
-  if (stat (filename, &st) < 0)
+  if (xemacs_stat (filename, &st) < 0)
     return 0;
   return ((st.st_mode & S_IEXEC) != 0);
-#else /* not WINDOWSNT */
+#else /* not WIN32_NATIVE */
 #ifdef HAVE_EACCESS
-  return eaccess (filename, 1) >= 0;
+  return eaccess (filename, X_OK) >= 0;
 #else
   /* Access isn't quite right because it uses the real uid
      and we really want to test with the effective uid.
      But Unix doesn't give us a right way to do it.  */
-  return access (filename, 1) >= 0;
+  return access (filename, X_OK) >= 0;
 #endif /* HAVE_EACCESS */
-#endif /* not WINDOWSNT */
+#endif /* not WIN32_NATIVE */
 }
 
 /* Return nonzero if file FILENAME exists and can be written.  */
 
 static int
-check_writable (CONST char *filename)
+check_writable (const char *filename)
 {
 #ifdef HAVE_EACCESS
-  return (eaccess (filename, 2) >= 0);
+  return (eaccess (filename, W_OK) >= 0);
 #else
   /* Access isn't quite right because it uses the real uid
      and we really want to test with the effective uid.
      But Unix doesn't give us a right way to do it.
      Opening with O_WRONLY could work for an ordinary file,
      but would lose for directories.  */
-  return (access (filename, 2) >= 0);
+  return (access (filename, W_OK) >= 0);
 #endif
 }
 
@@ -2206,7 +2212,7 @@ See also `file-readable-p' and `file-attributes'.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can call lisp; GC checked 2000-07-11 ben */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct stat statbuf;
@@ -2223,7 +2229,7 @@ See also `file-readable-p' and `file-attributes'.
   if (!NILP (handler))
     return call2 (handler, Qfile_exists_p, abspath);
 
-  return stat ((char *) XSTRING_DATA (abspath), &statbuf) >= 0 ? Qt : Qnil;
+  return xemacs_stat ((char *) XSTRING_DATA (abspath), &statbuf) >= 0 ? Qt : Qnil;
 }
 
 DEFUN ("file-executable-p", Ffile_executable_p, 1, 1, 0, /*
@@ -2233,7 +2239,7 @@ For a directory, this means you can access files in that directory.
        (filename))
 
 {
-  /* This function can GC.  GC checked 1997.04.10. */
+  /* This function can GC.  GC checked 07-11-2000 ben. */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct gcpro gcpro1;
@@ -2273,14 +2279,14 @@ See also `file-exists-p' and `file-attributes'.
   if (!NILP (handler))
     RETURN_UNGCPRO (call2 (handler, Qfile_readable_p, abspath));
 
-#if defined(WINDOWSNT) || defined(__CYGWIN32__)
+#if defined(WIN32_NATIVE) || defined(CYGWIN)
   /* Under MS-DOS and Windows, open does not work for directories.  */
   UNGCPRO;
   if (access (XSTRING_DATA (abspath), 0) == 0)
     return Qt;
   else
     return Qnil;
-#else /* not WINDOWSNT */
+#else /* not WIN32_NATIVE */
   {
     int desc = interruptible_open ((char *) XSTRING_DATA (abspath), O_RDONLY | OPEN_BINARY, 0);
     UNGCPRO;
@@ -2289,7 +2295,7 @@ See also `file-exists-p' and `file-attributes'.
     close (desc);
     return Qt;
   }
-#endif /* not WINDOWSNT */
+#endif /* not WIN32_NATIVE */
 }
 
 /* Having this before file-symlink-p mysteriously caused it to be forgotten
@@ -2316,7 +2322,7 @@ Return t if file FILENAME can be written or created by you.
   if (!NILP (handler))
     return call2 (handler, Qfile_writable_p, abspath);
 
-  if (stat ((char *) XSTRING_DATA (abspath), &statbuf) >= 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (abspath), &statbuf) >= 0)
     return (check_writable ((char *) XSTRING_DATA (abspath))
 	    ? Qt : Qnil);
 
@@ -2337,11 +2343,13 @@ Otherwise returns nil.
        (filename))
 {
   /* This function can GC.  GC checked 1997.04.10. */
+  /* XEmacs change: run handlers even if local machine doesn't have symlinks */
 #ifdef S_IFLNK
   char *buf;
   int bufsize;
   int valsize;
   Lisp_Object val;
+#endif
   Lisp_Object handler;
   struct gcpro gcpro1;
 
@@ -2356,6 +2364,7 @@ Otherwise returns nil.
   if (!NILP (handler))
     return call2 (handler, Qfile_symlink_p, filename);
 
+#ifdef S_IFLNK
   bufsize = 100;
   while (1)
     {
@@ -2406,7 +2415,7 @@ if the directory so specified exists and really is a directory.
   if (!NILP (handler))
     return call2 (handler, Qfile_directory_p, abspath);
 
-  if (stat ((char *) XSTRING_DATA (abspath), &st) < 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (abspath), &st) < 0)
     return Qnil;
   return (st.st_mode & S_IFMT) == S_IFDIR ? Qt : Qnil;
 }
@@ -2431,7 +2440,7 @@ searchable directory.
     return call2 (handler, Qfile_accessible_directory_p,
 		  filename);
 
-#if !defined(WINDOWSNT)
+#if !defined(WIN32_NATIVE)
   if (NILP (Ffile_directory_p (filename)))
       return (Qnil);
   else
@@ -2452,7 +2461,7 @@ searchable directory.
     UNGCPRO;
     return tem ? Qnil : Qt;
   }
-#endif /* !defined(WINDOWSNT) */
+#endif /* !defined(WIN32_NATIVE) */
 }
 
 DEFUN ("file-regular-p", Ffile_regular_p, 1, 1, 0, /*
@@ -2479,7 +2488,7 @@ This is the sort of file that holds an ordinary stream of data bytes.
   if (!NILP (handler))
     return call2 (handler, Qfile_regular_p, abspath);
 
-  if (stat ((char *) XSTRING_DATA (abspath), &st) < 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (abspath), &st) < 0)
     return Qnil;
   return (st.st_mode & S_IFMT) == S_IFREG ? Qt : Qnil;
 }
@@ -2508,14 +2517,14 @@ Return mode bits of FILE, as an integer.
   if (!NILP (handler))
     return call2 (handler, Qfile_modes, abspath);
 
-  if (stat ((char *) XSTRING_DATA (abspath), &st) < 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (abspath), &st) < 0)
     return Qnil;
   /* Syncing with FSF 19.34.6 note: not in FSF, #if 0'ed out here. */
 #if 0
-#ifdef DOS_NT
+#ifdef WIN32_NATIVE
   if (check_executable (XSTRING_DATA (abspath)))
     st.st_mode |= S_IEXEC;
-#endif /* DOS_NT */
+#endif /* WIN32_NATIVE */
 #endif /* 0 */
 
   return make_int (st.st_mode & 07777);
@@ -2589,7 +2598,7 @@ Tell Unix to finish all pending disk updates.
 */
        ())
 {
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
   sync ();
 #endif
   return Qnil;
@@ -2630,12 +2639,12 @@ otherwise, if FILE2 does not exist, the answer is t.
     return call3 (handler, Qfile_newer_than_file_p, abspath1,
 		  abspath2);
 
-  if (stat ((char *) XSTRING_DATA (abspath1), &st) < 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (abspath1), &st) < 0)
     return Qnil;
 
   mtime1 = st.st_mtime;
 
-  if (stat ((char *) XSTRING_DATA (abspath2), &st) < 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (abspath2), &st) < 0)
     return Qt;
 
   return (mtime1 > st.st_mtime) ? Qt : Qnil;
@@ -2725,7 +2734,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   fd = -1;
 
-  if (stat ((char *) XSTRING_DATA (filename), &st) < 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (filename), &st) < 0)
     {
       if (fd >= 0) close (fd);
     badopen:
@@ -3112,12 +3121,12 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 */
        (start, end, filename, append, visit, lockname, codesys))
 {
-  /* This function can call lisp */
+  /* This function can call lisp.  GC checked 2000-07-28 ben */
   int desc;
   int failure;
   int save_errno = 0;
   struct stat st;
-  Lisp_Object fn;
+  Lisp_Object fn = Qnil;
   int speccount = specpdl_depth ();
   int visiting_other = STRINGP (visit);
   int visiting = (EQ (visit, Qt) || visiting_other);
@@ -3126,28 +3135,37 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   Lisp_Object annotations = Qnil;
   struct buffer *given_buffer;
   Bufpos start1, end1;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  struct gcpro ngcpro1, ngcpro2;
+  Lisp_Object curbuf;
 
-  /* #### dmoore - if Fexpand_file_name or handlers kill the buffer,
+  XSETBUFFER (curbuf, current_buffer);
+
+  /* start, end, visit, and append are never modified in this fun
+     so we don't protect them. */
+  GCPRO5 (visit_file, filename, codesys, lockname, annotations);
+  NGCPRO2 (curbuf, fn);
+
+  /* [[ dmoore - if Fexpand_file_name or handlers kill the buffer,
      we should signal an error rather than blissfully continuing
      along.  ARGH, this function is going to lose lose lose.  We need
      to protect the current_buffer from being destroyed, but the
-     multiple return points make this a pain in the butt. */
+     multiple return points make this a pain in the butt. ]] we do
+     protect curbuf now. --ben */
 
 #ifdef FILE_CODING
   codesys = Fget_coding_system (codesys);
 #endif /* FILE_CODING */
 
   if (current_buffer->base_buffer && ! NILP (visit))
-    error ("Cannot do file visiting in an indirect buffer");
+    invalid_operation ("Cannot do file visiting in an indirect buffer",
+		       curbuf);
 
   if (!NILP (start) && !STRINGP (start))
     get_buffer_range_char (current_buffer, start, end, &start1, &end1, 0);
 
   {
     Lisp_Object handler;
-    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-
-    GCPRO5 (start, filename, visit, visit_file, lockname);
 
     if (visiting_other)
       visit_file = Fexpand_file_name (visit, Qnil);
@@ -3155,11 +3173,11 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       visit_file = filename;
     filename = Fexpand_file_name (filename, Qnil);
 
-    UNGCPRO;
-
     if (NILP (lockname))
       lockname = visit_file;
 
+    /* We used to UNGCPRO here.  BAD!  visit_file is used below after
+       more Lisp calling. */
     /* If the file name has special constructs in it,
        call the corresponding file handler.  */
     handler = Ffind_file_name_handler (filename, Qwrite_region);
@@ -3178,21 +3196,15 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	    current_buffer->filename = visit_file;
 	    MARK_MODELINE_CHANGED;
 	  }
+	NUNGCPRO;
+	UNGCPRO;
 	return val;
       }
   }
 
 #ifdef CLASH_DETECTION
   if (!auto_saving)
-    {
-      Lisp_Object curbuf;
-      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-
-      XSETBUFFER (curbuf, current_buffer);
-      GCPRO5 (start, filename, visit_file, lockname, curbuf);
-      lock_file (lockname);
-      UNGCPRO;
-    }
+    lock_file (lockname);
 #endif /* CLASH_DETECTION */
 
   /* Special kludge to simplify auto-saving.  */
@@ -3221,8 +3233,8 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   if (desc < 0)
     {
       desc = open ((char *) XSTRING_DATA (fn),
-                   (O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY),
-		   ((auto_saving) ? auto_save_mode_bits : CREAT_MODE));
+                   O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
+		   auto_saving ? auto_save_mode_bits : CREAT_MODE);
     }
 
   if (desc < 0)
@@ -3238,9 +3250,9 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   {
     Lisp_Object desc_locative = Fcons (make_int (desc), Qnil);
     Lisp_Object instream = Qnil, outstream = Qnil;
-    struct gcpro gcpro1, gcpro2;
+    struct gcpro nngcpro1, nngcpro2;
     /* need to gcpro; QUIT could happen out of call to write() */
-    GCPRO2 (instream, outstream);
+    NNGCPRO2 (instream, outstream);
 
     record_unwind_protect (close_file_unwind, desc_locative);
 
@@ -3298,7 +3310,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	save_errno = errno;
       }
     Lstream_close (XLSTREAM (instream));
-    UNGCPRO;
 
 #ifdef HAVE_FSYNC
     /* Note fsync appears to change the modtime on BSD4.2 (both vax and sun).
@@ -3318,7 +3329,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
        systems where close() can change the modtime.  This is known to
        happen on various NFS file systems, on Windows, and on Linux.
        Rather than handling this on a per-system basis, we
-       unconditionally do the stat() after the close(). */
+       unconditionally do the xemacs_stat() after the close(). */
 
     /* NFS can report a write failure now.  */
     if (close (desc) < 0)
@@ -3332,9 +3343,11 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
        as necessary). */
     XCAR (desc_locative) = Qnil;
     unbind_to (speccount, Qnil);
+
+    NNUNGCPRO;
   }
 
-  stat ((char *) XSTRING_DATA (fn), &st);
+  xemacs_stat ((char *) XSTRING_DATA (fn), &st);
 
 #ifdef CLASH_DETECTION
   if (!auto_saving)
@@ -3348,9 +3361,10 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     current_buffer->modtime = st.st_mtime;
 
   if (failure)
-    error ("IO error writing %s: %s",
-           XSTRING_DATA (fn),
-           strerror (save_errno));
+    {
+      errno = save_errno;
+      report_file_error ("Writing file", list1 (fn));
+    }
 
   if (visiting)
     {
@@ -3361,6 +3375,8 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     }
   else if (quietly)
     {
+      NUNGCPRO;
+      UNGCPRO;
       return Qnil;
     }
 
@@ -3370,19 +3386,21 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
         message ("Wrote %s", XSTRING_DATA (visit_file));
       else
 	{
-	  struct gcpro gcpro1;
 	  Lisp_Object fsp;
-	  GCPRO1 (fn);
+	  struct gcpro nngcpro1;
 
+	  NNGCPRO1 (fsp);
 	  fsp = Ffile_symlink_p (fn);
 	  if (NILP (fsp))
 	    message ("Wrote %s", XSTRING_DATA (fn));
 	  else
 	    message ("Wrote %s (symlink to %s)",
 		     XSTRING_DATA (fn), XSTRING_DATA (fsp));
-	  UNGCPRO;
+	  NNUNGCPRO;
 	}
     }
+  NUNGCPRO;
+  UNGCPRO;
   return Qnil;
 }
 
@@ -3634,7 +3652,7 @@ This means that the file has not been changed since it was visited or saved.
 */
        (buf))
 {
-  /* This function can call lisp */
+  /* This function can call lisp; GC checked 2000-07-11 ben */
   struct buffer *b;
   struct stat st;
   Lisp_Object handler;
@@ -3652,7 +3670,7 @@ This means that the file has not been changed since it was visited or saved.
   if (!NILP (handler))
     return call2 (handler, Qverify_visited_file_modtime, buf);
 
-  if (stat ((char *) XSTRING_DATA (b->filename), &st) < 0)
+  if (xemacs_stat ((char *) XSTRING_DATA (b->filename), &st) < 0)
     {
       /* If the file doesn't exist now and didn't exist before,
 	 we say that it isn't modified, provided the error is a tame one.  */
@@ -3724,7 +3742,7 @@ An argument specifies the modification time value to use
       if (!NILP (handler))
 	/* The handler can find the file name the same way we did.  */
 	return call2 (handler, Qset_visited_file_modtime, Qnil);
-      else if (stat ((char *) XSTRING_DATA (filename), &st) >= 0)
+      else if (xemacs_stat ((char *) XSTRING_DATA (filename), &st) >= 0)
 	current_buffer->modtime = st.st_mtime;
     }
 
@@ -3765,7 +3783,7 @@ auto_save_1 (Lisp_Object ignored)
 
   /* Get visited file's mode to become the auto save file's mode.  */
   if (STRINGP (fn) &&
-      stat ((char *) XSTRING_DATA (fn), &st) >= 0)
+      xemacs_stat ((char *) XSTRING_DATA (fn), &st) >= 0)
     /* But make sure we can overwrite it later!  */
     auto_save_mode_bits = st.st_mode | 0600;
   else
@@ -3954,10 +3972,10 @@ Non-nil second argument means save only current buffer.
 	      set_buffer_internal (b);
 	      if (!auto_saved && NILP (no_message))
 		{
-		  static CONST unsigned char *msg
-		    = (CONST unsigned char *) "Auto-saving...";
+		  static const unsigned char *msg
+		    = (const unsigned char *) "Auto-saving...";
 		  echo_area_message (selected_frame (), msg, Qnil,
-				     0, strlen ((CONST char *) msg),
+				     0, strlen ((const char *) msg),
 				     Qauto_saving);
 		}
 
@@ -3983,7 +4001,7 @@ Non-nil second argument means save only current buffer.
 		 auto save name.  */
 	      if (listdesc >= 0)
 		{
-		  CONST Extbyte *auto_save_file_name_ext;
+		  const Extbyte *auto_save_file_name_ext;
 		  Extcount auto_save_file_name_ext_len;
 
 		  TO_EXTERNAL_FORMAT (LISP_STRING, b->auto_save_file_name,
@@ -3992,7 +4010,7 @@ Non-nil second argument means save only current buffer.
 				      Qfile_name);
 		  if (!NILP (b->filename))
 		    {
-		      CONST Extbyte *filename_ext;
+		      const Extbyte *filename_ext;
 		      Extcount filename_ext_len;
 
 		      TO_EXTERNAL_FORMAT (LISP_STRING, b->filename,
@@ -4061,10 +4079,10 @@ Non-nil second argument means save only current buffer.
   if (auto_saved && NILP (no_message)
       && NILP (clear_echo_area (selected_frame (), Qauto_saving, 0)))
     {
-      static CONST unsigned char *msg
-        = (CONST unsigned char *)"Auto-saving...done";
+      static const unsigned char *msg
+        = (const unsigned char *)"Auto-saving...done";
       echo_area_message (selected_frame (), msg, Qnil, 0,
-			 strlen ((CONST char *) msg), Qauto_saving);
+			 strlen ((const char *) msg), Qauto_saving);
     }
 
   Vquit_flag = oquit;
@@ -4150,9 +4168,8 @@ syms_of_fileio (void)
   defsymbol (&Qformat_annotate_function, "format-annotate-function");
 
   defsymbol (&Qcompute_buffer_file_truename, "compute-buffer-file-truename");
-  deferror (&Qfile_error, "file-error", "File error", Qio_error);
-  deferror (&Qfile_already_exists, "file-already-exists",
-	    "File already exists", Qfile_error);
+  DEFERROR_STANDARD (Qfile_error, Qio_error);
+  DEFERROR_STANDARD (Qfile_already_exists, Qfile_error);
 
   DEFSUBR (Ffind_file_name_handler);
 
@@ -4171,9 +4188,7 @@ syms_of_fileio (void)
   DEFSUBR (Fdelete_file);
   DEFSUBR (Frename_file);
   DEFSUBR (Fadd_name_to_file);
-#ifdef S_IFLNK
   DEFSUBR (Fmake_symbolic_link);
-#endif /* S_IFLNK */
 #ifdef HPUX_NET
   DEFSUBR (Fsysnetunam);
 #endif /* HPUX_NET */
@@ -4299,9 +4314,31 @@ This variable affects the built-in functions only on Windows,
 on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   Vdirectory_sep_char = make_char ('\\');
 #else
-   Vdirectory_sep_char = make_char ('/');
+  Vdirectory_sep_char = make_char ('/');
 #endif
+
+  reinit_vars_of_fileio ();
+}
+
+void
+reinit_vars_of_fileio (void)
+{
+  /* We want temp_name_rand to be initialized to a value likely to be
+     unique to the process, not to the executable.  The danger is that
+     two different XEmacs processes using the same binary on different
+     machines creating temp files in the same directory will be
+     unlucky enough to have the same pid.  If we randomize using
+     process startup time, then in practice they will be unlikely to
+     collide. We use the microseconds field so that scripts that start
+     simultaneous XEmacs processes on multiple machines will have less
+     chance of collision.  */
+  {
+    EMACS_TIME thyme;
+
+    EMACS_GET_TIME (thyme);
+    temp_name_rand = (unsigned int) (EMACS_SECS (thyme) ^ EMACS_USECS (thyme));
+  }
 }

@@ -102,7 +102,7 @@ Lisp_Object Qvisible, Qiconic, Qinvisible, Qvisible_iconic, Qinvisible_iconic;
 Lisp_Object Qnomini, Qvisible_nomini, Qiconic_nomini, Qinvisible_nomini;
 Lisp_Object Qvisible_iconic_nomini, Qinvisible_iconic_nomini;
 
-Lisp_Object Qset_specifier, Qset_glyph_image, Qset_face_property;
+Lisp_Object Qset_specifier, Qset_face_property;
 Lisp_Object Qface_property_instance;
 
 Lisp_Object Qframe_property_alias;
@@ -121,8 +121,6 @@ static struct display_line title_string_display_line;
    the dynamic allocation time adds up. */
 static Emchar_dynarr *title_string_emchar_dynarr;
 
-EXFUN (Fset_frame_properties, 2);
-
 
 static Lisp_Object
 mark_frame (Lisp_Object obj)
@@ -131,8 +129,6 @@ mark_frame (Lisp_Object obj)
 
 #define MARKED_SLOT(x) mark_object (f->x)
 #include "frameslots.h"
-
-  mark_subwindow_cachels (f->subwindow_cachels);
 
   if (FRAME_LIVE_P (f)) /* device is nil for a dead frame */
     MAYBE_FRAMEMETH (f, mark_frame, (f));
@@ -202,19 +198,18 @@ allocate_frame_core (Lisp_Object device)
   XWINDOW (root_window)->pixel_width = 10;
   XWINDOW (root_window)->pixel_height = 9;
 
-  /* The size of the minibuffer window is now set in x_create_frame
-     in xfns.c. */
-
   f->root_window = root_window;
   f->selected_window = root_window;
   f->last_nonminibuf_window = root_window;
 
   /* cache of subwindows visible on frame */
-  f->subwindow_cachels    = Dynarr_new (subwindow_cachel);
+  f->subwindow_instance_cache    = make_weak_list (WEAK_LIST_SIMPLE);
 
   /* associated exposure ignore list */
   f->subwindow_exposures = 0;
   f->subwindow_exposures_tail = 0;
+
+  FRAME_SET_PAGENUMBER (f, 1);
 
   /* Choose a buffer for the frame's root window.  */
   XWINDOW (root_window)->buffer = Qt;
@@ -270,7 +265,9 @@ setup_frame_without_minibuffer (struct frame *f, Lisp_Object mini_window)
 	      FRAME_CONSOLE (XFRAME (XWINDOW (mini_window)->frame))))
     error ("frame and minibuffer must be on the same console");
 
-  if (NILP (mini_window))
+  /* Do not create a default minibuffer frame on printer devices.  */
+  if (NILP (mini_window)
+      && DEVICE_DISPLAY_P (XDEVICE (FRAME_DEVICE (f))))
     {
       struct console *con = XCONSOLE (FRAME_CONSOLE (f));
       /* Use default-minibuffer-frame if possible.  */
@@ -285,8 +282,13 @@ setup_frame_without_minibuffer (struct frame *f, Lisp_Object mini_window)
     }
 
   /* Install the chosen minibuffer window, with proper buffer.  */
-  store_minibuf_frame_prop (f, mini_window);
-  Fset_window_buffer (mini_window, Vminibuffer_zero, Qt);
+  if (!NILP (mini_window))
+    {
+      store_minibuf_frame_prop (f, mini_window);
+      Fset_window_buffer (mini_window, Vminibuffer_zero, Qt);
+    }
+  else
+    f->minibuffer_window = Qnil;
 }
 
 /* Make a frame containing only a minibuffer window.  */
@@ -380,7 +382,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   else
     name = build_string ("emacs");
 
-  if (!NILP (Fstring_match (make_string ((CONST Bufbyte *) "\\.", 2), name,
+  if (!NILP (Fstring_match (make_string ((const Bufbyte *) "\\.", 2), name,
 			    Qnil, Qnil)))
     signal_simple_error (". not allowed in frame names", name);
 
@@ -466,19 +468,13 @@ See `set-frame-properties', `default-x-frame-plist', and
 #endif
       reset_face_cachels (XWINDOW (FRAME_SELECTED_WINDOW (f)));
       reset_glyph_cachels (XWINDOW (FRAME_SELECTED_WINDOW (f)));
-      reset_subwindow_cachels (f);
-      change_frame_size (f, f->height, f->width, 0);
 
+      change_frame_size (f, f->height, f->width, 0);
     }
 
   MAYBE_FRAMEMETH (f, init_frame_2, (f, props));
   Fset_frame_properties (frame, props);
   MAYBE_FRAMEMETH (f, init_frame_3, (f));
-
-  /* now initialise the gutters, this won't change the frame size
-     so is ok here. */
-  if (!DEVICE_STREAM_P (d))
-    init_frame_gutters (f);
 
   /* Hallelujah, praise the lord. */
   f->init_finished = 1;
@@ -504,6 +500,18 @@ See `set-frame-properties', `default-x-frame-plist', and
      to strange console-type-specific things that need to be done. */
   MAYBE_FRAMEMETH (f, after_init_frame, (f, first_frame_on_device,
 					 first_frame_on_console));
+
+  if (!DEVICE_STREAM_P (d))
+    {
+      /* Now initialise the gutters. This won't change the frame size,
+         but is needed as input to the layout that change_frame_size
+         will eventually do. Unfortunately gutter sizing code relies
+         on the frame in question being visible so we can't do this
+         earlier. */
+      init_frame_gutters (f);
+
+      change_frame_size (f, f->height, f->width, 0);
+    }
 
   if (first_frame_on_device)
     {
@@ -905,13 +913,13 @@ set_frame_selected_window (struct frame *f, Lisp_Object window)
   f->selected_window = window;
   if (!MINI_WINDOW_P (XWINDOW (window)) || FRAME_MINIBUF_ONLY_P (f))
     {
-#ifdef HAVE_TOOLBARS
       if (!EQ (f->last_nonminibuf_window, window))
 	{
+#ifdef HAVE_TOOLBARS
 	  MARK_TOOLBAR_CHANGED;
+#endif
 	  MARK_GUTTER_CHANGED;
 	}
-#endif
       f->last_nonminibuf_window = window;
     }
 }
@@ -1025,13 +1033,10 @@ frame_matches_frametype (Lisp_Object frame, Lisp_Object type)
 }
 
 int
-device_matches_console_spec (Lisp_Object frame, Lisp_Object device,
-			     Lisp_Object console)
+device_matches_console_spec (Lisp_Object device, Lisp_Object console)
 {
   if (EQ (console, Qwindow_system))
     return DEVICE_WIN_P (XDEVICE (device));
-  if (NILP (console))
-    console = (DEVICE_CONSOLE (XDEVICE (FRAME_DEVICE (XFRAME (frame)))));
   if (DEVICEP (console))
     return EQ (device, console);
   if (CONSOLEP (console))
@@ -1045,78 +1050,60 @@ device_matches_console_spec (Lisp_Object frame, Lisp_Object device,
    FRAMETYPE and CONSOLE control which frames and devices
    are considered; see `next-frame'. */
 
-static Lisp_Object
-next_frame_internal (Lisp_Object frame, Lisp_Object frametype,
-		     Lisp_Object console, int called_from_delete_device)
-{
-  int passed = 0;
-  int started_over = 0;
-
-  /* If this frame is dead, it won't be in frame_list, and we'll loop
-     forever.  Forestall that.  */
-  CHECK_LIVE_FRAME (frame);
-
-  while (1)
-    {
-      Lisp_Object devcons, concons;
-
-      DEVICE_LOOP_NO_BREAK (devcons, concons)
-	{
-	  Lisp_Object device = XCAR (devcons);
-	  Lisp_Object frmcons;
-
-	  if (!device_matches_console_spec (frame, device, console))
-	    continue;
-
-	  DEVICE_FRAME_LOOP (frmcons, XDEVICE (device))
-	    {
-	      Lisp_Object f = XCAR (frmcons);
-	      if (passed)
-		{
-		  /* #### Doing this here is bad and is now
-                     unnecessary.  The real bug was that f->iconified
-                     was never, ever updated unless a user explicitly
-                     called frame-iconified-p.  That has now been
-                     fixed.  With this change removed all of the other
-                     changes made to support this routine having the
-                     called_from_delete_device arg could be removed.
-                     But it is too close to release to do that now. */
-#if 0
-		  /* Make sure the visibility and iconified flags are
-                     up-to-date unless we're being deleted. */
-		  if (!called_from_delete_device)
-		    {
-		      Fframe_iconified_p (f);
-		      Fframe_visible_p (f);
-		    }
-#endif
-
-		  /* Decide whether this frame is eligible to be returned.  */
-
-		  /* If we've looped all the way around without finding any
-		     eligible frames, return the original frame.  */
-		  if (EQ (f, frame))
-		    return f;
-
-		  if (frame_matches_frametype (f, frametype))
-		    return f;
-		}
-
-	      if (EQ (frame, f))
-		passed++;
-	    }
-	}
-      /* We hit the end of the list, and need to start over again. */
-      if (started_over)
-	return Qnil;
-      started_over++;
-    }
-}
-
 Lisp_Object
 next_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
 {
-  return next_frame_internal (frame, frametype, console, 0);
+  Lisp_Object first = Qnil;
+  Lisp_Object devcons, concons;
+  int passed = 0;
+
+  CHECK_LIVE_FRAME (frame);
+
+  DEVICE_LOOP_NO_BREAK (devcons, concons)
+    {
+      Lisp_Object device = XCAR (devcons);
+      Lisp_Object frmcons;
+
+      if (!device_matches_console_spec (device, console))
+	{
+	  if (EQ (device, FRAME_DEVICE (XFRAME (frame))))
+	    passed = 1;
+	  continue;
+	}
+
+      DEVICE_FRAME_LOOP (frmcons, XDEVICE (device))
+	{
+	  Lisp_Object f = XCAR (frmcons);
+
+	  if (passed)
+	    {
+	      if (frame_matches_frametype (f, frametype))
+		return f;
+	    }
+	  else
+	    {
+	      if (EQ (frame, f))
+		{
+		  passed = 1;
+		}
+	      else
+		{
+		  if (NILP (first) && frame_matches_frametype (f, frametype))
+		    first = f;
+		}
+	    }
+	}
+    }
+
+  if (NILP (first))
+    /* We went through the whole frame list without finding a single
+       acceptable frame.  Return the original frame.  */
+    return frame;
+  else
+    /* There were no acceptable frames in the list after FRAME; otherwise,
+       we would have returned directly from the loop.  Since FIRST is the last
+       acceptable frame in the list, return it.  */
+    return first;
 }
 
 /* Return the previous frame in the frame list before FRAME.
@@ -1124,50 +1111,52 @@ next_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
    are considered; see `next-frame'. */
 
 Lisp_Object
-prev_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
+previous_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
 {
   Lisp_Object devcons, concons;
-  Lisp_Object prev;
+  Lisp_Object last = Qnil;
 
-  /* If this frame is dead, it won't be in frame_list, and we'll loop
-     forever.  Forestall that.  */
   CHECK_LIVE_FRAME (frame);
 
-  prev = Qnil;
   DEVICE_LOOP_NO_BREAK (devcons, concons)
     {
       Lisp_Object device = XCAR (devcons);
       Lisp_Object frmcons;
 
-      if (!device_matches_console_spec (frame, device, console))
-	continue;
+      if (!device_matches_console_spec (device, console))
+	{
+	  if (EQ (device, FRAME_DEVICE (XFRAME (frame)))
+	      && !NILP (last))
+	    return last;
+	  continue;
+	}
 
       DEVICE_FRAME_LOOP (frmcons, XDEVICE (device))
 	{
 	  Lisp_Object f = XCAR (frmcons);
 
-	  if (EQ (frame, f) && !NILP (prev))
-	    return prev;
-
-	  /* Decide whether this frame is eligible to be returned,
-	     according to frametype.  */
-
-	  if (frame_matches_frametype (f, frametype))
-	    prev = f;
-
+	  if (EQ (frame, f))
+	    {
+	      if (!NILP (last))
+		return last;
+	    }
+	  else
+	    {
+	      if (frame_matches_frametype (f, frametype))
+		last = f;
+	    }
 	}
     }
 
-  /* We've scanned the entire list.  */
-  if (NILP (prev))
+  if (NILP (last))
     /* We went through the whole frame list without finding a single
        acceptable frame.  Return the original frame.  */
     return frame;
   else
     /* There were no acceptable frames in the list before FRAME; otherwise,
-       we would have returned directly from the loop.  Since PREV is the last
+       we would have returned directly from the loop.  Since LAST is the last
        acceptable frame in the list, return it.  */
-    return prev;
+    return last;
 }
 
 DEFUN ("next-frame", Fnext_frame, 0, 3, 0, /*
@@ -1232,7 +1221,7 @@ arguments.
 {
   XSETFRAME (frame, decode_frame (frame));
 
-  return prev_frame (frame, frametype, console);
+  return previous_frame (frame, frametype, console);
 }
 
 /* Return any frame for which PREDICATE is non-zero, or return Qnil
@@ -1264,23 +1253,15 @@ find_some_frame (int (*predicate) (Lisp_Object, void *),
    (Exception: if F is a stream frame, it's OK to delete if
    any other frames exist.) */
 
-static int
-other_visible_frames_internal (struct frame *f, int called_from_delete_device)
+int
+other_visible_frames (struct frame *f)
 {
   Lisp_Object frame;
 
   XSETFRAME (frame, f);
   if (FRAME_STREAM_P (f))
-    return !EQ (frame, next_frame_internal (frame, Qt, Qt,
-					    called_from_delete_device));
-  return !EQ (frame, next_frame_internal (frame, Qvisible_iconic_nomini, Qt,
-					  called_from_delete_device));
-}
-
-int
-other_visible_frames (struct frame *f)
-{
-  return other_visible_frames_internal (f, 0);
+    return !EQ (frame, next_frame (frame, Qt, Qt));
+  return !EQ (frame, next_frame (frame, Qvisible_iconic_nomini, Qt));
 }
 
 /* Delete frame F.
@@ -1343,7 +1324,7 @@ delete_frame_internal (struct frame *f, int force,
      losing any way of communicating with the still running XEmacs process.
      So we put it back.  */
   if (!force && !allow_deletion_of_last_visible_frame &&
-      !other_visible_frames_internal (f, called_from_delete_device))
+      !other_visible_frames (f))
     error ("Attempt to delete the sole visible or iconified frame");
 
   /* Does this frame have a minibuffer, and is it the surrogate
@@ -1469,22 +1450,17 @@ delete_frame_internal (struct frame *f, int force,
 
       next = DEVMETH_OR_GIVEN (d, get_frame_parent, (f), Qnil);
       if (NILP (next) || EQ (next, frame) || ! FRAME_LIVE_P (XFRAME (next)))
-	next = next_frame_internal (frame, Qvisible, device,
-				    called_from_delete_device);
+	next = next_frame (frame, Qvisible, device);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qvisible, console,
-				    called_from_delete_device);
+	next = next_frame (frame, Qvisible, console);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qvisible, Qt,
-				    called_from_delete_device);
+	next = next_frame (frame, Qvisible, Qt);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qt, device,
-				    called_from_delete_device);
+	next = next_frame (frame, Qt, device);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qt, console,
-				    called_from_delete_device);
+	next = next_frame (frame, Qt, console);
       if (NILP (next) || EQ (next, frame))
-	next = next_frame_internal (frame, Qt, Qt, called_from_delete_device);
+	next = next_frame (frame, Qt, Qt);
 
       /* if we haven't found another frame at this point
 	 then there aren't any. */
@@ -1506,9 +1482,7 @@ delete_frame_internal (struct frame *f, int force,
 	   */
 	  if (!EQ (device, FRAME_DEVICE(XFRAME(next))))
 	    {
-		Lisp_Object next_f =
-		    next_frame_internal (frame, Qt, device,
-					 called_from_delete_device);
+		Lisp_Object next_f = next_frame (frame, Qt, device);
 		if (NILP (next_f) || EQ (next_f, frame))
 		  set_device_selected_frame (d, Qnil);
 		else
@@ -1546,6 +1520,12 @@ delete_frame_internal (struct frame *f, int force,
   free_frame_toolbars (f);
 #endif
   free_frame_gutters (f);
+  /* Unfortunately deleting the frame will also delete the parent of
+     all of the subwindow instances current on the frame. I think this
+     can lead to bad things when trying to finalize the
+     instances. Thus we loop over all instance caches calling the
+     finalize method for each instance. */
+  free_frame_subwindow_instances (f);
 
   /* This must be done before the window and window_mirror structures
      are freed.  The scrollbar information is attached to them. */
@@ -1557,11 +1537,7 @@ delete_frame_internal (struct frame *f, int force,
   f->root_window = Qnil;
 
   /* clear out the cached glyph information */
-  if (f->subwindow_cachels)
-    {
-      Dynarr_free (f->subwindow_cachels);
-      f->subwindow_cachels = 0;
-    }
+  f->subwindow_instance_cache = Qnil;
 
   /* Remove the frame now from the list.  This way, any events generated
      on this frame by the maneuvers below will disperse themselves. */
@@ -1735,13 +1711,14 @@ mouse_pixel_position_1 (struct device *d, Lisp_Object *frame,
 
 DEFUN ("mouse-pixel-position", Fmouse_pixel_position, 0, 1, 0, /*
 Return a list (WINDOW X . Y) giving the current mouse window and position.
-The position is given in pixel units, where (0, 0) is the upper-left corner.
+The position is given in pixel units, where (0, 0) is the upper-left corner
+of the window.
 
 When the cursor is not over a window, the return value is a list (nil nil).
 
 DEVICE specifies the device on which to read the mouse position, and
 defaults to the selected device.  If the device is a mouseless terminal
-or Emacs hasn't been programmed to read its mouse position, it returns
+or XEmacs hasn't been programmed to read its mouse position, it returns
 the device's selected window for WINDOW and nil for X and Y.
 */
        (device))
@@ -2087,8 +2064,61 @@ doesn't support multiple overlapping frames, this function does nothing.
   return Qnil;
 }
 
+
+DEFUN ("disable-frame", Fdisable_frame, 1, 1, 0, /*
+Disable frame FRAME, so that it cannot have the focus or receive user input.
+This is normally used during modal dialog boxes.
+WARNING: Be very careful not to wedge XEmacs!
+Use an `unwind-protect' that re-enables the frame to avoid this.
+*/
+       (frame))
+{
+  struct frame *f = decode_frame (frame);
+
+  f->disabled = 1;
+  MAYBE_FRAMEMETH (f, disable_frame, (f));
+  return Qnil;
+}
+
+DEFUN ("enable-frame", Fenable_frame, 1, 1, 0, /*
+Enable frame FRAME, so that it can have the focus and receive user input.
+Frames are normally enabled, unless explicitly disabled using `disable-frame'.
+*/
+       (frame))
+{
+  struct frame *f = decode_frame (frame);
+  f->disabled = 0;
+  MAYBE_FRAMEMETH (f, enable_frame, (f));
+  return Qnil;
+}
+
 /* Ben thinks there is no need for `redirect-frame-focus' or `frame-focus',
    crockish FSFmacs functions.  See summary on focus in event-stream.c. */
+
+DEFUN ("print-job-page-number", Fprint_job_page_number, 1, 1, 0, /*
+Return current page number for the print job FRAME.
+*/
+       (frame))
+{
+  CHECK_PRINTER_FRAME (frame);
+  return make_int (FRAME_PAGENUMBER (XFRAME (frame)));
+}
+
+DEFUN ("print-job-eject-page", Fprint_job_eject_page, 1, 1, 0, /*
+Eject page in the print job FRAME.
+*/
+       (frame))
+{
+  struct frame *f;
+
+  CHECK_PRINTER_FRAME (frame);
+  f = XFRAME (frame);
+  FRAMEMETH (f, eject_page, (f));
+  FRAME_SET_PAGENUMBER (f, 1 + FRAME_PAGENUMBER (f));
+  f->clear = 1;
+
+  return Qnil;
+}
 
 
 /***************************************************************************/
@@ -2232,8 +2262,9 @@ The following symbols etc. have predefined meanings:
 
  minibuffer	Gives the minibuffer behavior for this frame.  Either
 		t (frame has its own minibuffer), `only' (frame is
-		a minibuffer-only frame), or a window (frame uses that
-		window, which is on another frame, as the minibuffer).
+		a minibuffer-only frame), `none' (frame has no minibuffer)
+		or a window (frame uses that window, which is on another
+		frame, as the minibuffer).
 
  unsplittable	If non-nil, frame cannot be split by `display-buffer'.
 
@@ -2247,7 +2278,13 @@ The following symbols etc. have predefined meanings:
  left-toolbar-visible-p, right-toolbar-visible-p, toolbar-buttons-captioned-p,
  top-toolbar-border-width, bottom-toolbar-border-width,
  left-toolbar-border-width, right-toolbar-border-width,
- modeline-shadow-thickness, has-modeline-p
+ modeline-shadow-thickness, has-modeline-p,
+ default-gutter, top-gutter, bottom-gutter, left-gutter, right-gutter,
+ default-gutter-height, default-gutter-width, top-gutter-height,
+ bottom-gutter-height, left-gutter-width, right-gutter-width,
+ default-gutter-visible-p, top-gutter-visible-p, bottom-gutter-visible-p,
+ left-gutter-visible-p, right-gutter-visible-p, top-gutter-border-width,
+ bottom-gutter-border-width, left-gutter-border-width, right-gutter-border-width,
 		[Giving the name of any built-in specifier variable is
 		equivalent to calling `set-specifier' on the specifier,
 		with a locale of FRAME.  Giving the name to `frame-property'
@@ -2851,8 +2888,6 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
     - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f)
     - 2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f);
 
-  new_pixwidth += 2 * f->internal_border_width;
-
   /* Adjust the width for the end glyph which may be a different width
      than the default character width. */
   {
@@ -2874,7 +2909,14 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
   if (new_pixheight)
     {
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = FRAME_TOP_BORDER_END (f);
+      /* Adjust for gutters here so that we always get set
+         properly. */
+      new_pixheight -=
+	(FRAME_TOP_GUTTER_BOUNDS (f)
+	 + FRAME_BOTTOM_GUTTER_BOUNDS (f));
+
+      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top
+	= FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
 
       if (FRAME_HAS_MINIBUF_P (f)
 	  && ! FRAME_MINIBUF_ONLY_P (f))
@@ -2900,7 +2942,10 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 				new_pixheight - minibuf_height, 0);
 
 	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
-	    new_pixheight - minibuf_height + FRAME_TOP_BORDER_END (f);
+	    FRAME_TOP_BORDER_END (f) +
+	    FRAME_TOP_GUTTER_BOUNDS (f) +
+	    FRAME_BOTTOM_GUTTER_BOUNDS (f) +
+	    new_pixheight - minibuf_height;
 
 	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
 	}
@@ -2915,13 +2960,20 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
   if (new_pixwidth)
     {
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = FRAME_LEFT_BORDER_END (f);
+      /* Adjust for gutters here so that we always get set
+         properly. */
+      new_pixwidth -=
+	(FRAME_LEFT_GUTTER_BOUNDS (f)
+	 + FRAME_RIGHT_GUTTER_BOUNDS (f));
+
+      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left =
+	FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
       set_window_pixwidth (FRAME_ROOT_WINDOW (f), new_pixwidth, 0);
 
       if (FRAME_HAS_MINIBUF_P (f))
 	{
 	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
-	    FRAME_LEFT_BORDER_END (f);
+	    FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
 	  set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), new_pixwidth, 0);
 	}
 
@@ -2940,6 +2992,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
     }
 
   MARK_FRAME_TOOLBARS_CHANGED (f);
+  MARK_FRAME_GUTTERS_CHANGED (f);
   MARK_FRAME_CHANGED (f);
   f->echo_area_garbaged = 1;
 }
@@ -3122,6 +3175,8 @@ init_frame (void)
 void
 syms_of_frame (void)
 {
+  INIT_LRECORD_IMPLEMENTATION (frame);
+
   defsymbol (&Qdelete_frame_hook, "delete-frame-hook");
   defsymbol (&Qselect_frame_hook, "select-frame-hook");
   defsymbol (&Qdeselect_frame_hook, "deselect-frame-hook");
@@ -3182,7 +3237,6 @@ syms_of_frame (void)
   defsymbol (&Qborder_width, "border-width");
   /* Qwidth, Qheight, Qleft, Qtop in general.c */
   defsymbol (&Qset_specifier, "set-specifier");
-  defsymbol (&Qset_glyph_image, "set-glyph-image");
   defsymbol (&Qset_face_property, "set-face-property");
   defsymbol (&Qface_property_instance, "face-property-instance");
   defsymbol (&Qframe_property_alias, "frame-property-alias");
@@ -3220,6 +3274,8 @@ syms_of_frame (void)
   DEFSUBR (Fvisible_frame_list);
   DEFSUBR (Fraise_frame);
   DEFSUBR (Flower_frame);
+  DEFSUBR (Fdisable_frame);
+  DEFSUBR (Fenable_frame);
   DEFSUBR (Fframe_property);
   DEFSUBR (Fframe_properties);
   DEFSUBR (Fset_frame_properties);
@@ -3232,6 +3288,8 @@ syms_of_frame (void)
   DEFSUBR (Fset_frame_size);
   DEFSUBR (Fset_frame_position);
   DEFSUBR (Fset_frame_pointer);
+  DEFSUBR (Fprint_job_page_number);
+  DEFSUBR (Fprint_job_eject_page);
 }
 
 void
@@ -3345,11 +3403,17 @@ visible frames.
   Vsynchronize_minibuffers = Qnil;
 
   DEFVAR_LISP ("frame-title-format", &Vframe_title_format /*
-Controls the title of the X window corresponding to the selected frame.
+Controls the title of the window-system window of the selected frame.
 This is the same format as `modeline-format' with the exception that
 %- is ignored.
 */ );
+/* #### I would change this unilaterally but for the wrath of the Kyles
+of the world. */
+#ifdef WIN32_NATIVE
+  Vframe_title_format = build_string ("%b - XEmacs");
+#else
   Vframe_title_format = build_string ("%S: %b");
+#endif
 
   DEFVAR_LISP ("frame-icon-title-format", &Vframe_icon_title_format /*
 Controls the title of the icon corresponding to the selected frame.
@@ -3359,8 +3423,9 @@ See also the variable `frame-title-format'.
 
   DEFVAR_LISP ("default-frame-name", &Vdefault_frame_name /*
 The default name to assign to newly-created frames.
-This can be overridden by arguments to `make-frame'.
-This must be a string.
+This can be overridden by arguments to `make-frame'.  This must be a string.
+This is used primarily for picking up X resources, and is *not* the title
+of the frame. (See `frame-title-format'.)
 */ );
 #ifndef INFODOCK
   Vdefault_frame_name = build_string ("emacs");

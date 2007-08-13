@@ -801,7 +801,7 @@ as a set of built-in Lisp function in C) by a flexible and
 customizable Common Lisp like one (implemented entirely in Emacs
 Lisp). During reading of Emacs Lisp source files, it is about 40%
 slower than the built-in reader, but there is no difference in
-loading byte compiled files - they dont contain any syntactic sugar
+loading byte compiled files - they don't contain any syntactic sugar
 and are loaded with the built in subroutine `load'.
 
 ** ediff        - Compare and merge files with graphical difference display
@@ -4568,7 +4568,7 @@ whether a symbol begins with a colon.
 `get', `put', and `remprop' have been generalized to allow you to set
 and retrieve properties on many different kinds of objects: symbols,
 strings, faces, glyphs, and extents (for extents, however, this is not
-yet implemented).  They are joined by a new function `object-props'
+yet implemented).  They are joined by a new function `object-plist'
 that returns all of the properties that have been set on an object.
 
 New functions `plists-eq' and `plists-equal' are provided for

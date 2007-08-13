@@ -34,11 +34,6 @@ own configuration files, please let the Free Software Foundation in on
 your work; we'd like to distribute this information.
 NOTE-END  */
 
-/* Define WORD_MACHINE if addresses and such have
- * to be corrected before they can be used as byte counts.  */
-/* ns16000 addresses are byte addresses */
-#undef WORD_MACHINE
-
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    vax, m68000, ns16000, pyramid, orion, tahoe and APOLLO
@@ -46,14 +41,6 @@ NOTE-END  */
 /* Say this machine is a 16000 and an mg1, cpp says its a 32000 */
 #define ns16000
 #define mg1
-
-/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
-   the bit field into an int.  In other words, if bit fields
-   are always unsigned.
-
-   If you use NO_UNION_TYPE, this flag does not matter.  */
-
-#define EXPLICIT_SIGN_EXTEND
 
 /* Data type of load average, as read out of kmem.  */
 /* mg1 its an unsigned long */
@@ -68,15 +55,6 @@ NOTE-END  */
    and temacs will do (load "loadup") automatically unless told otherwise.  */
 /* ns16000's have an unexec, so should the mg-1 */
 #undef CANNOT_DUMP
-
-/* Define VIRT_ADDR_VARIES if the virtual addresses of
-   pure and impure space as loaded can vary, and even their
-   relative order cannot be relied on.
-
-   Otherwise Emacs assumes that text space precedes data space,
-   numerically.  */
-/* hmmmm... not sure.  copied sequent.h */
-#undef VIRT_ADDR_VARIES
 
 /* Define C_ALLOCA if this machine does not support a true alloca
    and the one written in C should be used instead.

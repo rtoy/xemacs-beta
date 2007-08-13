@@ -31,9 +31,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 
-#ifdef WINDOWSNT
-#include <direct.h>
-#ifdef __MINGW32__
+#ifdef WIN32_NATIVE
+#ifdef MINGW
 #include <mingw32/process.h>
 #else
 /* <process.h> should not conflict with "process.h", as per ANSI definition.
@@ -45,12 +44,10 @@ Boston, MA 02111-1307, USA.  */
    which will conflict with the macro defined in lisp.h
 */
 #include <../include/process.h>
-#endif /* __MINGW32__ */
-#endif /* WINDOWSNT */
+#endif /* MINGW */
+#endif /* WIN32_NATIVE */
 
 #include "lisp.h"
-
-#include <stdlib.h>
 
 /* ------------------------------- */
 /*          basic includes         */
@@ -81,16 +78,20 @@ Boston, MA 02111-1307, USA.  */
 #include "syswait.h"
 #include "sysdir.h"
 #include "systime.h"
-#if defined(WINDOWSNT) || defined(__CYGWIN32__)
+#if defined(WIN32_NATIVE) || defined(CYGWIN)
 #include "syssignal.h"
 #endif
-#ifndef WINDOWSNT
+
+#include "sysproc.h"
+
+#ifndef WIN32_NATIVE
 #include <sys/times.h>
 #endif
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 #include <sys/utime.h>
 #include "ntheap.h"
+#include "nt.h"
 #endif
 
 /* ------------------------------- */
@@ -109,10 +110,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif /* TIOCGWINSZ or ISC4_0 */
 #endif /* USG */
-
-#ifdef HAVE_SYS_STROPTS_H
-#include <sys/stropts.h>
-#endif /* HAVE_SYS_STROPTS_H */
 
 /* LPASS8 is new in 4.3, and makes cbreak mode provide all 8 bits.  */
 #ifndef LPASS8
@@ -233,7 +230,7 @@ wait_without_blocking (void)
 #endif /* NO_SUBPROCESSES */
 
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 void wait_for_termination (HANDLE pHandle)
 #else
 void wait_for_termination (int pid)
@@ -347,7 +344,7 @@ void wait_for_termination (int pid)
 
      Since implementations may add their own error indicators on top,
      we ignore it by default.  */
-#elif defined (WINDOWSNT)
+#elif defined (WIN32_NATIVE)
   int ret = 0, status = 0;
   if (pHandle == NULL)
     {
@@ -421,7 +418,7 @@ void wait_for_termination (int pid)
 	   Try defining BROKEN_WAIT_FOR_SIGNAL. */
 	EMACS_WAIT_FOR_SIGNAL (SIGCHLD);
     }
-#else /* not HAVE_WAITPID and not WINDOWSNT and (not EMACS_BLOCK_SIGNAL or BROKEN_WAIT_FOR_SIGNAL) */
+#else /* not HAVE_WAITPID and not WIN32_NATIVE and (not EMACS_BLOCK_SIGNAL or BROKEN_WAIT_FOR_SIGNAL) */
   /* This approach is kind of cheesy but is guaranteed(?!) to work
      for all systems. */
   while (1)
@@ -459,7 +456,7 @@ flush_pending_output (int channel)
 #endif
 }
 
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
 /*  Set up the terminal at the other end of a pseudo-terminal that
     we will be controlling an inferior through.
     It should not echo or do line-editing, since that is done
@@ -570,7 +567,7 @@ child_setup_tty (int out)
   }
 #endif /* RTU */
 }
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
 #endif /* not NO_SUBPROCESSES */
 
@@ -611,21 +608,21 @@ restore_signal_handlers (struct save_signal *saved_handlers)
     }
 }
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
+
 pid_t
 sys_getpid (void)
 {
   return abs (getpid ());
 }
-#endif /* WINDOWSNT */
+
+#endif /* WIN32_NATIVE */
 
 /* Fork a subshell.  */
 static void
 sys_subshell (void)
 {
-#ifdef WINDOWSNT
-  HANDLE pid;
-#else
+#ifndef WIN32_NATIVE
   int pid;
 #endif
   struct save_signal saved_handlers[5];
@@ -660,22 +657,18 @@ sys_subshell (void)
   str = (unsigned char *) alloca (XSTRING_LENGTH (dir) + 2);
   len = XSTRING_LENGTH (dir);
   memcpy (str, XSTRING_DATA (dir), len);
-  /* #### Unix specific */
-  if (str[len - 1] != '/') str[len++] = '/';
+  if (!IS_ANY_SEP (str[len - 1]))
+    str[len++] = DIRECTORY_SEP;
   str[len] = 0;
  xyzzy:
 
-#ifdef WINDOWSNT
-  pid = NULL;
-#else /* not WINDOWSNT */
-
+#ifndef WIN32_NATIVE
   pid = fork ();
 
   if (pid == -1)
     error ("Can't spawn subshell");
   if (pid == 0)
-
-#endif /* not WINDOWSNT */
+#endif /* not WIN32_NATIVE */
   {
       char *sh = 0;
 
@@ -688,7 +681,18 @@ sys_subshell (void)
     if (str)
       sys_chdir (str);
 
-#if !defined (NO_SUBPROCESSES) && !defined (WINDOWSNT)
+#ifdef WIN32_NATIVE
+
+    /* Waits for process completion */
+    if (_spawnlp (_P_WAIT, sh, sh, NULL) != 0)
+      error ("Can't spawn subshell");
+    else
+      return; /* we're done, no need to wait for termination */
+  }
+
+#else
+
+#if !defined (NO_SUBPROCESSES)
     close_process_descs ();	/* Close Emacs's pipes/ptys */
 #endif
 
@@ -697,23 +701,18 @@ sys_subshell (void)
       nice (-emacs_priority);   /* Give the new shell the default priority */
 #endif
 
-#ifdef WINDOWSNT
-      /* Waits for process completion */
-      pid = _spawnlp (_P_WAIT, sh, sh, NULL);
-      if (pid == NULL)
-        write (1, "Can't execute subshell", 22);
-
-#else   /* not WINDOWSNT */
     execlp (sh, sh, 0);
     write (1, "Can't execute subshell", 22);
     _exit (1);
-#endif /* not WINDOWSNT */
   }
 
   save_signal_handlers (saved_handlers);
   synch_process_alive = 1;
   wait_for_termination (pid);
   restore_signal_handlers (saved_handlers);
+
+#endif /* not WIN32_NATIVE */
+
 }
 
 #endif /* !defined (SIGTSTP) && !defined (USG_JOBCTRL) */
@@ -760,23 +759,36 @@ sys_suspend_process (int process)
 
 
 /* Given FD, obtain pty buffer size. When no luck, a good guess is made,
-   so that the function works even fd is not a pty. */
+   so that the function works even when fd is not a pty. */
 
 int
 get_pty_max_bytes (int fd)
 {
-  int pty_max_bytes;
-
+  /* DEC OSF 4.0 fpathconf returns 255, but xemacs hangs on long shell
+     input lines if we return 253.  252 is OK!.  So let's leave a bit
+     of slack for the newline that xemacs will insert, and for those
+     inevitable vendor off-by-one-or-two-or-three bugs. */
+#define MAX_CANON_SLACK 10
+#define SAFE_MAX_CANON (127 - MAX_CANON_SLACK)
 #if defined (HAVE_FPATHCONF) && defined (_PC_MAX_CANON)
-  pty_max_bytes = fpathconf (fd, _PC_MAX_CANON);
-  if (pty_max_bytes < 0)
+  {
+    int max_canon = fpathconf (fd, _PC_MAX_CANON);
+#ifdef __hpux__
+    /* HP-UX 10.20 fpathconf returns 768, but this results in
+       truncated input lines, while 255 works. */
+    if (max_canon > 255) max_canon = 255;
 #endif
-    pty_max_bytes = 250;
-
-  /* Deduct one, to leave space for the eof.  */
-  pty_max_bytes--;
-
-  return pty_max_bytes;
+    return (max_canon < 0 ? SAFE_MAX_CANON :
+	    max_canon > SAFE_MAX_CANON ? max_canon - MAX_CANON_SLACK :
+	    max_canon);
+  }
+#elif defined (_POSIX_MAX_CANON)
+  return (_POSIX_MAX_CANON > SAFE_MAX_CANON ?
+	  _POSIX_MAX_CANON - MAX_CANON_SLACK :
+	  _POSIX_MAX_CANON);
+#else
+  return SAFE_MAX_CANON;
+#endif
 }
 
 /* Figure out the eof character for the FD. */
@@ -784,7 +796,7 @@ get_pty_max_bytes (int fd)
 Bufbyte
 get_eof_char (int fd)
 {
-  CONST Bufbyte ctrl_d = (Bufbyte) '\004';
+  const Bufbyte ctrl_d = (Bufbyte) '\004';
 
   if (!isatty (fd))
     return ctrl_d;
@@ -794,7 +806,7 @@ get_eof_char (int fd)
     tcgetattr (fd, &t);
 #if 0
     /* What is the following line designed to do??? -mrb */
-    if (strlen ((CONST char *) t.c_cc) < (unsigned int) (VEOF + 1))
+    if (strlen ((const char *) t.c_cc) < (unsigned int) (VEOF + 1))
       return ctrl_d;
     else
       return (Bufbyte) t.c_cc[VEOF];
@@ -817,7 +829,7 @@ get_eof_char (int fd)
   {
     struct termio t;
     ioctl (fd, TCGETA, &t);
-    if (strlen ((CONST char *) t.c_cc) < (unsigned int) (VINTR + 1))
+    if (strlen ((const char *) t.c_cc) < (unsigned int) (VINTR + 1))
       return ctrl_d;
     else
       return (Bufbyte) t.c_cc[VINTR];
@@ -872,7 +884,7 @@ set_window_size (int fd, int height, int width)
 void
 setup_pty (int fd)
 {
-  /* I'm told that TOICREMOTE does not mean control chars
+  /* I'm told that TIOCREMOTE does not mean control chars
      "can't be sent" but rather that they don't have
      input-editing or signaling effects.
      That should be good, because we have other ways
@@ -951,7 +963,7 @@ init_baud_rate (struct device *d)
   assert (DEVICE_TTY_P (d));
   {
     int input_fd = CONSOLE_TTY_DATA (con)->infd;
-#if defined (WINDOWSNT)
+#if defined (WIN32_NATIVE)
     DEVICE_TTY_DATA (d)->ospeed = 15;
 #elif defined (HAVE_TERMIOS)
     struct termios sg;
@@ -1216,8 +1228,8 @@ unrequest_sigio (void)
 
 #ifdef SIGIO_REQUIRES_SEPARATE_PROCESS_GROUP
 
-static int inherited_pgroup;
-static int inherited_tty_pgroup;
+static pid_t inherited_pgroup;
+static pid_t inherited_tty_pgroup;
 
 #endif
 
@@ -1235,7 +1247,7 @@ munge_tty_process_group (void)
       CONSOLE_LIVE_P (XCONSOLE (Vcontrolling_terminal)))
     {
       int fd = open ("/dev/tty", O_RDWR, 0);
-      int me = getpid ();
+      pid_t me = getpid ();
       EMACS_BLOCK_SIGNAL (SIGTTOU);
       EMACS_SET_TTY_PROCESS_GROUP (fd, &me);
       EMACS_UNBLOCK_SIGNAL (SIGTTOU);
@@ -1377,7 +1389,7 @@ disconnect_controlling_terminal (void)
 /* It's wrong to encase these into #ifdef HAVE_TTY because we need
    them for child TTY processes.  */
 /* However, this does break NT support while we don't do child TTY processes */
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
 
 /* Set *TC to the parameters associated with the terminal FD.
    Return zero if all's well, or -1 if we ran into an error we
@@ -1396,7 +1408,7 @@ emacs_get_tty (int fd, struct emacs_tty *settings)
   if (ioctl (fd, TCGETA, &settings->main) < 0)
     return -1;
 
-#elif !defined (WINDOWSNT)
+#elif !defined (WIN32_NATIVE)
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, TIOCGETP, &settings->main) < 0)
     return -1;
@@ -1470,7 +1482,7 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
   if (ioctl (fd, flushp ? TCSETAF : TCSETAW, &settings->main) < 0)
     return -1;
 
-#elif !defined (WINDOWSNT)
+#elif !defined (WIN32_NATIVE)
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, (flushp) ? TIOCSETP : TIOCSETN, &settings->main) < 0)
     return -1;
@@ -1493,7 +1505,7 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
   return 0;
 }
 
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
 /* ------------------------------------------------------ */
 /*                 Initializing a device                  */
@@ -1653,14 +1665,14 @@ tty_init_sys_modes_on_device (struct device *d)
   tty.main.c_iflag &= ~BRKINT;
 #endif /* AIX */
 #else /* if not HAVE_TERMIO */
-#if !defined (WINDOWSNT)
+#if !defined (WIN32_NATIVE)
   con->tty_erase_char = make_char (tty.main.sg_erase);
   tty.main.sg_flags &= ~(ECHO | CRMOD | XTABS);
   if (TTY_FLAGS (con).meta_key)
     tty.main.sg_flags |= ANYP;
   /* #### should we be using RAW mode here? */
   tty.main.sg_flags |= /* interrupt_input ? RAW : */ CBREAK;
-#endif /* not WINDOWSNT */
+#endif /* not WIN32_NATIVE */
 #endif /* not HAVE_TERMIO */
 
   /* If going to use CBREAK mode, we must request C-g to interrupt
@@ -2143,24 +2155,15 @@ hft_reset (struct console *con)
 
 #if !defined(HAVE_TEXT_START) && !defined(PDUMP)
 
-#ifdef __cplusplus
-  extern "C" int _start (void);
-#else
-  extern int _start (void);
-#endif
+EXTERN_C int _start (void);
 
 char *
 start_of_text (void)
 {
 #ifdef TEXT_START
-  return ((char *) TEXT_START);
+  return (char *) TEXT_START;
 #else
-#ifdef GOULD
-  extern csrt ();
-  return ((char *) csrt);
-#else /* not GOULD */
-  return ((char *) _start);
-#endif /* GOULD */
+  return (char *) _start;
 #endif /* TEXT_START */
 }
 #endif /* !defined(HAVE_TEXT_START) && !defined(PDUMP) */
@@ -2168,7 +2171,7 @@ start_of_text (void)
 /*
  *	Return the address of the start of the data segment prior to
  *	doing an unexec.  After unexec the return value is undefined.
- *	See crt0.c for further information and definition of data_start.
+ *	See ecrt0.c for further information and definition of data_start.
  *
  *	Apparently, on BSD systems this is etext at startup.  On
  *	USG systems (swapping) this is highly mmu dependent and
@@ -2191,7 +2194,7 @@ start_of_text (void)
  *
  */
 
-#ifdef ORDINARY_LINK
+#if defined(ORDINARY_LINK) && !defined(MINGW)
 extern char **environ;
 #endif
 
@@ -2208,7 +2211,7 @@ start_of_data (void)
    * is known to live at or near the start of the system crt0.c, and
    * we don't sweat the handful of bytes that might lose.
    */
-#ifdef HEAP_IN_DATA
+#if defined (HEAP_IN_DATA) && !defined(PDUMP)
   extern char* static_heap_base;
   if (!initialized)
     return static_heap_base;
@@ -2269,15 +2272,10 @@ end_of_data (void)
 
 extern Lisp_Object Vsystem_name;
 
-#ifdef HAVE_SOCKETS
-# include <sys/socket.h>
-# include <netdb.h>
-#endif /* HAVE_SOCKETS */
-
 void
 init_system_name (void)
 {
-#if defined (WINDOWSNT)
+#if defined (WIN32_NATIVE)
   char hostname [MAX_COMPUTERNAME_LENGTH + 1];
   size_t size = sizeof (hostname);
   GetComputerName (hostname, &size);
@@ -2335,7 +2333,7 @@ init_system_name (void)
 #   endif
 	if (hp)
 	  {
-	    CONST char *fqdn = (CONST char *) hp->h_name;
+	    const char *fqdn = (const char *) hp->h_name;
 
 	    if (!strchr (fqdn, '.'))
 	      {
@@ -2495,7 +2493,7 @@ sys_do_signal (int signal_number, signal_handler_t action)
 /* Linux added here by Raymond L. Toy <toy@alydar.crd.ge.com> for XEmacs. */
 /* Irix added here by gparker@sni-usa.com for XEmacs. */
 /* NetBSD added here by James R Grinter <jrg@doc.ic.ac.uk> for XEmacs */
-extern CONST char *sys_errlist[];
+extern const char *sys_errlist[];
 extern int sys_nerr;
 #endif
 
@@ -2505,17 +2503,17 @@ extern int sys_nerr;
 #endif
 
 
-CONST char *
+const char *
 strerror (int errnum)
 {
   if (errnum >= 0 && errnum < sys_nerr)
     return sys_errlist[errnum];
-  return ((CONST char *) GETTEXT ("Unknown error"));
+  return ((const char *) GETTEXT ("Unknown error"));
 }
 
 #endif /* ! HAVE_STRERROR */
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 
 struct errentry {
   unsigned long oscode;  /* Win32 error */
@@ -2612,7 +2610,7 @@ mswindows_set_last_errno (void)
   mswindows_set_errno (GetLastError ());
 }
 
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
 
 /************************************************************************/
@@ -2644,7 +2642,7 @@ mswindows_set_last_errno (void)
 
 #ifdef ENCAPSULATE_OPEN
 int
-sys_open (CONST char *path, int oflag, ...)
+sys_open (const char *path, int oflag, ...)
 {
   int mode;
   va_list ap;
@@ -2653,7 +2651,9 @@ sys_open (CONST char *path, int oflag, ...)
   mode = va_arg (ap, int);
   va_end (ap);
 
-#ifdef WINDOWSNT
+  PATHNAME_CONVERT_OUT (path);
+
+#ifdef WIN32_NATIVE
   /* Make all handles non-inheritable */
   oflag |= _O_NOINHERIT;
 #endif
@@ -2681,7 +2681,7 @@ sys_open (CONST char *path, int oflag, ...)
    is not interrupted by C-g.  However, the worst that can happen is
    the fallback to simple open().  */
 int
-interruptible_open (CONST char *path, int oflag, int mode)
+interruptible_open (const char *path, int oflag, int mode)
 {
   /* This function can GC */
   size_t len = strlen (path);
@@ -2693,7 +2693,7 @@ interruptible_open (CONST char *path, int oflag, int mode)
 
   PATHNAME_CONVERT_OUT (nonreloc);
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   /* Make all handles non-inheritable */
   oflag |= _O_NOINHERIT;
 #endif
@@ -2757,10 +2757,10 @@ sys_read (int fildes, void *buf, size_t nbyte)
 #endif /* ENCAPSULATE_READ */
 
 ssize_t
-sys_write_1 (int fildes, CONST void *buf, size_t nbyte, int allow_quit)
+sys_write_1 (int fildes, const void *buf, size_t nbyte, int allow_quit)
 {
   ssize_t bytes_written = 0;
-  CONST char *b = (CONST char *) buf;
+  const char *b = (const char *) buf;
 
   /* No harm in looping regardless of the INTERRUPTIBLE_IO setting. */
   while (nbyte > 0)
@@ -2786,7 +2786,7 @@ sys_write_1 (int fildes, CONST void *buf, size_t nbyte, int allow_quit)
 
 #ifdef ENCAPSULATE_WRITE
 ssize_t
-sys_write (int fildes, CONST void *buf, size_t nbyte)
+sys_write (int fildes, const void *buf, size_t nbyte)
 {
   return sys_write_1 (fildes, buf, nbyte, 0);
 }
@@ -2804,10 +2804,10 @@ sys_write (int fildes, CONST void *buf, size_t nbyte)
 
 #ifdef ENCAPSULATE_FOPEN
 FILE *
-sys_fopen (CONST char *path, CONST char *type)
+sys_fopen (const char *path, const char *type)
 {
   PATHNAME_CONVERT_OUT (path);
-#if defined (WINDOWSNT)
+#if defined (WIN32_NATIVE)
   {
     int fd;
     int oflag;
@@ -2914,12 +2914,12 @@ sys_fread (void *ptr, size_t size, size_t nitem, FILE *stream)
 
 #ifdef ENCAPSULATE_FWRITE
 size_t
-sys_fwrite (CONST void *ptr, size_t size, size_t nitem, FILE *stream)
+sys_fwrite (const void *ptr, size_t size, size_t nitem, FILE *stream)
 {
 #ifdef INTERRUPTIBLE_IO
   size_t rtnval;
   size_t items_written = 0;
-  CONST char *b = (CONST char *) ptr;
+  const char *b = (const char *) ptr;
 
   while (nitem > 0)
     {
@@ -2947,7 +2947,7 @@ sys_fwrite (CONST void *ptr, size_t size, size_t nitem, FILE *stream)
 
 #ifdef ENCAPSULATE_CHDIR
 int
-sys_chdir (CONST char *path)
+sys_chdir (const char *path)
 {
   PATHNAME_CONVERT_OUT (path);
   return chdir (path);
@@ -2957,10 +2957,10 @@ sys_chdir (CONST char *path)
 
 #ifdef ENCAPSULATE_MKDIR
 int
-sys_mkdir (CONST char *path, mode_t mode)
+sys_mkdir (const char *path, mode_t mode)
 {
   PATHNAME_CONVERT_OUT (path);
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   return mkdir (path);
 #else
   return mkdir (path, mode);
@@ -2971,7 +2971,7 @@ sys_mkdir (CONST char *path, mode_t mode)
 
 #ifdef ENCAPSULATE_OPENDIR
 DIR *
-sys_opendir (CONST char *filename)
+sys_opendir (const char *filename)
 {
   DIR *rtnval;
   PATHNAME_CONVERT_OUT (filename);
@@ -3003,7 +3003,7 @@ sys_readdir (DIR *dirp)
   {
     Extcount external_len;
     int ascii_filename_p = 1;
-    CONST Extbyte * CONST external_name = (CONST Extbyte *) rtnval->d_name;
+    const Extbyte * const external_name = (const Extbyte *) rtnval->d_name;
 
     /* Optimize for the common all-ASCII case, computing len en passant */
     for (external_len = 0; external_name[external_len] ; external_len++)
@@ -3016,7 +3016,7 @@ sys_readdir (DIR *dirp)
 
     { /* Non-ASCII filename */
       static Bufbyte_dynarr *internal_DIRENTRY;
-      CONST Bufbyte *internal_name;
+      const Bufbyte *internal_name;
       Bytecount internal_len;
       if (!internal_DIRENTRY)
         internal_DIRENTRY = Dynarr_new (Bufbyte);
@@ -3056,7 +3056,7 @@ sys_closedir (DIR *dirp)
 
 #ifdef ENCAPSULATE_RMDIR
 int
-sys_rmdir (CONST char *path)
+sys_rmdir (const char *path)
 {
   PATHNAME_CONVERT_OUT (path);
   return rmdir (path);
@@ -3068,7 +3068,7 @@ sys_rmdir (CONST char *path)
 
 #ifdef ENCAPSULATE_ACCESS
 int
-sys_access (CONST char *path, int mode)
+sys_access (const char *path, int mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return access (path, mode);
@@ -3079,7 +3079,7 @@ sys_access (CONST char *path, int mode)
 #ifdef HAVE_EACCESS
 #ifdef ENCAPSULATE_EACCESS
 int
-sys_eaccess (CONST char *path, int mode)
+sys_eaccess (const char *path, int mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return eaccess (path, mode);
@@ -3090,7 +3090,7 @@ sys_eaccess (CONST char *path, int mode)
 
 #ifdef ENCAPSULATE_LSTAT
 int
-sys_lstat (CONST char *path, struct stat *buf)
+sys_lstat (const char *path, struct stat *buf)
 {
   PATHNAME_CONVERT_OUT (path);
   return lstat (path, buf);
@@ -3100,7 +3100,7 @@ sys_lstat (CONST char *path, struct stat *buf)
 
 #ifdef ENCAPSULATE_READLINK
 int
-sys_readlink (CONST char *path, char *buf, size_t bufsiz)
+sys_readlink (const char *path, char *buf, size_t bufsiz)
 {
   PATHNAME_CONVERT_OUT (path);
   /* #### currently we don't do conversions on the incoming data */
@@ -3108,31 +3108,34 @@ sys_readlink (CONST char *path, char *buf, size_t bufsiz)
 }
 #endif /* ENCAPSULATE_READLINK */
 
-
 #ifdef ENCAPSULATE_FSTAT
 int
 sys_fstat (int fd, struct stat *buf)
 {
+#ifdef WIN32_NATIVE
+  return mswindows_fstat (fd, buf);
+#else
   return fstat (fd, buf);
+#endif
 }
 #endif /* ENCAPSULATE_FSTAT */
 
-
-#ifdef ENCAPSULATE_STAT
 int
-sys_stat (CONST char *path, struct stat *buf)
+xemacs_stat (const char *path, struct stat *buf)
 {
   PATHNAME_CONVERT_OUT (path);
+#ifdef WIN32_NATIVE
+  return mswindows_stat (path, buf);
+#else
   return stat (path, buf);
+#endif
 }
-#endif /* ENCAPSULATE_STAT */
-
 
 /****************** file-manipulation calls *****************/
 
 #ifdef ENCAPSULATE_CHMOD
 int
-sys_chmod (CONST char *path, mode_t mode)
+sys_chmod (const char *path, mode_t mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return chmod (path, mode);
@@ -3142,7 +3145,7 @@ sys_chmod (CONST char *path, mode_t mode)
 
 #ifdef ENCAPSULATE_CREAT
 int
-sys_creat (CONST char *path, mode_t mode)
+sys_creat (const char *path, mode_t mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return creat (path, mode);
@@ -3152,7 +3155,7 @@ sys_creat (CONST char *path, mode_t mode)
 
 #ifdef ENCAPSULATE_LINK
 int
-sys_link (CONST char *existing, CONST char *new)
+sys_link (const char *existing, const char *new)
 {
   PATHNAME_CONVERT_OUT (existing);
   PATHNAME_CONVERT_OUT (new);
@@ -3163,18 +3166,18 @@ sys_link (CONST char *existing, CONST char *new)
 
 #ifdef ENCAPSULATE_RENAME
 int
-sys_rename (CONST char *old, CONST char *new)
+sys_rename (const char *old, const char *new)
 {
   PATHNAME_CONVERT_OUT (old);
   PATHNAME_CONVERT_OUT (new);
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
   /* Windows rename fails if NEW exists */
   if (rename (old, new) == 0)
     return 0;
   if (errno != EEXIST)
     return -1;
   unlink (new);
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
   return rename (old, new);
 }
 #endif /* ENCAPSULATE_RENAME */
@@ -3182,7 +3185,7 @@ sys_rename (CONST char *old, CONST char *new)
 
 #ifdef ENCAPSULATE_SYMLINK
 int
-sys_symlink (CONST char *name1, CONST char *name2)
+sys_symlink (const char *name1, const char *name2)
 {
   PATHNAME_CONVERT_OUT (name1);
   PATHNAME_CONVERT_OUT (name2);
@@ -3193,7 +3196,7 @@ sys_symlink (CONST char *name1, CONST char *name2)
 
 #ifdef ENCAPSULATE_UNLINK
 int
-sys_unlink (CONST char *path)
+sys_unlink (const char *path)
 {
   PATHNAME_CONVERT_OUT (path);
   return unlink (path);
@@ -3203,7 +3206,7 @@ sys_unlink (CONST char *path)
 
 #ifdef ENCAPSULATE_EXECVP
 int
-sys_execvp (CONST char *path, char * CONST * argv)
+sys_execvp (const char *path, char * const * argv)
 {
   int i, argc;
   char ** new_argv;
@@ -3231,7 +3234,7 @@ sys_execvp (CONST char *path, char * CONST * argv)
 
 #ifndef HAVE_GETCWD
 char *
-getcwd (char *pathname, int size)
+getcwd (char *pathname, size_t size)
 {
   return getwd (pathname);
 }
@@ -3275,7 +3278,7 @@ getwd (char *pathname)
 
 #ifndef HAVE_RENAME
 int
-rename (CONST char *from, CONST char *to)
+rename (const char *from, const char *to)
 {
   if (access (from, 0) == 0)
     {
@@ -3389,7 +3392,7 @@ static int process_times_available;
 static int
 get_process_times_1 (long *user_ticks, long *system_ticks)
 {
-#if defined (_SC_CLK_TCK) || defined (CLK_TCK) && !defined(WINDOWSNT)
+#if defined (_SC_CLK_TCK) || defined (CLK_TCK) && !defined(WIN32_NATIVE)
   /* We have the POSIX times() function available. */
   struct tms tttt;
   times (&tttt);
@@ -3531,8 +3534,8 @@ get_random (void)
 
 #if !defined (SYS_SIGLIST_DECLARED) && !defined (HAVE_SYS_SIGLIST)
 
-#if defined(WINDOWSNT) || defined(__CYGWIN32__)
-CONST char *sys_siglist[] =
+#if defined(WIN32_NATIVE) || defined(CYGWIN)
+const char *sys_siglist[] =
   {
     "bum signal!!",
     "hangup",
@@ -3565,7 +3568,7 @@ CONST char *sys_siglist[] =
 
 #ifdef USG
 #ifdef AIX
-CONST char *sys_siglist[NSIG + 1] =
+const char *sys_siglist[NSIG + 1] =
   {
     /* AIX has changed the signals a bit */
     DEFER_GETTEXT ("bogus signal"),			/* 0 */
@@ -3605,7 +3608,7 @@ CONST char *sys_siglist[NSIG + 1] =
     0
   };
 #else /* USG, not AIX */
-CONST char *sys_siglist[NSIG + 1] =
+const char *sys_siglist[NSIG + 1] =
   {
     DEFER_GETTEXT ("bogus signal"),			/* 0 */
     DEFER_GETTEXT ("hangup"),				/* 1  SIGHUP */
@@ -3654,7 +3657,7 @@ CONST char *sys_siglist[NSIG + 1] =
 #endif /* not AIX */
 #endif /* USG */
 #ifdef DGUX
-CONST char *sys_siglist[NSIG + 1] =
+const char *sys_siglist[NSIG + 1] =
   {
     DEFER_GETTEXT ("null signal"),			 /*  0 SIGNULL   */
     DEFER_GETTEXT ("hangup"),				 /*  1 SIGHUP    */
@@ -3759,7 +3762,7 @@ closedir (DIR *dirp)  /* stream from opendir */
 #ifdef NONSYSTEM_DIR_LIBRARY
 
 DIR *
-opendir (CONST char *filename)	/* name of directory */
+opendir (const char *filename)	/* name of directory */
 {
   DIR *dirp;		/* -> malloc'ed storage */
   int fd;		/* file descriptor for read */
@@ -3861,13 +3864,13 @@ readdir (DIR *dirp)	/* stream from opendir */
 MKDIR_PROTOTYPE
 #else
 int
-mkdir (CONST char *dpath, int dmode)
+mkdir (const char *dpath, int dmode)
 #endif
 {
   int cpid, status, fd;
   struct stat statbuf;
 
-  if (stat (dpath, &statbuf) == 0)
+  if (stat (dpath, &statbuf) == 0) /* we do want stat() here */
     {
       errno = EEXIST;		/* Stat worked, so it already exists */
       return -1;
@@ -3921,12 +3924,12 @@ mkdir (CONST char *dpath, int dmode)
 
 #ifndef HAVE_RMDIR
 int
-rmdir (CONST char *dpath)
+rmdir (const char *dpath)
 {
   int cpid, status, fd;
   struct stat statbuf;
 
-  if (stat (dpath, &statbuf) != 0)
+  if (stat (dpath, &statbuf) != 0) /* we do want stat() here */
     {
       /* Stat just set errno.  We don't have to */
       return -1;
@@ -3995,59 +3998,3 @@ dlclose (void)
 }
 
 #endif /* USE_DL_STUBS */
-
-
-
-#ifndef HAVE_STRCASECMP
-/*
- * From BSD
- */
-static unsigned char charmap[] = {
-        '\000', '\001', '\002', '\003', '\004', '\005', '\006', '\007',
-        '\010', '\011', '\012', '\013', '\014', '\015', '\016', '\017',
-        '\020', '\021', '\022', '\023', '\024', '\025', '\026', '\027',
-        '\030', '\031', '\032', '\033', '\034', '\035', '\036', '\037',
-        '\040', '\041', '\042', '\043', '\044', '\045', '\046', '\047',
-        '\050', '\051', '\052', '\053', '\054', '\055', '\056', '\057',
-        '\060', '\061', '\062', '\063', '\064', '\065', '\066', '\067',
-        '\070', '\071', '\072', '\073', '\074', '\075', '\076', '\077',
-        '\100', '\141', '\142', '\143', '\144', '\145', '\146', '\147',
-        '\150', '\151', '\152', '\153', '\154', '\155', '\156', '\157',
-        '\160', '\161', '\162', '\163', '\164', '\165', '\166', '\167',
-        '\170', '\171', '\172', '\133', '\134', '\135', '\136', '\137',
-        '\140', '\141', '\142', '\143', '\144', '\145', '\146', '\147',
-        '\150', '\151', '\152', '\153', '\154', '\155', '\156', '\157',
-        '\160', '\161', '\162', '\163', '\164', '\165', '\166', '\167',
-        '\170', '\171', '\172', '\173', '\174', '\175', '\176', '\177',
-        '\200', '\201', '\202', '\203', '\204', '\205', '\206', '\207',
-        '\210', '\211', '\212', '\213', '\214', '\215', '\216', '\217',
-        '\220', '\221', '\222', '\223', '\224', '\225', '\226', '\227',
-        '\230', '\231', '\232', '\233', '\234', '\235', '\236', '\237',
-        '\240', '\241', '\242', '\243', '\244', '\245', '\246', '\247',
-        '\250', '\251', '\252', '\253', '\254', '\255', '\256', '\257',
-        '\260', '\261', '\262', '\263', '\264', '\265', '\266', '\267',
-        '\270', '\271', '\272', '\273', '\274', '\275', '\276', '\277',
-        '\300', '\301', '\302', '\303', '\304', '\305', '\306', '\307',
-        '\310', '\311', '\312', '\313', '\314', '\315', '\316', '\317',
-        '\320', '\321', '\322', '\323', '\324', '\325', '\326', '\327',
-        '\330', '\331', '\332', '\333', '\334', '\335', '\336', '\337',
-        '\340', '\341', '\342', '\343', '\344', '\345', '\346', '\347',
-        '\350', '\351', '\352', '\353', '\354', '\355', '\356', '\357',
-        '\360', '\361', '\362', '\363', '\364', '\365', '\366', '\367',
-        '\370', '\371', '\372', '\373', '\374', '\375', '\376', '\377',
-};
-
-int
-strcasecmp (char *s1, char *s2)
-{
-  unsigned char *cm = charmap;
-  unsigned char *us1 = (unsigned char *) s1;
-  unsigned char *us2 = (unsigned char *)s2;
-
-  while (cm[*us1] == cm[*us2++])
-    if (*us1++ == '\0')
-      return (0);
-
-  return (cm[*us1] - cm[*--us2]);
-}
-#endif /* !HAVE_STRCASECMP */

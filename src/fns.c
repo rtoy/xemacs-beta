@@ -36,10 +36,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "lisp.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <errno.h>
+#include "sysfile.h"
 
 #include "buffer.h"
 #include "bytecode.h"
@@ -111,17 +108,25 @@ bit_vector_hash (Lisp_Object obj, int depth)
 			     sizeof (long)));
 }
 
+static size_t
+size_bit_vector (const void *lheader)
+{
+  Lisp_Bit_Vector *v = (Lisp_Bit_Vector *) lheader;
+  return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector, bits,
+				       BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)));
+}
+
 static const struct lrecord_description bit_vector_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Bit_Vector, next) },
   { XD_END }
 };
 
 
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bit-vector", bit_vector,
-				     mark_bit_vector, print_bit_vector, 0,
-				     bit_vector_equal, bit_vector_hash,
-				     bit_vector_description,
-				     Lisp_Bit_Vector);
+DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
+					      mark_bit_vector, print_bit_vector, 0,
+					      bit_vector_equal, bit_vector_hash,
+					      bit_vector_description, size_bit_vector,
+					      Lisp_Bit_Vector);
 
 DEFUN ("identity", Fidentity, 1, 1, 0, /*
 Return the argument unchanged.
@@ -196,7 +201,7 @@ length_with_bytecode_hack (Lisp_Object seq)
 #endif /* LOSING_BYTECODE */
 
 void
-check_losing_bytecode (CONST char *function, Lisp_Object seq)
+check_losing_bytecode (const char *function, Lisp_Object seq)
 {
   if (COMPILED_FUNCTIONP (seq))
     error_with_frob
@@ -705,6 +710,7 @@ concat (int nargs, Lisp_Object *args,
 	string_result_ptr = string_result;
         break;
       default:
+	val = Qnil;
         abort ();
       }
   }
@@ -913,85 +919,82 @@ Relevant parts of the string-extent-data are copied in the new string.
 }
 
 DEFUN ("subseq", Fsubseq, 2, 3, 0, /*
-Return a subsequence of SEQ, starting at index FROM and ending before TO.
-TO may be nil or omitted; then the subsequence runs to the end of SEQ.
-If FROM or TO is negative, it counts from the end.
-The resulting subsequence is always the same type as the original
- sequence.
-If SEQ is a string, relevant parts of the string-extent-data are copied
- to the new string.
+Return the subsequence of SEQUENCE starting at START and ending before END.
+END may be omitted; then the subsequence runs to the end of SEQUENCE.
+If START or END is negative, it counts from the end.
+The returned subsequence is always of the same type as SEQUENCE.
+If SEQUENCE is a string, relevant parts of the string-extent-data
+are copied to the new string.
 */
-       (seq, from, to))
+       (sequence, start, end))
 {
-  EMACS_INT len, f, t;
+  EMACS_INT len, s, e;
 
-  if (STRINGP (seq))
-    return Fsubstring (seq, from, to);
+  if (STRINGP (sequence))
+    return Fsubstring (sequence, start, end);
 
-  if (!LISTP (seq) && !VECTORP (seq) && !BIT_VECTORP (seq))
-    {
-      check_losing_bytecode ("subseq", seq);
-      seq = wrong_type_argument (Qsequencep, seq);
-    }
+  len = XINT (Flength (sequence));
 
-  len = XINT (Flength (seq));
+  CHECK_INT (start);
+  s = XINT (start);
+  if (s < 0)
+    s = len + s;
 
-  CHECK_INT (from);
-  f = XINT (from);
-  if (f < 0)
-    f = len + f;
-
-  if (NILP (to))
-    t = len;
+  if (NILP (end))
+    e = len;
   else
     {
-      CHECK_INT (to);
-      t = XINT (to);
-      if (t < 0)
-	t = len + t;
+      CHECK_INT (end);
+      e = XINT (end);
+      if (e < 0)
+	e = len + e;
     }
 
-  if (!(0 <= f && f <= t && t <= len))
-    args_out_of_range_3 (seq, make_int (f), make_int (t));
+  if (!(0 <= s && s <= e && e <= len))
+    args_out_of_range_3 (sequence, make_int (s), make_int (e));
 
-  if (VECTORP (seq))
+  if (VECTORP (sequence))
     {
-      Lisp_Object result = make_vector (t - f, Qnil);
+      Lisp_Object result = make_vector (e - s, Qnil);
       EMACS_INT i;
-      Lisp_Object *in_elts  = XVECTOR_DATA (seq);
+      Lisp_Object *in_elts  = XVECTOR_DATA (sequence);
       Lisp_Object *out_elts = XVECTOR_DATA (result);
 
-      for (i = f; i < t; i++)
-	out_elts[i - f] = in_elts[i];
+      for (i = s; i < e; i++)
+	out_elts[i - s] = in_elts[i];
       return result;
     }
-
-  if (LISTP (seq))
+  else if (LISTP (sequence))
     {
       Lisp_Object result = Qnil;
       EMACS_INT i;
 
-      seq = Fnthcdr (make_int (f), seq);
+      sequence = Fnthcdr (make_int (s), sequence);
 
-      for (i = f; i < t; i++)
+      for (i = s; i < e; i++)
 	{
-	  result = Fcons (Fcar (seq), result);
-	  seq = Fcdr (seq);
+	  result = Fcons (Fcar (sequence), result);
+	  sequence = Fcdr (sequence);
 	}
 
       return Fnreverse (result);
     }
+  else if (BIT_VECTORP (sequence))
+    {
+      Lisp_Object result = make_bit_vector (e - s, Qzero);
+      EMACS_INT i;
 
-  /* bit vector */
-  {
-    Lisp_Object result = make_bit_vector (t - f, Qzero);
-    EMACS_INT i;
-
-    for (i = f; i < t; i++)
-      set_bit_vector_bit (XBIT_VECTOR (result), i - f,
-			  bit_vector_bit (XBIT_VECTOR (seq), i));
-    return result;
-  }
+      for (i = s; i < e; i++)
+	set_bit_vector_bit (XBIT_VECTOR (result), i - s,
+			    bit_vector_bit (XBIT_VECTOR (sequence), i));
+      return result;
+    }
+  else
+    {
+      abort (); /* unreachable, since Flength (sequence) did not get
+                   an error */
+      return Qnil;
+    }
 }
 
 
@@ -1217,7 +1220,6 @@ The value is actually the tail of LIST whose car is ELT.
 */
        (elt, list))
 {
-  Lisp_Object list_elt, tail;
   EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
     {
       if (internal_equal (elt, list_elt, 0))
@@ -1234,7 +1236,6 @@ Do not use it.
 */
        (elt, list))
 {
-  Lisp_Object list_elt, tail;
   EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
     {
       if (internal_old_equal (elt, list_elt, 0))
@@ -1249,7 +1250,6 @@ The value is actually the tail of LIST whose car is ELT.
 */
        (elt, list))
 {
-  Lisp_Object list_elt, tail;
   EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
     {
       if (EQ_WITH_EBOLA_NOTICE (elt, list_elt))
@@ -1266,7 +1266,6 @@ Do not use it.
 */
        (elt, list))
 {
-  Lisp_Object list_elt, tail;
   EXTERNAL_LIST_LOOP_3 (list_elt, list, tail)
     {
       if (HACKEQ_UNSAFE (elt, list_elt))
@@ -1278,7 +1277,6 @@ Do not use it.
 Lisp_Object
 memq_no_quit (Lisp_Object elt, Lisp_Object list)
 {
-  Lisp_Object list_elt, tail;
   LIST_LOOP_3 (list_elt, list, tail)
     {
       if (EQ_WITH_EBOLA_NOTICE (elt, list_elt))
@@ -1294,7 +1292,6 @@ The value is actually the element of LIST whose car equals KEY.
        (key, list))
 {
   /* This function can GC. */
-  Lisp_Object elt, elt_car, elt_cdr;
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, list)
     {
       if (internal_equal (key, elt_car, 0))
@@ -1310,7 +1307,6 @@ The value is actually the element of LIST whose car equals KEY.
        (key, list))
 {
   /* This function can GC. */
-  Lisp_Object elt, elt_car, elt_cdr;
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, list)
     {
       if (internal_old_equal (key, elt_car, 0))
@@ -1334,7 +1330,6 @@ Elements of LIST that are not conses are ignored.
 */
        (key, list))
 {
-  Lisp_Object elt, elt_car, elt_cdr;
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, list)
     {
       if (EQ_WITH_EBOLA_NOTICE (key, elt_car))
@@ -1352,7 +1347,6 @@ Do not use it.
 */
        (key, list))
 {
-  Lisp_Object elt, elt_car, elt_cdr;
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, list)
     {
       if (HACKEQ_UNSAFE (key, elt_car))
@@ -1368,7 +1362,6 @@ Lisp_Object
 assq_no_quit (Lisp_Object key, Lisp_Object list)
 {
   /* This cannot GC. */
-  Lisp_Object elt;
   LIST_LOOP_2 (elt, list)
     {
       Lisp_Object elt_car = XCAR (elt);
@@ -1384,7 +1377,6 @@ The value is actually the element of LIST whose cdr equals KEY.
 */
        (key, list))
 {
-  Lisp_Object elt, elt_car, elt_cdr;
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, list)
     {
       if (internal_equal (key, elt_cdr, 0))
@@ -1399,7 +1391,6 @@ The value is actually the element of LIST whose cdr equals KEY.
 */
        (key, list))
 {
-  Lisp_Object elt, elt_car, elt_cdr;
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, list)
     {
       if (internal_old_equal (key, elt_cdr, 0))
@@ -1414,7 +1405,6 @@ The value is actually the element of LIST whose cdr is KEY.
 */
        (key, list))
 {
-  Lisp_Object elt, elt_car, elt_cdr;
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, list)
     {
       if (EQ_WITH_EBOLA_NOTICE (key, elt_cdr))
@@ -1429,7 +1419,6 @@ The value is actually the element of LIST whose cdr is KEY.
 */
        (key, list))
 {
-  Lisp_Object elt, elt_car, elt_cdr;
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, list)
     {
       if (HACKEQ_UNSAFE (key, elt_cdr))
@@ -1443,7 +1432,6 @@ The value is actually the element of LIST whose cdr is KEY.
 Lisp_Object
 rassq_no_quit (Lisp_Object key, Lisp_Object list)
 {
-  Lisp_Object elt;
   LIST_LOOP_2 (elt, list)
     {
       Lisp_Object elt_cdr = XCDR (elt);
@@ -1464,7 +1452,6 @@ Also see: `remove'.
 */
        (elt, list))
 {
-  Lisp_Object list_elt;
   EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
 				(internal_equal (elt, list_elt, 0)));
   return list;
@@ -1479,7 +1466,6 @@ of changing the value of `foo'.
 */
        (elt, list))
 {
-  Lisp_Object list_elt;
   EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
 				(internal_old_equal (elt, list_elt, 0)));
   return list;
@@ -1494,7 +1480,6 @@ changing the value of `foo'.
 */
        (elt, list))
 {
-  Lisp_Object list_elt;
   EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
 				(EQ_WITH_EBOLA_NOTICE (elt, list_elt)));
   return list;
@@ -1509,7 +1494,6 @@ changing the value of `foo'.
 */
        (elt, list))
 {
-  Lisp_Object list_elt;
   EXTERNAL_LIST_LOOP_DELETE_IF (list_elt, list,
 				(HACKEQ_UNSAFE (elt, list_elt)));
   return list;
@@ -1521,7 +1505,6 @@ changing the value of `foo'.
 Lisp_Object
 delq_no_quit (Lisp_Object elt, Lisp_Object list)
 {
-  Lisp_Object list_elt;
   LIST_LOOP_DELETE_IF (list_elt, list,
 		       (EQ_WITH_EBOLA_NOTICE (elt, list_elt)));
   return list;
@@ -1571,7 +1554,6 @@ the value of `foo'.
 */
        (key, list))
 {
-  Lisp_Object elt;
   EXTERNAL_LIST_LOOP_DELETE_IF (elt, list,
 				(CONSP (elt) &&
 				 internal_equal (key, XCAR (elt), 0)));
@@ -1595,7 +1577,6 @@ the value of `foo'.
 */
        (key, list))
 {
-  Lisp_Object elt;
   EXTERNAL_LIST_LOOP_DELETE_IF (elt, list,
 				(CONSP (elt) &&
 				 EQ_WITH_EBOLA_NOTICE (key, XCAR (elt))));
@@ -1607,7 +1588,6 @@ the value of `foo'.
 Lisp_Object
 remassq_no_quit (Lisp_Object key, Lisp_Object list)
 {
-  Lisp_Object elt;
   LIST_LOOP_DELETE_IF (elt, list,
 		       (CONSP (elt) &&
 			EQ_WITH_EBOLA_NOTICE (key, XCAR (elt))));
@@ -1623,7 +1603,6 @@ the value of `foo'.
 */
        (value, list))
 {
-  Lisp_Object elt;
   EXTERNAL_LIST_LOOP_DELETE_IF (elt, list,
 				(CONSP (elt) &&
 				 internal_equal (value, XCDR (elt), 0)));
@@ -1639,7 +1618,6 @@ the value of `foo'.
 */
        (value, list))
 {
-  Lisp_Object elt;
   EXTERNAL_LIST_LOOP_DELETE_IF (elt, list,
 				(CONSP (elt) &&
 				 EQ_WITH_EBOLA_NOTICE (value, XCDR (elt))));
@@ -1650,7 +1628,6 @@ the value of `foo'.
 Lisp_Object
 remrassq_no_quit (Lisp_Object value, Lisp_Object list)
 {
-  Lisp_Object elt;
   LIST_LOOP_DELETE_IF (elt, list,
 		       (CONSP (elt) &&
 			EQ_WITH_EBOLA_NOTICE (value, XCDR (elt))));
@@ -1690,7 +1667,6 @@ See also the function `nreverse', which is used more often.
        (list))
 {
   Lisp_Object reversed_list = Qnil;
-  Lisp_Object elt;
   EXTERNAL_LIST_LOOP_2 (elt, list)
     {
       reversed_list = Fcons (elt, reversed_list);
@@ -2092,8 +2068,6 @@ static Lisp_Object
 bad_bad_turtle (Lisp_Object *plist, Lisp_Object *badplace, Error_behavior errb)
 {
   if (ERRB_EQ (errb, ERROR_ME))
-    /* #### Eek, this will probably result in another error
-       when PLIST is printed out */
     return Fsignal (Qcircular_property_list, list1 (*plist));
   else
     {
@@ -2368,8 +2342,7 @@ This means that it's a malformed or circular plist.
 DEFUN ("valid-plist-p", Fvalid_plist_p, 1, 1, 0, /*
 Given a plist, return non-nil if its format is correct.
 If it returns nil, `check-valid-plist' will signal an error when given
-the plist; that means it's a malformed or circular plist or has non-symbols
-as keywords.
+the plist; that means it's a malformed or circular plist.
 */
        (plist))
 {
@@ -2446,9 +2419,7 @@ properties on the list.
        (lax_plist, prop, default_))
 {
   Lisp_Object val = external_plist_get (&lax_plist, prop, 1, ERROR_ME);
-  if (UNBOUNDP (val))
-    return default_;
-  return val;
+  return UNBOUNDP (val) ? default_ : val;
 }
 
 DEFUN ("lax-plist-put", Flax_plist_put, 3, 3, 0, /*
@@ -2568,222 +2539,87 @@ See also `alist-to-plist'.
   return head;
 }
 
-/* Symbol plists are directly accessible, so we need to protect against
-   invalid property list structure */
-
-static Lisp_Object
-symbol_getprop (Lisp_Object sym, Lisp_Object propname, Lisp_Object default_)
-{
-  Lisp_Object val = external_plist_get (&XSYMBOL (sym)->plist, propname,
-					0, ERROR_ME);
-  return UNBOUNDP (val) ? default_ : val;
-}
-
-static void
-symbol_putprop (Lisp_Object sym, Lisp_Object propname, Lisp_Object value)
-{
-  external_plist_put (&XSYMBOL (sym)->plist, propname, value, 0, ERROR_ME);
-}
-
-static int
-symbol_remprop (Lisp_Object symbol, Lisp_Object propname)
-{
-  return external_remprop (&XSYMBOL (symbol)->plist, propname, 0, ERROR_ME);
-}
-
-/* We store the string's extent info as the first element of the string's
-   property list; and the string's MODIFF as the first or second element
-   of the string's property list (depending on whether the extent info
-   is present), but only if the string has been modified.  This is ugly
-   but it reduces the memory allocated for the string in the vast
-   majority of cases, where the string is never modified and has no
-   extent info. */
-
-
-static Lisp_Object *
-string_plist_ptr (Lisp_String *s)
-{
-  Lisp_Object *ptr = &s->plist;
-
-  if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
-    ptr = &XCDR (*ptr);
-  if (CONSP (*ptr) && INTP (XCAR (*ptr)))
-    ptr = &XCDR (*ptr);
-  return ptr;
-}
-
-static Lisp_Object
-string_getprop (Lisp_String *s, Lisp_Object property,
-		Lisp_Object default_)
-{
-  Lisp_Object val = external_plist_get (string_plist_ptr (s), property, 0,
-					ERROR_ME);
-  return UNBOUNDP (val) ? default_ : val;
-}
-
-static void
-string_putprop (Lisp_String *s, Lisp_Object property,
-		Lisp_Object value)
-{
-  external_plist_put (string_plist_ptr (s), property, value, 0, ERROR_ME);
-}
-
-static int
-string_remprop (Lisp_String *s, Lisp_Object property)
-{
-  return external_remprop (string_plist_ptr (s), property, 0, ERROR_ME);
-}
-
-static Lisp_Object
-string_plist (Lisp_String *s)
-{
-  return *string_plist_ptr (s);
-}
-
 DEFUN ("get", Fget, 2, 3, 0, /*
-Return the value of OBJECT's PROPNAME property.
-This is the last VALUE stored with `(put OBJECT PROPNAME VALUE)'.
+Return the value of OBJECT's PROPERTY property.
+This is the last VALUE stored with `(put OBJECT PROPERTY VALUE)'.
 If there is no such property, return optional third arg DEFAULT
-\(which defaults to `nil').  OBJECT can be a symbol, face, extent,
-or string.  See also `put', `remprop', and `object-plist'.
+\(which defaults to `nil').  OBJECT can be a symbol, string, extent,
+face, or glyph.  See also `put', `remprop', and `object-plist'.
 */
-       (object, propname, default_))
+       (object, property, default_))
 {
   /* Various places in emacs call Fget() and expect it not to quit,
      so don't quit. */
+  Lisp_Object val;
 
-  /* It's easiest to treat symbols specially because they may not
-     be an lrecord */
-  if (SYMBOLP (object))
-    return symbol_getprop (object, propname, default_);
-  else if (STRINGP (object))
-    return string_getprop (XSTRING (object), propname, default_);
-  else if (LRECORDP (object))
-    {
-      CONST struct lrecord_implementation *imp
-	= XRECORD_LHEADER_IMPLEMENTATION (object);
-      if (!imp->getprop)
-	goto noprops;
-
-      {
-	Lisp_Object val = (imp->getprop) (object, propname);
-	if (UNBOUNDP (val))
-	  val = default_;
-	return val;
-      }
-    }
+  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->getprop)
+    val = XRECORD_LHEADER_IMPLEMENTATION (object)->getprop (object, property);
   else
-    {
-    noprops:
-      signal_simple_error ("Object type has no properties", object);
-      return Qnil;		/* Not reached */
-    }
+    signal_simple_error ("Object type has no properties", object);
+
+  return UNBOUNDP (val) ? default_ : val;
 }
 
 DEFUN ("put", Fput, 3, 3, 0, /*
-Store OBJECT's PROPNAME property with value VALUE.
-It can be retrieved with `(get OBJECT PROPNAME)'.  OBJECT can be a
-symbol, face, extent, or string.
-
+Set OBJECT's PROPERTY to VALUE.
+It can be subsequently retrieved with `(get OBJECT PROPERTY)'.
+OBJECT can be a symbol, face, extent, or string.
 For a string, no properties currently have predefined meanings.
 For the predefined properties for extents, see `set-extent-property'.
 For the predefined properties for faces, see `set-face-property'.
-
 See also `get', `remprop', and `object-plist'.
 */
-       (object, propname, value))
+       (object, property, value))
 {
-  CHECK_SYMBOL (propname);
   CHECK_LISP_WRITEABLE (object);
 
-  if (SYMBOLP (object))
-    symbol_putprop (object, propname, value);
-  else if (STRINGP (object))
-    string_putprop (XSTRING (object), propname, value);
-  else if (LRECORDP (object))
+  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->putprop)
     {
-      CONST struct lrecord_implementation
-	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
-      if (imp->putprop)
-	{
-	  if (! (imp->putprop) (object, propname, value))
-	    signal_simple_error ("Can't set property on object", propname);
-	}
-      else
-	goto noprops;
+      if (! XRECORD_LHEADER_IMPLEMENTATION (object)->putprop
+	  (object, property, value))
+	signal_simple_error ("Can't set property on object", property);
     }
   else
-    {
-    noprops:
-      signal_simple_error ("Object type has no settable properties", object);
-    }
+    signal_simple_error ("Object type has no settable properties", object);
 
   return value;
 }
 
 DEFUN ("remprop", Fremprop, 2, 2, 0, /*
-Remove from OBJECT's property list the property PROPNAME and its
-value.  OBJECT can be a symbol, face, extent, or string.  Returns
-non-nil if the property list was actually changed (i.e. if PROPNAME
-was present in the property list).  See also `get', `put', and
-`object-plist'.
+Remove, from OBJECT's property list, PROPERTY and its corresponding value.
+OBJECT can be a symbol, string, extent, face, or glyph.  Return non-nil
+if the property list was actually modified (i.e. if PROPERTY was present
+in the property list).  See also `get', `put', and `object-plist'.
 */
-       (object, propname))
+       (object, property))
 {
-  int retval = 0;
+  int ret = 0;
 
-  CHECK_SYMBOL (propname);
   CHECK_LISP_WRITEABLE (object);
 
-  if (SYMBOLP (object))
-    retval = symbol_remprop (object, propname);
-  else if (STRINGP (object))
-    retval = string_remprop (XSTRING (object), propname);
-  else if (LRECORDP (object))
+  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->remprop)
     {
-      CONST struct lrecord_implementation
-	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
-      if (imp->remprop)
-	{
-	  retval = (imp->remprop) (object, propname);
-	  if (retval == -1)
-	    signal_simple_error ("Can't remove property from object",
-				 propname);
-	}
-      else
-	goto noprops;
+      ret = XRECORD_LHEADER_IMPLEMENTATION (object)->remprop (object, property);
+      if (ret == -1)
+	signal_simple_error ("Can't remove property from object", property);
     }
   else
-    {
-    noprops:
-      signal_simple_error ("Object type has no removable properties", object);
-    }
+    signal_simple_error ("Object type has no removable properties", object);
 
-  return retval ? Qt : Qnil;
+  return ret ? Qt : Qnil;
 }
 
 DEFUN ("object-plist", Fobject_plist, 1, 1, 0, /*
-Return a property list of OBJECT's props.
-For a symbol this is equivalent to `symbol-plist'.
-Do not modify the property list directly; this may or may not have
-the desired effects. (In particular, for a property with a special
-interpretation, this will probably have no effect at all.)
+Return a property list of OBJECT's properties.
+For a symbol, this is equivalent to `symbol-plist'.
+OBJECT can be a symbol, string, extent, face, or glyph.
+Do not modify the returned property list directly;
+this may or may not have the desired effects.  Use `put' instead.
 */
        (object))
 {
-  if (SYMBOLP (object))
-    return Fsymbol_plist (object);
-  else if (STRINGP (object))
-    return string_plist (XSTRING (object));
-  else if (LRECORDP (object))
-    {
-      CONST struct lrecord_implementation
-	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
-      if (imp->plist)
-	return (imp->plist) (object);
-      else
-	signal_simple_error ("Object type has no properties", object);
-    }
+  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->plist)
+    return XRECORD_LHEADER_IMPLEMENTATION (object)->plist (object);
   else
     signal_simple_error ("Object type has no properties", object);
 
@@ -2804,7 +2640,7 @@ internal_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
     return 0;
   if (LRECORDP (obj1))
     {
-      CONST struct lrecord_implementation
+      const struct lrecord_implementation
 	*imp1 = XRECORD_LHEADER_IMPLEMENTATION (obj1),
 	*imp2 = XRECORD_LHEADER_IMPLEMENTATION (obj2);
 
@@ -3094,12 +2930,11 @@ mapcar1 (size_t leni, Lisp_Object *vals,
 
 	 if (vals == 0) we don't have any free space available and
 	 don't want to eat up any more stack with alloca().
-	 So we use EXTERNAL_LIST_LOOP_3 and GCPRO the tail. */
+	 So we use EXTERNAL_LIST_LOOP_3_NO_DECLARE and GCPRO the tail. */
 
       if (vals)
 	{
 	  Lisp_Object *val = vals;
-	  Lisp_Object elt;
 
 	  LIST_LOOP_2 (elt, sequence)
 	      *val++ = elt;
@@ -3115,12 +2950,13 @@ mapcar1 (size_t leni, Lisp_Object *vals,
       else
 	{
 	  Lisp_Object elt, tail;
+	  EMACS_INT len_unused;
 	  struct gcpro ngcpro1;
 
 	  NGCPRO1 (tail);
 
 	  {
-	    EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
+	    EXTERNAL_LIST_LOOP_4_NO_DECLARE (elt, sequence, tail, len_unused)
 	      {
 		args[1] = elt;
 		Ffuncall (2, args);
@@ -3168,7 +3004,7 @@ mapcar1 (size_t leni, Lisp_Object *vals,
 	}
     }
   else
-    abort(); /* cannot get here since Flength(sequence) did not get an error */
+    abort (); /* unreachable, since Flength (sequence) did not get an error */
 
   if (vals)
     UNGCPRO;
@@ -3185,16 +3021,13 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
   size_t len = XINT (Flength (sequence));
   Lisp_Object *args;
   int i;
-  struct gcpro gcpro1;
   int nargs = len + len - 1;
 
-  if (nargs < 0) return build_string ("");
+  if (len == 0) return build_string ("");
 
   args = alloca_array (Lisp_Object, nargs);
 
-  GCPRO1 (separator);
   mapcar1 (len, args, function, sequence);
-  UNGCPRO;
 
   for (i = len - 1; i >= 0; i--)
     args[i + i] = args[i];
@@ -3255,7 +3088,58 @@ the spiffy Common Lisp arguments.  You should normally use `mapc'.
 }
 
 
+
+
+DEFUN ("replace-list", Freplace_list, 2, 2, 0, /*
+Destructively replace the list OLD with NEW.
+This is like (copy-sequence NEW) except that it reuses the
+conses in OLD as much as possible.  If OLD and NEW are the same
+length, no consing will take place.
+*/
+       (old, new))
+{
+  Lisp_Object tail, oldtail = old, prevoldtail = Qnil;
+
+  EXTERNAL_LIST_LOOP (tail, new)
+    {
+      if (!NILP (oldtail))
+	{
+	  CHECK_CONS (oldtail);
+	  XCAR (oldtail) = XCAR (tail);
+	}
+      else if (!NILP (prevoldtail))
+	{
+	  XCDR (prevoldtail) = Fcons (XCAR (tail), Qnil);
+	  prevoldtail = XCDR (prevoldtail);
+	}
+      else
+	old = oldtail = Fcons (XCAR (tail), Qnil);
+
+      if (!NILP (oldtail))
+	{
+	  prevoldtail = oldtail;
+	  oldtail = XCDR (oldtail);
+	}
+    }
+
+  if (!NILP (prevoldtail))
+    XCDR (prevoldtail) = Qnil;
+  else
+    old = Qnil;
+
+  return old;
+}
+
+
 /* #### this function doesn't belong in this file! */
+
+#ifdef HAVE_GETLOADAVG
+#ifdef HAVE_SYS_LOADAVG_H
+#include <sys/loadavg.h>
+#endif
+#else
+int getloadavg (double loadavg[], int nelem); /* Defined in getloadavg.c */
+#endif
 
 DEFUN ("load-average", Fload_average, 0, 1, 0, /*
 Return list of 1 minute, 5 minute and 15 minute load averages.
@@ -3326,10 +3210,13 @@ Examples:
   (featurep '(or (and xemacs 19.15) (and emacs 19.34)))
     => ; Non-nil on XEmacs 19.15 and later, or FSF Emacs 19.34 and later.
 
+  (featurep '(and xemacs 21.02))
+    => ; Non-nil on XEmacs 21.2 and later.
+
 NOTE: The advanced arguments of this function (anything other than a
 symbol) are not yet supported by FSF Emacs.  If you feel they are useful
 for supporting multiple Emacs variants, lobby Richard Stallman at
-<bug-gnu-emacs@prep.ai.mit.edu>.
+<bug-gnu-emacs@gnu.org>.
 */
        (fexp))
 {
@@ -3859,6 +3746,8 @@ Lisp_Object Qyes_or_no_p;
 void
 syms_of_fns (void)
 {
+  INIT_LRECORD_IMPLEMENTATION (bit_vector);
+
   defsymbol (&Qstring_lessp, "string-lessp");
   defsymbol (&Qidentity, "identity");
   defsymbol (&Qyes_or_no_p, "yes-or-no-p");
@@ -3938,6 +3827,7 @@ syms_of_fns (void)
   DEFSUBR (Fmapvector);
   DEFSUBR (Fmapc_internal);
   DEFSUBR (Fmapconcat);
+  DEFSUBR (Freplace_list);
   DEFSUBR (Fload_average);
   DEFSUBR (Ffeaturep);
   DEFSUBR (Frequire);

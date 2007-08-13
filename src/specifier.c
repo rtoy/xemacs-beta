@@ -41,14 +41,14 @@ Boston, MA 02111-1307, USA.  */
 #include "rangetab.h"
 
 Lisp_Object Qspecifierp;
-Lisp_Object Qprepend, Qappend, Qremove_tag_set_prepend, Qremove_tag_set_append;
-Lisp_Object Qremove_locale, Qremove_locale_type, Qremove_all;
-Lisp_Object Qfallback;
-
-/* Qinteger, Qboolean, Qgeneric defined in general.c. */
-Lisp_Object Qnatnum;
+Lisp_Object Qremove_tag_set_prepend, Qremove_tag_set_append;
+Lisp_Object Qremove_locale, Qremove_locale_type;
 
 Lisp_Object Qconsole_type, Qdevice_class;
+
+Lisp_Object Qspecifier_syntax_error;
+Lisp_Object Qspecifier_argument_error;
+Lisp_Object Qspecifier_change_error;
 
 static Lisp_Object Vuser_defined_tags;
 
@@ -68,7 +68,8 @@ static specifier_type_entry_dynarr *the_specifier_type_entry_dynarr;
 
 static const struct lrecord_description ste_description_1[] = {
   { XD_LISP_OBJECT, offsetof (specifier_type_entry, symbol) },
-  { XD_STRUCT_PTR,  offsetof (specifier_type_entry, meths), 1, &specifier_methods_description },
+  { XD_STRUCT_PTR,  offsetof (specifier_type_entry, meths), 1,
+    &specifier_methods_description },
   { XD_END }
 };
 
@@ -354,13 +355,13 @@ specifier_hash (Lisp_Object obj, int depth)
 }
 
 static size_t
-sizeof_specifier (CONST void *header)
+sizeof_specifier (const void *header)
 {
   if (GHOST_SPECIFIER_P ((Lisp_Specifier *) header))
     return offsetof (Lisp_Specifier, data);
   else
     {
-      CONST Lisp_Specifier *p = (CONST Lisp_Specifier *) header;
+      const Lisp_Specifier *p = (const Lisp_Specifier *) header;
       return offsetof (Lisp_Specifier, data) + p->methods->extra_data_size;
     }
 }
@@ -385,14 +386,16 @@ static const struct struct_description specifier_caching_description = {
 };
 
 static const struct lrecord_description specifier_description[] = {
-  { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, methods), 1, &specifier_methods_description },
+  { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, methods), 1,
+    &specifier_methods_description },
   { XD_LO_LINK,     offsetof (Lisp_Specifier, next_specifier) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, global_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, device_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, frame_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, window_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, buffer_specs) },
-  { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, caching), 1, &specifier_caching_description },
+  { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, caching), 1,
+    &specifier_caching_description },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, magic_parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, fallback) },
   { XD_SPECIFIER_END }
@@ -425,8 +428,8 @@ decode_specifier_type (Lisp_Object type, Error_behavior errb)
 	return Dynarr_at (the_specifier_type_entry_dynarr, i).meths;
     }
 
-  maybe_signal_simple_error ("Invalid specifier type", type,
-			     Qspecifier, errb);
+  maybe_signal_type_error (Qspecifier_argument_error, "Invalid specifier type",
+			   type, Qspecifier, errb);
 
   return 0;
 }
@@ -532,29 +535,52 @@ Return a new specifier object of type TYPE.
 
 A specifier is an object that can be used to keep track of a property
 whose value can be per-buffer, per-window, per-frame, or per-device,
-and can further be restricted to a particular console-type or device-class.
-Specifiers are used, for example, for the various built-in properties of a
-face; this allows a face to have different values in different frames,
-buffers, etc.  For more information, see `specifier-instance',
+and can further be restricted to a particular console-type or
+device-class.  Specifiers are used, for example, for the various
+built-in properties of a face; this allows a face to have different
+values in different frames, buffers, etc.
+
+When speaking of the value of a specifier, it is important to
+distinguish between the *setting* of a specifier, called an
+\"instantiator\", and the *actual value*, called an \"instance\".  You
+put various possible instantiators (i.e. settings) into a specifier
+and associate them with particular locales (buffer, window, frame,
+device, global), and then the instance (i.e. actual value) is
+retrieved in a specific domain (window, frame, device) by looking
+through the possible instantiators (i.e. settings).  This process is
+called \"instantiation\".
+ 
+To put settings into a specifier, use `set-specifier', or the
+lower-level functions `add-spec-to-specifier' and
+`add-spec-list-to-specifier'.  You can also temporarily bind a setting
+to a specifier using `let-specifier'.  To retrieve settings, use
+`specifier-specs', or its lower-level counterpart
+`specifier-spec-list'.  To determine the actual value, use
+`specifier-instance'.
+
+For more information, see `set-specifier', `specifier-instance',
 `specifier-specs', and `add-spec-to-specifier'; or, for a detailed
-description of specifiers, including how they are instantiated over a
-particular domain (i.e. how their value in that domain is determined),
-see the chapter on specifiers in the XEmacs Lisp Reference Manual.
+description of specifiers, including how exactly the instantiation
+process works, see the chapter on specifiers in the XEmacs Lisp
+Reference Manual.
 
 TYPE specifies the particular type of specifier, and should be one of
-the symbols 'generic, 'integer, 'boolean, 'color, 'font, 'image,
-'face-boolean, or 'toolbar.
+the symbols 'generic, 'integer, 'natnum, 'boolean, 'color, 'font,
+'image, 'face-boolean, 'display-table, 'gutter, 'gutter-size,
+'gutter-visible or 'toolbar.
 
-For more information on particular types of specifiers, see the functions
-`generic-specifier-p', `integer-specifier-p', `boolean-specifier-p',
-`color-specifier-p', `font-specifier-p', `image-specifier-p',
-`face-boolean-specifier-p', and `toolbar-specifier-p'.
+For more information on particular types of specifiers, see the
+functions `make-generic-specifier', `make-integer-specifier',
+`make-natnum-specifier', `make-boolean-specifier',
+`make-color-specifier', `make-font-specifier', `make-image-specifier',
+`make-face-boolean-specifier', `make-gutter-size-specifier',
+`make-gutter-visible-specifier', `default-toolbar', `default-gutter',
+and `current-display-table'.
 */
        (type))
 {
   /* This function can GC */
-  struct specifier_methods *meths = decode_specifier_type (type,
-							   ERROR_ME);
+  struct specifier_methods *meths = decode_specifier_type (type, ERROR_ME);
 
   return make_specifier (meths);
 }
@@ -607,19 +633,24 @@ Valid locales are devices, frames, windows, buffers, and 'global.
 DEFUN ("valid-specifier-domain-p", Fvalid_specifier_domain_p, 1, 1, 0, /*
 Return t if DOMAIN is a valid specifier domain.
 A domain is used to instance a specifier (i.e. determine the specifier's
-value in that domain).  Valid domains are windows, frames, and devices.
-\(nil is not valid.)
+value in that domain).  Valid domains are image instances, windows, frames,
+and devices. \(nil is not valid.) image instances are pseudo-domains since
+instantiation will actually occur in the window the image instance itself is
+instantiated in.
 */
      (domain))
 {
   /* This cannot GC. */
   return ((DEVICEP (domain) && DEVICE_LIVE_P (XDEVICE (domain))) ||
 	  (FRAMEP  (domain) && FRAME_LIVE_P  (XFRAME  (domain))) ||
-	  (WINDOWP (domain) && WINDOW_LIVE_P (XWINDOW (domain))))
+	  (WINDOWP (domain) && WINDOW_LIVE_P (XWINDOW (domain))) ||
+	  /* #### get image instances out of domains! */
+	  IMAGE_INSTANCEP (domain))
     ? Qt : Qnil;
 }
 
-DEFUN ("valid-specifier-locale-type-p", Fvalid_specifier_locale_type_p, 1, 1, 0, /*
+DEFUN ("valid-specifier-locale-type-p", Fvalid_specifier_locale_type_p, 1, 1, 0,
+       /*
 Given a specifier LOCALE-TYPE, return non-nil if it is valid.
 Valid locale types are 'global, 'device, 'frame, 'window, and 'buffer.
 \(Note, however, that in functions that accept either a locale or a locale
@@ -643,7 +674,8 @@ check_valid_locale_or_locale_type (Lisp_Object locale)
       !NILP (Fvalid_specifier_locale_p (locale)) ||
       !NILP (Fvalid_specifier_locale_type_p (locale)))
     return;
-  signal_simple_error ("Invalid specifier locale or locale type", locale);
+  signal_type_error (Qspecifier_argument_error,
+		     "Invalid specifier locale or locale type", locale);
 }
 
 DEFUN ("specifier-locale-type-from-locale", Fspecifier_locale_type_from_locale,
@@ -654,7 +686,8 @@ Given a specifier LOCALE, return its type.
 {
   /* This cannot GC. */
   if (NILP (Fvalid_specifier_locale_p (locale)))
-    signal_simple_error ("Invalid specifier locale", locale);
+    signal_type_error (Qspecifier_argument_error, "Invalid specifier locale",
+		       locale);
   if (DEVICEP (locale)) return Qdevice;
   if (FRAMEP  (locale)) return Qframe;
   if (WINDOWP (locale)) return Qwindow;
@@ -672,7 +705,8 @@ decode_locale (Lisp_Object locale)
   else if (!NILP (Fvalid_specifier_locale_p (locale)))
     return locale;
   else
-    signal_simple_error ("Invalid specifier locale", locale);
+    signal_type_error (Qspecifier_argument_error, "Invalid specifier locale",
+		       locale);
 
   return Qnil;
 }
@@ -687,7 +721,8 @@ decode_locale_type (Lisp_Object locale_type)
   if (EQ (locale_type, Qwindow)) return LOCALE_WINDOW;
   if (EQ (locale_type, Qbuffer)) return LOCALE_BUFFER;
 
-  signal_simple_error ("Invalid specifier locale type", locale_type);
+  signal_type_error (Qspecifier_argument_error, "Invalid specifier locale type",
+		     locale_type);
   return LOCALE_GLOBAL; /* not reached */
 }
 
@@ -702,7 +737,6 @@ decode_locale_list (Lisp_Object locale)
     }
   else if (CONSP (locale))
     {
-      Lisp_Object elt;
       EXTERNAL_LIST_LOOP_2 (elt, locale)
 	check_valid_locale_or_locale_type (elt);
       return locale;
@@ -724,10 +758,11 @@ static void
 check_valid_domain (Lisp_Object domain)
 {
   if (NILP (Fvalid_specifier_domain_p (domain)))
-    signal_simple_error ("Invalid specifier domain", domain);
+    signal_type_error (Qspecifier_argument_error, "Invalid specifier domain",
+		       domain);
 }
 
-static Lisp_Object
+Lisp_Object
 decode_domain (Lisp_Object domain)
 {
   if (NILP (domain))
@@ -800,7 +835,8 @@ decode_specifier_tag_set (Lisp_Object tag_set)
   if (!NILP (Fvalid_specifier_tag_p (tag_set)))
     return list1 (tag_set);
   if (NILP (Fvalid_specifier_tag_set_p (tag_set)))
-    signal_simple_error ("Invalid specifier tag-set", tag_set);
+    signal_type_error (Qspecifier_argument_error, "Invalid specifier tag-set",
+		       tag_set);
   return tag_set;
 }
 
@@ -863,7 +899,7 @@ sorting by symbol name and removing duplicates.)
        (tag_set))
 {
   if (NILP (Fvalid_specifier_tag_set_p (tag_set)))
-    signal_simple_error ("Invalid tag set", tag_set);
+    signal_type_error (Qspecifier_argument_error, "Invalid tag set", tag_set);
   return canonicalize_tag_set (tag_set);
 }
 
@@ -893,7 +929,8 @@ device_matches_specifier_tag_set_p (Lisp_Object device, Lisp_Object tag_set)
   return 1;
 }
 
-DEFUN ("device-matches-specifier-tag-set-p", Fdevice_matches_specifier_tag_set_p, 2, 2, 0, /*
+DEFUN ("device-matches-specifier-tag-set-p",
+       Fdevice_matches_specifier_tag_set_p, 2, 2, 0, /*
 Return non-nil if DEVICE matches specifier tag set TAG-SET.
 This means that DEVICE matches each tag in the tag set. (Every
 tag recognized by XEmacs has a predicate associated with it that
@@ -904,7 +941,7 @@ specifies which devices match it.)
   CHECK_LIVE_DEVICE (device);
 
   if (NILP (Fvalid_specifier_tag_set_p (tag_set)))
-    signal_simple_error ("Invalid tag set", tag_set);
+    signal_type_error (Qspecifier_argument_error, "Invalid tag set", tag_set);
 
   return device_matches_specifier_tag_set_p (device, tag_set) ? Qt : Qnil;
 }
@@ -927,12 +964,13 @@ and classes) or the symbols nil, t, 'all, or 'global.
   CHECK_SYMBOL (tag);
   if (valid_device_class_p (tag) ||
       valid_console_type_p (tag))
-    signal_simple_error ("Cannot redefine built-in specifier tags", tag);
+    signal_type_error (Qspecifier_change_error,
+		       "Cannot redefine built-in specifier tags", tag);
   /* Try to prevent common instantiators and locales from being
      redefined, to reduce ambiguity */
   if (NILP (tag) || EQ (tag, Qt) || EQ (tag, Qall) || EQ (tag, Qglobal))
-    signal_simple_error ("Cannot define nil, t, 'all, or 'global",
-			 tag);
+    signal_type_error (Qspecifier_change_error, "Cannot define nil, t, 'all, or 'global",
+		       tag);
   assoc = assq_no_quit (tag, Vuser_defined_tags);
   if (NILP (assoc))
     {
@@ -1005,7 +1043,8 @@ setup_device_initial_specifier_tags (struct device *d)
     }
 }
 
-DEFUN ("device-matching-specifier-tag-list", Fdevice_matching_specifier_tag_list,
+DEFUN ("device-matching-specifier-tag-list",
+       Fdevice_matching_specifier_tag_list,
        0, 1, 0, /*
 Return a list of all specifier tags matching DEVICE.
 DEVICE defaults to the selected device if omitted.
@@ -1061,7 +1100,8 @@ Return the predicate for the given specifier tag.
   CHECK_SYMBOL (tag);
 
   if (NILP (Fvalid_specifier_tag_p (tag)))
-    signal_simple_error ("Invalid specifier tag", tag);
+    signal_type_error (Qspecifier_argument_error, "Invalid specifier tag",
+		       tag);
 
   /* Make up some predicates for the built-in types */
 
@@ -1188,19 +1228,22 @@ check_valid_inst_list (Lisp_Object inst_list, struct specifier_methods *meths,
 
       if (!CONSP (rest))
 	{
-	  maybe_signal_simple_error ("Invalid instantiator list", inst_list,
+	  maybe_signal_type_error (Qspecifier_syntax_error,
+				   "Invalid instantiator list", inst_list,
 				     Qspecifier, errb);
 	  return Qnil;
 	}
       if (!CONSP (inst_pair = XCAR (rest)))
 	{
-	  maybe_signal_simple_error ("Invalid instantiator pair", inst_pair,
+	  maybe_signal_type_error (Qspecifier_syntax_error,
+				   "Invalid instantiator pair", inst_pair,
 				     Qspecifier, errb);
 	  return Qnil;
 	}
       if (NILP (Fvalid_specifier_tag_set_p (tag_set = XCAR (inst_pair))))
 	{
-	  maybe_signal_simple_error ("Invalid specifier tag", tag_set,
+	  maybe_signal_type_error (Qspecifier_syntax_error,
+				   "Invalid specifier tag", tag_set,
 				     Qspecifier, errb);
 	  return Qnil;
 	}
@@ -1243,13 +1286,15 @@ check_valid_spec_list (Lisp_Object spec_list, struct specifier_methods *meths,
       Lisp_Object spec, locale;
       if (!CONSP (rest) || !CONSP (spec = XCAR (rest)))
 	{
-	  maybe_signal_simple_error ("Invalid specification list", spec_list,
+	  maybe_signal_type_error (Qspecifier_syntax_error,
+				   "Invalid specification list", spec_list,
 				     Qspecifier, errb);
 	  return Qnil;
 	}
       if (NILP (Fvalid_specifier_locale_p (locale = XCAR (spec))))
 	{
-	  maybe_signal_simple_error ("Invalid specifier locale", locale,
+	  maybe_signal_type_error (Qspecifier_syntax_error,
+				   "Invalid specifier locale", locale,
 				     Qspecifier, errb);
 	  return Qnil;
 	}
@@ -1299,7 +1344,8 @@ decode_how_to_add_specification (Lisp_Object how_to_add)
   if (EQ (Qremove_all, how_to_add))
     return SPEC_REMOVE_ALL;
 
-  signal_simple_error ("Invalid `how-to-add' flag", how_to_add);
+  signal_type_error (Qspecifier_argument_error, "Invalid `how-to-add' flag",
+		     how_to_add);
 
   return SPEC_PREPEND;		/* not reached */
 }
@@ -1323,7 +1369,8 @@ check_modifiable_specifier (Lisp_Object spec)
 {
   if (NILP (Vunlock_ghost_specifiers)
       && GHOST_SPECIFIER_P (XSPECIFIER (spec)))
-    signal_simple_error ("Attempt to modify read-only specifier",
+    signal_type_error (Qspecifier_change_error,
+		       "Attempt to modify read-only specifier",
 			 list1 (spec));
 }
 
@@ -1735,7 +1782,10 @@ specifier_add_spec (Lisp_Object specifier, Lisp_Object locale,
   else if (add_meth == SPEC_APPEND)
     tem = nconc2 (*orig_inst_list, list_to_build_up);
   else
-    abort ();
+    {
+      abort ();
+      tem = Qnil;
+    }
 
   *orig_inst_list = tem;
 
@@ -2343,7 +2393,8 @@ check_valid_specifier_matchspec (Lisp_Object matchspec,
     }
 }
 
-DEFUN ("check-valid-specifier-matchspec", Fcheck_valid_specifier_matchspec, 2, 2, 0, /*
+DEFUN ("check-valid-specifier-matchspec", Fcheck_valid_specifier_matchspec, 2,
+       2, 0, /*
 Signal an error if MATCHSPEC is invalid for SPECIFIER-TYPE.
 See `specifier-matching-instance' for a description of matchspecs.
 */
@@ -2433,7 +2484,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
   GCPRO2 (specifier, inst_list);
 
   sp = XSPECIFIER (specifier);
-  device = DFW_DEVICE (domain);
+  device = DOMAIN_DEVICE (domain);
 
   if (no_quit)
   /* The instantiate method is allowed to call eval.  Since it
@@ -2513,16 +2564,20 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
 
   /* Attempt to determine buffer, window, frame, and device from the
      domain. */
-  if (WINDOWP (domain))
+  /* #### get image instances out of domains! */
+  if (IMAGE_INSTANCEP (domain))
+    window = DOMAIN_WINDOW (domain);
+  else if (WINDOWP (domain))
     window = domain;
   else if (FRAMEP (domain))
     frame = domain;
   else if (DEVICEP (domain))
     device = domain;
   else
-    /* #### dmoore - dammit, this should just signal an error or something
-       shouldn't it?
-       #### No. Errors are handled in Lisp primitives implementation.
+    /* dmoore writes: [dammit, this should just signal an error or something
+       shouldn't it?]
+
+       No. Errors are handled in Lisp primitives implementation.
        Invalid domain is a design error here - kkm. */
     abort ();
 
@@ -2727,7 +2782,8 @@ you should not use this function; use `specifier-instance' instead.
   return UNBOUNDP (val) ? default_ : val;
 }
 
-DEFUN ("specifier-matching-instance-from-inst-list", Fspecifier_matching_instance_from_inst_list,
+DEFUN ("specifier-matching-instance-from-inst-list",
+       Fspecifier_matching_instance_from_inst_list,
        4, 5, 0, /*
 Attempt to convert a particular inst-list into an instance.
 This attempts to instantiate INST-LIST in the given DOMAIN
@@ -2816,6 +2872,13 @@ recompute_one_cached_specifier_in_window (Lisp_Object specifier,
      method. */
   location = (Lisp_Object *)
     ((char *) w + XSPECIFIER (specifier)->caching->offset_into_struct_window);
+  /* #### What's the point of this check, other than to optimize image
+     instance instantiation? Unless you specify a caching instantiate
+     method the instantiation that specifier_instance will do will
+     always create a new copy. Thus EQ will always fail. Unfortunately
+     calling equal is no good either as this doesn't take into account
+     things attached to the specifier - for instance strings on
+     extents. --andyp */
   if (!EQ (newval, *location))
     {
       Lisp_Object oldval = *location;
@@ -2950,8 +3013,9 @@ DEFINE_SPECIFIER_TYPE (generic);
 
    What really needs to be done is to write a function
    `make-specifier-type' that creates new specifier types.
-   #### I'll look into this for 19.14.
- */
+
+   #### [I'll look into this for 19.14.]  Well, sometime. (Currently
+   May 2000, 21.2 is in development.  19.14 was released in June 1996.) */
 
 "A generic specifier is a generalized kind of specifier with user-defined\n"
 "semantics.  The instantiator can be any kind of Lisp object, and the\n"
@@ -2988,8 +3052,8 @@ DEFINE_SPECIFIER_TYPE (generic);
 DEFUN ("generic-specifier-p", Fgeneric_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a generic specifier.
 
-A generic specifier allows any kind of Lisp object as an instantiator,
-and returns back the Lisp object unchanged when it is instantiated.
+See `make-generic-specifier' for a description of possible generic
+instantiators.
 */
        (object))
 {
@@ -3011,6 +3075,9 @@ integer_validate (Lisp_Object instantiator)
 
 DEFUN ("integer-specifier-p", Finteger_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is an integer specifier.
+
+See `make-integer-specifier' for a description of possible integer
+instantiators.
 */
        (object))
 {
@@ -3031,6 +3098,9 @@ natnum_validate (Lisp_Object instantiator)
 
 DEFUN ("natnum-specifier-p", Fnatnum_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a natnum (non-negative-integer) specifier.
+
+See `make-natnum-specifier' for a description of possible natnum
+instantiators.
 */
        (object))
 {
@@ -3047,11 +3117,15 @@ static void
 boolean_validate (Lisp_Object instantiator)
 {
   if (!EQ (instantiator, Qt) && !EQ (instantiator, Qnil))
-    signal_simple_error ("Must be t or nil", instantiator);
+    signal_type_error (Qspecifier_argument_error, "Must be t or nil",
+		       instantiator);
 }
 
 DEFUN ("boolean-specifier-p", Fboolean_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a boolean specifier.
+
+See `make-boolean-specifier' for a description of possible boolean
+instantiators.
 */
        (object))
 {
@@ -3064,11 +3138,11 @@ Return non-nil if OBJECT is a boolean specifier.
 
 DEFINE_SPECIFIER_TYPE (display_table);
 
-#define VALID_SINGLE_DISPTABLE_INSTANTIATOR_P(instantiator)			\
-  (VECTORP (instantiator)							\
-   || (CHAR_TABLEP (instantiator)						\
-       && (XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_CHAR		\
-	   || XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_GENERIC))	\
+#define VALID_SINGLE_DISPTABLE_INSTANTIATOR_P(instantiator)		   \
+  (VECTORP (instantiator)						   \
+   || (CHAR_TABLEP (instantiator)					   \
+       && (XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_CHAR	   \
+	   || XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_GENERIC)) \
    || RANGE_TABLEP (instantiator))
 
 static void
@@ -3092,7 +3166,8 @@ display_table_validate (Lisp_Object instantiator)
       if (!VALID_SINGLE_DISPTABLE_INSTANTIATOR_P (instantiator))
 	{
 	lose:
-	  dead_wrong_type_argument (display_table_specifier_methods->predicate_symbol,
+	  dead_wrong_type_argument
+	    (display_table_specifier_methods->predicate_symbol,
 				    instantiator);
 	}
     }
@@ -3100,6 +3175,9 @@ display_table_validate (Lisp_Object instantiator)
 
 DEFUN ("display-table-specifier-p", Fdisplay_table_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a display-table specifier.
+
+See `current-display-table' for a description of possible display-table
+instantiators.
 */
        (object))
 {
@@ -3114,13 +3192,14 @@ Return non-nil if OBJECT is a display-table specifier.
 void
 syms_of_specifier (void)
 {
-  defsymbol (&Qspecifierp, "specifierp");
+  INIT_LRECORD_IMPLEMENTATION (specifier);
 
-  defsymbol (&Qconsole_type, "console-type");
-  defsymbol (&Qdevice_class, "device-class");
+  DEFSYMBOL (Qspecifierp);
 
-  /* Qinteger, Qboolean, Qgeneric defined in general.c */
-  defsymbol (&Qnatnum, "natnum");
+  DEFSYMBOL (Qconsole_type);
+  DEFSYMBOL (Qdevice_class);
+
+  /* specifier types defined in general.c. */
 
   DEFSUBR (Fvalid_specifier_type_p);
   DEFSUBR (Fspecifier_type_list);
@@ -3175,15 +3254,15 @@ syms_of_specifier (void)
 
   /* locales are defined in general.c. */
 
-  defsymbol (&Qprepend, "prepend");
-  defsymbol (&Qappend, "append");
-  defsymbol (&Qremove_tag_set_prepend, "remove-tag-set-prepend");
-  defsymbol (&Qremove_tag_set_append, "remove-tag-set-append");
-  defsymbol (&Qremove_locale, "remove-locale");
-  defsymbol (&Qremove_locale_type, "remove-locale-type");
-  defsymbol (&Qremove_all, "remove-all");
+  /* some how-to-add flags in general.c. */
+  DEFSYMBOL (Qremove_tag_set_prepend);
+  DEFSYMBOL (Qremove_tag_set_append);
+  DEFSYMBOL (Qremove_locale);
+  DEFSYMBOL (Qremove_locale_type);
 
-  defsymbol (&Qfallback, "fallback");
+  DEFERROR_STANDARD (Qspecifier_syntax_error, Qsyntax_error);
+  DEFERROR_STANDARD (Qspecifier_argument_error, Qinvalid_argument);
+  DEFERROR_STANDARD (Qspecifier_change_error, Qinvalid_change);
 }
 
 void
@@ -3209,7 +3288,8 @@ specifier_type_create (void)
 
   SPECIFIER_HAS_METHOD (boolean, validate);
 
-  INITIALIZE_SPECIFIER_TYPE (display_table, "display-table", "display-table-p");
+  INITIALIZE_SPECIFIER_TYPE (display_table, "display-table",
+			     "display-table-p");
 
   SPECIFIER_HAS_METHOD (display_table, validate);
 }

@@ -56,8 +56,6 @@ by Hallvard:
 #include "opaque.h"
 #include "syntax.h"
 
-#include <limits.h>
-
 EXFUN (Ffetch_bytecode, 1);
 
 Lisp_Object Qbyte_code, Qcompiled_functionp, Qinvalid_byte_code;
@@ -216,10 +214,10 @@ typedef unsigned char Opbyte;
 static void invalid_byte_code_error (char *error_message, ...);
 
 Lisp_Object * execute_rare_opcode (Lisp_Object *stack_ptr,
-				   CONST Opbyte *program_ptr,
+				   const Opbyte *program_ptr,
 				   Opcode opcode);
 
-static Lisp_Object execute_optimized_program (CONST Opbyte *program,
+static Lisp_Object execute_optimized_program (const Opbyte *program,
 					      int stack_depth,
 					      Lisp_Object *constants_data);
 
@@ -473,7 +471,6 @@ Lisp_Object
 funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
 {
   /* This function can GC */
-  Lisp_Object symbol, tail;
   int speccount = specpdl_depth();
   REGISTER int i = 0;
   Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (fun);
@@ -488,24 +485,26 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
      and local variables of fun.   So just reserve it once. */
   SPECPDL_RESERVE (f->specpdl_depth);
 
-  /* Fmake_byte_code() guaranteed that f->arglist is a valid list
-     containing only non-constant symbols. */
-  LIST_LOOP_3 (symbol, f->arglist, tail)
-    {
-      if (EQ (symbol, Qand_rest))
-	{
-	  tail = XCDR (tail);
-	  symbol  = XCAR (tail);
-	  SPECBIND_FAST_UNSAFE (symbol, Flist (nargs - i, &args[i]));
-	  goto run_code;
-	}
-      else if (EQ (symbol, Qand_optional))
-	optional = 1;
-      else if (i == nargs && !optional)
-	goto wrong_number_of_arguments;
-      else
-	SPECBIND_FAST_UNSAFE (symbol, i < nargs ? args[i++] : Qnil);
-    }
+  {
+    /* Fmake_byte_code() guaranteed that f->arglist is a valid list
+       containing only non-constant symbols. */
+    LIST_LOOP_3 (symbol, f->arglist, tail)
+      {
+	if (EQ (symbol, Qand_rest))
+	  {
+	    tail = XCDR (tail);
+	    symbol  = XCAR (tail);
+	    SPECBIND_FAST_UNSAFE (symbol, Flist (nargs - i, &args[i]));
+	    goto run_code;
+	  }
+	else if (EQ (symbol, Qand_optional))
+	  optional = 1;
+	else if (i == nargs && !optional)
+	  goto wrong_number_of_arguments;
+	else
+	  SPECBIND_FAST_UNSAFE (symbol, i < nargs ? args[i++] : Qnil);
+      }
+  }
 
   if (i < nargs)
     goto wrong_number_of_arguments;
@@ -596,12 +595,12 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
 
 
 static Lisp_Object
-execute_optimized_program (CONST Opbyte *program,
+execute_optimized_program (const Opbyte *program,
 			   int stack_depth,
 			   Lisp_Object *constants_data)
 {
   /* This function can GC */
-  REGISTER CONST Opbyte *program_ptr = (Opbyte *) program;
+  REGISTER const Opbyte *program_ptr = (Opbyte *) program;
   REGISTER Lisp_Object *stack_ptr
     = alloca_array (Lisp_Object, stack_depth + 1);
   int speccount = specpdl_depth ();
@@ -1221,7 +1220,7 @@ execute_optimized_program (CONST Opbyte *program,
    Don't make this function static, since then the compiler might inline it. */
 Lisp_Object *
 execute_rare_opcode (Lisp_Object *stack_ptr,
-		     CONST Opbyte *program_ptr,
+		     const Opbyte *program_ptr,
 		     Opcode opcode)
 {
   switch (opcode)
@@ -1491,7 +1490,7 @@ invalid_byte_code_error (char *error_message, ...)
 
   sprintf (buf, "%s", error_message);
   va_start (args, error_message);
-  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (buf), Qnil, -1,
+  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (buf), Qnil, -1,
 				args);
   va_end (args);
 
@@ -1607,14 +1606,14 @@ optimize_byte_code (/* in */
 		    Lisp_Object instructions,
 		    Lisp_Object constants,
 		    /* out */
-		    Opbyte * CONST program,
-		    int * CONST program_length,
-		    int * CONST varbind_count)
+		    Opbyte * const program,
+		    int * const program_length,
+		    int * const varbind_count)
 {
   size_t instructions_length = XSTRING_LENGTH (instructions);
   size_t comfy_size = 2 * instructions_length;
 
-  int * CONST icounts = alloca_array (int, comfy_size);
+  int * const icounts = alloca_array (int, comfy_size);
   int * icounts_ptr = icounts;
 
   /* We maintain a table of jumps in the source code. */
@@ -1623,13 +1622,13 @@ optimize_byte_code (/* in */
     int from;
     int to;
   };
-  struct jump * CONST jumps = alloca_array (struct jump, comfy_size);
+  struct jump * const jumps = alloca_array (struct jump, comfy_size);
   struct jump *jumps_ptr = jumps;
 
   Opbyte *program_ptr = program;
 
-  CONST Bufbyte *ptr = XSTRING_DATA (instructions);
-  CONST Bufbyte * CONST end = ptr + instructions_length;
+  const Bufbyte *ptr = XSTRING_DATA (instructions);
+  const Bufbyte * const end = ptr + instructions_length;
 
   *varbind_count = 0;
 
@@ -2069,13 +2068,13 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
     /* Invert action performed by optimize_byte_code() */
     Lisp_Opaque *opaque = XOPAQUE (f->instructions);
 
-    Bufbyte * CONST buffer =
+    Bufbyte * const buffer =
       alloca_array (Bufbyte, OPAQUE_SIZE (opaque) * MAX_EMCHAR_LEN);
     Bufbyte *bp = buffer;
 
-    CONST Opbyte * CONST program = (CONST Opbyte *) OPAQUE_DATA (opaque);
-    CONST Opbyte *program_ptr = program;
-    CONST Opbyte * CONST program_end = program_ptr + OPAQUE_SIZE (opaque);
+    const Opbyte * const program = (const Opbyte *) OPAQUE_DATA (opaque);
+    const Opbyte *program_ptr = program;
+    const Opbyte * const program_end = program_ptr + OPAQUE_SIZE (opaque);
 
     while (program_ptr < program_end)
       {
@@ -2410,8 +2409,9 @@ If STACK-DEPTH is incorrect, Emacs may crash.
 void
 syms_of_bytecode (void)
 {
-  deferror (&Qinvalid_byte_code, "invalid-byte-code",
-	    "Invalid byte code", Qerror);
+  INIT_LRECORD_IMPLEMENTATION (compiled_function);
+
+  DEFERROR_STANDARD (Qinvalid_byte_code, Qinvalid_state);
   defsymbol (&Qbyte_code, "byte-code");
   defsymbol (&Qcompiled_functionp, "compiled-function-p");
 

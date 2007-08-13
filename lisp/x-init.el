@@ -55,7 +55,7 @@
 
 (defun x-activate-region-as-selection ()
   (if (marker-buffer (mark-marker t))
-      (x-own-selection (cons (point-marker t) (mark-marker t)))))
+      (own-selection (cons (point-marker t) (mark-marker t)))))
 
 ;; OpenWindows-like "find" processing.  These functions are really Sunisms,
 ;; but we put them here instead of in x-win-sun.el in case someone wants
@@ -68,8 +68,8 @@
 (defun ow-find (&optional backward-p)
   "Search forward the next occurrence of the text of the selection."
   (interactive)
-  (let ((sel (condition-case () (x-get-selection) (error nil)))
-	(clip (condition-case () (x-get-clipboard) (error nil)))
+  (let ((sel  (ignore-errors (get-selection)))
+	(clip (ignore-errors (get-clipboard)))
 	text)
     (setq text (cond
 		(sel)
@@ -305,13 +305,13 @@
         (init-x-toolbar))
     (if (and (featurep 'infodock) (featurep 'toolbar))
 	(require 'id-x-toolbar))
-    (if (featurep 'mule)
-        (init-mule-x-win))
+    (if (featurep 'gutter) (init-gutter))
+    (if (featurep 'mule) (init-mule-x-win))
     ;; these are only ever called if zmacs-regions is true.
     (add-hook 'zmacs-deactivate-region-hook
 	      (lambda ()
 		(when (console-on-window-system-p)
-		  (x-disown-selection))))
+		  (disown-selection))))
     (add-hook 'zmacs-activate-region-hook
 	      (lambda ()
 		(when (console-on-window-system-p)

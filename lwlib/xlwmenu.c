@@ -51,7 +51,7 @@ Boston, MA 02111-1307, USA.  */
 #include <dmalloc.h>
 #endif
 
-/* simple, naieve integer maximum */
+/* simple, naive integer maximum */
 #ifndef max
 #define max(a,b) ((a)>(b)?(a):(b))
 #endif
@@ -88,6 +88,8 @@ xlwMenuResources[] =
   {XtNfont,  XtCFont, XtRFontStruct, sizeof(XFontStruct *),
      offset(menu.font), XtRString, (XtPointer) "XtDefaultFont"},
 # ifdef USE_XFONTSET
+  /* #### Consider using the same method as for Motif; see the comment in
+     XlwMenuInitialize(). */
   {XtNfontSet,  XtCFontSet, XtRFontSet, sizeof(XFontSet),
      offset(menu.font_set), XtRString, (XtPointer) "XtDefaultFontSet"},
 # endif
@@ -457,7 +459,7 @@ string_width_u (XlwMenuWidget mw,
 }
 
 static void
-massage_resource_name (CONST char *in, char *out)
+massage_resource_name (const char *in, char *out)
 {
   /* Turn a random string into something suitable for using as a resource.
      For example:
@@ -479,16 +481,26 @@ massage_resource_name (CONST char *in, char *out)
   Boolean firstp = True;
   while (*in)
     {
-      char ch = massaged_resource_char[(unsigned char) *in++];
-      if (ch)
+      if (*in == '%' && *(in + 1) == '_')
+	in += 2;
+      else
 	{
-	  int int_ch = (int) (unsigned char) ch;
-	  *out++ = firstp ? tolower (int_ch) : toupper (int_ch);
-	  firstp = False;
-	  while ((ch = massaged_resource_char[(unsigned char) *in++]) != '\0')
-	    *out++ = ch;
-	  if (!*(in-1))		/* Overshot the NULL byte? */
-	    break;
+	  char ch;
+
+	  if (*in == '%' && *(in + 1) == '%')
+	    in++;
+	  ch = massaged_resource_char[(unsigned char) *in++];
+	  if (ch)
+	    {
+	      int int_ch = (int) (unsigned char) ch;
+	      *out++ = firstp ? tolower (int_ch) : toupper (int_ch);
+	      firstp = False;
+	      while ((ch = massaged_resource_char[(unsigned char) *in++])
+		     != '\0')
+		*out++ = ch;
+	      if (!*(in-1))		/* Overshot the NULL byte? */
+		break;
+	    }
 	}
     }
   *out = 0;
@@ -506,23 +518,21 @@ nameResource[] =
     0, XtRImmediate, 0 }
 };
 
-/*
- *    This function looks through string searching for parameter
- *    inserts of the form:
- *    %[padding]1
- *    padding is space (' ') or dash ('-') characters meaning
- *    padding to the left or right of the inserted parameter.
- *    In essence all %1 strings are replaced by value in the return
- *    value (which the caller is expected to free).
- *    %% means insert one % (like printf).
- *    %1 means insert value.
- *    %-1 means insert value followed by one space. The latter is
- *    not inserted if value is a zero length string.
- */
+/* This function searches STRING for parameter inserts of the form:
+       %[padding]1
+   padding is either space (' ') or dash ('-') meaning
+   padding to the left or right of the inserted parameter.
+   In essence, all %1 strings are replaced by VALUE in the return value.
+   The caller is expected to free the return value using XtFree().
+   %% means insert one % (like printf).
+   %1 means insert VALUE.
+   %-1 means insert VALUE followed by one space. The latter is
+   not inserted if VALUE is a zero length string.
+*/
 static char*
-parameterize_string (CONST char *string, CONST char *value)
+parameterize_string (const char *string, const char *value)
 {
-  char *percent;
+  const char *percent;
   char *result;
   unsigned int done = 0;
   unsigned int ntimes;
@@ -531,24 +541,25 @@ parameterize_string (CONST char *string, CONST char *value)
     {
       result = XtMalloc(1);
       result[0] = '\0';
-      return (result);
+      return result;
     }
 
   if (!value)
     value = "";
 
-  for (ntimes = 1, result = (char *) string; (percent = strchr(result, '%'));
+  for (ntimes = 1, percent = string;
+       (percent = strchr (percent, '%'));
        ntimes++)
-    result = &percent[1];
+    percent++;
 
   result = XtMalloc ((ntimes * strlen(value)) + strlen(string) + 4);
   result[0] = '\0';
 
-  while ((percent = strchr(string, '%')))
+  while ((percent = strchr (string, '%')))
     {
       unsigned int left_pad;
       unsigned int right_pad;
-      char *p;
+      const char *p;
 
       if (percent[1] == '%')
 	{	/* it's a real % */
@@ -679,7 +690,7 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
 
 /* Unused */
 #if 0
-/* These two routines should be a seperate file..djw */
+/* These two routines should be a separate file..djw */
 static char *
 xlw_create_localized_string (Widget w,
 			     char *name,
@@ -1510,7 +1521,7 @@ menu_item_type (widget_value *val)
   else
     return TEXT_TYPE;
 #else
-  else 
+  else
     abort();
   return UNSPECIFIED_TYPE; /* Not reached */
 #endif
@@ -1873,7 +1884,7 @@ radio_button_draw (XlwMenuWidget mw,
 
 static struct _shadow_names
 {
-  CONST char *      name;
+  const char *      name;
   shadow_type type;
 } shadow_names[] =
 {
@@ -2482,7 +2493,7 @@ remap_menubar (XlwMenuWidget mw)
 
   mw->menu.old_depth = new_depth;
 
-  /* refresh the last seletion */
+  /* refresh the last selection */
   selection_position.x = 0;
   selection_position.y = 0;
   display_menu (mw, last_same, new_selection == old_selection,
@@ -2809,30 +2820,22 @@ make_shadow_gcs (XlwMenuWidget mw)
   xgcv.foreground = mw->menu.top_shadow_color;
   xgcv.background = mw->core.background_pixel;
 /*  xgcv.stipple = mw->menu.top_shadow_pixmap; gtb */
-#ifdef NEED_MOTIF
   if (mw->menu.top_shadow_pixmap &&
       mw->menu.top_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
      xgcv.stipple = mw->menu.top_shadow_pixmap;
   else
      xgcv.stipple = 0;
-#else
-  xgcv.stipple = mw->menu.top_shadow_pixmap;
-#endif /* NEED_MOTIF */
   pm = (xgcv.stipple ? GCStipple|GCFillStyle : 0);
   mw->menu.shadow_top_gc =
     XtGetGC((Widget)mw, GCForeground|GCBackground|pm, &xgcv);
 
   xgcv.foreground = mw->menu.bottom_shadow_color;
 /*  xgcv.stipple = mw->menu.bottom_shadow_pixmap; gtb */
-#ifdef NEED_MOTIF
   if (mw->menu.bottom_shadow_pixmap &&
       mw->menu.bottom_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
      xgcv.stipple = mw->menu.bottom_shadow_pixmap;
   else
      xgcv.stipple = 0;
-#else
-  xgcv.stipple = mw->menu.bottom_shadow_pixmap;
-#endif /* NEED_MOTIF */
   pm = (xgcv.stipple ? GCStipple|GCFillStyle : 0);
   mw->menu.shadow_bottom_gc =
     XtGetGC ((Widget)mw, GCForeground|GCBackground|pm, &xgcv);
@@ -3016,10 +3019,12 @@ XlwMenuInitialize (Widget request, Widget new, ArgList args,
 				 gray_width, gray_height, 1, 0, 1);
 
 #ifdef NEED_MOTIF
+  /* #### Even if it's a kludge!!!, we should consider doing the same for
+     X Font Sets. */
   /* The menu.font_list slot came from the *fontList resource (Motif standard.)
      The menu.font_list_2 slot came from the *font resource, for backward
      compatibility with older versions of this code, and consistency with the
-     rest of emacs.  If both font and fontList are specified, we use font.
+     rest of emacs.  If both font and fontList are specified, we use fontList.
      If only one is specified, we use that.  If neither are specified, we
      use the "fallback" value.  What a kludge!!!
 

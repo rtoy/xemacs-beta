@@ -4,14 +4,16 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 #include <io.h>
 #include <fcntl.h>
 #endif
 
 #if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 #endif
 
@@ -142,12 +144,12 @@ main (int argc, char *argv[])
 	{
 	  char buf[18];
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	  _setmode (_fileno (stdout), O_BINARY);
 #endif
 	  for (;;)
 	    {
-	      register int i, c, d;
+	      register int i, c = 0, d;
 
 #define hexchar(x) (isdigit (x) ? x - '0' : x - 'a' + 10)
 
@@ -185,7 +187,7 @@ main (int argc, char *argv[])
 	}
       else
 	{
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 	  _setmode (_fileno (fp), O_BINARY);
 #endif
 	  address = 0;
@@ -193,7 +195,7 @@ main (int argc, char *argv[])
 	  string[17] = '\0';
 	  for (;;)
 	    {
-	      register int i, c;
+	      register int i, c = 0;
 
 	      for (i=0; i < 16; ++i)
 		{
@@ -242,8 +244,8 @@ main (int argc, char *argv[])
 }
 
 void
-usage ()
+usage (void)
 {
-  (void) fprintf (stderr, "usage: %s [-de] [-iso]\n", progname);
+  fprintf (stderr, "Usage: %s [-de] [-iso]\n", progname);
   exit (1);
 }

@@ -17,13 +17,14 @@ XEmacs is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
-
 You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
+
+/* 7-8-00 This file is more or less Mule-ized in my Mule workspace. */
 
 /* Original author: Jamie Zawinski for 19.8
    font-truename stuff added by Jamie Zawinski for 19.10
@@ -98,7 +99,6 @@ DECLARE_IMAGE_INSTANTIATOR_FORMAT (nothing);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (string);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (formatted_string);
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (inherit);
-DECLARE_IMAGE_INSTANTIATOR_FORMAT (layout);
 #ifdef HAVE_JPEG
 DECLARE_IMAGE_INSTANTIATOR_FORMAT (jpeg);
 #endif
@@ -128,7 +128,9 @@ DEFINE_IMAGE_INSTANTIATOR_FORMAT (font);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (autodetect);
 
 #ifdef HAVE_WIDGETS
+DECLARE_IMAGE_INSTANTIATOR_FORMAT (layout);
 DEFINE_DEVICE_IIFORMAT (x, widget);
+DEFINE_DEVICE_IIFORMAT (x, native_layout);
 DEFINE_DEVICE_IIFORMAT (x, button);
 DEFINE_DEVICE_IIFORMAT (x, progress_gauge);
 DEFINE_DEVICE_IIFORMAT (x, edit_field);
@@ -264,7 +266,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 	      gr = *ip++;
 	      bl = *ip++;
 	      conv.val = pixarray[QUANT_GET_COLOR(qtable,rd,gr,bl)];
-#if WORDS_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
 	      if (outimg->byte_order == MSBFirst)
 		for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
 	      else
@@ -339,7 +341,7 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 		bl = *ip++ >> (8 - bbits);
 
 	      conv.val = (rd << rshift) | (gr << gshift) | (bl << bshift);
-#if WORDS_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
 	      if (outimg->byte_order == MSBFirst)
 		for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
 	      else
@@ -394,11 +396,14 @@ x_finalize_image_instance (Lisp_Image_Instance *p)
   if (!p->data)
     return;
 
-  if (DEVICE_LIVE_P (XDEVICE (p->device)))
+  if (DEVICE_LIVE_P (XDEVICE (IMAGE_INSTANCE_DEVICE (p))))
     {
-      Display *dpy = DEVICE_X_DISPLAY (XDEVICE (p->device));
-
-      if (IMAGE_INSTANCE_TYPE (p) == IMAGE_WIDGET)
+      Display *dpy = DEVICE_X_DISPLAY
+	(XDEVICE (IMAGE_INSTANCE_DEVICE (p)));
+      if (0)
+	;
+#ifdef HAVE_WIDGETS
+      else if (IMAGE_INSTANCE_TYPE (p) == IMAGE_WIDGET)
 	{
 	  if (IMAGE_INSTANCE_SUBWINDOW_ID (p))
 	    {
@@ -408,9 +413,15 @@ x_finalize_image_instance (Lisp_Image_Instance *p)
 #endif
 	      lw_destroy_widget (IMAGE_INSTANCE_X_WIDGET_ID (p));
 	      lw_destroy_widget (IMAGE_INSTANCE_X_CLIPWIDGET (p));
-	      IMAGE_INSTANCE_SUBWINDOW_ID (p) = 0;
+
+	      /* We can release the callbacks again. */
+	      ungcpro_popup_callbacks (IMAGE_INSTANCE_X_WIDGET_LWID (p));
+
+	      IMAGE_INSTANCE_X_WIDGET_ID (p) = 0;
+	      IMAGE_INSTANCE_X_CLIPWIDGET (p) = 0;
 	    }
 	}
+#endif
       else if (IMAGE_INSTANCE_TYPE (p) == IMAGE_SUBWINDOW)
 	{
 	  if (IMAGE_INSTANCE_SUBWINDOW_ID (p))
@@ -975,7 +986,7 @@ x_init_image_instance_from_eimage (Lisp_Image_Instance *ii,
     }
 }
 
-int read_bitmap_data_from_file (CONST char *filename, unsigned int *width,
+int read_bitmap_data_from_file (const char *filename, unsigned int *width,
 				unsigned int *height, unsigned char **datap,
 				int *x_hot, int *y_hot)
 {
@@ -989,7 +1000,7 @@ int read_bitmap_data_from_file (CONST char *filename, unsigned int *width,
 static Pixmap
 pixmap_from_xbm_inline (Lisp_Object device, int width, int height,
 			/* Note that data is in ext-format! */
-			CONST Extbyte *bits)
+			const Extbyte *bits)
 {
   return XCreatePixmapFromBitmapData (DEVICE_X_DISPLAY (XDEVICE(device)),
 				      XtWindow (DEVICE_XT_APP_SHELL (XDEVICE (device))),
@@ -1004,7 +1015,7 @@ static void
 init_image_instance_from_xbm_inline (Lisp_Image_Instance *ii,
 				     int width, int height,
 				     /* Note that data is in ext-format! */
-				     CONST char *bits,
+				     const char *bits,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
@@ -1142,7 +1153,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		   int dest_mask, int width, int height,
 		   /* Note that data is in ext-format! */
-		   CONST char *bits)
+		   const char *bits)
 {
   Lisp_Object mask_data = find_keyword_in_vector (instantiator, Q_mask_data);
   Lisp_Object mask_file = find_keyword_in_vector (instantiator, Q_mask_file);
@@ -1151,15 +1162,13 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 
   if (!NILP (mask_data))
     {
-      CONST char *ext_data;
+      const char *ext_data;
 
-      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (XCDR (XCDR (mask_data))),
-			  C_STRING_ALLOCA, ext_data,
-			  Qbinary);
+      LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (mask_data))), ext_data, Qbinary);
       mask = pixmap_from_xbm_inline (IMAGE_INSTANCE_DEVICE (ii),
 				     XINT (XCAR (mask_data)),
 				     XINT (XCAR (XCDR (mask_data))),
-				     (CONST unsigned char *) ext_data);
+				     (const unsigned char *) ext_data);
     }
 
   init_image_instance_from_xbm_inline (ii, width, height, bits,
@@ -1175,13 +1184,11 @@ x_xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		   int dest_mask, Lisp_Object domain)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-  CONST char *ext_data;
+  const char *ext_data;
 
   assert (!NILP (data));
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (XCDR (XCDR (data))),
-		      C_STRING_ALLOCA, ext_data,
-		      Qbinary);
+  LISP_STRING_TO_EXTERNAL (XCAR (XCDR (XCDR (data))), ext_data, Qbinary);
 
   xbm_instantiate_1 (image_instance, instantiator, pointer_fg,
 		     pointer_bg, dest_mask, XINT (XCAR (data)),
@@ -1660,15 +1667,14 @@ x_xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
-  char *p, *bits, *bp;
-  CONST char * volatile emsg = 0;
-  CONST char * volatile dstring;
+  char *bits, *bp;
+  const char *p;
+  const char * volatile emsg = 0;
+  const char * volatile dstring;
 
   assert (!NILP (data));
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, data,
-		      C_STRING_ALLOCA, dstring,
-		      Qbinary);
+  LISP_STRING_TO_EXTERNAL (data, dstring, Qbinary);
 
   if ((p = strchr (dstring, ':')))
     {
@@ -1732,7 +1738,8 @@ autodetect_validate (Lisp_Object instantiator)
 
 static Lisp_Object
 autodetect_normalize (Lisp_Object instantiator,
-		      Lisp_Object console_type)
+		      Lisp_Object console_type,
+		      Lisp_Object dest_mask)
 {
   Lisp_Object file = find_keyword_in_vector (instantiator, Q_data);
   Lisp_Object filename = Qnil;
@@ -1839,10 +1846,8 @@ autodetect_instantiate (Lisp_Object image_instance,
   alist = tagged_vector_to_alist (instantiator);
   if (dest_mask & IMAGE_POINTER_MASK)
     {
-      CONST char *name_ext;
-      TO_EXTERNAL_FORMAT (LISP_STRING, data,
-			  C_STRING_ALLOCA, name_ext,
-			  Qfile_name);
+      const char *name_ext;
+      LISP_STRING_TO_EXTERNAL (data, name_ext, Qfile_name);
       if (XmuCursorNameToIndex (name_ext) != -1)
         {
           result = alist_to_tagged_vector (Qcursor_font, alist);
@@ -2031,7 +2036,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Display *dpy;
   int i;
-  CONST char *name_ext;
+  const char *name_ext;
   Lisp_Object foreground, background;
 
   if (!DEVICE_X_P (XDEVICE (device)))
@@ -2042,9 +2047,7 @@ cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   if (!(dest_mask & IMAGE_POINTER_MASK))
     incompatible_image_types (instantiator, dest_mask, IMAGE_POINTER_MASK);
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, data,
-		      C_STRING_ALLOCA, name_ext,
-		      Qfile_name);
+  LISP_STRING_TO_EXTERNAL (data, name_ext, Qfile_name);
   if ((i = XmuCursorNameToIndex (name_ext)) == -1)
     signal_simple_error ("Unrecognized cursor-font name", data);
 
@@ -2144,8 +2147,9 @@ x_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 			 x, y, dga->width, dga->height);
       XMoveWindow (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
 		   subwindow, -dga->xoffset, -dga->yoffset);
-      XMapWindow (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
-		  IMAGE_INSTANCE_X_CLIPWINDOW (p));
+      if (!IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (p))
+	XMapWindow (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
+		    IMAGE_INSTANCE_X_CLIPWINDOW (p));
     }
   else				/* must be a widget */
     {
@@ -2155,36 +2159,109 @@ x_map_subwindow (Lisp_Image_Instance *p, int x, int y,
 			 dga->width, dga->height, 0);
       XtMoveWidget (IMAGE_INSTANCE_X_WIDGET_ID (p),
 		    -dga->xoffset, -dga->yoffset);
-      XtMapWidget (IMAGE_INSTANCE_X_CLIPWIDGET (p));
+      if (!IMAGE_INSTANCE_SUBWINDOW_DISPLAYEDP (p))
+	XtMapWidget (IMAGE_INSTANCE_X_CLIPWIDGET (p));
     }
 }
 
 /* when you click on a widget you may activate another widget this
    needs to be checked and all appropriate widgets updated */
 static void
-x_update_subwindow (Lisp_Image_Instance *p)
+x_redisplay_subwindow (Lisp_Image_Instance *p)
 {
-#ifdef HAVE_WIDGETS
-  if (IMAGE_INSTANCE_TYPE (p) == IMAGE_WIDGET)
+  /* Update the subwindow size if necessary. */
+  if (IMAGE_INSTANCE_SIZE_CHANGED (p))
     {
-      widget_value* wv = gui_items_to_widget_values
-	(IMAGE_INSTANCE_WIDGET_ITEMS (p));
-
-      /* This seems ugly, but I'm not sure what else to do. */
-      if (EQ (IMAGE_INSTANCE_WIDGET_TYPE (p), Qtab_control))
-	{
-	  update_tab_widget_face (wv, p,
-				  IMAGE_INSTANCE_SUBWINDOW_FRAME (p));
-	}
-      /* update the colors and font */
-      update_widget_face (wv, p, IMAGE_INSTANCE_SUBWINDOW_FRAME (p));
-
-      /* now modify the widget */
-      lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (p),
-			     wv, True);
-      free_widget_value_tree (wv);
-      /* subwindow resizing now gets done by the parent function. */
+      XResizeWindow (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (p),
+		     IMAGE_INSTANCE_X_SUBWINDOW_ID (p),
+		     IMAGE_INSTANCE_WIDTH (p),
+		     IMAGE_INSTANCE_HEIGHT (p));
     }
+}
+
+/* Update all attributes that have changed. Lwlib actually does most
+   of this for us. */
+static void
+x_redisplay_widget (Lisp_Image_Instance *p)
+{
+  /* This function can GC if IN_REDISPLAY is false. */
+#ifdef HAVE_WIDGETS
+  widget_value* wv = 0;
+
+  /* First get the items if they have changed since this is a
+     structural change. As such it will nuke all added values so we
+     need to update most other things after the items have changed.*/
+  if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p))
+    {
+      Lisp_Object image_instance;
+
+      XSETIMAGE_INSTANCE (image_instance, p);
+      wv = gui_items_to_widget_values
+	(image_instance, IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (p),
+	 /* #### this is not right; we need to keep track of which widgets
+	    want accelerators and which don't */ 0);
+      wv->change = STRUCTURAL_CHANGE;
+    }
+  else
+    {
+      /* Assume the lotus position, breath deeply and chant to
+	 yourself lwlibsux, lwlibsux ... lw_get_all_values returns a
+	 reference to the real values rather than a copy thus any
+	 changes we make to the values we get back will look like they
+	 have already been applied. If we rebuild the widget tree then
+	 we may lose propertie. */
+      wv = copy_widget_value_tree (lw_get_all_values
+				   (IMAGE_INSTANCE_X_WIDGET_LWID (p)),
+				   NO_CHANGE);
+    }
+
+  /* Possibly update the colors and font */
+  if (IMAGE_INSTANCE_WIDGET_FACE_CHANGED (p)
+      ||
+      XFRAME (IMAGE_INSTANCE_FRAME (p))->faces_changed
+      ||
+      IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p))
+    {
+      update_widget_face (wv, p, IMAGE_INSTANCE_FRAME (p));
+    }
+
+  /* Possibly update the text. */
+  if (IMAGE_INSTANCE_TEXT_CHANGED (p))
+    {
+      char* str;
+      Lisp_Object val = IMAGE_INSTANCE_WIDGET_TEXT (p);
+      LISP_STRING_TO_EXTERNAL (val, str, Qnative);
+      wv->value = str;
+    }
+
+  /* Possibly update the size. */
+  if (IMAGE_INSTANCE_SIZE_CHANGED (p)
+      ||
+      IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (p)
+      ||
+      IMAGE_INSTANCE_TEXT_CHANGED (p))
+    {
+      assert (IMAGE_INSTANCE_X_WIDGET_ID (p) &&
+	      IMAGE_INSTANCE_X_CLIPWIDGET (p)) ;
+
+      if (IMAGE_INSTANCE_X_WIDGET_ID (p)->core.being_destroyed
+	  || !XtIsManaged(IMAGE_INSTANCE_X_WIDGET_ID (p)))
+	{
+	  Lisp_Object sw;
+	  XSETIMAGE_INSTANCE (sw, p);
+	  signal_simple_error ("XEmacs bug: subwindow is deleted", sw);
+	}
+
+      lw_add_widget_value_arg (wv, XtNwidth,
+			       (Dimension)IMAGE_INSTANCE_WIDTH (p));
+      lw_add_widget_value_arg (wv, XtNheight,
+			       (Dimension)IMAGE_INSTANCE_HEIGHT (p));
+    }
+
+  /* now modify the widget */
+  lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (p),
+			 wv, True);
+  free_widget_value_tree (wv);
 #endif
 }
 
@@ -2197,15 +2274,15 @@ x_subwindow_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* This function can GC */
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-  Lisp_Object frame = FW_FRAME (domain);
+  Lisp_Object frame = DOMAIN_FRAME (domain);
   struct frame* f = XFRAME (frame);
   Display *dpy;
   Screen *xs;
   Window pw, win;
   XSetWindowAttributes xswa;
   Mask valueMask = 0;
-  unsigned int w = IMAGE_INSTANCE_SUBWINDOW_WIDTH (ii),
-    h = IMAGE_INSTANCE_SUBWINDOW_HEIGHT (ii);
+  unsigned int w = IMAGE_INSTANCE_WIDTH (ii),
+    h = IMAGE_INSTANCE_HEIGHT (ii);
 
   if (!DEVICE_X_P (XDEVICE (device)))
     signal_simple_error ("Not an X device", device);
@@ -2272,34 +2349,6 @@ Subwindows are not currently implemented.
 }
 #endif
 
-static void
-x_resize_subwindow (Lisp_Image_Instance* ii, int w, int h)
-{
-  if (IMAGE_INSTANCE_TYPE (ii) == IMAGE_SUBWINDOW)
-    {
-      XResizeWindow (IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (ii),
-		     IMAGE_INSTANCE_X_SUBWINDOW_ID (ii),
-		     w, h);
-    }
-  else				/* must be a widget */
-    {
-      Arg al[2];
-
-      if ( !XtIsManaged(IMAGE_INSTANCE_X_WIDGET_ID (ii))
-	   ||
-	   IMAGE_INSTANCE_X_WIDGET_ID (ii)->core.being_destroyed )
-	{
-	  Lisp_Object sw;
-	  XSETIMAGE_INSTANCE (sw, ii);
-	  signal_simple_error ("XEmacs bug: subwindow is deleted", sw);
-	}
-
-      XtSetArg (al [0], XtNwidth, (Dimension)w);
-      XtSetArg (al [1], XtNheight, (Dimension)h);
-      XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, 2);
-    }
-}
-
 
 #ifdef HAVE_WIDGETS
 
@@ -2342,6 +2391,11 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
 		      (IMAGE_INSTANCE_WIDGET_TEXT (ii),
 		       IMAGE_INSTANCE_WIDGET_FACE (ii),
 		       domain))));
+  wv->change = VISIBLE_CHANGE;
+  /* #### Megahack - but its just getting too complicated to do this
+     in the right place. */
+  if (EQ (IMAGE_INSTANCE_WIDGET_TYPE (ii), Qtab_control))
+    update_tab_widget_face (wv, ii, domain);
 }
 
 static void
@@ -2358,9 +2412,12 @@ update_tab_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
 	 domain);
       XColor fcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (pixel));
       lw_add_widget_value_arg (val, XtNtabForeground, fcolor.pixel);
+      wv->change = VISIBLE_CHANGE;
+      val->change = VISIBLE_CHANGE;
 
       for (cur = val->next; cur; cur = cur->next)
 	{
+	  cur->change = VISIBLE_CHANGE;
 	  if (cur->value)
 	    {
 	      lw_copy_widget_value_args (val, cur);
@@ -2373,12 +2430,12 @@ static void
 x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		      int dest_mask, Lisp_Object domain,
-		      CONST char* type, widget_value* wv)
+		      const char* type, widget_value* wv)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii), pixel;
   struct device* d = XDEVICE (device);
-  Lisp_Object frame = FW_FRAME (domain);
+  Lisp_Object frame = DOMAIN_FRAME (domain);
   struct frame* f = XFRAME (frame);
   char* nm=0;
   Widget wid;
@@ -2397,9 +2454,7 @@ x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   IMAGE_INSTANCE_TYPE (ii) = IMAGE_WIDGET;
 
   if (!NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)))
-    TO_EXTERNAL_FORMAT (LISP_STRING, IMAGE_INSTANCE_WIDGET_TEXT (ii),
-			C_STRING_ALLOCA, nm,
-			Qnative);
+    LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii), nm, Qnative);
 
   ii->data = xnew_and_zero (struct x_subwindow_data);
 
@@ -2411,9 +2466,9 @@ x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   lw_add_widget_value_arg (clip_wv, XtNresize, False);
   lw_add_widget_value_arg (clip_wv, XtNwidth,
-			   (Dimension)IMAGE_INSTANCE_SUBWINDOW_WIDTH (ii));
+			   (Dimension)IMAGE_INSTANCE_WIDTH (ii));
   lw_add_widget_value_arg (clip_wv, XtNheight,
-			   (Dimension)IMAGE_INSTANCE_SUBWINDOW_HEIGHT (ii));
+			   (Dimension)IMAGE_INSTANCE_HEIGHT (ii));
   clip_wv->enabled = True;
 
   clip_wv->name = xstrdup ("clip-window");
@@ -2436,12 +2491,12 @@ x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      anymore...*/
   pixel = FACE_FOREGROUND
     (IMAGE_INSTANCE_WIDGET_FACE (ii),
-     IMAGE_INSTANCE_SUBWINDOW_FRAME (ii));
+     IMAGE_INSTANCE_FRAME (ii));
   fcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (pixel));
 
   pixel = FACE_BACKGROUND
     (IMAGE_INSTANCE_WIDGET_FACE (ii),
-     IMAGE_INSTANCE_SUBWINDOW_FRAME (ii));
+     IMAGE_INSTANCE_FRAME (ii));
   bcolor = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (pixel));
 
   lw_add_widget_value_arg (wv, XtNbackground, bcolor.pixel);
@@ -2449,9 +2504,9 @@ x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* we cannot allow widgets to resize themselves */
   lw_add_widget_value_arg (wv, XtNresize, False);
   lw_add_widget_value_arg (wv, XtNwidth,
-			   (Dimension)IMAGE_INSTANCE_SUBWINDOW_WIDTH (ii));
+			   (Dimension)IMAGE_INSTANCE_WIDTH (ii));
   lw_add_widget_value_arg (wv, XtNheight,
-			   (Dimension)IMAGE_INSTANCE_SUBWINDOW_HEIGHT (ii));
+			   (Dimension)IMAGE_INSTANCE_HEIGHT (ii));
   /* update the font. */
   update_widget_face (wv, ii, domain);
 
@@ -2460,15 +2515,6 @@ x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   IMAGE_INSTANCE_SUBWINDOW_ID (ii) = (void*)wid;
   IMAGE_INSTANCE_X_WIDGET_LWID (ii) = id;
-
-  /* Resize the widget here so that the values do not get copied by
-     lwlib. */
-  ac = 0;
-  XtSetArg (al [ac], XtNwidth,
-	    (Dimension)IMAGE_INSTANCE_SUBWINDOW_WIDTH (ii)); ac++;
-  XtSetArg (al [ac], XtNheight,
-	    (Dimension)IMAGE_INSTANCE_SUBWINDOW_HEIGHT (ii)); ac++;
-  XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, ac);
   /* because the EmacsManager is the widgets parent we have to
      offset the redisplay of the widget by the amount the text
      widget is inside the manager. */
@@ -2480,35 +2526,9 @@ x_widget_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   XtSetMappedWhenManaged (wid, TRUE);
 
   free_widget_value_tree (wv);
-}
-
-static Lisp_Object
-x_widget_set_property (Lisp_Object image_instance, Lisp_Object prop,
-		       Lisp_Object val)
-{
-  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
-
-  /* Modify the text properties of the widget */
-  if (EQ (prop, Q_text))
-    {
-      char* str;
-      widget_value* wv = lw_get_all_values (IMAGE_INSTANCE_X_WIDGET_LWID (ii));
-      CHECK_STRING (val);
-      TO_EXTERNAL_FORMAT (LISP_STRING, val,
-			  C_STRING_ALLOCA, str,
-			  Qnative);
-      wv->value = str;
-      lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (ii), wv, False);
-    }
-
-  /* Modify the text properties of the widget */
-  else if (EQ (prop, Q_face))
-    {
-      widget_value* wv = lw_get_all_values (IMAGE_INSTANCE_X_WIDGET_LWID (ii));
-      update_widget_face (wv, ii, IMAGE_INSTANCE_SUBWINDOW_FRAME (ii));
-      lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (ii), wv, False);
-    }
-  return Qunbound;
+  /* A kludgy but simple way to make sure the callback for a widget
+     doesn't get deleted. */
+  gcpro_popup_callbacks (id);
 }
 
 /* get properties of a control */
@@ -2525,6 +2545,16 @@ x_widget_property (Lisp_Object image_instance, Lisp_Object prop)
   return Qunbound;
 }
 
+/* Instantiate a layout control for putting other widgets in. */
+static void
+x_native_layout_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+			     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+			     int dest_mask, Lisp_Object domain)
+{
+  x_widget_instantiate (image_instance, instantiator, pointer_fg,
+			pointer_bg, dest_mask, domain, "layout", 0);
+}
+
 /* Instantiate a button widget. Unfortunately instantiated widgets are
    particular to a frame since they need to have a parent. It's not
    like images where you just select the image into the context you
@@ -2539,9 +2569,7 @@ x_button_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object gui = IMAGE_INSTANCE_WIDGET_ITEM (ii);
   Lisp_Object glyph = find_keyword_in_vector (instantiator, Q_image);
-  widget_value* wv = xmalloc_widget_value ();
-
-  button_item_to_widget_value (gui, wv, 1, 1);
+  widget_value* wv = gui_items_to_widget_values (image_instance, gui, 1);
 
   if (!NILP (glyph))
     {
@@ -2566,6 +2594,30 @@ x_button_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #endif
       XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, ac);
     }
+}
+
+/* Update a button's clicked state.
+
+   #### This is overkill, but it works. Right now this causes all
+   button instances to flash for some reason buried deep in lwlib. In
+   theory this should be the Right Thing to do since lwlib should only
+   merge in changed values - and if nothing has changed then nothing
+   should get done. This may be because of the args stuff,
+   i.e. although the arg contents may be the same the args look
+   different and so are re-applied to the widget. */
+static void
+x_button_redisplay (Lisp_Object image_instance)
+{
+  /* This function can GC if IN_REDISPLAY is false. */
+  Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
+  widget_value* wv =
+    gui_items_to_widget_values (image_instance,
+				IMAGE_INSTANCE_WIDGET_ITEMS (p), 1);
+
+  /* now modify the widget */
+  lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (p),
+			 wv, True);
+  free_widget_value_tree (wv);
 }
 
 /* get properties of a button */
@@ -2594,30 +2646,29 @@ x_progress_gauge_instantiate (Lisp_Object image_instance, Lisp_Object instantiat
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object gui = IMAGE_INSTANCE_WIDGET_ITEM (ii);
-  widget_value* wv = xmalloc_widget_value ();
-
-  button_item_to_widget_value (gui, wv, 1, 1);
+  widget_value* wv = gui_items_to_widget_values (image_instance, gui, 0);
 
   x_widget_instantiate (image_instance, instantiator, pointer_fg,
 			pointer_bg, dest_mask, domain, "progress", wv);
 }
 
-/* set the properties of a progres guage */
-static Lisp_Object
-x_progress_gauge_set_property (Lisp_Object image_instance, Lisp_Object prop,
-			 Lisp_Object val)
+/* set the properties of a progress gauge */
+static void
+x_progress_gauge_redisplay (Lisp_Object image_instance)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
-  if (EQ (prop, Q_percent))
+  if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii))
     {
       Arg al [1];
-      CHECK_INT (val);
+      Lisp_Object val;
+#ifdef ERROR_CHECK_GLYPHS
+      assert (GUI_ITEMP (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii)));
+#endif
+      val = XGUI_ITEM (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii))->value;
       XtSetArg (al[0], XtNvalue, XINT (val));
       XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, 1);
-      return Qt;
     }
-  return Qunbound;
 }
 
 /* instantiate an edit control */
@@ -2628,9 +2679,7 @@ x_edit_field_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object gui = IMAGE_INSTANCE_WIDGET_ITEM (ii);
-  widget_value* wv = xmalloc_widget_value ();
-
-  button_item_to_widget_value (gui, wv, 1, 1);
+  widget_value* wv = gui_items_to_widget_values (image_instance, gui, 0);
 
   x_widget_instantiate (image_instance, instantiator, pointer_fg,
 			pointer_bg, dest_mask, domain, "text-field", wv);
@@ -2650,7 +2699,8 @@ x_combo_box_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   widget_instantiate (image_instance, instantiator, pointer_fg,
 		      pointer_bg, dest_mask, domain);
 
-  wv = gui_items_to_widget_values (IMAGE_INSTANCE_WIDGET_ITEMS (ii));
+  wv = gui_items_to_widget_values (image_instance,
+				   IMAGE_INSTANCE_WIDGET_ITEMS (ii), 0);
 
   x_widget_instantiate (image_instance, instantiator, pointer_fg,
 			pointer_bg, dest_mask, domain, "combo-box", wv);
@@ -2664,43 +2714,100 @@ x_tab_control_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   widget_value * wv =
-    gui_items_to_widget_values (IMAGE_INSTANCE_WIDGET_ITEMS (ii));
-
+    gui_items_to_widget_values (image_instance,
+				IMAGE_INSTANCE_WIDGET_ITEMS (ii), 0);
   update_tab_widget_face (wv, ii,
-			  IMAGE_INSTANCE_SUBWINDOW_FRAME (ii));
-
+			  IMAGE_INSTANCE_FRAME (ii));
   x_widget_instantiate (image_instance, instantiator, pointer_fg,
 			pointer_bg, dest_mask, domain, "tab-control", wv);
 }
 
-/* set the properties of a tab control */
-static Lisp_Object
-x_tab_control_set_property (Lisp_Object image_instance, Lisp_Object prop,
-			    Lisp_Object val)
+/* Set the properties of a tab control */
+static void
+x_tab_control_redisplay (Lisp_Object image_instance)
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
-  if (EQ (prop, Q_items))
+  if (IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii)
+      ||
+      IMAGE_INSTANCE_WIDGET_ACTION_OCCURRED (ii))
     {
-      widget_value * wv = 0;
-      check_valid_item_list_1 (val);
+      /* If only the order has changed then simply select the first
+	 one of the pending set. This stops horrendous rebuilding -
+	 and hence flicker - of the tabs each time you click on
+	 one. */
+      if (tab_control_order_only_changed (image_instance))
+	{
+	  Lisp_Object rest, selected =
+	    gui_item_list_find_selected
+	    (NILP (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii)) ?
+	     XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)) :
+	     XCDR (IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii)));
 
-      IMAGE_INSTANCE_WIDGET_ITEMS (ii) =
-	Fcons (XCAR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)),
-	       parse_gui_item_tree_children (val));
+	  LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
+	    {
+	      if (gui_item_equal_sans_selected (XCAR (rest), selected, 0))
+		{
+		  /* There may be an encapsulated way of doing this,
+		     but I couldn't find it. */
+		  Lisp_Object old_selected =gui_item_list_find_selected
+		    (XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)));
+		  Arg al [1];
+		  char* name;
+		  unsigned int num_children, i;
+		  Widget* children;
 
-      wv = gui_items_to_widget_values (IMAGE_INSTANCE_WIDGET_ITEMS (ii));
+		  LISP_STRING_TO_EXTERNAL (XGUI_ITEM (XCAR (rest))->name,
+					   name, Qnative);
+		  /* The name may contain a `.' which confuses
+		     XtNameToWidget, so we do it ourselves. */
+		  children = XtCompositeChildren (IMAGE_INSTANCE_X_WIDGET_ID (ii),
+						  &num_children);
+		  for (i = 0; i < num_children; i++)
+		    {
+		      if (!strcmp (XtName (children [i]), name))
+			{
+			  XtSetArg (al [0], XtNtopWidget, children [i]);
+			  XtSetValues (IMAGE_INSTANCE_X_WIDGET_ID (ii), al, 1);
+			  break;
+			}
+		    }
+		  /* Pick up the new selected item. */
+		  XGUI_ITEM (old_selected)->selected =
+		    XGUI_ITEM (XCAR (rest))->selected;
+		  XGUI_ITEM (XCAR (rest))->selected =
+		    XGUI_ITEM (selected)->selected;
+		  /* We're not actually changing the items anymore. */
+		  IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii) = 0;
+		  IMAGE_INSTANCE_WIDGET_PENDING_ITEMS (ii) = Qnil;
+		  break;
+		}
+	    }
+	}
+    }
+  /* Possibly update the face. */
+  if (IMAGE_INSTANCE_WIDGET_FACE_CHANGED (ii)
+      ||
+      XFRAME (IMAGE_INSTANCE_FRAME (ii))->faces_changed
+      ||
+      IMAGE_INSTANCE_WIDGET_ITEMS_CHANGED (ii))
+    {
+      /* See previous comments on the brokeness of lwlib.
+
+	 #### There's actually not much point in doing this here
+	 since, colors will have been set appropriately by
+	 x_redisplay_widget. */
+      widget_value* wv =copy_widget_value_tree
+	(lw_get_all_values
+	 (IMAGE_INSTANCE_X_WIDGET_LWID (ii)),
+	 NO_CHANGE);
 
       update_tab_widget_face (wv, ii,
-			      IMAGE_INSTANCE_SUBWINDOW_FRAME (ii));
+			      IMAGE_INSTANCE_FRAME (ii));
 
       lw_modify_all_widgets (IMAGE_INSTANCE_X_WIDGET_LWID (ii), wv, True);
-
       free_widget_value_tree (wv);
-      return Qt;
     }
-
-  return Qunbound;
 }
 
 /* instantiate a static control possible for putting other things in */
@@ -2711,9 +2818,7 @@ x_label_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 {
   Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object gui = IMAGE_INSTANCE_WIDGET_ITEM (ii);
-  widget_value* wv = xmalloc_widget_value ();
-
-  button_item_to_widget_value (gui, wv, 1, 1);
+  widget_value* wv = gui_items_to_widget_values (image_instance, gui, 0);
 
   x_widget_instantiate (image_instance, instantiator, pointer_fg,
 			pointer_bg, dest_mask, domain, "button", wv);
@@ -2747,8 +2852,8 @@ console_type_create_glyphs_x (void)
   CONSOLE_HAS_METHOD (x, locate_pixmap_file);
   CONSOLE_HAS_METHOD (x, unmap_subwindow);
   CONSOLE_HAS_METHOD (x, map_subwindow);
-  CONSOLE_HAS_METHOD (x, resize_subwindow);
-  CONSOLE_HAS_METHOD (x, update_subwindow);
+  CONSOLE_HAS_METHOD (x, redisplay_widget);
+  CONSOLE_HAS_METHOD (x, redisplay_subwindow);
 }
 
 void
@@ -2756,7 +2861,9 @@ image_instantiator_format_create_glyphs_x (void)
 {
   IIFORMAT_VALID_CONSOLE (x, nothing);
   IIFORMAT_VALID_CONSOLE (x, string);
+#ifdef HAVE_WIDGETS
   IIFORMAT_VALID_CONSOLE (x, layout);
+#endif
   IIFORMAT_VALID_CONSOLE (x, formatted_string);
   IIFORMAT_VALID_CONSOLE (x, inherit);
 #ifdef HAVE_XPM
@@ -2781,17 +2888,20 @@ image_instantiator_format_create_glyphs_x (void)
   INITIALIZE_DEVICE_IIFORMAT (x, subwindow);
   IIFORMAT_HAS_DEVMETHOD (x, subwindow, instantiate);
 #ifdef HAVE_WIDGETS
+  /* layout widget */
+  INITIALIZE_DEVICE_IIFORMAT (x, native_layout);
+  IIFORMAT_HAS_DEVMETHOD (x, native_layout, instantiate);
   /* button widget */
   INITIALIZE_DEVICE_IIFORMAT (x, button);
   IIFORMAT_HAS_DEVMETHOD (x, button, property);
   IIFORMAT_HAS_DEVMETHOD (x, button, instantiate);
-
+  IIFORMAT_HAS_DEVMETHOD (x, button, redisplay);
+  /* general widget methods. */
   INITIALIZE_DEVICE_IIFORMAT (x, widget);
   IIFORMAT_HAS_DEVMETHOD (x, widget, property);
-  IIFORMAT_HAS_DEVMETHOD (x, widget, set_property);
   /* progress gauge */
   INITIALIZE_DEVICE_IIFORMAT (x, progress_gauge);
-  IIFORMAT_HAS_DEVMETHOD (x, progress_gauge, set_property);
+  IIFORMAT_HAS_DEVMETHOD (x, progress_gauge, redisplay);
   IIFORMAT_HAS_DEVMETHOD (x, progress_gauge, instantiate);
   /* text field */
   INITIALIZE_DEVICE_IIFORMAT (x, edit_field);
@@ -2800,12 +2910,12 @@ image_instantiator_format_create_glyphs_x (void)
   /* combo box */
   INITIALIZE_DEVICE_IIFORMAT (x, combo_box);
   IIFORMAT_HAS_DEVMETHOD (x, combo_box, instantiate);
-  IIFORMAT_HAS_SHARED_DEVMETHOD (x, combo_box, set_property, tab_control);
+  IIFORMAT_HAS_SHARED_DEVMETHOD (x, combo_box, redisplay, tab_control);
 #endif
   /* tab control widget */
   INITIALIZE_DEVICE_IIFORMAT (x, tab_control);
   IIFORMAT_HAS_DEVMETHOD (x, tab_control, instantiate);
-  IIFORMAT_HAS_DEVMETHOD (x, tab_control, set_property);
+  IIFORMAT_HAS_DEVMETHOD (x, tab_control, redisplay);
   /* label */
   INITIALIZE_DEVICE_IIFORMAT (x, label);
   IIFORMAT_HAS_DEVMETHOD (x, label, instantiate);

@@ -24,13 +24,13 @@ Boston, MA 02111-1307, USA.  */
  * exist in your home directory, containing individual mail messages in
  * separate files in the standard gosling emacs mail reader format.
  *
- * Program takes one argument: an output file.  THis file will contain
+ * Program takes one argument: an output file.  This file will contain
  * all the messages in Messages directory, in berkeley mail format.
  * If no output file is mentioned, messages are put in ~/OMAIL.
  *
  * In order to get rmail to read the messages, the resulting file must
  * be mv'ed to ~/mbox, and then have rmail invoked on them.
- * 
+ *
  * Author: Larry Kolodney, 1985
  */
 
@@ -44,8 +44,8 @@ Boston, MA 02111-1307, USA.  */
 static void *xmalloc (size_t);
 static void *xrealloc (void *, size_t);
 static void skip_to_lf (FILE *stream);
-static void fatal (CONST char *s1, CONST char *s2);
-static void error (CONST char *s1, CONST char *s2);
+static void fatal (const char *s1, const char *s2);
+static void error (const char *s1, const char *s2);
 
 int
 main (int argc, char *argv[])
@@ -106,7 +106,7 @@ main (int argc, char *argv[])
      fclose (cff);
     }
   fclose (mddf);
-  fclose (mfilef);    
+  fclose (mfilef);
   return 0;
 }
 
@@ -139,14 +139,14 @@ xrealloc (void *ptr, size_t size)
 /* Print error message and exit.  */
 
 static void
-fatal (CONST char *s1, CONST char *s2)
+fatal (const char *s1, const char *s2)
 {
   error (s1, s2);
   exit (1);
 }
 
 static void
-error (CONST char *s1, CONST char *s2)
+error (const char *s1, const char *s2)
 {
   fprintf (stderr, "cvtmail: ");
   fprintf (stderr, s1, s2);

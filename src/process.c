@@ -107,6 +107,7 @@ struct hash_table *usid_to_process;
 Lisp_Object Vprocess_list;
 
 extern Lisp_Object Vlisp_EXEC_SUFFIXES;
+Lisp_Object Vnull_device;
 
 
 
@@ -208,11 +209,11 @@ get_process_streams (Lisp_Process *p, Lisp_Object *instr, Lisp_Object *outstr)
 Lisp_Process *
 get_process_from_usid (USID usid)
 {
-  CONST void *vval;
+  const void *vval;
 
   assert (usid != USID_ERROR && usid != USID_DONTHASH);
 
-  if (gethash ((CONST void*)usid, usid_to_process, &vval))
+  if (gethash ((const void*)usid, usid_to_process, &vval))
     {
       Lisp_Object proc;
       CVOID_TO_LISP (proc, vval);
@@ -483,7 +484,7 @@ init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
     {
       Lisp_Object proc = Qnil;
       XSETPROCESS (proc, p);
-      puthash ((CONST void*)usid, LISP_TO_VOID (proc), usid_to_process);
+      puthash ((const void*)usid, LISP_TO_VOID (proc), usid_to_process);
     }
 
   MAYBE_PROCMETH (init_process_io_handles, (p, in, out, flags));
@@ -607,9 +608,23 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
     }
   else
     {
-      if (!NILP (Ffile_directory_p (program)))
-	error ("Specified program for new process is a directory");
+      /* we still need to canonicalize it and ensure it has the proper
+	 ending, e.g. .exe */
+      struct gcpro ngcpro1;
+
+      tem = Qnil;
+      NGCPRO1 (tem);
+      locate_file (list1 (build_string ("")), program, Vlisp_EXEC_SUFFIXES,
+		   &tem, X_OK);
+      if (NILP (tem))
+	report_file_error ("Searching for program", list1 (program));
+      program = tem;
+      NUNGCPRO;
     }
+
+  if (!NILP (Ffile_directory_p (program)))
+    invalid_operation ("Specified program for new process is a directory",
+		       program);
 
   proc = make_process_internal (name);
 
@@ -663,7 +678,8 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
    connection has no PID; you cannot signal it.  All you can do is
    deactivate and close it via delete-process */
 
-DEFUN ("open-network-stream-internal", Fopen_network_stream_internal, 4, 5, 0, /*
+DEFUN ("open-network-stream-internal", Fopen_network_stream_internal, 4, 5,
+       0, /*
 Open a TCP connection for a service to a host.
 Return a subprocess-object to represent the connection.
 Input and output work as for subprocesses; `delete-process' closes it.
@@ -681,7 +697,7 @@ Fifth argument PROTOCOL is a network protocol.  Currently 'tcp
  (Transmission Control Protocol) and 'udp (User Datagram Protocol) are
  supported.  When omitted, 'tcp is assumed.
 
-Ouput via `process-send-string' and input via buffer or filter (see
+Output via `process-send-string' and input via buffer or filter (see
 `set-process-filter') are stream-oriented.  That means UDP datagrams are
 not guaranteed to be sent and received in discrete packets. (But small
 datagrams around 500 bytes that are not truncated by `process-send-string'
@@ -964,7 +980,7 @@ read_process_output (Lisp_Object proc)
 
 void
 send_process (Lisp_Object proc,
-              Lisp_Object relocatable, CONST Bufbyte *nonrelocatable,
+              Lisp_Object relocatable, const Bufbyte *nonrelocatable,
               int start, int len)
 {
   /* This function can GC */
@@ -1073,24 +1089,25 @@ See `set-process-filter' for more info on filter functions.
   return XPROCESS (proc)->filter;
 }
 
-DEFUN ("process-send-region", Fprocess_send_region, 3, 3, 0, /*
-Send current contents of region as input to PROCESS.
+DEFUN ("process-send-region", Fprocess_send_region, 3, 4, 0, /*
+Send current contents of the region between START and END as input to PROCESS.
 PROCESS may be a process name or an actual process.
-Called from program, takes three arguments, PROCESS, START and END.
+BUFFER specifies the buffer to look in; if nil, the current buffer is used.
 If the region is more than 500 or so characters long,
 it is sent in several bunches.  This may happen even for shorter regions.
 Output from processes can arrive in between bunches.
 */
-       (process, start, end))
+       (process, start, end, buffer))
 {
   /* This function can GC */
   Lisp_Object proc = get_process (process);
   Bufpos st, en;
+  struct buffer *buf = decode_buffer (buffer, 0);
 
-  get_buffer_range_char (current_buffer, start, end, &st, &en, 0);
+  XSETBUFFER (buffer, buf);
+  get_buffer_range_char (buf, start, end, &st, &en, 0);
 
-  send_process (proc, Fcurrent_buffer (), 0,
-                st, en - st);
+  send_process (proc, buffer, 0, st, en - st);
   return Qnil;
 }
 
@@ -1266,13 +1283,13 @@ See `set-process-sentinel' for more info on sentinels.
 }
 
 
-CONST char *
+const char *
 signal_name (int signum)
 {
   if (signum >= 0 && signum < NSIG)
-    return (CONST char *) sys_siglist[signum];
+    return (const char *) sys_siglist[signum];
 
-  return (CONST char *) GETTEXT ("unknown signal");
+  return (const char *) GETTEXT ("unknown signal");
 }
 
 void
@@ -1521,133 +1538,23 @@ If PROCESS has not yet exited or died, return 0.
 
 
 
-/* send a signal number SIGNO to PROCESS.
-   CURRENT_GROUP means send to the process group that currently owns
-   the terminal being used to communicate with PROCESS.
-   This is used for various commands in shell mode.
-   If NOMSG is zero, insert signal-announcements into process's buffers
-   right away.
-
-   If we can, we try to signal PROCESS by sending control characters
-   down the pty.  This allows us to signal inferiors who have changed
-   their uid, for which killpg would return an EPERM error.  */
-
-static void
-process_send_signal (Lisp_Object process, int signo,
-                     int current_group, int nomsg)
+static int
+decode_signal (Lisp_Object signal_)
 {
-  /* This function can GC */
-  Lisp_Object proc = get_process (process);
-
-  if (network_connection_p (proc))
-    error ("Network connection %s is not a subprocess",
-	   XSTRING_DATA (XPROCESS(proc)->name));
-  CHECK_LIVE_PROCESS (proc);
-
-  MAYBE_PROCMETH (kill_child_process, (proc, signo, current_group, nomsg));
-}
-
-DEFUN ("interrupt-process", Finterrupt_process, 0, 2, 0, /*
-Interrupt process PROCESS.  May be process or name of one.
-Nil or no arg means current buffer's process.
-Second arg CURRENT-GROUP non-nil means send signal to
-the current process-group of the process's controlling terminal
-rather than to the process's own process group.
-If the process is a shell, this means interrupt current subjob
-rather than the shell.
-*/
-       (process, current_group))
-{
-  /* This function can GC */
-  process_send_signal (process, SIGINT, !NILP (current_group), 0);
-  return process;
-}
-
-DEFUN ("kill-process", Fkill_process, 0, 2, 0, /*
-Kill process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.
-*/
-       (process, current_group))
-{
-  /* This function can GC */
-#ifdef SIGKILL
-  process_send_signal (process, SIGKILL, !NILP (current_group), 0);
-#else
-  error ("kill-process: Not supported on this system");
-#endif
-  return process;
-}
-
-DEFUN ("quit-process", Fquit_process, 0, 2, 0, /*
-Send QUIT signal to process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.
-*/
-       (process, current_group))
-{
-  /* This function can GC */
-#ifdef SIGQUIT
-  process_send_signal (process, SIGQUIT, !NILP (current_group), 0);
-#else
-  error ("quit-process: Not supported on this system");
-#endif
-  return process;
-}
-
-DEFUN ("stop-process", Fstop_process, 0, 2, 0, /*
-Stop process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.
-*/
-       (process, current_group))
-{
-  /* This function can GC */
-#ifdef SIGTSTP
-  process_send_signal (process, SIGTSTP, !NILP (current_group), 0);
-#else
-  error ("stop-process: Not supported on this system");
-#endif
-  return process;
-}
-
-DEFUN ("continue-process", Fcontinue_process, 0, 2, 0, /*
-Continue process PROCESS.  May be process or name of one.
-See function `interrupt-process' for more details on usage.
-*/
-       (process, current_group))
-{
-  /* This function can GC */
-#ifdef SIGCONT
-  process_send_signal (process, SIGCONT, !NILP (current_group), 0);
-#else
-  error ("continue-process: Not supported on this system");
-#endif
-  return process;
-}
-
-DEFUN ("signal-process", Fsignal_process, 2, 2,
-       "nProcess number: \nnSignal code: ", /*
-Send the process with process id PID the signal with code SIGCODE.
-PID must be an integer.  The process need not be a child of this Emacs.
-SIGCODE may be an integer, or a symbol whose name is a signal name.
-*/
-       (pid, sigcode))
-{
-  CHECK_INT (pid);
-
-  if (INTP (sigcode))
-    ;
+  if (INTP (signal_))
+    return XINT (signal_);
   else
     {
       Bufbyte *name;
 
-      CHECK_SYMBOL (sigcode);
-      name = string_data (XSYMBOL (sigcode)->name);
+      CHECK_SYMBOL (signal_);
+      name = string_data (XSYMBOL (signal_)->name);
 
-#define handle_signal(signal)				\
-  else if (!strcmp ((CONST char *) name, #signal))	\
-    XSETINT (sigcode, signal)
+#define handle_signal(sym) do {				\
+	if (!strcmp ((const char *) name, #sym))	\
+	  return sym;					\
+      } while (0)
 
-      if (0)
-	;
       handle_signal (SIGINT);  /* ANSI */
       handle_signal (SIGILL);  /* ANSI */
       handle_signal (SIGABRT); /* ANSI */
@@ -1781,14 +1688,145 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.
 #ifdef SIGPWR
       handle_signal (SIGPWR);
 #endif
-      else
-	error ("Undefined signal name %s", name);
-    }
 
 #undef handle_signal
 
+      error ("Undefined signal name %s", name);
+      return 0; /* Unreached */
+    }
+}
+
+/* Send signal number SIGNO to PROCESS.
+   CURRENT-GROUP non-nil means send signal to the current
+   foreground process group of the process's controlling terminal rather
+   than to the process's own process group.
+   This is used for various commands in shell mode.
+   If NOMSG is zero, insert signal-announcements into process's buffers
+   right away.
+
+   If we can, we try to signal PROCESS by sending control characters
+   down the pty.  This allows us to signal inferiors who have changed
+   their uid, for which kill() would return an EPERM error, or to
+   processes running on another computer through a remote login.  */
+
+static void
+process_send_signal (Lisp_Object process, int signo,
+                     int current_group, int nomsg)
+{
+  /* This function can GC */
+  Lisp_Object proc = get_process (process);
+
+  if (network_connection_p (proc))
+    error ("Network connection %s is not a subprocess",
+	   XSTRING_DATA (XPROCESS(proc)->name));
+  CHECK_LIVE_PROCESS (proc);
+
+  MAYBE_PROCMETH (kill_child_process, (proc, signo, current_group, nomsg));
+}
+
+DEFUN ("process-send-signal", Fprocess_send_signal, 1, 3, 0, /*
+Send signal SIGNAL to process PROCESS.
+SIGNAL may be an integer, or a symbol naming a signal, like `SIGSEGV'.
+PROCESS may be a process, a buffer, the name of a process or buffer, or
+nil, indicating the current buffer's process.
+Third arg CURRENT-GROUP non-nil means send signal to the current
+foreground process group of the process's controlling terminal rather
+than to the process's own process group.
+If the process is a shell that supports job control, this means
+send the signal to the current subjob rather than the shell.
+*/
+       (signal_, process, current_group))
+{
+  /* This function can GC */
+  process_send_signal (process, decode_signal (signal_),
+		       !NILP (current_group), 0);
+  return process;
+}
+
+DEFUN ("interrupt-process", Finterrupt_process, 0, 2, 0, /*
+Interrupt process PROCESS.
+See function `process-send-signal' for more details on usage.
+*/
+       (process, current_group))
+{
+  /* This function can GC */
+  process_send_signal (process, SIGINT, !NILP (current_group), 0);
+  return process;
+}
+
+DEFUN ("kill-process", Fkill_process, 0, 2, 0, /*
+Kill process PROCESS.
+See function `process-send-signal' for more details on usage.
+*/
+       (process, current_group))
+{
+  /* This function can GC */
+#ifdef SIGKILL
+  process_send_signal (process, SIGKILL, !NILP (current_group), 0);
+#else
+  error ("kill-process: Not supported on this system");
+#endif
+  return process;
+}
+
+DEFUN ("quit-process", Fquit_process, 0, 2, 0, /*
+Send QUIT signal to process PROCESS.
+See function `process-send-signal' for more details on usage.
+*/
+       (process, current_group))
+{
+  /* This function can GC */
+#ifdef SIGQUIT
+  process_send_signal (process, SIGQUIT, !NILP (current_group), 0);
+#else
+  error ("quit-process: Not supported on this system");
+#endif
+  return process;
+}
+
+DEFUN ("stop-process", Fstop_process, 0, 2, 0, /*
+Stop process PROCESS.
+See function `process-send-signal' for more details on usage.
+*/
+       (process, current_group))
+{
+  /* This function can GC */
+#ifdef SIGTSTP
+  process_send_signal (process, SIGTSTP, !NILP (current_group), 0);
+#else
+  error ("stop-process: Not supported on this system");
+#endif
+  return process;
+}
+
+DEFUN ("continue-process", Fcontinue_process, 0, 2, 0, /*
+Continue process PROCESS.
+See function `process-send-signal' for more details on usage.
+*/
+       (process, current_group))
+{
+  /* This function can GC */
+#ifdef SIGCONT
+  process_send_signal (process, SIGCONT, !NILP (current_group), 0);
+#else
+  error ("continue-process: Not supported on this system");
+#endif
+  return process;
+}
+
+DEFUN ("signal-process", Fsignal_process, 2, 2,
+       "nProcess number: \nnSignal code: ", /*
+Send the process with process id PID the signal with code SIGNAL.
+PID must be an integer.  The process need not be a child of this Emacs.
+SIGNAL may be an integer, or a symbol naming a signal, like `SIGSEGV'.
+*/
+       (pid, signal_))
+{
+  CHECK_INT (pid);
+
   return make_int (PROCMETH_OR_GIVEN (kill_process_by_pid,
-				      (XINT (pid), XINT (sigcode)), -1));
+				      (XINT (pid), decode_signal (signal_)),
+				      -1));
 }
 
 DEFUN ("process-send-eof", Fprocess_send_eof, 0, 1, 0, /*
@@ -1859,7 +1897,7 @@ deactivate_process (Lisp_Object proc)
 					    p->pipe_outstream);
 
   if (usid != USID_DONTHASH)
-    remhash ((CONST void*)usid, usid_to_process);
+    remhash ((const void*)usid, usid_to_process);
 
   p->pipe_instream = Qnil;
   p->pipe_outstream = Qnil;
@@ -1990,6 +2028,8 @@ t or pty (pty) or stream (socket connection).
 void
 syms_of_process (void)
 {
+  INIT_LRECORD_IMPLEMENTATION (process);
+
   defsymbol (&Qprocessp, "processp");
   defsymbol (&Qprocess_live_p, "process-live-p");
   defsymbol (&Qrun, "run");
@@ -2035,6 +2075,7 @@ syms_of_process (void)
 #endif /* HAVE_SOCKETS */
   DEFSUBR (Fprocess_send_region);
   DEFSUBR (Fprocess_send_string);
+  DEFSUBR (Fprocess_send_signal);
   DEFSUBR (Finterrupt_process);
   DEFSUBR (Fkill_process);
   DEFSUBR (Fquit_process);
@@ -2071,6 +2112,22 @@ nil means don't delete them until `list-processes' is run.
 */ );
 
   delete_exited_processes = 1;
+
+  DEFVAR_CONST_LISP ("null-device", &Vnull_device /*
+Name of the null device, which differs from system to system.
+The null device is a filename that acts as a sink for arbitrary amounts of
+data, which is discarded, or as a source for a zero-length file.
+It is available on all the systems that we currently support, but with
+different names (typically either `/dev/null' or `nul').
+
+Note that there is also a /dev/zero on most modern Unix versions (including
+Cygwin), which acts like /dev/null when used as a sink, but as a source
+it sends a non-ending stream of zero bytes.  It's used most often along
+with memory-mapping.  We don't provide a Lisp variable for this because
+the operations needing this are lower level than what ELisp programs
+typically do, and in any case no equivalent exists under native MS Windows.
+*/ );
+  Vnull_device = build_string (NULL_DEVICE);
 
   DEFVAR_LISP ("process-connection-type", &Vprocess_connection_type /*
 Control type of device used to communicate with subprocesses.

@@ -24,11 +24,6 @@ Boston, MA 02111-1307, USA.  */
    operating system this machine is likely to run.
    USUAL-OPSYS="bsd4-3"  */
 
-/* Define WORD_MACHINE if addresses and such have
- * to be corrected before they can be used as byte counts.  */
-
-/* #define WORD_MACHINE */
-  
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically.  */
 #ifndef convex  /* The compiler doesn't always do this.  */
@@ -61,15 +56,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* #define CANNOT_DUMP */
 
-/* Define VIRT_ADDR_VARIES if the virtual addresses of
-   pure and impure space as loaded can vary, and even their
-   relative order cannot be relied on.
-
-   Otherwise Emacs assumes that text space precedes data space,
-   numerically.  */
-
-/*#define VIRT_ADDR_VARIES*/
-
 /* Define C_ALLOCA if this machine does not support a true alloca
    and the one written in C should be used instead.
    Define HAVE_ALLOCA to say that the system provides a properly
@@ -91,9 +77,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* #define NO_REMAP */
 
-/* Addresses on the Convex have the high bit set.  */
-#define DATA_SEG_BITS (1 << (INTBITS-1))
-
 /* Right shift is logical shift.
    And the usual way of handling such machines, which involves
    copying the number into sign_extend_temp, does not work

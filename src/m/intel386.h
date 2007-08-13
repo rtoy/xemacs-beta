@@ -50,11 +50,6 @@ Prime EXL (-machine=intel386 -opsystem=usg5-3)
   Minor changes merged in 19.1.
 NOTE-END */
 
-/* Define WORD_MACHINE if addresses and such have
- * to be corrected before they can be used as byte counts.  */
-
-/* #define WORD_MACHINE */
-
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    Ones defined so far include vax, m68000, ns16000, pyramid,
@@ -117,15 +112,6 @@ NOTE-END */
 
 /* #define CANNOT_DUMP */
 
-/* Define VIRT_ADDR_VARIES if the virtual addresses of
-   pure and impure space as loaded can vary, and even their
-   relative order cannot be relied on.
-
-   Otherwise Emacs assumes that text space precedes data space,
-   numerically.  */
-
-/* #define VIRT_ADDR_VARIES */
-
 #ifdef XENIX
 
 /* Define NO_REMAP if memory segmentation makes it not work well
@@ -152,21 +138,10 @@ NOTE-END */
 
 #ifdef USG
 
-#if 0 /* ALLOCA is now autodetected */
-#define HAVE_ALLOCA
-#endif
 #define NO_REMAP 
 #define TEXT_START 0
 #endif /* USG */
 #endif /* not XENIX */
-
-#ifdef USG5_4
-#define DATA_SEG_BITS 0x08000000
-#endif
-
-#ifdef MSDOS
-#define NO_REMAP
-#endif
 
 #ifdef linux
 /* libc-linux/sysdeps/linux/i386/ulimit.c says that due to shared library, */

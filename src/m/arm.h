@@ -20,11 +20,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.31. */
 
-/* Define WORD_MACHINE if addresses and such have
- * to be corrected before they can be used as byte counts.  */
-
-#undef WORD_MACHINE
-
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    Ones defined so far include vax, m68000, ns16000, pyramid,
@@ -76,33 +71,13 @@ Boston, MA 02111-1307, USA.  */
 
 #undef CANNOT_DUMP
 
-/* Define VIRT_ADDR_VARIES if the virtual addresses of
-   pure and impure space as loaded can vary, and even their
-   relative order cannot be relied on.
-
-   Otherwise Emacs assumes that text space precedes data space,
-   numerically.  */
-
-#undef VIRT_ADDR_VARIES
-
-
 /* this brings in alloca() if we're using cc */
 #ifdef USG
 #define NO_REMAP 
 #define TEXT_START 0
 #endif /* USG */
 
-
-#ifdef USG5_4
-#define DATA_SEG_BITS 0x08000000
-#endif
-
-#ifdef MSDOS
-#define NO_REMAP
-#endif
-
-#ifdef WINDOWSNT
-#define VIRT_ADDR_VARIES
+#ifdef WIN32_NATIVE
 #define DATA_END 	get_data_end ()
 #define DATA_START 	get_data_start ()
 #define HAVE_ALLOCA
@@ -115,17 +90,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define SEGMENT_MASK ((SEGMENT_SIZE)-1)
 #endif
-
-#if 0
-#ifdef __GNUC__
-/* GCC's alloca() is semi-broken.  See lisp.h.
-
-   This brokenness has been confirmed under both Linux and NetBSD.
-   It may also exist on non-Intel architectures. */
-#define BROKEN_ALLOCA_IN_FUNCTION_CALLS
-#endif
-#endif
-
 
 /* XEmacs change: John Hughes <john@AtlanTech.COM> says using vfork
    under i386-unknown-sysv4.2 makes C-g sometimes cause a SIGSEGV

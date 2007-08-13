@@ -69,7 +69,7 @@ Boston, MA 02111-1307, USA.
 #include <errno.h>
 #include "../src/sysfile.h"
 #include "../src/syswait.h"
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
 #include "../src/systime.h"
 #endif
 #include <stdlib.h>
@@ -87,10 +87,6 @@ extern int optind, opterr;
 char * strerror (int errnum);
 #endif /* HAVE_STRERROR */
 
-#ifdef MSDOS
-#undef access
-#endif /* MSDOS */
-
 #ifndef DIRECTORY_SEP
 #define DIRECTORY_SEP '/'
 #endif
@@ -98,7 +94,7 @@ char * strerror (int errnum);
 #define IS_DIRECTORY_SEP(_c_) ((_c_) == DIRECTORY_SEP)
 #endif
 
-#ifdef WINDOWSNT
+#ifdef WIN32_NATIVE
 #undef access
 #undef unlink
 #define fork() 0
@@ -110,7 +106,7 @@ char * strerror (int errnum);
    properly - make sure it does before you enable this! */
 #define DISABLE_DIRECT_ACCESS
 #include <io.h>
-#endif /* WINDOWSNT */
+#endif /* WIN32_NATIVE */
 
 #if defined (HAVE_UNISTD_H)
 #include <unistd.h>
@@ -204,7 +200,9 @@ struct option longopts[] =
 #define DEFAULT_LOCKING DOTLOCKING
 #endif
 
+#ifndef DISABLE_DIRECT_ACCESS
 static void lock_dot(char *);
+#endif
 static void unlock_dot(char *);
 static int parse_lock_method(char *);
 static char *unparse_lock_method(int);
@@ -341,7 +339,7 @@ main (int argc, char *argv[])
       exit (retcode);
     }
 
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
   setuid (getuid ());
 #endif
 #endif /* MAIL_USE_POP */
@@ -566,6 +564,7 @@ dot_filename(char *filename)
 
 static char *dotlock_filename = NULL;
 
+#ifndef DISABLE_DIRECT_ACCESS
 static void
 lock_dot(char *filename)
 {
@@ -625,6 +624,7 @@ lock_dot(char *filename)
     }
   strcpy(dotlock_filename, filename);
 }
+#endif /* not DISABLE_DIRECT_ACCESS */
 
 static void
 unlock_dot(char *filename)
@@ -705,7 +705,7 @@ xmalloc (unsigned int size)
 
 #ifdef MAIL_USE_POP
 
-#ifndef WINDOWSNT
+#ifndef WIN32_NATIVE
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -714,7 +714,7 @@ xmalloc (unsigned int size)
 #include <winsock.h>
 #endif
 #include <stdio.h>
-#include <pwd.h>
+#include "../src/syspwd.h"
 
 #define POP_ERROR 	(-1)
 #define POP_RETRIEVED (0)
@@ -770,7 +770,7 @@ popmail (char *user, char *outfile, char *password)
       error ("Error in open: %s, %s", strerror (errno), outfile);
       return (1);
     }
-#if !defined(__CYGWIN32__) && !defined(WINDOWSNT)
+#if !defined(CYGWIN) && !defined(WIN32_NATIVE)
   fchown (mbfi, getuid (), (gid_t) -1);
 #endif
 

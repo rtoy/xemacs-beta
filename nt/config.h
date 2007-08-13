@@ -21,7 +21,7 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: FSF 19.30 (more or less). */
 
 /* No code in XEmacs #includes config.h twice, but some of the code
-   intended to work with other packages as well (like gmalloc.c) 
+   intended to work with other packages as well (like gmalloc.c)
    think they can include it as many times as they like.  */
 #ifndef _SRC_CONFIG_H_
 #define _SRC_CONFIG_H_
@@ -154,11 +154,10 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_UTIME_H
 #undef HAVE_SYS_WAIT_H
 #undef HAVE_LIBGEN_H
-#undef HAVE_LINUX_VERSION_H
 #undef WORDS_BIGENDIAN
 #undef TIME_WITH_SYS_TIME
 
-#define HAVE_SYS_TIME_H
+#undef HAVE_SYS_TIME_H
 #define HAVE_LOCALE_H
 #ifdef HAVE_X_WINDOWS
 #define HAVE_X11_LOCALE_H
@@ -231,7 +230,10 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_FREXP
 #undef HAVE_FTIME
 #undef HAVE_GETHOSTNAME
-#undef HAVE_GETPAGESIZE
+
+#define HAVE_GETPAGESIZE
+#define getpagesize() 4096
+
 #define HAVE_GETTIMEOFDAY
 #define HAVE_GETWD
 #undef HAVE_LOGB
@@ -255,7 +257,6 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_SIGHOLD
 #undef HAVE_SIGPROCMASK
 #undef HAVE_SIGSETJMP
-#undef HAVE_STRCASECMP
 #define HAVE_STRERROR
 #undef HAVE_TZSET
 #undef HAVE_UTIMES
@@ -287,7 +288,7 @@ Boston, MA 02111-1307, USA.  */
 /* Define HAVE_BERKELEY_DB if you want to use the BerkDB libraries */
 #undef HAVE_BERKELEY_DB
 /* Full #include file path for Berkeley DB's db.h */
-#undef DB_H_PATH
+#undef DB_H_FILE
 
 #if defined (HAVE_DBM) || defined (HAVE_BERKELEY_DB)
 # define HAVE_DATABASE
@@ -296,8 +297,8 @@ Boston, MA 02111-1307, USA.  */
 /* Define HAVE_NCURSES if -lncurses is present. */
 #undef HAVE_NCURSES
 /* Full #include file paths for ncurses' curses.h and term.h. */
-#undef CURSES_H_PATH
-#undef TERM_H_PATH
+#undef CURSES_H_FILE
+#undef TERM_H_FILE
 
 #define LOWTAGS
 
@@ -343,6 +344,11 @@ Boston, MA 02111-1307, USA.  */
 #define bufpos_checking_assert(assertion)
 #endif
 
+#ifdef ERROR_CHECK_GC
+#define gc_checking_assert(assertion) assert (assertion)
+#else
+#define gc_checking_assert(assertion)
+#endif
 
 /* Define MEMORY_USAGE_STATS if you want extra code compiled in to
    determine where XEmacs's memory is going. */
@@ -420,8 +426,6 @@ Boston, MA 02111-1307, USA.  */
    compiling-running-crashing. */
 #undef NO_DOC_FILE
 
-#define CONST const
-
 /* If not defined, use unions instead of ints.  A few systems (DEC Alpha)
    seem to require this, probably because something with the int
    definitions isn't right with 64-bit systems.
@@ -484,7 +488,7 @@ Boston, MA 02111-1307, USA.  */
 #undef SUNPRO
 
 /* Sun SparcStations, SGI machines, and HP9000s700s have support for playing
-   different sound files as beeps.  If you are on a SparcStation but do not 
+   different sound files as beeps.  If you are on a SparcStation but do not
    have the sound option installed for some reason, then undefine
    HAVE_NATIVE_SOUND.  (It's usually found in /usr/demo/SOUND/ on SunOS 4
    and Solaris systems; on Solaris, you may need to install the "SUNWaudmo"
@@ -494,7 +498,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* If you wish to compile with support for the Network Audio System
    system define HAVE_NAS_SOUND.
-   NAS_NO_ERROR_JUMP means that the NAS libraries don't inlcude some
+   NAS_NO_ERROR_JUMP means that the NAS libraries don't include some
    error handling changes.
  */
 #undef HAVE_NAS_SOUND
@@ -534,7 +538,7 @@ Boston, MA 02111-1307, USA.  */
    uses, mbstowcs() and wcstombs(), are unusable when programs are
    statically linked (as XEmacs must be) because the static version of
    libc.a contains the *dynamic* versions of these functions.  These
-   functions don't seem to be called when XEmacs is running, so it's 
+   functions don't seem to be called when XEmacs is running, so it's
    enough to define stubs for them.
 
    This appears to be fixed in SunOS 4.1.2.
@@ -557,10 +561,8 @@ on various systems. */
 #define ENCAPSULATE_OPEN
 #define ENCAPSULATE_FOPEN
 #define ENCAPSULATE_MKDIR
-
-#if defined (WIN32) && defined (USE_IME)
-#define HAVE_FEP
-#endif
+#define ENCAPSULATE_STAT
+#define ENCAPSULATE_FSTAT
 
 #if defined (HAVE_SOCKS) && !defined (DO_NOT_SOCKSIFY)
 #define accept Raccept
@@ -581,10 +583,12 @@ on various systems. */
 
 /* MSVC version >= 2.x without /Za supports __inline */
 #if (_MSC_VER < 900) || defined(__STDC__)
-# define INLINE static
+# define inline
 #else
-# define INLINE __inline
+# define inline __inline
 #endif
+
+#define INLINE_HEADER inline static
 
 /* MSVC warnings no-no crap. When adding one to this section,
    1. Think twice
@@ -596,6 +600,21 @@ on various systems. */
 #pragma warning ( disable : 4018 )
 
 #endif /* compiler understands #pragma warning*/
+
+#ifndef NOT_C_CODE /* Actually means C or C++ */
+# if defined (__cplusplus)
+/* Avoid C++ keywords used as ordinary C identifiers */
+#  define class c_class
+#  define new   c_new
+#  define this  c_this
+#  define catch c_catch
+#  define not   c_not
+
+#  define EXTERN_C extern "C"
+# else /* C code */
+#  define EXTERN_C extern
+# endif
+#endif /* C or C++ */
 
 #define enum_field(enumeration_type) unsigned int
 

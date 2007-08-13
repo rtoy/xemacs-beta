@@ -23,6 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Substantially rewritten for XEmacs.  */
 
+/* 7-8-00 !!#### This file needs definite Mule review. */
+
 #include <config.h>
 #include "lisp.h"
 
@@ -50,6 +52,7 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame.h"
 #include "window.h"
+#include "gutter.h"
 
 #ifdef HAVE_DRAGNDROP
 #include "dragdrop.h"
@@ -113,7 +116,7 @@ x_any_window_to_frame (struct device *d, Window wdesc)
 
   /* We used to map over all frames here and then map over all widgets
      belonging to that frame. However it turns out that this was very fragile
-     as it requires our display stuctures to be in sync _and_ that the
+     as it requires our display structures to be in sync _and_ that the
      loop is told about every new widget somebody adds. Therefore we
      now let Xt find it for us (which does a bottom-up search which
      could even be faster) */
@@ -659,11 +662,9 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
   for (ptr = value; *ptr; ptr++)
     if (!BYTE_ASCII_P (*ptr))
       {
-        CONST char * tmp;
+        const char * tmp;
         encoding = DEVICE_XATOM_COMPOUND_TEXT (XDEVICE (FRAME_DEVICE (f)));
-	TO_EXTERNAL_FORMAT (C_STRING, value,
-			    C_STRING_ALLOCA, tmp,
-			    Qctext);
+	C_STRING_TO_EXTERNAL (value, tmp, Qctext);
         new_XtValue = (String) tmp;
         break;
       }
@@ -760,17 +761,15 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 
       if (STRINGP (prop))
 	{
-	  CONST char *extprop;
+	  const char *extprop;
 
 	  if (XSTRING_LENGTH (prop) == 0)
 	    continue;
 
-	  TO_EXTERNAL_FORMAT (LISP_STRING, prop,
-			      C_STRING_ALLOCA, extprop,
-			      Qctext);
+	  LISP_STRING_TO_EXTERNAL (prop, extprop, Qctext);
 	  if (STRINGP (val))
 	    {
-	      CONST Extbyte *extval;
+	      const Extbyte *extval;
 	      Extcount extvallen;
 
 	      TO_EXTERNAL_FORMAT (LISP_STRING, val,
@@ -1146,12 +1145,12 @@ WARNING: can only handle plain/text and file: transfers!
 	  x_event.xbutton.y_root = lisp_event->event.button.y;
 	}
       modifier = lisp_event->event.button.modifiers;
-      if (modifier & MOD_SHIFT)   state |= ShiftMask;
-      if (modifier & MOD_CONTROL) state |= ControlMask;
-      if (modifier & MOD_META)    state |= xd->MetaMask;
-      if (modifier & MOD_SUPER)   state |= xd->SuperMask;
-      if (modifier & MOD_HYPER)   state |= xd->HyperMask;
-      if (modifier & MOD_ALT)     state |= xd->AltMask;
+      if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
+      if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
+      if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
+      if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
+      if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
+      if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
       state |= Button1Mask << (lisp_event->event.button.button-1);
 
       x_event.xbutton.state = state;
@@ -1191,7 +1190,7 @@ WARNING: can only handle plain/text and file: transfers!
 		  Ctext=NULL;
 		  break;
 		}
-	      strcpy (Ctext+pos, (CONST char *)XSTRING_DATA (XCAR (item)));
+	      strcpy (Ctext+pos, (const char *)XSTRING_DATA (XCAR (item)));
 	      pos += XSTRING_LENGTH (XCAR (item)) + 1;
 	      item = XCDR (item);
 	    }
@@ -1367,7 +1366,7 @@ The type defaults to DndText (4).
 		}
 	      len = XSTRING_LENGTH (XCAR (run)) + 1;
 	      dnd_data = (char *) xrealloc (dnd_data, dnd_len + len);
-	      strcpy (dnd_data + dnd_len - 1, (CONST char *)XSTRING_DATA (XCAR (run)));
+	      strcpy (dnd_data + dnd_len - 1, (const char *)XSTRING_DATA (XCAR (run)));
 	      dnd_len += len;
 	      run = XCDR (run);
 	    }
@@ -1412,12 +1411,12 @@ The type defaults to DndText (4).
 	}
 
       modifier = lisp_event->event.button.modifiers;
-      if (modifier & MOD_SHIFT)   state |= ShiftMask;
-      if (modifier & MOD_CONTROL) state |= ControlMask;
-      if (modifier & MOD_META)    state |= xd->MetaMask;
-      if (modifier & MOD_SUPER)   state |= xd->SuperMask;
-      if (modifier & MOD_HYPER)   state |= xd->HyperMask;
-      if (modifier & MOD_ALT)     state |= xd->AltMask;
+      if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
+      if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
+      if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
+      if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
+      if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
+      if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
       state |= Button1Mask << (lisp_event->event.button.button-1);
 
       x_event.xbutton.state = state;
@@ -1550,13 +1549,16 @@ x_initialize_frame_size (struct frame *f)
   {
     struct window *win = XWINDOW (f->root_window);
 
-    WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f);
-    WINDOW_TOP (win) = FRAME_TOP_BORDER_END (f);
+    WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f)
+      + FRAME_LEFT_GUTTER_BOUNDS (f);
+    WINDOW_TOP (win) = FRAME_TOP_BORDER_END (f)
+      + FRAME_TOP_GUTTER_BOUNDS (f);
 
     if (!NILP (f->minibuffer_window))
       {
 	win = XWINDOW (f->minibuffer_window);
-	WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f);
+	WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f)
+	  + FRAME_LEFT_GUTTER_BOUNDS (f);
       }
   }
 
@@ -1861,7 +1863,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 #ifdef EXTERNAL_WIDGET
   Window window_id = 0;
 #endif
-  CONST char *name;
+  const char *name;
   Arg al [25];
   int ac = 0;
   Widget text, container, shell;
@@ -1872,9 +1874,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 #endif
 
   if (STRINGP (f->name))
-    TO_EXTERNAL_FORMAT (LISP_STRING, f->name,
-			C_STRING_ALLOCA, name,
-			Qctext);
+    LISP_STRING_TO_EXTERNAL (f->name, name, Qctext);
   else
     name = "emacs";
 
@@ -2486,6 +2486,18 @@ x_lower_frame (struct frame *f)
     }
 }
 
+static void
+x_enable_frame (struct frame *f)
+{
+  XtSetSensitive (FRAME_X_SHELL_WIDGET (f), True);
+}
+
+static void
+x_disable_frame (struct frame *f)
+{
+  XtSetSensitive (FRAME_X_SHELL_WIDGET (f), False);
+}
+
 /* Change from withdrawn state to mapped state. */
 static void
 x_make_frame_visible (struct frame *f)
@@ -2789,6 +2801,8 @@ console_type_create_frame_x (void)
   CONSOLE_HAS_METHOD (x, set_mouse_position);
   CONSOLE_HAS_METHOD (x, raise_frame);
   CONSOLE_HAS_METHOD (x, lower_frame);
+  CONSOLE_HAS_METHOD (x, enable_frame);
+  CONSOLE_HAS_METHOD (x, disable_frame);
   CONSOLE_HAS_METHOD (x, make_frame_visible);
   CONSOLE_HAS_METHOD (x, make_frame_invisible);
   CONSOLE_HAS_METHOD (x, iconify_frame);

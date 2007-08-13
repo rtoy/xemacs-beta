@@ -26,13 +26,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* The "lrecord" type of Lisp object is used for all object types
    other than a few simple ones.  This allows many types to be
-   implemented but only a few bits required in a Lisp object for
-   type information. (The tradeoff is that each object has its
-   type marked in it, thereby increasing its size.) The first
-   four bytes of all lrecords is either a pointer to a struct
-   lrecord_implementation, which contains methods describing how
-   to process this object, or an index into an array of pointers
-   to struct lrecord_implementations plus some other data bits.
+   implemented but only a few bits required in a Lisp object for type
+   information. (The tradeoff is that each object has its type marked
+   in it, thereby increasing its size.) All lrecords begin with a
+   `struct lrecord_header', which identifies the lisp object type, by
+   providing an index into a table of `struct lrecord_implementation',
+   which describes the behavior of the lisp object.  It also contains
+   some other data bits.
 
    Lrecords are of two types: straight lrecords, and lcrecords.
    Straight lrecords are used for those types of objects that have
@@ -42,12 +42,12 @@ Boston, MA 02111-1307, USA.  */
    the lrecord_implementation for the object.  There are special
    routines in alloc.c to deal with each such object type.
 
-   Lcrecords are used for less common sorts of objects that don't
-   do their own allocation.  Each such object is malloc()ed
-   individually, and the objects are chained together through
-   a `next' pointer.  Lcrecords have a `struct lcrecord_header'
-   at the top, which contains a `struct lrecord_header' and
-   a `next' pointer, and are allocated using alloc_lcrecord().
+   Lcrecords are used for less common sorts of objects that don't do
+   their own allocation.  Each such object is malloc()ed individually,
+   and the objects are chained together through a `next' pointer.
+   Lcrecords have a `struct lcrecord_header' at the top, which
+   contains a `struct lrecord_header' and a `next' pointer, and are
+   allocated using alloc_lcrecord().
 
    Creating a new lcrecord type is fairly easy; just follow the
    lead of some existing type (e.g. hash tables).  Note that you
@@ -60,21 +60,29 @@ Boston, MA 02111-1307, USA.  */
 struct lrecord_header
 {
   /* index into lrecord_implementations_table[] */
-  unsigned type :8;
-  /* 1 if the object is marked during GC. */
-  unsigned mark :1;
-  /* 1 if the object resides in read-only space */
-  unsigned c_readonly : 1;
+  unsigned int type :8;
+
+  /* If `mark' is 0 after the GC mark phase, the object will be freed
+     during the GC sweep phase.  There are 2 ways that `mark' can be 1:
+     - by being referenced from other objects during the GC mark phase
+     - because it is permanently on, for c_readonly objects */
+  unsigned int mark :1;
+
+  /* 1 if the object resides in logically read-only space, and does not
+     reference other non-c_readonly objects.
+     Invariant: if (c_readonly == 1), then (mark == 1 && lisp_readonly == 1) */
+  unsigned int c_readonly :1;
+
   /* 1 if the object is readonly from lisp */
-  unsigned lisp_readonly : 1;
+  unsigned int lisp_readonly :1;
 };
 
 struct lrecord_implementation;
-int lrecord_type_index (CONST struct lrecord_implementation *implementation);
+int lrecord_type_index (const struct lrecord_implementation *implementation);
 
 #define set_lheader_implementation(header,imp) do {	\
   struct lrecord_header* SLI_header = (header);		\
-  SLI_header->type = lrecord_type_index (imp);		\
+  SLI_header->type = (imp)->lrecord_type_index;		\
   SLI_header->mark = 0;					\
   SLI_header->c_readonly = 0;				\
   SLI_header->lisp_readonly = 0;			\
@@ -84,9 +92,9 @@ struct lcrecord_header
 {
   struct lrecord_header lheader;
 
-  /* The `next' field is normally used to chain all lrecords together
+  /* The `next' field is normally used to chain all lcrecords together
      so that the GC can find (and free) all of them.
-     `alloc_lcrecord' threads records together.
+     `alloc_lcrecord' threads lcrecords together.
 
      The `next' field may be used for other purposes as long as some
      other mechanism is provided for letting the GC do its work.
@@ -118,13 +126,78 @@ struct free_lcrecord_header
   Lisp_Object chain;
 };
 
-/* see alloc.c for an explanation */
-Lisp_Object this_one_is_unmarkable (Lisp_Object obj);
+enum lrecord_type
+{
+  /* Symbol value magic types come first to make SYMBOL_VALUE_MAGIC_P fast.
+     #### This should be replaced by a symbol_value_magic_p flag
+     in the Lisp_Symbol lrecord_header. */
+  lrecord_type_symbol_value_forward,
+  lrecord_type_symbol_value_varalias,
+  lrecord_type_symbol_value_lisp_magic,
+  lrecord_type_symbol_value_buffer_local,
+  lrecord_type_max_symbol_value_magic = lrecord_type_symbol_value_buffer_local,
+
+  lrecord_type_symbol,
+  lrecord_type_subr,
+  lrecord_type_cons,
+  lrecord_type_vector,
+  lrecord_type_string,
+  lrecord_type_lcrecord_list,
+  lrecord_type_compiled_function,
+  lrecord_type_weak_list,
+  lrecord_type_bit_vector,
+  lrecord_type_float,
+  lrecord_type_hash_table,
+  lrecord_type_lstream,
+  lrecord_type_process,
+  lrecord_type_charset,
+  lrecord_type_coding_system,
+  lrecord_type_char_table,
+  lrecord_type_char_table_entry,
+  lrecord_type_range_table,
+  lrecord_type_opaque,
+  lrecord_type_opaque_ptr,
+  lrecord_type_buffer,
+  lrecord_type_extent,
+  lrecord_type_extent_info,
+  lrecord_type_extent_auxiliary,
+  lrecord_type_marker,
+  lrecord_type_event,
+  lrecord_type_keymap,
+  lrecord_type_command_builder,
+  lrecord_type_timeout,
+  lrecord_type_specifier,
+  lrecord_type_console,
+  lrecord_type_device,
+  lrecord_type_frame,
+  lrecord_type_window,
+  lrecord_type_window_configuration,
+  lrecord_type_gui_item,
+  lrecord_type_popup_data,
+  lrecord_type_toolbar_button,
+  lrecord_type_color_instance,
+  lrecord_type_font_instance,
+  lrecord_type_image_instance,
+  lrecord_type_glyph,
+  lrecord_type_face,
+  lrecord_type_database,
+  lrecord_type_tooltalk_message,
+  lrecord_type_tooltalk_pattern,
+  lrecord_type_ldap,
+  lrecord_type_pgconn,
+  lrecord_type_pgresult,
+  lrecord_type_devmode,
+  lrecord_type_mswindows_dialog_id,
+  lrecord_type_last_built_in_type /* must be last */
+};
+
+extern unsigned int lrecord_type_count;
 
 struct lrecord_implementation
 {
-  CONST char *name;
-  /* This function is called at GC time, to make sure that all Lisp_Objects
+  const char *name;
+
+  /* `marker' is called at GC time, to make sure that all Lisp_Objects
      pointed to by this object get properly marked.  It should call
      the mark_object function on all Lisp_Objects in the object.  If
      the return value is non-nil, it should be a Lisp_Object to be
@@ -134,78 +207,97 @@ struct lrecord_implementation
      with the deepest level of Lisp_Object pointers.  This function
      can be NULL, meaning no GC marking is necessary. */
   Lisp_Object (*marker) (Lisp_Object);
-  /* This can be NULL if the object is an lcrecord; the
-     default_object_printer() in print.c will be used. */
+
+  /* `printer' converts the object to a printed representation.
+     This can be NULL; in this case default_object_printer() will be
+     used instead. */
   void (*printer) (Lisp_Object, Lisp_Object printcharfun, int escapeflag);
-  /* This function is called at GC time when the object is about to
+
+  /* `finalizer' is called at GC time when the object is about to
      be freed, and at dump time (FOR_DISKSAVE will be non-zero in this
      case).  It should perform any necessary cleanup (e.g. freeing
-     malloc()ed memory.  This can be NULL, meaning no special
+     malloc()ed memory).  This can be NULL, meaning no special
      finalization is necessary.
 
-     WARNING: remember that the finalizer is called at dump time even
+     WARNING: remember that `finalizer' is called at dump time even
      though the object is not being freed. */
   void (*finalizer) (void *header, int for_disksave);
+
   /* This can be NULL, meaning compare objects with EQ(). */
   int (*equal) (Lisp_Object obj1, Lisp_Object obj2, int depth);
-  /* This can be NULL, meaning use the Lisp_Object itself as the hash;
-     but *only* if the `equal' function is EQ (if two objects are
-     `equal', they *must* hash to the same value or the hashing won't
-     work). */
+
+  /* `hash' generates hash values for use with hash tables that have
+     `equal' as their test function.  This can be NULL, meaning use
+     the Lisp_Object itself as the hash.  But, you must still satisfy
+     the constraint that if two objects are `equal', then they *must*
+     hash to the same value in order for hash tables to work properly.
+     This means that `hash' can be NULL only if the `equal' method is
+     also NULL. */
   unsigned long (*hash) (Lisp_Object, int);
 
   /* External data layout description */
   const struct lrecord_description *description;
 
+  /* These functions allow any object type to have builtin property
+     lists that can be manipulated from the lisp level with
+     `get', `put', `remprop', and `object-plist'. */
   Lisp_Object (*getprop) (Lisp_Object obj, Lisp_Object prop);
   int (*putprop) (Lisp_Object obj, Lisp_Object prop, Lisp_Object val);
   int (*remprop) (Lisp_Object obj, Lisp_Object prop);
   Lisp_Object (*plist) (Lisp_Object obj);
 
-  /* Only one of these is non-0.  If both are 0, it means that this type
-     is not instantiable by alloc_lcrecord(). */
+  /* Only one of `static_size' and `size_in_bytes_method' is non-0.
+     If both are 0, this type is not instantiable by alloc_lcrecord(). */
   size_t static_size;
-  size_t (*size_in_bytes_method) (CONST void *header);
-  /* A unique subtag-code (dynamically) assigned to this datatype. */
-  /* (This is a pointer so the rest of this structure can be read-only.) */
-  int *lrecord_type_index;
+  size_t (*size_in_bytes_method) (const void *header);
+
+  /* The (constant) index into lrecord_implementations_table */
+  enum lrecord_type lrecord_type_index;
+
   /* A "basic" lrecord is any lrecord that's not an lcrecord, i.e.
      one that does not have an lcrecord_header at the front and which
      is (usually) allocated in frob blocks.  We only use this flag for
      some consistency checking, and that only when error-checking is
      enabled. */
-  int basic_p;
+  unsigned int basic_p :1;
 };
 
-extern CONST struct lrecord_implementation *lrecord_implementations_table[];
+/* All the built-in lisp object types are enumerated in `enum record_type'.
+   Additional ones may be defined by a module (none yet).  We leave some
+   room in `lrecord_implementations_table' for such new lisp object types. */
+#define MODULE_DEFINABLE_TYPE_COUNT 32
+
+extern const struct lrecord_implementation *lrecord_implementations_table[(unsigned int)lrecord_type_last_built_in_type + MODULE_DEFINABLE_TYPE_COUNT];
 
 #define XRECORD_LHEADER_IMPLEMENTATION(obj) \
-   (lrecord_implementations_table[XRECORD_LHEADER (obj)->type])
-#define LHEADER_IMPLEMENTATION(lh) (lrecord_implementations_table[(lh)->type])
+   LHEADER_IMPLEMENTATION (XRECORD_LHEADER (obj))
+#define LHEADER_IMPLEMENTATION(lh) lrecord_implementations_table[(lh)->type]
 
 extern int gc_in_progress;
 
-#define MARKED_RECORD_P(obj) (gc_in_progress && XRECORD_LHEADER (obj)->mark)
+#define MARKED_RECORD_P(obj) (XRECORD_LHEADER (obj)->mark)
 #define MARKED_RECORD_HEADER_P(lheader) ((lheader)->mark)
 #define MARK_RECORD_HEADER(lheader)   ((void) ((lheader)->mark = 1))
 #define UNMARK_RECORD_HEADER(lheader) ((void) ((lheader)->mark = 0))
 
-#define UNMARKABLE_RECORD_HEADER_P(lheader) \
-  (LHEADER_IMPLEMENTATION (lheader)->marker == this_one_is_unmarkable)
-
 #define C_READONLY_RECORD_HEADER_P(lheader)  ((lheader)->c_readonly)
 #define LISP_READONLY_RECORD_HEADER_P(lheader)  ((lheader)->lisp_readonly)
-#define SET_C_READONLY_RECORD_HEADER(lheader) \
-  ((void) ((lheader)->c_readonly = (lheader)->lisp_readonly = 1))
+#define SET_C_READONLY_RECORD_HEADER(lheader) do {	\
+  struct lrecord_header *SCRRH_lheader = (lheader);	\
+  SCRRH_lheader->c_readonly = 1;			\
+  SCRRH_lheader->lisp_readonly = 1;			\
+  SCRRH_lheader->mark = 1;				\
+} while (0)
 #define SET_LISP_READONLY_RECORD_HEADER(lheader) \
   ((void) ((lheader)->lisp_readonly = 1))
+#define RECORD_MARKER(lheader) lrecord_markers[(lheader)->type]
 
 /* External description stuff
 
    A lrecord external description  is an array  of values.  The  first
    value of each line is a type, the second  the offset in the lrecord
    structure.  Following values  are parameters, their  presence, type
-   and number is type-dependant.
+   and number is type-dependent.
 
    The description ends with a "XD_END" or "XD_SPECIFIER_END" record.
 
@@ -236,7 +328,7 @@ extern int gc_in_progress;
   An array of Lisp objects or pointers to lrecords.
   The third element is the count.
 
-  XD_LO_RESET_NIL
+    XD_LO_RESET_NIL
   Lisp objects which will be reset to Qnil when dumping.  Useful for cleaning
   up caches.
 
@@ -333,17 +425,6 @@ struct struct_description {
   { XD_INT,        offsetof (base_type, cur) }, \
   { XD_INT_RESET,  offsetof (base_type, max), XD_INDIRECT(1, 0) }
 
-/* Declaring the following structures as const puts them in the
-   text (read-only) segment, which makes debugging inconvenient
-   because this segment is not mapped when processing a core-
-   dump file */
-
-#ifdef DEBUG_XEMACS
-#define CONST_IF_NOT_DEBUG
-#else
-#define CONST_IF_NOT_DEBUG CONST
-#endif
-
 /* DEFINE_LRECORD_IMPLEMENTATION is for objects with constant size.
    DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION is for objects whose size varies.
  */
@@ -357,62 +438,220 @@ struct struct_description {
 #define DEFINE_BASIC_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
 DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
-#define DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,props,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,props,sizeof(structtype),0,1,structtype)
+#define DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof(structtype),0,1,structtype)
 
 #define DEFINE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
 DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
 
-#define DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,props,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,props,sizeof (structtype),0,0,structtype)
+#define DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
 
 #define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
 
-#define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,props,sizer,structtype) \
-MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,props,0,sizer,0,structtype) \
+#define DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,0,sizer,1,structtype)
 
-#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,props,size,sizer,basic_p,structtype) \
+#define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype) \
+
+#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
-static int lrecord_##c_name##_lrecord_type_index;			\
-CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name =	\
+const struct lrecord_implementation lrecord_##c_name =			\
   { name, marker, printer, nuker, equal, hash, desc,			\
-    getprop, putprop, remprop, props, size, sizer,			\
-    &(lrecord_##c_name##_lrecord_type_index), basic_p }			\
+    getprop, putprop, remprop, plist, size, sizer,			\
+    lrecord_type_##c_name, basic_p }
+
+#define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,structtype) \
+DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,structtype)
+
+#define DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,structtype) \
+MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizeof (structtype),0,0,structtype)
+
+#define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,sizer,structtype) \
+DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,0,0,0,0,sizer,structtype)
+
+#define DEFINE_EXTERNAL_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,sizer,structtype) \
+MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,0,sizer,0,structtype)
+
+#define MAKE_EXTERNAL_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,desc,getprop,putprop,remprop,plist,size,sizer,basic_p,structtype) \
+DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
+unsigned int lrecord_type_##c_name = lrecord_type_count++;              \
+const struct lrecord_implementation lrecord_##c_name =			\
+  { name, marker, printer, nuker, equal, hash, desc,			\
+    getprop, putprop, remprop, plist, size, sizer,			\
+    (enum lrecord_type)lrecord_type_##c_name, basic_p }
+
+
+extern Lisp_Object (*lrecord_markers[]) (Lisp_Object);
+
+#define INIT_LRECORD_IMPLEMENTATION(type) do {				\
+  lrecord_implementations_table[lrecord_type_##type] = &lrecord_##type;	\
+  lrecord_markers[lrecord_type_##type] =				\
+    lrecord_implementations_table[lrecord_type_##type]->marker;		\
+} while (0)
 
 #define LRECORDP(a) (XTYPE (a) == Lisp_Type_Record)
 #define XRECORD_LHEADER(a) ((struct lrecord_header *) XPNTR (a))
 
 #define RECORD_TYPEP(x, ty) \
-  (LRECORDP (x) && \
-   lrecord_implementations_table[XRECORD_LHEADER (x)->type] == (ty))
+  (LRECORDP (x) && (((unsigned int)(XRECORD_LHEADER (x)->type)) == ((unsigned int)(ty))))
 
-/* NOTE: the DECLARE_LRECORD() must come before the associated
-   DEFINE_LRECORD_*() or you will get compile errors.
+/* Steps to create a new object:
 
-   Furthermore, you always need to put the DECLARE_LRECORD() in a header
-   file, and make sure the header file is included in inline.c, even
-   if the type is private to a particular file.  Otherwise, you will
-   get undefined references for the error_check_foo() inline function
-   under GCC. */
+   1. Declare the struct for your object in a header file somewhere.
+   Remember that it must begin with
+
+   struct lcrecord_header header;
+
+   2. Put a DECLARE_LRECORD() for the object below the struct definition,
+   along with the standard XFOO/XSETFOO junk.
+
+   3. Add this header file to inline.c.
+
+   4. Create the methods for your object.  Note that technically you don't
+   need any, but you will almost always want at least a mark method.
+
+   5. Define your object with DEFINE_LRECORD_IMPLEMENTATION() or some
+   variant.
+
+   6. Include the header file in the .c file where you defined the object.
+
+   7. Put a call to INIT_LRECORD_IMPLEMENTATION() for the object in the
+   .c file's syms_of_foo() function.
+
+   8. Add a type enum for the object to enum lrecord_type, earlier in this
+   file.
+
+An example:
+
+------------------------------ in toolbar.h -----------------------------
+
+struct toolbar_button
+{
+  struct lcrecord_header header;
+
+  Lisp_Object next;
+  Lisp_Object frame;
+
+  Lisp_Object up_glyph;
+  Lisp_Object down_glyph;
+  Lisp_Object disabled_glyph;
+
+  Lisp_Object cap_up_glyph;
+  Lisp_Object cap_down_glyph;
+  Lisp_Object cap_disabled_glyph;
+
+  Lisp_Object callback;
+  Lisp_Object enabled_p;
+  Lisp_Object help_string;
+
+  char enabled;
+  char down;
+  char pushright;
+  char blank;
+
+  int x, y;
+  int width, height;
+  int dirty;
+  int vertical;
+  int border_width;
+};
+
+DECLARE_LRECORD (toolbar_button, struct toolbar_button);
+#define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
+#define XSETTOOLBAR_BUTTON(x, p) XSETRECORD (x, p, toolbar_button)
+#define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)
+#define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
+#define CONCHECK_TOOLBAR_BUTTON(x) CONCHECK_RECORD (x, toolbar_button)
+
+------------------------------ in toolbar.c -----------------------------
+
+#include "toolbar.h"
+
+...
+
+static Lisp_Object
+mark_toolbar_button (Lisp_Object obj)
+{
+  struct toolbar_button *data = XTOOLBAR_BUTTON (obj);
+  mark_object (data->next);
+  mark_object (data->frame);
+  mark_object (data->up_glyph);
+  mark_object (data->down_glyph);
+  mark_object (data->disabled_glyph);
+  mark_object (data->cap_up_glyph);
+  mark_object (data->cap_down_glyph);
+  mark_object (data->cap_disabled_glyph);
+  mark_object (data->callback);
+  mark_object (data->enabled_p);
+  return data->help_string;
+}
+
+DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
+			       mark_toolbar_button, 0, 0, 0, 0, 0,
+			       struct toolbar_button);
+
+...
+
+void
+syms_of_toolbar (void)
+{
+  INIT_LRECORD_IMPLEMENTATION (toolbar_button);
+
+  ...;
+}
+
+------------------------------ in inline.c -----------------------------
+
+#ifdef HAVE_TOOLBARS
+#include "toolbar.h"
+#endif
+
+------------------------------ in lrecord.h -----------------------------
+
+enum lrecord_type
+{
+  ...
+  lrecord_type_toolbar_button,
+  ...
+};
+
+*/
+
+/*
+
+Note: Object types defined in external dynamically-loaded modules (not
+part of the XEmacs main source code) should use DECLARE_EXTERNAL_LRECORD
+and DEFINE_EXTERNAL_LRECORD_IMPLEMENTATION rather than DECLARE_LRECORD
+and DEFINE_LRECORD_IMPLEMENTATION.
+
+*/
+
 
 #ifdef ERROR_CHECK_TYPECHECK
 
 # define DECLARE_LRECORD(c_name, structtype)			\
-extern CONST_IF_NOT_DEBUG struct lrecord_implementation		\
-  lrecord_##c_name;						\
-INLINE structtype *error_check_##c_name (Lisp_Object obj);	\
-INLINE structtype *						\
+extern const struct lrecord_implementation lrecord_##c_name;	\
+INLINE_HEADER structtype *					\
+error_check_##c_name (Lisp_Object obj);				\
+INLINE_HEADER structtype *					\
 error_check_##c_name (Lisp_Object obj)				\
 {								\
-  assert (RECORD_TYPEP (obj, &lrecord_##c_name));		\
+  assert (RECORD_TYPEP (obj, lrecord_type_##c_name));		\
   return (structtype *) XPNTR (obj);				\
 }								\
 extern Lisp_Object Q##c_name##p
 
+# define DECLARE_EXTERNAL_LRECORD(c_name, structtype)	       	\
+extern unsigned int lrecord_type_##c_name;                      \
+DECLARE_LRECORD(c_name, structtype)
+
 # define DECLARE_NONRECORD(c_name, type_enum, structtype)	\
-INLINE structtype *error_check_##c_name (Lisp_Object obj);	\
-INLINE structtype *						\
+INLINE_HEADER structtype *					\
+error_check_##c_name (Lisp_Object obj);				\
+INLINE_HEADER structtype *					\
 error_check_##c_name (Lisp_Object obj)				\
 {								\
   assert (XTYPE (obj) == type_enum);				\
@@ -425,26 +664,29 @@ extern Lisp_Object Q##c_name##p
 
 # define XSETRECORD(var, p, c_name) do				\
 {								\
-  XSETOBJ (var, Lisp_Type_Record, p);				\
-  assert (RECORD_TYPEP (var, &lrecord_##c_name));		\
+  XSETOBJ (var, p);						\
+  assert (RECORD_TYPEP (var, lrecord_type_##c_name));		\
 } while (0)
 
 #else /* not ERROR_CHECK_TYPECHECK */
 
 # define DECLARE_LRECORD(c_name, structtype)			\
 extern Lisp_Object Q##c_name##p;				\
-extern CONST_IF_NOT_DEBUG struct lrecord_implementation		\
-  lrecord_##c_name
+extern const struct lrecord_implementation lrecord_##c_name
+# define DECLARE_EXTERNAL_LRECORD(c_name, structtype)		\
+extern Lisp_Object Q##c_name##p;				\
+extern unsigned int lrecord_type_##c_name;			\
+extern const struct lrecord_implementation lrecord_##c_name
 # define DECLARE_NONRECORD(c_name, type_enum, structtype)	\
 extern Lisp_Object Q##c_name##p
 # define XRECORD(x, c_name, structtype) ((structtype *) XPNTR (x))
 # define XNONRECORD(x, c_name, type_enum, structtype)		\
   ((structtype *) XPNTR (x))
-# define XSETRECORD(var, p, c_name) XSETOBJ (var, Lisp_Type_Record, p)
+# define XSETRECORD(var, p, c_name) XSETOBJ (var, p)
 
 #endif /* not ERROR_CHECK_TYPECHECK */
 
-#define RECORDP(x, c_name) RECORD_TYPEP (x, &lrecord_##c_name)
+#define RECORDP(x, c_name) RECORD_TYPEP (x, lrecord_type_##c_name)
 
 /* Note: we now have two different kinds of type-checking macros.
    The "old" kind has now been renamed CONCHECK_foo.  The reason for
@@ -470,7 +712,7 @@ extern Lisp_Object Q##c_name##p
    way out and disabled returning from a signal entirely. */
 
 #define CONCHECK_RECORD(x, c_name) do {			\
- if (!RECORD_TYPEP (x, &lrecord_##c_name))		\
+ if (!RECORD_TYPEP (x, lrecord_type_##c_name))		\
    x = wrong_type_argument (Q##c_name##p, x);		\
 }  while (0)
 #define CONCHECK_NONRECORD(x, lisp_enum, predicate) do {\
@@ -478,7 +720,7 @@ extern Lisp_Object Q##c_name##p
    x = wrong_type_argument (predicate, x);		\
  } while (0)
 #define CHECK_RECORD(x, c_name) do {			\
- if (!RECORD_TYPEP (x, &lrecord_##c_name))		\
+ if (!RECORD_TYPEP (x, lrecord_type_##c_name))		\
    dead_wrong_type_argument (Q##c_name##p, x);		\
  } while (0)
 #define CHECK_NONRECORD(x, lisp_enum, predicate) do {	\
@@ -486,7 +728,7 @@ extern Lisp_Object Q##c_name##p
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
-void *alloc_lcrecord (size_t size, CONST struct lrecord_implementation *);
+void *alloc_lcrecord (size_t size, const struct lrecord_implementation *);
 
 #define alloc_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_lcrecord (sizeof (type), lrecord_implementation))
