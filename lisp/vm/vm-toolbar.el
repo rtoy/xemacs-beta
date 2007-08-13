@@ -25,7 +25,7 @@
    (vm-toolbar-any-messages-p)
    "Go to the next message.\n
 The command `vm-toolbar-next-command' is run, which is normally
-bound to `vm-next-message'.
+fbound to `vm-next-message'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-next-command 'some-other-command)"])
@@ -39,7 +39,7 @@ s-expression like this one in your .vm file:
    (vm-toolbar-any-messages-p)
    "Go to the previous message.\n
 The command `vm-toolbar-previous-command' is run, which is normally
-bound to `vm-previous-message'.
+fbound to `vm-previous-message'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-previous-command 'some-other-command)"])
@@ -58,7 +58,7 @@ s-expression like this one in your .vm file:
   [vm-toolbar-file-icon vm-toolbar-file-command (vm-toolbar-any-messages-p)
    "Save the current message to a folder.\n
 The command `vm-toolbar-file-command' is run, which is normally
-bound to `vm-save-message'.
+fbound to `vm-save-message'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-file-command 'some-other-command)"])
@@ -71,7 +71,7 @@ s-expression like this one in your .vm file:
    (vm-toolbar-mail-waiting-p)
    "Retrieve spooled mail for the current folder.\n
 The command `vm-toolbar-getmail-command' is run, which is normally
-bound to `vm-get-new-mail'.
+fbound to `vm-get-new-mail'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-getmail-command 'some-other-command)"])
@@ -85,7 +85,7 @@ s-expression like this one in your .vm file:
    (vm-toolbar-any-messages-p)
    "Print the current message.\n
 The command `vm-toolbar-print-command' is run, which is normally
-bound to `vm-print-message'.
+fbound to `vm-print-message'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-print-command 'some-other-command)"])
@@ -97,7 +97,7 @@ s-expression like this one in your .vm file:
   [vm-toolbar-visit-icon vm-toolbar-visit-command t
    "Visit a different folder.\n
 The command `vm-toolbar-visit-command' is run, which is normally
-bound to `vm-visit-folder'.
+fbound to `vm-visit-folder'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-visit-command 'some-other-command)"])
@@ -111,7 +111,7 @@ s-expression like this one in your .vm file:
    (vm-toolbar-any-messages-p)
    "Reply to the current message.\n
 The command `vm-toolbar-reply-command' is run, which is normally
-bound to `vm-followup-include-text'.
+fbound to `vm-followup-include-text'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-reply-command 'some-other-command)"])
@@ -123,7 +123,7 @@ s-expression like this one in your .vm file:
   [vm-toolbar-compose-icon vm-toolbar-compose-command t
    "Compose a new message.\n
 The command `vm-toolbar-compose-command' is run, which is normally
-bound to `vm-mail'.
+fbound to `vm-mail'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-compose-command 'some-other-command)"])
@@ -141,7 +141,7 @@ documentation for the variables vm-mime-internal-content-types
 and vm-mime-external-content-types-alist to see how to control
 whether you see buttons or objects.\n
 The command `vm-toolbar-decode-mime-command' is run, which is normally
-bound to `vm-decode-mime-messages'.
+fbound to `vm-decode-mime-messages'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-decode-mime-command 'some-other-command)"])
@@ -190,7 +190,7 @@ file then this button will run `recover-file'."])
    (vm-toolbar-can-quit-p)
    "Quit visiting this folder.\n
 The command `vm-toolbar-quit-command' is run, which is normally
-bound to `vm-quit'.
+fbound to `vm-quit'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-quit-command 'some-other-command)"])
@@ -199,10 +199,12 @@ s-expression like this one in your .vm file:
     (fset 'vm-toolbar-quit-command 'vm-quit))
 
 (defun vm-toolbar-any-messages-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    vm-message-list))
+  (condition-case nil
+      (save-excursion
+	(vm-check-for-killed-folder)
+	(vm-select-folder-buffer)
+	vm-message-list)
+    (error nil)))
 
 (defun vm-toolbar-delete/undelete-message (&optional prefix-arg)
   (interactive "P")
@@ -218,11 +220,13 @@ s-expression like this one in your .vm file:
 
 (defun vm-toolbar-can-autofile-p ()
   (interactive)
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and vm-message-pointer
-	 (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist))))
+  (condition-case nil
+      (save-excursion
+	(vm-check-for-killed-folder)
+	(vm-select-folder-buffer)
+	(and vm-message-pointer
+	     (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)))
+    (error nil)))
 
 (defun vm-toolbar-autofile-message ()
   (interactive)
@@ -239,39 +243,43 @@ s-expression like this one in your .vm file:
       (error "No match for message in vm-auto-folder-alist."))))
 
 (defun vm-toolbar-can-recover-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and vm-folder-read-only
-	 buffer-file-name
-	 buffer-auto-save-file-name
-	 (null (buffer-modified-p))
-	 (file-newer-than-file-p
-	  buffer-auto-save-file-name
-	  buffer-file-name))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(and vm-folder-read-only
+	     buffer-file-name
+	     buffer-auto-save-file-name
+	     (null (buffer-modified-p))
+	     (file-newer-than-file-p
+	      buffer-auto-save-file-name
+	      buffer-file-name)))
+    (error nil)))
 
 (defun vm-toolbar-can-decode-mime-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and
-     vm-display-using-mime
-     vm-message-pointer
-     vm-presentation-buffer
-     (not vm-mime-decoded)
-     (not (vm-mime-plain-message-p (car vm-message-pointer))))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(and
+	 vm-display-using-mime
+	 vm-message-pointer
+	 vm-presentation-buffer
+	 (not vm-mime-decoded)
+	 (not (vm-mime-plain-message-p (car vm-message-pointer)))))
+    (error nil)))
 
 (defun vm-toolbar-can-quit-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (memq major-mode '(vm-mode vm-virtual-mode))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(memq major-mode '(vm-mode vm-virtual-mode)))
+    (error nil)))
 
 (defun vm-toolbar-mail-waiting-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    vm-spooled-mail-waiting))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	vm-spooled-mail-waiting)
+    (error nil)))
 
 (fset 'vm-toolbar-can-help-p 'vm-toolbar-can-quit-p)
 
@@ -311,6 +319,9 @@ s-expression like this one in your .vm file:
   (vm-toolbar-initialize)
   (let ((height (+ 4 (glyph-height (car vm-toolbar-help-icon))))
 	(width (+ 4 (glyph-width (car vm-toolbar-help-icon))))
+	(frame (selected-frame))
+	(buffer (current-buffer))
+	(tag-set '(win))
 	(myframe (vm-created-this-frame-p))
 	toolbar )
     ;; glyph-width and glyph-height return 0 at startup sometimes
@@ -328,31 +339,27 @@ s-expression like this one in your .vm file:
     (cond ((eq vm-toolbar-orientation 'right)
 	   (setq vm-toolbar-specifier right-toolbar)
 	   (if myframe
-	       (set-specifier right-toolbar (cons (selected-frame) toolbar)))
-	   (set-specifier right-toolbar (cons (current-buffer) toolbar))
-	   (set-specifier right-toolbar-width
-			  (cons (selected-frame) width)))
+	       (set-specifier right-toolbar toolbar frame tag-set))
+	   (set-specifier right-toolbar toolbar buffer)
+	   (set-specifier right-toolbar-width width frame tag-set))
 	  ((eq vm-toolbar-orientation 'left)
 	   (setq vm-toolbar-specifier left-toolbar)
 	   (if myframe
-	       (set-specifier left-toolbar (cons (selected-frame) toolbar)))
-	   (set-specifier left-toolbar (cons (current-buffer) toolbar))
-	   (set-specifier left-toolbar-width
-			  (cons (selected-frame) width)))
+	       (set-specifier left-toolbar toolbar frame tag-set))
+	   (set-specifier left-toolbar toolbar buffer)
+	   (set-specifier left-toolbar-width width frame tag-set))
 	  ((eq vm-toolbar-orientation 'bottom)
 	   (setq vm-toolbar-specifier bottom-toolbar)
 	   (if myframe
-	       (set-specifier bottom-toolbar (cons (selected-frame) toolbar)))
-	   (set-specifier bottom-toolbar (cons (current-buffer) toolbar))
-	   (set-specifier bottom-toolbar-height
-			  (cons (selected-frame) height)))
+	       (set-specifier bottom-toolbar toolbar frame tag-set))
+	   (set-specifier bottom-toolbar toolbar buffer)
+	   (set-specifier bottom-toolbar-height height frame tag-set))
 	  (t
 	   (setq vm-toolbar-specifier top-toolbar)
 	   (if myframe
-	       (set-specifier top-toolbar (cons (selected-frame) toolbar)))
-	   (set-specifier top-toolbar (cons (current-buffer) toolbar))
-	   (set-specifier top-toolbar-height
-			  (cons (selected-frame) height))))))
+	       (set-specifier top-toolbar toolbar frame tag-set))
+	   (set-specifier top-toolbar toolbar buffer)
+	   (set-specifier top-toolbar-height height frame tag-set)))))
 
 (defun vm-toolbar-make-toolbar-spec ()
   (let ((button-alist '(
@@ -360,6 +367,7 @@ s-expression like this one in your .vm file:
 			(compose . vm-toolbar-compose-button)
 			(delete/undelete . vm-toolbar-delete/undelete-button)
 			(file . vm-toolbar-file-button)
+			(getmail . vm-toolbar-getmail-button)
 			(help . vm-toolbar-help-button)
 			(mime . vm-toolbar-decode-mime-button)
 			(next . vm-toolbar-next-button)
@@ -393,7 +401,8 @@ s-expression like this one in your .vm file:
     (let ((tuples
 	   (if (featurep 'xpm)
 	       (list
-		(if (>= (device-bitplanes) 16)
+		(if (and (device-on-window-system-p)
+			 (>= (device-bitplanes) 16))
       '(vm-toolbar-decode-mime-icon "mime-colorful-up.xpm"
 				    "mime-colorful-dn.xpm"
 				    "mime-colorful-xx.xpm")

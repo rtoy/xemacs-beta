@@ -55,7 +55,7 @@ Time at which Emacs was dumped out.")
   "Non-nil when this is a test (beta) version of XEmacs.
 Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
-(defconst xemacs-codename "Queens"
+(defconst xemacs-codename "Brooklyn"
   "Symbolic name of XEmacs build.
 Warning, this variable did not exist in XEmacs versions prior to 19.16
 and 20.3")

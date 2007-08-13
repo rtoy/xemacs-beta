@@ -1,5 +1,14 @@
 							-*- indented-text -*-
+to 19.16 pre2 -- "Brooklyn"
+-- Patch for XEmacs not Dying on quit applied
+-- movemail synched with 20.3
+-- Lispref synched with 20.3
+-- XEmacs FAQ synched with 20.3
+-- Internals manual synched with 20.3
+-- VM-6.34 courtesy of Kyle Jones
+
 to 19.16 pre1 -- "Queens"
+-- Fix all lisp to refer to only keysyms with `-' instead of `_'.
 -- Hardcode the version number since this is dead code and the previous
    kludgy method doesn't work anymore.
 

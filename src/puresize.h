@@ -31,11 +31,15 @@ Boston, MA 02111-1307, USA.  */
 /* Basic amount of purespace to use, in the absence of extra
    things configured in. */
 
+/* This computation is Barbra Streisand, BS
 #if (LONGBITS == 64)
 # define BASE_PURESIZE 944000
 #else
 # define BASE_PURESIZE 527000
 #endif
+*/
+
+#define BASE_PURESIZE 1400000
 
 /* If any particular systems need to change the base puresize, they
    should define SYSTEM_PURESIZE_EXTRA.  Note that this can be

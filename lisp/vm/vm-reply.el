@@ -297,7 +297,18 @@ vm-included-text-prefix is prepended to every yanked line."
 		    (t (setq parts (list o))))
 	      (while parts
 		(cond ((vm-mime-text-type-p (car parts))
-		       (if (vm-mime-display-internal-text/plain (car parts) t)
+		       (if (cond ((vm-mime-types-match
+				   "text/html"
+				   (car (vm-mm-layout-type (car parts))))
+				  (vm-mime-display-internal-text/html
+				   (car parts)))
+				 ((vm-mime-types-match
+				   "text/enriched"
+				   (car (vm-mm-layout-type (car parts))))
+				  (vm-mime-display-internal-text/enriched
+				   (car parts)))
+				 ((vm-mime-display-internal-text/plain
+				   (car parts) t)))
 			   nil
 			 ;; charset problems probably
 			 ;; just dump the raw bits
@@ -333,6 +344,10 @@ as having been replied to, if appropriate."
   (let ((b (current-buffer)))
     (vm-mail-send)
     (cond ((null (buffer-name b)) ;; dead buffer
+	   ;; This improves window configuration behavior in
+	   ;; XEmacs.  It avoids taking the folder buffer from
+	   ;; one frame and attaching it to the selected frame.
+	   (set-buffer (window-buffer (selected-window)))
 	   (vm-display nil nil '(vm-mail-send-and-exit)
 		       '(vm-mail-send-and-exit
 			 reading-message
@@ -355,7 +370,9 @@ as having been replied to, if appropriate."
 				vm-kept-mail-buffers)))
 	(mapcar (function
 		 (lambda (b)
-		   (and (buffer-name b) (kill-buffer b))))
+		   (and (buffer-name b)
+			(not (buffer-modified-p b))
+			(kill-buffer b))))
 		extras)
 	(and vm-kept-mail-buffers extras
 	     (setcdr (memq (car extras) vm-kept-mail-buffers) nil)))))
@@ -421,16 +438,16 @@ as replied to, forwarded, etc, if appropriate."
       (let ((this-command this-command))
 	(save-excursion
 	  (mail-send))))
-    (cond ((eq vm-system-state 'replying)
-	   (vm-mail-mark-replied))
-	  ((eq vm-system-state 'forwarding)
-	   (vm-mail-mark-forwarded))
-	  ((eq vm-system-state 'redistributing)
-	   (vm-mail-mark-redistributed)))
     ;; be careful, something could have killed the composition
     ;; buffer inside mail-send.
     (if (eq (current-buffer) composition-buffer)
 	(progn
+	  (cond ((eq vm-system-state 'replying)
+		 (vm-mail-mark-replied))
+		((eq vm-system-state 'forwarding)
+		 (vm-mail-mark-forwarded))
+		((eq vm-system-state 'redistributing)
+		 (vm-mail-mark-redistributed)))
 	  (vm-rename-current-mail-buffer)
 	  (vm-keep-mail-buffer (current-buffer))))
     (vm-display nil nil '(vm-mail-send) '(vm-mail-send))))
@@ -599,7 +616,8 @@ Subject: header manually."
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
-  (if (eq last-command 'vm-next-command-uses-marks)
+  (if (and (eq last-command 'vm-next-command-uses-marks)
+	   (cdr (vm-select-marked-or-prefixed-messages 0)))
       (let ((vm-digest-send-type vm-forwarding-digest-type))
 	(setq this-command 'vm-next-command-uses-marks)
 	(command-execute 'vm-send-digest))
@@ -607,8 +625,8 @@ Subject: header manually."
 	  (miming (and vm-send-using-mime
 		       (equal vm-forwarding-digest-type "mime")))
 	  mail-buffer
-	  header-end boundary
-	  (mp vm-message-pointer))
+	  header-end
+	  (mp (vm-select-marked-or-prefixed-messages 1)))
       (save-restriction
 	(widen)
 	(vm-mail-internal
@@ -635,15 +653,13 @@ Subject: header manually."
 	  (goto-char (match-end 0))
 	  (setq header-end (match-beginning 0)))
 	(cond ((equal vm-forwarding-digest-type "mime")
-	       (setq boundary (vm-mime-encapsulate-messages
-			       (list (car mp)) vm-forwarded-headers
-			       vm-unforwarded-header-regexp))
+	       (vm-mime-encapsulate-messages (list (car mp))
+					     vm-forwarded-headers
+					     vm-unforwarded-header-regexp
+					     nil)
 	       (goto-char header-end)
 	       (insert "MIME-Version: 1.0\n")
-	       (insert (if vm-mime-avoid-folding-content-type
-			   "Content-Type: multipart/digest; boundary=\""
-			 "Content-Type: multipart/digest;\n\tboundary=\"")
-		       boundary "\"\n")
+	       (insert "Content-Type: message/rfc822\n")
 	       (insert "Content-Transfer-Encoding: "
 		       (vm-determine-proper-content-transfer-encoding
 			(point)
@@ -665,9 +681,7 @@ Subject: header manually."
 	  (let ((b (current-buffer)))
 	    (set-buffer mail-buffer)
 	    (mail-text)
-	    (vm-mime-attach-object b "multipart/digest"
-				   (list (concat "boundary=\""
-						 boundary "\"")) nil t)
+	    (vm-mime-attach-object b "message/rfc822" nil nil t)
 	    (add-hook 'kill-buffer-hook
 		      (list 'lambda ()
 			    (list 'if (list 'eq mail-buffer '(current-buffer))
@@ -742,10 +756,10 @@ you can change the recipient address before resending the message."
 The current message will be copied to a Mail mode buffer and you
 can edit the message and send it as usual.
 
-NOTE: since you are doing a resend, a Resent-To header is
-provided for you to fill in.  If you don't fill it in, when you
-send the message it will go to the original recipients listed in
-the To and Cc headers.  You may also create a Resent-Cc header."
+NOTE: since you are doing a resend, a Resent-To header is provided
+for you to fill in the new recipient list.  If you don't fill in
+this header, what happens when you send the message is undefined.
+You may also create a Resent-Cc header."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
@@ -842,7 +856,8 @@ only marked messages will be put into the digest."
       (cond ((equal vm-digest-send-type "mime")
 	     (setq boundary (vm-mime-encapsulate-messages
 			     mlist vm-mime-digest-headers
-			     vm-mime-digest-discard-header-regexp))
+			     vm-mime-digest-discard-header-regexp
+			     t))
 	     (goto-char header-end)
 	     (insert "MIME-Version: 1.0\n")
 	     (insert (if vm-mime-avoid-folding-content-type
@@ -864,18 +879,6 @@ only marked messages will be put into the digest."
 	      vm-rfc1153-digest-discard-header-regexp)))
       (goto-char start)
       (setq mp mlist)
-      (if prefix
-	  (progn
-	    (message "Building digest preamble...")
-	    (while mp
-	      (let ((vm-summary-uninteresting-senders nil))
-		(insert (vm-sprintf 'vm-digest-preamble-format (car mp)) "\n"))
-	      (if vm-digest-center-preamble
-		  (progn
-		    (forward-char -1)
-		    (center-line)
-		    (forward-char 1)))
-	      (setq mp (cdr mp)))))
       (if miming
 	  (let ((b (current-buffer)))
 	    (set-buffer mail-buffer)
@@ -887,6 +890,22 @@ only marked messages will be put into the digest."
 		      (list 'lambda ()
 			    (list 'if (list 'eq mail-buffer '(current-buffer))
 				  (list 'kill-buffer b))))))
+      (if prefix
+	  (save-excursion
+	    (message "Building digest preamble...")
+	    (if miming
+		(progn
+		  (set-buffer mail-buffer)
+		  (mail-text)))
+	    (while mp
+	      (let ((vm-summary-uninteresting-senders nil))
+		(insert (vm-sprintf 'vm-digest-preamble-format (car mp)) "\n"))
+	      (if vm-digest-center-preamble
+		  (progn
+		    (forward-char -1)
+		    (center-line)
+		    (forward-char 1)))
+	      (setq mp (cdr mp)))))
       (mail-position-on-field "To")
       (message "Building %s digest... done" vm-digest-send-type)))
   (run-hooks 'vm-send-digest-hook)
@@ -927,7 +946,8 @@ found, the current buffer remains selected."
 	  ;; different composition buffer.
 	  (vm-unbury-buffer b)
 	  (set-buffer b)
-	  (if (and vm-frame-per-composition (vm-multiple-frames-possible-p)
+	  (if (and vm-mutable-frames vm-frame-per-composition
+		   (vm-multiple-frames-possible-p)
 		   ;; only pop up a frame if there's an undisplay
 		   ;; hook in place to make the frame go away.
 		   vm-undisplay-buffer-hook)
@@ -991,7 +1011,7 @@ found, the current buffer remains selected."
       (if (eq mail-aliases t)
 	  (progn
 	    (setq mail-aliases nil)
-	    (if (file-exists-p "~/.mailrc")
+	    (if (file-exists-p (or mail-personal-alias-file "~/.mailrc"))
 		(build-mail-aliases)))))
     (if (stringp vm-mail-header-from)
 	(insert "From: " vm-mail-header-from "\n"))
@@ -1002,10 +1022,12 @@ found, the current buffer remains selected."
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
     (insert "X-Mailer: VM " vm-version " under "
-	    (if (vm-fsfemacs-19-p) "Emacs " "")
+	    (if vm-fsfemacs-19-p "Emacs " "")
 	    emacs-version "\n")
-    ;; REPLYTO support for FSF Emacs v19.29
-    (and (eq mail-default-reply-to t)
+    ;; REPLYTO environmental variable support
+    ;; note that in FSF Emacs v19.29 we would initialize if the
+    ;; value was t.  nil is the treigger value used now.
+    (and (eq mail-default-reply-to nil)
 	 (setq mail-default-reply-to (getenv "REPLYTO")))
     (if mail-default-reply-to
 	(insert "Reply-To: " mail-default-reply-to "\n"))
@@ -1032,7 +1054,8 @@ found, the current buffer remains selected."
     ;; config stuff will select it as the composition buffer.
     (vm-unbury-buffer (current-buffer))
     ;; make a new frame if the user wants it.
-    (if (and vm-frame-per-composition (vm-multiple-frames-possible-p))
+    (if (and vm-mutable-frames vm-frame-per-composition
+	     (vm-multiple-frames-possible-p))
 	(progn
 	  (vm-goto-new-frame 'composition)
 	  (vm-set-hooks-for-frame-deletion)))

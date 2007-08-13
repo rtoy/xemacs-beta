@@ -979,8 +979,11 @@ dnl hostname on some systems (SVR3.2, Linux) returns a bogus exit status,
 dnl so uname gets run too.
 # on host `(hostname || uname -n) 2>/dev/null | sed 1q`:
 #
-[#] [$]0 [$]quoted_arguments
-
+EOF
+sed 's/^/[#] /' >> config.status <<EOF
+[$]0 [$]quoted_arguments
+EOF
+cat >> config.status <<EOF
 changequote(,)dnl
 ac_cs_usage="Usage: config.status [--recheck] [--version] [--help]"
 changequote([,])dnl

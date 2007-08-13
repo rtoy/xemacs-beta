@@ -92,6 +92,86 @@ The new version of the list, minus the deleted strings, is returned."
 	     (nreverse list)) ; jwz: fixed order
 	(and work-buffer (kill-buffer work-buffer)))))))
 
+(defun vm-parse-structured-header (string &optional sepchar keep-quotes)
+  (if (null string)
+      ()
+    (let ((work-buffer nil))
+      (save-excursion
+       (unwind-protect
+	   (let ((list nil)
+		 (nonspecials "^\"\\( \t\n\r\f")
+		 start s char sp+sepchar)
+	     (if sepchar
+		 (setq nonspecials (concat nonspecials (list sepchar))
+		       sp+sepchar (concat "\t\f\n\r " (list sepchar))))
+	     (setq work-buffer (generate-new-buffer "*vm-work*"))
+	     (buffer-disable-undo work-buffer)
+	     (set-buffer work-buffer)
+	     (insert string)
+	     (goto-char (point-min))
+	     (skip-chars-forward "\t\f\n\r ")
+	     (setq start (point))
+	     (while (not (eobp))
+	       (skip-chars-forward nonspecials)
+	       (setq char (following-char))
+	       (cond ((looking-at "[ \t\n\r\f]")
+		      (delete-char 1))
+		     ((= char ?\\)
+		      (forward-char 1)
+		      (if (not (eobp))
+			  (forward-char 1)))
+		     ((and sepchar (= char sepchar))
+		      (setq s (buffer-substring start (point)))
+		      (if (or (null (string-match "^[\t\f\n\r ]+$" s))
+			      (not (string= s "")))
+			  (setq list (cons s list)))
+		      (skip-chars-forward sp+sepchar)
+		      (setq start (point)))
+		     ((looking-at " \t\n\r\f")
+		      (skip-chars-forward " \t\n\r\f"))
+		     ((= char ?\")
+		      (let ((done nil))
+			(if keep-quotes
+			    (forward-char 1)
+			  (delete-char 1))
+			(while (not done)
+			  (if (null (re-search-forward "[\\\"]" nil t))
+			      (setq done t)
+			    (setq char (char-after (1- (point))))
+			    (cond ((char-equal char ?\\)
+				   (delete-char -1)
+				   (if (eobp)
+				       (setq done t)
+				     (forward-char 1)))
+				  (t (if (not keep-quotes)
+					 (delete-char -1))
+				     (setq done t)))))))
+		     ((= char ?\()
+		      (let ((done nil)
+			    (pos (point))
+			    (parens 1))
+			(forward-char 1)
+			(while (not done)
+			  (if (null (re-search-forward "[\\()]" nil t))
+			      (setq done t)
+			    (setq char (char-after (1- (point))))
+			    (cond ((char-equal char ?\\)
+				   (if (eobp)
+				       (setq done t)
+				     (forward-char 1)))
+				  ((char-equal char ?\()
+				   (setq parens (1+ parens)))
+				  (t
+				   (setq parens (1- parens)
+					 done (zerop parens))))))
+			(delete-region pos (point))))))
+	     (setq s (buffer-substring start (point)))
+	     (if (and (null (string-match "^[\t\f\n\r ]+$" s))
+		      (not (string= s "")))
+		 (setq list (cons s list)))
+	     (nreverse list))
+	(and work-buffer (kill-buffer work-buffer)))))))
+
 (defun vm-write-string (where string)
   (if (bufferp where)
       (vm-save-buffer-excursion
@@ -108,7 +188,7 @@ The new version of the list, minus the deleted strings, is returned."
 	    ;; writing out message separators
 	    (setq buffer-file-type nil)
 	    ;; Tell XEmacs/MULE to pick the correct newline conversion.
-	    (and (vm-xemacs-mule-p)
+	    (and vm-xemacs-mule-p
 		 (set-file-coding-system 'no-conversion nil))
 	    (write-region (point-min) (point-max) where t 'quiet))
 	(and temp-buffer (kill-buffer temp-buffer))))))
@@ -343,52 +423,40 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	((markerp object) (copy-marker object))
 	(t object)))
 
-(defun vm-xemacs-p ()
-  (let ((case-fold-search nil))
-    (string-match "XEmacs" emacs-version)))
-
-(defun vm-xemacs-mule-p ()
-  (and (vm-xemacs-p)
-       (featurep 'mule)
-       (fboundp 'set-file-coding-system)
-       (fboundp 'get-coding-system)))
-
-(defun vm-fsfemacs-19-p ()
-  (and (string-match "^19" emacs-version)
-       (not (string-match "XEmacs\\|Lucid" emacs-version))))
-
-;; make-frame might be defined and still not work.  This would
-;; be true since the user could be running on a tty and using
-;; XEmacs 19.12, or using FSF Emacs 19.28 (or prior FSF Emacs versions).
-;;
-;; make-frame works on ttys in FSF Emacs 19.29, but other than
-;; looking at the version number I don't know a sane way to
-;; test for it without just running make-frame.  I'll just
-;; let it not work for now... someone will complain eventually
-;; and I'll think of something.
-(defun vm-multiple-frames-possible-p ()
-  (or (and (boundp 'window-system) (not (eq window-system nil)))
-      (and (fboundp 'device-type) (eq (device-type) 'x))))
-
-(defun vm-mouse-support-possible-p ()
-  (vm-multiple-frames-possible-p))
+(defun vm-multiple-frames-possible-p () 
+  (cond (vm-xemacs-p 
+	 (or (memq 'win (device-matching-specifier-tag-list))
+	     (featurep 'tty-frames)))
+        (vm-fsfemacs-19-p 
+         (fboundp 'make-frame))))
+ 
+(defun vm-mouse-support-possible-p () 
+  (cond (vm-xemacs-p 
+         (featurep 'window-system)) 
+        (vm-fsfemacs-19-p 
+         (fboundp 'track-mouse))))
+ 
+(defun vm-mouse-support-possible-here-p ()
+  (cond (vm-xemacs-p
+	 (memq 'win (device-matching-specifier-tag-list)))
+	(vm-fsfemacs-19-p
+	 (eq window-system 'x))))
 
 (defun vm-menu-support-possible-p ()
-  (or (and (boundp 'window-system)
-	   (or (eq window-system 'x)
-	       (eq window-system 'ns)      ;; NextStep
-	       (eq window-system 'win32)))
-      (and (fboundp 'device-type) (eq (device-type) 'x))))
-
+  (cond (vm-xemacs-p
+	 (featurep 'menubar))
+	(vm-fsfemacs-19-p
+	 (fboundp 'menu-bar-mode))))
+ 
 (defun vm-toolbar-support-possible-p ()
-  (and (vm-xemacs-p)
-       (vm-multiple-frames-possible-p)
-       (featurep 'toolbar)))
+  (and vm-xemacs-p (featurep 'toolbar)))
 
 (defun vm-multiple-fonts-possible-p ()
-  (or (eq window-system 'x)
-      (and (fboundp 'device-type)
-	   (eq (device-type) 'x))))
+  (cond (vm-xemacs-p
+	 (eq (device-type) 'x))
+	(vm-fsfemacs-19-p
+	 (or (eq window-system 'x)
+	     (eq window-system 'win32)))))
 
 (defun vm-run-message-hook (message &optional hook-variable)
   (save-excursion
@@ -435,13 +503,15 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	;; save this work so we won't have to do it again
 	(setq vm-sortable-date-alist
 	      (cons (cons string
-			  (timezone-make-date-sortable
-			   (format "%s %s %s %s %s"
-				   (aref vect 1)
-				   (aref vect 2)
-				   (aref vect 3)
-				   (aref vect 4)
-				   (aref vect 5))))
+			  (condition-case nil
+			      (timezone-make-date-sortable
+			       (format "%s %s %s %s %s"
+				       (aref vect 1)
+				       (aref vect 2)
+				       (aref vect 3)
+				       (aref vect 4)
+				       (aref vect 5)))
+			    (error "1970010100:00:00")))
 		    vm-sortable-date-alist))
 	;; return result
 	(cdr (car vm-sortable-date-alist)))))
@@ -497,12 +567,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	   (get-file-buffer (file-truename file)))))
 
 (defun vm-set-region-face (start end face)
-  (cond ((fboundp 'make-overlay)
-	 (let ((o (make-overlay start end)))
-	   (overlay-put o 'face face)))
-	((fboundp 'make-extent)
-	 (let ((o (make-extent start end)))
-	   (set-extent-property o 'face face)))))
+  (let ((e (vm-make-extent start end)))
+    (vm-set-extent-property e 'face face)))
 
 (defun vm-default-buffer-substring-no-properties (beg end &optional buffer)
   (let ((s (if buffer
@@ -516,7 +582,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (fset 'vm-buffer-substring-no-properties
   (cond ((fboundp 'buffer-substring-no-properties)
 	 (function buffer-substring-no-properties))
-	((vm-xemacs-p)
+	(vm-xemacs-p
 	 (function buffer-substring))
 	(t (function vm-default-buffer-substring-no-properties))))
 
@@ -535,37 +601,45 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (set-buffer buffer))
     (set-buffer target-buffer)))
 
-(if (fboundp 'overlay-get)
-    (fset 'vm-extent-property 'overlay-get)
-  (fset 'vm-extent-property 'extent-property))
+(if (not (fboundp 'vm-extent-property))
+    (if (fboundp 'overlay-get)
+	(fset 'vm-extent-property 'overlay-get)
+      (fset 'vm-extent-property 'extent-property)))
 
-(if (fboundp 'overlay-put)
-    (fset 'vm-set-extent-property 'overlay-put)
-  (fset 'vm-set-extent-property 'set-extent-property))
+(if (not (fboundp 'vm-set-extent-property))
+    (if (fboundp 'overlay-put)
+	(fset 'vm-set-extent-property 'overlay-put)
+      (fset 'vm-set-extent-property 'set-extent-property)))
 
-(if (fboundp 'move-overlay)
-    (fset 'vm-set-extent-endpoints 'move-overlay)
-  (fset 'vm-set-extent-endpoints 'set-extent-endpoints))
+(if (not (fboundp 'vm-set-extent-endpoints))
+    (if (fboundp 'move-overlay)
+	(fset 'vm-set-extent-endpoints 'move-overlay)
+      (fset 'vm-set-extent-endpoints 'set-extent-endpoints)))
 
-(if (fboundp 'make-overlay)
-    (fset 'vm-make-extent 'make-overlay)
-  (fset 'vm-make-extent 'make-extent))
+(if (not (fboundp 'vm-make-extent))
+    (if (fboundp 'make-overlay)
+	(fset 'vm-make-extent 'make-overlay)
+      (fset 'vm-make-extent 'make-extent)))
 
-(if (fboundp 'overlay-end)
-    (fset 'vm-extent-end-position 'overlay-end)
-  (fset 'vm-extent-end-position 'extent-end-position))
+(if (not (fboundp 'vm-extent-end-position))
+    (if (fboundp 'overlay-end)
+	(fset 'vm-extent-end-position 'overlay-end)
+      (fset 'vm-extent-end-position 'extent-end-position)))
 
-(if (fboundp 'overlay-start)
-    (fset 'vm-extent-start-position 'overlay-start)
-  (fset 'vm-extent-start-position 'extent-start-position))
+(if (not (fboundp 'vm-extent-start-position))
+    (if (fboundp 'overlay-start)
+	(fset 'vm-extent-start-position 'overlay-start)
+      (fset 'vm-extent-start-position 'extent-start-position)))
 
-(if (fboundp 'delete-overlay)
-    (fset 'vm-detach-extent 'delete-overlay)
-  (fset 'vm-detach-extent 'detach-extent))
+(if (not (fboundp 'vm-detach-extent))
+    (if (fboundp 'delete-overlay)
+	(fset 'vm-detach-extent 'delete-overlay)
+      (fset 'vm-detach-extent 'detach-extent)))
 
-(if (fboundp 'overlay-properties)
-    (fset 'vm-extent-properties 'overlay-properties)
-  (fset 'vm-extent-properties 'extent-properties))
+(if (not (fboundp 'vm-extent-properties))
+    (if (fboundp 'overlay-properties)
+	(fset 'vm-extent-properties 'overlay-properties)
+      (fset 'vm-extent-properties 'extent-properties)))
 
 (defun vm-copy-extent (e)
   (let ((props (vm-extent-properties e))

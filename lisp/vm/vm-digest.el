@@ -54,7 +54,8 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
       (goto-char (point-max))
       (insert "------- end of forwarded message -------\n"))))
 
-(defun vm-mime-encapsulate-messages (message-list keep-list discard-regexp)
+(defun vm-mime-encapsulate-messages (message-list keep-list discard-regexp
+				     always-use-digest)
   "Encapsulate the messages in MESSAGE-LIST as per the MIME spec.
 The resulting digest is inserted at point in the current buffer.
 Point is not moved.
@@ -67,14 +68,21 @@ KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
 to be forwarded.  See the docs for vm-reorder-message-headers
 to find out how KEEP-LIST and DISCARD-REGEXP are used.
 
-Returns the multipart boundary parameter (string) that should be used
-in the Content-Type header."
+If ALWAYS-USE-DIGEST is non-nil, always encapsulate for a multipart/digest.
+Otherwise if there are fewer than two messages to be encapsulated
+leave off the multipart boundary strings.  The caller is assumed to
+be using message/rfc822 or message/news encoding instead.
+
+If multipart/digest encapsulation is done, the function returns
+the multipart boundary parameter (string) that should be used in
+the Content-Type header.  Otherwise nil is returned."
   (if message-list
       (let ((target-buffer (current-buffer))
 	    (boundary-positions nil)
 	    (mlist message-list)
 	    (mime-keep-list (append keep-list vm-mime-header-list))
-	    boundary source-buffer m start n beg)
+	    (boundary nil)
+	    source-buffer m start n beg)
 	(save-restriction
 	  ;; narrow to a zero length region to avoid interacting
 	  ;; with anything that might have already been inserted
@@ -97,42 +105,47 @@ in the Content-Type header."
 	     discard-regexp)
 	    (goto-char (point-max))
 	    (setq mlist (cdr mlist)))
-	  (goto-char start)
-	  (setq boundary (vm-mime-make-multipart-boundary))
-	  (while (re-search-forward (concat "^--"
-					    (regexp-quote boundary)
-					    "\\(--\\)?$")
-				    nil t)
+	  (if (and (< (length message-list) 2) (not always-use-digest))
+	      nil
+	    (goto-char start)
 	    (setq boundary (vm-mime-make-multipart-boundary))
-	    (goto-char start))
-	  (goto-char (point-max))
-	  (insert "\n--" boundary "--\n")
-	  (while boundary-positions
-	    (goto-char (car boundary-positions))
-	    (insert "\n--" boundary "\n\n")
-	    (setq boundary-positions (cdr boundary-positions)))
-	  (goto-char start)
-	  (setq n (length message-list))
-	  (insert (format "This is a %s%sMIME encapsulation.\n"
-			  (if (cdr message-list)
-			      "digest, "
-			    "forwarded message, ")
-			  (if (cdr message-list)
-			      (format "%d messages, " n)
-			    "")))
+	    (while (re-search-forward (concat "^--"
+					      (regexp-quote boundary)
+					      "\\(--\\)?$")
+				      nil t)
+	      (setq boundary (vm-mime-make-multipart-boundary))
+	      (goto-char start))
+	    (goto-char (point-max))
+	    (insert "\n--" boundary "--\n")
+	    (while boundary-positions
+	      (goto-char (car boundary-positions))
+	      (insert "\n--" boundary "\n\n")
+	      (setq boundary-positions (cdr boundary-positions)))
+	    (goto-char start)
+	    (setq n (length message-list))
+	    (insert
+	     (format "This is a digest, %d messages, MIME encapsulation.\n"
+		     n)))
 	  (goto-char start))
 	boundary )))
 
 (defun vm-mime-burst-message (m)
   "Burst messages from the digest message M.
 M should be a message struct for a real message.
-MIME encoding is expected.  The message content type
-must be either message/* or multipart/digest."
+MIME encoding is expected.  Somewhere within the MIME layout
+there must be at least one part of type message/news, message/rfc822 or
+multipart/digest.  If there are multiple parts matching those types,
+all of them will be burst."
   (let ((ident-header nil)
-	(layout (vm-mm-layout m)))
+	(did-burst nil)
+	(list (vm-mime-find-digests-in-layout (vm-mm-layout m))))
     (if vm-digest-identifier-header-format
 	(setq ident-header (vm-sprintf 'vm-digest-identifier-header-format m)))
-    (vm-mime-burst-layout layout ident-header)))
+    (while list
+      (setq did-burst (or did-burst
+			  (vm-mime-burst-layout (car list) ident-header)))
+      (setq list (cdr list)))
+    did-burst))
 
 (defun vm-mime-burst-layout (layout ident-header)
   (let ((work-buffer nil)
@@ -411,12 +424,7 @@ RFC 1153.  Otherwise assume RFC 934 digests."
 			     folder-type
 			     after-prev-sep
 			     (match-beginning 0))
-			  (store-match-data md)))
-		      ;; eat preceding newlines
-		      (while (= (preceding-char) ?\n)
-			(delete-char -1))
-		      ;; put one back
-		      (insert ?\n)))
+			  (store-match-data md)))))
 	       ;; there should be at least one valid header at
 	       ;; the beginning of an encapsulated message.  If
 	       ;; there isn't a valid header, then assume that
@@ -432,14 +440,22 @@ RFC 1153.  Otherwise assume RFC 934 digests."
 						    nil t))))))
 		   (setq prev-sep (point)
 			 after-prev-sep (point))
-		 ;; insert a trailing message separator
-		 ;; delete the digest separator
-		 ;; insert the leading separator
+		 ;; if this isn't the first message, delete the
+		 ;; digest separator goop and insert a trailing message
+		 ;; separator of the proper type.
 		 (if prev-sep
 		     (progn
-		       (delete-region (match-beginning 0) (match-end 0))
+		       ;; eat preceding newlines
+		       (while (= (preceding-char) ?\n)
+			 (delete-char -1))
+		       ;; put one back
+		       (insert ?\n)
+		       ;; delete the digest separator
+		       (delete-region (match-beginning 0) (point))
+		       ;; insert a trailing message separator
 		       (insert (vm-trailing-message-separator folder-type))))
 		 (setq prev-sep (point))
+		 ;; insert the leading separator
 		 (insert (vm-leading-message-separator folder-type))
 		 (setq after-prev-sep (point))
 		 ;; eat trailing newlines
@@ -599,12 +615,15 @@ Returns either \"rfc934\", \"rfc1153\" or \"mime\"."
       (set-buffer (vm-buffer-of m))
       (let ((layout (vm-mm-layout m)))
 	(if (and (vectorp layout)
-		 (or (vm-mime-types-match "multipart/digest"
-					  (car (vm-mm-layout-type layout)))
-		     (vm-mime-types-match "message/rfc822"
-					  (car (vm-mm-layout-type layout)))
-		     (vm-mime-types-match "message/news"
-					  (car (vm-mm-layout-type layout)))))
+		 (or (vm-mime-layout-contains-type
+		      layout
+		      "multipart/digest")
+		     (vm-mime-layout-contains-type
+		      layout
+		      "message/rfc822")
+		     (vm-mime-layout-contains-type
+		      layout
+		      "message/news")))
 	    (throw 'return-value "mime"))))
     (save-excursion
       (save-restriction

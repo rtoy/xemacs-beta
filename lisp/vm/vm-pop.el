@@ -191,11 +191,12 @@
 	  (setq process-buffer
 		(get-buffer-create (format "trace of POP session to %s" host)))
 	  ;; Tell XEmacs/MULE not to mess with the text.
-	  (and (vm-xemacs-mule-p)
-	       (set-file-coding-system 'binary t))
+	  (and vm-xemacs-mule-p
+	       (set-buffer-file-coding-system 'binary t))
 	  ;; clear the trace buffer of old output
 	  (save-excursion
 	    (set-buffer process-buffer)
+	    (buffer-disable-undo)
 	    (erase-buffer))
 	  ;; open the connection to the server
 	  (setq process (open-network-stream "POP" process-buffer host port))

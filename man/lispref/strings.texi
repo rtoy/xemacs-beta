@@ -345,10 +345,30 @@ in case if @code{case-fold-search} is non-@code{nil}.
 @example
 (char-equal ?x ?x)
      @result{} t
-(char-to-string (+ 256 ?x))
-     @result{} "x"
-(char-equal ?x  (+ 256 ?x))
+(let ((case-fold-search t))
+  (char-equal ?x ?X))
      @result{} t
+(let ((case-fold-search nil))
+  (char-equal ?x ?X))
+     @result{} nil
+@end example
+@end defun
+
+@defun char= character1 character2
+This function returns @code{t} if the arguments represent the same
+character, @code{nil} otherwise.  Case is significant.
+
+@example
+(char= ?x ?x)
+     @result{} t
+(char= ?x ?X)
+     @result{} nil
+(let ((case-fold-search t))
+  (char-equal ?x ?X))
+     @result{} nil
+(let ((case-fold-search nil))
+  (char-equal ?x ?X))
+     @result{} nil
 @end example
 @end defun
 

@@ -2,17 +2,9 @@
 # Allowed values are 18 and 19.
 # Version 18 of Emacs is UNSUPPORTED.
 # In fact all versions of Emacs prior to 19.34 for Emacs and
-# prior to 19.14 for XEmacs are unsupported.
+# prior to 19.14 for XEmacs are unsupported.  For v20 XEmacs
+# EMACS_VERSION should remain 19.
 #
-# Currently only vm-isearch-forward depends on the EMACS_VERSION
-# setting being correct.  You can use the same VM .elc files
-# under v18 and v19 Emacs if you don't care about
-# vm-isearch-forward.
-#
-# Note that .elc files compiled with the v19 byte compiler won't
-# work under v18 Emacs, but v18 .elcs will work under v19.  So
-# point this at your v18 Emacs binary if you want compatible .elc
-# files.
 EMACS_VERSION = 19
 
 # what emacs is called on your system
@@ -26,6 +18,7 @@ LISPDIR = /usr/local/lib/emacs/site-lisp
 
 # where the toolbar pixmaps should go.
 # vm-toolbar-pixmap-directory must point to the same place.
+# vm-image-directory must point to the same place.
 PIXMAPDIR = /usr/local/lib/emacs/etc/vm
 
 ############## no user servicable parts beyond this point ###################
@@ -72,7 +65,7 @@ SOURCES = \
 
 vm:	vm.elc
 
-vm.elc:	noautoload
+vm.elc:	autoload
 
 noautoload:	$(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules included)..."

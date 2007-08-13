@@ -483,8 +483,8 @@ in reverse order.
 
 @group
 last-output
-     @result{} (10 34 116 117 112 116 117 111 32 101 104 
-    116 32 115 105 32 115 105 104 84 34 10)
+     @result{} (?\n ?\" ?t ?u ?p ?t ?u ?o ?\  ?e ?h ?t
+                ?\  ?s ?i ?\  ?s ?i ?h ?T ?\" ?\n)
 @end group
 @end example
 

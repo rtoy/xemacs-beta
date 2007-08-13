@@ -424,7 +424,7 @@ chapters describe features of XEmacs Lisp that have counterparts in many
 programming languages, and later chapters describe features that are
 peculiar to XEmacs Lisp or relate specifically to editing.
 
-  This is edition 3.0.
+  This is edition 3.2.
 
 @menu
 * Caveats::             Flaws and a request for help.
@@ -472,8 +472,9 @@ which you are criticizing.
 
 This manual was originally written for FSF Emacs 19 and was updated by
 Ben Wing (wing@@666.com) for Lucid Emacs 19.10 and later for XEmacs
-19.12, 19.13, and 19.14.  Please send comments and corrections
-relating to XEmacs-specific portions of this manual to
+19.12, 19.13, 19.14, and 20.0.  It was further updated by the XEmacs
+Development Team for 19.15 and 20.1.  Please send comments and
+corrections relating to XEmacs-specific portions of this manual to
 @example
 xemacs@@xemacs.org
 @end example
@@ -852,13 +853,14 @@ review and edit the manual, with the support of the Defense Advanced
 Research Projects Agency, ARPA Order 6082, arranged by Warren A. Hunt,
 Jr. of Computational Logic, Inc.
 
-  Ben Wing adapted this manual for XEmacs 19.14, and earlier
+  Ben Wing adapted this manual for XEmacs 19.14 and 20.0, and earlier
 for Lucid Emacs 19.10, XEmacs 19.12, and XEmacs 19.13.  He is the sole
 author of many of the manual sections, in particular the XEmacs-specific
 sections: events, faces, extents, glyphs, specifiers, toolbar, menubars,
 scrollbars, dialog boxes, devices, consoles, hash tables, range tables,
 char tables, databases, and others.  The section on annotations was
-originally written by Chuck Thompson.
+originally written by Chuck Thompson.  Corrections to v3.1 were done by
+Martin Buchholz, Steve Baur, and Hrvoje Niksic.
 
   Corrections to the original GNU Emacs Lisp Reference Manual were
 supplied by Karl Berry, Jim Blandy, Bard Bloom, Stephane Boucher, David

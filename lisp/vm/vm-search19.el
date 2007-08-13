@@ -79,6 +79,7 @@ vm-search-using-regexps for this search."
 			  (vm-start-of (car vm-message-pointer))
 			(vm-vheaders-of (car vm-message-pointer)))
 		      (vm-text-end-of (car vm-message-pointer)))
+		     (save-excursion (vm-energize-urls))
 		     (vm-display nil nil
 				 '(vm-isearch-forward vm-isearch-backward)
 				 '(reading-message))

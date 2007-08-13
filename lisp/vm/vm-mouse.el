@@ -18,18 +18,18 @@
 (provide 'vm-mouse)
 
 (defun vm-mouse-fsfemacs-mouse-p ()
-  (and (vm-fsfemacs-19-p)
+  (and vm-fsfemacs-19-p
        (fboundp 'set-mouse-position)))
 
 (defun vm-mouse-xemacs-mouse-p ()
-  (and (vm-xemacs-p)
+  (and vm-xemacs-p
        (fboundp 'set-mouse-position)))
 
 (defun vm-mouse-set-mouse-track-highlight (start end)
-  (cond ((fboundp 'make-overlay)
+  (cond (vm-fsfemacs-19-p
 	 (let ((o (make-overlay start end)))
 	   (overlay-put o 'mouse-face 'highlight)))
-	((fboundp 'make-extent)
+	(vm-xemacs-p
 	 (let ((o (make-extent start end)))
 	   (set-extent-property o 'highlight t)))))
 
@@ -90,7 +90,7 @@
 	  ((vm-mouse-fsfemacs-mouse-p)
 	   (set-buffer (window-buffer (posn-window (event-start event))))
 	   (goto-char (posn-point (event-start event)))))
-    (cond ((fboundp 'overlays-at)
+    (cond (vm-fsfemacs-19-p
 	   (let ((o-list (overlays-at (point)))
 		 (string nil))
 	     (while o-list
@@ -101,7 +101,7 @@
 			 o-list nil)
 		 (setq o-list (cdr o-list))))
 	     string ))
-	  ((fboundp 'extent-at)
+	  (vm-xemacs-p
 	   (let ((e (extent-at (point) nil 'highlight)))
 	     (if e
 		 (buffer-substring (extent-start-position e)
@@ -201,6 +201,9 @@
 	(vm-mouse-send-url-to-netscape url t new-window)))
   (message "Sending URL to Netscape... done"))
 
+(defun vm-mouse-send-url-to-netscape-new-window (url)
+  (vm-mouse-send-url-to-netscape url nil t))
+
 (defun vm-mouse-send-url-to-mosaic (url &optional new-mosaic new-window)
   (message "Sending URL to Mosaic...")
   (if (null new-mosaic)
@@ -218,8 +221,8 @@
 	       ;; newline convention used should be the local
 	       ;; one, whatever that is.
 	       (setq buffer-file-type nil)
-	       (and (vm-xemacs-mule-p)
-		    (set-file-coding-system 'no-conversion nil))
+	       (and vm-xemacs-mule-p
+		    (set-buffer-file-coding-system 'no-conversion nil))
 	       (write-region (point-min) (point-max)
 			     (concat "/tmp/Mosaic." pid)
 			     nil 0)
@@ -232,6 +235,9 @@
      (apply 'vm-run-background-command vm-mosaic-program
 	    (append vm-mosaic-program-switches (list url))))
   (message "Sending URL to Mosaic... done"))
+
+(defun vm-mouse-send-url-to-mosaic-new-window (url)
+  (vm-mouse-send-url-to-mosaic url nil t))
 
 (defun vm-mouse-install-mouse ()
   (cond ((vm-mouse-xemacs-mouse-p)
@@ -318,7 +324,8 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-file-name-history history)
     (setq vm-mouse-read-file-name-prompt prompt)
     (setq vm-mouse-read-file-name-return-value nil)
-    (if (and vm-frame-per-completion (vm-multiple-frames-possible-p))
+    (if (and vm-mutable-frames vm-frame-per-completion
+	     (vm-multiple-frames-possible-p))
 	(save-excursion
 	  (vm-goto-new-frame 'completion)))
     (switch-to-buffer (current-buffer))
@@ -339,9 +346,6 @@ HISTORY argument is ignored."
 	(cond ((equal string key-doc)
 	       (condition-case nil
 		   (save-excursion
-		     (save-excursion
-		       (let ((vm-mutable-frames t))
-			 (vm-delete-windows-or-frames-on (current-buffer))))
 		     (setq vm-mouse-read-file-name-return-value
 			   (save-excursion
 			     (vm-keyboard-read-file-name
@@ -383,11 +387,10 @@ HISTORY argument is ignored."
 
 (defun vm-mouse-read-file-name-quit-handler (&optional normal-exit)
   (interactive)
-  (let ((vm-mutable-frames t))
-    (vm-delete-windows-or-frames-on (current-buffer))
-    (if normal-exit
-	(throw 'exit nil)
-      (throw 'exit t))))
+  (vm-maybe-delete-windows-or-frames-on (current-buffer))
+  (if normal-exit
+      (throw 'exit nil)
+    (throw 'exit t)))
 
 (defvar vm-mouse-read-string-prompt)
 (defvar vm-mouse-read-string-completion-list)
@@ -407,7 +410,8 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-string-completion-list completion-list)
     (setq vm-mouse-read-string-multi-word multi-word)
     (setq vm-mouse-read-string-return-value nil)
-    (if (and vm-frame-per-completion (vm-multiple-frames-possible-p))
+    (if (and vm-mutable-frames vm-frame-per-completion
+	     (vm-multiple-frames-possible-p))
 	(save-excursion
 	  (vm-goto-new-frame 'completion)))
     (switch-to-buffer (current-buffer))
@@ -432,9 +436,6 @@ HISTORY argument is ignored."
 	(cond ((equal string key-doc)
 	       (condition-case nil
 		   (save-excursion
-		     (save-excursion
-		       (let ((vm-mutable-frames t))
-			 (vm-delete-windows-or-frames-on (current-buffer))))
 		     (setq vm-mouse-read-string-return-value
 			   (vm-keyboard-read-string
 			    vm-mouse-read-string-prompt
@@ -485,8 +486,7 @@ HISTORY argument is ignored."
 
 (defun vm-mouse-read-string-quit-handler (&optional normal-exit)
   (interactive)
-  (let ((vm-mutable-frames t))
-    (vm-delete-windows-or-frames-on (current-buffer))
-    (if normal-exit
-	(throw 'exit nil)
-      (throw 'exit t))))
+  (vm-maybe-delete-windows-or-frames-on (current-buffer))
+  (if normal-exit
+      (throw 'exit nil)
+    (throw 'exit t)))

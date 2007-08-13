@@ -25,7 +25,7 @@ mode, a major mode for reading mail.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
-changes, messages additions or deletions will be allowed in the
+changes, message additions or deletions will be allowed in the
 visited folder.
 
 Visiting the primary inbox causes any contents of the system mailbox to
@@ -63,7 +63,7 @@ See the documentation for vm-mode for more information."
 			    (inhibit-local-variables t)
 			    (enable-local-variables nil)
 			    ;; for XEmacs/Mule
-			    (overriding-file-coding-system 'no-conversion))
+			    (coding-system-for-read 'no-conversion))
 			(message "Reading %s..." file)
 			(prog1 (find-file-noselect file)
 			  ;; update folder history
@@ -80,25 +80,25 @@ See the documentation for vm-mode for more information."
       ;; the file coding system and decoding it.
       ;; This is only possible if a file is visited and then vm-mode
       ;; is run on it afterwards.
-      (defvar file-coding-system)
-      (if (and (vm-xemacs-mule-p)
-	       (not (eq (get-coding-system file-coding-system)
+      (defvar buffer-file-coding-system)
+      (if (and vm-xemacs-mule-p
+	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'no-conversion-unix)))
-	       (not (eq (get-coding-system file-coding-system)
+	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'no-conversion-dos)))
-	       (not (eq (get-coding-system file-coding-system)
+	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'no-conversion-mac)))
-	       (not (eq (get-coding-system file-coding-system)
+	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'binary))))
 	  (let ((buffer-read-only nil)
 		(omodified (buffer-modified-p)))
 	    (unwind-protect
 		(progn
 		  (encode-coding-region (point-min) (point-max)
-					file-coding-system)
-		  (set-file-coding-system 'no-conversion nil)
+					buffer-file-coding-system)
+		  (set-buffer-file-coding-system 'no-conversion nil)
 		  (decode-coding-region (point-min) (point-max)
-					file-coding-system))
+					buffer-file-coding-system))
 	      (set-buffer-modified-p omodified))))
       (vm-check-for-killed-summary)
       (vm-check-for-killed-presentation)
@@ -158,11 +158,14 @@ See the documentation for vm-mode for more information."
       ;; raise frame if requested and apply startup window
       ;; configuration.
       (if full-startup
-	  (progn
+	  (let ((buffer-to-display (or vm-summary-buffer
+				       vm-presentation-buffer
+				       (current-buffer))))
+	    (vm-display buffer-to-display buffer-to-display
+			(list this-command)
+			(list (or this-command 'vm) 'startup))
 	    (if vm-raise-frame-at-startup
-		(vm-raise-frame))
-	    (vm-display nil nil (list this-command)
-			(list (or this-command 'vm) 'startup))))
+		(vm-raise-frame))))
 
       ;; say this NOW, before the non-previewers read a message,
       ;; alter the new message count and confuse themselves.
@@ -171,9 +174,7 @@ See the documentation for vm-mode for more information."
 	  (setq totals-blurb (vm-emit-totals-blurb)))
 
       (vm-thoughtfully-select-message)
-      (if vm-message-list
-	  (vm-preview-current-message)
-	(vm-update-summary-and-mode-line))
+      (vm-update-summary-and-mode-line)
       ;; need to do this after any frame creation because the
       ;; toolbar sets frame-specific height and width specifiers.
       (and (vm-toolbar-support-possible-p) vm-use-toolbar
@@ -195,6 +196,7 @@ See the documentation for vm-mode for more information."
 	    ;; raise the summary frame if the user wants frames
 	    ;; raised and if there is a summary frame.
 	    (if (and vm-summary-buffer
+		     vm-mutable-frames
 		     vm-frame-per-summary
 		     vm-raise-frame-at-startup)
 		(vm-raise-frame))
@@ -208,6 +210,9 @@ See the documentation for vm-mode for more information."
 		(switch-to-buffer (or vm-summary-buffer
 				      vm-presentation-buffer
 				      (current-buffer)))))))
+
+      (if vm-message-list
+	  (vm-preview-current-message))
 
       (run-hooks 'vm-visit-folder-hook)
 
@@ -275,7 +280,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.22.
+This is VM 6.34.
 
 Commands:
    h - summarize folder contents
@@ -440,6 +445,7 @@ Variables:
    vm-frame-per-composition
    vm-frame-per-edit
    vm-frame-per-folder
+   vm-frame-per-help
    vm-frame-per-summary
    vm-highlighted-header-face
    vm-highlighted-header-regexp
@@ -538,6 +544,7 @@ Variables:
    vm-summary-thread-indent-level
    vm-tale-is-an-idiot
    vm-temp-file-directory
+   vm-toolbar-pixmap-directory
    vm-trust-From_-with-Content-Length
    vm-undisplay-buffer-hook
    vm-unforwarded-header-regexp
@@ -739,6 +746,7 @@ vm-visit-virtual-folder.")
 	  ;; raise the summary frame if the user wants frames
 	  ;; raised and if there is a summary frame.
 	  (if (and vm-summary-buffer
+		   vm-mutable-frames
 		   vm-frame-per-summary
 		   vm-raise-frame-at-startup)
 	      (vm-raise-frame))
@@ -797,30 +805,36 @@ vm-visit-virtual-folder.")
 	(vm-search-other-frames nil))
     (vm-visit-virtual-folder folder-name read-only)))
 
-(defun vm-mail ()
-  "Send a mail message from within VM, or from without."
+(defun vm-mail (&optional to)
+  "Send a mail message from within VM, or from without.
+Optional argument TO is a string that should contain a comma separated
+recipient list."
   (interactive)
   (vm-session-initialization)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
-  (vm-mail-internal)
+  (vm-mail-internal nil to)
   (run-hooks 'vm-mail-hook)
   (run-hooks 'vm-mail-mode-hook))
 
-(defun vm-mail-other-frame ()
-  "Like vm-mail, but run in a newly created frame."
+(defun vm-mail-other-frame (&optional to)
+  "Like vm-mail, but run in a newly created frame.
+Optional argument TO is a string that should contain a comma separated
+recipient list."
   (interactive)
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
       (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-mail))
+    (vm-mail to))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
-(defun vm-mail-other-window ()
-  "Like vm-mail, but run in a different window."
+(defun vm-mail-other-window (&optional to)
+  "Like vm-mail, but run in a different window.
+Optional argument TO is a string that should contain a comma separated
+recipient list."
   (interactive)
   (vm-session-initialization)
   (if (one-window-p t)
@@ -828,7 +842,7 @@ vm-visit-virtual-folder.")
   (other-window 1)
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-mail)))
+    (vm-mail to)))
 
 (defun vm-submit-bug-report ()
   "Submit a bug report, with pertinent information to the VM bug list."
@@ -886,6 +900,7 @@ vm-visit-virtual-folder.")
       'vm-frame-per-composition
       'vm-frame-per-edit
       'vm-frame-per-folder
+      'vm-frame-per-help
       'vm-frame-per-summary
       'vm-highlight-url-face
       'vm-highlighted-header-regexp
@@ -990,6 +1005,7 @@ vm-visit-virtual-folder.")
       'vm-summary-uninteresting-senders
       'vm-summary-uninteresting-senders-arrow
       'vm-tale-is-an-idiot
+      'vm-toolbar-pixmap-directory
       'vm-temp-file-directory
       'vm-trust-From_-with-Content-Length
       'vm-undisplay-buffer-hook
@@ -1010,7 +1026,7 @@ vm-visit-virtual-folder.")
       )
      nil
      nil
-     "Please change the Subject header to a concise bug description.\nRemember to cover the basics, that is, what you expected to\nhappen and what in fact did happen.  Please remove these instructions from your message.")
+     "Please change the Subject header to a concise bug description.\nRemember to cover the basics, that is, what you expected to\nhappen and what in fact did happen.  Please remove these\ninstructions from your message.")
     (save-excursion
       (goto-char (point-min))
       (mail-position-on-field "Subject")
@@ -1026,13 +1042,13 @@ vm-visit-virtual-folder.")
   (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
 (defun vm-check-emacs-version ()
-  (cond ((and (vm-xemacs-p)
+  (cond ((and vm-xemacs-p
 	      (or (< emacs-major-version 19)
 		  (and (= emacs-major-version 19)
 		       (< emacs-minor-version 14))))
 	 (error "VM %s must be run on XEmacs 19.14 or a later version."
 		vm-version))
-	((and (vm-fsfemacs-19-p)
+	((and vm-fsfemacs-19-p
 	      (or (< emacs-major-version 19)
 		  (and (= emacs-major-version 19)
 		       (< emacs-minor-version 34))))
@@ -1052,8 +1068,9 @@ vm-visit-virtual-folder.")
 	     ))))
 
 (defun vm-session-initialization ()
+  (vm-note-emacs-version)
   (vm-check-emacs-version)
-  (vm-set-debug-flags)
+;;  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
   ;; do some necessary preparations.
   (if (or (not (boundp 'vm-session-beginning))

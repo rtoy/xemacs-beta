@@ -508,7 +508,7 @@ like a From_ folder."
 		  (set-buffer temp-buffer)
 		  (if (file-readable-p file)
 		      (condition-case nil
-			  (let ((overriding-file-coding-system 'binary))
+			  (let ((coding-system-for-read 'binary))
 			    (insert-file-contents file nil 0 4096))
 			(wrong-number-of-arguments
 			 (call-process "sed" file temp-buffer nil
@@ -1166,7 +1166,7 @@ vm-folder-type is initialized here."
 	  (vm-total-count 0)
 	  (modulus (+ (% (vm-abs (random)) 11) 25))
 	  (case-fold-search t)
-	  data)
+	  oldpoint data)
       (while mp
 	(vm-increment vm-total-count)
 	(if (vm-attributes-of (car mp))
@@ -1182,17 +1182,28 @@ vm-folder-type is initialized here."
 			       (vm-text-of (car mp)) t)
 	    (goto-char (match-beginning 2))
 	    (condition-case ()
-		(setq data (read (current-buffer)))
-	      (error (setq data
-			   (list
-			    (make-vector vm-attributes-vector-length nil)
-			    (make-vector vm-cache-vector-length nil)
-			    nil))
-		     ;; In lieu of a valid attributes header
-		     ;; assume the message is new.  avoid
-		     ;; vm-set-new-flag because it asks for a
-		     ;; summary update.
-		     (vm-set-new-flag-in-vector (car data) t)))
+		(progn
+		  (setq oldpoint (point)
+			data (read (current-buffer)))
+		  (if (and (or (not (listp data)) (not (= 3 (length data))))
+			   (not (vectorp data)))
+		      (progn
+			(error "Bad x-vm-v5-data at %d in buffer %s"
+			       oldpoint (buffer-name))))
+		  data )
+	      (error 
+	       (message "Bad x-vm-v5-data header at %d in buffer %s, ignoring"
+			oldpoint (buffer-name))
+	       (setq data
+		     (list
+		      (make-vector vm-attributes-vector-length nil)
+		      (make-vector vm-cache-vector-length nil)
+		      nil))
+	       ;; In lieu of a valid attributes header
+	       ;; assume the message is new.  avoid
+	       ;; vm-set-new-flag because it asks for a
+	       ;; summary update.
+	       (vm-set-new-flag-in-vector (car data) t)))
 	    ;; support version 4 format
 	    (cond ((vectorp data)
 		   (setq data (vm-convert-v4-attributes data))
@@ -1406,8 +1417,19 @@ vm-folder-type is initialized here."
 	 (vm-skip-past-folder-header)
 	 (vm-skip-past-leading-message-separator)
 	 (if (re-search-forward vm-labels-header-regexp lim t)
-	     (let (list)
-	       (setq list (read (current-buffer)))
+	     (let ((oldpoint (point))
+		   list)
+	       (condition-case ()
+		   (progn
+		     (setq list (read (current-buffer)))
+		     (if (not (listp list))
+			 (error "Bad global label list at %d in buffer %s"
+				oldpoint (buffer-name)))
+		     list )
+		 (error
+		  (message "Bad global label list at %d in buffer %s, ignoring"
+			   oldpoint (buffer-name))
+		  (setq list nil) ))
 	       (mapcar (function
 			(lambda (s)
 			  (intern s vm-label-obarray)))
@@ -1418,7 +1440,8 @@ vm-folder-type is initialized here."
 ;; Returns non-nil if successful, nil otherwise.
 (defun vm-gobble-bookmark ()
   (let ((case-fold-search t)
-	n lim)
+	(n nil)
+	lim oldpoint)
     (save-excursion
       (vm-save-restriction
        (widen)
@@ -1431,7 +1454,18 @@ vm-folder-type is initialized here."
        (vm-skip-past-folder-header)
        (vm-skip-past-leading-message-separator)
        (if (re-search-forward vm-bookmark-header-regexp lim t)
-	   (setq n (read (current-buffer))))))
+	   (condition-case ()
+	       (progn
+		 (setq oldpoint (point)
+		       n (read (current-buffer)))
+		 (if (not (natnump n))
+		     (error "Bad bookmark at %d in buffer %s"
+			    oldpoint (buffer-name)))
+		 n )
+	     (error
+	      (message "Bad bookmark at %d in buffer %s, ignoring"
+		       oldpoint (buffer-name))
+	      (setq n 1))))))
     (if n
 	(vm-record-and-change-message-pointer
 	 vm-message-pointer
@@ -1490,13 +1524,25 @@ vm-folder-type is initialized here."
 	(vm-skip-past-folder-header)
 	(vm-skip-past-leading-message-separator)
 	(if (re-search-forward vm-message-order-header-regexp lim t)
-	    (progn
+	    (let ((oldpoint (point)))
 	      (message "Reordering messages...")
-	      (setq order (read (current-buffer))
-		    list-length (length vm-message-list)
+	      (condition-case nil
+		  (progn
+		    (setq order (read (current-buffer)))
+		    (if (not (listp order))
+			(error "Bad order header at %d in buffer %s"
+			       oldpoint (buffer-name)))
+		    order )
+		(error
+		 (message "Bad order header at %d in buffer %s, ignoring"
+			  oldpoint (buffer-name))
+		 (setq order nil)))
+	      (setq list-length (length vm-message-list)
 		    v (make-vector (max list-length (length order)) nil))
 	      (while (and order mp)
-		(aset v (1- (car order)) (car mp))
+		(condition-case nil
+		    (aset v (1- (car order)) (car mp))
+		  (args-out-of-range nil))
 		(setq order (cdr order) mp (cdr mp)))
 	      ;; lock out interrupts while the message list is in
 	      ;; an inconsistent state.
@@ -1529,8 +1575,13 @@ vm-folder-type is initialized here."
        (vm-skip-past-folder-header)
        (vm-skip-past-leading-message-separator)
        (if (re-search-forward vm-summary-header-regexp lim t)
-	   (progn
-	     (setq summary (read (current-buffer)))
+	   (let ((oldpoint (point)))
+	     (condition-case ()
+		 (setq summary (read (current-buffer)))
+	       (error
+		(message "Bad summary header at %d in buffer %s, ignoring"
+			 oldpoint (buffer-name))
+		(setq summary "")))
 	     (if (not (equal summary vm-summary-format))
 		 (while mp
 		   (vm-set-summary-of (car mp) nil)
@@ -2173,17 +2224,20 @@ The folder is not altered and Emacs is still visiting it."
 	   (error nil))
 	 (let (timer)
 	   (and (natnump vm-flush-interval) 
+		(not (vm-timer-using 'vm-flush-itimer-function))
 		(setq timer (run-at-time vm-flush-interval vm-flush-interval
 					 'vm-flush-itimer-function nil))
 		(timer-set-function timer 'vm-flush-itimer-function
 				    (list timer)))
 	   (and (natnump vm-mail-check-interval) 
+		(not (vm-timer-using 'vm-check-mail-itimer-function))
 		(setq timer (run-at-time vm-mail-check-interval
 					 vm-mail-check-interval
 					 'vm-check-mail-itimer-function nil))
 		(timer-set-function timer 'vm-check-mail-itimer-function
 				    (list timer)))
 	   (and (natnump vm-auto-get-new-mail)
+		(not (vm-timer-using 'vm-get-mail-itimer-function))
 		(setq timer (run-at-time vm-auto-get-new-mail
 					 vm-auto-get-new-mail
 					 'vm-get-mail-itimer-function nil))
@@ -2192,6 +2246,15 @@ The folder is not altered and Emacs is still visiting it."
 	(t
 	 (setq vm-flush-interval t
 	       vm-auto-get-new-mail t))))
+
+(defun vm-timer-using (fun)
+  (let ((p timer-list)
+	(done nil))
+    (while (and p (not done))
+      (if (eq (aref (car p) 5) fun)
+	  (setq done t)
+	(setq p (cdr p))))
+    p ))
 
 ;; support for vm-mail-check-interval
 ;; if timer argument is present, this means we're using the Emacs
@@ -2484,7 +2547,7 @@ run vm-expunge-folder followed by vm-save-folder."
   (if (eq major-mode 'vm-summary-mode)
       (vm-select-folder-buffer))
   (let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
-	(pop-up-frames vm-mutable-frames))
+	(pop-up-frames (and vm-mutable-frames vm-frame-per-help)))
     (cond
      ((eq last-command 'vm-help)
       (describe-function major-mode))
@@ -2499,7 +2562,7 @@ run vm-expunge-folder followed by vm-save-folder."
      ((eq major-mode 'mail-mode)
       (message
        (substitute-command-keys
-	"Type \\[vm-mail-send-and-exit] to send message, \\[kill-buffer] to discard this message")))
+	"Type \\[vm-mail-send-and-exit] to send message, \\[kill-buffer] to discard this composition")))
      (t (describe-mode)))))
 
 (defun vm-spool-move-mail (source destination)
@@ -2555,7 +2618,7 @@ run vm-expunge-folder followed by vm-save-folder."
 	     ;; enable-local-variables == nil disables them for newer Emacses
 	     (let ((inhibit-local-variables t)
 		   (enable-local-variables nil)
-		   (overriding-file-coding-system 'no-conversion))
+		   (coding-system-for-read 'no-conversion))
 	       (find-file-noselect crash-box)))
        (save-excursion
 	 (set-buffer crash-buf)
@@ -2886,7 +2949,7 @@ spool files."
 	     (vm-save-restriction
 	      (widen)
 	      (goto-char (point-max))
-	      (let ((overriding-file-coding-system 'binary))
+	      (let ((coding-system-for-read 'binary))
 		(insert-file-contents folder))))
 	   (setq mcount (length vm-message-list))
 	   (if (vm-assimilate-new-messages)

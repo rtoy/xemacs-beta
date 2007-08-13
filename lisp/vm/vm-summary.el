@@ -32,8 +32,7 @@
 	truncate-lines t)
   ;; horizontal scrollbar off by default
   ;; user can turn it on in summary hook if desired.
-  (and (fboundp 'set-specifier)
-       scrollbar-height
+  (and vm-xemacs-p (featurep 'scrollbar)
        (set-specifier scrollbar-height (cons (current-buffer) 0)))
   (use-local-map vm-summary-mode-map)
   (and (vm-menu-support-possible-p)
@@ -42,7 +41,7 @@
        (vm-mouse-support-possible-p)
        (vm-mouse-xemacs-mouse-p)
        (add-hook 'mode-motion-hook 'mode-motion-highlight-line))
-  (if (or vm-frame-per-folder vm-frame-per-summary)
+  (if (and vm-mutable-frames (or vm-frame-per-folder vm-frame-per-summary))
       (vm-set-hooks-for-frame-deletion))
   (run-hooks 'vm-summary-mode-hook)
   ;; Lucid Emacs apparently used this name
@@ -284,13 +283,13 @@ mandatory."
 	    (and old-window (select-window old-window)))))))
 
 (defun vm-summary-highlight-region (start end face)
-  (cond ((fboundp 'make-overlay)
+  (cond (vm-fsfemacs-19-p
 	 (if (and vm-summary-overlay (overlay-buffer vm-summary-overlay))
 	     (move-overlay vm-summary-overlay start end)
 	   (setq vm-summary-overlay (make-overlay start end))
 	   (overlay-put vm-summary-overlay 'evaporate nil)
 	   (overlay-put vm-summary-overlay 'face face)))
-	((fboundp 'make-extent)
+	(vm-xemacs-p
 	 (if (and vm-summary-overlay (extent-end-position vm-summary-overlay))
 	     (set-extent-endpoints vm-summary-overlay start end)
 	   (setq vm-summary-overlay (make-extent start end))
@@ -930,7 +929,8 @@ mandatory."
   (or (vm-message-id-of m)
       (vm-set-message-id-of
        m
-       (or (vm-get-header-contents m "Message-Id:")
+       (or (let ((id (vm-get-header-contents m "Message-Id:")))
+	     (and id (car (vm-parse id "[^<]*\\(<[^>]+>\\)"))))
 	   ;; try running md5 on the message body to produce an ID
 	   ;; better than nothing.
 	   (save-excursion

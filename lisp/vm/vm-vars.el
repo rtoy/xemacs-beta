@@ -221,8 +221,14 @@ for a pause while the check is being done.")
 (defvar vm-mail-check-interval 300
   "*Numeric value specifies the number of seconds between checks
 for new mail.  The maildrops for all visited folders are checked.
-The buffer local variable vm-spooled-mail-waiting is set non-nil
-in the buffers of those folders that have mail waiting.")
+
+A nil value means don't check for new mail.
+
+Note that mail if new mail is found, it is not retrieved.  The
+buffer local variable vm-spooled-mail-waiting is set non-nil in
+the buffers of those folders that have mail waiting.  VM uses
+the displays \"Mail\" in the mode line of folders that have mail
+waiting.")
 
 (defvar vm-spooled-mail-waiting nil
   "Value is non-nil if there is mail waiting for the current folder.
@@ -271,9 +277,10 @@ messages are of the same type as that folder.
 
 A nil value means don't do the checks.
 
-Depending on the value of vm-convert-folder-types VM will either
-convert the messages to the appropriate type before saving or
-incorporating them, or it will signal an error.")
+If non-nil, VM will either convert the messages to the appropriate
+type before saving or incorporating them, or it will signal an
+error.  The value of vm-convert-folder-types determines which
+action VM will take.")
 
 (defvar vm-convert-folder-types t
   "*Non-nil value means that when VM checks folder types and finds
@@ -353,7 +360,7 @@ FSF Emacs always uses VM's builtin highlighting code.")
 
 (defvar vm-highlighted-header-face 'bold
   "*Face to be used to highlight headers.
-The header to highlight are sepcified by the vm-highlighted-header-regexp
+The headers to highlight are specified by the vm-highlighted-header-regexp
 variable.
 
 This variable is ignored under XEmacs if vm-use-lucid-highlighting is
@@ -390,7 +397,10 @@ various MIME standards specifications.
 A nil value means VM will not display MIME messages any
 differently than any other message.")
 
-(defvar vm-mime-ignore-mime-version nil
+;; this is t because at this time (11 April 1997) Solaris is
+;; generated too many mangled MIME version headers.  For the same
+;; reason vm-mime-avoid-folding-content-type is also set to t.
+(defvar vm-mime-ignore-mime-version t
   "*Non-nil value means ignore the version number in the MIME-Version
 header.  VM only knows how to decode and display MIME version 1.0
 messages.  Some systems scramble the MIME-Version header, causing
@@ -450,11 +460,11 @@ that type are assumed to be included.
 Note that some types are processed specially, and this variable does not
 apply to them.
 
-   Multipart/Digest and Message/RFC822 messages are always
-   displayed as a button to avoid visiting a new folder while the
-   user is moving around in the current folder.
+   multipart/digest messages are always displayed as a button to
+   avoid automatically visiting a new folder while you are moving
+   around in the current folder.
 
-   Message/Partial messages are always displayed as a button,
+   message/partial messages are always displayed as a button,
    because there always needs to be a way to trigger the assembly
    of the parts into a full message.
 
@@ -594,7 +604,7 @@ can only be displayed if you're running under a window system
 e.g. X windows.  So this variable will have no effect if you're
 running Emacs on a tty.
 
-Note that under FSF Emacs any fonts you use must be the same size
+Note that under FSF Emacs any fonts you use must be the same height
 as your default font.  XEmacs does not have this limitation.")
 
 (defvar vm-mime-button-face 'gui-button-face
@@ -610,7 +620,7 @@ such a character is found.
 This variable is unused in XEmacs/MULE.  Since multiple character
 sets can be displayed in a single buffer under MULE, VM will map
 the file coding system of the buffer to a single MIME character
-that can display all the buffer's characters.")
+set that can display all the buffer's characters.")
 
 (defvar vm-mime-8bit-text-transfer-encoding 'quoted-printable
   "*Symbol specifying what kind of transfer encoding to use on 8bit
@@ -683,8 +693,8 @@ for transmission using the MIME message/partial type.")
 When VM prompts you for a target file name when saving a MIME body,
 any relative pathnames will be relative to this directory.")
 
-(defvar vm-mime-avoid-folding-content-type nil
-  "*Non-nil means don't send folded Content-Type headers in MIME messages.
+(defvar vm-mime-avoid-folding-content-type t
+  "*Non-nil means don't send folded Content- headers in MIME messages.
 `Folded' headers are headers broken into multiple lines as specified
 in RFC822 for readability and to avoid excessive line lengths.  At
 least one major UNIX vendor ships a version of sendmail that believes
@@ -1632,32 +1642,22 @@ A value of nil restricts VM's window usage to the window from which
 it was invoked.  VM will not create, delete, or use any other windows,
 nor will it resize its own window.")
 
-(defvar vm-mutable-frames nil
+(defvar vm-mutable-frames t
   "*Non-nil value means VM is allowed to create and destroy frames
-to display and undisplay buffers.
+to display and undisplay buffers.  Whether VM actually does
+so depends on the value of the variables with names prefixed by
+`vm-frame-per-'.
 
 VM can create a frame to display a buffer, and delete frame to
 undisplay a buffer.  A nil value means VM should not create or
 delete frames.
 
-This variable is _not_ an analogue of vm-mutable-windows.  VM
-still might create frames if this variable is nil.  If you set
-the vm-frame-per-* variables VM will still create frames.  Using
-the vm-frame-per-* variables you have more control over when it
-happens.
-
-Users should consider setting vm-frame-per-folder and
-vm-frame-per-composition and/or using the -other-frame commands
-instead of setting this variable.  If vm-mutable-frames is set to t,
-then vm-mutable-windows should probably be set to nil so that you
-avoid splitting frames.
+This variable used to have a different meaning but it was changed
+to better reflect what users expected.  This variable is now a
+frame analogue of vm-mutable-windows.
 
 This variable does not apply to the VM commands whose
-names end in -other-frame, which always create a new frame.
-
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+names end in -other-frame, which always create a new frame.")
 
 (defvar vm-raise-frame-at-startup t
   "*Specifies whether VM should raise its frame at startup.
@@ -1671,9 +1671,10 @@ Nil means the commands will use the current frame.  This variable
 does not apply to the VM commands whose names end in
 -other-frame, which always create a new frame.
 
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs supports multiple virtual frames on dumb terminals, and
+VM will use them.")
 
 (defvar vm-frame-per-summary nil
   "*Non-nil value causes VM to display the folder summary in its own frame.
@@ -1681,9 +1682,10 @@ Nil means the vm-summarize command will use the current frame.
 This variable does not apply to vm-summarize-other-frame, which
 always create a new frame.
 
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs supports multiple virtual frames on dumb terminals, and
+VM will use them.")
 
 (defvar vm-frame-per-composition t
   "*Non-nil value causes the mail composition commands to open a new frame.
@@ -1691,9 +1693,10 @@ Nil means the commands will use the current frame.  This variable
 does not apply to the VM commands whose names end in
 -other-frame, which always create a new frame.
 
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs supports multiple virtual frames on dumb terminals, and
+VM will use them.")
 
 (defvar vm-frame-per-edit t
   "*Non-nil value causes vm-edit-message to open a new frame.
@@ -1701,9 +1704,19 @@ Nil means the vm-edit-message will use the current frame.  This
 variable does not apply to vm-edit-message-other-frame, which
 always create a new frame.
 
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs support multiple virtual frames on dumb terminals, and
+VM will use them.")
+
+(defvar vm-frame-per-help nil
+  "*Non-nil value causes VM to open a new frame to display help buffers.
+Nil means the VM will use the current frame.
+
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs supports multiple virtual frames on dumb terminals, and
+VM will use them.")
 
 (defvar vm-frame-per-completion t
   "*Non-nil value causes VM to open a new frame on mouse
@@ -1721,7 +1734,8 @@ list of choices.
 
 This variable has no meaning if you're not running Emacs native
 under X Windows or some other window system that allows multiple
-Emacs frames.")
+real Emacs frames.  Note that Emacs supports virtual frames under
+ttys but VM will not use these to display completion information.")
 
 (defvar vm-frame-parameter-alist nil
   "*Non-nil value is an alist of types and lists of frame parameters.
@@ -1750,10 +1764,7 @@ of frame that the following PARAMLIST applies to.
    (e.g. created by vm-summarize-other-frame)
 
 PARAMLIST is a list of pairs as described in the documentation for
-the function `make-frame'.
-
-This variable has no effect on frames created as a result of
-having vm-mutable-frames set to non-nil.")
+the function `make-frame'.")
 
 (defvar vm-search-other-frames t
   "*Non-nil means VM should search frames other than the selected frame
@@ -2307,7 +2318,10 @@ vm-mouse-send-url-to-mosaic uses this.")
 (defvar vm-mosaic-program-switches nil
   "*List of command line switches to pass to Mosaic.")
 
-(defvar vm-temp-file-directory "/tmp"
+(defvar vm-temp-file-directory
+  (or (and (file-directory-p "/tmp") "/tmp")
+      (and (file-directory-p "C:\\") "C:\\")
+      "/tmp")
   "*Name of a directory where VM can put temporary files.
 This name must not end with a slash.")
 
@@ -2339,7 +2353,8 @@ mail is not sent.")
     (define-key map "t" 'vm-expose-hidden-headers)
     (define-key map " " 'vm-scroll-forward)
     (define-key map "b" 'vm-scroll-backward)
-    (define-key map "\C-?" 'vm-scroll-backward)
+    (define-key map 'delete 'vm-scroll-backward)
+    (define-key map 'backspace 'vm-scroll-backward)
     (define-key map "D" 'vm-decode-mime-message)
     (define-key map "d" 'vm-delete-message)
     (define-key map "\C-d" 'vm-delete-message-backward)
@@ -2433,6 +2448,17 @@ mail is not sent.")
     (define-key map "8" 'digit-argument)
     (define-key map "9" 'digit-argument)
     (define-key map "-" 'negative-argument)
+    (cond ((fboundp 'set-keymap-name)
+	   (set-keymap-name map 'vm-mode-map)
+	   (set-keymap-name (lookup-key map "l")
+			    "VM mode message labels map")
+	   (set-keymap-name (lookup-key map "V")
+			    "VM mode virtual folders map")
+	   (set-keymap-name (lookup-key map "M")
+			    "VM mode message marks map")
+	   (set-keymap-name (lookup-key map "W")
+			    "VM mode window configuration map")))
+
     map )
   "Keymap for VM mode.")
 
@@ -2445,12 +2471,15 @@ mail is not sent.")
     (define-key map "\C-c\C-p" 'vm-mime-preview-composition)
     (define-key map "\C-c\C-e" 'vm-mime-encode-composition)
     (define-key map "\C-c\C-a" 'vm-mime-attach-file)
-    (define-key map "\C-c\C-m" 'vm-mime-attach-mime-file)
+;;    (define-key map "\C-c\C-m" 'vm-mime-attach-mime-file)
     (define-key map "\C-c\C-y" 'vm-yank-message)
     (define-key map "\C-c\C-s" 'vm-mail-send)
     (define-key map "\C-c\C-c" 'vm-mail-send-and-exit)
+    (cond ((fboundp 'set-keymap-name)
+	   (set-keymap-name map 'vm-mail-mode-map)))
     map )
-  "Keymap for VM Mail mode buffers.")
+  "Keymap for VM Mail mode buffers.
+Its parent keymap is mail-mode-map.")
 
 (defvar vm-edit-message-map
   (let ((map (make-sparse-keymap)))
@@ -2458,6 +2487,8 @@ mail is not sent.")
     (define-key map "\C-c\e" 'vm-edit-message-end)
     (define-key map "\C-c\C-c" 'vm-edit-message-end)
     (define-key map "\C-c\C-]" 'vm-edit-message-abort)
+    (cond ((fboundp 'set-keymap-name)
+	   (set-keymap-name map 'vm-edit-message-map)))
     map )
   "Keymap for the buffers created by VM's vm-edit-message command.")
 
@@ -2882,7 +2913,7 @@ append a space to words that complete unambiguously.")
 ;; is loaded before highlight-headers.el
 (defvar highlight-headers-regexp "Subject[ \t]*:")
 (defvar vm-url-regexp
-  "<URL:\\([^>]+\\)>\\|\\(\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
+  "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
   "Regular expression that matches an absolute URL.
 The URL itself must be matched by a \\(..\\) grouping.
 VM will extract the URL by copying the lowest number grouping
@@ -2913,6 +2944,7 @@ that has a match.")
 (make-variable-buffer-local 'vm-summary-overlay)
 (defvar vm-thread-loop-obarray (make-vector 29 0))
 (defvar vm-delete-duplicates-obarray (make-vector 29 0))
+(defvar vm-image-obarray (make-vector 29 0))
 (defvar vm-mail-mode-map-parented nil)
 (defvar vm-xface-cache (make-vector 29 0))
 (defconst vm-mime-base64-alphabet
@@ -3052,3 +3084,17 @@ that has a match.")
 (defvar vm-frame-list nil)
 (if (not (boundp 'shell-command-switch))
     (defvar shell-command-switch "-c"))
+
+(defconst vm-xemacs-p nil)
+(defconst vm-xemacs-mule-p nil)
+(defconst vm-fsfemacs-19-p nil)
+(defun vm-xemacs-p () vm-xemacs-p)
+(defun vm-xemacs-mule-p () vm-xemacs-mule-p)
+(defun vm-fsfemacs-19-p () vm-fsfemacs-19-p)
+(defun vm-note-emacs-version ()
+  (setq vm-xemacs-p (string-match "XEmacs" emacs-version)
+	vm-xemacs-mule-p (and vm-xemacs-p (featurep 'mule)
+			      ;; paranoia
+			      (fboundp 'set-file-coding-system))
+	vm-fsfemacs-19-p (not vm-xemacs-p)))
+(vm-note-emacs-version)

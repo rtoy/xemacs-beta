@@ -455,8 +455,8 @@ mechanisms for visiting.
 @deffn Command append-to-file start end filename
 This function appends the contents of the region delimited by
 @var{start} and @var{end} in the current buffer to the end of file
-@var{filename}.  If that file does not exist, it is created.  This
-function returns @code{nil}.
+@var{filename}.  If that file does not exist, it is created.  If that
+file exists it is overwritten.  This function returns @code{nil}.
 
 An error is signaled if @var{filename} specifies a nonwritable file,
 or a nonexistent file in a directory where files cannot be created.
@@ -1001,8 +1001,8 @@ is owned by the user with @sc{uid} 2235.
 is in the group with @sc{gid} 75.
 
 @item (8489 20284)
-was last accessed on Aug 19 00:09.  Unfortunately, you cannot convert
-this number into a time string in XEmacs.
+was last accessed on Aug 19 00:09. Use @code{format-time-string} to
+! convert this number into a time string.  @xref{Time Conversion}.
 
 @item (8489 20284)
 was last modified on Aug 19 00:09.
@@ -1567,8 +1567,7 @@ variables; only @code{substitute-in-file-name} does that.
 @defun file-relative-name filename &optional directory
 This function does the inverse of expansion---it tries to return a
 relative name that is equivalent to @var{filename} when interpreted
-relative to @var{directory}.  (If such a relative name would be longer
-than the absolute name, it returns the absolute name instead.)
+relative to @var{directory}.
 
 @c XEmacs feature?
 If @var{directory} is @code{nil} or omitted, the value of
@@ -1578,7 +1577,7 @@ If @var{directory} is @code{nil} or omitted, the value of
 (file-relative-name "/foo/bar" "/foo/")
      @result{} "bar")
 (file-relative-name "/foo/bar" "/hack/")
-     @result{} "/foo/bar")
+     @result{} "../foo/bar")
 @end example
 @end defun
 

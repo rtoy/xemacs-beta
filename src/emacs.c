@@ -179,7 +179,7 @@ fatal_error_signal (int sig)
   /* If fatal error occurs in code below, avoid infinite recursion.  */
   if (! fatal_error_in_progress)
     {
-      fatal_error_in_progress = 1;
+      fatal_error_in_progress = dont_check_for_quit = 1;
       shut_down_emacs (sig, Qnil);
       stderr_out("\nLisp backtrace follows:\n\n");
       Fbacktrace(Qexternal_debugging_output, Qt);

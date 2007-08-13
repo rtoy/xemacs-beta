@@ -61,12 +61,17 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/file.h>
 #include <stdio.h>
 #include <errno.h>
-#include <../src/syswait.h>
+#include "../src/syswait.h"
+#include "../src/systime.h"
 #include <stdlib.h>
 #include <string.h>
 #ifdef MAIL_USE_POP
 #include "pop.h"
 #endif
+
+#ifndef HAVE_STRERROR
+static char * strerror (int errnum);
+#endif /* HAVE_STRERROR */
 
 #ifdef MSDOS
 #undef access
@@ -92,20 +97,19 @@ Boston, MA 02111-1307, USA.  */
 #define DISABLE_DIRECT_ACCESS
 #endif /* WINDOWSNT */
 
-#ifdef USG
-#include <fcntl.h>
+#if defined (HAVE_UNISTD_H) || defined (USG)
 #include <unistd.h>
+#endif /* unistd.h */
 #ifndef F_OK
 #define F_OK 0
 #define X_OK 1
 #define W_OK 2
 #define R_OK 4
-#endif
-#endif /* USG */
+#endif /* No F_OK */
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#if defined (HAVE_FCNTL_H) || defined (USG)
+#include <fcntl.h>
+#endif /* fcntl.h */
 
 #if defined (XENIX) || defined (WINDOWSNT)
 #include <sys/locking.h>
@@ -129,35 +133,30 @@ extern int lk_open (), lk_close ();
 #undef write
 #undef close
 
-#ifndef errno
-extern int errno;
+static void fatal (char *, char*);
+static void error (char *, char *, char *);
+static void pfatal_with_name (char *);
+static void pfatal_and_delete (char *);
+static char *concat (char *, char *, char *);
+static long *xmalloc (unsigned int);
+static int popmail (char *, char *, char *);
+#ifdef MAIL_USE_POP
+static int pop_retr (popserver server, int msgno, int (*action)(), int arg);
 #endif
-char *strerror ();
-
-void fatal (char *, char*);
-void error ();
-void pfatal_with_name ();
-void pfatal_and_delete ();
-char *concat ();
-long *xmalloc ();
-int popmail ();
-int pop_retr ();
-int mbx_write ();
-int mbx_delimit_begin ();
-int mbx_delimit_end ();
+static int mbx_write (char *, FILE *);
+static int mbx_delimit_begin (FILE *);
+static int mbx_delimit_end (FILE *);
 
 /* Nonzero means this is name of a lock file to delete on fatal error.  */
 char *delete_lockname;
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char *argv[])
 {
   char *inname, *outname;
   int indesc, outdesc;
   int nread;
-  WAITTYPE status;
+  int status;
 
 #ifndef MAIL_USE_SYSTEM_LOCK
   struct stat st;
@@ -193,13 +192,13 @@ main (argc, argv)
   /* Also check that outname's directory is writable to the real uid.  */
   {
     char *buf = (char *) xmalloc (strlen (outname) + 1);
-    char *p;
+    char *cp;
     strcpy (buf, outname);
-    p = buf + strlen (buf);
-    while (p > buf && !IS_DIRECTORY_SEP (p[-1]))
-      *--p = 0;
-    if (p == buf)
-      *p++ = '.';
+    cp = buf + strlen (buf);
+    while (cp > buf && !IS_DIRECTORY_SEP (cp[-1]))
+      *--cp = 0;
+    if (cp == buf)
+      *cp++ = '.';
     if (access (buf, W_OK) != 0)
       pfatal_with_name (buf);
     free (buf);
@@ -397,8 +396,8 @@ main (argc, argv)
   wait (&status);
   if (!WIFEXITED (status))
     exit (1);
-  else if (WRETCODE (status) != 0)
-    exit (WRETCODE (status));
+  else if (WEXITSTATUS (status) != 0)
+    exit (WEXITSTATUS (status));
 
 #if !defined (MAIL_USE_MMDF) && !defined (MAIL_USE_SYSTEM_LOCK)
   unlink (lockname);
@@ -411,38 +410,34 @@ main (argc, argv)
 
 /* Print error message and exit.  */
 
-void
-fatal (s1, s2)
-     char *s1, *s2;
+static void
+fatal (char *s1, char *s2)
 {
   if (delete_lockname)
     unlink (delete_lockname);
-  error (s1, s2);
+  error (s1, s2, NULL);
   exit (1);
 }
 
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
 
-void
-error (s1, s2, s3)
-     char *s1, *s2, *s3;
+static void
+error (char *s1, char *s2, char *s3)
 {
   fprintf (stderr, "movemail: ");
   fprintf (stderr, s1, s2, s3);
   fprintf (stderr, "\n");
 }
 
-void
-pfatal_with_name (name)
-     char *name;
+static void
+pfatal_with_name (char *name)
 {
   char *s = concat ("", strerror (errno), " for %s");
   fatal (s, name);
 }
 
-void
-pfatal_and_delete (name)
-     char *name;
+static void
+pfatal_and_delete (char *name)
 {
   char *s = concat ("", strerror (errno), " for %s");
   unlink (name);
@@ -451,9 +446,8 @@ pfatal_and_delete (name)
 
 /* Return a newly-allocated string whose contents concatenate those of s1, s2, s3.  */
 
-char *
-concat (s1, s2, s3)
-     char *s1, *s2, *s3;
+static char *
+concat (char *s1, char *s2, char *s3)
 {
   int len1 = strlen (s1), len2 = strlen (s2), len3 = strlen (s3);
   char *result = (char *) xmalloc (len1 + len2 + len3 + 1);
@@ -468,9 +462,8 @@ concat (s1, s2, s3)
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-long *
-xmalloc (size)
-     unsigned size;
+static long *
+xmalloc (unsigned int size)
 {
   long *result = (long *) malloc (size);
   if (!result)
@@ -493,15 +486,6 @@ xmalloc (size)
 #include <stdio.h>
 #include <pwd.h>
 
-#ifdef USG
-#include <fcntl.h>
-/* Cancel substitutions made by config.h for Emacs.  */
-#undef open
-#undef read
-#undef write
-#undef close
-#endif /* USG */
-
 #define NOTOK (-1)
 #define OK 0
 #define DONE 1
@@ -513,10 +497,8 @@ char ibuffer[BUFSIZ];
 char obuffer[BUFSIZ];
 char Errmsg[80];
 
-popmail (user, outfile, password)
-     char *user;
-     char *outfile;
-     char *password;
+static int
+popmail (char *user, char *outfile, char *password)
 {
   int nmsgs, nbytes;
   register int i;
@@ -530,13 +512,13 @@ popmail (user, outfile, password)
   server = pop_open (0, user, password, POP_NO_GETPASS);
   if (! server)
     {
-      error (pop_error);
+      error (pop_error, NULL, NULL);
       return (1);
     }
 
   if (pop_stat (server, &nmsgs, &nbytes))
     {
-      error (pop_error);
+      error (pop_error, NULL, NULL);
       return (1);
     }
 
@@ -558,7 +540,7 @@ popmail (user, outfile, password)
   if ((mbf = fdopen (mbfi, "wb")) == NULL)
     {
       pop_close (server);
-      error ("Error in fdopen: %s", strerror (errno));
+      error ("Error in fdopen: %s", strerror (errno), NULL);
       close (mbfi);
       unlink (outfile);
       return (1);
@@ -569,7 +551,7 @@ popmail (user, outfile, password)
       mbx_delimit_begin (mbf);
       if (pop_retr (server, i, mbx_write, mbf) != OK)
 	{
-	  error (Errmsg);
+	  error (Errmsg, NULL, NULL);
 	  close (mbfi);
 	  return (1);
 	}
@@ -577,7 +559,7 @@ popmail (user, outfile, password)
       fflush (mbf);
       if (ferror (mbf))
 	{
-	  error ("Error in fflush: %s", strerror (errno));
+	  error ("Error in fflush: %s", strerror (errno), NULL);
 	  pop_close (server);
 	  close (mbfi);
 	  return (1);
@@ -593,14 +575,14 @@ popmail (user, outfile, password)
 #ifdef BSD
   if (fsync (mbfi) < 0)
     {
-      error ("Error in fsync: %s", strerror (errno));
+      error ("Error in fsync: %s", strerror (errno), NULL);
       return (1);
     }
 #endif
 
   if (close (mbfi) == -1)
     {
-      error ("Error in close: %s", strerror (errno));
+      error ("Error in close: %s", strerror (errno), NULL);
       return (1);
     }
 
@@ -608,7 +590,7 @@ popmail (user, outfile, password)
     {
       if (pop_delete (server, i))
 	{
-	  error (pop_error);
+	  error (pop_error, NULL, NULL);
 	  pop_close (server);
 	  return (1);
 	}
@@ -616,18 +598,16 @@ popmail (user, outfile, password)
 
   if (pop_quit (server))
     {
-      error (pop_error);
+      error (pop_error, NULL, NULL);
       return (1);
     }
     
   return (0);
 }
 
-pop_retr (server, msgno, action, arg)
-     popserver server;
-     int (*action)();
+static int
+pop_retr (popserver server, int msgno, int (*action)(), int arg)
 {
-  extern char *strerror ();
   char *line;
   int ret;
 
@@ -668,10 +648,8 @@ pop_retr (server, msgno, action, arg)
 			 && (a[3] == 'm') \
 			 && (a[4] == ' '))
 
-int
-mbx_write (line, mbf)
-     char *line;
-     FILE *mbf;
+static int
+mbx_write (char *line, FILE *mbf)
 {
   if (IS_FROM_LINE (line))
     {
@@ -685,17 +663,16 @@ mbx_write (line, mbf)
   return (OK);
 }
 
-int
-mbx_delimit_begin (mbf)
-     FILE *mbf;
+static int
+mbx_delimit_begin (FILE *mbf)
 {
   if (fputs ("\f\n0, unseen,,\n", mbf) == EOF)
     return (NOTOK);
   return (OK);
 }
 
-mbx_delimit_end (mbf)
-     FILE *mbf;
+static int
+mbx_delimit_end (FILE *mbf)
 {
   if (putc ('\037', mbf) == EOF)
     return (NOTOK);
@@ -705,9 +682,8 @@ mbx_delimit_end (mbf)
 #endif /* MAIL_USE_POP */
 
 #ifndef HAVE_STRERROR
-char *
-strerror (errnum)
-     int errnum;
+static char *
+strerror (int errnum)
 {
   extern char *sys_errlist[];
   extern int sys_nerr;

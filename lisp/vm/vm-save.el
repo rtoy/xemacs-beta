@@ -132,11 +132,9 @@ The saved messages are flagged as `filed'."
 			      (vm-number-of (car vm-message-pointer))
 			      auto-folder)))
 		 (let ((vm-delete-after-saving vm-delete-after-archiving))
-		   (if (not (string-equal auto-folder "/dev/null"))
-		       (vm-save-message auto-folder))
+		   (vm-save-message auto-folder)
 		   (vm-increment archived)
-		   (message "%d archived, still working..."
-				       archived)))
+		   (message "%d archived, still working..." archived)))
 	    (setq done (eq vm-message-pointer stop-point)
 		  vm-message-pointer (cdr vm-message-pointer))))
       ;; fix mode line
@@ -434,8 +432,9 @@ vm-save-message instead (normally bound to `s')."
     (setq vm-last-written-file file)))
 
 (defun vm-pipe-message-to-command (command prefix-arg)
-  "Run shell command with the some or all of the current message as input.
-By default the entire message is used.
+  "Runs a shell command with some or all of the contents of the
+current message as input.
+By default, the entire message is used.
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message
@@ -496,7 +495,7 @@ Output, if any, is displayed.  The message is not altered."
        (vm-display nil nil '(vm-pipe-message-to-command)
 		   '(vm-pipe-message-to-command)))))
 
-(defun vm-print-message (count)
+(defun vm-print-message (&optional count)
   "Print the current message
 Prefix arg N means print the current message and the next N - 1 messages.
 Prefix arg -N means print the current message and the previous N - 1 messages.
@@ -514,6 +513,7 @@ Output, if any, is displayed.  The message is not altered."
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
+  (or count (setq count 1))
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	(command (mapconcat (function identity)
 			    (nconc (list vm-print-command)

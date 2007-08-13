@@ -248,7 +248,13 @@ Prefix arg means the new virtual folder should be visited read only."
 	   (list name
 		 (list (list (list 'get-buffer (buffer-name)))
 		       (if arg (list selector arg) (list selector))))))
-    (vm-visit-virtual-folder name read-only)))
+    (vm-visit-virtual-folder name read-only))
+  ;; have to do this again here because the known virtual
+  ;; folder menu is now hosed because we installed it while
+  ;; vm-virtual-folder-alist was bound to the temp value above
+  (if vm-use-menus
+      (vm-menu-install-known-virtual-folders-menu)))
+
 
 (defun vm-apply-virtual-folder (name &optional read-only)
   "Apply the selectors of a named virtual folder to the current folder
@@ -275,7 +281,12 @@ Prefix arg means the new virtual folder should be visited read only."
       (setq clauses (cdr clauses)))
     (setcar vfolder (format "%s/%s" (buffer-name) (car vfolder)))
     (setq vm-virtual-folder-alist (list vfolder))
-    (vm-visit-virtual-folder (car vfolder) read-only)))
+    (vm-visit-virtual-folder (car vfolder) read-only))
+  ;; have to do this again here because the known virtual
+  ;; folder menu is now hosed because we installed it while
+  ;; vm-virtual-folder-alist was bound to the temp value above
+  (if vm-use-menus
+      (vm-menu-install-known-virtual-folders-menu)))
 
 (defun vm-toggle-virtual-mirror ()
   (interactive)

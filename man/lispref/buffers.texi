@@ -682,10 +682,10 @@ then @code{other-buffer} returns the first buffer on the buffer list
 that is not visible in any window in a visible frame.
 
 If the selected frame has a non-@code{nil} @code{buffer-predicate}
-parameter, then @code{other-buffer} uses that predicate to decide which
+property, then @code{other-buffer} uses that predicate to decide which
 buffers to consider.  It calls the predicate once for each buffer, and
 if the value is @code{nil}, that buffer is ignored.  @xref{X Frame
-Parameters}.
+Properties}.
 
 @c Emacs 19 feature
 If @var{visible-ok} is @code{nil}, @code{other-buffer} avoids returning

@@ -25,11 +25,18 @@ value of vm-auto-next-message is non-nil.
 Prefix argument N means scroll forward N lines."
   (interactive "P")
   (let ((mp-changed (vm-follow-summary-cursor))
+	needs-decoding 
 	(was-invisible nil))
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
     (vm-check-for-killed-presentation)
     (vm-error-if-folder-empty)
+    (setq needs-decoding (and vm-display-using-mime
+			      (not vm-mime-decoded)
+			      (not (vm-mime-plain-message-p
+				    (car vm-message-pointer)))
+			      vm-auto-decode-mime-messages
+			      (eq vm-system-state 'previewing)))
     (and vm-presentation-buffer
 	 (set-buffer vm-presentation-buffer))
     (let ((point (point))
@@ -46,7 +53,7 @@ Prefix argument N means scroll forward N lines."
 	    (if (= (window-start w) (point-max))
 		(set-window-start w (point-min)))
 	    (setq was-invisible t))))
-    (if (or mp-changed was-invisible
+    (if (or mp-changed was-invisible needs-decoding
 	    (and (eq vm-system-state 'previewing)
 		 (pos-visible-in-window-p
 		  (point-max)
@@ -193,7 +200,7 @@ Prefix argument N means scroll forward N lines."
     (message "End of message %s"
 			(vm-number-of (car vm-message-pointer)))))
 
-(defun vm-scroll-backward (arg)
+(defun vm-scroll-backward (&optional arg)
   "Scroll backward a screenful of text.
 Prefix N scrolls backward N lines."
   (interactive "P")
@@ -205,14 +212,14 @@ Prefix N scrolls backward N lines."
 
 (defun vm-highlight-headers ()
   (cond
-   ((and (vm-xemacs-p) vm-use-lucid-highlighting)
+   ((and vm-xemacs-p vm-use-lucid-highlighting)
     (require 'highlight-headers)
     ;; disable the url marking stuff, since VM has its own interface.
     (let ((highlight-headers-mark-urls nil)
 	  (highlight-headers-regexp (or vm-highlighted-header-regexp
 					highlight-headers-regexp)))
       (highlight-headers (point-min) (point-max) t)))
-   ((vm-xemacs-p)
+   (vm-xemacs-p
     (let (e)
       (map-extents (function
 		    (lambda (e ignore)
@@ -263,7 +270,7 @@ Prefix N scrolls backward N lines."
 				       (point-max))))
       (setq search-pairs (list (cons (point-min) (point-max)))))
     (cond
-     ((vm-xemacs-p)
+     (vm-xemacs-p
       (let (e)
 	(map-extents (function
 		      (lambda (e ignore)
@@ -282,10 +289,16 @@ Prefix N scrolls backward N lines."
 	    (if vm-highlight-url-face
 		(set-extent-property e 'face vm-highlight-url-face))
 	    (if vm-url-browser
-		(let ((keymap (make-sparse-keymap)))
+		(let ((keymap (make-sparse-keymap))
+		      (popup-function
+		       (if (save-excursion
+			     (goto-char (match-beginning n))
+			     (looking-at "mailto:"))
+			   'vm-menu-popup-mailto-url-browser-menu
+			 'vm-menu-popup-url-browser-menu)))
 		  (define-key keymap 'button2 'vm-mouse-send-url-at-event)
 		  (if vm-popup-menu-on-mouse-3
-		      (define-key keymap 'button3 'vm-menu-popup-url-browser-menu))
+		      (define-key keymap 'button3 popup-function))
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))
@@ -293,7 +306,7 @@ Prefix N scrolls backward N lines."
 		  (set-extent-property e 'balloon-help 'vm-url-help)
 		  (set-extent-property e 'highlight t))))
 	  (setq search-pairs (cdr search-pairs)))))
-     ((and (vm-fsfemacs-19-p)
+     ((and vm-fsfemacs-19-p
 	   (fboundp 'overlay-put))
       (let (o-lists o p)
 	(setq o-lists (overlay-lists)
@@ -318,9 +331,17 @@ Prefix N scrolls backward N lines."
 	    (if vm-highlight-url-face
 		(overlay-put o 'face vm-highlight-url-face))
 	    (if vm-url-browser
-		(let ((keymap (make-sparse-keymap)))
+		(let ((keymap (make-sparse-keymap))
+		      (popup-function
+		       (if (save-excursion
+			     (goto-char (match-beginning n))
+			     (looking-at "mailto:"))
+			   'vm-menu-popup-mailto-url-browser-menu
+			 'vm-menu-popup-url-browser-menu)))
 		  (overlay-put o 'mouse-face 'highlight)
 		  (setq keymap (nconc keymap (current-local-map)))
+		  (if vm-popup-menu-on-mouse-3
+		      (define-key keymap [mouse-3] popup-function))
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))
@@ -329,7 +350,7 @@ Prefix N scrolls backward N lines."
 
 (defun vm-energize-headers ()
   (cond
-   ((vm-xemacs-p)
+   (vm-xemacs-p
     (let ((search-tuples '(("^From:" vm-menu-author-menu)
 			   ("^Subject:" vm-menu-subject-menu)))
 	  regexp menu keymap e)
@@ -363,7 +384,7 @@ Prefix N scrolls backward N lines."
 	  (set-extent-property e 'balloon-help 'vm-mouse-3-help)
 	  (set-extent-property e 'highlight t))
 	(setq search-tuples (cdr search-tuples)))))
-   ((and (vm-fsfemacs-19-p)
+   ((and vm-fsfemacs-19-p
 	 (fboundp 'overlay-put))
     (let ((search-tuples '(("^From:" vm-menu-fsfemacs-author-menu)
 			   ("^Subject:" vm-menu-fsfemacs-subject-menu)))
@@ -416,7 +437,10 @@ Prefix N scrolls backward N lines."
 	    (setq g (intern h vm-xface-cache))
 	    (if (boundp g)
 		(setq g (symbol-value g))
-	      (set g (make-glyph h))
+	      (set g (make-glyph
+		      (list
+		       (list 'global (cons '(tty) [nothing]))
+		       (list 'global (cons '(win) (vector 'xface ':data h))))))
 	      (setq g (symbol-value g))
 	      ;; XXX broken.  Gives extra pixel lines at the
 	      ;; bottom of the glyph in 19.12
@@ -456,7 +480,7 @@ Use mouse button 3 to choose a Web browser for the URL."
 (defun vm-highlight-headers-maybe ()
   ;; highlight the headers
   (if (or vm-highlighted-header-regexp
-	  (and (vm-xemacs-p) vm-use-lucid-highlighting))
+	  (and vm-xemacs-p vm-use-lucid-highlighting))
       (save-restriction
 	(widen)
 	(narrow-to-region (vm-headers-of (car vm-message-pointer))
@@ -473,8 +497,7 @@ Use mouse button 3 to choose a Web browser for the URL."
 	(vm-energize-headers)))
   ;; display xfaces, if we can
   (if (and vm-display-xfaces
-	   (vm-xemacs-p)
-	   (vm-multiple-frames-possible-p)
+	   vm-xemacs-p
 	   (featurep 'xface))
       (save-restriction
 	(widen)

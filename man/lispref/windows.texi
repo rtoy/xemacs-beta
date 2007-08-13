@@ -272,7 +272,7 @@ Now, the screen looks like this:
 @end smallexample
 
 Normally, Emacs indicates the border between two side-by-side windows
-with a scroll bar (@pxref{X Frame Parameters,Scroll Bars}) or @samp{|}
+with a scroll bar (@pxref{X Frame Properties,Scroll Bars}) or @samp{|}
 characters.  The display table can specify alternative border
 characters; see @ref{Display Tables}.
 @end deffn
@@ -892,14 +892,14 @@ is non-@code{nil}.
 Its value should be a function of no arguments.  When
 @code{display-buffer} makes a new frame, it does so by calling that
 function, which should return a frame.  The default value of the
-variable is a function that creates a frame using parameters from
-@code{pop-up-frame-alist}.
+variable is a function that creates a frame using properties from
+@code{pop-up-frame-plist}.
 @end defvar
 
-@defvar pop-up-frame-alist
-This variable holds an alist specifying frame parameters used when
-@code{display-buffer} makes a new frame.  @xref{Frame Parameters}, for
-more information about frame parameters.
+@defvar pop-up-frame-plist
+This variable holds a plist specifying frame properties used when
+@code{display-buffer} makes a new frame.  @xref{Frame Properties}, for
+more information about frame properties.
 @end defvar
 
 @defvar special-display-buffer-names
@@ -912,7 +912,7 @@ By default, special display means to give the buffer a dedicated frame.
 If an element is a list, instead of a string, then the @sc{car} of the
 list is the buffer name, and the rest of the list says how to create the
 frame.  There are two possibilities for the rest of the list.  It can be
-an alist, specifying frame parameters, or it can contain a function and
+a plist, specifying frame properties, or it can contain a function and
 arguments to give to it.  (The function's first argument is always the
 buffer to be displayed; the arguments from the list come after that.)
 @end defvar
@@ -951,8 +951,8 @@ in your init file, before @var{buffer} was created, then presumably the
 window was previously made by this function.
 @end defun
 
-@defopt special-display-frame-alist
-This variable holds frame parameters for
+@defopt special-display-frame-plist
+This variable holds frame properties for
 @code{special-display-popup-frame} to use when it creates a frame.
 @end defopt
 

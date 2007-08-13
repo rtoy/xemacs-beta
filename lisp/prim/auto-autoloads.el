@@ -1223,7 +1223,7 @@ To change this variable use \\[dired-do-compress] with a zero prefix.")
 *Switches passed to ls for dired. MUST contain the `l' option.
 Can contain even `F', `b', `i' and `s'.")
 
-(defvar dired-chown-program (if (memq system-type '(hpux dgux usg-unix-v)) "chown" "/etc/chown") "\
+(defvar dired-chown-program (if (memq system-type '(hpux dgux usg-unix-v linux)) "chown" "/etc/chown") "\
 *Name of chown command (usually `chown' or `/etc/chown').")
 
 (defvar dired-gnutar-program nil "\
@@ -1314,6 +1314,9 @@ Use \\[dired-omit-toggle] to see these files. (buffer local)")
 *Mail reader used by dired for dired-read-mail (\\[dired-read-mail]).
 The symbols 'rmail and 'vm are the only two allowed values.")
 
+(defvar dired-refresh-automatically t "\
+*If non-nil, refresh dired buffers automatically after file operations.")
+
 (define-key ctl-x-map "d" 'dired)
 
 (autoload 'dired "dired" "\
@@ -1378,14 +1381,18 @@ Returns a list (HOST USER PATH), or nil if PATH does not match the format." nil 
 
 ;;;### (autoloads (remote-path-file-handler-function) "efs-dump" "efs/efs-dump.el")
 
-(defvar allow-remote-paths t "\
-*Set this to nil if you don't want remote paths to access
-remote files.")
-
 (or (assoc efs-path-root-regexp file-name-handler-alist) (setq file-name-handler-alist (cons (cons efs-path-root-regexp 'remote-path-file-handler-function) file-name-handler-alist)))
 
 (autoload 'remote-path-file-handler-function "efs-dump" "\
 Function to call special file handlers for remote files." nil nil)
+
+;;;***
+
+;;;### (autoloads nil "efs-fnh" "efs/efs-fnh.el")
+
+(defvar allow-remote-paths t "\
+*Set this to nil if you don't want remote paths to access
+remote files.")
 
 ;;;***
 
@@ -1889,12 +1896,10 @@ Generate ARG (default 1) sentences of half-crazed gibberish." t nil)
 Start a Gomoku game between you and Emacs.
 If a game is in progress, this command allow you to resume it.
 If optional arguments N and M are given, an N by M board is used.
-If prefix arg is given for N, M is prompted for.
 
-You and Emacs play in turn by marking a free square.  You mark it with X
+You and Emacs play in turn by marking a free square. You mark it with X
 and Emacs marks it with O. The winner is the first to get five contiguous
 marks horizontally, vertically or in diagonal.
-
 You play by moving the cursor over the square you choose and hitting
 \\<gomoku-mode-map>\\[gomoku-human-plays].
 Use \\[describe-mode] for more info." t nil)
@@ -3576,8 +3581,6 @@ with no args, if that value is non-nil." t nil)
 
 ;;;### (autoloads (hide-ifdef-mode) "hideif" "modes/hideif.el")
 
-(add-minor-mode 'hide-ifdef-mode " Ifdef")
-
 (autoload 'hide-ifdef-mode "hideif" "\
 Toggle Hide-Ifdef mode.  This is a minor mode, albeit a large one.
 With ARG, turn Hide-Ifdef mode on if arg is positive, off otherwise.
@@ -3736,7 +3739,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.19 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.20 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5011,7 +5014,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.19 $
+vhdl-mode $Revision: 1.20 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5319,7 +5322,8 @@ Optional arg (interactive prefix) non-nil means prompt for user name and site.
 Second arg is file name of change log.  If nil, uses `change-log-default-name'.
 Third arg OTHER-WINDOW non-nil means visit in other window.
 Fourth arg NEW-ENTRY non-nil means always create a new entry at the front;
-never append to an existing entry." t nil)
+never append to an existing entry.  Today's date is calculated according to
+`change-log-time-zone-rule' if non-nil, otherwise in local time." t nil)
 
 (autoload 'add-change-log-entry-other-window "add-log" "\
 Find change log file in other window and add an entry for today.
@@ -5334,6 +5338,15 @@ Prevents numeric backups and sets `left-margin' to 8 and `fill-column' to 74.
 New log entries are usually made with \\[add-change-log-entry] or \\[add-change-log-entry-other-window].
 Each entry behaves as a paragraph, and the entries for one day as a page.
 Runs `change-log-mode-hook'." t nil)
+
+(defvar add-log-lisp-like-modes '(emacs-lisp-mode lisp-mode scheme-mode lisp-interaction-mode) "\
+*Modes that look like Lisp to `add-log-current-defun'.")
+
+(defvar add-log-c-like-modes '(c-mode c++-mode c++-c-mode objc-mode) "\
+*Modes that look like C to `add-log-current-defun'.")
+
+(defvar add-log-tex-like-modes '(TeX-mode plain-TeX-mode LaTeX-mode plain-tex-mode latex-mode) "\
+*Modes that look like TeX to `add-log-current-defun'.")
 
 (autoload 'add-log-current-defun "add-log" "\
 Return name of function definition point is in, or nil.

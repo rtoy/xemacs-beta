@@ -723,27 +723,29 @@ last-command-event
 @end defvar
 
 @defvar last-command-char
-If the value of @code{last-command-event} is a keyboard event, then this
-is the nearest @sc{ASCII} equivalent to it.  This is the value that
-@code{self-insert-command} will put in the buffer.  Remember that there
-is @emph{not} a 1:1 mapping between keyboard events and @sc{ASCII}
-characters: the set of keyboard events is much larger, so writing code
-that examines this variable to determine what key has been typed is bad
-practice, unless you are certain that it will be one of a small set of
-characters.
 
-This function exists for compatibility with Emacs version 18.
+If the value of @code{last-command-event} is a keyboard event, then this
+is the nearest character equivalent to it (or @code{nil} if there is no
+character equivalent).  @code{last-command-char} is the character that
+@code{self-insert-command} will insert in the buffer.  Remember that
+there is @emph{not} a one-to-one mapping between keyboard events and
+XEmacs characters: many keyboard events have no corresponding character,
+and when the Mule feature is available, most characters can not be input
+on standard keyboards, except possibly with help from an input method.
+So writing code that examines this variable to determine what key has
+been typed is bad practice, unless you are certain that it will be one
+of a small set of characters.
+
+This variable exists for compatibility with Emacs version 18.
 
 @example
 @group
-last-command-char 
+last-command-char
 ;; @r{Now use @kbd{C-u C-x C-e} to evaluate that.}
-     @result{} 5
+     @result{} ?\^E
 @end group
 @end example
 
-@noindent
-The value is 5 because that is the @sc{ASCII} code for @kbd{C-e}.
 @end defvar
 
 @defvar current-mouse-event
@@ -820,7 +822,7 @@ the key pressed and the modifiers that were held down at the time.
 or released, button events specify the modifier keys that were held down
 at the time and the position of the pointer at the time.
 
-@item pointer-motion event
+@item motion event
   The pointer was moved.  Along with the position of the pointer, these events
 also specify the modifier keys that were held down at the time.
 
@@ -954,38 +956,72 @@ when the event is created.
 @end table
 @end table
 
+@defun event-type event
+Return the type of @var{event}.
+
+This will be a symbol; one of
+
+@table @code
+@item key-press
+A key was pressed.
+@item button-press
+A mouse button was pressed.
+@item button-release
+A mouse button was released.
+@item motion
+The mouse moved.
+@item misc-user
+Some other user action happened; typically, this is
+a menu selection or scrollbar action.
+@item process
+Input is available from a subprocess.
+@item timeout
+A timeout has expired.
+@item eval
+This causes a specified action to occur when dispatched.
+@item magic
+Some window-system-specific event has occurred.
+@end table
+@end defun
+
 @node Event Predicates
 @subsection Event Predicates
 
-The following predicates return whether an object is an event of a particular
-type.
-
-@defun button-event-p object object
-This is true if @var{object} is a button-press or button-release event.
-@end defun
-
-@defun button-press-event-p object
-This is true if @var{object} is a mouse-button-press event.
-@end defun
-
-@defun button-release-event-p object
-This is true if @var{object} is a mouse-button-release event.
-@end defun
-
-@defun eval-event-p object
-This is true if @var{object} is an eval or misc-user event.
-@end defun
+The following predicates return whether an object is an event of a
+particular type.
 
 @defun key-press-event-p object
 This is true if @var{object} is a key-press event.
 @end defun
 
-@defun misc-user-event-p object
-This is true if @var{object} is a misc-user event.
+@defun button-event-p object object
+This is true if @var{object} is a mouse button-press or button-release
+event.
+@end defun
+
+@defun button-press-event-p object
+This is true if @var{object} is a mouse button-press event.
+@end defun
+
+@defun button-release-event-p object
+This is true if @var{object} is a mouse button-release event.
 @end defun
 
 @defun motion-event-p object
-This is true if @var{object} is a mouse-motion event.
+This is true if @var{object} is a mouse motion event.
+@end defun
+
+@defun mouse-event-p object
+This is true if @var{object} is a mouse button-press, button-release
+or motion event.
+@end defun
+
+@defun eval-event-p object
+This is true if @var{object} is an eval event.
+@end defun
+
+@defun misc-user-event-p object
+This is true if @var{object} is a misc-user event.
 @end defun
 
 @defun process-event-p object
@@ -1003,7 +1039,7 @@ This is true if @var{object} is any event that has not been deallocated.
 @node Accessing Mouse Event Positions
 @subsection Accessing the Position of a Mouse Event
 
-Unlike other events, mouse events (i.e. mouse-motion, button-press, and
+Unlike other events, mouse events (i.e. motion, button-press, and
 button-release events) occur in a particular location on the screen.
 Many primitives are provided for determining exactly where the event
 occurred and what is under that location.
@@ -1032,15 +1068,13 @@ motion, button press, or button release event occurred in.  This will be
 @defun event-x-pixel event
 This function returns the X position in pixels of the given mouse event.
 The value returned is relative to the frame the event occurred in.
-This will signal an error if the event is not a mouse-motion, button-press,
-or button-release event.
+This will signal an error if the event is not a mouse event.
 @end defun
 
 @defun event-y-pixel event
 This function returns the Y position in pixels of the given mouse event.
 The value returned is relative to the frame the event occurred in.
-This will signal an error if the event is not a mouse-motion, button-press,
-or button-release event.
+This will signal an error if the event is not a mouse event.
 @end defun
 
 @node Window-Level Event Position Info
@@ -1053,16 +1087,16 @@ a mouse event occurred.
 Given a mouse motion, button press, or button release event, compute and
 return the window on which that event occurred.  This may be @code{nil}
 if the event occurred in the border or over a toolbar.  The modeline is
-considered to be in the window it represents.
+considered to be within the window it describes.
 @end defun
 
 @defun event-buffer event
 Given a mouse motion, button press, or button release event, compute and
 return the buffer of the window on which that event occurred.  This may
 be @code{nil} if the event occurred in the border or over a toolbar.
-The modeline is considered to be in the window it represents.  This is
+The modeline is considered to be within the window it describes.  This is
 equivalent to calling @code{event-window} and then calling
-@code{event-buffer} on the result if it is a window.
+@code{window-buffer} on the result if it is a window.
 @end defun
 
 @defun event-window-x-pixel event
@@ -1206,8 +1240,8 @@ This will be the @sc{ASCII} code of a printing character, or a symbol.
 @end defun
 
 @defun event-button event
-This function returns the button-number of the given mouse-button-press
-event.
+This function returns the button-number of the given button-press or
+button-release event.
 @end defun
 
 @defun event-modifiers event

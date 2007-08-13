@@ -203,11 +203,11 @@ the actual charset object.
 A documentation string describing the charset.
 @item registry
 A regular expression matching the font registry field for this character
-set.  For example, both the @code{ascii} and @code{latin-1} charsets
-use the registry @code{"ISO8859-1"}.  This field is used to choose
-an appropriate font when the user gives a general font specification
-such as @samp{-*-courier-medium-r-*-140-*}, i.e. a 14-point upright
-medium-weight Courier font.
+set.  For example, both the @code{ascii} and @code{latin-iso8859-1}
+charsets use the registry @code{"ISO8859-1"}.  This field is used to
+choose an appropriate font when the user gives a general font
+specification such as @samp{-*-courier-medium-r-*-140-*}, i.e. a
+14-point upright medium-weight Courier font.
 @item dimension
 Number of position codes used to index a character in the character set.
 XEmacs/MULE can only handle character sets of dimension 1 or 2.
@@ -251,8 +251,8 @@ position codes 33 through 126 map to font indices 33 through 126; with
 it set to 1, position codes 33 through 126 map to font indices 161
 through 254 (i.e. the same number but with the high bit set).  For
 example, for a font whose registry is ISO8859-1, the left half of the
-font (octets 0x20 - 0x7F) is the @code{ascii} charset, while the
-right half (octets 0xA0 - 0xFF) is the @code{latin-1} charset.
+font (octets 0x20 - 0x7F) is the @code{ascii} charset, while the right
+half (octets 0xA0 - 0xFF) is the @code{latin-iso8859-1} charset.
 @item ccl-program
 A compiled CCL program used to convert a character in this charset into
 an index into the font.  This is in addition to the @code{graphic}
@@ -400,54 +400,53 @@ This function sets the @code{ccl-program} property of @var{charset} to
 The following charsets are predefined in the C code.
 
 @example
-Name            Doc String            Type  Fi Gr Dir Registry
+Name                    Type  Fi Gr Dir Registry
 --------------------------------------------------------------
-ascii           ASCII                 94    B  0  l2r ISO8859-1
-control-1       Control characters    94       0  l2r ---
-latin-1         Latin-1               94    A  1  l2r ISO8859-1
-latin-2         Latin-2               96    B  1  l2r ISO8859-2
-latin-3         Latin-3               96    C  1  l2r ISO8859-3
-latin-4         Latin-4               96    D  1  l2r ISO8859-4
-cyrillic        Cyrillic              96    L  1  l2r ISO8859-5
-arabic          Arabic                96    G  1  r2l ISO8859-6
-greek           Greek                 96    F  1  l2r ISO8859-7
-hebrew          Hebrew                96    H  1  r2l ISO8859-8
-latin-5         Latin-5               96    M  1  l2r ISO8859-9
-thai            Thai                  96    T  1  l2r TIS620
-japanese-kana   Japanese Katakana     94    I  1  l2r JISX0201.1976
-japanese-roman  Japanese Roman        94    J  0  l2r JISX0201.1976
-japanese-old    Japanese Old          94x94 @@  0  l2r JISX0208.1978
-chinese-gb      Chinese GB            94x94 A  0  l2r GB2312
-japanese        Japanese              94x94 B  0  l2r JISX0208.19(83|90)
-korean          Korean                94x94 C  0  l2r KSC5601
-japanese-2      Japanese Supplement   94x94 D  0  l2r JISX0212
-chinese-cns-1   Chinese CNS Plane 1   94x94 G  0  l2r CNS11643.1
-chinese-cns-2   Chinese CNS Plane 2   94x94 H  0  l2r CNS11643.2
-chinese-big5-1  Chinese Big5 Level 1  94x94 0  0  l2r Big5
-chinese-big5-2  Chinese Big5 Level 2  94x94 1  0  l2r Big5
-composite       Composite             96x96    0  l2r ---
+ascii                    94    B  0  l2r ISO8859-1
+control-1                94       0  l2r ---
+latin-iso8859-1          94    A  1  l2r ISO8859-1
+latin-iso8859-2          96    B  1  l2r ISO8859-2
+latin-iso8859-3          96    C  1  l2r ISO8859-3
+latin-iso8859-4          96    D  1  l2r ISO8859-4
+cyrillic-iso8859-5       96    L  1  l2r ISO8859-5
+arabic-iso8859-6         96    G  1  r2l ISO8859-6
+greek-iso8859-7          96    F  1  l2r ISO8859-7
+hebrew-iso8859-8         96    H  1  r2l ISO8859-8
+latin-iso8859-9          96    M  1  l2r ISO8859-9
+thai-tis620              96    T  1  l2r TIS620
+katakana-jisx0201        94    I  1  l2r JISX0201.1976
+latin-jisx0201           94    J  0  l2r JISX0201.1976
+japanese-jisx0208-1978   94x94 @@  0  l2r JISX0208.1978
+japanese-jisx0208        94x94 B  0  l2r JISX0208.19(83|90)
+japanese-jisx0212        94x94 D  0  l2r JISX0212
+chinese-gb2312           94x94 A  0  l2r GB2312
+chinese-cns11643-1       94x94 G  0  l2r CNS11643.1
+chinese-cns11643-2       94x94 H  0  l2r CNS11643.2
+chinese-big5-1           94x94 0  0  l2r Big5
+chinese-big5-2           94x94 1  0  l2r Big5
+korean-ksc5601           94x94 C  0  l2r KSC5601
+composite                96x96    0  l2r ---
 @end example
 
 The following charsets are predefined in the Lisp code.
 
 @example
-Name            Doc String            Type  Fi Gr Dir Registry
+Name                     Type  Fi Gr Dir Registry
 --------------------------------------------------------------
-arabic-0        Arabic digits         94    2  0  l2r MuleArabic-0
-arabic-1        one-column Arabic     94    3  0  r2l MuleArabic-1
-arabic-2        one-column Arabic     94    4  0  r2l MuleArabic-2
-sisheng         PinYin-ZhuYin         94    0  0  l2r sisheng_cwnn\|
-                                                          OMRON_UDC_ZH
-chinese-cns-3   Chinese CNS Plane 3   94x94 I  0  l2r CNS11643.1
-chinese-cns-4   Chinese CNS Plane 4   94x94 J  0  l2r CNS11643.1
-chinese-cns-5   Chinese CNS Plane 5   94x94 K  0  l2r CNS11643.1
-chinese-cns-6   Chinese CNS Plane 6   94x94 L  0  l2r CNS11643.1
-chinese-cns-7   Chinese CNS Plane 7   94x94 M  0  l2r CNS11643.1
-ethiopic        Ethiopic              94x94 2  0  l2r Ethio
-ascii-r2l       Right-to-Left ASCII   94    B  0  r2l ISO8859-1
-ipa             IPA for Mule          96    0  1  l2r MuleIPA
-vietnamese-1    VISCII lower          96    1  1  l2r VISCII1.1
-vietnamese-2    VISCII upper          96    2  1  l2r VISCII1.1
+arabic-digit             94    2  0  l2r MuleArabic-0
+arabic-1-column          94    3  0  r2l MuleArabic-1
+arabic-2-column          94    4  0  r2l MuleArabic-2
+sisheng                  94    0  0  l2r sisheng_cwnn\|OMRON_UDC_ZH
+chinese-cns11643-3       94x94 I  0  l2r CNS11643.1
+chinese-cns11643-4       94x94 J  0  l2r CNS11643.1
+chinese-cns11643-5       94x94 K  0  l2r CNS11643.1
+chinese-cns11643-6       94x94 L  0  l2r CNS11643.1
+chinese-cns11643-7       94x94 M  0  l2r CNS11643.1
+ethiopic                 94x94 2  0  l2r Ethio
+ascii-r2l                94    B  0  r2l ISO8859-1
+ipa                      96    0  1  l2r MuleIPA
+vietnamese-lower         96    1  1  l2r VISCII1.1
+vietnamese-upper         96    2  1  l2r VISCII1.1
 @end example
 
 For all of the above charsets, the dimension and number of columns are
@@ -474,13 +473,13 @@ This function returns the octet (i.e. position code) numbered @var{n}
 (should be 0 or 1) of char @var{ch}.  @var{n} defaults to 0 if omitted.
 @end defun
 
-@defun charsets-in-region start end &optional buffer
+@defun find-charset-region start end &optional buffer
 This function returns a list of the charsets in the region between
 @var{start} and @var{end}.  @var{buffer} defaults to the current buffer
 if omitted.
 @end defun
 
-@defun charsets-in-string string
+@defun find-charset-string string
 This function returns a list of the charsets in @var{string}.
 @end defun
 
@@ -518,9 +517,9 @@ left as-is.  @var{buffer} defaults to the current buffer if omitted.
 @node ISO 2022
 @section ISO 2022
 
-This section briefly describes the ISO2022 encoding standard.  For more
-thorough understanding, please refer to the original document of
-ISO2022.
+This section briefly describes the ISO 2022 encoding standard.  For more
+thorough understanding, please refer to the original document of ISO
+2022.
 
 Character sets (@dfn{charsets}) are classified into the following four
 categories, according to the number of characters of charset:
@@ -566,8 +565,8 @@ register of charset can be invoked into.
 Usually, in the initial state, G0 is invoked into GL, and G1
 is invoked into GR.
 
-ISO2022 distinguishes 7-bit environments and 8-bit
-environments.  In 7-bit environments, only C0 and GL are used.
+ISO 2022 distinguishes 7-bit environments and 8-bit environments.  In
+7-bit environments, only C0 and GL are used.
 
 Charset designation is done by escape sequences of the form:
 
@@ -589,13 +588,11 @@ The meaning of intermediate characters are:
 	+ [0x2B]: designate to G3 a 94-charset whose final byte is @var{F}.
 	- [0x2D]: designate to G1 a 96-charset whose final byte is @var{F}.
 	. [0x2E]: designate to G2 a 96-charset whose final byte is @var{F}.
-	/ [0x2F]: designate to G3 a 96-charset whose final byte is
-	@var{F}.
+	/ [0x2F]: designate to G3 a 96-charset whose final byte is @var{F}.
 @end group
 @end example
 
-The following rule is not allowed in ISO2022 but can be used
-in Mule.
+The following rule is not allowed in ISO 2022 but can be used in Mule.
 
 @example
 	, [0x2C]: designate to G0 a 96-charset whose final byte is @var{F}.
@@ -613,17 +610,16 @@ Here are examples of designations:
 @end group
 @end example
 
-To use a charset designated to G2 or G3, and to use a
-charset designated to G1 in a 7-bit environment, you must
-explicitly invoke G1, G2, or G3 into GL.  There are two
-types of invocation, Locking Shift (forever) and Single
-Shift (one character only).
+To use a charset designated to G2 or G3, and to use a charset designated
+to G1 in a 7-bit environment, you must explicitly invoke G1, G2, or G3
+into GL.  There are two types of invocation, Locking Shift (forever) and
+Single Shift (one character only).
 
 Locking Shift is done as follows:
 
 @example
-	SI or LS0: invoke G0 into GL
-	SO or LS1: invoke G1 into GL
+	LS0 or SI (0x0F): invoke G0 into GL
+	LS1 or SO (0x0E): invoke G1 into GL
 	LS2:  invoke G2 into GL
 	LS3:  invoke G3 into GL
 	LS1R: invoke G1 into GR
@@ -646,12 +642,12 @@ ESC O behave as indicated.  The above definitions will not parse
 EUC-encoded text correctly, and it looks like the code in mule-coding.c
 has similar problems.)
 
-You may realize that there are a lot of ISO2022-compliant ways of
+You may realize that there are a lot of ISO-2022-compliant ways of
 encoding multilingual text.  Now, in the world, there exist many coding
 systems such as X11's Compound Text, Japanese JUNET code, and so-called
-EUC (Extended UNIX Code); all of these are variants of ISO2022.
+EUC (Extended UNIX Code); all of these are variants of ISO 2022.
 
-In Mule, we characterize ISO2022 by the following attributes:
+In Mule, we characterize ISO 2022 by the following attributes:
 
 @enumerate
 @item
@@ -675,7 +671,7 @@ Use JISX0208-1983 or JISX0208-1976.
 (The last two are only for Japanese.)
 
 By specifying these attributes, you can create any variant
-of ISO2022.
+of ISO 2022.
 
 Here are several examples:
 
@@ -742,7 +738,7 @@ coding system is used to decode the stream into a series of characters
 or process, and is used to encode the text back into the same format
 when it is written out to a file or process.
 
-For example, many ISO2022-compliant coding systems (such as Compound
+For example, many ISO-2022-compliant coding systems (such as Compound
 Text, which is used for inter-client data under the X Window System) use
 escape sequences to switch between different charsets -- Japanese Kanji,
 for example, is invoked with @samp{ESC $ ( B}; ASCII is invoked with
@@ -778,19 +774,19 @@ This function returns non-@code{nil} if @var{object} is a coding system.
 @itemx autodetect
 Automatic conversion.  XEmacs attempts to detect the coding system used
 in the file.
-@item noconv
+@item no-conversion
 No conversion.  Use this for binary files and such.  On output, graphic
 characters that are not in ASCII or Latin-1 will be replaced by a
-@samp{?}. (For a noconv-encoded buffer, these characters will only be
-present if you explicitly insert them.)
+@samp{?}. (For a no-conversion-encoded buffer, these characters will
+only be present if you explicitly insert them.)
 @item shift-jis
 Shift-JIS (a Japanese encoding commonly used in PC operating systems).
 @item iso2022
-Any ISO2022-compliant encoding.  Among other things, this includes JIS
-(the Japanese encoding commonly used for e-mail), EUC (the standard Unix
-encoding for Japanese and other languages), and Compound Text (the
-encoding used in X11).  You can specify more specific information about
-the conversion with the @var{flags} argument.
+Any ISO-2022-compliant encoding.  Among other things, this includes JIS
+(the Japanese encoding commonly used for e-mail), national variants of
+EUC (the standard Unix encoding for Japanese and other languages), and
+Compound Text (an encoding used in X11).  You can specify more specific
+information about the conversion with the @var{flags} argument.
 @item big5
 Big5 (the encoding commonly used for Taiwanese).
 @item ccl
@@ -882,7 +878,7 @@ may be later on; this automatically sets the corresponding
 @item force-g0-on-output
 @itemx force-g1-on-output
 @itemx force-g2-on-output
-@itemx force-g2-on-output
+@itemx force-g3-on-output
 If non-@code{nil}, send an explicit designation sequence on output
 before using the specified register.
 
@@ -913,7 +909,7 @@ If non-@code{nil}, don't use ISO6429's direction specification.
 
 @item escape-quoted
 If non-nil, literal control characters that are the same as the
-beginning of a recognized ISO2022 or ISO6429 escape sequence (in
+beginning of a recognized ISO 2022 or ISO 6429 escape sequence (in
 particular, ESC (0x1B), SO (0x0E), SI (0x0F), SS2 (0x8E), SS3 (0x8F),
 and CSI (0x9B)) are ``quoted'' with an escape character so that they can
 be properly distinguished from an escape sequence.  (Note that doing
@@ -921,7 +917,7 @@ this results in a non-portable encoding.) This encoding flag is used for
 byte-compiled files.  Note that ESC is a good choice for a quoting
 character because there are no escape sequences whose second byte is a
 character from the Control-0 or Control-1 character sets; this is
-explicitly disallowed by the ISO2022 standard.
+explicitly disallowed by the ISO 2022 standard.
 
 @item input-charset-conversion
 A list of conversion specifications, specifying conversion of characters
@@ -1018,7 +1014,7 @@ This function returns the @var{prop} property of @var{coding-system}.
 This function decodes the text between @var{start} and @var{end} which
 is encoded in @var{coding-system}.  This is useful if you've read in
 encoded text from a file without decoding it (e.g. you read in a
-JIS-formatted file but used the @code{binary} or @code{noconv} coding
+JIS-formatted file but used the @code{binary} or @code{no-conversion} coding
 system, so that it shows up as @samp{^[$B!<!+^[(B}).  The length of the
 encoded text is returned.  @var{buffer} defaults to the current buffer
 if unspecified.

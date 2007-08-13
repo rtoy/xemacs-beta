@@ -74,13 +74,21 @@ KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
 to be forwarded.  See the docs for vm-reorder-message-headers
 to find out how KEEP-LIST and DISCARD-REGEXP are used.
 
-Returns the multipart boundary parameter (string) that should be used
-in the Content-Type header." nil nil)
+If ALWAYS-USE-DIGEST is non-nil, always encapsulate for a multipart/digest.
+Otherwise if there are fewer than two messages to be encapsulated
+leave off the multipart boundary strings.  The caller is assumed to
+be using message/rfc822 or message/news encoding instead.
+
+If multipart/digest encapsulation is done, the function returns
+the multipart boundary parameter (string) that should be used in
+the Content-Type header.  Otherwise nil is returned." nil nil)
 
 (autoload (quote vm-mime-burst-message) "vm-digest" "Burst messages from the digest message M.
 M should be a message struct for a real message.
-MIME encoding is expected.  The message content type
-must be either message/* or multipart/digest." nil nil)
+MIME encoding is expected.  Somewhere within the MIME layout
+there must be at least one part of type message/news, message/rfc822 or
+multipart/digest.  If there are multiple parts matching those types,
+all of them will be burst." nil nil)
 
 (autoload (quote vm-mime-burst-layout) "vm-digest" nil nil nil)
 
@@ -597,6 +605,8 @@ The folder is not altered and Emacs is still visiting it." t nil)
 
 (autoload (quote vm-start-itimers-if-needed) "vm-folder" nil nil nil)
 
+(autoload (quote vm-timer-using) "vm-folder" nil nil nil)
+
 (autoload (quote vm-check-mail-itimer-function) "vm-folder" nil nil nil)
 
 (autoload (quote vm-get-mail-itimer-function) "vm-folder" nil nil nil)
@@ -802,6 +812,8 @@ set to the command name so that window configuration will be done." nil nil)
 (autoload (quote vm-menu-goto-event) "vm-menu" nil nil nil)
 
 (autoload (quote vm-menu-popup-url-browser-menu) "vm-menu" nil t nil)
+
+(autoload (quote vm-menu-popup-mailto-url-browser-menu) "vm-menu" nil t nil)
 
 (autoload (quote vm-menu-popup-mime-dispose-menu) "vm-menu" nil t nil)
 
@@ -1139,9 +1151,13 @@ for the current directory (.) is inserted." nil nil)
 
 (autoload (quote vm-mm-layout-cache) "vm-mime" nil nil nil)
 
+(autoload (quote vm-mm-layout-display-error) "vm-mime" nil nil nil)
+
 (autoload (quote vm-set-mm-layout-type) "vm-mime" nil nil nil)
 
 (autoload (quote vm-set-mm-layout-cache) "vm-mime" nil nil nil)
+
+(autoload (quote vm-set-mm-layout-display-error) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mm-layout) "vm-mime" nil nil nil)
 
@@ -1178,8 +1194,6 @@ for the current directory (.) is inserted." nil nil)
 (autoload (quote vm-reencode-mime-encoded-words) "vm-mime" nil nil nil)
 
 (autoload (quote vm-reencode-mime-encoded-words-in-string) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-parse-content-header) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-get-header-contents) "vm-mime" nil nil nil)
 
@@ -1247,6 +1261,8 @@ in the buffer.  The function is expected to make the message
 
 (autoload (quote vm-mime-display-button-text) "vm-mime" nil nil nil)
 
+(autoload (quote vm-mime-display-internal-text/html) "vm-mime" nil nil nil)
+
 (autoload (quote vm-mime-display-internal-text/plain) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-internal-text/enriched) "vm-mime" nil nil nil)
@@ -1254,6 +1270,8 @@ in the buffer.  The function is expected to make the message
 (autoload (quote vm-mime-display-external-generic) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-internal-application/octet-stream) "vm-mime" nil nil nil)
+
+(autoload (quote vm-mime-display-button-application) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-button-image) "vm-mime" nil nil nil)
 
@@ -1272,6 +1290,8 @@ in the buffer.  The function is expected to make the message
 (autoload (quote vm-mime-display-button-multipart/parallel) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-internal-multipart/digest) "vm-mime" nil nil nil)
+
+(autoload (quote vm-mime-display-button-message/rfc822) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-internal-message/rfc822) "vm-mime" nil nil nil)
 
@@ -1293,7 +1313,7 @@ in the buffer.  The function is expected to make the message
 
 (autoload (quote vm-mime-run-display-function-at-point) "vm-mime" nil t nil)
 
-(autoload (quote vm-mime-set-extent-glyph-for-layout) "vm-mime" nil nil nil)
+(autoload (quote vm-mime-set-extent-glyph-for-type) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-insert-button) "vm-mime" nil nil nil)
 
@@ -1318,6 +1338,8 @@ in the buffer.  The function is expected to make the message
 (autoload (quote vm-mime-layout-description) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-layout-contains-type) "vm-mime" nil nil nil)
+
+(autoload (quote vm-mime-find-digests-in-layout) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-plain-message-p) "vm-mime" nil nil nil)
 
@@ -1394,9 +1416,13 @@ will interactively query you for the file type information." t nil)
 
 (autoload (quote vm-mime-transfer-encode-layout) "vm-mime" nil nil nil)
 
-(autoload (quote vm-mime-encode-composition) "vm-mime" "MIME encode the current buffer.
+(autoload (quote vm-mime-encode-composition) "vm-mime" "MIME encode the current mail composition buffer.
 Attachment tags added to the buffer with vm-mime-attach-file are expanded
 and the approriate content-type and boundary markup information is added." t nil)
+
+(autoload (quote vm-mime-xemacs-encode-composition) "vm-mime" nil nil nil)
+
+(autoload (quote vm-mime-fsfemacs-encode-composition) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-fragment-composition) "vm-mime" nil nil nil)
 
@@ -1407,8 +1433,6 @@ Type `q' to quit this temp folder and return to composing your
 message." t nil)
 
 (autoload (quote vm-mime-composite-type-p) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-map-atomic-layouts) "vm-mime" nil nil nil)
 
 (autoload (quote vm-minibuffer-complete-word) "vm-minibuf" nil t nil)
 
@@ -1472,6 +1496,8 @@ The new version of the list, minus the deleted strings, is returned." nil nil)
 (autoload (quote vm-parse) "vm-misc" nil nil nil)
 
 (autoload (quote vm-parse-addresses) "vm-misc" nil nil nil)
+
+(autoload (quote vm-parse-structured-header) "vm-misc" nil nil nil)
 
 (autoload (quote vm-write-string) "vm-misc" nil nil nil)
 
@@ -1538,15 +1564,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (autoload (quote vm-copy) "vm-misc" nil nil nil)
 
-(autoload (quote vm-xemacs-p) "vm-misc" nil nil nil)
-
-(autoload (quote vm-xemacs-mule-p) "vm-misc" nil nil nil)
-
-(autoload (quote vm-fsfemacs-19-p) "vm-misc" nil nil nil)
-
 (autoload (quote vm-multiple-frames-possible-p) "vm-misc" nil nil nil)
 
 (autoload (quote vm-mouse-support-possible-p) "vm-misc" nil nil nil)
+
+(autoload (quote vm-mouse-support-possible-here-p) "vm-misc" nil nil nil)
 
 (autoload (quote vm-menu-support-possible-p) "vm-misc" nil nil nil)
 
@@ -1624,7 +1646,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (autoload (quote vm-mouse-send-url-to-netscape) "vm-mouse" nil nil nil)
 
+(autoload (quote vm-mouse-send-url-to-netscape-new-window) "vm-mouse" nil nil nil)
+
 (autoload (quote vm-mouse-send-url-to-mosaic) "vm-mouse" nil nil nil)
+
+(autoload (quote vm-mouse-send-url-to-mosaic-new-window) "vm-mouse" nil nil nil)
 
 (autoload (quote vm-mouse-install-mouse) "vm-mouse" nil nil nil)
 
@@ -1929,10 +1955,10 @@ you can change the recipient address before resending the message." t nil)
 The current message will be copied to a Mail mode buffer and you
 can edit the message and send it as usual.
 
-NOTE: since you are doing a resend, a Resent-To header is
-provided for you to fill in.  If you don't fill it in, when you
-send the message it will go to the original recipients listed in
-the To and Cc headers.  You may also create a Resent-Cc header." t nil)
+NOTE: since you are doing a resend, a Resent-To header is provided
+for you to fill in the new recipient list.  If you don't fill in
+this header, what happens when you send the message is undefined.
+You may also create a Resent-Cc header." t nil)
 
 (autoload (quote vm-send-digest) "vm-reply" "Send a digest of all messages in the current folder to recipients.
 The type of the digest is specified by the variable vm-digest-send-type.
@@ -2030,8 +2056,9 @@ The saved messages are flagged as `written'.
 This command should NOT be used to save message to mail folders; use
 vm-save-message instead (normally bound to `s')." t nil)
 
-(autoload (quote vm-pipe-message-to-command) "vm-save" "Run shell command with the some or all of the current message as input.
-By default the entire message is used.
+(autoload (quote vm-pipe-message-to-command) "vm-save" "Runs a shell command with some or all of the contents of the
+current message as input.
+By default, the entire message is used.
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message
@@ -2172,7 +2199,7 @@ mode, a major mode for reading mail.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
-changes, messages additions or deletions will be allowed in the
+changes, message additions or deletions will be allowed in the
 visited folder.
 
 Visiting the primary inbox causes any contents of the system mailbox to
@@ -2192,7 +2219,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.22.
+This is VM 6.34.
 
 Commands:
    h - summarize folder contents
@@ -2357,6 +2384,7 @@ Variables:
    vm-frame-per-composition
    vm-frame-per-edit
    vm-frame-per-folder
+   vm-frame-per-help
    vm-frame-per-summary
    vm-highlighted-header-face
    vm-highlighted-header-regexp
@@ -2455,6 +2483,7 @@ Variables:
    vm-summary-thread-indent-level
    vm-tale-is-an-idiot
    vm-temp-file-directory
+   vm-toolbar-pixmap-directory
    vm-trust-From_-with-Content-Length
    vm-undisplay-buffer-hook
    vm-unforwarded-header-regexp
@@ -2503,11 +2532,17 @@ vm-visit-virtual-folder." nil nil)
 
 (autoload (quote vm-visit-virtual-folder-other-window) "vm-startup" "Like vm-visit-virtual-folder, but run in a different window." t nil)
 
-(autoload (quote vm-mail) "vm-startup" "Send a mail message from within VM, or from without." t nil)
+(autoload (quote vm-mail) "vm-startup" "Send a mail message from within VM, or from without.
+Optional argument TO is a string that should contain a comma separated
+recipient list." t nil)
 
-(autoload (quote vm-mail-other-frame) "vm-startup" "Like vm-mail, but run in a newly created frame." t nil)
+(autoload (quote vm-mail-other-frame) "vm-startup" "Like vm-mail, but run in a newly created frame.
+Optional argument TO is a string that should contain a comma separated
+recipient list." t nil)
 
-(autoload (quote vm-mail-other-window) "vm-startup" "Like vm-mail, but run in a different window." t nil)
+(autoload (quote vm-mail-other-window) "vm-startup" "Like vm-mail, but run in a different window.
+Optional argument TO is a string that should contain a comma separated
+recipient list." t nil)
 
 (autoload (quote vm-submit-bug-report) "vm-startup" "Submit a bug report, with pertinent information to the VM bug list." t nil)
 
@@ -2795,6 +2830,14 @@ by VM for a reply, resend or forward." nil nil)
 
 (autoload (quote vm-spool-files) "vm-vars" nil nil nil)
 
+(autoload (quote vm-xemacs-p) "vm-vars" nil nil nil)
+
+(autoload (quote vm-xemacs-mule-p) "vm-vars" nil nil nil)
+
+(autoload (quote vm-fsfemacs-19-p) "vm-vars" nil nil nil)
+
+(autoload (quote vm-note-emacs-version) "vm-vars" nil nil nil)
+
 (autoload (quote vm-version) "vm-version" "Returns the value of the variable vm-version." nil nil)
 
 (autoload (quote vm-build-virtual-message-list) "vm-virtual" nil nil nil)
@@ -2888,8 +2931,6 @@ Prefix arg means the new virtual folder should be visited read only." t nil)
 
 (autoload (quote vm-set-window-configuration) "vm-window" nil nil nil)
 
-(autoload (quote vm-record-current-window-configuration) "vm-window" nil nil nil)
-
 (autoload (quote vm-save-window-configuration) "vm-window" "Name and save the current window configuration.
 With this command you associate the current window setup with an
 action.  Each time you perform this action VM will duplicate this
@@ -2906,11 +2947,7 @@ configurations and then the default configuration.  The first
 configuration found is the one that is applied.
 
 The value of vm-mutable-windows must be non-nil for VM to use
-window configurations.
-
-If vm-mutable-frames is non-nil and Emacs is running under X
-windows, then VM will use all existing frames.  Otherwise VM will
-restrict its changes to the frame in which it was started." t nil)
+window configurations." t nil)
 
 (autoload (quote vm-buffer-to-label) "vm-window" nil nil nil)
 
@@ -2931,7 +2968,7 @@ Run the hooks in vm-iconify-frame-hook before doing so." t nil)
 
 (autoload (quote vm-frame-loop) "vm-window" nil nil nil)
 
-(autoload (quote vm-delete-windows-or-frames-on) "vm-window" nil nil nil)
+(autoload (quote vm-maybe-delete-windows-or-frames-on) "vm-window" nil nil nil)
 
 (autoload (quote vm-replace-buffer-in-windows) "vm-window" nil nil nil)
 

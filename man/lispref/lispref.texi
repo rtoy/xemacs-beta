@@ -14,7 +14,8 @@ Lucid Emacs Lisp Reference Manual (for 19.10) First Edition, March 1994
 XEmacs Lisp Programmer's Manual (for 19.12) Second Edition, April 1995
 GNU Emacs Lisp Reference Manual v2.4, June 1995
 XEmacs Lisp Programmer's Manual (for 19.13) Third Edition, July 1995
-XEmacs Lisp Programmer's Manual (for 19.14) v3.1, March 1996
+XEmacs Lisp Reference Manual (for 19.14 and 20.0) v3.1, March 1996
+XEmacs Lisp Reference Manual (for 19.15 and 20.1, 20.2) v3.2, April, May 1997
 @c Please REMEMBER to update edition number in *four* places in this file
 @c                 and also in *one* place in intro.texi
 
@@ -72,9 +73,9 @@ instead of in the original English.
 @title XEmacs Lisp Reference Manual
 @c The edition number appears in several places in this file
 @c and also in the file intro.texi.
-@c This manual documents XEmacs 19.14 and was based on the
+@c This manual documents XEmacs 19.14 and 20.0 and was based on the
 @c documentation for FSF Emacs 19.29 (v2.4).
-@subtitle Version 3.1 (for XEmacs 19.14), March 1996
+@subtitle Version 3.2 (for XEmacs 19.15 and 20.1, 20.2), April, May 1997
 
 @author by Ben Wing
 @author
@@ -87,9 +88,9 @@ Copyright @copyright{} 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundati
 Copyright @copyright{} 1994, 1995 Sun Microsystems, Inc.
 Copyright @copyright{} 1995, 1996 Ben Wing.
 @sp 2
-Version 3.1 @*
-Revised for XEmacs Version 19.14,@*
-March, 1996.@*
+Version 3.2 @*
+Revised for XEmacs Versions 19.15 and 20.1, 20.2,@*
+April, May 1997.@*
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -116,7 +117,7 @@ Cover art by Etienne Suvasa.
 
 @ifinfo
 This Info file contains the third edition of the XEmacs Lisp
-Reference Manual, corresponding to XEmacs version 19.14.
+Reference Manual, corresponding to XEmacs versions 19.15 and 20.1.
 @end ifinfo
 
 @menu
@@ -740,7 +741,7 @@ Windows
 Frames
 
 * Creating Frames::	    Creating additional frames.
-* Frame Parameters::	    Controlling frame size, position, font, etc.
+* Frame Properties::	    Controlling frame size, position, font, etc.
 * Frame Titles::            Automatic updating of frame titles.
 * Deleting Frames::	    Frames last until explicitly deleted.
 * Finding All Frames::	    How to examine all existing frames.

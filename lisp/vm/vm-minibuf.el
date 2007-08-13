@@ -181,10 +181,8 @@ default the local keymap of the current buffer is used."
 	     (while keymaps
 	       (setq keymap (car keymaps))
 	       (cond ((vm-mouse-xemacs-mouse-p)
-		      (define-key keymap 'button1 'ignore)
-		      (define-key keymap 'button2 'ignore)
-		      (define-key keymap 'button1up command)
-		      (define-key keymap 'button2up command))
+		      (define-key keymap 'button1 command)
+		      (define-key keymap 'button2 command))
 		     ((vm-mouse-fsfemacs-mouse-p)
 		      (define-key keymap [down-mouse-1] 'ignore)
 		      (define-key keymap [drag-mouse-1] 'ignore)
@@ -274,7 +272,7 @@ default the local keymap of the current buffer is used."
   ;; handle alist
   (if (consp (car completion-list))
       (setq completion-list (nreverse (mapcar 'car completion-list))))
-  (if (and completion-list (vm-mouse-support-possible-p))
+  (if (and completion-list (vm-mouse-support-possible-here-p))
       (cond ((and (vm-mouse-xemacs-mouse-p)
 		  (or (button-press-event-p last-command-event)
 		      (button-release-event-p last-command-event)
@@ -382,7 +380,7 @@ Line editing keys are:
 				 must-match initial history)
   "Like read-file-name, except a mouse interface is used if a mouse
 click mouse triggered the current command."
-  (if (vm-mouse-support-possible-p)
+  (if (vm-mouse-support-possible-here-p)
       (cond ((and (vm-mouse-xemacs-mouse-p)
 		  (or (button-press-event-p last-command-event)
 		      (button-release-event-p last-command-event)
