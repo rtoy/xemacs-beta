@@ -1,5 +1,5 @@
 ;;; psgml.el --- SGML-editing mode with parsing support
-;; $Id: psgml.el,v 1.2 1997/01/03 03:10:28 steve Exp $
+;; $Id: psgml.el,v 1.3 1997/01/23 05:29:40 steve Exp $
 
 ;; Copyright (C) 1993, 1994, 1995, 1996 Lennart Staflin
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -455,7 +455,9 @@ Example:
 ;;; Its error messages can be parsed by next-error.
 ;;; The -s option suppresses output.
 
-(defvar sgml-validate-command "nsgmls -s %s %s"
+(defvar sgml-validate-command (concat "nsgmls -s -m "
+				      data-directory
+				      "CATALOG %s %s")
   "*The shell command to validate an SGML document.
 
 This is a `format' control string that by default should contain two

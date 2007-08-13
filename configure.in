@@ -218,8 +218,9 @@ Window-system options:
 --with-menubars=TYPE	Use TYPE menubars (lucid, motif, or no).  The Lucid
 			widgets emulate Motif (mostly) but are faster.
 			*WARNING*  The Motif menubar is currently broken.
---with-scrollbars=TYPE	Use TYPE scrollbars (lucid, motif, athena, or no).
---with-dialogs=TYPE	Use TYPE dialog boxes (motif, athena, or no).
+--with-scrollbars=TYPE	Use TYPE scrollbars (lucid, motif, athena, 
+			athena3d, or no).
+--with-dialogs=TYPE	Use TYPE dialog boxes (motif, athena, athena3d, or no).
 			(Lucid menubars and scrollbars are the default.
 			 Motif dialog boxes will be used if Motif can be
 			 found.)
@@ -714,6 +715,7 @@ Set it to either \`yes', \`no', or \`default'."
 	  case "${val}" in
 	    l | lu | luc | luci | lucid )		val=lucid  ;;
 	    m | mo | mot | moti | motif )		val=motif  ;;
+	    athena3d | athena-3d )			val=athena3d ;;
 	    a | at | ath | athe | athen | athena )	val=athena ;;
 	    n | no | non | none )			val=no ;;
 	    * )
@@ -1039,6 +1041,7 @@ case "${canonical}" in
   cydra*-cydrome-sysv* ) machine=cydra5 opsys=usg5-3 ;;
 
   ## Data General AViiON Machines
+  i586-dg-dgux*R4* | i586-dg-dgux5.4.4* ) machine=aviion opsys=dgux5-4r4 ;;
   m88k-dg-dgux5.4R3* | m88k-dg-dgux5.4.3* ) machine=aviion opsys=dgux5-4r3 ;;
   m88k-dg-dgux5.4R2* | m88k-dg-dgux5.4.2* ) machine=aviion opsys=dgux5-4r2 ;;
   m88k-dg-dgux* 			  ) machine=aviion opsys=dgux	   ;;
@@ -1278,7 +1281,7 @@ case "${canonical}" in
   ## Iris 4D
   mips-sgi-irix3.*      ) machine=iris4d opsys=irix3-3 ;;
   mips-sgi-irix4.*      ) machine=iris4d opsys=irix4-0 ;;
-  mips-sgi-irix6*       ) machine=iris4d opsys=irix6-0  NON_GNU_CPP=/lib/cpp ;;
+  mips-sgi-irix6*       ) machine=iris4d opsys=irix6-0 ;;
   mips-sgi-irix5.[3-9]* ) machine=iris4d opsys=irix5-3 ;;
   mips-sgi-irix5.2*     ) machine=iris4d opsys=irix5-2 ;;
   mips-sgi-irix5.1*     ) machine=iris4d opsys=irix5-1 ;;
@@ -2537,6 +2540,12 @@ fi
 test "${with_menubars}"   = "motif" -o \
      "${with_scrollbars}" = "motif" -o \
      "${with_dialogs}"    = "motif"  && with_motif="yes"
+test "${with_menubars}"   = "athena" -o \
+     "${with_scrollbars}" = "athena" -o \
+     "${with_dialogs}"    = "athena"  && with_athena="yes"
+test "${with_menubars}"   = "athena3d" -o \
+     "${with_scrollbars}" = "athena3d" -o \
+     "${with_dialogs}"    = "athena3d"  && with_athena="yes"
 test "${with_menubars}"   = ""       && with_menubars="lucid"
 test "${with_menubars}"   = "athena" && with_menubars="lucid"
 test "${with_scrollbars}" = ""       && with_scrollbars="lucid"
@@ -2552,8 +2561,16 @@ test "${with_menubars}"   = "motif"  && AC_DEFINE(LWLIB_MENUBARS_MOTIF)
 test "${with_scrollbars}" = "lucid"  && AC_DEFINE(LWLIB_SCROLLBARS_LUCID)
 test "${with_scrollbars}" = "motif"  && AC_DEFINE(LWLIB_SCROLLBARS_MOTIF)
 test "${with_scrollbars}" = "athena" && AC_DEFINE(LWLIB_SCROLLBARS_ATHENA)
+if test "${with_scrollbars}" = "athena3d"; then
+	AC_DEFINE(LWLIB_SCROLLBARS_ATHENA)
+	AC_DEFINE(LWLIB_SCROLLBARS_ATHENA3D)
+fi
 test "${with_dialogs}"    = "motif"  && AC_DEFINE(LWLIB_DIALOGS_MOTIF)
 test "${with_dialogs}"    = "athena" && AC_DEFINE(LWLIB_DIALOGS_ATHENA)
+if test "${with_dialogs}"    = "athena3d"; then
+	AC_DEFINE(LWLIB_DIALOGS_ATHENA)
+	AC_DEFINE(LWLIB_DIALOGS_ATHENA3D)
+fi
 
 ############################################################################
 #									   #
@@ -2992,6 +3009,7 @@ fi
 IF_YES_AC_DEFINE(rel_alloc,       REL_ALLOC)
 IF_YES_AC_DEFINE(LISP_FLOAT_TYPE, LISP_FLOAT_TYPE)
 IF_YES_AC_DEFINE(with_motif,      LWLIB_USES_MOTIF)
+IF_YES_AC_DEFINE(with_athena,	 LWLIB_USES_ATHENA)
 IF_YES_AC_DEFINE(with_toolbars,  HAVE_TOOLBARS)
 IF_YES_AC_DEFINE(with_tty,       HAVE_TTY)
 IF_YES_AC_DEFINE(with_tooltalk,  TOOLTALK)
@@ -3122,8 +3140,10 @@ fi
 test "$with_scrollbars" = lucid  && echo "  Using the Lucid scrollbar."
 test "$with_scrollbars" = motif  && echo "  Using the Motif scrollbar."
 test "$with_scrollbars" = athena && echo "  Using the Athena scrollbar."
+test "$with_scrollbars" = athena3d && echo "  Using the Athena-3d scrollbar."
 test "$with_dialogs"    = motif  && echo "  Using the Motif dialog boxes."
 test "$with_dialogs"    = athena && echo "  Using the Athena dialog boxes."
+test "$with_dialogs"    = athena3d && echo "  Using the Athena-3d dialog boxes."
 
 test "${use_union_type}"     = yes && echo "  Using the union type for Lisp_Objects."
 test "${debug}"              = yes && echo "  Compiling in extra code for debugging."

@@ -3240,13 +3240,19 @@ sys_unlink (CONST char *path)
 
 #ifdef ENCAPSULATE_EXECVP
 int
-sys_execvp (CONST char *path, char * CONST argv[])
+sys_execvp (CONST char *path, char * CONST * argv)
 {
-  int i;
+  int i, argc;
+  CONST char ** new_argv;
+  
   PATHNAME_CONVERT_OUT (path);
-  for (i = 0; argv[i]; i++)
-    PATHNAME_CONVERT_OUT (argv[i]);
-  return execvp (path, argv);
+  for (argc = 0; argv[argc]; argc++)
+    ;
+  new_argv = (CONST char **) alloca ( (argc + 1) * sizeof (* new_argv));
+  for (i = 0; i < argc; i++)
+    GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (argv[i], new_argv[i]);
+  new_argv[argc] = NULL;
+  return execvp (path, (char **) new_argv);
 }
 #endif /* ENCAPSULATE_EXECVP */
 

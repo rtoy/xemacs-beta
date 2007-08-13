@@ -54,6 +54,7 @@ which is intended to be used for global environment specification.")
   ;;  '(; ("\\.el$" . euc-japan)
   '(("\\.el$" . iso-2022-8)
     ("\\.info$" . iso-2022-8)
+    ("ChangeLog$" . iso-2022-8)
     ("\\.\\(gz\\|Z\\)$" . binary)
     ("/spool/mail/.*$" . convert-mbox-coding-system))
   "Alist specifying the coding system used for particular files.

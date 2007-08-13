@@ -827,8 +827,17 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 	      /* Skip until the first newline; remember the two previous chars. */
 	      while (c != '\n' && c >= 0)
 		{
+		  /* ### Kludge -- Ignore any ESC x x ISO2022 sequences */
+		  if (c == 27)
+		    {
+		      getc (infile);
+		      getc (infile);
+		      goto nextchar;
+		    }
+		  
 		  c2 = c1;
 		  c1 = c;
+		nextchar:
 		  c = getc (infile);
 		}
 	  
@@ -960,7 +969,7 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 	    }
 	}
 
-#ifdef DEBUG
+#if 0 /* causes crash */
       else if (! strcmp (buffer, "if") ||
 	       ! strcmp (buffer, "byte-code"))
 	;

@@ -1,12 +1,12 @@
 ;;; url-parse.el --- Uniform Resource Locator parser
 ;; Author: wmperry
-;; Created: 1996/12/26 23:25:55
-;; Version: 1.3
+;; Created: 1997/01/10 00:13:05
+;; Version: 1.4
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;

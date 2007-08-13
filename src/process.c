@@ -1187,9 +1187,9 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   new_argv[0] = (char *) XSTRING_DATA (program);
 
   /* If program file name is not absolute, search our path for it */
-  if (!IS_DIRECTORY_SEP (string_byte (XSTRING (program), 0))
+  if (!IS_DIRECTORY_SEP (XSTRING_BYTE (program, 0))
       && !(XSTRING_LENGTH (program) > 1
-	   && IS_DEVICE_SEP (string_byte (XSTRING (program), 1))))
+	   && IS_DEVICE_SEP (XSTRING_BYTE (program, 1))))
     {
       struct gcpro gcpro1, gcpro2, gcpro3, gcpro4; /* Caller protects args[] */
       GCPRO4 (buffer, current_dir, name, program);

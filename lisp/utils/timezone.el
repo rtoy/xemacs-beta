@@ -191,7 +191,16 @@ Understands the following styles:
 		(substring date (match-beginning year) (match-end year)))
 	  ;; It is now Dec 1992.  8 years before the end of the World.
 	  (if (< (length year) 4)
-	      (setq year (concat "19" (substring year -2 nil))))
+	      ;; 2 digit years are bogus, so guess the century
+	      (let ((yr (string-to-int year)))
+		(when (>= yr 100)
+		  ;; What does a three digit year mean?
+		  (setq yr (- yr 100)))
+		(setq year (format "%d%02d"
+				   (if (< yr 70)
+				       20
+				     19)
+				   yr))))
 	  (let ((string (substring date
 				   (match-beginning month)
 				   (+ (match-beginning month) 3))))

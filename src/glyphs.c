@@ -2379,7 +2379,7 @@ glyph_height_internal (Lisp_Object glyph, Lisp_Object frame_face,
 	struct face_cachel *cachel;
 
 	find_charsets_in_bufbyte_string (charsets,
-					 XSTRING_DATA (string),
+					 XSTRING_DATA   (string),
 					 XSTRING_LENGTH (string));
 
 	if (!NILP (frame_face))

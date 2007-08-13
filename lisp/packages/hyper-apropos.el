@@ -336,8 +336,9 @@ General Commands:
 	buffer-read-only t
 	truncate-lines t
 	hypropos-last-regexp regexp
-	modeline-buffer-identification (concat "Hyper Apropos: "
-					       "\"" regexp "\""))
+	modeline-buffer-identification
+	(list (cons modeline-buffer-id-left-extent "Hyper Apropos: ")
+	      (cons modeline-buffer-id-right-extent (concat "\"" regexp "\""))))
   (setq mode-motion-hook 'mode-motion-highlight-line)
   (use-local-map hypropos-map)
   (run-hooks 'hyper-apropos-mode-hook))

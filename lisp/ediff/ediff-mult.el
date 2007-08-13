@@ -1,6 +1,6 @@
 ;;; ediff-mult.el --- support for multi-file/multi-buffer processing in Ediff
 
-;; Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -667,7 +667,8 @@ Moves in circular fashion. With numeric prefix arg, skip this many items."
 	   "     `=':\tmark identical files in each session\n\n"))
 
       (if (and (stringp regexp) (> (length regexp) 0))
-	  (insert (format "Filter-through regular expression: %s\n" regexp)))
+	  (insert
+	   (format "\n*** Filter-through regular expression: %s\n" regexp)))
       (if (and ediff-autostore-merges (ediff-merge-metajob)
 	       (stringp merge-autostore-dir))
 	  (insert (format
@@ -821,7 +822,8 @@ Useful commands:
      DEL: previous line\n\n")
 
       (if (and (stringp regexp) (> (length regexp) 0))
-	  (insert (format "Filter-through regular expression: %s\n" regexp)))
+	  (insert
+	   (format "\n*** Filter-through regular expression: %s\n" regexp)))
       (insert "\n")
       (insert (format "\n%-27s%-26s"
 		      (ediff-truncate-string-left

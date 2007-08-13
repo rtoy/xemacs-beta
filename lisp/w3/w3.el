@@ -1,12 +1,12 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1996/12/30 20:37:55
-;; Version: 1.48
+;; Created: 1997/01/22 15:30:44
+;; Version: 1.60
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -426,6 +426,28 @@ to disk."
   (split-window)
   (w3-fetch url))
 
+;; Ripped off from red gnus
+(defun w3-find-etc-directory (package &optional file)
+  "Go through the path and find the \".../etc/PACKAGE\" directory.
+If FILE, find the \".../etc/PACKAGE\" file instead."
+  (let ((path load-path)
+	dir result)
+    ;; We try to find the dir by looking at the load path,
+    ;; stripping away the last component and adding "etc/".
+    (while path
+      (if (and (car path)
+	       (file-exists-p
+		(setq dir (concat
+			   (file-name-directory
+			    (directory-file-name (car path)))
+			   "etc/" package 
+			   (if file "" "/"))))
+	       (or file (file-directory-p dir)))
+	  (setq result dir
+		path nil)
+	(setq path (cdr path))))
+    result))
+
 (defun w3-url-completion-function (string predicate function)
   (if (not w3-setup-done) (w3-do-setup))
   (cond
@@ -457,14 +479,15 @@ to disk."
   (url-do-setup)
   (let* ((completion-ignore-case t)
 	 (default
-	   (if (eq major-mode 'w3-mode)
-	       (if (and current-prefix-arg (w3-view-this-url t))
-		   (w3-view-this-url t)
-		 (url-view-url t))
-	     (url-get-url-at-point)))
+	   (cond
+	    ((null w3-fetch-with-default) nil)
+	    ((eq major-mode 'w3-mode)
+	     (or (and current-prefix-arg (w3-view-this-url t))
+		 (url-view-url t)))
+	    ((url-get-url-at-point)
+	     (url-get-url-at-point))
+	    (t "http://www.")))
 	 (url nil))
-    (if (not default)
-	(setq default "http://www."))
     (setq url
 	  (completing-read "URL: "  'w3-url-completion-function
 			   nil nil default))
@@ -479,13 +502,8 @@ to disk."
 ;;;###autoload
 (defun w3-fetch (&optional url)
   "Retrieve a document over the World Wide Web.
-The World Wide Web is a global hypertext system started by CERN in
-Switzerland in 1991.
-
-The document should be specified by its fully specified
-Uniform Resource Locator.  The document will be parsed, printed, or
-passed to an external viewer as appropriate.  Variable
-`mm-mime-info' specifies viewers for particular file types."
+Defaults to URL of the current document, if any.
+With prefix argument, use the URL of the hyperlink under point instead."
   (interactive (list (w3-read-url-with-default)))
   (if (not w3-setup-done) (w3-do-setup))
   (if (boundp 'w3-working-buffer)
@@ -962,13 +980,10 @@ and convert newlines into spaces."
   (interactive "P")
   (let* ((url (if under (w3-view-this-url) (url-view-url t)))
 	 (fil (if under nil url-current-file))
-	 (tag '$html-source)		; For the stylesheet info
-	 (args nil)			; For the stylesheet info
-	 (face nil)			; For the stylesheet info
 	 (src
 	  (cond
-	   ((or (null url) (string= url "file:nil"))
-	    (error "Not a w3 buffer!"))
+	   ((null url)
+	    (error "No URL found!"))
 	   ((and under (null url)) (error "No link at point!"))
 	   ((and (not under) (equal url-current-mime-type "text/plain"))
 	    (buffer-string))
@@ -995,12 +1010,14 @@ and convert newlines into spaces."
       (insert src)
       (put-text-property (point-min) (point-max) 'w3-base url)
       (goto-char (point-min))
-      (setq buffer-file-truename nil
-	    buffer-file-name nil)
+      (setq buffer-file-truename url
+	    buffer-file-name url)
       ;; Null filename bugs `set-auto-mode' in Mule ...
       (condition-case ()
  	  (set-auto-mode)
 	(error nil))
+      (setq buffer-file-truename nil
+	    buffer-file-name nil)
       (buffer-enable-undo)
       (set-buffer-modified-p nil)
       (w3-notify-when-ready (get-buffer tmp))))
@@ -1288,16 +1305,15 @@ ftp.w3.org:/pub/www/doc."
   "Convert current data into the appropriate coding system"
   (and (or (not mmtype)
 	   (member mmtype w3-mime-list-for-code-conversion))
-       (let* ((c (mule-detect-coding-version (point-min) (point-max)))
-	      (code (or (and (listp c) (car c)) c)))
-	 (mule-code-convert-region (point-min) (point-max) code))))
+       (mule-code-convert-region
+	(point-min) (point-max)
+	(mule-detect-coding-version (point-min) (point-max)))))
 
 (defun w3-sentinel (&optional proc string)
   (set-buffer url-working-buffer)
   (if (or (stringp proc)
 	  (bufferp proc)) (setq w3-current-last-buffer proc))
-  (if (boundp 'after-change-functions)
-      (remove-hook 'after-change-functions 'url-after-change-function))
+  (remove-hook 'after-change-functions 'url-after-change-function)
   (if url-be-asynchronous
       (progn
 	(url-clean-text)
@@ -1324,39 +1340,50 @@ ftp.w3.org:/pub/www/doc."
 (defun w3-save-as (&optional type)
   "Save a document to the local disk"
   (interactive)
-  (let* ((completion-ignore-case t)
-	 (format (or type (completing-read
-			   "Format: "
-			   '(("HTML Source") ("Formatted Text")
-			     ("LaTeX Source") ("Binary"))
-			   nil t)))
-	(fname (expand-file-name
-		(read-file-name "File name: " default-directory)))
-	(url (url-view-url t)))
-    (cond
-     ((equal "Binary" format)
-      (if (not w3-current-source)
-	  (let ((url-be-asynchronous nil))
-	    (url-retrieve url))))
-     ((equal "HTML Source" format)
-      (if (not w3-current-source)
-	  (let ((url-be-asynchronous nil))
-	    (url-retrieve url))		; Get the document if necessary
-	(let ((txt w3-current-source))
-	  (set-buffer (get-buffer-create url-working-buffer))
-	  (erase-buffer)
-	  (insert txt)))
-      (goto-char (point-min))
-      (if (re-search-forward "<head>" nil t)
-	  (insert "\n"))
-      (insert (format "<BASE HREF=\"%s\">\n" url)))
-     ((or (equal "Formatted Text" format)
-	  (equal "" format))
-      nil)				; Do nothing - we have the text already
-     ((equal "LaTeX Source" format)
-      (w3-parse-tree-to-latex w3-current-parse url)
-      (insert-buffer url-working-buffer)))
-    (write-region (point-min) (point-max) fname)))
+  (save-excursion
+    (let* ((completion-ignore-case t)
+	   (format (or type (completing-read
+			     "Format: "
+			     '(("HTML Source")
+			       ("Formatted Text")
+			       ("LaTeX Source")
+			       ("PostScript")
+			       ("Binary"))
+			     nil t)))
+	   (fname (expand-file-name
+		   (read-file-name "File name: " default-directory)))
+	   (url (url-view-url t)))
+      (cond
+       ((equal "Binary" format)
+	(if (not w3-current-source)
+	    (let ((url-be-asynchronous nil))
+	      (url-retrieve url))))
+       ((equal "HTML Source" format)
+	(if (not w3-current-source)
+	    (let ((url-be-asynchronous nil))
+	      (url-retrieve url))	; Get the document if necessary
+	  (let ((txt w3-current-source))
+	    (set-buffer (get-buffer-create url-working-buffer))
+	    (erase-buffer)
+	    (insert txt)))
+	(goto-char (point-min))
+	(if (re-search-forward "<head>" nil t)
+	    (insert "\n"))
+	(insert (format "<BASE HREF=\"%s\">\n" url)))
+       ((or (equal "Formatted Text" format)
+	    (equal "" format))
+	nil)				; Do nothing - we have the text already
+       ((equal "PostScript" format)
+	(let ((ps-spool-buffer-name " *w3-temp*"))
+	  (if (get-buffer ps-spool-buffer-name)
+	      (kill-buffer ps-spool-buffer-name))
+	  (w3-print-with-ps-print (current-buffer)
+				  'ps-spool-buffer-with-faces)
+	  (set-buffer ps-spool-buffer-name)))
+       ((equal "LaTeX Source" format)
+	(w3-parse-tree-to-latex w3-current-parse url)
+	(insert-buffer url-working-buffer)))
+      (write-region (point-min) (point-max) fname))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2208,7 +2235,7 @@ dumped with emacs."
   (add-minor-mode 'w3-annotation-minor-mode " Annotating"
 		  w3-annotation-minor-mode-map)
   (add-minor-mode 'w3-lynx-emulation-minor-mode " Lynx"
-		  w3-annotation-minor-mode-map)
+		  w3-lynx-emulation-minor-mode-map)
   
   (setq url-package-version w3-version-number
 	url-package-name "Emacs-W3")
@@ -2431,9 +2458,8 @@ With optional ARG, move across that many fields."
 				 (substring link-at-point 0 17) "..."))
 			      "): ")
 		    "Link: ") links-alist nil t))
-    (if (string= choice "")
-	(w3-follow-link)
-      (w3-fetch (cdr (assoc choice links-alist))))))
+    (if (setq choice (try-completion choice links-alist))
+	(w3-fetch (cdr (assoc choice links-alist))))))
 
 (defun w3-mode ()
   "Mode for viewing HTML documents.  If called interactively, will

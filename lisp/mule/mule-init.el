@@ -119,7 +119,10 @@ then `set-language-environment' is called with LANGUAGE-ENVIRONMENT.")
     ;; Translate remaining args on command line using pathname-coding-system
     (loop for arg in-ref command-line-args-left do
 	  (setf arg (decode-coding-string arg pathname-coding-system)))
-  
+
+    ;; rman seems to be incompatible with encoded text
+    (setq Manual-use-rosetta-man nil)
+    
     ;; Make sure ls -l output is readable by dired and encoded using
     ;; pathname-coding-system
     (add-hook

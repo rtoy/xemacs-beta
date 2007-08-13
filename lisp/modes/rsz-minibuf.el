@@ -10,7 +10,7 @@
 ;;; Keywords: minibuffer, window, frames, display
 ;;; Status: Known to work in FSF GNU Emacs 19.23 and Lucid Emacs 19.9.
 
-;;; $Id: rsz-minibuf.el,v 1.1.1.1 1996/12/18 22:42:48 steve Exp $
+;;; $Id: rsz-minibuf.el,v 1.2 1997/01/23 05:29:30 steve Exp $
 
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -159,10 +159,16 @@ counterparts."
 	     (add-hook 'minibuffer-exit-hook 'resize-minibuffer-frame-restore
 		       nil t)
 	     (make-local-hook 'post-command-hook)
-	     (add-hook 'post-command-hook 'resize-minibuffer-frame nil t))))
+	     (add-hook 'post-command-hook 'resize-minibuffer-frame nil t)
+	     (unless (and (boundp 'icomplete-mode)
+			  icomplete-mode)
+	       (resize-minibuffer-frame)))))
      (t
       (make-local-hook 'post-command-hook)
-      (add-hook 'post-command-hook 'resize-minibuffer-window nil t))))))
+      (add-hook 'post-command-hook 'resize-minibuffer-window nil t)
+      (unless (and (boundp 'icomplete-mode)
+		   icomplete-mode)
+	(resize-minibuffer-window)))))))
 
 (defun resize-minibuffer-count-window-lines (&optional start end)
   "Return number of window lines occupied by text in region.

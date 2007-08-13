@@ -89,12 +89,12 @@
 ;;;
 ;;; - Exactly what behavior you're seeing;
 ;;; - The output of the `xlsfonts' program;
-;;; - The value of the variable `fonts-menu-cache';
+;;; - The value of the variable `device-fonts-cache';
 ;;; - The values of the following expressions, both before and after
 ;;;   making a selection from any of the fonts-related menus:
 ;;;	(face-font 'default)
-;;;	(font-instance-truename (face-font 'default))
-;;;	(font-instance-properties (face-font 'default))
+;;;	(font-truename   (face-font 'default))
+;;;	(font-properties (face-font 'default))
 ;;; - The values of the following variables after making a selection:
 ;;;	font-menu-preferred-resolution
 ;;;	font-menu-preferred-registry
@@ -141,7 +141,7 @@ affect one frame instead of all frames.")
 				;  "Axcob" -> "Applix Courier Bold", etc.
       )
     "\\|"))
-  "A regexp matching font families which are uninteresting (cursor fonts).")
+  "A regexp matching font families which are uninteresting (e.g. cursor fonts).")
 
 (defun hack-font-truename (fn)
   "Filter the output of `font-instance-truename' to deal with Japanese fontsets."
@@ -196,7 +196,8 @@ or if you change your font path, you can call this to re-initialize the menus."
 			   (getenv "LANG")))
 	;; #### - this is questionable behavior left over from the I18N4 code.
 	(setq x-font-regexp-ja "jisx[^-]*-[^-]*$"
-	      font-menu-preferred-registry '("*" . "*")))
+	      font-menu-preferred-registry '("*" . "*")
+	      font-menu-preferred-resolution '("*" . "*")))
     (let ((all-fonts nil)
 	  (case-fold-search t)
 	  name family size weight entry monospaced-p
@@ -212,35 +213,34 @@ or if you change your font path, you can call this to re-initialize the menus."
 		   (or debug
 		       (list-fonts "*-*-*-*-*-*-*-*-*-*-*-*-*-*" device)))))
       (while (setq name (pop all-fonts))
-	(cond ((and (or (not x-font-regexp-ja)
-			(string-match x-font-regexp-ja name))
-		    (string-match x-font-regexp name))
-	       (setq weight (capitalize (match-string 1 name))
-		     size   (string-to-int (match-string 6 name)))
-	       (or (string-match x-font-regexp-foundry-and-family name)
-		   (error "internal error"))
-	       (setq family (capitalize (match-string 1 name)))
-	       (or (string-match x-font-regexp-spacing name)
-		   (error "internal error"))
-	       (setq monospaced-p (string= "m" (match-string 1 name)))
-	       (if (string-match fonts-menu-junk-families family)
-		   nil
-		 (setq entry (or (vassoc family cache)
-				 (car (setq cache
-					    (cons (vector family nil nil t)
-						  cache)))))
-		 (or (member family families)
-		     (setq families (cons family families)))
-		 (or (member weight weights)
-		     (setq weights (cons weight weights)))
-		 (or (member weight (aref entry 1))
-		     (aset entry 1 (cons weight (aref entry 1))))
-		 (or (member size sizes)
-		     (setq sizes (cons size sizes)))
-		 (or (member size (aref entry 2))
-		     (aset entry 2 (cons size (aref entry 2))))
-		 (aset entry 3 (and (aref entry 3) monospaced-p))
-		 ))))
+	(when (and (or (not x-font-regexp-ja)
+		       (string-match x-font-regexp-ja name))
+		   (string-match x-font-regexp name))
+	  (setq weight (capitalize (match-string 1 name))
+		size   (string-to-int (match-string 6 name)))
+	  (or (string-match x-font-regexp-foundry-and-family name)
+	      (error "internal error"))
+	  (setq family (capitalize (match-string 1 name)))
+	  (or (string-match x-font-regexp-spacing name)
+	      (error "internal error"))
+	  (setq monospaced-p (string= "m" (match-string 1 name)))
+	  (unless (string-match fonts-menu-junk-families family)
+	    (setq entry (or (vassoc family cache)
+			    (car (setq cache
+				       (cons (vector family nil nil t)
+					     cache)))))
+	    (or (member family families)
+		(setq families (cons family families)))
+	    (or (member weight weights)
+		(setq weights (cons weight weights)))
+	    (or (member weight (aref entry 1))
+		(aset entry 1 (cons weight (aref entry 1))))
+	    (or (member size sizes)
+		(setq sizes (cons size sizes)))
+	    (or (member size (aref entry 2))
+		(aset entry 2 (cons size (aref entry 2))))
+	    (aset entry 3 (and (aref entry 3) monospaced-p))
+	    )))
       ;;
       ;; Hack scalable fonts.
       ;; Some fonts come only in scalable versions (the only size is 0)
@@ -305,17 +305,39 @@ or if you change your font path, you can call this to re-initialize the menus."
 		       weights)))
       (cdr dev-cache))))
 
+(defsubst font-menu-truename (face)
+  (hack-font-truename
+   (if (featurep 'mule)
+       (face-font-instance face nil 'ascii)
+     (face-font-instance face))))
+
+;;; Extract a font family from a face.
+;;; Use the user-specified one if possible.
+;;; If the user didn't specify one (with "*", for example)
+;;; get the truename and use the guaranteed family from that.
+(defun font-menu-family (face)
+  (let ((dcache (cdr (assq (selected-device) device-fonts-cache)))
+	(name (font-instance-name (face-font-instance face)))
+	(family nil))
+    (when (string-match x-font-regexp-foundry-and-family name)
+      (setq family (capitalize (match-string 1 name))))
+    (when (not (and family (vassoc family (aref dcache 0))))
+      (setq name (font-menu-truename face))
+      (string-match x-font-regexp-foundry-and-family name)
+      (setq family (capitalize (match-string 1 name))))
+    family))
+
 ;;;###autoload
 (defun font-menu-family-constructor (ignored)
   ;; by Stig@hackvan.com
   (if (not (eq 'x (device-type (selected-device))))
       '(["Cannot parse current font" ding nil])
-    (let ((dcache (cdr (assq (selected-device) device-fonts-cache)))
-	  (name (hack-font-truename (face-font-instance 'default)))
-	  (case-fold-search t)
-	  family weight size		; parsed from current font
-	  entry				; font cache entry
-	  f)
+    (let* ((dcache (cdr (assq (selected-device) device-fonts-cache)))
+	   (name (font-menu-truename 'default))
+	   (case-fold-search t)
+	   family weight size		; parsed from current font
+	   entry			; font cache entry
+	   f)
       (or dcache
 	  (setq dcache (reset-device-font-menus (selected-device))))
       (if (not (string-match x-font-regexp name))
@@ -323,8 +345,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	  '(["Cannot parse current font" ding nil])
 	(setq weight (capitalize (match-string 1 name)))
 	(setq size (string-to-number (match-string 6 name)))
-	(and (string-match x-font-regexp-foundry-and-family name)
-	     (setq family (capitalize (match-string 1 name))))
+	(setq family (font-menu-family 'default))
 	(setq entry (vassoc family (aref dcache 0)))
 	(mapcar #'(lambda (item)
 		    ;;
@@ -354,7 +375,7 @@ or if you change your font path, you can call this to re-initialize the menus."
   (if (not (eq 'x (device-type (selected-device))))
       '(["Cannot parse current font" ding nil])
     (let ((dcache (cdr (assq (selected-device) device-fonts-cache)))
-	  (name (hack-font-truename (face-font-instance 'default)))
+	  (name (font-menu-truename 'default))
 	  (case-fold-search t)
 	  family size			; parsed from current font
 	  entry				; font cache entry
@@ -365,8 +386,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	  ;; couldn't parse current font
 	  '(["Cannot parse current font" ding nil])
 	(setq size (string-to-number (match-string 6 name)))
-	(and (string-match x-font-regexp-foundry-and-family name)
-	     (setq family (capitalize (match-string 1 name))))
+	(setq family (font-menu-family 'default))
 	(setq entry (vassoc family (aref dcache 0)))
 	(mapcar
          (lambda (item)
@@ -395,7 +415,7 @@ or if you change your font path, you can call this to re-initialize the menus."
   (if (not (eq 'x (device-type (selected-device))))
       '(["Cannot parse current font" ding nil])
     (let ((dcache (cdr (assq (selected-device) device-fonts-cache)))
-	  (name (hack-font-truename (face-font-instance 'default)))
+	  (name (font-menu-truename 'default))
 	  (case-fold-search t)
 	  family weight			; parsed from current font
 	  entry				; font cache entry
@@ -406,15 +426,12 @@ or if you change your font path, you can call this to re-initialize the menus."
 	  ;; couldn't parse current font
 	  '(["Cannot parse current font" ding nil])
 	(setq weight (capitalize (match-string 1 name)))
-	(and (string-match x-font-regexp-foundry-and-family name)
-	     (setq family (capitalize (match-string 1 name))))
+	(setq family (font-menu-family 'default))
 	(setq entry (vassoc family (aref dcache 0)))
 	(mapcar #'(lambda (item)
-		    ;;
 		    ;; Items on the Weight menu are enabled iff current font
 		    ;; has that weight.  Only the weight of the current font
 		    ;; is selected.
-		    ;;
 		    (setq w (aref item 0))
 		    (if (member w (aref entry 1))
 			(enable-menu-item item)
@@ -434,16 +451,14 @@ or if you change your font path, you can call this to re-initialize the menus."
   ;; fonts menus.  It needs to be rather clever.
   ;; (size is measured in 10ths of points.)
   (let ((faces (delq 'default (face-list)))
-	(default-name (hack-font-truename (face-font-instance 'default)))
+	(default-name (font-menu-truename 'default))
 	(case-fold-search t)
 	new-default-face-font
 	from-family from-weight from-size)
     ;;
     ;; First, parse out the default face's font.
     ;;
-    (or (string-match x-font-regexp-foundry-and-family default-name)
-	(signal 'error (list "couldn't parse font name" default-name)))
-    (setq from-family (capitalize (match-string 1 default-name)))
+    (setq from-family (font-menu-family 'default))
     (or (string-match x-font-regexp default-name)
 	(signal 'error (list "couldn't parse font name" default-name)))
     (setq from-weight (capitalize (match-string 1 default-name)))
@@ -477,8 +492,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 			      from-family from-weight from-size
 			      to-family   to-weight   to-size)
   (or (symbolp face) (signal 'wrong-type-argument (list 'symbolp face)))
-  (let* ((font (face-font-instance face))
-	 (name (hack-font-truename font))
+  (let* ((name (font-menu-truename face))
 	 (case-fold-search t)
 	 face-family
 	 face-weight
@@ -527,9 +541,9 @@ or if you change your font path, you can call this to re-initialize the menus."
     (setq slant (capitalize (match-string 2 from-font))
 	  resx  (match-string 7 from-font)
 	  resy  (match-string 8 from-font))
-    (cond ((equal slant "O") (setq other-slant "I")) ; oh, bite me.
-	  ((equal slant "I") (setq other-slant "O"))
-	  (t (setq other-slant nil)))
+    (setq other-slant (cond ((equal slant "O") "I") ; oh, bite me.
+			    ((equal slant "I") "O")
+			    (t nil)))
     ;;
     ;; Remember these values for the first font we switch away from
     ;; (the original default font).

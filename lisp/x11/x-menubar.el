@@ -572,10 +572,10 @@
        ["Package Browser"	finder-by-keyword	t]
        ["Splash Screen"		xemacs-splash-buffer	t])
       "-----"
-      ("XEmacs FAQ & Web Page"
-       ["XEmacs WWW Page"	xemacs-www-page		t]
+      ("XEmacs FAQ"
+       ["XEmacs FAQ (local)"	xemacs-local-faq	t]
        ["Newest XEmacs FAQ via WWW" xemacs-www-faq	t]
-       ["XEmacs FAQ (local)"	xemacs-local-faq	t])
+       ["XEmacs WWW Page"	xemacs-www-page		t])
       ("Samples"
        ["Sample"			(find-file
 					 (expand-file-name "sample.emacs"
@@ -606,12 +606,13 @@
        ["Describe Key/Mouse..."	describe-key		t]
        ["List Key Bindings"	describe-bindings	t]
        ["List Mouse Bindings"	describe-pointer	t]
+       ["Recent Keystrokes"	view-lossage		t]
        "-----"
        ["Describe Function..."	describe-function	t]
        ["Describe Variable..."	describe-variable	t]
        ["Where Is Command..."	where-is		t])
       "-----"
-      ["Recent Keystrokes/Messages" view-lossage	t]
+      ["Recent Messages" view-lossage	t]
       ("Misc"
        ["Describe No Warranty"	describe-no-warranty	t]
        ["Describe XEmacs License" describe-copying	t]

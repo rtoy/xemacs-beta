@@ -1134,8 +1134,9 @@ See list-motion-handlers for more details."
 				    (progn 
 				      ;; (message "%s" (event-window event))
 				      (move-to-window-line
-				       (if (< emacs-minor-version 12)
-					   (- (event-y event) 
+				       (if (and (= emacs-major-version 19)
+						(< emacs-minor-version 12))
+					   (- (event-y event)
 					      (nth 1 (window-edges window)))
 					 (event-y event)))
 				      (beginning-of-line)

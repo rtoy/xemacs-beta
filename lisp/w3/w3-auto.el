@@ -32,7 +32,7 @@
 
 ;; Stylesheet stuff
 (autoload 'w3-handle-style "w3-style")
-(autoload 'w3-display-stylesheet "w3-style")
+(autoload 'w3-display-stylesheet "w3-style" "" t)
 
 ;; Setup stuff
 (autoload 'url-do-setup "url")

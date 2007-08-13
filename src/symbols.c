@@ -436,7 +436,9 @@ Return list of symbols found.
 
 static void set_up_buffer_local_cache (Lisp_Object sym, 
 				       struct symbol_value_buffer_local *bfwd,
-				       struct buffer *buf);
+				       struct buffer *buf,
+				       Lisp_Object new_alist_el,
+				       int set_it_p);
 
 DEFUN ("boundp", Fboundp, 1, 1, 0, /*
 T if SYMBOL's value is not void.
@@ -1275,9 +1277,11 @@ write_out_buffer_local_cache (Lisp_Object symbol,
 static void
 set_up_buffer_local_cache (Lisp_Object sym, 
 			   struct symbol_value_buffer_local *bfwd,
-			   struct buffer *buf)
+			   struct buffer *buf,
+			   Lisp_Object new_alist_el,
+			   int set_it_p)
 {
-  Lisp_Object new_alist_el, new_val;
+  Lisp_Object new_val;
 
   if (!NILP (bfwd->current_buffer)
       && buf == XBUFFER (bfwd->current_buffer))
@@ -1288,7 +1292,10 @@ set_up_buffer_local_cache (Lisp_Object sym,
   write_out_buffer_local_cache (sym, bfwd);
 
   /* Retrieve the new alist element and new value. */
+  if (NILP (new_alist_el)
+      && set_it_p)
   new_alist_el = buffer_local_alist_element (buf, sym, bfwd);
+
   if (NILP (new_alist_el))
     new_val = bfwd->default_value;
   else
@@ -1360,14 +1367,15 @@ kill_buffer_local_variables (struct buffer *buf)
 	     will do this.  It doesn't hurt to do it whenever
 	     BUF == current_buffer, so just go ahead and do that. */
 	  if (buf == current_buffer)
-	    set_up_buffer_local_cache (sym, bfwd, buf);
+	    set_up_buffer_local_cache (sym, bfwd, buf, Qnil, 0);
 	}
     }
 }
 
 static Lisp_Object
 find_symbol_value_1 (Lisp_Object sym, struct buffer *buf,
-		     struct console *con, int swap_it_in)
+		     struct console *con, int swap_it_in,
+		     Lisp_Object symcons, int set_it_p)
 {
   Lisp_Object valcontents;
 
@@ -1388,6 +1396,7 @@ find_symbol_value_1 (Lisp_Object sym, struct buffer *buf,
 
     case SYMVAL_VARALIAS:
       sym = follow_varalias_pointers (sym, Qt /* #### kludge */);
+      symcons = Qnil;
       /* presto change-o! */
       goto retry;
 
@@ -1399,7 +1408,7 @@ find_symbol_value_1 (Lisp_Object sym, struct buffer *buf,
 
 	if (swap_it_in)
 	  {
-	    set_up_buffer_local_cache (sym, bfwd, buf);
+	    set_up_buffer_local_cache (sym, bfwd, buf, symcons, set_it_p);
 	    valcontents = bfwd->current_value;
 	  }
 	else
@@ -1407,14 +1416,17 @@ find_symbol_value_1 (Lisp_Object sym, struct buffer *buf,
 	    if (!NILP (bfwd->current_buffer) &&
 		buf == XBUFFER (bfwd->current_buffer))
 	      valcontents = bfwd->current_value;
-	    else
+	    else if (NILP (symcons))
 	      {
+		if (set_it_p)
 		valcontents = assq_no_quit (sym, buf->local_var_alist);
 		if (NILP (valcontents))
 		  valcontents = bfwd->default_value;
 		else
-		  valcontents = Fcdr (valcontents);
+		  valcontents = XCDR (valcontents);
 	      }
+	    else
+	      valcontents = XCDR (symcons);
 	  }
 	break;
       }
@@ -1449,7 +1461,7 @@ symbol_value_in_buffer (Lisp_Object sym, Lisp_Object buffer)
 			      /* If it bombs out at startup due to a
 				 Lisp error, this may be nil. */
 			      CONSOLEP (Vselected_console)
-			      ?	XCONSOLE (Vselected_console) : 0, 0);
+			      ?	XCONSOLE (Vselected_console) : 0, 0, Qnil, 1);
 }
 
 static Lisp_Object
@@ -1462,7 +1474,8 @@ symbol_value_in_console (Lisp_Object sym, Lisp_Object console)
   else
     console = Vselected_console;
 
-  return find_symbol_value_1 (sym, current_buffer, XCONSOLE (console), 0);
+  return find_symbol_value_1 (sym, current_buffer, XCONSOLE (console), 0,
+			      Qnil, 1);
 }
 
 /* Return the current value of SYM.  The difference between this function
@@ -1489,7 +1502,45 @@ find_symbol_value (Lisp_Object sym)
       dev = 0;
     }
 
-  return find_symbol_value_1 (sym, current_buffer, dev, 1);
+  return find_symbol_value_1 (sym, current_buffer, dev, 1, Qnil, 1);
+}
+
+/* This is an optimized function for quick lookup of buffer local symbols
+   by avoiding O(n) search.  This will work when either:
+     a) We have already found the symbol e.g. by traversing local_var_alist.
+   or
+     b) We know that the symbol will not be found in the current buffer's
+        list of local variables.
+   In the former case, find_it_p is 1 and symbol_cons is the element from
+   local_var_alist.  In the latter case, find_it_p is 0 and symbol_cons
+   is the symbol.
+
+   This function is called from set_buffer_internal which does both of these
+   things. */
+
+Lisp_Object
+find_symbol_value_quickly (Lisp_Object symbol_cons, int find_it_p)
+{
+  /* WARNING: This function can be called when current_buffer is 0
+     and Vselected_console is Qnil, early in initialization. */
+  struct console *dev;
+  Lisp_Object sym = find_it_p ? XCAR (symbol_cons) : symbol_cons;
+  
+  CHECK_SYMBOL (sym);
+  if (CONSOLEP (Vselected_console))
+    dev = XCONSOLE (Vselected_console);
+  else
+    {
+      /* This can also get called while we're preparing to shutdown.
+         #### What should really happen in that case?  Should we
+         actually fix things so we can't get here in that case? */
+      assert (!initialized || preparing_for_armageddon);
+      dev = 0;
+    }
+
+  return find_symbol_value_1 (sym, current_buffer, dev, 1,
+			      find_it_p ? symbol_cons : Qnil,
+			      find_it_p);
 }
 
 DEFUN ("symbol-value", Fsymbol_value, 1, 1, 0, /*
@@ -2119,7 +2170,7 @@ Use `make-local-hook' instead.
 	case SYMVAL_BOOLEAN_FORWARD:
 	case SYMVAL_OBJECT_FORWARD:
 	case SYMVAL_DEFAULT_BUFFER_FORWARD:
-	  set_up_buffer_local_cache (variable, bfwd, current_buffer);
+	  set_up_buffer_local_cache (variable, bfwd, current_buffer, Qnil, 1);
 	  break;
 
 	case SYMVAL_UNBOUND_MARKER:
@@ -2215,7 +2266,7 @@ From now on the default value will apply in this buffer.
 	   value of the C variable.  set_up_buffer_local_cache()
 	   will do this.  It doesn't hurt to do it always,
 	   so just go ahead and do that. */
-	set_up_buffer_local_cache (variable, bfwd, current_buffer);
+	set_up_buffer_local_cache (variable, bfwd, current_buffer, Qnil, 1);
       }
       return (variable);
 

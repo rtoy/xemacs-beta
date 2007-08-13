@@ -929,8 +929,8 @@ See also the function `substitute-in-file-name'.
   if (! NILP (defalt) && !EQ (defalt, name)
       /* This saves time in a common case.  */
       && ! (XSTRING_LENGTH (defalt) >= 3
-	    && IS_DIRECTORY_SEP (string_byte (XSTRING (defalt), 0))
-	    && IS_DEVICE_SEP (string_byte (XSTRING (defalt), 1))))
+	    && IS_DIRECTORY_SEP (XSTRING_BYTE (defalt, 0))
+	    && IS_DEVICE_SEP (XSTRING_BYTE (defalt, 1))))
     {
       struct gcpro gcpro1;
 
@@ -1477,7 +1477,7 @@ No component of the resulting pathname will be a symbolic link, as
 
     {
       int rlen = strlen (resolved_path);
-      if (elen > 0 && string_byte (XSTRING (expanded_name), elen - 1) == '/'
+      if (elen > 0 && XSTRING_BYTE (expanded_name, elen - 1) == '/'
           && !(rlen > 0 && resolved_path[rlen - 1] == '/'))
 	{
 	  if (rlen + 1 > countof (resolved_path))
@@ -1738,7 +1738,7 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
 #ifdef VMS
   {
     Bufbyte c =
-      string_byte (XSTRING (abspath), XSTRING_LENGTH (abspath) - 1);
+      XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 1);
     if (c == ':' || c == ']' || c == '>')
       abspath = Fdirectory_file_name (abspath);
   }
@@ -1746,10 +1746,8 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
   /* Remove final slash, if any (unless path is root).
      stat behaves differently depending!  */
   if (XSTRING_LENGTH (abspath) > 1
-      && IS_DIRECTORY_SEP (string_byte (XSTRING (abspath),
-					XSTRING_LENGTH (abspath) - 1))
-      && !IS_DEVICE_SEP (string_byte (XSTRING (abspath),
-				      XSTRING_LENGTH (abspath) - 2)))
+      && IS_DIRECTORY_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 1))
+      && !IS_DEVICE_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 2)))
     /* We cannot take shortcuts; they might be wrong for magic file names.  */
     abspath = Fdirectory_file_name (abspath);
 #endif
@@ -1859,8 +1857,7 @@ A prefix arg makes KEEP-TIME non-nil.
       args[1] = Qnil; args[2] = Qnil;
       NGCPRO1 (*args); 
       ngcpro1.nvars = 3;
-      if (string_byte (XSTRING (newname),
-		       XSTRING_LENGTH (newname) - 1) != '/')
+      if (XSTRING_BYTE (newname, XSTRING_LENGTH (newname) - 1) != '/')
 	args[i++] = build_string ("/");
       args[i++] = Ffile_name_nondirectory (filename);
       newname = Fconcat (i, args);
@@ -2260,7 +2257,7 @@ This happens for interactive use with M-x.
   /* If the link target has a ~, we must expand it to get
      a truly valid file name.  Otherwise, do not expand;
      we want to permit links to relative file names.  */
-  if (string_byte (XSTRING (filename), 0) == '~') /* #### Un*x-specific */
+  if (XSTRING_BYTE (filename, 0) == '~') /* #### Un*x-specific */
     filename = Fexpand_file_name (filename, Qnil);
   linkname = Fexpand_file_name (linkname, Qnil);
 
@@ -3469,7 +3466,8 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	desc = open (fn_data, O_RDWR, 0);
 	if (desc < 0)
 	  desc = creat_copy_attrs ((STRINGP (current_buffer->filename)
-				    ? (char *) XSTRING_DATA (current_buffer->filename)
+				    ? (char *)
+				    XSTRING_DATA (current_buffer->filename)
 				    : 0),
 				   fn_data);
       }
@@ -4163,14 +4161,11 @@ auto_save_error (Lisp_Object condition_object, Lisp_Object ignored)
     return Qnil;
   clear_echo_area (selected_frame (), Qauto_saving, 1);
   Fding (Qt, Qauto_save_error, Qnil);
-  message ("Auto-saving...error for %s",
-	   XSTRING_DATA (current_buffer->name));
+  message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
-  message ("Auto-saving...error!for %s",
-	   XSTRING_DATA (current_buffer->name));
+  message ("Auto-saving...error!for %s", XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
-  message ("Auto-saving...error for %s",
-	   XSTRING_DATA (current_buffer->name));
+  message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
   return Qnil;
 }

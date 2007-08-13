@@ -1,12 +1,12 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/01/03 16:43:49
-;; Version: 1.22
+;; Created: 1997/01/22 19:31:17
+;; Version: 1.26
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -48,13 +48,20 @@
 (defconst font-running-xemacs (string-match "XEmacs" (emacs-version))
   "Whether we are running in XEmacs or not.")
 
-(defmacro defkeyword (keyword &optional docstring)
-  (list 'defconst keyword (list 'quote keyword)
-	(or docstring "A keyword")))
+(defmacro define-font-keywords (&rest keys)
+  (`
+   (eval-and-compile
+     (let ((keywords (quote (, keys))))
+       (while keywords
+	 (or (boundp (car keywords))
+	     (set (car keywords) (car keywords)))
+	 (setq keywords (cdr keywords)))))))  
 
 (defconst font-window-system-mappings
   '((x        . (x-font-create-name x-font-create-object))
     (ns       . (ns-font-create-name ns-font-create-object))
+    (win32    . (x-font-create-name x-font-create-object)) ; Change? FIXME
+    (pm       . (x-font-create-name x-font-create-object)) ; Change? FIXME
     (tty      . (tty-font-create-plist tty-font-create-object)))
   "An assoc list mapping device types to the function used to create
 a font name from a font structure.")
@@ -127,22 +134,11 @@ for use in the 'weight' field of an X font string.")
     )
   "A list of font family mappings.")
 
-(defkeyword :family "Keyword specifying the font family of a FONTOBJ.")
+(define-font-keywords :family :style :size :registry :encoding)
 
-(defkeyword :weight "Keyword specifying the font weight of a FONTOBJ.")
- (defkeyword :extra-light)
- (defkeyword :light)
- (defkeyword :demi-light)
- (defkeyword :medium)
- (defkeyword :normal)
- (defkeyword :demi-bold)
- (defkeyword :bold)
- (defkeyword :extra-bold)
-
-(defkeyword :style "Keyword specifying the font style of a FONTOBJ.")
-(defkeyword :size "Keyword specifying the font size of a FONTOBJ.")
-(defkeyword :registry "Keyword specifying the registry of a FONTOBJ.")
-(defkeyword :encoding "Keyword specifying the encoding of a FONTOBJ.")
+(define-font-keywords
+  :weight :extra-light :light :demi-light :medium :normal :demi-bold
+  :bold :extra-bold)
 
 (defvar font-style-keywords nil)
 
@@ -1058,16 +1054,16 @@ The variable x-library-search-path is use to locate the rgb.txt file."
 (defun font-normalize-color (color &optional device)
   "Return an RGB tuple, given any form of input.  If an error occurs, black
 is returned."
-  (cond
-   ((eq (device-type device) 'x)
+  (case (device-type device)
+   ((x pm win32)
     (apply 'format "#%02x%02x%02x" (font-color-rgb-components color)))
-   ((eq (device-type device) 'tty)
+   (tty
     (apply 'font-tty-find-closest-color (font-color-rgb-components color)))
-   ((eq (device-type device) 'ns)
+   (ns
     (let ((vals (mapcar (function (lambda (x) (>> x 8)))
 			(font-color-rgb-components color))))
       (apply 'format "RGB%02x%02x%02xff" vals)))
-   (t "black")))
+   (otherwise "black")))
 
 (defun font-set-face-background (&optional face color &rest args)
   (interactive)

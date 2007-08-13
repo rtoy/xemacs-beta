@@ -1140,7 +1140,12 @@ redisplay_update_line (struct window *w, int first_line, int last_line,
   /* #### See if we can get away with only calling this if
      max_line_len is greater than the window_char_width. */
 #ifdef HAVE_SCROLLBARS
-  update_window_scrollbars (w, NULL, 1, 1);
+  {
+    extern int stupid_vertical_scrollbar_drag_hack;
+
+    update_window_scrollbars (w, NULL, 1, stupid_vertical_scrollbar_drag_hack);
+    stupid_vertical_scrollbar_drag_hack = 1;
+  }
 #endif
 
   /* This has to be done after we've updated the values.  We don't

@@ -610,7 +610,8 @@ if this function doesn't work on your system."
   ;; overran by a couple of chars.
   (setq truncate-lines t)
   ;; turn off horizontal scrollbars in this buffer
-  (set-specifier scrollbar-height (cons (current-buffer) 0))
+  (when (featurep 'scrollbar)
+    (set-specifier scrollbar-height (cons (current-buffer) 0)))
   (run-hooks 'Manual-mode-hook))
 
 (defun Manual-last-page ()

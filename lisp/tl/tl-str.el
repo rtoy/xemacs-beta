@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: tl-str.el,v 1.1.1.2 1996/12/21 20:50:49 steve Exp $
+;;	$Id: tl-str.el,v 1.2 1997/01/23 05:29:41 steve Exp $
 ;; Keywords: string
 
 ;; This file is part of tl (Tiny Library).
@@ -206,8 +206,8 @@
       (substring filename 0 (match-beginning 0))
     filename))
 
-(autoload 'replace-as-filename "filename")
-
+(autoload 'replace-as-filename "filename"
+  "Return safety filename from STRING. [filename.el]")
 
 ;;; @ symbol
 ;;;

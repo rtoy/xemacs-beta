@@ -577,7 +577,7 @@ encoding detection or end-of-line detection.
   handler = Ffind_file_name_handler (file, Qload);
   if (!NILP (handler))
     RETURN_UNGCPRO (call5 (handler, Qload, file, no_error,
-			   nomessage, nosuffix));
+			  nomessage, nosuffix));
 
   /* Do this after the handler to avoid
      the need to gcpro noerror, nomessage and nosuffix.
@@ -672,22 +672,22 @@ encoding detection or end-of-line detection.
     fd = open (foundstr, O_RDONLY | O_TEXT);
 #endif /* DOS_NT */
 
-#define PRINT_LOADING_MESSAGE(done) do {			\
-  if (load_ignore_elc_files)					\
-    {								\
-      if (message_p)						\
-	message ("Loading %s..." done, XSTRING_DATA (newer));	\
-    }								\
-  else if (!NILP (newer))					\
-    message ("Loading %s..." done " (file %s is newer)",	\
-	     XSTRING_DATA (file),				\
-	     XSTRING_DATA (newer));				\
-  else if (source_only)						\
+#define PRINT_LOADING_MESSAGE(done) do {				\
+  if (load_ignore_elc_files)						\
+    {									\
+      if (message_p)							\
+	message ("Loading %s..." done, XSTRING_DATA (newer));		\
+    }									\
+  else if (!NILP (newer))						\
+    message ("Loading %s..." done " (file %s is newer)",		\
+	     XSTRING_DATA (file),					\
+	     XSTRING_DATA (newer));					\
+  else if (source_only)							\
     message ("Loading %s..." done " (file %s.elc does not exist)",	\
-	     XSTRING_DATA (file),				\
-	     XSTRING_DATA (Ffile_name_nondirectory (file)));	\
-  else if (message_p)						\
-    message ("Loading %s..." done, XSTRING_DATA (file));	\
+	     XSTRING_DATA (file),					\
+	     XSTRING_DATA (Ffile_name_nondirectory (file)));		\
+  else if (message_p)							\
+    message ("Loading %s..." done, XSTRING_DATA (file));		\
   } while (0)
 
   PRINT_LOADING_MESSAGE ("");

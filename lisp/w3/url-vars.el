@@ -1,12 +1,12 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1996/12/30 14:25:24
-;; Version: 1.19
+;; Created: 1997/01/16 14:13:05
+;; Version: 1.24
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -64,6 +64,10 @@ each item in the list will be an argument to the url-current-callback-func.")
 				      url-current-user
 				      ))
 
+(defvar url-cookie-storage nil         "Where cookies are stored.")
+(defvar url-cookie-secure-storage nil  "Where secure cookies are stored.")
+(defvar url-cookie-file nil            "*Where cookies are stored on disk.")
+
 (defvar url-default-retrieval-proc 'url-default-callback
   "*The default action to take when an asynchronous retrieval completes.")
 
@@ -101,9 +105,6 @@ time.")
   "*Whether to check md5s of retrieved documents or not.")
 
 (defvar url-expected-md5 nil "What md5 we expect to see.")
-
-(defvar url-broken-resolution nil
-  "*Whether to use [ange|efs]-ftp-nslookup-host.")
 
 (defvar url-bug-address "wmperry@cs.indiana.edu" "Where to send bug reports.")
 
@@ -201,7 +202,7 @@ buffer, and it should use mail-header-separator if possible.")
 
 (defvar url-proxy-services nil
   "*An assoc list of access types and servers that gateway them.
-Looks like ((\"http\" . \"url://for/proxy/server/\") ....)  This is set up
+Looks like ((\"http\" . \"hostname:portnumber\") ....)  This is set up
 from the ACCESS_proxy environment variables in url-do-setup.")
 
 (defvar url-global-history-file nil
@@ -434,66 +435,24 @@ tries.")
 
 (defvar url-find-this-link nil "Link to go to within a document.")
 
-(defvar url-show-http2-transfer t
-  "*Whether to show the total # of bytes, size of file, and percentage
-transferred when retrieving a document over HTTP/1.0 and it returns a
-valid content-length header.  This can mess up some people behind
-gateways.")
-
 (defvar url-gateway-method 'native
   "*The type of gateway support to use.
 Should be a symbol specifying how we are to get a connection off of the
 local machine.
 
 Currently supported methods:
-'program	:: Run a program in a subprocess to connect
-                   (examples are itelnet, an expect script, etc)
-'native		:: Use the native open-network-stream in emacs
+'telnet   	:: Run telnet in a subprocess to connect
+'rlogin         :: Rlogin to another machine to connect
+'socks          :: Connects through a socks server
+'ssl            :: Connection should be made with SSL
 'tcp            :: Use the excellent tcp.el package from gnus.
                    This simply does a (require 'tcp), then sets
-                   url-gateway-method to be 'native.")
-
-(defvar url-gateway-shell-is-telnet nil
-  "*Whether the login shell of the remote host is telnet.")
-
-(defvar url-gateway-program-interactive nil
-  "*Whether url needs to hand-hold the login program on the remote machine.")
-
-(defvar url-gateway-handholding-login-regexp "ogin:"
-  "*Regexp for when to send the username to the remote process.")
-
-(defvar url-gateway-handholding-password-regexp "ord:"
-  "*Regexp for when to send the password to the remote process.")
-
-(defvar url-gateway-host-prompt-pattern "^[^#$%>;]*[#$%>;] *"
-  "*Regexp used to detect when the login is finished on the remote host.")
-
-(defvar url-gateway-telnet-ready-regexp "Escape character is .*"
-  "*A regular expression that signifies url-gateway-telnet-program is
-ready to accept input.")
-
-(defvar url-local-rlogin-prog "rlogin"
-  "*Program for local telnet connections.")
-
-(defvar url-remote-rlogin-prog "rlogin"
-  "*Program for remote telnet connections.")
-
-(defvar url-local-telnet-prog "telnet"
-  "*Program for local telnet connections.")
-
-(defvar url-remote-telnet-prog "telnet"
-  "*Program for remote telnet connections.")  
+                   url-gateway-method to be 'native.
+'native		:: Use the native open-network-stream in emacs
+")
 
 (defvar url-running-xemacs (string-match "XEmacs" emacs-version)
   "*In XEmacs?.")
-
-(defvar url-gateway-telnet-program "itelnet"
-  "*Program to run in a subprocess when using gateway-method 'program.")
-
-(defvar url-gateway-local-host-regexp nil
-  "*If a host being connected to matches this regexp then the
-connection is done natively, otherwise the process is started on
-`url-gateway-host' instead.")
 
 (defvar url-use-hypertext-dired t
   "*How to format directory listings.

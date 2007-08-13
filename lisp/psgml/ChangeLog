@@ -1,3 +1,7 @@
+Thu Jan 16 18:23:51 1997  Steven L Baur  <steve@miranova.com>
+
+	* psgml.el: Use newer interface form of nsgmls.
+
 Wed Nov 20 19:40:05 1996  Lennart Staflin  <lenst@lysator.liu.se>
 
 	* psgml-parse.el (sgml-modify-dtd): set sgml-current-tree to

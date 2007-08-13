@@ -1,6 +1,6 @@
 ;;; ediff-init.el --- Macros, variables, and defsubsts used by Ediff
 
-;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -32,6 +32,10 @@
 (defvar ediff-mouse-pixel-threshold)
 (defvar ediff-whitespace)
 (defvar ediff-multiframe)
+
+(and noninteractive
+     (eval-when-compile
+	 (load "ange-ftp" 'noerror)))
 ;; end pacifier
 
 ;; Is it XEmacs?
@@ -90,7 +94,7 @@ that Ediff doesn't know about.")
 (ediff-defvar-local ediff-buffer-C nil "")
 ;; Ancestor buffer
 (ediff-defvar-local ediff-ancestor-buffer nil "")
-;; The control buffer of ediff.
+;; The Ediff control buffer
 (ediff-defvar-local ediff-control-buffer nil "")
 
 ;;; Macros
@@ -625,8 +629,8 @@ appropriate symbol: `rcs', `pcl-cvs', or `generic-sc' if you so desire.")
   
   
 ;;;; warn if it is a wrong version of emacs
-;;(if (or (ediff-check-version '< 19 29 'emacs)
-;;	(ediff-check-version '< 19 12 'xemacs))
+;;(if (or (ediff-check-version '< 19 35 'emacs)
+;;	(ediff-check-version '< 19 15 'xemacs))
 ;;    (progn
 ;;      (with-output-to-temp-buffer ediff-msg-buffer
 ;;	(switch-to-buffer ediff-msg-buffer)
@@ -635,9 +639,9 @@ appropriate symbol: `rcs', `pcl-cvs', or `generic-sc' if you so desire.")
 ;;
 ;;This version of Ediff requires 
 ;;
-;;\t Emacs 19.29 and higher
+;;\t Emacs 19.35 and higher
 ;;\t OR
-;;\t XEmacs 19.12 and higher
+;;\t XEmacs 19.15 and higher
 ;;
 ;;It is unlikely to work under Emacs version %s
 ;;that you are using... " emacs-version))

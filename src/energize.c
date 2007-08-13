@@ -1666,7 +1666,7 @@ read_energize_buffer_data (Connection *conn, CBuffer *cbu, Editor *editor,
     {
       if (modifying_p
 	  && strcmp ((char*) XSTRING_DATA (buffer_name),
-		     (char*) xSTRING_DATA (XBUFFER (binfo->emacs_buffer)->name))))
+		     (char*) XSTRING_DATA (XBUFFER (binfo->emacs_buffer)->name)))
 	rename_the_buffer (buffer_name);
     }
 
@@ -2553,7 +2553,7 @@ See also 'energize-list-menu'.
   CHECK_STRING (command);
 
   execute_energize_menu (buffer, extent_to_data (extent_obj),
-			 (char*)XSTRING_DATA (command), 0, 0, selection,
+			 (char*) XSTRING_DATA (command), 0, 0, selection,
 			 no_confirm);
 
   return Qt;

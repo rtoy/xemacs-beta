@@ -35,33 +35,25 @@ CORE = docomp.el
 URLSOURCES = \
 	url-nfs.el url-file.el url-cookie.el url-parse.el url-irc.el	\
 	url-gopher.el url-http.el url-mail.el url-misc.el url-news.el	\
-	url-pgp.el url-vars.el url-wais.el urlauth.el mm.el md5.el	\
-	ssl.el base64.el url.el socks.el
+	url-pgp.el url-vars.el url-wais.el url-auth.el mm.el md5.el	\
+	url-gw.el ssl.el base64.el url.el socks.el
 
 CUSTOMSOURCES = widget.el widget-edit.el
 CUSTOMOBJECTS = $(CUSTOMSOURCES:.el=.elc)
 URLOBJECTS    = $(URLSOURCES:.el=.elc)
 
 SOURCES = \
-	w3.el w3-display.el w3-e19.el w3-parse.el w3-print.el		\
-	w3-vars.el w3-xemac.el w3-style.el w3-about.el w3-hot.el	\
-	w3-toolbar.el font.el w3-sysdp.el w3-annotat.el w3-auto.el	\
-	w3-forms.el images.el w3-imap.el w3-emulate.el w3-menu.el	\
-	w3-keyword.el w3-mouse.el w3-widget.el w3-speak.el w3-prefs.el	\
-	w3-latex.el dsssl.el css.el mule-sysdp.el $(CUSTOMSOURCES)	\
-	$(URLSOURCES)
+	$(CUSTOMSOURCES) $(URLSOURCES) mule-sysdp.el w3-widget.el	\
+	w3-imap.el css.el dsssl.el font.el images.el w3-vars.el		\
+	w3-style.el w3-keyword.el w3-forms.el w3-emulate.el		\
+	w3-annotat.el w3-auto.el w3-menu.el w3-mouse.el w3-toolbar.el	\
+	w3-prefs.el w3-speak.el w3-latex.el w3-parse.el w3-display.el	\
+	w3-print.el w3-about.el w3-hot.el w3-e19.el w3-xemac.el w3.el
 
-OBJECTS = \
-	w3.elc w3-display.elc w3-e19.elc w3-parse.elc w3-print.elc	\
-	w3-vars.elc w3-xemac.elc w3-style.elc w3-about.elc w3-hot.elc	\
-	w3-toolbar.elc font.elc w3-annotat.elc w3-auto.elc		\
-	w3-forms.elc images.elc w3-imap.elc w3-emulate.elc w3-menu.elc	\
-	w3-keyword.elc w3-mouse.elc w3-widget.elc w3-speak.elc		\
-	w3-prefs.elc w3-latex.elc css.elc dsssl.elc mule-sysdp.elc	\
-	$(CUSTOMOBJECTS) $(URLOBJECTS)
+OBJECTS = $(SOURCES:.el=.elc)
 
-DISTFILES     = Makefile ChangeLog $(SOURCES) w3.txi docomp.el	\
-		clean-cache default.css
+# Warning!  Currently, the following file can _NOT_ be bytecompiled.
+EXTRAS = w3-sysdp.el
 
 .SUFFIXES: .elc .el .el,v
 
@@ -79,6 +71,7 @@ install: all
 	@( if [ ! -d $(infodir) ]; then mkdir -p $(infodir); fi )
 	@( if [ ! -d $(confdir) ]; then mkdir -p $(confdir);  fi )
 	$(INSTALL) -m 644 $(SOURCES) $(OBJECTS) $(lispdir)
+	$(INSTALL) -m 644 $(EXTRAS) $(lispdir)
 	$(INSTALL) -m 644 w3.info* $(infodir)
 	$(INSTALL) -m 644 default.css $(confdir)/stylesheet
 	$(INSTALL) -m 644 html32.dsl $(confdir)/

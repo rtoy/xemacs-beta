@@ -8,7 +8,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by T.V. Raman (raman@adobe.com)
-;;; Copyright (c) 1996 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1996, 1997 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -56,157 +57,32 @@
   (error (message "Emacspeak not found - speech will not work.")))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; How to get information summarizing a form field, so it can be spoken in
-;;; a sane manner.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;{{{  putting and getting form field summarizer
-
-(defsubst w3-speak-define-field-summarizer (type &optional function-name)
-  "Associate the name of a function that describes this type of form field."
-  (put type 'w3-speak-summarizer
-       (or function-name (intern
-			  (format "w3-speak-summarize-%s-field" type)))))
-
-(defsubst w3-speak-get-field-summarizer  (type)
-  "Retrieve function-name string for this voice"
-  (get type 'w3-speak-summarizer))
-
-;;}}}
-;;{{{  Associate summarizer functions for form fields 
-
-(w3-speak-define-field-summarizer 'text)
-(w3-speak-define-field-summarizer 'option)
-(w3-speak-define-field-summarizer 'checkbox)
-(w3-speak-define-field-summarizer 'reset)
-(w3-speak-define-field-summarizer 'submit)
-(w3-speak-define-field-summarizer 'button)
-(w3-speak-define-field-summarizer 'radio)
-(w3-speak-define-field-summarizer 'multiline)
-(w3-speak-define-field-summarizer 'image)
-
-;;}}}
-
-
-;;{{{  define the form field summarizer functions
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Now actually define the summarizers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defsubst w3-speak-extract-form-field-label (data)
-  ;;; FIXXX!!! Need to reimplement using the new forms implementation!
-  (declare (special w3-form-labels))
-  nil)
-
-(defun w3-speak-summarize-text-field (data)
-  "Summarize a text field given the field data."
-  (let (
-	(label (w3-speak-extract-form-field-label data))
-	(name  (w3-form-element-name data))
-	(value (widget-get (w3-form-element-widget data) :value)))
-    (dtk-speak
-     (format "Text  field  %s  %s " (or label (concat "called " name))
-	     (concat "set to " value)))))
-
-(defun w3-speak-summarize-multiline-field (data)
-  "Summarize a text field given the field data."
-  (let (
-        (name (w3-form-element-name data))
-        (label (w3-speak-extract-form-field-label data))
-        (value (w3-form-element-value data)))
-    (dtk-speak
-     (format "Multiline text input  %s  %s" (or label (concat "called " name))
-	     (concat "set to " value)))))
-
-(defun w3-speak-summarize-checkbox-field (data)
-  "Summarize a checkbox  field given the field data."
-  (let (
-	(name (w3-form-element-name data))
-	(label (w3-speak-extract-form-field-label data))
-	(checked (widget-value (w3-form-element-widget data))))
-    (dtk-speak
-     (format "Checkbox %s is %s" (or label name) (if checked "on" "off")))))
-
-(defun w3-speak-summarize-option-field (data)
-  "Summarize a options   field given the field data."
-  (let (
-	(name (w3-form-element-name data))
-	(label (w3-speak-extract-form-field-label data))
-	(default (w3-form-element-default-value data)))
-    (dtk-speak
-     (format "Choose an option %s  %s" (or label name)
-	     (if (string=  "" default)
-                 ""
-               (format "default is %s" default))))))
-
-;;; to handle brain dead nynex forms
-(defun w3-speak-summarize-image-field (data)
-  "Summarize a image   field given the field data.
-Currently, only the NYNEX server uses this."
-  (let (
-	(name (w3-form-element-name data))
-	(label (w3-speak-extract-form-field-label data)))
-    (dtk-speak
-     (substring name 1))))
-
-(defun w3-speak-summarize-submit-field (data)
-  "Summarize a submit field given the field data."
-  (let  (
-	 (type (w3-form-element-type data))
-	 (label (w3-speak-extract-form-field-label data))
-	 (button-text (widget-value (w3-form-element-widget data))))
-    (message "%s" (or label button-text
-		      (case type
-			(submit "Submit Form")
-			(reset "Reset Form")
-			(button "A Button"))))))
-
-(defalias 'w3-speak-summarize-reset-field 'w3-speak-summarize-submit-field)
-(defalias 'w3-speak-summarize-button-field 'w3-speak-summarize-submit-field)
-
-(defun w3-speak-summarize-radio-field (data)
-  "Summarize a radio   field given the field data."
-  (let (
-	(name (w3-form-element-name data))
-	(label (w3-speak-extract-form-field-label data))
-	(checked (widget-value (w3-form-element-widget data))))
-    (dtk-speak
-     (format "Radio button   %s is %s" (or label name) (if checked
-							"pressed"
-						      "not pressed")))))
-
-;;}}}
-
 ;;{{{  speaking form fields 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Now for the guts
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun w3-speak-extract-form-field-information ()
-  (let* ((widget (widget-at (point)))
-	 (data (and widget (widget-get widget 'w3-form-data))))
-    data))
-
 (defun w3-speak-summarize-form-field ()
   "Summarizes field under point if any."
-  (let* ((data (w3-speak-extract-form-field-information))
-         (type (and data (w3-form-element-type data)))
-         (summarizer (and type (w3-speak-get-field-summarizer type))))
-    (cond
-     ((and data
-           summarizer
-           (fboundp summarizer))
-      (funcall summarizer data))
-     (data
-      (message "Please define a summarizer function for %s"  type))
-     (t nil))))
+  (let ((widget (widget-at (point))))
+    (and widget (w3-form-summarize-field widget))))
 
 ;;}}}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Movement notification
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defadvice w3-widget-forward (after emacspeak pre act comp)
+  (when (interactive-p)
+    (emacspeak-auditory-icon 'large-movement)
+    (emacspeak-widget-summarize (emacspeak-widget-at  (point )))))
+
+
+(defadvice w3-widget-backward (after emacspeak pre act comp)
+  (when (interactive-p)
+    (emacspeak-auditory-icon 'large-movement)
+    (emacspeak-widget-summarize (emacspeak-widget-at  (point )))))
+
 (defadvice w3-scroll-up (after emacspeak pre act comp)
   "Provide auditory feedback"
   (when (interactive-p)

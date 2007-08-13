@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.13
+;; Version: 1.18
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -77,7 +77,13 @@ into the buffer visible in the event's window."
   :prefix "widget-"
   :group 'emacs)
 
-(defface widget-documentation-face '((t ()))
+(defface widget-documentation-faces '((((class color)
+				       (background dark))
+				      (:foreground "lime green"))
+				     (((class color)
+				       (background light))
+				      (:foreground "dark green"))
+				     (t nil))
   "Face used for documentation text."
   :group 'widgets)
 
@@ -90,12 +96,10 @@ into the buffer visible in the event's window."
   :type 'face
   :group 'widgets)
 
-(defface widget-field-face '((((type x)
-			       (class grayscale color)
+(defface widget-field-face '((((class grayscale color)
 			       (background light))
 			      (:background "light gray"))
-			     (((type x)
-			       (class grayscale color)
+			     (((class grayscale color)
 			       (background dark))
 			      (:background "dark gray"))
 			     (t 
@@ -106,6 +110,7 @@ into the buffer visible in the event's window."
 (defcustom widget-menu-max-size 40
   "Largest number of items allowed in a popup-menu.
 Larger menus are read through the minibuffer."
+  :group 'widgets
   :type 'integer)
 
 ;;; Utility functions.
@@ -468,10 +473,9 @@ Recommended as a parent keymap for modes using widgets.")
       (call-interactively
        (lookup-key widget-global-map (this-command-keys))))))
 
-(defun widget-forward (arg)
-  "Move point to the next field or button.
-With optional ARG, move across that many fields."
-  (interactive "p")
+(defun widget-move (arg)
+  "Move point to the ARG next field or button.
+ARG may be negative to move backward."
   (while (> arg 0)
     (setq arg (1- arg))
     (let ((next (cond ((get-text-property (point) 'button)
@@ -533,13 +537,22 @@ With optional ARG, move across that many fields."
 	     (goto-char (max button field)))
 	    (button (goto-char button))
 	    (field (goto-char field)))))
-  (widget-echo-help (point)))
+  (widget-echo-help (point))
+  (run-hooks 'widget-move-hook))
+
+(defun widget-forward (arg)
+  "Move point to the next field or button.
+With optional ARG, move across that many fields."
+  (interactive "p")
+  (run-hooks 'widget-forward-hook)
+  (widget-move arg))
 
 (defun widget-backward (arg)
   "Move point to the previous field or button.
 With optional ARG, move across that many fields."
   (interactive "p")
-  (widget-forward (- arg)))
+  (run-hooks 'widget-backward-hook)
+  (widget-move (- arg)))
 
 ;;; Setting up the buffer.
 
@@ -877,6 +890,7 @@ With optional ARG, move across that many fields."
 
 (define-widget 'link 'item
   "An embedded link."
+  :help-echo "Push me to follow the link."
   :format "%[_%t_%]")
 
 ;;; The `info-link' Widget.
@@ -1834,6 +1848,14 @@ It will read a directory name from the minibuffer when activated."
 	    (> (length pp) 40))
 	(concat "\n" pp)
       pp)))
+
+(if (not (fboundp 'error-message-string))
+    (defun error-message-string (obj)
+      "Convert an error value to an error message."
+      (let ((buf (get-buffer-create " *error-message*")))
+	(erase-buffer buf)
+	(display-error obj buf)
+	(buffer-string buf))))
 
 (defun widget-sexp-validate (widget)
   ;; Valid if we can read the string and there is no junk left after it.

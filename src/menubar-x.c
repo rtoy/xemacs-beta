@@ -336,12 +336,17 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
   Lisp_Object rest = Qnil;
+  Lisp_Object frame;
   int any_changes = 0;
 
   if (!f)
     f = x_any_window_to_frame (d, XtWindow (XtParent (widget)));
   if (!f)
     return;
+
+  /* make sure f is the selected frame */
+  XSETFRAME (frame, f);
+  Fselect_frame (frame);
 
   if (client_data)
     {
@@ -433,12 +438,20 @@ compute_menubar_data (struct frame *f, Lisp_Object menubar, int deep_p)
     data = 0;
   else
     {
+      Lisp_Object old_buffer;
+      int count = specpdl_depth ();
+
+      old_buffer = Fcurrent_buffer ();
+      record_unwind_protect (Fset_buffer, old_buffer);
+      Fset_buffer ( XWINDOW (FRAME_SELECTED_WINDOW (f))->buffer);
       data = menu_item_descriptor_to_widget_value (menubar, MENUBAR_TYPE,
 						   deep_p, 0);
 #ifdef ENERGIZE
       if (data)
 	set_panel_button_sensitivity (f, data);
 #endif
+      Fset_buffer (old_buffer);
+      unbind_to (count, Qnil);
     }
   return data;
 }

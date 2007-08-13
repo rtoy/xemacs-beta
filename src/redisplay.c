@@ -876,6 +876,7 @@ add_emchar_rune (pos_data *data)
 	    data->last_char_width = -1;
 	  data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
 	  data->new_descent = max (data->new_descent, (int) fi->descent);
+	  data->last_charset = charset;
 	}
 
       width = data->last_char_width;

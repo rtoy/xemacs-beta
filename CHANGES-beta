@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 20.0 beta91
+-- func-menu.el-2.45
+-- ediff-2.64
+-- viper-2.92
+-- w3-3.0.50
+-- html 3.2 final dtd added.
+-- Miscellaneous bug fixes
+-- ps-print.el-3.05 Courtesy of Jacques Duthen Prestataire
+
 to 20.0 beta90
 -- ediff-2.64
 -- viper-2.92

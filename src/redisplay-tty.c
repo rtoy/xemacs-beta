@@ -1073,8 +1073,11 @@ tty_ring_bell (struct device *d, int volume, int pitch, int duration)
 {
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
 
-  OUTPUT1 (c, TTY_SD (c).audio_bell);
-  Lstream_flush (XLSTREAM (CONSOLE_TTY_DATA (c)->outstream));
+  if (volume)
+    {
+      OUTPUT1 (c, TTY_SD (c).audio_bell);
+      Lstream_flush (XLSTREAM (CONSOLE_TTY_DATA (c)->outstream));
+    }
 }
 
 

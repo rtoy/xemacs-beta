@@ -1318,10 +1318,9 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       break;
       
     case VisibilityNotify: /* window visiblity has changed */
-      if (event->xvisibility.state == VisibilityUnobscured)
-	FRAME_X_TOTALLY_VISIBLE_P (f) = 1;
-      else
-	FRAME_X_TOTALLY_VISIBLE_P (f) = 0;
+      if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
+ 	FRAME_X_TOTALLY_VISIBLE_P (f) =
+ 	  (event->xvisibility.state == VisibilityUnobscured);
       break;
       
     case ConfigureNotify:

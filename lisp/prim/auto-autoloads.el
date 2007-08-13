@@ -1207,12 +1207,17 @@ Display Ediff's registry." t nil)
 
 ;;;***
 
-;;;### (autoloads (ediff-toggle-multiframe) "ediff-util" "ediff/ediff-util.el")
+;;;### (autoloads (ediff-toggle-use-toolbar ediff-toggle-multiframe) "ediff-util" "ediff/ediff-util.el")
 
 (autoload 'ediff-toggle-multiframe "ediff-util" "\
-Switch from the multiframe display to single-frame display and back.
-For a permanent change, set the variable `ediff-window-setup-function',
+Switch from multiframe display to single-frame display and back.
+To change the default, set the variable `ediff-window-setup-function',
 which see." t nil)
+
+(autoload 'ediff-toggle-use-toolbar "ediff-util" "\
+Enable or disable Ediff toolbar.
+Works only in versions of Emacs that support toolbars.
+To change the default, set the variable `ediff-use-toolbar-p', which see." t nil)
 
 ;;;***
 
@@ -3654,7 +3659,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.4 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.5 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4951,7 +4956,7 @@ gets scrolled to the same line." t nil)
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.4 $
+vhdl-mode $Revision: 1.5 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -7010,13 +7015,14 @@ When active, typed text replaces the selection." t nil)
 
 ;;;***
 
-;;;### (autoloads (ps-despool ps-spool-region-with-faces ps-spool-region ps-spool-buffer-with-faces ps-spool-buffer ps-print-region-with-faces ps-print-region ps-print-buffer-with-faces ps-print-buffer) "ps-print" "packages/ps-print.el")
+;;;### (autoloads (ps-setup ps-nb-pages-region ps-nb-pages-buffer ps-line-lengths ps-despool ps-spool-region-with-faces ps-spool-region ps-spool-buffer-with-faces ps-spool-buffer ps-print-region-with-faces ps-print-region ps-print-buffer-with-faces ps-print-buffer) "ps-print" "packages/ps-print.el")
 
-(defvar ps-paper-type 'ps-letter "\
-*Specifies the size of paper to format for.  Should be one of
-`ps-letter', `ps-legal', or `ps-a4'.")
+(defvar ps-paper-type 'letter "\
+*Specifies the size of paper to format for.
+Should be one of the paper types defined in `ps-page-dimensions-database', for
+example `letter', `legal' or `a4'.")
 
-(defvar ps-print-color-p (and (or (fboundp 'x-color-values) (fboundp 'color-instance-rgb-components)) (fboundp 'float)) "\
+(defvar ps-print-color-p (or (fboundp 'x-color-values) (fboundp 'color-instance-rgb-components)) "\
 *If non-nil, print the buffer's text in color.")
 
 (autoload 'ps-print-buffer "ps-print" "\
@@ -7087,6 +7093,25 @@ More specifically, the FILENAME argument is treated as follows: if it
 is nil, send the image to the printer.  If FILENAME is a string, save
 the PostScript image in a file with that name.  If FILENAME is a
 number, prompt the user for the name of the file to save in." t nil)
+
+(autoload 'ps-line-lengths "ps-print" "\
+*Display the correspondance between a line length and a font size,
+using the current ps-print setup.
+Try: pr -t file | awk '{printf \"%3d %s
+\", length($0), $0}' | sort -r | head" t nil)
+
+(autoload 'ps-nb-pages-buffer "ps-print" "\
+*Display an approximate correspondance between a font size and the number
+of pages the current buffer would require to print
+using the current ps-print setup." t nil)
+
+(autoload 'ps-nb-pages-region "ps-print" "\
+*Display an approximate correspondance between a font size and the number
+of pages the current region would require to print
+using the current ps-print setup." t nil)
+
+(autoload 'ps-setup "ps-print" "\
+*Return the current setup" nil nil)
 
 ;;;***
 
@@ -9479,13 +9504,8 @@ to disk." t nil)
 
 (autoload 'w3-fetch "w3" "\
 Retrieve a document over the World Wide Web.
-The World Wide Web is a global hypertext system started by CERN in
-Switzerland in 1991.
-
-The document should be specified by its fully specified
-Uniform Resource Locator.  The document will be parsed, printed, or
-passed to an external viewer as appropriate.  Variable
-`mm-mime-info' specifies viewers for particular file types." t nil)
+Defaults to URL of the current document, if any.
+With prefix argument, use the URL of the hyperlink under point instead." t nil)
 
 (autoload 'w3-maybe-follow-link-mouse "w3" "\
 Maybe follow a hypertext link under point.

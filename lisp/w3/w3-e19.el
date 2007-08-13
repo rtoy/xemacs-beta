@@ -1,12 +1,12 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/12/31 15:38:51
-;; Version: 1.12
+;; Created: 1997/01/19 20:04:48
+;; Version: 1.16
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -110,11 +110,11 @@
 	 (widget (and good pt (number-or-marker-p pt) (widget-at pt)))
 	 (link (and widget (or (widget-get widget 'href)
 			       (widget-get widget 'name))))
-	 (form (and widget (widget-get widget 'w3-form-data)))
+	 (form (and widget (widget-get widget :w3-form-data)))
 	 (imag nil) ; (nth 1 (memq 'w3graphic props))))
 	 )
     (cond
-     (link (w3-widget-echo widget))
+     (link (message "%s" (w3-widget-echo widget)))
      (form
       (cond
        ((eq 'submit (w3-form-element-type form))

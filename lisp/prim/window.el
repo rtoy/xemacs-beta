@@ -294,23 +294,25 @@ or if the window is the only window of its frame."
 		      ;			       'menu-bar-lines params)
 		      0)))
 	  (unwind-protect
-	      (progn
-		(select-window (or window w))
+	      (let ((shrinkee (or window w)))
+		(set-buffer (window-buffer shrinkee))
 		(goto-char (point-min))
 		(while (pos-visible-in-window-p
 			(- (point-max)
-			   (if ignore-final-newline 1 0)))
+			   (if ignore-final-newline 1 0))
+			shrinkee)
 		  ;; defeat file locking... don't try this at home, kids!
 		  (setq buffer-file-name nil)
 		  (insert ?\n) (setq n (1+ n)))
 		(if (> n 0)
 		    (shrink-window (min (1- n)
-					(- (window-height)
-					   window-min-height)))))
+					(- (window-height shrinkee)
+					   window-min-height))
+				   nil
+				   shrinkee)))
 	    (delete-region (point-min) (point))
 	    (set-buffer-modified-p modified)
 	    (goto-char p)
-	    (select-window w)
 	    ;; Make sure we unbind buffer-read-only
 	    ;; with the proper current buffer.
 	    (set-buffer buffer))))))

@@ -1,12 +1,12 @@
 ;;; w3-style.el --- Emacs-W3 binding style sheet mechanism
 ;; Author: wmperry
-;; Created: 1996/12/13 18:01:46
-;; Version: 1.23
+;; Created: 1997/01/17 14:27:39
+;; Version: 1.25
 ;; Keywords: faces, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -39,33 +39,29 @@
 
 
 
-(defun w3-handle-style (&optional args)
-  (let ((fname (or (cdr-safe (assq 'href args))
-		   (cdr-safe (assq 'src args))
-		   (cdr-safe (assq 'uri args))))
-	(type (downcase (or (cdr-safe (assq 'notation args))
-			    "experimental")))
+(defun w3-handle-style (&optional plist)
+  (let ((url (or (plist-get plist 'href)
+		 (plist-get plist 'src)
+		 (plist-get plist 'uri)))
+	(media (intern (downcase (or (plist-get plist 'media) "all"))))
+	(type (downcase (or (plist-get plist 'notation) "text/css")))
 	(url-working-buffer " *style*")
-	(base (cdr-safe (assq 'base args)))
 	(stylesheet nil)
 	(defines nil)
 	(cur-sheet w3-current-stylesheet)
-	(string (cdr-safe (assq 'data args))))
-    (if fname (setq fname (url-expand-file-name fname
-						(cdr-safe
-						 (assoc base w3-base-alist)))))
-    (save-excursion
-      (set-buffer (get-buffer-create url-working-buffer))
-      (erase-buffer)
-      (setq url-be-asynchronous nil)
-      (cond
-       ((member type '("experimental" "arena" "w3c-style" "css" "text/css"))
-	(setq stylesheet (css-parse fname string cur-sheet)))
-       (t
-	(w3-warn 'html "Unknown stylesheet notation: %s" type))))
-    (setq w3-current-stylesheet stylesheet)
-    )
-  )
+	(string (plist-get plist 'data)))
+    (if (not (memq media (css-active-device-types)))
+	nil				; Not applicable to us!
+      (save-excursion
+	(set-buffer (get-buffer-create url-working-buffer))
+	(erase-buffer)
+	(setq url-be-asynchronous nil)
+	(cond
+	 ((member type '("experimental" "arena" "w3c-style" "css" "text/css"))
+	  (setq stylesheet (css-parse url string cur-sheet)))
+	 (t
+	  (w3-warn 'html "Unknown stylesheet notation: %s" type))))
+      (setq w3-current-stylesheet stylesheet))))
 
 (defun w3-display-stylesheet (&optional sheet)
   (interactive)

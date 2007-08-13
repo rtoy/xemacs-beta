@@ -1,6 +1,6 @@
 ;;; ediff-wind.el --- window manipulation utilities
 
-;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -38,13 +38,13 @@
 (defvar ediff-diff-status)
 
 (eval-when-compile
-  (let ((load-path (cons  "." load-path)))
+  (let ((load-path (cons (expand-file-name ".") load-path)))
     (or (featurep 'ediff-init)
 	(load "ediff-init.el" nil nil 'nosuffix))
-    (or (featurep 'ediff-help)
-	(load "ediff-help.el" nil nil 'nosuffix))
     (or (featurep 'ediff-util)
 	(load "ediff-util.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-help)
+	(load "ediff-help.el" nil nil 'nosuffix))
     (or (featurep 'ediff-tbar)
 	(load "ediff-tbar.el" 'noerror nil 'nosuffix))
     ))
@@ -878,16 +878,19 @@ into icons, regardless of the window manager.")
 	  fheight lines
 	  fwidth (max (+ (ediff-help-message-line-length) 2)
 		      (ediff-compute-toolbar-width))
-	  adjusted-parameters (append (list
-				       ;; possibly change surrogate minibuffer
-				       (cons 'minibuffer
-					     (minibuffer-window
-					      designated-minibuffer-frame))
-				       (cons 'width fwidth)
-				       (cons 'height fheight))
-				      (funcall
-				       ediff-control-frame-position-function
-				       ctl-buffer fwidth fheight)))
+	  adjusted-parameters ;;(append
+	  (list
+	   ;; possibly change surrogate minibuffer
+	   (cons 'minibuffer
+		 (minibuffer-window
+		  designated-minibuffer-frame))
+	   (cons 'width fwidth)
+	   (cons 'height fheight))
+	  ;;(funcall
+	   ;;ediff-control-frame-position-function
+	   ;;ctl-buffer fwidth fheight)
+	  ;;)
+	  )
     (if ediff-use-long-help-message
 	(setq adjusted-parameters
 	      (cons '(auto-raise . nil) adjusted-parameters)))
@@ -896,8 +899,10 @@ into icons, regardless of the window manager.")
     ;; are changed. 
     (if ediff-xemacs-p
 	(progn
+	  (set-specifier top-toolbar-height (list ctl-frame 2))
+	  (sit-for 0)
 	  (set-specifier top-toolbar-height (list ctl-frame 0))
-	  (set-specifier bottom-toolbar-height (list ctl-frame 0))
+	  ;;(set-specifier bottom-toolbar-height (list ctl-frame 0))
 	  (set-specifier left-toolbar-width (list ctl-frame 0))
 	  (set-specifier right-toolbar-width (list ctl-frame 0))
 	  ))
@@ -910,11 +915,13 @@ into icons, regardless of the window manager.")
     (if (memq system-type '(emx windows-nt windows-95))
 	(modify-frame-parameters ctl-frame adjusted-parameters))
       
-    (goto-char (point-min))
+    ;; make or zap toolbar (if not requested)
+    (ediff-make-bottom-toolbar ctl-frame)
     
+    (goto-char (point-min))
+
     (modify-frame-parameters ctl-frame adjusted-parameters)
     (make-frame-visible ctl-frame)
-    (ediff-make-bottom-toolbar) ; no effect if the toolbar is not requested
     
     ;; This works around a bug in 19.25 and earlier. There, if frame gets
     ;; iconified, the current buffer changes to that of the frame that
@@ -930,6 +937,12 @@ into icons, regardless of the window manager.")
 	   (raise-frame ctl-frame)))
     
     (set-window-dedicated-p (selected-window) t)
+
+    ;; Now move the frame. We must do it separately due to an obscure bug in
+    ;; XEmacs
+    (modify-frame-parameters
+     ctl-frame
+     (funcall ediff-control-frame-position-function ctl-buffer fwidth fheight))
       
     ;; synchronize so the cursor will move to control frame
     ;; per RMS suggestion
@@ -955,6 +968,7 @@ into icons, regardless of the window manager.")
     (ediff-eval-in-buffer ctl-buffer
       (run-hooks 'ediff-after-setup-control-frame-hook))
     ))
+
     
 (defun ediff-destroy-control-frame (ctl-buffer)
   (ediff-eval-in-buffer ctl-buffer
@@ -1081,9 +1095,9 @@ It assumes that it is called from within the control buffer."
     
     ;; control buffer format
     (setq mode-line-format
-	  (list (if (ediff-narrow-control-frame-p) "   " "-- ")
-		mode-line-buffer-identification
-		"        Quick Help"))
+	  (if (ediff-narrow-control-frame-p)
+	      (list "   " mode-line-buffer-identification)
+	    (list "-- " mode-line-buffer-identification "        Quick Help")))
     ;; control buffer id
     (setq mode-line-buffer-identification 
 	  (if (ediff-narrow-control-frame-p)

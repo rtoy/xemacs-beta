@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $Id: tm-au,v 1.3 1997/01/11 20:13:51 steve Exp $
+# $Id: tm-au,v 1.4 1997/01/23 05:29:22 steve Exp $
 #
 
 PATH=${PATH:-/usr/bin:/bin}:`dirname $0 2>/dev/null`; export PATH
@@ -22,14 +22,15 @@ case "$4" in
 	echo "$2; $3 ->"
 	tmdecode $3 $1 $filename
 	if [ "$AUDIOSERVER" = "" ]; then
-		if [ `uname` = "IRIX" ]; then
-			sfplay $filename
-		else
-			cat $filename > /dev/audio
-		fi
+          case "`uname`" in
+            IRIX )  sfplay $filename           ;;
+            OSF1 )  decsound -play $filename   ;;
+            *    )  cat $filename > /dev/audio ;;
+          esac
 	else
-		autool -v 40 $filename
+          autool -v 40 $filename
 	fi
+        
 	trap 'rm -f $filename' 0 1 2 3 13 15
 	;;
 "extract")

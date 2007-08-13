@@ -68,7 +68,7 @@
 (defvar telnet-count 0
   "Number of output strings read from the telnet process
 while looking for the initial password.")
-(make-variable-buffer-local 'telnet-count)
+;; (make-variable-buffer-local 'telnet-count)
 
 (defvar telnet-program "telnet"
   "Program to run to open a telnet connection.")
@@ -254,7 +254,6 @@ See also `\\[rsh]'."
 					   (if port (concat " " port) "")
 					   "\n"))
       (setq comint-input-sender 'telnet-simple-send)
-      (setq telnet-count telnet-initial-count)
       ;; run last so that hooks can change things.
       (telnet-mode))))
 
@@ -273,6 +272,7 @@ Data is sent to the remote host when RET is typed.
         mode-name "Telnet"
         comint-prompt-regexp telnet-prompt-pattern)
   (use-local-map telnet-mode-map)
+  (set (make-local-variable 'telnet-count) telnet-initial-count)
   (run-hooks 'telnet-mode-hook))
 
 ;;;###autoload (add-hook 'same-window-regexps "\\*rsh-[^-]*\\*\\(\\|<[0-9]*>\\)")
@@ -303,8 +303,10 @@ See also `\\[telnet]'."
     ;; antisocial than echoing a password, and more likely than connecting
     ;; to a non-Unix rsh host these days...
     ;;
-    ;; (set-process-filter (get-process name) 'telnet-initial-filter)
-    (set-process-filter (get-process name) 'telnet-filter)
+    ;; I disagree with the above.  -sb
+    ;;
+    (set-process-filter (get-process name) 'telnet-initial-filter)
+    ;; (set-process-filter (get-process name) 'telnet-filter)
     ;; run last so that hooks can change things.
     (telnet-mode)))
 

@@ -1,6 +1,6 @@
 ;;; viper-mous.el --- mouse support for Viper
 
-;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -33,13 +33,16 @@
 (defvar vip-re-search)
 
 (eval-when-compile
-  (let ((load-path (cons "." load-path)))
+  (let ((load-path (cons (expand-file-name ".") load-path)))
     (or (featurep 'viper-util)
 	(load "viper-util.el" nil nil 'nosuffix))
+    (or (featurep 'viper)
+	(load "viper.el" nil nil 'nosuffix))
     ))
 ;; end pacifier
 
 (require 'viper-util)
+
 
 
 ;;; Variables

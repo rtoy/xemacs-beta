@@ -85,7 +85,8 @@ static XtResource resources[] = {
      offset (scrollbar_height), XtRImmediate, (XtPointer)-1},
   {XtNscrollBarPlacement, XtCScrollBarPlacement, XtRScrollBarPlacement,
       sizeof(unsigned char), offset(scrollbar_placement), XtRImmediate,
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
+    defined (LWLIB_SCROLLBARS_ATHENA3D)
       (XtPointer) XtBOTTOM_RIGHT
 #else
       (XtPointer) XtBOTTOM_LEFT

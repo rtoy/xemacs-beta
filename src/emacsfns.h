@@ -1715,6 +1715,7 @@ void kill_buffer_local_variables (struct buffer *buf);
 Lisp_Object Fmake_local_variable (Lisp_Object object);
 int symbol_value_buffer_local_info (Lisp_Object symbol, struct buffer *);
 Lisp_Object find_symbol_value (Lisp_Object symbol);
+Lisp_Object find_symbol_value_quickly (Lisp_Object symbol_cons, int find_it_p);
 Lisp_Object top_level_value (Lisp_Object symbol);
 Lisp_Object Fkill_local_variable (Lisp_Object symbol);
 Lisp_Object Fmake_variable_buffer_local (Lisp_Object variable);

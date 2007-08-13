@@ -54,7 +54,7 @@ Packages:
 * External-Widget::
 		Use XEmacs as a text widget inside of another program.
 * Forms::	A package for editing databases by filling in forms.
-* GNUS::	An NNTP-based newsreader for XEmacs.
+* Gnus::	A netnews and mail reader for XEmacs.
 * Hyperbole::	A programmable information management and hypertext system.
 * ILISP::	Multi-dialect inferior LISP interface.
 * Ispell::	Interactive spelling corrector.

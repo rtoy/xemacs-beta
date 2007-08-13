@@ -6,7 +6,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1994, 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -298,7 +298,7 @@ these are used to determine whether a viewer passes the 'test' or
 not.")
 
 (defvar mm-content-transfer-encodings
-  '(("base64"     . base64-decode)
+  '(("base64"     . base64-decode-region)
     ("7bit"       . ignore)
     ("8bit"       . ignore)
     ("binary"     . ignore)

@@ -1,12 +1,12 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/01/02 20:20:45
-;; Version: 1.90
+;; Created: 1997/01/21 19:45:13
+;; Version: 1.110
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996 Free Software Foundation, Inc.
+;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; This file is part of GNU Emacs.
@@ -38,14 +38,14 @@
 (w3-d-s-var-def w3-display-open-element-stack)
 (w3-d-s-var-def w3-display-alignment-stack)
 (w3-d-s-var-def w3-display-list-stack)
-(w3-d-s-var-def w3-display-form-stack)
+(w3-d-s-var-def w3-display-form-id)
 (w3-d-s-var-def w3-display-whitespace-stack)
 (w3-d-s-var-def w3-display-font-family-stack)
 (w3-d-s-var-def w3-display-font-weight-stack)
 (w3-d-s-var-def w3-display-font-variant-stack)
 (w3-d-s-var-def w3-display-font-size-stack)
 (w3-d-s-var-def w3-face-color)
-(w3-d-s-var-def w3-face-background)
+(w3-d-s-var-def w3-face-background-color)
 (w3-d-s-var-def w3-active-faces)
 (w3-d-s-var-def w3-active-voices)
 (w3-d-s-var-def w3-current-form-number)
@@ -85,7 +85,7 @@
        (w3-get-face-info text-decoration)
        ;;(w3-get-face-info pixmap)
        (w3-get-face-info color)
-       (w3-get-face-info background)
+       (w3-get-face-info background-color)
        (setq w3-face-font-spec (make-font
 				:weight (car w3-face-font-weight)
 				:family (car w3-face-font-family)
@@ -101,10 +101,11 @@
        (w3-pop-face-info text-decoration)
        ;;(w3-pop-face-info pixmap)
        (w3-pop-face-info color)
-       (w3-pop-face-info background))))
+       (w3-pop-face-info background-color))))
 
   )
 
+(defvar w3-display-same-buffer nil)
 (defvar w3-face-cache nil  "Cache for w3-face-for-element")
 (defvar w3-face-index 0)
 (defvar w3-image-widgets-waiting nil)
@@ -233,10 +234,10 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 				  (car w3-face-font-variant)))
   (setq w3-face-descr (list w3-face-font-spec
 			    (car w3-face-color)
-			    (car w3-face-background))
+			    (car w3-face-background-color))
 	w3-face-face (cdr-safe (assoc w3-face-descr w3-face-cache)))
   (if (or w3-face-face (not (or (car w3-face-color)
-				(car w3-face-background)
+				(car w3-face-background-color)
 				w3-face-font-spec)))
       nil				; Do nothing, we got it already
     (setq w3-face-face
@@ -247,8 +248,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	(set-face-font w3-face-face w3-face-font-spec))
     (if (car w3-face-color)
 	(set-face-foreground w3-face-face (car w3-face-color)))
-    (if (car w3-face-background)
-	(set-face-background w3-face-face (car w3-face-background)))
+    (if (car w3-face-background-color)
+	(set-face-background w3-face-face (car w3-face-background-color)))
     ;;(set-face-background-pixmap w3-face-face w3-face-pixmap)
     (setq w3-face-cache (cons
 			 (cons w3-face-descr w3-face-face)
@@ -274,6 +275,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
   '((disc   . ?*)
     (circle . ?o)
     (square . ?#)
+    (none   . ? )
     )
   "*An assoc list of unordered list types mapping to characters to use
 as the bullet character.")    
@@ -358,21 +360,25 @@ as the bullet character.")
   )
 
 (defun w3-widget-echo (widget &rest ignore)
-  (let ((href (widget-get widget 'href))
+  (let ((url (widget-get widget 'href))
 	(name (widget-get widget 'name))
 	(text (buffer-substring (widget-get widget :from)
 				(widget-get widget :to)))
 	(title (widget-get widget 'title))
+	(check w3-echo-link)
 	(msg nil))
-    (if href
-	(setq href (url-truncate-url-for-viewing href)))
+    (if url
+	(setq url (url-truncate-url-for-viewing url)))
     (if name
 	(setq name (concat "anchor:" name)))
-    (case w3-echo-link
-      (url (or href title text name))
-      (text (or text title href name))
-      (title (or title text href name))
-      (otherwise nil))))
+    (if (not (listp check))
+	(setq check (cons check '(title url text name))))
+    (catch 'exit
+      (while check
+	(and (boundp (car check))
+	     (stringp (symbol-value (car check)))
+	     (throw 'exit (symbol-value (car check))))
+	(pop check)))))
 
 (defun w3-follow-hyperlink (widget &rest ignore)
   (let* ((target (widget-get widget 'target))
@@ -423,7 +429,7 @@ as the bullet character.")
     (`
      (case (car break-style)
        (list-item
-	(let ((list-style (w3-get-style-info 'list-style node))
+	(let ((list-style (w3-get-style-info 'list-style-type node))
 	      (list-num (if (car w3-display-list-stack)
 			    (incf (car w3-display-list-stack))
 			  1))
@@ -572,7 +578,7 @@ as the bullet character.")
     (setq desc (and desc (intern dc-desc)))
     (case desc
       ((style stylesheet)
-       (w3-handle-style args))
+       (w3-handle-style plist))
       (otherwise
        )
       )
@@ -1389,6 +1395,25 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		)
       "HoplesSLYCoNfUSED")))
 
+(defun w3-display-chop-into-table (node cols)
+  ;; Chop the content of 'node' up into 'cols' columns suitable for inclusion
+  ;; as the content of a table
+  (let ((content (nth 2 node))
+	(items nil)
+	(rows nil))
+    (setq cols (max cols 1))
+    (while content
+      (push (list 'td nil (list (pop content))) items)
+      (if (= (length items) cols)
+	  (setq rows (cons (nreverse items) rows)
+		items nil)))
+    (if items				; Store any leftovers
+	(setq rows (cons (nreverse items) rows)
+	      items nil))
+    (while rows
+      (push (list 'tr nil (pop rows)) items))
+    items))
+
 (defun w3-display-node (node &optional nofaces)
   (let (
 	(content-stack (list (list node)))
@@ -1421,6 +1446,9 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 				(list
 				 'mouse-face 'highlight
 				 'duplicable t
+				 'start-open t
+				 'end-open t
+				 'rear-nonsticky t
 				 'help-echo 'w3-balloon-help-callback
 				 'balloon-help 'w3-balloon-help-callback))
 	   (fillin-text-property (car hyperlink-info) (point)
@@ -1428,8 +1456,6 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	   (widget-put (cadr hyperlink-info) :to (set-marker
 						  (make-marker) (point))))
 	 (setq hyperlink-info nil))
-	(form
-	 (pop w3-display-form-stack))
 	((ol ul dl dir menu)
 	 (pop w3-display-list-stack))
 	(otherwise
@@ -1454,14 +1480,20 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	  (if (w3-get-attribute 'style)
 	      (let ((unique-id (or (w3-get-attribute 'id)
 				   (w3-display-create-unique-id)))
-		    (sheet ""))
+		    (sheet "")
+		    (class (assq 'class args)))
 		(setq sheet (format "%s.%s { %s }\n" tag unique-id
 				    (w3-get-attribute 'style)))
-		(setf (nth 1 node) (cons (cons 'id unique-id) args))
-		(w3-handle-style (list (cons 'data sheet)
-				       (cons 'notation "css")))))
+		(if class
+		    (setcdr class (cons unique-id (cdr class)))
+		  (setf (nth 1 node) (cons (cons 'class (list unique-id))
+					   (nth 1 node))))
+		(setf (nth 1 node) (cons (cons 'id unique-id) (nth 1 node)))
+		(w3-handle-style (list 'data sheet
+				       'notation "css"))))
 	  (setq w3-display-css-properties (css-get
-					   (nth 0 node) (nth 1 node)
+					   (nth 0 node)
+					   (nth 1 node)
 					   w3-current-stylesheet
 					   w3-display-open-element-stack))
 	  (if nofaces
@@ -1514,8 +1546,22 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	       (w3-handle-content node)
 	       )
 	     )
-	    ((ol ul dl dir menu)
+	    ((ol ul dl menu)
 	     (push 0 w3-display-list-stack)
+	     (w3-handle-content node))
+	    (dir
+	     (push 0 w3-display-list-stack)
+	     (setq node
+		   (list tag args
+			 (list
+			  (list 'table nil
+				(w3-display-chop-into-table node 3)))))
+	     (w3-handle-content node))
+	    (multicol
+	     (setq node (list tag args
+			      (list
+			       (list 'table nil
+				     (w3-display-chop-into-table node 2)))))
 	     (w3-handle-content node))
 	    (img			; inlined image
 	     (w3-handle-image)
@@ -1565,7 +1611,27 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	       (setq w3-imagemaps (cons (cons name areas) w3-imagemaps)))
 	     (w3-handle-empty-tag)
 	     )
-	    (table			; Yeeee-hah!
+	    (note
+	     ;; Ewwwwhhh.  Looks gross, but it works.  This converts a
+	     ;; <note> into a two-cell table, so that things look all
+	     ;; pretty.
+	     (setq node
+		   (list 'note nil
+			 (list
+			  (list 'table nil
+				(list
+				 (list 'tr nil
+				       (list
+					(list 'td (list 'align 'right)
+					      (list
+					       (concat
+						(or (w3-get-attribute 'role)
+						    "CAUTION") ":")))
+					(list 'td nil
+					      (nth 2 node)))))))))
+	     (w3-handle-content node)
+	     )
+	    (table
 	     (w3-display-table node)
 	     (setq w3-last-fill-pos (point))
 	     (w3-handle-empty-tag)
@@ -1599,7 +1665,8 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	    (*document
 	     (let ((info (mapcar (lambda (x) (cons x (symbol-value x)))
 				 w3-persistent-variables)))
-	       (set-buffer (generate-new-buffer "Untitled"))
+	       (if (not w3-display-same-buffer)
+		   (set-buffer (generate-new-buffer "Untitled")))
 	       (setq w3-current-form-number 0
 		     w3-display-open-element-stack nil
 		     w3-last-fill-pos (point-min)
@@ -1613,6 +1680,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	       ;; ACK!  We don't like filladapt mode!
 	       (set (make-local-variable 'filladapt-mode) nil)
 	       (set (make-local-variable 'adaptive-fill-mode) nil)
+	       (set (make-local-variable 'voice-lock-mode) t)
 	       (setq w3-current-stylesheet (css-copy-stylesheet
 					    w3-user-stylesheet)
 		     w3-last-fill-pos (point)
@@ -1660,7 +1728,8 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		 (setq potential-title (concat potential-title (car content))
 		       content (cdr content)))
 	       (setq potential-title (w3-normalize-spaces potential-title))
-	       (if (string-match "^[ \t]*$" potential-title)
+	       (if (or w3-display-same-buffer
+		       (string-match "^[ \t]*$" potential-title))
 		   nil
 		 (rename-buffer (generate-new-buffer-name
 				 (w3-fix-spaces potential-title)))))
@@ -1672,134 +1741,157 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		    (url nil))
 	       (if (not action)
 		   (setq args (cons (cons 'action (url-view-url t)) args)))
-	       (push (cons
-		      (cons 'form-number
-			    w3-current-form-number)
-		      args) w3-display-form-stack)
+	       (setq w3-display-form-id (cons
+					 (cons 'form-number
+					       w3-current-form-number)
+					 args))
 	       (w3-handle-content node)))
+	    (keygen
+	     (w3-form-add-element 'keygen
+				  (or (w3-get-attribute 'name)
+				      (w3-get-attribute 'id)
+				      "keygen")
+				  nil	; value
+				  nil	; size
+				  nil	; maxlength
+				  nil   ; default
+				  w3-display-form-id ; action
+				  nil	; options
+				  w3-current-form-number
+				  (w3-get-attribute 'id) ; id
+				  nil	; checked
+				  (car w3-active-faces)))
 	    (input
-	     (if (not (assq 'form w3-display-open-element-stack))
-		 (message "Input field outside of a <form>")
-	       (let* (
-		      (type (intern (downcase (or (w3-get-attribute 'type)
-						  "text"))))
-		      (name (w3-get-attribute 'name))
-		      (value (or (w3-get-attribute 'value) ""))
-		      (size (if (w3-get-attribute 'size)
-				(string-to-int (w3-get-attribute 'size))))
-		      (maxlength (cdr (assoc 'maxlength args)))
-		      (default value)
-		      (action (car w3-display-form-stack))
-		      (options)
-		      (id (w3-get-attribute 'id))
-		      (checked (assq 'checked args)))
-		 (if (and (string-match "^[ \t\n\r]+$" value)
-			  (not (eq type 'hidden)))
-		     (setq value ""))
-		 (if maxlength (setq maxlength (string-to-int maxlength)))
-		 (if (and name (string-match "[\r\n]" name))
-		     (setq name (mapconcat (function
-					    (lambda (x)
-					      (if (memq x '(?\r ?\n))
-						  ""
-						(char-to-string x))))
-					   name "")))
-		 (if (memq type '(checkbox radio)) (setq default checked))
-		 (if (and (eq type 'checkbox) (string= value ""))
-		     (setq value "on"))
-		 (w3-form-add-element type name
-				      value size maxlength default action
-				      options w3-current-form-number id checked
-				      (car w3-active-faces))
-		 )
+	     (let* (
+		    (type (intern (downcase (or (w3-get-attribute 'type)
+						"text"))))
+		    (name (w3-get-attribute 'name))
+		    (value (or (w3-get-attribute 'value) ""))
+		    (size (if (w3-get-attribute 'size)
+			      (string-to-int (w3-get-attribute 'size))))
+		    (maxlength (cdr (assoc 'maxlength args)))
+		    (default value)
+		    (action w3-display-form-id)
+		    (options)
+		    (id (w3-get-attribute 'id))
+		    (checked (assq 'checked args)))
+	       (if (and (string-match "^[ \t\n\r]+$" value)
+			(not (eq type 'hidden)))
+		   (setq value ""))
+	       (if maxlength (setq maxlength (string-to-int maxlength)))
+	       (if (and name (string-match "[\r\n]" name))
+		   (setq name (mapconcat (function
+					  (lambda (x)
+					    (if (memq x '(?\r ?\n))
+						""
+					      (char-to-string x))))
+					 name "")))
+	       (if (memq type '(checkbox radio)) (setq default checked))
+	       (if (and (eq type 'checkbox) (string= value ""))
+		   (setq value "on"))
+	       (w3-form-add-element type name
+				    value size maxlength default action
+				    options w3-current-form-number id checked
+				    (car w3-active-faces))
 	       )
 	     (w3-handle-empty-tag)
 	     )
 	    (select
-	     (if (not (assq 'form w3-display-open-element-stack))
-		 (message "Input field outside of a <form>")
-	       (let* (
-		      (name (w3-get-attribute 'name))
-		      (size (string-to-int (or (w3-get-attribute 'size)
-					       "20")))
-		      (maxlength (cdr (assq 'maxlength args)))
-		      (value nil)
-		      (tmp nil)
-		      (action (car w3-display-form-stack))
-		      (options)
-		      (id (w3-get-attribute 'id))
-		      (checked (assq 'checked args)))
-		 (if maxlength (setq maxlength (string-to-int maxlength)))
-		 (if (and name (string-match "[\r\n]" name))
-		     (setq name (mapconcat (function
-					    (lambda (x)
-					      (if (memq x '(?\r ?\n))
-						  ""
-						(char-to-string x))))
-					   name "")))
-		 (setq options
-		       (mapcar
-			(function
-			 (lambda (n)
-			   (setq tmp (w3-normalize-spaces
-				      (apply 'concat (nth 2 n)))
-				 tmp (cons tmp
-					   (or
-					    (cdr-safe (assq 'value (nth 1 n)))
-					    tmp)))
-			   (if (assq 'selected (nth 1 n))
-			       (setq value (car tmp)))
-			   tmp))
-			(nth 2 node)))
-		 (if (not value)
-		     (setq value (caar options)))
-		 (w3-form-add-element 'option name
-				      value size maxlength value action
-				      options w3-current-form-number id nil
+	     (let* (
+		    (name (w3-get-attribute 'name))
+		    (size (string-to-int (or (w3-get-attribute 'size)
+					     "20")))
+		    (maxlength (cdr (assq 'maxlength args)))
+		    (value nil)
+		    (tmp nil)
+		    (action w3-display-form-id)
+		    (options)
+		    (id (w3-get-attribute 'id))
+		    (multiple (assq 'multiple args))
+		    (checked (assq 'checked args)))
+	       (if maxlength (setq maxlength (string-to-int maxlength)))
+	       (if (and name (string-match "[\r\n]" name))
+		   (setq name (mapconcat (function
+					  (lambda (x)
+					    (if (memq x '(?\r ?\n))
+						""
+					      (char-to-string x))))
+					 name "")))
+	       (setq options
+		     (mapcar
+		      (function
+		       (lambda (n)
+			 (setq tmp (w3-normalize-spaces
+				    (apply 'concat (nth 2 n)))
+			       tmp (cons tmp
+					 (or
+					  (cdr-safe (assq 'value (nth 1 n)))
+					  tmp)))
+			 (if (assq 'selected (nth 1 n))
+			     (setq value (car tmp)))
+			 tmp))
+		      (nth 2 node)))
+	       (if (not value)
+		   (setq value (caar options)))
+	       (if multiple
+		   (progn
+		     (setq options
+			   (mapcar
+			    (function
+			     (lambda (opt)
+			       (list 'div nil
+				     (list
+				      (list 'input
+					    (list (cons 'name name)
+						  (cons 'type "checkbox")
+						  (cons 'value (car opt))))
+				      " " (car opt) (list 'br nil nil)))))
+			    options))
+		     (setq node (list 'p nil options))
+		     (w3-handle-content node))
+		 (w3-form-add-element 'option
+				      name value size maxlength value
+				      action options
+				      w3-current-form-number id nil
 				      (car w3-active-faces))
 		 ;; This should really not be necessary, but some versions
 		 ;; of the widget library leave point _BEFORE_ the menu
 		 ;; widget instead of after.
 		 (goto-char (point-max))
-		 )
-	       )
-	     (w3-handle-empty-tag)
-	     )
+		 (w3-handle-empty-tag))))
 	    (textarea
-	     (if (not (assq 'form w3-display-open-element-stack))
-		 (message "Input field outside of a <form>")
-	       (let* (
-		      (name (w3-get-attribute 'name))
-		      (size (string-to-int (or (w3-get-attribute 'size)
-					       "20")))
-		      (maxlength (cdr (assq 'maxlength args)))
-		      (value (w3-normalize-spaces
-			      (apply 'concat (nth 2 node))))
-		      (default value)
-		      (tmp nil)
-		      (action (car w3-display-form-stack))
-		      (options)
-		      (id (w3-get-attribute 'id))
-		      (checked (assq 'checked args)))
-		 (if maxlength (setq maxlength (string-to-int maxlength)))
-		 (if (and name (string-match "[\r\n]" name))
-		     (setq name (mapconcat (function
-					    (lambda (x)
-					      (if (memq x '(?\r ?\n))
-						  ""
-						(char-to-string x))))
-					   name "")))
-		 (w3-form-add-element 'multiline name
-				      value size maxlength value action
-				      options w3-current-form-number id nil
-				      (car w3-active-faces))
-		 )
+	     (let* (
+		    (name (w3-get-attribute 'name))
+		    (size (string-to-int (or (w3-get-attribute 'size)
+					     "22")))
+		    (maxlength (cdr (assq 'maxlength args)))
+		    (value (w3-normalize-spaces
+			    (apply 'concat (nth 2 node))))
+		    (default value)
+		    (tmp nil)
+		    (action w3-display-form-id)
+		    (options)
+		    (id (w3-get-attribute 'id))
+		    (checked (assq 'checked args)))
+	       (if maxlength (setq maxlength (string-to-int maxlength)))
+	       (if (and name (string-match "[\r\n]" name))
+		   (setq name (mapconcat (function
+					  (lambda (x)
+					    (if (memq x '(?\r ?\n))
+						""
+					      (char-to-string x))))
+					 name "")))
+	       (w3-form-add-element 'multiline name
+				    value size maxlength value action
+				    options w3-current-form-number id nil
+				    (car w3-active-faces))
 	       )
 	     (w3-handle-empty-tag)
 	     )
 	    (style
-	     (w3-handle-style (cons (cons 'data (apply 'concat (nth 2 node)))
-				    (nth 1 node)))
+	     (w3-handle-style (alist-to-plist
+			       (cons (cons 'data (apply 'concat (nth 2 node)))
+				     (nth 1 node))))
 	     (w3-handle-empty-tag))
 	    (otherwise
 	     ;; Generic formatting
@@ -1829,6 +1921,48 @@ Should be run before restoring w3-table-border-chars to ascii characters."
     (- nd st)))
 
 
+(defsubst w3-finish-drawing ()
+  (if (and (boundp 'w3-image-widgets-waiting) w3-image-widgets-waiting)
+      (let (url glyph widget)
+	(while w3-image-widgets-waiting
+	  (setq widget (car w3-image-widgets-waiting)
+		w3-image-widgets-waiting (cdr w3-image-widgets-waiting)
+		url (widget-get widget 'src)
+		glyph (cdr-safe (assoc url w3-graphics-list)))
+	  (widget-value-set widget glyph)))
+    ;;(w3-handle-annotations)
+    ;;(w3-handle-headers)
+    )
+  )
+
+(defun w3-region (st nd)
+  (if (not w3-setup-done) (w3-do-setup))
+  (let* ((source (buffer-substring st nd))
+	 (w3-display-same-buffer t)
+	 (parse nil))
+    (save-excursion
+      (set-buffer (get-buffer-create " *w3-region*"))
+      (erase-buffer)
+      (insert source)
+      (setq parse (w3-parse-buffer (current-buffer))))
+    (narrow-to-region st nd)
+    (delete-region (point-min) (point-max))
+    (w3-draw-tree parse)
+    (w3-finish-drawing)))
+
+(defun w3-refresh-buffer ()
+  (interactive)
+  (let ((parse w3-current-parse)
+	(inhibit-read-only t)
+	(w3-display-same-buffer t))
+    (if (not parse)
+	(error "Could not find the parse tree for this buffer.  EEEEK!"))
+    (erase-buffer)
+    (w3-draw-tree parse)
+    (w3-finish-drawing)
+    (w3-mode)
+    (set-buffer-modified-p nil)))
+
 (defun w3-prepare-buffer (&rest args)
   ;; The text/html viewer - does all the drawing and displaying of the buffer
   ;; that is necessary to go from raw HTML to a good presentation.
@@ -1841,17 +1975,8 @@ Should be run before restoring w3-table-border-chars to ascii characters."
     (set-buffer-modified-p nil)
     (setq w3-current-source source
 	  w3-current-parse parse)
-    (if (and (boundp 'w3-image-widgets-waiting) w3-image-widgets-waiting)
-	(let (url glyph widget)
-	  (while w3-image-widgets-waiting
-	    (setq widget (car w3-image-widgets-waiting)
-		  w3-image-widgets-waiting (cdr w3-image-widgets-waiting)
-		  url (widget-get widget 'src)
-		  glyph (cdr-safe (assoc url w3-graphics-list)))
-	    (widget-value-set widget glyph))))
+    (w3-finish-drawing)
     (w3-mode)
-    ;;(w3-handle-annotations)
-    ;;(w3-handle-headers)
     (set-buffer-modified-p nil)
     (goto-char (point-min))
     (if url-keep-history

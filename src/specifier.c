@@ -2152,8 +2152,8 @@ check_valid_specifier_matchspec (Lisp_Object matchspec,
 
 	  GCPRO1 (opaque);
 	  retval = call_with_suspended_errors
-	    ( (lisp_fn_t) call_validate_matchspec_method,
-	      Qnil, Qspecifier, errb, 2, opaque, matchspec);
+	    ((lisp_fn_t) call_validate_matchspec_method,
+	     Qnil, Qspecifier, errb, 2, opaque, matchspec);
 	  
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
@@ -2276,9 +2276,9 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 
 	  if (HAS_SPECMETH_P (sp, instantiate))
 	    val = call_with_suspended_errors
-	      ( (lisp_fn_t) RAW_SPECMETH (sp, instantiate),
-		Qunbound, Qspecifier, errb, 5, specifier,
-		matchspec, domain, XCDR (tagged_inst), depth);
+	      ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
+	       Qunbound, Qspecifier, errb, 5, specifier,
+	       matchspec, domain, XCDR (tagged_inst), depth);
 
 	  if (!UNBOUNDP (val))
 	    {

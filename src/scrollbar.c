@@ -720,7 +720,8 @@ behavior.
      with their standard behaviors.  It is not possible to hide the
      differences down in lwlib because knowledge of XEmacs buffer and
      cursor motion routines is necessary. */
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
+    defined (LWLIB_SCROLLBARS_ATHENA3D)
   window_scroll (window, Qnil, -1, ERROR_ME_NOT);
 #else /* Athena */
   {
@@ -760,7 +761,8 @@ behavior.
      with their standard behaviors.  It is not possible to hide the
      differences down in lwlib because knowledge of XEmacs buffer and
      cursor motion routines is necessary. */
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
+    defined (LWLIB_SCROLLBARS_ATHENA3D)
   window_scroll (window, Qnil, 1, ERROR_ME_NOT);
 #else /* Athena */
   {
@@ -828,6 +830,7 @@ change the scrollbar behavior.
   start_pos = scrollbar_point (XWINDOW (window), 1);
   Fset_window_start (window, make_int (start_pos), Qnil);
   scrollbar_reset_cursor (window, orig_pt);
+  Fsit_for(Qzero, Qnil);
   zmacs_region_stays = 1;
   return Qnil;
 }

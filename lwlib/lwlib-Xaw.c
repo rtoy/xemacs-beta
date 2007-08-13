@@ -128,6 +128,8 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
     {
       Dimension bw = 0;
       XtVaGetValues (widget, XtNborderWidth, &bw, 0);
+
+#ifndef LWLIB_DIALOGS_ATHENA3D
       if (bw == 0)
 	/* Don't let buttons end up with 0 borderwidth, that's ugly...
 	   Yeah, all this should really be done through app-defaults files
@@ -136,6 +138,7 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 	   not look like shit is just entirely too much work.
 	 */
 	XtVaSetValues (widget, XtNborderWidth, 1, 0);
+#endif
 
       XtVaSetValues (widget,
 		     XtNlabel, val->value,
@@ -518,9 +521,11 @@ xaw_scrollbar_scroll (Widget widget, XtPointer closure, XtPointer call_data)
   event_data.time = 0;
 
   if ((int) call_data > 0)
-    event_data.action = SCROLLBAR_PAGE_DOWN;
+    /* event_data.action = SCROLLBAR_PAGE_DOWN;*/
+    event_data.action = SCROLLBAR_LINE_DOWN;
   else
-    event_data.action = SCROLLBAR_PAGE_UP;
+    /* event_data.action = SCROLLBAR_PAGE_UP;*/
+    event_data.action = SCROLLBAR_LINE_UP;
 
   if (instance->info->pre_activate_cb)
     instance->info->pre_activate_cb (widget, id, (XtPointer) &event_data);

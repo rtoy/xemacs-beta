@@ -2249,7 +2249,7 @@ tiff_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-tiff_possible_dest_types ()
+tiff_possible_dest_types (void)
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }

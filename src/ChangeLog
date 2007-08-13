@@ -1,3 +1,87 @@
+Wed Jan 22 21:09:52 1997  Steven L Baur  <steve@altair.xemacs.org>
+	* puresize.h (BASE_PURESIZE): Tighten up.
+
+	* scrollbar.c (scrollbar-page-up): Add Athena3d to Lucid/Motif
+	code.
+	(scrollbar-page-down): Ditto.
+
+	* scrollbar-x.c (x_create_scrollbar_instance): Add Athena3d to
+	Lucid/Motif code.
+	(x_update_vertical_scrollbar_callback): Ditto.
+	(x_update_horizontal_scrollbar_callback): Add Athena3d to Lucid
+	special case code.
+
+	* scrollbar-x.h (struct x_scrollbar_data): Add start drag position
+	for Athena3d.
+
+	* redisplay-output.c (redisplay_update_line): A vain attempt to
+	get the Athena vertical thumb adjusted after drag.
+
+	* EmacsFrame.c: Default to lower/right with Athena3d libraries.
+
+Wed Jan 22 18:38:52 1997  Ian Wells  <I.Wells@tarragon-et.co.uk>
+
+	* m/aviion.h: Remove definition of m88k.
+
+	* s/dgux5-4r4.h: New file.
+
+Wed Jan 22 18:32:49 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* buffer.h: Put proper typecasts on calls to alloca().
+
+Tue Jan 21 22:25:23 1997  Steven L. Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: Add LWLIB_USES_ATHENA symbol
+
+	* Makefile.in.in (TOOLKIT_LIBS): It is possible to have both
+	Athena and Motif in the same link.
+
+Tue Jan 21 20:43:41 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* redisplay-tty.c (tty_ring_bell): Don't ring tty bell if the
+	volume is set to 0.
+
+Tue Jan 21 20:38:58 1997  Axel Seibert  <aseibert@cybernet-ag.net>
+
+	* s/nextstep.h (signal_handler_t): define as int.
+
+Mon Jan 20 21:12:57 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* src/event-Xt.c (emacs_Xt_handle_magic_event):
+	(frame-totally-visible-p) sometimes incorrectly returned nil.
+
+Thu Jan 16 17:24:29 1997  Joel Peterson  <tarzan@aosi.com>
+
+	* menubar-x.c (pre_activate_callback): Correctly handle buffer
+	local variables in :included clauses.
+	(compute_menubar_data): Ditto.
+
+Wed Jan 15 21:44:53 1997  Joel Peterson  <tarzan@aosi.com>
+
+	* redisplay.c (add_emchar_rune): Enable last_charset display
+	optimization.
+
+Wed Jan 15 19:06:27 1997  David Moore  <dmoore@UCSD.EDU>
+
+	* event-stream.c (Faccept_process_output): Avoid checking an
+	uninitialized variable.
+
+Wed Jan 15 14:14:24 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* regex.c: Modify values of re_max_failures and MAX_FAILURE_ITEMS
+	to match Emacs 19.34.
+
+Mon Jan 13 00:36:01 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* sysdep.c (sys_execvp): Fix when compiled with
+	--const-is-losing=no.  Old code could crash if argv contained
+	non-ascii characters and the execvp failed and then caller
+	examined argv (for error message, for example).
+
+Sun Jan 12 17:22:24 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: TM .elcs moved to SUNPRO_LISP only.
+
 Fri Jan 10 20:21:47 1997  Ben Wing  <ben@666.com>
 
 	* minibuf.c (Ftry_completion): Don't crash if not given a proper

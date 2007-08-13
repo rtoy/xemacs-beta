@@ -617,6 +617,9 @@ USAGE_TRACKING_LIBS =
 
 #ifdef LWLIB_USES_MOTIF
 TOOLKIT_LIBS = -lXm
+#ifdef LWLIB_USES_ATHENA
+TOOLKIT_LIBS = -lXm -lXaw
+#endif /* LWLIB_USES_ATHENA */
 #else /* ! LWLIB_USES_MOTIF */
 TOOLKIT_LIBS = -lXaw
 #endif /* ! LWLIB_USES_MOTIF */
@@ -1092,26 +1095,12 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 #else
 # define MULE_X11_LISP
 #endif
-#define MULE_TM_LISP \
-	${lispdir}tm/mime-setup.elc \
-	${lispdir}tl/tl-misc.elc \
-	${lispdir}tl/tl-str.elc \
-	${lispdir}tl/tl-list.elc \
-	${lispdir}tl/tl-seq.elc \
-	${lispdir}tl/tl-atype.elc \
-	${lispdir}tl/file-detect.elc \
-	${lispdir}tl/emu.elc \
-	${lispdir}tl/emu-x20.elc \
-	${lispdir}tl/emu-xemacs.elc \
-	${lispdir}tm/tm-setup.elc \
-	${lispdir}mule/cyrillic.elc
 #define MULE_LISP \
 	${lispdir}mule/mule-load.elc ${lispdir}mule/mule-coding.elc \
 	${lispdir}mule/mule-charset.elc ${lispdir}mule/mule-files.elc \
 	${lispdir}mule/mule-category.elc ${lispdir}mule/mule-misc.elc \
 	${lispdir}mule/mule-ccl.elc ${lispdir}mule/mule-init.elc \
 	MULE_X11_LISP \
-	MULE_TM_LISP \
 	${lispdir}mule/arabic-hooks.elc \
 	${lispdir}mule/chinese-hooks.elc \
 	${lispdir}mule/cyrillic-hooks.elc \
@@ -1163,6 +1152,19 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 
 #ifdef SUNPRO
 /* Lisp files preloaded if compiled with support for SunPro products */
+#define MULE_TM_LISP \
+	${lispdir}tm/mime-setup.elc \
+	${lispdir}tl/tl-misc.elc \
+	${lispdir}tl/tl-str.elc \
+	${lispdir}tl/tl-list.elc \
+	${lispdir}tl/tl-seq.elc \
+	${lispdir}tl/tl-atype.elc \
+	${lispdir}tl/file-detect.elc \
+	${lispdir}tl/emu.elc \
+	${lispdir}tl/emu-x20.elc \
+	${lispdir}tl/emu-xemacs.elc \
+	${lispdir}tm/tm-setup.elc \
+	${lispdir}mule/cyrillic.elc
 #define SUNPRO_LISP \
 	${lispdir}packages/sccs.elc \
 	${lispdir}sunpro/sunpro-init.elc \
@@ -1182,7 +1184,8 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 	${lispdir}utils/annotations.elc \
 	${lispdir}modes/cc-mode.elc \
 	${lispdir}modes/imenu.elc \
-	${lispdir}utils/reporter.elc
+	${lispdir}utils/reporter.elc \
+	MULE_TM_LISP
 #else
 #define SUNPRO_LISP
 #endif

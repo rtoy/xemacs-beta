@@ -787,12 +787,13 @@ See the command `imenu' for more information."
   (interactive "sImenu menu item name: ")
   (let ((newmap (make-sparse-keymap))
 	(menu-bar (lookup-key (current-local-map) [menu-bar])))
-    (define-key newmap [menu-bar]
-      (append (make-sparse-keymap) menu-bar))
-    (define-key newmap [menu-bar index]
-      (cons name (nconc (make-sparse-keymap "Imenu")
-			(make-sparse-keymap))))
-    (use-local-map (append newmap (current-local-map))))
+    (when menu-bar
+      (define-key newmap [menu-bar]
+	(append (make-sparse-keymap) menu-bar))
+      (define-key newmap [menu-bar index]
+	(cons name (nconc (make-sparse-keymap "Imenu")
+			  (make-sparse-keymap))))
+      (use-local-map (append newmap (current-local-map)))))
   (add-hook 'menu-bar-update-hook 'imenu-update-menubar))
 
 (defvar imenu-buffer-menubar nil)

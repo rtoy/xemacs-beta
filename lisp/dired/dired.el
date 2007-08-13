@@ -852,7 +852,9 @@ Keybindings:
 	case-fold-search nil
 	buffer-read-only t
 	selective-display t		; for subdirectory hiding
-	modeline-buffer-identification '("Dired: %17b"))
+	modeline-buffer-identification
+	(list (cons modeline-buffer-id-left-extent "Dired: ")
+	      (cons modeline-buffer-id-right-extent "%17b")))
   (set (make-local-variable 'revert-buffer-function)
        (function dired-revert))
   (set (make-local-variable 'page-delimiter)

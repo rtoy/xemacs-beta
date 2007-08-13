@@ -395,7 +395,7 @@ child_setup (in, out, err, new_argv, env)
   close_process_descs ();
 
   if (STRINGP (current_buffer->directory))
-    chdir (string_data (XSTRING (current_buffer->directory)));
+    chdir (XSTRING_DATA (current_buffer->directory));
 }
 
 DEFUN ("call-process-internal", Fcall_process_internal, 1, MANY, 0 /*
@@ -469,7 +469,7 @@ if you quit, the process is killed.
     int arg0;
     int firstArg;
 
-    if (strcmp (string_data (XSTRING (args[0])), "*dcl*") == 0)
+    if (strcmp (XSTRING_DATA (args[0]), "*dcl*") == 0)
       {
 	arg0 = 5;
 	firstArg = 6;
@@ -479,18 +479,18 @@ if you quit, the process is killed.
 	arg0 = 0;
 	firstArg = 4;
       }
-    len = string_length (XSTRING (args[arg0])) + 1;
+    len = XSTRING_LENGTH (args[arg0]) + 1;
     for (i = firstArg; i < nargs; i++)
       {
 	CHECK_STRING (args[i]);
-	len += string_length (XSTRING (args[i])) + 1;
+	len += XSTRING_LENGTH (args[i]) + 1;
       }
     new_argv = alloca (len);
-    strcpy (new_argv, string_data (XSTRING (args[arg0])));
+    strcpy (new_argv, XSTRING_DATA (args[arg0]));
     for (i = firstArg; i < nargs; i++)
       {
 	strcat (new_argv, " ");
-	strcat (new_argv, string_data (XSTRING (args[i])));
+	strcat (new_argv, XSTRING_DATA (args[i]));
       }
     dcmd.l = len-1;
     dcmd.a = new_argv;
@@ -520,7 +520,7 @@ if you quit, the process is killed.
     vs->outputChan = outchannel;
   }
 
-  filefd = open (string_data (XSTRING (args[1])), O_RDONLY, 0);
+  filefd = open (XSTRING_DATA (args[1]), O_RDONLY, 0);
   if (filefd < 0)
     {
       sys$dassgn (inchannel);
@@ -531,8 +531,8 @@ if you quit, the process is killed.
   else
     close (filefd);
 
-  din.l = string_length (XSTRING (args[1]));
-  din.a = string_data (XSTRING (args[1]));
+  din.l = XSTRING_LENGTH (args[1]);
+  din.a = XSTRING_DATA   (args[1]);
 
   /*
       Start a read on the process channel

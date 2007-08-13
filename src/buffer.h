@@ -1313,7 +1313,7 @@ do									\
     }									\
   else									\
     {									\
-      (stick_value_here) = alloca (1 + __gcida_len_out__);		\
+      (stick_value_here) = (CONST Extbyte *) alloca (1 + __gcida_len_out__);		\
       memcpy ((Bufbyte *) stick_value_here, __gcida_ptr_out__,		\
 	      1 + __gcida_len_out__); 					\
       (stick_len_here) = __gcida_len_out__;				\
@@ -1387,7 +1387,7 @@ do									   \
   __gseda_ptr__ = convert_to_external_format (string_data (__gseda_s__),   \
 					      string_length (__gseda_s__), \
 					      &__gseda_len__, fmt);	   \
-  (stick_value_here) = alloca (1 + __gseda_len__);			   \
+  (stick_value_here) = (CONST Extbyte *) alloca (1 + __gseda_len__);			   \
   memcpy ((Extbyte *) stick_value_here, __gseda_ptr__, 1 + __gseda_len__); \
   (stick_len_here) = __gseda_len__;					   \
 } while (0)

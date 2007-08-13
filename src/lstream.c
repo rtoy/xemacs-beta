@@ -709,7 +709,7 @@ Lstream_pseudo_close (Lstream *lstr)
 int
 Lstream_close (Lstream *lstr)
 {
-  int rc =0;
+  int rc = 0;
 
   if (lstr->flags & LSTREAM_FL_IS_OPEN)
     {

@@ -368,8 +368,7 @@ Send to VMS subprocess named NAME the string COMMAND.
   for (ptr = process_list; ptr; ptr = ptr->next)
     if (XINT (name) == ptr->name)
       {
-	write_to_mbx (ptr, string_data (XSTRING (command)),
-		      string_length (XSTRING (command)));
+	write_to_mbx (ptr, XSTRING_DATA (command), XSTRING_LENGTH (command));
 	return Qt;
       }
   return Qnil;
@@ -583,8 +582,8 @@ or nil depending upon whether the privilege is already enabled.
 
   CHECK_STRING (priv);
   priv = Fupcase (priv, Fcurrent_buffer ());
-  prvname = string_data (XSTRING (priv));
-  prvlen = string_length (XSTRING (priv));
+  prvname = XSTRING_DATA   (priv);
+  prvlen  = XSTRING_LENGTH (priv);
   found = 0;
   prvmask[0] = 0;
   prvmask[1] = 0;
@@ -603,7 +602,7 @@ or nil depending upon whether the privilege is already enabled.
 	}
     }
   if (! found)
-    error ("Unknown privilege name %s", string_data (XSTRING (priv)));
+    error ("Unknown privilege name %s", XSTRING_DATA (priv));
   if (NILP (getprv))
     {
       if (sys$setprv (NILP (value) ? 0 : 1, prvmask, 0, 0) == SS$_NORMAL)
@@ -654,8 +653,8 @@ These are the possibilities for the first arg (upper or lower case ok):
 
   CHECK_STRING (type);
   type = Fupcase (type, Fcurrent_buffer ());
-  typename = string_data (XSTRING (type));
-  typelen = string_length (XSTRING (type));
+  typename = XSTRING_DATA   (type);
+  typelen  = XSTRING_LENGTH (type);
   for (i = 0; i < sizeof (vms_object) / sizeof (vms_object[0]); i++)
     {
       ptr = &vms_object[i];
@@ -678,7 +677,7 @@ translate_id (Lisp_Object pid, int owner)
   int prcnam[2];
 
   if (NILP (pid)
-      || STRINGP (pid) && string_length (XSTRING (pid)) == 0
+      || STRINGP (pid) && XSTRING_LENGTH (pid) == 0
       || ZEROP (pid))
     {
       code = owner ? JPI$_OWNER : JPI$_PID;
@@ -693,8 +692,8 @@ translate_id (Lisp_Object pid, int owner)
     return (XINT (pid));
   CHECK_STRING (pid);
   pid = Fupcase (pid, Fcurrent_buffer ());
-  size = string_length (XSTRING (pid));
-  p = string_data (XSTRING (pid));
+  size = XSTRING_LENGTH (pid);
+  p = XSTRING_DATA (pid);
   numeric = 1;
   id = 0;
   for (i = 0; i < size; i++, p++)
@@ -713,8 +712,8 @@ translate_id (Lisp_Object pid, int owner)
       }
   if (numeric)
     return (id);
-  prcnam[0] = string_length (XSTRING (pid));
-  prcnam[1] = string_data (XSTRING (pid));
+  prcnam[0] = XSTRING_LENGTH (pid);
+  prcnam[1] = XSTRING_DATA   (pid);
   status = lib$getjpi (&JPI$_PID, 0, prcnam, &id);
   if (! (status & 1))
     error ("Cannot find process id: %s",
@@ -854,8 +853,8 @@ vms_trnlog (arg1, arg2)
   short length, level;
 
   CHECK_STRING (arg1);
-  symdsc[0] = string_length (XSTRING (arg1));
-  symdsc[1] = string_data (XSTRING (arg1));
+  symdsc[0] = XSTRING_LENGTH (arg1);
+  symdsc[1] = XSTRING_DATA   (arg1);
   status = lib$sys_trnlog (symdsc, &length, strdsc);
   if (! (status & 1))
     error ("Unable to translate logical name: %s", vmserrstr (status));
@@ -874,8 +873,8 @@ vms_symbol (arg1, arg2)
   short length, level;
 
   CHECK_STRING (arg1);
-  symdsc[0] = string_length (XSTRING (arg1));
-  symdsc[1] = string_data (XSTRING (arg1));
+  symdsc[0] = XSTRING_LENGTH (arg1);
+  symdsc[1] = XSTRING_DATA   (arg1);
   status = lib$get_symbol (symdsc, strdsc, &length, &level);
   if (! (status & 1)) {
     if (status == LIB$_NOSUCHSYM)

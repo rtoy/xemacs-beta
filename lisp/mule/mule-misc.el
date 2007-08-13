@@ -53,16 +53,7 @@ two arguments START and END corresponding to character position.")
 (defun string-to-char-list (str)
   (mapcar 'identity str))
 
-;;; Slower, albeit more elegant, implementation??
-;; (defun string-columns (string)
-;;  "Return number of columns STRING occupies when displayed.
-;; Uses the charset-columns attribute of the characters in STRING,
-;; which may not accurately represent the actual display width in a
-;; window system."
-;;  (loop for c across string
-;;     sum (charset-columns (char-charset c))))
-
-(defun string-columns (string)
+(defun string-width (string)
   "Return number of columns STRING occupies when displayed.
 Uses the charset-columns attribute of the characters in STRING,
 which may not accurately represent the actual display width when
@@ -75,7 +66,8 @@ using a window system."
       (setq i (1+ i)))
     col))
 
-(defalias 'string-width 'string-columns)
+(defalias 'string-columns 'string-width)
+(make-obsolete 'string-columns 'string-width)
 
 (defun delete-text-in-column (from to)
   "Delete the text between column FROM and TO (exclusive) of the current line.
@@ -154,21 +146,75 @@ If each element of LIST is not a string, it is converted to string
 	   (null (car buffer-undo-list)) )
       (setq buffer-undo-list (cdr buffer-undo-list)) ))
 
+
 ;;; Common API emulation functions for GNU Emacs-merged Mule.
 ;;; As suggested by MORIOKA Tomohiko
-(defun truncate-string (str width &optional start-column)
-  "Truncate STR to fit in WIDTH columns.
-Optional non-nil arg START-COLUMN specifies the starting column."
-  (substring str (or start-column 0) width))
+
+;; Following definition were imported from Emacs/mule-delta.
+
+(defun truncate-string-to-width (str width &optional start-column padding)
+  "Truncate string STR to fit in WIDTH columns.
+Optional 1st arg START-COLUMN if non-nil specifies the starting column.
+Optional 2nd arg PADDING if non-nil, space characters are padded at
+the head and tail of the resulting string to fit in WIDTH if necessary.
+If PADDING is nil, the resulting string may be narrower than WIDTH."
+  (or start-column
+      (setq start-column 0))
+  (let ((len (length str))
+	(idx 0)
+	(column 0)
+	(head-padding "") (tail-padding "")
+	ch last-column last-idx from-idx)
+    (condition-case nil
+	(while (< column start-column)
+	  (setq ch (sref str idx)
+		column (+ column (char-width ch))
+		idx (+ idx (char-bytes ch))))
+      (args-out-of-range (setq idx len)))
+    (if (< column start-column)
+	(if padding (make-string width ?\ ) "")
+      (if (and padding (> column start-column))
+	  (setq head-padding (make-string (- column start-column) ?\ )))
+      (setq from-idx idx)
+      (condition-case nil
+	  (while (< column width)
+	    (setq last-column column
+		  last-idx idx
+		  ch (sref str idx)
+		  column (+ column (char-width ch))
+		  idx (+ idx (char-bytes ch))))
+	(args-out-of-range (setq idx len)))
+      (if (> column width)
+	  (setq column last-column idx last-idx))
+      (if (and padding (< column width))
+	  (setq tail-padding (make-string (- width column) ?\ )))
+      (setq str (substring str from-idx idx))
+      (if padding
+	  (concat head-padding str tail-padding)
+	str))))
+
+;;; For backward compatiblity ...
+;;;###autoload
+(defalias 'truncate-string 'truncate-string-to-width)
+(make-obsolete 'truncate-string 'truncate-string-to-width)
+
+;; end of imported definition
+
 
 (defalias 'sref 'aref)
 (defalias 'map-char-concat 'mapcar)
-(defun char-bytes (chr) 1)
-(defun char-length (chr) 1)
+(defun char-bytes (character)
+  "Return number of length a CHARACTER occupies in a string or buffer.
+It returns only 1 in XEmacs.  It is for compatibility with MULE 2.3."
+  1)
+(defalias 'char-length 'char-bytes)
 
-(defun char-columns (character)
+(defun char-width (character)
   "Return number of columns a CHARACTER occupies when displayed."
   (charset-columns (char-charset character)))
+
+(defalias 'char-columns 'char-width)
+(make-obsolete 'char-columns 'char-width)
 
 (defalias 'charset-description 'charset-doc-string)
 
@@ -177,43 +223,15 @@ Optional non-nil arg START-COLUMN specifies the starting column."
 
 (defun find-non-ascii-charset-string (string)
   "Return a list of charsets in the STRING except ascii.
-For compatibility with Mule"
+It might be available for compatibility with Mule 2.3,
+because its `find-charset-string' ignores ASCII charset."
   (delq 'ascii (charsets-in-string string)))
 
 (defun find-non-ascii-charset-region (start end)
-  "Return a list of charsets except ascii
-in the region between START and END.
-For compatibility with Mule"
+  "Return a list of charsets except ascii in the region between START and END.
+It might be available for compatibility with Mule 2.3,
+because its `find-charset-string' ignores ASCII charset."
   (delq 'ascii (charsets-in-region start end)))
-
-;(defun truncate-string-to-column (str width &optional start-column)
-;  "Truncate STR to fit in WIDTH columns.
-;Optional non-nil arg START-COLUMN specifies the starting column."
-;  (or start-column
-;      (setq start-column 0))
-;  (let ((max-width (string-width str))
-;	(len (length str))
-;	(from 0)
-;	(column 0)
-;	to-prev to ch)
-;    (if (>= width max-width)
-;	(setq width max-width))
-;    (if (>= start-column width)
-;	""
-;      (while (< column start-column)
-;	(setq ch (aref str from)
-;	      column (+ column (char-width ch))
-;	      from (+ from (char-octets ch))))
-;      (if (< width max-width)
-;	  (progn
-;	    (setq to from)
-;	    (while (<= column width)
-;	      (setq ch (aref str to)
-;		    column (+ column (char-width ch))
-;		    to-prev to
-;		    to (+ to (char-octets ch))))
-;	    (setq to to-prev)))
-;      (substring str from to))))
 
 
 ;;; Language environments

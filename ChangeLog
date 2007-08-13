@@ -1,4 +1,40 @@
+Wed Jan 22 21:07:17 1997  Steven L Baur  <steve@altair.xemacs.org>
+	* XEmacs 20.0-b91 (prerelease 2) is released.
+
+	* configure.in (--with-scrollbars): Add Athena3d as a toolkit
+	type.
+
+	* lwlib/lwlib-Xaw.c (xaw_update_one_widget): Let Athena 3d have 0
+	borderwidth.
+	(xaw_scrollbar_scroll): Use SCROLLBAR_LINE_UP and
+	SCROLLBAR_LINE_DOWN since that's current the only to get to the
+	bottom of the buffer. :-(
+
+Tue Jan 21 20:01:19 1997  Steven L. Baur  <steve@altair.xemacs.org>
+
+	* configure.in (beta): Add LWLIB_USES_ATHENA for odd
+	configurations that use both Motif and Athena.
+
+	* etc/sgml/HTML32.dtd: html-3.2 final dtd added.
+
+Wed Jan 15 12:55:19 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* info/dir (Gnus): Updated spelling and info.
+
+Mon Jan 13 13:37:27 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Remove assignment of NON_GNU_CPP for irix-6.0.
+
+Mon Jan 13 00:36:01 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* lib-src/make-docfile.c (scan_lisp_file): eliminate doc-string
+	warnings for ccl-read-*
+
 Sat Jan 11 12:05:31 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* etc/sample.emacs: Remove code snippet that wipes out the cycle
+	buffer modeline feature.
+
 	* XEmacs 20.0 beta90 (prerelease 1) is released.
 	* XEmacs 19.15 beta90 (prerelease 1) is released.
 	

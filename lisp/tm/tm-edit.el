@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -119,7 +119,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.4 1997/01/11 20:14:11 steve Exp $")
+  "$Id: tm-edit.el,v 1.5 1997/01/23 05:29:42 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -648,14 +648,6 @@ Tspecials means any character that matches with it in header must be quoted.")
 
 ;;; @ functions
 ;;;
-
-;; The following text was removed from the docstring of the subsequent
-;; functions due to problems with the resulting autoload file. -sb
-
-;;	--[[text/plain; charset=ISO-2022-JP]]
-;;	これは charset を ISO-2022-JP に指定した日本語の plain テキス
-;;	トです.
-
 
 ;;;###autoload
 (defun mime/editor-mode ()

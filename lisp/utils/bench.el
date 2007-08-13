@@ -1,11 +1,11 @@
 ;;; bench.el --- benchmarking utility for emacsen
 
 ;; Copyright (C) 1987,88,89,90,93,94,95,96 Free Software Foundation, Inc.
-;; $Id: bench.el,v 1.2 1997/01/11 20:14:12 steve Exp $	
+;; $Id: bench.el,v 1.3 1997/01/23 05:29:43 steve Exp $	
 ;; $Source: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/utils/Attic/bench.el,v $
-;; $Revision: 1.2 $
+;; $Revision: 1.3 $
 ;; $Author: steve $
-;; $Date: 1997/01/11 20:14:12 $
+;; $Date: 1997/01/23 05:29:43 $
 
 ;; Author: Shane Holder <holder@rsn.hp.com>
 ;; Adapted-By: Steve Baur <steve@altair.xemacs.org>
@@ -325,7 +325,7 @@ Expect point to be at point min"
 ;-----------------------------------------------------------------------------
 (defconst bench-mark-insert-into-empty-buffer-num-words 100000)
 
-(defun bench-handler-insert-into-empty-buffer ()
+(defun bench-handler-insert-into-empty-buffer (times)
   (set-buffer (get-buffer-create "*tmp*"))
   (bench-mark-insert-into-empty-buffer)
   (erase-buffer)
@@ -340,7 +340,7 @@ Expect point to be at point min"
 )
 
 ;=============================================================================
-(defconst bench-version (let ((rcsvers "$Revision: 1.2 $"))
+(defconst bench-version (let ((rcsvers "$Revision: 1.3 $"))
 			  (substring rcsvers 11 (- (length rcsvers) 2)))
   "*Version number of bench.el")
 

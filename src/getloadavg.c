@@ -567,6 +567,26 @@ getloadavg (loadavg, nelem)
   free(buf);
   
 #endif /* HAVE_KSTAT_H && HAVE_LIBKSTAT */
+
+#if !defined (LDAV_DONE) && defined (HAVE_SYS_PSTAT_H)
+#define LDAV_DONE
+  /* This is totally undocumented, and is not guaranteed to work, but
+     mayhap it might ....  If it does work, it will work only on HP-UX
+     8.0 or later.  -- Darryl Okahata <darrylo@sr.hp.com> */
+#undef LOAD_AVE_TYPE		/* Make sure these don't exist. */
+#undef LOAD_AVE_CVT
+#undef LDAV_SYMBOL
+  struct pst_dynamic	procinfo;
+  union pstun		statbuf;
+
+  statbuf.pst_dynamic = &procinfo;
+  if (pstat (PSTAT_DYNAMIC, statbuf, sizeof (struct pst_dynamic), 0, 0) == -1)
+    return (-1);
+  loadavg[elem++] = procinfo.psd_avg_1_min;
+  loadavg[elem++] = procinfo.psd_avg_5_min;
+  loadavg[elem++] = procinfo.psd_avg_15_min;
+#endif	/* HPUX */
+
 #endif /* XEMACS */
 
 #if !defined (LDAV_DONE) && defined (__linux__)

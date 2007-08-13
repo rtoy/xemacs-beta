@@ -355,7 +355,7 @@ Arg is number of lines to scroll."
 	(scroll-up lines)))
     (cond ((pos-visible-in-window-p (point-max))
 	   (goto-char (point-max))
-	   (message "%"
+	   (message "%s"
 		    (substitute-command-keys
 		     "End.  Type \\[view-exit] to quit viewing."))))
     (move-to-window-line -1)
