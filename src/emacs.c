@@ -84,6 +84,12 @@ Lisp_Object Vsystem_type;
 /* Variable whose value is string giving configuration built for.  */
 Lisp_Object Vsystem_configuration;
 
+/* Version numbers and strings */
+Lisp_Object Vemacs_major_version;
+Lisp_Object Vemacs_minor_version;
+Lisp_Object Vemacs_beta_version;
+Lisp_Object Vxemacs_codename;
+
 /* The name under which XEmacs was invoked, with any leading directory
    names discarded.  */
 Lisp_Object Vinvocation_name;
@@ -126,7 +132,7 @@ char *stack_bottom;
 /* If nonzero, this is the place to put the end of the writable segment
    at startup.  */
 
-unsigned int bss_end = 0;
+uintptr_t bss_end = 0;
 #endif
 
 /* Number of bytes of writable memory we can expect to be able to get */
@@ -2116,7 +2122,7 @@ and announce itself normally when it is run.
        conversion is applied everywhere.  Don't worry about memory
        leakage because this call only happens once. */
     unexec ((char *) intoname_ext, (char *) symname_ext,
-	    (unsigned int) &my_edata,
+	    (uintptr_t) &my_edata,
 	    0, 0);
   }
 #endif /* not MSDOS and EMX */
@@ -2299,22 +2305,39 @@ Value is string indicating configuration XEmacs was built for.
 */ );
   Vsystem_configuration = Fpurecopy (build_string (EMACS_CONFIGURATION));
 
-  DEFVAR_INT ("emacs-beta-version", &emacs_beta_version /*
+  DEFVAR_LISP ("emacs-major-version", &Vemacs_major_version /*
+Major version number of this version of Emacs, as an integer.
+Warning: this variable did not exist in Emacs versions earlier than:
+  FSF Emacs:   19.23
+  XEmacs:      19.10
+*/ );
+  Vemacs_major_version = make_int (EMACS_MAJOR_VERSION);
+
+  DEFVAR_LISP ("emacs-minor-version", &Vemacs_minor_version /*
+Minor version number of this version of Emacs, as an integer.
+Warning: this variable did not exist in Emacs versions earlier than:
+  FSF Emacs:   19.23
+  XEmacs:      19.10
+*/ );
+  Vemacs_minor_version = make_int (EMACS_MINOR_VERSION);
+
+  DEFVAR_LISP ("emacs-beta-version", &Vemacs_beta_version /*
 Beta number of this version of Emacs, as an integer.
 The value is nil if this is an officially released version of XEmacs.
 Warning: this variable does not exist in FSF Emacs or in XEmacs versions
 earlier than 20.3.
 */ );
-#ifndef EMACS_BETA_VERSION
-#define EMACS_BETA_VERSION Qnil
+#ifdef EMACS_BETA_VERSION
+  Vemacs_beta_version = make_int (EMACS_BETA_VERSION);
+#else
+  Vemacs_beta_version = Qnil;
 #endif
-  emacs_beta_version = EMACS_BETA_VERSION;
 
   DEFVAR_LISP ("xemacs-codename", &Vxemacs_codename /*
 Codename of this version of Emacs (a string).
 */ );
 #ifndef XEMACS_CODENAME
-#define XEMACS_CODENAME Qnil
+#define XEMACS_CODENAME "Noname"
 #endif
   Vxemacs_codename = Fpurecopy (build_string (XEMACS_CODENAME));
 

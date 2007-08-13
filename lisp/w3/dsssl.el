@@ -1,7 +1,7 @@
 ;;; dsssl.el --- DSSSL parser
 ;; Author: wmperry
-;; Created: 1997/04/18 15:44:22
-;; Version: 1.14
+;; Created: 1997/06/10 06:01:32
+;; Version: 1.15
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,7 +43,7 @@
 	string->number char\?  char=\?  char-property string\?  string
 	string-length string-ref string=\?  substring string-append
 	procedure\?  apply external-procedure make time time->string quote
-	char-downcase indentity error let)
+	char-downcase identity error let)
   "A list of all the builtin DSSSL functions that we support.")
 
 (defsubst dsssl-check-args (args expected)

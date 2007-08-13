@@ -38,15 +38,27 @@ If INFO is omitted, the current profiling info is retrieved using
   (setq info (nreverse (sort info #'cdr-less-than-cdr)))
   (princ "Function                                               Count        %\n")
   (princ "---------------------------------------------------------------------\n")
-  (let ((sum 0.0)
-	(info2 info))
-    (while info2
-      (setq sum (+ sum (cdar info2)))
-      (setq info2 (cdr info2)))
+  (let ((sum 0.0))
+    (dolist (info2 info)
+      (incf sum (cdr info2)))
     (while info
       (let ((f (caar info)))
 	(princ (format "%-50s%10d   %6.3f\n" f (cdar info)
 		       (* 100 (/ (cdar info) sum)))))
       (setq info (cdr info)))))
+
+;;;###autoload
+(defmacro profile (&rest forms)
+  "Turn on profiling, execute FORMS and stop profiling.
+Returns the profiling info, printable by `pretty-print-profiling-info'."
+  `(progn
+     (unwind-protect
+	 (progn
+	   (start-profiling)
+	   ,@forms)
+       (stop-profiling))
+     (get-profiling-info)))
+
+(put 'profile 'lisp-indent-function 0)
 
 ;;; profile.el ends here

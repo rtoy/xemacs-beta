@@ -327,12 +327,6 @@
     (if tail
 	(setcdr tail new-parent))))
 
-(sysdep-defun buffer-substring-no-properties (st nd)
-  "Return the characters of part of the buffer, without the text properties.
-The two arguments START and END are character positions;
-they can be in either order."
-  (buffer-substring st nd))
-
 ;; Property list functions
 ;;
 (sysdep-defun plist-put (plist prop val)

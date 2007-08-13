@@ -82,14 +82,16 @@
       ["Replace (Regexp)..."	query-replace-regexp	t]
       "----"
       ("Bookmarks"
-       ["Jump to bookmark"  	bookmark-menu-jump	t]
+       ("Jump to bookmark"
+	:filter bookmark-menu-filter)
        ["Set bookmark"  	bookmark-set		t]
        "---"
        ["Insert contents"  	bookmark-menu-insert	t]
        ["Insert location"  	bookmark-menu-locate	t]
        "---"
        ["Rename bookmark"  	bookmark-menu-rename	t]
-       ["Delete bookmark"  	bookmark-menu-delete	t]
+       ("Delete bookmark"
+  	:filter bookmark-delete-filter)
        ["Edit Bookmark List"    bookmark-bmenu-list	t]
        "---"
        ["Save bookmarks"        bookmark-save		t]
@@ -106,11 +108,11 @@
      
      ,@(if (featurep 'mule)
 	   '(("Mule"
-	      ["Describe language support"
-	       mule-describe-language-support-prefix nil] ; not implemented yet
-	      ["Set language environment"
-	       mule-set-language-environment-prefix nil] ; not implemented yet
-	      "--"
+	      ;; ["Describe language support"
+	       ;; mule-describe-language-support-prefix nil]
+	      ;; ["Set language environment"
+	       ;; mule-set-language-environment-prefix nil]
+	      ;; "--"
 	      ["Toggle input method" toggle-input-method t]
 	      ["Select input method" select-input-method t]
 	      ["Describe input method" describe-input-method t]
@@ -836,6 +838,24 @@ This function changes the sensitivity of these Edit menu items:
     result))
 
 
+;;; The Bookmarks menu
+
+(defun bookmark-menu-filter (menu-items)
+  "*Build the bookmark jump submenu dynamically from all defined bookmarks."
+  (if (bookmark-all-names)
+      (mapcar
+       #'(lambda (bmk)
+	   (vector bmk `(bookmark-jump ',bmk) t)) (bookmark-all-names))
+    (list "No Bookmarks Set")))
+
+(defun bookmark-delete-filter (menu-items)
+  "*Build the bookmark delete submenu dynamically from all defined bookmarks."
+  (if (bookmark-all-names)
+      (mapcar
+       #'(lambda (bmk)
+	   (vector bmk `(bookmark-delete ',bmk) t)) (bookmark-all-names))
+    (list "No Bookmarks Set")))
+
 ;;; The Buffers menu
 
 (defvar buffers-menu-max-size 25

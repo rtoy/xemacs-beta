@@ -319,11 +319,13 @@ are used."
 	  (while (< (point) output-end)
 	    (let ((beg (point)))
 	      (end-of-line)
-	      (if (> (- (point) beg) 900)
-		  (progn
-		    (message "A line is too long--over 900 characters")
-		    (sleep-for 2)
-		    (goto-char output-end))))
+	      ;; Emacs -- I still haven't figured this one out.
+	      ;; (if (> (- (point) beg) 900)
+		  ;; (progn
+		    ;; (message "A line is too long--over 900 characters")
+		    ;; (sleep-for 2)
+		    ;; (goto-char output-end)))
+	      )
 	    (forward-line 1))
 	  (goto-char output-end)
 	  (insert generate-autoload-section-trailer)))

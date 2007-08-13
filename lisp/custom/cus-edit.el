@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9931
+;; Version: 1.9937
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -29,6 +29,10 @@
 ;; This file implements the code to create and edit customize buffers.
 ;; 
 ;; See `custom.el'.
+
+;; No commands should have names starting with `custom-' because
+;; that interferes with completion.  Use `customize-' for commands
+;; that the user will run with M-x, and `Custom-' for interactive commands.
 
 ;;; Code:
 
@@ -251,13 +255,18 @@
   :group 'customize
   :group 'faces)
 
+(defgroup custom-browse nil
+  "Control customize browser."
+  :prefix "custom-"
+  :group 'customize)
+
 (defgroup custom-buffer nil
-  "Control the customize buffers."
+  "Control customize buffers."
   :prefix "custom-"
   :group 'customize)
 
 (defgroup custom-menu nil
-  "Control how the customize menus."
+  "Control customize menus."
   :prefix "custom-"
   :group 'customize)
 
@@ -545,62 +554,81 @@ if that fails, the doc string with `custom-guess-doc-alist'."
 
 ;;; Sorting.
 
+(defcustom custom-browse-sort-alphabetically nil
+  "If non-nil, sort members of each customization group alphabetically."
+  :type 'boolean
+  :group 'custom-browse)
+
+(defcustom custom-browse-order-groups nil
+  "If non-nil, order group members within each customization group.
+If `first', order groups before non-groups.
+If `last', order groups after non-groups."
+  :type '(choice (const first)
+		 (const last)
+		 (const :tag "none" nil))
+  :group 'custom-browse)
+
 (defcustom custom-buffer-sort-alphabetically nil
-  "If non-nil, sort the members of each customization group alphabetically."
+  "If non-nil, sort members of each customization group alphabetically."
   :type 'boolean
   :group 'custom-buffer)
 
-(defcustom custom-buffer-groups-last nil
-  "If non-nil, put subgroups after all ordinary options within a group."
-  :type 'boolean
+(defcustom custom-buffer-order-groups 'last
+  "If non-nil, order group members within each customization group.
+If `first', order groups before non-groups.
+If `last', order groups after non-groups."
+  :type '(choice (const first)
+		 (const last)
+		 (const :tag "none" nil))
   :group 'custom-buffer)
 
 (defcustom custom-menu-sort-alphabetically nil
-  "If non-nil, sort the members of each customization group alphabetically."
+  "If non-nil, sort members of each customization group alphabetically."
   :type 'boolean
   :group 'custom-menu)
 
-(defcustom custom-menu-groups-first t
-  "If non-nil, put subgroups before all ordinary options within a group."
-  :type 'boolean
+(defcustom custom-menu-order-groups 'first
+  "If non-nil, order group members within each customization group.
+If `first', order groups before non-groups.
+If `last', order groups after non-groups."
+  :type '(choice (const first)
+		 (const last)
+		 (const :tag "none" nil))
   :group 'custom-menu)
 
-(defun custom-buffer-sort-predicate (a b)
-  "Return t iff A should come before B in a customization buffer.
-A and B should be members of a `custom-group' property."
-  (cond ((and (not custom-buffer-groups-last)
-	      (not custom-buffer-sort-alphabetically))
-	 nil)
-	((or (eq (eq (nth 1 a) 'custom-group) (eq (nth 1 b) 'custom-group))
-	     (not custom-buffer-groups-last))
-	 (if custom-buffer-sort-alphabetically
-	     (string-lessp (symbol-name (nth 0 a)) (symbol-name (nth 0 b)))
-	   nil))
-	(t
-	 (not (eq (nth 1 a) 'custom-group) ))))
-
-(defalias 'custom-browse-sort-predicate 'ignore)
-
-(defun custom-menu-sort-predicate (a b)
-  "Return t iff A should come before B in a customization menu.
-A and B should be members of a `custom-group' property."
-  (cond ((and (not custom-menu-groups-first)
-	      (not custom-menu-sort-alphabetically))
-	 nil)
-	((or (eq (eq (nth 1 a) 'custom-group) (eq (nth 1 b) 'custom-group))
-	     (not custom-menu-groups-first))
-	 (if custom-menu-sort-alphabetically
-	     (string-lessp (symbol-name (nth 0 a)) (symbol-name (nth 0 b)))
-	   nil))
-	(t
-	 (eq (nth 1 a) 'custom-group) )))
+(defun custom-sort-items (items sort-alphabetically order-groups)
+  "Return a sorted copy of ITEMS.
+ITEMS should be a `custom-group' property.
+If SORT-ALPHABETICALLY non-nil, sort alphabetically.
+If ORDER-GROUPS is `first' order groups before non-groups, if `last' order
+groups after non-groups, if nil do not order groups at all."
+  (sort (copy-sequence items)
+   (lambda (a b)
+     (let ((typea (nth 1 a)) (typeb (nth 1 b))
+	   (namea (symbol-name (nth 0 a))) (nameb (symbol-name (nth 0 b))))
+       (cond ((not order-groups)
+	      ;; Since we don't care about A and B order, maybe sort.
+	      (when sort-alphabetically
+		(string-lessp namea nameb)))
+	     ((eq typea 'custom-group)
+	      ;; If B is also a group, maybe sort.  Otherwise, order A and B.
+	      (if (eq typeb 'custom-group)
+		  (when sort-alphabetically
+		    (string-lessp namea nameb))
+		(eq order-groups 'first)))
+	     ((eq typeb 'custom-group)
+	      ;; Since A cannot be a group, order A and B.
+	      (eq order-groups 'last))
+	     (sort-alphabetically
+	      ;; Since A and B cannot be groups, sort.
+	      (string-lessp namea nameb)))))))
 
 ;;; Custom Mode Commands.
 
 (defvar custom-options nil
   "Customization widgets in the current buffer.")
 
-(defun custom-set ()
+(defun Custom-set ()
   "Set changes in all modified options."
   (interactive)
   (let ((children custom-options))
@@ -609,7 +637,7 @@ A and B should be members of a `custom-group' property."
 		(widget-apply child :custom-set)))
 	    children)))
 
-(defun custom-save ()
+(defun Custom-save ()
   "Set all modified group members and save them."
   (interactive)
   (let ((children custom-options))
@@ -620,9 +648,9 @@ A and B should be members of a `custom-group' property."
   (custom-save-all))
 
 (defvar custom-reset-menu 
-  '(("Current" . custom-reset-current)
-    ("Saved" . custom-reset-saved)
-    ("Standard Settings" . custom-reset-standard))
+  '(("Current" . Custom-reset-current)
+    ("Saved" . Custom-reset-saved)
+    ("Standard Settings" . Custom-reset-standard))
   "Alist of actions for the `Reset' button.
 The key is a string containing the name of the action, the value is a
 lisp function taking the widget as an element which will be called
@@ -637,7 +665,7 @@ when the action is chosen.")
     (if answer
 	(funcall answer))))
 
-(defun custom-reset-current (&rest ignore)
+(defun Custom-reset-current (&rest ignore)
   "Reset all modified group members to their current value."
   (interactive)
   (let ((children custom-options))
@@ -646,7 +674,7 @@ when the action is chosen.")
 		(widget-apply child :custom-reset-current)))
 	    children)))
 
-(defun custom-reset-saved (&rest ignore)
+(defun Custom-reset-saved (&rest ignore)
   "Reset all modified or set group members to their saved value."
   (interactive)
   (let ((children custom-options))
@@ -655,7 +683,7 @@ when the action is chosen.")
 		(widget-apply child :custom-reset-saved)))
 	    children)))
 
-(defun custom-reset-standard (&rest ignore)
+(defun Custom-reset-standard (&rest ignore)
   "Reset all modified, set, or saved group members to their standard settings."
   (interactive)
   (let ((children custom-options))
@@ -701,7 +729,7 @@ If the variable has a `custom-type' property, it must be a widget and the
 		   (eval-minibuffer prompt)))))))
 
 ;;;###autoload
-(defun custom-set-value (var val)
+(defun customize-set-value (var val)
   "Set VARIABLE to VALUE.  VALUE is a Lisp object.
 
 If VARIABLE has a `variable-interactive' property, that is used as if
@@ -715,7 +743,7 @@ If VARIABLE has a `custom-type' property, it must be a widget and the
   (set var val))
 
 ;;;###autoload
-(defun custom-set-variable (var val)
+(defun customize-set-variable (var val)
   "Set the default for VARIABLE to VALUE.  VALUE is a Lisp object.
 
 If VARIABLE has a `custom-set' property, that is used for setting
@@ -811,17 +839,14 @@ If SYMBOL is nil, customize all faces."
   (interactive (list (completing-read "Customize face: (default all) " 
 				      obarray 'custom-facep)))
   (if (or (null symbol) (and (stringp symbol) (zerop (length symbol))))
-      (let ((found nil))
-	(message "Looking for faces...")
-	(mapcar (lambda (symbol)
-		  (push (list symbol 'custom-face) found))
-		(nreverse (mapcar 'intern
-				  (sort (mapcar 'symbol-name (face-list))
-					'string-lessp))))
-			
-	(custom-buffer-create found "*Customize Faces*"))
-    (if (stringp symbol)
-	(setq symbol (intern symbol)))
+      (custom-buffer-create (custom-sort-items
+			     (mapcar (lambda (symbol)
+				       (list symbol 'custom-face))
+				     (face-list))
+			     t nil)
+			    "*Customize Faces*")
+    (when (stringp symbol)
+      (setq symbol (intern symbol)))
     (unless (symbolp symbol)
       (error "Should be a symbol %S" symbol))
     (custom-buffer-create (list (list symbol 'custom-face))
@@ -855,9 +880,10 @@ If SYMBOL is nil, customize all faces."
 		(and (get symbol 'customized-value)
 		     (boundp symbol)
 		     (push (list symbol 'custom-variable) found))))
-    (if found 
-	(custom-buffer-create found "*Customize Customized*")
-      (error "No customized user options"))))
+    (if (not found)
+	(error "No customized user options")
+      (custom-buffer-create (custom-sort-items found t nil)
+			    "*Customize Customized*"))))
 
 ;;;###autoload
 (defun customize-saved ()
@@ -871,9 +897,10 @@ If SYMBOL is nil, customize all faces."
 		(and (get symbol 'saved-value)
 		     (boundp symbol)
 		     (push (list symbol 'custom-variable) found))))
-    (if found 
-	(custom-buffer-create found "*Customize Saved*")
-      (error "No saved user options"))))
+    (if (not found )
+	(error "No saved user options")
+      (custom-buffer-create (custom-sort-items found t nil)
+			    "*Customize Saved*"))))
 
 ;;;###autoload
 (defun customize-apropos (regexp &optional all)
@@ -903,9 +930,9 @@ user-settable, as well as faces and groups."
 		    (push (list symbol 'custom-variable) found)))))
     (if (not found)
 	(error "No matches")
-      (let ((custom-buffer-sort-alphabetically t))
-	(custom-buffer-create (sort found 'custom-buffer-sort-predicate)
-			      "*Customize Apropos*")))))
+      (custom-buffer-create (custom-sort-items found t
+					       custom-buffer-order-groups)
+			    "*Customize Apropos*"))))
 
 ;;;###autoload
 (defun customize-apropos-options (regexp &optional arg)
@@ -979,25 +1006,28 @@ This button will have a menu with all three reset operations."
   (message "Creating customization buffer...")
   (custom-mode)
   (widget-insert "This is a customization buffer.
-Push RET or click mouse-2 on the word ")
+Square brackets show active fields; type RET or click mouse-2
+on an active field to invoke its action.  Invoke ")
   (widget-create 'info-link 
-		 :tag "help"
+		 :tag "Help"
 		 :help-echo "Read the online help."
 		 "(emacs)Easy Customization")
   (widget-insert " for more information.\n\n")
   (message "Creating customization buttons...")
+  (widget-insert "Operate on everything in this buffer:\n ")
   (widget-create 'push-button
 		 :tag "Set"
-		 :help-echo "Set all modifications for this session."
+		 :help-echo "\
+Make your editing in this buffer take effect for this session."
 		 :action (lambda (widget &optional event)
-			   (custom-set)))
+			   (Custom-set)))
   (widget-insert " ")
   (widget-create 'push-button
 		 :tag "Save"
 		 :help-echo "\
-Make the modifications default for future sessions."
+Make your editing in this buffer take effect for future Emacs sessions."
 		 :action (lambda (widget &optional event)
-			   (custom-save)))
+			   (Custom-save)))
   (widget-insert " ")
   (if custom-reset-button-menu
       (widget-create 'push-button
@@ -1009,23 +1039,23 @@ Make the modifications default for future sessions."
     (widget-create 'push-button
 		   :tag "Reset"
 		   :help-echo "\
-Reset all visible items in this buffer to their current settings."
-		   :action 'custom-reset-current)
+Reset all edited text in this buffer to reflect current values."
+		   :action 'Custom-reset-current)
     (widget-insert " ")
     (widget-create 'push-button
 		   :tag "Reset to Saved"
 		   :help-echo "\
-Reset all visible items in this buffer to their saved settings."
-		   :action 'custom-reset-saved)
+Reset all values in this buffer to their saved settings."
+		   :action 'Custom-reset-saved)
     (widget-insert " ")
     (widget-create 'push-button
 		   :tag "Reset to Standard"
 		   :help-echo "\
-Reset all visible items in this buffer to their standard settings."
-		   :action 'custom-reset-standard))
-  (widget-insert " ")
+Reset all values in this buffer to their standard settings."
+		   :action 'Custom-reset-standard))
+  (widget-insert "   ")
   (widget-create 'push-button
-		 :tag "Done"
+		 :tag "Bury Buffer"
 		 :help-echo "Bury the buffer."
 		 :action (lambda (widget &optional event)
 			   (bury-buffer)))
@@ -1068,23 +1098,33 @@ Reset all visible items in this buffer to their standard settings."
 ;;; The Tree Browser.
 
 ;;;###autoload
-(defun customize-browse ()
+(defun customize-browse (group)
   "Create a tree browser for the customize hierarchy."
-  (interactive)
+  (interactive (list (let ((completion-ignore-case t))
+		       (completing-read "Customize group: (default emacs) "
+					obarray 
+					(lambda (symbol)
+					  (get symbol 'custom-group))
+					t))))
+
+  (when (stringp group)
+    (if (string-equal "" group)
+	(setq group 'emacs)
+      (setq group (intern group))))
   (let ((name "*Customize Browser*"))
     (kill-buffer (get-buffer-create name))
     (switch-to-buffer (get-buffer-create name)))
   (custom-mode)
   (widget-insert "\
 Invoke [+] below to expand items, and [-] to collapse items.
-Invoke the [group], [face], and [option] buttons below to edit that
+Invoke the [Group], [Face], and [Option] buttons below to edit that
 item in another window.\n\n")
   (let ((custom-buffer-style 'tree))
     (widget-create 'custom-group 
 		   :custom-last t
 		   :custom-state 'unknown
-		   :tag (custom-unlispify-tag-name 'emacs)
-		   :value 'emacs))
+		   :tag (custom-unlispify-tag-name group)
+		   :value group))
   (goto-char (point-min)))
 
 (define-widget 'custom-tree-visibility 'item
@@ -1098,7 +1138,7 @@ item in another window.\n\n")
 
 (define-widget 'custom-tree-group-tag 'push-button
   "Show parent in other window when activated."
-  :tag "group"
+  :tag "Group"
   :tag-glyph "folder"
   :action 'custom-tree-group-tag-action)
 
@@ -1108,7 +1148,7 @@ item in another window.\n\n")
 
 (define-widget 'custom-tree-variable-tag 'push-button
   "Show parent in other window when activated."
-  :tag "option"
+  :tag "Option"
   :tag-glyph "option"
   :action 'custom-tree-variable-tag-action)
 
@@ -1118,7 +1158,7 @@ item in another window.\n\n")
 
 (define-widget 'custom-tree-face-tag 'push-button
   "Show parent in other window when activated."
-  :tag "face"
+  :tag "Face"
   :tag-glyph "face"
   :action 'custom-tree-face-tag-action)
 
@@ -1128,18 +1168,23 @@ item in another window.\n\n")
 
 (defconst custom-tree-alist '(("   " "space")
 			      (" | " "vertical")
+			      ("-\\ " "top")
 			      (" |-" "middle")
 			      (" `-" "bottom")))
 
-(defun custom-tree-insert (prefix)
+(defun custom-tree-insert-prefix (prefix)
   "Insert PREFIX.  On XEmacs convert it to line graphics."
-  (if nil ;(string-match "XEmacs" emacs-version)
-      (while (not (string-equal prefix ""))
-	(let ((entry (substring prefix 0 3)))
-	  (setq prefix (substring prefix 3))
-	  (widget-specify-insert
-	   (widget-glyph-insert nil entry
-				(nth 1 (assoc entry custom-tree-alist))))))
+  (if nil ; (string-match "XEmacs" emacs-version)
+      (progn 
+	(insert "*")
+	(while (not (string-equal prefix ""))
+	  (let ((entry (substring prefix 0 3)))
+	    (setq prefix (substring prefix 3))
+	    (let ((overlay (make-overlay (1- (point)) (point) nil t nil))
+		  (name (nth 1 (assoc entry custom-tree-alist))))
+	      (overlay-put overlay 'end-glyph (widget-glyph-find name entry))
+	      (overlay-put overlay 'start-open t)
+	      (overlay-put overlay 'end-open t)))))
     (insert prefix)))
 
 ;;; Modification of Basic Widgets.
@@ -1283,22 +1328,22 @@ The list should be sorted most significant first.")
 
 (defcustom custom-magic-show 'long
   "If non-nil, show textual description of the state.
-If non-nil and not the symbol `long', only show first word."
+If `long', show a full-line description, not just one word."
   :type '(choice (const :tag "no" nil)
 		 (const short)
 		 (const long))
   :group 'custom-buffer)
 
 (defcustom custom-magic-show-hidden '(option face)
-  "Control whether the state button is shown for hidden items.
-The value should be a list with the custom categories where the state
+  "Control whether the State button is shown for hidden items.
+The value should be a list with the custom categories where the State
 button should be visible.  Possible categories are `group', `option',
 and `face'."
   :type '(set (const group) (const option) (const face))
   :group 'custom-buffer)
 
 (defcustom custom-magic-show-button nil
-  "Show a magic button indicating the state of each customization option."
+  "Show a \"magic\" button indicating the state of each customization option."
   :type 'boolean
   :group 'custom-buffer)
 
@@ -1339,7 +1384,9 @@ and `face'."
 	       (or (not hidden)
 		   (memq category custom-magic-show-hidden)))
       (insert "   ")
-      (when (eq category 'group)
+      (when (and (eq category 'group)
+		 (not (and (eq custom-buffer-style 'links)
+			   (> (widget-get parent :custom-level) 1))))
 	(insert-char ?\  (* custom-buffer-indent
 			    (widget-get parent :custom-level))))
       (push (widget-create-child-and-convert 
@@ -1352,13 +1399,17 @@ and `face'."
 	     :tag "State")
 	    children)
       (insert ": ")
-      (if (eq custom-magic-show 'long)
-	  (insert text)
-	(insert (symbol-name state)))
-      (when lisp 
-	(insert " (lisp)"))
+      (let ((start (point)))
+	(if (eq custom-magic-show 'long)
+	    (insert text)
+	  (insert (symbol-name state)))
+	(when lisp 
+	  (insert " (lisp)"))
+	(put-text-property start (point) 'face 'custom-state-face))
       (insert "\n"))
-    (when (eq category 'group)
+    (when (and (eq category 'group)
+	       (not (and (eq custom-buffer-style 'links)
+			 (> (widget-get parent :custom-level) 1))))
       (insert-char ?\  (* custom-buffer-indent
 			  (widget-get parent :custom-level))))
     (when custom-magic-show-button
@@ -1388,6 +1439,24 @@ and `face'."
 
 ;;; The `custom' Widget.
 
+(defface custom-button-face nil
+  "Face used for buttons in customization buffers."
+  :group 'custom-faces)
+
+(defface custom-documentation-face nil
+  "Face used for documentation strings in customization buffers."
+  :group 'custom-faces)
+
+(defface custom-state-face '((((class color)
+			       (background dark))
+			      (:foreground "lime green"))
+			     (((class color)
+			       (background light))
+			      (:foreground "dark green"))
+			     (t nil))
+  "Face used for State descriptions in the customize buffer."
+  :group 'custom-faces)
+
 (define-widget 'custom 'default
   "Customize a user option."
   :format "%v"
@@ -1401,6 +1470,7 @@ and `face'."
   :value-delete 'widget-children-value-delete
   :value-get 'widget-value-value-get
   :validate 'widget-children-validate
+  :button-face 'custom-button-face
   :match (lambda (widget value) (symbolp value)))
 
 (defun custom-convert-widget (widget)
@@ -1509,7 +1579,7 @@ and `face'."
     (widget-setup)))
 
 (defun custom-toggle-parent (widget &rest ignore)
-  "Toggle visibility of parent to WIDGET."
+  "Toggle visibility of parent of WIDGET."
   (custom-toggle-hide (widget-get widget :parent)))
 
 (defun custom-add-see-also (widget &optional prefix)
@@ -1540,32 +1610,41 @@ Insert PREFIX first if non-nil."
 	       (insert ", "))))
       (widget-put widget :buttons buttons))))
 
-(defun custom-add-parent-links (widget)
-  "Add `Parent groups: ...' to WIDGET."
+(defun custom-add-parent-links (widget &optional initial-string)
+  "Add \"Parent groups: ...\" to WIDGET if the group has parents.
+The value if non-nil if any parents were found.
+If INITIAL-STRING is non-nil, use that rather than \"Parent groups:\"."
   (let ((name (widget-value widget))
 	(type (widget-type widget))
 	(buttons (widget-get widget :buttons))
+	(start (point))
 	found)
-    (insert "Parent groups:")
+    (insert (or initial-string "Parent groups:"))
     (mapatoms (lambda (symbol)
-		(let ((group (get symbol 'custom-group)))
-		  (when (assq name group)
-		    (when (eq type (nth 1 (assq name group)))
-		      (insert " ")
-		      (push (widget-create-child-and-convert 
-			     widget 'custom-group-link 
-			     :tag (custom-unlispify-tag-name symbol)
-			     symbol)
-			    buttons)
-		      (setq found t))))))
+		(let ((entry (assq name (get symbol 'custom-group))))
+		  (when (eq (nth 1 entry) type)
+		    (insert " ")
+		    (push (widget-create-child-and-convert 
+			   widget 'custom-group-link 
+			   :tag (custom-unlispify-tag-name symbol)
+			   symbol)
+			  buttons)
+		    (setq found t)))))
     (widget-put widget :buttons buttons)
-    (unless found
-      (insert " (none)"))
-    (insert "\n")))
+    (if found
+	(insert "\n")
+      (delete-region start (point)))
+    found))
 
 ;;; The `custom-variable' Widget.
 
-(defface custom-variable-sample-face '((t (:underline t)))
+(defface custom-variable-tag-face '((((class color)
+				      (background dark))
+				     (:foreground "light blue" :underline t))
+				    (((class color)
+				      (background light))
+				     (:foreground "blue" :underline t))
+				    (t (:underline t)))
   "Face used for unpushable variable tags."
   :group 'custom-faces)
 
@@ -1647,7 +1726,7 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 	   (push (widget-create-child-and-convert 
 		  widget 'item
 		  :format "%{%t%}: "
-		  :sample-face 'custom-variable-sample-face
+		  :sample-face 'custom-variable-tag-face
 		  :tag tag
 		  :parent widget)
 		 buttons)
@@ -1698,7 +1777,7 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 		    :help-echo "Change value of this option."
 		    :mouse-down-action 'custom-tag-mouse-down-action
 		    :button-face 'custom-variable-button-face
-		    :sample-face 'custom-variable-sample-face
+		    :sample-face 'custom-variable-tag-face
 		    tag)
 		   buttons)
 	     (insert " ")
@@ -2348,7 +2427,7 @@ Optional EVENT is the location for the menu."
 
 (define-widget 'custom-group-link 'link
   "Show parent in other window when activated."
-  :help-echo "Create customize buffer for this group group."
+  :help-echo "Create customization buffer for this group."
   :action 'custom-group-link-action)
 
 (defun custom-group-link-action (widget &rest ignore)
@@ -2356,7 +2435,7 @@ Optional EVENT is the location for the menu."
 
 ;;; The `custom-group' Widget.
 
-(defcustom custom-group-tag-faces '(custom-group-tag-face-1)
+(defcustom custom-group-tag-faces nil
   ;; In XEmacs, this ought to play games with font size.
   "Face used for group tags.
 The first member is used for level 1 groups, the second for level 2,
@@ -2405,6 +2484,16 @@ and so forth.  The remaining group tags are shown with
   (or (nth (1- (widget-get widget :custom-level)) custom-group-tag-faces)
       'custom-group-tag-face))
 
+(define-widget 'custom-group-visibility 'visibility
+  "An indicator and manipulator for hidden group contents."
+  :create 'custom-group-visibility-create)
+
+(defun custom-group-visibility-create (widget)
+  (let ((visible (widget-value widget)))
+    (if visible
+	(insert "--------")))
+  (widget-default-create widget))
+
 (defun custom-group-value-create (widget)
   "Insert a customize group for WIDGET in the current buffer."
   (let ((state (widget-get widget :custom-state))
@@ -2416,7 +2505,7 @@ and so forth.  The remaining group tags are shown with
 	(symbol (widget-value widget)))
     (cond ((and (eq custom-buffer-style 'tree)
 		(eq state 'hidden))
-	   (custom-tree-insert prefix)
+	   (custom-tree-insert-prefix prefix)
 	   (push (widget-create-child-and-convert
 		  widget 'custom-tree-visibility 
 		  ;; :tag-glyph "plus"
@@ -2431,7 +2520,7 @@ and so forth.  The remaining group tags are shown with
 	   (widget-put widget :buttons buttons))
 	  ((and (eq custom-buffer-style 'tree)
 		(zerop (length (get symbol 'custom-group))))
-	   (custom-tree-insert prefix)
+	   (custom-tree-insert-prefix prefix)
 	   (insert "[ ]-- ")
 	   ;; (widget-glyph-insert nil "[ ]" "empty")
 	   ;; (widget-glyph-insert nil "-- " "horizontal")
@@ -2441,11 +2530,11 @@ and so forth.  The remaining group tags are shown with
 	   (insert " " tag "\n")
 	   (widget-put widget :buttons buttons))
 	  ((eq custom-buffer-style 'tree)
-	   (custom-tree-insert prefix)
+	   (custom-tree-insert-prefix prefix)
 	   (custom-load-widget widget)
 	   (if (zerop (length (get symbol 'custom-group)))
 	       (progn 
-		 (custom-tree-insert prefix)
+		 (custom-tree-insert-prefix prefix)
 		 (insert "[ ]-- ")
 		 ;; (widget-glyph-insert nil "[ ]" "empty")
 		 ;; (widget-glyph-insert nil "-- " "horizontal")
@@ -2459,16 +2548,17 @@ and so forth.  The remaining group tags are shown with
 		    ;; :tag-glyph "minus"
 		    :tag "-")
 		   buttons)
-	     (insert "-+ ")
-	     ;; (widget-glyph-insert nil "-+ " "top")
+	     (insert "-\\ ")
+	     ;; (widget-glyph-insert nil "-\\ " "top")
 	     (push (widget-create-child-and-convert 
 		    widget 'custom-tree-group-tag)
 		   buttons)
 	     (insert " " tag "\n")
 	     (widget-put widget :buttons buttons)
 	     (message "Creating group...")
-	     (let* ((members (sort (copy-sequence (get symbol 'custom-group))
-				   'custom-browse-sort-predicate))
+	     (let* ((members (custom-sort-items (get symbol 'custom-group)
+			      custom-browse-sort-alphabetically
+			      custom-browse-order-groups))
 		    (prefixes (widget-get widget :custom-prefixes))
 		    (custom-prefix-list (custom-prefix-add symbol prefixes))
 		    (length (length members))
@@ -2496,8 +2586,9 @@ and so forth.  The remaining group tags are shown with
 	  ;; Nested style.
 	  ((eq state 'hidden)
 	   ;; Create level indicator.
-	   (insert-char ?\  (* custom-buffer-indent (1- level)))
-	   (insert "-- ")
+	   (unless (eq custom-buffer-style 'links)
+	     (insert-char ?\  (* custom-buffer-indent (1- level)))
+	     (insert "-- "))
 	   ;; Create tag.
 	   (let ((begin (point)))
 	     (insert tag)
@@ -2507,11 +2598,11 @@ and so forth.  The remaining group tags are shown with
 	   (if (eq custom-buffer-style 'links)
 	       (push (widget-create-child-and-convert
 		      widget 'custom-group-link 
-		      :tag "Show"
+		      :tag "Go to Group"
 		      symbol)
 		     buttons)
 	     (push (widget-create-child-and-convert 
-		    widget 'visibility
+		    widget 'group-visibility
 		    :help-echo "Show members of this group."
 		    :action 'custom-toggle-parent
 		    (not (eq state 'hidden)))
@@ -2525,9 +2616,18 @@ and so forth.  The remaining group tags are shown with
 	   ;; Update buttons.
 	   (widget-put widget :buttons buttons)
 	   ;; Insert documentation.
+	   (if (and (eq custom-buffer-style 'links) (> level 1))
+	       (widget-put widget :documentation-indent 0))
 	   (widget-default-format-handler widget ?h))
 	  ;; Nested style.
 	  (t				;Visible.
+	   ;; Add parent groups references above the group.
+	   (if t    ;;; This should test that the buffer
+		    ;;; was made to display a group.
+	       (when (eq level 1)
+		 (if (custom-add-parent-links widget
+					      "Go to parent group:")
+		     (insert "\n"))))
 	   ;; Create level indicator.
 	   (insert-char ?\  (* custom-buffer-indent (1- level)))
 	   (insert "/- ")
@@ -2563,18 +2663,21 @@ and so forth.  The remaining group tags are shown with
 	   (widget-put widget :buttons buttons)
 	   ;; Insert documentation.
 	   (widget-default-format-handler widget ?h)
-	   ;; Parents and See also.
-	   (when (eq level 1)
-	     (insert-char ?\  custom-buffer-indent)
-	     (custom-add-parent-links widget))
+	   ;; Parent groups.
+	   (if nil  ;;; This should test that the buffer
+		    ;;; was not made to display a group.
+	       (when (eq level 1)
+		 (insert-char ?\  custom-buffer-indent)
+		 (custom-add-parent-links widget)))
 	   (custom-add-see-also widget 
 				(make-string (* custom-buffer-indent level)
 					     ?\ ))
 	   ;; Members.
 	   (message "Creating group...")
 	   (custom-load-widget widget)
-	   (let* ((members (sort (copy-sequence (get symbol 'custom-group))
-				 'custom-buffer-sort-predicate))
+	   (let* ((members (custom-sort-items (get symbol 'custom-group)
+					      custom-buffer-sort-alphabetically
+					      custom-buffer-order-groups))
 		  (prefixes (widget-get widget :custom-prefixes))
 		  (custom-prefix-list (custom-prefix-add symbol prefixes))
 		  (length (length members))
@@ -2807,7 +2910,7 @@ Leave point at the location of the call, or after the last expression."
 	(princ "\n")))))
 
 ;;;###autoload
-(defun custom-save-customized ()
+(defun customize-save-customized ()
   "Save all user options which have been set in this session."
   (interactive)
   (mapatoms (lambda (symbol)
@@ -2838,7 +2941,8 @@ Leave point at the location of the call, or after the last expression."
 (unless (string-match "XEmacs" emacs-version)
   (defconst custom-help-menu
     '("Customize"
-      ["Update menu..." custom-menu-update t]
+      ["Update menu..." Custom-menu-update t]
+      ["Browse..." (customize-browse 'emacs) t]
       ["Group..." customize-group t]
       ["Variable..." customize-variable t]
       ["Face..." customize-face t]
@@ -2860,7 +2964,7 @@ Leave point at the location of the call, or after the last expression."
 	    (easy-menu-create-keymaps (car custom-help-menu)
 				      (cdr custom-help-menu)))))
 
-  (defun custom-menu-update (event)
+  (defun Custom-menu-update (event)
     "Update customize menu."
     (interactive "e")
     (add-hook 'custom-define-hook 'custom-menu-reset)
@@ -2928,8 +3032,9 @@ The menu is in a format applicable to `easy-menu-define'."
 	     (< (length (get symbol 'custom-group)) widget-menu-max-size))
 	(let ((custom-prefix-list (custom-prefix-add symbol
 						     custom-prefix-list))
-	      (members (sort (copy-sequence (get symbol 'custom-group))
-			     'custom-menu-sort-predicate)))
+	      (members (custom-sort-items (get symbol 'custom-group)
+					  custom-menu-sort-alphabetically
+					  custom-menu-order-groups)))
 	  (custom-load-symbol symbol)
 	  `(,(custom-unlispify-menu-entry symbol t)
 	    ,item
@@ -2962,29 +3067,47 @@ The format is suitable for use with `easy-menu-define'."
 
 (defvar custom-mode-map nil
   "Keymap for `custom-mode'.")
-  
+
 (unless custom-mode-map
   (setq custom-mode-map (make-sparse-keymap))
   (set-keymap-parent custom-mode-map widget-keymap)
   (suppress-keymap custom-mode-map)
-  (define-key custom-mode-map "q" 'bury-buffer))
+  (define-key custom-mode-map " " 'scroll-up)
+  (define-key custom-mode-map "\177" 'scroll-down)
+  (define-key custom-mode-map "q" 'bury-buffer)
+  (define-key custom-mode-map "u" 'Custom-goto-parent))
 
-(easy-menu-define custom-mode-menu 
+(easy-menu-define Custom-mode-menu 
     custom-mode-map
   "Menu used in customization buffers."
   `("Custom"
     ,(customize-menu-create 'customize)
-    ["Set" custom-set t]
-    ["Save" custom-save t]
-    ["Reset to Current" custom-reset-current t]
-    ["Reset to Saved" custom-reset-saved t]
-    ["Reset to Standard Settings" custom-reset-standard t]
+    ["Set" Custom-set t]
+    ["Save" Custom-save t]
+    ["Reset to Current" Custom-reset-current t]
+    ["Reset to Saved" Custom-reset-saved t]
+    ["Reset to Standard Settings" Custom-reset-standard t]
     ["Info" (Info-goto-node "(custom)The Customization Buffer") t]))
+
+(defun Custom-goto-parent ()
+  "Go to the parent group listed at the top of this buffer.
+If several parents are listed, go to the first of them."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (if (search-forward "\nGo to parent group: " nil t)
+	(let* ((button (get-char-property (point) 'button))
+	       (parent (downcase (widget-get  button :tag))))
+	  (customize-group parent)))))
 
 (defcustom custom-mode-hook nil
   "Hook called when entering custom-mode."
   :type 'hook
   :group 'custom-buffer )
+
+(defun custom-state-buffer-message (widget)
+  (if (eq (widget-get (widget-get widget :parent) :custom-state) 'modified)
+      (message "To install your edits, invoke [State] and choose the Set operation")))
 
 (defun custom-mode ()
   "Major mode for editing customization buffers.
@@ -2995,11 +3118,11 @@ Move to next button or editable field.     \\[widget-forward]
 Move to previous button or editable field. \\[widget-backward]
 Invoke button under the mouse pointer.     \\[widget-button-click]
 Invoke button under point.		   \\[widget-button-press]
-Set all modifications.			   \\[custom-set]
-Make all modifications default.		   \\[custom-save]
-Reset all modified options. 		   \\[custom-reset-current]
-Reset all modified or set options.	   \\[custom-reset-saved]
-Reset all options.			   \\[custom-reset-standard]
+Set all modifications.			   \\[Custom-set]
+Make all modifications default.		   \\[Custom-save]
+Reset all modified options. 		   \\[Custom-reset-current]
+Reset all modified or set options.	   \\[Custom-reset-saved]
+Reset all options.			   \\[Custom-reset-standard]
 
 Entry to this mode calls the value of `custom-mode-hook'
 if that value is non-nil."
@@ -3007,8 +3130,12 @@ if that value is non-nil."
   (setq major-mode 'custom-mode
 	mode-name "Custom")
   (use-local-map custom-mode-map)
-  (easy-menu-add custom-mode-menu)
+  (easy-menu-add Custom-mode-menu)
   (make-local-variable 'custom-options)
+  (make-local-variable 'widget-documentation-face)
+  (setq widget-documentation-face 'custom-documentation-face)
+  (make-local-hook 'widget-edit-functions)
+  (add-hook 'widget-edit-functions 'custom-state-buffer-message nil t)
   (run-hooks 'custom-mode-hook))
 
 ;;; The End.

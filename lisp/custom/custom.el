@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9931
+;; Version: 1.9937
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -44,8 +44,8 @@
 ;; These autoloads should be deleted eventually. 
 (unless (fboundp 'load-gc)
   ;; From cus-edit.el
-  (autoload 'custom-set-value "cus-edit" nil t)
-  (autoload 'custom-set-variable "cus-edit" nil t)
+  (autoload 'customize-set-value "cus-edit" nil t)
+  (autoload 'customize-set-variable "cus-edit" nil t)
   (autoload 'customize "cus-edit" nil t)
   (autoload 'customize-browse "cus-edit" nil t)
   (autoload 'customize-group "cus-edit" nil t)

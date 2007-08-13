@@ -30,7 +30,6 @@ for dir in lisp/*; do
    -a $dir != lisp/SCCS \
    -a $dir != lisp/egg \
    -a $dir != lisp/its \
-   -a $dir != lisp/mule \
    -a $dir != lisp/language \
    -a $dir != lisp/leim; then
     dirs="$dirs $dir"

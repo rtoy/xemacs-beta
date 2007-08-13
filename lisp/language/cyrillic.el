@@ -119,7 +119,7 @@
 
 (make-coding-system
  'koi8-r 'ccl
- "Coding-system used for KOI8."
+ "Coding-system used for KOI8-R."
  `(decode ,ccl-decode-koi8
    encode ,ccl-encode-koi8
    mnemonic "KOI8"))
@@ -254,7 +254,7 @@
  "Cyrillic" '((setup-function . setup-cyrillic-environment)
 	      (describe-function . describe-cyrillic-support)
 	      (charset . (cyrillic-iso8859-5))
-	      (coding-system . (iso-8859-5 koi8 alternativnyj))
+	      (coding-system . (iso-8859-5 koi8-r alternativnyj))
 	      (sample-text . "Russian (,L@caaZXY(B)	,L7T`PRabRcYbU(B!")
 	      (documentation . nil)))
 

@@ -151,8 +151,7 @@ to a suitable internal image format will be carried out."
 	      (while chain
 		(cond
 		 ((stringp (car chain))
-		  (let ((coding-system-for-read 'no-conversion)
-			(coding-system-for-write 'no-conversion))
+		  (let ((file-coding-system mule-no-coding-system))
 		    (call-process-region
 		     (point-min) (point-max)
 		     shell-file-name t

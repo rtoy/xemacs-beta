@@ -91,7 +91,7 @@
 (put 'supercite-hooks 'custom-loads '("supercite"))
 (put 'display 'custom-loads '())
 (put 'texinfo-tex 'custom-loads '("texnfo-tex"))
-(put 'faces 'custom-loads '("fast-lock" "ps-print"))
+(put 'faces 'custom-loads '("fast-lock" "hyper-apropos" "ps-print"))
 (put 'pages 'custom-loads '("page-ext"))
 (put 'diary 'custom-loads '())
 (put 'supercite-frames 'custom-loads '("supercite"))

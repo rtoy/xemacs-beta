@@ -230,10 +230,11 @@ in `substitute-in-file-name'."
 
 (defun minibuffer-keyboard-quit ()
   "Abort recursive edit.
-If `zmacs-regions' is true, and the zmacs region is active, then this
-key deactivates the region without beeping."
+If `zmacs-regions' is true, and the zmacs region is active in this buffer,
+then this key deactivates the region without beeping."
   (interactive)
-  (if (and zmacs-regions (zmacs-deactivate-region))
+  (if (and (region-active-p)
+	   (eq (current-buffer) (zmacs-region-buffer)))
       ;; pseudo-zmacs compatibility: don't beep if this ^G is simply
       ;; deactivating the region.  If it is inactive, beep.
       nil

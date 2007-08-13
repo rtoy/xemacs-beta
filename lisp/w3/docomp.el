@@ -66,6 +66,7 @@
       byte-optimize t
       )
 
+(require 'cl)
 (require 'w3-vars)
 (require 'url)
 (require 'mm)

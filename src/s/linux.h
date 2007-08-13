@@ -211,8 +211,3 @@ Boston, MA 02111-1307, USA.  */
 
 /* XEmacs: removed setpgrp() definition because we use setpgid() when
    it's available, and autodetect it. */
-
-/* glibc fuckage */
-#if defined __GLIBC__ && ((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1) || __GLIBC__ > 2)
-# define GETPGRP_NEEDS_ARG
-#endif

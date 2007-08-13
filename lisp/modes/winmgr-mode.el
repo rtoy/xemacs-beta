@@ -66,33 +66,37 @@
 
 
 ;;; Code:
-(defvar winmgr-mode-hook nil
-  "Hook to be run when `winmgr-mode' is entered.")
 
-(defvar winmgr-basic-offset 4
-  "*Number of spaces per indentation level.")
+(defgroup winmgr nil
+  "Generic window manager mode."
+  :tag "Window Managers"
+  :group 'languages)
+
+
+(defcustom winmgr-basic-offset 4
+  "*Number of spaces per indentation level."
+  :type 'integer
+  :group 'winmgr)
+
+(defcustom winmgr-mode-hook nil
+  "Hook to be run when `winmgr-mode' is entered."
+  :type 'hook
+  :group 'winmgr)
 
 
-;; font-lock-isms
-(defvar font-lock-m4-face 'default
-  "New face for m4 macros.")
-
-(defun winmgr-init-font-lock ()
-  ;; initialize font-lock faces for winmgr-mode
-  (condition-case nil 
-      (progn
-	(copy-face 'default   'm4-face)
-	(set-face-foreground  'm4-face "blue")
-	(set-face-background  'm4-face "white")
-	(setq font-lock-m4-face 'm4-face))
-    (error nil)))
+(defface font-lock-m4-face
+  '((((class color))
+     (:foreground "blue"))
+    (t
+     (:underline t)))
+  "Font-lock face for M4 macros."
+  :group 'winmgr)
 
 (defvar winmgr-font-lock-keywords 
   '(("^[A-Za-z]+[ \n\t]" . font-lock-function-name-face)
     ;;("^#.*" . font-lock-comment-face)
     ("^[A-Za-z]+(.*)" . font-lock-m4-face))
   "Default font-lock keywords.")
-
 
 
 ;; major-mode stuff
@@ -119,6 +123,7 @@
   )
 
 
+;;;###autoload
 (defun winmgr-mode ()
   "Major mode for editing winmgr config files."
   (interactive)

@@ -719,8 +719,8 @@ concat (int nargs, Lisp_Object *args,
 	  /* Fetch next element of `seq' arg into `elt' */
 	  if (CONSP (seq))
             {
-              elt = Fcar (seq);
-              seq = Fcdr (seq);
+              elt = XCAR (seq);
+              seq = XCDR (seq);
             }
 	  else
 	    {
@@ -1733,8 +1733,9 @@ Returns the beginning of the reversed list.
   while (!NILP (tail))
     {
       QUIT;
-      next = Fcdr (tail);
-      Fsetcdr (tail, prev);
+      CHECK_CONS (tail);
+      next = XCDR (tail);
+      XCDR (tail) = prev;
       prev = tail;
       tail = next;
     }
@@ -1748,17 +1749,13 @@ See also the function `nreverse', which is used more often.
 */
        (list))
 {
-  Lisp_Object length;
-  Lisp_Object *vec;
-  Lisp_Object tail;
-  REGISTER int i;
+  Lisp_Object new;
 
-  length = Flength (list);
-  vec = (Lisp_Object *) alloca (XINT (length) * sizeof (Lisp_Object));
-  for (i = XINT (length) - 1, tail = list; i >= 0; i--, tail = Fcdr (tail))
-    vec[i] = Fcar (tail);
-
-  return Flist (XINT (length), vec);
+  for (new = Qnil; CONSP (list); list = XCDR (list))
+    new = Fcons (XCAR (list), new);
+  if (!NILP (list))
+    list = wrong_type_argument (Qconsp, list);
+  return new;
 }
 
 static Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2, 
@@ -2887,10 +2884,10 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
     return 0;
   else if (CONSP (o1))
     {
-      if (!internal_equal (Fcar (o1), Fcar (o2), depth + 1))
+      if (!internal_equal (XCAR (o1), XCAR (o2), depth + 1))
         return 0;
-      o1 = Fcdr (o1);
-      o2 = Fcdr (o2);
+      o1 = XCDR (o1);
+      o2 = XCDR (o2);
       goto do_cdr;
     }
 
@@ -2957,10 +2954,10 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
     return 0;
   else if (CONSP (o1))
     {
-      if (!internal_old_equal (Fcar (o1), Fcar (o2), depth + 1))
+      if (!internal_old_equal (XCAR (o1), XCAR (o2), depth + 1))
         return 0;
-      o1 = Fcdr (o1);
-      o2 = Fcdr (o2);
+      o1 = XCDR (o1);
+      o2 = XCDR (o2);
       goto do_cdr;
     }
 
@@ -3135,7 +3132,7 @@ Only the last argument is not altered, and need not be a list.
       while (CONSP (tem))
 	{
 	  tail = tem;
-	  tem = Fcdr (tail);
+	  tem = XCDR (tail);
 	  QUIT;
 	}
 

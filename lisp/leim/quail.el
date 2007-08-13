@@ -1,4 +1,4 @@
-;;; quail.el -- provides simple input method for multilingual text
+;;; quail.el --- Provides simple input method for multilingual text
 
 ;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
@@ -92,6 +92,13 @@ See the documentation of `quail-package-alist' for the format.")
 
 (defvar quail-current-translations nil
   "Cons of indices and vector of possible translations of the current key.")
+
+(defvar quail-current-data nil
+  "Any Lisp object holding information of current translation status.
+When a key sequence is mapped to TRANS and TRANS is a cons
+of actual translation and some Lisp object to be refered
+for translating the longer key sequence, this variable is set
+to that Lisp object.")
 
 ;; A flag to control conversion region.  Normally nil, but if set to
 ;; t, it means we must start the new conversion region if new key to
@@ -557,7 +564,10 @@ The command \\[describe-input-method] describes the current Quail package."
       (setq overriding-local-map quail-saved-overriding-local-map)
       ;; If whole text in conversion area was deleted, exit from the
       ;; recursive edit.
-      (let ((start (overlay-start quail-conv-overlay)))
+      ;;    1997/6/24 modified by MORIOKA Tomohiko <morioka@jaist.ac.jp>
+      ;;	for XEmacs
+      (let ((start (and quail-conv-overlay
+			(overlay-start quail-conv-overlay))))
 	(if (and start (= start (overlay-end quail-conv-overlay)))
 	    (throw 'quail-tag nil)))
       )))
@@ -684,11 +694,13 @@ the translation.  These objects are transformed to cons cells in the
 format \(INDEX . VECTOR), as described above."
   (and (consp object)
        (let ((translation (car object)))
-	 (or (integerp translation) (consp translation) (null translation)
+	 (or (characterp translation) (null translation)
 	     (vectorp translation) (stringp translation)
-	     (symbolp translation)))
+	     (symbolp translation)
+	     (and (consp translation) (not (vectorp (cdr translation))))))
        (let ((alist (cdr object)))
-	 (or (listp alist) (symbolp alist)))))
+	 (or (and (listp alist) (consp (car alist)))
+	     (symbolp alist)))))
 
 (defmacro quail-define-rules (&rest rules)
   "Define translation rules of the current Quail package.
@@ -723,11 +735,14 @@ The installed map can be referred by the function `quail-map'."
 (defun quail-defrule (key translation &optional name)
   "Add one translation rule, KEY to TRANSLATION, in the current Quail package.
 KEY is a string meaning a sequence of keystrokes to be translated.
-TRANSLATION is a character, a string, a vector, a Quail map, or a function.
+TRANSLATION is a character, a string, a vector, a Quail map,
+a function, or a cons.
 It it is a character, it is the sole translation of KEY.
 If it is a string, each character is a candidate for the translation.
 If it is a vector, each element (string or character) is a candidate
   for the translation.
+If it is a cons, the car is one of the above and the cdr is a function
+to call when translating KEY.
 In these cases, a key specific Quail map is generated and assigned to KEY.
 
 If TRANSLATION is a Quail map or a function symbol which returns a Quail map,
@@ -749,6 +764,7 @@ current Quail package."
   ;; 1997/5/26 by MORIOKA Tomohiko
   ;;	modified for XEmacs
   (if (not (or (characterp trans) (stringp trans) (vectorp trans)
+	       (consp trans)
 	       (symbolp trans)
 	       (quail-map-p trans)))
       (error "Invalid Quail translation `%s'" trans))
@@ -757,6 +773,7 @@ current Quail package."
   (let ((len (length key))
 	(idx 0)
 	ch entry)
+    ;; Make a map for registering TRANS if necessary.
     (while (< idx len)
       (if (null (consp map))
 	  ;; We come here, for example, when we try to define a rule
@@ -794,41 +811,43 @@ current Quail package."
 	      (setcdr entry (append trans (cdr map)))))
 	(setcar map trans)))))
 
-(defun quail-get-translation (map key len)
-  "Return the translation specified in Quail map MAP for KEY of length LEN.
+(defun quail-get-translation (def key len)
+  "Return the translation specified as DEF for KEY of length LEN.
 The translation is either a character or a cons of the form (INDEX . VECTOR),
 where VECTOR is a vector of candidates (character or string) for
 the translation, and INDEX points into VECTOR to specify the currently
 selected translation."
-  (let ((def (car map)))
-    (if (and def (symbolp def))
-	;; DEF is a symbol of a function which returns valid translation.
-	(setq def (funcall def key len)))
-    (cond
-     ((or (characterp def) (consp def))
-      def)
+  (if (and def (symbolp def))
+      ;; DEF is a symbol of a function which returns valid translation.
+      (setq def (funcall def key len)))
+  (if (and (consp def) (not (vectorp (cdr def))))
+      (setq def (car def)))
 
-     ((null def)
-      ;; No translation.
-      nil)
+  (cond
+   ((or (characterp def) (consp def))
+    def)
 
-     ((stringp def)
-      ;; Each character in DEF is a candidate of translation.  Reform
-      ;; it as (INDEX . VECTOR).
-      (setq def (string-to-vector def))
-      ;; But if the length is 1, we don't need vector but a single
-      ;; character as the translation.
-      (if (= (length def) 1)
-	  (aref def 0)
-	(cons 0 def)))
+   ((null def)
+    ;; No translation.
+    nil)
 
-     ((vectorp def)
-      ;; Each element (string or character) in DEF is a candidate of
-      ;; translation.  Reform it as (INDEX . VECTOR).
-      (cons 0 def))
+   ((stringp def)
+    ;; Each character in DEF is a candidate of translation.  Reform
+    ;; it as (INDEX . VECTOR).
+    (setq def (string-to-vector def))
+    ;; But if the length is 1, we don't need vector but a single
+    ;; candidate as the translation.
+    (if (= (length def) 1)
+	(aref def 0)
+      (cons 0 def)))
 
-     (t
-      (error "Invalid object in Quail map: %s" def)))))
+   ((vectorp def)
+    ;; Each element (string or character) in DEF is a candidate of
+    ;; translation.  Reform it as (INDEX . VECTOR).
+    (cons 0 def))
+
+   (t
+    (error "Invalid object in Quail map: %s" def))))
 
 (defun quail-lookup-key (key len)
   "Lookup KEY of length LEN in the current Quail map and return the definition.
@@ -836,7 +855,7 @@ The returned value is a Quail map specific to KEY."
   (let ((idx 0)
 	(map (quail-map))
 	(kbd-translate (quail-kbd-translate))
-	slot ch translation)
+	slot ch translation def)
     (while (and map (< idx len))
       (setq ch (if kbd-translate (quail-keyboard-translate (aref key idx))
 		 (aref key idx)))
@@ -847,12 +866,22 @@ The returned value is a Quail map specific to KEY."
       (if (and (cdr slot) (symbolp (cdr slot)))
 	  (setcdr slot (funcall (cdr slot) key idx)))
       (setq map (cdr slot)))
-    (if (and map (setq translation (quail-get-translation map key len)))
+    (setq def (car map))
+    (if (and map (setq translation (quail-get-translation def key len)))
 	(progn
-	  ;; We may have to reform car part of MAP.
-	  (if (not (equal (car map) translation))
-	      (setcar map translation))
-	  (if (consp translation) 
+	  (if (and (consp def) (not (vectorp (cdr def))))
+	      (progn
+		(if (not (equal (car def) translation))
+		    ;; We must reflect TRANSLATION to car part of DEF.
+		    (setcar def translation))
+		(setq quail-current-data
+		      (if (functionp (cdr def))
+			  (funcall (cdr def))
+			(cdr def))))
+	    (if (not (equal def translation))
+		;; We must reflect TRANSLATION to car part of MAP.
+		(setcar map translation)))
+	  (if (and (consp translation) (vectorp (cdr translation))) 
 	      (progn
 		(setq quail-current-translations translation)
 		(if (quail-forget-last-selection)
@@ -1044,6 +1073,8 @@ sequence counting from the head."
 	 def ch)
     (if map
 	(let ((def (car map)))
+	  (if (and (consp def) (not (vectorp (cdr def))))
+	      (setq def (car def)))
 	  (setq quail-current-str
 		(if (consp def) (aref (cdr def) (car def)) def))
 	  ;; Return t only if we can terminate the current translation.
@@ -1065,6 +1096,8 @@ sequence counting from the head."
 	      (quail-maximum-shortest)
 	      (>= len 4)
 	      (setq def (car (quail-lookup-key quail-current-key (- len 2))))
+	      (if (and (consp def) (not (vectorp (cdr def))))
+		  (setq def (car def)))
 	      (quail-lookup-key (substring quail-current-key -2) 2))
 	     ;; Now the sequence is "...ABCD", which can be split into
 	     ;; "...AB" and "CD..." to get valid translation.
@@ -1350,8 +1383,11 @@ the bottommost ordinary window."
 
 (defun quail-show-translations ()
   "Show the current possible translations."
-  (let ((key quail-current-key)
-	(map (quail-lookup-key quail-current-key (length quail-current-key))))
+  (let* ((key quail-current-key)
+	 (map (quail-lookup-key quail-current-key (length quail-current-key)))
+	 (def (car map)))
+    (if (and (consp def) (not (vectorp (cdr def))))
+	(setq def (car def)))
     (save-excursion
       (set-buffer quail-guidance-buf)
       (erase-buffer)
@@ -1369,9 +1405,9 @@ the bottommost ordinary window."
 	    (insert "]")))
 
       ;; Show list of translations.
-      (if (consp (car map))
-	  (let* ((idx (car (car map)))
-		 (translations (cdr (car map)))
+      (if (and (not (quail-deterministic)) (consp def))
+	  (let* ((idx (car def))
+		 (translations (cdr def))
 		 (from (* (/ idx 10) 10))
 		 (to (min (+ from 10) (length translations))))
 	    (indent-to 10)
@@ -1431,10 +1467,10 @@ All possible translations of the current key and whole possible longer keys
 	    (setq l (cdr l)))))))
 
 ;; List all possible translations of KEY in Quail map MAP with
-;; indentation INDENT."
+;; indentation INDENT.
 (defun quail-completion-list-translations (map key indent)
   (let ((translations
-	 (quail-get-translation map key (length key))))
+	 (quail-get-translation (car map) key (length key))))
     (if (integerp translations)
 	(insert "(1/1) 1." translations "\n")
       ;; We need only vector part.
@@ -1533,7 +1569,7 @@ key		binding
 	  (insert ch)
 	(let* ((map (cdr (assq ch (cdr (quail-map)))))
 	       (translation (and map (quail-get-translation 
-				      map (char-to-string ch) 1))))
+				      (car map) (char-to-string ch) 1))))
 	  (if (integerp translation)
 	      (insert translation)
 	    (if (consp translation)

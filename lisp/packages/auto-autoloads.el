@@ -161,7 +161,7 @@ each TIMEOUT secs (can be a float)." t nil)
 
 ;;;***
 
-;;;### (autoloads (bookmark-menu-delete bookmark-menu-rename bookmark-menu-locate bookmark-menu-jump bookmark-menu-insert bookmark-bmenu-list bookmark-load bookmark-save bookmark-write bookmark-delete bookmark-insert bookmark-rename bookmark-insert-location bookmark-relocate bookmark-jump bookmark-set) "bookmark" "packages/bookmark.el")
+;;;### (autoloads (bookmark-menu-delete bookmark-menu-rename bookmark-menu-locate bookmark-menu-jump bookmark-menu-insert bookmark-bmenu-list bookmark-load bookmark-save bookmark-write bookmark-delete bookmark-insert bookmark-rename bookmark-insert-location bookmark-relocate bookmark-jump bookmark-set bookmark-all-names) "bookmark" "packages/bookmark.el")
 
 (if (symbolp (key-binding "r")) nil (progn (define-key ctl-x-map "rb" 'bookmark-jump) (define-key ctl-x-map "rm" 'bookmark-set) (define-key ctl-x-map "rl" 'bookmark-bmenu-list)))
 
@@ -199,6 +199,9 @@ functions have a binding in this keymap.")
 (define-key bookmark-map "s" 'bookmark-save)
 
 (add-hook 'kill-emacs-hook (function (lambda nil (and (featurep 'bookmark) bookmark-alist (bookmark-time-to-save-p t) (bookmark-save)))))
+
+(autoload 'bookmark-all-names "bookmark" "\
+Return a list of all current bookmark names." nil nil)
 
 (autoload 'bookmark-set "bookmark" "\
 Set a bookmark named NAME inside a file.
@@ -1626,6 +1629,8 @@ and `inhibit-first-line-modes-suffixes'." nil nil)
 
 ;;;### (autoloads (turn-on-lazy-lock lazy-lock-mode) "lazy-lock" "packages/lazy-lock.el")
 
+(defvar lazy-lock-mode nil)
+
 (autoload 'lazy-lock-mode "lazy-lock" "\
 Toggle Lazy Lock mode.
 With arg, turn Lazy Lock mode on if and only if arg is positive and the buffer
@@ -1652,7 +1657,7 @@ Use \\[lazy-lock-submit-bug-report] to send bug reports or feedback." t nil)
 (autoload 'turn-on-lazy-lock "lazy-lock" "\
 Unconditionally turn on Lazy Lock mode." nil nil)
 
-(when (fboundp 'add-minor-mode) (defvar lazy-lock-mode nil) (add-minor-mode 'lazy-lock-mode nil))
+(add-minor-mode 'lazy-lock-mode " Lazy")
 
 ;;;***
 

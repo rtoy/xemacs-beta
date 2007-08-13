@@ -1168,7 +1168,7 @@ to make one entry in the kill ring."
    ;; just isn't aware of this.  However, there's no harm in putting
    ;; the region's text in the kill ring, anyway.
    ((or (and buffer-read-only (not inhibit-read-only))
-	(text-property-not-all beg end 'read-only nil))
+	(text-property-not-all (min beg end) (max beg end) 'read-only nil))
    ;; This is redundant.
    ;; (if verbose (message "Copying %d characters"
    ;;			 (- (max beg end) (min beg end))))
@@ -1195,11 +1195,13 @@ to make one entry in the kill ring."
       ;; Search back in buffer-undo-list for this string,
       ;; in case a change hook made property changes.
       (setq tail buffer-undo-list)
-      (while (not (stringp (car-safe (car-safe tail)))) ; XEmacs
-	(setq tail (cdr tail)))
+      (while (and tail
+		  (not (stringp (car-safe (car-safe tail))))) ; XEmacs
+	(pop tail))
       ;; Take the same string recorded for undo
       ;; and put it in the kill-ring.
-      (kill-new (car (car tail)))))
+      (and tail
+	   (kill-new (car (car tail))))))
 
    (t
     ;; if undo is not kept, grab the string then delete it (which won't

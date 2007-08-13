@@ -477,7 +477,7 @@ wants_debugger (Lisp_Object list, Lisp_Object conditions)
    and described by SIGNAL-DATA, should skip the debugger
    according to debugger-ignore-errors.  */
 
-extern Lisp_Object Frunning_temacs_p();
+extern Lisp_Object Frunning_temacs_p(), Ferror_message_string(Lisp_Object obj);
 
 static int
 skip_debugger (Lisp_Object conditions, Lisp_Object data)
@@ -485,11 +485,47 @@ skip_debugger (Lisp_Object conditions, Lisp_Object data)
   Lisp_Object tail;
   int first_string = 1;
   Lisp_Object error_message;
+#if 0
+  struct gcpro gcpro1;
+#endif
 
-  if (!NILP(Frunning_temacs_p()) || NILP(Vdebug_ignored_errors))
+  /* Comment by Hrvoje Niksic:
+     For some reason, Ferror_message_string loses in temacs.  This
+     should require some more consideration than this knee-jerk
+     solution, but it will do for now.  For those interested in
+     debugging, here is what happens:
+
+     In temacs, a condition-cased file-error occurs.  Now, we enter
+     signal_call_debugger, which is supposed to decide whether we
+     should call debugger (for example, if `debug-on-signal' requires
+     it).  signal_call_debugger calls skip_debugger, which calls
+     Ferror_message_string.  Ferror_message_string in turn calls
+     print_error_message.  For some unfathomable reason, the
+     expression
+
+        errname = Fcar (data);
+
+     fails with a `wrong-type-argument' error, which should not
+     happen, as the DATA argument is the very same Lisp_Object
+     skip_debugger was called with (which is in signal_call_debugger,
+     and the DATA argument is Fcons (FOO, BAR)).
+
+     Of course, since an error is signaled, signal_call_debugger gets
+     called again, which calls skip_debugger, and we end up with a
+     beautiful endless recursion.
+
+     The only explanation I can think of is that DATA should be
+     gc-protected during the way; I cannot test this, as I cannot
+     repeat all of this.  The crash info comes from Steve. */
+#if 0
+  if (!NILP(Frunning_temacs_p()))
     {
-      return 1;
+      return 0;
     }
+#endif
+#if 0
+  GCPRO1(data);
+#endif
 
   for (tail = Vdebug_ignored_errors; CONSP (tail); tail = XCDR (tail))
     {
@@ -497,23 +533,34 @@ skip_debugger (Lisp_Object conditions, Lisp_Object data)
 	{
 	  if (first_string)
 	    {
-/*	      error_message = Ferror_message_string (data);*/
-	      error_message = build_string("Tell_Hrvoje");
+	      error_message = Ferror_message_string (data);
+/*	      error_message = build_string("Tell_Hrvoje"); */
 	      first_string = 0;
 	    }
-	  if (fast_lisp_string_match (XCAR (tail), error_message) >= 0)
+	  if (fast_lisp_string_match (XCAR (tail), error_message) >= 0) {
+#if 0
+	    UNGCPRO;
+#endif
 	    return 1;
+	  }
 	}
       else
 	{
 	  Lisp_Object contail;
 
           for (contail = conditions; CONSP (contail); contail = XCDR (contail))
-            if (EQ (XCAR (tail), XCAR (contail)))
+            if (EQ (XCAR (tail), XCAR (contail))) {
+#if 0
+	      UNGCPRO;
+#endif
 	      return 1;
+	    }
 	}
     }
 
+#if 0
+  UNGCPRO;
+#endif
   return 0;
 }
 

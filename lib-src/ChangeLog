@@ -1,3 +1,15 @@
+1997-06-24  Steven L Baur  <steve@altair.xemacs.org>
+
+	* gnuattach: Needed executable bit set.
+	Suggested by Kyle Jones <kyle_jones@wonderworks.com>
+
+	* update-elc.sh (ignore_pattern): lisp/language/ethiopic byte
+	compiles now.
+
+1997-06-24  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* update-autoloads.sh: Search lisp/mule/.
+
 1997-06-20  Steven L Baur  <steve@altair.xemacs.org>
 
 	* gnuattach: Readd as warning script.

@@ -229,101 +229,6 @@ non-nil." t nil)
 
 ;;;***
 
-;;;### (autoloads (c-add-style c-set-style java-mode objc-mode c++-mode c-mode) "cc-mode" "modes/cc-mode.el")
-
-(autoload 'c-mode "cc-mode" "\
-Major mode for editing K&R and ANSI C code.
-To submit a problem report, enter `\\[c-submit-bug-report]' from a
-c-mode buffer.  This automatically sets up a mail buffer with version
-information already added.  You just need to add a description of the
-problem, including a reproducible test case and send the message.
-
-To see what version of CC Mode you are running, enter `\\[c-version]'.
-
-The hook variable `c-mode-hook' is run with no args, if that value is
-bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
-run first.
-
-Key bindings:
-\\{c-mode-map}" t nil)
-
-(autoload 'c++-mode "cc-mode" "\
-Major mode for editing C++ code.
-To submit a problem report, enter `\\[c-submit-bug-report]' from a
-c++-mode buffer.  This automatically sets up a mail buffer with
-version information already added.  You just need to add a description
-of the problem, including a reproducible test case, and send the
-message.
-
-To see what version of CC Mode you are running, enter `\\[c-version]'.
-
-The hook variable `c++-mode-hook' is run with no args, if that
-variable is bound and has a non-nil value.  Also the hook
-`c-mode-common-hook' is run first.
-
-Key bindings:
-\\{c++-mode-map}" t nil)
-
-(autoload 'objc-mode "cc-mode" "\
-Major mode for editing Objective C code.
-To submit a problem report, enter `\\[c-submit-bug-report]' from an
-objc-mode buffer.  This automatically sets up a mail buffer with
-version information already added.  You just need to add a description
-of the problem, including a reproducible test case, and send the
-message.
-
-To see what version of CC Mode you are running, enter `\\[c-version]'.
-
-The hook variable `objc-mode-hook' is run with no args, if that value
-is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
-is run first.
-
-Key bindings:
-\\{objc-mode-map}" t nil)
-
-(autoload 'java-mode "cc-mode" "\
-Major mode for editing Java code.
-To submit a problem report, enter `\\[c-submit-bug-report]' from an
-java-mode buffer.  This automatically sets up a mail buffer with
-version information already added.  You just need to add a description
-of the problem, including a reproducible test case and send the
-message.
-
-To see what version of CC Mode you are running, enter `\\[c-version]'.
-
-The hook variable `java-mode-hook' is run with no args, if that value
-is bound and has a non-nil value.  Also the common hook
-`c-mode-common-hook' is run first.  Note that this mode automatically
-sets the \"java\" style before calling any hooks so be careful if you
-set styles in `c-mode-common-hook'.
-
-Key bindings:
-\\{java-mode-map}" t nil)
-
-(autoload 'c-set-style "cc-mode" "\
-Set CC Mode variables to use one of several different indentation styles.
-STYLENAME is a string representing the desired style from the list of
-styles described in the variable `c-style-alist'.  See that variable
-for details of setting up styles.
-
-The variable `c-indentation-style' always contains the buffer's current
-style name." t nil)
-
-(autoload 'c-add-style "cc-mode" "\
-Adds a style to `c-style-alist', or updates an existing one.
-STYLE is a string identifying the style to add or update.  DESCRIP is
-an association list describing the style and must be of the form:
-
-  ((VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
-
-See the variable `c-style-alist' for the semantics of VARIABLE and
-VALUE.  This function also sets the current style to STYLE using
-`c-set-style' if the optional SET-P flag is non-nil." t nil)
-
-(fset 'set-c-style           'c-set-style)
-
-;;;***
-
 ;;;### (autoloads (common-lisp-indent-function) "cl-indent" "modes/cl-indent.el")
 
 (autoload 'common-lisp-indent-function "cl-indent" nil nil nil)
@@ -756,7 +661,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.1 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.2 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -1371,33 +1276,35 @@ Minor mode with distinct support for \\label, \\ref and \\cite in LaTeX.
 
 Labels can be created with `\\[reftex-label]' and referenced with `\\[reftex-reference]'.
 When referencing, you get a menu with all labels of a given type and
-context of the label definition. The selected label is inserted as a
+context of the label definition.  The selected label is inserted as a
 \\ref macro.
 
 Citations can be made with `\\[reftex-citation]' which will use a regular expression 
 to pull out a *formatted* list of articles from your BibTeX
-database. The selected citation is inserted as a \\cite macro.
+database.  The selected citation is inserted as a \\cite macro.
 
 A Table of Contents of the entire (multifile) document with browsing
 capabilities is available with `\\[reftex-toc]'.
 
-Most command have help available on the fly. This help is accessed by
+Most command have help available on the fly.  This help is accessed by
 pressing `?' to any prompt mentioning this feature.
 
+Extensive documentation about reftex is in the file header of `reftex.el'.
+
 \\{reftex-mode-map}
-Under X, these functions will be available also in a menu on the menu bar.
+Under X, these functions will also be available in a menu on the menu bar.
 
 ------------------------------------------------------------------------------" t nil)
 
 (autoload 'reftex-add-to-label-alist "reftex" "\
-Add label environment descriptions to reftex-label-alist-external-add-ons.
-The format of ENTRY-LIST is exactly like reftex-label-alist. See there 
+Add label environment descriptions to `reftex-label-alist-external-add-ons'.
+The format of ENTRY-LIST is exactly like `reftex-label-alist'.  See there 
 for details.
 This function makes it possible to support RefTeX from AUCTeX style files.
 The entries in ENTRY-LIST will be processed after the user settings in
-reftex-label-alist, and before the defaults (specified in
-reftex-default-label-alist-entries).  Any changes made to
-reftex-label-alist-external-add-ons will raise a flag to the effect that a
+`reftex-label-alist', and before the defaults (specified in
+`reftex-default-label-alist-entries').  Any changes made to
+`reftex-label-alist-external-add-ons' will raise a flag to the effect that a
 mode reset is done on the next occasion." nil nil)
 
 ;;;***
@@ -2098,7 +2005,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.1 $
+vhdl-mode $Revision: 1.2 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2212,6 +2119,13 @@ already exist.
 
 Commands:
 \\{vrml-mode-map}" t nil)
+
+;;;***
+
+;;;### (autoloads (winmgr-mode) "winmgr-mode" "modes/winmgr-mode.el")
+
+(autoload 'winmgr-mode "winmgr-mode" "\
+Major mode for editing winmgr config files." t nil)
 
 ;;;***
 

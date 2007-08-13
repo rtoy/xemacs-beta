@@ -1,44 +1,47 @@
 ;;; sun-mouse.el --- mouse handling for Sun windows
 
-;; Copyright (C) 1987 Free Software Foundation, Inc.
+;; Copyright (C) 1987, 1997 Free Software Foundation, Inc.
 
 ;; Author: Jeff Peck
 ;; Maintainer: FSF
 ;; Keywords: hardware
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with:  Unknown
 
 ;;; Commentary:
 
-;;; Jeff Peck, Sun Microsystems, Jan 1987.
-;;; Original idea by Stan Jefferson
+;; Jeff Peck, Sun Microsystems, Jan 1987.
+;; Original idea by Stan Jefferson
 
-;;;
-;;;     Modelled after the GNUEMACS keymap interface.
-;;;
-;;; User Functions:
-;;;   make-mousemap, copy-mousemap, 
-;;;   define-mouse, global-set-mouse, local-set-mouse,
-;;;   use-global-mousemap, use-local-mousemap,
-;;;   mouse-lookup, describe-mouse-bindings
-;;;
-;;; Options:
-;;;   extra-click-wait, scrollbar-width
-;;;
+;;
+;;     Modelled after the GNUEMACS keymap interface.
+;;
+;; User Functions:
+;;   make-mousemap, copy-mousemap, 
+;;   define-mouse, global-set-mouse, local-set-mouse,
+;;   use-global-mousemap, use-local-mousemap,
+;;   mouse-lookup, describe-mouse-bindings
+;;
+;; Options:
+;;   extra-click-wait, scrollbar-width
+;;
 
 ;;; Code:
 
@@ -164,18 +167,6 @@ Just like the Common Lisp function of the same name."
 (defmacro sm::loc-x (loc) (list 'nth 1 loc))
 (defmacro sm::loc-y (loc) (list 'nth 2 loc))
 
-(defmacro eval-in-buffer (buffer &rest forms)
-  "Macro to switches to BUFFER, evaluates FORMS, returns to original buffer."
-  ;; When you don't need the complete window context of eval-in-window
-  (` (let ((StartBuffer (current-buffer)))
-    (unwind-protect
-	(progn
-	  (set-buffer (, buffer))
-	  (,@ forms))
-    (set-buffer StartBuffer)))))
-
-(put 'eval-in-buffer 'lisp-indent-function 1)
-
 ;;; this is used extensively by sun-fns.el
 ;;;
 (defmacro eval-in-window (window &rest forms)
@@ -247,7 +238,7 @@ Returns nil."
 	  (*mouse-x* (sm::loc-x loc))
 	  (*mouse-y* (sm::loc-y loc))
 	  (mouse-code (mouse-event-code hit loc)))
-      (let ((form (eval-in-buffer (window-buffer *mouse-window*)
+      (let ((form (with-current-buffer (window-buffer *mouse-window*)
 		    (mouse-lookup mouse-code))))
 	(cond ((null form)
 	       (if (not (sm::hit-up-p hit))	; undefined up hits are ok.

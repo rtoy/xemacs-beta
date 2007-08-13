@@ -1,7 +1,7 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/24 04:44:57
-;; Version: 1.25
+;; Created: 1997/05/10 23:01:41
+;; Version: 1.26
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -107,7 +107,7 @@
   ;; Emacs 19 specific stuff for w3-mode
   (declare (special w3-face-index w3-display-background-properties))
   (make-local-variable 'track-mouse)
-  (set (make-local-variable 'buffer-access-fontify-functions) 'w3-e19-no-read-only)
+  ;(set (make-local-variable 'buffer-access-fontify-functions) 'w3-e19-no-read-only)
   (if w3-track-mouse (setq track-mouse t))
   (if w3-display-background-properties
       (let ((face (w3-make-face (intern

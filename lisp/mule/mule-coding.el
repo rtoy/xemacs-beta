@@ -73,6 +73,8 @@ Does not modify STR.  Returns the encoded string on successful conversion."
   "Return the 'mnemonic property of CODING-SYSTEM."
   (coding-system-property coding-system 'mnemonic))
 
+(defalias 'coding-system-docstring 'coding-system-doc-string)
+
 (defun coding-system-eol-type (coding-system)
   "Return the 'eol-type property of CODING-SYSTEM."
   (coding-system-property coding-system 'eol-type))

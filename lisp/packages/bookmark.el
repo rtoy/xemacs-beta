@@ -338,7 +338,7 @@ through a file easier.")
   "Return name of FULL-RECORD \(an alist element instead of a string\)."
   (car full-record))
 
-
+;;;###autoload
 (defun bookmark-all-names ()
   "Return a list of all current bookmark names."
   (bookmark-maybe-load-default-file)
@@ -2087,7 +2087,7 @@ The number of panes depends on the number of entries."
 	 (x-popup-menu event (bookmark-menu-build-paned-menu name entries)))
 	(t ; XEmacs
 	 (get-popup-menu-response
-	  (cons title
+	  (cons name
 		(mapcar
 		 (function
 		  (lambda (x)

@@ -62,7 +62,6 @@
 (put 'browse-url 'custom-loads '())
 (put 'processes 'custom-loads '("background" "comint" "rlogin" "shell" "ssh"))
 (put 'message-insertion 'custom-loads '())
-(put 'hyper-apropos 'custom-loads '())
 (put 'background 'custom-loads '("background"))
 (put 'vc 'custom-loads '())
 (put 'alloc 'custom-loads '())

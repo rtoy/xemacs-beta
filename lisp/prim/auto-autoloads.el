@@ -223,12 +223,16 @@ Type \\[describe-mode] in that buffer for a list of commands." t nil)
 
 ;;;***
 
-;;;### (autoloads (pretty-print-profiling-info) "profile" "prim/profile.el")
+;;;### (autoloads (profile pretty-print-profiling-info) "profile" "prim/profile.el")
 
 (autoload 'pretty-print-profiling-info "profile" "\
 Print profiling info INFO to standard output in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
 `get-profiling-info'." nil nil)
+
+(autoload 'profile "profile" "\
+Turn on profiling, execute FORMS and stop profiling.
+Returns the profiling info, printable by `pretty-print-profiling-info'." nil 'macro)
 
 ;;;***
 

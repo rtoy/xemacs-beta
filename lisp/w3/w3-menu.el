@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/17 15:50:07
-;; Version: 1.37
+;; Created: 1997/06/24 13:59:48
+;; Version: 1.40
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -28,6 +28,18 @@
 
 (require 'w3-vars)
 (require 'w3-mouse)
+(require 'widget)
+
+(define-widget-keywords :href :src :title)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; InfoDock stuff
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(if (not (fboundp 'id-menubar-set))
+    (fset 'id-menubar-set 'ignore))
+
+(id-menubar-set 'w3-mode 'w3-menu-make-xemacs-menubar)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Spiffy new menus (for both Emacs and XEmacs)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -143,10 +155,10 @@ on that platform."
 	(while widgets
 	  (setq widget (car widgets)
 		widgets (cdr widgets)
-		href (widget-get widget 'href)
+		href (widget-get widget :href)
 		menu (cons
 		      (vector (w3-truncate-menu-item
-			       (or (widget-get widget 'title)
+			       (or (widget-get widget :title)
 				   (w3-fix-spaces
 				    (buffer-substring
 				     (widget-get widget :from)
@@ -553,10 +565,12 @@ on that platform."
 (defun w3-menu-install-menubar ()
   (cond
    (w3-running-xemacs
-    (if (not (featurep 'menubar))
-	nil				; No menus available
+    (cond
+     ((not (featurep 'menubar)) nil)	; No menus available
+     ((featurep 'infodock) nil)		; InfoDock does it automatically
+     (t
       (setq w3-menu-w3-menubar (w3-menu-make-xemacs-menubar))
-      (set-buffer-menubar w3-menu-w3-menubar)))
+      (set-buffer-menubar w3-menu-w3-menubar))))
    ((not (fboundp 'vm-menu-undo-menu))
     (w3-menu-initialize-w3-mode-menu-map)
     (define-key w3-mode-map [menu-bar]
@@ -707,10 +721,10 @@ on that platform."
 	   (widget (or (and glyph (glyph-property glyph 'widget))
 		       (widget-at (point))))
 	   (parent (and widget (widget-get widget :parent)))
-	   (href (or (and widget (widget-get widget 'href))
-		     (and parent (widget-get parent 'href))))
-	   (imag (or (and widget (widget-get widget 'src))
-		     (and parent (widget-get parent 'src))))
+	   (href (or (and widget (widget-get widget :href))
+		     (and parent (widget-get parent :href))))
+	   (imag (or (and widget (widget-get widget :src))
+		     (and parent (widget-get parent :src))))
 	   (menu (copy-tree w3-popup-menu))
 	   url val trunc-url)
       (if href

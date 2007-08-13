@@ -24,7 +24,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Version: 1.15  (I choose the version number starting at 1.1
+;;; Version: 1.17  (I choose the version number starting at 1.1
 ;;;                to indicate that 1.0 was the old version
 ;;;                before I hacked away on it -jtl)
 
@@ -56,11 +56,21 @@
 ;;; Code:
 
 (require 'itimer)
+;;; Not sure for now...
+;;;(require 'balloon-help)
 
 (defconst display-time-version-number "1.15" "Version number of time.el")
 (defconst display-time-version (format "Time.el version %s for XEmacs"
 				       display-time-version-number)
   "The full version string for time.el")
+
+;;; Doesn't work by now....
+;;;(defvar display-time-keymap nil)
+;;;
+;;;(if display-time-keymap ()
+;;;  (setq display-time-keymap (make-sparse-keymap)) 
+;;;  (suppress-keymap display-time-keymap)
+;;;  (define-key display-time-keymap 'button1 'balloon-help))
 
 ;; We need the progn to kill off the defgroup-tracking mechanism.
 ;; This package changes the state of XEmacs by loading it, which is
@@ -493,11 +503,15 @@ displayed."
 	      (make-glyph  (concat display-time-icons-dir "letter.xpm"))))
       (set-extent-property (car display-time-mail-sign) 'balloon-help
 			   'display-time-mail-balloon)
+;;;	 (set-extent-keymap (car display-time-mail-sign)
+;;;			    display-time-keymap)
       (defvar display-time-no-mail-sign
 	(cons (make-extent nil nil)
 	      (make-glyph  (concat display-time-icons-dir "no-letter.xpm"))))
       (set-extent-property (car display-time-no-mail-sign) 'balloon-help
 			   display-time-no-mail-balloon)
+;;;	 (set-extent-keymap (car display-time-no-mail-sign)
+;;;			    display-time-keymap)
       (defvar display-time-1-glyph  nil)
       (defvar display-time-2-glyph  nil)
       (defvar display-time-3-glyph  nil)
@@ -553,6 +567,7 @@ displayed."
 					 (char-to-string elem)
 					 "-glyph"))))
 	(set-extent-property (car elem) 'balloon-help balloon-help)
+;;;	(set-extent-keymap (car elem) display-time-keymap)
 	(push elem tmp))
       (reverse tmp))))
 
@@ -976,6 +991,7 @@ Look at display-time-form-list.")
 
 (defun display-time-function ()
   (let* ((now (current-time))
+	 (nowhigh (* (- (nth 0 now) (* (/ (nth 0 now) 10) 10)) 65536))
 	 (time (current-time-string now))
          (load (condition-case ()
                    (if (zerop (car (load-average))) ""
@@ -989,17 +1005,21 @@ Look at display-time-form-list.")
 	 (mail (and (stringp mail-spool-file)
 		    (or (null display-time-server-down-time)
 			;; If have been down for 20 min, try again.
-			(> (- (nth 1 (current-time))
+			(> (- (+ (nth 1 now) nowhigh)
 			      display-time-server-down-time)
 			   1200))
 		    (let ((start-time (current-time)))
 		      (prog1
 			  (display-time-file-nonempty-p mail-spool-file)
-			(if (> (- (nth 1 (current-time)) (nth 1 start-time))
+			(setq now (current-time)
+			      nowhigh (* (- (nth 0 now) (* (/ (nth 0 now) 10) 10)) 65536))
+			(if (> (- (+ (nth 1 now) nowhigh)
+				  (+ (nth 1 start-time)
+				     (* (- (nth 0 start-time) (* (/ (nth 0 start-time) 10) 10)) 65536)))
 			       20)
 			    ;; Record that mail file is not accessible.
 			    (setq display-time-server-down-time 
-				  (nth 1 (current-time)))
+				  (+ (nth 1 now) nowhigh))
 			  ;; Record that mail file is accessible.
 			  (setq display-time-server-down-time nil))))))
          (24-hours (substring time 11 13))

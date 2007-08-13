@@ -1749,9 +1749,11 @@ configure___ REAL_CFLAGS=C_DEBUG_SWITCH '$SPECIFIED_CFLAGS'
 dnl The value of CPP is a quoted variable reference, so we need to do this
 dnl to get its actual value...
 CPP=`eval "echo $CPP"`
+define(TAB, [	])dnl
+changequote(, )dnl
 eval `$CPP -Isrc $tempcname \
-	| [sed -n -e "s/[ \t]*=[ \t\"]*/='/" -e "s/[ \t\"]*\$/'/" -e "s/^configure___//p"`]
-
+	| sed -n -e "s/[ TAB]*=[ TAB\"]*/='/" -e "s/[ TAB\"]*\$/'/" -e "s/^configure___//p"`
+changequote([, ])dnl
 dnl if test -z "$SPECIFIED_CFLAGS"; then
 dnl   eval `$CPP -Isrc -DTHIS_IS_CONFIGURE $tempcname \
 dnl 	| sed -n -e "s/ *=[[ \"]]*/='/" -e "s/[[ \"]]*\$/'/" -e "s/^configure___//p"`
@@ -1878,7 +1880,7 @@ done
 
 dnl --site-runtime-libraries (multiple dirs)
 if test -n "$site_runtime_libraries" ; then
-  LD_RUN_PATH="`echo $site_runtime_libraries | sed 's/ 	*/:/'`"
+  LD_RUN_PATH="`echo $site_runtime_libraries | sed -e 's/  */:/g'`"
   export LD_RUN_PATH
 fi
 
@@ -1937,8 +1939,8 @@ dnl XE_COMPUTE_RUNPATH()
 define([XE_COMPUTE_RUNPATH],[
 if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   dnl Remove runtime paths from current ld switches
-  ld_switch_site=`echo   '' $ld_switch_site   | sed -e 's:^ ::' -e "s/$dash_r[[^ ]]*//"`
-  ld_switch_x_site=`echo '' $ld_switch_x_site | sed -e 's:^ ::' -e "s/$dash_r[[^ ]]*//"`
+  ld_switch_site=`echo   '' $ld_switch_site   | sed -e 's:^ ::' -e "s/$dash_r[[^ ]]*//g"`
+  ld_switch_x_site=`echo '' $ld_switch_x_site | sed -e 's:^ ::' -e "s/$dash_r[[^ ]]*//g"`
   dnl PRINT_VAR(ld_switch_site ld_switch_x_site)
 
   dnl Fix up Runtime path
@@ -2128,7 +2130,7 @@ if   ${CC-cc} '-###' -xildon  no_such_file.c 2>&1 | grep '^[^ ]*/ild ' > /dev/nu
 fi
 
 dnl Link with "-z ignore" on Solaris if supported
-if test "$opsys" = "sol2" -a "${OS_RELEASE:-0}" -ge 56; then
+if test "$opsys" = "sol2" && test "$OS_RELEASE" -ge 56; then
   AC_MSG_CHECKING(for \"-z ignore\" linker flag)
   case "`ld -h 2>&1`" in
     *-z\ ignore\|record* ) AC_MSG_RESULT(yes)
@@ -3478,13 +3480,14 @@ dnl except ./Makefile from $srcdir/Makefile.in
 AC_OUTPUT($internal_makefile_list,[
 for dir in $MAKE_SUBDIR; do
   echo creating $dir/Makefile
-  ([
+  (
+changequote(<<, >>)dnl
     cd $dir
     rm -f junk.c
     < Makefile.in \
-      sed -e 's/^# Generated.*//' \
+      sed -e '/^# Generated/d' \
           -e 's%/\*\*/#.*%%' \
-          -e 's/^[ \f\t]*#[ \f\t]*/#/' \
+          -e 's/^ *# */#/' \
           -e '/^##/d' \
           -e '/^#/ {
 p
@@ -3497,8 +3500,8 @@ s/$/"/
     $CPP -I. -I${top_srcdir}/src $CPPFLAGS junk.c > junk.cpp;
     < junk.cpp				\
       sed -e 's/^#.*//'			\
-	-e 's/^[ \f\t][ \f\t]*$//'	\
-	-e 's/^ /	/'		\
+	-e 's/^[ TAB][ TAB]*$//'	\
+	-e 's/^ /TAB/'			\
 	| sed -n -e '/^..*$/p'		\
 	| sed '/^"/ {
 s/\\\([\"]\)/\1/g
@@ -3508,7 +3511,8 @@ s/"$//
     chmod 444 Makefile.new
     mv -f Makefile.new Makefile
     rm -f junk.c junk.cpp
-  ])
+changequote([, ])dnl
+)
 done
 ],
 [CPP="$CPP"

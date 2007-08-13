@@ -5,7 +5,7 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @setfilename  cc-mode.info
-@settitle     CC MODE Version 4 Documentation
+@settitle     CC MODE Version 5 Documentation
 @footnotestyle end
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -16,13 +16,11 @@
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
-@comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: 2.66
-@comment generated from the original README file by Krishna Padmasola
+@comment TeXinfo manual for CC Mode
+@comment Generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
-@comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: 1997/03/07 23:36:14
+@comment Maintained by Barry A. Warsaw <cc-mode-help@python.org>
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -48,10 +46,9 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @comment The title is printed in a large font.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@center @titlefont{CC Mode Version 4}
+@center @titlefont{CC Mode 5.11}
 @sp 2
-@center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: 2.66)
+@center @subtitlefont{A GNU Emacs mode for editing C, C++, Objective-C, and Java code}
 @sp 2
 @center Barry A. Warsaw
 
@@ -112,17 +109,17 @@ CC Mode
 @end macro
 
 @cindex BOCM
-Welcome to @ccmode{}, version 4.  This is a GNU Emacs mode for
-editing files containing C, C++, Objective-C, and Java code.
-This incarnation of the mode is descendant from @file{c-mode.el} (also
-called "Boring Old C Mode" or BOCM @code{:-)}, and @file{c++-mode.el}
-version 2, which I have been maintaining since 1992.  @ccmode{}
-represents a significant milestone in the mode's life.  It has been
-fully merged back with Emacs 19's @file{c-mode.el}. Also a new, more
-intuitive and flexible mechanism for controlling indentation has been
-developed.
 
-@ccmode{} version 4 supports the editing of K&R and ANSI C, @dfn{ARM}
+Welcome to @ccmode{}.  This is a GNU Emacs mode for editing files
+containing C, C++, Objective-C, and Java code.  This incarnation of the
+mode is descendant from @file{c-mode.el} (also called "Boring Old C
+Mode" or BOCM @code{:-)}, and @file{c++-mode.el} version 2, which I have
+been maintaining since 1992.  @ccmode{} represents a significant
+milestone in the mode's life.  It has been fully merged back with Emacs
+19's @file{c-mode.el}. Also a new, more intuitive and flexible mechanism
+for controlling indentation has been developed.
+
+@ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
 @footnote{``The Annotated C++ Reference Manual'', by Ellis and
 Stroustrup.} C++, Objective-C, and Java files.  In this way, you can
 easily set up consistent coding styles for use in editing all C, C++,
@@ -154,16 +151,6 @@ prefixed with @code{c-@var{<thing>}}, and @code{c-mode},
 provided.  This file is intended to be a replacement for
 @file{c-mode.el} and @file{c++-mode.el}.
 
-@findex c-version
-The major version number was incremented to 4 with the addition of
-@code{objc-mode}. To find the minor revision number of this release, use
-@kbd{M-x c-version RET}.
-
-As of this writing (27-Feb-1997), Emacs 19.34, XEmacs 19.14, and XEmacs
-20.0 are all distributed with @ccmode{}, but they may not have the
-latest releases.  You may therefore, want to upgrade your copy of
-@ccmode{}.  See @ref{Getting the latest CC Mode release}.
-
 @cindex @file{cc-compat.el} file
 This distribution also contains a file called @file{cc-compat.el} which
 should ease your transition from BOCM to @ccmode{}.  It currently
@@ -186,166 +173,78 @@ converting the original @file{README} file to texinfo format.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@file{cc-mode.el} works well with the three main branches of Emacs:
-XEmacs 19 and XEmacs 20, both maintained by @code{xemacs.org}, and Emacs
-19 maintained by the Free Software Foundation.  Emacs users will want to
-use version 19.21 or better, XEmacs users will want 19.6 or better.
-Earlier versions of these Emacsen have deficiencies and/or bugs which
-will adversely affect the performance and usability of @ccmode{}.  You
-are better off just getting the latest version of Emacs or XEmacs.
+If you got this version of @ccmode{} with Emacs, it should work just
+fine right out of the box, and you can safely skip to the next chapter.
+Note however that you may not have the latest @ccmode{} release and may
+want to upgrade your copy.  See the @file{README} file, or the @ccmode{}
+Web pages latest information on Emacs version compatibility,
+@ref{Getting the latest CC Mode release}.
 
 @cindex @file{cc-mode-18.el} file
-@file{cc-mode.el} will work with Emacs 18 if you use the
-@file{cc-mode-18.el} compatibility file, but only moderately well.  A
-word of warning though, @emph{Emacs 18 lacks some fundamental
-functionality and ultimately, using Emacs 18 is a losing
-battle}.  Hence @ccmode{} under Emacs 18 is no longer supported and
-it is highly recommended that you upgrade to Emacs 19.  If you use
-@ccmode{} under Emacs 18, you're on your own.  With @ccmode{}
-version 5, Emacs 18 support will be dropped altogether.
-
-Note that as of XEmacs 19.13 and Emacs 19.30, your Emacs already comes
-with @ccmode{} version 4 preconfigured for your use.  You should be
-able to safely skip the rest of the setup information in this chapter,
-unless you want to install the latest version of @ccmode{} into one
-of these Emacsen.
+@emph{@ccmode{} no longer works with Emacs 18!}  The
+@file{cc-mode-18.el} file is no longer distributed with @ccmode{}.  If
+you haven't upgraded from Emacs 18 by now, you are out of luck.  The
+rest of these installation instructions assume you are using one of the
+new Emacs or XEmacs releases, that already come with @ccmode{}.  These
+instructions explain how to upgrade to use the latest @ccmode{}
+release.
 
 @cindex .emacs file
-The first thing you will want to do is put @file{cc-mode.el} somewhere
-on your @code{load-path} so Emacs can find it.  Do a @kbd{C-h v
-load-path RET} to see all the directories Emacs looks at when loading a
-file.  If none of these directories are appropriate, create a new
-directory and add it to your @code{load-path}:
 
-@noindent
-@emph{[in the shell]}
-@example
-@group
+The first thing you will want to do is put the @ccmode{} source files in
+a subdirectory somewhere on your @code{load-path} so Emacs can find it.
+The distribution tarball unpacks into its own subdirectory tagged with
+the version number of the release.  E.g. @ccmode{} release 5.00 will
+unpack into the @file{cc-mode-5.00} directory.  Assuming you unpacked
+the distribution in your home directory, you should add the following to
+your @file{.emacs} file in order to pick up the latest version of
+@ccmode{} over the one distributed with your Emacs:
 
-% cd
-% mkdir mylisp
-% mv cc-mode.el mylisp
-% cd mylisp
-
-@end group
-@end example
-
-@noindent
-@emph{[in your .emacs file add]}
 @example
 
-(setq load-path (cons "~/mylisp" load-path))
+(setq load-path (cons "~/cc-mode-5.00" load-path))
 
 @end example
 
 @cindex byte compile
-Next you want to @dfn{byte compile} @file{cc-mode.el}.  The mode uses a
-lot of macros so if you don't byte compile it, things will be unbearably
-slow.  @emph{You can ignore all byte-compiler warnings!}  They are the
-result of the supporting different versions of Emacs, and none of the
-warnings have any effect on operation. Let me say this again:
-@strong{You really can ignore all byte-compiler warnings!}
 
-Here's what to do to byte-compile the file [in emacs]:
+Next you want to @dfn{byte compile} all the @ccmode{} source files.
+@ccmode{} uses a lot of macros so if you don't byte compile it,
+things will be unbearably slow.  @emph{You can ignore all byte-compiler
+warnings!}  They are the result of the supporting different versions of
+Emacs, and none of the warnings have any effect on operation. Let me say
+this again: @strong{You really can ignore all byte-compiler warnings!}
+
+To byte-compile the source files, be sure you have access to the
+@code{make(1)} program.  In a shell, execute the following commands
+(again, assuming you unpacked @ccmode{} version 5.00 in your home
+directory@footnote{Of course, the version numbers will probably be
+different.}):
+
 @example
 
-M-x byte-compile-file RET ~/mylisp/cc-mode.el RET
+% cd ~/cc-mode-5.00
+% make
 
 @end example
 
-If you are running a version of Emacs or XEmacs that comes with
-@ccmode{} by default, you can simply add the following to your
-@file{.emacs} file in order to upgrade to the latest version of
-@ccmode{}:
+By default, the @file{Makefile} assumes you are using XEmacs.  If you
+are using Emacs, execute this instead:
+
 @example
 
-(load "cc-mode")
+% make EMACS=emacs
 
 @end example
 
-Users of even older versions of Emacs 19, Emacs 18, or of the older
-Lucid Emacs will probably be running an Emacs that has BOCM
-@file{c-mode.el} and possible @file{c++-mode.el} pre-dumped.  If your
-Emacs is dumped with either of these files you first need to make Emacs
-``forget'' about those older modes.
-
-If you can do a @kbd{C-h v c-mode-map RET} without getting an error, you
-need to add these lines at the top of your @file{.emacs} file:
-@example
-@group
-
-(fmakunbound 'c-mode)
-(makunbound  'c-mode-map)
-(fmakunbound 'c++-mode)
-(makunbound  'c++-mode-map)
-(makunbound  'c-style-alist)
-
-@end group
-@end example
-
-After those lines you will want to add the following autoloads to your
-@file{.emacs} file so that @ccmode{} gets loaded at the right time:
-@example
-@group
-
-(autoload 'c++-mode  "cc-mode" "C++ Editing Mode" t)
-(autoload 'c-mode    "cc-mode" "C Editing Mode" t)
-(autoload 'objc-mode "cc-mode" "Objective-C Editing Mode" t)
-(autoload 'java-mode "cc-mode" "Java Editing Mode" t)
-
-@end group
-@end example
-
-Alternatively, if you want to make sure @ccmode{} is loaded when
-Emacs starts up, you could use this line instead of the autoloads
-above:
+Next time you start up Emacs you should be using the latest @ccmode{}.
+You can test this by visiting a C file and hitting @kbd{M-x c-version
+RET}; you should see this message in the echo area:
 @example
 
-(require 'cc-mode)
+Using CC Mode version 5.00
 
 @end example
-
-Next, you will want to set up Emacs so that it edits C files in
-@code{c-mode}, C++ files in @code{c++-mode}, Objective-C files in
-@code{objc-mode}, and Java files in @code{java-mode}. You should
-add the following to your @file{.emacs} file, which assumes
-you'll be editing @code{.h} and @code{.c} files as C, @code{.hh},
-@code{.cc}, @code{.H}, and @code{.C} files as C++, @code{.m} files as
-Objective-C, and @code{.java} files as Java code. YMMV:
-@example
-@group
-
-(setq auto-mode-alist
-  (append
-    '(("\\.C$"    . c++-mode)
-      ("\\.H$"    . c++-mode)
-      ("\\.cc$"   . c++-mode)
-      ("\\.hh$"   . c++-mode)
-      ("\\.c$"    . c-mode)
-      ("\\.h$"    . c-mode)
-      ("\\.m$"    . objc-mode)
-      ("\\.java$" . java-mode)
-     ) auto-mode-alist))
-
-@end group
-@end example
-
-You may already have some or all of these settings on your
-@code{auto-mode-alist}, but it won't hurt to put them on there again.
-
-That's all you need --- I know, I know, it sounds like a lot @code{:-)},
-but after you've done all this, you should only need to quit and restart
-Emacs.  The next time you visit a C, C++, Objective-C, or Java file you
-should be using @ccmode{}.  You can check this easily by hitting
-@kbd{M-x c-version RET}; you should see this message in the echo area:
-@example
-
-Using CC Mode version 4.@var{xxx}
-
-@end example
-
-@noindent
-where @var{xxx} is the latest minor release number.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1144,26 +1043,63 @@ extremely useful.  In fact, you might find yourself wanting
 hungry-delete in @strong{all} your editing modes!
 
 @kindex DEL
-In a nutshell, when hungry-delete mode is enabled, hitting the @kbd{DEL}
-character will consume all preceding whitespace, including newlines and
-tabs.  This can really cut down on the number of @kbd{DEL}'s you have to
-type if, for example you made a mistake on the preceding line.
+@kindex Backspace
+In a nutshell, when hungry-delete mode is enabled, hitting the
+@kbd{Backspace} key@footnote{I say ``hit the @kbd{Backspace} key'' but
+what I really mean is ``when Emacs receives the @code{BackSpace} keysym
+event''.  The difference usually isn't significant to most users, but
+advanced users will realize that under window systems such as X, any
+physical key (keycap) on the keyboard can be configured to generate any
+keysym.  Also, the use of Emacs on TTYs will affect which keycap
+generates which keysym.  From a pedantic point of view, here we are only
+concerned with the keysym event that Emacs receives.} will consume all
+preceding whitespace, including newlines and tabs.  This can really cut
+down on the number of @kbd{Backspace}'s you have to type if, for example
+you made a mistake on the preceding line.
+
+@findex c-electric-backspace
+@findex electric-backspace (c-)
+@vindex c-backspace-function
+@vindex backspace-function (c-)
 
 @findex c-electric-delete
 @findex electric-delete (c-)
 @vindex c-delete-function
 @vindex delete-function (c-)
 @cindex literal
-By default, @ccmode{} actually runs the command
-@code{c-electric-delete} when you hit @kbd{DEL}.  When this command is
-used to delete a single character (i.e. when it is called interactively
-with no numeric argument), it really runs the function contained in the
-variable @code{c-delete-function}.  This function is called with a
-single argument, which is the number of characters to delete.
-@code{c-delete-function} is also called when the @kbd{DEL} key is typed
-inside a literal (see @ref{Auto-newline insertion}.  Inside a literal,
-@code{c-electric-delete} is not electric, which is typical of all the
-so-called electric commands.
+
+@findex backward-delete-char-untabify
+
+By default, when you hit the @kbd{Backspace} key
+@ccmode{} runs the command @code{c-electric-backspace}, which deletes
+text in the backwards direction.  When deleting a single character, or
+when @kbd{Backspace} is hit in a literal
+(see @ref{Auto-newline insertion}), 
+or when hungry-delete mode is disabled, the function
+contained in the @code{c-backspace-function} variable is called with one
+argument (the number of characters to delete).  This variable is set to
+@code{backward-delete-char-untabify} by default.
+
+@vindex delete-key-deletes-forward
+@findex delete-char
+
+Similarly, hitting the @kbd{DEL} key runs the command
+@code{c-electric-delete}.  Some versions of Emacs@footnote{As of this
+writing, 20-Jun-1997, only XEmacs 20 supports this.} support separation
+of the @kbd{Backspace} and @kbd{DEL} keys, so that @kbd{DEL} will delete
+in the forward direction when @code{delete-key-deletes-forward} is
+non-@code{nil}.  If your Emacs supports this, and
+@code{delete-key-deletes-forward} is non-@code{nil}, and hungry-delete
+mode is enabled, then @kbd{DEL} will consume all whitespace following
+point.  When deleting a single character, or when @kbd{DEL} is hit in a
+literal, or when hungry-delete mode is disabled, the function contained
+in the @code{c-delete-function} variable is called with one argument
+(the number of characters to delete).  This variable is set to
+@code{delete-char} by default.
+
+However, if @code{delete-key-deletes-forward} is @code{nil}, or your
+Emacs does not support separation of @kbd{Backspace} and @kbd{DEL}, then 
+@code{c-electric-delete} simply calls @code{c-electric-backspace}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1476,17 +1412,10 @@ So, for example, because most of the default offsets are defined in
 terms of @code{+}, @code{-}, and @code{0}, if you like the general
 indentation style, but you use 4 spaces instead of 2 spaces per level,
 you can probably achieve your style just by changing
-@code{c-basic-offset} like so (in your @file{.emacs} file)@footnote{The
-reason you need to use @code{setq-default} instead of @code{setq} is
-that @code{c-basic-offset} is a buffer local variable, as are most
-configuration variables.  If you were to put this code in, e.g. your
-@code{c-mode-common-hook} function, you could use @code{setq}.
-Alternatively, you can keep these variables global by setting
-@code{c-style-variables-are-local-p} to @code{nil}, but you must do this
-before @code{cc-mode.el} is loaded into your Emacs session.}:
+@code{c-basic-offset} like so (in your @file{.emacs} file):
 @example
 
-(setq-default c-basic-offset 4)
+(setq c-basic-offset 4)
 
 @end example
 
@@ -1654,8 +1583,30 @@ adjustments.
 @vindex objc-mode-hook
 @vindex java-mode-hook
 @cindex hooks
-To make this change permanent, you need to add some lisp code to your
-@file{.emacs} file.  @ccmode{} provides several hooks that you can
+To make your changes permanent, you need to add some lisp code to your
+@file{.emacs} file, but first you need to decide whether your styles
+should be global in every buffer, or local to each specific buffer.
+
+If you edit primarily one style of C (or C++, Objective-C, Java) code,
+you may want to make the @ccmode{} style variables have global values so
+that every buffer will share the style settings.  This will allow you to
+set the @ccmode{} variables at the top level of your @file{.emacs}
+file.  This is the default way @ccmode{} works.
+
+@vindex c-mode-common-hook
+@vindex mode-common-hook (c-)
+@vindex c-style-variables-are-local-p
+@vindex style-variables-are-local-p (c-)
+If you edit many different styles of C (or C++, Objective-C, Java) at
+the same time, you probably want to make the @ccmode{} style variables
+have buffer local values.  If you do this, then you will need to set any
+@ccmode{} style variables in a hook function (e.g. off of
+@code{c-mode-common-hook} instead of at the top level of your
+@file{.emacs} file.  The recommended way to do this is to set the
+variable @code{c-style-variables-are-local-p} to @code{t}
+@strong{before} @ccmode{} is loaded into your Emacs session.
+
+@ccmode{} provides several hooks that you can
 use to customize the mode according to your coding style.  Each language
 mode has its own hook, adhering to standard Emacs major mode
 conventions.  There is also one general hook:
@@ -1692,9 +1643,6 @@ file to make the changes described in the previous section
 (@ref{Interactive Customization}) more permanent.  See the Emacs manuals
 for more information on customizing Emacs via hooks.  @xref{Sample
 .emacs File} for a more complete sample @file{.emacs} file.
-@footnote{The use of @code{add-hook} in this example only works for
-Emacs 19 and beyond.  Workarounds are available if you are using Emacs
-18.}
 @example
 @group
 
@@ -1965,13 +1913,11 @@ you will have to make the variables buffer local.  The variable
 
 When @code{c-style-variables-are-local-p} is non-nil, then the style
 variables will have a different settable value for each buffer,
-otherwise all buffers will share the same values.  This variable only
-takes effect when @ccmode{} is loaded into your Emacs session.  By
-default (for backwards compatibility reasons), its value is @code{t}.
-Note that once the variables are made buffer local, they will retain
-this property for the remainder of the current Emacs session.  To change
-this behavior, set @code{c-style-variables-are-local-p} to @code{nil}
-@emph{before} you load @file{cc-mode.el}.
+otherwise all buffers will share the same values.  By default, its value
+is @code{nil} (i.e. global values).  You @strong{must} set this variable
+before @ccmode{} is loaded into your Emacs session, and once the
+variables are made buffer local, they cannot be made global again
+(unless you restart Emacs of course!)
 
 @menu
 * Custom Indentation Functions::
@@ -2390,10 +2336,11 @@ More detailed descriptions follow below.
 @item
 @code{inline-close} --- brace that closes an in-class inline method
 @item
-@code{func-decl-cont} --- the nether region between a function
-declaration's argument list and the defun opening brace.  In C++ and
-Java, this can include the @code{throws} clauses of a method
-declaration.
+@code{func-decl-cont} --- the region between a function definition's
+argument list and the function opening brace (excluding K&R argument
+declarations).  In C, you cannot put anything but whitespace and comments
+between them; in C++ and Java, @code{throws} declarations and other
+things can appear in this context.
 @item
 @code{knr-argdecl-intro} --- first line of a K&R C argument declaration
 @item
@@ -2679,7 +2626,7 @@ Bass::Bass()
 Returning to the previous example, line 16 is given @code{inline-close}
 syntax, while line 12 is given @code{defun-block-open} syntax, and lines
 13 through 15 are all given @code{statement} syntax.  Line 17 is
-interesting in that it's syntactic analysis list contains three
+interesting in that its syntactic analysis list contains three
 elements:
 
 @example
@@ -3020,7 +2967,7 @@ syntax.
 @cindex   Performance Issues
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-C and it's derivative languages are highly complex creatures.  Often,
+C and its derivative languages are highly complex creatures.  Often,
 ambiguous code situations arise that require @ccmode{} to scan
 large portions of the buffer to determine syntactic context.  Such
 pathological code@footnote{such as the output of @code{lex(1)}!}
@@ -3084,7 +3031,8 @@ column zero!
 @cindex @file{cc-lobotomy.el} file
 @vindex cc-lobotomy-pith-list
 You might want to investigate the speed-ups contained in the
-file @file{cc-lobotomy.el}, which is part of the @ccmode{} distribution.
+file @file{cc-lobotomy.el}, which comes as part of the @ccmode{}
+distribution, but is completely unsupported.
 As mentioned previous, @ccmode{} always trades accuracy for speed,
 however it is recognized that sometimes you need speed and can sacrifice
 some accuracy in indentation.  The file @file{cc-lobotomy.el} contains
@@ -3110,7 +3058,7 @@ at the variable @code{cc-lobotomy-pith-list} for details.
 @kindex ESC C-q
 @kindex ESC C-u
 @kindex RET
-@kindex LFD
+@kindex C-j
 @findex newline-and-indent
 @quotation
 
@@ -3138,7 +3086,7 @@ To re-indent the entire function hit @kbd{C-c C-q}.
 where the new text should go after inserting the newline?}
 
 @strong{A.} Emacs' convention is that @key{RET} just adds a newline,
-and that @key{LFD} adds a newline and indents it.  You can make
+and that @key{C-j} adds a newline and indents it.  You can make
 @key{RET} do this too by adding this to your
 @code{c-mode-common-hook} (see the sample @file{.emacs} file
 @ref{Sample .emacs File}):
@@ -3177,22 +3125,6 @@ constructs appear in different colors, or in bold face, etc.?}
 
 @strong{A.} ``Syntax Colorization'' is an Emacs 19 feature, controlled
 by @code{font-lock-mode}.  It is not part of @ccmode{}.
-
-@sp 1
-@strong{Q.} @emph{I @code{setq} @code{c-basic-offset} to 4 in my
-@file{.emacs} file, but why does everything still get indented with only
-2 spaces?}
-
-@vindex c-style-variables-are-local-p
-@vindex style-variables-are-local-p
-@strong{A.} It's because @code{c-basic-offset} is, by default, a
-``buffer local variable'', meaning its value is unique to each buffer.
-The prefered way to customize this is to change its value in a ``mode
-hook'' (most likely @code{c-mode-common-hook}).  Alternatively you can
-use @code{setq-default} to change its value globally.  Better yet,
-before you load @file{cc-mode.el}, set the variable
-@code{c-style-variables-are-local-p} to @code{nil}.  @xref{Advanced
-Customizations}.
 
 @end quotation
 
@@ -3307,8 +3239,6 @@ about its availability!
   (define-key c-mode-map "\C-m" 'newline-and-indent)
   )
 
-;; the following only works in Emacs 19
-;; Emacs 18ers can use (setq c-mode-common-hook 'my-c-mode-common-hook)
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 @end example
 
@@ -3326,10 +3256,6 @@ Multi-line macros are not handled properly.
 
 @item
 Re-indenting large regions or expressions can be slow.
-
-@item
-Use with Emacs 18 can be slow and annoying.  You should seriously
-consider upgrading to Emacs 19.
 
 @item
 Add-on fill packages may not work as well as @ccmode{}'s built-in
@@ -3375,6 +3301,18 @@ suggestions, and kudos to @code{cc-mode-help@@python.org}, or
 @code{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on newsgroup
 @code{gnu.emacs.help}.
 
+There are two mailing lists for @ccmode{}.  One is a general discussion
+list and the other is an announce-only list.  You do not need to
+subscribe to either list, but if you want to, only subscribe to one of
+these.  Announcements of new releases get sent to both lists.  To join
+the general discussion list, send a message with the word
+@emph{subscribe} in the body of the message to
+@code{cc-mode-victims-request@@python.org}.  To join just the
+announce-only list, send a message with the word @emph{subscribe} in the
+body of the message to @code{cc-mode-announce-request@@python.org}.
+Both mailing lists are managed by Majordomo, and if you are successfully
+subscribed, you will receive an email message with more information on
+using the list.
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Concept Index, Command Index,  Mailing Lists and Submitting Bug Reports, Top

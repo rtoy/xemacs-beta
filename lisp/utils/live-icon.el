@@ -125,9 +125,10 @@
 (defun live-icon-one-frame (&optional frame)
   "Gives FRAME (defaulting to (selected-frame)) a live icon."
   (interactive)
-  (if (not frame)
-      (setq frame (selected-frame)))
-  (set-glyph-image frame-icon-glyph (live-icon-from-frame frame) frame))
+  (unless frame
+    (setq frame (selected-frame)))
+  (unless (frame-property frame 'balloon-help)
+    (set-glyph-image frame-icon-glyph (live-icon-from-frame frame) frame)))
 
 ;;(defun live-icon-all-frames ()
 ;;  "Gives all your frames live-icons."
@@ -138,7 +139,7 @@
 ;;			       fr))
 ;;	  (frame-list)))
 
-(add-hook 'unmap-screen-hook 'live-icon-one-frame)
+(add-hook 'unmap-frame-hook 'live-icon-one-frame)
 ;;(start-itimer "live-icon" 'live-icon-all-frames 120 120)
 
 (provide 'live-icon)

@@ -2,7 +2,262 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Wed Jun 25 07:29:46 1997  William M. Perry  <wmperry@aventail.com>
+
+* Makefile.in (Makefile): Ditto
+
+* texi/Makefile.in: Automatically rebuilds out-of-date Makefiles
+
+* configure.in: Make sure we create texi/Makefile
+
+* w3-display.el (w3-table-ascii-border-chars): Slightly nicer rounded
+  edges for ascii borders on tables.
+
+Tue Jun 24 14:35:05 1997  William M. Perry  <wmperry@aventail.com>
+
+* Moved texinfo stuff into its own subdirectory, integrated into
+  configure, make, and install procedures.
+
+* url-file.el: Visiting directories with an index file works in asynch
+  mode now.
+
+* docomp.el (cl): Load cl during builds
+
+* w3.el (w3-find-default-stylesheets): Added more directories to the
+  stylesheet search path.
+  (w3-do-setup): Make sure we don't infinitely recurse if we are using
+  html bookmarks.  w3-parse-hotlist could call w3-parse-buffer, which will
+  call w3-do-setup if we don't set our global flag as 't'.
+
+* Makefile.in (SOURCES): Some reordering to make the stupid thing at least
+  compile with Emacs 19.
+
+Tue Jun 24 11:44:59 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+* w3.el (w3-mode): Avoid calling the global bindings for RET and mouse-2. 
+
+1997-06-24  William M. Perry  <wmperry@aventail.com>
+
+* Synch'd up to custom/widget 1.9936
+	
+* Emacs/W3 3.0.90 released
+
+* Moved the documentation into its own subdirectory
+
+* w3-menu.el: Slightly less complete version of id-menubar-set when not in 
+  InfoDock - was causing lots of errors in XEmacs when trying to run a
+  non-existent hook.  Bleah.
+
+* configure.in: Fixed AC_CHECK_PROG for emacs/xemacs - duh.
+
+* aclocal.m4: Don't check custom sanity if it was specified on the
+  configure line
+
+1997-06-23  William M. Perry  <wmperry@aventail.com>
+
+* url-file.el (url-file): Make sure we set the content-type when loading
+  files.  Was screwed when we were asynch.
+
+* Upped planned release # to 4.0
+
+* Emacs/W3 3.0.89 released.
+
+* configure.in: Fixed --with-x*emacs switches.
+
+* Emacs/W3 3.0.88 aborted.
+
+* w3-display.el (w3-display-node): deal with empty selections
+
+* Now uses autoconf to deal with all configuration issues, including
+  sanity checking the installation of the custom and widget libraries.
+
+Mon Jun 23 17:08:55 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+* w3.el (w3-mode): Don't call `widget-minor-mode'.
+
+* w3-vars.el (w3-mode-map): Use `make-sparse-keymap'.
+  Use `widget-keymap' as parent.
+  (wid-edit): require.
+
+Mon Jun 23 07:09:51 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el (w3-parse-buffer): Make sure we always have a newline at the
+  end of the buffer before starting the parse.
+
+Fri Jun 20 11:23:28 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'd up to Widget 1.9929
+
+* w3-mouse.el: Deal with InfoDock button bindings - we don't need to bind
+  _anything_ since hyperbole knows all about hyperlinks and stuff.
+
+* w3-menu.el (w3-menu-install-menubar): Deal with InfoDock way of
+  specifying mode menubars.
+
+* w3-toolbar.el (w3-add-toolbar-to-buffer): Don't install the toolbar
+  under InfoDock - it uses different toolbars than straight XEmacs.
+
+* w3-mouse.el: Don't bind shift-button2 - this is reserved for hyperbole.
+  This is now on meta.
+
+1997-06-19  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-map-links): Deal with new keywords.
+
+* w3-menu.el (w3-menu-links-constructor): Deal with new keywords on
+  links/images.
+  (w3-popup-menu): Ditto.
+
+* w3-display.el (w3-widget-echo): Deal with new keywords we use on widgets.
+  (w3-follow-hyperlink): Ditto.
+  (w3-balloon-help-callback): Ditto.
+  (w3-maybe-start-image-download): Ditto.
+  (w3-handle-image): Use new keywords.
+  (w3-display-convert-arglist): New function to convert an assoc list into 
+  a property list with real CL-style keywords.
+  (w3-display-node): Use it when building a hyperlink.
+  (w3-resurrect-hyperlinks): Now uses widget-convert-text instead of nasty 
+  knowledge of internals of the widget library.
+
+Tue Jun 17 21:45:06 1997  William M. Perry  <wmperry@aventail.com>
+
+* custom-check: Was misusing 'tr'
+
+Sun Jun 15 22:17:01 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'd up to custom 1.9920
+
+Sat Jun 14 15:37:09 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'd up to custom 1.9918 - now distribute all of custom, just to be
+  anal.
+
+* w3-display.el (w3-display-line-break): Ebola vaccination
+  (w3-maybe-start-background-image-download): Don't try to load background
+  images in Emacs 19 or on a TTY.
+  (w3-display-node): Keep track of the active face of a hyperlink.  Need
+  to make the widget library smarter about this.
+
+Fri Jun 13 22:16:59 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el:  Some stupid sites put meta tags in the middle of their
+  documents.  Sigh. Allow it, but bitch and moan.
+
+* Added custom library to the distribution.
+
+1997-06-11  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el : Allow <meta> tags in %body.content for stupid cnn.com
+  site.
+
+* Emacs/W3 3.0.87 released.
+
+* Synched up to Widget 1.9907 - you must be running this version for most
+  things to work.  Make sure you are not picking up a widget library from
+  gnus or something like that before the one in the w3 directory.
+
+* w3-display.el (w3-maybe-start-background-image-download): New function
+  that takes a URL and a face and does its best to set the background
+  pixmap of that face to the image pointed to by the URL.
+  (w3-display-node): Implemented 'background' property on 'body' or 'html' 
+  tags.
+  (w3-finalize-image-download): Changed a fair bit - shared between normal 
+  image downloads and background image downloads.
+  (w3-display-node): w3-user-colors-take-precedence now controls whether
+  background faces are retrieved or not.
+  (w3-face-for-element): Stylesheets use of background-image should almost 
+  work now.
+  (w3-display-node): Stylesheets use of background-image should work
+  completely now.
+
+Tue Jun 10 07:24:09 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-only-links): This will now use w3-map-links
+  (w3-mode): Dont' set inhibit-read-only, ever.
+  (w3-mode): back to using widget-minor-mode, since inheriting the keymap
+  doesn't seem to do much good.
+
+* w3-vars.el: Don't bind anything to widget-button-press, let
+  widget-minor-mode do that.
+
+* w3.el (w3-map-links): Revamped this to work with the new way widget is
+  using overlays instead of text properties.
+  (w3-mode): Use widget-minor-mode instead of binding a lot of
+  navigational commands ourselves.
+
+* w3-display.el: Make sure we don't try to redefine the w3-dingbats
+  character set when loading this file more than once.
+  (w3-display-node): Rearranged some of the insert-before handling so that 
+  any text inserted does _not_ have the properties of the tag on it
+  (colors on hyperlinks won't bleed anymore)
+  (w3-resurrect-hyperlinks): New semi-working way of resurrecting
+  hyperlinks
+
+Mon Jun  9 22:53:14 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-display-node): Protect against stylesheet specified
+  widths on horizontal rules.
+
+Mon Jun  9 22:42:26 1997  Istvan Marko <istvan@cmdmail.amd.com>
+
+* w3-hot.el (w3-hotlist-apropos): Let this work when reuse-buffers != no
+
+Mon Jun  9 22:35:04 1997  Dieter Maurer <dieter@hit.handshake.de>
+
+* mm.el (mm-decode-quoted-printable): Fix for some multipart attachments
+  showing up empty due to badness in mm-decode-quoted-printable and
+  'ignore' not moving to the end of the region just decoded.
+
+Mon Jun  9 22:35:04 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el (w3-parse-buffer): Call w3-do-setup to make sure our
+  hashtables and things are set up correctly or gnus can choke big time.
+
+Mon Jun  9 22:26:29 1997  Michael Ernst <mernst@cs.washington.edu>
+
+* url.el (url-get-url-filename-chars): Fixed problem with bad use of a
+  hyphen in the regexp.  Would cause problems when invoking
+  url-get-url-at-point when point was in front of a hyphen.
+
+1997-05-28  William M. Perry  <wmperry@aventail.com>
+
+* w3-cus.el: Use a :prefix on most of the groups to make the options look
+  nicer.
+
+Thu May 15 05:06:30 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-sysdp.el: removed bogus definition of buffer-substring-no-properties
+  - will now use the more correct one that was already there.
+
+* w3-display.el (w3-pause): Now has its own mini-event loop to pass off
+  scrolling commands, etc.  Keeps buffer position constant while doing
+  incremental display.
+
+Mon May 12 08:13:27 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-view-this-url): Check the parent widget for an href if you
+  don't find one right away.  This means that all commands that act on the
+  URL at point will now work on image widgets, etc. that are hyperlinks.
+
+Sat May 10 14:37:25 1997  William M. Perry  <wmperry@aventail.com>
+
+* css.el (css-parse): Deal better with newline-challenged stylesheets
+  (css-parse): Don't be so aggressive in finding block data for @xyzzy
+  directives.
+
+* mm.el (mm-viewer-passes-test): Always run the tests in the users home
+  directory.
+
+* w3-mouse.el: Use down-mouse-N in Emacs 19, to be more consistent with
+  how the XEmacs keybindings work.
+
+Fri May  9 11:32:46 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-document-information): some formatting changes
+
 Thu May  8 14:06:40 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.86 released
 
 * mule-sysdp.el (mule-code-convert-region): Try to deal gracefully with
   the recent XEmacs 20.0 -> 20.2 renaming of the autodetect coding system

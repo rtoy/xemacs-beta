@@ -1,3 +1,29 @@
+1997-06-25  Steven L Baur  <steve@altair.xemacs.org>
+
+	* alloc.c (Flist): Optimize.
+	From Hrvoje Niksic.
+
+1997-06-23  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lisp.h: Get uintptr_t stuffs because it is needed for including
+	emacsfns.h.
+
+	* sysdep.h: Removed uintptr_t stuffs.
+
+1997-06-22  Steven L Baur  <steve@altair.xemacs.org>
+
+	* fns.c (concat): Replace Fcar/Fcdr with XCAR/XCDR.
+	(Fnreverse): Ditto.
+	(internal_equal): Ditto.
+	(internal_old_equal): Ditto.
+	(Fnconc): Ditto.
+	(Freverse): Saner implementation.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* s/linux.h: getpgrp with glibc is now properly detected by
+	configure.
+	Suggested by Andreas Jaeger <aj@arthur.rhein-neckar.de>
+
 1997-06-20  Steven L Baur  <steve@altair.xemacs.org>
 
 	* events.c: Remove declaration of Qempty.

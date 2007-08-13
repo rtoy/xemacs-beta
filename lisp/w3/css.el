@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/04/21 14:00:12
-;; Version: 1.38
+;; Created: 1997/05/11 00:54:23
+;; Version: 1.39
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -902,7 +902,7 @@ For a terminal frame, the value is always 1."
 	      (looking-at "--+>"))	; end
 	  (goto-char (match-end 0)))
 	 ;; C++ style comments
-	 ((looking-at "//")
+	 ((looking-at "[ \t]*//")
 	  (end-of-line))
 	 ;; Pre-Processor directives
 	 ((looking-at "[ \t\r]*@\\([^ \t\r\n]\\)")
@@ -915,7 +915,7 @@ For a terminal frame, the value is always 1."
 	    (skip-chars-forward " \t\r")
 	    (setq save-pos (point))
 	    (cond
-	     ((looking-at ".*\\({\\)")
+	     ((looking-at "[^{]*\\({\\)")
 	      (goto-char (match-beginning 1))
 	      (forward-sexp 1)
 	      (setq data (buffer-substring save-pos (1- (point)))))
@@ -954,7 +954,6 @@ For a terminal frame, the value is always 1."
 	  (condition-case ()
 	      (forward-sexp 1)
 	    (error (goto-char (point-max))))
-	  (end-of-line)
 	  (skip-chars-backward "\r}")
 	  (subst-char-in-region save-pos (point) ?\n ? )
 	  (subst-char-in-region save-pos (point) ?\r ? )

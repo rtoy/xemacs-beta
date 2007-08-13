@@ -604,14 +604,17 @@ x_toolbar_size_changed_in_frame_1 (struct frame *f, enum toolbar_pos pos,
 
   in_specifier_change_function++;
   if (!in_resource_setting)
-    /* mirror the value in the frame resources, unless it was already
-       done. */
-    XtVaSetValues (FRAME_X_TEXT_WIDGET (f),
-		   pos == TOP_TOOLBAR ? XtNtopToolBarHeight :
-		   pos == BOTTOM_TOOLBAR ? XtNbottomToolBarHeight :
-		   pos == LEFT_TOOLBAR ? XtNleftToolBarWidth :
-		   XtNrightToolBarWidth,
-		   newval, 0);
+    /* mirror the value in the frame resources, unless already done. */
+    {
+      Arg al [1];
+      XtSetArg (al [0],
+		pos ==    TOP_TOOLBAR ? XtNtopToolBarHeight    :
+		pos == BOTTOM_TOOLBAR ? XtNbottomToolBarHeight :
+		pos ==   LEFT_TOOLBAR ? XtNleftToolBarWidth    :
+		XtNrightToolBarWidth,
+		newval);
+      XtSetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
+    }
   if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
     {
       int change = newval - oldval;
@@ -744,10 +747,10 @@ x_release_frame_toolbar_gcs (struct frame *f)
   XtReleaseGC (ew, FRAME_X_TOOLBAR_BOTTOM_SHADOW_GC (f));
 
   /* Seg fault if we try and use these again. */
-  FRAME_X_TOOLBAR_BLANK_BACKGROUND_GC (f) = (GC) -1;
-  FRAME_X_TOOLBAR_PIXMAP_BACKGROUND_GC (f) = (GC) -1;
-  FRAME_X_TOOLBAR_TOP_SHADOW_GC (f) = (GC) -1;
-  FRAME_X_TOOLBAR_BOTTOM_SHADOW_GC (f) = (GC) -1;
+  FRAME_X_TOOLBAR_BLANK_BACKGROUND_GC (f)  = (GC) - 1;
+  FRAME_X_TOOLBAR_PIXMAP_BACKGROUND_GC (f) = (GC) - 1;
+  FRAME_X_TOOLBAR_TOP_SHADOW_GC (f)        = (GC) - 1;
+  FRAME_X_TOOLBAR_BOTTOM_SHADOW_GC (f)     = (GC) - 1;
 }
 
 static void
@@ -757,8 +760,9 @@ x_initialize_frame_toolbars (struct frame *f)
 
   if (ef->emacs_frame.toolbar_shadow_thickness < MINIMUM_SHADOW_THICKNESS)
     {
-      XtVaSetValues (FRAME_X_TEXT_WIDGET (f), XtNtoolBarShadowThickness,
-		     MINIMUM_SHADOW_THICKNESS, 0);
+      Arg al [1];
+      XtSetArg (al [0], XtNtoolBarShadowThickness, MINIMUM_SHADOW_THICKNESS);
+      XtSetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
     }
 
   x_initialize_frame_toolbar_gcs (f);

@@ -1,7 +1,7 @@
 ;;; w3-toolbar.el --- Toolbar functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/26 00:01:47
-;; Version: 1.9
+;; Created: 1997/06/20 18:31:25
+;; Version: 1.10
 ;; Keywords: mouse, toolbar
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -329,7 +329,8 @@ not `none'.")
     (popup-dialog-box descr)))
 
 (defun w3-add-toolbar-to-buffer ()
-  (if (not (featurep 'toolbar))
+  (if (or (not (featurep 'toolbar))
+	  (featurep 'infodock))		; InfoDock uses different toolbars
       nil
     (let ((toolbar (w3-toolbar-from-orientation w3-toolbar-orientation)))
       (if toolbar

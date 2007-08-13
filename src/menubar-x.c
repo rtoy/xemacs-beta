@@ -627,14 +627,19 @@ make_dummy_xbutton_event (XEvent *dummy,
     {
       Position shellx, shelly, framex, framey;
       Widget shell = XtParent (daddy);
+      Arg al [2];
       btn->time = eev->timestamp;
       btn->button = eev->event.button.button;
       btn->root = RootWindowOfScreen (XtScreen (daddy));
       btn->subwindow = (Window) NULL;
       btn->x = eev->event.button.x;
       btn->y = eev->event.button.y;
-      XtVaGetValues (shell, XtNx, &shellx, XtNy, &shelly, NULL);
-      XtVaGetValues (daddy, XtNx, &framex, XtNy, &framey, NULL);
+      XtSetArg (al [0], XtNx, &shellx);
+      XtSetArg (al [1], XtNy, &shelly);
+      XtGetValues (shell, al, 2);
+      XtSetArg (al [0], XtNx, &framex);
+      XtSetArg (al [1], XtNy, &framey);
+      XtGetValues (daddy, al, 2);
       btn->x_root = shellx + framex + btn->x;
       btn->y_root = shelly + framey + btn->y;;
       btn->state = ButtonPressMask; /* all buttons pressed */
@@ -785,24 +790,21 @@ x_update_frame_menubar_internal (struct frame *f)
   FRAME_X_NUM_TOP_WIDGETS (f) = new_num_top_widgets;
   {
     /* We want to end up as close in size as possible to what we
-       were before.  So, ask the EmacsManager what size it wants
-       to be (suggesting the current size), and resize it to that
-       size.  It in turn will call our query-geometry callback,
-       which will round the size to something that exactly fits
-       the text widget. */
+       were before.  So, ask the EmacsManager what size it wants to be
+       (suggesting the current size), and resize it to that size.  It
+       in turn will call our query-geometry callback, which will round
+       the size to something that exactly fits the text widget. */
     XtWidgetGeometry req, repl;
+    Arg al [2];
 
     req.request_mode = CWWidth | CWHeight;
-    XtVaGetValues (container,
-		   XtNwidth, &req.width,
-		   XtNheight, &req.height,
-		   NULL);
+    XtSetArg (al [0], XtNwidth,  &req.width);
+    XtSetArg (al [1], XtNheight, &req.height);
+    XtGetValues (container, al, 2);
     XtQueryGeometry (container, &req, &repl);
-    EmacsManagerChangeSize (container, repl.width,
-			    repl.height);
+    EmacsManagerChangeSize (container, repl.width, repl.height);
     /* The window size might not have changed but the text size
-       did; thus, the base size might be incorrect.  So update
-       it. */
+       did; thus, the base size might be incorrect.  So update it. */
     EmacsShellUpdateSizeHints (FRAME_X_SHELL_WIDGET (f));
   }
 

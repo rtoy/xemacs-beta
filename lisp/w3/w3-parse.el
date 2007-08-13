@@ -1246,11 +1246,16 @@ skip-chars-forward."
                            nil
                            ;; Push <P> before data characters.  Non-SGML.
                            (((%text) p)
+                            ;; Some stupid sites put meta tags in the
+                            ;; middle of their documents.  Sigh.
+                            ;; Allow it, but bitch and moan.
+                            ((meta) *include *same "not allowed here")
                             ;; Closing when seeing CREDIT is a stupidity
                             ;; caused by BQ's sharing of BODYTEXT.  BQ
                             ;; should have its own BQTEXT.
                             ((credit plaintext) *close))
-                           nil)])
+                           nil)
+                          ])
         (end-tag-omissible . t))
        ((div banner center multicol)
         (content-model . [((%body.content)
@@ -1949,12 +1954,14 @@ skip-chars-forward."
 BUFF defaults to the value of url-working-buffer.
 Destructively alters contents of BUFF.
 Returns a data structure containing the parsed information."
-  
+  (if (not w3-setup-done) (w3-do-setup))
   (set-buffer (or buff url-working-buffer))
   (setq buff (current-buffer))
   (set-syntax-table w3-sgml-md-syntax-table)
   (buffer-disable-undo (current-buffer))
   (widen)                               ; sanity checking
+  (goto-char (point-max))
+  (insert "\n")
   (goto-char (point-min))
   (setq case-fold-search t)             ; allows smaller regexp patterns
   

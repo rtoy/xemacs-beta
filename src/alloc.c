@@ -39,6 +39,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include "sysdep.h"
 
 #ifndef standalone
 #include "backtrace.h"
@@ -179,10 +180,10 @@ extern Lisp_Object pure[];/* moved to pure.c to speed incremental linking */
 static long pureptr;
 
 #define PURIFIED(ptr)							\
-   ((PNTR_COMPARISON_TYPE) (ptr) <					\
-    (PNTR_COMPARISON_TYPE) (PUREBEG + PURESIZE) &&			\
-    (PNTR_COMPARISON_TYPE) (ptr) >=					\
-    (PNTR_COMPARISON_TYPE) PUREBEG)
+   ((uintptr_t) (ptr) <					\
+    (uintptr_t) (PUREBEG + PURESIZE) &&			\
+    (uintptr_t) (ptr) >=					\
+    (uintptr_t) PUREBEG)
 
 /* Non-zero if pureptr > PURESIZE; accounts for excess purespace needs. */
 static long pure_lossage;
@@ -1025,16 +1026,11 @@ Any number of arguments, even zero arguments, are allowed.
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object len, val, val_tail;
+  Lisp_Object val = Qnil;
+  Lisp_Object *argp = args + nargs;
 
-  len = make_int (nargs);
-  val = Fmake_list (len, Qnil);
-  val_tail = val;
-  while (!NILP (val_tail))
-    {
-      XCAR (val_tail) = *args++;
-      val_tail = XCDR (val_tail);
-    }
+  while (nargs-- > 0)
+    val = Fcons (*--argp, val);
   return val;
 }
 

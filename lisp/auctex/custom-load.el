@@ -66,7 +66,6 @@
 (put 'browse-url 'custom-loads '())
 (put 'LaTeX-indentation 'custom-loads '("latex"))
 (put 'message-insertion 'custom-loads '())
-(put 'hyper-apropos 'custom-loads '())
 (put 'LaTeX 'custom-loads '("latex" "tex"))
 (put 'vc 'custom-loads '())
 (put 'alloc 'custom-loads '())

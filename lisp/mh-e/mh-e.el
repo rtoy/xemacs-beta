@@ -63,7 +63,7 @@
 ;;; Modified by James Larus, BBN, July 1984 and UCB, 1984 & 1985.
 ;;; Rewritten for GNU Emacs, James Larus 1985.  larus@ginger.berkeley.edu
 ;;; Modified by Stephen Gildea 1988.  gildea@lcs.mit.edu
-(defconst mh-e-RCS-id "$Id: mh-e.el,v 1.3 1997/06/11 19:25:57 steve Exp $")
+(defconst mh-e-RCS-id "$Id: mh-e.el,v 1.4 1997/06/26 02:31:00 steve Exp $")
 
 ;;; Code:
 
@@ -924,7 +924,8 @@ The value of mh-folder-mode-hook is called when a new folder is set up."
 		   (format "inc %s..." folder)))
       (setq mh-next-direction 'forward)
       (goto-char (point-max))
-      (let ((start-of-inc (point)))
+      (let ((start-of-inc (point))
+	    (coding-system-for-read mh-folder-coding-system))
 	(if maildrop-name
 	    ;; I think MH 5 used "-ms-file" instead of "-file",
 	    ;; which would make inc'ing from maildrops fail.

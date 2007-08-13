@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "xintrinsicp.h"	/* CoreP.h needs this */
 #include <X11/CoreP.h>		/* Numerous places access the fields of
 				   a core widget directly.  We could
-				   use XtVaGetValues(), but ... */
+				   use XtGetValues(), but ... */
 #include "xgccache.h"
 #include <X11/Shell.h>
 #include "xmu.h"

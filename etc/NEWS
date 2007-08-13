@@ -109,28 +109,28 @@ the form of easy-to-install add-ons.
 * Changes in XEmacs 20.3
 ========================
 
-** .xemacs is loaded at startup if it exists.
+** Startup file additions.
 
 By default XEmacs now loads the user file ~/.xemacs if it exists.  If
-there is no such file, it reads ~/.emacs as usual.  If both .xemacs and
-.emacs exist, XEmacs will only load .xemacs.
+there is no such file, it reads ~/.emacs as usual.  If both .xemacs
+and .emacs exist, XEmacs will only load .xemacs.
+
+Customizable options are now saved to ~/.xemacs-custom file, which is
+normally loaded after .emacs.
 
 ** Quail input method is now available.
 
-#### Need something to say about quail.
-
-** arc-mode has a new function called `archive-quit' bound to q.
-
-This function quits archive mode in the same fashion dired-quit works.
+Quail is a simple key-translation system which allows users to input
+any multilingual text from normal ASCII keyboard.  This means that
+XEmacs with Mule now supports a number of European languages.
 
 ** XEmacs runs on Windows NT.
 
 Thanks to David Hobley <davidh@wr.com.au> and Marc Paquette
 <marcpa@cam.org>, XEmacs now runs on Windows NT.
 
-For now, you need an X server to be able to run it, but Marc is
-working on a port that implements a native NT device.  We need *your*
-help.
+There are plans to hire contractors to do a native, professional
+port.  This might be over for the 20.3 final release.
 
 ** Multiple TTY frames are now available.
 
@@ -145,6 +145,13 @@ the current defun.
 ** The new command `C-x 4 0' (kill-buffer-and-window) kills the
 current buffer and deletes the selected window.  It asks for
 confirmation first.
+
+** arc-mode has a new function called `archive-quit' bound to q, which
+quits archive mode in the same fashion dired-quit works.
+ 
+** The feature to teach the key bindings of extended commands after
+the command finishes.  The message suggesting key bindings appears
+temporarily in the echo area.  The previous echo area contents come
 
 ** XEmacs can now save the minibuffer histories from various
 minibuffers.  To use this feature, add the line:
@@ -245,6 +252,11 @@ works using `save-current-buffer'.
 ** The new macro `with-temp-file' lets you do some work in a new buffer and
 write the output to a specified file.  Like `progn', it returns the value
 of the last form.
+
+** The variable `debug-ignored-errors' now works in XEmacs.  It allows
+one to ignore the debugger for some common errors, even when
+`debug-on-error' is t.  It has no effect when `debug-on-signal' is
+non-nil.
 
 
 

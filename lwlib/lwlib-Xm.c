@@ -227,14 +227,12 @@ is_in_dialog_box (Widget w)
 static void
 xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
 {
-  XmString built_string = 0;
-  XmString key_string   = 0;
-  XmString val_string   = 0;
-  XmString name_string  = 0;
-  Arg al [256];
-  int ac;
-  
-  ac = 0;
+  XmString built_string = NULL;
+  XmString key_string   = NULL;
+  XmString val_string   = NULL;
+  XmString name_string  = NULL;
+  Arg al [20];
+  int ac = 0;
 
   if (val->value)
     {
@@ -258,7 +256,7 @@ xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
 	    XmStringCreateLtoR (value_name, XmSTRING_DEFAULT_CHARSET);
 	}
       else
-#endif
+#endif /* DIALOGS_MOTIF */
 	{
 	  char *value_name = NULL;
 	  char *res_name = NULL;
@@ -335,7 +333,9 @@ static void
 xm_update_pushbutton (widget_instance* instance, Widget widget,
 		      widget_value* val)
 {
-  XtVaSetValues (widget, XmNalignment, XmALIGNMENT_CENTER, NULL);
+  Arg al [1];
+  XtSetArg (al [0], XmNalignment, XmALIGNMENT_CENTER);
+  XtSetValues (widget, al, 1);
   XtRemoveAllCallbacks (widget, XmNactivateCallback);
   XtAddCallback (widget, XmNactivateCallback, xm_generic_callback, instance);
 }
@@ -374,16 +374,18 @@ xm_update_cascadebutton (widget_instance* instance, Widget widget,
 static void
 xm_update_toggle (widget_instance* instance, Widget widget, widget_value* val)
 {
+  Arg al [2];
   XtRemoveAllCallbacks (widget, XmNvalueChangedCallback);
 #ifndef ENERGIZE
   XtAddCallback (widget, XmNvalueChangedCallback, xm_generic_callback,
 		 instance);
 #else
- XtAddCallback (widget, XmNvalueChangedCallback,
-                xm_internal_update_other_instances, instance);
-#endif 
-  XtVaSetValues (widget, XmNset, val->selected,
-		 XmNalignment, XmALIGNMENT_BEGINNING, NULL);
+  XtAddCallback (widget, XmNvalueChangedCallback,
+		 xm_internal_update_other_instances, instance);
+#endif
+  XtSetArg (al [0], XmNset, val->selected);
+  XtSetArg (al [1], XmNalignment, XmALIGNMENT_BEGINNING);
+  XtSetValues (widget, al, 2);
 }
 
 static void
@@ -408,11 +410,10 @@ xm_update_radiobox (widget_instance* instance, Widget widget,
       toggle = XtNameToWidget (widget, cur->value);
       if (toggle)
 	{
-	  XtVaSetValues (toggle, XmNsensitive, cur->enabled, NULL);
-	  if (!val->value && cur->selected)
-	    XtVaSetValues (toggle, XmNset, cur->selected, NULL);
-	  if (val->value && strcmp (val->value, cur->value))
-	    XtVaSetValues (toggle, XmNset, False, NULL);
+	  Arg al [2];
+	  XtSetArg (al [0], XmNsensitive, cur->enabled);
+	  XtSetArg (al [1], XmNset, (!val->value && cur->selected ? cur->selected : False));
+	  XtSetValues (toggle, al, 2);
 	}
     }
 
@@ -421,7 +422,11 @@ xm_update_radiobox (widget_instance* instance, Widget widget,
     {
       toggle = XtNameToWidget (widget, val->value);
       if (toggle)
-	XtVaSetValues (toggle, XmNset, True, NULL);
+	{
+	  Arg al [1];
+	  XtSetArg (al [0], XmNset, True);
+	  XtSetValues (toggle, al, 1);
+	}
     }
 }
 
@@ -440,15 +445,15 @@ make_menu_in_widget (widget_instance* instance, Widget widget,
   Widget menu;
   Arg al [256];
   int ac;
-  Boolean menubar_p;
+  Boolean menubar_p = False;
 
   /* Allocate the children array */
   for (num_children = 0, cur = val; cur; num_children++, cur = cur->next);
   children = (Widget*)XtMalloc (num_children * sizeof (Widget));
 
   /* tricky way to know if this RowColumn is a menubar or a pulldown... */
-  menubar_p = False;
-  XtVaGetValues (widget, XmNisHomogeneous, &menubar_p, NULL);
+  XtSetArg (al [0], XmNisHomogeneous, &menubar_p);
+  XtGetValues (widget, al, 1);
 
   /* add the unmap callback for popups and pulldowns */
   /*** this sounds bogus ***/
@@ -503,15 +508,9 @@ make_menu_in_widget (widget_instance* instance, Widget widget,
 	    button = XmCreateLabel (widget, cur->name, al, ac);
 	  else if (cur->type == TOGGLE_TYPE || cur->type == RADIO_TYPE)
 	    {
-	      if (cur->type == TOGGLE_TYPE)
-		{
-		  XtSetArg (al [ac], XmNindicatorType, XmN_OF_MANY); ac++;
-		}
-	      else
-		{
-		  XtSetArg (al [ac], XmNindicatorType, XmONE_OF_MANY); ac++;
-		}
-	      
+	      XtSetArg (al [ac], XmNindicatorType,
+			(cur->type == TOGGLE_TYPE ?
+			 XmN_OF_MANY : XmONE_OF_MANY));    ac++;
 	      XtSetArg (al [ac], XmNvisibleWhenOff, True); ac++;
 	      button = XmCreateToggleButtonGadget (widget, cur->name, al, ac);
 	    }
@@ -555,8 +554,7 @@ static void
 update_one_menu_entry (widget_instance* instance, Widget widget,
 		       widget_value* val, Boolean deep_p)
 {
-  Arg al [256];
-  int ac;
+  Arg al [2];
   Widget menu;
   widget_value* contents;
 
@@ -565,10 +563,9 @@ update_one_menu_entry (widget_instance* instance, Widget widget,
 
   /* update the sensitivity and userdata */
   /* Common to all widget types */
-  XtVaSetValues (widget,
-		 XmNsensitive, val->enabled,
-		 XmNuserData, val->call_data,
-		 NULL);
+  XtSetArg (al [0], XmNsensitive, val->enabled);
+  XtSetArg (al [1], XmNuserData,  val->call_data);
+  XtSetValues (widget, al, 2);
 
   /* update the menu button as a label. */
   if (val->change >= VISIBLE_CHANGE)
@@ -584,7 +581,8 @@ update_one_menu_entry (widget_instance* instance, Widget widget,
 
   /* update the pulldown/pullaside as needed */
   menu = NULL;
-  XtVaGetValues (widget, XmNsubMenuId, &menu, NULL);
+  XtSetArg (al [0], XmNsubMenuId, &menu);
+  XtGetValues (widget, al, 1);
   
   contents = val->contents;
 
@@ -713,25 +711,19 @@ xm_update_scrollbar (widget_instance *instance, Widget widget,
       int new_sliderSize, new_value;
       double percent;
       double h_water, l_water;
+      Arg al [4];
 
-      /*
-       * First size and position the scrollbar widget.
-       */
-      XtVaSetValues (widget,
-		     XtNx, data->scrollbar_x,
-		     XtNy, data->scrollbar_y,
-		     XtNwidth, data->scrollbar_width,
-		     XtNheight, data->scrollbar_height,
-		     NULL);
+      /* First size and position the scrollbar widget. */
+      XtSetArg (al [0], XtNx,      data->scrollbar_x);
+      XtSetArg (al [1], XtNy,      data->scrollbar_y);
+      XtSetArg (al [2], XtNwidth,  data->scrollbar_width);
+      XtSetArg (al [3], XtNheight, data->scrollbar_height);
+      XtSetValues (widget, al, 4);
 
-      /*
-       * Now the size the scrollbar's slider.
-       */
-
-      XtVaGetValues (widget,
-		     XmNsliderSize, &widget_sliderSize,
-		     XmNvalue, &widget_val,
-		     NULL);
+      /* Now size the scrollbar's slider. */
+      XtSetArg (al [0], XmNsliderSize, &widget_sliderSize);
+      XtSetArg (al [1], XmNvalue,      &widget_val);
+      XtGetValues (widget, al, 2);
 
       percent = (double) data->slider_size /
 	(double) (data->maximum - data->minimum);
@@ -743,7 +735,7 @@ xm_update_scrollbar (widget_instance *instance, Widget widget,
 
       if (new_sliderSize > (INT_MAX - 1))
 	new_sliderSize = INT_MAX - 1;
-      if (new_sliderSize < 1)
+      else if (new_sliderSize < 1)
 	new_sliderSize = 1;
 
       if (new_value > (INT_MAX - new_sliderSize))
@@ -782,15 +774,15 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
 		      widget_value* val, Boolean deep_p)
 {
   WidgetClass class;
+  Arg al [2];
   
   /* Mark as not edited */
   val->edited = False;
 
   /* Common to all widget types */
-  XtVaSetValues (widget,
-		 XmNsensitive, val->enabled,
-		 XmNuserData,  val->call_data,
-		 NULL);
+  XtSetArg (al [0], XmNsensitive, val->enabled);
+  XtSetArg (al [1], XmNuserData,  val->call_data);
+  XtSetValues (widget, al, 2);
 
 #if defined (DIALOGS_MOTIF) || defined (MENUBARS_MOTIF)
   /* Common to all label like widgets */
@@ -819,8 +811,9 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
   else if (class == xmRowColumnWidgetClass)
     {
       Boolean radiobox = 0;
-      
-      XtVaGetValues (widget, XmNradioBehavior, &radiobox, NULL);
+
+      XtSetArg (al [0], XmNradioBehavior, &radiobox);
+      XtGetValues (widget, al, 1);
       
       if (radiobox)
 	xm_update_radiobox (instance, widget, val);
@@ -869,7 +862,9 @@ xm_update_one_value (widget_instance* instance, Widget widget,
   
   if (class == xmToggleButtonWidgetClass || class == xmToggleButtonGadgetClass)
     {
-      XtVaGetValues (widget, XmNset, &val->selected, NULL);
+      Arg al [1];
+      XtSetArg (al [0], XmNset, &val->selected);
+      XtGetValues (widget, al, 1);
       val->edited = True;
     }
 #ifdef DIALOGS_MOTIF
@@ -891,8 +886,10 @@ xm_update_one_value (widget_instance* instance, Widget widget,
   else if (class == xmRowColumnWidgetClass)
     {
       Boolean radiobox = 0;
+      Arg al [1];
       
-      XtVaGetValues (widget, XmNradioBehavior, &radiobox, NULL);
+      XtSetArg (al [0], XmNradioBehavior, &radiobox);
+      XtGetValues (widget, al, 1);
       
       if (radiobox)
 	{
@@ -902,8 +899,10 @@ xm_update_one_value (widget_instance* instance, Widget widget,
 	    {
 	      int set = False;
 	      Widget toggle = radio->composite.children [i];
-	      
-	      XtVaGetValues (toggle, XmNset, &set, NULL);
+	      Arg al [1];
+
+	      XtSetArg (al [0], XmNset, &set);
+	      XtGetValues (toggle, al, 1);
 	      if (set)
 		{
 		  if (val->value)
@@ -1347,13 +1346,18 @@ recenter_widget (Widget widget)
   Dimension child_height = 0;
   Position x;
   Position y;
+  Arg al [2];
 
-  XtVaGetValues (widget, XtNwidth, &child_width, XtNheight, &child_height, NULL);
-  XtVaGetValues (parent, XtNwidth, &parent_width, XtNheight, &parent_height,
-		 NULL);
+  XtSetArg (al [0], XtNwidth,  &child_width);
+  XtSetArg (al [1], XtNheight, &child_height);
+  XtGetValues (widget, al, 2);
 
-  x = (((Position)parent_width) - ((Position)child_width)) / 2;
-  y = (((Position)parent_height) - ((Position)child_height)) / 2;
+  XtSetArg (al [0], XtNwidth,  &parent_width);
+  XtSetArg (al [1], XtNheight, &parent_height);
+  XtGetValues (parent, al, 2);
+
+  x = (Position) ((parent_width  - child_width)  / 2);
+  y = (Position) ((parent_height - child_height) / 2);
   
   XtTranslateCoords (parent, x, y, &x, &y);
 
@@ -1367,7 +1371,9 @@ recenter_widget (Widget widget)
   if (y < 0)
     y = 0;
 
-  XtVaSetValues (widget, XtNx, x, XtNy, y, NULL);
+  XtSetArg (al [0], XtNx, x);
+  XtSetArg (al [1], XtNy, y);
+  XtSetValues (widget, al, 2);
 }
 
 static Widget
@@ -1397,7 +1403,12 @@ recycle_instance (destroyed_instance* instance)
       /* shrink the separator label back to their original size */
       separator = XtNameToWidget (widget, "*separator_button");
       if (separator)
-	XtVaSetValues (separator, XtNwidth, 5, XtNheight, 5, NULL);
+	{
+	  Arg al [2];
+	  XtSetArg (al [0], XtNwidth,  5);
+	  XtSetArg (al [1], XtNheight, 5);
+	  XtSetValues (separator, al, 2);
+	}
 
       /* Center the dialog in its parent */
       recenter_widget (widget);
@@ -1749,7 +1760,12 @@ xm_popup_menu (Widget widget, XEvent *event)
       else if (event->xbutton.state & Button3Mask) trans = "<Btn3Down>";
       else if (event->xbutton.state & Button2Mask) trans = "<Btn2Down>";
       else if (event->xbutton.state & Button1Mask) trans = "<Btn1Down>";
-      if (trans) XtVaSetValues (widget, XmNmenuPost, trans, NULL);
+      if (trans)
+	{
+	  Arg al [1];
+	  XtSetArg (al [0], XmNmenuPost, trans);
+	  XtSetValues (widget, al, 1);
+	}
       XmMenuPosition (widget, (XButtonPressedEvent *) event);
     }
   XtManageChild (widget);
@@ -1764,8 +1780,15 @@ set_min_dialog_size (Widget w)
 {
   short width;
   short height;
-  XtVaGetValues (w, XmNwidth, &width, XmNheight, &height, NULL);
-  XtVaSetValues (w, XmNminWidth, width, XmNminHeight, height, NULL);
+  Arg al [2];
+
+  XtSetArg (al [0], XmNwidth,  &width);
+  XtSetArg (al [1], XmNheight, &height);
+  XtGetValues (w, al, 2);
+
+  XtSetArg (al [0], XmNminWidth,  width);
+  XtSetArg (al [1], XmNminHeight, height);
+  XtSetValues (w, al, 2);
 }
 
 #endif
@@ -1810,6 +1833,7 @@ do_call (Widget widget, XtPointer closure, enum do_call_type type)
   widget_instance* instance = (widget_instance*)closure;
   Widget instance_widget;
   LWLIB_ID id;
+  Arg al [1];
 
   if (!instance)
     return;
@@ -1822,7 +1846,8 @@ do_call (Widget widget, XtPointer closure, enum do_call_type type)
 
   id = instance->info->id;
   user_data = NULL;
-  XtVaGetValues (widget, XmNuserData, &user_data, NULL);
+  XtSetArg(al [0], XmNuserData, &user_data);
+  XtGetValues (widget, al, 1);
   switch (type)
     {
     case pre_activate:
@@ -1874,8 +1899,13 @@ xm_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
       || XtClass (widget) == xmToggleButtonGadgetClass)
     {
       Boolean check;
-      XtVaGetValues (widget, XmNset, &check, NULL);
-      XtVaSetValues (widget, XmNset, !check, NULL);
+      Arg al [1];
+
+      XtSetArg (al [0], XmNset, &check);
+      XtGetValues (widget, al, 1);
+
+      XtSetArg (al [0], XmNset, !check);
+      XtSetValues (widget, al, 1);
     }
 #endif 
   lw_internal_update_other_instances (widget, closure, call_data);

@@ -126,11 +126,11 @@
 ;; Now load files to set up all the different languages/environments
 ;; that Mule knows about.
 
-#+mule "arabic-hooks"
+#+mule "language/arabic"
 #+mule "language/chinese"
 #+mule "language/cyrillic"
 #+mule "language/english"
-#+mule "ethiopic-hooks"
+#+mule "language/ethiopic"
 #+mule "language/european"
 #+mule "language/greek"
 #+mule "hebrew-hooks"
@@ -176,6 +176,8 @@
 ;;; formerly in sunpro/sunpro-load.el
 #+sparcworks "cc-mode"
 #+sparcworks "sunpro-init"
+#+sparcworks "ring"
+#+sparcworks "comint"
 #+sparcworks "annotations"
 ;;; formerly in eos/sun-eos-load.el
 #+sparcworks "sun-eos-init"

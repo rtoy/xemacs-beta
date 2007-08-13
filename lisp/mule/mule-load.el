@@ -54,11 +54,11 @@
 ;; Now load files to set up all the different languages/environments
 ;; that Mule knows about.
 
-(load-gc "arabic-hooks")
+(load-gc "language/arabic")
 (load-gc "language/chinese")
 (load-gc "language/cyrillic")
 (load-gc "language/english")
-(load-gc "ethiopic-hooks")
+(load-gc "language/ethiopic")
 (load-gc "language/european")
 (load-gc "language/greek")
 (load-gc "hebrew-hooks")

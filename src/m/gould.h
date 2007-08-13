@@ -160,10 +160,6 @@ NOTE-END */
 
 #define C_DEBUG_SWITCH
 
-/* Comparing pointers as unsigned ints tickles a bug in older compilers.  */
-
-#define PNTR_COMPARISON_TYPE int
-
 /* The GOULD machine counts the a.out file header as part of the text.  */
 
 #define A_TEXT_OFFSET(HDR) sizeof (HDR)

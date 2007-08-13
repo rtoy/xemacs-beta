@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/05/09 04:54:28
-;; Version: 1.119
+;; Created: 1997/06/24 22:38:28
+;; Version: 1.130
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -71,6 +71,7 @@
 
 (require 'w3-sysdp)
 (require 'mule-sysdp)
+(require 'widget)
 
 (or (featurep 'efs)
     (featurep 'efs-auto)
@@ -641,7 +642,7 @@ the cdr is the 'next' node."
 						 hdrs)
 					 '>)))
 		   (fmtstring (format "   <tr><td align=right>%%%ds:</td><td>%%s</td></tr>" maxlength)))
-	      (insert "  <tr><th>MetaInformation</th></tr>\n"
+	      (insert "  <tr><th colspan=2>MetaInformation</th></tr>\n"
 		      (mapconcat
 		       (function
 			(lambda (x)
@@ -667,7 +668,7 @@ the cdr is the 'next' node."
 						 info)
 					 '>)))
 		   (fmtstring (format "   <tr><td>%%%ds:</td><td>%%s</td></tr>" maxlength)))
-	      (insert "   <tr><th>Miscellaneous Variables</th></tr>\n")
+	      (insert "   <tr><th colspan=2>Miscellaneous Variables</th></tr>\n")
 	      (while info
 		(insert (format fmtstring
 				(url-insert-entities-in-string
@@ -1332,7 +1333,7 @@ ftp.w3.org:/pub/www/doc."
 
 
 (defun w3-load-flavors ()
-  ;; Load the correct zone/font info for each flavor of emacs
+  ;; Load the correct emacsen specific stuff
   (cond
    ((and w3-running-xemacs (eq system-type 'ms-windows))
     (error "WinEmacs no longer supported."))
@@ -1689,7 +1690,9 @@ cached and in local mode."
   "View the URL of the link under point"
   (interactive)
   (let* ((widget (widget-at (point)))
-	 (href (and widget (widget-get widget 'href))))
+	 (parent (and widget (widget-get widget :parent)))
+	 (href (or (and widget (widget-get widget 'href))
+		   (and parent (widget-get parent 'href)))))
     (cond
      ((and no-show href)
       href)
@@ -1848,17 +1851,17 @@ The arguments FROM, TO, MAPARG, and BUFFER default to the beginning of
 BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
   (let ((cur (point-min))
 	(widget nil)
-	(parent nil))
-    (while (setq cur (next-single-property-change cur 'button))
-      (setq widget (widget-at cur)
+	(parent nil)
+	(overlays (overlay-lists)))
+    (setq overlays (append (car overlays) (cdr overlays)))
+    (while (setq cur (pop overlays))
+      (setq widget (overlay-get cur 'button)
 	    parent (and widget (widget-get widget :parent)))
-      ;; Check to see if its a push widget, its got the correct callback,
-      ;; and actually has a URL.  Remember the url as a side-effect of the
-      ;; test for later use.
+      ;; Check to see if its got a URL tacked on it somewhere
       (cond
-       ((and widget (widget-get widget 'href))
+       ((and widget (widget-get widget :href))
 	(funcall function widget maparg))
-       ((and parent (widget-get parent 'href))
+       ((and parent (widget-get parent :href))
 	(funcall function parent maparg))
        (t nil)))))
 
@@ -1918,6 +1921,8 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 		       (concat data-directory "w3/")
 		       (expand-file-name "../../w3" data-directory)
 		       (file-name-directory (locate-library "w3"))
+		       (expand-file-name "../w3" (file-name-directory
+						  (locate-library "w3")))
 		       w3-configuration-directory))
 	 (total-found 0)
 	 (possible (append
@@ -1972,12 +1977,11 @@ dumped with emacs."
   (url-register-protocol 'www 'w3-internal-url 'w3-internal-expander)
   (w3-load-flavors)
   (w3-setup-version-specifics)
+  (setq w3-setup-done t)
   (setq w3-default-configuration-file (expand-file-name 
 				       (or w3-default-configuration-file
 					   "profile")
 				       w3-configuration-directory))
-					   
-
   (if (and init-file-user
 	   w3-default-configuration-file
 	   (file-exists-p w3-default-configuration-file))
@@ -2058,8 +2062,7 @@ dumped with emacs."
 
   ; Set up the entity definition for PGP and PEM authentication
 
-  (run-hooks 'w3-load-hook)
-  (setq w3-setup-done t))
+  (run-hooks 'w3-load-hook))
 
 (defun w3-mark-link-as-followed (ext dat)
   ;; Mark a link as followed
@@ -2067,13 +2070,9 @@ dumped with emacs."
 
 (defun w3-only-links ()
   (let* (result temp)
-    (if (widget-at (point-min))
-	(setq result (list (widget-at (point-min)))))
-    (setq temp (w3-next-widget (point-min)))
-    (while temp
-      (if (widget-get temp 'href)
-	  (setq result (cons temp result)))
-      (setq temp (w3-next-widget (widget-get temp :to))))
+    (w3-map-links (function
+		   (lambda (x y)
+		     (setq result (cons x result)))))
     result))
 
 (defun w3-download-callback (fname buff)
@@ -2085,7 +2084,7 @@ dumped with emacs."
 	      (write-file-hooks nil)
 	      (write-contents-hooks nil)
 	      (enable-multibyte-characters t) ; mule 2.4
-	      (coding-system-for-write mule-no-coding-system) ; (X)Emacs/mule
+	      (buffer-file-coding-system mule-no-coding-system) ; mule 2.4
 	      (file-coding-system mule-no-coding-system) ; mule 2.3
 	      (mc-flag t))		; mule 2.3
 	  (write-file fname)
@@ -2163,7 +2162,6 @@ to disk."
      (t
       (w3-fetch href)))))
 
-;;; FIXME!  Need to rewrite these so that we can pass a predicate to 
 (defun w3-widget-forward (arg)
   "Move point to the next field or button.
 With optional ARG, move across that many fields."
@@ -2251,16 +2249,18 @@ Current keymap is:
       ;; Oh gross, this kills buffer-local faces in XEmacs
       ;;(kill-all-local-variables)
       (use-local-map w3-mode-map)
-      (setq major-mode 'w3-mode)
       (setq mode-name "WWW")
       (mapcar (function (lambda (x) (set-variable (car x) (cdr x)))) tmp)
+      (setq major-mode 'w3-mode)
       (w3-mode-version-specifics)
       (w3-menu-install-menus)
       (setq url-current-passwd-count 0
-	    inhibit-read-only nil
 	    truncate-lines t
 	    mode-line-format w3-modeline-format)
       (run-hooks 'w3-mode-hook)
+      ;; Avoid calling the global bindings for RET and mouse-2.
+      (make-local-variable 'widget-global-map)
+      (setq widget-global-map  (make-sparse-keymap))
       (widget-setup)
       (if w3-current-isindex
 	  (setq mode-line-process "-Searchable")))))

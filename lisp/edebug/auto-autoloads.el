@@ -1,6 +1,9 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (not (featurep 'edebug-autoloads))
     (progn
+
+(provide 'edebug-autoloads)
+))
 
 ;;;### (autoloads (edebug-eval-top-level-form def-edebug-spec) "edebug" "edebug/edebug.el")
 
@@ -18,6 +21,3 @@ Print its name in the minibuffer and leave point where it is,
 or if an error occurs, leave point after it with mark at the original point." t nil)
 
 ;;;***
-
-(provide 'edebug-autoloads)
-))

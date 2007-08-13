@@ -128,7 +128,7 @@
 
 ;; (print (prin1-to-string (append options processed)))
 
-(print "Spawning make-docfile ...")
+(princ "Spawning make-docfile ...")
 ;; (print (prin1-to-string (append options processed)))
 
 (setq exec-path (list (concat default-directory "../lib-src")))
@@ -142,6 +142,7 @@
        nil
        (append options processed))
 
+(princ "Spawning make-docfile ...done\n")
 ;; (write-region-internal (point-min) (point-max) "/tmp/DOC")
 
 (kill-emacs)

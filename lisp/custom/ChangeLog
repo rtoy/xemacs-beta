@@ -1,3 +1,83 @@
+Wed Jun 25 17:46:18 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9937 released.
+
+Wed Jun 25 17:29:08 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:match-alternatives): New keyword.
+
+	* custom.el: Updated autoloads.
+
+	* all: Synched with FSF.
+
+Tue Jun 24 16:27:41 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9936 released.
+
+Tue Jun 24 14:35:17 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (customize-browse): Take a group argument.
+	(custom-help-menu): Browse `emacs' group.
+
+	* Version 1.9935 released.
+
+Tue Jun 24 14:31:53 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9934 released.
+
+Tue Jun 24 14:30:26 MET DST 1997  Simon Marshall <simon@gnu.ai.mit.edu>
+
+	* cus-edit.el (custom-add-parent-links): Simplify mapatoms lambda.
+	(custom-browse): New group.
+	(custom-buffer-groups-last):
+	(custom-menu-groups-first): Options deleted.
+	(custom-browse-sort-alphabetically):
+	(custom-browse-order-groups):
+	(custom-buffer-order-groups):
+	(custom-menu-order-groups): New options.
+	(custom-browse-sort-predicate):
+	(custom-buffer-sort-predicate):
+	(custom-menu-sort-predicate): Functions deleted.
+	(custom-sort-items): New replacement function; simplification and
+	extension of previous predicate functions.
+	(customize-face):
+	(customize-customized):
+	(customize-saved):
+	(customize-apropos):
+	(custom-menu-create):
+	(custom-group-value-create): Use it.
+
+Tue Jun 24 11:46:40 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-tree-alist): Use "-\ " instead of "-+ ".
+	(custom-group-value-create): Ditto.
+
+	* Version 1.9933 released.
+
+Tue Jun 24 11:32:55 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-button-click): Steal up event if key is not
+	bounbd in `widget-global-map'.
+
+Mon Jun 23 17:23:27 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9932 released.
+
+Mon Jun 23 11:56:40 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-tree-insert-prefix): Renamed from
+	`custom-tree-insert'.
+	(custom-group-value-create): Use it.
+
+	* wid-edit.el (widget-field-use-before-change): New option.
+	(widget-setup): Obey it.
+
+	* cus-edit.el (custom-help-menu): Add entry for
+	`customize-browse'. 
+
+	* widget.texi: Change `@br' to `@*'.
+	Patch by Ralph Schleicher <rs@purple.UL.BaWue.DE>.
+
 Sat Jun 21 21:10:57 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.9931 released.

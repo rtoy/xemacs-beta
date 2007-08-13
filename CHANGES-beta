@@ -1,32 +1,45 @@
 							-*- indented-text -*-
+to 20.3 beta9 "Sofia".
+-- cc-mode-5.11
+-- custom-1.9937
+-- Mule Updates/Quail/Synch with Emacs/Mule zeta courtesy of MORIOKA Tomohiko
+-- lazy-lock.el reverted to 1.14 as per Ben Wing's instructions.
+-- ph.el-2.1
+-- W3-3.0.92 courtesy of William Perry
+-- reftex.el-2.14
+-- Lots of Miscellaneous Hrvoje Niksic patches
+-- view-process 2.4 -- Courtesy of Heiko Muenkel
+-- time.el-1.17
+-- Miscellaneous bug fixes
+
 to 20.3 beta8 "Copenhagen".
 -- Custom changes now saved in ~/.xemacs-custom and loaded automatically at
-   startup.
+   startup
 -- oobr support binaries moved from lisp hierarchy to new top level
-   directory `pkg-src'.
+   directory `pkg-src'
 -- Viper-2.94 Courtesy of Michael Kifer
 -- Customizations from Hrvoje Niksic
 -- FAQ update from Andreas Kaempf
 -- New graphic cbx.gif added to etc, courtesy of Jens Lautenbacher,
    `Created by XEmacs' suitable for adorning a web page.
 -- save-some-buffers now has an option to preview dirty buffers as
-   they are being offered for save.  Courtesy of David Bakhash.
--- XEmacs compiles in 64 bit SGI environment courtesy of Olivier Galibert.
--- Hardcoded -I/usr/local/include, -L/usr/local/include removed.
+   they are being offered for save.  Courtesy of David Bakhash
+-- XEmacs compiles in 64 bit SGI environment courtesy of Olivier Galibert
+-- Hardcoded -I/usr/local/include, -L/usr/local/include removed
 -- edmacro.el-3.16
 -- mapvector is now a subr courtesy of Hrvoje Niksic
 -- new function archive-quit in arc-mode.el courtesy of Karl Hegbloom
 -- debug-on-error (round 2) courtesy of Hrvoje Niksic
 -- Gnus-5.4.59
 -- Build no longer depends on a list of .elc files listed in src/Makefile.in.in
-   (only important to developers).
+   (only important to developers)
 -- If a .xemacs file exists, use it in preference to .emacs.  If no .xemacs
-   use .emacs as usual.  The file loaded is left in `user-init-file'.
--- Overhaul of XEmacs startup code, Part II.
+   use .emacs as usual.  The file loaded is left in `user-init-file'
+-- Overhaul of XEmacs startup code, Part II
 -- custom-1.9931
 -- Miscellaneous Ebola fixes
--- New internal autoload generating function `batch-update-directory'.
--- New file hippie-exp.el from Emacs/Mule zeta.
+-- New internal autoload generating function `batch-update-directory'
+-- New file hippie-exp.el from Emacs/Mule zeta
 -- Miscellaneous bug fixes
 
 to 20.3 beta7 "Oslo".

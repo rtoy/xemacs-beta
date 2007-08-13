@@ -2,9 +2,9 @@
 (if (not (featurep 'custom-autoloads))
     (progn
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-option customize-group-other-window customize-group customize custom-set-variable custom-set-value) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all customize-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-option customize-group-other-window customize-group customize customize-set-variable customize-set-value) "cus-edit" "custom/cus-edit.el")
 
-(autoload 'custom-set-value "cus-edit" "\
+(autoload 'customize-set-value "cus-edit" "\
 Set VARIABLE to VALUE.  VALUE is a Lisp object.
 
 If VARIABLE has a `variable-interactive' property, that is used as if
@@ -13,7 +13,7 @@ it were the arg to `interactive' (which see) to interactively read the value.
 If VARIABLE has a `custom-type' property, it must be a widget and the
 `:prompt-value' property of that widget will be used for reading the value." t nil)
 
-(autoload 'custom-set-variable "cus-edit" "\
+(autoload 'customize-set-variable "cus-edit" "\
 Set the default for VARIABLE to VALUE.  VALUE is a Lisp object.
 
 If VARIABLE has a `custom-set' property, that is used for setting
@@ -101,7 +101,7 @@ Create a tree browser for the customize hierarchy." t nil)
 
 (defcustom custom-file (if (featurep 'xemacs) "~/.xemacs-custom" "~/.emacs") "File used for storing customization information.\nIf you change this from the default \"~/.emacs\" you need to\nexplicitly load that file for the settings to take effect." :type 'file :group 'customize)
 
-(autoload 'custom-save-customized "cus-edit" "\
+(autoload 'customize-save-customized "cus-edit" "\
 Save all user options which have been set in this session." t nil)
 
 (autoload 'custom-save-all "cus-edit" "\

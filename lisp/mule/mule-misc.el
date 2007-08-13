@@ -153,51 +153,7 @@ If each element of LIST is not a string, it is converted to string
 
 ;; Following definition were imported from Emacs/mule-delta.
 
-(defun truncate-string-to-width (str width &optional start-column padding)
-  "Truncate string STR to fit in WIDTH columns.
-Optional 1st arg START-COLUMN if non-nil specifies the starting column.
-Optional 2nd arg PADDING if non-nil, space characters are padded at
-the head and tail of the resulting string to fit in WIDTH if necessary.
-If PADDING is nil, the resulting string may be narrower than WIDTH."
-  (or start-column
-      (setq start-column 0))
-  (let ((len (length str))
-	(idx 0)
-	(column 0)
-	(head-padding "") (tail-padding "")
-	ch last-column last-idx from-idx)
-    (condition-case nil
-	(while (< column start-column)
-	  (setq ch (sref str idx)
-		column (+ column (char-width ch))
-		idx (+ idx (char-bytes ch))))
-      (args-out-of-range (setq idx len)))
-    (if (< column start-column)
-	(if padding (make-string width ?\ ) "")
-      (if (and padding (> column start-column))
-	  (setq head-padding (make-string (- column start-column) ?\ )))
-      (setq from-idx idx)
-      (condition-case nil
-	  (while (< column width)
-	    (setq last-column column
-		  last-idx idx
-		  ch (sref str idx)
-		  column (+ column (char-width ch))
-		  idx (+ idx (char-bytes ch))))
-	(args-out-of-range (setq idx len)))
-      (if (> column width)
-	  (setq column last-column idx last-idx))
-      (if (and padding (< column width))
-	  (setq tail-padding (make-string (- width column) ?\ )))
-      (setq str (substring str from-idx idx))
-      (if padding
-	  (concat head-padding str tail-padding)
-	str))))
-
-;;; For backward compatiblity ...
-;;;###autoload
-(defalias 'truncate-string 'truncate-string-to-width)
-(make-obsolete 'truncate-string 'truncate-string-to-width)
+;; Function `truncate-string-to-width' was moved to mule-util.el.
 
 ;; end of imported definition
 

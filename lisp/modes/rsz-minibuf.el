@@ -1,61 +1,68 @@
 ;;; rsz-minibuf.el --- dynamically resize minibuffer to display entire contents
 
-;;; Copyright (C) 1990 Roland McGrath
-;;; Copyright (C) 1993, 1994 Noah S. Friedman
+;; Copyright (C) 1990 Roland McGrath
+;; Copyright (C) 1993, 1994 Noah S. Friedman
 
-;;; Author: Noah Friedman <friedman@prep.ai.mit.edu>
-;;;         Roland McGrath <roland@prep.ai.mit.edu>
-;;; Modified for Lucid Emacs By: Peter Stout <pds@cs.cmu.edu>
-;;; Maintainer: friedman@prep.ai.mit.edu
-;;; Keywords: minibuffer, window, frames, display
-;;; Status: Known to work in FSF GNU Emacs 19.23 and Lucid Emacs 19.9.
+;; Author: Noah Friedman <friedman@prep.ai.mit.edu>
+;; Author: Roland McGrath <roland@prep.ai.mit.edu>
+;; Modified for Lucid Emacs By: Peter Stout <pds@cs.cmu.edu>
+;; Maintainer: friedman@prep.ai.mit.edu
+;; Keywords: minibuffer, window, frames, display
+;; Status: Known to work in FSF GNU Emacs 19.23 and Lucid Emacs 19.9.
 
-;;; $Id: rsz-minibuf.el,v 1.4 1997/04/19 23:21:04 steve Exp $
+;; This file is part of XEmacs.
 
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2, or (at your option)
-;;; any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License
-;;; along with this program; if not, you can either send email to this
-;;; program's maintainer or write to: The Free Software Foundation,
-;;; Inc.; 675 Massachusetts Avenue; Cambridge, MA 02139, USA.
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, you can either
+;; send email to this program's maintainer or write to: The Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: Not synched.
 
 ;;; Commentary:
 
-;;; This package allows the entire contents (or as much as possible) of the
-;;; minibuffer to be visible at once when typing.  As the end of a line is
-;;; reached, the minibuffer will resize itself.  When the user is done
-;;; typing, the minibuffer will return to its original size.
+;; This file has received maintenance by the XEmacs development team.
 
-;;; In window systems where it is possible to have a frame in which the
-;;; minibuffer is the only window, the frame itself can be resized.  In FSF
-;;; GNU Emacs 19.22 and earlier, the frame may not be properly returned to
-;;; its original size after it ceases to be active because
-;;; `minibuffer-exit-hook' didn't exist until version 19.23.
+;; $Id: rsz-minibuf.el,v 1.5 1997/06/26 02:31:05 steve Exp $
 
-;;; NOTE: The code to resize frames has not been tested under Lucid Emacs,
-;;; because detached minibuffers are broken.
+;; This package allows the entire contents (or as much as possible) of the
+;; minibuffer to be visible at once when typing.  As the end of a line is
+;; reached, the minibuffer will resize itself.  When the user is done
+;; typing, the minibuffer will return to its original size.
 
-;;; Note that the minibuffer and echo area are not the same!  They simply
-;;; happen to occupy roughly the same place on the frame.  Messages put in
-;;; the echo area will not cause any resizing by this package.
+;; In window systems where it is possible to have a frame in which the
+;; minibuffer is the only window, the frame itself can be resized.  In FSF
+;; GNU Emacs 19.22 and earlier, the frame may not be properly returned to
+;; its original size after it ceases to be active because
+;; `minibuffer-exit-hook' didn't exist until version 19.23.
 
-;;; This package is considered a minor mode but it doesn't put anything in
-;;; minor-mode-alist because this mode is specific to the minibuffer, which
-;;; has no modeline.
+;; NOTE: The code to resize frames has not been tested under Lucid Emacs,
+;; because detached minibuffers are broken.
 
-;;; To use this package, put the following in your .emacs:
-;;;
-;;;     (autoload 'resize-minibuffer-mode "rsz-minibuf" nil t)
-;;;
-;;; Invoking the command `resize-minibuffer-mode' will then enable this mode.
+;; Note that the minibuffer and echo area are not the same!  They simply
+;; happen to occupy roughly the same place on the frame.  Messages put in
+;; the echo area will not cause any resizing by this package.
+
+;; This package is considered a minor mode but it doesn't put anything in
+;; minor-mode-alist because this mode is specific to the minibuffer, which
+;; has no modeline.
+
+;; To use this package, put the following in your .emacs:
+;;
+;;     (autoload 'resize-minibuffer-mode "rsz-minibuf" nil t)
+;;
+;; Invoking the command `resize-minibuffer-mode' will then enable this mode.
 
 ;;; Code:
 
@@ -264,4 +271,4 @@ respectively."
 
 (add-hook 'minibuffer-setup-hook 'resize-minibuffer-setup)
 
-;; rsz-minibuf.el ends here
+;;; rsz-minibuf.el ends here

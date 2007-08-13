@@ -1789,9 +1789,9 @@ extern Lisp_Object Qinhibit_read_only;
 
 /* Defined in unex*.c */
 int unexec (char *new_name, char *a_name,
-	    unsigned int data_start, 
-	    unsigned int bss_start, 
-	    unsigned int entry_address);
+	    uintptr_t data_start, 
+	    uintptr_t bss_start, 
+	    uintptr_t entry_address);
 #ifdef RUN_TIME_REMAP
 int run_time_remap (char *);
 #endif

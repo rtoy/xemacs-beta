@@ -1221,6 +1221,8 @@ run `normal-mode' explicitly."
     ("[Mm]akefile\\(\\.\\|\\'\\)" . makefile-mode)
     ("\\.X\\(defaults\\|environment\\|resources\\|modmap\\)\\'" . xrdb-mode)
     ("/app-defaults/" . xrdb-mode)
+    ("\\.[^/]*wm\\'" . winmgr-mode)
+    ("\\.[^/]*wm2?rc" . winmgr-mode)
     )
 "Alist of filename patterns vs. corresponding major mode functions.
 Each element looks like (REGEXP . FUNCTION) or (REGEXP FUNCTION NON-NIL).

@@ -228,6 +228,11 @@ all:	${GENERATED_HEADERS} ${MAKE_SUBDIR}
 ## Convenience target for XEmacs beta testers
 beta:	clean all-elc
 
+## Convenience target for XEmacs maintainers
+## This would run `make-xemacsdist' if I were really confident that everything
+## was turnkey.
+dist:	all-elc info
+
 ## Build XEmacs and recompile out-of-date and missing .elc files along
 ## the way.
 all-elc all-elcs:   lib-src lwlib dump-elcs src
@@ -361,7 +366,7 @@ install-arch-dep: mkdir
 	then \
 	   ${INSTALL_DATA} lib-src/DOC ${archlibdir}/DOC ; \
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; do \
-	     (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ;
+	     (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; \
 	   done ; \
 	else true; fi
 	${INSTALL_PROGRAM} src/xemacs ${bindir}/xemacs-${version}
@@ -455,7 +460,7 @@ mkdir: FRC.mkdir
 
 ## Some makes seem to remember that they've built something called FRC,
 ## so you can only use a given FRC once per makefile.
-FRC FRC.src.paths.h FRC.mkdir FRC.dump-elcs:
+FRC FRC.src.paths.h FRC.mkdir FRC.dump-elcs FRC.info:
 FRC.mostlyclean FRC.clean FRC.distclean FRC.realclean FRC.tags:
 
 ## ==================== Cleaning up and miscellanea ====================
@@ -575,8 +580,9 @@ TAGS tags: FRC.tags
 check:
 	@echo "We don't have any automated tests for XEmacs yet."
 
-dist:
-	cd ${srcdir} && make-dist
+## Is this something Chuck used and doesn't work with CVS?  -slb
+## dist:
+##	cd ${srcdir} && make-dist
 
 info: FRC.info
 	cd ${srcdir}/man && $(MAKE) $(MFLAGS) $@

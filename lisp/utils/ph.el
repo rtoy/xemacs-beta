@@ -1,11 +1,11 @@
 ;;; ph.el --- Client for the CCSO directory system (aka PH/QI)
 
-;; Copyright (C) 1997 Oscar Figueiredo
+;; Copyright (C) 1997 Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: May 1997
-;; Version: $Revision: 1.2 $
+;; Version: 2.1
 ;; Keywords: help
 
 ;; This file is part of XEmacs
@@ -21,26 +21,21 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to
+;; along with XEmacs; see the file COPYING.  If not, write to 
 ;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
-
-;; LCD Archive Entry (not registered yet):
-;; ph|Oscar Figueiredo|Oscar.Figueiredo@di.epfl.ch|
-;; Client for the CCSO directory system (aka PH/QI)|
-;; 27-May-1997|Version $Revision: 1.2 $|ftp://(Not Available)
-
-;;    This package provides functions to query CCSO nameservers through an
-;;    interactive form or replace inline query strings in buffers with
-;;    appropriately formatted query results (especially used to expand email
-;;    addresses in message buffers). It also interfaces with the BBDB package
-;;    to let you register entries of the CCSO directory into your own database.
-;;    The CCSO white pages system was developped at UIUC and is in use in more
+;;    This package provides functions to query CCSO PH/QI nameservers
+;;    through an interactive form or replace inline query strings in
+;;    buffers with appropriately formatted query results (especially
+;;    used to expand email addresses in message buffers). It also
+;;    interfaces with the BBDB package to let you register entries of
+;;    the CCSO PH/QI directory into your own database.  The CCSO PH/QI
+;;    white pages system was developped at UIUC and is in use in more
 ;;    than 300 sites in the world. The distribution can be found at
-;;    ftp://uiarchive.cso.uiuc.edu/pub/packages/ph 
-;;    Traditionally the server is called QI while the client is called PH.
+;;    ftp://uiarchive.cso.uiuc.edu/pub/packages/ph Traditionally the
+;;    server is called QI while the client is called PH.
 
 ;;; Installation:
 ;;    This package uses the custom and widget libraries. If they are not already 
@@ -48,21 +43,19 @@
 ;;    Then uncomment and add the following to your .emacs file:
 ;;      (require 'ph)
 ;;      (eval-after-load "message"
-;;                       (define-key message-mode-map [(control ?c) (tab)] 'ph-expand-inline))
+;;                       '(define-key message-mode-map [(control ?c) (tab)] 'ph-expand-inline))
 ;;      (eval-after-load "mail"
-;;                       (define-key mail-mode-map [(control ?c) (tab)] 'ph-expand-inline))
-
-;;    This package should run under XEmacs 19.15 or 20 as well as under Emacs 19.34 and above
+;;                       '(define-key mail-mode-map [(control ?c) (tab)] 'ph-expand-inline))
 
 ;;; Usage:
-;;    * Provided you did the installation as proposed in the above section, 
+;;    - Provided you did the installation as proposed in the above section, 
 ;;      inline expansion will be available when you compose an email
 ;;      message. Type the name of somebody recorded in your PH/QI server and hit
 ;;      C-c TAB, this will overwrite the name with the corresponding email 
 ;;      address
-;;    * M-x ph-customize to customize inline expansion and other features to
+;;    - M-x ph-customize to customize inline expansion and other features to
 ;;      your needs.
-;;    * Look for the Ph submenu in the tools menu for more.
+;;    - Look for the Ph submenu in the Tools menu for more.
 
 ;;; Code:
 
@@ -73,7 +66,10 @@
     (require 'overlay))
 (if (locate-library "timer")
     (require 'timer))
+
 (autoload 'custom-menu-create "cus-edit")
+(autoload 'bbdb-create-internal "bbdb-com")
+(autoload 'bbdb-display-records "bbdb")
 
 ;;{{{      Package customization variables
 
@@ -116,7 +112,7 @@ Possible values are:
 		  (const :menu-tag "None" nil))
   :group 'ph)
 
-(defcustom ph-duplicate-fields-handling-method 'list
+(defcustom ph-duplicate-fields-handling-method '((email . duplicate))
   "*A method to handle entries containing duplicate fields.
 This is either an alist (FIELD . METHOD) or a symbol METHOD.
 The alist form of the variable associates a method to an individual field,
@@ -170,26 +166,26 @@ as additional arguments to format."
 			(symbol :tag "")))
   :group 'ph)
 
-(defcustom ph-form-fields '(name firstname email phone)
+(defcustom ph-form-fields '(name email phone)
   "*A list of fields presented in the query form."
   :tag   "Default Fields in Query Forms"
   :type  '(repeat (symbol :tag "Field name"))
   :group 'ph)
 
 (defcustom ph-fieldname-formstring-alist '((url . "URL")
-					    (unix_gid . "Unix GID")
-					    (unix_uid . "Unix UID")
-					    (unit_code . "Unit Code")
-					    (department_code . "Department Code")
-					    (high_school . "High School")
-					    (home_phone . "Home Phone")
-					    (office_phone . "Office Phone")
-					    (callsign . "HAM Call Sign")
-					    (office_address . "Office Address")
-					    (office_location . "Office Location")
-					    (id . "ID")
-					    (email . "E-Mail")
-					    (firstname . "First Name"))
+					   (unix_gid . "Unix GID")
+					   (unix_uid . "Unix UID")
+					   (unit_code . "Unit Code")
+					   (department_code . "Department Code")
+					   (high_school . "High School")
+					   (home_phone . "Home Phone")
+					   (office_phone . "Office Phone")
+					   (callsign . "HAM Call Sign")
+					   (office_address . "Office Address")
+					   (office_location . "Office Location")
+					   (id . "ID")
+					   (email . "E-Mail")
+					   (firstname . "First Name"))
   "*A mapping of CCSO database field names onto prompt strings used in query/response forms.
 Prompt strings for fields that are not in this are derived by capitalizing
 the field name."
@@ -199,13 +195,31 @@ the field name."
 		        (string :tag "Prompt string")))
   :group 'ph)
 
-(defcustom ph-bbdb-mapping-alist '((name . (firstname name))
-				    (email . net))
-  "*A mapping of CCSO database field names onto BBDB field names"
-  :tag "CCSO to BBDB Field Name Mapping"
+(defcustom ph-bbdb-conversion-alist '((name . name)
+				      (net . email)
+				      (address . (ph-bbdbify-address address "Address"))
+				      (phone . ((ph-bbdbify-phone phone "Phone")
+						(ph-bbdbify-phone office_phone "Office Phone"))))
+  "*A mapping from BBDB to PH/QI fields.
+This is a list of cons cells (BBDB-FIELD . SPEC-OR-LIST) where BBDB-FIELD
+is the name of a field that must be defined in your BBDB (standard field
+names are `name', `company', `net', `phone', `address' and `notes').
+SPEC-OR-LIST is either a single SPEC or a list of SPECs. Lists of specs are
+valid only for the `phone' and `address' BBDB fields. 
+SPECs are sexps which are evaluated:
+  -a string evaluates to itself
+  -a symbol evaluates to the symbol value. Symbols naming PH/QI fields
+   present in the record evaluate to the value of the field in the record
+  -a form is evaluated as a function. The argument list may contain PH/QI 
+   field names which eval to the corresponding values in the record. The form
+   evaluation should return something appropriate for the particular 
+   BBDB-FIELD (see bbdb-create-internal). ph-bbdbify-phone and 
+   ph-bbdbify-address are provided as convenience functions to parse phones
+   and addresses."
+  :tag "BBDB to CCSO Field Name Mapping"
   :type '(repeat (cons :tag "Field Name"
-		       (symbol :tag "CCSO")
-		       (sexp :tag "BBDB")))
+		       (symbol :tag "BBDB Field")
+		       (sexp :tag "Conversion Spec")))
   :group 'ph)
 
 (defcustom ph-options-file "~/.emacs"
@@ -234,6 +248,20 @@ choice."
 (defvar ph-form-widget-list nil)
 (defvar ph-process-buffer nil)
 (defvar ph-read-point)
+
+
+
+
+;;; FSF Emacs does not provide that one
+(if (not (fboundp 'split-string))
+    (defun split-string (string pattern)
+      "Return a list of substrings of STRING which are separated by PATTERN."
+      (let (parts (start 0))
+	(while (string-match pattern string start)
+	  (setq parts (cons (substring string start (match-beginning 0)) parts)
+		start (match-end 0)))
+	(nreverse (cons (substring string start) parts))
+	)))
 
 (defun ph-display-records (records &optional raw-field-names)
   "Display the record list RECORDS in a formatted buffer. 
@@ -398,10 +426,10 @@ Fields not in FIELDS are discarded."
 		      (memq 'all fields)
 		      (memq current-key fields))
 		  (if key
-		      (setq record (cons (cons key value) record))
-		    (setcdr (car record) (cons value (if (listp (cdar record))
-							 (cdar record)
-						       (cons (cdar record) nil)))))))))
+		      (setq record (cons (cons key value) record)) ; New key
+		    (setcdr (car record) (if (listp (cdar record))
+					     (append (cdar record) (list value))
+					   (list (cdar record) value))))))))
 	(and (not ignore)
 	     (or (null fields)
 		 (memq 'all fields)
@@ -573,17 +601,129 @@ depending on RETURN-RESPONSE"
 	  (buffer-substring (point) match-end)
 	return-code))))
 
-;;; FSF Emacs does not provide that one
-(if (not (fboundp 'split-string))
-    (defun split-string (string pattern)
-      "Return a list of substrings of STRING which are separated by PATTERN."
-      (let (parts (start 0))
-	(while (string-match pattern string start)
-	  (setq parts (cons (substring string start (match-beginning 0)) parts)
-		start (match-end 0)))
-	(nreverse (cons (substring string start) parts))
-	)))
+(defun ph-create-bbdb-record (record)
+  "Create a BBDB record using the RECORD alist.
+RECORD is an alist of (KEY . VALUE) where KEY is a symbol naming a field
+of the PH/QI database and VALUE is the corresponding value for the record"
+  ;; This function runs in a special context where lisp symbols corresponding
+  ;; to field names in record are bound to the corresponding values
+  (eval 
+   `(let* (,@(mapcar '(lambda (c)
+			(list (car c) (if (listp (cdr c))
+					  (list 'quote (cdr c))
+					(cdr c))))
+		     record)
+	     bbdb-name
+	     bbdb-company
+	     bbdb-net
+	     bbdb-address
+	     bbdb-phones
+	     bbdb-notes
+	     spec
+	     bbdb-record
+	     value)
 
+      ;; BBDB standard fields
+      (setq bbdb-name (ph-parse-spec (cdr (assq 'name ph-bbdb-conversion-alist)) record nil)
+	    bbdb-company (ph-parse-spec (cdr (assq 'company ph-bbdb-conversion-alist)) record nil)
+	    bbdb-net (ph-parse-spec (cdr (assq 'net ph-bbdb-conversion-alist)) record nil)
+	    bbdb-notes (ph-parse-spec (cdr (assq 'notes ph-bbdb-conversion-alist)) record nil))
+      (setq spec (cdr (assq 'address ph-bbdb-conversion-alist)))
+      (setq bbdb-address (delq nil (ph-parse-spec (if (listp (car spec))
+						      spec
+						    (list spec))
+						  record t)))
+      (setq spec (cdr (assq 'phone ph-bbdb-conversion-alist)))
+      (setq bbdb-phones (delq nil (ph-parse-spec (if (listp (car spec))
+						     spec
+						   (list spec))
+						 record t)))
+      ;; BBDB custom fields
+      (setq bbdb-notes (append (list (and bbdb-notes (cons 'notes bbdb-notes)))
+			       (mapcar (function
+					(lambda (mapping)
+					  (if (and (not (memq (car mapping)
+							      '(name company net address phone notes)))
+						   (setq value (ph-parse-spec (cdr mapping) record nil)))
+					      (cons (car mapping) value))))
+				       ph-bbdb-conversion-alist)))
+      (setq bbdb-notes (delq nil bbdb-notes))
+      (setq bbdb-record (bbdb-create-internal bbdb-name 
+					      bbdb-company 
+					      bbdb-net
+					      bbdb-address
+					      bbdb-phones
+					      bbdb-notes))
+
+      (bbdb-display-records (list bbdb-record))
+      )))
+
+(defun ph-parse-spec (spec record recurse)
+  "Parse the conversion SPEC using RECORD. 
+If RECURSE is non-nil then SPEC may be a list of atomic specs"
+  (cond 
+   ((or (stringp spec)
+	(symbolp spec)
+	(and (listp spec)
+	     (symbolp (car spec))
+	     (fboundp (car spec))))
+    (condition-case nil
+	(eval spec)
+      (void-variable nil)))
+   ((and recurse
+	 (listp spec))
+    (mapcar '(lambda (spec-elem)
+	       (ph-parse-spec spec-elem record nil))
+	    spec))
+   (t
+    (error "Invalid mapping specification for `%s'. Fix ph-bbdb-conversion-alist" spec))))
+
+(defun ph-bbdbify-address (addr location)
+  "Parse ADDR into a vector compatible with bbdb-create-internal.
+ADR should be an address string of no more than four lines or a
+list of lines. 
+The last line is searched for the zip code, city and state name.
+LOCATION is used as the address location for bbdb"
+  (let* ((addr-components (if (listp addr)
+			      (reverse addr)
+			    (reverse (split-string addr "\n"))))
+	 (lastl (pop addr-components))
+	 zip city state)
+    (setq addr-components (nreverse addr-components))
+    (cond
+     ;; American style
+     ((string-match "\\(\\w+\\)\\W*\\([A-Z][A-Z]\\)\\W*\\([0-9]+\\)" lastl)
+      (setq city (match-string 1 lastl)
+	    state (match-string 2 lastl)
+	    zip (string-to-number (match-string 3 lastl))))
+     ;; European style
+     ((string-match "\\([0-9]+\\)[ \t]+\\(.*\\)" lastl)
+      (setq city (match-string 2 lastl)
+	    zip (string-to-number (match-string 1 lastl))))
+     (t
+      (error "ph-bbdbify-address was unable to parse the address. Customize ph-bbdb-conversion-alist")))
+    (vector location 
+	    (or (nth 0 addr-components) "")
+	    (or (nth 1 addr-components) "")
+	    (or (nth 2 addr-components) "")
+	    (or city "")
+	    (or state "")
+	    zip)))
+
+(defun ph-bbdbify-phone (phone location)
+  "Parse PHONE into a vector compatible with bbdb-create-internal.
+PHONE is either a string supposedly containing a phone number or
+a list of such strings which are concatenated.
+LOCATION is used as the phone location for bbdb"
+  (let ((phone-string (cond
+		       ((stringp phone)
+			phone)
+		       ((listp phone)
+			(mapconcat 'identity phone ", "))
+		       (t
+			(error "Invalid phone specification. Cannot create bbdb record")))))
+    (vector location phone-string)))
+			
 ;;}}}				 
 
 ;;{{{      High-level interfaces (interactive functions)
@@ -596,8 +736,8 @@ depending on RETURN-RESPONSE"
 (defun ph-set-server (server)
   "Set the server to SERVER."
   (interactive "sNew PH/QI Server: ")
-  (setq ph-server server)
-  (message "Selected PH/QI server is now %s" server))
+  (message "Selected PH/QI server is now %s" server)
+  (setq ph-server server))
 
 (defun ph-get-email (name)
   "Get the email field of NAME from the PH/QI directory server."
@@ -834,6 +974,17 @@ for the existing fields and displays a corresponding form."
     (save-buffer))
 )
 
+
+(defun ph-insert-record-at-point-into-bbdb ()
+  "Insert record at point into the BBDB database.
+This function can only be called from a PH/QI query result buffer."
+  (interactive)
+  (let ((record (and (overlays-at (point))
+		     (overlay-get (car (overlays-at (point))) 'ph-record))))
+    (if (null record)
+	(error "Point is not over a record.")
+      (ph-create-bbdb-record record))))
+    
 ;;}}}
 
 ;;{{{      Menu interface
@@ -844,6 +995,11 @@ for the existing fields and displays a corresponding form."
   `(["---" nil nil]
     ["Query Form" ph-query-form t]
     ["Expand Inline" ph-expand-inline t]
+    ["Insert Record into BBDB" ph-insert-record-at-point-into-bbdb 
+     (and (or (featurep 'bbdb)
+	      (locate-library 'bbdb))
+	  (overlays-at (point))
+	  (overlay-get (car (overlays-at (point))) 'ph-record))]
     ["---" nil nil]
     ["Get Email" ph-get-email t]
     ["Get Phone" ph-get-phone t]

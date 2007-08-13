@@ -1,7 +1,7 @@
 ;;; w3-hot.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/05/09 04:30:54
-;; Version: 1.14
+;; Created: 1997/06/10 05:42:43
+;; Version: 1.15
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -157,7 +157,7 @@
 		      (set-buffer save-buf)
 		      (rename-buffer (concat "Hotlist during " regexp))))
       (unwind-protect
-	  (progn
+	  (let ((w3-reuse-buffers 'no))
 	    (w3-show-hotlist)
 	    (rename-buffer (concat "Hotlist \"" regexp "\""))
 	    (url-set-filename url-current-object (concat "hotlist/" regexp)))

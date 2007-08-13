@@ -188,16 +188,17 @@ Commands:
 (define-key help-mode-map 'delete 'scroll-down)
 
 (defun help-mode-quit ()
-  "Exits from help mode, possibly restoring the previous window configuration."
+  "Exits from help mode, possibly restoring the previous window configuration.
+Bury the help buffer to the end of the buffer list."
   (interactive)
-  (cond ((frame-property (selected-frame) 'help-window-config)
+  (let ((buf (current-buffer)))
+    (cond ((frame-property (selected-frame) 'help-window-config)
 	   (set-window-configuration
 	    (frame-property (selected-frame) 'help-window-config))
 	   (set-frame-property  (selected-frame) 'help-window-config nil))
-        ((one-window-p)
-	 (bury-buffer))
-        (t
-         (delete-window))))
+	  ((not (one-window-p))
+	   (delete-window)))
+    (bury-buffer buf)))
 
 (defun help-quit ()
   (interactive)

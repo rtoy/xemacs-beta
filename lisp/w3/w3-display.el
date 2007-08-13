@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/04/24 16:51:06
-;; Version: 1.176
+;; Created: 1997/06/25 14:30:16
+;; Version: 1.189
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,7 +34,8 @@
 (require 'w3-widget)
 (require 'w3-imap)
 
-(define-widget-keywords :emacspeak-help)
+(define-widget-keywords :active-face :emacspeak-help :href
+  :name :target :title :src)
 (autoload 'sentence-ify "flame")
 (autoload 'string-ify "flame")
 (autoload '*flame "flame")
@@ -70,7 +71,7 @@
 (w3-d-s-var-def w3-face-text-decoration)
 (w3-d-s-var-def w3-face-face)
 (w3-d-s-var-def w3-face-descr)
-(w3-d-s-var-def w3-face-pixmap)
+(w3-d-s-var-def w3-face-background-image)
 (w3-d-s-var-def w3-display-css-properties)
 (w3-d-s-var-def w3-display-background-properties)
 
@@ -107,7 +108,7 @@
        (w3-get-face-info font-variant)
        (w3-get-face-info font-size)
        (w3-get-face-info text-decoration)
-       ;;(w3-get-face-info pixmap)
+       (w3-get-face-info background-image)
        (w3-get-face-info color color)
        (w3-get-face-info background-color bgcolor)
        (setq w3-face-font-spec (make-font
@@ -124,7 +125,7 @@
        (w3-pop-face-info font-size)
        (w3-pop-face-info font-style)
        (w3-pop-face-info text-decoration)
-       ;;(w3-pop-face-info pixmap)
+       (w3-pop-face-info background-image)
        (w3-pop-face-info color)
        (w3-pop-face-info background-color))))
 
@@ -153,16 +154,27 @@
       (setq len (1+ len)))
     breaks-vector))
 
-(defun w3-pause ()
-  (cond
-   (w3-running-FSF19 (sit-for 0))
-   (w3-running-xemacs
-    (sit-for 0))
-   ;; (if (and (not (sit-for 0)) (input-pending-p))
-   ;;	(condition-case ()
-   ;;	    (dispatch-event (next-command-event))
-   ;;	  (error nil)))
-   (t (sit-for 0))))
+(defsubst w3-pause ()
+  (save-excursion
+    (goto-char (or (symbol-value 'cur-viewing-pos) (point-min)))
+    (cond
+     (w3-running-FSF19
+      (if (and (not (sit-for 0)) (input-pending-p))
+	  (condition-case ()
+	      (progn
+		(set 'cur-viewing-pos
+		     (lookup-key w3-mode-map (vector (read-event))))
+		(case (symbol-value 'cur-viewing-pos)
+		  ((w3-quit w3-leave-buffer) nil)
+		  (otherwise (call-interactively (symbol-value 'cur-viewing-pos)))))
+	    (error nil))))
+     (w3-running-xemacs
+      (if (and (not (sit-for 0)) (input-pending-p))
+	  (condition-case ()
+	      (dispatch-event (next-command-event))
+	    (error nil))))
+     (t (sit-for 0)))
+    (set 'cur-viewing-pos (point))))
 
 (defmacro w3-get-pad-string (len)
   (` (cond
@@ -261,10 +273,12 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
       (set-font-style-by-keywords w3-face-font-spec
 				  (car w3-face-font-style)))
   (setq w3-face-descr (list w3-face-font-spec
+			    (car w3-face-background-image)
 			    (car w3-face-color)
 			    (car w3-face-background-color))
 	w3-face-face (cdr-safe (assoc w3-face-descr w3-face-cache)))
   (if (or w3-face-face (not (or (car w3-face-color)
+				(car w3-face-background-image)
 				(car w3-face-background-color)
 				w3-face-font-spec)))
       nil				; Do nothing, we got it already
@@ -272,13 +286,15 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	  (w3-make-face (intern (format "w3-style-face-%05d" w3-face-index))
 			"An Emacs-W3 face... don't edit by hand." t)
 	  w3-face-index (1+ w3-face-index))
+    (if (car w3-face-background-image)
+	(w3-maybe-start-background-image-download
+	 (car w3-face-background-image) w3-face-face))
     (if w3-face-font-spec
 	(font-set-face-font w3-face-face w3-face-font-spec))
     (if (car w3-face-color)
 	(font-set-face-foreground w3-face-face (car w3-face-color)))
     (if (car w3-face-background-color)
 	(font-set-face-background w3-face-face (car w3-face-background-color)))
-    ;;(set-face-background-pixmap w3-face-face w3-face-pixmap)
     (setq w3-face-cache (cons
 			 (cons w3-face-descr w3-face-face)
 			 w3-face-cache)))
@@ -300,12 +316,16 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
   string)
 
 
+(if (not (fboundp 'char-before))
+    (fset 'char-before 'preceding-char))
+
 (defsubst w3-display-line-break (n)
   (if (or
        (memq (car w3-display-whitespace-stack) '(pre nowrap)) ; Been told
        (= w3-last-fill-pos (point))
        (> w3-last-fill-pos (point-max)))
-      (if (/= (preceding-char) ?\n) (setq n (1+ n))) ; at least put one line in
+      (if (not (eq (char-before) ?\n))
+	  (setq n (1+ n))) ; at least put one line in
     (let ((fill-column (max (1+ (length fill-prefix)) fill-column))
 	  width)
       (case (car w3-display-alignment-stack)
@@ -401,13 +421,13 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
       (cookie fname st nd))))
 
 (defun w3-widget-echo (widget &rest ignore)
-  (let ((url (widget-get widget 'href))
-	(name (widget-get widget 'name))
-	(text (buffer-substring (widget-get widget :from)
-				(widget-get widget :to)))
-	(title (widget-get widget 'title))
-	(check w3-echo-link)
-	(msg nil))
+  (let* ((url (widget-get widget :href))
+	 (name (widget-get widget :name))
+	 (text (buffer-substring (widget-get widget :from)
+				 (widget-get widget :to)))
+	 (title (widget-get widget :title))
+	 (check w3-echo-link)
+	 (msg nil))
     (if url
 	(setq url (url-truncate-url-for-viewing url)))
     (if name
@@ -423,9 +443,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	(pop check)))))
 
 (defun w3-follow-hyperlink (widget &rest ignore)
-  (let* ((target (or (widget-get widget 'target)
-		     w3-base-target))
-	 (href (widget-get widget 'href)))
+  (let* ((target (or (widget-get widget :target) w3-base-target))
+	 (href (widget-get widget :href)))
     (if target (setq target (intern (downcase target))))
     (case target
       ((_blank external)
@@ -438,7 +457,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 
 (defun w3-balloon-help-callback (object &optional event)
   (let* ((widget (widget-at (extent-start-position object)))
-	 (href (and widget (widget-get widget 'href))))
+	 (href (widget-get widget :href)))
     (if href
 	(url-truncate-url-for-viewing href)
       nil)))
@@ -637,7 +656,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 
 ;; Image handling
 (defun w3-maybe-start-image-download (widget)
-  (let* ((src (widget-get widget 'src))
+  (let* ((src (widget-get widget :src))
 	 (cached-glyph (w3-image-cached-p src)))
     (cond
      ((and cached-glyph
@@ -651,7 +670,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	  (eq (device-type) 'tty))	; Why bother?
       (w3-add-delayed-graphic widget))
      ((not (w3-image-loadable-p src nil)) ; Hey, we can't load it!
-      (message "Skipping image %s" (url-basepath src t))
+      (mesage "Skipping image %s" (url-basepath src t))
       (w3-add-delayed-graphic widget))
      (t					; Grab the images
       (let (
@@ -675,17 +694,61 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 				     w3-graphics-list))
 	(save-excursion
 	  (set-buffer (get-buffer-create url-working-buffer))
-	  (setq url-current-callback-data (list widget)
+	  (setq url-current-callback-data (list src (widget-get widget 'buffer)
+						widget)
 		url-be-asynchronous t
 		url-current-callback-func 'w3-finalize-image-download)
 	  (url-retrieve src))
 	(setq-default url-be-asynchronous old-asynch))))))
 
-(defun w3-finalize-image-download (widget)
+(defun w3-maybe-start-background-image-download (src face)
+  (let* ((cached-glyph (w3-image-cached-p src))
+	 (buf (current-buffer)))
+    (cond
+     ((and cached-glyph
+	   (widget-glyphp cached-glyph)
+	   (not (eq 'nothing
+		    (image-instance-type
+		     (glyph-image-instance cached-glyph)))))
+      (set-face-background-pixmap face
+				  (glyph-image-instance cached-glyph) buf))
+     ((or (not (fboundp 'valid-specifier-domain-p)) ; Can't do images
+	  (eq (device-type) 'tty))	; Why bother?
+      nil)
+     ((not (w3-image-loadable-p src nil)) ; Hey, we can't load it!
+      (mesage "Skipping image %s" (url-basepath src t))
+      nil)
+     (t					; Grab the images
+      (let (
+	    (url-request-method "GET")
+	    (old-asynch url-be-asynchronous)
+	    (url-request-data nil)
+	    (url-request-extra-headers nil)
+	    (url-source t)
+	    (url-mime-accept-string (substring
+				     (mapconcat
+				      (function
+				       (lambda (x)
+					 (if x
+					     (concat (car x) ",")
+					   "")))
+				      w3-allowed-image-types "")
+				     0 -1))
+	    (url-working-buffer (generate-new-buffer-name " *W3GRAPH*")))
+	(setq-default url-be-asynchronous t)
+	(setq w3-graphics-list (cons (cons src (make-glyph))
+				     w3-graphics-list))
+	(save-excursion
+	  (set-buffer (get-buffer-create url-working-buffer))
+	  (setq url-current-callback-data (list src buf 'background face)
+		url-be-asynchronous t
+		url-current-callback-func 'w3-finalize-image-download)
+	  (url-retrieve src))
+	(setq-default url-be-asynchronous old-asynch))))))
+
+(defun w3-finalize-image-download (url buffer &optional widget face)
   (let ((glyph nil)
-	(url (widget-get widget 'src))
-	(node nil)
-	(buffer (widget-get widget 'buffer)))
+	(node nil))
     (message "Enhancing image...")
     (setq glyph (image-normalize (cdr-safe (assoc url-current-mime-type
 						  w3-image-mappings))
@@ -719,14 +782,23 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
       (setq w3-graphics-list (cons (cons url glyph) w3-graphics-list)))
      (t nil))
 
-    (if (and (buffer-name buffer)	; Dest. buffer exists
-	     (widget-glyphp glyph))	; got a valid glyph
-	(save-excursion
-	  (set-buffer buffer)
-	  (if (eq major-mode 'w3-mode)
-	      (widget-value-set widget glyph)
-	    (setq w3-image-widgets-waiting
-		  (cons widget w3-image-widgets-waiting)))))))
+    (cond
+     ((or (not buffer)
+	  (not (widget-glyphp glyph))
+	  (not (buffer-name buffer)))
+      nil)
+     ((and (eq widget 'background)
+	   w3-running-xemacs)
+      (set-face-background-pixmap face
+				  (glyph-image-instance glyph)
+				  buffer))
+     ((not (eq widget 'background))
+      (save-excursion
+	(set-buffer buffer)
+	(if (eq major-mode 'w3-mode)
+	    (widget-value-set widget glyph)
+	  (setq w3-image-widgets-waiting
+		(cons widget w3-image-widgets-waiting))))))))
 
 (defmacro w3-handle-image ()
   (`
@@ -744,8 +816,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	  (ismap (and (assq 'ismap args) 'ismap))
 	  (usemap (w3-get-attribute 'usemap))
 	  (base (w3-get-attribute 'base))
-	  (href (and hyperlink-info (widget-get (cadr hyperlink-info) 'href)))
-	  (target (and hyperlink-info (widget-get (cadr hyperlink-info) 'target)))
+	  (href (and hyperlink-info (widget-get (cadr hyperlink-info) :href)))
+	  (target (and hyperlink-info (widget-get (cadr hyperlink-info) :target)))
 	  (widget nil)
 	  (align (or (w3-get-attribute 'align)
 		     (w3-get-style-info 'vertical-align node))))
@@ -755,12 +827,12 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	 (insert alt)
        (setq widget (widget-create 'image
 				   :value-face w3-active-faces
-				   'src src ; Where to load the image from
+				   :src src ; Where to load the image from
 				   'alt alt ; Textual replacement
 				   'ismap ismap ; Is it a server-side map?
 				   'usemap usemap ; Is it a client-side map?
-				   'href href ; Hyperlink destination
-				   'target target
+				   :href href ; Hyperlink destination
+				   :target target
 				   ))
        (widget-put widget 'buffer (current-buffer))
        (w3-maybe-start-image-download widget)
@@ -772,7 +844,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 
 ;; The table handling
 
-(if (and w3-running-xemacs (featurep 'mule))
+(if (and w3-running-xemacs (featurep 'mule)
+	 (not (find-charset 'w3-dingbats)))
     (make-charset 'w3-dingbats "Dingbats character set for Emacs/W3"
 		  '(registry "" dimension 1 chars 96 final ?:)))
 
@@ -782,7 +855,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
     oct))
 
 (defvar w3-table-ascii-border-chars
-  [nil  nil  nil  ?/ nil  ?- ?\\ ?- nil ?\\ ?| ?| ?/ ?- ?| ?+]
+  [nil  nil  nil  ?' nil  ?- ?` ?- nil ?\\ ?| ?| ?/ ?- ?| ?+]
   "*Vector of ascii characters to use to draw table borders.
 This vector is used when terminal characters are unavailable")
 
@@ -819,7 +892,7 @@ w3-table-ascii-border-chars,
 w3-table-glyph-border-chars, or
 w3-table-graphic-border-chars.")
 
-(defsubst w3-table-lookup-char (l u r b)
+(defsubst w3-table-lookup-char (l u r b &optional char)
   (aref w3-table-border-chars (logior (if l 1 0)
 				      (if u 2 0)
 				      (if r 4 0)
@@ -840,7 +913,7 @@ w3-table-graphic-border-chars.")
 (defsubst w3-horizontal-rule-char nil
   (or w3-horizontal-rule-char (w3-table-lookup-char t nil t nil)))
 
-(defun w3-setup-terminal-chars nil
+(defun w3-setup-terminal-chars ()
   "Try to find the best set of characters to draw table borders with.
 On a console, this can trigger some Emacs display bugs.
 
@@ -1612,6 +1685,27 @@ Can sometimes make the structure of a document clearer")
 	  plist (plist-put plist 'maxlength maxlength))
     plist))
 
+(defun w3-resurrect-hyperlinks ()
+  (let ((st (point-min))
+	(inhibit-read-only t)
+	info nd node face)
+    (while st
+      (if (setq info (get-text-property st 'w3-hyperlink-info))
+	  (progn
+	    (setq nd (or (next-single-property-change st 'w3-hyperlink-info)
+			 (point-max)))
+	    (apply 'widget-convert-text 'link st nd st nd info)))
+      (setq st (next-single-property-change st 'w3-hyperlink-info)))))
+
+(defun w3-display-convert-arglist (args)
+  (let ((rval nil)
+	(newsym nil)
+	(cur nil))
+    (while (setq cur (pop args))
+      (setq newsym (intern (concat ":" (symbol-name (car cur))))
+	    rval (plist-put rval newsym (cdr cur))))
+    rval))
+
 (defun w3-display-node (node &optional nofaces)
   (let (
 	(content-stack (list (list node)))
@@ -1647,17 +1741,11 @@ Can sometimes make the structure of a document clearer")
 	     nil
 	   (add-text-properties (car hyperlink-info) (point)
 				(list
-				 'mouse-face 'highlight
 				 'duplicable t
 				 'start-open t
 				 'end-open t
 				 'rear-nonsticky t
-				 'help-echo 'w3-balloon-help-callback
-				 'balloon-help 'w3-balloon-help-callback))
-	   (fillin-text-property (car hyperlink-info) (point)
-				 'button 'button (cadr hyperlink-info))
-	   (widget-put (cadr hyperlink-info) :to (set-marker
-						  (make-marker) (point))))
+				 'w3-hyperlink-info (cadr hyperlink-info))))
 	 (setq hyperlink-info nil))
 	((ol ul dl dir menu)
 	 (pop w3-display-list-stack))
@@ -1709,10 +1797,6 @@ Can sometimes make the structure of a document clearer")
 					   (nth 1 node)
 					   w3-current-stylesheet
 					   w3-display-open-element-stack))
-	  (if nofaces
-	      nil
-	    (push (w3-face-for-element node) w3-active-faces)
-	    (push (w3-voice-for-element node) w3-active-voices))
 	  (push (w3-get-style-info 'display node) break-style)
 	  (push (w3-get-style-info 'insert-after node) insert-after)
 	  (setq insert-before (w3-get-style-info 'insert-before node))
@@ -1724,6 +1808,10 @@ Can sometimes make the structure of a document clearer")
 	    (setcar insert-after nil))
 	  (if insert-before
 	      (w3-handle-string-content insert-before))
+	  (if nofaces
+	      nil
+	    (push (w3-face-for-element node) w3-active-faces)
+	    (push (w3-voice-for-element node) w3-active-voices))
 	  (setq insert-before nil)
 	  (if id
 	      (setq w3-id-positions (cons
@@ -1743,21 +1831,37 @@ Can sometimes make the structure of a document clearer")
 		    (after nil)
 		    (face nil)
 		    (voice nil)
-		    (st nil))
+		    (st nil)
+		    (old-props w3-display-css-properties)
+		    (active-face nil)
+		    (munged (copy-list args)))
+	       (if (assq 'class munged)
+		   (push ":active" (cdr (assq 'class munged)))
+		 (setq munged (cons (cons 'class '(":active")) munged)))
+	       (setq w3-display-css-properties (css-get
+						tag
+						munged
+						w3-current-stylesheet
+						w3-display-open-element-stack))
+	       (setq active-face (w3-face-for-element (list tag munged nil)))
+	       (w3-pop-all-face-info)
+	       (setq w3-display-css-properties old-props)
 	       (if (w3-get-attribute 'href)
 		   (setq st (point)
 			 hyperlink-info (list
 					 st
-					 (append 
-					  (list 'link :args nil
+					 (append
+					  (list :args nil
 						:value "" :tag ""
 						:action 'w3-follow-hyperlink
+						:button-face '(nil)
+						:active-face active-face
 						:from (set-marker
 						       (make-marker) st)
 						:help-echo 'w3-widget-echo
 						:emacspeak-help 'w3-widget-echo
 						)
-					  (alist-to-plist args)))))
+					  (w3-display-convert-arglist args)))))
 	       (w3-handle-content node)
 	       )
 	     )
@@ -1827,8 +1931,10 @@ Can sometimes make the structure of a document clearer")
 			      (w3-get-style-info 'width node)
 			      "100%"))
 		    (width nil))
-	       (setq perc (/ (min (string-to-int perc) 100) 100.0)
-		     width (truncate (* fill-column perc)))
+	       (if (stringp perc)
+		   (setq perc (/ (min (string-to-int perc) 100) 100.0)
+			 width (truncate (* fill-column perc)))
+		 (setq width perc))
 	       (w3-insert-terminal-char (w3-horizontal-rule-char) width)
 	       (w3-handle-empty-tag)))
 	    (map			; Client side imagemaps
@@ -1913,6 +2019,7 @@ Can sometimes make the structure of a document clearer")
 	    ((html body)
 	     (let ((fore (car (delq nil (copy-list w3-face-color))))
 		   (back (car (delq nil (copy-list w3-face-background-color))))
+		   (pixm (car (delq nil (copy-list w3-face-background-image))))
 		   (alink (w3-get-attribute 'alink))
 		   (vlink (w3-get-attribute 'vlink))
 		   (link  (w3-get-attribute 'link))
@@ -1927,22 +2034,28 @@ Can sometimes make the structure of a document clearer")
 	       (if alink
 		   (setq sheet (format "%sa:active { color: %s }\n" sheet
 				       (w3-fix-color alink))))
-	       (if (and (not w3-user-colors-take-precedence)
-			(/= (length sheet) 0))
-		   (w3-handle-style (list 'data sheet
-					  'notation "text/css")))
-	       (if (and (not w3-user-colors-take-precedence)
-			(w3-get-attribute 'text)
-			(not fore))
-		   (progn
-		     (setq fore (w3-fix-color (w3-get-attribute 'text)))
-		     (setf (car w3-face-color) fore)))
-	       (if (not font-running-xemacs)
-		   (setq w3-display-background-properties (cons fore back))
-		 (if fore
-		     (font-set-face-foreground 'default fore (current-buffer)))
-		 (if back
-		     (font-set-face-background 'default back (current-buffer))))
+	       (if w3-user-colors-take-precedence
+		   nil
+		 (if (/= (length sheet) 0)
+		     (w3-handle-style (list 'data sheet
+					    'notation "text/css")))
+		 (if (and (w3-get-attribute 'background)
+			  (not pixm))
+		     (progn
+		       (setq pixm (w3-get-attribute 'background))
+		       (setf (car w3-face-background-image) pixm)))
+		 (if (and (w3-get-attribute 'text) (not fore))
+		     (progn
+		       (setq fore (w3-fix-color (w3-get-attribute 'text)))
+		       (setf (car w3-face-color) fore)))
+		 (if (not font-running-xemacs)
+		     (setq w3-display-background-properties (cons fore back))
+		   (if pixm
+		       (w3-maybe-start-background-image-download pixm 'default))
+		   (if fore
+		       (font-set-face-foreground 'default fore (current-buffer)))
+		   (if back
+		       (font-set-face-background 'default back (current-buffer)))))
 	       (w3-handle-content node)))
 	    (*document
 	     (let ((info (mapcar (lambda (x) (cons x (symbol-value x)))
@@ -1967,6 +2080,7 @@ Can sometimes make the structure of a document clearer")
 	       (set (make-local-variable 'filladapt-mode) nil)
 	       (set (make-local-variable 'adaptive-fill-mode) nil)
 	       (set (make-local-variable 'voice-lock-mode) t)
+	       (set (make-local-variable 'cur-viewing-pos) (point-min))
 	       (setq w3-current-stylesheet (css-copy-stylesheet
 					    w3-user-stylesheet)
 		     w3-last-fill-pos (point)
@@ -2066,7 +2180,7 @@ Can sometimes make the structure of a document clearer")
 				 tmp))
 			      (nth 2 node))))
 	       (if (not value)
-		   (setq value (aref (car options) 0)))
+		   (setq value (and options (aref (car options) 0))))
 	       (setq plist (plist-put plist 'value value))
 	       (if multiple
 		   (progn
@@ -2170,6 +2284,7 @@ Can sometimes make the structure of a document clearer")
     (w3-display-node (car tree))
     (setq tree (cdr tree)))
   (w3-display-fix-widgets)
+  (w3-resurrect-hyperlinks)
   (w3-form-resurrect-widgets))
 
 (defun time-display (&optional tree)
@@ -2196,7 +2311,7 @@ Can sometimes make the structure of a document clearer")
     (while w3-image-widgets-waiting
       (setq widget (car w3-image-widgets-waiting)
 	    w3-image-widgets-waiting (cdr w3-image-widgets-waiting)
-	    url (widget-get widget 'src)
+	    url (widget-get widget :src)
 	    glyph (cdr-safe (assoc url w3-graphics-list)))
       (condition-case nil
 	  (widget-value-set widget glyph)

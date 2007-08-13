@@ -69,7 +69,6 @@
 (put 'browse-url 'custom-loads '())
 (put 'w3-hooks 'custom-loads '("w3-cus"))
 (put 'message-insertion 'custom-loads '())
-(put 'hyper-apropos 'custom-loads '())
 (put 'vc 'custom-loads '())
 (put 'w3 'custom-loads '("w3-cus" "w3-script"))
 (put 'url-file 'custom-loads '("url-cache" "url-vars"))

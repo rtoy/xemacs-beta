@@ -40,11 +40,16 @@ Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
 (defconst emacs-version
   (purecopy
-   (format "%d.%d \"%s\"%s%s"
+   (format "%d.%d %s%s%s"
 	   emacs-major-version
 	   emacs-minor-version
-	   xemacs-codename
-	   " XEmacs Lucid"
+	   (if xemacs-codename
+	       (concat "\"" xemacs-codename "\"")
+	     "")
+	   (concat " XEmacs "
+		   (if (not (featurep 'infodock))
+		       " Lucid"
+		     ""))
 	   (if xemacs-betaname
 	       (concat " " xemacs-betaname)
 	     "")))
@@ -83,8 +88,11 @@ to the system configuration; look at `system-configuration' instead."
   (interactive "p")
   (let ((version-string
          (format
-	  "XEmacs %s [Lucid] (%s%s) of %s %s on %s"
+	  "XEmacs %s %s(%s%s) of %s %s on %s"
 	  (substring emacs-version 0 (string-match " XEmacs" emacs-version))
+	  (if (not (featurep 'infodock))
+	      "[Lucid] "
+	    "")
 	  system-configuration
 	  (cond ((or (and (fboundp 'featurep)
 			  (featurep 'mule))

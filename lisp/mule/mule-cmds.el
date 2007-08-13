@@ -31,18 +31,18 @@
   "Keymap for MULE (Multilingual environment) specific commands.")
 (fset 'mule-prefix mule-keymap)
 
-;; Keep "C-x C-k ..." for mule specific commands.
-(define-key ctl-x-map "\C-k" 'mule-prefix)
+;; Keep "C-x C-m ..." for mule specific commands.
+(define-key ctl-x-map "\C-m" 'mule-prefix)
 
-(defvar mule-describe-language-support-map
-  (make-sparse-keymap "Describe Language Support"))
-(fset 'mule-describe-language-support-prefix
-      mule-describe-language-support-map)
+;; (defvar mule-describe-language-support-map
+;;   (make-sparse-keymap "Describe Language Support"))
+;; (fset 'mule-describe-language-support-prefix
+;;       mule-describe-language-support-map)
 
-(defvar mule-set-language-environment-map
-  (make-sparse-keymap "Set Language Environment"))
-(fset 'mule-set-language-environment-prefix
-      mule-set-language-environment-map)
+;; (defvar mule-set-language-environment-map
+;;   (make-sparse-keymap "Set Language Environment"))
+;; (fset 'mule-set-language-environment-prefix
+;;       mule-set-language-environment-map)
 
 (define-key mule-keymap "f" 'set-buffer-file-coding-system)
 (define-key mule-keymap "F" 'set-default-buffer-file-coding-system) ; XEmacs
@@ -74,7 +74,9 @@
 (defun view-hello-file ()
   "Display the HELLO file which list up many languages and characters."
   (interactive)
-  (find-file-read-only (expand-file-name "HELLO" data-directory)))
+  ;; We have to decode the file in any environment.
+  (let ((coding-system-for-read 'iso-2022-7))
+    (find-file-read-only (expand-file-name "HELLO" data-directory))))
 
 
 ;;; Language support staffs.
@@ -86,7 +88,7 @@ Emacs provide various language supports based on this variable.")
 (defvar language-info-alist nil
   "Alist of language names vs the corresponding information of various kind.
 Each element looks like:
-        (LANGUAGE-NAME . ((KEY . INFO) ...))
+	(LANGUAGE-NAME . ((KEY . INFO) ...))
 where LANGUAGE-NAME is a string,
 KEY is a symbol denoting the kind of information,
 INFO is any Lisp object which contains the actual information related
@@ -98,21 +100,7 @@ LANGUAGE-NAME is a string.
 KEY is a symbol denoting the kind of required information."
   (let ((lang-slot (assoc language-name language-info-alist)))
     (if lang-slot
-        (cdr (assq key (cdr lang-slot))))))
-
-;; Return a lambda form which calls `describe-language-support' with
-;; argument LANG.
-(defun build-describe-language-support-function (lang)
-  `(lambda ()
-     (interactive)
-     (describe-language-support ,lang)))
-
-;; Return a lambda form which calls `set-language-environment' with
-;; argument LANG.
-(defun build-set-language-environment-function (lang)
-  `(lambda ()
-     (interactive)
-     (set-language-environment ,lang)))
+	(cdr (assq key (cdr lang-slot))))))
 
 (defun set-language-info (language-name key info)
   "Set for LANGUAGE-NAME the information INFO under KEY.
@@ -123,40 +111,50 @@ INFO is any Lisp object which contains the actual information.
 Currently, the following KEYs are used by Emacs:
 charset: list of symbols whose values are charsets specific to the language.
 coding-system: list of coding systems specific to the langauge.
-setup-function: see the documentation of `set-language-environment'.
 tutorial: a tutorial file name written in the language.
 sample-text: one line short text containing characters of the language.
-documentation: a docstring describing how the language is supported,
-  or a fuction to call to describe it,
-  or t which means call `describe-language-support' to describe it.
 input-method: alist of input method names for the language vs information
   for activating them.  Use `register-input-method' (which see)
   to add a new input method to the alist.
+documentation: a string describing how Emacs supports the langauge.
+describe-function: a function to call for descriebing how Emacs supports
+ the language.  The function uses information listed abobe.
+setup-function: a function to call for setting up environment
+ convenient for the language.
 
-Emacs will use more KEYs in the future.  To avoid the conflition, users
-should use prefix \"user-\" in the name of KEY."
+Emacs will use more KEYs in the future.  To avoid conflict, users
+should use prefix \"user-\" in the name of KEY if he wants to set
+different kind of information."
   (let (lang-slot key-slot)
     (setq lang-slot (assoc language-name language-info-alist))
-    (if (null lang-slot)                ; If no slot for the language, add it.
-        (setq lang-slot (list language-name)
-              language-info-alist (cons lang-slot language-info-alist)))
+    (if (null lang-slot)		; If no slot for the language, add it.
+	(setq lang-slot (list language-name)
+	      language-info-alist (cons lang-slot language-info-alist)))
     (setq key-slot (assq key lang-slot))
-    (if (null key-slot)                 ; If no slot for the key, add it.
-        (progn
-          (setq key-slot (list key))
-          (setcdr lang-slot (cons key-slot (cdr lang-slot)))))
+    (if (null key-slot)			; If no slot for the key, add it.
+	(progn
+	  (setq key-slot (list key))
+	  (setcdr lang-slot (cons key-slot (cdr lang-slot)))))
     (setcdr key-slot info)
     ;; Setup menu.
-    (cond ((eq key 'documentation)
-           (define-key mule-describe-language-support-map
-             (vector (intern language-name))
-             (cons language-name
-                   (build-describe-language-support-function language-name))))
-          ((eq key 'setup-function)
-           (define-key mule-set-language-environment-map
-             (vector (intern language-name))
-             (cons language-name
-                   (build-set-language-environment-function language-name)))))
+    (cond ((eq key 'describe-function)
+           ;; (define-key-after mule-describe-language-support-map
+           ;;   (vector (intern language-name))
+           ;;   (cons language-name info)
+           ;;   t)
+	   (eval-after-load "x-menubar"
+	     `(add-menu-button '("Mule" "Describe Language Support")
+			       (vector ,language-name ',info t)))
+	   )
+	  ((eq key 'setup-function)
+	   ;; (define-key-after mule-set-language-environment-map
+           ;;   (vector (intern language-name))
+           ;;   (cons language-name info)
+           ;;   t)
+	   (eval-after-load "x-menubar"
+	     `(add-menu-button '("Mule" "Set Language Environment")
+			       (vector ,language-name ',info t)))
+           ))
     ))
 
 (defun set-language-info-alist (language-name alist)
@@ -170,13 +168,13 @@ ALIST is an alist of KEY and INFO.  See the documentation of
 (defun read-language-name (key prompt &optional initial-input)
   "Read language name which has information for KEY, prompting with PROMPT."
   (let* ((completion-ignore-case t)
-         (name (completing-read prompt
-                                language-info-alist
-                                (function (lambda (elm) (assq key elm)))
-                                t
-                                initial-input)))
+	 (name (completing-read prompt
+				language-info-alist
+				(function (lambda (elm) (assq key elm)))
+				t
+				initial-input)))
     (and (> (length name) 0)
-         (car (assoc-ignore-case (downcase name) language-info-alist)))))
+	 (car (assoc-ignore-case (downcase name) language-info-alist)))))
 
 ;;; Multilingual input methods.
 
@@ -189,7 +187,7 @@ If nil, it means no input method is activated now.")
 
 (defvar current-input-method-title nil
   "Title string of the current input method shown in mode line.
-Every input method should set this an appropriate value when activated.")
+Every input method should set this to an appropriate value when activated.")
 (make-variable-buffer-local 'current-input-method-title)
 (put 'current-input-method-title 'permanent-local t)
 
@@ -224,7 +222,7 @@ This function is called with no argument.")
   "Register INPUT-METHOD as an input method of LANGUAGE-NAME.
 LANGUAGE-NAME is a string.
 INPUT-METHOD is a list of the form:
-        (METHOD-NAME ACTIVATE-FUNC ARG ...)
+	(METHOD-NAME ACTIVATE-FUNC ARG ...)
 where METHOD-NAME is the name of this method,
 ACTIVATE-FUNC is the function to call for activating this method.
 Arguments for the function are METHOD-NAME and ARGs."
@@ -242,25 +240,25 @@ Arguments for the function are METHOD-NAME and ARGs."
   "Read a language names and the corresponding input method from a minibuffer.
 Return a cons of those names."
   (let ((language-name (read-language-name
-                        'input-method
-                        "Language: "
-                        (if previous-input-method
-                            (cons (car previous-input-method) 0)))))
+			'input-method
+			"Language: "
+			(if previous-input-method
+			    (cons (car previous-input-method) 0)))))
     (if (null language-name)
-        (error "No input method for the specified language"))
+	(error "No input method for the specified language"))
     (let* ((completion-ignore-case t)
-           (key-slot (cdr (assq 'input-method
-                                (assoc language-name language-info-alist))))
-           (method-name
-            (completing-read "Input method: " key-slot nil t
-                             (if (and previous-input-method
-                                      (string= language-name
-                                               (car previous-input-method)))
-                                 (cons (cdr previous-input-method) 0)))))
+	   (key-slot (cdr (assq 'input-method
+				(assoc language-name language-info-alist))))
+	   (method-name
+	    (completing-read "Input method: " key-slot nil t
+			     (if (and previous-input-method
+				      (string= language-name
+					       (car previous-input-method)))
+				 (cons (cdr previous-input-method) 0)))))
       (if (= (length method-name) 0)
-          (error "No input method specified"))
+	  (error "No input method specified"))
       (list language-name
-            (car (assoc-ignore-case (downcase method-name) key-slot))))))
+	    (car (assoc-ignore-case (downcase method-name) key-slot))))))
 
 (defun set-default-input-method (language-name method-name)
   "Set the default input method to METHOD-NAME for inputting LANGUAGE-NAME.
@@ -279,23 +277,23 @@ This doesn't affect the currently activated input method."
 The information for activating METHOD-NAME is stored
 in `language-info-alist' under the key 'input-method.
 The format of the information has the form:
-        ((METHOD-NAME ACTIVATE-FUNC ARG ...) ...)
+	((METHOD-NAME ACTIVATE-FUNC ARG ...) ...)
 where ACTIVATE-FUNC is a function to call for activating this method.
 Arguments for the function are METHOD-NAME and ARGs."
   (interactive (read-language-and-input-method-name))
   (let* ((key-slot (get-language-info language-name 'input-method))
-         (method-slot (assoc method-name key-slot)))
+	 (method-slot (assoc method-name key-slot)))
     (if (null method-slot)
-        (error "No input method `%s' for %s" method-name language-name))
+	(error "No input method `%s' for %s" method-name language-name))
     (if current-input-method
-        (progn
-          (if (not (equal previous-input-method current-input-method))
-              (setq previous-input-method current-input-method))
-          (funcall inactivate-current-input-method-function)))
+	(progn
+	  (if (not (equal previous-input-method current-input-method))
+	      (setq previous-input-method current-input-method))
+	  (funcall inactivate-current-input-method-function)))
     (setq method-slot (cdr method-slot))
     (apply (car method-slot) method-name (cdr method-slot))
     (setq default-input-method
-          (setq current-input-method (cons language-name method-name)))
+	  (setq current-input-method (cons language-name method-name)))
     (setq default-input-method-title current-input-method-title)
     (setq current-input-method default-input-method)))
 
@@ -320,7 +318,7 @@ Without arg, the method being activated is the one selected most recently,
   (interactive)
   (if current-input-method
       (if (and (symbolp describe-current-input-method-function)
-               (fboundp describe-current-input-method-function))
+	       (fboundp describe-current-input-method-function))
 	  (funcall describe-current-input-method-function)
 	(message "No way to describe the current input method `%s'"
 		 (cdr current-input-method))
@@ -328,18 +326,18 @@ Without arg, the method being activated is the one selected most recently,
     (message "No input method is activated now")
     (ding)))
 
-;; (defun read-multilingual-string (prompt &optional initial-input
-;;                                         language-name method-name)
-;;   "Read a multilingual string from minibuffer, prompting with string PROMPT.
-;; The input method selected last time is activated in minibuffer.
-;; If non-nil, second arg INITIAL-INPUT is a string to insert before reading.
-;; Optional 3rd and 4th arguments LANGUAGE-NAME and METHOD-NAME specify
-;;  the input method to be activated instead of the one selected last time."
-;;   (let ((minibuffer-setup-hook '(toggle-input-method))
-;;         (default-input-method default-input-method))
-;;     (if (and language-name method-name)
-;;         (set-default-input-method language-name method-name))
-;;     (read-string prompt initial-input)))
+(defun read-multilingual-string (prompt &optional initial-input
+					language-name method-name)
+  "Read a multilingual string from minibuffer, prompting with string PROMPT.
+The input method selected last time is activated in minibuffer.
+If non-nil, second arg INITIAL-INPUT is a string to insert before reading.
+Optional 3rd and 4th arguments LANGUAGE-NAME and METHOD-NAME specify
+ the input method to be activated instead of the one selected last time."
+  (let ((minibuffer-setup-hook '(toggle-input-method))
+	(default-input-method default-input-method))
+    (if (and language-name method-name)
+	(set-default-input-method language-name method-name))
+    (read-string prompt initial-input)))
 
 ;; Variables to control behavior of input methods.  All input methods
 ;; should react to these variables.
@@ -350,14 +348,14 @@ Without arg, the method being activated is the one selected most recently,
 For instance, Quail input method does not show guidance buffer while
 inputting at minibuffer if this flag is t.")
 
-;; (defvar input-method-activate-hook nil
-;;   "Normal hook run just after an input method is activated.")
+(defvar input-method-activate-hook nil
+  "Normal hook run just after an input method is activated.")
 
-;; (defvar input-method-inactivate-hook nil
-;;   "Normal hook run just after an input method is inactivated.")
+(defvar input-method-inactivate-hook nil
+  "Normal hook run just after an input method is inactivated.")
 
-;; (defvar input-method-after-insert-chunk-hook nil
-;;   "Normal hook run just after an input method insert some chunk of text.")
+(defvar input-method-after-insert-chunk-hook nil
+  "Normal hook run just after an input method insert some chunk of text.")
 
 
 ;;; Language specific setup functions.
@@ -381,52 +379,59 @@ inputting at minibuffer if this flag is t.")
   (princ "\n"))
 
 (defun describe-language-support (language-name)
-  "Show documentation about how Emacs supports LANGUAGE-NAME."
+  "Describe how Emacs supports LANGUAGE-NAME.
+
+For that, a function returned by:
+  (get-language-info LANGUAGE-NAME 'describe-function)
+is called."
   (interactive (list (read-language-name 'documentation "Language: ")))
-  (let (doc)
+  (let (func)
     (if (or (null language-name)
-	    (null (setq doc
-			(get-language-info language-name 'documentation))))
+	    (null (setq func
+			(get-language-info language-name 'describe-function))))
 	(error "No documentation for the specified language"))
-    (with-output-to-temp-buffer "*Help*"
-      (if (not (eq doc t))
-	  (cond ((stringp doc)
-		 (princ doc))
-		((and (symbolp doc) (fboundp doc))
-		 (funcall doc))
-		(t
-		 (error "Invalid documentation data for %s" language-name)))
-	(princ-list "List of items specific to "
-		    language-name
-		    " environment")
-	(princ "-----------------------------------------------------------\n")
-	(let ((str (get-language-info language-name 'sample-text)))
-	  (if (stringp str)
-	      (progn
-		(princ "<sample text>\n")
-		(princ-list "  " str))))
-	(princ "<input methods>\n")
-	(let ((l (get-language-info language-name 'input-method)))
-	  (while l
-	    (princ-list "  " (car (car l)))
-	    (setq l (cdr l))))
-	(princ "<character sets>\n")
-	(let ((l (get-language-info language-name 'charset)))
-	  (if (null l)
-	      (princ-list "  nothing specific to " language-name)
-	    (while l
-	      (princ-list "  " (car l)
-			  (format ":%3d:\n\t" (charset-id (car l)))
-			  (charset-description (car l)))
-	      (setq l (cdr l)))))
-	(princ "<coding systems>\n")
-	(let ((l (get-language-info language-name 'coding-system)))
-	  (if (null l)
-	      (princ-list "  nothing specific to " language-name)
-	    (while l
-	      (princ-list "  " (car l) ":\n\t"
-			  (coding-system-docstring (car l)))
-	      (setq l (cdr l)))))))))
+    (funcall func)))
+
+;; Print LANGUAGE-NAME specific information such as input methods,
+;; charsets, and coding systems.  This function is intended to be
+;; called from various describe-LANGUAGE-support functions defined in
+;; lisp/language/LANGUAGE.el.
+(defun describe-language-support-internal (language-name)
+  (with-output-to-temp-buffer "*Help*"
+    (let ((doc (get-language-info language-name 'documentation)))
+      (if (stringp doc)
+	  (princ-list doc)))
+    (princ "-----------------------------------------------------------\n")
+    (princ-list "List of items specific to "
+		language-name
+		" support")
+    (princ "-----------------------------------------------------------\n")
+    (let ((str (get-language-info language-name 'sample-text)))
+      (if (stringp str)
+	  (progn
+	    (princ "<sample text>\n")
+	    (princ-list "  " str))))
+    (princ "<input methods>\n")
+    (let ((l (get-language-info language-name 'input-method)))
+      (while l
+	(princ-list "  " (car (car l)))
+	(setq l (cdr l))))
+    (princ "<character sets>\n")
+    (let ((l (get-language-info language-name 'charset)))
+      (if (null l)
+	  (princ-list "  nothing specific to " language-name)
+	(while l
+	  (princ-list "  " (car l) ": "
+		      (charset-description (car l)))
+	  (setq l (cdr l)))))
+    (princ "<coding systems>\n")
+    (let ((l (get-language-info language-name 'coding-system)))
+      (if (null l)
+	  (princ-list "  nothing specific to " language-name)
+	(while l
+	  (princ-list "  " (car l) ":\n\t"
+		      (coding-system-docstring (car l)))
+	  (setq l (cdr l)))))))
 
 ;;; Charset property
 
@@ -468,7 +473,5 @@ inputting at minibuffer if this flag is t.")
 ;;               (setcar (cdr slot) value)
 ;;             (nconc plist (list propname value))))
 ;;       (aset char-code-property-table char (list propname value)))))
-
-(provide 'mule-cmds)
 
 ;;; mule-cmds.el ends here

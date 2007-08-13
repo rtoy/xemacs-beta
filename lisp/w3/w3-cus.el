@@ -1,7 +1,7 @@
 ;;; w3-cus.el --- Customization support for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/04/24 14:57:19
-;; Version: 1.8
+;; Created: 1997/05/28 13:51:24
+;; Version: 1.9
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,31 +43,38 @@
 
 (defgroup w3-files nil
   "Emacs-W3 configuration files."
-  :group 'w3)
+  :group 'w3
+  :prefix "w3-")
 
 (defgroup w3-images nil
   "Controlling image handling."
-  :group 'w3)
+  :group 'w3
+  :prefix "w3-")
 
 (defgroup w3-printing nil
   "Various options for hardcopy from web pages."
-  :group 'w3)
+  :group 'w3
+  :prefix "w3-")
 
 (defgroup w3-menus nil
   "The look of menus in Emacs-W3"
-  :group 'w3)
+  :group 'w3
+  :prefix "w3-")
 
 (defgroup w3-parsing nil
   "Options relating to HTML parsing"
-  :group 'w3)
+  :group 'w3
+  :prefix "w3-")
 
 (defgroup w3-display nil
   "Variables relating to how web pages are displayed."
-  :group 'w3)
+  :group 'w3
+  :prefix "w3-")
 
 (defgroup w3-hooks nil
   "Hooks relating to Emacs-W3."
-  :group 'w3)
+  :group 'w3
+  :prefix "w3-")
 
 ;;; File related variables
 (defcustom w3-configuration-directory "~/.w3/"

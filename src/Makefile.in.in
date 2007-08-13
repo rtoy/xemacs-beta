@@ -254,6 +254,8 @@ other_files=\
  ${motif_other_files}\
  libextcli_Xt.a libextcli_Xlib.a\
  ${shared_other_files}
+
+all: ${other_files}
 # endif /* EXTERNAL_WIDGET */
 
 X11_objs = EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o $(external_widget_objs)
@@ -263,21 +265,7 @@ X11_objs = EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o 
 ## should not be told about.
 otherobjs = $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
 
-
-LIBES = $(lwlib_libs) $(quantify_libs) $(ld_libs_all) $(GNULIB_VAR)
-
-## Enable recompilation of certain other files depending on system type.
-
-## Enable inclusion of object files in temacs depending on system type.
-#ifndef OBJECTS_SYSTEM
-#define OBJECTS_SYSTEM
-#endif
-
-#ifndef OBJECTS_MACHINE
-#define OBJECTS_MACHINE
-#endif
-
-all: xemacs ${other_files}
+LIBES = $(lwlib_libs) $(quantify_libs) $(ld_libs_all) $(lib_gcc)
 
 #ifdef I18N3
 mo_dir = ${etcdir}
@@ -342,9 +330,7 @@ dump_elcs: dump-elcs
 dump-elcs: temacs
 	@touch SATISFIED
 	-${DUMPENV} ./temacs -batch -l ../prim/update-elc.el
-	@if [ ! -f SATISFIED ]; then \
-		$(MAKE) dump-elcs; \
-	fi
+	@if test ! -f SATISFIED; then $(MAKE) $@; fi
 	@$(RM) SATISFIED
 
 all-elc all-elcs:

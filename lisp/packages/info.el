@@ -292,6 +292,11 @@
 ;;
 ;; Modified Info-search to use with-caps-disable-folding
 
+;; Modified 6/21/97 by Hrvoje Niksic
+;;
+;; Fixed up Info-next-reference to work sanely when n < 0.
+;; Added S-tab binding.
+
 ;; Code:
 
 (defgroup info nil
@@ -855,7 +860,7 @@ to read a file name from the minibuffer."
 	   (let ((buffer-read-only nil)
 		 (bufmod (buffer-modified-p))
 		 (case-fold-search t))
-	     (while (re-search-forward "\\*Note\\([ \n]\\)" nil t)
+	     (while (re-search-forward "\\*[Nn]ote\\([ \n]\\)" nil t)
 	       (replace-match (concat "*" Info-footnote-tag "\ ")))
 	     (set-buffer-modified-p bufmod))))
      (Info-reannotate-node)
@@ -1217,28 +1222,46 @@ NAME may be an abbreviation of the reference name."
   (interactive "p")
   (let ((pat (format "\\*%s[ \n\t]*\\([^:]*\\):\\|^\\* .*:\\|<<.*>>"
 		     Info-footnote-tag))
-	(case-fold-search nil)
-	(old-pt (point)))
+	(old-pt (point))
+	wrapped found-nomenu)
     (while (< n 0)
-      (save-excursion
-	(goto-char (point-min))
-	(while (re-search-forward pat nil t)
-	  (setq n (1+ n)))
-	(goto-char (point-min))
-	(if (re-search-forward "^\\* Menu:" nil t)
-	    (setq n (1- n)))))
-    (while (>= (setq n (1- n)) 0)
+      (unless (re-search-backward pat nil t)
+	;; Don't wrap more than once in a buffer where only the
+	;; menu references are found.
+	(when (and wrapped (not found-nomenu))
+	  (goto-char old-pt)
+	  (error "No cross references in this node"))
+	(setq wrapped t)
+	(goto-char (point-max))
+	(unless (re-search-backward pat nil t)
+	  (goto-char old-pt)
+	  (error "No cross references in this node")))
+      (unless (save-excursion
+		(goto-char (match-beginning 0))
+		(when (looking-at "\\* Menu:")
+		  (decf n)))
+	(setq found-nomenu t))
+      (incf n))
+    (while (> n 0)
       (or (eobp) (forward-char 1))
-      (or (re-search-forward pat nil t)
-	  (progn
-	    (goto-char (point-min))
-	    (or (re-search-forward pat nil t)
-		(progn
-		  (goto-char old-pt)
-		  (error "No cross references in this node")))))
-      (goto-char (match-beginning 0))
-      (if (looking-at "\\* Menu:")
-	  (setq n (1+ n))))))
+      (unless (re-search-forward pat nil t)
+	(when (and wrapped (not found-nomenu))
+	  (goto-char old-pt)
+	  (error "No cross references in this node"))
+	(setq wrapped t)
+	(goto-char (point-min))
+	(unless (re-search-forward pat nil t)
+	  (goto-char old-pt)
+	  (error "No cross references in this node")))
+      (unless (save-excursion
+		(goto-char (match-beginning 0))
+		(when (looking-at "\\* Menu:")
+		  (incf n)))
+	(setq found-nomenu t))
+      (decf n))
+    (when (looking-at "\\* Menu:")
+      (error "No cross references in this node"))
+    (goto-char (match-beginning 0))))
 
 (defun Info-prev-reference (n)
   (interactive "p")
@@ -2074,8 +2097,9 @@ At end of the node's text, moves to the next node."
   (define-key Info-mode-map "@" 'Info-follow-nearest-node)
   (define-key Info-mode-map "," 'Info-index-next)
   (define-key Info-mode-map "*" 'Info-elisp-ref)
-  (define-key Info-mode-map "\t" 'Info-next-reference)
-  (define-key Info-mode-map "\e\t" 'Info-prev-reference)
+  (define-key Info-mode-map [tab] 'Info-next-reference)
+  (define-key Info-mode-map [(meta tab)] 'Info-prev-reference)
+  (define-key Info-mode-map [(shift tab)] 'Info-prev-reference)
   (define-key Info-mode-map "\r" 'Info-follow-nearest-node)
   ;; XEmacs addition
   (define-key Info-mode-map 'backspace 'Info-scroll-prev)

@@ -68,7 +68,6 @@
 (put 'news 'custom-loads '("highlight-headers"))
 (put 'highlight-headers 'custom-loads '("highlight-headers"))
 (put 'message-insertion 'custom-loads '())
-(put 'hyper-apropos 'custom-loads '())
 (put 'savehist 'custom-loads '("savehist"))
 (put 'vc 'custom-loads '())
 (put 'alloc 'custom-loads '())

@@ -100,10 +100,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define	ADDR_CORRECT(ADDR) ((int)ADDR)
 
-/* Cast pointers to this type to compare them. */
-
-#define	PNTR_COMPARISON_TYPE	void *
-
 /* Some machines that use COFF executables require that each section
    start on a certain boundary *in the COFF file*.  Such machines should
    define SECTION_ALIGNMENT to a mask of the low-order bits that must be

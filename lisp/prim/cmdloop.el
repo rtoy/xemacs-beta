@@ -58,10 +58,11 @@
 If this character is typed while lisp code is executing, it will be treated
  as an interrupt.
 If this character is typed at top-level, this simply beeps.
-If `zmacs-regions' is true, and the zmacs region is active, then this
- key deactivates the region without beeping or signalling."
+If `zmacs-regions' is true, and the zmacs region is active in this buffer,
+then this key deactivates the region without beeping or signalling."
   (interactive)
-  (if (and zmacs-regions (zmacs-deactivate-region))
+  (if (and (region-active-p)
+	   (eq (current-buffer) (zmacs-region-buffer)))
       ;; pseudo-zmacs compatibility: don't beep if this ^G is simply
       ;; deactivating the region.  If it is inactive, beep.
       nil
@@ -104,7 +105,7 @@ or go back to just one window (by deleting all but the selected window)."
     (setq standard-output t)
     (setq standard-input t)
     (setq executing-kbd-macro nil)
-    (zmacs-deactivate-region)
+;    (zmacs-deactivate-region)
     (discard-input)
 
     (setq last-error error-object)
@@ -222,18 +223,22 @@ or go back to just one window (by deleting all but the selected window)."
          ))
 
 
-(defvar teach-extended-commands-p t
+(defcustom teach-extended-commands-p t
   "*If true, then `\\[execute-extended-command]' will teach you keybindings.
 Any time you execute a command with \\[execute-extended-command] which has a
 shorter keybinding, you will be shown the alternate binding before the
 command executes.  There is a short pause after displaying the binding,
 before executing it; the length can be controlled by
-`teach-extended-commands-timeout'.")
+`teach-extended-commands-timeout'."
+  :type 'boolean
+  :group 'keyboard)
 
-(defvar teach-extended-commands-timeout 2
+(defcustom teach-extended-commands-timeout 4
   "*How long to pause after displaying a keybinding before executing.
 The value is measured in seconds.  This only applies if
-`teach-extended-commands-p' is true.")
+`teach-extended-commands-p' is true."
+  :type 'number
+  :group 'keyboard)
 
 ;That damn RMS went off and implemented something differently, after
 ;we had already implemented it.  We can't support both properly until
@@ -276,20 +281,31 @@ when called from Lisp."
                               (t
                                "M-x ")))))
 
-  (if (and teach-extended-commands-p (interactive-p))
-      (let ((keys (where-is-internal this-command)))
-	(if keys
-	    (progn
-	      (message "M-x %s (bound to key%s: %s)"
-		       this-command
-		       (if (cdr keys) "s" "")
-		       (mapconcat 'key-description
-				  (sort keys #'(lambda (x y)
-						 (< (length x) (length y))))
-				  ", "))
-	      (sit-for teach-extended-commands-timeout)))))
-
-  (command-execute this-command t))
+  (if (and teach-extended-commands-p
+	   (interactive-p))
+      ;; We need to fiddle with keys: remember the keys, run the
+      ;; command, and show the keys (if any).
+      (let ((_execute_command_keys_ (where-is-internal this-command))
+	    (_execute_command_name_ this-command)) ; the name can change
+	(command-execute this-command t)
+	(when (and _execute_command_keys_
+		   ;; Wait for a while, so the user can see a message
+		   ;; printed, if any.
+		   (sit-for 1))
+	  (display-message
+	   'no-log
+	   (format "Command `%s' is bound to key%s: %s"
+		   _execute_command_name_
+		   (if (cdr _execute_command_keys_) "s" "")
+		   (mapconcat 'key-description
+			      (sort _execute_command_keys_
+				    #'(lambda (x y)
+					(< (length x) (length y))))
+			      ", ")))
+	  (sit-for teach-extended-commands-timeout)
+	  (clear-message 'no-log)))
+    ;; Else, just run the command.
+    (command-execute this-command t)))
 
 
 ;;; C code calls this; the underscores in the variable names are to avoid

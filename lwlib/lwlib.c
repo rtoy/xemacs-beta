@@ -1253,17 +1253,18 @@ show_one_widget_busy (Widget w, Boolean flag)
   Pixel foreground = 0;
   Pixel background = 1;
   Widget widget_to_invert = XtNameToWidget (w, "*sheet");
+  Arg al [2];
+  
   if (!widget_to_invert)
     widget_to_invert = w;
-  
-  XtVaGetValues (widget_to_invert,
-		 XtNforeground, &foreground,
-		 XtNbackground, &background,
-		 NULL);
-  XtVaSetValues (widget_to_invert,
-		 XtNforeground, background,
-		 XtNbackground, foreground,
-		 NULL);
+
+  XtSetArg (al [0], XtNforeground, &foreground);
+  XtSetArg (al [1], XtNbackground, &background);
+  XtGetValues (widget_to_invert, al, 2);
+
+  XtSetArg (al [0], XtNforeground, background);
+  XtSetArg (al [1], XtNbackground, foreground);
+  XtSetValues (widget_to_invert, al, 2);
 }
 
 void

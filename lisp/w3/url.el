@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/05/08 22:17:40
-;; Version: 1.78
+;; Created: 1997/06/10 05:26:37
+;; Version: 1.79
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/05/08 22:17:40|1.78|Location Undetermined
+;;; 1997/06/10 05:26:37|1.79|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1025,7 +1025,7 @@ dumped with emacs."
     (run-hooks 'url-load-hook)
     (setq url-setup-done t)))
 
-(defvar url-get-url-filename-chars "%.?@a-zA-Z0-9---()_/:~=&"
+(defvar url-get-url-filename-chars "-%.?@a-zA-Z0-9()_/:~=&"
   "Valid characters in a URL")
 
 ;;;###autoload

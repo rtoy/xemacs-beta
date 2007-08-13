@@ -1,3 +1,172 @@
+1997-06-25  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el(default-menubar): Comment out changes to the
+	Mule menu because they bombed after recompilation.
+
+	* packages/hyper-apropos.el
+	(hyper-apropos-toggle-programming-flag): Use `with-current-buffer' 
+	instead of `eval-in-buffer'.
+
+	* term/sun-mouse.el: Remove bogus redefinition of
+	`eval-in-buffer'.
+	(sun-mouse-handler): Use with-current-buffer instead of
+	`eval-in-buffer'.
+
+	* prim/make-docfile.el: Use princ not print.
+	Suggested by Hrvoje Niksic.
+
+	* packages/info.el (Info-select-node): Desensitive case search for 
+	Note:.
+	(Info-next-reference): Ditto.
+	* prim/simple.el (kill-region): Adjust endpoints of extent to
+	test and deal with case of the end being less than the beginning.
+	* prim/cmdloop.el (teach-extended-commands-timeout): Bump value to 4.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* prim/subr.el (eval-in-buffer): Make obsolete.
+	Suggested by Hrvoje Niksic.
+
+	* packages/hyper-apropos.el (hyper-apropos-faces): Change group to 
+	'faces.
+	Suggested by Per Abrahamsen.
+
+1997-06-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/cmdloop.el (execute-extended-command): Print message after
+	the command finishes, and restore old echo-area contents.
+
+	- Get keybinding before command is executed.
+	Suggested by Kyle Jones and Steve Baur.
+	
+1997-06-24  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/gnuserv.el: Make old symbols Obsolete.
+	From Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/cmdloop.el (keyboard-quit): Don't kill zmacs-region in
+	minibuffer.
+	* prim/minibuf.el (minibuffer-keyboard-quit): Ditto.
+	From Hrvoje Niksic  <hniksic@srce.hr>
+	
+	* prim/help.el (help-mode-quit): Bury buffer when quitting.
+	From Hrvoje Niksic  <hniksic@srce.hr>
+
+1997-06-24  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/cmdloop.el: Customize `teach-extended-commands-p' and
+ 	`teach-extended-commands-timeout'.
+
+1997-06-23  Steven L Baur  <steve@altair.xemacs.org>
+
+	* version.el (emacs-version): Synch with InfoDock 4.0.
+	(emacs-version): Ditto.
+
+Mon Jun 23 12:33:52 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* about.el (about-show-linked-info): Use empty strings for
+	`widget-link-prefix' and `widget-link-suffix'.
+
+1997-06-22  Gary D. Foster  <Gary.Foster@corp.Sun.COM>
+
+	* x11/x-menubar.el: Added `bookmark-menu-filter', changed
+	  bookmark submenu from a popup to a cascading submenu.
+	* packages/bookmark.el: Added an autoload cookie for
+	  `bookmark-all-names' (by Steve Baur)
+
+1997-06-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/info.el (Info-next-reference): Fix up for M-TAB to work 
+	correctly.
+
+	* utils/live-icon.el (live-icon-one-frame): Don't set glyphs to
+	balloon-help frames.
+
+	* packages/balloon-help.el (balloon-help-make-help-frame): Set the
+	`balloon-help' property to the newly created frame.
+
+	* prim/profile.el (profile): New macro.
+
+	* prim/files.el (auto-mode-alist): Add winmgr-mode.
+
+	* modes/winmgr-mode.el: Customize.
+
+1997-06-23  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/autoload.el (generate-file-autoloads-1): Remove warning
+	about 900 character lines.
+
+	* x11/x-toolbar.el (toolbar-mail-commands-alist): Correction for
+	calling Netscape mail.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-06-22  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el (default-menubar): Make `Jump to bookmark' menu 
+	dynamic.
+	From Gary D. Foster <Gary.Foster@Corp.Sun.COM>
+
+	* prim/dumped-lisp.el (dumped-lisp-packages): Sparcworks dumps
+	comint and ring.
+
+1997-06-24  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/arabic.el: moved from mule/arabic-hooks.el.
+
+	* mh-e/mh-e.el (mh-get-new-mail): Decode output as
+	`mh-folder-coding-system'.
+
+1997-06-24  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/ethio-util.el: imported from Emacs/mule-19.34.94-zeta.
+
+	* language/arabic-util.el: moved from mule/arabic.el; repair
+	Arabic characters.
+
+1997-06-24  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* x11/x-menubar.el: Fix "Describe language support" and "Set
+	language environment" of Mule menu.
+
+	* language/visual-mode.el: moved from mule/.
+
+	* language/ethiopic.el: Modify for XEmacs.
+
+	* language/cyrillic.el: Modify DOC-string of koi8-r; Fixed problem
+	of setting for `language-info-alist' about koi8-r.
+
+	* mule/auto-autoloads.el: Enable auto-autoloads.el for mule/.
+
+	* mule/mule-util.el: New file (imported from
+	Emacs/mule-19.34.94-zeta).
+
+	* mule/mule-misc.el: Function `truncate-string-to-width' was moved
+	to mule-util.el.
+
+	* prim/dumped-lisp.el, mule/mule-load.el: mule/arabic-hooks.el was
+	moved to language/arabic.el; mule/arabic.el was moved to
+	language/arabic-util.el; Use language/ethiopic.el instead of
+	mule/ethiopic-hooks.el; Use language/ethio-util.el instead of
+	mule/ethiopic.el.
+
+	* mule/mule-coding.el (coding-system-docstring): New alias (to
+	emulate Emacs/mule-19.34.94-zeta function).
+
+	* mule/mule-cmds.el: modified to sync with
+	Emacs/mule-19.34.94-zeta (mule-prefix was changed to "C-x C-m")
+
+	(set-language-info): Add to "Describe Language Support" and "Set
+	Language Environment" menu.
+
+	* mule/mule-charset.el: Function `compose-region' and
+	`decompose-region' were moved to mule-util.el.
+
+	* leim/quail.el: modify to sync with latest quail.el of Emacs/mule
+	in ETL.
+
+	(quail-toggle-mode-temporarily): check `quail-conv-overlay'.
+
+	(quail-map-p): Use `characterp' instead of `integerp'.
+
 1997-06-21  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/tabify.el (untabify): Return nil.
@@ -8,6 +177,8 @@
 
 1997-06-21  Hrvoje Niksic  <hniksic@srce.hr>
 
+	* packages/bookmark.el (bookmark-menu-popup-paned-menu): Change
+	title to name.
 	* prim/overlay.el (overlay-put): Support `local-map'.
 	(overlay-get): Support `category'.
 

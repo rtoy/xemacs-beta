@@ -109,9 +109,7 @@ Otherwise, only the interactive functions and user variables will be listed."
 (defgroup hyper-apropos-faces nil
   "Faces defined by hyper-apropos."
   :prefix "hyper-apropos-"
-  :group 'hyper-apropos)
-(define-obsolete-variable-alias
-  'hypropos-faces 'hyper-apropos-faces)
+  :group 'faces)
 
 (defface hyper-apropos-documentation
   '((((class color) (background light))
@@ -292,7 +290,7 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
 
 (defun hyper-apropos-toggle-programming-flag ()
   (interactive)
-  (eval-in-buffer hyper-apropos-apropos-buf
+  (with-current-buffer hyper-apropos-apropos-buf
     (set (make-local-variable 'hyper-apropos-programming-apropos)
 	 (not hyper-apropos-programming-apropos)))
   (message "Re-running apropos...")

@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "xintrinsicp.h"	/* CoreP.h needs this */
 #include <X11/CoreP.h>		/* Numerous places access the fields of
 				   a core widget directly.  We could
-				   use XtVaGetValues(), but ... */
+				   use XtGetValues(), but ... */
 #include <X11/Shell.h>
 #include <X11/ShellP.h>
 #include "xmu.h"
@@ -196,12 +196,14 @@ x_wm_mark_shell_position_user_specified (Widget wmshell)
 void
 x_wm_set_shell_iconic_p (Widget shell, int iconic_p)
 {
+  Arg al [1];
   if (! XtIsWMShell (shell)) abort ();
 
   /* Because of questionable logic in Shell.c, this sequence can't work:
 
        w = XtCreatePopupShell (...);
-       XtVaSetValues (w, XtNiconic, True, NULL);
+       XtSetArg (al, XtNiconic, True);
+       XtSetValues (w, al, 1);
        XtRealizeWidget (w);
 
      The iconic resource is only consulted at initialization time (when
@@ -216,27 +218,31 @@ x_wm_set_shell_iconic_p (Widget shell, int iconic_p)
      realization.  This is true of MIT X11R5 patch level 25, at least.
      (Apparently some other versions of Xt don't have this bug?)
    */
-  XtVaSetValues (shell, XtNiconic, iconic_p, NULL);
+  XtSetArg(al [0], XtNiconic, iconic_p);
+  XtSetValues (shell, al, 1);
   EmacsShellSmashIconicHint (shell, iconic_p);
 }
 
 void
 x_wm_set_cell_size (Widget wmshell, int cw, int ch)
 {
+  Arg al [2];
+  
   if (!XtIsWMShell (wmshell))
     abort ();
   if (cw <= 0 || ch <= 0)
     abort ();
 
-  XtVaSetValues (wmshell,
-		 XtNwidthInc, cw, 
-		 XtNheightInc, ch,
-		 NULL);
+  XtSetArg (al [0], XtNwidthInc,  cw);
+  XtSetArg (al [1], XtNheightInc, ch);
+  XtSetValues (wmshell, al, 2);
 }
 
 void
 x_wm_set_variable_size (Widget wmshell, int width, int height)
 {
+  Arg al [2];
+  
   if (!XtIsWMShell (wmshell))
     abort ();
 #ifdef DEBUG_GEOMETRY_MANAGEMENT
@@ -244,10 +250,10 @@ x_wm_set_variable_size (Widget wmshell, int width, int height)
   printf ("x_wm_set_variable_size: %d %d\n", width, height);
   fflush (stdout);
 #endif
-  XtVaSetValues (wmshell,
-		 XtNwidthCells, width,
-		 XtNheightCells, height,
-		 NULL);
+
+  XtSetArg (al [0], XtNwidthCells,  width);
+  XtSetArg (al [1], XtNheightCells, height);
+  XtSetValues (wmshell, al, 2);
 }
 
 /* If the WM_PROTOCOLS property does not already contain WM_TAKE_FOCUS
@@ -569,7 +575,7 @@ x_internal_frame_property_p (struct frame *f, Lisp_Object property)
     || EQ (property, Qbottom_toolbar_shadow_color)
     || EQ (property, Qbackground_toolbar_color)
     || EQ (property, Qtoolbar_shadow_thickness)
-#endif
+#endif /* HAVE_TOOLBARS */
     || EQ (property, Qinter_line_space)
     || EQ (property, Qwindow_id)
     || STRINGP (property);
@@ -639,7 +645,7 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
   Atom encoding = XA_STRING;
   String new_XtValue = (String) value;
   String old_XtValue = NULL;
-  Arg av[2];
+  Arg al[2];
 
 #ifdef MULE
   Bufbyte *ptr;
@@ -656,13 +662,13 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
 #endif /* MULE */
 
   /* ### Caching is device-independent - belongs in update_frame_title. */
-  XtSetArg (av[0], Xt_resource_name, &old_XtValue);
-  XtGetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
+  XtSetArg (al[0], Xt_resource_name, &old_XtValue);
+  XtGetValues (FRAME_X_SHELL_WIDGET (f), al, 1);
   if (!old_XtValue || strcmp (new_XtValue, old_XtValue))
     {
-      XtSetArg (av[0], Xt_resource_name, new_XtValue);
-      XtSetArg (av[1], Xt_resource_encoding_name, encoding);
-      XtSetValues (FRAME_X_SHELL_WIDGET (f), av, 2);
+      XtSetArg (al[0], Xt_resource_name, new_XtValue);
+      XtSetArg (al[1], Xt_resource_encoding_name, encoding);
+      XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 2);
     }
 }
 
@@ -695,6 +701,7 @@ x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
   char uspos = !!(flags & (XValue | YValue));
   char ussize = !!(flags & (WidthValue | HeightValue));
   char *temp;
+  Arg al [1];
 
   /* assign the correct size to the EmacsFrame widget ... */
   EmacsFrameSetCharSize (FRAME_X_TEXT_WIDGET (f), w, h);
@@ -718,7 +725,9 @@ x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
     }
   else
     temp = NULL;
-  XtVaSetValues (FRAME_X_SHELL_WIDGET (f), XtNgeometry, temp, NULL);
+  
+  XtSetArg (al [0], XtNgeometry, temp);
+  XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 1);
 }
 
 /* Report to X that a frame property of frame S is being set or changed.
@@ -737,6 +746,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
   Bool internal_border_width_specified = False;
   Lisp_Object tail;
   Widget w = FRAME_X_TEXT_WIDGET (f);
+  Arg al [10];
   
   for (tail = plist; !NILP (tail); tail = Fcdr (Fcdr (tail)))
     {
@@ -758,13 +768,13 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 
 	      GET_STRING_CTEXT_DATA_ALLOCA (val, extval, extvallen);
 	      XtVaSetValues (w, XtVaTypedArg, extprop,
-			     XtRString, extval, extvallen + 1, NULL);
+			     XtRString, extval, extvallen + 1,
+			     (XtArgVal) NULL);
 	    }
 	  else
-	    XtVaSetValues (w, XtVaTypedArg,
-			   extprop, XtRInt, XINT (val),
-			   sizeof (int),
-			   NULL);
+	    XtVaSetValues (w, XtVaTypedArg, extprop, XtRInt,
+			   XINT (val), sizeof (int),
+			   (XtArgVal) NULL);
 	}
       else if (SYMBOLP (prop))
 	{
@@ -837,21 +847,19 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  if (int_p)
 	    {
 	      CHECK_INT (val);
-	      XtVaSetValues (w, (char *) XSTRING_DATA (str),
-			     XINT (val), NULL);
+	      XtSetArg (al [0], (char *) XSTRING_DATA (str), XINT (val));
+	      XtSetValues (w, al, 1);
 	    }
 	  else if (EQ (val, Qt))
-	    XtVaSetValues (w,
-			   /* XtN... */
-			   (char *) XSTRING_DATA (str),
-			   True,
-			   NULL);
+	    {
+	      XtSetArg (al [0], (char *) XSTRING_DATA (str), True); /* XtN...*/
+	      XtSetValues (w, al, 1);
+	    }
 	  else if (EQ (val, Qnil))
-	    XtVaSetValues (w,
-			   /* XtN... */
-			   (char *) XSTRING_DATA (str),
-			   False,
-			   NULL);
+	    {
+	      XtSetArg (al [0], (char *) XSTRING_DATA (str), False); /* XtN...*/
+	      XtSetValues (w, al, 1);
+	    }
 	  else
 	    {
 	      CHECK_STRING (val);
@@ -861,7 +869,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 			     XtRString,
 			     XSTRING_DATA (val),
 			     XSTRING_LENGTH (val) + 1,
-			     NULL);
+			     (XtArgVal) NULL);
 	    }
 
 #ifdef HAVE_SCROLLBARS
@@ -1300,6 +1308,7 @@ x_initialize_frame_size (struct frame *f)
 
   char *geom = 0, *ew_geom = 0;
   Boolean iconic_p = False, ew_iconic_p = False;
+  Arg al [2];
 
   Widget wmshell = FRAME_X_SHELL_WIDGET (f);
   /* #### This may not be an ApplicationShell any more, with the 'popup
@@ -1354,14 +1363,17 @@ x_initialize_frame_size (struct frame *f)
 
   if (!FRAME_X_TOP_LEVEL_FRAME_P (f))
     {
-      XtVaGetValues (ew, XtNgeometry, &ew_geom, NULL);
+      XtSetArg (al [0], XtNgeometry, &ew_geom);
+      XtGetValues (ew, al, 1);
       if (ew_geom)
-	frame_flags = XParseGeometry (ew_geom, &frame_x, &frame_y,
-				       &frame_w, &frame_h);
+	frame_flags = XParseGeometry (ew_geom,
+				      &frame_x, &frame_y,
+				      &frame_w, &frame_h);
       if (! (frame_flags & (WidthValue | HeightValue)))
 	{
-	  XtVaGetValues (ew, XtNwidth, &frame_w,
-			 XtNheight, &frame_h, NULL);
+	  XtSetArg (al [0], XtNwidth,  &frame_w);
+	  XtSetArg (al [1], XtNheight, &frame_h);
+	  XtGetValues (ew, al, 2);
 	  if (!frame_w && !frame_h)
 	    {
 	      frame_w = 64;
@@ -1373,13 +1385,18 @@ x_initialize_frame_size (struct frame *f)
 	EmacsFrameSetCharSize (ew, frame_w, frame_h);
       if (frame_flags & (XValue | YValue))
 	{
-	  XtVaGetValues (ew, XtNwidth, &frame_w,
-			 XtNheight, &frame_h, NULL);
+	  XtSetArg (al [0], XtNwidth,  &frame_w);
+	  XtSetArg (al [1], XtNheight, &frame_h);
+	  XtGetValues (ew, al, 2);
+	  
 	  if (frame_flags & XNegative)
 	    frame_x += frame_w;
 	  if (frame_flags & YNegative)
 	    frame_y += frame_h;
-	  XtVaSetValues (ew, XtNx, frame_x, XtNy, frame_y, NULL);
+
+	  XtSetArg (al [0], XtNx, frame_x);
+	  XtSetArg (al [1], XtNy, frame_y);
+	  XtSetValues (ew, al, 2);
 	}
       return;
     }
@@ -1391,40 +1408,48 @@ x_initialize_frame_size (struct frame *f)
     abort ();
 
   /* If the EmacsFrame doesn't have a geometry but the shell does,
-     treat that as the geometry of the frame.  (Is this bogus?
-     I'm not sure.) */
+     treat that as the geometry of the frame.
+     (Is this bogus? I'm not sure.) */
 
-  XtVaGetValues (ew, XtNgeometry, &ew_geom, NULL);
+  XtSetArg (al [0], XtNgeometry, &ew_geom);
+  XtGetValues (ew, al, 1);
   if (!ew_geom)
     {
-      XtVaGetValues (wmshell, XtNgeometry, &geom, NULL);
+      XtSetArg (al [0], XtNgeometry, &geom);
+      XtGetValues (wmshell, al, 1);
       if (geom)
 	{
 	  ew_geom = geom;
-	  XtVaSetValues (ew, XtNgeometry, ew_geom, NULL);
+	  XtSetArg (al [0], XtNgeometry, ew_geom);
+	  XtSetValues (ew, al, 1);
 	}
     }
 
-  /* If the Shell is iconic, then the EmacsFrame is iconic.  (Is
-     this bogus? I'm not sure.) */
-  XtVaGetValues (ew, XtNiconic, &ew_iconic_p, NULL);
+  /* If the Shell is iconic, then the EmacsFrame is iconic.
+     (Is this bogus? I'm not sure.) */
+  XtSetArg (al [0], XtNiconic, &ew_iconic_p);
+  XtGetValues (ew, al, 1);
   if (!ew_iconic_p)
     {
-      XtVaGetValues (wmshell, XtNiconic, &iconic_p, NULL);
+      XtSetArg (al [0], XtNiconic, &iconic_p);
+      XtGetValues (wmshell, al, 1);
       if (iconic_p)
 	{
 	  ew_iconic_p = iconic_p;
-	  XtVaSetValues (ew, XtNiconic, iconic_p, NULL);
+	  XtSetArg (al [0], XtNiconic, iconic_p);
+	  XtSetValues (ew, al, 1);
 	}
     }
-  
-  XtVaGetValues (app_shell, XtNgeometry, &geom, NULL);
+
+  XtSetArg (al [0], XtNgeometry, &geom);
+  XtGetValues (app_shell, al, 1);
   if (geom)
     app_flags = XParseGeometry (geom, &app_x, &app_y, &app_w, &app_h);
 
   if (ew_geom)
-    frame_flags = XParseGeometry (ew_geom, &frame_x, &frame_y,
-				   &frame_w, &frame_h);
+    frame_flags = XParseGeometry (ew_geom,
+				  &frame_x, &frame_y,
+				  &frame_w, &frame_h);
   
   if (first_x_frame_p (f))
     {
@@ -1467,11 +1492,13 @@ x_initialize_frame_size (struct frame *f)
       /* If the AppShell is iconic, then the EmacsFrame is iconic. */
       if (!ew_iconic_p)
 	{
-	  XtVaGetValues (app_shell, XtNiconic, &iconic_p, NULL);
+	  XtSetArg (al [0], XtNiconic, &iconic_p);
+	  XtGetValues (app_shell, al, 1);
 	  if (iconic_p)
 	    {
 	      ew_iconic_p = iconic_p;
-	      XtVaSetValues (ew, XtNiconic, iconic_p, NULL);
+	      XtSetArg (al [0], XtNiconic, iconic_p);
+	      XtSetValues (ew, al, 1);
 	    }
 	}
     }
@@ -1561,7 +1588,10 @@ x_layout_widgets (Widget w, XtPointer client_data, XtPointer call_data)
     /* The scrollbar positioning is completely handled by redisplay.  We
        just need to know which sides they are supposed to go on. */
     unsigned char scrollbar_placement;
-    XtVaGetValues (text, XtNscrollBarPlacement, &scrollbar_placement, NULL);
+    Arg al [1];
+    
+    XtSetArg (al [0], XtNscrollBarPlacement, &scrollbar_placement);
+    XtGetValues (text, al, 1);
     f->scrollbar_on_left = (scrollbar_placement == XtTOP_LEFT ||
                             scrollbar_placement == XtBOTTOM_LEFT);
     f->scrollbar_on_top  = (scrollbar_placement == XtTOP_LEFT ||
@@ -1621,7 +1651,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
   Window window_id = 0;
 #endif
   CONST char *name;
-  Arg av [25];
+  Arg al [25];
   int ac = 0;
   Widget text, container, shell;
   Widget parentwid = 0;
@@ -1681,31 +1711,31 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       FRAME_X_TOP_LEVEL_FRAME_P (f) = 1;
 
   ac = 0;
-  XtSetArg (av[ac], XtNallowShellResize, True); ac++;
+  XtSetArg (al[ac], XtNallowShellResize, True); ac++;
 #ifdef LWLIB_USES_MOTIF
   /* Motif sucks beans.  Without this in here, it will delete the window
      out from under us when it receives a WM_DESTROY_WINDOW message
      from the WM. */
-  XtSetArg (av[ac], XmNdeleteResponse, XmDO_NOTHING); ac++;
+  XtSetArg (al[ac], XmNdeleteResponse, XmDO_NOTHING); ac++;
 #endif
 
 #ifdef EXTERNAL_WIDGET
   if (window_id)
     {
-      XtSetArg (av[ac], XtNwindow, window_id); ac++;
+      XtSetArg (al[ac], XtNwindow, window_id); ac++;
     }
   else
 #endif /* EXTERNAL_WIDGET */
     {
-      XtSetArg (av[ac], XtNinput, True); ac++;
-      XtSetArg (av[ac], (String) XtNminWidthCells, 10); ac++;
-      XtSetArg (av[ac], (String) XtNminHeightCells, 1); ac++;
+      XtSetArg (al[ac], XtNinput, True);       ac++;
+      XtSetArg (al[ac], XtNminWidthCells, 10); ac++;
+      XtSetArg (al[ac], XtNminHeightCells, 1); ac++;
     }
 
   if (!NILP (parent))
     {
       parentwid = FRAME_X_SHELL_WIDGET (XFRAME (parent));
-      XtSetArg (av[ac], XtNtransientFor, parentwid); ac++;
+      XtSetArg (al[ac], XtNtransientFor, parentwid); ac++;
     }
 
   shell = XtCreatePopupShell ("shell",
@@ -1718,14 +1748,13 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 			       ),
 			      parentwid ? parentwid :
 			      DEVICE_XT_APP_SHELL (d),
-			      av, ac);
+			      al, ac);
   FRAME_X_SHELL_WIDGET (f) = shell;
   maybe_set_frame_title_format (shell);
 
   /* Create the manager widget */
-  container = XtVaCreateWidget ("container",
-				emacsManagerWidgetClass,
-				shell, NULL);
+  container = XtCreateWidget ("container",
+			      emacsManagerWidgetClass, shell, NULL, 0);
   FRAME_X_CONTAINER_WIDGET (f) = container;
   XtAddCallback (container, XtNresizeCallback, x_layout_widgets,
 		 (XtPointer) f);
@@ -1733,12 +1762,9 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 		 (XtPointer) f);
 
   /* Create the text area */
-  ac = 0;
-  XtSetArg (av[ac], XtNborderWidth, 0); ac++;	/* should this be settable? */
-  XtSetArg (av[ac], (String) XtNemacsFrame, f); ac++;
-  text = XtCreateWidget (name,
-			 emacsFrameClass,
-			 container, av, ac);
+  XtSetArg (al [0], XtNborderWidth, 0); /* should this be settable? */
+  XtSetArg (al [1], XtNemacsFrame,  f);
+  text = XtCreateWidget (name, emacsFrameClass, container, al, 2);
   FRAME_X_TEXT_WIDGET (f) = text;
 
 #ifdef HAVE_MENUBARS  
@@ -1773,6 +1799,7 @@ xemacs_XtPopup (Widget widget)
 {
   ShellWidget shell_widget = (ShellWidget) widget;
   XtGrabKind call_data = XtGrabNone;
+  Arg al [1];
 
   XtCallCallbacks (widget, XtNpopupCallback, (XtPointer)&call_data);
 
@@ -1783,11 +1810,13 @@ xemacs_XtPopup (Widget widget)
   if (shell_widget->shell.create_popup_child_proc != NULL)
     (*(shell_widget->shell.create_popup_child_proc))(widget);
 
-  /* The XtVaSetValues below are not in XtPopup menu.  We just want to
+  /* The XtSetValues below are not in XtPopup menu.  We just want to
      make absolutely sure... */
-  XtVaSetValues (widget, XtNmappedWhenManaged, False, NULL);
+  XtSetArg (al [0], XtNmappedWhenManaged, False);
+  XtSetValues (widget, al, 1);
   XtRealizeWidget (widget);
-  XtVaSetValues (widget, XtNmappedWhenManaged, True, NULL);
+  XtSetArg (al [0], XtNmappedWhenManaged, True);
+  XtSetValues (widget, al, 1);
 }
 
 #ifdef HAVE_CDE
@@ -1995,11 +2024,10 @@ x_set_frame_icon (struct frame *f)
 
   /* Store the X data into the widget. */
   {
-    Arg av [10];
-    int ac = 0;
-    XtSetArg (av [ac], XtNiconPixmap, x_pixmap); ac++;
-    XtSetArg (av [ac], XtNiconMask, x_mask); ac++;
-    XtSetValues (FRAME_X_SHELL_WIDGET (f), av, ac);
+    Arg al [2];
+    XtSetArg (al [0], XtNiconPixmap, x_pixmap);
+    XtSetArg (al [1], XtNiconMask,   x_mask);
+    XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 2);
   }
 }
 
@@ -2016,10 +2044,10 @@ static Lisp_Object
 x_get_frame_parent (struct frame *f)
 {
   Widget parentwid = 0;
-  Arg av[1];
+  Arg al[1];
 
-  XtSetArg (av[0], XtNtransientFor, &parentwid);
-  XtGetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
+  XtSetArg (al[0], XtNtransientFor, &parentwid);
+  XtGetValues (FRAME_X_SHELL_WIDGET (f), al, 1);
   /* find the frame whose wid is parentwid */
   if (parentwid)
     {
@@ -2063,12 +2091,12 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
   Dimension frame_h = DisplayHeight (dpy, DefaultScreen (dpy));
   Dimension shell_w, shell_h, shell_bord;
   int win_gravity;
+  Arg al [3];
 
-  XtVaGetValues (w,
-		 XtNwidth,       &shell_w,
-		 XtNheight,      &shell_h,
-		 XtNborderWidth, &shell_bord,
-		 NULL);
+  XtSetArg (al [0], XtNwidth,       &shell_w);
+  XtSetArg (al [1], XtNheight,      &shell_h);
+  XtSetArg (al [2], XtNborderWidth, &shell_bord);
+  XtGetValues (w, al, 3);
 
   win_gravity =
     xoff >= 0 && yoff >= 0 ? NorthWestGravity :
@@ -2084,11 +2112,10 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
      come back at the right place.  We can't look at s->visible to determine
      whether it is iconified because it might not be up-to-date yet (the queue
      might not be processed). */
-  XtVaSetValues (w,
-		 XtNwinGravity, win_gravity,
-		 XtNx, xoff,
-		 XtNy, yoff,
-		 NULL);
+  XtSetArg (al [0], XtNwinGravity, win_gravity);
+  XtSetArg (al [1], XtNx, xoff);
+  XtSetArg (al [2], XtNy, yoff);
+  XtSetValues (w, al, 3);
   
   /* Sometimes you will find that
 

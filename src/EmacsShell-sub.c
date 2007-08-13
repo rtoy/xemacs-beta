@@ -232,6 +232,7 @@ update_size_hints_internal (EMACS_SHELL_WIDGET w,
 {
   int base_width, base_height;
   int cell_width, cell_height;
+  Arg al [10];
 
   /* time to update them thar size hints */
   cell_width = w->wm.size_hints.width_inc;
@@ -250,14 +251,13 @@ update_size_hints_internal (EMACS_SHELL_WIDGET w,
   printf ("  base size set to: %d %d\n", base_width, base_height);
   fflush (stdout);
 #endif
-  XtVaSetValues ((Widget) w,
-		 XtNbaseWidth, base_width,
-		 XtNbaseHeight, base_height,
-		 XtNminWidth, base_width +
-		 cell_width * w->emacs_shell.min_width_cells,
-		 XtNminHeight, base_height +
-		 cell_height * w->emacs_shell.min_height_cells,
-		 NULL);
+  XtSetArg(al [0], XtNbaseWidth, base_width);
+  XtSetArg(al [1], XtNbaseHeight, base_height);
+  XtSetArg(al [2], XtNminWidth, base_width +
+	   cell_width * w->emacs_shell.min_width_cells);
+  XtSetArg(al [3], XtNminHeight, base_height +
+	   cell_height * w->emacs_shell.min_height_cells);
+  XtSetValues ((Widget) w, al, 4);
 }
 
 static XtGeometryResult

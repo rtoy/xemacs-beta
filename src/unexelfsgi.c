@@ -497,6 +497,8 @@ Filesz      Memsz       Flags       Align
 #include <elf.h>
 #include <sym.h> /* for HDRR declaration */
 #include <sys/mman.h>
+#include <config.h>
+#include "sysdep.h"
 
 /* in 64bits mode, use 64bits elf */
 #ifdef _ABI64
@@ -606,9 +608,9 @@ find_section (name, section_names, file_name, old_file_h, old_section_h, noerror
 void
 unexec (new_name, old_name, data_start, bss_start, entry_address)
      char *new_name, *old_name;
-     unsigned data_start, bss_start, entry_address;
+     uintptr_t data_start, bss_start, entry_address;
 {
-  extern unsigned int bss_end;
+  extern uintptr_t bss_end;
   int new_file, old_file, new_file_size;
 
   /* Pointers to the base of the image of the two files.  */
@@ -680,7 +682,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   old_bss_addr	    = OLD_SECTION_H (old_bss_index).sh_addr;
   old_bss_size	    = OLD_SECTION_H (old_bss_index).sh_size;
 #if defined(emacs) || !defined(DEBUG)
-  bss_end	    = (unsigned int) sbrk (0);
+  bss_end	    = (uintptr_t) sbrk (0);
   new_bss_addr	    = (l_Elf_Addr) bss_end;
 #else
   new_bss_addr	    = old_bss_addr + old_bss_size + 0x1234;

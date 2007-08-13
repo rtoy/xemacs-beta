@@ -70,25 +70,19 @@ xaw_update_scrollbar (widget_instance *instance, Widget widget,
       scrollbar_values *data = val->scrollbar_data;
       float widget_shown, widget_topOfThumb;
       float new_shown, new_topOfThumb;
+      Arg al [10];
 
-      /*
-       * First size and position the scrollbar widget.
-       */
-      XtVaSetValues (widget,
-		     XtNx, data->scrollbar_x,
-		     XtNy, data->scrollbar_y,
-		     XtNwidth, data->scrollbar_width,
-		     XtNheight, data->scrollbar_height,
-		     NULL);
+      /* First size and position the scrollbar widget. */
+      XtSetArg (al [0], XtNx,      data->scrollbar_x);
+      XtSetArg (al [1], XtNy,      data->scrollbar_y);
+      XtSetArg (al [2], XtNwidth,  data->scrollbar_width);
+      XtSetArg (al [3], XtNheight, data->scrollbar_height);
+      XtSetValues (widget, al, 4);
 
-      /*
-       * Now the size the scrollbar's slider.
-       */
-
-      XtVaGetValues (widget,
-		     XtNtopOfThumb, &widget_topOfThumb,
-		     XtNshown, &widget_shown,
-		     NULL);
+      /* Now size the scrollbar's slider. */
+      XtSetArg (al [0], XtNtopOfThumb, &widget_topOfThumb);
+      XtSetArg (al [1], XtNshown, &widget_shown);
+      XtGetValues (widget, al, 2);
 
       new_shown = (double) data->slider_size /
 	(double) (data->maximum - data->minimum);
@@ -98,12 +92,12 @@ xaw_update_scrollbar (widget_instance *instance, Widget widget,
 
       if (new_shown > 1.0)
 	new_shown = 1.0;
-      if (new_shown < 0)
+      else if (new_shown < 0)
 	new_shown = 0;
 
       if (new_topOfThumb > 1.0)
 	new_topOfThumb = 1.0;
-      if (new_topOfThumb < 0)
+      else if (new_topOfThumb < 0)
 	new_topOfThumb = 0;
 
       if (new_shown != widget_shown || new_topOfThumb != widget_topOfThumb)
@@ -127,12 +121,16 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 #ifdef DIALOGS_ATHENA
   else if (XtIsSubclass (widget, dialogWidgetClass))
       {
-	XtVaSetValues (widget, XtNlabel, val->contents->value, NULL);
+	Arg al [1];
+	XtSetArg (al [0], XtNlabel, val->contents->value);
+	XtSetValues (widget, al, 1);
       }
   else if (XtIsSubclass (widget, commandWidgetClass))
     {
       Dimension bw = 0;
-      XtVaGetValues (widget, XtNborderWidth, &bw, NULL);
+      Arg al [3];
+      XtSetArg (al [0], XtNborderWidth, &bw);
+      XtGetValues (widget, al, 1);
 
 #ifndef LWLIB_DIALOGS_ATHENA3D
       if (bw == 0)
@@ -142,15 +140,17 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 	   that I don't feel like opening right now.  Making Athena widgets
 	   not look like shit is just entirely too much work.
 	 */
-	XtVaSetValues (widget, XtNborderWidth, 1, NULL);
+	{
+	  XtSetArg (al [0], XtNborderWidth, 1);
+	  XtSetValues (widget, al, 1);
+	}
 #endif
 
-      XtVaSetValues (widget,
-		     XtNlabel, val->value,
-		     XtNsensitive, val->enabled,
-		     /* Force centered button text.  Se above. */
-		     XtNjustify, XtJustifyCenter,
-		     NULL);
+      XtSetArg (al [0], XtNlabel,     val->value);
+      XtSetArg (al [1], XtNsensitive, val->enabled);
+      /* Force centered button text.  See above. */
+      XtSetArg (al [2], XtNjustify, XtJustifyCenter);
+      XtSetValues (widget, al, 3);
 
       XtRemoveAllCallbacks (widget, XtNcallback);
       XtAddCallback (widget, XtNcallback, xaw_generic_callback, instance);
@@ -452,7 +452,11 @@ xaw_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
 
 #if 0
   user_data = NULL;
-  XtVaGetValues (widget, XtNuserData, &user_data, NULL);
+  {
+    Arg al [1];
+    XtSetArg (al [0], XtNuserData, &user_data);
+    XtGetValues (widget, al, 1);
+  }
 #else
   /* Damn!  Athena doesn't give us a way to hang our own data on the
      buttons, so we have to go find it...  I guess this assumes that
@@ -483,9 +487,11 @@ wm_delete_window (Widget shell, XtPointer closure, XtPointer call_data)
   LWLIB_ID id;
   Widget *kids = 0;
   Widget widget;
+  Arg al [1];
   if (! XtIsSubclass (shell, shellWidgetClass))
     abort ();
-  XtVaGetValues (shell, XtNchildren, &kids, NULL);
+  XtSetArg (al [0], XtNchildren, &kids);
+  XtGetValues (shell, al, 1);
   if (!kids || !*kids)
     abort ();
   widget = kids [0];

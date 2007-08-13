@@ -532,13 +532,8 @@ This function accepts any number of arguments, but ignores them."
   (interactive)
   nil)
 
-(defmacro eval-in-buffer (buffer &rest forms)
-  "Evaluate FORMS in BUFFER.
-See also: `save-current-buffer' and `save-excursion'."
-  ;; by Stig@hackvan.com
-  (` (save-current-buffer
-      (set-buffer (, buffer))
-      (,@ forms))))
+(define-function 'eval-in-buffer 'with-current-buffer)
+(make-obsolete 'eval-in-buffer 'with-current-buffer)
 
 ;;; The real defn is in abbrev.el but some early callers
 ;;;  (eg lisp-mode-abbrev-table) want this before abbrev.el is loaded...

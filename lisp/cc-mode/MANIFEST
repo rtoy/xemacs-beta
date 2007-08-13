@@ -1,0 +1,28 @@
+Manifest for CC Mode 5.11
+Barry A. Warsaw <cc-mode-help@python.org>
+
+You should have received the following files in this distribution:
+
+    MANIFEST: This file.
+
+    README: Quick intro into how to get CC Mode up and running.
+
+    Makefile: for byte-compiling the source code
+
+    cc-align.el, cc-auto.el, cc-cmds.el, cc-engine.el, cc-langs.el,
+    cc-menus.el, cc-mode.el, cc-styles.el, cc-vars.el: The source code
+
+    cc-compat.el: Helps ease the transition from c-mode.el to cc-mode
+    style indentation control.  This is provided for your convenience
+    only, and is completely unguaranteed and unsupported.
+
+    cc-guess.el: Experiments in style guessing.  This is provided for
+    your convenience only, and is completely unguaranteed and
+    unsupported.
+
+    cc-lobotomy.el: Performance vs. accuracy trade-offs.
+
+    cc-mode.texi: The latest CC-Mode Texinfo manual.
+
+    ANNOUNCEMENT: Release announcement as it appeared on various
+    forums.

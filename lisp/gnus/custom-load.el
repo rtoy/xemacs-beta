@@ -123,7 +123,6 @@
 (put 'news 'custom-loads '("gnus" "message"))
 (put 'gnus-cache 'custom-loads '())
 (put 'message-insertion 'custom-loads '("message"))
-(put 'hyper-apropos 'custom-loads '())
 (put 'message-faces 'custom-loads '("message"))
 (put 'vc 'custom-loads '())
 (put 'alloc 'custom-loads '())

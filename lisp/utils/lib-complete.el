@@ -36,7 +36,7 @@
 ;; Last Modified By: Heiko M|nkel <muenkel@tnt.uni-hannover.de>
 ;; Additional XEmacs integration By: Chuck Thompson <cthomp@cs.uiuc.edu>
 ;; Last Modified On: Thu Jul 1 14:23:00 1994
-;; RCS Info        : $Revision: 1.4 $ $Locker:  $
+;; RCS Info        : $Revision: 1.5 $ $Locker:  $
 ;; ========================================================================
 ;; NOTE: XEmacs must be redumped if this file is changed.
 ;;
@@ -121,8 +121,10 @@ Display MESSAGE and evaluate FORMS, returning value of the last one."
       (message "%s" (, MESSAGE))
       (progn (,@ FORMS))
       (message "")))))
+#+infodock (defalias 'lib-funcall-with-msg 'progn-with-message)
 
 (put 'progn-with-message 'lisp-indent-hook 1)
+#+infodock (put 'lib-funcall-with-message 'lisp-indent-hook 1)
 
 ;;=== Completion caching ==================================================
 
@@ -136,6 +138,7 @@ Format is a list of lists of the form
 where each <cache-record> has the form
 
    (<root> <modtimes> <completion-table>)")
+#+infodock (defvaralias 'lib-completions 'lib-complete:cache)
 
 (defun lib-complete:better-root (ROOT1 ROOT2)
   "Return non-nil if ROOT1 is a superset of ROOT2."
@@ -190,7 +193,7 @@ where each <cache-record> has the form
 					path-modtimes completion-table)
 	completion-table))))
 
-(defvar lib-complete:max-cache-size 20 
+(defvar lib-complete:max-cache-size 40 
   "*Maximum number of search paths which are cached.")
 
 (defun lib-complete:cache-completions (key root modtimes table)
@@ -315,6 +318,7 @@ with a prefix argument, you will be prompted for the coding system."
 	 (if current-prefix-arg
 	   (read-coding-system "Coding System: "))))
   (find-file-other-window library codesys))
+#+infodock (defalias 'lib-edit-other-window 'find-library-other-window)
 
 (defun find-library-other-frame (library &optional codesys)
   "Load the library named LIBRARY in a newly-created frame.
@@ -332,7 +336,8 @@ with a prefix argument, you will be prompted for the coding system."
 (define-key global-map "\C-x4l" 'find-library-other-window)
 (define-key global-map "\C-x5l" 'find-library-other-frame)
 
+#+infodock (defalias 'lib-where-is 'locate-library)
 
+#+infodock (provide 'lib)
 (provide 'lib-complete)
-
 ;;; lib-complete.el ends here

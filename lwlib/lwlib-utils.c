@@ -36,17 +36,18 @@ void
 XtNoClearRefreshWidget (Widget widget)
 {
   XEvent event;
+  XExposeEvent* ev = &event.xexpose;
 
-  event.type = Expose;
-  event.xexpose.serial = 0;
-  event.xexpose.send_event = 0;
-  event.xexpose.display = XtDisplay (widget);
-  event.xexpose.window = XtWindow (widget);
-  event.xexpose.x = 0;
-  event.xexpose.y = 0;
-  event.xexpose.width = widget->core.width;
-  event.xexpose.height = widget->core.height;
-  event.xexpose.count = 0;
+  ev->type = Expose;
+  ev->serial = 0;
+  ev->send_event = 0;
+  ev->display = XtDisplay (widget);
+  ev->window = XtWindow (widget);
+  ev->x = 0;
+  ev->y = 0;
+  ev->width  = widget->core.width;
+  ev->height = widget->core.height;
+  ev->count = 0;
 
   (*widget->core.widget_class->core_class.expose)
     (widget, &event, (Region)NULL);
@@ -63,8 +64,7 @@ XtApplyToWidgets (Widget w, XtApplyToWidgetsProc proc, XtPointer arg)
     {
       CompositeWidget cw = (CompositeWidget) w;
       /* We have to copy the children list before mapping over it, because
-	 the procedure might add/delete elements, which would lose badly.
-	 */
+	 the procedure might add/delete elements, which would lose badly. */
       int nkids = cw->composite.num_children;
       Widget *kids = (Widget *) malloc (sizeof (Widget) * nkids);
       int i;

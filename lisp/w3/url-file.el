@@ -1,7 +1,7 @@
 ;;; url-file.el --- File retrieval code
 ;; Author: wmperry
-;; Created: 1997/05/09 04:39:15
-;; Version: 1.19
+;; Created: 1997/06/24 22:38:39
+;; Version: 1.21
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -125,17 +125,9 @@
 
 (defun url-format-directory (dir)
   ;; Format the files in DIR into hypertext
-  (if (and url-directory-index-file
-	   (file-exists-p (expand-file-name url-directory-index-file dir))
-	   (file-readable-p (expand-file-name url-directory-index-file dir)))
-      (save-excursion
-	(set-buffer url-working-buffer)
-	(erase-buffer)
-	(insert-file-contents
-	 (expand-file-name url-directory-index-file dir)))
-    (kill-buffer (current-buffer))
-    (find-file dir)
-    (url-dired-minor-mode t)))
+  (kill-buffer (current-buffer))
+  (find-file dir)
+  (url-dired-minor-mode t))
 
 (defun url-host-is-local-p (host)
   "Return t iff HOST references our local machine."
@@ -189,8 +181,11 @@
 	 (dest (url-target urlobj))
 	 (filename (if (or user (not (url-host-is-local-p site)))
 		       (concat "/" (or user "anonymous") "@" site ":" file)
-		     file)))
-
+		     file))
+	 (viewer (mm-mime-info
+		  (mm-extension-to-mime (url-file-extension file))))
+	 (pos-index (if url-directory-index-file
+			(expand-file-name url-directory-index-file filename))))
     (url-clear-tmp-buffer)
     (and user pass
 	 (cond
@@ -200,6 +195,12 @@
 	   (efs-set-passwd site user pass))
 	  (t
 	   nil)))
+    (if (and pos-index
+	     (file-exists-p pos-index)
+	     (file-readable-p pos-index))
+	(setq filename pos-index))
+    (setq url-current-mime-type (mm-extension-to-mime
+				 (url-file-extension filename)))
     (cond
      ((file-directory-p filename)
       (if (not (string-match "/$" filename))
@@ -241,9 +242,7 @@
 				  (url-file-build-continuation new)
 				  0 nil)))))
      (t
-      (let ((viewer (mm-mime-info
-		     (mm-extension-to-mime (url-file-extension file))))
-	    (errobj nil))
+      (let ((errobj nil))
 	(if (or url-source		; Need it in a buffer
 		(and (symbolp viewer)
 		     (not (eq viewer 'w3-default-local-file)))
@@ -252,9 +251,7 @@
 		(url-insert-possibly-compressed-file filename t)
 	      (error
 	       (url-save-error errobj)
-	       (url-retrieve (concat "www://error/nofile/" file))))))))
-    (setq url-current-mime-type (mm-extension-to-mime
-				 (url-file-extension file)))))
+	       (url-retrieve (concat "www://error/nofile/" file))))))))))
 
 (fset 'url-ftp 'url-file)
 

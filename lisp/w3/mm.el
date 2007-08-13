@@ -720,6 +720,7 @@ not.")
   (let* ((test-info   (assoc "test"   viewer-info))
 	 (test (cdr test-info))
 	 (viewer (cdr (assoc "viewer" viewer-info)))
+	 (default-directory (expand-file-name "~/"))
 	 status
 	 parsed-test
 	)
@@ -1177,7 +1178,7 @@ The different multipart specs are put in `mm-temporary-directory'."
 		(if (stringp cmd)
 		    (shell-command-on-region st nd cmd t)
 		  (funcall cmd st nd))
-		(set-marker nd (point))))
+		(or (eq cmd 'ignore) (set-marker nd (point)))))
 	  (write-region st nd fname nil 5)
 	  (delete-region st nd)
 	  (setq results (cons
@@ -1247,7 +1248,8 @@ The different multipart specs are put in `mm-temporary-directory'."
 	     (* 16 (mm-hex-char-to-integer 
 		    (char-after (1+ (match-beginning 0)))))
 	     (mm-hex-char-to-integer
-	      (char-after (1- (match-end 0))))))))))))
+	      (char-after (1- (match-end 0))))))))))
+    (goto-char (point-max))))
 
 ;; Taken from hexl.el.
 (defun mm-hex-char-to-integer (character)

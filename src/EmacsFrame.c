@@ -590,6 +590,7 @@ EmacsFrameSetCharSize (Widget widget, int columns, int rows)
   EmacsFrame ew = (EmacsFrame) widget;
   int pixel_width, pixel_height;
   struct frame *f = ew->emacs_frame.frame;
+  Arg al [2];
 
   if (columns < 3)
     columns = 3;  /* no way buddy */
@@ -601,8 +602,7 @@ EmacsFrameSetCharSize (Widget widget, int columns, int rows)
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_set_variable_size (FRAME_X_SHELL_WIDGET (f), columns, rows);
 
-  XtVaSetValues ((Widget) ew,
-		 XtNwidth, (Dimension) pixel_width,
-		 XtNheight, (Dimension) pixel_height,
-		 NULL);
+  XtSetArg (al [0], XtNwidth,  (Dimension) pixel_width);
+  XtSetArg (al [1], XtNheight, (Dimension) pixel_height);
+  XtSetValues ((Widget) ew, al, 2);
 }

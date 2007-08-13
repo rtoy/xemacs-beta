@@ -58,7 +58,6 @@
 (put 'diary 'custom-loads '())
 (put 'browse-url 'custom-loads '())
 (put 'message-insertion 'custom-loads '())
-(put 'hyper-apropos 'custom-loads '())
 (put 'vc 'custom-loads '())
 (put 'alloc 'custom-loads '())
 (put 'isearch 'custom-loads '())

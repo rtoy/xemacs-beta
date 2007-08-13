@@ -160,8 +160,7 @@
     (elm	. (toolbar-external "xterm" "-e" "elm"))
     (mutt	. (toolbar-external "xterm" "-e" "mutt"))
     (exmh	. (toolbar-external "exmh"))
-    ;; How to turn on netscape mail, command-line??
-    (netscape	. (toolbar-external "netscape")))
+    (netscape	. (toolbar-external "netscape" "mailbox:")))
   "*Alist of mail readers and their commands.
 The car of each alist element is the mail reader, and the cdr is the form
 used to start it."

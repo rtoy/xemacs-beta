@@ -186,8 +186,6 @@ NOTE-END
 
 #define UNEXEC "unexalpha.o"
 
-#define PNTR_COMPARISON_TYPE unsigned long
-
 #if 0
 
 /* XEmacs -- removed code to define XINT, etc.  This gets

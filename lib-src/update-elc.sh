@@ -108,14 +108,15 @@ echo \"lisp/$dir done.\";"
 #make_special vm
 #make_special ediff elc
 #make_special viper elc
-make_special efs x20
-make_special gnus  some
-make_special w3 xemacs-w3
-make_special hyperbole elc
-make_special oobr HYPB_ELC='' elc
-make_special eos -k		# not strictly necessary...
-make_special ilisp elc
 make_special auctex some
+make_special cc-mode all
+make_special efs x20
+make_special eos -k		# not strictly necessary...
+make_special gnus  some
+make_special hyperbole elc
+make_special ilisp elc
+make_special oobr HYPB_ELC='' elc
+make_special w3 xemacs-w3
 
 ignore_pattern=''
 for dir in $ignore_dirs ; do
@@ -144,7 +145,6 @@ ignore_pattern="$ignore_pattern"'
 \!/sunpro/sunpro-load.el$!d
 \!/tooltalk/tooltalk-load.el$!d
 \!/language/devanagari.el$!d
-\!/language/ethiopic.el$!d
 \!/language/indian.el$!d
 \!/language/lao-util.el$!d
 \!/language/lao.el$!d

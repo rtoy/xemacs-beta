@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/05/09 06:21:55
-;; Version: 1.129
+;; Created: 1997/06/25 15:58:53
+;; Version: 1.143
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -31,9 +31,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'w3-cus)			; Grab everything that is customized
+(require 'wid-edit)			; For `widget-keymap'
 
 (defconst w3-version-number
-  (let ((x "p3.0.86"))
+  (let ((x "p3.0.92"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -41,7 +42,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/05/09 06:21:55"))
+(defconst w3-version-date (let ((x "1997/06/25 15:58:53"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -76,11 +77,11 @@ in later garbage collections taking more time.")
 ;;; Figure out what flavor of emacs we are running
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-running-xemacs (string-match "XEmacs\\|Lucid" emacs-version)
-  "*In XEmacs?.")
+  "*Got XEmacs?.")
 
 (defvar w3-running-FSF19 (and (string-match "^19" emacs-version)
 			      (not w3-running-xemacs))
-  "*In FSF v19 emacs?")
+  "*Got Emacs 19?")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Store the database of HTML general entities.
@@ -502,8 +503,9 @@ returns.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;  Keymap definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-mode-map (make-keymap) "Keymap to use in w3-mode.")
+(defvar w3-mode-map (make-sparse-keymap) "Keymap to use in w3-mode.")
 (suppress-keymap w3-mode-map)
+(set-keymap-parent w3-mode-map widget-keymap)
 
 (define-key w3-mode-map "h" (make-sparse-keymap))
 (define-key w3-mode-map "H" (make-sparse-keymap))
@@ -547,8 +549,6 @@ returns.")
 (define-key w3-mode-map "\M-m"	   'w3-mail-current-document)
 (define-key w3-mode-map "\M-s"	   'w3-save-as)
 (define-key w3-mode-map "\M-\r"    'w3-follow-inlined-image)
-(define-key w3-mode-map "\r"       'w3-widget-button-press)
-(define-key w3-mode-map "\n"       'w3-widget-button-press)
 (define-key w3-mode-map "b"	   'w3-widget-backward)
 (define-key w3-mode-map "c"        'w3-mail-document-author)
 (define-key w3-mode-map "d"        'w3-download-this-url)
@@ -573,13 +573,17 @@ returns.")
 (define-key w3-mode-map [(control meta t)] 'url-list-processes)
 
 ;; Widget navigation
-(define-key w3-mode-map [tab]         'w3-widget-forward)
-(define-key w3-mode-map "\t"          'w3-widget-forward)
-(define-key w3-mode-map "\M-\t"       'w3-widget-backward)
-(define-key w3-mode-map [backtab]     'w3-widget-backward)
-(define-key w3-mode-map [(shift tab)] 'w3-widget-backward)
-(define-key w3-mode-map [(meta tab)]  'w3-widget-backward)
-  
+(if t
+    nil
+  (define-key w3-mode-map "\r"          'w3-widget-button-press)
+  (define-key w3-mode-map "\n"          'w3-widget-button-press)
+  (define-key w3-mode-map [tab]         'w3-widget-forward)
+  (define-key w3-mode-map "\t"          'w3-widget-forward)
+  (define-key w3-mode-map "\M-\t"       'w3-widget-backward)
+  (define-key w3-mode-map [backtab]     'w3-widget-backward)
+  (define-key w3-mode-map [(shift tab)] 'w3-widget-backward)
+  (define-key w3-mode-map [(meta tab)]  'w3-widget-backward)
+  )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Keyword definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

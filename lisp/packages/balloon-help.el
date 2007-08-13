@@ -479,7 +479,8 @@ This command must be bound to a mouse event."
 			       (cons 'minibuffer
 				     (minibuffer-window junk-frame))
 			       '(width . 3)
-			       '(height . 1)))))
+			       '(height . 1)
+			       '(balloon-help . t)))))
       (set-face-font 'default balloon-help-font frame)
       (set-face-foreground 'default balloon-help-foreground frame)
       (set-face-background 'default balloon-help-background frame)

@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.9931
+;; Version: 1.9937
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -134,6 +134,10 @@ is the string or buffer containing the text."
   :group 'widgets
   :group 'faces)
 
+(defvar widget-documentation-face 'widget-documentation-face
+  "Face used for documentation strings in widges.
+This exists as a variable so it can be set locally in certain buffers.")
+
 (defface widget-documentation-face '((((class color)
 				       (background dark))
 				      (:foreground "lime green"))
@@ -202,6 +206,13 @@ Larger menus are read through the minibuffer."
   :group 'widgets
   :type 'integer)
 
+(defcustom widget-menu-minibuffer-flag nil
+  "*Control how to ask for a choice from the keyboard.
+Non-nil means use the minibuffer;
+nil means read a single character."
+  :group 'widgets
+  :type 'boolean)
+
 (defun widget-choose (title items &optional event)
   "Choose an item from a list.
 
@@ -238,7 +249,8 @@ minibuffer."
 			  (stringp (car-safe (event-object val)))
 			  (car (event-object val))))
 	   (cdr (assoc val items))))
-	(t
+	(widget-menu-minibuffer-flag
+	 ;; Read the choice of name from the minibuffer.
 	 (setq items (widget-remove-if 'stringp items))
 	 (let ((val (completing-read (concat title ": ") items nil t)))
 	   (if (stringp val)
@@ -246,7 +258,45 @@ minibuffer."
 		 (when (stringp try)
 		   (setq val try))
 		 (cdr (assoc val items)))
-	     nil)))))
+	     nil)))
+	(t
+	 ;; Construct a menu of the choices
+	 ;; and then use it for prompting for a single character.
+	 (let* ((overriding-terminal-local-map
+		 (make-sparse-keymap))
+		map choice (next-digit ?0)
+		value)
+	   ;; Define SPC as a prefix char to get to this menu.
+	   (define-key overriding-terminal-local-map " "
+	     (setq map (make-sparse-keymap title)))
+	   (while items
+	     (setq choice (car items) items (cdr items))
+	     (if (consp choice)
+		 (let* ((name (car choice))
+		       (function (cdr choice))
+		       (character (aref name 0)))
+		   ;; Pick a character for this choice;
+		   ;; avoid duplication.
+		   (when (lookup-key map (vector character))
+		     (setq character (downcase character))
+		     (when (lookup-key map (vector character))
+		       (setq character next-digit
+			     next-digit (1+ next-digit))))
+		   (define-key map (vector character)
+		     (cons (format "%c = %s" character name) function)))))
+	   (define-key map [?\C-g] '("Quit" . keyboard-quit))
+	   (define-key map [t] 'keyboard-quit)
+	   (setcdr map (nreverse (cdr map)))
+	   ;; Unread a SPC to lead to our new menu.
+	   (setq unread-command-events (cons ?\ unread-command-events))
+	   ;; Read a char with the menu, and return the result
+	   ;; that corresponds to it.
+	   (setq value
+		 (lookup-key overriding-terminal-local-map
+			     (read-key-sequence title) t))
+	   (when (eq value 'keyboard-quit)
+	     (error "Canceled"))
+	   value))))
 
 (defun widget-remove-if (predictate list)
   (let (result (tail list))
@@ -282,6 +332,17 @@ minibuffer."
 This is needed on all versions of Emacs, and on XEmacs before 20.3.  
 If you don't add the space, it will become impossible to edit a zero
 size field."
+  :type 'boolean
+  :group 'widgets)
+
+(defcustom widget-field-use-before-change
+  (or (> emacs-minor-version 34)
+      (> emacs-major-version 20)
+      (string-match "XEmacs" emacs-version))
+  "Non-nil means use `before-change-functions' to track editable fields.
+This enables the use of undo, but doesn'f work on Emacs 19.34 and earlier. 
+Using before hooks also means that the :notify function can't know the
+new value."
   :type 'boolean
   :group 'widgets)
 
@@ -354,7 +415,7 @@ size field."
 (defun widget-specify-doc (widget from to)
   ;; Specify documentation for WIDGET between FROM and TO.
   (add-text-properties from to (list 'widget-doc widget
-				     'face 'widget-documentation-face)))
+				     'face widget-documentation-face)))
 
 (defmacro widget-specify-insert (&rest form)
   ;; Execute FORM without inheriting any text properties.
@@ -931,24 +992,25 @@ Recommended as a parent keymap for modes using widgets.")
 			 (widget-apply-action button event)))
 		   (overlay-put overlay 'face face)
 		   (overlay-put overlay 'mouse-face mouse-face)))
-	     (let (command up)
+	     (let ((up t)
+		   command)
 	       ;; Find the global command to run, and check whether it
 	       ;; is bound to an up event.
 	       (cond ((setq command	;down event
-			    (lookup-key widget-global-map [ button2 ])))
+			    (lookup-key widget-global-map [ button2 ]))
+		      (setq up nil))
 		     ((setq command	;down event
-			    (lookup-key widget-global-map [ down-mouse-2 ])))
+			    (lookup-key widget-global-map [ down-mouse-2 ]))
+		      (setq up nil))
 		     ((setq command	;up event
-			    (lookup-key widget-global-map [ button2up ]))
-		      (setq up t))
+			    (lookup-key widget-global-map [ button2up ])))
 		     ((setq command	;up event
-			    (lookup-key widget-global-map [ mouse-2]))
-		      (setq up t)))
-	       (when command
+			    (lookup-key widget-global-map [ mouse-2]))))
+	       (when up
 		 ;; Don't execute up events twice.
-		 (when up
-		   (while (not (button-release-event-p event))
-		     (setq event (widget-read-event))))
+		 (while (not (button-release-event-p event))
+		   (setq event (widget-read-event))))
+	       (when command
 		 (call-interactively command))))))
 	(t
 	 (message "You clicked somewhere weird."))))
@@ -1140,11 +1202,12 @@ When not inside a field, move to the previous button or field."
   (widget-clear-undo)
   ;; We need to maintain text properties and size of the editing fields.
   (make-local-variable 'after-change-functions)
-  (make-local-variable 'before-change-functions)
   (setq after-change-functions
 	(if widget-field-list '(widget-after-change) nil))
-  (setq before-change-functions
-	(if widget-field-list '(widget-before-change) nil)))
+  (when widget-field-use-before-change
+    (make-local-variable 'before-change-functions)
+    (setq before-change-functions
+	  (if widget-field-list '(widget-before-change) nil))))
 
 (defvar widget-field-last nil)
 ;; Last field containing point.
@@ -1437,9 +1500,17 @@ If that does not exists, call the value of `widget-complete-field'."
 	   (error "Unknown escape `%c'" escape)))
     (widget-put widget :buttons buttons)))
 
+(defvar widget-button-face nil
+  "Face to use for buttons.
+This is a variable so that it can be buffer-local.")
+
 (defun widget-default-button-face-get (widget)
   ;; Use :button-face or widget-button-face
-  (or (widget-get widget :button-face) 'widget-button-face))
+  (or (widget-get widget :button-face)
+      (let ((parent (widget-get widget :parent)))
+	(if parent
+	    (widget-apply parent :button-face-get)
+	  'widget-button-face))))
 
 (defun widget-default-sample-face-get (widget)
   ;; Use :sample-face.
@@ -1468,11 +1539,25 @@ If that does not exists, call the value of `widget-complete-field'."
 
 (defun widget-default-value-set (widget value)
   ;; Recreate widget with new value.
-  (save-excursion
-    (goto-char (widget-get widget :from))
-    (widget-apply widget :delete)
-    (widget-put widget :value value)
-    (widget-apply widget :create)))
+  (let* ((old-pos (point))
+	 (from (copy-marker (widget-get widget :from)))
+	 (to (copy-marker (widget-get widget :to)))
+	 (offset (if (and (<= from old-pos) (<= old-pos to))
+		     (if (>= old-pos (1- to))
+			 (- old-pos to 1)
+		       (- old-pos from)))))
+    ;;??? Bug: this ought to insert the new value before deleting the old one,
+    ;; so that markers on either side of the value automatically 
+    ;; stay on the same side.  -- rms.
+    (save-excursion
+      (goto-char (widget-get widget :from))
+      (widget-apply widget :delete)
+      (widget-put widget :value value)
+      (widget-apply widget :create))
+    (if offset
+	(if (< offset 0)
+	    (goto-char (+ (widget-get widget :to) offset 1))
+	  (goto-char (min (+ from offset) (1- (widget-get widget :to))))))))
 
 (defun widget-default-value-inline (widget)
   ;; Wrap value in a list unless it is inline.
@@ -1707,16 +1792,12 @@ If END is omitted, it defaults to the length of LIST."
 				:prompt-internal prompt initial history)))
       (widget-apply widget :value-to-external answer))))
 
+(defvar widget-edit-functions nil)
+
 (defun widget-field-action (widget &optional event)
-  ;; Edit the value in the minibuffer.
-  (let ((invalid (widget-apply widget :validate)))
-    (let ((prompt (concat (widget-apply widget :menu-tag-get) ": "))
-	  (value (unless invalid 
-		   (widget-value widget))))
-      (let ((answer (widget-apply widget :prompt-value prompt value invalid) ))
-	(widget-value-set widget answer)))
-    (widget-setup)
-    (widget-apply widget :notify widget event)))
+  ;; Move to next field.
+  (widget-forward 1)
+  (run-hook-with-args 'widget-edit-functions widget))
 
 (defun widget-field-validate (widget)
   ;; Valid if the content matches `:valid-regexp'.
@@ -1911,7 +1992,8 @@ when he invoked the menu."
 			(widget-apply current :value-to-external
 				      (widget-get current :value)))
       (widget-setup)
-      (widget-apply widget :notify widget event))))
+      (widget-apply widget :notify widget event)))
+  (run-hooks 'widget-edit-hook))
 
 (defun widget-choice-validate (widget)
   ;; Valid if we have made a valid choice.
@@ -1966,7 +2048,8 @@ when he invoked the menu."
 (defun widget-toggle-action (widget &optional event)
   ;; Toggle value.
   (widget-value-set widget (not (widget-value widget)))
-  (widget-apply widget :notify widget event))
+  (widget-apply widget :notify widget event)
+  (run-hooks 'widget-edit-hook))
 
 ;;; The `checkbox' Widget.
 
@@ -2641,8 +2724,15 @@ when he invoked the menu."
   (concat "Describe the `" (widget-get widget :value) "' symbol."))
 
 (defun widget-documentation-link-action (widget &optional event)
-  "Run apropos on WIDGET's value.  Ignore optional argument EVENT."
-  (apropos (concat "\\`" (regexp-quote (widget-get widget :value)) "\\'")))
+  "Display documentation for WIDGET's value.  Ignore optional argument EVENT."
+  (let* ((string (widget-get widget :value))
+	 (symbol (intern string)))
+    (if (and (fboundp symbol) (boundp symbol))
+	;; If there are two doc strings, give the user a way to pick one.
+	(apropos (concat "\\`" (regexp-quote string) "\\'"))
+      (if (fboundp symbol)
+	  (describe-function symbol)
+	(describe-variable symbol)))))
 
 (defcustom widget-documentation-links t
   "Add hyperlinks to documentation strings when non-nil."
@@ -2802,10 +2892,36 @@ link for that string."
 (define-widget 'file 'string
   "A file widget.  
 It will read a file name from the minibuffer when invoked."
+  :complete-function 'widget-file-complete
   :prompt-value 'widget-file-prompt-value
   :format "%{%t%}: %v"
-  :tag "File"
-  :action 'widget-file-action)
+  :tag "File")
+
+(defun widget-file-complete ()
+  "Perform completion on file name preceding point."
+  (interactive)
+  (let* ((end (point))
+	 (beg (save-excursion
+		(skip-chars-backward "^ ")
+		(point)))
+	 (pattern (buffer-substring beg end))
+	 (name-part (file-name-nondirectory pattern))
+	 (directory (file-name-directory pattern))
+	 (completion (file-name-completion name-part directory)))
+    (cond ((eq completion t))
+	  ((null completion)
+	   (message "Can't find completion for \"%s\"" pattern)
+	   (ding))
+	  ((not (string= name-part completion))
+	   (delete-region beg end)
+	   (insert (expand-file-name completion directory)))
+	  (t
+	   (message "Making completion list...")
+	   (let ((list (file-name-all-completions name-part directory)))
+	     (setq list (sort list 'string<))
+	     (with-output-to-temp-buffer "*Completions*"
+	       (display-completion-list list)))
+	   (message "Making completion list...%s" "done")))))
 
 (defun widget-file-prompt-value (widget prompt value unbound)
   ;; Read file from minibuffer.
@@ -2818,18 +2934,18 @@ It will read a file name from the minibuffer when invoked."
 	   (must-match (widget-get widget :must-match)))
        (read-file-name prompt2 dir nil must-match file)))))
 
-(defun widget-file-action (widget &optional event)
-  ;; Read a file name from the minibuffer.
-  (let* ((value (widget-value widget))
-	 (dir (file-name-directory value))
-	 (file (file-name-nondirectory value))
-	 (menu-tag (widget-apply widget :menu-tag-get))
-	 (must-match (widget-get widget :must-match))
-	 (answer (read-file-name (concat menu-tag ": (default `" value "') ")
-				 dir nil must-match file)))
-    (widget-value-set widget (abbreviate-file-name answer))
-    (widget-setup)
-    (widget-apply widget :notify widget event)))
+;;;(defun widget-file-action (widget &optional event)
+;;;  ;; Read a file name from the minibuffer.
+;;;  (let* ((value (widget-value widget))
+;;;	 (dir (file-name-directory value))
+;;;	 (file (file-name-nondirectory value))
+;;;	 (menu-tag (widget-apply widget :menu-tag-get))
+;;;	 (must-match (widget-get widget :must-match))
+;;;	 (answer (read-file-name (concat menu-tag ": (default `" value "') ")
+;;;				 dir nil must-match file)))
+;;;    (widget-value-set widget (abbreviate-file-name answer))
+;;;    (widget-setup)
+;;;    (widget-apply widget :notify widget event)))
 
 (define-widget 'directory 'file
   "A directory widget.  
@@ -2845,6 +2961,7 @@ It will read a directory name from the minibuffer when invoked."
   :tag "Symbol"
   :format "%{%t%}: %v"
   :match (lambda (widget value) (symbolp value))
+  :complete-function 'lisp-complete-symbol
   :prompt-internal 'widget-symbol-prompt-internal
   :prompt-match 'symbolp
   :prompt-history 'widget-symbol-prompt-value-history
@@ -2990,19 +3107,45 @@ It will read a directory name from the minibuffer when invoked."
 		   (buffer-substring (point) (point-max))))
 	  answer)))))
 
-(define-widget 'integer 'sexp
+(define-widget 'restricted-sexp 'sexp
+  "A Lisp expression restricted to values that match.
+To use this type, you must define :match or :match-alternatives."
+  :type-error "The specified value is not valid"
+  :match 'widget-restricted-sexp-match
+  :value-to-internal (lambda (widget value)
+		       (if (widget-apply widget :match value)
+			   (prin1-to-string value)
+			 value)))
+
+(defun widget-restricted-sexp-match (widget value)
+  (let ((alternatives (widget-get widget :match-alternatives))
+	matched)
+    (while (and alternatives (not matched))
+      (if (cond ((functionp (car alternatives))
+		 (funcall (car alternatives) value))
+		((and (consp (car alternatives))
+		      (eq (car (car alternatives)) 'quote))
+		 (eq value (nth 1 (car alternatives)))))
+	  (setq matched t))
+      (setq alternatives (cdr alternatives)))
+    matched))
+
+(define-widget 'integer 'restricted-sexp
   "An integer."
   :tag "Integer"
   :value 0
   :type-error "This field should contain an integer"
-  :value-to-internal (lambda (widget value)
-		       (if (integerp value) 
-			   (prin1-to-string value)
-			 value))
-  :match (lambda (widget value) (integerp value)))
+  :match-alternatives '(integerp))
+
+(define-widget 'number 'restricted-sexp
+  "A floating point number."
+  :tag "Number"
+  :value 0.0
+  :type-error "This field should contain a number"
+  :match-alternatives '(numberp))
 
 (define-widget 'character 'editable-field
-  "An character."
+  "A character."
   :tag "Character"
   :value 0
   :size 1 
@@ -3021,17 +3164,6 @@ It will read a directory name from the minibuffer when invoked."
 	   (if (fboundp 'characterp)
 	       (characterp value)
 	     (integerp value))))
-
-(define-widget 'number 'sexp
-  "A floating point number."
-  :tag "Number"
-  :value 0.0
-  :type-error "This field should contain a number"
-  :value-to-internal (lambda (widget value)
-		       (if (numberp value)
-			   (prin1-to-string value)
-			 value))
-  :match (lambda (widget value) (numberp value)))
 
 (define-widget 'list 'group
   "A lisp list."

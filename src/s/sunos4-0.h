@@ -71,15 +71,19 @@ extern void tzsetwall (void);
 extern int getpagesize (void);
 
 #ifndef __SUNPRO_C
+/* Suppress zillions of warnings from outdated SunOS4 prototypes */
 /* Bother! Sun can't even get the arg types right. */
-#include <string.h> /* But we need to include this first because
-		       *sometimes* (i.e. when using SparcWorks) the
-		       correct prototypes are provided. */
-#define memset(ptr, val, size) memset ((char *) ptr, val, size)
-#define memcpy(dest, src, size) \
-  memcpy ((char *) dest, (CONST char *) src, size)
-#define memcmp(src1, src2, size) \
-  memcmp ((CONST char *) src1, (CONST char *) src2, size)
+#include <memory.h>
+#include <string.h>
+#define memset(a,b,c) memset((char*) (a), b, c)
+#define memcpy(a,b,c) memcpy((char*) (a), (char*) (b), c)
+#define memcmp(a,b,c) memcmp((char*) (a), (char*) (b), c)
+#define memchr(a,b,c) memchr((char*) (a), b, c)
+void * __builtin_alloca(int);
+#ifdef HAVE_X_WINDOWS
+#include <X11/Xlib.h>
+#define XFree(p) XFree((char*)(p))
+#endif /* X Windows */
 #endif /* !__SUNPRO_C */
 
 #endif /* __STDC__ */
@@ -98,6 +102,6 @@ extern int getpagesize (void);
   int mkdir (const char *dpath, unsigned short dmode)
 # endif /* __GNUC__ */
 
-#endif /* !NOT_C_CODE */
+#endif /* C_CODE */
 
 #endif /* _S_SUNOS4_H_ */

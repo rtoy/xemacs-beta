@@ -3,7 +3,7 @@
 ;; Copyright (c) 1997 Free Software Foundation, Inc.
 
 ;; Keywords: extensions
-;; Version: 2.2
+;; Version: 2.3
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
 
 ;; This file is part of XEmacs.
@@ -849,7 +849,7 @@ hair various colours (see ")
   (let* ((entry (assq who xemacs-hackers))
 	 (name (cadr entry))
 	 (address (caddr entry)))
-    (let ((widget-link-prefix nil) (widget-link-suffix nil))
+    (let ((widget-link-prefix "") (widget-link-suffix ""))
       (widget-create 'link :help-echo (concat "Find out more about " name)
 		     :action 'about-maintainer
 		     :tag name

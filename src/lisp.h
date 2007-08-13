@@ -674,11 +674,6 @@ enum Lisp_Type
 # define EMACS_UINT unsigned int
 #endif
 
-/* Cast pointers to this type to compare them.  Some machines want int.  */
-#ifndef PNTR_COMPARISON_TYPE
-# define PNTR_COMPARISON_TYPE unsigned int
-#endif
-
 /* Overridden by m/next.h */
 #ifndef ASSERT_VALID_POINTER
 # define ASSERT_VALID_POINTER(pnt) (assert ((((EMACS_UINT) pnt) & 3) == 0))
@@ -1853,6 +1848,23 @@ struct overhead_stats
 #endif
 #ifndef IS_ANY_SEP
 #define IS_ANY_SEP(_c_) (IS_DIRECTORY_SEP (_c_))
+#endif
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#elif SIZEOF_VOID_P == SIZEOF_INT
+typedef int intptr_t;
+typedef unsigned int uintptr_t;
+#elif SIZEOF_VOID_P == SIZEOF_LONG
+typedef long intptr_t;
+typedef unsigned long uintptr_t;
+#elif defined(SIZEOF_LONG_LONG) && SIZEOF_VOID_P == SIZEOF_LONG_LONG
+typedef long long intptr_t;
+typedef unsigned long long uintptr_t;
+#else
+/* Just pray. May break, may not. */
+typedef char *intptr_t;
+typedef char *uintptr_t;
 #endif
 
 #include "emacsfns.h"

@@ -1,7 +1,7 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.3
+;; Version: 3.4
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
 ;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
@@ -74,13 +74,13 @@
 ;;
 ;; Hrvoje Niksic <hniksic@srce.hr> May/1997
 ;;     Completely rewritten.  Now uses `defstruct' and other CL stuff
-;;     to define clients cleanly.  Dave, thanks!
+;;     to define clients cleanly.  Many thanks to Dave Gillespie!
 
 
 ;;; Code:
 
 (defconst gnuserv-rcs-version
-  "$Id: gnuserv.el,v 1.10 1997/05/29 23:50:05 steve Exp $")
+  "$Id: gnuserv.el,v 1.11 1997/06/26 02:31:17 steve Exp $")
 
 (defgroup gnuserv nil
   "The gnuserv suite of programs to talk to Emacs from outside."
@@ -187,16 +187,24 @@ and reused by the programs that invoke the Emacs server."
 ;; The old functions are provided as aliases, to avoid breaking .emacs
 ;; files.  However, they are obsolete and should be avoided.
 
-(defvaralias 'server-frame 'gnuserv-frame)
-(defvaralias 'server-done-function 'gnuserv-done-function)
-(defvaralias 'server-done-temp-file-function 'gnuserv-done-temp-file-function)
-(defvaralias 'server-find-file-function 'gnuserv-find-file-function)
-(defvaralias 'server-program 'gnuserv-program)
-(defvaralias 'server-visit-hook 'gnuserv-visit-hook)
-(defvaralias 'server-done-hook 'gnuserv-done-hook)
-(defvaralias 'server-kill-quietly 'gnuserv-kill-quietly)
-(defvaralias 'server-temp-file-regexp 'gnuserv-temp-file-regexp)
-(defvaralias 'server-make-temp-file-backup 'gnuserv-make-temp-file-backup)
+(define-obsolete-variable-alias 'server-frame 'gnuserv-frame)
+(define-obsolete-variable-alias 'server-done-function 'gnuserv-done-function)
+(define-obsolete-variable-alias 'server-done-temp-file-function
+  'gnuserv-done-temp-file-function)
+(define-obsolete-variable-alias 'server-find-file-function
+  'gnuserv-find-file-function)
+(define-obsolete-variable-alias 'server-program
+  'gnuserv-program)
+(define-obsolete-variable-alias 'server-visit-hook
+  'gnuserv-visit-hook)
+(define-obsolete-variable-alias 'server-done-hook
+  'gnuserv-done-hook)
+(define-obsolete-variable-alias 'server-kill-quietly
+  'gnuserv-kill-quietly)
+(define-obsolete-variable-alias 'server-temp-file-regexp
+  'gnuserv-temp-file-regexp)
+(define-obsolete-variable-alias 'server-make-temp-file-backup
+  'gnuserv-make-temp-file-backup)
 
 
 ;;; Internal variables:
@@ -475,12 +483,10 @@ If a flag is `view', view the files read-only."
 ;; `gnuserv-buffer-p' when appropriate, for instance.
 (defun gnuserv-buffer-clients (buffer)
   "Returns a list of clients to which BUFFER belongs."
-  (let ((client gnuserv-clients)
-	res)
-    (while client
-      (if (memq buffer (gnuclient-buffers (car client)))
-	  (push (car client) res))
-      (pop client))
+  (let (res)
+    (dolist (client gnuserv-clients)
+      (when (memq buffer (gnuclient-buffers client))
+	(push client res)))
     res))
 
 ;; Like `gnuserv-buffer-clients', but returns a boolean; doesn't
@@ -499,14 +505,12 @@ If a flag is `view', view the files read-only."
   "Remove the buffer from the buffer lists of all the clients it belongs to.
 Any client that remains \"empty\" after the removal is informed that the
 editing has ended."
-  (let* ((buf (current-buffer))
-	 (clients (gnuserv-buffer-clients buf)))
-    (while clients
-      (callf2 delq buf (gnuclient-buffers (car clients)))
+  (let* ((buf (current-buffer)))
+    (dolist (client (gnuserv-buffer-clients buf))
+      (callf2 delq buf (gnuclient-buffers client))
       ;; If no more buffers, kill the client.
-      (when (null (gnuclient-buffers (car clients)))
-	(gnuserv-kill-client (car clients)))
-      (pop clients))))
+      (when (null (gnuclient-buffers client))
+	(gnuserv-kill-client client)))))
 
 (add-hook 'kill-buffer-hook 'gnuserv-kill-buffer-function)
 
@@ -534,15 +538,13 @@ editing has ended."
 ;; as well.  This is why we hook into `delete-device-hook'.
 (defun gnuserv-check-device (device)
   (when (memq device gnuserv-devices)
-    (let ((client gnuserv-clients))
-      (while client
-	(when (eq device (gnuclient-device (car client)))
-	  ;; we must make sure that the server kill doesn't result in
-	  ;; killing the device, because it would cause a device-dead
-	  ;; error when `delete-device' tries to do the job later.
-	  (gnuserv-kill-client (car client) t))
-	(pop client)))
-    (callf2 delq device gnuserv-devices)))
+    (dolist (client gnuserv-clients)
+      (when (eq device (gnuclient-device client))
+	;; we must make sure that the server kill doesn't result in
+	;; killing the device, because it would cause a device-dead
+	;; error when `delete-device' tries to do the job later.
+	(gnuserv-kill-client (car client) t))))
+  (callf2 delq device gnuserv-devices))
 
 (add-hook 'delete-device-hook 'gnuserv-check-device)
 
@@ -589,21 +591,19 @@ the function will not remove the frames associated with the client."
 
 ;; Do away with the buffer.
 (defun gnuserv-buffer-done-1 (buffer)
-  (let ((clients (gnuserv-buffer-clients buffer)))
-    (while clients
-      (callf2 delq buffer (gnuclient-buffers (car clients)))
-      (when (null (gnuclient-buffers (car clients)))
-	(gnuserv-kill-client (car clients)))
-      (pop clients))
-    ;; Get rid of the buffer
-    (save-excursion
-      (set-buffer buffer)
-      (run-hooks 'gnuserv-done-hook)
-      (setq gnuserv-minor-mode nil)
-      (funcall (if (gnuserv-temp-file-p buffer)
-		   gnuserv-done-temp-file-function
-		 gnuserv-done-function)
-	       buffer))))
+  (dolist (client (gnuserv-buffer-clients buffer))
+    (callf2 delq buffer (gnuclient-buffers client))
+    (when (null (gnuclient-buffers client))
+      (gnuserv-kill-client client)))
+  ;; Get rid of the buffer
+  (save-excursion
+    (set-buffer buffer)
+    (run-hooks 'gnuserv-done-hook)
+    (setq gnuserv-minor-mode nil)
+    (funcall (if (gnuserv-temp-file-p buffer)
+		 gnuserv-done-temp-file-function
+	       gnuserv-done-function)
+	     buffer)))
 
 
 ;;; Higher-level functions
@@ -629,7 +629,7 @@ the function will not remove the frames associated with the client."
      ;; Else, try to find any client with at least one buffer, and
      ;; return its first buffer.
      ((setq client
-	    (car (member-if-not 'null gnuserv-clients
+	    (car (member-if-not #'null gnuserv-clients
 				:key 'gnuclient-buffers)))
       (car (gnuclient-buffers client)))
      ;; Oh, give up.

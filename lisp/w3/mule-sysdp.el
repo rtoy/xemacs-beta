@@ -41,7 +41,7 @@
     (2.3 *noconv*)
     (2.4 'no-conversion)
     (3.0 'no-conversion)
-    (xemacs 'binary)
+    (xemacs 'no-conversion)
     (otherwise nil))
   "Coding system that means no coding system should be used.")
 
@@ -81,7 +81,7 @@
 	       (get-coding-system 'autodetect)
 	     (error (setq code 'automatic-conversion)))))
      (decode-coding-region (point-min) (point-max) code)
-     (set-buffer-file-coding-system code))
+     (set-file-coding-system code))
     (otherwise
      nil)))
 

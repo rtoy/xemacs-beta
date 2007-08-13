@@ -187,9 +187,10 @@ static void
 update_one_scrollbar_bs (struct frame *f, Widget sb_widget)
 {
   Boolean use_backing_store;
+  Arg al [1];
 
-  XtVaGetValues (FRAME_X_TEXT_WIDGET (f),
-		 XtNuseBackingStore, &use_backing_store, NULL);
+  XtSetArg (al [0], XtNuseBackingStore, &use_backing_store);
+  XtGetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
 
   if (use_backing_store && sb_widget)
     {
@@ -308,8 +309,11 @@ x_scrollbar_width_changed_in_frame (Lisp_Object specifier, struct frame *f,
   /* mirror the value in the frame resources, unless it was already
      done. */
   if (!in_resource_setting)
-    XtVaSetValues (FRAME_X_TEXT_WIDGET (f), XtNscrollBarWidth,
-		   XINT (newval), NULL);
+    {
+      Arg al [1];
+      XtSetArg (al [0], XtNscrollBarWidth, XINT (newval));
+      XtSetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
+    }
 
   if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
     {
@@ -350,8 +354,11 @@ x_scrollbar_height_changed_in_frame (Lisp_Object specifier, struct frame *f,
        did, we wouldn't want to overwrite the resource information
        (which might specify a user preference). */
   if (!in_resource_setting)
-    XtVaSetValues (FRAME_X_TEXT_WIDGET (f), XtNscrollBarHeight,
-		   XINT (newval), NULL);
+    {
+      Arg al [1];
+      XtSetArg (al [0], XtNscrollBarHeight, XINT (newval));
+      XtSetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
+    }
 
   if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
     {

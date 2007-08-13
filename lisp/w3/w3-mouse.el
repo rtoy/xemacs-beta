@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Mouse specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/23 03:08:58
-;; Version: 1.8
+;; Created: 1997/06/20 18:56:21
+;; Version: 1.12
 ;; Keywords: mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -54,36 +54,39 @@ the mouse click, opening it in another frame."
 	 (w3-fetch (widget-get widget 'src)))))
 
 (defvar w3-mouse-button1 (cond
+			  ((featurep 'infodock) nil)
 			  ((and w3-running-xemacs (featurep 'mouse)) 'button1)
 			  (w3-running-xemacs nil)
-			  (t 'mouse-1)))
+			  (t 'down-mouse-1)))
 (defvar w3-mouse-button2 (cond
+			  ((featurep 'infodock) nil)
 			  ((and w3-running-xemacs (featurep 'mouse)) 'button2)
 			  (w3-running-xemacs nil)
-			  (t 'mouse-2)))
+			  (t 'down-mouse-2)))
 (defvar w3-mouse-button3 (cond
+			  ((featurep 'infodock) nil)
 			  ((and w3-running-xemacs (featurep 'mouse)) 'button3)
 			  (w3-running-xemacs nil) 
-			  (t 'mouse-3)))
+			  (t 'down-mouse-3)))
 
-(if w3-mouse-button2
-    (define-key w3-mode-map (vector w3-mouse-button2) 'w3-widget-button-click))
 (if w3-mouse-button3
     (define-key w3-mode-map (vector w3-mouse-button3) 'w3-popup-menu))
-(if w3-mouse-button2
-    (define-key w3-mode-map (vector (list 'shift w3-mouse-button2))
-      'w3-follow-mouse-other-frame))
 
-(define-key w3-netscape-emulation-minor-mode-map (vector w3-mouse-button1)
-  'w3-widget-button-click)
-(define-key w3-netscape-emulation-minor-mode-map (vector w3-mouse-button2)
-  'w3-follow-mouse-other-frame)
+(if w3-mouse-button1
+    (define-key w3-netscape-emulation-minor-mode-map
+      (vector w3-mouse-button1) 'w3-widget-button-click))
+      
+(if w3-mouse-button2
+    (progn
+      (define-key w3-mode-map (vector (list 'meta w3-mouse-button2))
+	'w3-follow-mouse-other-frame)
+      (define-key w3-netscape-emulation-minor-mode-map
+	(vector w3-mouse-button2) 'w3-follow-mouse-other-frame)))
 
 (if w3-running-FSF19
     (progn
       (define-key w3-mode-map [mouse-movement] 'w3-mouse-handler)
       (if w3-popup-menu-on-mouse-3
 	  (define-key w3-mode-map [down-mouse-3] 'w3-popup-menu))))
-
   
 (provide 'w3-mouse)
