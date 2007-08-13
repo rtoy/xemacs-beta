@@ -1,3 +1,37 @@
+1998-01-02  Didier Verna  <verna@inf.enst.fr>
+
+	* x-menubar.el (default-menubar): make the tutorials available
+	through the menubar. (Plus some compilation warnings cleanup).
+
+1998-01-04  SL Baur  <steve@altair.xemacs.org>
+
+	* check-features.el: New file.  Perform sanity check after build.
+
+	* dumped-lisp.el (preloaded-file-list): Move tooltalk dumped lisp
+	files to tooltalk package.
+	(preloaded-file-list): Moved sparcworks dumped lisp files to Sun
+	package.
+
+	* package-admin.el (package-admin-xemacs): Use better default for
+	location of XEmacs binary.
+
+1998-01-03  Aki Vehtari  <Aki.Vehtari@hut.fi>
+
+	* x-menubar.el (buffers-menu-submenus-for-groups-p): Replace const
+	tag with sexp and add value tag with value `t'.
+
+1998-01-03  SL Baur  <steve@altair.xemacs.org>
+
+	* package-get.el: Changes to work with real data.
+	From Pete Ware <ware@cis.ohio-state.edu>
+
+	* packages.el (packages-reload-autoloads): Guard load for the time 
+	being.
+
+	* update-elc.el ("packages.el"): Force loading packages.el instead 
+	of possibly out-of-date packges.elc.
+	* make-docfile.el ("packages.el"): Ditto.
+
 1998-01-02  Colin Rafferty  <colin@xemacs.org>
 
 	* build-report.el (build-report-delete-regexp): Added a rule for

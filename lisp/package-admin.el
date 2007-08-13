@@ -32,8 +32,7 @@
 
 (require 'config)
 
-(defvar package-admin-xemacs (concat (config-value 'top_srcdir)
-				     "/src/xemacs")
+(defvar package-admin-xemacs (concat invocation-directory invocation-name)
   "Location of XEmacs binary to use.")
 
 (defvar package-admin-temp-buffer "*Package Output*"

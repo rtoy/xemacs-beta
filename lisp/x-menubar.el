@@ -35,7 +35,11 @@
 
 ;;; Warning-free compile
 (eval-when-compile
-  (defvar language-environment-list))
+  (defvar language-environment-list)
+  (defvar bookmark-alist)
+  (defvar language-info-alist)
+  (defvar current-language-environment)
+  (defvar tutorial-supported-languages))
 
 (defconst default-menubar
   (purecopy-menubar
@@ -735,7 +739,39 @@
      ("Help"
       ["About XEmacs..."	about-xemacs		t]
       ("Basics"
-       ["Tutorial"		help-with-tutorial	t]
+       ;; Tutorials.
+       ,(if (featurep 'mule)
+	    ;; Mule tutorials.
+	    (let ((lang language-info-alist)
+		  submenu tut)
+	      (while lang
+		(and (setq tut (assq 'tutorial (car lang)))
+		     (not (string= (caar lang) "ASCII"))
+		     (setq 
+		      submenu 
+		      (cons 
+		       `[,(caar lang) (help-with-tutorial nil ,(cdr tut)) t]
+		       submenu)))
+		(setq lang (cdr lang)))
+	      (append `("Tutorials" 
+			:filter tutorials-menu-filter
+			["Default" help-with-tutorial t 
+			 ,(concat "(" current-language-environment ")")])
+		      submenu))
+	  ;; Non mule tutorials.
+	  (let ((lang tutorial-supported-languages)
+		submenu)
+	    (while lang
+	      (setq submenu
+		    (cons 
+		     `[,(caar lang) 
+		       (help-with-tutorial ,(format "TUTORIAL.%s"
+						    (cadr (car lang)))) t]
+		     submenu))
+	      (setq lang (cdr lang)))
+	    (append '("Tutorials"
+		      ["English" help-with-tutorial t])
+		    submenu)))
        ["News"			view-emacs-news		t]
        ["Packages"		finder-by-keyword	t]
        ["Splash"		xemacs-splash-buffer	t])
@@ -989,7 +1025,7 @@ If this is an integer, do not build submenus if the number of buffers
 is not larger than this value."
   :type '(choice (const :tag "No Subgroups" nil)
 		 (integer :tag "Max. submenus" 10)
-		 (const :tag "Allow Subgroups" t))
+		 (sexp :format "%t\n" :tag "Allow Subgroups" :value t))
   :group 'buffers-menu)
 
 (defcustom buffers-menu-switch-to-buffer-function 'switch-to-buffer
@@ -1551,6 +1587,26 @@ If this is a relative filename, it is put into the same directory as your
       (set-buffer init-output-buffer)
       (save-buffer))
     ))
+
+
+;;; The Help menu
+
+(if (featurep 'mule)
+    (defun tutorials-menu-filter (menu-items)
+      ;; If there's a tutorial for the current language environment, make it
+      ;; appear first as the default one. Otherwise, use the english one.
+      (let* ((menu menu-items)
+	     (item (pop menu-items)))
+	(aset 
+	 item 3 
+	 (concat "(" 
+		 (if (assoc 
+		      'tutorial 
+		      (assoc current-language-environment language-info-alist))
+		     current-language-environment 
+		   "English")
+		 ")"))
+	menu)))
 
 
 (set-menubar default-menubar)

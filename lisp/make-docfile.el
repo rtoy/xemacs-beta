@@ -88,7 +88,7 @@
 (setq autoload-file-name "auto-autoloads.elc")
 (setq source-directory (concat default-directory "../lisp"))
 ;; (print (concat "Source directory: " source-directory))
-(require 'packages)
+(load "packages.el")
 
 (let (preloaded-file-list)
   (load (concat default-directory "../lisp/dumped-lisp.el"))

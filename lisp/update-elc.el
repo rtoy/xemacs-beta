@@ -63,7 +63,7 @@
 ;		    (nthcdr 3 command-line-args))))
 
 (define-function 'defalias 'define-function)
-(require 'packages)
+(load "packages.el")
 
 (let ((autol (packages-list-autoloads)))
   ;; (print (prin1-to-string autol))

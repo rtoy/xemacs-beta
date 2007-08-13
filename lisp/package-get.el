@@ -168,15 +168,18 @@ package provides that functionality.  If VERSION is nil, retrieves
 latest version.  Optional argument FETCHED-PACKAGES is used to keep
 track of packages already fetched."
   (interactive "sPackage: sVersion: ")
-  (let* ((this-package (package-get-info-version
-			(package-get-info-find-package package-get-base
-						       package) version))
+  (let* ((the-package (package-get-info-find-package package-get-base
+						     package))
+	 (this-package (package-get-info-version
+			the-package version))
 	 (this-requires (package-get-info-prop this-package 'requires))
 	 )
+    (setq version (package-get-info-prop this-package 'version))
     (unless (package-get-installedp package version)
       (package-get package version))
     (setq fetched-packages
-	  (append (package-get-info-prop this-package 'provides)
+	  (append (list package)
+		  (package-get-info-prop this-package 'provides)
 		  fetched-packages))
     ;; grab everything that this package requires plus recursively
     ;; grab everything that the requires require.  Keep track
@@ -188,6 +191,8 @@ track of packages already fetched."
 				(car this-requires)))
 		 (reqd-version (cadr reqd-package))
 		 (reqd-name (car reqd-package)))
+	    (if (null reqd-name)
+		(error "Unable to find a provider for %s" (car this-requires)))
 	    (setq fetched-packages
 		  (package-get-all reqd-name reqd-version fetched-packages)))
 	)
@@ -225,7 +230,7 @@ of the package, an error is signalled."
     (if (null filename)
 	(error "No filename associated with package %s, version %s"
 	       package version))
-    
+    (setq version (package-get-info-prop this-package 'version))
     (unless (and (eq conflict 'never)
 		 (package-get-installedp package version))
       ;; Find the package from search list in package-get-remote
@@ -252,7 +257,7 @@ of the package, an error is signalled."
 	(if (not (string= (buffer-substring (match-beginning 0) (match-end 0))
 			  (package-get-info-prop this-package 'md5sum)))
 	    (error "Package %s does not match md5 checksum" filename)))
-      (message "Retrieved package %s" filename) (sit-for 1)
+      (message "Retrieved package %s" filename) (sit-for 0)
       (let ((status
 	     (if (eq (package-get-info-prop this-package 'type) 'single)
 		 (package-admin-add-single-file-package
@@ -261,9 +266,9 @@ of the package, an error is signalled."
 		(package-get-staging-dir filename)))))
 	(when (not (= status 0))
 	  (message "Package failed.")
-	  (select-buffer package-admin-temp-buffer)))
-      (sit-for 2)
-      (message "Added package") (sit-for 1)
+	  (switch-to-buffer package-admin-temp-buffer)))
+      (sit-for 0)
+      (message "Added package") (sit-for 0)
       (setq found t))
     (if (and found package-get-remove-copy)
 	(delete-file (package-get-staging-dir filename)))
@@ -372,9 +377,14 @@ some built in variables.  For now, use `locate-library'."
 	(done nil)
 	(found nil))
     (while (and (not done) packages)
-      (let ((this-package (cdr (car packages)))) ;strip off package name
+      (let* ((this-name (caar packages))
+	     (this-package (cdr (car packages)))) ;strip off package name
 	(while (and (not done) this-package)
-	  (if (member sym (package-get-info-prop (car this-package) 'provides))
+	  (if (or (eq this-name sym)
+		  (eq (cons this-name
+			    (package-get-info-prop (car this-package) 'version))
+		      sym)
+		  (member sym (package-get-info-prop (car this-package) 'provides)))
 	      (progn (setq done t)
 		     (setq found (list (caar packages)
 				       (package-get-info-prop (car this-package) 'version))))

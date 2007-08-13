@@ -1152,12 +1152,7 @@ This command is designed to be used whether you are already in Info or not." t n
 
 ;;;***
 
-;;;### (autoloads (unload-feature) "loadhist" "lisp/loadhist.el")
-
-(autoload 'unload-feature "loadhist" "\
-Unload the library that provided FEATURE, restoring all its autoloads.
-If the feature is required by any other loaded code, and optional FORCE
-is nil, raise an error." t nil)
+;;;### (autoloads nil "loadhist" "lisp/loadhist.el")
 
 ;;;***
 

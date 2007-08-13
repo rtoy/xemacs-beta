@@ -634,8 +634,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
   /* Handle the -batch switch, which means don't do interactive display.  */
   if (argmatch (argv, argc, "-batch", "--batch", 5, NULL, &skip_args))
     {
+#if 0 /* I don't think this is correct. */
       inhibit_update_autoloads = 1;
       inhibit_update_dumped_lisp = 1;
+#endif
       noninteractive = 1;
     }
 

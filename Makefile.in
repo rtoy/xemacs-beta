@@ -271,14 +271,14 @@ custom-loads:
 finder: src
 	@echo "Building finder database"
 	@(cd lisp; \
-		${blddir}/src/xemacs -batch -q -no-site-file \
+		${blddir}/src/xemacs -batch -vanilla \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 
 lisp/finder-inf.el:
 	@echo "Building finder database"
 	@(cd lisp; \
-		${blddir}/src/xemacs -batch -q -no-site-file \
+		${blddir}/src/xemacs -batch -vanilla \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
 
@@ -380,6 +380,7 @@ lwlib/config.h: ${srcdir}/lwlib/config.h.in
 ## On Xenix, use tar xpf.
 
 .PHONY: install-only install install-arch-dep install-arch-indep gzip.el mkdir
+.PHONY: check-features
 
 ## We delete each directory in ${COPYDESTS} before we copy into it;
 ## that way, we can reinstall over directories that have been put in
@@ -395,9 +396,12 @@ lwlib/config.h: ${srcdir}/lwlib/config.h.in
 ## inconsistency in the build process.  So we go ahead and depend on
 ## all.  --cet
 
-install-only: ${MAKE_SUBDIR} install-arch-dep install-arch-indep
+check-features: all
+	${blddir}/src/xemacs -batch -l check-features.el
 
-install: all install-arch-dep install-arch-indep;
+install-only: ${MAKE_SUBDIR} check-features install-arch-dep install-arch-indep
+
+install: all check-features install-arch-dep install-arch-indep;
 
 install-arch-dep: mkdir
 	for subdir in ${INSTALL_ARCH_DEP_SUBDIR}; do \

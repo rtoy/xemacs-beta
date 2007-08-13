@@ -1,3 +1,12 @@
+1998-01-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta17 is released.
+
+	* Makefile.in (finder): Use -vanilla.
+	(lisp/finder-inf.el): Ditto.
+	(check-features): New target.  Do a sanity check prior to
+	installation.
+
 1997-01-03  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta16 is released.

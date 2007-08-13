@@ -75,7 +75,7 @@ filename -- Filename of tarball to generate info for."
     (erase-buffer)
     (insert-file-contents-literally package-info-template)
     (goto-char (point-min))
-    (pi-update-key "VERSION" version)
+    (pi-update-key "VERSION" (format "\"%s\"" version))
     (pi-update-key "MD5SUM" (format "\"%s\""
 				    (pi-md5sum filename)))
     (pi-update-key "FILENAME" (format "\"%s\""

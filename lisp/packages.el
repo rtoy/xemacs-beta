@@ -235,7 +235,9 @@ is run.  Don't call it or you'll be sorry."
 	(when feature
 	  ;; (message "(unload-feature %S)" feature)
 	  (unload-feature feature))
-	(load autoload-file))
+	(condition-case nil
+	    (load autoload-file)
+	  (t nil)))
       (setq autoload-list (cdr autoload-list)))))
 
 ;; The following function cannot be called from a bare temacs

@@ -169,9 +169,10 @@
 ;; preload the TTY init code.
 	#+tty "tty-init"
 ;;; Formerly in tooltalk/tooltalk-load.el
-	#+tooltalk "tooltalk-macros"
-	#+tooltalk "tooltalk-util"
-	#+tooltalk "tooltalk-init"
+	;; Moved to tooltalk package
+	;; #+tooltalk "tooltalk-macros"
+	;; #+tooltalk "tooltalk-util"
+	;; #+tooltalk "tooltalk-init"
 	;; "vc-hooks"		; Packaged.  Available in two versions.
 	;; "ediff-hook"		; Packaged.
 	"fontl-hooks"
@@ -179,11 +180,14 @@
 ;; #+energize "energize/energize-load.el"
 ;;; formerly in sunpro/sunpro-load.el
 ;;	#+(and mule sparcworks) "mime-setup"
-	#+sparcworks "cc-mode" ; Requires cc-mode package
-	#+sparcworks "sunpro-init"
-	#+sparcworks "ring"
-	#+sparcworks "comint" ; Requires comint package
-	#+sparcworks "annotations"
+
+	;; Moved to Sun package
+	;; #+sparcworks "cc-mode" ; Requires cc-mode package
+	;; #+sparcworks "sunpro-init"
+	;; #+sparcworks "ring"
+	;; #+sparcworks "comint" ; Requires comint package
+	;; #+sparcworks "annotations"
+
 ;;; formerly in eos/sun-eos-load.el
 ;;	#+sparcworks "sun-eos-init"
 ;;	#+sparcworks "sun-eos-common"
