@@ -7,7 +7,7 @@
 ;;             1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
-;; Version:    5.12
+;; Version:    5.13
 ;; Keywords:   c languages oop
 
 ;; This file is part of GNU Emacs.
@@ -553,7 +553,6 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
   ;; crucial because future c-set-style calls will always reset the
   ;; variables first to the `cc-mode' style before instituting the new
   ;; style.  Only do this once!
-  (require 'cl)
   (or (assoc "cc-mode" c-style-alist)
       (progn
 	(c-add-style "cc-mode"
@@ -562,7 +561,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 		       (lambda (var)
 			 (let ((val (symbol-value var)))
 			   (cons var (if (atom val) val
-				       (copy-tree val)
+				       (copy-sequence val)
 				       ))
 			   )))
 		      '(c-backslash-column

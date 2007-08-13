@@ -1,14 +1,12 @@
 ;;; tar-mode.el --- simple editing of tar files from GNU emacs
+
+;; Copyright (C) 1990-1993 Free Software Foundation, Inc.
+
+;; Author: Jamie Zawinski <jwz@netscape.com>
 ;; Keywords: unix
+;; Created: 4 Apr 1990
+;; Version: 1.31, 15 Dec 93
 
-;;; File:		tar-mode.el
-;;; Description:	simple editing of tar files from GNU emacs
-;;; Author:		Jamie Zawinski <jwz@netscape.com>
-;;; Created:		4 Apr 1990
-;;; Version:		1.31, 15 Dec 93
-
-;;; Copyright (C) 1990-1993 Free Software Foundation, Inc.
-;;;
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -28,65 +26,69 @@
 
 ;;; Synched up with: Not synched with FSF.
 
-;;; This package attempts to make dealing with Unix 'tar' archives easier.
-;;; When this code is loaded, visiting a file whose name ends in '.tar' will
-;;; cause the contents of that archive file to be displayed in a Dired-like
-;;; listing.  It is then possible to use the customary Dired keybindings to
-;;; extract sub-files from that archive, either by reading them into their own
-;;; editor buffers, or by copying them directly to arbitrary files on disk.
-;;; It is also possible to delete sub-files from within the tar file and write
-;;; the modified archive back to disk, or to edit sub-files within the archive
-;;; and re-insert the modified files into the archive.  See the documentation
-;;; string of tar-mode for more info.
+;;; Commentary:
 
-;;; To autoload, add this to your .emacs file:
-;;;
-;;;  (setq auto-mode-alist (cons '("\\.tar$" . tar-mode) auto-mode-alist))
-;;;  (autoload 'tar-mode "tar-mode")
-;;;
-;;; But beware: for certain tar files - those whose very first file has 
-;;; a -*- property line - autoloading won't work.  See the function 
-;;; "tar-normal-mode" to understand why.
+;; This package attempts to make dealing with Unix 'tar' archives easier.
+;; When this code is loaded, visiting a file whose name ends in '.tar' will
+;; cause the contents of that archive file to be displayed in a Dired-like
+;; listing.  It is then possible to use the customary Dired keybindings to
+;; extract sub-files from that archive, either by reading them into their own
+;; editor buffers, or by copying them directly to arbitrary files on disk.
+;; It is also possible to delete sub-files from within the tar file and write
+;; the modified archive back to disk, or to edit sub-files within the archive
+;; and re-insert the modified files into the archive.  See the documentation
+;; string of tar-mode for more info.
 
-;;; This code now understands the extra fields that GNU tar adds to tar files.
+;; To autoload, add this to your .emacs file:
+;;
+;;  (setq auto-mode-alist (cons '("\\.tar$" . tar-mode) auto-mode-alist))
+;;  (autoload 'tar-mode "tar-mode")
+;;
+;; But beware: for certain tar files - those whose very first file has 
+;; a -*- property line - autoloading won't work.  See the function 
+;; "tar-normal-mode" to understand why.
 
-;;; This interacts correctly with "uncompress.el" in the Emacs library,
-;;; and with sufficiently recent versions of "crypt.el" by Kyle Jones.
+;; This code now understands the extra fields that GNU tar adds to tar files.
 
-;;;    ***************   TO DO   *************** 
-;;;
-;;; o  There should be a command to extract the whole current buffer into files
-;;;    on disk (right now you have to do the subfiles one at a time.)
-;;;
-;;; o  chmod should understand "a+x,og-w".
-;;;
-;;; o  It's not possible to add a NEW file to a tar archive; not that 
-;;;    important, but still...
-;;;
-;;; o  The code is less efficient that it could be - in a lot of places, I
-;;;    pull a 512-character string out of the buffer and parse it, when I could
-;;;    be parsing it in place, not garbaging a string.  Should redo that.
-;;;
-;;; o  I'd like a command that searches for a string/regexp in every subfile
-;;;    of an archive, where <esc> would leave you in a subfile-edit buffer.
-;;;    (Like M-s in VM and M-r in the Zmacs mail reader.)
-;;;
-;;; o  Sometimes (but not always) reverting the tar-file buffer does not 
-;;;    re-grind the listing, and you are staring at the binary tar data.
-;;;    Typing 'g' again immediately after that will always revert and re-grind
-;;;    it, though.  I have no idea why this happens.
-;;;
-;;; o  If you edit a subfile, and selective-display gets set to t, then when
-;;;    we save the subfile, we should map ^M -> ^J.
-;;;
-;;; o  Block files, sparse files, continuation files, and the various header
-;;;    types aren't editable.  Actually I don't know that they work at all.
-;;;    If you know that they work, or know that they don't, please let me know.
-;;;
-;;; o  Tar files inside of tar files don't work.
-;;;
-;;; o  When using crypt-mode, you can't save a compressed or encrypted subfile
-;;;    of a tar file back into the tar file: it is saved uncompressed.
+;; This interacts correctly with "uncompress.el" in the Emacs library,
+;; and with sufficiently recent versions of "crypt.el" by Kyle Jones.
+
+;;    ***************   TO DO   *************** 
+;;
+;; o  There should be a command to extract the whole current buffer into files
+;;    on disk (right now you have to do the subfiles one at a time.)
+;;
+;; o  chmod should understand "a+x,og-w".
+;;
+;; o  It's not possible to add a NEW file to a tar archive; not that 
+;;    important, but still...
+;;
+;; o  The code is less efficient that it could be - in a lot of places, I
+;;    pull a 512-character string out of the buffer and parse it, when I could
+;;    be parsing it in place, not garbaging a string.  Should redo that.
+;;
+;; o  I'd like a command that searches for a string/regexp in every subfile
+;;    of an archive, where <esc> would leave you in a subfile-edit buffer.
+;;    (Like M-s in VM and M-r in the Zmacs mail reader.)
+;;
+;; o  Sometimes (but not always) reverting the tar-file buffer does not 
+;;    re-grind the listing, and you are staring at the binary tar data.
+;;    Typing 'g' again immediately after that will always revert and re-grind
+;;    it, though.  I have no idea why this happens.
+;;
+;; o  If you edit a subfile, and selective-display gets set to t, then when
+;;    we save the subfile, we should map ^M -> ^J.
+;;
+;; o  Block files, sparse files, continuation files, and the various header
+;;    types aren't editable.  Actually I don't know that they work at all.
+;;    If you know that they work, or know that they don't, please let me know.
+;;
+;; o  Tar files inside of tar files don't work.
+;;
+;; o  When using crypt-mode, you can't save a compressed or encrypted subfile
+;;    of a tar file back into the tar file: it is saved uncompressed.
+
+;;; Code:
 
 (defvar tar-anal-blocksize 20
   "*The blocksize of tar files written by Emacs, or nil, meaning don't care.
@@ -1404,3 +1406,5 @@ itself."
 (fset 'set-auto-mode 'tar-set-auto-mode)
 
 (provide 'tar-mode)
+
+;;; tar-mode.el ends here

@@ -26,7 +26,7 @@ SHELL = /bin/sh
 EMACS = xemacs
 EMACSFLAGS = -batch -q -no-site-file 
 
-# NOTE:  You *must* have a patched makeinfo-1.67 or later to rebuild the
+# NOTE:  You *must* have makeinfo-1.68 or later to rebuild the
 # info tree.
 MAKEINFO = makeinfo
 

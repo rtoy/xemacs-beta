@@ -2260,7 +2260,7 @@ See `term-prompt-regexp'."
 			    (term-move-columns -1))
 			   ((eq char ?\033) ; Escape
 			    (setq term-terminal-state 2))
-			   ((eq char 0)) ; NUL: Do nothing
+			   ((eq char ?\0)) ; NUL: Do nothing
 			   ((eq char ?\016)) ; Shift Out - ignored
 			   ((eq char ?\017)) ; Shift In - ignored
 			   ((eq char ?\^G)

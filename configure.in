@@ -1614,6 +1614,11 @@ if test "$with_workshop" = "yes"; then
   with_tooltalk=yes
 fi
 
+if test "$with_clash_detection" = "yes"; then
+  AC_DEFINE(CLASH_DETECTION)
+  XE_ADD_OBJS(filelock.o)
+fi
+
 dnl Choose a compiler from (in order)
 dnl --compiler, env var CC, with_gcc=no && ${NON_GNU_CC:-cc}, AC_PROG_CC
 test -n "$compiler" && CC="$compiler"
@@ -1823,7 +1828,7 @@ if test -z "$CFLAGS"; then
   dnl Following values of CFLAGS are known to work well.
   dnl Should we take debugging options into consideration?
   if   test "$GCC" = "yes"; then
-    CFLAGS="-g -O2 -Wall"
+    CFLAGS="-g -O2 -Wall -Wno-switch"
     test "$opsys" = "linux" -a "$machine" = "intel386" && \
       CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
   elif test "$__sunpro_c" = "yes"; then
@@ -1866,6 +1871,7 @@ else
   AC_MSG_RESULT(yes)
   AC_DEFINE(DYNODUMP)
   XE_APPEND(dynodump, MAKE_SUBDIR)
+  XE_APPEND(dynodump, SRC_SUBDIR_DEPS)
   case "$machine" in
     sparc   ) dynodump_arch=sparc ;;
     *86*    ) dynodump_arch=i386  ;;
@@ -1882,7 +1888,7 @@ test -n "$ld_text_start_addr" && start_flags="-T $ld_text_start_addr -e __start"
 AC_SUBST(start_flags)
 if test "$ordinary_link" = "no" -a "$GCC" = "yes"; then
  test -z "$linker" &&  linker='$(CC) -nostdlib'
- test -z "$lib_gcc" && lib_gcc='`$(CC) -print-lib-gccfile-name`'
+ test -z "$lib_gcc" && lib_gcc='`$(CC) -print-libgcc-file-name`'
 fi
 test "$GCC" != "yes" && lib_gcc=
 AC_SUBST(ld)
@@ -2218,6 +2224,7 @@ esac
 if test "$with_x11" = "yes"; then
   AC_DEFINE(HAVE_X_WINDOWS)
   XE_APPEND(lwlib, MAKE_SUBDIR)
+  XE_APPEND(lwlib, SRC_SUBDIR_DEPS)
 
   dnl Try to find Motif/CDE/Tooltalk dirs
   dnl These take precedence over other X libs/includes, so PRE-pend
@@ -2809,6 +2816,10 @@ if test "$ac_cv_c_inline" != "no"; then
   test "$GCC" = "yes" && XE_ADD_OBJS(inline.o)
 fi
 
+dnl HP-UX has a working alloca in libPW.
+case "$opsys" in hpux* )
+ AC_CHECK_FUNC(alloca, [:], [AC_CHECK_LIB(PW, alloca)])
+esac
 
 AC_FUNC_ALLOCA
 test -n "$ALLOCA" && XE_ADD_OBJS($ALLOCA)
@@ -2872,6 +2883,15 @@ test "$GNU_MALLOC" != "yes"   -a "$have_mmap" != "yes" && rel_alloc=no
 test "$rel_alloc" = "default" -a "$have_mmap"  = "yes" && rel_alloc=yes
 test "$rel_alloc" = "yes" && AC_DEFINE(REL_ALLOC)
 
+dnl Check for terminal I/O variants
+dnl TERMIOS systems may have termio.h, but not vice-versa, I think.
+AC_CHECK_HEADER(termios.h, 
+  AC_DEFINE(HAVE_TERMIOS)
+  AC_DEFINE(SIGNALS_VIA_CHARACTERS)
+  AC_DEFINE(NO_TERMIO),
+  [AC_CHECK_HEADER(termio.h, [AC_DEFINE(HAVE_TERMIO)])])
+
+
 dnl Check for Internet sockets.
 AC_CHECK_FUNC(socket,
  [AC_CHECK_HEADER(netinet/in.h,
@@ -2902,7 +2922,7 @@ AC_CHECK_HEADER(nlist.h, AC_DEFINE(NLIST_STRUCT), )
 
 dnl AIX export list
 for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp" ; do
-  if test -r $f; then AC_DEFINE_UNQUOTED(AIX_SMT_EXP, -bI:$f) break; fi
+  if test -r $f; then AC_DEFINE_UNQUOTED(AIX_SMT_EXP, "-bI:$f") break; fi
 done
 
 dnl Check for sound of various sorts.
@@ -3009,11 +3029,6 @@ if test "$with_tty" = "yes"  ; then
   AC_CHECKING(for TTY-related features)
   AC_DEFINE(HAVE_TTY)
   XE_ADD_OBJS(console-tty.o device-tty.o event-tty.o frame-tty.o objects-tty.o redisplay-tty.o cm.o)
-
-  dnl Check for terminal I/O variants
-  dnl TERMIOS systems may have termio.h, but not vice-versa, I think.
-  AC_CHECK_HEADER(termios.h,  [AC_DEFINE(HAVE_TERMIOS)],
-   [AC_CHECK_HEADER(termio.h, [AC_DEFINE(HAVE_TERMIO)])])
 
   dnl Autodetect ncurses.
   if test -z "$with_ncurses"; then
@@ -3180,6 +3195,7 @@ dnl --------------------------------
 
 dnl We ignore (C|LD)_SWITCH_X_(MACHINE|SYSTEM)
 dnl Use XE_SPACE instead of plain assignment statements to remove extraneous blanks
+XE_SPACE(CFLAGS, $CFLAGS)
 XE_SPACE(extra_objs, $extra_objs)
 XE_SPACE(c_switch_general, -DHAVE_CONFIG_H $c_switch_site $c_switch_machine $c_switch_system)
 XE_SPACE(c_switch_window_system, $c_switch_x_site $X_CFLAGS)
@@ -3192,7 +3208,6 @@ XE_SPACE(ld_libs_window_system, $X_EXTRA_LIBS $libs_x $X_PRE_LIBS)
 XE_SPACE(ld_libs_all, $ld_libs_window_system $ld_libs_general)
 
 dnl Compute lists of Makefiles and subdirs
-SRC_SUBDIR_DEPS="$MAKE_SUBDIR"
 AC_SUBST(SRC_SUBDIR_DEPS)
 XE_APPEND(src, MAKE_SUBDIR)
 internal_makefile_list="Makefile"
@@ -3297,7 +3312,6 @@ AC_SUBST(ld_switch_all)
 AC_SUBST(ld_libs_general)
 AC_SUBST(ld_libs_window_system)
 AC_SUBST(ld_libs_all)
-AC_SUBST(libsrc_libs)
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
@@ -3352,7 +3366,6 @@ test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
 test "$with_pop"           = "yes" && AC_DEFINE(MAIL_USE_POP)
 test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
-test "$with_clash_detection" = "yes" && AC_DEFINE(CLASH_DETECTION)
 test "$use_union_type" != yes && AC_DEFINE(NO_UNION_TYPE)
 
 dnl -------------------------------
@@ -3408,7 +3421,7 @@ fi
 test "$with_gif"   = yes && echo "  Compiling in support for GIF image conversion."
 if test "$with_xpm" = yes; then
   echo "  Compiling in support for XPM images."
-else
+elif test "$with_x11" = yes; then
   echo "  --------------------------------------------------------------------"
   echo "  WARNING: Compiling without XPM support."
   echo "  WARNING: You should strongly considering installing XPM."
@@ -3542,6 +3555,15 @@ s/"$//
 changequote([, ])dnl
 )
 done
+
+dnl Create a file of config variables for use by the lisp code
+sed < config.status > lib-src/config.values \
+-e 's/^s%@\(.*\)@%\(.*\)%g$/\1 "\2"/p' \
+-e '/{ac_dA}.*{ac_dB}.*{ac_dC}.*{ac_dD}$/!d' \
+-e 's/\${ac_dA}\(.*\)\${ac_dB}.*\${ac_dC}\(.*\)\${ac_dD}/\1 \2/' \
+-e 's/^\([[^ ]]*\) $/\1 ""/' \
+-e 's/ 1$/ t/'
+
 ],
 [CPP="$CPP"
  CPPFLAGS="$CPPFLAGS"

@@ -2306,6 +2306,7 @@ x_make_frame_invisible (struct frame *f)
 static int
 x_frame_visible_p (struct frame *f)
 {
+#if 0
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
   XWindowAttributes xwa;
   int result;
@@ -2329,7 +2330,6 @@ x_frame_visible_p (struct frame *f)
      use async visibility like in standard Emacs.
      */
 
-#if 0
   if (!XGetWindowAttributes (display,
 			     XtWindow (FRAME_X_SHELL_WIDGET (f)),
 			     &xwa))
@@ -2341,7 +2341,7 @@ x_frame_visible_p (struct frame *f)
 
   f->visible = result;
   return result;
-#endif
+#endif /* 0 */
 
   return f->visible;
 }

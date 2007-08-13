@@ -962,7 +962,6 @@ as BUFFER means use current buffer.
        (flag, buffer))
 {
   /* This function can GC */
-  Lisp_Object fn;
   struct buffer *buf = decode_buffer (buffer, 0);
 
 #ifdef ENERGIZE
@@ -975,7 +974,7 @@ as BUFFER means use current buffer.
   /* If buffer becoming modified, lock the file.
      If buffer becoming unmodified, unlock the file.  */
 
-  fn = buf->file_truename;
+  Lisp_Object fn = buf->file_truename;
   if (!NILP (fn))
     {
       int already = BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf);

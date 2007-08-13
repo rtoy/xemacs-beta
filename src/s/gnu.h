@@ -32,9 +32,9 @@ Boston, MA 02111-1307, USA.  */
 /* XXX should getloadavg be in libc?  Should we have a libutil?
 #define HAVE_GETLOADAVG */
 
-#define SIGNALS_VIA_CHARACTERS
+/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
 
-#define NO_TERMIO
+/* #define NO_TERMIO */ /* mrb */
 
 #define LIBS_DEBUG
 

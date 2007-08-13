@@ -1,6 +1,9 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (not (featurep 'viper-autoloads))
     (progn
+
+(provide 'viper-autoloads)
+))
 
 ;;;### (autoloads (viper-mode) "viper" "viper/viper.el")
 
@@ -10,6 +13,3 @@
 Turn on Viper emulation of Vi." t nil)
 
 ;;;***
-
-(provide 'viper-autoloads)
-))

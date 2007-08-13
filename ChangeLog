@@ -1,3 +1,35 @@
+1997-07-19  Stephanie L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta14 is released.
+
+1997-07-19  Martin Buchholz  <mrb@eng.sun.com>
+
+	* src/fns.c (requrire): Print messages when loading a file as a
+	result of require.
+	
+	* configure.in:
+	* lisp/utils/config.el:
+	* lib-src/config.values: 
+	- new file created and installed by building.
+	- Allow configuration time values to be queried by the lisp code.
+
+	* configure.in:
+	- check for alloca in libPW on hpux.
+	- Redo --with-clash-detection
+	- need to check for termios and friends even if with-tty=no.
+	- Always define SIGNALS_VIA_CHARACTERS if HAVE_TERMIOS
+	- better quoting for AIX_SMT_EXP (untested)
+	- gcc flags now default to "-g -O2 -Wall -Wno-switch"
+
+	* *.[ch]: more warning elimination
+
+	* src/input-method*.c:
+	* src/s/freebsd.h:
+	- remove freebsd ifdefs from C code.
+
+	* src/specifier.c:
+	- fix Fdisplay-table-specifier-p
+
 1997-07-13  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta13 is released.

@@ -33,15 +33,22 @@
 #define LIBS_SYSTEM "-lutil"
 #endif
 
+/* Kludge to work around setlocale(LC_ALL,...) not working before 01/1997 */
+#if __FreeBSD_version < 199701
+#include <X11/Xlocale.h>
+#define setlocale(locale_category, locale_spec) setlocale(LC_CTYPE, locale_spec)
+#endif
+
 #define LIBS_TERMCAP "-ltermcap"
-#define LIB_GCC "-lgcc"
 
 #ifndef NO_SHARED_LIBS
 #if 0 /* mrb */
+#define LIB_GCC "-lgcc"
 #define LD_SWITCH_SYSTEM "-dc -dp -e start"
 #define START_FILES "pre-crt0.o /usr/lib/crt0.o"
 #else /* mrb */
 #define ORDINARY_LINK
+#undef LIB_GCC
 #undef LD_SWITCH_SYSTEM
 #undef START_FILES
 #endif /* mrb */
@@ -65,7 +72,7 @@
 #endif /* NO_SHARED_LIBS */
 
 #define HAVE_GETLOADAVG
-#define NO_TERMIO
+/* #define NO_TERMIO */ /* mrb */
 #define DECLARE_GETPWUID_WITH_UID_T
 
 /* freebsd uses OXTABS instead of the expected TAB3. */

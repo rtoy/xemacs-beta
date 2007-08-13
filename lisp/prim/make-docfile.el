@@ -103,14 +103,17 @@
  (setq dumped-lisp-packages
        (append dumped-lisp-packages packages-hardcoded-lisp))
  (while dumped-lisp-packages
-   (let ((arg (packages-add-suffix (car dumped-lisp-packages))))
-     (setq arg (locate-library arg))
-     (if (null (member arg processed))
-	 (progn
-	   (if (and (null docfile-out-of-date)
-		    (file-newer-than-file-p arg docfile))
-	       (setq docfile-out-of-date t))
-	   (setq processed (cons arg processed))))
+   (let ((arg0 (packages-add-suffix (car dumped-lisp-packages)))
+	 arg)
+     (setq arg (locate-library arg0))
+     (if (null arg)
+	 (princ (format "Error:  dumped file %s does not exist\n" arg))
+       (if (null (member arg processed))
+	   (progn
+	     (if (and (null docfile-out-of-date)
+		      (file-newer-than-file-p arg docfile))
+		 (setq docfile-out-of-date t))
+	     (setq processed (cons arg processed)))))
      (setq dumped-lisp-packages (cdr dumped-lisp-packages)))))
 
 ;; Finally process the list of site-loaded files.

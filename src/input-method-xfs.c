@@ -36,10 +36,6 @@ Boston, MA 02111-1307, USA.  */
 #include "EmacsFrame.h"
 #include "events.h"
 
-#ifdef __FreeBSD__
-#include <osreldate.h>
-#endif
-
 #ifdef USE_XFONTSET
 void
 Initialize_Locale (void)
@@ -47,15 +43,7 @@ Initialize_Locale (void)
   char *locale;
   
   XtSetLanguageProc (NULL, (XtLanguageProc) NULL, NULL);
-#ifdef __FreeBSD_version
-# if __FreeBSD_version >= 199701 /* waiting FreeBSD supports all locale */
-  if ((locale = setlocale(LC_CTYPE, "")) == NULL)
-# else
   if ((locale = setlocale (LC_ALL, "")) == NULL)
-# endif
-#else
-  if ((locale = setlocale (LC_ALL, "")) == NULL)
-#endif
     {
       stderr_out ("Can't set locale.\n");
       stderr_out ("Using C locale instead.\n");

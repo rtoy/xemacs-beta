@@ -23,7 +23,7 @@
 
 /* thomas@mathematik.uni-bremen.de says this is needed.  */
 /* Make process_send_signal work by "typing" a signal character on the pty.  */
-#define SIGNALS_VIA_CHARACTERS
+/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
 
 /* SGI has all the fancy wait stuff, but we can't include sys/wait.h
    because it defines BIG_ENDIAN and LITTLE_ENDIAN (ugh!.)  Instead

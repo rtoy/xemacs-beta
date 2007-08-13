@@ -221,8 +221,14 @@ for a pause while the check is being done.")
 (defvar vm-mail-check-interval 300
   "*Numeric value specifies the number of seconds between checks
 for new mail.  The maildrops for all visited folders are checked.
-The buffer local variable vm-spooled-mail-waiting is set non-nil
-in the buffers of those folders that have mail waiting.")
+
+A nil value means don't check for new mail.
+
+Note that mail if new mail is found, it is not retrieved.  The
+buffer local variable vm-spooled-mail-waiting is set non-nil in
+the buffers of those folders that have mail waiting.  VM uses
+the displays \"Mail\" in the mode line of folders that have mail
+waiting.")
 
 (defvar vm-spooled-mail-waiting nil
   "Value is non-nil if there is mail waiting for the current folder.
@@ -2907,7 +2913,7 @@ append a space to words that complete unambiguously.")
 ;; is loaded before highlight-headers.el
 (defvar highlight-headers-regexp "Subject[ \t]*:")
 (defvar vm-url-regexp
-  "<URL:\\([^>]+\\)>\\|\\(\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
+  "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
   "Regular expression that matches an absolute URL.
 The URL itself must be matched by a \\(..\\) grouping.
 VM will extract the URL by copying the lowest number grouping

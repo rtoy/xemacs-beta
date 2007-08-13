@@ -171,6 +171,8 @@ Run Ediff by comparing versions of a file.
 The file is an optional FILE argument or the file visited by the current
 buffer. Use `vc.el' or `rcs.el' depending on `ediff-version-control-package'." t nil)
 
+(defalias 'erevision 'ediff-revision)
+
 (autoload 'ediff-version "ediff" "\
 Return string describing the version of Ediff.
 When called interactively, displays the version." t nil)

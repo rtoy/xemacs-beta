@@ -142,13 +142,13 @@ Boston, MA 02111-1307, USA.  */
  *
  */
 
-#define SIGNALS_VIA_CHARACTERS
+/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
 
 /*
  *	Prevent redundant inclusion of termio.h.
  */
 
-#define NO_TERMIO
+/* #define NO_TERMIO */ /* mrb */
 
 /*
  *	Use a Berkeley style sys/wait.h.

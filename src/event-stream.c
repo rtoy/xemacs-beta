@@ -38,6 +38,14 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
+#ifdef HAVE_X_WINDOWS
+#include "console-x.h"		/* for menu accelerators ... */
+#include "gui-x.h"
+#include "../lwlib/lwlib.h"
+#else
+#define lw_menu_active	0
+#endif
+
 #include "buffer.h"
 #include "commands.h"
 #include "device.h"
@@ -192,6 +200,33 @@ static Lisp_Object Vdribble_file;
 Lisp_Object Vrecent_keys_ring;
 int recent_keys_ring_size;
 int recent_keys_ring_index;
+
+/* prefix key(s) that must match in order to activate menu.
+   This is ugly.  fix me.
+   */
+Lisp_Object Vmenu_accelerator_prefix;
+
+/* list of modifier keys to match accelerator for top level menus */
+Lisp_Object Vmenu_accelerator_modifiers;
+
+/* whether menu accelerators are enabled */
+Lisp_Object Vmenu_accelerator_enabled;
+
+/* keymap for auxillary menu accelerator functions */
+Lisp_Object Vmenu_accelerator_map;
+
+Lisp_Object Qmenu_force;
+Lisp_Object Qmenu_fallback;
+Lisp_Object Qmenu_quit;
+Lisp_Object Qmenu_up;
+Lisp_Object Qmenu_down;
+Lisp_Object Qmenu_left;
+Lisp_Object Qmenu_right;
+Lisp_Object Qmenu_select;
+Lisp_Object Qmenu_escape;
+
+/* this is in keymap.c */
+extern Lisp_Object Fmake_keymap (Lisp_Object name);
 
 #ifdef DEBUG_XEMACS
 int debug_emacs_events;
@@ -652,7 +687,8 @@ maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
     return;
 
   if (minibuf_level == 0
-      && echo_keystrokes > 0)
+      && echo_keystrokes > 0
+      && !lw_menu_active)
     {
       if (!no_snooze)
 	{
@@ -2163,6 +2199,8 @@ The returned event will be one of the following types:
       goto RETURN;
     case button_release_event:
     case misc_user_event:
+      /* don't echo menu accelerator keys */
+      reset_key_echo (command_builder, 1);
       goto EXECUTE_KEY;
     case button_press_event:	/* key or mouse input can trigger prompting */
       goto STORE_AND_EXECUTE_KEY;
@@ -2533,7 +2571,6 @@ Return non-nil iff we received any output before the timeout expired.
 	case pointer_motion_event:
 	case magic_event:
           {
-          EXECUTE_INTERNAL:
             execute_internal_event (event);
             break;
           }
@@ -2603,7 +2640,6 @@ It is recommended that you never call sleep-for from inside of a process
 	case pointer_motion_event:
 	case magic_event:
           {
-          EXECUTE_INTERNAL:
             execute_internal_event (event);
             break;
           }
@@ -2745,7 +2781,6 @@ If sit-for is called from within a process filter function or timer
 	     happened above. */
 	default:
 	  {
-	  EXECUTE_INTERNAL:
 	    execute_internal_event (event);
 	    break;
 	  }
@@ -2986,6 +3021,503 @@ command_builder_find_leaf_1 (struct command_builder *builder)
   return event_binding (event0, 1);
 }
 
+#ifdef HAVE_X_WINDOWS
+static void
+menu_move_up (void)
+{
+  widget_value *current, *prev;
+  widget_value *entries;
+  
+  current = lw_get_entries (False);
+  entries = lw_get_entries (True);
+  prev = NULL;
+  if (current != entries)
+    {
+      while (entries != current)
+	{
+	  if (entries->name /*&& entries->enabled*/) prev = entries;
+	  entries = entries->next;
+	  assert (entries);
+	}
+    }
+
+  if (!prev)
+    /* move to last item */
+    {
+      while (entries->next)
+	{
+	  if (entries->name /*&& entries->enabled*/) prev = entries;
+	  entries = entries->next;
+	}
+      if (prev)
+	{
+	  if (entries->name /*&& entries->enabled*/)
+	    prev = entries;
+	}
+      else
+	{
+	  /* no selectable items in this menu, pop up to previous level */
+	  lw_pop_menu ();
+	  return;
+	}
+    }
+  lw_set_item (prev);
+}
+
+static void
+menu_move_down (void)
+{
+  widget_value *current;
+  widget_value *new;
+  
+  current = lw_get_entries (False);
+  new = current;
+  
+  while (new->next)
+    {
+      new = new->next;
+      if (new->name /*&& new->enabled*/) break;
+    }
+  
+  if (new==current||!(new->name/*||new->enabled*/))
+    {
+      new = lw_get_entries (True);
+      while (new!=current)
+	{
+	  if (new->name /*&& new->enabled*/) break;
+	  new = new->next;
+	}
+      if (new==current&&!(new->name /*|| new->enabled*/))
+	{
+	  lw_pop_menu ();
+	  return;
+	}
+    }
+  
+  lw_set_item (new);
+}
+
+static void
+menu_move_left (void)
+{
+  int level = lw_menu_level ();
+  int l = level;
+  widget_value *current;
+  
+  while (level >= 3)
+    {
+      --level;
+      lw_pop_menu ();
+    }
+  menu_move_up ();
+  current = lw_get_entries (False);
+  if (l > 2 && current->contents)
+    lw_push_menu (current->contents);
+}
+
+static void
+menu_move_right (void)
+{
+  int level = lw_menu_level ();
+  int l = level;
+  widget_value *current;
+  
+  while (level >= 3)
+    {
+      --level;
+      lw_pop_menu ();
+    }
+  menu_move_down ();
+  current = lw_get_entries (False);
+  if (l > 2 && current->contents)
+    lw_push_menu (current->contents);
+}
+
+static void
+menu_select_item (widget_value *val)
+{
+  if (val == NULL)
+    val = lw_get_entries (False);
+  
+  /* is match a submenu? */
+  
+  if (val->contents)
+    {
+      /* enter the submenu */
+      
+      lw_set_item (val);
+      lw_push_menu (val->contents);
+    }
+  else
+    {
+      /* Execute the menu entry by calling the menu's `select'
+	 callback function
+	 */
+      lw_kill_menus (val);
+    }
+}
+
+static Lisp_Object
+command_builder_operate_menu_accelerator (struct command_builder *builder)
+{
+  /* this function can GC */
+  
+  struct console *con = XCONSOLE (Vselected_console);
+  Lisp_Object evee = builder->most_current_event;
+  Lisp_Object binding;
+  widget_value *entries;
+  
+  extern int lw_menu_accelerate; /* lwlib.c */
+
+#if 0
+  {
+    int i;
+    Lisp_Object t;
+    char buf[50];
+    
+    t = builder->current_events;
+    i = 0;
+    while (!NILP (t))
+      {
+	i++;
+	sprintf(buf,"OPERATE (%d): ",i);
+	write_c_string (buf,Qexternal_debugging_output);
+	print_internal (t, Qexternal_debugging_output, 1);
+	write_c_string ("\n", Qexternal_debugging_output);
+	t = XEVENT_NEXT (t);
+      }
+  }
+#endif
+  
+  /* menu accelerator keys don't go into keyboard macros */
+  if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))
+    con->kbd_macro_ptr = con->kbd_macro_end;
+  
+  /* don't echo menu accelerator keys */
+  /*reset_key_echo (builder, 1);*/
+  
+  if (!lw_menu_accelerate)
+    {
+      /* `convert' mouse display to keyboard display
+	 by entering the open submenu
+	 */
+      entries = lw_get_entries (False);
+      if (entries->contents)
+	{
+	  lw_push_menu (entries->contents);
+	  lw_display_menu (CurrentTime);
+	}
+    }
+  
+  /* compare event to the current menu accelerators */
+  
+  entries=lw_get_entries (True);
+  
+  while (entries)
+    {
+      Lisp_Object accel;
+      VOID_TO_LISP (accel, entries->accel);
+      if (entries->name && !NILP (accel))
+	{
+	  if (event_matches_key_specifier_p (XEVENT (evee), accel))
+	    {
+	      /* a match! */
+	      
+	      menu_select_item (entries);
+	      
+	      if (lw_menu_active) lw_display_menu (CurrentTime);
+	      
+	      reset_this_command_keys (Vselected_console, 1);
+	      /*reset_command_builder_event_chain (builder);*/
+	      return Vmenu_accelerator_map;
+	    }
+	}
+      entries = entries->next;
+    }
+  
+  /* try to look up event in menu-accelerator-map */
+  
+  binding = event_binding_in (evee, Vmenu_accelerator_map, 1);
+  
+  if (NILP (binding))
+    {
+      /* beep at user for undefined key */
+      return Qnil;
+    }
+  else
+    {
+      if (EQ (binding, Qmenu_quit))
+	{
+	  /* turn off menus and set quit flag */
+	  lw_kill_menus (NULL);
+	  Vquit_flag = Qt;
+	}
+      else if (EQ (binding, Qmenu_up))
+	{
+	  int level = lw_menu_level ();
+	  if (level > 2)
+	    menu_move_up ();
+	}
+      else if (EQ (binding, Qmenu_down))
+	{
+	  int level = lw_menu_level ();
+	  if (level > 2)
+	    menu_move_down ();
+	  else
+	    menu_select_item (NULL);
+	}
+      else if (EQ (binding, Qmenu_left))
+	{
+	  int level = lw_menu_level ();
+	  if (level > 3)
+	    {
+	      lw_pop_menu ();
+	      lw_display_menu (CurrentTime);
+	    }
+	  else
+	    menu_move_left ();
+	}
+      else if (EQ (binding, Qmenu_right))
+	{
+	  int level = lw_menu_level ();
+	  if (level > 2 &&
+	      lw_get_entries (False)->contents)
+	    {
+	      widget_value *current = lw_get_entries (False);
+	      if (current->contents)
+		menu_select_item (NULL);
+	    }
+	  else
+	    menu_move_right ();
+	}
+      else if (EQ (binding, Qmenu_select))
+	menu_select_item (NULL);
+      else if (EQ (binding, Qmenu_escape))
+	{
+	  int level = lw_menu_level ();
+	  
+	  if (level > 2)
+	    {
+	      lw_pop_menu ();
+	      lw_display_menu (CurrentTime);
+	    }
+	  else
+	    {
+	      /* turn off menus quietly */
+	      lw_kill_menus (NULL);
+	    }
+	}
+      else if (KEYMAPP (binding))
+	{
+	  /* prefix key */
+	  reset_this_command_keys (Vselected_console, 1);
+	  /*reset_command_builder_event_chain (builder);*/
+	  return binding;
+	}
+      else
+	{
+	  /* turn off menus and execute binding */
+	  lw_kill_menus (NULL);
+	  reset_this_command_keys (Vselected_console, 1);
+	  /*reset_command_builder_event_chain (builder);*/
+	  return binding;
+	}
+    }
+  
+  if (lw_menu_active) lw_display_menu (CurrentTime);
+  
+  reset_this_command_keys (Vselected_console, 1);
+  /*reset_command_builder_event_chain (builder);*/
+  
+  return Vmenu_accelerator_map;
+}
+
+static Lisp_Object
+menu_accelerator_junk_on_error (Lisp_Object errordata, Lisp_Object ignored)
+{
+  Vmenu_accelerator_prefix = Qnil;
+  Vmenu_accelerator_modifiers = Qnil;
+  Vmenu_accelerator_enabled = Qnil;
+  if (!NILP (errordata))
+    {
+      Lisp_Object args[2];
+      
+      args[0] = build_string ("Error in menu accelerators (setting to nil)");
+      /* #### This should call
+	 (with-output-to-string (display-error errordata))
+	 but that stuff is all in Lisp currently. */
+      args[1] = errordata;
+      warn_when_safe_lispobj
+	(Qerror, Qwarning,
+	 emacs_doprnt_string_lisp ((CONST Bufbyte *) "%s: %s",
+				   Qnil, -1, 2, args));
+    }
+  
+  return Qnil;
+}
+
+static Lisp_Object
+menu_accelerator_safe_compare (Lisp_Object event0)
+{
+  if (CONSP (Vmenu_accelerator_prefix))
+    {
+      Lisp_Object t;
+      t=Vmenu_accelerator_prefix;
+      while (!NILP (t)
+	     && !NILP (event0)
+	     && event_matches_key_specifier_p (XEVENT (event0), Fcar (t)))
+	{
+	  t = Fcdr (t);
+	  event0 = XEVENT_NEXT (event0);
+	}
+      if (!NILP (t))
+	return Qnil;
+    }
+  else if (NILP (event0))
+    return Qnil;
+  else if (event_matches_key_specifier_p (XEVENT (event0), Vmenu_accelerator_prefix))
+    event0 = XEVENT_NEXT (event0);
+  else
+    return Qnil;
+  return event0;
+}
+
+static Lisp_Object
+menu_accelerator_safe_mod_compare (Lisp_Object cons)
+{
+  return (event_matches_key_specifier_p (XEVENT (XCAR (cons)), XCDR (cons))
+	  ? Qt
+	  : Qnil);
+}
+
+static Lisp_Object
+command_builder_find_menu_accelerator (struct command_builder *builder)
+{
+  /* this function can GC */
+  Lisp_Object event0 = builder->current_events;
+  struct console *con = XCONSOLE (Vselected_console);
+  struct frame *f = XFRAME (CONSOLE_SELECTED_FRAME (con));
+  Widget menubar_widget;
+  
+  /* compare entries in event0 against the menu prefix */
+  
+  if ((!CONSOLE_X_P (XCONSOLE (builder->console))) || NILP (event0) ||
+      XEVENT (event0)->event_type != key_press_event)
+    return Qnil;
+  
+  if (!NILP (Vmenu_accelerator_prefix))
+    {
+      event0 = condition_case_1 (Qerror,
+				 menu_accelerator_safe_compare,
+				 event0,
+				 menu_accelerator_junk_on_error,
+				 Qnil);
+    }
+  
+  if (NILP (event0))
+    return Qnil;
+  
+  menubar_widget = FRAME_X_MENUBAR_WIDGET (f);
+  if (menubar_widget
+      && CONSP (Vmenu_accelerator_modifiers))
+    {
+      Lisp_Object fake;
+      Lisp_Object last;
+      struct gcpro gcpro1;
+      Lisp_Object matchp;
+      
+      widget_value *val;
+      LWLIB_ID id = XPOPUP_DATA (f->menubar_data)->id;
+      
+      val = lw_get_all_values (id);
+      if (val)
+	{
+	  val = val->contents;
+	  
+	  fake = Fcopy_sequence (Vmenu_accelerator_modifiers);
+	  last = fake;
+	  
+	  while (!NILP (Fcdr (last)))
+	    last = Fcdr (last);
+	  
+	  Fsetcdr (last, Fcons (Qnil, Qnil));
+	  last = Fcdr (last);
+	}
+      
+      fake = Fcons (Qnil, fake);
+      
+      GCPRO1 (fake);
+
+      while (val)
+	{
+	  Lisp_Object accel;
+	  VOID_TO_LISP (accel, val->accel);
+	  if (val->name && !NILP (accel))
+	    {
+	      Fsetcar (last, accel);
+	      Fsetcar (fake, event0);
+	      matchp = condition_case_1 (Qerror,
+					 menu_accelerator_safe_mod_compare,
+					 fake,
+					 menu_accelerator_junk_on_error,
+					 Qnil);
+	      if (!NILP (matchp))
+		{
+		  /* we found one! */
+		  
+		  lw_set_menu (menubar_widget, val);
+		  /* yah - yet another hack.
+		     pretend emacs timestamp is the same as an X timestamp,
+		     which for the moment it is.  (read events.h)
+		     */
+		  lw_map_menu (XEVENT (event0)->timestamp);
+		  
+		  if (val->contents)
+		    lw_push_menu (val->contents);
+		  
+		  lw_display_menu (CurrentTime);
+		  
+		  /* menu accelerator keys don't go into keyboard macros */
+		  if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))
+		    con->kbd_macro_ptr = con->kbd_macro_end;
+		  
+		  /* don't echo menu accelerator keys */
+		  /*reset_key_echo (builder, 1);*/
+		  reset_this_command_keys (Vselected_console, 1);
+		  UNGCPRO;
+		  
+		  return Vmenu_accelerator_map;
+		}
+	    }
+	  
+	  val = val->next;
+	}
+      
+      UNGCPRO;
+    }
+  return Qnil;
+}
+
+void
+event_menu_accelerate ()
+{
+  struct console *con = XCONSOLE (Vselected_console);
+  struct frame *f = XFRAME (CONSOLE_SELECTED_FRAME (con));
+  LWLIB_ID id = XPOPUP_DATA (f->menubar_data)->id;
+  widget_value *val = lw_get_all_values (id);
+  
+  val = val->contents;
+  lw_set_menu (FRAME_X_MENUBAR_WIDGET (f), val);
+  lw_map_menu (CurrentTime);
+  
+  lw_display_menu (CurrentTime);
+  
+  /* menu accelerator keys don't go into keyboard macros */
+  if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))
+    con->kbd_macro_ptr = con->kbd_macro_end;
+}
+#endif /* HAVE_X_WINDOWS */
+
 /* See if we can do function-key-map or key-translation-map translation
    on the current events in the command builder.  If so, do this, and
    return the resulting binding, if any. */
@@ -3109,10 +3641,31 @@ command_builder_find_leaf (struct command_builder *builder,
       return list2 (fn, arg);
     }
 
-  else if (XEVENT_TYPE (evee) == misc_user_event)
+  
+  if (XEVENT_TYPE (evee) == misc_user_event)
     return Qnil;
 
-  result = command_builder_find_leaf_1 (builder);
+  /* if we're currently in a menu accelerator, check there for further events */
+#ifdef HAVE_X_WINDOWS
+  if (lw_menu_active)
+    {
+      result = command_builder_operate_menu_accelerator (builder);
+      return result;
+    }
+  else
+    {
+      result=Qnil;
+      if (EQ (Vmenu_accelerator_enabled, Qmenu_force))
+	result = command_builder_find_menu_accelerator (builder);
+      if (NILP (result))
+#endif
+	result = command_builder_find_leaf_1 (builder);
+#ifdef HAVE_X_WINDOWS
+      if (NILP (result)
+	  && EQ (Vmenu_accelerator_enabled, Qmenu_fallback))
+	result = command_builder_find_menu_accelerator (builder);
+    }
+#endif
 
   /* Check to see if we have a potential function-key-map match. */
   if (NILP (result))
@@ -3588,23 +4141,43 @@ lookup_command_event (struct command_builder *command_builder,
 
     if (KEYMAPP (leaf))
       {
-	Lisp_Object prompt = Fkeymap_prompt (leaf, Qt);
-	if (STRINGP (prompt))
+	if (!lw_menu_active)
 	  {
-	    /* Append keymap prompt to key echo buffer */
-	    int buf_index = command_builder->echo_buf_index;
-	    Bytecount len = XSTRING_LENGTH (prompt);
-
-	    if (len + buf_index + 1 <= command_builder->echo_buf_length)
+	    Lisp_Object prompt = Fkeymap_prompt (leaf, Qt);
+	    if (STRINGP (prompt))
 	      {
-		Bufbyte *echo = command_builder->echo_buf + buf_index;
-		memcpy (echo, XSTRING_DATA (prompt), len);
-		echo[len] = 0;
+		/* Append keymap prompt to key echo buffer */
+		int buf_index = command_builder->echo_buf_index;
+		Bytecount len = XSTRING_LENGTH (prompt);
+
+		if (len + buf_index + 1 <= command_builder->echo_buf_length)
+		  {
+		    Bufbyte *echo = command_builder->echo_buf + buf_index;
+		    memcpy (echo, XSTRING_DATA (prompt), len);
+		    echo[len] = 0;
+		  }
+		maybe_echo_keys (command_builder, 1);
 	      }
-	    maybe_echo_keys (command_builder, 1);
+	    else
+	      maybe_echo_keys (command_builder, 0);
 	  }
-	else
-	  maybe_echo_keys (command_builder, 0);
+	else if (!NILP (Vquit_flag)) {
+	  Lisp_Object event = Fmake_event();
+	  struct Lisp_Event *e = XEVENT (event);
+	  struct console *con;
+	  int ch;
+	  
+	  /* if quit happened during menu acceleration, pretend we read it */
+	  con = XCONSOLE (Fselected_console ());
+	  
+	  ch = CONSOLE_QUIT_CHAR (con);
+	  
+	  character_to_event (ch, e, con, 1);
+	  e->channel = make_console (con);
+	  
+	  enqueue_command_event (event);
+	  Vquit_flag = Qnil;
+	}
       }
     else if (!NILP (leaf))
       {
@@ -4029,6 +4602,9 @@ Magic events are handled as necessary.
 	  /* Huh? */
 	  Vthis_command = Qnil;
 
+	/* clear the echo area */
+	reset_key_echo (command_builder, 1);
+	
 	command_builder->self_insert_countdown = 0;
 	if (NILP (XCONSOLE (console)->prefix_arg)
 	    && NILP (Vexecuting_macro)
@@ -4298,6 +4874,17 @@ syms_of_event_stream (void)
 	     "retry-undefined-key-binding-unshifted");
   defsymbol (&Qauto_show_make_point_visible,
 	     "auto-show-make-point-visible");
+
+  defsymbol (&Qmenu_force, "menu-force");
+  defsymbol (&Qmenu_fallback, "menu-fallback");
+  
+  defsymbol (&Qmenu_quit, "menu-quit");
+  defsymbol (&Qmenu_up, "menu-up");
+  defsymbol (&Qmenu_down, "menu-down");
+  defsymbol (&Qmenu_left, "menu-left");
+  defsymbol (&Qmenu_right, "menu-right");
+  defsymbol (&Qmenu_select, "menu-select");
+  defsymbol (&Qmenu_escape, "menu-escape");
 }
 
 void
@@ -4616,12 +5203,82 @@ and is one of the following:
 */ );
   debug_emacs_events = 0;
 #endif
+
+  DEFVAR_LISP("menu-accelerator-prefix", &Vmenu_accelerator_prefix /*
+Prefix key(s) that must be typed before menu accelerators will be activated.
+Set this to a value acceptable by define-key.
+*/ );
+  Vmenu_accelerator_prefix = Qnil;
+
+  DEFVAR_LISP ("menu-accelerator-modifiers", &Vmenu_accelerator_modifiers /*
+Modifier keys which must be pressed to get to the top level menu accelerators.
+This is a list of modifier key symbols.  All modifier keys must be held down
+while a valid menu accelerator key is pressed in order for the top level
+menu to become active.
+
+See also menu-accelerator-enabled and menu-accelerator-prefix.
+*/ );
+  Vmenu_accelerator_modifiers = list1 (Qmeta);
+  
+  DEFVAR_LISP ("menu-accelerator-enabled", &Vmenu_accelerator_enabled /*
+Whether menu accelerator keys can cause the menubar to become active.
+If 'menu-force or 'menu-fallback, then menu accelerator keys can
+be used to activate the top level menu.  Once the menubar becomes active, the
+accelerator keys can be used regardless of the value of this variable.
+
+menu-force is used to indicate that the menu accelerator key takes
+precedence over bindings in the current keymap(s).  menu-fallback means
+that bindings in the current keymap take precedence over menu accelerator keys.
+Thus a top level menu with an accelerator of \"T\" would be activated on a
+keypress of Meta-t if menu-accelerator-enabled is menu-force.
+However, if menu-accelerator-enabled is menu-fallback, then
+Meta-t will not activate the menubar and will instead run the function
+transpose-words, to which it is normally bound.
+
+See also menu-accelerator-modifiers and menu-accelerator-prefix.
+*/ );
+  Vmenu_accelerator_enabled = Qnil;
 }
 
 void
 complex_vars_of_event_stream (void)
 {
   Vkeyboard_translate_table = Fmake_hashtable (make_int (100), Qnil);
+
+  DEFVAR_LISP ("menu-accelerator-map", &Vmenu_accelerator_map /*
+Keymap for use when the menubar is active.
+The actions menu-quit, menu-up, menu-down, menu-left, menu-right,
+menu-select and menu-escape can be mapped to keys in this map.
+
+menu-quit    Immediately deactivate the menubar and any open submenus without
+             selecting an item.
+menu-up      Move the menu cursor up one row in the current menu.  If the
+             move extends past the top of the menu, wrap around to the bottom.
+menu-down    Move the menu cursor down one row in the current menu.  If the
+             move extends past the bottom of the menu, wrap around to the top.
+             If executed while the cursor is in the top level menu, move down
+             into the selected menu.
+menu-left    Move the cursor from a submenu into the parent menu.  If executed
+             while the cursor is in the top level menu, move the cursor to the
+             left.  If the move extends past the left edge of the menu, wrap
+             around to the right edge.
+menu-right   Move the cursor into a submenu.  If the cursor is located in the
+             top level menu or is not currently on a submenu heading, then move
+             the cursor to the next top level menu entry.  If the move extends
+             past the right edge of the menu, wrap around to the left edge.
+menu-select  Activate the item under the cursor.  If the cursor is located on
+             a submenu heading, then move the cursor into the submenu.
+menu-escape  Pop up to the next level of menus.  Moves from a submenu into its
+             parent menu.  From the top level menu, this deactivates the
+             menubar.
+
+This keymap can also contain normal key-command bindings, in which case the
+menubar is deactivated and the corresponding command is executed.
+
+The action bindings used by the menu accelerator code are designed to mimic
+the actions of menu traversal keys in a commonly used PC operating system.
+*/ );
+  Vmenu_accelerator_map = Fmake_keymap(Qnil);
 }
 
 void

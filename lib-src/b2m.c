@@ -19,7 +19,7 @@
    by Francesco Potorti` <pot@cnuce.cnr.it>. */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <../src/config.h>
 /* On some systems, Emacs defines static as nothing for the sake
    of unexec.  We don't want that here since we don't use unexec. */
 #undef static
@@ -34,12 +34,6 @@
 #include <fcntl.h>
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-/* On some systems, Emacs defines static as nothing for the sake
-   of unexec.  We don't want that here since we don't use unexec. */
-#undef static
-#endif
 #undef TRUE
 #define TRUE	1
 #undef FALSE

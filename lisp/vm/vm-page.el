@@ -200,7 +200,7 @@ Prefix argument N means scroll forward N lines."
     (message "End of message %s"
 			(vm-number-of (car vm-message-pointer)))))
 
-(defun vm-scroll-backward (arg)
+(defun vm-scroll-backward (&optional arg)
   "Scroll backward a screenful of text.
 Prefix N scrolls backward N lines."
   (interactive "P")
@@ -437,7 +437,10 @@ Prefix N scrolls backward N lines."
 	    (setq g (intern h vm-xface-cache))
 	    (if (boundp g)
 		(setq g (symbol-value g))
-	      (set g (make-glyph h))
+	      (set g (make-glyph
+		      (list
+		       (list 'global (cons '(tty) [nothing]))
+		       (list 'global (cons '(win) (vector 'xface ':data h))))))
 	      (setq g (symbol-value g))
 	      ;; XXX broken.  Gives extra pixel lines at the
 	      ;; bottom of the glyph in 19.12

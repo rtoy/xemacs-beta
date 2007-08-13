@@ -71,7 +71,7 @@ Boston, MA 02111-1307, USA.  */
 #define FIRST_PTY_LETTER 'A'
 #define	PTY_ITERATION	for (c = 'A'; c <= 'P'; c++) for (i = 0; i < 16; i++)
 
-#define NO_TERMIO
+/* #define NO_TERMIO */ /* mrb */
 
 /*
  *	Define HAVE_PTYS if the system supports pty devices.

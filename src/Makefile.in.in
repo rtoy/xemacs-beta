@@ -154,12 +154,6 @@ freecheck_objs = free-hook.o
 energize_objs = energize.o $(freecheck_objs)
 #endif /* ENERGIZE */
 
-#ifdef CLASH_DETECTION
-LOCK_OBJ = filelock.o
-#else
-LOCK_OBJ =
-#endif /* CLASH_DETECTION */
-
 ## lastfile must follow all files whose initialized data areas should
 ## be dumped as pure by dump-emacs.
 

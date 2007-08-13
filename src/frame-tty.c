@@ -41,9 +41,6 @@ Boston, MA 02111-1307, USA.  */
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_tty_frame_plist;
 
-/* The count of frame number. */
-static int tty_frame_count;
-
 static void tty_raise_frame (struct frame *);
 
 
@@ -183,8 +180,6 @@ tty_raise_frame_no_select (struct frame *f)
 static void
 tty_raise_frame (struct frame *f)
 {
-  struct device *d = XDEVICE (FRAME_DEVICE (f));
-
   tty_raise_frame_no_select (f);
   tty_schedule_frame_select (f);
 }

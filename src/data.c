@@ -89,26 +89,6 @@ eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
       && (debug_issue_ebola_notices >= 2
 	  || XREALINT (obj1) == XREALINT (obj2)))
     {
-#if 0
-/*#ifndef LRECORD_SYMBOL*/
-      struct backtrace *bt = backtrace_list;
-      char *p;
-      /* Continuing the joke by printing `Ebola warning!!!' confuses */
-      /* too many people.  The message must be printed because Emacs used */
-      /* to work differently for two decades. */
-      /* temporary hack that will probably be around too long -slb */
-      if (XTYPE(*bt->function) == Lisp_Symbol)
-	{
-	  p = (XSYMBOL(*bt->function)->name)->_data;
-	  if (!strcmp(p, "byte-compile-constant") ||
-	      !strcmp(p, "byte-compile-constants-vector") ||
-	      !strcmp(p, "byte-optimize-minus") ||
-	      !strcmp(p, "byte-optimize-plus") ||
-	      !strcmp(p, "byte-decompile-bytecode-1") ||
-	      !strcmp(p, "byte-optimize-logmumble") ||
-	      !strcmp(p, "byte-compile-push-constant")) goto sc;
-	}
-#endif
       stderr_out("Comparison between integer and character is constant nil (");
       Fprinc (obj1, Qexternal_debugging_output);
       stderr_out (" and ");
@@ -116,7 +96,6 @@ eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
       stderr_out (")\n");
       debug_short_backtrace (debug_ebola_backtrace_length);
     }
-sc:
   return EQ (obj1, obj2);
 }
 

@@ -2889,7 +2889,7 @@ display_table_validate (Lisp_Object instantiator)
 }
 
 DEFUN ("display-table-specifier-p", Fdisplay_table_specifier_p, 1, 1, 0, /*
-Return non-nil if OBJECT is an display-table specifier.
+Return non-nil if OBJECT is a display-table specifier.
 */
        (object))
 {
@@ -2958,6 +2958,7 @@ syms_of_specifier (void)
   DEFSUBR (Finteger_specifier_p);
   DEFSUBR (Fnatnum_specifier_p);
   DEFSUBR (Fboolean_specifier_p);
+  DEFSUBR (Fdisplay_table_specifier_p);
 
   /* Symbols pertaining to specifier creation.  Specifiers are created
      in the syms_of() functions. */
@@ -2997,8 +2998,7 @@ specifier_type_create (void)
 
   SPECIFIER_HAS_METHOD (boolean, validate);
 
-  INITIALIZE_SPECIFIER_TYPE (display_table, "display-table",
-			     "display-table-p");
+  INITIALIZE_SPECIFIER_TYPE (display_table, "display-table", "display-table-p");
 
   SPECIFIER_HAS_METHOD (display_table, validate);
 }

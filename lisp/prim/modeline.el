@@ -265,15 +265,15 @@ in the list takes precedence.")
   "Add a minor mode to `minor-mode-alist' and `minor-mode-map-alist'.
 TOGGLE is a symbol whose value as a variable specifies whether the
 minor mode is active.  NAME is the name that should appear in the
-modeline (it should be a string beginning with a space).  KEYMAP is a
-keymap to make active when the minor mode is active.  AFTER is the
-toggling symbol used for another minor mode.  If AFTER is non-nil,
-then it is used to position the new mode in the minor-mode alists.
-TOGGLE-FUN specifies an interactive function that is called to toggle
-the mode on and off; this affects what happens when button2 is pressed
-on the mode, and when button3 is pressed somewhere in the list of
-modes.  If TOGGLE-FUN is nil and TOGGLE names an interactive function,
-TOGGLE is used as the toggle function.
+modeline (it should either be a string beginning with a space or a
+symbol).  KEYMAP is a keymap to make active when the minor mode is
+active.  AFTER is the toggling symbol used for another minor mode.  If
+AFTER is non-nil, then it is used to position the new mode in the
+minor-mode alists.  TOGGLE-FUN specifies an interactive function that
+is called to toggle the mode on and off; this affects what happens
+when button2 is pressed on the mode, and when button3 is pressed
+somewhere in the list of modes.  If TOGGLE-FUN is nil and TOGGLE names
+an interactive function, TOGGLE is used as the toggle function.
 
 Example:  (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
   (let (el place

@@ -1821,7 +1821,7 @@ describe_event_window (Window window, Display *display)
 {
   struct frame *f;
   Widget w;
-  stderr_out ("   window: 0x%x", window);
+  stderr_out ("   window: 0x%lx", (unsigned long) window);
   w = XtWindowToWidget (display, window);
   if (w)
     stderr_out (" %s", w->core.widget_class->core_class.class_name);
@@ -1899,7 +1899,6 @@ describe_event (XEvent *event)
       
     case KeyPress:
       {
-	Lisp_Object keysym;
 	XKeyEvent *ev = &event->xkey;
 	unsigned int state = ev->state;
 	

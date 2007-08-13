@@ -1493,4 +1493,4 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 ;; -------------------------------------------------------------------------
 (provide 'archive-mode)
 
-;; arc-mode.el ends here.
+;;; arc-mode.el ends here.

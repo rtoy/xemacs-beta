@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include <errno.h>
 
 #ifdef emacs
-#include <config.h>
+#include <../src/config.h>
 #endif
 
 extern int errno;

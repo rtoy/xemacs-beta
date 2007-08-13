@@ -262,7 +262,7 @@ getopt.o: ${srcdir}/getopt.c ${srcdir}/getopt.h
 getopt1.o: ${srcdir}/getopt1.c ${srcdir}/getopt.h
 	${CC} -c $(cflags) ${srcdir}/getopt1.c
 alloca.o: ${srcdir}/../src/alloca.c
-	${CC} -c ${ALLOCA_CFLAGS} ${srcdir}/../src/alloca.c
+	${CC} -c $(cflags) ${srcdir}/../src/alloca.c
 
 #ifdef REGEXP_IN_LIBC
 REGEXOBJ =
@@ -300,8 +300,8 @@ make-docfile: ${srcdir}/make-docfile.c
 digest-doc: ${srcdir}/digest-doc.c
 	$(CC) ${cflags} ${srcdir}/digest-doc.c $(ldflags) -o $@
 
-sorted-doc: ${srcdir}/sorted-doc.c ${ALLOCA}
-	$(CC) ${cflags} ${srcdir}/sorted-doc.c ${ALLOCA} $(ldflags) -o $@
+sorted-doc: ${srcdir}/sorted-doc.c
+	$(CC) ${cflags} ${srcdir}/sorted-doc.c $(ldflags) -o $@
 
 b2m: ${srcdir}/b2m.c ../src/config.h
 	$(CC) ${cflags} ${srcdir}/b2m.c $(ldflags) -o $@

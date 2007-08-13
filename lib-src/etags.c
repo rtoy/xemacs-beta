@@ -1217,11 +1217,11 @@ init ()
 
   for (i = 0; i < CHARS; i++)
     _wht[i] = _nin[i] = _etk[i] = _itk[i] = _btk[i] = FALSE;
-  for (sp = white; *sp; sp++) _wht[*sp] = TRUE;    _wht[0] = _wht['\n'];
-  for (sp = nonam; *sp; sp++) _nin[*sp] = TRUE;    _nin[0] = _nin['\n'];
-  for (sp = endtk; *sp; sp++) _etk[*sp] = TRUE;    _etk[0] = _etk['\n'];
-  for (sp = midtk; *sp; sp++) _itk[*sp] = TRUE;    _btk[0] = _btk['\n'];
-  for (sp = begtk; *sp; sp++) _btk[*sp] = TRUE;    _itk[0] = _itk['\n'];
+  for (sp = white; *sp; sp++) _wht[(int)*sp] = TRUE;    _wht[0] = _wht['\n'];
+  for (sp = nonam; *sp; sp++) _nin[(int)*sp] = TRUE;    _nin[0] = _nin['\n'];
+  for (sp = endtk; *sp; sp++) _etk[(int)*sp] = TRUE;    _etk[0] = _etk['\n'];
+  for (sp = midtk; *sp; sp++) _itk[(int)*sp] = TRUE;    _btk[0] = _btk['\n'];
+  for (sp = begtk; *sp; sp++) _btk[(int)*sp] = TRUE;    _itk[0] = _itk['\n'];
 }
 
 /*
@@ -1721,7 +1721,7 @@ hash (str, len)
       35,   9,  61, 117,  40,  52,  10,  57,   3, 117,
      117, 117, 117, 117, 117, 117, 117, 117,
   };
-  return len + hash_table[str[2]] + hash_table[str[0]];
+  return len + hash_table[(int)(str[2])] + hash_table[(int)(str[0])];
 }
 
 struct C_stab_entry *

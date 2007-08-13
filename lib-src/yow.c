@@ -9,7 +9,7 @@
 
 /* Synched up with: FSF 19.28. */
 
-#include <config.h>
+#include <../src/config.h>
 
 #include <stdio.h>
 #include <ctype.h>

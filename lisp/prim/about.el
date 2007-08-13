@@ -64,6 +64,7 @@
     (jareth   "Jareth Hein"       "jhod@po.iijnet.or.jp")
     (jens     "Jens Lautenbacher" "jens@lemcbed.lem.uni-karlsruhe.de")
     (jwz      "Jamie Zawinski"    "jwz@netscape.com")
+    (kazz     "IENAGA Kazuyuki"   "ienaga@jsys.co.jp")
     (kyle     "Kyle Jones"        "kyle_jones@wonderworks.com")
     (larsi    "Lars Magne Ingebrigtsen" "larsi@gnus.org")
     (mly      "Richard Mlynarik"  "mly@adoc.xerox.com")
@@ -72,7 +73,7 @@
     (piper    "Andy Piper"        "andy@parallax.co.uk")
     (shelton  "Vin Shelton"	  "acs@acm.org")
     (sperber  "Michael Sperber"   "sperber@informatik.uni-tuebingen.de")
-    (steve    "Steve Baur"        "steve@xemacs.org")
+    (slb      "SL Baur"           "steve@xemacs.org")
     (stig     "Jonathan Stigelman" "stig@hackvan.com")
     (thiessel "Marcus Thiessel"   "thiessel@rhrk.uni-kl.de")
     (vladimir "Vladimir Ivanovic" "vladimir@mri.com")
@@ -90,10 +91,10 @@
     (cc-mode   . "http://www.python.org/ftp/emacs/")
     (dmoore    . "http://oj.egbt.org/dmoore/")
     (jwz       . "http://www.netscape.com/people/jwz/")
+    (kazz      . "http://www.imasy.or.jp/~kazz/")
     (kyle      . "http://www.wonderworks.com/kyle/")
     (larsi     . "http://www.ifi.uio.no/~larsi/")
     (shelton   . "http://www.upa.org/")
-    (steve     . "http://www.miranova.com/~steve/")
     (wget      . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
     (xemacs    . "http://www.xemacs.org/"))
   "Some of the more important URLs.")
@@ -247,7 +248,7 @@ developers responsible for the 20.3 release are:\n\n")
 			     :value who)
 	      (widget-insert (format "  <%s>\n" address)))))
       ;; Setup persons responsible for this release.
-      (mapc 'setup-person '(steve mrb hniksic))
+      (mapc 'setup-person '(slb mrb hniksic))
       (widget-insert "\n\t* ")
       (let ((widget-link-prefix "") (widget-link-suffix ""))
 	(widget-create 'link :help-echo "A legion of XEmacs hackers"
@@ -542,19 +543,19 @@ contributed to the XEmacs development from late 1994 to early
 ;; here.
 (defun about-maintainer-info (entry)
   (ecase (car entry)
-    (steve
+    (slb
      (widget-insert "\
-Steve took over the maintenance of XEmacs in November of 1996 (it
-seemed like a good idea at the time ...).  In real life he is a
-network administrator and Unix systems programmer for Miranova
-Systems, Inc.
+I took over the maintenance of XEmacs in November of 1996 (it
+seemed like a good idea at the time ...).  In real life I am a
+network administrator and Unix systems programmer for Calag.com,
+Inc. a small, but growing ISP in California.
 
-Steve's main contributions to XEmacs have been reviving the FAQ,
+My main contributions to XEmacs have been reviving the FAQ,
 testing and integrating patches, tracking down and fixing bugs, and
 answering hundreds of questions on Usenet.
 
-Steve has a home page at ")
-     (about-url-link 'steve "Visit Steve's home page")
+Is that my picture?  I believe I already answered that in
+xemacs-beta-discuss ...")
      (widget-insert ".\n"))
     (mrb
      (widget-insert "\
@@ -727,7 +728,7 @@ See ")
      (widget-insert ".\n"))
     (jens
      (widget-insert "\
-Jens did the artwork for graphics added to XEmacs 20.1 and 19.15.
+Jens did the artwork for graphics added to XEmacs 20.2 and 19.15.
 
 I'm currently working at the University of Karlsruhe, Germany on
 getting my diploma thesis on Supersymmetry (uuh, that's physics) done.
@@ -813,7 +814,22 @@ Some of this currently involves doing an A-Z (by country) of
 restaurants with friends, and has, in the past, involved dyeing his
 hair various colours (see ")
      (about-url-link 'ajc "Visit Andrew's home page")
-     (widget-insert ".\n"))))
+     (widget-insert ".\n"))
+    (kazz
+     (widget-insert "\
+Kazz is the XEmacs lead on BSD (especially FreeBSD).
+His main workspace is, probably, the latest stable version of
+FreeBSD and it makes him comfortable and not.
+His *mission* is to make XEmacs runs on FreeBSD without
+any problem.
+
+In real life, he is working on a PDM product based on CORBA,
+and doing consultation, design and implemention.
+He loves to play soccer, yes football!
+See also:")
+     (about-url-link 'kazz "Visit Kazz's home page")
+     (widget-insert ".\n"))
+))
 
 ;; Setup the buffer for a maintainer.
 (defun about-maintainer (widget &optional event)
@@ -961,6 +977,9 @@ et. al., he spends his time pursuing, among other things, a Life.
 Some of this currently involves doing an A-Z (by country) of
 restaurants with friends, and has, in the past, involved dyeing his
 hair various colours.\n")
+    (about-show-linked-info 'kazz "\
+IENAGA Kazuyuki is the XEmacs technical lead on BSD, particularly
+FreeBSD.\n")
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)
@@ -1095,9 +1114,8 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Shane Holder" "holder@rsn.hp.com")
        (print-short "David Hughes" "djh@harston.cv.com")
        (print-short "Tatsuya Ichikawa" "ichikawa@hv.epson.co.jp")
-       (print-short "Kazuyuki IENAGA" "ienaga@jsys.co.jp")
        (print-short "Andrew Innes" "andrewi@harlequin.co.uk")
-       (print-short "Andreas Jaeger" "aj@arthur.pfalz.de")
+       (print-short "Andreas Jaeger" "aj@arthur.rhein-neckar.de")
        (print-short "Markku Jarvinen" "Markku.Jarvinen@simpukka.funet.fi")
        (print-short "Robin Jeffries" "robin.jeffries@sun.com")
        (print-short "Philip Johnson" "johnson@uhics.ics.Hawaii.Edu")

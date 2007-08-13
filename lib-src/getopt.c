@@ -31,14 +31,12 @@ USA.  */
 #endif
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <../src/config.h>
 #endif
 
 #include <stdio.h>
-#ifdef STDC_HEADERS
 #include <string.h>
 #include <stdlib.h>
-#endif
 
 /* Comment out all this code if we are using the GNU C Library, and are not
    actually compiling the library itself.  This code is part of the GNU C

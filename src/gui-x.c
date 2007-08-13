@@ -86,6 +86,11 @@ mark_widget_value_mapper (widget_value *val, void *closure)
       (cl->markobj) (markee);
     }
 
+  if (val->accel)
+    {
+      VOID_TO_LISP (markee, val->accel);
+      (cl->markobj) (markee);
+    }
   return 0;
 }
 
@@ -238,6 +243,10 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_widget_or_parent_to_frame (d, widget);
 
+  /* set in lwlib to the time stamp associated with the most recent menu
+     operation */
+  extern Time x_focus_timestamp_really_sucks_fix_me_better;
+
   if (!f)
     return;
   if (((EMACS_INT) client_data) == 0)
@@ -284,7 +293,7 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
   /* This is the timestamp used for asserting focus so we need to get an
      up-to-date value event if no events has been dispatched to emacs
      */
-  DEVICE_X_MOUSE_TIMESTAMP (d) = DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d);
+  DEVICE_X_MOUSE_TIMESTAMP (d) = x_focus_timestamp_really_sucks_fix_me_better;
   signal_special_Xt_user_event (frame, fn, arg);
 }
 
@@ -348,6 +357,24 @@ menu_separator_style (CONST char *s)
   return NULL;
 }
 
+/* set menu accelerator key to first underlined character in menu name */
+
+Lisp_Object
+menu_name_to_accelerator (char *name)
+{
+  while (*name) {
+    if (*name=='%') {
+      ++name;
+      if (!(*name))
+	return Qnil;
+      if (*name=='_'&&*(name+1))
+	return make_char (tolower(*(name+1)));
+    }
+    ++name;
+  }
+  return Qnil;
+}
+
 /* This does the dirty work.  gc_currently_forbidden is 1 when this is called.
  */
 
@@ -367,6 +394,7 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
   Lisp_Object keys       = Qnil;
   Lisp_Object style      = Qnil;
   Lisp_Object config_tag = Qnil;
+  Lisp_Object accel = Qnil;
   int length = XVECTOR_LENGTH (desc);
   Lisp_Object *contents = XVECTOR_DATA (desc);
   int plist_p;
@@ -416,6 +444,14 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 	  else if (EQ (key, Q_selected)) selected_p = val, selected_spec = 1;
 	  else if (EQ (key, Q_included)) include_p  = val, included_spec = 1;
 	  else if (EQ (key, Q_config))	 config_tag = val;
+	  else if (EQ (key, Q_accelerator))
+	    {
+	      if ( SYMBOLP (val)
+		   || CHARP (val))
+		accel = val;
+	      else
+		signal_simple_error ("bad keyboard accelerator", val);
+	    }
 	  else if (EQ (key, Q_filter))
 	    signal_simple_error(":filter keyword not permitted on leaf nodes", desc);
 	  else
@@ -435,6 +471,10 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
   CHECK_STRING (name);
   wv->name = (char *) XSTRING_DATA (name);
 
+  if (NILP (accel))
+    accel = menu_name_to_accelerator (wv->name);
+  wv->accel = LISP_TO_VOID (accel);
+  
   if (!NILP (suffix))
     {
       CONST char *const_bogosity;

@@ -74,4 +74,16 @@ extern WidgetClass xlwMenuWidgetClass;
 void
 xlw_pop_up_menu (XlwMenuWidget mw, XButtonPressedEvent* event);
 
+/* menu accelerator */
+
+void xlw_set_menu (Widget w, widget_value *val);
+void xlw_push_menu (widget_value *val);
+int xlw_pop_menu (void);
+void xlw_set_item (widget_value *val);
+void xlw_map_menu (Time t);
+void xlw_display_menu (Time t);
+void xlw_kill_menus (widget_value *val);
+widget_value *xlw_get_entries (int allp);
+int xlw_menu_level (void);
+
 #endif /* _XlwMenu_h */

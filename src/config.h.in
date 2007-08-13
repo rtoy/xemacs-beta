@@ -271,6 +271,8 @@ Boston, MA 02111-1307, USA.  */
 
 #undef HAVE_TERMIOS
 #undef HAVE_TERMIO
+#undef NO_TERMIO
+#undef SIGNALS_VIA_CHARACTERS
 
 #undef NLIST_STRUCT
 

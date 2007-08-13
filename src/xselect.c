@@ -1836,7 +1836,7 @@ nil is the same as PRIMARY, and t is the same as SECONDARY.)
   CHECK_SYMBOL (selection);
   if (!NILP (Fx_selection_owner_p (selection)))
     return Qt;
-  return XGetSelectionOwner (dpy, symbol_to_x_atom (d, selection, 0)) != NULL ?
+  return XGetSelectionOwner (dpy, symbol_to_x_atom (d, selection, 0)) != None ?
     Qt : Qnil;
 }
 

@@ -1,0 +1,232 @@
+CFLAGS "-m486 -O4 -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2 -fomit-frame-pointer -Wall"
+CPPFLAGS ""
+CXXFLAGS ""
+DEFS "-DHAVE_CONFIG_H"
+LDFLAGS ""
+LIBS "-ldb -lgdbm -lgpm -lncurses -lintl -lm "
+exec_prefix "${prefix}"
+prefix "/usr/local"
+program_transform_name "s,x,x,"
+bindir "${exec_prefix}/bin"
+sbindir "${exec_prefix}/sbin"
+libexecdir "${exec_prefix}/libexec"
+datadir "${prefix}/lib"
+sysconfdir "${prefix}/etc"
+sharedstatedir "${prefix}/com"
+localstatedir "${prefix}/var"
+libdir "${exec_prefix}/lib"
+includedir "${prefix}/include"
+oldincludedir "/usr/include"
+infodir "${prefix}/lib/xemacs-${version}/info"
+mandir "${prefix}/man/man1"
+LN_S "ln -s"
+CC "gcc"
+CPP "gcc -E"
+ld_switch_shared "-c"
+start_files ""
+start_flags ""
+ld "$(CC) $(CFLAGS)"
+lib_gcc ""
+RANLIB "ranlib"
+INSTALL_PROGRAM "${INSTALL}"
+INSTALL_DATA "${INSTALL} -m 644"
+YACC "bison -y"
+SET_MAKE ""
+X_CFLAGS " -I/usr/X11R6/include"
+X_PRE_LIBS " -lSM -lICE"
+X_LIBS " -L/usr/X11R6/lib"
+X_EXTRA_LIBS ""
+libs_xauth "-lXau -lXmu -lXt -lXext -lX11 -lSM -lICE"
+lwlib_objs " lwlib-Xaw.o xlwmenu.o lwlib-Xlw.o"
+ALLOCA ""
+SRC_SUBDIR_DEPS " lwlib"
+INSTALL_ARCH_DEP_SUBDIR " lib-src pkg-src/tree-x"
+MAKE_SUBDIR " lib-src lwlib pkg-src/tree-x src"
+SUBDIR_MAKEFILES "lib-src/Makefile lwlib/Makefile pkg-src/tree-x/Makefile src/Makefile"
+version "20.3-b14"
+configuration "i586-pc-linux"
+canonical "i586-pc-linux"
+srcdir "/b/XEmacs/xemacs-20.0"
+pkgdir ""
+statedir "${prefix}/lib"
+infodir_user_defined "no"
+lispdir "${datadir}/xemacs-${version}/lisp"
+lispdir_user_defined "no"
+sitelispdir "${datadir}/xemacs/site-lisp"
+etcdir "${datadir}/xemacs-${version}/etc"
+etcdir_user_defined "no"
+lockdir "${statedir}/xemacs/lock"
+lockdir_user_defined "no"
+archlibdir "${libdir}/xemacs-${version}/${configuration}"
+archlibdir_user_defined "no"
+docdir ""
+bitmapdir ""
+extra_objs "debug.o unexelf.o dgif_lib.o gif_err.o gifalloc.o menubar.o scrollbar.o dialog.o toolbar.o gui.o menubar-x.o scrollbar-x.o dialog-x.o toolbar-x.o gui-x.o mule.o mule-ccl.o mule-charset.o mule-coding.o mule-wnnfns.o mule-canna.o realpath.o inline.o console-tty.o device-tty.o event-tty.o frame-tty.o objects-tty.o redisplay-tty.o cm.o terminfo.o gpmevent.o event-unixoid.o database.o"
+machfile "m/intel386.h"
+opsysfile "s/linux.h"
+c_switch_general "-DHAVE_CONFIG_H"
+c_switch_window_system "-I/usr/X11R6/include"
+c_switch_all "-DHAVE_CONFIG_H -I/usr/X11R6/include"
+ld_switch_general ""
+ld_switch_window_system "-L/usr/X11R6/lib"
+ld_switch_all "-L/usr/X11R6/lib"
+ld_libs_general "-ldb -lgdbm -lgpm -lncurses -lintl -lm"
+ld_libs_window_system "-lcanna -lRKC -lwnn -lXaw -lpng -lz -ljpeg -lcompface -lXpm -lDnd -lXmu -lXt -lXext -lX11 -lSM -lICE"
+ld_libs_all "-lcanna -lRKC -lwnn -lXaw -lpng -lz -ljpeg -lcompface -lXpm -lDnd -lXmu -lXt -lXext -lX11 -lSM -lICE -ldb -lgdbm -lgpm -lncurses -lintl -lm"
+RECURSIVE_MAKE "$(MAKE) $(MFLAGS) CC='$(CC)' CFLAGS='$(CFLAGS)' LDFLAGS='$(LDFLAGS)' CPPFLAGS='$(CPPFLAGS)'"
+native_sound_lib ""
+sound_cflags ""
+dynodump_arch ""
+internal_makefile_list "Makefile lib-src/Makefile.in lwlib/Makefile.in pkg-src/tree-x/Makefile.in src/Makefile.in"
+configure_input "$configure_input"
+srcdir "$srcdir"
+top_srcdir "$top_srcdir"
+INSTALL "$INSTALL"
+EMACS_MAJOR_VERSION 20
+EMACS_MINOR_VERSION 3
+EMACS_BETA_VERSION 14
+XEMACS_CODENAME "Vienna"
+EMACS_VERSION "20.3-b14"
+DEBUG_XEMACS t
+USE_ASSERTIONS t
+MEMORY_USAGE_STATS t
+CANONICAL_VERSION 20_3_b14_i586_pc_linux
+HAVE_SYS_TIMEB_H t
+HAVE_SYS_TIME_H t
+HAVE_UNISTD_H t
+HAVE_UTIME_H t
+HAVE_LOCALE_H t
+HAVE_FCNTL_H t
+HAVE_ULIMIT_H t
+HAVE_LINUX_VERSION_H t
+HAVE_LIMITS_H t
+HAVE_SYS_WAIT_H t
+STDC_HEADERS t
+TIME_WITH_SYS_TIME t
+SYS_SIGLIST_DECLARED t
+HAVE_STRUCT_UTIMBUF t
+RETSIGTYPE void
+HAVE_TIMEVAL t
+HAVE_TZNAME t
+SIZEOF_SHORT 2
+SIZEOF_INT 4
+SIZEOF_LONG 4
+SIZEOF_LONG_LONG 8
+SIZEOF_VOID_P 4
+HAVE_LONG_FILE_NAMES t
+HAVE_LIBM t
+LISP_FLOAT_TYPE t
+HAVE_X_WINDOWS t
+NARROWPROTO t
+_POSIX_SOURCE t
+_BSD_SOURCE t
+_SVID_SOURCE t
+linux t
+__i386__ t
+X_LOCALE t
+THIS_IS_X11R6 t
+HAVE_X11_XLOCALE_H t
+HAVE_XFREE386 t
+HAVE_XAUTH t
+HAVE_OFFIX_DND t
+HAVE_GIF t
+HAVE_XPM t
+HAVE_XFACE t
+HAVE_JPEG t
+HAVE_PNG t
+LWLIB_USES_ATHENA t
+NEED_ATHENA t
+NEED_LUCID t
+LWLIB_SCROLLBARS_ATHENA t
+LWLIB_DIALOGS_ATHENA t
+LWLIB_SCROLLBARS_ATHENA3D t
+LWLIB_DIALOGS_ATHENA3D t
+HAVE_MENUBARS t
+HAVE_SCROLLBARS t
+HAVE_DIALOGS t
+HAVE_TOOLBARS t
+LWLIB_MENUBARS_LUCID t
+MULE t
+HAVE_LIBINTL_H t
+HAVE_LIBINTL t
+HAVE_CRYPT t
+HAVE_WNN t
+HAVE_CANNA t
+HAVE_ACOSH t
+HAVE_ASINH t
+HAVE_ATANH t
+HAVE_CBRT t
+HAVE_CLOSEDIR t
+HAVE_DUP2 t
+HAVE_FMOD t
+HAVE_FPATHCONF t
+HAVE_FREXP t
+HAVE_FTIME t
+HAVE_GETHOSTNAME t
+HAVE_GETPAGESIZE t
+HAVE_GETTIMEOFDAY t
+HAVE_GETCWD t
+HAVE_GETWD t
+HAVE_LRAND48 t
+HAVE_MKDIR t
+HAVE_MKTIME t
+HAVE_PERROR t
+HAVE_POLL t
+HAVE_RANDOM t
+HAVE_RENAME t
+HAVE_RES_INIT t
+HAVE_RINT t
+HAVE_RMDIR t
+HAVE_SELECT t
+HAVE_SETITIMER t
+HAVE_SETPGID t
+HAVE_SETLOCALE t
+HAVE_SETSID t
+HAVE_SIGBLOCK t
+HAVE_SIGPROCMASK t
+HAVE_STRCASECMP t
+HAVE_STRERROR t
+HAVE_TZSET t
+HAVE_ULIMIT t
+HAVE_USLEEP t
+HAVE_UTIMES t
+HAVE_WAITPID t
+HAVE_H_ERRNO t
+HAVE_SIGSETJMP t
+LOCALTIME_CACHE t
+HAVE_INLINE t
+HAVE_ALLOCA_H t
+HAVE_ALLOCA t
+HAVE_STRCOLL t
+HAVE_GETPGRP t
+GETPGRP_VOID t
+HAVE_MMAP t
+REL_ALLOC t
+HAVE_TERMIOS t
+SIGNALS_VIA_CHARACTERS t
+NO_TERMIO t
+HAVE_SOCKETS t
+HAVE_SYSVIPC t
+SYSV_SYSTEM_DIR t
+NLIST_STRUCT t
+HAVE_TTY t
+HAVE_NCURSES t
+CURSES_H_PATH "ncurses/curses.h"
+TERM_H_PATH "ncurses/term.h"
+HAVE_GPM t
+HAVE_DBM t
+DB_H_PATH "db.h"
+HAVE_BERKELEY_DB t
+HAVE_DATABASE t
+EMACS_CONFIGURATION "i586-pc-linux"
+EMACS_CONFIG_OPTIONS " '--cflags=-m486 -O4 -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2 -fomit-frame-pointer -Wall' --with-sound=no --error-checking=none --debug=yes --with-mule=yes --with-dialogs=athena3d --with-scrollbars=athena3d --use-union-type=yes --with-xim=no --mail-locking=file"
+config_machfile "m/intel386.h"
+config_opsysfile "s/linux.h"
+LD_SWITCH_X_SITE ""
+LD_SWITCH_X_SITE_AUX ""
+C_SWITCH_X_SITE ""
+LD_SWITCH_SITE ""
+C_SWITCH_SITE ""
+GNU_MALLOC t
+USE_GCC t
+CONST_IS_LOSING t

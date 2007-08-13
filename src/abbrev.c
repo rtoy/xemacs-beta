@@ -273,7 +273,7 @@ Returns t if expansion took place.
   struct Lisp_Symbol *abbrev_symbol;
   struct Lisp_String *abbrev_string;
   Lisp_Object expansion, count, hook;
-  Charcount abbrev_length, idx;
+  Charcount abbrev_length;
   int lccount, uccount;
 
   run_hook (Qpre_abbrev_expand_hook);

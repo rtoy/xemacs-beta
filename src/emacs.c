@@ -84,6 +84,10 @@ Lisp_Object Vsystem_type;
 /* Variable whose value is string giving configuration built for.  */
 Lisp_Object Vsystem_configuration;
 
+/* Variable whose value is string containing the configuration options
+   XEmacs was built with.  */
+Lisp_Object Vsystem_configuration_options;
+
 /* Version numbers and strings */
 Lisp_Object Vemacs_major_version;
 Lisp_Object Vemacs_minor_version;
@@ -1254,8 +1258,6 @@ main_1 (int argc, char **argv, char **envp)
       /* Calls Fmake_range_table(). */
       complex_vars_of_search ();
 
-      /* Calls Fmake_hashtable(). */
-      complex_vars_of_event_stream ();
       /* Calls make_lisp_hashtable(). */
       complex_vars_of_extents ();
 
@@ -1275,8 +1277,8 @@ main_1 (int argc, char **argv, char **envp)
          could require that the charsets be initialized. */
       complex_vars_of_glyphs ();
 
-      /* This relies on the glyphs just created in the previous function,
-	 and calls Fadd_spec_to_specifier(), which relies on various
+      /* These rely on the glyphs just created in the previous function,
+	 and call Fadd_spec_to_specifier(), which relies on various
 	 variables initialized above. */
 #ifdef HAVE_X_WINDOWS
       complex_vars_of_glyphs_x ();
@@ -1341,6 +1343,8 @@ main_1 (int argc, char **argv, char **envp)
 	 initialized in the vars_of_*() section) and possibly other
 	 stuff. */
       complex_vars_of_keymap ();
+      /* Calls Fmake_hashtable() and creates a keymap */
+      complex_vars_of_event_stream ();
 
       if (always_gc)                /* purification debugging hack */
 	garbage_collect_1 ();
@@ -2298,6 +2302,15 @@ Value is symbol indicating type of operating system you are using.
 Value is string indicating configuration XEmacs was built for.
 */ );
   Vsystem_configuration = Fpurecopy (build_string (EMACS_CONFIGURATION));
+
+#ifndef EMACS_CONFIG_OPTIONS
+# define EMACS_CONFIG_OPTIONS "UNKNOWN"
+#endif
+  DEFVAR_LISP ("system-configuration-options", &Vsystem_configuration_options /*
+String containing the configuration options XEmacs was built with.
+*/ );
+  Vsystem_configuration_options = Fpurecopy (build_string
+					     (EMACS_CONFIG_OPTIONS));
 
   DEFVAR_LISP ("emacs-major-version", &Vemacs_major_version /*
 Major version number of this version of Emacs, as an integer.

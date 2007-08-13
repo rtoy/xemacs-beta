@@ -8,7 +8,7 @@
 @titlepage
 @title XEmacs FAQ
 @subtitle Frequently asked questions about XEmacs
-@subtitle Last Modified:  1997-07-02
+@subtitle Last Modified:  1997-07-17
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@666.com>
@@ -249,25 +249,17 @@ Also, @kbd{M-x apropos} will look for commands for you.
 
 Try reading this FAQ, examining the regular GNU Emacs FAQ (which can be
 found with the Emacs 19 distribution) as well as at
-@example
-<URL:http://www.eecs.nwu.edu/emacs/faq/>
-@end example
-and reading the Usenet group comp.emacs.xemacs.
+<URL:http://www.eecs.nwu.edu/emacs/faq/> and reading the Usenet group 
+comp.emacs.xemacs.
 
 If that does not help, try posting your question to comp.emacs.xemacs.
 Please @strong{do not} post XEmacs related questions to gnu.emacs.help.
 
 If you cannot post or read Usenet news, there is a corresponding mailing
 list which is available.  It can be subscribed to by sending a message
-with a subject of @samp{subscribe} to
-@example
-<xemacs-request@@xemacs.org>
-@end example
-for subscription information and
-@example
-<xemacs@@xemacs.org>
-@end example
-to send messages to the list.
+with a subject of @samp{subscribe} to <xemacs-request@@xemacs.org>
+for subscription information and <xemacs@@xemacs.org> to send messages 
+to the list.
 
 To cancel a subscription, you @strong{must} use the xemacs-request
 address.  Send a message with a subject of @samp{unsubscribe} to be
@@ -303,6 +295,18 @@ senior-level staff working under a professionally managed project
 structure.  See <URL:http://www.altrasoft.com/> for more details or
 contact Altrasoft directly at 1-888-ALTSOFT.
 
+A private effort is being put forth by David Hobley 
+<URL:http://www.angelfire.com/wa/hobley>. 
+
+He can be reached at the following email addresses: 
+@example
+<davidh@@wr.com.au> (home)
+@end example
+
+@example
+<david_hobley@@optusvision.com.au> (work)
+@end example
+ 
 The closest is @dfn{Win-Emacs}, which is based on Lucid Emacs 19.6.
 Available from <URL:http://www.pearlsoft.com/>.
 
@@ -876,6 +880,171 @@ This will let you run XEmacs without massive copying.
 Steve Baur <steve@@altair.xemacs.org> writes:
 
 @quotation
+The 45MB of space required by the installation directories can be
+reduced dramatically if desired.  Gzip all the .el files.  Remove all
+the packages you'll never want to use (or even ones you do like the two
+obsolete mailcrypts and Gnus 4 in 19.13).  Remove the TexInfo manuals.
+Remove the Info (and use just hardcopy versions of the manual).  Remove
+most of the stuff in etc.  Remove or gzip all the source code.  Gzip or
+remove the C source code.  Configure it so that copies are not made of
+the support lisp.  I'm not advocating any of these things, just pointing
+out ways to reduce the disk requirements if desired.
+
+Now examine the space used by directory:
+
+@example
+0	/usr/local/bin/xemacs
+2048	/usr/local/bin/xemacs-19.13
+
+1546	/usr/local/lib/xemacs-19.13/i486-miranova-sco3.2v4.2
+1158	/usr/local/lib/xemacs-19.13/i486-unknown-linux1.2.13
+@end example
+
+You need to keep these.  XEmacs isn't stripped by default in
+installation, you should consider stripping.  That will save you about
+5MB right there.
+
+@example
+207	/usr/local/lib/xemacs-19.13/etc/w3
+122	/usr/local/lib/xemacs-19.13/etc/sounds
+18	/usr/local/lib/xemacs-19.13/etc/sparcworks
+159	/usr/local/lib/xemacs-19.13/etc/vm
+6	/usr/local/lib/xemacs-19.13/etc/e
+21	/usr/local/lib/xemacs-19.13/etc/eos
+172	/usr/local/lib/xemacs-19.13/etc/toolbar
+61	/usr/local/lib/xemacs-19.13/etc/ns
+43	/usr/local/lib/xemacs-19.13/etc/gnus
+@end example
+
+These are support directories for various packages.  In general they
+match a directory under ./xemacs-19.13/lib/xemacs-19.13/lisp/.  If you
+do not require the package, you may delete or gzip the support too.
+
+@example
+1959	/usr/local/lib/xemacs-19.13/etc
+175	/usr/local/lib/xemacs-19.13/lisp/bytecomp
+340	/usr/local/lib/xemacs-19.13/lisp/calendar
+342	/usr/local/lib/xemacs-19.13/lisp/comint
+517	/usr/local/lib/xemacs-19.13/lisp/dired
+42	/usr/local/lib/xemacs-19.13/lisp/electric
+212	/usr/local/lib/xemacs-19.13/lisp/emulators
+238	/usr/local/lib/xemacs-19.13/lisp/energize
+289	/usr/local/lib/xemacs-19.13/lisp/gnus
+457	/usr/local/lib/xemacs-19.13/lisp/ilisp
+1439	/usr/local/lib/xemacs-19.13/lisp/modes
+2276	/usr/local/lib/xemacs-19.13/lisp/packages
+1040	/usr/local/lib/xemacs-19.13/lisp/prim
+176	/usr/local/lib/xemacs-19.13/lisp/pcl-cvs
+154	/usr/local/lib/xemacs-19.13/lisp/rmail
+3	/usr/local/lib/xemacs-19.13/lisp/epoch
+45	/usr/local/lib/xemacs-19.13/lisp/term
+860	/usr/local/lib/xemacs-19.13/lisp/utils
+851	/usr/local/lib/xemacs-19.13/lisp/vm
+13	/usr/local/lib/xemacs-19.13/lisp/vms
+157	/usr/local/lib/xemacs-19.13/lisp/x11
+19	/usr/local/lib/xemacs-19.13/lisp/tooltalk
+14	/usr/local/lib/xemacs-19.13/lisp/sunpro
+291	/usr/local/lib/xemacs-19.13/lisp/games
+198	/usr/local/lib/xemacs-19.13/lisp/edebug
+619	/usr/local/lib/xemacs-19.13/lisp/w3
+229	/usr/local/lib/xemacs-19.13/lisp/eos
+55	/usr/local/lib/xemacs-19.13/lisp/iso
+59	/usr/local/lib/xemacs-19.13/lisp/mailcrypt
+187	/usr/local/lib/xemacs-19.13/lisp/eterm
+356	/usr/local/lib/xemacs-19.13/lisp/ediff
+408	/usr/local/lib/xemacs-19.13/lisp/hyperbole/kotl
+1262	/usr/local/lib/xemacs-19.13/lisp/hyperbole
+247	/usr/local/lib/xemacs-19.13/lisp/hm--html-menus
+161	/usr/local/lib/xemacs-19.13/lisp/mh-e
+299	/usr/local/lib/xemacs-19.13/lisp/viper
+53	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-x
+4	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/DocWindow.nib
+3	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/InfoPanel.nib
+3	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/TreeView.nib
+11	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj
+53	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx
+466	/usr/local/lib/xemacs-19.13/lisp/oobr
+14142	/usr/local/lib/xemacs-19.13/lisp
+@end example
+
+These are all Emacs Lisp source code and bytecompiled object code.  You
+may safely gzip everything named *.el here.  You may remove any package
+you don't use.  @emph{Nothing bad will happen if you delete a package
+that you do not use}.  You must be sure you do not use it though, so be
+conservative at first.
+
+Possible candidates for deletion include w3 (newer versions exist, or
+you may just use Lynx or Netscape for web browsing), games, hyperbole,
+mh-e, hm--html-menus (better packages exist), vm, viper, oobr, gnus (new
+versions exist), etc.  Ask yourself, @emph{Do I ever want to use this
+package?}  If the answer is no, then it is a candidate for removal.
+
+First, gzip all the .el files.  Then go about package by package and
+start gzipping the .elc files.  Then run XEmacs and do whatever it is
+you normally do.  If nothing bad happens, then delete the directory.  Be
+conservative about deleting directories, and it would be handy to have a
+backup tape around in case you get too zealous.
+
+@file{prim}, @file{modes}, @file{packages}, and @file{utils} are four
+directories you definitely do @strong{not} want to delete, although
+certain packages can be removed from them if you do not use them.
+
+@example
+1972	/usr/local/lib/xemacs-19.13/info
+@end example
+
+These are online texinfo sources.  You may either gzip them or remove
+them.  In either case, @kbd{C-h i} (info mode) will no longer work.
+
+@example
+20778	/usr/local/lib/xemacs-19.13
+@end example
+
+The 20MB achieved is less than half of what the full distribution takes up,
+@strong{and} can be achieved without deleting a single file.
+@end quotation
+
+giacomo boffi <boffi@@hp735.stru.polimi.it> provides this procedure:
+
+@quotation
+Substitute @file{/usr/local/lib/} with the path where the xemacs tree is
+rooted, then use this script:
+
+@example
+#!/bin/sh
+
+r=/usr/local/lib/xemacs-19.13/lisp
+
+cd $r ; rm -f cmpr ; touch cmpr
+
+du -s .
+
+for d in * ; do
+  if test -d $d ; then
+    cd $d
+    for f in *.el ; do
+#     compress (remove) only (ONLY) the sources that have a
+#     corresponding compiled file --- do not (DO NOT) touch other
+#     sources
+      if test -f $@{f@}c ; then gzip -v9 $f >> $r/cmpr ; fi
+    done
+    cd ..
+  fi
+done
+
+du -s .
+@end example
+
+A step beyond would be substituting @samp{rm -f} for @samp{gzip -v9},
+but you have to be desperate for removing the sources (remember that
+emacs can access compressed files transparently).
+
+Also, a good megabyte could easily be trimmed from the $r/../etc
+directory, e.g., the termcap files, some O+NEWS, others that I don't
+remember as well.
+@end quotation
+
+@quotation
 XEmacs 20.3 will unbundle the lisp hierarchy and allow the installer
 to choose exactly how much support code gets installed.
 @end quotation
@@ -920,7 +1089,7 @@ src/xemacs -nw -q
 Initialization error: Terminal type `xterm' undefined (or can't access database?)
 @end example
 
-Ben Wing <ben@@666.com&gt writes:
+Ben Wing <ben@@666.com> writes:
 
 @quotation
 Your ncurses configuration is messed up.  Your /usr/lib/terminfo is a
@@ -3287,16 +3456,7 @@ Note that each string is a regular expression.
 @node Q4.0.7, Q4.0.8, Q4.0.6, Subsystems
 @section Is there a mailing list or FAQ for VM?
 
-There is no archived FAQ for VM.
-
-Kyle Jones <kyle_jones@@wonderworks.com> writes:
-
-@quotation
-No, I'm too atavistic to write one.  For some reason I'd rather just
-answer the questions myself.  I guess it serves a purpose in that the VM
-user community knows that I'm still alive, despite the 9 months since
-the last release.
-@end quotation
+A FAQ for VM exists at <URL:http://www.cyberpass.net/~gorkab/vmfaq.htm>. 
 
 VM has its own newsgroups gnu.emacs.vm.info and gnu.emacs.vm.bug.
 

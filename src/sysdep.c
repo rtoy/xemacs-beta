@@ -455,7 +455,7 @@ child_setup_tty (int out)
 #endif /* 0 */
 
   s.main.c_lflag |= ICANON;	/* Enable erase/kill and eof processing */
-  s.main.c_cc[VEOF] = 04;	/* insure that EOF is Control-D */
+  s.main.c_cc[VEOF] = 04;	/* ensure that EOF is Control-D */
   s.main.c_cc[VERASE] = CDISABLE; /* disable erase processing */
   s.main.c_cc[VKILL]  = CDISABLE; /* disable kill processing */
 

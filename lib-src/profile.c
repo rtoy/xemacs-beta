@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
  **  abstraction : a stopwatch
  **  operations: reset_watch, get_time
  */
-#include <config.h>
+#include <../src/config.h>
 #include <stdio.h>
 #if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>

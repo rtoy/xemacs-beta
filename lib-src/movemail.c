@@ -69,6 +69,10 @@ Boston, MA 02111-1307, USA.  */
 #include "pop.h"
 #endif
 
+#ifndef HAVE_STRERROR
+static char * strerror (int errnum);
+#endif /* HAVE_STRERROR */
+
 #ifdef MSDOS
 #undef access
 #endif /* MSDOS */
@@ -604,7 +608,6 @@ popmail (char *user, char *outfile, char *password)
 static int
 pop_retr (popserver server, int msgno, int (*action)(), int arg)
 {
-  extern char *strerror ();
   char *line;
   int ret;
 

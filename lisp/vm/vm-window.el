@@ -104,9 +104,11 @@
 
 (defun vm-undisplay-buffer (buffer)
   (vm-save-buffer-excursion
-    (vm-maybe-delete-windows-or-frames-on buffer)
-    (let ((w (vm-get-buffer-window buffer)))
-      (and w (set-window-buffer w (other-buffer))))))
+   (let ((vm-mutable-frames (and vm-mutable-frames pop-up-frames)))
+     (vm-maybe-delete-windows-or-frames-on buffer))
+   (let (w)
+     (while (setq w (vm-get-buffer-window buffer))
+       (set-window-buffer w (other-buffer buffer))))))
 
 (defun vm-load-window-configurations (file)
   (save-excursion
@@ -200,7 +202,8 @@
 	  ;; the user not to lose here.
 	  (vm-replace-buffer-in-windows nonexistent-summary message)
 	(and (get-buffer nonexistent-summary)
-	     (vm-maybe-delete-windows-or-frames-on nonexistent-summary))) )))
+	     (vm-maybe-delete-windows-or-frames-on nonexistent-summary)))
+      config )))
 
 (defun vm-save-window-configuration (tag)
   "Name and save the current window configuration.

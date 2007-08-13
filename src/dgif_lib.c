@@ -922,7 +922,6 @@ int DGifSlurp(GifFileType *GifFile)
     int ImageSize;
     GifRecordType RecordType;
     SavedImage *sp;
-    ExtensionBlock *ep;
     GifByteType *ExtData;
     int ExtCode;
 
@@ -961,7 +960,8 @@ int DGifSlurp(GifFileType *GifFile)
 		    return(GIF_ERROR);
 		else
 		{
-		    ep = &sp->ExtensionBlocks[sp->ExtensionBlockCount++];
+		    ExtensionBlock *ep =
+		      &sp->ExtensionBlocks[sp->ExtensionBlockCount++];
 
 		    ep->ByteCount = ExtData[0];
 		    ep->Bytes = (GifByteType *)xmalloc(ep->ByteCount * sizeof(GifByteType));
@@ -973,7 +973,8 @@ int DGifSlurp(GifFileType *GifFile)
 			return(GIF_ERROR);
 		    else
 		    {
-			ep = &sp->ExtensionBlocks[sp->ExtensionBlockCount++];
+			ExtensionBlock *ep =
+			  &sp->ExtensionBlocks[sp->ExtensionBlockCount++];
 
 			ep->ByteCount = ExtData[0];
 			ep->Bytes = (GifByteType *)xmalloc(ep->ByteCount * sizeof(GifByteType));

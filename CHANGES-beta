@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 20.3 beta14 "Vienna"
+-- VM-6.33
+-- Miscellaneous Martin Buchholz patches to configure
+-- viper-2.95
+-- ediff-2.66
+-- cc-mode-5.13
+-- Texinfo files updated from Texinfo-3.9e.
+-- Menubar accelerators courtesy of Joel Peterson
+-- Miscellaneous bug fixes
+
 to 20.3 beta13 "Brussels"
 -- W3-3.0.94
 -- ph.el-2.6 courtesy of Oscar Figueiredo

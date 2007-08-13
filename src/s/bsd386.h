@@ -10,7 +10,7 @@
 
 #define DECLARE_GETPWUID_WITH_UID_T
 
-#define SIGNALS_VIA_CHARACTERS
+/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
 
 #define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
 #define A_TEXT_OFFSET(x)    (sizeof (struct exec))
@@ -27,7 +27,7 @@
 #define TABDLY OXTABS
 #define TAB3 OXTABS
 
-#define NO_TERMIO
+/* #define NO_TERMIO */ /* mrb */
 
 /* This silences a few compilation warnings.  */
 #ifdef emacs

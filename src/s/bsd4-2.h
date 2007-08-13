@@ -72,7 +72,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Send signals to subprocesses by "typing" special chars at them.  */
 
-#define SIGNALS_VIA_CHARACTERS
+/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
 
 /* Formerly "BSD_PGRPS" */
 

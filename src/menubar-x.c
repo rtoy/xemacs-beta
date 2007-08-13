@@ -145,10 +145,15 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	{
 	  Lisp_Object key, val;
 	  Lisp_Object include_p = Qnil, hook_fn = Qnil, config_tag = Qnil;
+	  Lisp_Object accel;
 	  int included_spec = 0;
 	  wv->type = CASCADE_TYPE;
 	  wv->enabled = 1;
 	  wv->name = (char *) XSTRING_DATA (LISP_GETTEXT (XCAR (desc)));
+
+	  accel = menu_name_to_accelerator (wv->name);
+	  wv->accel = LISP_TO_VOID (accel);
+
 	  desc = Fcdr (desc);
 
 	  while (key = Fcar (desc), KEYWORDP (key))
@@ -166,6 +171,14 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		config_tag = val;
 	      else if (EQ (key, Q_filter))
 		hook_fn = val;
+	      else if (EQ (key, Q_accelerator))
+		{
+		  if ( SYMBOLP (val)
+		       || CHARP (val))
+		    wv->accel = LISP_TO_VOID (val);
+		  else
+		    signal_simple_error ("bad keyboard accelerator", val);
+		}
 	      else 
 		signal_simple_error ("unknown menu cascade keyword", cascade);
 	    }
@@ -352,6 +365,10 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   int any_changes = 0;
   int count;
 
+  /* set in lwlib to the time stamp associated with the most recent menu
+     operation */
+  extern Time x_focus_timestamp_really_sucks_fix_me_better;
+
   if (!f)
     f = x_any_window_to_frame (d, XtWindow (XtParent (widget)));
   if (!f)
@@ -430,6 +447,9 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	  !XFRAME_MENUBAR_DATA (f)->menubar_contents_up_to_date)
 #endif 
 	set_frame_menubar (f, 1, 0);
+      DEVICE_X_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =
+	DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =
+	x_focus_timestamp_really_sucks_fix_me_better;
       UNGCPRO;
     }
 }

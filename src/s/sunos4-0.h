@@ -60,10 +60,10 @@ extern char *ttyname (int);
 extern void tzsetwall (void);
 extern int getpagesize (void);
 
+#include <memory.h>
 #ifdef __SUNPRO_C
 /* Suppress zillions of warnings from outdated SunOS4 prototypes */
 /* Bother! Sun can't even get the arg types right. */
-#include <memory.h>
 #include <string.h>
 #define memset(a,b,c) memset((char*) (a), b, c)
 #define memcpy(a,b,c) memcpy((char*) (a), (char*) (b), c)

@@ -5,8 +5,9 @@
 @comment %**start of header (This is for running Texinfo on a region.)
 
 @comment Using ediff.info instead of ediff in setfilename breaks DOS.
-@setfilename ediff
+@comment @setfilename ediff
 @comment @setfilename ediff.info
+@setfilename ediff
 
 @settitle Ediff User's Manual
 @synindex vr cp
@@ -39,16 +40,16 @@ paragraph not being relevant to the printed manual).
 @titlepage
 @title Ediff User's Manual
 @sp 4
-@subtitle Ediff version 2.62
+@subtitle Ediff version 2.66
 @sp 1
-@subtitle July 1996
+@subtitle July 1997
 @sp 5
 @author Michael Kifer
 @page
 
 @vskip 0pt plus 1filll
 @noindent
-Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
+Copyright @copyright{} 1995, 1996, 1997 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -59,8 +60,9 @@ are preserved on all copies.
 
 @node Top, Introduction, (dir), (dir)
 
+
 @menu
-* Introduction::                About Ediff.
+* Introduction::                About Ediff 2.66.
 * Major Entry Points::          How to use Ediff.
 * Session Commands::            Ediff commands used within a session.
 * Registry of Ediff Sessions::  Keeping track of multiple Ediff sessions.
@@ -114,7 +116,7 @@ files with their older versions. Ediff also works with remote and
 compressed files, automatically ftp'ing them over and uncompressing them.
 @xref{Remote and Compressed Files}, for details.
 
-This package builds upon ideas borrowed from Emerge and several Ediff's
+This package builds upon ideas borrowed from Emerge, and several of Ediff's
 functions are adaptations from Emerge.  Although Ediff subsumes and greatly
 extends Emerge, much of the functionality in Ediff is influenced by Emerge.
 The architecture and the interface are, of course, drastically different.
@@ -1683,7 +1685,8 @@ Otherwise, you may have to tune the values of the variables
 @item ediff-patch-options
 Options to pass to @code{ediff-patch-program}.
  
-Note: the `-b' option should be specified in `ediff-backup-specs'.
+Note: the `-b' and `-z' options should be specified in
+`ediff-backup-specs', not in @code{ediff-patch-options}.
   
 It is recommended to pass the `-f' option to the patch program, so it won't
 ask questions. However, some implementations don't accept this option, in
@@ -1702,6 +1705,7 @@ by the patch program.
 
 Some versions of the patch program let the user specify `-b backup-extension'.
 Other versions only permit `-b', which (usually) assumes the extension `.orig'.
+Yet others force you to use `-z<backup-extension>'.
 
 Note that both `ediff-backup-extension' and `ediff-backup-specs' must be
 properly set. If your patch program takes the option `-b', but not
@@ -2053,6 +2057,10 @@ The default function that Ediff uses simply toggles the read-only property,
 unless the file is under version control.  For a checked-in file under
 version control, Ediff first tries to check the file out.
 
+@item ediff-make-buffers-readonly-at-startup nil
+@vindex ediff-make-buffers-readonly-at-startup
+If t, all variant buffers are made read-only at Ediff startup.
+
 @item ediff-keep-variants
 @vindex @code{ediff-keep-variants}
 The default is @code{t}, meaning that the buffers being compared or merged will
@@ -2163,8 +2171,9 @@ by emerge.el written by Dale R. Worley <drw@@math.mit.edu>.  An idea due to
 Boris Goldowsky <boris@@cs.rochester.edu> made it possible to highlight
 fine differences in Ediff buffers. Alastair Burt <burt@@dfki.uni-kl.de>
 ported Ediff to XEmacs, Eric Freudenthal <freudent@@jan.ultra.nyu.edu>
-made it work with VC, and Marc Paquette <marcpa@@cam.org> wrote the
-toolbar support package for Ediff.
+made it work with VC, Marc Paquette <marcpa@@cam.org> wrote the
+toolbar support package for Ediff, and Hrvoje Niksic <hniksic@@srce.hr>
+adapted it to the Emacs customization package.
 
 Many people provided help with bug reports, patches, and advice.
 Without them, Ediff would not be nearly as useful as it is today.
@@ -2172,15 +2181,19 @@ Here is a full list of contributors (I hope I didn't miss anyone):
 
 @example
 Neal Becker (neal@@ctd.comsat.com),
-Alastair Burt (burt@@dfki.uni-kl.de), Paul Bibilo (peb@@delcam.co.uk),
+Alastair Burt (burt@@dfki.uni-kl.de),
+Paul Bibilo (peb@@delcam.co.uk),
 Kevin Broadey (KevinB@@bartley.demon.co.uk),
 Harald Boegeholz (hwb@@machnix.mathematik.uni-stuttgart.de),
 Bradley A. Bosch (brad@@lachman.com),
 Michael D. Carney  (carney@@ltx-tr.com),
 Jin S. Choi (jin@@atype.com),
+Scott Cummings (cummings@@adc.com),
 Albert Dvornik (bert@@mit.edu),
 Eric Eide (eeide@@asylum.cs.utah.edu),
-Kevin Esler (esler@@ch.hp.com), Robert Estes (estes@@ece.ucdavis.edu), 
+Paul Eggert (eggert@@twinsun.com),
+Kevin Esler (esler@@ch.hp.com),
+Robert Estes (estes@@ece.ucdavis.edu), 
 Xavier Fornari (xavier@@europe.cma.fr),
 Eric Freudenthal (freudent@@jan.ultra.nyu.edu),
 Job Ganzevoort (Job.Ganzevoort@@cwi.nl),
@@ -2188,21 +2201,27 @@ Boris Goldowsky (boris@@cs.rochester.edu),
 Allan Gottlieb (gottlieb@@allan.ultra.nyu.edu),
 Xiaoli Huang (hxl@@epic.com),
 Lars Magne Ingebrigtsen (larsi@@ifi.uio.no),
-Larry Gouge (larry@@itginc.com), Karl Heuer (kwzh@@gnu.ai.mit.edu),
-(irvine@@lks.csi.com), (jaffe@@chipmunk.cita.utoronto.ca),
+Larry Gouge (larry@@itginc.com),
+Karl Heuer (kwzh@@gnu.ai.mit.edu),
+(irvine@@lks.csi.com),
+(jaffe@@chipmunk.cita.utoronto.ca),
 David Karr (dkarr@@nmo.gtegsc.com),
 Norbert Kiesel (norbert@@i3.informatik.rwth-aachen.de),
-Leigh L Klotz (klotz@@adoc.xerox.com), Fritz Knabe (Fritz.Knabe@@ecrc.de),
+Leigh L Klotz (klotz@@adoc.xerox.com),
+Fritz Knabe (Fritz.Knabe@@ecrc.de),
 Heinz Knutzen (hk@@informatik.uni-kiel.d400.de),
 Andrew Koenig (ark@@research.att.com),
-Ken Laprade (laprade@@dw3f.ess.harris.com), Will C Lauer (wcl@@cadre.com),
-Richard Levitte (levitte@@e.kth.se), Mike Long (mike.long@@analog.com),
+Ken Laprade (laprade@@dw3f.ess.harris.com),
+Will C Lauer (wcl@@cadre.com),
+Richard Levitte (levitte@@e.kth.se),
+Mike Long (mike.long@@analog.com),
 Martin Maechler (maechler@@stat.math.ethz.ch),
-Simon Marshall (Simon.Marshall@@gnu.ai.mit.edu),
+Simon Marshall (simon@@gnu.ai.mit.edu),
 Richard Mlynarik (mly@@adoc.xerox.com),
 Chris Murphy (murphycm@@sun.aston.ac.uk),
 Erik Naggum (erik@@naggum.no),
-Eyvind Ness (Eyvind.Ness@@hrp.no), Ray Nickson (nickson@@cs.uq.oz.au), 
+Eyvind Ness (Eyvind.Ness@@hrp.no),
+Ray Nickson (nickson@@cs.uq.oz.au), 
 David Petchey (petchey_david@@jpmorgan.com),
 Benjamin Pierce (benjamin.pierce@@cl.cam.ac.uk),
 Tibor Polgar (tlp00@@spg.amdahl.com),
@@ -2211,16 +2230,20 @@ Paul Raines (raines@@slac.stanford.edu),
 C.S. Roberson (roberson@@aur.alcatel.com),
 Kevin Rodgers (kevin.rodgers@@ihs.com),
 Sandy Rutherford (sandy@@ibm550.sissa.it),
-Heribert Schuetz (schuetz@@ecrc.de), Andy Scott (ascott@@pcocd2.intel.com),
+Heribert Schuetz (schuetz@@ecrc.de),
+Andy Scott (ascott@@pcocd2.intel.com),
 Axel Seibert (axel@@tumbolia.ppp.informatik.uni-muenchen.de),
 Scott O. Sherman (Scott.Sherman@@mci.com),
 Richard Stallman (rms@@gnu.ai.mit.edu), 
 Richard Stanton (stanton@@haas.berkeley.edu), 
-Ake Stenhoff (etxaksf@@aom.ericsson.se), Stig (stig@@hackvan.com),
-Peter Stout (Peter_Stout@@cs.cmu.edu), Chuck Thompson (cthomp@@cs.uiuc.edu),
+Ake Stenhoff (etxaksf@@aom.ericsson.se),
+Stig (stig@@hackvan.com),
+Peter Stout (Peter_Stout@@cs.cmu.edu),
+Chuck Thompson (cthomp@@cs.uiuc.edu),
 Ray Tomlinson (tomlinso@@bbn.com),
 Raymond Toy (toy@@rtp.ericsson.se),
 Philippe Waroquiers (philippe.waroquiers@@eurocontrol.be),
+Klaus Weber (gizmo@@zork.north.de),
 Ben Wing (wing@@666.com),
 Ilya Zakharevich (ilya@@math.ohio-state.edu),
 Eli Zaretskii (eliz@@is.elta.co.il)

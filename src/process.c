@@ -1509,7 +1509,6 @@ Fourth arg SERVICE is name of the service desired, or an integer
     for (tail = network_stream_blocking_port_list; CONSP (tail); tail = XCDR (tail))
       {
 	Lisp_Object tail_port = XCAR (tail);
-	int block_port;
 
 	if (STRINGP (tail_port))
 	  {
@@ -2085,10 +2084,10 @@ Return a pair of coding-system for decoding and encoding of PROCESS.
        (process))
 {
   process = get_process (process);
-  return Fcons(decoding_stream_coding_system
-	       (XLSTREAM (XPROCESS (process)->instream)),
-	       encoding_stream_coding_system
-	       (XLSTREAM (XPROCESS (process)->outstream)) );
+  return Fcons (decoding_stream_coding_system
+		(XLSTREAM (XPROCESS (process)->instream)),
+		encoding_stream_coding_system
+		(XLSTREAM (XPROCESS (process)->outstream)));
 }
 
 DEFUN ("set-process-input-coding-system",
@@ -2154,11 +2153,10 @@ static void
 exec_sentinel (Lisp_Object proc, Lisp_Object reason)
 {
   /* This function can GC */
-  Lisp_Object sentinel;
-  struct Lisp_Process *p = XPROCESS (proc);
   int speccount = specpdl_depth ();
+  struct Lisp_Process *p = XPROCESS (proc);
+  Lisp_Object sentinel = p->sentinel;
 
-  sentinel = p->sentinel;
   if (NILP (sentinel))
     return;
 
@@ -2172,8 +2170,7 @@ exec_sentinel (Lisp_Object proc, Lisp_Object reason)
   /* We used to bind inhibit-quit to t here, but call2_trapping_errors()
      does that for us. */
   running_asynch_code = 1;
-  call2_trapping_errors ("Error in process sentinel",
-			 sentinel, proc, reason);
+  call2_trapping_errors ("Error in process sentinel", sentinel, proc, reason);
   running_asynch_code = 0;
   restore_match_data ();
   unbind_to (speccount, Qnil);
@@ -2670,19 +2667,20 @@ DEFUN ("process-status", Fprocess_status, 1, 1, 0, /*
 Return the status of PROCESS.
 This is a symbol, one of these:
 
-run  -- for a process that is running.
-stop -- for a process stopped but continuable.
-exit -- for a process that has exited.
+run    -- for a process that is running.
+stop   -- for a process stopped but continuable.
+exit   -- for a process that has exited.
 signal -- for a process that has got a fatal signal.
-open -- for a network stream connection that is open.
+open   -- for a network stream connection that is open.
 closed -- for a network stream connection that is closed.
-nil -- if arg is a process name and no such process exists.
+nil    -- if arg is a process name and no such process exists.
+
 PROCESS may be a process, a buffer, the name of a process or buffer, or
 nil, indicating the current buffer's process.
 */
        (proc))
 {
-  Lisp_Object status;
+  Lisp_Object status_symbol;
 
   if (STRINGP (proc))
     proc = Fget_process (proc);
@@ -2690,17 +2688,17 @@ nil, indicating the current buffer's process.
     proc = get_process (proc);
 
   if (NILP (proc))
-    return proc;
+    return Qnil;
 
-  status = XPROCESS (proc)->status_symbol;
+  status_symbol = XPROCESS (proc)->status_symbol;
   if (network_connection_p (proc))
     {
-      if (EQ (status, Qrun))
-	status = Qopen;
-      else if (EQ (status, Qexit))
-	status = Qclosed;
+      if (EQ (status_symbol, Qrun))
+	status_symbol = Qopen;
+      else if (EQ (status_symbol, Qexit))
+	status_symbol = Qclosed;
     }
-  return status;
+  return status_symbol;
 }
 
 DEFUN ("process-exit-status", Fprocess_exit_status, 1, 1, 0, /*
@@ -2782,7 +2780,7 @@ process_signal_char (int tty_fd, int signo)
     }
   }
 # else /* ! defined (TCGETA) */
-#error ERROR! Using SIGNALS_VIA_CHARACTERS, but not (TIOCGLTC && TIOCGETC) || TCGETA
+#error ERROR! Using SIGNALS_VIA_CHARACTERS, but not HAVE_TERMIOS || (TIOCGLTC && TIOCGETC) || TCGETA
   /* If your system configuration files define SIGNALS_VIA_CHARACTERS,
      you'd better be using one of the alternatives above!  */
 # endif /* ! defined (TCGETA) */

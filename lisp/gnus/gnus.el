@@ -2077,7 +2077,7 @@ that that variable is buffer-local to the summary buffers."
 
 (defun gnus-simplify-mode-line ()
   "Make mode lines a bit simpler."
-  (setq mode-line-modified "-- ")
+  (setq mode-line-modified (cdr gnus-mode-line-modified))
   (when (listp mode-line-format)
     (make-local-variable 'mode-line-format)
     (setq mode-line-format (copy-sequence mode-line-format))

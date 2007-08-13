@@ -27,6 +27,7 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Q_active, Q_suffix, Q_keys, Q_style, Q_selected;
 Lisp_Object Q_filter, Q_config, Q_included;
+Lisp_Object Q_accelerator;
 Lisp_Object Qtoggle, Qradio;
 
 void
@@ -40,6 +41,7 @@ syms_of_gui (void)
   defkeyword (&Q_filter,   ":filter");
   defkeyword (&Q_config,   ":config");
   defkeyword (&Q_included, ":included");
+  defkeyword (&Q_accelerator, ":accelerator");
 
   defsymbol (&Qtoggle, "toggle");
   defsymbol (&Qradio, "radio");

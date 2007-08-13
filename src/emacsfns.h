@@ -1445,6 +1445,7 @@ extern int popup_menu_up_p;
 extern Lisp_Object Qmouse_event_p; /* events.c */
 extern Lisp_Object Q_active, Q_suffix, Q_keys, Q_style, Q_selected;
 extern Lisp_Object Q_filter, Q_config, Q_included;
+extern Lisp_Object Q_accelerator;
 extern Lisp_Object Qtoggle, Qradio;
 extern Lisp_Object Vmenubar_configuration;
 extern int menubar_show_keybindings;

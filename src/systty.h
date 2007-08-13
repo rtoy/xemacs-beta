@@ -425,34 +425,34 @@ struct emacs_tty {
    for dummy get and set definitions.  */
 #ifdef HAVE_TCATTR
   struct termios main;
-#else
+#else /* !HAVE_TCATTR */
 #ifdef HAVE_TERMIO
   struct termio main;
-#else
+#else /* !HAVE_TERMIO */
 #ifdef VMS
   struct sensemode main;
-#else
+#else /* !VMS */
 #ifdef DOS_NT
   int main;
 #else  /* not DOS_NT */
   struct sgttyb main;
 #endif /* not DOS_NT */
 #endif /* !VMS */
-#endif
-#endif
+#endif /* !HAVE_TERMIO */
+#endif /* !HAVE_TCATTR */
 
 /* If we have TERMIOS, we don't need to do this - they're taken care of
    by the tc*attr calls.  */
 #ifndef HAVE_TERMIOS
 #ifdef HAVE_LTCHARS
   struct ltchars ltchars;
-#endif
+#endif /* HAVE_LTCHARS */
 
 #ifdef HAVE_TCHARS
   struct tchars tchars;
   int lmode;
-#endif
-#endif
+#endif /* HAVE_TCHARS */
+#endif /* HAVE_TERMIOS */
 };
 
 /* Define EMACS_GET_TTY and EMACS_SET_TTY,
@@ -475,7 +475,7 @@ struct emacs_tty {
 #define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
 #else
 #define EMACS_TTY_TABS_OK(p) 1
-#endif
+#endif /* TABDLY */
 
 #else /* not def HAVE_TERMIOS */
 #ifdef HAVE_TERMIO

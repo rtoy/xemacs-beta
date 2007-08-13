@@ -80,7 +80,6 @@ int make_connection(hostarg, portarg, s)
      int *s;
 {
 #ifdef INTERNET_DOMAIN_SOCKETS
-  char localhost[HOSTNAMSZ];
   char *ptr;
   if (hostarg == NULL)
     hostarg = getenv("GNU_HOST");
@@ -114,9 +113,12 @@ int make_connection(hostarg, portarg, s)
     *s = connect_to_ipc_server();
     return (int) CONN_IPC;
 #elif defined(INTERNET_DOMAIN_SOCKETS)
-    gethostname(localhost,HOSTNAMSZ);	  /* use this host by default */    
-    *s = connect_to_internet_server(localhost, portarg);
-    return (int) CONN_INTERNET;
+    {
+      char localhost[HOSTNAMSZ];
+      gethostname(localhost,HOSTNAMSZ);	  /* use this host by default */    
+      *s = connect_to_internet_server(localhost, portarg);
+      return (int) CONN_INTERNET;
+    }
 #endif /* IPC type */
   }
 }
@@ -225,7 +227,6 @@ void send_string(s,msg)
 */
 int read_line(int s, char *dest)
 {
-  char *index = NULL;
   int length;
   int offset=0;
   char buffer[GSERV_BUFSZ+1];

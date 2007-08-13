@@ -1,3 +1,100 @@
+1997-07-19  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el: Sundry changes.
+
+1997-07-18  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/crypt.el (crypt-inhibit-formats): New variable.
+	(crypt-encoded-p): Use it.
+	Based on a patch by Tkil <tkil@scrye.com>
+
+	* utils/ring.el (ring-p): Make compatible, not obsolete.
+
+1997-07-16  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/crontab.el (crontab-get): Check for `no crontab for' as an 
+	error return.
+	Suggested by Jeff Miller <jmiller@smart.net>
+
+	* modes/arc-mode.el: Clean up comment.
+
+	* packages/tar-mode.el: Clean up comments.
+
+Wed Jul 16 23:56:58 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/:  Release 5.13.
+
+Thu Jul 17 03:36:22 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-langs.el (c-symbol-key):
+	first character must be a letter or underscore
+
+Mon Jul 14 23:43:33 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-langs.el (c-make-inherited-keymap): Change to a defun
+
+	* cc-mode/cc-langs.el:
+	Added (require 'cc-defs) to pick up the definition of c-emacs-features.
+
+	* cc-mode/README: Simplified instructions
+
+	* cc-mode/cc-make.el: New file to aid in byte-compiling in older
+	Emacsen.
+
+Sun Jul 13 21:24:37 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-cmds.el: cc-defs is required to pick up the
+	c-add-syntax macro
+
+	* cc-mode/cc-langs.el (c-mode-menu):
+	Added uncomment region and slight rearrangement of
+	items
+
+	* cc-mode/cc-cmds.el (c-electric-backspace):
+	Must get 'supercede property values to work
+	with delsel and pending-del.
+
+Thu Jul 10 20:46:09 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-engine.el (c-maybe-labelp):
+	defvar this to shut up the byte compiler
+
+Wed Jul  9 22:08:58 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el (c-initialize-builtin-style):
+	use copy-sequence instead of copy-tree
+	so the cl module isn't necessary.
+
+	* cc-mode/cc-cmds.el (c-electric-brace):
+	fix ebola eradication consequence in the
+	preserve-p test.
+
+1997-07-15  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (xemacs-hackers): Add info about IENAGA Kazuyuki.
+	(about-url-alist): Ditto.
+	(about-maintainer-info): Ditto.
+
+	* prim/modeline.el (add-minor-mode): Update docstring.
+
+1997-07-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/pending-del.el (pending-delete-mode): Use the option
+	symbol as argument to add-minor-mode, not its value.
+
+1997-07-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/pending-del.el (pending-delete-modeline-string): New
+ 	option.
+
+1997-07-14  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (auto-mode-alist): Readd objective c mode.
+	From Barry A. Warsaw <bwarsaw@CNRI.Reston.Va.US>
+
+	* prim/make-docfile.el: Print more informative message when
+	attempting to create docfile and all dumped .elcs do not exist.
+
 1997-07-13  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/files.el (save-some-buffers): Guard call to

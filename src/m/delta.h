@@ -105,7 +105,7 @@ Boston, MA 02111-1307, USA.  */
 /* Machine specific stuff */
 #define HAVE_PTYS
 #define SYSV_PTYS
-#define SIGNALS_VIA_CHARACTERS
+/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
 #define BROKEN_CLOSEDIR		/* builtin closedir is interruptible */
 #define memmove(t,f,s) safe_bcopy(f,t,s) /* for overlapping copies */
 #undef KERNEL_FILE

@@ -32,10 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include "EmacsFrame.h"
 #include <Xm/Xm.h>
 
-#ifdef __FreeBSD__
-#include <osreldate.h>
-#endif
-
 #ifndef XIM_MOTIF
 #error  XIM_MOTIF is not defined??
 #endif
@@ -46,15 +42,7 @@ Initialize_Locale (void)
   char *locale;
   
   XtSetLanguageProc (NULL, (XtLanguageProc) NULL, NULL);
-#ifdef __FreeBSD_version
-# if __FreeBSD_version >= 199701
-  if ((locale = setlocale (LC_CTYPE, "")) == NULL)
-# else
   if ((locale = setlocale (LC_ALL, "")) == NULL)
-# endif
-#else
-  if ((locale = setlocale (LC_ALL, "")) == NULL)
-#endif
     {
       stderr_out ("Can't set locale.\n");
       stderr_out ("Using C locale instead.\n");

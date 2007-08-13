@@ -35,13 +35,15 @@ all : info
 info : $(INFOS)
 
 ../../info/%-en.info : %-en.texi
-	makeinfo -o $@ $<
+	$(MAKEINFO) -o $@ $<
 
 ../../info/%-ja.info : %-ja.texi
-	$(EMACS) -batch -q -no-site-file $< -eval '(cd "../../info")' \
-	    -l texinfmt -f texinfo-format-buffer \
-	    -eval '(setq file-coding-system (quote iso-2022-7))' \
-	    -eval '(save-buffer 0)'
+	$(EMACS) -batch -q -no-site-file $< \
+		-eval '(unless (featurep (quote mule)) (kill-emacs 0))' \
+		-eval '(cd "../../info")' \
+		-l texinfmt -f texinfo-format-buffer \
+		-eval '(setq file-coding-system (quote iso-2022-7))' \
+		-eval '(save-buffer 0)'
 
 dvi: $(DVIS)
 .texi.dvi :

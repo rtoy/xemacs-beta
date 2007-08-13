@@ -97,7 +97,7 @@ crontab-filename"
 
 ;; What if crontab returns a fatal ??????  Can't we check the errorlevel ????
    (goto-char (point-min))
-   (if (search-forward "crontab:" nil t nil)
+   (if (search-forward-regexp "crontab:\\|no crontab for" nil t nil)
        (erase-buffer))
    (if (eobp)
        (crontab-initialize))

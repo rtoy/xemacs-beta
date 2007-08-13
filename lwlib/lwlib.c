@@ -56,6 +56,15 @@ Boston, MA 02111-1307, USA.  */
    */
 static widget_info *all_widget_info = NULL;
 
+/* boolean flag indicating that the menubar is active */
+int lw_menu_active = 0;
+
+/* X11 menubar widget */
+Widget lw_menubar_widget = NULL;
+
+/* whether the last menu operation was a keyboard accelerator */
+int lw_menu_accelerate = False;
+
 
 /* Forward declarations */
 static void
@@ -243,6 +252,7 @@ copy_widget_value_tree (widget_value *val, change_type change)
       copy->name = safe_strdup (val->name);
       copy->value = safe_strdup (val->value);
       copy->key = safe_strdup (val->key);
+      copy->accel = val->accel;
       copy->enabled = val->enabled;
       copy->selected = val->selected;
       copy->edited = False;
@@ -537,6 +547,13 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
       change = max (change, VISIBLE_CHANGE);
       safe_free_str (val1->key);
       val1->key = safe_strdup (val2->key);
+    }
+  if (val1->accel != val2->accel)
+    {
+      EXPLAIN (val1->name, change, VISIBLE_CHANGE, "accelerator change",
+	       val1->accel, val2->accel);
+      change = max (change, VISIBLE_CHANGE);
+      val1->accel = val2->accel;
     }
   if (val1->enabled != val2->enabled)
     {

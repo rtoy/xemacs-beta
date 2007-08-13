@@ -1314,12 +1314,10 @@ typedef struct
 	DEBUG_PRINT2 ("  Pushing reg: %d\n", this_reg);			\
         DEBUG_STATEMENT (num_regs_pushed++);				\
 									\
-	DEBUG_PRINT2 ("    start: 0x%lx\n",				\
-		      (unsigned long) regstart[this_reg]);		\
+	DEBUG_PRINT2 ("    start: 0x%p\n", regstart[this_reg]);		\
         PUSH_FAILURE_POINTER (regstart[this_reg]);			\
                                                                         \
-	DEBUG_PRINT2 ("    end: 0x%lx\n",				\
-		      (unsigned long) regend[this_reg]);		\
+	DEBUG_PRINT2 ("    end: 0x%p\n", regend[this_reg]);		\
         PUSH_FAILURE_POINTER (regend[this_reg]);			\
 									\
 	DEBUG_PRINT2 ("    info: 0x%lx\n      ",			\
@@ -1341,13 +1339,11 @@ typedef struct
     DEBUG_PRINT2 ("  Pushing high active reg: %d\n", highest_active_reg);\
     PUSH_FAILURE_INT (highest_active_reg);				\
 									\
-    DEBUG_PRINT2 ("  Pushing pattern 0x%lx: ",				\
-		  (unsigned long) pattern_place);			\
+    DEBUG_PRINT2 ("  Pushing pattern 0x%p: ", pattern_place);		\
     DEBUG_PRINT_COMPILED_PATTERN (bufp, pattern_place, pend);		\
     PUSH_FAILURE_POINTER (pattern_place);				\
 									\
-    DEBUG_PRINT2 ("  Pushing string 0x%lx: `",				\
-		  (unsigned long) string_place);			\
+    DEBUG_PRINT2 ("  Pushing string 0x%p: `", string_place);		\
     DEBUG_PRINT_DOUBLE_STRING (string_place, string1, size1, string2,   \
 				 size2);				\
     DEBUG_PRINT1 ("'\n");						\
@@ -1421,12 +1417,12 @@ typedef struct
   if (string_temp != NULL)						\
     str = (CONST char *) string_temp;					\
 									\
-  DEBUG_PRINT2 ("  Popping string 0x%lx: `", (unsigned long) str);	\
+  DEBUG_PRINT2 ("  Popping string 0x%p: `",  str);			\
   DEBUG_PRINT_DOUBLE_STRING (str, string1, size1, string2, size2);	\
   DEBUG_PRINT1 ("'\n");							\
 									\
   pat = (unsigned char *) POP_FAILURE_POINTER ();			\
-  DEBUG_PRINT2 ("  Popping pattern 0x%lx: ", (unsigned long) pat);	\
+  DEBUG_PRINT2 ("  Popping pattern 0x%p: ", pat);			\
   DEBUG_PRINT_COMPILED_PATTERN (bufp, pat, pend);			\
 									\
   /* Restore register info.  */						\
@@ -1445,12 +1441,10 @@ typedef struct
 		    * (unsigned long *) &reg_info[this_reg]);		\
 									\
       regend[this_reg] = (CONST char *) POP_FAILURE_POINTER ();		\
-      DEBUG_PRINT2 ("      end: 0x%lx\n",				\
-		    (unsigned long) regend[this_reg]);			\
+      DEBUG_PRINT2 ("      end: 0x%p\n", regend[this_reg]);		\
 									\
       regstart[this_reg] = (CONST char *) POP_FAILURE_POINTER ();	\
-      DEBUG_PRINT2 ("      start: 0x%lx\n",				\
-		    (unsigned long) regstart[this_reg]);		\
+      DEBUG_PRINT2 ("      start: 0x%p\n", regstart[this_reg]);		\
     }									\
 									\
   set_regs_matched_done = 0;						\
@@ -3324,7 +3318,6 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 #endif
   DECLARE_DESTINATION
   /* We don't push any register information onto the failure stack.  */
-  unsigned num_regs = 0;
   
   register char *fastmap = bufp->fastmap;
   unsigned char *pattern = bufp->buffer;
@@ -4420,7 +4413,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
      fails at this starting point in the input data.  */
   for (;;)
     {
-      DEBUG_PRINT2 ("\n0x%lx: ", (unsigned long) p);
+      DEBUG_PRINT2 ("\n0x%p: ", p);
 
       if (p == pend)
 	{ /* End of pattern means we might have succeeded.  */
@@ -5023,7 +5016,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           DEBUG_PRINT1 ("EXECUTING on_failure_keep_string_jump");
           
           EXTRACT_NUMBER_AND_INCR (mcnt, p);
-          DEBUG_PRINT3 (" %d (to 0x%lx):\n", mcnt, (unsigned long) (p + mcnt));
+          DEBUG_PRINT3 (" %d (to 0x%p):\n", mcnt, p + mcnt);
 
           PUSH_FAILURE_POINT (p + mcnt, NULL, -2);
           break;
@@ -5046,7 +5039,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           DEBUG_PRINT1 ("EXECUTING on_failure_jump");
 
           EXTRACT_NUMBER_AND_INCR (mcnt, p);
-          DEBUG_PRINT3 (" %d (to 0x%lx)", mcnt, (unsigned long) (p + mcnt));
+          DEBUG_PRINT3 (" %d (to 0x%p)", mcnt, p + mcnt);
 
           /* If this on_failure_jump comes right before a group (i.e.,
              the original * applied to a group), save the information
@@ -5261,7 +5254,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 	  EXTRACT_NUMBER_AND_INCR (mcnt, p);	/* Get the amount to jump.  */
           DEBUG_PRINT2 ("EXECUTING jump %d ", mcnt);
 	  p += mcnt;				/* Do the jump.  */
-          DEBUG_PRINT2 ("(to 0x%lx).\n", (unsigned long) p);
+          DEBUG_PRINT2 ("(to 0x%p).\n", p);
 	  break;
 
 	
@@ -5281,7 +5274,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           DEBUG_PRINT1 ("EXECUTING dummy_failure_jump.\n");
           /* It doesn't matter what we push for the string here.  What
              the code at `fail' tests is the value for the pattern.  */
-          PUSH_FAILURE_POINT (0, 0, -2);
+          PUSH_FAILURE_POINT (NULL, NULL, -2);
           goto unconditional_jump;
 
 
@@ -5294,7 +5287,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           DEBUG_PRINT1 ("EXECUTING push_dummy_failure.\n");
           /* See comments just above at `dummy_failure_jump' about the
              two zeroes.  */
-          PUSH_FAILURE_POINT (0, 0, -2);
+          PUSH_FAILURE_POINT (NULL, NULL, -2);
           break;
 
         /* Have to succeed matching what follows at least n times.
@@ -5310,13 +5303,11 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
                mcnt--;
 	       p += 2;
                STORE_NUMBER_AND_INCR (p, mcnt);
-               DEBUG_PRINT3 ("  Setting 0x%lx to %d.\n", (unsigned long) p,
-			     mcnt);
+               DEBUG_PRINT3 ("  Setting 0x%p to %d.\n", p, mcnt);
             }
 	  else if (mcnt == 0)
             {
-              DEBUG_PRINT2 ("  Setting two bytes from 0x%lx to no_op.\n",
-			    (unsigned long) p+2);
+              DEBUG_PRINT2 ("  Setting two bytes from 0x%p to no_op.\n", p+2);
 	      p[2] = (unsigned char) no_op;
               p[3] = (unsigned char) no_op;
               goto on_failure;
@@ -5346,8 +5337,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
             EXTRACT_NUMBER_AND_INCR (mcnt, p);
             p1 = p + mcnt;
             EXTRACT_NUMBER_AND_INCR (mcnt, p);
-            DEBUG_PRINT3 ("  Setting 0x%lx to %d.\n", (unsigned long) p1,
-			  mcnt);
+            DEBUG_PRINT3 ("  Setting 0x%p to %d.\n", p1, mcnt);
 	    STORE_NUMBER (p1, mcnt);
             break;
           }

@@ -6,7 +6,7 @@
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1993/11/21 (obsolete mh-e-mime.el)
-;; Version: $Revision: 1.1.1.2 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -48,7 +48,7 @@
 ;;;
 
 (defconst tm-mh-e/RCS-ID
-  "$Id: tm-mh-e.el,v 1.1.1.2 1996/12/21 20:50:46 steve Exp $")
+  "$Id: tm-mh-e.el,v 1.2 1997/07/19 22:11:28 steve Exp $")
 
 (defconst tm-mh-e/version (get-version-string tm-mh-e/RCS-ID))
 
@@ -73,20 +73,26 @@
   ;; Display message NUMBER of FOLDER.
   ;; Sets the current buffer to the show buffer.
   (set-buffer folder)
-  (or show-buffer
-      (setq show-buffer mh-show-buffer))
   ;; Bind variables in folder buffer in case they are local
-  (let ((msg-filename (mh-msg-filename msg-num)))
+  (let ((formfile mhl-formfile)
+	(clean-message-header mh-clean-message-header)
+	(invisible-headers mh-invisible-headers)
+	(visible-headers mh-visible-headers)
+	(msg-filename (mh-msg-filename msg-num))
+	(show-buffer mh-show-buffer)
+	)
     (if (not (file-exists-p msg-filename))
 	(error "Message %d does not exist" msg-num))
     (set-buffer show-buffer)
     (cond ((not (equal msg-filename buffer-file-name))
 	   ;; Buffer does not yet contain message.
-	   (clear-visited-file-modtime)
-	   (unlock-buffer)
-	   (setq buffer-file-name nil)	; no locking during setup
+	   (mh-unvisit-file)
 	   (setq buffer-read-only nil)
 	   (erase-buffer)
+	   ;; Changing contents, so this hook needs to be reinitialized.
+	   ;; pgp.el uses this.
+	   (if (boundp 'write-contents-hooks) ;Emacs 19
+	       (setq write-contents-hooks nil))
 	   (if mode
 	       (let* ((aname (concat "article-" folder))
 		      (abuf (get-buffer aname))
@@ -114,18 +120,21 @@
 		 (mime/viewer-mode nil nil nil
 				   aname (concat "show-" folder))
 		 (goto-char (point-min))
+		 (let ( (buffer-read-only nil) )
+		   (cond (clean-message-header
+			  (mh-clean-msg-header (point-min)
+					       invisible-headers
+					     visible-headers)
+			  (goto-char (point-min)))
+			 (t
+			  (mh-start-of-uncleaned-message))))
+		 (goto-char (point-min))
 		 )
-	     (let ((clean-message-header mh-clean-message-header)
-		   (invisible-headers mh-invisible-headers)
-		   (visible-headers mh-visible-headers)
-		   )
-	       ;; 1995/9/21
-	       ;;   modified by ARIURA <ariura@cc.tuat.ac.jp>
-	       ;;   to support mhl.
-	       (if mhl-formfile
+	     (progn
+	       (if formfile
 		   (mh-exec-lib-cmd-output "mhl" "-nobell" "-noclear"
-					   (if (stringp mhl-formfile)
-					       (list "-form" mhl-formfile))
+					   (if (stringp formfile)
+					       (list "-form" formfile))
 					   msg-filename)
 		 (insert-file-contents msg-filename))
 	       ;; end
@@ -145,11 +154,14 @@
 	       (setq buffer-file-name msg-filename)
 	       (mh-show-mode)
 	       ))
+	   (set-buffer-modified-p nil)
 	   (or (eq buffer-undo-list t)	;don't save undo info for prev msgs
 	       (setq buffer-undo-list nil))
-;;; Added by itokon (02/19/96)
+	   (set-buffer-auto-saved)
+	   ;; the parts of set-visited-file-name we want to do (no locking)
 	   (setq buffer-file-name msg-filename)
-;;;
+	   (setq buffer-backed-up nil)
+	   (auto-save-mode 1)
 	   (set-mark nil)
 	   (setq mode-line-buffer-identification
 		 (list (format mh-show-buffer-mode-line-buffer-id

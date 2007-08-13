@@ -31,8 +31,9 @@ Boston, MA 02111-1307, USA.  */
 #include "syspwd.h"
 #include "syssignal.h" /* for kill */
 
-
-#ifdef CLASH_DETECTION
+#ifndef CLASH_DETECTION
+#error  CLASH_DETECTION is not defined??
+#endif
 
 /* FSFmacs uses char *lock_dir and char *superlock_file instead of
    the Lisp variables we use. */
@@ -544,5 +545,3 @@ complex_vars_of_filelock (void)
 #endif
   /* All the rest done dynamically by startup.el */
 }
-
-#endif /* CLASH_DETECTION */

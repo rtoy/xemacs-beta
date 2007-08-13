@@ -4,7 +4,7 @@
 
 ;; Author: Matthieu Devin <devin@lucid.com>, 14 Jul 92.
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
-;; Version 2.1
+;; Version 2.2
 
 ;; This file is part of XEmacs.
 
@@ -40,7 +40,11 @@
   "Non-nil when Pending Delete mode is enabled.
 In Pending Delete mode, typed text replaces the selected region.")
 
-(add-minor-mode 'pending-delete-mode " PenDel")
+(defcustom pending-delete-modeline-string " PenDel"
+  "*String to display in the modeline when Pending Delete mode is active."
+  :type 'string)
+
+(add-minor-mode 'pending-delete-mode 'pending-delete-modeline-string)
 
 
 (defun pending-delete-active-region (&optional killp)

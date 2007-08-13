@@ -2622,8 +2622,6 @@ report_pure_usage (int report_impurities,
 
   if (pure_lossage)
     {
-      CONST long report_round = 5000;
-
       message ("\n****\tPure Lisp storage exhausted!\n"
 "\tPurespace usage: %ld of %ld\n"
  "****",

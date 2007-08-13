@@ -106,10 +106,8 @@ static char header_rcsid [] = "!Header: gnuserv.h,v 2.4 95/02/16 11:58:11 arup a
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <stdio.h>
-#ifdef STDC_HEADERS
 #include <stdlib.h>
 #include <string.h>
-#endif /* STDC_HEADERS */
 #include <signal.h>
 #include <errno.h>
 

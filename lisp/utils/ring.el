@@ -52,7 +52,7 @@
 
 ;; XEmacs change
 ;;;###autoload
-(define-obsolete-function-alias 'ring-p 'ringp)
+(define-compatible-function-alias 'ring-p 'ringp)
 
 ;;;###autoload
 (defun make-ring (size)

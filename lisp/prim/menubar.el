@@ -66,9 +66,9 @@ See `current-menubar' for a description of the syntax of a menubar."
     (setq menu (cdr menu)))
   (let (menuitem item)
     (while (keywordp (setq item (car menu)))
-      (or (memq item '(:config :included :filter))
+      (or (memq item '(:config :included :filter :accelerator))
 	  (signal 'error
-		  (list "menu keyword must be :config, :included, or :filter"
+		  (list "menu keyword must be :config, :included, :accelerator or :filter"
 			item)))
       (if (or (not (cdr menu))
 	      (vectorp (nth 1 menu))
@@ -133,7 +133,8 @@ See `current-menubar' for a description of the syntax of a menubar."
 		(while (< i L)
 		  (setq item (aref menuitem i))
 		  (cond ((not (memq item '(:active :suffix :keys :style
-						   :full :included :selected)))
+						   :full :included :selected
+						   :accelerator)))
 			 (signal 'error
 				 (list (if (keywordp item)
 					   "unknown menu item keyword"
@@ -490,6 +491,23 @@ MENU-DESC."
 			    (event-window event)))
 	   (funcall (event-function response)
 		    (event-object response))))))
+
+;; provide default bindings for menu accelerator map
+(and (boundp 'menu-accelerator-map)
+     (keymapp menu-accelerator-map)
+     (progn
+       (define-key menu-accelerator-map "\e" 'menu-escape)
+       (define-key menu-accelerator-map [left] 'menu-left)
+       (define-key menu-accelerator-map [right] 'menu-right)
+       (define-key menu-accelerator-map [up] 'menu-up)
+       (define-key menu-accelerator-map [down] 'menu-down)
+       (define-key menu-accelerator-map [return] 'menu-select)
+       (define-key menu-accelerator-map [kp_down] 'menu-down)
+       (define-key menu-accelerator-map [kp_up] 'menu-down)
+       (define-key menu-accelerator-map [kp_left] 'menu-left)
+       (define-key menu-accelerator-map [kp_right] 'menu-right)
+       (define-key menu-accelerator-map [kp_enter] 'menu-select)
+       (define-key menu-accelerator-map "\C-g" 'menu-quit)))
 
 
 (provide 'menubar)

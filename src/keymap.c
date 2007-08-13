@@ -2618,6 +2618,22 @@ event_binding (Lisp_Object event0, int accept_default)
 						      accept_default));
 }
 
+/* like event_binding, but specify a keymap to search */
+
+Lisp_Object
+event_binding_in (Lisp_Object event0, Lisp_Object keymap, int accept_default)
+{
+  /* This function can GC */
+  Lisp_Object maps[1];
+  
+  if (!KEYMAPP (keymap))
+    return Qnil;
+  
+  maps[0] = keymap;
+  return process_event_binding_result (lookup_events (event0, 1, maps,
+						      accept_default));
+}
+
 /* Attempts to find a function key mapping corresponding to the
    event-sequence whose head is event0 (sequence is threaded through
    event_next).  The return value will be the same as for event_binding(). */

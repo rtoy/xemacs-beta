@@ -1,3 +1,12 @@
+1997-07-17  Steven L Baur  <steve@altair.xemacs.org>
+
+	* gnus.el (gnus-simplify-mode-line): Use gnus-mode-line-modified
+	for the modified string.
+	* gnus-salt.el (gnus-carpal-mode): Ditto.
+
+	* gnus-ems.el (gnus-mode-line-modified): Refine detection on
+	whether narrow indicators should be used.
+
 Sat Jul 12 19:46:22 1997  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
 
 	* gnus.el: Gnus v5.4.63 is released.

@@ -341,29 +341,25 @@ s-expression like this one in your .vm file:
 	   (if myframe
 	       (set-specifier right-toolbar toolbar frame tag-set))
 	   (set-specifier right-toolbar toolbar buffer)
-	   (if myframe
-	       (set-specifier right-toolbar-width width frame tag-set)))
+	   (set-specifier right-toolbar-width width frame tag-set))
 	  ((eq vm-toolbar-orientation 'left)
 	   (setq vm-toolbar-specifier left-toolbar)
 	   (if myframe
 	       (set-specifier left-toolbar toolbar frame tag-set))
 	   (set-specifier left-toolbar toolbar buffer)
-	   (if myframe
-	       (set-specifier left-toolbar-width width frame tag-set)))
+	   (set-specifier left-toolbar-width width frame tag-set))
 	  ((eq vm-toolbar-orientation 'bottom)
 	   (setq vm-toolbar-specifier bottom-toolbar)
 	   (if myframe
 	       (set-specifier bottom-toolbar toolbar frame tag-set))
 	   (set-specifier bottom-toolbar toolbar buffer)
-	   (if myframe
-	       (set-specifier bottom-toolbar-height height frame tag-set)))
+	   (set-specifier bottom-toolbar-height height frame tag-set))
 	  (t
 	   (setq vm-toolbar-specifier top-toolbar)
 	   (if myframe
 	       (set-specifier top-toolbar toolbar frame tag-set))
 	   (set-specifier top-toolbar toolbar buffer)
-	   (if myframe
-	       (set-specifier top-toolbar-height height frame tag-set))))))
+	   (set-specifier top-toolbar-height height frame tag-set)))))
 
 (defun vm-toolbar-make-toolbar-spec ()
   (let ((button-alist '(

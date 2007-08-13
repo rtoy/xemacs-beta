@@ -568,7 +568,9 @@
 			encoding (or (vm-get-header-contents
 				      m "Content-Transfer-Encoding:")
 				     "7bit")
-			encoding (car (vm-mime-parse-content-header encoding))
+			encoding (or (car
+				      (vm-mime-parse-content-header encoding))
+				     "7bit")
 			id (vm-get-header-contents m "Content-ID:")
 			id (car (vm-mime-parse-content-header id))
 			description (vm-get-header-contents
@@ -597,7 +599,8 @@
 		    encoding (or (vm-mime-get-header-contents
 				  "Content-Transfer-Encoding:")
 				 default-encoding)
-		    encoding (car (vm-mime-parse-content-header encoding))
+		    encoding (or (car (vm-mime-parse-content-header encoding))
+				 default-encoding)
 		    id (vm-mime-get-header-contents "Content-ID:")
 		    id (car (vm-mime-parse-content-header id))
 		    description (vm-mime-get-header-contents
@@ -1741,7 +1744,6 @@ in the buffer.  The function is expected to make the message
 	  ;; we don't need to set it here.
 	  (write-region start end tempfile nil 0)
 	  (message "Creating %s glyph..." name)
-;; `((LOCALE (TAG-SET . INSTANTIATOR) ...) ...)'.  This function accepts
 	  (setq g (make-glyph
 		   (list
 		    (cons (list 'win)
@@ -1749,7 +1751,7 @@ in the buffer.  The function is expected to make the message
 		    (cons (list 'win)
 			  (vector 'string
 				  ':data
-				  (format "[Unknown/Bsd %s image encoding]\n"
+				  (format "[Unknown/Bad %s image encoding]\n"
 					  name)))
 		    (cons nil
 			  (vector 'string
@@ -1896,8 +1898,10 @@ in the buffer.  The function is expected to make the message
 	      glyph (or glyph
 			(and file
 			     (make-glyph
-			      (vector 'autodetect
-				      ':data (expand-file-name file dir))))))
+			      (list
+			       (vector 'xpm ':file
+				       (expand-file-name file dir))
+			       [nothing])))))
 	(and sym (not (boundp sym)) (set sym glyph))
 	(and glyph (set-extent-begin-glyph e glyph)))))
 

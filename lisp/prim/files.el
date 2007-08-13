@@ -1203,6 +1203,7 @@ run `normal-mode' explicitly."
     ("^/tmp/fol/" . text-mode)
     ("\\.y\\'" . c-mode)
     ("\\.lex\\'" . c-mode)
+    ("\\.m\\'" . objc-mode)
     ("\\.oak\\'" . scheme-mode)
     ("\\.s?html?\\'" . html-mode)
     ("\\.htm?l?3\\'" . html3-mode)

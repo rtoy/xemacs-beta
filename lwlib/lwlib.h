@@ -116,6 +116,13 @@ typedef struct _widget_value
   char*		value;
   /* keyboard equivalent. no implications for XtTranslations */ 
   char*		key;
+  /* accelerator key.  For XEmacs, this should be a Lisp_Object holding a
+     char or symbol suitable for passing to event_matches_key_specifier_p.
+     Outside of emacs, this can be anything: an X KeySym is a good idea.
+     lwlib provides support functions for keyboard traversal of menus.  Actual
+     implementation of those accelerators is up to the application.
+     */
+  XtPointer	accel;
   /* true if enabled */
   Boolean	enabled;
   /* true if selected */
@@ -147,6 +154,26 @@ typedef struct _widget_value
 
 
 typedef void (*lw_callback) (Widget w, LWLIB_ID id, XtPointer data);
+
+/* menu stuff */
+/* maybe this should go into a generic lwmenu.h */
+
+extern int lw_menu_active;
+
+#if defined (LWLIB_MENUBARS_LUCID)
+#include "xlwmenu.h"
+#define lw_set_menu xlw_set_menu
+#define lw_push_menu xlw_push_menu
+#define lw_pop_menu xlw_pop_menu
+#define lw_set_item xlw_set_item
+#define lw_map_menu xlw_map_menu
+#define lw_display_menu xlw_display_menu
+#define lw_kill_menus xlw_kill_menus
+#define lw_get_entries xlw_get_entries
+#define lw_menu_level xlw_menu_level
+#else /* MENUBARS_LUCID */
+/* do this for the other toolkits too */
+#endif /* MENUBARS_LUCID */
 
 void  lw_register_widget (CONST char* type, CONST char* name, LWLIB_ID id,
 			  widget_value* val, lw_callback pre_activate_cb,

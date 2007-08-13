@@ -1116,6 +1116,10 @@ converting between different encoding types can be done based on
 FILE-EXTENSION; typically t.
 ")
 
+(defvar crypt-inhibit-formats (when (featurep 'mule) '(dos))
+  "*A list of crypt abilities to turn off.  In particular, setting this 
+variable to be '(dos) will stop the dos-mode CRLF <-> LF damage.")
+
 
 ;;; This allows the user to alter contents of the encoding and encryption
 ;;; table variables without having to reload all of crypt++.
@@ -1401,7 +1405,8 @@ Derived from variable `crypt-encoding-alist' and function
       (goto-char (point-min))
       (let ((alist crypt-encoding-alist) elt found)
         (while (and alist (setq elt (car alist)) (not found))
-          (if (looking-at (nth 1 elt))
+          (if (and (looking-at (nth 1 elt))
+		   (not (memq (nth 0 elt) crypt-inhibit-formats)))
               (setq crypt-buffer-encoding-type (nth 0 elt)
                     found t)
             ;; Decrement

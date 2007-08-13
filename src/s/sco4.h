@@ -97,7 +97,7 @@ Boston, MA 02111-1307, USA.  */
 #define LIB_STANDARD "-lc /lib/crtn.o"
 
 /* Send signals to subprocesses by "typing" signal chars at them.  */
-#define SIGNALS_VIA_CHARACTERS
+/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
 
 /* Specify program for etc/fakemail to run.  Define SMAIL if you are
    using smail, don't for MMDF.  */

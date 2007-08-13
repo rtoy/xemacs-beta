@@ -2987,7 +2987,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_c_string (" ", printcharfun);
     }
 
-  sprintf (buf, "0x%lx", (long) ext);
+  sprintf (bp, "0x%p", ext);
   write_c_string (buf, printcharfun);
 }
 
@@ -5721,15 +5721,6 @@ struct copy_string_extents_1_arg
   Lisp_Object parent_in_question;
   EXTENT found_extent;
 };
-
-static int
-copy_string_extents_1_mapper (EXTENT extent, void *arg)
-{
-  struct copy_string_extents_1_arg *closure =
-    (struct copy_string_extents_1_arg *) arg;
-
-  return 0;
-}
 
 static int
 copy_string_extents_mapper (EXTENT extent, void *arg)

@@ -368,7 +368,9 @@ install-arch-dep: mkdir
 	    exec_prefix=${exec_prefix} bindir=${bindir} libdir=${libdir} \
 	    archlibdir=${archlibdir} ) ; done
 	if test `(cd ${archlibdir} && $(pwd))` != `(cd lib-src && $(pwd))`; then \
-	   ${INSTALL_DATA} lib-src/DOC ${archlibdir}/DOC ; \
+	   for f in DOC config.values; do \
+		${INSTALL_DATA} lib-src/$${f} ${archlibdir}/$${f}; \
+	   done ; \
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
 	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \
 	else true; fi

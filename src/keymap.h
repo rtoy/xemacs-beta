@@ -34,6 +34,8 @@ DECLARE_LRECORD (keymap, struct keymap);
 
 extern Lisp_Object get_keymap (Lisp_Object object, int errorp, int autoload);
 extern Lisp_Object event_binding (Lisp_Object event0, int accept_default);
+extern Lisp_Object event_binding_in (Lisp_Object event0, Lisp_Object keymap,
+				     int accept_default);
 extern Lisp_Object munging_key_map_event_binding (Lisp_Object event0,
 						  enum munge_me_out_the_door
 						  munge);

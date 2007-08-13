@@ -76,7 +76,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Don't use -lc on the NeXT.  */
 #define LIB_STANDARD "-lsys_s"
-#define LIB_MATH "-lm"
 
 #define START_FILES "pre-crt0.o"
 
@@ -121,7 +120,7 @@ typedef unsigned short mode_t;
 #undef BSD_TERMIOS
 #undef HAVE_TERMIOS
 #undef HAVE_TERMIO
-#define NO_TERMIO
+/* #define NO_TERMIO */ /* mrb */
 #define TAB3 XTABS
 #define C_OPTIMIZE_SWITCH "-pipe"
 #undef HAVE_SETITIMER

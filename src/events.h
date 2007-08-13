@@ -515,6 +515,8 @@ int read_event_from_tty_or_stream_desc (struct Lisp_Event *event,
 					struct console *c, int fd);
 #endif /* HAVE_UNIXOID_EVENT_LOOP */
 
+void event_menu_accelerate (void);
+
 extern int emacs_is_blocking;
 
 extern Lisp_Object Vcontrolling_terminal;

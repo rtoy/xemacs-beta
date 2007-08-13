@@ -224,6 +224,16 @@ an Emacs buffer." t nil)
 
 ;;;***
 
+;;;### (autoloads (config-value config-value-hash-table) "config" "utils/config.el")
+
+(autoload 'config-value-hash-table "config" "\
+Returns hashtable of configuration parameters and their values." nil nil)
+
+(autoload 'config-value "config" "\
+Return the value of the configuration parameter CONFIG_SYMBOL." nil nil)
+
+;;;***
+
 ;;;### (autoloads (docref-setup) "docref" "utils/docref.el")
 
 (autoload 'docref-setup "docref" "\
@@ -803,7 +813,7 @@ look nicer." t nil)
 (autoload 'ringp "ring" "\
 Returns t if X is a ring; nil otherwise." nil nil)
 
-(define-obsolete-function-alias 'ring-p 'ringp)
+(define-compatible-function-alias 'ring-p 'ringp)
 
 (autoload 'make-ring "ring" "\
 Make a ring that can contain SIZE elements." nil nil)

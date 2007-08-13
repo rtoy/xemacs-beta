@@ -236,4 +236,4 @@ NOTE-END
    redefines the V___ values for termio.  This means you cannot do
    ioctls using termios and termio in the same source file.
    */
-#define NO_TERMIO 1
+/* #define NO_TERMIO */ /* mrb */
