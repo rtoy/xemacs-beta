@@ -561,7 +561,7 @@ struct charset_list_closure
   Lisp_Object *charset_list;
 };
 
-static void
+static int
 add_charset_to_list_mapper (CONST void *hash_key, void *hash_contents,
 			    void *charset_list_closure)
 {
@@ -575,6 +575,7 @@ add_charset_to_list_mapper (CONST void *hash_key, void *hash_contents,
   charset_list = chcl->charset_list;
 
   *charset_list = Fcons (XCHARSET_NAME (contents), *charset_list);
+  return 0;
 }
 
 DEFUN ("charset-list", Fcharset_list, 0, 0, 0, /*

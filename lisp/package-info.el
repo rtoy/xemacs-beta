@@ -70,7 +70,10 @@ filename -- Filename of tarball to generate info for."
   (unless noninteractive
     (error "`batch-update-package-info' is to be used only with -batch"))
   (let ((version (nth 0 command-line-args-left))
-	(filename (nth 1 command-line-args-left)))
+	(filename (nth 1 command-line-args-left))
+	(requires (nth 2 command-line-args-left)))
+    (unless requires
+      (setq requires ""))
     (find-file package-info)
     (erase-buffer)
     (insert-file-contents-literally package-info-template)
@@ -82,6 +85,7 @@ filename -- Filename of tarball to generate info for."
 				      (file-name-nondirectory filename)))
     (pi-update-key "SIZE" (format "%d"
 				  (nth 7 (file-attributes filename))))
+    (pi-update-key "REQUIRES" requires)
     (save-buffers-kill-emacs 0)))
 
 (provide 'package-info)

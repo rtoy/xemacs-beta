@@ -390,7 +390,7 @@ struct face_list_closure
   Lisp_Object *face_list;
 };
 
-static void
+static int
 add_face_to_list_mapper (CONST void *hash_key, void *hash_contents,
 			 void *face_list_closure)
 {
@@ -404,6 +404,7 @@ add_face_to_list_mapper (CONST void *hash_key, void *hash_contents,
   face_list = fcl->face_list;
 
   *face_list = Fcons (XFACE (contents)->name, *face_list);
+  return 0;
 }
 
 static Lisp_Object
@@ -434,7 +435,7 @@ temporary_faces_list (void)
 }
 
 
-static void
+static int
 mark_face_as_clean_mapper (CONST void *hash_key, void *hash_contents,
 			   void *flag_closure)
 {
@@ -444,6 +445,7 @@ mark_face_as_clean_mapper (CONST void *hash_key, void *hash_contents,
   CVOID_TO_LISP (key, hash_key);
   VOID_TO_LISP (contents, hash_contents);
   XFACE (contents)->dirty = *flag;
+  return 0;
 }
 
 static void
@@ -501,7 +503,7 @@ update_inheritance_mapper_internal (Lisp_Object cur_face,
   UNGCPRO;
 }
 
-static void
+static int
 update_face_inheritance_mapper (CONST void *hash_key, void *hash_contents,
 				void *face_inheritance_closure)
 {
@@ -536,6 +538,7 @@ update_face_inheritance_mapper (CONST void *hash_key, void *hash_contents,
       update_inheritance_mapper_internal (contents, fcl->face, Qblinking);
       update_inheritance_mapper_internal (contents, fcl->face, Qreverse);
     }
+  return 0;
 }
 
 static void

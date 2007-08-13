@@ -51,9 +51,11 @@ static Lisp_Object Vall_weak_hashtables;
 static Lisp_Object mark_hashtable (Lisp_Object, void (*) (Lisp_Object));
 static void print_hashtable (Lisp_Object, Lisp_Object, int);
 static int hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth);
+static unsigned long hashtable_hash (Lisp_Object obj, int depth);
 DEFINE_LRECORD_IMPLEMENTATION ("hashtable", hashtable,
                                mark_hashtable, print_hashtable, 0,
-			       hashtable_equal, 0, struct hashtable);
+			       hashtable_equal, hashtable_hash,
+			       struct hashtable);
 
 static Lisp_Object
 mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -78,43 +80,38 @@ mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
    elements, and for each key in hashtable, the values are `equal'.
 
    This is similar to Common Lisp `equalp' of hashtables, with the
-   difference that CL requires the keys to be compared using the
-   `:test' function, which we don't do.  Doing that would require
-   consing, and consing is bad idea in `equal'.  Anyway, our method
-   should provide the same result -- if the keys are not equal
-   according to `:test', then Fgethash() in hashtable_equal_mapper()
-   will fail.  */
+   difference that CL requires the keys to be compared with the test
+   function, which we don't do.  Doing that would require consing, and
+   consing is bad idea in `equal'.  Anyway, our method should provide
+   the same result -- if the keys are not equal according to test
+   function, then Fgethash() in hashtable_equal_mapper() will fail.  */
 struct hashtable_equal_closure
 {
   int depth;
-  int equal_so_far;
+  int equal;
   Lisp_Object other_table;
 };
 
-static void
+static int
 hashtable_equal_mapper (void *key, void *contents, void *arg)
 {
   struct hashtable_equal_closure *closure =
     (struct hashtable_equal_closure *)arg;
   Lisp_Object keytem, valuetem;
+  Lisp_Object value_in_other;
 
-  /* It would be beautiful if maphash() allowed us to bail out when C
-     function returns non-zero, a la map_extents() et al.  #### Make
-     it so!  */
-  if (closure->equal_so_far)
+  CVOID_TO_LISP (keytem, key);
+  CVOID_TO_LISP (valuetem, contents);
+  /* Look up the key in the other hashtable, and compare the values.  */
+  value_in_other = Fgethash (keytem, closure->other_table, Qunbound);
+  if (UNBOUNDP (value_in_other)
+      || !internal_equal (valuetem, value_in_other, closure->depth))
     {
-      Lisp_Object value_in_other;
-      CVOID_TO_LISP (keytem, key);
-      CVOID_TO_LISP (valuetem, contents);
-      /* Look up the key in the other hashtable, and compare the
-         values.  */
-      value_in_other = Fgethash (keytem, closure->other_table, Qunbound);
-      if (UNBOUNDP (value_in_other)
-	  || !internal_equal (valuetem, value_in_other, closure->depth))
-	closure->equal_so_far = 0;
-      /* return 1; */
+      /* Give up. */
+      closure->equal = 0;
+      return 1;
     }
-  /* return 0; */
+  return 0;
 }
 
 static int
@@ -133,10 +130,71 @@ hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth)
     return 0;
 
   closure.depth = depth + 1;
-  closure.equal_so_far = 1;
+  closure.equal = 1;
   closure.other_table = t2;
   elisp_maphash (hashtable_equal_mapper, t1, &closure);
-  return closure.equal_so_far;
+  return closure.equal;
+}
+
+/* Hashtable hash function.  This hashes 5 key-value pairs.  For EQ
+   hashtables, keys are used as the hash value themselves, whereas
+   values are hashed with internal_hash().  For EQUAL hashtables, both
+   keys and values are hashed properly.  EQL tables are handled as
+   necessary.  All of this should make the hash function compatible
+   with hashtable_equal().  The elements hashed are the first five
+   mapped over by maphash().  */
+
+struct hashtable_hash_closure
+{
+  struct hashtable *table;
+  int depth;
+  unsigned long hash;
+  int count;
+};
+
+/* Needed for tests.  */
+static int lisp_object_eql_equal (CONST void *x1, CONST void *x2);
+static int lisp_object_equal_equal (CONST void *x1, CONST void *x2);
+
+static int
+hashtable_hash_mapper (void *key, void *contents, void *arg)
+{
+  struct hashtable_hash_closure *closure =
+    (struct hashtable_hash_closure *)arg;
+  Lisp_Object valuetem, keytem;
+  unsigned long keyhash;
+
+  CVOID_TO_LISP (keytem, key);
+  CVOID_TO_LISP (valuetem, contents);
+
+  if (!closure->table->test_function)
+    /* For eq, use key itself as hash.  */
+    keyhash = LISP_HASH (keytem);
+  else if (closure->table->test_function == lisp_object_eql_equal)
+    /* The same as eq, unless the key is float.  */
+    keyhash = (FLOATP (keytem)
+	       ? internal_hash (keytem, closure->depth) : LISP_HASH (keytem));
+  else
+    /* equal: hash the key properly. */
+    keyhash = internal_hash (keytem, closure->depth);
+
+  closure->hash = HASH3 (closure->hash, keyhash,
+			 internal_hash (valuetem, closure->depth));
+  return (++closure->count > 5) ? 1 : 0;
+}
+
+static unsigned long
+hashtable_hash (Lisp_Object obj, int depth)
+{
+  struct hashtable_hash_closure closure;
+
+  closure.table = XHASHTABLE (obj);
+  closure.depth = depth + 1;
+  closure.hash = 0;
+  closure.count = 0;
+
+  elisp_maphash (hashtable_hash_mapper, obj, &closure);
+  return closure.hash;
 }
 
 /* Printing hashtables.
@@ -157,7 +215,7 @@ hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth)
    #<hashtable size 2/13 data (key1 value1 key2 value2) 0x874d>
 
    The data is truncated to four pairs, and the rest is shown with
-   `...'.  The actual printer is non-consing.  */
+   `...'.  This printer does not cons.  */
 
 struct print_hashtable_data_closure
 {
@@ -168,7 +226,7 @@ struct print_hashtable_data_closure
   Lisp_Object printcharfun;
 };
 
-static void
+static int
 print_hashtable_data_mapper (void *key, void *contents, void *arg)
 {
   Lisp_Object keytem, valuetem;
@@ -188,6 +246,7 @@ print_hashtable_data_mapper (void *key, void *contents, void *arg)
       print_internal (valuetem, closure->printcharfun, 1);
     }
   ++closure->count;
+  return 0;
 }
 
 /* Print the data of the hashtable.  This maps through a Lisp
@@ -204,10 +263,6 @@ print_hashtable_data (Lisp_Object hashtable, Lisp_Object printcharfun)
   write_c_string ((!print_readably && closure.count > 4) ? " ...)" : ")",
 		  printcharfun);
 }
-
-/* Needed for tests.  */
-static int lisp_object_eql_equal (CONST void *x1, CONST void *x2);
-static int lisp_object_equal_equal (CONST void *x1, CONST void *x2);
 
 static void
 print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
@@ -226,8 +281,10 @@ print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		"you-d-better-not-see-this"));
       write_c_string (buf, printcharfun);
     }
-  /* These checks are way kludgy... */
-  if (table->test_function == NULL)
+  /* These checks have a kludgy look to them, but they are safe.  Due
+     to nature of hashing, you cannot use arbitrary test functions
+     anyway.  */
+  if (!table->test_function)
     write_c_string (" test eq", printcharfun);
   else if (table->test_function == lisp_object_equal_equal)
     write_c_string (" test equal", printcharfun);
@@ -521,6 +578,8 @@ Return t if OBJ is a hashtable, else nil.
 int
 lisp_string_equal (CONST void *x1, CONST void *x2)
 {
+  /* This is wrong anyway.  You can't use strcmp() on Lisp strings,
+     because they can contain zero characters.  */
   Lisp_Object str1, str2;
   CVOID_TO_LISP (str1, x1);
   CVOID_TO_LISP (str2, x2);
@@ -803,7 +862,7 @@ verify_function (Lisp_Object function, CONST char *description)
   signal_error (Qinvalid_function, list1 (function));
 }
 
-static void
+static int
 lisp_maphash_function (CONST void *void_key,
 		       void *void_val,
 		       void *void_fn)
@@ -814,6 +873,7 @@ lisp_maphash_function (CONST void *void_key,
   VOID_TO_LISP (val, void_val);
   VOID_TO_LISP (fn, void_fn);
   call2 (fn, key, val);
+  return 0;
 }
 
 
@@ -840,7 +900,9 @@ each key and value in the table.
    lisp hashtable.
  */
 void
-elisp_maphash (maphash_function function, Lisp_Object hashtable, void *closure)
+elisp_maphash (void (*function) (CONST void *key, void *contents,
+				 void *extra_arg),
+	       Lisp_Object hashtable, void *closure)
 {
   struct _C_hashtable htbl;
 
@@ -850,7 +912,10 @@ elisp_maphash (maphash_function function, Lisp_Object hashtable, void *closure)
 }
 
 void
-elisp_map_remhash (remhash_predicate function, Lisp_Object hashtable,
+elisp_map_remhash (int (*function) (CONST void *key,
+				    CONST void *contents,
+				    void *extra_arg),
+		   Lisp_Object hashtable,
 		   void *closure)
 {
   struct _C_hashtable htbl;
@@ -933,7 +998,7 @@ struct marking_closure
   int did_mark;
 };
 
-static void
+static int
 marking_mapper (CONST void *key, void *contents, void *closure)
 {
   Lisp_Object keytem, valuetem;
@@ -1001,7 +1066,7 @@ marking_mapper (CONST void *key, void *contents, void *closure)
       abort (); /* Huh? */
     }
 
-  return;
+  return 0;
 }
 
 int
@@ -1189,6 +1254,19 @@ internal_hash (Lisp_Object obj, int depth)
   return LISP_HASH (obj);
 }
 
+#if 0
+xxDEFUN ("internal-hash-value", Finternal_hash_value, 1, 1, 0, /*
+Hash value of OBJECT.  For debugging.
+The value is returned as (HIGH . LOW).
+*/
+       (object))
+{
+  /* This function is pretty 32bit-centric. */
+  unsigned long hash = internal_hash (object, 0);
+  return Fcons (hash >> 16, hash & 0xffff);
+}
+#endif
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -1209,6 +1287,9 @@ syms_of_elhash (void)
   DEFSUBR (Fmake_weak_hashtable);
   DEFSUBR (Fmake_key_weak_hashtable);
   DEFSUBR (Fmake_value_weak_hashtable);
+#if 0
+  DEFSUBR (Finternal_hash_value);
+#endif
   defsymbol (&Qhashtablep, "hashtablep");
   defsymbol (&Qhashtable, "hashtable");
   defsymbol (&Qweak, "weak");

@@ -1,5 +1,6 @@
 /* Why the hell is XEmacs so fucking slow?
    Copyright (C) 1996 Ben Wing.
+   Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -28,27 +29,35 @@ Boston, MA 02111-1307, USA.  */
 #include "syssignal.h"
 #include "systime.h"
 
-/*
+/* We implement our own profiling scheme so that we can determine
+   things like which Lisp functions are occupying the most time.  Any
+   standard OS-provided profiling works on C functions, which is
+   somewhat useless.
 
-We implement our own profiling scheme so that we can determine things
-like which Lisp functions are occupying the most time.  Any standard
-OS-provided profiling works on C functions, which is somewhat useless.
+   The basic idea is simple.  We set a profiling timer using setitimer
+   (ITIMER_PROF), which generates a SIGPROF every so often.  (This
+   runs not in real time but rather when the process is executing or
+   the system is running on behalf of the process.) When the signal
+   goes off, we see what we're in, and add by 1 the count associated
+   with that function.
 
-The basic idea is simple.  We set a profiling timer using
-setitimer (ITIMER_PROF), which generates a SIGPROF every so often.
-\(This runs not in real time but rather when the process is executing
-or the system is running on behalf of the process.) When the signal
-goes off, we see what we're in, and add by 1 the count associated with
-that function.
+   It would be nice to use the Lisp allocation mechanism etc. to keep
+   track of the profiling information, but we can't because that's not
+   safe, and trying to make it safe would be much more work than is
+   worth.
 
-It would be nice to use the Lisp allocation mechanism etc. to keep
-track of the profiling information, but we can't because that's not
-safe, and trying to make it safe would be much more work than is
-worth.
 
-*/
+   Jan 1998: In addition to this, I have added code to remember call
+   counts of Lisp funcalls.  The profile_increase_call_count()
+   function is called from funcall_recording_as(), and serves to add
+   data to Vcall_count_profile_table.  This mechanism is much simpler
+   and independent of the SIGPROF-driven one.  It uses the Lisp
+   allocation mechanism normally, since it is not called from a
+   handler.  It may even be useful to provide a way to turn on only
+   one profiling mechanism, but I haven't done so yet.  --hniksic */
 
 c_hashtable big_profile_table;
+Lisp_Object Vcall_count_profile_table;
 
 int default_profiling_interval;
 
@@ -68,6 +77,22 @@ Lisp_Object QSunknown;
    inside_profiling in case the timeout between signal calls is short
    enough to catch us while we're already in there. */
 static volatile int inside_profiling;
+
+/* Increase the value of OBJ in Vcall_count_profile_table hashtable.
+   If hashtable is nil, create it first.  */
+void
+profile_increase_call_count (Lisp_Object obj)
+{
+  Lisp_Object count;
+
+  if (NILP (Vcall_count_profile_table))
+    Vcall_count_profile_table = Fmake_hashtable (make_int (100), Qeq);
+
+  count = Fgethash (obj, Vcall_count_profile_table, Qzero);
+  if (!INTP (count))
+    count = Qzero;
+  Fputhash (obj, make_int (1 + XINT (count)), Vcall_count_profile_table);
+}
 
 static SIGTYPE
 sigprof_handler (int signo)
@@ -194,7 +219,7 @@ struct get_profiling_info_closure
   Lisp_Object accum;
 };
 
-static void
+static int
 get_profiling_info_maphash (CONST void *void_key,
 			    void *void_val,
 			    void *void_closure)
@@ -209,6 +234,7 @@ get_profiling_info_maphash (CONST void *void_key,
   val = (EMACS_INT) void_val;
 
   closure->accum = Fcons (Fcons (key, make_int (val)), closure->accum);
+  return 0;
 }
 
 DEFUN ("get-profiling-info", Fget_profiling_info, 0, 0, 0, /*
@@ -236,7 +262,7 @@ struct mark_profiling_info_closure
   void (*markfun) (Lisp_Object);
 };
 
-static void
+static int
 mark_profiling_info_maphash (CONST void *void_key,
 			     void *void_val,
 			     void *void_closure)
@@ -245,6 +271,7 @@ mark_profiling_info_maphash (CONST void *void_key,
 
   CVOID_TO_LISP (key, void_key);
   (((struct mark_profiling_info_closure *) void_closure)->markfun) (key);
+  return 0;
 }
 
 void
@@ -274,6 +301,8 @@ Clear out the recorded profiling info.
       clrhash (big_profile_table);
       inside_profiling = 0;
     }
+  if (!NILP(Vcall_count_profile_table))
+    Fclrhash (Vcall_count_profile_table);
   return Qnil;
 }
 
@@ -305,6 +334,13 @@ Note that the time in question is CPU time (when the program is executing
 or the kernel is executing on behalf of the program) and not real time.
 */ );
   default_profiling_interval = 1000;
+
+  DEFVAR_LISP ("call-count-profile-table", &Vcall_count_profile_table /*
+The table where call-count information is stored by the profiling primitives.
+This is a hashtable whose keys are funcallable objects, and whose
+ values are their call counts (integers).
+*/ );
+  Vcall_count_profile_table = Qnil;
 
   inside_profiling = 0;
 

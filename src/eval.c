@@ -51,6 +51,9 @@ struct backtrace *backtrace_list;
 #define POP_BACKTRACE(bt) \
   do { backtrace_list = (bt).next; } while (0)
 
+extern int profiling_active;
+void profile_increase_call_count (Lisp_Object);
+
 /* This is the list of current catches (and also condition-cases).
    This is a stack: the most recent catch is at the head of the
    list.  Catches are created by declaring a 'struct catchtag'
@@ -3199,6 +3202,10 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
   }
 #endif
 
+  /* It might be useful to place this *after* all the checks.  */
+  if (profiling_active)
+    profile_increase_call_count (fun);
+
   if (SYMBOLP (fun))
     fun = indirect_function (fun, 1);
 
@@ -5047,6 +5054,10 @@ function calls.
 		  int i;
 		  for (i = 0; i < backlist->nargs; i++)
 		    {
+		      if (!i && EQ(tem, Qbyte_code)) {
+			write_c_string("\"...\"", stream);
+			continue;
+		      }
 		      if (i != 0) write_c_string (" ", stream);
 		      Fprin1 (backlist->args[i], stream);
 		    }

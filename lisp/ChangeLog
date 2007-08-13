@@ -1,3 +1,18 @@
+1998-01-12  SL Baur  <steve@altair.xemacs.org>
+
+	* menubar.el (check-menu-syntax): Emergency dirty fix -- the 0 plist
+	bug strikes a menudescriptor.
+
+	* package-get-base.el (package-get-base): Updated.
+
+	* package-info.el (batch-update-package-info): Derive REQUIRES
+	from the Makefile.
+
+1998-01-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* files.el (save-some-buffers): Don't play games with deleting
+	other windows if we are in the minibuffer window.
+
 1998-01-08  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
 
 	* modeline.el (modeline-minor-mode-menu): Add support for :active

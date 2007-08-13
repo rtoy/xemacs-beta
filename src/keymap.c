@@ -681,7 +681,7 @@ struct keymap_submaps_closure
   Lisp_Object *result_locative;
 };
 
-static void
+static int
 keymap_submaps_mapper_0 (CONST void *hash_key, void *hash_contents,
                          void *keymap_submaps_closure)
 {
@@ -690,9 +690,10 @@ keymap_submaps_mapper_0 (CONST void *hash_key, void *hash_contents,
   VOID_TO_LISP (contents, hash_contents);
   /* Perform any autoloads, etc */
   Fkeymapp (contents);
+  return 0;
 }
 
-static void
+static int
 keymap_submaps_mapper (CONST void *hash_key, void *hash_contents,
                        void *keymap_submaps_closure)
 {
@@ -707,6 +708,7 @@ keymap_submaps_mapper (CONST void *hash_key, void *hash_contents,
 
   if (!NILP (Fkeymapp (contents)))
     *result_locative = Fcons (Fcons (key, contents), *result_locative);
+  return 0;
 }
 
 static int map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
@@ -1110,7 +1112,7 @@ struct copy_keymap_inverse_closure
   Lisp_Object inverse_table;
 };
 
-static void
+static int
 copy_keymap_inverse_mapper (CONST void *hash_key, void *hash_contents,
                             void *copy_keymap_inverse_closure)
 {
@@ -1125,6 +1127,8 @@ copy_keymap_inverse_mapper (CONST void *hash_key, void *hash_contents,
   if (CONSP (inverse_contents))
     inverse_contents = Fcopy_sequence (inverse_contents);
   Fputhash (key, inverse_contents, closure->inverse_table);
+
+  return 0;
 }
 
 
@@ -1157,7 +1161,7 @@ struct copy_keymap_closure
   struct keymap *self;
 };
 
-static void
+static int
 copy_keymap_mapper (CONST void *hash_key, void *hash_contents,
                     void *copy_keymap_closure)
 {
@@ -1178,6 +1182,7 @@ copy_keymap_mapper (CONST void *hash_key, void *hash_contents,
   if (KEYMAPP (contents))
     keymap_store_internal (key, closure->self,
 			   copy_keymap (contents));
+  return 0;
 }
 
 static Lisp_Object
@@ -2765,7 +2770,7 @@ struct map_keymap_unsorted_closure
 };
 
 /* used by map_keymap() */
-static void
+static int
 map_keymap_unsorted_mapper (CONST void *hash_key, void *hash_contents,
                             void *map_keymap_unsorted_closure)
 {
@@ -2796,6 +2801,7 @@ map_keymap_unsorted_mapper (CONST void *hash_key, void *hash_contents,
       key.modifiers = modifiers;
       ((*closure->fn) (&key, contents, closure->arg));
     }
+  return 0;
 }
 
 
@@ -2805,7 +2811,7 @@ struct map_keymap_sorted_closure
 };
 
 /* used by map_keymap_sorted() */
-static void
+static int
 map_keymap_sorted_mapper (CONST void *hash_key, void *hash_contents,
                           void *map_keymap_sorted_closure)
 {
@@ -2816,6 +2822,7 @@ map_keymap_sorted_mapper (CONST void *hash_key, void *hash_contents,
   CVOID_TO_LISP (key, hash_key);
   VOID_TO_LISP (contents, hash_contents);
   *list = Fcons (Fcons (key, contents), *list);
+  return 0;
 }
 
 

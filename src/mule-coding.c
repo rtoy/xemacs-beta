@@ -439,7 +439,7 @@ struct coding_system_list_closure
   Lisp_Object *coding_system_list;
 };
 
-static void
+static int
 add_coding_system_to_list_mapper (CONST void *hash_key, void *hash_contents,
 				  void *coding_system_list_closure)
 {
@@ -454,6 +454,7 @@ add_coding_system_to_list_mapper (CONST void *hash_key, void *hash_contents,
 
   *coding_system_list = Fcons (XCODING_SYSTEM (contents)->name,
 			       *coding_system_list);
+  return 0;
 }
 
 DEFUN ("coding-system-list", Fcoding_system_list, 0, 0, 0, /*

@@ -445,8 +445,9 @@ apropos_mapper (Lisp_Object symbol, void *arg)
 
 DEFUN ("apropos-internal", Fapropos_internal, 1, 2, 0, /*
 Show all symbols whose names contain match for REGEXP.
-If optional 2nd arg PREDICATE is non-nil, (funcall PRED SYM) is done
-for each symbol and a symbol is mentioned only if that returns non-nil.
+If optional 2nd arg PREDICATE is non-nil, (funcall PREDICATE SYMBOL)
+ is done for each symbol and a symbol is mentioned only if that
+ returns non-nil.
 Return list of symbols found.
 */
        (regexp, predicate))

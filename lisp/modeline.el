@@ -300,19 +300,42 @@ in the list takes precedence.")
 (defvar place)
 (defun add-minor-mode (toggle name &optional keymap after toggle-fun)
   "Add a minor mode to `minor-mode-alist' and `minor-mode-map-alist'.
-TOGGLE is a symbol whose value as a variable specifies whether the
-minor mode is active.  NAME is the name that should appear in the
-modeline (it should either be a string beginning with a space or a
-symbol).  KEYMAP is a keymap to make active when the minor mode is
-active.  AFTER is the toggling symbol used for another minor mode.  If
-AFTER is non-nil, then it is used to position the new mode in the
-minor-mode alists.  TOGGLE-FUN specifies an interactive function that
-is called to toggle the mode on and off; this affects what happens
-when button2 is pressed on the mode, and when button3 is pressed
-somewhere in the list of modes.  If TOGGLE-FUN is nil and TOGGLE names
-an interactive function, TOGGLE is used as the toggle function.
 
-Example:  (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
+TOGGLE is a symbol whose value as a variable specifies whether the
+minor mode is active.
+
+ If TOGGLE has the `:menu-tag' property set to a string, that string
+ will be used as the label on the `modeline-minor-mode-menu' instead
+ of TOGGLE's symbol-name.
+
+ TOGGLE may have an `:included' property, which determines whether a
+ menu button will be shown for this minor mode in the
+ `modeline-minor-mode-menu'.  This should be either a boolean
+ variable, or an expression evaluating to t or nil.  \(See the
+ documentation of `current-menubar' for more information.)
+
+ It may have an `:active' property also, as documented in
+ `current-menubar'.
+
+NAME is the name that should appear in the modeline.  It should either
+be a string beginning with a space, or a symbol with a similar string
+as its value.
+
+KEYMAP is a keymap to make active when the minor mode is active.
+
+AFTER is the toggling symbol used for another minor mode.  If AFTER is
+non-nil, then it is used to position the new mode in the minor-mode
+alists.
+
+TOGGLE-FUN specifies an interactive function that is called to toggle
+the mode on and off; this affects what happens when button2 is pressed
+on the mode, and when button3 is pressed somewhere in the list of
+modes.  If TOGGLE-FUN is nil and TOGGLE names an interactive function,
+TOGGLE is used as the toggle function.
+
+Example: (put 'view-minor-mode :menu-tag \"View (minor)\")
+         (put 'view-minor-mode :included '(buffer-file-name))
+         (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
   (let (el place
 	(add-elt #'(lambda (elt sym)
 		     (cond ((null after) ; add to front
@@ -373,23 +396,32 @@ Example:  (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 		    'minor-mode-map-alist)))
     ))
 
+;; gettext anyone?
+(put 'abbrev-mode :menu-tag "Abbreviation Expansion")
 (add-minor-mode 'abbrev-mode " Abbrev")
+;; only when visiting a file...
 (add-minor-mode 'overwrite-mode 'overwrite-mode)
+(put 'auto-fill-function :menu-tag "Auto Fill")
 (add-minor-mode 'auto-fill-function " Fill" nil nil 'auto-fill-mode)
-;; not really a minor mode...
-(add-minor-mode 'defining-kbd-macro " Def")
+
+;; what's the meaning of `####' vs `FIXME' or ...?
+;; not really a minor mode...  and it doesn't work right anyway.
+;;(put 'defining-kbd-macro :menu-tag "Defining kbd macro")
+;;(add-minor-mode 'defining-kbd-macro " Def") FIXME
 
 (defun modeline-minor-mode-menu (event)
+  "The menu that pops up when you press `button3' inside the
+parentheses on the modeline."
   (interactive "e")
   (save-excursion
     (set-buffer (event-buffer event))
     (popup-menu-and-execute-in-window
-     (cons (format "Minor Mode Commands for %S:"
-		   (buffer-name (event-buffer event)))
+     (cons "Minor Mode Toggles"
 	   (apply 'nconc
 		  (mapcar
 		   #'(lambda (x)
 		       (let* ((toggle-sym (car x))
+			      (menu-tag (get toggle-sym :menu-tag nil))
 			      (toggle-fun
 			       (or (get toggle-sym
 					'modeline-toggle-function)
@@ -398,15 +430,23 @@ Example:  (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 					toggle-sym))))
 			 (if (not toggle-fun) nil
 			   (list (vector
-				  (concat (if (and (boundp toggle-sym)
-						   (symbol-value toggle-sym))
-					      "turn off " "turn on ")
-					  (if (symbolp toggle-fun)
-					      (symbol-name toggle-fun)
-					    (symbol-name toggle-sym)))
-
+				  (or (and (stringp menu-tag)
+					   menu-tag)
+				      (setq menu-tag (capitalize
+						      (replace-in-string
+						       (replace-in-string
+							(replace-in-string (if (symbolp toggle-fun)
+									       (symbol-name toggle-fun)
+									     (symbol-name toggle-sym))
+									   "-" " ")
+							"minor" " (minor)")
+						       " mode" ""))))
 				  toggle-fun
-				  t)))))
+				  :active (get toggle-sym :active t)
+				  :included (get toggle-sym :included t)
+				  :style 'toggle
+				  :selected (and (boundp toggle-sym)
+						 toggle-sym))))))
 		   minor-mode-alist)))
      event)))
 

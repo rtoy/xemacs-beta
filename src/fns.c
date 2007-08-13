@@ -269,11 +269,12 @@ which is at least the number of distinct elements.
 DEFUN ("string-equal", Fstring_equal, 2, 2, 0, /*
 T if two strings have identical contents.
 Case is significant.  Text properties are ignored.
-(Under XEmacs, `equal' also ignores text properties and extents in
-strings, but this is not the case under FSF Emacs.)
+\(Under XEmacs, `equal' also ignores text properties and extents in
+strings, but this is not the case under FSF Emacs 19.  In FSF Emacs 20
+`equal' is the same as in XEmacs, in that respect.)
 Symbols are also allowed; their print names are used instead.
 */
-  (s1, s2))
+       (s1, s2))
 {
   int len;
 

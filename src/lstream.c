@@ -898,7 +898,9 @@ stdio_flusher (Lstream *stream)
   if (stream->flags & LSTREAM_FL_WRITE)
     return fflush (str->file);
   else
-    /* call fpurge?  Only exists on some systems. */
+    /* call fpurge?  Only exists on some systems.  #### Why not add a
+       configure check for HAVE_FPURGE and utilize it on systems that
+       support it?  --hniksic */
     return 0;
 }
 

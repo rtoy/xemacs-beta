@@ -100,10 +100,10 @@ been available since 20.3, only it hasn't been announced before.
 * Lisp and internal changes in XEmacs 20.5
 ==========================================
 
-** There is initial support for 30-bit integers in elisp (normally,
+** There is initial support for 31-bit integers in elisp (normally,
 integers are only 28 bits wide on 32-bit machines.)  Compile with
 -DUSE_MINIMAL_TAGBITS to test.  With this change, the maximum buffer
-size on 32-bit machines is bumped from 128M to 512M.
+size on 32-bit machines is bumped from 128M to 1G.
 
 ** The internal image code now uses the ImageMagick library as an
 interface to various image-related functions.  You still need the
@@ -123,6 +123,11 @@ If `print-readably' is non-nil, a more relaxed syntax is used; for
 instance:
 
    #<hashtable size 2/13 data (key1 value1 key2 value2) 0x874d>
+
+** When profiling is in effect, a call-count of all recorded functions
+is now calculated.  This information is stored in
+`call-count-profile-table', and is utilized by `profile-results' as
+well as the new function `profile-call-count-results'.
 
 ** The `make-event' function now supports the TYPE and PLIST
 arguments, which can be used to create many various events from Lisp.
@@ -146,6 +151,11 @@ a formatted warning, with a non-default CLASS or LABEL.
 very large buffers.  This is achieved by caching the line numbers of
 recent buffer positions, and reusing them.  This cache is used only in
 the buffers where `line-number-mode' is in effect.
+
+* Changes in XEmacs 20.4
+========================
+
+** XEmacs 20.4 is a bugfix release with no user-visible changes.
 
 
 * Changes in XEmacs 20.3

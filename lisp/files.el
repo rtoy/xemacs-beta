@@ -2351,6 +2351,7 @@ Optional second argument EXITING means ask about certain non-file buffers
     (save-window-excursion
       ;; This can bomb during autoloads generation
       (when (and (not noninteractive)
+		 (not (eq (selected-window) (minibuffer-window)))
 		 save-some-buffers-query-display-buffer)
 	(delete-other-windows))
       ;; XEmacs - do not use queried flag

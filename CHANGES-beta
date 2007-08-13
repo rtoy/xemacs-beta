@@ -1,4 +1,9 @@
 							-*- indented-text -*-
+to 20.5 beta19 "Damani"
+-- Package building update
+-- Hash and profile patches from Hrvoje Niksic
+-- Miscellaneous bug fixes
+
 to 20.5 beta18 "Daera Din Panah"
 -- Miscellaneous and sundry fixes for 20.4 merged
 -- MS Windows updates from Kirill Katsnelson and Andy Piper

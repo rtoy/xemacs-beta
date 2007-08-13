@@ -70,7 +70,7 @@ void puthash (CONST void *key, void *contents, c_hashtable hash);
 /* delete the entry which key is key */
 void remhash (CONST void *key, c_hashtable hash);
 
-typedef void (*maphash_function) (CONST void* key, void* contents, void* arg);
+typedef int (*maphash_function) (CONST void* key, void* contents, void* arg);
 
 typedef int (*remhash_predicate) (CONST void* key, CONST void* contents,
                                   void* arg);

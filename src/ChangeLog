@@ -1,4 +1,80 @@
-Sat Jan 10 11:36:11 1998    <andyp@parallax.co.uk>
+1998-01-12  SL Baur  <steve@altair.xemacs.org>
+
+	* profile.c (Fclear_profiling_info): Fix typing error.
+
+	* elhash.c (elisp_map_remhash): Fix typing error.
+	(elisp_maphash): Ditto.
+
+1998-01-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* mule-ccl.c (Fccl_execute_on_string): Use Dynar_free to free a
+ 	Dynarr.
+
+1998-01-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* profile.c (vars_of_profile): New variable
+ 	`call-count-profile-table'.
+	(Fclear_profiling_info): Clear call-count-profile-table.
+
+	* eval.c (funcall_recording_as): Use it.
+
+	* profile.c (profile_increase_call_count): New function.
+
+	* lstream.c (stdio_flusher): Comment addition.
+
+	* objects-msw.c (mswindows_string_to_color): Support #RRRGGGBBB,
+	as well as #RRGGBB.
+	(mswindows_X_color_map): Reformatted.
+
+1998-01-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* line-number.c (invalidate_line_number_cache): Comment fixup.
+
+	* symbols.c (Fapropos_internal): Docstring fix.
+
+	* fns.c (Fstring_equal): Docstring fix.
+
+1998-01-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* profile.c (get_profiling_info_maphash): Return int.
+	(mark_profiling_info_maphash): Ditto.
+
+	* elhash.c (Finternal_hash_value): New debugging function,
+	undefined by default.
+
+1998-01-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* mule-coding.c (add_coding_system_to_list_mapper): Ditto.
+
+	* mule-charset.c (add_charset_to_list_mapper): Return int.
+
+	* faces.c (add_face_to_list_mapper): Return int.
+	(mark_face_as_clean_mapper): Ditto.
+	(update_face_inheritance_mapper): Ditto.
+
+	* keymap.c (keymap_submaps_mapper_0): Return int.
+	(keymap_submaps_mapper): Ditto.
+	(copy_keymap_inverse_mapper): Ditto.
+	(copy_keymap_mapper): Ditto.
+	(map_keymap_unsorted_mapper): Ditto.
+	(map_keymap_sorted_mapper): Ditto.
+
+	* elhash.c (hashtable): Added a hash method.
+	(hashtable_hash): New function.
+
+1998-01-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* elhash.c (lisp_maphash_function): Return 0.
+	(hashtable_equal_mapper): Bail out when an element is not `equal'.
+
+	* hash.c (maphash): Bail out if map function returns non-zero.
+
+1998-01-11  SL Baur  <steve@altair.xemacs.org>
+
+	* eval.c (Fbacktrace): Treat first parameter to byte-code
+	specially.
+
+Sat Jan 10 11:36:11 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* config.h.in: undef HAVE_SYS_UN_H so that it gets defined by
 	configure for gnuserv with UNIX_DOMAIN_SOCKETS.

@@ -134,8 +134,15 @@ invalidate_line_number_cache (struct buffer *b, Bufpos pos)
       if (!CONSP (ring[i]))
 	break;
       /* As the marker stays behind the insertions, this check might
-         as well be >=.  However, Finsert_before_markers can move the
-         marker anyway, which bites in shell buffers.  */
+         as well be `>'.  However, Finsert_before_markers can move the
+         marker anyway, which bites in shell buffers.
+
+	 #### This is wrong; it works right, but forces recreation of
+	 the cached marker (and recalculation of newlines) every time
+	 a newline is inserted at point, which is way losing.  Isn't
+	 there a way to make a marker impervious to
+	 Finsert_before_markers()??  Maybe I should convert to using
+	 extents.  */
       if (marker_position (XCAR (ring[i])) >= pos)
 	{
 	  /* Get the marker out of the way.  */

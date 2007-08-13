@@ -453,12 +453,18 @@ maphash (maphash_function mf, c_hashtable hash, void *arg)
   hentry *limit;
 
   if (hash->zero_set)
-    ((*mf) (0, hash->zero_entry, arg));
+    {
+      if (((*mf) (0, hash->zero_entry, arg)))
+	return;
+    }
 
   for (e = hash->harray, limit = e + hash->size; e < limit; e++)
     {
       if (e->key)
-	((*mf) (e->key, e->contents, arg));
+	{
+	  if (((*mf) (e->key, e->contents, arg)))
+	    return;
+	}
     }
 }
 

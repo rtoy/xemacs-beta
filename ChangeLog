@@ -1,3 +1,12 @@
+1998-01-12  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta19 is released.
+
+1998-01-12  Damon Lipparelli  <lipp@primus.com>
+
+	* Makefile.in: Yow!  Fixed paths to install dirs when --prefix !=
+	--exec-prefix.
+
 1998-01-10  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta18 is released.

@@ -967,7 +967,7 @@ As side effect, each element of REGISTER holds the value of
   CHECK_VECTOR (ccl_prog);
   CHECK_VECTOR (reg);
   if (XVECTOR_LENGTH (reg) != 8)
-    error ("Invalid length of vector REGISTERS");
+    signal_simple_error ("Vector should be of length 8", reg);
 
   setup_ccl_program (&ccl, ccl_prog);
   for (i = 0; i < 8; i++)
@@ -1012,7 +1012,7 @@ CCL-PROGRAM on exit.
   CHECK_VECTOR (ccl_prog);
   CHECK_VECTOR (status);
   if (XVECTOR_LENGTH (status) != 9)
-    error ("Invalid length of vector STATUS");
+    signal_simple_error ("Vector should be of length 9", status);
   CHECK_STRING (str);
   GCPRO3 (ccl_prog, status, str);
 
@@ -1040,7 +1040,7 @@ CCL-PROGRAM on exit.
   UNGCPRO;
 
   val = make_string (Dynarr_atp (outbuf, 0), produced);
-  free (outbuf);
+  Dynarr_free (outbuf);
   QUIT;
   if (ccl.status != CCL_STAT_SUCCESS
       && ccl.status != CCL_STAT_SUSPEND)

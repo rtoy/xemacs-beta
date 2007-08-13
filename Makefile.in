@@ -403,7 +403,7 @@ check-features: all
 
 install-only: ${MAKE_SUBDIR} check-features install-arch-dep install-arch-indep
 
-install: all check-features install-arch-dep install-arch-indep;
+install: all check-features install-arch-dep install-arch-indep
 
 install-arch-dep: mkdir
 	for subdir in ${INSTALL_ARCH_DEP_SUBDIR}; do \
@@ -420,21 +420,21 @@ install-arch-dep: mkdir
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
 	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \
 	else true; fi
-	${INSTALL_PROGRAM} src/xemacs ${bindir}/${progname}${version}
-	-chmod 0755 ${bindir}/${progname}${version}
-	cd ${bindir} && $(RM) ./xemacs && ${LN_S} ${progname}${version} ./xemacs
+	${INSTALL_PROGRAM} src/xemacs ${bindir}/${progname}-${version}
+	-chmod 0755 ${bindir}/${progname}-${version}
+	cd ${bindir} && $(RM) ./xemacs && ${LN_S} ${progname}-${version} ./xemacs
 	if test "${prefix}" != "${exec_prefix}"; then \
            test ! -d ${exec_prefix}/lib/xemacs && \
                 $(LN_S) ${prefix}/lib/xemacs ${exec_prefix}/lib/xemacs; \
-           test ! -d ${exec_prefix}/lib/${progname}${version}/etc && \
-                $(LN_S) ${prefix}/lib/${progname}${version}/etc \
-                        ${exec_prefix}/lib/${progname}${version}/etc; \
-           test ! -d ${exec_prefix}/lib/${progname}${version}/info && \
-                $(LN_S) ${prefix}/lib/${progname}${version}/info \
-                        ${exec_prefix}/lib/${progname}${version}/info; \
-           test ! -d ${exec_prefix}/lib/${progname}${version}/lisp && \
-                $(LN_S) ${prefix}/lib/${progname}${version}/lisp \
-                        ${exec_prefix}/lib/${progname}${version}/lisp; \
+           test ! -d ${exec_prefix}/lib/${progname}-${version}/etc && \
+                $(LN_S) ${prefix}/lib/${progname}-${version}/etc \
+                        ${exec_prefix}/lib/${progname}-${version}/etc; \
+           test ! -d ${exec_prefix}/lib/${progname}-${version}/info && \
+                $(LN_S) ${prefix}/lib/${progname}-${version}/info \
+                        ${exec_prefix}/lib/${progname}-${version}/info; \
+           test ! -d ${exec_prefix}/lib/${progname}-${version}/lisp && \
+                $(LN_S) ${prefix}/lib/${progname}-${version}/lisp \
+                        ${exec_prefix}/lib/${progname}-${version}/lisp; \
 	fi
 
 install-arch-indep: mkdir info
@@ -520,7 +520,7 @@ mkdir: FRC.mkdir
 #	done
 #	cd ${infodir} && $(RM) cl* xemacs* forms* info* vip*
 #	cd ${mandir} && $(RM) xemacs.1 etags.1 ctags.1 gnuserv.1
-#	cd ${bindir} && $(RM) ${progname}${version} xemacs
+#	cd ${bindir} && $(RM) ${progname}-${version} xemacs
 
 
 ## Some makes seem to remember that they've built something called FRC,
