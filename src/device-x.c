@@ -99,8 +99,8 @@ int in_specifier_change_function;
 /*                          helper functions                            */
 /************************************************************************/
 
-struct device *
-get_device_from_display (Display *dpy)
+static struct device *
+get_device_from_display_1 (Display *dpy)
 {
   Lisp_Object devcons, concons;
 
@@ -111,11 +111,25 @@ get_device_from_display (Display *dpy)
 	return d;
     }
 
-  /* Only devices we are actually managing should ever be used as an
-     argument to this function. */
-  abort ();
+  return 0;
+}
 
-  return 0; /* suppress compiler warning */
+struct device *
+get_device_from_display (Display *dpy)
+{
+  struct device *d = get_device_from_display_1 (dpy);
+
+  if (!d) {
+    /* This isn't one of our displays.  Let's crash? */
+    stderr_out
+      ("\n%s: Fatal X Condition.  Asked about display we don't own: \"%s\"\n",
+       (STRINGP (Vinvocation_name) ?
+	(char *) XSTRING_DATA (Vinvocation_name) : "xemacs"),
+       DisplayString (dpy) ? DisplayString (dpy) : "???");
+    abort();
+  }
+
+  return d;
 }
 
 struct device *
@@ -600,8 +614,12 @@ x_IO_error_handler (Display *disp)
 {
   /* This function can GC */
   Lisp_Object dev;
-  struct device *d = get_device_from_display (disp);
-  XSETDEVICE (dev, d);
+  struct device *d = get_device_from_display_1 (disp);
+
+  if (d)
+    XSETDEVICE (dev, d);
+  else
+    dev = Qnil;
 
   if (NILP (find_nonminibuffer_frame_not_on_device (dev)))
     {
@@ -629,7 +647,8 @@ x_IO_error_handler (Display *disp)
          QLength (disp));
     }
 
-  enqueue_magic_eval_event (io_error_delete_device, dev);
+  if (d)
+    enqueue_magic_eval_event (io_error_delete_device, dev);
 
   return 0;
 }

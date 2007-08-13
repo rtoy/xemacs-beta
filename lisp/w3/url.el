@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/03/09 06:19:51
-;; Version: 1.62
+;; Created: 1997/03/20 15:45:21
+;; Version: 1.66
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/03/09 06:19:51|1.62|Location Undetermined
+;;; 1997/03/20 15:45:21|1.66|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -922,7 +922,7 @@ dumped with emacs."
 
     (setq url-cookie-file
 	  (or url-cookie-file
-	      (expand-file-name "~/.w3cookies")))
+	      (expand-file-name "~/.w3/cookies")))
     
     (setq url-global-history-file
 	  (or url-global-history-file
@@ -931,7 +931,7 @@ dumped with emacs."
 	      (and (memq system-type '(axp-vms vax-vms))
 		   (expand-file-name "~/mosaic.global-history"))
 	      (condition-case ()
-		  (expand-file-name "~/.mosaic-global-history")
+		  (expand-file-name "~/.w3/history")
 		(error nil))))
   
     ;; Parse the global history file if it exists, so that it can be used
@@ -1020,6 +1020,9 @@ dumped with emacs."
     (run-hooks 'url-load-hook)
     (setq url-setup-done t)))
 
+(defvar url-get-url-filename-chars "%.?@a-zA-Z0-9---()_/:~=&"
+  "Valid characters in a URL")
+
 ;;;###autoload
 (defun url-get-url-at-point (&optional pt)
   "Get the URL closest to point, but don't change your
@@ -1028,7 +1031,7 @@ directly on a symbol."
   ;; Not at all perfect - point must be right in the name.
   (save-excursion
     (if pt (goto-char pt))
-    (let ((filename-chars "%.?@a-zA-Z0-9---()_/:~=&") start url)
+    (let (start url)
       (save-excursion
 	;; first see if you're just past a filename
 	(if (not (eobp))
@@ -1037,16 +1040,16 @@ directly on a symbol."
 		  (skip-chars-backward " \n\t\r({[]})")
 		  (if (not (bobp))
 		      (backward-char 1)))))
-	(if (string-match (concat "[" filename-chars "]")
-			  (char-to-string (following-char)))
+	(if (and (char-after (point))
+		 (string-match (eval-when-compile
+				 (concat "[" url-get-url-filename-chars "]"))
+			       (char-to-string (char-after (point)))))
 	    (progn
-	      (skip-chars-backward filename-chars)
+	      (skip-chars-backward url-get-url-filename-chars)
 	      (setq start (point))
-	      (skip-chars-forward filename-chars))
+	      (skip-chars-forward url-get-url-filename-chars))
 	  (setq start (point)))
-	(setq url (if (fboundp 'buffer-substring-no-properties)
-		      (buffer-substring-no-properties start (point))
-		    (buffer-substring start (point)))))
+	(setq url (buffer-substring-no-properties start (point))))
       (if (string-match "^URL:" url)
 	  (setq url (substring url 4 nil)))
       (if (string-match "\\.$" url)
@@ -1334,7 +1337,7 @@ and decoding any MIME content-transfer-encoding used."
 
 (defun url-default-callback (buf)
   (url-download-minor-mode nil)
-  (url-store-in-cache)
+  (url-store-in-cache buf)
   (cond
    ((save-excursion (set-buffer buf)
 		    (and url-current-callback-func

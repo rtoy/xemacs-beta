@@ -376,6 +376,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (defun vm-menu-support-possible-p ()
   (or (and (boundp 'window-system)
 	   (or (eq window-system 'x)
+	       (eq window-system 'ns)      ;; NextStep
 	       (eq window-system 'win32)))
       (and (fboundp 'device-type) (eq (device-type) 'x))))
 

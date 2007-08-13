@@ -22,7 +22,8 @@
 ;;; 93.8.3   modified for Mule Ver.1.1 by K.Handa <handa@etl.go.jp>
 ;;;	Not to define regexp of Japanese word in this file.
 
-(provide 'jisx0201)
+(require 'egg)
+(provide 'egg-jisx0201)
 
 (defvar *katakana-alist*
   '(( 161 . "ｧ" )
@@ -142,8 +143,8 @@
     (let ((regexp (if arg "\\cS\\|\\cK\\|\\cH" "\\cS\\|\\cK")))
       (while (re-search-forward regexp (point-max) (point-max))
 	(let* ((ch (preceding-char))
-	       (ch1 (char-component ch 1))
-	       (ch2 (char-component ch 2)))
+	       (ch1 (char-octet ch 0))
+	       (ch2 (char-octet ch 1)))
 	  (cond ((= ?\241 ch1)
 		 (let ((val (cdr (assq ch2 *katakana-kigou-alist*))))
 		   (if val (progn

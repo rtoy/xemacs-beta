@@ -254,3 +254,7 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 (set-coding-category-system 'iso-8-1 'ctext)
 (set-coding-category-system 'iso-lock-shift 'iso-2022-lock)
 (set-coding-category-system 'no-conversion 'no-conversion)
+
+(make-compatible-variable 'enable-multibyte-characters "Unimplemented")
+
+;;; mule-coding.el ends here

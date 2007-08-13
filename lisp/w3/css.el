@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/03/07 01:12:31
-;; Version: 1.29
+;; Created: 1997/03/14 22:02:39
+;; Version: 1.30
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -621,7 +621,7 @@
 	(while (not (eobp))
 	  (skip-chars-forward ";, \n\t")
 	  (setq name-pos (point))
-	  (skip-chars-forward "^ \n\t:=,;")
+	  (skip-chars-forward "^ \n\t:,;")
 	  (downcase-region name-pos (point))
 	  (setq name (intern (buffer-substring name-pos (point))))
 	  (skip-chars-forward " \t\n")

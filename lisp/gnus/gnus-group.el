@@ -1563,9 +1563,9 @@ Return the name of the group is selection was successful."
     (require (car method))
     (when (boundp saddr)
       (unless (assq saddr method)
-	(nconc method `((,saddr ,(cadr method)))))
-      (setf (cadr method) (format "%s-%d" (cadr method)
-				  (incf gnus-ephemeral-group-server)))))
+	(nconc method `((,saddr ,(cadr method))))
+	(setf (cadr method) (format "%s-%d" (cadr method)
+				    (incf gnus-ephemeral-group-server))))))
   (let ((group (if (gnus-group-foreign-p group) group
 		 (gnus-group-prefixed-name group method))))
     (gnus-sethash
@@ -2538,7 +2538,7 @@ or nil if no action could be taken."
   (gnus-group-unsubscribe-current-group n 'unsubscribe))
 
 (defun gnus-group-subscribe (&optional n)
-  "Unsubscribe the current group."
+  "Subscribe the current group."
   (interactive "P")
   (gnus-group-unsubscribe-current-group n 'subscribe))
 

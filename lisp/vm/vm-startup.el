@@ -275,7 +275,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.19.
+This is VM 6.21.
 
 Commands:
    h - summarize folder contents
@@ -477,10 +477,12 @@ Variables:
    vm-mime-digest-headers
    vm-mime-display-function
    vm-mime-external-content-types-alist
+   vm-mime-ignore-mime-version
    vm-mime-internal-content-types
    vm-mime-max-message-size
    vm-mode-hook
    vm-mosaic-program
+   vm-mosaic-program-switches
    vm-move-after-deleting
    vm-move-after-killing
    vm-move-after-undeleting
@@ -488,6 +490,7 @@ Variables:
    vm-mutable-frames
    vm-mutable-windows
    vm-netscape-program
+   vm-netscape-program-switches
    vm-pop-bytes-per-session
    vm-pop-max-message-size
    vm-pop-md5-program
@@ -922,11 +925,13 @@ vm-visit-virtual-folder.")
       'vm-mime-digest-headers
       'vm-mime-display-function
       'vm-mime-external-content-types-alist
+      'vm-mime-ignore-mime-version
       'vm-mime-internal-content-types
       'vm-mime-max-message-size
       'vm-mode-hook
       'vm-mode-hooks
       'vm-mosaic-program
+      'vm-mosaic-program-switches
       'vm-move-after-deleting
       'vm-move-after-undeleting
       'vm-move-messages-physically
@@ -934,6 +939,7 @@ vm-visit-virtual-folder.")
       'vm-mutable-frames
       'vm-mutable-windows
       'vm-netscape-program
+      'vm-netscape-program-switches
       'vm-pop-bytes-per-session
       'vm-pop-max-message-size
       'vm-pop-messages-per-session
@@ -946,7 +952,8 @@ vm-visit-virtual-folder.")
       'vm-quit-hook
       'vm-recognize-pop-maildrops
       'vm-reply-hook
-      'vm-reply-ignored-addresses
+;; don't feed the spammers or crackers
+;;      'vm-reply-ignored-addresses
       'vm-reply-ignored-reply-tos
       'vm-reply-subject-prefix
       'vm-resend-bounced-discard-header-regexp
@@ -1059,6 +1066,10 @@ vm-visit-virtual-folder.")
 	  (or (vm-load-window-configurations vm-window-configuration-file)
 	      (setq vm-window-configurations vm-default-window-configuration)))
 	(setq vm-buffers-needing-display-update (make-vector 29 0))
+	;; default value of vm-mime-button-face is 'gui-button-face
+	;; this face doesn't exist by default in FSF Emacs 19.34.
+	;; Create it.
+	(and (fboundp 'make-face) (make-face 'gui-button-face))
 	(and (vm-mouse-support-possible-p)
 	     (vm-mouse-install-mouse))
 	(and (vm-menu-support-possible-p)

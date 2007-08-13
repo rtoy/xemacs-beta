@@ -70,3 +70,6 @@ the toolbar, glyphs, etc."
 
 (defalias 'valid-device-type-p 'valid-console-type-p)
 (defalias 'device-type-list 'console-type-list)
+(defalias 'device-pixel-depth 'device-bitplanes)
+
+;;; device.el ends here

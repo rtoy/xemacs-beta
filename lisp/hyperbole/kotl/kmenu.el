@@ -6,12 +6,11 @@
 ;; KEYWORDS:     mouse, outlines, wp
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola, Inc., PPG
 ;;
 ;; ORIG-DATE:    28-Mar-94 at 11:22:09
-;; LAST-MOD:     22-Oct-96 at 01:30:50 by Bob Weiner
+;; LAST-MOD:      6-Mar-97 at 01:20:03 by Bob Weiner
 ;;
-;; Copyright (C) 1994-1995 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1997  Free Software Foundation, Inc.
 ;;
 ;; This file is part of Hyperbole.
 ;;

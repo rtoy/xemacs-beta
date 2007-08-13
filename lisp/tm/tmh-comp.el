@@ -6,7 +6,7 @@
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/2/29 (separated from tm-mh-e.el)
-;; Version: $Id: tmh-comp.el,v 1.4 1997/03/16 03:05:47 steve Exp $
+;; Version: $Id: tmh-comp.el,v 1.5 1997/03/22 06:02:46 steve Exp $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -515,6 +515,31 @@ to select message yanking function."
  'mh-insert-letter 'tm-mh-e/insert-letter mh-letter-mode-map)
 
 
+;;; @ for mu-cite
+;;;
+
+(call-after-loaded
+ 'mu-cite
+ (function
+  (lambda ()
+    (set-alist 'mu-cite/get-field-value-method-alist
+	       'mh-letter-mode
+	       (function
+		(lambda (name)
+		  (if (and (stringp mh-sent-from-folder)
+			   (numberp mh-sent-from-msg))
+		      (save-excursion
+			(set-buffer mh-sent-from-folder)
+			(set-buffer mh-show-buffer)
+			(and (boundp 'mime::preview/article-buffer)
+			     (bufferp mime::preview/article-buffer)
+			     (set-buffer mime::preview/article-buffer))
+			(std11-field-body name)
+			))
+		  )))
+    )))
+
+		   
 ;;; @ end
 ;;;
 

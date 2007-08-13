@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/03/10 15:18:19
-;; Version: 1.36
+;; Created: 1997/03/19 18:28:10
+;; Version: 1.38
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -64,7 +64,7 @@
 (defconst font-window-system-mappings
   '((x        . (x-font-create-name x-font-create-object))
     (ns       . (ns-font-create-name ns-font-create-object))
-    (win32    . (x-font-create-name x-font-create-object)) ; Change? FIXME
+    (win32    . (x-font-create-name x-font-create-object))
     (pm       . (x-font-create-name x-font-create-object)) ; Change? FIXME
     (tty      . (tty-font-create-plist tty-font-create-object)))
   "An assoc list mapping device types to the function used to create
@@ -533,7 +533,7 @@ for use in the 'weight' field of an X font string.")
 		(normal (mapcar (function (lambda (x) (if x (aref x 0))))
 				(aref menu 1))))
 	    (sort (unique (nconc scaled normal)) 'string-lessp))))
-    (mapcar 'car font-family-mappings)))
+    (cons "monospace" (mapcar 'car font-family-mappings))))
 
 (defvar font-default-cache nil)
 
@@ -572,7 +572,7 @@ for use in the 'weight' field of an X font string.")
   ;; (if font-running-xemacs
   ;;    (format "%dpx" (face-height 'default device))
   (font-size (font-default-object-for-device device)))
-       
+
 (defun x-font-create-name (fontobj &optional device)
   (if (and (not (or (font-family fontobj)
 		    (font-weight fontobj)

@@ -915,6 +915,7 @@ int DGifSlurp(GifFileType *GifFile)
     SavedImage *sp;
     ExtensionBlock *ep;
     GifByteType *ExtData;
+    int ExtCode;
 
     /* Some versions of malloc dislike 0-length requests */
     GifFile->SavedImages = (SavedImage *)xmalloc(sizeof(SavedImage));
@@ -941,7 +942,12 @@ int DGifSlurp(GifFileType *GifFile)
 		break;
 
 	    case EXTENSION_RECORD_TYPE:
-
+	        /* This code fails if no image_desc record has been read
+		   yet.  I don't know if that's legal, but I've seen GIFs
+		   that start with an extension record.  XEmacs doesn't use
+		   the extension records anyway, so we'll just ignore them.
+		   - dkindred@cs.cmu.edu */
+#if 0
 		if (DGifGetExtension(GifFile,&sp->Function,&ExtData)==GIF_ERROR)
 		    return(GIF_ERROR);
 		else
@@ -965,6 +971,17 @@ int DGifSlurp(GifFileType *GifFile)
 			memcpy(ep->Bytes,ExtData,ep->ByteCount * sizeof(char));
 		    }
 		}
+#else
+	        /* Skip any extension blocks in the file. */
+	        if (DGifGetExtension (GifFile, &ExtCode, &ExtData) 
+		    == GIF_ERROR)
+		    return GIF_ERROR;
+
+		while (ExtData != NULL) {
+		    if (DGifGetExtensionNext (GifFile, &ExtData) == GIF_ERROR)
+		        return GIF_ERROR;
+		}
+#endif
 		break;
 
 	    case TERMINATE_RECORD_TYPE:

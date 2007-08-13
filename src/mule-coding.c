@@ -74,6 +74,8 @@ Lisp_Object Qctext;
 
 Lisp_Object Vcoding_system_hashtable;
 
+int enable_multibyte_characters;
+
 /* Additional information used by the ISO2022 decoder and detector. */
 struct iso2022_decoder
 {
@@ -4724,6 +4726,15 @@ This can be changed for a particular process using
 Coding system used to convert pathnames when accessing files.
 */ );
   Vpathname_coding_system = Qnil;
+
+  DEFVAR_BOOL ("enable-multibyte-characters", &enable_multibyte_characters /*
+Non-nil means the buffer contents are regarded as multi-byte form
+of characters, not a binary code.  This affects the display, file I/O,
+and behaviors of various editing commands.
+
+Setting this to nil does not do anything.
+*/ );
+  enable_multibyte_characters = 1;
 }
 
 void

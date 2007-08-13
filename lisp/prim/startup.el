@@ -606,10 +606,12 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
   (setq init-file-loaded t)
 
   ;; Do this here in case the init file sets mail-host-address.
-  (or user-mail-address
-      (setq user-mail-address (concat (user-login-name) "@"
-				      (or mail-host-address
-					  (system-name)))))
+  ;; Don't do this here unless noninteractive, it is frequently wrong. -sb
+  ;; (or user-mail-address
+  (when noninteractive
+    (setq user-mail-address (concat (user-login-name) "@"
+				    (or mail-host-address
+					(system-name)))))
 
   (run-hooks 'after-init-hook)
   nil)

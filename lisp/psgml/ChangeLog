@@ -1,3 +1,8 @@
+Wed Mar 19 22:58:40 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* psgml-html.el (html-helper-address-string): Use
+	user-mail-address function.
+
 Mon Jan 27 13:12:41 1997  Jin S. Choi <jsc@atype.com>
 
 	* psgml.el: Fix location of CATALOG in `sgml-validate-command'.

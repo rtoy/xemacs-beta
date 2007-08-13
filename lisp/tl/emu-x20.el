@@ -3,7 +3,7 @@
 ;; Copyright (C) 1994,1995,1996,1997 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-x20.el,v 1.5 1997/03/16 03:05:43 steve Exp $
+;; Version: $Id: emu-x20.el,v 1.6 1997/03/22 06:02:43 steve Exp $
 ;; Keywords: emulation, compatibility, Mule, XEmacs
 
 ;; This file is part of XEmacs.
@@ -22,10 +22,6 @@
 ;; along with GNU XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
-
-;;; Commentary:
-
-;; This module requires XEmacs 20.1 b6 or later with mule.
 
 ;;; Commentary:
 

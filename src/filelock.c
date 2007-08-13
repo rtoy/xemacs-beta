@@ -196,7 +196,11 @@ lock_file_owner_name (CONST char *lfname)
 void
 lock_file (Lisp_Object fn)
 {
-  /* This function can GC */
+  /* This function can GC. */
+  /* dmoore - and can destroy current_buffer and all sorts of other
+     mean nasty things with pointy teeth.  If you call this make sure
+     you protect things right. */
+
   REGISTER Lisp_Object attack, orig_fn;
   REGISTER char *lfname;
   struct gcpro gcpro1, gcpro2;
@@ -337,6 +341,11 @@ current_lock_owner_1 (CONST char *lfname)
 void
 unlock_file (Lisp_Object fn)
 {
+  /* This function can GC. */
+  /* dmoore - and can destroy current_buffer and all sorts of other
+     mean nasty things with pointy teeth.  If you call this make sure
+     you protect things right. */
+
   REGISTER char *lfname;
   if (NILP (Vlock_directory) || NILP (Vsuperlock_file)) return;
   CHECK_STRING (fn);
@@ -395,9 +404,13 @@ lock_superlock (CONST char *lfname)
 void
 unlock_all_files (void)
 {
-  REGISTER Lisp_Object tail;
-  REGISTER struct buffer *b;
+  /* This function can GC. */
 
+  Lisp_Object tail;
+  REGISTER struct buffer *b;
+  struct gcpro gcpro1;
+
+  GCPRO1 (tail);
   for (tail = Vbuffer_alist; GC_CONSP (tail);
        tail = XCDR (tail))
     {
@@ -406,6 +419,7 @@ unlock_all_files (void)
 	  BUF_SAVE_MODIFF (b) < BUF_MODIFF (b))
 	unlock_file (b->file_truename);
     }
+  UNGCPRO;
 }
 
 
@@ -417,6 +431,10 @@ or else nothing is done if current buffer isn't visiting a file.
        (fn))
 {
   /* This function can GC */
+  /* dmoore - and can destroy current_buffer and all sorts of other
+     mean nasty things with pointy teeth.  If you call this make sure
+     you protect things right. */
+
   if (NILP (fn))
     fn = current_buffer->file_truename;
   CHECK_STRING (fn);
@@ -432,6 +450,11 @@ if it should normally be locked.
 */
        ())
 {
+  /* This function can GC */
+  /* dmoore - and can destroy current_buffer and all sorts of other
+     mean nasty things with pointy teeth.  If you call this make sure
+     you protect things right. */
+
   if (BUF_SAVE_MODIFF (current_buffer) < BUF_MODIFF (current_buffer)
       && STRINGP (current_buffer->file_truename))
     unlock_file (current_buffer->file_truename);
@@ -444,6 +467,10 @@ if it should normally be locked.
 void
 unlock_buffer (struct buffer *buffer)
 {
+  /* This function can GC */
+  /* dmoore - and can destroy current_buffer and all sorts of other
+     mean nasty things with pointy teeth.  If you call this make sure
+     you protect things right. */
   if (BUF_SAVE_MODIFF (buffer) < BUF_MODIFF (buffer)
       && STRINGP (buffer->file_truename))
     unlock_file (buffer->file_truename);

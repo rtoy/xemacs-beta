@@ -115,6 +115,11 @@ Lisp_Object Qcompute_buffer_file_truename;
 DOESNT_RETURN
 report_file_error (CONST char *string, Lisp_Object data)
 {
+  /* #### dmoore - This uses current_buffer, better make sure no one
+     has GC'd the current buffer.  File handlers are giving me a headache
+     maybe I'll just always protect current_buffer around all of those
+     calls. */
+
   /* mrb: #### Needs to be fixed at a lower level; errstring needs to
      be MULEized.  The following at least prevents a crash... */
   Lisp_Object errstring = build_ext_string (strerror (errno), FORMAT_BINARY);
@@ -378,6 +383,16 @@ call2_check_string (Lisp_Object fn, Lisp_Object arg0, Lisp_Object arg1)
 }
 
 static Lisp_Object
+call2_check_string_or_nil (Lisp_Object fn, Lisp_Object arg0, Lisp_Object arg1)
+{
+  /* This function can GC */
+  Lisp_Object result = call2 (fn, arg0, arg1);
+  if (!NILP (result))
+    CHECK_STRING (result);
+  return (result);
+}
+
+static Lisp_Object
 call3_check_string (Lisp_Object fn, Lisp_Object arg0, 
                     Lisp_Object arg1, Lisp_Object arg2)
 {
@@ -408,14 +423,8 @@ on VMS, perhaps instead a string ending in `:', `]' or `>'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (file, Qfile_name_directory);
   if (!NILP (handler))
-    {
-      Lisp_Object retval = call2 (handler, Qfile_name_directory,
-				  file);
-
-      if (!NILP (retval))
-	CHECK_STRING (retval);
-      return retval;
-    }
+    return (call2_check_string_or_nil (handler, Qfile_name_directory,
+				       file));
 
 #ifdef FILE_SYSTEM_CASE
   file = FILE_SYSTEM_CASE (file);
@@ -883,6 +892,7 @@ See also the function `substitute-in-file-name'.
   Bufbyte *tmp, *defdir;
 #endif /* DOS_NT */
   Lisp_Object handler;
+  struct gcpro gcpro1;
   
   CHECK_STRING (name);
 
@@ -911,7 +921,11 @@ See also the function `substitute-in-file-name'.
 
   if (!NILP (defalt))
     {
+      struct gcpro gcpro1;
+
+      GCPRO1 (defalt);		/* might be current_buffer->directory */
       handler = Ffind_file_name_handler (defalt, Qexpand_file_name);
+      UNGCPRO;
       if (!NILP (handler))
 	return call3 (handler, Qexpand_file_name, name, defalt);
     }
@@ -934,7 +948,7 @@ See also the function `substitute-in-file-name'.
     {
       struct gcpro gcpro1;
 
-      GCPRO1 (name);
+      GCPRO1 (defalt);		/* may be current_buffer->directory */
       defalt = Fexpand_file_name (defalt, Qnil);
       UNGCPRO;
     }
@@ -947,6 +961,8 @@ See also the function `substitute-in-file-name'.
   name = FILE_SYSTEM_CASE (name);
 #endif
 
+  /* #### dmoore - this is ugly, clean this up.  Looks like nm
+     pointing into name should be safe during all of this, though. */
   nm = XSTRING_DATA (name);
   
 #ifdef MSDOS
@@ -1391,9 +1407,7 @@ No component of the resulting pathname will be a symbolic link, as
 
   CHECK_STRING (filename);
 
-  GCPRO1 (filename);
   expanded_name = Fexpand_file_name (filename, defalt);
-  UNGCPRO;
 
   if (!STRINGP (expanded_name))
     return Qnil;
@@ -1528,14 +1542,8 @@ duplicates what `expand-file-name' does.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (string, Qsubstitute_in_file_name);
   if (!NILP (handler))
-    {
-      Lisp_Object retval = call2 (handler, Qsubstitute_in_file_name,
-				  string);
-
-      if (!NILP (retval))
-	CHECK_STRING (retval);
-      return retval;
-    }
+    return (call2_check_string_or_nil (handler, Qsubstitute_in_file_name,
+				       string));
 
   nm = XSTRING_DATA (string);
 #ifdef MSDOS
@@ -1984,18 +1992,16 @@ Create a directory.  One argument, a file name string.
   /* This function can GC */
   char dir [MAXPATHLEN];
   Lisp_Object handler;
-
   struct gcpro gcpro1;
   
-  GCPRO1 (dirname);
   CHECK_STRING (dirname);
   dirname = Fexpand_file_name (dirname, Qnil);
 
+  GCPRO1 (dirname);
   handler = Ffind_file_name_handler (dirname, Qmake_directory_internal);
   UNGCPRO;
   if (!NILP (handler))
-    return (call2 (handler, Qmake_directory_internal,
-		   dirname));
+    return (call2 (handler, Qmake_directory_internal, dirname));
  
   if (XSTRING_LENGTH (dirname) > (sizeof (dir) - 1))
     {
@@ -2031,10 +2037,11 @@ Delete a directory.  One argument, a file name or directory name string.
   Lisp_Object handler;
   struct gcpro gcpro1;
   
-  GCPRO1 (dirname);
   CHECK_STRING (dirname);
-  dirname =
-    Fdirectory_file_name (Fexpand_file_name (dirname, Qnil));
+
+  GCPRO1 (dirname);
+  dirname = Fexpand_file_name (dirname, Qnil);
+  dirname =  Fdirectory_file_name (dirname);
 
   handler = Ffind_file_name_handler (dirname, Qdelete_directory);
   UNGCPRO;
@@ -2057,10 +2064,10 @@ If file has multiple names, it continues to exist with the other names.
   Lisp_Object handler;
   struct gcpro gcpro1;
   
-  GCPRO1 (filename);
   CHECK_STRING (filename);
   filename = Fexpand_file_name (filename, Qnil);
 
+  GCPRO1 (filename);
   handler = Ffind_file_name_handler (filename, Qdelete_file);
   UNGCPRO;
   if (!NILP (handler))
@@ -2551,10 +2558,16 @@ Return t if file FILENAME can be written or created by you.
 	    ? Qt : Qnil);
 
 
+  GCPRO1 (abspath);
   dir = Ffile_name_directory (abspath);
+  UNGCPRO;
 #if defined (VMS) || defined (MSDOS)
   if (!NILP (dir))
-    dir = Fdirectory_file_name (dir);
+    {
+      GCPRO1(dir);
+      dir = Fdirectory_file_name (dir);
+      UNGCPRO;
+    }
 #endif /* VMS or MSDOS */
   return (check_writable (!NILP (dir) ? (char *) XSTRING_DATA (dir)
 			  : "")
@@ -2626,7 +2639,7 @@ if the directory so specified exists and really is a directory.
   Lisp_Object handler;
   struct gcpro gcpro1;
   
-  GCPRO1 (filename);
+  GCPRO1 (current_buffer->directory);
   abspath = expand_and_dir_to_file (filename,
 				    current_buffer->directory);
   UNGCPRO;
@@ -2665,6 +2678,8 @@ searchable directory.
     return call2 (handler, Qfile_accessible_directory_p,
 		  filename);
 
+  /* #### dmoore - this gcpro on filename should be unneccesary since
+     the caller should ahve already protected it. */
   GCPRO1 (filename);
   if (NILP (Ffile_directory_p (filename)))
     {
@@ -2682,15 +2697,20 @@ This is the sort of file that holds an ordinary stream of data bytes.
 */
        (filename))
 {
-  REGISTER Lisp_Object abspath;
+  Lisp_Object abspath;
   struct stat st;
   Lisp_Object handler;
+  struct gcpro gcpro1;
 
+  GCPRO1 (current_buffer->directory);
   abspath = expand_and_dir_to_file (filename, current_buffer->directory);
+  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
+  GCPRO1 (abspath);
   handler = Ffind_file_name_handler (abspath, Qfile_regular_p);
+  UNGCPRO;
   if (!NILP (handler))
     return call2 (handler, Qfile_regular_p, abspath);
 
@@ -2710,7 +2730,7 @@ Return mode bits of FILE, as an integer.
   Lisp_Object handler;
   struct gcpro gcpro1;
   
-  GCPRO1 (filename);
+  GCPRO1 (current_buffer->directory);
   abspath = expand_and_dir_to_file (filename,
 				    current_buffer->directory);
   UNGCPRO;
@@ -2742,9 +2762,9 @@ Only the 12 low bits of MODE are used.
   /* This function can GC */
   Lisp_Object abspath;
   Lisp_Object handler;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1;
   
-  GCPRO2 (filename, mode);
+  GCPRO1 (current_buffer->directory);
   abspath = Fexpand_file_name (filename, current_buffer->directory);
   CHECK_INT (mode);
   UNGCPRO;
@@ -2821,22 +2841,20 @@ otherwise, if FILE2 does not exist, the answer is t.
   struct stat st;
   int mtime1;
   Lisp_Object handler;
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
   CHECK_STRING (file1);
   CHECK_STRING (file2);
 
   abspath1 = Qnil;
-  GCPRO2 (abspath1, file2);
-  abspath1 = expand_and_dir_to_file (file1,
-				     current_buffer->directory);
-  abspath2 = expand_and_dir_to_file (file2,
-				     current_buffer->directory);
-  UNGCPRO;
+  abspath2 = Qnil;
+
+  GCPRO3 (abspath1, abspath2, current_buffer->directory);
+  abspath1 = expand_and_dir_to_file (file1, current_buffer->directory);
+  abspath2 = expand_and_dir_to_file (file2, current_buffer->directory);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  GCPRO2 (abspath1, abspath2);
   handler = Ffind_file_name_handler (abspath1, Qfile_newer_than_file_p);
   if (NILP (handler))
     handler = Ffind_file_name_handler (abspath2, Qfile_newer_than_file_p);
@@ -2890,12 +2908,13 @@ positions), even in Mule. (Fixing this is very difficult.)
   int saverrno = 0;
   Charcount inserted = 0;
   int speccount;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   Lisp_Object handler = Qnil, val;
   int total;
   Bufbyte read_buf[READ_BUF_SIZE];
   int mc_count;
   struct buffer *buf = current_buffer;
+  Lisp_Object curbuf;
   int not_regular = 0;
 
   if (buf->base_buffer && ! NILP (visit))
@@ -2906,7 +2925,12 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   val = Qnil;
 
-  GCPRO4 (filename, val, visit, handler);
+  /* #### dmoore - should probably check in various places to see if
+     curbuf was killed and if so signal an error? */
+
+  XSETBUFFER (curbuf, buf);
+
+  GCPRO5 (filename, val, visit, handler, curbuf);
   
   mc_count = (NILP (replace)) ?
     begin_multiple_change (buf, BUF_PT  (buf), BUF_PT (buf)) :
@@ -3358,6 +3382,12 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   struct buffer *given_buffer;
   Bufpos start1, end1;
 
+  /* #### dmoore - if Fexpand_file_name or handlers kill the buffer,
+     we should signal an error rather than blissfully continuing
+     along.  ARGH, this function is going to lose lose lose.  We need
+     to protect the current_buffer from being destroyed, but the
+     multiple return points make this a pain in the butt. */
+
 #ifdef DOS_NT
   int buffer_file_type
     = NILP (current_buffer->buffer_file_type) ? O_TEXT : O_BINARY;
@@ -3376,6 +3406,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   {
     Lisp_Object handler;
     struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+
     GCPRO5 (start, filename, visit, visit_file, lockname);
 
     if (visiting_other)
@@ -3415,8 +3446,11 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 #ifdef CLASH_DETECTION
   if (!auto_saving)
     {
-      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-      GCPRO4 (start, filename, visit_file, lockname);
+      Lisp_Object curbuf;
+      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+
+      XSETBUFFER (curbuf, current_buffer);
+      GCPRO5 (start, filename, visit_file, lockname, curbuf);
       lock_file (lockname);
       UNGCPRO;
     }
@@ -4061,11 +4095,10 @@ An argument specifies the modification time value to use
       Lisp_Object filename;
       struct stat st;
       Lisp_Object handler;
-      struct gcpro gcpro1, gcpro2;
+      struct gcpro gcpro1, gcpro2, gcpro3;
       
-      GCPRO2 (filename, time_list);
-      filename = Fexpand_file_name (current_buffer->filename,
-				    Qnil);
+      GCPRO3 (filename, time_list, current_buffer->filename);
+      filename = Fexpand_file_name (current_buffer->filename, Qnil);
 
       /* If the file name has special constructs in it,
 	 call the corresponding file handler.  */
@@ -4117,16 +4150,16 @@ it will be used if it is either an integer or a cons of two integers.
   if (!set_time_to_use)
     {
       Lisp_Object filename = Qnil;
-      struct gcpro gcpro1, gcpro2;
-      GCPRO2 (buf, filename);
+      struct gcpro gcpro1;
+      GCPRO1 (filename);
+      /* #### dmoore - do we need to protect XBUFFER (buf)->filename?
+	 What if a ^(*&^&*^*& handler renames a buffer?  I think I'm
+	 getting a headache now. */
 
       if (STRINGP (XBUFFER (buf)->filename))
-        filename = Fexpand_file_name (XBUFFER (buf)->filename,
-				      Qnil);
+        filename = Fexpand_file_name (XBUFFER (buf)->filename, Qnil);
       else
         filename = Qnil;
-  
-      UNGCPRO;
 
       if (!NILP (filename) && !NILP (Ffile_exists_p (filename)))
         {
@@ -4134,7 +4167,6 @@ it will be used if it is either an integer or a cons of two integers.
 
 	  /* If the file name has special constructs in it,
 	     call the corresponding file handler.  */
-	  GCPRO1 (filename);
 	  handler = Ffind_file_name_handler (filename, Qset_buffer_modtime);
 	  UNGCPRO;
 	  if (!NILP (handler))
@@ -4149,11 +4181,14 @@ it will be used if it is either an integer or a cons of two integers.
 	    }
         }
       else
-	time_to_use = time ((time_t *) 0);
+	{
+	  UNGCPRO;
+  	  time_to_use = time ((time_t *) 0);
+	}
     }
 
   XBUFFER (buf)->modtime = time_to_use;
-
+  
   return Qnil;
 }
 

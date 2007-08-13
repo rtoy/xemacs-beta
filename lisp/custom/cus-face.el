@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.64
+;; Version: 1.65
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -111,33 +111,33 @@ Does nothing when the variable initialize-face-resources is nil."
        ;; Too hard to do right on XEmacs.
        (defalias 'initialize-face-resources 'ignore)))
 
-(if (string-match "XEmacs" emacs-version)
-    ;; Xemacs.
-    (defun custom-invert-face (face &optional frame)
-      "Swap the foreground and background colors of face FACE.
-If the colors are not specified in the face, use the default colors."
-      (interactive (list (read-face-name "Reverse face: ")))
-      (let ((fg (color-name (face-foreground face frame) frame))
-	    (bg (color-name (face-background face frame) frame)))
-	(set-face-foreground face bg frame)
-	(set-face-background face fg frame)))
-  ;; Emacs.
-  (defun custom-invert-face (face &optional frame)
-    "Swap the foreground and background colors of face FACE.
-If the colors are not specified in the face, use the default colors."
-    (interactive (list (read-face-name "Reverse face: ")))
-    (let ((fg (or (face-foreground face frame)
-		  (face-foreground 'default frame)
-		  (frame-property (or frame (selected-frame))
-				  'foreground-color)
-		  "black"))
-	  (bg (or (face-background face frame)
-		  (face-background 'default frame)
-		  (frame-property (or frame (selected-frame))
-				  'background-color)
-		  "white")))
-      (set-face-foreground face bg frame)
-      (set-face-background face fg frame))))
+;;(if (string-match "XEmacs" emacs-version)
+;;    ;; Xemacs.
+;;    (defun custom-invert-face (face &optional frame)
+;;      "Swap the foreground and background colors of face FACE.
+;;If the colors are not specified in the face, use the default colors."
+;;      (interactive (list (read-face-name "Reverse face: ")))
+;;      (let ((fg (color-name (face-foreground face frame) frame))
+;;	    (bg (color-name (face-background face frame) frame)))
+;;	(set-face-foreground face bg frame)
+;;	(set-face-background face fg frame)))
+;;  ;; Emacs.
+;;  (defun custom-invert-face (face &optional frame)
+;;    "Swap the foreground and background colors of face FACE.
+;;If the colors are not specified in the face, use the default colors."
+;;    (interactive (list (read-face-name "Reverse face: ")))
+;;    (let ((fg (or (face-foreground face frame)
+;;		  (face-foreground 'default frame)
+;;		  (frame-property (or frame (selected-frame))
+;;				  'foreground-color)
+;;		  "black"))
+;;	  (bg (or (face-background face frame)
+;;		  (face-background 'default frame)
+;;		  (frame-property (or frame (selected-frame))
+;;				  'background-color)
+;;		  "white")))
+;;      (set-face-foreground face bg frame)
+;;      (set-face-background face fg frame))))
 
 (defcustom custom-background-mode nil
   "The brightness of the background.
@@ -249,14 +249,14 @@ Control whether the text should be underlined.")
 			:value "white"
 			:help-echo "Set background color.")
 		 set-face-background)
-    (:invert (const :format "Invert Face\n" 
-		    :sibling-args (:help-echo "\
-Reverse the foreground and background color.
-If you haven't specified them for the face, the default colors will be used.")
-		    t)
-	     (lambda (face value &optional frame)
-	       ;; We don't use VALUE.
-	       (custom-invert-face face frame)))
+    ;;    (:invert (const :format "Invert Face\n" 
+    ;;		    :sibling-args (:help-echo "
+    ;;Reverse the foreground and background color.
+    ;;If you haven't specified them for the face, the default colors will be used.")
+    ;;		    t)
+    ;;	     (lambda (face value &optional frame)
+    ;;	       ;; We don't use VALUE.
+    ;;	       (custom-invert-face face frame)))
     (:stipple (editable-field :format "Stipple: %v"
 			      :help-echo "Name of background bitmap file.")
 	      set-face-stipple))

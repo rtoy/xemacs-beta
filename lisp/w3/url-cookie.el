@@ -1,7 +1,7 @@
 ;;; url-cookie.el --- Netscape Cookie support
 ;; Author: wmperry
-;; Created: 1997/02/18 23:34:20
-;; Version: 1.11
+;; Created: 1997/03/19 00:42:23
+;; Version: 1.14
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -268,6 +268,12 @@
   "A regular expression of top-level domains that only require two matching
 '.'s in the domain name in order to set a cookie.")
 
+(defvar url-cookie-trusted-urls nil
+  "*A list of regular expressions matching URLs to always accept cookies from.")
+
+(defvar url-cookie-untrusted-urls nil
+  "*A list of regular expressions matching URLs to never accept cookies from.")
+
 (defun url-cookie-host-can-set-p (host domain)
   (let ((numdots 0)
 	(tmp domain)
@@ -298,6 +304,9 @@
 	 (domain (or (cdr-safe (assoc* "domain" args :test
 				       'url-header-comparison))
 		     (url-host url-current-object)))
+	 (current-url (url-view-url t))
+	 (trusted url-cookie-trusted-urls)
+	 (untrusted url-cookie-untrusted-urls)
 	 (expires (cdr-safe (assoc* "expires" args :test
 				    'url-header-comparison)))
 	 (path (or (cdr-safe (assoc* "path" args :test
@@ -324,14 +333,40 @@
 			      (url-match expires 3) " "
 			      (url-match expires 4) " ["
 			      (url-match expires 5) "]")))
+    (while (consp trusted)
+      (if (string-match (car trusted) current-url)
+	  (setq trusted (- (match-end 0) (match-beginning 0)))
+	(pop trusted)))
+    (while (consp untrusted)
+      (if (string-match (car untrusted) current-url)
+	  (setq untrusted (- (match-end 0) (match-beginning 0)))
+	(pop untrusted)))
+    (if (and trusted untrusted)
+	;; Choose the more specific match
+	(if (> trusted untrusted)
+	    (setq untrusted nil)
+	  (setq trusted nil)))
     (cond
+     (untrusted
+      ;; The site was explicity marked as untrusted by the user
+      nil)
      ((and (listp url-privacy-level) (memq 'cookies url-privacy-level))
       ;; user never wants cookies
       nil)
      ((and url-cookie-confirmation
-	   (not (funcall url-confirmation-func
-			 (format "Allow %s to set a cookie? "
-				 (url-host url-current-object)))))
+	   (not trusted)
+	   (save-window-excursion
+	     (with-output-to-temp-buffer "*Cookie Warning*"
+	       (mapcar
+		(function
+		 (lambda (x)
+		   (princ (format "%s - %s" (car x) (cdr x))))) rest))
+	     (prog1
+		 (not (funcall url-confirmation-func
+			       (format "Allow %s to set these cookies? "
+				       (url-host url-current-object))))
+	       (if (get-buffer "*Cookie Warning*")
+		   (kill-buffer "*Cookie Warning*")))))
       ;; user wants to be asked, and declined.
       nil)
      ((url-cookie-host-can-set-p (url-host url-current-object) domain)

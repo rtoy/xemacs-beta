@@ -2203,6 +2203,11 @@ reap_exited_processes (void)
   int i;
   struct Lisp_Process *p;
 
+  if (exited_processes_index <= 0)
+    {
+      return;
+    }
+
 #ifdef  EMACS_BLOCK_SIGNAL
   EMACS_BLOCK_SIGNAL (SIGCHLD);
 #endif
@@ -2285,6 +2290,11 @@ reap_exited_processes (void)
 static void
 record_exited_processes (int block_sigchld)
 {
+  if (!sigchld_happened)
+    {
+      return;
+    }
+
 #ifdef EMACS_BLOCK_SIGNAL
   if (block_sigchld)
     EMACS_BLOCK_SIGNAL (SIGCHLD);

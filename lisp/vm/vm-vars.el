@@ -381,7 +381,7 @@ A nil value causes VM to preview messages only if new or unread.")
 MIME (Multipurpose Internet Mail Extensions) is a set of
 extensions to the standard Internet message format that allows
 reliable tranmission and reception of arbitrary data including
-images, audio and video as well as traditional text.
+images, audio and video as well as ordinary text.
 
 A non-nil value for this variable means that VM will recognize
 MIME encoded messages and display them as specified by the
@@ -389,6 +389,14 @@ various MIME standards specifications.
 
 A nil value means VM will not display MIME messages any
 differently than any other message.")
+
+(defvar vm-mime-ignore-mime-version nil
+  "*Non-nil value means ignore the version number in the MIME-Version
+header.  VM only knows how to decode and display MIME version 1.0
+messages.  Some systems scramble the MIME-Version header, causing
+VM to believe that it cannot display a message that it actually
+can display.  You can set vm-mime-ignore-mime-version non-nil if
+you use such systems.")
 
 ;; try to avoid bad interaction with TM
 (defvar vm-send-using-mime (not (featurep 'mime-setup))
@@ -576,7 +584,7 @@ An example setup might be:
 
   (setq vm-mime-charset-font-alist
    '(
-     (\"iso-8859-7\" . \"-*-*-medium-r-normal--16-160-72-72-c-80-iso8859-7\")
+     (\"iso-8859-7\" . \"-*-*-medium-r-normal-*-16-160-72-72-c-80-iso8859-7\")
     )
   )
 
@@ -589,15 +597,7 @@ running Emacs on a tty.
 Note that under FSF Emacs any fonts you use must be the same size
 as your default font.  XEmacs does not have this limitation.")
 
-(defvar vm-mime-button-face
-    (cond ((and (fboundp 'find-face)
-		(fboundp 'device-type))
-	   (or (and (not (eq (device-type) 'tty)) (find-face 'gui-button-face)
-		    'gui-button-face)
-	       (and (find-face 'bold-italic) 'bold-italic)))
-	  ((fboundp 'facep)
-	   (or (and (facep 'gui-button-face) 'gui-button-face)
-	       (and (facep 'bold-italic) 'bold-italic))))
+(defvar vm-mime-button-face 'gui-button-face
   "*Face used for text in buttons that trigger the display of MIME objects.")
 
 (defvar vm-mime-8bit-composition-charset "iso-8859-1"
@@ -1202,7 +1202,9 @@ ambient value of fill-column.   A nil value suppresses centering.")
 
 (defvar vm-digest-identifier-header-format "X-Digest: %s\n"
   "*Header to insert into messages burst from a digest.
-Value should be a format string of the same type as vm-summary-format that describes a header to be inserted into each message burst from a digest.  The format string must end with a newline.")
+Value should be a format string of the same type as vm-summary-format
+that describes a header to be inserted into each message burst from a
+digest.  The format string must end with a newline.")
 
 (defvar vm-digest-burst-type "guess"
   "*Value specifies the default digest type offered by vm-burst-digest
@@ -1220,7 +1222,7 @@ dashes, with digested messages separated by lines of exactly 30 dashes.
 rfc934 digests separate messages on any line that begins with a few
 dashes, but doesn't require lines with only dashes or lines with a
 specific number of dashes.  In the text of the message, any line
-beginning with dashes is textually modified to be preceeded by a dash
+beginning with dashes is textually modified to be preceded by a dash
 and a space to prevent confusion with message separators.
 
 MIME digests use whatever boundary that is specified by the
@@ -2192,6 +2194,12 @@ You should use the new name.")
   "*List of hook functions to run when a VM virtual folder buffer is created.
 The current buffer will be that buffer when the hooks are run.")
 
+(defvar vm-presentation-mode-hook nil
+  "*List of hook functions to run when a VM presentation buffer is created.
+The current buffer will be that buffer when the hooks are run.
+Presentation buffers are used to display messages when some type of decoding
+must be done to the message to make it presentable.  E.g. MIME decoding.")
+
 (defvar vm-quit-hook nil
   "*List of hook functions to run when you quit VM.
 This applies to any VM quit command.")
@@ -2289,9 +2297,15 @@ distributed with Emacs.")
   "*Name of program to use to run Netscape.
 vm-mouse-send-url-to-netscape uses this.")
 
+(defvar vm-netscape-program-switches nil
+  "*List of command line switches to pass to Netscape.")
+
 (defvar vm-mosaic-program "Mosaic"
   "*Name of program to use to run Mosaic.
 vm-mouse-send-url-to-mosaic uses this.")
+
+(defvar vm-mosaic-program-switches nil
+  "*List of command line switches to pass to Mosaic.")
 
 (defvar vm-temp-file-directory "/tmp"
   "*Name of a directory where VM can put temporary files.
@@ -2768,7 +2782,7 @@ Should be just a list of strings, not an alist or an obarray.")
   "Non-nil value means that vm-minibuffer-complete-word should automatically
 append a space to words that complete unambiguously.")
 (defconst vm-attributes-vector-length 9)
-(defconst vm-cache-vector-length 20)
+(defconst vm-cache-vector-length 21)
 (defconst vm-softdata-vector-length 18)
 (defconst vm-location-data-vector-length 6)
 (defconst vm-mirror-data-vector-length 5)

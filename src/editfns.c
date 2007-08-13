@@ -631,20 +631,42 @@ If BUFFER is nil, the current buffer is assumed.
   return Qnil;
 }
 
-DEFUN ("char-after", Fchar_after, 1, 2, 0, /*
+DEFUN ("char-after", Fchar_after, 0, 2, 0, /*
 Return character in BUFFER at position POS.
 POS is an integer or a buffer pointer.
 If POS is out of range, the value is nil.
 If BUFFER is nil, the current buffer is assumed.
+if POS is nil, the value of point is assumed.
 */
        (pos, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  Bufpos n = get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD);
+  Bufpos n = (NILP (pos) ? BUF_PT (b) :
+	      get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD));
 
   if (n < 0 || n == BUF_ZV (b))
     return Qnil;
-  return (make_char (BUF_FETCH_CHAR (b, n)));
+  return make_char (BUF_FETCH_CHAR (b, n));
+}
+
+DEFUN ("char-before", Fchar_before, 0, 2, 0, /*
+Return character in BUFFER before position POS.
+POS is an integer or a buffer pointer.
+If POS is out of range, the value is nil.
+If BUFFER is nil, the current buffer is assumed.
+if POS is nil, the value of point is assumed.
+*/
+       (pos, buffer))
+{
+  struct buffer *b = decode_buffer (buffer, 1);
+  Bufpos n = ((NILP (pos) ? BUF_PT (b) :
+	       get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD)));
+
+  n--;
+  
+  if (n < BUF_BEGV (b))
+    return Qnil;
+  return make_char (BUF_FETCH_CHAR (b, n));
 }
 
 
@@ -2104,6 +2126,7 @@ syms_of_editfns (void)
   DEFSUBR (Ffollowing_char);
   DEFSUBR (Fpreceding_char);
   DEFSUBR (Fchar_after);
+  DEFSUBR (Fchar_before);
   DEFSUBR (Finsert);
   DEFSUBR (Finsert_string);
   DEFSUBR (Finsert_before_markers);

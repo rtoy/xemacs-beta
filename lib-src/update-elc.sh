@@ -25,36 +25,32 @@ if test ! -d lisp/. ; then
   exit 1
 fi
 
-# Determine xemacs executable to use for compilation.
-if test -n "$XEMACS" ; then
-  EMACS="$XEMACS"
-elif test -x ./src/xemacs ; then
-  EMACS="./src/xemacs"
-elif test -x "$EMACS" ; then
-  :
-else
-  EMACS=xemacs
-fi
-case "$EMACS" in
-  */* ) : ;; # Pathname specified
-  *) # Need to find executable on PATH
-     for dir in `echo $PATH | sed 's/:/ /g'` ; do
-       if test -x "dir/xemacs" ; then
-	 EMACS="$dir/$EMACS"
-	 break
-       fi
-     done ;;
-esac
-# Canonicalize
-EMACS=`cd \`dirname $EMACS\` ; pwd | sed 's:^/tmp_mnt::'`/`basename $EMACS`
+EMACS="./src/xemacs"
 export EMACS
 
-echo "Recompiling in `pwd|sed 's:^/tmp_mnt::'`"
-echo "    with $EMACS..."
+echo " (using $EMACS)"
 
-prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
+# fuckin' sysv, man...
+if [ "`uname -r | sed 's/\(.\).*/\1/'`" -gt 4 ]; then
+  echon()
+  {    
+    /bin/echo $* '\c'
+  }
+else
+  echon()
+  {
+    echo -n $*
+  }
+fi
+
+REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
+BYTECOMP="$REAL -batch -q -no-site-file "
+echo "Recompiling in `pwd|sed 's|^/tmp_mnt||'`"
+echo "          with $REAL..."
 
 $EMACS -batch -q -l `pwd`/lisp/prim/cleantree -f batch-remove-old-elc lisp
+
+prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
 # $els  is a list of all .el  files
 # $elcs is a list of all .elc files
@@ -65,26 +61,26 @@ find lisp/. $prune_vc -name '*.el'  -print                    | sort > $els
 find lisp/. $prune_vc -name '*.elc' -print | sed 's/elc$/el/' | sort > $elcs
 
 
-echo "Deleting .elc files without .el files..."
+echon "Deleting .elc files without .el files..."
 comm -13 $els $elcs | sed -e '\!/vm.el!d' -e 's/el$/elc/' | \
  while read file ; do echo rm "$file" ; rm "$file" ; done
-echo "Deleting .elc files without .el files... Done"
+echo done.
 
 
 # Compute patterns to ignore when searching for files
-ignore_dirs="its quail"	# ### Not ported yet...
+ignore_dirs="quail"	# ### Not ported yet...
 
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
-echo "Checking for Mule support..."
+echon "Checking for Mule support..."
 lisp_prog='(princ (featurep (quote mule)))'
 mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
   echo No
-  ignore_dirs="$ignore_dirs mule"
+  ignore_dirs="$ignore_dirs its egg mule"
 elif test "$mule_p" = t; then
   echo Yes
 else
-  echo "Error determining presence of mule support"
+  echo "Error -- call Martin"
   exit 1;
 fi
 
@@ -92,14 +88,13 @@ fi
 # with the latest version (assuming we're compiling the lisp dir of the emacs
 # we're running, which might not be the case, but often is.)
 echo "Checking the byte compiler..."
-BYTECOMP="$EMACS -batch -q -no-site-file -l bytecomp"
 $BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
 
 # Byte-compile VM first, because other packages depend on it,
 # but it depends on nothing (Kyle is like that).
 ignore_dirs="$ignore_dirs vm"
 echo "Compiling in lisp/vm";
-(cd lisp/vm && ${MAKE:-make} EMACS=$EMACS autoload)
+(cd lisp/vm && ${MAKE:-make} EMACS=$REAL autoload)
 echo "lisp/vm done."
 
 # Prepare for byte-compiling directories with directory-specific instructions
@@ -109,7 +104,7 @@ make_special () {
   ignore_dirs="$ignore_dirs $dir"
   make_special_commands="$make_special_commands \
 echo \"Compiling in lisp/$dir\"; \
-(cd \"lisp/$dir\" && ${MAKE:-make} EMACS=$EMACS ${1+$*}); \
+(cd \"lisp/$dir\" && ${MAKE:-make} EMACS=$REAL ${1+$*}); \
 echo \"lisp/$dir done.\";"
 }
 
@@ -118,7 +113,7 @@ echo \"lisp/$dir done.\";"
 #make_special viper elc
 make_special efs
 make_special gnus  some
-make_special w3
+make_special w3 xemacs-w3
 make_special hyperbole elc
 make_special oobr HYPB_ELC='' elc
 make_special eos -k		# not stricly necessary...

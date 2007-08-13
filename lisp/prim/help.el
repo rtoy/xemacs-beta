@@ -181,11 +181,10 @@ Commands:
 (defun help-mode-quit ()
   "Exits from help mode, possibly restoring the previous window configuration."
   (interactive)
-  (cond ((local-variable-p 'help-window-config (current-buffer))
-         (let ((config help-window-config))
-	   (kill-local-variable 'help-window-config)
-	   (bury-buffer)
-	   (set-window-configuration config)))
+  (cond ((frame-property (selected-frame) 'help-window-config)
+	   (set-window-configuration
+	    (frame-property (selected-frame) 'help-window-config))
+	   (set-frame-property  (selected-frame) 'help-window-config nil))
         ((one-window-p)
 	 (bury-buffer))
         (t
@@ -345,8 +344,8 @@ If FUNCTION is nil, applies `message' to it, thus printing it."
 This just displays the buffer in another window, rather than selecting
 the window.")
 
-(defvar help-window-config nil)
-
+(defvar help-window-max-height .5
+  "*Proportion of frame to use for help windows.")
 ;; Use this function for displaying help when C-h something is pressed
 ;; or in similar situations.  Do *not* use it when you are displaying
 ;; a help message and then prompting for input in the minibuffer --
@@ -357,7 +356,12 @@ the window.")
 ;;; requirement of caller to code a lambda form in THUNK -- mrb
 (defun with-displaying-help-buffer (thunk)
   (let ((winconfig (current-window-configuration))
-        (was-one-window (one-window-p)))
+        (was-one-window (one-window-p))
+	(help-not-visible
+	 (not (and (windows-of-buffer "*Help*") ;shortcut
+		   (member (selected-frame)
+			   (mapcar 'window-frame
+				   (windows-of-buffer "*Help*")))))))
     (prog1 (with-output-to-temp-buffer "*Help*"
              (prog1 (funcall thunk)
                (save-excursion
@@ -368,7 +372,11 @@ the window.")
             (progn
               (save-excursion
                 (set-buffer (window-buffer helpwin))
-                (set (make-local-variable 'help-window-config) winconfig))
+		;;If the *Help* buffer is already displayed on this
+		;; frame, don't override the previous configuration
+		(if help-not-visible
+		    (set-frame-property (selected-frame)
+					'help-window-config winconfig)))
               (if help-selects-help-window
                   (select-window helpwin))
               (cond ((eq helpwin (selected-window))
@@ -381,6 +389,11 @@ the window.")
                      (message
                       (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))
 	      (when temp-buffer-shrink-to-fit
+		(let* ((help-window-size (round (* help-window-max-height
+					    (frame-height (window-frame helpwin)))))
+		       (size (window-displayed-height helpwin)))
+		  (if (< size help-window-size)
+		      (enlarge-window (- help-window-size size) nil helpwin)))
 		(shrink-window-if-larger-than-buffer helpwin))))))))
 
 (defun describe-key (key)

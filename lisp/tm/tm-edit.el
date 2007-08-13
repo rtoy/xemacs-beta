@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.8 $
+;; Version: $Revision: 1.9 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -120,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.8 1997/02/15 22:21:28 steve Exp $")
+  "$Id: tm-edit.el,v 1.9 1997/03/22 06:02:45 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -1760,16 +1760,17 @@ Content-Transfer-Encoding: 7bit
 	     (tag (buffer-substring beg end))
 	     )
 	(delete-region beg end)
-	(setq contype (mime-editor/get-contype tag))
-	(setq encoding (mime-editor/get-encoding tag))
-	(insert (concat prefix "--" boundary "\n"))
-	(save-restriction
-	  (narrow-to-region (point)(point))
-	  (insert "Content-Type: " contype "\n")
-	  (if encoding
-	      (insert "Content-Transfer-Encoding: " encoding "\n"))
-	  (mime/encode-message-header)
-	  )
+ 	(let ((contype (mime-editor/get-contype tag))
+ 	      (encoding (mime-editor/get-encoding tag))
+ 	      )
+	  (insert (concat prefix "--" boundary "\n"))
+	  (save-restriction
+	    (narrow-to-region (point)(point))
+	    (insert "Content-Type: " contype "\n")
+	    (if encoding
+		(insert "Content-Transfer-Encoding: " encoding "\n"))
+	    (mime/encode-message-header)
+	    ))
 	t)))
 
 (defun mime-editor/translate-region (beg end &optional boundary multipart)

@@ -8,7 +8,8 @@
 ;; AUTHOR:       Bob Weiner & Kellie Clark
 ;;
 ;; ORIG-DATE:    17-Apr-94
-;; LAST-MOD:      1-Nov-95 at 02:33:23 by Bob Weiner
+;; LAST-MOD:      6-Mar-97 at 01:19:02 by Bob Weiner
+
 ;;; ************************************************************************
 ;;; Public variables
 ;;; ************************************************************************
@@ -47,7 +48,7 @@
 	  ((eq label-type 'partial-alpha)
 	   (error
 	    "(klabel:level): Can't compute the level of a partial-alpha label"))
-	  (t (error "(klabel:level): Invalid label type setting: '%s'"
+	  (t (error "(klabel:level): Invalid label type setting: `%s'"
 		    label-type)))))
 
 (defun klabel:parent (label)
@@ -69,7 +70,7 @@
 	    (error
 	     "(klabel:child-id): Can't compute child of idstamp label"))))
 	(t (error
-	    "(klabel-type:child): Invalid label type setting: '%s'"
+	    "(klabel-type:child): Invalid label type setting: `%s'"
 	    label-type))))
 
 (defun klabel-type:increment (label-type)
@@ -96,7 +97,7 @@
 		(error "(klabel:increment-no): 0 cell cannot have a sibling")
 	      (error "(klabel:increment-id): Can't compute sibling of idstamp label")))))
 	(t (error
-	    "(klabel:increment): Invalid label type setting: '%s'"
+	    "(klabel:increment): Invalid label type setting: `%s'"
 	    label-type))))
 
 (defun klabel-type:parent (label-type)
@@ -127,7 +128,7 @@
 	    (error
 	     "(klabel:parent-id): Can't compute parent of idstamp label"))))
 	(t (error
-	    "(klabel-type:parent): Invalid label type setting: '%s'"
+	    "(klabel-type:parent): Invalid label type setting: `%s'"
 	    label-type))))
 
 ;;;
@@ -211,7 +212,7 @@ First visible outline cell is level 1."
 	 (concat (substring label 0 (match-beginning 0))
 		 (int-to-string
 		  (1+ (string-to-int (substring label (match-beginning 0)))))))
-	(t (error "(klabel:increment-legal): Invalid label, '%s'" label))))
+	(t (error "(klabel:increment-legal): Invalid label, `%s'" label))))
 
 (defun klabel:level-legal (label)
   "Return outline level as an integer of legal-style LABEL.
@@ -243,10 +244,10 @@ First visible outline cell is level 1."
 ;; It must be one of the following symbols:
 ;;   no              for no labels,
 ;;   id              for permanent idstamp labels, e.g. 001, 002, etc.
-;;   alpha           for '1a2' full alphanumeric labels
-;;   legal           for '1.1.2' labels
-;;   partial-alpha   for partial alphanumeric labels, e.g. '2' for node '1a2'
-;;   star            for multi-star labeling, e.g. '***'.
+;;   alpha           for `1a2' full alphanumeric labels
+;;   legal           for `1.1.2' labels
+;;   partial-alpha   for partial alphanumeric labels, e.g. `2' for node `1a2'
+;;   star            for multi-star labeling, e.g. `***'.
 
 ;;
 ;; Functions to compute sibling and child labels for particular label types.
@@ -352,7 +353,7 @@ Function signature is: ().  It takes no arguments and begins the search from poi
 			(if (re-search-backward
 			     "\\(\\`\\|[\n\r][\n\r]\\)[ \t]*0[0-9]+" nil t)
 			    (goto-char (match-end 0)))))))))
-	(error "(kview:to-label-end): Invalid label type: '%s'" label-type)))
+	(error "(kview:to-label-end): Invalid label type: `%s'" label-type)))
 
 (defun klabel-type:star-label (prev-label &optional child-p)
   "Return full star label, e.g. ***, for cell following PREV-LABEL's cell.
@@ -379,7 +380,7 @@ With optional CHILD-P, return label for first child cell of PREV-LABEL cell."
 		  ((eq label-type 'no) "")
 		  ((eq label-type 'star) "*")
 		  (t (error
-		      "(klabel-type:set-labels): Invalid label type: '%s'"
+		      "(klabel-type:set-labels): Invalid label type: `%s'"
 		      label-type))))
       (let ((klabel-type:changing-flag t))
 	(klabel-type:update-labels-from-point label-type first-label)))))
@@ -603,7 +604,7 @@ LABEL must be >= 1 or >= a.  If LABEL is decremented below 1 or a, an error
 is signaled."
   (if (not (kotl-label:is-p label))
       (error
-       "(kotl-label:increment): First arg, '%s', must be a kotl-label."
+       "(kotl-label:increment): First arg, `%s', must be a kotl-label."
        label))
   (let ((int-p) (val 0))
     (if (or (setq int-p (kotl-label:integer-p label))
@@ -613,13 +614,13 @@ is signaled."
 	    (progn (setq int-p (string-to-int label))
 		   (if (> (setq val (+ int-p n)) 0)
 		       (kotl-label:create val)
-		     (error "(kotl-label:increment): Decrement of '%s' by '%d' is less than 1." label n)))
+		     (error "(kotl-label:increment): Decrement of `%s' by `%d' is less than 1." label n)))
 	  ;; alpha-p
 	  (if (<= 0 (setq val (+ n (kotl-label:alpha-to-int label))))
 	      (kotl-label:create
 	       (kotl-label:int-to-alpha val))
-	    (error "(kotl-label:increment): Decrement of '%s' by '%d' is illegal." label n)))
-      (error "(kotl-label:increment): label, '%s', must be all digits or alpha characters" label))))
+	    (error "(kotl-label:increment): Decrement of `%s' by `%d' is illegal." label n)))
+      (error "(kotl-label:increment): label, `%s', must be all digits or alpha characters" label))))
 
 (defun kotl-label:increment-alpha (label)
   "Return alphabetic LABEL incremented by 1.
@@ -694,7 +695,7 @@ Return NEW-LABEL string."
 For example, the full label \"1a2\" has kotl-label \"2\", as does \"1.1.2\"."
   (if (string-match "[0-9]+$\\|[a-zA-Z]+$" label)
       (substring label (match-beginning 0))
-    (error "(klabel:to-kotl-label): Invalid label, '%s'" label)))
+    (error "(klabel:to-kotl-label): Invalid label, `%s'" label)))
 
 (defun klabel-type:update-labels-from-point (label-type first-label)
   (let ((label-sep-len (kview:label-separator-length kview)))

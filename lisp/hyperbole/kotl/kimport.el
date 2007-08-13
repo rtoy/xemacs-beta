@@ -8,7 +8,8 @@
 ;; AUTHOR:       Bob Weiner & Kellie Clark
 ;;
 ;; ORIG-DATE:    15-Nov-93 at 11:57:05
-;; LAST-MOD:      1-Nov-95 at 23:19:09 by Bob Weiner
+;; LAST-MOD:      6-Mar-97 at 01:18:33 by Bob Weiner
+
 ;;; ************************************************************************
 ;;; Other required Elisp libraries
 ;;; ************************************************************************
@@ -133,7 +134,7 @@ on."
     (message "Imported %d of %d Augment statements." count total)))
 
 ;;;
-;;; Emacs outliner style files, leading '*' cell delimiters
+;;; Emacs outliner style files, leading `*' cell delimiters
 ;;;
 
 ;;;###autoload
@@ -213,7 +214,7 @@ an explanation of where imported cells are placed.
 Text paragraphs are imported as a sequence of same level cells.  Koutlines
 are imported with their structure intact.
 
-The variable, 'paragraph-start,' is used to determine paragraphs."
+The variable, `paragraph-start,' is used to determine paragraphs."
   (interactive "FImport from text/koutline buffer/file: \nFInsert cells into koutline buffer/file: \nP")
   (let ((klabel "1") (output-level 1) (count 0) initially-empty-output
 	no-renumber orig-point total)
@@ -540,7 +541,7 @@ previous cell, with the COUNT of inserted paragraphs starting at 0.  TOTAL is
 the total number of paragraphs in IMPORT-FROM, used to show a running tally
 of the imported paragraphs.
 
-The variable, 'paragraph-start' is used to determine paragraphs."
+The variable, `paragraph-start' is used to determine paragraphs."
   (set-buffer import-from)
   (let* ((count 0) start end contents)
     ;; Next line is needed when importing into an existing kview.

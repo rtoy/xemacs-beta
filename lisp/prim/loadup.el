@@ -147,10 +147,10 @@
        (load-gc "vmsproc")
        (load-gc "vms-patch"))
       ((eq system-type 'windows-nt)
-       (load-gc "ls-lisp")
+       ;; (load-gc "ls-lisp")
        (load-gc "winnt"))
       ((eq system-type 'ms-dos)
-       (load-gc "ls-lisp")
+       ;; (load-gc "ls-lisp")
        (load-gc "dos-fns")
        (load-gc "disp-table")))	; needed to setup ibm-pc char set,
 				; see internal.el

@@ -1,3 +1,68 @@
+Fri Mar 21 20:19:09 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: strip inline.o.
+
+Fri Mar 21 18:54:04 1997  David Moore  <dmoore@ucsd.edu>
+
+	* fileio.c (call2_check_string_or_nil): New function.
+	(Ffile_name_directory): Use it.
+	(Fsubstitute_in_file_name): Use it.
+
+	* fileio.c (Fexpand_file_name): GC protect against file handlers.
+	(Fdelete_file): ditto
+	(Ffile_writable_p): ditto
+	(Ffile_directory_p): ditto
+	(Ffile_regular_p): ditto
+	(Fset_file_modes): ditto
+	(Ffile_newer_than_file_p): ditto
+	(Fset_visited_file_modtime): ditto
+	
+	*fileio.c (Ffile_truename): Unneccessary GC protection.
+	(Fdelete_directory): Fix broken caller-must-GC-protect call.
+
+	* filelock.c (lock_file): New comments warning that this function
+	may kill the current buffer.
+	(unlock_file): ditto
+	(Flock_buffer): ditto
+	(Funlock_buffer): ditto
+	(unlock_buffer): ditto
+
+	* filelock.c (unlock_all_files): GC protect against unlock_file
+	killing random buffers.
+
+	* buffer.c (Fkill_buffer): GC protect against unlock_file killing
+	the buffer.
+
+	* insdel.c (prepare_to_modify_buffer): GC protect against
+ 	lock_file() killing the buffer.
+
+Fri Mar 21 19:11:15 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* mule-coding.c (vars_of_mule_coding): Add
+	enable-multibyte-characters for MULE compatibility.
+
+Thu Mar 20 13:25:26 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c: Implement a dummy function to insert a fake EOI
+	marker if called.  Based on code from William Perry.
+
+Wed Mar 19 10:49:05 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* menubar-x.c (pre_activate_callback): Attempt to avoid recursive
+	expansion of submenus via :filter expansion.
+
+	* glyphs-x.c (x_print_image_instance): Move define of
+	HAVE_SUBWINDOWS to glyphs-x.h.
+	(our_skip_input_data): Implement with some error checking based on 
+	patch by Dominic Froud.
+
+	* glyphs-x.h (HAVE_SUBWINDOWS): Define to keep inline.c from
+	barfing.
+
+Tue Mar 18 11:15:23 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c: Strip unimplemented subwindows code.
+
 Mon Mar 17 15:40:12 1997  David Moore  <dmoore@ucsd.edu>
 
 	* glyphs-x.c (our_own_dgif_slurp_from_gif2x11_c): Only get the

@@ -2306,6 +2306,11 @@ if test "${with_cde}"      = "yes" -a \
   with_tooltalk='yes'
 fi
 
+# having CDE requires Motif
+if test "${with_cde}" = "yes" ; then
+  motif_libs="-lXm -lXt"
+fi
+
 #
 # See if we can find OffiX.
 #
@@ -2677,14 +2682,14 @@ fi
 # set defaults for finding WNN includes and libs
 #
 if test "${with_wnn}" = "yes" ; then
-  for arg in "-I${wnn_includes}" "-I/usr/X11R6/include"
+  for arg in "-I${wnn_includes}" "-I/usr/X11R6/include/wnn" "-I/usr/include/wnn"
   do
     if test -f `echo "${arg}/wnnerror.h" | sed 's/^\-I//'` ; then
       C_SWITCH_SITE="${C_SWITCH_SITE} ${arg}"
       wnn_includes=${arg}
     fi
   done
-  for arg in "-L${wnn_libraries}" "-I/usr/X11R6/lib"
+  for arg in "-L${wnn_libraries}" "-L/usr/X11R6/lib" "-L/usr/lib"
   do
     if test -f `echo "${arg}/libwnn.a" | sed 's/^\-L//'` ; then
       LD_SWITCH_SITE="${LD_SWITCH_SITE} ${arg}"
@@ -2704,7 +2709,7 @@ if test "${with_canna}" = "yes" ; then
       canna_includes=${arg}
     fi
   done
-  for arg in "-L${canna_libraries}" "-I/usr/X11R6/lib"
+  for arg in "-L${canna_libraries}" "-L/usr/X11R6/lib"
   do
     if test -f `echo "${arg}/libcanna.a" | sed 's/^\-L//'` ; then
       LD_SWITCH_SITE="${LD_SWITCH_SITE} ${arg}"

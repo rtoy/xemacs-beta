@@ -15,13 +15,12 @@
 ;;               Tel: +1 408-243-3300
 ;;
 ;; ORIG-DATE:     7-Jun-89 at 22:08:29
-;; LAST-MOD:     17-Feb-97 at 15:32:20 by Bob Weiner
+;; LAST-MOD:     14-Mar-97 at 01:32:23 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1989, '90, '91, '92, '95  Free Software Foundation, Inc.
-;; Copyright (C) 1996  InfoDock Associates
+;; Copyright (C) 1989, '90, '91, '92, '95, '96, '97  Free Software Foundation, Inc.
 ;;
 ;; DESCRIPTION:  
 ;;
@@ -63,7 +62,7 @@
 ;;
 ;;  SETUP:
 ;;
-;;   The variable 'rolo-file-list' is a list of files to search for
+;;   The variable `rolo-file-list' is a list of files to search for
 ;;   matching rolodex entries.  To add personal files to rolo-file-list,
 ;;   when you find these functions are useful for any sort of list lookup,
 ;;   add the following to your ~/.emacs file (substituting where you see
@@ -71,9 +70,9 @@
 ;;
 ;;      (setq rolo-file-list (append rolo-file-list '("<file1>" "<file2>")))
 ;;
-;;   We recommend that entries in 'rolo-file-list' have ".otl" suffixes
+;;   We recommend that entries in `rolo-file-list' have ".otl" suffixes
 ;;   so that they do not conflict with file names that other rolodex
-;;   programs might use and so that they are edited in 'outline-mode' by
+;;   programs might use and so that they are edited in `outline-mode' by
 ;;   default.  If you want the latter behavior, uncomment and add something
 ;;   like the following to one of your GNU Emacs initialization files:
 ;;
@@ -98,7 +97,7 @@
 ;;   message, the rolodex add function will extract the sender's name
 ;;   and e-mail address and prompt you with the name as a default.  If
 ;;   you accept it, it will enter the name and the email address using
-;;   the format given by the 'rolo-email-format' variable.  See its
+;;   the format given by the `rolo-email-format' variable.  See its
 ;;   documentation if you want to change its value.
 ;;
 ;;
@@ -139,8 +138,8 @@
 ;;   parent/child to locate a child entry below a parent entry, e.g.
 ;;   from the example near the top, we could give Company/Manager/Underlings.
 ;;
-;;   Here is a snippet from our group rolodex file.  The ';'s should be
-;;   removed of course and the '*'s should begin at the start of the
+;;   Here is a snippet from our group rolodex file.  The `;'s should be
+;;   removed of course and the `*'s should begin at the start of the
 ;;   line.  If a rolodex file begins with two separator lines whose
 ;;   first three characters are "===", then these lines and any text
 ;;   between them are prepended to the output buffer whenever any
@@ -160,43 +159,43 @@
 ;;  FOR PROGRAMMERS:
 ;;
 ;;   Entries in rolodex files are separated by patterns matching
-;;   'rolo-entry-regexp'.  Each entry may have any number of sub-entries
+;;   `rolo-entry-regexp'.  Each entry may have any number of sub-entries
 ;;   which represent the next level down in the entry hierarchy.
 ;;   Sub-entries' separator patterns are always longer than their parents'.
-;;   For example, if an entry began with '*' then its sub-entries would begin
-;;   with '**' and so on.  Blank lines in rolodex files will not end up where
+;;   For example, if an entry began with `*' then its sub-entries would begin
+;;   with `**' and so on.  Blank lines in rolodex files will not end up where
 ;;   you want them if you use the rolo-sort commands; therefore, blank lines
 ;;   are not recommended.  If you change the value of
-;;   'rolo-entry-regexp', you will have to modify 'rolo-sort'.
+;;   `rolo-entry-regexp', you will have to modify `rolo-sort'.
 ;;
 ;;   The following additional functions are provided:
 ;;
-;;     'rolo-sort-level' sorts a specific level of entries in a rolodex file;
-;;     'rolo-map-level' runs a user specified function on a specific level of
+;;     `rolo-sort-level' sorts a specific level of entries in a rolodex file;
+;;     `rolo-map-level' runs a user specified function on a specific level of
 ;;       entries in a rolodex file;
-;;     'rolo-fgrep-file', same as 'rolo-fgrep' but operates on a single file;
-;;     'rolo-grep-file', same as 'rolo-grep' but operates on a single file;
-;;     'rolo-display-matches', display last set of rolodex matches, if any;
-;;     'rolo-toggle-narrow-to-entry' toggles between display of current entry
+;;     `rolo-fgrep-file', same as `rolo-fgrep' but operates on a single file;
+;;     `rolo-grep-file', same as `rolo-grep' but operates on a single file;
+;;     `rolo-display-matches', display last set of rolodex matches, if any;
+;;     `rolo-toggle-narrow-to-entry' toggles between display of current entry
 ;;       and display of all matching entries.
 ;;
 ;;
 ;;  MOD HISTORY:
 ;;
 ;;   12/17/89
-;;     Added internal 'rolo-shrink-window' function for use in
+;;     Added internal `rolo-shrink-window' function for use in
 ;;     compressing/uncompressing the rolo view window to/from a size just
 ;;     large enough for the selected entry.  This is useful when a search
 ;;     turns up more entries than desired.
 ;;
 ;;   02/21/90
-;;     Modified 'rolo-grep-file' and 'rolo-map-level' so they only set buffers
+;;     Modified `rolo-grep-file' and `rolo-map-level' so they only set buffers
 ;;     read-only the first time they are read in.  This way, if someone edits a
 ;;     rolodex file and then does a rolo-fgrep or other function, the buffer
 ;;     will not be back in read-only mode.
 ;;
 ;;   04/18/91
-;;     Modified 'rolo-grep-file' to expand any hidden entries in rolo file
+;;     Modified `rolo-grep-file' to expand any hidden entries in rolo file
 ;;     before doing a search.
 ;;
 ;;   12/24/91
@@ -261,6 +260,10 @@ Only unmodified buffers are killed.")
 (defvar rolo-save-buffers-after-use t
   "*Non-nil means save rolodex file after an entry is killed.")
 
+;; Insert or update the entry date each time an entry is added or edited.
+(add-hook 'wrolo-add-hook 'rolo-set-date)
+(add-hook 'wrolo-edit-hook 'rolo-set-date)
+
 (defvar wrolo-yank-reformat-function nil
   "*Value is a function of two arguments, START and END, invoked after a rolo-yank.
 It should reformat the region given by the arguments to some preferred style.
@@ -290,19 +293,19 @@ entry which begins with the parent string."
 		 (format rolo-email-format entry email) entry)
 	     current-prefix-arg))))
   (if (or (not (stringp name)) (string= name ""))
-      (error "(rolo-add): Invalid name: '%s'" name))
+      (error "(rolo-add): Invalid name: `%s'" name))
   (if (and (interactive-p) file)
       (setq file (completing-read "File to add to: "
 				  (mapcar 'list rolo-file-list))))
   (if (null file) (setq file (car rolo-file-list)))
   (cond ((and file (or (not (stringp file)) (string= file "")))
-	 (error "(rolo-add): Invalid file: '%s'" file))
+	 (error "(rolo-add): Invalid file: `%s'" file))
 	((and (file-exists-p file) (not (file-readable-p file)))
-	 (error "(rolo-add): File not readable: '%s'" file))
+	 (error "(rolo-add): File not readable: `%s'" file))
 	((not (file-writable-p file))
-	 (error "(rolo-add): File not writable: '%s'" file)))
+	 (error "(rolo-add): File not writable: `%s'" file)))
   (set-buffer (or (get-file-buffer file) (find-file-noselect file)))
-  (if (interactive-p) (message "Locating insertion point for '%s'..." name))
+  (if (interactive-p) (message "Locating insertion point for `%s'..." name))
   (let ((parent "") (level "") end)
     (widen) (goto-char 1)
     (while (setq end (string-match "/" name))
@@ -313,7 +316,7 @@ entry which begins with the parent string."
 		   (regexp-quote parent)) nil t)
 	  (setq level (buffer-substring (match-beginning 1)
 					(match-end 1)))
-	(error "(rolo-add): '%s' category not found in \"%s\"."
+	(error "(rolo-add): `%s' category not found in \"%s\"."
 	       parent file)))
     (narrow-to-region (point)
 		      (progn (rolo-to-entry-end t level) (point)))
@@ -356,13 +359,14 @@ entry which begins with the parent string."
 	(widen)
 	(rolo-to-buffer (current-buffer))
 	(goto-char opoint))
+      (run-hooks 'wrolo-add-hook)
       (if (interactive-p)
 	  (message "Edit entry at point.")))))
 
 ;;;###autoload
 (defun rolo-display-matches (&optional display-buf return-to-buffer)
   "Display optional DISPLAY-BUF buffer of previously found rolodex matches.
-If DISPLAY-BUF is nil, use the value in 'rolo-display-buffer'.
+If DISPLAY-BUF is nil, use the value in `rolo-display-buffer'.
 Second arg RETURN-TO-BUFFER is the buffer to leave point within after the display."
   (interactive)
   (or display-buf (setq display-buf (get-buffer rolo-display-buffer)))
@@ -391,15 +395,15 @@ Second arg RETURN-TO-BUFFER is the buffer to leave point within after the displa
 
 ;;;###autoload
 (defun rolo-edit (&optional name file)
-  "Edits a rolodex entry given by optional NAME within 'rolo-file-list'.
+  "Edits a rolodex entry given by optional NAME within `rolo-file-list'.
 With prefix argument, prompts for optional FILE to locate entry within.
-With no NAME arg, simply displays FILE or first entry in 'rolo-file-list' in an
+With no NAME arg, simply displays FILE or first entry in `rolo-file-list' in an
 editable mode.  NAME may be of the form: parent/child to edit child below a
 parent entry which begins with the parent string."
   (interactive "sName to edit in rolo: \nP")
   (if (string-equal name "") (setq name nil))
   (and name (not (stringp name))
-       (error "(rolo-edit): Invalid name: '%s'" name))
+       (error "(rolo-edit): Invalid name: `%s'" name))
   (if (and (interactive-p) current-prefix-arg)
       (if (= (length rolo-file-list) 1)
 	  (setq file (car rolo-file-list))
@@ -409,7 +413,7 @@ parent entry which begins with the parent string."
     (or file (setq file (car file-list)))
     (if (null name)
 	(progn (if (not (file-writable-p file))
-		  (error "(rolo-edit): File not writable: '%s'" file))
+		  (error "(rolo-edit): File not writable: `%s'" file))
 	       (find-file-other-window file) (setq buffer-read-only nil))
       (if (setq found-point (rolo-to name file-list))
 	  (progn
@@ -417,10 +421,10 @@ parent entry which begins with the parent string."
 	    (if (file-writable-p file)
 		(setq buffer-read-only nil)
 	      (message
-	       "(rolo-edit): Entry found but file not writable: '%s'" file)
+	       "(rolo-edit): Entry found but file not writable: `%s'" file)
 	      (beep))
 	    (rolo-to-buffer (current-buffer)))
-	(message "(rolo-edit): '%s' not found." name)
+	(message "(rolo-edit): `%s' not found." name)
 	(beep)
 	(rolo-to-buffer (or (get-file-buffer (car file-list))
 			    (find-file-noselect (car file-list))))
@@ -428,7 +432,8 @@ parent entry which begins with the parent string."
       (widen)
       ;; Rolo-to-buffer may have moved point from its desired location, so
       ;; restore it.
-      (if found-point (goto-char found-point)))))
+      (if found-point (goto-char found-point))
+      (run-hooks 'wrolo-edit-hook))))
 
 (defun rolo-edit-entry ()
   "Edit the source entry of the rolodex match buffer entry at point.
@@ -526,14 +531,14 @@ Use this to add characters to further narrow the search."
 
 ;;;###autoload
 (defun rolo-kill (name &optional file)
-  "Kills a rolodex entry given by NAME within 'rolo-file-list'.
+  "Kills a rolodex entry given by NAME within `rolo-file-list'.
 With prefix argument, prompts for optional FILE to locate entry within.
 NAME may be of the form: parent/child to kill child below a parent entry
 which begins with the parent string.
 Returns t if entry is killed, nil otherwise."
   (interactive "sName to kill in rolo: \nP")
   (if (or (not (stringp name)) (string= name ""))
-      (error "(rolo-kill): Invalid name: '%s'" name))
+      (error "(rolo-kill): Invalid name: `%s'" name))
   (if (and (interactive-p) current-prefix-arg)
       (setq file (completing-read "Entry's File: "
 				  (mapcar 'list rolo-file-list))))
@@ -572,9 +577,9 @@ Returns t if entry is killed, nil otherwise."
 			(message "Aborted")))
 		  (funcall kill-op start level)))
 	    (message
-	     "(rolo-kill): Entry found but file not writable: '%s'" file)
+	     "(rolo-kill): Entry found but file not writable: `%s'" file)
 	    (beep)))
-      (message "(rolo-kill): '%s' not found." name)
+      (message "(rolo-kill): `%s' not found." name)
       (beep))
     killed))
 
@@ -630,7 +635,7 @@ Returns t if entry is killed, nil otherwise."
 ;;;###autoload
 (defun rolo-sort (&optional rolo-file)
   "Sorts up to 14 levels of entries in ROLO-FILE (default is personal rolo).
-Assumes entries are delimited by one or more '*'characters.
+Assumes entries are delimited by one or more `*'characters.
 Returns list of number of groupings at each entry level." 
   (interactive
    (list (let ((default "")
@@ -681,6 +686,22 @@ of groupings sorted."
      rolo-file
      level-regexp
      max-groupings)))
+
+;;;###autoload
+(defun rolo-toggle-datestamps (&optional arg)
+  "Toggle whether datestamps are updated when rolodex entries are modified.
+With optional ARG, turn them on iff ARG is positive."
+  (interactive "P")
+  (if (or (and arg (<= (prefix-numeric-value arg) 0))
+	  (and (not (and arg (> (prefix-numeric-value arg) 0)))
+	       (boundp 'wrolo-add-hook) (listp wrolo-add-hook)
+	       (memq 'rolo-set-date wrolo-add-hook)))
+      (progn (remove-hook 'wrolo-add-hook 'rolo-set-date)
+	     (remove-hook 'wrolo-edit-hook 'rolo-set-date)
+	     (message "Rolodex date stamps are now turned off."))
+    (add-hook 'wrolo-add-hook 'rolo-set-date)
+    (add-hook 'wrolo-edit-hook 'rolo-set-date)
+    (message "Rolodex date stamps are now turned on.")))
 
 (defun rolo-toggle-narrow-to-entry ()
   "Toggle between display of current entry and display of all matched entries.
@@ -783,7 +804,7 @@ Returns number of matching entries found."
 	      (widen)
 	      (goto-char 1)
 	      ;; Ensure no entries in outline mode are hidden.
-	      ;; Uses 'show-all' function from outline.el.
+	      ;; Uses `show-all' function from outline.el.
 	      (and (search-forward "\C-m" nil t)
 		   (show-all))
 	      (if (re-search-forward rolo-hdr-regexp nil t 2)
@@ -846,7 +867,7 @@ level two.  Returns number of groupings matched."
 		(outline-regexp rolo-entry-regexp)
 		(buffer-read-only)
 		(level-len))
-	    ;; Load 'outline' library since its functions are used here.
+	    ;; Load `outline' library since its functions are used here.
 	    (if (not (boundp 'outline-mode-map))
 		(load-library "outline"))
 	    (goto-char (point-min))
@@ -890,7 +911,7 @@ level two.  Returns number of groupings matched."
 					     rolo-entry-regexp nil t)
 					    (progn (beginning-of-line) (point))
 					  (point-max))))
-				;; Remember last expression in 'progn'
+				;; Remember last expression in `progn'
 				;; must always return non-nil.
 				(goto-char start)))
 			    (not grouping-end)))
@@ -925,6 +946,14 @@ ROLO-BUF may be a file-name, buffer-name, or buffer."
 			     rolo-buf))
 	     (buffer-list))))
 
+(defun rolo-current-date ()
+  "Return the current date (a string) in a form used for rolodex entry insertion."
+  (let ((year-month-day (htz:date-parse (current-time-string))))
+    (format "\t%02s/%02s/%s"
+	    (aref year-month-day 1)
+	    (aref year-month-day 2)
+	    (aref year-month-day 0))))
+
 (defun rolo-display-to-entry-end ()
   "Go to end of current entry, ignoring sub-entries."
   (if (re-search-forward (concat rolo-hdr-regexp "\\|"
@@ -952,7 +981,7 @@ ROLO-BUF may be a file-name, buffer-name, or buffer."
 				   hproperty:highlight-face)))))))
 
 (defun rolo-kill-buffer (&optional rolo-buf)
-  "Kills optional ROLO-BUF if unchanged and 'rolo-kill-buffers-after-use' is t.
+  "Kills optional ROLO-BUF if unchanged and `rolo-kill-buffers-after-use' is t.
 Default is current buffer."
   (or rolo-buf (setq rolo-buf (current-buffer)))
   (and rolo-kill-buffers-after-use (not (buffer-modified-p rolo-buf))
@@ -960,7 +989,7 @@ Default is current buffer."
 
 (defun rolo-name-and-email ()
   "If point is in a mail message, returns list of (name email-addr) of sender.
-Name is returned as 'last, first-and-middle'."
+Name is returned as `last, first-and-middle'."
   (let ((email) (name) (from))
     (save-window-excursion
       (if (or (hmail:lister-p) (hnews:lister-p))
@@ -996,7 +1025,7 @@ Name is returned as 'last, first-and-middle'."
 	(list name email))))
 
 (defun rolo-name-at ()
-  "If point is within an entry in 'rolo-display-buffer', returns entry, else nil."
+  "If point is within an entry in `rolo-display-buffer', returns entry, else nil."
   (if (string-equal (buffer-name) rolo-display-buffer)
       (save-excursion
 	(if (or (looking-at rolo-entry-regexp)
@@ -1013,11 +1042,27 @@ Name is returned as 'last, first-and-middle'."
   (or (/= (point-min) 1) (/= (1+ (buffer-size)) (point-max))))
 
 (defun rolo-save-buffer (&optional rolo-buf)
-  "Saves optional ROLO-BUF if changed and 'rolo-save-buffers-after-use' is t.
+  "Saves optional ROLO-BUF if changed and `rolo-save-buffers-after-use' is t.
 Default is current buffer.  Used, for example, after a rolo entry is killed."
   (or rolo-buf (setq rolo-buf (current-buffer)))
   (and rolo-save-buffers-after-use (buffer-modified-p rolo-buf)
        (set-buffer rolo-buf) (save-buffer)))
+
+(defun rolo-set-date ()
+  "Add a line with the current date at the end of the current rolodex entry.
+Suitable for use as an entry in `wrolo-add-hook' and `wrolo-edit-hook'.
+The default date format is MM/DD/YYYY.  Rewrite `rolo-current-date' to
+return a different format, if you prefer."
+  (save-excursion
+    (skip-chars-forward "*")
+    (rolo-to-entry-end)
+    (skip-chars-backward " \t\n\r\f")
+    (skip-chars-backward "^\n\r\f")
+    (if (looking-at "\\s-+[-0-9./]+\\s-*$") ;; a date
+	(progn (delete-region (point) (match-end 0))
+	       (insert (rolo-current-date)))
+	(end-of-line)
+	(insert "\n" (rolo-current-date)))))
 
 (defun rolo-shrink-window ()
   (let* ((lines (count-lines (point-min) (point-max)))
@@ -1034,7 +1079,7 @@ Default is current buffer.  Used, for example, after a rolo entry is killed."
 
 (defun rolo-to (name &optional file-list)
   "Moves point to entry for NAME within optional FILE-LIST.
-'rolo-file-list' is used as default when FILE-LIST is nil.
+`rolo-file-list' is used as default when FILE-LIST is nil.
 Leaves point immediately after match for NAME within entry.
 Switches internal current buffer but does not alter the frame.
 Returns point where matching entry begins or nil if not found."
@@ -1044,9 +1089,9 @@ Returns point where matching entry begins or nil if not found."
       (setq file (car file-list)
 	    file-list (cdr file-list))
       (cond ((and file (or (not (stringp file)) (string= file "")))
-	     (error "(rolo-to): Invalid file: '%s'" file))
+	     (error "(rolo-to): Invalid file: `%s'" file))
 	    ((and (file-exists-p file) (not (file-readable-p file)))
-	     (error "(rolo-to): File not readable: '%s'" file)))
+	     (error "(rolo-to): File not readable: `%s'" file)))
       (set-buffer (or (get-file-buffer file) (find-file-noselect file)))
       (let ((case-fold-search t) (real-name name) (parent "") (level) end)
 	(widen) (goto-char 1)
@@ -1068,7 +1113,7 @@ Returns point where matching entry begins or nil if not found."
 		(t;; Found parent but not child
 		 (setq buffer-read-only nil)
 		 (rolo-to-buffer (current-buffer))
-		 (error "(rolo-to): '%s' part of name not found in \"%s\"."
+		 (error "(rolo-to): `%s' part of name not found in \"%s\"."
 			parent file)))
 	  (if level
 	      (narrow-to-region (point)

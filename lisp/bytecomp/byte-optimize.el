@@ -1173,7 +1173,11 @@
 	   (setq op (logand op 248))
 	   (cond ((eq tem 6)
 		  (setq ptr (1+ ptr))	;offset in next byte
-		  (aref bytes ptr))
+		  ;; char-to-int to avoid downstream problems
+		  ;; caused by chars appearing where ints are
+		  ;; expected.  In bytecode the bytes in the
+		  ;; opcode string are always interpreted as ints.
+		  (char-to-int (aref bytes ptr)))
 		 ((eq tem 7)
 		  (setq ptr (1+ ptr))	;offset in next 2 bytes
 		  (+ (aref bytes ptr)
@@ -1197,7 +1201,11 @@
 	((and (>= op byte-rel-goto)
 	      (<= op byte-insertN))
 	 (setq ptr (1+ ptr))		;offset in next byte
-	 (aref bytes ptr))))
+	 ;; Use char-to-int to avoid downstream problems caused by
+	 ;; chars appearing where ints are expected.  In bytecode
+	 ;; the bytes in the opcode string are always interpreted as
+	 ;; ints.
+	 (char-to-int (aref bytes ptr)))))
 
 
 ;;; This de-compiler is used for inline expansion of compiled functions,

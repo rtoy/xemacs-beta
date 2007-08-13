@@ -264,11 +264,11 @@ which must be a string to use as the error message."
     (while (progn
              (skip-chars-forward "^\"\\\t\n\r")
              (not (eobp)))
-      (insert "\\" (cdr (assq (following-char) '((?\" . "\"")
-                                                 (?\\ . "\\")
-                                                 (?\t . "t")
-                                                 (?\n . "n")
-                                                 (?\r . "r")))))
+      (insert "\\" (cdr (assq (char-after (point)) '((?\" . "\"")
+                                                     (?\\ . "\\")
+                                                     (?\t . "t")
+                                                     (?\n . "n")
+                                                     (?\r . "r")))))
       (delete-char 1))
     (insert "\"")
     (buffer-string)))
@@ -450,7 +450,7 @@ which must be a string to use as the error message."
       ;; is not a function character in the SGML declaration.
       )
    
-     ((eq ?& (following-char))
+     ((eq ?& (char-after (point)))
       ;; We are either looking at an undefined reference or a & that does
       ;; not start a reference (in which case we should not have been called).
       ;; Skip over the &.
@@ -1530,6 +1530,7 @@ skip-chars-forward."
                            nil
                            (((tbody) *close)
                             ;; error handling
+                            ((td th) tr *same error)
                             ((%body.content) tr *same error))
                            nil)])
         (end-tag-omissible . t))
@@ -2116,7 +2117,7 @@ Returns a data structure containing the parsed information."
         ;; character, or end of buffer.
         (cond
 
-         ((= ?< (following-char))
+         ((eq ?< (char-after (point)))
 
           ;; We are looking at a tag, comment, markup declaration, SGML marked
           ;; section, SGML processing instruction, or non-markup "<".
@@ -2131,8 +2132,8 @@ Returns a data structure containing the parsed information."
             (setq w3-p-d-tag-name
                   (intern (buffer-substring (match-beginning 1)
                                             (match-end 1))))
-            (setq w3-p-d-end-tag-p (= ?/ (following-char)))
-            (setq between-tags-end (1- (point)))
+            (setq w3-p-d-end-tag-p (eq ?/ (char-after (point)))
+                  between-tags-end (1- (point)))
             (goto-char (match-end 0))
           
             ;; Read the attributes from a start-tag.
@@ -2244,7 +2245,7 @@ Returns a data structure containing the parsed information."
                                (buffer-substring (point-min) (point-max)))))
                     (t
                      (error "impossible attribute value"))))
-                  ((memq (following-char) '(?\" ?'))
+                  ((memq (char-after (point)) '(?\" ?'))
                    ;; Missing terminating quote character.
                    (narrow-to-region (point)
                                      (progn
@@ -2348,15 +2349,15 @@ Returns a data structure containing the parsed information."
           
             ;; Process the end of the tag.
             (skip-chars-forward " \t\n\r")
-            (cond ((= ?> (following-char))
+            (cond ((eq ?> (char-after (point)))
                    ;; Ordinary tag end.
                    (forward-char 1))
-                  ((and (= ?/ (following-char))
+                  ((and (eq ?/ (char-after (point)))
                         (not w3-p-d-end-tag-p))
                    ;; This is a NET-enabling start-tag.
                    (setq net-tag-p t)
                    (forward-char 1))
-                  ((= ?< (following-char))
+                  ((eq ?< (char-after (point)))
                    ;; *** Strictly speaking, the following text has to
                    ;; lexically be STAGO or ETAGO, which means that it
                    ;; can't match some other lexical unit.
@@ -2373,7 +2374,7 @@ Returns a data structure containing the parsed information."
            
            ((looking-at "/?>")
             ;; We are looking at an empty tag (<>, </>).
-            (setq w3-p-d-end-tag-p (= ?/ (following-char)))
+            (setq w3-p-d-end-tag-p (eq ?/ (char-after (point))))
             (setq w3-p-d-tag-name (if w3-p-d-end-tag-p
                                (w3-element-name w3-p-d-current-element)
                              ;; *** Strictly speaking, if OMITTAG NO, then
@@ -2435,7 +2436,7 @@ Returns a data structure containing the parsed information."
                   ;; declarations, a goal for the future.
                   (w3-debug-html "Bad <! syntax.")
                   (skip-chars-forward "^>")
-                  (if (= ?> (following-char))
+                  (if (eq ?> (char-after (point)))
                       (forward-char))))
                (point))))
          
@@ -2462,7 +2463,7 @@ Returns a data structure containing the parsed information."
                                             ((memq 'RCDATA keywords))
                                             ((memq 'INCLUDE keywords))
                                             ((memq 'TEMP keywords))))))
-              (or (= ?\[ (following-char))
+              (or (eq ?\[ (char-after (point)))
                   ;; I probably shouldn't even check this, since it is so
                   ;; impossible.
                   (error "impossible ??"))
@@ -2503,7 +2504,7 @@ Returns a data structure containing the parsed information."
              (point)
              (progn
                (skip-chars-forward "^>")
-               (if (= ?> (following-char))
+               (if (eq ?> (char-after (point)))
                    (forward-char))
                (point))))
            (t
@@ -2512,16 +2513,16 @@ Returns a data structure containing the parsed information."
             ;; again.
             )))
        
-         ((= ?& (following-char))
+         ((eq ?& (char-after (point)))
           (w3-expand-entity-at-point-maybe))
 
-         ((and (= ?\] (following-char))
+         ((and (eq ?\] (char-after (point)))
                w3-p-d-in-parsed-marked-section
                (looking-at "]]>"))
           ;; *** handle the end of a parsed marked section.
           (error "***unimplemented***"))
 
-         ((and (= ?/ (following-char))
+         ((and (eq ?/ (char-after (point)))
                w3-p-d-null-end-tag-enabled)
           ;; We are looking at a null end tag.
           (setq w3-p-d-end-tag-p t)
@@ -2554,8 +2555,8 @@ Returns a data structure containing the parsed information."
          ((looking-at (eval-when-compile
                         (concat "[" (w3-invalid-sgml-chars) "]")))
           (w3-debug-html
-            (format "Invalid SGML character: %c" (following-char)))
-          (insert (or (cdr-safe (assq (following-char)
+            (format "Invalid SGML character: %c" (char-after (point))))
+          (insert (or (cdr-safe (assq (char-after (point))
                                       ;; These characters are apparently
                                       ;; from a Windows character set.
                                       '((146 . "'")
@@ -2610,7 +2611,7 @@ Returns a data structure containing the parsed information."
               (or (setq content (w3-element-content w3-p-d-current-element))
                   ;; *** Strictly speaking, in SGML the record end is
                   ;; carriage return, not line feed.
-                  (if (= ?\n (char-after between-tags-start))
+                  (if (eq ?\n (char-after between-tags-start))
                       (setq between-tags-start (1+ between-tags-start))))
               (if (= between-tags-start (point))
                   ;; Do nothing.
@@ -2739,7 +2740,7 @@ Returns a data structure containing the parsed information."
                                                     "</[a-z>]\\|&")
                                                   nil 'move)
                                (goto-char (match-beginning 0)))
-                           (= ?& (following-char)))
+                           (eq ?& (char-after (point))))
                     (w3-expand-entity-at-point-maybe)))))))
              (t
               ;; The element is illegal here.  We'll just discard the start

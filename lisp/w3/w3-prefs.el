@@ -1,7 +1,7 @@
 ;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/14 06:31:17
-;; Version: 1.19
+;; Created: 1997/03/14 23:49:47
+;; Version: 1.20
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -219,7 +219,7 @@
     (while todo
       (setq cur (car todo)
 	    todo (cdr todo)
-	    doc (documentation-property cur 'variable-documentation)) ;; (get cur 'variable-documentation))
+	    doc (documentation-property cur 'variable-documentation))
       (if (string-match "^\\*" doc)
 	  (setq doc (substring doc 1 nil)))
       (setq pt (point))

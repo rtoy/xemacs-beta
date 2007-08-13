@@ -396,19 +396,22 @@
 
 ;; XEmacs addition: (and remove disable-undo variable)
 ;; For Emacs V18/Nemacs compatibility
-(and (not (fboundp 'buffer-disable-undo))
-     (fboundp 'buffer-flush-undo)
-     (defalias 'buffer-disable-undo 'buffer-flush-undo))
+;(and (not (fboundp 'buffer-disable-undo))
+;     (fboundp 'buffer-flush-undo)
+;     (defalias 'buffer-disable-undo 'buffer-flush-undo))
 
 ;; 97.2.4 Created by J.Hein to simulate Mule-2.3
-(defun read-event ()
-  "Cheap 'n cheesy event filter to facilitate translation from Mule-2.3"
-  (let ((event (make-event)))
-    (while (progn
-	     (next-event event)
-	     (not (key-press-event-p event)))
-      (dispatch-event event))
-    (event-key event)))
+(defun egg-read-event ()
+  "FSFmacs event emulator that shoves non key events into
+unread-command-events to facilitate translation from Mule-2.3"
+  (let ((event (make-event))
+	(ch nil))
+    (next-command-event event)
+    (if (key-press-event-p event)
+	(setq ch (event-key event))
+      (setq unread-command-events (list event)))
+    (deallocate-event event)
+    ch))
 
 (eval-when-compile (require 'egg-jsymbol))
 
@@ -683,7 +686,7 @@
 	 )
 	;; end of patch
 	(while (not finished)
-	  (let ((ch (read-event)))
+	  (let ((ch (egg-read-event)))
 	    (setq quit-flag nil)
 	    (cond
 	     ((eq ch ?\C-a)
@@ -1615,7 +1618,12 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
 (defun its:peek-char ()
   (if (= (point) its:*buff-e*)
       (if its:*interactive*
-	  (setq unread-command-events (list (character-to-event(read-event))))
+	  (let ((ch (egg-read-event)))
+	    (if ch
+		(progn
+		  (setq unread-command-events (list (character-to-event ch)))
+		  ch)
+	      nil))
 	nil)
     (following-char)))
 
@@ -1624,7 +1632,7 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
       (progn 
 	(setq its:*char-from-buff* nil)
 	(if its:*interactive*
-	    (read-event)
+	    (egg-read-event)
 	  nil))
     (let ((ch (following-char)))
       (setq its:*char-from-buff* t)
@@ -1816,7 +1824,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 	(ch 0))
     (while (not (eq ch ?\^L))
       (insert "<" (nth (car action-output)output) ">")
-      (setq ch (read-event))
+      (setq ch (egg-read-event))
       (cond ((eq ch ?\^N)
 	     (setcar action-output
 		     (mod (1+ (car action-output)) (length output))))
@@ -2115,7 +2123,6 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 ;; (load-library "its-hankaku")
 ;; (load-library "its-zenkaku")
 
-
 (defvar its:*current-map* nil)
 (make-variable-buffer-local 'its:*current-map*)
 ;; 92.3.13 by K.Handa
@@ -2378,6 +2385,9 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 			   'egg-self-insert-command
 			   global-map)
 
+;; wire us into pending-delete
+(put 'egg-self-insert-command 'pending-delete t)
+
 ;;;
 ;;; Currently entries C-\ and C-^ at global-map are undefined.
 ;;;
@@ -2398,7 +2408,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 (define-key mule-keymap "Z" 'its:select-zenkaku-upcase)
 
 ;;;
-;;; auto fill controll
+;;; auto fill control
 ;;;
 
 (defun egg:do-auto-fill ()
@@ -2581,7 +2591,8 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
 
 (defun enter-fence-mode ()
   ;; XEmacs change:
-  (buffer-disable-undo (current-buffer))
+;  (buffer-disable-undo (current-buffer))
+  (undo-boundary)
   (setq egg:*in-fence-mode* t)
   (egg:mode-line-display)
   ;;;(setq egg:*global-map-backup* (current-global-map))
@@ -2692,7 +2703,11 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
 	    its:*previous-map* nil))
   (egg:quit-egg-mode))
 
-(defvar egg-insert-after-hook nil)
+;; jhod: This seems bogus to me, as it should be called either after each
+;; egg-self-insert, or after accepting input, but not both. Otherwise, I can't
+;; really think of a use for it.
+(defvar egg-insert-after-hook nil "Hook to run when egg inserts a character
+in the buffer")
 (make-variable-buffer-local 'egg-insert-after-hook)
 
 (defvar egg-exit-hook nil
@@ -2718,7 +2733,7 @@ correspoding to character position.")
   (set-marker egg:*region-start* nil)
   (set-marker egg:*region-end*   nil)
   ;; XEmacs change:
-  (buffer-enable-undo (current-buffer))
+;  (buffer-enable-undo (current-buffer))
   (if egg-insert-after-hook
       (run-hooks 'egg-insert-after-hook))
   )
@@ -2727,6 +2742,16 @@ correspoding to character position.")
   (interactive)
   (delete-region egg:*region-start* egg:*region-end*)
   (fence-exit-mode))
+
+(defun fence-mouse-protect ()
+  "Cancel entry in progress if mouse events occur."
+  (if egg:*in-fence-mode*
+      (save-excursion
+	(its:reset-input)
+	(fence-cancel-input))))
+
+(if (boundp 'mouse-track-cleanup-hook)
+    (add-hook 'mouse-track-cleanup-hook 'fence-mouse-protect))
 
 (defun fence-mode-help-command ()
   "Display documentation for fence-mode."

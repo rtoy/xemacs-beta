@@ -269,6 +269,7 @@
 ;;; compose-map.
 
 (set-keymap-name compose-acute-map 'compose-acute-map)
+(set-keymap-default-binding compose-acute-map 'self-insert-command)
 (define-key compose-acute-map " "	"'")
 (define-key compose-acute-map "'"	[acute])
 (define-key compose-acute-map "A"	[Aacute])
@@ -285,6 +286,7 @@
 (define-key compose-acute-map "y"	[yacute])
 
 (set-keymap-name compose-grave-map 'compose-grave-map)
+(set-keymap-default-binding compose-grave-map 'self-insert-command)
 (define-key compose-grave-map " "	[grave])
 (define-key compose-grave-map "A"	[Agrave])
 (define-key compose-grave-map "E"	[Egrave])
@@ -298,11 +300,13 @@
 (define-key compose-grave-map "u"	[ugrave])
 
 (set-keymap-name compose-cedilla-map 'compose-cedilla-map)
+(set-keymap-default-binding compose-cedilla-map 'self-insert-command)
 (define-key compose-cedilla-map ","	[cedilla])
 (define-key compose-cedilla-map "C"	[Ccedilla])
 (define-key compose-cedilla-map "c"	[ccedilla])
 
 (set-keymap-name compose-diaeresis-map 'compose-diaeresis-map)
+(set-keymap-default-binding compose-diaeresis-map 'self-insert-command)
 (define-key compose-diaeresis-map " "	[diaeresis])
 (define-key compose-diaeresis-map "\""	[diaeresis])
 (define-key compose-diaeresis-map "A"	[Adiaeresis])
@@ -318,6 +322,7 @@
 (define-key compose-diaeresis-map "y"	[ydiaeresis])
 
 (set-keymap-name compose-circumflex-map 'compose-circumflex-map)
+(set-keymap-default-binding compose-circumflex-map 'self-insert-command)
 (define-key compose-circumflex-map " "	"^")
 (define-key compose-circumflex-map "/"	"|")
 (define-key compose-circumflex-map "!"	[brokenbar])
@@ -340,6 +345,7 @@
 (define-key compose-circumflex-map "u"	[ucircumflex])
 
 (set-keymap-name compose-tilde-map 'compose-tilde-map)
+(set-keymap-default-binding compose-tilde-map 'self-insert-command)
 (define-key compose-tilde-map " "	"~")
 (define-key compose-tilde-map "A"	[Atilde])
 (define-key compose-tilde-map "N"	[Ntilde])
@@ -349,6 +355,7 @@
 (define-key compose-tilde-map "o"	[otilde])
 
 (set-keymap-name compose-ring-map 'compose-ring-map)
+(set-keymap-default-binding compose-ring-map 'self-insert-command)
 (define-key compose-ring-map " "	[degree])
 (define-key compose-ring-map "A"	[Aring])
 (define-key compose-ring-map "a"	[aring])
@@ -358,6 +365,7 @@
 ;;; that are not accessible via "dead" keys.
 
 (set-keymap-name compose-map 'compose-map)
+(set-keymap-default-binding compose-map 'self-insert-command)
 (define-key compose-map " '"	"'")
 (define-key compose-map " ^"	"^")
 (define-key compose-map " `"	"`")

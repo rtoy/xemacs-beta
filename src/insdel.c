@@ -2275,10 +2275,18 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 			  int lockit)
 {
   /* This function can GC */
+  /* dmoore - This function can also kill the buffer buf, the current
+     buffer, and do anything it pleases.  So if you call it, be
+     careful. */
+  Lisp_Object buffer;
+  struct gcpro gcpro1;
+
   barf_if_buffer_read_only (buf, start, end);
 
   /* if this is the first modification, see about locking the buffer's
      file */
+  XSETBUFFER (buffer, buf);
+  GCPRO1 (buffer);
   if (!NILP (buf->filename) && lockit &&
       BUF_SAVE_MODIFF (buf) >= BUF_MODIFF (buf))
     {
@@ -2287,8 +2295,6 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 	/* Make binding buffer-file-name to nil effective.  */
 	lock_file (buf->file_truename);
 #else
-      Lisp_Object buffer;
-      XSETBUFFER (buffer, buf);
       /* At least warn if this file has changed on disk since it was visited.*/
       if (NILP (Fverify_visited_file_modtime (buffer))
 	  && !NILP (Ffile_exists_p (buf->filename)))
@@ -2296,6 +2302,11 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 			 buf->filename);
 #endif /* not CLASH_DETECTION */
     }
+  UNGCPRO;
+
+  /* #### dmoore - is this reasonable in case of buf being killed above? */
+  if (!BUFFER_LIVE_P (buf))
+    return;
 
   signal_before_change (buf, start, end);
 

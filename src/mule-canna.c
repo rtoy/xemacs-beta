@@ -28,8 +28,8 @@ Boston, MA 02111-1307, USA.  */
 
 /*
 
-  Authors: Akira Kon (we need a current email address)
-           Ichiro Hirakura (hirakura@uxp.bs2.mt.nec.co.jp)
+  Authors: Akira Kon (kon@uxd.fc.nec.co.jp)
+           Ichiro Hirakura (hirakura@uxd.fc.nec.co.jp)
 
   Functions defined in this file are
 

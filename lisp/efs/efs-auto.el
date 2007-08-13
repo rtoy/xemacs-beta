@@ -3,12 +3,11 @@
 ;;
 ;; File:         efs-auto.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.2 $
 ;; RCS:          
 ;; Description:  Simple way of autoloading efs
 ;; Author:       Andy Norman, Dawn
 ;; Created:      Thu Sep 24 09:50:08 1992
-;; Modified:     Sun Nov 27 11:45:28 1994 by sandy on gandalf
 ;; Language:     Emacs-Lisp
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,7 +36,7 @@
 (defconst efs-auto-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.2 $" 11 -2)))
 
 ;;; Interactive functions that should be accessible from here.
 

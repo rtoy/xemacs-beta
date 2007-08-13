@@ -20,7 +20,7 @@
 
 ;;; 92.9.24  created for Mule Ver.0.9.6 by K.Shibata <shibata@sgi.co.jp>
 
-(require 'jisx0201)
+(require 'egg-jisx0201)
 
 (its-define-mode "roma-han-kata"  "ｱｧ" t)
 
@@ -35,7 +35,7 @@
 
 (its-defrule "N" "ﾝ")
 
-(defvar enable-double-n-syntax nil "*Enable ""nn"" input for ""ﾝ"" ")
+(defvar enable-double-n-syntax nil "*Enable \"nn\" input for \"ﾝ\"")
 
 (its-defrule-conditional "n"
   ((not enable-double-n-syntax) "ﾝ")

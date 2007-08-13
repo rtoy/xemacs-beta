@@ -12,7 +12,7 @@
 @c               Tel: +1 408-243-3300
 @c
 @c ORIG-DATE:     6-Nov-91 at 11:18:03
-@c LAST-MOD:     20-Feb-97 at 12:36:16 by Bob Weiner
+@c LAST-MOD:     17-Mar-97 at 21:36:15 by Bob Weiner
 
 @c %**start of header (This is for running Texinfo on a region.)
 @setfilename ../info/hyperbole.info
@@ -35,9 +35,9 @@
 @sp 1
 @center E-mail: <hyperbole@@infodock.com>  (This is a mailing list.)
 @sp 2
-@center Edition 4.02
+@center Edition 4.023
 @sp 2
-@center February 19, 1997
+@center March 17, 1997
 
 @page
 @vskip 0pt plus 1filll
@@ -2222,8 +2222,9 @@ global file.  These are good places to start your button creation testing.
 @item Cust/
 Customizes Hyperbole by setting major options.
 This includes where Hyperbole link referents are displayed, where URLs
-are displayed and whether to use proportional or windowful scrolling
-when a Smart Key is pressed at the end of a line.  @xref{Configuring}.
+are displayed, whether the date stamps are added to rolodex entries, and
+whether to use proportional or windowful scrolling when a Smart Key is
+pressed at the end of a line.  @xref{Configuring}.
 
 @cindex menu, EBut
 @item Ebut/
@@ -3378,17 +3379,19 @@ Here is an example of a simple rolodex file.
 @end group
 @end example
 
-We call rolodex records, @dfn{entries}.  Entries begin with a delimiter,
-some number of `*' characters at the beginning of a line.  Entries may
+We call rolodex records, @dfn{entries}.  Entries begin with a delimiter
+of one or more `*' characters at the beginning of a line.  Entries may
 be arranged in a hierarchy, where child entries begin with one more `*'
-characters than do their parents.  Top level entries begin with a single
+character than do their parents.  Top level entries begin with a single
 `*'.
 
 Beyond this initial delimiter, entries are completely free-form text.
 It is best to use a "lastname, firstname" format, however, when adding
 contact entries into a rolodex.  Then the rolodex system will
 automatically keep your entries alphabetized as you enter them.  You'll
-also be able to sort them whenever you desire.
+also be able to sort them whenever you desire.  This is what the
+rolodex will use if you accept the default entry that it prompts you
+with when adding a new entry.
 
 Any search done on the rolodex scans the full text of each entry.
 During a search, the rolodex file header separator lines and anything in
@@ -3491,9 +3494,23 @@ Thus, "Underlings" as a search pattern will find an entry containing
 @section   Rolo Keys
 
 @kindex e
-@cindex rolodex, editing an entry
+@cindex rolodex, editing
+@cindex datestamps
+@cindex rolodex, datestamps
+@cindex customization, rolodex datestamps
+@cindex menu, Toggle-Rolo-Dates
+@cindex customization, rolodex edits
+@cindex customization, rolodex additions
+@vindex wrolo-edit-hook
+@vindex wrolo-add-hook
 Use the @{@kbd{e}@} key to edit the entry at point within the rolodex
-source file.
+source file.  A datestamp will be automatically added or updated at the
+end of the entry, unless this feature has been turned off via the
+Cust/Toggle-Rolo-Dates menu item.  The variable, @var{wrolo-edit-hook},
+is evaluated after the update of the entry datestamp.  This allows
+programmed modification of the way rolodex edits work.  The variable,
+@var{wrolo-add-hook}, works the same way but is evaluated when a new
+entry is first added.
 
 @cindex wrolo menu
 @cindex rolodex keys
@@ -3602,8 +3619,8 @@ saved.  If you would rather always save files yourself, use this
 setting: @code{(setq rolo-save-buffers-after-use nil)}.
 
 @vindex rolo-email-format
-When adding an entry from within a buffer containing a mail message, the
-rolodex add function will extract the sender's name and e-mail address
+When adding an entry from within a buffer that contains a mail message,
+the rolodex add function will extract the sender's name and e-mail address
 and prompt you with the name as a default.  If you accept it, it will
 enter the name and the email address using the format given by the
 @var{rolo-email-format} variable.  See its documentation if you want to

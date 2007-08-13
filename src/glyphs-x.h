@@ -72,6 +72,9 @@ struct x_image_instance_data
 #define XIMAGE_INSTANCE_X_NPIXELS(i) \
   IMAGE_INSTANCE_X_NPIXELS (XIMAGE_INSTANCE (i))
 
+/* Set to 1 if you wish to implement this feature */
+# define HAVE_SUBWINDOWS 0
+# if HAVE_SUBWINDOWS
 /****************************************************************************
  *                            Subwindow Object                              *
  ****************************************************************************/
@@ -95,6 +98,7 @@ struct Lisp_Subwindow
 
   int being_displayed;		/* used to detect when needs to be unmapped */
 };
+# endif
 
 #endif /* HAVE_X_WINDOWS */
 #endif /* _XEMACS_GLYPHS_X_H_ */

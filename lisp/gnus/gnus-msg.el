@@ -308,13 +308,10 @@ header line with the old Message-ID."
       (message-supersede)
       (push
        `((lambda ()
-	   (gnus-cache-possibly-remove-article ,article nil nil nil t)))
-       message-send-actions)
-      (push
-       `((lambda ()
 	   (when (buffer-name (get-buffer ,gnus-summary-buffer))
 	     (save-excursion
 	       (set-buffer (get-buffer ,gnus-summary-buffer))
+	       (gnus-cache-possibly-remove-article ,article nil nil nil t)
 	       (gnus-summary-mark-as-read ,article gnus-canceled-mark)))))
        message-send-actions))))
 
@@ -407,8 +404,10 @@ header line with the old Message-ID."
 		(message-mail (or to-address to-list))
 		;; Arrange for mail groups that have no `to-address' to
 		;; get that when the user sends off the mail.
-		(push (list 'gnus-inews-add-to-address pgroup)
-		      message-send-actions))
+		(when (and (not to-list)
+			   (not to-address))
+		  (push (list 'gnus-inews-add-to-address pgroup)
+			message-send-actions)))
 	    (set-buffer gnus-article-copy)
 	    (message-wide-reply to-address)))
 	(when yank
@@ -726,7 +725,9 @@ The current group name will be inserted at \"%s\".")
 	       (gnus-alive-p))
       ;; This mail group doesn't have a `to-list', so we add one
       ;; here.  Magic!
-      (gnus-group-add-parameter group (cons 'to-list to-address)))))
+      (when (gnus-y-or-n-p
+	     (format "Do you want to add this as `to-list': %s " to-address))
+	(gnus-group-add-parameter group (cons 'to-list to-address))))))
 
 (defun gnus-put-message ()
   "Put the current message in some group and return to Gnus."

@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-ms-unix.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.2 $
 ;; RCS:          
 ;; Description:  efs support for the Microsoft PC FTP server in unix mode.
 ;; Author:       Sandy Rutherford <sandy@tsmi19.sissa.it>
@@ -19,7 +19,7 @@
 (defconst efs-ms-unix-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.2 $" 11 -2)))
 
 (defvar efs-ms-unix-month-and-time-regexp
   (concat

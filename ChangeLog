@@ -1,3 +1,24 @@
+Fri Mar 21 21:26:01 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-19.15-b103 is released.
+	* XEmacs-20.0-b9 is released.
+
+	* Makefile.in (top_distclean): Add `Installation' to distclean
+	rule.
+
+Fri Mar 21 20:05:29 1997  Darrell Kindred  <dkindred@cmu.edu>
+
+	* Makefile.in (autoloads): Pass $(MAKE) to update-elc.sh and
+	update-autoloads.sh.
+
+Thu Mar 20 20:14:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-19.15-b102 is released.
+
+Tue Mar 18 21:52:36 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-19.15-b101 is released.
+
 Mon Mar 17 19:09:29 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs-20.1-b8 is released.

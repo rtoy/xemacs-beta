@@ -1,3 +1,13 @@
+Wed Mar 19 10:38:04 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (SCRIPTS): Link gzip-el.sh in --srcdir
+	configuration.
+
+Tue Mar 18 17:49:14 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (EMACS): Removed $XEMACS backdoor.  We will make
+	the .elcs *only* with the freshly built XEmacs.
+
 Mon Mar 17 10:12:03 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in (INSTALLABLE_SCRIPTS): Add install-sid and

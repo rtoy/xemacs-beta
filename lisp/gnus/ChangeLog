@@ -1,3 +1,129 @@
+Thu Mar 20 17:33:54 1997  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
+
+	* gnus.el: Gnus v5.4.33 is released.
+
+Thu Mar 20 16:01:38 1997  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus-sum.el (gnus-build-get-header): Don't fold case.
+
+	* nnfolder.el (nnfolder-read-folder): Would always parse the
+	entire mbox.
+
+	* gnus-sum.el (gnus-summary-read-group-1): Return right value.
+
+	* gnus-start.el (gnus-slave-save-newsrc): Set file modes.
+
+	* nneething.el (nneething-open-server): New function.
+	(nneething-possibly-change-directory): Redefined.
+
+Wed Mar 19 21:16:48 1997  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
+
+	* gnus.el: Gnus v5.4.32 is released.
+
+Wed Mar 19 21:06:07 1997  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* nnmail.el (nnmail-cache-accepted-message-ids): Bogus.
+
+Wed Mar 19 20:53:34 1997  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
+
+	* gnus.el: Gnus v5.4.31 is released.
+
+Wed Mar 19 14:29:26 1997  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* nnmh.el (nnmh-request-accept-article): Ditto.
+
+	* nnbabyl.el (nnbabyl-request-accept-article): Ditto.
+
+	* nnmbox.el (nnmbox-request-accept-article): Ditto.
+
+	* nnfolder.el (nnfolder-request-accept-article): Ditto.
+
+	* nnml.el (nnml-request-accept-article): Cache or not.
+
+	* gnus-sum.el (gnus-summary-read-group): Don't recurse.
+	(gnus-summary-ignore-duplicates): New variable.
+	(gnus-get-newsgroup-headers): Use it.
+	(gnus-nov-parse-line): Ditto.
+
+	* message.el (message-reply): Remove excessive white space in
+	headers. 
+
+	* nnfolder.el (nnfolder-read-folder): Work when ignoring active
+	file. 
+
+	* nnmail.el (nnmail-process-unix-mail-format): Narrow to the right
+	portion.
+	(nnmail-process-mmdf-mail-format): Ditto.
+
+	* gnus.el (gnus-group-remove-parameter): New function.
+	(gnus-group-set-parameter): Use it.
+	(gnus-group-add-parameter): Ditto.
+
+	* gnus-msg.el (gnus-post-news): Check first whether
+	to-list/to-address exists before adding.
+
+Tue Mar 18 23:54:17 1997  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
+
+	* gnus.el: Gnus v5.4.30 is released.
+
+Tue Mar 18 23:43:50 1997  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus-group.el (gnus-group-subscribe): Doc fix.
+
+Tue Mar 18 23:39:08 1997  Lance A. Brown  <brown9@niehs.nih.gov>
+
+	* gnus-sum.el (gnus-update-marks): Articles->list.
+
+Tue Mar 18 23:07:35 1997  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus-sum.el (gnus-summary-update-article-line): Don't pass nil
+	on as subject string.
+
+	* gnus-group.el (gnus-group-read-group): Revert to old
+	definition. 
+
+	* gnus-sum.el (gnus-summary-read-group-1): New function.
+	(gnus-summary-read-group): Use it.
+
+Tue Mar 18 17:56:26 1997  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
+
+	* gnus.el: Gnus v5.4.29 is released.
+
+Tue Mar 18 14:29:49 1997  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus-group.el (gnus-group-read-ephemeral-group): Would set virt
+	ser too much. 
+	(gnus-group-read-group): Return right value.
+
+	* nnml.el (nnml-generate-nov-databases-1): Save active.
+
+	* gnus-msg.el (gnus-summary-supersede-article): Place point in the
+	with buffer.
+	(gnus-inews-add-to-address): Prompt before adding.
+
+	* gnus-art.el (article-strip-leading-space): Not a new command
+	and keystroke (HTDW Jaari fix).
+
+	* nnfolder.el (nnfolder-close-group): Don't push bogus entries
+	onto alist.
+
+Tue Mar 18 14:28:27 1997  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* nnfolder.el (nnfolder-request-scan): Check whether buffer really
+	is live.
+
+Tue Mar 18 13:53:00 1997  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* gnus-group.el (gnus-group-read-group): Iterate instead of
+	recurse. 
+
+	* nnfolder.el (nnfolder-request-accept-article): Don't insert into
+	Message-ID cache.
+	* nnbabyl.el (nnbabyl-request-accept-article): Ditto.
+	* nnmbox.el (nnmbox-request-accept-article): Ditto.
+	* nnml.el (nnml-request-accept-article): Ditto.
+	* nnmh.el (nnmh-request-accept-article): Ditto.
+
 Tue Mar 18 00:35:06 1997  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
 
 	* gnus.el: Gnus v5.4.28 is released.

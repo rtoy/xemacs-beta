@@ -130,8 +130,10 @@
 	       (concat "^" (regexp-quote mail-header-separator) "$") nil 0))
 	    (forward-char 1)
 	    (while mlist
-	      (vm-yank-message (car mlist))
-	      (goto-char (point-max))
+	      (save-restriction
+		(narrow-to-region (point) (point))
+		(vm-yank-message (car mlist))
+		(goto-char (point-max)))
 	      (setq mlist (cdr mlist)))))
       (run-hooks 'vm-reply-hook)
       (run-hooks 'vm-mail-mode-hook)))
@@ -576,7 +578,15 @@ the message.  See the documentation for the function vm-reply for details."
   "Like vm-forward-message but always forwards all the headers."
   (interactive)
   (let ((vm-forwarded-headers nil)
-	(vm-unforwarded-header-regexp "only-drop-this-header"))
+	(vm-unforwarded-header-regexp "only-drop-this-header")
+	;; set these because vm-forward-message calls vm-send-digest
+	;; if there is more than one message to be forwarded.
+	(vm-rfc934-digest-headers nil)
+	(vm-rfc934-digest-discard-header-regexp "only-drop-this-header")
+	(vm-rfc1153-digest-headers nil)
+	(vm-rfc1153-digest-discard-header-regexp "only-drop-this-header")
+	(vm-mime-digest-headers nil)
+	(vm-mime-digest-discard-header-regexp "only-drop-this-header"))
     (vm-forward-message)))
 
 (defun vm-forward-message ()
@@ -991,6 +1001,9 @@ found, the current buffer remains selected."
     (and newsgroups (insert "Newsgroups: " newsgroups "\n"))
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
+    (insert "X-Mailer: VM " vm-version " under "
+	    (if (vm-fsfemacs-19-p) "Emacs " "")
+	    emacs-version "\n")
     ;; REPLYTO support for FSF Emacs v19.29
     (and (eq mail-default-reply-to t)
 	 (setq mail-default-reply-to (getenv "REPLYTO")))

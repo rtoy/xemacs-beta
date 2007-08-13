@@ -2338,7 +2338,11 @@ map_event_to_widget_value (XlwMenuWidget mw, XMotionEvent *ev,
   *inside_menu = False;
   
   /* Find the window */
+#if 1
   for (i = mw->menu.old_depth - 1; i >= 0; i--)
+#else
+  for (i = 0; i <= mw->menu.old_depth - 1; i++)
+#endif
     {
       ws = &mw->menu.windows [i];
       if (ws && motion_event_is_in_menu (mw, ev, i, &relative_pos))

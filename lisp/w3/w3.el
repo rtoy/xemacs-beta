@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/03/14 06:39:41
-;; Version: 1.98
+;; Created: 1997/03/18 20:31:29
+;; Version: 1.100
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -472,8 +472,9 @@ With prefix argument, use the URL of the hyperlink under point instead."
 	    (progn
 	      (push-mark (point) t)
 	      (w3-find-specific-link (url-match url 1))))
-	(message "Reusing URL.  To reload, type %s."
-		 (substitute-command-keys "\\[w3-reload-document]")))))))
+	(or (w3-maybe-fetch-frames)
+	    (message "Reusing URL.  To reload, type %s."
+		     (substitute-command-keys "\\[w3-reload-document]"))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1226,7 +1227,8 @@ ftp.w3.org:/pub/www/doc."
                
 (defun w3-popup-info (&optional url)
   "Show information about the link under point. (All SGML attributes)"
-  (interactive (list (w3-read-url-with-default)))
+  (interactive (list (or (w3-view-this-url t)
+			 (w3-read-url-with-default))))
   (let (dat widget)
     (if (interactive-p)
 	nil

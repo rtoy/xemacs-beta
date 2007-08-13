@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    28-Oct-94 at 10:59:44
-;; LAST-MOD:     19-Feb-97 at 10:50:57 by Bob Weiner
+;; LAST-MOD:     14-Mar-97 at 01:35:02 by Bob Weiner
 ;;
 ;; Copyright (C) 1994, 1995, 1996, 1997  Free Software Foundation, Inc.
 ;;
@@ -117,6 +117,12 @@
 	    ["Scrolls-Proportionally"
 	     (setq smart-scroll-proportional t)
 	     :style radio :selected smart-scroll-proportional]
+	    )
+	  '("----"
+	    ["Toggle-Rolodex-Dates" rolo-toggle-datestamps
+	     :style toggle :selected (and (boundp 'wrolo-add-hook)
+					  (listp wrolo-add-hook)
+					  (memq 'rolo-set-date wrolo-add-hook))]
 	    ))
   "Untitled menu of Hyperbole options.")
 
@@ -126,6 +132,7 @@
   (delq nil
 	(list
 	 "Hyperbole"
+	 :config 'Hyperbole
 	 '["About" (hypb:display-file-with-logo
 		    (expand-file-name "ABOUT" hyperb:dir)) t]
 	 '["Manual"      (id-info "(hyperbole.info)Top") t]

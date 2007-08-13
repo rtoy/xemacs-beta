@@ -1,0 +1,26 @@
+#!/bin/sh
+EMACS=${1:-emacs}
+if [ -z "$HOME" ]; then
+    HOME=`(cd ; pwd)`
+fi
+
+if [ -n "$WIDGETDIR" ]; then
+    echo "WIDGETDIR environment variable set, good good" 
+    exit 0
+fi
+
+WITH=`${EMACS} -batch -l ${HOME}/.emacs -eval '(princ (locate-library "custom"))' | cut -f3- |xargs dirname`
+WITHOUT=`${EMACS} -batch -eval '(princ (locate-library "custom"))' | cut -f3- |xargs dirname`
+
+if [ "${WITH}" = "${WITHOUT}" ]; then
+    exit 0
+else
+    echo "WARNING -- WARNING -- WARNING"
+    echo "Found custom in different places with and without ${HOME}/.emacs"
+    echo
+    echo "This could cause potential problems.  Please recompile with"
+    echo "the environment variable WIDGETDIR set correctly.  Try this"
+    echo "command:"
+    echo "make WIDGETDIR=${WITH}"
+    exit 1
+fi

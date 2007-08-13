@@ -420,6 +420,12 @@ Optional argument OBJECT is the string or buffer containing the text."
        object)
       (setq start next))))
 
+(sysdep-defun buffer-substring-no-properties (st nd)
+  "Return the characters of part of the buffer, without the text properties.
+The two arguments START and END are character positions;
+they can be in either order."
+  (buffer-substring st nd))
+
 ;; Property list functions
 ;;
 (sysdep-defun plist-put (plist prop val)

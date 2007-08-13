@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          dired-shell.el
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: $Revision: 1.2 $
 ;; RCS:
 ;; Description:   Commands for running shell commands on marked files.
 ;;
@@ -15,21 +15,28 @@
 ;;; Variables
 
 (defvar dired-postscript-print-command
-  (concat
-   (if (boundp 'lpr-command)
-       lpr-command
-     (if (memq system-type
-	       '(usg-unix-v hpux silicon-graphics-unix))
-	 "lp"
-       "lpr"))
-   (if (and (boundp 'lpr-switches) lpr-switches)
-       (concat " "
-	       (mapconcat 'identity lpr-switches " ")
-	       " ")
-     " "))
-  "Command to print a postscript file.")
+  (condition-case nil
+      (progn
+	(require 'ps-print)
+	(concat ps-lpr-command
+		" "
+		(ps-flatten-list (mapcar 'ps-eval-switch ps-lpr-switches))))
+    (error
+     (concat
+      (if (boundp 'lpr-command)
+	  lpr-command
+	(if (memq system-type
+		  '(usg-unix-v hpux silicon-graphics-unix))
+	    "lp"
+	  "lpr"))
+      (if (and (boundp 'lpr-switches) lpr-switches)
+	  (concat " "
+		  (mapconcat 'identity lpr-switches " ")
+		  " ")
+	" "))))
+     "Command to print a postscript file.")
 
-(defvar dired-text-print-command (concat dired-postscript-print-command " -p")
+(defvar dired-text-print-command (concat dired-postscript-print-command "-p ")
   "Command to print a text file.")
 
 (defvar dired-print-program-alist

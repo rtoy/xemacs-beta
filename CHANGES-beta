@@ -1,4 +1,29 @@
 							-*- indented-text -*-
+to 20.1 beta9
+-- VM-6.21
+-- tm-7.106
+-- Garbage Collection patches courtesy of David Moore
+-- time.el update
+-- minor build tweaks
+-- EFS integration/bug fix patches courtesy of Michael Sperber
+-- MULE safe char-before added
+-- preceding-char, following-char are obsolete and broken, do not use them
+-- user-mail-address now uses the function
+-- miscellaneous bug fixes
+-- Egg patches courtesy of Jareth Hein
+-- corrections to lib-src script setup in --srcdir configuration
+-- itimer.el-1.05
+-- hyperbole-4.023
+-- cc-mode.el-4.387
+-- floating-toolbar.el-1.02
+-- balloon-help.el-1.05
+-- W3-3.0.71
+-- VM-6.20
+-- Custom-1.65
+-- Gnus-5.4.33
+-- strip unimplemented subwindows subr code
+-- GIF correction courtesy Darrell Kindred
+
 to 20.1 beta8
 -- GIF crash fix courtesy of David Moore
 -- Fix for problem dumping comint with sparcworks

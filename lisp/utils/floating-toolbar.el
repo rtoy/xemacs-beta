@@ -86,7 +86,7 @@
 (require 'toolbar)
 (require 'x)
 
-(defvar floating-toolbar-version "1.01"
+(defvar floating-toolbar-version "1.02"
   "Version string for the floating-toolbar package.")
 
 (defvar floating-toolbar-use-sound nil
@@ -312,7 +312,11 @@ extent local toolbar."
 (defun floating-toolbar-make-junk-frame ()
   (let ((window-min-height 1)
 	(window-min-width 1))
-    (make-frame '(minibuffer t initially-unmapped t width 1 height 1))))
+    (save-excursion
+      (set-buffer (generate-new-buffer "*junk-frame-buffer*"))
+      (prog1
+	  (make-frame '(minibuffer t initially-unmapped t width 1 height 1))
+	(rename-buffer " *junk-frame-buffer*" t)))))
 
 (defun floating-toolbar-make-toolbar-frame (x y)
   (save-excursion

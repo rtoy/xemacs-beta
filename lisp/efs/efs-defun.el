@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-defun.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.2 $
 ;; RCS:          
 ;; Description:  efs-defun allows for OS-dependent coding of functions
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
@@ -136,7 +136,7 @@
 (defconst efs-defun-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.2 $" 11 -2)))
 
 (defconst efs-key-obarray (make-vector 7 0))
 

@@ -180,10 +180,14 @@
 		(save-restriction
 		  (set who nil)
 		  (narrow-to-region (point) (point))
-		  (insert-file-contents who-xpm)
+		  (let ((coding-system-for-read 'binary))
+		    (insert-file-contents who-xpm))
 		  (if (looking-at "\037\235") ;may already be decompressed...
-		      (call-process-region (point-min) (point-max)
-					   "zcat" t t nil))
+		      (let ((coding-system-for-write 'binary)
+			    process-input-coding-system
+			    process-output-coding-system)
+			(call-process-region (point-min) (point-max)
+					     "zcat" t t nil)))
 		  (set who (make-glyph
 			    (prog1 (buffer-string)
 			      (delete-region (point-min) (point-max)))))
@@ -653,13 +657,14 @@
 
 	 ((eq xref 'baw)
 	  (about-face "Barry Warsaw" 'bold)
-	  (insert " <bwarsaw@cnri.reston.va.us>
+	  (insert " <bwarsaw@python.org>
 
 	Author of cc-mode for C++, C, and Objective-C editing, and
 	Supercite for mail and news citing.  Also various and sundry other
 	Emacs utilities, fixes, enhancements and kludgery as whimsy,
 	boredom, and ToT dictate (but not necessarily in that order).
 
+	See \"http://www.python.org/~bwarsaw\".
 
 	Daddy
 	© 1994 Warsaw
@@ -824,7 +829,7 @@
 	Contributor of many dispersed improvements in the core Lisp code,
 	and back-seat contributor for several of it's major packages.
 
-	") (about-xref "Barry Warsaw" 'baw "Find out more about Barry Warsaw") (insert " <bwarsaw@cnri.reston.va.us>
+	") (about-xref "Barry Warsaw" 'baw "Find out more about Barry Warsaw") (insert " <bwarsaw@python.org>
 	Author of cc-mode for C++, C, and Objective-C editing, and
 	Supercite for mail and news citing.  Also various and sundry other
 	Emacs utilities, fixes, enhancements and kludgery as whimsy,

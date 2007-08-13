@@ -49,7 +49,7 @@
 
 ;; Set this to be whatever signature you want on the bottom of your pages.
 (defvar html-helper-address-string
-  (concat "<a href=\"mailto:" user-mail-address "\">"
+  (concat "<a href=\"mailto:" (user-mail-address) "\">"
 	  (user-full-name) "</a>")
   "*The default author string of each file.")
 

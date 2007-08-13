@@ -1,4 +1,4 @@
-;;;  wnn-egg.el --- a inputting method communicating with [jck]server
+;;;  egg-wnn.el --- a inputting method communicating with [jck]server
 
 ;; Author: Satoru Tomura (tomura@etl.go.jp), and
 ;;         Toshiaki Shingu (shingu@cpr.canon.co.jp)
@@ -89,6 +89,7 @@
 
 ;;; Code:
 
+(require 'egg)
 (make-variable-buffer-local 'wnn-server-type)
 (make-variable-buffer-local 'cwnn-zhuyin)
 
@@ -117,10 +118,12 @@
 ;;;	以下の its mode 関係の関数は、egg.el で定義されているが、
 ;;; たかなでは its mode の切替えに同期して、jserver/cserver,
 ;;; pinyin/zhuyin の切替えも行ないたいので、再定義している。
-;;; 従って、egg.el, wnn-egg.el の順にロードしなければならない。
+;;; 従って、egg.el, egg-wnn.el の順にロードしなければならない。
 
 
 (defun its:select-mode (name)
+"Switch ITS mode to NAME or prompt for it if called interactivly.
+After changing, its:select-mode-hook is called."
   (interactive (list (completing-read "ITS mode: " its:*mode-alist*)))
   (if (its:get-mode-map name)
       (progn
@@ -131,6 +134,8 @@
   )
 
 (defun its:select-mode-from-menu ()
+"Select ITS mode from menu.
+After changing, its:select-mode-hook is called."
   (interactive)
   (setcar (nthcdr 2 its:*select-mode-menu*) its:*mode-alist*)
   (setq its:*current-map* (menu:select-from-menu its:*select-mode-menu*))
@@ -153,6 +158,8 @@
 	   ))))
 
 (defun its:next-mode ()
+"Switch to next mode in list its:*standard-modes*
+After changing, its:select-mode-hook is called."
   (interactive)
   (let ((pos (its:find its:*current-map* its:*standard-modes*)))
     (setq its:*current-map*
@@ -162,6 +169,8 @@
     (run-hooks 'its:select-mode-hook)))
 
 (defun its:previous-mode ()
+"Switch to previous mode in list its:*standard-modes*
+After changing, its:select-mode-hook is called."
   (interactive)
   (let ((pos (its:find its:*current-map* its:*standard-modes*)))
     (setq its:*current-map*
@@ -201,7 +210,7 @@
 (defvar egg:*sai-henkan-end* nil)
 (defvar egg:*old-bunsetu-suu* nil)
 
-(defun wnn-egg:kill-emacs-function ()
+(defun egg-wnn:kill-emacs-function ()
   (let ((wnn-server-type))
     (setq wnn-server-type 'jserver)
     (close-wnn)
@@ -210,20 +219,93 @@
     (setq wnn-server-type 'kserver)
     (close-wnn)))
 
-(add-hook 'kill-emacs-hook 'wnn-egg:kill-emacs-function)
+(add-hook 'kill-emacs-hook 'egg-wnn:kill-emacs-function)
 
 (defun egg:error (form &rest mesg)
   (apply 'notify (or form "%s") mesg)
   (apply 'error (or form "%s") mesg))
 
+(defun wnn-toggle-english-messages ()
+"Toggle whether wnn reports info in english or the native language of the server."
+  (interactive)
+  (setq wnn-english-messages (not wnn-english-messages)))
+
+(defvar wnn-english-messages nil "*If non-nil, display messages from the [jck]server in English")
+
+(make-symbol "english-mess")
+
 (defun egg:msg-get (message)
   (or
-   (nth 1 (assoc message (nth 1 (assoc wnn-server-type *egg-message-alist*))))
+   (nth 1 (assoc message (nth 1 (assoc (if wnn-english-messages 'english-mess wnn-server-type)
+				       *egg-message-alist*))))
    (format "No message. Check *egg-message-alist* %s %s"
 	   wnn-server-type message)))
 
 (defvar *egg-message-alist*
-  '((jserver
+  '((english-mess
+     ((open-wnn "Connected with Wnn on host %s")
+      (no-rcfile "No egg-startup-file on %s")
+      (file-saved "Wnn dictionary and frequency data recorded.")
+      (henkan-mode-indicator "漢")
+      (begin-henkan "変換開始文字列: ")
+      (end-henkan "変換終了文字列: ")
+      (kugiri-dai "大文節区切り文字列: ")
+      (kugiri-sho "小文節区切り文字列: ")
+      (face-henkan "変換区間表示属性: ")
+      (face-dai "大文節区間表示属性: ")
+      (face-sho "小文節区間表示属性: ")
+      (jikouho "次候補:")
+      (off-msg "%s %s(%s:%s) turned off.")
+      (henkan-help "Kanji conversion mode:
+文節移動
+  \\[henkan-first-bunsetu]\t先頭文節\t\\[henkan-last-bunsetu]\t後尾文節  
+  \\[henkan-backward-bunsetu]\t直前文節\t\\[henkan-forward-bunsetu]\t直後文節
+変換変更
+  大文節次候補    \\[henkan-next-kouho-dai]\t小文節次候補    \\[henkan-next-kouho-sho]
+  前候補    \\[henkan-previous-kouho]  \t次候補    \\[henkan-next-kouho]
+  大文節伸し  \\[henkan-bunsetu-nobasi-dai]  \t大文節縮め  \\[henkan-bunsetu-chijime-dai]
+  小文節伸し  \\[henkan-bunsetu-nobasi-sho]  \t小文節縮め  \\[henkan-bunsetu-chijime-sho]
+  大文節変換候補選択  \\[henkan-select-kouho-dai]  \t小文節変換候補選択  \\[henkan-select-kouho-sho]
+変換確定
+  全文節確定  \\[henkan-kakutei]  \t直前文節まで確定  \\[henkan-kakutei-before-point]
+変換中止    \\[henkan-quit]
+")
+      (hinsimei "Hinshi (product/noun) name:")
+      (jishotouroku-yomi "Dictionary entry for『%s』 reading:")
+      (touroku-jishomei "Name of dictionary:" )
+      (registerd "Dictonary entry『%s』(%s: %s) registered in %s.")
+      (yomi "Reading：")
+      (no-yomi "No dictionary entry for 『%s』.")
+      (jisho "Dictionary:")
+      (hindo "Frequency:")
+      (kanji "Kanji:")
+      (register-notify "Dictonary entry『%s』(%s: %s) registered in %s.")
+      (cannot-remove "Cannot delete entry from system dictionary.")
+      (enter-hindo "Enter frequency:")
+      (remove-notify "Dictonary entry『%s』(%s) removed from %s.")
+      (removed "Dictonary entry『%s』(%s) removed from %s.")
+      (jishomei "Dictionary name:" )
+      (comment "Comment:")
+      (jisho-comment "Dictionary:%s: comment:%s")
+      (param ("Ｎ ( 大 ) 文節解析のＮ"
+	      "大文節中の小文節の最大数"
+	      "幹語の頻度のパラメータ"
+	      "小文節長のパラメータ"
+	      "幹語長のパラメータ"
+	      "今使ったよビットのパラメータ"
+	      "辞書のパラメータ"
+	      "小文節の評価値のパラメータ"
+	      "大文節長のパラメータ"
+	      "小文節数のパラメータ"
+	      "疑似品詞 数字の頻度"
+	      "疑似品詞 カナの頻度"
+	      "疑似品詞 英数の頻度"
+	      "疑似品詞 記号の頻度"
+	      "疑似品詞 閉括弧の頻度"
+	      "疑似品詞 付属語の頻度"
+	      "疑似品詞 開括弧の頻度"))
+      ))
+    (jserver
      ((open-wnn "ホスト %s の Wnn を起動しました")
       (no-rcfile "%s 上に egg-startup-file がありません。")
       (file-saved "Wnnの頻度情報・辞書情報を退避しました。")
@@ -458,6 +540,10 @@
 ;; ###jhod Currently very broken. Needs to be rewritten for the new
 ;;         wnn-server-set-param
 (defun set-wnn-param (&rest param)
+"Set parameters for the current wnn session.
+Uses property list PARAM, or prompts if called interactivly.
+
+Currently very broken."
   (interactive)
 ;  (open-wnn-if-disconnected)
   (let ((current-param (wnn-server-get-param))
@@ -601,6 +687,7 @@
   (cons name (delete name list)))
 
 (defun set-wnn-host-name (name)
+"Set egg/wnn to connect to jserver on host NAME, or prompt for it."
   (interactive "sHost name: ")
   (let ((wnn-server-type 'jserver)) (close-wnn))
   (setq jserver-list
@@ -610,6 +697,7 @@
 (fset 'set-jserver-host-name (symbol-function 'set-wnn-host-name))
 
 (defun set-cwnn-host-name (name)
+"Set egg/wnn to connect to cserver on host NAME, or prompt for it."
   (interactive "sHost name: ")
   (let ((wnn-server-type 'cserver)) (close-wnn))
   (setq cserver-list
@@ -619,6 +707,7 @@
 (fset 'set-cserver-host-name (symbol-function 'set-cwnn-host-name))
 
 (defun set-kwnn-host-name (name)
+"Set egg/wnn to connect to kserver on host NAME, or prompt for it."
   (interactive "sHost name: ")
   (let ((wnn-server-type 'kserver)) (close-wnn))
   (setq kserver-list
@@ -695,10 +784,12 @@ whose name defaults to .eggrc.")
       (run-hooks 'egg:open-wnn-hook))))
 
 (defun disconnect-wnn ()
+"Dump connection to Wnn servers, discarding dictionary and frequency changes."
   (interactive)
   (if (wnn-server-isconnect) (wnn-server-close)))
 
 (defun close-wnn ()
+"Cleanly shutdown connection to Wnn servers, saving data and calling egg:close-wnn-hook"
   (interactive)
   (if (wnn-server-isconnect)
       (progn
@@ -1010,6 +1101,7 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
       (setq i (1+ i)))))
 
 (defun henkan-kakutei ()
+  "Accept the current henkan region"
   (interactive)
   (egg:bunsetu-face-off)
   (egg:henkan-face-off)
@@ -1060,6 +1152,7 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
 ;; end of patch
 
 (defun henkan-kakutei-before-point ()
+"Accept the henkan region before point, and put the rest back into a fence."
   (interactive)
   (egg:bunsetu-face-off)
   (egg:henkan-face-off)
@@ -1100,7 +1193,9 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
   (use-local-map fence-mode-map)
   (egg:mode-line-display))
 
+;; ### Should probably put this on a key.
 (defun sai-henkan ()
+"Reconvert last henkan entry."
   (interactive)
   (if egg:henkan-mode-in-use nil
     (let ((finished nil))
@@ -1131,8 +1226,8 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
   ;; make dai-bunsetu extent and sho-bunsetu extent if they do not exist.
   ;; put thier faces to extents and move them to each bunsetu.
   (let* ((bunsetu-begin *bunsetu-number*)
-	 (bunsetu-end)
-	 (bunsetu-suu (wnn-server-bunsetu-suu)))
+	 (bunsetu-end))
+;	 (bunsetu-suu (wnn-server-bunsetu-suu)))
 ; dai bunsetu
     (if egg:*dai-bunsetu-face*
 	(progn
@@ -1252,7 +1347,7 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
 (defun henkan-goto-kouho (kouho-number)
 ;  (egg:bunsetu-face-off)
   (let ((point (point))
-	(yomi  (bunsetu-yomi *bunsetu-number*))
+;	(yomi  (bunsetu-yomi *bunsetu-number*))
 	(max)
 	(min))
     (setq kouho-number 
@@ -1330,8 +1425,7 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
     (bunsetu-length-henko l)))
 
 (defun bunsetu-length-henko (length)
-  (let ((i 0)
-	(r (wnn-server-bunsetu-henkou *bunsetu-number* length egg:*dai*))
+  (let ((r (wnn-server-bunsetu-henkou *bunsetu-number* length egg:*dai*))
 	(start (max 0 (1- *bunsetu-number*))))
     (cond((null r)
 	  (egg:error (wnn-server-get-msg)))
@@ -1749,7 +1843,7 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
 			(if (= (current-column) 0) 1 0)
 			-1)
 		    *diced-dict-info*))
-	 (hindo (nth 2 dict-item))
+;	 (hindo (nth 2 dict-item))
 	 (dict-number (nth 3 dict-item))
 	 (serial-number (nth 4 dict-item))
 	 )
@@ -1760,13 +1854,13 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
 (defun diced-hindo-set (&optional newhindo)
   (interactive)
   (if (null newhindo)
-      (setq newhindo (read-minibuffer (egg:msg-get 'enter-hindo))))
+      (setq newhindo (read-expression (egg:msg-get 'enter-hindo))))
   (let* ((dict-item (nth 
 		     (+ (count-lines (point-min) (point))
 			(if (= (current-column) 0) 1 0)
 			-1)
 		    *diced-dict-info*))
-	 (hindo (nth 2 dict-item))
+;	 (hindo (nth 2 dict-item))
 	 (dict-number (nth 3 dict-item))
 	 (serial-number (nth 4 dict-item))
 	 )
@@ -1793,10 +1887,10 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
 		 (kanji (nth 0 dict-item))
 		 (bunpo (nth 1 dict-item))
 		 (hinshi (wnn-server-hinsi-name bunpo))
-		 (hindo (nth 2 dict-item))
+;		 (hindo (nth 2 dict-item))
 		 (dict-number (nth 3 dict-item))
 		 (dict-name (wnn-dict-name dict-number (wnn-server-dict-list)))
-		 (sys-dict-p (null (memq dict-number (wnn-server-hinsi-dicts -1))))
+;		 (sys-dict-p (null (memq dict-number (wnn-server-hinsi-dicts -1))))
 		 (serial-number (nth 4 dict-item))
 		 )
 	    (if (notify-yes-or-no-p (egg:msg-get 'remove-notify)
@@ -1829,7 +1923,7 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
   (if (eobp) (forward-line -1)))
 
 (defun diced-mode ()
-  "Mode for \"editing\" dictionaries.
+  "Mode for \"editing\" Wnn dictionaries.
 In diced, you are \"editing\" a list of the entries in dictionaries.
 You can move using the usual cursor motion commands.
 Letters no longer insert themselves. Instead, 
@@ -1926,6 +2020,6 @@ Type  x to eXecute the deletions requested.
 			 hindo hyoka daihyoka kangovect)
 		 t)))))))))
 
-(provide 'wnn-egg)
+(provide 'egg-wnn)
 
-;;; wnn-egg.el ends here
+;;; egg-wnn.el ends here

@@ -509,7 +509,9 @@ Prefix arg means the new virtual folder should be visited read only."
 	       ;; set the message pointer to a new value if it is
 	       ;; now invalid.
 	       (cond
-		((equal "Q" (vm-message-id-number-of (car vm-message-pointer)))
+		((and vm-message-pointer
+		      (equal "Q" (vm-message-id-number-of
+				  (car vm-message-pointer))))
 		 (vm-garbage-collect-message)
 		 (setq vmp vm-message-pointer)
 		 (while (and vm-message-pointer

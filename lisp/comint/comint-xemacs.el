@@ -31,20 +31,20 @@
 
 ;;; Code:
 
+(defgroup comint nil
+  "General command interpreter in a window stuff."
+  :group 'processes)
+
 (defface comint-input-face '((((class color)
 			      (background dark))
 			     (:foreground "red"))
 			    (((class color)
 			      (background light))
 			     (:foreground "blue"))
-			    (((class mono))
-			     (:bold t))
-			    (((class grayscale))
-			     (:bold t))
 			    (t 
 			     (:bold t)))
   "How to display user input for comint shells."
-  :group 'comint-input-face)
+  :group 'comint)
 
 
 

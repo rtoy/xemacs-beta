@@ -1,7 +1,7 @@
 ;;; w3-cus.el --- Customization support for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/14 06:51:36
-;; Version: 1.3
+;; Created: 1997/03/18 20:30:34
+;; Version: 1.5
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -32,8 +32,42 @@
   (if (and (featurep 'custom) (fboundp 'custom-declare-variable))
       nil ;; We've got what we needed
     ;; We have the old custom-library, hack around it!
+    (defmacro defgroup (&rest args)
+      nil)
     (defmacro defcustom (var value doc &rest args) 
       (` (defvar (, var) (, value) (, doc))))))
+
+(defgroup w3 nil
+  "Emacs-W3 - the web browser of choice."
+  :group 'hypermedia)
+
+(defgroup w3-files nil
+  "Emacs-W3 configuration files."
+  :group 'w3)
+
+(defgroup w3-images nil
+  "Controlling image handling."
+  :group 'w3)
+
+(defgroup w3-printing nil
+  "Various options for hardcopy from web pages."
+  :group 'w3)
+
+(defgroup w3-menus nil
+  "The look of menus in Emacs-W3"
+  :group 'w3)
+
+(defgroup w3-parsing nil
+  "Options relating to HTML parsing"
+  :group 'w3)
+
+(defgroup w3-display nil
+  "Variables relating to how web pages are displayed."
+  :group 'w3)
+
+(defgroup w3-hooks nil
+  "Hooks relating to Emacs-W3."
+  :group 'w3)
 
 ;;; File related variables
 (defcustom w3-configuration-directory "~/.w3/"
@@ -80,9 +114,16 @@ menus to get to them."
 
 ;;; Display related variables
 (defcustom w3-display-frames nil
-  "*Fetch frames - not optimal."
+  "*Fetch frames - can be:
+nil		no frame display whatsoever
+'as-links	display frame hyperlinks, but do not fetch them
+'ask		display frame hyperlinks and ask whether to fetch them
+t		display frame hyperlinks and fetch them."
   :group 'w3-display
-  :type 'boolean)
+  :type '(choice (const :tag "Do not display frames" :value nil)
+		 (const :tag "Show hyperlinks" :value as-links)
+		 (const :tag "Show hyperlinks, ask whether to retrieve them" :value ask)
+		 (const :tag "Automatically retrieve frames" :value t)))
 
 (defcustom w3-do-incremental-display nil
   "*Whether to do incremental display of pages or not."

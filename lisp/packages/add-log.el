@@ -55,7 +55,7 @@ This defaults to the value of `user-mail-address'.")
 
 ;; So that the dump-time value doesn't go into loaddefs.el with the autoload.
 (or add-log-mailing-address
-    (setq add-log-mailing-address user-mail-address))
+    (setq add-log-mailing-address (user-mail-address)))
 
 (defvar change-log-font-lock-keywords
   '(("^[SMTWF].+" . font-lock-function-name-face)	; Date line.
@@ -168,7 +168,7 @@ never append to an existing entry."
   (or add-log-full-name
       (setq add-log-full-name (user-full-name)))
   (or add-log-mailing-address
-      (setq add-log-mailing-address user-mail-address))
+      (setq add-log-mailing-address (user-mail-address)))
   (if whoami
       (progn
         (setq add-log-full-name (read-string "Full name: " add-log-full-name))

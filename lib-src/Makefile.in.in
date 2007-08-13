@@ -115,7 +115,7 @@ UTILITIES= make-path wakeup profile make-docfile digest-doc \
 /* Like UTILITIES, but they are not system-dependent, and should not be
    deleted by the distclean target. */
 TM_SCRIPTS=tm-au tm-file tm-html tm-image tm-mpeg tm-plain tm-ps tmdecode
-SCRIPTS= rcs2log vcdiff install-sid send-pr $(TM_SCRIPTS)
+SCRIPTS= rcs2log vcdiff gzip-el.sh install-sid send-pr $(TM_SCRIPTS)
 
 EXECUTABLES= ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS}
 
@@ -274,7 +274,12 @@ tm-ps :
 	${LN_S} ${srcdir}/$@ $@
 tmdecode :
 	${LN_S} ${srcdir}/$@ $@
-
+gzip-el.sh:
+	${LN_S} ${srcdir}/$@ $@
+install-sid:
+	${LN_S} ${srcdir}/$@ $@
+send-pr:
+	${LN_S} ${srcdir}/$@ $@
 
 #ifdef MOVEMAIL_NEEDS_BLESSING
 blessmail:

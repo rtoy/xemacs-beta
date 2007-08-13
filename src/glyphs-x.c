@@ -140,8 +140,10 @@ x_print_image_instance (struct Lisp_Image_Instance *p,
 	}
       write_c_string (")", printcharfun);
       break;
+#if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
+#endif
     default:
       break;
     }
@@ -202,8 +204,10 @@ x_image_instance_equal (struct Lisp_Image_Instance *p1,
       if (IMAGE_INSTANCE_X_NPIXELS (p1) != IMAGE_INSTANCE_X_NPIXELS (p2))
 	return 0;
       break;
+#if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
+#endif
       break;
     default:
       break;
@@ -221,8 +225,10 @@ x_image_instance_hash (struct Lisp_Image_Instance *p, int depth)
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
       return IMAGE_INSTANCE_X_NPIXELS (p);
+#if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
+#endif
       return 0;
     default:
       return 0;
@@ -1053,7 +1059,9 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #include "jerror.h"
 
 /* The in-core jpeg code doesn't work, so I'm avoiding it for now.  -sb  */
-#define USE_TEMP_FILES_FOR_JPEG_IMAGES 1
+/* Late-breaking update, we're going to give it a try, I think it's */
+/* fixed now -sb */
+/*#define USE_TEMP_FILES_FOR_JPEG_IMAGES 1*/
 #define USE_TEMP_FILES_FOR_PNG_IMAGES 1
 
 static void
@@ -1175,8 +1183,16 @@ METHODDEF(boolean)
 METHODDEF boolean
 #endif
 our_fill_input_buffer (j_decompress_ptr cinfo) {
-  ERREXIT(cinfo,JERR_INPUT_EOF);
-  return FALSE;
+  /* Insert a fake EOI marker */
+  struct jpeg_source_mgr *src = (struct jpeg_source_mgr *) cinfo->src;
+  static JOCTET buffer[2];
+
+  buffer[0] = (JOCTET) 0xFF;
+  buffer[1] = (JOCTET) JPEG_EOI;
+
+  src->next_input_byte = buffer;
+  src->bytes_in_buffer = 2;
+  return TRUE;
 }
 
 #if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
@@ -1185,6 +1201,19 @@ METHODDEF(void)
 METHODDEF void
 #endif
 our_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
+  struct jpeg_source_mgr *src = NULL;
+
+  src = (struct jpeg_source_mgr *) cinfo->src;
+
+  if (!src) {
+    return;
+  } else if (num_bytes > src->bytes_in_buffer) {
+    ERREXIT(cinfo, JERR_INPUT_EOF);
+    /*NOTREACHED*/
+  }
+
+  src->bytes_in_buffer -= num_bytes;
+  src->next_input_byte += num_bytes;
 }
 
 #if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
@@ -1199,8 +1228,8 @@ typedef struct {
   struct jpeg_source_mgr pub;
 } our_jpeg_source_mgr;
 
-static void jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data,
-			     unsigned int len)
+static void
+jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, unsigned int len)
 {
   struct jpeg_source_mgr *src = NULL;
   
@@ -1605,6 +1634,7 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
   return Qnil;
 }
 
+#if 0
 /* We provide our own version of DGifSlurp() because the standardly
    provided one doesn't handle interlaced GIFs.  This is based on
    code in gif2x11.c. */
@@ -1711,6 +1741,7 @@ our_own_dgif_slurp_from_gif2x11_c (GifFileType *GifFile)
 
   return GIF_OK;
 }
+#endif
 
 static void
 gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
@@ -1760,10 +1791,12 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	signal_simple_error ("Unable to decode GIF",
 			     build_string (EmacsPrintGifError ()));
       }
-#if 1
+#if 0
     if (our_own_dgif_slurp_from_gif2x11_c(unwind.giffile) != GIF_OK)
 #else
-      /* DGifSlurp() doesn't handle interlaced files. */
+    /* DGifSlurp() doesn't handle interlaced files. */
+    /* Actually, it does, sort of.  It just sets the Interlace flag 
+       and stores RasterBits in interlaced order.  We handle that below. */
     if (DGifSlurp (unwind.giffile) != GIF_OK)
 #endif
       goto gif_decode_error;
@@ -1802,7 +1835,12 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     int width = unwind.giffile->SWidth;
     int depth;
     int bitmap_pad;
-    int i, j;
+    int i, j, row, pass, interlace;
+    /* interlaced gifs have rows in this order:
+       0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
+    static int InterlacedOffset[] = { 0, 4, 2, 1 };
+    static int InterlacedJumps[] = { 8, 8, 4, 2 };
+
     
     depth = DefaultDepthOfScreen (scr);
     
@@ -1835,14 +1873,35 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        optimization routines from XPM (they're in turn mostly
        copied from the Xlib source code). */
     
+    /* Note: We just use the first image in the file and ignore the rest. 
+             We check here that that image covers the full "screen" size.
+	     I don't know whether that's always the case.
+             -dkindred@cs.cmu.edu  */
+    if (unwind.giffile->SavedImages[0].ImageDesc.Height != height
+	|| unwind.giffile->SavedImages[0].ImageDesc.Width != width
+	|| unwind.giffile->SavedImages[0].ImageDesc.Left != 0
+	|| unwind.giffile->SavedImages[0].ImageDesc.Top != 0)
+      signal_simple_error ("First image in GIF file is not full size",
+			   instantiator);
+
+    interlace = unwind.giffile->SavedImages[0].ImageDesc.Interlace;
+    pass = 0;
+    row = interlace ? InterlacedOffset[pass] : 0;
     for (i = 0; i < height; i++)
-      for (j = 0; j < width; j++)
-	XPutPixel (unwind.ximage, j, i,
-		   unwind.pixels[(unsigned char)
-				 /* incorrect signed declaration
-				    of RasterBits[] */
-				 (unwind.giffile->SavedImages->
-				  RasterBits[i * width + j])]);
+      {
+	if (interlace && row >= height)
+	  row = InterlacedOffset[++pass];
+
+	for (j = 0; j < width; j++)
+	  XPutPixel (unwind.ximage, j, row,
+		     unwind.pixels[(unsigned char)
+				  /* incorrect signed declaration
+				     of RasterBits[] */
+				  (unwind.giffile->SavedImages[0].
+				   RasterBits[i * width + j])]);
+
+	row += interlace ? InterlacedJumps[pass] : 1;
+      }
   }
 
   /* 4. Now create the pixmap and set up the image instance */
@@ -3433,6 +3492,7 @@ x_colorize_image_instance (Lisp_Object image_instance,
 }
 
 
+#if HAVE_SUBWINDOWS
 /************************************************************************/
 /*                               subwindows                             */
 /************************************************************************/
@@ -3708,7 +3768,7 @@ Subwindows are not currently implemented.
 
   return subwindow;
 }
-
+#endif
 
 /************************************************************************/
 /*                            initialization                            */
@@ -3717,6 +3777,7 @@ Subwindows are not currently implemented.
 void
 syms_of_glyphs_x (void)
 {
+#if HAVE_SUBWINDOWS
   defsymbol (&Qsubwindowp, "subwindowp");
 
   DEFSUBR (Fmake_subwindow);
@@ -3727,6 +3788,7 @@ syms_of_glyphs_x (void)
   DEFSUBR (Fsubwindow_xid);
   DEFSUBR (Fresize_subwindow);
   DEFSUBR (Fforce_subwindow_map);
+#endif
 
   defkeyword (&Q_mask_file, ":mask-file");
   defkeyword (&Q_mask_data, ":mask-data");

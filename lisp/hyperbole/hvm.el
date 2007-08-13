@@ -6,10 +6,10 @@
 ;; KEYWORDS:     hypermedia, mail
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    10-Oct-91 at 01:51:12
-;; LAST-MOD:     31-Oct-96 at 22:36:19 by Bob Weiner
+;; LAST-MOD:     20-Mar-97 at 14:52:54 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -372,7 +372,10 @@ Has side-effect of widening buffer."
 ;;; Overlay this function from "vm-folder.el" called whenever new mail is
 ;;; incorporated so that it will highlight Hyperbole buttons when possible.
 ;;  Returns non-nil if there were any new messages.
-(defun vm-assimilate-new-messages (&optional dont-read-attributes gobble-order)
+(defun vm-assimilate-new-messages (&optional
+				   dont-read-attributes
+				   gobble-order
+				   labels)
   (let ((tail-cons (vm-last vm-message-list))
 	b-list new-messages)
     (save-excursion
@@ -401,17 +404,49 @@ Has side-effect of widening buffer."
       (setq new-messages (if tail-cons (cdr tail-cons) vm-message-list))
       (vm-set-numbering-redo-start-point new-messages)
       (vm-set-summary-redo-start-point new-messages))
+    ;; copy the new-messages list because sorting might scramble
+    ;; it.  Also something the user does when
+    ;; vm-arrived-message-hook is run might affect it.
+    ;; vm-assimilate-new-messages returns this value so it must
+    ;; not be mangled.
+    (setq new-messages (copy-sequence new-messages))
+    ;; add the labels
+    (if (and labels (boundp 'vm-burst-digest-messages-inherit-labels)
+	     vm-burst-digest-messages-inherit-labels)
+	(let ((mp new-messages))
+	  (while mp
+	    (vm-set-labels-of (car mp) (copy-sequence labels))
+	    (setq mp (cdr mp)))))
     (if vm-summary-show-threads
 	(progn
 	  ;; get numbering and summary of new messages done now
 	  ;; so that the sort code only has to worry about the
 	  ;; changes it needs to make.
 	  (vm-update-summary-and-mode-line)
-	  ;; copy the new-messages list because sorting might
-	  ;; scramble it.  vm-assimilate-new-messages returns
-	  ;; this value.
-	  (setq new-messages (copy-sequence new-messages))
 	  (vm-sort-messages "thread")))
+    (if (and vm-arrived-message-hook
+	     new-messages
+	     ;; tail-cons == nil means vm-message-list was empty.
+	     ;; Thus new-messages == vm-message-list.  In this
+	     ;; case, run the hooks only if this is not the first
+	     ;; time vm-assimilate-new-messages has been called
+	     ;; in this folder.  gobble-order non-nil is a good
+	     ;; indicator that this is the first time because the
+	     ;; order is gobbled only once per visit and always
+	     ;; the first time vm-assimilate-new-messages is
+	     ;; called.
+	     (or tail-cons (null gobble-order)))
+	(let ((new-messages new-messages))
+	  ;; seems wise to do this so that if the user runs VM
+	  ;; command here they start with as much of a clean
+	  ;; slate as we can provide, given we're currently deep
+	  ;; in the guts of VM.
+	  (vm-update-summary-and-mode-line)
+	  (while new-messages
+	    (vm-run-message-hook (car new-messages) 'vm-arrived-message-hook)
+	    (setq new-messages (cdr new-messages)))))
+    (vm-update-summary-and-mode-line)
+    (run-hooks 'vm-arrived-messages-hook)
     (if (and new-messages vm-virtual-buffers)
 	(save-excursion
 	  (setq b-list vm-virtual-buffers)

@@ -1,4 +1,126 @@
+Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+* Makefile (xemacs-w3): Special target for XEmacs Build.
+
+Thu Mar 20 06:22:29 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el:Added more transitions for error handling of raw 'td' or
+  'th' outside of a 'tr' in tablebody.
+
+* url.el (url-default-callback): asynch downloads should now be cached
+
+* w3-script.el (w3-do-scripting): Customized, turned off by default
+
+Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+* Makefile (xemacs-w3): Special target for XEmacs Build.
+
+Wed Mar 19 05:56:56 1997  William M. Perry  <wmperry@aventail.com>
+
+* font.el (x-font-families-for-device): Just in case
+  font-default-family-for-device fails under Emacs/NT, return "monospace"
+  at the front of the list.
+
+* url-vars.el (url-privacy-level): Now defaults to not sending your email
+  address in HTTP requests.
+
+Tue Mar 18 13:09:13 1997  William M. Perry  <wmperry@aventail.com>
+
+* url-cookie.el (url-cookie-handle-set-cookie): Fixed variable typos -
+  doh.  Today just hasn't been my day.
+
+* Emacs-W3 3.0.70 released
+
+* We now pass all tests on the forms tester page
+  http://www.research.digital.com/nsl/formtest/home.html
+
+* w3-display.el (w3-display-node): Better handling of <select multiple>
+  and <select> in general.
+
+* w3-forms.el (w3-form-encode-xwfu): Encode : and / in xwfu, since the
+  form tester expects it.
+
+* url-cookie.el (url-cookie-trusted-urls): New variable - list of regexps
+  of URLs that you will accept cookies from without question.
+  (url-cookie-untrusted-urls): New variable - list of regexps of URLs that
+  you will _never_ accept cookies from.
+  (url-cookie-handle-set-cookie): Use them
+  (url-cookie-handle-set-cookie): When asking whether to allow a site to
+  set a cookie, show the cookies they are wanting to set.
+
+Tue Mar 18 06:47:46 1997  Thierry Emery <Thierry.Emery@aar.alcatel-alsthom.fr>
+
+* w3-display.el: Latest round of patches for <frames> support.
+
+* w3-cus.el (w3-display-frames): can now have 4 values.
+	nil		no frame display whatsoever (currently the default)
+	'as-links	display frame hyperlinks, but do not fetch them
+	'ask		display frame hyperlinks and ask whether to fetch them
+	t		display frame hyperlinks and fetch them
+
+Tue Mar 18 06:47:46 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el (w3-parse-buffer): Duh, don't do `=' comparison on results
+  of char-after, since it is nil at the end of the buffer.
+
+Mon Mar 17 08:44:46 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.69 released
+
+* w3-sysdp.el (buffer-substring-no-properties): Added stub
+
+* url-gopher.el (url-gopher-retrieve): Ditto.
+
+* url.el: Ditto
+
+* w3-parse.el: Removed all sorts of fun (following-char) commands that can
+  cause ebola warnings under XEmacs 20.x
+
+* w3.el (w3-popup-info): Default to the URL under point instead of the
+  documents URL
+
+* w3-auto.el: updated autoloads - made sure everything was interactive if
+  appropriate.
+
+* w3-menu.el (w3-popup-menu): If w3-popup-menu-on-mouse-3 is nil, call
+  whatever button3 is bound to in global-map
+
+* w3-display.el: Added XEmacs version of frame-char-height and
+  frame-char-width
+  (w3-frames): If w3-display-frames is non-nil, then do a refresh with it
+  bound locally, so everything should just work.
+
+* url.el (url-do-setup): Global history file now defaults to ~/.w3/history
+  (url-do-setup): Cookie storage now defaults to ~/.w3/cookies
+
+Mon Mar 17 06:51:07 1997  Paul Stodghill <stodghil@CS.Cornell.EDU>
+
+* mm.el (mm-temporary-directory): Initialize variable from TMPDIR
+  environment variable
+
+Fri Mar 14 13:35:56 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-create-custom): Fixed the 'custom' input type for
+  new filenames in the widget/custom package.
+
+* ssl.el (ssl-certificate-verification-depth): New variable to control how
+  far up a cert chain to look.
+  (ssl-view-certificate-program-name): New variable.
+  (ssl-view-certificate-program-arguments): New variable.
+  (ssl-certificate-directory-style): New variable.
+  (ssl-rehash-program-name): New variable.
+  (ssl-certificate-directory): New variable.
+  (ssl-program-arguments): Use some of them.
+  (ssl-accept-ca-certificate): Use the rest.
+
+* css.el (css-parse-args): Removed old code that could cause infinite loop
+  in stylesheet parsing on bad things like "foo=bar" instead of "foo:bar"
+
+* w3-cus.el: Added better groupings for the customization stuff.
+
 Thu Mar 13 19:54:50 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.68 released
 
 * w3-cus.el: Added customization support for Emacs-W3
 

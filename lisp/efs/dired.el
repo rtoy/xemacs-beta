@@ -5,7 +5,7 @@
 ;;
 ;; File:          dired.el
 ;; RCS:           
-;; Dired Version: $Revision: 1.3 $
+;; Dired Version: $Revision: 1.4 $
 ;; Description:   The DIRectory EDitor is for manipulating, and running
 ;;                commands on files in a directory.
 ;; Authors:       FSF,
@@ -36,7 +36,7 @@
 
 ;;; Dired Version
 
-(defconst dired-version (substring "$Revision: 1.3 $" 11 -2)
+(defconst dired-version (substring "$Revision: 1.4 $" 11 -2)
   "The revision number of Tree Dired (as a string).
 
 Don't forget to mention this when reporting bugs to:
@@ -92,9 +92,24 @@ Don't forget to mention this when reporting bugs to:
    ((< ver 18)
     (error "dired does not work with emacs version %s" emacs-version))))
 
-;; Load default-dir last, because we want its interactive specs.
-(require 'default-dir)
+;; We duplicate default-dir stuff to avoid its overwrites unless
+;; they are explicitly requested.
 
+(defvar default-directory-function nil
+  "A function to call to compute the default-directory for the current buffer.
+If this is nil, the function default-directory will return the value of the
+variable default-directory.
+Buffer local.")
+(make-variable-buffer-local 'default-directory-function)
+
+(defun default-directory ()
+  " Returns the default-directory for the current buffer.
+Will use the variable default-directory-function if it non-nil."
+  (if default-directory-function
+      (funcall default-directory-function)
+    (if (string-match "Lucid" emacs-version)
+	(abbreviate-file-name default-directory t)
+      (abbreviate-file-name default-directory))))
 
 ;;;;----------------------------------------------------------------
 ;;;; Customizable variables
@@ -143,7 +158,7 @@ To change this variable use \\[dired-do-compress] with a zero prefix.")
  
  For example:
  
-   \(setq dired-compresssion-method-alist
+   \(setq dired-compression-method-alist
          \(cons '\(frobnicate \".frob\" \(\"frob\"\) \(\"frob\" \"-d\"\) \"-f\"\)
                dired-compression-method-alist\)\)
    => \(\(frobnicate \".frob\" \(\"frob\"\) \(\"frob\" \"-d\"\)\) 
@@ -207,7 +222,7 @@ setting of this variable.")
 ;;;###autoload
 (defvar dired-chown-program
   (if (memq system-type '(hpux dgux usg-unix-v)) "chown" "/etc/chown")
-  "*Name of chown command (usully `chown' or `/etc/chown').")
+  "*Name of chown command (usually `chown' or `/etc/chown').")
 
 ;;;###autoload
 (defvar dired-gnutar-program nil
@@ -3776,7 +3791,7 @@ and \\[dired-unmark] to remove the mark of the current file."
 Optional CHAR indicates a marker character to use."
   (let (buffer-read-only)
     (if (memq (or char dired-marker-char) '(?\  ?\n ?\r))
-	(error "Invalid marker charcter %c" dired-marker-char))
+	(error "Invalid marker character %c" dired-marker-char))
     (or char (setq char dired-marker-char))
     (dired-repeat-over-lines
      arg

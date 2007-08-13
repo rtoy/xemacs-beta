@@ -1304,7 +1304,7 @@ To change this variable use \\[dired-do-compress] with a zero prefix.")
  
  For example:
  
-   (setq dired-compresssion-method-alist
+   (setq dired-compression-method-alist
          (cons '(frobnicate \".frob\" (\"frob\") (\"frob\" \"-d\") \"-f\")
                dired-compression-method-alist))
    => ((frobnicate \".frob\" (\"frob\") (\"frob\" \"-d\")) 
@@ -1321,7 +1321,7 @@ To change this variable use \\[dired-do-compress] with a zero prefix.")
 Can contain even `F', `b', `i' and `s'.")
 
 (defvar dired-chown-program (if (memq system-type '(hpux dgux usg-unix-v)) "chown" "/etc/chown") "\
-*Name of chown command (usully `chown' or `/etc/chown').")
+*Name of chown command (usually `chown' or `/etc/chown').")
 
 (defvar dired-gnutar-program nil "\
 *If non-nil, name of the GNU tar executable (e.g. \"tar\" or \"gnutar\").
@@ -1459,6 +1459,47 @@ Like \\[dired-jump-back], but to other window." t nil)
 
 (autoload 'dired-jump-back-other-frame "dired" "\
 Like \\[dired-jump-back], but in another frame." t nil)
+
+;;;***
+
+;;;### (autoloads nil "efs-cu" "efs/efs-cu.el")
+
+(defvar efs-path-root-regexp "^/[^/:]+:" "\
+Regexp to match the `/user@host:' root of an efs full path.")
+
+;;;***
+
+;;;### (autoloads nil "efs-dump" "efs/efs-dump.el")
+
+(setq file-name-handler-alist (cons (cons efs-path-root-regexp 'efs-file-handler-function) file-name-handler-alist))
+
+;;;***
+
+;;;### (autoloads (efs-root-file-name-completion efs-root-file-name-all-completions efs-set-passwd) "efs-netrc" "efs/efs-netrc.el")
+
+(autoload 'efs-set-passwd "efs-netrc" "\
+For a given HOST and USER, set or change the associated PASSWORD." t nil)
+
+(autoload 'efs-root-file-name-all-completions "efs-netrc" nil nil nil)
+
+(autoload 'efs-root-file-name-completion "efs-netrc" nil nil nil)
+
+;;;***
+
+;;;### (autoloads (efs-report-bug) "efs-report" "efs/efs-report.el")
+
+(autoload 'efs-report-bug "efs-report" "\
+Submit a bug report for efs." t nil)
+
+;;;***
+
+;;;### (autoloads (efs-file-handler-function efs-nslookup-host) "efs" "efs/efs.el")
+
+(autoload 'efs-nslookup-host "efs" "\
+Attempt to resolve the given HOSTNAME using nslookup if possible." t nil)
+
+(autoload 'efs-file-handler-function "efs" "\
+Function to call special file handlers for remote files." nil nil)
 
 ;;;***
 
@@ -2766,7 +2807,7 @@ FUNC that return non-nil." t nil)
 
 ;;;***
 
-;;;### (autoloads (rolo-yank rolo-sort rolo-kill rolo-grep rolo-fgrep rolo-edit rolo-display-matches rolo-add) "wrolo" "hyperbole/wrolo.el")
+;;;### (autoloads (rolo-yank rolo-toggle-datestamps rolo-sort rolo-kill rolo-grep rolo-fgrep rolo-edit rolo-display-matches rolo-add) "wrolo" "hyperbole/wrolo.el")
 
 (autoload 'rolo-add "wrolo" "\
 Adds a new entry in personal rolodex for NAME.
@@ -2777,13 +2818,13 @@ entry which begins with the parent string." t nil)
 
 (autoload 'rolo-display-matches "wrolo" "\
 Display optional DISPLAY-BUF buffer of previously found rolodex matches.
-If DISPLAY-BUF is nil, use the value in 'rolo-display-buffer'.
+If DISPLAY-BUF is nil, use the value in `rolo-display-buffer'.
 Second arg RETURN-TO-BUFFER is the buffer to leave point within after the display." t nil)
 
 (autoload 'rolo-edit "wrolo" "\
-Edits a rolodex entry given by optional NAME within 'rolo-file-list'.
+Edits a rolodex entry given by optional NAME within `rolo-file-list'.
 With prefix argument, prompts for optional FILE to locate entry within.
-With no NAME arg, simply displays FILE or first entry in 'rolo-file-list' in an
+With no NAME arg, simply displays FILE or first entry in `rolo-file-list' in an
 editable mode.  NAME may be of the form: parent/child to edit child below a
 parent entry which begins with the parent string." t nil)
 
@@ -2818,7 +2859,7 @@ Returns number of entries matched.  See also documentation for the variable
 rolo-file-list." t nil)
 
 (autoload 'rolo-kill "wrolo" "\
-Kills a rolodex entry given by NAME within 'rolo-file-list'.
+Kills a rolodex entry given by NAME within `rolo-file-list'.
 With prefix argument, prompts for optional FILE to locate entry within.
 NAME may be of the form: parent/child to kill child below a parent entry
 which begins with the parent string.
@@ -2826,8 +2867,12 @@ Returns t if entry is killed, nil otherwise." t nil)
 
 (autoload 'rolo-sort "wrolo" "\
 Sorts up to 14 levels of entries in ROLO-FILE (default is personal rolo).
-Assumes entries are delimited by one or more '*'characters.
+Assumes entries are delimited by one or more `*'characters.
 Returns list of number of groupings at each entry level." t nil)
+
+(autoload 'rolo-toggle-datestamps "wrolo" "\
+Toggle whether datestamps are updated when rolodex entries are modified.
+With optional ARG, turn them on iff ARG is positive." t nil)
 
 (autoload 'rolo-yank "wrolo" "\
 Inserts at point the first rolodex entry matching NAME.
@@ -3840,7 +3885,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.16 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.17 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4602,7 +4647,7 @@ scribe-electric-parenthesis
 
 ;;;***
 
-;;;### (autoloads (mail-other-frame mail-other-window mail mail-mode) "sendmail" "modes/sendmail.el")
+;;;### (autoloads (mail-other-frame mail-other-window mail mail-mode user-mail-address) "sendmail" "modes/sendmail.el")
 
 (defvar mail-from-style 'angles "\
 *Specifies how \"From:\" fields look.
@@ -4662,6 +4707,9 @@ nil means use indentation.")
 (defvar mail-signature nil "\
 *Text inserted at end of mail buffer when a message is initialized.
 If t, it means to insert the contents of the file `mail-signature-file'.")
+
+(autoload 'user-mail-address "sendmail" "\
+Query the user for his mail address, unless it is already known." t nil)
 
 (autoload 'mail-mode "sendmail" "\
 Major mode for editing mail to be sent.
@@ -5192,7 +5240,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.16 $
+vhdl-mode $Revision: 1.17 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

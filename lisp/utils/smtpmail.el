@@ -139,7 +139,7 @@ don't define this value.")
 	    ;; they put one in themselves.
 	    (goto-char (point-min))
 	    (if (not (re-search-forward "^From:" delimline t))
-		(let* ((login user-mail-address)
+		(let* ((login (user-mail-address))
 		       (fullname (user-full-name)))
 		  (cond ((eq mail-from-style 'angles)
 			 (insert "From: " fullname)
@@ -270,7 +270,7 @@ don't define this value.")
 
 	    ;; MAIL FROM: <sender>
 ;	    (smtpmail-send-command process (format "MAIL FROM:%s@%s" (user-login-name) (smtpmail-fqdn)))
-	    (smtpmail-send-command process (format "MAIL FROM: <%s>" user-mail-address))
+	    (smtpmail-send-command process (format "MAIL FROM: <%s>" (user-mail-address)))
 
 	    (if (or (null (car (setq response-code (smtpmail-read-response process))))
 		    (not (integerp (car response-code)))

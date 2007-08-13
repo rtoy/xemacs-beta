@@ -1812,7 +1812,7 @@ list that represents a doc string reference.
 		;; negate POSITION.
 		(if (and (stringp (nth (nth 1 info) form))
 			 (> (length (nth (nth 1 info) form)) 0)
-			 (eq (aref (nth (nth 1 info) form) 0) ?*))
+			 (char= (aref (nth (nth 1 info) form) 0) ?*))
 		    (setq position (- position)))))
 
 	 (if preface
@@ -2336,7 +2336,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 				  (prin1-to-string (car rest))))
 	      ((memq (car rest) '(t nil))
 	       (byte-compile-warn "constant in arglist: %s" (car rest)))
-	      ((and (= ?\& (aref (symbol-name (car rest)) 0))
+	      ((and (char= ?\& (aref (symbol-name (car rest)) 0))
 		    (not (memq (car rest) '(&optional &rest))))
 	       (byte-compile-warn "unrecognised `&' keyword in arglist: %s"
 				  (car rest))))

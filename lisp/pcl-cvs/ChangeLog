@@ -1,3 +1,7 @@
+Wed Mar 19 23:25:26 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* pcl-cvs.el (cvs-changelog-ours-p): Use function.
+
 Sat Dec 21 22:37:37 1996  Neal Becker  <neal@ctd.comsat.com>
 
 	* pcl-cvs.el: Synched with pcl-cvs.el from cvs-1.9.

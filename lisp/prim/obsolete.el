@@ -613,4 +613,8 @@ If FRAME is omitted or nil, use the selected frame."
 ;; likewise with int-char.
 (define-compatible-function-alias 'int-char 'int-to-char)
 
+;; Two loser functions which shouldn't be used.
+(make-obsolete 'following-char 'char-after)
+(make-obsolete 'preceding-char 'char-after)
+
 ;;; obsolete.el ends here

@@ -1,3 +1,51 @@
+Fri Mar 21 19:16:46 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* mule/mule-coding.el (enable-multibyte-characters): MULE
+	compatabile variable.
+
+Thu Mar 20 13:28:17 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* bytecomp/bytecomp.el (byte-compile-output-docform): Ebola fix.
+	(byte-compile-lambda): Ebola fix.
+
+	* prim/obsolete.el (following-char): Make this turkey obsolete.
+	(preceding-char): Ditto.  (Suggested by Richard Mlynarik).
+
+Wed Mar 19 10:12:09 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* modes/sendmail.el (sendmail-send-it): Use function for
+	user-mail-address.
+	(user-mail-address): Autoload.
+
+	* pcl-cvs/pcl-cvs.el (cvs-changelog-ours-p): Use function for
+	user-mail-address.
+
+	* prim/startup.el (load-init-file): Only set user-mail-address if
+	non-interactive.
+
+	* utils/smtpmail.el (smtpmail-send-it): Use function for
+	user-mail-address.
+	(smtpmail-via-smtp): Ditto.
+
+	* packages/add-log.el (add-log-mailing-address): Use new function
+	to obtaion email address.
+	(add-change-log-entry): Ditto.
+
+	* prim/device.el (device-pixel-depth): New alias for
+	`device-bitplanes'.
+
+	* comint/comint-xemacs.el (comint): Fix typo in defgroup.
+
+Tue Mar 18 11:16:28 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/loadup.el: ls-lisp doesn't exist now.
+
+	* comint/comint-xemacs.el (comint): Touch up fixes from Per
+	Abrahamsen.
+
+	* prim/glyphs.el (subwindow-image-instance-p): Change doc string
+	to reflect unimplemented status.
+
 Mon Mar 17 15:34:06 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* comint/comint.el (comint-input-setup): Require comint-xemacs.

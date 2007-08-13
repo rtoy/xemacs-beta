@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/03/14 06:51:57
-;; Version: 1.35
+;; Created: 1997/03/20 18:03:50
+;; Version: 1.39
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,7 +26,7 @@
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst url-version (let ((x "p3.0.68"))
+(defconst url-version (let ((x "p3.0.71"))
 			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))
@@ -109,7 +109,7 @@ request.")
 exists, and is readable, then it will be viewed instead of
 automatically creating the directory listing.")
 
-(defvar url-privacy-level 'none
+(defvar url-privacy-level '(email)
   "*How private you want your requests to be.
 HTTP/1.0 has header fields for various information about the user, including
 operating system information, email addresses, the last page you visited, etc.

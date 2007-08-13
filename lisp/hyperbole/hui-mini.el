@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    15-Oct-91 at 20:13:17
-;; LAST-MOD:      6-Mar-97 at 14:08:46 by Bob Weiner
+;; LAST-MOD:     17-Mar-97 at 21:28:26 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -99,6 +99,16 @@
 	   "Sets where referents are displayed.")
 	  ("Smart-Key-at-Eol/" (menu . cust-eol)
 	   "Sets how scrolling via end of line presses works.")
+	  ("Toggle-Rolo-Dates"
+	   (if (and (boundp 'wrolo-add-hook) (listp wrolo-add-hook)
+		    (memq 'rolo-set-date wrolo-add-hook))
+	       (progn (remove-hook 'wrolo-add-hook 'rolo-set-date)
+		      (remove-hook 'wrolo-edit-hook 'rolo-set-date)
+		      (message "Rolodex date stamps are now turned off."))
+	     (add-hook 'wrolo-add-hook 'rolo-set-date)
+	     (add-hook 'wrolo-edit-hook 'rolo-set-date)
+	     (message "Rolodex date stamps are now turned on."))
+	   "Toggle whether date stamps are update when rolodex entries are edited.")
 	  ("URL-Display/" (menu . cust-urls) "Sets where URLs are displayed.")))
        '(cust-eol .
          (("Smart Key press at eol scrolls>")
@@ -326,7 +336,6 @@ structure."
       (progn (beep) nil)
     (unwind-protect
 	(progn
-	  (require 'hyperbole)
 	  (require 'hsite) ;; Since "hui-mini" may be loaded without loading
 			   ;; all of Hyperbole.
 	  (hyperb:init-menubar)

@@ -3,11 +3,10 @@
 ;;
 ;; File:         efs-ovwrt.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.2 $
 ;; RCS:
 ;; Description:  Utilities for overwriting functions with new definitions.
 ;; Author:       Andy Norman <ange@hplb.hpl.hp.com>
-;; Modified:     Sun Nov 27 18:40:20 1994 by sandy on gandalf
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -20,7 +19,7 @@
 (defconst efs-ovwrt-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.2 $" 11 -2)))
 
 (defvar efs-overwrite-fmt
   "Note: This function has been modified to work with %s.")
@@ -66,9 +65,12 @@ definition suitably augmented."
     ;; later after some other code has been loaded on top of our stuff.
     
     (or (fboundp saved)
-	(progn
+	(let ((advised-p (and (featurep 'advice)
+			      (ad-is-advised fun))))
+	  (if advised-p (ad-deactivate fun))
 	  (fset saved (symbol-function fun))
-	  (fset fun new)))
+	  (fset fun new)
+	  (if advised-p (ad-activate fun))))
     
     ;; Rewrite the doc string on the new function.  This should
     ;; be done every time the file is loaded (or a function is redefined),

@@ -986,6 +986,8 @@ as BUFFER means use current buffer.
 	{
 	  int count = specpdl_depth ();
 	  /* lock_file() and unlock_file() currently use current_buffer */
+	  /* #### - dmoore, what if lock_file or unlock_file kill
+	     the current buffer? */
 	  record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
 	  set_buffer_internal (buf);
 	  if (!already && !NILP (flag))
@@ -1306,12 +1308,12 @@ with `delete-process'.
      to kill the buffer.  This must be done after the questions
      since anything can happen within yes-or-no-p.  */
 
-  /* Don't kill the minibuffer now current.  */
-  if (EQ (buf, XWINDOW (minibuf_window)->buffer))
-    return Qnil;
-
   /* Might have been deleted during the last question above */
   if (!BUFFER_LIVE_P (b))
+    return Qnil;
+
+  /* Don't kill the minibuffer now current.  */
+  if (EQ (buf, XWINDOW (minibuf_window)->buffer))
     return Qnil;
 
   /* When we kill a base buffer, kill all its indirect buffers.
@@ -1342,8 +1344,23 @@ with `delete-process'.
   /* Now there is no question: we can kill the buffer.  */
 
 #ifdef CLASH_DETECTION
-  /* Unlock this buffer's file, if it is locked.  */
+  /* Unlock this buffer's file, if it is locked.  unlock_buffer
+     can both GC and kill the current buffer, and wreak general
+     havok by running lisp code. */
+  GCPRO1 (buf);
   unlock_buffer (b);
+  UNGCPRO;
+  b = XBUFFER (buf);
+
+  if (!BUFFER_LIVE_P (b))
+    return Qnil;
+
+  if (b == current_buffer)
+    {
+      Fset_buffer (Fother_buffer (buf, Qnil, Qnil));
+      if (b == current_buffer)
+	return Qnil;
+    }
 #endif /* CLASH_DETECTION */
 
   {
