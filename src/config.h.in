@@ -51,6 +51,13 @@ Boston, MA 02111-1307, USA.  */
 /* Do you have the X window system and want to use it? */
 #undef HAVE_X_WINDOWS
 
+/* Slightly better type checking in X header files */
+#ifdef HAVE_X_WINDOWS
+#ifndef NeedFunctionPrototypes
+#define NeedFunctionPrototypes 1
+#endif
+#endif
+
 /* Do you have the the NeXTstep window system? */
 #undef HAVE_NEXTSTEP
 

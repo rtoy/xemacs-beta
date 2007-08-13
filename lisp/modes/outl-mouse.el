@@ -264,9 +264,10 @@ static char * right[] = {
   '("Outline Commands"
     ["Hide all"		hide-body			t]
     ["Hide all subtrees" hide-subtrees-same-level	t]
-    "---"
     ["Hide subtree"	hide-subtree                    t]
-    ["Hide body"        hide-body                       t]
+;   ["Hide body"        hide-body                       t]
+    "---"
+    ["Show all"		show-all			t]
     ["Show subtree"	show-subtree                    t]
     ["Show body"        show-entry                      t]
     "---"

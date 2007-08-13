@@ -215,8 +215,8 @@
 ;;    ; Repeat the preceding mappings for X-windows.
 ;;    (cond
 ;;     (window-system
-;;      (global-set-key [kp_7] 'tpu-paragraph)                   ; KP7
-;;      (define-key GOLD-map [kp_f1] 'universal-argument)))      ; GOLD-PF1
+;;      (global-set-key [kp-7] 'tpu-paragraph)                   ; KP7
+;;      (define-key GOLD-map [kp-f1] 'universal-argument)))      ; GOLD-PF1
 
 ;;    ; Display the TPU-edt version.
 ;;    (tpu-version)
@@ -2250,7 +2250,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 
 
 ;;;
-;;;  Minibuffer map additions to make KP_enter = RET
+;;;  Minibuffer map additions to make KP-enter = RET
 ;;;
 (define-key minibuffer-local-map "\eOM" 'exit-minibuffer)
 (define-key minibuffer-local-ns-map "\eOM" 'exit-minibuffer)

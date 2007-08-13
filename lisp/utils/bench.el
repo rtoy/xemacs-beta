@@ -71,6 +71,7 @@ version.  Don't install this file with Emacs/XEmacs.")
     (bench-mark-10 . "Garbage Collection Large Size List")
     (bench-mark-11 . "Make Several Small Size List")
     (bench-mark-12 . "Garbage Collection Small Size List")
+    (bench-mark-13 . "Append to buffer")
 ))
 
 (defconst bench-enabled-profiling nil
@@ -187,6 +188,18 @@ version.  Don't install this file with Emacs/XEmacs.")
 (defun bench-mark-12 ()
   (garbage-collect)
 )
+
+;-----------------------------------------------------------------------------
+(defun bench-mark-13 ()
+  (unwind-protect
+      (let ((a 100000))
+        (set-buffer (get-buffer-create "*tmp*"))
+        (erase-buffer)
+        (while (> a 0)
+          (insert "0123456789\n")
+          (setq a (1- a))))
+    (kill-buffer "*tmp*")))
+
 
 ;=============================================================================
 (defun bench-init ()

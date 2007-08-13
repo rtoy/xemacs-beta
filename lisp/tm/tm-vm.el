@@ -9,7 +9,7 @@
 ;;         Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: 1994/10/29
-;; Version: $Revision: 1.1.1.1 $
+;; Version: $Revision: 1.1.1.2 $
 ;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -35,11 +35,16 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'tm-edit)
+  (require 'tm-mail)
+  (require 'vm)
+  (require 'vm-window))
+
 (require 'tm-view)
-(require 'vm)
 
 (defconst tm-vm/RCS-ID
-  "$Id: tm-vm.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $")
+  "$Id: tm-vm.el,v 1.1.1.2 1996/12/21 20:50:47 steve Exp $")
 (defconst tm-vm/version (get-version-string tm-vm/RCS-ID))
 
 (define-key vm-mode-map "Z" 'tm-vm/view-message)
@@ -175,7 +180,7 @@ tm-vm uses `vm-select-message-hook', use this hook instead.")
 (defun tm-vm/header-filter ()
   "Filter headers in current buffer (assumed to be a message-like buffer)
 according to vm-visible-headers and vm-invisible-header-regexp"
-  (beginning-of-buffer)
+  (goto-char (point-min))
   (let ((visible-headers vm-visible-headers))
     (if (or vm-use-lucid-highlighting
 	    vm-display-xfaces)
@@ -255,7 +260,7 @@ MIME Preview buffer exists nothing is done."
     (set-buffer mbuf)))
 
 (defun tm-vm/preview-current-message ()
-  "Preview current message if it has a MIME contents and 
+  "Preview current message if it has MIME contents and 
 tm-vm/automatic-mime-preview is non nil. Installed on 
 vm-visit-folder-hook and vm-select-message-hook."
   ;; assumed current buffer is folder buffer.
@@ -313,12 +318,14 @@ vm-visit-folder-hook and vm-select-message-hook."
   (if mime::preview/article-buffer
       (set-buffer mime::preview/article-buffer)
     (vm-select-folder-buffer))
-  (if mime::article/preview-buffer
+  (if (and mime::article/preview-buffer
+	   (get-buffer mime::article/preview-buffer))
       (save-excursion
 	(set-buffer mime::article/preview-buffer)
 	(goto-char (point-min))
 	(widen)))
   (if (or (and mime::article/preview-buffer
+	       (get-buffer mime::article/preview-buffer)
 	       (vm-get-visible-buffer-window mime::article/preview-buffer))
 	  (vm-get-visible-buffer-window (current-buffer)))
       (progn
@@ -378,33 +385,32 @@ variable tm-vm/automatic-mime-preview."
              (was-invisible (and (null mwin) (null pwin)))
              )
         ;; now current buffer is folder buffer.
-        (tm-vm/save-window-excursion
-         (if (or mp-changed was-invisible)
-             (vm-display mbuf t '(vm-scroll-forward vm-scroll-backward)
-                         (list this-command 'reading-message)))
-         (tm-vm/display-preview-buffer)
-         (setq mwin (vm-get-buffer-window mbuf)
-               pwin (and pbuf (vm-get-buffer-window pbuf)))
-         (cond
-          ((or mp-changed was-invisible)
-           nil
-           )
-          ((null pbuf)
-           ;; preview buffer is killed.
-           (tm-vm/preview-current-message)
-           (vm-update-summary-and-mode-line))
-          ((eq (tm-vm/system-state) 'previewing)
-           (tm-vm/show-current-message))
-          (t
-           (select-window pwin)
-           (set-buffer pbuf)
-           (if (pos-visible-in-window-p (point-max) pwin)
-               (tm-vm/next-message)
-             ;; not end of message. scroll preview buffer only.
-             (scroll-up)
-             (tm-vm/howl-if-eom)
-             (set-buffer mbuf))
-           ))))
+	(if (or mp-changed was-invisible)
+	    (vm-display mbuf t '(vm-scroll-forward vm-scroll-backward)
+			(list this-command 'reading-message)))
+	(tm-vm/display-preview-buffer)
+	(setq mwin (vm-get-buffer-window mbuf)
+	      pwin (and pbuf (vm-get-buffer-window pbuf)))
+	(cond
+	 ((or mp-changed was-invisible)
+	  nil)
+	 ((null pbuf)
+	  ;; preview buffer is killed.
+	  (tm-vm/preview-current-message)
+	  (vm-update-summary-and-mode-line))
+	 ((eq (tm-vm/system-state) 'previewing)
+	  (tm-vm/show-current-message))
+	 (t
+	  (tm-vm/save-window-excursion
+	   (select-window pwin)
+	   (set-buffer pbuf)
+	   (if (pos-visible-in-window-p (point-max) pwin)
+	       (tm-vm/next-message)
+	     ;; not end of message. scroll preview buffer only.
+	     (scroll-up)
+	     (tm-vm/howl-if-eom)
+	     (set-buffer mbuf))
+	   ))))
       )))
 
 ;;; based on vm-scroll-backward [vm-page.el]
@@ -425,29 +431,29 @@ variable tm-vm/automatic-mime-preview."
         (if (or mp-changed was-invisible)
             (vm-display mbuf t '(vm-scroll-forward vm-scroll-backward)
                         (list this-command 'reading-message)))
-        (tm-vm/save-window-excursion
-         (tm-vm/display-preview-buffer)
-         (setq mwin (vm-get-buffer-window mbuf)
-               pwin (and pbuf (vm-get-buffer-window pbuf)))
-         (cond
-          (was-invisible
-           nil
-           )
-          ((null pbuf)
-           ;; preview buffer is killed.
-           (tm-vm/preview-current-message)
-           (vm-update-summary-and-mode-line))
-          ((eq (tm-vm/system-state) 'previewing)
-           (tm-vm/show-current-message))
-          (t
-           (select-window pwin)
-           (set-buffer pbuf)
-           (if (pos-visible-in-window-p (point-min) pwin)
-               nil
-             ;; scroll preview buffer only.
-             (scroll-down)
-             (set-buffer mbuf))
-           ))))
+	(tm-vm/display-preview-buffer)
+	(setq mwin (vm-get-buffer-window mbuf)
+	      pwin (and pbuf (vm-get-buffer-window pbuf)))
+	(cond
+	 (was-invisible
+	  nil
+	  )
+	 ((null pbuf)
+	  ;; preview buffer is killed.
+	  (tm-vm/preview-current-message)
+	  (vm-update-summary-and-mode-line))
+	 ((eq (tm-vm/system-state) 'previewing)
+	  (tm-vm/show-current-message))
+	 (t
+	  (tm-vm/save-window-excursion
+	   (select-window pwin)
+	   (set-buffer pbuf)
+	   (if (pos-visible-in-window-p (point-min) pwin)
+	       nil
+	     ;; scroll preview buffer only.
+	     (scroll-down)
+	     (set-buffer mbuf))
+	   ))))
       )))
 
 ;;; based on vm-beginning-of-message [vm-page.el]
@@ -557,19 +563,6 @@ if any"
              (get-buffer mime::article/preview-buffer))
         (kill-buffer mime::article/preview-buffer)))
   (vm-quit-no-change))
-
-(substitute-key-definition 'vm-scroll-forward
-                           'tm-vm/scroll-forward vm-mode-map)
-(substitute-key-definition 'vm-scroll-backward
-                           'tm-vm/scroll-backward vm-mode-map)
-(substitute-key-definition 'vm-beginning-of-message
-                           'tm-vm/beginning-of-message vm-mode-map)
-(substitute-key-definition 'vm-end-of-message
-                           'tm-vm/end-of-message vm-mode-map)
-(substitute-key-definition 'vm-quit
-                           'tm-vm/quit vm-mode-map)
-(substitute-key-definition 'vm-quit-no-change
-                           'tm-vm/quit-no-change vm-mode-map)
 
 ;;; based on vm-next-message [vm-motion.el]                        
 (defun tm-vm/next-message ()
@@ -687,7 +680,8 @@ vm-included-text-prefix is prepended to every yanked line."
             (tm-vm/sync-preview-buffer)
             (setq pbuf (and mime::article/preview-buffer
                             (get-buffer mime::article/preview-buffer)))
-            (if pbuf
+            (if (and pbuf
+		     (not (eq this-command 'tm-vm/forward-message)))
                 (if running-xemacs
                     (let ((tmp (generate-new-buffer "tm-vm/tmp")))
                       (set-buffer pbuf)
@@ -965,6 +959,8 @@ Subject: header manually."
   (interactive)
   (if (not (equal vm-forwarding-digest-type "rfc1521"))
       (vm-forward-message)
+    (if mime::preview/article-buffer
+	(set-buffer mime::preview/article-buffer))
     (vm-follow-summary-cursor)
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
@@ -1067,7 +1063,7 @@ only marked messages will be put into the digest."
                'mail-mode (function
                            (lambda ()
                              (interactive)
-                             (sendmail-send-it)
+                             (funcall send-mail-function)
                              )))
     (if (and (string-match "XEmacs\\|Lucid" emacs-version)
              tm-vm/use-xemacs-popup-menu)
@@ -1111,16 +1107,23 @@ only marked messages will be put into the digest."
 ;;; @ for ps-print (Suggestted by Anders Stenman <stenman@isy.liu.se>)
 ;;;
 
-(require 'ps-print)
+(defvar tm-vm/use-ps-print (not (featurep 'mule))
+  "*Use Postscript printing (ps-print) to print MIME messages.")
 
-(add-hook 'vm-mode-hook 'tm-vm/ps-print-setup)
-(add-hook 'mime-viewer/define-keymap-hook 'tm-vm/ps-print-setup)
-(fset 'vm-toolbar-print-command 'tm-vm/print-message)
+(if tm-vm/use-ps-print
+    (progn
+      (autoload 'ps-print-buffer-with-faces "ps-print" "Postscript Print" t)
+      (add-hook 'vm-mode-hook 'tm-vm/ps-print-setup)
+      (add-hook 'mime-viewer/define-keymap-hook 'tm-vm/ps-print-setup)
+      (fset 'vm-toolbar-print-command 'tm-vm/print-message)))
 
 (defun tm-vm/ps-print-setup ()
   "Set things up for printing MIME messages with ps-print. Set binding to 
 the [Print Screen] key."
-  (local-set-key (ps-prsc) 'tm-vm/print-message)
+  (local-set-key (if running-xemacs
+		     'f22
+		   [f22]) 
+		 'tm-vm/print-message)
   (setq ps-header-lines 3)
   (setq ps-left-header
         (list 'ps-article-subject 'ps-article-author 'buffer-name)))
@@ -1141,6 +1144,35 @@ Value of tm-vm/strict-mime is also taken into consideration."
           (require 'ps-print)
           (ps-print-buffer-with-faces))
       (vm-print-message))))
+
+
+;;; @ Substitute VM bindings and menus
+;;;
+
+(substitute-key-definition 'vm-scroll-forward
+                           'tm-vm/scroll-forward vm-mode-map)
+(substitute-key-definition 'vm-scroll-backward
+                           'tm-vm/scroll-backward vm-mode-map)
+(substitute-key-definition 'vm-beginning-of-message
+                           'tm-vm/beginning-of-message vm-mode-map)
+(substitute-key-definition 'vm-end-of-message
+                           'tm-vm/end-of-message vm-mode-map)
+(substitute-key-definition 'vm-forward-message
+			   'tm-vm/forward-message vm-mode-map)
+(substitute-key-definition 'vm-quit
+                           'tm-vm/quit vm-mode-map)
+(substitute-key-definition 'vm-quit-no-change
+                           'tm-vm/quit-no-change vm-mode-map)
+
+;; The following function should be modified and called on vm-menu-setup-hook
+;; but VM 5.96 does not run that hook on XEmacs
+(require 'vm-menu)
+(if running-xemacs
+    (condition-case nil
+	(aset (car (find-menu-item vm-menu-dispose-menu '("Forward")))
+	      1
+	      'tm-vm/forward-message)
+      (t nil)))
 
 ;;; @ end
 ;;;

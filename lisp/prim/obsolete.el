@@ -357,6 +357,7 @@ See `set-frame-properties' for built-in property names."
 (define-obsolete-function-alias 'user-original-login-name 'user-login-name)
 
 ; old names
+(define-obsolete-function-alias 'wholenump 'natnump)
 (define-obsolete-function-alias 'show-buffer 'set-window-buffer)
 (define-obsolete-function-alias 'buffer-flush-undo 'buffer-disable-undo)
 (define-obsolete-function-alias 'eval-current-buffer 'eval-buffer)

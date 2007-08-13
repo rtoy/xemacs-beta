@@ -771,9 +771,17 @@ at the initial click position."
   (cond ((eq type 'word)
 	 ;; trap the beginning and end of buffer errors
 	 (condition-case ()
-	     (if forwardp
-		 (default-mouse-track-end-of-word t)
-	       (default-mouse-track-beginning-of-word t))
+	     (progn
+	       (setq type (char-syntax (char-after (point))))
+	       (if forwardp
+		   (if (= type ?\()
+		       (goto-char (scan-sexps (point) 1))
+		     (if (= type  ?\))
+			 (forward-char 1)
+		       (default-mouse-track-end-of-word t)))
+		 (if (= type ?\))
+		     (goto-char (scan-sexps (1+ (point)) -1))
+		   (default-mouse-track-beginning-of-word t))))
 	   (error ())))
 	((eq type 'line)
 	 (if forwardp (end-of-line) (beginning-of-line)))

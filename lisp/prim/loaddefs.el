@@ -4840,6 +4840,81 @@ non-nil." t nil)
 ;;;### (autoloads nil "cc-mode" "modes/cc-mode.el" (12964 17751))
 ;;; Generated autoloads from modes/cc-mode.el
 
+(autoload 'c-mode "cc-mode" "\
+Major mode for editing K&R and ANSI C code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
+c-mode buffer.  This automatically sets up a mail buffer with version
+information already added.  You just need to add a description of the
+problem, including a reproducible test case and send the message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+The hook variable `c-mode-hook' is run with no args, if that value is
+bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
+run first.
+
+Key bindings:
+\\{c-mode-map}" t nil)
+
+(autoload 'c++-mode "cc-mode" "\
+Major mode for editing C++ code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
+c++-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+The hook variable `c++-mode-hook' is run with no args, if that
+variable is bound and has a non-nil value.  Also the hook
+`c-mode-common-hook' is run first.
+
+Key bindings:
+\\{c++-mode-map}" t nil)
+
+(autoload 'objc-mode "cc-mode" "\
+Major mode for editing Objective C code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+objc-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+The hook variable `objc-mode-hook' is run with no args, if that value
+is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
+is run first.
+
+Key bindings:
+\\{objc-mode-map}" t nil)
+
+(autoload 'java-mode "cc-mode" "\
+Major mode for editing Java code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+java-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case and send the
+message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+The hook variable `java-mode-hook' is run with no args, if that value
+is bound and has a non-nil value.  Also the common hook
+`c-mode-common-hook' is run first.  Note that this mode automatically
+sets the \"java\" style before calling any hooks so be careful if you
+set styles in `c-mode-common-hook'.
+
+Key bindings:
+\\{java-mode-map}" t nil)
+
+(autoload 'c-set-style "cc-mode" "\
+Set cc-mode variables to use one of several different indentation styles.
+STYLENAME is a string representing the desired style from the list of
+styles described in the variable `c-style-alist'.  See that variable
+for details of setting up styles." t nil)
+
 (fset 'set-c-style           'c-set-style)
 
 ;;;***
@@ -5299,7 +5374,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;; Generated autoloads from modes/ksh-mode.el
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.1.1.2 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.1.1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}

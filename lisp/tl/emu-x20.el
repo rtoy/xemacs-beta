@@ -4,7 +4,7 @@
 ;; Copyright (C) 1994,1995,1996 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-x20.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;; Version: $Id: emu-x20.el,v 1.1.1.2 1996/12/21 20:50:48 steve Exp $
 ;; Keywords: emulation, compatibility, Mule, XEmacs
 
 ;; This file is part of tl (Tiny Library).
@@ -36,7 +36,7 @@
        )))
 
 
-;;; @ character set
+;;; @ graphic character set
 ;;;
 
 (defalias 'charset-description 'charset-doc-string)
@@ -56,33 +56,6 @@ in the region between START and END.
 \[emu-x20.el; Mule emulating function]"
   (delq 'ascii (charsets-in-region start end))
   )
-
-;;; @@ for Mule emulation
-;;;
-
-(defconst lc-ascii  'ascii)
-(defconst lc-ltn1   'latin-1)
-(defconst lc-ltn2   'latin-2)
-(defconst lc-ltn3   'latin-3)
-(defconst lc-ltn4   'latin-4)
-(defconst lc-crl    'cyrillic)
-(defconst lc-arb    'arabic)
-(defconst lc-grk    'greek)
-(defconst lc-hbw    'hebrew)
-(defconst lc-ltn5   'latin-5)
-(defconst lc-jp     'japanese-jisx0208)
-(defconst lc-jp2    'japanese-jisx0212)
-(defconst lc-kr     'korean-ksc5601)
-(defconst lc-big5-1 'chinese-big5-1)
-(defconst lc-big5-2 'chinese-big5-2)
-(defconst lc-cn     'chinese-gb)
-(defconst lc-cns1   'chinese-cns11643-1)
-(defconst lc-cns2   'chinese-cns11643-2)
-(defconst lc-cns3   'chinese-cns11643-3)
-(defconst lc-cns4   'chinese-cns11643-4)
-(defconst lc-cns5   'chinese-cns11643-5)
-(defconst lc-cns6   'chinese-cns11643-6)
-(defconst lc-cns7   'chinese-cns11643-7)
 
 
 ;;; @ coding-system
@@ -113,25 +86,28 @@ in the region between START and END.
 
 (defvar charsets-mime-charset-alist
   '(((ascii)						. us-ascii)
-    ((ascii latin-1)					. iso-8859-1)
-    ((ascii latin-2)					. iso-8859-2)
-    ((ascii latin-3)					. iso-8859-3)
-    ((ascii latin-4)					. iso-8859-4)
-;;; ((ascii cyrillic)					. iso-8859-5)
-    ((ascii cyrillic)					. koi8-r)
-    ((ascii arabic)					. iso-8859-6)
-    ((ascii greek)					. iso-8859-7)
-    ((ascii hebrew)					. iso-8859-8)
-    ((ascii latin-5)					. iso-8859-9)
+    ((ascii latin-iso8859-1)				. iso-8859-1)
+    ((ascii latin-iso8859-2)				. iso-8859-2)
+    ((ascii latin-iso8859-3)				. iso-8859-3)
+    ((ascii latin-iso8859-4)				. iso-8859-4)
+;;; ((ascii cyrillic-iso8859-5)				. iso-8859-5)
+    ((ascii cyrillic-iso8859-5)				. koi8-r)
+    ((ascii arabic-iso8859-6)				. iso-8859-6)
+    ((ascii greek-iso8859-7)				. iso-8859-7)
+    ((ascii hebrew-iso8859-8)				. iso-8859-8)
+    ((ascii latin-iso8859-9)				. iso-8859-9)
     ((ascii japanese-jisx0208-1978 japanese-jisx0208)	. iso-2022-jp)
     ((ascii korean-ksc5601)				. euc-kr)
     ((ascii chinese-big5-1 chinese-big5-2)		. big5)
     ((ascii japanese-jisx0208-1978 chinese-gb
 	    japanese-jisx0208 korean-ksc5601
-	    japanese-jisx0212 latin-1 greek)		. iso-2022-jp-2)
-    ((ascii japanese-jisx0208-1978 chinese-gb japanese-jisx0208 korean-ksc5601
-	    japanese-jisx0212 chinese-cns11643-1 chinese-cns11643-2
-	    latin-1 greek)				. iso-2022-int-1)
+	    japanese-jisx0212 latin-iso8859-1
+	    greek-iso8859-7)				. iso-2022-jp-2)
+    ((ascii japanese-jisx0208-1978 chinese-gb2312
+	    japanese-jisx0208 korean-ksc5601
+	    japanese-jisx0212
+	    chinese-cns11643-1 chinese-cns11643-2
+	    latin-iso8859-1 greek-iso8859-7)		. iso-2022-int-1)
     ))
 
 (defvar default-mime-charset 'iso-2022-int-1)

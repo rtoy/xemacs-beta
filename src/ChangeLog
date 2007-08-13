@@ -1,3 +1,119 @@
+Fri Dec 20 19:21:56 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (lisp): Remove cc-mode as a dumped package.
+
+	* keymap.c (define_key_check_and_coerce_keysym): Make obsolete
+	binding of kp_.* not lose.
+
+	* bitmaps.h: Add left & right arrows to show extended lines.
+
+Fri Dec 20 15:32:53 1996  David Moore  <dmoore@UCSD.EDU>
+
+	* event-stream.c (event_stream_wakeup_pending_p): New function.
+	(Faccept_process_output): Fix timeout handling race conditions.
+	(Fsleep_for): Ditto.
+	(Fsit_for): Ditto.
+
+Thu Dec 19 22:25:26 1996  Steve Carney  <carney@gvc.dec.com>
+
+	* cmds.c (Fbeginning_of_line): Adjust for 64 bit machines.
+
+Thu Dec 19 00:44:10 1996  Bart Robinson  <lomew@cs.utah.edu>
+
+	* syssignal.h: The declaration of SIGTYPE shouldn't be protected
+	by HAVE_SIGPROCMASK.
+
+Wed Dec 18 20:40:21 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* dgif_lib.c: Miscellaneous cleanup, including removing signed
+	bitfields.
+
+	* mule-charset.h: Change charset names.
+
+	* mule-coding.c (struct iso2022_decoder): Uniform unsigned bitfields.
+	Change charset names.
+
+	* mule-charset.c: Change charset names.
+
+	* mule-canna.c: Change charset names.
+
+	* EmacsShell-sub.c: Ansify and reformat.
+
+	* console-tty.h (struct tty_console): Uniform unsigned bitfields.
+
+	* glyphs-x.c: Ansify.
+
+	* specifier.c: Use lisp_fn_t.
+
+	* EmacsShell.c: Ansify.
+
+	* vm-limit.c: Ansify.
+
+	* emacsfns.h: Use lisp_fn_t.
+
+	* lstream.c (struct filedesc_stream): Unsigned int bitfields.
+
+	* xselect.c (hack_motif_clipboard_selection): Change charset name.
+	(Fx_store_cutbuffer_internal): Change charset name.
+
+	* ralloc.c: Ansify and clean up.
+
+	* frame.h (struct frame): Uniform unsigned bit fields.
+
+	* event-Xt.c: Documentation change.
+
+	* lisp.h: Introduce lisp_fn_t.
+	Remove SunPro C compiler warning message workaround.
+
+	* xmu.c: Ansify.
+
+	* doprnt.c (struct printf_spec): Use unsigned bitfields.
+
+	* fileio.c: various code formatting changes.
+
+	* eval.c: reorganize primitive funcalls.
+
+	* config.h.in (NeedFunctionPrototypes): Force slightly better type
+	checking in X header files.
+
+	* Makefile.in.in: #undef i386, move mime-setup.elc?.
+
+	* s/sunos4-0-shr.h: Documentation change.
+
+	* s/sol2.h (__EXTENSIONS__): Add.
+	Include <setjmp.h> under certain conditions.
+
+Mon Dec 16 19:13:10 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lstream.c (Lstream_pseudo_close): Return status on error.
+	(Lstream_close): Ditto.  (Fixes disk full-no error on write bug).
+
+Sat Dec 14 16:54:52 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c (jpeg_instantiate): Use file I/O for JPEG loading
+	because the in-core code is broken.
+
+Fri Dec 13 16:43:45 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* device-x.c (x_init_device): Don't make nonexistent X server the
+	default when running on a tty.
+
+	* event-Xt.c (x_to_emacs_keysym): Rename kp_.* keysyms to be kp-\1.
+
+	* redisplay-tty.c (keys): Rename kp_.* keynames to kp-\1.
+
+Fri Dec 13 14:48:42 1996  Michael Sperber  <sperber@informatik.uni-tuebingen.de>
+
+	* lread.c (Fload_internal): Change arity of call to
+	file-name-handlers.
+
+	* fileio.c (Finsert_file_contents_internal): Ditto.
+
+Thu Dec 12 16:55:34 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* cmds.c (Fpoint_at_eol, Fpoint_at_bol): New functions.
+	(Fend_of_line, Fbeginning_of_line): Use them.
+
 Tue Dec 10 11:17:32 1996  Shane Holder  <holder@mordor.rsn.hp.com>
 
 	* s/hpux9shxr4.h: hpux9shr.h -> hpux9-shr.h

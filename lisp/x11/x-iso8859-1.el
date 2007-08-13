@@ -30,7 +30,7 @@
 
 ;; It puts the same property on the keypad keys, so that (read-char) will
 ;; think that they are the same as the digit characters.  However, those
-;; keys are bound to one-character keyboard macros, so that `kp_9' will, by
+;; keys are bound to one-character keyboard macros, so that `kp-9' will, by
 ;; default, do the same thing that `9' does, in whatever the current mode is.
 
 ;; The standard case and syntax tables are set in prim/iso8859-1.el, since
@@ -255,3 +255,5 @@ possible, in the interest of portability.")
  )
 
 (provide 'x-iso8859-1)
+
+;;; x-iso8859-1.el ends here

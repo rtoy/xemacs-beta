@@ -984,9 +984,11 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 }
 
 static int
-xbm_possible_dest_types ()
+xbm_possible_dest_types (void)
 {
-  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -1050,6 +1052,9 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #include "jpeglib.h"
 #include "jerror.h"
 
+/* The in-core jpeg code doesn't work, so I'm avoiding it for now.  -sb  */
+#define USE_TEMP_FILES_FOR_JPEG_IMAGES 1
+
 static void
 jpeg_validate (Lisp_Object instantiator)
 {
@@ -1063,7 +1068,7 @@ jpeg_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-jpeg_possible_dest_types ()
+jpeg_possible_dest_types (void)
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -1269,7 +1274,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   unwind.dpy = dpy;
   record_unwind_protect (jpeg_instantiate_unwind, make_opaque_ptr (&unwind));
 
-#ifdef USE_TEMP_FILES_FOR_IMAGES
+#ifdef USE_TEMP_FILES_FOR_JPEG_IMAGES
   /* Step 0: Write out to a temp file.
 
      The JPEG routines require you to read from a file unless
@@ -1325,7 +1330,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Step 2: specify data source (eg, a file) */
 
-#ifdef USE_FILEIO_FOR_IMAGES
+#ifdef USE_TEMP_FILES_FOR_JPEG_IMAGES
   jpeg_stdio_src (&cinfo, unwind.instream);
 #else
   {
@@ -1544,7 +1549,7 @@ gif_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-gif_possible_dest_types ()
+gif_possible_dest_types (void)
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -1865,7 +1870,7 @@ png_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-png_possible_dest_types ()
+png_possible_dest_types (void)
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -2460,9 +2465,11 @@ xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-xpm_possible_dest_types ()
+xpm_possible_dest_types (void)
 {
-  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -2948,9 +2955,11 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-xface_possible_dest_types ()
+xface_possible_dest_types (void)
 {
-  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -3124,10 +3133,13 @@ autodetect_normalize (Lisp_Object instantiator, Lisp_Object console_type)
 }
 
 static int
-autodetect_possible_dest_types ()
+autodetect_possible_dest_types (void)
 {
-  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
-    IMAGE_POINTER_MASK | IMAGE_TEXT_MASK;
+  return
+    IMAGE_MONO_PIXMAP_MASK  |
+    IMAGE_COLOR_PIXMAP_MASK |
+    IMAGE_POINTER_MASK      |
+    IMAGE_TEXT_MASK;
 }
 
 static void
@@ -3222,7 +3234,7 @@ safe_XLoadFont (Display *dpy, char *name)
 }
 
 static int
-font_possible_dest_types ()
+font_possible_dest_types (void)
 {
   return IMAGE_POINTER_MASK;
 }
@@ -3320,7 +3332,7 @@ cursor_font_validate (Lisp_Object instantiator)
 }
 
 static int
-cursor_font_possible_dest_types ()
+cursor_font_possible_dest_types (void)
 {
   return IMAGE_POINTER_MASK;
 }
@@ -3925,6 +3937,7 @@ complex_vars_of_glyphs_x (void)
   BUILD_GLYPH_INST (Vtruncation_glyph, truncator);
   BUILD_GLYPH_INST (Vcontinuation_glyph, continuer);
   BUILD_GLYPH_INST (Vxemacs_logo, xemacs);
+  BUILD_GLYPH_INST (Vhscroll_glyph, hscroll);
 
 #undef BUILD_GLYPH_INST
 }

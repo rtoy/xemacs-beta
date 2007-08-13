@@ -1,0 +1,963 @@
+<!doctype sinfo system>
+<!-- $Id: tm-view-ja.sgml,v 1.1.1.1 1996/12/21 20:51:39 steve Exp $ -->
+<head>
+<title>tm-view 7.77 Reference Manual（日本語版）
+<author>守岡 知彦 <mail>morioka@jaist.ac.jp</mail>
+<date>1996/10/11
+
+<toc>
+</head>
+
+<body>
+
+<abstract>
+<p>
+This file documents tm-view, a MIME Viewer for GNU Emacs.
+<p>
+GNU Emacs 用の MIME Viewer である `tm-view' について説明します。
+</abstract>
+
+
+<h1> tm-view って何？
+<node> Introduction
+<p>
+tm-view は GNU Emacs で動作する汎用的な MIME viewer です。
+<p>
+tm-view は <a node="mime/viewer-mode"><code>mime/viewer-mode</code>
+</a> という MIME message を見るための major-mode を <a file="tm-ja"
+node="MUA">MUA</a> に対して提供します。MUA の設計者はこの mode を利用
+することでその MUA に MIME 機能を付加することができます。
+<p>
+tm-view は MIME message を閲覧するための user interface の核であり、そ
+の上で各 <dref file="tm-ja">content-type</dref> を扱うための <a
+node="method"><concept>method</concept></a> と呼ばれるプログラムを動作
+させます。また、MIME message の表示の仕方を決める <a node="Two buffers
+for an article"><concept>filter</concept></a> と呼ばれるプログラムを起
+動時に呼び出します。method と filter を tm-view に組み込む事によって、
+<code>mime/viewer-mode</code> でさまざまな MIME content-type を扱う事
+ができます。
+
+
+<h1> mime/viewer-mode の画面構成
+<node> MIME display
+<p>
+<a node="mime/viewer-mode">mime/viewer-mode</a> では各 part に対して
+<p>
+<verb>
+	[content-button]
+	(content-header)
+	
+	(content-body)
+	(content-separator)
+</verb>
+<p>
+<noindent>
+という情報を表示します。これらは条件に従って design を変更したり、表示
+を抑制することができます。
+<p>
+以下に、表示例を示します。
+
+
+<verb>
+From: morioka@jaist.ac.jp (守岡 知彦 / MORIOKA Tomohiko)
+Subject: Re: 質問？
+Newsgroups: zxr.message.mime
+Date: 22 Oct 93 11:02:44
+Mime-Version: 1.0
+Organization: Japan Advanced Institute of Science and Technology,
+        Ishikawa, Japan
+
+[1  (text/plain)]
+  MIME-Edit mode における、MIME message の作り方。
+
+  C-c C-x ? を押すと help が出てくる。
+
+C-c C-x C-t	insert a text message.
+C-c C-x TAB	insert a (binary) file.
+C-c C-x C-e	insert a reference to external body.
+C-c C-x C-v	insert a voice message.
+C-c C-x C-y	insert a mail or news message.
+C-c C-x RET	insert a mail message.
+C-c C-x C-s	insert a signature file at end.
+C-c C-x t	insert a new MIME tag.
+C-c C-x a	enclose as multipart/alternative.
+C-c C-x p	enclose as multipart/parallel.
+C-c C-x m	enclose as multipart/mixed.
+C-c C-x d	enclose as multipart/digest.
+C-c C-x s	enclose as PGP signed.
+C-c C-x e	enclose as PGP encrypted.
+C-c C-x C-k	insert PGP public key.
+C-c C-x C-p	preview editing MIME message.
+...
+
+って訳で、C-c C-x C-i を押して、挿入したい binary file を指定します。
+
+  binary file の MIME encoding には、普通、Base64 を指定します。
+
+[2  (image/gif)]
+
+[3  (text/plain)]
+
+  こんな風に、絵入り message のでき上がり。
+
+〓〓〓〓〓〓〓〓〓〓〓 ロシアン・ティーを一杯。 〓〓〓〓〓〓〓〓〓〓〓
+〓〓〓〓〓  ☆ ジャムではなくマーマレードでもなく蜂蜜で ☆  〓〓〓〓〓
+〓〓〓〓〓         МОРいОКА  ТОМОХИКО         〓〓〓〓〓
+〓〓〓〓〓〓〓  Internet E-mail: <morioka@jaist.ac.jp>  〓〓〓〓〓〓〓
+</verb>
+
+
+<h2> content-button
+<node> content-button
+<p>
+<concept>content-button</concept> は part の先頭にあって、その part に
+関する大まかな情報を表示する部分です。
+<p>
+標準では
+
+<verb>
+        [1.3 test (text/plain)]
+</verb>
+
+<noindent>
+のような感じに表示されます。
+<p>
+最初の数字は message 中のこの part の位置を節番号のように表したもので、
+<concept>content-number</concept> と呼びます。
+<p>
+２番目の文字列は表題を表します。この情報は、
+
+<ol>
+<li><dref file="tm-ja">Content-Type field</dref> の name paramater も
+しくは x-name parameter に書かれた file 名
+</li>
+<li><dref file="tm-ja">Content-Description field</dref> もしくは 
+Subject field に書かれた表題
+</li>
+<li> uuencode の場合の file 名
+</ol>
+
+<noindent>
+から作ります。どれも存在しない場合は空白が表示されます。
+<p>
+３番目の括弧の中の情報はその part の content-type/subtype を表します。
+非 MIME part の場合、<code>nil</code> が表示されます。
+<p>
+この content-button は <a node="content-header">content-header</a>, <a
+node="content-body">content-body</a> を表示しない場合、icon のような役
+割を果たします。例えば、
+
+<verb>
+        [2  (image/gif)]
+</verb>
+
+<noindent>
+の上で <kbd>v</kbd> を押せばここに入っている絵が表示されます。
+<p>
+また、mouse 操作が可能な場合、content-button を第２ボタン（3 button
+mouse の場合、中央のボタン）で押せば、同様にその絵が表示されます。
+(<ref node="mime/viewer-mode">)
+<p>
+ところで、content-button を表示するのは鬱陶しい場合があるので、
+content-button の表示を条件によって抑制することができます。
+
+
+<defvar name="mime-viewer/content-button-ignored-ctype-list">
+<p>
+content-button を表示しない content-type を要素とする list. 
+</defvar>
+
+
+<h2> content-header
+<node> content-header
+<p>
+<concept>content-header</concept> はある part の header を表示する部分
+です。しかし、全ての part の content-header を表示するのは鬱陶しいので、
+以下のような mechanism によって表示するかしないかを決めています。
+<p>
+ある part の reversed-content-number を関数 
+<code>mime-viewer/header-visible-p</code> に与えた時の返り値が 
+<code>t</code> になる場合、その part の content-header が表示されます。
+<p>
+この判定関数は、一番上の part でなく、その part の親の <dref
+file="tm-ja">content-type</dref> が変数 
+<code>mime-viewer/childrens-header-showing-Content-Type-list</code> で
+指定されている場合に <code>t</code> を返します。
+<p>
+この条件を変えたい場合は、この関数を再定義して下さい。但し、標準では、
+変数 
+<code>mime-viewer/childrens-header-showing-Content-Type-list</code> を
+参照しますが、再定義した場合、この変数の有効性は保証されないので注意し
+て下さい。
+<p>
+content-header が表示される場合、content-header は 
+<concept>content-header-filter</concept> と呼ばれる program によって整
+形されます。content-header-filter は <a
+node="raw-article-buffer">raw-article-buffer</a> の major-mode を key 
+として変数 <code>mime-viewer/content-header-filter-alist</code> から探
+されます。もし、content-header-filter が見つからなかった場合、関数
+<code>mime-viewer/default-content-header-filter</code> が呼ばれます。
+<p>
+
+<defvar name="mime-viewer/childrens-header-showing-Content-Type-list">
+<p>
+ある part の子に当たる content の content-header を表示すべき 
+Content-Type を収めた list. 既定値は <code>"message/rfc822"</code> で
+ある。
+<p>
+この変数は関数 <code>mime-viewer/header-visible-p</code> によって参照
+される。
+</defvar>
+
+
+<defun name="mime-viewer/header-visible-p">
+<args> rcnum cinfo <opts> ctype
+<p>
+content-info <var>cinfo</var> 中の reversed-content-number が 
+<var>rcnum</var> である part の header が表示される場合、
+<code>t</code> を返す。その part の content-type があらかじめわかって
+いる場合、<var>ctype</var> に引数として渡すことができる。
+</defun>
+
+
+<defvar name="mime-viewer/content-header-filter-alist">
+<p>
+raw-article-buffer の major-mode を key とした連想リストで、値部には 
+content-header-filter が入っている。
+</defvar>
+
+
+<defun name="mime-viewer/default-content-header-filter">
+<p>
+ある part の content-header を表示すべき時、変数 
+<code>mime-viewer/content-header-filter-alist</code> の中に 
+content-header-filter が見つからなかった場合に呼び出される。
+<p>
+変数 <code>mime-viewer/ignored-field-regexp</code> を参照する。
+</defun>
+
+
+<defvar name="mime-viewer/ignored-field-list">
+<p>
+content-header を表示する時に、表示しない field を指定する。
+<p>
+正規表現の list になっており、この値を元に変数 
+<code>mime-viewer/ignored-field-regexp</code> が作られる。
+<p>
+この変数は直接操作せず、関数 <code>tm:add-fields</code> や 
+<code>tm:delete-fields</code> を使って操作する。
+</defvar>
+
+
+<h2> content-body
+<node> content-body
+<p>
+<concept>content-body</concept> は part の内容を表示する部分です。
+<p>
+全ての part の内容を表示できるとは限らないし、また、表示したくない 
+part も存在するので、以下のような方法で表示するかしないかを決めていま
+す。
+<p>
+ある part の content-body を表示するかどうかは、関数 
+<code>mime-viewer/body-visible-p</code> が <code>t</code> になるかどう
+かで決まります。標準では、ある part の content-type が変数 
+<code>mime-viewer/default-showing-Content-Type-list</code> に設定され
+ている時に表示されます。
+<p>
+ある part の content-body が表示される時、preview buffer には part の
+内容を <concept>content-filter</concept> と呼ばれる program によって整
+形されたものが表示されます。呼ばれる content-filter は <a
+node="raw-article-buffer">raw-article-buffer</a> の major-mode を key 
+として変数 <code>mime-viewer/content-filter-alist</code> から探されま
+す。もし、この変数に登録されていなかった場合、関数 
+<code>mime-viewer/default-content-filter</code> が呼ばれます。
+
+
+<defvar name="mime-viewer/default-showing-Content-Type-list">
+<p>
+content-body を表示すべき content-type を要素とする list.
+</defvar>
+
+
+<defun name="mime-viewer/body-visible-p">
+<args> rcnum cinfo <opts> ctype
+<p>
+reversed-content-number が <var>rcnum</var> である part が表示される場
+合、<code>t</code> を返す。その part の content-type があらかじめわかっ
+ている場合、<var>ctype</var> に引数として渡すことができる。
+</defun>
+
+
+<defvar name="mime-viewer/content-filter-alist">
+<p>
+raw-article-buffer の major-mode を key とした連想リストで、値部には 
+content-filter が入っている。
+</defvar>
+
+
+<defun name="mime-viewer/default-content-filter">
+<args> rcnum cinfo ctype params subj
+<p>
+ある part の content-body を表示すべき時、変数 
+<code>mime-viewer/content-filter-alist</code> の中に content-filter が
+見つからなかった場合に呼び出される。
+<p>
+標準では何もしない。
+</defun>
+
+
+
+<h2> content-separator
+<node> content-separator
+<p>
+<concept>content-separator</concept> は part の一番最後に part 間の境
+目を明らかにするために表示されます。
+<p>
+content-separator は関数 
+<code>mime-viewer/default-content-separator</code>によって表示されます。
+標準では、content-header も content-body も表示されない場合のみ、改行
+を表示します。
+<p>
+content-separator の設定を変更したい場合は、この関数を再定義して下さい。
+<p>
+
+<defun name="mime-viewer/default-content-separator">
+<args> rcnum cinfo ctype params subj
+<p>
+content-number が <var>cnum</var> である part の content-separator を
+表示する。標準では、content-header も content-body も表示されない場合
+のみ、改行を表示する。
+</defun>
+
+
+<h1> mime/viewer-mode での操作
+<node> mime/viewer-mode
+<p>
+mime/viewer-mode には以下の機能があります。
+<p>
+<kl>
+<kt>u
+<kd>
+上の part に戻る（message の一番上の part でこれを行なうと Summary
+mode に戻る (*1)）
+</kd>
+<kt>p<kd>前の part に移動する
+</kd>
+<kt>n<kd>次の part に移動する
+</kd>
+<kt>SPC<kd>scroll up する
+</kd>
+<kt>M-SPC<kd>scroll down する
+</kd>
+<kt>DEL<kd>scroll down する
+</kd>
+<kt>RET<kd>次の行に移動する
+</kd>
+<kt>M-RET<kd>前の行に移動する
+</kd>
+<kt>M-RET<kd>前の行に移動する
+</kd>
+<kt>&lt;<kd>message の先頭に移動する
+</kd>
+<kt>&gt;<kd>message の末尾に移動する
+</kd>
+<kt>v<kd>part を再生する (*2)
+</kd>
+<kt>e<kd>part から file を取り出す (*2)
+</kd>
+<kt>C-c C-p<kd>part を印刷する (*2)
+</kd>
+<kt>f<kd>message 中の X-Face を表示する
+</kd>
+<kt>mouse-button-2
+<kd>
+preview-buffer 中の mouse button を起動する
+<p>
+content-button を押せば、その part が再生される(*2)
+<p>
+URL-button を押せば、その WWW browser が起動される
+</kd>
+</kl>
+<p>
+<memo title="注意">
+<p>
+(*1) tm-MUA で tm-view の設定をしていない場合、Summary mode には戻りま
+せん。
+<p>
+(*2) 実際の動作は対応する method に依ります。
+</memo>
+
+
+<h1> 再生処理の実現
+<node> method
+<p>
+<code>mime/viewer-mode</code> では、各 part に対して、play
+(<kbd>v</kbd>), extract (<kbd>e</kbd>), print (<kbd>C-c C-p</kbd>) と
+いう操作を行なうことができます。こうした操作のことを『（part に対する）
+decode 操作』と呼ぶことにします。また、play, extract, print という 
+decode 操作の種類のことを <concept>decoding-mode</concept> と呼ぶこと
+にします。
+<p>
+decode 操作が行なわれた時、その part の <dref
+file="tm-ja">content-type</dref> などの条件やその場の環境に応じて実際
+にその操作を実行する手続きが呼ばれます。この手続きのことを 
+<concept>method</concept> と呼びます。
+<p>
+method には、Emacs Lisp で書かれた <concept>内部 method</concept> と、
+外部 program で実現された <concept>外部 method</concept> があります。
+内部 method は Emacs の機能を使ってきめ細かい処理を行なうことができま
+す。外部 method は非同期プロセス呼び出しを使って実現されているので、実
+行中待たされずにすみます。このため、静止画や動画などの巨大な data を再
+生するのに良いでしょう。
+
+
+<h2> part の再生に関する条件の設定
+<node> decoding-condition
+<p>
+tm-view は decode 操作が行なわれると、変数 
+<code>mime/content-decoding-condition</code> からその時の条件に合致し
+た method を捜し出して、それを呼び出します。
+<p>
+変数 <code>mime/content-decoding-condition</code> は
+<p>
+<lisp>
+        (条件1 条件2 ...)
+</lisp>
+<p>
+<noindent>
+という形をした list で、各条件は
+<p>
+<lisp>
+        ((field-type_1 . value_1)
+         (field-type_2 . value_2)
+         ...)
+</lisp>
+<p>
+<noindent>
+という形の連想 list になっています。
+<p>
+例えば、<dref file="tm-ja">text/plain</dref> の時、tm-plain を起動する
+時、
+<p>
+<lisp>
+        ((type . "text/plain")
+         (method "tm-plain" nil 'file 'type 'encoding 'mode 'name))
+</lisp>
+<p>
+<noindent>
+という条件を書きます。この method の value 部の書式については後で詳し
+く述べます。
+<p>
+この条件は <dref file="tm-ja">content-type</dref> が text/plain である 
+part なら全ての decoding-mode で有効です。しかし、
+<p>
+<lisp>
+        ((type . "text/plain")
+         (method "tm-plain" nil 'file 'type 'encoding 'mode 'name)
+         (mode . "play"))
+</lisp>
+<p>
+<noindent>
+なら、play mode の時しか有効になりません。
+<p>
+逆に、
+<p>
+<lisp>
+        ((method "metamail" t "-m" "tm" "-x" "-d" "-z" "-e" 'file)
+         (mode . "play"))
+</lisp>
+<p>
+<noindent>
+なら、全ての content-type の play mode で有効になります。
+<p>
+こうして各条件を前から見て行き、最初に有効になった条件が実行されます。
+
+
+<h3> method の値部の書式
+<node> method value
+<p>
+decode-condition の method field は
+<p>
+<lisp>
+        (method . SYMBOL)
+</lisp>
+<p>
+<noindent>
+か
+<p>
+<lisp>
+        (method  文字列  FLAG  引数1  引数2  ...)
+</lisp>
+<p>
+<noindent>
+という形をしています。
+<p>
+前者は内部 method を指定するための形式で、decode 操作が行なわれた時、
+SYMBOL という関数が関数呼び出しによって内部 method として呼び出されま
+す。
+<p>
+後者は外部 method を指定するための形式で、decode 操作が行なわれた時、
+文字列で指定された外部 program が非同期プロセス呼び出しによって外部 
+method として呼び出されます。
+<p>
+外部 method を指定する場合の method field の書式は以下の通りです。
+<p>
+<dl>
+<dt>文字列
+<dd>外部 method の名前
+</dd>
+<dt>FLAG
+<dd><code>t</code> なら content-header も外部 method に渡す。
+<p>
+<code>nil</code> なら content-body のみを渡す。
+</dd>
+<dt>引数列
+<dd>外部 method の引数
+</dd>
+</dl>
+<p>
+また、外部 method の引数は次のような形式で書きます。
+<p>
+<dl>
+<dt>文字列
+<dd>その文字列を渡す
+</dd>
+<dt>'SYMBOL
+<dd>SYMBOL を key とした decoding-condition の値を渡す
+</dd>
+<dt>'文字列
+<dd>文字列を key とした decoding-condition の値を渡す
+</dd>
+</dl>
+<p>
+'SYMBOL で指定できるものには、
+<p>
+<dl>
+<dt>'file
+<dd>part の情報を渡すための file 名
+</dd>
+<dt>'type
+<dd>Content-Type field の content-type/subtype
+</dd>
+<dt>'encoding
+<dd>Content-Transfer-Encoding field の field body
+</dd>
+<dt>'mode
+<dd>decoding-mode
+</dd>
+<dt>'name
+<dd>file に落す場合の file 名
+</dd>
+</dl>
+
+<noindent>
+などがあり、<code>'文字列</code> では Content-Type field の parameter 
+の値が指定できます。
+
+
+<h3> decoding-condition の例
+<node> Example of decoding-condition
+<p>
+以下に decoding-condition の設定例を示します。
+
+<lisp>
+(defvar mime/content-decoding-condition
+  '(((type . "text/plain")
+     (method "tm-plain" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "text/x-latex")
+     (method "tm-latex" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "audio/basic")
+     (method "tm-au"    nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/gif")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/jpeg")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/tiff")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-tiff")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-xbm")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-pic")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "video/mpeg")`
+     (method "tm-mpeg"  nil 'file 'type 'encoding 'mode 'name))
+    ((type . "application/octet-stream")
+     (method "tm-file"  nil 'file 'type 'encoding 'mode 'name))
+    ((type . "message/partial")
+     (method . mime/decode-message/partial-region))
+    ((method "metamail" t
+             "-m" "tm" "-x" "-d" "-z" "-e" 'file)(mode . "play"))
+    ))
+</lisp>
+
+<p>
+例えば、「全部 metamail 使うんや」という場合、
+
+<lisp>
+(setq mime/content-decoding-condition
+      '(
+        ((method "metamail" t "-m" "tm" "-x" "-d" "-z" "-e" 'file))
+       ))
+</lisp>
+
+<noindent>
+とすれば OK です。
+<p>
+工夫すれば、かなり複雑な条件が書けるでしょう。
+<p>
+以下に、decoding-condition を設定するための有用な関数を紹介します。
+
+
+<defun name="set-atype">
+<args> symbol alist
+<p>
+<var>symbol</var> に条件 <var>alist</var> を追加します。
+
+<memo title="例">
+<p>
+<lisp>
+(set-atype 'mime/content-decoding-condition
+	   '((type . "message/external-body")
+	     ("access-type" . "anon-ftp")
+	     (method . mime/decode-message/external-ftp)
+	     ))
+</lisp>
+</memo>
+</defun>
+
+
+<h2> 環境変数
+<node> environment variables
+<p>
+以下に tm-view の標準 method が参照する環境変数を示します。
+
+<vl>
+<dt>TM_TMP_DIR
+<dd>
+一時的に作成される file や file 出力する場合の default の出力先として
+用いられる directory を指定する。省略された場合、<file>/tmp/</file> が
+用いられる。
+</dd>
+<dt>VIDEO_DITHER
+<dd>
+mpeg_play での dither のかけ方を指定する。既定値は `gray'.
+</dd>
+<dt>TM_WWW_BROWSER
+<dd>
+WWW browser を指定する。既定値は `netscape'.
+</vl>
+
+
+<h1> raw-article-buffer と preview-buffer
+<node> Two buffers for an article
+<p>
+tm-view は、MIME 処理を行なう前の生の message が入っている 
+<concept>raw-article-buffer</concept> とその内容を user に簡潔に表示し、
+user が操作するための <concept>preview-buffer</concept> という２つの 
+buffer を管理します。raw-article-buffer の major-mode はもともとの MUA 
+の article 表示用の major-mode であり、preview-buffer の major-mode は 
+<a node="mime/viewer-mode"><code>mime/viewer-mode</code></a> となりま
+す。
+<p>
+<code>mime/viewer-mode</code> を実行すると、tm-view はまず 
+raw-article-buffer の内容を解析し、その message の構造を 
+raw-article-buffer の buffer local 変数 
+<code>mime::article/content-info</code> に記録します。
+<p>
+次に、この結果を元に raw-article-buffer に対応する preview-buffer を作
+ります。この際、content-type に応じて、part 単位で header や body を加
+工することができます。この header を加工するプログラムを <a
+node="content-header"><concept>header-filter</concept></a>, body を加
+工するプログラムを <a
+node="content-body"><concept>content-filter</concept></a> と呼び、これ
+らを総称して <concept>filter</concept> と呼びます。
+<p>
+preview-buffer を作成する時に、message の表示上の構造を記録した 
+preview-buffer の buffer local 変数 
+<code>mime::preview/content-list</code> が作られます。tm-view は 
+raw-article-buffer 上の <code>mime::article/content-info</code> と 
+preview-buffer 上の <code>mime::preview/content-list</code> を用いて 
+message を管理します。
+<p>
+<memo title="注意">
+この説明書では、Content-Type field の content-type/subtype のことを称
+して ``content-type'' と呼びます。
+</memo>
+
+
+<h2> raw-article-buffer の buffer local 変数
+<node> raw-article-buffer
+<p>
+<define type="Structure" name="mime::content-info">
+<args> rcnum point-min point-max type parameters encoding children
+<p>
+raw-article-buffer における MIME part に関する情報を格納するための構造
+体。単に <concept>content-info</concept> とも呼ぶ。
+<p>
+この構造体を参照するには、<code>mime::content-info/スロット名</code> 
+という content-info を引数にとる関数を用いる。
+<p>
+この構造体のスロットは以下の通りである：
+
+<vl>
+<dt>rcnum<dd>``reversed content-number'' (list)
+</dd>
+<dt>point-min<dd>raw-article-buffer における先頭 point
+</dd>
+<dt>point-max<dd>raw-article-buffer における末尾 point
+</dd>
+<dt>type<dd>content-type/sub-type（文字列、または、nil）
+</dd>
+<dt>parameters<dd>Content-Type field の parameter （連想 list）
+</dd>
+<dt>encoding<dd>Content-Transfer-Encoding（文字列、または、nil）
+</dd>
+<dt>children<dd>この part に含まれる part（content-info の list）
+</dd>
+</vl>
+<p>
+ある part が multipart もしくは message/rfc822 などの別の part を含む
+ような part であった場合、<var>children</var> に別の part の 
+content-info が含まれる事によって、content-info は木構造になる。
+</define>
+
+<defvar name="mime::article/content-info">
+<p>
+raw-article-buffer を MIME message として解析した結果 (content-info)
+</defvar>
+
+<defvar name="mime::article/preview-buffer">
+<p>
+raw-article-buffer に対応する preview-buffer.
+</defvar>
+
+<defun name="mime-article/point-content-number">
+<args> point <opts> cinfo
+<p>
+content-info <var>cinfo</var> で管理される領域において、
+<var>point</var> に対応する content-number を返す。
+<p>
+<var>cinfo</var> が省略された場合は、
+<code>mime::article/content-info</code>が用いられる。
+</defun>
+
+<defun name="mime-article/rcnum-to-cinfo">
+<args> rcnum <opts> cinfo
+<p>
+content-info <var>cinfo</var> で管理される領域において、
+reversed-content-number <var>rcnum</var> に対応する content-info を返
+す。
+<p>
+<var>cinfo</var> が省略された場合は、
+<code>mime::article/content-info</code> が用いられる。
+</defun>
+
+<defun name="mime-article/cnum-to-cinfo">
+<args> rcnum <opts> cinfo
+<p>
+content-info <var>cinfo</var> で管理される領域において、content-number
+<var>rcnum</var> に対応する content-info を返す。
+<p>
+<var>cinfo</var> が省略された場合は、
+<code>mime::article/content-info</code> が用いられる。
+</defun>
+
+<defun name="mime/flatten-content-info">
+<args> <opts> cinfo
+<p>
+content-info <var>cinfo</var> 中に納められた全 part の content-info の 
+list を返す。
+<p>
+<var>cinfo</var> が省略された場合は、
+<code>mime::article/content-info</code> が用いられる。
+</defun>
+
+
+<h2> preview-buffer の buffer local 変数
+<node> preview-buffer
+<p>
+<defvar name="mime::preview/mother-buffer">
+<p>
+この preview-buffer の親に相当する buffer.
+</defvar>
+
+<define type="Structure" name="mime::preview-content-info">
+<args> point-min point-max buffer content-info
+<p>
+preview-buffer における MIME content に関する情報を格納するための構造
+体。単に <concept>preview-content-info</concept> とも呼ぶ。
+<p>
+この構造体を参照するには、<code>mime::content-info/スロット名</code> 
+というcontent-info を引数にとる関数を用いる。
+<p>
+この構造体のスロットは以下の通りである。
+
+<vl>
+<dt>point-min<dd>preview-buffer における先頭 point
+</dd>
+<dt> point-max<dd>preview-buffer における末尾 point
+</dd>
+<dt>buffer<dd>この part に対応する raw-article-buffer
+</dd>
+<dt>content-info<dd>この part に対応する content-info
+</dd>
+</vl>
+</define>
+
+<defvar name="mime::preview/content-list">
+<p>
+この preview-buffer の構造をあらわす preview-content-info の list.
+</defvar>
+<p>
+<defvar name="mime::preview/article-buffer">
+<p>
+この preview-buffer に対応する raw-article-buffer.
+</defvar>
+
+<defvar name="mime::preview/original-major-mode">
+<p>
+この preview-buffer のもとになった buffer の major-mode.
+</defvar>
+
+<defvar name="mime::preview/original-window-configuration">
+<p>
+<code>mime/viewer-mode</code> を実行して、この preview-buffer 作る直前
+の window-configuration.
+</defvar>
+
+<defun name="mime-preview/point-pcinfo">
+<args> point <opts> pcl
+<p>
+preview-content-info <var>pcl</var> で管理される preview-buffer 中の領
+域において、<var>point</var> に対応する part の preview-content-info 
+を返す。
+<p>
+<var>cinfo</var> が省略された場合は、
+<code>mime::preview/content-list</code> が用いられる。
+</defun>
+
+
+<h1> MIME message の decode に関する関数
+<node> API
+<p>
+tm-view の提供する関数を各 <a file="tm-ja" node="MUA">MUA</a> に組み込
+む事によって、各 MUA に MIME 再生機能を付加する事ができます。
+<p>
+tm-view が各 MUA に提供する関数は、MIME preview を行うための関数 
+<code>mime/viewer-mode</code> と <dref
+file="tm-ja">encoded-word</dref> を decode するための関数群です。
+
+
+<h2> MIME preview に関する関数
+<node> API about MIME preview
+<p>
+
+<define type="Command" name="mime/viewer-mode">
+<opts> mother ctl encoding ibuf obuf mother-keymap
+<p>
+<var>ibuf</var> を MIME message として解析して、その内容を閲覧するため
+の preview-buffer を <var>obuf</var> に作成し、
+<a node="mime/viewer-mode">
+<code>mime/viewer-mode</code>
+</a>
+に入ります。
+<p>
+<var>ibuf</var> が省略された場合、current buffer を用います。
+<p>
+<var>mother</var> は、解析の対象とする raw-article-buffer が 
+message/partial 形式の分割された message を結合して作成した場合などに
+おける元の buffer を指定するために使います。
+<p>
+<var>ctl</var> は <dref file="tm-ja">Content-Type field</dref> の 
+field-body を <code>mime/Content-Type</code> の出力正式にしたものを入
+れます。この引数がある場合、raw-article-buffer の Content-Type field 
+よりもこの引数を優先します。
+<p>
+<var>encoding</var> は Content-Transfer-Encoding field の field-body 
+を入れます。この引数がある場合、raw-article-buffer の 
+Content-Transfer-Encoding field よりもこの引数を優先します。
+<p>
+<var>mother-keymap</var> が指定された場合、
+<code>mime/viewer-mode</code> の keymap はこの keymap に加えたものとな
+ります。
+</define>
+
+
+<h2> encoded-word の復元
+<node> encoded-word decoding
+<p>
+tm-view は RFC 1522 で規定された <dref
+file="tm-ja">encoded-word</dref> を decode するための関数を持っていま
+す。
+<p>
+<memo>
+旧 <file>tiny-mime.el</file> にあった RFC 1522 encoded-word を decode 
+するための関数群は tm-view に引き継がれました。
+</memo>
+
+
+<define type="Command" name="mime/decode-message-header">
+<p>
+current buffer の message header 中の encoded-word を decode します。
+<p>
+壊れていたり、不正だったり、decode できない <a file="tm-ja" node="MIME
+charset">MIME charset</a> が用いられている encoded-word は decode され
+ずそのまま残されます。
+</define>
+
+
+<define type="Command" name="mime-eword/decode-region">
+<args> start end <opts> unfolding must-unfold
+<p>
+<var>start</var> と <var>end</var> で囲まれた領域中の encoded-word を 
+decode します。
+<p>
+壊れていたり、不正だったり、decode できない <a file="tm-ja" node="MIME
+charset">MIME charset</a> が用いられている encoded-word は decode され
+ずそのまま残されます。
+<p>
+<var>unfolding</var> が non-nil の場合、折り返された field を 
+unfolding します。
+<p>
+<var>must-fold</var> が non-nil の場合、encoded-word の decode 結果に
+折り返し、もしくは、改行が含まれている場合、unfold し、改行を除きます。
+</define>
+
+
+<defun name="mime-eword/decode-string">
+<args> string <opts> must-unfold
+<p>
+<var>string</var> 中の encoded-word を decode した文字列を返します。
+<p>
+壊れていたり、不正だったり、decode できない <a file="tm-ja" node="MIME
+charset">MIME charset</a> が用いられている encoded-word は decode され
+ずそのまま出力されます。
+<p>
+<var>string</var> が折り返されている場合、encoded-word を decode する
+前に <var>string</var> は unfold されます。
+<p>
+<var>must-fold</var> が non-nil の場合、encoded-word の decode 結果に
+折り返し、もしくは、改行が含まれていても、それらは unfold され単体の改
+行文字も取り除かれます。
+</defun>
+
+
+<h1> 概念索引
+<node> Concept Index
+
+<cindex>
+
+
+<h1> 関数索引
+<node> Function Index
+
+<findex>
+
+
+<h1> 変数索引
+<node> Variable Index
+
+<vindex>
+
+</body>

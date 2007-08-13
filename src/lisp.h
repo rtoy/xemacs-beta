@@ -1056,6 +1056,8 @@ DECLARE_NONRECORD (symbol, Lisp_Symbol, struct Lisp_Symbol);
 
 /*********** subr ***********/
 
+typedef Lisp_Object (*lisp_fn_t) (Lisp_Object, ...);
+     
 struct Lisp_Subr
 {
   struct lrecord_header lheader;
@@ -1063,7 +1065,7 @@ struct Lisp_Subr
   CONST char *prompt;
   CONST char *doc;
   CONST char *name;
-  Lisp_Object (*subr_fn) ();
+  lisp_fn_t subr_fn;
 };
 
 DECLARE_LRECORD (subr, struct Lisp_Subr);
@@ -1419,8 +1421,8 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 
 #define DEFUN(lname, Fname, minargs, maxargs, prompt, arglist)		\
   Lisp_Object Fname (DEFUN_ ## maxargs arglist) ; /* See below */	\
-  static struct Lisp_Subr S##Fname					\
-    = { {lrecord_subr}, minargs, maxargs, prompt, 0, lname, Fname }; \
+  static struct Lisp_Subr S##Fname = { {lrecord_subr},			\
+	minargs, maxargs, prompt, 0, lname, (lisp_fn_t) Fname };	\
   Lisp_Object Fname (DEFUN_##maxargs arglist)
 
 
@@ -1740,14 +1742,6 @@ void debug_ungcpro();
 #define NNUNGCPRO (gcprolist = nngcpro1.next)
 
 #endif /* ! DEBUG_GCPRO */
-
-/* Another try to fix SunPro C compiler warnings */
-/* "end-of-loop code not reached" */
-#ifdef __SUNPRO_C
-#define RETURN__ if (1) return
-#else
-#define RETURN__ return
-#endif
 
 /* Another try to fix SunPro C compiler warnings */
 /* "end-of-loop code not reached" */

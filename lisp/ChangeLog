@@ -1,3 +1,194 @@
+Fri Dec 20 15:19:36 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/compile.el (compilation-error-regexp-alist): Complete
+	fix for lossage on bad regexps.
+
+	* prim/loadup.el: Remove cc-mode as a dumped package.
+
+	* prim/glyphs.el (init-glyphs): hscroll-glyph is now builtin.
+
+	* prim/minibuf.el (minibuffer-complete-word): Correct an ebola
+	infection that caused incorrect interpretation of SPC in the
+	minibuffer.
+
+Thu Dec 19 22:16:47 1996  Heiko Muenkel  <muenkel@tnt.uni-hannover.de>
+
+	* modes/outl-mouse.el (outline-glyph-menu): Remove Hide body item,
+	Add Show all item.
+
+Thu Dec 19 00:37:59 1996  Bart Robinson <lomew@cs.utah.edu>
+
+	* prim/files.el: Make enable-local-variables 'ask-me behave sanely.
+
+Wed Dec 18 23:10:15 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/simple.el (next-line-add-newlines): Now defaults to nil.
+
+Wed Dec 18 22:56:48 1996  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* utils/bench.el (bench-mark-13): Added.
+
+Wed Dec 18 20:26:10 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* mule/mule-coding.el: Change charset names.
+
+	* mule/japanese-hooks.el: Change charset names.
+
+	* mule/hebrew-hooks.el: Change charset names.
+	Remove quail hooks.
+
+	* mule/greek-hooks.el: Change charset names.
+	Remove quail hooks.
+
+	* mule/european-hooks.el ((make-char 'latin-iso8859-1 32)): Change
+	charset names.
+	Remove quail hooks.
+
+	* mule/cyrillic-hooks.el (cyrillic-iso8859-5): Use instead of cyrillic.
+	Remove quail hooks.
+
+	* mule/chinese-hooks.el (chinese-gb2312): Fix chinese syntax tables.
+	Use chinese-gb2312.
+	Remove quail hooks.
+	(chinese): Comment out code for egg.
+
+	* mule/thai-hooks.el: Use thai-tis620.
+	(thai): Prefer macro definition of lambda.
+
+	* sunpro/sunpro-init.el (sunpro-startup): Guard against Sun
+	censorship.
+
+	* prim/obsolete.el (wholenump): New obsolete alias.
+
+	* prim/simple.el (comment-indent-function): Use macro definition
+	of (lambda () ...).
+
+	* prim/replace.el (list-matching-lines): Remove redundant
+	(message (format ...))
+
+	* modes/cc-mode.el: Readd autoloads (prior to removing cc-mode as
+	a dumped package).
+
+Wed Dec 18 11:09:45 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/telnet.el: Synch up to 19.15 & Emacs 19.34.
+	(telnet-check-software-type-initialize): Cleanup from Synch.
+
+Sat Dec 14 17:39:17 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/buff-menu.el (list-buffers-directory): autoload.
+
+Fri Dec 13 16:53:14 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* electric/ebuff-menu.el (electric-buffer-list): Restore behavior
+	of using prefix argument.
+
+	* emulators/crisp.el (crisp-mode-map): Rename kp_.* keysyms to
+	kp-\1.
+
+	* emulators/tpu-edt.el: Ditto.
+
+	* x11/x-win-sun.el: Ditto.
+
+	* x11/x-iso8859-1.el: Ditto.
+
+	* term/tvi970.el: Ditto.
+
+	* term/news.el: Ditto.
+
+	* term/lk201.el: Ditto.
+
+	* term/linux.el: Ditto.
+
+	* prim/keydefs.el: Ditto.
+
+	* prim/events.el: Ditto.
+
+	* packages/icomplete.el (icomplete-get-keys): Ditto.
+
+	* games/gomoku.el (gomoku-mode-map): Ditto.
+
+	* games/blackbox.el (blackbox-mode-map): Ditto.
+
+Fri Dec 13 09:40:27 1996  Sudish Joseph  <sudish@mindspring.com>
+
+	* prim/minibuf.el (next-history-element): Remove kludge test on
+	minibuffer-history-sexp-flag.
+
+	* x11/x-init.el (init-post-x-win): Fix hooks for gnuattached ttys
+	on XEmacsen started on X displays.
+
+Thu Dec 12 16:05:53 1996  Raymond Toy  <toy@rtp.ericsson.se>
+
+	* ilisp/ilisp-out.el (ilisp-find-lower-window): Correct XEmacs
+	version check to look at major numbers.
+	(ilisp-find-top-left-most-window): Ditto.
+
+Thu Dec 12 15:21:43 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* utils/mail-extr.el (mail-extract-address-components): Don't
+	automatically downcase extracted elements.  It violates standards.
+
+Thu Dec 12 14:46:47 1996  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* x11/x-menubar.el (buffers-menu-filter): The buffer menu was
+	shortened to `buffers-menu-max-size' items even if
+	`buffers-menu-submenus-for-groups-p' is non-nil.
+
+	Let `buffers-menu-submenus-for-groups-p' be an integer : if there
+	are more buffers than this value, use submenus, otherwise not.
+	
+	* packages/vc.el (vc-rename-this-file): New function (was missing,
+	but referred to on the menubar).
+
+	* packages/compile.el (compilation-font-lock-keywords): `defvar'
+	instead of `defconst'!
+
+	* prim/mouse.el (default-mouse-track-normalize-point): Double
+	click mouse-1 on sexpr selects the sexpr.
+
+	* x11/x-menubar.el (options-menu-saved-forms): Fix bug in
+	`save-options-menu-settings'.
+
+Thu Dec 12 14:25:21 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/simple.el (forward-to-indentation): Do not deactivate zmacs
+	region on usage.
+	(backward-to-indentation): Ditto.
+
+Thu Dec 12 14:22:55 1996  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* prim/lisp.el (backward-up-list): Do not deactivate zmacs region
+	on usage.
+
+Wed Dec 11 20:26:21 1996  Barry A. Warsaw  <bwarsaw@CNRI.Reston.VA.US>
+
+	* prim/files.el (set-auto-mode): Require a #! signature to set
+	mode based on interpreter.
+
+Wed Dec 11 13:25:50 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/man.el (Manual-use-rosetta-man): Restore Neal Becker's
+	Rosetta Man Patch.
+	(Man-cleanup-manpage): Use it.
+
+	* prim/simple.el (yank): Corrected a mistaken synch with Emacs
+	19.34.
+
+	* modes/eiffel3.el (eiffel-mode-syntax-table): Quote the semicolon
+	syntax entry so update-autoloads doesn't barf.
+
+	* packages/buff-menu.el (Buffer-menu-mode-map): Correct mouse key
+	bindings.
+
+Tue Dec 10 21:24:04 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/ps-print.el (ps-do-despool): Allow dynamic expansion of
+	`ps-lpr-switches'.
+
+	* packages/lpr.el (print-region-1): Allow dynamic expansion of
+	`lpr-switches'.
+
 Tue Dec 10 18:30:01 1996  Rod Whitby  <rwhitby@asc.sps.mot.com>
 
 	* modes/vhdl-mode.el: New File.

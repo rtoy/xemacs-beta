@@ -24,11 +24,9 @@
 ;;; Synched up with: Mule 2.3.
 
 ;; For syntax of Greek
-(let ((c 54))
-  (while (< c 127)
-    (modify-syntax-entry (make-char 'greek c) "w")
-    (setq c (1+ c))))
-(modify-syntax-entry (make-char 'greek 32) "w") ; no-break space
+(loop for c from 54 to 126
+      do (modify-syntax-entry (make-char 'greek-iso8859-7 c) "w"))
+(modify-syntax-entry (make-char 'greek-iso8859-7 32) "w") ; no-break space
 (modify-syntax-entry ?,F7(B ".")
 (modify-syntax-entry ?,F;(B ".")
 (modify-syntax-entry ?,F=(B ".")
@@ -41,13 +39,13 @@
 (make-coding-system
  'iso-8859-7 'iso2022 "MIME ISO-8859-7"
  '(charset-g0 ascii
-   charset-g1 greek
+   charset-g1 greek-iso8859-7
    charset-g2 t
    charset-g3 t
    mnemonic "MIME/Grk"
    ))
 
-(add-hook 'quail-package-alist '("greek" "quail/greek"))
+;;(add-hook 'quail-package-alist '("greek" "quail/greek"))
 
 (define-language-environment 'greek
   "Greek"
@@ -57,6 +55,6 @@
     (set-default-file-coding-system 'iso-8859-7)
     (setq terminal-coding-system 'iso-8859-7)
     (setq keyboard-coding-system 'iso-8859-7)
-    (setq-default quail-current-package
-		  (assoc "greek" quail-package-alist))))
-
+;;    (setq-default quail-current-package
+;;		  (assoc "greek" quail-package-alist))))
+    ))

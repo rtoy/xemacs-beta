@@ -4,7 +4,7 @@
 
 ;; Author:   MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Keywords: mail, news, RFC 822, STD 11
-;; Version: $Id: std11.el,v 1.1.1.1 1996/12/18 22:43:39 steve Exp $
+;; Version: $Id: std11.el,v 1.1.1.2 1996/12/21 20:50:52 steve Exp $
 
 ;; This file is part of MU (Message Utilities).
 
@@ -113,8 +113,11 @@ header separator. [std11.el]"
 (defun std11-unfold-string (string)
   "Unfold STRING as message header field. [std11.el]"
   (let ((dest ""))
-    (while (string-match "\n\\s +" string)
-      (setq dest (concat dest (substring string 0 (match-beginning 0)) " "))
+    (while (string-match "\n\\([ \t]\\)" string)
+      (setq dest (concat dest
+                         (substring string 0 (match-beginning 0))
+                         (match-string 1 string)
+                         ))
       (setq string (substring string (match-end 0)))
       )
     (concat dest string)
@@ -197,37 +200,48 @@ If BOUNDARY is not nil, it is used as message header separator.
 ;;; @ quoted-string
 ;;;
 
+(defun std11-wrap-as-quoted-pairs (string specials)
+  (let (dest
+	(i 0)
+	(b 0)
+	(len (length string))
+	)
+    (while (< i len)
+      (let ((chr (aref string i)))
+	(if (memq chr specials)
+	    (setq dest (concat dest (substring string b i) "\\")
+		  b i)
+	  ))
+      (setq i (1+ i))
+      )
+    (concat dest (substring string b))
+    ))
+
 (defconst std11-non-qtext-char-list '(?\" ?\\ ?\r ?\n))
 
 (defun std11-wrap-as-quoted-string (string)
   "Wrap STRING as RFC 822 quoted-string. [std11.el]"
   (concat "\""
-	  (mapconcat (function
-		      (lambda (chr)
-			(if (memq chr std11-non-qtext-char-list)
-			    (concat "\\" (char-to-string chr))
-			  (char-to-string chr)
-			  )
-			)) string "")
+	  (std11-wrap-as-quoted-pairs string std11-non-qtext-char-list)
 	  "\""))
 
-(defun std11-strip-quoted-pair (str)
-  (let ((dest "")
+(defun std11-strip-quoted-pair (string)
+  "Strip quoted-pairs in STRING. [std11.el]"
+  (let (dest
+	(b 0)
 	(i 0)
-	(len (length str))
-	chr flag)
-    (while (< i len)
-      (setq chr (aref str i))
-      (if (or flag (not (eq chr ?\\)))
-	  (progn
-	    (setq dest (concat dest (char-to-string chr)))
-	    (setq flag nil)
-	    )
-	(setq flag t)
+	(len (length string))
 	)
-      (setq i (+ i 1))
-      )
-    dest))
+    (while (< i len)
+      (let ((chr (aref string i)))
+	(if (eq chr ?\\)
+	    (setq dest (concat dest (substring string b i))
+		  b (1+ i)
+		  i (+ i 2))
+	  (setq i (1+ i))
+	  )))
+    (concat dest (substring string b))
+    ))
 
 (defun std11-strip-quoted-string (string)
   "Strip quoted-string STRING. [std11.el]"
@@ -291,13 +305,28 @@ represents addr-spec of RFC 822. [std11.el]"
 	       (comment (nth 2 address))
 	       phrase)
 	   (if (eq (car addr) 'phrase-route-addr)
-	       (setq phrase (mapconcat (function
-					(lambda (token)
-					  (cdr token)
-					  ))
-				       (nth 1 addr) ""))
+	       (setq phrase
+		     (mapconcat
+		      (function
+		       (lambda (token)
+			 (let ((type (car token)))
+			   (cond ((eq type 'quoted-string)
+				  (std11-strip-quoted-pair (cdr token))
+				  )
+				 ((eq type 'comment)
+				  (concat
+				   "("
+				   (std11-strip-quoted-pair (cdr token))
+				   ")")
+				  )
+				 (t
+				  (cdr token)
+				  )))))
+		      (nth 1 addr) ""))
 	     )
-	   (or phrase comment)
+	   (cond ((> (length phrase) 0) phrase)
+		 (comment (std11-strip-quoted-pair comment))
+		 )
 	   ))))
 
 

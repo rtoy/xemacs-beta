@@ -1515,7 +1515,7 @@ c2mu (char *cp, int l, char *mp)
     {
       if ((unsigned char) ch == ISO_CODE_SS2)
 	{
-	  *mp++ = LEADING_BYTE_JAPANESE_JISX0201_KANA;
+	  *mp++ = LEADING_BYTE_KATAKANA_JISX0201;
 	  cp++;
 	}
       else if ((unsigned char) ch == ISO_CODE_SS3)
@@ -1545,7 +1545,7 @@ m2c (unsigned char *mp, int l, unsigned char *cp)
     {
       switch (ch)
 	{
-	case LEADING_BYTE_JAPANESE_JISX0201_KANA:
+	case LEADING_BYTE_KATAKANA_JISX0201:
 	  *cp++ = ISO_CODE_SS2;
 	  *cp++ = *mp++;
 	  break;

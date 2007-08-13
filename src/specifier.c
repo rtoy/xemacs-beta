@@ -1048,10 +1048,10 @@ check_valid_instantiator (Lisp_Object instantiator,
 	  struct gcpro gcpro1;
 
 	  GCPRO1 (opaque);
-	  retval = call_with_suspended_errors (call_validate_method,
-					       Qnil,
-					       Qspecifier, errb, 2,
-					       opaque, instantiator);
+	  retval = call_with_suspended_errors
+	    ((lisp_fn_t) call_validate_method,
+	     Qnil, Qspecifier, errb, 2, opaque, instantiator);
+	  
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
 	}
@@ -2151,10 +2151,10 @@ check_valid_specifier_matchspec (Lisp_Object matchspec,
 	  struct gcpro gcpro1;
 
 	  GCPRO1 (opaque);
-	  retval = call_with_suspended_errors (call_validate_matchspec_method,
-					       Qnil,
-					       Qspecifier, errb, 2,
-					       opaque, matchspec);
+	  retval = call_with_suspended_errors
+	    ( (lisp_fn_t) call_validate_matchspec_method,
+	      Qnil, Qspecifier, errb, 2, opaque, matchspec);
+	  
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
 	}
@@ -2275,11 +2275,10 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 	  Lisp_Object val = XCDR (tagged_inst);
 
 	  if (HAS_SPECMETH_P (sp, instantiate))
-	    val = call_with_suspended_errors (RAW_SPECMETH (sp, instantiate),
-					      Qunbound, Qspecifier, errb,
-					      5, specifier, matchspec, domain,
-					      XCDR (tagged_inst),
-					      depth);
+	    val = call_with_suspended_errors
+	      ( (lisp_fn_t) RAW_SPECMETH (sp, instantiate),
+		Qunbound, Qspecifier, errb, 5, specifier,
+		matchspec, domain, XCDR (tagged_inst), depth);
 
 	  if (!UNBOUNDP (val))
 	    {

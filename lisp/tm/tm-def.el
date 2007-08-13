@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-def.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
+;; Version: $Id: tm-def.el,v 1.1.1.2 1996/12/21 20:50:42 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, definition
 
 ;; This file is part of tm (Tools for MIME).
@@ -180,14 +180,21 @@
 ;;;
 
 (defconst base64-token-regexp "[A-Za-z0-9+/=]")
+(defconst base64-token-padding-regexp "[A-Za-z0-9+/=]")
 
 (defconst mime/B-encoded-text-regexp
-  (concat "\\("
+  (concat "\\(\\("
 	  base64-token-regexp
 	  base64-token-regexp
 	  base64-token-regexp
 	  base64-token-regexp
-	  "\\)+"))
+	  "\\)*"
+	  base64-token-regexp
+	  base64-token-regexp
+	  base64-token-padding-regexp
+	  base64-token-padding-regexp
+          "\\)"))
+
 (defconst mime/B-encoding-and-encoded-text-regexp
   (concat "\\(B\\)\\?" mime/B-encoded-text-regexp))
 

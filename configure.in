@@ -1004,14 +1004,10 @@ case "${canonical}" in
   ## AT&T 3b1 - The Mighty Unix PC!
   m68*-att-sysv* ) machine=7300 opsys=usg5-2-2 ;;
 
-  ## Bull dpx20
-  rs6000-bull-bosx* ) machine=ibmrs6000 opsys=aix3-2 ;;
-
-  ## Bull dpx2
-  m68*-bull-sysv3* ) machine=dpx2 opsys=usg5-3 ;;
-
-  ## Bull sps7
-  m68*-bull-sysv2* ) machine=sps7 opsys=usg5-2 ;;
+  ## Bull machines
+  rs6000-bull-bosx* ) machine=ibmrs6000 opsys=aix3-2 ;; # dpx20
+  m68*-bull-sysv3*  ) machine=dpx2      opsys=usg5-3 ;; # dpx2
+  m68*-bull-sysv2*  ) machine=sps7      opsys=usg5-2 ;; # sps7
 
   ## CCI 5/32, 6/32 -- see "Tahoe".
 
@@ -1045,7 +1041,7 @@ case "${canonical}" in
   ## Data General AViiON Machines
   m88k-dg-dgux5.4R3* | m88k-dg-dgux5.4.3* ) machine=aviion opsys=dgux5-4r3 ;;
   m88k-dg-dgux5.4R2* | m88k-dg-dgux5.4.2* ) machine=aviion opsys=dgux5-4r2 ;;
-  m88k-dg-dgux* ) machine=aviion opsys=dgux ;;
+  m88k-dg-dgux* 			  ) machine=aviion opsys=dgux	   ;;
 
   mips-dec-ultrix[0-3].* | mips-dec-ultrix4.0* | mips-dec-bsd4.2* ) machine=pmax opsys=bsd4-2 ;;
   mips-dec-ultrix4.[12]* | mips-dec-bsd* ) machine=pmax opsys=bsd4-3 ;;
@@ -1098,7 +1094,7 @@ case "${canonical}" in
   m88k-harris-cxux* )
     # Build needs to be different on 7.0 and later releases
     case "`uname -r`" in
-       [56].[0-9] ) machine=nh4000 opsys=cxux ;;
+       [56].[0-9] ) machine=nh4000 opsys=cxux  ;;
        [7].[0-9]  ) machine=nh4000 opsys=cxux7 ;;
     esac
     NON_GNU_CPP="/lib/cpp"
@@ -1129,13 +1125,10 @@ case "${canonical}" in
     esac
 
     case "${canonical}" in
-      *-hp-hpux7*     )  opsys=hpux      ;;
-      *-hp-hpux8shr*  )  opsys=hpux8-shr  ;;
-      *-hp-hpux8*     )  opsys=hpux8     ;;
-      *-hp-hpux9shr*  )  opsys=hpux9-shr  ;;
-      *-hp-hpux9*     )  opsys=hpux9     ;;
-      *-hp-hpux10shr* )  opsys=hpux10-shr ;;
-      *-hp-hpux10*    )  opsys=hpux10    ;;
+      *-hp-hpux7*     )  opsys=hpux       ;;
+      *-hp-hpux8*     )  opsys=hpux8      ;;
+      *-hp-hpux9*     )  opsys=hpux9      ;;
+      *-hp-hpux10*    )  opsys=hpux10     ;;
       * )
         case "`uname -r`" in
 	  ## Someone's system reports A.B8.05 for this.
@@ -1148,6 +1141,8 @@ case "${canonical}" in
         esac
       ;;
     esac
+
+    case "${canonical}" in *-hp-hpux*shr* ) opsys="${opsys}-shr" ;; esac
   ;;
 
   hppa-*-nextstep* ) machine=hp800 opsys=nextstep ;;
@@ -1339,25 +1334,23 @@ case "${canonical}" in
     
     case "${canonical}" in
       ## The Sun386 didn't get past 4.0.
-      i[3-9]86-*-sunos4	   ) opsys=sunos4-0      ;;
-      *-sunos4shr*	   ) opsys=sunos4-0shr   ;;
-      *-sunos4-0shr*	   ) opsys=sunos4-0shr   ;;
-      *-sunos4-1shr*	   ) opsys=sunos4-1shr   ;;
-      *-sunos4-1-2shr*	   ) opsys=sunos4-1-2shr ;;
-      *-sunos4-1-[3-9]shr* ) opsys=sunos4-1-3shr ;;
-      *-sunos4.0*	   ) opsys=sunos4-0      ;;
-      *-sunos4.1.2*        ) opsys=sunos4-1-2    ;;
-      *-sunos4.1.[3-9]*	   ) opsys=sunos4-1-3    ;;
-      *-sunos4* | *-sunos  ) opsys=sunos4-1	 ;;
+      i[3-9]86-*-sunos4*  ) opsys=sunos4-0	;;
+      *-sunos4.0*	  ) opsys=sunos4-0	;;
+      *-sunos4.1.2*	  ) opsys=sunos4-1-2	;;
+      *-sunos4.1.[3-9]*	  ) opsys=sunos4-1-3	;;
+      *-sunos4* | *-sunos ) opsys=sunos4-1	;;
 
-      *-solaris2.3*	   ) opsys=sol2-3 	 ;;
-      *-solaris2.4*	   ) opsys=sol2-4	 ;;
-      *-solaris2.5*	   ) opsys=sol2-5	 ;;
-      *-solaris2.[6-9]*	   ) opsys=sol2-6	 ;;
-      *-solaris*	   ) opsys=sol2		 ;;
-      *-mach*		   ) opsys=mach-bsd4-3   ;;
-      *			   ) opsys=bsd4-2	 ;;
+      *-solaris2.3*	  ) opsys=sol2-3	;;
+      *-solaris2.4*	  ) opsys=sol2-4	;;
+      *-solaris2.5*	  ) opsys=sol2-5	;;
+      *-solaris2.[6-9]*	  ) opsys=sol2-6	;;
+      *-solaris*	  ) opsys=sol2		;;
+
+      *-mach*		  ) opsys=mach-bsd4-3	;;
+      *			  ) opsys=bsd4-2	;;
     esac
+
+    case "${canonical}" in *-sunos4*shr* ) opsys="${opsys}-shr" ;; esac
 
     ## Watch out for a compiler that is guaranteed not to work.
     case "${canonical}" in
@@ -1474,13 +1467,11 @@ if test -z "${opsys}" ; then
     *-bsd4.[01] )		opsys=bsd4-1 ;;
     *-bsd4.2 )			opsys=bsd4-2 ;;
     *-bsd4.3 )			opsys=bsd4-3 ;;
-    *-sysv0 | *-sysvr0 )	opsys=usg5-0 ;;
-    *-sysv2 | *-sysvr2 )	opsys=usg5-2 ;;
-    *-sysv2.2 | *-sysvr2.2 )	opsys=usg5-2-2 ;;
-    *-sysv3* | *-sysvr3* )	opsys=usg5-3 ;;
-    *-sysv4.1* | *-sysvr4.1* )
-      NON_GNU_CPP=/usr/lib/cpp
-      opsys=usg5-4 ;;
+    *-sysv0    | *-sysvr0 )	opsys=usg5-0 ;;
+    *-sysv2    | *-sysvr2 )	opsys=usg5-2 ;;
+    *-sysv2.2  | *-sysvr2.2 )	opsys=usg5-2-2 ;;
+    *-sysv3*   | *-sysvr3* )	opsys=usg5-3 ;;
+    *-sysv4.1* | *-sysvr4.1* )	opsys=usg5-4 NON_GNU_CPP=/usr/lib/cpp ;;
     *-sysv4.[2-9]* | *-sysvr4.[2-9]* )
 	if test -z "$NON_GNU_CPP" ; then
 	  if test -f /usr/ccs/lib/cpp
@@ -1505,13 +1496,11 @@ fi
 
 if test "${dynamic}" = "yes" ; then
   case "${opsys}" in
-    hpux8 | hpux9 | hpux10 | sunos4-0 | sunos4-1 | sunos4-1-2 | sunos4-1-3 | sco5 ) 
-    opsys="${opsys}-shr" ;;
+    hpux* | sunos4* | sco5 ) opsys="${opsys}-shr" ;;
   esac
 elif test "${dynamic}" = "no" ; then
   case "${opsys}" in
-    sol2 | sol2-3 | sol2-4 | decosf1-3 | decosf3-1 | decosf3-2 | linux )
-    opsys="${opsys}-static" ;;
+    sol2* | decosf1-3 | decosf3-* | linux ) opsys="${opsys}-static" ;;
   esac
 fi
 
@@ -1851,7 +1840,7 @@ if test "${window_system}" = "none" ; then
     if eval "test -n \"\$with_$feature\" -a \"\$with_$feature\" != no" ; then
        AC_WARN(--with-$feature ignored:  Not valid without X support)
     fi
-     eval "with_$feature=no"
+    eval "with_$feature=no"
   done
 elif test -z "${with_toolbars}"  ; then
   with_toolbars='yes'
@@ -1864,7 +1853,7 @@ esac
 if test -n "${x_libraries}" ; then
   if test "${add_runtime_flag}" ; then
     LD_SWITCH_X_SITE="-L${x_libraries} -R${dash_r_space}${x_libraries}"
-      else
+  else
     LD_SWITCH_X_SITE="-L${x_libraries}"
   fi
 fi
@@ -1913,7 +1902,7 @@ if test "${opsys}" = "hpux9"; then
   esac
 fi
 
-if test "${opsys}" = "hpux9shr"; then
+if test "${opsys}" = "hpux9-shr"; then
   case "${x_libraries}" in
     *X11R4* ) opsysfile="s/hpux9shxr4.h" ;;
   esac

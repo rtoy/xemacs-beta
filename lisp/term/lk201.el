@@ -1,3 +1,26 @@
+;;; lk201.el --- basic editing commands for XEmacs
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: Not in FSF
+
+;;; Commentary:
+
 ;; Define function key sequences for DEC terminals.
 
 ;; Termcap or terminfo should set these.
@@ -5,6 +28,8 @@
 ;; (define-key function-key-map "\e[B" [down])
 ;; (define-key function-key-map "\e[C" [right])
 ;; (define-key function-key-map "\e[D" [left])
+
+;;; Code:
 
 (define-key function-key-map "\e[1~" [find])
 (define-key function-key-map "\e[2~" [insert])
@@ -43,26 +68,28 @@
 
 ;; Termcap or terminfo should set these, but doesn't properly.
 ;; Termcap sets these to k1-k4, which get mapped to f1-f4 in term.c
-(define-key function-key-map "\eOP" [kp_f1])
-(define-key function-key-map "\eOQ" [kp_f2])
-(define-key function-key-map "\eOR" [kp_f3])
-(define-key function-key-map "\eOS" [kp_f4])
+(define-key function-key-map "\eOP" [kp-f1])
+(define-key function-key-map "\eOQ" [kp-f2])
+(define-key function-key-map "\eOR" [kp-f3])
+(define-key function-key-map "\eOS" [kp-f4])
 
-(define-key function-key-map "\eOI" [kp_tab])
-(define-key function-key-map "\eOj" [kp_multiply])
-(define-key function-key-map "\eOk" [kp_add])
-(define-key function-key-map "\eOl" [kp_separator])
-(define-key function-key-map "\eOM" [kp_enter])
-(define-key function-key-map "\eOm" [kp_subtract])
-(define-key function-key-map "\eOn" [kp_decimal])
-(define-key function-key-map "\eOo" [kp_divide])
-(define-key function-key-map "\eOp" [kp_0])
-(define-key function-key-map "\eOq" [kp_1])
-(define-key function-key-map "\eOr" [kp_2])
-(define-key function-key-map "\eOs" [kp_3])
-(define-key function-key-map "\eOt" [kp_4])
-(define-key function-key-map "\eOu" [kp_5])
-(define-key function-key-map "\eOv" [kp_6])
-(define-key function-key-map "\eOw" [kp_7])
-(define-key function-key-map "\eOx" [kp_8])
-(define-key function-key-map "\eOy" [kp_9])
+(define-key function-key-map "\eOI" [kp-tab])
+(define-key function-key-map "\eOj" [kp-multiply])
+(define-key function-key-map "\eOk" [kp-add])
+(define-key function-key-map "\eOl" [kp-separator])
+(define-key function-key-map "\eOM" [kp-enter])
+(define-key function-key-map "\eOm" [kp-subtract])
+(define-key function-key-map "\eOn" [kp-decimal])
+(define-key function-key-map "\eOo" [kp-divide])
+(define-key function-key-map "\eOp" [kp-0])
+(define-key function-key-map "\eOq" [kp-1])
+(define-key function-key-map "\eOr" [kp-2])
+(define-key function-key-map "\eOs" [kp-3])
+(define-key function-key-map "\eOt" [kp-4])
+(define-key function-key-map "\eOu" [kp-5])
+(define-key function-key-map "\eOv" [kp-6])
+(define-key function-key-map "\eOw" [kp-7])
+(define-key function-key-map "\eOx" [kp-8])
+(define-key function-key-map "\eOy" [kp-9])
+
+;;; lk201.el ends here

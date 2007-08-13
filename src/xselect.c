@@ -384,7 +384,7 @@ hack_motif_clipboard_selection (Atom selection_atom,
 		continue;
 	      }
 
-	    if ((*ptr) == LEADING_BYTE_LATIN_1 ||
+	    if ((*ptr) == LEADING_BYTE_LATIN_ISO8859_1 ||
 		(*ptr) == LEADING_BYTE_CONTROL_1)
 	      {
 		chartypes = LATIN_1;
@@ -1985,7 +1985,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 	  continue;
 	}
       
-      if ((*ptr) == LEADING_BYTE_LATIN_1 ||
+      if ((*ptr) == LEADING_BYTE_LATIN_ISO8859_1 ||
 	  (*ptr) == LEADING_BYTE_CONTROL_1)
 	{
 	  chartypes = LATIN_1;

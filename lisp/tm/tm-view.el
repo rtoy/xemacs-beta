@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/7/13 (1994/8/31 obsolete tm-body.el)
-;; Version: $Revision: 1.1.1.1 $
+;; Version: $Revision: 1.1.1.2 $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -42,7 +42,7 @@
 ;;;
 
 (defconst mime-viewer/RCS-ID
-  "$Id: tm-view.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $")
+  "$Id: tm-view.el,v 1.1.1.2 1996/12/21 20:50:43 steve Exp $")
 
 (defconst mime-viewer/version (get-version-string mime-viewer/RCS-ID))
 (defconst mime/viewer-version mime-viewer/version)
@@ -379,6 +379,9 @@ Each elements are regexp of field-name. [tm-view.el]")
 ;;;
 
 (defvar mime-viewer/following-method-alist nil)
+
+(defvar mime-viewer/following-required-fields-list
+  '("From"))
 
 
 ;;; @@ X-Face
@@ -981,6 +984,24 @@ button-2	Move to point under the mouse cursor
 		      rcnum (cdr rcnum))
 		)
 	      )
+	    (let ((rest mime-viewer/following-required-fields-list))
+	      (while rest
+		(let ((field-name (car rest)))
+		  (or (std11-field-body field-name)
+		      (insert
+		       (format
+			(concat field-name
+				": "
+				(save-excursion
+				  (set-buffer the-buf)
+				  (set-buffer mime::preview/mother-buffer)
+				  (set-buffer mime::preview/article-buffer)
+				  (std11-field-body field-name)
+				  )
+				"\n")))
+		      ))
+		(setq rest (cdr rest))
+		))
 	    (mime/decode-message-header)
 	    )
 	  (funcall (cdr (assq mode mime-viewer/following-method-alist))
@@ -1025,7 +1046,7 @@ button-2	Move to point under the mouse cursor
 	 (i (- (length pcl) 1))
 	 beg)
     (catch 'tag
-      (while (>= i 0)
+      (while (> i 0)
 	(setq beg (mime::preview-content-info/point-min (nth i pcl)))
 	(if (> p beg)
 	    (throw 'tag (goto-char beg))

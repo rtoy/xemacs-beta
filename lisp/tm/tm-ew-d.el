@@ -1,4 +1,4 @@
-;;; tm-ew-d.el --- RFC 1522 based MIME encoded-word decoder for GNU Emacs
+;;; tm-ew-d.el --- RFC 2047 based encoded-word decoder for GNU Emacs
 
 ;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
@@ -9,8 +9,8 @@
 ;; Original: 1992/07/20 ENAMI Tsugutomo's `mime.el'.
 ;;	Renamed: 1993/06/03 to tiny-mime.el.
 ;;	Renamed: 1995/10/03 from tiny-mime.el. (split off encoder)
-;; Version: $Revision: 1.1.1.1 $
-;; Keywords: mail, news, MIME, RFC 1522, multilingual, encoded-word
+;; Version: $Revision: 1.1.1.2 $
+;; Keywords: encoded-word, MIME, multilingual, header, mail, news
 
 ;; This file is part of tm (Tools for MIME).
 
@@ -41,7 +41,7 @@
 ;;;
 
 (defconst tm-ew-d/RCS-ID
-  "$Id: tm-ew-d.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $")
+  "$Id: tm-ew-d.el,v 1.1.1.2 1996/12/21 20:50:42 steve Exp $")
 (defconst mime/eword-decoder-version (get-version-string tm-ew-d/RCS-ID))
 
 
@@ -122,9 +122,7 @@ such as a version of Net$cape). [tm-ew-d.el]"
 	  (mime/unfolding)
 	)
       (goto-char (point-min))
-      (while (re-search-forward
-	      (concat (regexp-quote "?=") "\\s +" (regexp-quote "=?"))
-	      nil t)
+      (while (re-search-forward "\\?=\\(\n*\\s +\\)+=\\?" nil t)
 	(replace-match "?==?")
 	)
       (goto-char (point-min))
@@ -157,14 +155,15 @@ such as a version of Net$cape). [tm-ew-d.el]"
   (let (field beg end)
     (while (re-search-forward std11-field-head-regexp nil t)
       (setq beg (match-beginning 0)
-	    end (std11-field-end))
+            end (std11-field-end))
       (setq field (buffer-substring beg end))
       (if (string-match mime/encoded-word-regexp field)
-	  (save-restriction
-	    (narrow-to-region (goto-char beg) end)
-	    (while (re-search-forward "\n[ \t]+" nil t)
-	      (replace-match " ")
-	      )
+          (save-restriction
+            (narrow-to-region (goto-char beg) end)
+            (while (re-search-forward "\n\\([ \t]\\)" nil t)
+              (replace-match
+               (match-string 1))
+              )
 	    (goto-char (point-max))
 	    ))
       )))
@@ -193,7 +192,9 @@ as a version of Net$cape). [tm-ew-d.el]"
 		(text
 		 (substring word (match-beginning 3) (match-end 3))
 		 ))
-	    (mime/decode-encoded-text charset encoding text must-unfold)
+            (condition-case err
+                (mime/decode-encoded-text charset encoding text must-unfold)
+              (error nil))
 	    ))
       word))
 
@@ -215,11 +216,13 @@ as a version of Net$cape). [tm-ew-d.el]"
   (let ((cs (mime-charset-to-coding-system charset)))
     (if cs
 	(let ((dest
-	       (cond ((string-equal "B" encoding)
-		      (base64-decode-string string))
-		     ((string-equal "Q" encoding)
-		      (q-encoding-decode-string string))
-		     (t (message "unknown encoding %s" encoding)
+               (cond ((and (string-equal "B" encoding)
+                           (string-match mime/B-encoded-text-regexp string))
+                      (base64-decode-string string))
+                     ((and (string-equal "Q" encoding)
+                           (string-match mime/Q-encoded-text-regexp string))
+                      (q-encoding-decode-string string))
+		     (t (message "Invalid encoded-word %s" encoding)
 			nil))))
 	  (if dest
 	      (progn

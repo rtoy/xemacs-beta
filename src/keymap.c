@@ -1320,7 +1320,15 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 otherwise have the same problem as above.  (Gag!)  We silently
 	 accept these as aliases for the "real" names.
 	 */
-      else if (EQ (*keysym, QLFD))
+      else if (!strncmp(name, "kp_", 3)) {
+	/* Likewise, the obsolete keysym binding of kp_.* should not lose. */
+	char temp[50];
+
+	strncpy(temp, name, sizeof (temp));
+	temp[sizeof (temp) - 1] = '\0';
+	temp[2] = '-';
+	*keysym = Fintern_soft(make_string(temp, strlen(temp)), Qnil);
+      } else if (EQ (*keysym, QLFD))
 	*keysym = QKlinefeed;
       else if (EQ (*keysym, QTAB))
 	*keysym = QKtab;

@@ -861,13 +861,13 @@ Repeating \\[universal-argument] without digits or minus sign
 ;; XEmacs -- shouldn't these functions keep the zmacs region active?
 (defun forward-to-indentation (arg)
   "Move forward ARG lines and position at first nonblank character."
-  (interactive "p")
+  (interactive "_p")
   (forward-line arg)
   (skip-chars-forward " \t"))
 
 (defun backward-to-indentation (arg)
   "Move backward ARG lines and position at first nonblank character."
-  (interactive "p")
+  (interactive "_p")
   (forward-line (- arg))
   (skip-chars-forward " \t"))
 
@@ -1227,8 +1227,10 @@ See also the command \\[yank-pop]."
       ;; This is like exchange-point-and-mark, but doesn't activate the mark.
       ;; It is cleaner to avoid activation, even though the command
       ;; loop would deactivate the mark because we inserted text.
-      (goto-char (prog1 (mark t)
-		   (set-marker (mark-marker) (point) (current-buffer)))))
+      ;; (But doesn't work in XEmacs)
+      ;(goto-char (prog1 (mark t)
+		   ;(set-marker (mark-marker) (point) (current-buffer)))))
+      (exchange-point-and-mark t))
   ;; If we do get all the way thru, make this-command indicate that.
   (setq this-command 'yank)
   nil)
@@ -1534,7 +1536,8 @@ The mark is activated unless DONT-ACTIVATE-REGION is non-nil."
     (switch-to-buffer buffer)))
 
 
-(defvar next-line-add-newlines t
+;;; After 8 years of waiting ... -sb
+(defvar next-line-add-newlines nil  ; XEmacs
   "*If non-nil, `next-line' inserts newline to avoid `end of buffer' error.")
 
 (defun next-line (arg)
@@ -1900,16 +1903,16 @@ the comment's starting delimiter.")
 (defconst comment-indent-function
   ;; XEmacs - add at least one space after the end of the text on the
   ;; current line...  
-  #'(lambda ()
-      (save-excursion 
-	(beginning-of-line) 
-	(let ((eol (save-excursion (end-of-line) (point))))
-	  (and comment-start-skip
-	       (re-search-forward comment-start-skip eol t)
-	       (setq eol (match-beginning 0)))
-	  (goto-char eol)
-	  (skip-chars-backward " \t")
-	  (max comment-column (1+ (current-column))))))
+  (lambda ()
+    (save-excursion 
+      (beginning-of-line) 
+      (let ((eol (save-excursion (end-of-line) (point))))
+	(and comment-start-skip
+	     (re-search-forward comment-start-skip eol t)
+	     (setq eol (match-beginning 0)))
+	(goto-char eol)
+	(skip-chars-backward " \t")
+	(max comment-column (1+ (current-column))))))
   "Function to compute desired indentation for a comment.
 This function is called with no args with point at the beginning of
 the comment's starting delimiter.")

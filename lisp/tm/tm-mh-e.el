@@ -6,7 +6,7 @@
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1993/11/21 (obsolete mh-e-mime.el)
-;; Version: $Revision: 1.1.1.1 $
+;; Version: $Revision: 1.1.1.2 $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -48,7 +48,7 @@
 ;;;
 
 (defconst tm-mh-e/RCS-ID
-  "$Id: tm-mh-e.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $")
+  "$Id: tm-mh-e.el,v 1.1.1.2 1996/12/21 20:50:46 steve Exp $")
 
 (defconst tm-mh-e/version (get-version-string tm-mh-e/RCS-ID))
 
@@ -214,16 +214,6 @@ With arg, turn MIME processing on if arg is positive."
     (mh-header-display)
     ))
 
-(defun tm-mh-e/scroll-up-msg (&optional arg)
-  (interactive)
-  (mh-page-msg (or arg 1))
-  )
-
-(defun tm-mh-e/scroll-down-msg (&optional arg)
-  (interactive)
-  (mh-page-msg (- (or arg 1)))
-  )
-
 (defun tm-mh-e/burst-multipart/digest ()
   "Burst apart the current message, which should be a multipart/digest.
 The message is replaced by its table of contents and the letters from the
@@ -291,7 +281,7 @@ digest are inserted into the folder after that message."
     (goto-char (point-max))
     (setq mh-show-buffer buf)
     (apply (function mh-send)
-	   (std11-field-bodies '("To" "cc" "Subject") ""))
+	   (std11-field-bodies '("From" "cc" "Subject") ""))
     (setq mh-sent-from-folder buf)
     (setq mh-sent-from-msg 1)
     (let ((last (point)))
@@ -340,8 +330,6 @@ digest are inserted into the folder after that message."
 (define-key mh-folder-mode-map "." (function tm-mh-e/show))
 (define-key mh-folder-mode-map "," (function tm-mh-e/header-display))
 (define-key mh-folder-mode-map "\e," (function tm-mh-e/raw-display))
-(define-key mh-folder-mode-map "\r" (function tm-mh-e/scroll-up-msg))
-(define-key mh-folder-mode-map "\e\r" (function tm-mh-e/scroll-down-msg))
 (define-key mh-folder-mode-map "\C-c\C-b"
   (function tm-mh-e/burst-multipart/digest))
 

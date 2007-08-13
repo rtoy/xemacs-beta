@@ -1,0 +1,357 @@
+\input texinfo.tex
+@setfilename gnus-mime-en.info
+@settitle{gnus-mime 0.10 reference manual (English Version)}
+@titlepage
+@title gnus-mime 0.10 reference manual (English Version)
+@author MORIOKA Tomohiko <morioka@@jaist.ac.jp>
+@subtitle 1996/10/21
+@end titlepage
+@node Top, Introduction, (dir), (dir)
+@top gnus-mime 0.10 reference manual (English Version)
+
+@ifinfo
+
+This file documents gnus-mime, a MIME extension for Gnus.
+@end ifinfo
+
+@menu
+* Introduction::                What is gnus-mime?
+* Automatic MIME Preview::      Inline display for MIME message
+* mule::                        Internationalization
+* MIME-Edit::                   Composing MIME messages
+* Concept Index::               
+* Function Index::              
+* Variable Index::              
+@end menu
+
+@node Introduction, Automatic MIME Preview, Top, Top
+@chapter What is gnus-mime?
+
+@cindex{gnus-mime}@strong{gnus-mime} is a MIME (@ref{(tm-en)MIME})
+extender for Gnus (@ref{(gnus)}) using tm (@ref{(tm-en)tm-kernel}).
+
+@noindent
+@strong{[Notice]}
+@quotation
+
+gnus-mime is for only Gnus.  Please use tm-gnus (@ref{(tm-gnus_en)}) for
+GNUS.
+@end quotation
+
+
+gnus-mime supports automatic MIME preview in @code{"*Article*"} buffer
+using tm-view (@ref{(tm-view-en)}).  In particular, with XEmacs, it
+decodes images as same as text.@refill
+
+In addition, gnus-mime supports multilingual/internationalization
+feature for mule such as MULE (@ref{(tm-en)mule}), XEmacs/mule and mule
+merged Emacs.  It supports code-conversion by MIME charset or depended
+default MIME charset of newsgroups.@refill
+
+For RFC 1522, original Gnus supports only Q-encoded iso-8859-1
+(@ref{(tm-en)iso-8859-1}) encoded-word (@ref{(tm-en)encoded-word}).  So
+gnus-mime supports more MIME charsets, such as iso-8859-2
+(@ref{(tm-en)iso-8859-2}), iso-8859-3 (@ref{(tm-en)iso-8859-3}), ...,
+iso-2022-jp (@ref{(tm-en)iso-2022-jp}), euc-kr (@ref{(tm-en)euc-kr}),
+iso-2022-kr (@ref{(tm-en)iso-2022-kr}), gb2312, hz-gb-2312
+(@ref{(tm-en)hz-gb-2312}), cn-big5 (@ref{(tm-en)cn-big5}), and
+B-encoding.  In addition, original Gnus does not support unfolding or
+space elimination rule of RFC 1522.  gnus-mime is more rightful.
+
+
+@node Automatic MIME Preview, mule, Introduction, Top
+@chapter Inline display for MIME message
+
+@cindex{automatic MIME preview}@strong{automatic MIME preview} feature
+is available for gnus-mime.  In automatic MIME preview mode, when
+reading an article in summary mode, gnus-mime displays preview buffer
+processed by tm-view instead of raw article
+buffer. (cf. @ref{(tm-view-en)}) @refill
+
+Therefore if an article is encoded by Base64 (@ref{(tm-en)Base64}) or
+Quoted-Printable (@ref{(tm-en)Quoted-Printable}), a decoded article is
+displayed.  Or rich text article, such as text/enriched
+(@ref{(tm-en)text/enriched}) format, is automatic formated.  Of course,
+multipart (@ref{(tm-en)multipart}) article is dealt with
+correctly.@refill
+
+In addition, in @cindex{XEmacs}@strong{XEmacs}, images are displayed in
+preview buffer as same as text.@refill
+
+Different from using metamail, speaker does not roar just then read an
+article includes audio content, video player does not play just then
+read an article includes video content, it does not do anonymous ftp
+(@ref{(tm-en)ftp}) or send mail when read an article includes
+external-message.  These contents are played when you do decoding
+command in preview buffer.@refill
+
+However if you use a slow machine, or are just really impatient, you
+can stop automatic MIME preview.
+
+
+@menu
+* MIME processing::             How to process MIME in Article Buffer
+* Two buffers for an article::  Mechanism of Automatic MIME preview
+@end menu
+
+@node MIME processing, Two buffers for an article, Automatic MIME Preview, Automatic MIME Preview
+@section How to process MIME in Article Buffer
+
+When @code{gnus-show-mime} is not @code{nil} and an article has
+Mime-Version field in its message header, namely it is a MIME message,
+Gnus calls @code{gnus-show-mime-method} to process MIME.@refill
+
+When @code{gnus-strict-mime} is @code{nil} and @code{gnus-show-mime} is
+not @code{nil}, Gnus calls @code{gnus-show-mime-method} even if an
+message does not have Mime-Version field in its message header.@refill
+
+Gnus 5.2 or later calls @code{gnus-show-mime-method} when
+@code{gnus-strict-mime} is not @code{nil} and an article
+does not have Mime-Version field.  Notice that old Gnus does not have
+it, so it may be better to set @code{gnus-strict-mime} to
+@code{nil}.
+
+
+@defvar gnus-show-mime
+
+If it is not @code{nil}, Gnus do automatic MIME preview.  Default value
+is @code{t}.@refill
+
+It is a variable of Gnus, so if gnus is loaded before gnus-mime is
+loaded, default value is not guaranteed.
+
+(cf. @ref{(gnus)Using MIME})
+@end defvar
+
+
+@defvar gnus-show-mime-method
+
+Gnus calls function bound by it to process MIME.  Default value is
+@code{gnus-article-preview-mime-message}.@refill
+
+It is a variable of Gnus, so if gnus is loaded before gnus-mime is
+loaded, default value is not guaranteed.
+
+(cf. @ref{(gnus)Using MIME})
+@end defvar
+
+
+@defvar gnus-decode-encoded-word-method
+
+Gnus calls function bound by it to decode encoded-words.  Default value
+is @code{gnus-article-decode-encoded-word}.@refill
+
+It is a variable of Gnus, so if gnus is loaded before gnus-mime is
+loaded, default value is not guaranteed.@refill
+
+In addition, it is not available at Gnus 5.0.* or Gnus 5.1.
+@end defvar
+
+
+@noindent
+@strong{[Notice]}
+@quotation
+
+gnus-mime uses some variables of Gnus and defines different default
+values by @code{defvar}.  For example, gnus-mime's default value of
+@code{gnus-show-mime} is @code{t} instead of @code{nil}.  Or its default
+value of @code{gnus-show-mime-method} is
+@code{gnus-article-preview-mime-message} instead of
+@code{metamail-buffer}.  (cf. @ref{(gnus)Using MIME}) @refill
+
+gnus-mime uses @code{defvar} instead of @code{setq}, because of respect
+user's setting before gnus-mime is loaded, such as using
+@file{~/.emacs}.  But it has a problem.  If gnus is loaded before
+gnus-mime is loaded, features of gnus-mime is not available in default
+even if gnus-mime is loaded.  Therefore there is serious problem to load
+gnus before gnus-mime is loaded.  In other words, setting in
+@file{~/.gnus}, such as to load @file{gnus-mime} or @file{mime-setup},
+is not good way.  If you want such way, please do setting for
+@code{gnus-show-mime} and @code{gnus-show-mime-method}.
+@end quotation
+
+
+
+@node Two buffers for an article,  , MIME processing, Automatic MIME Preview
+@section Mechanism of Automatic MIME preview
+
+Gnus 5.2 or later has two buffers for an article,
+@code{gnus-original-article-buffer} (@code{" *Original Article*"}) and
+@code{gnus-article-buffer} (@code{"*Article*"}).  The former is called
+@cindex{raw article buffer}@strong{raw article buffer}, the latter is
+called @cindex{preview buffer}@strong{preview buffer}.@refill
+
+Content of raw article buffer is non-processed ``raw message''.  In
+particular, for emacs variants includes mule (@ref{(tm-en)mule})
+features, message is not code-converted in it.@refill
+
+Content of preview buffer is MIME processed message to display for user.
+In particular, for emacs variants includes mule features, non-ASCII
+message is code-converted in it by MIME charset or default MIME charset
+(@ref{(tm-en)MIME charset}) for selected newsgroup.@refill
+
+Gnus 5.0.* and Gnus 5.1 don't have distinction between raw article
+buffer and preview buffer.  So gnus-mime emulate raw article buffer.  It
+is unnatural, so it may be better to use Gnus 5.2 or later, which are
+designed for tm-view.@refill
+
+(cf. @ref{(tm-view-en)Two buffers for an article})
+
+
+
+@node mule, MIME-Edit, Automatic MIME Preview, Top
+@chapter Internationalization
+
+For emacs variants includes mule feature, such as MULE
+(@ref{(tm-en)MULE}), XEmacs/mule and Emacs/mule(*1), gnus-mime supports
+code-conversion by MIME charset (@ref{(tm-en)MIME charset}) or
+@code{default-mime-charset} of selected newsgroup.
+
+@noindent
+@strong{[Memo]}
+@quotation
+(*1) It means next generation of Emacs includes mule features.  Now
+(October 1996), HANDA Ken'ichi and RMS are developing it.
+@end quotation
+
+
+Detail of code conversion is following:
+
+@enumerate
+@item
+If a newsgroup is selected, MIME charset for the newsgroup is
+searched from @code{gnus-newsgroup-default-charset-alist}.  If
+it is found, it is set to buffer local variable
+@code{default-mime-charset} of Summary Buffer.  If not found,
+global value of @code{default-mime-charset} is used.
+@item
+Non-ASCII characters in Summary Buffer are code-converted by
+@code{default-mime-charset} in Summary Buffer.
+@item
+encoded-word (@ref{(tm-en)encoded-word}) are code-converted by their
+specified MIME charset (@ref{(tm-en)MIME charset}).
+@item
+Code-conversion of articles are following:
+
+@enumerate
+@item
+If a part of a MIME message has charset parameter of Content-Type field
+(@ref{(tm-en)Content-Type field}), it is code-converted by the MIME
+charset.
+@item
+When there are no specified MIME charset, such as message header
+or non-MIME message, they are code-converted by
+@code{default-mime-charset} in Summary Buffer.
+@end enumerate
+@end enumerate
+
+
+
+@defvar gnus-newsgroup-default-charset-alist
+
+Association-list regexp for newsgroup vs. symbol for default MIME
+charset.@refill
+
+Default setting are following:
+
+@table @samp
+@item alt.chinese.*
+hz-gb-2312 (@ref{(tm-en)hz-gb-2312})@refill
+
+@item alt.chinese.text.big5, hk.*, hkstar.*, tw.*
+cn-big5 (@ref{(tm-en)cn-big5})@refill
+
+@item fj.*
+iso-2022-jp-2 (@ref{(tm-en)iso-2022-jp-2})@refill
+
+@item han.*
+euc-kr (@ref{(tm-en)euc-kr})@refill
+
+@item relcom.*
+koi8-r (@ref{(tm-en)koi8-r})@refill
+
+@end table
+
+If there is no MIME charsets for a newsgroup,
+@code{default-mime-charset} is used as default MIME charset.
+@end defvar
+
+
+@defun gnus-set-newsgroup-default-charsetnewsgroup charset
+
+Set default MIME @var{charset} of @var{newsgroup} to
+@code{gnus-newsgroup-default-charset-alist}.@refill
+
+@var{newsgroup} is string of newsgroup name or category, for
+@code{"gnu.emacs.gnus"}, @code{"gnu.emacs"}, @code{"gnu"}.@refill
+
+@var{charset} is symbol of MIME charset, for example @code{iso-8859-1},
+@code{iso-2022-jp}.
+@end defun
+
+
+
+@node MIME-Edit, Concept Index, mule, Top
+@chapter Composing MIME messages
+
+If using mime-setup (@ref{(tm-en)mime-setup}), you can edit MIME message
+in message-mode using tm-edit (@ref{(tm-edit-en)}).
+
+@noindent
+@strong{[Notice]}
+@quotation
+
+Default setting of mime-setup avoids automatic inserting signature
+when sending a message.
+
+(cf. @ref{(tm-en)mime-setup})
+@end quotation
+
+
+gnus-mime does not have implementation for @kbd{C-c C-x C-m}
+(@code{mime-editor/insert-mail}).  Because gnus-mime does not know which
+mail-reader should be used.  In addition, @kbd{C-c C-x C-y}
+(@code{mime-editor/insert-message}) is enough to insert mail (namely to
+select a mail group and select a message to insert, then it is available
+to insert the mail message).@refill
+
+However you can use @kbd{C-c C-x C-m} to specify an
+implementation of @code{message-mode} to
+@code{mime-editor/mail-inserter-alist}.
+
+
+@section Example: same as @kbd{C-c C-x C-m}
+
+@lisp
+(set-alist 'mime-editor/mail-inserter-alist
+	   'message-mode (function message-mime-insert-article))
+@end lisp
+
+
+
+@section Example: including from MH folder
+
+@lisp
+(autoload 'tm-mh-e/insert-mail "tm-mh-e")
+
+(set-alist 'mime-editor/mail-inserter-alist
+	   'message-mode (function tm-mh-e/insert-mail))
+@end lisp
+
+
+
+@node Concept Index, Function Index, MIME-Edit, Top
+@chapter Concept Index
+
+@printindex cp
+
+@node Function Index, Variable Index, Concept Index, Top
+@chapter Function Index
+
+@printindex fn
+
+@node Variable Index,  , Function Index, Top
+@chapter Variable Index
+
+@printindex vr
+@bye

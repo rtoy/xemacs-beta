@@ -137,32 +137,31 @@ Boston, MA 02111-1307, USA.  */
 
    This encompasses the character sets:
    - Printing-ASCII,
-   - Japanese-JISX0201-Kana (half-width katakana, the right half of JISX0201).
+   - Katakana-JISX0201 (half-width katakana, the right half of JISX0201).
    - Japanese-JISX0208
    - Japanese-JISX0212
    It uses 8-bit bytes.
 
-   Note that Printing-ASCII and Japanese-JISX0201-Kana are 94-character
+   Note that Printing-ASCII and Katakana-JISX0201 are 94-character
    charsets, while Japanese-JISX0208 is a 94x94-character charset.
 
    The encoding is as follows:
 
-   Character set		Representation  (PC == position-code)
-   -------------		--------------
-   Printing-ASCII		PC-1
-   Japanese-JISX0208		PC-1 + 0x80 / PC-2 + 0x80
-   Japanese-JISX0201-Kana	0x8E / PC-1 + 0x80
+   Character set	Representation  (PC == position-code)
+   -------------	--------------
+   Printing-ASCII	PC1
+   Japanese-JISX0208	PC1 + 0x80 | PC2 + 0x80
+   Katakana-JISX0201	0x8E       | PC1 + 0x80
 
 
    B. JIS7
 
    This encompasses the character sets:
    - Printing-ASCII
-   - Japanese-JISX0201-Roman (the left half of JISX0201; this
-     character set is very similar to Printing-ASCII and is a
-     94-character charset)
+   - Latin-JISX0201 (the left half of JISX0201; this character set is
+     very similar to Printing-ASCII and is a 94-character charset)
    - Japanese-JISX0208
-   - Japanese-JISX0201-Kana.
+   - Katakana-JISX0201
    It uses 7-bit bytes.
 
    Unlike Japanese EUC, this is a "modal" encoding, which
@@ -173,18 +172,18 @@ Boston, MA 02111-1307, USA.  */
 
    The encoding is as follows:
 
-   Character set		Representation
-   -------------		--------------
-   Printing-ASCII		PC-1
-   Japanese-JISX0201-Roman	PC-1
-   Japanese-JISX0201-Kana	PC-1
-   Japanese-JISX0208		PC-1 / PC-2
+   Character set	Representation
+   -------------	--------------
+   Printing-ASCII	PC1
+   Latin-JISX0201	PC1
+   Katakana-JISX0201	PC1
+   Japanese-JISX0208	PC1 | PC2
 
    Escape sequence	ASCII equivalent  Meaning
    ---------------	----------------  -------
    0x1B 0x28 0x42	ESC ( B		  invoke Printing-ASCII
-   0x1B 0x28 0x4A	ESC ( J		  invoke Japanese-JISX0201-Roman
-   0x1B 0x28 0x49	ESC ( I		  invoke Japanese-JISX0201-Kana
+   0x1B 0x28 0x4A	ESC ( J		  invoke Latin-JISX0201
+   0x1B 0x28 0x49	ESC ( I		  invoke Katakana-JISX0201
    0x1B 0x24 0x42	ESC $ B		  invoke Japanese-JISX0208
 
    Initially, Printing-ASCII is invoked.
@@ -333,26 +332,26 @@ Boston, MA 02111-1307, USA.  */
 
 /** The following are for 1-byte characters in an official charset. **/
 
-#define LEADING_BYTE_LATIN_1		0x81 /* Right half of ISO 8859-1 */
-#define LEADING_BYTE_LATIN_2		0x82 /* Right half of ISO 8859-2 */
-#define LEADING_BYTE_LATIN_3		0x83 /* Right half of ISO 8859-3 */
-#define LEADING_BYTE_LATIN_4		0x84 /* Right half of ISO 8859-4 */
-#define LEADING_BYTE_THAI		0x85 /* TIS620-2533 */
-#define LEADING_BYTE_GREEK		0x86 /* Right half of ISO 8859-7 */
-#define LEADING_BYTE_ARABIC		0x87 /* Right half of ISO 8859-6 */
-#define LEADING_BYTE_HEBREW		0x88 /* Right half of ISO 8859-8 */
-#define LEADING_BYTE_JAPANESE_JISX0201_KANA  0x89 /* Right half of JIS X0201-1976 */
-#define LEADING_BYTE_JAPANESE_JISX0201_ROMAN 0x8A /* Left  half of JIS X0201-1976 */
-#define LEADING_BYTE_CYRILLIC		0x8C /* Right half of ISO 8859-5 */
-#define LEADING_BYTE_LATIN_5		0x8D /* Right half of ISO 8859-9 */
+#define LEADING_BYTE_LATIN_ISO8859_1	0x81 /* Right half of ISO 8859-1 */
+#define LEADING_BYTE_LATIN_ISO8859_2	0x82 /* Right half of ISO 8859-2 */
+#define LEADING_BYTE_LATIN_ISO8859_3	0x83 /* Right half of ISO 8859-3 */
+#define LEADING_BYTE_LATIN_ISO8859_4	0x84 /* Right half of ISO 8859-4 */
+#define LEADING_BYTE_THAI_TIS620	0x85 /* TIS620-2533 */
+#define LEADING_BYTE_GREEK_ISO8859_7	0x86 /* Right half of ISO 8859-7 */
+#define LEADING_BYTE_ARABIC_ISO8859_6	0x87 /* Right half of ISO 8859-6 */
+#define LEADING_BYTE_HEBREW_ISO8859_8	0x88 /* Right half of ISO 8859-8 */
+#define LEADING_BYTE_KATAKANA_JISX0201	0x89 /* Right half of JIS X0201-1976 */
+#define LEADING_BYTE_LATIN_JISX0201	0x8A /* Left  half of JIS X0201-1976 */
+#define LEADING_BYTE_CYRILLIC_ISO8859_5	0x8C /* Right half of ISO 8859-5 */
+#define LEADING_BYTE_LATIN_ISO8859_9	0x8D /* Right half of ISO 8859-9 */
 
-#define MIN_LEADING_BYTE_OFFICIAL_1	LEADING_BYTE_LATIN_1
-#define MAX_LEADING_BYTE_OFFICIAL_1	LEADING_BYTE_LATIN_5
+#define MIN_LEADING_BYTE_OFFICIAL_1	LEADING_BYTE_LATIN_ISO8859_1
+#define MAX_LEADING_BYTE_OFFICIAL_1	LEADING_BYTE_LATIN_ISO8859_9
 
 /** The following are for 2-byte characters in an official charset. **/
 
 #define LEADING_BYTE_JAPANESE_JISX0208_1978 0x90/* Japanese JIS X0208-1978 */
-#define LEADING_BYTE_CHINESE_GB		0x91	/* Chinese Hanzi GB2312-1980 */
+#define LEADING_BYTE_CHINESE_GB2312	0x91	/* Chinese Hanzi GB2312-1980 */
 #define LEADING_BYTE_JAPANESE_JISX0208	0x92	/* Japanese JIS X0208-1983 */
 #define LEADING_BYTE_KOREAN_KSC5601	0x93	/* Hangul KS C5601-1987 */
 #define LEADING_BYTE_JAPANESE_JISX0212	0x94	/* Japanese JIS X0212-1990 */
@@ -403,11 +402,10 @@ LEADING_BYTE_PREFIX_P (unsigned char lb)
 /* Given a private leading byte, return the leading byte prefix stored
    in a string */
 
-#define PRIVATE_LEADING_BYTE_PREFIX(lb)				\
-  ((lb) < MIN_LEADING_BYTE_PRIVATE_2 ? PRE_LEADING_BYTE_PRIVATE_1	\
-   : PRE_LEADING_BYTE_PRIVATE_2)
-
-
+#define PRIVATE_LEADING_BYTE_PREFIX(lb)	\
+  ((lb) < MIN_LEADING_BYTE_PRIVATE_2 ?	\
+   PRE_LEADING_BYTE_PRIVATE_1 :		\
+   PRE_LEADING_BYTE_PRIVATE_2)
 
 
 /************************************************************************/
@@ -486,13 +484,13 @@ DECLARE_LRECORD (charset, struct Lisp_Charset);
 #define CHECK_CHARSET(x) CHECK_RECORD (x, charset)
 #define CONCHECK_CHARSET(x) CONCHECK_RECORD (x, charset)
 
-#define CHARSET_TYPE_94  0	/* This charset includes 94    characters. */
-#define CHARSET_TYPE_96  1	/* This charset includes 96    characters. */
+#define CHARSET_TYPE_94    0	/* This charset includes 94    characters. */
+#define CHARSET_TYPE_96    1	/* This charset includes 96    characters. */
 #define CHARSET_TYPE_94X94 2	/* This charset includes 94x94 characters. */
 #define CHARSET_TYPE_96X96 3	/* This charset includes 96x96 characters. */
 
-#define CHARSET_LEFT_TO_RIGHT		0
-#define CHARSET_RIGHT_TO_LEFT		1
+#define CHARSET_LEFT_TO_RIGHT	0
+#define CHARSET_RIGHT_TO_LEFT	1
 
 #define CHARSET_NAME(cs)	 ((cs)->name)
 #define CHARSET_LEADING_BYTE(cs) ((cs)->leading_byte)
@@ -507,24 +505,21 @@ DECLARE_LRECORD (charset, struct Lisp_Charset);
 #define CHARSET_CCL_PROGRAM(cs)  ((cs)->ccl_program)
 #define CHARSET_REVERSE_DIRECTION_CHARSET(cs) ((cs)->reverse_direction_charset)
 
-INLINE int CHARSET_DIMENSION (struct Lisp_Charset *cs);
 INLINE int
 CHARSET_DIMENSION (struct Lisp_Charset *cs)
 {
-  return (CHARSET_TYPE (cs) == CHARSET_TYPE_94 ||
-          CHARSET_TYPE (cs) == CHARSET_TYPE_96) ? 1 : 2;
+  /* Optimized using inside knowledge of CHARSET_TYPE values */
+  return (CHARSET_TYPE (cs) <= CHARSET_TYPE_96) ? 1 : 2;
 }
 
-INLINE int CHARSET_CHARS (struct Lisp_Charset *cs);
 INLINE int
 CHARSET_CHARS (struct Lisp_Charset *cs)
 {
-  return (CHARSET_TYPE (cs) == CHARSET_TYPE_94 ||
-          CHARSET_TYPE (cs) == CHARSET_TYPE_94X94) ? 94 : 96;
+  /* Optimized using inside knowledge of CHARSET_TYPE values */
+  return (CHARSET_TYPE (cs) & 0x1) ? 96 : 94;
 }
 
-#define CHARSET_PRIVATE_P(cs) \
-  LEADING_BYTE_PRIVATE_P (CHARSET_LEADING_BYTE (cs))
+#define CHARSET_PRIVATE_P(cs) LEADING_BYTE_PRIVATE_P (CHARSET_LEADING_BYTE (cs))
 
 #define XCHARSET_NAME(cs)	  CHARSET_NAME         (XCHARSET (cs))
 #define XCHARSET_REP_BYTES(cs)	  CHARSET_REP_BYTES    (XCHARSET (cs))
@@ -598,23 +593,23 @@ REP_BYTES_BY_FIRST_BYTE (int fb)
 
 extern Lisp_Object Vcharset_ascii;
 extern Lisp_Object Vcharset_control_1;
-extern Lisp_Object Vcharset_latin_1;
-extern Lisp_Object Vcharset_latin_2;
-extern Lisp_Object Vcharset_latin_3;
-extern Lisp_Object Vcharset_latin_4;
-extern Lisp_Object Vcharset_latin_5;
-extern Lisp_Object Vcharset_greek;
-extern Lisp_Object Vcharset_thai;
-extern Lisp_Object Vcharset_arabic;
-extern Lisp_Object Vcharset_hebrew;
-extern Lisp_Object Vcharset_cyrillic;
-extern Lisp_Object Vcharset_japanese_jisx0201_kana;
-extern Lisp_Object Vcharset_japanese_jisx0201_roman;
+extern Lisp_Object Vcharset_latin_iso8859_1;
+extern Lisp_Object Vcharset_latin_iso8859_2;
+extern Lisp_Object Vcharset_latin_iso8859_3;
+extern Lisp_Object Vcharset_latin_iso8859_4;
+extern Lisp_Object Vcharset_cyrillic_iso8859_5;
+extern Lisp_Object Vcharset_arabic_iso8859_6;
+extern Lisp_Object Vcharset_greek_iso8859_7;
+extern Lisp_Object Vcharset_hebrew_iso8859_8;
+extern Lisp_Object Vcharset_latin_iso8859_9;
+extern Lisp_Object Vcharset_thai_tis620;
+extern Lisp_Object Vcharset_katakana_jisx0201;
+extern Lisp_Object Vcharset_latin_jisx0201;
 extern Lisp_Object Vcharset_japanese_jisx0208_1978;
 extern Lisp_Object Vcharset_japanese_jisx0208;
 extern Lisp_Object Vcharset_japanese_jisx0212;
 extern Lisp_Object Vcharset_korean_ksc5601;
-extern Lisp_Object Vcharset_chinese_gb;
+extern Lisp_Object Vcharset_chinese_gb2312;
 extern Lisp_Object Vcharset_chinese_big5_1;
 extern Lisp_Object Vcharset_chinese_big5_2;
 extern Lisp_Object Vcharset_chinese_cns11643_1;

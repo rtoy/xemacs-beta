@@ -1,5 +1,6 @@
 /* Synched up with: FSF 19.31. */
 
+#define __EXTENSIONS__
 #include "usg5-4-2.h"		/* XEmacs change from 5-4 to 5-4-2 */
 
 #define SOLARIS2
@@ -42,6 +43,16 @@
    there isn't a prototype for it other than in /usr/ucbinclude. */
 int gethostname (char *, int);
 
+/* Get non-ANSI functions from ANSI header files in cc -Xc mode.
+   Sun has promised to fix setjmp.h */
+#if __STDC__ == 1
+#ifndef __GNUC__
+#define _POSIX_C_SOURCE 1
+#include <setjmp.h>
+#undef _POSIX_C_SOURCE
+#endif /* __GNUC__ */
+#endif /* __STDC__ */
+
 /* XEmacs: Solaris include files miss this. */
 struct timeval;
 int utimes (char *file, struct timeval *tvp);
@@ -49,7 +60,7 @@ int utimes (char *file, struct timeval *tvp);
 /* XEmacs addition: to this to avoid having problems when we later
    define INT_MAX etc. */
 #include <limits.h>
-#endif
+#endif /* C_CODE */
 
 /* XEmacs change -- removed flags to force K & R compilation */
 

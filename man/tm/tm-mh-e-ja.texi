@@ -1,0 +1,223 @@
+\input texinfo.tex
+@setfilename tm-mh-e-ja.info
+@settitle{tm-mh-e 7.71 説明書（日本語版）}
+@titlepage
+@title tm-mh-e 7.71 説明書（日本語版）
+@author 守岡 知彦 <morioka@@jaist.ac.jp>
+@subtitle 1996/10/15
+@end titlepage
+@node Top, Introduction, (dir), (dir)
+@top tm-mh-e 7.71 説明書（日本語版）
+
+@ifinfo
+
+This file documents tm-mh-e, a MIME extension for GNUS.@refill
+
+mh-e で MIME を楽しむための package である `tm-mh-e' について説明します。
+@end ifinfo
+
+@menu
+* Introduction::                tm-mh-e って何？
+* mh-folder-mode::              MH-Folder mode に拡張される機能
+* Automatic MIME Preview::      MIME message の inline 表示
+* mule::                        国際化
+* MIME-Edit::                   MIME message の作成
+* Concept Index::               概念索引
+* Variable Index::              変数索引
+@end menu
+
+@node Introduction, mh-folder-mode, Top, Top
+@chapter tm-mh-e って何？
+
+@cindex{tm-mh-e}@strong{tm-mh-e} は tm (@ref{(tm-ja)tm-kernel}) を使って 
+mh-e (@ref{(mh-e)}) の MIME (@ref{(tm-ja)MIME}) 機能を強化するための 
+package です。@refill
+
+tm-mh-e によって強化される機能は次の通りです：
+
+@itemize @bullet
+@item
+tm-view (@ref{(tm-view-ja)}) を使った automatic MIME preview
+@item
+tm-edit (@ref{(tm-edit-ja)}) を使った MIME message の作成
+@end itemize
+
+
+
+@node mh-folder-mode, Automatic MIME Preview, Introduction, Top
+@chapter MH-Folder mode に拡張される機能
+
+@table @kbd
+@item @key{M-t}
+automatic MIME preview を行なうかどうかの toggle
+
+@item @key{v}
+@code{mime/viewer-mode} に入り、MIME message を操作する
+
+@item @key{.}
+message を表示する
+
+@item @key{,}
+全ての field を表示した状態で、message を表示する
+
+@item @key{M-,}
+automatic MIME preview を行う前の生の message を表示する
+
+@end table
+
+
+mime/viewer-mode (@ref{(tm-view-ja)mime/viewer-mode}) は MIME message を
+閲覧するための mode で、message の中を移動したり、対話的に message の中
+の各 content を再生したりすることができます。
+
+
+@node Automatic MIME Preview, mule, mh-folder-mode, Top
+@chapter MIME message の inline 表示
+
+tm-mh-e では @cindex{automatic MIME preview}@strong{automatic MIME
+preview} 機能を利用することができます。この機能を使うと MH-Folder mode
+(@ref{(mh-e)Reading Mail}) で記事を読む時、通常表示される show buffer の
+代わりに tm-view (@ref{(tm-view-ja)}) で処理された preview buffer を表示
+します。@refill
+
+
+このため、Quoted-Printable (@ref{(tm-ja)Quoted-Printable}) や Base64
+(@ref{(tm-ja)Base64}) で encode された記事を decode して表示することがで
+きます。あるいは、text/enriched (@ref{(tm-ja)text/enriched}) 形式のよう
+な書体や組版に関する情報を持った記事を整形して表示できます。当然のことな
+がら、multipart (@ref{(tm-ja)multipart}) の記事も正しく処理できます。
+
+また、@cindex{XEmacs}@strong{XEmacs} では text と同様に絵も preview
+buffer 内で表示することができます。@refill
+
+metamail を使った場合と異なり、音の入った記事を読んだとたん、いきなり、
+音が鳴り出したり、video の入った記事を読むたびに video が再生されたり、
+anonymous ftp (@ref{(tm-ja)ftp}) や mail-server を利用した 
+external-message の入った記事を読むたびに anonymous ftp を実行したり、
+mail を送ったりすることが防げます。こうした content は preview buffer の
+中に入って再生 command を実行した時のみ再生されます。@refill
+
+しかしながら、遅い machine を使っていて、MIME 処理の overhead が気にな
+る場合、automatic MIME preview を抑止することができます。
+
+
+@defvar tm-mh-e/automatic-mime-preview
+
+@code{nil} でない場合、automatic MIME preview を行います。
+@end defvar
+
+
+
+@node mule, MIME-Edit, Automatic MIME Preview, Top
+@chapter 国際化
+
+MULE (@ref{(tm-ja)mule}), XEmacs/mule, および、mule 統合版 Emacs (*1) な
+どの mule 機能を持った emacs では MIME charset (@ref{(tm-ja)MIME
+charset}) および、非 MIME message/part に対する newsgroup 毎に指定された 
+@code{default-mime-charset} での code 変換が行われます。
+
+@noindent
+@strong{[Memo]}
+@quotation
+(*1) 1996 年 10 月現在、半田 剣一 氏と RMS 氏が開発中の Emacs で、MULE
+の機能のうち、多言語化と国際化に関する機能が merge されたものを指して
+います。
+@end quotation
+
+
+具体的には、code 変換は次のように行われます：
+
+@enumerate
+@item
+もし、ある MIME message のある part が Content-Type field
+(@ref{(tm-ja)Content-Type field}) に charset parameter を持っていれば、
+その MIME charset を用いて code 変換を行う。
+
+@item
+message header や非 MIME message など、charset が宣言されていない場合、
+Summary Buffer 上の @code{default-mime-charset} の値で code 変換
+される。
+@end enumerate
+
+
+
+@menu
+* evil environment::            MTA で code 変換を行っている場合
+@end menu
+
+@node evil environment,  , mule, mule
+@section MTA で code 変換を行っている場合
+
+MTA (@ref{(tm-ja)MTA}) で EUC や Shift_JIS などに code 変換している場合、
+tm-mh-e の default の設定では文字化けします。はっきり言って、こうしたこ
+とを行なうことはあまり勧められたことではないです。MIMEの charset 宣言が
+おかしくなるほかに、電子書名がおかしくなるなど、さまざまな弊害があります。
+
+よって、もし、あなたが管理者でこういう設定をしているのであれば即刻やめま
+しょう。また、どうしてもそういうことをしたいのなら user が MTA での code 
+変換をやめられるような方法にしましょう。また、あなたが管理者でないなら管
+理者を説得しましょう。また、業者がそういう設定をしないように注文しましょ
+う。聞くところによると、そういう設定をする見識のない WS maker があるそう
+ですが、SE にいってそういう設定をさせないようにしましょう。また、どうし
+ても聞かないならそういう業者とは縁を切りましょう。@refill
+
+しかし、あなたが不幸にしてどうしてもこういう環境で使わざるを得ないので
+あれば、以下の記述を参考にしてください。
+
+
+@subsection 非 MIME message または charset が存在しない場合のみの対策
+
+非 MIME message の場合、変数 default-mime-charset に文字 code を設定す
+れば OK です。例えば、日本語 EUC の場合は
+
+@lisp
+(setq default-mime-charset 'euc-japan)
+@end lisp
+
+@noindent
+として下さい。
+
+
+@subsection MIME charset が存在する場合も含めた対策
+
+MIME charset (@ref{(tm-ja)MIME charset}) が存在する場合、変数 
+@code{mime-charset-coding-system-alist} に @code{iso-2022-jp} に対応する 
+coding-system を @code{*sjis*} や @code{*euc-japan*} 等の変換された code 
+に変えるというのが１つの方法です。但し、この場合、encode されて元の文字 
+code が保存されている場合に文字化けすることになります。@refill
+
+このことを考慮すると、関数 @code{tm-mh-e/decode-charset-buffer} 
+を再定義するのが良いといえます。おそらく、iso-2022-jp 以外の文字 code 
+は保存されないでしょうから、例えば日本語 EUC に変換されている場合、以
+下のような定義で十分でしょう。
+
+@lisp
+(defun tm-mh-e/decode-charset-buffer (charset &optional encoding)
+  (decode-mime-charset-region (point-min)(point-max) 'euc-japan)
+  )
+@end lisp
+
+
+
+@node MIME-Edit, Concept Index, mule, Top
+@chapter MIME message の作成
+
+mime-setup (@ref{(tm-ja)mime-setup}) を使っている場合、MH-Letter mode
+(@ref{(mh-e)Draft Editing}) において、tm-edit (@ref{(tm-edit-ja)}) を用
+いた MIME message の作成を行うことができます。@refill
+
+また、MH-Folder mode で @kbd{f} を押すと、RFC 934 (@ref{(tm-ja)RFC 934}) 
+による forward の代りに message/rfc822 (@ref{(tm-ja)message/rfc822}) 形
+式による forward が行えます。
+
+
+@node Concept Index, Variable Index, MIME-Edit, Top
+@chapter 概念索引
+
+@printindex cp
+
+@node Variable Index,  , Concept Index, Top
+@chapter 変数索引
+
+@printindex vr
+@bye

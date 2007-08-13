@@ -1,3 +1,21 @@
+Wed Dec 18 20:22:08 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: Reformat.  Fix shared include file rename
+	problem.
+
+	* configure: Reformat.  Fix shared include file rename problem.
+
+	* dynodump/dynodump.c (__EXTENSIONS__): Define it.
+
+Thu Dec 12 13:19:00 1996  Joseph J Nuspl  <nuspl@nvwls.cc.purdue.edu>
+
+	* Makefile.in (install-arch-indep): Install infofiles gzipped by
+	default.
+
+Tue Dec 10 19:25:25 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* CHANGES-beta: XEmacs 20.0-b31 is released.
+
 Tue Dec 10 18:33:19 1996  Rod Whitby  <rwhitby@asc.sps.mot.com>
 
 	* info/vhdl-mode.info: New file.

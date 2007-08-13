@@ -117,7 +117,7 @@
   (define-key gomoku-mode-map [down] 'gomoku-move-down)
   (define-key gomoku-mode-map [left] 'gomoku-move-left)
   (define-key gomoku-mode-map [right] 'gomoku-move-right)
-  (define-key gomoku-mode-map [kp_enter] 'gomoku-human-plays)
+  (define-key gomoku-mode-map [kp-enter] 'gomoku-human-plays)
   (define-key gomoku-mode-map [button2] 'gomoku-click)
   (define-key gomoku-mode-map [insert] 'gomoku-human-plays))
 

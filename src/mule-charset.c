@@ -37,22 +37,22 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Vcharset_ascii;
 Lisp_Object Vcharset_control_1;
-Lisp_Object Vcharset_latin_1;
-Lisp_Object Vcharset_latin_2;
-Lisp_Object Vcharset_latin_3;
-Lisp_Object Vcharset_latin_4;
-Lisp_Object Vcharset_cyrillic;
-Lisp_Object Vcharset_arabic;
-Lisp_Object Vcharset_greek;
-Lisp_Object Vcharset_hebrew;
-Lisp_Object Vcharset_latin_5;
-Lisp_Object Vcharset_thai;
-Lisp_Object Vcharset_japanese_jisx0201_kana;
-Lisp_Object Vcharset_japanese_jisx0201_roman;
+Lisp_Object Vcharset_latin_iso8859_1;
+Lisp_Object Vcharset_latin_iso8859_2;
+Lisp_Object Vcharset_latin_iso8859_3;
+Lisp_Object Vcharset_latin_iso8859_4;
+Lisp_Object Vcharset_cyrillic_iso8859_5;
+Lisp_Object Vcharset_arabic_iso8859_6;
+Lisp_Object Vcharset_greek_iso8859_7;
+Lisp_Object Vcharset_hebrew_iso8859_8;
+Lisp_Object Vcharset_latin_iso8859_9;
+Lisp_Object Vcharset_thai_tis620;
+Lisp_Object Vcharset_katakana_jisx0201;
+Lisp_Object Vcharset_latin_jisx0201;
 Lisp_Object Vcharset_japanese_jisx0208_1978;
 Lisp_Object Vcharset_japanese_jisx0208;
 Lisp_Object Vcharset_japanese_jisx0212;
-Lisp_Object Vcharset_chinese_gb;
+Lisp_Object Vcharset_chinese_gb2312;
 Lisp_Object Vcharset_chinese_big5_1;
 Lisp_Object Vcharset_chinese_big5_2;
 Lisp_Object Vcharset_chinese_cns11643_1;
@@ -111,16 +111,27 @@ Lisp_Object Qdirection;
 Lisp_Object Qreverse_direction_charset;
 Lisp_Object Qccl_program;
 
-Lisp_Object Qascii, Qcontrol_1, Qlatin_1, Qlatin_2, Qlatin_3, Qlatin_4, Qlatin_5,
-  Qthai, Qarabic, Qhebrew, Qgreek, Qcyrillic,
+Lisp_Object Qascii, Qcontrol_1,
   
-  Qjapanese_jisx0201_kana,
-  Qjapanese_jisx0201_roman,
+  Qlatin_iso8859_1,
+  Qlatin_iso8859_2,
+  Qlatin_iso8859_3,
+  Qlatin_iso8859_4,
+  Qcyrillic_iso8859_5,
+  Qarabic_iso8859_6,
+  Qgreek_iso8859_7,
+  Qhebrew_iso8859_8,
+  Qlatin_iso8859_9,
+  
+  Qthai_tis620,
+  
+  Qkatakana_jisx0201, Qlatin_jisx0201,
   Qjapanese_jisx0208_1978,
   Qjapanese_jisx0208,
   Qjapanese_jisx0212,
   
-  Qchinese_gb, Qchinese_big5_1, Qchinese_big5_2,
+  Qchinese_gb2312,
+  Qchinese_big5_1, Qchinese_big5_2,
   Qchinese_cns11643_1, Qchinese_cns11643_2,
   
   Qkorean_ksc5601, Qcomposite;
@@ -1163,34 +1174,35 @@ syms_of_mule_charset (void)
   defsymbol (&Ql2r, "l2r");
   defsymbol (&Qr2l, "r2l");
 
-  /* Charsets */
-  defsymbol (&Qascii, "ascii");
-  defsymbol (&Qcontrol_1, "control-1");
-  defsymbol (&Qlatin_1, "latin-1");
-  defsymbol (&Qlatin_2, "latin-2");
-  defsymbol (&Qlatin_3, "latin-3");
-  defsymbol (&Qlatin_4, "latin-4");
-  defsymbol (&Qcyrillic, "cyrillic");
-  defsymbol (&Qarabic, "arabic");
-  defsymbol (&Qgreek, "greek");
-  defsymbol (&Qhebrew, "hebrew");
-  defsymbol (&Qlatin_5, "latin-5");
-  defsymbol (&Qthai, "thai");
+  /* Charsets, compatible with Emacs/Mule 19.33-delta
+     Naming convention is Script-Charset[-Edition] */
+  defsymbol (&Qascii,			"ascii");
+  defsymbol (&Qcontrol_1,		"control-1");
+  defsymbol (&Qlatin_iso8859_1,		"latin-iso8859-1");
+  defsymbol (&Qlatin_iso8859_2,		"latin-iso8859-2");
+  defsymbol (&Qlatin_iso8859_3,		"latin-iso8859-3");
+  defsymbol (&Qlatin_iso8859_4,		"latin-iso8859-4");
+  defsymbol (&Qcyrillic_iso8859_5, 	"cyrillic-iso8859-5");
+  defsymbol (&Qarabic_iso8859_6,	"arabic-iso8859-6");
+  defsymbol (&Qgreek_iso8859_7,		"greek-iso8859-7");
+  defsymbol (&Qhebrew_iso8859_8,	"hebrew-iso8859-8");
+  defsymbol (&Qlatin_iso8859_9,		"latin-iso8859-9");
+  defsymbol (&Qthai_tis620,		"thai-tis620");
   
-  defsymbol (&Qjapanese_jisx0201_kana,	"japanese-jisx0201-kana");
-  defsymbol (&Qjapanese_jisx0201_roman,	"japanese-jisx0201-roman");
+  defsymbol (&Qkatakana_jisx0201,	"katakana-jisx0201");
+  defsymbol (&Qlatin_jisx0201,		"latin-jisx0201");
   defsymbol (&Qjapanese_jisx0208_1978,	"japanese-jisx0208-1978");
   defsymbol (&Qjapanese_jisx0208, 	"japanese-jisx0208");
   defsymbol (&Qjapanese_jisx0212,	"japanese-jisx0212");
   
-  defsymbol (&Qchinese_gb, "chinese-gb");
-  defsymbol (&Qchinese_big5_1, "chinese-big5-1");
-  defsymbol (&Qchinese_big5_2, "chinese-big5-2");
-  defsymbol (&Qchinese_cns11643_1, "chinese-cns11643-1");
-  defsymbol (&Qchinese_cns11643_2, "chinese-cns11643-2");
+  defsymbol (&Qchinese_gb2312,		"chinese-gb2312");
+  defsymbol (&Qchinese_big5_1,		"chinese-big5-1");
+  defsymbol (&Qchinese_big5_2,		"chinese-big5-2");
+  defsymbol (&Qchinese_cns11643_1,	"chinese-cns11643-1");
+  defsymbol (&Qchinese_cns11643_2,	"chinese-cns11643-2");
   
-  defsymbol (&Qkorean_ksc5601, "korean-ksc5601");
-  defsymbol (&Qcomposite, "composite");
+  defsymbol (&Qkorean_ksc5601,		"korean-ksc5601");
+  defsymbol (&Qcomposite,		"composite");
 }
 
 void
@@ -1237,78 +1249,78 @@ complex_vars_of_mule_charset (void)
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Control characters"),
 		  build_string (""));
-  Vcharset_latin_1 =
-    make_charset (Qlatin_1, LEADING_BYTE_LATIN_1, 2,
+  Vcharset_latin_iso8859_1 =
+    make_charset (Qlatin_iso8859_1, LEADING_BYTE_LATIN_ISO8859_1, 2,
 		  CHARSET_TYPE_96, 1, 1, 'A',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Latin-1"),
 		  build_string ("ISO8859-1"));
-  Vcharset_latin_2 =
-    make_charset (Qlatin_2, LEADING_BYTE_LATIN_2, 2,
+  Vcharset_latin_iso8859_2 =
+    make_charset (Qlatin_iso8859_2, LEADING_BYTE_LATIN_ISO8859_2, 2,
 		  CHARSET_TYPE_96, 1, 1, 'B',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Latin-2"),
 		  build_string ("ISO8859-2"));
-  Vcharset_latin_3 =
-    make_charset (Qlatin_3, LEADING_BYTE_LATIN_3, 2,
+  Vcharset_latin_iso8859_3 =
+    make_charset (Qlatin_iso8859_3, LEADING_BYTE_LATIN_ISO8859_3, 2,
 		  CHARSET_TYPE_96, 1, 1, 'C',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Latin-3"),
 		  build_string ("ISO8859-3"));
-  Vcharset_latin_4 =
-    make_charset (Qlatin_4, LEADING_BYTE_LATIN_4, 2,
+  Vcharset_latin_iso8859_4 =
+    make_charset (Qlatin_iso8859_4, LEADING_BYTE_LATIN_ISO8859_4, 2,
 		  CHARSET_TYPE_96, 1, 1, 'D',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Latin-4"),
 		  build_string ("ISO8859-4"));
-  Vcharset_cyrillic =
-    make_charset (Qcyrillic, LEADING_BYTE_CYRILLIC, 2,
+  Vcharset_cyrillic_iso8859_5 =
+    make_charset (Qcyrillic_iso8859_5, LEADING_BYTE_CYRILLIC_ISO8859_5, 2,
 		  CHARSET_TYPE_96, 1, 1, 'L',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Cyrillic"),
 		  build_string ("ISO8859-5"));
-  Vcharset_arabic =
-    make_charset (Qarabic, LEADING_BYTE_ARABIC, 2,
+  Vcharset_arabic_iso8859_6 =
+    make_charset (Qarabic_iso8859_6, LEADING_BYTE_ARABIC_ISO8859_6, 2,
 		  CHARSET_TYPE_96, 1, 1, 'G',
 		  CHARSET_RIGHT_TO_LEFT,
 		  build_string ("Arabic"),
 		  build_string ("ISO8859-6"));
-  Vcharset_greek =
-    make_charset (Qgreek, LEADING_BYTE_GREEK, 2,
+  Vcharset_greek_iso8859_7 =
+    make_charset (Qgreek_iso8859_7, LEADING_BYTE_GREEK_ISO8859_7, 2,
 		  CHARSET_TYPE_96, 1, 1, 'F',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Greek"),
 		  build_string ("ISO8859-7"));
-  Vcharset_hebrew =
-    make_charset (Qhebrew, LEADING_BYTE_HEBREW, 2,
+  Vcharset_hebrew_iso8859_8 =
+    make_charset (Qhebrew_iso8859_8, LEADING_BYTE_HEBREW_ISO8859_8, 2,
 		  CHARSET_TYPE_96, 1, 1, 'H',
 		  CHARSET_RIGHT_TO_LEFT,
 		  build_string ("Hebrew"),
 		  build_string ("ISO8859-8"));
-  Vcharset_latin_5 =
-    make_charset (Qlatin_5, LEADING_BYTE_LATIN_5, 2,
+  Vcharset_latin_iso8859_9 =
+    make_charset (Qlatin_iso8859_9, LEADING_BYTE_LATIN_ISO8859_9, 2,
 		  CHARSET_TYPE_96, 1, 1, 'M',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Latin-5"),
 		  build_string ("ISO8859-9"));
-  Vcharset_thai =
-    make_charset (Qthai, LEADING_BYTE_THAI, 2,
+  Vcharset_thai_tis620 =
+    make_charset (Qthai_tis620, LEADING_BYTE_THAI_TIS620, 2,
 		  CHARSET_TYPE_96, 1, 1, 'T',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Thai"),
 		  build_string ("TIS620"));
 
   /* Japanese */
-  Vcharset_japanese_jisx0201_kana =
-    make_charset (Qjapanese_jisx0201_kana,
-		  LEADING_BYTE_JAPANESE_JISX0201_KANA, 2,
+  Vcharset_katakana_jisx0201 =
+    make_charset (Qkatakana_jisx0201,
+		  LEADING_BYTE_KATAKANA_JISX0201, 2,
 		  CHARSET_TYPE_94, 1, 1, 'I',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Japanese Katakana"),
 		  build_string ("JISX0201.1976"));
-  Vcharset_japanese_jisx0201_roman =
-    make_charset (Qjapanese_jisx0201_roman,
-		  LEADING_BYTE_JAPANESE_JISX0201_ROMAN, 2,
+  Vcharset_latin_jisx0201 =
+    make_charset (Qlatin_jisx0201,
+		  LEADING_BYTE_LATIN_JISX0201, 2,
 		  CHARSET_TYPE_94, 1, 0, 'J',
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Japanese Roman"),
@@ -1336,11 +1348,11 @@ complex_vars_of_mule_charset (void)
 		  build_string ("JISX0212"));
 
   /* Chinese */
-  Vcharset_chinese_gb =
-    make_charset (Qchinese_gb, LEADING_BYTE_CHINESE_GB, 3,
+  Vcharset_chinese_gb2312 =
+    make_charset (Qchinese_gb2312, LEADING_BYTE_CHINESE_GB2312, 3,
 		  CHARSET_TYPE_94X94, 2, 0, 'A',
 		  CHARSET_LEFT_TO_RIGHT,
-		  build_string ("Chinese GB"),
+		  build_string ("Chinese GB2312"),
 		  build_string ("GB2312"));
 #define CHINESE_CNS_PLANE_RE(n) "CNS11643[.-]\\(.*[.-]\\)?" n "$"
   Vcharset_chinese_cns11643_1 =

@@ -21,7 +21,7 @@ for dir in  .  ..  ../..  editor  ../editor  ; do
 done
 
 if test ! -d lisp/. ; then
-  echo "$0: Can't find the \`lisp' directory."
+  echo "$0: Cannot find the \`lisp' directory."
   exit 1
 fi
 
@@ -60,7 +60,7 @@ fi
 # first recompile the byte-compiler, so that the other compiles take place
 # with the latest version (assuming we're compiling the lisp dir of the emacs
 # we're running, which might not be the case, but often is.)
-echo "Checking the byte compiler... "
+echo "Checking the byte compiler..."
 $REAL -batch -q -no-site-file -f batch-byte-recompile-directory lisp/bytecomp
 
 # Prepare for byte-compiling directories with directory-specific instructions

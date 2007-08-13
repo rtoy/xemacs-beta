@@ -123,34 +123,34 @@ struct iso2022_decoder
      sequence literally into the output stream, and later on
      insert the corresponding direction-restoring escape sequence
      literally also. */
-  int switched_dir_and_no_valid_charset_yet :1;
-  int invalid_switch_dir :1;
+  unsigned int switched_dir_and_no_valid_charset_yet :1;
+  unsigned int invalid_switch_dir :1;
 
   /* Tells the decoder to output the escape sequence literally
      even though it was valid.  Used in the games we play to
      avoid lossage when we encounter invalid designations. */
-  int output_literally :1;
+  unsigned int output_literally :1;
   /* We encountered a direction switch followed by an invalid
      designation.  We didn't output the direction switch
      literally because we didn't know about the invalid designation;
      but we have to do so now. */
-  int output_direction_sequence :1;
+  unsigned int output_direction_sequence :1;
 };
 
 Lisp_Object Fcopy_coding_system (Lisp_Object old_coding_system,
 				 Lisp_Object new_name);
 struct detection_state;
-static int detect_coding_shift_jis (struct detection_state *st,
-				    CONST unsigned char *src,
-				    unsigned int n);
-static void decode_coding_shift_jis (Lstream *decoding,
-				     CONST unsigned char *src,
-				     unsigned_char_dynarr *dst,
-				     unsigned int n);
-static void encode_coding_shift_jis (Lstream *encoding,
-				     CONST unsigned char *src,
-				     unsigned_char_dynarr *dst,
-				     unsigned int n);
+static int detect_coding_sjis (struct detection_state *st,
+			       CONST unsigned char *src,
+			       unsigned int n);
+static void decode_coding_sjis (Lstream *decoding,
+				CONST unsigned char *src,
+				unsigned_char_dynarr *dst,
+				unsigned int n);
+static void encode_coding_sjis (Lstream *encoding,
+				CONST unsigned char *src,
+				unsigned_char_dynarr *dst,
+				unsigned int n);
 static int detect_coding_big5 (struct detection_state *st,
 			       CONST unsigned char *src,
 			       unsigned int n);
@@ -1232,10 +1232,10 @@ struct detection_state
       struct iso2022_decoder iso;
       unsigned int flags;
       int high_byte_count;
-      int saw_single_shift:1;
+      unsigned int saw_single_shift:1;
     }
   iso2022;
-  
+
   struct
     {
       int seen_anything;
@@ -1354,7 +1354,7 @@ detect_coding_type (struct detection_state *st, CONST unsigned char *src,
   if (!mask_has_at_most_one_bit_p (st->iso2022.mask))
     st->iso2022.mask = detect_coding_iso2022 (st, src, n);
   if (!mask_has_at_most_one_bit_p (st->shift_jis.mask))
-    st->shift_jis.mask = detect_coding_shift_jis (st, src, n);
+    st->shift_jis.mask = detect_coding_sjis (st, src, n);
   if (!mask_has_at_most_one_bit_p (st->big5.mask))
     st->big5.mask = detect_coding_big5 (st, src, n);
 
@@ -1588,7 +1588,7 @@ do {						\
     }						\
   else						\
     {						\
-      Dynarr_add (dst, LEADING_BYTE_LATIN_1);	\
+      Dynarr_add (dst, LEADING_BYTE_LATIN_ISO8859_1); \
       Dynarr_add (dst, c);			\
     }						\
 } while (0)
@@ -1602,14 +1602,12 @@ do {					\
     }					\
 } while (0)
 
-#define DECODE_HANDLE_END_OF_CONVERSION(flags, ch, dst)\
-do {							\
-  DECODE_OUTPUT_PARTIAL_CHAR (ch);			\
-  if (flags & CODING_STATE_END)				\
-    {							\
-      if (flags & CODING_STATE_CR)			\
-	Dynarr_add (dst, '\r');				\
-    }							\
+#define DECODE_HANDLE_END_OF_CONVERSION(flags, ch, dst)	\
+do {					\
+  DECODE_OUTPUT_PARTIAL_CHAR (ch);	\
+  if ((flags & CODING_STATE_END) &&	\
+      (flags & CODING_STATE_CR))	\
+    Dynarr_add (dst, '\r');		\
 } while (0)
 
 #define DECODING_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, decoding)
@@ -1950,7 +1948,7 @@ mule_decode (Lstream *decoding, CONST unsigned char *src,
       decode_coding_no_conversion (decoding, src, dst, n);
       break;
     case CODESYS_SHIFT_JIS:
-      decode_coding_shift_jis (decoding, src, dst, n);
+      decode_coding_sjis (decoding, src, dst, n);
       break;
     case CODESYS_BIG5:
       decode_coding_big5 (decoding, src, dst, n);
@@ -1994,7 +1992,7 @@ BUFFER defaults to the current buffer if unspecified.
 
   get_buffer_range_char (buf, start, end, &b, &e, 0);
   coding_system = Fget_coding_system (coding_system);
-  instream = make_lisp_buffer_input_stream (buf, b, e, 0);
+  instream  = make_lisp_buffer_input_stream  (buf, b, e, 0);
   outstream = make_lisp_buffer_output_stream (buf, b, 0);
   outstream = make_decoding_output_stream (XLSTREAM (outstream),
 					   coding_system);
@@ -2349,7 +2347,7 @@ mule_encode (Lstream *encoding, CONST unsigned char *src,
       encode_coding_no_conversion (encoding, src, dst, n);
       break;
     case CODESYS_SHIFT_JIS:
-      encode_coding_shift_jis (encoding, src, dst, n);
+      encode_coding_sjis (encoding, src, dst, n);
       break;
     case CODESYS_BIG5:
       encode_coding_big5 (encoding, src, dst, n);
@@ -2382,7 +2380,7 @@ text.  BUFFER defaults to the current buffer if unspecified.
 
   get_buffer_range_char (buf, start, end, &b, &e, 0);
   coding_system = Fget_coding_system (coding_system);
-  instream = make_lisp_buffer_input_stream (buf, b, e, 0);
+  instream  = make_lisp_buffer_input_stream  (buf, b, e, 0);
   outstream = make_lisp_buffer_output_stream (buf, b, 0);
   outstream = make_decoding_output_stream (XLSTREAM (outstream),
 					   Fget_coding_system (Qbinary));
@@ -2396,7 +2394,6 @@ text.  BUFFER defaults to the current buffer if unspecified.
                      ------> [ENCODE AS SPECIFIED]
 		             ------> [DECODE AS BINARY]
 			             ------> [BUFFER]
-
    */
   while (1)
     {
@@ -2449,15 +2446,15 @@ text.  BUFFER defaults to the current buffer if unspecified.
 
 /* Is this the first byte of a Shift-JIS two-byte char? */
 
-#define BYTE_SHIFT_JIS_TWO_BYTE_1_P(c)					\
+#define BYTE_SJIS_TWO_BYTE_1_P(c) \
   (((c) >= 0x81 && (c) <= 0x9F) || ((c) >= 0xE0 && (c) <= 0xEF))
 
 /* Is this the second byte of a Shift-JIS two-byte char? */
 
-#define BYTE_SHIFT_JIS_TWO_BYTE_2_P(c)					\
+#define BYTE_SJIS_TWO_BYTE_2_P(c) \
   (((c) >= 0x40 && (c) <= 0x7E) || ((c) >= 0x80 && (c) <= 0xFC))
 
-#define BYTE_SHIFT_JIS_KATAKANA_P(c)					\
+#define BYTE_SJIS_KATAKANA_P(c)	\
   ((c) >= 0xA1 && (c) <= 0xDF)
 
 /* Code conversion macros.  These are macros because they are used in
@@ -2472,61 +2469,35 @@ text.  BUFFER defaults to the current buffer if unspecified.
 /* Convert shift-JIS code (sj1, sj2) into internal string
    representation (c1, c2). (The leading byte is assumed.) */
 
-#define DECODE_SHIFT_JIS(sj1, sj2, c1, c2) do	\
-{						\
-  int I1 = sj1, I2 = sj2;			\
-  if (I2 >= 0x9f)				\
-    {						\
-      if (I1 >= 0xe0)				\
-	c1 = (I1 << 1) - 0xe0;			\
-      else					\
-	c1 = (I1 << 1) - 0x60;			\
-      c2 = I2 + 2;				\
-    }						\
-  else						\
-    {						\
-      if (I1 >= 0xe0)				\
-	c1 = (I1 << 1) - 0xe1;			\
-      else					\
-	c1 = (I1 << 1) - 0x61;			\
-      if (I2 >= 0x7f)				\
-	c2 = I2 + 0x60;				\
-      else					\
-	c2 = I2 + 0x61;				\
-    }						\
+#define DECODE_SJIS(sj1, sj2, c1, c2)			\
+do {							\
+  int I1 = sj1, I2 = sj2;				\
+  if (I2 >= 0x9f)					\
+    c1 = (I1 << 1) - ((I1 >= 0xe0) ? 0xe0 : 0x60),	\
+    c2 = I2 + 2;					\
+  else							\
+    c1 = (I1 << 1) - ((I1 >= 0xe0) ? 0xe1 : 0x61),	\
+    c2 = I2 + ((I2 >= 0x7f) ? 0x60 : 0x61);		\
 } while (0)
 
 /* Convert the internal string representation of a Shift-JIS character
    (c1, c2) into Shift-JIS code (sj1, sj2).  The leading byte is
    assumed. */
 
-#define ENCODE_SHIFT_JIS(c1, c2, sj1, sj2) do	\
-{						\
-  int I1 = c1, I2 = sj2;			\
-  if (I1 & 1)					\
-    {						\
-      if (I1 < 0xdf)				\
-	sj1 = (I1 >> 1) + 0x31;			\
-      else					\
-	sj1 = (I1 >> 1) + 0x71;			\
-      if (I2 >= 0xe0)				\
-	sj2 = I2 - 0x60;			\
-      else					\
-	sj2 = I2 - 0x61;			\
-    }						\
-  else						\
-    {						\
-      if (I1 < 0xdf)				\
-	sj1 = (I1 >> 1) + 0x30;			\
-      else					\
-	sj1 = (I1 >> 1) + 0x70;			\
-      sj2 = I2 - 2;				\
-    }						\
+#define ENCODE_SJIS(c1, c2, sj1, sj2)			\
+do {							\
+  int I1 = c1, I2 = sj2;				\
+  if (I1 & 1)						\
+    sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x31 : 0x71),	\
+    sj2 = I2 - ((I2 >= 0xe0) ? 0x60 : 0x61);		\
+  else							\
+    sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x30 : 0x70),	\
+    sj2 = I2 - 2;					\
 } while (0)
 
 static int
-detect_coding_shift_jis (struct detection_state *st, CONST unsigned char *src,
-			 unsigned int n)
+detect_coding_sjis (struct detection_state *st, CONST unsigned char *src,
+		    unsigned int n)
 {
   int c;
 
@@ -2550,8 +2521,8 @@ detect_coding_shift_jis (struct detection_state *st, CONST unsigned char *src,
 /* Convert Shift-JIS data to internal format. */
 
 static void
-decode_coding_shift_jis (Lstream *decoding, CONST unsigned char *src,
-			 unsigned_char_dynarr *dst, unsigned int n)
+decode_coding_sjis (Lstream *decoding, CONST unsigned char *src,
+		    unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
   unsigned int flags, ch;
@@ -2568,12 +2539,12 @@ decode_coding_shift_jis (Lstream *decoding, CONST unsigned char *src,
       if (ch)
 	{
 	  /* Previous character was first byte of Shift-JIS Kanji char. */
-	  if (BYTE_SHIFT_JIS_TWO_BYTE_2_P (c))
+	  if (BYTE_SJIS_TWO_BYTE_2_P (c))
 	    {
 	      unsigned char e1, e2;
 
 	      Dynarr_add (dst, LEADING_BYTE_JAPANESE_JISX0208);
-	      DECODE_SHIFT_JIS (ch, c, e1, e2);
+	      DECODE_SJIS (ch, c, e1, e2);
 	      Dynarr_add (dst, e1);
 	      Dynarr_add (dst, e2);
 	    }
@@ -2587,11 +2558,11 @@ decode_coding_shift_jis (Lstream *decoding, CONST unsigned char *src,
       else
 	{
 	  DECODE_HANDLE_EOL_TYPE (eol, c, flags, dst);
-	  if (BYTE_SHIFT_JIS_TWO_BYTE_1_P (c))
+	  if (BYTE_SJIS_TWO_BYTE_1_P (c))
 	    ch = c;
-	  else if (BYTE_SHIFT_JIS_KATAKANA_P (c))
+	  else if (BYTE_SJIS_KATAKANA_P (c))
 	    {
-	      Dynarr_add (dst, LEADING_BYTE_JAPANESE_JISX0201_KANA);
+	      Dynarr_add (dst, LEADING_BYTE_KATAKANA_JISX0201);
 	      Dynarr_add (dst, c);
 	    }
 	  else
@@ -2608,8 +2579,8 @@ decode_coding_shift_jis (Lstream *decoding, CONST unsigned char *src,
 /* Convert internally-formatted data to Shift-JIS. */
 
 static void
-encode_coding_shift_jis (Lstream *encoding, CONST unsigned char *src,
-			 unsigned_char_dynarr *dst, unsigned int n)
+encode_coding_sjis (Lstream *encoding, CONST unsigned char *src,
+		    unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
@@ -2636,12 +2607,12 @@ encode_coding_shift_jis (Lstream *encoding, CONST unsigned char *src,
 	  ch = 0;
 	}
       else if (BUFBYTE_LEADING_BYTE_P (c))
-	ch = (c == LEADING_BYTE_JAPANESE_JISX0201_KANA ||
+	ch = (c == LEADING_BYTE_KATAKANA_JISX0201 ||
 	      c == LEADING_BYTE_JAPANESE_JISX0208_1978 ||
 	      c == LEADING_BYTE_JAPANESE_JISX0208) ? c : 0;
       else if (ch)
 	{
-	  if (ch == LEADING_BYTE_JAPANESE_JISX0201_KANA)
+	  if (ch == LEADING_BYTE_KATAKANA_JISX0201)
 	    {
 	      Dynarr_add (dst, c);
 	      ch = 0;
@@ -2652,7 +2623,7 @@ encode_coding_shift_jis (Lstream *encoding, CONST unsigned char *src,
 	  else
 	    {
 	      unsigned char j1, j2;
-	      ENCODE_SHIFT_JIS (ch, c, j1, j2);
+	      ENCODE_SJIS (ch, c, j1, j2);
 	      Dynarr_add (dst, j1);
 	      Dynarr_add (dst, j2);
 	      ch = 0;
@@ -2677,10 +2648,10 @@ Return the corresponding character.
   CHECK_INT (XCDR (code));
   s1 = XINT (XCAR (code));
   s2 = XINT (XCDR (code));
-  if (BYTE_SHIFT_JIS_TWO_BYTE_1_P (s1) &&
-      BYTE_SHIFT_JIS_TWO_BYTE_2_P (s2))
+  if (BYTE_SJIS_TWO_BYTE_1_P (s1) &&
+      BYTE_SJIS_TWO_BYTE_2_P (s2))
     {
-      DECODE_SHIFT_JIS (s1, s2, c1, c2);
+      DECODE_SJIS (s1, s2, c1, c2);
       return make_char (MAKE_CHAR (Vcharset_japanese_jisx0208,
 				   c1 & 0x7F, c2 & 0x7F));
     }
@@ -2701,7 +2672,7 @@ Return the corresponding character code in SHIFT-JIS as a cons of two bytes.
   BREAKUP_CHAR (XCHAR (ch), charset, c1, c2);
   if (EQ (charset, Vcharset_japanese_jisx0208))
     {
-      ENCODE_SHIFT_JIS (c1 | 0x80, c2 | 0x80, s1, s2);
+      ENCODE_SJIS (c1 | 0x80, c2 | 0x80, s1, s2);
       return Fcons (make_int (s1), make_int (s2));
     }
   else
@@ -3405,7 +3376,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	{
 	  int jj;
 
-	  /* If we are in the thrall of in invalid designation,
+	  /* If we are in the thrall of an invalid designation,
 	   then stick the directionality sequence literally into the
 	   output stream so it ends up in the original text again. */
 	  for (jj = 0; jj < 4; jj++)
@@ -3563,7 +3534,7 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 }
 
 static int
-detect_coding_iso2022 (struct detection_state *st,  CONST unsigned char *src,
+detect_coding_iso2022 (struct detection_state *st, CONST unsigned char *src,
 		       unsigned int n)
 {
   int c;
@@ -4423,14 +4394,15 @@ encode_coding_no_conversion (Lstream *encoding, CONST unsigned char *src,
       else if (BUFBYTE_LEADING_BYTE_P (c))
 	{
 	  assert (ch == 0);
-	  if (c == LEADING_BYTE_LATIN_1 || c == LEADING_BYTE_CONTROL_1)
+	  if (c == LEADING_BYTE_LATIN_ISO8859_1 ||
+	      c == LEADING_BYTE_CONTROL_1)
 	    ch = c;
 	  else
 	    Dynarr_add (dst, '~'); /* untranslatable character */
 	}
       else
 	{
-	  if (ch == LEADING_BYTE_LATIN_1)
+	  if (ch == LEADING_BYTE_LATIN_ISO8859_1)
 	    Dynarr_add (dst, c);
 	  else if (ch == LEADING_BYTE_CONTROL_1)
 	    {
@@ -4488,9 +4460,9 @@ convert_to_external_format (CONST Bufbyte *ptr,
       for (; ptr < end;)
         {
           Bufbyte c =
-            (BYTE_ASCII_P (*ptr))		? *ptr :
-            (*ptr == LEADING_BYTE_CONTROL_1)	? (*(ptr+1) - 0x20) :
-            (*ptr == LEADING_BYTE_LATIN_1)	? (*(ptr+1)) :
+            (BYTE_ASCII_P (*ptr))		   ? *ptr :
+            (*ptr == LEADING_BYTE_CONTROL_1)	   ? (*(ptr+1) - 0x20) :
+            (*ptr == LEADING_BYTE_LATIN_ISO8859_1) ? (*(ptr+1)) :
             '~';
 
           Dynarr_add (conversion_out_dynarr, (Extbyte) c);

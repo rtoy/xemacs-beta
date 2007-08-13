@@ -28,7 +28,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Syntax of Japanese characters.
-(modify-syntax-entry 'japanese-jisx0201-kana "w")
+(modify-syntax-entry 'katakana-jisx0201 "w")
 (modify-syntax-entry 'japanese-jisx0212 "w")
 
 (modify-syntax-entry 'japanese-jisx0208 "w")
@@ -127,7 +127,7 @@
  '(charset-g0 ascii
    short t
    seven t
-   input-charset-conversion ((japanese-jisx0201-roman ascii)
+   input-charset-conversion ((latin-jisx0201 ascii)
 			     (japanese-jisx0208-1978 japanese-jisx0208))
    mnemonic "Mail/Ja"
    ))
@@ -140,7 +140,7 @@
  '(charset-g0 ascii
    short t
    seven t
-   output-charset-conversion ((ascii japanese-jisx0201-roman)
+   output-charset-conversion ((ascii latin-jisx0201)
 			      (japanese-jisx0208 japanese-jisx0208-1978))
    mnemonic "Mail/Ja-old"
    ))
@@ -150,7 +150,7 @@
  "Coding-system of Japanese EUC (Extended Unix Code)."
  '(charset-g0 ascii
    charset-g1 japanese-jisx0208
-   charset-g2 japanese-jisx0201-kana
+   charset-g2 katakana-jisx0201
    charset-g3 japanese-jisx0212
    short t
    mnemonic "EUC/Ja"
@@ -161,7 +161,7 @@
   (lambda ()
     (set-coding-category-system 'iso-7   'iso-2022-jp)
     (set-coding-category-system 'iso-8-2 'euc-japan)
-    (set-coding-priority-list '(iso-7 iso-8-2 no-conversion))
+    (set-coding-priority-list '(iso-7 iso-8-2 shift-jis no-conversion))
     ;;'(iso-8-2 iso-8-designate iso-8-1 shift-jis big5)
     
     ;;(when (featurep 'egg)

@@ -191,7 +191,7 @@ Does not modify STR.  Returns the encoded string on successful conversion."
  'ctext 'iso2022
  "Coding-system used in X as Compound Text Encoding."
  '(charset-g0 ascii
-   charset-g1 latin-1
+   charset-g1 latin-iso8859-1
    eol-type lf
    mnemonic "CText"
    ))
@@ -200,7 +200,7 @@ Does not modify STR.  Returns the encoded string on successful conversion."
  'iso-2022-ss2-8 'iso2022
  "ISO-2022 coding system using SS2 for 96-charset in 8-bit code."
  '(charset-g0 ascii
-   charset-g1 latin-1
+   charset-g1 latin-iso8859-1
    charset-g2 t ;; unspecified but can be used later.
    short t
    mnemonic "ISO8/SS"
@@ -229,7 +229,7 @@ Does not modify STR.  Returns the encoded string on successful conversion."
  'iso-2022-8 'iso2022
  "ISO-2022 eight-bit coding system.  No single-shift or locking-shift."
  '(charset-g0 ascii
-   charset-g1 latin-1
+   charset-g1 latin-iso8859-1
    short t
    mnemonic "ISO8"
    ))
@@ -238,7 +238,7 @@ Does not modify STR.  Returns the encoded string on successful conversion."
  'escape-quoted 'iso2022
  "ISO-2022 eight-bit coding system with escape quoting; used for .ELC files."
  '(charset-g0 ascii
-   charset-g1 latin-1
+   charset-g1 latin-iso8859-1
    eol-type lf
    escape-quoted t
    mnemonic "ESC/Quot"

@@ -633,12 +633,16 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 
 	;; finish initializing continuation glyph -- created internally
 	;; because it has a built-in bitmap
-	(set-glyph-image continuation-glyph "\\" 'global 'tty)))
+	(set-glyph-image continuation-glyph "\\" 'global 'tty)
+
+	;; finish initializing hscroll glyph -- created internally
+	;; because it has a built-in bitmap
+	(set-glyph-image hscroll-glyph "$" 'global 'tty)))
 
   (set-glyph-image octal-escape-glyph "\\")
   (set-glyph-image control-arrow-glyph "^")
   (set-glyph-image invisible-text-glyph " ...")
-  (set-glyph-image hscroll-glyph "$")
+  ;; (set-glyph-image hscroll-glyph "$")
 
   ;; finish initializing xemacs logo -- created internally because it
   ;; has a built-in bitmap

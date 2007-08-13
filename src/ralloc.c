@@ -914,9 +914,14 @@ find_mmap_handle (POINTER *alias)
    about the memory map.  Instead, we try to coalesce empty or
    unavailable blocks at any available opportunity.  */
 
-static void Addr_Block_initialize(); /* Initialization procedure for address picking scheme */
-static VM_ADDR New_Addr_Block( SIZE sz ); /* Get a suitable VM_ADDR via mmap */
-static void Free_Addr_Block( VM_ADDR addr, SIZE sz ); /* Free a VM_ADDR allocated via New_Addr_Block */
+/* Initialization procedure for address picking scheme */
+static void Addr_Block_initialize(void);
+
+/* Get a suitable VM_ADDR via mmap */
+static VM_ADDR New_Addr_Block( SIZE sz );
+
+/* Free a VM_ADDR allocated via New_Addr_Block */
+static void Free_Addr_Block( VM_ADDR addr, SIZE sz );
 
 #ifdef MMAP_GENERATE_ADDRESSES
 /* Implementation of the three calls for address picking when XEmacs is incharge */
@@ -1035,8 +1040,10 @@ static void Free_Addr_Block( VM_ADDR addr, SIZE sz )
 /* This is an alternate (simpler) implementation in cases where the
    address is picked by the kernel. */
 
-static void Addr_Block_initialize()
-{} /* Nothing. */
+static void Addr_Block_initialize(void)
+{
+  /* Nothing. */
+}
 
 static VM_ADDR New_Addr_Block( SIZE sz )
 {

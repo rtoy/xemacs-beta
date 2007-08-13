@@ -77,6 +77,14 @@ Returns nil if the required files cannot be found."
      (setq exec-path (append exec-path (list (concat sunpro-dir "bin/"))))))))
 
 (defun sunpro-startup ()
+  "Runs at startup if support for Sun Workshop is compiled in.  Don't run this."
+  
+  ;; Sun distribution censors yow, among other things...
+  (unless (locate-file "yow.el" load-path)
+    (fmakunbound 'yow)
+    (delete-menu-item '("Apps" "Games" "Quote from Zippy"))
+    (delete-menu-item '("Apps" "Games" "Psychoanalyze Zippy!")))
+  
   (when (not (noninteractive))
 
     (flet

@@ -1,4 +1,23 @@
 							-*- indented-text -*-
+to 20.0 beta32
+-- InfoDock man.el
+-- Fix long-standing race condition in timeout handling (courtesy of David
+   Moore).
+-- next-line-add-newlines now defaults to nil
+-- tm-7.97
+-- charset renames for Mule 2.4 and TM compatibility.
+-- ANSIfication of the code base is mostly completed.
+-- Random bug fixes.
+-- Default JPEG image loading is now old tempfile code, but should work again.
+-- Keysyms now use dashes instead of underscores for compatibility.
+-- Miscellaneous bug fixes courtesy of Christoph Wedler
+-- mic-paren.el courtesy of Mikael Sjdin
+-- lpr.el/ps-print.el - Allow dynamic expansion of
+   lpr-switches/ps-lpr-switches.
+-- Lisp Bug fixes
+-- Install info files compressed (courtesy of Joseph J Nuspl)
+-- Default locking for Linux is now .lock locking
+
 to 20.0 beta31
 
 -- EDT/TPU modes synched from GNU Emacs, should actually work for the first

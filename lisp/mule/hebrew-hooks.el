@@ -29,14 +29,14 @@
 
 ;; Syntax of Hebrew characters
 (loop for c from 96 to 122
-      do (modify-syntax-entry (make-char 'hebrew c) "w"))
-(modify-syntax-entry (make-char 'hebrew 32) "w") ; no-break space
+      do (modify-syntax-entry (make-char 'hebrew-iso8859-8 c) "w"))
+(modify-syntax-entry (make-char 'hebrew-iso8859-8 32) "w") ; no-break space
 
 (make-coding-system
  'iso-8859-8 'iso2022
  "MIME ISO-8859-8"
  '(charset-g0 ascii
-   charset-g1 hebrew
+   charset-g1 hebrew-iso8859-8
    charset-g2 t
    charset-g3 t
    no-iso6429 t
@@ -47,13 +47,13 @@
  'ctext-hebrew 'iso2022
  "Coding-system of Hebrew."
  '(charset-g0 ascii
-   charset-g1 hebrew
+   charset-g1 hebrew-iso8859-8
    charset-g2 t
    charset-g3 t
    mnemonic "CText/Hbrw"
 ))
 
-(add-hook 'quail-package-alist '("hebrew" "quail/hebrew"))
+;;(add-hook 'quail-package-alist '("hebrew" "quail/hebrew"))
 
 (define-language-environment 'hebrew
   "Hebrew"
@@ -63,5 +63,6 @@
     (set-default-file-coding-system 'iso-8859-8)
     (setq terminal-coding-system    'iso-8859-8)
     (setq keyboard-coding-system    'iso-8859-8)
-    (setq-default quail-current-package
-                  (assoc "hebrew" quail-package-alist))))
+;;    (setq-default quail-current-package
+;;                  (assoc "hebrew" quail-package-alist))))
+    ))

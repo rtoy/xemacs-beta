@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #undef unix
 #undef sgi
 #undef NeXT
+#undef i386
 
 #ifdef USE_GNU_MAKE
 /* For performance and consistency, no built-in rules */
@@ -1092,7 +1093,7 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 # define MULE_X11_LISP
 #endif
 #define MULE_TM_LISP \
-	${lispdir}tl/mime-setup.elc \
+	${lispdir}tm/mime-setup.elc \
 	${lispdir}tl/tl-misc.elc \
 	${lispdir}tl/tl-str.elc \
 	${lispdir}tl/tl-list.elc \
@@ -1261,7 +1262,7 @@ lisp=   ${lispdir}paths.el ${lispdir}prim/loaddefs.elc \
         ${lispdir}prim/paragraphs.elc ${lispdir}modes/lisp-mode.elc \
         ${lispdir}modes/text-mode.elc ${lispdir}prim/fill.elc \
         ${lispdir}prim/isearch-mode.elc ${lispdir}prim/misc.elc \
-	${lispdir}modes/cc-mode.elc ${lispdir}packages/vc-hooks.elc \
+	${lispdir}packages/vc-hooks.elc \
         ${lispdir}prim/replace.elc ${lispdir}prim/specifier.elc \
         ${lispdir}modes/auto-show.elc SUNPRO_LISP TTY_LISP \
         ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP EPOCH_LISP \

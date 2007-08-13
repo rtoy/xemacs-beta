@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-art-mime.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;;	$Id: gnus-art-mime.el,v 1.1.1.2 1996/12/21 20:50:48 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -28,14 +28,14 @@
 ;;; Code:
 
 (require 'emu)
+(require 'gnus-mime)
 (require 'gnus-art)
+(require 'tm-view)
 
 (autoload 'mime-eword/decode-region "tm-ew-d"
   "Decode MIME encoded-words in region." t)
 (autoload 'mime/decode-message-header "tm-ew-d"
   "Decode MIME encoded-words in message header." t)
-(autoload 'mime/viewer-mode "tm-view"
-  "Major mode for viewing MIME message." t)
 
 
 ;;; @ encoded-word

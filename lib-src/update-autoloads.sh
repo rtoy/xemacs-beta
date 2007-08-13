@@ -25,5 +25,5 @@ echo "          with $REAL..."
 
 $EMACS -batch -q -f batch-update-autoloads \
   `ls lisp | egrep -v \
-  "COPYING|README|SCCS|egg|eterm|its|mule|paths.el|quail|version.el|vms" \
+  "ChangeLog|CVS|COPYING|README|SCCS|egg|eterm|its|mule|paths.el|quail|version.el|vms" \
   | xargs -i echo lisp/\{\}`

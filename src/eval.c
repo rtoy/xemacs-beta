@@ -218,7 +218,7 @@ static Lisp_Object Vcondition_handlers;
 /* Used for error catching purposes by throw_or_bomb_out */
 static int throw_level;
 
-static Lisp_Object primitive_funcall (Lisp_Object (*fn) (), int nargs,
+static Lisp_Object primitive_funcall (lisp_fn_t fn, int nargs,
 				      Lisp_Object args[]);
 
 
@@ -2054,9 +2054,8 @@ static Lisp_Object
 call_with_suspended_errors_1 (Lisp_Object opaque_arg)
 {
   Lisp_Object *kludgy_args = (Lisp_Object *) get_opaque_ptr (opaque_arg);
-  return (primitive_funcall
-	  ((Lisp_Object (*)()) get_opaque_ptr (kludgy_args[0]),
-	   XINT (kludgy_args[1]), kludgy_args + 2));
+  return (primitive_funcall ((lisp_fn_t) get_opaque_ptr (kludgy_args[0]),
+			     XINT (kludgy_args[1]), kludgy_args + 2));
 }
 
 static Lisp_Object
@@ -2089,7 +2088,7 @@ restore_current_error_state (Lisp_Object error_state)
 */
 
 Lisp_Object
-call_with_suspended_errors (Lisp_Object (*fun)(), Lisp_Object retval,
+call_with_suspended_errors (lisp_fn_t fun, Lisp_Object retval,
 			    Lisp_Object class, Error_behavior errb,
 			    int nargs, ...)
 {
@@ -2981,7 +2980,8 @@ Evaluate FORM and return its value.
 	  backtrace.args = vals;
 	  backtrace.nargs = nargs;
 
-	  val = ((subr_function (subr)) (nargs, vals));
+	  val = ((Lisp_Object (*) (int, Lisp_Object *)) (subr_function (subr)))
+	    (nargs, vals);
 
           /* Have to duplicate this code because if the
            *  debugger is called it must be in a scope in
@@ -3154,7 +3154,8 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
 
       if (max_args == MANY)
 	{
-	  val = ((subr_function (subr)) (nargs, args + 1));
+	  val = ((Lisp_Object (*) (int, Lisp_Object *)) (subr_function (subr)))
+	    (nargs, args + 1);
 	}
 
       else if (max_args > nargs)
@@ -3431,50 +3432,47 @@ Thus, (apply '+ 1 2 '(3 4)) returns 10.
 }
 
 
+/* Define proper types and argument lists simultaneously */
+#define PRIMITIVE_FUNCALL(n) ((Lisp_Object (*) (PRIMITIVE_FUNCALL_##n)
+#define PRIMITIVE_FUNCALL_0  void)) (fn)) (
+#define PRIMITIVE_FUNCALL_1  Lisp_Object)) (fn)) (args[0]
+#define PRIMITIVE_FUNCALL_2  Lisp_Object, PRIMITIVE_FUNCALL_1,  args[1]
+#define PRIMITIVE_FUNCALL_3  Lisp_Object, PRIMITIVE_FUNCALL_2,  args[2]
+#define PRIMITIVE_FUNCALL_4  Lisp_Object, PRIMITIVE_FUNCALL_3,  args[3]
+#define PRIMITIVE_FUNCALL_5  Lisp_Object, PRIMITIVE_FUNCALL_4,  args[4]
+#define PRIMITIVE_FUNCALL_6  Lisp_Object, PRIMITIVE_FUNCALL_5,  args[5]
+#define PRIMITIVE_FUNCALL_7  Lisp_Object, PRIMITIVE_FUNCALL_6,  args[6]
+#define PRIMITIVE_FUNCALL_8  Lisp_Object, PRIMITIVE_FUNCALL_7,  args[7]
+#define PRIMITIVE_FUNCALL_9  Lisp_Object, PRIMITIVE_FUNCALL_8,  args[8]
+#define PRIMITIVE_FUNCALL_10 Lisp_Object, PRIMITIVE_FUNCALL_9,  args[9]
+#define PRIMITIVE_FUNCALL_11 Lisp_Object, PRIMITIVE_FUNCALL_10, args[10]
+#define PRIMITIVE_FUNCALL_12 Lisp_Object, PRIMITIVE_FUNCALL_11, args[11]
+
 static Lisp_Object
-primitive_funcall (Lisp_Object (*fn) (), int nargs, Lisp_Object args[])
+primitive_funcall (lisp_fn_t fn, int nargs, Lisp_Object args[])
 {
   switch (nargs)
     {
-    case 0:
-      return ((*fn) ());
-    case 1:
-      return ((*fn) (args[0]));
-    case 2:
-      return ((*fn) (args[0], args[1]));
-    case 3:
-      return ((*fn) (args[0], args[1], args[2]));
-    case 4:
-      return ((*fn) (args[0], args[1], args[2], args[3]));
-    case 5:
-      return ((*fn) (args[0], args[1], args[2], args[3], args[4]));
-    case 6:
-      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5]));
-    case 7:
-      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
-		     args[6]));
-    case 8:
-      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
-		     args[6], args[7]));
-    case 9:
-      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
-		     args[6], args[7], args[8]));
-    case 10:
-      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
-		     args[6], args[7], args[8], args[9]));
-    case 11:
-      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
-		     args[6], args[7], args[8], args[9], args[10]));
-    case 12:
-      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
-		     args[6], args[7], args[8], args[9], args[10], args[11]));
-    default:
-      /* Someone has created a subr that takes more arguments than
-	 is supported by this code.  We need to either rewrite the
-	 subr to use a different argument protocol, or add more
-	 cases to this switch.  */
-      abort ();
+    case 0:  return PRIMITIVE_FUNCALL(0);
+    case 1:  return PRIMITIVE_FUNCALL(1);
+    case 2:  return PRIMITIVE_FUNCALL(2);
+    case 3:  return PRIMITIVE_FUNCALL(3);
+    case 4:  return PRIMITIVE_FUNCALL(4);
+    case 5:  return PRIMITIVE_FUNCALL(5);
+    case 6:  return PRIMITIVE_FUNCALL(6);
+    case 7:  return PRIMITIVE_FUNCALL(7);
+    case 8:  return PRIMITIVE_FUNCALL(8);
+    case 9:  return PRIMITIVE_FUNCALL(9);
+    case 10: return PRIMITIVE_FUNCALL(10);
+    case 11: return PRIMITIVE_FUNCALL(11);
+    case 12: return PRIMITIVE_FUNCALL(12);
     }
+
+  /* Someone has created a subr that takes more arguments than is
+     supported by this code.  We need to either rewrite the subr to
+     use a different argument protocol, or add more cases to this
+     switch.  */
+  abort ();
   return Qnil;	/* suppress compiler warning */
 }
 

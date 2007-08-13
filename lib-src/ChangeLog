@@ -1,3 +1,11 @@
+Wed Dec 18 20:22:55 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* mmencode.c: Don't declare index().
+
+	* Makefile.in.in: Documentation changes.
+
+	* update-elc.sh: Portability Fix.
+
 Thu Dec  5 15:41:53 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
 
 	* update-elc.sh: Corrections to protect against too smart /bin/sh'es.

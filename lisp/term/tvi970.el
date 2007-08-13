@@ -5,21 +5,22 @@
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -38,10 +39,10 @@
 		      (car key-binding) (nth 1 key-binding))))
 	'(
 	  ;; These are set up by termcap or terminfo
-	  ;; ("\eOP"	[kp_f1])
-	  ;; ("\eOQ"	[kp_f2])
-	  ;; ("\eOR"	[kp_f3])
-	  ;; ("\eOS"	[kp_f4])
+	  ;; ("\eOP"	[kp-f1])
+	  ;; ("\eOQ"	[kp-f2])
+	  ;; ("\eOR"	[kp-f3])
+	  ;; ("\eOS"	[kp-f4])
 
 	  ;; These might br set by terminfo
 	  ("\e[H"	[home])
@@ -53,27 +54,27 @@
 	  ("\e[U"	[next])		;; actually the `page' key
 
 	  ;; These won't be set up by either
-	  ("\eOm"	[kp_subtract])
-	  ("\eOl"	[kp_separator])
-	  ("\eOn"	[kp_decimal])
-	  ("\eOM"	[kp_enter])
+	  ("\eOm"	[kp-subtract])
+	  ("\eOl"	[kp-separator])
+	  ("\eOn"	[kp-decimal])
+	  ("\eOM"	[kp-enter])
 
 	  ;; These won't be set up by either either
-	  ("\e[K"	[key_eol])	;; Not an X keysym
-	  ("\e[J"	[key_eos])	;; Not an X keysym
-	  ("\e[2J"	[key_clear])	;; Not an X keysym
-	  ("\e[P"	[key_dc])	;; Not an X keysym
+	  ("\e[K"	[key-eol])	;; Not an X keysym
+	  ("\e[J"	[key-eos])	;; Not an X keysym
+	  ("\e[2J"	[key-clear])	;; Not an X keysym
+	  ("\e[P"	[key-dc])	;; Not an X keysym
 	  ("\e[g"	[(shift tab)])	;; Not an X keysym
 	  ("\e[2N"	[clearentry])	;; Not an X keysym
 	  ("\e[2K"	[(shift clearentry)])	;; Not an X keysym
 	  ("\e[E"	[?\C-j])	;; Not an X keysym
 	  ("\e[g"	[(shift backtab)])	;; Not an X keysym
-	  ("\e[?1i"	[key_sprint])	;; Not an X keysym
-	  ("\e[4h"	[key_sic])	;; Not an X keysym
+	  ("\e[?1i"	[key-sprint])	;; Not an X keysym
+	  ("\e[4h"	[key-sic])	;; Not an X keysym
 	  ("\e[4l"	[(shift delete)])	;; Not an X keysym
 	  ("\e[Q"	[(shift insertline)])	;; Not an X keysym
-	  ("\e[1Q"	[key_sdl])	;; Not an X keysym
-	  ("\e[19l"	[key_seol])	;; Not an X keysym
+	  ("\e[1Q"	[key-sdl])	;; Not an X keysym
+	  ("\e[19l"	[key-seol])	;; Not an X keysym
 	  ("\e[19h"	[(shift erasepage)])	;; Not an X keysym
 	  ("\e[V"	[(shift page)])	;; Not an X keysym
 	  ("\eS"	[send])		;; Not an X keysym
@@ -85,7 +86,7 @@
   (while (< i 10)
     (define-key function-key-map
       (format "\eO%c" (+ i ?p))
-      (vector (intern (format "kp_%d" i))))
+      (vector (intern (format "kp-%d" i))))
     (setq i (1+ i))))
 ;; The numbered function keys.
 (let ((i 0))

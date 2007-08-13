@@ -1,3 +1,11 @@
+Wed Dec 18 20:21:06 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* Makefile (realclean): Don't delete itself `make distclean'
+
+	* lispref/numbers.texi (Predicates on Numbers): wholenump->natnump.
+
+	* Makefile: New File.
+
 Tue Dec 10 18:35:21 1996  Rod Whitby  <rwhitby@asc.sps.mot.com>
 
 	* vhdl-mode.texi: New file.

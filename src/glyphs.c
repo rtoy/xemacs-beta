@@ -1048,7 +1048,7 @@ message is generated and this function returns nil.
 {
   Error_behavior errb = decode_error_behavior_flag (no_error);
 
-  return call_with_suspended_errors (make_image_instance_1,
+  return call_with_suspended_errors ((lisp_fn_t) make_image_instance_1,
 				     Qnil, Qimage, errb,
 				     3, data, device, dest_types);
 }
@@ -1318,7 +1318,7 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
  ****************************************************************************/
 
 static int
-nothing_possible_dest_types ()
+nothing_possible_dest_types (void)
 {
   return IMAGE_NOTHING_MASK;
 }
@@ -1360,7 +1360,7 @@ inherit_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-inherit_possible_dest_types ()
+inherit_possible_dest_types (void)
 {
   return IMAGE_MONO_PIXMAP_MASK;
 }
@@ -1386,7 +1386,7 @@ string_validate (Lisp_Object instantiator)
 }
 
 static int
-string_possible_dest_types ()
+string_possible_dest_types (void)
 {
   return IMAGE_TEXT_MASK;
 }
@@ -1422,7 +1422,7 @@ formatted_string_validate (Lisp_Object instantiator)
 }
 
 static int
-formatted_string_possible_dest_types ()
+formatted_string_possible_dest_types (void)
 {
   return IMAGE_TEXT_MASK;
 }
@@ -1730,12 +1730,11 @@ image_going_to_add (Lisp_Object specifier, Lisp_Object locale,
       Lisp_Object newinst;
       Lisp_Object contype = XCAR (rest);
 
-      newinst = call_with_suspended_errors (normalize_image_instantiator,
-					    Qnil, Qimage, ERROR_ME_NOT,
-					    3, instantiator, contype,
-					    make_int
-					    (XIMAGE_SPECIFIER_ALLOWED
-					     (specifier)));
+      newinst = call_with_suspended_errors
+	((lisp_fn_t) normalize_image_instantiator,
+	 Qnil, Qimage, ERROR_ME_NOT, 3, instantiator, contype,
+	 make_int (XIMAGE_SPECIFIER_ALLOWED (specifier)));
+      
       if (!NILP (newinst))
 	{
 	  Lisp_Object newtag;

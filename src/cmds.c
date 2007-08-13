@@ -134,6 +134,31 @@ If BUFFER is nil, the current buffer is assumed.
   return make_int (negp ? - shortage : shortage);
 }
 
+DEFUN ("point-at-bol", Fpoint_at_bol, 0, 2, 0, /*
+Return the character position of the first character on the current line.
+With argument N not nil or 1, move forward N - 1 lines first.
+If scan reaches end of buffer, return that position.
+This function does not move point.
+*/
+       (arg, buffer))
+{
+  struct buffer *b = decode_buffer (buffer, 1);
+  register int orig, end;
+
+  XSETBUFFER (buffer, b);
+  if (NILP (arg))
+    arg = make_int (1);
+  else
+    CHECK_INT (arg);
+
+  orig = BUF_PT(b);
+  Fforward_line (make_int (XINT (arg) - 1), buffer);
+  end = BUF_PT(b);
+  BUF_SET_PT(b, orig);
+
+  return make_int (end);
+}
+
 DEFUN ("beginning-of-line", Fbeginning_of_line, 0, 2, "_p", /*
 Move point to beginning of current line.
 With argument ARG not nil or 1, move forward ARG - 1 lines first.
@@ -144,21 +169,15 @@ If BUFFER is nil, the current buffer is assumed.
 {
   struct buffer *b = decode_buffer (buffer, 1);
 
-  XSETBUFFER (buffer, b);
-  if (NILP (arg))
-    arg = make_int (1);
-  else
-    CHECK_INT (arg);
-
-  Fforward_line (make_int (XINT (arg) - 1), buffer);
+  BUF_SET_PT(b, XINT (Fpoint_at_bol(arg, buffer)));
   return Qnil;
 }
 
-DEFUN ("end-of-line", Fend_of_line, 0, 2, "_p", /*
-Move point to end of current line.
-With argument ARG not nil or 1, move forward ARG - 1 lines first.
-If scan reaches end of buffer, stop there without error.
-If BUFFER is nil, the current buffer is assumed.
+DEFUN ("point-at-eol", Fpoint_at_eol, 0, 2, 0, /*
+Return the character position of the last character on the current line.
+With argument N not nil or 1, move forward N - 1 lines first.
+If scan reaches end of buffer, return that position.
+This function does not move point.
 */
        (arg, buffer))
 {
@@ -171,8 +190,21 @@ If BUFFER is nil, the current buffer is assumed.
   else
     CHECK_INT (arg);
 
-  BUF_SET_PT (buf, find_before_next_newline (buf, BUF_PT (buf), 0,
+  return make_int (find_before_next_newline (buf, BUF_PT (buf), 0,
 					     XINT (arg) - (XINT (arg) <= 0)));
+}
+
+DEFUN ("end-of-line", Fend_of_line, 0, 2, "_p", /*
+Move point to end of current line.
+With argument ARG not nil or 1, move forward ARG - 1 lines first.
+If scan reaches end of buffer, stop there without error.
+If BUFFER is nil, the current buffer is assumed.
+*/
+       (arg, buffer))
+{
+  struct buffer *b = decode_buffer (buffer, 1);
+
+  BUF_SET_PT(b, XINT (Fpoint_at_eol (arg, buffer)));
   return Qnil;
 }
 
@@ -416,6 +448,9 @@ syms_of_cmds (void)
   DEFSUBR (Fforward_line);
   DEFSUBR (Fbeginning_of_line);
   DEFSUBR (Fend_of_line);
+
+  DEFSUBR (Fpoint_at_bol);
+  DEFSUBR (Fpoint_at_eol);
 
   DEFSUBR (Fdelete_char);
   DEFSUBR (Fdelete_backward_char);

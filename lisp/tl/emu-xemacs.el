@@ -5,7 +5,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: emu-xemacs.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;;	$Id: emu-xemacs.el,v 1.1.1.2 1996/12/21 20:50:48 steve Exp $
 ;; Keywords: emulation, compatibility, XEmacs
 
 ;; This file is part of emu.

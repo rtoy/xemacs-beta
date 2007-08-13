@@ -626,8 +626,6 @@ somewhat; setting it to nil makes the diary display faster.")
 (defvar calendar-mark-ring nil)
 
 ;;;###autoload
-(put 'general-holidays 'risky-local-variable t)
-;;;###autoload
 (defvar general-holidays
   '((holiday-fixed 1 1 "New Year's Day")
     (holiday-float 1 1 3 "Martin Luther King Day")
@@ -650,21 +648,23 @@ somewhat; setting it to nil makes the diary display faster.")
 See the documentation for `calendar-holidays' for details.")
 
 ;;;###autoload
-(put 'local-holidays 'risky-local-variable t)
+(put 'general-holidays 'risky-local-variable t)
+
 ;;;###autoload
 (defvar local-holidays nil
   "*Local holidays.
 See the documentation for `calendar-holidays' for details.")
 
 ;;;###autoload
-(put 'other-holidays 'risky-local-variable t)
+(put 'local-holidays 'risky-local-variable t)
 ;;;###autoload
 (defvar other-holidays nil
   "*User defined holidays.
 See the documentation for `calendar-holidays' for details.")
 
 ;;;###autoload
-(put 'hebrew-holidays-1 'risky-local-variable t)
+(put 'other-holidays 'risky-local-variable t)
+
 ;;;###autoload
 (defvar hebrew-holidays-1
   '((holiday-rosh-hashanah-etc)
@@ -684,7 +684,8 @@ See the documentation for `calendar-holidays' for details.")
                21))) "\"Tal Umatar\" (evening)"))))
 
 ;;;###autoload
-(put 'hebrew-holidays-2 'risky-local-variable t)
+(put 'hebrew-holidays-1 'risky-local-variable t)
+
 ;;;###autoload
 (defvar hebrew-holidays-2
   '((if all-hebrew-calendar-holidays
@@ -706,7 +707,8 @@ See the documentation for `calendar-holidays' for details.")
         (holiday-hebrew 11 15 "Tu B'Shevat"))))
 
 ;;;###autoload
-(put 'hebrew-holidays-3 'risky-local-variable t)
+(put 'hebrew-holidays-2 'risky-local-variable t)
+
 ;;;###autoload
 (defvar hebrew-holidays-3
   '((if all-hebrew-calendar-holidays
@@ -737,9 +739,9 @@ See the documentation for `calendar-holidays' for details.")
                   (day (extract-calendar-day s-s)))
              day))
          "Shabbat Shirah"))))
-
 ;;;###autoload
-(put 'hebrew-holidays-4 'risky-local-variable t)
+(put 'hebrew-holidays-3 'risky-local-variable t)
+
 ;;;###autoload
 (defvar hebrew-holidays-4
   '((holiday-passover-etc)
@@ -756,9 +758,9 @@ See the documentation for `calendar-holidays' for details.")
         (holiday-julian 3 26 "Kiddush HaHamah"))
     (if all-hebrew-calendar-holidays
         (holiday-tisha-b-av-etc))))
-
 ;;;###autoload
-(put 'hebrew-holidays 'risky-local-variable t)
+(put 'hebrew-holidays-4 'risky-local-variable t)
+
 ;;;###autoload
 (defvar hebrew-holidays (append hebrew-holidays-1 hebrew-holidays-2
 				hebrew-holidays-3 hebrew-holidays-4)
@@ -766,7 +768,8 @@ See the documentation for `calendar-holidays' for details.")
 See the documentation for `calendar-holidays' for details.")
 
 ;;;###autoload
-(put 'christian-holidays 'risky-local-variable t)
+(put 'hebrew-holidays 'risky-local-variable t)
+
 ;;;###autoload
 (defvar christian-holidays
   '((if all-christian-calendar-holidays
@@ -785,7 +788,8 @@ See the documentation for `calendar-holidays' for details.")
 See the documentation for `calendar-holidays' for details.")
 
 ;;;###autoload
-(put 'islamic-holidays 'risky-local-variable t)
+(put 'christian-holidays 'risky-local-variable t)
+
 ;;;###autoload
 (defvar islamic-holidays
   '((holiday-islamic
@@ -818,7 +822,8 @@ See the documentation for `calendar-holidays' for details.")
 See the documentation for `calendar-holidays' for details.")
 
 ;;;###autoload
-(put 'solar-holidays 'risky-local-variable t)
+(put 'islamic-holidays 'risky-local-variable t)
+
 ;;;###autoload
 (defvar solar-holidays
   '((if (fboundp 'atan)
@@ -848,7 +853,9 @@ See the documentation for `calendar-holidays' for details.")
 See the documentation for `calendar-holidays' for details.")
 
 ;;;###autoload
-(put 'calendar-holidays 'risky-local-variable t)
+(put 'solar-holidays 'risky-local-variable t)
+
+;;;###autoload
 (defvar calendar-holidays
   (append general-holidays local-holidays other-holidays
           christian-holidays hebrew-holidays islamic-holidays
@@ -939,6 +946,9 @@ you've written to return a (possibly empty) list of the relevant VISIBLE dates
 with descriptive strings such as
 
      (((2 6 1989) \"New Moon\") ((2 12 1989) \"First Quarter Moon\") ... ).")
+
+;;;###autoload
+(put 'calendar-holidays 'risky-local-variable t)
 
 (defconst calendar-buffer "*Calendar*"
   "Name of the buffer used for the calendar.")

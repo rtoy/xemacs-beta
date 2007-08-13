@@ -260,9 +260,10 @@ update_size_hints_internal (EMACS_SHELL_WIDGET w,
 		 NULL);
 }
 
-static XtGeometryResult SuperClassRootGeometryManager (gw, request, reply)
-    Widget gw;
-    XtWidgetGeometry *request, *reply;
+static XtGeometryResult
+SuperClassRootGeometryManager (Widget gw,
+			       XtWidgetGeometry *request,
+			       XtWidgetGeometry *reply)
 {
   ShellWidgetClass swc = (ShellWidgetClass) SUPERCLASS_WIDGET_CLASS;
   ShellClassExtensionRec *scer;
@@ -286,9 +287,10 @@ static XtGeometryResult SuperClassRootGeometryManager (gw, request, reply)
   return (scer->root_geometry_manager)(gw, request, reply);
 }
 
-static XtGeometryResult RootGeometryManager (gw, request, reply)
-    Widget gw;
-    XtWidgetGeometry *request, *reply;
+static XtGeometryResult
+RootGeometryManager (Widget gw,
+		     XtWidgetGeometry *request,
+		     XtWidgetGeometry *reply)
 {
   EMACS_SHELL_WIDGET w = (EMACS_SHELL_WIDGET) gw;
   /* OK since this file is not dumped */

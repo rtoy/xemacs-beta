@@ -440,7 +440,7 @@ It serves as a menu to find any of the occurrences in this buffer.
       (save-excursion
 	(if list-matching-lines-whole-buffer
 	    (beginning-of-buffer))
-	(message (format "Searching for %s ..." regexp))
+	(message "Searching for %s ..." regexp)
 	;; Find next match, but give up if prev match was at end of buffer.
 	(while (and (not (= prevpos (point-max)))
 		    (re-search-forward regexp nil t))

@@ -159,15 +159,16 @@ character is either `(' or `)' -- `hs-forward-sexp-func' would just be
 `forward-sexp'.  For other modes such as simula, a more specialized function
 is necessary.")
 
-(defvar hs-emacs-type 'fsf
+(defvar hs-emacs-type 'lucid
   "Used to support both FSF Emacs and Xemacs.")
 
-(eval-when-compile
-  (if (string-match "xemacs\\|lucid" emacs-version)
-      (progn
-	(defvar current-menubar nil "")
-	(defun set-buffer-menubar (arg1))
-	(defun add-menu (arg1 arg2 arg3)))))
+;; This doesn't work
+;(eval-when-compile
+;  (if (string-match "XEmacs\\|Lucid" emacs-version)
+;      (progn
+;	(defvar current-menubar nil "")
+;	(defun set-buffer-menubar (arg1))
+;	(defmacro add-menu (arg1 arg2 arg3)))))
 
 
 ;;;----------------------------------------------------------------------------
@@ -417,7 +418,7 @@ variables to default values and disables the hideshow commands."
  	(if (eq hs-emacs-type 'lucid)
 	    (progn
 	      (set-buffer-menubar (copy-sequence current-menubar))
-	      (add-menu nil (car hs-menu-bar) (cdr hs-menu-bar))))
+	      (add-submenu (car hs-menu-bar) hs-menu-bar)))
 	(setq selective-display t
 	      selective-display-ellipses t)
 	(hs-grok-mode-type)

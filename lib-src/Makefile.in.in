@@ -21,22 +21,24 @@ Boston, MA 02111-1307, USA.  */
 
 /* Note: FSF Makefile.in.in does something weird so that the comments
    above a certain point in this file are in shell format instead of
-   in C format.  I don't know how the hell this is supposed to work. */
+   in C format.  How the hell is this supposed to work? */
 
-/* Avoid trouble on systems where the `SHELL' variable might be
+/* Avoid trouble on systems where the "SHELL" variable might be
    inherited from the environment. */
 SHELL = /bin/sh
 
-/* Some people use these in paths they define.  We don't want their paths
-   getting changed on them. */
+/* Some people use these in paths they define.
+   This is a horrible kludge - should we really use CPP
+   to pre-process Makefiles? */
 #undef sparc
 #undef sun
 #undef unix
 #undef sgi
 #undef NeXT
 #undef mips
+#undef i386
 
-/* ==================== Things `configure' will edit ==================== */
+/* ==================== Things "configure" will edit ==================== */
 
 CC=@CC@
 CFLAGS=@CFLAGS@
@@ -52,28 +54,28 @@ configuration=@configuration@
    subdirectories of this directory.  The default values for many of
    the variables below are expressed in terms of this one, so you may
    not need to change them.  This is set with the --prefix option to
-   `../configure'. */
+   "../configure". */
 prefix=@prefix@
 
-/* Like `prefix', but used for architecture-specific files.  This is
-   set with the --exec-prefix option to `../configure'. */
+/* Like "prefix", but used for architecture-specific files.  This is
+   set with the "--exec-prefix" option to "../configure". */
 exec_prefix=@exec_prefix@
 
 /* Where to install Emacs and other binaries that people will want to
-   run directly (like etags).  This is set with the --bindir option
-   to `../configure'. */
+   run directly (like etags).  This is set with the "--bindir" option
+   to "../configure". */
 bindir=@bindir@
 
 /* Where to install and expect executable files to be run by Emacs
    rather than directly by users, and other architecture-dependent
    data.  ${archlibdir} is usually below this.  This is set with the
-   --libdir option to `../configure'. */
+   --libdir option to "../configure". */
 libdir=@libdir@
 
 /* Where to find the source code.  This is set by the configure
-   script's `--srcdir' option.  However, the value of ${srcdir} in
+   "--srcdir" option.  However, the value of ${srcdir} in
    this makefile is not identical to what was specified with --srcdir,
-   since the variable here has `/lib-src' added at the end. */
+   since the variable here has "/lib-src" appended to the end. */
 srcdir=@srcdir@
 
 /* ==================== Emacs-specific directories ==================== */
@@ -85,7 +87,7 @@ srcdir=@srcdir@
    This path usually includes the Emacs version and configuration name,
    so that multiple configurations for multiple versions of Emacs may
    be installed at once.  This can be set with the --archlibdir option
-   to `../configure'. */
+   to "../configure". */
 archlibdir=@archlibdir@
 
 /* ==================== Utility Programs for the Build ================= */
@@ -110,7 +112,7 @@ UTILITIES= make-path wakeup profile make-docfile digest-doc \
 /* These need to be conditional on I18N3
 	make-msgfile make-po */
 
-/* Like UTILITIES, but they're not system-dependent, and should not be
+/* Like UTILITIES, but they are not system-dependent, and should not be
    deleted by the distclean target. */
 TM_SCRIPTS=tm-au tm-file tm-html tm-image tm-mpeg tm-plain tm-ps tmdecode
 SCRIPTS= rcs2log vcdiff $(TM_SCRIPTS)
@@ -138,22 +140,22 @@ SOURCES = COPYING ChangeLog Makefile.in.in README aixcc.lex emacs.csh \
    in-place location, it will not get recompiled in the not-in-place
    location.
 
-   The GNU Make `vpath' directive continues this tradition, but at
+   The GNU Make "vpath" directive continues this tradition, but at
    least lets you restrict the classes of files that it applies to.
    This allows us to kludge around the problem. */
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
 vpath %.h @srcdir@
 /* now list files that should NOT be searched in the srcdir.
-   This includes any .c or .h that's built from something else
+   This includes any .c or .h built from something else
    (e.g. a .in file). */
 /* none here */
 #else
 VPATH=@srcdir@
 #endif
 
-/* We won't really call alloca;
-   don't let the file name alloca.c get messed up.  */
+/* We will not really call alloca;
+   do not let the file name alloca.c get messed up.  */
 #ifdef alloca
 #undef alloca
 #endif
@@ -236,8 +238,8 @@ LINK_CFLAGS = C_SWITCH_SYSTEM C_SWITCH_MACHINE -Demacs -DHAVE_CONFIG_H \
    -I. -I../src -I${srcdir} -I${srcdir}/../src ${LDFLAGS} ${CFLAGS}
 CPP_CFLAGS = C_SWITCH_SYSTEM C_SWITCH_MACHINE -Demacs -DHAVE_CONFIG_H \
    -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS}
-/* Formerly -Demacs was missing, but it's needed to suppress the
-   defining of malloc to xmalloc.  [Yes it's fucked up.  Blame FSF
+/* Formerly -Demacs was missing, but it is needed to suppress the
+   defining of malloc to xmalloc.  [Yes it is fucked up.  Blame FSF
    for this.] */
 ALLOCA_CFLAGS = C_SWITCH_SYSTEM C_SWITCH_MACHINE -Demacs -DHAVE_CONFIG_H \
    -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS}
@@ -282,7 +284,7 @@ blessmail:
 
 maybe-blessmail: BLESSMAIL
 #ifdef MOVEMAIL_NEEDS_BLESSING
-/* Don't charge ahead and do it!  Let the installer decide.
+/* Do not charge ahead and do it!  Let the installer decide.
 	  ./blessmail ${archlibdir}/movemail  */
 	@if [ `wc -l <blessmail` != 2 ] ; then \
 	  dir=`sed -n -e 's/echo mail directory = \(.*\)/\1/p' blessmail`; \
@@ -311,7 +313,7 @@ ${archlibdir}: all
 	  done ; \
 	fi
 
-/* We don't need to install `wakeup' explicitly, because it will be
+/* We do not need to install "wakeup" explicitly, because it will be
    copied when this whole directory is copied.  */
 install: ${archlibdir}
 	@echo

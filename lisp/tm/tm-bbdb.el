@@ -6,7 +6,7 @@
 ;; Author: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;;         Artur Pioro <artur@flugor.if.uj.edu.pl>
 ;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
-;; Version: $Id: tm-bbdb.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;; Version: $Id: tm-bbdb.el,v 1.1.1.2 1996/12/21 20:50:46 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, BBDB
 
 ;; This file is part of tm (Tools for MIME).
@@ -28,22 +28,49 @@
 
 ;;; Code:
 
-(eval-when (compile)
-  (ignore-errors
-    (require 'bbdb)
-    (require 'bbdb-com)))
-(eval-when (load eval)
-    (require 'bbdb)
-    (require 'bbdb-com))
 (require 'std11)
 (require 'tm-ew-d)
 (require 'tm-view)
+(if (module-installed-p 'bbdb-com)
+    (require 'bbdb-com)
+  (eval-when-compile
+    ;; imported from bbdb-1.51
+    (defmacro bbdb-pop-up-elided-display ()
+      '(if (boundp 'bbdb-pop-up-elided-display)
+	   bbdb-pop-up-elided-display
+	 bbdb-elided-display))
+    (defmacro bbdb-user-mail-names ()
+      "Returns a regexp matching the address of the logged-in user"
+      '(or bbdb-user-mail-names
+	   (setq bbdb-user-mail-names
+		 (concat "\\b" (regexp-quote (user-login-name)) "\\b"))))
+    ))
 
+
+;;; @ User Variables
+;;;
+
+(defvar tm-bbdb/use-mail-extr t
+  "*If non-nil, `mail-extract-address-components' is used.
+Otherwise `tm-bbdb/extract-address-components' overrides it.")
+
+(defvar tm-bbdb/auto-create-p nil
+  "*If t, create new BBDB records automatically.
+If function, then it is called with no arguments to decide whether an
+entry should be automatically creaded.
+
+tm-bbdb uses this variable instead of `bbdb/mail-auto-create-p' or
+`bbdb/news-auto-create-p' unless other tm-MUA overrides it.")
+
+(defvar tm-bbdb/delete-empty-window nil
+  "*If non-nil, delete empty BBDB window.
+All bbdb-MUAs but bbdb-gnus display BBDB window even if it is empty.
+If you prefer behavior of bbdb-gnus, set this variable to t.
+
+For framepop users: If empty, `framepop-banish' is used instead.")
 
 ;;; @ mail-extr
 ;;;
-
-(defvar tm-bbdb/use-mail-extr t)
 
 (defun tm-bbdb/extract-address-components (str)
   (let* ((ret     (std11-extract-address-components str))
@@ -123,8 +150,6 @@
 ;;; @ BBDB functions for mime/viewer-mode
 ;;;
 
-(defvar tm-bbdb/auto-create-p nil)
-
 (defun tm-bbdb/update-record (&optional offer-to-create)
   "Return the record corresponding to the current MIME previewing message.
 Creating or modifying it as necessary. A record will be created if
@@ -153,7 +178,7 @@ the user confirms the creation."
         ))))
 
 (defun tm-bbdb/annotate-sender (string)
-  "Add a line to the end of the Notes field of the BBDB record 
+  "Add a line to the end of the Notes field of the BBDB record
 corresponding to the sender of this message."
   (interactive
    (list (if bbdb-readonly-p
@@ -184,24 +209,31 @@ This buffer will be in bbdb-mode, with associated keybindings."
 (defun tm-bbdb/pop-up-bbdb-buffer (&optional offer-to-create)
   "Make the *BBDB* buffer be displayed along with the MIME preview window(s),
 displaying the record corresponding to the sender of the current message."
-  (bbdb-pop-up-bbdb-buffer
-   (function
-    (lambda (w)
-      (let ((b (current-buffer)))
-        (set-buffer (window-buffer w))
-        (prog1 (eq major-mode 'mime/viewer-mode)
-          (set-buffer b))))))
-  (let ((bbdb-gag-messages t)
-        (bbdb-use-pop-up nil)
-        (bbdb-electric-p nil))
-    (let ((record (tm-bbdb/update-record offer-to-create))
-          (bbdb-elided-display (bbdb-pop-up-elided-display))
-          (b (current-buffer)))
-      (bbdb-display-records (if record (list record) nil))
-      (or record
-          (delete-windows-on (get-buffer "*BBDB*")))
-      (set-buffer b)
-      record)))
+  (let ((framepop (eq temp-buffer-show-function 'framepop-display-buffer)))
+    (or framepop
+        (bbdb-pop-up-bbdb-buffer
+         (function
+          (lambda (w)
+            (let ((b (current-buffer)))
+              (set-buffer (window-buffer w))
+              (prog1 (eq major-mode 'mime/viewer-mode)
+                (set-buffer b)))))))
+    (let ((bbdb-gag-messages t)
+          (bbdb-use-pop-up nil)
+          (bbdb-electric-p nil))
+      (let ((record (tm-bbdb/update-record offer-to-create))
+            (bbdb-elided-display (bbdb-pop-up-elided-display))
+            (b (current-buffer)))
+        (if framepop
+            (if record
+                (bbdb-display-records (list record))
+              (framepop-banish))
+          (bbdb-display-records (if record (list record) nil))
+          (if (and (null record)
+                   tm-bbdb/delete-empty-window)
+              (delete-windows-on (get-buffer "*BBDB*"))))
+        (set-buffer b)
+        record))))
 
 (defun tm-bbdb/define-keys ()
   (let ((mime/viewer-mode-map (current-local-map)))
@@ -225,9 +257,9 @@ displaying the record corresponding to the sender of the current message."
 (defun signature/set-bbdb-sigtype (sigtype addr)
   "Add sigtype information to BBDB."
   (let* ((bbdb-notice-hook nil)
-         (record (bbdb-annotate-message-sender 
+         (record (bbdb-annotate-message-sender
                   addr t
-                  (bbdb-invoke-hook-for-value 
+                  (bbdb-invoke-hook-for-value
                    bbdb/mail-auto-create-p)
                   t)))
     (if record
@@ -241,7 +273,7 @@ displaying the record corresponding to the sender of the current message."
          (addr (and to
                     (car (cdr (mail-extract-address-components to)))))
          (sigtype (signature/get-bbdb-sigtype addr))
-         return  
+         return
          )
     (if addr
         (if verbose

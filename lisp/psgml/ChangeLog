@@ -1,3 +1,8 @@
+Sat Dec 21 11:59:34 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* psgml-parse.el (sgml-final): Moved up in file to make the byte
+	compiler happier.
+
 Tue Sep 10 17:52:40 1996  Steven L Baur  <steve@miranova.com>
 
 	* Various files: Sync'ed with 1.0a12

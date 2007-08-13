@@ -96,8 +96,8 @@
   (define-key Buffer-menu-mode-map "t" 'Buffer-menu-visit-tags-table)
   (define-key Buffer-menu-mode-map "%" 'Buffer-menu-toggle-read-only)
   (define-key Buffer-menu-mode-map "g" 'revert-buffer)
-  (define-key Buffer-menu-mode-map [mouse-2] 'Buffer-menu-mouse-select)
-  (define-key Buffer-menu-mode-map [mouse-3] 'Buffer-menu-popup-menu)
+  (define-key Buffer-menu-mode-map 'button2 'Buffer-menu-mouse-select)
+  (define-key Buffer-menu-mode-map 'button3 'Buffer-menu-popup-menu)
   )
 
 ;; Buffer Menu mode is suitable only for specially formatted data.
@@ -489,7 +489,10 @@ to generate such a string.  This variable is always buffer-local.")
 (make-variable-buffer-local 'list-buffers-identification)
 
 ;; XEmacs
-(defvar list-buffers-directory)
+;;;###autoload
+(defvar list-buffers-directory nil)
+
+;;;###autoload
 (make-variable-buffer-local 'list-buffers-directory)
 
 ;; #### not synched

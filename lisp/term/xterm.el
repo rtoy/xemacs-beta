@@ -4,6 +4,7 @@
 ;; Keywords: terminals
 
 ;; Copyright (C) 1995 Free Software Foundation, Inc.
+
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -66,23 +67,23 @@
 (define-key function-key-map "\eOC" [right])
 (define-key function-key-map "\eOD" [left])
 
-(define-key function-key-map "\eOp" [kp_0])
-(define-key function-key-map "\eOq" [kp_1])
-(define-key function-key-map "\eOr" [kp_2])
-(define-key function-key-map "\eOs" [kp_3])
-(define-key function-key-map "\eOt" [kp_4])
-(define-key function-key-map "\eOu" [kp_5])
-(define-key function-key-map "\eOv" [kp_6])
-(define-key function-key-map "\eOw" [kp_7])
-(define-key function-key-map "\eOx" [kp_8])
-(define-key function-key-map "\eOy" [kp_9])
+(define-key function-key-map "\eOp" [kp-0])
+(define-key function-key-map "\eOq" [kp-1])
+(define-key function-key-map "\eOr" [kp-2])
+(define-key function-key-map "\eOs" [kp-3])
+(define-key function-key-map "\eOt" [kp-4])
+(define-key function-key-map "\eOu" [kp-5])
+(define-key function-key-map "\eOv" [kp-6])
+(define-key function-key-map "\eOw" [kp-7])
+(define-key function-key-map "\eOx" [kp-8])
+(define-key function-key-map "\eOy" [kp-9])
 
-(define-key function-key-map "\eOk" [kp_add])
-(define-key function-key-map "\eOm" [kp_subtract])
-(define-key function-key-map "\eOM" [kp_enter])
-(define-key function-key-map "\eOj" [kp_multiply])
-(define-key function-key-map "\eOo" [kp_divide])
-(define-key function-key-map "\eOn" [kp_decimal])
+(define-key function-key-map "\eOk" [kp-add])
+(define-key function-key-map "\eOm" [kp-subtract])
+(define-key function-key-map "\eOM" [kp-enter])
+(define-key function-key-map "\eOj" [kp-multiply])
+(define-key function-key-map "\eOo" [kp-divide])
+(define-key function-key-map "\eOn" [kp-decimal])
 
 ;; If you use the X resource -- XTerm*sunFunctionKeys: on -- you may
 ;; need these.
@@ -113,3 +114,5 @@
 (define-key function-key-map "\e[2z" [insert])
 (define-key function-key-map "\e[5z" [prior])
 (define-key function-key-map "\e[6z" [next])
+
+;;; xterm.el ends here

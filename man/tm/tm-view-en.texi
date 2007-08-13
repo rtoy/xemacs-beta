@@ -1,0 +1,1045 @@
+\input texinfo.tex
+@setfilename tm-view-en.info
+@settitle{tm-view 7.77 Reference Manual (English Version)}
+@titlepage
+@title tm-view 7.77 Reference Manual (English Version)
+@author MORIOKA Tomohiko <morioka@@jaist.ac.jp>
+@subtitle 1996/10/11
+@end titlepage
+@node Top, Introduction, (dir), (dir)
+@top tm-view 7.77 Reference Manual (English Version)
+
+@ifinfo
+
+This file documents tm-view, a MIME Viewer for GNU Emacs.
+@end ifinfo
+
+@menu
+* Introduction::                What is tm-view?
+* MIME display::                Structure of display in mime/viewer-mode
+* mime/viewer-mode::            Navigation in mime/viewer-mode
+* method::                      Mechanism of decoding
+* Two buffers for an article::  raw-article-buffer and preview-buffer
+* API::                         Functions to decode MIME message
+* Concept Index::               
+* Function Index::              
+* Variable Index::              
+@end menu
+
+@node Introduction, MIME display, Top, Top
+@chapter What is tm-view?
+
+The tm-view is a general MIME viewer running on GNU Emacs.@refill
+
+tm-view provides the major-mode called @code{mime/viewer-mode}
+(@ref{mime/viewer-mode}) to read MIME message for MUA.  MUA
+(@ref{(tm-en)MUA}) implementer can use it to add MIME function.@refill
+
+tm-view is a user interface kernel to view and navigate MIME message.
+tm-view drives some programs to navigate each content-type
+(@ref{(tm-en)content-type})s, they are called
+@cindex{method}@strong{method} (@ref{method}).  tm-view calls some
+programs to display each contents and headers in preview buffer, they
+are called @cindex{filter}@strong{filter} (@ref{Two buffers for an
+article}).  Method and filters are tm-view application program.  They
+expand tm-view to treat various kinds of MIME types.
+
+
+@node MIME display, mime/viewer-mode, Introduction, Top
+@chapter Structure of display in mime/viewer-mode
+
+In mime/viewer-mode (@ref{mime/viewer-mode}), following are displayed
+for each parts:@refill
+
+@example
+	[content-button]
+	(content-header)
+	
+	(content-body)
+	(content-separator)
+@end example
+
+You can change design or stop to display if you specify for each
+conditions, such as content-types.@refill
+
+Example:
+
+@example
+From: morioka@@jaist.ac.jp (MORIOKA Tomohiko)
+Subject: Re: Question
+Newsgroups: zxr.message.mime
+Date: 22 Oct 93 11:02:44
+Mime-Version: 1.0
+Organization: Japan Advanced Institute of Science and Technology,
+        Ishikawa, Japan
+
+[1  (text/plain)]
+  How to compose MIME message in MIME-Edit mode.
+
+  Press `C-c C-x ?' then help message will be displayed:
+
+C-c C-x C-t	insert a text message.
+C-c C-x TAB	insert a (binary) file.
+C-c C-x C-e	insert a reference to external body.
+C-c C-x C-v	insert a voice message.
+C-c C-x C-y	insert a mail or news message.
+C-c C-x RET	insert a mail message.
+C-c C-x C-s	insert a signature file at end.
+C-c C-x t	insert a new MIME tag.
+C-c C-x a	enclose as multipart/alternative.
+C-c C-x p	enclose as multipart/parallel.
+C-c C-x m	enclose as multipart/mixed.
+C-c C-x d	enclose as multipart/digest.
+C-c C-x s	enclose as PGP signed.
+C-c C-x e	enclose as PGP encrypted.
+C-c C-x C-k	insert PGP public key.
+C-c C-x C-p	preview editing MIME message.
+...
+
+So press `C-c C-x C-i' and specify file name you want to include.
+
+  MIME encoding for binary file is normally Base64.
+
+[2  (image/gif)]
+
+[3  (text/plain)]
+
+  In this way, it is finish a message attaching a picture.
+
+======================== A cup of Russian tea ========================
+============  * not by jam, not by marmalade, by honey *  ============
+============               MORIOKA Tomohiko               ============
+=============== Internet E-mail: <morioka@@jaist.ac.jp> ===============
+@end example
+
+
+
+@menu
+* content-button::              
+* content-header::              
+* content-body::                
+* content-separator::           
+@end menu
+
+@node content-button, content-header, MIME display, MIME display
+@section content-button
+
+content-subject displays abstract for the part.  It is placed in top of
+the part.@refill
+
+In default, it is displayed following design:
+
+@example
+        [1.3 test (text/plain)]
+@end example
+
+
+First number field represents position of a content in the part.  It is
+called @cindex{content-number}@strong{content-number}.  It can be
+considered as the chapter number in the message.@refill
+
+Second string part represents title.  It is created by following:
+
+@enumerate
+@item
+name paramater or x-name parameter in Content-Type field
+(@ref{(tm-en)Content-Type field})
+@item
+Content-Description field (@ref{(tm-en)Content-Description field}) or
+Subject field
+@item
+ filename of uuencode
+@end enumerate
+
+
+If they are not exists, space is displayed.@refill
+
+Third parenthesis part represents content-type/subtype of the part.  If
+it is non-MIME part, @code{nil} is displayed.@refill
+
+Content-button is used like icon when content-header
+(@ref{content-header}) and content-body (@ref{content-body}) are hidden.
+For example:
+
+@example
+        [2  (image/gif)]
+@end example
+
+@noindent
+if you press @kbd{v} key, GIF image is displayed.
+
+If mouse operations are available, you can press content-button by mouse
+button-2 (center button of 3 button-mouse) to play, similarly to press
+@kbd{v} key. (cf. @ref{mime/viewer-mode}) @refill
+
+By the way, it is annoying to display content-button if content-header
+is displayed.  So tm-view provides a mechanism to specify conditions
+to display content-button.
+
+
+@defvar mime-viewer/content-button-ignored-ctype-list
+
+List of content-types.@refill
+
+If content-type of a part is a member of this list, its content-button
+is not displayed.
+@end defvar
+
+
+
+@node content-header, content-body, content-button, MIME display
+@section content-header
+
+A content header displays the header portion of a part in the
+preview-buffer.  However it is annoying to display header for every
+parts, so tm-view provides a mechanism to specify its condition.@refill
+
+When the function @code{mime-viewer/header-visible-p} returns @code{t}
+for reversed-content-number of a part, content-header is
+displayed.@refill
+
+This judge function returns @code{t} when a part is root or content-type
+of its parent is a member of the variable
+@code{mime-viewer/childrens-header-showing-Content-Type-list}.@refill
+
+If you want to change this condition, please redefine it.  Notice that
+it refers variable
+@code{mime-viewer/childrens-header-showing-Content-Type-list}, however
+if you redefine function @code{mime-viewer/header-visible-p}, it may not
+work.  So if you want to redefine it, it should be refer variable
+@code{mime-viewer/childrens-header-showing-Content-Type-list}.@refill
+
+When content-header is displayed, content-header are formated by the
+program called by
+@cindex{content-header-filter}@strong{content-header-filter}.
+Content-header-filter is searched from variable
+@code{mime-viewer/content-header-filter-alist}.  Its key is major-mode
+of the raw-article-buffer (@ref{raw-article-buffer}).  If not found,
+function @code{mime-viewer/default-content-header-filter} is
+called.@refill
+
+
+@defvar mime-viewer/childrens-header-showing-Content-Type-list
+
+List of content-types.  If content-type of parent of a part is a member
+of this variable, its content-header is displayed.  Default value is
+@code{'("message/rfc822" "message/news")}.@refill
+
+This variable is referred by the function
+@code{mime-viewer/header-visible-p}.
+@end defvar
+
+
+
+@defun mime-viewer/header-visible-p rcnum cinfo  &optional  ctype
+
+Returns @code{t} if a part which reversed-content-number is @var{rcnum}
+in content-info @var{cinfo} is displayed.@refill
+
+If you know content-type, you can specify by @var{ctype}.
+@end defun
+
+
+
+@defvar mime-viewer/content-header-filter-alist
+
+Association-list whose key is major-mode of a raw-article-buffer, value
+is content-header-filter.
+@end defvar
+
+
+
+@defun mime-viewer/default-content-header-filter
+
+It is called when content-header-filter is not found in variable
+@code{mime-viewer/content-header-filter-alist}.@refill
+
+It refers @code{mime-viewer/ignored-field-regexp}.
+@end defun
+
+
+
+@defvar mime-viewer/ignored-field-list
+
+List of regular expression to represent invisible fields even if
+content-header is displayed.@refill
+
+Variable @code{mime-viewer/ignored-field-regexp} is created from
+it.@refill
+
+Please use function @code{tm:add-fields} or @code{tm:delete-fields} to
+set it.
+@end defvar
+
+
+
+@node content-body, content-separator, content-header, MIME display
+@section content-body
+
+@cindex{content-body}@strong{content-body} represents content of the
+part.@refill
+
+tm-view does not display raw content body.  For example, if a content
+has binary, it is hidden.  If a content has text/enriched, it is
+formated.  Namely content body is hidden or formated.@refill
+
+Function @code{mime-viewer/body-visible-p} is a judge function whether
+content-body of a content is displayed.  If it returns @code{nil},
+content-body is hidden.  In default, it returns non-@code{nil} when
+content-type of a part is a member of variable
+@code{mime-viewer/default-showing-Content-Type-list}.@refill
+
+When content-body of a content is displayed, content-body is formated by
+@cindex{content-filter}@strong{content-filter}.  Content-filter is
+searched from variable @code{mime-viewer/content-filter-alist}.  At this
+time, major-mode of the raw-article-buffer (@ref{raw-article-buffer}) is
+used as the key.
+
+If it is not found, function
+@code{mime-viewer/default-content-filter} is called.
+
+
+@defvar mime-viewer/default-showing-Content-Type-list
+
+List of content-type.  If content-type of a part is a member of this
+variable, its body is displayed.
+@end defvar
+
+
+
+@defun mime-viewer/body-visible-p rcnum cinfo  &optional  ctype
+
+Return non-@code{nil}, if content-type of a part is displayed.
+@var{rcnum} is reversed-content-number of a part.  @var{cinfo} is
+content-info of the message.  If you know content-type of a part, you
+can specify it as argument @var{ctype}.
+@end defun
+
+
+
+@defvar mime-viewer/content-filter-alist
+
+Association-list whose key is major-mode of a raw-article-buffer, value
+is content-filter.
+@end defvar
+
+
+
+@defun mime-viewer/default-content-filter rcnum cinfo ctype params subj
+
+It is called when content-body of a part should be displayed and
+content-filter is not found in
+@code{mime-viewer/content-filter-alist}.@refill
+
+In default, it does nothing.
+@end defun
+
+
+
+@node content-separator,  , content-body, MIME display
+@section content-separator
+
+@cindex{content-separator}@strong{content-separator} is displayed to
+represent boundary of contents.@refill
+
+Content-separator is displayed by function
+@code{mime-viewer/default-content-separator}.  In default, it displays
+line-break when content-header and content-body are not
+displayed.@refill
+
+If you want to change this condition, please redefine this function.
+
+
+@defun mime-viewer/default-content-separator rcnum cinfo ctype params subj
+
+Display content-separator.  @var{cnum} is content-number of a content.
+@var{cinfo} is content-info of the message.  @var{ctype} is content-type
+of a content.  @var{params} is Content-Type field parameters of a
+content.  @var{subj} is subject.@refill
+
+In default, it displays line-break when content-header and content-body
+are not displayed.
+@end defun
+
+
+
+@node mime/viewer-mode, method, MIME display, Top
+@chapter Navigation in mime/viewer-mode
+
+@code{mime/viewer-mode} has following functions:@refill
+
+@table @kbd
+@item @key{u}
+goes to the upper content (returns to the Summary mode if the cursor
+is sitting on the top content (*1))
+
+@item @key{p}
+goes to the previous content
+
+@item @key{n}
+goes to the next content
+
+@item @key{SPC}
+scrolls up
+
+@item @key{M-SPC}
+scrolls down
+
+@item @key{DEL}
+scrolls down
+
+@item @key{RET}
+goes to the next line
+
+@item @key{M-RET}
+goes to the previous line
+
+@item @key{<}
+goes to the beginning of message
+
+@item @key{>}
+goes to the end of message
+
+@item @key{v}
+playbacks a part (*2)
+
+@item @key{e}
+extracts a file from a part (*2)
+
+@item @key{C-c C-p}
+prints a part (*2)
+
+@item @key{f}
+displays X-Face in the message
+
+@item @key{mouse-button-2}
+drives mouse button in preview-buffer.
+
+For content-button, it playbacks a part (*2)@refill
+
+For URL-button, it drives WWW browser@refill
+
+@end table
+
+@noindent
+@strong{[Notice]}
+@quotation
+
+(*1) Not return to the Summary mode unless tm-view has been setup using
+tm-mh-e, tm-vm, gnus-mime, tm-gnus, tm-rmail etc.@refill
+
+(*2) Actual playback/extract/print will be performed by a method.
+@end quotation
+
+
+
+@node method, Two buffers for an article, mime/viewer-mode, Top
+@chapter Mechanism of decoding
+
+In @code{mime/viewer-mode}, you can do play (@kbd{v}), extract
+(@kbd{e}), or print (@kbd{C-c C-p}) for each parts.  These operations
+are called @cindex{decoding operation(s) (for a part)}@strong{decoding
+operation(s) (for a part)}.  And kind of decoding operations are called
+@cindex{decoding-mode}@strong{decoding-mode}.@refill
+
+When decoding operation is driven, tm-view calls a procedure matched for
+the condition, such as content-type (@ref{(tm-en)content-type}) of the
+part or its environment.  This procedure is called
+@cindex{method}@strong{method}.@refill
+
+There are two kinds of methods.  One is Emacs Lisp function, called
+@cindex{internal method}@strong{internal method}.  Another one is
+external program, called @cindex{external method}@strong{external
+method}.@refill
+
+Internal method operates in Emacs, so it can do carefully.@refill
+
+External method is called as asynchronous process, so Emacs does not
+wait while method is running.  So it is good for big data, such as
+audio, image or video.
+
+
+@menu
+* decoding-condition::          Setting decoding condition for parts
+* environment variables::       Environment variables
+@end menu
+
+@node decoding-condition, environment variables, method, method
+@section Setting decoding condition for parts
+
+When decoding operation is driven, tm-view calls a method matched for
+the condition searched from the variable
+@code{mime/content-decoding-condition}.@refill
+
+Variable @code{mime/content-decoding-condition} is defined as a list
+with the following syntax:@refill
+
+@lisp
+        (condition_1 condition_2 ...)
+@end lisp
+
+Each condition are association-list with the following syntax:@refill
+
+@lisp
+        ((field-type_1 . value_1)
+         (field-type_2 . value_2)
+         ...)
+@end lisp
+
+For example, if you want to call the external method named tm-plain to
+decode every text/plain (@ref{(tm-en)text/plain}) type parts, you can
+define the condition like:@refill
+
+@lisp
+        ((type . "text/plain")
+         (method "tm-plain" nil 'file 'type 'encoding 'mode 'name))
+@end lisp
+
+This condition definition will match all parts whose content-type
+(@ref{(tm-en)content-type}) are text/plain.  Here is an another
+example:@refill
+
+@lisp
+        ((type . "text/plain")
+         (method "tm-plain" nil 'file 'type 'encoding 'mode 'name)
+         (mode . "play"))
+@end lisp
+
+This will match the part whose type is text/plain and the mode is
+play.@refill
+
+Here is an another example:@refill
+
+@lisp
+        ((method "metamail" t "-m" "tm" "-x" "-d" "-z" "-e" 'file)
+         (mode . "play"))
+@end lisp
+
+This will match all parts which have a mode of play.@refill
+
+The conditions defined in a variable
+@code{mime/content-decoding-condition} are examined from top to
+bottom.  The first matching condition becomes valid and the method
+specified in that condition definition will be executed.
+
+
+@menu
+* method value::                Format of method value
+* Example of decoding-condition::  
+@end menu
+
+@node method value, Example of decoding-condition, decoding-condition, decoding-condition
+@subsection Format of method value
+
+You can specify the method field of the decoding-condition definition in
+two different ways,@refill
+
+@lisp
+        (method . SYMBOL)
+@end lisp
+
+@noindent
+or
+
+@lisp
+        (method  STRING  FLAG  arg1  arg2  ...)
+@end lisp
+
+@noindent
+can be accepted.
+
+When a symbol is specified in the method field, a function whose name is
+SYMBOL will be called as an internal method.@refill
+
+When a list is specified in the method field, it will be called as an
+external method.@refill
+
+The list below shows the meaning of the parameters when the external
+method is specified in the method field.@refill
+
+@table @samp
+@item STRING
+name of an external method
+
+@item FLAG
+If @code{t}, both the content-header and the content-body
+are passed to an external method.
+
+If @code{nil}, only the content-body is passed to an external
+method.@refill
+
+@item ARGUMENTs
+list of arguments passed to an external method
+
+@end table
+
+An argument passed to an external method can be in one of the following
+formats:@refill
+
+@table @samp
+@item STRING
+string itself
+
+@item 'SYMBOL
+value gotten using SYMBOL as a key from decoding-condition
+
+@item 'STRING
+value gotten using STRING as a key from decoding-condition
+
+@end table
+
+@code{'SYMBOL} can be one of the following:@refill
+
+@table @samp
+@item 'file
+name of a file holding the original content
+
+@item 'type
+content-type/sub-type of Content-Type field
+
+@item 'encoding
+field body of Content-Transfer-Encoding field
+
+@item 'mode
+decoding-mode
+
+@item 'name
+name of a file created by decode operation
+
+@end table
+
+
+@code{'STRING} is used to search a parameter of the Content-Type
+field whose name matches with it, and pass the value of that parameter
+to the external method.
+
+
+@node Example of decoding-condition,  , method value, decoding-condition
+@subsection Example of decoding-condition
+
+Following is an example of decoding-condition:
+
+@lisp
+(defvar mime/content-decoding-condition
+  '(((type . "text/plain")
+     (method "tm-plain" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "text/x-latex")
+     (method "tm-latex" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "audio/basic")
+     (method "tm-au"    nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/gif")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/jpeg")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/tiff")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-tiff")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-xbm")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-pic")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "video/mpeg")`
+     (method "tm-mpeg"  nil 'file 'type 'encoding 'mode 'name))
+    ((type . "application/octet-stream")
+     (method "tm-file"  nil 'file 'type 'encoding 'mode 'name))
+    ((type . "message/partial")
+     (method . mime/decode-message/partial-region))
+    ((method "metamail" t
+             "-m" "tm" "-x" "-d" "-z" "-e" 'file)(mode . "play"))
+    ))
+@end lisp
+
+
+For example, if you want to use metamail to decode any contents,
+
+@lisp
+(setq mime/content-decoding-condition
+      '(
+        ((method "metamail" t "-m" "tm" "-x" "-d" "-z" "-e" 'file))
+       ))
+@end lisp
+
+@noindent
+will work.
+
+Variable @code{mime/content-decoding-condition} provides you of very
+flexible way to define the conditions of decoding.  It can be simple if
+you only need the a few decoding methods, while it can be very
+complicated if you want to use the separate decoding method for each
+type/mode combination.@refill
+
+Following function may be useful to set decoding-condition.  It is a
+function of @file{tl-atype.el}.
+
+
+@defun set-atype symbol alist
+
+Add condition @var{alist} to @var{symbol}.
+
+@noindent
+@strong{[Example]}
+@quotation
+
+@lisp
+(set-atype 'mime/content-decoding-condition
+	   '((type . "message/external-body")
+	     ("access-type" . "anon-ftp")
+	     (method . mime/decode-message/external-ftp)
+	     ))
+@end lisp
+@end quotation
+@end defun
+
+
+
+@node environment variables,  , decoding-condition, method
+@section Environment variables
+
+Standard methods of tm-view reference some environment variables.  You
+can specify them to customize.
+
+@table @var
+@item TM_TMP_DIR
+Directory for temporary files or extracted files.  If it is omitted,
+@file{/tmp/} is used.
+
+@item VIDEO_DITHER
+Dither for mpeg_play.  If it is omitted, `gray' is used.
+
+@item TM_WWW_BROWSER
+WWW browser name.  If it is omitted, `netscape' is used.
+
+@end table
+
+
+
+@node Two buffers for an article, API, method, Top
+@chapter raw-article-buffer and preview-buffer
+
+tm-view managements two buffers, one is for raw message called
+@cindex{raw-article-buffer}@strong{raw-article-buffer}, another one is
+to preview for user called
+@cindex{preview-buffer}@strong{preview-buffer}.  major-mode of
+raw-article-buffer is same as major-mode for article of original MUA,
+major-mode of preview-buffer is @code{mime/viewer-mode}
+(@ref{mime/viewer-mode}).@refill
+
+When called @code{mime/viewer-mode}, tm-view analyzes
+raw-article-buffer, and sets its result to the variable
+@code{mime::article/content-info}.@refill
+
+After that, tm-view create a preview-buffer corresponded to the
+raw-article-buffer.  As this time, tm-view modifies header and body of
+each parts of the message by specified conditions.  Filter program for
+header is called @cindex{header-filter}@strong{header-filter}
+(@ref{content-header}), filter program for body is called
+@cindex{content-filter}@strong{content-filter} (@ref{content-body}), and
+they are called @cindex{filter}@strong{filter}.@refill
+
+When preview-buffer is made, buffer local variable of preview-buffer
+@code{mime::preview/content-list} is made to register structure of
+preview-buffer.  tm-view manages message by
+@code{mime::article/content-info} in raw-article-buffer and
+@code{mime::preview/content-list} in preview-buffer.@refill
+
+@noindent
+@strong{[Notice]}
+@quotation
+In this document, I call ``content-type'' as content-type/subtype of
+Content-Type field.
+@end quotation
+
+
+
+@menu
+* raw-article-buffer::          buffer local variables of raw-article-buffer
+* preview-buffer::              Buffer local variables of preview-buffer
+@end menu
+
+@node raw-article-buffer, preview-buffer, Two buffers for an article, Two buffers for an article
+@section buffer local variables of raw-article-buffer
+
+@deffn{Structure} mime::content-info rcnum point-min point-max type parameters encoding children
+
+structure to represent MIME content in raw-article-buffer.  It is called
+by @cindex{content-info}@strong{content-info}.@refill
+
+Please use reference function @code{mime::content-info/SLOT-NAME} to
+reference slot of content-info.  Their argument is only
+content-info.@refill
+
+Following is a list of slots of the structure:
+
+@table @var
+@item rcnum
+``reversed content-number'' (list)
+
+@item point-min
+beginning point of region in raw-article-buffer
+
+@item point-max
+end point of region in raw-article-buffer
+
+@item type
+content-type/sub-type (string or nil)
+
+@item parameters
+parameter of Content-Type field (association list)
+
+@item encoding
+Content-Transfer-Encoding (string or nil)
+
+@item children
+parts included in this part (list of content-infos)
+
+@end table
+
+If a part includes other parts in its contents, such as multipart or
+message/rfc822, content-infos of other parts are included in
+@var{children}, so content-info become a tree.
+@end deffn
+
+
+@defvar mime::article/content-info
+
+result of MIME parsing of raw-article-buffer (content-info)
+@end defvar
+
+
+@defvar mime::article/preview-buffer
+
+preview-buffer corresponded by this buffer
+@end defvar
+
+
+@defun mime-article/point-content-number point  &optional  cinfo
+
+In a region managed by content-info @var{cinfo}, it returns
+content-number corresponded by @var{point}.@refill
+
+If @var{cinfo} is omitted, @code{mime::article/content-info} is used as
+default value.
+@end defun
+
+
+@defun mime-article/rcnum-to-cinfo rcnum  &optional  cinfo
+
+In a region managed by content-info @var{cinfo}, it returns content-info
+corresponded by reversed-content-number @var{rcnum}.@refill
+
+If @var{cinfo} is omitted, @code{mime::article/content-info} is used as
+default value.
+@end defun
+
+
+@defun mime-article/cnum-to-cinfo rcnum  &optional  cinfo
+
+In a region managed by content-info @var{cinfo}, it returns content-info
+corresponded by content-number @var{rcnum}.@refill
+
+If @var{cinfo} is omitted, @code{mime::article/content-info} is used as
+default value.
+@end defun
+
+
+@defun mime/flatten-content-info  &optional  cinfo
+
+It returns flatten list of content-info from content-info @var{cinfo}
+tree.@refill
+
+If @var{cinfo} is omitted, @code{mime::article/content-info} is used as
+default value.
+@end defun
+
+
+
+@node preview-buffer,  , raw-article-buffer, Two buffers for an article
+@section Buffer local variables of preview-buffer
+
+@defvar mime::preview/mother-buffer
+
+Mother buffer of this preview-buffer.
+@end defvar
+
+
+@deffn{Structure} mime::preview-content-info point-min point-max buffer content-info
+
+structure to represent MIME content in preview-buffer.  It is called by
+@cindex{preview-content-info}@strong{preview-content-info}.@refill
+
+Please use reference function
+@code{mime::preview-content-info/SLOT-NAME} to reference slot of
+preview-content-info.  Their argument is only
+preview-content-info.@refill
+
+Following is a list of slots of the structure:
+
+@table @var
+@item point-min
+beginning point of region in preview-buffer
+
+@item  point-max
+end point of region in preview-buffer
+
+@item buffer
+raw-article-buffer corresponding a part
+
+@item content-info
+content-info corresponding a part
+
+@end table
+@end deffn
+
+
+
+@defvar mime::preview/content-list
+
+List of preview-content-info to represent structure of this
+preview-buffer.
+@end defvar
+
+
+
+@defvar mime::preview/article-buffer
+
+raw-article-buffer corresponded by this preview-buffer.
+@end defvar
+
+
+
+@defvar mime::preview/original-major-mode
+
+major-mode of original buffer.
+@end defvar
+
+
+
+@defvar mime::preview/original-window-configuration
+
+window-configuration just before made this preview-buffer.
+@end defvar
+
+
+
+@defun mime-preview/point-pcinfo point  &optional  pcl
+
+In a region of preview-buffer managed by preview-content-info @var{pcl},
+it returns preview-content-info corresponded by @var{point}.@refill
+
+If @var{cinfo} is omitted, @code{mime::preview/content-list} is used.
+@end defun
+
+
+
+@node API, Concept Index, Two buffers for an article, Top
+@chapter Functions to decode MIME message
+
+tm-view provides some available functions to decode and navigate MIME
+message to each MUA (@ref{(tm-en)MUA})s.@refill
+
+There are 2 kinds of functions, one is for MIME preview, another one is
+to decode RFC 1522 encoded-word (@ref{(tm-en)encoded-word}).
+
+
+@menu
+* API about MIME preview::      Function to preview MIME message
+* encoded-word decoding::       encoded-word decoder
+@end menu
+
+@node API about MIME preview, encoded-word decoding, API, API
+@section Function to preview MIME message
+
+
+@deffn{Command} mime/viewer-mode &optional  mother ctl encoding ibuf obuf mother-keymap
+
+Parse @var{ibuf} as a MIME message, and create preview-buffer into
+@var{obuf} to display to user, then enter @code{mime/viewer-mode}
+(@ref{mime/viewer-mode}).@refill
+
+If @var{ibuf} is omitted, current buffer is used.@refill
+
+@var{mother} is used to specify original raw-article-buffer.  It may be
+useful when a raw-article-buffer is assembled from message/partial
+messages.@refill
+
+@var{ctl} is used to specify Content-Type field
+(@ref{(tm-en)Content-Type field}) information.  Its format is output
+format of @code{mime/Content-Type}.  When @var{ctl} is specified,
+tm-view uses it instead of Content-Type field of the
+raw-article-buffer.@refill
+
+@var{encoding} is used to specify field-body of
+Content-Transfer-Encoding field.  When is is specified, tm-view uses it
+instead of Content-Type field of the raw-article-buffer.@refill
+
+If @var{mother-keymap} is specified, keymap of @code{mime/viewer-mode}
+includes it.
+@end deffn
+
+
+
+@node encoded-word decoding,  , API about MIME preview, API
+@section encoded-word decoder
+
+tm-view has functions to decode RFC 1522 encoded-word
+(@ref{(tm-en)encoded-word}).
+
+
+@deffn{Command} mime/decode-message-header
+
+It decodes encoded-words in message header of current buffer.@refill
+
+If an encoded-word is broken or invalid, or it has non supported MIME
+charset (@ref{(tm-en)MIME charset}), it is not decoded.
+@end deffn
+
+
+
+@deffn{Command} mime-eword/decode-region start end  &optional  unfolding must-unfold
+
+It decodes encoded-words in region @var{start} to @var{end}.@refill
+
+If an encoded-word is broken or invalid, or it has non supported MIME
+charset (@ref{(tm-en)MIME charset}), it is not decoded.@refill
+
+If @var{unfolding} is non-nil, it unfolds folded fields.@refill
+
+If @var{must-fold} is non-nil and decoded result of an encoded-word has
+folding or raw CR or LF, it unfolds or delete raw CR or LF.
+@end deffn
+
+
+
+@defun mime-eword/decode-string string  &optional  must-unfold
+
+It decodes encoded-words in @var{string} and returns decoded
+string.@refill
+
+If an encoded-word is broken or invalid, or it has non supported MIME
+charset (@ref{(tm-en)MIME charset}), it is not decoded.@refill
+
+If @var{string} is folded, it unfolds @var{string} before
+decoding.@refill
+
+If @var{must-fold} is non-nil and decoded result of an encoded-word has
+folding or raw CR or LF, it unfolds or delete raw CR or LF.
+@end defun
+
+
+
+@node Concept Index, Function Index, API, Top
+@chapter Concept Index
+
+@printindex cp
+
+@node Function Index, Variable Index, Concept Index, Top
+@chapter Function Index
+
+@printindex fn
+
+@node Variable Index,  , Function Index, Top
+@chapter Variable Index
+
+@printindex vr
+@bye

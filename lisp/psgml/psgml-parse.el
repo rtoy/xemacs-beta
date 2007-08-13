@@ -1,5 +1,5 @@
 ;;;; psgml-parse.el --- Parser for SGML-editing mode with parsing support
-;; $Id: psgml-parse.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
+;; $Id: psgml-parse.el,v 1.1.1.2 1996/12/21 20:50:41 steve Exp $
 
 ;; Copyright (C) 1994, 1995 Lennart Staflin
 
@@ -465,6 +465,11 @@ to point to the next scratch buffer.")
    (t					;state is a and-state
     (sgml-get-and-move state token))))
 
+(defsubst sgml-final (state)
+  (if (sgml-normal-state-p state)
+      (sgml-state-final-p state)
+    (sgml-final-and state)))
+
 (defun sgml-get-and-move (state token)
   ;; state is a and-state
   (let ((m (sgml-get-move (sgml-and-state-substate state) token)))
@@ -502,11 +507,6 @@ If this is not possible, but all DFAS are final, move by TOKEN in NEXT."
               nconc (sgml-tokens-of-moves (sgml-state-reqs s)))
         (sgml-tokens-of-moves (sgml-state-reqs (sgml-and-state-next state))))))
 
-
-(defsubst sgml-final (state)
-  (if (sgml-normal-state-p state)
-      (sgml-state-final-p state)
-    (sgml-final-and state)))
 
 (defun sgml-final-and (state)
   (and (sgml-final (sgml-and-state-substate state))

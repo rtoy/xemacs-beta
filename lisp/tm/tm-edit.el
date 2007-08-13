@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.1.1.1 $
+;; Version: $Revision: 1.1.1.2 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -29,19 +29,19 @@
 ;;; Commentary:
 
 ;; This is an Emacs minor mode for editing Internet multimedia
-;; messages formatted in MIME (RFC 1521 and RFC 1522). All messages in
-;; this mode are composed in the tagged MIME format, that are
-;; described in the following examples. The messages composed in the
-;; tagged MIME format are automatically translated into a MIME
-;; compliant message when exiting the mode.
+;; messages formatted in MIME (RFC 2045, 2046, 2047, 2048 and 2049).
+;; All messages in this mode are composed in the tagged MIME format,
+;; that are described in the following examples.  The messages
+;; composed in the tagged MIME format are automatically translated
+;; into a MIME compliant message when exiting the mode.
 
 ;; Mule (a multilingual extension to Emacs 18 and 19) has a capability
 ;; of handling multilingual text in limited ISO-2022 manner that is
 ;; based on early experiences in Japanese Internet community and
-;; resulted in RFC 1468 (ISO-2022-JP charset for MIME). In order to
+;; resulted in RFC 1468 (ISO-2022-JP charset for MIME).  In order to
 ;; enable multilingual capability in single text message in MIME,
 ;; charset of multilingual text written in Mule is declared as either
-;; `ISO-2022-JP-2' [RFC 1554] or `ISO-2022-INT-1'. Mule is required
+;; `ISO-2022-JP-2' [RFC 1554] or `ISO-2022-INT-1'.  Mule is required
 ;; for reading the such messages.
 
 ;; This MIME composer can work with Mail mode, mh-e letter Mode, and
@@ -96,7 +96,7 @@
 ;; This is also a plain text.  But, it is explicitly specified as is.
 ;;
 ;;--[[text/plain; charset=ISO-2022-JP]]
-;; $B$3$l$O(B charset $B$r(B ISO-2022-JP $B$K;XDj$7$?F|K\8l$N(B plain $B/home/mrb/e/w/editor/lisp/tm/SCCS/s.tm-edit.el-%9%H$G$9(B.
+;; $B$3$l$O(B charset $B$r(B ISO-2022-JP $B$K;XDj$7$?F|K\8l$N(B plain $B%F%-%9%H$G$9(B.
 ;;
 ;;--[[text/richtext]]
 ;; <center>This is a richtext.</center>
@@ -110,7 +110,6 @@
 (require 'sendmail)
 (require 'mail-utils)
 (require 'mel)
-(require 'tl-822)
 (require 'tl-list)
 (require 'tm-view)
 (require 'tm-ew-e)
@@ -121,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $")
+  "$Id: tm-edit.el,v 1.1.1.2 1996/12/21 20:50:44 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -731,7 +730,7 @@ TABs at the beginning of the line are not a part of the message:
 	This is also a plain text.  But, it is explicitly specified as
 	is.
 	--[[text/plain; charset=ISO-2022-JP]]
-	$B$3$l$O(B charset $B$r(B ISO-2022-JP $B$K;XDj$7$?F|K\8l$N(B plain $B/home/mrb/e/w/editor/lisp/tm/SCCS/s.tm-edit.el-%9(B
+	$B$3$l$O(B charset $B$r(B ISO-2022-JP $B$K;XDj$7$?F|K\8l$N(B plain $B%F%-%9(B
 	$B%H$G$9(B.
 	--[[text/richtext]]
 	<center>This is a richtext.</center>
@@ -2479,18 +2478,27 @@ Content-Type: message/partial; id=%s; number=%d; total=%d\n%s\n"
 	     (t
 	      (let* (charset
 		     (pstr
-		      (mapconcat (function
-				  (lambda (attr)
-				    (if (string-equal (car attr)
-						      "charset")
-					(progn
-					  (setq charset (cdr attr))
-					  "")
-				      (concat ";" (car attr)
-					      "=" (cdr attr))
-				      )
-				    ))
-				 params ""))
+		      (let ((bytes (+ 14 (length ctype))))
+			(mapconcat (function
+				    (lambda (attr)
+				      (if (string-equal (car attr) "charset")
+					  (progn
+					    (setq charset (cdr attr))
+					    "")
+					(let* ((str
+						(concat (car attr)
+							"=" (cdr attr))
+						)
+					       (bs (length str))
+					       )
+					  (setq bytes (+ bytes bs 2))
+					  (if (< bytes 76)
+					      (concat "; " str)
+					    (setq bytes (+ bs 1))
+					    (concat ";\n " str)
+					    )
+					  ))))
+				   params "")))
 		     encoding
 		     encoded)
 		(save-excursion

@@ -1205,6 +1205,34 @@ event_stream_disable_wakeup (int id, int async_p)
     }
 }
 
+int
+event_stream_wakeup_pending_p (int id, int async_p)
+{
+  struct timeout *timeout;
+  Lisp_Object rest = Qnil;
+  Lisp_Object timeout_list;
+  int found = 0;
+
+
+  if (async_p)
+    timeout_list = pending_async_timeout_list;
+  else
+    timeout_list = pending_timeout_list;
+
+  /* Find the element on the list of pending ones, if it's still there. */
+  LIST_LOOP (rest, timeout_list)
+    {
+      timeout = (struct timeout *) XOPAQUE_DATA (XCAR (rest));
+      if (timeout->id == id)
+	{
+	  found = 1;
+	  break;
+	}
+    }
+
+  return found;
+}
+
 
 /**** Asynch. timeout functions (see also signal.c) ****/
 
@@ -2400,6 +2428,13 @@ Return non-nil iff we received any output before the timeout expired.
 	    and really need the processes to be handled. */
 	 || (!EQ (result, Qt) && event_stream_event_pending_p (0)))
     {
+      /* If our timeout has arrived, we move along. */
+      if (!event_stream_wakeup_pending_p (timeout_id, 0))
+	{
+	  timeout_enabled = 0;
+	  process = Qnil;	/* We're  done. */
+	}
+
       QUIT;	/* next_event_internal() does not QUIT, so check for ^G
 		   before reading output from the process - this makes it
 		   less likely that the filter will actually be aborted.
@@ -2426,17 +2461,8 @@ Return non-nil iff we received any output before the timeout expired.
 	    break;
 	  }
 	case timeout_event:
-	  {
-	    if (timeout_enabled &&
-                XEVENT (event)->event.timeout.id_number == timeout_id)
-	      {
-                timeout_enabled = 0;
-		process = Qnil; /* we're done */
-	      }
-	    else	/* a timeout that's not the one we're waiting for */
-              goto EXECUTE_INTERNAL;
-	    break;
-	  }
+	  /* We execute the event even if it's ours, and notice that it's
+	     happened above. */
 	case pointer_motion_event:
 	case magic_event:
           {
@@ -2480,6 +2506,10 @@ ARG may be a float, meaning pause for some fractional part of a second.
   event = Fmake_event ();
   while (1)
     {
+      /* If our timeout has arrived, we move along. */
+      if (!event_stream_wakeup_pending_p (id, 0))
+	goto DONE_LABEL;
+
       QUIT;	/* next_event_internal() does not QUIT, so check for ^G
 		   before reading output from the process - this makes it
 		   less likely that the filter will actually be aborted.
@@ -2493,12 +2523,8 @@ ARG may be a float, meaning pause for some fractional part of a second.
       switch (XEVENT_TYPE (event))
 	{
 	case timeout_event:
-	  {
-	    if (XEVENT (event)->event.timeout.id_number == id)
-	      goto DONE_LABEL;
-            else
-              goto EXECUTE_INTERNAL;
-	  }
+	  /* We execute the event even if it's ours, and notice that it's
+	     happened above. */
 	case pointer_motion_event:
 	case process_event:
 	case magic_event:
@@ -2582,8 +2608,8 @@ Value is t if waited the full time with no input arriving.
 	  redisplay ();
 	}
 
-      /* If we're no longer waiting for a timeout, bug out. */
-      if (! id)
+      /* If our timeout has arrived, we move along. */
+      if (!event_stream_wakeup_pending_p (id, 0))
 	{
 	  result = Qt;
 	  goto DONE_LABEL;
@@ -2614,15 +2640,9 @@ Value is t if waited the full time with no input arriving.
 	    break;
 	  }
 	case timeout_event:
-	  {
-	    if (XEVENT (event)->event.timeout.id_number != id)
-	      /* a timeout that wasn't the one we're waiting for */
-	      goto EXECUTE_INTERNAL;
-	    id = 0;	/* assert that we are no longer waiting for it. */
-	    result = Qt;
-	    goto DONE_LABEL;
-	  }
-      default:
+	  /* We execute the event even if it's ours, and notice that it's
+	     happened above. */
+	default:
 	  {
 	  EXECUTE_INTERNAL:
 	    execute_internal_event (event);
@@ -2633,7 +2653,7 @@ Value is t if waited the full time with no input arriving.
 
  DONE_LABEL:
   /* If our timeout has not been signalled yet, disable it. */
-  if (id)
+  if (NILP (result))
     event_stream_disable_wakeup (id, 0);
 
   /* Put back the event (if any) that made Fsit_for() exit before the

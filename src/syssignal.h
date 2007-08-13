@@ -88,11 +88,12 @@ Boston, MA 02111-1307, USA.  */
    the risk of someone forgetting this convention and calling
    signal() directly. */
 
+typedef SIGTYPE (*signal_handler_t) (int);
+
 #if defined (HAVE_SIGPROCMASK)
 
 /* The POSIX way (sigaction, sigprocmask, sigpending, sigsuspend) */
 
-typedef SIGTYPE (*signal_handler_t) (int);
 extern signal_handler_t sys_do_signal (int signal_number,
 				       signal_handler_t action);
 /* Provide our own version of signal(), that calls sigaction().  The

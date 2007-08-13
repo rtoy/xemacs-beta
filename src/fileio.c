@@ -1815,7 +1815,7 @@ Fourth arg KEEP-TIME non-nil means give the new file the same
 last-modified time as the old one.  (This works on only some systems.)
 A prefix arg makes KEEP-TIME non-nil.
 */
-       (filename, newname, ok_if_already_exists, keep_date))
+       (filename, newname, ok_if_already_exists, keep_time))
 {
   /* This function can GC */
   int ifd, ofd, n;
@@ -1843,7 +1843,7 @@ A prefix arg makes KEEP-TIME non-nil.
   {
     UNGCPRO;
     return call5 (handler, Qcopy_file, filename, newname,
-		  ok_if_already_exists, keep_date);
+		  ok_if_already_exists, keep_time);
   }
 
   /* When second argument is a directory, copy the file into it.
@@ -1944,7 +1944,7 @@ A prefix arg makes KEEP-TIME non-nil.
 
     if (input_file_statable_p)
     {
-      if (!NILP (keep_date))
+      if (!NILP (keep_time))
       {
         EMACS_TIME atime, mtime;
         EMACS_SET_SECS_USECS (atime, st.st_atime, 0);
@@ -2923,8 +2923,8 @@ positions), even in Mule. (Fixing this is very difficult.)
   handler = Ffind_file_name_handler (filename, Qinsert_file_contents);
   if (!NILP (handler))
     {
-      val = call8 (handler, Qinsert_file_contents, filename,
-		   visit, beg, end, replace, codesys, used_codesys);
+      val = call6 (handler, Qinsert_file_contents, filename,
+		   visit, beg, end, replace);
       goto handled;
     }
 

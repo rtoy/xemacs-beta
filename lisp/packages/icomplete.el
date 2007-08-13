@@ -4,7 +4,7 @@
 
 ;;; Author: Ken Manheimer <klm@nist.gov>
 ;;; Maintainer: Ken Manheimer <klm@nist.gov>
-;;; Version: $Id: icomplete.el,v 1.1.1.2 1996/12/18 22:50:53 steve Exp $
+;;; Version: $Id: icomplete.el,v 1.1.1.3 1996/12/21 20:48:12 steve Exp $
 ;;; Created: Mar 1993 klm@nist.gov - first release to usenet
 ;;; Keywords: help, abbrev
 
@@ -134,7 +134,7 @@ a command.")
       (concat "<"
 	      (if keys
 		  (mapconcat 'key-description
-			     (sort '([next] [kp_next] [(control v)])
+			     (sort '([next] [kp-next] [(control v)])
 				   #'(lambda (x y)
 				       (< (length x) (length y))))
 			     ", ")

@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/9/26 (separated from tm-view.el)
-;; Version: $Id: tm-play.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
+;; Version: $Id: tm-play.el,v 1.1.1.2 1996/12/21 20:50:43 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -27,19 +27,6 @@
 ;;; Code:
 
 (require 'tm-view)
-
-(defvar mime-viewer/external-progs "/usr/local/share/tm"
-  "*Directory containing tm external methods.")
-
-(add-to-list 'exec-path mime-viewer/external-progs)
-
-(let ((paths (parse-colon-path (getenv "PATH"))))
-  (or (member mime-viewer/external-progs paths)
-      (setenv "PATH"
-	      (mapconcat (function identity)
-			 (append paths (list mime-viewer/external-progs))
-			 path-separator))
-      ))
 
   
 ;;; @ content decoder

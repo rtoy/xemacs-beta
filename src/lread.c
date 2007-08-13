@@ -576,8 +576,8 @@ encoding detection or end-of-line detection.
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
   if (!NILP (handler))
-    RETURN_UNGCPRO (call7 (handler, Qload, file, no_error, nomessage,
-			   nosuffix, codesys, used_codesys));
+    RETURN_UNGCPRO (call5 (handler, Qload, file, no_error,
+			   nomessage, nosuffix));
 
   /* Do this after the handler to avoid
      the need to gcpro noerror, nomessage and nosuffix.

@@ -1,7 +1,7 @@
 ;; @(#) crisp.el -- Crisp/Brief Emacs emulator
 
 ;; Author: Gary D. Foster <Gary.Foster@corp.sun.com>
-;; $Revision: 1.1.1.1 $
+;; $Revision: 1.1.1.2 $
 ;; Keywords: emulations brief crisp
 
 ;; This file is part of GNU Emacs.
@@ -127,8 +127,8 @@ to loading this package to prevent it.")
 (define-key crisp-mode-map [(meta f10)]      'compile)
 
 (define-key crisp-mode-map [(SunF37)]          'kill-buffer)
-(define-key crisp-mode-map [(kp_add)]       'x-copy-primary-selection)
-(define-key crisp-mode-map [(kp_subtract)]  'x-kill-primary-selection)
+(define-key crisp-mode-map [(kp-add)]       'x-copy-primary-selection)
+(define-key crisp-mode-map [(kp-subtract)]  'x-kill-primary-selection)
 (define-key crisp-mode-map [(insert)]       'x-yank-clipboard-selection)
 (define-key crisp-mode-map [(f16)]          'x-copy-primary-selection) ; copy on Sun5 kbd
 (define-key crisp-mode-map [(f20)]          'x-kill-primary-selection) ; cut on Sun5 kbd 

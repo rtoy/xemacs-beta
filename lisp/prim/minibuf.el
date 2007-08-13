@@ -157,6 +157,10 @@ minibuffer is reinvoked while it is the selected window.")
     (define-key map "\M-?" 'comint-dynamic-list-completions)
     map)
   "Minibuffer keymap used by shell-command and related commands.")
+
+(defvar should-use-dialog-box t
+  "Variable controlling usage of the dialog box.  If nil, the dialog box
+will never be used, even in response to mouse events.")
 
 (defvar minibuffer-electric-file-name-behavior t
   "If non-nil, slash and tilde in certain places cause immediate deletion.
@@ -840,7 +844,7 @@ Return nil if there is no valid completion, else t."
                                    (error nil))))
                         (char last-command-char))
                     ;; Try to complete by adding a word-delimiter
-                    (or (and (integerp char) (> char 0)
+                    (or (and (characterp char) (> char 0)
                              (funcall foo (char-to-string char)))
                         (and (not (eq char ?\ ))
                              (funcall foo " "))
@@ -1207,9 +1211,7 @@ If N is negative, find the previous or Nth previous match."
 	  (let ((elt (nth (1- minibuffer-history-position)
 			  (symbol-value minibuffer-history-variable))))
 	    (insert
-	     (if (and minibuffer-history-sexp-flag
-		      ;; total kludge
-		      (not (stringp elt)))
+	     (if (not (stringp elt))
 		 (let ((print-level nil))
 		   (condition-case nil
 		       (let ((print-readably t)
@@ -2003,10 +2005,16 @@ something mousy but which wasn't actually invoked using the mouse.")
   "If non-nil, questions should be asked with a dialog box instead of the
 minibuffer.  This looks at `last-command-event' to see if it was a mouse
 event, and checks whether dialog-support exists and the current device
-supports dialog boxes."
+supports dialog boxes.
+
+The dialog box is totally disabled if the variable `should-use-dialog-box'
+is set to nil."
   (and (featurep 'dialog)
        (device-on-window-system-p)
+       should-use-dialog-box
        (or force-dialog-box-use
 	   (button-press-event-p last-command-event)
 	   (button-release-event-p last-command-event)
 	   (misc-user-event-p last-command-event))))
+
+;;; minibuf.el ends here

@@ -544,11 +544,13 @@
       ["XEmacs FAQ (local)"	xemacs-local-faq	t]
       ["XEmacs Tutorial"	help-with-tutorial	t]
       ["XEmacs News"		view-emacs-news		t]
-      ["Sample"
-       (find-file (expand-file-name "sample.emacs" data-directory))
+      ["Sample"			(find-file
+				 (expand-file-name "sample.emacs"
+						   data-directory))
        t ".emacs"]
-      ["Sample"
-       (find-file (expand-file-name "sample.Xdefaults" data-directory))
+      ["Sample"			(find-file
+				 (expand-file-name "sample.Xdefaults"
+						   data-directory))
        t ".Xdefaults"]
       "-----"
       ["Info (Detailed Docs)"	info			t]
@@ -728,7 +730,9 @@ select that buffer.")
 
 (defvar buffers-menu-submenus-for-groups-p nil
   "*If true, the buffers menu will contain one submenu per group of buffers,
-if a grouping function is specified in `buffers-menu-grouping-function'.")
+if a grouping function is specified in `buffers-menu-grouping-function'.
+If this is an integer, do not build submenus if the number of buffers
+is not larger than this value.")
 
 (defvar buffers-menu-switch-to-buffer-function 'switch-to-buffer
   "*The function to call to select a buffer from the buffers menu.
@@ -848,43 +852,43 @@ This groups buffers by major mode.  It only really makes sense if
 (defsubst build-buffers-menu-internal (buffers)
   (let (name line)
     (mapcar
-     (lambda (buffer)
-       (if (eq buffer t)
-	   "---"
-	 (setq line (funcall buffers-menu-format-buffer-line-function
-			     buffer))
-	 (if complex-buffers-menu-p
-	     (delq nil
-		   (list line
-			 (vector "Switch to Buffer"
-				 (list buffers-menu-switch-to-buffer-function
-				       (setq name (buffer-name buffer)))
-				 t)
-			 (if (eq buffers-menu-switch-to-buffer-function
-				 'switch-to-buffer)
-			     (vector "Switch to Buffer, Other Frame"
-				     (list 'switch-to-buffer-other-frame
-					   (setq name (buffer-name buffer)))
-				     t)
-			   nil)
-			 (if (and (buffer-modified-p buffer)
-				  (buffer-file-name buffer))
-			     (vector "Save Buffer"
-				     (list 'buffer-menu-save-buffer name) t)
-			   ["Save Buffer" nil nil]
-			   )
-			 (vector "Save As..."
-				 (list 'buffer-menu-write-file name) t)
-			 (vector "Delete Buffer" (list 'kill-buffer name)
-				 t)))
-	   ;; ### We don't want buffer names to be translated,
-	   ;; ### so we put the buffer name in the suffix.
-	   ;; ### Also, avoid losing with non-ASCII buffer names.
-	   ;; ### We still lose, however, if complex-buffers-menu-p. --mrb
-	   (vector ""
-		   (list buffers-menu-switch-to-buffer-function
-			 (buffer-name buffer))
-		   t line))))
+     #'(lambda (buffer)
+	 (if (eq buffer t)
+	     "---"
+	   (setq line (funcall buffers-menu-format-buffer-line-function
+			       buffer))
+	   (if complex-buffers-menu-p
+	       (delq nil
+		     (list line
+			   (vector "Switch to Buffer"
+				   (list buffers-menu-switch-to-buffer-function
+					 (setq name (buffer-name buffer)))
+				   t)
+			   (if (eq buffers-menu-switch-to-buffer-function
+				   'switch-to-buffer)
+			       (vector "Switch to Buffer, Other Frame"
+				       (list 'switch-to-buffer-other-frame
+					     (setq name (buffer-name buffer)))
+				       t)
+			     nil)
+			   (if (and (buffer-modified-p buffer)
+				    (buffer-file-name buffer))
+			       (vector "Save Buffer"
+				       (list 'buffer-menu-save-buffer name) t)
+			     ["Save Buffer" nil nil]
+			     )
+			   (vector "Save As..."
+				   (list 'buffer-menu-write-file name) t)
+			   (vector "Delete Buffer" (list 'kill-buffer name)
+				   t)))
+	     ;; ### We don't want buffer names to be translated,
+	     ;; ### so we put the buffer name in the suffix.
+	     ;; ### Also, avoid losing with non-ASCII buffer names.
+	     ;; ### We still lose, however, if complex-buffers-menu-p. --mrb
+	     (vector ""
+		     (list buffers-menu-switch-to-buffer-function
+			   (buffer-name buffer))
+		     t line))))
      buffers)))
 
 (defun buffers-menu-filter (menu)
@@ -898,12 +902,16 @@ items by redefining the function `format-buffers-menu-line'."
     (and (integerp buffers-menu-max-size)
 	 (> buffers-menu-max-size 1)
 	 (> (length buffers) buffers-menu-max-size)
-	 ;; shorten list of buffers
+	 ;; shorten list of buffers (not with submenus!)
+	 (not (and buffers-menu-grouping-function
+		   buffers-menu-submenus-for-groups-p))
 	 (setcdr (nthcdr buffers-menu-max-size buffers) nil))
     (if buffers-menu-sort-function
 	(setq buffers (sort buffers buffers-menu-sort-function)))
     (if (and buffers-menu-grouping-function
-	     buffers-menu-submenus-for-groups-p)
+	     buffers-menu-submenus-for-groups-p
+	     (or (not (integerp buffers-menu-submenus-for-groups-p))
+		 (> (length buffers) buffers-menu-submenus-for-groups-p)))
 	(let (groups groupnames current-group)
 	  (mapl
 	   #'(lambda (sublist)
@@ -1090,7 +1098,9 @@ items by redefining the function `format-buffers-menu-line'."
 					(face-property ',face ',property)
 					',(save-options-specifier-spec-list
 					   face property))))
-			      built-in-face-specifiers)))
+			      (delq 'display-table
+				    (copy-sequence
+				     built-in-face-specifiers)))))
 		   (face-list))))
 
      ;; Mule-specific:

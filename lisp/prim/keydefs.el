@@ -23,6 +23,10 @@
 
 ;;; Synched up with: Not synched with FSF.
 
+;;; Commentary:
+
+;;; Code:
+
 ;; created by C code
 (defvar global-map (current-global-map) "\
 Default global keymap mapping XEmacs keyboard input into commands.
@@ -516,10 +520,10 @@ Keymap for characters following C-c.")
 ;; files, but these appear to be the standard Motif and PC bindings.
 
 ;; potential R6isms
-(define-key global-map 'kp_left		'backward-char)
-(define-key global-map 'kp_up		'previous-line)
-(define-key global-map 'kp_right	'forward-char)
-(define-key global-map 'kp_down		'next-line)
+(define-key global-map 'kp-left		'backward-char)
+(define-key global-map 'kp-up		'previous-line)
+(define-key global-map 'kp-right	'forward-char)
+(define-key global-map 'kp-down		'next-line)
 
 
 ;; movement by larger blocks
@@ -542,10 +546,10 @@ Keymap for characters following C-c.")
 (define-key global-map '(control prior)	'scroll-right)
 (define-key global-map '(control next)	'scroll-left)
 ;; potential R6isms
-(define-key global-map 'kp_prior	'scroll-down)
-(define-key global-map 'kp_next		'scroll-up)
-(define-key global-map '(control kp_prior) 'scroll-right)
-(define-key global-map '(control kp_next) 'scroll-left)
+(define-key global-map 'kp-prior	'scroll-down)
+(define-key global-map 'kp-next		'scroll-up)
+(define-key global-map '(control kp-prior) 'scroll-right)
+(define-key global-map '(control kp-next) 'scroll-left)
 
 
 ;; movement to the limits
@@ -554,10 +558,10 @@ Keymap for characters following C-c.")
 (define-key global-map 'begin		'beginning-of-line)
 (define-key global-map '(control begin)	'beginning-of-buffer)
 ;; potential R6isms
-(define-key global-map 'kp_home		'beginning-of-line)
-(define-key global-map '(control kp_home) 'beginning-of-buffer)
-(define-key global-map 'kp_end		'end-of-line)
-(define-key global-map '(control kp_end) 'end-of-buffer)
+(define-key global-map 'kp-home		'beginning-of-line)
+(define-key global-map '(control kp-home) 'beginning-of-buffer)
+(define-key global-map 'kp-end		'end-of-line)
+(define-key global-map '(control kp-end) 'end-of-buffer)
 
 ;; movement between windows
 (define-key global-map '(control tab)	'other-window)
@@ -569,41 +573,41 @@ Keymap for characters following C-c.")
 (define-key global-map '(meta home)	'beginning-of-buffer-other-window)
 (define-key global-map '(meta end)	'end-of-buffer-other-window)
 ;; potential R6isms
-(define-key global-map '(meta kp_next)	'scroll-other-window)
-(define-key global-map '(meta kp_prior)	'scroll-other-window-down)
-(define-key global-map '(meta kp_home)	'beginning-of-buffer-other-window)
-(define-key global-map '(meta kp_end)	'end-of-buffer-other-window)
+(define-key global-map '(meta kp-next)	'scroll-other-window)
+(define-key global-map '(meta kp-prior)	'scroll-other-window-down)
+(define-key global-map '(meta kp-home)	'beginning-of-buffer-other-window)
+(define-key global-map '(meta kp-end)	'end-of-buffer-other-window)
 
 ;; potential R6isms
 (define-key global-map 'redo		'repeat-complex-command)
-(define-key global-map 'kp_insert	'overwrite-mode)
-(define-key global-map 'kp_delete	'backward-delete-char-untabify)
+(define-key global-map 'kp-insert	'overwrite-mode)
+(define-key global-map 'kp-delete	'backward-delete-char-untabify)
 
-(define-key global-map 'kp_enter	[return]) ; do whatever RET does now
-(define-key global-map 'kp_tab		[tab])
+(define-key global-map 'kp-enter	[return]) ; do whatever RET does now
+(define-key global-map 'kp-tab		[tab])
 
 (define-key global-map 'undo		'undo)
 (define-key global-map 'help		'help-for-help)
 
-(define-key global-map 'kp_space	'self-insert-command)
-(define-key global-map 'kp_equal	'self-insert-command)
-(define-key global-map 'kp_multiply	'self-insert-command)
-(define-key global-map 'kp_add		'self-insert-command)
-(define-key global-map 'kp_separator	'self-insert-command)
-(define-key global-map 'kp_subtract	'self-insert-command)
-(define-key global-map 'kp_decimal	'self-insert-command)
-(define-key global-map 'kp_divide	'self-insert-command)
+(define-key global-map 'kp-space	'self-insert-command)
+(define-key global-map 'kp-equal	'self-insert-command)
+(define-key global-map 'kp-multiply	'self-insert-command)
+(define-key global-map 'kp-add		'self-insert-command)
+(define-key global-map 'kp-separator	'self-insert-command)
+(define-key global-map 'kp-subtract	'self-insert-command)
+(define-key global-map 'kp-decimal	'self-insert-command)
+(define-key global-map 'kp-divide	'self-insert-command)
 
-(define-key global-map 'kp_0		'self-insert-command)
-(define-key global-map 'kp_1		'self-insert-command)
-(define-key global-map 'kp_2		'self-insert-command)
-(define-key global-map 'kp_3		'self-insert-command)
-(define-key global-map 'kp_4		'self-insert-command)
-(define-key global-map 'kp_5		'self-insert-command)
-(define-key global-map 'kp_6		'self-insert-command)
-(define-key global-map 'kp_7		'self-insert-command)
-(define-key global-map 'kp_8		'self-insert-command)
-(define-key global-map 'kp_9		'self-insert-command)
+(define-key global-map 'kp-0		'self-insert-command)
+(define-key global-map 'kp-1		'self-insert-command)
+(define-key global-map 'kp-2		'self-insert-command)
+(define-key global-map 'kp-3		'self-insert-command)
+(define-key global-map 'kp-4		'self-insert-command)
+(define-key global-map 'kp-5		'self-insert-command)
+(define-key global-map 'kp-6		'self-insert-command)
+(define-key global-map 'kp-7		'self-insert-command)
+(define-key global-map 'kp-8		'self-insert-command)
+(define-key global-map 'kp-9		'self-insert-command)
 
 (define-key global-map 'select		'function-key-error)
 (define-key global-map 'print		'function-key-error)
@@ -613,3 +617,5 @@ Keymap for characters following C-c.")
 (define-key global-map 'deleteline	'kill-line)
 (define-key global-map 'insertchar	'function-key-error)
 (define-key global-map 'deletechar	'delete-char)
+
+;;; keydefs.el ends here

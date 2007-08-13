@@ -187,8 +187,8 @@ struct tty_console
   struct emacs_tty old_tty;
   
   /* Is this TTY our controlling terminal? */
-  int controlling_terminal :1;
-  int is_stdio :1;
+  unsigned int controlling_terminal :1;
+  unsigned int is_stdio :1;
 };
 
 #define CONSOLE_TTY_DATA(c) CONSOLE_TYPE_DATA (c, tty)

@@ -42,7 +42,7 @@
  'tis620 'iso2022
  "Coding-system used for ASCII(MSB=0) & TIS620(MSB=1)."
  '(charset-g0 ascii
-   charset-g1 thai
+   charset-g1 thai-tis620
    no-ascii-cntl t
    mnemonic "TIS620"
    post-read-conversion thai-compose-region
@@ -53,9 +53,9 @@
 
 (define-language-environment 'thai
   "Thai"
-  #'(lambda ()
-      (set-coding-category-system 'iso-8-designate 'tis620)
-      (set-coding-priority-list '(iso-8-designate iso-8-1))
-      (set-default-file-coding-system 'tis620)
-      (setq-default quail-current-package (assoc "thai" quail-package-alist))))
+  (lambda ()
+    (set-coding-category-system 'iso-8-designate 'tis620)
+    (set-coding-priority-list '(iso-8-designate iso-8-1))
+    (set-default-file-coding-system 'tis620)))
+    ;;(setq-default quail-current-package (assoc "thai" quail-package-alist))))
 

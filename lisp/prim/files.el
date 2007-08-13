@@ -749,10 +749,13 @@ with a prefix argument, you will be prompted for the coding system."
   "Create a suitably named buffer for visiting FILENAME, and return it.
 FILENAME (sans directory) is used unchanged if that name is free;
 otherwise a string <2> or <3> or ... is appended to get an unused name."
-  (let ((lastname (file-name-nondirectory filename)))
-    (if (string= lastname "")
-	(setq lastname filename))
-    (generate-new-buffer lastname)))
+    (let ((handler (find-file-name-handler filename 'create-file-buffer)))
+      (if handler
+	  (funcall handler 'create-file-buffer filename)
+	(let ((lastname (file-name-nondirectory filename)))
+	  (if (string= lastname "")
+	      (setq lastname filename))
+	  (generate-new-buffer lastname)))))
 
 (defun generate-new-buffer (name)
   "Create and return a buffer with a name based on NAME.
@@ -767,48 +770,51 @@ Choose the buffer's name using `generate-new-buffer-name'."
 See documentation of variable `directory-abbrev-alist' for more information.
 If optional argument HACK-HOMEDIR is non-nil, then this also substitutes
 \"~\" for the user's home directory."
-  ;; Get rid of the prefixes added by the automounter.
-  ;(if (and (string-match automount-dir-prefix filename)
-  ;         (file-exists-p (file-name-directory
-  ;                         (substring filename (1- (match-end 0))))))
-  ;    (setq filename (substring filename (1- (match-end 0)))))
-  (let ((tail directory-abbrev-alist))
-    ;; If any elt of directory-abbrev-alist matches this name,
-    ;; abbreviate accordingly.
-    (while tail
-      (if (string-match (car (car tail)) filename)
-	  (setq filename
-		(concat (cdr (car tail)) (substring filename (match-end 0)))))
-      (setq tail (cdr tail))))
-  (if hack-homedir
-      (progn
-	;; Compute and save the abbreviated homedir name.
-	;; We defer computing this until the first time it's needed, to
-	;; give time for directory-abbrev-alist to be set properly.
-	;; We include a slash at the end, to avoid spurious matches
-	;; such as `/usr/foobar' when the home dir is `/usr/foo'.
-	(or abbreviated-home-dir
-	    (setq abbreviated-home-dir
-		  (let ((abbreviated-home-dir "$foo"))
-		    (concat "\\`" (regexp-quote (abbreviate-file-name
-						 (expand-file-name "~")))
-			    "\\(/\\|\\'\\)"))))
-        ;; If FILENAME starts with the abbreviated homedir,
-        ;; make it start with `~' instead.
-	(if (and (string-match abbreviated-home-dir filename)
-                 ;; If the home dir is just /, don't change it.
-                 (not (and (= (match-end 0) 1) ;#### unix-specific
-			   (= (aref filename 0) ?/)))
-		 (not (and (or (eq system-type 'ms-dos) 
-			       (eq system-type 'windows-nt))
-			   (save-match-data
-			     (string-match "^[a-zA-Z]:/$" filename)))))
-	    (setq filename
-		  (concat "~"
-			  (substring filename
-				     (match-beginning 1) (match-end 1))
-			  (substring filename (match-end 0)))))))
-  filename)
+  (let ((handler (find-file-name-handler filename 'abbreviate-file-name)))
+    (if handler
+	(funcall handler 'abbreviate-file-name filename hack-homedir)
+      ;; Get rid of the prefixes added by the automounter.
+      ;;(if (and (string-match automount-dir-prefix filename)
+      ;;         (file-exists-p (file-name-directory
+      ;;                         (substring filename (1- (match-end 0))))))
+      ;;    (setq filename (substring filename (1- (match-end 0)))))
+      (let ((tail directory-abbrev-alist))
+	;; If any elt of directory-abbrev-alist matches this name,
+	;; abbreviate accordingly.
+	(while tail
+	  (if (string-match (car (car tail)) filename)
+	      (setq filename
+		    (concat (cdr (car tail)) (substring filename (match-end 0)))))
+	  (setq tail (cdr tail))))
+      (if hack-homedir
+	  (progn
+	    ;; Compute and save the abbreviated homedir name.
+	    ;; We defer computing this until the first time it's needed, to
+	    ;; give time for directory-abbrev-alist to be set properly.
+	    ;; We include a slash at the end, to avoid spurious matches
+	    ;; such as `/usr/foobar' when the home dir is `/usr/foo'.
+	    (or abbreviated-home-dir
+		(setq abbreviated-home-dir
+		      (let ((abbreviated-home-dir "$foo"))
+			(concat "\\`" (regexp-quote (abbreviate-file-name
+						     (expand-file-name "~")))
+				"\\(/\\|\\'\\)"))))
+	    ;; If FILENAME starts with the abbreviated homedir,
+	    ;; make it start with `~' instead.
+	    (if (and (string-match abbreviated-home-dir filename)
+		     ;; If the home dir is just /, don't change it.
+		     (not (and (= (match-end 0) 1) ;#### unix-specific
+			       (= (aref filename 0) ?/)))
+		     (not (and (or (eq system-type 'ms-dos) 
+				   (eq system-type 'windows-nt))
+			       (save-match-data
+				 (string-match "^[a-zA-Z]:/$" filename)))))
+		(setq filename
+		      (concat "~"
+			      (substring filename
+					 (match-beginning 1) (match-end 1))
+			      (substring filename (match-end 0)))))))
+      filename)))
 
 (defvar find-file-not-true-dirname-list nil
   "*List of logical names for which visiting shouldn't save the true dirname.
@@ -1240,7 +1246,10 @@ If `enable-local-variables' is nil, this function does not check for a
 		  (setq alist (cdr alist))))
               ;; If we can't deduce a mode from the file name,
               ;; look for an interpreter specified in the first line.
-	      (if (null mode)
+	      (if (and (null mode)
+		       (save-excursion ; XEmacs
+			 (goto-char (point-min))
+			 (looking-at "#!")))
                   (let ((firstline
                          (buffer-substring
                           (point-min)
@@ -1456,22 +1465,23 @@ for current buffer."
 		   (setq result (cons (cons key val) result))
 		   (skip-chars-forward " \t;")))
 	       (setq result (nreverse result))))))
-	
-    (let ((set-any-p (or force (hack-local-variables-p t)))
-	  (mode-p nil))
-      (while result
-	(let ((key (car (car result)))
-	      (val (cdr (car result))))
-	  (cond ((eq key 'mode)
-		 (setq mode-p t)
-		 (funcall (intern (concat (downcase (symbol-name val))
-					  "-mode"))))
-		(set-any-p
-		 (hack-one-local-variable key val))
-		(t
-		 nil)))
-	(setq result (cdr result)))
-      mode-p)))
+
+    (if result
+	(let ((set-any-p (or force (hack-local-variables-p t)))
+	      (mode-p nil))
+	  (while result
+	    (let ((key (car (car result)))
+		  (val (cdr (car result))))
+	      (cond ((eq key 'mode)
+		     (setq mode-p t)
+		     (funcall (intern (concat (downcase (symbol-name val))
+					      "-mode"))))
+		    (set-any-p
+		     (hack-one-local-variable key val))
+		    (t
+		     nil)))
+	    (setq result (cdr result)))
+	  mode-p))))
 
 (defconst ignored-local-variables
   (list 'enable-local-eval)
@@ -1689,81 +1699,85 @@ This is normally done before saving the buffer the first time.
 If the value is non-nil, it is the result of `file-modes' on the original file;
 this means that the caller, after saving the buffer, should change the modes
 of the new file to agree with the old modes."
-  (if (and make-backup-files
-           (not backup-inhibited)
-	   (not buffer-backed-up)
-	   (file-exists-p buffer-file-name)
-	   (memq (aref (elt (file-attributes buffer-file-name) 8) 0)
-		 '(?- ?l)))
-      (let ((real-file-name buffer-file-name)
-	    backup-info backupname targets setmodes)
-	;; If specified name is a symbolic link, chase it to the target.
-	;; Thus we make the backups in the directory where the real file is.
-	(setq real-file-name (file-chase-links real-file-name))
-	(setq backup-info (find-backup-file-name real-file-name)
-	      backupname (car backup-info)
-	      targets (cdr backup-info))
+  (if buffer-file-name
+      (let ((handler (find-file-name-handler buffer-file-name 'backup-buffer)))
+	(if handler
+	    (funcall handler 'backup-buffer)
+	  (if (and make-backup-files
+		   (not backup-inhibited)
+		   (not buffer-backed-up)
+		   (file-exists-p buffer-file-name)
+		   (memq (aref (elt (file-attributes buffer-file-name) 8) 0)
+			 '(?- ?l)))
+	      (let ((real-file-name buffer-file-name)
+		    backup-info backupname targets setmodes)
+		;; If specified name is a symbolic link, chase it to the target.
+		;; Thus we make the backups in the directory where the real file is.
+		(setq real-file-name (file-chase-links real-file-name))
+		(setq backup-info (find-backup-file-name real-file-name)
+		      backupname (car backup-info)
+		      targets (cdr backup-info))
 ;;;     (if (file-directory-p buffer-file-name)
 ;;;         (error "Cannot save buffer in directory %s" buffer-file-name))
-	(if backup-info
-	    (condition-case ()
-		(let ((delete-old-versions
-		       ;; If have old versions to maybe delete,
-		       ;; ask the user to confirm now, before doing anything.
-		       ;; But don't actually delete til later.
-		       (and targets
-			    (or (eq delete-old-versions t)
-				(eq delete-old-versions nil))
-			    (or delete-old-versions
-				(y-or-n-p (format "Delete excess backup versions of %s? "
-						  real-file-name))))))
-		  ;; Actually write the back up file.
-		  (condition-case ()
-		      (if (or file-precious-flag
-    ;			  (file-symlink-p buffer-file-name)
-			      backup-by-copying
-			      (and backup-by-copying-when-linked
-				   (> (file-nlinks real-file-name) 1))
-			      (and backup-by-copying-when-mismatch
-				   (let ((attr (file-attributes real-file-name)))
-				     (or (nth 9 attr)
-					 (not (file-ownership-preserved-p real-file-name))))))
+		(if backup-info
+		    (condition-case ()
+			(let ((delete-old-versions
+			       ;; If have old versions to maybe delete,
+			       ;; ask the user to confirm now, before doing anything.
+			       ;; But don't actually delete til later.
+			       (and targets
+				    (or (eq delete-old-versions t)
+					(eq delete-old-versions nil))
+				    (or delete-old-versions
+					(y-or-n-p (format "Delete excess backup versions of %s? "
+							  real-file-name))))))
+			  ;; Actually write the back up file.
 			  (condition-case ()
-			      (copy-file real-file-name backupname t t)
+			      (if (or file-precious-flag
+					;			  (file-symlink-p buffer-file-name)
+				      backup-by-copying
+				      (and backup-by-copying-when-linked
+					   (> (file-nlinks real-file-name) 1))
+				      (and backup-by-copying-when-mismatch
+					   (let ((attr (file-attributes real-file-name)))
+					     (or (nth 9 attr)
+						 (not (file-ownership-preserved-p real-file-name))))))
+				  (condition-case ()
+				      (copy-file real-file-name backupname t t)
+				    (file-error
+				     ;; If copying fails because file BACKUPNAME
+				     ;; is not writable, delete that file and try again.
+				     (if (and (file-exists-p backupname)
+					      (not (file-writable-p backupname)))
+					 (delete-file backupname))
+				     (copy-file real-file-name backupname t t)))
+				;; rename-file should delete old backup.
+				(rename-file real-file-name backupname t)
+				(setq setmodes (file-modes backupname)))
 			    (file-error
-			     ;; If copying fails because file BACKUPNAME
-			     ;; is not writable, delete that file and try again.
-			     (if (and (file-exists-p backupname)
-				      (not (file-writable-p backupname)))
-				 (delete-file backupname))
-			     (copy-file real-file-name backupname t t)))
-			;; rename-file should delete old backup.
-			(rename-file real-file-name backupname t)
-			(setq setmodes (file-modes backupname)))
-		    (file-error
-		     ;; If trouble writing the backup, write it in ~.
-		     (setq backupname (expand-file-name "~/%backup%~"))
-		     (message "Cannot write backup file; backing up in ~/%%backup%%~")
-		     (sleep-for 1)
-		     (condition-case ()
-			 (copy-file real-file-name backupname t t)
-		       (file-error
-			;; If copying fails because file BACKUPNAME
-			;; is not writable, delete that file and try again.
-			(if (and (file-exists-p backupname)
-				 (not (file-writable-p backupname)))
-			    (delete-file backupname))
-			(copy-file real-file-name backupname t t)))))
-		  (setq buffer-backed-up t)
-		  ;; Now delete the old versions, if desired.
-		  (if delete-old-versions
-		      (while targets
-			(condition-case ()
-			    (delete-file (car targets))
-			  (file-error nil))
-			(setq targets (cdr targets))))
-		  setmodes)
-	    (file-error nil))))))
+			     ;; If trouble writing the backup, write it in ~.
+			     (setq backupname (expand-file-name "~/%backup%~"))
+			     (message "Cannot write backup file; backing up in ~/%%backup%%~")
+			     (sleep-for 1)
+			     (condition-case ()
+				 (copy-file real-file-name backupname t t)
+			       (file-error
+				;; If copying fails because file BACKUPNAME
+				;; is not writable, delete that file and try again.
+				(if (and (file-exists-p backupname)
+					 (not (file-writable-p backupname)))
+				    (delete-file backupname))
+				(copy-file real-file-name backupname t t)))))
+			  (setq buffer-backed-up t)
+			  ;; Now delete the old versions, if desired.
+			  (if delete-old-versions
+			      (while targets
+				(condition-case ()
+				    (delete-file (car targets))
+				  (file-error nil))
+				(setq targets (cdr targets))))
+			  setmodes)
+		      (file-error nil)))))))))
 
 (defun file-name-sans-versions (name &optional keep-backup-version)
   "Return FILENAME sans backup versions or strings.
@@ -2503,28 +2517,35 @@ beginning and `after-revert-hook' at the end."
   ;; Not just because users often use the default.
   (interactive "FRecover file: ")
   (setq file (expand-file-name file))
-  (if (auto-save-file-name-p file)
-      (error "%s is an auto-save file" file))
-  (let ((file-name (let ((buffer-file-name file))
-		     (make-auto-save-file-name))))
-    (cond ((if (file-exists-p file)
-	       (not (file-newer-than-file-p file-name file))
-	     (not (file-exists-p file-name)))
-	   (error "Auto-save file %s not current" file-name))
-	  ((save-window-excursion
-	     (if (not (eq system-type 'vax-vms))
-		 (with-output-to-temp-buffer "*Directory*"
-		   (buffer-disable-undo standard-output)
-		   (call-process "ls" nil standard-output nil
-				 (if (file-symlink-p file) "-lL" "-l")
-				 file file-name)))
-	     (yes-or-no-p (format "Recover auto save file %s? " file-name)))
-	   (switch-to-buffer (find-file-noselect file t))
-	   (let ((buffer-read-only nil))
-	     (erase-buffer)
-	     (insert-file-contents file-name nil))
-	   (after-find-file nil nil t))
-	  (t (error "Recover-file cancelled.")))))
+  (let ((handler (or (find-file-name-handler file 'recover-file)
+		    (find-file-name-handler 
+		     (let ((buffer-file-name file))
+		       (make-auto-save-file-name))
+		     'recover-file))))
+    (if handler
+	(funcall handler 'recover-file file)
+      (if (auto-save-file-name-p file)
+	  (error "%s is an auto-save file" file))
+      (let ((file-name (let ((buffer-file-name file))
+			 (make-auto-save-file-name))))
+	(cond ((if (file-exists-p file)
+		   (not (file-newer-than-file-p file-name file))
+		 (not (file-exists-p file-name)))
+	       (error "Auto-save file %s not current" file-name))
+	      ((save-window-excursion
+		 (if (not (eq system-type 'vax-vms))
+		     (with-output-to-temp-buffer "*Directory*"
+		       (buffer-disable-undo standard-output)
+		       (call-process "ls" nil standard-output nil
+				     (if (file-symlink-p file) "-lL" "-l")
+				     file file-name)))
+		 (yes-or-no-p (format "Recover auto save file %s? " file-name)))
+	       (switch-to-buffer (find-file-noselect file t))
+	       (let ((buffer-read-only nil))
+		 (erase-buffer)
+		 (insert-file-contents file-name nil))
+	       (after-find-file nil nil t))
+	      (t (error "Recover-file cancelled.")))))))
 
 (defun recover-session ()
   "Recover auto save files from a previous Emacs session.

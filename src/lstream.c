@@ -690,6 +690,8 @@ Lstream_seekable_p (Lstream *lstr)
 static int
 Lstream_pseudo_close (Lstream *lstr)
 {
+  int rc;
+
   if (!lstr->flags & LSTREAM_FL_IS_OPEN)
     {
       Lisp_Object obj = Qnil;
@@ -699,18 +701,20 @@ Lstream_pseudo_close (Lstream *lstr)
     }
 
   /* don't check errors here -- best not to risk file descriptor loss */
-  Lstream_flush (lstr);
+  rc = Lstream_flush (lstr);
 
-  return 0;
+  return rc;
 }
 
 int
 Lstream_close (Lstream *lstr)
 {
+  int rc =0;
+
   if (lstr->flags & LSTREAM_FL_IS_OPEN)
     {
       /* don't return here on error, or file descriptor leak will result. */
-      Lstream_pseudo_close (lstr);
+      rc = Lstream_pseudo_close (lstr);
       if (lstr->imp->closer)
 	{
 	  if ((lstr->imp->closer) (lstr) < 0)
@@ -743,7 +747,7 @@ Lstream_close (Lstream *lstr)
       lstr->unget_buffer = 0;
     }
 
-  return 0;
+  return rc;
 }
 
 int
@@ -888,11 +892,11 @@ struct filedesc_stream
   int current_pos;
   int end_pos;
   int chars_sans_newline;
-  int closing :1;
-  int allow_quit :1;
-  int blocked_ok :1;
-  int pty_flushing :1;
-  int blocking_error_p :1;
+  unsigned int closing :1;
+  unsigned int allow_quit :1;
+  unsigned int blocked_ok :1;
+  unsigned int pty_flushing :1;
+  unsigned int blocking_error_p :1;
 };
 
 #define FILEDESC_STREAM_DATA(stream) LSTREAM_TYPE_DATA (stream, filedesc)

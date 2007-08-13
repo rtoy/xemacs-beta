@@ -28,9 +28,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Syntax of Chinese characters.
-(loop for row in '(33 34 41)  do (modify-syntax-entry `[chinese-gb ,row] "."))
-(loop for row from 35 to  40  do (modify-syntax-entry `[chinese-gb ,row] "w"))
-(loop for row from 42 to 126  do (modify-syntax-entry `[chinese-gb ,row] "w"))
+(modify-syntax-entry 'chinese-gb2312 "w")
+(loop for row in '(33 34 41)
+      do (modify-syntax-entry `[chinese-gb2312 ,row] "."))
+;;(loop for row from 35 to  40
+;;      do (modify-syntax-entry `[chinese-gb2312 ,row] "w"))
+;;(loop for row from 42 to 126
+;;      do (modify-syntax-entry `[chinese-gb2312 ,row] "w"))
 
 (modify-syntax-entry 'chinese-cns11643-1  "w")
 (modify-syntax-entry 'chinese-cns11643-2  "w")
@@ -77,7 +81,7 @@
  'euc-china 'iso2022
  "Coding-system of Chinese EUC (Extended Unix Code)."
  '(charset-g0 ascii
-   charset-g1 chinese-gb
+   charset-g1 chinese-gb2312
    charset-g2 sisheng
    charset-g3 t
    mnemonic "EUC/China"
@@ -99,31 +103,31 @@
 (copy-coding-system 'big5 'big5-eten)
 
 ;; If you prefer QUAIL to EGG, please modify below as you wish.
-(when (and (featurep 'egg) (featurep 'wnn))
-  (setq wnn-server-type 'cserver)
-  (load "its/pinyin")
-  (setq its:*standard-modes*
-        (cons (its:get-mode-map "PinYin") its:*standard-modes*)))
+;;(when (and (featurep 'egg) (featurep 'wnn))
+;;  (setq wnn-server-type 'cserver)
+;;  (load "its/pinyin")
+;;  (setq its:*standard-modes*
+;;        (cons (its:get-mode-map "PinYin") its:*standard-modes*)))
 
 ;; For QUAIL
 ;; Please add your own quail package if any.
 
 ;; For GB character input
-(add-hook 'quail-package-alist '("py"      "quail/py"))
-(add-hook 'quail-package-alist '("qj"      "quail/qj"))
-(add-hook 'quail-package-alist '("punct"   "quail/punct"))
-(add-hook 'quail-package-alist '("sw"      "quail/sw"))
-(add-hook 'quail-package-alist '("tonepy"  "quail/tonepy"))
-(add-hook 'quail-package-alist '("ccdospy" "quail/ccdospy"))
-(add-hook 'quail-package-alist '("ctlau"   "quail/ctlau"))
+;;(add-hook 'quail-package-alist '("py"      "quail/py"))
+;;(add-hook 'quail-package-alist '("qj"      "quail/qj"))
+;;(add-hook 'quail-package-alist '("punct"   "quail/punct"))
+;;(add-hook 'quail-package-alist '("sw"      "quail/sw"))
+;;(add-hook 'quail-package-alist '("tonepy"  "quail/tonepy"))
+;;(add-hook 'quail-package-alist '("ccdospy" "quail/ccdospy"))
+;;(add-hook 'quail-package-alist '("ctlau"   "quail/ctlau"))
 
 ;; For BIG5 character input
-(add-hook 'quail-package-alist '("py-b5"    "quail/py-b5"))
-(add-hook 'quail-package-alist '("qj-b5"    "quail/qj-b5"))
-(add-hook 'quail-package-alist '("punct-b5" "quail/punct-b5"))
-(add-hook 'quail-package-alist '("ctlaub"   "quail/ctlaub"))
-(add-hook 'quail-package-alist '("zozy"     "quail/zozy"))
-(add-hook 'quail-package-alist '("etzy"     "quail/etzy"))
+;;(add-hook 'quail-package-alist '("py-b5"    "quail/py-b5"))
+;;(add-hook 'quail-package-alist '("qj-b5"    "quail/qj-b5"))
+;;(add-hook 'quail-package-alist '("punct-b5" "quail/punct-b5"))
+;;(add-hook 'quail-package-alist '("ctlaub"   "quail/ctlaub"))
+;;(add-hook 'quail-package-alist '("zozy"     "quail/zozy"))
+;;(add-hook 'quail-package-alist '("etzy"     "quail/etzy"))
 
 ;; For Big5 handling
 
@@ -172,8 +176,9 @@
     (set-default-file-coding-system 'euc-china) ; GB encoding
     (setq terminal-coding-system    'euc-china)
     (setq keyboard-coding-system    'euc-china)
-    (when (featurep 'egg)
-      (setq-default its:*current-map* (its:get-mode-map "PinYin")))
-    (setq-default quail-current-package (assoc "py" quail-package-alist))))
+;;    (when (featurep 'egg)
+;;      (setq-default its:*current-map* (its:get-mode-map "PinYin")))
+;;    (setq-default quail-current-package (assoc "py" quail-package-alist))))
+    ))
 
 (set-coding-category-system 'big5 'big5)
