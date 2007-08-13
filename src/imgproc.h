@@ -59,4 +59,4 @@ typedef struct {
 
 #define QUANT_GET_COLOR(qt,r,g,b) (qt->histogram[r>>COLOR_SHIFT][g>>COLOR_SHIFT][b>>COLOR_SHIFT])
 
-quant_table *EImage_build_quantable(unsigned char *eimage, int width, int height, int num_colors);
+quant_table *build_EImage_quantable(unsigned char *eimage, int width, int height, int num_colors);

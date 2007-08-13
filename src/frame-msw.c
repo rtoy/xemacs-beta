@@ -31,18 +31,27 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-msw.h"
-
 #include "buffer.h"
+#include "console-msw.h"
+#include "events.h"
 #include "faces.h"
 #include "frame.h"
-#include "events.h"
+#include "redisplay.h"
 
-#define MSWINDOWS_FRAME_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_OVERLAPPEDWINDOW
-#define MSWINDOWS_POPUP_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_CAPTION|WS_POPUP
+#define MSWINDOWS_FRAME_STYLE (WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW)
+#define MSWINDOWS_POPUP_STYLE (WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP \
+			       | WS_CAPTION | WS_BORDER | WS_SYSMENU | WS_MINIMIZEBOX)
 
 #define MSWINDOWS_FRAME_EXSTYLE WS_EX_OVERLAPPEDWINDOW
-#define MSWINDOWS_POPUP_EXSTYLE WS_EX_OVERLAPPEDWINDOW
+#define MSWINDOWS_POPUP_EXSTYLE WS_EX_PALETTEWINDOW
+
+/* Default popup left top corner offset from the same
+   corner of the parent frame, in pixel */
+#define POPUP_OFFSET 30
+
+/* Default popup size, in characters */
+#define POPUP_WIDTH 30
+#define POPUP_HEIGHT 10
 
 #ifdef HAVE_MENUBARS
 #define ADJR_MENUFLAG TRUE
@@ -52,8 +61,17 @@ Boston, MA 02111-1307, USA.  */
 
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_mswindows_frame_plist;
+
 /* Lisp_Object Qname, Qheight, Qwidth, Qinitially_unmapped, Qpopup, Qtop, Qleft; */
 Lisp_Object Qinitially_unmapped, Qpopup;
+
+/* This does not need to be GC protected, as it holds a
+   frame Lisp_Object already protected by Fmake_frame */
+Lisp_Object mswindows_frame_being_created;
+
+/* Geometry, in characters, as specified by proplist during frame
+   creation. Memebers are set to -1 for unspecified */
+XEMACS_RECT_WH mswindows_frame_target_rect;
 
 static void
 mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
@@ -61,17 +79,40 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   Lisp_Object device = FRAME_DEVICE (f);
   Lisp_Object initially_unmapped;
   Lisp_Object name, height, width, popup, top, left;
-  Lisp_Object frame_obj;
+  Lisp_Object frame_obj = Qnil;
   RECT rect;
+  XEMACS_RECT_WH rect_default;
   DWORD style, exstyle;
+  HWND hwnd, hwnd_parent;
 
+  /* Pick up relevant properties */
   initially_unmapped = Fplist_get (props, Qinitially_unmapped, Qnil);
   name = Fplist_get (props, Qname, Qnil);
-  height = Fplist_get (props, Qheight, Qnil);
-  width = Fplist_get (props, Qwidth, Qnil);
+  
   popup = Fplist_get (props, Qpopup, Qnil);
-  top = Fplist_get (props, Qtop, Qnil);
+  if (EQ (popup, Qt))
+    popup = Fselected_frame (Qnil);
+
   left = Fplist_get (props, Qleft, Qnil);
+  if (!NILP (left))
+    CHECK_INT (left);
+
+  top = Fplist_get (props, Qtop, Qnil);
+  if (!NILP (top))
+    CHECK_INT (top);
+
+  width = Fplist_get (props, Qwidth, Qnil);
+  if (!NILP (width))
+    CHECK_INT (width);
+
+  height = Fplist_get (props, Qheight, Qnil);
+  if (!NILP (height))
+    CHECK_INT (height);
+
+  mswindows_frame_target_rect.left = NILP (left) ? -1 : abs (XINT (left));
+  mswindows_frame_target_rect.top = NILP (top) ? -1 : abs (XINT (top));
+  mswindows_frame_target_rect.width = NILP (width) ? -1 : abs (XINT (width));
+  mswindows_frame_target_rect.height = NILP (height) ? -1 : abs (XINT (height));
 
   /* These shouldn't be here, but the window is created too early.
      The initialization of scrollbar resources is done between
@@ -80,17 +121,8 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   f->scrollbar_height = make_int (15);
 
   f->frame_data = xnew_and_zero (struct mswindows_frame);
-  FRAME_WIDTH (f) = INTP(width) ? XINT(width) : 80;
-  FRAME_HEIGHT (f) = INTP(height) ? XINT(height) : 30;
-  char_to_pixel_size (f, FRAME_WIDTH(f), FRAME_HEIGHT (f),
-		      &FRAME_PIXWIDTH (f), &FRAME_PIXHEIGHT (f));
 
-  style = (NILP(popup)) ? MSWINDOWS_FRAME_STYLE : MSWINDOWS_POPUP_STYLE;
-  exstyle = (NILP(popup)) ? MSWINDOWS_FRAME_EXSTYLE : MSWINDOWS_POPUP_EXSTYLE;
-  rect.left = rect.top = 0;
-  rect.right = FRAME_PIXWIDTH (f);
-  rect.bottom = FRAME_PIXHEIGHT (f);
-
+  /* Misc frame stuff */
   FRAME_MSWINDOWS_DATA(f)->button2_need_lbutton = 0;
   FRAME_MSWINDOWS_DATA(f)->button2_need_rbutton = 0;
   FRAME_MSWINDOWS_DATA(f)->button2_is_down = 0;
@@ -100,38 +132,102 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 
   FRAME_MSWINDOWS_MENU_HASHTABLE(f) = Qnil;
 
+  /* Will initialize these in WM_SIZE handler. We cannot do it now,
+     because we do not know what is CW_USEDEFAULT height and width */
+  FRAME_WIDTH (f) = 0;
+  FRAME_HEIGHT (f) = 0;
+  FRAME_PIXWIDTH (f) = 0;
+  FRAME_PIXHEIGHT (f) = 0;
+
+  if (NILP (popup))
+    {
+      style = MSWINDOWS_FRAME_STYLE;
+      exstyle = MSWINDOWS_FRAME_EXSTYLE;
+      hwnd_parent = NULL;
+
+      /* We always create am overlapped frame with default size,
+	 and later adjust only requested geometry parameters. */
+      rect_default.left = rect_default.top = CW_USEDEFAULT;
+      rect_default.width = rect_default.height = CW_USEDEFAULT;
+    }
+  else
+    {
+      style = MSWINDOWS_POPUP_STYLE;
+      exstyle = MSWINDOWS_POPUP_EXSTYLE;
+
+      CHECK_MSWINDOWS_FRAME (popup);
+      hwnd_parent = FRAME_MSWINDOWS_HANDLE (XFRAME (popup));
+      assert (IsWindow (hwnd_parent));
+
+      /* We cannot use CW_USEDEFAULT when creating a popup window.
+	 So by default, we offset the new popup 30 pixels right
+	 and down from its parent, and give it size of 30x10 characters.
+	 These dimensions look adequate on both high and low res monitors */
+      GetWindowRect (hwnd_parent, &rect);
+      rect_default.left = rect.left + POPUP_OFFSET;
+      rect_default.top = rect.top + POPUP_OFFSET;
+      char_to_real_pixel_size (f, POPUP_WIDTH, POPUP_HEIGHT,
+			       &rect_default.width, &rect_default.height);
+    }
+
   AdjustWindowRectEx(&rect, style, ADJR_MENUFLAG, exstyle);
 
-  FRAME_MSWINDOWS_HANDLE(f) =
-    CreateWindowEx (exstyle,
-		    XEMACS_CLASS,
-		    STRINGP(f->name) ? XSTRING_DATA(f->name) :
-		    	(STRINGP(name) ? XSTRING_DATA(name) : XEMACS_CLASS),
-		    style,
-		    INTP(left) ? XINT(left) : CW_USEDEFAULT,
-		    INTP(top) ? XINT(top) : CW_USEDEFAULT,
-		    rect.right-rect.left, rect.bottom-rect.top,
-		    NULL, NULL, NULL, NULL);
   XSETFRAME (frame_obj, f);
-  SetWindowLong (FRAME_MSWINDOWS_HANDLE(f), XWL_FRAMEOBJ, (LONG)frame_obj);
-  FRAME_MSWINDOWS_DC(f) = GetDC(FRAME_MSWINDOWS_HANDLE(f));
-  SetTextAlign(FRAME_MSWINDOWS_DC(f), TA_BASELINE|TA_LEFT|TA_NOUPDATECP);
+
+  mswindows_frame_being_created = frame_obj;
+
+  hwnd = CreateWindowEx (exstyle,
+			 XEMACS_CLASS,
+			 STRINGP(f->name) ? XSTRING_DATA(f->name) :
+		    	   (STRINGP(name) ? XSTRING_DATA(name) : XEMACS_CLASS),
+			 style,
+			 rect_default.left, rect_default.top,
+			 rect_default.width, rect_default.height,
+			 hwnd_parent, NULL, NULL, NULL);
+
+  mswindows_frame_being_created = Qnil;
+
+  if (hwnd == NULL)
+    error ("System call to create frame failed");
+			   
+  FRAME_MSWINDOWS_HANDLE(f) = hwnd;
+
+  SetWindowLong (hwnd, XWL_FRAMEOBJ, (LONG)LISP_TO_VOID(frame_obj));
+  FRAME_MSWINDOWS_DC(f) = GetDC (hwnd);
+  FRAME_MSWINDOWS_CDC(f) = CreateCompatibleDC (FRAME_MSWINDOWS_CDC(f));
+  SetTextAlign (FRAME_MSWINDOWS_DC(f), TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
 }
 
-/* Called just before frame's properties are set, size is 10x10 or something */
+#if 0 /* #### unused */
 static void
 mswindows_init_frame_2 (struct frame *f, Lisp_Object props)
 {
 }
+#endif
 
 /* Called after frame's properties are set */
 static void
 mswindows_init_frame_3 (struct frame *f)
 {
-  /* Don't do this earlier or we get a WM_PAINT before the frame is ready*/
+  /* Don't do this earlier or we get a WM_PAINT before the frame is ready */
   ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
   SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
   DragAcceptFiles (FRAME_MSWINDOWS_HANDLE(f), TRUE);
+}
+
+static void
+mswindows_after_init_frame (struct frame *f, int first_on_device,
+		            int first_on_console)
+{
+  /* Windows, unlike X, is very synchronous. After the initial
+     frame is created, it will never be displayed, except for 
+     hollow border, unless we start pumping messages. Load progress
+     messages show in the bottom of the hollow frame, which is ugly.
+     We redipsplay the initial frame here, so modeline and root window
+     backgorund show.
+  */
+  if (first_on_console)
+    redisplay ();
 }
 
 static void
@@ -143,7 +239,7 @@ mswindows_mark_frame (struct frame *f, void (*markobj) (Lisp_Object))
 static void
 mswindows_focus_on_frame (struct frame *f)
 {
-    SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
+  SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
 }
 
 static void
@@ -151,37 +247,41 @@ mswindows_delete_frame (struct frame *f)
 {
   if (f->frame_data)
     {
+      DeleteDC(FRAME_MSWINDOWS_CDC(f));
       ReleaseDC(FRAME_MSWINDOWS_HANDLE(f), FRAME_MSWINDOWS_DC(f));
       DestroyWindow(FRAME_MSWINDOWS_HANDLE(f));
+      xfree (f->frame_data);
     }
+  f->frame_data = 0;
 }
 
 static void
 mswindows_set_frame_size (struct frame *f, int cols, int rows)
 {
-  RECT rect1, rect2;
-  
-  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect1);
-  rect2.left = rect2.top = 0;
-  char_to_pixel_size (f, cols, rows, &rect2.right, &rect2.bottom);
+  RECT rect;
+  rect.left = rect.top = 0;
+  rect.right = cols;
+  rect.bottom = rows;
 
-  AdjustWindowRectEx (&rect2,
+  AdjustWindowRectEx (&rect,
 		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
 		      GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
 		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
-		    
-  MoveWindow (FRAME_MSWINDOWS_HANDLE(f), rect1.left, rect1.top,
- 	      rect2.right-rect2.left, rect2.bottom-rect2.top, TRUE);
+
+  if (IsIconic (FRAME_MSWINDOWS_HANDLE(f)) || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
+    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
+
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
+		0, 0, rect.right-rect.left, rect.bottom-rect.top,
+		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING | SWP_NOMOVE);
 }
 
 static void
 mswindows_set_frame_position (struct frame *f, int xoff, int yoff)
 {
-  RECT rect;
-
-  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
-  MoveWindow (FRAME_MSWINDOWS_HANDLE(f), xoff, yoff,
-	      rect.right-rect.left, rect.bottom-rect.top, TRUE);
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
+		xoff, yoff, 0, 0,
+		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING | SWP_NOSIZE);
 }
 
 static void
@@ -234,11 +334,8 @@ mswindows_raise_frame (struct frame *f)
 static void
 mswindows_lower_frame (struct frame *f)
 {
-  RECT rect;
-  
-  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
-  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), HWND_BOTTOM, rect.top, rect.left,
-		rect.right-rect.left, rect.bottom-rect.top, 0);
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), HWND_BOTTOM, 0, 0, 0, 0,
+		SWP_NOSIZE | SWP_NOMOVE | SWP_NOSENDCHANGING);
 }
 
 static void
@@ -308,19 +405,24 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 	}
     }
 
-  /* Now we've extracted the properties, apply them */
-  if (width_specified_p || height_specified_p || x_specified_p || y_specified_p)
+  /* Now we've extracted the properties, apply them.
+     Do not apply geometric properties during frame creation. This
+     is excessive anyways, and this loses becuase WM_SIZE has not
+     been sent yet, so frame width and height fields are not initialized
+  */ 
+  if (f->init_finished
+      && (width_specified_p || height_specified_p || x_specified_p || y_specified_p))
     {
-      Lisp_Object frame;
+      Lisp_Object frame = Qnil;
       RECT rect;
       int pixel_width, pixel_height;
       XSETFRAME (frame, f);
 
+      char_to_real_pixel_size (f, width, height, &pixel_width, &pixel_height);
       if (!width_specified_p)
-	width = FRAME_WIDTH (f);
+	pixel_width = FRAME_PIXWIDTH (f);
       if (!height_specified_p)
-	height = FRAME_HEIGHT (f);
-      char_to_pixel_size (f, width, height, &pixel_width, &pixel_height);
+	pixel_height = FRAME_PIXHEIGHT (f);
 
       GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
       if (!x_specified_p)
@@ -328,24 +430,85 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
       if (!y_specified_p)
 	y = rect.top;
 
+      rect.left = rect.top = 0;
+      rect.right = pixel_width;
+      rect.bottom = pixel_height;
       AdjustWindowRectEx (&rect,
 			  GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
 			  GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
 			  GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
+      
 
-      MoveWindow (FRAME_MSWINDOWS_HANDLE(f), x, y, pixel_width, pixel_height,
-		  (width_specified_p || height_specified_p));
+      if (IsIconic (FRAME_MSWINDOWS_HANDLE(f)) || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
+	ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
+
+      SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
+		    x, y, rect.right - rect.left, rect.bottom - rect.top,
+		    SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING
+		    | ((width_specified_p || height_specified_p) ? 0 : SWP_NOSIZE)
+		    | ((x_specified_p || y_specified_p) ? 0 : SWP_NOMOVE));
     }
 }
 
+static Lisp_Object
+mswindows_get_frame_parent (struct frame *f)
+{
+  HWND hwnd = FRAME_MSWINDOWS_HANDLE(f);
+  hwnd = GetParent (hwnd);
+  if (hwnd)
+    {
+      Lisp_Object parent;
+      VOID_TO_LISP (parent, GetWindowLong (hwnd, XWL_FRAMEOBJ));
+      assert (FRAME_MSWINDOWS_P (XFRAME (parent)));
+      return parent;
+    }
+  else
+    return Qnil;
+}
+
+static void
+mswindows_update_frame_external_traits (struct frame* frm, Lisp_Object name)
+{
+  if (EQ (name, Qfont))
+    {
+      /* We resize the frame along with the font if user preference
+	 of MS style compliance is turned off, and if font size has
+	 really changed
+      */
+      /* #### Frame gets resized after font here */
+      if (1)
+	{
+	  int new_char_height, new_char_width;
+          pixel_to_real_char_size (frm, FRAME_PIXWIDTH(frm), FRAME_PIXHEIGHT(frm),
+				   &new_char_width, &new_char_height);
+	  if (new_char_width != MSWINDOWS_FRAME_CHARWIDTH (frm)
+	      || new_char_height != MSWINDOWS_FRAME_CHARHEIGHT (frm))
+	    {
+	      Lisp_Object frame;
+	      XSETFRAME (frame, frm);
+	      Fset_frame_size (frame, MSWINDOWS_FRAME_CHARWIDTH (frm),
+			       MSWINDOWS_FRAME_CHARHEIGHT (frm), Qnil);
+	    }
+	}
+
+      /* This resizes minibuffer and redraws modeline. */
+      {
+        int width, height;
+	pixel_to_char_size (frm, FRAME_PIXWIDTH(frm), FRAME_PIXHEIGHT(frm),
+			    &width, &height);
+	change_frame_size (frm, height, width, 1);
+      }
+   }
+}
 
 void
 console_type_create_frame_mswindows (void)
 {
   /* frame methods */
   CONSOLE_HAS_METHOD (mswindows, init_frame_1);
-  CONSOLE_HAS_METHOD (mswindows, init_frame_2);
+/*  CONSOLE_HAS_METHOD (mswindows, init_frame_2); */
   CONSOLE_HAS_METHOD (mswindows, init_frame_3);
+  CONSOLE_HAS_METHOD (mswindows, after_init_frame);
   CONSOLE_HAS_METHOD (mswindows, mark_frame);
   CONSOLE_HAS_METHOD (mswindows, focus_on_frame);
   CONSOLE_HAS_METHOD (mswindows, delete_frame);
@@ -369,7 +532,8 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, frame_iconified_p);
 /*  CONSOLE_HAS_METHOD (mswindows, set_frame_pointer); */
 /*  CONSOLE_HAS_METHOD (mswindows, set_frame_icon); */
-/*  CONSOLE_HAS_METHOD (mswindows, get_frame_parent); */
+  CONSOLE_HAS_METHOD (mswindows, get_frame_parent);
+  CONSOLE_HAS_METHOD (mswindows, update_frame_external_traits);
 }
 
 void
@@ -389,6 +553,9 @@ syms_of_frame_mswindows (void)
 void
 vars_of_frame_mswindows (void)
 {
+  mswindows_frame_being_created = Qnil;
+  staticpro (&mswindows_frame_being_created);
+
   DEFVAR_LISP ("default-mswindows-frame-plist", &Vdefault_mswindows_frame_plist /*
 Plist of default frame-creation properties for mswindows frames.
 These override what is specified in `default-frame-plist', but are

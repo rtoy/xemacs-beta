@@ -1,3 +1,7 @@
+1998-03-27  Stephen Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* xemacs/frame.texi: Document cursor appearance at end of line.
+
 1998-03-14  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* internals/internals.texi (GCPROing): Explain when it is

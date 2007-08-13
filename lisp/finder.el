@@ -179,8 +179,10 @@ arguments compiles from `load-path'."
 		      (buffer-disable-undo (current-buffer))
 		      (erase-buffer)
 		      (insert-file-contents (expand-file-name f d))
-		      (setq summary  (lm-synopsis)
-			    keywords (lm-keywords)))
+		      (condition-case err
+			  (setq summary  (lm-synopsis)
+				keywords (lm-keywords))
+			(t (message "finder: error processing %s %S" f err))))
 		    (if (not summary)
 			nil
 		      (insert (format "    (\"%s\"\n        " f))

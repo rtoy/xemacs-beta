@@ -153,11 +153,11 @@ lispdir=@lispdir@
 lispdir_user_defined=@lispdir_user_defined@
 
 ## Where packages are found.
-packagepath=@packagepath@
+package_path=@package_path@
 
 ## This is set to 'yes' if the user specified the --package_path
 ## at configuration time.
-packagepath_user_defined=@packagepath_user_defined@
+package_path_user_defined=@package_path_user_defined@
 
 
 ## Directory XEmacs should search for lisp files specific
@@ -311,9 +311,9 @@ src/paths.h: Makefile ${srcdir}/src/paths.h.in FRC.src.paths.h
 	   then echo    '#define PATH_LOADSEARCH "${lispdir}"'; \
 	   else echo '/* #define PATH_LOADSEARCH "${lispdir}" */'; \
 	 fi; \
-	 if test "${packagepath_user_defined}" = "yes"; \
-	   then echo    '#define PATH_PACKAGEPATH "${packagepath}"'; \
-	   else echo '/* #define PATH_PACKAGEPATH "${packagepath}" */'; \
+	 if test "${package_path_user_defined}" = "yes"; \
+	   then echo    '#define PATH_PACKAGEPATH "${package_path}"'; \
+	   else echo '/* #define PATH_PACKAGEPATH "${package_path}" */'; \
 	 fi; \
 	 if test "${sitelispdir_user_defined}" = "yes"; \
 	   then echo    '#define PATH_SITE "${sitelispdir}"'; \
@@ -335,10 +335,8 @@ src/paths.h: Makefile ${srcdir}/src/paths.h.in FRC.src.paths.h
 	   then echo    '#define PATH_INFO "${infodir}"'; \
 	   else echo '/* #define PATH_INFO "${infodir}" */'; \
 	fi; \
-	 if test "${infopath_user_defined}" = "yes"; \
-	   then echo    '#define PATH_INFOPATH "${infopath}"'; \
-	   else echo '/* #define PATH_INFOPATH "${infopath}" */'; \
-	fi; ) >> src/paths.h.tmp; \
+	echo    '#define PATH_INFOPATH "${infopath}"'; \
+	) >> src/paths.h.tmp; \
 	sh ${srcdir}/move-if-change src/paths.h.tmp src/paths.h
 
 ## We have to force the building of Emacs.ad.h as well in order to get it

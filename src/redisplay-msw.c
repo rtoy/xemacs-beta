@@ -313,7 +313,7 @@ mswindows_output_blank (struct window *w, struct display_line *dl, struct rune *
  ****************************************************************************/
 static void
 mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
-		   int width, struct rune *rb)
+			 int width, face_index findex, Emchar ch, int image_p)
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -321,7 +321,6 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   Lisp_Object font = Qnil;
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   HDC hdc = FRAME_MSWINDOWS_DC (f);
-  int real_char_p = (rb->type == RUNE_CHAR && rb->object.chr.ch != '\n');
   unsigned int face_index=0;
   char *p_char = NULL;
   int n_char = 0;
@@ -329,15 +328,16 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 		dl->ypos - dl->ascent,
 		xpos + width,
 		dl->ypos + dl->descent - dl->clip};
-
   Lisp_Object bar = symbol_value_in_buffer (Qbar_cursor,
 					    WINDOW_BUFFER (w));
-  int bar_p = !NILP (bar);
+  int bar_p = image_p || !NILP (bar);
+  int cursor_p = !NILP (w->text_cursor_visible_p);
+  int real_char_p = ch != 0;
 
   if (real_char_p)
     {
       /* Use the font from the underlying character */
-      cachel = WINDOW_FACE_CACHEL (w, rb->findex);
+      cachel = WINDOW_FACE_CACHEL (w, findex);
 
       /* XXX MULE: Need to know the charset! */
       font = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
@@ -345,21 +345,29 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 
   if ((focus || bar_p) && real_char_p)
     {
-      p_char = (char*) &rb->object.chr.ch;
+      p_char = (char*) &ch;
       n_char = 1;
     }
 
-  /* Use cursor fg/bg for block cursor, or character fg/bg for the bar.
-     Output nothing at eol if bar cursor */
-  face_index = get_builtin_face_cache_index (w, Vtext_cursor_face);
-  cachel = WINDOW_FACE_CACHEL (w, (bar_p ? rb->findex : face_index));
-  mswindows_update_dc (hdc, font, cachel->foreground,
-		       cachel->background, Qnil);
-  ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE|ETO_CLIPPED, &rect, p_char, n_char, NULL);
+  if (!image_p)
+    {
+      /* Use cursor fg/bg for block cursor, or character fg/bg for the bar
+	 or when we need to erase the cursor. Output nothing at eol if bar
+	 cursor */
+      face_index = get_builtin_face_cache_index (w, Vtext_cursor_face);
+      cachel = WINDOW_FACE_CACHEL (w, ((!cursor_p || bar_p)
+				       ? findex : face_index));
+      mswindows_update_dc (hdc, font, cachel->foreground,
+			   cachel->background, Qnil);
+      ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE|ETO_CLIPPED, &rect, p_char, n_char, NULL);
+    }
+
+  if (!cursor_p)
+    return;
 
   if (focus && bar_p)
     {
-      rect.right = rect.left + (EQ (bar, Qt) ? 1 : 2);
+      rect.right = rect.left + (EQ (bar, Qt) ? 1 : min (2, width));
       face_index = get_builtin_face_cache_index (w, Vtext_cursor_face);
       cachel = WINDOW_FACE_CACHEL (w, face_index);
       mswindows_update_dc (hdc, Qnil, Qnil, cachel->background, Qnil);
@@ -374,12 +382,12 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 
       if (real_char_p)
 	{
-	  p_char = (char*) &rb->object.chr.ch;
+	  p_char = (char*) &ch;
 	  n_char = 1;
 	}
 
       face_index = get_builtin_face_cache_index (w, Vdefault_face);
-      cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? rb->findex : face_index));
+      cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? findex : face_index));
       mswindows_update_dc (hdc, Qnil, cachel->foreground,
 			   cachel->background, Qnil);
       ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
@@ -514,16 +522,16 @@ mswindows_output_dibitmap (struct frame *f, struct Lisp_Image_Instance *p,
     }
 
   /* Select the bitmaps into the compatible DC. */
-  if ((old=SelectObject(IMAGE_INSTANCE_MSWINDOWS_DC(p),
+  if ((old=SelectObject(FRAME_MSWINDOWS_CDC(f),
 			IMAGE_INSTANCE_MSWINDOWS_BITMAP(p))))
     {
       BitBlt(hdc, 
 	     x,y,
 	     width, height, 
-	     IMAGE_INSTANCE_MSWINDOWS_DC(p),
+	     FRAME_MSWINDOWS_CDC(f),
 	     0,0, 
 	     SRCCOPY);                  
-      SelectObject(IMAGE_INSTANCE_MSWINDOWS_DC(p),old);
+      SelectObject(FRAME_MSWINDOWS_CDC(f),old);
     }
   else
     {
@@ -652,6 +660,7 @@ mswindows_output_pixmap (struct window *w, struct display_line *dl,
 			       pwidth, pheight, pixmap_offset);
   }
 
+#if 0
   /* Draw a cursor over top of the pixmap. */
   if (cursor_width && cursor_height && (cursor_start >= xpos)
       && !NILP (w->text_cursor_visible_p)
@@ -684,6 +693,7 @@ mswindows_output_pixmap (struct window *w, struct display_line *dl,
 		     cursor_height);
 	}
     }
+#endif
 }
 
 #ifdef HAVE_SCROLLBARS
@@ -1052,12 +1062,14 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 		{
 		  if (rb->object.chr.ch == '\n')
 		    {
-		      mswindows_output_cursor (w, dl, xpos, cursor_width, rb);
+		      mswindows_output_cursor (w, dl, xpos, cursor_width,
+					       findex, 0, 0);
 		    }
 		  else
 		    {
 		      Dynarr_add (buf, rb->object.chr.ch);
-		      mswindows_output_cursor (w, dl, xpos, cursor_width, rb);
+		      mswindows_output_cursor (w, dl, xpos, cursor_width,
+					       findex, rb->object.chr.ch, 0);
 		      Dynarr_reset (buf);
 		    }
 
@@ -1092,7 +1104,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 		}
 
 	      if (rb->cursor_type == CURSOR_ON)
-		mswindows_output_cursor (w, dl, xpos, cursor_width, rb);
+		mswindows_output_cursor (w, dl, xpos, cursor_width, rb->findex, 0, 0);
 
 	      elt++;
 	      if (elt < end)
@@ -1125,7 +1137,8 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 			(XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
 
 		      if (rb->cursor_type == CURSOR_ON)
-			mswindows_output_cursor (w, dl, xpos, cursor_width, rb);
+			mswindows_output_cursor (w, dl, xpos, cursor_width,
+						 findex, Dynarr_at (buf, 0), 0);
 		      else /* #### redisplay-x passes -1 as the width: why ? */
 			mswindows_output_string (w, dl, buf, xpos,
 					   rb->object.dglyph.xoffset,
@@ -1140,6 +1153,9 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 				     rb->object.dglyph.xoffset, start_pixpos,
 				     rb->width, findex, cursor_start,
 				     cursor_width, cursor_height);
+		    if (rb->cursor_type == CURSOR_ON)
+		      mswindows_output_cursor (w, dl, xpos, cursor_width,
+					       findex, 0, 1);
 		    break;
 
 		  case IMAGE_POINTER:
@@ -1176,7 +1192,6 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
     mswindows_bevel_modeline (w, dl);
 
   Dynarr_free (buf);
-  
 }
 
 

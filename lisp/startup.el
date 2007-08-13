@@ -1027,7 +1027,8 @@ It's idempotent, so call this as often as you like!"
 					     late-package-load-path
 					     inhibit-site-lisp))
 
-  (setq info-path (paths-construct-info-path roots early-packages late-packages))
+  (setq Info-directory-list
+	(paths-construct-info-path roots early-packages late-packages))
 
   (if (boundp 'lock-directory)
       (progn

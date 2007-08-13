@@ -419,6 +419,12 @@ int faces_changed;
 /* Nonzero means some frames have been marked as garbaged */
 int frame_changed;
 
+/* non-zero if any of the builtin display glyphs (continuation,
+   hscroll, control-arrow, etc) is in need of updating
+   somewhere. */
+int glyphs_changed;
+int glyphs_changed_set;
+
 /* This variable is 1 if the icon has to be updated.
  It is set to 1 when `frame-icon-glyph' changes. */
 int icon_changed;
@@ -426,8 +432,7 @@ int icon_changed_set;
 
 /* This variable is 1 if the menubar widget has to be updated.
  It is set to 1 by set-menubar-dirty-flag and cleared when the widget
- has been indapted. */
-/* indapted???? */
+ has been updated. */
 int menubar_changed;
 int menubar_changed_set;
 
@@ -5590,7 +5595,8 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   /* Ditto the glyph cache elements. */
   if ((!echo_active && b != window_display_buffer (w))
-      || !Dynarr_length (w->glyph_cachels))
+      || !Dynarr_length (w->glyph_cachels)
+      || f->glyphs_changed)
     reset_glyph_cachels (w);
   else
     mark_glyph_cachels_as_not_updated (w);
@@ -5668,6 +5674,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	  && !f->clip_changed
 	  && !f->extents_changed
 	  && !f->faces_changed
+	  && !f->glyphs_changed
 	  && !f->point_changed
 	  && !f->windows_structure_changed)
 	{
@@ -5687,6 +5694,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	      && !f->clip_changed
 	      && !f->extents_changed
 	      && !f->faces_changed
+	      && !f->glyphs_changed
 	      && !f->windows_structure_changed)
 	    {
 	      if (point_visible (w, pointm, CURRENT_DISP)
@@ -5743,6 +5751,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
   else if (!w->windows_changed
 	   && !f->clip_changed
 	   && !f->faces_changed
+	   && !f->glyphs_changed
 	   && !f->windows_structure_changed
 	   && !f->frame_changed
 	   && !truncation_changed
@@ -6006,6 +6015,7 @@ redisplay_frame (struct frame *f, int preemption_check)
   f->extents_changed  = 0;
   f->faces_changed    = 0;
   f->frame_changed    = 0;
+  f->glyphs_changed   = 0;
   f->icon_changed     = 0;
   f->menubar_changed  = 0;
   f->modeline_changed = 0;
@@ -6069,7 +6079,8 @@ redisplay_device (struct device *d)
 	  f->faces_changed    || f->frame_changed || f->menubar_changed ||
 	  f->modeline_changed || f->point_changed || f->size_changed    ||
 	  f->toolbar_changed  || f->windows_changed ||
-	  f->windows_structure_changed)
+	  f->windows_structure_changed ||
+	  f->glyphs_changed)
 	{
 	  preempted = redisplay_frame (f, 0);
 	}
@@ -6103,7 +6114,8 @@ redisplay_device (struct device *d)
 	      f->faces_changed    || f->frame_changed || f->menubar_changed ||
 	      f->modeline_changed || f->point_changed || f->size_changed    ||
 	      f->toolbar_changed  || f->windows_changed ||
-	      f->windows_structure_changed)
+	      f->windows_structure_changed ||
+	      f->glyphs_changed)
 	    {
 	      preempted = redisplay_frame (f, 0);
 	    }
@@ -6123,6 +6135,7 @@ redisplay_device (struct device *d)
   d->extents_changed  = 0;
   d->faces_changed    = 0;
   d->frame_changed    = 0;
+  d->glyphs_changed   = 0;
   d->icon_changed     = 0;
   d->menubar_changed  = 0;
   d->modeline_changed = 0;
@@ -6168,6 +6181,7 @@ redisplay_without_hooks (void)
       !faces_changed   && !frame_changed    && !icon_changed    &&
       !menubar_changed && !modeline_changed && !point_changed   &&
       !size_changed    && !toolbar_changed  && !windows_changed &&
+      !glyphs_changed  &&
       !windows_structure_changed && !disable_preemption &&
       preemption_count < max_preempts)
     goto done;
@@ -6181,7 +6195,8 @@ redisplay_without_hooks (void)
 	  d->faces_changed    || d->frame_changed    || d->icon_changed    ||
 	  d->menubar_changed  || d->modeline_changed || d->point_changed   ||
 	  d->size_changed     || d->toolbar_changed  || d->windows_changed ||
-	  d->windows_structure_changed)
+	  d->windows_structure_changed ||
+	  d->glyphs_changed)
 	{
 	  preempted = redisplay_device (d);
 
@@ -6204,6 +6219,7 @@ redisplay_without_hooks (void)
   clip_changed     = 0;
   extents_changed  = 0;
   frame_changed    = 0;
+  glyphs_changed   = 0;
   icon_changed     = 0;
   menubar_changed  = 0;
   modeline_changed = 0;
@@ -8580,7 +8596,43 @@ void
 redisplay_glyph_changed (Lisp_Object glyph, Lisp_Object property,
 			 Lisp_Object locale)
 {
-  MARK_CLIP_CHANGED;
+  if (WINDOWP (locale))
+    {
+      struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (locale)));
+      MARK_FRAME_GLYPHS_CHANGED (f);
+    }
+  else if (FRAMEP (locale))
+    {
+      struct frame *f = XFRAME (locale);
+      MARK_FRAME_GLYPHS_CHANGED (f);
+    }
+  else if (DEVICEP (locale))
+    {
+      Lisp_Object frmcons;
+      DEVICE_FRAME_LOOP (frmcons, XDEVICE (locale))
+	{
+	  struct frame *f = XFRAME (XCAR (frmcons));
+	  MARK_FRAME_GLYPHS_CHANGED (f);
+	}
+    }
+  else if (CONSOLEP (locale))
+    {
+      Lisp_Object frmcons, devcons;
+      CONSOLE_FRAME_LOOP_NO_BREAK (frmcons, devcons, XCONSOLE (locale))
+	{
+	  struct frame *f = XFRAME (XCAR (frmcons));
+	  MARK_FRAME_GLYPHS_CHANGED (f);
+	}
+    }
+  else /* global or buffer */
+    {
+      Lisp_Object frmcons, devcons, concons;
+      FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
+	{
+	  struct frame *f = XFRAME (XCAR (frmcons));
+	  MARK_FRAME_GLYPHS_CHANGED (f);
+	}
+    }
 }
 
 static void

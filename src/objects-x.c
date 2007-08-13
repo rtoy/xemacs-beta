@@ -114,13 +114,26 @@ allocate_nearest_color (Display *display, Colormap colormap, Visual *visual,
 	    status = 1;
 	  else
   	    {
+  	      int rd, gr, bl;	
 	      /* ### JH: I'm punting here, knowing that doing this will at
 		 least draw the color correctly.  However, unless we convert
 		 all of the functions that allocate colors (graphics
 		 libraries, etc) to use this function doing this is very
 		 likely to cause problems later... */
-	      color_def->pixel = (color_def->red << rshift) | (color_def->green << gshift) |
-				   (color_def->blue << bshift);
+
+	      if (rbits > 8)
+		rd = color_def->red << (rbits - 8);
+	      else
+		rd = color_def->red >> (8 - rbits);
+	      if (gbits > 8)
+		gr = color_def->green << (gbits - 8);
+	      else
+		gr = color_def->green >> (8 - gbits);
+	      if (bbits > 8)
+		bl = color_def->blue << (bbits - 8);
+	      else
+		bl = color_def->blue >> (8 - bbits);
+	      color_def->pixel = (rd << rshift) | (gr << gshift) | (bl << bshift);
 	      status = 3;
 	    }
 	}
@@ -180,10 +193,12 @@ allocate_nearest_color (Display *display, Colormap colormap, Visual *visual,
 	  color_def->red = cells[nearest].red;
 	  color_def->green = cells[nearest].green;
 	  color_def->blue = cells[nearest].blue;
-	  if (XAllocColor (display, colormap, color_def) != 0)
+	  if (XAllocColor (display, colormap, color_def) != 0) {
 	    status = 2;
-	  else
+	  } else {
 	    status = 0; /* JH: how does this happen??? DOES this happen??? */
+	    fprintf(stderr,"allocate_nearest_color returned 0!!!\n");
+	  }
 	}
     }
   return status;

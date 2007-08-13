@@ -151,23 +151,11 @@ See also 'find-menu-item'
        (desc, path))
 {
   Lisp_Object path_entry, submenu_desc, submenu;
-  Lisp_Object *gui_item_array;
   struct gcpro gcpro1;
   struct gui_item gui_item;
 
   gui_item_init (&gui_item);
-
-  /*
-   * gui_item is a struct containing a bunch of Lisp_Object
-   * members.  We need to GC-protect all the member slots.
-   * Rather than build a long chain of individual gcpro structs
-   * that protect the slots individually, we protect all the
-   * member slots by pretending the struct is an array.  ANSI C
-   * requires tihs hack to work, ugly though it is.
-   */
-  gui_item_array = (Lisp_Object *) &gui_item;
-  GCPRO1 (gui_item_array[0]);
-  gcpro1.nvars = GUI_ITEM_GCPRO_COUNT;
+  GCPRO_GUI_ITEM (&gui_item);
   
   EXTERNAL_LIST_LOOP (path_entry, path)
     {

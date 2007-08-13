@@ -153,14 +153,14 @@ mswindows_update_scrollbar_instance_status (struct window *w,
 {
   struct frame *f = XFRAME (w->frame);
   
-  if (SCROLLBAR_MSW_SIZE (sb) != size) {
-    SCROLLBAR_MSW_SIZE (sb) = size;
-    ShowScrollBar (SCROLLBAR_MSW_HANDLE (sb), SB_CTL,
-		   SCROLLBAR_MSW_SIZE (sb));
-    SCROLLBAR_MSW_INFO(sb).fMask |= SIF_DISABLENOSCROLL;
-    SetScrollInfo(SCROLLBAR_MSW_HANDLE (sb), SB_CTL, &SCROLLBAR_MSW_INFO (sb), TRUE);
-    FRAMEMETH (f, set_frame_size, (f, FRAME_WIDTH (f), FRAME_HEIGHT (f)));
-  }
+  if (SCROLLBAR_MSW_SIZE (sb) != size)
+    {
+      SCROLLBAR_MSW_SIZE (sb) = size;
+      ShowScrollBar (SCROLLBAR_MSW_HANDLE (sb), SB_CTL,
+		     SCROLLBAR_MSW_SIZE (sb));
+      SCROLLBAR_MSW_INFO(sb).fMask |= SIF_DISABLENOSCROLL;
+      SetScrollInfo(SCROLLBAR_MSW_HANDLE (sb), SB_CTL, &SCROLLBAR_MSW_INFO (sb), TRUE);
+    }
 }
 
 void

@@ -41,12 +41,6 @@ Boston, MA 02111-1307, USA.  */
 #include "specifier.h"
 #include "window.h"
 
-#ifdef HAVE_X_WINDOWS
-#include "console-x.h"
-#include "objects-x.h"
-#include "EmacsFrame.h"
-#endif /* HAVE_X_WINDOWS */
-
 /* Qfont, Qdoc_string, Qface defined in general.c */
 Lisp_Object Qfacep;
 Lisp_Object Qforeground, Qbackground, Qdisplay_table;
@@ -727,6 +721,21 @@ default_face_height_and_width (Lisp_Object domain,
 			       int *height, int *width)
 {
   default_face_font_info (domain, 0, 0, height, width, 0);
+}
+
+void
+default_face_height_and_width_1 (Lisp_Object domain,
+				 int *height, int *width)
+{
+  if (window_system_pixelated_geometry (domain))
+    {
+      if (height)
+	*height = 1;
+      if (width)
+	*width = 1;
+    }
+  else
+    default_face_height_and_width (domain, height, width);
 }
 
 DEFUN ("face-list", Fface_list, 0, 1, 0, /*
@@ -1578,96 +1587,11 @@ get_extent_fragment_face_cache_index (struct window *w,
  interface functions
  ****************************************************************************/
 
-/* #### This function should be converted into appropriate device methods. */
 static void
 update_EmacsFrame (Lisp_Object frame, Lisp_Object name)
 {
   struct frame *frm = XFRAME (frame);
-
-#ifdef HAVE_X_WINDOWS
-  if (FRAME_X_P (frm))
-     {
-       Arg av[10];
-       int ac = 0;
-
-       if (EQ (name, Qforeground))
-	 {
-	   Lisp_Object color = FACE_FOREGROUND (Vdefault_face, frame);
-	   XColor fgc;
-
-	   if (!EQ (color, Vthe_null_color_instance))
-	     {
-	       fgc = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color));
-	       XtSetArg (av[ac], XtNforeground, (void *) fgc.pixel); ac++;
-	     }
-	 }
-       else if (EQ (name, Qbackground))
-	 {
-	   Lisp_Object color = FACE_BACKGROUND (Vdefault_face, frame);
-	   XColor bgc;
-
-	   if (!EQ (color, Vthe_null_color_instance))
-	     {
-	       bgc = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color));
-	       XtSetArg (av[ac], XtNbackground, (void *) bgc.pixel); ac++;
-	     }
-
-	   /* Really crappy way to force the modeline shadows to be
-              redrawn.  But effective. */
-	   MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (frm);
-	   MARK_FRAME_CHANGED (frm);
-	 }
-       else if (EQ (name, Qfont))
-	 {
-	   Lisp_Object font = FACE_FONT (Vdefault_face, frame, Vcharset_ascii);
-
-	   if (!EQ (font, Vthe_null_font_instance))
-	     XtSetArg (av[ac], XtNfont,
-		       (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
-	   ac++;
-	 }
-       else
-	 abort ();
-
-       XtSetValues (FRAME_X_TEXT_WIDGET (frm), av, ac);
-
-#ifdef HAVE_TOOLBARS
-       /* Setting the background clears the entire frame area
-          including the toolbar so we force an immediate redraw of
-          it. */
-       if (EQ (name, Qbackground))
-	 MAYBE_DEVMETH (XDEVICE (frm->device), redraw_frame_toolbars, (frm));
-#endif /* HAVE_TOOLBARS */
-
-       /* The intent of this code is to cause the frame size in
-	  characters to remain the same when the font changes, at the
-	  expense of changing the frame size in pixels.  It's not
-	  totally clear that this is the right thing to do, but it's
-	  not clearly wrong either.  */
-       if (EQ (name, Qfont))
-	 {
-	   EmacsFrameRecomputeCellSize (FRAME_X_TEXT_WIDGET (frm));
-	   Fset_frame_size (frame,
-			    make_int (frm->width),
-			    make_int (frm->height),
-			    Qnil);
-	 }
-     }
-#endif /* HAVE_X_WINDOWS */
-#ifdef HAVE_MS_WINDOWS
-  if (CONSOLE_TYPESYM_MSWINDOWS_P (FRAME_TYPE (frm)))
-    {
-      /* Cause the frame size in characters to remain the same when the font
-       * changes, at the expense of changing the frame size in pixels. */
-      if (EQ (name, Qfont))
-	{
-	  Fset_frame_size (frame,
-			   make_int (frm->width),
-			   make_int (frm->height),
-			   Qnil);
-	}
-    }
-#endif /* HAVE_MS_WINDOWS */
+  MAYBE_FRAMEMETH (frm, update_frame_external_traits, (frm, name));
 }
 
 static void

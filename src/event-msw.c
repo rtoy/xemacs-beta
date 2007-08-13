@@ -999,25 +999,70 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       if (wParam==SIZE_MINIMIZED)
 	{
 	  /* Iconified */
-	  FRAME_VISIBLE_P (frame) = 0;
+          FRAME_VISIBLE_P (frame) = 0;
 	  mswindows_enqueue_magic_event (hwnd, XM_UNMAPFRAME);
-	  Fframe_iconified_p (fobj);
 	}
       else
 	{
-	  int was_visible = FRAME_VISIBLE_P (frame);
-	  if (!msframe->sizing && !was_visible)
-	    mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
-	  
 	  GetClientRect(hwnd, &rect);
-      	  FRAME_VISIBLE_P(frame) = 1;
 	  FRAME_PIXWIDTH(frame) = rect.right;
 	  FRAME_PIXHEIGHT(frame) = rect.bottom;
+
+	  pixel_to_real_char_size (frame, rect.right, rect.bottom,
+				   &MSWINDOWS_FRAME_CHARWIDTH (frame),
+				   &MSWINDOWS_FRAME_CHARHEIGHT (frame));
+
 	  pixel_to_char_size (frame, rect.right, rect.bottom, &columns, &rows);
 	  change_frame_size (frame, rows, columns, 1);
 
-	  if (msframe->sizing && mswindows_dynamic_frame_resize)
-	    redisplay ();
+	  /* If we are inside frame creation, we have to apply geometric
+	     properties now. */
+	  if (mswindows_frame_target_rect.left >= 0
+	      || mswindows_frame_target_rect.top >= 0
+	      || mswindows_frame_target_rect.width >= 0
+	      || mswindows_frame_target_rect.height >= 0)
+	    {
+	      /* Yes, we have to size again */
+	      XEMACS_RECT_WH geom;
+	      
+	      geom.left = mswindows_frame_target_rect.left;
+	      geom.top = mswindows_frame_target_rect.top;
+	      char_to_real_pixel_size (frame,
+				       mswindows_frame_target_rect.width,
+				       mswindows_frame_target_rect.height,
+				       &geom.width, &geom.height);
+	      if (mswindows_frame_target_rect.width < 0)
+		geom.width = -1;
+	      if (mswindows_frame_target_rect.height < 0)
+		geom.height = -1;
+
+	      /* Reset to we do not get here again */
+	      mswindows_frame_target_rect.left = -1;
+	      mswindows_frame_target_rect.top = -1;
+	      mswindows_frame_target_rect.width = -1;
+	      mswindows_frame_target_rect.height = -1;
+
+	      /* Size the rectangle to the actual size */
+	      GetWindowRect (hwnd, &rect);
+	      SetWindowPos
+		(hwnd, NULL,
+		 geom.left >= 0 ? geom.left : rect.left,
+		 geom.top >= 0 ? geom.top : rect.top,
+		 geom.width >= 0 ? geom.width : rect.right - rect.left,
+		 geom.height >= 0 ? geom.height : rect.bottom - rect.top,
+		 SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING
+		 | ((geom.left >= 0 || geom.top >= 0) ? 0 : SWP_NOMOVE)
+		 | ((geom.width >= 0 || geom.height >= 0) ? 0 : SWP_NOSIZE));
+	    }
+	  else
+	    {
+	      if (!msframe->sizing && !FRAME_VISIBLE_P (frame))
+		mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
+	      FRAME_VISIBLE_P (frame) = 1;
+	      
+	      if (!msframe->sizing || mswindows_dynamic_frame_resize)
+		redisplay ();
+	    }
 	}
     }
     break;
@@ -1035,7 +1080,9 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       GetWindowPlacement(hwnd, &wpl);
 
       /* Only interested if size is changing and we're not being iconified */
-      if ((wpl.showCmd != SW_SHOWMINIMIZED) && !(wp->flags & SWP_NOSIZE))
+      if (wpl.showCmd != SW_SHOWMINIMIZED
+	  && wpl.showCmd != SW_SHOWMAXIMIZED
+	  && !(wp->flags & SWP_NOSIZE))
       {
 	RECT ncsize = { 0, 0, 0, 0 };
 	int pixwidth, pixheight;
@@ -1043,10 +1090,10 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
  			    GetMenu(hwnd) != NULL,
 			    GetWindowLong (hwnd, GWL_EXSTYLE));
 
-	round_size_to_char (XFRAME (mswindows_find_frame (hwnd)),
-			    wp->cx - (ncsize.right - ncsize.left),
-			    wp->cy - (ncsize.bottom - ncsize.top),
-			    &pixwidth, &pixheight);
+	round_size_to_real_char (XFRAME (mswindows_find_frame (hwnd)),
+				 wp->cx - (ncsize.right - ncsize.left),
+				 wp->cy - (ncsize.bottom - ncsize.top),
+				 &pixwidth, &pixheight);
 
 	/* Convert client sizes to window sizes */
 	pixwidth += (ncsize.right - ncsize.left);
@@ -1068,8 +1115,10 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	wp->cx = pixwidth;
 	wp->cy = pixheight;
       }
+      /* DefWindowProc sends useful WM_GETMINMAXINFO message, and adjusts
+	 window position if the user tries to track window too small */
     }
-    break;
+    goto defproc;
 
   case WM_ENTERSIZEMOVE:
     msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
@@ -1145,10 +1194,8 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       /* O Toolbar Implementor, this place may have something for you!;*/
 #endif
 
-      /* Bite me - a spurious command. No abort(), for safety */
-      /* #### Perhaps, this message should be changed */
-      error ("Cannot decode command. Tell kkm he's a parallelogramm, if you know"
-	     " what does that mean!");
+      /* Bite me - a spurious command. This cannot happen. */
+      error ("XEMACS BUG: Cannot decode command message");
     }
   break;
 
@@ -1228,10 +1275,9 @@ mswindows_set_chord_timer (HWND hwnd)
 {
   int interval;
 
-  /* We get half system threshold as it seems to
-     long before drag-selection is shown */
+  /* We get one third half system double click threshold */
   if (mswindows_button2_chord_time <= 0)
-    interval = GetDoubleClickTime () / 2;
+    interval = GetDoubleClickTime () / 3;
   else
     interval = mswindows_button2_chord_time;
 
@@ -1402,9 +1448,19 @@ mswindows_find_console (HWND hwnd)
 static Lisp_Object
 mswindows_find_frame (HWND hwnd)
 {
-  return (Lisp_Object) GetWindowLong (hwnd, XWL_FRAMEOBJ);
+  LONG l = GetWindowLong (hwnd, XWL_FRAMEOBJ);
+  Lisp_Object f;
+  if (l == 0)
+    {
+      /* We are in progress of frame creation. Return the frame
+	 being created, as it still not remembered in the window
+	 extra storage. */
+      assert (!NILP (mswindows_frame_being_created));
+      return mswindows_frame_being_created;
+    }
+  VOID_TO_LISP (f, l);
+  return f;
 }
-
 
 
 /************************************************************************/

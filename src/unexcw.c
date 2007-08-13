@@ -69,7 +69,7 @@ void* bss_start = UNINIT_PTR;
 unsigned long  bss_size = UNINIT_LONG;
 FILHDR f_hdr;
 PEAOUTHDR f_ohdr;
-SCNHDR f_data, f_bss, f_text, f_idata;
+SCNHDR f_data, f_bss, f_text, f_nextdata;
 
 #define PERROR(arg) perror(arg);exit(-1) 
 #define CHECK_AOUT_POS(a) \
@@ -196,12 +196,12 @@ static void get_section_info (int a_out, char* a_name)
      than the one Emacs was dumped on).  */
   data_size = (unsigned long)my_edata - (unsigned long)data_start_va;
 
-  /* The .idata section.  */
-  if (read (a_out, &f_idata, sizeof (f_idata)) != sizeof (f_idata)
+  /* The following data section.  */
+  if (read (a_out, &f_nextdata, sizeof (f_nextdata)) != sizeof (f_nextdata)
       &&
-      strcmp (f_idata.s_name, ".rdata"))
+      strcmp (&f_nextdata.s_name[2], "data"))
     {
-      PERROR ("no .idata section");
+      PERROR ("no other data section");
     }
 }
 
@@ -239,10 +239,10 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
   f_data.s_vaddr = f_bss.s_vaddr;
   f_data.s_paddr += new_bss_size;
 #if 0 
-  if (f_data.s_size + f_idata.s_size != f_ohdr.dsize)
+  if (f_data.s_size + f_nextdata.s_size != f_ohdr.dsize)
     {
       printf("section size doesn't tally with dsize %lx != %lx\n", 
-	     f_data.s_size + f_idata.s_size, f_ohdr.dsize);
+	     f_data.s_size + f_nextdata.s_size, f_ohdr.dsize);
     }
 #endif
   f_data.s_size += new_bss_size;
@@ -285,13 +285,13 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
       PERROR("failed to write data header");
     }
 
-  printf("writing .idata header\n");
-  f_idata.s_scnptr += file_sz_change;
-  if (f_idata.s_lnnoptr != 0) f_idata.s_lnnoptr += file_sz_change;
-  if (f_idata.s_relptr != 0) f_idata.s_relptr += file_sz_change;
-  if (write(a_new, &f_idata, sizeof(f_idata)) != sizeof(f_idata))
+  printf("writing following data header\n");
+  f_nextdata.s_scnptr += file_sz_change;
+  if (f_nextdata.s_lnnoptr != 0) f_nextdata.s_lnnoptr += file_sz_change;
+  if (f_nextdata.s_relptr != 0) f_nextdata.s_relptr += file_sz_change;
+  if (write(a_new, &f_nextdata, sizeof(f_nextdata)) != sizeof(f_nextdata))
     {
-      PERROR("failed to write idata header");
+      PERROR("failed to write nextdata header");
     }
 
   /* copy other section headers adjusting the file offset */
@@ -361,21 +361,21 @@ copy_executable_and_dump_data_section (int a_out, int a_new)
   static_heap_dumped = 0;
   
   size = lseek(a_out, f_data_s_scnptr + data_size, SEEK_SET);
-  size = f_idata.s_scnptr - size;
+  size = f_nextdata.s_scnptr - size;
   dup_file_area(a_out, a_new, size);
 
-  //  lseek(a_out, f_idata.s_scnptr, SEEK_CUR);
-  CHECK_AOUT_POS(f_idata.s_scnptr);
-  /* now dump - idata don't need to do this cygwin ds is in .data! */
-  printf ("dumping .idata section... %lx bytes\n", f_idata.s_size);
+  //  lseek(a_out, f_nextdata.s_scnptr, SEEK_CUR);
+  CHECK_AOUT_POS(f_nextdata.s_scnptr);
+  /* now dump - nextdata don't need to do this cygwin ds is in .data! */
+  printf ("dumping following data section... %lx bytes\n", f_nextdata.s_size);
 
-  dup_file_area(a_out,a_new,f_idata.s_size);
+  dup_file_area(a_out,a_new,f_nextdata.s_size);
 
   /* write rest of file */
   printf ("writing rest of file\n");
   size = lseek(a_out, 0, SEEK_END);
-  size = size - (f_idata.s_scnptr + f_idata.s_size); /* length remaining in a_out */
-  lseek(a_out, f_idata.s_scnptr + f_idata.s_size, SEEK_SET);
+  size = size - (f_nextdata.s_scnptr + f_nextdata.s_size); /* length remaining in a_out */
+  lseek(a_out, f_nextdata.s_scnptr + f_nextdata.s_size, SEEK_SET);
 
   dup_file_area(a_out, a_new, size);
 }

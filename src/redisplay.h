@@ -343,6 +343,12 @@ extern int faces_changed;
 /* Nonzero means one or more frames have been marked as garbaged */
 extern int frame_changed;
 
+/* True if any of the builtin display glyphs (continuation,
+   hscroll, control-arrow, etc) is in need of updating
+   somewhere. */
+extern int glyphs_changed;
+extern int glyphs_changed_set;
+
 /* True if an icon is in need of updating somewhere. */
 extern int icon_changed;
 extern int icon_changed_set;
@@ -409,6 +415,7 @@ extern int windows_structure_changed;
 #define MARK_MODELINE_CHANGED MARK_TYPE_CHANGED (modeline)
 #define MARK_POINT_CHANGED MARK_TYPE_CHANGED (point)
 #define MARK_TOOLBAR_CHANGED MARK_TYPE_CHANGED (toolbar)
+#define MARK_GLYPHS_CHANGED MARK_TYPE_CHANGED (glyphs)
 
 /* Anytime a console, device or frame is added or deleted we need to reset
    these flags. */
@@ -422,6 +429,7 @@ extern int windows_structure_changed;
     modeline_changed_set = 0;						\
     point_changed_set = 0;						\
     toolbar_changed_set = 0;						\
+    glyphs_changed_set = 0;						\
   } while (0)
 
 

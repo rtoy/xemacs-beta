@@ -271,6 +271,8 @@ void default_face_font_info (Lisp_Object domain, int *ascent,
 			     int *proportional_p);
 void default_face_height_and_width (Lisp_Object domain,
 				    int *height, int *width);
+void default_face_height_and_width_1 (Lisp_Object domain,
+				      int *height, int *width);
 
 extern Lisp_Object Qforeground, Qbackground, Qfont, Qdisplay_table;
 extern Lisp_Object Qbackground_pixmap, Qunderline, Qhighlight, Qdim;

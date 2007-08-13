@@ -1,3 +1,67 @@
+1998-03-27  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* x-faces.el: Global X resources should override
+	  specs for all device classes (color, grayscale, mono);
+	  code currently doesn't override any of them.  Fixed by
+	  calling remove-specifier with '(x default) as the tag
+	  set and allowing inexact matches.
+
+1998-03-27  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* faces.el: Separated face intializations based on
+	  device classes into device type specific (tag set,
+	  instantiator) pairs.
+
+1998-03-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-choice-action): Remember user's explicit
+	choice.
+	(widget-choice-value-create): Respect it.
+	From Richard Stallman <rms@gnu.org>
+
+1998-03-26  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* setup-paths.el (paths-construct-info-path): Always append
+	existing directories from configure-time info path.
+
+	* startup.el (startup-setup-paths): Renamed misnamed info-path to
+	Info-directory-list.
+
+	* info.el: Removed Info-default-directory-list which was broken by
+	design.
+	Removed bogus initialization of Info-directory-list---startup.el
+	can do a much better job.
+	Added autoload of Info-directory-list.
+
+	* setup-paths.el (paths-construct-load-path): Fixed a bug pointed
+	out by Martin Buchholz <martin@xemacs.org>: EMACSLOADPATH used to
+	be exclusive; now it's merely given precedence, just like in the
+	old days.
+
+1998-03-25  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* find-paths.el (paths-find-architecture-directory): Fix bug with
+	finding; it used to default too early.
+
+1998-03-25  Martin Buchholz <martin@xemacs.org>
+
+	* packages.el (packages-split-path): Fix a bug; it used to fail
+	for paths that weren't split.
+
+1998-03-26  SL Baur  <steve@altair.xemacs.org>
+
+	* finder.el (finder-compile-keywords): trap on errors.
+
+1998-03-24  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* x-faces.el (remove-specifier-specs-matching-tag-set-cdrs): Pass
+	  fourth argument of t so that only the specs exactly
+	  matching the tag lists are removed.
+
+1998-03-25  SL Baur  <steve@altair.xemacs.org>
+
+	* make-docfile.el: Don't discard the BOOTSTRAPLOADPATH.
+
 1998-03-23  SL Baur  <steve@altair.xemacs.org>
 
 	* minibuf.el (mouse-read-file-name-1): If a default directory was

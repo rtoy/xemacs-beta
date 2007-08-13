@@ -354,6 +354,7 @@ compare_display_blocks (struct window *w, struct display_line *cdl,
 
   if (f->windows_structure_changed ||
       f->faces_changed ||
+      f->glyphs_changed ||
       cdl->ypos != ddl->ypos ||
       cdl->ascent != ddl->ascent ||
       cdl->descent != ddl->descent ||

@@ -104,6 +104,9 @@ Lisp_Object Vemacs_minor_version;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 
+/* The path under which XEmacs was invoked. */
+Lisp_Object Vinvocation_path;
+
 /* The name under which XEmacs was invoked, with any leading directory
    names discarded.  */
 Lisp_Object Vinvocation_name;
@@ -539,11 +542,16 @@ main_1 (int argc, char **argv, char **envp, int restart)
       printf ("malloc jumpstart failed!\n");
 #endif /* NeXT */
 
+  /*
 #if defined (GNU_MALLOC) && \
     defined (ERROR_CHECK_MALLOC) && \
     !defined (HAVE_LIBMCHECK)
-  /* Prior to XEmacs 21, this was `#if 0'ed out.  I'm putting it back in
-     because it provides extremely valuable debugging code. -slb */
+  */
+#if defined(LOSING_GCC_DESTRUCTOR_FREE_BUG)
+  /* Prior to XEmacs 21, this was `#if 0'ed out.  */
+  /* I'm enabling this because it is the only reliable way I've found to */
+  /* prevent a very annoying problem where GCC will attempt to free(3) */
+  /* memory at exit() and cause a coredump. */
   init_free_hook ();
 #endif
 
@@ -685,7 +693,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
     {
       /* Inhibit everything */
       inhibit_package_init = 1;
-      inhibit_site_lisp = 1;
       inhibit_update_autoloads = 1;
       inhibit_update_dumped_lisp = 1;
       skip_args--;
@@ -992,10 +999,13 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_btl ();
 #endif
 
+      /*
 #if defined (GNU_MALLOC) && \
     defined (ERROR_CHECK_MALLOC) && \
     !defined (HAVE_LIBMCHECK)
+      */
       /* Prior to XEmacs 21, this was `#if 0'ed out. -slb */
+#if defined (LOSING_GCC_DESTRUCTOR_FREE_BUG)
       syms_of_free_hook ();
 #endif
 
@@ -1568,13 +1578,19 @@ main_1 (int argc, char **argv, char **envp, int restart)
     Vinvocation_directory = Vinvocation_name;
 
     if (!NILP (Ffile_name_directory (Vinvocation_name)))
-      /* invocation-name includes a directory component -- presumably it
-         is relative to cwd, not $PATH */
-      Vinvocation_directory = Fexpand_file_name (Vinvocation_name,
-					   Qnil);
+      {
+	/* invocation-name includes a directory component -- presumably it
+	   is relative to cwd, not $PATH */
+	Vinvocation_directory = Fexpand_file_name (Vinvocation_name,
+						   Qnil);
+	Vinvocation_path = Qnil;
+      }
     else
-      locate_file (Vexec_path, Vinvocation_name, EXEC_SUFFIXES,
-		   &Vinvocation_directory, X_OK);
+      {
+	Vinvocation_path = decode_env_path ("PATH", NULL);
+	locate_file (Vinvocation_path, Vinvocation_name, EXEC_SUFFIXES,
+		     &Vinvocation_directory, X_OK);
+      }
 
     if (NILP (Vinvocation_directory))
       Vinvocation_directory = Vinvocation_name;
@@ -2553,6 +2569,12 @@ The directory in which the XEmacs executable was found, to run it.
 The value is simply the program name if that directory's name is not known.
 */ );
 
+  DEFVAR_LISP ("invocation-path", &Vinvocation_path /*
+The path in which the XEmacs executable was found, to run it.
+The value is simply the value of environment variable PATH on startup
+if XEmacs was found there.
+*/ );
+
 #if 0 /* FSFmacs */
   xxDEFVAR_LISP ("installation-directory", &Vinstallation_directory,
     "A directory within which to look for the `lib-src' and `etc' directories.\n"
@@ -2631,6 +2653,9 @@ Set to non-nil when the package-path should not be searched at startup.
   DEFVAR_BOOL ("inhibit-site-lisp", &inhibit_site_lisp /*
 Set to non-nil when the site-lisp should not be searched at startup.
 */ );
+#ifdef INHIBIT_SITE_LISP
+  inhibit_site_lisp = 1;
+#endif
 
   DEFVAR_BOOL ("inhibit-update-dumped-lisp", &inhibit_update_dumped_lisp /*
 Set to non-nil when modified dumped lisp should not be reloaded at startup.

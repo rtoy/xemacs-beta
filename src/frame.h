@@ -169,6 +169,7 @@ Value : Emacs meaning                           :f-v-p : X meaning
   unsigned int extents_changed :1;
   unsigned int faces_changed :1;
   unsigned int frame_changed :1;
+  unsigned int glyphs_changed :1;
   unsigned int icon_changed :1;
   unsigned int menubar_changed :1;
   unsigned int modeline_changed :1;
@@ -275,6 +276,14 @@ extern int frame_changed;
     MARK_DEVICE_FACES_CHANGED (XDEVICE ((f)->device));			\
   else									\
     faces_changed = 1; } while (0)
+
+#define MARK_FRAME_GLYPHS_CHANGED(f) do {				\
+  (f)->glyphs_changed = 1;						\
+  (f)->modiff++;							\
+  if (!NILP ((f)->device))						\
+    MARK_DEVICE_GLYPHS_CHANGED (XDEVICE ((f)->device));			\
+  else									\
+    glyphs_changed = 1; } while (0)
 
 #define MARK_FRAME_TOOLBARS_CHANGED(f) do {				\
   (f)->toolbar_changed = 1;						\
@@ -405,10 +414,10 @@ extern int frame_changed;
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) \
   (!NILP((f)->toolbar_data[pos]) && !NILP ((f)->toolbar_visible_p[pos]))
 #define FRAME_RAW_THEORETICAL_TOOLBAR_SIZE(f, pos) \
-  (!NILP ((f)->toolbar_data[pos]) ? \
+  (!NILP ((f)->toolbar_data[pos]) && INTP((f)->toolbar_size[pos]) ? \
    (XINT ((f)->toolbar_size[pos])) : 0)
 #define FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos) \
-  (!NILP ((f)->toolbar_data[pos]) ? \
+  (!NILP ((f)->toolbar_data[pos]) && INTP((f)->toolbar_border_width[pos]) ? \
    (XINT ((f)->toolbar_border_width[pos])) : 0)
 #else
 #define FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE(f, pos) 0
@@ -453,9 +462,16 @@ extern int frame_changed;
   (HAS_DEVMETH_P (XDEVICE (FRAME_DEVICE (f)), initialize_frame_toolbars) \
    && !NILP (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_visible_p[pos]))
 #define FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH(f, pos) \
-  (XINT (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_border_width[pos]))
+     ((INTP (XWINDOW \
+	     (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_border_width[pos])) ? \
+      (XINT (XWINDOW \
+	     (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_border_width[pos])) \
+      : 0)
 #define FRAME_RAW_REAL_TOOLBAR_SIZE(f, pos) \
-  (XINT (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_size[pos]))
+     ((INTP (XWINDOW \
+	     (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_size[pos])) ? \
+      (XINT (XWINDOW \
+	     (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar_size[pos])) : 0)
 #define FRAME_REAL_TOOLBAR(f, pos) \
   (XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->toolbar[pos])
 #else
@@ -586,6 +602,12 @@ void char_to_pixel_size (struct frame *f, int char_width, int char_height,
 			 int *pixel_width, int *pixel_height);
 void round_size_to_char (struct frame *f, int in_width, int in_height,
 			 int *out_width, int *out_height);
+void pixel_to_real_char_size (struct frame *f, int pixel_width, int pixel_height,
+			 int *char_width, int *char_height);
+void char_to_real_pixel_size (struct frame *f, int char_width, int char_height,
+			 int *pixel_width, int *pixel_height);
+void round_size_to_real_char (struct frame *f, int in_width, int in_height,
+			      int *out_width, int *out_height);
 void change_frame_size (struct frame *frame,
 			int newlength, int newwidth,
 			int delay);

@@ -1,6 +1,6 @@
 XEMACS=..
 LISP=$(XEMACS)\lisp
-PACKAGE_PATH="~/.xemacs;f:/src/xemacs/packages"
+PATH_PACKAGEPATH="~/.xemacs;;d:/src/xemacs/packages"
 HAVE_X=0
 HAVE_MSW=1
 
@@ -220,6 +220,7 @@ DOC_SRC3=\
  $(XEMACS)\src\gmalloc.c \
  $(XEMACS)\src\gui.c  \
  $(XEMACS)\src\hash.c \
+ $(XEMACS)\src\imgproc.c \
  $(XEMACS)\src\indent.c \
  $(XEMACS)\src\inline.c \
  $(XEMACS)\src\insdel.c \
@@ -298,6 +299,7 @@ DOC_SRC7=\
  $(XEMACS)\src\device-msw.c  \
  $(XEMACS)\src\event-msw.c  \
  $(XEMACS)\src\frame-msw.c \
+ $(XEMACS)\src\glyphs-msw.c \
  $(XEMACS)\src\menubar-msw.c \
  $(XEMACS)\src\objects-msw.c \
  $(XEMACS)\src\redisplay-msw.c \
@@ -365,7 +367,7 @@ TEMACS_CPP_FLAGS= $(WARN_CPP_FLAGS) $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DEMACS_BETA_VERSION=$(emacs_beta_version) \
  -DXEMACS_CODENAME=\"$(xemacs_codename)\" \
  -DPATH_PREFIX=\"$(XEMACS)\" \
- -DPACKAGE_PATH=\"$(PACKAGE_PATH)\"
+ -DPATH_PACKAGEPATH=\"$(PATH_PACKAGEPATH)\"
 
 TEMACS_FLAGS=-nologo -ML $(WARN_CPP_FALGS) $(OPT) -c $(TEMACS_CPP_FLAGS)
 
@@ -400,6 +402,7 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\device-msw.obj \
 	$(OUTDIR)\event-msw.obj \
 	$(OUTDIR)\frame-msw.obj \
+	$(OUTDIR)\glyphs-msw.obj \
 	$(OUTDIR)\menubar-msw.obj \
 	$(OUTDIR)\objects-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
@@ -474,6 +477,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\gui.obj \
 	$(OUTDIR)\hash.obj \
 	$(OUTDIR)\indent.obj \
+	$(OUTDIR)\imgproc.obj \
 	$(OUTDIR)\inline.obj \
 	$(OUTDIR)\insdel.obj \
 	$(OUTDIR)\intl.obj \
@@ -562,7 +566,7 @@ LOADPATH=$(LISP)
 
 $(DOC): $(LIB_SRC)\make-docfile.exe
 	-del $(DOC)
-	!$(TEMACS) -batch -l make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
+	!$(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\make-docfile.el -- -o $(DOC) -i $(XEMACS)\site-packages
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC1)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC2)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC3)
@@ -577,7 +581,8 @@ $(LISP)\Installation.el: Installation.el
 	copy Installation.el $(LISP)
 
 update-elc: $(LISP)\Installation.el
-	!$(TEMACS) -batch -l update-elc.el
+	set EMACSBOOTSTRAPLOADPATH=$(LISP)
+	!$(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\update-elc.el
 
 rebuild: $(TEMACS_DIR)\puresize-adjust.h
         !nmake -nologo -f xemacs.mak dump-xemacs
@@ -585,11 +590,12 @@ rebuild: $(TEMACS_DIR)\puresize-adjust.h
 # This rule dumps xemacs and then checks to see if a rebuild is required due
 # to changing PURESPACE requirements.
 dump-xemacs: $(TEMACS)
-        !echo >rebuild
-        cd $(TEMACS_DIR)
-        !$(TEMACS) -batch -l loadup.el dump
-        cd $(XEMACS)\nt
-        !nmake -nologo -f xemacs.mak rebuild
+	!echo >rebuild
+	cd $(TEMACS_DIR)
+	set EMACSBOOTSTRAPLOADPATH=$(LISP)
+	!$(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\loadup.el dump
+	cd $(XEMACS)\nt
+	!nmake -nologo -f xemacs.mak rebuild
 
 #------------------------------------------------------------------------------
 

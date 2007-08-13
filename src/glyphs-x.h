@@ -46,6 +46,7 @@ struct x_image_instance_data
   /* If depth>0, then that means that other colors were allocated when
      this pixmap was loaded.  These are they; we need to free them when
      finalizing the image instance. */
+  Colormap colormap;
   unsigned long *pixels;
   int npixels;
 
@@ -58,6 +59,7 @@ struct x_image_instance_data
 #define IMAGE_INSTANCE_X_PIXMAP(i) (X_IMAGE_INSTANCE_DATA (i)->pixmap)
 #define IMAGE_INSTANCE_X_MASK(i) (X_IMAGE_INSTANCE_DATA (i)->mask)
 #define IMAGE_INSTANCE_X_CURSOR(i) (X_IMAGE_INSTANCE_DATA (i)->cursor)
+#define IMAGE_INSTANCE_X_COLORMAP(i) (X_IMAGE_INSTANCE_DATA (i)->colormap)
 #define IMAGE_INSTANCE_X_PIXELS(i) (X_IMAGE_INSTANCE_DATA (i)->pixels)
 #define IMAGE_INSTANCE_X_NPIXELS(i) (X_IMAGE_INSTANCE_DATA (i)->npixels)
 

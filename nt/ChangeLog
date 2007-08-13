@@ -1,3 +1,8 @@
+1998-03-25  jhar@tardis.ed.ac.uk
+
+	* xemacs.mak: Adds glyphs-msw.c and imgproc.c and reflects
+	alterations to package_path in nt/xemacs.mak.
+
 1998-03-24  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* xemacs.mak (dump-xemacs): Replaced use of `touch' with `echo'.

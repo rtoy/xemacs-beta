@@ -1,5 +1,29 @@
 1998-03-24  SL Baur  <steve@altair.xemacs.org>
 
+	* XEmacs 21.0-beta33 is released.
+
+1998-03-26  Didier Verna <verna@inf.enst.fr>
+
+	* configure.in, Makefile.in: Removed infopath_user_defined---we
+	always want to propagate it.
+
+	* configure.usage: Synched with configure.in.
+
+1998-03-25  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.usage, INSTALL: Synched with the new path layout.
+
+	* Makefile.in (src/paths.h): Replaced packagepath with
+	package_path to make configure happy.
+
+	* configure.in: Made default setting for packagepath conform to
+	what packages.el builds at run-time: XEmacs-version-specific paths
+	before site-specific ones.
+	Added default setting for pkgdir.
+	Changed --packagepath back to --package-path.
+
+1998-03-24  SL Baur  <steve@altair.xemacs.org>
+
 	* XEmacs 21.0-beta32 is released.
 
 1998-03-23  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>

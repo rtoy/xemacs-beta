@@ -329,20 +329,20 @@ dnl BETA NOTE: ! Will you please add to this list?  Nonexistent dirs
 dnl are dropped from the list at runtime, so it is safe to add
 dnl directories to this list that you don't have at home.
 infopath='/usr/local/lib/texmf/doc/info:/usr/local/lib/texmf/info:/usr/lib/texmf/doc/info:/usr/lib/texmf/info:/usr/local/info:/usr/info'
-infopath_user_defined='no'
 lispdir='${datadir}/xemacs-${version}/lisp'
 lispdir_user_defined='no'
 sitelispdir='${datadir}/xemacs/site-lisp'
 sitelispdir_user_defined='no'
-packagepath='~/.xemacs::${datadir}/xemacs/mule-packages:${datadir}/xemacs-${version}/mule-packages:${datadir}/xemacs/packages:${datadir}/xemacs-${version}/packages'
-packagepath_user_defined='no'
+pkgdir='${datadir}/xemacs-${version}/lisp'
+package_path='~/.xemacs::${datadir}/xemacs-${version}/mule-packages:${datadir}/xemacs/mule-packages:${datadir}/xemacs-${version}/packages:${datadir}/xemacs/packages'
+package_path_user_defined='no'
 etcdir='${datadir}/xemacs-${version}/etc'
 etcdir_user_defined='no'
 lockdir='${statedir}/xemacs/lock'
 lockdir_user_defined='no'
 archlibdir='${libdir}/xemacs-${version}/${configuration}'
 archlibdir_user_defined='no'
-with_site_lisp='yes'
+with_site_lisp='no'
 with_menubars=''
 with_scrollbars=''
 with_dialogs=''
@@ -448,6 +448,7 @@ while test $# != 0; do
 
       dnl Process (many) boolean options
 	run_in_place	| \
+        with_site_lisp  | \
 	with_x		| \
 	with_x11	| \
 	with_msw	| \
@@ -683,7 +684,7 @@ while test $# != 0; do
 	dnl Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
 	mandir | infodir | infopath | lispdir | etcdir | lockdir | pkgdir | \
-	archlibdir | sitelispdir | docdir | packagepath )	
+	archlibdir | sitelispdir | docdir | package_path )	
 	   dnl If the value was omitted, get it from the next argument.
 	   if test "$valomitted" = "yes"; then
 	     if test "$#" = 0; then
@@ -702,8 +703,7 @@ while test $# != 0; do
              sitelispdir ) sitelispdir_user_defined=yes ;;
              etcdir  )  etcdir_user_defined=yes ;;
              infodir ) infodir_user_defined=yes ;;
-             infopath ) infopath_user_defined=yes ;;
-             packagepath ) packagepath_user_defined=yes ;;
+             package_path ) package_path_user_defined=yes ;;
              datadir ) lispdir_user_defined=yes etcdir_user_defined=yes ;;
              statedir | lockdir ) lockdir_user_defined=yes ;;
              exec_prefix | libdir | archlibdir ) archlibdir_user_defined=yes ;;
@@ -749,11 +749,6 @@ done
 dnl -------------------------
 dnl Finish options processing
 dnl -------------------------
-
-dnl Personal settings shouldn't affect the configuration process.
-dnl if test "$infopath_user_defined" = "no" -a -n "$INFOPATH" ; then
-dnl   infopath="$INFOPATH"
-dnl fi
 
 dnl Get the arguments back.  See the diatribe on Shell Magic above.
 eval set x "$quoted_arguments"; shift
@@ -1140,13 +1135,15 @@ case "$canonical" in
       *-hp-hpux8*  )  opsys=hpux8  ;;
       *-hp-hpux9*  )  opsys=hpux9  ;;
       *-hp-hpux10* )  opsys=hpux10 ;;
+      *-hp-hpux11* )  opsys=hpux11 ;;
       *            )  opsys=hpux   ;;
     esac
 
     dnl HP has a broken "strcat"
     case "$opsys" in hpux9 | hpux10 ) XE_ADD_OBJS(strcat.o) ;; esac
 
-    if test "$opsys" = "hpux10"; then ansi_flag="-Ae"; else ansi_flag="-Aa"; fi
+    if test "$opsys" = "hpux10" -o "$opsys" = "hpux11"; then \
+	ansi_flag="-Ae"; else ansi_flag="-Aa"; fi
     NON_GNU_CC="cc $ansi_flag" NON_GNU_CPP="cc $ansi_flag -E"
 
     case "$canonical" in *-hp-hpux*shr* ) opsys="${opsys}-shr" ;; esac
@@ -3408,9 +3405,8 @@ AC_SUBST(mandir)
 AC_SUBST(infodir)
 AC_SUBST(infodir_user_defined)
 AC_SUBST(infopath)
-AC_SUBST(infopath_user_defined)
-AC_SUBST(packagepath)
-AC_SUBST(packagepath_user_defined)
+AC_SUBST(package_path)
+AC_SUBST(package_path_user_defined)
 AC_SUBST(lispdir)
 AC_SUBST(lispdir_user_defined)
 AC_SUBST(sitelispdir)

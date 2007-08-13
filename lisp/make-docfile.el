@@ -79,14 +79,6 @@
 
 (setq load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH")))
 
-(let ((temp-path (expand-file-name "." (car load-path))))
-  (setq load-path (nconc (mapcar
-			  #'(lambda (i) (concat i "/"))
-			  (directory-files temp-path t "^[^-.]"
-					   nil 'dirs-only))
-			 (cons (file-name-as-directory temp-path)
-			       load-path))))
-
 ;; Then process the autoloads
 (setq autoload-file-name "auto-autoloads.elc")
 (setq source-directory (concat default-directory "../lisp"))
@@ -95,6 +87,10 @@
 (load "packages.el")
 (load "setup-paths.el")
 (load "dump-paths.el")
+
+(setq
+ load-path
+ (nconc load-path (decode-path-internal (getenv "EMACSBOOTSTRAPLOADPATH"))))
 
 (let (preloaded-file-list)
   (load (concat default-directory "../lisp/dumped-lisp.el"))

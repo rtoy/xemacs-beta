@@ -1,3 +1,283 @@
+Sat Mar 28 10:16:29 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* Makefile.in.in: fix fastdump target
+
+	* console-msw.h: add memory dc to frame.
+
+	* frame-msw.c: manage memory dc on frame creation/deleteion
+
+	* frame.h: mess with toolbar macros so that xemacs doesn't die
+	in redisplay with a triple build.
+
+	* g;yphs-msw.c: GNUize the code. Fix 24bpp display and make the
+	default.
+
+	* glyphs-msw.h: remove memory dc from image attributes.
+
+	* redisplay-msw.c: fix redisplay to use new frame memory dc.
+
+	* sheap.c: bump initial sheap yet again to allow byyte
+	recompilation.
+
+	* unexcw.c: fix section parsing for multiple idata and rdata
+	sections.
+
+1998-03-27  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c: Enabled free-hook.c code if
+	LOSING_GCC_DESTRUCTOR_FREE_BUG is defined.
+
+1998-03-28  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Fixed display bug where changes to builtin glyphs like
+	  Vcontrol_arrow_glyph would not be propagated
+	  immediately to the display.
+
+	* device.h: Added glyphs_changed field to device
+	   struct.  Created MARK_DEVICE_GLYPHS_CHANGED macro.
+
+	* frame.h: Added glyphs_changed field to frame
+	   struct.  Created MARK_FRAME_GLYPHS_CHANGED macro.
+
+	* redisplay.h: Declared glyph_changed and
+	   glyph_changed_set variables, mimicking clip_changed
+	   and clip_changed_set.  New macro MARK_GLYPHS_CHANGED.
+
+	* redisplay.c: Defined glyph_changed and
+	   glyph_changed_set variables, mimicking
+	   clip_changed and clip_changed_set.
+
+	   (redisplay_window): Reset the window's glyph cache is 
+	   f->glyphs_changed is non-zero.  Call regenerate_window 
+	   if f->glyphs_changed is non-zero.
+
+	   (redisplay_frame): Clear f->glyphs_changed after
+	   successful redisplay of all windows on frame.
+
+	   (redisplay_device): Redisplay frame if f->glyphs_changed
+	   is non-zero.  Clear d->glyphs_changed after successful
+	   redisplay of all frames on device
+
+	   (redisplay_without_hooks): Redisplay devices if
+	   glyphs_changed is non-zero.  Redisplay an individual
+	   device if d->glyphs_changed is non-zero.  Clear
+	   glyphs_changed after successful redisplay of all
+	   devices.
+
+	   (redisplay_glyphs_changed): Dropped use of
+	   MARK_CLIP_CHANGED.  Call MARK_FRAME_GLYPHS_CHANGED for
+	   all affected frames.  For locales that are not device
+	   related, mark all frames.
+
+	* redisplay-output.c (compare_display_blocks):
+	   Output the whole display block if f->glyphs_changed is 
+	   non-nil.
+
+1998-03-27  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* callproc.c (Fcall_process_internal): In the case where 
+	  fd_error and fd1 are the same don't close that
+	  descriptor twice.
+
+1998-03-27  SL Baur  <steve@altair.xemacs.org>
+
+	* frame-x.c (x_update_frame_external_traits): Need a Lisp_Object
+	frame as well as a struct frame.
+
+1998-03-27  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* emacs.c (main_1): Reinstated PATH searching for invocation data.
+
+1998-03-26  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* menubar.c (Fmenu_find_real_submenu): See the entry for gui.h.
+
+	* menubar-msw.c (populate_menu_add_item): Used GCPRO_GUI_ITEM
+	macro to aviod warnings, in 2 places.
+	(populate_or_checksum_helper): Ditto
+	(populate_or_checksum_helper): Added placeholder for menu right
+	flash customization.
+
+	* gui.h (GCPRO_GUI_ITEM): Code which warning-free GC protects a
+	GUI_ITEM structure moved into this macro from menubar.c
+
+	* frame-x.c (x_update_frame_external_traits): Moved part of the
+	former update_EmacsFrame() here.
+	(console_type_create_frame_x): Declared the above method.
+
+	* frame-msw.c (mswindows_set_frame_properties): Do not try to
+	resize the frame if called from Fmake_frame the first time
+	(potential race	condition).
+	(mswindows_init_frame_1): Fixed support for popup frames.
+	(mswindows_delete_frame): Fixed memory leak.
+	(mswindows_get_frame_parent): Implemented.
+	(mswindows_update_frame_external_traits): Moved part of the former 
+	update_EmacsFrame() here.
+	(console_type_create_frame_mswindows): Declare get_frame_parent
+	and update_frame_external_traits methods.
+
+	* faces.c (update_EmacsFrame): Converted into a device method
+	`update_frame_external_traits'.
+
+	* event-msw.c (mswindows_wnd_proc, WM_SIZE): Rewrote to avoid
+	relying on an assumption on when Windows calls this handler.
+	(mswindows_find_frame): Return the frame being created if the
+	windows does not yet have associated frame object
+	(mswindows_find_frame): Casted long to Lisp_Object properly.
+
+	* device.c (window_system_pixelated_geometry): Changed to call the 
+	device_implementation_flags device method.
+
+	* device-msw.c (mswindows_device_implementation_flags):
+	Implemented. 
+	(console_type_create_device_mswindows): Declared the above.
+
+	* console.h (struct console_methods): Added
+	device_implementation_flags_method and
+	update_frame_external_traits_method. 
+	Defined flags retuned by device_implementation_flags_method.
+
+	* console-msw.h (struct mswindows_frame): Added charheight and
+	charwidth fields.
+	Added macros for referring to these two, Rvalue.
+	Moved Windows-specific macros from frame.h here.
+	(typedef struct XEMACS_RECT_WH): Added.
+	Declared global variables.
+	
+1998-03-19  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* console-msw.h: Added prototypes for
+	mswindows_protect_modal_loop() and
+	mswindows_unmodalize_signal_maybe().
+
+	* scrollbar-msw.c (mswindows_update_scrollbar_instance_status):
+	Removed redundant call to set_frame_size method.
+
+	* frame.c (Fframe_property): For a window system with pixel-based
+	geometry, convert passed char-based metrics to pixels.
+	(Fframe_properties): Ditto.
+	(Fset_frame_height): Ditto.
+	(Fset_frame_width): Ditto.
+	(Fset_frame_size): Ditto.
+	(frame_conversion_internal): Added a parameter, controlling
+	whether the function uses real char metrics or 1 when geometry is
+	pixel-based.
+	Allow NULL for output int* params.
+	(pixel_to_char_size): frame_conversion_internal() is called with
+	indication to fake font size to 1.
+	(char_to_pixel_size): Ditto.
+	(round_size_to_char): Ditto.
+	(pixel_to_real_char_size): 
+	(char_to_real_pixel_size): 
+	(round_size_to_real_char): New three counterparts of the above
+	metioned functions, which always use real character metrics.
+	(change_frame_size_1): Use real character metrics when computing
+	minibuffer height.
+
+	* frame.h: Prototypes for pixel_to_real_char_size(),
+	char_to_real_pixel_size(), round_size_to_real_char().
+
+	* frame-msw.c (mswindows_init_frame_1): Rewritten to support
+	system-default new window width and height.
+	(mswindows_init_frame_2): Commented out, unused.
+	(mswindows_after_init_frame): Added frame method.
+	(mswindows_set_frame_size): Reworked to support pixel base
+	geometry. 
+	(mswindows_set_frame_position): Cahnged to use SetWindowPos.
+	(mswindows_lower_frame): Ditto.
+	(mswindows_set_frame_properties): Fixed to perform correct
+	calculation, and to support pixel geometry.
+	(console_type_create_frame_mswindows): init_frame_2 removed,
+	after_init_frame added.
+
+	* faces.c (default_face_height_and_width_1): Added.
+	(update_EmacsFrame): Changed method of notifying mswindwows frame, 
+	so modeline border gets redrawn.
+
+	* faces.h: Prototype for default_face_height_and_width_1().
+
+	* event-msw.c (mswindows_wnd_proc, WM_SIZE): Redisplay after
+	maximize/restore window.
+	(mswindows_wnd_proc, WM_WINDOWPOSCHANGING): Do not round size to
+	char if window is maximized.
+	Use real char metrics for rounding.
+	Call DefWindowProc to process WM_GETMINMAXINFO
+	(mswindows_set_chord_timer): Changed chord timeout from 1/2 to 1/3 
+	system double click time
+
+	* device.c (domain_device_type): New function.
+	(window_system_pixelated_geometry): New function. 
+	(Fdomain_device_type): New function, lisp interface to
+	domain_device_type(). 
+	(syms_of_device): DEFSUBRed the above.
+
+	* device.h: Ptorotypes for domain_device_type() and
+	window_system_pixelated_geometry().
+
+	* menubar-msw.c (mswindows_update_frame_menubars): Call
+	update_frame_menubar_maybe always.
+
+1998-03-27  SL Baur  <steve@altair.xemacs.org>
+
+	* s/hpux11.h:
+	* s/hpux11-shr.h: New files.
+	From Marcus Thiessel <marcus_thiessel@hp.com>
+
+	* Makefile.in.in: temporarily comment -lmcheck support.
+	Suggested by Marcus Thiessel <marcus_thiessel@hp.com>
+
+1998-03-26  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* emacs.c (vars_of_emacs): Fixed bug: Now respects configure
+	setting of inhibit-site-lisp.
+	(main_1): inhibit-site-lisp is now exclusively
+	configure-initialized.
+
+1998-03-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* events.c (WRONG_EVENT_TYPE_FOR_PROPERTY): Don't feed
+	error_with_frob() with LispObjects.
+
+1998-03-26  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* redisplay-msw.c (mswindows_output_cursor): Added parameters for
+	character under cursor, and a flag indicating whether the cursir
+	is over an image. Draw bar cursor always over an image glyph.
+	Callers are changed accross the file.
+	Honor the value of window::text_cursor_visible_p.
+	(mswindows_output_pixmap): Cursor drawing code #if0ed.
+	(mswindows_output_display_block): Call to output cursor after
+	drawind an image.
+
+1998-03-27  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c: 
+	* imgproc.c:
+	* imgproc.h:
+	* glyphs-x.h: Added in a colormap variable in the X specific image
+	struct to handle IMAGE_POINTER images which must be allocated in the
+	default colormap of the screen.  Also reformated the code to follow
+	coding standards.
+
+	* glyphs.h:
+	* glyphs.c: 
+	* glyphs-x.c: added image-conversion-error type
+
+	* objects-x.c (allocate_nearest_color): Corrected a minor bug involving
+	setting the values into XColor.
+
+1998-03-25  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* free-hook.c (check_realloc): Handle the degerate case of realloc with
+	a NULL value acting the same as malloc.
+
+1998-03-24  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* redisplay-x.c (x_output_eol_cursor): Use x_clear_region
+	  instead of XClearArea to erase the cursor so that background
+	  pixmaps are handled properly.  New fourth parameter findex
+	  added so that it can be passed to x_clear_region.
+
 1998-03-25  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* process.c (Fprocess_send_eof): Close output stream before
@@ -79,13 +359,6 @@ Mon Mar 23 22:14:12 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* lread.c (readevalloop): Don't specbind Qstandard_input to
 	READCHARFUN.
-
-1998-03-09  Hrvoje Niksic  <hniksic@srce.hr>
-
-	* wid-edit.el (widget-choice-action): Remember user's explicit
-	choice.
-	(widget-choice-value-create): Respect it.
-	From Richard Stallman <rms@gnu.org>
 
 1998-03-09  Hrvoje Niksic  <hniksic@srce.hr>
 

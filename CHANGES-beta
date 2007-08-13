@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 21.0 beta33 "Nigerian Dwarf"
+-- Various MS Windows patches from Kirill Katsnelson, Andy Piper and
+   Jonathon Harris
+-- Startup fixes from Michael Sperber
+-- Various fixes from Hrvoje Niksic
+-- Various fixes from Kyle Jones
+-- miscellaneous bug fixes
+
 to 21.0 beta32 "Nachi"
 -- NT image support from Andy Piper
 -- Various fixes from Hrvoje Niksic

@@ -166,6 +166,7 @@ struct device
   unsigned int extents_changed :1;
   unsigned int faces_changed :1;
   unsigned int frame_changed :1;
+  unsigned int glyphs_changed :1;
   unsigned int icon_changed :1;
   unsigned int menubar_changed :1;
   unsigned int modeline_changed :1;
@@ -336,6 +337,10 @@ int valid_device_class_p (Lisp_Object class);
   faces_changed = 1;							\
   (d)->faces_changed = 1; } while (0)
 
+#define MARK_DEVICE_GLYPHS_CHANGED(d) do {				\
+  glyphs_changed = 1;							\
+  (d)->glyphs_changed = 1; } while (0)
+
 #define MARK_DEVICE_TOOLBARS_CHANGED(d) do {				\
   toolbar_changed = 1;							\
   (d)->toolbar_changed = 1; } while (0)
@@ -395,5 +400,7 @@ void delete_device_internal (struct device *d, int force,
 void io_error_delete_device (Lisp_Object device);
 Lisp_Object find_nonminibuffer_frame_not_on_device (Lisp_Object device);
 void set_device_selected_frame (struct device *d, Lisp_Object frame);
+Lisp_Object domain_device_type (Lisp_Object domain);
+int window_system_pixelated_geometry (Lisp_Object domain);
 
 #endif /* _XEMACS_DEVICE_H_ */

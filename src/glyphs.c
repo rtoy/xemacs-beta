@@ -38,6 +38,8 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "window.h"
 
+Lisp_Object Qimage_conversion_error;
+
 Lisp_Object Qglyphp, Qcontrib_p, Qbaseline;
 
 Lisp_Object Qbuffer_glyph_p, Qpointer_glyph_p, Qicon_glyph_p;
@@ -2758,6 +2760,12 @@ syms_of_glyphs (void)
   /* Qbuffer defined in general.c. */
   /* Qpointer defined above */
   defsymbol (&Qicon, "icon");
+
+  /* Errors */
+  deferror (&Qimage_conversion_error,
+	    "image-conversion-error",
+	    "image-conversion error", Qio_error);
+
 }
 
 void

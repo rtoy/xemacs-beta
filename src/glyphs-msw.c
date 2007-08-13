@@ -54,25 +54,27 @@ static void
 mswindows_initialize_dibitmap_image_instance (struct Lisp_Image_Instance *ii,
 					    enum image_instance_type type);
 
-COLORREF mswindows_string_to_color(CONST char *name);
+COLORREF mswindows_string_to_color (CONST char *name);
 
 /************************************************************************/
 /* convert from a series of RGB triples to a BITMAPINFO formated for the*/
 /* proper display 							*/
 /************************************************************************/
-BITMAPINFO* EImage2DIBitmap(Lisp_Object device, int width, int height,
+BITMAPINFO* EImage2DIBitmap (Lisp_Object device, int width, int height,
 			    unsigned char *pic,
 			    int *bit_count,
 			    unsigned char** bmp_data)
 {
   struct device *d = XDEVICE (device);
-  int i;
+  int i,j;
   RGBQUAD* colortbl;
   int		ncolors;
   BITMAPINFO*	bmp_info;
+  unsigned char *ip, *dp;
 
-  if (DEVICE_MSWINDOWS_BITSPIXEL(d) > 16)
+  if (DEVICE_MSWINDOWS_BITSPIXEL (d) > 0)
     {
+      int bpline=(int)(~3UL & (unsigned long)((width*3) +3));
       /* FIXME: we can do this because 24bpp implies no colour table, once
        * we start paletizing this is no longer true. The X versions of
        * this function quantises to 256 colours or bit masks down to a
@@ -80,7 +82,7 @@ BITMAPINFO* EImage2DIBitmap(Lisp_Object device, int width, int height,
        * don't see much point trying to optimise down to the best
        * structure - unless it has memory / color allocation implications
        * .... */
-      bmp_info=xnew_and_zero(BITMAPINFO);
+      bmp_info=xnew_and_zero (BITMAPINFO);
       
       if (!bmp_info)
 	{
@@ -117,7 +119,7 @@ BITMAPINFO* EImage2DIBitmap(Lisp_Object device, int width, int height,
       int bpline= (int)(~3UL & (unsigned long)(width +3));
       /* Quantize the image and get a histogram while we're at it.
 	 Do this first to save memory */
-      qtable = EImage_build_quantable(pic, width, height, 256);
+      qtable = build_EImage_quantable(pic, width, height, 256);
       if (qtable == NULL) return NULL;
 
       /* use our quantize table to allocate the colors */
@@ -143,8 +145,8 @@ BITMAPINFO* EImage2DIBitmap(Lisp_Object device, int width, int height,
 
       if (!*bmp_data)
 	{
-	  xfree(qtable);
-	  xfree(bmp_info);
+	  xfree (qtable);
+	  xfree (bmp_info);
 	  return NULL;
 	}
       
@@ -165,18 +167,18 @@ BITMAPINFO* EImage2DIBitmap(Lisp_Object device, int width, int height,
 	  rd = *ip++;
 	  gr = *ip++;
 	  bl = *ip++;
-	  *dp++ = QUANT_GET_COLOR(qtable,rd,gr,bl);
+	  *dp++ = QUANT_GET_COLOR (qtable,rd,gr,bl);
 	}
       }
-      xfree(qtable);
+      xfree (qtable);
     } 
   /* fix up the standard stuff */
   bmp_info->bmiHeader.biWidth=width;
   bmp_info->bmiHeader.biHeight=height;
   bmp_info->bmiHeader.biPlanes=1;
   bmp_info->bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
-  bmp_info->bmiHeader.biXPelsPerMeter=3779; /* unless you know better */
-  bmp_info->bmiHeader.biYPelsPerMeter=3779; 
+  bmp_info->bmiHeader.biXPelsPerMeter=0; /* unless you know better */
+  bmp_info->bmiHeader.biYPelsPerMeter=0; 
 
   return bmp_info;
 }
@@ -192,12 +194,11 @@ locate_pixmap_file (Lisp_Object name)
 
   /* Check non-absolute pathnames with a directory component relative to
      the search path; that's the way Xt does it. */
-  /* #### Unix-specific */
-  if (XSTRING_BYTE (name, 0) == '/' ||
+  if (IS_DIRECTORY_SEP(XSTRING_BYTE (name, 0)) ||
       (XSTRING_BYTE (name, 0) == '.' &&
-       (XSTRING_BYTE (name, 1) == '/' ||
+       (IS_DIRECTORY_SEP(XSTRING_BYTE (name, 1)) ||
 	(XSTRING_BYTE (name, 1) == '.' &&
-	 (XSTRING_BYTE (name, 2) == '/')))))
+	 (IS_DIRECTORY_SEP(XSTRING_BYTE (name, 2)))))))
     {
       if (!NILP (Ffile_readable_p (name)))
 	return name;
@@ -205,7 +206,7 @@ locate_pixmap_file (Lisp_Object name)
 	return Qnil;
     }
 
-  if (!NILP(Vmswindows_bitmap_file_path))
+  if (!NILP (Vmswindows_bitmap_file_path))
   {
     Lisp_Object found;
     if (locate_file (Vmswindows_bitmap_file_path, name, "", &found, R_OK) < 0)
@@ -248,7 +249,7 @@ potential_pixmap_file_instantiator (Lisp_Object instantiator,
 
   if (!NILP (file) && NILP (data))
     {
-      Lisp_Object retval = locate_pixmap_file (file);
+      Lisp_Object retval = locate_pixmap_file(file);
       if (!NILP (retval))
 	return retval;
       else
@@ -322,10 +323,10 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
 {
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   struct device *d = XDEVICE (device);
-  struct frame *f = XFRAME (DEVICE_SELECTED_FRAME(d));
+  struct frame *f = XFRAME (DEVICE_SELECTED_FRAME (d));
   void* bmp_buf=0;
   HBITMAP bitmap;
-  HDC hdc, cdc;
+  HDC hdc;
 
   if (!DEVICE_MSWINDOWS_P (d))
     signal_simple_error ("Not an mswindows device", device);
@@ -338,7 +339,7 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
 			      IMAGE_COLOR_PIXMAP_MASK);
   hdc = FRAME_MSWINDOWS_DC (f);
 
-  bitmap=CreateDIBSection(hdc,  
+  bitmap=CreateDIBSection (hdc,  
 			  bmp_info,
 			  DIB_RGB_COLORS,
 			  &bmp_buf, 
@@ -348,10 +349,7 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
     signal_simple_error ("Unable to create bitmap", instantiator);
 
   /* copy in the actual bitmap */
-  memcpy(bmp_buf, bmp_data, bmp_bits);
-
-  /* create a memory dc */
-  cdc = CreateCompatibleDC(hdc);
+  memcpy (bmp_buf, bmp_data, bmp_bits);
 
   mswindows_initialize_dibitmap_image_instance (ii, IMAGE_COLOR_PIXMAP);
 
@@ -359,7 +357,6 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
     find_keyword_in_vector (instantiator, Q_file);
 
   IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = bitmap;
-  IMAGE_INSTANCE_MSWINDOWS_DC (ii) = cdc;
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = bmp_info->bmiHeader.biWidth;
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = bmp_info->bmiHeader.biHeight;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = bmp_info->bmiHeader.biBitCount;
@@ -370,7 +367,7 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
  **********************************************************************/
 
 #ifdef HAVE_XPM
-static int xpm_to_eimage(Lisp_Object image, CONST Extbyte *buffer,
+static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
 			 unsigned char** data,
 			 int* width, int* height,
 			 COLORREF bg)
@@ -386,10 +383,10 @@ static int xpm_to_eimage(Lisp_Object image, CONST Extbyte *buffer,
   memset (&xpmimage, 0, sizeof (xpmimage));
   memset (&xpminfo, 0, sizeof (xpmimage));
   
-  result = XpmCreateXpmImageFromBuffer((char*)buffer,
+  result = XpmCreateXpmImageFromBuffer ((char*)buffer,
 				       &xpmimage,
 				       &xpminfo);
-  switch(result)
+  switch (result)
     {
     case XpmSuccess:
       break;
@@ -416,8 +413,8 @@ static int xpm_to_eimage(Lisp_Object image, CONST Extbyte *buffer,
   *data = xnew_array_and_zero (unsigned char, *width * *height * 3);
   if (!*data)
     {
-      XpmFreeXpmImage(&xpmimage);
-      XpmFreeXpmInfo(&xpminfo);
+      XpmFreeXpmImage (&xpmimage);
+      XpmFreeXpmInfo (&xpminfo);
       return 0;
     }
 
@@ -425,23 +422,23 @@ static int xpm_to_eimage(Lisp_Object image, CONST Extbyte *buffer,
   colortbl = xnew_array_and_zero (COLORREF, xpmimage.ncolors);
   if (!colortbl)
     {
-      xfree(*data);
-      XpmFreeXpmImage(&xpmimage);
-      XpmFreeXpmInfo(&xpminfo);
+      xfree (*data);
+      XpmFreeXpmImage (&xpmimage);
+      XpmFreeXpmInfo (&xpminfo);
       return 0;
     }
 
   for (i=0; i<xpmimage.ncolors; i++)
     {
 				/* pick up transparencies */
-      if (!strcmp(xpmimage.colorTable[i].c_color,"None"))
+      if (!strcmp (xpmimage.colorTable[i].c_color,"None"))
 	{
 	  colortbl[i]=bg;
 	}
       else
 	{
 	  colortbl[i]=
-	    mswindows_string_to_color(xpmimage.colorTable[i].c_color);
+	    mswindows_string_to_color (xpmimage.colorTable[i].c_color);
 	}
     }
 
@@ -453,14 +450,14 @@ static int xpm_to_eimage(Lisp_Object image, CONST Extbyte *buffer,
       color = colortbl[*sptr++];
 
       /* split out the 0x02bbggrr colorref into an rgb triple */
-      *dptr++=GetRValue(color); /* red */
-      *dptr++=GetGValue(color); /* green */
-      *dptr++=GetBValue(color); /* blue */
+      *dptr++=GetRValue (color); /* red */
+      *dptr++=GetGValue (color); /* green */
+      *dptr++=GetBValue (color); /* blue */
     }
 
-  XpmFreeXpmImage(&xpmimage);
-  XpmFreeXpmInfo(&xpminfo);
-  xfree(colortbl);
+  XpmFreeXpmImage (&xpmimage);
+  XpmFreeXpmInfo (&xpminfo);
+  xfree (colortbl);
   return TRUE;
 }
 
@@ -493,10 +490,10 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
   /* this is a hack but MaskBlt and TransparentBlt are not supported
      on most windows variants */
   bkcolor = COLOR_INSTANCE_MSWINDOWS_COLOR 
-    (XCOLOR_INSTANCE (FACE_BACKGROUND(Vdefault_face, domain)));
+    (XCOLOR_INSTANCE (FACE_BACKGROUND (Vdefault_face, domain)));
 
   /* convert to an eimage to make processing easier */
-  if (!xpm_to_eimage(image_instance, bytes, &eimage, &width, &height,
+  if (!xpm_to_eimage (image_instance, bytes, &eimage, &width, &height,
 		     bkcolor))
     {
       signal_simple_error ("XPM to EImage conversion failed", 
@@ -504,20 +501,21 @@ mswindows_xpm_instantiate (Lisp_Object image_instance,
     }
   
   /* build a bitmap from the eimage */
-  if (!(bmp_info=EImage2DIBitmap(device, width, height, eimage,
+  if (!(bmp_info=EImage2DIBitmap (device, width, height, eimage,
 				 &bmp_bits, &bmp_data)))
     {
+      xfree (eimage);
       signal_simple_error ("XPM to EImage conversion failed",
 			   image_instance);
     }
-  xfree(eimage);
+  xfree (eimage);
 
   /* Now create the pixmap and set up the image instance */
   init_image_instance_from_dibitmap (ii, bmp_info, dest_mask,
 				     bmp_data, bmp_bits, instantiator);
 
-  xfree(bmp_info);
-  xfree(bmp_data);
+  xfree (bmp_info);
+  xfree (bmp_data);
 }
 #endif /* HAVE_XPM */
 
@@ -620,12 +618,9 @@ mswindows_finalize_image_instance (struct Lisp_Image_Instance *p)
 
   if (DEVICE_LIVE_P (XDEVICE (p->device)))
     {
-      if (IMAGE_INSTANCE_MSWINDOWS_DC (p))
-	DeleteDC(IMAGE_INSTANCE_MSWINDOWS_DC (p));
       if (IMAGE_INSTANCE_MSWINDOWS_BITMAP (p))
-	DeleteObject(IMAGE_INSTANCE_MSWINDOWS_BITMAP (p));
+	DeleteObject (IMAGE_INSTANCE_MSWINDOWS_BITMAP (p));
       IMAGE_INSTANCE_MSWINDOWS_BITMAP (p) = 0;
-      IMAGE_INSTANCE_MSWINDOWS_DC (p) = 0;
     }
 
   xfree (p->data);

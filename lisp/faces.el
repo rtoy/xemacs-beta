@@ -1582,46 +1582,77 @@ in that frame; otherwise change each frame."
 ;; the first non-stream device.
 
 (set-face-background 'text-cursor
-		     '(((default x) . "Red3")
-		       ((default mswindows) . "Red3"))
+		     '(((x default) . "Red3")
+		       ((mswindows default) . "Red3"))
 		     'global)
 
-;; some older servers don't recognize "darkseagreen2"
+;; some older X servers don't recognize "darkseagreen2"
 (set-face-background 'highlight
-		     '(((default color) . "darkseagreen2")
-		       ((default color) . "green")
-		       ((default grayscale) . "gray53"))
+		     '(((x default color) . "darkseagreen2")
+		       ((x default color) . "green")
+		       ((x default grayscale) . "gray53")
+		       ((mswindows default color) . "darkseagreen2")
+		       ((mswindows default color) . "green")
+		       ((mswindows default grayscale) . "gray53"))
 		     'global)
-(set-face-background-pixmap 'highlight "gray1" 'global '(default mono))
+(set-face-background-pixmap 'highlight
+			    '(((x default mono) . "gray1")
+			      ((mswindows default mono) . "gray1"))
+			    'global)
 
-(set-face-background 'zmacs-region "gray65" 'global '(default color))
-(set-face-background 'zmacs-region "gray65" 'global '(default grayscale))
-(set-face-background-pixmap 'zmacs-region "gray3" 'global '(default mono))
+(set-face-background 'zmacs-region
+		     '(((x default color) . "gray65")
+		       ((x default grayscale) . "gray65")
+		       ((mswindows default color) . "gray65")
+		       ((mswindows default grayscale) . "gray65"))
+		     'global)
+(set-face-background-pixmap 'zmacs-region
+			    '(((x default mono) . "gray3")
+			      ((mswindows default mono) . "gray3"))
+			    'global)
 
-(set-face-background 'list-mode-item-selected "gray68" 'global
-		     '(default color))
-(set-face-background 'list-mode-item-selected "gray68" 'global
-		     '(default grayscale))
 (set-face-background 'list-mode-item-selected
-		     [default foreground] 'global '(default mono))
+		     '(((x default color) . "gray68")
+		       ((x default grayscale) . "gray68")
+		       ((x default mono) . [default foreground])
+		       ((mswindows default color) . "gray68")
+		       ((mswindows default grayscale) . "gray68")
+		       ((mswindows default mono) . [default foreground]))
+		     'global)
 (set-face-foreground 'list-mode-item-selected
-		     [default background] 'global '(default mono))
+		     '(((x default mono) . [default background])
+		       ((mswindows default mono) . [default background]))
+		     'global)
 
-(set-face-background 'primary-selection "gray65" 'global '(default color))
-(set-face-background 'primary-selection "gray65" 'global '(default grayscale))
-(set-face-background-pixmap 'primary-selection "gray3" 'global '(default mono))
+(set-face-background 'primary-selection
+		     '(((x default color) . "gray65")
+		       ((x default grayscale) . "gray65")
+		       ((mswindows default color) . "gray65")
+		       ((mswindows default grayscale) . "gray65"))
+		     'global)
+(set-face-background-pixmap 'primary-selection
+			    '(((x default mono) . "gray3")
+			      ((mswindows default mono) . "gray3"))
+			    'global)
 
 (set-face-background 'secondary-selection
-		     '(((default color) . "paleturquoise")
-		       ((default color) . "green")
-		       ((default grayscale) . "gray53"))
+		     '(((x default color) . "paleturquoise")
+		       ((x default color) . "green")
+		       ((x default grayscale) . "gray53")
+		       ((mswindows default color) . "paleturquoise")
+		       ((mswindows default color) . "green")
+		       ((mswindows default grayscale) . "gray53"))
 		     'global)
-(set-face-background-pixmap 'secondary-selection "gray1" 'global
-			    '(default mono))
+(set-face-background-pixmap 'secondary-selection
+			    '(((x default mono) . "gray1")
+			      ((mswindows default mono) . "gray1"))
+			    'global)
 
 (set-face-background 'isearch
-		     '(((default color) . "paleturquoise")
-		       ((default color) . "green"))
+		     '(((x default color) . "paleturquoise")
+		       ((x default color) . "green")
+		       ((mswindows default color) . "paleturquoise")
+		       ((mswindows default color) . "green"))
 		     'global)
 
 (when (featurep 'tty)

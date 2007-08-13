@@ -505,11 +505,13 @@ WARNING: the event object returned may be a reused one; see the function
   plist = Fcopy_sequence (plist);
   Fcanonicalize_plist (plist, Qnil);
 
-#define WRONG_EVENT_TYPE_FOR_PROPERTY(prop)					\
-  error_with_frob (type, "Invalid event type for `%s' property", keyword)
+#define WRONG_EVENT_TYPE_FOR_PROPERTY(prop)				\
+  error_with_frob (type, "Invalid event type for `%s' property",	\
+		   string_data (symbol_name (XSYMBOL (keyword))))
 
   EXTERNAL_PROPERTY_LIST_LOOP (tail, keyword, value, plist)
     {
+      CHECK_SYMBOL (keyword);
       if (EQ (keyword, Qchannel))
 	{
 	  if (e->event_type == key_press_event)

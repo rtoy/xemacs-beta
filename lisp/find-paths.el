@@ -157,12 +157,12 @@ DEFAULT is a fall-back value."
    ;; from more to less specific
    (paths-find-version-directory roots
 				 (concat base system-configuration)
-				 envvar default)
-   (paths-find-version-directory roots
-				 system-configuration
-				 envvar default)
+				 envvar)
    (paths-find-version-directory roots
 				 base
+				 envvar)
+   (paths-find-version-directory roots
+				 system-configuration
 				 envvar default)))
   
 (defvar paths-path-emacs-version nil

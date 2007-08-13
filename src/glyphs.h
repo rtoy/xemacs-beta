@@ -186,6 +186,8 @@ do {								\
 		entry);							\
   } while (0)
 
+extern Lisp_Object Qimage_conversion_error;
+
 extern Lisp_Object Q_data, Q_file;
 
 void add_entry_to_image_instantiator_format_list (Lisp_Object symbol,

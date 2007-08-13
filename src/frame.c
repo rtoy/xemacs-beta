@@ -2297,6 +2297,7 @@ See `set-frame-properties' for the built-in property names.
        (frame, property, default_))
 {
   struct frame *f = decode_frame (frame);
+  int width, height;
 
   XSETFRAME (frame, f);
 
@@ -2309,8 +2310,20 @@ do {				\
 } while (0)
 
   FROB (Qname, f->name);
-  FROB (Qheight, make_int (FRAME_HEIGHT (f)));
-  FROB (Qwidth,  make_int (FRAME_WIDTH  (f)));
+
+  if (window_system_pixelated_geometry (frame))
+    {
+      pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+			       &width, &height);
+    }
+  else
+    {
+      height = FRAME_HEIGHT (f);
+      width = FRAME_WIDTH (f);
+    }
+  FROB (Qheight, make_int (height));
+  FROB (Qwidth,  make_int (width));
+
   /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
      This is over-the-top bogosity, because it's inconsistent with
      the semantics of `minibuffer' when passed to `make-frame'.
@@ -2365,8 +2378,11 @@ Do not modify this list; use `set-frame-property' instead.
   struct frame *f = decode_frame (frame);
   Lisp_Object result = Qnil;
   struct gcpro gcpro1;
+  int width, height;
 
   GCPRO1 (result);
+
+  XSETFRAME (frame, f);
 
 #define FROB(propprop, value)				\
 do {							\
@@ -2377,8 +2393,20 @@ do {							\
 } while (0)
 
   FROB (Qname, f->name);
-  FROB (Qheight, make_int (FRAME_HEIGHT (f)));
-  FROB (Qwidth,  make_int (FRAME_WIDTH  (f)));
+
+  if (window_system_pixelated_geometry (frame))
+    {
+      pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+			       &width, &height);
+    }
+  else
+    {
+      height = FRAME_HEIGHT (f);
+      width = FRAME_WIDTH (f);
+    }
+  FROB (Qheight, make_int (height));
+  FROB (Qwidth,  make_int (width));
+
  /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
      This is over-the-top bogosity, because it's inconsistent with
      the semantics of `minibuffer' when passed to `make-frame'.
@@ -2467,11 +2495,22 @@ but that the idea of the actual height of the frame should not be changed.
        (frame, rows, pretend))
 {
   struct frame *f = decode_frame (frame);
+  int height, width;
   XSETFRAME (frame, f);
   CHECK_INT (rows);
 
-  internal_set_frame_size (f, FRAME_WIDTH (f), XINT (rows),
-			   !NILP (pretend));
+  if (window_system_pixelated_geometry (frame))
+    {
+      char_to_real_pixel_size (f, 0, XINT (rows), 0, &height);
+      width = FRAME_PIXWIDTH (f);
+    }
+  else
+    {
+      height = XINT (rows);
+      width = FRAME_WIDTH (f);
+    }
+
+  internal_set_frame_size (f, width, height, !NILP (pretend));
   return frame;
 }
 
@@ -2483,11 +2522,22 @@ but that the idea of the actual width of the frame should not be changed.
        (frame, cols, pretend))
 {
   struct frame *f = decode_frame (frame);
+  int width, height;
   XSETFRAME (frame, f);
   CHECK_INT (cols);
 
-  internal_set_frame_size (f, XINT (cols), FRAME_HEIGHT (f),
-			    !NILP (pretend));
+  if (window_system_pixelated_geometry (frame))
+    {
+      char_to_real_pixel_size (f, XINT (cols), 0, &width, 0);
+      height = FRAME_PIXHEIGHT (f);
+    }
+  else
+    {
+      width = XINT (cols);
+      height = FRAME_HEIGHT (f);
+    }
+
+  internal_set_frame_size (f, width, height, !NILP (pretend));
   return frame;
 }
 
@@ -2499,11 +2549,20 @@ but that the idea of the actual size of the frame should not be changed.
        (frame, cols, rows, pretend))
 {
   struct frame *f = decode_frame (frame);
+  int height, width;
   XSETFRAME (frame, f);
   CHECK_INT (cols);
   CHECK_INT (rows);
 
-  internal_set_frame_size (f, XINT (cols), XINT (rows), !NILP (pretend));
+  if (window_system_pixelated_geometry (frame))
+    char_to_real_pixel_size (f, XINT (cols), XINT (rows), &width, &height);
+  else
+    {
+      height = XINT (rows);
+      width = XINT (cols);
+    }
+
+  internal_set_frame_size (f, width, height, !NILP (pretend));
   return frame;
 }
 
@@ -2533,7 +2592,8 @@ the rightmost or bottommost possible position (that stays within the screen).
 static void
 frame_conversion_internal (struct frame *f, int pixel_to_char,
 			   int *pixel_width, int *pixel_height,
-			   int *char_width, int *char_height)
+			   int *char_width, int *char_height,
+			   int real_face)
 {
   int cpw;
   int cph;
@@ -2542,7 +2602,11 @@ frame_conversion_internal (struct frame *f, int pixel_to_char,
   Lisp_Object frame, window;
 
   XSETFRAME (frame, f);
-  default_face_height_and_width (frame, &cph, &cpw);
+  if (real_face)
+    default_face_height_and_width (frame, &cph, &cpw);
+  else
+    default_face_height_and_width_1 (frame, &cph, &cpw);
+
   window = FRAME_SELECTED_WINDOW (f);
 
   egw = max (glyph_width (Vcontinuation_glyph, Vdefault_face, 0, window),
@@ -2560,13 +2624,17 @@ frame_conversion_internal (struct frame *f, int pixel_to_char,
 
   if (pixel_to_char)
     {
-      *char_width = 1 + ((*pixel_width - egw) - bdr - obw) / cpw;
-      *char_height = (*pixel_height - bdr - obh) / cph;
+      if (char_width)
+	*char_width = 1 + ((*pixel_width - egw) - bdr - obw) / cpw;
+      if (char_height)
+	*char_height = (*pixel_height - bdr - obh) / cph;
     }
   else
     {
-      *pixel_width = (*char_width - 1) * cpw + egw + bdr + obw;
-      *pixel_height = *char_height * cph + bdr + obh;
+      if (pixel_width)
+	*pixel_width = (*char_width - 1) * cpw + egw + bdr + obw;
+      if (pixel_height)
+	*pixel_height = *char_height * cph + bdr + obh;
     }
 }
 
@@ -2586,7 +2654,7 @@ pixel_to_char_size (struct frame *f, int pixel_width, int pixel_height,
 		    int *char_width, int *char_height)
 {
   frame_conversion_internal (f, 1, &pixel_width, &pixel_height, char_width,
-			     char_height);
+			     char_height, 0);
 }
 
 /* Given a character size, this returns the minimum number of pixels
@@ -2602,7 +2670,7 @@ char_to_pixel_size (struct frame *f, int char_width, int char_height,
 		    int *pixel_width, int *pixel_height)
 {
   frame_conversion_internal (f, 0, pixel_width, pixel_height, &char_width,
-			     &char_height);
+			     &char_height, 0);
 }
 
 /* Given a pixel size, rounds DOWN to the smallest size in pixels necessary
@@ -2618,6 +2686,34 @@ round_size_to_char (struct frame *f, int in_width, int in_height,
   char_to_pixel_size (f, char_width, char_height, out_width, out_height);
 }
 
+/* Versions of the above which always account for real font metrics.
+ */
+void
+pixel_to_real_char_size (struct frame *f, int pixel_width, int pixel_height,
+			 int *char_width, int *char_height)
+{
+  frame_conversion_internal (f, 1, &pixel_width, &pixel_height, char_width,
+			     char_height, 1);
+}
+
+void
+char_to_real_pixel_size (struct frame *f, int char_width, int char_height,
+			 int *pixel_width, int *pixel_height)
+{
+  frame_conversion_internal (f, 0, pixel_width, pixel_height, &char_width,
+			     &char_height, 1);
+}
+
+void
+round_size_to_real_char (struct frame *f, int in_width, int in_height,
+			 int *out_width, int *out_height)
+{
+  int char_width;
+  int char_height;
+  pixel_to_real_char_size (f, in_width, in_height, &char_width, &char_height);
+  char_to_real_pixel_size (f, char_width, char_height, out_width, out_height);
+}
+
 /* Change the frame height and/or width.  Values may be given as zero to
    indicate no change is to take place. */
 static void
@@ -2625,7 +2721,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 {
   Lisp_Object frame;
   int new_pixheight, new_pixwidth;
-  int font_height, font_width;
+  int font_height, real_font_height, font_width;
 
   /* #### Chuck -- shouldn't we be checking to see if the frame
      is being "changed" to its existing size, and do nothing if so? */
@@ -2638,7 +2734,8 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
   XSETFRAME (frame, f);
 
-  default_face_height_and_width (frame, &font_height, &font_width);
+  default_face_height_and_width (frame, &real_font_height, 0);
+  default_face_height_and_width_1 (frame, &font_height, &font_width);
 
   /* This size-change overrides any pending one for this frame.  */
   FRAME_NEW_HEIGHT (f) = 0;
@@ -2711,9 +2808,9 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 	  int old_minibuf_height =
 	    XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
 	  int minibuf_height =
-	    f->init_finished && (old_minibuf_height % font_height) == 0 ?
-	    max(old_minibuf_height, font_height) :
-	    font_height;
+	    f->init_finished && (old_minibuf_height % real_font_height) == 0 ?
+	    max(old_minibuf_height, real_font_height) :
+	    real_font_height;
 	  set_window_pixheight (FRAME_ROOT_WINDOW (f),
 				/* - font_height for minibuffer */
 				new_pixheight - minibuf_height, 0);

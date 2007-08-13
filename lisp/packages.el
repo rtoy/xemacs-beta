@@ -336,13 +336,13 @@ This function is basically a wrapper over `locate-file'."
 (defun packages-split-path (path)
   "Split PATH at NIL, return pair with two components.
 The second component is shared with PATH."
-  (let ((reverse-early '()))
+  (let ((reverse-tail '()))
     (while (and path (null (null (car path))))
-      (setq reverse-early (cons (car path) reverse-early))
+      (setq reverse-tail (cons (car path) reverse-tail))
       (setq path (cdr path)))
     (if (null path)
-	(cons nil path)
-      (cons (reverse reverse-early) (cdr path)))))
+	(cons nil (nreverse reverse-tail))
+      (cons (nreverse reverse-tail) (cdr path)))))
 
 (defun packages-find-packages (package-path &optional inhibit)
   "Search for all packages in PACKAGE-PATH.

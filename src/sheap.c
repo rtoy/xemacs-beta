@@ -24,13 +24,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <stddef.h>
 #include "sheap-adjust.h"
 
-#ifdef MULE
 #define STATIC_HEAP_BASE	0x600000
 #define STATIC_HEAP_SLOP	0x40000
-#else
-#define STATIC_HEAP_BASE	0x500000
-#define STATIC_HEAP_SLOP	0x40000
-#endif
 #define STATIC_HEAP_SIZE \
 (STATIC_HEAP_BASE + SHEAP_ADJUSTMENT + STATIC_HEAP_SLOP)
 #define BLOCKSIZE	(1<<12)

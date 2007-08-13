@@ -518,67 +518,95 @@ Otherwise, it returns the next larger version of this font that is defined."
     ;; done when the instancing actually happens, but I'm not
     ;; sure how it should actually be dealt with.
     (when fn
-      ;; Always use the x-tag-set to remove specs, since we don't
-      ;; know whether the predumped face was initialized with an
-      ;; 'x tag or not.
-      (remove-specifier-specs-matching-tag-set-cdrs (face-font face)
-						    locale
-						    x-tag-set)
+      (if device-class
+	  ;; Always use the x-tag-set to remove specs, since we don't
+	  ;; know whether the predumped face was initialized with an
+	  ;; 'x tag or not.
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-font face)
+							locale
+							x-tag-set)
+	;; If there's no device class then we're initializing
+	;; globally.  This means we should override global
+	;; defaults for all X device classes.
+	(remove-specifier (face-font face) locale x-tag-set nil))
       (set-face-font face fn locale nil append))
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up
     ;; if you start up an X frame and then later create a TTY frame.
     (when fg
-      (remove-specifier-specs-matching-tag-set-cdrs (face-foreground face)
-						    locale
-						    x-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-foreground face)
+							locale
+							x-tag-set)
+	(remove-specifier (face-foreground face) locale x-tag-set nil))
       (set-face-foreground face fg locale 'x append))
     (when bg
-      (remove-specifier-specs-matching-tag-set-cdrs (face-background face)
-						    locale
-						    x-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-background face)
+							locale
+							x-tag-set)
+	(remove-specifier (face-background face) locale x-tag-set nil))
       (set-face-background face bg locale 'x append))
     (when bgp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-background-pixmap
-						     face)
-						    locale
-						    x-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-background-pixmap
+							 face)
+							locale
+							x-tag-set)
+	(remove-specifier (face-background-pixmap face) locale x-tag-set nil))
       (set-face-background-pixmap face bgp locale nil append))
     (when ulp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-property
-						     face 'underline)
-						    locale
-						    tty-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
+							 face 'underline)
+							locale
+							tty-tag-set)
+	(remove-specifier (face-propery face 'underline) locale
+			  tty-tag-set nil))
       (set-face-underline-p face ulp locale nil append))
     (when stp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-property
-						     face 'strikethru)
-						    locale
-						    tty-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
+							 face 'strikethru)
+							locale
+							tty-tag-set)
+	(remove-specifier (face-propery face 'strikethru)
+			  locale tty-tag-set nil))
       (set-face-strikethru-p face stp locale nil append))
     (when hp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-property
-						     face 'highlight)
-						    locale
-						    tty-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
+							 face 'highlight)
+							locale
+							tty-tag-set)
+	(remove-specifier (face-propery face 'highlight)
+			  locale tty-tag-set nil))
       (set-face-highlight-p face hp locale nil append))
     (when dp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-property
-						     face 'dim)
-						    locale
-						    tty-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
+							 face 'dim)
+							locale
+							tty-tag-set)
+	(remove-specifier (face-property face 'dim) locale tty-tag-set nil))
       (set-face-dim-p face dp locale nil append))
     (when bp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-property
-						     face 'blinking)
-						    locale
-						    tty-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
+							 face 'blinking)
+							locale
+							tty-tag-set)
+	(remove-specifier (face-propery face 'blinking) locale
+			  tty-tag-set nil))
       (set-face-blinking-p face bp locale nil append))
     (when rp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-property
-						     face 'reverse)
-						    locale
-						    tty-tag-set)
+      (if device-class
+	  (remove-specifier-specs-matching-tag-set-cdrs (face-property
+							 face 'reverse)
+							locale
+							tty-tag-set)
+	(remove-specifier (face-property face 'reverse) locale
+			  tty-tag-set nil))
       (set-face-reverse-p face rp locale nil append))
     ))
 
@@ -587,7 +615,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 
 (defun remove-specifier-specs-matching-tag-set-cdrs (specifier locale tag-set)
   (while tag-set
-    (remove-specifier specifier locale tag-set)
+    (remove-specifier specifier locale tag-set t)
     (setq tag-set (cdr tag-set))))
 
 ;;; x-init-global-faces is responsible for ensuring that the

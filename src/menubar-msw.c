@@ -92,6 +92,9 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 #include "window.h"
 
+/* #### */
+#define REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIHGT_FLUSH 0
+
 #define EMPTY_ITEM_ID ((UINT)LISP_TO_VOID (Qunbound))
 #define EMPTY_ITEM_NAME "(empty)"
 
@@ -250,8 +253,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       struct gcpro gcpro1;
 
       gui_item_init (&gui_item);
-      GCPRO1 (gui_item);
-      gcpro1.nvars = GUI_ITEM_GCPRO_COUNT;
+      GCPRO_GUI_ITEM (&gui_item);
 
       menu_parse_submenu_keywords (item, &gui_item);
 
@@ -299,8 +301,7 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
       struct gcpro gcpro1;
 
       gui_item_init (&gui_item);
-      GCPRO1 (gui_item);
-      gcpro1.nvars = GUI_ITEM_GCPRO_COUNT;
+      GCPRO_GUI_ITEM (&gui_item);
 
       gui_parse_item_keywords (item, &gui_item);
 
@@ -362,12 +363,16 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
   Lisp_Object item_desc;
   int deep_p, flush_right;
   struct gcpro gcpro1;
-  unsigned long checksum = 0;
+  unsigned long checksum;
   struct gui_item gui_item;
 
   gui_item_init (&gui_item);
-  GCPRO1 (gui_item);
-  gcpro1.nvars = GUI_ITEM_GCPRO_COUNT;
+  GCPRO_GUI_ITEM (&gui_item);
+
+  /* We are sometimes called with the menubar unchanged, and with changed
+     right flush. We have to update the menubar in ths case,
+     so account for the compliance setting in the hash value */
+  checksum = REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIHGT_FLUSH;
 
   /* Will initially contain only "(empty)" */
   if (populate_p)
@@ -393,7 +398,8 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
     {
       if (NILP (XCAR (item_desc)))
 	{
-	  if (bar_p)
+	  /* Do not flush right menubar items when MS style compiant */
+	  if (bar_p && !REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIHGT_FLUSH)
 	    flush_right = 1;
 	  if (!populate_p)
 	    checksum = HASH2 (checksum, Qnil);
@@ -702,13 +708,7 @@ mswindows_handle_wm_exitmenuloop (struct frame* f)
 static void
 mswindows_update_frame_menubars (struct frame* f)
 {
-  /* #### KLUDGE. menubar.c calls us when the following
-     condition is true:
-	(f->menubar_changed || f->windows_changed)
-     Is that much really necessary?
-     */
-  if (f->menubar_changed)
-    update_frame_menubar_maybe (f);
+  update_frame_menubar_maybe (f);
 }
 
 static void

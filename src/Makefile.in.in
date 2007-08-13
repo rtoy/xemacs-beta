@@ -70,7 +70,7 @@ start_files=@start_files@
 start_flags=@start_flags@
 LD=@ld@
 lib_gcc=@lib_gcc@
-#libmcheck=@libmcheck@
+##libmcheck=@libmcheck@
 
 #define NOT_C_CODE
 #include "config.h"
@@ -328,7 +328,7 @@ xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
 
 fastdump: temacs 
 	@$(RM) xemacs && touch SATISFIED
-	-$(DUMPENV) ./temacs -batch -l loadup.el dump
+	-$(DUMPENV) ./temacs -batch -l ${srcdir}/../lisp/loadup.el dump
 	@if test -f xemacs;        then if test -f SATISFIED; then \
 		./xemacs -batch -vanilla -f list-load-path-shadows; fi; \
 		$(RM) SATISFIED; exit 0; fi; \

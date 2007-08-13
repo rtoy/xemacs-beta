@@ -76,6 +76,7 @@ struct console_methods
   int (*device_mm_height_method) (struct device *);
   int (*device_bitplanes_method) (struct device *);
   int (*device_color_cells_method) (struct device *);
+  unsigned int (*device_implementation_flags_method) ();
 
   /* frame methods */
   Lisp_Object *device_specific_frame_props;
@@ -111,6 +112,7 @@ struct console_methods
   void (*set_frame_icon_method) (struct frame *f);
   void (*popup_menu_method) (Lisp_Object menu, Lisp_Object event);
   Lisp_Object (*get_frame_parent_method) (struct frame *f);
+  void (*update_frame_external_traits_method) (struct frame *f, Lisp_Object name);
 
   /* redisplay methods */
   int (*left_margin_width_method) (struct window *);
@@ -253,6 +255,13 @@ struct console_methods
   /* dialog methods */
 #endif
 };
+
+/*
+ * Constants returned by device_implementation_flags_method
+ */
+/* Set when device uses pixel-based geometry */
+#define XDEVIMPF_PIXEL_GEOMETRY	  0x00000001L
+
 
 #define CONSOLE_TYPE_NAME(c) ((c)->conmeths->name)
 #define CONSOLE_TYPE(c) ((c)->conmeths->symbol)

@@ -259,8 +259,6 @@
 ;; Modified 5/9/1993 by Dave Gillespie:
 ;;
 ;; Merged in various things from FSF's latest Emacs 19 info.el.
-;; Notably:  Added Info-default-directory-list.
-
 
 ;; Modified 6/2/1993 by Dave Gillespie:
 ;;
@@ -375,19 +373,6 @@ This variable is ignored unless running under XEmacs."
   :type 'boolean
   :group 'info)
 
-(defvar Info-default-directory-list nil
-  "*List of directories to search for Info documents, and `dir' or `localdir' files.
-The value of `Info-default-directory-list' will be initialized to a
-reasonable default by the startup code, and usually doesn't need to be
-changed in your personal configuration, though you may do so if you
-like, and this is where to do that.
-
-The first directory on this list must contain a `dir' file like the one
-supplied with XEmacs, which will be used as the (dir)Top node.
-
-For more information, see the documentation to the variables:
-`Info-additional-search-directory-list' and `Info-directory-list'.")
-
 (defcustom Info-additional-search-directory-list nil
   "*List of additional directories to search for Info documentation
 files.  These directories are not searched for merging the `dir'
@@ -400,18 +385,14 @@ file. An example might be something like:
   "The filename of the XEmacs info for
 `Info-goto-emacs-command-node' (`\\<help-mode-map>\\[Info-goto-emacs-command-node]')")
 
-(defvar Info-directory-list
-  (let ((path (getenv "INFOPATH")))
-    (if path
-	(split-string path path-separator)
-      Info-default-directory-list))
+;;;###autoload
+(defvar Info-directory-list nil
   "List of directories to search for Info documentation files.
 
-The default is to use the environment variable INFOPATH if it exists,
-else to use `Info-default-directory-list'.  The first directory in
-this list, the \"dir\" file there will become the (dir)Top node of the
-Info documentation tree.  If you wish to modify the info search path,
-use `M-x customize-variable, Info-default-directory-list' to do so.")
+The first directory in this list, the \"dir\" file there will become
+the (dir)Top node of the Info documentation tree.  If you wish to
+modify the info search path, use `M-x customize-variable,
+Info-directory-list' to do so.")
 
 (defcustom Info-localdir-heading-regexp
     "^Locally installed XEmacs Packages:?"
@@ -832,8 +813,8 @@ actually get any text from."
       ;; If it doesn't work, fix it.
       (setq buffer (car buffers)
 	    ;; reverse it since they are pushed down from the top. the
-	    ;; `Info-default-directory-list'/INFOPATH can be specified
-	    ;; in natural order this way.
+	    ;; `Info-directory-list can be specified in natural order
+	    ;; this way.
 	    others (nreverse (cdr buffers)))
 
       ;; Insert the entire original dir file as a start; note that we've

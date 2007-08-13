@@ -2558,6 +2558,79 @@ x_delete_frame (struct frame *f)
   f->frame_data = 0;
 }
 
+static void
+x_update_frame_external_traits (struct frame* frm, Lisp_Object name)
+{
+  Arg av[10];
+  int ac = 0;
+  Lisp_Object frame = Qnil;
+
+  XSETFRAME(frame, frm);
+
+  if (EQ (name, Qforeground))
+   {
+     Lisp_Object color = FACE_FOREGROUND (Vdefault_face, frame);
+     XColor fgc;
+
+     if (!EQ (color, Vthe_null_color_instance))
+       {
+	 fgc = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color));
+	 XtSetArg (av[ac], XtNforeground, (void *) fgc.pixel); ac++;
+       }
+   }
+  else if (EQ (name, Qbackground))
+   {
+     Lisp_Object color = FACE_BACKGROUND (Vdefault_face, frame);
+     XColor bgc;
+
+     if (!EQ (color, Vthe_null_color_instance))
+       {
+	 bgc = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (color));
+	 XtSetArg (av[ac], XtNbackground, (void *) bgc.pixel); ac++;
+       }
+
+     /* Really crappy way to force the modeline shadows to be
+	redrawn.  But effective. */
+     MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (frm);
+     MARK_FRAME_CHANGED (frm);
+   }
+  else if (EQ (name, Qfont))
+   {
+     Lisp_Object font = FACE_FONT (Vdefault_face, frame, Vcharset_ascii);
+
+     if (!EQ (font, Vthe_null_font_instance))
+       XtSetArg (av[ac], XtNfont,
+		 (void *) FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font)));
+     ac++;
+   }
+  else
+   abort ();
+
+  XtSetValues (FRAME_X_TEXT_WIDGET (frm), av, ac);
+
+  #ifdef HAVE_TOOLBARS
+  /* Setting the background clears the entire frame area
+    including the toolbar so we force an immediate redraw of
+    it. */
+  if (EQ (name, Qbackground))
+    MAYBE_DEVMETH (XDEVICE (frm->device), redraw_frame_toolbars, (frm));
+  #endif /* HAVE_TOOLBARS */
+
+  /* The intent of this code is to cause the frame size in
+    characters to remain the same when the font changes, at the
+    expense of changing the frame size in pixels.  It's not
+    totally clear that this is the right thing to do, but it's
+    not clearly wrong either.  */
+  if (EQ (name, Qfont))
+   {
+     EmacsFrameRecomputeCellSize (FRAME_X_TEXT_WIDGET (frm));
+     Fset_frame_size (frame,
+		      make_int (frm->width),
+		      make_int (frm->height),
+		      Qnil);
+   }
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -2610,6 +2683,7 @@ console_type_create_frame_x (void)
   CONSOLE_HAS_METHOD (x, set_frame_pointer);
   CONSOLE_HAS_METHOD (x, set_frame_icon);
   CONSOLE_HAS_METHOD (x, get_frame_parent);
+  CONSOLE_HAS_METHOD (x, update_frame_external_traits);
 }
 
 void

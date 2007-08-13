@@ -226,7 +226,7 @@ check_free (void *ptr)
 	{
 	/* This can only happen if you try to free something that didn't
 	   come from malloc */
-#if 1
+#if !defined(__linux__)
 	  /* I originally wrote:  "There's really no need to drop core."
 	     I have seen the error of my ways. -slb */
 	  if (strict_free_check)
@@ -243,7 +243,7 @@ check_free (void *ptr)
       if (size < 0)
 	{
 	  /* This happens when you free twice */
-#if 1
+#if !defined(__linux__)
 	  /* See above comment. */
 	  if (strict_free_check)
 	    {
@@ -352,12 +352,13 @@ check_realloc (void * ptr, unsigned long size)
   unsigned long old_size;
   void *result = malloc (size);
 
+  if (!ptr) return result;
   present = (EMACS_INT) gethash (ptr, pointer_table, (void **) &old_size);
   if (!present)
     {
     /* This can only happen by reallocing a pointer that didn't
        come from malloc. */
-#if 1
+#if !defined(__linux__)
       /* see comment in check_free(). */
       abort ();
 #endif

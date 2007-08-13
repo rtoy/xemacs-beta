@@ -68,19 +68,22 @@ is not recommended, you will also need to add the library directories
 to the --site-runtime-libraries option.
 
 
-3) Decide what Initial Lisp you need with XEmacs.  XEmacs is distributed
-separately from most of its runtime environment.  This is done to make it
-easier for administrators to tune an installation for what the local users
-need.  See the file etc/PACKAGES for an overview of what is available and
-which packages need to be installed prior to building XEmacs.  At this
-point you only need a minimum to get started at which point you may install
-what you wish without further changes to the XEmacs binary.  A sample
-minimum configuration for a Linux system using Mule and Wnn6 from OMRON
-corporation would be the packages `mule-base' and `egg-its'.  By default,
-packages will be searched for in the directory $prefix/lib/xemacs/packages.
-This may be changed by specifying a different value with the --package-path
-configuration option.  Multiple directories may be specified.
+3) Decide what Initial Lisp you need with XEmacs.  XEmacs is
+distributed separately from most of its runtime environment.  This is
+done to make it easier for administrators to tune an installation for
+what the local users need.  See the file etc/PACKAGES for an overview
+of what is available and which packages need to be installed prior to
+building XEmacs.  At this point you only need a minimum to get started
+at which point you may install what you wish without further changes
+to the XEmacs binary.  A sample minimum configuration for a Linux
+system using Mule and Wnn6 from OMRON corporation would be the
+packages `mule-base' and `egg-its'.  By default, packages will be
+searched for in the path
 
+~/.xemacs::$prefix/lib/xemacs-${version}/mule-packages:$prefix/lib/xemacs/mule-packages:$prefix/lib/xemacs-${version}/packages:$prefix/lib/xemacs/packages
+
+This may be changed by specifying a different value with the
+--package-path configuration option.
 
 4) In the top level directory of the XEmacs distribution, run the
    program `configure' as follows:

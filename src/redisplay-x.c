@@ -86,7 +86,7 @@ static void x_redraw_exposed_windows (Lisp_Object window, int x, int y,
 static void x_clear_region (Lisp_Object window, face_index findex, int x,
 			    int y, int width, int height);
 static void x_output_eol_cursor (struct window *w, struct display_line *dl,
-				 int xpos);
+				 int xpos, face_index findex);
 static void x_clear_frame (struct frame *f);
 static void x_clear_frame_windows (Lisp_Object window);
 static void x_bevel_modeline (struct window *w, struct display_line *dl);
@@ -418,7 +418,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 		{
 		  if (rb->object.chr.ch == '\n')
 		    {
-		      x_output_eol_cursor (w, dl, xpos);
+		      x_output_eol_cursor (w, dl, xpos, findex);
 		    }
 		  else
 		    {
@@ -2059,10 +2059,12 @@ x_clear_region (Lisp_Object locale, face_index findex, int x, int y,
  narrower than the normal cursor.
  ****************************************************************************/
 static void
-x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
+x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
+		     face_index findex)
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
+  Lisp_Object window;
 
   Display *dpy = DEVICE_X_DISPLAY (d);
   Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
@@ -2081,7 +2083,8 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
   int cursor_height, cursor_y;
   int defheight, defascent;
 
-  XClearArea (dpy, x_win, x, y, width, height, False);
+  XSETWINDOW (window, w);
+  x_clear_region (window, findex, x, y, width, height);
 
   if (NILP (w->text_cursor_visible_p))
     return;

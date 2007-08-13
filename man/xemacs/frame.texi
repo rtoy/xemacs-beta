@@ -86,9 +86,14 @@ and edit the text at different places.
 
   While the cursor appears to point @var{at} a character, you should
 think of point as @var{between} two characters: it points @var{before}
-the character on which the cursor appears.  Sometimes people speak
-of ``the cursor'' when they mean ``point,'' or speak of commands that
-move point as ``cursor motion'' commands.
+the character on which the cursor appears.  The exception is at the
+end of the line, where the cursor appears after the last character of
+the line.  Where the display is capable, the cursor at the end of the
+line will appear differently from a cursor over whitespace at the end
+of the line.  (In an X Windows frame, the end-of-line cursor is half
+the width of a within-line cursor.)  Sometimes people speak of ``the
+cursor'' when they mean ``point,'' or speak of commands that move
+point as ``cursor motion'' commands.
 
  Each XEmacs frame has only one cursor.  When output is in progress, the cursor
 must appear where the typing is being done.  This does not mean that

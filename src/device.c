@@ -965,6 +965,64 @@ Return the output baud rate of DEVICE.
   return make_int (DEVICE_BAUD_RATE (decode_device (device)));
 }
 
+Lisp_Object
+domain_device_type (Lisp_Object domain)
+{
+  /* This cannot GC */
+  assert (WINDOWP (domain) || FRAMEP (domain)
+	  || DEVICEP (domain) || CONSOLEP (domain));
+
+  if (WINDOWP (domain))
+    {
+      if (!WINDOW_LIVE_P (XWINDOW (domain)))
+	return Qdead;
+      domain = WINDOW_FRAME (XWINDOW (domain));
+    }
+  if (FRAMEP (domain))
+    {
+      if (!FRAME_LIVE_P (XFRAME (domain)))
+	return Qdead;
+      domain = FRAME_DEVICE (XFRAME (domain));
+    }
+  if (DEVICEP (domain))
+    {
+      if (!DEVICE_LIVE_P (XDEVICE (domain)))
+	return Qdead;
+      domain = DEVICE_CONSOLE (XDEVICE (domain));
+    }
+  return CONSOLE_TYPE (XCONSOLE (domain));
+}
+
+/*
+ * Determine whether window system bases window geometry on character
+ * or pixel counts.
+ * Return non-zero for pixel-based geometry, zero for character-based.
+ */
+int
+window_system_pixelated_geometry (Lisp_Object domain)
+{
+  /* This cannot GC */
+  Lisp_Object winsy = domain_device_type (domain);
+  struct console_methods *meth = decode_console_type (winsy, ERROR_ME_NOT);
+  assert (meth);
+  return (MAYBE_INT_CONTYPE_METH (meth, device_implementation_flags, ())
+	  & XDEVIMPF_PIXEL_GEOMETRY);
+}
+
+DEFUN ("domain-device-type", Fdomain_device_type, 0, 1, 0, /*
+Return the device type symbol for a DOMAIN, e.g. 'x or 'tty.
+DOMAIN can be either a window, frame, device or console.
+*/
+       (domain))
+{
+  if (!WINDOWP (domain) && !FRAMEP (domain)
+      && !DEVICEP (domain) && !CONSOLEP (domain))
+    signal_simple_error
+      ("Domain must be either a window, frame, device or console", domain);
+
+  return domain_device_type (domain);
+}
+
 void
 handle_asynch_device_change (void)
 {
@@ -1052,6 +1110,7 @@ syms_of_device (void)
   DEFSUBR (Fdevice_color_cells);
   DEFSUBR (Fset_device_baud_rate);
   DEFSUBR (Fdevice_baud_rate);
+  DEFSUBR (Fdomain_device_type);
 
   defsymbol (&Qdevicep, "devicep");
   defsymbol (&Qdevice_live_p, "device-live-p");

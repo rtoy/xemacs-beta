@@ -54,22 +54,23 @@
   (roots early-package-load-path late-package-load-path
 	 &optional inhibit-site-lisp)
   "Construct the load path."
-  (let ((envvar-value (getenv "EMACSLOADPATH")))
-    (if envvar-value
-	(decode-path-internal envvar-value)
-      (let* ((site-lisp-directory
-	      (and (null inhibit-site-lisp)
-		   (paths-find-site-lisp-directory roots)))
-	     (site-lisp-load-path
-	      (and site-lisp-directory
-		   (paths-find-recursive-load-path (list site-lisp-directory))))
-	     (lisp-directory (paths-find-lisp-directory roots))
-	     (lisp-load-path
-	      (paths-find-recursive-load-path (list lisp-directory))))
-	(append early-package-load-path
-		site-lisp-load-path
-		late-package-load-path
-		lisp-load-path)))))
+  (let* ((envvar-value (getenv "EMACSLOADPATH"))
+	 (env-load-path (and envvar-value
+			     (decode-path-internal envvar-value)))
+	 (site-lisp-directory
+	  (and (null inhibit-site-lisp)
+	       (paths-find-site-lisp-directory roots)))
+	 (site-lisp-load-path
+	  (and site-lisp-directory
+	       (paths-find-recursive-load-path (list site-lisp-directory))))
+	 (lisp-directory (paths-find-lisp-directory roots))
+	 (lisp-load-path
+	  (paths-find-recursive-load-path (list lisp-directory))))
+    (append env-load-path
+	    early-package-load-path
+	    site-lisp-load-path
+	    late-package-load-path
+	    lisp-load-path)))
 
 (defun paths-construct-info-path (roots early-packages late-packages)
   "Construct the info path."
@@ -79,15 +80,13 @@
    (let ((info-directory
 	  (paths-find-version-directory roots "info"
 					nil
-					(append
-					 (and configure-info-directory
-					      (list configure-info-directory))
-					 configure-info-path))))
+					configure-info-directory)))
      (and info-directory
 	  (list info-directory)))
    (let ((info-path-envval (getenv "INFOPATH")))
      (if info-path-envval
-	 (decode-path-internal info-path-envval)))))
+	 (decode-path-internal info-path-envval)
+       (paths-directories-which-exist configure-info-path)))))
 
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory."

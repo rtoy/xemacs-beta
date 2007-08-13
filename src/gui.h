@@ -50,6 +50,21 @@ struct gui_item
 #define GUI_ITEM_GCPRO_COUNT \
   (slot_offset(struct gui_item, GUI_ITEM_LAST_GCPROED) / sizeof(Lisp_Object) + 1)
 
+/*
+ * gui_item is a struct containing a bunch of Lisp_Object
+ * members.  We need to GC-protect all the member slots.
+ * Rather than build a long chain of individual gcpro structs
+ * that protect the slots individually, we protect all the
+ * member slots by pretending the struct is an array.  ANSI C
+ * requires tihs hack to work, ugly though it is.
+ */
+#define GCPRO_GUI_ITEM(pgui_item)					\
+	do {								\
+	  Lisp_Object *gui_item_array = (Lisp_Object *) pgui_item;	\
+	  GCPRO1 (gui_item_array[0]);					\
+	  gcpro1.nvars = GUI_ITEM_GCPRO_COUNT;				\
+	} while (0);
+
 void gui_item_init (struct gui_item *pgui_item);
 void gui_item_add_keyval_pair (struct gui_item *pgui_item,
 			       Lisp_Object key, Lisp_Object val);

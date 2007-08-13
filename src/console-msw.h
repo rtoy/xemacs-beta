@@ -111,6 +111,9 @@ struct mswindows_frame
   /* DC for this win32 window */
   HDC hdc;
 
+  /* compatibke DC for bitmap operations */
+  HDC cdc;
+
   /* Time of last click event, for button 2 emul */
   DWORD last_click_time;
 
@@ -122,6 +125,10 @@ struct mswindows_frame
 
   /* Menu checksum. See menubar-msw.c */
   unsigned int menu_checksum;
+
+  /* Real character width and height of the frame.
+     FRAME_{HEIGHT,WIDTH} do not work for pixel geometry! */
+  int charheight, charwidth;
 
   /* Misc flags */
   int button2_need_lbutton : 1;
@@ -138,6 +145,13 @@ struct mswindows_frame
 #define FRAME_MSWINDOWS_DC(f)		  (FRAME_MSWINDOWS_DATA (f)->hdc)
 #define FRAME_MSWINDOWS_MENU_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->menu_hashtable)
 #define FRAME_MSWINDOWS_MENU_CHECKSUM(f)  (FRAME_MSWINDOWS_DATA (f)->menu_checksum)
+#define MSWINDOWS_FRAME_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)
+#define MSWINDOWS_FRAME_CHARHEIGHT(f)	  (FRAME_MSWINDOWS_DATA (f)->charheight)
+
+/* Frame check and validation macros */
+#define FRAME_MSWINDOWS_P(frm) CONSOLE_TYPESYM_MSWINDOWS_P (FRAME_TYPE (frm))
+#define CHECK_MSWINDOWS_FRAME(z) CHECK_FRAME_TYPE (z, mswindows)
+#define CONCHECK_MSWINDOWS_FRAME(z) CONCHECK_FRAME_TYPE (z, mswindows)
 
 /* win32 window LONG indices */
 #define XWL_FRAMEOBJ	0
@@ -182,5 +196,20 @@ void mswindows_enqueue_dispatch_event (Lisp_Object event);
 void mswindows_enqueue_magic_event (HWND hwnd, UINT message);
 Lisp_Object mswindows_cancel_dispatch_event (struct Lisp_Event* event);
 Lisp_Object mswindows_pump_outstanding_events (void);
+Lisp_Object mswindows_protect_modal_loop (Lisp_Object (*bfun) (Lisp_Object barg),
+					  Lisp_Object barg);
+void mswindows_unmodalize_signal_maybe (void);
+
+/* #### This wants to go to lisp.h */
+typedef struct
+{
+  int left;
+  int top;
+  int width;
+  int height;
+} XEMACS_RECT_WH;
+
+extern XEMACS_RECT_WH mswindows_frame_target_rect;
+extern Lisp_Object mswindows_frame_being_created;
 
 #endif /* _XEMACS_CONSOLE_MSW_H_ */

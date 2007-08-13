@@ -57,7 +57,6 @@ Lisp_Object Vmswindows_get_true_file_attributes;
 
 Lisp_Object Qinit_pre_mswindows_win, Qinit_post_mswindows_win;
 
-
 static void
 mswindows_init_device (struct device *d, Lisp_Object props)
 {
@@ -166,6 +165,11 @@ mswindows_device_color_cells (struct device *d)
   return(DEVICE_MSWINDOWS_CELLS(d));
 }
 
+static unsigned int
+mswindows_device_implementation_flags (void)
+{
+  return XDEVIMPF_PIXEL_GEOMETRY;
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -204,6 +208,7 @@ console_type_create_device_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, device_mm_height);
   CONSOLE_HAS_METHOD (mswindows, device_bitplanes);
   CONSOLE_HAS_METHOD (mswindows, device_color_cells);
+  CONSOLE_HAS_METHOD (mswindows, device_implementation_flags);
 }
 
 void

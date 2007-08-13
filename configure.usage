@@ -124,23 +124,21 @@ Additional features:
 --mail-locking=TYPE (*)	Specify the locking to be used by movemail to prevent
 			concurrent updates of mail spool files. Valid types
 			are `lockf', `flock', and `file'.
+--with-site-lisp        Allow for a site-lisp directory in the XEmacs hierarchy 
+			searched before the installation packages.
 --package-path=PATH     Directories to search for packages to dump with xemacs.
-                        Defaults to `/usr/local/lib/xemacs/packages:~/.xemacs'.
+                        Defaults to
+   `~/.xemacs::/usr/local/lib/xemacs-${version}/mule-packages:/usr/local/lib/xemacs/mule-packages:/usr/local/lib/xemacs-${version}/packages:/usr/local/lib/xemacs/packages'.
+	                Components before the double colon (::) will not
+                        be seen at dump time.  They will also show up
+                        as the first thing in the various paths.
 --infodir=DIR		Directory to install the XEmacs Info manuals and dir in.
     Defaults to: `'.
 --infopath=PATH		Directories to search for Info documents, info dir
-			and localdir files.  This is used to initialize
-			`Info-default-directory-list' at dump time.
-			Directories on this path that do not exist in the
-			filesystem will be dropped by the startup code at
-			runtime, so it is safe to specify directories that do
-			not exist in the compilation environment, or that won't
-			exist in the runtime environment. The "dir"
-			file in the first existing directory in this list will
-			become the (dir)Top node of the Info tree.
+			and localdir files in case run-time searching
+                        for them fails.
     Defaults to the value of:
-    `/usr/local/info:/usr/info:/usr/local/lib/texmf/doc/info:/usr/lib/texmf/doc/
-info'.
+    `/usr/local/lib/texmf/doc/info:/usr/local/lib/texmf/info:/usr/lib/texmf/doc/info:/usr/lib/texmf/info:/usr/local/info:/usr/info'.
 
 Internationalization options:
 
@@ -205,11 +203,11 @@ Other options:
 --with-system-malloc	Force use of the system malloc, rather than GNU malloc.
 --with-debug-malloc	Use the debugging malloc package.
 
-You may also specify any of the `path' variables found in
-Makefile.in, including --bindir, --libdir, --lispdir, --datadir, and
-so on.  Note that we recommend against explicitly setting any of these
-variables.  See the INSTALL file for a complete list plus the reasons
-we advise not changing them.
+You may also specify any of the `path' variables found in Makefile.in,
+including --bindir, --libdir, --lispdir, --sitelispdir, --datadir,
+--infodir, --mandir and so on.  Note that we recommend against
+explicitly setting any of these variables.  See the INSTALL file for a
+complete list plus the reasons we advise not changing them.
 
 If successful, configure leaves its status in config.status.  If
 unsuccessful after disturbing the status quo, it removes config.status.
