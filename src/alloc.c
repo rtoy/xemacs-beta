@@ -35,6 +35,8 @@ Boston, MA 02111-1307, USA.  */
         and various changes for Mule, for 19.12.
         Added bit vectors for 19.13.
 	Added lcrecord lists for 19.14.
+   slb: Lots of work on the purification and dump time code.
+        Synched Doug Lea malloc support from Emacs 20.2.
 */
 
 #include <config.h>
@@ -57,15 +59,25 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 #endif
 
+#ifdef DOUG_LEA_MALLOC
+#include <malloc.h>
+#endif
+
 /* #define GDB_SUCKS */
 
-/* #define VERIFY_STRING_CHARS_INTEGRITY */
+#if 0 /* this is _way_ too slow to be part of the standard debug options */
+#if defined(DEBUG_XEMACS) && defined(MULE)
+#define VERIFY_STRING_CHARS_INTEGRITY
+#endif
+#endif
 
 /* Define this to see where all that space is going... */
 /* But the length of the printout is obnoxious, so limit it to testers */
+/* If somebody wants to see this they can ask for it.
 #ifdef DEBUG_XEMACS
 #define PURESTAT
 #endif
+*/
 
 /* Define this to use malloc/free with no freelist for all datatypes,
    the hope being that some debugging tools may help detect
@@ -185,6 +197,18 @@ extern void sheap_adjust_h();
 extern Lisp_Object pure[];/* moved to pure.c to speed incremental linking */
 
 #define PUREBEG ((unsigned char *) pure)
+
+#if 0 /* This is breathing_space in XEmacs */
+/* Points to memory space allocated as "spare",
+   to be freed if we run out of memory.  */
+static char *spare_memory;
+
+/* Amount of spare memory to keep in reserve.  */
+#define SPARE_MEMORY (1 << 14)
+#endif
+
+/* Number of extra blocks malloc should get when it needs more core.  */
+static int malloc_hysteresis;
 
 /* Index in pure at which next pure object will be allocated. */
 static long pureptr;
@@ -788,6 +812,21 @@ gc_record_type_p (Lisp_Object frob, CONST struct lrecord_implementation *type)
 #define MALLOC_OVERHEAD 8
 #endif
 #endif /* MALLOC_OVERHEAD */
+
+#if !defined(HAVE_MMAP) || defined(DOUG_LEA_MALLOC)
+/* If we released our reserve (due to running out of memory),
+   and we have a fair amount free once again,
+   try to set aside another reserve in case we run out once more.
+
+   This is called when a relocatable block is freed in ralloc.c.  */
+
+void
+refill_memory_reserve ()
+{
+  if (breathing_space == 0)
+    breathing_space = (char *) malloc (4096 - MALLOC_OVERHEAD);
+}
+#endif
 
 #ifdef ALLOC_NO_POOLS
 # define TYPE_ALLOC_SIZE(type, structtype) 1
@@ -4904,6 +4943,11 @@ init_alloc_once_early (void)
   XSETINT (Vgc_message, 0);
   all_lcrecords = 0;
   ignore_malloc_warnings = 1;
+#ifdef DOUG_LEA_MALLOC
+  mallopt (M_TRIM_THRESHOLD, 128*1024); /* trim threshold */
+  mallopt (M_MMAP_THRESHOLD, 64*1024); /* mmap threshold */
+  /*  mallopt (M_MMAP_MAX, 64); /* max. number of mmap'ed areas */
+#endif
   init_string_alloc ();
   init_string_chars_alloc ();
   init_cons_alloc ();

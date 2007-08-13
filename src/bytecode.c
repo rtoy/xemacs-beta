@@ -56,7 +56,10 @@ by Hallvard:
  *
  * define BYTE_CODE_METER to enable generation of a byte-op usage histogram.
  */
+/* This isn't defined in FSF Emacs and isn't defined in XEmacs v19 */
+#ifdef DEBUG_XEMACS
 #define BYTE_CODE_SAFE
+#endif
 /* #define BYTE_CODE_METER */
 
 

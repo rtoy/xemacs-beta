@@ -271,18 +271,20 @@ custom-loads:
 	MAKE='$(MAKE)' sh ${srcdir}/lib-src/update-custom.sh
 
 finder: src
-	@echo "Building finder database"
+	@echo "Building finder database ..."
 	@(cd lisp; \
 		${blddir}/src/xemacs -batch -vanilla \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
+	@echo "Building finder database ...(done)"
 
 lisp/finder-inf.el:
-	@echo "Building finder database"
+	@echo "Building finder database ..."
 	@(cd lisp; \
 		${blddir}/src/xemacs -batch -vanilla \
 		-eval '(setq finder-compile-keywords-quiet t)' \
 		-l finder -f finder-compile-keywords )
+	@echo "Building finder database ...(done)"
 
 ## We force the rebuilding of src/paths.h because the user might give
 ## different values for the various directories.  Since we use

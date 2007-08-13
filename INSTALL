@@ -38,7 +38,9 @@ in different directories, then the installation procedure temporarily
 requires 41+16 Mb.  Adjust this value upwards depending upon what
 additional Lisp support is installed.
 
-XEmacs requires an ANSI C compiler, such as GCC.
+XEmacs requires an ANSI C compiler, such as GCC.  If you wish to build
+the documentation yourself, you will need at least version 1.68 of
+makeinfo (GNU texinfo-3.11).
 
 
 2) Decide on what other software packages you would like to use with

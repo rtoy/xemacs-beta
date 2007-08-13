@@ -277,7 +277,7 @@ are used."
 			    ))
 		      ;; Copy the rest of the line to the output.
 		      (let ((begin (point)))
-			(terpri outbuf)
+			;; (terpri outbuf)
 			(cond ((looking-at "immediate\\s *$") ; XEmacs
 			       ;; This is here so that you can automatically
 			       ;; have small hook functions copied to

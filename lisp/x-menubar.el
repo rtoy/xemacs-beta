@@ -165,6 +165,8 @@
 	:active (fboundp 'xmine)]
        ["Tetris" tetris
 	:active (fboundp 'tetris)]
+       ["Sokoban" sokoban
+	:active (fboundp 'sokoban)]
        ["Quote from Zippy" yow
 	:active (fboundp 'yow)]
        ["Psychoanalyst" doctor

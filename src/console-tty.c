@@ -226,6 +226,86 @@ Return the controlling process of TTY console CONSOLE.
   return CONSOLE_TTY_DATA (decode_tty_console (console))->controlling_process;
 }
 
+#ifdef MULE
+DEFUN ("set-console-tty-coding-system", Fset_console_tty_coding_system, 0, 2, 0, /*
+Set the coding system of tty console CONSOLE to CODESYS.
+CONSOLE defaults to the selected console.
+CODESYS defaults to the value of `terminal-coding-system'.
+*/
+	(console, codesys))
+{
+  struct console *con = decode_tty_console (console);
+  codesys = NILP (codesys) ?
+    Vterminal_coding_system :
+    Fget_coding_system (codesys);
+  set_encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
+	codesys);
+  return Qnil;
+}
+#endif /* MULE */
+
+
+/* redefine coding system for console tty */
+#ifdef MULE
+DEFUN ("console-tty-input-coding-system", Fconsole_tty_input_coding_system, 1, 1, 0, /*
+Return TTY CONSOLE's input coding system.
+*/
+       (console))
+{
+  struct console *con = decode_tty_console (console);
+  return decoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
+}
+
+DEFUN ("set-console-tty-input-coding-system", Fset_console_tty_input_coding_system, 0, 2, 0, /*
+Set the coding system of tty input of console CONSOLE to CODESYS.
+CONSOLE defaults to the selected console.
+CODESYS defaults to the value of `keyboard-coding-system'.
+*/
+	(console, codesys))
+{
+  struct console *con;
+  if (!NILP(console)) {
+    con = decode_tty_console (console);
+    codesys = NILP (codesys) ?
+      Vkeyboard_coding_system :
+      Fget_coding_system (codesys);
+    set_encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->instream),
+                                       codesys);
+  }
+  return Qnil;
+}
+
+DEFUN ("console-tty-output-coding-system", Fconsole_tty_output_coding_system, 1, 1, 0, /*
+Return TTY CONSOLE's output coding system.
+*/
+       (console))
+{
+  struct console *con = decode_tty_console (console);
+  return encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream) );
+}
+
+DEFUN ("set-console-tty-output-coding-system", Fset_console_tty_output_coding_system, 0, 2, 0, /*
+Set the coding system of tty output of console CONSOLE to CODESYS.
+CONSOLE defaults to the selected console.
+CODESYS defaults to the value of `terminal-coding-system'.
+*/
+	(console, codesys))
+{
+  struct console *con;
+  if (!NILP(console)) {
+    con = decode_tty_console (console);
+    codesys = NILP (codesys) ?
+      Vterminal_coding_system :
+      Fget_coding_system (codesys);
+    set_encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
+                                       codesys);
+  }
+  return Qnil;
+}
+
+#endif /* MULE */
+
+
 Lisp_Object
 tty_semi_canonicalize_console_connection (Lisp_Object connection,
 					  Error_behavior errb)
@@ -266,6 +346,13 @@ syms_of_console_tty (void)
   DEFSUBR (Fconsole_tty_controlling_process);
   defsymbol (&Qterminal_type, "terminal-type");
   defsymbol (&Qcontrolling_process, "controlling-process");
+#ifdef MULE
+  DEFSUBR (Fconsole_tty_output_coding_system);
+  DEFSUBR (Fset_console_tty_output_coding_system);
+  DEFSUBR (Fconsole_tty_input_coding_system);
+  DEFSUBR (Fset_console_tty_input_coding_system);
+  DEFSUBR (Fset_console_tty_coding_system);
+#endif
 }
 
 void

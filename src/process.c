@@ -102,9 +102,11 @@ Lisp_Object Qprocessp;
    output from the process is to read at least one char.
    Always -1 on systems that support FIONREAD.  */
 
+#if 0 /* FSFmacs */
 /* FSFmacs says:
    Don't make static; need to access externally.  */
 static int proc_buffered_char[MAXDESC];
+#endif
 
 #ifdef HAVE_PTYS
 /* The file name of the pty opened by allocate_pty.  */
@@ -3232,7 +3234,9 @@ init_xemacs_process (void)
   for (i = 0; i < MAXDESC; i++)
     {
       descriptor_to_process[i] = Qnil;
+#if 0 /* FSFmacs */
       proc_buffered_char[i] = -1;
+#endif
     }
 }
 

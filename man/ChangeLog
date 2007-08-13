@@ -1,3 +1,8 @@
+1998-02-15  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* lispref/searching.texi (Regular Expressions): Document the
+	recent regular expression syntax extensions.
+
 1998-02-10  Olivier Galibert  <galibert@pobox.com>
 
 	* internals/internals.texi: Remove all mocklisp references.

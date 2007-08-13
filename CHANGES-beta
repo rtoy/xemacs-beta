@@ -1,4 +1,16 @@
 							-*- indented-text -*-
+to 20.5 beta26 "Kiko"
+-- MS Windows patches courtesy of Kirill Katsnelson
+-- Various patches from Kyle Jones
+-- Modeline scrolling courtesy of Dider Verna
+-- various patches from Christoph Wedler
+-- Fixes for Linux/alpha courtesy of Aki Vehtari
+-- Mouse scrolling fix courtesy of Didier Verna
+-- files.el fix courtesy of Kyle Jones
+-- (Not so) Experimental support for Doug Lea Malloc
+-- XEmacs/Mule in a tty works courtesy of Kazuyuki IENAGA
+-- Miscellaneous bug fixes
+
 to 20.5 beta25 "Kamori"
 -- Dead key fixes courtesy of Martin Buchholz
 -- Make count-* functions work sensibly courtesy of Hrvoje Niksic

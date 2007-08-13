@@ -307,7 +307,7 @@ DOC_SRC8=\
 !endif
 
 !if $(DEBUG_XEMACS)
-DOC_SRC_9=\
+DOC_SRC9=\
  $(XEMACS)\src\debug.c
 !endif
 

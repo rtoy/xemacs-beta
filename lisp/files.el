@@ -1128,8 +1128,9 @@ Finishes by calling the functions in `find-file-hooks'."
 			    (file-newer-than-file-p (make-auto-save-file-name)
 						    buffer-file-name))
 		       (format "%s has auto save data; consider M-x recover-file"
+			       (file-name-nondirectory buffer-file-name))
 		     (setq not-serious t)
-		     (if error (gettext "(New file)") nil))))
+		     (if error (gettext "(New file)") nil)))
 		  ((not error)
 		   (setq not-serious t)
 		   (gettext "Note: file is write protected"))
@@ -1155,7 +1156,7 @@ Finishes by calling the functions in `find-file-hooks'."
 		   nil))))
       (if msg
 	  (progn
-	    (message msg)
+	    (message "%s" msg)
 	    (or not-serious (sit-for 1 t)))))
     (if (and auto-save-default (not noauto))
 	(auto-save-mode t)))

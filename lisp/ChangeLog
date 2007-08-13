@@ -1,3 +1,40 @@
+1997-12-22  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* prim/register.el (view-register): Show register type file-query.
+
+1998-02-17  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* mode-motion.el (mode-motion-highlight-internal):
+	  save-excursion inside save-window-exucrsion form to
+	  hide buffer point changes from save-window-excursion.
+	  Prevents display flickering when the mouse pointer
+	  moves.
+
+1998-02-17  Didier Verna  <verna@inf.enst.fr>
+
+	* mouse.el (default-mouse-track-set-point-in-window): rewrote this
+	function to handle correctly the case of a toolbar one side of the 
+	window: scrolling will not necessarily happen.
+
+1998-02-17  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* files.el (after-find-file): Restore missing argument
+	  to format that provides filename for "... consider M-x
+	  recover-file" message.  Also call `message' with "%s"
+	  as the first arg instead of an arbitrary string.
+
+1998-02-18  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): Various additions.
+
+1998-02-15  SL Baur  <steve@altair.xemacs.org>
+
+	* autoload.el (generate-file-autoloads-1): Don't force an extra
+	line out when copying on-the-same line autoloads.
+
+	* x-menubar.el (default-menubar): Add Sokoban to the menubar if it 
+	is installed.
+
 1998-02-14  Martin Buchholz  <martin@xemacs.org>
 
 	* x11/x-win-xfree86.el (x-win-init-xfree86): 

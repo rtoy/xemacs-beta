@@ -158,6 +158,11 @@ int dup2 (int oldd, int newd);
 CONST char *strerror (int);
 #endif
 
+#ifdef WINDOWSNT
+void mswindows_set_errno (unsigned long win32_error);
+void mswindows_set_last_errno (void);
+#endif
+
 int interruptible_open (CONST char *path, int oflag, int mode);
 
 #ifndef HAVE_H_ERRNO

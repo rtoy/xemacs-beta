@@ -1,3 +1,7 @@
+1998-02-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: Fixed lost docstrings
+
 1998-01-28  Jonathon Harris  <jhar@tardis.ed.ac.uk>
 
 	* xemacs.mak: Updated accordingly.

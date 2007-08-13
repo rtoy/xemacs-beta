@@ -81,6 +81,13 @@ Lisp_Object Vcommand_line_args;
   on subsequent starts.  */
 int initialized;
 
+#ifdef DOUG_LEA_MALLOC
+# include <malloc.h>
+/* Preserves a pointer to the memory allocated that copies that
+   static data inside glibc's malloc.  */
+void *malloc_state_ptr;
+#endif
+
 /* Variable whose value is symbol giving operating system type. */
 Lisp_Object Vsystem_type;
 
@@ -871,7 +878,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_process ();
 #endif
       syms_of_profile ();
-#if defined (HAVE_MMAP) && defined (REL_ALLOC)
+#if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
       syms_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
       syms_of_rangetab ();
@@ -1205,7 +1212,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_process ();
 #endif
       vars_of_profile ();
-#if defined (HAVE_MMAP) && defined (REL_ALLOC)
+#if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
       vars_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
       vars_of_redisplay ();
@@ -1875,8 +1882,15 @@ main (int argc, char **argv, char **envp)
   /* Lisp_Object must fit in a word; check VALBITS and GCTYPEBITS */
   assert (sizeof (Lisp_Object) == sizeof (void *));
 
+#ifdef LINUX_SBRK_BUG
+  sbrk (1);
+#endif
+
   if (!initialized)
     {
+#ifdef DOUG_LEA_MALLOC
+      mallopt (M_MMAP_MAX, 0);
+#endif
       run_temacs_argc = 0;
       if (! SETJMP (run_temacs_catch))
 	{
@@ -1913,6 +1927,22 @@ main (int argc, char **argv, char **envp)
     /* obviously no-one uses this because where it was before initalized was 
      *always* true */  
     run_time_remap (argv[0]);
+#endif
+
+#ifdef DOUG_LEA_MALLOC
+  if (initialized && (malloc_state_ptr != NULL))
+    {
+      malloc_set_state (malloc_state_ptr);
+#if 0
+      free (malloc_state_ptr);
+#endif
+#if !defined(MULE) && !defined(DEBUG_DOUG_LEA_MALLOC)
+      mallopt (M_MMAP_MAX, 64);
+#endif
+#ifdef REL_ALLOC
+      r_alloc_reinit ();
+#endif
+    }
 #endif
 
   run_temacs_argc = -1;
@@ -2205,6 +2235,9 @@ and announce itself normally when it is run.
       GET_C_STRING_FILENAME_DATA_ALLOCA (symname, symname_ext);
     else
       symname_ext = 0;
+#ifdef DOUG_LEA_MALLOC
+  malloc_state_ptr = malloc_get_state ();
+#endif
     /* here we break our rule that the filename conversion should
        be performed at the actual time that the system call is made.
        It's a whole lot easier to do the conversion here than to
@@ -2214,6 +2247,9 @@ and announce itself normally when it is run.
     unexec ((char *) intoname_ext, (char *) symname_ext,
 	    (uintptr_t) my_edata,
 	    0, 0);
+#ifdef DOUG_LEA_MALLOC
+  free (malloc_state_ptr);
+#endif
   }
 #endif /* not MSDOS and EMX */
 

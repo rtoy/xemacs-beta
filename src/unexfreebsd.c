@@ -683,14 +683,14 @@ run_time_remap (char *dummy)
       if (sbrk_of_0_at_unexec < current_sbrk)
 	{
 	  if (sbrk_of_0_at_unexec != 0)
-	    fprintf (stderr, "Absurd new brk addr = 0x%x (current = 0x%x)\n", 
+	    fprintf (stderr, "Absurd new brk addr = %lx (current = %lx)\n", 
 		     sbrk_of_0_at_unexec, current_sbrk);
 	}
       else
         {
           errno = 0;
           if (brk ((caddr_t) sbrk_of_0_at_unexec))
-            fprintf (stderr, "failed to change brk addr to 0x%x: %s\n", 
+            fprintf (stderr, "failed to change brk addr to %lx: %s\n", 
                      sbrk_of_0_at_unexec, SYS_ERR);
         }
 

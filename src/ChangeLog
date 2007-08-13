@@ -1,3 +1,91 @@
+1998-02-18  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Remove all references to prefix-args.
+
+1998-02-18  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* sysdep.c (mswindows_set_errno): New function
+	(mswindows_set_last_errno): Ditto
+	These convert Win32 error code to ANSI C errno.
+
+	* sysdep.h: Prototypes for the above 2 functions.
+
+	* menubar-msw.c (vars_of_menubar_mswindows): Fprovide
+	('mswindows-menubar) removed. See the entry of 1998-01-03
+
+	* process.c: FSFmacs proc_buffered_char static array
+	#if0'ed in 2 places. It is never used.
+
+1998-02-01  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* window.c (save_window_save): Save window-cached
+	  speciifer values.
+	  (saved_window_equal): Added comparisons of window-cached
+	  specifier values.
+	  (Fset-window-configuration): Restore window-cached
+	  specifier values.
+
+1998-02-18  Didier Verna  <verna@inf.enst.fr>
+
+	* modeline.el (mouse-drag-modeline): added the horizontal
+	scrolling functionality for the modeline. This could still be
+	improved, for instance when the mouse goes out of the modeline.
+
+1998-02-18  Didier Verna  <verna@inf.enst.fr>
+
+	* redisplay.c:
+ 	(generate_formatted_string_db): new flag to distinguish a modeline
+	string from a title or icon one, plus use a negative first pos to
+	indicate the modeline hscroll ammount. 
+	(add_string_to_fstring_db_runes): completely rewrote this function
+	to handle the case of scrolled modelines.
+	(add_glyph_to_fstring_db_runes): handle the case of scrolled
+	modelines. 
+
+	* window.c:
+	(Fmodeline_hscroll): new function to return the	modeline current
+	horizontal scroll ammount. 
+	(Fset_modeline_hscroll): new function to scroll the modeline
+	horizontaly. 
+	Plus some updates related to this new functionality (windows
+	configuration, notably).
+
+	* window.h (struct window): added the new field modeline_hscroll.
+
+1998-02-18  SL Baur  <steve@altair.xemacs.org>
+
+	* m/alpha.h:
+	* unexelf.c: Synched with Emacs 20.2.
+	From Aki Vehtari <Aki.Vehtari@hut.fi>
+
+	* emacs.c (main): Don't call __sbrk().
+	* gmalloc.c (__sbrk): Ditto.
+	Suggested by Andreas Jaeger <aj@arthur.rhein-neckar.de>
+
+1998-02-17  SL Baur  <steve@altair.xemacs.org>
+
+	* console-tty.c (Fset_console_tty_coding_system): New function.
+	From Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+1998-02-15  SL Baur  <steve@altair.xemacs.org>
+
+	* ralloc.c (init_ralloc): DOUG_LEA_MALLOC support.
+	(r_alloc_reinit): Ditto.
+	[All non-HAVE_MMAP code]: Synched with Emacs 20.2.
+
+	* emacs.c: Synch DOUG_LEA_MALLOC support from Emacs 20.2.
+	(main): Ditto.
+	Add LINUX_SBRK_BUG workaround, what is it?
+	(Fdump_emacs): DOUG_LEA_MALLOC support from Emacs 20.2.
+
+	* alloc.c: Synch DOUG_LEA_MALLOC support from Emacs 20.2.
+	(init_alloc_once_early): Ditto.
+
+	* config.h.in: Add DOUG_LEA_MALLOC symbol.
+
+	* unexfreebsd.c (run_time_remap): Change printf format string to
+	match parameters given.
+
 1998-02-14  SL Baur  <steve@altair.xemacs.org>
 
 	* s/sco5.h: Define LIB_GCC as -lgcc for gcc 2.8 and egcs.

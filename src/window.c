@@ -4481,6 +4481,32 @@ struct saved_window
   int prev_index;             /* index into saved_windows */
   Lisp_Object dedicated;
   char start_at_line_beg; /* boolean */
+  Lisp_Object display_table;
+  Lisp_Object modeline_shadow_thickness;
+  Lisp_Object has_modeline_p;
+#ifdef HAVE_SCROLLBARS
+  Lisp_Object scrollbar_width;
+  Lisp_Object scrollbar_height;
+  Lisp_Object scrollbar_pointer;
+#endif /* HAVE_SCROLLBARS */
+#ifdef HAVE_TOOLBARS
+  Lisp_Object toolbar[4];
+  Lisp_Object toolbar_size[4];
+  Lisp_Object toolbar_border_width[4];
+  Lisp_Object toolbar_visible_p[4];
+  Lisp_Object toolbar_buttons_captioned_p;
+  Lisp_Object default_toolbar;
+  Lisp_Object default_toolbar_width, default_toolbar_height;
+  Lisp_Object default_toolbar_visible_p;
+  Lisp_Object default_toolbar_border_width;
+#endif /* HAVE_TOOLBARS */
+  Lisp_Object left_margin_width, right_margin_width;
+  Lisp_Object minimum_line_ascent, minimum_line_descent;
+  Lisp_Object use_left_overflow, use_right_overflow;
+#ifdef HAVE_MENUBARS
+  Lisp_Object menubar_visible_p;
+#endif /* HAVE_MENUBARS */
+  Lisp_Object text_cursor_visible_p;
 };
 
 /* If you add anything to this structure make sure window_config_equal
@@ -4595,7 +4621,49 @@ saved_window_equal (struct saved_window *win1, struct saved_window *win2)
     win1->parent_index == win2->parent_index &&
     win1->prev_index   == win2->prev_index &&
     EQ (win1->dedicated, win2->dedicated) &&
-    win1->start_at_line_beg == win2->start_at_line_beg;
+    win1->start_at_line_beg == win2->start_at_line_beg &&
+    internal_equal(win1->display_table, win2->display_table, 0) &&
+    EQ(win1->modeline_shadow_thickness, win2->modeline_shadow_thickness) &&
+    EQ(win1->has_modeline_p, win2->has_modeline_p) &&
+#ifdef HAVE_SCROLLBARS
+    EQ(win1->scrollbar_width, win2->scrollbar_width) &&
+    EQ(win1->scrollbar_height, win2->scrollbar_height) &&
+    EQ(win1->scrollbar_pointer, win2->scrollbar_pointer) &&
+#endif /* HAVE_SCROLLBARS */
+#ifdef HAVE_TOOLBARS
+    internal_equal(win1->toolbar[0], win2->toolbar[0], 0) &&
+    internal_equal(win1->toolbar[1], win2->toolbar[1], 0) &&
+    internal_equal(win1->toolbar[2], win2->toolbar[2], 0) &&
+    internal_equal(win1->toolbar[3], win2->toolbar[3], 0) &&
+    internal_equal(win1->toolbar_border_width[0], win2->toolbar_border_width[0], 0) &&
+    internal_equal(win1->toolbar_border_width[1], win2->toolbar_border_width[1], 0) &&
+    internal_equal(win1->toolbar_border_width[2], win2->toolbar_border_width[2], 0) &&
+    internal_equal(win1->toolbar_border_width[3], win2->toolbar_border_width[3], 0) &&
+    internal_equal(win1->toolbar_size[0], win2->toolbar_size[0], 0) &&
+    internal_equal(win1->toolbar_size[1], win2->toolbar_size[1], 0) &&
+    internal_equal(win1->toolbar_size[2], win2->toolbar_size[2], 0) &&
+    internal_equal(win1->toolbar_size[3], win2->toolbar_size[3], 0) &&
+    internal_equal(win1->toolbar_visible_p[0], win2->toolbar_visible_p[0], 0) &&
+    internal_equal(win1->toolbar_visible_p[1], win2->toolbar_visible_p[1], 0) &&
+    internal_equal(win1->toolbar_visible_p[2], win2->toolbar_visible_p[2], 0) &&
+    internal_equal(win1->toolbar_visible_p[3], win2->toolbar_visible_p[3], 0) &&
+    EQ(win1->toolbar_buttons_captioned_p, win2->toolbar_buttons_captioned_p) &&
+    internal_equal(win1->default_toolbar, win2->default_toolbar, 0) &&
+    EQ(win1->default_toolbar_width, win2->default_toolbar_width) &&
+    EQ(win1->default_toolbar_height, win2->default_toolbar_height) &&
+    EQ(win1->default_toolbar_visible_p, win2->default_toolbar_visible_p) &&
+    EQ(win1->default_toolbar_border_width, win2->default_toolbar_border_width) &&
+#endif /* HAVE_TOOLBARS */
+    EQ(win1->left_margin_width, win2->left_margin_width) &&
+    EQ(win1->right_margin_width, win2->right_margin_width) &&
+    EQ(win1->minimum_line_ascent, win2->minimum_line_ascent) &&
+    EQ(win1->minimum_line_descent, win2->minimum_line_descent) &&
+    EQ(win1->use_left_overflow, win2->use_left_overflow) &&
+    EQ(win1->use_right_overflow, win2->use_right_overflow) &&
+#ifdef HAVE_MENUBARS
+    EQ(win1->menubar_visible_p, win2->menubar_visible_p) &&
+#endif /* HAVE_MENUBARS */
+    EQ(win1->text_cursor_visible_p, win2->text_cursor_visible_p);
 }
 
 /* Returns a boolean indicating whether the two given configurations
@@ -4872,10 +4940,41 @@ by `current-window-configuration' (which see).
 	  WINDOW_WIDTH (w) = WINDOW_WIDTH (p);
 	  WINDOW_HEIGHT (w) = WINDOW_HEIGHT (p);
 	  w->hscroll = p->hscroll;
-	  /* #### Here we need to restore the saved specs for
-	     has-modeline-p, scrollbar-width, scrollbar-height,
-	     modeline-shadow-thickness, left-margin-width,
-	     right-margin-width, and current-display-table. */
+	  w->display_table = p->display_table;
+	  w->modeline_shadow_thickness = p->modeline_shadow_thickness;
+	  w->has_modeline_p = p->has_modeline_p;
+#ifdef HAVE_SCROLLBARS
+	  w->scrollbar_width = p->scrollbar_width;
+	  w->scrollbar_height = p->scrollbar_height;
+	  w->scrollbar_pointer = p->scrollbar_pointer;
+#endif /* HAVE_SCROLLBARS */
+#ifdef HAVE_TOOLBARS
+	  {
+	    int ix;
+	    for (ix = 0; ix < 4; ix++)
+	      {
+		w->toolbar[ix] = p->toolbar[ix];
+		w->toolbar_size[ix] = p->toolbar_size[ix];
+		w->toolbar_border_width[ix] = p->toolbar_border_width[ix];
+		w->toolbar_visible_p[ix] = p->toolbar_visible_p[ix];
+	      }
+	  }
+	  w->toolbar_buttons_captioned_p = p->toolbar_buttons_captioned_p;
+	  w->default_toolbar = p->default_toolbar;
+	  w->default_toolbar_width = p->default_toolbar_width;
+	  w->default_toolbar_visible_p = p->default_toolbar_visible_p;
+	  w->default_toolbar_border_width = p->default_toolbar_border_width;
+#endif /* HAVE_TOOLBARS */
+	  w->left_margin_width = p->left_margin_width;
+	  w->right_margin_width = p->right_margin_width;
+	  w->minimum_line_ascent = p->minimum_line_ascent;
+	  w->minimum_line_descent = p->minimum_line_descent;
+	  w->use_left_overflow = p->use_left_overflow;
+	  w->use_right_overflow = p->use_right_overflow;
+#ifdef HAVE_MENUBARS
+	  w->menubar_visible_p = p->menubar_visible_p;
+#endif /* HAVE_MENUBARS */
+	  w->text_cursor_visible_p = p->text_cursor_visible_p;
 	  w->dedicated = p->dedicated;
 	  w->line_cache_last_updated = Qzero;
 	  SET_LAST_MODIFIED (w, 1);
@@ -5108,10 +5207,42 @@ save_window_save (Lisp_Object window, struct window_config *config, int i)
       WINDOW_WIDTH (p) = WINDOW_WIDTH (w);
       WINDOW_HEIGHT (p) = WINDOW_HEIGHT (w);
       p->hscroll = w->hscroll;
-      /* #### Here we need to save the specs for
-	 has-modeline-p, scrollbar-width, scrollbar-height,
-	 modeline-shadow-thickness, left-margin-width,
-	 right-margin-width, current-display-table, etc. */
+      p->display_table = w->display_table;
+      p->modeline_shadow_thickness = w->modeline_shadow_thickness;
+      p->has_modeline_p = w->has_modeline_p;
+#ifdef HAVE_SCROLLBARS
+      p->scrollbar_width = w->scrollbar_width;
+      p->scrollbar_height = w->scrollbar_height;
+      p->scrollbar_pointer = w->scrollbar_pointer;
+#endif /* HAVE_SCROLLBARS */
+#ifdef HAVE_TOOLBARS
+      {
+	int ix;
+ 	for (ix = 0; ix < 4; ix++)
+	  {
+	    p->toolbar[ix] = w->toolbar[ix];
+	    p->toolbar_size[ix] = w->toolbar_size[ix];
+	    p->toolbar_border_width[ix] = w->toolbar_border_width[ix];
+	    p->toolbar_visible_p[ix] = w->toolbar_visible_p[ix];
+	  }
+      }
+      p->toolbar_buttons_captioned_p = w->toolbar_buttons_captioned_p;
+      p->default_toolbar = w->default_toolbar;
+      p->default_toolbar_width = w->default_toolbar_width;
+      p->default_toolbar_visible_p = w->default_toolbar_visible_p;
+      p->default_toolbar_border_width = w->default_toolbar_border_width;
+#endif /* HAVE_TOOLBARS */
+      p->left_margin_width = w->left_margin_width;
+      p->right_margin_width = w->right_margin_width;
+      p->minimum_line_ascent = w->minimum_line_ascent;
+      p->minimum_line_descent = w->minimum_line_descent;
+      p->use_left_overflow = w->use_left_overflow;
+      p->use_right_overflow = w->use_right_overflow;
+#ifdef HAVE_MENUBARS
+      p->menubar_visible_p = w->menubar_visible_p;
+#endif /* HAVE_MENUBARS */
+      p->text_cursor_visible_p = w->text_cursor_visible_p;
+
       if (!NILP (w->buffer))
 	{
 	  /* Save w's value of point in the window configuration.

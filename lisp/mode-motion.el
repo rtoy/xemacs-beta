@@ -80,7 +80,12 @@ to be added.  This variable is local to every buffer.")
 	    (set-buffer buffer)
 	    (mode-motion-ensure-extent-ok event)
 	    (if point
-		(progn
+		;; Use save-excursion here to avoid
+		;; save-window-excursion seeing a change in
+		;; window point's value which would make the
+		;; display code do a whole lot of useless work
+		;; and making the display flicker horribly.
+		(save-excursion
 		  (goto-char point)
 		  (condition-case nil (funcall backward) (error nil))
 		  (setq point (point))

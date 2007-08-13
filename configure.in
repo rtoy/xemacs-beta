@@ -1919,6 +1919,14 @@ dnl -----------------------------------
 dnl Do the opsystem or machine files prohibit the use of the GNU malloc?
 dnl Assume not, until told otherwise.
 GNU_MALLOC=yes
+doug_lea_malloc=yes
+AC_CHECK_FUNC(malloc_get_state, ,doug_lea_malloc=no)
+AC_CHECK_FUNC(malloc_set_state, ,doug_lea_malloc=no)
+AC_MSG_CHECKING(whether __after_morecore_hook exists)
+AC_TRY_LINK([extern void (* __after_morecore_hook)();],[__after_morecore_hook = 0],
+  [AC_MSG_RESULT(yes)],
+  [AC_MSG_RESULT(no)
+   doug_lea_malloc=no])
 if test "$system_malloc" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
@@ -1931,6 +1939,14 @@ elif test "$with_debug_malloc" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
   (User chose to use Debugging Malloc)."
+fi
+
+if test "$doug_lea_malloc" = "yes" ; then
+  if test "$GNU_MALLOC" = yes ; then
+    GNU_MALLOC_reason="
+      (Using Doug Lea's new malloc from the GNU C Library.)"
+  fi
+  AC_DEFINE(DOUG_LEA_MALLOC)
 fi
 
 dnl Some other nice autoconf tests.  If you add a test here which
@@ -2327,9 +2343,13 @@ fi
 AC_SUBST(libs_xauth)
 
 dnl Always compile OffiX except --without-offix is given or no
-dnl x11 support is compiled in
+dnl x11 support is compiled in or no standard Xmu.
 OFFIX_O=""
 test "$window_system" != "x11" && with_offix=no
+if test "$with_xmu" != yes -a "$with_x11" = yes; then
+  AC_MSG_WARN([No OffiX without real Xmu support])
+  with_offix=no
+fi
 test -z "$with_offix" && with_offix=yes
 if test "$with_offix" = "yes"; then
   AC_DEFINE(HAVE_OFFIX_DND)

@@ -1,3 +1,7 @@
+1998-02-15  SL Baur  <steve@altair.xemacs.org>
+
+	* getopt.c (_getopt_internal): Add braces for clarity.
+
 1998-01-13  Martin Buchholz  <martin@xemacs.org>
 
 	* lib-src/add-little-package.sh: 

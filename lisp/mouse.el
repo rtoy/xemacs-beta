@@ -745,14 +745,51 @@ at the initial click position."
 (defvar default-mouse-track-result nil)
 (defvar default-mouse-track-down-event nil)
 
+;; D. Verna Feb. 17 1998
+;; This function used to assume that when (event-window event) differs from 
+;; window, we have to scroll. This is WRONG, for instance when there are
+;; toolbars on the side, in which case window-event returns nil.
 (defun default-mouse-track-set-point-in-window (event window)
-  (if (not (and (not (event-over-modeline-p event))
-		(eq (event-window event) window)
-		(let ((p (event-closest-point event)))
-		  (and p (pos-visible-in-window-p p window)))))
-      nil
-    (mouse-set-point event)
-    t))
+  (if (event-over-modeline-p event)
+      nil ;; Scroll
+    ;; Not over a modeline
+    (if (eq (event-window event) window)
+	(let ((p (event-closest-point event)))
+	  (if  (or (not p) (not (pos-visible-in-window-p p window)))
+	      nil ;; Scroll
+	    (mouse-set-point event)
+	    t))
+      ;; Not over a modeline, not the same window. Check if the Y position
+      ;; is still overlapping the original window. 
+      (let* ((edges (window-pixel-edges window))
+	     (row (event-y-pixel event))
+	     (text-start (nth 1 edges))
+	     (text-end (+ (nth 3 edges))))
+	(if (or (< row text-start) 
+		(> row text-end))
+	    nil ;; Scroll
+	  ;; The Y pos in overlapping the original window. Check however if
+	  ;; the position is really visible, because there could be a 
+	  ;; scrollbar or a modeline at this place.
+	  ;; Find the mean line height (height / lines nb), and approximate
+	  ;; the line number for Y pos.
+	  (select-window window)
+	  (let ((line (/ (* (- row text-start) (window-height)) 
+			 (- text-end text-start))))
+	    (if (not (save-excursion
+		       (goto-char (window-start))
+		       (pos-visible-in-window-p
+			(point-at-bol (+ 1 line)))))
+		nil ;; Scroll
+	      ;; OK, we can go to that position
+	      (goto-char (window-start))
+	      (forward-line line)
+	      ;; On the right side: go to end-of-line.
+	      (when (>= (event-x-pixel event) (nth 2 edges))
+		(goto-char (point-at-eol)))
+	      t))))
+      )))
+
 
 (defun default-mouse-track-scroll-and-set-point (event window)
   (select-window window)

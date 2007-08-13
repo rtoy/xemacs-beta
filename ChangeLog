@@ -1,5 +1,25 @@
+1998-02-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.5-beta26 is released.
+
+1998-02-18  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.4-pre3 is released.
+
+	* Makefile.in: use better feedback while rebuilding finder database.
+	Suggested by Stephen J. Turnbull <turnbull@sk.tsukuba.ac.jp>
+
+1998-02-15  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (doug_lea_malloc): Add checking for Doug Lea
+	Malloc.
+
 1998-02-14  SL Baur  <steve@altair.xemacs.org>
 
+	* configure.in (OFFIX_O): Don't use OffiX if no real Xmu support.
+	Suggested by Pekka Marjola <pema@iki.fi>
+
+	* XEmacs-20.4-pre2 is released.
 	* XEmacs-20.5-beta25 is released.
 
 1998-02-13  SL Baur  <steve@altair.xemacs.org>

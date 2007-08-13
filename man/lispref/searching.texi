@@ -161,6 +161,21 @@ denotes a (possibly infinite) set of strings.  Searching for matches for
 a regexp is a very powerful operation.  This section explains how to write
 regexps; the following section says how to search for them.
 
+ To gain a thorough understanding of regular expressions and how to use
+them to best advantage, we recommend that you study @cite{Mastering
+Regular Expressions, by Jeffrey E.F. Friedl, O'Reilly and Associates,
+1997}. (It's known as the "Hip Owls" book, because of the picture on its
+cover.)  You might also read the manuals to @ref{(gawk)Top},
+@ref{(ed)Top}, @cite{sed}, @cite{grep}, @ref{(perl)Top},
+@ref{(regex)Top}, @ref{(rx)Top}, @cite{pcre}, and @ref{(flex)Top}, which
+also make good use of regular expressions.
+
+ The XEmacs regular expression syntax most closely resembles that of
+@cite{ed}, or @cite{grep}, the GNU versions of which all utilize the GNU
+@cite{regex} library.  XEmacs' version of @cite{regex} has recently been
+extended with some perl--like capabilities, described in the next
+section.
+
 @menu
 * Syntax of Regexps::       Rules for writing regular expressions.
 * Regexp Example::          Illustrates regular expression syntax.
@@ -205,26 +220,28 @@ matches any three-character string that begins with @samp{a} and ends with
 
 @item *
 @cindex @samp{*} in regexp
-is not a construct by itself; it is a suffix operator that means to
-repeat the preceding regular expression as many times as possible.  In
-@samp{fo*}, the @samp{*} applies to the @samp{o}, so @samp{fo*} matches
-one @samp{f} followed by any number of @samp{o}s.  The case of zero
-@samp{o}s is allowed: @samp{fo*} does match @samp{f}.@refill
+is not a construct by itself; it is a quantifying suffix operator that
+means to repeat the preceding regular expression as many times as
+possible.  In @samp{fo*}, the @samp{*} applies to the @samp{o}, so
+@samp{fo*} matches one @samp{f} followed by any number of @samp{o}s.
+The case of zero @samp{o}s is allowed: @samp{fo*} does match
+@samp{f}.@refill
 
 @samp{*} always applies to the @emph{smallest} possible preceding
 expression.  Thus, @samp{fo*} has a repeating @samp{o}, not a
 repeating @samp{fo}.@refill
 
-The matcher processes a @samp{*} construct by matching, immediately,
-as many repetitions as can be found.  Then it continues with the rest
-of the pattern.  If that fails, backtracking occurs, discarding some
-of the matches of the @samp{*}-modified construct in case that makes
-it possible to match the rest of the pattern.  For example, in matching
-@samp{ca*ar} against the string @samp{caaar}, the @samp{a*} first
-tries to match all three @samp{a}s; but the rest of the pattern is
-@samp{ar} and there is only @samp{r} left to match, so this try fails.
-The next alternative is for @samp{a*} to match only two @samp{a}s.
-With this choice, the rest of the regexp matches successfully.@refill
+The matcher processes a @samp{*} construct by matching, immediately, as
+many repetitions as can be found; it is "greedy".  Then it continues
+with the rest of the pattern.  If that fails, backtracking occurs,
+discarding some of the matches of the @samp{*}-modified construct in
+case that makes it possible to match the rest of the pattern.  For
+example, in matching @samp{ca*ar} against the string @samp{caaar}, the
+@samp{a*} first tries to match all three @samp{a}s; but the rest of the
+pattern is @samp{ar} and there is only @samp{r} left to match, so this
+try fails.  The next alternative is for @samp{a*} to match only two
+@samp{a}s.  With this choice, the rest of the regexp matches
+successfully.@refill
 
 Nested repetition operators can be extremely slow if they specify
 backtracking loops.  For example, it could take hours for the regular
@@ -236,17 +253,70 @@ expressions run fast, check nested repetitions carefully.
 
 @item +
 @cindex @samp{+} in regexp
-is a suffix operator similar to @samp{*} except that the preceding
-expression must match at least once.  So, for example, @samp{ca+r}
-matches the strings @samp{car} and @samp{caaaar} but not the string
-@samp{cr}, whereas @samp{ca*r} matches all three strings.
+is a quantifying suffix operator similar to @samp{*} except that the
+preceding expression must match at least once.  It is also "greedy".
+So, for example, @samp{ca+r} matches the strings @samp{car} and
+@samp{caaaar} but not the string @samp{cr}, whereas @samp{ca*r} matches
+all three strings.
 
 @item ?
 @cindex @samp{?} in regexp
-is a suffix operator similar to @samp{*} except that the preceding
-expression can match either once or not at all.  For example,
+is a quantifying suffix operator similar to @samp{*}, except that the
+preceding expression can match either once or not at all.  For example,
 @samp{ca?r} matches @samp{car} or @samp{cr}, but does not match anyhing
 else.
+
+@item *?
+@cindex @samp{*?} in regexp
+works just like @samp{*}, except that rather than matching the longest
+match, it matches the shortest match.  This is known as a "non-greedy"
+quantifier.  It is a syntax that comes to us from perl.  It is very
+useful for situations where you want to match the text inside a pair of
+delimiters.
+@c Did perl get this from somewhere?  What's the real history of *? ?
+
+@lisp
+@group
+(setq s "/ blah / / blah2 /")
+    @result{} "/ blah / / blah2 /"
+(string-match "/.*/" s)
+    @result{} 0
+(match-string 0 s)
+    @result{} "/ blah / / blah2 /"
+(string-match "/.*?/" s)
+    @result{} 0
+(match-string 0 s)
+    @result{} "/ blah /"
+@end group
+@end lisp
+
+@item +?
+@cindex @samp{+?} in regexp
+is the @samp{+} analog to @samp{*?}.
+
+@item \@{n,m\@}
+@c Note the spacing after the close brace is deliberate.
+@cindex @samp{\@{n,m\@} }in regexp
+this is an interval quantifier, which is analogous to @samp{*} or
+@samp{+}, but specifies that the expression must match at least @samp{n}
+times, but no more than @samp{m} times.  This syntax comes to us from
+@cite{ed}, @cite{grep}, and @cite{perl}.  The @cite{etags} utility also
+supports it.
+
+@lisp
+@group
+(setq s "12 123 1234 12345")
+    @result{} "12 123 1234 12345"
+(string-match "[0-9]\\@{2,4\\@}" s)
+    @result{} 0
+(match-string 0 s)
+    @result{} "12"
+(string-match "[0-9]\\@{3,4\\@}" s)
+    @result{} 3
+(match-string 0 s)
+    @result{} "123"
+@end group
+@end lisp
 
 @item [ @dots{} ]
 @cindex character set (in regexp)
@@ -408,6 +478,39 @@ For example, @samp{\(.*\)\1} matches any newline-free string that is
 composed of two identical halves.  The @samp{\(.*\)} matches the first
 half, which may be anything, but the @samp{\1} that follows must match
 the same exact text.
+
+@item \(?: @dots{} \)
+@cindex @samp{(?:} in regex
+@cindex regexp grouping
+is called a "shy" grouping operator, and it is used just like @samp{\(
+@dots{} \)}, except that it does not cause the matched substring to be
+recorded for future reference.  This can be useful at times when a
+program wants to refer to a specific @samp{\( @dots{} \)} group's number
+(eg. in a @code{match-string} or @code{match-beginning} function
+application) and you need to use grouping constructs for an alternation
+or multi--character repetition inside a regular expression string that
+can change each time the code is run, but you don't want those groups
+counting because they'd change the reference number of the group you
+want to refer to that is inside the static part of your generated
+regular expression.
+
+@lisp
+;; @r{Here `dynamic-regex' might contain shy groups.}
+(re-search-forward
+ (concat "\\(" dynamic-regex "\\)\\(-?[0-9]\\@{2,4\\@}\\)"))
+;; @r{and this `match-string' will still refer to the integer}
+;; @r{captured by the second group in the `concat' string.}
+(match-string 2)
+@end lisp
+
+Using @samp{\(?: @dots{} \)} rather than @samp{\( @dots{} \)} when you
+don't need the captured substrings ought to speed up your programs some,
+since it shortens the code path followed by the regular expression
+engine, as well as the amount of memory allocation and string copying it
+must do.  The actual performance gain to be observed has not been
+measured or quantified as of this writing.
+@c This is used to good advantage by the font-locking code, and by `regexp-opt.el'.
+@c ... It will be.  It's not yet, but will be.
 
 @item \w
 @cindex @samp{\w} in regexp

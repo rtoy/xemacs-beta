@@ -188,18 +188,26 @@ rallocobjs = ralloc.o
 
 malloclib =
 #ifndef SYSTEM_MALLOC
-# ifdef GNU_MALLOC  /* New GNU malloc */
+# ifdef GNU_MALLOC  /* GNU malloc */
 #  ifdef ERROR_CHECK_MALLOC
+#ifdef DOUG_LEA_MALLOC
+mallocobjs = free-hook.o vm-limit.o
+#else
 mallocobjs = gmalloc.o free-hook.o vm-limit.o
+#endif
 mallocdocsrc = free-hook.c
 #  else /* New GNU malloc, sans error checking */
+#ifdef DOUG_LEA_MALLOC
+mallocobjs = vm-limit.o
+#else
 mallocobjs = gmalloc.o vm-limit.o
+#endif
 mallocdocsrc =
 #  endif /* ERROR_CHECK_MALLOC */
-# else /* Old GNU malloc */
+# else /* Older GNU malloc */
 mallocobjs = malloc.o
 mallocdocsrc =
-# endif /* Old GNU malloc */
+# endif /* Older GNU malloc */
 #else /* SYSTEM_MALLOC */
 mallocobjs =
 mallocdocsrc =
@@ -381,7 +389,7 @@ lint: $(LINTFILES)
 
 temacs_deps=\
  $(start_files) ${objs} ${otherobjs}\
- $(lwlib_deps) $(dynodump_deps) prefix-args
+ $(lwlib_deps) $(dynodump_deps)
 
 temacs_link_args=\
  ${start_flags} ${ldflags}\
@@ -547,9 +555,6 @@ libextcli_Xlib.so.1: ${external_client_xlib_objs_shared}
 
 #endif /* EXTERNAL_WIDGET */
 
-prefix-args: ${srcdir}/prefix-args.c config.h
-	$(CC) $(cflags) ${srcdir}/prefix-args.c -o prefix-args
-
 config.h: ${srcdir}/config.h.in
 puresize-adjust.h: ${srcdir}/puresize.h
 paths.h: ${srcdir}/paths.h.in
@@ -619,7 +624,7 @@ hpplay.o: ${srcdir}/hpplay.c
 
 .PHONY: mostlyclean clean distclean realclean versionclean extraclean
 mostlyclean:
-	$(RM) temacs puremacs quantmacs prefix-args depend.* *.o *.i \
+	$(RM) temacs puremacs quantmacs depend.* *.o *.i \
 	  core puresize-adjust.h sheap-adjust.h
 clean: mostlyclean versionclean
 	$(RM) libextcli* update-elc.stamp

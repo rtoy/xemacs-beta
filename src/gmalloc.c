@@ -1315,9 +1315,9 @@ Boston, MA 02111-1307, USA.  */
 #include <malloc.h>
 #endif
 
-#ifndef	__GNU_LIBRARY__
+/* #ifndef	__GNU_LIBRARY__ */
 #define	__sbrk	sbrk
-#endif
+/* #endif */
 
 #ifdef GMALLOC_NEEDS_SBRK_DECL
 /* some versions of OSF1 need this */

@@ -70,7 +70,7 @@
 /* XEmacs: the current mmap-based ralloc handles small blocks very
    poorly, so we disable it here. */
 
-#if defined (REL_ALLOC) && defined (HAVE_MMAP)
+#if (defined (REL_ALLOC) && defined (HAVE_MMAP)) || defined(DOUG_LEA_MALLOC)
 # undef REL_ALLOC
 #endif
 

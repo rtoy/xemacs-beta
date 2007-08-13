@@ -85,13 +85,16 @@ Boston, MA 02111-1307, USA.  */
 /* Does XEmacs support floating-point numbers? */
 #undef LISP_FLOAT_TYPE
 
-/* Use the *new* GNU memory allocator? */
+/* Define GNU_MALLOC if you want to use the GNU memory allocator. */
 #undef GNU_MALLOC
+
+/* Define if you are using the GNU C Library. -- experimental */
+#undef DOUG_LEA_MALLOC
 
 /* Use the system malloc? */
 #undef USE_SYSTEM_MALLOC
 
-/* Use a debugging malloc? */
+/* Use a debugging malloc? -- experimental */
 #undef USE_DEBUG_MALLOC
 
 /* Compile in TTY support? */
