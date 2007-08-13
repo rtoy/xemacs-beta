@@ -196,8 +196,8 @@ use the new mode, Paragraph Indent Text mode.
 subsystem.  If the `dir' file does not exist in an Info directory, the
 relevant information will be generated on-the-fly.
 
-This behaviour can be customized, look for `Info-rebuild-outdated-dir'
-in the `info' customization group. #### Mention other variables!
+This behaviour can be customized, look for `Info-auto-generate-directory'
+and `Info-save-auto-generated-dir' in the `info' customization group.
 
 
 * Lisp and internal changes in XEmacs 21.0

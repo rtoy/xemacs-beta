@@ -142,29 +142,29 @@ This is called from `post-command-hook'."
 With prefix argument N, move N items (negative N means move backward)."
   (interactive "p")
   (while (and (> n 0) (not (eobp)))
-    (let ((prop (get-char-property (point) 'list-mode-item))
-	   (end (point-max)))
+    (let ((extent (extent-at (point) (current-buffer) 'list-mode-item))
+	  (end (point-max)))
       ;; If in a completion, move to the end of it.
-      (if prop
-	   (goto-char (next-single-property-change (point) 'list-mode-item
-						   nil end)))
+      (if extent (goto-char (extent-end-position extent)))
       ;; Move to start of next one.
-      (goto-char (next-single-property-change (point)
-					      'list-mode-item nil end)))
+      (or (extent-at (point) (current-buffer) 'list-mode-item)
+	  (goto-char (next-single-property-change (point) 'list-mode-item
+						  nil end))))
     (setq n (1- n)))
   (while (and (< n 0) (not (bobp)))
-    (let ((prop (get-char-property (1- (point)) 'list-mode-item))
+    (let ((extent (extent-at (point) (current-buffer) 'list-mode-item))
 	  (end (point-min)))
       ;; If in a completion, move to the start of it.
-      (if prop
-	  (goto-char (previous-single-property-change
-		      (point) 'list-mode-item nil end)))
-      ;; Move to end of the previous completion.
-      (goto-char (previous-single-property-change (point) 'list-mode-item
-						  nil end))
+      (if extent (goto-char (extent-start-position extent)))
       ;; Move to the start of that one.
-      (goto-char (previous-single-property-change (point) 'list-mode-item nil
-						  end)))
+      (if (setq extent (extent-at (point) (current-buffer) 'list-mode-item
+				  nil 'before))
+	  (goto-char (extent-start-position extent))
+	(goto-char (previous-single-property-change
+		    (point) 'list-mode-item nil end))
+	(if (setq extent (extent-at (point) (current-buffer) 'list-mode-item
+				    nil 'before))
+	    (goto-char (extent-start-position extent)))))
     (setq n (1+ n))))
 
 (defun list-mode-item-selected-1 (extent event)

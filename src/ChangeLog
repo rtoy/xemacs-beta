@@ -1,3 +1,18 @@
+1998-06-11  Martin Buchholz  <martin@xemacs.org>
+
+	* casefiddle.c:
+	(upcase-initials "fooBar") ==> "FooBar" instead of "Foobar"
+
+1998-06-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* eldap.c (Fldap_search_internal): Use build_ext_string instead of 
+	build_string to avoid crashes under Mule.
+
+1998-06-13  Andy Piper  <andyp@parallax.co.uk>
+
+	* ntplay.c (play_sound_data_1): don't delete the sound data until
+	the next sound is played and the previous one finished.
+
 1998-06-10  Samuel Mikes  <smikes@alumni.hmc.edu>
 
 	* fileio.c (directory-sep-char): Escape backslashes.

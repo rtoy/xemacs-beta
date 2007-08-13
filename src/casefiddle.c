@@ -61,7 +61,7 @@ casify_object (enum case_action flag, Lisp_Object obj, Lisp_Object buffer)
 	  for (i = 0; i < len; i++)
 	    {
 	      Emchar c = string_char (XSTRING (obj), i);
-	      if (inword)
+	      if (inword && flag != CASE_CAPITALIZE_UP)
 		c = DOWNCASE (buf, c);
 	      else if (!UPPERCASEP (buf, c)
 		       && (!inword || flag != CASE_CAPITALIZE_UP))

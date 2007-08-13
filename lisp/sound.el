@@ -107,7 +107,7 @@
 
 (defcustom sound-ext (if (or (eq system-type 'cygwin32)
 			     (eq system-type 'windows-nt))
-			 ".wav" ".au")
+			 ".wav:" ".au:")
   "Filename extensions to complete sound file name with. If more than one
    extension is used, they should be separated by \":\". "
   :group 'sound

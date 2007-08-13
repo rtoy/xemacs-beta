@@ -27,6 +27,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #ifdef __CYGWIN32__
 extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);
+#else
+#include <mmsystem.h>
 #endif
 static void play_sound_data_1 (unsigned char *data, int length,
 			       int volume, int convert);
@@ -64,11 +66,9 @@ void play_sound_file (char *sound_file, int volume)
 	  xfree (data);
 	  return;
 	}
+      close (ofd);
       
       play_sound_data_1 (data, size, 100, FALSE);
-      
-      xfree (data);
-      close (ofd);
     }
   else 
     PlaySound (XSTRING_DATA (fname), NULL, flags);
@@ -80,7 +80,14 @@ static void play_sound_data_1 (unsigned char *data, int length, int volume,
 			       int convert_to_malloc)
 {
   DWORD flags = SND_ASYNC | SND_MEMORY | SND_NODEFAULT;
-  unsigned char* sound_data;
+  static unsigned char* sound_data=0;
+  if (sound_data)
+    {
+      PlaySound (NULL, NULL, flags);
+      xfree (sound_data);
+      sound_data=0;
+    }
+
   if (convert_to_malloc)
     {
       sound_data = xmalloc (length);
@@ -90,8 +97,7 @@ static void play_sound_data_1 (unsigned char *data, int length, int volume,
     sound_data = data;
 
   PlaySound(sound_data, NULL, flags);
-  if (convert_to_malloc)
-    xfree (sound_data);
+
   return;
 }
 

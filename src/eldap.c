@@ -505,13 +505,13 @@ an alist of attribute/values.
            a != NULL;
            a= ldap_next_attribute (ld, e, ptr) )
         {
-          list = Fcons (build_string (a), Qnil);
+          list = Fcons (build_ext_string (a, FORMAT_OS), Qnil);
           unwind.vals = ldap_get_values (ld, e, a);
           if (unwind.vals != NULL)
             {
               for (i = 0; unwind.vals[i] != NULL; i++)
                 {
-                  list = Fcons (build_string (unwind.vals[i]),
+                  list = Fcons (build_ext_string (unwind.vals[i], FORMAT_OS),
                                 list);
                 }
             }

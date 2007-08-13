@@ -471,25 +471,35 @@ use them heavily, Emacs provides caches which may improve the
 performance of your code.  @xref{Text Lines, cache-long-line-scans}.
 
 
-@defun vertical-motion count &optional window
+@defun vertical-motion count &optional window pixels
 This function moves point to the start of the frame line @var{count}
 frame lines down from the frame line containing point.  If @var{count}
-is negative, it moves up instead.
+is negative, it moves up instead.  The optional second argument
+@var{window} may be used to specify a window other than the 
+selected window in which to perform the motion.
 
-@code{vertical-motion} returns the number of lines moved.  The value may
-be less in absolute value than @var{count} if the beginning or end of
-the buffer was reached.
+Normally, @code{vertical-motion} returns the number of lines moved.  The
+value may be less in absolute value than @var{count} if the beginning or
+end of the buffer was reached.  If the optional third argument,
+@var{pixels} is non-@code{nil}, the vertical pixel height of the motion
+which took place is returned instead of the actual number of lines
+moved.  A motion of zero lines returns the height of the current line.
 
 Note that @code{vertical-motion} sets @var{window}'s buffer's point, not
 @var{window}'s point. (This differs from FSF Emacs, which buggily always
 sets current buffer's point, regardless of @var{window}.)
 @end defun
 
-@defun vertical-motion-pixels count &optional window
-This function is identical to @code{vertical-motion}, except that it
-returns the vertical pixel height of the motino which took place,
-instead of the actual number of lines moved.  A motion of zero lines
-returns the height of the current line.
+@defun vertical-motion-pixels count &optional window how
+This function moves point to the start of the frame line @var{pixels}
+vertical pixels down from the frame line containing point, or up if
+@var{pixels} is negative.  The optional second argument @var{window} is
+the window to move in, and defaults to the selected window.  The
+optional third argument @var{how} specifies the stopping condition.  A
+negative integer indicates that the motion should be no more
+than @var{pixels}.  A positive value indicates that the
+motion should be at least @var{pixels}.  Any other value indicates
+that the motion should be as close as possible to @var{pixels}.
 @end defun
 
 @deffn Command move-to-window-line count &optional window

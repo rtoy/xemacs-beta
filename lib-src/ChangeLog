@@ -1,3 +1,7 @@
+1998-06-12  Jim Radford  <radford@robby.caltech.edu>
+
+	* gnuclient.c (initialize_signals): Don't pass SIGHUP to XEmacs.
+
 1998-06-04  Andy Piper  <andyp@parallax.co.uk>
 
 	* Makefile.in.in (runemacs): add runemacs as a build target if

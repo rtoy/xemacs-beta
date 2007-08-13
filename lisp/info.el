@@ -387,16 +387,38 @@ file. An example might be something like:
   :type '(repeat directory)
   :group 'info)
 
-(defcustom Info-rebuild-outdated-dir 'conservative
-  "*What to do if the `dir' or `localdir' file needs to be (re)built.
+(defcustom Info-auto-generate-directory 'if-missing
+  "*When to auto generate an info directory listing.
 Possible values are:
-`never' never (re)build the `dir' or `localdir' file
-`always' automatically (re)builds when needed
-`ask' asks the user before (re)building
-`conservative' asks the user before overwriting existing files"
+nil or `never' never auto-generate a directory listing,
+  use any existing `dir' or `localdir' file and ignore info
+  directories containing none
+`always' auto-generate a directory listing ignoring existing
+  `dir' and `localdir' files
+`if-missing', the default, auto-generates a directory listing
+  if no `dir' or `localdir' file is present.  Otherwise the 
+  contents of any of these files is used instead.
+`if-outdated' auto-generates a directory listing if the `dir'
+  and `localdir' are either inexistent or outdated (touched 
+  less recently than an info file in the same directory)."
   :type '(choice (const :tag "never" never)
 		 (const :tag "always" always)
-		 (const :tag "ask" ask)
+		 (const :tag "if-missing" if-missing)
+		 (const :tag "if-outdated" if-outdated))
+  :group 'info)
+
+(defcustom Info-save-auto-generated-dir nil
+  "*Whether an auto-generated info directory listing should be saved.
+Possible values are:
+nil or `never', the default, auto-generated info directory 
+  information will never be saved.
+`always', auto-generated info directory information will be saved to
+  a `dir' file in the same directory overwriting it if it exists
+`conservative', auto-generated info directory information will be saved
+  to a `dir' file in the same directory but the user is asked before 
+  overwriting any existing file."
+  :type '(choice (const :tag "never" never)
+		 (const :tag "always" always)
 		 (const :tag "conservative" conservative))
   :group 'info)
 
@@ -971,27 +993,18 @@ actually get any text from."
   (setq buffer-file-name (caar Info-dir-file-attributes)))
 
 (defun Info-maybe-update-dir (file)
-  "Rebuild dir or localdir if it does not exist or is outdated."
-  (unless (or (eq Info-rebuild-outdated-dir 'never)
-	      (not (file-exists-p (file-name-directory file)))
+  "Rebuild dir or localdir according to `Info-auto-generate-directory'."
+  (unless (or (not (file-exists-p (file-name-directory file)))
 	      (null (directory-files (file-name-directory file) nil "\\.info")))
     (if (not (find-buffer-visiting file))
 	(if (not (file-exists-p file))
-	    (if (or (eq Info-rebuild-outdated-dir 'always)
-		    (eq Info-rebuild-outdated-dir 'conservative)
-		    (and (eq Info-rebuild-outdated-dir 'ask)
-			 (y-or-n-p (format "No dir file in %s. Rebuild now ? " 
-					   (file-name-directory file)))))
-		(Info-build-dir-anew (file-name-directory file) (not (file-writable-p file))))
-	  (if (Info-dir-outdated-p file)
-	      (if (or (eq Info-rebuild-outdated-dir 'always)
-		      (and (eq Info-rebuild-outdated-dir 'conservative)
-			   (or (not (file-writable-p file))
-			       (y-or-n-p (format "%s is outdated. Rebuild it now ? " 
-					       (file-name-directory file)))))
-		      (and (eq Info-rebuild-outdated-dir 'ask)
-			   (y-or-n-p (format "%s is outdated. Rebuild it now ? " file))))
-		  (Info-rebuild-dir file (not (file-writable-p file)))))))))
+	    (if (or (eq Info-auto-generate-directory 'always)
+		    (eq Info-auto-generate-directory 'if-missing))	      
+		(Info-build-dir-anew (file-name-directory file)))
+	  (if (or (eq Info-auto-generate-directory 'always)
+		  (and (eq Info-auto-generate-directory 'if-outdated)
+		       (Info-dir-outdated-p file)))
+	      (Info-rebuild-dir file))))))
 
 ;; Record which *.info files are newer than the dir file
 (defvar Info-dir-newer-info-files nil)
@@ -1091,21 +1104,24 @@ and `END-INFO-DIR-ENTRY'"
     (insert "\n")))
 
 
-(defun Info-build-dir-anew (directory to-temp)
-  "Build a new info dir file in DIRECTORY"
+(defun Info-build-dir-anew (directory)
+  "Build info directory information for DIRECTORY.
+The generated directory listing may be saved to a `dir' according 
+to the value of `Info-save-auto-generated-dir'"
   (save-excursion
-    (let ((dirfile (expand-file-name "dir" directory))
-	  (info-files 
-	   (directory-files directory
-			    'fullname
-			    ".*\\.info\\(.gz\\|.Z\\|-z\\|.zip\\)?$"
-			    nil
-			    t)))
+    (let* ((dirfile (expand-file-name "dir" directory))
+	   (to-temp (or (null Info-save-auto-generated-dir)
+			(eq Info-save-auto-generated-dir 'never)
+			(and (not (file-writable-p dirfile))
+			     (message "File not writable %s. Using temporary." dirfile))))
+	   (info-files 
+	    (directory-files directory
+			     'fullname
+			     ".*\\.info\\(.gz\\|.Z\\|-z\\|.zip\\)?$"
+			     nil
+			     t)))
       (if to-temp
-	  (if (not (eq Info-rebuild-outdated-dir 'always))
-	      (display-warning 'info 
-		(format "Missing info dir file in %s" directory) 
-		'notice))
+	  (message "Creating temporary dir in %s..." directory)
 	(message "Creating %s..." dirfile))
       (set-buffer (find-file-noselect dirfile t))
       (setq buffer-read-only nil)
@@ -1128,26 +1144,40 @@ and `END-INFO-DIR-ENTRY'"
 	  (set-buffer-modified-p nil)
 	(save-buffer))
       (if to-temp
-	  (message "Creating temporary dir...done")
+	  (message "Creating temporary dir in %s...done" directory)
 	(message "Creating %s...done" dirfile)))))
 
 
-(defun Info-rebuild-dir (file to-temp)
-  "Update an existing info dir file after info files have been modified"
+(defun Info-rebuild-dir (file)
+  "Build info directory information in the directory of dir FILE.
+Description of info files are merged from the info files in the 
+directory and the contents of FILE with the description in info files
+taking precedence over descriptions in FILE.  
+The generated directory listing may be saved to a `dir' according to 
+the value of `Info-save-auto-generated-dir' "
   (save-excursion
     (save-restriction
       (let (dir-section-contents dir-full-contents
 	    dir-entry
 	    file-dir-entry
 	    mark next-section
-	    not-first-section)
+	    not-first-section
+	    (to-temp 
+	     (or (null Info-save-auto-generated-dir)
+		 (eq Info-save-auto-generated-dir 'never)
+		 (and (eq Info-save-auto-generated-dir 'always)
+		      (not (file-writable-p file))
+		      (message "File not writable %s. Using temporary." file))
+		 (and (eq Info-save-auto-generated-dir 'conservative)
+		      (or (and (not (file-writable-p file))
+			       (message "File not writable %s. Using temporary." file))
+			  (not (y-or-n-p 
+				(message "%s is outdated. Overwrite ? " 
+					 file))))))))
 	(set-buffer (find-file-noselect file t))
 	(setq buffer-read-only nil)
 	(if to-temp
-	    (if (not (eq Info-rebuild-outdated-dir 'always))
-		(display-warning 'info 
-		  (format "Outdated info dir file: %s" file) 
-		  'notice))
+	    (message "Rebuilding temporary %s..." file)
 	  (message "Rebuilding %s..." file))
 	(catch 'done
 	  (setq buffer-read-only nil)
@@ -1205,10 +1235,10 @@ and `END-INFO-DIR-ENTRY'"
 				     (point-max))))
 	    (setq not-first-section t)))
 	(if to-temp
-	    (set-buffer-modified-p nil)
-	  (save-buffer))
-	(if to-temp
-	    (message "Rebuilding temporary dir...done")
+	    (progn
+	      (set-buffer-modified-p nil)
+	      (message "Rebuilding temporary %s...done" file))
+	  (save-buffer)
 	  (message "Rebuilding %s...done" file))))))
 
 ;;;###autoload      
@@ -1223,22 +1253,24 @@ For example, invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\""
   (defvar command-line-args-left)	; Avoid 'free variable' warning
   (if (not noninteractive)
       (error "`Info-batch-rebuild-dir' is to be used only with -batch"))
-  (while command-line-args-left
-    (if  (not (file-directory-p (car command-line-args-left)))
-	(message "Warning: Skipped %s. Not a directory."
-		 (car command-line-args-left))
-      (setq dir (expand-file-name "dir" (car command-line-args-left)))
-      (setq localdir (expand-file-name "localdir" (car command-line-args-left)))
-      (cond 
-       ((file-exists-p dir)
-	(Info-rebuild-dir dir nil))
-       ((file-exists-p localdir)
-	(Info-rebuild-dir localdir nil))
-       (t
-	(Info-build-dir-anew (car command-line-args-left) nil))))
-    (setq command-line-args-left (cdr command-line-args-left)))
-  (message "Done")
-  (kill-emacs 0))
+  (let ((Info-save-auto-generated-dir 'always)
+	dir localdir)
+    (while command-line-args-left
+      (if  (not (file-directory-p (car command-line-args-left)))
+	  (message "Warning: Skipped %s. Not a directory."
+		   (car command-line-args-left))
+	(setq dir (expand-file-name "dir" (car command-line-args-left)))
+	(setq localdir (expand-file-name "localdir" (car command-line-args-left)))
+	(cond 
+	 ((file-exists-p dir)
+	  (Info-rebuild-dir dir))
+	 ((file-exists-p localdir)
+	  (Info-rebuild-dir localdir))
+	 (t
+	  (Info-build-dir-anew (car command-line-args-left)))))
+      (setq command-line-args-left (cdr command-line-args-left)))
+    (message "Done")
+    (kill-emacs 0)))
 
 (defun Info-history-add (file node point)
   (if Info-keeping-history

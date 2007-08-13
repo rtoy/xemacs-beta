@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 21.0 pre1 "Swedish Landrace"
+-- package-get-base synchronized with latest packages
+-- MULE-ize eldap.c from Hrvoje Niksic
+-- ntplay fix from Andy Piper
+-- info fixes from Oscar Figueiredo
+-- list-mode fix from Christoph Wedler
+-- Gnuclient SIGHUP fix from Jim Radford
+
 to 21.0 beta43 "Spanish"
 -- texinfo documentation synched from GNU texinfo-3.12
 -- Manual cleanup from Adrian Aichner

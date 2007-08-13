@@ -1,6 +1,16 @@
+1998-06-14  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre1 is released.
+
+1998-06-14  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* etc/NEWS: Updated information about customization of the
+	automatic info dir file generation using
+	`Info-auto-generate-directory' and `Info-save-auto-generated-dir'
+
 1998-06-11  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs 21.0-beta 43 is released.
+	* XEmacs 21.0-beta43 is released.
 
 1998-06-04  Oliver Graf <ograf@fga.de>
 

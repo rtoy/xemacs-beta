@@ -1,3 +1,17 @@
+1998-06-13  Greg Klanderman  <greg@alphatech.com>
+
+	* lispref/windows.texi (Resizing Windows): document third optional 
+	WINDOW argument to enlarge-window and shrink-window.
+	(Selecting Windows): document select-window optional norecord
+	argument. 
+	(Size of Window): document window-text-area-pixel-height and
+	window-text-area-pixel-width. 
+	(Size of Window): document window-displayed-text-pixel-height.
+	(Position of Window): document window-text-area-pixel-edges.
+
+	* lispref/positions.texi (Screen Lines): cleanup docs for
+	vertical-motion and vertical-motion-pixels.
+
 1998-06-10  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* lispref/windows.texi (Resizing Windows): Document

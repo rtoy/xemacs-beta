@@ -123,7 +123,6 @@ initialize_signals ()
      We used to send SIGSEGV, SIGBUS, SIGPIPE, SIGILL and others to
      Emacs, but I think it's better not to.  I can see no reason why
      Emacs should SIGSEGV whenever gnuclient SIGSEGV-s, etc.  */
-  signal (SIGHUP, pass_signal_to_emacs);
   signal (SIGQUIT, pass_signal_to_emacs);
   signal (SIGINT, pass_signal_to_emacs);
 #ifdef SIGWINCH

@@ -1,3 +1,27 @@
+1998-06-06  Jeff Miller <jmiller@smart.net>
+
+	* lisp/sound.el: Update sound-ext to allow filenames with
+	  extensions to be found by load-sound-file
+
+1998-06-14  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* info.el (Info-rebuild-outdated-dir): Removed variable
+	(Info-auto-generate-directory): New variable
+	(Info-save-auto-generated-dir): New variable
+	(Info-maybe-update-dir): Use `Info-auto-generate-directory'
+	(Info-build-dir-anew): Second parameter removed.  Use
+	`Info-save-auto-generated-dir' 
+	(Info-rebuild-dir): Ditto
+
+1998-06-02  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* list-mode.el (next-list-mode-item): Would not recognize
+	border between directly neighbored items.
+
+1998-06-12  Andy Piper  <andyp@parallax.co.uk>
+
+	* package-get.el: add autoloads for some functions.
+
 1998-06-10  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* specifier.el (let-specifier): Tiny docfixes.

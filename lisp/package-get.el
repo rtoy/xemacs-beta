@@ -160,6 +160,7 @@ order until the package is found.")
   "*After copying and installing a package, if this is T, then remove the
 copy.  Otherwise, keep it around.")
 
+;;;###autoload
 (defun package-get-update-all ()
   "Fetch and install the latest versions of all currently installed packages."
   (interactive)
@@ -170,6 +171,7 @@ copy.  Otherwise, keep it around.")
 	     (car pkg) nil))
           packages-package-list))
 
+;;;###autoload
 (defun package-get-all (package version &optional fetched-packages)
   "Fetch PACKAGE with VERSION and all other required packages.
 Uses `package-get-base' to determine just what is required and what
@@ -209,6 +211,7 @@ track of packages already fetched."
       fetched-packages
       ))
 
+;;;###autoload
 (defun package-get (package &optional version conflict)
   "Fetch PACKAGE from remote site.
 Optional arguments VERSION indicates which version to retrieve, nil
@@ -406,6 +409,7 @@ some built in variables.  For now, use packages-package-list."
   "Configure XEmacs packages."
   :group 'emacs)
 
+;;;###autoload
 (defun package-get-custom ()
   "Fetch and install the latest versions of all customized packages."
   (interactive)
