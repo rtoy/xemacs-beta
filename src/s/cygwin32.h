@@ -71,8 +71,8 @@ Boston, MA 02111-1307, USA.  */
 /* cheesy way to determine cygwin version */
 #ifndef NOT_C_CODE
 #include <signal.h>
-#ifdef HAVE_CYGWIN32_VERSION_H
-#include <cygwin32/version.h>
+#ifdef HAVE_CYGWIN_VERSION_H
+#include <cygwin/version.h>
 #else
 #ifdef SIGIO
 #define CYGWIN_B19
@@ -85,7 +85,7 @@ extern void cygwin32_win32_to_posix_path_list(const char*, char*);
 extern int cygwin32_win32_to_posix_path_list_buf_size(const char*);
 extern void cygwin32_posix_to_win32_path_list(const char*, char*);
 extern int cygwin32_posix_to_win32_path_list_buf_size(const char*);
-#ifndef CYGWIN_DLL_VERSION_MAJOR
+#ifndef CYGWIN_VERSION_DLL_MAJOR
 struct timeval;
 struct timezone;
 struct itimerval;
@@ -115,21 +115,6 @@ extern long random();
 #define SND_FILENAME		0x2000L
 #define VK_APPS			0x5D
 #define SIF_TRACKPOS	0x0010
-#endif
-#endif
-
-#ifdef HAVE_MS_WINDOWS
-#define HAVE_NTGUI
-#define HAVE_FACES
-#endif
-
-#ifndef ORDINARY_LINK
-#define ORDINARY_LINK
-#endif
-
-#define C_SWITCH_SYSTEM -Wno-sign-compare -fno-caller-saves
-#define LIBS_SYSTEM -lwinmm
-
 #define ICC_BAR_CLASSES 4
 #define FW_BLACK	FW_HEAVY
 #define FW_ULTRABOLD	FW_EXTRABOLD
@@ -145,13 +130,33 @@ extern long random();
 #define JOHAB_CHARSET 		130
 #define MAC_CHARSET 		77
 
+#endif
+#endif
+
+#ifdef HAVE_MS_WINDOWS
+#define HAVE_NTGUI
+#define HAVE_FACES
+#endif
+
+#ifndef ORDINARY_LINK
+#define ORDINARY_LINK
+#endif
+
+#define C_SWITCH_SYSTEM -Wno-sign-compare -fno-caller-saves
+#define LIBS_SYSTEM -lwinmm
+
+
 #define TEXT_START -1
 #define TEXT_END -1
 #define DATA_END -1
 #define HEAP_IN_DATA
 #define UNEXEC "unexcw.o"
-/* #define BROKEN_SIGIO */
+
+#ifdef CYGWIN_VERSION_DLL_MAJOR
+#define BROKEN_SIGIO
+#else
 #define PROCESS_IO_BLOCKING
+#endif
 #define strnicmp strncasecmp
 #ifndef HAVE_SOCKETS
 #define HAVE_SOCKETS

@@ -190,6 +190,7 @@ pointer looks like an int) but not on all machines.
 #  define __STDC_EXTENDED__ 1
 # endif
 
+# include <stddef.h>
 # include <stdlib.h>
 # include <unistd.h>
 # include <string.h>
@@ -287,7 +288,7 @@ static long data_scnptr;
 
 #ifdef __STDC__
 #ifndef __sys_stdtypes_h
-#ifndef _PTRDIFF_T
+#if !defined(_PTRDIFF_T) && !defined(_BSD_PTRDIFF_T_)
 typedef long ptrdiff_t;
 #endif
 #endif

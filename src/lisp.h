@@ -960,7 +960,7 @@ struct Lisp_Bit_Vector
   struct lrecord_header lheader;
   Lisp_Object next;
   long size;
-  unsigned int bits[1];
+  unsigned long bits[1];
 };
 
 DECLARE_LRECORD (bit_vector, struct Lisp_Bit_Vector);

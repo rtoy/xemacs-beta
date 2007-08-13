@@ -1,4 +1,37 @@
 							-*- indented-text -*-
+to 21.0 "Pyrenean"
+-- easymenu.el synch with FSF from Jan Vroonhof
+-- chartable bug fixes from Hrvoje Niksic
+-- Various MULE filenaming/localization bug fixes from Didier Verna
+-- Linux/ARM support from James LewisMoss
+-- Realpath fix for UnixWare2.1.3 from Takeshi Hagiwara
+-- OSS Sound support for AIX from Michael Sperber
+-- msw-faces X11 emulation fix from Adrian Aichner
+-- Wnn6 detection fix from IENAGA Kazuyuki
+-- More Cygwin b20 from Andy Piper
+-- 64 bit cleanliness fix from Olivier Galibert
+-- Package-get updates from Jan Vroonhof and Greg Klanderman
+-- Movemail build fix for MS Windows NT from Andy Piper
+-- Clicking on buttons not switching windows patch from Hrvoje Niksic
+-- Cygwin b20 support from Andy Piper
+-- Autoload cookie fix for cus-face.el from Jan Vroonhof
+-- Frame resize inside window fix for MS Windows from Andy Piper
+-- Type clean up patches from Steve Carney
+-- movemail pop patches from Andy Piper
+-- Fix auto-save-directory-fallback hardcoding at dump time from Jan Vroonhof
+-- Package loading fixes from Greg Klanderman
+-- Package Tool Finishing Touches from Jan Vroonhof
+-- package-get-base.el removed from the core
+-- BS/DEL fix from Glynn Clements
+-- Tty vertical divider width now defaults to 1 instead of 0
+-- MS Windows toolbar fixes from Jonathan Harris
+-- Fix for XtDisplay being called with stale widget from Takeshi Hagiwara
+-- Fixes for Cygwin b20 from Andy Piper
+-- Package UI fetching improvements from Greg Klanderman
+-- isearch regexp pruning bugfix from Hrvoje Niksic
+-- package deletion fixes from Jan Vroonhof
+-- gnuclient fix from Jan Vroonhof
+
 to 21.0 "Poitou"
 -- port to Motif >= 2.0
 -- help keymap fixes from Jan Vroonhof

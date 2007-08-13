@@ -587,7 +587,7 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 		      (cons isearch-string regexp-search-ring)
 		      regexp-search-ring-yank-pointer regexp-search-ring)
 		(if (> (length regexp-search-ring) regexp-search-ring-max)
-		    (setcdr (nthcdr (1- search-ring-max) regexp-search-ring)
+		    (setcdr (nthcdr (1- regexp-search-ring-max) regexp-search-ring)
 			    nil))))
 	(if (not (setq search-ring-yank-pointer
 		       ;; really need equal test instead of eq.
