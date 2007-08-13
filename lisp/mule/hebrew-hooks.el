@@ -53,7 +53,7 @@
    mnemonic "CText/Hbrw"
 ))
 
-;;(add-hook 'quail-package-alist '("hebrew" "quail/hebrew"))
+(add-hook 'quail-package-alist '("hebrew" "quail-hebrew"))
 
 (define-language-environment 'hebrew
   "Hebrew"
@@ -63,6 +63,6 @@
     (set-default-buffer-file-coding-system 'iso-8859-8)
     (setq terminal-coding-system    'iso-8859-8)
     (setq keyboard-coding-system    'iso-8859-8)
-;;  (setq-default quail-current-package
-;;                (assoc "hebrew" quail-package-alist))))
+    (setq-default quail-current-package
+		  (assoc "hebrew" quail-package-alist))
     ))

@@ -422,9 +422,9 @@ See also `dired-omit-extensions'.")
   "*File names matching these regexp may be omitted (buffer-local).
 This only has effect when the subdirectory is in omission mode.
 To make omission mode the default, set `dired-omit-files' to t.
-This only has effect when `dired-omit-files-p' is t.
+This only has effect when `dired-omit-files' is t.
 See also `dired-omit-extensions'.")
-(make-variable-buffer-local 'dired-omit-files-regexp)
+(make-variable-buffer-local 'dired-omit-regexps)
 
 (defvar dired-filename-re-ext "\\..+$"   ; start from the first dot. last dot?
   "*Defines what is the extension of a file name.
@@ -1563,7 +1563,7 @@ See variable `dired-local-variables-file'."
       (run-hooks 'dired-after-readin-hook)
       ;; I put omit-expunge after the dired-after-readin-hook
       ;; in case that hook marks files. Does this make sense? Also, users
-      ;; might want to set dired-omit-files-p in some incredibly clever
+      ;; might want to set dired-omit-files in some incredibly clever
       ;; way depending on the contents of the directory... I don't know...
       (if dired-omit-files
 	  (dired-omit-expunge nil t))
@@ -5273,7 +5273,7 @@ a zero prefix redisplays all killed file lines."
 
 (defun dired-omit-toggle (&optional arg)
   "Toggle between displaying and omitting files matching
-`dired-omit-files-regexp' in the current subdirectory.
+`dired-omit-regexps' in the current subdirectory.
 With a positive prefix, omits files in the entire tree dired buffer.
 With a negative prefix, forces all files in the tree dired buffer to be
 displayed."
@@ -5317,7 +5317,7 @@ displayed."
 
 (defun dired-omit-expunge (&optional regexp full-buffer)
   ;; Hides all unmarked files matching REGEXP.
-  ;; If REGEXP is nil or not specified, uses `dired-omit-files-regexp',
+  ;; If REGEXP is nil or not specified, uses `dired-omit-regexps',
   ;; and also omits filenames ending in `dired-omit-extensions'.
   ;; If REGEXP is the empty string, this function is a no-op.
   (let ((omit-re (or regexp (dired-omit-regexp)))

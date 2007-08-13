@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/04/21 21:59:42
-;; Version: 1.175
+;; Created: 1997/04/24 16:51:06
+;; Version: 1.176
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1061,6 +1061,9 @@ Can sometimes make the structure of a document clearer")
 	  (if (stringp cur)
 	      nil
 	    (case (car cur)
+	      ((thead tfoot col colgroup)
+	       (if (nth 2 cur)
+		   (setq content (append (nth 2 cur) content))))
 	      (tr
 	       (setq col 0)
 	       (setq rows (1+ rows))
@@ -1278,6 +1281,10 @@ Can sometimes make the structure of a document clearer")
 	     (setq fill-prefix ""))))
 	(while content
 	  (case (caar content)
+	    ((thead tfoot col colgroup)
+	     (if (nth 2 (car content))
+		 (setq content (append (nth 2 (car content)) (cdr content)))
+	       (setq content (cdr content))))
 	    (tr
 	     (setq w3-display-css-properties (css-get
 					      (nth 0 (car content))

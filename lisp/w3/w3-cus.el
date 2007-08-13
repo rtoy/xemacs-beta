@@ -1,7 +1,7 @@
 ;;; w3-cus.el --- Customization support for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/24 06:35:57
-;; Version: 1.7
+;; Created: 1997/04/24 14:57:19
+;; Version: 1.8
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -279,7 +279,9 @@ If nil, then no file extension is used."
   "*How to map MIME types to image types for the `image' package.
 Each entry is a cons cell of MIME types and image-type symbols."
   :group 'w3-images
-  :type '(repeat cons))
+  :type '(repeat (cons :format "%v"
+		       (string :tag "MIME Type")
+		       (symbol :tag "Image type"))))
 
 ;;; Printing variables
 (defcustom w3-latex-docstyle "{article}"

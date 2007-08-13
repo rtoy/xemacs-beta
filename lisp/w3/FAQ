@@ -34,6 +34,15 @@ A: You can use the 'file preparation hook', which is run before any
    This will turn on stylistic warnings for any local HTML files or
    files loaded from the `*.some.domain.name' domain.
 
+Q: How do I make emacs scroll the window horizontally when tabbing
+   through links?
+A: XEmacs:
+   (add-hook 'w3-mode-hook '(lambda () (auto-show-mode 1)))
+
+   Emacs (if you have hscroll.el from ftp:// ?????):
+   (autoload 'turn-on-hscroll "hscroll" nil t)
+   (add-hook 'w3-mode-hook 'turn-on-hscroll)
+
 Courtesy of greg stark <gsstark@mit.edu>
 Q: How do i get Shift-Tab to go backwards on a text terminal or XTerm?
 aka: I hate the new text widgets, I can't go through the links with n and b

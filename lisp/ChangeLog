@@ -1,3 +1,41 @@
+Sat Apr 26 16:25:49 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/lib-complete.el: Make conformant to Lisp coding standards
+	MULE-ize by allowing for coding system argument.
+
+Fri Apr 25 08:39:50 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/info.el: Remove mouse-1 binding.
+
+	* modes/sh-script.el (sh-indent-line): Deal with pathological case 
+	of indenting a first line containing a `#' as first non-white
+	space character.
+
+Thu Apr 24 18:40:32 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/telnet.el (telnet-mode-map): Correct Emacs synch typo.
+
+	* rmail/rmail.el (rmail-get-new-mail): display-time-string is not
+	necessarily a string.
+
+Thu Apr 24 11:08:28 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* packages/balloon-help.el:
+	- default background color now grey80 to match XEmacs default.
+	- default border width is now 1.
+	- default font is now "variable"
+	- balloon-help can now handle variable width fonts.
+	- loading balooon-help no longer turns on balloon-help-mode.
+	- new `balloon-help' command.
+	- changes to the font/background/foreground variables now affect
+	  the help frame at next display.
+	- help frame should now pop up on the correct display if XEmacs
+	  is running with multiple devices open.
+	- Customized, courtesy of Hrvoje.
+	- don't use the padding lines that were needed for 19.12.
+	  Compatibility with older XEmacs versions is hereby disavowed.
+	- xclock frame name hack is gone.
+
 Wed Apr 23 10:56:05 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/files.el (hack-local-variables-prop-line): Mistakenly

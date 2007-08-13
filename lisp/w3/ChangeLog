@@ -2,7 +2,54 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Thu Apr 24 08:29:34 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.85 released
+
+* w3-display.el (w3-display-table-dimensions): Deal with
+  colgroup/thead/tfoot/col better.  Before was ignoring the rest of the
+  table.  ack.
+  (w3-display-table): ditto
+
+* w3-prefs.el (w3-preferences-restore-variables): Slap things into
+  custom-land where they belong.
+
+* A few customization tweaks.
+
+Wed Apr 23 21:44:59 1997  <chang@wsu.edu>
+
+* w3-e19.el (w3-store-in-clipboard): Make this work under OS/2
+
+Tue Apr 22 07:23:51 1997  William M. Perry  <wmperry@aventail.com>
+
+* devices.el: Removed defsubsts so that we should be able to share .elc
+  files again between emacs and XEmacs.
+
+* font.el: Added in code to make a face blink.  Causes lots of screen
+  flicker under Emacs 19 though, so it is turned off by default.  Turn it
+  on with ESC-: (font-blink-initialize) - should be able to optimize when
+  the callback actually does anything based on what fonts are visible in
+  the visible buffers.
+  (font-face-visible-in-window-p): New function to tell if a face is
+  visible in a buffer window.
+  (font-map-windows): New function to map a function over all visible
+  windows.
+  (font-blink-callback): Use them to optimize so that invert-face is not
+  called unless absolutely necessary.
+
 Mon Apr 21 08:58:02 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-e19.el: Added in compile-time require of w3-props so that pages with
+  backgrounds don't puke and die.
+
+* w3.el (w3-find-default-stylesheets): Don't load a user's personal
+  stylesheet if we started up in '-q' mode.
+
+* Emacs/W3 3.0.84 released
+
+* w3-display.el: When using XEmacs 20.x w/mule support, we now define our
+  own special character set.  This means that the table border chars work
+  again in XEmacs/mule
 
 * devices.el: Added magic to not optimize this file under XEmacs - its not 
   actually used, so no damage.  It wouldn't compile under XEmacs because

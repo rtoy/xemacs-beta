@@ -842,6 +842,7 @@ argument causes us to read a file name and use that file as the inbox."
 	  ;; #### BOGUS!  Run a hook here instead and let time.el do it.
 	  (and (boundp 'display-time-string)
 	       display-time-string
+	       (stringp display-time-string)
 	       (string-match " Mail" display-time-string)
 	       (setq display-time-string
 		     (concat

@@ -25,7 +25,11 @@
 #define regmatch_t sys_regmatch_t
 
 #define SYSTEM_MALLOC
+
+/* Some V4.0* versions before V4.0B don't detect rename properly. */
+#ifndef HAVE_RENAME
 #define HAVE_RENAME
+#endif
 
 /* Digital Unix 4.0 has a realpath, but it's buggy.  And I
    *do* mean buggy. */

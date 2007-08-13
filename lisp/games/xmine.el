@@ -2,7 +2,7 @@
 
 ;; Author:     Jens Lautenbacher <jens@lemming0.lem.uni-karlsruhe.de>
 ;; Keywords:   games
-;; Version:    1.7
+;; Version:    1.8
 
 ;; This file is part of XEmacs.
 
@@ -44,7 +44,7 @@
 ;;
 ;;; First of all we'll define the needed varibles.
 
-(defconst xmine-version-number "1.7" "XEmacs Mine version number.")
+(defconst xmine-version-number "1.8" "XEmacs Mine version number.")
 (defconst xmine-version (format "XEmacs Mine v%s by Jens Lautenbacher © 1997"
 			       xmine-version-number)
   "Full XEmacs Mine version number.")
@@ -100,36 +100,39 @@
      "------------------ XEmacs XMine ------------------")))
 
 (defvar xmine-glyph-production-list
-  '(("xmine-new-up"            "new_up.gif"               "new"  nil               )
-    ("xmine-new-down"          "new_down.gif"             "NEW"  nil               )
-    ("xmine-quit-up"           "quit_up.gif"              "quit" nil               )
-    ("xmine-quit-down"         "quit_down.gif"   	  "QUIT" nil               )
-    ("xmine-up-glyph"          "empty_16_up.gif"          "@ "   xmine-hidden-face )
-    ("xmine-up-sel-glyph"      "empty_16_up_sel.gif"      "@<"   xmine-hidden-face )
-    ("xmine-down-glyph"        "empty_16_down.gif"        "? "   nil               ) 
+  '(("xmine-new-up"            "new_up.gif"               "new"  nil)
+    ("xmine-new-down"          "new_down.gif"             "NEW"  nil)
+    ("xmine-quit-up"           "quit_up.gif"              "quit" nil)
+    ("xmine-quit-down"         "quit_down.gif"   	  "QUIT" nil)
+    ("xmine-up-glyph"          "empty_16_up.gif"          "@ "   xmine-hidden-face)
+    ("xmine-up-sel-glyph"      "empty_16_up_sel.gif"      "@<"   xmine-hidden-face)
+    ("xmine-down-glyph"        "empty_16_down.gif"        "? "   nil) 
     ("xmine-flagged-glyph"     "flagged_16_up.gif"        "! "   xmine-flagged-face)
     ("xmine-flagged-sel-glyph" "flagged_16_up_sel.gif"    "!<"   xmine-flagged-face)
-    ("xmine-mine-glyph"        "bomb_16_flat.gif"         "* "   nil               )
-    ("xmine-mine-sel-glyph"    "bomb_16_flat.gif"         "*<"   nil               )
-    ("xmine-trapped-glyph"     "bomb_trapped_16_flat.gif" "X "   nil               )
-    ("xmine-0-glyph"           "empty_16_flat.gif"        ". "   nil               )
-    ("xmine-0-sel-glyph"       "empty_16_flat_sel.gif"    ".<"   nil               )
-    ("xmine-1-glyph"           "1_16_flat.gif"            "1 "   xmine-number-face )
-    ("xmine-1-sel-glyph"       "1_16_flat_sel.gif"        "1<"   xmine-number-face )
-    ("xmine-2-glyph"           "2_16_flat.gif"            "2 "   xmine-number-face )
-    ("xmine-2-sel-glyph"       "2_16_flat_sel.gif"        "2<"   xmine-number-face )
-    ("xmine-3-glyph"           "3_16_flat.gif"            "3 "   xmine-number-face )
-    ("xmine-3-sel-glyph"       "3_16_flat_sel.gif"        "3<"   xmine-number-face )
-    ("xmine-4-glyph"           "4_16_flat.gif"            "4 "   xmine-number-face )
-    ("xmine-4-sel-glyph"       "4_16_flat_sel.gif"        "4<"   xmine-number-face )
-    ("xmine-5-glyph"           "5_16_flat.gif"            "5 "   xmine-number-face )
-    ("xmine-5-sel-glyph"       "5_16_flat_sel.gif"        "5<"   xmine-number-face )
-    ("xmine-6-glyph"           "6_16_flat.gif"            "6 "   xmine-number-face )
-    ("xmine-6-sel-glyph"       "6_16_flat_sel.gif"        "6<"   xmine-number-face )
-    ("xmine-7-glyph"           "7_16_flat.gif"            "7 "   xmine-number-face )
-    ("xmine-7-sel-glyph"       "7_16_flat_sel.gif"        "7<"   xmine-number-face )
-    ("xmine-8-glyph"           "8_16_flat.gif"            "8 "   xmine-number-face )
-    ("xmine-8-sel-glyph"       "8_16_flat_sel.gif"        "8<"   xmine-number-face )))
+    ("xmine-mine-glyph"        "bomb_16_flat.gif"         "* "   nil)
+    ("xmine-mine-sel-glyph"    "bomb_16_flat.gif"         "*<"   nil)
+    ("xmine-trapped-glyph"     "bomb_trapped_16_flat.gif" "X "   nil)
+    ("xmine-0-glyph"           "empty_16_flat.gif"        ". "   nil)
+    ("xmine-0-sel-glyph"       "empty_16_flat_sel.gif"    ".<"   nil)
+    ("xmine-1-glyph"           "1_16_flat.gif"            "1 "   xmine-number-face)
+    ("xmine-1-sel-glyph"       "1_16_flat_sel.gif"        "1<"   xmine-number-face)
+    ("xmine-2-glyph"           "2_16_flat.gif"            "2 "   xmine-number-face)
+    ("xmine-2-sel-glyph"       "2_16_flat_sel.gif"        "2<"   xmine-number-face)
+    ("xmine-3-glyph"           "3_16_flat.gif"            "3 "   xmine-number-face)
+    ("xmine-3-sel-glyph"       "3_16_flat_sel.gif"        "3<"   xmine-number-face)
+    ("xmine-4-glyph"           "4_16_flat.gif"            "4 "   xmine-number-face)
+    ("xmine-4-sel-glyph"       "4_16_flat_sel.gif"        "4<"   xmine-number-face)
+    ("xmine-5-glyph"           "5_16_flat.gif"            "5 "   xmine-number-face)
+    ("xmine-5-sel-glyph"       "5_16_flat_sel.gif"        "5<"   xmine-number-face)
+    ("xmine-6-glyph"           "6_16_flat.gif"            "6 "   xmine-number-face)
+    ("xmine-6-sel-glyph"       "6_16_flat_sel.gif"        "6<"   xmine-number-face)
+    ("xmine-7-glyph"           "7_16_flat.gif"            "7 "   xmine-number-face)
+    ("xmine-7-sel-glyph"       "7_16_flat_sel.gif"        "7<"   xmine-number-face)
+    ("xmine-8-glyph"           "8_16_flat.gif"            "8 "   xmine-number-face)
+    ("xmine-8-sel-glyph"       "8_16_flat_sel.gif"        "8<"   xmine-number-face)))
+
+(defvar xmine-force-textual nil
+  "This is for debugging purposes only. No need to set it. Really.")
 
 (defun xmine-generate-glyphs ()
   (let ((list xmine-glyph-production-list)
@@ -140,7 +143,8 @@
 	    text (caddr  elem)
 	    face (cadddr elem))
       (set (intern var)
-	   (make-glyph (if (eq window-system 'x)
+	   (make-glyph (if (and (not xmine-force-textual)
+				(eq window-system 'x))
 			   (concat xmine-glyph-dir gif)
 			 text)))
       (if face
@@ -241,14 +245,20 @@ preferred if you don't want to use white."
 (defun xmine-activate-function-button (event)
   (interactive "e")
   (let* ((extent (event-glyph-extent event))
-	 (button (event-button event))
-	 (action (intern (concat "action" (number-to-string button))))
+	 (button (number-to-string (event-button event)))
+	 (action (intern (concat "action" button)))
+	 (down-action (intern (concat "down-action" button)))
+	 (restore-down-action (intern (concat "restore-down-action" button)))
 	 (mouse-down t)
-	 (up-glyph nil))
+	 (action-do-it t)
+	 up-glyph)
     ;; make the glyph look pressed
     (cond ((annotation-down-glyph extent)
 	   (setq up-glyph (annotation-glyph extent))
 	   (set-annotation-glyph extent (annotation-down-glyph extent))))
+    (if (extent-property extent down-action)
+	(setq action-do-it
+	      (funcall (extent-property extent down-action) extent)))
     (while mouse-down
       (setq event (next-event event))
       (if (button-release-event-p event)
@@ -257,8 +267,12 @@ preferred if you don't want to use white."
     (cond ((annotation-down-glyph extent)
 	   (set-annotation-glyph extent up-glyph)))
     (if (eq extent (event-glyph-extent event))
-	(if (extent-property extent action)
-	    (funcall (extent-property extent action) extent)))))
+	(if (and (extent-property extent action) action-do-it)
+	    (funcall (extent-property extent action) extent)
+	  (if (extent-property extent restore-down-action)
+	      (funcall (extent-property extent restore-down-action) extent)))
+      (if (extent-property extent restore-down-action)
+	      (funcall (extent-property extent restore-down-action) extent)))))
 
 ;;; Here we define the button object's constructor function
 
@@ -268,6 +282,8 @@ preferred if you don't want to use white."
     (set-extent-property ext 'action1 'xmine-action1)
     (set-extent-property ext 'action2 'xmine-beep)
     (set-extent-property ext 'action3 'xmine-action3)
+    (set-extent-property ext 'down-action2 'xmine-down-action2)
+    (set-extent-property ext 'restore-down-action2 'xmine-restore-down-action2)
     (set-extent-property ext 'xmine-glyph (xmine-type-to-glyph type))
     (set-extent-property ext 'xmine-sel-glyph (xmine-type-to-sel-glyph type)) 
     (set-extent-property ext 'xmine-type type)
@@ -294,6 +310,22 @@ preferred if you don't want to use white."
        (not (extent-property ext 'xmine-hidden))
        (equal "0" (extent-property ext 'xmine-type))))
 
+(defun xmine-enough-flagged-p (ext)
+  (let ((list (xmine-get-neighbours ext))
+	(number (extent-property ext 'xmine-type))
+	(flagged 0) elem res)
+    (if (not (or (equal number "mine")
+		 (equal number "0")))
+	(progn
+	  (setq number (string-to-number number))
+	  (while (setq elem (pop list))
+	    (if (extent-property elem 'xmine-flagged)
+		(setq flagged (1+ flagged))))
+	  (setq res (>= flagged number))
+	  ))
+    res))
+    
+		 
 (defun xmine-mine-button-p (ext)
   (and ext
        (equal "mine" (extent-property ext 'xmine-type))))
@@ -313,7 +345,7 @@ preferred if you don't want to use white."
 (defun xmine-type-to-sel-glyph (type)
   (eval (intern-soft (concat "xmine-" type "-sel-glyph"))))
 
-;;; the next three functions are the main functions that are used
+;;; the next 3 functions are the main functions that are used
 ;;; inside the button objects and which are bound to the 'action1,
 ;;; 'action2 and 'action3 slots respectively
 
@@ -353,6 +385,7 @@ there isn't one)"
   (let ((list (xmine-get-neighbours ext))
 	(xmine-no-unhide-sound t)
 	next)
+;;    (xmine-restore-down-action2 ext)
     (if list (xmine-unhide-many-sound))
     (while (setq next (pop list))
       (if (not (xmine-flat-button-p next)) (xmine-action1 next)))))
@@ -390,6 +423,22 @@ You flag a button if you know - or think - that there's a mine under it"
 					  xmine-number-of-flagged))))))))
 
 
+(defun xmine-down-action2 (ext)
+  (let ((list (xmine-get-neighbours ext))
+	(do-it (xmine-enough-flagged-p ext))
+	elem)
+    (if (not do-it)
+	(while (setq elem (pop list))
+	  (set-extent-property elem 'xmine-temp-glyph (annotation-glyph elem))
+	  (set-annotation-glyph elem (annotation-down-glyph elem))))
+    do-it))
+
+(defun xmine-restore-down-action2 (ext)
+  (let ((list (xmine-get-neighbours ext))
+	elem)
+    (while (setq elem (pop list))
+      (set-annotation-glyph elem (extent-property elem 'xmine-temp-glyph)))))
+  
 ;;; the sounds...
 (defcustom xmine-play-sounds nil
   "If XMine should play some sounds for various events to happen."
@@ -739,8 +788,9 @@ We set up the XMine buffer, set up the keymap and so on."
 (defun xmine-key-action2 ()
   (interactive)
   (let ((action (extent-property xmine-key-sel-button 'action2)))
-    (if action
-	(funcall action xmine-key-sel-button))))
+    (if (and action (xmine-enough-flagged-p xmine-key-sel-button))
+	(funcall action xmine-key-sel-button)
+      (beep))))
 
 (defun xmine-key-action3 ()
   (interactive)

@@ -666,7 +666,7 @@ The prefix character for file name transformers is always the same as
      (list
       (dired-read-shell-command
        (concat (if dir
-		   (format "! in %s" (dired-abbreviate-file-name dir))
+		   (format "! in %s " (dired-abbreviate-file-name dir))
 		 "cd <dir>; ! ")
 	       "on "
 	       (if on-each "each ")

@@ -57,7 +57,11 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysfile.h"
 
+#ifdef HAVE_PNG
+#include <png.h>
+#else
 #include <setjmp.h>
+#endif
 
 #define LISP_DEVICE_TO_X_SCREEN(dev)					\
   XDefaultScreenOfDisplay (DEVICE_X_DISPLAY (XDEVICE (dev)))
@@ -1921,8 +1925,6 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 
 #ifdef HAVE_PNG
-
-#include <png.h>
 
 /**********************************************************************
  *                             PNG                                    *

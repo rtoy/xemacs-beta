@@ -32,7 +32,7 @@
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 
-;; $Id: cperl-mode.el,v 1.4 1997/03/16 03:05:17 steve Exp $
+;; $Id: cperl-mode.el,v 1.5 1997/04/27 19:30:26 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -3757,7 +3757,8 @@ in subdirectories too."
     (save-excursion
       (cond (inbuffer nil)		; Already there
 	    ((file-exists-p tags-file-name)
-	     (visit-tags-table-buffer tags-file-name))
+	     ;;(visit-tags-table-buffer tags-file-name))
+	     (visit-tags-table-buffer))
 	    (t (set-buffer (find-file-noselect tags-file-name))))
       (cond
        (dir

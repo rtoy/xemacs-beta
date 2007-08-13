@@ -305,7 +305,7 @@ Newline's direction will be same as display-direction."
 (defvar *visual-punctuations*
   '(?  ?. ?, ?: ?; ?? ?! ?- ?_ ?' ?\" ?/ ?( ?) ?[ ?] ?{ ?} ?\n ?\t ; ASCII
     ?  ?. ?, ?: ?; ?? ?! ?- ?_ ?' ?" ?( ?) ?[ ?]		   ; Hebrew
-    ?[2](3![0](B ?[2](3&[0](B ?[2](3%[0](B ?[2](3)[0](B ?[2](3"[0](B ?[2](3'[0](B ?[2](3([0](B ?[2](3#[0](B ?[2](3$[0](B ?[2](3*[0](B ?[2](3+[0](B ))				   ; Arabic
+    ?›2](3!›0](B ?›2](3&›0](B ?›2](3%›0](B ?›2](3)›0](B ?›2](3"›0](B ?›2](3'›0](B ?›2](3(›0](B ?›2](3#›0](B ?›2](3$›0](B ?›2](3*›0](B ?›2](3+›0](B ))				   ; Arabic
 
 (defun visual-forward-word (arg)
   "Move the cursor visually forward by ARG (integer) words.
@@ -534,6 +534,9 @@ If display-direction is non-nil, the cursor stays at the same position."
   (visual-insert-char last-command-char arg)
   (if display-direction
       (visual-backward-char arg)))
+
+;; wire us into pending-delete
+(put 'visual-self-insert-command 'pending-delete t)
 
 (defun visual-newline (arg)
   "newline command for visual-mode.

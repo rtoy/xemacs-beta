@@ -82,9 +82,20 @@
 
 	ilisp-reset ":q"
 
-	comint-interrupt-regexp "Interrupted at"
+	comint-interrupt-regexp "Interrupted at")
 
-	ilisp-binary-extension "sparcf"
-	ilisp-init-binary-extension "sparcf"
-	ilisp-binary-command "\"sparcf\""
-	))
+  (if (progn
+	  (shell-command "uname -s")
+	  (save-excursion
+	    (set-buffer "*Shell Command Output*")
+	    (goto-char (point-min))
+	    (looking-at "[Ll]inux")))
+      (setq
+       ilisp-binary-extension "x86f"
+       ilisp-init-binary-extension "x86f"
+       ilisp-binary-command "\"x86f\"")
+    ;; else assume sparc.
+    (setq ilisp-binary-extension "sparcf"
+	  ilisp-init-binary-extension "sparcf"
+	  ilisp-binary-command "\"sparcf\"")))
+

@@ -2724,6 +2724,16 @@ correspoding to character position.")
 (if (boundp 'mouse-track-cleanup-hook)
     (add-hook 'mouse-track-cleanup-hook 'fence-mouse-protect))
 
+(defun egg-lang-switch-callback ()
+  "Do whatever processing is necessary when the language-environment changes."
+  (if egg:*in-fence-mode*
+      (progn
+	(its:reset-input)
+	(fence-cancel-input)))
+  (let ((func (get current-language-environment 'set-egg-environ)))
+    (if (not (null func))
+      (funcall func))))
+
 (defun fence-mode-help-command ()
   "Display documentation for fence-mode."
   (interactive)
@@ -2834,9 +2844,13 @@ correspoding to character position.")
 
 (define-key global-map "\C-^"  'special-symbol-input)
 
-(autoload 'busyu-input "busyu" nil t)	;92.10.18 by K.Handa
-(autoload 'kakusuu-input "busyu" nil t)	;92.10.18 by K.Handa
+(autoload 'busyu-input "egg-busyu" nil t)
+(autoload 'kakusuu-input "egg-busyu" nil t)
 
 (provide 'egg)
+
+;; if set-lang-environment has already been called, call egg-lang-switch-callback
+(if (not (null current-language-environment))
+    (egg-lang-switch-callback))
 
 ;;; egg.el ends here

@@ -1,4 +1,15 @@
 							-*- indented-text -*-
+to 20.2 beta3
+-- Miscellaneous Mule/ Egg/Quail patches courtesy of Jareth Hein
+-- Various hyperbole fixes courtesy of Bob Weiner
+-- Restoration of obsolete symbol overriding-file-coding-system
+-- MULE-ization of lib-complete.el
+-- W3-3.0.85
+-- xmine-1.8 coutesy of Jens Lautenbacher
+-- efs-1.15-x5 Courtesy of Michael Sperber
+-- miscellaneous bug fixes
+-- balloon-help.el-1.06 Courtesy of Kyle Jones
+
 to 20.2 beta2
 -- sundry psgml fixes
 -- VM-6.29

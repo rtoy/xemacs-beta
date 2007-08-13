@@ -1,3 +1,13 @@
+Fri Apr 25 10:53:07 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c: libpng already includes setjmp.h, so don't attempt
+	to include it twice.
+
+Thu Apr 24 09:14:13 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* balloon-x.c (vars_of_balloon_x): Don't override advertised and
+	supported balloon-help.
+
 Tue Apr 22 11:54:02 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* emacs.c (main_1): Add syms_of_balloon_x and guard with

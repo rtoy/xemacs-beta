@@ -64,10 +64,10 @@
     (isearch-fep-quail  isearch-fep-prompt-quail  isearch-fep-read-quail)))
 
 ;; the followings are defined in isearch.el
-;;  (define-key isearch-mode-map "\C-k"  'isearch-fep-string)
-;;  (define-key isearch-mode-map "\C-\\" 'isearch-fep-egg)
-;;  (define-key isearch-mode-map "\M-k"  'isearch-fep-egg)
-;;  (define-key isearch-mode-map "\C-o"  'isearch-fep-canna)
+(define-key isearch-mode-map "\C-k"  'isearch-fep-string)
+(define-key isearch-mode-map "\C-\\" 'isearch-fep-egg)
+(define-key isearch-mode-map "\M-k"  'isearch-fep-egg)
+(define-key isearch-mode-map "\C-o"  'isearch-fep-canna)
 ;;  (define-key isearch-mode-map "\C-\]" 'isearch-fep-quail)
 
 (defun isearch-fep-mode ()

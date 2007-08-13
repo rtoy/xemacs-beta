@@ -93,6 +93,10 @@ Latin characters.")
   (self-insert-internal char)
   (check-auto-fill))
 
+;; ### I think this is the right function to put this on... must check further
+;; wire us into pending-delete
+(put 'keyboard-self-insert-do-insert 'pending-delete t)
+
 (defun keyboard-use-local-map-do-insert (map)
   (use-local-map map))
 

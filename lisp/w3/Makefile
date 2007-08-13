@@ -101,8 +101,8 @@ w3.dvi:		w3.txi
 		w3.cps w3.fns w3.kys w3.pgs w3.tps w3.vrs	\
 		w3.log w3.toc w3.aux
 
-w3-vars.elc: w3-cus.el w3-vars.el
-w3-display.elc: w3-display.el css.el font.el w3-imap.el
-css.elc: css.el font.el
-w3.elc: css.el w3-vars.el w3.el
-dsssl.elc: dsssl.el dsssl-flow.el
+w3-vars.elc: w3-cus.elc w3-vars.el
+w3-display.elc: w3-display.el css.elc font.elc w3-imap.elc
+css.elc: css.el font.elc
+w3.elc: css.elc w3-vars.elc w3.el
+dsssl.elc: dsssl.el dsssl-flow.elc

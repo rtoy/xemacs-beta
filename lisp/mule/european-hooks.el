@@ -24,23 +24,23 @@
 ;;; Synched up with: Mule 2.3.
 
 ;; For syntax of Latin-1 characters.
-(loop for c from 64 to 127		; from ',A@(B' to ',A(B'
+(loop for c from 64 to 127		; from 'À' to 'ÿ'
       do (modify-syntax-entry (make-char 'latin-iso8859-1 c) "w"))
 
 (modify-syntax-entry (make-char 'latin-iso8859-1 32) "w") ; no-break space
-(modify-syntax-entry ?,AW(B "_")
-(modify-syntax-entry ?,Aw(B "_")
+(modify-syntax-entry ?× "_")
+(modify-syntax-entry ?÷ "_")
 
 ;; For syntax of Latin-2
-(loop for c in '(?,B!(B ?,B#(B ?,B%(B ?,B&(B ?,B)(B ?,B*(B ?,B+(B ?,B,(B ?,B.(B ?,B/(B ?,B1(B ?,B3(B ?,B5(B ?,B6(B ?,B9(B ?,B:(B ?,B;(B ?,B<(B)
+(loop for c in '(?-B¡ ?£ ?¥ ?¦ ?© ?ª ?« ?¬ ?® ?¯ ?± ?³ ?µ ?¶ ?¹ ?º ?» ?¼)-A
       do (modify-syntax-entry c "w"))
 
 (loop for c from 62 to 126
       do (modify-syntax-entry (make-char 'latin-iso8859-2 c) "w"))
 
 (modify-syntax-entry (make-char 'latin-iso8859-2 32) "w") ; no-break space
-(modify-syntax-entry ?,BW(B ".")
-(modify-syntax-entry ?,Bw(B ".")
+(modify-syntax-entry ?-B× ".")-A
+(modify-syntax-entry ?-B÷ ".")-A
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EUROPEANS
@@ -82,11 +82,11 @@
    mnemonic "MIME/Ltn-5"
    ))
 
-;;(add-hook 'quail-package-alist '("latin-1" "quail/latin"))
-;;(add-hook 'quail-package-alist '("latin-2" "quail/latin"))
-;;(add-hook 'quail-package-alist '("latin-3" "quail/latin"))
-;;(add-hook 'quail-package-alist '("latin-4" "quail/latin"))
-;;(add-hook 'quail-package-alist '("latin-5" "quail/latin"))
+(add-hook 'quail-package-alist '("latin-1" "quail-latin"))
+(add-hook 'quail-package-alist '("latin-2" "quail-latin"))
+(add-hook 'quail-package-alist '("latin-3" "quail-latin"))
+(add-hook 'quail-package-alist '("latin-4" "quail-latin"))
+(add-hook 'quail-package-alist '("latin-5" "quail-latin"))
 
 (define-language-environment 'european
   "European (for Latin-1 through Latin-5)"
@@ -98,6 +98,6 @@
     (set-buffer-file-coding-system-for-read 'no-conversion) ; iso-8859-1
     ;;(setq display-coding-system 'iso-8859-1)
     ;;(setq keyboard-coding-system 'iso-8859-1)
-    ;;(setq-default quail-current-package
-    ;;              (assoc "latin-1" quail-package-alist))))
+    (setq-default quail-current-package
+                  (assoc "latin-1" quail-package-alist))
     ))

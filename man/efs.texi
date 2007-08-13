@@ -4,6 +4,10 @@
 @settitle EFS
 @comment %**end of header (This is for running Texinfo on a region.)
 
+@direntry
+* EFS::		Transparent remote file access via FTP.
+@end direntry
+
 @synindex fn vr
 
 @node Top, What is EFS?, (dir), (dir)

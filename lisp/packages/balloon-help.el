@@ -1,4 +1,4 @@
-;;; Balloon help for XEmacs (requires 19.12 or later)
+;;; Balloon help for XEmacs (requires 19.15 or later)
 ;;; Copyright (C) 1995, 1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -28,63 +28,77 @@
 ;; following line to your .emacs:
 ;;
 ;; (require 'balloon-help)
+;; (balloon-help-mode 1)
 ;;
-;; For 19.12 users:
-;;    If you are using fvwm, [tv]twm or ol[v]wm, you can also add
-;;    the following lines to various configuration file to use
-;;    minimal decorations on the balloon help frames.
+;; The balloon-help frame is a transient window that is not
+;; normally decorated by window managers, so the following
+;; window manager directives may not be needed.  But if they
+;; are:
 ;;
-;;    In .emacs:
-;;       (setq balloon-help-frame-name "balloon-help")
+;; For ol[v]wm use this in .Xdefaults:
+;;    olvwm.NoDecor: balloon-help
+;;      or
+;;    olwm.MinimalDecor: balloon-help
 ;;
-;;    For ol[v]wm use this in .Xdefaults:
-;;       olvwm.NoDecor: balloon-help
-;;         or
-;;       olwm.MinimalDecor: balloon-help
+;; For fvvm version 1 use this in your .fvwmrc:
+;;    NoTitle balloon-help
+;; or
+;;    Style "balloon-help" NoTitle, NoHandles, BorderWidth 0
 ;;
-;;    For fvvm use this in your .fvwmrc:
-;;       NoTitle balloon-help
-;;    or
-;;       Style "balloon-help" NoTitle, NoHandles, BorderWidth 0
+;; For twm use this in your .twmrc:
+;;    NoTitle { "balloon-help" }
 ;;
-;;    For twm use this in your .twmrc:
-;;       NoTitle { "balloon-help" }
-;; 
-;; Under 19.13 and later versions the balloon-help frame uses a
-;; transient window that is not normally decorated by window
-;; managers.  So the window manager directives should not be
-;; needed for XEmacs 19.13 and beyond.
 
 (provide 'balloon-help)
 
-(defvar balloon-help-version "1.05"
+(require 'custom)
+
+(defgroup balloon-help nil
+  "Balloon-help support in XEmacs"
+  :group 'frames)
+
+(defvar balloon-help-version "1.06"
   "Version string for Balloon Help.")
 
-(defvar balloon-help-mode t
+(defvar balloon-help-mode nil
   "*Non-nil means Balloon help mode is enabled.")
 
-(defvar balloon-help-timeout 1500
-  "*Display help after this many milliseconds of mouse inactivity.")
+(defcustom balloon-help-timeout 1500
+  "*Display help after this many milliseconds of mouse inactivity."
+  :type 'integer
+  :group 'balloon-help)
 
-(defvar balloon-help-foreground "black"
-  "*The foreground color for displaying balloon help text.")
+(defcustom balloon-help-foreground "black"
+  "*The foreground color for displaying balloon help text."
+  :type 'string
+  :group 'balloon-help)
 
-(defvar balloon-help-background "rgb:c0/c0/c0"
-  "*The background color for the balloon help frame.")
+(defcustom balloon-help-background "gray80"
+  "*The background color for the balloon help frame."
+  :type 'string
+  :group 'balloon-help)
 
-(defvar balloon-help-background-pixmap ""
-  "*The background pixmap for the balloon help frame.")
+(defcustom balloon-help-background-pixmap ""
+  "*The background pixmap for the balloon help frame."
+  :type 'string
+  :group 'balloon-help)
 
-(defvar balloon-help-font "fixed"
-  "*The font for displaying balloon help text.")
+(defcustom balloon-help-font "variable"
+  "*The font for displaying balloon help text."
+  :type 'string
+  :group 'balloon-help)
 
-(defvar balloon-help-border-color "black"
-  "*The color for displaying balloon help frame's border.")
+(defcustom balloon-help-border-color "black"
+  "*The color for displaying balloon help frame's border."
+  :type 'string
+  :group 'balloon-help)
 
-(defvar balloon-help-border-width 2
-  "*The width of the balloon help frame's border.")
+(defcustom balloon-help-border-width 1
+  "*The width of the balloon help frame's border."
+  :type 'integer
+  :group 'balloon-help)
 
-(defvar balloon-help-use-sound nil
+(defcustom balloon-help-use-sound nil
   "*Non-nil value means play a sound to herald the appearance
 and disappearance of the help frame.
 
@@ -92,14 +106,20 @@ and disappearance of the help frame.
 `balloon-help-disappears' will be played when the frame disappears.
 
 See the documentation for the function load-sound-file to see how
-define sounds.")
+define sounds."
+  :type 'boolean
+  :group 'balloon-help)
 
-(defvar balloon-help-frame-name nil
-  "*The frame name to use for the frame to display the balloon help.")
+(defcustom balloon-help-frame-name "balloon-help"
+  "*The frame name to use for the frame to display the balloon help."
+  :type 'string
+  :group 'balloon-help)
 
-(defvar balloon-help-aggressively-follow-mouse nil
+(defcustom balloon-help-aggressively-follow-mouse nil
   "*Non-nil means the balloon should move with the mouse even if the mouse
-is over the same object as the last mouse motion event.")
+is over the same object as the last mouse motion event."
+  :type 'boolean
+  :group 'balloon-help)
 
 ;;;
 ;;; End of user variables.
@@ -107,7 +127,9 @@ is over the same object as the last mouse motion event.")
 
 (defvar mouse-motion-hook mouse-motion-handler
   "Hooks to be run whenever the user moves the mouse.
-Each hook is called with one argument, the mouse motion event.")
+Each hook is called with one argument, the mouse motion event.
+This hooks variable does not exist unless the \"balloon-help\" library
+has been loaded.")
 
 (defun mouse-motion-hook (event)
   "Run the hooks attached to mouse-motion-hook."
@@ -118,6 +140,9 @@ Each hook is called with one argument, the mouse motion event.")
 (defvar balloon-help-frame nil
   "Balloon help is displayed in this frame.")
 
+(defvar balloon-help-junk-frame nil
+  "Junk parent frame of balloon-help-frame.")
+
 (defvar balloon-help-help-object nil
   "Object that the mouse is over that has a help property, nil otherwise.")
 
@@ -127,7 +152,7 @@ Each hook is called with one argument, the mouse motion event.")
 (defvar balloon-help-help-object-y nil
   "Last vertical mouse position over balloon-help-help-object.")
 
-(defvar balloon-help-buffer nil
+(defvar balloon-help-buffer (get-buffer-create " *balloon-help*")
   "Buffer used to display balloon help.")
 
 (defvar balloon-help-timeout-id nil
@@ -166,22 +191,32 @@ used as the help message."
 
 (defun balloon-help-displayed ()
   (and (frame-live-p balloon-help-frame)
-       (frame-visible-p balloon-help-frame)))
+       (frame-visible-p balloon-help-frame)
+       (eq (frame-device balloon-help-frame) (selected-device))))
+
+(defun balloon-help (&optional event)
+  "Display Balloon Help for the object under EVENT.
+If EVENT is nil, then point in the selected window is used instead.
+See the documentation for balloon-help-mode to find out what this means.
+This command must be bound to a mouse event."
+  (interactive "e")
+  (unless (device-on-window-system-p)
+    (error "Cannot display balloon help on %s device" (device-type)))
+  (let ((balloon-help-mode t))
+    (balloon-help-motion-hook event))
+  (when balloon-help-timeout-id
+    (disable-timeout balloon-help-timeout-id)
+    (setq balloon-help-timeout-id nil))
+  (balloon-help-display-help))
 
 (defun balloon-help-motion-hook (event)
   (cond
    ((null balloon-help-mode) t)
-   ((button-press-event-p event)
-    (setq balloon-help-help-object nil)
-    (if balloon-help-timeout-id
-	(disable-timeout balloon-help-timeout-id))
-    (if (balloon-help-displayed)
-	(balloon-help-undisplay-help)))
    (t
-    (let* ((buffer (event-buffer event))
-	   (frame (event-frame event))
-	   (point (and buffer (event-point event)))
-	   (modeline-point (and buffer (event-modeline-position event)))
+    (let* ((buffer (if event (event-buffer event) (current-buffer)))
+	   (frame (if event (event-frame event) (selected-frame)))
+	   (point (if event (event-point event) (point)))
+	   (modeline-point (if event (event-modeline-position event)))
 	   (modeline-extent (and modeline-point
 				 (map-extents
 				  (function (lambda (e ignored) e))
@@ -191,14 +226,14 @@ used as the help message."
 				  modeline-point modeline-point
 				  nil nil
 				  'balloon-help)))
-	   (glyph-extent (event-glyph-extent event))
+	   (glyph-extent (and event (event-glyph-extent event)))
 	   (glyph-extent (if (and glyph-extent
 				  (extent-property glyph-extent
 						   'balloon-help))
 			     glyph-extent))
 	   (extent (and point
 			(extent-at point buffer 'balloon-help)))
-	   (button (event-toolbar-button event))
+	   (button (and event (event-toolbar-button event)))
 	   (button (if (and button (toolbar-button-help-string button))
 		       button
 		     nil))
@@ -209,8 +244,9 @@ used as the help message."
 		   (not (eq frame balloon-help-frame)))
 	      (progn
 		(setq balloon-help-help-object nil)
-		(if id
-		    (disable-timeout id))
+		(when id
+		  (disable-timeout id)
+		  (setq balloon-help-timeout-id nil))
 		(if (balloon-help-displayed)
 		    (balloon-help-undisplay-help))))
 	(let* ((params (frame-parameters frame))
@@ -232,10 +268,15 @@ used as the help message."
 			 (save-excursion (set-buffer buffer) current-menubar))
 		    22 0)))
 	  (setq balloon-help-help-object-x
-		(+ left xleft-toolbar-width (event-x-pixel event))
+		(if event
+		    (+ left xleft-toolbar-width
+		       (event-x-pixel event))
+		  (/ (* (device-pixel-width) 2) 5))
 		balloon-help-help-object-y
-		(+ top xtop-toolbar-height menubar-height
-		   (event-y-pixel event))))
+		(if event
+		    (+ top xtop-toolbar-height menubar-height
+		       (event-y-pixel event))
+		  (/ (* (device-pixel-height) 2) 5))))
 	(cond ((eq frame balloon-help-frame) t)
 	      ((eq object balloon-help-help-object)
 	       (if (and (balloon-help-displayed)
@@ -253,18 +294,9 @@ used as the help message."
 				  (function balloon-help-display-help)
 				  nil)))))))))
 
-(defun balloon-help-pre-command-hook (&rest ignored)
-  (setq balloon-help-help-object nil)
-  (if (balloon-help-displayed)
-      (balloon-help-undisplay-help)))
-
-(fset 'balloon-help-post-command-hook 'balloon-help-pre-command-hook)
-(fset 'balloon-help-mouse-leave-frame-hook 'balloon-help-pre-command-hook)
-(fset 'balloon-help-deselect-frame-hook 'balloon-help-pre-command-hook)
-
 (defun balloon-help-display-help (&rest ignored)
   (setq balloon-help-timeout-id nil)
-  (if balloon-help-help-object
+  (if (and balloon-help-help-object (device-on-window-system-p))
       (let* ((object balloon-help-help-object)
 	     (help (or (and (extent-live-p object)
 			    (extent-property object 'balloon-help))
@@ -281,38 +313,33 @@ used as the help message."
 	     (setq help (format "help function signaled: %S" data)))))
 	(if (stringp help)
 	    (save-excursion
-	      (if (not (bufferp balloon-help-buffer))
-		  (setq balloon-help-buffer
-			(get-buffer-create " *balloon-help*")))
-	      (if (not (frame-live-p balloon-help-frame))
+	      (if (or (not (frame-live-p balloon-help-frame))
+		      (not (eq (selected-device)
+			       (frame-device balloon-help-frame))))
 		  (setq balloon-help-frame (balloon-help-make-help-frame)))
 	      (set-buffer balloon-help-buffer)
 	      (erase-buffer)
 	      (insert help)
 	      (if (not (bolp))
 		  (insert ?\n))
-	      ;; help strings longer than 2 lines have the last
-	      ;; line stolen by the minibuffer, so make sure the
-	      ;; last line is blank.  Make the top line blank for
-	      ;; some symmetry.
-	      (if (< 2 (count-lines (point-min) (point-max)))
-		  (progn
-		    (insert ?\n)
-		    ;; add a second blank line at the end to
-		    ;; prevent the modeline bar from clipping the
-		    ;; descenders of the last line of text.
-		    (insert ?\n)
-		    (goto-char (point-min))
-		    (insert ?\n)))
-	      ;; cursor will be at point-min because we're just
-	      ;; moving point which doesn't affect window-point
-	      ;; when the window isn't selected.  Indent
-	      ;; everything so that the cursor will be over a
-	      ;; space.  The 1-pixel bar cursor will be
-	      ;; completely invisible this way.
+;;;	      ;; help strings longer than 2 lines have the last
+;;;	      ;; line stolen by the minibuffer, so make sure the
+;;;	      ;; last line is blank.  Make the top line blank for
+;;;	      ;; some symmetry.
+;;;	      (if (< 2 (count-lines (point-min) (point-max)))
+;;;		  (progn
+;;;		    (insert ?\n)
+;;;		    ;; add a second blank line at the end to
+;;;		    ;; prevent the modeline bar from clipping the
+;;;		    ;; descenders of the last line of text.
+;;;		    (insert ?\n)
+;;;		    (goto-char (point-min))
+;;;		    (insert ?\n)))
+	      ;; indent everything by a space for readability
  	      (indent-rigidly (point-min) (point-max) 1)
-	      (balloon-help-move-help-frame)
+	      (balloon-help-set-frame-properties)
 	      (balloon-help-resize-help-frame)
+	      (balloon-help-move-help-frame)
 	      (balloon-help-expose-help-frame))))))
 
 (defun balloon-help-undisplay-help ()
@@ -334,49 +361,123 @@ used as the help message."
 	    (play-sound 'balloon-help-appears))
 	(setq balloon-help-display-pending t))))
 
+(defun balloon-help-set-frame-properties ()
+  (let ((frame balloon-help-frame))
+    ;; don't set the font unconditionally because it makes the
+    ;; frame size flap visibly while XEmacs figures out the new
+    ;; frame size.
+    (if (not (equal (face-font 'default frame) balloon-help-font))
+	(set-face-font 'default balloon-help-font frame))
+    (set-face-foreground 'default balloon-help-foreground frame)
+    (set-face-background 'default balloon-help-background frame)
+    (set-face-background 'modeline balloon-help-background frame)
+    (set-face-background-pixmap 'default balloon-help-background-pixmap frame)
+    (set-frame-property frame 'border-color balloon-help-border-color)
+    (set-frame-property frame 'border-width balloon-help-border-width)))
+
+;;;(defun balloon-help-resize-help-frame ()
+;;;  (save-excursion
+;;;    (set-buffer balloon-help-buffer)
+;;;    (let ((longest 0)
+;;;	  (lines 0)
+;;;	  (done nil)
+;;;	  (window-min-height 1)
+;;;	  (window-min-width 1))
+;;;      (goto-char (point-min))
+;;;      (while (not done)
+;;;	(end-of-line)
+;;;	(setq longest (max longest (current-column))
+;;;	      done (not (= 0 (forward-line))))
+;;;	(and (not done) (setq lines (1+ lines))))
+;;;      (set-frame-size balloon-help-frame (+ 1 longest) lines))))
+
 (defun balloon-help-resize-help-frame ()
   (save-excursion
     (set-buffer balloon-help-buffer)
-    (let ((longest 0)
-	  (lines 0)
-	  (done nil)
-	  (window-min-height 1)
-	  (window-min-width 1))
+    (let* ((longest 0)
+	   (lines 0)
+	   (done nil)
+	   (inst (vector 'string ':data nil))
+	   (window (frame-selected-window balloon-help-frame))
+	   (font-width (font-width (face-font 'default) balloon-help-frame))
+	   start width
+	   (window-min-height 1)
+	   (window-min-width 1))
       (goto-char (point-min))
       (while (not done)
+	(setq start (point))
 	(end-of-line)
-	(setq longest (max longest (current-column))
+	(aset inst 2 (buffer-substring start (point)))
+	(setq longest (max longest (glyph-width (make-glyph inst) window))
 	      done (not (= 0 (forward-line))))
 	(and (not done) (setq lines (1+ lines))))
-      (set-frame-size balloon-help-frame (+ 1 longest) lines))))
+      (setq width (/ longest font-width)
+	    width (if (> longest (* width font-width)) (1+ width) width))
+      (set-frame-size balloon-help-frame (+ 0 width) lines))))
+
+(defun balloon-help-compute-help-frame-y-location ()
+  (let* ((device-bottom (device-pixel-height
+			 (frame-device balloon-help-frame)))
+	 (y-pos (max 0 (+ 48 balloon-help-help-object-y)))
+	 (height (frame-pixel-height balloon-help-frame))
+	 (bottom (+ y-pos height)))
+    (if (>= bottom device-bottom)
+	(setq y-pos (max 0 (- y-pos (- bottom device-bottom)))))
+    y-pos ))
+
+(defun balloon-help-compute-help-frame-x-location ()
+  (let* ((device-right (device-pixel-width (frame-device balloon-help-frame)))
+	 (x-pos (max 0 (+ 32 balloon-help-help-object-x)))
+	 (width (frame-pixel-width balloon-help-frame))
+	 (right (+ x-pos width)))
+    (if (>= right device-right)
+	(setq x-pos (max 0 (- x-pos (- right device-right)))))
+    x-pos ))
+
+(defun balloon-help-move-help-frame ()
+  (let ((x (balloon-help-compute-help-frame-x-location))
+	(y (balloon-help-compute-help-frame-y-location)))
+    (set-frame-position balloon-help-frame x y)))
 
 (defun balloon-help-make-junk-frame ()
   (let ((window-min-height 1)
 	(window-min-width 1))
-    (save-excursion
-      (set-buffer (generate-new-buffer "*junk-frame-buffer*"))
-      (prog1
-	  (make-frame '(minibuffer t initially-unmapped t width 1 height 1))
-	(rename-buffer " *junk-frame-buffer*" t)))))
+    (when (framep balloon-help-junk-frame)
+      (delete-frame balloon-help-junk-frame)
+      (setq balloon-help-junk-frame nil))
+    (prog1
+	(setq balloon-help-junk-frame
+	      (make-frame '(minibuffer t
+			    initially-unmapped t
+			    width 1
+			    height 1)))
+      (set-window-buffer (frame-selected-window balloon-help-junk-frame)
+			 balloon-help-buffer))))
 
 (defun balloon-help-make-help-frame ()
+  (when (framep balloon-help-frame)
+    (delete-frame balloon-help-frame)
+    (setq balloon-help-frame nil))
   (save-excursion
     (set-buffer balloon-help-buffer)
+    (setq truncate-lines t)
     (set-buffer-menubar nil)
     (let* ((x (balloon-help-compute-help-frame-x-location))
 	   (y (balloon-help-compute-help-frame-y-location))
 	   (window-min-height 1)
 	   (window-min-width 1)
+	   (junk-frame (balloon-help-make-junk-frame))
 	   (frame (make-frame (list
 			       '(initially-unmapped . t)
 			       ;; try to evade frame decorations
-			       (cons 'name (or balloon-help-frame-name
-					       "xclock"))
+			       (cons 'name balloon-help-frame-name)
 			       (cons 'border-width balloon-help-border-width)
 			       (cons 'border-color balloon-help-border-color)
 			       (cons 'top y)
 			       (cons 'left x)
-			       (cons 'popup (balloon-help-make-junk-frame))
+			       (cons 'popup junk-frame)
+			       (cons 'minibuffer
+				     (minibuffer-window junk-frame))
 			       '(width . 3)
 			       '(height . 1)))))
       (set-face-font 'default balloon-help-font frame)
@@ -390,33 +491,43 @@ used as the help message."
       (set-specifier left-toolbar-width (cons frame 0))
       (set-specifier right-toolbar-width (cons frame 0))
       (set-specifier bottom-toolbar-height (cons frame 0))
+      (set-specifier top-toolbar-visible-p (cons frame nil))
+      (set-specifier left-toolbar-visible-p (cons frame nil))
+      (set-specifier right-toolbar-visible-p (cons frame nil))
+      (set-specifier bottom-toolbar-visible-p (cons frame nil))
       (set-specifier top-toolbar (cons frame nil))
       (set-specifier left-toolbar (cons frame nil))
       (set-specifier right-toolbar (cons frame nil))
       (set-specifier bottom-toolbar (cons frame nil))
       (set-specifier scrollbar-width (cons frame 0))
       (set-specifier scrollbar-height (cons frame 0))
-      (and (boundp 'text-cursor-visible-p)
-	   (specifierp text-cursor-visible-p)
-	   (set-specifier text-cursor-visible-p (cons frame nil)))
+      (set-specifier text-cursor-visible-p (cons frame nil))
+      (set-specifier has-modeline-p (cons frame nil))
       (set-specifier modeline-shadow-thickness (cons frame 0))
+      (set-specifier (glyph-image truncation-glyph) [nothing] frame '(x))
       (set-face-background 'modeline balloon-help-background frame)
       frame )))
 
-(defun balloon-help-compute-help-frame-x-location ()
-  (max 0 (+ 32 balloon-help-help-object-x)))
+(defun balloon-help-pre-command-hook ()
+  (unless (eq this-command 'balloon-help)
+    (balloon-help-go-away)))
 
-(defun balloon-help-compute-help-frame-y-location ()
-  (max 0 (+ 48 balloon-help-help-object-y)))
+(defun balloon-help-go-away (&rest ignored)
+  (setq balloon-help-help-object nil)
+  (if (balloon-help-displayed)
+      (balloon-help-undisplay-help)))
 
-(defun balloon-help-move-help-frame ()
-  (let ((x (balloon-help-compute-help-frame-x-location))
-	(y (balloon-help-compute-help-frame-y-location)))
-    (set-frame-position balloon-help-frame x y)))
+(defun balloon-help-mouse-leave-frame-hook (&rest ignored)
+  (let* ((mouse (mouse-position))
+	 (window (car mouse)))
+    (if (or (null window) (not (eq (window-frame window) balloon-help-frame)))
+	(balloon-help-go-away))))
+
+;; loses with ClickToFocus under fvwm
+;;(fset 'balloon-help-deselect-frame-hook 'balloon-help-go-away)
+;;(add-hook 'deselect-frame-hook 'balloon-help-deselect-frame-hook)
 
 (add-hook 'mouse-motion-hook 'balloon-help-motion-hook)
+
 (add-hook 'pre-command-hook 'balloon-help-pre-command-hook)
-(add-hook 'post-command-hook 'balloon-help-post-command-hook)
 (add-hook 'mouse-leave-frame-hook 'balloon-help-mouse-leave-frame-hook)
-;; loses with ClickToFocus under fvwm
-;;(add-hook 'deselect-frame-hook 'balloon-help-deselect-frame-hook)

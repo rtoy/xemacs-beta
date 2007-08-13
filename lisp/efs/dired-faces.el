@@ -57,9 +57,9 @@
   :group 'dired)
 
 (defface dired-face-boring '((((class color))
-			      (:foreground "Grey"))
+			      (:foreground "Gray65"))
 			     (((class grayscale))
-			      (:foreground "Grey")))
+			      (:foreground "Gray65")))
   "Face used for unimportant files."
   :group 'dired)
 

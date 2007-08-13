@@ -25,9 +25,9 @@
 
 ;; For syntax of Cyrillic
 (modify-syntax-entry 'cyrillic-iso8859-5 "w")
-(modify-syntax-entry ?,L-(B ".")
-(modify-syntax-entry ?,Lp(B ".")
-(modify-syntax-entry ?,L}(B ".")
+(modify-syntax-entry ?-L­ ".")-A
+(modify-syntax-entry ?-Lð ".")-A
+(modify-syntax-entry ?-Lý ".")-A
 
 
 
@@ -45,12 +45,12 @@
    mnemonic "ISO8/Cyr"
    ))
 
-;;(add-hook 'quail-package-alist '("jcuken" "quail/cyrillic"))
-;;(add-hook 'quail-package-alist '("macedonian" "quail/cyrillic"))
-;;(add-hook 'quail-package-alist '("serbian" "quail/cyrillic"))
-;;(add-hook 'quail-package-alist '("beylorussian" "quail/cyrillic"))
-;;(add-hook 'quail-package-alist '("ukrainian" "quail/cyrillic"))
-;;(add-hook 'quail-package-alist '("yawerty" "quail/cyrillic"))
+;;(add-hook 'quail-package-alist '("jcuken" "quail-cyrillic"))
+;;(add-hook 'quail-package-alist '("macedonian" "quail-cyrillic"))
+;;(add-hook 'quail-package-alist '("serbian" "quail-cyrillic"))
+;;(add-hook 'quail-package-alist '("beylorussian" "quail-cyrillic"))
+;;(add-hook 'quail-package-alist '("ukrainian" "quail-cyrillic"))
+(add-hook 'quail-package-alist '("yawerty" "quail-cyrillic"))
 
 (define-language-environment 'cyrillic
   "Cyrillic"
@@ -60,6 +60,6 @@
     (set-default-buffer-file-coding-system 'iso-8859-5)
     (setq terminal-coding-system 'iso-8859-5)
     (setq keyboard-coding-system 'iso-8859-5)
-;;    (setq-default quail-current-package
-;;		  (assoc "yawerty" quail-package-alist))))
+    (setq-default quail-current-package
+		  (assoc "yawerty" quail-package-alist))
     ))

@@ -112,6 +112,66 @@ denizen of the free software community.
 * Changes in XEmacs 20.2
 ========================
 
+Testing of XEmacs 20.1 revealed a number of showstopping bugs at the
+very final moment.  Instead of confusing the version numbers further,
+the `20.1' designation was abandoned, and the release was renamed to
+`20.2'.
+
+** The `C-z' key now iconifies only the current X frame.  You can use
+`C-x C-z' to get the old behavior.
+
+On the tty frames `C-z' behaves as before.
+
+** Several Egg/Wnn-related crashes were fixed.
+
+** lib-complete.el was MULE-ized.
+
+The commands `find-library', `find-library-other-window' and
+`find-library-other-frame' now take an optional coding system
+argument.
+
+** XEmacs 20.0 MULE API supported for backwards compatibilty
+
+XEmacs 20.2 primarily supports the MULE 3 API.  It now also supports
+the XEmacs 20.0 MULE API.
+
+** `values' now has a setf method
+
+** W3-3.0.85 Courtesy of William Perry
+
+Bug fixes.  See the 20.1 notes for further details.
+
+** Gnus-5.4.47 Courtesy of Lars Magne Ingebrigtsen
+
+Bug fixes.  See the 20.1 notes for further details.
+
+** edmacro.el-3.10 Courtesy of Hrvoje Niksic
+
+Interface changes to maintain Emacs compatibility.
+
+** live-icon.el-1.3
+
+Bug fixes.
+
+** tpu-edt.el
+
+Restoration of proper behavior with respect to the zmacs region.
+
+** xmine.el-1.8
+
+** balloon-help.el-1.06 Courtesy of Kyle Jones
+
+** VM-6.29
+
+** Verilog.el-2.25 Courtesy of Michael McNamara
+
+** etags.c-11.83 Courtesy of F. Potortì
+
+** Further support of Custom package by Hrvoje Niksic
+
+* Changes in XEmacs 20.1 (never publicly released)
+========================
+
 ** The logo has been changed, and the default background color is
 now a shade of gray instead of the eye-burning white.
 
@@ -126,11 +186,6 @@ when new mail arrives.  It also supports balloon-help messages.
 ** Various commands that were previously disabled are now enabled, like
 eval-expression (`M-:') and upcase-region (`C-x C-u')/downcase-region
 (`C-x C-l').
-
-** The `C-z' key now iconifies only the current X frame.  You can use
-`C-x C-z' to get the old behavior.
-
-On the tty frames `C-z' behaves as before.
 
 ** Numerous causes of crashes have been fixed.  XEmacs should now be
 even more stable than before.

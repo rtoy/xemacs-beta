@@ -1,3 +1,8 @@
+Fri Apr 25 09:12:04 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* pstogif: Use Martin Buchholz magic to automagically find perl
+	interpreter.
+
 Tue Apr  8 03:08:22 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in: C Comment out Make comments.  No snide comments

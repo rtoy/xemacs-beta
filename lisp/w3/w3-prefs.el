@@ -1,7 +1,7 @@
 ;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/21 15:52:22
-;; Version: 1.23
+;; Created: 1997/04/24 15:41:27
+;; Version: 1.24
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -56,6 +56,8 @@
     (while vars
       (setq temp (intern (format "w3-preferences-temp-%s" (car vars))))
       (set (car vars) (symbol-value temp))
+      (if (fboundp 'custom-set-variables)
+	  (eval (` (custom-set-variables '((, (car vars)) (quote (, (symbol-value temp))) t)))))
       (setq vars (cdr vars)))))
 					 
 (defun w3-preferences-create-temp-variables (vars)
@@ -538,6 +540,8 @@
 	    panels (cdr panels))
       (if (fboundp func)
 	  (funcall func)))
+    (if (fboundp 'custom-save-variables)
+	(custom-save-variables))
     (w3-preferences-save-options)
     (message "Options saved")
     (sit-for 1)

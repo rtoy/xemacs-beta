@@ -1509,7 +1509,8 @@ If FILE is nil, try to load a default file.  The default file names are
       (if (null term)
 	  (error "Unable to load EDT terminal specific file for %s" edt-term)))
     (setq edt-term term))
-  (setq edt-orig-transient-mark-mode transient-mark-mode)
+  (when (boundp 'transient-mark-mode)
+    (setq edt-orig-transient-mark-mode transient-mark-mode))
   (add-hook 'activate-mark-hook
 	    (function
 	     (lambda ()
@@ -1532,7 +1533,8 @@ If FILE is nil, try to load a default file.  The default file names are
   (setq edt-select-mode-text nil)
   (edt-reset)
   (force-mode-line-update t)
-  (setq transient-mark-mode edt-orig-transient-mark-mode)
+  (when (boundp 'transient-mark-mode)
+    (setq transient-mark-mode edt-orig-transient-mark-mode))
   (message "Original key bindings restored; EDT Emulation disabled"))
 
 (defun edt-default-emulation-setup (&optional user-setup)
@@ -1590,7 +1592,8 @@ If FILE is nil, try to load a default file.  The default file names are
 (defun edt-select-default-global-map()
   "Select default EDT emulation key bindings."
   (interactive)
-  (transient-mark-mode 1)
+  (when (fboundp 'transient-mark-mode)
+    (transient-mark-mode 1))
   (use-global-map edt-default-global-map)
   (if (not edt-keep-current-page-delimiter)
       (progn
@@ -1607,7 +1610,8 @@ If FILE is nil, try to load a default file.  The default file names are
   (interactive)
   (if edt-user-map-configured
       (progn
-	(transient-mark-mode 1)
+	(when (fboundp 'transient-mark-mode)
+	  (transient-mark-mode 1))
         (use-global-map edt-user-global-map)
         (if (not edt-keep-current-page-delimiter)
             (progn

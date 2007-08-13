@@ -33,6 +33,7 @@
 ;; string, you can input any text from ASCII keyboard.
 
 (require 'mule)
+(require 'visual-mode)
 
 ;;;###autoload
 (defconst quail-version "2.2")
@@ -61,9 +62,9 @@
 (make-variable-buffer-local 'quail-keep-state)
 (defvar quail-mode-string nil)
 (make-variable-buffer-local 'quail-mode-string)
-(defvar quail-overlay nil
+(defvar quail-extent nil
   "Overlay which covers quail zone.")
-(make-variable-buffer-local 'quail-overlay)
+(make-variable-buffer-local 'quail-extent)
 (defvar quail-current-key nil
   "Within Quail mode, a key string typed so far.")
 (make-variable-buffer-local 'quail-current-key)
@@ -465,8 +466,8 @@ The description about the current quail package is shown by \\[quail-help]."
     (setq quail-mode t
 	  quail-mode-string prompt)
     (erase-buffer)
-    (or (overlayp quail-overlay)
-	(setq quail-overlay (make-overlay 1 1)))
+    (or (extentp quail-extent)
+	(setq quail-extent (make-extent 1 1)))
     (set-buffer curbuf))
   (cond ((get-buffer-window quail-guidance-buf)
 	 ;; `buf' is already shown in some window.
@@ -504,10 +505,10 @@ The description about the current quail package is shown by \\[quail-help]."
       (setq mode-line-format
 	    (cons '(quail-mode (mc-flag ("[" quail-mode-string "]")))
 		  mode-line-format)))
-  (if (null (overlayp quail-overlay))
+  (if (null (extentp quail-extent))
       (progn
-	(setq quail-overlay (make-overlay (point) (point)))
-	(overlay-put quail-overlay 'face quail-region-face)))
+	(setq quail-extent (make-extent (point) (point)))
+	(set-extent-face quail-extent 'face quail-region-face)))
   (make-local-hook 'post-command-hook)
   (add-hook 'post-command-hook 'quail-reset-state nil t)
   (setq quail-keep-state nil)
@@ -536,7 +537,7 @@ The description about the current quail package is shown by \\[quail-help]."
 (defun quail-exit-mode ()
   (interactive)
   (kill-local-variable 'post-command-hook)
-  (delete-overlay quail-overlay)
+  (delete-extent quail-extent)
   (quail-delete-guidance-buf)
   (let ((modes (quail-extra-mode-list))
 	(i 0))
@@ -562,23 +563,23 @@ The description about the current quail package is shown by \\[quail-help]."
 	(quail-init-state))))
 
 (defun quail-init-state ()
-  (if (overlayp quail-overlay)
-      (move-overlay quail-overlay (point) (point))
-    (setq quail-overlay (make-overlay (point) (point))))
+  (if (extentp quail-extent)
+      (set-extent-endpoints quail-extent (point) (point))
+    (setq quail-extent (make-extent (point) (point))))
   (setq quail-current-key nil
 	quail-current-str nil)
   (if quail-sub-mode (quail-exit-sub-mode))
   (quail-setup-guidance-buf))
 
 (defun quail-check-state ()
-  (if (and (overlay-buffer quail-overlay)
-	   (= (point) (overlay-end quail-overlay)))
+  (if (and (extent-object quail-extent)
+	   (= (point) (extent-end-position quail-extent)))
       quail-current-key
     (quail-init-state)
     nil))
 
 (defun quail-delete-region ()
-  (delete-region (overlay-start quail-overlay) (overlay-end quail-overlay)))
+  (delete-region (extent-start-position quail-extent) (extent-end-position quail-extent)))
 
 (defun quail-insert (str)
   (quail-delete-region)
@@ -593,7 +594,7 @@ The description about the current quail package is shown by \\[quail-help]."
   (if (and auto-fill-function (> (current-column) fill-column))
       (run-hooks 'auto-fill-function))
   (let ((len (if (integerp str) (char-bytes str) (length str))))
-    (move-overlay quail-overlay (- (point) len) (point)))
+    (set-extent-endpoints quail-extent (- (point) len) (point)))
   (quail-show-guidance))
 
 (defun quail-get-candidates (def)
@@ -659,9 +660,9 @@ The description about the current quail package is shown by \\[quail-help]."
 	(goto-char (point-min))
 	(if (search-forward (concat " " key ":") nil t)
 	    (if (and str (search-forward (concat "." str) nil t))
-		(move-overlay quail-overlay (1+ (match-beginning 0)) (point))
-	      (move-overlay quail-overlay (match-beginning 0) (point)))
-	  (move-overlay quail-overlay 1 1))
+		(set-extent-endpoints quail-extent (1+ (match-beginning 0)) (point))
+	      (set-extent-endpoints quail-extent (match-beginning 0) (point)))
+	  (set-extent-endpoints quail-extent 1 1))
 	(select-window (get-buffer-window buf))
 	)))
 
@@ -750,6 +751,9 @@ The description about the current quail package is shown by \\[quail-help]."
   (if (and quail-current-key (null quail-sub-mode))
       (quail-enter-sub-mode))
   )
+
+;; wire us into pending-delete
+(put 'quail-self-insert-command 'pending-delete t)
 
 (defun quail-next-candidate ()
   "Select next candidate."
@@ -862,7 +866,7 @@ The description about the current quail package is shown by \\[quail-help]."
 	  (let ((idx (car candidates))
 		(maxidx (1+ (/ (1- (length (cdr candidates))) 10)))
 		(num 0)
-		p p1 p2 str)
+		p p1 p2)
 	    (indent-to 10)
 	    (insert (format "(%d/%d)" (1+ (/ idx 10)) maxidx))
 	    (setq candidates (nthcdr (* (/ idx 10) 10) (cdr candidates)))
@@ -908,8 +912,8 @@ The description about the current quail package is shown by \\[quail-help]."
 		  (get-buffer-create "*Completions*")))
 	(set-buffer quail-completion-buf)
 	(erase-buffer)
-	(setq quail-overlay (make-overlay 1 1))
-	(overlay-put quail-overlay 'face quail-selection-face)
+	(setq quail-extent (make-extent 1 1))
+	(set-extent-face quail-extent 'face quail-selection-face)
 	(insert "Current candidates:\n")
 	(quail-completion-list key def 1)
 	(quail-display-buffer (current-buffer)))
@@ -937,8 +941,7 @@ The description about the current quail package is shown by \\[quail-help]."
 (defun quail-candidate-with-indent (candidates key)
   (if (consp candidates)
       (let ((clm (current-column))
-	    (i 0)
-	    num)
+	    (i 0))
 	(while candidates
 	  (if (= (% i 10) 0) (insert (format "(%d)" (1+ (/ i 10)))))
 	  (insert " " (if (= (% i 10) 9) "0" (+ ?1 (% i 10))) ".")

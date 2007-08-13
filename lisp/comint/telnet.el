@@ -120,7 +120,7 @@ rejecting one login and prompting again for a username and password.")
   (set-keymap-parents telnet-mode-map (list comint-mode-map))
   (define-key telnet-mode-map "\C-m" 'telnet-send-input)
 ;  (define-key telnet-mode-map "\C-j" 'telnet-send-input)
-  (define-key telnet-mode-map "\C-c\C-q" 'send-process-next-char)
+  (define-key telnet-mode-map "\C-c\C-q" 'telnet-send-process-next-char)
   (define-key telnet-mode-map "\C-c\C-c" 'telnet-interrupt-subjob) 
   (define-key telnet-mode-map "\C-c\C-z" 'telnet-c-z))
 

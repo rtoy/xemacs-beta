@@ -1,7 +1,7 @@
 ;;; devices.el -- XEmacs device API emulation
 ;; Author: wmperry
-;; Created: 1997/04/21 15:57:56
-;; Version: 1.2
+;; Created: 1997/04/22 14:48:02
+;; Version: 1.3
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -114,13 +114,13 @@ the terminal type will be inferred from the TERM environment variable."
 (defun make-x-device (&optional display)
   (make-device 'x display))
 
-(defsubst set-device-selected-frame (device frame)
+(defun set-device-selected-frame (device frame)
   "Set the selected frame of device object DEVICE to FRAME.
 If DEVICE is nil, the selected device is used.
 If DEVICE is the selected device, this makes FRAME the selected frame."
   (select-frame frame))
 
-(defsubst set-device-baud-rate (device rate)
+(defun set-device-baud-rate (device rate)
   "Set the output baud rate of DEVICE to RATE.
 On most systems, changing this value will affect the amount of padding
 and other strategic decisions made during redisplay."
@@ -137,12 +137,12 @@ Return nil otherwise."
    (t
     nil)))
 
-(defsubst event-device (event)
+(defun event-device (event)
   "Return the device that EVENT occurred on.
 This will be nil for some types of events (e.g. keyboard and eval events)."
   (dfw-device (posn-window (event-start event))))
 
-(defsubst device-connection (&optional device)
+(defun device-connection (&optional device)
   "Return the connection of the specified device.
 DEVICE defaults to the selected device if omitted"
   (or (cdr-safe (assq 'display (frame-parameters device))) "stdio"))
@@ -169,13 +169,13 @@ name; in such a case, the first device found is returned.)"
   "Return the output baud rate of DEVICE."
   'baud-rate)
 
-(defsubst device-on-window-system-p (&optional device)
+(defun device-on-window-system-p (&optional device)
   "Return non-nil if DEVICE is on a window system.
 This generally means that there is support for the mouse, the menubar,
 the toolbar, glyphs, etc."
   (and (cdr-safe (assq 'display (frame-parameters device))) t))
 
-(defsubst device-name (&optional device)
+(defun device-name (&optional device)
   "Return the name of the specified device."
   (or (cdr-safe (assq 'display (frame-parameters device))) "stdio"))
 
@@ -218,43 +218,43 @@ will automatically call `save-buffers-kill-emacs'.)"
       (delete-frame (car frames) force)
       (setq frames (cdr frames)))))
 
-(defsubst device-color-cells (&optional device)
+(defun device-color-cells (&optional device)
   (case window-system
     ((x win32 pm) (x-display-color-cells device))
     (ns (ns-display-color-cells device))
     (otherwise 1)))
 
-(defsubst device-pixel-width (&optional device)
+(defun device-pixel-width (&optional device)
   (case window-system
     ((x win32 pm) (x-display-pixel-width device))
     (ns (ns-display-pixel-width device))
     (otherwise (frame-width device))))
 
-(defsubst device-pixel-height (&optional device)
+(defun device-pixel-height (&optional device)
   (case window-system
     ((x win32 pm) (x-display-pixel-height device))
     (ns (ns-display-pixel-height device))
     (otherwise (frame-height device))))
 
-(defsubst device-mm-width (&optional device)
+(defun device-mm-width (&optional device)
   (case window-system
     ((x win32 pm) (x-display-mm-width device))
     (ns (ns-display-mm-width device))
     (otherwise nil)))
 
-(defsubst device-mm-height (&optional device)
+(defun device-mm-height (&optional device)
   (case window-system
     ((x win32 pm) (x-display-mm-height device))
     (ns (ns-display-mm-height device))
     (otherwise nil)))
 
-(defsubst device-bitplanes (&optional device)
+(defun device-bitplanes (&optional device)
   (case window-system
     ((x win32 pm) (x-display-planes device))
     (ns (ns-display-planes device))
     (otherwise 2)))
 
-(defsubst device-class (&optional device)
+(defun device-class (&optional device)
   (case window-system
     (x					; X11
      (cond
@@ -297,22 +297,22 @@ will automatically call `save-buffers-kill-emacs'.)"
       (t 'mono)))
     (otherwise 'color)))
 
-(defsubst device-class-list ()
+(defun device-class-list ()
   "Returns a list of valid device classes."
   (list 'color 'grayscale 'mono))
 
-(defsubst valid-device-class-p (class)
+(defun valid-device-class-p (class)
   "Given a CLASS, return t if it is valid.
 Valid classes are 'color, 'grayscale, and 'mono."
   (memq class (device-class-list)))
 
-(defsubst device-or-frame-type (device-or-frame)
+(defun device-or-frame-type (device-or-frame)
   "Return the type (e.g. `x' or `tty') of DEVICE-OR-FRAME.
 DEVICE-OR-FRAME should be a device or a frame object.  See `device-type'
 for a description of the possible types."
   (or window-system 'tty))
 
-(defsubst device-type (&optional device)
+(defun device-type (&optional device)
   "Return the type of the specified device (e.g. `x' or `tty').
 Value is `tty' for a tty device (a character-only terminal),
 `x' for a device which is a connection to an X server,
@@ -322,13 +322,13 @@ Value is `tty' for a tty device (a character-only terminal),
 'intuition' for an Amiga screen"
   (device-or-frame-type device))
 
-(defsubst device-type-list ()
+(defun device-type-list ()
   "Return a list of valid console types."
   (if window-system
       (list window-system 'tty)
     (list 'tty)))
 
-(defsubst valid-device-type-p (type)
+(defun valid-device-type-p (type)
   "Given a TYPE, return t if it is valid."
   (memq type (device-type-list)))
 

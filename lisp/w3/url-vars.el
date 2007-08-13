@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/04/21 22:07:55
-;; Version: 1.55
+;; Created: 1997/04/24 20:22:16
+;; Version: 1.57
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -38,7 +38,7 @@
     (defmacro defcustom (var value doc &rest args) 
       (` (defvar (, var) (, value) (, doc))))))
 
-(defconst url-version (let ((x "p3.0.84"))
+(defconst url-version (let ((x "p3.0.85"))
 			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))
@@ -245,7 +245,9 @@ session."
 				    (".Z"  . "x-compress"))
   "*An assoc list of file extensions and the appropriate
 content-transfer-encodings for each."
-  :type '(repeat (cons (string :tag "Extension") (string :tag "Encoding")))
+  :type '(repeat (cons :format "%v"
+		       (string :tag "Extension")
+		       (string :tag "Encoding")))
   :group 'url-mime)
 
 (defcustom url-mail-command 'url-mail
@@ -260,7 +262,8 @@ buffer, and it should use mail-header-separator if possible."
   "*An assoc list of access types and servers that gateway them.
 Looks like ((\"http\" . \"hostname:portnumber\") ....)  This is set up
 from the ACCESS_proxy environment variables in url-do-setup."
-  :type '(repeat (cons (string :tag "Protocol")
+  :type '(repeat (cons :format "%v"
+		       (string :tag "Protocol")
 		       (string :tag "Proxy")))
   :group 'url)
 

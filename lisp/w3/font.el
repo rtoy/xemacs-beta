@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/04/20 19:19:45
-;; Version: 1.45
+;; Created: 1997/04/24 13:55:44
+;; Version: 1.51
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,35 +30,47 @@
 ;;; The emacsen compatibility package - load it up before anything else
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'cl)
+(require 'devices)
 
 (eval-and-compile
-  (require 'devices))
+  (condition-case ()
+      (require 'custom)
+    (error nil))
+  (if (and (featurep 'custom) (fboundp 'custom-declare-variable))
+      nil ;; We've got what we needed
+    ;; We have the old custom-library, hack around it!
+    (defmacro defgroup (&rest args)
+      nil)
+    (defmacro defcustom (var value doc &rest args) 
+      (` (defvar (, var) (, value) (, doc))))))
 
-(eval-and-compile
-  (if (not (fboundp 'try-font-name))
-      (defsubst try-font-name (fontname &rest args)
-	(case window-system
-	  ((x win32 pm) (car-safe (x-list-fonts fontname)))
-	  (ns (car-safe (ns-list-fonts fontname)))
-	  (otherwise nil))))
-  (if (not (fboundp 'facep))
-      (defsubst facep (face)
-	"Return t if X is a face name or an internal face vector."
-	(if (not window-system)
-	    nil				; FIXME if FSF ever does TTY faces
-	  (and (or (internal-facep face)
-		   (and (symbolp face) (assq face global-face-data)))
-	       t))))
-  (if (not (fboundp 'set-face-property))
-      (defsubst set-face-property (face property value &optional locale
-					tag-set how-to-add)
-	"Change a property of FACE."
-	(and (symbolp face)
-	     (put face property value))))
-  (if (not (fboundp 'face-property))
-      (defsubst face-property (face property &optional locale tag-set exact-p)
-	"Return FACE's value of the given PROPERTY."
-	(and (symbolp face) (get face property)))))
+(if (not (fboundp 'try-font-name))
+    (defun try-font-name (fontname &rest args)
+      (case window-system
+	((x win32 pm) (car-safe (x-list-fonts fontname)))
+	(ns (car-safe (ns-list-fonts fontname)))
+	(otherwise nil))))
+
+(if (not (fboundp 'facep))
+    (defun facep (face)
+      "Return t if X is a face name or an internal face vector."
+      (if (not window-system)
+	  nil				; FIXME if FSF ever does TTY faces
+	(and (or (internal-facep face)
+		 (and (symbolp face) (assq face global-face-data)))
+	     t))))
+
+(if (not (fboundp 'set-face-property))
+    (defun set-face-property (face property value &optional locale
+				   tag-set how-to-add)
+      "Change a property of FACE."
+      (and (symbolp face)
+	   (put face property value))))
+
+(if (not (fboundp 'face-property))
+    (defun face-property (face property &optional locale tag-set exact-p)
+      "Return FACE's value of the given PROPERTY."
+      (and (symbolp face) (get face property))))
 
 (require 'disp-table)
 
@@ -299,7 +311,7 @@ for use in the 'weight' field of an X font string.")
 	  (setq retval (cons type retval))))
     retval))
 
-(defun unique (list)
+(defun font-unique (list)
   (let ((retval)
 	(cur))
     (while list
@@ -415,8 +427,8 @@ for use in the 'weight' field of an X font string.")
 		     (font-spatial-to-canonical (font-size fontobj-2)))))
     (set-font-weight retval (font-higher-weight (font-weight fontobj-1)
 						(font-weight fontobj-2)))
-    (set-font-family retval (unique (append (font-family fontobj-1)
-					    (font-family fontobj-2))))
+    (set-font-family retval (font-unique (append (font-family fontobj-1)
+						 (font-family fontobj-2))))
     (set-font-style retval (| (font-style fontobj-1) (font-style fontobj-2)))
     (set-font-registry retval (or (font-registry fontobj-1)
 				  (font-registry fontobj-2)))
@@ -570,7 +582,7 @@ for use in the 'weight' field of an X font string.")
 				(aref menu 0)))
 		(normal (mapcar (function (lambda (x) (if x (aref x 0))))
 				(aref menu 1))))
-	    (sort (unique (nconc scaled normal)) 'string-lessp))))
+	    (sort (font-unique (nconc scaled normal)) 'string-lessp))))
     (cons "monospace" (mapcar 'car font-family-mappings))))
 
 (defvar font-default-cache nil)
@@ -711,7 +723,7 @@ for use in the 'weight' field of an X font string.")
 				(aref menu 0)))
 		(normal (mapcar (function (lambda (x) (if x (aref x 0))))
 				(aref menu 1))))
-	    (sort (unique (nconc scaled normal)) 'string-lessp))))))
+	    (sort (font-unique (nconc scaled normal)) 'string-lessp))))))
 
 (defun ns-font-create-name (fontobj &optional device)
   (let ((family (or (font-family fontobj)
@@ -1164,4 +1176,67 @@ is returned."
 	(apply 'set-face-foreground face color args)))
     (error nil)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Support for 'blinking' fonts
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun font-map-windows (func &optional arg frame)
+  (let* ((start (selected-window))
+	 (cur start)
+	 (result nil))
+    (push (funcall func start arg) result)
+    (while (not (eq start (setq cur (next-window cur))))
+      (push (funcall func cur arg) result))
+    result))
+
+(defun font-face-visible-in-window-p (window face)
+  (let ((st (window-start window))
+	(nd (window-end window))
+	(found nil)
+	(face-at nil))
+    (setq face-at (get-text-property st 'face (window-buffer window)))
+    (if (or (eq face face-at) (and (listp face-at) (memq face face-at)))
+	(setq found t))
+    (while (and (not found)
+		(/= nd
+		    (setq st (next-single-property-change
+			      st 'face
+			      (window-buffer window) nd))))
+      (setq face-at (get-text-property st 'face (window-buffer window)))
+      (if (or (eq face face-at) (and (listp face-at) (memq face face-at)))
+	  (setq found t)))
+    found))
+  
+(defun font-blink-callback ()
+  ;; Optimized to never invert the face unless one of the visible windows
+  ;; is showing it.
+  (let ((faces (if font-running-xemacs (face-list t) (face-list)))
+	(obj nil))
+    (while faces
+      (if (and (setq obj (face-property (car faces) 'font-specification))
+	       (font-blink-p obj)
+	       (memq t
+		     (font-map-windows 'font-face-visible-in-window-p (car faces))))
+	  (invert-face (car faces)))
+      (pop faces))))
+
+(defcustom font-blink-interval 0.5
+  "How often to blink faces"
+  :type 'number
+  :group 'faces)
+  
+(defun font-blink-initialize ()
+  (cond
+   ((featurep 'itimer)
+    (if (get-itimer "font-blinker")
+	(delete-itimer (get-itimer "font-blinker")))
+    (start-itimer "font-blinker" 'font-blink-callback
+		  font-blink-interval
+		  font-blink-interval))
+   ((fboundp 'run-at-time)
+    (cancel-function-timers 'font-blink-callback)    
+    (run-at-time font-blink-interval
+		 font-blink-interval
+		 'font-blink-callback))
+   (t nil)))
+  
 (provide 'font)

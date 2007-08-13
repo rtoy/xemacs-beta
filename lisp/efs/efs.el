@@ -902,7 +902,7 @@
 ;;;    efs|Andy Norman and Sandy Rutherford
 ;;;    |ange@hplb.hpl.hp.com and sandy@ibm550.sissa.it
 ;;;    |transparent FTP Support for GNU Emacs
-;;;    |$Date: 1997/04/05 18:07:24 $|$efs release: 1.15 beta $|
+;;;    |$Date: 1997/04/27 19:30:06 $|$efs release: 1.15 beta $|
 
 ;;; Host and listing type notation:
 ;;;
@@ -1597,6 +1597,9 @@ is killed first.  Note that doing this may result in the FTP process filter
 getting out of synch with the FTP client, so using this feature routinely
 isn't recommended.")
 
+(defvar efs-use-passive-mode nil
+  "*If non-nil, the ftp client will specify passive mode for all transfers.")
+
 ;;; Hooks and crooks.
 
 (defvar efs-ftp-startup-hook nil
@@ -1657,7 +1660,7 @@ to do such a thing?")
 (defvar efs-cmd-ok-cmds
   (concat
    "^quote port \\|^type \\|^quote site \\|^chmod \\|^quote noop\\|"
-   "^quote pasv"))
+   "^quote pasv\\|^passive"))
 ;; Regexp to match commands for which efs-cmd-ok-msgs is a valid server
 ;; response for success.
 
@@ -1690,6 +1693,8 @@ to do such a thing?")
 			; (Sometimes get this with a timeout,
 			; so treat as fatal.)
    "^3[0-5][0-7] \\|"    ; 3yz = positive intermediate reply
+   ;; passive
+   "^[Pp]assive \\|"
    ;; client codes
    "^[Hh]ash mark "))
 ;; Response to indicate that the requested action was successfully completed.
@@ -3656,6 +3661,9 @@ Create a new process if needed."
 		  ;; Tell client to send back hash-marks as progress.  It isn't
 		  ;; usually fatal if this command fails.
 		  (efs-guess-hash-mark-size proc)
+
+		  (if efs-use-passive-mode
+		      (efs-passive-mode host user))
 		  
 		  ;; Run any user startup functions
 		  (let ((alist efs-ftp-startup-function-alist)
@@ -3696,6 +3704,10 @@ Create a new process if needed."
 				 'efs-gateway-hash-mark-size
 			       'efs-hash-mark-size)
 			     (string-to-int size))))))))))
+
+(defun efs-passive-mode (host user)
+  ;; put ftp into passive mode
+  (efs-send-cmd host user '(passive)))
 
 ;;;; ------------------------------------------------------------
 ;;;; Simple FTP process shell support.
@@ -4078,6 +4090,10 @@ non-nil, this is not done."
 					   (efs-fix-path host-type cmd2))
 		    cmd-string (concat "rename " cmd1 " " cmd2))))
 	   
+	   ;; passive command
+	   ((eq cmd0 'passive)
+	    (setq cmd-string "passive"))
+	
 	   (t
 	    (error "efs: Don't know how to send %s %s %s %s"
 		   cmd0 cmd1 cmd2 cmd3))))
@@ -4211,7 +4227,7 @@ You must do that yourself."
 	(progn
 	  (setq proc (efs-kerberos-login host user proc))
 	  (efs-login-send-user host user proc gate))
-      (let ((to (if (memq gate '(proxy local raptor))
+      (let ((to (if (memq gate '(proxy raptor))
 		    efs-gateway-host
 		  host))
 	    port cmd result)
@@ -4245,7 +4261,7 @@ You must do that yourself."
 Optional argument GATE specifies which type of gateway is being used.
 RETRY argument specifies to try twice if we get a 421 response."
   (let ((cmd (cond
-	      ((memq gate '(local proxy interlock))
+	      ((memq gate '(proxy interlock))
 	       (format "quote USER \"%s\"@%s" user
 		       (if (and efs-nslookup-on-connect
 				(string-match "[^0-9.]" host))
@@ -4273,7 +4289,7 @@ RETRY argument specifies to try twice if we get a 421 response."
 	      (t
 	       (format "quote user \"%s\"" user))))
 	(msg (format "Logging in as user %s%s..." user
-		     (if (memq gate '(proxy local raptor kerberos))
+		     (if (memq gate '(proxy raptor kerberos))
 			 (concat "@" host) "")))  
 	result code)	 
 	

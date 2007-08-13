@@ -113,21 +113,21 @@
 ;; Please add your own quail package if any.
 
 ;; For GB character input
-;;(add-hook 'quail-package-alist '("py"      "quail/py"))
-;;(add-hook 'quail-package-alist '("qj"      "quail/qj"))
-;;(add-hook 'quail-package-alist '("punct"   "quail/punct"))
-;;(add-hook 'quail-package-alist '("sw"      "quail/sw"))
-;;(add-hook 'quail-package-alist '("tonepy"  "quail/tonepy"))
-;;(add-hook 'quail-package-alist '("ccdospy" "quail/ccdospy"))
-;;(add-hook 'quail-package-alist '("ctlau"   "quail/ctlau"))
+(add-hook 'quail-package-alist '("py"      "quail-py"))
+(add-hook 'quail-package-alist '("qj"      "quail-qj"))
+(add-hook 'quail-package-alist '("punct"   "quail-punct"))
+(add-hook 'quail-package-alist '("sw"      "quail-sw"))
+(add-hook 'quail-package-alist '("tonepy"  "quail-tonepy"))
+(add-hook 'quail-package-alist '("ccdospy" "quail-ccdospy"))
+(add-hook 'quail-package-alist '("ctlau"   "quail-ctlau"))
 
 ;; For BIG5 character input
-;;(add-hook 'quail-package-alist '("py-b5"    "quail/py-b5"))
-;;(add-hook 'quail-package-alist '("qj-b5"    "quail/qj-b5"))
-;;(add-hook 'quail-package-alist '("punct-b5" "quail/punct-b5"))
-;;(add-hook 'quail-package-alist '("ctlaub"   "quail/ctlaub"))
-;;(add-hook 'quail-package-alist '("zozy"     "quail/zozy"))
-;;(add-hook 'quail-package-alist '("etzy"     "quail/etzy"))
+;;(add-hook 'quail-package-alist '("py-b5"    "quail-py-b5"))
+;;(add-hook 'quail-package-alist '("qj-b5"    "quail-qj-b5"))
+;;(add-hook 'quail-package-alist '("punct-b5" "quail-punct-b5"))
+;;(add-hook 'quail-package-alist '("ctlaub"   "quail-ctlaub"))
+;;(add-hook 'quail-package-alist '("zozy"     "quail-zozy"))
+;;(add-hook 'quail-package-alist '("etzy"     "quail-etzy"))
 
 ;; For Big5 handling
 

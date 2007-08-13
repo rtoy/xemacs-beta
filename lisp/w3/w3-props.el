@@ -1,7 +1,7 @@
 ;;; w3-props.el --- Additional text property stuff
 ;; Author: wmperry
-;; Created: 1997/04/20 19:19:14
-;; Version: 1.1
+;; Created: 1997/04/22 14:50:19
+;; Version: 1.2
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,14 +49,13 @@ Optional argument OBJECT is the string or buffer containing the text."
       (put-text-property start next markprop value object)
       (setq start (text-property-any next end markprop nil object)))))
 
-(if (not (fboundp 'unique))
-    (defsubst unique (list)
-      "Uniquify LIST, deleting elements using `delq'.
+(defsubst w3-props-unique (list)
+  "Uniquify LIST, deleting elements using `delq'.
 Return the list with subsequent duplicate items removed by side effects."
-      (let ((list list))
-	(while list
-	  (setq list (setcdr list (delq (car list) (cdr list))))))
-      list))
+  (let ((list list))
+    (while list
+      (setq list (setcdr list (delq (car list) (cdr list))))))
+  list)
 
 ;; A generalisation of `facemenu-add-face' for any property, but without the
 ;; removal of inactive faces via `facemenu-discard-redundant-faces' and special
@@ -72,7 +71,7 @@ Optional argument OBJECT is the string or buffer containing the text."
 	    prev (get-text-property start prop object))
       (put-text-property
        start next prop
-       (unique (append val (if (listp prev) prev (list prev))))
+       (w3-props-unique (append val (if (listp prev) prev (list prev))))
        object)
       (setq start next))))
 
@@ -87,7 +86,7 @@ Optional argument OBJECT is the string or buffer containing the text."
 	    prev (get-text-property start prop object))
       (put-text-property
        start next prop
-       (unique (append (if (listp prev) prev (list prev)) val))
+       (w3-props-unique (append (if (listp prev) prev (list prev)) val))
        object)
       (setq start next))))
 

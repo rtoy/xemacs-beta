@@ -1,7 +1,7 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/04/16 05:11:58
-;; Version: 1.16
+;; Created: 1997/04/21 23:59:58
+;; Version: 1.17
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -28,6 +28,7 @@
 
 (require 'url-vars)
 (require 'url-parse)
+(require 'widget)
 (autoload 'Info-goto-node "info" "" t)
 
 (defun url-netrek (url)

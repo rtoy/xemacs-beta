@@ -1989,10 +1989,27 @@ The returned event will be one of the following types:
     XCOMMAND_BUILDER (con->command_builder);
   int store_this_key = 0;
   struct gcpro gcpro1;
-  GCPRO1 (event);
+#ifdef LWLIB_MENUBARS_LUCID
+  extern int in_menu_callback;  /* defined in menubar-x.c */
+#endif /* LWLIB_MENUBARS_LUCID */
 
+  GCPRO1 (event);
   /* DO NOT do QUIT anywhere within this function or the functions it calls.
      We want to read the ^G as an event. */
+
+#ifdef LWLIB_MENUBARS_LUCID
+  /*
+   * #### Fix the menu code so this isn't necessary.
+   *
+   * We cannot allow the lwmenu code to be reentered, because the
+   * code is not written to be reentrant and will crash.  Therefore
+   * paths from the menu callbacks back into the menu code have to
+   * be blocked.  Fnext_event is the normal path into the menu code,
+   * so we signal an error here.
+   */
+  if (in_menu_callback)
+    error ("Attempt to call next-event inside menu callback");
+#endif /* LWLIB_MENUBARS_LUCID */
 
   if (NILP (event))
     event = Fmake_event ();

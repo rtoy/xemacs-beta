@@ -131,7 +131,7 @@ Hide balloon help.
 }
 
 DEFUN ("balloon-help-move-to-pointer", Fballoon_help_move_to_pointer, 0, 0, 0, /*
-Hide balloon help.
+Move the balloon help to the place where the pointer currently resides.
 */
       ())
 {
@@ -159,5 +159,5 @@ syms_of_balloon_x (void)
 void
 vars_of_balloon_x (void)
 {
-  Fprovide (intern ("balloon-help"));
+  Fprovide (intern ("c-balloon-help"));
 }

@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/04/16 05:08:07
-;; Version: 1.75
+;; Created: 1997/04/22 15:08:38
+;; Version: 1.76
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/04/16 05:08:07|1.75|Location Undetermined
+;;; 1997/04/22 15:08:38|1.76|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -38,6 +38,7 @@
 (require 'url-parse)
 (require 'mm)
 (require 'mule-sysdp)
+(require 'devices)
 (or (featurep 'efs)
     (featurep 'efs-auto)
     (condition-case ()

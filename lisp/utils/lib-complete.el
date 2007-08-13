@@ -1,17 +1,11 @@
-;; ========================================================================
-;; lib-complete.el --  Completion on a search path
-;; Author          : Mike Williams <mike-w@cs.aukuni.ac.nz>
-;; Created On      : Sat Apr 20 17:47:21 1991
-;; Last Modified By: Heiko M|nkel <muenkel@tnt.uni-hannover.de>
-;; Additional XEmacs integration By: Chuck Thompson <cthomp@cs.uiuc.edu>
-;; Last Modified On: Thu Jul 1 14:23:00 1994
-;; RCS Info        : $Revision: 1.1.1.1 $ $Locker:  $
-;; ========================================================================
-;; NOTE: this file must be recompiled if changed.
-;;
+;;; lib-complete.el --- Completion on the lisp search path
+
 ;; Copyright (C) Mike Williams <mike-w@cs.aukuni.ac.nz> 1991
-;;
-;; Keywords: utility, lisp
+
+;; Author: Mike Williams <mike-w@cs.aukuni.ac.nz>
+;; Maintainer:
+;; Keywords: lisp, extensions
+;; Created: Sat Apr 20 17:47:21 1991
 
 ;; This file is part of XEmacs.
 
@@ -32,6 +26,23 @@
 
 ;;; Synched up with: Not in FSF.
 
+;;; Commentary:
+
+;; ========================================================================
+;; lib-complete.el --  Completion on a search path
+;; Author          : Mike Williams <mike-w@cs.aukuni.ac.nz>
+;; Created On      : Sat Apr 20 17:47:21 1991
+;; Last Modified By: Heiko M|nkel <muenkel@tnt.uni-hannover.de>
+;; Additional XEmacs integration By: Chuck Thompson <cthomp@cs.uiuc.edu>
+;; Last Modified On: Thu Jul 1 14:23:00 1994
+;; RCS Info        : $Revision: 1.2 $ $Locker:  $
+;; ========================================================================
+;; NOTE: XEmacs must be redumped if this file is changed.
+;;
+;; Copyright (C) Mike Williams <mike-w@cs.aukuni.ac.nz> 1991
+;;
+;; Keywords: utility, lisp
+
 ;; Many thanks to Hallvard Furuseth <hallvard@ifi.uio.no> for his
 ;; helpful suggestions.
 
@@ -40,7 +51,11 @@
 
 ;; There is now the new function find-library in this package.
 
-(provide 'lib-complete)
+;;; ChangeLog:
+
+;; 4/26/97: sb Mule-ize.
+
+;;; Code:
 
 ;;=== Usage ===============================================================
 ;; 
@@ -307,27 +322,46 @@ This is an interface to the function `load'."
 
 ;;=== find-library with completion (Author: Heiko Muenkel) ===================
 
-(defun find-library (library)
+(defun find-library (library &optional codesys)
   "Find and edit the source for the library named LIBRARY.
-The extension of the LIBRARY must be omitted."
+The extension of the LIBRARY must be omitted.
+Under XEmacs/Mule, the optional second argument specifies the
+coding system to use when decoding the file.  Interactively,
+with a prefix argument, you will be prompted for the coding system."
   (interactive 
-   (list 
-    (get-library-path)))
-  (find-file library))
+   (list (get-library-path)
+	 (if current-prefix-arg
+	     (read-coding-system "Coding System: "))))
+  (find-file library codesys))
 
-(defun find-library-other-window (library)
-  "Load the library named LIBRARY in another window."
+(defun find-library-other-window (library &optional codesys)
+  "Load the library named LIBRARY in another window.
+Under XEmacs/Mule, the optional second argument specifies the
+coding system to use when decoding the file.  Interactively,
+with a prefix argument, you will be prompted for the coding system."
   (interactive 
-   (list (get-library-path)))
-  (find-file-other-window library))
+   (list (get-library-path)
+	 (if current-prefix-arg
+	   (read-coding-system "Coding System: "))))
+  (find-file-other-window library codesys))
 
-(defun find-library-other-frame (library)
-  "Load the library named LIBRARY in a newly-created frame."
+(defun find-library-other-frame (library &optional codesys)
+  "Load the library named LIBRARY in a newly-created frame.
+Under XEmacs/Mule, the optional second argument specifies the
+coding system to use when decoding the file.  Interactively,
+with a prefix argument, you will be prompted for the coding system."
   (interactive 
-   (list (get-library-path)))
-  (find-file-other-frame library))
+   (list (get-library-path)
+	 (if current-prefix-arg
+	     (read-coding-system "Coding System: "))))
+  (find-file-other-frame library codesys))
 
 ; This conflicts with an existing binding
 ;(define-key global-map "\C-xl" 'find-library)
 (define-key global-map "\C-x4l" 'find-library-other-window)
 (define-key global-map "\C-x5l" 'find-library-other-frame)
+
+
+(provide 'lib-complete)
+
+;;; lib-complete.el ends here

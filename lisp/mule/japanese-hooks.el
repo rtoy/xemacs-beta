@@ -139,6 +139,29 @@
    mnemonic "EUC/Ja"
    ))
 
+;; EGG specific setup
+(define-egg-environment 'japanese
+  "Japanese settings for egg."
+  (lambda ()
+    (when (not (featurep 'egg-jpn))
+      (load "its/its-hira")
+      (load "its/its-kata")
+      (load "its/its-hankaku")
+      (load "its/its-zenkaku")
+      (setq its:*standard-modes*
+	    (append
+	     (list (its:get-mode-map "roma-kana")
+		   (its:get-mode-map "roma-kata")
+		   (its:get-mode-map "downcase")
+		   (its:get-mode-map "upcase")
+		   (its:get-mode-map "zenkaku-downcase")
+		   (its:get-mode-map "zenkaku-upcase"))
+	     its:*standard-modes*))
+      (provide 'egg-jpn))
+    (setq wnn-server-type 'jserver)
+    (setq egg-default-startup-file "eggrc-wnn")
+    (setq-default its:*current-map* (its:get-mode-map "roma-kana"))))
+
 (define-language-environment 'japanese
   "Japanese (includes JIS and EUC)"
   (lambda ()
@@ -147,26 +170,6 @@
     (set-coding-priority-list '(iso-7 iso-8-2 shift-jis no-conversion))
     ;;'(iso-8-2 iso-8-designate iso-8-1 shift-jis big5)
     
-    ;; EGG specific setup 97.02.05 jhod
-    (when (featurep 'egg)
-      (when (not (featurep 'egg-jpn))
-	(provide 'egg-jpn)
-	(setq wnn-server-type 'jserver)
-	(load "its/its-hira")
-	(load "its/its-kata")
-	(load "its/its-hankaku")
-	(load "its/its-zenkaku")
-	(setq its:*standard-modes*
-	      (append
-	       (list (its:get-mode-map "roma-kana")
-		     (its:get-mode-map "roma-kata")
-		     (its:get-mode-map "downcase")
-		     (its:get-mode-map "upcase")
-		     (its:get-mode-map "zenkaku-downcase")
-		     (its:get-mode-map "zenkaku-upcase"))
-	       its:*standard-modes*)))
-      (setq-default its:*current-map* (its:get-mode-map "roma-kana")))
-
     ;; Added by mrb, who doesn't speak japanese - so be sceptical...
     ;; (when (string-match "solaris\\|sunos" system-configuration)
     ;;(set-native-coding-system          'euc-japan) ; someday

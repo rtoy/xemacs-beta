@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    15-Apr-91 at 00:48:49
-;; LAST-MOD:      8-Mar-97 at 22:52:36 by Bob Weiner
+;; LAST-MOD:     24-Apr-97 at 22:41:33 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -285,7 +285,10 @@ See documentation of `hpath:display-where-alist' for valid values.")
    (list 'one-window  (function (lambda (f)
 				  (if (br-in-browser) (br-quit))
 				  (delete-other-windows) (find-file f))))
-   (list 'new-frame   'find-file-new-frame)
+   (list 'new-frame   (function (lambda (f)
+				  (if (fboundp 'find-file-new-frame)
+				      (find-file-new-frame f)
+				    (find-file-other-frame f)))))
    (list 'other-frame 'hpath:find-other-frame)
    (list 'other-frame-one-window
 	 (function (lambda (f) (hpath:find-other-frame f) (delete-other-windows)))))

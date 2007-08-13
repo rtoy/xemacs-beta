@@ -41,7 +41,13 @@
 (setq-default buffer-file-coding-system 'iso-2022-8)
 (put 'buffer-file-coding-system 'permanent-local t)
 
-(define-obsolete-variable-alias 'file-coding-system 'buffer-file-coding-system)
+(define-obsolete-variable-alias
+  'file-coding-system
+  'buffer-file-coding-system)
+
+(define-obsolete-variable-alias
+  'overriding-file-coding-system
+  'coding-system-for-read)
 
 (defvar buffer-file-coding-system-for-read 'automatic-conversion
   "Coding system used when reading a file.

@@ -11,7 +11,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    04-Feb-89
-;; LAST-MOD:     20-Feb-97 at 11:55:00 by Bob Weiner
+;; LAST-MOD:     24-Apr-97 at 22:37:14 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -458,7 +458,9 @@ If assist-key is pressed:
 	 (goto-char (point-max)))
 	((looking-at "~") (dired-flag-backup-files))
 	((looking-at "#") (dired-flag-auto-save-files))
-	(t (dired-flag-file-deleted 1))))
+	(t (if (fboundp 'dired-flag-file-deletion)
+	       (dired-flag-file-deletion 1)
+	     (dired-flag-file-deleted 1)))))
 
 ;;; ************************************************************************
 ;;; smart-gnus functions

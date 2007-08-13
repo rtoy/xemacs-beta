@@ -5,7 +5,7 @@
 
 ;; Author: Akira Kon <kon@d1.bs2.mt.nec.co.jp>
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.5 $
+;; Version: $Revision: 1.6 $
 ;; Keywords: Canna, Japanese, input method, mule, multilingual
 
 ;; This file is not a part of Emacs yet.
@@ -49,7 +49,7 @@
 ;; end
 
 (defconst canna-rcs-version
-  "$Id: canna.el,v 1.5 1997/04/10 05:55:27 steve Exp $")
+  "$Id: canna.el,v 1.6 1997/04/27 19:30:30 steve Exp $")
 
 (defun canna-version ()
   "Display version of canna.el in mini-buffer."
@@ -174,7 +174,7 @@
 	 (or (canna:memq-recursive 'mode-line-canna-mode
 				   default-modeline-format)
 	     (setq-default default-modeline-format
-			   (nconc '("" mode-line-canna-mode)
+			   (append '("" mode-line-canna-mode)
 				  default-modeline-format))
 	     )
 	 (mapcar (function
@@ -184,7 +184,7 @@
 		      (or (canna:memq-recursive 'mode-line-canna-mode
 						modeline-format)
 			  (setq modeline-format
-				(nconc '("" mode-line-canna-mode)
+				(append '("" mode-line-canna-mode)
 				       modeline-format))
 			  )
 		      )))
@@ -759,6 +759,9 @@ kana-to-kanji translation, even if you are in the minibuffer."
 	      (funcall self-insert-after-hook
 		       (- (point) arg) (point)))
 	(if (= last-command-char ? ) (canna:do-auto-fill))))))
+
+;; wire us into pending-delete
+(put 'canna-self-insert-command 'pending-delete t)
 
 (defun canna-toggle-japanese-mode ()
   "Toggle canna japanese mode."

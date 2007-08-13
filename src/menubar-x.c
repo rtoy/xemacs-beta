@@ -308,6 +308,18 @@ menu_item_descriptor_to_widget_value (Lisp_Object desc,
 }
 
 
+#ifdef LWLIB_MENUBARS_LUCID
+int in_menu_callback;
+
+Lisp_Object
+restore_in_menu_callback(Lisp_Object val)
+{
+    in_menu_callback = XINT(val);
+    return Qnil;
+}
+#endif /* LWLIB_MENUBARS_LUCID */
+
+
 /* The order in which callbacks are run is funny to say the least.
    It's sometimes tricky to avoid running a callback twice, and to
    avoid returning prematurely.  So, this function returns true
@@ -338,6 +350,7 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   Lisp_Object rest = Qnil;
   Lisp_Object frame;
   int any_changes = 0;
+  int count;
 
   if (!f)
     f = x_any_window_to_frame (d, XtWindow (XtParent (widget)));
@@ -357,8 +370,22 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 
       assert (hack_wv->type == INCREMENTAL_TYPE);
       VOID_TO_LISP (submenu_desc, hack_wv->call_data);
+
+      /*
+       * #### Fix the menu code so this isn't necessary.
+       *
+       * Protect against reentering the menu code otherwise we will
+       * crash later when the code gets confused at the state
+       * changes.
+       */
+      count = specpdl_depth ();
+      record_unwind_protect (restore_in_menu_callback,
+			     make_int (in_menu_callback));
+      in_menu_callback = 1;
       wv = menu_item_descriptor_to_widget_value (submenu_desc, SUBMENU_TYPE,
 						 1, 0);
+      unbind_to (count, Qnil);
+
       if (!wv)
 	{
 	  wv = xmalloc_widget_value ();

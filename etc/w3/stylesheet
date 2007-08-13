@@ -63,10 +63,12 @@ h4,h5,h6  {
       h5  { font-size : -2pt  }
       h6  { font-size : -4pt  }
 
-/* Used to cause problems under Emacs 19, lets try once more, with feeling! */
+/* This causes problems with Emacs 19 */
+@media xemacs {
    pre,xmp,
   plaintext { font-family: monospace }
 key,code,tt { font-family: monospace }
+}
 
 /*
 ** Best we can do under Emacs-19 is use the default font and try to make

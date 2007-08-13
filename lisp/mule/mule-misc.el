@@ -1,4 +1,4 @@
-;;; mule-misc.el --- Miscellaneous Mule functions.
+;; mule-misc.el --- Miscellaneous Mule functions.
 
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
@@ -265,7 +265,12 @@ Returns nil if `set-language-environment' has not been called."
   (let ((func (get env 'set-lang-environ)))
     (if (not (null func))
 	(funcall func)))
-  (setq current-language-environment env))
+  (setq current-language-environment env)
+  (if (fboundp 'egg)
+      (egg-lang-switch-callback))
+;;  (if (fboundp 'quail)
+;;      (quail-lang-switch-callback))
+)
 
 (defun define-language-environment (env-sym doc-string enable-function)
   "Define a new language environment, named by ENV-SYM.
@@ -275,3 +280,20 @@ when the language environment is made current."
   (put env-sym 'lang-environ-doc-string doc-string)
   (put env-sym 'set-lang-environ enable-function)
   (setq language-environment-list (cons env-sym language-environment-list)))
+
+(defun define-egg-environment (env-sym doc-string enable-function)
+  "Define a new language environment for egg, named by ENV-SYM.
+DOC-STRING should be a string describing the environment.
+ENABLE-FUNCTION should be a function of no arguments that will be called
+when the language environment is made current."
+  (put env-sym 'egg-environ-doc-string doc-string)
+  (put env-sym 'set-egg-environ enable-function))
+
+(defun define-quail-environment (env-sym doc-string enable-function)
+  "Define a new language environment for quail, named by ENV-SYM.
+DOC-STRING should be a string describing the environment.
+ENABLE-FUNCTION should be a function of no arguments that will be called
+when the language environment is made current."
+  (put env-sym 'quail-environ-doc-string doc-string)
+  (put env-sym 'set-quail-environ enable-function))
+

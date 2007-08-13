@@ -1,4 +1,6 @@
-#!/usr/local/bin/perl
+: # -*-Perl-*-
+eval 'exec perl -w -S $0 ${1+"$@"}' # Portability kludge
+    if 0;
 # 
 # pstogif.pl v1.0, July 1994, by Nikos Drakos <nikos@cbl.leeds.ac.uk>
 # Computer Based Learning Unit, University of Leeds.

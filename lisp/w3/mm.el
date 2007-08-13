@@ -94,7 +94,8 @@
 ;;; Variables, etc
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
-  (require 'cl))
+  (require 'cl)
+  (require 'devices))
 
 (defconst mm-version (let ((x "1.96"))
 		       (if (string-match "Revision: \\([^ \t\n]+\\)" x)

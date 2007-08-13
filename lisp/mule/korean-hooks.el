@@ -34,18 +34,10 @@
 (loop for row from 38 to  41  do (modify-syntax-entry `[korean-ksc5601 ,row] "."))
 (loop for row from 42 to 126  do (modify-syntax-entry `[korean-ksc5601 ,row] "w"))
 
-;; EGG specific setup
-;(if (featurep 'egg)
-;    (progn
-;      (load "its-hangul")
-;      (setq its:*standard-modes*
-;	    (cons (its:get-mode-map "hangul") its:*standard-modes*))
-;      (setq-default its:*current-map* (its:get-mode-map "hangul"))))
-
-;(add-hook 'quail-package-alist '("hangul"    "quail/hangul"))
-;(add-hook 'quail-package-alist '("hangul3"   "quail/hangul3"))
-;(add-hook 'quail-package-alist '("hanja-jis" "quail/hanja-jis"))
-;(add-hook 'quail-package-alist '("hanja-ksc" "quail/hanja-ksc"))
+(add-hook 'quail-package-alist '("hangul"    "quail-hangul"))
+(add-hook 'quail-package-alist '("hangul3"   "quail-hangul3"))
+(add-hook 'quail-package-alist '("hanja-jis" "quail-hanja-jis"))
+(add-hook 'quail-package-alist '("hanja-ksc" "quail-hanja-ksc"))
 
 (make-coding-system
  'euc-korea 'iso2022
@@ -83,6 +75,19 @@
    mnemonic "ISO7/Ko"
    ))
 
+;; EGG specific setup
+(define-egg-environment 'korean
+  "Korean settings for egg"
+  (lambda ()
+    (when (not (featurep 'egg-kor))
+      (load "its-hangul")
+      (setq its:*standard-modes*
+	    (cons (its:get-mode-map "hangul") its:*standard-modes*))
+      (provide 'egg-kor))
+    (setq wnn-server-type 'kserver)
+    (setq egg-default-startup-file "eggrc-wnn")
+    (setq-default its:*current-map* (its:get-mode-map "hangul"))))
+
 (define-language-environment 'korean
   "Korean"
   (lambda ()
@@ -110,6 +115,6 @@
 	    (cons (its:get-mode-map "hangul") its:*standard-modes*)))
       (setq-default its:*current-map* (its:get-mode-map "hangul")))
 
-;    (setq-default quail-current-package
-;                  (assoc "hangul" quail-package-alist))))
+    (setq-default quail-current-package
+		  (assoc "hangul" quail-package-alist))
     ))

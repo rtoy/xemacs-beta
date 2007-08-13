@@ -1002,6 +1002,7 @@ Lines containing only comments are considered empty."
   (interactive)
   (let ((previous (save-excursion
 		    (while (and (not (bobp))
+				(not (eq (point-min) (point-at-bol)))
 				(progn
 				  (forward-line -1)
 				  (back-to-indentation)

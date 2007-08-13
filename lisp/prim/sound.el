@@ -128,11 +128,15 @@ where .wav files are also supported by the sound card drivers."
   (interactive "fSound file name: \n\
 SSymbol to name this sound: \n\
 nVolume (0 for default): ")
-  (or (symbolp sound-name) (error "sound-name not a symbol"))
-  (or (null volume) (integerp volume) (error "volume not an integer or nil"))
+  (unless (symbolp sound-name)
+    (error "sound-name not a symbol"))
+  (unless (null volume)
+    (integerp volume) (error "volume not an integer or nil"))
   (let (buf
 	data
 	(file (locate-file filename  default-sound-directory-list  sound-ext)))
+    (unless file
+      (error "Couldn't load sound file %s" filename))
     (unwind-protect
 	(save-excursion
 	  (set-buffer (setq buf (get-buffer-create " *sound-tmp*")))

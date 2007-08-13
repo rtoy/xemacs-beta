@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/04/15 23:28:10
-;; Version: 1.111
+;; Created: 1997/04/21 23:55:57
+;; Version: 1.112
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1900,6 +1900,10 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
   (let* ((lightp (css-color-light-p 'default))
 	 (longname (if lightp "stylesheet-light" "stylesheet-dark"))
 	 (shortname (if lightp "light.css" "dark.css"))
+	 (no-user-init (= 0 (length user-init-file)))
+	 (w3-configuration-directory (if no-user-init
+					 "/this/is/a/highly/unlikely/directory/name"
+				       w3-configuration-directory))
 	 (directories (list
 		       data-directory
 		       (concat data-directory "w3/")
@@ -1919,7 +1923,8 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 			  (expand-file-name "stylesheet" dir)
 			  (expand-file-name "default.css" dir))))
 		      directories))
-		    (list w3-default-stylesheet)))
+		    (and (not no-user-init)
+			 (list w3-default-stylesheet))))
 	 (remember possible)
 	 (old-asynch (default-value 'url-be-asynchronous))
 	 (found nil)

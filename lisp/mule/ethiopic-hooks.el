@@ -51,7 +51,7 @@
 
 (set-charset-ccl-program 'ethiopic ccl-ethiopic)
 
-(add-hook 'quail-package-alist '("ethio" "quail/ethio"))
+(add-hook 'quail-package-alist '("ethio" "quail-ethio"))
 
 (define-language-environment 'ethiopic
   "Ethiopic"

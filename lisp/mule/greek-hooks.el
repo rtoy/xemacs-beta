@@ -27,9 +27,9 @@
 (loop for c from 54 to 126
       do (modify-syntax-entry (make-char 'greek-iso8859-7 c) "w"))
 (modify-syntax-entry (make-char 'greek-iso8859-7 32) "w") ; no-break space
-(modify-syntax-entry ?,F7(B ".")
-(modify-syntax-entry ?,F;(B ".")
-(modify-syntax-entry ?,F=(B ".")
+(modify-syntax-entry ?-F· ".")-A
+(modify-syntax-entry ?-F» ".")-A
+(modify-syntax-entry ?-F½ ".")-A
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,7 +45,7 @@
    mnemonic "MIME/Grk"
    ))
 
-;;(add-hook 'quail-package-alist '("greek" "quail/greek"))
+(add-hook 'quail-package-alist '("greek" "quail-greek"))
 
 (define-language-environment 'greek
   "Greek"
@@ -55,6 +55,6 @@
     (set-default-buffer-file-coding-system 'iso-8859-7)
     (setq terminal-coding-system 'iso-8859-7)
     (setq keyboard-coding-system 'iso-8859-7)
-;;  (setq-default quail-current-package
-;;		  (assoc "greek" quail-package-alist))))
+    (setq-default quail-current-package
+		  (assoc "greek" quail-package-alist))
     ))

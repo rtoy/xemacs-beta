@@ -75,6 +75,7 @@ single subdirs using \\[dired-do-redisplay].
   (set (make-local-variable 'dired-subdir-alist) nil)
   (dired-build-subdir-alist)
   (goto-char (point-min))
+  (dired-insert-set-properties (point-min) (point-max))
   (dired-initial-position dirname))
 
 (defun dired-virtual-guess-dir ()

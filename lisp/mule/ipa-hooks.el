@@ -37,5 +37,5 @@
 ;;; OTHERS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(add-hook 'quail-package-alist '("ipa" "quail/ipa"))
+(add-hook 'quail-package-alist '("ipa" "quail-ipa"))
 

@@ -1,7 +1,7 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/10 00:03:25
-;; Version: 1.23
+;; Created: 1997/04/24 04:44:57
+;; Version: 1.25
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,6 +29,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Enhancements For Emacs 19
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(eval-when-compile
+  (require 'w3-props))
 (require 'w3-forms)
 (require 'font)
 (require 'w3-script)
@@ -90,12 +92,11 @@
 
 (defun w3-store-in-clipboard (str)
   "Store string STR in the Xwindows clipboard"
-  (cond
-   ((memq (device-type) '(x pm))
-    (x-select-text str))
-   ((eq (device-type) 'ns)
-    (ns-store-pasteboard-internal str))
-   (t nil)))
+  (case (device-type)
+    (x (x-select-text str))
+    (pm (pm-put-clipboard str))
+    (ns (ns-store-pasteboard-internal str))
+    (otherwise nil)))
 
 (defun w3-e19-no-read-only (st nd)
   ;; Make sure we don't yank any read-only data out of this buffer
