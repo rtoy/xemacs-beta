@@ -1,4 +1,7 @@
 							-*- indented-text -*-
+to 19.16 -- "Lille"
+-- Really apply the Irix build fix
+
 to 19.16 -- "Nancy"
 -- about.el touch up, new faces, new entries
 -- BSD build fix
