@@ -3659,7 +3659,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.6 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.7 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4956,7 +4956,7 @@ gets scrolled to the same line." t nil)
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.6 $
+vhdl-mode $Revision: 1.7 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -7095,18 +7095,18 @@ the PostScript image in a file with that name.  If FILENAME is a
 number, prompt the user for the name of the file to save in." t nil)
 
 (autoload 'ps-line-lengths "ps-print" "\
-*Display the correspondance between a line length and a font size,
+*Display the correspondence between a line length and a font size,
 using the current ps-print setup.
 Try: pr -t file | awk '{printf \"%3d %s
 \", length($0), $0}' | sort -r | head" t nil)
 
 (autoload 'ps-nb-pages-buffer "ps-print" "\
-*Display an approximate correspondance between a font size and the number
+*Display an approximate correspondence between a font size and the number
 of pages the current buffer would require to print
 using the current ps-print setup." t nil)
 
 (autoload 'ps-nb-pages-region "ps-print" "\
-*Display an approximate correspondance between a font size and the number
+*Display an approximate correspondence between a font size and the number
 of pages the current region would require to print
 using the current ps-print setup." t nil)
 

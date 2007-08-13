@@ -30,9 +30,13 @@
 
 ;;; Code:
 
+(defvar html-auto-sgml-entity-conversion nil
+  "*Control automatic sgml entity to ISO-8859-1 conversion")
+
 (require 'psgml)
 (require 'derived)
-(require 'iso-sgml)
+(when html-auto-sgml-entity-conversion
+  (require 'iso-sgml))
 (require 'tempo)			;essential part of html-helper-mode
 
 ;;{{{ user variables

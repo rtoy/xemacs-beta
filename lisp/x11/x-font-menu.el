@@ -217,7 +217,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	  (not (eq (device-type device) 'x)))
       nil
     (unless x-font-regexp-ascii
-      (setq x-font-regexp-ascii (if (fboundp 'charset-registry)
+      (setq x-font-regexp-ascii (if (featurep 'mule)
 				    (charset-registry 'ascii)
 				  "iso8859-1")))
     (setq font-menu-registry-encoding

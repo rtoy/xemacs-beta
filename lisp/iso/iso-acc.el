@@ -3,11 +3,11 @@
 ;; Copyright (C) 1993, 1994, 1996 Free Software Foundation, Inc.
 
 ;; Author: Johan Vromans <jv@mh.nl>
-;; Version: 1.7 (modified)
+;; Version: 1.8
 ;; Maintainer: FSF
 ;; Keywords: i18n
-;; Adapted for XEmacs 19.14 by Alexandre Oliva <oliva@dcc.unicamp.br>
-;; Last update: Oct 10, 1996
+;; Adapted to XEmacs 19.14 by Alexandre Oliva <oliva@dcc.unicamp.br>
+;; Last update: Jan 25, 1997
 
 ;; This file is part of GNU Emacs.
 
@@ -74,7 +74,8 @@
 
 ;; needed to work on GNU Emacs (had to use this function on XEmacs)
 (if (fboundp 'character-to-event) ()
-  (defun character-to-event (ch &optional event console meta) ch))
+  (defun character-to-event (ch &optional event console meta)
+    (if (listp ch) (car ch) ch)))
 
 ;; needed for compatibility with XEmacs 19.14 and GNU Emacs 19.30
 (if (fboundp 'this-single-command-keys) ()
@@ -83,26 +84,6 @@
 	(setq this-command (not (this-command-keys)))
 	(this-command-keys))
     (defun this-single-command-keys () (this-command-keys))))
-
-(if (string-match "Lucid" (version))
-    (progn
-      (global-set-key [quoted-insert-for-iso-acc] 'quoted-insert)
-      (defun iso-generate-char (char)
-	"inserts the octal representation of char into unread-command-events,\nand then returns the pseudo-key quoted-insert-for-iso-acc (which should be mapped to quoted-insert).\n\nCan be used in keymaps to generate characters from 128 to 255."
-	(setq unread-command-events
-	      (append
-	       (mapcar 'character-to-event (list
-					    (+ 48 (/ char 64))
-					    (+ 48 (% (/ char 8) 8))
-					    (+ 48 (% char 8))))
-	       unread-command-events))
-	[quoted-insert-for-iso-acc])
-      )
-  (defun iso-generate-char (char)
-    "Just returns a vector with the given character.\n\nNot necessary in the GNU Emacs implementation"
-    (vector char))
-  )
-
 
 (defvar iso-languages
   '(("portuguese"
@@ -248,11 +229,15 @@ the language you choose).")
 			  (delete-region (1- (point)) (point)))))
 	 (entry (cdr (assq second-char list))))
     (if entry
-	;; Found it: return the mapped char
-	(iso-generate-char entry)
+	;; Found it: insert the accented character and
+	;; return a do-nothing key
+        (vector (character-to-event (list entry)))
       ;; Otherwise, advance and schedule the second key for execution.
-      (setq unread-command-events (list (character-to-event second-char)))
-      (vector first-char))))
+      (setq unread-command-events (append
+				   (list
+				    (character-to-event (list second-char)))
+				   unread-command-events))
+      (vector (character-to-event (list first-char))))))
 
 ;; It is a matter of taste if you want the minor mode indicated
 ;; in the mode line...
@@ -298,12 +283,14 @@ and a negative argument disables it."
     ;; Enable electric accents.
     (setq iso-accents-mode t)))
 
+(defvar iso-accents-mode-map nil)
+
 (defun iso-accents-customize (language)
   "Customize the ISO accents machinery for a particular language.
 It selects the customization based on the specifications in the
 `iso-languages' variable."
   (interactive (list (completing-read "Language: " iso-languages nil t)))
-  (let ((table (assoc language iso-languages)) tail)
+  (let ((table (assoc language iso-languages)) tail acc)
     (if (not table)
 	(error "Unknown language '%s'" language)
       (setq iso-language language
@@ -312,13 +299,56 @@ It selects the customization based on the specifications in the
 	  (substitute-key-definition
 	   'iso-accents-accent-key nil key-translation-map)
 	(setq key-translation-map (make-sparse-keymap)))
+      (setq iso-accents-mode-map (make-sparse-keymap))
+      (let ((pair (assoc 'iso-accents-mode minor-mode-map-alist)))
+	(if pair
+	    (setcdr pair iso-accents-mode-map)
+	  (let ((l minor-mode-map-alist))
+	    (while (cdr l)
+	      (setq l (cdr l)))
+	    (setcdr l (list (cons 'iso-accents-mode iso-accents-mode-map))))))
       ;; Set up translations for all the characters that are used as
       ;; accent prefixes in this language.
       (setq tail iso-accents-list)
       (while tail
-	(define-key key-translation-map (vector (car (car tail)))
+	(define-key key-translation-map
+	  (vector (character-to-event (list (car (car tail)))))
 	  'iso-accents-accent-key)
+	(setq acc (cdr (car tail)))
+	(while acc
+	  (define-key iso-accents-mode-map
+	    (vector (character-to-event (list (cdr (car acc)))))
+	    'iso-accents-self-insert-unless-redefined)
+	  (setq acc (cdr acc)))
 	(setq tail (cdr tail))))))
+
+(defun iso-accents-self-insert-unless-redefined (prompt)
+  "Temporarily disables iso-accents-mode, and checks for additional bindings of the keys that produced its invocation.  If no such binding is found, 'self-insert-command is returned"
+  (interactive "p")
+  (let* ((iso-accents-mode nil)
+	 (bind (key-binding (this-command-keys)))
+	 (repeat t) result)
+    (while repeat
+      (setq result
+	    (cond ((or (null bind)
+		       (eq bind 'self-insert-command))
+		   (setq repeat nil)
+		   (self-insert-command prompt))
+		  ((commandp bind)
+		   (setq repeat nil)
+		   (call-interactively bind))
+		  ((or (stringp bind)
+		       (keymapp bind))
+		   (setq repeat nil)
+		   bind)
+		  ((and (consp bind)
+			(stringp (car bind)))
+		   (setq bind (cdr bind)))
+		  ((and (consp bind)
+			(keymapp (car bind)))
+		   (setq bind (lookup-key (car bind) (cdr bind))))
+		  (t (error "Invalid key binding")))))
+    result))
 
 (defun iso-accentuate (start end)
   "Convert two-character sequences in region into accented characters.

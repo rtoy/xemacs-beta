@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.20
+;; Version: 1.22
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -249,15 +249,43 @@ minibuffer."
 
 (defun widget-specify-field-update (widget from to)
   ;; Specify editable button for WIDGET between FROM and TO.
-  (let ((map (or (widget-get widget :keymap)
-		 widget-keymap))
+  (let ((map (widget-get widget :keymap))
+	(secret (widget-get widget :secret))
+	(secret-to to)
+	(size (widget-get widget :size))
 	(face (or (widget-get widget :value-face)
 		  'widget-field-face)))
+
+    (when secret 
+      (while (and size
+		  (not (zerop size))
+		  (> secret-to from)
+		  (eq (char-after (1- secret-to)) ?\ ))
+	(setq secret-to (1- secret-to)))
+
+      (save-excursion
+	(goto-char from)
+	(while (< (point) secret-to)
+	  (let ((old (get-text-property (point) 'secret)))
+	    (when old
+	      (subst-char-in-region (point) (1+ (point)) secret old)))
+	  (forward-char))))
+
     (set-text-properties from to (list 'field widget
 				       'read-only nil
 				       'keymap map
 				       'local-map map
 				       'face face))
+
+    (when secret 
+      (save-excursion
+	(goto-char from)
+	(while (< (point) secret-to)
+	  (let ((old (following-char)))
+	    (subst-char-in-region (point) (1+ (point)) old secret)
+	    (put-text-property (point) (1+ (point)) 'secret old))
+	  (forward-char))))
+
     (unless (widget-get widget :size)
       (add-text-properties to (1+ to) (list 'field widget
 					    'face face
@@ -461,10 +489,8 @@ The optional ARGS are additional keyword arguments."
   "Keymap containing useful binding for buffers containing widgets.
 Recommended as a parent keymap for modes using widgets.")
 
-(if widget-keymap 
-    ()
+(unless widget-keymap 
   (setq widget-keymap (make-sparse-keymap))
-  (set-keymap-parent widget-keymap global-map)
   (define-key widget-keymap "\t" 'widget-forward)
   (define-key widget-keymap "\M-\t" 'widget-backward)
   (define-key widget-keymap [(shift tab)] 'widget-backward)
@@ -479,6 +505,30 @@ Recommended as a parent keymap for modes using widgets.")
 (defvar widget-global-map global-map
   "Keymap used for events the widget does not handle themselves.")
 (make-variable-buffer-local 'widget-global-map)
+
+(defvar widget-field-keymap nil
+  "Keymap used inside an editable field.")
+
+(unless widget-field-keymap 
+  (setq widget-field-keymap (copy-keymap widget-keymap))
+  (define-key widget-field-keymap "\C-m" 'widget-field-activate)
+  (set-keymap-parent widget-field-keymap global-map))
+
+(defvar widget-text-keymap nil
+  "Keymap used inside a text field.")
+
+(unless widget-text-keymap 
+  (setq widget-text-keymap (copy-keymap widget-keymap))
+  (set-keymap-parent widget-text-keymap global-map))
+
+(defun widget-field-activate (pos &optional event)
+  "Activate the ediable field at point."
+  (interactive "@d")
+  (let* ((field (get-text-property pos 'field)))
+    (if field
+	(widget-apply field :action event)
+      (call-interactively
+       (lookup-key widget-global-map (this-command-keys))))))
 
 (defun widget-button-click (event)
   "Activate button below mouse pointer."
@@ -952,6 +1002,7 @@ With optional ARG, move across that many fields."
 (define-widget 'editable-field 'default
   "An editable text field."
   :convert-widget 'widget-item-convert-widget
+  :keymap widget-field-keymap
   :format "%v"
   :value ""
   :action 'widget-field-action
@@ -1012,6 +1063,7 @@ With optional ARG, move across that many fields."
   (let ((from (widget-get widget :value-from))
 	(to (widget-get widget :value-to))
 	(size (widget-get widget :size))
+	(secret (widget-get widget :secret))
 	(old (current-buffer)))
     (if (and from to)
 	(progn 
@@ -1023,8 +1075,15 @@ With optional ARG, move across that many fields."
 		      (> to from)
 		      (eq (char-after (1- to)) ?\ ))
 	    (setq to (1- to)))
-	  (prog1 (buffer-substring-no-properties from to)
-	    (set-buffer old)))
+	  (let ((result (buffer-substring-no-properties from to)))
+	    (when secret
+	      (let ((index 0))
+		(while (< (+ from index) to)
+		  (aset result index
+			(get-text-property (+ from index) 'secret))
+		  (setq index (1+ index)))))
+	    (set-buffer old)
+	    result))
       (widget-get widget :value))))
 
 (defun widget-field-match (widget value)
@@ -1034,6 +1093,7 @@ With optional ARG, move across that many fields."
 ;;; The `text' Widget.
 
 (define-widget 'text 'editable-field
+  :keymap widget-text-keymap
   "A multiline text area.")
 
 ;;; The `menu-choice' Widget.

@@ -127,9 +127,9 @@ opinions held by the various parties involved.
        inhability of the various parties involved to work together and
        compromise. If people could all work together, I don't think there
        would be any benifit in having 2 Emacsen. It may seem profitable
-       right now, but in the long run, I think everyone looses. The time
+       right now, but in the long run, I think everyone loses. The time
        everyone spends porting back and forth, and imitating what the other
-       has done is not spent to do new features. I've presonnally
+       has done is not spent to do new features. I've personnally
        experienced a project split in the past, and in the end everyone
        lost. 
        
@@ -144,7 +144,7 @@ opinions held by the various parties involved.
        contributors will continue to argue among themselves, nitpicking
        about how to get the perfect solution, rather than try to move
        forward. Meanwhile, people will enjoy using a new state of the art
-       editor. 
+       editor.
    
    Don't think we're just being needlessly perverse by continuing to have
    XEmacs. I'm well aware of the problems in having a project split, and
@@ -170,11 +170,13 @@ opinions held by the various parties involved.
        I'd have to write almost all of the code or rewrite most of his
        code), and provided that he can use this issue as a bargaining
        chip to get concessions of his own.
+
     2. RMS sees the merge process as a series of mutual concessions
        traded back and forth. IMHO this is reasonable for a peace treaty
        but absurd for a piece of software -- we have to have technical
        agreement on the major issues involved, and the chance of that
        happening is basically nil.
+
     3. RMS has insisted in full backwards compatibility with all aspects
        of FSF Emacs, no matter how ugly; and furthermore, this backwards
        compatibility must work fast enough to make existing code run
@@ -186,8 +188,9 @@ opinions held by the various parties involved.
        conses or vectors and a lot of code depends on this, and
        reconciling this with XEmacs's primitive keymap type is difficult
        to impossible).
+
     4. RMS will not even consent to neutral names for the two editors. He
-       objects to call his editor FSF Emacs because for some unfathomable
+       objects to calling his editor FSF Emacs because for some unfathomable
        reason he finds it insulting. He suggests just Emacs, which I find
        not only insulting (XEmacs is just as much Emacs as is FSF Emacs)
        but also quite confusing. He will not even consent to calling his
@@ -207,10 +210,7 @@ opinions held by the various parties involved.
        is patently false -- so why does RMS continue to insist that this
        is the case?
 
-   ben
-   --
-   "... then the day came when the risk to remain tight in a bud was
-   more painful than the risk it took to blossom." -- Anais Nin
+   Ben Wing
 
 
 ** Why Another Version of Emacs?  (The Lucid, Inc. Point of View)
@@ -269,7 +269,7 @@ substantial contribution of the University of Illinois with the support of
 Sun Microsystems.
 
 Certain elements of Lucid Emacs, or derivatives of them, have been ported to
-the FSF GNU Emacs.  We have not been doing work in this direction, because
+FSF GNU Emacs.  We have not been doing work in this direction, because
 we feel that Lucid Emacs has a cleaner and more extensible substrate, and
 that any kind of merger between the two branches would be far easier by
 merging the Free Software Foundation changes into our version than the other
@@ -282,7 +282,7 @@ a compatibility package which will allow Epoch 4 code to run in XEmacs with
 little or no change.  (As of 19.8, Lucid Emacs is running a descendant of
 the Epoch redisplay engine.)
 
-** Why Another Version of Emacs?  (The SunPro Point of View)
+** Why Another Version of Emacs?  (The Sun Microsystems, Inc. Point of View)
 ============================================================
 
 Emacs 18 has been around for a long, long time.  Version 19 was supposed to
@@ -292,45 +292,53 @@ as 1984!), but it never came out.  v19 development was going very, very
 slowly, and from the outside it seemed that it was not moving at all.  In
 the meantime other people gave up waiting for v19 and decided to build their
 own X-aware Emacsen.  The most important of these was probably Epoch, which
-came from the University of Illinois and was based on v18.
+came from the University of Illinois ("UofI") and was based on v18.
 
-Around three years ago we decided that we wanted an integrated editor.  We
-contracted with the University of Illinois to provide a number of basic
-enhancements to the functionality in Epoch.  The University of Illinois
-initially was planning to deliver this on top of Epoch code.
+Around 1990, the Developer Products group within Sun Microsystems
+Inc., decided that it wanted an integrated editor.  (This group is now
+known as DevPro.  It used to be known as SunPro - the name was changed
+in mid-1994.)  They contracted with the University of Illinois to
+provide a number of basic enhancements to the functionality in Epoch.
+UofI initially was planning to deliver this on top of Epoch code.
 
-In the meantime (actually some time before we talked with the University of
-Illinois) Lucid had decided that it also wanted to provide an integrated
-environment with an integrated editor.  Lucid decided that the Version 19
-basis was a better one than Version 18 and thus decided not to use Epoch but
-instead work with Richard Stallman, the head of the Free Software Foundation
-and principle author of Emacs, on getting Version 19 out.  At some point
-Stallman and Lucid parted ways.  Lucid kept working and got a Version 19 out
-that they called Lucid Emacs 19.
+In the meantime, (actually some time before they talked with UofI)
+Lucid had decided that it also wanted to provide an integrated
+environment with an integrated editor.  Lucid decided that the Version
+19 base was a better one than Version 18 and thus decided not to use
+Epoch but instead to work with Richard Stallman, the head of the Free
+Software Foundation and principal author of Emacs, on getting v19 out.
+At some point Stallman and Lucid parted ways.  Lucid kept working and
+got a v19 out that they called Lucid Emacs 19.
 
-After Lucid's v19 came out it became clear to us (the University of Illinois
-and SunPro) that the right thing to do was to push for an integration of
-both Lucid Emacs and Epoch, and to get the deliverables that we were asking
-from the University of Illinois on top of this integrated platform.  Through
-the last two years, SunPro has been actively supporting this product and has
-been investing a comparable amount of effort into it as Lucid has.
-Substantial portions of the current code have originated under the support
-of SunPro, either directly in SunPro, or in the University of Illinois but
-paid for by us.  This code was kept away from Lucid for a while, but later
-was made available to them.  Initially Lucid didn't know that we were
-supporting UofI, but later we were open about it.
+After Lucid's v19 came out it became clear to us (the UofI and Sun)
+that the right thing to do was to push for an integration of both
+Lucid Emacs and Epoch, and to get the deliverables that Sun was asking
+from the University of Illinois on top of this integrated platform.
+Until 1994, Sun and Lucid both actively supported XEmacs as part of
+their product suite and invested a comparable amount of effort into
+it.  Substantial portions of the current code have originated under
+the support of Sun, either directly within Sun, or at UofI but paid
+for by Sun.  This code was kept away from Lucid for a while, but later
+was made available to them.  Initially Lucid didn't know that Sun was
+supporting UofI, but later Sun was open about it.
 
-Eventually, all development source trees were synched up.  Currently, there
-is basically no difference in the source trees between what is at the
-University of Illinois and SunPro.
+Around 1992 DevPro-originated code started showing up in Lucid Emacs,
+starting with the infusion of the Epoch redisplay code.  The separate
+code bases at Lucid, Sun, and the University of Illinois were merged,
+allowing a single XEmacs to evolve from that point on.
 
-SunPro originally called the integrated product ERA, for "Emacs Rewritten
-Again".  At some point, SunPro and Lucid came to an agreement to find a name
-for the product that was not specific to either company.  An additional
-constraint that Lucid placed on the name was that it must contain the word
-"Emacs" in it -- thus "ERA" was not acceptable.  The agreed-upon name was
-"XEmacs", and this is what the product has been called starting with the
-19.11 release.
+Sun originally called the integrated product "ERA", for "Emacs
+Rewritten Again".  Sun and Lucid eventually came to an agreement to
+find a name for the product that was not specific to either company.
+An additional constraint that Lucid placed on the name was that it
+must contain the word "Emacs" in it -- thus "ERA" was not
+acceptable.  The tentatively agreed-upon name was "XEmacs", and this
+has been the name of the program since version 19.11.)
+
+As of 1997, Sun is shipping XEmacs as part of its Developer Products
+integrated programming environment "Sun WorkShop".  Sun is
+continuing to support XEmacs development, with focus on
+internationalization and quality improvement.
 
 
 * What's Different?
@@ -339,6 +347,9 @@ constraint that Lucid placed on the name was that it must contain the word
 
 ** Differences between XEmacs and FSF GNU Emacs 19
 ==================================================
+In XEmacs 20, characters are first-class objects.  Characters can be
+converted to integers, but are not integers.  FSF 19, XEmacs 19, and Mule
+represent them as integers.
 
 In XEmacs, events are first-class objects.  FSF 19 represents them as
 integers, which obscures the differences between a key gesture and the
@@ -417,12 +428,11 @@ NOTE: All timestamps are measured as milliseconds since Emacs started.
 
  key_press_event	
     event_channel	A token representing which keyboard generated it.
-			For this kind of event, this is a frame object.
-			(This is for eventual support of multiple displays.)
+			For this kind of event, this is a console object.
     timestamp		When it happened
-    key			What keysym this is; an integer or a symbol.
-			If this is an integer, it will be in the printing
-			ASCII range: >32 and <127.
+    key			What keysym this is; a character or a symbol.
+			If it is a character, it will be a printing
+			ASCII character.
     modifiers		Bucky-bits on that key: control, meta, etc.
 			For most keys, Shift is not a bit; that is implicit
 			in the keyboard layout.
@@ -1428,9 +1438,169 @@ EFS, and Auc-TeX, as well as all of the large packages currently
 distributed with XEmacs).  There will also still be a full distribution
 that includes all the optional packages.
 
-In the longer term, we are also working on a separate branch of XEmacs that
-includes full Asian-language ("MULE") support.  This work is currently in
-beta and is being supported by Sun Microsystems.
+We are working on improving the Mule support in future releases:
+
+-- Other input methods, such as wnn, will be supported.
+
+-- More user-level documentation on using Mule.
+
+** Major Differences Between 19.14 and 20.0
+
+XEmacs 20.0 is the first public release to have support for MULE
+(Multi-Lingual Emacs).  The --with-mule configuration flag must be
+used to enable Mule support.
+
+Many bugs have been fixed.  An effort has been made to eradicate all
+XEmacs crashes, although we are not quite done yet.  The overall
+quality of XEmacs should be higher than any previous release.  XEmacs
+now compiles with nary a warning with some compilers.
+
+-- Multiple character sets can be displayed in a buffer.  The file
+   mule-doc/demo in the distribution contains a greeting in many
+   different languages.
+
+-- Although the Mule work is for all languages, particular effort has
+   been invested in Japanese, with particular focus on Japanese users
+   of Sun WorkShop.  Many menubar labels have been translated into
+   Japanese.  Martin usually runs XEmacs in a Japanese language
+   environment.  Some of the other contributors are Japanese, most
+   importantly Morioka Tomohiko, author of the TM package, providing
+   MIME support for Mail and News.
+
+-- Input for complex Asian languages is supported via XIM, a mechanism
+   introduced in X11R5 to allow applications to get localized input
+   without knowledge of the language.  The way XIM works is that when
+   the locale has a complex character set, such as Japanese, and extra
+   minibuffer-like status window appears attached to various
+   application windows, and indicates the status of the input method.
+   Composed input in XEmacs should work the same as with other
+   applications.  If Motif and Mule support is configured into XEmacs,
+   then XIM support is automatically configured in as well.
+
+-- TM (Tools for Mime) now comes with XEmacs.  This provides MIME
+   (Multi-purpose Internet Multi-media Extensions?) support for Mail
+   and News.  The primary author is Morioka Tomohiko.
+
+-- Japanese input can also be input using the `canna' input method.
+   This support was contributed by Morioka Tomohiko.  Setting up canna
+   usually requires more user effort (and better knowledge of Japanese!)
+   than XIM, but provides a better-integrated input method.
+
+-- A mini-tutorial on using Mule:
+
+   -- Every time data passes between XEmacs and the rest of the
+      environment, via file or process input or output, XEmacs must
+      convert between its internal multi-character representation and
+      the external representation (`coding system').  Many
+      difficulties with Mule are related to controlling these coding
+      system conversions.
+
+      -- file-coding-system, file-coding-system-for-read,
+         overriding-file-coding-system, and file-coding-system-alist
+         are used to determine the coding systems used on file input
+         and output.
+
+      -- For each process, (set-process-input-coding-system) and
+         (set-process-output-coding-system) determine the coding
+         system used for I/O from the process.
+
+      -- Many other things are encoded using pathname-coding-system:
+         -- file and directory names
+         -- window manager properties: window title, icon name
+         -- process names and process arguments
+         -- XIM input.
+
+      -- In many cases, you will want to have the same values for all
+         the above variables in many cases.  For example, in a
+         Japanese environment, you will want to use the 'euc-japan
+         coding system consistently, except when running certain
+         processes that do byte-oriented, rather than
+         character-oriented I/O, such as gzip, or when processing Mail
+         or News, where ISO2022-based coding systems are the norm,
+         since they support multiple character sets.
+
+   -- To add support for a new language or character set, start by
+      trying to copy code in japanese-hooks.el.
+
+   -- The traditional pre-Mule data conversion is equivalent to the
+      'binary coding system under Mule.  In this case all characters
+      are treated as iso8859-1 (i.e. characters for English + Western
+      European languages).
+
+   -- many fileio-related commands such as find-file and write-file
+      take an extra argument, coding-system, which specifies the
+      encoding to be used with the file on disk.  For example, here is
+      a command that converts from the Japanese EUC to ISO2022 format:
+
+         xemacs -batch -eval '(progn (find-file
+         "locale-start.el.euc" (quote euc-japan)) (write-file
+         "locale-start.el" nil (quote iso-2022-8-unix)))'
+
+      Interactively, you can be prompted for a coding system by
+      providing a prefix argument to the fileio command.  In
+      particular, C-u C-x C-f is a useful sequence to edit a file
+      using a particular coding system.
+
+   -- In an Asian locale (i.e. if $LANG is set to ja, ko, or zh),
+      XEmacs automatically sets up a language environment assuming
+      that the operating system encodes information in the national
+      version of EUC, which supports English and the national
+      language, but typically no other character sets.
+
+-- Command line processing should work much better now - no more order
+   dependencies.
+
+-- Many many package upgraded (thanks go to countless maintainers):
+
+  -- ediff 2.64 (Michael Kifer)
+  -- w3 3.0.51  (Bill Perry)
+  -- ilisp 5.8
+  -- VM 5.97     (Kyle Jones)
+  -- etags 11.78 (Francesco Potorti`)
+  -- ksh-mode.el 2.9
+  -- vhdl-mode.el 2.73 (Rod Whitby)
+  -- id-select.el (Bob Weiner)
+  -- EDT/TPU emulation modes should work now for the first time.
+  -- viper 2.92 (Michael Kifer) is now the `official' vi emulator for XEmacs.
+  -- big-menubar should work much better now.
+  -- mode-motion+.el 3.16
+  -- backup-dir 2.0 (Greg Klanderman)
+  -- ps-print.el-3.05 (Jacques Duthen Prestataire)
+  -- lazy-lock-1.15
+  -- reporter 3.3
+  -- hm--html-menus 5.0 (Heiko Muenkel)
+  -- cc-mode 4.322 (Barry Warsaw)
+  -- elp 2.37 (Barry Warsaw)
+
+
+-- Many new packages have been added:
+  -- m4-mode 1.8 (Andrew Csillag)
+  -- crisp.el - crisp/brief emulation (Gary D. Foster)
+  -- Johan Vroman's iso-acc.el has been ported to XEmacs by Alexandre Oliva
+  -- psgml-1.01
+  -- python-mode.el 2.83 (Barry Warsaw)
+  -- vrml-mode.el (Ben Wing)
+  -- enriched.el, face-menu.el (Michael Sperber)
+
+-- New function x-keysym-on-keyboard-p helps determine keyboard
+   characteristics for key rebinding:
+
+  x-keysym-on-keyboard-p: (KEYSYM &optional DEVICE)
+    -- a built-in function.
+  Return true if KEYSYM names a key on the keyboard of DEVICE.
+  More precisely, return true if pressing a physical key
+  on the keyboard of DEVICE without any modifier keys generates KEYSYM.
+  Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
+  /usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
+
+-- Installed info files are now compressed (support courtesy of Joseph J Nuspl)
+
+-- (load-average) works on Solaris, even if you're not root. Thanks to
+   Hrvoje Niksic.
+
+-- OffiX drag-and-drop support added
+
+-- lots of syncing with 19.34 elisp files, most by Steven Baur
 
 
 ** Major Differences Between 19.13 and 19.14

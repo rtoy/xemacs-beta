@@ -5,7 +5,7 @@
 ;; Author:     Jim Thompson (was <thompson@wg2.waii.com>)
 ;; Maintainer: Jacques Duthen <duthen@cegelec-red.fr>
 ;; Keywords:   print, PostScript
-;; Time-stamp: <97/01/17 16:41:00 duthen>
+;; Time-stamp: <97/01/29 23:21:25 tjchol01>
 ;; Version:    3.05
 
 (defconst ps-print-version "3.05"
@@ -490,10 +490,10 @@ Please send all bug fixes and enhancements to
 ;; ------------------------
 ;;
 ;; To use a new font family, you MUST first teach ps-print
-;; this font, ie add its information to `ps-font-info-database',
+;; this font, i.e., add its information to `ps-font-info-database',
 ;; otherwise ps-print cannot correctly place line and page breaks.
 ;;
-;; For example, assuming `Helvetica' is unkown,
+;; For example, assuming `Helvetica' is unknown,
 ;; you first need to do the following ONLY ONCE:
 ;;
 ;; - create a new buffer
@@ -603,12 +603,12 @@ Please send all bug fixes and enhancements to
 ;; left and right margins and the font size.  On UN*X systems, do:
 ;; pr -t file | awk '{printf "%3d %s\n", length($0), $0}' | sort -r | head
 ;; to determine the longest lines of your file.
-;; Then, the command `ps-line-lengths' will give you the correspondance
+;; Then, the command `ps-line-lengths' will give you the correspondence
 ;; between a line length (number of characters) and the maximum font
 ;; size which doesn't wrap such a line with the current ps-print setup.
 ;;
 ;; The commands `ps-nb-pages-buffer' and `ps-nb-pages-region' display
-;; the correspondance between a number of pages and the maximum font
+;; the correspondence between a number of pages and the maximum font
 ;; size which allow the number of lines of the current buffer or of
 ;; its current region to fit in this number of pages.
 ;; Note: line folding is not taken into account in this process
@@ -1017,7 +1017,7 @@ this variable.")
 (defvar ps-razzle-dazzle t
   "*Non-nil means report progress while formatting buffer.")
 
-(defvar ps-adobe-tag "%!PS-Adobe-1.0\n"
+(defvar ps-adobe-tag "%!PS-Adobe-3.0\n"
   "*Contains the header line identifying the output as PostScript.
 By default, `ps-adobe-tag' contains the standard identifier.  Some
 printers require slightly different versions of this line.")
@@ -1166,7 +1166,7 @@ number, prompt the user for the name of the file to save in."
 
 ;;;###autoload
 (defun ps-line-lengths ()
-  "*Display the correspondance between a line length and a font size,
+  "*Display the correspondence between a line length and a font size,
 using the current ps-print setup.
 Try: pr -t file | awk '{printf \"%3d %s\n\", length($0), $0}' | sort -r | head"
   (interactive)
@@ -1174,7 +1174,7 @@ Try: pr -t file | awk '{printf \"%3d %s\n\", length($0), $0}' | sort -r | head"
 
 ;;;###autoload
 (defun ps-nb-pages-buffer (nb-lines)
-  "*Display an approximate correspondance between a font size and the number
+  "*Display an approximate correspondence between a font size and the number
 of pages the current buffer would require to print
 using the current ps-print setup."
   (interactive (list (count-lines (point-min) (point-max))))
@@ -1182,7 +1182,7 @@ using the current ps-print setup."
 
 ;;;###autoload
 (defun ps-nb-pages-region (nb-lines)
-  "*Display an approximate correspondance between a font size and the number
+  "*Display an approximate correspondence between a font size and the number
 of pages the current region would require to print
 using the current ps-print setup."
   (interactive (list (count-lines (mark) (point))))
@@ -1825,7 +1825,7 @@ and the text it contains.")
 ;; Internal functions
 
 (defun ps-line-lengths-internal ()
-  "Display the correspondance between a line length and a font size,
+  "Display the correspondence between a line length and a font size,
 using the current ps-print setup.
 Try: pr -t file | awk '{printf \"%3d %s\n\", length($0), $0}' | sort -r | head"
   (let ((buf (get-buffer-create "*Line-lengths*"))
@@ -1863,7 +1863,7 @@ Try: pr -t file | awk '{printf \"%3d %s\n\", length($0), $0}' | sort -r | head"
     (display-buffer buf 'not-this-window)))
 
 (defun ps-nb-pages (nb-lines)
-  "Display an approximate correspondance between a font size and the number
+  "Display an approximate correspondence between a font size and the number
 of pages the number of lines would require to print
 using the current ps-print setup."
   (let ((buf (get-buffer-create "*Nb-Pages*"))
@@ -2114,7 +2114,7 @@ page-height == bm + print-height + tm - ho - hh
   (ps-flush-output)
 
   ;; Check to see that the file exists and is readable; if not, throw
-  ;; and error.
+  ;; an error.
   (if (not (file-readable-p fname))
       (error "Could not read file `%s'" fname))
 
@@ -2173,13 +2173,10 @@ page-height == bm + print-height + tm - ho - hh
   (ps-output "%%Creator: " (user-full-name) "\n")
   (ps-output "%%CreationDate: " 
 	     (time-stamp-hh:mm:ss) " " (time-stamp-mon-dd-yyyy) "\n")
-  (ps-output "%% DocumentFonts: "
-	     ps-font " " ps-font-bold " " ps-font-italic " "
-	     ps-font-bold-italic " "
-	     ps-header-font " " ps-header-title-font "\n")
   (ps-output "%%Pages: (atend)\n")
   (ps-output "%%EndComments\n\n")
 
+  (ps-output "%%BeginProlog\n")
   (ps-output-boolean "LandscapeMode"             ps-landscape-mode)
   (ps-output (format "/NumberOfColumns %d def\n" ps-number-of-columns))
 
@@ -2204,6 +2201,10 @@ page-height == bm + print-height + tm - ho - hh
   (ps-output (format "/LineHeight   %s def\n" ps-line-height))
 
   (ps-output ps-print-prologue-1)
+  (ps-output "%%EndProlog\n\n")
+
+
+  (ps-output "%%BeginSetup\n")
 
   ;; Header fonts
   (ps-output				; /h0 14 /Helvetica-Bold Font
@@ -2220,7 +2221,8 @@ page-height == bm + print-height + tm - ho - hh
   (ps-output (format "/f3 %s /%s DefFont\n" ps-font-size ps-font-bold-italic))
 
   (ps-output "\nBeginDoc\n\n")
-  (ps-output "%%EndPrologue\n"))
+  (ps-output "%%EndSetup\n")
+)
 
 (defun ps-header-dirpart ()
   (let ((fname (buffer-file-name)))
@@ -2244,10 +2246,11 @@ page-height == bm + print-height + tm - ho - hh
   (setq ps-page-count 0))
 
 (defun ps-end-file ()
-  (ps-output "\nEndDoc\n\n")
-  (ps-output "%%Trailer\n")
+  (ps-output "\n\n%%Trailer\n")
   (ps-output (format "%%%%Pages: %d\n" (1+ (/ (1- ps-page-count)
-					      ps-number-of-columns)))))
+					      ps-number-of-columns))))
+  (ps-output "EndDoc\n")
+  (ps-output "%%EOF\n"))
 
 (defun ps-next-page ()
   (ps-end-page)
@@ -2747,7 +2750,7 @@ EndDSCPage\n"))
 	      (set-marker safe-marker (point-max))
 	    
 	      (goto-char (point-min))
-	      (if (looking-at (regexp-quote "%!PS-Adobe-1.0"))
+	      (if (looking-at (regexp-quote ps-adobe-tag))
 		  nil
 		(setq needs-begin-file t))
 	      (save-excursion

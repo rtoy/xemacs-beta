@@ -100,7 +100,7 @@ energize_version='no'
 native_sound_lib=''
 # make normal error-checking be the default in alpha and beta versions, so
 # that bugs get noticed.  Change this for released versions.
-error_check_default='yes'
+error_check_default='no'
 error_check_extents=$error_check_default
 error_check_typecheck=$error_check_default
 error_check_bufpos=$error_check_default
@@ -1154,6 +1154,7 @@ case "${canonical}" in
   i370-ibm-aix*) machine=ibm370aix opsys=usg5-3 ;;
   rs6000-ibm-aix3.1*  | powerpc-ibm-aix3.1*  ) machine=ibmrs6000 opsys=aix3-1	;;
   rs6000-ibm-aix3.2.5 | powerpc-ibm-aix3.2.5 ) machine=ibmrs6000 opsys=aix3-2-5	;;
+  rs6000-ibm-aix4.2*  | powerpc-ibm-aix4.2*  ) machine=ibmrs6000 opsys=aix4-2	;;
   rs6000-ibm-aix4.1*  | powerpc-ibm-aix4.1*  ) machine=ibmrs6000 opsys=aix4-1	;;
   rs6000-ibm-aix4*    | powerpc-ibm-aix4*    ) machine=ibmrs6000 opsys=aix4	;;
   rs6000-ibm-aix*     | powerpc-ibm-aix*     ) machine=ibmrs6000 opsys=aix3-2	;;
@@ -3666,6 +3667,9 @@ fi
       # begin expansion of ac_have_library
       ac_save_LIBS="${LIBS}"
       LIBS="${LIBS} -lXmu -lXt -lXext -lX11 -lm"
+      if test ${machine} = sparc -a ${opsys} = linux; then
+	LIBS="${LIBS} -lICE -lSM"
+      fi
       ac_have_lib=""
       cat > conftest.${ac_ext} <<EOF
 int main() { return 0; }

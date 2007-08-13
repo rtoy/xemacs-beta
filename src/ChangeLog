@@ -1,3 +1,18 @@
+Fri Jan 31 10:28:47 1997  David Byers  <davby@ida.liu.se>
+
+	* frame.c (frame_matches_frametype): Fix next-window when the next
+	window is on another frame.
+
+Thu Jan 30 20:25:00 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* syntax.c (scan_sexps_forward): Change test on targetdepth to
+	match Emacs 19.34.
+
+Wed Jan 29 22:11:53 1997  James LewisMoss <dres@scsn.net>
+
+	* gmalloc.c: Corrections for namespace collision with Linux libc
+	malloc.
+
 Mon Jan 27 21:46:53 1997  Tomasz J. Cholewo  <tjchol01@mecca.spd.louisville.edu>
 
 	* fileio.c (Fwrite_region_internal): pack lockname to write-region

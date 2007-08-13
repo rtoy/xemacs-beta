@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/01/26 00:16:07
-;; Version: 1.112
+;; Created: 1997/01/31 04:26:17
+;; Version: 1.115
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -32,6 +32,12 @@
 (require 'w3-widget)
 (require 'w3-imap)
 
+(autoload 'sentence-ify "flame")
+(autoload 'string-ify "flame")
+(autoload '*flame "flame")
+(if (not (fboundp 'flatten)) (autoload 'flatten "flame"))
+(defvar w3-cookie-cache nil)
+
 (defmacro w3-d-s-var-def (var)
   (` (make-variable-buffer-local (defvar (, var) nil))))
 
@@ -55,6 +61,7 @@
 (w3-d-s-var-def w3-face-font-size)
 (w3-d-s-var-def w3-face-font-family)
 (w3-d-s-var-def w3-face-font-size)
+(w3-d-s-var-def w3-face-font-style)
 (w3-d-s-var-def w3-face-font-spec)
 (w3-d-s-var-def w3-face-text-decoration)
 (w3-d-s-var-def w3-face-face)
@@ -79,6 +86,7 @@
     (`
      (progn
        (w3-get-face-info font-family)
+       (w3-get-face-info font-style)
        (w3-get-face-info font-weight)
        (w3-get-face-info font-variant)
        (w3-get-face-info font-size)
@@ -98,6 +106,7 @@
        (w3-pop-face-info font-weight)
        (w3-pop-face-info font-variant)
        (w3-pop-face-info font-size)
+       (w3-pop-face-info font-style)
        (w3-pop-face-info text-decoration)
        ;;(w3-pop-face-info pixmap)
        (w3-pop-face-info color)
@@ -232,6 +241,9 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
   (if w3-face-font-variant
       (set-font-style-by-keywords w3-face-font-spec
 				  (car w3-face-font-variant)))
+  (if w3-face-font-style
+      (set-font-style-by-keywords w3-face-font-spec
+				  (car w3-face-font-style)))
   (setq w3-face-descr (list w3-face-font-spec
 			    (car w3-face-color)
 			    (car w3-face-background-color))
@@ -358,6 +370,22 @@ as the bullet character.")
       (add-text-properties w3-scratch-start-point (point)
 			   (list 'personality (car w3-active-voices))))
   )
+
+(defun w3-display-get-cookie (args)
+  (if (not (fboundp 'cookie))
+      "Sorry, no cookies today."
+    (let* ((href (or (w3-get-attribute 'href) (w3-get-attribute 'src)))
+	   (fname (or (cdr-safe (assoc href w3-cookie-cache))
+		      (url-generate-unique-filename "%s.cki")))
+	   (st (or (cdr-safe (assq 'start args)) "Loading cookies..."))
+	   (nd (or (cdr-safe (assq 'end args)) "Loading cookies... done.")))
+      (if (not (file-exists-p fname))
+	  (save-excursion
+	    (set-buffer (generate-new-buffer " *cookie*"))
+	    (url-insert-file-contents href)
+	    (write-region (point-min) (point-max) fname 5)
+	    (setq w3-cookie-cache (cons (cons href fname) w3-cookie-cache))))
+      (cookie fname st nd))))
 
 (defun w3-widget-echo (widget &rest ignore)
   (let ((url (widget-get widget 'href))
@@ -697,17 +725,19 @@ as the bullet character.")
 	  (widget nil)
 	  (align (or (w3-get-attribute 'align)
 		     (w3-get-style-info 'vertical-align node))))
-     (setq widget (widget-create 'image
-				 :value-face w3-active-faces
-				 'src src ; Where to load the image from
-				 'alt alt ; Textual replacement
-				 'ismap ismap ; Is it a server-side map?
-				 'usemap usemap	; Is it a client-side map?
-				 'href href ; Hyperlink destination
-				 ))
-     (widget-put widget 'buffer (current-buffer))
-     (w3-maybe-start-image-download widget)
-     (goto-char (point-max)))))
+     (if (assq '*table-autolayout w3-display-open-element-stack)
+	 (insert alt)
+       (setq widget (widget-create 'image
+				   :value-face w3-active-faces
+				   'src src ; Where to load the image from
+				   'alt alt ; Textual replacement
+				   'ismap ismap ; Is it a server-side map?
+				   'usemap usemap ; Is it a client-side map?
+				   'href href ; Hyperlink destination
+				   ))
+       (widget-put widget 'buffer (current-buffer))
+       (w3-maybe-start-image-download widget)
+       (goto-char (point-max))))))
 
 ;; The table handling
 
@@ -1860,8 +1890,44 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 			       (cons (cons 'data (apply 'concat (nth 2 node)))
 				     (nth 1 node))))
 	     (w3-handle-empty-tag))
+	    ;; Emacs-W3 stuff that cannot be expressed in a stylesheet
+	    (pinhead
+	     ;; This check is so that we don't screw up table auto-layout
+	     ;; by changing our text midway through the parse/layout/display
+	     ;; steps.
+	     (if (nth 2 node)
+		 nil
+	       (setcar (cddr node)
+		       (list
+			(if (fboundp 'yow)
+			    (yow)
+			  "AIEEEEE!  I am having an UNDULATING EXPERIENCE!"))))
+	     (w3-handle-content node))
+	    (flame
+	     (if (nth 2 node)
+		 nil
+	       (setcar
+		(cddr node)
+		(list
+		 (condition-case ()
+		     (concat
+		      (sentence-ify
+		       (string-ify
+			(append-suffixes-hack (flatten (*flame))))))
+		   (error
+		    "You know, everything is really a graphics editor.")))))
+	     (w3-handle-content node))
+	    (cookie
+	     (if (nth 2 node)
+		 nil
+	       (setcar
+		(cddr node)
+		(list
+		 (w3-display-get-cookie args))))
+	     (w3-handle-content node))
+	    ;; Generic formatting - all things that can be fully specified
+	    ;; by a CSS stylesheet.
 	    (otherwise
-	     ;; Generic formatting
 	     (w3-handle-content node))
 	    )				; case tag
 	  )				; stringp content

@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.6 $
+;; Version: $Revision: 1.7 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -96,7 +96,7 @@
 ;; This is also a plain text.  But, it is explicitly specified as is.
 ;;
 ;;--[[text/plain; charset=ISO-2022-JP]]
-;; $(B$3$l$O(B charset $(B$r(B ISO-2022-JP $(B$K;XDj$7$?F|K\8l$N(B plain $(B%F%-%9%H$G$9(B.
+;; [Insert Japanese text here]
 ;;
 ;;--[[text/richtext]]
 ;; <center>This is a richtext.</center>
@@ -120,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.6 1997/01/30 02:22:48 steve Exp $")
+  "$Id: tm-edit.el,v 1.7 1997/02/02 02:16:16 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -853,7 +853,8 @@ just return to previous mode."
     ;; Restore previous state.
     (setq mime/editor-mode-flag nil)
     (cond (running-xemacs
-	   (delete-menu-item (list mime-editor/menu-title)))
+	   (if (featurep 'menubar) 
+	       (delete-menu-item (list mime-editor/menu-title))))
 	  (t
 	   (use-local-map mime/editor-mode-old-local-map)))
     

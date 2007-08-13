@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #if (LONGBITS == 64)
 # define BASE_PURESIZE 893000
 #else
-# define BASE_PURESIZE 513000
+# define BASE_PURESIZE 518000
 #endif
 
 /* If any particular systems need to change the base puresize, they
@@ -69,7 +69,7 @@ Boston, MA 02111-1307, USA.  */
 # if (LONGBITS == 64)
 #  define X11_PURESIZE_EXTRA 95000
 # else
-#  define X11_PURESIZE_EXTRA 63000
+#  define X11_PURESIZE_EXTRA 68000
 # endif
 #else
 # define X11_PURESIZE_EXTRA 0
@@ -78,10 +78,15 @@ Boston, MA 02111-1307, USA.  */
 /* Extra amount of purespace needed for Mule. */
 
 #ifdef MULE
+#ifdef HAVE_CANNA
+# define MULE_PURESIZE_CANNA 5000
+#else
+# define MULE_PURESIZE_CANNA 0
+#endif
 # if (LONGBITS == 64)
-#  define MULE_PURESIZE_EXTRA 99000
+#  define MULE_PURESIZE_EXTRA 99000+MULE_PURESIZE_CANNA
 # else
-#  define MULE_PURESIZE_EXTRA 78000
+#  define MULE_PURESIZE_EXTRA 78000+MULE_PURESIZE_CANNA
 # endif
 #else
 # define MULE_PURESIZE_EXTRA 0

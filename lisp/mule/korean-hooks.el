@@ -42,17 +42,17 @@
 ;	    (cons (its:get-mode-map "hangul") its:*standard-modes*))
 ;      (setq-default its:*current-map* (its:get-mode-map "hangul"))))
 
-(add-hook 'quail-package-alist '("hangul"    "quail/hangul"))
-(add-hook 'quail-package-alist '("hangul3"   "quail/hangul3"))
-(add-hook 'quail-package-alist '("hanja-jis" "quail/hanja-jis"))
-(add-hook 'quail-package-alist '("hanja-ksc" "quail/hanja-ksc"))
+;(add-hook 'quail-package-alist '("hangul"    "quail/hangul"))
+;(add-hook 'quail-package-alist '("hangul3"   "quail/hangul3"))
+;(add-hook 'quail-package-alist '("hanja-jis" "quail/hanja-jis"))
+;(add-hook 'quail-package-alist '("hanja-ksc" "quail/hanja-ksc"))
 
 (make-coding-system
  'euc-korea 'iso2022
  "Coding-system of Korean EUC (Extended Unix Code)."
  '(charset-g0 ascii
    charset-g1 korean-ksc5601
-   mnemonic "EUC/Kor"
+   mnemonic "EUC/Ko"
    eol-type lf
    ))
 
@@ -66,7 +66,7 @@
    force-g1-on-output t
    seven t
    lock-shift t
-   mnemonic "Mail/Kor"
+   mnemonic "Mail/Ko"
    eol-type lf
    ))
 
@@ -80,14 +80,24 @@
    short t
    seven t
    lock-shift t
-   mnemonic "ISO7/Kor"
+   mnemonic "ISO7/Ko"
    ))
 
 (define-language-environment 'korean
   "Korean"
   (lambda ()
     (set-coding-category-system 'iso-8-2 'euc-korea)
-    (set-coding-priority-list '(iso-8-2 iso-8-designate))
-    (set-default-file-coding-system 'iso-2022-kr)
-    (setq-default quail-current-package
-                  (assoc "hangul" quail-package-alist))))
+    (set-coding-priority-list '(iso-8-2 iso-7 iso-8-designate))
+    (set-pathname-coding-system 'euc-korea)
+    (add-hook 'comint-exec-hook
+              (lambda ()
+                (let ((proc (get-buffer-process (current-buffer))))
+                  (set-process-input-coding-system  proc 'euc-korea)
+                  (set-process-output-coding-system proc 'euc-korea))))
+    (set-file-coding-system-for-read 'autodetect)
+    (set-default-file-coding-system 'euc-korea)
+    (setq keyboard-coding-system     'euc-korea)
+    (setq terminal-coding-system     'euc-korea)
+    (set-charset-registry 'ascii "ksc5636")))
+;    (setq-default quail-current-package
+;                  (assoc "hangul" quail-package-alist))))

@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/01/27 00:57:39
-;; Version: 1.51
+;; Created: 1997/01/28 14:21:54
+;; Version: 1.55
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -84,7 +84,10 @@
     (multiline 21)
     (hidden nil)
     (file (or size 26))
-    ((float text int) (or size 20))
+    ((float password text int) (or size 20))
+    (image (+ 2 (length (or
+			 (plist-get (w3-form-element-plist el) 'alt)
+			 "Form-Image"))))
     (option
      (or size
 	 (length (caar (sort (w3-form-element-options el)
@@ -108,7 +111,8 @@
 		     plist))
 	 (size (w3-form-determine-size el (plist-get plist 'size)))
 	 (node (assoc action w3-form-elements)))
-    (if (eq (plist-get plist 'type) 'hidden)
+    (if (and (eq (plist-get plist 'type) 'hidden)
+	     (not (assq '*table-autolayout w3-display-open-element-stack)))
 	(if node
 	    (setcdr node (cons el (cdr node)))
 	  (setq w3-form-elements (cons (cons action (list el))
@@ -202,6 +206,7 @@
 (put 'float     'w3-widget-creation-function 'w3-form-create-float)
 (put 'custom    'w3-widget-creation-function 'w3-form-create-custom)
 (put 'text      'w3-widget-creation-function 'w3-form-create-text)
+(put 'password  'w3-widget-creation-function 'w3-form-create-password)
 
 ;; Custom support.
 (defvar w3-custom-options nil)
@@ -279,10 +284,11 @@
 		   val)))
 
 (defun w3-form-create-image (el face)
-  (let ((widget (widget-create 'push-button
-			       :notify 'w3-form-submit/reset-callback
-			       :value "Form-Image")))
-    widget))
+  (widget-create 'push-button
+		 :notify 'w3-form-submit/reset-callback
+		 :value (or
+			 (plist-get (w3-form-element-plist el) 'alt)
+			 "Form-Image")))
 
 (defun w3-form-create-submit-button (el face)
   (let ((val (w3-form-element-value el)))
@@ -385,6 +391,19 @@
 		 :value-face face
 		 :w3-form-data el
 		 (w3-form-element-value el)))
+
+(defun w3-form-create-password (el face)
+  ;; *sigh*  This will fail under XEmacs, but I can yell at them about
+  ;; upgrading separately for the release of 19.15 and 20.0
+  (if (boundp :secret)
+      (widget-create 'editable-field
+		     :secret ?*
+		     :keymap w3-form-keymap
+		     :size (w3-form-element-size el)
+		     :value-face face
+		     :w3-form-data el
+		     (w3-form-element-value el))
+    (w3-form-default-widget-creator el face)))
 
 (defun w3-form-default-widget-creator (el face)
   (widget-create 'link

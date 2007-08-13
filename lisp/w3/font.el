@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/01/22 19:31:17
-;; Version: 1.26
+;; Created: 1997/01/30 00:58:33
+;; Version: 1.29
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -251,9 +251,12 @@ for use in the 'weight' field of an X font string.")
 (defsubst set-font-style-by-keywords (fontobj styles)
   (make-local-variable 'font-func)
   (declare (special font-func))
-  (while styles
-    (setq font-func (car-safe (cdr-safe (assq (car styles) font-style-keywords)))
-	  styles (cdr styles))
+  (if (listp styles)
+      (while styles
+	(setq font-func (car-safe (cdr-safe (assq (car styles) font-style-keywords)))
+	      styles (cdr styles))
+	(and (fboundp font-func) (funcall font-func fontobj t)))
+    (setq font-func (car-safe (cdr-safe (assq styles font-style-keywords))))
     (and (fboundp font-func) (funcall font-func fontobj t))))
 
 (defsubst font-properties-from-style (fontobj)
@@ -572,7 +575,9 @@ for use in the 'weight' field of an X font string.")
 		      (x-font-families-for-device device)))
 	  (weight (or (font-weight fontobj) :medium))
 	  (style (font-style fontobj))
-	  (size (or (font-size fontobj) (font-default-size-for-device device)))
+	  (size (or (if font-running-xemacs
+			(font-size fontobj))
+		    (font-default-size-for-device device)))
 	  (registry (or (font-registry fontobj) "*"))
 	  (encoding (or (font-encoding fontobj) "*")))
       (if (stringp family)

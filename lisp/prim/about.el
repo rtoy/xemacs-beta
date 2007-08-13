@@ -37,7 +37,7 @@
 ;;;		      and Chuck Thompson <cthomp@xemacs.org>
 ;;; More hacking for 19.12 by Chuck Thompson and Ben Wing.
 ;;; 19.13 and 19.14 updating done by Chuck Thompson.
-;;; 19.15 and 20.0 updating done by Steve Baur.
+;;; 19.15 and 20.0 updating done by Steve Baur and Martin Buchholz.
 
 (require 'browse-url)
 (defvar about-xref-map (let ((map (make-sparse-keymap)))
@@ -107,7 +107,7 @@
 
 	(insert "In almost all circumstances, Emacs-Lisp code written for
 	GNU Emacs versions 18 and 19 will run under XEmacs without
-        requiring any modifications, or at most will require small
+	requiring any modifications, or at most will require small
 	changes to accommodate an improved functional interface.\n\n\t")
 
     (insert "XEmacs provides a great number of ")
@@ -275,23 +275,25 @@
 	  (set-buffer-modified-p nil)
 	  )))
      (t
-      (switch-to-buffer (get-buffer-create
-			 (cond ((eq xref 'jwz) "About Jamie Zawinski")
-			       ((eq xref 'cthomp) "About Chuck Thompson")
-			       ((eq xref 'wing) "About Ben Wing")
-			       ((eq xref 'mly) "About Richard Mlynarik")
-			       ((eq xref 'vladimir) "About Vladimir Ivanovic")
-			       ((eq xref 'baw) "About Barry Warsaw")
-			       ((eq xref 'wmperry) "About William Perry")
-			       ((eq xref 'bw) "About Bob Weiner")
-			       ((eq xref 'piper) "About Andy Piper")
-			       ((eq xref 'stig) "About Jonathan Stigelman")
-			       ((eq xref 'steve) "About Steve Baur")
-			       ((eq xref 'mrb) "About Martin Buchholz")
-			       ((eq xref 'others) "About Everyone")
-			       ((eq xref 'features) "New XEmacs Features")
-			       ((eq xref 'history) "XEmacs History")
-			       )))
+      (switch-to-buffer
+       (get-buffer-create
+	(case xref
+	  ('jwz "About Jamie Zawinski")
+	  ('cthomp "About Chuck Thompson")
+	  ('wing "About Ben Wing")
+	  ('mly "About Richard Mlynarik")
+	  ('vladimir "About Vladimir Ivanovic")
+	  ('baw "About Barry Warsaw")
+	  ('wmperry "About William Perry")
+	  ('bw "About Bob Weiner")
+	  ('piper "About Andy Piper")
+	  ('stig "About Jonathan Stigelman")
+	  ('steve "About Steve Baur")
+	  ('mrb "About Martin Buchholz")
+	  ('others "About Everyone")
+	  ('features "New XEmacs Features")
+	  ('history "XEmacs History")
+	  )))
       (delete-other-windows)
       (buffer-disable-undo (current-buffer))
       (widen)
@@ -334,7 +336,7 @@
 
 	We needed a version of Emacs with mouse-sensitive regions,
 	multiple fonts, the ability to mark sections of a buffer as
-	read-only, the ability to detect which parts of a buffer has
+	read-only, the ability to detect which parts of a buffer have
 	been modified, and many other features.
 
 	For our purposes, the existing version of Epoch was not
@@ -386,82 +388,82 @@
 	  (about-face "The Sun Microsystems, Inc. Point of View" 'italic)
 	  (insert "
 
-	Emacs 18 has been around for a long, long time.  Version 19 was
-	supposed to be the successor to v18 with X support.  It was
-	going to be available \"real soon\" for a long time (some
+	Emacs 18 has been around for a long, long time.  Version 19
+	was supposed to be the successor to v18 with X support.  It
+	was going to be available \"real soon\" for a long time (some
 	people remember hearing about v19 as early as 1984!), but it
 	never came out.  v19 development was going very, very slowly,
 	and from the outside it seemed that it was not moving at all.
 	In the meantime other people gave up waiting for v19 and
-	decided to build their own X-aware Emacsen.  The most important
-	of these was probably Epoch, which came from University of
-	Illinois (\"UofI\") and was based on v18.
+	decided to build their own X-aware Emacsen.  The most
+	important of these was probably Epoch, which came from the
+	University of Illinois (\"UofI\") and was based on v18.
 
-	Around three or four years ago what was then called SunPro (a
-	division of Sun Microsystems, Inc.) decided that it wanted an
-	integrated editor.  They contracted with UofI to provide a
-	number of basic enhancements to the functionality in Epoch.
-	UofI initially was planning to deliver this on top of Epoch
-	code.
+	Around 1990, the Developer Products group within Sun
+	Microsystems Inc., decided that it wanted an integrated
+	editor.  (This group is now known as DevPro.  It used to be
+	known as SunPro - the name was changed in mid-1994.)  They
+	contracted with the University of Illinois to provide a number
+	of basic enhancements to the functionality in Epoch.  UofI
+	initially was planning to deliver this on top of Epoch code.
 
-	In the meantime (actually some time before they talked with UofI)
-	Lucid had decided that it also wanted to provide an integrated
-	environment with an integrated editor.  Lucid decided that the
-	v19 basis was a better one than v18 and thus decided not to use
-	Epoch but instead work with Richard Stallman, the head of the
-	Free Software Foundation and principle author of Emacs, on
-	getting v19 out.  At some point Stallman and Lucid parted ways.
-	Lucid kept working and got a v19 out that they called Lucid
-	Emacs 19.
+	In the meantime, (actually some time before they talked with
+	UofI) Lucid had decided that it also wanted to provide an
+	integrated environment with an integrated editor.  Lucid
+	decided that the Version 19 base was a better one than Version
+	18 and thus decided not to use Epoch but instead to work with
+	Richard Stallman, the head of the Free Software Foundation and
+	principal author of Emacs, on getting v19 out.  At some point
+	Stallman and Lucid parted ways.  Lucid kept working and got a
+	v19 out that they called Lucid Emacs 19.
 
-	After Lucid's v19 came out it became clear to UofI and SunPro
-	that the right thing to do was to push for an integration of
-	both Lucid Emacs and Epoch, and to get the deliverables that
-	SunPro was asking from UofI on top of this integrated
-	platform.  Through the last three or four years, SunPro has
-	been actively supporting this product and has been investing a
-	comparable amount of effort into it as Lucid has.  Substantial
+	After Lucid's v19 came out it became clear to us (the UofI and
+	Sun) that the right thing to do was to push for an integration
+	of both Lucid Emacs and Epoch, and to get the deliverables
+	that Sun was asking from the University of Illinois on top of
+	this integrated platform.  Until 1994, Sun and Lucid both
+	actively supported XEmacs as part of their product suite and
+	invested a comparable amount of effort into it.  Substantial
 	portions of the current code have originated under the support
-	of SunPro, either directly in SunPro, or in UofI but paid for
-	by SunPro.  This code was kept away from Lucid for a while,
-	but later was made available to them.  Initially Lucid didn't
-	know that SunPro was supporting UofI, but later they were open
-	about it.
+	of Sun, either directly within Sun, or at UofI but paid for by
+	Sun.  This code was kept away from Lucid for a while, but
+	later was made available to them.  Initially Lucid didn't know
+	that Sun was supporting UofI, but later Sun was open about it.
 
-	Around two years ago the SunPro-related code started showing up
-	in Lucid Emacs.  This started with the infusion of the Epoch
-	redisplay code.
+	Around 1992 DevPro-originated code started showing up in Lucid
+	Emacs, starting with the infusion of the Epoch redisplay code.
+	The separate code bases at Lucid, Sun, and the University of
+	Illinois were merged, allowing a single XEmacs to evolve from
+	that point on.
 
-	At this moment there is basically no difference in the source
-	trees between what is at UofI and at Sun.  All the development
-	sites are in sync.
-
-	SunPro originally called the integrated product ERA, for
-	\"Emacs Rewritten Again\".  SunPro and Lucid eventually came
+	Sun originally called the integrated product \"ERA\", for
+	\"Emacs Rewritten Again\".  Sun and Lucid eventually came
 	to an agreement to find a name for the product that was not
 	specific to either company.  An additional constraint that
 	Lucid placed on the name was that it must contain the word
 	\"Emacs\" in it -- thus \"ERA\" was not acceptable.  The
-	tentatively agreed-upon name was \"XEmacs\", and this has
-	been the name of the product since version 19.11.)")
+	tentatively agreed-upon name was \"XEmacs\", and this has been
+	the name of the program since version 19.11.)
 
-	  (insert "\n\n\n\t")
-	  (about-face "SunPro is now DevPro (Sun Developer Products)\n" 'italic)
-	  (insert "
-	In mid-'94 Sun completed a reorganization where SunPro moved
-	to SunSoft.  As a consequence, SunPro was then called SunSoft
-	Developer Products, or DevPro for short.  De-planetization is
-	continuing in 1996, and the name `Sunsoft' is falling into
-	disuse in favour of `Sun'.")
+	As of 1997, Sun is shipping XEmacs as part of its Developer
+	Products integrated programming environment \"Sun WorkShop\".
+	Sun is continuing to support XEmacs development, with focus on
+	internationalization and quality improvement.")
 
 	  (insert "\n\n\n\t")
 	  (about-face "Lucid goes under\n" 'italic)
 	  (insert "
-	Around mid-'94, Lucid went out of business.  Development on
-	XEmacs, however, has continued unabated under the auspices of
-	Sun Microsystems and the University of Illinois, with help
-	from Amdahl Corporation and INS Engineering Corporation.
-	Sun plans to continue to support XEmacs into the future.")
+	Around mid-'94, Lucid went out of business.  Lucid founder
+	Richard Gabriel's book \"Patterns of Software\", which is
+	highly recommended reading in any case, documents the demise
+	of Lucid and suggests lessons to be learned for the whole
+	software development community.
+
+	Development on XEmacs, however, has continued unabated under
+	the auspices of Sun Microsystems and the University of
+	Illinois, with help from Amdahl Corporation and INS
+	Engineering Corporation.  Sun plans to continue to support
+	XEmacs into the future.")
 
 	  (insert "\n\n\n\t")
 	  (about-face "The Amdahl Corporation point of view" 'italic)
@@ -489,7 +491,7 @@
 	  (about-face "The INS Engineering point of view" 'italic)
 	  (insert "
 
-        INS Engineering Corporation, based in Tokyo, bought rights
+	INS Engineering Corporation, based in Tokyo, bought rights
 	to sell Energize when Lucid went out of business.  Unhappy
 	with the performance of the Japanese support in XEmacs 19.11,
 	INS also contributed to the XEmacs development from late 1994
@@ -509,10 +511,10 @@
 	Jamie Zawinski was primarily to blame for Lucid Emacs from its
 	inception in 1991, to 1994 when Lucid Inc. finally died.  He is
 	now to be found at Netscape Communications, hacking on Netscape
-        Navigator (he did the first Unix version and the mail reader).
-        Thankfully his extensive sleep deprivation experiments conducted
-        during 1994 and 1995 are now a thing of the past, but his
-        predilection for dark, Gothic music remains unabated.
+	Navigator (he did the first Unix version and the mail reader).
+	Thankfully his extensive sleep deprivation experiments conducted
+	during 1994 and 1995 are now a thing of the past, but his
+	predilection for dark, Gothic music remains unabated.
 
 	Come visit his glorified .plan file at
 
@@ -543,12 +545,18 @@
 	  (about-face "Martin Buchholz" 'bold)
 	  (insert " <mrb@eng.sun.com>
 
-	Martin Buchholz <Martin.Buchholz@sun.com>
-	Technical lead for XEmacs at DevPro (formerly SunPro), a
-	division of Sun Microsystems.  Martin used to do XEmacs as a
-	`hobby' while at IBM, and was crazy enough to try to do it
-	for a living at Sun.  Martin is currently working mostly on
-	Internationalization.")
+	Martin is the XEmacs guy at DevPro, a part of Sun Microsystems.
+	Martin used to do XEmacs as a `hobby' while at IBM, and was
+	crazy enough to try to make a living doing it at Sun.
+
+	Martin starting using Emacs originally not to edit files, but
+	to get the benefit of shell mode. He actually used to run
+	nothing but a shell buffer, and use `xterm -e vi' to edit
+	files.  But then he saw the light.  He dreams of rewriting
+	shell mode from scratch.  Stderr should show up in red!!
+
+	Martin is currently working mostly on Internationalization.
+	He spends most of his waking hours inside a Japanized XEmacs.")
 
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
@@ -599,15 +607,15 @@
 
 	Since April 1993, I've worked on XEmacs as a contractor
 	for various companies, changing hats faster than Ronald Reagan's
-        hair color (oops, did I just show my age?).  My main contributions
-        to XEmacs include rewriting large parts of the internals and the
-        gory Xt/Xlib interfacing, adding the Mule support, implementing
-        the external client widget, improving the documentation (especially
-        the Emacs Lisp manual), and being a general nuisance ... er,
-        brainstormer for many of the new features of XEmacs.
+	hair color (oops, did I just show my age?).  My main contributions
+	to XEmacs include rewriting large parts of the internals and the
+	gory Xt/Xlib interfacing, adding the Mule support, implementing
+	the external client widget, improving the documentation (especially
+	the Emacs Lisp manual), and being a general nuisance ... er,
+	brainstormer for many of the new features of XEmacs.
 
-        Recently I took a job at Dimension X, where I'm working on a
-        Java-based toolkit for developing VRML applications.")
+	Recently I took a job at Dimension X, where I'm working on a
+	Java-based toolkit for developing VRML applications.")
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
 	  (insert " to go back to the previous page.\n")
@@ -626,10 +634,9 @@
 	  (about-face "Vladimir Ivanovic" 'bold)
 	  (insert " <vladimir@mri.com>
 
-	Former technical lead for XEmacs at DevPro (formerly SunPro),
-	a division of Sun Microsystems.  He is now with Microtec
-	Research Inc., working on embedded systems development
-	tools.")
+	Former technical lead for XEmacs at Sun.  He is now with
+	Microtec Research Inc., working on embedded systems
+	development tools.")
 
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
@@ -673,8 +680,8 @@
 	browser.  He also designed the InfoDock integrated tool
 	framework for software engineers.  It runs atop XEmacs and is
 	available from his firm, InfoDock Associates, which offers custom
-        development and support packages for corporate users of XEmacs,
-        GNU Emacs and InfoDock.  See \"http://www.infodock.com>\".
+	development and support packages for corporate users of XEmacs,
+	GNU Emacs and InfoDock.  See \"http://www.infodock.com>\".
 	His interests include user interfaces, information management,
 	CASE tools, communications and enterprise integration.")
 
@@ -744,100 +751,97 @@
 	someone; we apologize!  You can see some of our faces further below.
 
 	") (about-xref "Vladimir Ivanovic" 'vladimir "Find out more about Vladimir Ivanovic") (insert " <vladimir@mri.com>
-	  Former technical lead for XEmacs at Sun Microsystems.  He is
-	  now with Microtec Research Inc., working on embedded systems
-	  development tools.
+	Former technical lead for XEmacs at Sun Microsystems.  He is
+	now with Microtec Research Inc., working on embedded systems
+	development tools.
 
 	") (about-xref "Jonathan Stigelman" 'stig "Find out more about Jonathan Stigelman") (insert " <stig@hackvan.com>
-          Peripatetic uninominal Emacs hacker.  Stig sometimes operates
-	  out of a big white van set up for nomadic living and hacking.
-	  Implemented the faster stay-up Lucid menus and hyper-apropos.
-	  Contributor of many dispersed improvements in the core Lisp code,
-	  and back-seat contributor for several of it's major packages.
+	Peripatetic uninominal Emacs hacker.  Stig sometimes operates
+	out of a big white van set up for nomadic living and hacking.
+	Implemented the faster stay-up Lucid menus and hyper-apropos.
+	Contributor of many dispersed improvements in the core Lisp code,
+	and back-seat contributor for several of it's major packages.
 
 	") (about-xref "Barry Warsaw" 'baw "Find out more about Barry Warsaw") (insert " <bwarsaw@cnri.reston.va.us>
-	  Author of cc-mode for C++, C, and Objective-C editing, and
-	  Supercite for mail and news citing.  Also various and sundry other
-	  Emacs utilities, fixes, enhancements and kludgery as whimsy,
-	  boredom, and ToT dictate (but not necessarily in that order).
+	Author of cc-mode for C++, C, and Objective-C editing, and
+	Supercite for mail and news citing.  Also various and sundry other
+	Emacs utilities, fixes, enhancements and kludgery as whimsy,
+	boredom, and ToT dictate (but not necessarily in that order).
 
 	") (about-xref "Andy Piper" 'piper "Find out more about Andy Piper") (insert " <andyp@parallax.co.uk>
-	  Created the prototype for the toolbars.  Has been the first to make
-	  use of many of the new XEmacs graphics features.
+	Created the prototype for the toolbars.  Has been the first to make
+	use of many of the new XEmacs graphics features.
 
 	") (about-xref "Bob Weiner" 'bw "Find out more about Bob Weiner") (insert " <weiner@infodock.com>
-	  Author of the Hyperbole everyday information management
-	  hypertext system and the OO-Browser multi-language code
-	  browser.  He also designed the InfoDock integrated tool
-	  framework for software engineers.  It runs atop XEmacs and is
-	  available from his firm, InfoDock Associates, which offers custom
-          development and support packages for corporate users of XEmacs,
-          GNU Emacs and InfoDock.  See \"http://www.infodock.com>\".
-	  His interests include user interfaces, information management,
- 	  CASE tools, communications and enterprise integration.
+	Author of the Hyperbole everyday information management
+	hypertext system and the OO-Browser multi-language code
+	browser.  He also designed the InfoDock integrated tool
+	framework for software engineers.  It runs atop XEmacs and is
+	available from his firm, InfoDock Associates, which offers custom
+	development and support packages for corporate users of XEmacs,
+	GNU Emacs and InfoDock.  See \"http://www.infodock.com>\".
+	His interests include user interfaces, information management,
+	CASE tools, communications and enterprise integration.
 
 	") (about-xref "William Perry" 'wmperry "Find out more about Bill Perry") (insert " <wmperry@aventail.com>
-	  Author of Emacs-w3, the builtin web browser that comes with XEmacs,
-	  and various additions to the C code (e.g. the database support,
-	  the PNG support, some of the GIF/JPEG support, the strikethru
-	  face attribute support).
+	Author of Emacs-w3, the builtin web browser that comes with XEmacs,
+	and various additions to the C code (e.g. the database support,
+	the PNG support, some of the GIF/JPEG support, the strikethru
+	face attribute support).
 
 	Kyle Jones <kyle@crystal.wonderworks.com>
-	  Author of VM (View Mail), a mail-reading package that is
-	  included in the standard XEmacs distribution, and
-	  contributor of many improvements and bug fixes.  Unlike most
-	  other mail-reading packages, VM uses the standard Unix-mail
-	  format for its mailboxes; thus, you can use VM concurrently
-	  with standard mail readers such as Unix mail and ELM.
+	Author of VM (View Mail), a mail-reading package that is
+	included in the standard XEmacs distribution, and
+	contributor of many improvements and bug fixes.  Unlike most
+	other mail-reading packages, VM uses the standard Unix-mail
+	format for its mailboxes; thus, you can use VM concurrently
+	with standard mail readers such as Unix mail and ELM.
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
-	  Unofficial maintainer of the xemacs-beta list of extant
-	  bugs and contributor of an extraordinary number of
-	  important bug fixes, many of them in areas that neither
-	  Chuck nor Ben was particularly enthusiastic about
-	  investigating.
+	Unofficial maintainer of the xemacs-beta list of extant bugs
+	and contributor of an extraordinary number of important bug
+	fixes, many of them in areas that neither Chuck nor Ben were
+	particularly enthusiastic about investigating.
 
 	Eduardo Pelegri-Llopart <pelegri@eng.sun.com>
-	  Author of EOS, a package included in the standard XEmacs
-	  distribution that integrates XEmacs with the SPARCworks
-	  development environment from SunPro.  Past lead for XEmacs
-	  at SunPro; advocated the validity of using Epoch, and later
-	  Lemacs, at SunPro through several early prototypes.
+	Author of EOS, a package included in the standard XEmacs
+	distribution that integrates XEmacs with the SPARCworks
+	development environment from Sun.  Past lead for XEmacs at
+	Sun; advocated the validity of using Epoch, and later Lemacs,
+	at Sun through several early prototypes.
 
 	Matthieu Devin <devin@rs.com>
-	  Part of the original (pre-19.0) Lucid Emacs development team.
-	  Matthieu wrote the initial Energize interface, designed the
-	  toolkit-independent Lucid Widget library, and fixed enough
-	  redisplay bugs to last a lifetime.  The features in Lucid
-	  Emacs were largely inspired by Matthieu's initial prototype
-	  of an Energize interface using Epoch.
+	Part of the original (pre-19.0) Lucid Emacs development team.
+	Matthieu wrote the initial Energize interface, designed the
+	toolkit-independent Lucid Widget library, and fixed enough
+	redisplay bugs to last a lifetime.  The features in Lucid
+	Emacs were largely inspired by Matthieu's initial prototype of
+	an Energize interface using Epoch.
 
 	Harlan Sexton <hbs@odi.com>
-	  Part of the original (pre-19.0) Lucid Emacs development team.
-	  Harlan designed and implemented many of the low level data
-	  structures which are original to the Lucid version of Emacs,
-	  including extents and hash tables.
+	Part of the original (pre-19.0) Lucid Emacs development team.
+	Harlan designed and implemented many of the low level data
+	structures which are original to the Lucid version of Emacs,
+	including extents and hash tables.
 
 	Eric Benson <eb@kaleida.com>
-	  Part of the original (pre-19.0) Lucid Emacs development team.
-	  Eric played a big part in the design of many aspects of the
-	  system, including the new command loop and keymaps, fixed
-	  numerous bugs, and has been a reliable beta tester ever
-	  since.
+	Part of the original (pre-19.0) Lucid Emacs development team.
+	Eric played a big part in the design of many aspects of the
+	system, including the new command loop and keymaps, fixed
+	numerous bugs, and has been a reliable beta tester ever since.
 
 	John Rose <john.rose@sun.com>
-	  Author of many extensions to the `extents' code, including
-	  the initial implementation of `duplicable' properties.
+	Author of many extensions to the `extents' code, including
+	the initial implementation of `duplicable' properties.
 
 	Hans Muller <hmuller@eng.sun.com>
-	 Author of the code used to connect XEmacs with ToolTalk,
-	 and of an early client of the external Emacs widget.
+	Author of the code used to connect XEmacs with ToolTalk, and
+	of an early client of the external Emacs widget.
 
 	In addition to those just mentioned, the following people have
 	spent a great deal of effort providing feedback, testing beta
-	versions of XEmacs, providing patches to the source code,
-	or doing all of the above.  We couldn't have done it without
-	them.
+	versions of XEmacs, providing patches to the source code, or
+	doing all of the above.  We couldn't have done it without them.
 
 	  Nagi M. Aboulenein <aboulene@ponder.csci.unt.edu>
 	  Gary Adams <gra@zeppo.East.Sun.COM>
@@ -857,7 +861,7 @@
 	  Rick Braumoeller <rickb@mti.sgi.com>
 	  Matthew J. Brown <mjb@doc.ic.ac.uk>
 	  Alastair Burt <burt@dfki.uni-kl.de>
-	  Rick Busdiecker <rfb@lehman.com>
+	  Rick Campbell <rickc@lehman.com>
 	  Richard Caley <rjc@cstr.edinburgh.ac.uk>
 	  Stephen Carney <carney@gvc.dec.com>
 	  Philippe Charton <charton@lmd.ens.fr>
@@ -1042,26 +1046,30 @@
 	  (about-face "New Features in XEmacs" 'bold-italic)
 
 	  (insert "\n
-	 * A real toolbar.
-	 * Proper integration with Xt and Motif (including Motif menubars
-	   and scrollbars).  Motif look-alike menubars and scrollbars
-	   are provided for those systems without real Motif support.
-	 * Face support on TTY's, including color.
-	 * Horizontal and vertical scrollbars in all windows.
-	 * Support for variable-width and variable height fonts.
-	 * Support for display on multiple simultaneous X and/or TTY devices.
-	 * Support for arbitrary pixmaps in a buffer.
-	 * Access to the ToolTalk API.
-	 * Support for using XEmacs frames as Xt widgets.
-	 * Support for overlapping regions (or extents) and efficient handling
-	   of a large number of such extents in a single buffer.
-	 * Powerful, flexible control over the display characteristics
-	   of most of the visual aspects of XEmacs through the use
-	   of specifiers, which allow separate values to be specified
-	   for individual buffers, windows, frames, devices, device classes,
-	   and device types.
-	 * A clean interface to the menubar, window-system events, and key
-	   combinations."))
+	* MULE (Multi-Lingual Emacs) support.  Display of multiple
+	  simultaneous character sets is possible.
+	* Text for complex languages can be entered using the XIM mechanism.
+	* Localization of menubar text for the Japanese locale.
+	* A real toolbar.
+	* Proper integration with Xt and Motif (including Motif menubars
+	  and scrollbars).  Motif look-alike menubars and scrollbars
+	  are provided for those systems without real Motif support.
+	* Face support on TTY's, including color.
+	* Horizontal and vertical scrollbars in all windows.
+	* Support for variable-width and variable height fonts.
+	* Support for display on multiple simultaneous X and/or TTY devices.
+	* Support for arbitrary pixmaps in a buffer.
+	* Access to the ToolTalk API.
+	* Support for using XEmacs frames as Xt widgets.
+	* Support for overlapping regions (or extents) and efficient handling
+	  of a large number of such extents in a single buffer.
+	* Powerful, flexible control over the display characteristics
+	  of most of the visual aspects of XEmacs through the use
+	  of specifiers, which allow separate values to be specified
+	  for individual buffers, windows, frames, devices, device classes,
+	  and device types.
+	* A clean interface to the menubar, window-system events, and key
+	  combinations."))
 	 ))
       (goto-char (point-min))
       ))))

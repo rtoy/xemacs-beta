@@ -383,7 +383,8 @@ call it with the value of the `gnus-data' text property."
   (fset 'gnus-put-text-property 'gnus-xmas-put-text-property)
       
   (require 'text-props)
-  (if (< emacs-minor-version 14)
+  (if (and (<= emacs-major-version 19)
+	   (< emacs-minor-version 14))
       (fset 'gnus-set-text-properties 'gnus-xmas-set-text-properties))
 
   (or (boundp 'standard-display-table) (setq standard-display-table nil))

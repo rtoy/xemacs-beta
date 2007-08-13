@@ -1,7 +1,8 @@
 /******************************************************************************
 **       File: default.css
 **    Purpose: Default Stylesheet for Emacs-W3
-**       Info: Copyright (c) 1995 William M. Perry <wmperry@spry.com>
+**       Info: Copyright (c) 1995 - 1996 William M. Perry <wmperry@spry.com>
+**             Copyright (c) 1997 Free Software Foundation, Inc.
 **    Created: William M. Perry <wmperry@spry.com>, Aug-31-1995
 ** Maintainer: William M. Perry <wmperry@spry.com>
 **
@@ -10,17 +11,25 @@
 ******************************************************************************
 **
 ** To specify device-dependent styles, you must mark a section with
-** :devicetype:
-** If you are not using 'devicetype', then anything up to the next
-** :xxx: media descriptor is ignored.
+** @media devicetype { ... }
+** If you are not using 'devicetype', then anything within the { ... }
+** is ignored.
+**
+** These sections are currently defined by
+** http://www.w3.org/pub/WWW/Style/Group/WD-PRINT-961220
+** 
+**    print  - output for paged opaque material, and for documents viewed
+**             on screen in print preview mode
+**    screen - a continuous presentation of computer screens
+** projector - paged presentation for projected presentations
+**   braille - for braille tactile feedback devices
+**    speech - aural presentation
+**       all - the default value, applies to all output devices
 **
 ** There are a few special Emacs-W3 sections
 **
 **  emacs - only include this chunk if you are using Emacs 19
-** speech - only include this chunk if you are using Emacspeak for audio
 ** xemacs - only include this chunk if you are using XEmacs
-** normal - always include this chunk (useful for switching out of another 
-**          device-type block
 ******************************************************************************/
 
 /*

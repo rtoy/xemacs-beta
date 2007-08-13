@@ -603,15 +603,15 @@
      ("Help"
       ["About XEmacs..."	about-xemacs		t]
       ("Basics"
-       ["XEmacs Tutorial"	help-with-tutorial	t]
-       ["XEmacs News"		view-emacs-news		t]
-       ["Package Browser"	finder-by-keyword	t]
-       ["Splash Screen"		xemacs-splash-buffer	t])
+       ["Tutorial"		help-with-tutorial	t]
+       ["News"			view-emacs-news		t]
+       ["Packages"		finder-by-keyword	t]
+       ["Splash"		xemacs-splash-buffer	t])
       "-----"
       ("XEmacs FAQ"
-       ["XEmacs FAQ (local)"	xemacs-local-faq	t]
-       ["Newest XEmacs FAQ via WWW" xemacs-www-faq	t]
-       ["XEmacs WWW Page"	xemacs-www-page		t])
+       ["FAQ"			xemacs-local-faq	t]
+       ["FAQ via WWW" 		xemacs-www-faq	t]
+       ["Home Page"		xemacs-www-page		t])
       ("Samples"
        ["Sample"			(find-file
 					 (expand-file-name "sample.emacs"
@@ -627,32 +627,32 @@
 	t "enriched"])
       "-----"
       ("Lookup in Info"
-       ["Key/Mouse Binding..."	Info-goto-emacs-key-command-node t]
+       ["Key Binding..."	Info-goto-emacs-key-command-node t]
        ["Command..."		Info-goto-emacs-command-node t]
-       ["Elisp Function..."	Info-elisp-ref		t]
+       ["Function..."		Info-elisp-ref		t]
        ["Topic..."		Info-query		t])
       ("Manuals"
-       ["Info (Detailed Docs)"	info			t]
+       ["Info"			info			t]
        ["Unix Manual..."	manual-entry		t])
       ("Commands & Keys"
-       ["Describe Mode"		describe-mode		t]
+       ["Mode"			describe-mode		t]
        ["Apropos..."		hyper-apropos		t]
-       ["Apropos Documentation..." apropos-documentation	t]
+       ["Apropos Docs..."	apropos-documentation	t]
        "-----"
-       ["Describe Key/Mouse..."	describe-key		t]
-       ["List Key Bindings"	describe-bindings	t]
-       ["List Mouse Bindings"	describe-pointer	t]
-       ["Recent Keystrokes"	view-lossage		t]
+       ["Key..."		describe-key		t]
+       ["Bindings"		describe-bindings	t]
+       ["Mouse Bindings"	describe-pointer	t]
+       ["Recent Keys"		view-lossage		t]
        "-----"
-       ["Describe Function..."	describe-function	t]
-       ["Describe Variable..."	describe-variable	t]
-       ["Where Is Command..."	where-is		t])
+       ["Function..."		describe-function	t]
+       ["Variable..."		describe-variable	t]
+       ["Locate Command..."	where-is		t])
       "-----"
-      ["Recent Messages" view-lossage	t]
+      ["Recent Messages"	view-lossage		t]
       ("Misc"
-       ["Describe No Warranty"	describe-no-warranty	t]
-       ["Describe XEmacs License" describe-copying	t]
-       ["Getting the Latest Version" describe-distribution	t])
+       ["No Warranty"		describe-no-warranty	t]
+       ["XEmacs License"	describe-copying	t]
+       ["The Latest Version"	describe-distribution	t])
       )
      )))
 

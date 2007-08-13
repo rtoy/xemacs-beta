@@ -258,7 +258,7 @@ extern __ptr_t __default_morecore __P ((ptrdiff_t __size));
 extern void (*__after_morecore_hook) __P ((void));
 
 /* Nonzero if `malloc' has been called and done its initialization.  */
-extern int __malloc_initialized;
+    /* extern int __malloc_initialized; */
 
 /* Hooks for debugging versions.  */
 extern void (*__free_hook) __P ((__ptr_t __ptr));
@@ -431,7 +431,7 @@ __malloc_size_t _chunks_free;
 __malloc_size_t _bytes_free;
 
 /* Are you experienced?  */
-int __malloc_initialized;
+static int __malloc_initialized;
 
 void (*__after_morecore_hook) __P ((void));
 
@@ -556,12 +556,12 @@ malloc (size)
     return NULL;
 #endif
 
+  if (__malloc_hook != NULL)
+    return (*__malloc_hook) (size);
+
   if (!__malloc_initialized)
     if (!initialize ())
       return NULL;
-
-  if (__malloc_hook != NULL)
-    return (*__malloc_hook) (size);
 
 #ifdef SUNOS_LOCALTIME_BUG
   /* Workaround for localtime() allocating 8 bytes and writing 9 bug... */

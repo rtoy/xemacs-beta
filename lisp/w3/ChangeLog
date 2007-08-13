@@ -1,4 +1,51 @@
+Thu Jan 30 20:27:06 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-handle-image): When doing table auto layout, don't
+  start loading the images.
+
+Wed Jan 29 06:15:37 1997  William M. Perry  <wmperry@aventail.com>
+
+* font.el (x-font-create-name): Yet another fix for not screwing up the
+  line-height in Emacs 19.
+
+* w3-display.el (w3-face-for-element): Uhh, oblique seems to work.
+
+* font.el (set-font-style-by-keywords): now deals with arguments that
+  aren't lists, for the font-style and font-variant CSS stuff
+
+* w3-display.el (w3-display-node): Reimplemented <cookie> tag.
+(w3-display-node): Reimplemented <flame> tag.
+
+* url.el (url-insert-file-contents): url-insert-file-contents now
+  decodes/uncompresses the data before returning.
+
+* w3-display.el (w3-display-node): Reimplemented <pinhead> tag
+
+Tue Jan 28 06:22:08 1997  William M. Perry  <wmperry@aventail.com>
+
+* font.el (x-font-create-name): Never take font size into account under
+  Emacs - too much chance of totally screwing up the users leading by
+  choosing a bigger font than their default.  This sucks.  But I can't
+  find a better solution.
+
+* w3.el: w3-mode now turns on truncate-lines by default.
+
+* w3-forms.el (w3-form-create-image): Better image input type support.
+
+Mon Jan 27 08:21:58 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-create-password): Now uses real password entry
+  widgets provided by 'widget' - you _MUST_USE_ the widget library that
+  comes with Emacs-W3 for this, otherwise the info won't be hidden
+  correctly.
+  (w3-form-add-element): Deal with hidden text areas better when they are
+  in forms
+
+* Synch'd up to widget 1.22
+
 Sun Jan 26 16:50:09 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.51 released
 
 * w3-forms.el (w3-form-create-text): Now uses the real text entry widgets
   provided by 'widget' - still can't do this for password fields yet

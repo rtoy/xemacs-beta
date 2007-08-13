@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/01/26 04:24:41
-;; Version: 1.47
+;; Created: 1997/01/29 14:32:36
+;; Version: 1.48
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/01/26 04:24:41|1.47|Location Undetermined
+;;; 1997/01/29 14:32:36|1.48|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -597,6 +597,8 @@ accessible."
       (let ((buf (current-buffer))
 	    (url-working-buffer (cdr (url-retrieve url))))
 	(setq-default url-be-asynchronous old-asynch)
+	(set-buffer url-working-buffer)
+	(url-uncompress)
 	(set-buffer buf)
 	(insert-buffer url-working-buffer)
 	(setq buffer-file-name url)

@@ -84,7 +84,7 @@
    charset-g1 chinese-gb2312
    charset-g2 sisheng
    charset-g3 t
-   mnemonic "EUC/China"
+   mnemonic "EUC/Zh"
    ))
 
 (make-coding-system
@@ -173,12 +173,23 @@
     (require 'chinese)
     (set-coding-category-system 'iso-8-2 'euc-china)
     (set-coding-priority-list '(iso-8-2 big5 iso-8-designate))
+    (set-pathname-coding-system 'euc-china)
     (set-default-file-coding-system 'euc-china) ; GB encoding
     (setq terminal-coding-system    'euc-china)
     (setq keyboard-coding-system    'euc-china)
+    (add-hook 'comint-exec-hook
+              (lambda ()
+                (let ((proc (get-buffer-process (current-buffer))))
+                  (set-process-input-coding-system  proc 'euc-china)
+                  (set-process-output-coding-system proc 'euc-china))))
+    (set-file-coding-system-for-read 'autodetect)
+    (set-default-file-coding-system 'euc-china)
+    (setq keyboard-coding-system     'euc-china)
+    (setq terminal-coding-system     'euc-china)
+    (set-charset-registry 'ascii "gb1988")))
 ;;    (when (featurep 'egg)
 ;;      (setq-default its:*current-map* (its:get-mode-map "PinYin")))
 ;;    (setq-default quail-current-package (assoc "py" quail-package-alist))))
-    ))
+;;    ))
 
 (set-coding-category-system 'big5 'big5)

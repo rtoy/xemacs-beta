@@ -1,3 +1,17 @@
+Sat Feb  1 18:17:38 1997  Steven L Baur <steve@altair.xemacs.org>
+
+	* XEmacs 20.0 is released.
+	* XEmacs 19.15b-91 AKA XEmacs '97 NOT! is released.
+
+Sat Feb  1 00:00:48 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* PROBLEMS:  Updated from beta test bug reports.
+	Put in outline-mode/outl-mouse-minor-mode by default.
+
+Wed Jan 29 19:59:41 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* CHANGES-beta: XEmacs 20.0-b93 is released.
+
 Sat Jan 25 15:43:59 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* CHANGES-beta: XEmacs 20.0-b92 is released.

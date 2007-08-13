@@ -1,4 +1,8 @@
 							-*- indented-text -*-
+to 20.0 final
+-- iso-acc.el updated courtesy of Alexandre Oliva
+-- Miscellaneous bug fixes
+
 to 20.0 beta93
 -- tm-7.101
 -- w3-3.0.51

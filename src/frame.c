@@ -903,7 +903,7 @@ frame_matches_frametype (Lisp_Object frame, Lisp_Object type)
   if (NILP (type))
     type = Qnomini;
   if (ZEROP (type))
-    type = Qiconic;
+    type = Qvisible_iconic;
 
   if (EQ (type, Qvisible))
     return FRAME_VISIBLE_P (f);

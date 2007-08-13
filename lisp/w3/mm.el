@@ -925,6 +925,7 @@ viewer is returned."
     (".pdf"      . "application/pdf")
     (".pgm"      . "image/portable-graymap")
     (".pict"     . "image/pict")
+    (".png"      . "image/png")
     (".pnm"      . "image/x-portable-anymap")
     (".ppm"      . "image/portable-pixmap")
     (".ps"       . "application/postscript")
