@@ -367,6 +367,7 @@ s-expression like this one in your .vm file:
 			(compose . vm-toolbar-compose-button)
 			(delete/undelete . vm-toolbar-delete/undelete-button)
 			(file . vm-toolbar-file-button)
+			(getmail . vm-toolbar-getmail-button)
 			(help . vm-toolbar-help-button)
 			(mime . vm-toolbar-decode-mime-button)
 			(next . vm-toolbar-next-button)

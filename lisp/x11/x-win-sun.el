@@ -156,7 +156,10 @@
 	,@(cond ((x-keysym-on-keyboard-sans-modifiers-p "apRead") ; SunOS 4.1.1
 		 '(("apRead" apRead f11) ("apEdit" apEdit f12)))
 		((x-keysym-on-keyboard-sans-modifiers-p "SunF36") ; SunOS 5
-		 '(("SunF36" SunF36 f11) ("SunF37" SunF37 f12))))
+		 '(("SunF36" SunF36 f11)
+		   ("SunF37" SunF37 f12)
+		   ("F11"    f11    stop)
+		   ("F12"    f12    again))))
 	)
       do (when (x-keysym-on-keyboard-sans-modifiers-p x-name)
 	   (x-remap-keysyms-using-function-key-map from-key to-key)))

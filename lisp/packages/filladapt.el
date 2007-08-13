@@ -96,6 +96,7 @@
   "*Non-nil means that Filladapt minor mode is enabled.
 Use the filladapt-mode command to toggle the mode on/off."
   :type 'boolean
+  :require 'filladapt
   :group 'filladapt)
 (make-variable-buffer-local 'filladapt-mode)
 

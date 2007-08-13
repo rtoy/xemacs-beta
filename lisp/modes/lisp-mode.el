@@ -746,6 +746,7 @@ of the start of the containing expression."
 (put 'save-current-buffer 'lisp-indent-function 0)
 (put 'with-current-buffer 'lisp-indent-function 1)
 (put 'with-temp-file 'lisp-indent-function 1)
+(put 'with-temp-buffer 'lisp-indent-function 0)
 (put 'with-output-to-string 'lisp-indent-function 0)
 (put 'with-output-to-temp-buffer 'lisp-indent-function 1)
 

@@ -3469,8 +3469,13 @@ by default--see the `log-message-ignore-labels' variable):
   (clear-message label frame stdout-p t)
   (append-message label message frame stdout-p))
 
+(defun current-message (&optional frame)
+  "Returns the current message in the echo area, or nil.
+The FRAME argument is currently unused."
+  (cdr (car message-stack)))
+
 ;;; may eventually be frame-dependent
-(defun current-message-label (frame)
+(defun current-message-label (&optional frame)
   (if message-stack
       (car (car message-stack))
     nil))

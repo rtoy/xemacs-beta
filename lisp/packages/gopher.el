@@ -200,8 +200,9 @@
        ))
 
 (defgroup gopher nil
-  "An Emacs gopher client."
-  :group 'hypermedia)
+  "Emacs gopher client."
+  :group 'hypermedia
+  :group 'comm)
 
 
 (defcustom gopher-root-node (vector ?1 "root" "" "ucs_gopher" 70)

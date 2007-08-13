@@ -76,7 +76,7 @@ Key bindings:
 
 (autoload 'java-mode "cc-mode" "\
 Major mode for editing Java code.
-To submit a problem report, enter `\\[c-submit-bug-report]' from an
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
 java-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
 of the problem, including a reproducible test case and send the
@@ -95,7 +95,7 @@ Key bindings:
 
 (autoload 'idl-mode "cc-mode" "\
 Major mode for editing CORBA's IDL code.
-To submit a problem report, enter `\\[c-submit-bug-report]' from an
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
 idl-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
 of the problem, including a reproducible test case, and send the

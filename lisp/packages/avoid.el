@@ -79,11 +79,23 @@
 
 
 ;;;###autoload
-(defvar mouse-avoidance-mode nil
+(defcustom mouse-avoidance-mode nil
   "Value is t or a symbol if the mouse pointer should avoid the cursor.
 See function `mouse-avoidance-mode' for possible values.  Changing this
 variable is NOT the recommended way to change modes; use that function 
-instead.")
+instead."
+  :type '(radio
+	  (const :tag "No mouse avoidance" nil)
+	  (const :tag "Move the mouse on keypress" banish)
+	  (const :tag "Move the mouse if the cursor gets too close" exile)
+	  (const :tag "Displace the mouse if the cursor gets too close" jump)
+	  (const :tag "Animate the mouse" animate)
+	  (const :tag "Animate + change shape" proteus))
+  :set (lambda (symbol value)
+	 (mouse-avoidance-mode (or value 'none)))
+  :initialize 'custom-initialize-default
+  :require 'avoid
+  :group 'avoid)
 
 (defcustom mouse-avoidance-nudge-dist 15
   "*Average distance that mouse will be moved when approached by cursor.

@@ -8,7 +8,6 @@
 ;; Modified for Lucid Emacs By: Peter Stout <pds@cs.cmu.edu>
 ;; Maintainer: friedman@prep.ai.mit.edu
 ;; Keywords: minibuffer, window, frames, display
-;; Status: Known to work in FSF GNU Emacs 19.23 and Lucid Emacs 19.9.
 
 ;; This file is part of XEmacs.
 
@@ -34,7 +33,7 @@
 
 ;; This file has received maintenance by the XEmacs development team.
 
-;; $Id: rsz-minibuf.el,v 1.5 1997/06/26 02:31:05 steve Exp $
+;; $Id: rsz-minibuf.el,v 1.6 1997/09/17 05:19:26 steve Exp $
 
 ;; This package allows the entire contents (or as much as possible) of the
 ;; minibuffer to be visible at once when typing.  As the end of a line is
@@ -67,7 +66,6 @@
 ;;; Code:
 
 
-;;;###autoload
 
 (defgroup resize-minibuffer nil
   "Dynamically resize minibuffer to display entire contents"
@@ -77,9 +75,9 @@
 (defcustom resize-minibuffer-mode nil
   "*If non-`nil', resize the minibuffer so its entire contents are visible."
   :type 'boolean
+  :require 'rsz-minibuf
   :group 'resize-minibuffer)
 
-;;;###autoload
 (defcustom resize-minibuffer-window-max-height nil
   "*Maximum size the minibuffer window is allowed to become.
 If less than 1 or not a number, the limit is the height of the frame in
@@ -87,7 +85,6 @@ which the active minibuffer window resides."
   :type '(choice (const nil) integer)
   :group 'resize-minibuffer)
 
-;;;###autoload
 (defcustom resize-minibuffer-window-exactly t
   "*If non-`nil', make minibuffer exactly the size needed to display all its contents.
 Otherwise, the minibuffer window can temporarily increase in size but
@@ -96,18 +93,15 @@ never get smaller while it is active."
   :group 'resize-minibuffer)
 
 
-;;;###autoload
 (defcustom resize-minibuffer-frame nil
   "*If non-`nil' and the active minibuffer is the sole window in its frame, allow changing the frame height."
   :type 'boolean
   :group 'resize-minibuffer)
 
-;;;###autoload
 (defcustom resize-minibuffer-frame-max-height nil
   "*Maximum size the minibuffer frame is allowed to become.
 If less than 1 or not a number, there is no limit.")
 
-;;;###autoload
 (defcustom resize-minibuffer-frame-exactly nil
   "*If non-`nil', make minibuffer frame exactly the size needed to display all its contents.
 Otherwise, the minibuffer frame can temporarily increase in size but
@@ -150,32 +144,12 @@ counterparts."
    (t
     (setq resize-minibuffer-mode nil))))
 
-;;; Glue code to make things work in both FSF and Lucid Emacsen.
-(if (string-match "Lucid" emacs-version)
-    (progn
-      (fset 'resize-frame-parameters 'screen-parameters)
-      (fset 'resize-frame-height 'screen-height)
-      (fset 'resize-frame-width 'screen-width)
-      (fset 'resize-selected-frame 'selected-screen)
-      (fset 'resize-set-frame-size 'set-screen-size)
-      (defun resize-minibuffer-frame-alist ()
-	"Return the frame alist for the minibuffer."
-	minibuffer-alist))
-  (fset 'resize-frame-parameters 'frame-parameters)
-  (fset 'resize-frame-height 'frame-height)
-  (fset 'resize-frame-width 'frame-width)
-  (fset 'resize-selected-frame 'selected-frame)
-  (fset 'resize-set-frame-size 'set-frame-size)
-  (defun resize-minibuffer-frame-alist ()
-    "Return the frame alist for the minibuffer."
-    minibuffer-frame-alist))
-
 (defun resize-minibuffer-setup ()
   (cond
    (resize-minibuffer-mode
     (cond
      ((and (not (eq 'tty (console-type)))
-	   (eq 'only (cdr (assq 'minibuffer (resize-frame-parameters)))))
+	   (eq 'only (plist-get (frame-properties) 'minibuffer)))
       (and resize-minibuffer-frame
 	   (progn
 	     (make-local-hook 'minibuffer-exit-hook)
@@ -211,16 +185,6 @@ respectively."
 	(goto-char start)
         (vertical-motion (buffer-size))))))
 
-;; Why isn't `min' a subr?
-;; Do not pretend this is a real definition of `min'.  It suffices for this
-;; packages's purposes (and is reasonably fast for a lisp call) but a real
-;; min function would be able to take more than 2 arguments.
-(defun resize-minibuffer-min (x y)
-  "Return the lesser of X or Y."
-  (if (< x y)
-      x
-    y))
-
 
 ;; Resize the minibuffer window to contain the minibuffer's contents.
 ;; The minibuffer must be the current window.
@@ -229,7 +193,7 @@ respectively."
 	(lines (1+ (resize-minibuffer-count-window-lines))))
     (and (numberp resize-minibuffer-window-max-height)
 	 (> resize-minibuffer-window-max-height 0)
-	 (setq lines (resize-minibuffer-min
+	 (setq lines (min
 		      lines
 		      resize-minibuffer-window-max-height)))
     (or (if resize-minibuffer-window-exactly
@@ -241,30 +205,25 @@ respectively."
 ;; Resize the minibuffer frame to contain the minibuffer's contents.
 ;; The minibuffer frame must be the current frame.
 (defun resize-minibuffer-frame ()
-  (let ((height (resize-frame-height))
+  (let ((height (frame-height))
 	(lines (1+ (resize-minibuffer-count-window-lines))))
     (and (numberp resize-minibuffer-frame-max-height)
 	 (> resize-minibuffer-frame-max-height 0)
-	 (setq lines (resize-minibuffer-min
+	 (setq lines (min
 		      lines
 		      resize-minibuffer-frame-max-height)))
     (cond
      ((> lines height)
-      (resize-set-frame-size (resize-selected-frame)
-			     (resize-frame-width)
-			     lines))
+      (set-frame-size (selected-frame) (frame-width) lines))
      ((and resize-minibuffer-frame-exactly
-	   (> height (cdr (assq 'height (resize-minibuffer-frame-alist))))
+	   (> height (plist-get minibuffer-frame-plist 'height))
 	   (< lines height))
-      (resize-set-frame-size (resize-selected-frame)
-			     (resize-frame-width)
-			     lines)))))
+      (set-frame-size (selected-frame) (frame-width) lines)))))
 
 ;; Restore the original height of the frame.
 (defun resize-minibuffer-frame-restore ()
-  (resize-set-frame-size (resize-selected-frame)
-			 (resize-frame-width)
-			 (cdr (assq 'height (resize-minibuffer-frame-alist)))))
+  (set-frame-size (selected-frame) (frame-width)
+		  (plist-get minibuffer-frame-plist 'height)))
 
 
 (provide 'rsz-minibuf)

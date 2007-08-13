@@ -1,5 +1,5 @@
 ;;; recent-files.el --- Maintain menu of recently opened files.
-;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.2 1997/04/19 23:21:11 steve Exp $
+;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.3 1997/09/17 05:19:36 steve Exp $
 ;;;
 ;;; Copyright (C) 1994, 1995 Juergen Nickelsen <nickel@cs.tu-berlin.de>
 ;;;
@@ -208,7 +208,8 @@
 
 (defgroup recent-files nil
   "Maintain a menu of recently opened files."
-  :group 'data)
+  :group 'files
+  :group 'menu)
 
 (defgroup recent-files-menu nil
   "Menu options of recent-files."
@@ -415,7 +416,7 @@ If the buffer has changed, the menu must be rebuilt.")
   "Return a string identifying the current verion of recent-files.
 If called interactively, show it in the echo area."
   (interactive)
-  (let ((version "$Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.2 1997/04/19 23:21:11 steve Exp $"))
+  (let ((version "$Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.3 1997/09/17 05:19:36 steve Exp $"))
     (if (interactive-p)
 	(message version)
       version)))

@@ -4,7 +4,7 @@
 
 ;; Keywords: tools
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
 ;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY.  No author or distributor
@@ -183,21 +183,16 @@
 ;; Auxiliary functions
 
 (defun tags-delete (item list)
-  "delete the item from the list, testing with equal.  Copies the list."
-  (cond ((null list)
-	 nil)
-	((equal item (car list))
-	 (tags-delete item (cdr list)))
-	(t
-	 (cons (car list) (tags-delete item (cdr list))))))
+  "Delete the item from the list, testing with equal.  Copies the list."
+  (delete item (copy-list list)))
 
 (defun tags-remove-duplicates (list)
-  "delete equal duplicates from the list; copies the list."
-  (cond ((null list)
-	 nil)
-	(t
-	 (cons (car list)
-	       (tags-remove-duplicates (tags-delete (car list) (cdr list)))))))
+  "Delete equal duplicates from the list; copies the list."
+  (let (res)
+    (dolist (el list)
+      (unless (member el res)
+	(push el res)))
+    (nreverse res)))
 
 ;; derived from generate-new-buffer
 ;; now defined in C
@@ -422,9 +417,11 @@ See the documentation for the variable `tag-table-alist' for more information."
 been built.  this is nil, t, or 'disabled.")
 (make-variable-buffer-local 'tag-table-completion-status)
 
-(defvar make-tags-files-invisible nil
-  "*If true, TAGS-files will not show up in buffer-lists or be 
-selectable (or deletable.)")
+(defcustom make-tags-files-invisible nil
+  "*If non-nil, TAGS-files will not show up in buffer-lists or be 
+selectable (or deletable.)"
+  :type 'boolean
+  :group 'etags)
 
 (defconst tag-table-files nil
   "If the current buffer is a TAGS table, this holds a list of the files 

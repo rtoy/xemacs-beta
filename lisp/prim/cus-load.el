@@ -26,18 +26,23 @@
 
 ;;; Commentary:
 
-;; custom loads are no longer in a single file.  So, collect the whole set!
+;; In FSF all of the custom loads are in a single `cus-load' file.
+;; However, we have them distributed across directories, with optional
+;; incremental loading.  Here we simply collect the whole set.
 
+
 ;;; Code:
 
-(fset 'custom-put 'put)
+(defun custom-put (symbol property list)
+  (let ((loads (get symbol property)))
+    (dolist (el list)
+      (unless (member el loads)
+	(setq loads (nconc loads (list el)))))
+    (put symbol property loads)))
 
-(let ((dir load-path))
-  (while dir
-    (condition-case nil
-	(load (concat (car dir) "custom-load") nil nil)
-      (file-error nil))
-    (pop dir)))
+(mapc (lambda (dir)
+	(load (expand-file-name "custom-load" dir) t))
+      load-path)
 
 (provide 'cus-load)
 

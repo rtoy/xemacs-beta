@@ -27,8 +27,10 @@
 ;;; Synched up with: FSF 19.30.
 
 (defgroup texinfo nil
-  "Texinfo Mode"
-  :group 'docs)
+  "Major mode for editing Texinfo files."
+  :group 'docs
+  :group 'tex
+  :group 'wp)
 
 
 ;;; Autoloads:

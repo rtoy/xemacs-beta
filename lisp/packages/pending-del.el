@@ -36,13 +36,20 @@
 
 ;;; Code:
 
-(defvar pending-delete-mode nil
+(defcustom pending-delete-mode nil
   "Non-nil when Pending Delete mode is enabled.
-In Pending Delete mode, typed text replaces the selected region.")
+In Pending Delete mode, typed text replaces the selected region."
+  :type 'boolean
+  :set (lambda (symbol value)
+	 (pending-delete-mode (or value 0)))
+  :initialize 'custom-initialize-default
+  :require 'pending-del
+  :group 'keyboard)
 
 (defcustom pending-delete-modeline-string " PenDel"
   "*String to display in the modeline when Pending Delete mode is active."
-  :type 'string)
+  :type 'string
+  :group 'keyboard)
 
 (add-minor-mode 'pending-delete-mode 'pending-delete-modeline-string)
 

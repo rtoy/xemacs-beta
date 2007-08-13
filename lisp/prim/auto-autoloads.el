@@ -42,6 +42,18 @@ Describe the case table of the current buffer." t nil)
 
 ;;;***
 
+;;;### (autoloads (custom-make-dependencies) "cus-dep" "prim/cus-dep.el")
+
+(autoload 'custom-make-dependencies "cus-dep" "\
+Extract custom dependencies from .el files in SUBDIRS.
+SUBDIRS is a list of directories.  If it is nil, the command-line
+arguments are used.  If it is a string, only that directory is
+processed.  This function is especially useful in batch mode.
+
+Batch usage: xemacs -batch -l cus-dep.el -f custom-make-dependencies DIRS" t nil)
+
+;;;***
+
 ;;;### (autoloads (cancel-debug-on-entry debug-on-entry debug) "debug" "prim/debug.el")
 
 (autoload 'debug "debug" "\

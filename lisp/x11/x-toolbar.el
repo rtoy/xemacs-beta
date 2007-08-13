@@ -1,7 +1,11 @@
-;; Toolbar support for X.
+;;; x-toolbar.el -- Runtime initialization of XEmacs toolbar
+;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994 Andy Piper <andyp@parallax.demon.co.uk>
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
 ;; Copyright (C) 1996 Ben Wing <wing@666.com>
+
+;; Maintainer: XEmacs development team
+;; Keywords: frames
 
 ;; This file is part of XEmacs.
 
@@ -20,10 +24,14 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;
+;;; Synched up:  Not synched
+
+;;; Commentary:
+
 ;; Miscellaneous toolbar functions, useful for users to redefine, in
 ;; order to get different behaviour.
-;;
+
+;;; Code:
 
 (eval-when-compile
   (require 'pending-del))
@@ -388,27 +396,28 @@ netscape."
     ;; sometimes when this is evaluated.  Note that I even tried to
     ;; kludge-fix this by calls to `set-specifier-dirty-flag' in
     ;; pop-window-configuration and such.
-    
+
     ;;[toolbar-next-win-icon	unpop-window-configuration
     ;;(frame-property (selected-frame)
     ;;	'window-config-unpop-stack) t "Undo \"Most recent window config\""]
     ;; #### Illicit knowledge?
-    
-    [toolbar-file-icon		toolbar-open	t	"Open a file"	]
+
+    [toolbar-file-icon		toolbar-open	t	"Open a file"]
     [toolbar-folder-icon	toolbar-dired	t	"View directory"]
-    [toolbar-disk-icon		toolbar-save	t	"Save buffer"	]
-    [toolbar-printer-icon	toolbar-print	t	"Print buffer"	]
+    [toolbar-disk-icon		toolbar-save	t	"Save buffer"]
+    [toolbar-printer-icon	toolbar-print	t	"Print buffer"]
     [toolbar-cut-icon		toolbar-cut	t	"Kill region"]
     [toolbar-copy-icon		toolbar-copy	t	"Copy region"]
     [toolbar-paste-icon		toolbar-paste	t	"Paste from clipboard"]
-    [toolbar-undo-icon		toolbar-undo	t	"Undo edit"	]
-    [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"	]
-    [toolbar-replace-icon	toolbar-replace	t	"Replace text"	]
-    [toolbar-mail-icon		toolbar-mail	t	"Mail"		]
-    [toolbar-info-icon		toolbar-info	t	"Information"	]
-    [toolbar-compile-icon	toolbar-compile	t	"Compile"	]
-    [toolbar-debug-icon		toolbar-debug	t	"Debug"		]
-    [toolbar-news-icon		toolbar-news	t	"News"		])
+    [toolbar-undo-icon		toolbar-undo	t	"Undo edit"]
+    [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"]
+    [toolbar-replace-icon	toolbar-replace	t	"Replace text"]
+    ;; [toolbar-mail-icon		toolbar-mail	t	"Mail"]
+    [toolbar-info-icon		toolbar-info	t	"Information"]
+    [toolbar-compile-icon	toolbar-compile	t	"Compile"]
+    [toolbar-debug-icon		toolbar-debug	t	"Debug"]
+    ;; [toolbar-news-icon		toolbar-news	t	"News"]
+)
   "The initial toolbar for a buffer.")
 
 (defun x-init-toolbar-from-resources (locale)

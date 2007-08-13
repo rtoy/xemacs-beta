@@ -359,7 +359,7 @@ Unless you are an XEmacs maintainr, it is probably unwise to change this.")
 		    data-directory)
   "*File `update-file-autoloads' puts customization into.")
 
-(defvar customized-symbols nil)
+(defvar customized-symbols (make-hash-table :test 'eq))
 
 ;; Written by Per Abrahamsen
 (defun autoload-snarf-defcustom (file)
@@ -371,16 +371,16 @@ Unless you are an XEmacs maintainr, it is probably unwise to change this.")
 		 (string-match "\\`\\(.*\\)\\.el\\'" file)
 		 (not (buffer-modified-p)))
 	(goto-char (point-min))
-	(condition-case nil
-	    (let ((name (file-name-nondirectory (match-string 1 file))))
-	      (while t
+	(let ((name (file-name-nondirectory (match-string 1 file))))
+	  (condition-case nil
+	      (while (re-search-forward
+		      "^(defcustom\\|^(defface\\|^(defgroup"
+		      nil t)
+		(beginning-of-line)
 		(let ((expr (read (current-buffer))))
-		  (when (and (listp expr)
-			     (memq (car expr) '(defcustom defface defgroup)))
-		    (eval expr)
-		    (put (nth 1 expr) 'custom-where name)
-		    (pushnew (nth 1 expr) customized-symbols)))))
-	  (error nil)))
+		  (eval expr)
+		  (setf (gethash (nth 1 expr) customized-symbols) name)))
+	    (error nil))))
       (unless (buffer-modified-p)
 	(kill-buffer (current-buffer))))))
 
@@ -527,38 +527,26 @@ Obsolete autoload entries for files that no longer exist are deleted."
     (erase-buffer)
     (insert
      (with-output-to-string
-      (mapcar (lambda (symbol)
-		(let ((members (condition-case nil
-				   (get symbol 'custom-group)
-				 (t (progn
-				      (message "Bad plist in %s"
-					       (symbol-name symbol)))
-				    nil)))
-		      item where
-		      (found (condition-case nil
-				 (get symbol 'custom-loads)
-			       (t nil)))
-		      )
-		  (when (or members found)
-		    (princ "(custom-put '")
-		    (princ symbol)
-		    (princ " 'custom-loads '(")
-		    (when found
-		      ;; (message "found = `%s'" found)
-		      (insert (mapconcat 'prin1-to-string found " ")))
-		    (while members
-		      (setq item (car (car members))
-			    members (cdr members)
-			    where (get item 'custom-where))
-		      (unless (or (null where)
-				  (member where found))
-			;; (message "where = `%s', found = `%s'" where found)
-			(when found
-			  (princ " "))
-			(prin1 where)
-			(push where found)))
-		    (princ "))\n"))))
-	      customized-symbols)))
+       (mapatoms (lambda (sym)
+		   (let ((members (get sym 'custom-group))
+			 item where found)
+		     (when members
+		       (while members
+			 (setq item (car (car members))
+			       members (cdr members)
+			       where (gethash item customized-symbols))
+			 (unless (or (null where)
+				     (member where found))
+			   (if found
+			       (insert " ")
+;;;				  (insert "(custom-add-loads '" (symbol-name sym)
+			     (insert "(custom-put '" (symbol-name sym)
+				     " 'custom-loads '("))
+			   (prin1 where (current-buffer))
+			   (push where found)))
+		       (when found
+			 (insert "))\n"))))))
+))
     (when (= (point-min) (point-max))
       (set-buffer-modified-p nil))))
 
@@ -579,7 +567,7 @@ be the first parameter on the command line."
       (flet ((custom-put (symbol property value)
 			  (progn
 			    (put symbol property value)
-			    (pushnew symbol customized-symbols))))
+			    (setf (gethash symbol customized-symbols) value))))
 	(load generated-custom-file nil t)))
     ;; (message "Updating autoloads in %s..." generated-autoload-file)
     (dolist (arg command-line-args-left)
@@ -634,16 +622,17 @@ be used only with -batch, and kills XEmacs on completion."
 				;; (message "Loading %s = %s"
 					 ;; (symbol-name symbol)
 					 ;; (prin1-to-string value))
-				(pushnew symbol customized-symbols))))
+				(setf (gethash symbol customized-symbols)
+				      value))))
 	    (load generated-custom-file nil t)))
 	(cond
 	 ((file-directory-p arg)
-	  (message "Updating autoloads in directory %s..." arg)
+	  (message "Updating autoloads/custom in directory %s..." arg)
 	  (update-autoloads-from-directory arg))
 	 (t (error "No such file or directory: %s" arg)))
 	(when autoload-do-custom-save
 	  (autoload-save-customization)
-	  (setq customized-symbols nil))
+	  (clrhash customized-symbols))
 	(fixup-autoload-buffer (concat (if autoload-package-name
 					   autoload-package-name
 					 (file-name-nondirectory arg))

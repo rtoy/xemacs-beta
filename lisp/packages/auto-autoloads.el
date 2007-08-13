@@ -113,11 +113,7 @@ or if CONDITION had no actions, after all other CONDITIONs." nil nil)
 
 ;;;### (autoloads (mouse-avoidance-mode) "avoid" "packages/avoid.el")
 
-(defvar mouse-avoidance-mode nil "\
-Value is t or a symbol if the mouse pointer should avoid the cursor.
-See function `mouse-avoidance-mode' for possible values.  Changing this
-variable is NOT the recommended way to change modes; use that function 
-instead.")
+(defcustom mouse-avoidance-mode nil "Value is t or a symbol if the mouse pointer should avoid the cursor.\nSee function `mouse-avoidance-mode' for possible values.  Changing this\nvariable is NOT the recommended way to change modes; use that function \ninstead." :type '(radio (const :tag "No mouse avoidance" nil) (const :tag "Move the mouse on keypress" banish) (const :tag "Move the mouse if the cursor gets too close" exile) (const :tag "Displace the mouse if the cursor gets too close" jump) (const :tag "Animate the mouse" animate) (const :tag "Animate + change shape" proteus)) :set (lambda (symbol value) (mouse-avoidance-mode (or value 'none))) :initialize 'custom-initialize-default :require 'avoid :group 'avoid)
 
 (autoload 'mouse-avoidance-mode "avoid" "\
 Set cursor avoidance mode to MODE.
@@ -1759,7 +1755,7 @@ redisplayed as output is inserted." t nil)
 
 ;;;### (autoloads (blink-paren paren-set-mode) "paren" "packages/paren.el")
 
-(defcustom paren-mode nil "*Sets the style of parenthesis highlighting.\nValid values are nil, `blink-paren', `paren', and `sexp'.\n  nil		no parenthesis highlighting.\n  blink-paren	causes the matching paren to blink.\n  paren		causes the matching paren to be highlighted but not to blink.\n  sexp		whole expression enclosed by the local paren at its mate.\n  nested	(not yet implemented) use variable shading to see the\n		nesting of an expression.  Also groks regular expressions\n		and shell quoting.\n\nThis variable is global by default, but you can make it buffer-local and\nhighlight parentheses differently in different major modes." :type '(radio (const nil) (const blink-paren) (const paren) (const sexp) (const nested)) :group 'paren-matching)
+(defcustom paren-mode nil "*Sets the style of parenthesis highlighting.\nValid values are nil, `blink-paren', `paren', and `sexp'.\n  nil		no parenthesis highlighting.\n  blink-paren	causes the matching paren to blink.\n  paren		causes the matching paren to be highlighted but not to blink.\n  sexp		whole expression enclosed by the local paren at its mate.\n  nested	(not yet implemented) use variable shading to see the\n		nesting of an expression.  Also groks regular expressions\n		and shell quoting.\n\nThis variable is global by default, but you can make it buffer-local and\nhighlight parentheses differently in different major modes." :type '(radio (const :tag "None (default)" nil) (const :tag "Blinking Paren" blink-paren) (const :tag "Highlighted Paren" paren) (const :tag "Highlighted Expression" sexp)) :set (lambda (symbol value) (paren-set-mode value)) :initialize 'custom-initialize-default :require 'paren :group 'paren-matching)
 
 (autoload 'paren-set-mode "paren" "\
 Cycles through possible values for `paren-mode', force off with negative arg.
@@ -2218,7 +2214,9 @@ with the logmessage as change commentary.  A writable file is retained.
 merge in the changes into your working copy." t nil)
 
 (autoload 'vc-register "vc" "\
-Register the current file into your version-control system." t nil)
+Register the current file into your version-control system.
+The default initial version number, taken to be `vc-default-init-version',
+can be overridden by giving a prefix arg." t nil)
 
 (autoload 'vc-checkout "vc" "\
 Retrieve a copy of the latest version of the given file." nil nil)

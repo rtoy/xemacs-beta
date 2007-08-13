@@ -158,11 +158,14 @@ See the documentation for vm-mode for more information."
       ;; raise frame if requested and apply startup window
       ;; configuration.
       (if full-startup
-	  (progn
+	  (let ((buffer-to-display (or vm-summary-buffer
+				       vm-presentation-buffer
+				       (current-buffer))))
+	    (vm-display buffer-to-display buffer-to-display
+			(list this-command)
+			(list (or this-command 'vm) 'startup))
 	    (if vm-raise-frame-at-startup
-		(vm-raise-frame))
-	    (vm-display nil nil (list this-command)
-			(list (or this-command 'vm) 'startup))))
+		(vm-raise-frame))))
 
       ;; say this NOW, before the non-previewers read a message,
       ;; alter the new message count and confuse themselves.
@@ -277,7 +280,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.33.
+This is VM 6.34.
 
 Commands:
    h - summarize folder contents

@@ -34,7 +34,7 @@
 (require 'wid-edit)			; For `widget-keymap'
 
 (defconst w3-version-number
-  (let ((x "p3.0.103"))
+  (let ((x "p3.0.104"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))

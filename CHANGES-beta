@@ -1,4 +1,17 @@
 							-*- indented-text -*-
+to 20.3 beta21 "Bern"
+-- Artificial event creation from Hrvoje Niksic
+-- cl-extra.elc and cl-seq.elc are now dumped with XEmacs
+-- custom-1.9958 Courtesy of Per Abrahamsen
+-- W3-3.0.104 Courtesy of William Perry
+-- one-shot extent hooks added -- someone please send me the current
+   shotlock.el
+-- Custom initialization rework from Hrvoje Niksic
+-- cc-mode-5.18 courtesy of Barry Warsaw
+-- VM-6.34 courtesy of Kyle Jones
+-- Miscellaneous clean up patches from Hrvoje Niksic
+-- Miscellaneous bug fixes
+
 to 20.3 beta20 "Tirana"
 -- Miscellaneous patches from Martin and Hrvoje
 -- tetris.el-1.8

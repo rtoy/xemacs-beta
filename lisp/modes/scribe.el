@@ -3,7 +3,7 @@
 
 ;; Copyright (C) 1985 Free Software Foundation, Inc.
 
-;; This file might become part of GNU Emacs.
+;; This file is part of XEmacs.
 
 ;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but without any warranty.  No author or distributor
@@ -19,6 +19,10 @@
 ;; It should be in a file named COPYING.  Among other things, the
 ;; copyright notice and this notice must be preserved on all copies.
 
+(defgroup scribe nil
+  "Scribe mode, and its idiosyncratic commands."
+  :group 'wp)
+
 
 (defvar scribe-mode-syntax-table nil
   "Syntax table used while in scribe mode.")
@@ -26,15 +30,21 @@
 (defvar scribe-mode-abbrev-table nil
   "Abbrev table used while in scribe mode.")
 
-(defvar scribe-fancy-paragraphs nil
-  "*Non-NIL makes Scribe mode use a different style of paragraph separation.")
+(defcustom scribe-fancy-paragraphs nil
+  "*Non-NIL makes Scribe mode use a different style of paragraph separation."
+  :type 'boolean
+  :group 'scribe)
 
-(defvar scribe-electric-quote nil
-  "*Non-NIL makes insert of double quote use `` or '' depending on context.")
+(defcustom scribe-electric-quote nil
+  "*Non-NIL makes insert of double quote use `` or '' depending on context."
+  :type 'boolean
+  :group 'scribe)
 
-(defvar scribe-electric-parenthesis nil
+(defcustom scribe-electric-parenthesis nil
   "*Non-NIL makes parenthesis char ( (]}> ) automatically insert its close
-if typed after an @Command form.")
+if typed after an @Command form."
+  :type 'boolean
+  :group 'scribe)
 
 (defconst scribe-open-parentheses "[({<"
   "Open parenthesis characters for Scribe.")
@@ -150,7 +160,7 @@ scribe-electric-parenthesis
   "Surround current word with Scribe construct @STRING[...].  COUNT
 specifies how many words to surround.  A negative count means to skip 
 backward."
-  (let ((spos (point)) (epos (point)) (ccoun 0) noparens)
+  (let ((spos (point)) (epos (point)) (ccoun 0))
     (if (not (zerop count))
 	(progn (if (= (char-syntax (preceding-char)) ?w)
 		   (forward-sexp (min -1 count)))

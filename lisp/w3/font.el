@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/04/24 13:55:44
-;; Version: 1.51
+;; Created: 1997/09/05 15:44:37
+;; Version: 1.52
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -47,7 +47,7 @@
 (if (not (fboundp 'try-font-name))
     (defun try-font-name (fontname &rest args)
       (case window-system
-	((x win32 pm) (car-safe (x-list-fonts fontname)))
+	((x win32 w32 pm) (car-safe (x-list-fonts fontname)))
 	(ns (car-safe (ns-list-fonts fontname)))
 	(otherwise nil))))
 
@@ -101,6 +101,7 @@
   '((x        . (x-font-create-name x-font-create-object))
     (ns       . (ns-font-create-name ns-font-create-object))
     (win32    . (x-font-create-name x-font-create-object))
+    (w32      . (x-font-create-name x-font-create-object))
     (pm       . (x-font-create-name x-font-create-object)) ; Change? FIXME
     (tty      . (tty-font-create-plist tty-font-create-object)))
   "An assoc list mapping device types to the function used to create
@@ -1143,6 +1144,11 @@ is returned."
     (let* ((rgb (font-color-rgb-components color))
 	   (color (apply 'format "#%02x%02x%02x" rgb)))
       (win32-define-rgb-color (nth 0 rgb) (nth 1 rgb) (nth 2 rgb) color)
+      color))
+   (w32
+    (let* ((rgb (font-color-rgb-components color))
+	   (color (apply 'format "#%02x%02x%02x" rgb)))
+      (w32-define-rgb-color (nth 0 rgb) (nth 1 rgb) (nth 2 rgb) color)
       color))
    (tty
     (apply 'font-tty-find-closest-color (font-color-rgb-components color)))

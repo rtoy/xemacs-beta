@@ -50,14 +50,9 @@
 (require 'executable)
 
 (defgroup sh nil
-  "Shell programming utilities"
+  "Shell programming mode."
   :group 'unix
   :group 'languages)
-
-(defgroup sh-script nil
-  "Shell script mode"
-  :group 'sh
-  :prefix "sh-")
 
 
 ;;; interpreter-mode-alist is not compatible between Emacs and XEmacs.
@@ -106,12 +101,12 @@ If it matches, mode MODE is selected.")
 (defcustom sh-mode-hook nil
   "*Hook run by `sh-mode'."
   :type 'hook
-  :group 'sh-script)
+  :group 'sh)
 
 (defcustom sh-set-shell-hook nil
   "*Hook run by `sh-set-shell'."
   :type 'hook
-  :group 'sh-script)
+  :group 'sh)
 
 (defcustom sh-ancestor-alist
   '((ash . sh)
@@ -154,7 +149,7 @@ sh		Bourne Shell
   posix		IEEE 1003.2 Shell Standard
   wsh		? Shell"
   :type '(repeat (cons symbol symbol))
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-alias-alist
@@ -169,13 +164,13 @@ sh		Bourne Shell
 Use this where the name of the executable doesn't correspond to the type of
 shell it really is."
   :type '(repeat (cons symbol symbol))
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-shell-file (or (getenv "SHELL") "/bin/sh")
   "*The executable file name for the shell being programmed."
   :type 'string
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-shell-arg
@@ -199,7 +194,7 @@ shell it really is."
 			       (cons :format "Evaluate: %v"
 				     (const :format "" eval)
 				     sexp))))
-  :group 'sh-script)
+  :group 'sh)
 
 (defvar sh-shell-variables nil
   "Alist of shell variable names that should be included in completion.
@@ -350,7 +345,7 @@ the car and cdr are the same symbol.")
     comint-dynamic-complete-filename)
   "*Functions for doing TAB dynamic completion."
   :type '(repeat function)
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-require-final-newline
@@ -365,7 +360,7 @@ See `sh-feature'."
 			       (cons :format "Evaluate: %v"
 				     (const :format "" eval)
 				     sexp))))
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-comment-prefix
@@ -381,7 +376,7 @@ See `sh-feature'."
 			       (cons :format "Evaluate: %v"
 				     (const :format "" eval)
 				     sexp))))
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-assignment-regexp
@@ -398,19 +393,19 @@ sign.  See `sh-feature'."
 			       (cons :format "Evaluate: %v"
 				     (const :format "" eval)
 				     sexp))))
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-indentation 4
   "The width for further indentation in Shell-Script mode."
   :type 'integer
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-remember-variable-min 3
   "*Don't remember variables less than this length for completing reads."
   :type 'integer
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defvar sh-header-marker nil
@@ -423,7 +418,7 @@ That command is also used for setting this variable.")
   "*Regexp to determine the beginning of a shell command.
 The actual command starts at the beginning of the second \\(grouping\\)."
   :type 'regexp
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-end-of-command
@@ -431,7 +426,7 @@ The actual command starts at the beginning of the second \\(grouping\\)."
   "*Regexp to determine the end of a shell command.
 The actual command ends at the end of the first \\(grouping\\)."
   :type 'regexp
-  :group 'sh-script)
+  :group 'sh)
 
 
 
@@ -515,7 +510,7 @@ implemented as aliases.  See `sh-feature'."
 			       (cons :format "Evaluate: %v"
 				     (const :format "" eval)
 				     sexp))))
-  :group 'sh-script)
+  :group 'sh)
 
 
 
@@ -536,7 +531,7 @@ flow of control or syntax.  See `sh-feature'."
 			       (cons :format "Evaluate: %v"
 				     (const :format "" eval)
 				     sexp))))
-  :group 'sh-script)
+  :group 'sh)
 
 
 (defcustom sh-other-keywords
@@ -572,7 +567,7 @@ See `sh-feature'."
 			       (cons :format "Evaluate: %v"
 				     (const :format "" eval)
 				     sexp))))
-  :group 'sh-script)
+  :group 'sh)
 
 
 
@@ -1533,6 +1528,6 @@ The document is bounded by `sh-here-document-word'."
   (if (re-search-forward sh-end-of-command nil t)
       (goto-char (match-end 1))))
 
-(provide 'sh-script)
+(provide 'sh)
 ;; sh-script.el ends here
 

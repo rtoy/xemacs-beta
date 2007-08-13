@@ -8,7 +8,7 @@
 ;;;### (autoloads (ada-make-filename-from-adaname ada-mode) "ada-mode" "modes/ada-mode.el")
 
 (autoload 'ada-mode "ada-mode" "\
-Ada Mode is the major mode for editing Ada code.
+Ada mode is the major mode for editing Ada code.
 
 Bindings are as follows: (Note: 'LFD' is control-j.)
 
@@ -28,7 +28,7 @@ Bindings are as follows: (Note: 'LFD' is control-j.)
  Fill comment paragraph and justify each line         '\\[ada-fill-comment-paragraph-justify]'
  Fill comment paragraph, justify and append postfix   '\\[ada-fill-comment-paragraph-postfix]'
 
- Next func/proc/task '\\[ada-next-procedure]'    Previous func/proc/task '\\[ada-previous-procedure]'
+ Next func/proc/task '\\[ada-next-procedure]'  Previous func/proc/task '\\[ada-previous-procedure]'
  Next package        '\\[ada-next-package]'  Previous package        '\\[ada-previous-package]'
 
  Goto matching start of current 'end ...;'            '\\[ada-move-to-start]'
@@ -482,9 +482,7 @@ hide-ifdef-read-only
 
 ;;;### (autoloads (hs-minor-mode hs-hide-block hs-hide-all) "hideshow" "modes/hideshow.el")
 
-(defvar hs-minor-mode nil "\
-Non-nil if using hideshow mode as a minor mode of some other mode.
-Use the command `hs-minor-mode' to toggle this variable.")
+(defcustom hs-minor-mode nil "Non-nil if using hideshow mode as a minor mode of some other mode.\nUse the command `hs-minor-mode' to toggle this variable." :type 'boolean :set (lambda (symbol value) (hs-minor-mode (or value 0))) :initialize 'custom-initialize-default :require 'hideshow :group 'hideshow)
 
 (autoload 'hs-hide-all "hideshow" "\
 Hides all top-level blocks, displaying only first and last lines.
@@ -569,7 +567,7 @@ Decode XPM image between START and END." nil nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.9 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.10 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -1277,18 +1275,6 @@ table to convert all REXX keywords into upper case." t nil)
 
 ;;;### (autoloads (resize-minibuffer-mode) "rsz-minibuf" "modes/rsz-minibuf.el")
 
-(defgroup resize-minibuffer nil "Dynamically resize minibuffer to display entire contents" :group 'frames)
-
-(defcustom resize-minibuffer-window-max-height nil "*Maximum size the minibuffer window is allowed to become.\nIf less than 1 or not a number, the limit is the height of the frame in\nwhich the active minibuffer window resides." :type '(choice (const nil) integer) :group 'resize-minibuffer)
-
-(defcustom resize-minibuffer-window-exactly t "*If non-`nil', make minibuffer exactly the size needed to display all its contents.\nOtherwise, the minibuffer window can temporarily increase in size but\nnever get smaller while it is active." :type 'boolean :group 'resize-minibuffer)
-
-(defcustom resize-minibuffer-frame nil "*If non-`nil' and the active minibuffer is the sole window in its frame, allow changing the frame height." :type 'boolean :group 'resize-minibuffer)
-
-(defcustom resize-minibuffer-frame-max-height nil "*Maximum size the minibuffer frame is allowed to become.\nIf less than 1 or not a number, there is no limit.")
-
-(defcustom resize-minibuffer-frame-exactly nil "*If non-`nil', make minibuffer frame exactly the size needed to display all its contents.\nOtherwise, the minibuffer frame can temporarily increase in size but\nnever get smaller while it is active." :type 'boolean :group 'resize-minibuffer)
-
 (autoload 'resize-minibuffer-mode "rsz-minibuf" "\
 Enable or disable resize-minibuffer mode.
 A negative prefix argument disables this mode.  A positive argument or
@@ -1560,8 +1546,7 @@ with your script for an edit-interpret-debug cycle." t nil)
 
 ;;;### (autoloads (strokes-compose-complex-stroke strokes-decode-buffer strokes-mode strokes-list-strokes strokes-load-user-strokes strokes-help strokes-describe-stroke strokes-do-complex-stroke strokes-do-stroke strokes-read-stroke strokes-global-set-stroke) "strokes" "modes/strokes.el")
 
-(defvar strokes-mode nil "\
-Non-nil when `strokes' is globally enabled")
+(defcustom strokes-mode nil "Non-nil when `strokes' is globally enabled." :type 'boolean :set (lambda (symbol value) (strokes-mode (or value 0))) :initialize 'custom-initialize-default :require 'strokes :group 'strokes)
 
 (autoload 'strokes-global-set-stroke "strokes" "\
 Interactively give STROKE the global binding as COMMAND.
@@ -1935,7 +1920,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.9 $
+vhdl-mode $Revision: 1.10 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

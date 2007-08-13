@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (featurep 'leim-autoloads) (error "Already loaded"))
-
 
 ;;;### (autoloads (quail-use-package) "quail" "leim/quail.el")
 

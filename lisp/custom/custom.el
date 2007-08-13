@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9956
+;; Version: 1.9958
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -136,7 +136,7 @@ not using the standard setting.  Otherwise, use the `set-default'."
     (put symbol 'force-value nil))
   (when doc
     (put symbol 'variable-documentation doc))
-  (let ((initialize 'custom-initialize-set)
+  (let ((initialize 'custom-initialize-reset)
 	(requests nil))
     (while args 
       (let ((arg (car args)))

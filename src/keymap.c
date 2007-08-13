@@ -1557,7 +1557,7 @@ event_matches_key_specifier_p (struct Lisp_Event *event,
      to compare the ASCII values. */
 
   GCPRO1 (event2);
-  event2 = Fmake_event ();
+  event2 = Fmake_event (Qnil, Qnil);
   Fcharacter_to_event (key_specifier, event2, Qnil, Qnil);
   if (XEVENT (event2)->event_type != key_press_event)
     retval = 0;

@@ -158,7 +158,14 @@ Returns nil if the required files cannot be found."
            (file-exists-p (concat sunpro-dir "bin/sparcworks"))
          (setq exec-path (append exec-path (list (concat sunpro-dir "bin/"))))))
       
-      (and (fboundp 'eos::start)) (eos::start))
+      (load "sun-eos-init")
+      (load "sun-eos-common")
+      (load "sun-eos-editor")
+      (load "sun-eos-browser")
+      (load "sun-eos-debugger")
+      (load "sun-eos-debugger-extra")
+      (load "sun-eos-menubar")
+      (eos::start))
      
      (t ; Neither? Complain...
       (display-warning

@@ -218,7 +218,9 @@
 (defgroup fume nil
   "Jump to a function within a buffer."
   :tag "Func Menu"
-  :group 'tools)
+  :group 'tools
+  :group 'c
+  :group 'lisp)
 
 (defconst fume-developer "David Hughes <d.hughes@videonetworks.com>")
 

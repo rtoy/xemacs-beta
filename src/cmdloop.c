@@ -497,7 +497,7 @@ Don't call this unless you know what you're doing.
        ())
 {
   /* This function can GC */
-  Lisp_Object event = Fmake_event ();
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
   Lisp_Object old_loop = Qnil;
   struct gcpro gcpro1, gcpro2;
   int was_locked = in_single_console_state ();

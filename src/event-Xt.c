@@ -849,7 +849,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	GCPRO2 (instream, fb_instream);
         while ((ch = Lstream_get_emchar (istr)) != EOF)
           {
-            Lisp_Object emacs_event = Fmake_event ();
+            Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 	    struct Lisp_Event *ev = XEVENT (emacs_event);
             ev->channel	            = DEVICE_CONSOLE (d);
             ev->event_type	    = key_press_event;
@@ -2149,7 +2149,7 @@ void
 signal_special_Xt_user_event (Lisp_Object channel, Lisp_Object function,
 			      Lisp_Object object)
 {
-  Lisp_Object event = Fmake_event ();
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
 
   XEVENT (event)->event_type = misc_user_event;
   XEVENT (event)->channel = channel;
@@ -2242,7 +2242,7 @@ emacs_Xt_event_handler (Widget wid /* unused */,
 			XEvent *event,
 			Boolean *continue_to_dispatch /* unused */)
 {
-  Lisp_Object emacs_event = Fmake_event ();
+  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
 
 #ifdef DEBUG_XEMACS
   if (x_debug_events > 0)
@@ -2359,7 +2359,7 @@ check_for_tty_quit_char (struct device *d)
       if (!poll_fds_for_input (temp_mask))
 	return;
 
-      event = Fmake_event ();
+      event = Fmake_event (Qnil, Qnil);
       if (!read_event_from_tty_or_stream_desc (XEVENT (event), con, infd))
 	/* EOF, or something ... */
 	return;

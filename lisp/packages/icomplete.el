@@ -4,7 +4,7 @@
 
 ;; Author: Ken Manheimer <klm@python.org>
 ;; Maintainer: Ken Manheimer <klm@python.org>
-;; Version: $Id: icomplete.el,v 1.4 1997/06/06 00:57:26 steve Exp $
+;; Version: $Id: icomplete.el,v 1.5 1997/09/17 05:19:35 steve Exp $
 ;; Created: Mar 1993 klm@nist.gov - first release to usenet
 ;; Keywords: help, abbrev
 
@@ -44,13 +44,14 @@
 ;; customize icomplete setup for interoperation with other
 ;; minibuffer-oriented packages.
 
-;; To activate icomplete mode, simply load the package.  You can
-;; subsequently deactivate it by invoking the function icomplete-mode
-;; with a negative prefix-arg (C-U -1 ESC-x icomplete-mode).  Also,
-;; you can prevent activation of the mode during package load by
-;; first setting the variable `icomplete-mode' to nil.  Icompletion
-;; can be enabled any time after the package is loaded by invoking
-;; icomplete-mode without a prefix arg.
+;; To activate icomplete mode, load the package and use the
+;; `icomplete-mode' function.  You can subsequently deactivate it by
+;; invoking the function icomplete-mode with a negative prefix-arg
+;; (C-U -1 ESC-x icomplete-mode).  Also, you can prevent activation of
+;; the mode during package load by first setting the variable
+;; `icomplete-mode' to nil.  Icompletion can be enabled any time after
+;; the package is loaded by invoking icomplete-mode without a prefix
+;; arg.
 
 ;; Thanks to everyone for their suggestions for refinements of this
 ;; package.  I particularly have to credit Michael Cook, who
@@ -66,18 +67,38 @@
 ;;;_* Provide
 (provide 'icomplete)
 
+(defgroup icomplete nil
+  "Minibuffer completion incremental feedback."
+  :group 'minibuffer)
+
+
+(defcustom icomplete-mode nil
+  "*Non-nil activates incremental minibuffer completion."
+  :type 'boolean
+  :set (lambda (symbol value)
+	 (icomplete-mode (if value 1 -1)))
+  :initialize 'custom-initialize-default
+  :require 'icomplete
+  :group 'icomplete)
+
 ;;;_* User Customization variables
-(defvar icomplete-compute-delay .3
+(defcustom icomplete-compute-delay .3
   "*Completions-computation stall, used only with large-number
-completions - see `icomplete-delay-completions-threshold'.")
-(defvar icomplete-delay-completions-threshold 400
-  "*Pending-completions number over which to apply icomplete-compute-delay.")
-(defvar icomplete-max-delay-chars 3
-  "*Maximum number of initial chars to apply icomplete compute delay.")
+completions - see `icomplete-delay-completions-threshold'."
+  :type 'number
+  :group 'icomplete)
+(defcustom icomplete-delay-completions-threshold 400
+  "*Pending-completions number over which to apply icomplete-compute-delay."
+  :type 'integer
+  :group 'icomplete)
+(defcustom icomplete-max-delay-chars 3
+  "*Maximum number of initial chars to apply icomplete compute delay."
+  :type 'integer
+  :group 'icomplete)
 
 ;;;_* Initialization
 ;;;_  = icomplete-minibuffer-setup-hook
-(defvar icomplete-minibuffer-setup-hook nil
+(defcustom icomplete-minibuffer-setup-hook nil
   "*Icomplete-specific customization of minibuffer setup.
 
 This hook is run during minibuffer setup iff icomplete will be active.
@@ -91,12 +112,14 @@ with other packages.  For instance:
 	       \(setq resize-minibuffer-window-max-height 3))))
 
 will constrain rsz-mini to a maximum minibuffer height of 3 lines when
-icompletion is occurring.")
+icompletion is occurring."
+  :type 'hook
+  :group 'icomplete)
 
 ;;;_ + Internal Variables
 ;;;_  = icomplete-mode
-(defvar icomplete-mode t
-  "*Nil inhibits activated incremental minibuffer completion.")
+;(defvar icomplete-mode t
+;  "*Nil inhibits activated incremental minibuffer completion.")
 ;;;_  = icomplete-eoinput 1
 (defvar icomplete-eoinput 1
   "Point where minibuffer input ends and completion info begins.")

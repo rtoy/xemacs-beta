@@ -1752,7 +1752,7 @@ defaults to the selected device.  If the mouse position can't be determined
 
   if (mouse_pixel_position_1 (d, &frame, &intx, &inty))
     {
-      Lisp_Object event = Fmake_event ();
+      Lisp_Object event = Fmake_event (Qnil, Qnil);
       XEVENT (event)->event_type = pointer_motion_event;
       XEVENT (event)->channel = frame;
       XEVENT (event)->event.motion.x = intx;

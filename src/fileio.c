@@ -973,6 +973,8 @@ See also the function `substitute-in-file-name'.
   }
 #endif /* DOS_NT */
 
+  /* We *don't* want to handle // and /~ that way.  */
+#if 0
   /* Handle // and /~ in middle of file name
      by discarding everything through the first / of that sequence.  */
   p = nm;
@@ -998,6 +1000,7 @@ See also the function `substitute-in-file-name'.
 
       p++;
     }
+#endif
 
   /* If nm is absolute, flush ...// and detect /./ and /../.
      If no /./ or /../ we can return right away. */

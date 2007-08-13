@@ -38,7 +38,7 @@
     (defmacro defcustom (var value doc &rest args) 
       (` (defvar (, var) (, value) (, doc))))))
 
-(defconst url-version (let ((x "p3.0.103"))
+(defconst url-version (let ((x "p3.0.104"))
 			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))

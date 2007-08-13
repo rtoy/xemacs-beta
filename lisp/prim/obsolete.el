@@ -624,4 +624,74 @@ If FRAME is omitted or nil, use the selected frame."
 (make-obsolete 'following-char 'char-after)
 (make-obsolete 'preceding-char 'char-before)
 
+
+;; The following several functions are useful in GNU Emacs 20 because
+;; of the multibyte "characters" the internal representation of which
+;; leaks into Lisp.  In XEmacs/Mule they are trivial and unnecessary.
+;; We provide them for compatibility reasons solely.
+
+(defun string-to-sequence (string type)
+  "Convert STRING to a sequence of TYPE which contains characters in STRING.
+TYPE should be `list' or `vector'.
+Multibyte characters are concerned."
+  (cond ((eq type 'list)
+	 (mapcar #'identity string))
+	((eq type 'vector)
+	 (mapcar #'identity string))
+	(t
+	 (error "Type must be `list' or `vector'"))))
+
+(defun string-to-list (string)
+  "Return a list of characters in STRING."
+  (mapcar #'identity string))
+
+(defun string-to-vector (string)
+  "Return a vector of characters in STRING."
+  (mapvector #'identity string))
+
+(defun store-substring (string idx obj)
+  "Embed OBJ (string or character) at index IDX of STRING."
+  (let* ((str (cond ((stringp obj) obj)
+		    ((characterp obj) (char-to-string obj))
+		    (t (error
+			"Invalid argument (should be string or character): %s"
+			obj))))
+	 (string-len (length string))
+	 (len (length str))
+	 (i 0))
+    (while (and (< i len) (< idx string-len))
+      (aset string idx (aref str i))
+      (setq idx (1+ idx) i (1+ i)))
+    string))
+
+;; ### This function is not compatible with FSF in some cases.  Hard
+;; to fix, because it is hard to trace the logic of the FSF function.
+;; In case we need the exact behaviour, we can always copy the FSF
+;; version, which is very long and does lots of unnecessary stuff.
+(defun truncate-string-to-width (str end-column &optional start-column padding)
+  "Truncate string STR to end at column END-COLUMN.
+The optional 2nd arg START-COLUMN, if non-nil, specifies
+the starting column; that means to return the characters occupying
+columns START-COLUMN ... END-COLUMN of STR.
+
+The optional 3rd arg PADDING, if non-nil, specifies a padding character
+to add at the end of the result if STR doesn't reach column END-COLUMN,
+or if END-COLUMN comes in the middle of a character in STR.
+PADDING is also added at the beginning of the result
+if column START-COLUMN appears in the middle of a character in STR.
+
+If PADDING is nil, no padding is added in these cases, so
+the resulting string may be narrower than END-COLUMN."
+  (or start-column
+      (setq start-column 0))
+  (let ((len (length str)))
+    (concat (substring str (min start-column len) (min end-column len))
+	    (and padding (> end-column len)
+		 (make-string (- end-column len) padding)))))
+
+(defalias 'truncate-string 'truncate-string-to-width)
+(make-obsolete 'truncate-string 'truncate-string-to-width)
+
+
+
 ;;; obsolete.el ends here

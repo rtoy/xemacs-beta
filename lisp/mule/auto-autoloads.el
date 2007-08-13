@@ -95,30 +95,7 @@ Set variable keyboard-coding-system to CODESYS and modify keymap for it." t nil)
 
 ;;;***
 
-;;;### (autoloads (decompose-composite-char compose-chars decompose-region compose-region set-coding-system-alist lookup-nested-alist set-nested-alist nested-alist-p truncate-string-to-width store-substring string-to-vector string-to-list string-to-sequence) "mule-util" "mule/mule-util.el")
-
-(autoload 'string-to-sequence "mule-util" "\
-Convert STRING to a sequence of TYPE which contains characters in STRING.
-TYPE should be `list' or `vector'.
-Multibyte characters are concerned." nil nil)
-
-(autoload 'string-to-list "mule-util" "\
-Return a list of characters in STRING." nil nil)
-
-(autoload 'string-to-vector "mule-util" "\
-Return a vector of characters in STRING." nil nil)
-
-(autoload 'store-substring "mule-util" "\
-Embed OBJ (string or character) at index IDX of STRING." nil nil)
-
-(autoload 'truncate-string-to-width "mule-util" "\
-Truncate string STR to fit in WIDTH columns.
-Optional 1st arg START-COLUMN if non-nil specifies the starting column.
-Optional 2nd arg PADDING if non-nil is a padding character to be padded at
-the head and tail of the resulting string to fit in WIDTH if necessary.
-If PADDING is nil, the resulting string may be narrower than WIDTH." nil nil)
-
-(defalias 'truncate-string 'truncate-string-to-width)
+;;;### (autoloads (decompose-composite-char compose-chars decompose-region compose-region set-coding-system-alist lookup-nested-alist set-nested-alist nested-alist-p) "mule-util" "mule/mule-util.el")
 
 (autoload 'nested-alist-p "mule-util" "\
 Return t if OBJ is a nesetd alist.

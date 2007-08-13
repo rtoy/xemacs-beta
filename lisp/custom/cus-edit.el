@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9956
+;; Version: 1.9958
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -1960,7 +1960,7 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
     ("Don't show as Lisp expression" custom-variable-edit 
      (lambda (widget)
        (eq (widget-get widget :custom-form) 'lisp)))
-    ("Show as Lisp expression" custom-variable-edit-lisp
+    ("Show initial Lisp expression" custom-variable-edit-lisp
      (lambda (widget)
        (eq (widget-get widget :custom-form) 'edit))))
   "Alist of actions for the `custom-variable' widget.
@@ -2023,7 +2023,7 @@ Optional EVENT is the location for the menu."
     (custom-redraw-magic widget)))
 
 (defun custom-variable-save (widget)
-  "Set the default value for the variable being edited by WIDGET."
+  "Set and save the value for the variable being edited by WIDGET."
   (let* ((form (widget-get widget :custom-form))
 	 (state (widget-get widget :custom-state))
 	 (child (car (widget-get widget :children)))
@@ -3093,25 +3093,31 @@ The menu is in a format applicable to `easy-menu-define'."
   (let* ((item (vector (custom-unlispify-menu-entry symbol)
 		       `(customize-group ',symbol)
 		       t)))
-    (if (and (or (not (boundp 'custom-menu-nesting))
-		 (>= custom-menu-nesting 0))
-	     (< (length (get symbol 'custom-group)) widget-menu-max-size))
-	(let ((custom-prefix-list (custom-prefix-add symbol
-						     custom-prefix-list))
-	      (members (custom-sort-items (get symbol 'custom-group)
-					  custom-menu-sort-alphabetically
-					  custom-menu-order-groups)))
-	  (custom-load-symbol symbol)
-	  `(,(custom-unlispify-menu-entry symbol t)
-	    ,item
-	    "--"
-	    ,@(mapcar (lambda (entry)
-			(widget-apply (if (listp (nth 1 entry))
-					  (nth 1 entry)
-					(list (nth 1 entry)))
-				      :custom-menu (nth 0 entry)))
-		      members)))
-      item)))
+    ;; Item is the entry for creating a menu buffer for SYMBOL.
+    (if (< custom-menu-nesting 0)
+	;; We don't nest any further.
+	item
+      ;; We may nest, if the menu is not too big.
+      (custom-load-symbol symbol)
+      (if (< (length (get symbol 'custom-group)) widget-menu-max-size)
+	  ;; The menu is not too big.
+	  (let ((custom-prefix-list (custom-prefix-add symbol
+						       custom-prefix-list))
+		(members (custom-sort-items (get symbol 'custom-group)
+					    custom-menu-sort-alphabetically
+					    custom-menu-order-groups)))
+	    ;; Create the menu.
+	    `(,(custom-unlispify-menu-entry symbol t)
+	      ,item
+	      "--"
+	      ,@(mapcar (lambda (entry)
+			  (widget-apply (if (listp (nth 1 entry))
+					    (nth 1 entry)
+					  (list (nth 1 entry)))
+					:custom-menu (nth 0 entry)))
+			members)))
+	;; The menu was too big.
+	item))))
 
 ;;;###autoload
 (defun customize-menu-create (symbol &optional name)

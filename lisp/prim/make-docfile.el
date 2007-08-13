@@ -100,12 +100,12 @@
 
 ;; (load "featurep")
 
-(let (dumped-lisp-packages)
+(let (preloaded-file-list)
  (load (concat default-directory "../lisp/prim/dumped-lisp.el"))
- (setq dumped-lisp-packages
-       (append dumped-lisp-packages packages-hardcoded-lisp))
- (while dumped-lisp-packages
-   (let ((arg0 (packages-add-suffix (car dumped-lisp-packages)))
+ (setq preloaded-file-list
+       (append preloaded-file-list packages-hardcoded-lisp))
+ (while preloaded-file-list
+   (let ((arg0 (packages-add-suffix (car preloaded-file-list)))
 	 arg)
      (setq arg (locate-library arg0))
      (if (null arg)
@@ -116,7 +116,7 @@
 		      (file-newer-than-file-p arg docfile))
 		 (setq docfile-out-of-date t))
 	     (setq processed (cons arg processed)))))
-     (setq dumped-lisp-packages (cdr dumped-lisp-packages)))))
+     (setq preloaded-file-list (cdr preloaded-file-list)))))
 
 ;; Finally process the list of site-loaded files.
 (if site-file-list

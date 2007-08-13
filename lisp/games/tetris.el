@@ -45,6 +45,7 @@
 ;; Modified: 1997-09-09, changed layout to work in a 22 line window
 ;; Modified: 1997-09-12
 ;;	fixed tetris-shift-down to deal with multiple rows correctly
+;; Modified: 1997-09-14, added tetris-setup-default-face
 ;; URL: ftp://sensei.co.uk/misc/tetris.el.gz
 ;; Tested with XEmacs 20.3-beta and Emacs 19.34
 ;; Reported to work with XEmacs 19.15 and 20.2
@@ -463,6 +464,16 @@ static char *noname[] = {
 			     nil 'remove-locale)
     (setq buffer-display-table tetris-display-table)))
 
+(defun tetris-setup-default-face ()
+  (cond ((eq tetris-display-mode 'glyph)
+	 (let* ((font-spec (face-property 'default 'font))
+		(name (font-name font-spec))
+		(glyph (aref tetris-display-table tetris-blank))
+		(height (glyph-height glyph)))
+	   (while (> (font-height font-spec) height)
+	     (setq name (x-find-smaller-font name))
+	     (add-spec-to-specifier font-spec name (current-buffer)))))))
+
 (defun tetris-hide-cursor ()
   (if (fboundp 'specifierp)
       (set-specifier text-cursor-visible-p nil (current-buffer))))
@@ -791,6 +802,7 @@ tetris-mode keybindings:
   (buffer-disable-undo (current-buffer))
 
   (tetris-initialize-display)
+  (tetris-setup-default-face)
   (tetris-set-display-table)
   (tetris-hide-cursor)
 

@@ -39,7 +39,9 @@
 
 (define-function 'defalias 'define-function)
 (defvar running-xemacs t
-  "non-nil when the current emacsen is XEmacs.")
+  "Non-nil when the current emacsen is XEmacs.")
+(defvar preloaded-file-list nil
+  "List of files preloaded into the XEmacs binary image.")
 
 (call-with-condition-handler
       ;; This is awfully damn early to be getting an error, right?
@@ -96,8 +98,9 @@
      ;; (load-gc "version.el")	; Ignore compiled-by-mistake version.elc
      ;; (load-gc "cl")
      ;; (load-gc "featurep") ; OBSOLETE now
-     (let (dumped-lisp-packages file)
-       (load "dumped-lisp.el")
+     (load "dumped-lisp.el")
+     (let ((dumped-lisp-packages preloaded-file-list)
+	   file)
        (while (setq file (car dumped-lisp-packages))
 	 (load-gc file)
 	 (setq dumped-lisp-packages (cdr dumped-lisp-packages)))
@@ -110,6 +113,10 @@
      )) ;; end of call-with-condition-handler
 
 
+;; Fix up the preloaded file list
+(setq preloaded-file-list (mapcar #'file-name-sans-extension
+				  preloaded-file-list))
+
 (setq load-warn-when-source-newer t ; set to t at top of file
       load-warn-when-source-only nil)
 

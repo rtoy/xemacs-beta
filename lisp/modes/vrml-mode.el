@@ -45,7 +45,7 @@
 ;;
 
 (defgroup vrml nil
-  "VRML Language."
+  "Major mode for editing VRML (.wrl) files."
   :group 'languages)
 
 
@@ -76,7 +76,7 @@ to take place:
   6. Move backward to start of comment, indenting if necessary."
   :type '(choice (const :tag "on" t)
 		 (const :tag "off" nil)
-		 (const :tag "The Works" other))
+		 (sexp :format "%t\n" :tag "The Works" other))
   :group 'vrml)
 
 (defcustom vrml-use-hairy-comment-detector t

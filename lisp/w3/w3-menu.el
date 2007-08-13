@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/07/06 22:24:36
-;; Version: 1.41
+;; Created: 1997/08/20 13:57:38
+;; Version: 1.42
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,10 +35,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; InfoDock stuff
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(if (not (fboundp 'id-menubar-set))
-    (fset 'id-menubar-set 'ignore))
-
-(id-menubar-set 'w3-mode 'w3-menu-make-xemacs-menubar)
+(if (fboundp 'id-menubar-set)
+    (id-menubar-set 'w3-mode 'w3-menu-make-xemacs-menubar))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Spiffy new menus (for both Emacs and XEmacs)

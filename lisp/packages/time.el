@@ -72,10 +72,6 @@
 ;;;  (suppress-keymap display-time-keymap)
 ;;;  (define-key display-time-keymap 'button1 'balloon-help))
 
-;; We need the progn to kill off the defgroup-tracking mechanism.
-;; This package changes the state of XEmacs by loading it, which is
-;; why it's potentially dangerous.
-(progn
 (defgroup display-time nil
   "Facilities to display the current time/date/load and a new-mail indicator
 in the XEmacs mode line or echo area."
@@ -85,7 +81,7 @@ in the XEmacs mode line or echo area."
   "Fancy add-ons to display-time for using the `balloon-help' feature.
 balloon-help must be loaded before these settings take effect."
   :group 'display-time)
-) ;progn
+
 
 (defcustom display-time-mail-file nil
   "*File name of mail inbox file, for indicating existence of new mail.
@@ -143,6 +139,8 @@ After each update, `display-time-hook' is run with `run-hooks'.
 If `display-time-echo-area' is non-nil, the time is displayed in the
 echo area instead of in the mode-line."
   (interactive)
+  (or display-time-insinuated
+      (display-time-insinuate))
   ;; if the "display-time" itimer already exists, nuke it first.
   (let ((old (get-itimer "display-time")))
     (if old (delete-itimer old)))
@@ -496,47 +494,50 @@ displayed."
       (redisplay-frame))
     ))
 
-(if (featurep 'xpm)
-    (progn
-      (defvar display-time-mail-sign
-	(cons (make-extent nil nil)
-	      (make-glyph  (concat display-time-icons-dir "letter.xpm"))))
-      (set-extent-property (car display-time-mail-sign) 'balloon-help
-			   'display-time-mail-balloon)
+(defvar display-time-insinuated nil)
+
+;; This used to be at top-level!
+(defun display-time-insinuate ()
+  (when (featurep 'xpm)
+    (defvar display-time-mail-sign
+      (cons (make-extent nil nil)
+	    (make-glyph  (concat display-time-icons-dir "letter.xpm"))))
+    (set-extent-property (car display-time-mail-sign) 'balloon-help
+			 'display-time-mail-balloon)
 ;;;	 (set-extent-keymap (car display-time-mail-sign)
 ;;;			    display-time-keymap)
-      (defvar display-time-no-mail-sign
-	(cons (make-extent nil nil)
-	      (make-glyph  (concat display-time-icons-dir "no-letter.xpm"))))
-      (set-extent-property (car display-time-no-mail-sign) 'balloon-help
-			   display-time-no-mail-balloon)
+    (defvar display-time-no-mail-sign
+      (cons (make-extent nil nil)
+	    (make-glyph  (concat display-time-icons-dir "no-letter.xpm"))))
+    (set-extent-property (car display-time-no-mail-sign) 'balloon-help
+			 display-time-no-mail-balloon)
 ;;;	 (set-extent-keymap (car display-time-no-mail-sign)
 ;;;			    display-time-keymap)
-      (defvar display-time-1-glyph  nil)
-      (defvar display-time-2-glyph  nil)
-      (defvar display-time-3-glyph  nil)
-      (defvar display-time-4-glyph  nil)
-      (defvar display-time-5-glyph  nil)
-      (defvar display-time-6-glyph  nil)
-      (defvar display-time-7-glyph  nil)
-      (defvar display-time-8-glyph  nil)
-      (defvar display-time-9-glyph  nil)
-      (defvar display-time-0-glyph  nil)
-      (defvar display-time-:-glyph  nil)
-      (defvar display-time-am-glyph nil)
-      (defvar display-time-pm-glyph nil)
-      (defvar display-time-load-0.0-glyph nil)
-      (defvar display-time-load-0.5-glyph nil)
-      (defvar display-time-load-1.0-glyph nil)
-      (defvar display-time-load-1.5-glyph nil)
-      (defvar display-time-load-2.0-glyph nil)
-      (defvar display-time-load-2.5-glyph nil)
-      (defvar display-time-load-3.0-glyph nil)
-      (display-time-generate-time-glyphs 'force)
-      (display-time-generate-load-glyphs 'force)  
-      (display-time-init-glyphs)
-      (sit-for 0)
-      ))
+    (defvar display-time-1-glyph  nil)
+    (defvar display-time-2-glyph  nil)
+    (defvar display-time-3-glyph  nil)
+    (defvar display-time-4-glyph  nil)
+    (defvar display-time-5-glyph  nil)
+    (defvar display-time-6-glyph  nil)
+    (defvar display-time-7-glyph  nil)
+    (defvar display-time-8-glyph  nil)
+    (defvar display-time-9-glyph  nil)
+    (defvar display-time-0-glyph  nil)
+    (defvar display-time-:-glyph  nil)
+    (defvar display-time-am-glyph nil)
+    (defvar display-time-pm-glyph nil)
+    (defvar display-time-load-0.0-glyph nil)
+    (defvar display-time-load-0.5-glyph nil)
+    (defvar display-time-load-1.0-glyph nil)
+    (defvar display-time-load-1.5-glyph nil)
+    (defvar display-time-load-2.0-glyph nil)
+    (defvar display-time-load-2.5-glyph nil)
+    (defvar display-time-load-3.0-glyph nil)
+    (display-time-generate-time-glyphs 'force)
+    (display-time-generate-load-glyphs 'force)  
+    (display-time-init-glyphs)
+    (sit-for 0))
+  (setq display-time-insinuated t))
 
 
 (defun display-time-can-do-graphical-display (&optional textual)

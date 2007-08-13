@@ -54,22 +54,11 @@
 
 ;;; Code:
 
-(defcustom paren-message-offscreen t
-  "*Display message if matching open paren is offscreen."
-  :type 'boolean
-  :group 'paren-matching)
+(defgroup paren-matching nil
+  "Highlight (un)matching of parens and expressions."
+  :prefix "paren-"
+  :group 'matching)
 
-(defcustom paren-ding-unmatched nil
-  "*Make noise if the cursor is at an unmatched paren.
-
-If T, then typing or passing over an unmatched paren will ring the bell
-using the `paren' sound.  If NIL, then the bell will not ring even if an
-unmatched paren is typed.  If neither T or NIL, then the bell will not ring
-when the cursor moves over unmatched parens but will ring if one is typed."
-  :type '(choice (const :tag "off" nil)
-		 (const :tag "on" t)
-		 (const :tag "other" other))
-  :group 'paren-matching)
 
 ;;;###autoload
 (defcustom paren-mode nil
@@ -85,8 +74,31 @@ Valid values are nil, `blink-paren', `paren', and `sexp'.
 
 This variable is global by default, but you can make it buffer-local and
 highlight parentheses differently in different major modes."
-  :type '(radio (const nil) (const blink-paren) (const paren)
-		(const sexp) (const nested))
+  :type '(radio (const :tag "None (default)" nil)
+		(const :tag "Blinking Paren" blink-paren)
+		(const :tag "Highlighted Paren" paren)
+		(const :tag "Highlighted Expression" sexp))
+  :set (lambda (symbol value)
+	 (paren-set-mode value))
+  :initialize 'custom-initialize-default
+  :require 'paren
+  :group 'paren-matching)
+
+(defcustom paren-message-offscreen t
+  "*Display message if matching open paren is offscreen."
+  :type 'boolean
+  :group 'paren-matching)
+
+(defcustom paren-ding-unmatched nil
+  "*Make noise if the cursor is at an unmatched paren.
+
+If T, then typing or passing over an unmatched paren will ring the bell
+using the `paren' sound.  If NIL, then the bell will not ring even if an
+unmatched paren is typed.  If neither T or NIL, then the bell will not ring
+when the cursor moves over unmatched parens but will ring if one is typed."
+  :type '(choice (const :tag "off" nil)
+		 (const :tag "on" t)
+		 (const :tag "other" other))
   :group 'paren-matching)
 
 (make-face 'paren-match)
@@ -116,15 +128,19 @@ highlight parentheses differently in different major modes."
 ;; this is either paren-match or paren-mismatch...
 (defvar paren-blink-on-face nil)
 
-(defvar paren-blink-interval 0.2
+(defcustom paren-blink-interval 0.2
   "*If the cursor is on a parenthesis, the matching parenthesis will blink.
 This variable controls how long each phase of the blink lasts in seconds.
-This should be a fractional part of a second (a float.)")
+This should be a fractional part of a second (a float.)"
+  :type 'number
+  :group 'paren-matching)
 
-(defvar paren-max-blinks (* 5 60 5)	; 5 minutes is plenty...
+(defcustom paren-max-blinks (* 5 60 5)	; 5 minutes is plenty...
   ;; idea from Eric Eide <eeide@jaguar.cs.utah.edu>
   "*Maximum number of times that a matching parenthesis will blink.
-Set this to NIL if you want indefinite blinking.")
+Set this to NIL if you want indefinite blinking."
+  :type 'number
+  :group 'paren-matching)
 
 ;; timeout to blink the face
 (defvar paren-timeout-id nil)
@@ -310,10 +326,6 @@ and the following faces:
 					    paren-blink-interval))))))
 	))))
 
-;; kill off the competition, er, uh, eliminate redundancy...
-(setq post-command-hook (delq 'show-paren-command-hook post-command-hook))
-(setq pre-command-hook (delq 'blink-paren-pre-command pre-command-hook))
-(setq post-command-hook (delq 'blink-paren-post-command post-command-hook))
 
 ;;;###autoload
 (defun paren-set-mode (arg &optional quiet)
@@ -321,6 +333,11 @@ and the following faces:
 When called from lisp, a symbolic value for `paren-mode' can be passed directly.
 See also `paren-mode' and `paren-highlight'."
   (interactive "P")
+  ;; kill off the competition, er, uh, eliminate redundancy...
+  (setq post-command-hook (delq 'show-paren-command-hook post-command-hook))
+  (setq pre-command-hook (delq 'blink-paren-pre-command pre-command-hook))
+  (setq post-command-hook (delq 'blink-paren-post-command post-command-hook))
+
   (let* ((paren-modes '(blink-paren paren sexp))
 	 (paren-next-modes (cons nil (append paren-modes (list nil)))))
     (setq paren-mode (if (and (numberp arg) (< arg 0))
@@ -348,14 +365,15 @@ See also `paren-mode' and `paren-highlight'."
   ;; suppress compiler warning.
   (defvar highlight-paren-expression))
 
-(paren-set-mode (if (and (boundp 'highlight-paren-expression)
-			    ;; bletcherous blink-paren no-naming-convention
-			    highlight-paren-expression)
-		       'sexp
-		     (if (eq 'x (device-type (selected-device)))
-			 'blink-paren
-		       'paren))
-		t)
+;; No no no!
+;(paren-set-mode (if (and (boundp 'highlight-paren-expression)
+;			    ;; bletcherous blink-paren no-naming-convention
+;			    highlight-paren-expression)
+;		       'sexp
+;		     (if (eq 'x (device-type (selected-device)))
+;			 'blink-paren
+;		       'paren))
+;		t)
 
 ;;;###autoload
 (make-obsolete 'blink-paren 'paren-set-mode)

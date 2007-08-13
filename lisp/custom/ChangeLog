@@ -1,3 +1,29 @@
+Mon Sep 15 19:40:19 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9958 released.
+
+Mon Sep 15 19:23:36 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cus-edit.el (custom-menu-create): First load symbol
+ 	dependencies, then create menus.  
+	[ Patch modified by Per Abrahamsen ]
+
+Mon Sep 08 19:56:06 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9957 released.
+
+Tue Aug 26 19:43:14 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (custom-declare-variable): Changed default initializer
+	to `custom-initialize-reset'.
+
+	* cus-edit.el (custom-variable-save): Fixed doc string.
+
+Fri Aug 15 12:34:58 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-variable-menu): Make it clear that `Lisp
+	mode' edit the initial lisp expression.
+
 Wed Aug 13 13:04:36 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.9956 released.

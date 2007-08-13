@@ -1024,6 +1024,13 @@ and the operator, in order to detect the intentions of the latter.
 Otherwise, I'm, say, 35.82% professional Jazz guitar player,
 which means that's not the way I earn my crust, but things may very
 well reverse in the future ...\n")
+       (print-short "David hobley" "david.hobley@usa.net" "\
+I used to do real work, but now I am a Project Manager for one of the
+Telco's in Australia. In my spare time I like to get back to basics and
+muck around with things. As a result I started the NT port. Hopefully I
+will get to finish it sometime sooner rather than later. I do vaguely
+remember University where it seems like I had more spare time that I can
+believe now. Oh well, such is life.\n")
        "\n\
 In addition to those just mentioned, the following people have spent a
 great deal of effort providing feedback, testing beta versions of

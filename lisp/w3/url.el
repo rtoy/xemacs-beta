@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/07/14 05:15:29
-;; Version: 1.80
+;; Created: 1997/09/05 15:43:50
+;; Version: 1.81
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/07/14 05:15:29|1.80|Location Undetermined
+;;; 1997/09/05 15:43:50|1.81|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -804,7 +804,7 @@ or 1 second has elapsed."
 	 ((eq system-type 'windows-nt) "Windows-NT; 32bit")
 	 ((eq system-type 'ms-windows) "Windows; 16bit")
 	 ((eq system-type 'ms-dos) "MS-DOS; 32bit")
-	 ((eq (device-type) 'win32) "Windows; 32bit")
+	 ((memq (device-type) '(win32 w32)) "Windows; 32bit")
 	 ((eq (device-type) 'pm) "OS/2; 32bit")
 	 (t
 	  (case (device-type)

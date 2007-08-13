@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/07/14 16:57:04
-;; Version: 1.140
+;; Created: 1997/08/25 14:55:29
+;; Version: 1.141
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -670,11 +670,12 @@ the cdr is the 'next' node."
 		   (fmtstring (format "   <tr><td>%%%ds:</td><td>%%s</td></tr>" maxlength)))
 	      (insert "   <tr><th colspan=2>Miscellaneous Variables</th></tr>\n")
 	      (while info
-		(insert (format fmtstring
-				(url-insert-entities-in-string
-				 (capitalize (caar info)))
-				(url-insert-entities-in-string
-				 (cdar info))) "\n")
+		(if (and (caar info) (cdar info))
+		    (insert (format fmtstring
+				    (url-insert-entities-in-string
+				     (capitalize (caar info)))
+				    (url-insert-entities-in-string
+				     (cdar info))) "\n"))
 		(setq info (cdr info))
 		)
 	      )

@@ -635,7 +635,8 @@ bottom of the buffer stack."
 	 (frame (make-frame (if name
 				  (list (cons 'name (symbol-name name)))))))
     (pop-to-buffer buffer t frame)
-    (select-frame frame)
+    (unless focus-follows-mouse
+      (select-frame frame))
     (make-frame-visible frame)
     buffer))
 

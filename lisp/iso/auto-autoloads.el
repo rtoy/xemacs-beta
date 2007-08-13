@@ -1,6 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (featurep 'iso-autoloads) (error "Already loaded"))
-
 
 ;;;### (autoloads (iso-accents-mode) "iso-acc" "iso/iso-acc.el")
 

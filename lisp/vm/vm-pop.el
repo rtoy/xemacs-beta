@@ -196,6 +196,7 @@
 	  ;; clear the trace buffer of old output
 	  (save-excursion
 	    (set-buffer process-buffer)
+	    (buffer-disable-undo)
 	    (erase-buffer))
 	  ;; open the connection to the server
 	  (setq process (open-network-stream "POP" process-buffer host port))

@@ -109,46 +109,6 @@ the form of easy-to-install add-ons.
 * Changes in XEmacs 20.3
 ========================
 
-** Info "dir" functionality merged from Emacs-19.34
-
-All of the directories on `Info-directory-list' will be searched for
-"dir" files, which may be full fledged Info files containing subnodes
-as well as menus.  They are merged to become one directory, with menus
-in like-named subnodes being coalesced from the several "dir" files.
-
-"localdir" files are looked for too, secondary to "dir"'s.  If there's
-no "dir" in a directory, a "localdir" will be looked for.  There can
-be one of either "dir" or "localdir" in each of the directories in
-`Info-directory-list', which is initialized from `Info-default-
-directory-list', which you may customize through the Options menu.
-
-The first directory specified in `Info-default-directory-list' should
-contain a "dir" file that will become the toplevel dir which the
-others will be merged into.  A "localdir" may optionally contain a
-'* Menu:' section, or just entries like those in a menu section, but
-no subnodes or info header.  You can see what I'm talking about if you
-view the "dir" file that comes with XEmacs.  It has a header section
-that should not be in a "localdir" file.  The "localdir" should look
-like the `buffer-substring' of XEmacs' stock "dir" from just below
-"* Menu:" to the end of the file, optionally also containing the
-"* Menu:" line.
-
-The contents of each "localdir" file will be inserted into the
-toplevel "dir" file replacing a '* Locals:' line, OR alternatively,
-will insert it below a 'Local*' (that's a regexp) heading line.  If
-there's more than one "localdir" file, each will either consume a '*
-Locals:' line, be catenated to the end of the (dir)Top, or be inserted
-under the 'Local' topic header.
-
-There is a new variable, called `Info-additional-directory-list',
-which you may customize also, that can contain a list of directories
-in which to search for Info documents, but NOT to search in for "dir"
-or "localdir" files.  This is useful for things like the Calc package,
-which likes its info files in its lisp directory.  If you put that
-directory in the 'additional list', and a menu entry for it in one of
-your "dir" or "localdir" files, a click on a menu entry for it will be
-able to find the Info file.
-
 ** Startup file additions.
 
 By default XEmacs now loads the user file ~/.xemacs if it exists.  If
@@ -185,22 +145,18 @@ a signaled error.  The new variable `errors-deactivate-region' may be
 set to nil to revert to the old behaviour.  As before, typing C-g
 deactivate the region.
 
-** Pending-delete changes.
+** Info "dir" functionality merged from Emacs-19.34
 
-*** Pending-delete is now a minor mode, with the normal minor-mode
-semantics and toggle functions.  Old functions are left for
-compatibility.
+All of the directories on `Info-directory-list' will be searched for
+"dir" files, which may be full fledged Info files containing subnodes
+as well as menus.  They are merged to become one directory, with menus
+in like-named subnodes being coalesced from the several "dir" files.
 
-*** Loading pending-del no longer turns on pending-delete mode.  In
-fact, it is no longer necessary to explicitly load pending-del.  All
-you need to do to turn on tpu-edt is run the tpu-edt function.  Here's
-how to run pending-delete instead of loading the file:
-
-  Within XEmacs:   Type      M-x pending-delete <ret>
-                    not      M-x load-library <ret> pending-delete <ret>
-  
-  In .emacs:       Use       (turn-on-pending-delete)
-                   not       (load "pending-del")
+"localdir" files are looked for too, secondary to "dir"'s.  If there's
+no "dir" in a directory, a "localdir" will be looked for.  There can
+be one of either "dir" or "localdir" in each of the directories in
+`Info-directory-list', which is initialized from `Info-default-
+directory-list', which you may customize through the Options menu.
 
 ** Abbreviations can now contain non-word characters.
 
@@ -208,6 +164,10 @@ This means that it is finally possible to do such simple things as
 define `#if' to expand to `#include' in C mode, `s-c-b' to
 `save-current-buffer' in Lisp mode, `call/cc' to
 `call-with-current-continuation' in Scheme mode, etc.
+
+** Customize now has a new `browser' mode of traversing
+customizations, which is in many ways easier to follow than the
+standard one.  Try it with `M-x customize-browse'.
 
 ** `C-x n d' now runs the new command `narrow-to-defun',
 which narrows the accessible parts of the buffer to just
@@ -224,6 +184,38 @@ quits archive mode in the same fashion dired-quit works.
 prints the message after the command finishes.  After some time, the
 previous echo area contents is restored (in case the command prints
 something useful.)
+
+** Pending-delete changes.
+
+*** Pending-delete is now a minor mode, with the normal minor-mode
+semantics and toggle functions.  Old functions are left for
+compatibility.
+
+*** Loading pending-del no longer turns on pending-delete mode.  In
+fact, it is no longer necessary to explicitly load pending-del.  All
+you need to do to turn on pending-delete is run the pending-delete
+function:
+
+  Within XEmacs:   Type      M-x pending-delete <ret>
+                    not      M-x load-library <ret> pending-delete <ret>
+  
+  In .emacs:       Use       (turn-on-pending-delete)
+                   not       (load "pending-del")
+
+** Package starting changes.
+
+*** Loading `paren.el' is no longer sufficient to enable
+paren-blinking.  Use `paren-set-mode' explicitly, or customize
+`paren-mode'.
+
+*** Loading `uniquify.el' is no longer sufficient to enable uniquify;
+you have to set `uniquify-buffer-name-style' to a legal value.
+
+*** Loading `time.el' is no longer sufficient to enable display time;
+you have to invoke `display-time' explicitly.
+
+*** Loading `jka-compr.el' is no longer sufficient to enable
+on-the-fly compression; you have to use `toggle-auto-compression'.
 
 ** XEmacs can now save the minibuffer histories from various
 minibuffers.  To use this feature, add the line:
@@ -290,6 +282,31 @@ paragraph name.
 an interval is \{M,N\}, and it means to match the preceding expression
 at least M times and as many as N times.
 
+** Ada mode changes.
+
+*** There is now better support for using find-file.el with Ada mode.
+If you switch between spec and body, the cursor stays in the same
+procedure (modulo overloading).  If a spec has no body file yet, but
+you try to switch to its body file, Ada mode now generates procedure
+stubs.
+
+*** There are two new commands:
+ - `ada-make-local'   : invokes gnatmake on the current buffer
+ - `ada-check-syntax' : check syntax of current buffer.
+
+The user options `ada-compiler-make', `ada-make-options',
+`ada-language-version', `ada-compiler-syntax-check', and
+`ada-compile-options' are used within these commands. 
+
+*** Ada mode can now work with Outline minor mode.  The outline level
+is calculated from the indenting, not from syntactic contructs.
+Outlining does not work if your code is not correctly indented.
+
+*** The new function `ada-gnat-style' converts the buffer to the style of
+formatting used in GNAT.  It places two blanks after a comment start,
+places one blank between a word end and an opening '(', and puts one
+space between a comma and the beginning of a word.
+
 
 
 * Lisp and internal changes in XEmacs 20.3
@@ -335,6 +352,23 @@ of the last form.
 one to ignore the debugger for some common errors, even when
 `debug-on-error' is t.  It has no effect when `debug-on-signal' is
 non-nil.
+
+** The function current-message returns the message currently displayed
+in the echo area, or nil if there is none.
+
+** File-access primitive functions no longer discard an extra redundant
+directory name from the beginning of the file name.  In other words,
+they no longer do anything special with // or /~.  The same goes for
+`expand-file-name'.  That conversion is now done only in
+`substitute-in-file-name'.
+
+This makes it possible for a Lisp program to open a file whose name
+begins with ~.
+
+** The new function regexp-opt returns an efficient regexp to match a
+string.  The arguments are STRINGS and (optionally) PAREN.  This
+function can be used where regexp matching or searching is intensively
+used and speed is important, e.g., in Font Lock mode.
 
 
 

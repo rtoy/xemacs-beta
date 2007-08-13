@@ -353,20 +353,25 @@ event_hash (Lisp_Object obj, int depth)
 }
 
 
-/* #### This should accept a type and props (as returned by
-   event-properties) to allow creation of any type of event.
-   This is useful, for example, in Lisp code that might want
-   to determine if, for a given button-down event, what the
-   binding for the corresponding button-up event is. */
+DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
+Create a new event of type TYPE, with properties stored in PLIST.
+TYPE is a symbol, either `empty', `key-press', `button-press',
+ `button-release', or `motion'.  If TYPE is left out, it defaults to
+ `empty'.
+PLIST is a list of properties, as returned by `event-properties'.  Not
+ all properties are allowed for all kinds of events, and some are
+ required.
 
-DEFUN ("make-event", Fmake_event, 0, 0, 0, /*
-Create a new empty event.
 WARNING, the event object returned may be a reused one; see the function
-`deallocate-event'.
+ `deallocate-event'.
 */
-       ())
+       (type, plist))
 {
-  Lisp_Object event;
+  Lisp_Object event, prop, val;
+  struct Lisp_Event *e;
+
+  if (NILP (type))
+    type = Qempty;
 
   if (!NILP (Vevent_resource))
     {
@@ -377,7 +382,131 @@ WARNING, the event object returned may be a reused one; see the function
     {
       event = allocate_event ();
     }
-  zero_event (XEVENT (event));
+  e = XEVENT (event);
+  zero_event (e);
+
+  if (EQ (type, Qkey_press))
+    e->event_type = key_press_event;
+  else if (EQ (type, Qbutton_press))
+    e->event_type = button_press_event;
+  else if (EQ (type, Qbutton_release))
+    e->event_type = button_release_event;
+  else if (EQ (type, Qmotion))
+    e->event_type = pointer_motion_event;
+  else if (EQ (type, Qempty))
+    e->event_type = empty_event;
+  else
+    /* not allowed: Qmisc_user, Qprocess, Qtimeout, Qmagic, Qmagic_eval */
+    signal_simple_error ("Invalid event type", type);
+
+  /* Process the plist. */
+  while (!NILP (plist))
+    {
+      prop = Fcar (plist);
+      plist = Fcdr (plist);
+      val = Fcar (plist);
+      plist = Fcdr (plist);
+      if (EQ (prop, Qchannel))
+	{
+	  if (!DEVICEP (val) && !CONSOLEP (val) && !FRAMEP (val)
+	      && !NILP (val))
+	    signal_simple_error ("Invalid event channel", val);
+	  EVENT_CHANNEL (e) = val;
+	}
+      else if (EQ (prop, Qkey))
+	{
+	  if (e->event_type != key_press_event)
+	    wrong_type_argument (Qkey_press_event_p, event);
+	  if (!SYMBOLP (val) && !CHARP (val))
+	    signal_simple_error ("Invalid event key", val);
+	  e->event.key.keysym = val;
+	}
+      else if (EQ (prop, Qbutton))
+	{
+	  CHECK_NATNUM (val);
+	  check_int_range (XINT(val), 1, 3);
+	  if (e->event_type != button_press_event
+	      && e->event_type != button_release_event)
+	    signal_simple_error ("Invalid event type for `button' property",
+				 type);
+	  e->event.button.button = XINT (val);
+	}
+      else if (EQ (prop, Qmodifiers))
+	{
+	  Lisp_Object tail, sym;
+	  int modifiers = 0;
+
+	  if (e->event_type != key_press_event
+	      && e->event_type != button_press_event
+	      && e->event_type != button_release_event
+	      && e->event_type != pointer_motion_event)
+	    signal_simple_error ("Invalid event type for modifiers", type);
+
+	  for (tail = val; !NILP (tail); tail = Fcdr (tail))
+	    {
+	      sym = Fcar (tail);
+	      if (EQ (sym, Qcontrol))      modifiers |= MOD_CONTROL;
+	      else if (EQ (sym, Qmeta))    modifiers |= MOD_META;
+	      else if (EQ (sym, Qsuper))   modifiers |= MOD_SUPER;
+	      else if (EQ (sym, Qhyper))   modifiers |= MOD_HYPER;
+	      else if (EQ (sym, Qalt))     modifiers |= MOD_ALT;
+	      else if (EQ (sym, Qsymbol))  modifiers |= MOD_ALT;
+	      else if (EQ (sym, Qshift))   modifiers |= MOD_SHIFT;
+	      else
+		signal_simple_error ("Invalid key modifier", Fcar (tail));
+	    }
+	  if (e->event_type == key_press_event)
+	    e->event.key.modifiers = modifiers;
+	  else if (e->event_type == button_press_event
+		   || e->event_type == button_release_event)
+	    e->event.button.modifiers = modifiers;
+	  else /* pointer_motion_event */
+	    e->event.motion.modifiers = modifiers;
+	}
+      else if (EQ (prop, Qx))
+	{
+	  CHECK_NATNUM (val);
+	  if (e->event_type == pointer_motion_event)
+	    e->event.motion.x = XINT (val);
+	  else if (e->event_type == button_press_event
+		   || e->event_type == button_release_event)
+	    e->event.button.x = XINT (val);
+	}
+      else if (EQ (prop, Qy))
+	{
+	  CHECK_NATNUM (val);
+	  if (e->event_type == pointer_motion_event)
+	    e->event.motion.y = XINT (val);
+	  else if (e->event_type == button_press_event
+		   || e->event_type == button_release_event)
+	    e->event.button.y = XINT (val);
+	}
+      else if (EQ (prop, Qtimestamp))
+	{
+	  CHECK_NATNUM (val);
+	  e->timestamp = XINT (val);
+	}
+      else
+	signal_simple_error ("Invalid property", prop);
+    } /* while */
+
+  /* Now, let's validate what we got. */
+  switch (e->event_type)
+    {
+    case key_press_event:
+      if (!(SYMBOLP (e->event.key.keysym) || CHARP (e->event.key.keysym)))
+	error ("Undefined key for keypress event");
+      break;
+    case button_press_event:
+    case button_release_event:
+      if (!e->event.button.button)
+	error ("Undefined button for button-press or button-release event");
+      if (NILP (EVENT_CHANNEL (e)))
+	error ("Undefined channel for button-press or button-release event");
+      break;
+    default:
+      break;
+    }
   return event;
 }
 
@@ -444,7 +573,7 @@ the function `deallocate-event'.
 {
   CHECK_LIVE_EVENT (event1);
   if (NILP (event2))
-    event2 = Fmake_event ();
+    event2 = Fmake_event (Qnil, Qnil);
   else CHECK_LIVE_EVENT (event2);
   if (EQ (event1, event2))
     return signal_simple_continuable_error_2
@@ -828,7 +957,7 @@ ASCII character set can encode.
 {
   struct console *con = decode_console (console);
   if (NILP (event))
-    event = Fmake_event ();
+    event = Fmake_event (Qnil, Qnil);
   else
     CHECK_LIVE_EVENT (event);
   if (CONSP (ch) || SYMBOLP (ch))
@@ -872,7 +1001,7 @@ key_sequence_to_event_chain (Lisp_Object seq)
 
   for (i = 0; i < len; i++)
     {
-      Lisp_Object event = Fmake_event ();
+      Lisp_Object event = Fmake_event (Qnil, Qnil);
       nth_of_key_sequence_as_event (seq, i, event);
       enqueue_event (event, &head, &tail);
     }

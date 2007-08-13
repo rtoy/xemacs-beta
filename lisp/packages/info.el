@@ -7,6 +7,7 @@
 ;;	   Richard Stallman <rms@gnu.ai.mit.edu>
 ;; Maintainer: Dave Gillespie <daveg@synaptics.com>
 ;; Version: 1.07 of 7/22/93
+;; Keywords: docs, help
 
 ;; This file is part of XEmacs.
 
@@ -306,8 +307,10 @@
 ;; Code:
 
 (defgroup info nil
-  "Info subsystem"
-  :group 'help)
+  "The info package for Emacs."
+  :group 'help
+  :group 'docs)
+
 
 (defcustom Info-inhibit-toolbar nil
   "*Non-nil means don't use the specialized Info toolbar."
@@ -356,9 +359,9 @@ The Lisp code is executed when the node is selected."
 If nil, they beep and remain in the current node.
 If t, they move to the next node (like Info-global-next/prev).
 If anything else, they must be pressed twice to move to the next node."
-  :type '(radio (const :tag "off" nil)
-		(const :tag "advance" t)
-		(const :tag "confirm" twice))
+  :type '(choice (const :tag "off" nil)
+		 (const :tag "advance" t)
+		 (const :tag "confirm" twice))
   :group 'info)
 
 (defcustom Info-fontify t
@@ -2256,6 +2259,11 @@ At end of the node's text, moves to the next node."
 	  ((and (<= y h/4)
 		(and (>= x w/3) (<= x (+ w/3 w/3))))
 	   (Info-up)
+	   t)
+	  ;; In the bottom 1/4 and inside the middle 1/3
+	  ((and (>= y (+ h/4 h/4 h/4))
+		(and (>= x w/3) (<= x (+ w/3 w/3))))
+	   (Info-nth-menu-item 1)
 	   t)
 	  ;; In the lower 3/4 and the right 1/2
 	  ;; OR in the upper 1/4 and the right 1/3

@@ -60,8 +60,14 @@
 (defvar balloon-help-version "1.06"
   "Version string for Balloon Help.")
 
-(defvar balloon-help-mode nil
-  "*Non-nil means Balloon help mode is enabled.")
+(defcustom balloon-help-mode nil
+  "*Non-nil means Balloon help mode is enabled."
+  :type 'boolean
+  :set (lambda (symbol value)
+	 (balloon-help-mode (or value 0)))
+  :initialize 'custom-initialize-default
+  :require 'balloon-help
+  :group 'balloon-help)
 
 (defcustom balloon-help-timeout 1500
   "*Display help after this many milliseconds of mouse inactivity."

@@ -83,14 +83,12 @@
 
 ;;; User-visible variables
 
-(progn
-  (defgroup uniquify nil
-    "Unique buffer names dependent on file name"
-    :group 'applications)
-  )
+(defgroup uniquify nil
+  "Unique buffer names dependent on file name"
+  :group 'applications)
 
 
-(defcustom uniquify-buffer-name-style 'post-forward
+(defcustom uniquify-buffer-name-style nil
   "*If non-nil, buffer names are uniquified with parts of directory name.
 The value determines the buffer name style and is one of `forward',
 `reverse', `post-forward' (the default), or `post-forward-angle-brackets'.
@@ -106,6 +104,7 @@ would have the following buffer names in the various styles:
 		(const post-forward)
 		(const podt-forward-angle-brackets)
 		(const nil))
+  :require 'uniquify
   :group 'uniquify)
 
 (defcustom uniquify-after-kill-buffer-p nil
@@ -360,149 +359,68 @@ but no others."
 
 ;;; Hooks from the rest of Emacs
 
-(cond
- ((string-match "^\\(19\\|20\\)" emacs-version)
-  ;; Emacs 19 (Emacs or XEmacs)
+;; The logical place to put all this code is in generate-new-buffer-name.
+;; It's written in C, so we would add a generate-new-buffer-name-function
+;; which, if non-nil, would be called instead of the C.  One problem with
+;; that is that generate-new-buffer-name takes a potential buffer name as
+;; its argument -- not other information, such as what file the buffer will
+;; visit.
 
-  ;; The logical place to put all this code is in generate-new-buffer-name.
-  ;; It's written in C, so we would add a generate-new-buffer-name-function
-  ;; which, if non-nil, would be called instead of the C.  One problem with
-  ;; that is that generate-new-buffer-name takes a potential buffer name as
-  ;; its argument -- not other information, such as what file the buffer will
-  ;; visit.
+;; The below solution works because generate-new-buffer-name is called
+;; only by rename-buffer (which, as of 19.29, is never called from C) and
+;; generate-new-buffer, which is called only by Lisp functions
+;; create-file-buffer and rename-uniquely.  Rename-uniquely generally
+;; isn't used for buffers visiting files, so it's sufficient to hook
+;; rename-buffer and create-file-buffer.  (Setting find-file-hooks isn't
+;; sufficient.)
 
-  ;; The below solution works because generate-new-buffer-name is called
-  ;; only by rename-buffer (which, as of 19.29, is never called from C) and
-  ;; generate-new-buffer, which is called only by Lisp functions
-  ;; create-file-buffer and rename-uniquely.  Rename-uniquely generally
-  ;; isn't used for buffers visiting files, so it's sufficient to hook
-  ;; rename-buffer and create-file-buffer.  (Setting find-file-hooks isn't
-  ;; sufficient.)
+(defadvice rename-buffer (after rename-buffer-uniquify activate)
+  "Uniquify buffer names with parts of directory name."
+  (if (and uniquify-buffer-name-style
+	   ;; UNIQUE argument
+	   (ad-get-arg 1))
+      (progn
+	(if uniquify-after-kill-buffer-p
+	    ;; call with no argument; rationalize vs. old name as well as new
+	    (uniquify-rationalize-file-buffer-names)
+	  ;; call with argument: rationalize vs. new name only
+	  (uniquify-rationalize-file-buffer-names
+	   (uniquify-buffer-file-name (current-buffer)) (current-buffer)))
+	(setq ad-return-value (buffer-name (current-buffer))))))
 
-  (defadvice rename-buffer (after rename-buffer-uniquify activate)
-    "Uniquify buffer names with parts of directory name."
-    (if (and uniquify-buffer-name-style
-	     ;; UNIQUE argument
-	     (ad-get-arg 1))
-	(progn
-	  (if uniquify-after-kill-buffer-p
-	      ;; call with no argument; rationalize vs. old name as well as new
-	      (uniquify-rationalize-file-buffer-names)
-	    ;; call with argument: rationalize vs. new name only
-	    (uniquify-rationalize-file-buffer-names
-	     (uniquify-buffer-file-name (current-buffer)) (current-buffer)))
-	  (setq ad-return-value (buffer-name (current-buffer))))))
+(defadvice create-file-buffer (after create-file-buffer-uniquify activate)
+  "Uniquify buffer names with parts of directory name."
+  (if uniquify-buffer-name-style
+      (uniquify-rationalize-file-buffer-names (ad-get-arg 0) ad-return-value)))
 
-  (defadvice create-file-buffer (after create-file-buffer-uniquify activate)
-    "Uniquify buffer names with parts of directory name."
-    (if uniquify-buffer-name-style
-	(uniquify-rationalize-file-buffer-names (ad-get-arg 0) ad-return-value)))
+;; Buffer deletion
+;; Rerationalize after a buffer is killed, to reduce coinciding buffer names.
+;; This mechanism uses `kill-buffer-hook', which runs *before* deletion.
+;; That means that the kill-buffer-hook function cannot just delete the
+;; buffer -- it has to set something to do the rationalization *later*.
+;; It actually puts another function on `post-command-hook'.  This other
+;; function runs the rationalization and then removes itself from the hook.
+;; Is there a better way to accomplish this?
+;; (This ought to set some global variables so the work is done only for
+;; buffers with names similar to the deleted buffer.  -MDE)
 
-  ;; Buffer deletion
-  ;; Rerationalize after a buffer is killed, to reduce coinciding buffer names.
-  ;; This mechanism uses `kill-buffer-hook', which runs *before* deletion.
-  ;; That means that the kill-buffer-hook function cannot just delete the
-  ;; buffer -- it has to set something to do the rationalization *later*.
-  ;; It actually puts another function on `post-command-hook'.  This other
-  ;; function runs the rationalization and then removes itself from the hook.
-  ;; Is there a better way to accomplish this?
-  ;; (This ought to set some global variables so the work is done only for
-  ;; buffers with names similar to the deleted buffer.  -MDE)
-
-  (cond
-   ((or (not (string-lessp emacs-version "19.28"))
-	(and (string-match "XEmacs" emacs-version)
-	     (not (string-lessp emacs-version "19.12"))))
-    ;; Emacs 19.28 or later, or XEmacs (19.12 or later; is that necessary?)
-    (defun delay-uniquify-rationalize-file-buffer-names ()
-      "Add `delayed-uniquify-rationalize-file-buffer-names' to `post-command-hook'.
+;; Emacs 19.28 or later, or XEmacs (19.12 or later; is that necessary?)
+(defun delay-uniquify-rationalize-file-buffer-names ()
+  "Add `delayed-uniquify-rationalize-file-buffer-names' to `post-command-hook'.
 For use on, eg, `kill-buffer-hook', to rationalize *after* buffer deletion."
-      (if (and uniquify-buffer-name-style
-	       uniquify-after-kill-buffer-p)
-	  (add-hook 'post-command-hook
-		    'delayed-uniquify-rationalize-file-buffer-names)))
-    (defun delayed-uniquify-rationalize-file-buffer-names ()
-      "Rerationalize buffer names and remove self from `post-command-hook'.
+  (if (and uniquify-buffer-name-style
+	   uniquify-after-kill-buffer-p)
+      (add-hook 'post-command-hook
+		'delayed-uniquify-rationalize-file-buffer-names)))
+
+(defun delayed-uniquify-rationalize-file-buffer-names ()
+  "Rerationalize buffer names and remove self from `post-command-hook'.
 See also `delay-rationalize-file-buffer-names' for hook setter."
-      (uniquify-rationalize-file-buffer-names)
-      (remove-hook 'post-command-hook
-		   'delayed-uniquify-rationalize-file-buffer-names))
+  (uniquify-rationalize-file-buffer-names)
+  (remove-hook 'post-command-hook
+	       'delayed-uniquify-rationalize-file-buffer-names))
 
-    (add-hook 'kill-buffer-hook 'delay-uniquify-rationalize-file-buffer-names))
-   (t
-    ;; GNU Emacs 19.01 through 19.27
-    ;; Before version 19.28, {pre,post}-command-hook was unable to set itself.
+(add-hook 'kill-buffer-hook 'delay-uniquify-rationalize-file-buffer-names)
 
-    (defvar uniquify-post-command-p nil
-      "Set to trigger re-rationalization of buffer names by function on
-`post-command-hook'.  Used by kill-buffer-rationalization mechanism.")
-
-    (defun uniquify-post-command-rerationalization ()
-      "Set variable so buffer names may be rationalized by `post-command-hook'.
-
-See variables `uniquify-post-command-p', `uniquify-buffer-name-style', and
-`uniquify-after-kill-buffer-p'."
-      (if (and uniquify-buffer-name-style
-	       uniquify-after-kill-buffer-p)
-	  (setq uniquify-post-command-p
-		;; Set the buffer name, so, once the delimiter character
-		;; is parameterized, we could selectively rationalize just
-		;; related buffer names.
-		(cons (buffer-name) uniquify-post-command-p))))
-    (defun uniquify-rationalize-after-buffer-kill ()
-      "Via `post-command-hook', rerationalize buffer names after kill-buffer.
-
-Checks `uniquify-post-command-p', which should be set by
-`uniquify-post-command-rerationalization' function on `kill-buffer-hook'."
-      (if uniquify-post-command-p
-	  (progn (if (and uniquify-buffer-name-style
-			  uniquify-after-kill-buffer-p)
-		     (uniquify-rationalize-file-buffer-names))
-		 (setq uniquify-post-command-p nil))))
-
-    (add-hook 'kill-buffer-hook 'uniquify-post-command-rerationalization)
-    (add-hook 'post-command-hook 'uniquify-rationalize-after-buffer-kill))
-  ))
- (t
-  ;; Emacs 18: redefine create-file-buffer and dired-find-buffer.
-
-  ;; Since advice.el can run in Emacs 18 as well as Emacs 19, we could use
-  ;; advice here, too, if it is available; but it's not worth it, since
-  ;; Emacs 18 is obsolescent anyway.
-
-  (defun create-file-buffer (filename)	;from files.el
-    "Create a suitably named buffer for visiting FILENAME, and return it."
-    (let ((base (file-name-nondirectory filename)))
-      (if (string= base "")
-	  (setq base filename))
-      (if (and (get-buffer base)
-	       uniquify-ask-about-buffer-names-p)
-	  (get-buffer-create
-	   (let ((tem (read-string (format
-				    "Buffer name \"%s\" is in use; type a new name, or Return to clobber: "
-                                    base))))
-	     (if (equal tem "") base tem)))
-	(let ((buf (generate-new-buffer base)))
-	  (if uniquify-buffer-name-style
-	      (uniquify-rationalize-file-buffer-names filename buf))
-	  buf))))
-
-  (defun dired-find-buffer (dirname)	;from dired.el
-    (let ((blist (buffer-list))
-	  found)
-      (while blist
-	(save-excursion
-	  (set-buffer (car blist))
-	  (if (and (eq major-mode 'dired-mode)
-		   (equal dired-directory dirname))
-	      (setq found (car blist)
-		    blist nil)
-	    (setq blist (cdr blist)))))
-      (or found
-	  (progn (if (string-match "/$" dirname)
-		     (setq dirname (substring dirname 0 -1)))
-		 (create-file-buffer (if uniquify-buffer-name-style
-					 dirname
-				       (file-name-nondirectory dirname)))))))))
 
 ;;; uniquify.el ends here

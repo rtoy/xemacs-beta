@@ -34,8 +34,10 @@
 ;;; Code:
 
 (defgroup compilation nil
-  "Compilation buffer processing"
-  :group 'programming)
+  "Run compiler as inferior of Emacs, parse error messages."
+  :group 'programming
+  :group 'tools
+  :group 'processes)
 
 
 ;;;###autoload
@@ -147,7 +149,13 @@ The list of known systems is:
   ultrix:   the operating system
 
 See also the variable `compilation-error-regexp-alist-alist'."
-  :type '(choice (const all) (repeat symbol))
+  :type '(choice (const all)
+		 (set :menu-tag "Pick"
+		      (const gnu) (const lcc) (const ada)
+		      (const of) (const comma) (const 4bsd)
+		      (const msft) (const borland) (const mips)
+		      (const sgi) (const cray) (const ibm)
+		      (const aix) (const ultrix)))
   :group 'compilation)
 
 (defun compilation-build-compilation-error-regexp-alist ()

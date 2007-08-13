@@ -84,7 +84,25 @@
 ;;;----------------------------------------------------------------------------
 ;;; user-configurable variables
 
-(defvar hs-unbalance-handler-method 'top-level
+(defgroup hideshow nil
+  "Selectively display blocks of code."
+  :prefix "hs-"
+  :group 'outlines
+  :group 'tools)
+
+
+;;;###autoload
+(defcustom hs-minor-mode nil
+  "Non-nil if using hideshow mode as a minor mode of some other mode.
+Use the command `hs-minor-mode' to toggle this variable."
+  :type 'boolean
+  :set (lambda (symbol value)
+	 (hs-minor-mode (or value 0)))
+  :initialize 'custom-initialize-default
+  :require 'hideshow
+  :group 'hideshow)
+
+(defcustom hs-unbalance-handler-method 'top-level
   "*Symbol representing how \"unbalanced parentheses\" should be handled.
 This error is usually signaled by `hs-show-block'.  One of four values:
 `top-level', `next-line', `signal' or `ignore'.  Default is `top-level'.
@@ -96,9 +114,14 @@ This error is usually signaled by `hs-show-block'.  One of four values:
 - `signal' -- Pass the error through, stopping execution.
 - `ignore' -- Ignore the error, continuing execution.
 
-Values other than these four will be interpreted as `signal'.")
+Values other than these four will be interpreted as `signal'."
+  :type '(radio (const :tag "Show top-level block" top-level)
+		(const :tag "Show block to next line" next-line)
+		(sexp :format "%t\n" :tag "Signal the error" signal)
+		(const :tag "Ignore the error" ignore))
+  :group 'hideshow)
 
-(defvar hs-special-modes-alist '((c-mode "{" "}")
+(defcustom hs-special-modes-alist '((c-mode "{" "}")
 				 (c++-mode "{" "}"))
   "*Alist of the form (MODE START-RE END-RE FORWARD-SEXP-FUNC).
 If present, hideshow will use these values for the start and end regexps,
@@ -116,26 +139,30 @@ For example:
 \t(pushnew '(simula-mode \"begin\" \"end\" simula-next-statement)
 \t	hs-special-modes-alist :test 'equal)
 
-Note that the regexps should not contain leading or trailing whitespace.")
+Note that the regexps should not contain leading or trailing whitespace."
+  :type 'sexp ; too hard to do right
+  :group 'hideshow)
 
-(defvar hs-hide-hook nil
-  "*Hooks called at the end of `hs-hide-all' and `hs-hide-block'.")
+(defcustom hs-hide-hook nil
+  "*Hooks called at the end of `hs-hide-all' and `hs-hide-block'."
+  :type 'hook
+  :group 'hideshow)
 
-(defvar hs-show-hook nil
+(defcustom hs-show-hook nil
   "*Hooks called at the end of commands to show text.
-These commands include `hs-show-all', `hs-show-block' and `hs-show-region'.")
+These commands include `hs-show-all', `hs-show-block' and `hs-show-region'."
+  :type 'hook
+  :group 'hideshow)
 
-(defvar hs-minor-mode-prefix "\C-c"
-  "*Prefix key to use for hideshow commands in hideshow minor mode.")
+(defcustom hs-minor-mode-prefix "\C-c"
+  "*Prefix key to use for hideshow commands in hideshow minor mode."
+  :type 'hook
+  :group 'hideshow)
 
 
 ;;;----------------------------------------------------------------------------
 ;;; internal variables
 
-;;;###autoload
-(defvar hs-minor-mode nil
-  "Non-nil if using hideshow mode as a minor mode of some other mode.
-Use the command `hs-minor-mode' to toggle this variable.")
 
 (defvar hs-minor-mode-map (make-sparse-keymap)
   "Mode map for hideshow minor mode.")

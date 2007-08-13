@@ -1,4 +1,4 @@
-(setq dumped-lisp-packages
+(setq preloaded-file-list
       '("backquote" 		; needed for defsubst etc.
 	"bytecomp-runtime"	; define defsubst
 	"packages"		; Bootstrap run-time lisp environment
@@ -6,8 +6,8 @@
 	"replace" 		; match-string used in version.el.
 	"version.el"		; Ignore compiled-by-mistake version.elc
 	"cl"
-	;; "cl-extra"		; These cause lossage at dump
-	;; "cl-seq"		; Fix it first, if you want these dumped
+	"cl-extra"
+	"cl-seq"
 	;;"featurep"
 	"widget"
 	"custom"		; Before the world so everything can be

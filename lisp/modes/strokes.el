@@ -145,7 +145,8 @@
 ;; byte-compiled) and then add the following to your .emacs file (or
 ;; wherever you put XEmacs-specific startup preferences):
 
-;; (if window-system (require 'strokes))
+;; (and (console-on-window-system-p)
+;;      (require 'strokes))
 
 ;; Once loaded, you can start stroking.  You can also toggle between
 ;; strokes mode by simple typing
@@ -373,7 +374,21 @@ static char * stroke_xpm[] = {
 
 (defgroup strokes nil
   "Control Emacs through mouse strokes."
-  :group 'mouse)
+  :group 'mouse
+  :group 'lisp
+  :group 'extensions)
+
+;; This is an internal variable, but we defcustom it so Customize can
+;; use it.
+;;;###autoload
+(defcustom strokes-mode nil
+  "Non-nil when `strokes' is globally enabled."
+  :type 'boolean
+  :set (lambda (symbol value)
+	 (strokes-mode (or value 0)))
+  :initialize 'custom-initialize-default
+  :require 'strokes
+  :group 'strokes)
 
 (defcustom strokes-modeline-string " Strokes"
   "*Modeline identification when strokes are on \(default is \" Strokes\"\)."
@@ -445,10 +460,6 @@ This is set to `mouse-yank' by default."
   :group 'strokes)
 
 ;;; internal variables...
-
-;;;###autoload
-(defvar strokes-mode nil
-  "Non-nil when `strokes' is globally enabled")
 
 (defvar strokes-window-configuration nil
   "The special window configuration used when entering strokes.
@@ -577,7 +588,7 @@ COMMAND must take one event argument.
 Example of how one might fix up a command that's bound to button2
 and which is an interactive funcion of one event argument:
 
-(strokes-fix-button2-command 'vm-mouse-button-2)"
+\(strokes-fix-button2-command 'vm-mouse-button-2)"
   (let ((command (eval command)))
     `(progn
        (defadvice ,command (around strokes-fix-button2 compile preactivate)
@@ -586,31 +597,37 @@ and which is an interactive funcion of one event argument:
                   ',(intern (format "ad-Orig-%s" command))))
              (strokes-do-stroke (ad-get-arg 0)))))))
 
-(strokes-fix-button2-command 'vm-mouse-button-2)
-(strokes-fix-button2-command 'rmail-summary-mouse-goto-msg)
-(strokes-fix-button2-command 'Buffer-menu-mouse-select)
-(strokes-fix-button2-command 'w3-widget-button-click)
-(strokes-fix-button2-command 'widget-image-button-press)
-(strokes-fix-button2-command 'Info-follow-clicked-node)
-(strokes-fix-button2-command 'compile-mouse-goto-error)
-(strokes-fix-button2-command 'gdbsrc-select-or-yank)
-(strokes-fix-button2-command 'hypropos-mouse-get-doc)
-(strokes-fix-button2-command 'gnus-mouse-pick-group)
-(strokes-fix-button2-command 'gnus-mouse-pick-article)
-(strokes-fix-button2-command 'gnus-article-push-button)
-(strokes-fix-button2-command 'dired-mouse-find-file)
-(strokes-fix-button2-command 'url-dired-find-file-mouse)
-(strokes-fix-button2-command 'dired-u-r-mouse-toggle)
-(strokes-fix-button2-command 'dired-u-w-mouse-toggle)
-(strokes-fix-button2-command 'dired-u-x-mouse-toggle)
-(strokes-fix-button2-command 'dired-g-r-mouse-toggle)
-(strokes-fix-button2-command 'dired-g-w-mouse-toggle)
-(strokes-fix-button2-command 'dired-g-x-mouse-toggle)
-(strokes-fix-button2-command 'dired-o-r-mouse-toggle)
-(strokes-fix-button2-command 'dired-o-w-mouse-toggle)
-(strokes-fix-button2-command 'isearch-yank-x-selection)
-(strokes-fix-button2-command 'occur-mode-mouse-goto)
-(strokes-fix-button2-command 'cvs-mouse-find-file)
+(defvar strokes-insinuated nil)
+
+(defun strokes-insinuate ()
+  "Insinuate Emacs with strokes advices."
+  (unless strokes-insinuated
+    (strokes-fix-button2-command 'vm-mouse-button-2)
+    (strokes-fix-button2-command 'rmail-summary-mouse-goto-msg)
+    (strokes-fix-button2-command 'Buffer-menu-mouse-select)
+    (strokes-fix-button2-command 'w3-widget-button-click)
+    (strokes-fix-button2-command 'widget-image-button-press)
+    (strokes-fix-button2-command 'Info-follow-clicked-node)
+    (strokes-fix-button2-command 'compile-mouse-goto-error)
+    (strokes-fix-button2-command 'gdbsrc-select-or-yank)
+    (strokes-fix-button2-command 'hypropos-mouse-get-doc)
+    (strokes-fix-button2-command 'gnus-mouse-pick-group)
+    (strokes-fix-button2-command 'gnus-mouse-pick-article)
+    (strokes-fix-button2-command 'gnus-article-push-button)
+    (strokes-fix-button2-command 'dired-mouse-find-file)
+    (strokes-fix-button2-command 'url-dired-find-file-mouse)
+    (strokes-fix-button2-command 'dired-u-r-mouse-toggle)
+    (strokes-fix-button2-command 'dired-u-w-mouse-toggle)
+    (strokes-fix-button2-command 'dired-u-x-mouse-toggle)
+    (strokes-fix-button2-command 'dired-g-r-mouse-toggle)
+    (strokes-fix-button2-command 'dired-g-w-mouse-toggle)
+    (strokes-fix-button2-command 'dired-g-x-mouse-toggle)
+    (strokes-fix-button2-command 'dired-o-r-mouse-toggle)
+    (strokes-fix-button2-command 'dired-o-w-mouse-toggle)
+    (strokes-fix-button2-command 'isearch-yank-x-selection)
+    (strokes-fix-button2-command 'occur-mode-mouse-goto)
+    (strokes-fix-button2-command 'cvs-mouse-find-file))
+  (setq strokes-insinuated t))
 
 ;;; I can fix the customize widget button click, but then
 ;;; people will get confused when they try to customize
@@ -1690,8 +1707,9 @@ strokes with
 		  (> (prefix-numeric-value arg) 0)
 		(not strokes-mode))))
     (cond ((not (device-on-window-system-p))
-	   (error "Can't use strokes without windows"))
+	   (warn "Can't use strokes without windows"))
 	  (on-p				; turn on strokes
+	   (strokes-insinuate)
 	   (and (file-exists-p strokes-file)
 		(null strokes-global-map)
 		(strokes-load-user-strokes))
@@ -1736,13 +1754,10 @@ strokes with
 					; but what can you do?
 
 ;;(unless (find-face 'strokes-char-face)
-(copy-face 'default 'strokes-char-face)
-(set-face-background 'strokes-char-face "lightgray") ; I should really
-					; make this a
-					; user-option,
-					; but I'm too
-					; lazy right now.
-					; In a few days.
+
+(defface strokes-char-face '((t (:background "lightgray")))
+  "Face for strokes characters."
+  :group 'strokes)
 
 (defconst strokes-char-table (make-char-table 'generic) ;
   "The table which stores values for the character keys.")

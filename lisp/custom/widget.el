@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.9956
+;; Version: 1.9958
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.

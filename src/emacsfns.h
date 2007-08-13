@@ -757,7 +757,7 @@ void signal_special_Xt_user_event (Lisp_Object channel,
 
 /* Defined in events.c */
 void clear_event_resource (void);
-Lisp_Object Fmake_event (void);
+Lisp_Object Fmake_event (Lisp_Object, Lisp_Object);
 Lisp_Object Fdeallocate_event (Lisp_Object event);
 Lisp_Object Fcopy_event (Lisp_Object from, Lisp_Object to);
 Lisp_Object allocate_event (void);

@@ -137,7 +137,7 @@
       ["Read Mail (VM)..."	vm			t]
       ["Read Mail (MH)..."	(mh-rmail t)		t]
       ["Send mail..."		mail			t]
-      ["Usenet News"		gnus			t]
+      ["Usenet News"		gnus			(fboundp 'gnus)]
       ["Browse the Web"		w3			t]
       ["Gopher"			gopher			t]
       ["Hyperbole..."		hyperbole		t]

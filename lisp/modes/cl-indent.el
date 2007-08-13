@@ -51,7 +51,7 @@
 ;;; Code:
 
 (defgroup lisp-indent nil
-  "Indentation in Lisp"
+  "Enhanced lisp-indent mode."
   :group 'lisp)
 
 

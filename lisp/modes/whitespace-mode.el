@@ -26,7 +26,7 @@
  
 ;;; Commentary:
 
-;; $Id: whitespace-mode.el,v 1.4 1997/07/26 22:09:50 steve Exp $
+;; $Id: whitespace-mode.el,v 1.5 1997/09/17 05:19:29 steve Exp $
 ;; Description:
 ;;
 ;;	This is a minor mode, which highlights whitespaces (blanks and
@@ -92,6 +92,17 @@
   :group 'outlines
   :group 'matching)
 
+
+(defcustom whitespace-mode nil
+  "Non-nil, if the `whitespace-mode' is active."
+  :type 'boolean
+  :set (lambda (symbol value)
+	 (whitespace-mode (or value 0)))
+  :require 'whitespace-mode
+  :initialize 'custom-initialize-default
+  :group 'whitespace)
+
+(make-variable-buffer-local 'whitespace-mode)
 
 (defcustom whitespace-chars 'tabs-and-blanks
   "*Determines, which whitespaces are highlighted.
@@ -362,11 +373,6 @@ END. OLD-LEN isn't used, but provided from the after-change hook."
       nil
     (whitespace-dehighlight-region beg end)
     (whitespace-highlight-region beg end)))
-
-(defvar whitespace-mode nil
-  "Non-nil, if the `whitespace-mode' is active.")
-
-(make-variable-buffer-local 'whitespace-mode)
 
 (defun whitespace-mode (&optional arg)
   "Toggle whitespace mode.

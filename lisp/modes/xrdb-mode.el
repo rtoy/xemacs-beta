@@ -69,6 +69,7 @@
 ;; These variables are available for your customization
 (defgroup xrdb nil
   "Mode for editing X resource database files."
+  :group 'data
   :group 'languages)
 
 (defcustom xrdb-mode-hook nil

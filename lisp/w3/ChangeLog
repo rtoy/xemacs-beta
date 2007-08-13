@@ -1,3 +1,37 @@
+1997-09-05  William M. Perry  <wmperry@aventail.com>
+
+* Makefile.in: Now includes the 'contrib' directory in distributions.
+
+* aclocal.m4: Fixed custom detection - would sometimes set CUSTOM to the
+  directory, sometimes to the filename... ick.
+
+* Makefile.in (dotemacs): Tweaked the install of autoloads into .emacs file
+
+* lisp/font.el (font-normalize-color): Ditto
+
+* lisp/url.el (url-setup-privacy-info): Ditto
+
+* lisp/devices.el: Everything now recognizes 'w32' as an alias for the
+  'win32' device type.  This is for Emacs 20.x compatibility, which will
+  have this change.
+
+1997-09-04  William M. Perry  <wmperry@aventail.com>
+
+* Updated to Widget/Custom 1.9956
+
+1997-08-25  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3.el (w3-document-information): Fixed bug with empty 'meta' links.
+
+1997-08-20  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3-menu.el ((fboundp 'id-menubar-set)): Avoid fset'ing
+  id-menubar-set - it was confusing oobr
+
+1997-08-19  William M. Perry  <wmperry@aventail.com>
+
+* New file w3-imenu.el from T.V. Raman <raman@adobe.com>
+
 1997-07-26  SL Baur  <steve@altair.xemacs.org>
 
 	* mm.el (mm-extension-to-mime): Use `eq' for character comparison.

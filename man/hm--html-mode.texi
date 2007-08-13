@@ -4,7 +4,7 @@
 @settitle HM HTML Mode
 @setchapternewpage odd
 @comment %**end of header (This is for running Texinfo on a region.)
-@comment $Id: hm--html-mode.texi,v 1.4 1997/07/26 22:10:08 steve Exp $
+@comment $Id: hm--html-mode.texi,v 1.5 1997/09/17 05:19:51 steve Exp $
 @ifinfo
 This file documents the Elisp package @code{hm--html-menus}.
 
@@ -36,7 +36,7 @@ of in the original English.
 
 @end ifinfo
 @iftex
-@input umlaute.texinfo
+@input umlaute.texi
 @end iftex
 @titlepage
 @sp 10
@@ -135,7 +135,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 This document describes the Elisp package @emph{hm---html-menus 5.8}.
 
 The version of the document is:@*
-$Id: hm--html-mode.texi,v 1.4 1997/07/26 22:10:08 steve Exp $
+$Id: hm--html-mode.texi,v 1.5 1997/09/17 05:19:51 steve Exp $
 
 The package provides commands and various popup and pulldown menus for
 an HTML mode called @dfn{hm---html-mode}, a mode for writing HTML pages

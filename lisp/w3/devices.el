@@ -1,7 +1,7 @@
 ;;; devices.el -- XEmacs device API emulation
 ;; Author: wmperry
-;; Created: 1997/04/25 21:27:01
-;; Version: 1.4
+;; Created: 1997/09/05 15:41:55
+;; Version: 1.5
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -221,37 +221,37 @@ will automatically call `save-buffers-kill-emacs'.)"
 
 (defun device-color-cells (&optional device)
   (case window-system
-    ((x win32 pm) (x-display-color-cells device))
+    ((x win32 w32 pm) (x-display-color-cells device))
     (ns (ns-display-color-cells device))
     (otherwise 1)))
 
 (defun device-pixel-width (&optional device)
   (case window-system
-    ((x win32 pm) (x-display-pixel-width device))
+    ((x win32 w32 pm) (x-display-pixel-width device))
     (ns (ns-display-pixel-width device))
     (otherwise (frame-width device))))
 
 (defun device-pixel-height (&optional device)
   (case window-system
-    ((x win32 pm) (x-display-pixel-height device))
+    ((x win32 w32 pm) (x-display-pixel-height device))
     (ns (ns-display-pixel-height device))
     (otherwise (frame-height device))))
 
 (defun device-mm-width (&optional device)
   (case window-system
-    ((x win32 pm) (x-display-mm-width device))
+    ((x win32 w32 pm) (x-display-mm-width device))
     (ns (ns-display-mm-width device))
     (otherwise nil)))
 
 (defun device-mm-height (&optional device)
   (case window-system
-    ((x win32 pm) (x-display-mm-height device))
+    ((x win32 w32 pm) (x-display-mm-height device))
     (ns (ns-display-mm-height device))
     (otherwise nil)))
 
 (defun device-bitplanes (&optional device)
   (case window-system
-    ((x win32 pm) (x-display-planes device))
+    ((x win32 w32 pm) (x-display-planes device))
     (ns (ns-display-planes device))
     (otherwise 2)))
 
@@ -318,7 +318,7 @@ for a description of the possible types."
 Value is `tty' for a tty device (a character-only terminal),
 `x' for a device which is a connection to an X server,
 'ns' for a device which is a connection to a NeXTStep dps server,
-'win32' for a Windows-NT window,
+'win32' or 'w32' for a Windows-NT window,
 'pm' for an OS/2 Presentation Manager window,
 'intuition' for an Amiga screen"
   (device-or-frame-type device))

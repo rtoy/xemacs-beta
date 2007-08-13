@@ -455,7 +455,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (cond (vm-xemacs-p
 	 (eq (device-type) 'x))
 	(vm-fsfemacs-19-p
-	 (eq window-system 'x))))
+	 (or (eq window-system 'x)
+	     (eq window-system 'win32)))))
 
 (defun vm-run-message-hook (message &optional hook-variable)
   (save-excursion

@@ -45,7 +45,12 @@
 
 ;;; Code:
 
-(defvar auto-insert 'not-modified
+(defgroup auto-insert nil
+  "Automatic mode-dependent insertion of text into new files."
+  :group 'tools)
+
+
+(defcustom auto-insert 'not-modified
   "*Controls automatic insertion into newly found empty files:
 	nil	do nothing
 	t	insert if possible
@@ -55,17 +60,30 @@ Insertion is possible when something appropriate is found in
 save it with  \\[write-file] RET.
 This variable is used when `auto-insert' is called as a function, e.g.
 when you do (add-hook 'find-file-hooks 'auto-insert).
-With \\[auto-insert], this is always treated as if it were `t'.")
+With \\[auto-insert], this is always treated as if it were `t'."
+  :type '(radio (const :tag "Do nothing" nil)
+		(const :tag "Insert if possible" t)
+		(sexp :format "%t\n"
+		      :tag "Insert if possible, but mark as unmodified"
+		      other))
+  :require 'autoinsert
+  :group 'auto-insert)
 
 
-(defvar auto-insert-query 'function
+(defcustom auto-insert-query 'function
   "*If non-`nil', ask user before auto-inserting.
-When this is `function', only ask when called non-interactively.")
+When this is `function', only ask when called non-interactively."
+  :type '(choice (const :tag "Don't ask" nil)
+		 (const :tag "Ask when non-interactive" function)
+		 (sexp :format "%t\n" :tag "Ask" other))
+  :group 'auto-insert)
 
 
-(defvar auto-insert-prompt "Perform %s auto-insertion? "
+(defcustom auto-insert-prompt "Perform %s auto-insertion? "
   "*Prompt to use when querying whether to auto-insert.
-If this contains a %s, that will be replaced by the matching rule.")
+If this contains a %s, that will be replaced by the matching rule."
+  :type 'string
+  :group 'auto-insert)
 
 
 (defvar auto-insert-alist

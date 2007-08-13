@@ -489,7 +489,7 @@ when doc strings are referred to in the dumped Emacs.
                  The type determines where the docstring is stored.  */
 	      else if (p[1] == 'F')
 		{
-                  fun = XSYMBOL (sym)->function;/*indirect_function (sym,0);*/
+                  fun = indirect_function (sym,0);
 
 		  if (CONSP (fun) && EQ (XCAR (fun), Qmacro))
 		    fun = XCDR (fun);

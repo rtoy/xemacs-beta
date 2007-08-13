@@ -7,8 +7,8 @@
 ;; Author:	  Rodney J. Whitby <rwhitby@geocities.com>
 ;; Maintainer:	  Rodney J. Whitby <rwhitby@geocities.com>
 ;; Created:	  June 1994, adapted from cc-mode.el 4.29 by Barry A. Warsaw.
-;; Version:	  $Revision: 1.6 $
-;; Last Modified: $Date: 1997/08/01 03:27:57 $
+;; Version:	  $Revision: 1.7 $
+;; Last Modified: $Date: 1997/09/17 05:19:27 $
 ;; Keywords:	  languages VHDL
 ;; Archive:	  http://www.geocities.com/SiliconValley/Park/8287/
 
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; vhdl-mode.el|Rodney J. Whitby|rwhitby@geocities.com
 ;; |Major mode for editing VHDL code
-;; |$Date: 1997/08/01 03:27:57 $|$Revision: 1.6 $
+;; |$Date: 1997/09/17 05:19:27 $|$Revision: 1.7 $
 ;; |http://www.geocities.com/SiliconValley/Park/8287/
 
 
@@ -76,17 +76,33 @@
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-(defvar vhdl-inhibit-startup-warnings-p nil
-  "*If non-nil, inhibits start up compatibility warnings.")
-(defvar vhdl-strict-syntax-p nil
+(defgroup vhdl nil
+  "Major mode for editing VHDL code."
+  :group 'languages)
+
+
+(defcustom vhdl-inhibit-startup-warnings-p nil
+  "*If non-nil, inhibits start up compatibility warnings."
+  :type 'boolean
+  :group 'vhdl)
+
+(defcustom vhdl-strict-syntax-p nil
   "*If non-nil, all syntactic symbols must be found in `vhdl-offsets-alist'.
 If the syntactic symbol for a particular line does not match a symbol
 in the offsets alist, an error is generated, otherwise no error is
-reported and the syntactic symbol is ignored.")
-(defvar vhdl-echo-syntactic-information-p nil
-  "*If non-nil, syntactic info is echoed when the line is indented.")
-(defvar vhdl-basic-offset 2
-  "*Amount of basic offset used by + and - symbols in `vhdl-offsets-alist'.")
+reported and the syntactic symbol is ignored."
+  :type 'boolean
+  :group 'vhdl)
+
+(defcustom vhdl-echo-syntactic-information-p nil
+  "*If non-nil, syntactic info is echoed when the line is indented."
+  :type 'boolean
+  :group 'vhdl)
+
+(defcustom vhdl-basic-offset 2
+  "*Amount of basic offset used by + and - symbols in `vhdl-offsets-alist'."
+  :type 'integer
+  :group 'vhdl)
 
 (defconst vhdl-offsets-alist-default
   '((string                . -1000)
@@ -112,7 +128,7 @@ reported and the syntactic symbol is ignored.")
 Do not change this constant!  See the variable `vhdl-offsets-alist' for
 more information.")
 
-(defvar vhdl-offsets-alist (copy-alist vhdl-offsets-alist-default)
+(defcustom vhdl-offsets-alist (copy-alist vhdl-offsets-alist-default)
   "*Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
 
@@ -172,9 +188,11 @@ Here is the current list of valid syntactic element symbols:
  package                -- inside a package declaration
  architecture           -- inside an architecture body
  package-body           -- inside a package body
-")
+"
+  :type 'sexp
+  :group 'vhdl)
 
-(defvar vhdl-tab-always-indent t
+(defcustom vhdl-tab-always-indent t
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil,
 hitting TAB indents the current line if point is at the left margin or
@@ -184,9 +202,14 @@ If other than nil or t, then tab is inserted only within literals
 directives, but line is always reindented.
 
 Note that indentation of lines containing only comments is also
-controlled by the `vhdl-comment-only-line-offset' variable.")
+controlled by the `vhdl-comment-only-line-offset' variable."
+  :type '(radio (const :tag "Always indent" t)
+		(const :tag "Indent if point in indentation" nil)
+		(sexp :format "%t\n"
+		      :tag "Insert if point within literals" other))
+  :group 'vhdl)
 
-(defvar vhdl-comment-only-line-offset 0
+(defcustom vhdl-comment-only-line-offset 0
   "*Extra offset for line which contains only the start of a comment.
 Can contain an integer or a cons cell of the form:
 
@@ -195,11 +218,18 @@ Can contain an integer or a cons cell of the form:
 Where NON-ANCHORED-OFFSET is the amount of offset given to
 non-column-zero anchored comment-only lines, and ANCHORED-OFFSET is
 the amount of offset to give column-zero anchored comment-only lines.
-Just an integer as value is equivalent to (<val> . 0)")
+Just an integer as value is equivalent to (<val> . 0)"
+  :type '(choice integer
+		 (cons :value (0 . 0)
+		       (integer :tag "Non-anchored offset")
+		       (integer :tag "Anchored offset")))
+  :group 'vhdl)
 
-(defvar vhdl-special-indent-hook nil
+(defcustom vhdl-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
-This hook gets called after a line is indented by the mode.")
+This hook gets called after a line is indented by the mode."
+  :type 'hook
+  :group 'vhdl)
 
 (defvar vhdl-style-alist
   '(("IEEE"
@@ -283,7 +313,7 @@ your style, only those that are different from the default.")
     (cond
      ((= major 18)  (setq major 'v18))	;Emacs 18
      ((= major 4)   (setq major 'v18))	;Epoch 4
-     ((>= major 19) (setq major 'v19	;Emacs 19 or later
+     ((= major 19)  (setq major 'v19	;Emacs 19
 			  flavor (cond
 				  ((string-match "Win-Emacs" emacs-version)
 				   'Win-Emacs)
@@ -292,6 +322,10 @@ your style, only those that are different from the default.")
 				   'XEmacs)
 				  (t
 				   'FSF))))
+     ((>= major 20) (setq major 'v20	;Emacs 20 or later
+			  flavor (if (string-match "XEmacs" emacs-version)
+				     'XEmacs
+				   'FSF)))
      ;; I don't know
      (t (error "Cannot recognize major version number: %s" major)))
     ;; lets do some minimal sanity checking.
@@ -537,7 +571,7 @@ This does a lot more highlighting.")
 ;;;###autoload
 (defun vhdl-mode ()
   "Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.6 $
+vhdl-mode $Revision: 1.7 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -744,7 +778,8 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 		    (let* ((syntax (vhdl-get-syntactic-context))
 			   (len (length syntax))
 			   (ic (format "%s" (car (nth (1- len) syntax)))))
-		      (if (memq 'v19 vhdl-emacs-features)
+		      (if (or (memq 'v19 vhdl-emacs-features)
+			      (memq 'v20 vhdl-emacs-features))
 			  (cons ic 0)
 			ic))
 		    )))
@@ -2562,6 +2597,9 @@ ENDPOS is encountered.  (interactive)"
 
 ;; Support for Barry Warsaw's elp (emacs lisp profiler) package:
 
+(eval-when-compile
+  (require 'elp))
+
 (setq elp-all-instrumented-list nil)
 (setq elp-function-list
       '(
@@ -2613,7 +2651,7 @@ ENDPOS is encountered.  (interactive)"
 
 ;; Defuns for submitting bug reports:
 
-(defconst vhdl-version "$Revision: 1.6 $"
+(defconst vhdl-version "$Revision: 1.7 $"
   "vhdl-mode version number.")
 (defconst vhdl-mode-help-address "rwhitby@geocities.com"
   "Address accepting submission of bug reports.")

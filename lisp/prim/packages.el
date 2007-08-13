@@ -78,8 +78,10 @@ BODY should be a list of lisp expressions."
   ;; `(function (lambda ,@cdr)))
   (list 'function (cons 'lambda cdr)))
 
+
 ;; Copied from help.el, could possibly move it to here permanently.
-;; This is taken directly from Emacs 19.34.94.
+;; Unlike the FSF version, our `locate-library' uses the `locate-file'
+;; primitive, which should make it lightning-fast.
 
 (defun locate-library (library &optional nosuffix path interactive-call)
   "Show the precise file name of Emacs library LIBRARY.
@@ -93,40 +95,33 @@ is used instead of `load-path'."
   (interactive (list (read-string "Locate library: ")
                      nil nil
                      t))
-  (let (result)
-    (catch 'answer
-      (mapcar
-       (lambda (dir)
-         (mapcar
-          (lambda (suf)
-            (let ((try (expand-file-name (concat library suf) dir)))
-              (and (file-readable-p try)
-                   (null (file-directory-p try))
-                   (progn
-                     (setq result try)
-                     (throw 'answer try)))))
-          (if nosuffix
-              '("")
-            (let ((basic '(".elc" ".el" ""))
-                  (compressed '(".Z" ".gz" "")))
-              ;; If autocompression mode is on,
-              ;; consider all combinations of library suffixes
-              ;; and compression suffixes.
-              (if (or (rassq 'jka-compr-handler file-name-handler-alist)
-		      (and (boundp 'find-file-hooks)
-			   (member 'crypt-find-file-hook find-file-hooks)))
-		  (apply 'nconc
-			 (mapcar (lambda (compelt)
-				   (mapcar (lambda (baselt)
-					     (concat baselt compelt))
-					   basic))
-				 compressed))
-		basic)))))
-       (or path load-path)))
+  (let ((result
+	 (locate-file
+	  library
+	  (or path load-path)
+	  (if nosuffix
+	      ""
+	    (if (or (rassq 'jka-compr-handler file-name-handler-alist)
+		    (and (boundp 'find-file-hooks)
+			 (member 'crypt-find-file-hook find-file-hooks)))
+		".elc:.el:"
+	      ;; The complex expression evaluates to a relatively
+	      ;; short string, so we do it at compile-time.
+	      ;; Nope.  This is run out of temacs and `eval-when-compile' is
+	      ;; a void function.  --sb
+	      (mapconcat #'identity
+			 (apply 'nconc
+				(mapcar (lambda (compelt)
+					  (mapcar (lambda (baselt)
+						    (concat baselt compelt))
+						  '(".elc" ".el" "")))
+					'(".Z" ".gz" "")))
+			 ":")))
+	  4)))
     (and interactive-call
-         (if result
-             (message "Library is file %s" result)
-           (message "No library %s in search path" library)))
+	 (if result
+	     (message "Library is file %s" result)
+	   (message "No library %s in search path" library)))
     result))
 
 (defun packages-add-suffix (str)
@@ -221,16 +216,18 @@ This is used at dump time to suppress the builder's local environment."
 ;; Data-directory is really a list now.  Provide something to search it for
 ;; directories.
 
-(defun locate-data-directory (name &optional data-dir-list)
-  "Locate a directory in a search path."
-  (unless data-dir-list
-    (setq data-dir-list data-directory-list))
-  (let (dir found found-dir (dirs data-dir-list))
-    (while (and (null found-dir) dirs)
-      (setq dir (car dirs))
-      (setq found (concat dir name "/"))
-      (setq found-dir (file-directory-p found))
-      (setq dirs (cdr dirs)))
+(defun locate-data-directory (name &optional dir-list)
+  "Locate a directory in a search path DIR-LIST (a list of directories).
+If no DIR-LIST is supplied, it defaults to `data-directory-list'."
+  (unless dir-list
+    (setq dir-list data-directory-list))
+  (let (found found-dir)
+    (while (and (null found-dir) dir-list)
+      (setq found (concat (car dir-list) name "/")
+	    found-dir (file-directory-p found))
+      (or found-dir
+	  (setq found nil))
+      (setq dir-list (cdr dir-list)))
     found))
 
 ;; If we are being loaded as part of being dumped, bootstrap the rest of the

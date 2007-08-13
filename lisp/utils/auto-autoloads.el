@@ -275,13 +275,11 @@ Edit a keyboard macro which has been given a name by `name-last-kbd-macro'." t n
 Read the region as a keyboard macro definition.
 The region is interpreted as spelled-out keystrokes, e.g., \"M-x abc RET\".
 See documentation for `edmacro-mode' for details.
-Leading/trailing \"C-x (\" and \"C-x )\" in the text are allowed and ignored.
 The resulting macro is installed as the \"current\" keyboard macro.
 
 In Lisp, may also be called with a single STRING argument in which case
 the result is returned rather than being installed as the current macro.
-The result will be a string if possible, otherwise an event vector.
-Second argument NEED-VECTOR means to return an event vector always." t nil)
+The result will be a vector of keystrokes." t nil)
 
 (autoload 'kbd "edmacro" "\
 Convert KEYS to the internal Emacs key representation." nil 'macro)
@@ -290,8 +288,7 @@ Convert KEYS to the internal Emacs key representation." nil 'macro)
 Return the keyboard macro MACRO as a human-readable string.
 This string is suitable for passing to `read-kbd-macro'.
 Second argument VERBOSE means to put one command per line with comments.
-If VERBOSE is `1', put everything on one line.  If VERBOSE is omitted
-or nil, use a compact 80-column format." nil nil)
+If VERBOSE is nil, put everything on one line." nil nil)
 
 ;;;***
 
@@ -798,6 +795,28 @@ original sexpression by its expansion in the current buffer.
 	However, calls to macros specified in the variable
 `pp-shadow-expansion-list' are not expanded, in order to make the code
 look nicer." t nil)
+
+;;;***
+
+;;;### (autoloads (regexp-opt-depth regexp-opt) "regexp-opt" "utils/regexp-opt.el")
+
+(autoload 'regexp-opt "regexp-opt" "\
+Return a regexp to match a string in STRINGS.
+Each string should be unique in STRINGS and should not contain any regexps,
+quoted or not.  If optional PAREN is non-nil, ensure that the returned regexp
+is enclosed by at least one regexp grouping construct.
+The returned regexp is typically more efficient than the equivalent regexp:
+
+ (let ((open-paren (if PAREN \"\\\\(\" \"\")) (close-paren (if PAREN \"\\\\)\" \"\")))
+   (concat open-paren (mapconcat 'regexp-quote STRINGS \"\\\\|\") close-paren))
+
+but typically contains more regexp grouping constructs.
+Use `regexp-opt-depth' to count them." nil nil)
+
+(autoload 'regexp-opt-depth "regexp-opt" "\
+Return the depth of REGEXP.
+This means the number of regexp grouping constructs (parenthesised expressions)
+in REGEXP." nil nil)
 
 ;;;***
 

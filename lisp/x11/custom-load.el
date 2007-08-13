@@ -1,1 +1,1 @@
-(custom-put 'toolbar 'custom-loads '("x-toolbar"))
+(custom-put 'environment 'custom-loads '(("x-toolbar")))

@@ -1,3 +1,22 @@
+1997-09-16  SL Baur  <steve@altair.xemacs.org>
+
+	* events.c (Fmake_event): Add default case, remove unused variables.
+
+1997-08-21  Jan Vroonhof  <vroonhof@math.ethz.ch>
+ 
+	* extents.c (extent_fragment_update): Trigger one_shot_function
+
+	* extents.c (set-extent-one-shot-function): New function
+
+	* extents.h (struct extent_auxiliary): Added one_shot_function
+
+	* extens.c: Added  one_shot_function to assesor functions.
+
+1997-09-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Fexpand_file_name): Don't treat "//" and "~/" in the
+	middle of path specially.
+
 1997-09-10  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* event-stream.c (inhibit_input_event_recording): New boolean

@@ -91,17 +91,17 @@
 
 ;; (print (prin1-to-string update-elc-files-to-compile))
 
-(let (dumped-lisp-packages site-load-packages)
+(let (preloaded-file-list site-load-packages)
   (load (concat default-directory "../lisp/prim/dumped-lisp.el"))
-  ;; (print (prin1-to-string dumped-lisp-packages))
+  ;; (print (prin1-to-string preloaded-file-list))
   (load (concat default-directory "../site-packages") t t)
-  (setq dumped-lisp-packages
+  (setq preloaded-file-list
 	(append packages-hardcoded-lisp
-		dumped-lisp-packages
+		preloaded-file-list
 		packages-useful-lisp
 		site-load-packages))
-  (while dumped-lisp-packages
-    (let ((arg (car dumped-lisp-packages)))
+  (while preloaded-file-list
+    (let ((arg (car preloaded-file-list)))
       ;; (print (prin1-to-string arg))
       (if (null (member arg packages-unbytecompiled-lisp))
 	  (progn
@@ -109,7 +109,7 @@
 	    (if (null arg)
 		(progn
 		  (print (format "Library file %s: not found"
-				 (car dumped-lisp-packages)))
+				 (car preloaded-file-list)))
 		  (kill-emacs)))
 	    (if (string-match "\\.elc?\\'" arg)
 		(setq arg (substring arg 0 (match-beginning 0))))
@@ -118,7 +118,7 @@
 		     (file-newer-than-file-p (concat arg ".el")
 					     (concat arg ".elc")))
 		(setq processed (cons (concat arg ".el") processed)))))
-      (setq dumped-lisp-packages (cdr dumped-lisp-packages)))))
+      (setq preloaded-file-list (cdr preloaded-file-list)))))
 
 (setq update-elc-files-to-compile (append update-elc-files-to-compile
 					  processed))

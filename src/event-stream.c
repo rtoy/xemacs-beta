@@ -1547,7 +1547,7 @@ enqueue_command_event_1 (Lisp_Object event_to_copy)
 void
 enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object)
 {
-  Lisp_Object event = Fmake_event ();
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
 
   XEVENT (event)->event_type = magic_eval_event;
   /* channel for magic_eval events is nil */
@@ -1565,7 +1565,7 @@ are received.
 */
        (function, object))
 {
-  Lisp_Object event = Fmake_event ();
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
 
   XEVENT (event)->event_type = eval_event;
   /* channel for eval events is nil */
@@ -1580,7 +1580,7 @@ Lisp_Object
 enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
 			 Lisp_Object object)
 {
-  Lisp_Object event = Fmake_event ();
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
 
   XEVENT (event)->event_type = misc_user_event;
   XEVENT (event)->channel = channel;
@@ -2045,7 +2045,7 @@ The returned event will be one of the following types:
 #endif /* LWLIB_MENUBARS_LUCID */
 
   if (NILP (event))
-    event = Fmake_event ();
+    event = Fmake_event (Qnil, Qnil);
   else
     CHECK_LIVE_EVENT (event);
 
@@ -2191,10 +2191,10 @@ The returned event will be one of the following types:
      key, click, or menu selection), never a motion or process event.
      */
   if (!EVENTP (Vlast_input_event))
-    Vlast_input_event = Fmake_event ();
+    Vlast_input_event = Fmake_event (Qnil, Qnil);
   if (XEVENT_TYPE (Vlast_input_event) == dead_event)
     {
-      Vlast_input_event = Fmake_event ();
+      Vlast_input_event = Fmake_event (Qnil, Qnil);
       error ("Someone deallocated last-input-event!");
     }
   if (! EQ (event, Vlast_input_event))
@@ -2312,7 +2312,7 @@ A user event is a key press, button press, button release, or
   /* This throws away user-input on the queue, but doesn't process any
      events.  Calling dispatch_event() here leads to a race condition.
    */
-  Lisp_Object event = Fmake_event ();
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
   Lisp_Object head = Qnil, tail = Qnil;
   Lisp_Object oiq = Vinhibit_quit;
   struct gcpro gcpro1, gcpro2;
@@ -2471,7 +2471,7 @@ Return non-nil iff we received any output before the timeout expired.
         }
     }
 
-  event = Fmake_event ();
+  event = Fmake_event (Qnil, Qnil);
 
   count = specpdl_depth ();
   record_unwind_protect (sit_for_unwind,
@@ -2575,7 +2575,7 @@ It is recommended that you never call sleep-for from inside of a process
   GCPRO1 (event);
 
   id = event_stream_generate_wakeup (msecs, 0, Qnil, Qnil, 0);
-  event = Fmake_event ();
+  event = Fmake_event (Qnil, Qnil);
 
   count = specpdl_depth ();
   record_unwind_protect (sit_for_unwind, make_int (id));
@@ -2681,7 +2681,7 @@ If sit-for is called from within a process filter function or timer
      redisplay when no input pending.
    */
   GCPRO1 (event);
-  event = Fmake_event ();
+  event = Fmake_event (Qnil, Qnil);
 
   /* Generate the wakeup even if MSECS is 0, so that existing timeout/etc.
      events get processed.  The old (pre-19.12) code special-cased this
@@ -2780,7 +2780,7 @@ void
 wait_delaying_user_input (int (*predicate) (void *arg), void *predicate_arg)
 {
   /* This function can GC */
-  Lisp_Object event = Fmake_event ();
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
   struct gcpro gcpro1;
   GCPRO1 (event);
 
@@ -3921,7 +3921,7 @@ reset_this_command_keys (Lisp_Object console, int clear_echo_area_p)
 static void
 push_this_command_keys (Lisp_Object event)
 {
-  Lisp_Object new = Fmake_event ();
+  Lisp_Object new = Fmake_event (Qnil, Qnil);
 
   Fcopy_event (event, new);
   enqueue_event (new, &Vthis_command_keys, &Vthis_command_keys_tail);
@@ -3998,7 +3998,7 @@ push_recent_keys (Lisp_Object event)
 
   if (NILP (e))
     {
-      e = Fmake_event ();
+      e = Fmake_event (Qnil, Qnil);
       XVECTOR_DATA (Vrecent_keys_ring) [recent_keys_ring_index] = e;
     }
   Fcopy_event (event, e);
@@ -4092,7 +4092,7 @@ lookup_command_event (struct command_builder *command_builder,
       }
     else
       {
-	event = Fcopy_event (event, Fmake_event ());
+	event = Fcopy_event (event, Fmake_event (Qnil, Qnil));
 
 	command_builder_append_event (command_builder, event);
       }
@@ -4127,7 +4127,7 @@ lookup_command_event (struct command_builder *command_builder,
 	      maybe_echo_keys (command_builder, 0);
 	  }
 	else if (!NILP (Vquit_flag)) {
-	  Lisp_Object quit_event = Fmake_event();
+	  Lisp_Object quit_event = Fmake_event(Qnil, Qnil);
 	  struct Lisp_Event *e = XEVENT (quit_event);
 	  /* if quit happened during menu acceleration, pretend we read it */
 	  struct console *con = XCONSOLE (Fselected_console ());
@@ -4184,10 +4184,10 @@ execute_command_event (struct command_builder *command_builder,
   /* Store the last-command-event.  The semantics of this is that it
      is the last event most recently involved in command-lookup. */
   if (!EVENTP (Vlast_command_event))
-    Vlast_command_event = Fmake_event ();
+    Vlast_command_event = Fmake_event (Qnil, Qnil);
   if (XEVENT (Vlast_command_event)->event_type == dead_event)
     {
-      Vlast_command_event = Fmake_event ();
+      Vlast_command_event = Fmake_event (Qnil, Qnil);
       error ("Someone deallocated the last-command-event!");
     }
 
@@ -4623,7 +4623,7 @@ sequences, where they wouldn't conflict with ordinary bindings.  See
   struct command_builder *command_builder =
     XCOMMAND_BUILDER (con->command_builder);
   Lisp_Object result;
-  Lisp_Object event = Fmake_event ();
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
   int speccount = specpdl_depth ();
   struct gcpro gcpro1;
   GCPRO1 (event);

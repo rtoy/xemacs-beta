@@ -105,11 +105,9 @@
   "Data compression utilities"
   :group 'data)
 
-(progn
-  (defgroup jka-compr nil
-    "jka-compr customization"
-    :group 'compression)
-  )
+(defgroup jka-compr nil
+  "jka-compr customization"
+  :group 'compression)
 
 
 (defcustom jka-compr-shell "sh"
@@ -175,7 +173,8 @@ APPEND-FLAG EXTENSION], where:
 Because of the way `call-process' is defined, discarding the stderr output of
 a program adds the overhead of starting a shell each time the program is
 invoked."
-  :type '(repeat (vector regexp
+  :type '(repeat (vector :tag "Compression Technique"
+			 regexp
 			 (choice :tag "Compress Message"
 				 (string :format "%v")
 				 (const :tag "No Message" nil))
@@ -231,7 +230,6 @@ based on the filename itself and `jka-compr-compression-info-list'."
 
 
 (defun jka-compr-error (prog args infile message &optional errfile)
-
   (let ((errbuf (get-buffer-create " *jka-compr-error*"))
 	(curbuf (current-buffer)))
     (set-buffer errbuf)
@@ -246,10 +244,11 @@ based on the filename itself and `jka-compr-compression-info-list'."
 
      (set-buffer curbuf)
      (display-buffer errbuf))
+  (signal 'compression-error (list "Opening input file"
+				   (format "error %s" message)
+				   infile)))
 
-  (signal 'compression-error (list "Opening input file" (format "error %s" message) infile)))
-			
-   
+
 (defvar jka-compr-dd-program
   "/bin/dd")
 
@@ -862,13 +861,8 @@ The return value is the entry in `file-name-handler-alist' for jka-compr."
   (rassq 'jka-compr-handler file-name-handler-alist))
 
 
-;;; Add the file I/O hook if it does not already exist.
-;;; Make sure that jka-compr-file-name-handler-entry is eq to the
-;;; entry for jka-compr in file-name-handler-alist.
-(and (jka-compr-installed-p)
-     (jka-compr-uninstall))
-
-(jka-compr-install)
+;; No no no no!
+;(jka-compr-install)
 
 
 (provide 'jka-compr)

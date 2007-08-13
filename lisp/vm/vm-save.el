@@ -132,11 +132,9 @@ The saved messages are flagged as `filed'."
 			      (vm-number-of (car vm-message-pointer))
 			      auto-folder)))
 		 (let ((vm-delete-after-saving vm-delete-after-archiving))
-		   (if (not (string-equal auto-folder "/dev/null"))
-		       (vm-save-message auto-folder))
+		   (vm-save-message auto-folder)
 		   (vm-increment archived)
-		   (message "%d archived, still working..."
-				       archived)))
+		   (message "%d archived, still working..." archived)))
 	    (setq done (eq vm-message-pointer stop-point)
 		  vm-message-pointer (cdr vm-message-pointer))))
       ;; fix mode line

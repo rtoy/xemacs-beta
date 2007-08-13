@@ -378,8 +378,9 @@
 ;;
 
 (defgroup tcl nil
-  "Tcl programming language"
+  "Tcl programming language."
   :group 'languages)
+
 
 (defcustom tcl-indent-level 4
   "*Indentation of Tcl statements with respect to containing block."
@@ -413,7 +414,7 @@ to take place:
   6. Move backward to start of comment, indenting if necessary."
   :type '(choice (const :tag "on" t)
 		 (const :tag "off" nil)
-		 (const :tag "The Works" other))
+		 (sexp :format "%t\n" :tag "The Works" other))
   :group 'tcl)
 
 (defcustom tcl-use-hairy-comment-detector t

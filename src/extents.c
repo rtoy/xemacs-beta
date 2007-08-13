@@ -446,6 +446,7 @@ Lisp_Object Qduplicable;
 Lisp_Object Qdetachable;
 Lisp_Object Qpriority;
 Lisp_Object Qmouse_face;
+Lisp_Object Qone_shot_function;
 
 Lisp_Object Qglyph_layout;  /* This exists only for backwards compatibility. */
 Lisp_Object Qbegin_glyph_layout, Qend_glyph_layout;
@@ -932,6 +933,7 @@ mark_extent_auxiliary (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (data->children));
   ((markobj) (data->read_only));
   ((markobj) (data->mouse_face));
+  ((markobj) (data->one_shot_function));
   return data->parent;
 }
 
@@ -1645,6 +1647,7 @@ extent_maybe_changed_for_redisplay (EXTENT extent, int descendants_too,
       !NILP (extent_end_glyph   (anc)) ||
       !NILP (extent_mouse_face  (anc)) ||
       !NILP (extent_invisible   (anc)) ||
+      !NILP (extent_one_shot_function (anc)) ||     
       invisibility_change)
     extent_changed_for_redisplay (extent, descendants_too,
 				  invisibility_change);
@@ -2879,6 +2882,28 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 				   mouse_highlight_priority);
 	      extent_face (&dummy_lhe_extent) = extent_mouse_face (lhe);
 	      Dynarr_add (ef->extents, &dummy_lhe_extent);
+	    }
+	  /* since we are looping anyway, we might as well do this here */
+	  if (!NILP(extent_one_shot_function (e)))
+	    {
+	      Lisp_Object function = extent_one_shot_function (e);
+	      Lisp_Object obj;
+
+	      /* printf("One shot function called!\n "); */
+	      
+	      /* print_extent_2(e);
+	         printf("\n"); */
+	      
+	      /* Do NOT use the set function here because that sets the
+		 redisplay flag.
+		 FIXME: One should probably inhibit the displaying of
+		 this extent to reduce flicker */
+	      set_extent_one_shot_function (e,Qnil); /* one shot */
+	      
+	      /* call the function */
+	      XSETEXTENT(obj,e);
+	      if(!NILP(function))
+	         Fenqueue_eval_event(function,obj);
 	    }
 	}
     }
@@ -4745,10 +4770,32 @@ canonicalize_extent_property (Lisp_Object prop, Lisp_Object value)
   return value;
 }
 
+/* Do we need a lisp-level function ? */
+DEFUN ("set-extent-one-shot-function", Fset_extent_one_shot_function, 
+       2,2,0,/* 
+Set one-shot-function of EXTENT to the function
+FUNCTION. This function will be called with EXTENT as its only
+argument shortly after (part of) the extent has been under
+consideration for display. The property is then cleared. 
+*/
+       (extent, function))     
+{
+  EXTENT e = decode_extent(extent, DE_MUST_BE_ATTACHED);
+
+  e = extent_ancestor (e);  /* Is this needed? Macro also does chasing!*/
+  set_extent_one_shot_function(e,function);
+  extent_changed_for_redisplay(e,1,0); /* Do we need to mark children too ?*/
+  
+  return function;
+}
+  
+
+  
+
 DEFUN ("extent-face", Fextent_face, 1, 1, 0, /*
 Return the name of the face in which EXTENT is displayed, or nil
 if the extent's face is unspecified.  This might also return a list
-of face names.
+of face names. 
 */
        (extent))
 {
@@ -5042,6 +5089,10 @@ The following symbols have predefined meanings:
 
  read-only          Text within this extent will be unmodifiable.
 
+ one-shot-function  function to be called the first time (part of) the extent
+                    is redisplayed. It will be called with the extent as its
+                    first argument.  
+
  detachable         Whether the extent gets detached (as with
                     `detach-extent') when all the text within the
                     extent is deleted.  This is true by default.  If
@@ -5173,6 +5224,8 @@ The following symbols have predefined meanings:
     Fset_extent_priority (extent, value);
   else if (EQ (property, Qface))
     Fset_extent_face (extent, value);
+  else if (EQ (property, Qone_shot_function))
+    Fset_extent_one_shot_function (extent, value);
   else if (EQ (property, Qmouse_face))
     Fset_extent_mouse_face (extent, value);
   /* Obsolete: */
@@ -5251,6 +5304,8 @@ See `set-extent-property' for the built-in property names.
     return extent_invisible (e);
   else if (EQ (property, Qface))
     return Fextent_face (extent);
+  else if (EQ (property, Qone_shot_function))
+    return extent_one_shot_function (e);
   else if (EQ (property, Qmouse_face))
     return Fextent_mouse_face (extent);
   /* Obsolete: */
@@ -5327,6 +5382,9 @@ Do not modify this list; use `set-extent-property' instead.
   if (extent_priority (anc) != 0)
     result = Fcons (Qpriority, Fcons (make_int (extent_priority (anc)),
 				      result));
+
+  if (!NILP (extent_one_shot_function (anc)))
+    result = Fcons (Qone_shot_function, Fcons (extent_one_shot_function (anc), result));
 
   if (!NILP (extent_invisible (anc)))
     result = Fcons (Qinvisible, Fcons (extent_invisible (anc), result));
@@ -6541,6 +6599,8 @@ syms_of_extents (void)
   defsymbol (&Qdetachable, "detachable");
   defsymbol (&Qpriority, "priority");
   defsymbol (&Qmouse_face, "mouse-face");
+  defsymbol (&Qone_shot_function,"one-shot-function");
+  
 
   defsymbol (&Qglyph_layout, "glyph-layout");	/* backwards compatibility */
   defsymbol (&Qbegin_glyph_layout, "begin-glyph-layout");
@@ -6593,6 +6653,7 @@ syms_of_extents (void)
   DEFSUBR (Fmap_extent_children);
   DEFSUBR (Fextent_at);
 
+  DEFSUBR (Fset_extent_one_shot_function);
   DEFSUBR (Fextent_face);
   DEFSUBR (Fset_extent_face);
   DEFSUBR (Fextent_mouse_face);
@@ -6666,6 +6727,7 @@ functions `get-text-property' or `get-char-property' are called.
   extent_auxiliary_defaults.invisible = Qnil;
   extent_auxiliary_defaults.read_only = Qnil;
   extent_auxiliary_defaults.mouse_face = Qnil;
+  extent_auxiliary_defaults.one_shot_function = Qnil;
 }
 
 void

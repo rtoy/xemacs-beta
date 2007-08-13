@@ -31,7 +31,7 @@
 ;;   I've deleted. ]
 
 (defgroup man nil
-  "Browse manual pages"
+  "Browse Unix manual pages"
   :group 'help)
 
 (defcustom Manual-program "man" "\
@@ -44,9 +44,9 @@
 nil means leave the buffer in fundamental-mode in another window.
 t means use `view-buffer' to display the man page in the current window.
 Any other value means use `view-buffer-other-window'."
-  :type '(choice (const :tag "fundamental-mode other window" nil)
-		 (const :tag "view-mode current window" t)
-		 (const :tag "view-mode other window" other))
+  :type '(radio (const :tag "Fundamental-mode other window" nil)
+		(const :tag "View-mode current window" t)
+		(sexp :format "%t\n" :tag "View-mode other window" other))
   :group 'man)
 
 (defcustom Manual-mode-hook nil
@@ -77,71 +77,70 @@ so that Manual-mode buffers will have their own submenu."
   :type 'boolean
   :group 'man)
 
+;;Here is information on RosettaMan, from Neal.Becker@comsat.com (Neal Becker):
+
+;;RosettaMan is a filter for UNIX manual pages.  It takes as input man
+;;pages formatted for a variety of UNIX flavors (not [tn]roff source)
+;;and produces as output a variety of file formats.  Currently
+;;RosettaMan accepts man pages as formatted by the following flavors of
+;;UNIX: Hewlett-Packard HP-UX, AT&T System V, SunOS, Sun Solaris, OSF/1,
+;;DEC Ultrix, SGI IRIX, Linux, SCO; and produces output for the following
+;;formats: printable ASCII only (stripping page headers and footers),
+;;section and subsection headers only, TkMan, [tn]roff, Ensemble, RTF,
+;;SGML (soon--I finally found a DTD), HTML, MIME, LaTeX, LaTeX 2e, Perl 5's pod.
+
+;;RosettaMan improves on other man page filters in several ways: (1) its
+;;analysis recognizes the structural pieces of man pages, enabling high
+;;quality output, (2) its modular structure permits easy augmentation of
+;;output formats, (3) it accepts man pages formatted with the varient
+;;macros of many different flavors of UNIX, and (4) it doesn't require
+;;modification or cooperation with any other program.
+
+;;RosettaMan is a rewrite of TkMan's man page filter, called bs2tk.  (If
+;;you haven't heard about TkMan, a hypertext man page browser, you
+;;should grab it via anonymous ftp from ftp.cs.berkeley.edu:
+;;/ucb/people/phelps/tkman.tar.Z.)  Whereas bs2tk generated output only for
+;;TkMan, RosettaMan generalizes the process so that the analysis can be
+;;leveraged to new output formats.  A single analysis engine recognizes
+;;section heads, subsection heads, body text, lists, references to other
+;;man pages, boldface, italics, bold italics, special characters (like
+;;bullets), tables (to a degree) and strips out page headers and
+;;footers.  The engine sends signals to the selected output functions so
+;;that an enhancement in the engine improves the quality of output of
+;;all of them.  Output format functions are easy to add, and thus far
+;;average about about 75 lines of C code each.
+
+
+
+;;*** NOTES ON CURRENT VERSION ***
+
+;;Help!  I'm looking for people to help with the following projects.
+;;\(1) Better RTF output format.  The current one works, but could be
+;;made better.  (2) Roff macros that produce text that is easily
+;;parsable.  RosettaMan handles a great variety, but some things, like
+;;H-P's tables, are intractable.  If you write an output format or
+;;otherwise improve RosettaMan, please send in your code so that I may
+;;share the wealth in future releases.
+
+;;This version can try to identify tables (turn this on with the -T
+;;switch) by looking for lines with a large amount of interword spacing,
+;;reasoning that this is space between columns of a table.  This
+;;heuristic doesn't always work and sometimes misidentifies ordinary
+;;text as tables.  In general I think it is impossible to perfectly
+;;identify tables from nroff formatted text.  However, I do think the
+;;heuristics can be tuned, so if you have a collection of manual pages
+;;with unrecognized tables, send me the lot, in formatted form (i.e.,
+;;after formatting with nroff -man), and uuencode them to preserve the
+;;control characters.  Better, if you can think of heuristics that
+;;distinguish tables from ordinary text, I'd like to hear them.
+
+;;Notes for HTML consumers: This filter does real (heuristic)
+;;parsing--no <PRE>!  Man page references are turned into hypertext links.
+
 (defcustom Manual-use-rosetta-man (not (null (locate-file "rman" exec-path))) "\
 If non-nil, use RosettaMan (rman) to filter man pages.
 This makes man-page cleanup virtually instantaneous, instead of
-potentially taking a long time.
-
-Here is information on RosettaMan, from Neal.Becker@comsat.com (Neal Becker):
-
-RosettaMan is a filter for UNIX manual pages.  It takes as input man
-pages formatted for a variety of UNIX flavors (not [tn]roff source)
-and produces as output a variety of file formats.  Currently
-RosettaMan accepts man pages as formatted by the following flavors of
-UNIX: Hewlett-Packard HP-UX, AT&T System V, SunOS, Sun Solaris, OSF/1,
-DEC Ultrix, SGI IRIX, Linux, SCO; and produces output for the following
-formats: printable ASCII only (stripping page headers and footers),
-section and subsection headers only, TkMan, [tn]roff, Ensemble, RTF,
-SGML (soon--I finally found a DTD), HTML, MIME, LaTeX, LaTeX 2e, Perl 5's pod.
-
-RosettaMan improves on other man page filters in several ways: (1) its
-analysis recognizes the structural pieces of man pages, enabling high
-quality output, (2) its modular structure permits easy augmentation of
-output formats, (3) it accepts man pages formatted with the varient
-macros of many different flavors of UNIX, and (4) it doesn't require
-modification or cooperation with any other program.
-
-RosettaMan is a rewrite of TkMan's man page filter, called bs2tk.  (If
-you haven't heard about TkMan, a hypertext man page browser, you
-should grab it via anonymous ftp from ftp.cs.berkeley.edu:
-/ucb/people/phelps/tkman.tar.Z.)  Whereas bs2tk generated output only for
-TkMan, RosettaMan generalizes the process so that the analysis can be
-leveraged to new output formats.  A single analysis engine recognizes
-section heads, subsection heads, body text, lists, references to other
-man pages, boldface, italics, bold italics, special characters (like
-bullets), tables (to a degree) and strips out page headers and
-footers.  The engine sends signals to the selected output functions so
-that an enhancement in the engine improves the quality of output of
-all of them.  Output format functions are easy to add, and thus far
-average about about 75 lines of C code each.
-
-
-
-*** NOTES ON CURRENT VERSION ***
-
-Help!  I'm looking for people to help with the following projects.
-\(1) Better RTF output format.  The current one works, but could be
-made better.  (2) Roff macros that produce text that is easily
-parsable.  RosettaMan handles a great variety, but some things, like
-H-P's tables, are intractable.  If you write an output format or
-otherwise improve RosettaMan, please send in your code so that I may
-share the wealth in future releases.
-
-This version can try to identify tables (turn this on with the -T
-switch) by looking for lines with a large amount of interword spacing,
-reasoning that this is space between columns of a table.  This
-heuristic doesn't always work and sometimes misidentifies ordinary
-text as tables.  In general I think it is impossible to perfectly
-identify tables from nroff formatted text.  However, I do think the
-heuristics can be tuned, so if you have a collection of manual pages
-with unrecognized tables, send me the lot, in formatted form (i.e.,
-after formatting with nroff -man), and uuencode them to preserve the
-control characters.  Better, if you can think of heuristics that
-distinguish tables from ordinary text, I'd like to hear them.
-
-
-Notes for HTML consumers: This filter does real (heuristic)
-parsing--no <PRE>!  Man page references are turned into hypertext links."
+potentially taking a long time."
   :type 'boolean
   :group 'man)
 
