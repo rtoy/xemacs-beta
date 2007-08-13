@@ -858,6 +858,38 @@ This function returns the real @sc{uid} of the user.
 This function returns the effective @sc{uid} of the user.  
 @end defun
 
+@defun user-home-directory
+This function returns the ``@code{HOME}'' directory of the user, and is
+intended to replace occurrences of ``@code{(getenv "HOME")}''.  Under
+Unix systems, the following is done:
+
+@enumerate
+@item
+Return the value of ``@code{(getenv "HOME")}'', if set.
+
+@item
+Return ``/'', as a fallback, but issue a warning.  (Future versions of
+XEmacs will also attempt to lookup the @code{HOME} directory via
+@code{getpwent()}, but this has not yet been implemented.)
+@end enumerate
+
+Under MS Windows, this is done:
+
+@enumerate
+@item
+Return the value of ``@code{(getenv "HOME")}'', if set.
+
+@item
+If the environment variables @code{HOMEDRIVE} and @code{HOMEDIR} are
+both set, return the concatenation (the following description uses MS
+Windows environment variable substitution syntax):
+@code{%HOMEDRIVE%%HOMEDIR%}.
+
+@item
+Return ``C:\'', as a fallback, but issue a warning.
+@end enumerate
+@end defun
+
 @node Time of Day
 @section Time of Day
 

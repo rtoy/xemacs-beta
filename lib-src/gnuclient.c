@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.
  Author: Andy Norman (ange@hplb.hpl.hp.com), based on
          'etc/emacsclient.c' from the GNU Emacs 18.52 distribution.
 
- Please mail bugs and suggestions to the author at the above address.
+ Please mail bugs and suggestions to the XEmacs maintainer.
 */
 
 /*
@@ -467,12 +467,14 @@ main (int argc, char *argv[])
 	  send_string (s, ")");
 	}
       send_string (s, "))");
-      send_string (s, EOT_STR);
-      if (read_line (s, result) == 0)
-	{
-	  fprintf (stderr, "%s: Could not read\n", progname);
-	  exit (1);
-	}
+      /* disconnect already sends EOT_STR */
+#ifdef SYSV_IPC
+      if (connect_type == (int) CONN_IPC)
+	disconnect_from_ipc_server (s, msgp, batch && !quick);
+#else /* !SYSV_IPC */
+      if (connect_type != (int) CONN_IPC)
+	disconnect_from_server (s, batch && !quick);
+#endif /* !SYSV_IPC */
     } /* eval_function || eval_form || load_library */
   else if (batch)
     {
@@ -493,12 +495,14 @@ main (int argc, char *argv[])
 	  send_string(s, buffer);
 	}
       send_string(s,"))");
-      send_string (s, EOT_STR);
-      if (read_line (s, result) == 0)
-	{
-	  fprintf (stderr, "%s: Could not read\n", progname);
-	  exit (1);
-	}
+      /* disconnect already sends EOT_STR */
+#ifdef SYSV_IPC
+      if (connect_type == (int) CONN_IPC)
+	disconnect_from_ipc_server (s, msgp, batch && !quick);
+#else /* !SYSV_IPC */
+      if (connect_type != (int) CONN_IPC)
+	disconnect_from_server (s, batch && !quick);
+#endif /* !SYSV_IPC */
     }
 
   if (!batch)
@@ -647,8 +651,6 @@ main (int argc, char *argv[])
 #endif /* !SYSV_IPC */
     } /* not batch */
 
-  if (batch && !quick)
-      printf ("%s\n", result);
 
   return 0;
 

@@ -55,6 +55,10 @@ Boston, MA 02111-1307, USA.  */
 #define POPUP_WIDTH 30
 #define POPUP_HEIGHT 10
 
+/* Default popup size, in characters */
+#define DEFAULT_FRAME_WIDTH 80
+#define DEFAULT_FRAME_HEIGHT 35
+
 #ifdef HAVE_MENUBARS
 #define ADJR_MENUFLAG TRUE
 #else
@@ -63,6 +67,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_mswindows_frame_plist;
+Lisp_Object Vmswindows_use_system_frame_size_defaults;
 
 /* Lisp_Object Qname, Qheight, Qwidth, Qinitially_unmapped, Qpopup, Qtop, Qleft; */
 Lisp_Object Qinitially_unmapped, Qpopup;
@@ -70,10 +75,6 @@ Lisp_Object Qinitially_unmapped, Qpopup;
 /* This does not need to be GC protected, as it holds a
    frame Lisp_Object already protected by Fmake_frame */
 Lisp_Object Vmswindows_frame_being_created;
-
-/* Geometry, in characters, as specified by proplist during frame
-   creation. Memebers are set to -1 for unspecified */
-XEMACS_RECT_WH mswindows_frame_target_rect;
 
 static void
 mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
@@ -111,13 +112,16 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   if (!NILP (height))
     CHECK_INT (height);
 
-  mswindows_frame_target_rect.left = NILP (left) ? -1 : abs (XINT (left));
-  mswindows_frame_target_rect.top = NILP (top) ? -1 : abs (XINT (top));
-  mswindows_frame_target_rect.width = NILP (width) ? -1 : abs (XINT (width));
-  mswindows_frame_target_rect.height = NILP (height) ? -1 : abs (XINT (height));
-
   f->frame_data = xnew_and_zero (struct mswindows_frame);
+  FRAME_MSWINDOWS_TARGET_RECT (f) = xnew_and_zero (XEMACS_RECT_WH);
 
+  FRAME_MSWINDOWS_TARGET_RECT (f)->left = NILP (left) ? -1 : abs (XINT (left));
+  FRAME_MSWINDOWS_TARGET_RECT (f)->top = NILP (top) ? -1 : abs (XINT (top));
+  FRAME_MSWINDOWS_TARGET_RECT (f)->width = NILP (width) ? -1 : 
+    abs (XINT (width));
+  FRAME_MSWINDOWS_TARGET_RECT (f)->height = NILP (height) ? -1 : 
+    abs (XINT (height));
+      
   /* Misc frame stuff */
   FRAME_MSWINDOWS_DATA(f)->button2_need_lbutton = 0;
   FRAME_MSWINDOWS_DATA(f)->button2_need_rbutton = 0;
@@ -150,8 +154,6 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 	  first_frame = 0;
 	}
 
-      /* We always create am overlapped frame with default size,
-	 and later adjust only requested geometry parameters. */
       rect_default.left = rect_default.top = CW_USEDEFAULT;
       rect_default.width = rect_default.height = CW_USEDEFAULT;
     }
@@ -203,12 +205,20 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   SetTextAlign (FRAME_MSWINDOWS_DC(f), TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
 }
 
-#if 0 /* #### unused */
 static void
 mswindows_init_frame_2 (struct frame *f, Lisp_Object props)
 {
+  if (NILP (Vmswindows_use_system_frame_size_defaults))
+    {
+      /* I don't think anything can set the frame size before this
+         since we don't have X resources. This may change if we look
+         at the registry. Even so these values can get overridden
+         later.*/
+      XEMACS_RECT_WH dest = { -1, -1, DEFAULT_FRAME_WIDTH, 
+			      DEFAULT_FRAME_HEIGHT };
+      mswindows_size_frame_internal (f, &dest);
+    }
 }
-#endif
 
 /* Called after frame's properties are set */
 static void
@@ -264,12 +274,12 @@ mswindows_delete_frame (struct frame *f)
 }
 
 static void
-mswindows_set_frame_size (struct frame *f, int cols, int rows)
+mswindows_set_frame_size (struct frame *f, int width, int height)
 {
   RECT rect;
   rect.left = rect.top = 0;
-  rect.right = cols;
-  rect.bottom = rows;
+  rect.right = width;
+  rect.bottom = height;
 
   AdjustWindowRectEx (&rect,
 		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
@@ -505,8 +515,8 @@ mswindows_frame_properties (struct frame *f)
 static void
 mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 {
-  int x=0, y=0;
-  int width = 0, height = 0;
+  int x=-1, y=-1;
+  int width = -1, height = -1;
   BOOL width_specified_p = FALSE;
   BOOL height_specified_p = FALSE;
   BOOL x_specified_p = FALSE;
@@ -566,46 +576,61 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
   /* Now we've extracted the properties, apply them.
      Do not apply geometric properties during frame creation. This
      is excessive anyways, and this loses becuase WM_SIZE has not
-     been sent yet, so frame width and height fields are not initialized
-  */ 
-  if (f->init_finished
-      && (width_specified_p || height_specified_p || x_specified_p || y_specified_p))
+     been sent yet, so frame width and height fields are not initialized.
+     
+     unfortunately WM_SIZE loses as well since the resize is only
+     applied once and the first time WM_SIZE is applied not everything
+     is initialised in the frame (toolbars for instance). enabling
+     this always makes no visible difference and fixes a whole host of
+     bugs (and is more consistent with X) so I am going to reenable it.
+     --andyp */
+  if ( FRAME_PIXWIDTH (f) && FRAME_PIXHEIGHT (f)
+       && (width_specified_p || height_specified_p || x_specified_p || y_specified_p))
     {
-      Lisp_Object frame = Qnil;
-      RECT rect;
-      int pixel_width, pixel_height;
-      XSETFRAME (frame, f);
+      XEMACS_RECT_WH dest = { x, y, width, height };
 
-      char_to_real_pixel_size (f, width, height, &pixel_width, &pixel_height);
-      if (!width_specified_p)
-	pixel_width = FRAME_PIXWIDTH (f);
-      if (!height_specified_p)
-	pixel_height = FRAME_PIXHEIGHT (f);
-
-      GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
-      if (!x_specified_p)
-	x = rect.left;
-      if (!y_specified_p)
-	y = rect.top;
-
-      rect.left = rect.top = 0;
-      rect.right = pixel_width;
-      rect.bottom = pixel_height;
-      AdjustWindowRectEx (&rect,
-			  GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
-			  GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
-			  GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
-      
-
-      if (IsIconic (FRAME_MSWINDOWS_HANDLE(f)) || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
-	ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
-
-      SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
-		    x, y, rect.right - rect.left, rect.bottom - rect.top,
-		    SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING
-		    | ((width_specified_p || height_specified_p) ? 0 : SWP_NOSIZE)
-		    | ((x_specified_p || y_specified_p) ? 0 : SWP_NOMOVE));
+      mswindows_size_frame_internal (f, &dest);
     }
+}
+
+void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
+{
+  RECT rect;
+  int pixel_width, pixel_height;
+  int size_p = (dest->width >=0 || dest->height >=0);
+  int move_p = (dest->top >=0 || dest->left >=0);
+
+  char_to_real_pixel_size (f, dest->width, dest->height, &pixel_width, &pixel_height);
+  
+  if (dest->width < 0)
+    pixel_width = FRAME_PIXWIDTH (f);
+  if (dest->height < 0)
+    pixel_height = FRAME_PIXHEIGHT (f);
+
+  GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
+  if (dest->left < 0)
+    dest->left = rect.left;
+  if (dest->top < 0)
+    dest->top = rect.top;
+
+  rect.left = rect.top = 0;
+  rect.right = pixel_width;
+  rect.bottom = pixel_height;
+
+  AdjustWindowRectEx (&rect,
+		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
+		      GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
+		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
+
+  if (IsIconic (FRAME_MSWINDOWS_HANDLE(f)) 
+      || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
+    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
+
+  SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
+		dest->left, dest->top, rect.right - rect.left, rect.bottom - rect.top,
+		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING
+		| (size_p ? 0 : SWP_NOSIZE)
+		| (move_p ? 0 : SWP_NOMOVE));
 }
 
 static Lisp_Object
@@ -641,7 +666,7 @@ console_type_create_frame_mswindows (void)
 {
   /* frame methods */
   CONSOLE_HAS_METHOD (mswindows, init_frame_1);
-/*  CONSOLE_HAS_METHOD (mswindows, init_frame_2); */
+  CONSOLE_HAS_METHOD (mswindows, init_frame_2); 
   CONSOLE_HAS_METHOD (mswindows, init_frame_3);
   CONSOLE_HAS_METHOD (mswindows, after_init_frame);
   CONSOLE_HAS_METHOD (mswindows, mark_frame);
@@ -683,6 +708,13 @@ vars_of_frame_mswindows (void)
   /* Needn't staticpro -- see comment above.  */
   Vmswindows_frame_being_created = Qnil;
 
+  DEFVAR_LISP ("mswindows-use-system-frame-size-defaults", &Vmswindows_use_system_frame_size_defaults /*
+Controls whether to use system or XEmacs defaults for frame size.
+If nil then reasonable defaults are used for intial frame sizes. If t
+then the system will choose default sizes for the frame.
+*/ );
+  Vmswindows_use_system_frame_size_defaults = Qnil;
+  
   DEFVAR_LISP ("default-mswindows-frame-plist", &Vdefault_mswindows_frame_plist /*
 Plist of default frame-creation properties for mswindows frames.
 These override what is specified in `default-frame-plist', but are

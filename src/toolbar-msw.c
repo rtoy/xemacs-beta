@@ -300,16 +300,19 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 		      /* need to build an image list for the bitmaps */
 		      if (!ilist && !(ilist = ImageList_Create 
 				      ( bmwidth, bmheight,
-					ILC_COLOR24, nbuttons, nbuttons * 2 )))
+					ILC_MASK | ILC_COLOR24, 
+					nbuttons, nbuttons * 2 )))
 			{
 			  xfree (button_tbl);
 			  signal_simple_error ("couldn't create image list",
 					       instance);
 			}
-		  
+
+		      /* make the mask actually do something */
+		      ImageList_SetBkColor (ilist, CLR_NONE);
 		      /* add a bitmap to the list */
 		      if ((tbbutton->iBitmap =
-			   ImageList_Add 
+			   ImageList_Add
 			   (ilist,
 			    bitmap ? bitmap 
 			    : IMAGE_INSTANCE_MSWINDOWS_BITMAP (p),

@@ -273,10 +273,12 @@ etags: ${etags_deps}
 runemacs_args = -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
 	-DVERSION='"${version}"' ${srcdir}/../nt/runemacs.c \
 	$(ldflags) -Wl,--subsystem,windows
-runemacs_deps   = ${srcdir}/../nt/runemacs.c ../src/config.h
+runemacs_deps   = ${srcdir}/../nt/runemacs.c ${srcdir}/../nt/xemacs.ico ../src/config.h
 
 runemacs: ${runemacs_deps}
-	$(CC) ${runemacs_args} -o $@
+	echo "runemacs ICON DISCARDABLE \"../nt/xemacs.ico\"" \
+	| windres -o runemacs_res.o
+	$(CC) runemacs_res.o ${runemacs_args} -o $@
 
 ootags_args = -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
 	-DVERSION='"${version}"' ${srcdir}/ootags.c \

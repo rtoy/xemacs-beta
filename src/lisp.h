@@ -2043,6 +2043,7 @@ Lisp_Object emacs_doprnt_string_lisp_2 (CONST Bufbyte *, Lisp_Object,
 /* Defined in editfns.c */
 void uncache_home_directory (void);
 char *get_home_directory (void);
+char *user_login_name (int *);
 Bufpos bufpos_clip_to_bounds (Bufpos, Bufpos, Bufpos);
 Bytind bytind_clip_to_bounds (Bytind, Bytind, Bytind);
 void buffer_insert1 (struct buffer *, Lisp_Object);

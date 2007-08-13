@@ -240,6 +240,53 @@ mswindows_update_dc (HDC hdc, Lisp_Object font, Lisp_Object fg,
 
 
 /*****************************************************************************
+ mswindows_apply_face_effects
+
+ Draw underline and strikeout as if this was X.
+ #### On mswindows this really should be done as part of drawing the font.
+ The line width used is chosen arbitrarily from the font height.
+ ****************************************************************************/
+static void
+mswindows_apply_face_effects (HDC hdc, struct display_line *dl, int xpos,
+			      int width, struct Lisp_Font_Instance *fi,
+			      struct face_cachel *cachel,
+			      struct face_cachel *color_cachel)
+{
+  int yclip;
+  HBRUSH brush, oldbrush;
+  RECT rect;
+
+  brush = CreateSolidBrush (COLOR_INSTANCE_MSWINDOWS_COLOR (
+			    XCOLOR_INSTANCE (color_cachel->foreground)));
+  if (brush)
+    {
+      yclip = dl->ypos + dl->descent - dl->clip;
+      rect.left = xpos;
+      rect.right = xpos + width;
+      oldbrush = SelectObject (hdc, brush);
+
+      if (cachel->underline)
+	{
+	  rect.top = dl->ypos + dl->descent/2;
+	  rect.bottom = rect.top + (fi->height >= 0x20 ? 2 : 1);
+	  if (rect.bottom <= yclip)
+	    FillRect (hdc, &rect, brush);
+	}
+      if (cachel->strikethru)
+	{
+	  rect.top = dl->ypos + dl->descent - (dl->ascent + dl->descent)/2;
+	  rect.bottom = rect.top + (fi->height >= 0x20 ? 2 : 1);
+	  if (rect.bottom <= yclip)
+	    FillRect (hdc, &rect, brush);
+	}
+
+      SelectObject (hdc, oldbrush);
+      DeleteObject (brush);
+    }
+}
+
+
+/*****************************************************************************
  mswindows_output_hline
 
  Output a horizontal line in the foreground of its face.
@@ -326,7 +373,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
       /* Use the font from the underlying character */
       cachel = WINDOW_FACE_CACHEL (w, findex);
 
-      /* XXX MULE: Need to know the charset! */
+      /* #### MULE: Need to know the charset! */
       font = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
     }
 
@@ -338,15 +385,21 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 
   if (!image_p)
     {
+      struct face_cachel *color_cachel;
+
       /* Use cursor fg/bg for block cursor, or character fg/bg for the bar
 	 or when we need to erase the cursor. Output nothing at eol if bar
 	 cursor */
       face_index = get_builtin_face_cache_index (w, Vtext_cursor_face);
-      cachel = WINDOW_FACE_CACHEL (w, ((!cursor_p || bar_p)
-				       ? findex : face_index));
-      mswindows_update_dc (hdc, font, cachel->foreground,
-			   cachel->background, Qnil);
+      color_cachel = WINDOW_FACE_CACHEL (w, ((!cursor_p || bar_p) ?
+					     findex : face_index));
+      mswindows_update_dc (hdc, font, color_cachel->foreground,
+			   color_cachel->background, Qnil);
       ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE|ETO_CLIPPED, &rect, p_char, n_char, NULL);
+      if (real_char_p && (cachel->underline || cachel->strikethru))
+        mswindows_apply_face_effects (hdc, dl, xpos, width,
+				      XFONT_INSTANCE (font),
+				      cachel, color_cachel);
     }
 
   if (!cursor_p)
@@ -362,7 +415,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
     }
   else if (!focus)
     {
-      /* Now have real character drawn in its own color. We defalte
+      /* Now have real character drawn in its own color. We deflate
 	 the rectangle so character cell will be bounded by the
 	 previously drawn cursor shape */
       InflateRect (&rect, -1, -1);
@@ -379,6 +432,10 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 			   cachel->background, Qnil);
       ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
 		  &rect, p_char, n_char, NULL);
+      if (cachel->underline || cachel->strikethru)
+        mswindows_apply_face_effects (hdc, dl, xpos+1, width-2,
+				      XFONT_INSTANCE (font),
+				      cachel, cachel);
     }
 }
 
@@ -428,7 +485,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 
   XSETWINDOW (window, w);
 
-#if 0	/* XXX: FIXME? */
+#if 0	/* #### FIXME? */
   /* We can't work out the width before we've set the font in the DC */
   if (width < 0)
     width = mswindows_text_width (cachel, Dynarr_atp (buf, 0), Dynarr_length (buf));
@@ -508,14 +565,16 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 	  }
 	}
 
-      assert (runs[i].dimension == 1);	/* XXX FIXME */
+      assert (runs[i].dimension == 1);	/* #### FIXME: Broken when Mule? */
       ExtTextOut (hdc, xpos, dl->ypos,
 		  NILP(bg_pmap) ? ETO_CLIPPED | ETO_OPAQUE : ETO_CLIPPED,
 		  &rect, (char *) runs[i].ptr, runs[i].len, NULL); 
 
-      /* XXX FIXME? X does underline/strikethrough here
-	 we will do it as part of face's font */
-
+      /* #### X does underline/strikethrough here so we do the same.
+	 On mswindows, underline/strikethrough really belongs to the font */
+      if (cachel->underline || cachel->strikethru)
+        mswindows_apply_face_effects (hdc, dl, xpos, this_width, fi,
+				      cachel, cachel);
       xpos += this_width;
     }
 }

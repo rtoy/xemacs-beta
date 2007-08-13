@@ -716,7 +716,7 @@ selective-display are excluded from the line count."
 	 (hscroll (if (= (window-hscroll) 0)
 		      ""
 		    (format " Hscroll=%d" (window-hscroll))))
-	 (col (current-column)))
+	 (col (+ (current-column) (if column-number-start-at-one 1 0))))
     (if (= pos end)
 	(if (or (/= beg 1) (/= end (1+ total)))
 	    (message "point=%d of %d(%d%%) <%d - %d>  column %d %s"

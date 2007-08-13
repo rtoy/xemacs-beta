@@ -179,6 +179,7 @@ package provides that functionality.  If VERSION is nil, retrieves
 latest version.  Optional argument FETCHED-PACKAGES is used to keep
 track of packages already fetched."
   (interactive "sPackage: \nsVersion: ")
+  (load "package-get-base.el")
   (let* ((the-package (package-get-info-find-package package-get-base
 						     package))
 	 (this-package (package-get-info-version
@@ -208,8 +209,8 @@ track of packages already fetched."
 		  (package-get-all reqd-name reqd-version fetched-packages)))
 	)
       (setq this-requires (cdr this-requires)))
-      fetched-packages
-      ))
+    fetched-packages
+    ))
 
 ;;;###autoload
 (defun package-get (package &optional version conflict)
@@ -229,6 +230,7 @@ Once the package is retrieved, its md5 checksum is computed.  If that
 sum does not match that stored in `package-get-base' for this version
 of the package, an error is signalled."
   (interactive "xPackage List: ")
+  (load "package-get-base.el")
   (let* ((this-package
 	  (package-get-info-version
 	   (package-get-info-find-package package-get-base
@@ -252,8 +254,8 @@ of the package, an error is signalled."
 		  (not (file-exists-p (package-get-staging-dir filename))))
 	(if (file-exists-p (package-get-remote-filename
 			    (car search-dirs) filename))
-	      (copy-file (package-get-remote-filename (car search-dirs) filename)
-			 (package-get-staging-dir filename))
+	    (copy-file (package-get-remote-filename (car search-dirs) filename)
+		       (package-get-staging-dir filename))
 	  (setq search-dirs (cdr search-dirs))
 	  ))
       (if (not (file-exists-p (package-get-staging-dir filename)))
@@ -261,7 +263,7 @@ of the package, an error is signalled."
       ;; Validate the md5 checksum
       ;; Doing it with XEmacs removes the need for an external md5 program
       (with-temp-buffer
-	; What ever happened to i-f-c-literally
+	;; What ever happened to i-f-c-literally
 	(let (file-name-handler-alist)
 	  (insert-file-contents-internal (package-get-staging-dir filename)))
 	(if (not (string= (md5 (current-buffer))
@@ -283,15 +285,15 @@ of the package, an error is signalled."
     ))
 
 (defun package-get-info-find-package (which name)
-  "Look in WHICH for the packaged called NAME and return all the info
-  associated with it.  See `package-get-base' for info on the format
-  returned.
+  "Look in WHICH for the package called NAME and return all the info
+associated with it.  See `package-get-base' for info on the format
+returned.
 
  To access fields returned from this, use
 `package-get-info-version' to return information about particular a
 version.  Use `package-get-info-find-prop' to find particular property 
 from a version returned by `package-get-info-version'."
-  (interactive "xPackage list: sPackage Name: ")
+  (interactive "xPackage list: \nsPackage Name: ")
   (if which
       (if (eq (caar which) name)
 	  (cdar which)
@@ -371,17 +373,19 @@ words
 I'm not sure if I want to do this by searching directories or checking 
 some built in variables.  For now, use packages-package-list."
   ;; Use packages-package-list which contains name and version
-	(equal (plist-get
-			 (package-get-info-find-package packages-package-list
-																			package) ':version)
-				 (if (floatp version) version (string-to-number version))))
+  (equal (plist-get
+	  (package-get-info-find-package packages-package-list
+					 package) ':version)
+	 (if (floatp version) version (string-to-number version))))
 
+;;;###autoload
 (defun package-get-package-provider (sym)
   "Search for a package that provides SYM and return the name and
   version.  Searches in `package-get-base' for SYM.   If SYM is a
   consp, then it must match a corresponding (provide (SYM VERSION)) from 
   the package."
   (interactive "SSymbol: ")
+  (load "package-get-base.el")
   (let ((packages package-get-base)
 	(done nil)
 	(found nil))
@@ -484,7 +488,7 @@ Entries in the customization file are retrieved from package-get-base.el."
 			 "  :group '" category "-packages\n"
 			 "  :initialize 'package-get-ever-installed-p\n"
 			 "  :type 'boolean)\n\n") custom-buffer)))
-	      package-get-base) custom-buffer)
+	    package-get-base) custom-buffer)
   )
 
 ;; need this first to avoid infinite dependency loops

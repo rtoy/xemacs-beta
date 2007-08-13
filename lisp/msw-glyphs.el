@@ -61,7 +61,7 @@
      ;; strings are not allowed so they will be ignored.
      ("" [nothing])))
 
-  (set-face-font 'border-glyph "WingDings:regular:11: :symbol"
+  (set-face-font 'border-glyph "WingDings:Regular:11::Symbol"
 		 'global 'mswindows)
   (set-glyph-image continuation-glyph "\xC3" 'global 'mswindows)
   (set-glyph-image truncation-glyph "\xF0" 'global 'mswindows)

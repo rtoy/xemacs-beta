@@ -94,8 +94,8 @@ CONFIG_ERROR=1
 !message Please specify root directory for your XPM installation: XPM_DIR=path
 CONFIG_ERROR=1
 !endif
-!if $(HAVE_MSW) && $(HAVE_XPM) && defined(XPM_DIR) && !exist("$(XPM_DIR)\LIB\XPM.LIB")
-!message Specified XPM directory does not contain "$(XPM_DIR)\LIB\XPM.LIB"
+!if $(HAVE_MSW) && $(HAVE_XPM) && defined(XPM_DIR) && !exist("$(XPM_DIR)\lib\Xpm.lib")
+!message Specified XPM directory does not contain "$(XPM_DIR)\lib\Xpm.lib"
 CONFIG_ERROR=1
 !endif
 !if $(HAVE_MSW) && $(HAVE_TOOLBARS) && !$(HAVE_XPM)
@@ -259,7 +259,7 @@ PROGRAM_DEFINES=-DINFODOCK 					\
 	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
 	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
 !else
-!if defined(emacs_beta_version)
+!if "$(emacs_beta_version)" != ""
 XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
 !else
 XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
@@ -553,6 +553,11 @@ DOC_SRC9=\
 
 # TEMACS Executable
 
+# This may not exist
+!if "$(emacs_beta_version)" != ""
+EMACS_BETA_VERSION=-DEMACS_BETA_VERSION=$(emacs_beta_version)
+!ENDIF
+
 TEMACS_DIR=$(XEMACS)\src
 TEMACS=$(TEMACS_DIR)\temacs.exe
 TEMACS_BROWSE=$(TEMACS_DIR)\temacs.bsc
@@ -567,7 +572,7 @@ TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS) -base:0x1000000\
 TEMACS_CPP_FLAGS= $(WARN_CPP_FLAGS) $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DEMACS_MAJOR_VERSION=$(emacs_major_version) \
  -DEMACS_MINOR_VERSION=$(emacs_minor_version) \
- -DEMACS_BETA_VERSION=$(emacs_beta_version) \
+ $(EMACS_BETA_VERSION) \
  -DXEMACS_CODENAME=\"$(xemacs_codename)\" \
  -DPATH_PACKAGEPATH=\"$(PATH_PACKAGEPATH)\"
 
@@ -817,12 +822,12 @@ distclean:
 	del *.rej
 	del *.pdb
 	del *.tmp
-	del puresize-adjust.h
 	cd $(OUTDIR)
 	del *.obj
 	del *.sbr
 	del *.lib
 	cd $(XEMACS)\$(TEMACS_DIR)
+	del puresize-adjust.h
 	del config.h
 	del paths.h
 	del Emacs.ad.h

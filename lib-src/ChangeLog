@@ -1,3 +1,12 @@
+1998-06-16  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* gnuclient.c (main): Use disconnect_from_server to read & echo
+	result.
+
+1998-06-15  Andy Piper  <andyp@parallax.co.uk>
+
+	* Makefile.in.in: add xemacs icon to the runemacs executable.
+
 1998-06-12  Jim Radford  <radford@robby.caltech.edu>
 
 	* gnuclient.c (initialize_signals): Don't pass SIGHUP to XEmacs.

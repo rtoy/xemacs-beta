@@ -1,3 +1,14 @@
+1998-06-10  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* texinfo.texi: added ../info/ to @setfilename, broke line after
+	@noindent.  Changed @var{arg-not-used-by-@TeX{}} to
+	@var{arg-not-used-by-@@TeX{}} to make `texinfo-format-buffer'
+	happy.  Fixed refs broken by a previous patch of mine.
+
+1998-06-18  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* lispref/os.texi (os.texi): Document `user-home-directory'.
+
 1998-06-13  Greg Klanderman  <greg@alphatech.com>
 
 	* lispref/windows.texi (Resizing Windows): document third optional 

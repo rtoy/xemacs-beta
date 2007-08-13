@@ -437,6 +437,44 @@
    requires (xemacs-base)
    type regular
 ))
+(sounds-au
+  (standards-version 1.0
+   version "1.01"
+   author-version "21.0"
+   date "1998-06-19"
+   build-date "1998-06-19"
+   maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
+   distribution stable
+   priority high
+   category "libs"
+   dump nil
+   description "XEmacs Sun sound files."
+   filename "sounds-au-1.01-pkg.tar.gz"
+   md5sum "878bde0798d5479ec3c2e1b4da8d5ee5"
+   size 125689
+   provides ()
+   requires ()
+   type regular
+))
+(sounds-wav
+  (standards-version 1.0
+   version "1.01"
+   author-version "21.0"
+   date "1998-06-19"
+   build-date "1998-06-19"
+   maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
+   distribution stable
+   priority high
+   category "libs"
+   dump nil
+   description "XEmacs Microsoft sound files."
+   filename "sounds-wav-1.01-pkg.tar.gz"
+   md5sum "cec8161f3c0ef188d416bb81bd2472c9"
+   size 148571
+   provides ()
+   requires ()
+   type regular
+))
 (tooltalk
   (standards-version 1.0
    version "1.04"
@@ -477,19 +515,19 @@
 ))
 (xemacs-devel
   (standards-version 1.0
-   version "1.12"
-   author-version "21.0b37"
-   date "1998-04-20"
-   build-date "1998-04-22"
+   version "1.13"
+   author-version "21.0"
+   date "1998-06-15"
+   build-date "1998-06-19"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "libs"
    dump nil
    description "Emacs Lisp developer support."
-   filename "xemacs-devel-1.12-pkg.tar.gz"
-   md5sum "7661b0a0e77c30f4147d943b382c0d9c"
-   size 77623
+   filename "xemacs-devel-1.13-pkg.tar.gz"
+   md5sum "3bec2cd2b955fa86617335ad14480e1a"
+   size 78840
    provides (docref eldoc elp find-func hide-copyleft ielm regexp-opt trace)
    requires (xemacs-base)
    type single
@@ -1407,3 +1445,4 @@
    type regular
 ))
 ))
+(provide 'package-get-base)

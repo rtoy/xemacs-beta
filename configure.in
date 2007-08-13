@@ -1811,6 +1811,7 @@ dnl AIX needs various hacks to make static linking work.
   for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp"; do
     if test -r "$f"; then start_flags="${start_flags},-bI:${f}"; break; fi
   done
+  AC_CHECK_LIB(C, terminateAndUnload, XE_APPEND(-lC, libs_system))
   fi
 elif test -n "$ld_text_start_addr"; then
   start_flags="-T $ld_text_start_addr -e __start"

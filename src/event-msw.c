@@ -1893,7 +1893,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       if (wParam==SIZE_MINIMIZED)
 	{
 	  /* Iconified */
-          FRAME_VISIBLE_P (frame) = 0;
+	  FRAME_VISIBLE_P (frame) = 0;
 	  mswindows_enqueue_magic_event (hwnd, XM_UNMAPFRAME);
 	}
       else
@@ -1911,42 +1911,15 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	  /* If we are inside frame creation, we have to apply geometric
 	     properties now. */
-	  if (mswindows_frame_target_rect.left >= 0
-	      || mswindows_frame_target_rect.top >= 0
-	      || mswindows_frame_target_rect.width >= 0
-	      || mswindows_frame_target_rect.height >= 0)
+	  if (FRAME_MSWINDOWS_TARGET_RECT (frame))
 	    {
 	      /* Yes, we have to size again */
-	      XEMACS_RECT_WH geom;
-	      
-	      geom.left = mswindows_frame_target_rect.left;
-	      geom.top = mswindows_frame_target_rect.top;
-	      char_to_real_pixel_size (frame,
-				       mswindows_frame_target_rect.width,
-				       mswindows_frame_target_rect.height,
-				       &geom.width, &geom.height);
-	      if (mswindows_frame_target_rect.width < 0)
-		geom.width = -1;
-	      if (mswindows_frame_target_rect.height < 0)
-		geom.height = -1;
-
+	      mswindows_size_frame_internal ( frame, 
+					      FRAME_MSWINDOWS_TARGET_RECT 
+					      (frame));
 	      /* Reset to we do not get here again */
-	      mswindows_frame_target_rect.left = -1;
-	      mswindows_frame_target_rect.top = -1;
-	      mswindows_frame_target_rect.width = -1;
-	      mswindows_frame_target_rect.height = -1;
-
-	      /* Size the rectangle to the actual size */
-	      GetWindowRect (hwnd, &rect);
-	      SetWindowPos
-		(hwnd, NULL,
-		 geom.left >= 0 ? geom.left : rect.left,
-		 geom.top >= 0 ? geom.top : rect.top,
-		 geom.width >= 0 ? geom.width : rect.right - rect.left,
-		 geom.height >= 0 ? geom.height : rect.bottom - rect.top,
-		 SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING
-		 | ((geom.left >= 0 || geom.top >= 0) ? 0 : SWP_NOMOVE)
-		 | ((geom.width >= 0 || geom.height >= 0) ? 0 : SWP_NOSIZE));
+	      xfree (FRAME_MSWINDOWS_TARGET_RECT (frame));
+	      FRAME_MSWINDOWS_TARGET_RECT (frame) = 0;
 	    }
 	  else
 	    {

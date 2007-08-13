@@ -1,3 +1,22 @@
+1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* file.ico, lisp.ico:
+	  New icons to represent a generic file and a lisp file.
+
+	* xemacs.rc: Build file.ico and lisp.ico into the executable.
+
+1998-06-15  Peter Windle <peterw@sdl.ug.eds.com>
+
+	* xemacs.mak: Made XPM and X11 checks cope with case-sensitive
+	NFS. Also apply Sean MacLennan's change allowing
+	emacs_beta_version to be undefined.
+
+1998-06-19  SL Baur  <steve@altair.xemacs.org>
+
+	* xemacs.mak (distclean): Reorder when puresize-adjust.h gets
+	deleted.
+	From Adrian Aichner <aichner@ecf.teradyne.com>
+
 1998-06-08  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* config.h: Undefined DONT_ENCAPSULATE.
@@ -389,14 +408,3 @@ Wed Mar 12 23:18:53 1997  marcpa  (marcpa at MARCPA)
 	* cpp.exe not used: cl.exe from VC++4.2 seems to handle everything
 	properly. 
 
-NOTES:
-
-Compilation with nmake -f xemacs.mak.
-
-Using X11R6.3 for NT.
-
-Work started with 20.1b2.
-
-Local Variables:
-mode: change-log
-End:

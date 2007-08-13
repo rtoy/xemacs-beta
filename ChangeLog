@@ -1,3 +1,11 @@
+1998-06-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre2 is released.
+
+1998-06-18  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.in: Added -lC for static linking under AIX 4.2.
+
 1998-06-14  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre1 is released.

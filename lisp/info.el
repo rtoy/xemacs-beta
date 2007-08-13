@@ -869,7 +869,7 @@ actually get any text from."
       ;; the list of them so that when they get pushed in, they appear
       ;; in the same order they got specified in the path, from top to
       ;; bottom.
-      (nconc buffers (nreverse lbuffers))
+      (nconc buffers (reverse lbuffers))
       
       (or buffers
 	  (error "Can't find the Info directory node"))
@@ -880,7 +880,7 @@ actually get any text from."
 	    ;; reverse it since they are pushed down from the top. the
 	    ;; `Info-directory-list can be specified in natural order
 	    ;; this way.
-	    others (nreverse (cdr buffers)))
+	    others (reverse (cdr buffers)))
 
       ;; Insert the entire original dir file as a start; note that we've
       ;; already saved its default directory to use as the default

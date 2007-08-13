@@ -1,9 +1,9 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $Id: texinfo.texi,v 1.6 1998/06/13 04:28:16 steve Exp $
+@c $Id: texinfo.texi,v 1.7 1998/06/20 00:58:34 steve Exp $
 @c %**start of header
 
 @c All text is ignored before the setfilename.
-@setfilename texinfo
+@setfilename ../info/texinfo
 @settitle Texinfo @value{edition}
 
 @c Edition number is now the same as the Texinfo distribution version number.
@@ -924,7 +924,7 @@ light-hearted, young and cheery.@refill
 @TeX{} is freely distributable.  It is written in a superset of Pascal
 called WEB and can be compiled either in Pascal or (by using a
 conversion program that comes with the @TeX{} distribution) in C.
-(@xref{TeX Mode, ,@TeX{} Mode, emacs, The GNU Emacs Manual}, for information
+(@xref{TeX Mode, ,@TeX{} Mode, xemacs, XEmacs User's Manual}, for information
 about @TeX{}.)@refill
 
 @TeX{} is very powerful and has a great many features.  Because a
@@ -1561,8 +1561,8 @@ equivalents, such as appendices.  With this value for the page
 delimiter, you can jump from chapter title to chapter title with the
 @kbd{C-x ]} (@code{forward-page}) and @kbd{C-x [}
 (@code{backward-page}) commands and narrow to a chapter with the
-@kbd{C-x p} (@code{narrow-to-page}) command.  (@xref{Pages, , ,emacs,
-The GNU Emacs Manual}, for details about the page commands.)@refill
+@kbd{C-x p} (@code{narrow-to-page}) command.  (@xref{Pages, , , xemacs,
+XEmacs User's Manual}, for details about the page commands.)@refill
 
 You may name a Texinfo file however you wish, but the convention is to
 end a Texinfo file name with one of the three extensions
@@ -1777,7 +1777,7 @@ off the region of the buffer that you are interested in by using the
 @kbd{C-x n n} (@code{narrow-to-region}) command and
 @code{texinfo-show-structure} will work on only that region.  To see
 the whole buffer again, use @w{@kbd{C-x n w}} (@code{widen}).
-(@xref{Narrowing, , , emacs, The GNU Emacs Manual}, for more
+(@xref{Narrowing, , , xemacs, XEmacs User's Manual}, for more
 information about the narrowing commands.)@refill
 
 @vindex page-delimiter
@@ -1788,7 +1788,7 @@ the chapter-level @@-commands.  This enables you to use the @kbd{C-x
 ]} (@code{forward-page}) and @kbd{C-x [} (@code{backward-page})
 commands to move forward and backward by chapter, and to use the
 @kbd{C-x p} (@code{narrow-to-page}) command to narrow to a chapter.
-@xref{Pages, , , emacs, The GNU Emacs Manual}, for more information
+@xref{Pages, , , xemacs, XEmacs User's Manual}, for more information
 about the page commands.@refill
 
 @node Updating Nodes and Menus, Info Formatting, Showing the Structure, Texinfo Mode
@@ -1975,10 +1975,9 @@ The @code{texinfo-column-for-description} variable specifies the
 column to which menu descriptions are indented.  By default, the value
 is 32 although it is often useful to reduce it to as low as 24.  You
 can set the variable with the @kbd{M-x edit-options} command
-(@pxref{Edit Options, , Editing Variable Values, emacs, The GNU Emacs
-Manual}) or with the @kbd{M-x set-variable} command (@pxref{Examining,
-, Examining and Setting Variables, emacs, The GNU Emacs
-Manual}).@refill
+(@pxref{Edit Options, , Editing Variable Values, xemacs, XEmacs User's
+Manual}) or with the @kbd{M-x set-variable} command (@pxref{Examining, ,
+Examining and Setting Variables, xemacs, XEmacs User's Manual}).@refill
 
 Also, the @code{texinfo-indent-menu-description} command may be used to
 indent existing menu descriptions to a specified column.  Finally, if
@@ -6146,26 +6145,30 @@ The official GNU ftp site is
 @@uref@{ftp://ftp.gnu.ai.mit.edu/pub/gnu@}
 @end example
 
-@noindent produces (in text):
+@noindent
+produces (in text):
 @display
 The official GNU ftp site is
 @uref{ftp://ftp.gnu.ai.mit.edu/pub/gnu}
 @end display
 
-@noindent whereas
+@noindent
+whereas
 @example
 The official
 @@uref@{ftp://ftp.gnu.ai.mit.edu/pub/gnu,
   GNU ftp site@} holds programs and texts.
 @end example
 
-@noindent produces (in text):
+@noindent
+produces (in text):
 @display
 The official @uref{ftp://ftp.gnu.ai.mit.edu/pub/gnu, GNU ftp site} holds
 programs and texts.
 @end display
 
-@noindent and (in HTML):
+@noindent
+and (in HTML):
 @example
 The official <A HREF="ftp://ftp.gnu.ai.mit.edu/pub/gnu">GNU ftp
 site</A> holds programs and texts.
@@ -6806,7 +6809,8 @@ For example:
 Send bug reports to @@email@{bug-texinfo@@@@gnu.org@}.
 Send suggestions to the @@email@{bug-texinfo@@@@gnu.org, same place@}.
 @end example
-@noindent produces
+@noindent
+produces
 @example
 Send bug reports to @email{bug-texinfo@@gnu.org}.
 Send suggestions to the @email{bug-texinfo@@gnu.org, same place}.
@@ -8188,7 +8192,8 @@ To specify column widths as fractions of the line length, write
 @@multitable @@columnfractions .33 .33 .33
 @end example
 
-@noindent The fractions need not add up exactly to 1.0, as these do
+@noindent
+The fractions need not add up exactly to 1.0, as these do
 not.  This allows you to produce tables that do not need the full line
 length.
 
@@ -8229,7 +8234,7 @@ input lines in your source file as necessary.
 
 Here is a complete example of a multi-column table (the text is from
 @cite{The GNU Emacs Manual}, @pxref{Split Window,, Splitting Windows,
-emacs, The GNU Emacs Manual}):
+xemacs, XEmacs User's Manual}):
 
 @example
 @@multitable @@columnfractions .15 .45 .4
@@ -8249,7 +8254,8 @@ split that window.
 @@end multitable
 @end example
 
-@noindent produces:
+@noindent
+produces:
 
 @multitable @columnfractions .15 .45 .4
 @item Key @tab Command @tab Description
@@ -8865,7 +8871,7 @@ In the Info file output, @code{@@.}@: is equivalent to a simple
 
 The meanings of @code{@@:} and @code{@@.}@: in Texinfo are designed to
 work well with the Emacs sentence motion commands (@pxref{Sentences,,,
-emacs, The GNU Emacs Manual}).  This made it necessary for them to be
+xemacs, XEmacs User's Manual}).  This made it necessary for them to be
 incompatible with some other formatting systems that use @@-commands.
 
 Do not put braces after any of these commands.
@@ -8903,7 +8909,8 @@ Spacey@@ @@ @@ @@
 example.
 @end example
 
-@noindent produces
+@noindent
+produces
 
 @example
 Spacey@ @ @ @
@@ -9833,7 +9840,8 @@ put a @samp{-} at each hyphenation point.  For example:
 @example
 @@hyphenation@{man-u-script man-u-scripts@}
 @end example
-@noindent @TeX{} only uses the specified hyphenation points when the
+@noindent
+@TeX{} only uses the specified hyphenation points when the
 words match exactly, so give all necessary variants.
 @end table
 
@@ -10415,7 +10423,7 @@ works like @code{@@defun}.@refill
 @item @@defspec @var{name} @var{arguments}@dots{}
 The @code{@@defspec} command is the definition command for special
 forms.  (In Lisp, a special form is an entity much like a function,
-@pxref{Special Forms,,, elisp, GNU Emacs Lisp Reference Manual}.)
+@pxref{Special Forms,,, lispref, XEmacs Lisp Reference Manual}.)
 @code{@@defspec} is equivalent to @samp{@@deffn @{Special Form@}
 @dots{}} and works like @code{@@defun}.@refill
 @end table
@@ -10502,7 +10510,7 @@ The template is:
 @cindex User options, marking
 The @code{@@defopt} command is the definition command for @dfn{user
 options}, i.e., variables intended for users to change according to
-taste; Emacs has many such (@pxref{Variables,,, emacs, The GNU Emacs
+taste; Emacs has many such (@pxref{Variables,,, xemacs, XEmacs User's
 Manual}).  @code{@@defopt} is equivalent to @samp{@@defvr @{User
 Option@} @dots{}} and works like @code{@@defvar}.@refill
 @end table
@@ -11036,8 +11044,8 @@ commands.  The name of the function follows immediately after the
 @code{@@defun} command and it is followed, on the same line, by the
 parameter list.@refill
 
-Here is a definition from @ref{Calling Functions,,, elisp, The GNU Emacs
-Lisp Reference Manual}.
+Here is a definition from @ref{Calling Functions,,, lispref, XEmacs Lisp
+Reference Manual}.
 
 @quotation
 @defun apply function &rest arguments
@@ -11297,9 +11305,9 @@ If you use @code{texinfo-format-buffer} or
 It can be either @samp{"separate"} for the separate node style or
 @samp{"end"} for the end of node style.  (You can change the value of
 this variable with the @kbd{M-x edit-options} command (@pxref{Edit
-Options, , Editing Variable Values, emacs, The GNU Emacs Manual}), or
+Options, , Editing Variable Values, xemacs, XEmacs User's Manual}), or
 with the @kbd{M-x set-variable} command (@pxref{Examining, , Examining
-and Setting Variables, emacs, The GNU Emacs Manual}).@refill
+and Setting Variables, xemacs, XEmacs User's Manual}).@refill
 
 The @code{texinfo-footnote-style} variable also controls the style if
 you use the @kbd{M-x makeinfo-region} or @kbd{M-x makeinfo-buffer}
@@ -11852,7 +11860,8 @@ After a macro is defined (see the previous section), you can use
 @@@var{macro-name} @{@var{arg1}, @var{arg2}, @dots{}@}
 @end example
 
-@noindent and the result will be just as if you typed the body of
+@noindent
+and the result will be just as if you typed the body of
 @var{macro-name} at that spot.  For example:
 
 @example
@@ -11862,7 +11871,8 @@ Together: \p\ & \q\.
 @@foo@{a, b@}
 @end example
 
-@noindent produces:
+@noindent
+produces:
 
 @display
 Together: a & b.
@@ -11893,7 +11903,8 @@ Twice: \p\, \p\.
 @@bar aah
 @end example
 
-@noindent produces:
+@noindent
+produces:
 
 @display
 Twice: aah, aah.
@@ -11970,7 +11981,8 @@ the name of the Texinfo file.  For example:
 tex foo.texi
 @end example
 
-@noindent @TeX{} will produce a @dfn{DVI file} as well as several auxiliary
+@noindent
+@TeX{} will produce a @dfn{DVI file} as well as several auxiliary
 files containing information for indices, cross references, etc.  The
 DVI file (for @dfn{DeVice Independent} file) can be printed on virtually
 any printe (see the following sections).
@@ -12252,10 +12264,10 @@ tex-show-queue-command                    "lpq"
 
 You can change the values of these variables with the @kbd{M-x
 edit-options} command (@pxref{Edit Options, , Editing Variable Values,
-emacs, The GNU Emacs Manual}), with the @kbd{M-x set-variable} command
-(@pxref{Examining, , Examining and Setting Variables, emacs, The GNU
-Emacs Manual}), or with your @file{.emacs} initialization file
-(@pxref{Init File, , , emacs, The GNU Emacs Manual}).@refill
+xemacs, XEmacs User's Manual}), with the @kbd{M-x set-variable} command
+(@pxref{Examining, , Examining and Setting Variables, xemacs, XEmacs
+User's Manual}), or with your @file{.emacs} initialization file
+(@pxref{Init File, , , xemacs, XEmacs User's Manual}).@refill
 
 @node Compile-Command, Requirements Summary, Texinfo Mode Printing, Format/Print Hardcopy
 @comment  node-name,  next,  previous,  up
@@ -12283,7 +12295,7 @@ End:
 
 @noindent
 This technique is most often used by programmers who also compile programs
-this way; see @ref{Compilation, , , emacs, The GNU Emacs Manual}.@refill
+this way; see @ref{Compilation, , , xemacs, XEmacs User's Manual}.@refill
 
 
 @node Requirements Summary, Preparing for TeX, Compile-Command, Format/Print Hardcopy
@@ -12948,7 +12960,7 @@ You can parse the error messages by typing @kbd{C-x `}
 (@code{next-error}).  This causes Emacs to go to and position the
 cursor on the line in the Texinfo source that @code{makeinfo} thinks
 caused the error.  @xref{Compilation, , Running @code{make} or
-Compilers Generally, emacs, The GNU Emacs Manual}, for more
+Compilers Generally, xemacs, XEmacs User's Manual}, for more
 information about using the @code{next-error} command.@refill
 
 In addition, you can kill the shell in which the @code{makeinfo}
@@ -13000,9 +13012,9 @@ Manual}.
 @noindent
 @ifinfo
 For more information, see@*
-@ref{Edit Options, , Editing Variable Values, emacs, The GNU Emacs Manual},@*
-@ref{Examining, , Examining and Setting Variables, emacs, The GNU Emacs Manual},@*
-@ref{Init File, , , emacs, The GNU Emacs Manual}, and@*
+@ref{Edit Options, , Editing Variable Values, xemacs, XEmacs User's Manual},@*
+@ref{Examining, , Examining and Setting Variables, xemacs, XEmacs User's Manual},@*
+@ref{Init File, , , xemacs, XEmacs User's Manual}, and@*
 @ref{makeinfo options, , Options for @code{makeinfo}}.
 @end ifinfo
 
@@ -13052,7 +13064,7 @@ provides better error checking (@pxref{makeinfo in Emacs}).@refill
 You can format Texinfo files for Info using @code{batch-texinfo-format}
 and Emacs Batch mode.  You can run Emacs in Batch mode from any shell,
 including a shell inside of Emacs.  (@xref{Command Switches, , Command
-Line Switches and Arguments, emacs, The GNU Emacs Manual}.)@refill
+Line Switches and Arguments, xemacs, XEmacs User's Manual}.)@refill
 
 Here is a shell command to format all the files that end in
 @file{.texinfo} in the current directory:
@@ -13099,7 +13111,7 @@ memory when you run Info.  (Before splitting was implemented, Info
 files were always kept short and @dfn{include files} were designed as
 a way to create a single, large printed manual out of the smaller Info
 files.  @xref{Include Files}, for more information.  Include files are
-still used for very large documents, such as @cite{The Emacs Lisp
+still used for very large documents, such as @cite{The XEmacs Lisp
 Reference Manual}, in which each chapter is a separate file.)@refill
 
 When a file is split, Info itself makes use of a shortened version of
@@ -15135,7 +15147,7 @@ and the printed manual.@refill
 Also, if you are writing a manual about software, you should explain
 that the software is free and either include the GNU General Public
 License (GPL) or provide a reference to it.  @xref{Distrib, ,
-Distribution, emacs, The GNU Emacs Manual}, for an example of the text
+Distribution, xemacs, XEmacs User's Manual}, for an example of the text
 that could be used in the software ``Distribution'', ``General Public
 License'', and ``NO WARRANTY'' sections of a document.  @xref{Copying,
 , Texinfo Copying Conditions}, for an example of a brief explanation
@@ -15511,7 +15523,7 @@ The full contents of @file{concept-index.texinfo} might be as simple as this:
 @end group
 @end example
 
-The outer Texinfo source file for @cite{The GNU Emacs Lisp Reference
+The outer Texinfo source file for @cite{The XEmacs Lisp Reference
 Manual} is named @file{elisp.texi}.  This outer file contains a master
 menu with 417 entries and a list of 41 @code{@@include}
 files.@refill
@@ -15546,7 +15558,7 @@ However, because large Info files are now split automatically, it is
 no longer necessary to keep them small.@refill
 
 Nowadays, multiple Texinfo files are used mostly for large documents,
-such as @cite{The GNU Emacs Lisp Reference Manual}, and for projects
+such as @cite{The XEmacs Lisp Reference Manual}, and for projects
 in which several different people write different sections of a
 document simultaneously.@refill
 
@@ -16106,8 +16118,8 @@ Inside the function @code{texinfo-format-parse-args}, the function
 @code{re-search-forward} was called; it was this function that could
 not find the missing right-hand brace.@refill
 
-@xref{Lisp Debug, , Debugging Emacs Lisp, emacs, The GNU Emacs
-Manual}, for more information.@refill
+@xref{Lisp Debug, , Debugging Emacs Lisp, xemacs, XEmacs User's Manual},
+for more information.@refill
 @end ignore
 
 @node Debugging with TeX, Using texinfo-show-structure, Debugging with Info, Catching Mistakes
@@ -16286,20 +16298,20 @@ commands respectively.  If you move your cursor into the @samp{*Occur*}
 window, you can position the cursor over one of the lines and use the
 @kbd{C-c C-c} command (@code{occur-mode-goto-occurrence}), to jump to
 the corresponding spot in the Texinfo file.  @xref{Other Repeating
-Search, , Using Occur, emacs, The GNU Emacs Manual}, for more
+Search, , Using Occur, xemacs, XEmacs User's Manual}, for more
 information about @code{occur-mode-goto-occurrence}.@refill
 
 The first line in the @samp{*Occur*} window describes the @dfn{regular
 expression} specified by @var{texinfo-heading-pattern}.  This regular
 expression is the pattern that @code{texinfo-show-structure} looks for.
-@xref{Regexps, , Using Regular Expressions, emacs, The GNU Emacs Manual},
+@xref{Regexps, , Using Regular Expressions, xemacs, XEmacs User's Manual},
 for more information.@refill
 
 When you invoke the @code{texinfo-show-structure} command, Emacs will
 display the structure of the whole buffer.  If you want to see the
 structure of just a part of the buffer, of one chapter, for example,
 use the @kbd{C-x n n} (@code{narrow-to-region}) command to mark the
-region.  (@xref{Narrowing, , , emacs, The GNU Emacs Manual}.)  This is
+region.  (@xref{Narrowing, , , xemacs, XEmacs User's Manual}.)  This is
 how the example used above was generated.  (To see the whole buffer
 again, use @kbd{C-x n w} (@code{widen}).)@refill
 
@@ -16331,10 +16343,10 @@ command directly.  To do this, type@refill
 @noindent
 and then, when prompted, type a @dfn{regexp}, a regular expression for
 the pattern you want to match.  (@xref{Regexps, , Regular Expressions,
-emacs, The GNU Emacs Manual}.)  The @code{occur} command works from
-the current location of the cursor in the buffer to the end of the
-buffer.  If you want to run @code{occur} on the whole buffer, place
-the cursor at the beginning of the buffer.@refill
+xemacs, XEmacs User's Manual}.)  The @code{occur} command works from the
+current location of the cursor in the buffer to the end of the buffer.
+If you want to run @code{occur} on the whole buffer, place the cursor at
+the beginning of the buffer.@refill
 
 For example, to see all the lines that contain the word
 @samp{@@chapter} in them, just type @samp{@@chapter}.  This will
@@ -16349,7 +16361,7 @@ or phrase, end the last word with a @samp{$}; for example,
 all the nodes that are part of the same chapter or section and
 therefore have the same `Up' pointer.@refill
 
-@xref{Other Repeating Search, , Using Occur, emacs , The GNU Emacs Manual},
+@xref{Other Repeating Search, , Using Occur, xemacs, XEmacs User's Manual},
 for more information.@refill
 
 @node Running Info-Validate,  , Using occur, Catching Mistakes
@@ -16758,7 +16770,8 @@ Electronic mail: @code{mackay@@cs.washington.edu}
 @end group
 @end display
 
-@noindent Please make checks payable to the University of Washington.
+@noindent
+Please make checks payable to the University of Washington.
 Checks must be in U.S.@: dollars, drawn on a U.S.@: bank.  Overseas
 sites: please add to the base cost, if desired, $20.00 for shipment via
 air parcel post, or $30.00 for shipment via courier.

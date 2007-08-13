@@ -2075,6 +2075,8 @@ whether it is a file(/result) or a directory (/result/)."
 	     (kill-buffer (current-buffer))))
 	 (setq x-read-color-completion-table clist)
 	 x-read-color-completion-table)))
+    (mswindows
+     (mapcar #'list (mswindows-color-list)))
     (tty
      (mapcar #'list (tty-color-list)))))
 
@@ -2082,7 +2084,8 @@ whether it is a file(/result) or a directory (/result/)."
   "Read the name of a color from the minibuffer.
 On X devices, this uses `x-library-search-path' to find rgb.txt in order
  to build a completion table.
-On TTY devices, this uses `tty-color-list'."
+On TTY devices, this uses `tty-color-list'.
+On mswindows devices, this uses `mswindows-color-list'."
   (let ((table (read-color-completion-table)))
     (completing-read prompt table nil (and table must-match)
 		     initial-contents)))

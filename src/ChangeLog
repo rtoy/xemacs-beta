@@ -1,3 +1,86 @@
+1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* redisplay-msw.c: new function mswindows_apply_face_effects.
+	  This is called by output_string and output_cursor to display
+	  underline and strikeout on faces.
+
+1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* console-msw.h: added a list of fonts to device data.
+
+	* device-msw.c: enumerate list of available fonts in
+	  mswindows_init_device. Free list in mswindows_delete_device.
+
+	* objects-msw.c: Added helper function match_font used by
+	  mswindows_initialize_font_instance and mswindows_list_fonts.
+	  Allow a charset to be specified in a font string, even if
+	  previous fields havn't been specified.
+
+1998-06-15  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* objects-msw.c:
+	  Removed compilation warnings from mswindows_string_to_color.
+	  mswindows_list_fonts returns a more general bogus font.
+	  New lisp-visible function mswindows-color-list.
+
+1998-06-19  David Bush <david.bush@adn.alcatel.com>
+
+	* editfns.c (Fuser_login_name): Modify to user new function
+	user_login_name.
+	(user_login_name): C only function to avoid Lisp object overhead
+	Returns "unknown" instead of nil in Cygwin environment
+
+	* fileio.c (Fexpand_file_name): Treat "~" and "~user" as
+	equivalent for current user in Cygwin environment. Use new
+	function user_login_name to get username.
+
+	* lisp.h: Declare user_login_name
+
+1998-06-18  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* unexaix.c (make_hdr): Fixed bias computations so debugging info
+	works again.
+	Some other insignificant nitpicks.
+
+1998-06-18  Andy Piper  <andyp@parallax.co.uk>
+
+	* toolbar-msw.c (mswindows_output_toolbar): specify ILC_MASK when
+	creating the image list and make sure he bk color is transparent.
+
+1998-06-18  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* event-Xt.c (emacs_Xt_remove_timeout): Also remove timeout from
+	completed_timeouts. The timer could have expired.
+
+1998-06-17  Andy Piper  <andyp@parallax.co.uk>
+
+	* console-msw.h: move XEMACS_RECT_WH inside frame
+	parameters. define macors to access it.
+
+	* frame-msw.c (mswindows_init_frame_1): use new target_rect
+	parameter to intialise desired sizing. (mswindows_init_frame_2):
+	enable and size the frame to something sensible when we get
+	here. (mswindows_set_frame_properites): use new
+	mswindows_size_frame_internal function and size frame if frame
+	parameters not just if init is finished - WM_SIZE happens too
+	early for some specs. (mswindows_size_frame_internal): new
+	function abstracted from mswindows_set_frame_properties. 
+	(Vmswindows_use_system_frame_size_defaults):
+	new variable controls whether to allow the system to pick frame
+	size defaults, defaults to nil.
+
+	* event-msw.c: in WM_SIZE use mswindows_size_frame_internal rather
+	than duplicated code.
+
+1998-06-15  Colin Rafferty <colin@xemacs.org>
+
+	* Makefile.in.in: Made EXTW_LINK expand properly.
+
+1998-06-12  Martin Buchholz  <martin@xemacs.org>
+
+	* redisplay.c (vars_of_redisplay): default value of
+	column-number-start-at-one should be NIL!
+
 1998-06-11  Martin Buchholz  <martin@xemacs.org>
 
 	* casefiddle.c:

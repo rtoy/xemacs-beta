@@ -83,6 +83,14 @@ struct mswindows_console
  * Device
  */
 
+#define MSW_FONTSIZE (LF_FACESIZE*4+12)
+
+struct mswindows_font_enum
+{
+  char fontname[MSW_FONTSIZE];
+  struct mswindows_font_enum *next;
+};
+
 struct mswindows_device
 {
   int logpixelsx, logpixelsy;
@@ -90,6 +98,7 @@ struct mswindows_device
   int horzres, vertres;		/* Size in pixels */
   int horzsize, vertsize;	/* Size in mm */
   int bitspixel;
+  struct mswindows_font_enum *fontlist;
 };
 
 #define DEVICE_MSWINDOWS_DATA(d) DEVICE_TYPE_DATA (d, mswindows)
@@ -102,11 +111,19 @@ struct mswindows_device
 #define DEVICE_MSWINDOWS_HORZSIZE(d) 	(DEVICE_MSWINDOWS_DATA (d)->horzsize)
 #define DEVICE_MSWINDOWS_VERTSIZE(d) 	(DEVICE_MSWINDOWS_DATA (d)->vertsize)
 #define DEVICE_MSWINDOWS_BITSPIXEL(d) 	(DEVICE_MSWINDOWS_DATA (d)->bitspixel)
+#define DEVICE_MSWINDOWS_FONTLIST(d) 	(DEVICE_MSWINDOWS_DATA (d)->fontlist)
 
 
 /*
  * Frame
  */
+typedef struct
+{
+  int left;
+  int top;
+  int width;
+  int height;
+} XEMACS_RECT_WH;
 
 struct mswindows_frame
 {
@@ -150,6 +167,10 @@ struct mswindows_frame
   int ignore_next_lbutton_up : 1;
   int ignore_next_rbutton_up : 1;
   int sizing : 1;
+
+  /* Geometry, in characters, as specified by proplist during frame
+     creation. Memebers are set to -1 for unspecified */
+  XEMACS_RECT_WH* target_rect;
 };
 
 #define FRAME_MSWINDOWS_DATA(f) FRAME_TYPE_DATA (f, mswindows)
@@ -166,6 +187,7 @@ struct mswindows_frame
 #define FRAME_MSWINDOWS_TITLE_CHECKSUM(f) (FRAME_MSWINDOWS_DATA (f)->title_checksum)
 #define FRAME_MSWINDOWS_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)
 #define FRAME_MSWINDOWS_CHARHEIGHT(f)	  (FRAME_MSWINDOWS_DATA (f)->charheight)
+#define FRAME_MSWINDOWS_TARGET_RECT(f)	  (FRAME_MSWINDOWS_DATA (f)->target_rect)
 
 /* Frame check and validation macros */
 #define FRAME_MSWINDOWS_P(frm) CONSOLE_TYPESYM_MSWINDOWS_P (FRAME_TYPE (frm))
@@ -200,6 +222,7 @@ LRESULT WINAPI mswindows_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam,
 
 void mswindows_redraw_exposed_area (struct frame *f, int x, int y, 
 				    int width, int height);
+void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest);
 
 /* win32 DDE management library */
 #define MSWINDOWS_DDE_ITEM_OPEN "Open"
@@ -225,15 +248,6 @@ HANDLE get_nt_process_handle (struct Lisp_Process *p);
 #endif
 
 extern Lisp_Object Vmswindows_frame_being_created;
-typedef struct
-{
-  int left;
-  int top;
-  int width;
-  int height;
-} XEMACS_RECT_WH;
-
-extern XEMACS_RECT_WH mswindows_frame_target_rect;
 extern Lisp_Object mswindows_frame_being_created;
 
 #endif /* _XEMACS_CONSOLE_MSW_H_ */

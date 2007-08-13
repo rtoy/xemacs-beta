@@ -1,3 +1,61 @@
+1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* font.el: Split font-family-mappings into X and
+	  mswindows-specific versions.
+	  mswindows-font-create-[object|name]: Treat supplied size
+	  as a pointsize. Added underline and strikethru handling.
+
+	* msw-faces.el: changed default mswindows charset to western.
+
+	* msw-glyphs.el: removed space in border-glyph font string that
+	  was inserted to get round bugs in the mswindows C font code.
+
+1998-06-15  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* minibuf.el: make read-color-completion-table call 
+	  (mswindows-color-list for mswindows devices.
+
+1998-06-18  Sam Mikes  <smikes@alumni.hmc.edu>
+
+	* lisp/font-lock.el
+	(font-lock-match-c++-style-declaration-item-and-skip-to-next):
+	Let declaration items contain non-word symbol characters.
+
+1998-06-15  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* package-get.el (package-get-package-provider): Added autoload
+	cookie.  Loading "package-get-base.el" in ALL functions that use
+	it.  Fixed some (interactive ...) with multiple argument specs
+	again.  Cosmetic indentation changes.
+
+1998-05-27  Glynn Clements  <glynn@sensei.co.uk>
+
+	* info.el (Info-insert-dir): Don't use nreverse on variables
+	that you want to use later.
+
+1998-06-17  Glynn Clements  <glynn@sensei.co.uk>
+
+	* x-mouse.el (x-set-point-and-move-selection): Replace call
+	to x-kill-primary-selection with kill-primary-selection
+
+1998-06-12  Martin Buchholz  <martin@xemacs.org>
+
+	* simple.el (what-cursor-position): Make cursor position reported
+	use value of column-number-start-at-one
+
+1998-06-17  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (xemacs-hackers): Fix Jareth's email address.
+
+1998-06-16  SL Baur  <steve@altair.xemacs.org>
+
+	* startup.el (startup-splash-frame): Remove
+	`xemacs-startup-logo-function'.
+
+1998-06-15  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): Update credits list.
+
 1998-06-06  Jeff Miller <jmiller@smart.net>
 
 	* lisp/sound.el: Update sound-ext to allow filenames with

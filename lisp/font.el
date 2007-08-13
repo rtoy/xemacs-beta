@@ -141,40 +141,6 @@ for use in the 'weight' field of an X font string.")
 (defvar font-maximum-slippage "1pt"
   "How much a font is allowed to vary from the desired size.")
 
-(defvar font-family-mappings
-  '(
-    ("serif"        . ("new century schoolbook"
-		       "utopia"
-		       "charter"
-		       "times"
-		       "lucidabright"
-		       "garamond"
-		       "palatino"
-		       "times new roman"
-		       "baskerville"
-		       "bookman"
-		       "bodoni"
-		       "computer modern"
-		       "rockwell"
-		       ))
-    ("sans-serif"   . ("lucida"
-		       "helvetica"
-		       "gills-sans"
-		       "avant-garde"
-		       "univers"
-		       "optima"))
-    ("elfin"        . ("tymes"))
-    ("monospace"    . ("courier"
-		       "courier new"
-		       "fixed"
-		       "lucidatypewriter"
-		       "clean"
-		       "terminal"))
-    ("cursive"      . ("sirene"
-		       "zapf chancery"))
-    )
-  "A list of font family mappings.")
-
 (define-font-keywords :family :style :size :registry :encoding)
 
 (define-font-keywords
@@ -520,6 +486,39 @@ for use in the 'weight' field of an X font string.")
 	    (encoding "[^-]+"))
 	(concat - "\\(" registry "\\)" - "\\(" encoding "\\)\\'"))))
 
+(defvar font-x-family-mappings
+  '(
+    ("serif"        . ("new century schoolbook"
+		       "utopia"
+		       "charter"
+		       "times"
+		       "lucidabright"
+		       "garamond"
+		       "palatino"
+		       "times new roman"
+		       "baskerville"
+		       "bookman"
+		       "bodoni"
+		       "computer modern"
+		       "rockwell"
+		       ))
+    ("sans-serif"   . ("lucida"
+		       "helvetica"
+		       "gills-sans"
+		       "avant-garde"
+		       "univers"
+		       "optima"))
+    ("elfin"        . ("tymes"))
+    ("monospace"    . ("courier"
+		       "fixed"
+		       "lucidatypewriter"
+		       "clean"
+		       "terminal"))
+    ("cursive"      . ("sirene"
+		       "zapf chancery"))
+    )
+  "A list of font family mappings on X devices.")
+
 (defun x-font-create-object (fontname &optional device)
   (let ((case-fold-search t))
     (if (or (not (stringp fontname))
@@ -583,7 +582,7 @@ for use in the 'weight' field of an X font string.")
 		(normal (mapcar (function (lambda (x) (if x (aref x 0))))
 				(aref menu 1))))
 	    (sort (font-unique (nconc scaled normal)) 'string-lessp))))
-    (cons "monospace" (mapcar 'car font-family-mappings))))
+    (cons "monospace" (mapcar 'car font-x-family-mappings))))
 
 (defvar font-default-cache nil)
 
@@ -671,13 +670,13 @@ for use in the 'weight' field of an X font string.")
 	(while (and family (not done))
 	  (setq cur-family (car family)
 		family (cdr family))
-	  (if (assoc cur-family font-family-mappings)
+	  (if (assoc cur-family font-x-family-mappings)
 	      ;; If the family name is an alias as defined by
-	      ;; font-family-mappings, then append those families
+	      ;; font-x-family-mappings, then append those families
 	      ;; to the front of 'family' and continue in the loop.
 	      (setq family (append
 			    (cdr-safe (assoc cur-family
-					     font-family-mappings))
+					     font-x-family-mappings))
 			    family))
 	    ;; Not an alias for a list of fonts, so we just check it.
 	    ;; First, convert all '-' to spaces so that we don't screw up
@@ -750,13 +749,14 @@ for use in the 'weight' field of an X font string.")
       (while (and family (not done))
 	(setq cur-family (car family)
 	      family (cdr family))
-	(if (assoc cur-family font-family-mappings)
+	(if (assoc cur-family font-x-family-mappings)
 	    ;; If the family name is an alias as defined by
-	    ;; font-family-mappings, then append those families
+	    ;; font-x-family-mappings, then append those families
 	    ;; to the front of 'family' and continue in the loop.
+	    ;; #### jhar: I don't know about ns font names, so using X mappings
 	    (setq family (append
 			  (cdr-safe (assoc cur-family
-					   font-family-mappings))
+					   font-x-family-mappings))
 			  family))
 	  ;; CARL: Need help here - I am not familiar with the NS font
 	  ;; model
@@ -770,13 +770,13 @@ for use in the 'weight' field of an X font string.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; mswindows fonts look like:
-;;;	fontname[:[weight][ style][:pointsize[:effects[:charset]]]]
+;;;	fontname[:[weight][ style][:pointsize[:effects]]][:charset]
 ;;; A minimal mswindows font spec looks like:
 ;;;	Courier New
 ;;; A maximal mswindows font spec looks like:
-;;;	Courier New:Bold Italic:10:underline strikeout:ansi
+;;;	Courier New:Bold Italic:10:underline strikeout:western
 ;;; Missing parts of the font spec should be filled in with these values:
-;;;	Courier New:Normal:10::ansi
+;;;	Courier New:Normal:10::western
 ;;  "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
 (defvar font-mswindows-font-regexp 
   (let
@@ -798,7 +798,7 @@ for use in the 'weight' field of an X font string.")
     (:demi        . "Demi")
     (:book        . "Book")
     (:medium      . "Medium")
-    (:normal      . "Medium")
+    (:normal      . "Normal")
     (:demi-bold   . "Demibold")
     (:bold        . "Bold")
     (:regular	  . "Regular")
@@ -806,6 +806,23 @@ for use in the 'weight' field of an X font string.")
   "An assoc list mapping keywords to actual mswindows specific strings
 for use in the 'weight' field of an mswindows font string.")
 
+(defvar font-mswindows-family-mappings
+  '(
+    ("serif"        . ("times new roman"
+		       "century schoolbook"
+		       "book antiqua"
+		       "bookman old style"))
+    ("sans-serif"   . ("arial"
+		       "verdana"
+		       "lucida sans unicode"))
+    ("monospace"    . ("courier new"
+		       "lucida console"
+		       "courier"
+		       "terminal"))
+    ("cursive"      . ("roman"
+		       "script"))
+    )
+  "A list of font family mappings on mswindows devices.")
 
 (defun mswindows-font-create-object (fontname &optional device)
   (let ((case-fold-search t)
@@ -813,7 +830,7 @@ for use in the 'weight' field of an mswindows font string.")
     (if (or (not (stringp font))
 	    (not (string-match font-mswindows-font-regexp font)))
 	(make-font)
-      (let ((name	(match-string 1 font))
+      (let ((family	(match-string 1 font))
 	    (weight	(match-string 2 font))
 	    (style	(match-string 3 font))
 	    (pointsize	(match-string 4 font))
@@ -823,16 +840,26 @@ for use in the 'weight' field of an mswindows font string.")
 	    (size nil)
 	    (case-fold-search t)
 	    )
-	(if pointsize (setq size (/ (string-to-int pointsize) 10)))
+	(if pointsize (setq size (concat pointsize "pt")))
 	(if weight (setq weight (intern-soft (concat ":" (downcase weight)))))
-	(setq retval (make-font :family name
+	(setq retval (make-font :family family
 				:weight weight
-				:size size))
+				:size size
+				:encoding charset))
 	(set-font-bold-p retval (eq :bold weight))
 	(cond
 	 ((null style) nil)
-	 ((string-match "^[iI]talic" style)
+	 ((string-match "^ *[iI]talic" style)
 	  (set-font-italic-p retval t)))
+	(cond
+	 ((null effects) nil)
+	 ((string-match "^[uU]nderline [sS]trikeout" effects)
+	  (set-font-underline-p retval t)
+	  (set-font-strikethru-p retval t))
+	 ((string-match "[uU]nderline" effects)
+	  (set-font-underline-p retval t))
+	 ((string-match "[sS]trikeout" effects)
+	  (set-font-strikethru-p retval t)))
 	retval))))
 
 (defun mswindows-font-create-name (fontobj &optional device)
@@ -847,13 +874,13 @@ for use in the 'weight' field of an mswindows font string.")
     (let* ((default (font-default-object-for-device device))
 	   (family (or (font-family fontobj)
 		       (font-family default)))
-	   (weight (or (font-weight fontobj) :medium))
+	   (weight (or (font-weight fontobj) :regular))
 	   (style (font-style fontobj))
 	   (size (or (if font-running-xemacs
 			 (font-size fontobj))
 		     (font-size default)))
-	   (registry (or (font-registry fontobj)
-			 (font-registry default)))
+	   (underline-p (font-underline-p fontobj))
+	   (strikeout-p (font-strikethru-p fontobj))
 	   (encoding (or (font-encoding fontobj)
 			 (font-encoding default))))
       (if (stringp family)
@@ -871,24 +898,29 @@ for use in the 'weight' field of an mswindows font string.")
 	(while (and family (not done))
 	  (setq cur-family (car family)
 		family (cdr family))
-	  (if (assoc cur-family font-family-mappings)
+	  (if (assoc cur-family font-mswindows-family-mappings)
 	      ;; If the family name is an alias as defined by
-	      ;; font-family-mappings, then append those families
+	      ;; font-mswindows-family-mappings, then append those families
 	      ;; to the front of 'family' and continue in the loop.
 	      (setq family (append
 			    (cdr-safe (assoc cur-family
-					     font-family-mappings))
+					     font-mswindows-family-mappings))
 			    family))
 	    ;; We treat oblique and italic as equivalent.  Don't ask.
-            ;; Courier New:Bold Italic:10:underline strikeout:ansi
+            ;; Courier New:Bold Italic:10:underline strikeout:western
 	    (setq font-name (format "%s:%s%s:%s:%s:%s"
 				    cur-family weight
 				    (if (font-italic-p fontobj)
 					" Italic" "")
 				    (if size
-					(int-to-string (* 10 size)) "10")
-				    ""
-				    "")
+					(int-to-string size) "10")
+				    (if underline-p
+					(if strikeout-p
+					    "underline strikeout"
+					  "underline")
+				      (if strikeout-p "strikeout" ""))
+				    (if encoding
+					encoding ""))
 		  done (try-font-name font-name device))))
 	(if done font-name)))))
 

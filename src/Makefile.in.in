@@ -228,21 +228,39 @@ external_widget_objs = ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 # ifdef USE_GCC
 #  ifdef USG5
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -Xlinker -z -Xlinker text -o output
+extw_link_beg = $(CC) -shared
+extw_link_mid = -Xlinker -z -Xlinker text -o
+extw_link_end = 
 ## I cannot figure out how to do shared a.out libraries, so just punt.
 #  elif !defined (LINUX) || defined (__ELF__)
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -o output
+extw_link_beg = $(CC) -shared
+extw_link_mid = -o
+extw_link_end = 
 #  endif
 # elif defined (USG5)
 #  if defined (IRIX)
 #   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations objs -o output
+extw_link_beg = $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations 
+extw_link_mid =  -o 
+extw_link_end = 
 #  else /* not IRIX */
 #   define EXTW_LINK(objs, output) $(CC) -G objs -z text -o output
+extw_link_beg = $(CC) -G
+extw_link_mid = -z text -o
+extw_link_end = 
 #  endif /* not IRIX */
 # else /* not USG5 */
 #  if defined (DEC_ALPHA) && defined (OSF1)
 #   define EXTW_LINK(objs, output) $(LD) $(ldflags) $(ld_switch_shared) -d objs -o output $(LIBES)
+extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d 
+extw_link_mid = -o 
+extw_link_end = $(LIBES)
 #  else /* !(DEC_ALPHA && OSF1) */
 #   define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
+extw_link_beg = $(LD) -dc
+extw_link_mid = -assert pure-text -o
+extw_link_end = 
 #  endif /* !(DEC_ALPHA && OSF1) */
 # endif /* not USG5 */
 
@@ -573,13 +591,13 @@ libextcli_Xlib.a: ${external_client_xlib_objs_nonshared}
 #ifdef EXTW_LINK
 
 libextcli_Xm.so.1: ${external_client_motif_objs_shared}
-	EXTW_LINK(${external_client_motif_objs_shared}, libextcli_Xm.so.1)
+	${extw_link_beg} ${external_client_motif_objs_shared} ${extw_link_mid} libextcli_Xm.so.1 ${extw_link_end}
 
 libextcli_Xt.so.1: ${external_client_xt_objs_shared}
-	EXTW_LINK(${external_client_xt_objs_shared}, libextcli_Xt.so.1)
+	${extw_link_beg} ${external_client_xt_objs_shared} ${extw_link_mid} libextcli_Xt.so.1 ${extw_link_end}
 
 libextcli_Xlib.so.1: ${external_client_xlib_objs_shared}
-	EXTW_LINK(${external_client_xlib_objs_shared}, libextcli_Xlib.so.1)
+	${extw_link_beg} ${external_client_xlib_objs_shared} ${extw_link_mid} libextcli_Xlib.so.1 ${extw_link_end}
 
 #endif /* EXTW_LINK */
 

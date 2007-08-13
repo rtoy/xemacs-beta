@@ -1991,7 +1991,7 @@ START should be at the beginning of a line."
   ;; with optional whitespace and a "(".  Everything following the item (but
   ;; belonging to it) is expected to by skip-able by `forward-sexp', and items
   ;; are expected to be separated with a "," or ";".
-  (if (looking-at "[ \t*&]*\\(\\sw+\\)\\(::\\(\\sw+\\)\\)?[ \t]*\\((\\)?")
+  (if (looking-at "[ \t*&]*\\(\\(?:\\sw\\|\\s_\\)+\\)\\(::\\(\\(?:\\sw\\|\\s_\\)+\\)\\)?[ \t]*\\((\\)?")
       (save-match-data
 	(condition-case nil
 	    (save-restriction

@@ -39,13 +39,21 @@ description.
 
 ** XEmacs is now supported under Microsoft Windows 95/98 and Windows
 NT operating systems.  For starters, look at the XEmacs on Windows FAQ
-at <URL:http://jagor.srce.hr/~hniksic/xemacs-on-windows.txt>.  To
+at <URL:http://jagor.srce.hr/~hniksic/xemacs-on-windows-faq.txt>.  To
 discuss Windows-specific issues, subscribe to the mailing list at
 <xemacs-nt-request@xemacs.org>.
 
 ** XEmacs will now use `XEmacs' as its application class if it finds
 any `XEmacs' resources in the resource database.  Otherwise, it will
 continue to use the `Emacs' class.
+
+** The options menu has been ported to Custom.
+This means that each entry in the options menu acts as if you had customized
+the corresponding variable by hand.  ### WARNING: there is currently no
+upgrading function to help you port your old options settings to the new
+format. Consequently, if you want to modify the options for XEmacs 21, you
+will have to set them all again through the menu, and remove the code loading
+.xemacs-options from your .emacs.
 
 ** When the Zmacs region is active, `M-x query-replace' and the other
 replace commands now operate on the region contents only.

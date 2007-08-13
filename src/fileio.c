@@ -789,6 +789,9 @@ See also the function `substitute-in-file-name'.
 #endif /* WINDOWSNT */
   int length;
   Lisp_Object handler;
+#ifdef __CYGWIN32__
+  char *user;
+#endif
 
   CHECK_STRING (name);
 
@@ -1019,6 +1022,19 @@ See also the function `substitute-in-file-name'.
 	  dostounix_filename (newdir);
 	  nm += strlen(o) + 1;
 #else  /* not WINDOWSNT */
+#ifdef __CYGWIN32__
+	  if ((user = user_login_name (NULL)) != NULL)
+	    {
+	      /* Does the user login name match the ~name? */
+	      if (strcmp(user,((char *) o + 1)) == 0)
+	        { 
+		  newdir = (Bufbyte *)  get_home_directory();
+	          nm = p;
+		}
+	    }
+          if (! newdir)
+            {	
+#endif /* __CYGWIN32__ */
 	  /* Jamie reports that getpwnam() can get wedged by SIGIO/SIGALARM
 	     occurring in it. (It can call select()). */
 	  slow_down_interrupts ();
@@ -1029,6 +1045,9 @@ See also the function `substitute-in-file-name'.
 	      newdir = (Bufbyte *) pw -> pw_dir;
 	      nm = p;
 	    }
+#ifdef __CYGWIN32__
+	    }
+#endif
 #endif /* not WINDOWSNT */
 
 	  /* If we don't find a user of that name, leave the name

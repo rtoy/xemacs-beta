@@ -637,12 +637,43 @@ ignored and this function returns the login name for that UID, or nil.
 */
        (uid))
 {
-  struct passwd *pw = NULL;
+  char *returned_name;
+  int local_uid;
 
   if (!NILP (uid))
     {
       CHECK_INT (uid);
-      pw = getpwuid (XINT (uid));
+      local_uid = XINT(uid);
+      returned_name = user_login_name(&local_uid);
+    }
+  else
+    {
+      returned_name = user_login_name(NULL);
+    }
+  /* #### - I believe this should return nil instead of "unknown" when pw==0
+     pw=0 is indicated by a null return from user_login_name
+  */
+  return returned_name ? build_string (returned_name) : Qnil;
+}
+
+/* This function may be called from other C routines when a
+   character string representation of the user_login_name is
+   needed but a Lisp Object is not.  The UID is passed by
+   reference.  If UID == NULL, then the USER name
+   for the user running Xemacs will be returned.  This
+   corresponds to a nil argument to Fuser_login_name.
+*/
+char*
+user_login_name (uid)
+  int *uid;          
+{
+  struct passwd *pw = NULL;
+  
+  /* uid == NULL to return name of this user */
+  if (uid != NULL)
+    {
+      pw = getpwuid (*uid);
+      return pw ? pw->pw_name : NULL;
     }
   else
     {
@@ -659,12 +690,22 @@ ignored and this function returns the login name for that UID, or nil.
 #endif
 			    );
       if (user_name)
-	return build_string (user_name);
+	return (user_name);
       else
-	pw = getpwuid (geteuid ());
+	{
+	  pw = getpwuid (geteuid ());
+#ifdef __CYGWIN32__
+	  /* Since the Cygwin environment may not have an /etc/passwd,
+	     return "unknown" instead of the null if the username
+	     cannot be determined.
+	  */
+	  return pw ? pw->pw_name : "unknown";
+#else
+	  /* For all but Cygwin return NULL (nil) */
+	  return pw ? pw->pw_name : NULL;
+#endif
+	}
     }
-  /* #### - I believe this should return nil instead of "unknown" when pw==0 */
-  return pw ? build_string (pw->pw_name) : Qnil;
 }
 
 DEFUN ("user-real-login-name", Fuser_real_login_name, 0, 0, 0, /*

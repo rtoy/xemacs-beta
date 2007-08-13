@@ -1685,28 +1685,58 @@ emacs_Xt_remove_timeout (int id)
 {
   struct Xt_timeout *timeout, *t2;
 
+  timeout = NULL;
+  
   /* Find the timeout on the list of pending ones, if it's still there. */
-  if (!pending_timeouts) return;
-  if (id == pending_timeouts->id)
+  if (pending_timeouts)
     {
-      timeout = pending_timeouts;
-      pending_timeouts = pending_timeouts->next;
-    }
-  else
-    {
-      t2 = pending_timeouts;
-      while (t2->next && t2->next->id != id) t2 = t2->next;
-      if (! t2->next) return;
-      timeout = t2->next;
-      t2->next = t2->next->next;
+      if (id == pending_timeouts->id)
+	{
+	  timeout = pending_timeouts;
+	  pending_timeouts = pending_timeouts->next;
+	}
+      else
+	{
+	  t2 = pending_timeouts;
+	  while (t2->next && t2->next->id != id) t2 = t2->next;
+	  if ( t2->next)   /*found it */
+	    {
+	      timeout = t2->next;
+	      t2->next = t2->next->next;
+	    }
+	}
+      /* if it was pending, we have removed it from the list */
+      if (timeout)
+	XtRemoveTimeOut (timeout->interval_id);
     }
 
-  /* At this point, we've found the thing on the list of pending timeouts,
-     and removed it.
-   */
+  /* It could be that the Xt call back was already called but we didn't convert
+     into an Emacs event yet */
+  if (!timeout && completed_timeouts)
+    {
+      /* Code duplication! */
+      if (id == completed_timeouts->id)
+	{
+	  timeout = completed_timeouts;
+	  completed_timeouts = completed_timeouts->next;
+	}
+      else
+	{
+	  t2 = completed_timeouts;
+	  while (t2->next && t2->next->id != id) t2 = t2->next;
+	  if ( t2->next)   /*found it */
+	    {
+	      timeout = t2->next;
+	      t2->next = t2->next->next;
+	    }
+	}
+    }
 
-  XtRemoveTimeOut (timeout->interval_id);
-  Blocktype_free (the_Xt_timeout_blocktype, timeout);
+  /* If we found the thing on the lists of timeouts,
+     and removed it, deallocate
+  */
+  if (timeout)
+    Blocktype_free (the_Xt_timeout_blocktype, timeout);
 }
 
 static void

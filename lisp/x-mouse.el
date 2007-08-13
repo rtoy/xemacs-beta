@@ -105,7 +105,7 @@ A mark is pushed, so that the inserted text lies between point and mark."
   (and (x-selection-owner-p)
        primary-selection-extent
        (x-insert-selection t event))
-  (x-kill-primary-selection))
+  (kill-primary-selection))
 
 (defun mouse-track-and-copy-to-cutbuffer (event)
   "Make a selection like `mouse-track', but also copy it to the cutbuffer."

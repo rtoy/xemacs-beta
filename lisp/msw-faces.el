@@ -49,13 +49,13 @@
 ;;; Fill in missing parts of a font spec. This is primarily intended as a
 ;;; helper function for the functions below.
 ;;; mswindows fonts look like:
-;;;	fontname[:[weight][ style][:pointsize[:effects[:charset]]]]
+;;;	fontname[:[weight][ style][:pointsize[:effects]]][:charset]
 ;;; A minimal mswindows font spec looks like:
 ;;;	Courier New
 ;;; A maximal mswindows font spec looks like:
-;;;	Courier New:Bold Italic:10:underline strikeout:ansi
+;;;	Courier New:Bold Italic:10:underline strikeout:western
 ;;; Missing parts of the font spec should be filled in with these values:
-;;;	Courier New:Normal:10::ansi
+;;;	Courier New:Normal:10::western
 (defun mswindows-font-canonicalize-name (font)
   "Given a mswindows font or font specification, this returns its
 specification in canonical form."
@@ -68,14 +68,14 @@ specification in canonical form."
 		"^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
 		name) name)
 	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*$"
-			     name) (concat name ":ansi"))
+			     name) (concat name ":western"))
 	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+$" name)
-	       (concat name "::ansi"))
+	       (concat name "::western"))
 	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*$" name)
-	       (concat name ":10::ansi"))
+	       (concat name ":10::western"))
 	      ((string-match "^[a-zA-Z ]+$" name)
-	       (concat name ":Normal:10::ansi"))
-	      (t "Courier New:Normal:10::ansi")))))
+	       (concat name ":Normal:10::western"))
+	      (t "Courier New:Normal:10::western")))))
 
 (defun mswindows-make-font-bold (font &optional device)
   "Given a mswindows font specification, this attempts to make a bold font.

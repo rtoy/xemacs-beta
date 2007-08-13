@@ -154,7 +154,7 @@ int unexec (char *new_name, char *a_name,
 {
   int new = -1, a_out = -1;
 
-  if (a_name && (a_out = open (a_name, 0)) < 0)
+  if (a_name && (a_out = open (a_name, O_RDONLY)) < 0)
     {
       PERROR (a_name);
     }
@@ -326,6 +326,7 @@ make_hdr (int new, int a_out,
   {
     ulong ptr = section[0].s_scnptr;
 
+    bias = -1;
     for (scns = 0; scns < f_hdr.f_nscns; scns++)
       {
 	struct scnhdr *s = &section[scns];
@@ -344,12 +345,17 @@ make_hdr (int new, int a_out,
 	      }
 	    s->s_scnptr = ptr;
 	  }
-	else
+	else if (s->s_flags & STYP_DATA)
+	  s->s_scnptr = ptr;
+	else if (!(s->s_flags & (STYP_TEXT | STYP_BSS)))
 	  {
+	    if (bias == -1)                /* if first section after bss */
 	      bias = ptr - s->s_scnptr;
-	      s->s_scnptr = ptr;
-	  }
 
+	    s->s_scnptr += bias;
+	    ptr = s->s_scnptr;
+	  }
+  
 	ptr = ptr + s->s_size;
       }
   }
@@ -535,7 +541,7 @@ adjust_lnnoptrs (int writedesc, int readdesc, char *new_name)
   if (!lnnoptr || !f_hdr.f_symptr)
     return 0;
 
-  if ((new = open (new_name, 2)) < 0)
+  if ((new = open (new_name, O_RDWR)) < 0)
     {
       PERROR (new_name);
       return -1;
@@ -552,7 +558,7 @@ adjust_lnnoptrs (int writedesc, int readdesc, char *new_name)
 	  write (new, &symentry, SYMESZ);
 	}
 
-      for (naux = symentry.n_numaux; naux-- != 0; )
+      for (naux = symentry.n_numaux; naux != 0; --naux)
 	{
 	  read (new, &auxentry, AUXESZ);
 	  nsyms++;

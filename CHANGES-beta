@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 21.0 pre2 "Thuringian"
+-- MS Windows native build fixes from Fabrice POPINEAU
+-- Miscellaneous bug fixes
+-- Documentation updates
+-- credits updates
+
 to 21.0 pre1 "Swedish Landrace"
 -- package-get-base synchronized with latest packages
 -- MULE-ize eldap.c from Hrvoje Niksic

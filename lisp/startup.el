@@ -979,15 +979,17 @@ XEmacs, by either running the command `xemacs-mule', or by using the X resource
 For tips and answers to frequently asked questions, see the XEmacs FAQ.
 \(It's on the Help menu, or type " (key xemacs-local-faq) " [a capital F!].\)"))))
 
-(defvar xemacs-startup-logo-function nil
-  "If non-nil, function called to provide the startup logo.
-This function should return an initialized glyph if it is used.")
+;; I really hate global variables, oh well.
+;(defvar xemacs-startup-logo-function nil
+;  "If non-nil, function called to provide the startup logo.
+;This function should return an initialized glyph if it is used.")
 
 (defun startup-splash-frame ()
   (let ((p (point))
-	(logo (cond (xemacs-startup-logo-function
-		     (funcall xemacs-startup-logo-function))
-		    (t xemacs-logo)))
+;	(logo (cond (xemacs-startup-logo-function
+;		     (funcall xemacs-startup-logo-function))
+;		    (t xemacs-logo)))
+	(logo xemacs-logo)
         (cramped-p (eq 'tty (console-type))))
     (unless cramped-p (insert "\n"))
     (indent-to (startup-center-spaces logo))

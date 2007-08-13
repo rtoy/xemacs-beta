@@ -1204,6 +1204,46 @@ Install a pre-bytecompiled XEmacs package into package hierarchy." t nil)
 
 ;;;***
 
+;;;### (autoloads (package-get-custom package-get-package-provider package-get package-get-all package-get-update-all) "package-get" "lisp/package-get.el")
+
+(autoload 'package-get-update-all "package-get" "\
+Fetch and install the latest versions of all currently installed packages." t nil)
+
+(autoload 'package-get-all "package-get" "\
+Fetch PACKAGE with VERSION and all other required packages.
+Uses `package-get-base' to determine just what is required and what
+package provides that functionality.  If VERSION is nil, retrieves
+latest version.  Optional argument FETCHED-PACKAGES is used to keep
+track of packages already fetched." t nil)
+
+(autoload 'package-get "package-get" "\
+Fetch PACKAGE from remote site.
+Optional arguments VERSION indicates which version to retrieve, nil
+means most recent version.  CONFLICT indicates what happens if the
+package is already installed.  Valid values for CONFLICT are:
+'always	always retrieve the package even if it is already installed
+'never	do not retrieve the package if it is installed.
+
+The value of `package-get-base' is used to determine what files should 
+be retrieved.  The value of `package-get-remote' is used to determine
+where a package should be retrieved from.  The sites are tried in
+order so one is better off listing easily reached sites first.
+
+Once the package is retrieved, its md5 checksum is computed.  If that
+sum does not match that stored in `package-get-base' for this version
+of the package, an error is signalled." t nil)
+
+(autoload 'package-get-package-provider "package-get" "\
+Search for a package that provides SYM and return the name and
+  version.  Searches in `package-get-base' for SYM.   If SYM is a
+  consp, then it must match a corresponding (provide (SYM VERSION)) from 
+  the package." t nil)
+
+(autoload 'package-get-custom "package-get" "\
+Fetch and install the latest versions of all customized packages." t nil)
+
+;;;***
+
 ;;;### (autoloads (picture-mode) "picture" "lisp/picture.el")
 
 (autoload 'picture-mode "picture" "\

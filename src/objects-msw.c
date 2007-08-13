@@ -721,6 +721,11 @@ static CONST colormap_t mswindows_X_color_map[] =
   {"LightGreen"			, PALETTERGB (144, 238, 144) }
 };
 
+
+/************************************************************************/
+/*                               helpers                                */
+/************************************************************************/
+
 static int
 hexval (char c) 
 {
@@ -747,7 +752,7 @@ mswindows_string_to_color(CONST char *name)
       for (i=1; i<strlen(name); i++)
 	{
 	  if (!isxdigit ((int)name[i]))
-	    return(-1);
+	    return (COLORREF) -1;
 	}
       if (strlen(name)==7)
 	{
@@ -793,7 +798,7 @@ mswindows_string_to_color(CONST char *name)
 	  return (PALETTERGB (r, g, b));
 	}
       else 
-	return -1;
+	return (COLORREF) -1;
     }
   else if (*name)	/* Can't be an empty string */
     {
@@ -810,8 +815,67 @@ mswindows_string_to_color(CONST char *name)
 	if (!stricmp (nospaces, mswindows_X_color_map[i].name))
 	  return (mswindows_X_color_map[i].colorref);
     }
-  return(-1);
+  return (COLORREF) -1;
 }
+
+/*
+ * Returns non-zero if the two supplied font patterns match.
+ * If they match and fontname is not NULL, copies the logical OR of the
+ * patterns to fontname (which is assumed to be at least MSW_FONTSIZE in size).
+ *
+ * The patterns 'match' iff for each field that is not blank in either pattern,
+ * the corresponding field in the other pattern is either identical or blank.
+ */
+static int
+match_font (char *pattern1, char *pattern2, char *fontname)
+{
+  char *c1=pattern1, *c2=pattern2, *e1, *e2;
+  int i;
+
+  if (fontname)
+    fontname[0] = '\0';
+
+  for (i=0; i<5; i++)
+    {
+      if (c1 && (e1 = strchr (c1, ':')))
+        *(e1) = '\0';
+      if (c2 && (e2 = strchr (c2, ':')))
+        *(e2) = '\0';
+
+      if (c1 && c1[0]!='\0')
+        {
+	  if (c2 && c2[0]!='\0' && stricmp(c1, c2))
+	    {
+	      if (e1) *e1 = ':';
+	      if (e2) *e2 = ':';
+	      return 0;
+	    }
+	  else if (fontname)
+	    strcat (strcat (fontname, c1), ":");
+	}
+      else if (fontname)
+        {
+	  if (c2 && c2[0]!='\0')
+	    strcat (strcat (fontname, c2), ":");
+	  else
+	    strcat (fontname, ":");
+	}
+
+      if (e1) *(e1++) = ':';
+      if (e2) *(e2++) = ':';
+      c1=e1;
+      c2=e2;
+    }
+
+  if (fontname)
+    fontname[strlen (fontname) - 1] = '\0';	/* Trim trailing ':' */
+  return 1;
+}
+
+
+/************************************************************************/
+/*                               methods                                */
+/************************************************************************/
 
 static int
 mswindows_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
@@ -908,33 +972,39 @@ mswindows_finalize_font_instance (struct Lisp_Font_Instance *f)
 
 static int
 mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
-			      Lisp_Object device, Error_behavior errb)
+				    Lisp_Object device, Error_behavior errb)
 {
   CONST char *extname;
   LOGFONT logfont;
   int fields;
   int pt;
-  char fontname[LF_FACESIZE], weight[32], *style, points[8], effects[32], charset[32];
-
+  char fontname[LF_FACESIZE], weight[LF_FACESIZE], *style, points[8];
+  char effects[LF_FACESIZE], charset[LF_FACESIZE];
+  char *c;
+  
   GET_C_STRING_CTEXT_DATA_ALLOCA (f->name, extname);
 
   /*
    * mswindows fonts look like:
-   *	fontname[:[weight ][style][:pointsize[:effects[:charset]]]]
+   *	fontname[:[weight ][style][:pointsize[:effects]]][:charset]
    * The font name field shouldn't be empty.
-   * #### Windows will substitute a default (monospace) font if the font name
-   * specifies a non-existent font. We don't catch this.
-   * effects and charset are currently ignored.
    *
    * ie:
    *	Lucida Console:Regular:10
    * minimal:
    *	Courier New
    * maximal:
-   *	Courier New:Bold Italic:10:underline strikeout:ansi
+   *	Courier New:Bold Italic:10:underline strikeout:western
    */
+
   fields = sscanf (extname, "%31[^:]:%31[^:]:%7[^:]:%31[^:]:%31s",
 		   fontname, weight, points, effects, charset);
+
+  /* This function is implemented in a fairly ad-hoc manner.
+   * The general idea is to validate and canonicalize each of the above fields
+   * at the same time as we build up the win32 LOGFONT structure. This enables
+   * us to use math_font() on a canonicalized font string to check the
+   * availability of the requested font */
 
   if (fields<0)
   {
@@ -953,105 +1023,134 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
     return (0);
   }
 
-  if (fields > 1 && strlen(weight))
+  /* weight */
+  if (fields < 2)
+    strcpy (weight, "Regular");
+
+  /* Maybe split weight into weight and style */
+  if ((c=strchr(weight, ' ')))
   {
-    char *c;
-    /* Maybe split weight into weight and style */
-    if ((c=strchr(weight, ' ')))
-    {
-      *c = '\0';
-      style = c+1;
-    }
-    else
-      style = NULL;
+    *c = '\0';
+    style = c+1;
+  }
+  else
+    style = NULL;
 
-    /* weight: Most-often used (maybe) first */
-    if (stricmp (weight,"regular") == 0)
+#define FROB(wgt)				\
+  if (stricmp (weight, #wgt) == 0)		\
+    logfont.lfWeight = FW_##wgt
+
+  FROB (REGULAR);
+  else FROB (THIN);
+  else FROB (EXTRALIGHT);
+  else FROB (ULTRALIGHT);
+  else FROB (LIGHT);
+  else FROB (NORMAL);
+  else FROB (MEDIUM);
+  else FROB (SEMIBOLD);
+  else FROB (DEMIBOLD);
+  else FROB (BOLD);
+  else FROB (EXTRABOLD);
+  else FROB (ULTRABOLD);
+  else FROB (HEAVY);
+  else FROB (BLACK);
+  else if (!style)
+    {
       logfont.lfWeight = FW_REGULAR;
-    else if (stricmp (weight,"normal") == 0)
-      logfont.lfWeight = FW_NORMAL;
-    else if (stricmp (weight,"bold") == 0)
-      logfont.lfWeight = FW_BOLD;
-    else if (stricmp (weight,"medium") == 0)
-      logfont.lfWeight = FW_MEDIUM;
-    else if (stricmp (weight,"italic") == 0)	/* Hack for early exit */
-    {
-      logfont.lfItalic = TRUE;
-      style=weight;
+      style = weight;	/* May have specified style without weight */
     }
-    /* the rest */
-    else if (stricmp (weight,"black") == 0)
-      logfont.lfWeight = FW_BLACK;
-    else if (stricmp (weight,"heavy") == 0)
-      logfont.lfWeight = FW_HEAVY;
-    else if (stricmp (weight,"ultrabold") == 0)
-      logfont.lfWeight = FW_ULTRABOLD;
-    else if (stricmp (weight,"extrabold") == 0)
-      logfont.lfWeight = FW_EXTRABOLD;
-    else if (stricmp (weight,"demibold") == 0)
-      logfont.lfWeight = FW_SEMIBOLD;
-    else if (stricmp (weight,"semibold") == 0)
-      logfont.lfWeight = FW_SEMIBOLD;
-    else if (stricmp (weight,"light") == 0)
-      logfont.lfWeight = FW_LIGHT;
-    else if (stricmp (weight,"ultralight") == 0)
-      logfont.lfWeight = FW_ULTRALIGHT;
-    else if (stricmp (weight,"extralight") == 0)
-      logfont.lfWeight = FW_EXTRALIGHT;
-    else if (stricmp (weight,"thin") == 0)
-      logfont.lfWeight = FW_THIN;
-    else
+  else
     {
-      logfont.lfWeight = FW_NORMAL;
-      if (!style)
-	style = weight;	/* May have specified a style without a weight */
-      else
-      {
-        maybe_signal_simple_error ("Invalid font weight", f->name, Qfont, errb);
-	return (0);	/* Invalid weight */
-      }
+      maybe_signal_simple_error ("Invalid font weight", f->name, Qfont, errb);
+      return (0);
     }
 
-    if (style)
+#undef FROB
+
+  if (style)
     {
       /* #### what about oblique? */
       if (stricmp (style,"italic") == 0)
 	logfont.lfItalic = TRUE;
-      else if (stricmp (style,"roman") == 0)
-	logfont.lfItalic = FALSE;
       else
       {
         maybe_signal_simple_error ("Invalid font weight or style", f->name, Qfont, errb);
-	return (0);	/* Invalid weight or style */
+	return (0);
       }
-    }
-    else
-    {
-      logfont.lfItalic = FALSE;
-    }
 
-  }
+      /* Glue weight and style together again */
+      if (weight != style)
+        *c = ' ';
+    }
   else
-  {
-    logfont.lfWeight = FW_NORMAL;
     logfont.lfItalic = FALSE;
-  }
 
-  /* #### Should we reject strings that don't specify a size? */
-  if (fields < 3 || !strlen(points) || (pt=atoi(points))==0)
-    pt = 10;
+  if (fields < 3)
+    pt = 10;	/* #### Should we reject strings that don't specify a size? */
+  else if ((pt=atoi(points)) == 0)
+    {
+      maybe_signal_simple_error ("Invalid font pointsize", f->name, Qfont, errb);
+      return (0);
+    }
 
   /* Formula for pointsize->height from LOGFONT docs in MSVC5 Platform SDK */
   logfont.lfHeight = -MulDiv(pt, DEVICE_MSWINDOWS_LOGPIXELSY(XDEVICE (device)), 72);
   logfont.lfWidth = 0;
 
-  /* Default to monospaced if the specified font name is not found */
-  logfont.lfPitchAndFamily = FF_MODERN;
-
-  /* ####: FIXME? */
+  /* Effects */
   logfont.lfUnderline = FALSE;
   logfont.lfStrikeOut = FALSE;
+  if (fields >= 4 && effects[0] != '\0')
+    {
+      char *effects2;
 
+      /* Maybe split effects into effects and effects2 */
+      if ((c=strchr (effects, ' ')))
+        {
+          *c = '\0';
+          effects2 = c+1;
+        }
+      else
+        effects2 = NULL;
+
+      if (stricmp (effects, "underline") == 0)
+	logfont.lfUnderline = TRUE;
+      else if (stricmp (effects, "strikeout") == 0)
+	logfont.lfStrikeOut = TRUE;
+      else
+        {
+          maybe_signal_simple_error ("Invalid font effect", f->name,
+				     Qfont, errb);
+	  return (0);
+	}
+
+      if (effects2 && effects2[0] != '\0')
+	{
+	  if (stricmp (effects2, "underline") == 0)
+	    logfont.lfUnderline = TRUE;
+	  else if (stricmp (effects2, "strikeout") == 0)
+	    logfont.lfStrikeOut = TRUE;
+	  else
+	    {
+	      maybe_signal_simple_error ("Invalid font effect", f->name,
+					 Qfont, errb);
+	      return (0);
+	    }
+        }
+
+      /* Regenerate sanitised effects string */
+      if (logfont.lfUnderline)
+	{
+	  if (logfont.lfStrikeOut)
+	    strcpy (effects, "underline strikeout");
+	  else
+	    strcpy (effects, "underline");
+	}
+      else if (logfont.lfStrikeOut)
+	strcpy (effects, "strikeout");
+    }
+  else
+    effects[0] = '\0';
 
 #define FROB(cs)				\
   else if (stricmp (charset, #cs) == 0)		\
@@ -1063,40 +1162,72 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
      than Russian. */
 #define CYRILLIC_CHARSET RUSSIAN_CHARSET
 #define CENTRALEUROPEAN_CHARSET EASTEUROPE_CHARSET
+#define CENTRALEUROPEAN_CHARSET EASTEUROPE_CHARSET
 
-  if (fields > 4)
+  /* charset can be specified even if earlier fields havn't been */
+  if ((fields < 5) && (c=strchr (extname, ':')) && (c=strchr (c+1, ':')) &&
+      (c=strchr (c+1, ':')) && (c=strchr (c+1, ':')))
     {
-      if (charset[0] == '\0' || stricmp (charset, "ansi") == 0)
-	logfont.lfCharSet = ANSI_CHARSET;
-      FROB (DEFAULT); /* #### Should we alow this? */
-      FROB (SYMBOL);
-      FROB (SHIFTJIS);
-      FROB (GB2312);
-      FROB (HANGEUL);
-      FROB (CHINESEBIG5);
-      FROB (OEM);
-      FROB (JOHAB);
-      FROB (HEBREW);
-      FROB (ARABIC);
-      FROB (GREEK);
-      FROB (TURKISH);
-      FROB (THAI);
-      FROB (EASTEUROPE);
-      FROB (CENTRALEUROPEAN);
-      FROB (CYRILLIC);
-      FROB (MAC);
-      FROB (BALTIC);
-      else
-	{
-	  maybe_signal_simple_error ("Invalid charset name", f->name, Qfont, errb);
-	  return 0;
-	}
+      strncpy (charset, c+1, LF_FACESIZE);
+      charset[LF_FACESIZE-1] = '\0';
     }
   else
-    logfont.lfCharSet = ANSI_CHARSET;
+    charset[0] = '\0';
+	  
+  if (charset[0] == '\0' || (stricmp (charset, "ansi") == 0) ||
+      (stricmp (charset, "western") == 0))
+    {
+      logfont.lfCharSet = ANSI_CHARSET;
+      strcpy (charset, "western");
+    }
+  FROB (SYMBOL);
+  FROB (SHIFTJIS);
+  FROB (GB2312);
+  FROB (HANGEUL);
+  FROB (CHINESEBIG5);
+  FROB (JOHAB);
+  FROB (HEBREW);
+  FROB (ARABIC);
+  FROB (GREEK);
+  FROB (TURKISH);
+  FROB (THAI);
+  FROB (EASTEUROPE);
+  FROB (CENTRALEUROPEAN);
+  FROB (CYRILLIC);
+  FROB (MAC);
+  FROB (BALTIC);
+  else if (stricmp (charset, "oem/dos") == 0)
+    logfont.lfCharSet = OEM_CHARSET;
+  else
+    {
+      maybe_signal_simple_error ("Invalid charset", f->name, Qfont, errb);
+      return 0;
+    }
 
 #undef FROB
-      
+
+  /* Windows will silently substitute a default font if the fontname 
+   * specifies a non-existent font. So we check the font against the device's
+   * list of font patterns to make sure that at least one of them matches */
+  {
+    struct mswindows_font_enum *fontlist;
+    char truename[MSW_FONTSIZE];
+    int done = 0;
+    
+    sprintf (truename, "%s:%s:%d:%s:%s", fontname, weight, pt, effects, charset);
+    fontlist = DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device));
+    while (fontlist && !done)
+      {
+        done = match_font (fontlist->fontname, truename, NULL);
+        fontlist = fontlist->next;
+      }
+    if (!done)
+      {
+	maybe_signal_simple_error ("No matching font", f->name, Qfont, errb);
+	return 0;
+      }
+  }
+
   /* Misc crud */
   logfont.lfEscapement = logfont.lfOrientation = 0;
 #if 1
@@ -1108,6 +1239,9 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
   logfont.lfClipPrecision = CLIP_STROKE_PRECIS;
   logfont.lfQuality = PROOF_QUALITY;
 #endif
+  /* Default to monospaced if the specified fontname doesn't exist.
+   * The match_font calls above should mean that this can't happen. */
+  logfont.lfPitchAndFamily = FF_MODERN;
 
   if ((f->data = CreateFontIndirect(&logfont)) == NULL)
   {
@@ -1162,8 +1296,20 @@ mswindows_print_font_instance (struct Lisp_Font_Instance *f,
 static Lisp_Object
 mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
 {
-  /* #### Implement me */
-  return list1 (build_string ("Courier New:Regular:10"));
+  Lisp_Object result = Qnil;
+  struct mswindows_font_enum *fontlist;
+  char fontname[MSW_FONTSIZE], *extpattern;
+
+  GET_C_STRING_CTEXT_DATA_ALLOCA (pattern, extpattern);
+  fontlist = DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device));
+  while (fontlist)
+    {
+      if (match_font (fontlist->fontname, extpattern, fontname))
+	 result = Fcons (build_string (fontname), result);
+      fontlist = fontlist->next;
+    }
+
+  return Fnreverse (result);
 }
 
 #ifdef MULE
@@ -1194,12 +1340,33 @@ mswindows_find_charset_font (Lisp_Object device, Lisp_Object font,
 
 
 /************************************************************************/
+/*                             non-methods                              */
+/************************************************************************/
+
+DEFUN ("mswindows-color-list", Fmswindows_color_list, 0, 0, 0, /*
+Return a list of the colors available on mswindows devices.
+*/
+       ())
+{
+  Lisp_Object result = Qnil;
+  int i;
+
+  for (i=0; i<countof (mswindows_X_color_map); i++)
+    result = Fcons (build_string (mswindows_X_color_map[i].name), result);
+
+  return Fnreverse (result);
+}
+
+
+
+/************************************************************************/
 /*                            initialization                            */
 /************************************************************************/
 
 void
 syms_of_objects_mswindows (void)
 {
+  DEFSUBR (Fmswindows_color_list);
 }
 
 void
