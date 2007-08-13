@@ -21,17 +21,23 @@
 # Author: Martin Buchholz
 
 # You can use this file to debug XEmacs using Sun WorkShop's dbx.
-# Add the contents of this file to $HOME/.dbxrc or
-# Source the contents of this file with something like:
-# if test -r ./dbxrc; then . ./dbxrc; fi
 
 # Some functions defined here require a running process, but most
 # don't.  Considerable effort has been expended to this end.
 
-# See also the comments in gdbinit.
+# Since this file is called `.dbxrc', it will be read by dbx
+# automatically when dbx is run in the build directory, which is where
+# developers usually debug their xemacs.
+
+# See also the comments in .gdbinit.
 
 # See also the question of the XEmacs FAQ, titled
 # "How to Debug an XEmacs problem with a debugger".
+
+# gdb sources the ./.gdbinit in _addition_ to ~/.gdbinit.
+# But dbx does _not_ source ~/.dbxrc if it found ./.dbxrc.
+# So we simulate the gdb algorithm by doing it ourselves here.
+if test -r $HOME/.dbxrc; then . $HOME/.dbxrc; fi
 
 ignore POLL
 ignore IO
@@ -127,6 +133,11 @@ function xint {
   print (long) ($val)
 }
 
+document xtype << 'end'
+Usage: xtype lisp_object
+Print the Lisp type of a lisp object.
+end
+
 function xtype {
   decode_object "$*"
   if   test $type = $Lisp_Type_Int;    then echo "int"
@@ -160,7 +171,27 @@ end
 
 function run-temacs {
   environment-to-run-temacs
-  run -batch -l ../lisp/loadup.el run-temacs -q
+  run -batch -l ../lisp/loadup.el run-temacs -q ${1+"$@"}
+}
+
+document check-xemacs << 'end'
+Usage: check-xemacs
+Run the test suite.  Equivalent to 'make check'.
+end
+
+function check-xemacs {
+  run -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+}
+
+document check-temacs << 'end'
+Usage: check-temacs
+Run the test suite on temacs.  Equivalent to 'make check-temacs'.
+Use this with debugging tools (like purify) that cannot deal with dumping,
+or when temacs builds successfully, but xemacs does not.
+end
+
+function check-temacs {
+  run-temacs -q -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
 }
 
 document update-elc << 'end'
@@ -175,18 +206,17 @@ function update-elc {
   run -batch -l ../lisp/update-elc.el
 }
 
-
-function dump-temacs {
-  environment-to-run-temacs
-  run -batch -l ../lisp/loadup.el dump
-}
-
 document dump-temacs << 'end'
 Usage: dump-temacs
 Run the dumping part of the build procedure.
 Use when debugging temacs, not xemacs!
 Use this when temacs builds successfully, but xemacs does not.
 end
+
+function dump-temacs {
+  environment-to-run-temacs
+  run -batch -l ../lisp/loadup.el dump
+}
 
 function pstruct {
   xstruct="((struct $1 *) $val)"
@@ -200,7 +230,7 @@ function lrecord_type_p {
 
 document pobj << 'end'
 Usage: pobj lisp_object
-Print the internal C structure of a underlying Lisp Object.
+Print the internal C representation of a Lisp Object.
 end
 
 function pobj {

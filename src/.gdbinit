@@ -21,8 +21,12 @@
 # Author: Martin Buchholz
 
 # Some useful commands for debugging emacs with gdb 4.16 or better.
-# Install this as your .gdbinit file in your home directory,
-# or source this file from your .gdbinit
+#
+# Since this file is called `.gdbinit', it will be read by gdb
+# automatically when gdb is run in the build directory, which is where
+# developers usually debug their xemacs.  You can also source this
+# file from your ~/.gdbinit, if you like.
+#
 # Configure xemacs with --debug, and compile with -g.
 #
 # See also the question of the XEmacs FAQ, titled
@@ -109,6 +113,11 @@ define xtype
   end
 end
 
+document xtype
+Usage: xtype lisp_object
+Print the Lisp type of a lisp object.
+end
+
 define lisp-shadows
   run -batch -vanilla -f list-load-path-shadows
 end
@@ -132,6 +141,27 @@ end
 document run-temacs
 Usage: run-temacs
 Run temacs interactively, like xemacs.
+Use this with debugging tools (like purify) that cannot deal with dumping,
+or when temacs builds successfully, but xemacs does not.
+end
+
+define check-xemacs
+  run -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+end
+
+document check-xemacs
+Usage: check-xemacs
+Run the test suite.  Equivalent to 'make check'.
+end
+
+define check-temacs
+  environment-to-run-temacs
+  run -batch -l ../lisp/loadup.el run-temacs -q -batch -l ../tests/automated/test-harness.el -f batch-test-emacs ../tests/automated
+end
+
+document check-temacs
+Usage: check-temacs
+Run the test suite on temacs.  Equivalent to 'make check-temacs'.
 Use this with debugging tools (like purify) that cannot deal with dumping,
 or when temacs builds successfully, but xemacs does not.
 end
@@ -434,7 +464,7 @@ end
 
 document pobj
 Usage: pobj lisp_object
-Print the internal C structure of a underlying Lisp Object.
+Print the internal C representation of a Lisp Object.
 end
 
 # -------------------------------------------------------------
