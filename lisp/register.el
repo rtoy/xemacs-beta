@@ -240,7 +240,8 @@ Interactively, second arg is non-nil if prefix arg is supplied."
       (princ (marker-position val) (current-buffer)))
      (t
       (error "Register does not contain text"))))
-  (if (not arg) (exchange-point-and-mark)))
+  ;; XEmacs: don't activate the region.  It's annoying.
+  (if (not arg) (exchange-point-and-mark t)))
 
 (defun copy-to-register (register start end &optional delete-flag)
   "Copy region into register REGISTER.  With prefix arg, delete as well.

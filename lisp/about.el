@@ -1255,6 +1255,14 @@ Microsoft Windows without a real editor.\n")
        (print-short "Michael R. Cook" "mcook@cognex.com" "\
 Author of the \"shy groups\" and minimal matching regular expression
 extensions.\n")
+       (print-short "Darryl Okahata" "darrylo@sr.hp.com" "\
+Perennial Emacs hacker since 1986 or so, when he first started on GNU
+Emacs 17.something.  Over the years, he's developed "OEmacs", the first
+version of GNU Emacs 19 for MSDOS, and "bigperl", a 32-bit version of
+Perl4 for MSDOS.  In recent years, reality has intruded and he no longer 
+has much time for playing with cool programs.  What little time he has
+now goes to XEmacs hacking, where he's worked on speeding up dired under 
+MS Windows, and to feeding his two cats.\n")
        "\n\
 In addition to those just mentioned, the following people have spent a
 great deal of effort providing feedback, testing beta versions of
@@ -1426,7 +1434,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Christian Nybø" "chr@mediascience.no")
        (print-short "Kevin Oberman" "oberman@es.net")
        (print-short "David Ofelt" "ofelt@getalife.Stanford.EDU")
-       (print-short "Darryl Okahata" "darrylo@sr.hp.com")
        (print-short "Alexandre Oliva" "oliva@dcc.unicamp.br")
        (print-short "Tore Olsen" "toreo@colargol.idb.hist.no")
        (print-short "Greg Onufer" "Greg.Onufer@eng.sun.com")

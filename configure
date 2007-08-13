@@ -416,7 +416,7 @@ echo "  Use \`$progname --help' to show usage.") >&2 && exit 1 ;;
 	  with_database_berkdb=no
 	  with_database_dbm=no
 	  with_database_gnudbm=no
-	  for x in `echo "$val" | sed -e 's/,/ /'` ; do
+	  for x in `echo "$val" | sed -e 's/,/ /g'` ; do
 	    case "$x" in
 		no ) ;;
 		b | be | ber | berk | berkd | berkdb )  with_database_berkdb=yes ;;
@@ -6252,7 +6252,7 @@ if test "$with_cde" = yes; then
   echo "configure: warning: CDE already found, disabling OffiX support" 1>&2
   with_offix=no
 fi
-test -z "$with_offix" && with_offix=yes
+test -z "$with_offix" && with_offix=no
 if test "$with_offix" = "yes"; then
   { test "$extra_verbose" = "yes" && cat << \EOF
     Defining HAVE_OFFIX_DND

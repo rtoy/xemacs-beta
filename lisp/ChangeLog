@@ -1,3 +1,22 @@
+1998-07-12  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre5 is released.
+
+1998-07-11  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): Credits update.
+
+1998-07-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* register.el (insert-register): Don't activate the region.
+
+1998-07-10  SL Baur  <steve@altair.xemacs.org>
+
+	* select.el: Restore x-* symbols for backwards compatibility:
+	x-copy-primary-selection, x-kill-primary-selection,
+	x-delete-primary-selection, x-select-make-extent-for-selection,
+	x-valid-simple-selection-, x-cut-copy-clear-internal.
+
 1998-07-09  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre4 is released.

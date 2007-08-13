@@ -1,4 +1,7 @@
 							-*- indented-text -*-
+to 21.0 pre5 "Zhong Wei"
+-- multiple DB configure fix from Gregory Neil Shapiro
+
 to 21.0 pre4 "Uzbek Black"
 -- Miscellaneous documentation cleanup from Altrasoft
 -- Updates for using emacsbug.el as primary bug report interface from

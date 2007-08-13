@@ -37,18 +37,27 @@
   (interactive)
   (and (console-on-window-system-p)
        (cut-copy-clear-internal 'copy)))
+(define-obsolete-function-alias
+  'x-copy-primary-selection
+  'copy-primary-selection)
 
 (defun kill-primary-selection ()
   "Copy the selection to the Clipboard and the kill ring, then delete it."
   (interactive "*")
   (and (console-on-window-system-p)
        (cut-copy-clear-internal 'cut)))
+(define-obsolete-function-alias
+  'x-kill-primary-selection
+  'kill-primary-selection)
 
 (defun delete-primary-selection ()
   "Delete the selection without copying it to the Clipboard or the kill ring."
   (interactive "*")
   (and (console-on-window-system-p)
        (cut-copy-clear-internal 'clear)))
+(define-obsolete-function-alias
+  'x-delete-primary-selection
+  'delete-primary-selection)
 
 (defun yank-clipboard-selection ()
   "Insert the current Clipboard selection at point."
@@ -209,6 +218,9 @@ secondary selection instead of the primary selection."
 	  (default-mouse-track-next-move-rect start end previous-extent)
 	  ))
 	previous-extent))))
+(define-obsolete-function-alias
+  'x-select-make-extent-for-selection
+  'select-make-extent-for-selection)
 
 ;; moved from x-select.el
 (defun valid-simple-selection-p (data)
@@ -230,6 +242,9 @@ secondary selection instead of the primary selection."
 	       (marker-buffer (cdr data)))
 	   (buffer-live-p (marker-buffer (car data)))
 	   (buffer-live-p (marker-buffer (cdr data))))))
+(define-obsolete-function-alias
+  'x-valid-simple-selection-p
+  'valid-simple-selection-p)
 
 (defun cut-copy-clear-internal (mode)
   (or (memq mode '(cut copy clear)) (error "unkown mode %S" mode))
@@ -272,5 +287,8 @@ secondary selection instead of the primary selection."
 	       (delete-region s e))))
       (disown-selection nil)
       )))
+(define-obsolete-function-alias
+  'x-cut-copy-clear-internal
+  'cut-copy-clear-internal)
 
 ;;; select.el ends here

@@ -570,7 +570,7 @@ while test $# != 0; do
 	  with_database_berkdb=no
 	  with_database_dbm=no
 	  with_database_gnudbm=no
-	  for x in `echo "$val" | sed -e 's/,/ /'` ; do
+	  for x in `echo "$val" | sed -e 's/,/ /g'` ; do
 	    case "$x" in
 		no ) ;;
 		b | be | ber | berk | berkd | berkdb )  with_database_berkdb=yes ;;
@@ -2582,6 +2582,8 @@ fi
 dnl Always compile OffiX unless --without-offix is given, no
 dnl X11 support is compiled in, no standard Xmu is avaiable,
 dnl or dragndrop support is disabled
+dnl Because OffiX support currently loses when more than one display
+dnl is in use, we now disable it by default -slb 07/10/1998.
 test "$window_system" != "x11" && with_offix=no
 if test "$with_xmu" != yes -a "$with_x11" = yes; then
   AC_MSG_WARN([No OffiX without real Xmu support])
@@ -2595,7 +2597,7 @@ if test "$with_cde" = yes; then
   AC_MSG_WARN([CDE already found, disabling OffiX support])
   with_offix=no
 fi
-test -z "$with_offix" && with_offix=yes
+test -z "$with_offix" && with_offix=no
 if test "$with_offix" = "yes"; then
   AC_DEFINE(HAVE_OFFIX_DND)
   XE_APPEND(offix.o, dnd_objs)

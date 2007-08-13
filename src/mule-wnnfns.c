@@ -332,20 +332,21 @@ Return nil if error occurs
 */
      (hname, lname))
 {
-  char	envname[32];
-  char	langname[32];
-  char	hostname[32];
+  char *envname;
+  char *langname;
+  char *hostname;
   int	snum;
+  int size;
   CHECK_STRING (lname);
 
   snum = check_wnn_server_type ();
   switch (snum)
     {
     case WNNSERVER_J:
-      strcpy (langname, "ja_JP");
+      langname = "ja_JP";
       break;
     case WNNSERVER_C:
-      strcpy (langname, "zh_CN");
+      langname = "zh_CN";
       break;
 /*  
     case WNNSERVER_T:
@@ -353,15 +354,25 @@ Return nil if error occurs
     break;
     */
     case WNNSERVER_K:
-      strcpy (langname, "ko_KR");
+      langname = "ko_KR";
       break;
+    case -1:
+    default:
+      return Qnil;
     }
-  strncpy (envname, (char *) XSTRING_DATA (lname), 32);
-  if (NILP (hname)) strcpy (hostname, "");
+  size = XSTRING_LENGTH (lname) > 1024 ? 1026 : XSTRING_LENGTH (lname) + 2;
+  envname = alloca (size);
+  strncpy (envname, (char *) XSTRING_DATA (lname), size-2);
+  envname[size-2] = '\0';
+  if (NILP (hname)) hostname = "";
   else
     {
       CHECK_STRING (hname);
-      strncpy (hostname, (char *) XSTRING_DATA (hname), 32);
+      size = XSTRING_LENGTH(hname) > 1024 ? 1025 : XSTRING_LENGTH(hname) + 1;
+
+      hostname = alloca (size);
+      strncpy (hostname, (char *) XSTRING_DATA (hname), size-1);
+      hostname[size-1] = '\0';
     }
   CHECK_STRING (lname);
   /* 97/4/16 jhod@po.iijnet.or.jp
