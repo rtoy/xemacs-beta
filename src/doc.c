@@ -348,10 +348,6 @@ string is passed through `substitute-command-keys'.
 	  else
 	    return Qnil;
 	}
-#ifdef MOCKLISP_SUPPORT
-      else if (EQ (funcar, Qmocklisp))
-	return Qnil;
-#endif
       else if (EQ (funcar, Qmacro))
 	return Fdocumentation (Fcdr (fun), raw);
       else

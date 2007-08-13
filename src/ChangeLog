@@ -1,3 +1,60 @@
+1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* eval.c (Fprogn): Delete mocklisp support.
+	(Fwhile): Ditto.
+	(Fcommandp): Ditto.
+	(Feval): Ditto.
+	(funcall_recording_as): Ditto.
+	(funcall_lambda): Ditto.
+
+	* elhash.c (verify_function): Delete mocklisp support.
+
+	* doc.c (Fdocumentation): Delete mocklisp support.
+
+	* data.c (wrong_type_argument): Delete mocklisp support.
+
+	* config.h.in: Delete mocklisp support.
+
+	* callint.c (Fcall_interactively): Delete mocklisp support.
+
+	* emacs.c (main_1): Delete mocklisp initialization.
+
+	* symsinit.h: Delete mocklisp.c decls.
+
+	* Makefile.in.in: Delete mocklisp stuffs.
+
+Thu May 29 03:00:16 1997  Kyle Jones  <kyle@crystal.wonderworks.com>
+
+	* frame.c (change_frame_size_1):
+          Drop code that returns immediately if the old frame
+          size is equal to the new.
+	  Leave the minibuffer height the same if the frame has
+	  been initialized, and the minibuffer height is tall
+	  enough to display at least one line of text in the default
+	  font, and the old minibuffer height is a multiple of the
+	  default font height.  This should cause the minibuffer
+	  height to be recomputed on font changes but not for
+	  other frame size changes, which seems reasonable.
+
+1997-05-26  Steven L Baur  <steve@altair.xemacs.org>
+
+	* event-stream.c (Frecent_keys): Take optional parameter to
+	indicate how many keystrokes to return.
+	(Frecent_keys_ring_size): New function returns the maximum number
+	of events `recent-keys' can return.
+	(Fset_recent_keys_ring_size): New function.  Modifies the above.
+
+	From Hrvoje Niksic <hniksic@srce.hr>
+	
+	* event-stream.c: New variable recent_keys_ring_size replacing a
+	hard-coded macro.
+
+1997-05-23  Steven L Baur  <steve@altair.xemacs.org>
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* sysdep.c: Correction of subprocess support when compiling
+	without ttys.
+
 1997-05-21  Steven L Baur  <steve@altair.xemacs.org>
 
 	* editfns.c (format-time-string): Update DOCstring.  Make time

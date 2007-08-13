@@ -353,6 +353,35 @@ and KILLP is t if a prefix arg was specified."
   (and overwrite-mode (not (eolp))
        (save-excursion (insert-char ?\  arg))))
 
+(defcustom delete-erases-forward nil
+  "If non-nil, the DEL key will erase one character forwards.
+If nil, the DEL key will erase one character backwards."
+  :type 'boolean
+  :group 'editing-basics)
+
+(defcustom backspace-or-delete-hook nil
+  "Hook that is run prior to executing the backspace-or-delete function.
+Return a non-nil value to indicate that the editing chore has been
+handled and the backspace-or-delete function will exit without doing
+anything else."
+  :type 'hook)
+  
+(defun backspace-or-delete (arg)
+  "Delete either one character backwards or one character forwards.
+Controlled by the state of `delete-erases-forward' and whether the
+BackSpace keysym even exists on your keyboard.  If you don't have a
+BackSpace keysym, the delete key should always delete one character
+backwards."
+  (interactive "*P")
+  (unless (run-hook-with-args 'backspace-or-delete-hook arg)
+    (if zmacs-region-active-p
+	(kill-region (point) (mark))
+      (if (and delete-erases-forward
+	       (or (eq 'tty (device-type))
+		   (x-keysym-on-keyboard-p "BackSpace")))
+	  (delete-char (prefix-numeric-value arg))
+	(delete-backward-char (prefix-numeric-value arg))))))
+
 (defun zap-to-char (arg char)
   "Kill up to and including ARG'th occurrence of CHAR.
 Goes backward if ARG is negative; error if CHAR not found."

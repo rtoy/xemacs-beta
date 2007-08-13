@@ -475,9 +475,6 @@ verify_function (Lisp_Object function, CONST char *description)
     Lisp_Object funcar = Fcar (function);
     if ((SYMBOLP (funcar)) 
         && (EQ (funcar, Qlambda) 
-#ifdef MOCKLISP_SUPPORT
-            || EQ (funcar, Qmocklisp) 
-#endif
             || EQ (funcar, Qautoload)))
       return;
   }

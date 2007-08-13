@@ -7,8 +7,8 @@
 ;; Author:	  Rodney J. Whitby <rwhitby@asc.corp.mot.com>
 ;; Maintainer:	  Rodney J. Whitby <rwhitby@asc.corp.mot.com>
 ;; Created:	  June 1994, adapted from cc-mode.el 4.29 by Barry A. Warsaw.
-;; Version:	  $Revision: 1.2 $
-;; Last Modified: $Date: 1997/03/08 23:26:29 $
+;; Version:	  $Revision: 1.3 $
+;; Last Modified: $Date: 1997/05/29 23:49:57 $
 ;; Keywords:	  languages VHDL
 ;; Archive:	  ftp.eda.com.au:/pub/emacs/vhdl-mode.tar.gz
 
@@ -69,7 +69,7 @@
 ;; LCD Archive Entry:
 ;; vhdl-mode.el|Rodney J. Whitby|rwhitby@asc.corp.mot.com
 ;; |Major mode for editing VHDL code
-;; |$Date: 1997/03/08 23:26:29 $|$Revision: 1.2 $
+;; |$Date: 1997/05/29 23:49:57 $|$Revision: 1.3 $
 ;; |ftp.eda.com.au:/pub/emacs/vhdl-mode.tar.gz
 
 
@@ -347,7 +347,8 @@ supported list, along with the values for this variable:
   (define-key vhdl-mode-map "\M-\C-h"	'vhdl-mark-defun)
   (define-key vhdl-mode-map "\M-\C-q"	'vhdl-indent-sexp)
   (define-key vhdl-mode-map "\t"        'vhdl-indent-command)
-  (define-key vhdl-mode-map "\177"      'backward-delete-char-untabify)
+;; GDF - leave the DEL key alone!
+;;  (define-key vhdl-mode-map "\177"      'backward-delete-char-untabify)
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key vhdl-mode-map "\C-c\C-b"  'vhdl-submit-bug-report)
   (define-key vhdl-mode-map "\C-c\C-c"  'comment-region)
@@ -539,7 +540,7 @@ This does a lot more highlighting.")
 ;;;###autoload
 (defun vhdl-mode ()
   "Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.2 $
+vhdl-mode $Revision: 1.3 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2593,7 +2594,7 @@ ENDPOS is encountered.  (interactive)"
 
 ;; Defuns for submitting bug reports:
 
-(defconst vhdl-version "$Revision: 1.2 $"
+(defconst vhdl-version "$Revision: 1.3 $"
   "vhdl-mode version number.")
 (defconst vhdl-mode-help-address "rwhitby@asc.corp.mot.com"
   "Address accepting submission of bug reports.")

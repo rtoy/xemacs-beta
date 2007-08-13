@@ -1,4 +1,4 @@
-;;; $Id: eiffel3.el,v 1.1.1.2 1996/12/21 20:47:49 steve Exp $
+;;; $Id: eiffel3.el,v 1.2 1997/05/29 23:49:51 steve Exp $
 ;;;--------------------------------------------------------------------------
 ;;; TowerEiffel -- Copyright (c) 1993-1996 Tower Technology Corporation. 
 ;;; All Rights Reserved.
@@ -1785,7 +1785,6 @@ only that line is indented"
   (if (and (boundp 'eif-cr-function) eif-cr-function)
       (define-key eiffel-mode-map "\C-m" eif-cr-function)
     )
-  (define-key eiffel-mode-map "\177" 'backward-delete-char-untabify)
   (define-key eiffel-mode-map "\M-\C-q" 'eif-indent-construct)
   (define-key eiffel-mode-map "\M-'" 'eif-feature-quote)
   (define-key eiffel-mode-map "\M-q" 'eif-fill-paragraph)

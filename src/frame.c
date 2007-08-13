@@ -2637,14 +2637,6 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
   XSETFRAME (frame, f);
 
-  /*
-   * If the frame has been initialized and the new height and width
-   * are the same as the current height and width, then just return.
-   */
-  if (f->init_finished &&
-      newheight == FRAME_HEIGHT (f) && newwidth == FRAME_WIDTH (f))
-    return;
-
   default_face_height_and_width (frame, &font_height, &font_width);
 
   /* This size-change overrides any pending one for this frame.  */
@@ -2702,14 +2694,29 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 	  && ! FRAME_MINIBUF_ONLY_P (f))
 	/* Frame has both root and minibuffer.  */
 	{
+	  /*
+	   * Leave the minibuffer height the same if the frame has
+	   * been initialized, and the minibuffer height is tall
+	   * enough to display at least one line of text in the default
+	   * font, and the old minibuffer height is a multiple of the
+	   * default font height.  This should cause the minibuffer
+	   * height to be recomputed on font changes but not for
+	   * other frame size changes, which seems reasonable.
+	   */
+	  int old_minibuf_height =
+	    XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
+	  int minibuf_height =
+	    f->init_finished && (old_minibuf_height % font_height) == 0 ?
+	    max(old_minibuf_height, font_height) :
+	    font_height;
 	  set_window_pixheight (FRAME_ROOT_WINDOW (f),
 				/* - font_height for minibuffer */
-				new_pixheight - font_height, 0);
+				new_pixheight - minibuf_height, 0);
 
 	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
-	    new_pixheight - font_height + FRAME_TOP_BORDER_END (f);
+	    new_pixheight - minibuf_height + FRAME_TOP_BORDER_END (f);
 	  
-	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f), font_height, 0);
+	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
 	}
       else
 	/* Frame has just one top-level window.  */

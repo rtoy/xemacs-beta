@@ -98,11 +98,6 @@ VPATH=@srcdir@
    do not let it interfere with this file.  */
 #undef register
 
-/* On some systems we may not be able to use the system make command. */
-#ifdef MAKE_COMMAND
-MAKE = MAKE_COMMAND
-#endif
-
 /* Unless inhibited or changed, use -lg to link for debugging.  */
 #ifndef LIBS_DEBUG
 #define LIBS_DEBUG -lg
@@ -119,7 +114,7 @@ MAKE = MAKE_COMMAND
 #ifndef ORDINARY_LINK
 
 #ifndef CRT0_COMPILE
-#define CRT0_COMPILE $(CC) -c $(cflags) C_SWITCH_ASM 
+#define CRT0_COMPILE $(CC) -c $(cflags) C_SWITCH_ASM
 #endif
 
 #ifndef START_FILES
@@ -258,7 +253,7 @@ GNULIB_VAR = LIB_GCC
 GNULIB_VAR = `if [ -f LIB_GCC ] ; then echo LIB_GCC; else echo; fi`
 #endif /* __GNUC__ < 2 */
 #else /* ! defined (__GNUC__) */
-GNULIB_VAR = 
+GNULIB_VAR =
 
 #endif /* ! defined (__GNUC__) */
 #else
@@ -388,7 +383,7 @@ external_widget_objs = ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 
 #  ifdef LWLIB_USES_MOTIF
 #    ifdef EXTW_LINK
-#      define MOTIF_OTHER_FILES libextcli_Xm.a libextcli_Xm.so.1 
+#      define MOTIF_OTHER_FILES libextcli_Xm.a libextcli_Xm.so.1
 #    else
 #      define MOTIF_OTHER_FILES libextcli_Xm.a
 #    endif
@@ -585,8 +580,8 @@ otherobjs = $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
    Every file that is loaded from loadup.el must be enumerated
    here, or the functions will have no docstrings.
    This is dumb - this list should be generated automatically.
-   [Note: "version.el" is included in the doc separately, but is not listed 
-    here because we do not want things to appear to be out-of-date just 
+   [Note: "version.el" is included in the doc separately, but is not listed
+    here because we do not want things to appear to be out-of-date just
     because the version number has been incremented. -- D.N.G. 8/28/93]
  */
 lisp=   ${lispdir}paths.el ${lispdir}prim/featurep.elc \
@@ -622,7 +617,7 @@ lisp=   ${lispdir}paths.el ${lispdir}prim/featurep.elc \
         ${lispdir}prim/itimer.elc ${lispdir}prim/itimer-autosave.elc \
 	${lispdir}ediff/ediff-hook.elc \
 	${lispdir}custom/widget.elc ${lispdir}custom/custom.elc \
-	${lispdir}prim/custom-load.elc ${lispdir}prim/cus-start.elc \
+	${lispdir}prim/cus-start.elc \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \
 	${lispdir}packages/buff-menu.elc DIALOG_LISP MULE_LISP NOMULE_LISP \
@@ -660,7 +655,7 @@ mo_dir = ${etcdir}
 mo_file = ${mo_dir}emacs.mo
 #endif
 
-LOADPATH =  EMACSLOADPATH="${lispdir}prim"  
+LOADPATH =  EMACSLOADPATH="${lispdir}prim"
 DUMPENV = $(LOADPATH)
 
 release: temacs ${lisp} ${libsrc}DOC $(mo_file) OTHER_FILES
@@ -770,7 +765,7 @@ ${libsrc}make-docfile:
 	cd ${libsrc} && ${MAKE} ${MFLAGS} make-docfile
 
 /* Lint Section */
-LINT.c=$(LINT) $(LINTFLAGS) $(LINTINCLUDES) 
+LINT.c=$(LINT) $(LINTFLAGS) $(LINTINCLUDES)
 LINTFILES= $(objs:.o=.ln)
 LINTINCLUDES = $(cppflags)
 /* LINTFLAGS= -fd -m -p -s -u -v -x */
@@ -858,7 +853,7 @@ pic_arg = -K pic
 # define EXTERNAL_CLIENT_XT_OBJS_NONSHARED    ExternalClient-Xt-nonshared.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 # define EXTERNAL_CLIENT_XLIB_OBJS_NONSHARED  ExternalClient-Xlib-nonshared.o extw-Xlib-nonshared.o
 
-/* Add dependencies so things work right with a parallel make */ 
+/* Add dependencies so things work right with a parallel make */
 ExternalClient-Xm-shared.o: ${srcdir}/ExternalClient.c ExternalClient-Xt-shared.o ExternalClient-Xm-nonshared.o
 	$(CC) -c $(pic_arg) $(cflags) -DEXTW_USES_MOTIF ${srcdir}/ExternalClient.c
 	mv ExternalClient.o ExternalClient-Xm-shared.o
@@ -1082,7 +1077,7 @@ gnu-depend: $(obj_dep)
 
 depend:
 	: > depend.tmp
-	makedepend -f depend.tmp -Dsubprocesses -DMOCKLISP_SUPPORT \
+	makedepend -f depend.tmp -Dsubprocesses \
 		   -DHAVE_X_WINDOWS -DMULE -- $(cppflags) $(cflags) \
 		   -- *.c
 	sh ${libsrc}process-depends.sh < depend.tmp > depend.out
@@ -1090,8 +1085,7 @@ depend:
 	grep -v '^mule' depend.out | grep -v '[^a-zA-Z]mule' > /tmp/depend2.$$
 	echo '#ifdef MULE' > depend.out
 	cat /tmp/depend1.$$ >> depend.out
-	/* The things you have to do to pay homage to the lexer God ...
-	   truly frightening. */
+	@# The things you have to do to pay homage to the lexer God ... frightening
 	echo '#endif /''* MULE *''/' >> depend.out
 	echo '' >> depend.out
 	cat /tmp/depend2.$$ >> depend.out
@@ -1226,7 +1220,6 @@ marker.o: mule-charset.h
 md5.o: mule-charset.h
 menubar-x.o: mule-charset.h
 minibuf.o: mule-charset.h
-mocklisp.o: mule-charset.h
 #ifdef HAVE_CANNA
 mule-canna.o: blocktype.h
 mule-canna.o: buffer.h
@@ -2432,11 +2425,6 @@ minibuf.o: specifier.h
 minibuf.o: systime.h
 minibuf.o: toolbar.h
 minibuf.o: window.h
-mocklisp.o: blocktype.h
-mocklisp.o: buffer.h
-mocklisp.o: bufslots.h
-mocklisp.o: config.h
-mocklisp.o: dynarr.h
 msdos.o: config.h
 nas.o: blocktype.h
 nas.o: config.h

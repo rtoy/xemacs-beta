@@ -224,7 +224,8 @@ If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
-  return make_int (BUF_PT (decode_buffer (buffer, 1)));
+  struct buffer *b = decode_buffer (buffer, 1);
+  return make_int (BUF_PT (b));
 }
 
 DEFUN ("point-marker", Fpoint_marker, 0, 2, 0, /*
@@ -313,16 +314,16 @@ region_limit (int beginningp, struct buffer *b)
 }
 
 DEFUN ("region-beginning", Fregion_beginning, 0, 1, 0, /*
-Return position of beginning of region, as an integer.
+Return position of beginning of region in BUFFER, as an integer.
 If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
-  return (region_limit (1, decode_buffer (buffer, 1)));
+  return region_limit (1, decode_buffer (buffer, 1));
 }
 
 DEFUN ("region-end", Fregion_end, 0, 1, 0, /*
-Return position of end of region, as an integer.
+Return position of end of region in BUFFER, as an integer.
 If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
@@ -496,7 +497,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return (make_int (BUF_SIZE (b)));
+  return make_int (BUF_SIZE (b));
 }
 
 DEFUN ("point-min", Fpoint_min, 0, 1, 0, /*
@@ -507,7 +508,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return (make_int (BUF_BEGV (b)));
+  return make_int (BUF_BEGV (b));
 }
 
 DEFUN ("point-min-marker", Fpoint_min_marker, 0, 1, 0, /*
@@ -529,7 +530,8 @@ If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
-  return make_int (BUF_ZV (decode_buffer (buffer,1)));
+  struct buffer *b = decode_buffer (buffer, 1);
+  return make_int (BUF_ZV (b));
 }
 
 DEFUN ("point-max-marker", Fpoint_max_marker, 0, 1, 0, /*
@@ -553,9 +555,9 @@ If BUFFER is nil, the current buffer is assumed.
 {
   struct buffer *b = decode_buffer (buffer, 1);
   if (BUF_PT (b) >= BUF_ZV (b))
-    return (Qzero);             /* #### Gag me! */
+    return Qzero;             /* #### Gag me! */
   else
-    return (make_char (BUF_FETCH_CHAR (b, BUF_PT (b))));
+    return make_char (BUF_FETCH_CHAR (b, BUF_PT (b)));
 }
 
 DEFUN ("preceding-char", Fpreceding_char, 0, 1, 0, /*
@@ -567,9 +569,9 @@ If BUFFER is nil, the current buffer is assumed.
 {
   struct buffer *b = decode_buffer (buffer, 1);
   if (BUF_PT (b) <= BUF_BEGV (b))
-    return (Qzero);             /* #### Gag me! */
+    return Qzero;             /* #### Gag me! */
   else
-    return (make_char (BUF_FETCH_CHAR (b, BUF_PT (b) - 1)));
+    return make_char (BUF_FETCH_CHAR (b, BUF_PT (b) - 1));
 }
 
 DEFUN ("bobp", Fbobp, 0, 1, 0, /*
@@ -723,7 +725,7 @@ This ignores the environment variables LOGNAME and USER, so it differs from
 #else
   Lisp_Object tem = build_string (pw ? pw->pw_name : "unknown");/* no gettext */
 #endif
-  return (tem);
+  return tem;
 }
 
 DEFUN ("user-uid", Fuser_uid, 0, 0, 0, /*
@@ -803,7 +805,7 @@ user is returned, or nil.  USER may be either a login name or a uid.
   p = getenv ("NAME");
   if (p)
     tem = build_string (p);
-  return (tem);
+  return tem;
 }
 
 DEFUN ("system-name", Fsystem_name, 0, 0, 0, /*
@@ -811,7 +813,7 @@ Return the name of the machine you are running on, as a string.
 */
        ())
 {
-    return (Fcopy_sequence (Vsystem_name));
+    return Fcopy_sequence (Vsystem_name);
 }
 
 /* For the benefit of callers who don't want to include lisp.h.
@@ -1371,9 +1373,9 @@ BUFFER defaults to the current buffer.
 */
        (string, buffer))
 {
-  struct buffer *buf = decode_buffer (buffer, 1);
+  struct buffer *b = decode_buffer (buffer, 1);
   CHECK_STRING (string);
-  buffer_insert_lisp_string (buf, string);
+  buffer_insert_lisp_string (b, string);
   zmacs_region_stays = 0;
   return Qnil;
 }
@@ -1405,7 +1407,7 @@ text into.  If BUFFER is nil, the current buffer is assumed.
   REGISTER Bytecount n;
   REGISTER Bytecount charlen;
   Bufbyte str[MAX_EMCHAR_LEN];
-  struct buffer *buf = decode_buffer (buffer, 1);
+  struct buffer *b = decode_buffer (buffer, 1);
   int cou;
 
   CHECK_CHAR_COERCE_INT (chr);
@@ -1430,7 +1432,7 @@ text into.  If BUFFER is nil, the current buffer is assumed.
   slen = i;
   while (n >= slen)
     {
-      buffer_insert_raw_string (buf, string, slen);
+      buffer_insert_raw_string (b, string, slen);
       n -= slen;
     }
   if (n > 0)
@@ -1442,7 +1444,7 @@ text into.  If BUFFER is nil, the current buffer is assumed.
 	insert (string, n);
     }
 #else
-    buffer_insert_raw_string (buf, string, n);
+    buffer_insert_raw_string (b, string, n);
 #endif
 
   zmacs_region_stays = 0;
@@ -1936,18 +1938,17 @@ If BUFFER is nil, the current buffer is assumed.
        (c1, c2, buffer))
 {
   Emchar x1, x2;
-  struct buffer *buf = decode_buffer (buffer, 1);
+  struct buffer *b = decode_buffer (buffer, 1);
 
   CHECK_CHAR_COERCE_INT (c1);
   CHECK_CHAR_COERCE_INT (c2);
   x1 = XCHAR (c1);
   x2 = XCHAR (c2);
 
-  if (!NILP (buf->case_fold_search)
-      ? DOWNCASE (buf, x1) == DOWNCASE (buf, x2)
-      : x1 == x2)
-    return Qt;
-  return Qnil;
+  return (!NILP (b->case_fold_search)
+	  ? DOWNCASE (b, x1) == DOWNCASE (b, x2)
+	  : x1 == x2)
+    ? Qt : Qnil;
 }
 
 DEFUN ("char=", Fchar_Equal, 2, 3, 0, /*
@@ -1957,14 +1958,10 @@ The optional buffer argument is for symmetry and is ignored.
 */
        (c1, c2, buffer))
 {
-  Emchar x1, x2;
-
   CHECK_CHAR_COERCE_INT (c1);
   CHECK_CHAR_COERCE_INT (c2);
-  x1 = XCHAR (c1);
-  x2 = XCHAR (c2);
 
-  return x1 == x2 ? Qt : Qnil;
+  return XCHAR(c1) == XCHAR(c2) ? Qt : Qnil;
 }
 
 #if 0 /* Undebugged FSFmacs code */
@@ -2030,7 +2027,7 @@ transpose_markers (Bufpos start1, Bufpos end1, Bufpos start2, Bufpos end2)
     }
 }
 
-#endif
+#endif /* 0 */
 
 DEFUN ("transpose-regions", Ftranspose_regions, 4, 5, 0, /*
 Transpose region START1 to END1 with START2 to END2.

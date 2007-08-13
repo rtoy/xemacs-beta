@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/7/13 (1994/8/31 obsolete tm-body.el)
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -42,7 +42,7 @@
 ;;;
 
 (defconst mime-viewer/RCS-ID
-  "$Id: tm-view.el,v 1.4 1997/04/24 04:00:14 steve Exp $")
+  "$Id: tm-view.el,v 1.5 1997/05/29 23:50:21 steve Exp $")
 
 (defconst mime-viewer/version (get-version-string mime-viewer/RCS-ID))
 (defconst mime/viewer-version mime-viewer/version)
@@ -74,6 +74,10 @@
      (mode "play" "print")
      )
     ((type . "image/gif")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name)
+     (mode "play" "print")
+     )
+    ((type . "image/png")
      (method "tm-image" nil 'file 'type 'encoding 'mode 'name)
      (mode "play" "print")
      )

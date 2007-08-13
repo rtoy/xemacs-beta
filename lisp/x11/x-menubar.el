@@ -140,10 +140,11 @@
       ("Customize"
        ("Emacs" :filter (lambda (&rest junk)
 			   (cdr (custom-menu-create 'emacs))))
-       ["Group..." customize t]
+       ["Group..." customize-group t]
        ["Variable..." customize-variable t]
        ["Face..." customize-face t]
-       ["Saved..." customize-customized t]
+       ["Saved..." customize-saved t]
+       ["Set..." customize-customized t]
        ["Apropos..." customize-apropos t])
       ["Read Only" (toggle-read-only)
        :style toggle :selected buffer-read-only]
@@ -542,7 +543,7 @@
 	    (strokes-mode)
 	  (beep)
 	  (message "This option requires a window system."))
-	:style toggle :selected (and strokes-enabled-p window-system)])
+	:style toggle :selected (and strokes-mode window-system)])
       ("Open URLs With"
        ["Emacs-W3" (setq browse-url-browser-function 'browse-url-w3)
 	:style radio

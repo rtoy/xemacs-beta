@@ -123,7 +123,8 @@ for SIMULA mode to function correctly.")
   (define-key simula-mode-map "\C-c\C-n"   'simula-next-statement)
   ;(define-key simula-mode-map "\C-c\C-g"   'simula-goto-definition)
   ;(define-key simula-mode-map "\C-c\C-h"   'simula-standard-help)
-  (define-key simula-mode-map "\177"       'backward-delete-char-untabify)
+;; GDF - Don't mess with DEL  
+;;  (define-key simula-mode-map "\177"       'backward-delete-char-untabify)
   (define-key simula-mode-map ":"          'simula-electric-label)
   (define-key simula-mode-map "\t"         'simula-indent-command))
 

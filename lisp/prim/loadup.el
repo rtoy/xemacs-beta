@@ -210,7 +210,6 @@
        (load-gc "energize/energize-load.el"))
      (when (featurep 'sparcworks)
        (load-gc "sunpro/sunpro-load.el"))
-     (load-gc "custom-load")
      (fmakunbound 'load-gc)
      )) ;; end of call-with-condition-handler
 

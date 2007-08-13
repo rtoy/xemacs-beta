@@ -1,4 +1,27 @@
 							-*- indented-text -*-
+to 20.3 beta3.
+-- miscellaneous bug fixes
+-- iso-acc.el-1.14 courtesy of Alexandre Oliva
+-- custom-load.el renamed to cus-load.el and is no longer dumped
+-- Configure patches courtesy of Martin Buchholz
+-- etags.c-12.7
+-- Old packages removed:  modes/old-c-mode.el, modes/old-c++-mode.el,
+   modes/two-column.el.
+   emulators/mlconvert.el, emulators/mlsupport.el.
+   energize/*.el.
+   eos/loaddefs-eos.el.
+   packages/generic-sc.el, packages/mime-compose.el, packages/netunam.el,
+   packages/sccs.el, packages/server.el.
+   utils/mailpost.el, utils/meese.el.
+-- dynodump hierarchy restored to distribution
+-- ssh.el-1.3 courtesy of Noah Friedman
+-- AUC TeX-9.7p courtesy of Per Abrahamsen
+-- savehist.el-0.2 courtesy of Hrvoje Niksic
+-- GPM support courtesy of William Perry
+-- Custom-1.98
+-- hm--html-menus-5.7 courtesy of Heiko Muenkel
+-- Gnus-5.4.55
+
 to 20.3 beta2.
 -- mega configure patches courtesy of Martin Buchholz
 -- edmacro.el-3.14

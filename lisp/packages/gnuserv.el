@@ -1,9 +1,11 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.2
+;; Version: 3.3
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
+;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
+;;             Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: environment, processes, terminals
 
 ;; This file is part of XEmacs.
@@ -45,11 +47,12 @@
 ;; TTY, this TTY will be attached as a new device to the running
 ;; XEmacs, and will be removed once you are done with the buffer.
 
-;; To evaluate a Lisp form in a running Emacs, use the `gnudoit'
-;; utility.  For example `gnudoit "(+ 2 3)"' will print `5', whereas
-;; `gnudoit "(gnus)"' will fire up your favorite newsreader.  Like
-;; gnuclient, `gnudoit' requires the server to be started prior to
-;; using it.
+;; To evaluate a Lisp form in a running Emacs, use the `-eval'
+;; argument of gnuclient.  To simplify this, we provide the `gnudoit'
+;; shell script.  For example `gnudoit "(+ 2 3)"' will print `5',
+;; whereas `gnudoit "(gnus)"' will fire up your favorite newsreader.
+;; Like gnuclient, `gnudoit' requires the server to be started prior
+;; to using it.
 
 ;; For more information you can refer to man pages of gnuclient,
 ;; gnudoit and gnuserv, distributed with XEmacs.
@@ -77,7 +80,7 @@
 ;;; Code:
 
 (defconst gnuserv-rcs-version
-  "$Id: gnuserv.el,v 1.9 1997/05/23 01:36:30 steve Exp $")
+  "$Id: gnuserv.el,v 1.10 1997/05/29 23:50:05 steve Exp $")
 
 (defgroup gnuserv nil
   "The gnuserv suite of programs to talk to Emacs from outside."
@@ -317,7 +320,7 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
   "Process gnuserv client requests to execute Emacs commands."
   (setq gnuserv-string (concat gnuserv-string string))
   ;; C-d means end of request.
-  (when (string-match "\C-d$" gnuserv-string)
+  (when (string-match "\C-d\\'" gnuserv-string)
     (cond ((string-match "^[0-9]+" gnuserv-string) ; client request id
 	   (let ((header (read-from-string gnuserv-string)))
 	     ;; Set the client we are talking to.
@@ -627,7 +630,7 @@ the function will not remove the frames associated with the client."
      ;; return its first buffer.
      ((setq client
 	    (car (member-if-not 'null gnuserv-clients
-				:key 'gnuserv-buffers)))
+				:key 'gnuclient-buffers)))
       (car (gnuclient-buffers client)))
      ;; Oh, give up.
      (t nil))))
@@ -674,8 +677,7 @@ All the clients will be disposed of via the normal methods."
     (condition-case ()
 	(delete-process gnuserv-process)
       (error nil))
-    (setq gnuserv-process nil)
-    (message "Killed server")))
+    (setq gnuserv-process nil)))
 
 ;; Actually start the process.  Kills all the clients before-hand.
 (defun gnuserv-start-1 (&optional leave-dead)

@@ -2,12 +2,11 @@
 
 ;; Copyright (C) 1993, 1994, 1996 Free Software Foundation, Inc.
 
-;; Author: Johan Vromans <jv@mh.nl>
+;; Author: Johan Vromans
 ;; Maintainer: Alexandre Oliva <oliva@dcc.unicamp.br>
 ;; Keywords: i18n
-;; Adapted to XEmacs 19.14 by Alexandre Oliva <oliva@dcc.unicamp.br>
-;; $Revision: 1.4 $
-;; $Date: 1997/05/10 23:20:58 $
+;; $Revision: 1.5 $
+;; $Date: 1997/05/29 23:49:45 $
 
 ;; This file is part of GNU Emacs.
 
@@ -31,7 +30,7 @@
 ;; Function `iso-accents-mode' activates a minor mode in which
 ;; typewriter "dead keys" are emulated.  The purpose of this emulation
 ;; is to provide a simple means for inserting accented characters
-;; according to the ISO-8859-1 character set.
+;; according to the ISO-8859-1 and other character sets.
 ;;
 ;; In `iso-accents-mode', pseudo accent characters are used to
 ;; introduce accented keys.  The pseudo-accent characters are:
@@ -42,9 +41,9 @@
 ;;   ^  (caret)     -> circumflex
 ;;   ~  (tilde)     -> tilde over the character
 ;;   /  (slash)     -> slash through the character
+;;                     Also:  /A is A-with-ring and /E is AE ligature.
 ;;   .  (dot)       -> dot over the character
-;;   ,  (cedilla)   -> cedilla under the character (except on default mode)
-;;                  Also:  /A is A-with-ring and /E is AE ligature.
+;;   ,  (cedilla)   -> cedilla under the character (some languages only)
 ;;
 ;; The action taken depends on the key that follows the pseudo accent.
 ;; In general: 
@@ -69,21 +68,28 @@
 
 (provide 'iso-acc)
 
-;; needed for compatibility with XEmacs 19.14
+;; multiple Emacs versions compatibility section
+
+(if (fboundp 'make-char)
+    (defalias 'iso-make-char 'make-char)
+  (defun iso-make-char (charset) 128))
+
 (if (fboundp 'read-event)
     (defalias 'iso-read-event 'read-event)
   (defun iso-read-event ()
     (event-key (next-command-event))))
 
 (if (fboundp 'character-to-event)
-    (defun iso-char-to-event (ch)
-      "returns an event containing the given character"
-      (character-to-event (list ch)))
-  (defun iso-char-to-event (ch)
-    "returns the character itself"
-    ch))
+    (progn
+      (defun iso-char-list-to-event (l)
+	"returns an event containing the given list of characters"
+	(character-to-event l))
+      (defun iso-char-to-event (ch)
+	"returns an event containing the given character"
+	(iso-char-list-to-event (list ch))))
+  (defalias 'iso-char-to-event 'identity)
+  (defalias 'iso-char-list-to-event 'identity))
 
-;; needed for compatibility with XEmacs 19.14 and GNU Emacs 19.30
 (if (fboundp 'this-single-command-keys) ()
   (if (string-match "Lucid" (version))
       (defun this-single-command-keys ()
@@ -91,10 +97,63 @@
 	(this-command-keys))
     (defun this-single-command-keys () (this-command-keys))))
 
-;; end of compatibility modules
+(defvar iso-accents-insert-offset
+  (if (boundp 'nonascii-insert-offset)
+      nonascii-insert-offset
+    0)
+  "*Offset added by ISO Accents mode to character codes 0200 and above.")
+
+;; end of compatibility section
 
 (defvar iso-languages
-  '(("portuguese"
+  '(("catalan"
+     ;; Note this includes some extra characters used in Spanish,
+     ;; on the idea that someone who uses Catalan is likely to use Spanish
+     ;; as well.
+     (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323) (?U . ?\332)
+	 (?a . ?\341) (?e . ?\351) (?i . ?\355) (?o . ?\363) (?u . ?\372)
+	 (?\  . ?'))
+     (?` (?A . ?\300) (?E . ?\310) (?O . ?\322)
+	 (?a . ?\340) (?e . ?\350) (?o . ?\362) (?\  . ?`))
+     (?\" (?I . ?\317) (?U . ?\334) (?i . ?\357) (?u . ?\374) (?\  . ?\"))
+     (?~ (?C . ?\307) (?N . ?\321) (?c . ?\347) (?n . ?\361)
+	 (?> . ?\273) (?< . ?\253) (?! . ?\241) (?? . ?\277)
+	 (?\  . ?~)))
+
+    ("esperanto"
+     (?^ (?H . ?\246) (?J . ?\254) (?h . ?\266) (?j . ?\274) (?C . ?\306)
+	 (?G . ?\330) (?S . ?\336) (?c . ?\346) (?g . ?\370) (?s . ?\376)
+	 (?^ . ?^) (?\  . ?^))
+     (?~ (?U . ?\335) (?u . ?\375) (?\  . ?~)))
+
+    ("french"
+     (?' (?E . ?\311) (?C . ?\307)
+	 (?e . ?\351) (?c . ?\347)
+	 (?\  . ?') (space . ?'))
+     (?` (?A . ?\300) (?E . ?\310) (?U . ?\331)
+	 (?a . ?\340) (?e . ?\350) (?u . ?\371)
+	 (?\  . ?`) (space . ?`))
+     (?^ (?A . ?\302) (?E . ?\312) (?I . ?\316) (?O . ?\324) (?U . ?\333)
+	 (?a . ?\342) (?e . ?\352) (?i . ?\356) (?o . ?\364) (?u . ?\373)
+	 (?\  . ?^) (space . ?^))
+     (?\" (?E . ?\313) (?I . ?\317)  
+          (?e . ?\353) (?i . ?\357)
+	  (?\  . ?\") (space . ?\"))
+     (?~ (?< . ?\253) (?> . ?\273)
+	 (?C . ?\307) (?c . ?\347)
+	 (?\  . ?~) (space . ?~))
+     (?, (?c . ?\347) (?C . ?\307) (?, . ?,)))
+    
+    ("german"
+     (?\" (?A . ?\304) (?O . ?\326) (?U . ?\334)
+	  (?a . ?\344) (?o . ?\366) (?u . ?\374) (?s . ?\337) (?\  . ?\")))
+
+    ("irish"
+     (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323) (?U . ?\332)
+	 (?a . ?\341) (?e . ?\351) (?i . ?\355) (?o . ?\363) (?u . ?\372)
+	 (?\  . ?') (space . ?')))
+
+    ("portuguese"
      (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323) (?U . ?\332)
 	 (?C . ?\307) (?a . ?\341) (?e . ?\351) (?i . ?\355) (?o . ?\363)
 	 (?u . ?\372) (?c . ?\347) (?\  . ?') (space . ?'))
@@ -102,83 +161,19 @@
      (?^ (?A . ?\302) (?E . ?\312) (?O . ?\324) (?a . ?\342) (?e . ?\352)
 	 (?o . ?\364) (?\  . ?^) (space . ?^))
      (?\" (?U . ?\334) (?u . ?\374) (?\  . ?\") (space . ?\"))
-     (?\~ (?A . ?\303) (?O . ?\325) (?a . ?\343) (?o . ?\365) (?\  . ?\~)
-	  (space . ?\~))
-     (?, (?c . ?\347) (?C . ?\307)))
-    
-    ("irish"
+     (?~ (?A . ?\303) (?O . ?\325)
+	 (?a . ?\343) (?o . ?\365)
+	 (?\  . ?~) (space . ?~))
+     (?, (?c . ?\347) (?C . ?\307) (?, . ?,)))
+
+    ("spanish"
      (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323) (?U . ?\332)
 	 (?a . ?\341) (?e . ?\351) (?i . ?\355) (?o . ?\363) (?u . ?\372)
-	 (?\  . ?') (space . ?')))
+	 (?\  . ?'))
+     (?\" (?U . ?\334) (?u . ?\374) (?\  . ?\"))
+     (?~ (?N . ?\321) (?n . ?\361) (?> . ?\273) (?< . ?\253) (?! . ?\241)
+	 (?? . ?\277) (?\  . ?~)))
     
-    ("french"
-     (?' (?E . ?\311) (?C . ?\307) (?e . ?\351) (?c . ?\347) (?\  . ?')
-	 (space . ?'))
-     (?` (?A . ?\300) (?E . ?\310) (?a . ?\340) (?e . ?\350) (?\  . ?`)
-	 (space . ?`))
-     (?^ (?A . ?\302) (?E . ?\312) (?I . ?\316) (?O . ?\324) (?U . ?\333)
-	 (?a . ?\342) (?e . ?\352) (?i . ?\356) (?o . ?\364) (?u . ?\373)
-	 (?\  . ?^) (space . ?^))
-     (?\" (?E . ?\313) (?I . ?\317)  
-          (?e . ?\353) (?i . ?\357) (?\  . ?\") (space . ?\"))
-     (?\~ (?< . ?\253) (?> . ?\273) (?C . ?\307) (?c . ?\347) (?\  . ?\~)
-	  (space . ?\~))
-     (?, (?c . ?\347) (?C . ?\307)))
-    
-   ;;; ISO-8859-3, developed by D. Dale Gulledge <ddg@cci.com>
-    ("latin-3"
-     (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323)
-	 (?U . ?\332) (?a . ?\341) (?e . ?\351) (?i . ?\355)
-     	 (?o . ?\363) (?u . ?\372) (?\  . ?') (space . ?'))
-     (?. (?C . ?\305) (?G . ?\325) (?I . ?\251) (?Z . ?\257)
-	 (?c . ?\345) (?g . ?\365) (?z . ?\277))
-     (?\" (?A . ?\304) (?E . ?\313) (?I . ?\317) (?O . ?\326)
-	  (?U . ?\334) (?a . ?\344) (?e . ?\353) (?i . ?\357)
-	  (?o ?\366) (?u ?\374) (?\  . ?\") (space . ?\"))
-     (?\/ (?\/ . ?\260) (?\  . ?/) (space . ?/))
-     (?\~ (?C . ?\307) (?G . ?\253) (?N . ?\321) (?S . ?\252)
-          (?U . ?\335) (?\~ . ?\270) (?c . ?\347) (?g . ?\273)
-	  (?h . ?\261) (?n . ?\361) (?u . ?\375)
-	  (?\  . ?~) (space . ?~))
-     (?^ (?A . ?\302) (?C . ?\306) (?E . ?\312) (?G . ?\330)
-	 (?H . ?\246) (?I . ?\316) (?J . ?\254) (?O . ?\324)
-	 (?S . ?\336) (?U . ?\333) (?a . ?\342) (?c . ?\346)
-	 (?e . ?\352) (?g . ?\370) (?h . ?\266) (?i . ?\356)
-	 (?j . ?\274) (?o . ?\364) (?s . ?\376) (?u . ?\373)
-	 (?\  . ?^) (space . \^))
-     (?` (?A . ?\300) (?E . ?\310) (?I . ?\314) (?O . ?\322)
-	 (?U . ?\331) (?a . ?\340) (?e . ?\350) (?i . ?\354)
-	 (?o . ?\362) (?u . ?\371) (?\  . ?`) (space . ?`)))
-
-    ;;; Thanks to Tudor <tudor@cs.unh.edu> for some fixes and additions.
-    ("latin-2"
-     (?' (?A . ?\301) (?C . ?\306) (?D . ?\320) (?E . ?\311) (?I . ?\315)
-	 (?L . ?\305) (?N . ?\321) (?O . ?\323) (?R . ?\300) (?S . ?\246)
-	 (?U . ?\332) (?Y . ?\335) (?Z . ?\254) (?a . ?\341) (?c . ?\346)
-	 (?d . ?\360) (?e . ?\351) (?i . ?\355) (?l . ?\345) (?n . ?\361)
-	 (?o . ?\363) (?r . ?\340) (?s . ?\266) (?u . ?\372) (?y . ?\375)
-	 (?z . ?\274) (?' . ?\264) (?\  . ?') (space . ?'))
-     (?` (?A . ?\241) (?C . ?\307) (?E . ?\312) (?L . ?\243) (?S . ?\252)
-	 (?T . ?\336) (?Z . ?\257) (?a . ?\261) (?l . ?\263) (?c . ?\347)
-	 (?e . ?\352) (?s . ?\272) (?t . ?\376) (?z . ?\277) (?` . ?\252)
-	 (?. . ?\377) (?\  . ?`) (space . ?`))
-     (?^ (?A . ?\302) (?I . ?\316) (?O . ?\324)
-	 (?a . ?\342) (?i . ?\356) (?o . ?\364)
-	 (?^ . ?^)			; no special code?
-	 (?\  . ?^) (space . ?^))
-     (?\" (?A . ?\304) (?E . ?\313) (?O . ?\326) (?U . ?\334) (?a . ?\344)
-	  (?e . ?\353) (?o . ?\366) (?s . ?\337) (?u . ?\374) (?\" . ?\250)
-	  (?\  . ?\") (space . ?\"))
-     (?\~ (?A . ?\303) (?C . ?\310) (?D . ?\317) (?L . ?\245) (?N . ?\322)
-	  (?O . ?\325) (?R . ?\330) (?S . ?\251) (?T . ?\253) (?U . ?\333)
-	  (?Z . ?\256) (?a . ?\343) (?c . ?\350) (?d . ?\357) (?l . ?\265)
-	  (?n . ?\362) (?o . ?\365) (?r . ?\370) (?s . ?\271) (?t . ?\273)
-	  (?u . ?\373) (?z . ?\276)
-	  (?v . ?\242)			; v accent
-	  (?\~ . ?\242)			; v accent
-	  (?\. . ?\270)			; cedilla accent
-	  (?\  . ?\~) (space . ?\~)))
-
     ("latin-1"
      (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323) (?U . ?\332)
 	 (?Y . ?\335) (?a . ?\341) (?e . ?\351) (?i . ?\355) (?o . ?\363)
@@ -192,23 +187,90 @@
      (?\" (?A . ?\304) (?E . ?\313) (?I . ?\317) (?O . ?\326) (?U . ?\334)
 	  (?a . ?\344) (?e . ?\353) (?i . ?\357) (?o . ?\366) (?s . ?\337)
 	  (?u . ?\374) (?y . ?\377) (?\" . ?\250) (?\  . ?\") (space . ?\"))
-     (?\~ (?A . ?\303) (?C . ?\307) (?D . ?\320) (?N . ?\321) (?O . ?\325)
-	  (?T . ?\336) (?a . ?\343) (?c . ?\347) (?d . ?\360) (?n . ?\361)
-	  (?o . ?\365) (?t . ?\376) (?> . ?\273) (?< . ?\253) (?\~ . ?\270)
-	  (?! . ?\241) (?? . ?\277)
-	  (?\  . ?\~) (space . ?\~))
-     (?\/ (?A . ?\305) (?E . ?\306) (?O . ?\330) (?a . ?\345) (?e . ?\346)
-	  (?o . ?\370) (?\/ . ?\260) (?\  . ?\/) (space . ?\/))))
+     (?~ (?A . ?\303) (?C . ?\307) (?D . ?\320) (?N . ?\321) (?O . ?\325)
+	 (?T . ?\336) (?a . ?\343) (?c . ?\347) (?d . ?\360) (?n . ?\361)
+	 (?o . ?\365) (?t . ?\376) (?> . ?\273) (?< . ?\253) (?~ . ?\270)
+	 (?! . ?\241) (?? . ?\277)
+	 (?\  . ?~) (space . ?~))
+     (?/ (?A . ?\305) (?E . ?\306) (?O . ?\330) (?a . ?\345) (?e . ?\346)
+	 (?o . ?\370) (?/ . ?\260) (?\  . ?/) (space . ?/)))
+
+    ("latin-2" latin-iso8859-2
+     (?' (?A . ?\301) (?C . ?\306) (?D . ?\320) (?E . ?\311) (?I . ?\315)
+	 (?L . ?\305) (?N . ?\321) (?O . ?\323) (?R . ?\300) (?S . ?\246)
+	 (?U . ?\332) (?Y . ?\335) (?Z . ?\254)
+	 (?a . ?\341) (?c . ?\346) (?d . ?\360) (?e . ?\351) (?i . ?\355)
+	 (?l . ?\345) (?n . ?\361) (?o . ?\363) (?r . ?\340) (?s . ?\266)
+	 (?u . ?\372) (?y . ?\375) (?z . ?\274)
+	 (?' . ?\264) (?\  . ?') (space . ?'))
+     (?` (?A . ?\241) (?C . ?\307) (?E . ?\312) (?L . ?\243) (?S . ?\252)
+	 (?T . ?\336) (?Z . ?\257)
+	 (?a . ?\261) (?l . ?\263) (?c . ?\347) (?e . ?\352) (?s . ?\272)
+	 (?t . ?\376) (?z . ?\277)
+	 (?` . ?\252)
+	 (?. . ?\377) (?\  . ?`) (space . ?`))
+     (?^ (?A . ?\302) (?I . ?\316) (?O . ?\324)
+	 (?a . ?\342) (?i . ?\356) (?o . ?\364)
+	 (?^ . ?^)			; no special code?
+	 (?\  . ?^) (space . ?^))
+     (?\" (?A . ?\304) (?E . ?\313) (?O . ?\326) (?U . ?\334)
+	  (?a . ?\344) (?e . ?\353) (?o . ?\366) (?s . ?\337) (?u . ?\374)
+	  (?\" . ?\250)
+	  (?\  . ?\") (space . ?\"))
+     (?~ (?A . ?\303) (?C . ?\310) (?D . ?\317) (?L . ?\245) (?N . ?\322)
+	 (?O . ?\325) (?R . ?\330) (?S . ?\251) (?T . ?\253) (?U . ?\333)
+	 (?Z . ?\256)
+	 (?a . ?\343) (?c . ?\350) (?d . ?\357) (?l . ?\265) (?n . ?\362)
+	 (?o . ?\365) (?r . ?\370) (?s . ?\271) (?t . ?\273) (?u . ?\373)
+	 (?z . ?\276)
+	 (?v . ?\242)			; v accent
+	 (?~ . ?\242)			; v accent
+	 (?. . ?\270)			; cedilla accent
+	 (?\  . ?~) (space . ?~)))
+
+    ("latin-3" latin-iso8859-3
+     (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323) (?U . ?\332)
+	 (?a . ?\341) (?e . ?\351) (?i . ?\355) (?o . ?\363) (?u . ?\372)
+	 (?' . ?\264) (?\  . ?') (space . ?'))
+     (?` (?A . ?\300) (?E . ?\310) (?I . ?\314) (?O . ?\322) (?U . ?\331)
+	 (?a . ?\340) (?e . ?\350) (?i . ?\354) (?o . ?\362) (?u . ?\371)
+	 (?` . ?`) (?\  . ?`) (space . ?`))
+     (?^ (?A . ?\302) (?C . ?\306) (?E . ?\312) (?G . ?\330)
+	 (?H . ?\246) (?I . ?\316) (?J . ?\254) (?O . ?\324)
+	 (?S . ?\336) (?U . ?\333)
+	 (?a . ?\342) (?c . ?\346) (?e . ?\352) (?g . ?\370) (?h . ?\266)
+	 (?i . ?\356) (?j . ?\274) (?o . ?\364) (?s . ?\376) (?u . ?\373)
+	 (?^ . ?^) (?\  . ?^) (space . \^))
+     (?\" (?A . ?\304) (?E . ?\313) (?I . ?\317) (?O . ?\326) (?U . ?\334)
+	  (?a . ?\344) (?e . ?\353) (?i . ?\357) (?o . ?\366) (?u . ?\374)
+	  (?s . ?\337)
+	  (?\" . ?\250) (?\  . ?\") (space . ?\"))
+     (?. (?C . ?\305) (?G . ?\325) (?I . ?\251) (?Z . ?\257)
+	 (?c . ?\345) (?g . ?\365) (?z . ?\277))
+     (?~ (?A . ?\303) (?C . ?\307) (?D . ?\320) (?G . ?\253) (?N . ?\321)
+	 (?O . ?\325) (?S . ?\252) (?U . ?\335)
+	 (?a . ?\343) (?c . ?\347) (?d . ?\360) (?g . ?\273) (?n . ?\361)
+	 (?o . ?\365) (?s . ?\252) (?u . ?\375)
+	 (?h . ?\261) (?$ . ?\245) (?` . ?\242)
+	 (?~ . ?\270) (?\  . ?~) (space . ?~))
+     (?/ (?C . ?\305) (?G . ?\325) (?H . ?\241) (?I . ?\251) (?Z . ?\257) 
+	 (?c . ?\345) (?g . ?\365) (?h . ?\261) (?i . ?\271) (?z . ?\277)
+	 (?r . ?\256) (?. . ?\377) (?# . ?\243) (?$ . ?\244)
+	 (?/ . ?\260) (?\  . ?/) (space . ?/)))
+    )
   "List of language-specific customizations for the ISO Accents mode.
 
 Each element of the list is of the form
 
-    (LANGUAGE
+    (LANGUAGE [CHARSET]
      (PSEUDO-ACCENT MAPPINGS)
      (PSEUDO-ACCENT MAPPINGS)
      ...)
 
 LANGUAGE is a string naming the language.
+CHARSET (which may be omitted) is the symbol name
+ of the character set used in this language.
+ If CHARSET is omitted, latin-iso8859-1 is the default.
 PSEUDO-ACCENT is a char specifying an accent key.
 MAPPINGS are cons cells of the form (CHAR . ISO-CHAR).
 
@@ -268,9 +330,16 @@ the language you choose).")
 	 (entry (cdr (assq second-char list))))
     (if entry
 	;; Found it: return the mapped char
-        (vector (iso-char-to-event entry))
+        (vector
+	 (iso-char-to-event
+	  (if (and (boundp 'enable-multibyte-characters)
+		   enable-multibyte-characters
+		   (>= entry ?\200))
+	      (+ iso-accents-insert-offset entry)
+	    entry)))
       ;; Otherwise, advance and schedule the second key for execution.
-      (setq unread-command-events (cons (iso-char-to-event second-char)
+      (setq unread-command-events (cons (iso-char-list-to-event
+					 (list second-char))
 					unread-command-events))
       (vector (iso-char-to-event first-char)))))
 
@@ -279,8 +348,8 @@ the language you choose).")
 ;; If so, uncomment the next four lines.
 ;; (or (assq 'iso-accents-mode minor-mode-alist)
 ;;     (setq minor-mode-alist
-;;	   (append minor-mode-alist
-;; 		  '((iso-accents-mode " ISO-Acc")))))
+;;           (append minor-mode-alist
+;;                   '((iso-accents-mode " ISO-Acc")))))
 
 ;;;###autoload
 (defun iso-accents-mode (&optional arg)
@@ -323,12 +392,19 @@ and a negative argument disables it."
 It selects the customization based on the specifications in the
 `iso-languages' variable."
   (interactive (list (completing-read "Language: " iso-languages nil t)))
-  (let ((table (assoc language iso-languages))
+  (let ((table (cdr (assoc language iso-languages)))
 	tail)
     (if (not table)
-	(error "Unknown language '%s'" language)
+	(error "Unknown language `%s'" language)
+      (setq iso-accents-insert-offset (- (iso-make-char
+					  (if (symbolp (car table))
+					      (car table)
+					    'latin-iso8859-1))
+					  128))
+      (if (symbolp (car table))
+	  (setq table (cdr table)))
       (setq iso-language language
-	    iso-accents-list (cdr table))
+	    iso-accents-list table)
       (if key-translation-map
 	  (substitute-key-definition
 	   'iso-accents-accent-key nil key-translation-map)
@@ -421,6 +497,8 @@ Noninteractively, this operates on text from START to END."
 	  (set-buffer (window-buffer minibuffer-scroll-window))
 	  iso-accents-mode)))
 
-(add-hook 'minibuf-setup-hook 'iso-acc-minibuf-setup)
+(if (boundp 'minibuffer-setup-hook)
+    (add-hook 'minibuffer-setup-hook 'iso-acc-minibuf-setup)
+  (add-hook 'minibuf-setup-hook 'iso-acc-minibuf-setup))
 
 ;;; iso-acc.el ends here

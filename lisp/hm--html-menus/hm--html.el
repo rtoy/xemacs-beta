@@ -1,4 +1,4 @@
-;;; $Id: hm--html.el,v 1.6 1997/05/09 03:28:00 steve Exp $
+;;; $Id: hm--html.el,v 1.7 1997/05/29 23:49:43 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -845,14 +845,14 @@ This tag must be added between <APPLET> and </APPLET>."
 
 
 (defun hm--html-add-preformatted ()
-  "Adds the HTML tags for preformatted text at the point in the current buffer."
+  "Adds the HTML tags for preformatted text at the current point."
   (interactive)
   (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
 		     "<PRE>"
 		     'hm--html-insert-end-tag-with-newline
 		     "</PRE>"))
-(define-obsolete-function-alias
-  'hm--html-add-preformated
+
+(define-obsolete-function-alias 'hm--html-add-preformated
   'hm--html-add-preformatted)
 
 (defun hm--html-add-preformatted-to-region ()
@@ -862,8 +862,8 @@ This tag must be added between <APPLET> and </APPLET>."
 			       "<PRE>"
 			       'hm--html-insert-end-tag-with-newline
 			       "</PRE>"))
-(define-obsolete-function-alias
-  'hm--html-add-preformated-to-region
+
+(define-obsolete-function-alias 'hm--html-add-preformated-to-region
   'hm--html-add-preformatted-to-region)
 
 (defun hm--html-add-blockquote ()
@@ -1427,11 +1427,13 @@ this tag or the beginning of the file otherwise."
       (if (search-forward "<title>" nil t)
 	  (let ((point-after-start-tag (point)))
 	    (if (not (search-forward "</title>" nil t))
-		nil
+ 		nil
 	      (goto-char (- (point) 8))
 	      (delete-backward-char (- (point) point-after-start-tag))
 	      (let ((start (point)))
-		(insert title " (" (hm--date) ")")
+		(if hm--html-automatic-create-title-date
+		    (insert title " (" (hm--date) ")")
+		  (insert title))
 		(goto-char start))))
 	;; Noch kein <TITLE> im Buffer vorhanden
 	(hm--html-set-point-for-title)
@@ -1439,8 +1441,10 @@ this tag or the beginning of the file otherwise."
 			   "<TITLE>"
 			   'hm--html-insert-end-tag
 			   "</TITLE>"
-			   'insert 
-			   (concat title " (" (hm--date) ")"))
+			   'insert
+			   (if hm--html-automatic-create-title-date
+			       (concat title " (" (hm--date) ")")
+			     title))
 	(forward-char 8)
 	(newline 1)
 	))))
@@ -1458,16 +1462,20 @@ this tag or the beginning of the file otherwise."
 	    (if (not (search-forward "</title>" nil t))
 		nil
 	      (goto-char (- (point) 8))
-	      (delete-backward-char (- (point) point-after-start-tag)) 
-	      (insert title " (" (hm--date) ")")))
+	      (delete-backward-char (- (point) point-after-start-tag))
+	      (if hm--html-automatic-create-title-date
+		  (insert title " (" (hm--date) ")")
+		(insert title))))
 	;; Noch kein <TITLE> im Buffer vorhanden
 	(hm--html-set-point-for-title)
 	(hm--html-add-tags 'hm--html-insert-start-tag
 			   "<TITLE>"
 			   'hm--html-insert-end-tag
 			   "</TITLE>"
-			   'insert 
-			   (concat title " (" (hm--date) ")"))
+			   'insert
+			   (if hm--html-automatic-create-title-date
+			       (concat title " (" (hm--date) ")")
+			     title))
 	(forward-char 8)
 	;(newline 1)
 	))))
@@ -1633,13 +1641,15 @@ title and the header of the document."
     (hm--html-add-head)
     (hm--html-add-body)
     (hm--html-add-title-and-header title)
-    (if hm--html-signature-file
-	(hm--html-add-signature))
+    (when hm--html-signature-file
+      (hm--html-add-signature))
     (goto-char (point-min))
     (search-forward "</h1>" nil t)
     (forward-line 1)
-    (if hm--html-automatic-created-comment
-	(hm--html-insert-created-comment))))
+    (when hm--html-automatic-created-comment
+      (hm--html-insert-created-comment))
+    (when hm--html-automatic-create-modified-line
+      (hm--html-insert-modified-line))))
 
 
 (defun hm--html-add-full-html-frame-with-region ()
@@ -1654,8 +1664,10 @@ the string for the title and the header of the document."
   (hm--html-add-head)
   (hm--html-add-body)
   (hm--html-add-signature)
-  (if hm--html-automatic-created-comment
-      (hm--html-insert-created-comment)))
+  (when hm--html-automatic-created-comment
+    (hm--html-insert-created-comment))
+  (when hm--html-automatic-create-modified-line
+    (hm--html-insert-modified-line)))
 
 
 (defun hm--html-add-link-target-to-region (name)
@@ -2722,12 +2734,14 @@ Mark is set after anchor."
 
 (defun hm--html-maybe-new-date-and-changed-comment ()
   "Hook function which updates the date in the title line, if
-'hm--html-automatic-new-date' is t and which inserts a 
+'hm--html-automatic-update-title-date' is t and which inserts a 
 \"changed comment\" line, if 'hm--html-automatic-changed-comment' is t."
-  (if hm--html-automatic-new-date 
-      (hm--html-new-date))
-  (if hm--html-automatic-changed-comment 
-      (hm--html-insert-changed-comment t)))
+  (when hm--html-automatic-update-title-date 
+    (hm--html-new-date))
+  (when hm--html-automatic-changed-comment 
+    (hm--html-insert-changed-comment t))
+  (when hm--html-automatic-update-modified-line
+    (hm--html-insert-modified-line)))
       
 
 (defun hm--html-new-date ()
@@ -2770,45 +2784,59 @@ noerror is nil."
 			   (point)
 			 (if (search-forward "<body>" nil t)
 			     (point)
-			   (point-max)))))
+			   (point-max))))
+	  (comment-infix (or hm--html-comment-infix
+			     (concat (or hm--html-username (user-full-name))
+				     ", "))))
       (goto-char (point-min))
       (if (not (search-forward "</title>" end-of-head t))
 	  (if (not noerror)
 	      (error "ERROR: Please insert a title in the document !"))
 ;	(let ((end-of-title-position (point)))
-	(if (search-forward "<!-- Created by: " end-of-head t)
+	(if (search-forward (concat "<!-- "
+				    hm--html-created-comment-prefix)
+			    end-of-head
+			    t)
 	    (if (yes-or-no-p 
-		 "Replace the old comment \"<!-- Created by: \" ")
+		 (concat "Replace the old comment \"<!-- "
+			 hm--html-created-comment-prefix
+			 "\" "))
 		(progn
 		  (goto-char (match-beginning 0))
 		  (kill-line)
 		  (hm--html-add-comment)
-		  (insert "Created by: " 
-			  (or hm--html-username (user-full-name))
-			  ", "
+		  (insert hm--html-created-comment-prefix
+			  comment-infix
+;			  (or hm--html-username (user-full-name))
+;			  ", "
 			  (hm--date))))
 	  (newline)
 	  (hm--html-add-comment)
-	  (insert "Created by: " 
-		  (or hm--html-username (user-full-name))
-		  ", "
+	  (insert hm--html-created-comment-prefix
+		  comment-infix
+;	  (insert "Created by: " 
+;		  (or hm--html-username (user-full-name))
+;		  ", "
 		  (hm--date)
 		  ))))))
 
 
-(defun hm--html-insert-changed-comment-1 (newline username)
+(defun hm--html-insert-changed-comment-1 (newline)
   "Internal function of 'hm--html-insert-changed-comment'.
-Inserts a newline if NEWLINE is t, before the comment is inserted.
-USERNAME is the name to be inserted in the comment."
+Inserts a newline if NEWLINE is t, before the comment is inserted."
   (if newline
       (progn
 	(newline)))
   (hm--html-add-comment)
-  (insert "Changed by: " username ", " (hm--date)))
+  (insert hm--html-changed-comment-prefix
+	  (or hm--html-comment-infix
+	      (concat (or hm--html-username (user-full-name)) ", "))
+	  (hm--date)))
 
 (defun hm--html-insert-changed-comment (&optional noerror)
   "The function inserts a \"changed comment\".
-The comment looks like <!-- Changed by: Heiko Münkel, 10-Dec-1993 -->.
+The comment looks by default like 
+	<!-- Changed by: Heiko Münkel, 10-Dec-1993 -->.
 The comment will be inserted after the last \"changed comment\" line, or,
 if there isn't such a line, after the \"created comment\" line, or,
 after the title line. If there is no title and NOERROR is nil, an error 
@@ -2817,8 +2845,12 @@ or the beginning of the body.
 If the last \"changed line\" is from the same author, it is only replaced
 by the new one. 
 
-Attention: Don't change the format of the lines and don't write anything
-else in such a line !"
+Look at the variables `hm--html-changed-comment-prefix' and
+`hm--html-comment-infix', if you'd like to change the
+inserted comments. You should not use different values for this
+variables in the same HTML file.
+
+Attention: Don't write anything else in such a line!"
   (interactive)
   (save-excursion
     (goto-char (point-min))
@@ -2828,10 +2860,18 @@ else in such a line !"
 			 (if (search-forward "<body>" nil t)
 			     (point)
 			   (point-max))))
-	  (username (or hm--html-username (user-full-name))))
+	  (comment-infix  (or hm--html-comment-infix
+			      hm--html-username
+			      (user-full-name))))
+;	  (username (or hm--html-username (user-full-name))))
       (goto-char end-of-head)
-      (if (search-backward "<!-- Changed by: " nil t)
-	  (if (string-match username
+;      (if (search-backward "<!-- Changed by: " nil t)
+      (if (search-backward (concat "<!-- "
+				   hm--html-changed-comment-prefix)
+			   nil
+			   t)
+;	  (if (string-match username
+	  (if (string-match comment-infix
 			    (buffer-substring (point)
 					      (progn
 						(end-of-line)
@@ -2842,14 +2882,18 @@ else in such a line !"
 		(delete-region (point) (progn
 					      (end-of-line)
 					      (point)))
-		(hm--html-insert-changed-comment-1 nil username))
+		(hm--html-insert-changed-comment-1 nil))
 	    ;; new comment line
 	    (end-of-line)
-	    (hm--html-insert-changed-comment-1 t username))
-	(if (search-backward "<!-- Created by: " nil t)
+	    (hm--html-insert-changed-comment-1 t))
+;	(if (search-backward "<!-- Created by: " nil t)
+	(if (search-backward (concat "<!-- "
+				     hm--html-created-comment-prefix)
+			     nil
+			     t)
 	    (progn
 	      (end-of-line)
-	      (hm--html-insert-changed-comment-1 t username))
+	      (hm--html-insert-changed-comment-1 t))
 	  (if (search-backward "</title>" nil t)
 	      (progn
 		(goto-char (match-end 0))
@@ -2857,12 +2901,58 @@ else in such a line !"
 		    (progn
 		      (newline)
 		      (forward-char -1)))
-		(hm--html-insert-changed-comment-1 t username))
+		(hm--html-insert-changed-comment-1 t))
 	    (if (not noerror)
 		(error 
 		 "ERROR: Insert at first a title in the document !"))))))))
 
+(defun hm--html-insert-modified-line ()
+  "Inserts a modified line.
+By default the line looks like:
+    	<EM>Modified: 23-May-1997</EM>
 
+Look at the variables `hm--html-automatic-create-modified-line',
+`hm--html-automatic-update-modified-line', `hm--html-modified-prefix',
+`hm--html-modified-start-tag', `hm--html-modified-end-tag' and
+`hm--html-modified-insert-before' to change the behaviour of this
+feature."
+  (interactive)
+  (save-excursion
+    (goto-char (point-max))
+    (if (search-backward-regexp (concat hm--html-modified-start-tag
+					"[ \t\n]*"
+					hm--html-modified-prefix)
+				nil
+				t)
+	(progn ; old modified line exists
+	  (goto-char (match-end 0))
+	  (if (search-forward-regexp (concat "\\([ \t\n]*\\)"
+					     "\\([^ \t\n<]+\\)"
+					     "\\([ \t\n]*" 
+					     hm--html-modified-end-tag
+					     "\\)"))
+	      (progn
+		(delete-region (match-beginning 2) (match-end 2))
+		(goto-char (match-beginning 2))
+		(insert (hm--date)))
+;	      (replace-match (concat "\\1" (hm--date)))
+	    (error "Destroyed \"Modified line\" found!")))
+      (search-backward hm--html-modified-insert-before nil t)
+      (search-backward "</html>" nil t)
+      (search-backward "</body>" nil t)
+      (newline)
+      (indent-according-to-mode)
+      (forward-line -1)
+      (unless (= (util-return-end-of-line) (point))
+	(end-of-line)
+	(newline))
+      (newline)
+      (indent-according-to-mode)
+      (insert hm--html-modified-start-tag
+	      hm--html-modified-prefix
+	      (hm--date)
+	      hm--html-modified-end-tag))))
+				    
 
 ;;; Functions to insert templates
 
@@ -3834,52 +3924,52 @@ A prefix arg is used as no of ROWS."
 (defun hm--html_acircumflex ()
   "Insert the character 'acircumflex'."
   (interactive)
-  (insert "&acircumflex;"))
+  (insert "&acirc;"))
 
 (defun hm--html_ecircumflex ()
   "Insert the character 'ecircumflex'."
   (interactive)
-  (insert "&ecircumflex;"))
+  (insert "&ecirc;"))
 
 (defun hm--html_icircumflex ()
   "Insert the character 'icircumflex'."
   (interactive)
-  (insert "&icircumflex;"))
+  (insert "&icirc;"))
 
 (defun hm--html_ocircumflex ()
   "Insert the character 'ocircumflex'."
   (interactive)
-  (insert "&ocircumflex;"))
+  (insert "&ocirc;"))
 
 (defun hm--html_ucircumflex ()
   "Insert the character 'ucircumflex'."
   (interactive)
-  (insert "&ucircumflex;"))
+  (insert "&ucirc;"))
 
 (defun hm--html_Acircumflex ()
   "Insert the character 'Acircumflex'."
   (interactive)
-  (insert "&Acircumflex;"))
+  (insert "&Acirc;"))
 
 (defun hm--html_Ecircumflex ()
   "Insert the character 'Ecircumflex'."
   (interactive)
-  (insert "&Ecircumflex;"))
+  (insert "&Ecirc;"))
 
 (defun hm--html_Icircumflex ()
   "Insert the character 'Icircumflex'."
   (interactive)
-  (insert "&Icircumflex;"))
+  (insert "&Icirc;"))
 
 (defun hm--html_Ocircumflex ()
   "Insert the character 'Ocircumflex'."
   (interactive)
-  (insert "&Ocircumflex;"))
+  (insert "&Ocirc;"))
 
 (defun hm--html_Ucircumflex ()
   "Insert the character 'Ucircumflex'."
   (interactive)
-  (insert "&Ucircumflex;"))
+  (insert "&Ucirc;"))
 
 (defun hm--html_ediaeresis ()
   "Insert the character 'ediaeresis'."
@@ -4050,8 +4140,13 @@ the number should be removed."
 	   'major-mode
 	   'hm--html-automatic-changed-comment
 	   'hm--html-automatic-created-comment
+	   'hm--html-automatic-create-modified-line
 	   'hm--html-automatic-expand-templates
-	   'hm--html-automatic-new-date
+	   'hm--html-automatic-update-modified-line
+	   'hm--html-automatic-update-title-date
+	   'hm--html-changed-comment-prefix
+	   'hm--html-comment-infix
+	   'hm--html-created-comment-prefix
 	   'hm--html-expert
 	   'hm--html-favorite-http-server-host-name
 	   'hm--html-file-path-alist
@@ -4075,6 +4170,10 @@ the number should be removed."
 	   'hm--html-mail-path-alist
 	   'hm--html-marc
 	   'hm--html-menu-load-hook
+	   'hm--html-modified-end-tag
+	   'hm--html-modified-insert-before
+	   'hm--html-modified-prefix
+	   'hm--html-modified-start-tag
 	   'hm--html-proggate-allowed-file
 	   'hm--html-proggate-hostname:port-alist
 	   'hm--html-proggate-hostname:port-default

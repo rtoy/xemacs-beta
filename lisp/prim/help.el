@@ -602,12 +602,25 @@ instead, to ensure that you get the most up-to-date information."
     (Info-find-node "xemacs-faq" "Top"))
   (switch-to-buffer "*info*"))
 
+(defcustom view-lossage-key-count 100
+  "*Number of keys `view-lossage' shows.
+The maximum number of available keys is governed by `recent-keys-ring-size'."
+  :type 'integer
+  :group 'help)
+
+(defcustom view-lossage-message-count 100
+  "*Number of minibuffer messages `view-lossage' shows."
+  :type 'integer
+  :group 'help)
+
 (defun view-lossage ()
-  "Display last 100 input keystrokes and last 100 or so minibuffer messages."
+  "Display recent input keystrokes and recent minibuffer messages.
+The number of keys shown is controlled by `view-lossage-key-count'.
+The number of messages shown is controlled by `view-lossage-message-count'."
   (interactive)
   (with-displaying-help-buffer
    (lambda ()
-     (princ (key-description (recent-keys)))
+     (princ (key-description (recent-keys view-lossage-key-count)))
      (save-excursion
        (set-buffer standard-output)
        (goto-char (point-min))
@@ -625,7 +638,7 @@ instead, to ensure that you get the most up-to-date information."
 	 (goto-char (point-max))
 	 (set-buffer standard-output)
 	 (while (and (> (point buffer) (point-min buffer))
-		     (< count 100))
+		     (< count view-lossage-message-count))
 	   (setq oldpoint (point buffer))
 	   (forward-line -1 buffer)
 	   (insert-buffer-substring buffer (point buffer) oldpoint)
@@ -671,7 +684,7 @@ instead, to ensure that you get the most up-to-date information."
         it prints which keystrokes invoke that command.
 \\[describe-distribution]	XEmacs ordering information.
 \\[describe-copying]	print XEmacs copying permission (General Public License).
-\\[view-emacs-news]	print print news of recent XEmacs changes.
+\\[view-emacs-news]	print news of recent XEmacs changes.
 \\[describe-no-warranty]	print information on absence of warranty for XEmacs."
   (interactive)
   (let ((help-key (copy-event last-command-event))

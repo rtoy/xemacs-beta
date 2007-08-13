@@ -46,7 +46,8 @@
   (define-key icon-mode-map "\e\C-a" 'beginning-of-icon-defun)
   (define-key icon-mode-map "\e\C-e" 'end-of-icon-defun)
   (define-key icon-mode-map "\e\C-q" 'indent-icon-exp)
-  (define-key icon-mode-map "\177" 'backward-delete-char-untabify)
+;; GDF - Don't rebind the DEL key
+;; (define-key icon-mode-map "\177" 'backward-delete-char-untabify)  
   (define-key icon-mode-map "\t" 'icon-indent-command))
 
 (defvar icon-mode-syntax-table nil

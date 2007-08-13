@@ -23,3 +23,7 @@
 #endif
 
 #define BROKEN_SIGIO
+
+#ifndef TERMINFO
+#define TERMINFO
+#endif

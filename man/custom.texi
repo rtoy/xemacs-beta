@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Customization Library
 
-Version: 1.97
+Version: 1.98
 
 @menu
 * Introduction::                
@@ -34,11 +34,11 @@ types of user options are supported, namely @dfn{variables} and
 @dfn{faces}.  Each user option can have four different values
 simultaneously:
 @table @dfn
-@item factory setting
+@item standard setting
 The value specified by the programmer.
 @item saved value
 The value saved by the user as the default for this variable.  This
-overwrites the factory setting when starting a new emacs.
+overwrites the standard setting when starting a new emacs.
 @item current value
 The value used by Emacs.  This will not be remembered next time you
 run Emacs.
@@ -64,8 +64,10 @@ The following commands will create a customization buffer:
 
 @table @code
 @item customize
-Create a customization buffer containing a specific group, by default
-the @code{emacs} group.
+Create a customization buffer containing the @code{emacs} group.
+
+@item customize-group
+Create a customization buffer containing a specific group.
 
 @item customize-variable
 Create a customization buffer containing a single variable.  
@@ -153,15 +155,15 @@ will be described in the following.
 
 @menu
 * The Introductory Text::       
+* The Customization Buttons::   
 * The Customization Options::   
 * The Variable Options::        
 * The Face Options::            
 * The Group Options::           
 * The State Button::            
-* The Customization Buttons::   
 @end menu
 
-@node  The Introductory Text, The Customization Options, The Customization Buffer, The Customization Buffer
+@node  The Introductory Text, The Customization Buttons, The Customization Buffer, The Customization Buffer
 @comment  node-name,  next,  previous,  up
 @subsection  The Introductory Text
 
@@ -177,33 +179,36 @@ Rather boring.  It is mostly just informative text, but the word
 @samp{help} is a button that will bring up this document when
 activated.  
 
-@node  The Customization Options, The Variable Options, The Introductory Text, The Customization Buffer
+@node  The Customization Buttons, The Customization Options, The Introductory Text, The Customization Buffer
+@comment  node-name,  next,  previous,  up
+@subsection The Customization Buttons
+
+The next part of the customization buffer looks like this:
+
+@example
+[Set] [Save] [Reset] [Done]
+@end example
+
+Activating the @samp{[Set]}, @samp{[Save]}, or @samp{[Reset]}
+button will affect all modified customization items that are visible in
+the buffer.  @samp{[Done]} will bury the buffer.
+
+@node  The Customization Options, The Variable Options, The Customization Buttons, The Customization Buffer
 @comment  node-name,  next,  previous,  up
 @subsection The Customization Options
 
 Each customization option looks similar to the following text:
 
 @example
- *** custom-background-mode: default 
- State: this item is unchanged from its factory setting.
- [ ] [?] The brightness of the background.
+ Custom Background Mode: default 
+ State: this item is unchanged from its standard setting.
+ [?] The brightness of the background.
 @end example
 
 The option contains the parts described below.
 
 @table @samp
-@item ***
-The Level Button.  The customization options in the buffer are organized
-in a hierarchy, which is indicated by the number of stars in the level
-button.  The top level options will be shown as @samp{*}.  When they are
-expanded, the suboptions will be shown as @samp{**}.  The example option
-is thus a subsuboption.
-
-Activating the level buttons will toggle between hiding and exposing the
-content of that option.  The content can either be the value of the
-option, as in this example, or a list of suboptions.
-
-@item custom-background-mode
+@item Custom Background Mode
 This is the tag of the the option.  The tag is a name of a variable, a
 face, or customization group.  Activating the tag has an effect that
 depends on the exact type of the option.  In this particular case,
@@ -217,15 +222,12 @@ may be able to edit the value directly.  If an option should contain a
 file name, it is displayed in an editable field, i.e. you can edit it
 using the standard emacs editing commands.
 
-@item State: this item is unchanged from its factory setting.
+@item State: this item is unchanged from its standard setting.
 The state line.  This line will explain the state of the option,
 e.g. whether it is currently hidden, or whether it has been modified or
 not.  Activating the button will allow you to change the state, e.g. set
 or reset the changes you have made.  This is explained in detail in the
 following sections.
-
-@item [ ]
-The magic button.  This is an abbreviated version of the state line. 
 
 @item [?] 
 The documentation button.  If the documentation is more than one line,
@@ -258,12 +260,12 @@ value for that variable.  The lisp value is a lisp expression that
 will be evaluated when you start emacs.  The result of the evaluation
 will be used as the initial value for that variable.  Editing the
 lisp value is for experts only, but if the current value of the
-variable is of a wrong type (i.e. a symbol where a string is expected),
+variable is of a wrong type (e.g. a symbol where a string is expected),
 the `edit lisp' mode will always be selected.
 
 You can see what mode is currently selected by looking at the state
-button.  If it uses parenthesises (like @samp{( )}) it is in edit lisp
-mode, with square brackets (like @samp{[ ]}) it is normal edit mode.
+description.  It will end with @samp{(lisp)} in lisp mode.
+
 You can switch mode by activating the state button, and select either
 @samp{Edit} or @samp{Edit lisp} from the menu.
 
@@ -288,13 +290,14 @@ undo the modification by activating this item.
 Activating this item will reset the value of the variable to the last
 value you marked as permanent with `Save'.
 
-@item Reset to Factory Settings
+@item Reset to Standard Settings
 Activating this item will undo all modifications you have made, and
 reset the value to the initial value specified by the program itself. 
 @end table
 
-By default, the value of large or complicated variables are hidden.   You
-can show the value by clicking on the level button.
+By default, the value of large or complicated variables are hidden.
+You can change this with the @samp{Hide} and @samp{Show} entries in the
+state menu.
 
 @node  The Face Options, The Group Options, The Variable Options, The Customization Buffer
 @comment  node-name,  next,  previous,  up
@@ -320,9 +323,9 @@ specifying whether this attribute has effect and what the value is.
 Here is an example:
 
 @example
- *** custom-invalid-face: (sample)
- State: this item is unchanged from its factory setting.
- [ ] Face used when the customize item is invalid.
+ Custom Invalid Face: (sample)
+ State: this item is unchanged from its standard setting.
+ Face used when the customize item is invalid.
  [INS] [DEL] Display: [ ] Type: [ ] X [ ] PM [ ] Win32 [ ] DOS [ ] TTY
                       [X] Class: [X] Color [ ] Grayscale [ ] Monochrome
                       [ ] Background: [ ] Light [ ] Dark
@@ -345,7 +348,7 @@ Here is an example:
 This has two display specifications.  The first will match all color
 displays, independently on what window system the device belongs to, and
 whether background color is dark or light.  For devices matching this
-specification, @samp{custom-invalid-face} will force text to be
+specification, @samp{Custom Invalid Face} will force text to be
 displayed in yellow on red, but leave all other attributes alone.
 
 The second display will simply match everything.  Since the list is
@@ -364,6 +367,9 @@ After modifying the face, you can activate the state button to make the
 changes take effect.  The menu items in the state button menu is similar
 to the state menu items for variables described in the previous section.
 
+Faces usually start out hidden, activate the @samp{State} button to show
+them.
+
 @node  The Group Options, The State Button, The Face Options, The Customization Buffer
 @comment  node-name,  next,  previous,  up
 @subsection The Group Options
@@ -372,7 +378,7 @@ Since Emacs has approximately a zillion configuration options, they have
 been organized in groups.  Each group can contain other groups, thus
 creating a customization hierarchy.  The nesting of the customization
 within the visible part of this hierarchy is indicated by the number of
-stars in the level button.
+asterisks before the name of the group.
 
 Since there is really no customization needed for the group itself, the
 menu items in the groups state button will affect all modified group
@@ -381,7 +387,7 @@ all variables and faces that have been modified and belong to that group
 will be applied.  For those members that themselves are groups, it will
 work as if you had activated the @samp{Set} menu item on them as well.
 
-@node  The State Button, The Customization Buttons, The Group Options, The Customization Buffer
+@node  The State Button,  , The Group Options, The Customization Buffer
 @comment  node-name,  next,  previous,  up
 @subsection The State Line and The Magic Button
 
@@ -389,7 +395,14 @@ The state line has two purposes.  The first is to hold the state menu,
 as described in the previous sections.  The second is to indicate the
 state of each customization item.  
 
-For the magic button, this is done by the character inside the brackets.
+There is an optional `magic button' that holds the same information in a
+more compact form.  The magic button contain a character inside the
+brackets (in edit mode) or parentheses (in lisp mode).  
+
+@defopt custom-magic-show-button
+Show a magic button indicating the state of each customization option.
+@end defopt
+
 The following states have been defined, the first that applies to the
 current item will be used:
 
@@ -411,35 +424,21 @@ The item has has been set by the user.
 The current value of this option is different from the saved value.   
 
 @item !
-The saved value of this option is different from the factory setting.
+The saved value of this option is different from the standard setting.
 
 @item @@
-The factory setting of this option is not known.  This occurs when you
+The standard setting of this option is not known.  This occurs when you
 try to customize variables or faces that have not been explicitly
 declared as customizable.
 
 @item SPC
-The factory setting is still in effect.
+The standard setting is still in effect.
 
 @end table
 
 For non-hidden group options, the state shown is the most severe state
 of its members, where more severe means that it appears earlier in the
 list above (except hidden members, which are ignored).
-
-@node  The Customization Buttons,  , The State Button, The Customization Buffer
-@comment  node-name,  next,  previous,  up
-@subsection The Customization Buttons
-
-The last part of the customization buffer looks like this:
-
-@example
-[Set] [Save] [Reset] [Done]
-@end example
-
-Activating the @samp{[Set]}, @samp{[Save]}, or @samp{[Reset]}
-button will affect all modified customization items that are visible in
-the buffer.  @samp{[Done]} will bury the buffer.
 
 @node   Declarations, Utilities, The Customization Buffer, Top
 @comment  node-name,  next,  previous,  up
@@ -581,7 +580,7 @@ widgets to use together with the @code{:type} keyword.
 @end defun
 
 Internally, custom uses the symbol property @code{custom-type} to keep
-track of the variables type, @code{factory-value} for the program
+track of the variables type, @code{standard-value} for the program
 specified default value, @code{saved-value} for a value saved by the
 user, and @code{variable-documentation} for the documentation string.
 
@@ -616,8 +615,6 @@ according to @var{spec}.
 
 @var{atts} is a list of face attributes and their values.  The possible
 attributes are defined in the variable `custom-face-attributes'.
-Alternatively, @var{atts} can be a face in which case the attributes of
-that face is used.
 
 The @var{atts} of the first entry in @var{spec} where the @var{display}
 matches the frame should take effect in that frame.  @var{display} can
@@ -791,6 +788,18 @@ Update customize buffers when @code{custom-set-variable} or
 
 @item
 Better handling of saved but uninitialized items.
+
+@item
+Detect when faces have been changed outside customize.
+
+@item
+Activate mouse help in Emacs by default.
+
+@item
+Group members should be sorted, groups last.
+
+@item
+Add an easy way to display the standard settings when an item is modified.
 
 @end itemize
 

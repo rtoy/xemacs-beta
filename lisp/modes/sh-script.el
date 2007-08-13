@@ -314,9 +314,10 @@ the car and cdr are the same symbol.")
 			       map (current-global-map))
     (substitute-key-definition 'newline-and-indent 'sh-newline-and-indent
 			       map (current-global-map))
-    (substitute-key-definition 'delete-backward-char
-			       'backward-delete-char-untabify
-			       map (current-global-map))
+;; GDF - Don't mess around with the DEL bindings    
+;;    (substitute-key-definition 'delete-backward-char
+;;			       'backward-delete-char-untabify
+;;			       map (current-global-map))
     (define-key map "\C-c:" 'sh-set-shell)
     (substitute-key-definition 'beginning-of-defun
 			       'sh-beginning-of-compound-command

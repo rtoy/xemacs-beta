@@ -39,6 +39,11 @@ Boston, MA 02111-1307, USA.  */
 #include "sysproc.h"		/* select stuff */
 #include "systime.h"
 
+#ifdef HAVE_GPM
+#include "gpmevent.h"
+#include <gpm.h>
+#endif
+
 /* Mask of bits indicating the descriptors that we wait for input on.
    These work as follows:
 
@@ -77,6 +82,12 @@ read_event_from_tty_or_stream_desc (struct Lisp_Event *event,
   Lisp_Object console = Qnil;
 
   XSETCONSOLE (console, con);
+
+#ifdef HAVE_GPM
+  if (fd == CONSOLE_TTY_MOUSE_FD (con)) {
+    return (handle_gpm_read (event,con,fd));
+  }
+#endif
 
   nread = read (fd, &ch, 1);
   if (nread <= 0)

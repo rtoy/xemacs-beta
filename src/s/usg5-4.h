@@ -55,9 +55,6 @@ Boston, MA 02111-1307, USA.  */
 /* there are no -lg libraries on this system, and no libPW */
 
 #define LIBS_DEBUG
-/* This is turned off because nobody actually uses LIBS_STANDARD (Nov 1995).
-   That name is a typo.  The next step is to delete this entirely.  */
-/* #define LIBS_STANDARD -lc */
 
 /* No <sioctl.h> */
 
@@ -176,3 +173,6 @@ char *ptsname ();
 
 /* Tell x11term.c and keyboard.c we have the system V streams feature.  */
 #define SYSV_STREAMS
+/* On Some SysV System , w3 freeze. If freeze your xemacs , Add below definition */
+/* This definition added by Shogo Fujii(shogo@bsd1.kbnes.nec.co.jp) */
+#define PROCESS_IO_BLOCKING

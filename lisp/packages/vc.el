@@ -1370,7 +1370,7 @@ in all these directories.  With a prefix argument, it lists all files."
       (setq dirname (concat dirname "/")))
   (let (nonempty
 	(dl (if (featurep 'xemacs)
-		(+ 1 (length (directory-file-name (expand-file-name dir))))
+		(+ 1 (length (directory-file-name (expand-file-name dirname))))
 	      (length dirname)))
 	(filelist nil) (statelist nil)
 	(old-dir default-directory)

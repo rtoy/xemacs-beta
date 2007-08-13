@@ -127,6 +127,11 @@ tty_init_console (struct console *con, Lisp_Object props)
 #endif /* MULE */
   CONSOLE_TTY_DATA (con)->terminal_type = terminal_type;
   CONSOLE_TTY_DATA (con)->controlling_process = controlling_process;
+
+#ifdef HAVE_GPM
+  connect_to_gpm(con);
+#endif
+
   if (NILP (CONSOLE_NAME (con)))
     CONSOLE_NAME (con) = Ffile_name_nondirectory (tty);
   {

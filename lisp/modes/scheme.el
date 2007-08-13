@@ -121,7 +121,8 @@
 
 (defun scheme-mode-commands (map)
   (define-key map "\t" 'scheme-indent-line)
-  (define-key map "\177" 'backward-delete-char-untabify)
+;; GDF - Don't rebind the delete key  
+;;  (define-key map "\177" 'backward-delete-char-untabify)
   (define-key map "\e\C-q" 'scheme-indent-sexp))
 
 (defvar scheme-mode-map nil)

@@ -1,4 +1,4 @@
-;;; $Id: adapt.el,v 1.3 1997/03/28 02:28:41 steve Exp $
+;;; $Id: adapt.el,v 1.4 1997/05/29 23:49:41 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -236,7 +236,23 @@ Return the next available \"user\" event.
 	    (and (eventp obj)
 		 (or (eq 'mouse-1 (event-basic-type obj))
 		     (eq 'mouse-2 (event-basic-type obj))
-		     (eq 'mouse-3 (event-basic-type obj))))))
+		     (eq 'mouse-3 (event-basic-type obj))
+		     (eq 'down-mouse-1 (event-basic-type obj))
+		     (eq 'down-mouse-2 (event-basic-type obj))
+		     (eq 'down-mouse-3 (event-basic-type obj))
+		     (eq 'up-mouse-1 (event-basic-type obj))
+		     (eq 'up-mouse-2 (event-basic-type obj))
+		     (eq 'up-mouse-3 (event-basic-type obj))
+		     (eq 'drag-mouse-1 (event-basic-type obj))
+		     (eq 'drag-mouse-2 (event-basic-type obj))
+		     (eq 'drag-mouse-3 (event-basic-type obj))
+		     ))))
+
+      (if (not (fboundp 'button-drag-event-p))
+	  (defun button-drag-event-p (obj)
+	    "True if OBJ is a mouse-button-drag event object."
+	    (and (button-event-p obj)
+		 (member 'drag (event-modifiers obj)))))
 
       (if (not (fboundp 'button-press-event-p))
 	  (defun button-press-event-p (obj)
@@ -266,37 +282,55 @@ Return the next available \"user\" event.
 
       (if (not (fboundp 'event-window))
 	  (defun event-window (event)
-	    "Return the window of the given mouse event.
- This may be nil if the event occurred in the border or over a toolbar.
- The modeline is considered to be in the window it represents."
-	    (and (eventp event)
-		 (listp event)
-		 (listp (cdr event))
-		 (listp (car (cdr event)))
-		 (car (car (cdr event))))))
+	    "Return the window of the given mouse EVENT.
+This may be nil if the event occurred in the border or over a toolbar.
+The modeline is considered to be in the window it represents.
+
+If the EVENT is a mouse drag event, then the end event window is returned."
+	    (if (button-drag-event-p event)
+		(and (listp event)
+		     (third event)
+		     (listp (third event))
+		     (windowp (car (third event)))
+		     (car (third event)))
+	      (and (eventp event)
+		   (listp event)
+		   (second event)
+		   (listp (second event))
+		   (windowp (car (second event)))
+		   (car (second event))))))
+
+;		   (listp (cdr event))
+;		   (listp (car (cdr event)))
+;		   (windowp (car (car (cdr event))))
+;		   (car (car (cdr event))))))
 
       (if (not (fboundp 'event-buffer))
 	  (defun event-buffer (event)
-	    "Given a mouse-motion, button-press, or button-release event, return
- the buffer on which that event occurred.  This will be nil for non-mouse
- events.  If event-over-text-area-p is nil, this will also be nil."
+	    "Given a mouse-motion, button-press, or button-release event,
+return the buffer on which that event occurred.  This will be nil for 
+non-mouse events.  If event-over-text-area-p is nil, this will also be nil."
 	    (if (button-event-p event)
 		(window-buffer (event-window event)))))
 
 
       (if (not (fboundp 'event-closest-point))
 	  (defun event-closest-point (event)
-	    "Return the character position of the given mouse event.
-If the event did not occur over a window or over text, return the
-closest point to the location of the event.  If the Y pixel position
+	    "Return the character position of the given mouse EVENT.
+If the EVENT did not occur over a window or over text, return the
+closest point to the location of the EVENT.  If the Y pixel position
 overlaps a window and the X pixel position is to the left of that
 window, the closest point is the beginning of the line containing the
 Y position.  If the Y pixel position overlaps a window and the X pixel
 position is to the right of that window, the closest point is the end
 of the line containing the Y position.  If the Y pixel position is
 above a window, return 0.  If it is below a window, return the value
-of (window-end)."
-	    (posn-point (event-start event))))
+of (window-end).
+
+If the EVENT is a drag event, the event-end will be used."
+	    (if (button-drag-event-p event)
+		(posn-point (event-end event))
+	      (posn-point (event-start event)))))
 
       (if (not (fboundp 'add-minor-mode))
 	  (defun add-minor-mode (toggle 
@@ -345,6 +379,80 @@ WARNING: THIS FUNCTION ISN'T READ YET."
       (if (not (fboundp 'mouse-track))
 	  (defalias 'mouse-track 'mouse-drag-region))
 
+      (if (not (fboundp 'windows-of-buffer))
+	  (defun windows-of-buffer (&optional buffer)
+	    "Returns a list of windows that have BUFFER in them.
+If BUFFER is not specified, the current buffer will be used."
+	    (get-buffer-window-list buffer)))
+
+      (if (not (boundp 'help-selects-help-window))
+	  (defvar help-selects-help-window t
+	    "*If nil, use the \"old Emacs\" behavior for Help buffers.
+This just displays the buffer in another window, rather than selecting
+the window."))
+
+      (if (not (fboundp 'with-displaying-help-buffer))
+	  (defun with-displaying-help-buffer (thunk)
+	    (let ((winconfig (current-window-configuration))
+		  (was-one-window (one-window-p))
+		  (help-not-visible
+		   (not (and (windows-of-buffer "*Help*") ;shortcut
+			     (member (selected-frame)
+				     (mapcar 'window-frame
+					     (windows-of-buffer "*Help*")))))))
+	      (prog1 (with-output-to-temp-buffer "*Help*"
+		       (prog1 (funcall thunk)
+			 (save-excursion
+			   (set-buffer standard-output)
+			   (help-mode))))
+		(let ((helpwin (get-buffer-window "*Help*")))
+		  (if helpwin
+		      (progn
+			(save-excursion
+			  (set-buffer (window-buffer helpwin))
+			  ;;If the *Help* buffer is already displayed on this
+			  ;; frame, don't override the previous configuration
+;			  (if help-not-visible
+;			      (set-frame-property
+;			       (selected-frame)
+;			       'help-window-config winconfig)))
+			  )
+			(if help-selects-help-window
+			    (select-window helpwin))
+			(cond ((eq helpwin (selected-window))
+			       (message
+				(substitute-command-keys
+				 "\\[scroll-up] to scroll the help."
+				 )))
+			      (was-one-window
+			       (message
+				(substitute-command-keys
+				 "\\[scroll-other-window] to scroll the help."
+				 )))
+			      (t
+			       (message
+				(substitute-command-keys
+				 "\\[scroll-other-window] to scroll the help."
+				 )))))))))))
+
+      (if (not (fboundp 'set-extent-mouse-face))
+	  (defun set-extent-mouse-face (extent face)
+	    "Set the face used to highlight EXTENT when the mouse passes over it.
+FACE can also be a list of faces, and all faces listed will apply,
+with faces earlier in the list taking priority over those later in the
+list.
+
+In the Emacs 19, the argument FACE could not be a list of faces."
+	    (put-text-property (overlay-start extent)
+			       (overlay-end extent)
+			       'mouse-face face)
+	    ))
+
+
+      (if (not (fboundp 'read-directory-name))
+	  (defalias 'read-directory-name 'read-file-name))
+
+	
       ))
 
 

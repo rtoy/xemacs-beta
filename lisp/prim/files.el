@@ -1092,24 +1092,26 @@ run `normal-mode' explicitly."
 (defvar auto-mode-alist
   '(("\\.te?xt\\'" . text-mode)
     ("\\.[ch]\\'" . c-mode)
-    ("\\.ltx\\'" . latex-mode)
     ("\\.el\\'" . emacs-lisp-mode)
-    ("\\.l\\(i?sp\\)?\\'" . lisp-mode)
-    ("\\.f\\(or\\)?\\'" . fortran-mode)
-    ("\\.p\\(as\\)?\\'" . pascal-mode)
-    ("\\.ad[abs]\\'" . ada-mode)
-    ("\\.p[lm]\\'" . perl-mode)
     ("\\.\\([CH]\\|cc\\|hh\\)\\'" . c++-mode)
     ("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode)
     ("\\.java\\'" . java-mode)
+    ("\\.f\\(or\\)?\\'" . fortran-mode)
+    ("\\.F\\(OR\\)?\\'" . fortran-mode)
+    ("\\.[fF]90\\'" . f90-mode)
 ;;; Less common extensions come here
 ;;; so more common ones above are found faster.
+    ("\\.p[lm]\\'" . perl-mode)
+    ("\\.py\\'" . python-mode)
     ("\\.texi\\(nfo\\)?\\'" . texinfo-mode)
+    ("\\.ad[abs]\\'" . ada-mode)
+    ("\\.l\\(i?sp\\)?\\'" . lisp-mode)
+    ("\\.p\\(as\\)?\\'" . pascal-mode)
+    ("\\.ltx\\'" . latex-mode)
     ("\\.[sS]\\'" . asm-mode)
     ("[Cc]hange.?[Ll]og?\\(.[0-9]+\\)?\\'" . change-log-mode)
     ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
     ("\\.scm\\(\\.[0-9]*\\)?\\'" . scheme-mode)
-    ("\\.py\\'" . python-mode)
     ("\\.e\\'" . eiffel-mode)
     ("\\.mss\\'" . scribe-mode)
     ("\\.m\\([mes]\\|an\\)\\'" . nroff-mode)
@@ -1125,7 +1127,6 @@ run `normal-mode' explicitly."
     ("\\.letter\\'" . text-mode)
     ("\\.\\(tcl\\|exp\\)\\'" . tcl-mode)
     ("\\.wrl\\'" . vrml-mode)
-    ("\\.f90\\'" . f90-mode)
     ("\\.awk\\'" . awk-mode)
     ("\\.prolog\\'" . prolog-mode)
     ("\\.tar\\'" . tar-mode)
@@ -1150,13 +1151,13 @@ run `normal-mode' explicitly."
     ;; _emacs following a directory delimiter
     ;; in MsDos syntax
     ("[:/]_emacs\\'" . emacs-lisp-mode)
-    ("\\.m4\\'" . m4-mode)
+    ("\\.m4\\'" . autoconf-mode)
     ("configure\\.in\\'" . autoconf-mode)
     ("\\.ml\\'" . lisp-mode)
     ("\\.ma?k\\'" . makefile-mode)
     ("[Mm]akefile\\(\\.\\|\\'\\)" . makefile-mode)
     )
-  "Alist of filename patterns vs. corresponding major mode functions.
+"Alist of filename patterns vs. corresponding major mode functions.
 Each element looks like (REGEXP . FUNCTION) or (REGEXP FUNCTION NON-NIL).
 \(NON-NIL stands for anything that is not nil; the value does not matter.)
 Visiting a file whose name matches REGEXP specifies FUNCTION as the

@@ -1,4 +1,4 @@
-;;; $Id: hm--html-keys.el,v 1.6 1997/05/09 03:28:00 steve Exp $
+;;; $Id: hm--html-keys.el,v 1.7 1997/05/29 23:49:42 steve Exp $
 ;;; 
 ;;; Copyright (C) 1995, 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -125,6 +125,8 @@ It could have the same value as
   (define-key hm--html-noregion-frame-map 
     [(control c)] 'hm--html-insert-created-comment)
   (define-key hm--html-noregion-frame-map "c" 'hm--html-insert-changed-comment)
+  (define-key hm--html-noregion-frame-map 
+    [(control m)] 'hm--html-insert-modified-line)
   (define-key hm--html-noregion-frame-map "d" 'hm--html-new-date)
   )
 
@@ -218,9 +220,6 @@ It could have the same value as
 
 (defvar hm--html-noregion-formatting-paragraph-map nil
   "Noregion sub keymap for inserting paragraph formatting elements.")
-(define-obsolete-variable-alias
-  'hm--html-noregion-formating-paragraph-map
-  'hm--html-noregion-formatting-paragraph-map)
 
 (if hm--html-noregion-formatting-paragraph-map
     ()
@@ -247,9 +246,6 @@ It could have the same value as
 
 (defvar hm--html-region-formatting-paragraph-map nil
   "Region sub keymap for inserting paragraph formatting elements.")
-(define-obsolete-variable-alias
-  'hm--html-region-formating-paragraph-map
-  'hm--html-region-formatting-paragraph-map)
 
 (if hm--html-region-formatting-paragraph-map
     ()
@@ -276,9 +272,6 @@ It could have the same value as
 
 (defvar hm--html-noregion-formatting-word-map nil
   "Norgion sub keymap for inserting physical text formatting elements.")
-(define-obsolete-variable-alias
-  'hm--html-noregion-formating-word-map
-  'hm--html-noregion-formatting-word-map)
 
 (if hm--html-noregion-formatting-word-map
     ()
@@ -309,9 +302,6 @@ It could have the same value as
 
 (defvar hm--html-region-formatting-word-map nil
   "Region sub keymap for inserting word text formatting elements.")
-(define-obsolete-variable-alias
-  'hm--html-region-formating-word-map
-  'hm--html-region-formatting-word-map)
 
 (if hm--html-region-formatting-word-map
     ()
@@ -754,7 +744,7 @@ It could have the same value as
   (if (adapt-xemacsp)
       (progn
 	(define-key hm--html-minor-region-mode-map 
-	  '(button3) 'hm--html-popup-menu-region)
+	  '(button3) 'hm--html-popup-minor-html-menu-region)
 	(define-key hm--html-minor-region-mode-map 
 	  [(meta control button1)] 'idd-mouse-drag-and-drop))
     (if hm--html-expert

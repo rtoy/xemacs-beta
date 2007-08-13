@@ -337,7 +337,7 @@ A .el file can set this in its local variables section to make its
 autoloads go somewhere else.")
 
 (defvar generated-custom-file
-  (expand-file-name "../lisp/prim/custom-load.el" data-directory)
+  (expand-file-name "../lisp/prim/cus-load.el" data-directory)
   "*File `update-file-autoloads' puts customization into.")
 
 ;; Written by Per Abrahamsen

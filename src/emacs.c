@@ -813,9 +813,6 @@ main_1 (int argc, char **argv, char **envp)
       syms_of_menubar ();
 #endif
       syms_of_minibuf ();
-#ifdef MOCKLISP_SUPPORT
-      syms_of_mocklisp ();
-#endif
       syms_of_objects ();
       syms_of_print ();
 #if !defined (NO_SUBPROCESSES)
@@ -1127,9 +1124,6 @@ main_1 (int argc, char **argv, char **envp)
       vars_of_menubar ();
 #endif
       vars_of_minibuf ();
-#ifdef MOCKLISP_SUPPORT
-      vars_of_mocklisp ();
-#endif
       vars_of_objects ();
       vars_of_print ();
 #ifndef NO_SUBPROCESSES

@@ -109,20 +109,6 @@ wrong_type_argument (Lisp_Object predicate, Lisp_Object value)
   REGISTER Lisp_Object tem;
   do
     {
-#ifdef MOCKLISP_SUPPORT
-      if (!EQ (Vmocklisp_arguments, Qt))
-	{
-	 if (STRINGP (value) &&
-	     (EQ (predicate, Qintegerp) ||
-	      EQ (predicate, Qinteger_or_marker_p) ||
-	      EQ (predicate, Qinteger_char_or_marker_p)))
-	   return Fstring_to_number (value);
-	 if (INTP (value) && EQ (predicate, Qstringp))
-	   return Fnumber_to_string (value);
-	 if (CHARP (value) && EQ (predicate, Qstringp))
-	   return Fchar_to_string (value);
-	}
-#endif /* MOCKLISP_SUPPORT */
       value = Fsignal (Qwrong_type_argument, list2 (predicate, value));
       tem = call1 (predicate, value);
     }

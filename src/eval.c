@@ -724,21 +724,6 @@ DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
   Lisp_Object args_left;
   struct gcpro gcpro1;
 
-#ifdef MOCKLISP_SUPPORT
-  /* In Mucklisp code, symbols at the front of the progn arglist
-   are to be bound to zero. */
-  if (!EQ (Vmocklisp_arguments, Qt))
-    {
-      Lisp_Object tem;
-      val = Qzero;
-      while (!NILP (args) && (tem = Fcar (args), SYMBOLP (tem)))
-	{
-	  QUIT;
-	  specbind (tem, val), args = Fcdr (args);
-	}
-    }
-#endif
-
   if (NILP (args))
     return Qnil;
 
@@ -936,12 +921,7 @@ until TEST returns nil.
 
   test = Fcar (args);
   body = Fcdr (args);
-#ifdef MOCKLISP_SUPPORT
-  while (tem = Feval (test),
-	 (!EQ (Vmocklisp_arguments, Qt) ? XINT (tem) : !NILP (tem)))
-#else
   while (tem = Feval (test), !NILP (tem))
-#endif
     {
       QUIT;
       Fprogn (body);
@@ -2550,10 +2530,6 @@ Also, a symbol satisfies `commandp' if its function definition does so.
     return Fsignal (Qinvalid_function, list1 (fun));
   if (EQ (funcar, Qlambda))
     return Fassq (Qinteractive, Fcdr (Fcdr (fun)));
-#ifdef MOCKLISP_SUPPORT
-  if (EQ (funcar, Qmocklisp))
-    return Qt;  /* All mocklisp functions can be called interactively */
-#endif
   if (EQ (funcar, Qautoload))
     return Fcar (Fcdr (Fcdr (Fcdr (fun))));
   else
@@ -2894,15 +2870,6 @@ Evaluate FORM and return its value.
 
       val = Fsymbol_value (form);
 
-#ifdef MOCKLISP_SUPPORT
-      if (!EQ (Vmocklisp_arguments, Qt))
-	{
-	  if (NILP (val))
-	    val = Qzero;
-	  else if (EQ (val, Qt))
-	    val = make_int (1);
-	}
-#endif
       return val;
     }
 
@@ -3001,15 +2968,6 @@ Evaluate FORM and return its value.
            *  (And GC-protected.)
            */
           lisp_eval_depth--;
-#ifdef MOCKLISP_SUPPORT
-          if (!EQ (Vmocklisp_arguments, Qt))
-	    {
-	      if (NILP (val))
-		val = Qzero;
-	      else if (EQ (val, Qt))
-		val = make_int (1);
-	    }
-#endif
           if (backtrace.debug_on_exit)
             val = do_debug_on_exit (val);
 	  POP_BACKTRACE (backtrace);
@@ -3062,10 +3020,6 @@ Evaluate FORM and return its value.
 	val = Feval (apply1 (Fcdr (fun), original_args));
       else if (EQ (funcar, Qlambda))
         val = apply_lambda (fun, nargs, original_args);
-#ifdef MOCKLISP_SUPPORT
-      else if (EQ (funcar, Qmocklisp))
-	val = ml_apply (fun, original_args);
-#endif
       else
 	{
 	invalid_function:
@@ -3074,15 +3028,6 @@ Evaluate FORM and return its value.
     }
 
   lisp_eval_depth--;
-#ifdef MOCKLISP_SUPPORT
-  if (!EQ (Vmocklisp_arguments, Qt))
-    {
-      if (NILP (val))
-	val = Qzero;
-      else if (EQ (val, Qt))
-	val = make_int (1);
-    }
-#endif
   if (backtrace.debug_on_exit)
     val = do_debug_on_exit (val);
   POP_BACKTRACE (backtrace);
@@ -3197,10 +3142,6 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
         goto invalid_function;
       if (EQ (funcar, Qlambda))
 	val = funcall_lambda (fun, nargs, args + 1);
-#ifdef MOCKLISP_SUPPORT
-      else if (EQ (funcar, Qmocklisp))
-	val = ml_apply (fun, Flist (nargs, args + 1));
-#endif
       else if (EQ (funcar, Qautoload))
 	{
 	  do_autoload (fun, args[0]);
@@ -3545,11 +3486,6 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object arg_vector[])
   int speccount = specpdl_depth_counter;
   REGISTER int i;
   int optional = 0, rest = 0;
-
-#ifdef MOCKLISP_SUPPORT
-  if (!EQ (Vmocklisp_arguments, Qt))
-    specbind (Qmocklisp_arguments, Qt); /* t means NOT mocklisp! */
-#endif
 
   if (CONSP (fun))
     syms_left = Fcar (Fcdr (fun));

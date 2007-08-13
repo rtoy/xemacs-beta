@@ -1860,7 +1860,7 @@ Returns whether it is indistinguishable from the default face."
          2 'font-lock-function-name-face)
    ;;
    ;; Fontify case clauses.  This is fast because its anchored on the left.
-   '("case[ \t]+\\(\\(\\sw\\|\\s_\\)+\\):". 1)
+   '("case[ \t]+\\(\\(\\sw\\|\\s_\\)+\\)[ \t]+:". 1)
    ;;
    '("\\<\\(default\\):". 1)
    ;; Fontify filenames in #include <...> preprocessor directives as strings.

@@ -202,8 +202,10 @@
    ;; XEmacs changes
    (set-keymap-name shared-lisp-mode-map 'shared-lisp-mode-map)
    (define-key shared-lisp-mode-map "\M-;" 'lisp-indent-for-comment)
-   (define-key shared-lisp-mode-map "\e\C-q" 'indent-sexp)
-   (define-key shared-lisp-mode-map "\177" 'backward-delete-char-untabify))
+;; GDF - don't rebind the DEL key
+;;  (define-key shared-lisp-mode-map "\177" 'backward-delete-char-untabify)
+
+   (define-key shared-lisp-mode-map "\e\C-q" 'indent-sexp))
 
 (defvar emacs-lisp-mode-map ()
   "Keymap for Emacs Lisp mode.

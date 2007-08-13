@@ -5,7 +5,7 @@
 
 ;; Author: Per Abrahamsen <abraham@iesd.auc.dk>
 ;; Maintainer: Per Abrahamsen <auc-tex@sunsite.auc.dk>
-;; Version: XEmacs
+;; Version: 9.7p (XEmacs)
 ;; Keywords: wp
 
 ;; This program is free software; you can redistribute it and/or modify

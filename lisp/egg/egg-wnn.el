@@ -876,17 +876,18 @@ whose name defaults to .eggrc.")
   (if egg:*henkan-face*
       (progn
 	(if (extentp egg:*henkan-extent*)
-	    nil
-	  ;; ###jhod this was a 'point-type' overlay
-	  (setq egg:*henkan-extent* (make-extent 1 1))
-	  (set-extent-property egg:*henkan-extent* 'face egg:*henkan-face*))
-	(set-extent-endpoints egg:*henkan-extent* egg:*region-start* egg:*region-end*))))
+	    (set-extent-endpoints egg:*henkan-extent* egg:*region-start* egg:*region-end*)
+	  (setq egg:*henkan-extent* (make-extent egg:*region-start* egg:*region-end*))
+ 	  (set-extent-property egg:*henkan-extent* 'start-open nil)
+ 	  (set-extent-property egg:*henkan-extent* 'end-open nil)
+ 	  (set-extent-property egg:*henkan-extent* 'detachable nil))
+	(set-extent-face egg:*henkan-extent* egg:*henkan-face*))))
 
 (defun egg:henkan-face-off ()
   ;; detach henkan extent from the current buffer.
   (and egg:*henkan-face*
        (extentp egg:*henkan-extent*)
-       (delete-extent egg:*henkan-extent*) ))
+       (detach-extent egg:*henkan-extent*) ))
 
 
 (defun henkan-region (start end)

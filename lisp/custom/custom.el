@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.97
+;; Version: 1.98
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -37,6 +37,7 @@
 ;;; Code:
 
 (require 'widget)
+(eval-when-compile (require 'cl))
 
 (define-widget-keywords :initialize :set :get :require :prefix :tag
   :load :link :options :type :group) 
@@ -47,7 +48,8 @@
   (autoload 'custom-set-value "cus-edit" nil t)
   (autoload 'custom-set-variable "cus-edit" nil t)
   (autoload 'customize "cus-edit" nil t)
-  (autoload 'customize-other-window "cus-edit" nil t)
+  (autoload 'customize-group "cus-edit" nil t)
+  (autoload 'customize-group-other-window "cus-edit" nil t)
   (autoload 'customize-variable "cus-edit" nil t)
   (autoload 'customize-variable-other-window "cus-edit" nil t)
   (autoload 'customize-face "cus-edit" nil t)
@@ -78,7 +80,7 @@ the car of that and used as the default binding for symbol.
 Otherwise, VALUE will be evaluated and used as the default binding for
 symbol."
   (unless (default-boundp symbol)
-    ;; Use the saved value if it exists, otherwise the factory setting.
+    ;; Use the saved value if it exists, otherwise the standard setting.
     (set-default symbol (if (get symbol 'saved-value)
 			    (eval (car (get symbol 'saved-value)))
 			  (eval value)))))
@@ -111,7 +113,7 @@ Like `custom-initialize-set', but use the function specified by
 (defun custom-initialize-changed (symbol value)
   "Initialize SYMBOL with VALUE.
 Like `custom-initialize-reset', but only use the `:set' function if the 
-not using the factory setting.  Otherwise, use the `set-default'."
+not using the standard setting.  Otherwise, use the `set-default'."
   (cond ((default-boundp symbol)
 	 (funcall (or (get symbol 'custom-set) 'set-default)
 		  symbol
@@ -126,8 +128,8 @@ not using the factory setting.  Otherwise, use the `set-default'."
 
 (defun custom-declare-variable (symbol value doc &rest args)
   "Like `defcustom', but SYMBOL and VALUE are evaluated as normal arguments."
-  ;; Remember the factory setting.
-  (put symbol 'factory-value (list value))
+  ;; Remember the standard setting.
+  (put symbol 'standard-value (list value))
   ;; Maybe this option was rogue in an earlier version.  It no longer is.
   (when (get symbol 'force-value)
     ;; It no longer is.    
@@ -153,7 +155,7 @@ not using the factory setting.  Otherwise, use the `set-default'."
 		((eq keyword :get)
 		 (put symbol 'custom-get value))
 		((eq keyword :require)
-		 (push value requests))
+		 (setq requests (cons value requests)))
 		((eq keyword :type)
 		 (put symbol 'custom-type value))
 		((eq keyword :options)
@@ -234,8 +236,6 @@ SPEC should be an alist of the form ((DISPLAY ATTS)...).
 
 ATTS is a list of face attributes and their values.  The possible
 attributes are defined in the variable `custom-face-attributes'.
-Alternatively, ATTS can be a face in which case the attributes of that
-face is used.
 
 The ATTS of the first entry in SPEC where the DISPLAY matches the
 frame should take effect in that frame.  DISPLAY can either be the

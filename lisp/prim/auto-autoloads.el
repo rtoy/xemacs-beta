@@ -690,6 +690,49 @@ Otherwise, one argument `-i' is passed to the shell.
 
 ;;;***
 
+;;;### (autoloads (ssh) "ssh" "comint/ssh.el")
+
+(add-hook 'same-window-regexps "^\\*ssh-.*\\*\\(\\|<[0-9]+>\\)")
+
+(autoload 'ssh "ssh" "\
+Open a network login connection via `ssh' with args INPUT-ARGS.
+INPUT-ARGS should start with a host name; it may also contain
+other arguments for `ssh'.
+
+Input is sent line-at-a-time to the remote connection.
+
+Communication with the remote host is recorded in a buffer `*ssh-HOST*'
+\(or `*ssh-USER@HOST*' if the remote username differs).
+If a prefix argument is given and the buffer `*ssh-HOST*' already exists,
+a new buffer with a different connection will be made.
+
+When called from a program, if the optional second argument BUFFER is
+a string or buffer, it specifies the buffer to use.
+
+The variable `ssh-program' contains the name of the actual program to
+run.  It can be a relative or absolute path.
+
+The variable `ssh-explicit-args' is a list of arguments to give to
+the ssh when starting.  They are prepended to any arguments given in
+INPUT-ARGS.
+
+If the default value of `ssh-directory-tracking-mode' is t, then the
+default directory in that buffer is set to a remote (FTP) file name to
+access your home directory on the remote machine.  Occasionally this causes
+an error, if you cannot access the home directory on that machine.  This
+error is harmless as long as you don't try to use that default directory.
+
+If `ssh-directory-tracking-mode' is neither t nor nil, then the default
+directory is initially set up to your (local) home directory.
+This is useful if the remote machine and your local machine
+share the same files via NFS.  This is the default.
+
+If you wish to change directory tracking styles during a session, use the
+function `ssh-directory-tracking-mode' rather than simply setting the
+variable." t nil)
+
+;;;***
+
 ;;;### (autoloads (rsh telnet) "telnet" "comint/telnet.el")
 
 (add-hook 'same-window-regexps "\\*telnet-.*\\*\\(\\|<[0-9]+>\\)")
@@ -711,7 +754,7 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-save-customized custom-buffer-create-other-window custom-buffer-create customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize-other-window customize custom-set-variable custom-set-value) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-save-customized custom-buffer-create-other-window custom-buffer-create customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize-group-other-window customize-group customize custom-set-variable custom-set-value) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'custom-set-value "cus-edit" "\
 Set VARIABLE to VALUE.  VALUE is a Lisp object.
@@ -738,9 +781,15 @@ If VARIABLE has a `custom-type' property, it must be a widget and the
 `:prompt-value' property of that widget will be used for reading the value. " t nil)
 
 (autoload 'customize "cus-edit" "\
-Customize SYMBOL, which must be a customization group." t nil)
+Select a customization buffer which you can use to set user options.
+User options are structured into \"groups\".
+Initially the top-level group `Emacs' and its immediate subgroups
+are shown; the contents of those subgroups are initially hidden." t nil)
 
-(autoload 'customize-other-window "cus-edit" "\
+(autoload 'customize-group "cus-edit" "\
+Customize GROUP, which must be a customization group." t nil)
+
+(autoload 'customize-group-other-window "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
 
 (autoload 'customize-variable "cus-edit" "\
@@ -1413,13 +1462,6 @@ Turn on EDT Emulation." t nil)
 
 ;;;***
 
-;;;### (autoloads (convert-mocklisp-buffer) "mlconvert" "emulators/mlconvert.el")
-
-(autoload 'convert-mocklisp-buffer "mlconvert" "\
-Convert buffer of Mocklisp code to real Lisp that GNU Emacs can run." t nil)
-
-;;;***
-
 ;;;### (autoloads (teco-command) "teco" "emulators/teco.el")
 
 (autoload 'teco-command "teco" "\
@@ -1558,10 +1600,6 @@ The key bindings are:
   C-q y		ws-kill-eol
   C-q DEL	ws-kill-bol
 " t nil)
-
-;;;***
-
-;;;### (autoloads nil "loaddefs-eos" "eos/loaddefs-eos.el")
 
 ;;;***
 
@@ -3772,7 +3810,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.29 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.30 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4705,16 +4743,72 @@ with your script for an edit-interpret-debug cycle." t nil)
 
 ;;;***
 
-;;;### (autoloads (strokes-mode) "strokes" "modes/strokes.el")
+;;;### (autoloads (strokes-mode strokes-list-strokes strokes-load-user-strokes strokes-help strokes-describe-stroke strokes-do-complex-stroke strokes-do-stroke strokes-read-complex-stroke strokes-read-stroke strokes-global-set-stroke) "strokes" "modes/strokes.el")
 
-(defvar strokes-enabled-p nil "\
-Variable determining whether `strokes' is globally enabled")
+(defvar strokes-mode nil "\
+Non-nil when `strokes' is globally enabled")
+
+(autoload 'strokes-global-set-stroke "strokes" "\
+Interactively give STROKE the global binding as COMMAND.
+Operated just like `global-set-key', except for strokes.
+COMMAND is a symbol naming an interactively-callable function.  STROKE
+is a list of sampled positions on the stroke grid as described in the
+documentation for the `strokes-define-stroke' function." t nil)
+
+(defalias 'global-set-stroke 'strokes-global-set-stroke)
+
+(autoload 'strokes-read-stroke "strokes" "\
+Read a simple stroke (interactively) and return the stroke.
+Optional PROMPT in minibuffer displays before and during stroke reading.
+This function will display the stroke interactively as it is being
+entered in the strokes buffer if the variable
+`strokes-use-strokes-buffer' is non-nil.
+Optional EVENT is currently not used, but hopefully will be soon." nil nil)
+
+(autoload 'strokes-read-complex-stroke "strokes" "\
+Read a complex stroke (interactively) and return the stroke.
+Optional PROMPT in minibuffer displays before and during stroke reading.
+Note that a complex stroke allows the user to pen-up and pen-down.  This
+is implemented by allowing the user to paint with button1 or button2 and
+then complete the stroke with button3.
+Optional EVENT is currently not used, but hopefully will be soon." nil nil)
+
+(autoload 'strokes-do-stroke "strokes" "\
+Read a simple stroke from the user and then exectute its comand.
+This must be bound to a mouse event." t nil)
+
+(autoload 'strokes-do-complex-stroke "strokes" "\
+Read a complex stroke from the user and then exectute its command.
+This must be bound to a mouse event." t nil)
+
+(autoload 'strokes-describe-stroke "strokes" "\
+Displays the command which STROKE maps to, reading STROKE interactively." t nil)
+
+(defalias 'describe-stroke 'strokes-describe-stroke)
+
+(autoload 'strokes-help "strokes" "\
+Get instructional help on using the the `strokes' package." t nil)
+
+(autoload 'strokes-load-user-strokes "strokes" "\
+Load user-defined strokes from file named by `strokes-file'." t nil)
+
+(defalias 'load-user-strokes 'strokes-load-user-strokes)
+
+(autoload 'strokes-list-strokes "strokes" "\
+Pop up a buffer containing a listing of all strokes defined in STROKE-MAP.
+If STROKE-MAP is not given, `strokes-global-map' will be used instead." t nil)
+
+(defalias 'list-strokes 'strokes-list-strokes)
 
 (autoload 'strokes-mode "strokes" "\
 Toggle strokes being enabled.
 With ARG, turn strokes on if and only if ARG is positive or true.
 Note that `strokes-mode' is a global mode.  Think of it as a minor
-mode in all buffers when activated." t nil)
+mode in all buffers when activated.
+By default, strokes are invoked with mouse button-2.  You can define
+new strokes with
+
+> M-x global-set-stroke" t nil)
 
 ;;;***
 
@@ -4939,125 +5033,6 @@ value of texinfo-mode-hook." t nil)
 
 ;;;***
 
-;;;### (autoloads (tc-recenter tc-scroll-down tc-scroll-up tc-scroll-line tc-associated-buffer tc-merge tc-dissociate tc-split tc-associate-buffer tc-two-columns) "two-column" "modes/two-column.el")
-
-(defvar tc-mode-map nil "\
-Keymap for commands for two-column mode.")
-
-(if tc-mode-map nil (setq tc-mode-map (make-sparse-keymap)) (define-key tc-mode-map "1" 'tc-merge) (define-key tc-mode-map "2" 'tc-two-columns) (define-key tc-mode-map "b" 'tc-associate-buffer) (define-key tc-mode-map "d" 'tc-dissociate) (define-key tc-mode-map "\^L" 'tc-recenter) (define-key tc-mode-map "o" 'tc-associated-buffer) (define-key tc-mode-map "s" 'tc-split) (define-key tc-mode-map "{" 'shrink-window-horizontally) (define-key tc-mode-map "}" 'enlarge-window-horizontally) (define-key tc-mode-map " " 'tc-scroll-up) (define-key tc-mode-map "" 'tc-scroll-down) (define-key tc-mode-map "" 'tc-scroll-line))
-
-(global-set-key "6" tc-mode-map)
-
-(defvar tc-other nil "\
-Marker to the associated buffer, if non-nil.")
-
-(make-variable-buffer-local 'tc-other)
-
-(put 'tc-other 'permanent-local t)
-
-(autoload 'tc-two-columns "two-column" "\
-Split current window vertically for two-column editing.
-
-When called the first time, associates a buffer with the current
-buffer.  Both buffers are put in two-column minor mode and
-tc-mode-hook gets called on both.  These buffers remember
-about one another, even when renamed.
-
-When called again, restores the screen layout with the current buffer
-first and the associated buffer to it's right.
-
-If you include long lines, i.e which will span both columns (eg.
-source code), they should be in what will be the first column, with
-the associated buffer having empty lines next to them.
-
-You have the following commands at your disposal:
-
-\\[tc-two-columns]   Rearrange screen
-\\[tc-associate-buffer]   Reassociate buffer after changing major mode
-\\[tc-scroll-up]   Scroll both buffers up by a screenfull
-\\[tc-scroll-down]   Scroll both buffers down by a screenful
-\\[tc-scroll-line]   Scroll both buffers up by one or more lines
-\\[tc-recenter]   Recenter and realign other buffer
-\\[shrink-window-horizontally], \\[enlarge-window-horizontally]   Shrink, enlarge current column
-\\[tc-associated-buffer]   Switch to associated buffer
-\\[tc-merge]   Merge both buffers
-
-These keybindings can be customized in your ~/.emacs by `tc-prefix'
-and `tc-mode-map'.
-
-The appearance of the screen can be customized by the variables
-`tc-window-width', `tc-beyond-fill-column',
-`tc-mode-line-format' and `truncate-partial-width-windows'." t nil)
-
-(add-minor-mode 'tc-other " 2C" nil nil 'tc-two-columns)
-
-(autoload 'tc-associate-buffer "two-column" "\
-Associate another buffer with this one in two-column minor mode.
-Can also be used to associate a just previously visited file, by
-accepting the proposed default buffer.
-
-See  \\[tc-two-columns]  and  `lisp/two-column.el'  for further details." t nil)
-
-(autoload 'tc-split "two-column" "\
-Unmerge a two-column text into two buffers in two-column minor mode.
-The text is unmerged at the cursor's column which becomes the local
-value of `tc-window-width'.  Only lines that have the ARG same
-preceding characters at that column get split.  The ARG preceding
-characters without any leading whitespace become the local value for
-`tc-separator'.  This way lines that continue across both
-columns remain untouched in the first buffer.
-
-This function can be used with a prototype line, to set up things as
-you like them.  You write the first line of each column with the
-separator you like and then unmerge that line.  E.g.:
-
-First column's text    sSs  Second columns text
-		       \\___/\\
-			/    \\
-   5 character Separator      You type  M-5 \\[tc-split]  with the point here
-
-See  \\[tc-two-columns]  and  `lisp/two-column.el'  for further details." t nil)
-
-(autoload 'tc-dissociate "two-column" "\
-Turn off two-column minor mode in current and associated buffer.
-If the associated buffer is unmodified and empty, it is killed." t nil)
-
-(autoload 'tc-merge "two-column" "\
-Merges the associated buffer with the current buffer.
-They get merged at the column, which is the value of
-`tc-window-width', i.e. usually at the vertical window
-separator.  This separator gets replaced with white space.  Beyond
-that the value of gets inserted on merged lines.  The two columns are
-thus pasted side by side, in a single text.  If the other buffer is
-not displayed to the left of this one, then this one becomes the left
-column.
-
-If you want `tc-separator' on empty lines in the second column,
-you should put just one space in them.  In the final result, you can strip
-off trailing spaces with \\[beginning-of-buffer] \\[replace-regexp] [ SPC TAB ] + $ RET RET" t nil)
-
-(autoload 'tc-associated-buffer "two-column" "\
-Switch to associated buffer." t nil)
-
-(autoload 'tc-scroll-line "two-column" "\
-Scroll current window upward by ARG lines.
-The associated window gets scrolled to the same line." t nil)
-
-(autoload 'tc-scroll-up "two-column" "\
-Scroll current window upward by ARG screens.
-The associated window gets scrolled to the same line." t nil)
-
-(autoload 'tc-scroll-down "two-column" "\
-Scroll current window downward by ARG screens.
-The associated window gets scrolled to the same line." t nil)
-
-(autoload 'tc-recenter "two-column" "\
-Center point in window.  With ARG, put point on line ARG.
-This counts from bottom if ARG is negative.  The associated window
-gets scrolled to the same line." t nil)
-
-;;;***
-
 ;;;### (autoloads (verilog-mode) "verilog-mode" "modes/verilog-mode.el")
 
 (autoload 'verilog-mode "verilog-mode" "\
@@ -5136,7 +5111,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.29 $
+vhdl-mode $Revision: 1.30 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5156,7 +5131,7 @@ Key bindings:
 
 ;;;### (autoloads (auto-view-mode view-major-mode view-mode view-minor-mode view-buffer-other-window view-file-other-window view-buffer view-file) "view-less" "modes/view-less.el")
 
-(defvar view-minor-mode-map (let ((map (make-keymap))) (set-keymap-name map 'view-minor-mode-map) (suppress-keymap map) (define-key map "-" 'negative-argument) (define-key map " " 'scroll-up) (define-key map "f" 'scroll-up) (define-key map "" 'scroll-down) (define-key map "b" 'scroll-down) (define-key map 'backspace 'scroll-down) (define-key map "" 'view-scroll-lines-up) (define-key map "\n" 'view-scroll-lines-up) (define-key map "e" 'view-scroll-lines-up) (define-key map "j" 'view-scroll-lines-up) (define-key map "y" 'view-scroll-lines-down) (define-key map "k" 'view-scroll-lines-down) (define-key map "d" 'view-scroll-some-lines-up) (define-key map "u" 'view-scroll-some-lines-down) (define-key map "r" 'recenter) (define-key map "t" 'toggle-truncate-lines) (define-key map "N" 'view-buffer) (define-key map "E" 'view-file) (define-key map "P" 'view-buffer) (define-key map "!" 'shell-command) (define-key map "|" 'shell-command-on-region) (define-key map "=" 'what-line) (define-key map "?" 'view-search-backward) (define-key map "h" 'view-mode-describe) (define-key map "s" 'view-repeat-search) (define-key map "n" 'view-repeat-search) (define-key map "/" 'view-search-forward) (define-key map "\\" 'view-search-backward) (define-key map "g" 'view-goto-line) (define-key map "G" 'view-last-windowful) (define-key map "%" 'view-goto-percent) (define-key map "p" 'view-goto-percent) (define-key map "m" 'point-to-register) (define-key map "'" 'register-to-point) (define-key map "C" 'view-cleanup-backspaces) (define-key map "" 'view-quit) (define-key map "" 'view-quit-toggle-ro) (define-key map "q" 'view-quit) map))
+(defvar view-minor-mode-map (let ((map (make-keymap))) (set-keymap-name map 'view-minor-mode-map) (suppress-keymap map) (define-key map "-" 'negative-argument) (define-key map " " 'scroll-up) (define-key map "f" 'scroll-up) (define-key map "b" 'scroll-down) (define-key map 'backspace 'scroll-down) (define-key map "" 'view-scroll-lines-up) (define-key map "\n" 'view-scroll-lines-up) (define-key map "e" 'view-scroll-lines-up) (define-key map "j" 'view-scroll-lines-up) (define-key map "y" 'view-scroll-lines-down) (define-key map "k" 'view-scroll-lines-down) (define-key map "d" 'view-scroll-some-lines-up) (define-key map "u" 'view-scroll-some-lines-down) (define-key map "r" 'recenter) (define-key map "t" 'toggle-truncate-lines) (define-key map "N" 'view-buffer) (define-key map "E" 'view-file) (define-key map "P" 'view-buffer) (define-key map "!" 'shell-command) (define-key map "|" 'shell-command-on-region) (define-key map "=" 'what-line) (define-key map "?" 'view-search-backward) (define-key map "h" 'view-mode-describe) (define-key map "s" 'view-repeat-search) (define-key map "n" 'view-repeat-search) (define-key map "/" 'view-search-forward) (define-key map "\\" 'view-search-backward) (define-key map "g" 'view-goto-line) (define-key map "G" 'view-last-windowful) (define-key map "%" 'view-goto-percent) (define-key map "p" 'view-goto-percent) (define-key map "m" 'point-to-register) (define-key map "'" 'register-to-point) (define-key map "C" 'view-cleanup-backspaces) (define-key map "" 'view-quit) (define-key map "" 'view-quit-toggle-ro) (define-key map "q" 'view-quit) map))
 
 (defvar view-mode-map (let ((map (copy-keymap view-minor-mode-map))) (set-keymap-name map 'view-mode-map) map))
 
@@ -5607,6 +5582,8 @@ functions have a binding in this keymap.")
 
 (define-key bookmark-map "s" 'bookmark-save)
 
+(add-hook 'kill-emacs-hook (function (lambda nil (and (featurep 'bookmark) bookmark-alist (bookmark-time-to-save-p t) (bookmark-save)))))
+
 (autoload 'bookmark-set "bookmark" "\
 Set a bookmark named NAME inside a file.
 If name is nil, then the user will be prompted.
@@ -5643,22 +5620,24 @@ will then jump to the new location, as well as recording it in place
 of the old one in the permanent bookmark record." t nil)
 
 (autoload 'bookmark-relocate "bookmark" "\
-Relocate BOOKMARK -- prompts for a filename, and makes an already
-existing bookmark point to that file, instead of the one it used to
-point at.  Useful when a file has been renamed after a bookmark was
-set in it." t nil)
+Relocate BOOKMARK to another file (reading file name with minibuffer).
+This makes an already existing bookmark point to that file, instead of
+the one it used to point at.  Useful when a file has been renamed
+after a bookmark was set in it." t nil)
 
 (autoload 'bookmark-insert-location "bookmark" "\
 Insert the name of the file associated with BOOKMARK.
 Optional second arg NO-HISTORY means don't record this in the
 minibuffer history list `bookmark-history'." t nil)
 
-(autoload 'bookmark-rename "bookmark" "\
-Change the name of OLD bookmark to NEW name.  If called from
-keyboard, prompts for OLD and NEW.  If called from menubar, OLD is
-selected from a menu, and prompts for NEW.
+(defalias 'bookmark-locate 'bookmark-insert-location)
 
-If called from Lisp, prompts for NEW if only OLD was passed as an
+(autoload 'bookmark-rename "bookmark" "\
+Change the name of OLD bookmark to NEW name.
+If called from keyboard, prompt for OLD and NEW.  If called from
+menubar, select OLD from a menu and prompt for NEW.
+
+If called from Lisp, prompt for NEW if only OLD was passed as an
 argument.  If called with two strings, then no prompting is done.  You
 must pass at least OLD when calling from Lisp.
 
@@ -5683,9 +5662,8 @@ Optional second arg BATCH means don't update the bookmark list buffer,
 probably because we were called from there." t nil)
 
 (autoload 'bookmark-write "bookmark" "\
-Write bookmarks to a file (for which the user will be prompted
-interactively).  Don't use this in Lisp programs; use bookmark-save
-instead." t nil)
+Write bookmarks to a file (reading the file name with the minibuffer).
+Don't use this in Lisp programs; use `bookmark-save' instead." t nil)
 
 (autoload 'bookmark-save "bookmark" "\
 Save currently defined bookmarks.
@@ -5785,6 +5763,30 @@ one most recently used in this file, if any).
 Warning: this function only takes an EVENT as argument.  Use the
 corresponding bookmark function from Lisp (the one without the
 \"-menu-\" in its name)." t nil)
+
+(defvar menu-bar-bookmark-map (make-sparse-keymap "Bookmark functions"))
+
+(defalias 'menu-bar-bookmark-map (symbol-value 'menu-bar-bookmark-map))
+
+(define-key menu-bar-bookmark-map [load] '("Load a Bookmark File..." . bookmark-load))
+
+(define-key menu-bar-bookmark-map [write] '("Save Bookmarks As..." . bookmark-write))
+
+(define-key menu-bar-bookmark-map [save] '("Save Bookmarks" . bookmark-save))
+
+(define-key menu-bar-bookmark-map [edit] '("Edit Bookmark List" . bookmark-bmenu-list))
+
+(define-key menu-bar-bookmark-map [delete] '("Delete Bookmark" . bookmark-menu-delete))
+
+(define-key menu-bar-bookmark-map [rename] '("Rename Bookmark" . bookmark-menu-rename))
+
+(define-key menu-bar-bookmark-map [locate] '("Insert Location" . bookmark-menu-locate))
+
+(define-key menu-bar-bookmark-map [insert] '("Insert Contents" . bookmark-menu-insert))
+
+(define-key menu-bar-bookmark-map [set] '("Set Bookmark" . bookmark-set))
+
+(define-key menu-bar-bookmark-map [jump] '("Jump to Bookmark" . bookmark-menu-jump))
 
 ;;;***
 
@@ -6433,62 +6435,6 @@ See `font-lock-mode' for details.
 This can take a while for large buffers." t nil)
 
 (add-minor-mode 'font-lock-mode " Font")
-
-;;;***
-
-;;;### (autoloads (sc-mode) "generic-sc" "packages/generic-sc.el")
-
-(autoload 'sc-mode "generic-sc" "\
-Toggle sc-mode.
-SYSTEM can be sccs, rcs or cvs.
-Cvs requires the pcl-cvs package.
-
-The following commands are available
-\\[sc-next-operation]	perform next logical source control operation on current file
-\\[sc-show-changes]	compare the version being edited with an older one
-\\[sc-version-diff-file]	compare two older versions of a file
-\\[sc-show-history]		display change history of current file
-\\[sc-visit-previous-revision]	display an older revision of current file
-\\[sc-revert-file]		revert buffer to last checked-in version
-\\[sc-list-all-locked-files]		show all files locked in current directory
-\\[sc-list-locked-files]		show all files locked by you in current directory
-\\[sc-list-registered-files]		show all files under source control in current directory
-\\[sc-update-directory]		get fresh copies of files checked-in by others in current directory
-\\[sc-rename-file]		rename the current file and its source control file
-
-
-While you are entering a change log message for a check in, sc-log-entry-mode
-will be in effect.
-
-Global user options:
-    sc-diff-command	A list consisting of the command and flags
-			to be used for generating context diffs.
-    sc-mode-expert	suppresses some conformation prompts,
-			notably for delta aborts and file saves.
-    sc-max-log-size	specifies the maximum allowable size
-			of a log message plus one.
-
-
-When using SCCS you have additional commands and options
-
-\\[sccs-insert-headers]		insert source control headers in current file
-
-When you generate headers into a buffer using \\[sccs-insert-headers],
-the value of sc-insert-headers-hook is called before insertion. If the
-file is recognized a C or Lisp source, sc-insert-c-header-hook or
-sc-insert-lisp-header-hook is called after insertion respectively.
-
-    sccs-headers-wanted	which %-keywords to insert when adding
-			headers with C-c h
-    sccs-insert-static	if non-nil, keywords inserted in C files
-			get stuffed in a static string area so that
-			what(1) can see them in the compiled object code.
-
-When using CVS you have additional commands
-
-\\[sc-cvs-update-directory]	update the current directory using pcl-cvs
-\\[sc-cvs-file-status]		show the CVS status of current file
-" t nil)
 
 ;;;***
 
@@ -7275,12 +7221,6 @@ See \\[compile]." t nil)
 
 (autoload 'resume-suspend-hook "resume" "\
 Clear out the file used for transmitting args when Emacs resumes." nil nil)
-
-;;;***
-
-;;;### (autoloads nil "server" "packages/server.el")
-
-(make-obsolete 'server-start 'gnuserv-start)
 
 ;;;***
 
@@ -9393,6 +9333,23 @@ Returns t if X is a ring; nil otherwise." nil nil)
 
 (autoload 'make-ring "ring" "\
 Make a ring that can contain SIZE elements." nil nil)
+
+;;;***
+
+;;;### (autoloads (savehist-save savehist-load) "savehist" "utils/savehist.el")
+
+(autoload 'savehist-load "savehist" "\
+Load the histories saved to `savehist-file'.
+Unless PREFIX is non-nil, the function will also add the save function to
+`kill-emacs-hook'.
+
+This function should be normally used from your Emacs init file.  Since it
+removes your current minibuffer histories (if any), it is unwise to call it
+at any other time." t nil)
+
+(autoload 'savehist-save "savehist" "\
+Save the histories from `savehist-history-variables' to `savehist-file'.
+A variable will be saved if it is bound and non-nil." t nil)
 
 ;;;***
 

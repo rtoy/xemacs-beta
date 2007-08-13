@@ -1729,6 +1729,9 @@ emacs_Xt_select_console (struct console *con)
 {
   Lisp_Object console = Qnil;
   int infd;
+#ifdef HAVE_GPM
+  int mousefd;
+#endif
 
   if (CONSOLE_X_P (con))
     return; /* X consoles are automatically selected for when we
@@ -1736,6 +1739,15 @@ emacs_Xt_select_console (struct console *con)
   infd = event_stream_unixoid_select_console (con);
   XSETCONSOLE (console, con);
   select_filedesc (infd, console);
+#ifdef HAVE_GPM
+  /* On a stream device (ie: noninteractive), bad things can happen. */
+  if (EQ (CONSOLE_TYPE (con), Qtty)) {
+    mousefd = CONSOLE_TTY_MOUSE_FD (con);
+    if (mousefd >= 0) {
+      select_filedesc (mousefd, console);
+    }
+  }
+#endif
 }
 
 static void
@@ -1743,6 +1755,9 @@ emacs_Xt_unselect_console (struct console *con)
 {
   Lisp_Object console = Qnil;
   int infd;
+#ifdef HAVE_GPM
+  int mousefd;
+#endif
 
   if (CONSOLE_X_P (con))
     return; /* X consoles are automatically selected for when we
@@ -1750,6 +1765,15 @@ emacs_Xt_unselect_console (struct console *con)
   infd = event_stream_unixoid_unselect_console (con);
   XSETCONSOLE (console, con);
   unselect_filedesc (infd);
+#ifdef HAVE_GPM
+  /* On a stream device (ie: noninteractive), bad things can happen. */
+  if (EQ (CONSOLE_TYPE (con), Qtty)) {
+    mousefd = CONSOLE_TTY_MOUSE_FD (con);
+    if (mousefd >= 0) {
+      unselect_filedesc (mousefd);
+    }
+  }
+#endif
 }
 
 /* read an event from a tty, if one is available.  Returns non-zero

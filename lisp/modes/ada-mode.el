@@ -3308,8 +3308,8 @@ This works by two steps:
       ;; Casing
       (define-key ada-mode-map "\C-c\C-r" 'ada-adjust-case-region)
       (define-key ada-mode-map "\C-c\C-b" 'ada-adjust-case-buffer)
-
-      (define-key ada-mode-map "\177"     'backward-delete-char-untabify)
+;; GDF - don't rebind the DEL key
+;;      (define-key ada-mode-map "\177"     'backward-delete-char-untabify)
 
       ;; Use predefined function of emacs19 for comments (RE)
       (define-key ada-mode-map "\C-c;"    'comment-region)

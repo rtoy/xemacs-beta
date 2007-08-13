@@ -1,6 +1,4 @@
 dnl Define our own header notice with own copyrights
-define([PRINT_VAR],[ifelse([$#] ,0, , [$#], 1, echo "[$1] = $[$1]", echo "[$1] = $[$1]"
-[PRINT_VAR(builtin([shift],$@))])])
 define([AC_INIT_NOTICE],
 [#### Configuration script for XEmacs.  Largely divergent from FSF.
 #### Guess values for system-dependent variables and create Makefiles.
@@ -59,6 +57,10 @@ dnl - non-standard options
 dnl - suport for extra-verbosity
 dnl - ordinary libs are handled separately from X libs (might be a mistake)
 dnl - various random kludges (e.g. -with-dnet=no
+
+dnl PRINT_VAR(var, var, ...)  prints values of shell variables
+define([PRINT_VAR],[ifelse([$#] ,0, , [$#], 1, echo "[$1]=\"$[$1]\"", echo "[$1] = $[$1]"
+[PRINT_VAR(builtin([shift],$@))])])
 
 dnl Disable cache files:
 dnl This is controversial, but I am convinced this is the right way to go,
@@ -197,7 +199,7 @@ dnl # $c_switch_x_machine  $c_switch_x_system
 dnl # $ld_switch_x_machine $ld_switch_x_system
 xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_switch_x_site $X_CFLAGS'
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
-xe_libs='$xe_check_libs $X_PRE_LIBS $libs_x $X_EXTRA_LIBS $LIBS $libs_machine $libs_system $libs_standard'
+xe_libs='$xe_check_libs $X_EXTRA_LIBS $libs_x $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
 ac_compile='${CC-cc} -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext 1>&AC_FD_CC'
 ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AC_FD_CC'
@@ -232,7 +234,6 @@ dnl Initialize some variables set by options.
 dnl The variables have the same names as the options, with
 dnl dashes changed to underlines.
 build=NONE
-cache_file=/dev/null
 exec_prefix=NONE
 host=NONE
 no_create=
@@ -249,6 +250,15 @@ target=NONE
 verbose=
 x_includes=NONE
 x_libraries=NONE
+
+dnl Allow this script to work with zsh, by setting sh emulation options
+if test -n "$ZSH_VERSION"; then
+  setopt NO_BAD_PATTERN NO_BANG_HIST NO_BG_NICE NO_EQUALS NO_FUNCTION_ARGZERO
+  setopt GLOB_SUBST NO_HUP INTERACTIVE_COMMENTS KSH_ARRAYS NO_MULTIOS NO_NOMATCH
+  setopt RM_STAR_SILENT POSIX_BUILTINS SH_FILE_EXPANSION SH_GLOB SH_OPTION_LETTERS
+  setopt SH_WORD_SPLIT BSD_ECHO IGNORE_BRACES
+fi
+
 dnl Installation directory options.
 dnl These are left unexpanded so users can "make install exec_prefix=/foo"
 dnl and all the variables that are supposed to be based on exec_prefix
@@ -293,9 +303,6 @@ dnl -----------------------------
 dnl Establish some default values
 dnl -----------------------------
 
-dnl Prevent autoconf2 caching
-cache_file=/dev/null
-
 XE_APPEND(lib-src, MAKE_SUBDIR)
 
 dnl run_in_place='no'
@@ -335,7 +342,7 @@ energize_version=''
 native_sound_lib=''
 dnl make normal error-checking be the default in alpha and beta versions, so
 dnl that bugs get noticed.  Change this for released versions.
-error_check_default='yes'
+error_check_default="yes"
 error_check_extents=$error_check_default
 error_check_typecheck=$error_check_default
 error_check_bufpos=$error_check_default
@@ -349,13 +356,13 @@ extra_verbose=$error_check_default
 dnl use-assertions should be 'yes' by default.  Too many people in this
 dnl world have core dumps turned off by default or \"cannot find where the
 dnl core file went\".  At least we should get some useful output ...
-use_assertions='yes'
+use_assertions="yes"
 dnl the following is set to yes or no later.
-with_gif=''
+with_gif=""
 dnl the following is set to yes or no later.
-with_toolbars=''
-use_union_type='no'
-with_dnet=''
+with_toolbars=""
+use_union_type="no"
+with_dnet=""
 
 dnl On Sun systems, people sometimes set up the variable CPP
 dnl with a value that is a directory, not an executable at all.
@@ -451,8 +458,9 @@ Window-system options:
 
 TTY options:
 
+--with-tty=no		Don't support TTY-s.
 --with-ncurses (*)	Use the ncurses library for tty support.
---with-gpm (*)		Compile in support for General Purpose Mouse.
+--with-gpm (*) 		Compile in support for General Purpose Mouse.
 
 
 Additional features:
@@ -478,9 +486,6 @@ Additional features:
 --native-sound-lib=LIB	Native sound support library.  Needed on Suns
 			with --with-sound=both because both sound libraries
 			are called libaudio.
---with-mocklisp		Compile with Mocklisp support.  Don't do this
-			unless you have a Mocklisp program that you need
-			to run.
 --with-pop		support POP for mail retrieval
 --with-kerberos		support Kerberos-authenticated POP
 --with-hesiod		support Hesiod to get the POP server host
@@ -583,8 +588,8 @@ for i in "$@"; do
    case "$i" in
    -no-create | --no-create | --no-creat | --no-crea | --no-cre \
    | --no-cr | --no-c) ;;
-   -norecursion | --norecursion | --norecursio | --norecursi \
-   | --norecurs | --norecur | --norecu | --norec | --nore | --nor) ;;
+   -no-recursion | --no-recursion | --no-recursio | --no-recursi \
+   | --no-recurs | --no-recur | --no-recu | --no-rec | --no-re | --no-r) ;;
    *)
    quoted_i="`echo $i | sed $quoted_sed_magic`"
    quoted_arguments="$quoted_arguments '$quoted_i'" ;;
@@ -662,7 +667,6 @@ while test $# != 0; do
 	with_canna	| \
 	with_wnn	| \
 	with_wnn6	| \
-	with_mocklisp	| \
 	with_energize	| \
 	with_workshop	| \
 	with_sparcworks | \
@@ -691,9 +695,11 @@ while test $# != 0; do
 
 
 	dnl Options that take a user-supplied value, as in --puresize=8000000
+	dnl The cache-file option is ignored (for compatibility with other configures)
 	srcdir		| \
 	compiler	| \
 	puresize	| \
+	cache_file	| \
 	native_sound_lib | \
 	x_includes	| \
 	x_libraries	| \
@@ -1674,6 +1680,7 @@ CPP_to_sh(UNEXEC, unexec, unexec.o)
 CPP_to_sh(C_DEBUG_SWITCH, c_debug_switch, -g)
 CPP_to_sh(C_OPTIMIZE_SWITCH, c_optimize_switch, -O)
 
+CPP_boolean_to_sh(ORDINARY_LINK, ordinary_link)
 CPP_boolean_to_sh(SYSTEM_MALLOC, system_malloc)
 CPP_boolean_to_sh(TERMINFO, have_terminfo)
 CPP_boolean_to_sh(MAIL_USE_FLOCK, mail_use_flock)
@@ -1704,15 +1711,19 @@ dnl to get its actual value...
 CPP=`eval "echo $CPP"`
 eval `$CPP -Isrc $tempcname \
        | grep 'configure___' \
-       | sed -n -e 's/^configure___ \([[^=]]*=\)\(.*\)$/\1"\2"/p'`
+       | sed -n -e 's/^configure___ \([[^= ]]* *=\)\(.*\)$/\1\`echo \2\`/p'`
 if test -z "$SPECIFIED_CFLAGS"; then
   eval `$CPP -Isrc -DTHIS_IS_CONFIGURE $tempcname \
 	 | grep 'configure___' \
-	 | sed -n -e 's/^configure___ \([[^=]]*=\)\(.*\)$/\1"\2"/p'`
+	 | sed -n -e 's/^configure___ \([[^= ]]* *=\)\(.*\)$/\1\`echo \2\`/p'`
 else
   REAL_CFLAGS="$CFLAGS"
 fi
+
 rm $tempcname
+
+dnl Non-ordinary link usually requires -lc
+test "$ordinary_link" = "no" -a -z "$libs_standard" && libs_standard="-lc"
 
 dnl override CFLAGS if user wishes
 test "$cflags" != "NO_CFLAGS_DEFINED" && REAL_CFLAGS="$cflags"
@@ -2053,7 +2064,7 @@ if test "$with_x11" = "yes"; then
   AC_CHECK_HEADER(X11/Intrinsic.h, ,
    [AC_MSG_ERROR("Unable to find X11 header files.")])
 
-  dnl -lXt -lX11 are required
+  dnl -lXt and -lX11 are required
   dnl Some broken systems require the magic "-b i486-linuxaout" flag
   AC_CHECK_LIB(X11, XOpenDisplay, have_lib_x11=yes)
   if test "$have_lib_x11" != "yes"; then
@@ -2065,6 +2076,10 @@ if test "$with_x11" = "yes"; then
   libs_x="-lX11"
   test "$extra_verbose" = "yes" && echo "    Setting libs_x to \"-lX11\""
 
+  dnl Autodetect -lXext
+  AC_CHECK_LIB(Xext, XShapeSelectInput, XE_PREPEND(-lXext, libs_x))
+
+  dnl Require -lXt
   case "$canonical" in *-sunos4.* ) # Bug workaround
    ld_switch_x_site="$ld_switch_x_site -u _XtToolkitInitialize" ;;
   esac
@@ -2091,9 +2106,6 @@ if test "$with_x11" = "yes"; then
   else
     AC_MSG_RESULT(no)
   fi
-
-  dnl Autodetect -lXext
-  AC_CHECK_LIB(Xext, XShapeSelectInput, XE_PREPEND(-lXext, libs_x))
 
   dnl autodetect -lXmu
   case "$canonical" in *-sunos4.* ) # Bug workaround
@@ -2469,9 +2481,6 @@ case "$opsys" in
     test "$ac_cv_func_realpath" != "yes" && XE_ADD_OBJS(realpath.o) ;;
 esac
 
-dnl mocklisp support - probably should excise it...
-test "$with_mocklisp" = "yes" && XE_ADD_OBJS(mocklisp.o)
-
 dnl If netdb.h does not declare h_errno, we must declare it by hand.
 AC_MSG_CHECKING(whether netdb declares h_errno)
 AC_TRY_LINK([#include <netdb.h>],
@@ -2575,12 +2584,46 @@ dnl Check whether strcoll exists and works correctly. (This does more
 dnl than just check for its existence.) If so, it defines HAVE_STRCOLL.
 AC_FUNC_STRCOLL
 
-AC_FUNC_MMAP
+dnl We used to call AC_FUNC_MMAP here
+dnl Instead we now use following, suggested by Neal Becker
+AC_MSG_CHECKING(for working mmap)
+AC_TRY_RUN([#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+
+#ifndef MAP_VARIABLE
+#define MAP_VARIABLE 0
+#endif
+
+#ifndef MAP_FAILED
+#define MAP_FAILED -1
+#endif
+
+int main (int argc, char *argv[])
+{
+  int fd = -1;
+  caddr_t p;
+#ifndef MAP_ANONYMOUS
+  fd = open ("/dev/zero", O_RDWR);
+  if (fd < 0)
+    return 1;
+#define MAP_ANONYMOUS 0
+#endif
+  if (mmap(0, 1024, PROT_READ | PROT_WRITE,
+	   MAP_PRIVATE | MAP_VARIABLE | MAP_ANONYMOUS,
+	   fd, 0) != (void *) MAP_FAILED)
+    return 0;
+  perror ("conftest: mmap failed");
+  return 1;
+}], have_mmap=yes, have_mmap=no)
+AC_MSG_RESULT($have_mmap)
+test "$have_mmap" = "yes" && AC_DEFINE(HAVE_MMAP)
 
 dnl rel_alloc requires either GNU malloc or system malloc with mmap
 dnl We only turn rel_alloc on by default if mmap is available.
-test "$GNU_MALLOC" != "yes"   -a "$ac_cv_func_mmap_fixed_mapped" != "yes" && rel_alloc=no
-test "$rel_alloc" = "default" -a "$ac_cv_func_mmap_fixed_mapped"  = "yes" && rel_alloc=yes
+test "$GNU_MALLOC" != "yes"   -a "$have_mmap" != "yes" && rel_alloc=no
+test "$rel_alloc" = "default" -a "$have_mmap"  = "yes" && rel_alloc=yes
 test "$rel_alloc" = "yes" && AC_DEFINE(REL_ALLOC)
 
 dnl Check for Internet sockets.
@@ -2727,11 +2770,8 @@ if test "$with_tty" = "yes"  ; then
    [AC_CHECK_HEADER(termio.h, [AC_DEFINE(HAVE_TERMIO)])])
 
   dnl Autodetect gpm
-  #### Attn: Bill Perry:  Remove next line when GPM support is added
-  test -z "$with_gpm" && with_gpm=no
-
   test -z "$with_gpm" && { AC_CHECK_HEADER(gpm.h, , with_gpm=no) }
-  test -z "$with_gpm" && { AC_CHECK_LIB(gpm, connect_to_gpm, with_gpm=yes, with_gpm=no) }
+  test -z "$with_gpm" && { AC_CHECK_LIB(gpm, Gpm_Open, with_gpm=yes, with_gpm=no) }
   if test "$with_gpm" = "yes"; then
     AC_DEFINE(HAVE_GPM)
     XE_ADD_OBJS(gpmevent.o)
@@ -2749,14 +2789,14 @@ if test "$with_tty" = "yes"  ; then
     XE_ADD_OBJS(terminfo.o)
     XE_PREPEND(-lncurses, LIBS)
 
-    if test "$ac_cv_header_ncurses_curses_h" != "yes"  ; then
+    if test "$ac_cv_header_ncurses_curses_h" != "yes" ; then
       dnl Try again, and check for the bogus ncurses/ include bug.
       dnl (i.e. ncurses/curses.h bogusly includes <unctrl.h> instead of
       dnl <ncurses/unctrl.h>)
       save_c_switch_site="$c_switch_site"
       c_switch_site="$c_switch_site -I/usr/include/ncurses"
       AC_CHECK_HEADER(ncurses/curses.h, curses_h_path=ncurses/curses.h)
-      if test "$ac_cv_header_ncurses_curses_h" = "yes";
+      if test "$ac_cv_header_ncurses_curses_h" = "yes"
         then AC_MSG_WARN("Your system has the bogus ncurses include bug.")
         else c_switch_site="$save_c_switch_site"
       fi
@@ -2769,7 +2809,7 @@ if test "$with_tty" = "yes"  ; then
 	XE_PREPEND($libs_termcap, LIBS)
       else
 	for lib in curses termlib termcap; do
-	  AC_CHECK_LIB($lib, tgetent, [XE_PREPEND(-l${lib}, LIBS)]; break)
+	  AC_CHECK_LIB($lib, tgetent, XE_PREPEND(-l${lib}, LIBS); break)
 	done
       fi
     else dnl "$have_terminfo" = "no" && "with_ncurses" = "no"
@@ -2781,9 +2821,9 @@ if test "$with_tty" = "yes"  ; then
       if test -n "$libs_termcap"; then
 	XE_PREPEND($libs_termcap, LIBS)
       else
-	AC_CHECK_LIB(curses, tgetent, [XE_PREPEND(-lcurses, LIBS)],[
-	AC_CHECK_LIB(termcap, tgetent, [XE_PREPEND(-ltermcap, LIBS)], [
-        XE_ADD_OBJS(termcap.o)])])
+	AC_CHECK_LIB(curses, tgetent, XE_PREPEND(-lcurses, LIBS),
+	  AC_CHECK_LIB(termcap, tgetent, XE_PREPEND(-ltermcap, LIBS),
+            XE_ADD_OBJS(termcap.o)))
       fi
     fi
   fi
@@ -2888,15 +2928,16 @@ dnl --------------------------------
 dnl Compute SUBST-itutable variables
 dnl --------------------------------
 dnl We ignore (C|LD)_SWITCH_X_(MACHINE|SYSTEM)
-c_switch_general="-DHAVE_CONFIG_H $c_switch_site $c_switch_machine $c_switch_system"
-c_switch_window_system="$c_switch_x_site $X_CFLAGS"
-c_switch_all="$c_switch_general $c_switch_window_system"
-ld_switch_general="$ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_run"
-ld_switch_window_system="$ld_switch_x_site"
-ld_switch_all="$ld_switch_general $ld_switch_window_system"
-ld_libs_general="$LIBS $libs_machine $libs_system $libs_standard"
-ld_libs_window_system="$X_PRE_LIBS $libs_x $X_EXTRA_LIBS"
-ld_libs_all="$ld_libs_window_system $ld_libs_general"
+dnl Use `echo ...` to remove extraneous blanks
+c_switch_general=`echo -DHAVE_CONFIG_H $c_switch_site $c_switch_machine $c_switch_system`
+c_switch_window_system=`echo $c_switch_x_site $X_CFLAGS`
+c_switch_all=`echo $c_switch_general $c_switch_window_system`
+ld_switch_general=`echo $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_run`
+ld_switch_window_system=`echo $ld_switch_x_site`
+ld_switch_all=`echo $ld_switch_general $ld_switch_window_system`
+ld_libs_general=`echo $LIBS $libs_machine $libs_system $libs_standard`
+ld_libs_window_system=`echo $X_EXTRA_LIBS $libs_x $X_PRE_LIBS`
+ld_libs_all=`echo $ld_libs_window_system $ld_libs_general`
 
 dnl Compute lists of Makefiles and subdirs
 SRC_SUBDIR_DEPS="$MAKE_SUBDIR"
@@ -2907,8 +2948,8 @@ SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock
 for dir in $MAKE_SUBDIR; do
   test -d "$dir" || mkdir "$dir"
-  SUBDIR_MAKEFILES="$SUBDIR_MAKEFILES $dir/Makefile"
-  internal_makefile_list="$internal_makefile_list $dir/Makefile.in"
+  SUBDIR_MAKEFILES=`echo $SUBDIR_MAKEFILES $dir/Makefile`
+  internal_makefile_list=`echo $internal_makefile_list $dir/Makefile.in`
 done
 AC_SUBST(MAKE_SUBDIR)
 AC_SUBST(SUBDIR_MAKEFILES)
@@ -2924,7 +2965,7 @@ fi
 
 dnl Create some auxiliary files
 if test -f $srcdir/src/gdbinit -a ! -f src/gdbinit ; then
-  echo "creating src/gdbinit"
+  echo "creating src/gdbinit"; echo ""
   echo "source $srcdir/src/gdbinit" > src/gdbinit
 fi
 
@@ -2932,7 +2973,7 @@ dnl Create top level .sbinit for Sun compilers
 AC_TRY_COMPILE([],[#ifndef __SUNPRO_C
 #error No Sun source browser capability
 #endif
-],[echo "creating .sbinit"
+],[echo "creating .sbinit"; echo ""
 ( echo "# For use with Sun WorkShop's Source browser."
   echo "# See sbquery(1) and sbinit(4) for more information"
   for dir in $MAKE_SUBDIR; do echo "import $dir"; done
@@ -3027,7 +3068,6 @@ elif test "$use_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
 test "$with_motif"         = "yes" && AC_DEFINE(LWLIB_USES_MOTIF)
 test "$with_i18n3"         = "yes" && AC_DEFINE(I18N3)
-test "$with_mocklisp"      = "yes" && AC_DEFINE(MOCKLISP_SUPPORT)
 test "$with_gcc"           = "yes" && AC_DEFINE(USE_GCC)
 test "$with_term"          = "yes" && AC_DEFINE(HAVE_TERM)
 test "$external_widget"    = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
@@ -3101,7 +3141,7 @@ if test "$with_xmu" != yes -a "$with_x11" = yes; then
 fi
 
 test "$with_gif"   = yes && echo "  Compiling in support for GIF image conversion."
-if test "$with_xpm" = yes; then 
+if test "$with_xpm" = yes; then
   echo "  Compiling in support for XPM images."
 else
   echo "  --------------------------------------------------------------------"
@@ -3143,7 +3183,6 @@ test "$with_i18n3"    = yes && echo "  Compiling in I18N support, level 3 (doesn
 test "$with_cde"      = yes && echo "  Compiling in support for CDE."
 test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
-test "$with_mocklisp" = yes && echo "  Compiling in support for Mocklisp."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)."
 case  "$with_menubars" in

@@ -1,3 +1,43 @@
+1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta3 is released.
+
+	* INSTALL: Delete documentation of mocklisp support.
+
+	* configure.in: Delete mocklisp support.
+
+	* etc/FTP: Update mirror info.
+
+	* etc/DISTRIB: Update mirror info.
+
+1997-05-29  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: Replace standard Autoconf MMAP test with Neal
+	Becker's replacement, hacked somewhat.
+
+1997-05-28  Martin Buchholz  <mrb@eng.sun.com>
+
+	* lisp/prim/files.el (auto-mode-alist): Reorg auto-mode-alist again.
+
+	* lib-src/etags.c: Version 12.7 from Francesco.
+
+	* configure.in: Juggle link order of X libraries.
+	Add support for using zsh to run configure.
+	Document --with-tty=no.
+	Fix -no-recursion option.
+	Recognize and ignore --cache-file option.
+	Recognize null values for preprocessor symbols converted to shell
+	variables.  This maybe fixes the "-ltermcap" problem.
+	Remove spurious blanks from various SUBST-ituted variables.
+	Fix conditional creation of gdbinit.
+	Conditionally create .sbinit for Sunpro C.
+
+1997-05-26  Steven L Baur  <steve@altair.xemacs.org>
+
+	* etc/FTP: Correct typo in ftp.cenatls.cena.dgac.fr.
+
+	* etc/DISTRIB: Ditto.
+
 1997-05-22  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta2 is released.

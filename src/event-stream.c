@@ -188,6 +188,11 @@ Lisp_Object Qauto_show_make_point_visible;
 /* File in which we write all commands we read; an lstream */
 static Lisp_Object Vdribble_file;
 
+/* Recent keys ring location; a vector of events or nil-s */
+Lisp_Object Vrecent_keys_ring;
+int recent_keys_ring_size;
+int recent_keys_ring_index;
+
 #ifdef DEBUG_XEMACS
 int debug_emacs_events;
 #endif
@@ -3227,24 +3232,39 @@ command_builder_find_leaf (struct command_builder *builder,
    data structure.)
  */
 
-#define RECENT_KEYS_SIZE 100
-Lisp_Object recent_keys_ring;
-int recent_keys_ring_index;
+DEFUN ("recent-keys", Frecent_keys, 0, 1, 0, /*
+Return a vector of recent keyboard or mouse button events read.
+If NUMBER is non-nil, not more than NUMBER events will be returned.
+Change number of events stored using `set-recent-keys-size'.
 
-DEFUN ("recent-keys", Frecent_keys, 0, 0, 0, /*
-Return vector of last 100 or so keyboard or mouse button events read.
 This copies the event objects into a new vector; it is safe to keep and
 modify them.
 */
-       ())
+       (number))
 {
   struct gcpro gcpro1;
   Lisp_Object val = Qnil;
-  int size = XVECTOR (recent_keys_ring)->size;
+  int nwanted;
   int start, nkeys, i, j;
   GCPRO1 (val);
 
-  if (NILP (vector_data (XVECTOR (recent_keys_ring))[recent_keys_ring_index]))
+  if (NILP (number))
+    nwanted = recent_keys_ring_size;
+  else
+    {
+      CHECK_NATNUM (number);
+      nwanted = XINT (number);
+    }
+
+  /* Create the keys ring vector, if none present. */
+  if (NILP (Vrecent_keys_ring))
+    {
+      Vrecent_keys_ring = make_vector (recent_keys_ring_size, Qnil);
+      /* And return nothing in particular. */
+      return make_vector (0, Qnil);
+    }
+
+  if (NILP (vector_data (XVECTOR (Vrecent_keys_ring))[recent_keys_ring_index]))
     /* This means the vector has not yet wrapped */
     {
       nkeys = recent_keys_ring_index;
@@ -3252,24 +3272,100 @@ modify them.
     }
   else
     {
-      nkeys = size;
-      start = ((recent_keys_ring_index == size) ? 0 : recent_keys_ring_index);
+      nkeys = recent_keys_ring_size;
+      start = ((recent_keys_ring_index == nkeys) ? 0 : recent_keys_ring_index);
     }
 
-  val = make_vector (nkeys, Qnil);
+  if (nwanted < nkeys)
+    {
+      start += nkeys - nwanted;
+      if (start >= recent_keys_ring_size)
+	start -= recent_keys_ring_size;
+      nkeys = nwanted;
+    }
+  else
+    nwanted = nkeys;
+
+  val = make_vector (nwanted, Qnil);
 
   for (i = 0, j = start; i < nkeys; i++)
   {
-    Lisp_Object e = vector_data (XVECTOR (recent_keys_ring))[j];
+    Lisp_Object e = vector_data (XVECTOR (Vrecent_keys_ring))[j];
 
     if (NILP (e))
       abort ();
     vector_data (XVECTOR (val))[i] = Fcopy_event (e, Qnil);
-    if (++j >= size)
+    if (++j >= recent_keys_ring_size)
       j = 0;
   }
   UNGCPRO;
   return (val);
+}
+
+
+DEFUN ("recent-keys-ring-size", Frecent_keys_ring_size, 0, 0, 0, /*
+The maximum number of events `recent-keys' can return.
+*/
+       ())
+{
+  return make_int (recent_keys_ring_size);
+}
+
+DEFUN ("set-recent-keys-ring-size", Fset_recent_keys_ring_size, 1, 1, 0, /*
+Set the maximum number of events to be stored internally.
+*/
+       (size))
+{
+  Lisp_Object new_vector = Qnil;
+  int i, j, nkeys, start, min;
+  struct gcpro gcpro1;
+  GCPRO1 (new_vector);
+
+  CHECK_INT (size);
+  if (XINT (size) <= 0)
+    error ("Recent keys ring size must be positive");
+  if (XINT (size) == recent_keys_ring_size)
+    return size;
+
+  new_vector = make_vector (XINT (size), Qnil);
+
+  if (NILP (Vrecent_keys_ring))
+    {
+      Vrecent_keys_ring = new_vector;
+      return size;
+    }
+
+  if (NILP (vector_data (XVECTOR (Vrecent_keys_ring))[recent_keys_ring_index]))
+    /* This means the vector has not yet wrapped */
+    {
+      nkeys = recent_keys_ring_index;
+      start = 0;
+    }
+  else
+    {
+      nkeys = recent_keys_ring_size;
+      start = ((recent_keys_ring_index == nkeys) ? 0 : recent_keys_ring_index);
+    }
+
+  if (XINT (size) > nkeys)
+    min = nkeys;
+  else
+    min = XINT (size);
+
+  for (i = 0, j = start; i < min; i++)
+    {
+      vector_data (XVECTOR (new_vector))[i]
+	= vector_data (XVECTOR (Vrecent_keys_ring))[j];
+      if (++j >= recent_keys_ring_size)
+	j = 0;
+    }
+  recent_keys_ring_size = XINT (size);
+  recent_keys_ring_index = (i < recent_keys_ring_size) ? i : 0;
+
+  Vrecent_keys_ring = new_vector;
+
+  UNGCPRO;
+  return size;
 }
 
 /* Vthis_command_keys having value Qnil means that the next time
@@ -3372,16 +3468,20 @@ extract_vector_nth_mouse_event (Lisp_Object vector, int n)
 static void
 push_recent_keys (Lisp_Object event)
 {
-  Lisp_Object e
-    = vector_data (XVECTOR (recent_keys_ring)) [recent_keys_ring_index];
+  Lisp_Object e;
+
+  if (NILP (Vrecent_keys_ring))
+    Vrecent_keys_ring = make_vector (recent_keys_ring_size, Qnil);
+
+  e = vector_data (XVECTOR (Vrecent_keys_ring)) [recent_keys_ring_index];
 
   if (NILP (e))
     {
       e = Fmake_event ();
-      vector_data (XVECTOR (recent_keys_ring)) [recent_keys_ring_index] = e;
+      vector_data (XVECTOR (Vrecent_keys_ring)) [recent_keys_ring_index] = e;
     }
   Fcopy_event (event, e);
-  if (++recent_keys_ring_index == XVECTOR (recent_keys_ring)->size)
+  if (++recent_keys_ring_index == recent_keys_ring_size)
     recent_keys_ring_index = 0;
 }
 
@@ -4160,6 +4260,8 @@ syms_of_event_stream (void)
   defsymbol (&Qcommand_execute, "command-execute");
 
   DEFSUBR (Frecent_keys);
+  DEFSUBR (Frecent_keys_ring_size);
+  DEFSUBR (Fset_recent_keys_ring_size);
   DEFSUBR (Finput_pending_p);
   DEFSUBR (Fenqueue_eval_event);
   DEFSUBR (Fnext_event);
@@ -4207,8 +4309,9 @@ vars_of_event_stream (void)
 
 
   recent_keys_ring_index = 0;
-  recent_keys_ring = make_vector (RECENT_KEYS_SIZE, Qnil);
-  staticpro (&recent_keys_ring);
+  recent_keys_ring_size = 100;
+  Vrecent_keys_ring = Qnil;
+  staticpro (&Vrecent_keys_ring);
 
   Vthis_command_keys = Qnil;
   staticpro (&Vthis_command_keys);
@@ -4471,7 +4574,6 @@ XEmacs sees these as single character keypress events.
 
   Vdribble_file = Qnil;
   staticpro (&Vdribble_file);
-
 
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-emacs-events", &debug_emacs_events /*

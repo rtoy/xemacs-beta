@@ -69,6 +69,12 @@ Lisp_Object Qopen, Qclosed;
    maybe other values to come.  */
 static Lisp_Object Vprocess_connection_type;
 
+#ifdef PROCESS_IO_BLOCKING
+/* List of port numbers or port names to set a blocking I/O mode.
+   Nil means set a non-blocking I/O mode [default]. */
+static Lisp_Object network_stream_blocking_port_list;
+#endif  /* PROCESS_IO_BLOCKING */
+
 /* FSFmacs says:
 
    These next two vars are non-static since sysdep.c uses them in the
@@ -1496,7 +1502,37 @@ Fourth arg SERVICE is name of the service desired, or an integer
 
   descriptor_to_process[inch] = proc;
 
+#ifdef PROCESS_IO_BLOCKING
+  {
+    Lisp_Object tail;
+
+    for (tail = network_stream_blocking_port_list; CONSP (tail); tail = XCDR (tail))
+      {
+	Lisp_Object tail_port = XCAR (tail);
+	int block_port;
+
+	if (STRINGP (tail_port))
+	  {
+	    struct servent *svc_info;
+	    CHECK_STRING (tail_port);
+	    svc_info = getservbyname ((char *) XSTRING_DATA (tail_port), "tcp");
+	    if ((svc_info != 0) && (svc_info->s_port == port))
+		break;
+	    else
+	      continue;
+	  }
+	else if ((INTP (tail_port)) && (htons ((unsigned short) XINT (tail_port)) == port))
+	  break;
+      }
+
+    if (!CONSP (tail))
+      {
+#endif	/* PROCESS_IO_BLOCKING */
   set_descriptor_non_blocking (inch);
+#ifdef PROCESS_IO_BLOCKING
+      }
+    }
+#endif	/* PROCESS_IO_BLOCKING */
 
   XPROCESS (proc)->pid = Fcons (service, host);
   XPROCESS (proc)->buffer = buffer;
@@ -3394,6 +3430,15 @@ then a pipe is used in any case.
 The value takes effect when `start-process' is called.
 */ );
   Vprocess_connection_type = Qt;
+
+#ifdef PROCESS_IO_BLOCKING
+  DEFVAR_LISP ("network-stream-blocking-port-list", &network_stream_blocking_port_list /*
+List of port numbers or port names to set a blocking I/O mode with connection.
+Nil value means to set a default(non-blocking) I/O mode.
+The value takes effect when `open-network-stream-internal' is called.
+*/ );
+  network_stream_blocking_port_list = Qnil;
+#endif	/* PROCESS_IO_BLOCKING */
 }
 
 #endif /* not NO_SUBPROCESSES */

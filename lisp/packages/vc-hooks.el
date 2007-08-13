@@ -1037,7 +1037,6 @@ Returns t if checkout was successful, nil otherwise."
       (define-key vc-prefix-map "u" 'vc-revert-buffer)
       (define-key vc-prefix-map "v" 'vc-next-action)
       (define-key vc-prefix-map "=" 'vc-diff)
-      #+xemacs (define-key vc-prefix-map "?" 'vc-file-status)
       (define-key vc-prefix-map "~" 'vc-version-other-window)))
 
 ;; Emacs menus
@@ -1083,8 +1082,6 @@ Returns t if checkout was successful, nil otherwise."
   '("VC"
     :filter vc-menu-filter
     ["" 		           vc-next-action		buffer-file-name nil]
-    ;; ^^^ this gets changed to checkin, checkout, register, or steal
-    ["Show status of"              vc-file-status               nil nil]
     ;;["Show Locked Files"	   vc-directory t] ;; needs new dired
     "----"
     ["Revert to Last Revision"	   vc-revert-buffer    		vc-mode nil]

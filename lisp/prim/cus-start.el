@@ -143,7 +143,7 @@
 	    ;; If variables are removed from C code, give an error here!
 	    (message "Intrinsic `%S' not bound" symbol))
       ;; This is called before any user can have changed the value.
-      (put symbol 'factory-value 
+      (put symbol 'standard-value 
 	   (list (custom-start-quote (default-value symbol))))
       ;; Add it to the right group.
       (custom-add-to-group group symbol 'custom-variable)

@@ -325,3 +325,7 @@ process as a string"
   ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu>
   (with-output-to-string
     (call-process shell-file-name nil t nil "-c" command)))
+
+(defalias 'shell-command-to-string 'exec-to-string)
+
+;;; process.el ends here

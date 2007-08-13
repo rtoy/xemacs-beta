@@ -421,9 +421,12 @@ that it is safe to do so.
     for (i = 0; i < XVECTOR (Vthis_command_keys)->size; i++)
       if (EQ (event, vector_data (XVECTOR (Vthis_command_keys)) [i]))
 	abort ();
-    for (i = 0; i < XVECTOR (Vrecent_keys_ring)->size; i++)
-      if (EQ (event, vector_data (XVECTOR (Vrecent_keys_ring)) [i]))
-	abort ();
+    if (!NILP (Vrecent_keys_ring))
+      {
+	for (i = 0; i < XVECTOR (Vrecent_keys_ring)->size; i++)
+	  if (EQ (event, vector_data (XVECTOR (Vrecent_keys_ring)) [i]))
+	    abort ();
+      }
   }
 #endif /* 0 */
 

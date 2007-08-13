@@ -1643,6 +1643,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf annotation-data set-annotation-data)
 (defsetf annotation-action set-annotation-action)
 (defsetf annotation-menu set-annotation-menu)
+(defsetf recent-keys-ring-size set-recent-keys-ring-size)
 
 (defsetf getenv setenv t)
 (defsetf get-register set-register)

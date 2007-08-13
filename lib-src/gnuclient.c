@@ -56,6 +56,7 @@ static char rcsid [] = "!Header: gnuclient.c,v 2.2 95/12/12 01:39:21 wing nene !
 #endif /* HAVE_UNISTD_H */
 #include <signal.h>
 
+int read_line(int, char *);
 
 #if !defined(SYSV_IPC) && !defined(UNIX_DOMAIN_SOCKETS) && \
     !defined(INTERNET_DOMAIN_SOCKETS)
@@ -91,7 +92,7 @@ tell_emacs_to_resume (int sig)
 
   connect_type = make_connection (NULL, (u_short) 0, &s);
 
-  sprintf(buffer,"(gnuserv-eval '(resume-pid-console %d))", getpid());
+  sprintf(buffer,"(gnuserv-eval '(resume-pid-console %d))", (int)getpid());
   send_string(s, buffer);
 
 #ifdef SYSV_IPC
@@ -252,6 +253,15 @@ clean_string (CONST char *s)
   over = 1;								   \
 } while (0)
 
+/* A strdup immitation. */
+static char *
+my_strdup (CONST char *s)
+{
+  char *new = malloc (strlen (s) + 1);
+  if (new)
+    strcpy (new, s);
+  return new;
+}
 
 int
 main (int argc, char *argv[])
@@ -268,12 +278,11 @@ main (int argc, char *argv[])
   int view = 0;			/* view only. */
   int nofiles = 0;
   int errflg = 0;		/* option error */
-  int c;			/* char from getopt */
   int s;			/* socket / msqid to server */
   int connect_type;		/* CONN_UNIX, CONN_INTERNET, or
 				 * CONN_IPC */
   int suppress_windows_system = 0;
-  char *display;
+  char *display = NULL;
 #ifdef INTERNET_DOMAIN_SOCKETS
   char *hostarg = NULL;		/* remote hostname */
   char *remotearg;
@@ -305,14 +314,25 @@ main (int argc, char *argv[])
   display = getenv ("DISPLAY");
   if (!display)
     suppress_windows_system = 1;
+  else
+    display = my_strdup (display);
 
   for (i = 1; argv[i] && !errflg; i++)
     {
       if (*argv[i] != '-')
 	break;
-      if (!strcmp (argv[i], "-batch"))
+      else if (*argv[i] == '-'
+	       && (*(argv[i] + 1) == '\0'
+		   || (*(argv[i] + 1) == '-' && *(argv[i] + 2) == '\0')))
+	{
+	  /* `-' or `--' */
+	  ++i;
+	  break;
+	}
+
+      if (!strcmp (argv[i], "-batch") || !strcmp (argv[i], "--batch"))
 	batch = 1;
-      else if (!strcmp (argv[i], "-eval"))
+      else if (!strcmp (argv[i], "-eval") || !strcmp (argv[i], "--eval"))
 	{
 	  if (!argv[++i])
 	    {
@@ -322,15 +342,19 @@ main (int argc, char *argv[])
 	    }
 	  eval_form = argv[i];
 	}
-      else if (!strcmp (argv[i], "-display"))
+      else if (!strcmp (argv[i], "-display") || !strcmp (argv[i], "--display"))
 	{
 	  suppress_windows_system = 0;
 	  if (!argv[++i])
 	    {
-	      fprintf (stderr, "%s: `-display' must be followed by an argument\n",
+	      fprintf (stderr,
+		       "%s: `-display' must be followed by an argument\n",
 		       progname);
 	      exit (1);
 	    }
+	  if (display)
+	    free (display);
+	  /* no need to strdup. */
 	  display = argv[i];
 	}
       else if (!strcmp (argv[i], "-nw"))
@@ -396,6 +420,13 @@ main (int argc, char *argv[])
 	       progname);
       exit (1);
     }
+  if (suppress_windows_system && hostarg)
+    {
+      fprintf (stderr, "%s: Remote editing is available only on X\n",
+	       progname);
+      exit (1);
+    }
+
   *result = '\0';
   if (eval_function || eval_form || load_library)
     {
@@ -446,32 +477,30 @@ main (int argc, char *argv[])
 	      fprintf (stderr, "%s: Not connected to a tty", progname);
 	      exit (1);
 	    }
-	}
-
 #if defined(INTERNET_DOMAIN_SOCKETS)
-      connect_type = make_connection (hostarg, port, &s);
+	  connect_type = make_connection (hostarg, port, &s);
 #else
-      connect_type = make_connection (NULL, (u_short) 0, &s);
+	  connect_type = make_connection (NULL, (u_short) 0, &s);
 #endif
+	  send_string (s, "(gnuserv-eval '(emacs-pid))");
+	  send_string (s, EOT_STR);
 
-      send_string (s, "(gnuserv-eval '(emacs-pid))");
-      send_string (s, EOT_STR);
-
-      if (read_line (s, buffer) == 0)
-	{
-	  fprintf (stderr, "%s: Could not establish emacs procces id\n",
-		   progname);
-	  exit (1);
-	}
+	  if (read_line (s, buffer) == 0)
+	    {
+	      fprintf (stderr, "%s: Could not establish Emacs procces id\n",
+		       progname);
+	      exit (1);
+	    }
       /* Don't do disconnect_from_server becasue we have already read
 	 data, and disconnect doesn't do anything else. */
 #ifndef INTERNET_DOMAIN_SOCKETS
-      if (connect_type == (int) CONN_IPC)
-	disconnect_from_ipc_server (s, msgp, FALSE);
+	  if (connect_type == (int) CONN_IPC)
+	    disconnect_from_ipc_server (s, msgp, FALSE);
 #endif /* !SYSV_IPC */
 
-      emacs_pid = (pid_t)atol(buffer);
-      initialize_signals();
+	  emacs_pid = (pid_t)atol(buffer);
+	  initialize_signals();
+	} /* suppress_windows_system */
 
 #if defined(INTERNET_DOMAIN_SOCKETS)
       connect_type = make_connection (hostarg, port, &s);
@@ -528,7 +557,7 @@ main (int argc, char *argv[])
 	      exit (1);
 	    }
 	  sprintf (command, "(gnuserv-edit-files '(tty %s %s %d) '(",
-		   clean_string (tty), clean_string (term), getpid ());
+		   clean_string (tty), clean_string (term), (int)getpid ());
 	}
       else /* !suppress_windows_system */
 	{
@@ -557,8 +586,7 @@ main (int argc, char *argv[])
 	  path = malloc (strlen (remotepath) + strlen (fullpath) + 1);
 	  sprintf (path, "%s%s", remotepath, fullpath);
 #else
-	  path = malloc (strlen (fullpath));
-	  strcpy (path, fullpath);
+	  path = my_strdup (fullpath);
 #endif
 	  sprintf (command, "(%d . %s)", starting_line, clean_string (path));
 	  send_string (s, command);

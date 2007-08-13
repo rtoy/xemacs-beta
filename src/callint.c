@@ -310,13 +310,6 @@ when reading the arguments.
 	    goto lose;
 	  specs = Fcar (Fcdr (specs));
 	}
-#ifdef MOCKLISP_SUPPORT
-      else if (EQ (funcar, Qmocklisp))
-	{
-	  single_console_state ();
-	  return ml_apply (fun, Qinteractive);
-	}
-#endif
       else
 	goto lose;
     }

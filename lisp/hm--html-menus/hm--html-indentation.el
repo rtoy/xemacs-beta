@@ -150,7 +150,7 @@ The name of the tag is TAG-NAME. After this function the point is at UNTIL
 
 (defun hm--html-is-one-element-tag-p (tag-name)
   "Returns t, if the tag with the tag-name is a one element tag."
-  (assoc :hm--html-one-element-tag
+  (assoc ':hm--html-one-element-tag
 	 (cdr (assoc* (downcase tag-name)
 		      hm--html-tag-name-alist
 		      :test 'string=))))
@@ -224,13 +224,34 @@ If no tags are found, then nil is returned."
 		   (hm--html-previous-line-indentation)))
 	    ))))
 
+
+;;; Indentation commands
+
 (defun hm--html-indent-line ()
   "Indent the current line line."
   (interactive)
   (unless hm--html-disable-indentation
-    (indent-line-to (max 0 (hm--html-calculate-indent)))))
+    (let ((pos (- (point-max) (point))))
+      (indent-line-to (max 0 (hm--html-calculate-indent)))
+      (when (> (- (point-max) pos) (point))
+	(goto-char (- (point-max) pos))))))
 
-;;; Indentation
+;(defun hm--html-indent-region (begin end)
+;  "Indents the region between BEGIN and END according to the major mode."
+;  (interactive "d\nm")
+;  (when (< end begin)
+;    (let ((a end))
+;      (setq end begin)
+;      (setq begin a)))
+;  (save-excursion
+;    (goto-char begin)
+;    (let ((old-point))
+;      (while (and (<= (point) end)
+;		  (not (eq (point) old-point)))
+;	(setq old-point (point))
+;	(indent-according-to-mode)
+;	(forward-line)
+;	))))
 
 (defun hm--html-indent-region (begin end)
   "Indents the region between BEGIN and END according to the major mode."
@@ -239,15 +260,12 @@ If no tags are found, then nil is returned."
     (let ((a end))
       (setq end begin)
       (setq begin a)))
-  (save-excursion
-    (goto-char begin)
-    (let ((old-point))
-      (while (and (<= (point) end)
-		  (not (eq (point) old-point)))
-	(setq old-point (point))
-	(indent-according-to-mode)
-	(forward-line)
-	))))
-
+  (let ((lines (count-lines begin end)))
+    (save-excursion
+      (goto-char begin)
+      (loop repeat lines
+            do (indent-according-to-mode)
+            (forward-line))))
+  )
 
 (provide 'hm--html-indentation)

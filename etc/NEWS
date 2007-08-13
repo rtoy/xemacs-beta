@@ -97,9 +97,6 @@ distribution to contain a much smaller amount of code for basic
 functionality, with all the popular Lisp packages being available in
 the form of easy-to-install add-ons.
 
-** Autoconf 2 will be supported, to make XEmacs a more behaved
-denizen of the free software community.
-
 ** We are working on improving the Mule support in future releases:
 
 *** Other input methods, such as skk, will be supported.
@@ -107,6 +104,22 @@ denizen of the free software community.
 *** Wnn support will be made more solid.
 
 *** More user-level documentation on using Mule.
+
+
+* Changes in XEmacs 20.3
+========================
+
+** Autoconf 2 is supported.
+
+** Multiple TTY frames are now available.
+
+On consoles that display only one frame at a time (e.g. TTY consoles),
+creating a new frame with `C-x 5 2' also raises and selects that
+frame.  The behavior of window system frames is unchanged.
+
+
+* Lisp and internal changes in XEmacs 20.3
+==========================================
 
 
 * Changes in XEmacs 20.2
@@ -124,7 +137,7 @@ the `20.1' designation was abandoned, and the release was renamed to
 The Delete and Backspace keysyms are now no longer identical.  A better
 version of delbackspace.el has been added called delbs.el.
 
-** XEmacs 20.0 MULE API supported for backwards compatibilty
+** XEmacs 20.0 MULE API supported for backwards compatibility
 
 XEmacs 20.2 primarily supports the MULE 3 API.  It now also supports
 the XEmacs 20.0 MULE API.
@@ -421,7 +434,6 @@ different FTP servers, and integration with dired.
 ** tpu-edt.el, fixes courtesy of R. Kevin Oberman
 ** etags.c-11.86 Courtesy of F. Potortì
 
-
 
 * Lisp and internal changes in XEmacs 20.2
 ==========================================
@@ -582,7 +594,7 @@ now compiles with nary a warning with some compilers.
    been invested in Japanese, with particular focus on Japanese users
    of Sun WorkShop.  Many menubar labels have been translated into
    Japanese.  Martin Buchholz, the maintainer of MULE features within
-   XEmacs normaly runs XEmacs in a Japanese language environment.
+   XEmacs normally runs XEmacs in a Japanese language environment.
    Some of the other contributors are Japanese, most importantly
    Morioka Tomohiko, author of the TM package, providing MIME support
    for Mail and News.
@@ -1635,7 +1647,7 @@ value that will be used for display.  See the section on specifiers.)
 The functions `face-font', `face-foreground', `face-background',
 `set-face-font', `set-face-foreground', `set-face-background',
 etc. are now convenience functions, trivially implemented using
-`face-property' and `set-face-property' and take new optioanl
+`face-property' and `set-face-property' and take new optional
 arguments in accordance with those functions.  New convenience
 functions `face-font-instance', `face-foreground-instance',
 `face-background-instance', etc. are provided and are trivially
@@ -1823,7 +1835,7 @@ a window instead of a frame.
 New function `mouse-position' that obsoletes and is more powerful than
 `read-mouse-position'.
 
-New functions `mouse-pixel-positon' and `set-mouse-pixel-position' for
+New functions `mouse-pixel-position' and `set-mouse-pixel-position' for
 working with pixels instead of characters.
 
 The active (Zmacs) region is now highlighted using the `zmacs-region-face'

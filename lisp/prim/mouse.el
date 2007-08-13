@@ -47,8 +47,15 @@ text is inserted."
   :type 'boolean
   :group 'mouse)
 
-(defvar mouse-yank-function 'yank	; x11/x-mouse changes this...
+(defvar mouse-yank-function 'mouse-consolidated-yank
   "Function that is called upon by `mouse-yank' to actually insert text.")
+
+(defun mouse-consolidated-yank ()
+  (interactive)
+  (case (device-type)
+    (x (x-yank-function))
+    (tty (yank))
+    (otherwise (yank))))
 
 
 (defun mouse-select ()

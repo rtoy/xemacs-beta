@@ -1,3 +1,54 @@
+24.05.97
+	Added `hm--html-automatic-create-title-date' and changed the
+	variable `hm--html-automatic-new-date' to
+	`hm--html-automatic-update-title-date'. `hm--html-automatic-new-date'
+	is no an obsolete variable and will be deleted in the future.
+	Applied a patch from Luca Pisati <pisati@nichimen.com>, which
+	fixed a bug in `hm--html-indent-region'. 
+	Fixed a bug in the `hm--html-minor-region-mode-map'. Thanks to
+	Luca Pisati, for the bug report.
+	Applied a patch from Gary D. Foster <Gary.Foster@Corp.Sun.COM>
+	to fix the misspelled words *formatted and *formating. Thanks Gary.
+	Changed `hm--html-indent-line' so that the indentation leaves the
+	point now at the old text position, if it was behind the
+	indentation column.
+23.05.97
+	Changed the special character entities &circumflex to &circ,
+	thanks to Guylaine Prat <prat@cisi.cnes.fr>, for the bug report.
+	Added the variables `hm--html-automatic-changed-comment-prefix',
+	`hm--html-automatic-created-comment-prefix' and
+	`hm--html-automatic-comment-infix' to make the automatic insertation
+	of created and changed comments more flexible.
+	Added the command `hm--html-insert-modified-line' and the 
+	variables `hm--html-automatic-create-modified-line',
+	`hm--html-automatic-update-modified-line', `hm--html-modified-prefix',
+	`hm--html-modified-start-tag', `hm--html-modified-end-tag' and
+	`hm--html-modified-insert-before', for inserting and updating
+	a visible "Modified line".
+08.05.97
+	Added the function `idd-get-buffer'.
+29.03.97
+	Fixed the problem with `:keys "\\[idd-help-mouse-drag-and-drop]"'
+	in the Emacs 19.
+	Fixed the template commands for the Emacs 19.
+	Added the commands `tmpl-util-indent-region' and
+	`tmpl-util-indent-buffer', which are useful utilities in
+	template files.
+	Changed frame.html.tmpl and command-description.html.tmpl, so that
+	they now will be indented after their insertation.
+28.03.97
+	Fixed the commands `idd-mouse-drag-and-drop-click' and
+	`idd-mouse-drag-and-drop-press-button-during-move' for the Emacs 19.
+	Fixed also the mouse keybinding for these commands in the Emacs 19.
+	Fixed the command `idd-start-mouse-drag-and-drop' for the Emacs 19.
+	Therefore the internal drag and drop is now working again in the
+	Emacs 19.
+	The idd help functions are fixed for the Emacs 19.
+	Fixed the function `hm--html-is-one-element-tag-p' for the Emacs 19.
+26.03.97
+	Applied a patch from Michael D. Harnois to fix the documentation.
+	Fixed a bug in adapt.el.
+	-- BUILDED the version 5.6 of the package --
 25.03.97
 	Fixed a bug in `hm--html-search-place-for-element-in-head'.
 	Fixed bugs in `hm--html-add-base' and `hm--html-add-isindex'.
@@ -524,8 +575,9 @@
 	the title in a html-file.
 	Fixed also some minor bugs;
 
-
-
-
-
-
+
+Local Variables:
+mode: text
+minor-mode: auto-fill-mode
+fill-prefix: "	"
+End:

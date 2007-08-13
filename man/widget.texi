@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.97
+Version: 1.98
 
 @menu
 * Introduction::                
@@ -57,14 +57,14 @@ Allows the user to choose one of multiple options from a menu, each
 option is itself a widget.  Only the selected option will be visible in
 the buffer.
 @item radio-button-choice
-Allows the user to choose one of multiple options by pushing radio
+Allows the user to choose one of multiple options by activating radio
 buttons.  The options are implemented as widgets.  All options will be
 visible in the buffer.
 @item item
 A simple constant widget intended to be used in the @code{menu-choice} and
 @code{radio-button-choice} widgets. 
 @item choice-item
-An button item only intended for use in choices.  When pushed, the user
+An button item only intended for use in choices.  When activated, the user
 will be asked to select another option from the choice widget.
 @item toggle
 A simple @samp{on}/@samp{off} switch.
@@ -233,7 +233,7 @@ Activating one of these will convert it to the other.  This is useful
 for implementing multiple-choice fields.  You can create it wit
 @item The @samp{@b{( )}} and @samp{@b{(*)}} buttons.
 Only one radio button in a @code{radio-button-choice} widget can be
-selected at any time.  When you push one of the unselected radio
+selected at any time.  When you activate one of the unselected radio
 buttons, it will be selected and the previous selected radio button will
 become unselected.
 @item The @samp{@b{[Apply Form]}} @samp{@b{[Reset Form]}} buttons.
@@ -445,6 +445,17 @@ The following @samp{%} escapes are available:
 @itemx %]
 The text inside will be marked as a button.
 
+By default, the text will be shown in @code{widget-button-face}, and
+surrounded by brackets. 
+
+@defopt widget-button-prefix
+String to prefix buttons.
+@end defopt
+
+@defopt widget-button-suffix
+String to suffix buttons.
+@end defopt
+
 @item %@{
 @itemx %@}
 The text inside will be displayed with the face specified by
@@ -476,6 +487,23 @@ Insert a literal @samp{%}.
 
 @item :button-face
 Face used to highlight text inside %[ %] in the format.
+
+@item :button-prefix
+@itemx :button-suffix
+
+Text around %[ %] in the format.
+
+These can be
+@table @emph
+@item nil
+No text is inserted.
+
+@item a string
+The string is inserted literally.
+
+@item a symbol
+The value of the symbol is expanded according to this table.
+@end table
 
 @item :doc
 The string inserted by the @samp{%d} escape in the format
@@ -612,6 +640,16 @@ The @var{value}, if present, is used to initialize the @code{:value}
 property.  The value should be a string, which will be inserted in the
 buffer. 
 
+By default the link will be shown in brackets.
+
+@defopt widget-link-prefix
+String to prefix links.
+@end defopt
+
+@defopt widget-link-suffix
+String to suffix links.
+@end defopt
+
 @node url-link, info-link, link, Basic Types
 @comment  node-name,  next,  previous,  up
 @subsection The @code{url-link} Widget
@@ -652,17 +690,15 @@ The @var{value}, if present, is used to initialize the @code{:value}
 property. The value should be a string, which will be inserted in the
 buffer. 
 
-The following extra properties are recognized.
-
-@table @code
-@item :text-format
-The format string used when the push button cannot be displayed
-graphically.  There are two escapes, @code{%s}, which must be present
-exactly once, will be substituted with the tag, and @code{%%} will be
-substituted with a singe @samp{%}.
-@end table
-
 By default the tag will be shown in brackets.
+
+@defopt widget-push-button-prefix
+String to prefix push buttons.
+@end defopt
+
+@defopt widget-push-button-suffix
+String to suffix push buttons.
+@end defopt
 
 @node editable-field, text, push-button, Basic Types
 @comment  node-name,  next,  previous,  up

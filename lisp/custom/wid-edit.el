@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.97
+;; Version: 1.98
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -31,8 +31,7 @@
 ;;; Code:
 
 (require 'widget)
-
-(eval-when-compile (require 'cl))
+(require 'cl)
 
 ;;; Compatibility.
 
@@ -146,7 +145,7 @@ and `end-open' if it should sticky to the front."
 			      (:background "gray85"))
 			     (((class grayscale color)
 			       (background dark))
-			      (:background "dark gray"))
+			      (:background "dim gray"))
 			     (t 
 			      (:italic t)))
   "Face used for editable fields."
@@ -542,7 +541,7 @@ This is only meaningful for radio buttons or checkboxes in a list."
 (defcustom widget-glyph-directory (concat data-directory "custom/")
   "Where widget glyphs are located.
 If this variable is nil, widget will try to locate the directory
-automatically. This does not work yet."
+automatically."
   :group 'widgets
   :type 'directory)
 
@@ -551,10 +550,21 @@ automatically. This does not work yet."
   :group 'widgets
   :type 'boolean)
 
+(defcustom widget-image-conversion
+  '((xpm ".xpm") (gif ".gif") (png ".png") (jpeg ".jpg" ".jpeg")
+    (xbm ".xbm"))
+  "Conversion alist from image formats to file name suffixes."
+  :group 'widgets
+  :type '(repeat (cons :format "%v"
+		       (symbol :tag "Image Format" unknown)
+		       (repeat :tag "Suffixes"
+			       (string :format "%v")))))
+
 (defun widget-glyph-insert (widget tag image)
   "In WIDGET, insert the text TAG or, if supported, IMAGE.
-IMAGE should either be a glyph, or a name sans extension of an xpm or
-xbm file located in `widget-glyph-directory'.
+IMAGE should either be a glyph, an image instantiator, or an image file
+name sans extension (xpm, xbm, gif, jpg, or png) located in
+`widget-glyph-directory'.
 
 WARNING: If you call this with a glyph, and you want the user to be
 able to activate the glyph, make sure it is unique.  If you use the
@@ -563,35 +573,51 @@ cause the last created widget to be activated."
   (cond ((not (and (string-match "XEmacs" emacs-version)
 		   widget-glyph-enable
 		   (fboundp 'make-glyph)
+		   (fboundp 'locate-file)
 		   image))
 	 ;; We don't want or can't use glyphs.
 	 (insert tag))
 	((and (fboundp 'glyphp)
 	      (glyphp image))
 	 ;; Already a glyph.  Insert it.
-	 (widget-glyph-insert-glyph widget tag image))
+	 (widget-glyph-insert-glyph widget image))
+	((stringp image)
+	 ;; A string.  Look it up in relevant directories.
+	 (let* ((dirlist (list (or widget-glyph-directory
+				   (concat data-directory
+					   "custom/"))
+			       data-directory))
+		(formats widget-image-conversion)
+		file)
+	   (while (and formats (not file))
+	     (when (valid-image-instantiator-format-p (car (car formats)))
+	       (setq file (locate-file image dirlist
+				       (mapconcat 'identity (cdr (car formats))
+						  ":"))))
+	     (setq formats (cdr formats)))
+	   ;; We create a glyph with the file as the default image
+	   ;; instantiator, and the TAG fallback
+	   (widget-glyph-insert-glyph
+	    widget
+	    (make-glyph (if file
+			    (list (vector (car (car formats)) ':file file)
+				  (vector 'string ':data tag))
+			  (vector 'string ':data tag))))))
+	((valid-instantiator-p image 'image)
+	 ;; A valid image instantiator (e.g. [gif ':file "somefile"] etc.)
+	 (widget-glyph-insert-glyph widget
+				    (list image
+					  (vector 'string ':data tag))))
 	(t
-	 ;; A string.  Look it up in.
-	 (let ((file (concat widget-glyph-directory 
-			    (if (string-match "/\\'" widget-glyph-directory)
-				""
-			      "/")
-			    image
-			    (if (featurep 'xpm) ".xpm" ".xbm"))))
-	   (if (file-readable-p file)
-	       (widget-glyph-insert-glyph widget tag (make-glyph file))
-	     ;; File not readable, give up.
-	     (insert tag))))))
+	 ;; Oh well.
+	 (insert tag))))
 
-(defun widget-glyph-insert-glyph (widget tag glyph &optional down inactive)
+(defun widget-glyph-insert-glyph (widget glyph &optional down inactive)
   "In WIDGET, with alternative text TAG, insert GLYPH."
-  (set-glyph-image glyph (cons 'tty tag))
   (set-glyph-property glyph 'widget widget)
   (when down
-    (set-glyph-image down (cons 'tty tag))
     (set-glyph-property down 'widget widget))
   (when inactive
-    (set-glyph-image inactive (cons 'tty tag))
     (set-glyph-property inactive 'widget widget))
   (insert "*")
   (add-text-properties (1- (point)) (point) 
@@ -609,6 +635,30 @@ cause the last created widget to be activated."
 	(set-extent-property extent help-property (if (stringp help-echo)
 						      help-echo
 						    'widget-mouse-help))))))
+
+;;; Buttons.
+
+(defgroup widget-button nil
+  "The look of various kinds of buttons."
+  :group 'widgets)
+
+(defcustom widget-button-prefix ""
+  "String used as prefix for buttons."
+  :type 'string
+  :group 'widgets)
+
+(defcustom widget-button-suffix ""
+  "String used as suffix for buttons."
+  :type 'string
+  :group 'widgets)
+
+(defun widget-button-insert-indirect (widget key)
+  "Insert value of WIDGET's KEY property."
+  (let ((val (widget-get widget key)))
+    (while (and val (symbolp val))
+      (setq val (symbol-value val)))
+    (when val 
+      (insert val))))
 
 ;;; Creating Widgets.
 
@@ -1136,6 +1186,8 @@ Optional EVENT is the event that triggered the action."
   "Basic widget other widgets are derived from."
   :value-to-internal (lambda (widget value) value)
   :value-to-external (lambda (widget value) value)
+  :button-prefix 'widget-button-prefix
+  :button-suffix 'widget-button-suffix
   :create 'widget-default-create
   :indent nil
   :offset 0
@@ -1159,9 +1211,6 @@ Optional EVENT is the event that triggered the action."
   "Create WIDGET at point in the current buffer."
   (widget-specify-insert
    (let ((from (point))
-	 (tag (widget-get widget :tag))
-	 (glyph (widget-get widget :tag-glyph))
-	 (doc (widget-get widget :doc))
 	 button-begin button-end
 	 sample-begin sample-end
 	 doc-begin doc-end
@@ -1175,8 +1224,10 @@ Optional EVENT is the event that triggered the action."
 	 (cond ((eq escape ?%)
 		(insert "%"))
 	       ((eq escape ?\[)
-		(setq button-begin (point)))
+		(setq button-begin (point))
+		(widget-button-insert-indirect widget :button-prefix))
 	       ((eq escape ?\])
+		(widget-button-insert-indirect widget :button-suffix)
 		(setq button-end (point)))
 	       ((eq escape ?\{)
 		(setq sample-begin (point)))
@@ -1187,21 +1238,24 @@ Optional EVENT is the event that triggered the action."
 		  (insert "\n")
 		  (insert-char ?  (widget-get widget :indent))))
 	       ((eq escape ?t)
-		(cond (glyph 
-		       (widget-glyph-insert widget (or tag "image") glyph))
-		      (tag
-		       (insert tag))
-		      (t
-		       (let ((standard-output (current-buffer)))
-			 (princ (widget-get widget :value))))))
+		(let ((glyph (widget-get widget :tag-glyph))
+		      (tag (widget-get widget :tag)))
+		  (cond (glyph 
+			 (widget-glyph-insert widget (or tag "image") glyph))
+			(tag
+			 (insert tag))
+			(t
+			 (let ((standard-output (current-buffer)))
+			   (princ (widget-get widget :value)))))))
 	       ((eq escape ?d)
-		(when doc
-		  (setq doc-begin (point))
-		  (insert doc)
-		  (while (eq (preceding-char) ?\n)
-		    (delete-backward-char 1))
-		  (insert "\n")
-		  (setq doc-end (point))))
+		(let ((doc (widget-get widget :doc)))
+		  (when doc
+		    (setq doc-begin (point))
+		    (insert doc)
+		    (while (eq (preceding-char) ?\n)
+		      (delete-backward-char 1))
+		    (insert "\n")
+		    (setq doc-end (point)))))
 	       ((eq escape ?v)
 		(if (and button-begin (not button-end))
 		    (widget-apply widget :value-create)
@@ -1386,17 +1440,29 @@ Optional EVENT is the event that triggered the action."
 ;; Cache already created GUI objects.
 (defvar widget-push-button-cache nil)
 
+(defcustom widget-push-button-prefix "["
+  "String used as prefix for buttons."
+  :type 'string
+  :group 'widget-button)
+
+(defcustom widget-push-button-suffix "]"
+  "String used as suffix for buttons."
+  :type 'string
+  :group 'widget-button)
+
 (define-widget 'push-button 'item
   "A pushable button."
+  :button-prefix ""
+  :button-suffix ""
   :value-create 'widget-push-button-value-create
-  :text-format "[%s]"
   :format "%[%v%]")
 
 (defun widget-push-button-value-create (widget)
   ;; Insert text representing the `on' and `off' states.
   (let* ((tag (or (widget-get widget :tag)
 		  (widget-get widget :value)))
-	 (text (format (widget-get widget :text-format) tag))
+	 (text (concat widget-push-button-prefix
+		       tag widget-push-button-suffix))
 	 (gui (cdr (assoc tag widget-push-button-cache))))
     (if (and (fboundp 'make-gui-button)
 	     (fboundp 'make-glyph)
@@ -1408,10 +1474,16 @@ Optional EVENT is the event that triggered the action."
 	  (unless gui
 	    (setq gui (make-gui-button tag 'widget-gui-action widget))
 	    (push (cons tag gui) widget-push-button-cache))
-	  (widget-glyph-insert-glyph widget text
-				     (make-glyph (nth 0 (aref gui 1)))
-				     (make-glyph (nth 1 (aref gui 1)))
-				     (make-glyph (nth 2 (aref gui 1)))))
+	  (widget-glyph-insert-glyph widget
+				     (make-glyph
+				      (list (nth 0 (aref gui 1))
+					    (vector 'string ':data text)))
+				     (make-glyph
+				      (list (nth 1 (aref gui 1))
+					    (vector 'string ':data text)))
+				     (make-glyph
+				      (list (nth 2 (aref gui 1))
+					    (vector 'string ':data text)))))
       (insert text))))
 
 (defun widget-gui-action (widget)
@@ -1420,10 +1492,22 @@ Optional EVENT is the event that triggered the action."
 
 ;;; The `link' Widget.
 
+(defcustom widget-link-prefix "_"
+  "String used as prefix for links."
+  :type 'string
+  :group 'widget-button)
+
+(defcustom widget-link-suffix "_"
+  "String used as suffix for links."
+  :type 'string
+  :group 'widget-button)
+
 (define-widget 'link 'item
   "An embedded link."
+  :button-prefix 'widget-link-prefix
+  :button-suffix 'widget-link-suffix
   :help-echo "Follow the link."
-  :format "%[_%t_%]")
+  :format "%[%t%]")
 
 ;;; The `info-link' Widget.
 
@@ -1756,6 +1840,8 @@ when he activate the menu."
 
 (define-widget 'checkbox 'toggle
   "A checkbox toggle."
+  :button-suffix ""
+  :button-prefix ""
   :format "%[%v%]"
   :on "[X]"
   :on-glyph "check1"
@@ -1940,6 +2026,8 @@ when he activate the menu."
   "A radio button for use in the `radio' widget."
   :notify 'widget-radio-button-notify
   :format "%[%v%]"
+  :button-suffix ""
+  :button-prefix ""
   :on "(*)"
   :on-glyph "radio1"
   :off "( )"
@@ -2376,7 +2464,7 @@ when he activate the menu."
 
 (define-widget 'widget-help 'push-button
   "The widget documentation button."
-  :format "%[[%t]%] %d"
+  :format "%[%t%] %d"
   :help-echo "Toggle display of documentation."
   :action 'widget-help-action)
 

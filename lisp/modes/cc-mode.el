@@ -1035,7 +1035,8 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   (define-key c-mode-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-map "\C-c\C-u"  'c-up-conditional)
   (define-key c-mode-map "\t"        'c-indent-command)
-  (define-key c-mode-map "\177"      'c-electric-delete)
+;; GDF - don't rebind the DEL key
+;;  (define-key c-mode-map "\177"      'c-electric-delete)
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-map ","         'c-electric-semi&comma)
   (define-key c-mode-map "*"         'c-electric-star)
@@ -1427,6 +1428,8 @@ Key bindings:
 \\{c-mode-map}"
   (interactive)
   (kill-all-local-variables)
+  (make-local-hook 'backspace-or-delete-hook)
+  (add-hook 'backspace-or-delete-hook 'c-electric-delete nil t)
   (set-syntax-table c-mode-syntax-table)
   (setq major-mode 'c-mode
 	mode-name "C"
@@ -1953,8 +1956,8 @@ nil, or point is inside a literal then the function in the variable
       (skip-chars-backward " \t\n")
       (if (/= (point) here)
 	  (delete-region (point) here)
-	(funcall c-delete-function 1)
-	))))
+	(funcall c-delete-function 1))))
+  t)
 
 (defun c-electric-pound (arg)
   "Electric pound (`#') insertion.

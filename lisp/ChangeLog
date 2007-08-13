@@ -1,3 +1,69 @@
+1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/bookmark.el (bookmark-menu-popup-paned-menu): Naive
+	port to XEmacs.
+	(bookmark-bmenu-other-window-with-mouse): Naive port to XEmacs.
+
+	* utils/autoload.el (generated-custom-file): custom-load.el
+	renamed to cus-load.el.
+
+	* prim/loadup.el: Don't preload custom-load.elc.
+
+Thu May 29 19:03:52 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* x11/x-menubar.el (default-menubar): Updated customize entries.
+
+1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-xemacs-xref): Update contributors list.
+
+1997-05-28  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/minibuf.el (mouse-file-display-completion-list): Protect
+	against bogus directory becoming default.
+	(mouse-directory-display-completion-list): Ditto.
+
+	From Per Abrahamsen <abraham@dina.kvl.dk>
+	* bytecomp/bytecomp.el
+	(byte-compile-file-form-custom-declare-variable): New function.
+	(custom-declare-variable): Use it.
+
+	* packages/vc.el (vc-directory): dirname typo'ed as dir.
+
+	* packages/vc-hooks.el (vc-menu): Remove vc-file-status.
+	(Toplevel): Remove key definition for vc-file-status.
+
+1997-05-27  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/cus-start.el (Toplevel): Rename factory-value to
+	standard-value for Custom-1.98.
+
+1997-05-26  Steven L Baur  <steve@altair.xemacs.org>
+	
+	* prim/help.el (view-lossage-key-count): New variable.
+	(view-lossage-message-count): New variable.
+	(view-lossage): Use them.
+
+	From Hrvoje Niksic
+	* prim/help.el (view-lossage): Use new argument to `recent-keys'.
+
+	* cl/cl-macs.el (recent-keys-ring-size): New setf method.
+
+1997-05-26  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/process.el (shell-command-to-string): Alias exec-to-string
+	to more logical name.
+
+1997-05-23  Steven L Baur  <steve@altair.xemacs.org>
+
+	* tm/tm-view.el (mime/content-decoding-condition): Add image/png
+	mime type.
+
+	* tm/tm-image.el (toplevel): Add image/png mime type.
+
+	* tm/tm-edit.el (mime-file-types): Add png handling.
+	(mime-content-types): Ditto.
+
 Thu May 22 04:19:09 1997  Martin Buchholz  <mrb@eng.sun.com>
 
 	* prim/files.el (auto-mode-alist): Reorg.  Support

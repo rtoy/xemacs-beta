@@ -59,7 +59,8 @@
     (define-key map "-" 'negative-argument)
     (define-key map " " 'scroll-up)
     (define-key map "f" 'scroll-up)
-    (define-key map "\177" 'scroll-down)
+;; GDF - Don't rebind the DEL key
+;;    (define-key map "\177" 'scroll-down)
     (define-key map "b" 'scroll-down)
     (define-key map 'backspace 'scroll-down)
     (define-key map "\r" 'view-scroll-lines-up)

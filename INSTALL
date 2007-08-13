@@ -248,10 +248,6 @@ The `--external-widget' option specifies that XEmacs should be built
 with support for being used as a widget by other X11 applications.
 This functionality should be considered beta.
 
-The `--with-mocklisp' option specifies that XEmacs should be built
-with support for Mocklisp.  Do not use this option unless you have a
-Mocklisp program that you need to run.
-
 The `--with-xmu=no' option can be used if your vendor doesn't ship
 the Xmu library.
 

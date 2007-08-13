@@ -1,6 +1,6 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.6 1997/05/09 03:28:00 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.7 1997/05/29 23:49:42 steve Exp $
 ;;;
 ;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
@@ -98,6 +98,7 @@
 	  "----"
 	  ["Created comment" hm--html-insert-created-comment t]
 	  ["Changed comment" hm--html-insert-changed-comment t]
+	  ["Modified line" hm--html-insert-modified-line t]
 	  ["New date in title" hm--html-new-date t]
 	  )
 	 ("Structure"
@@ -475,59 +476,110 @@
 	 ))
 
 
-
-(setq hm--html-pulldown-menu
-      '("HTML Config Menu"
-	("Set popup menu"
-	 ["Novice menu" 
-	  hm--html-use-novice-menu
-	  :active t
-	  :style radio
-	  :selected (not hm--html-expert)]
-	 ["Expert menu"
-	  hm--html-use-expert-menu
-	  :active t
-	  :style radio
-	  :selected hm--html-expert]
-	 )
-	["Reload config files" hm--html-load-config-files t]
-	["Templates (fixed dirs) ..."
-	 hm--html-insert-template-from-fixed-dirs
-	 t]
-	["Templates ..." hm--html-insert-template t]
-	["Drag & Drop"
-	 idd-start-mouse-drag-and-drop
-	 :active t
-	 :keys "\\[idd-mouse-drag-and-drop]"]
-	["Drag & Drop Help"
-	 idd-start-help-mouse-drag-and-drop
-	 :active t
-	 :keys "\\[idd-help-mouse-drag-and-drop]"]
-	"----"
-	["Remove numeric names" hm--html-remove-numeric-names t]
-	["Quotify hrefs" hm--html-quotify-hrefs t]
-	"----"
-	["Submit bug report..." hm--html-submit-bug-report t]
-	["WWW Package Docs" hm--html-view-www-package-docu t]
-	"----"
-	("Preview Document"     
-	 ["Netscape view buffer" (hm--html-send-buffer-to-netscape 
-				  (current-buffer)) t]
-	 "----"
-	 ["Xmosaic start" html-view-start-mosaic t]
-	 ["Xmosaic view buffer" html-view-view-buffer t]
-	 ["Xmosaic view file" html-view-view-file t]
-	 ["Xmosaic goto url" html-view-goto-url t]
-	 ["Xmosaic get display" html-view-get-display t]
-	 "----"
-	 ["W3 start" w3 t]
-	 ["W3 view buffer" w3-preview-this-buffer t]
-	 ["W3 open remote file..." w3-fetch t]
-	 ["W3 open local..." w3-open-local t]
-	 ["W3 use hotlist..." w3-use-hotlist t]
-	 )
-	))
-	
+(if (adapt-xemacsp)
+    ;; The reason for this if form is, that the Emacs 19 can't
+    ;; work correct with `:keys "\\[idd-help-mouse-drag-and-drop]"'
+    (setq hm--html-pulldown-menu
+	  '("HTML Config Menu"
+	    ("Set popup menu"
+	     ["Novice menu" 
+	      hm--html-use-novice-menu
+	      :active t
+	      :style radio
+	      :selected (not hm--html-expert)]
+	     ["Expert menu"
+	      hm--html-use-expert-menu
+	      :active t
+	      :style radio
+	      :selected hm--html-expert]
+	     )
+	    ["Reload config files" hm--html-load-config-files t]
+	    ["Templates (fixed dirs) ..."
+	     hm--html-insert-template-from-fixed-dirs
+	     t]
+	    ["Templates ..." hm--html-insert-template t]
+	    ["Drag & Drop"
+	     idd-start-mouse-drag-and-drop
+	     :active t
+	     :keys "\\[idd-mouse-drag-and-drop]"]
+	    ["Drag & Drop Help"
+	     idd-start-help-mouse-drag-and-drop
+	     :active t
+	     :keys "\\[idd-help-mouse-drag-and-drop]"]
+	    "----"
+	    ["Remove numeric names" hm--html-remove-numeric-names t]
+	    ["Quotify hrefs" hm--html-quotify-hrefs t]
+	    "----"
+	    ["Submit bug report..." hm--html-submit-bug-report t]
+	    ["WWW Package Docs" hm--html-view-www-package-docu t]
+	    "----"
+	    ("Preview Document"     
+	     ["Netscape view buffer" (hm--html-send-buffer-to-netscape 
+				      (current-buffer)) t]
+	     "----"
+	     ["Xmosaic start" html-view-start-mosaic t]
+	     ["Xmosaic view buffer" html-view-view-buffer t]
+	     ["Xmosaic view file" html-view-view-file t]
+	     ["Xmosaic goto url" html-view-goto-url t]
+	     ["Xmosaic get display" html-view-get-display t]
+	     "----"
+	     ["W3 start" w3 t]
+	     ["W3 view buffer" w3-preview-this-buffer t]
+	     ["W3 open remote file..." w3-fetch t]
+	     ["W3 open local..." w3-open-local t]
+	     ["W3 use hotlist..." w3-use-hotlist t]
+	     )
+	    ))
+  (setq hm--html-pulldown-menu
+	'("HTML Config Menu"
+	  ("Set popup menu"
+	   ["Novice menu" 
+	    hm--html-use-novice-menu
+	    :active t
+	    :style radio
+	    :selected (not hm--html-expert)]
+	   ["Expert menu"
+	    hm--html-use-expert-menu
+	    :active t
+	    :style radio
+	    :selected hm--html-expert]
+	   )
+	  ["Reload config files" hm--html-load-config-files t]
+	  ["Templates (fixed dirs) ..."
+	   hm--html-insert-template-from-fixed-dirs
+	   t]
+	  ["Templates ..." hm--html-insert-template t]
+	  ["Drag & Drop"
+	   idd-start-mouse-drag-and-drop
+	   :active t]
+	  ["Drag & Drop Help"
+	   idd-start-help-mouse-drag-and-drop
+	   :active t]
+	  "----"
+	  ["Remove numeric names" hm--html-remove-numeric-names t]
+	  ["Quotify hrefs" hm--html-quotify-hrefs t]
+	  "----"
+	  ["Submit bug report..." hm--html-submit-bug-report t]
+	  ["WWW Package Docs" hm--html-view-www-package-docu t]
+	  "----"
+	  ("Preview Document"     
+	   ["Netscape view buffer" (hm--html-send-buffer-to-netscape 
+				    (current-buffer)) t]
+	   "----"
+	   ["Xmosaic start" html-view-start-mosaic t]
+	   ["Xmosaic view buffer" html-view-view-buffer t]
+	   ["Xmosaic view file" html-view-view-file t]
+	   ["Xmosaic goto url" html-view-goto-url t]
+	   ["Xmosaic get display" html-view-get-display t]
+	   "----"
+	   ["W3 start" w3 t]
+	   ["W3 view buffer" w3-preview-this-buffer t]
+	   ["W3 open remote file..." w3-fetch t]
+	   ["W3 open local..." w3-open-local t]
+	   ["W3 use hotlist..." w3-use-hotlist t]
+	   )
+	  ))
+  )	
 
 (if (adapt-xemacsp)
     (defun hm--install-html-menu (menu-name)

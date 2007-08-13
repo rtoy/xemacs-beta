@@ -1322,7 +1322,8 @@ disconnect_controlling_terminal (void)
 /*        Getting and setting emacs_tty structures        */
 /* ------------------------------------------------------ */
 
-#ifdef HAVE_TTY
+/* It's wrong to encase these into #ifdef HAVE_TTY because we need
+   them for child TTY processes.  */
 
 /* Set *TC to the parameters associated with the terminal FD.
    Return zero if all's well, or -1 if we ran into an error we
@@ -1462,8 +1463,6 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
   /* We have survived the tempest.  */
   return 0;
 }
-
-#endif
 
 
 /* ------------------------------------------------------ */

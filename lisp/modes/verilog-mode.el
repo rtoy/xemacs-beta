@@ -1,6 +1,6 @@
 ;;; verilog-mode.el --- major mode for editing verilog source in Emacs
 ;;
-;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/modes/Attic/verilog-mode.el,v 1.4 1997/05/09 03:28:03 steve Exp $
+;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/modes/Attic/verilog-mode.el,v 1.5 1997/05/29 23:49:56 steve Exp $
 
 ;; Copyright (C) 1996 Free Software Foundation, Inc.
 
@@ -70,7 +70,7 @@
 (provide 'verilog-mode)
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "$$Revision: 1.4 $$"
+(defconst verilog-mode-version "$$Revision: 1.5 $$"
   "Version of this verilog mode.")
 
 ;;
@@ -264,7 +264,8 @@ lineups."
   (define-key verilog-mode-map "\M-\C-f"  'electric-verilog-forward-sexp)
   (define-key verilog-mode-map "\M-\r"    (function (lambda ()
 		      (interactive) (electric-verilog-terminate-line 1))))
-  (define-key verilog-mode-map "\177"     'backward-delete-char-untabify)
+;; GDF - Leave the DEL key alone
+;;  (define-key verilog-mode-map "\177"     'backward-delete-char-untabify)
   (define-key verilog-mode-map "\M-\t"    'verilog-complete-word)
   (define-key verilog-mode-map "\M-?"     'verilog-show-completions)
   (define-key verilog-mode-map "\M-\C-h"  'verilog-mark-defun)

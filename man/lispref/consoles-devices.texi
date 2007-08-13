@@ -27,13 +27,12 @@ normal window-system concept of a window.  Frames can overlap, be
 displayed at various locations within the display, be resized, etc.  For
 TTY, only one frame can be displayed at a time, and it occupies the
 entire TTY display area.
-@ignore @c Not yet implemented
-However, you can still define multiple frames
-and switch between them.  Their contents are entirely separate from each
-other.  These sorts of frames resemble the ``virtual console''
-capability provided under Linux or the multiple screens provided by the
-multiplexing program @samp{screen} under Unix.
-@end ignore
+
+However, you can still define multiple frames and switch between them.
+Their contents are entirely separate from each other.  These sorts of
+frames resemble the ``virtual console'' capability provided under Linux
+or the multiple screens provided by the multiplexing program
+@samp{screen} under Unix.
 
   When you start up XEmacs, an initial console and device are created to
 receive input and display frames on.  This will either be an X display

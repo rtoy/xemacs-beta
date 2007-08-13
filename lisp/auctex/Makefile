@@ -1,7 +1,7 @@
 # Makefile - for the AUC TeX distribution.
 #
 # Maintainer: Per Abrahamsen <auc-tex@sunsite.auc.dk>
-# Version: 9.7l
+# Version: 9.7p
 #
 # Edit the makefile, type `make', and follow the instructions.
 
@@ -87,7 +87,8 @@ STYLESRC = ../../etc/auctex/style/slides.el    ../../etc/auctex/style/foils.el  
 	   ../../etc/auctex/style/j-article.el ../../etc/auctex/style/j-book.el   ../../etc/auctex/style/j-report.el \
 	   ../../etc/auctex/style/jarticle.el  ../../etc/auctex/style/jbook.el    ../../etc/auctex/style/jreport.el \
 	   ../../etc/auctex/style/dinbrief.el  ../../etc/auctex/style/virtex.el   ../../etc/auctex/style/plfonts.el \
-	   ../../etc/auctex/style/plhb.el      ../../etc/auctex/style/harvard.el	../../etc/auctex/style/swedish.el
+	   ../../etc/auctex/style/plhb.el      ../../etc/auctex/style/harvard.el	../../etc/auctex/style/swedish.el \
+	   ../../etc/auctex/style/danish.el
 
 DOCFILES = doc/Makefile doc/auc-tex.texi doc/intro.texi doc/install.texi \
 	doc/changes.texi doc/tex-ref.tex doc/math-ref.tex doc/history.texi
@@ -136,8 +137,6 @@ install-lisp:	some
 
 install-contrib:
 	$(MV) $(CONTRIBELC) $(aucdir)
-	$(MV) bib-cite.elc $(aucdir)
-	$(MV) font-latex.elc $(aucdir)
 	$(CP) $(CONTRIB) $(aucdir)
 
 install-info:

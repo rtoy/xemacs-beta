@@ -1,4 +1,4 @@
-;;; $Id: internal-drag-and-drop.el,v 1.3 1997/03/28 02:28:42 steve Exp $
+;;; $Id: internal-drag-and-drop.el,v 1.4 1997/05/29 23:49:44 steve Exp $
 ;;; 
 ;;; Copyright (C) 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -67,16 +67,46 @@
 ;;;	The variable `idd-global-mouse-keys' defines the mouse keys,
 ;;;	which are bound to the drag and drop command.
 ;;;
+;;;	The variable `idd-global-help-mouse-keys' defines the mouse keys,
+;;;	which are bound to the drag and drop help command.
+;;;
 ;;;	The variable `idd-drag-and-drop-mouse-binding-type' determines
 ;;;	if you've to hold a mouse button down during moving the mouse
 ;;;	from the source to the destination or not.
+;;;
+;;;	Emacs 19 users should read carefully the whole comments of
+;;;	`idd-drag-and-drop-mouse-binding-type', `idd-global-mouse-keys'
+;;;	and `idd-global-help-mouse-keys', if they would like to change
+;;;	any of these variables or the mouse bindings!
 ;;;
 
 (require 'adapt)
 (require 'cl)
 
+(defvar idd-drag-and-drop-mouse-binding-type 'click
+  "*The type of the drag and drop mouse binding.
+The value maybe `click' or `press-button-during-move'.
+A value of `click' means, that you've to click over the source, leave
+the button and click it again over the destination.
+A value of `press-button-during-move' means, that you've to press
+the button down over the source and hold it until the mouse pointer
+is over the destination.
+
+The disadvantage of the `press-button-during-move' type compared with 
+the `click' type is, that you can't select a destination region and 
+therefore a drag and drop action depending on a selected region can't
+be started with that type of mouse binding.
+
+Note: In the Emacs 19 you'll have to change also the keybindings of
+the drag and drop commands, if you change this variable. Look at the
+variables `idd-global-mouse-keys' and `idd-global-help-mouse-keys' for
+this.")
+
 (defvar idd-global-mouse-keys (if (adapt-emacs19p)
-				  [(meta control mouse-1)]
+				  (if (eq idd-drag-and-drop-mouse-binding-type
+					  'click)
+				      [(meta control mouse-1)]
+				    [(meta control down-mouse-1)])
 				[(meta control button1)])
   "The mouse keys for the command `idd-mouse-drag-and-drop'.
 The command `idd-mouse-drag-and-drop' is bound during the loading
@@ -86,11 +116,21 @@ key map.
 Set it to nil, if you don't want to bind this function during loading.
 
 If the command is already bound in the global keymap during loading,
-then this key sequence will not be bind.")
+then this key sequence will not be bind.
 
-(defvar idd-global-help-mouse-keys (if (adapt-emacs19p)
-				       [(meta control mouse-3)]
-				     [(meta control button3)])
+Note: In the Emacs 19 the mouse keys must contain the modifier
+`down', if `idd-drag-and-drop-mouse-binding-type' is set to 
+`press-button-during-move' and must not contain the modifier, if it
+is set to `click'. If you set `idd-drag-and-drop-mouse-binding-type'
+before loading the package internal-drag-and-drop, the mouse will
+be bind in the right way.")
+
+(defvar idd-global-help-mouse-keys
+  (if (adapt-emacs19p)
+      (if (eq idd-drag-and-drop-mouse-binding-type 'click)
+	  [(meta control mouse-3)]
+	[(meta control down-mouse-3)])
+    [(meta control button3)])
   "The mouse keys for the command `idd-help-mouse-drag-and-drop'.
 The command `idd-help-mouse-drag-and-drop' is bound during the loading
 of the package internal-drag-and-drop to this keys in the global
@@ -99,21 +139,14 @@ key map.
 Set it to nil, if you don't want to bind this function during loading.
 
 If the command is already bound in the global keymap during loading,
-then this key sequence will not be bind.")
+then this key sequence will not be bind.
 
-(defvar idd-drag-and-drop-mouse-binding-type 'click
-  "*The type of the drag and drop mouse binding.
-The value maybe `click or 'press-button-during-move.
-A value of `click means, that you've to click over the source, leave
-the button and click it again over the destination.
-A value of 'press-button-during-move means, that you've to press
-the button down over the source and hold it until the mouse pointer
-is over the destination.
-
-The disadvantage of the `press-button-during-move' type compared with 
-the `click' type is, that you can't select a destination region and 
-therefore a drag and drop action depending on a selected region can't
-be started with that type of mouse binding.")
+Note: In the Emacs 19 the mouse keys must contain the modifier
+`down', if `idd-drag-and-drop-mouse-binding-type' is set to 
+`press-button-during-move' and must not contain the modifier, if it
+is set to `click'. If you set `idd-drag-and-drop-mouse-binding-type'
+before loading the package internal-drag-and-drop, the mouse will
+be bind in the right way.")
 
 (defvar idd-actions '((((idd-if-region-active-p . nil))
 		       (((idd-if-region-active-p . t))
@@ -295,18 +328,24 @@ The list ACTIONS contains all possible actions. Look at the variable
 ;  "Parse PATH according to ange-ftp-path-format (which see).
 ;Returns a list (HOST USER PATH), or nil if PATH does not match the format.")
 
+(defun idd-get-buffer (source-or-destination)
+  "Returns the buffer of the SOURCE-OR-DESTINATION."
+  (cdr (assoc ':buffer source-or-destination)))
+
 (defun idd-set-point (source-or-destination)
   "Sets the point and buffer to SOURCE-OR-DESTINATION."
-  (set-buffer (cdr (assoc ':buffer source-or-destination)))
+  (set-buffer (idd-get-buffer source-or-destination))
   (goto-char (cdr (assoc ':drag-or-drop-point source-or-destination))))
 
 (defun idd-set-region (source-or-destination)
   "Sets the point, mark and buffer to SOURCE-OR-DESTINATION.
 The region is active after this function is called."
-  (set-buffer (cdr (assoc ':buffer source-or-destination)))
+  (set-buffer (idd-get-buffer source-or-destination))
   (goto-char (car (cdr (assoc ':region-active source-or-destination))))
   (set-mark (cdr (cdr (assoc ':region-active source-or-destination))))
-  (activate-region))
+  (if (adapt-xemacsp)
+      (activate-region))
+  )
 
 
 ;;; Specification type functions for the list `idd-actions'
@@ -349,7 +388,7 @@ is returned. Otherwise nil is returned."
   "Checks, if the major mode of SOURCE-OR-DESTINATION is MODE.
 It returns 1, if that is t and nil otherwise."
   (save-excursion
-    (set-buffer (cdr (assoc ':buffer source-or-destination)))
+    (set-buffer (idd-get-buffer source-or-destination))
     (if (eq major-mode mode)
 	1
       nil)))
@@ -358,7 +397,7 @@ It returns 1, if that is t and nil otherwise."
   "Checks, if the variable named VARIABLE isn't t in  SOURCE-OR-DESTINATION.
 It returns 1, if this is t."
   (save-excursion
-    (set-buffer (cdr (assoc ':buffer source-or-destination)))
+    (set-buffer (idd-get-buffer source-or-destination))
     (if (eval variable)
 	1
       nil)))
@@ -398,7 +437,7 @@ nil. For the test the function `dired-get-filename' is used."
 
 (defun idd-get-local-filename (source-or-destination)
   "Returns the filename of a local file specified by SOURCE-OR-DESTINATION."
-  (buffer-file-name (cdr (assoc ':buffer source-or-destination))))
+  (buffer-file-name (idd-get-buffer source-or-destination)))
 
 (defun idd-get-directory-of-buffer (source-or-destination)
   "Returns the directory name assigned to the SOURCE-OR-DESTINATION buffer."
@@ -421,7 +460,7 @@ is returned. Otherwise nil is returned."
   "Checks, if SOURCE-OR-DESTINATION has a buffer called BUFFER-NAME.
 It returns 1 if this is the case or nil otherwise."
   (if (string= buffer-name
-	       (buffer-name (cdr (assoc ':buffer source-or-destination))))
+	       (buffer-name (idd-get-buffer source-or-destination)))
       1
     nil))
 
@@ -528,8 +567,10 @@ Look at the example `idd-action-move-region'."
 		  (setq idd-help-start-extent (make-extent start (point)))
 		  (set-extent-mouse-face idd-help-start-extent 'highlight)
 		  (set-extent-face idd-help-start-extent 'bold)
-		  (set-extent-keymap idd-help-start-extent
-				     idd-help-start-action-keymap)
+		  (if (adapt-xemacsp)
+		      (set-extent-keymap idd-help-start-extent
+					 idd-help-start-action-keymap)
+		    )
 		  )
 		(insert "'\n")
 		(insert (format "Source buffer       : `%s'\n"
@@ -573,7 +614,12 @@ button event. Therefore this should not be bind direct to a mouse button."
     (setq source-event
 	  (next-command-event nil drag-and-drop-message))
     (if (button-press-event-p source-event)
-	(idd-mouse-drag-and-drop source-event)
+	(progn
+	  (when (and (adapt-emacs19p)
+		     (mouse-event-p source-event)
+		     (eq idd-drag-and-drop-mouse-binding-type 'click))
+	    (while (not (button-release-event-p (next-command-event)))))
+	  (idd-mouse-drag-and-drop source-event)) 
       (message "Wrong event! Exit drag and drop."))))
 
 (defun idd-help-mouse-drag-and-drop (source-event)
@@ -641,7 +687,9 @@ destination region."
     (setq destination-event 
 	  (next-command-event nil drag-and-drop-message))
     (message "")
-    (cond ((button-release-event-p destination-event)
+    (cond ((or (button-release-event-p destination-event)
+	       (and (adapt-emacs19p)
+		    (button-drag-event-p destination-event)))
 	   (setq destination (idd-get-source-or-destination-alist
 			      destination-event))
 	   (idd-set-point destination)
@@ -667,8 +715,8 @@ button-press-event."
 	(destination nil)
 	(destination-event))
     (message drag-and-drop-message)
-    (if (and (adapt-xemacsp) (mouse-event-p source-event))
-	(dispatch-event (next-command-event)))
+    (when (and (adapt-xemacsp) (mouse-event-p source-event))
+      (dispatch-event (next-command-event)))
     (setq destination-event 
 	  (next-command-event nil drag-and-drop-message))
     (message "")
@@ -677,8 +725,8 @@ button-press-event."
 	   (setq destination (idd-get-source-or-destination-alist
 			      destination-event))
 	   (idd-set-point destination)
-	   (if (adapt-emacs19p)
-	       (while (not (button-release-event-p (next-command-event)))))
+;	   (when (adapt-emacs19p)
+;	       (while (not (button-release-event-p (next-command-event)))))
 	   (if idd-help-instead-of-action
 	       (idd-display-help-about-action (idd-get-action source
 							      destination
@@ -702,7 +750,13 @@ button-press-event."
 	     (idd-call-action (idd-get-action source destination idd-actions)
 			      source
 			      destination)))
-	  (t (message "Wrong event! Exit drag and drop.") nil))))
+	  (t (message "Wrong event! Exit drag and drop.") nil))
+
+    ;; Useful for debugging
+    ;;    (setq idd-last-source source)
+    ;;    (setq idd-last-destination destination)
+
+    ))
 
 (defun idd-help-start-action (event)
   "Used to start the action from the help buffer."

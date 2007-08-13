@@ -1,9 +1,92 @@
+Tue May 27 16:19:16 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.98 released.
+
+Mon May 26 22:29:22 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-glyph-directory): Fix doc. string.
+	(widget-image-conversion): New option.
+	(widget-glyph-insert): Use it.
+	(widget-glyph-insert-glyph): No tag here.
+	(widget-push-button-value-create): But here.
+	Patch by Hrvoje Niksic <hniksic@srce.hr>.
+
+	* wid-edit.el (widget-field-face): Changed to dim gray.
+	Suggested by Simon Marshall <Simon.Marshall@esrin.esa.it>. 
+
+Sat May 24 00:07:50 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.texi (push-button): Documented new options.
+	(link): Ditto.
+	(Basic Types): Documented new keywords.
+
+	* wid-edit.el (widget-push-button-prefix): New option.
+	(widget-push-button-suffix): New option.
+	(widget-button): New group.
+
+	* widget.el (:text-format): Removed.
+	(:button-suffix): New keyword.
+	(:button-prefix): New keyword.
+
+	* wid-edit.el (widget-button-prefix): New variable.
+	(widget-button-suffix): New variable.
+	(widget-insert-indirect): New function.
+	(widget-default-create): Use it.
+	(default): Bind them.
+	(widget-link-prefix): New option.
+	(widget-link-suffix): New option.
+	(link): Use them.
+	(push-button): Don't use `:text-format'.
+	(widget-push-button-value-create): Ditto.
+	(widget-help): Update format.
+	(checkbox): Ditto.
+	(radio-button): Ditto.
+
+Fri May 23 23:54:11 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-magic-alist): Use `activate' instead of
+	`push'. 
+	* custom.texi (The Face Options): Ditto.
+	* widget.texi (Introduction): Ditto.
+
+Thu May 22 12:49:36 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-magic-alist): Changed rogue state message.
+
+	* custom.el (defface): Doc fix.
+
 Tue May 20 19:17:01 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* cus-edit.el (mule): New group for MULE merged emacsen.
 	(auto-save): Spelling fix.
 
+Thu May 15 10:47:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.texi (User Commands): Updated documentation.
+
+	* cus-edit.el, custom.el: Renamed `factory' to `standard'
+	everywhere. 
+
+	* cus-edit.el (custom-magic-show-button): Changed default to
+	`nil'. 
+	(custom): Removed `:format'.
+	(custom-variable): Removed level button.
+	(custom-face): Ditto.
+	(custom-level): Deteted.
+	(custom-level-action): Deleted.
+	(custom-format-handler): Update caller.
+	(custom-group-magic-alist): Merged into `custom-magic-alist'.
+	(custom-magic-value-create): Use merged `custom-magic-alist'.
+	(custom-group-state-update): Ditto.
+	
+
+Wed May 14 19:47:35 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+
 Tue May 13 16:05:34 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (windows): Move to environment.
 
 	* Version 1.97 released.
 

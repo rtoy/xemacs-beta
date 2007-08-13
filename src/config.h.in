@@ -374,9 +374,6 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_WNN
 #undef WNN6
 
-/* Mocklisp Support. */
-#undef MOCKLISP_SUPPORT
-
 /* Enable special GNU Make features in the Makefiles. */
 #undef USE_GNU_MAKE
 

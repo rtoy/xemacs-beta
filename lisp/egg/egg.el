@@ -2552,10 +2552,12 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
   (if egg:*fence-face*
       (progn
 	(if (extentp egg:*fence-extent*)
-	    nil
-	  (setq egg:*fence-extent* (make-extent 1 1 nil t))
-	  (if egg:*fence-face* (set-extent-property egg:*fence-extent* 'face egg:*fence-face*)))
-	(set-extent-endpoints egg:*fence-extent* egg:*region-start* egg:*region-end* ) )))
+	    (set-extent-endpoints egg:*fence-extent* egg:*region-start* egg:*region-end*)
+	  (setq egg:*fence-extent* (make-extent egg:*region-start* egg:*region-end*))
+	  (set-extent-property egg:*fence-extent* 'start-open nil)
+	  (set-extent-property egg:*fence-extent* 'end-open nil)
+	  (set-extent-property egg:*fence-extent* 'detachable nil))
+	(set-extent-face egg:*fence-extent* egg:*fence-face*))))
 
 (defun egg:fence-face-off ()
   (and egg:*fence-face*

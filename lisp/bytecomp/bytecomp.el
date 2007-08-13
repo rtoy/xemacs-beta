@@ -2246,6 +2246,17 @@ list that represents a doc string reference.
    (list 'signal ''error
 	 (list 'quote (list "`domain' used inside a function" form)))))
 
+;; This is part of bytecomp.el in 19.35:
+(put 'custom-declare-variable 'byte-hunk-handler
+     'byte-compile-file-form-custom-declare-variable)
+(defun byte-compile-file-form-custom-declare-variable (form)
+  (if (memq 'free-vars byte-compile-warnings)
+      (setq byte-compile-bound-variables
+	    (cons (cons (nth 1 (nth 1 form))
+			byte-compile-global-bit)
+		  byte-compile-bound-variables)))
+  form)
+
 
 ;;;###autoload
 (defun byte-compile (form)

@@ -95,7 +95,7 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-e" 'end-of-line)
 (define-key global-map "\C-f" 'forward-char)
 (define-key global-map "\C-d" 'delete-char)
-(define-key global-map "\177" 'delete-backward-char)
+(define-key global-map "\177" 'backspace-or-delete)
 
 ;; FSFmacs files.el
 
@@ -371,9 +371,8 @@ Keymap for characters following C-c.")
 
 ;; Default binding of "Backspace" is no longer the same as delete.
 ;; Default binding of "Control-h" is help.
-(define-key global-map 'backspace "\C-?")
-(define-key global-map '(meta backspace) "\e\C-?")
-
+(define-key global-map 'backspace 'delete-backward-char)
+(define-key global-map '(meta backspace) 'backward-kill-word)
 
 (define-key global-map "\M-\C-z" 'activate-region)
 

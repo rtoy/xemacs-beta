@@ -4,7 +4,7 @@
 @settitle HM HTML Mode
 @setchapternewpage odd
 @comment %**end of header (This is for running Texinfo on a region.)
-@comment $Id: hm--html-mode.texi,v 1.2 1997/03/28 02:29:28 steve Exp $
+@comment $Id: hm--html-mode.texi,v 1.3 1997/05/29 23:50:32 steve Exp $
 @ifinfo
 This file documents the Elisp package @code{hm--html-menus}.
 
@@ -45,7 +45,7 @@ of in the original English.
 @sp 4
 @center by Heiko Münkel
 @sp 4
-@center Version 5.6, March 1997
+@center Version 5.7, May 1997
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1997 Heiko Münkel
@@ -94,6 +94,7 @@ of in the original English.
 * Use With psgml-html::         Use this package as an add-on minor mode
 * Internal Drag And Drop::      The HTML independent drag and drop package
 * Template Minor Mode::         The HTML independent template package
+* Hints For Emacs 19 Users::    Missing features in the Emacs 19 
 * Bug Reports::                 How and to whom you should send bug reports
 * Concept Index::               Concept Index
 * Function Index::              Function Index
@@ -131,10 +132,10 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 @findex hm--html-mode 
 @findex hm--html-minor-mode 
 
-This document describes the Elisp package @emph{hm---html-menus 5.6}.
+This document describes the Elisp package @emph{hm---html-menus 5.7}.
 
 The version of the document is:@*
-$Id: hm--html-mode.texi,v 1.2 1997/03/28 02:29:28 steve Exp $
+$Id: hm--html-mode.texi,v 1.3 1997/05/29 23:50:32 steve Exp $
 
 The package provides commands and various popup and pulldown menus for
 an HTML mode called @dfn{hm---html-mode}, a mode for writing HTML pages
@@ -280,6 +281,38 @@ directories (e.g. site-lisp/hm--html-menus).
 
 (autoload 'tmpl-expand-templates-in-buffer "tmpl-minor-mode"
   "Expand all templates in the current buffer." t)
+(autoload 'tmpl-expand-templates-in-region "tmpl-minor-mode"
+  "Expands the templates in the region from BEGIN to END.
+If BEGIN and END are nil, then the current region is used."
+  t)
+(autoload 'tmpl-insert-template-file-from-fixed-dirs "tmpl-minor-mode"
+  "Inserts a template FILE and expands it, if `tmpl-automatic-expand' is t.
+This command tries to read the template file from a list of
+predefined directories (look at `tmpl-template-dir-list') and it filters
+the contents of these directories with the regular expression
+`tmpl-filter-regexp' (look also at this variable). 
+The command uses a history variable, which could be changed with the
+variable `tmpl-history-variable-name'.
+
+The user of the command is able to change interactively to another
+directory by entering at first the string \"Change the directory\".
+This may be too difficult for the user. Therefore another command
+called `tmpl-insert-template-file' exist, which doesn't use fixed
+directories and filters."
+  t)
+
+(autoload 'tmpl-insert-template-file "tmpl-minor-mode"
+  "Inserts a template FILE and expand it, if `tmpl-automatic-expand' is t.
+Look also at `tmpl-template-dir-list', to specify a default template
+directory. 
+You should also take a look at `tmpl-insert-template-file-from-fixed-dirs'
+which has additional advantages (and disadvantages :-).
+
+ATTENTION: The interface of this function has changed. The old 
+function had the argument list (&optional TEMPLATE-DIR AUTOMATIC-EXPAND).
+The variables `tmpl-template-dir-list' and `tmpl-automatic-expand' must
+now be used instead of the args TEMPLATE-DIR and AUTOMATIC-EXPAND."
+  t)
 
 (autoload 'html-view-start-mosaic "html-view" "Start Xmosaic." t)
 (autoload 'html-view-view-buffer 
@@ -417,12 +450,12 @@ and before the user customization file.
 @comment  node-name,  next,  previous,  up
 @subsection  Where To Put User Specific Customization
 @cindex user specific customization 
-@cindex ~/.hm--configuration-file.el
+@cindex ~/.hm--html-configuration.el
 @vindex HTML_USER_CONFIG_FILE 
 @vindex hm--html-user-config-file 
 
 User specific customization can be put in the file
-@file{.hm--configuration-file.el}, which is searched by default in the
+@file{.hm--html-configuration.el}, which is searched by default in the
 home directory of the user. This can be overwritten by setting either
 the environment variable @code{HTML_USER_CONFIG_FILE} or the lisp
 variable @code{hm--html-user-config-file} to the name of the file and
@@ -918,23 +951,79 @@ strings.
 @cindex created comment 
 @vindex hm--html-automatic-new-date 
 @vindex hm--html-automatic-changed-comment 
-@vindex hm--html-automatic-created-comment 
+@vindex hm--html-automatic-create-modified-line 
+@vindex hm--html-automatic-update-modified-line 
+@vindex hm--html-changed-comment-prefix 
+@vindex hm--html-created-comment-prefix 
+@vindex hm--html-comment-infix 
+@vindex hm--html-modified-prefix 
+@vindex hm--html-modified-end-tag 
+@vindex hm--html-modified-insert-before 
+@vindex hm--html-modified-start-tag 
+
 
 The @code{hm--html-mode} automatically inserts some useful information in
 html pages. This behaviour can be changed by the following variables.
 
 @itemize @bullet
 @item
-@code{hm--html-automatic-new-date}: t => The date in the title line will
-be updated before file saving.  nil => No automatic update of the date.
+@code{hm--html-automatic-create-title-date}: t => A date string will be
+inserted in the title line. This will be updated each time before file
+saving, if @code{hm--html-automatic-update-title-date} is also set to t.
+@item
+@code{hm--html-automatic-update-title-date}: t => The date in the title
+line will be updated before file saving.  nil => No automatic update of
+the date. 
+@item
+@code{hm--html-automatic-created-comment}: t => A "created comment"
+line will be added.  nil => No automatic insert of a "created
+comment" line.
+@item
+@code{hm--html-created-comment-prefix}: The prefix text of the "created
+comment" lines. By default this is set to "Created by: ".
+@item
+@code{hm--html-comment-infix}: The infix (second part) of the "created
+comment" and the "changed comment" lines. By default, if this variable
+is nil, the value of @code{hm--html-username} or, if this variable is
+also nil, the return value of @code{(user-full-name)} will be used.
+In these cases the infix looks like "Heiko Münkel, ". 
+
+Set it to an empty string, if you don't want to have your name in the
+comments. 
 @item
 @code{hm--html-automatic-changed-comment}: t => A "changed comment"
 line will be added before file saving.  nil => No automatic insert
 of a "changed comment" line.
 @item
-@code{hm--html-automatic-created-comment}: t => A "created comment"
-line will be added.  nil => No automatic insert of a "created
-comment" line.
+@code{hm--html-changed-comment-prefix}: The prefix text of the "changed
+comment" lines. By default this is set to "Changed by: ".
+@item
+@code{hm--html-automatic-create-modified-line}: t => Some commands will
+insert a visible "modified" line with the current date, if such a line
+does not exist already. If it already exist, the date in the line will
+be updated. Visible means, that it is not a HTML comment. By default it
+looks like the following:
+@samp{<EM>Modified 24-May-1997</EM>}
+@item
+@code{hm--html-automatic-update-modified-line}: t => The visible
+"modified" line will be updated with the current date before file
+saving. If such a line does not exist, nothing will be done.
+@item
+@code{hm--html-modified-prefix}: Prefix of the "modified" line.
+By default it is set to @samp{"Modified: "}.
+@item
+@code{hm--html-modified-start-tag}: Start tag of the modified line.
+By default it is @samp{<EM>}. If you change this, you'll need to change also
+@code{hm--html--modified-end-tag}.
+@item
+@code{hm--html-modified-end-tag}: End tag of the modified line.
+By default it is @samp{</EM>}. If you change this, you'll need to change
+also @code{hm--html-modified-start-tag}.
+@item
+@code{hm--html-modified-insert-before}: The "modified line" will be
+inserted before this string. The search will be done from the end to the
+beginning. And the "modified line" will be put at least before the
+@samp{</HTML>} and the @samp{</BODY>} tags.
 @end itemize
  
 
@@ -948,7 +1037,7 @@ comment" line.
 @item
 @code{hm--html-bind-latin-1-char-entities}: Set this to nil, if you
 don't want to use the ISO Latin 1 character entities.  This is only
-useful if `hm--html-use-old-keymap' is set to nil. It is only used
+useful if @code{hm--html-use-old-keymap} is set to nil. It is only used
 when loading the html package the first time.
 @end itemize
 
@@ -1589,7 +1678,7 @@ item or a tool bar icon.
 @end itemize
 
 
-@node Template Minor Mode, Bug Reports, Internal Drag And Drop, Top
+@node Template Minor Mode, Hints For Emacs 19 Users, Internal Drag And Drop, Top
 @comment  node-name,  next,  previous,  up
 @chapter  Template Minor Mode
 @cindex templates 
@@ -1976,7 +2065,46 @@ It may be that I'll also provide a pulldown or popup menu for the minor
 mode in a future release.
 
 
-@node Bug Reports, Concept Index, Template Minor Mode, Top
+@node Hints For Emacs 19 Users, Bug Reports, Template Minor Mode, Top
+@comment  node-name,  next,  previous,  up
+@chapter  Hints For Emacs 19 Users
+@cindex Emacs 19 
+@cindex missing features in the Emacs 19 
+@vindex tmpl-history-variable-name 
+@findex file-remote-p 
+
+This package is tested with the GNU Emacs 19.34. The Emacs 19.34 has had
+not all features of the XEmacs. Therefore also some of the features of
+this package could not be implemeted in the Emacs 19. 
+
+Please read also the Emacs 19 related file @file{README-EMACS-19}!
+
+The following is a list of missing features:
+
+@itemize @bullet
+@item
+The capability to start an action from the help buffer. This is only
+possible in the XEmacs, because in the Emacs 19.34 one can't assign
+keymaps to a text region (overlay).
+
+@item
+The keybindings of the drag and drop commands are not displayed in
+the menus, because the Emacs 19 isn't able to handle the following
+menu specification: @code{:keys "\\[idd-help-mouse-drag-and-drop]"}.
+
+@item
+The function @code{file-remote-p} couldn't be implemeted, because of the
+lack of the function @code{ange-ftp-ftp-p} in the ange-ftp package of
+the Emacs 19.34.
+
+@item
+The history variable determined by @code{tmpl-history-variable-name}
+isn't used, because the function @code{read-file-name} doesn't support
+it in the Emacs 19.
+@end itemize
+
+
+@node Bug Reports, Concept Index, Hints For Emacs 19 Users, Top
 @comment  node-name,  next,  previous,  up
 @chapter  Bug Reports
 @cindex bug report 

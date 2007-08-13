@@ -24,8 +24,6 @@
 ;;(define-key global-map '(shift button2) 'x-mouse-kill)
 (define-key global-map '(control button2) 'x-set-point-and-move-selection)
 
-(setq mouse-yank-function 'x-yank-function)
-
 (defun x-mouse-kill (event)
   "Kill the text between the point and mouse and copy it to the clipboard and
 to the cut buffer"

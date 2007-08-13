@@ -15,8 +15,6 @@
 
 #define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
 
-/* Need to use GNU make, as system make has problems */
-#define MAKE_COMMAND gmake
 #define LIBS_DEBUG
 
 /* For mem-limits.h.  */

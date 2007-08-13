@@ -580,20 +580,18 @@ Initialized from `text-mode-syntax-table.")
 (defun gnus-article-delete-text-of-type (type)
   "Delete text of TYPE in the current buffer."
   (save-excursion
-    (let ((e (point-min))
-	  b)
-      (while (setq b (text-property-any e (point-max) 'article-type type))
-	(setq e (text-property-not-all b (point-max) 'article-type type))
-	(delete-region b e)))))
+    (let ((b (point-min)))
+      (while (setq b (text-property-any b (point-max) 'article-type type))
+	(delete-region
+	 b (text-property-not-all b (point-max) 'article-type type))))))
 
 (defun gnus-article-delete-invisible-text ()
   "Delete all invisible text in the current buffer."
   (save-excursion
-    (let ((e (point-min))
-	  b)
-      (while (setq b (text-property-any e (point-max) 'invisible t))
-	(setq e (text-property-not-all b (point-max) 'invisible t))
-	(delete-region b e)))))
+    (let ((b (point-min)))
+      (while (setq b (text-property-any b (point-max) 'invisible t))
+	(delete-region
+	 b (text-property-not-all b (point-max) 'invisible t))))))
 
 (defun gnus-article-text-type-exists-p (type)
   "Say whether any text of type TYPE exists in the buffer."
@@ -1733,34 +1731,33 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 
 (put 'gnus-article-mode 'mode-class 'special)
 
-(when t
-  (gnus-define-keys gnus-article-mode-map
-    " " gnus-article-goto-next-page
-    "\177" gnus-article-goto-prev-page
-    [delete] gnus-article-goto-prev-page
-    "\C-c^" gnus-article-refer-article
-    "h" gnus-article-show-summary
-    "s" gnus-article-show-summary
-    "\C-c\C-m" gnus-article-mail
-    "?" gnus-article-describe-briefly
-    gnus-mouse-2 gnus-article-push-button
-    "\r" gnus-article-press-button
-    "\t" gnus-article-next-button
-    "\M-\t" gnus-article-prev-button
-    "e" gnus-article-edit
-    "<" beginning-of-buffer
-    ">" end-of-buffer
-    "\C-c\C-i" gnus-info-find-node
-    "\C-c\C-b" gnus-bug
+(gnus-define-keys gnus-article-mode-map
+  " " gnus-article-goto-next-page
+  "\177" gnus-article-goto-prev-page
+  [delete] gnus-article-goto-prev-page
+  "\C-c^" gnus-article-refer-article
+  "h" gnus-article-show-summary
+  "s" gnus-article-show-summary
+  "\C-c\C-m" gnus-article-mail
+  "?" gnus-article-describe-briefly
+  gnus-mouse-2 gnus-article-push-button
+  "\r" gnus-article-press-button
+  "\t" gnus-article-next-button
+  "\M-\t" gnus-article-prev-button
+  "e" gnus-article-edit
+  "<" beginning-of-buffer
+  ">" end-of-buffer
+  "\C-c\C-i" gnus-info-find-node
+  "\C-c\C-b" gnus-bug
 
-    "\C-d" gnus-article-read-summary-keys
-    "\M-*" gnus-article-read-summary-keys
-    "\M-#" gnus-article-read-summary-keys
-    "\M-^" gnus-article-read-summary-keys
-    "\M-g" gnus-article-read-summary-keys)
+  "\C-d" gnus-article-read-summary-keys
+  "\M-*" gnus-article-read-summary-keys
+  "\M-#" gnus-article-read-summary-keys
+  "\M-^" gnus-article-read-summary-keys
+  "\M-g" gnus-article-read-summary-keys)
 
-  (substitute-key-definition
-   'undefined 'gnus-article-read-summary-keys gnus-article-mode-map))
+(substitute-key-definition
+ 'undefined 'gnus-article-read-summary-keys gnus-article-mode-map)
 
 (defun gnus-article-make-menu-bar ()
   (gnus-turn-off-edit-menu 'article)
@@ -2547,7 +2544,7 @@ groups."
 (defcustom gnus-button-alist
   `(("<\\(url: ?\\)?news:\\([^>\n\t ]*@[^>\n\t ]*\\)>" 0 t
      gnus-button-message-id 2)
-    ("\\bnews:\\([^>\n\t ]*@[^>\n\t ]*+\\)" 0 t gnus-button-message-id 1)
+    ("\\bnews:\\([^>\n\t ]*@[^>\n\t ]*\\)" 0 t gnus-button-message-id 1)
     ("\\(\\b<\\(url: ?\\)?news:\\(//\\)?\\([^>\n\t ]*\\)>\\)" 1 t
      gnus-button-fetch-group 4)
     ("\\bnews:\\(//\\)?\\([^>\n\t ]+\\)" 0 t gnus-button-fetch-group 2)

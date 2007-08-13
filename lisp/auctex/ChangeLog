@@ -4,6 +4,74 @@ Sat Apr  5 09:40:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* tex.el (TeX-lisp-directory): Restore previous setting.
 
+Thu Apr 17 14:25:44 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 9.7p released.
+
+Sat Apr 12 22:38:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* tex.el: Added customize information.
+	* tex-buf.el: Ditto.
+
+Sun Apr 06 19:28:11 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 9.7o released.
+
+Sun Apr  6 19:23:37 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* latex.el (LaTeX-equation-label): New variable.
+	(LaTeX-eqnarray-label): New variable.
+	(LaTeX-label): Support `figure*', `label*', `equation', and
+	`eqnarray'.
+	(LaTeX-env-figure): Support `table*'.
+	Patch by Joes Staal <staal@geo.tudelft.nl>.
+	
+Fri Mar 28 12:23:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* latex.el (LaTeX-down-section): Doc fix.
+	(LaTeX-section-heading): Ditto.
+	(LaTeX-section-title): Ditto.
+	(LaTeX-env-array): Ditto.
+	(TeX-braces-user-association): Ditto.
+	(LaTeX-fill-region-as-paragraph): Ditto.
+	(LaTeX-math-abbrev-prefix): Ditto.
+	(LaTeX-math-mode): Ditto.
+	(TeX-arg-right-insert-p): Ditto.
+	(latex-mode): Ditto.
+
+Wed Mar 26 21:14:44 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 9.7n released.
+
+Wed Mar 26 21:12:53 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* latex.el (LaTeX-math-default): Fixed hebrew delimiters.
+	Patch by John Griffith <griffith@sfs.nphil.uni-tuebingen.de>.
+	
+Wed Mar 26 21:09:50 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* latex.el (LaTeX-209-to-2e): Use `buffer-substring-no-properties'.
+	Reported by Graham Gough <graham@cs.man.ac.uk>.
+
+Mon Mar 17 13:35:46 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 9.7m released.
+
+Mon Mar 17 13:25:45 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* tex.el (TeX-auto-generate): Only generate when needed. 
+	(TeX-auto-generate-global): Ditto.
+	Patch by Helmut Geyer <Helmut.Geyer@IWR.Uni-Heidelberg.De>.
+
+	* Makefile (install-contrib): Don't move elc files twice.  Patch
+	by Helmut Geyer <Helmut.Geyer@IWR.Uni-Heidelberg.De>.
+
+Thu Mar 13 12:10:03 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* style/danish.el: Copied from `style/dk.el'.
+	* Makefile (STYLESRC): Added `style/danish.el'.
+	Suggested by Lars Frellesen <frelle@math-tech.dk>.
+
 Tue Mar 04 11:29:23 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 9.7l released.

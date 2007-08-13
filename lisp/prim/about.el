@@ -1165,7 +1165,7 @@
 	  Stephen Carney <carney@gvc.dec.com>
 	  Lorenzo M. Catucci <lorenzo@argon.roma2.infn.it>
 	  Philippe Charton <charton@lmd.ens.fr>
-	  Peter Cheng <peter.cheng@sun.com>
+	  Peter Cheng <peter.h.cheng@worldnet.att.net>
 	  Jin S. Choi <jin@atype.com>
 	  Tomasz J. Cholewo <tjchol01@mecca.spd.louisville.edu>
 	  Serenella Ciongoli <czs00@ladybug.oes.amdahl.com>
@@ -1263,6 +1263,7 @@
 	  Tonny Madsen <Tonny.Madsen@netman.dk>
 	  Ketil Z Malde <ketil@ii.uib.no>
 	  Steve March <smarch@quaver.urbana.mcd.mot.com>
+	  Ricardo Marek <ricky@ornet.co.il>
 	  Pekka Marjola <pema@iki.fi>
 	  Simon Marshall <simon@gnu.ai.mit.edu>
 	  Dave Mason <dmason@plg.uwaterloo.ca>
@@ -1285,6 +1286,7 @@
 	  Joseph J. Nuspl Jr. <nuspl@cc.purdue.edu>
 	  Kim Nyberg <kny@tekla.fi>
 	  David Ofelt <ofelt@getalife.Stanford.EDU>
+	  Alexandre Oliva <oliva@dcc.unicamp.br>
 	  Tore Olsen <toreo@colargol.idb.hist.no>
 	  Greg Onufer <Greg.Onufer@eng.sun.com>
 	  Achim Oppelt <aoppelt@theorie3.physik.uni-erlangen.de>

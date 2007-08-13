@@ -1787,25 +1787,29 @@ whether it is a file(/result) or a directory (/result/)."
 
 (defun mouse-file-display-completion-list (window dir minibuf user-data)
   (let ((standard-output (window-buffer window)))
-    (display-completion-list 
-     (directory-files dir nil nil nil t)
-     :window-width (* 2 (window-width window))
-     :activate-callback
-     'mouse-read-file-name-activate-callback
-     :user-data user-data
-     :reference-buffer minibuf
-     :help-string "")))
+    (condition-case nil
+	(display-completion-list 
+	 (directory-files dir nil nil nil t)
+	 :window-width (* 2 (window-width window))
+	 :activate-callback
+	 'mouse-read-file-name-activate-callback
+	 :user-data user-data
+	 :reference-buffer minibuf
+	 :help-string "")
+      (t nil))))
 
 (defun mouse-directory-display-completion-list (window dir minibuf user-data)
   (let ((standard-output (window-buffer window)))
-    (display-completion-list
-     (delete "." (directory-files dir nil nil nil 1))
-     :window-width (window-width window)
-     :activate-callback
-     'mouse-read-file-name-activate-callback
-     :user-data user-data
-     :reference-buffer minibuf
-     :help-string "")))
+    (condition-case nil
+	(display-completion-list
+	 (delete "." (directory-files dir nil nil nil 1))
+	 :window-width (window-width window)
+	 :activate-callback
+	 'mouse-read-file-name-activate-callback
+	 :user-data user-data
+	 :reference-buffer minibuf
+	 :help-string "")
+      (t nil))))
 
 (defun mouse-read-file-name-activate-callback (event extent user-data)
   (let* ((file (extent-string extent))

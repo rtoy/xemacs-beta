@@ -1,6 +1,6 @@
 ;;; hm--html-configuration.el - Configurationfile for the html-mode
 ;;;
-;;; $Id: hm--html-configuration.el,v 1.5 1997/03/28 02:28:41 steve Exp $
+;;; $Id: hm--html-configuration.el,v 1.6 1997/05/29 23:49:42 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -40,6 +40,7 @@
 ;;;
 
 ;(require 'adapt)
+
 
 
 ;;; The User config file (an proposal of Manoj Srivastava)
@@ -363,19 +364,65 @@ It can be set to a string or to a list of strings.")
 
 
 ;;; For insertation of created and changed comments and automatic
-;;; date update in the title line
+;;; date update in the title line and a visible modification date
 
-(defvar hm--html-automatic-new-date t
+(defvar hm--html-automatic-create-title-date t
+  "*t => A date string will be inserted in the title line.
+This will be updated each time before file saving, if
+`hm--html-automatic-update-title-date' is also set to t.")
+
+(defvar hm--html-automatic-update-title-date t
   "*t   => The date in the title line will be updated before filesaving.
 nil => No automatic update of the date.")
+
+(define-obsolete-variable-alias 'hm--html-automatic-new-date
+  'hm--html-automatic-update-title-date)
 
 (defvar hm--html-automatic-changed-comment t
   "*t   => A \"changed comment\" line will be added before filesaving.
 nil => No automatic insertation of a \"changed comment\" line.")
 
+(defvar hm--html-changed-comment-prefix "Changed by: "
+  "*The prefix text of the \"changed comment\" lines.")
+
+(defvar hm--html-created-comment-prefix "Created by: "
+  "*The prefix text of the \"created comment\" lines.")
+
+(defvar hm--html-comment-infix nil
+  "*The infix (second part) of the \"changed/created comment\" lines.
+By default, if this variable is nil, the username is used.
+Then the infix looks like \"Heiko Münkel, \".
+Set it to an empty string, if you don't want to have your name
+in the comments.")
+
 (defvar hm--html-automatic-created-comment t
   "*t   => A \"created comment\" line will be added.
 nil => No automatic insertation of a \"created comment\" line.")
+
+(defvar hm--html-automatic-create-modified-line nil
+  "*t => Inserts a visible \"modified\" line with the current date.
+Visible means, that it is not a HTML comment.")
+
+(defvar hm--html-automatic-update-modified-line nil
+  "*t => Updates a visible \"modified\" line with the current date.
+Visible means, that it is not a HTML comment.")
+
+(defvar hm--html-modified-prefix "Modified: "
+  "*Prefix of the last modified entry.")
+
+(defvar hm--html-modified-start-tag "<EM>"
+  "*Start tag of the modified line.
+If you change this, you'll need to change also
+`hm--html-modified-end-tag'.")
+
+(defvar hm--html-modified-end-tag "</EM>"
+  "*End tag of the modified line.
+If you change this, you'll need to change also
+`hm--html-modified-start-tag'.")
+
+(defvar hm--html-modified-insert-before "</body>"
+  "Insert modified line before this string.
+The search will be done from the end to the beginning.")
 
 
 ;;; Keybindings:

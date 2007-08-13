@@ -1,6 +1,6 @@
 ;;; tmpl-minor-mode.el --- Template Minor Mode
 ;;;
-;;; $Id: tmpl-minor-mode.el,v 1.4 1997/03/28 02:28:43 steve Exp $
+;;; $Id: tmpl-minor-mode.el,v 1.5 1997/05/29 23:49:44 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -88,7 +88,9 @@ use the command `tmpl-insert-template-file'.")
 (defvar tmpl-history-variable-name 'tmpl-history-variable
   "The name of the history variable.
 The history variable is used by the commands `tmpl-insert-template-file'
-and `tmpl-insert-template-file-from-fixed-dirs'.")
+and `tmpl-insert-template-file-from-fixed-dirs'.
+
+Not used in the Emacs 19.")
 
 (defvar tmpl-history-variable nil
   "The history variable. See also `tmpl-history-variable-name'.")
@@ -435,11 +437,16 @@ The alist looks like:
 	((file-accessible-directory-p (car template-dirs))
 	 (append (mapcar '(lambda (file)
 			    (cons (file-name-nondirectory file) file))
-			 (directory-files (car template-dirs)
-					  t
-					  filter-regexp
-					  nil
-					  t))
+			 (if (adapt-xemacsp)
+			     (directory-files (car template-dirs)
+					      t
+					      filter-regexp
+					      nil
+					      t)
+			   (directory-files (car template-dirs)
+					    t
+					    filter-regexp
+					    nil)))
 		 (tmpl-get-table-with-template-files (cdr template-dirs)
 						     filter-regexp)))
 	(t (tmpl-get-table-with-template-files (cdr template-dirs)
@@ -557,13 +564,20 @@ now be used instead of the args TEMPLATE-DIR and AUTOMATIC-EXPAND."
    (list
     (let* ((default-directory (or (car tmpl-template-dir-list)
 				  default-directory))
-	   (filename (read-file-name "Templatefile: "
-				     (if (listp tmpl-template-dir-list)
-					 (car tmpl-template-dir-list))
-				     nil
-				     t
-				     nil
-				     tmpl-history-variable-name))
+	   (filename (if (adapt-xemacsp)
+			 (read-file-name "Templatefile: "
+					 (if (listp tmpl-template-dir-list)
+					     (car tmpl-template-dir-list))
+					 nil
+					 t
+					 nil
+					 tmpl-history-variable-name)
+		       (read-file-name "Templatefile: "
+				       (if (listp tmpl-template-dir-list)
+					   (car tmpl-template-dir-list))
+				       nil
+				       t
+				       nil)))
 	   (directory (expand-file-name (file-name-directory filename))))
       (when (and (not (member* directory
 			       tmpl-template-dir-list
@@ -591,6 +605,25 @@ now be used instead of the args TEMPLATE-DIR and AUTOMATIC-EXPAND."
 ;		    t)))
 ;  (if automatic-expand
 ;      (tmpl-expand-templates-in-buffer)))
+
+;;; General utilities, which are useful in a template file
+(defun tmpl-util-indent-region (begin end)
+  "Indents a region acording to the mode."
+  (interactive "r")
+  (save-excursion
+    (goto-char end)
+    (let ((number-of-lines (count-lines begin (point)))
+	  (line 0))
+      (goto-char begin)
+      (while (< line number-of-lines)
+	(setq line (1+ line))
+	(indent-according-to-mode)
+	(forward-line)))))
+
+(defun tmpl-util-indent-buffer ()
+  "Indents the whole buffer acording to the mode."
+  (interactive)
+  (tmpl-util-indent-region (point-min) (point-max)))
 
 
 ;;; Definition of the minor mode tmpl

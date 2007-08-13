@@ -128,8 +128,6 @@ done
 ignore_pattern="$ignore_pattern"'
 \!/,!d
 \!/edebug/edebug-test.el$!d
-\!/energize/energize-load.el$!d
-\!/energize/write-file.el$!d
 \!/paths.el$!d
 \!/prim/loadup.el$!d
 \!/prim/loadup-el.el$!d
