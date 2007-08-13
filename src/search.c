@@ -584,8 +584,8 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
 	      
 	      ceil = BI_BUF_CEILING_OF (buf, st);
 	      ceil = min (lim, ceil);
-	      bufptr = memchr (BI_BUF_BYTE_ADDRESS (buf, st), (int) target,
-			       ceil - st);
+	      bufptr = (Bufbyte *) memchr (BI_BUF_BYTE_ADDRESS (buf, st),
+					   (int) target, ceil - st);
 	      if (bufptr)
 		{
 		  count--;

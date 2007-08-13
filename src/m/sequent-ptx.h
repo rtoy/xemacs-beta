@@ -130,5 +130,5 @@ Boston, MA 02111-1307, USA.  */
 #define MAKE_PARALLEL $&
 
 /* Use terminfo library.  */
-#define LIBS_TERMCAP -ltermlib
+#define LIBS_TERMCAP "-ltermlib"
 

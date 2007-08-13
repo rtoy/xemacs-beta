@@ -1,4 +1,166 @@
+1997-06-21  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/tabify.el (untabify): Return nil.
+	From contributor name lost.
+
+	* prim/packages.el (packages-hardcoded-lisp): startup.elc needs to 
+	be scanned for docstrings.
+
+1997-06-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/overlay.el (overlay-put): Support `local-map'.
+	(overlay-get): Support `category'.
+
+1997-06-21  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (load-user-init-file): Load custom-file if it
+	has not changed from the default.
+
+1997-06-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/overlay.el (make-overlay): Avoid temporary variable.
+	(move-overlay): Ditto.
+	(overlays-in): Use `mapcar-extents'.
+	(next-overlay-change): Avoid consing; use `map-extents'.
+	(previous-overlay-change): Ditto.
+	(overlay-lists): Ditto.
+	(overlay-lists): Call `overlay-recenter' with correct value.
+
+1997-06-20  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/autoload.el (fixup-autoload-buffer): New function.  Insert 
+	guards so a (load "auto-autoloads") works the same as require.
+	(batch-update-directory): Use it.
+
+	* prim/update-elc.el: Allow for specification of packages that
+	must not be bytecompiled.  Better error diagnostics if a package
+	is not found.
+
+	* prim/window.el, prim/window-xemacs.el, prim/simple.el:
+	* prim/lisp.el, prim/frame.el:
+	Customizations/synch to Emacs 20.1.
+	* packages/hyper-apropos.el: Massive update.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* tm/tm-vm.el (vm-menu-mail-menu): Fix typo.
+
+	* packages/font-lock.el (lisp-font-lock-keywords-2): Add some new
+	functions.
+	From Karl M. Hegbloom <karlheg@inetarena.com>
+
+	* prim/files.el (save-some-buffers-query-display-buffer): New
+	user variable.
+	(save-some-buffers): Use it.
+	From David Bakhash <cadet@MIT.EDU>
+	- Customization patches from Hrvoje Niksic.
+
+	* prim/simple.el (kill-region): Undo sorting region limits patch.
+
+1997-06-20  Mike Scheidler  <c23mts@eng.delcoelect.com>
+
+	* prim/tabify.el: Fixed 'untabify' to return 'nil value.
+
+1997-06-18  Steven L Baur  <steve@altair.xemacs.org>
+
+	* efs/dired-xemacs.el (dired-do-interactive-chmod): Advance point
+	after not failure.
+	From <rritchie@britannia-life.co.uk>
+
+	* utils/edmacro.el (edmacro-parse-word): make (kbd "M-123"), (kbd
+	"M--256") and such behave as documented.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* prim/cus-start.el: Various additions to built-in variable list.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* prim/subr.el: Remove mapvector.
+	(with-output-to-string): Use with-current-buffer.
+	(with-string-as-buffer-contents): Ditto.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* modes/arc-mode.el (archive-quit): New function.
+	From Karl M. Hegbloom <karlheg@inetarena.com>
+	(archive-mode-map): Bind it to `q'.
+
+	* utils/autoload.el (cusload-file-name): Default to custom-load.el 
+	for each individual file.
+
+	* prim/minibuf.el (minibuffer-max-depth-exceeded): Use
+	`custom-file' as a location for saving enable multiple minibuffers 
+	option.
+
+	* packages/man.el (manual-entry): Don't leave empty buffer if
+	error occurs.
+	From Glynn Clements <glynn@sensei.co.uk>
+
+	* modes/arc-mode.el (archive-arc-summarize): De-ebolify.
+	(archive-lzh-summarize): Ditto.
+	(archive-zip-summarize): Ditto.
+	(archive-zip-chmod-entry): Ditto.
+
+1997-06-17  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/update-elc.el: Total rework for dynamic dumped .elc finding.
+
+1997-06-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/loaddefs.el (debug-ignored-errors): Initialize it.
+
+1997-06-17  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (auto-mode-alist): Add /app-defaults/ as candidate 
+	for xrdb-mode.
+	Suggested by Karl Hegbloom, Regexp by David Moore.
+
+	* version.el: Remove variables emacs-version, emacs-major-version, 
+	and emacs-minor-version.
+
+	* tooltalk/tooltalk-load.el: Comment as obsolete and move contents 
+	to dumped-lisp.el.
+
+	* prim/make-docfile.el: New file.
+
+1997-06-16  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (load-user-init-file): Look for ~[user]/.xemacs
+	before loading .emacs.
+
+	* modes/xrdb-mode.el (xrdb-mode): Autoload.
+
+	* prim/files.el (auto-mode-alist): Add defaults for xrdb-mode.
+
+	* leim/quail.el (quail-toggle-mode-temporarily): Guard against
+	possibility of quail-conv-overlay not being an overlay.
+
+1997-06-15  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/loadup.el: Remove most but not all of the hardcoded dumped
+	lisp file names.
+
+	* prim/dumped-lisp.el: New file.
+
+	* prim/update-elc.el (toplevel): Rework using a better function to 
+	determine autoload file locations.
+
+	* prim/packages.el: New file.
+
+	* prim/update-elc.el: Determine location and count of
+ 	auto-autoloads files at run-time.
+
+	* prim/loaddefs.el (((dir load-path))): Generalize load of
+	auto-autoloads.
+
+	* utils/autoload.el (autoload-file-name): New variable.
+	(autoload-target-directory): New variable.
+	(generated-autoload-file): Use them.
+	(cusload-file-name): New variable.
+	(generated-custom-file): Use it.
+	(batch-update-directory): New function.
+
 1997-06-14  Steven L Baur  <steve@altair.xemacs.org>
+
+	* mule/canna.el: Guard call to function dynamic-link, which
+	doesn't exist in XEmacs/Mule.
 
 	* bytecomp/bytecomp.el (byte-compile-file): Suppress unavoidable
 	Ebola notices.
@@ -835,10 +997,6 @@ Fri May 16 21:43:35 1997  Steven L Baur  <steve@altair.xemacs.org>
 	(Info-maybe-follow-clicked-node): Use it.
 
 	* prim/simple.el (transpose-preceding-chars): New function.
-
-Wed Apr 23 16:04:22 1997  Hrvoje Niksic  <hniksic@srce.hr>
-
-	* prim/loaddefs.el (debug-ignored-errors): Initialize.
 
 Fri May 16 20:37:35 1997  Steven L Baur  <steve@altair.xemacs.org>
 

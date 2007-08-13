@@ -350,6 +350,10 @@ static struct sensemode {
    It would be nice to autodetect this, but there's unfortunately
    no general way. */
 
+/* The above comment is crap, because AC_FUNC_GETPGRP provides just
+   such a way - mrb. */
+
+#if 0 /* mrb */
 /* XEmacs backwards-compatibility */
 #ifdef GETPGRP_NEEDS_ARG
 # undef GETPGRP_NO_ARG
@@ -364,12 +368,13 @@ static struct sensemode {
 #    define GETPGRP_NO_ARG
 #  endif
 #endif
+#endif /* 0 */
 
-#if defined (GETPGRP_NO_ARG)
-#  define EMACS_GETPGRP(x) getpgrp()
+#ifdef GETPGRP_VOID
+#define EMACS_GETPGRP(x) getpgrp()
 #else
-#  define EMACS_GETPGRP(x) getpgrp(x)
-#endif /* !GETPGRP_NO_ARG */
+#define EMACS_GETPGRP(x) getpgrp(x)
+#endif /* GETPGRP_VOID */
 
 /* XEmacs backward-compatibility.  Is 0 always a reasonable argument? */
 #define EMACS_GET_PROCESS_GROUP() EMACS_GETPGRP (0)

@@ -77,7 +77,7 @@ NOTE-END */
 /* XEmacs: Richard Cognot <cognot@ensg.u-nancy.fr> says we need this for
    HPUX; but eeide@asylum.cs.utah.edu (Eric Eide) says it loses on BSD. */
 #ifndef BSD
-# define UNEXEC unexhp9k3.o
+# define UNEXEC "unexhp9k3.o"
 #endif
 
 
@@ -130,7 +130,7 @@ NOTE-END */
 /* This library is needed with -g, on the 200/300 only.  */
 
 #if !defined(__GNUC__) || defined(__HPUX_ASM__)
-#define LIBS_DEBUG /usr/lib/end.o
+#define LIBS_DEBUG "/usr/lib/end.o"
 #endif
 
 /* Need a TEXT_START.  On the HP9000/s300 that is 0.  */
@@ -166,7 +166,7 @@ NOTE-END */
 
 #ifndef HPUX_5
 #ifndef __GNUC__
-#define C_SWITCH_MACHINE -Wc,-Nd4000,-Ns3000
+#define C_SWITCH_MACHINE "-Wc,-Nd4000,-Ns3000"
 #endif
 #endif
 

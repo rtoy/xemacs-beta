@@ -83,7 +83,7 @@ Lisp_Object Vsystem_type;
 
 /* Variable whose value is string giving configuration built for.  */
 Lisp_Object Vsystem_configuration;
-  
+
 /* The name under which XEmacs was invoked, with any leading directory
    names discarded.  */
 Lisp_Object Vinvocation_name;
@@ -141,6 +141,13 @@ int noninteractive;
    but nothing terrible happens if user sets this one.  */
 
 int noninteractive1;
+
+/* Major & Minor version numbers are needed in temacs as of 20.3 */
+/* Version numbers and strings */
+int emacs_beta_version;
+int emacs_major_version;
+int emacs_minor_version;
+Lisp_Object Vxemacs_codename;
 
 /* Save argv and argc.  */
 char **initial_argv;
@@ -313,7 +320,7 @@ make_argc_argv (Lisp_Object argv_list, int *argc, char ***argv)
     {
       CONST char *temp;
       CHECK_STRING (XCAR (next));
-      
+
       GET_C_STRING_EXT_DATA_ALLOCA (XCAR (next), FORMAT_OS, temp);
       (*argv) [i] = xstrdup (temp);
     }
@@ -440,6 +447,12 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
     }
 }
 
+/* Make stack traces always identify version + configuration */
+/* C makes this bizarre circumlocution necessary. */
+#define PASTE_1(x,y) PASTE_2(x,y)
+#define PASTE_2(x,y) x##y
+#define main_1 PASTE_1(main_, CANONICAL_VERSION)
+
 static DOESNT_RETURN
 main_1 (int argc, char **argv, char **envp)
 {
@@ -452,7 +465,7 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 
 #ifndef SYSTEM_MALLOC
-  /* Make sure that any libraries we link against haven't installed a 
+  /* Make sure that any libraries we link against haven't installed a
      hook for a gmalloc of a potentially incompatible version. */
   __malloc_hook = NULL;
   __realloc_hook = NULL;
@@ -599,7 +612,7 @@ main_1 (int argc, char **argv, char **envp)
 	dup (0);
 	if (! isatty (0))
 	  fatal ("%s: not a tty", term);
- 
+
 #if 0
 	stderr_out ("Using %s", ttyname (0));
 #endif
@@ -626,7 +639,7 @@ main_1 (int argc, char **argv, char **envp)
   if (argmatch (argv, argc, "-version", "--version", 3, NULL, &skip_args) ||
       argmatch (argv, argc, "-V",    0,              2, NULL, &skip_args))
       noninteractive = 1, skip_args--;
-  
+
   /* Now, figure out which type of console is our first console. */
 
   display_arg = 0;
@@ -651,7 +664,7 @@ main_1 (int argc, char **argv, char **envp)
 #ifdef HAVE_X_WINDOWS
       char *dpy = 0;
       int count_before = skip_args;
-      
+
       if (argmatch (argv, argc, "-d", "--display", 3, &dpy, &skip_args) ||
 	  argmatch (argv, argc, "-display", 0,     3, &dpy, &skip_args))
 	{
@@ -688,7 +701,7 @@ main_1 (int argc, char **argv, char **envp)
          if the display was specified on the command line. */
       if ((dpy = getenv ("DISPLAY")) && dpy[0])
 	display_use = "x";
-      
+
 #endif /* HAVE_X_WINDOWS */
     }
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -888,7 +901,7 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 
 #ifdef EMACS_BTL
-      syms_of_btl (); 
+      syms_of_btl ();
 #endif
 
 #ifdef ENERGIZE
@@ -1246,7 +1259,7 @@ main_1 (int argc, char **argv, char **envp)
       complex_vars_of_event_stream ();
       /* Calls make_lisp_hashtable(). */
       complex_vars_of_extents ();
-      
+
       /* Depends on hashtables and specifiers. */
       complex_vars_of_faces ();
 
@@ -1523,7 +1536,7 @@ static struct standard_args standard_args[] =
   { "-reverse", 0, 5, 0 },
   { "-hb", "--horizontal-scroll-bars", 5, 0 },
   { "-vb", "--vertical-scroll-bars", 5, 0 },
-  
+
   /* These have the same priority as ordinary file name args,
      so they are not reordered with respect to those.  */
   { "-L", "--directory", 0, 1 },
@@ -1646,7 +1659,7 @@ sort_args (int argc, char **argv)
 	  if (options[from] > 0)
 	    from += options[from];
 	}
-	    
+
       if (best < 0)
 	abort ();
 
@@ -1713,7 +1726,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 
   /* Need to convert the orig_invoc_name and all of the arguments
      to external format. */
-  
+
   GET_STRING_EXT_DATA_ALLOCA (orig_invoc_name, FORMAT_OS, wampum,
 			      namesize);
   namesize++;
@@ -1751,7 +1764,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
 }
 
 /* ARGSUSED */
-DOESNT_RETURN
+int
 main (int argc, char **argv, char **envp)
 {
   int     volatile vol_argc = argc;
@@ -1783,12 +1796,12 @@ main (int argc, char **argv, char **envp)
 	 However, on both my systems environ is a plain old global
 	 variable initialized to zero.  _environ is the one that
 	 contains pointers to the actual environment.
-	
+
 	 Since we can't figure out the difference (and we're hours
 	 away from a release), this takes a very cowardly approach and
 	 is bracketed with both a system specific preprocessor test
 	 and a runtime "do you have this problem" test
-	
+
 	 06/20/96 robertl@dgii.com */
       {
 	extern char *_environ;
@@ -1801,6 +1814,7 @@ main (int argc, char **argv, char **envp)
   run_temacs_argc = -1;
 
   main_1 (vol_argc, vol_argv, vol_envp);
+  return 0; /* unreached */
 }
 
 
@@ -2285,6 +2299,25 @@ Value is string indicating configuration XEmacs was built for.
 */ );
   Vsystem_configuration = Fpurecopy (build_string (EMACS_CONFIGURATION));
 
+  DEFVAR_INT ("emacs-beta-version", &emacs_beta_version /*
+Beta number of this version of Emacs, as an integer.
+The value is nil if this is an officially released version of XEmacs.
+Warning: this variable does not exist in FSF Emacs or in XEmacs versions
+earlier than 20.3.
+*/ );
+#ifndef EMACS_BETA_VERSION
+#define EMACS_BETA_VERSION Qnil
+#endif
+  emacs_beta_version = EMACS_BETA_VERSION;
+
+  DEFVAR_LISP ("xemacs-codename", &Vxemacs_codename /*
+Codename of this version of Emacs (a string).
+*/ );
+#ifndef XEMACS_CODENAME
+#define XEMACS_CODENAME Qnil
+#endif
+  Vxemacs_codename = Fpurecopy (build_string (XEMACS_CODENAME));
+
   DEFVAR_BOOL ("noninteractive", &noninteractive1 /*
 Non-nil means XEmacs is running without interactive terminal.
 */ );
@@ -2298,4 +2331,24 @@ Currently, you need to define SET_EMACS_PRIORITY in `config.h'
 before you compile XEmacs, to enable the code for this feature.
 */ );
   emacs_priority = 0;
+
+  DEFVAR_INT ("emacs-major-version", &emacs_major_version /*
+Major version number of this version of Emacs, as an integer.
+Warning, this variable did not exist in Emacs versions earlier than:
+  FSF Emacs:   19.23
+  XEmacs:      19.10
+This variable was not available to temacs prior to:
+  XEmacs:      20.3
+*/ );
+  emacs_major_version = EMACS_MAJOR_VERSION;
+
+  DEFVAR_INT ("emacs-minor-version", &emacs_minor_version /*
+Minor version number of this version of Emacs, as an integer.
+Warning, this variable did not exist in Emacs versions earlier than:
+  FSF Emacs:   19.23
+  XEmacs:      19.10
+This variable was not available to temacs prior to:
+  XEMacs:      20.3
+*/ );
+  emacs_minor_version = EMACS_MINOR_VERSION;
 }

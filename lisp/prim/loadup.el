@@ -72,146 +72,25 @@
      ;; with garbage-collected junk)
      (defmacro load-gc (file)
        (list 'prog1 (list 'load file) '(garbage-collect)))
-     (load-gc "backquote") 		; needed for defsubst etc.
-     (load-gc "bytecomp-runtime")	; define defsubst
-     (load-gc "subr") 			; load the most basic Lisp functions
-     (load-gc "replace") 		; match-string used in version.el.
-     (load-gc "version.el")		; Ignore compiled-by-mistake version.elc
-     (load-gc "cl")
-     (load-gc "featurep")
-     (load-gc "widget")
-     (load-gc "custom") ; Before the world so everything can be customized
-     (load-gc "cus-start") ; for customization of builtin variables
-     (load-gc "cmdloop")
-     (or (fboundp 'recursive-edit) (load-gc "cmdloop1"))
-     (load-gc "keymap")
-     (load-gc "syntax")
-     (load-gc "device")
-     (load-gc "console")
-     (load-gc "obsolete")
-     (load-gc "specifier")
-     (load-gc "faces")	; must be loaded before any make-face call
-     ;;(load-gc "facemenu") #### not yet ported
-     (load-gc "glyphs")
-     (load-gc "objects")
-     (load-gc "extents")
-     (load-gc "events")
-     (load-gc "text-props")
-     (load-gc "process")
-     (load-gc "frame") ; move up here cause some stuff needs it here
-     (load-gc "map-ynp")
-     (load-gc "simple")
-     (load-gc "keydefs") ; Before loaddefs so that keymap vars exist.
-     (load-gc "abbrev")
-     (load-gc "derived")
-     (load-gc "minibuf")
-     (load-gc "list-mode")
-     (load-gc "modeline") ; needs simple.el to be loaded first
-     ;; If SparcWorks support is included some additional packages are
-     ;; dumped which would normally have autoloads.  To avoid
-     ;; duplicate doc string warnings, SparcWorks uses a separate
-     ;; autoloads file with the dumped packages removed.
-     ;; After fixing, eos/loaddefs-eos and loaddefs appear identical?!!
-     ;; So just make loaddefs-eos go away...
-     ;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
-     (load-gc "loaddefs") ; <=== autoloads get put here
-     (load-gc "misc")
-     ;; (load-gc "profile")
-     (load-gc "help")
-     ;; (load-gc "hyper-apropos")  Soon...
-     (when (not (featurep 'mule))
-       (load-gc "files-nomule"))
-     (load-gc "files")
-     (load-gc "lib-complete")
-     (load-gc "format")
-     (load-gc "indent")
-     (load-gc "isearch-mode")
-     (load-gc "buffer")
-     (load-gc "buff-menu")
-     (load-gc "undo-stack")
-     (load-gc "window")
-     (load-gc "window-xemacs")
-     (load-gc "paths.el")		; don't get confused if paths compiled.
-     (load-gc "startup")
-     (load-gc "lisp")
-     (load-gc "page")
-     (load-gc "register")
-     (load-gc "iso8859-1")		; This must be before any modes
-                                        ; (sets standard syntax table.)
-     (load-gc "paragraphs")
-     (load-gc "lisp-mode")
-     (load-gc "text-mode")
-     (load-gc "fill")
-     ;; (load-gc "cc-mode")		; as FSF goes so go we ..
-     ;; (load-gc "scroll-in-place")	; We're not ready for this :-(
-     ;; we no longer load buff-menu automatically.
-     ;; it will get autoloaded if needed.
-     
-     (cond  ; Differences based on system-type
-      ((eq system-type 'vax-vms)
-       (load-gc "vmsproc")
-       (load-gc "vms-patch"))
-      ((eq system-type 'windows-nt)
-       ;; (load-gc "ls-lisp")
-       (load-gc "winnt"))
-      ((eq system-type 'ms-dos)
-       ;; (load-gc "ls-lisp")
-       (load-gc "dos-fns")
-       (load-gc "disp-table")))	; needed to setup ibm-pc char set,
-				; see internal.el
-     (when (featurep 'lisp-float-type)
-       (load-gc "float-sup"))
-     (load-gc "itimer") ; for vars auto-save-timeout and auto-gc-threshold
-     (load-gc "itimer-autosave")
-     (if (featurep 'toolbar)
-	 (load-gc "toolbar")
-       ;; else still define a few functions.
-       (defun toolbar-button-p    (obj) "No toolbar support." nil)
-       (defun toolbar-specifier-p (obj) "No toolbar support." nil))
-     (when (featurep 'scrollbar)
-       (load-gc "scrollbar"))
-     (when (featurep 'menubar)
-       (load-gc "menubar"))
-     (when (featurep 'dialog)
-       (load-gc "dialog"))
-     (when (featurep 'mule)
-       (load-gc "mule-load.el"))
-     (when (featurep 'window-system)
-       (load-gc "gui")
-       (load-gc "mode-motion")
-       (load-gc "mouse"))
-     (when (featurep 'x)
-       ;; preload the X code, for faster startup.
-       (when (featurep 'menubar)
-	 (load-gc "x-menubar")
-	 ;; autoload this.
-	 ;;(load-gc "x-font-menu")
-	 )
-       (load-gc "x-faces")
-       (load-gc "x-iso8859-1")
-       (load-gc "x-mouse")
-       (load-gc "x-select")
-       (when (featurep 'scrollbar)
-	 (load-gc "x-scrollbar"))
-       (load-gc "x-misc")
-       (load-gc "x-init")
-       (when (featurep 'toolbar)
-	 (load-gc "x-toolbar"))
-       )
-     (when (featurep 'tty)
-       ;; preload the TTY init code.
-       (load-gc "tty-init"))
-     (when (featurep 'tooltalk)
-       (load-gc "tooltalk/tooltalk-load"))
-     (load-gc "vc-hooks")
-     (load-gc "ediff-hook")
-     (load-gc "fontl-hooks")
-     (load-gc "auto-show")
-     (when (featurep 'energize)
-       (load-gc "energize/energize-load.el"))
-     (when (featurep 'sparcworks)
-       (load-gc "sunpro/sunpro-load.el"))
-     (fmakunbound 'load-gc)
+     ;; Need a minimal number hardcoded to get going for now.
+     ;; (load-gc "backquote")		; needed for defsubst etc.
+     ;; (load-gc "bytecomp-runtime")	; define defsubst
+     ;; (load-gc "subr")		; load the most basic Lisp functions
+     ;; (load-gc "replace")		; match-string used in version.el.
+     ;; (load-gc "version.el")	; Ignore compiled-by-mistake version.elc
+     ;; (load-gc "cl")
+     ;; (load-gc "featurep") ; OBSOLETE now
+     (let (dumped-lisp-packages file)
+       (load "dumped-lisp.el")
+       (while (setq file (car dumped-lisp-packages))
+	 (load-gc file)
+	 (setq dumped-lisp-packages (cdr dumped-lisp-packages)))
+       (if (not (featurep 'toolbar))
+	   (progn
+	     ;; else still define a few functions.
+	     (defun toolbar-button-p    (obj) "No toolbar support." nil)
+	     (defun toolbar-specifier-p (obj) "No toolbar support." nil)))
+       (fmakunbound 'load-gc))
      )) ;; end of call-with-condition-handler
 
 

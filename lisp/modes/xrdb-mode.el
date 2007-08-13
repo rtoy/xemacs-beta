@@ -333,6 +333,7 @@ With optional \\[universal-argument], queries for alignment subdivision."
     (define-key xrdb-mode-map "\C-c>"    'xrdb-align-to)
     ))
 
+;;;###autoload
 (defun xrdb-mode ()
   "Major mode for editing xrdb config files"
   (interactive)

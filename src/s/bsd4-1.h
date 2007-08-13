@@ -81,4 +81,4 @@ Boston, MA 02111-1307, USA.  */
 #define O_CREAT 1000
 
 /* Special library needed for linking for 4.1.  */
-#define LIBS_SYSTEM -ljobs
+#define LIBS_SYSTEM "-ljobs"

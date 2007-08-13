@@ -674,7 +674,7 @@ static int mmap_hysteresis;	/* Should be size_t, really. */
 static MMAP_HANDLE
 new_mmap_handle (size_t nsiz)
 {
-  MMAP_HANDLE h = UNDERLYING_MALLOC( sizeof( struct alloc_dll ) );
+  MMAP_HANDLE h = (MMAP_HANDLE) UNDERLYING_MALLOC( sizeof (struct alloc_dll));
   if ( h == 0) return 0;
   h->size = nsiz;
   if (mmap_start == 0)
@@ -1081,7 +1081,7 @@ r_alloc (POINTER *ptr, SIZE size)
     case 0:
       abort();
     case 1:
-      *ptr = UNDERLYING_MALLOC(size);
+      *ptr = (POINTER) UNDERLYING_MALLOC(size);
       break;
     default:
       mh = new_mmap_handle( size );
@@ -1167,7 +1167,7 @@ r_re_alloc (POINTER *ptr, SIZE sz)
     }
   else if (r_alloc_initialized == 1)
     {
-      POINTER tmp = realloc(*ptr, sz);
+      POINTER tmp = (POINTER) realloc(*ptr, sz);
       if (tmp)
 	*ptr = tmp;
       return tmp;
@@ -1181,7 +1181,7 @@ r_re_alloc (POINTER *ptr, SIZE sz)
 
       if ( h == 0 )		/* Was allocated using malloc. */
 	{
-	  POINTER tmp = UNDERLYING_REALLOC(*ptr, sz);
+	  POINTER tmp = (POINTER) UNDERLYING_REALLOC(*ptr, sz);
 	  if (tmp)
 	    *ptr = tmp;
 	  return tmp;

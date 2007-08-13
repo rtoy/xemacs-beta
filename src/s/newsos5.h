@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #undef LIB_STANDARD
 
 #undef LIBS_SYSTEM
-#define LIBS_SYSTEM -lsocket -lnsl -lgen
+#define LIBS_SYSTEM "-lsocket -lnsl -lgen"
 
 /* Disable use of "unexelf.c" and shared libraries, because
    "unexelf.c" doesn't work correctly on NEWS-OS.  "unexmips.c" does
@@ -42,6 +42,6 @@ Boston, MA 02111-1307, USA.  */
 /* Use `ld' directly rather than ordinary link, because ordinary link
    can't produce a non-ELF executable.  */
 #undef ORDINARY_LINK
-#define LINKER /usr/lib/cmplrs/cc/ld
-#define START_FILES pre-crt0.o /usr/ccs/lib/crt1.o
-#define LIB_STANDARD -lc /usr/ccs/lib/crtn.o /usr/ccs/lib/values-Xt.o
+#define LINKER "/usr/lib/cmplrs/cc/ld"
+#define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o"
+#define LIB_STANDARD "-lc /usr/ccs/lib/crtn.o /usr/ccs/lib/values-Xt.o"

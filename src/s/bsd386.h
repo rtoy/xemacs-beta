@@ -17,8 +17,8 @@
 #define A_TEXT_SEEK(hdr) (N_TXTOFF(hdr) + A_TEXT_OFFSET(hdr))
 
 #define LIBS_DEBUG
-#define LIB_X11_LIB -L/usr/X11/lib -lX11
-#define LIBS_SYSTEM -lutil -lcompat
+#define LIB_X11_LIB "-L/usr/X11/lib -lX11"
+#define LIBS_SYSTEM "-lutil -lcompat"
 
 #define HAVE_GETLOADAVG
 

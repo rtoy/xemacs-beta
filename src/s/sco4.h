@@ -54,16 +54,16 @@ Boston, MA 02111-1307, USA.  */
 
 /* Must use 'cc' to link when build with motif toolkit. */
 #ifndef __GNUC__
-#define LINKER cc
+#define LINKER "cc"
 #endif
 
 /* This is safe since we already assumed HAVE_SOCKETS
    if using X windows.  */
 #undef LIBX11_SYSTEM
-#define LIBX11_SYSTEM -lpt -lnls -lnsl_s -lc_s -lsocket
+#define LIBX11_SYSTEM "-lpt -lnls -lnsl_s -lc_s -lsocket"
 
 #ifdef HAVE_SOCKETS
-#define LIBS_SYSTEM -lsocket -lPW
+#define LIBS_SYSTEM "-lsocket -lPW"
 
 /* SCO has gettimeofday in socket library */
 /* Autoconf should determine this, but for now, 
@@ -76,7 +76,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* This enables configure to tell that we have alloca.  */
 #ifndef LIBS_SYSTEM
-#define LIBS_SYSTEM -lPW
+#define LIBS_SYSTEM "-lPW"
 #endif
 
 #ifdef HAVE_X11R5
@@ -93,8 +93,8 @@ Boston, MA 02111-1307, USA.  */
 #define NEED_PTEM_H
 
 /* We need to link with crt1.o and crtn.o.  */
-#define START_FILES pre-crt0.o /lib/crt1.o
-#define LIB_STANDARD -lc /lib/crtn.o
+#define START_FILES "pre-crt0.o /lib/crt1.o"
+#define LIB_STANDARD "-lc /lib/crtn.o"
 
 /* Send signals to subprocesses by "typing" signal chars at them.  */
 #define SIGNALS_VIA_CHARACTERS

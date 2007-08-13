@@ -16,7 +16,7 @@
 /* Don't tell the linker to link statically */
 #ifdef NOT_C_CODE
 #define START_FILES
-#define LINKER $(CC)
+#define LINKER "$(CC)"
 /* now done in hpux8.h */
 /* #define LD_SWITCH_SYSTEM -L/usr/lib/X11R5 -L/usr/lib/Motif1.2 */
 #endif /* THIS IS YMAKEFILE */

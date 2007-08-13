@@ -72,8 +72,8 @@ Boston, MA 02111-1307, USA.  */
 /* The IRIS defines SIGIO in signal.h, but doesn't implement it. */
 #define BROKEN_SIGIO
 
-#define LIBS_MACHINE -lbsd -ldbm -lPW
-#define C_SWITCH_MACHINE -I/usr/include/bsd
+#define LIBS_MACHINE "-lbsd -ldbm -lPW"
+#define C_SWITCH_MACHINE "-I/usr/include/bsd"
 
 /* On USG systems the system calls are interruptible by signals
  that the user program has elected to catch.  Thus the system call

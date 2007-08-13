@@ -238,21 +238,6 @@ just before emacs is actually killed.")
 (define-function 'rplaca 'setcar)
 (define-function 'rplacd 'setcdr)
 
-;; XEmacs
-(defun mapvector (__function __seq)
-  "Apply FUNCTION to each element of SEQ, making a vector of the results.
-The result is a vector of the same length as SEQ.
-SEQ may be a list, a vector or a string."
-  (let* ((len (length __seq))
-	 (vec (make-vector len 'nil))
-	 (i 0))
-    (while (< i len)
-      (aset vec i (funcall __function (cond ((listp __seq)
-					     (nth i __seq))
-					    (t (aref __seq i)))))
-      (setq i (+ i 1)))
-    vec))
-
 ;;;; String functions.
 
 ;; XEmacs
@@ -322,8 +307,7 @@ Otherwise treat \\ in NEWTEXT string as special:
   "Collect output to `standard-output' while evaluating FORMS and return
 it as a string."
   ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu> w/ mods from Stig
-  (` (save-excursion
-       (set-buffer (get-buffer-create " *string-output*"))
+  (` (with-current-buffer (get-buffer-create " *string-output*")
        (setq buffer-read-only nil)
        (buffer-disable-undo (current-buffer))
        (erase-buffer)
@@ -366,8 +350,7 @@ See also `with-temp-buffer'."
     `(let ((,temp-buffer
 	    (get-buffer-create (generate-new-buffer-name " *temp*"))))
        (unwind-protect
-	   (save-excursion
-	     (set-buffer ,temp-buffer)
+	   (with-current-buffer ,temp-buffer
 	     ,@forms)
 	 (and (buffer-name ,temp-buffer)
 	      (kill-buffer ,temp-buffer))))))
@@ -377,18 +360,16 @@ See also `with-temp-buffer'."
   "With the contents of the current buffer being STR, run BODY.
 Returns the new contents of the buffer, as modified by BODY.
 The original current buffer is restored afterwards."
-  `(let ((curbuf (current-buffer))
-         (tempbuf (get-buffer-create " *string-as-buffer-contents*")))
-     (unwind-protect
-         (progn
-           (set-buffer tempbuf)
-           (buffer-disable-undo (current-buffer))
-           (erase-buffer)
-           (insert ,str)
-           ,@body
-           (buffer-string))
-       (erase-buffer tempbuf)
-       (set-buffer curbuf))))
+  `(let ((tempbuf (get-buffer-create " *string-as-buffer-contents*")))
+     (with-current-buffer tempbuf
+       (unwind-protect
+	   (progn
+	     (buffer-disable-undo (current-buffer))
+	     (erase-buffer)
+	     (insert ,str)
+	     ,@body
+	     (buffer-string))
+	 (erase-buffer tempbuf)))))
 
 (defun insert-face (string face)
   "Insert STRING and highlight with FACE.  Returns the extent created."

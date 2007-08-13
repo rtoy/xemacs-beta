@@ -35,15 +35,12 @@
        `#ifdef MULE' or with comments that have `XEmacs' in them.
  */
 
-/* AIX requires this to be the first thing in the file. */
-#if defined (_AIX) && !defined (REGEX_MALLOC)
-  #pragma alloca
-#endif
-
-#define _GNU_SOURCE
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
 #endif
 
 /* We assume non-Mule if emacs isn't defined. */

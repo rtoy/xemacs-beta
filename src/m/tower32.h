@@ -83,7 +83,7 @@ Boston, MA 02111-1307, USA.  */
 /* The standard C library is -lcieee, not -lc.
    Also use the PW library, which contains alloca.  */
 
-#define LIB_STANDARD -lPW -lcieee
+#define LIB_STANDARD "-lPW -lcieee"
 
 /* crt0.c should use the vax-bsd style of entry.  Beware that if you have
    OS release 2.00.00 or later, *and* change src/ymakefile so that CFLAGS

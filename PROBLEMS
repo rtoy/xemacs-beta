@@ -1018,42 +1018,6 @@ Richard Cognot <cognot@ensg.u-nancy.fr> writes:
 You *have* to compile your own jpeg lib. The one delivered with SGI
 systems is a C++ lib, which apparently XEmacs cannot cope with.
 
-** XEmacs won't build with the n32 environment on Irix 6.
-
-Olivier Galibert <Olivier.Galibert@mines.u-nancy.fr> writes:
-While making the OS and the compiler able to work on 64b
-architectures, SGI designed another mode for using registers
-and passing parameters between functions, activated on the
-compiler by using -64. Since it was much more efficient ar
-using registers even for 32b architectures, they designed
-a version for 32b called n32. And it _is_ really better.
-This mode should always be used when not using gcc (which
-can only do o32 afaik).
-
-Too bad xemacs can't do n32 out of the box. So here is what
-I had to do to compile it in this mode:
-
-s/irix6-0.h:
-- #define LD_SWITCH_SYSTEM -32
-+ #define LD_SWITCH_SYSTEM -n32 -G 0
-
-m/iris4d.h:
-- #define LIBS_MACHINE -lmld
-+ #define LIBS_MACHINE
-
-- #define C_SWITCH_MACHINE -32
-+ #define C_SWITCH_MACHINE -n32 -G 0
-
-(the mld lib does not exist in n32 mode)
-
-I also added a --cflags='-n32 -O2 -G 0 -s' to the configuration
-line but it seems that these flags are ignored for configure test
-and since o32 and n32 libraries are independant I had to revert
-to the CFLAGS env var.
-
-Anyway, once done that the compile has gone succesfully, the dump
-was OK and I'm writing this in the resulting xemacs-20.2b1 ;-)
-
 ** Slow startup on Linux.
 
 People using systems based on the Linux kernel sometimes report that

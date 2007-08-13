@@ -76,14 +76,14 @@ Boston, MA 02111-1307, USA.  */
 #ifdef __GNUC__
 #define HAVE_ALLOCA
 #define alloca __builtin_alloca
-#define C_OPTIMIZE_SWITCH -O -fstrength-reduce -fomit-frame-pointer
-#define LIB_STANDARD -lc /lib/crtn.o
+#define C_OPTIMIZE_SWITCH "-O -fstrength-reduce -fomit-frame-pointer"
+#define LIB_STANDARD "-lc /lib/crtn.o"
 #else
 /* This section is correct if you do *not* change src/ymakefile so that
    CFLAGS includes C_OPTIMIZE_SWITCH rather than C_DEBUG_SWITCH.  */
 #define HAVE_ALLOCA
-#define C_DEBUG_SWITCH -g -O0
-#define LIB_STANDARD -lc -lPW /lib/crtn.o
+#define "C_DEBUG_SWITCH -g -O0"
+#define LIB_STANDARD "-lc -lPW /lib/crtn.o"
 /* This section is correct if you do enable C_OPTIMIZE_SWITCH.  */
 /* #define C_ALLOCA */
 /* #define STACK_DIRECTION -1 */
@@ -94,7 +94,7 @@ Boston, MA 02111-1307, USA.  */
 /* The OS maps the data section far away from the text section.  */
 #define NO_REMAP
 #define TEXT_START 0
-#define START_FILES pre-crt0.o /lib/crt1.o
+#define START_FILES "pre-crt0.o /lib/crt1.o"
 
 /* The OS has an implementation of symlinks that is semantically different
    from BSD, but for some silly reason it partly has the same syntax.  */

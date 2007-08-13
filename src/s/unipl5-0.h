@@ -99,8 +99,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Special library needed for linking for Uniplus */
 
-#define LIBS_SYSTEM -lnet
+#define LIBS_SYSTEM "-lnet"
 
 /* A system-specific loader switch is needed.  */
 
-#define LD_SWITCH_SYSTEM -N -L/lib/libg /usr/lib/unshared.ld
+#define LD_SWITCH_SYSTEM "-N -L/lib/libg /usr/lib/unshared.ld"

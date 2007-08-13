@@ -65,7 +65,7 @@ NOTE-END */
    because the standard library requires some special hacks in crt0
    which the GNU crt0 does not have.  */
 
-#define LIB_STANDARD -lmc
+#define LIB_STANDARD "-lmc"
 
 /* macros to make unexec work right */
 
@@ -80,6 +80,6 @@ NOTE-END */
 #undef m68k
 
 #undef LIB_STANDARD
-#define LIB_STANDARD -lmc -lc
-#define C_DEBUG_SWITCH -20 -O -X23
+#define LIB_STANDARD "-lmc -lc"
+#define C_DEBUG_SWITCH "-20 -O -X23"
 #endif

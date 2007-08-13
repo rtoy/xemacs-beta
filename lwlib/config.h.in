@@ -20,9 +20,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Not in FSF. */
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef _LWLIB_CONFIG_H_
+#define _LWLIB_CONFIG_H_
 
+#include <../src/config.h>
+#if 0
 /* alloca twiddling belongs in one place, not the s&m headers
    AIX requires this to be the first thing in the file.  */
 #undef HAVE_ALLOCA_H
@@ -42,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef HAVE_UNISTD_H
 #undef HAVE_LIMITS_H
+#undef STDC_HEADERS
 #undef CONST_IS_LOSING
 
 #ifndef NeedFunctionPrototypes
@@ -54,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Required for most XFree86 systems */
 #undef NARROWPROTO
-
+#endif
 /* widget feature definitions */
 #undef LWLIB_MENUBARS_LUCID
 #undef LWLIB_MENUBARS_MOTIF

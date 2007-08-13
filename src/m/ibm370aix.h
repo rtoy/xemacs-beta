@@ -25,7 +25,7 @@
 #define LOAD_AVE_TYPE double
 
 #undef LIBS_MACHINE
-#define LIBS_MACHINE 
+#define LIBS_MACHINE
 
 #undef LD_SWITCH_MACHINE
-#define LD_SWITCH_MACHINE -xa
+#define LD_SWITCH_MACHINE "-xa"

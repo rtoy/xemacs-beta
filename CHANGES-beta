@@ -1,5 +1,35 @@
 							-*- indented-text -*-
-to 20.3 beta7.
+to 20.3 beta8 "Copenhagen".
+-- Custom changes now saved in ~/.xemacs-custom and loaded automatically at
+   startup.
+-- oobr support binaries moved from lisp hierarchy to new top level
+   directory `pkg-src'.
+-- Viper-2.94 Courtesy of Michael Kifer
+-- Customizations from Hrvoje Niksic
+-- FAQ update from Andreas Kaempf
+-- New graphic cbx.gif added to etc, courtesy of Jens Lautenbacher,
+   `Created by XEmacs' suitable for adorning a web page.
+-- save-some-buffers now has an option to preview dirty buffers as
+   they are being offered for save.  Courtesy of David Bakhash.
+-- XEmacs compiles in 64 bit SGI environment courtesy of Olivier Galibert.
+-- Hardcoded -I/usr/local/include, -L/usr/local/include removed.
+-- edmacro.el-3.16
+-- mapvector is now a subr courtesy of Hrvoje Niksic
+-- new function archive-quit in arc-mode.el courtesy of Karl Hegbloom
+-- debug-on-error (round 2) courtesy of Hrvoje Niksic
+-- Gnus-5.4.59
+-- Build no longer depends on a list of .elc files listed in src/Makefile.in.in
+   (only important to developers).
+-- If a .xemacs file exists, use it in preference to .emacs.  If no .xemacs
+   use .emacs as usual.  The file loaded is left in `user-init-file'.
+-- Overhaul of XEmacs startup code, Part II.
+-- custom-1.9931
+-- Miscellaneous Ebola fixes
+-- New internal autoload generating function `batch-update-directory'.
+-- New file hippie-exp.el from Emacs/Mule zeta.
+-- Miscellaneous bug fixes
+
+to 20.3 beta7 "Oslo".
 -- Miscellaneous Ebola fixes
 -- hyper-apropos update courtesy of Hrvoje Niksic
 -- Make lib-complete deal with compressed .el files when not using Mule.
@@ -12,19 +42,19 @@ to 20.3 beta7.
    Niksic
 -- Miscellaneous bug fixes
 
-to 20.3 beta6.
+to 20.3 beta6 "Moscow".
 -- Configure updates courtesy of Martin Buchholz
 -- Mule updates courtesy of MORIOKA Tomohiko
 -- Lots of Ebola cleanup, but much remains
 -- Miscellaneous bug fixes
 
-to 20.3 beta5.
+to 20.3 beta5 "Zagreb".
 -- Configure patches continued from Martin Buchholz
 -- Miscellaneous Bug Fixes from various people (see ChangeLogs)
 -- custom-1.9908
 -- Moved mule-doc/demo to etc/HELLO for the mule menu.
 
-to 20.3 beta4.
+to 20.3 beta4 "Warsaw".
 -- miscellaneous bug fixes
 -- various about.el additions & updates
 -- edmacro.el-3.15

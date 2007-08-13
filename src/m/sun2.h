@@ -70,7 +70,7 @@ NOTE-END  */
 
 /* Must use the system's termcap.  It does special things.  */
 
-#define LIBS_TERMCAP -ltermcap
+#define LIBS_TERMCAP "-ltermcap"
 
 /* Mask for address bits within a memory segment */
 
@@ -81,9 +81,9 @@ NOTE-END  */
 /* These programs require Sun UNIX 4.2 Release 3.2 or greater */
 
 #ifdef HAVE_SUN_WINDOWS
-#define OTHER_FILES  ${libsrc}emacstool
-#define LIBS_MACHINE -lsuntool -lsunwindow -lpixrect
-#define OBJECTS_MACHINE sunfns.o
+#define OTHER_FILES " ${libsrc}emacstool"
+#define LIBS_MACHINE "-lsuntool -lsunwindow -lpixrect"
+#define OBJECTS_MACHINE "sunfns.o"
 #define SYMS_MACHINE syms_of_sunfns ()
 #define SYSTEM_PURESIZE_EXTRA 12000
 #endif

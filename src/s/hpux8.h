@@ -26,16 +26,16 @@
    fix this up. */
 
 /* dob@inel.gov says HPUX 8.07 needs this.  He was using X11R5, I think.  */
-#define LIBX11_SYSTEM -lXext
+#define LIBX11_SYSTEM "-lXext"
 
-#define LIB_X11_LIB -L/usr/lib/X11R5 -L/usr/lib/X11R4 -lX11
-#define C_SWITCH_X_SYSTEM -I/usr/include/X11R5 -I/usr/include/X11R4
-#define LD_SWITCH_X_DEFAULT -L/usr/lib/X11R5 -L/usr/lib/X11R4
+#define LIB_X11_LIB "-L/usr/lib/X11R5 -L/usr/lib/X11R4 -lX11"
+#define C_SWITCH_X_SYSTEM "-I/usr/include/X11R5 -I/usr/include/X11R4"
+#define LD_SWITCH_X_DEFAULT "-L/usr/lib/X11R5 -L/usr/lib/X11R4"
 #endif
 
 /* XEmacs change -- changed LIBX11_SYSTEM and C_SWITCH_X_SYSTEM */
-#define C_SWITCH_X_SYSTEM -I/usr/include/X11R4 -I/usr/include/Motif1.1
-#define LD_SWITCH_X_SYSTEM -L/usr/lib/X11R4 -L/usr/lib/Motif1.1
+#define C_SWITCH_X_SYSTEM "-I/usr/include/X11R4 -I/usr/include/Motif1.1"
+#define LD_SWITCH_X_SYSTEM "-L/usr/lib/X11R4 -L/usr/lib/Motif1.1"
 
 /* Don't use shared libraries.  unexec doesn't handle them.
    Note GCC automatically passes -a archive to ld, and it has its own
@@ -47,22 +47,22 @@
 #ifdef HPUX_USE_SHLIBS
 #define LD_SWITCH_SYSTEM
 #else
-#define LD_SWITCH_SYSTEM -Xlinker -a -Xlinker archive
+#define LD_SWITCH_SYSTEM "-Xlinker -a -Xlinker archive"
 #endif
 
 #else /* not __GNUC__ */
 
 #if (defined(hp9000s700) || defined(__hp9000s700))
 #ifdef HPUX_USE_SHLIBS
-#define LD_SWITCH_SYSTEM -L/lib/pa1.1
+#define LD_SWITCH_SYSTEM "-L/lib/pa1.1"
 #else
-#define LD_SWITCH_SYSTEM -a archive -L/lib/pa1.1
+#define LD_SWITCH_SYSTEM "-a archive -L/lib/pa1.1"
 #endif
 #else /* not (defined(hp9000s700) || defined(__hp9000s700)) */
 #ifdef HPUX_USE_SHLIBS
 #define LD_SWITCH_SYSTEM
 #else
-#define LD_SWITCH_SYSTEM -a archive
+#define LD_SWITCH_SYSTEM "-a archive"
 #endif
 #endif /* not (defined(hp9000s700) || defined(__hp9000s700)) */
 
@@ -70,7 +70,7 @@
 
 /* XEmacs change */
 #ifndef __GNUC__
-#define C_SWITCH_SYSTEM -Aa -D_HPUX_SOURCE
+#define C_SWITCH_SYSTEM "-Aa -D_HPUX_SOURCE"
 #endif
 
 /* Some hpux 8 machines seem to have TIOCGWINSZ,

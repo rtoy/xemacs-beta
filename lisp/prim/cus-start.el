@@ -5,6 +5,25 @@
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: internal
 
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: Not synched.
+
 ;;; Commentary:
 ;;
 ;; Must be run before the user has changed the value of any options!
@@ -28,7 +47,6 @@
       sexp
     (list 'quote sexp)))
 
-;; The file names below are unreliable, as they are from Emacs 19.34.
 (let ((all '(;; boolean
 	     (abbrev-all-caps abbrev boolean)
 	     (allow-deletion-of-last-visible-frame frames boolean)
@@ -62,6 +80,9 @@
 	     (completion-ignored-extensions minibuffer
 					    (repeat
 					     (string :format "%v")))
+	     (debug-ignored-errors debug (repeat (choice :format "%v"
+							 (symbol :tag "Class")
+							 regexp)))
 	     (debug-on-error debug  (choice (const :tag "off" nil)
 					    (const :tag "Always" t)
 					    (repeat :menu-tag "When"
@@ -105,11 +126,18 @@
 	     (truncate-lines display boolean)
 	     ;; not documented as user-options, but should still be
 	     ;; customizable:
+	     (bar-cursor display (choice (const :tag "Block Cursor" nil)
+					 (const :tag "Bar Cursor (1 pixel)" t)
+					 (sexp :tag "Bar Cursor (2 pixels)"
+					       :format "%t\n" 'other)))
 	     (default-frame-plist frames (repeat
 					  (list :inline t
 						:format "%v"
 						(symbol :tag "Parameter")
 						(sexp :tag "Value"))))
+	     (disable-auto-save-when-buffer-shrinks auto-save boolean)
+	     (find-file-compare-truenames find-file boolean)
+	     (focus-follows-mouse x boolean)
 	     (help-char keyboard character)
 	     (max-lisp-eval-depth limits integer)
 	     (max-specpdl-size limits integer)
@@ -123,13 +151,15 @@
 					(const :tag "on" t)))
 	     (selective-display-ellipses display boolean)
 	     (signal-error-on-buffer-boundary internal boolean)
-	     (words-include-escapes editing-basics boolean)
 	     (temp-buffer-show-function
 	      windows (radio (function-item :tag "Temp Buffers Always in Same Frame"
 					    :format "%t\n"
 					    show-temp-buffer-in-current-frame)
 			     (const :tag "Temp Buffers Like Other Buffers" nil)
-			     (function :tag "Other")))))
+			     (function :tag "Other")))
+	     (undo-threshold undo integer)
+	     (undo-high-threshold undo integer)
+	     (words-include-escapes editing-basics boolean)))
       this symbol group type)
   (while all 
     (setq this (car all)

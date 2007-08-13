@@ -201,7 +201,7 @@ x_wm_set_shell_iconic_p (Widget shell, int iconic_p)
   /* Because of questionable logic in Shell.c, this sequence can't work:
 
        w = XtCreatePopupShell (...);
-       XtVaSetValues (w, XtNiconic, True, 0);
+       XtVaSetValues (w, XtNiconic, True, NULL);
        XtRealizeWidget (w);
 
      The iconic resource is only consulted at initialization time (when
@@ -216,7 +216,7 @@ x_wm_set_shell_iconic_p (Widget shell, int iconic_p)
      realization.  This is true of MIT X11R5 patch level 25, at least.
      (Apparently some other versions of Xt don't have this bug?)
    */
-  XtVaSetValues (shell, XtNiconic, iconic_p, 0);
+  XtVaSetValues (shell, XtNiconic, iconic_p, NULL);
   EmacsShellSmashIconicHint (shell, iconic_p);
 }
 
@@ -231,7 +231,7 @@ x_wm_set_cell_size (Widget wmshell, int cw, int ch)
   XtVaSetValues (wmshell,
 		 XtNwidthInc, cw, 
 		 XtNheightInc, ch,
-		 0);
+		 NULL);
 }
 
 void
@@ -247,7 +247,7 @@ x_wm_set_variable_size (Widget wmshell, int width, int height)
   XtVaSetValues (wmshell,
 		 XtNwidthCells, width,
 		 XtNheightCells, height,
-		 0);
+		 NULL);
 }
 
 /* If the WM_PROTOCOLS property does not already contain WM_TAKE_FOCUS
@@ -718,7 +718,7 @@ x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
     }
   else
     temp = NULL;
-  XtVaSetValues (FRAME_X_SHELL_WIDGET (f), XtNgeometry, temp, 0);
+  XtVaSetValues (FRAME_X_SHELL_WIDGET (f), XtNgeometry, temp, NULL);
 }
 
 /* Report to X that a frame property of frame S is being set or changed.
@@ -758,13 +758,13 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 
 	      GET_STRING_CTEXT_DATA_ALLOCA (val, extval, extvallen);
 	      XtVaSetValues (w, XtVaTypedArg, extprop,
-			     XtRString, extval, extvallen + 1, 0);
+			     XtRString, extval, extvallen + 1, NULL);
 	    }
 	  else
 	    XtVaSetValues (w, XtVaTypedArg,
 			   extprop, XtRInt, XINT (val),
 			   sizeof (int),
-			   0);
+			   NULL);
 	}
       else if (SYMBOLP (prop))
 	{
@@ -838,20 +838,20 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	    {
 	      CHECK_INT (val);
 	      XtVaSetValues (w, (char *) XSTRING_DATA (str),
-			     XINT (val), 0);
+			     XINT (val), NULL);
 	    }
 	  else if (EQ (val, Qt))
 	    XtVaSetValues (w,
 			   /* XtN... */
 			   (char *) XSTRING_DATA (str),
 			   True,
-			   0);
+			   NULL);
 	  else if (EQ (val, Qnil))
 	    XtVaSetValues (w,
 			   /* XtN... */
 			   (char *) XSTRING_DATA (str),
 			   False,
-			   0);
+			   NULL);
 	  else
 	    {
 	      CHECK_STRING (val);
@@ -861,7 +861,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 			     XtRString,
 			     XSTRING_DATA (val),
 			     XSTRING_LENGTH (val) + 1,
-			     0);
+			     NULL);
 	    }
 
 #ifdef HAVE_SCROLLBARS
@@ -1354,14 +1354,14 @@ x_initialize_frame_size (struct frame *f)
 
   if (!FRAME_X_TOP_LEVEL_FRAME_P (f))
     {
-      XtVaGetValues (ew, XtNgeometry, &ew_geom, 0);
+      XtVaGetValues (ew, XtNgeometry, &ew_geom, NULL);
       if (ew_geom)
 	frame_flags = XParseGeometry (ew_geom, &frame_x, &frame_y,
 				       &frame_w, &frame_h);
       if (! (frame_flags & (WidthValue | HeightValue)))
 	{
 	  XtVaGetValues (ew, XtNwidth, &frame_w,
-			 XtNheight, &frame_h, 0);
+			 XtNheight, &frame_h, NULL);
 	  if (!frame_w && !frame_h)
 	    {
 	      frame_w = 64;
@@ -1374,12 +1374,12 @@ x_initialize_frame_size (struct frame *f)
       if (frame_flags & (XValue | YValue))
 	{
 	  XtVaGetValues (ew, XtNwidth, &frame_w,
-			 XtNheight, &frame_h, 0);
+			 XtNheight, &frame_h, NULL);
 	  if (frame_flags & XNegative)
 	    frame_x += frame_w;
 	  if (frame_flags & YNegative)
 	    frame_y += frame_h;
-	  XtVaSetValues (ew, XtNx, frame_x, XtNy, frame_y, 0);
+	  XtVaSetValues (ew, XtNx, frame_x, XtNy, frame_y, NULL);
 	}
       return;
     }
@@ -1394,31 +1394,31 @@ x_initialize_frame_size (struct frame *f)
      treat that as the geometry of the frame.  (Is this bogus?
      I'm not sure.) */
 
-  XtVaGetValues (ew, XtNgeometry, &ew_geom, 0);
+  XtVaGetValues (ew, XtNgeometry, &ew_geom, NULL);
   if (!ew_geom)
     {
-      XtVaGetValues (wmshell, XtNgeometry, &geom, 0);
+      XtVaGetValues (wmshell, XtNgeometry, &geom, NULL);
       if (geom)
 	{
 	  ew_geom = geom;
-	  XtVaSetValues (ew, XtNgeometry, ew_geom, 0);
+	  XtVaSetValues (ew, XtNgeometry, ew_geom, NULL);
 	}
     }
 
   /* If the Shell is iconic, then the EmacsFrame is iconic.  (Is
      this bogus? I'm not sure.) */
-  XtVaGetValues (ew, XtNiconic, &ew_iconic_p, 0);
+  XtVaGetValues (ew, XtNiconic, &ew_iconic_p, NULL);
   if (!ew_iconic_p)
     {
-      XtVaGetValues (wmshell, XtNiconic, &iconic_p, 0);
+      XtVaGetValues (wmshell, XtNiconic, &iconic_p, NULL);
       if (iconic_p)
 	{
 	  ew_iconic_p = iconic_p;
-	  XtVaSetValues (ew, XtNiconic, iconic_p, 0);
+	  XtVaSetValues (ew, XtNiconic, iconic_p, NULL);
 	}
     }
   
-  XtVaGetValues (app_shell, XtNgeometry, &geom, 0);
+  XtVaGetValues (app_shell, XtNgeometry, &geom, NULL);
   if (geom)
     app_flags = XParseGeometry (geom, &app_x, &app_y, &app_w, &app_h);
 
@@ -1467,11 +1467,11 @@ x_initialize_frame_size (struct frame *f)
       /* If the AppShell is iconic, then the EmacsFrame is iconic. */
       if (!ew_iconic_p)
 	{
-	  XtVaGetValues (app_shell, XtNiconic, &iconic_p, 0);
+	  XtVaGetValues (app_shell, XtNiconic, &iconic_p, NULL);
 	  if (iconic_p)
 	    {
 	      ew_iconic_p = iconic_p;
-	      XtVaSetValues (ew, XtNiconic, iconic_p, 0);
+	      XtVaSetValues (ew, XtNiconic, iconic_p, NULL);
 	    }
 	}
     }
@@ -1561,7 +1561,7 @@ x_layout_widgets (Widget w, XtPointer client_data, XtPointer call_data)
     /* The scrollbar positioning is completely handled by redisplay.  We
        just need to know which sides they are supposed to go on. */
     unsigned char scrollbar_placement;
-    XtVaGetValues (text, XtNscrollBarPlacement, &scrollbar_placement, 0);
+    XtVaGetValues (text, XtNscrollBarPlacement, &scrollbar_placement, NULL);
     f->scrollbar_on_left = (scrollbar_placement == XtTOP_LEFT ||
                             scrollbar_placement == XtBOTTOM_LEFT);
     f->scrollbar_on_top  = (scrollbar_placement == XtTOP_LEFT ||
@@ -1725,7 +1725,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
   /* Create the manager widget */
   container = XtVaCreateWidget ("container",
 				emacsManagerWidgetClass,
-				shell, 0);
+				shell, NULL);
   FRAME_X_CONTAINER_WIDGET (f) = container;
   XtAddCallback (container, XtNresizeCallback, x_layout_widgets,
 		 (XtPointer) f);
@@ -2068,7 +2068,7 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
 		 XtNwidth,       &shell_w,
 		 XtNheight,      &shell_h,
 		 XtNborderWidth, &shell_bord,
-		 0);
+		 NULL);
 
   win_gravity =
     xoff >= 0 && yoff >= 0 ? NorthWestGravity :
@@ -2088,7 +2088,7 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
 		 XtNwinGravity, win_gravity,
 		 XtNx, xoff,
 		 XtNy, yoff,
-		 0);
+		 NULL);
   
   /* Sometimes you will find that
 

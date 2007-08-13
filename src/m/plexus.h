@@ -86,11 +86,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Use the following on ld so we can use the gnu crt0 
    The plexus ld looks for start                      */
-#define LD_SWITCH_MACHINE -e __start
+#define LD_SWITCH_MACHINE "-e __start"
 
 /* Use the PW library, which contains alloca.  */
 
-#define LIB_STANDARD -lPW -lc
+#define LIB_STANDARD "-lPW -lc"
 
 /* crt0.c should use the vax-bsd style of entry, with no dummy args.  */
 

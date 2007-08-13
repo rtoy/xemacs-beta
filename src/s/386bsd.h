@@ -6,7 +6,7 @@
 #include "bsd4-3.h"
 
 #undef LIB_STANDARD
-#define LIB_STANDARD -lc $(GNULIB_VAR)
+#define LIB_STANDARD "-lc $(GNULIB_VAR)"
 
 /* The following should be set to /netbsd if you are running netbsd > 0.8 
    Or just link /netbsd -> /386bsd  */

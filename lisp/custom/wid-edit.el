@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.9916
+;; Version: 1.9931
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -296,8 +296,11 @@ size field."
     (when widget-field-add-space
       (insert-and-inherit " "))
     (setq to (point)))
-  (add-text-properties (1- to) to ;to (1+ to) 
-  		       '(front-sticky nil start-open t read-only to))
+  (if widget-field-add-space
+      (add-text-properties (1- to) to
+			   '(front-sticky nil start-open t read-only to))
+    (add-text-properties to (1+ to) 
+			 '(front-sticky nil start-open t read-only to)))
   (add-text-properties (1- from) from 
 		       '(rear-nonsticky t end-open t read-only from))
   (let ((map (widget-get widget :keymap))
@@ -359,6 +362,7 @@ size field."
    (save-restriction
      (let ((inhibit-read-only t)
 	   result
+	   before-change-functions
 	   after-change-functions)
        (insert "<>")
        (narrow-to-region (- (point) 2) (point))
@@ -375,7 +379,7 @@ size field."
 				 (:foreground "light gray"))
 				(((class grayscale color)
 				  (background light))
-				 (:foreground "dark gray"))
+				 (:foreground "dim gray"))
 				(t 
 				 (:italic t)))
   "Face used for inactive widgets."
@@ -435,6 +439,15 @@ later with `widget-put'."
 	     (setq missing nil))))
     value))
 
+(defun widget-get-indirect (widget property)
+  "In WIDGET, get the value of PROPERTY.
+If the value is a symbol, return its binding.  
+Otherwise, just return the value."
+  (let ((value (widget-get widget property)))
+    (if (symbolp value)
+	(symbol-value value)
+      value)))
+
 (defun widget-member (widget property)
   "Non-nil iff there is a definition in WIDGET for PROPERTY."
   (cond ((widget-plist-member (cdr widget) property)
@@ -471,10 +484,9 @@ ARGS are passed as extra arguments to the function."
 
 (defun widget-apply-action (widget &optional event)
   "Apply :action in WIDGET in response to EVENT."
-  (let (after-change-functions)
-    (if (widget-apply widget :active)
-	(widget-apply widget :action event)
-      (error "Attempt to perform action on inactive widget"))))
+  (if (widget-apply widget :active)
+      (widget-apply widget :action event)
+    (error "Attempt to perform action on inactive widget")))
 
 ;;; Helper functions.
 ;;
@@ -629,22 +641,26 @@ provide the fallback TAG as a part of the instantiator yourself."
   "In WIDGET, insert GLYPH.
 If optional arguments DOWN and INACTIVE are given, they should be
 glyphs used when the widget is pushed and inactive, respectively."
-  (set-glyph-property glyph 'widget widget)
-  (when down
-    (set-glyph-property down 'widget widget))
-  (when inactive
-    (set-glyph-property inactive 'widget widget))
+  (when widget
+    (set-glyph-property glyph 'widget widget)
+    (when down
+      (set-glyph-property down 'widget widget))
+    (when inactive
+      (set-glyph-property inactive 'widget widget)))
   (insert "*")
   (let ((ext (make-extent (point) (1- (point))))
-	(help-echo (widget-get widget :help-echo)))
+	(help-echo (and widget (widget-get widget :help-echo))))
     (set-extent-property ext 'invisible t)
+    (set-extent-property ext 'start-open t)
+    (set-extent-property ext 'end-open t)
     (set-extent-end-glyph ext glyph)
     (when help-echo
       (set-extent-property ext 'balloon-help help-echo)
       (set-extent-property ext 'help-echo help-echo)))
-  (widget-put widget :glyph-up glyph)
-  (when down (widget-put widget :glyph-down down))
-  (when inactive (widget-put widget :glyph-inactive inactive)))
+  (when widget
+    (widget-put widget :glyph-up glyph)
+    (when down (widget-put widget :glyph-down down))
+    (when inactive (widget-put widget :glyph-inactive inactive))))
 
 ;;; Buttons.
 
@@ -661,14 +677,6 @@ glyphs used when the widget is pushed and inactive, respectively."
   "String used as suffix for buttons."
   :type 'string
   :group 'widget-button)
-
-(defun widget-button-insert-indirect (widget key)
-  "Insert value of WIDGET's KEY property."
-  (let ((val (widget-get widget key)))
-    (while (and val (symbolp val))
-      (setq val (symbol-value val)))
-    (when val 
-      (insert val))))
 
 ;;; Creating Widgets.
 
@@ -768,6 +776,7 @@ The optional ARGS are additional keyword arguments."
 (defun widget-insert (&rest args)
   "Call `insert' with ARGS and make the text read only."
   (let ((inhibit-read-only t)
+	before-change-functions
 	after-change-functions
 	(from (point)))
     (apply 'insert args)
@@ -811,8 +820,10 @@ button end points."
 	(children (widget-get widget :children)))
     (set-marker from nil)
     (set-marker to nil)
-    (delete-overlay button)
-    (delete-overlay field)
+    (when button
+      (delete-overlay button))
+    (when field
+      (delete-overlay field))
     (mapcar 'widget-leave-text children)))
 
 ;;; Keymap and Commands.
@@ -1114,6 +1125,7 @@ When not inside a field, move to the previous button or field."
   "Setup current buffer so editing string widgets works."
   (let ((inhibit-read-only t)
 	(after-change-functions nil)
+	before-change-functions
 	field)
     (while widget-field-new
       (setq field (car widget-field-new)
@@ -1128,9 +1140,11 @@ When not inside a field, move to the previous button or field."
   (widget-clear-undo)
   ;; We need to maintain text properties and size of the editing fields.
   (make-local-variable 'after-change-functions)
-  (if (and widget-field-list)
-      (setq after-change-functions '(widget-after-change))
-    (setq after-change-functions nil)))
+  (make-local-variable 'before-change-functions)
+  (setq after-change-functions
+	(if widget-field-list '(widget-after-change) nil))
+  (setq before-change-functions
+	(if widget-field-list '(widget-before-change) nil)))
 
 (defvar widget-field-last nil)
 ;; Last field containing point.
@@ -1173,6 +1187,14 @@ Unlike (get-char-property POS 'field) this, works with empty fields too."
 	    (debug "Overlapping fields"))
 	  (setq found field))))
     found))
+
+(defun widget-before-change (from &rest ignore)
+  ;; This is how, for example, a variable changes its state to `modified'.
+  ;; when it is being edited.
+  (condition-case nil
+      (let ((field (widget-field-find from)))
+	(widget-apply field :notify field))
+    (error (debug "Before Change"))))
 
 (defun widget-after-change (from to old)
   ;; Adjust field size and text properties.
@@ -1319,9 +1341,9 @@ If that does not exists, call the value of `widget-complete-field'."
 		(insert "%"))
 	       ((eq escape ?\[)
 		(setq button-begin (point))
-		(widget-button-insert-indirect widget :button-prefix))
+		(insert (widget-get-indirect widget :button-prefix)))
 	       ((eq escape ?\])
-		(widget-button-insert-indirect widget :button-suffix)
+		(insert (widget-get-indirect widget :button-suffix))
 		(setq button-end (point)))
 	       ((eq escape ?\{)
 		(setq sample-begin (point)))
@@ -1390,7 +1412,8 @@ If that does not exists, call the value of `widget-complete-field'."
 					   (widget-get widget :value)))))
 		  (doc-text (and (stringp doc-try)
 				 (> (length doc-try) 1)
-				 doc-try)))
+				 doc-try))
+		  (doc-indent (widget-get widget :documentation-indent)))
 	     (when doc-text
 	       (and (eq (preceding-char) ?\n)
 		    (widget-get widget :indent)
@@ -1403,6 +1426,11 @@ If that does not exists, call the value of `widget-complete-field'."
 		 (setq doc-text (substring doc-text 0 (match-beginning 0))))
 	       (push (widget-create-child-and-convert
 		      widget 'documentation-string
+		      :indent (cond ((numberp doc-indent )
+				     doc-indent)
+				    ((null doc-indent)
+				     nil)
+				    (t 0))
 		      doc-text)
 		     buttons))))
 	  (t 
@@ -1423,6 +1451,7 @@ If that does not exists, call the value of `widget-complete-field'."
 	(to (widget-get widget :to))
 	(inactive-overlay (widget-get widget :inactive))
 	(button-overlay (widget-get widget :button-overlay))
+	before-change-functions
 	after-change-functions
 	(inhibit-read-only t))
     (widget-apply widget :value-delete)
@@ -1566,30 +1595,33 @@ If END is omitted, it defaults to the length of LIST."
   ;; Insert text representing the `on' and `off' states.
   (let* ((tag (or (widget-get widget :tag)
 		  (widget-get widget :value)))
+	 (tag-glyph (widget-get widget :tag-glyph))
 	 (text (concat widget-push-button-prefix
 		       tag widget-push-button-suffix))
 	 (gui (cdr (assoc tag widget-push-button-cache))))
-    (if (and (fboundp 'make-gui-button)
+    (cond (tag-glyph
+	   (widget-glyph-insert widget text tag-glyph))
+	  ((and (fboundp 'make-gui-button)
 	     (fboundp 'make-glyph)
 	     widget-push-button-gui
 	     (fboundp 'device-on-window-system-p)
 	     (device-on-window-system-p)
 	     (string-match "XEmacs" emacs-version))
-	(progn 
-	  (unless gui
-	    (setq gui (make-gui-button tag 'widget-gui-action widget))
-	    (push (cons tag gui) widget-push-button-cache))
-	  (widget-glyph-insert-glyph widget
-				     (make-glyph
-				      (list (nth 0 (aref gui 1))
-					    (vector 'string ':data text)))
-				     (make-glyph
-				      (list (nth 1 (aref gui 1))
-					    (vector 'string ':data text)))
-				     (make-glyph
-				      (list (nth 2 (aref gui 1))
-					    (vector 'string ':data text)))))
-      (insert text))))
+	   (unless gui
+	     (setq gui (make-gui-button tag 'widget-gui-action widget))
+	     (push (cons tag gui) widget-push-button-cache))
+	   (widget-glyph-insert-glyph widget
+				      (make-glyph
+				       (list (nth 0 (aref gui 1))
+					     (vector 'string ':data text)))
+				      (make-glyph
+				       (list (nth 1 (aref gui 1))
+					     (vector 'string ':data text)))
+				      (make-glyph
+				       (list (nth 2 (aref gui 1))
+					     (vector 'string ':data text)))))
+	  (t
+	   (insert text)))))
 
 (defun widget-gui-action (widget)
   "Apply :action for WIDGET."
@@ -2410,6 +2442,7 @@ when he invoked the menu."
   (save-excursion
     (let ((children (widget-get widget :children))
 	  (inhibit-read-only t)
+	  before-change-functions
 	  after-change-functions)
       (cond (before 
 	     (goto-char (widget-get before :entry-from)))
@@ -2436,6 +2469,7 @@ when he invoked the menu."
     (let ((buttons (copy-sequence (widget-get widget :buttons)))
 	  button
 	  (inhibit-read-only t)
+	  before-change-functions
 	  after-change-functions)
       (while buttons
 	(setq button (car buttons)
@@ -2447,6 +2481,7 @@ when he invoked the menu."
     (let ((entry-from (widget-get child :entry-from))
 	  (entry-to (widget-get child :entry-to))
 	  (inhibit-read-only t)
+	  before-change-functions
 	  after-change-functions)
       (widget-delete child)
       (delete-region entry-from entry-to)
@@ -2567,8 +2602,8 @@ when he invoked the menu."
   :format "%[%v%]"
   :button-prefix ""
   :button-suffix ""
-  :on "hide"
-  :off "show"
+  :on "Hide"
+  :off "Show"
   :value-create 'widget-visibility-value-create
   :action 'widget-toggle-action
   :match (lambda (widget value) t))
@@ -2584,19 +2619,26 @@ when he invoked the menu."
       (setq on ""))
     (if off
 	(setq off (concat widget-push-button-prefix
-			 off
-			 widget-push-button-suffix))
+			  off
+			  widget-push-button-suffix))
       (setq off ""))
     (if (widget-value widget)
 	(widget-glyph-insert widget on "down" "down-pushed")
-      (widget-glyph-insert widget off "right" "right-pushed")
-      (insert "..."))))
+      (widget-glyph-insert widget off "right" "right-pushed"))))
 
 ;;; The `documentation-link' Widget.
+;;
+;; This is a helper widget for `documentation-string'.
 
 (define-widget 'documentation-link 'link
   "Link type used in documentation strings."
+  :tab-order -1
+  :help-echo 'widget-documentation-link-echo-help
   :action 'widget-documentation-link-action)
+
+(defun widget-documentation-link-echo-help (widget)
+  "Tell what this link will describe."
+  (concat "Describe the `" (widget-get widget :value) "' symbol."))
 
 (defun widget-documentation-link-action (widget &optional event)
   "Run apropos on WIDGET's value.  Ignore optional argument EVENT."
@@ -2635,15 +2677,23 @@ link for that string."
 	  (type widget-documentation-link-type)
 	  (buttons (widget-get widget :buttons)))
       (save-excursion
-	(goto-char (point-min))
+	(goto-char from)
 	(while (re-search-forward regexp to t)
 	  (let ((name (match-string 1))
-		(begin (match-beginning 0))
-		(end (match-end 0)))
+		(begin (match-beginning 1))
+		(end (match-end 1)))
 	    (when (funcall predicate name)
 	      (push (widget-convert-button type begin end :value name)
 		    buttons)))))
-      (widget-put widget :buttons buttons))))
+      (widget-put widget :buttons buttons)))
+  (let ((indent (widget-get widget :indent)))
+    (when (and indent (not (zerop indent)))
+      (save-excursion 
+	(save-restriction
+	  (narrow-to-region from to)
+	  (goto-char (point-min))
+	  (while (search-forward "\n" nil t)
+	    (insert-char ?\  indent)))))))
 
 ;;; The `documentation-string' Widget.
 
@@ -2657,6 +2707,7 @@ link for that string."
 (defun widget-documentation-string-value-create (widget)
   ;; Insert documentation string.
   (let ((doc (widget-value widget))
+	(indent (widget-get widget :indent))
 	(shown (widget-get (widget-get widget :parent) :documentation-shown))
 	(start (point)))
     (if (string-match "\n" doc)
@@ -2667,12 +2718,15 @@ link for that string."
 	  (widget-documentation-link-add widget start (point))
 	  (push (widget-create-child-and-convert
 		 widget 'visibility
-		 :off nil
+		 :help-echo "Show or hide rest of the documentation."
+		 :off "More"
 		 :action 'widget-parent-action
 		 shown)
 		buttons)
 	  (when shown
 	    (setq start (point))
+	    (when (and indent (not (zerop indent)))
+	      (insert-char ?\  indent))
 	    (insert after)
 	    (widget-documentation-link-add widget start (point)))
 	  (widget-put widget :buttons buttons))
@@ -3015,7 +3069,9 @@ It will read a directory name from the minibuffer when invoked."
 (define-widget 'choice 'menu-choice
   "A union of several sexp types."
   :tag "Choice"
-  :format "%[%t%]: %v"
+  :format "%{%t%}: %[Value Menu%] %v"
+  :button-prefix 'widget-push-button-prefix
+  :button-suffix 'widget-push-button-suffix
   :prompt-value 'widget-choice-prompt-value)
 
 (defun widget-choice-prompt-value (widget prompt value unbound)
@@ -3080,7 +3136,11 @@ It will read a directory name from the minibuffer when invoked."
   "To be nil or non-nil, that is the question."
   :tag "Boolean"
   :prompt-value 'widget-boolean-prompt-value
-  :format "%[%t%]: %v\n")
+  :button-prefix 'widget-push-button-prefix
+  :button-suffix 'widget-push-button-suffix
+  :format "%{%t%}: %[Toggle%]  %v\n"
+  :on "on (non-nil)"
+  :off "off (nil)")
 
 (defun widget-boolean-prompt-value (widget prompt value unbound)
   ;; Toggle a boolean.

@@ -3271,6 +3271,21 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
   return Flist (len, args);
 }
 
+DEFUN ("mapvector", Fmapvector, 2, 2, 0, /*
+Apply FUNCTION to each element of SEQUENCE, making a vector of the results.
+The result is a vector of the same length as SEQUENCE.
+SEQUENCE may be a list, a vector or a string.
+*/
+       (fn, seq))
+{
+  int len = XINT (Flength (seq));
+  Lisp_Object *args = (Lisp_Object *) alloca (len * sizeof (Lisp_Object));
+
+  mapcar1 (len, args, fn, seq);
+
+  return Fvector (len, args);
+}
+
 DEFUN ("mapc-internal", Fmapc_internal, 2, 2, 0, /*
 Apply FUNCTION to each element of SEQUENCE.
 SEQUENCE may be a list, a vector, a bit vector, or a string.
@@ -3331,6 +3346,79 @@ This function looks at the value of the variable `features'.
 {
   CHECK_SYMBOL (feature);
   return NILP (Fmemq (feature, Vfeatures)) ? Qnil : Qt;
+}
+#else
+extern int emacs_major_version, emacs_minor_version;
+
+DEFUN ("featurep", Ffeaturep, 1, 1, 0, /*
+Return non-nil if feature expression FEXP is true.
+*/
+       (fexp))
+{
+  static double featurep_emacs_version;
+
+  /* Brute force translation from Erik Naggum's lisp function. */
+  if (SYMBOLP(fexp))
+    {
+      /* Original definition */
+      return NILP (Fmemq (fexp, Vfeatures)) ? Qnil : Qt;
+    }
+  else if (INTP(fexp) || FLOATP(fexp))
+    {
+      double d = extract_float(fexp);
+
+      if (featurep_emacs_version == 0.0)
+	{
+	  featurep_emacs_version = emacs_major_version +
+	    (emacs_minor_version / 100.0);
+	}
+      return (featurep_emacs_version >= d) ? Qt : Qnil;
+    }
+  else if (CONSP(fexp))
+    {
+      Lisp_Object tem;
+
+      tem = XCAR(fexp);
+      if (EQ(tem, Qnot))
+	{
+	  Lisp_Object negate = XCDR(fexp);
+
+	  if (!NILP(XCDR(fexp)))
+	    {
+	      return Fsignal(Qinvalid_read_syntax, list1(XCDR(fexp)));
+	    }
+	  else
+	    {
+	      return NILP(Ffeaturep(negate)) ? Qt : Qnil;
+	    }
+	}
+      else if (EQ(tem, Qand))
+	{
+	  tem = XCDR(fexp);
+	  while (!NILP(tem) && !NILP(Ffeaturep(XCAR(tem))))
+	    {
+	      tem = XCDR(tem);
+	    }
+	  return NILP(tem) ? Qt : Qnil;
+	}
+      else if (EQ(tem, Qor))
+	{
+	  tem = XCDR(fexp);
+	  while (!NILP(tem) && NILP(Ffeaturep(XCAR(tem))))
+	    {
+	      tem = XCDR(tem);
+	    }
+	  return NILP(tem) ? Qnil : Qt;
+	}
+      else
+	{
+	  return Fsignal(Qinvalid_read_syntax, list1(XCDR(fexp)));
+	}
+    }
+  else
+    {
+      return Fsignal(Qinvalid_read_syntax, list1 (fexp));
+    }
 }
 #endif
 
@@ -3465,12 +3553,13 @@ syms_of_fns (void)
   DEFSUBR (Ffillarray);
   DEFSUBR (Fnconc);
   DEFSUBR (Fmapcar);
+  DEFSUBR (Fmapvector);
   DEFSUBR (Fmapc_internal);
   DEFSUBR (Fmapconcat);
   DEFSUBR (Fload_average);
-#ifndef FEATUREP_SYNTAX
+/*#ifndef FEATUREP_SYNTAX*/
   DEFSUBR (Ffeaturep);
-#endif
+/*#endif*/
   DEFSUBR (Frequire);
   DEFSUBR (Fprovide);
 }

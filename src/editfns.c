@@ -775,20 +775,20 @@ user is returned, or nil.  USER may be either a login name or a uid.
 */
        (user))
 {
-  Lisp_Object uname = (STRINGP (user) ? user : Fuser_login_name (user));
+  Lisp_Object user_name = (STRINGP (user) ? user : Fuser_login_name (user));
   struct passwd *pw = NULL;
   Lisp_Object tem;
   char *p, *q;
   
-  if (!NILP (uname))		/* nil when nonexistent UID passed as arg */
+  if (!NILP (user_name))	/* nil when nonexistent UID passed as arg */
     {
-      CONST char *uname_ext;
+      CONST char *user_name_ext;
       
       /* Fuck me.  getpwnam() can call select() and (under IRIX at least)
 	 things get wedged if a SIGIO arrives during this time. */
-      GET_C_STRING_OS_DATA_ALLOCA (uname, uname_ext);
+      GET_C_STRING_OS_DATA_ALLOCA (user_name, user_name_ext);
       slow_down_interrupts ();
-      pw = (struct passwd *) getpwnam (uname_ext);
+      pw = (struct passwd *) getpwnam (user_name_ext);
       speed_up_interrupts ();
     }
 
@@ -814,10 +814,10 @@ user is returned, or nil.  USER may be either a login name or a uid.
       /* Substitute the login name for the &, upcasing the first character.  */
       if (q)
 	{
-	  char *r = (char *) alloca (strlen (p) + XSTRING_LENGTH (uname) + 1);
+	  char *r = (char *) alloca (strlen (p) + XSTRING_LENGTH (user_name) + 1);
 	  memcpy (r, p, q - p);
 	  r[q - p] = 0;
-	  strcat (r, (char *) XSTRING_DATA (uname));
+	  strcat (r, (char *) XSTRING_DATA (user_name));
 	  /* #### current_buffer dependency! */
 	  r[q - p] = UPCASE (current_buffer, r[q - p]);
 	  strcat (r, q + 1);

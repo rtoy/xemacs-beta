@@ -23,8 +23,8 @@ NOTE-END  */
 /* In case we are using floating point, work together with crt0.c.  */
 
 #ifndef __GNUC__
-#define C_SWITCH_MACHINE -ffpa
+#define C_SWITCH_MACHINE "-ffpa"
 #endif
 
 #define sun_fpa
-#define START_FILES crt0.o /usr/lib/Wcrt1.o
+#define START_FILES "crt0.o /usr/lib/Wcrt1.o"

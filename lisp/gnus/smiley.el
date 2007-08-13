@@ -53,12 +53,12 @@
 ;; two alists below.
 
 (defcustom smiley-deformed-regexp-alist
-  '(("(?\\(\\^_?\\^;;;\\)\\()\\|\\W\\|[^\000-\177]\\)" 1 "Face_ase3.xbm")
-    ("(?\\(\\^_?\\^;;\\)\\()\\|\\W\\|[^\000-\177]\\)" 1 "Face_ase2.xbm")
-    ("(?\\(\\^_?\\^;\\)\\()\\|\\W\\|[^\000-\177]\\)" 1 "Face_ase.xbm")
-    ("(\\(\\^_?\\^\\)\\()\\|\\W\\|[^\000-\177]\\)" 1 "Face_smile.xbm")
-    ("(\\(;_?;\\))" 1 "Face_weep.xbm")
-    ("(\\(T_?T\\))" 1 "Face_weep.xbm")
+  '(("\\(\\^_?\\^;;;\\)\\W" 1 "WideFaceAse3.xbm")
+    ("\\(\\^_?\\^;;\\)\\W" 1 "WideFaceAse2.xbm")
+    ("\\(\\^_?\\^;\\)\\W" 1 "WideFaceAse1.xbm")
+    ("\\(\\^_?\\^\\)\\W" 1 "WideFaceSmile.xbm")
+    ("\\(\\;_;\\)\\W" 1 "WideFaceWeep.xbm")
+    ("\\(\\T_T\\)\\W" 1 "WideFaceWeep.xbm")
     ("\\(:-*[<«]+\\)\\W" 1 "FaceAngry.xpm")
     ("\\(:-+\\]+\\)\\W" 1 "FaceGoofy.xpm")
     ("\\(:-*D\\)\\W" 1 "FaceGrinning.xpm")
@@ -81,13 +81,7 @@
   :group 'smiley)
 
 (defcustom smiley-nosey-regexp-alist
-  '(("(?\\(\\^_?\\^;;;\\)\\()\\|\\W\\|[^\000-\177]\\)" 1 "Face_ase3.xbm")
-    ("(?\\(\\^_?\\^;;\\)\\()\\|\\W\\|[^\000-\177]\\)" 1 "Face_ase2.xbm")
-    ("(?\\(\\^_?\\^;\\)\\()\\|\\W\\|[^\000-\177]\\)" 1 "Face_ase.xbm")
-    ("(\\(\\^_?\\^\\)\\()\\|\\W\\|[^\000-\177]\\)" 1 "Face_smile.xbm")
-    ("(\\(;_?;\\))" 1 "Face_weep.xbm")
-    ("(\\(T_?T\\))" 1 "Face_weep.xbm")
-    ("\\(:-+[<«]+\\)\\W" 1 "FaceAngry.xpm")
+  '(("\\(:-+[<«]+\\)\\W" 1 "FaceAngry.xpm")
     ("\\(:-+\\]+\\)\\W" 1 "FaceGoofy.xpm")
     ("\\(:-+D\\)\\W" 1 "FaceGrinning.xpm")
     ("\\(:-+[}»]+\\)\\W" 1 "FaceHappy.xpm")

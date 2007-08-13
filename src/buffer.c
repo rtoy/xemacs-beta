@@ -2827,7 +2827,7 @@ init_buffer (void)
 
   Fset_buffer (Fget_buffer_create (QSscratch));
 
-  /* If PWD is accurate, use it instead of calling getwd.  This is faster
+  /* If PWD is accurate, use it instead of calling getcwd.  This is faster
      when PWD is right, and may avoid a fatal error.  */
   if ((pwd = getenv ("PWD")) != 0 && IS_DIRECTORY_SEP (*pwd)
       && stat (pwd, &pwdstat) == 0
@@ -2836,8 +2836,8 @@ init_buffer (void)
       && dotstat.st_dev == pwdstat.st_dev
       && (int) strlen (pwd) < MAXPATHLEN)
     strcpy (buf, pwd);
-  else if (getwd (buf) == 0)
-    fatal ("`getwd' failed: errno %d\n", errno);
+  else if (getcwd (buf, MAXPATHLEN) == NULL)
+    fatal ("`getcwd' failed: %s\n", strerror (errno));
 
 #ifndef VMS
   /* Maybe this should really use some standard subroutine

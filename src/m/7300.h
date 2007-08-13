@@ -82,8 +82,8 @@ Boston, MA 02111-1307, USA.  */
    both of which have been fixed now. */
 #define SECTION_ALIGNMENT 0x03ff
 #define SEGMENT_MASK 0xffff
-#define LD_SWITCH_MACHINE -z
+#define LD_SWITCH_MACHINE "-z"
 
 /* Insist on using cc when compiling this.  GCC may have been
    configured to use GAS syntax, which causes problems.  */
-#define CRT0_COMPILE cc -c -O -Demacs
+#define CRT0_COMPILE "cc -c -O -Demacs"

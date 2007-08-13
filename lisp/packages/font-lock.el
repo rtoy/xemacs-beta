@@ -1611,22 +1611,29 @@ Returns whether it is indistinguishable from the default face."
    (list
     ;;
     ;; Control structures.  ELisp and CLisp combined.
-;      (make-regexp
-;       '("cond" "if" "while" "let\\*?" "prog[nv12*]?" "catch" "throw"
-;	 "save-restriction" "save-excursion" "save-window-excursion"
-;	 "save-selected-window" "save-match-data" "unwind-protect"
-;	 "condition-case" "track-mouse"
-;	 "eval-after-load" "eval-and-compile" "eval-when-compile"
-;	 "when" "unless" "do" "flet" "labels" "return" "return-from"))
+    ;;
+    ;;(make-regexp
+    ;;  '("cond" "if" "while" "let\\*?" "prog[nv12*]?" "catch" "throw"
+    ;;    "save-restriction" "save-excursion" "save-window-excursion"
+    ;;    "save-current-buffer" "with-current-buffer"
+    ;;    "with-temp-file" "with-output-to-.+"
+    ;;    "save-selected-window" "save-match-data" "unwind-protect"
+    ;;    "condition-case" "track-mouse" "autoload"
+    ;;    "eval-after-load" "eval-and-compile" "eval-when-compile"
+    ;;    "when" "unless" "do" "flet" "labels" "lambda"
+    ;;    "return" "return-from"))
+    ;;
     (cons
      (concat
       "(\\("
-      "\\(c\\(atch\\|ond\\(\\|ition-case\\)\\)\\|do\\|"
-      "eval-\\(a\\(fter-load\\|nd-compile\\)\\|when-compile\\)\\|flet\\|"
-      "if\\|l\\(abels\\|et\\*?\\)\\|prog[nv12*]?\\|return\\(\\|-from\\)\\|"
-      "save-\\(excursion\\|match-data\\|restriction\\|selected-window\\|"
-      "window-excursion\\)\\|t\\(hrow\\|rack-mouse\\)\\|"
-      "un\\(less\\|wind-protect\\)\\|wh\\(en\\|ile\\)\\)"
+      "autoload\\|c\\(atch\\|ond\\(\\|ition-case\\)\\)\\|do\\|"
+      "eval-\\(a\\(fter-load\\|nd-compile\\)\\|when-compile\\)\\|"
+      "flet\\|if\\|l\\(a\\(bels\\|mbda\\)\\|et\\*?\\)\\|prog[nv12*]?\\|"
+      "return\\(\\|-from\\)\\|save-\\(current-buffer\\|excursion\\|"
+      "match-data\\|restriction\\|selected-window\\|window-excursion\\)\\|"
+      "t\\(hrow\\|rack-mouse\\)\\|un\\(less\\|wind-protect\\)\\|"
+      "w\\(h\\(en\\|ile\\)\\|ith-\\(current-buffer\\|output-to-.+\\|"
+      "temp-file\\)\\)"
       "\\)\\>") 1)
     ;;
     ;; Words inside \\[] tend to be for `substitute-command-keys'.

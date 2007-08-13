@@ -118,7 +118,7 @@ Boston, MA 02111-1307, USA.  */
 /* This machine requires completely different unexec code
    which lives in a separate file.  Specify the file name.  */
 
-#define UNEXEC unexhp9k800.o
+#define UNEXEC "unexhp9k800.o"
 
 #define LIBS_MACHINE
 #define LIBS_DEBUG

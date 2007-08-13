@@ -95,7 +95,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Alliant needs special crt0.o because system version is not reentrant */
 
-#define START_FILES crt0.o
+#define START_FILES "crt0.o"
 
 /* Alliant dependent code for dumping executing image.
    See crt0.c code for alliant.  */

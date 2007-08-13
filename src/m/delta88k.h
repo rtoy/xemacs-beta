@@ -113,7 +113,7 @@ Boston, MA 02111-1307, USA.  */
 #else
 #undef LIB_X11_LIB /* We don't have the shared libs as assumed in usg5-3.h. */
 #undef LIBX11_SYSTEM
-#define LIBX11_SYSTEM -lnsl -lbsd
+#define LIBX11_SYSTEM "-lnsl -lbsd"
 #endif /* USG5_4 */
 
 
@@ -122,9 +122,9 @@ Boston, MA 02111-1307, USA.  */
    we always need -lgen and usg5-4.h doesn't use it. */
 #undef LIBS_SYSTEM
 #ifdef USG5_4
-#define LIBS_SYSTEM -lsocket -lnsl -lelf -lgen
+#define LIBS_SYSTEM "-lsocket -lnsl -lelf -lgen"
 #else
-#define LIBS_SYSTEM -lbsd -lg
+#define LIBS_SYSTEM "-lbsd -lg"
 #endif /* USG5_4 */
 
 #define NO_TERMIO

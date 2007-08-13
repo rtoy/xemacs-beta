@@ -373,10 +373,6 @@ Enable mouse help in Emacs by default.
 Add an easy way to display the standard settings when an item is modified.
 
 @item
-Option or command to create new buffer instead of expanding a group
-inline. 
-
-@item
 See if it is feasible to scan files for customization information
 instead of loading them, 
 
@@ -385,6 +381,25 @@ Add hint message when user push a non-pushable tag.
 
 Suggest that the user unhide if hidden, and edit the value directly
 otherwise.
+
+@item
+Use checkboxes and radio buttons in the state menus.
+
+@item
+Add option to hide @samp{[hide]} for short options.  Default, on.
+
+@item 
+Add option to hide @samp{[state]} for options with their standard
+settings.
+
+@item 
+There should be a way to specify site defaults for user options.
+
+@item
+There should be more buffer styles.  The default `nested style, the old
+`outline' style, a `numeric' style with numbers instead of stars, an
+`empty' style with just the group name, and `compact' with only one line
+per item.
 
 @end itemize
 

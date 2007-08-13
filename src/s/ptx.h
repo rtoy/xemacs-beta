@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
  
 /* Leave out -lPW since it conflicts with term.o and because we're not sure 
    if the alloca found there by autoconf should be trusted on PTX.  */
-#define LIB_STANDARD -lc
+#define LIB_STANDARD "-lc"
 
 #ifndef HAVE_SOCKETS /* determined by configure */
 #define NO_SUBPROCESSES
@@ -48,16 +48,16 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_X_WINDOWS
 
-#define LIBX11_SYSTEM -lsocket -linet -lnsl
+#define LIBX11_SYSTEM "-lsocket -linet -lnsl"
 /* This is also defined so that lib-src/profile can link.  */
-#define LIBS_SYSTEM -lseq
+#define LIBS_SYSTEM "-lseq"
 
 #else /* ! HAVE_X_WINDOWS */
 
 #ifdef HAVE_SOCKETS
-#define LIBS_SYSTEM -lsocket -linet -lnsl -lseq
+#define LIBS_SYSTEM "-lsocket -linet -lnsl -lseq"
 #else
-#define LIBS_SYSTEM -lseq
+#define LIBS_SYSTEM "-lseq"
 #endif
 
 #endif /* ! HAVE_X_WINDOWS */

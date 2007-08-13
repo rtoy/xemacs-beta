@@ -6,6 +6,7 @@ README	    	-- This file
 Makefile	-- Automated installation file
 
 viper.el    	-- Viper Emacs Lisp code
+viper-cmd.el   	-- Viper Emacs Lisp code
 viper-macs.el	-- Viper Emacs Lisp code
 viper-ex.el	-- Viper Emacs Lisp code
 viper-init.el	-- Viper Emacs Lisp code
@@ -13,8 +14,7 @@ viper-util.el	-- Viper Emacs Lisp code
 viper-mous.el	-- Viper Emacs Lisp code
 viper-keym.el	-- Viper Emacs Lisp code
 
-viper.texi  	-- Manual in Texinfo format, main part
-viper-cmd.texi  -- Command reference part of the manual
+viper.texi  	-- Manual in Texinfo format
 
 viperCard.tex   -- Reference card in TeX format
 

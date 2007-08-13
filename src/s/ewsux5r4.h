@@ -20,5 +20,5 @@
 #endif
 
 #ifndef __GNUC__
-#define C_DEBUG_SWITCH -O  -KOlimit=2000 -ZXNd=5000
+#define C_DEBUG_SWITCH "-O  -KOlimit=2000 -ZXNd=5000"
 #endif

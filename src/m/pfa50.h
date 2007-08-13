@@ -44,12 +44,12 @@ Boston, MA 02111-1307, USA.  */
 /* Define START_FILES if your machine used _start.
  */
 
-#define START_FILES crt0.o
+#define START_FILES "crt0.o"
 
 /* Define LD_SWITCH_MACHINE if your linker needs it.
  */
 
-#define LD_SWITCH_MACHINE -e __start
+#define LD_SWITCH_MACHINE "-e __start"
 
 #if	pfa50 || pfa70
 
@@ -62,7 +62,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* SX/A has alloca in the PW library.  */
 
-#define LIB_STANDARD -lPW -lc
+#define LIB_STANDARD "-lPW -lc"
 #define HAVE_ALLOCA
 
 /* SX/A uses terminfo and lib/curses   */

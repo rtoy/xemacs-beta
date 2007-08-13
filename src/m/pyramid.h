@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Don't use the ordinary -g for debugging in cc */
 
-#define C_DEBUG_SWITCH -gx
+#define C_DEBUG_SWITCH "-gx"
 
 /* Reenable this #define for old versions of the Pyramid system.  */
 

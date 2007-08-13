@@ -64,19 +64,19 @@ Boston, MA 02111-1307, USA.  */
  * SMX--If you are using 32 bit (COFF) use "-N", else don't use anything.
  */
 
-#define LD_SWITCH_MACHINE -N -T32 -e __start
+#define LD_SWITCH_MACHINE "-N -T32 -e __start"
 
 /* If you are compiling for a 68020, then use -lc32 else use -lc */
 
-#define LIB_STANDARD -lc32
+#define LIB_STANDARD "-lc32"
 
 /* Fore 16 bit, -linet, for 32 bit -linet32 (be sure you have it!). */
 
-#define LIBS_MACHINE -linet32
+#define LIBS_MACHINE "-linet32"
 
 /* Use -T32 for 68020, -T16 otherwise */
 
-#define C_SWITCH_MACHINE -T32
+#define C_SWITCH_MACHINE "-T32"
 
 #define BROKEN_SIGIO
 

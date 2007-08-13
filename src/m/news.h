@@ -54,5 +54,5 @@ NOTE-END  */
 
 /* Must use the system's termcap.  It does special things.  */
 
-#define LIBS_TERMCAP -ltermcap
+#define LIBS_TERMCAP "-ltermcap"
 

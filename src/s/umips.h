@@ -7,12 +7,12 @@
 #ifdef BSD
 #include "bsd4-3.h"
 
-#define C_SWITCH_SYSTEM -systype bsd43
-#define LD_SWITCH_SYSTEM -systype bsd43
-#define LIBS_SYSTEM -lmld
+#define C_SWITCH_SYSTEM "-systype bsd43"
+#define LD_SWITCH_SYSTEM "-systype bsd43"
+#define LIBS_SYSTEM "-lmld"
 #define LIBS_DEBUG
-#define START_FILES pre-crt0.o /lib/crt1.o
-#define LIB_STANDARD -lc /usr/lib/crtn.o
+#define START_FILES "pre-crt0.o /lib/crt1.o"
+#define LIB_STANDARD "-lc /usr/lib/crtn.o"
 
 #define COFF
 #define TERMINFO
@@ -23,13 +23,13 @@
 #define DONT_DEFINE_NO_REMAP /* `static' hack not needed */
 #include "usg5-2-2.h"
 
-#define LIBS_SYSTEM -lmld
+#define LIBS_SYSTEM "-lmld"
 #define LIBS_DEBUG
-#define START_FILES pre-crt0.o /usr/lib/crt1.o
-#define LIB_STANDARD -lbsd -lc /usr/lib/crtn.o
+#define START_FILES "pre-crt0.o /usr/lib/crt1.o"
+#define LIB_STANDARD "-lbsd -lc /usr/lib/crtn.o"
 /* #define LIBS_TERMCAP -lcurses */
 
-#define C_SWITCH_SYSTEM -I/usr/include/bsd
+#define C_SWITCH_SYSTEM "-I/usr/include/bsd"
 
 /* Don't try to use SIGIO even though it is defined.  */
 #define BROKEN_SIGIO

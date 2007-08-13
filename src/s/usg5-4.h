@@ -32,23 +32,23 @@ Boston, MA 02111-1307, USA.  */
 
 #define USG5_4
 
-#define LIBS_SYSTEM -lsocket -lnsl -lelf
+#define LIBS_SYSTEM "-lsocket -lnsl -lelf"
 #define ORDINARY_LINK
 
 #if 0
 #ifdef ORDINARY_LINK
-#define LIB_STANDARD -lc /usr/ucblib/libucb.a
+#define LIB_STANDARD "-lc /usr/ucblib/libucb.a"
 #else
-#define START_FILES pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o
-#define LIB_STANDARD -lc /usr/ucblib/libucb.a /usr/ccs/lib/crtn.o
+#define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o"
+#define LIB_STANDARD "-lc /usr/ucblib/libucb.a /usr/ccs/lib/crtn.o"
 #endif
 #else
 
 #ifdef ORDINARY_LINK
 #define LIB_STANDARD
 #else
-#define START_FILES pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o
-#define LIB_STANDARD -lc /usr/ccs/lib/crtn.o
+#define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o"
+#define LIB_STANDARD "-lc /usr/ccs/lib/crtn.o"
 #endif
 #endif
 
@@ -64,7 +64,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef COFF
 
-#define UNEXEC unexelf.o
+#define UNEXEC "unexelf.o"
 
 /* Get <sys/ttold.h> to get struct
  * tchars. But get <termio.h> first to make sure ttold.h doesn't

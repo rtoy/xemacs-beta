@@ -82,7 +82,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Must use the system's termcap.  It does special things.  */
   
-#define LIBS_TERMCAP -ltermcap
+#define LIBS_TERMCAP "-ltermcap"
   
 /* Define NO_REMAP if memory segmentation makes it not work well
    to change the boundary between the text section and data section
@@ -103,7 +103,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Convex uses a special version of unexec.  */
 
-#define UNEXEC unexconvex.o
+#define UNEXEC "unexconvex.o"
 
 /* you gotta define 'COFF' for post 6.1 unexec. */
 
@@ -112,9 +112,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Posix stuff for Convex OS 8.1 and up. */
 
-#define LD_SWITCH_MACHINE \
-    -e__start -L /usr/lib \
-    '-A__iob=___ap$$iob' '-A_use_libc_sema=___ap$$use_libc_sema'
+#define LD_SWITCH_MACHINE "-e__start -L /usr/lib '-A__iob=___ap$$iob' '-A_use_libc_sema=___ap$$use_libc_sema'"
 
 #ifdef _POSIX_SOURCE
 
@@ -138,11 +136,10 @@ Boston, MA 02111-1307, USA.  */
 /*
  * Force a K&R compilation and libraries with the Convex V 4.0 C compiler
  */
-#define C_SWITCH_MACHINE -pcc
-#define LIB_STANDARD -lc_old
-#define LIBS_MACHINE -lC2_old
-#define LD_SWITCH_MACHINE -X -NL -fn -Enoposix -A__iob=___ap\$$iob \
- -A_use_libc_sema=___ap\$$use_libc_sema -L /usr/lib
+#define C_SWITCH_MACHINE "-pcc"
+#define LIB_STANDARD "-lc_old"
+#define LIBS_MACHINE "-lC2_old"
+#define LD_SWITCH_MACHINE "-X -NL -fn -Enoposix -A__iob=___ap\$$iob  -A_use_libc_sema=___ap\$$use_libc_sema -L /usr/lib"
 #endif
 
 /* Avoid error in xrdb.c - d.m.cooke@larc.nasa.gov.  */
@@ -152,7 +149,7 @@ Boston, MA 02111-1307, USA.  */
 #define GETPGRP_NO_ARG
 
 /* Tested for both Convex C and GNUC by d.m.cooke@larc.nasa.gov.  */
-#define LIBS_MACHINE -lC2
+#define LIBS_MACHINE "-lC2"
 
 /* Avoid error in getloadavg.c.  */
 #define NLIST_NAME_UNION  1
@@ -162,12 +159,10 @@ Boston, MA 02111-1307, USA.  */
 	  and report the results.  */
 /* gcc -nostdlib prevents some math symbols from being included.
    So we have to use -nostartfiles instead. */
-#define LINKER $(CC) -nostartfiles
+#define LINKER "$(CC) -nostartfiles"
 
 #define ORDINARY_LINK
 
 #undef LD_SWITCH_MACHINE
-#define LD_SWITCH_MACHINE \
-    -L /usr/lib \
-    '-A__iob=___ap$$iob' '-A_use_libc_sema=___ap$$use_libc_sema'
+#define LD_SWITCH_MACHINE "-L /usr/lib '-A__iob=___ap$$iob' '-A_use_libc_sema=___ap$$use_libc_sema'"
 #endif

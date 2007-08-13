@@ -178,4 +178,4 @@ NOTE-END */
 /* We use the system's crt0.o.  Somehow it avoids losing
    with `environ' the way most standard crt0.o's do.  */
 
-#define START_FILES pre-crt0.o /lib/crt0.o
+#define START_FILES "pre-crt0.o /lib/crt0.o"

@@ -1,48 +1,35 @@
-/*  Makefile for lib-src subdirectory in XEmacs.
+##   Makefile for lib-src subdirectory in XEmacs.
+##   Copyright (C) 1985, 1987, 1988, 1993, 1994 Free Software Foundation, Inc.
+##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 
-Copyright (C) 1985, 1987, 1988, 1993, 1994 Free Software Foundation, Inc.
+## This file is part of XEmacs.
 
-This file is part of XEmacs.
+## XEmacs is free software; you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by the
+## Free Software Foundation; either version 2, or (at your option) any
+## later version.
 
-XEmacs is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+## XEmacs is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
 
-XEmacs is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+## You should have received a copy of the GNU General Public License
+## along with XEmacs; see the file COPYING.  If not, write to
+## the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+## Boston, MA 02111-1307, USA.
 
-You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to the Free
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+## Note: FSF Makefile.in.in does something weird so that the comments
+## above a certain point in this file are in shell format instead of
+## in C format.  How the hell is this supposed to work? */
 
-/* Note: FSF Makefile.in.in does something weird so that the comments
-   above a certain point in this file are in shell format instead of
-   in C format.  How the hell is this supposed to work? */
-
-/* Avoid trouble on systems where the "SHELL" variable might be
-   inherited from the environment. */
 SHELL = /bin/sh
+RM = rm -f
 
-/* Some people use these in paths they define.
-   This is a horrible kludge - should we really use CPP
-   to pre-process Makefiles? */
-#undef sparc
-#undef sun
-#undef unix
-#undef sgi
-#undef NeXT
-#undef mips
-#undef i386
-#undef linux
-
-/* For performance and consistency, no built-in rules */
+## For performance and consistency, no built-in rules
 .SUFFIXES:
 .SUFFIXES: .c .o .i .h
-/* ==================== Things "configure" will edit ==================== */
+## ==================== Things "configure" will edit ====================
 
 CC=@CC@
 CPP=@CPP@
@@ -54,72 +41,37 @@ YACC=@YACC@
 LN_S=@LN_S@
 version=@version@
 
-/* ==================== Where To Install Things ==================== */
+## ==================== Where To Install Things ====================
 
-/* The default location for installation.  Everything is placed in
-   subdirectories of this directory.  The default values for many of
-   the variables below are expressed in terms of this one, so you may
-   not need to change them.  This is set with the --prefix option to
-   "../configure". */
 prefix=@prefix@
-
-/* Like "prefix", but used for architecture-specific files.  This is
-   set with the "--exec-prefix" option to "../configure". */
 exec_prefix=@exec_prefix@
-
-/* Where to install Emacs and other binaries that people will want to
-   run directly (like etags).  This is set with the "--bindir" option
-   to "../configure". */
 bindir=@bindir@
-
-/* Where to install and expect executable files to be run by Emacs
-   rather than directly by users, and other architecture-dependent
-   data.  ${archlibdir} is usually below this.  This is set with the
-   --libdir option to "../configure". */
 libdir=@libdir@
-
-/* Where to find the source code.  This is set by the configure
-   "--srcdir" option.  However, the value of ${srcdir} in
-   this makefile is not identical to what was specified with --srcdir,
-   since the variable here has "/lib-src" appended to the end. */
 srcdir=@srcdir@
-
-/* ==================== Emacs-specific directories ==================== */
-
-/* These variables hold the values Emacs will actually use.  They are
-   based on the values of the standard Make variables above.
-
-   Where to put executables to be run by Emacs rather than the user.
-   This path usually includes the Emacs version and configuration name,
-   so that multiple configurations for multiple versions of Emacs may
-   be installed at once.  This can be set with the --archlibdir option
-   to "../configure". */
 archlibdir=@archlibdir@
 
-/* ==================== Utility Programs for the Build ================= */
+## ==================== Utility Programs for the Build =================
 
-/* ../configure figures out the correct values for these. */
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-/* ========================== Lists of Files =========================== */
+## ========================== Lists of Files ===========================
 
-/* Things that a user might actually run,
-   which should be installed in bindir. */
+## Things that a user might actually run,
+## which should be installed in bindir.
 INSTALLABLES = etags ctags b2m gnuclient
-INSTALLABLE_SCRIPTS = rcs-checkin pstogif install-sid send-pr gnudoit
+INSTALLABLE_SCRIPTS = rcs-checkin pstogif install-sid send-pr gnudoit gnuattach
 
-/* Things that Emacs runs internally, or during the build process,
-   which should not be installed in bindir. */
+## Things that Emacs runs internally, or during the build process,
+## which should not be installed in bindir.
 UTILITIES= make-path wakeup profile make-docfile digest-doc \
 	sorted-doc movemail cvtmail fakemail yow hexl \
 	gnuserv mmencode
-/* These need to be conditional on I18N3
-	make-msgfile make-po */
+## These need to be conditional on I18N3 make-msgfile make-po
 
-/* Like UTILITIES, but they are not system-dependent, and should not be
-   deleted by the distclean target. */
+## Like UTILITIES, but they are not system-dependent, and should not be
+## deleted by the distclean target.
 TM_SCRIPTS=tm-au tm-file tm-html tm-image tm-mpeg tm-plain tm-ps tmdecode
 SCRIPTS= rcs2log vcdiff gzip-el.sh install-sid send-pr $(TM_SCRIPTS)
 
@@ -127,80 +79,43 @@ EXECUTABLES= ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS}
 
 SOURCES = COPYING ChangeLog Makefile.in.in README aixcc.lex emacs.csh \
 	makedoc.com *.[chy] $(SCRIPTS)
-/*
-# Additional -D flags for movemail (add to MOVE_FLAGS if desired):
-# MAIL_USE_POP		Support mail retrieval from a POP mailbox.
-# MAIL_USE_MMDF		Support MMDF mailboxes.
-# MAIL_USE_FLOCK	Use flock for file locking (see the comments
-#			about locking in movemail.c)
-# MAIL_UNLINK_SPOOL	Unlink the user spool mailbox after reading
-#			it (instead of just emptying it).
-# KERBEROS		Support Kerberized POP.
-# KRB5			Support Kerberos Version 5 pop instead of
-#			Version 4 (define this in addition to
-#			KERBEROS).
-# HESIOD		Support Hesiod lookups of user mailboxes.
-# MAILHOST		A string, the host name of the default POP
-#			mail host for the site.
-*/
+## Additional -D flags for movemail (add to MOVE_FLAGS if desired):
+## MAIL_USE_POP		Support mail retrieval from a POP mailbox.
+## MAIL_USE_MMDF		Support MMDF mailboxes.
+## MAIL_USE_FLOCK	Use flock for file locking (see the comments
+##			about locking in movemail.c)
+## MAIL_UNLINK_SPOOL	Unlink the user spool mailbox after reading
+##			it (instead of just emptying it).
+## KERBEROS		Support Kerberized POP.
+## KRB5			Support Kerberos Version 5 pop instead of
+##			Version 4 (define this in addition to
+##			KERBEROS).
+## HESIOD		Support Hesiod lookups of user mailboxes.
+## MAILHOST		A string, the host name of the default POP
+##			mail host for the site.
+
 MOVE_FLAGS=
-/*
-# Additional libraries for movemail:
-# For KERBEROS
-# MOVE_LIBS= -lkrb -ldes -lcom_err
-# For KERBEROS + KRB5
-# MOVE_LIBS= -lkrb5 -lcrypto -lisode -lcom_err
-# Add "-lhesiod" if HESIOD is defined.
-*/
+##
+## Additional libraries for movemail:
+## For KERBEROS
+## MOVE_LIBS= -lkrb -ldes -lcom_err
+## For KERBEROS + KRB5
+## MOVE_LIBS= -lkrb5 -lcrypto -lisode -lcom_err
+## Add "-lhesiod" if HESIOD is defined.
+
 MOVE_LIBS=
 
-/* ========================== start of cpp stuff ======================= */
-
-/* From here on, comments must be done in C syntax. (see comment above
-   about this.) */
+## ========================== start of cpp stuff =======================
 
 #define NO_SHORTNAMES
-#define THIS_IS_YMAKEFILE
 #define NOT_C_CODE
 #include "../src/config.h"
 
-/* With the traditional VPATH setting, it is not possible to
-   simultaneously compile in-place and in another directory.  The
-   mistaken definition is that *all* dependencies are searched for in
-   the VPATH directory, rather than just the dependencies that are not
-   themselves targets.  Thus, if there is an up-to-date .o file in the
-   in-place location, it will not get recompiled in the not-in-place
-   location.
-
-   The GNU Make "vpath" directive continues this tradition, but at
-   least lets you restrict the classes of files that it applies to.
-   This allows us to kludge around the problem. */
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
 vpath %.h @srcdir@
-/* now list files that should NOT be searched in the srcdir.
-   This includes any .c or .h built from something else
-   (e.g. a .in file). */
-/* none here */
 #else
 VPATH=@srcdir@
-#endif
-
-/* We will not really call alloca;
-   do not let the file name alloca.c get messed up.  */
-#undef alloca
-
-#undef MOVEMAIL_NEEDS_BLESSING
-#ifndef MAIL_USE_FLOCK
-#ifndef MAIL_USE_LOCKF
-#define MOVEMAIL_NEEDS_BLESSING
-#endif
-#endif
-
-#ifdef MOVEMAIL_NEEDS_BLESSING
-#define BLESSMAIL blessmail
-#else
-#define BLESSMAIL
 #endif
 
 c_switch_general=@c_switch_general@
@@ -217,23 +132,23 @@ LOADLIBES=$(ld_switch_general) $(ld_libs_general)
 LOAD_X_LIBES=$(ld_switch_window_system)
 C_SWITCH_X=$(c_switch_window_system)
 
-/* We need to #define emacs to get the right versions of some files. */
+## We need to #define emacs to get the right versions of some files.
 
 lib_src_cppflags = -Demacs -I../src -I${srcdir} -I${srcdir}/../src $(CPPFLAGS)
 lib_src_cppflags = -Demacs -I../src $(CPPFLAGS)
 cflags  = $(CFLAGS) $(lib_src_cppflags) $(c_switch_all)
 ldflags = $(LDFLAGS) $(ld_switch_all) $(ld_libs_general)
 
-/* This is the default compilation command.
-   But we should never rely on it, because some make version
-   failed to find it for getopt.o.
-   Using an explicit command made it work.  */
+## This is the default compilation command.
+## But we should never rely on it, because some make version
+## failed to find it for getopt.o.
+## Using an explicit command made it work.
 .c.o:
 	${CC} -c $(cflags) $<
 
 all: ${UTILITIES} ${INSTALLABLES} ${SCRIPTS}
 
-/* Make symlinks for shell scripts if using --srcdir */
+## Make symlinks for shell scripts if using --srcdir */
 rcs2log:
 	${LN_S} ${srcdir}/$@ $@
 vcdiff:
@@ -261,48 +176,51 @@ install-sid:
 send-pr:
 	${LN_S} ${srcdir}/$@ $@
 
-#ifdef MOVEMAIL_NEEDS_BLESSING
+
+#undef MOVEMAIL_NEEDS_BLESSING
+#if !defined (MAIL_USE_FLOCK) && ! defined (MAIL_USE_LOCKF)
+#define MOVEMAIL_NEEDS_BLESSING
+blessmail = blessmail
 blessmail:
 	../src/emacs -batch -l ../lisp/blessmail.el
-	chmod +x blessmail
-#endif
+	chmod +x $@
+#endif /* movemail needs blessing */
 
-maybe-blessmail: BLESSMAIL
+maybe-blessmail: $(blessmail)
 #ifdef MOVEMAIL_NEEDS_BLESSING
-/* Do not charge ahead and do it!  Let the installer decide.
+## Do not charge ahead and do it!  Let the installer decide.
 	  ./blessmail ${archlibdir}/movemail  */
-	@if [ `wc -l <blessmail` != 2 ] ; then \
+	@if test `wc -l <blessmail` != 2; then \
 	  dir=`sed -n -e 's/echo mail directory = \(.*\)/\1/p' blessmail`; \
-	  echo Assuming $$dir is really the mail spool directory, you should; \
-	  echo run  lib-src/blessmail ${archlibdir}/movemail; \
-	  echo as root, to give  movemail  appropriate permissions.; \
-	  echo Do that after running  make install.; \
+	  echo "Assuming $$dir is really the mail spool directory, you should"; \
+	  echo "run  lib-src/blessmail ${archlibdir}/movemail"; \
+	  echo "as root, to give  movemail  appropriate permissions."; \
+	  echo "Do that after running  make install."; \
 	fi
 #endif
 
-/* Install the internal utilities.  Until they are installed, we can
-   just run them directly from lib-src.  */
+## Install the internal utilities.  Until they are installed, we can
+## just run them directly from lib-src.
 ${archlibdir}: all
-	@echo
-	@echo "Installing utilities run internally by XEmacs."
+	@echo; echo "Installing utilities run internally by XEmacs."
 	./make-path ${archlibdir}
-	if [ `(cd ${archlibdir} && /bin/pwd)` != `/bin/pwd` ]; then \
+	if test `(cd ${archlibdir} && /bin/pwd)` != `/bin/pwd`; then \
 	  for file in ${UTILITIES}; do \
 	    (cd .. && $(INSTALL_PROGRAM) lib-src/$$file ${archlibdir}/$$file) ; \
 	  done ; \
 	fi
-	if [ `(cd ${archlibdir} && /bin/pwd)` \
-	     != `(cd ${srcdir} && /bin/pwd)` ]; then \
+	if test `(cd ${archlibdir} && /bin/pwd)` \
+	     != `(cd ${srcdir} && /bin/pwd)`; then \
 	  for file in ${SCRIPTS}; do \
 	    (cd .. && $(INSTALL_PROGRAM) ${srcdir}/$$file ${archlibdir}/$$file); \
 	  done ; \
 	fi
 
-/* We do not need to install "wakeup" explicitly, because it will be
-   copied when this whole directory is copied.  */
+## We do not need to install "wakeup" explicitly, because it will be
+## copied when this whole directory is copied.
+.PHONY : all maybe-blessmail install uninstall
 install: ${archlibdir}
-	@echo
-	@echo "Installing utilities for users to run."
+	@echo; echo "Installing utilities for users to run."
 	for file in ${INSTALLABLES} ; do \
 	  (cd .. && $(INSTALL_PROGRAM) lib-src/$${file} ${bindir}/$${file}) ; \
 	done
@@ -312,25 +230,26 @@ install: ${archlibdir}
 
 uninstall:
 	(cd ${bindir} && \
-	 rm -f ${INSTALLABLES} ${INSTALLABLE_SCRIPTS})
+	 $(RM) ${INSTALLABLES} ${INSTALLABLE_SCRIPTS})
 	(cd ${archlibdir} && \
-	 rm -f ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS})
+	 $(RM) ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS})
 
+.PHONY : mostlyclean clean distclean realclean extraclean unlock relock check
 mostlyclean:
-	-rm -f core *.o
+	$(RM) core *.o *.i
 
 clean: mostlyclean
-	-rm -f ${INSTALLABLES} ${UTILITIES}
+	$(RM) ${INSTALLABLES} ${UTILITIES}
 
 distclean: clean
-	-rm -f DOC *.tab.c *.tab.h aixcc.c TAGS
-	-rm -f Makefile Makefile.in blessmail
+	$(RM) DOC *.tab.c *.tab.h aixcc.c TAGS
+	$(RM) Makefile Makefile.in blessmail
 
 realclean: distclean
-	true
+	@true
 
 extraclean: realclean
-	-rm -f *~ \#*
+	$(RM) *~ \#*
 
 unlock:
 	chmod u+w $(SOURCES)
@@ -338,7 +257,7 @@ unlock:
 relock:
 	chmod u-w $(SOURCES)
 
-/* Test the contents of the directory.  */
+## Test the contents of the directory.
 check:
 	@echo "We don't have any tests for XEmacs yet."
 
@@ -369,8 +288,8 @@ regex.o: ${srcdir}/../src/regex.c ${srcdir}/../src/regex.h
 etags: ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) ../src/config.h
 	$(CC) ${cflags} -DVERSION="\"${version}\"" ${srcdir}/etags.c $(GETOPTOBJS) $(REGEXOBJ) $(ldflags) -o etags
 
-/* We depend on etags to assure that parallel makes do not write two
-   etags.o files on top of each other.  */
+## We depend on etags to assure that parallel makes do not write two
+## etags.o files on top of each other.
 ctags: ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) etags
 	$(CC) ${cflags} -DCTAGS -DVERSION="\"${version}\"" ${srcdir}/etags.c $(GETOPTOBJS) $(REGEXOBJ) $(ldflags) -o ctags
 
@@ -413,7 +332,7 @@ make-msgfile: ${srcdir}/make-msgfile.c
 make-po: ${srcdir}/make-po.c
 	$(CC) $(cflags) ${srcdir}/make-po.c $(ldflags) -o make-po
 
-/* Why oh why does HP not include half of the standard X distribution? */
+## Why oh why does HP not include half of the standard X distribution?
 
 ldflags_gnuserv = $(LDFLAGS) $(ld_switch_all) @libs_xauth@ $(ld_libs_general)
 gnuslib.o: ${srcdir}/gnuslib.c ${srcdir}/gnuserv.h ../src/config.h
@@ -423,20 +342,20 @@ gnuclient: ${srcdir}/gnuclient.c gnuslib.o ${srcdir}/gnuserv.h
 gnuserv: ${srcdir}/gnuserv.c gnuslib.o ${srcdir}/gnuserv.h
 	$(CC) ${cflags} -o $@ ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv}
 
-/* mmencode binary is used by tm - but is really part of the metamail package */
-/* mmencode.c was merged copy of mmencode.c and codes.c of metamail */
+## mmencode binary is used by tm - but is really part of the metamail package
+## mmencode.c was merged copy of mmencode.c and codes.c of metamail
 mmencode : ${srcdir}/mmencode.c
 	$(CC) ${cflags} ${srcdir}/mmencode.c -o mmencode
 
 
-/* The timer utility (timer.c, getdate.y) is not used in XEmacs
-   because XEmacs provides built-in timer facilities. */
+## The timer utility (timer.c, getdate.y) is not used in XEmacs
+## because XEmacs provides built-in timer facilities.
 
 make-path: ${srcdir}/make-path.c ../src/config.h
 	$(CC) $(cflags) ${srcdir}/make-path.c -o make-path
 
-/* These are NOT included in INSTALLABLES or UTILITIES.
-   See ../src/Makefile.in.in.  */
+## These are NOT included in INSTALLABLES or UTILITIES.
+## See ../src/Makefile.in.in.
 aixcc: ${srcdir}/aixcc.c
 	$(CC) $(cflags) -o aixcc ${srcdir}/aixcc.c
 

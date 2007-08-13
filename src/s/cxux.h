@@ -47,14 +47,14 @@ Boston, MA 02111-1307, USA.  */
 /* #define USING_CX_UX_7 */
 
 #ifdef USING_CX_UX_7
-#define LINKER /usr/sde/coff/usr/bin/ld
-#define LD_SWITCH_SYSTEM -L/usr/sde/coff/usr/lib -zzero_word
-#define START_FILES pre-crt0.o /usr/sde/coff/usr/lib/crt0.o /usr/sde/coff/usr/lib/m88100.o
+#define LINKER "/usr/sde/coff/usr/bin/ld"
+#define LD_SWITCH_SYSTEM "-L/usr/sde/coff/usr/lib -zzero_word"
+#define START_FILES "pre-crt0.o /usr/sde/coff/usr/lib/crt0.o /usr/sde/coff/usr/lib/m88100.o"
 #else	/* !USING_CX_UX_7 */
 #ifdef	_M88K
-#define	START_FILES pre-crt0.o /lib/crt0.o
+#define	START_FILES "pre-crt0.o /lib/crt0.o"
 #else
-#define	START_FILES cxux-crt0.o /lib/crt0.o
+#define	START_FILES "cxux-crt0.o /lib/crt0.o"
 #endif
 #endif	/* USING_CX_UX_7 */
 
@@ -63,7 +63,7 @@ Boston, MA 02111-1307, USA.  */
 
 #define SYSTEM_TYPE "usg-unix-v"
 
-#define C_SWITCH_SYSTEM -Xa
+#define C_SWITCH_SYSTEM "-Xa"
 
 /* Letter to use in finding device name of first pty,
   if system supports pty's.  'a' means it is /dev/ptya0  */

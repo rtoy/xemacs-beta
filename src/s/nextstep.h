@@ -72,15 +72,15 @@ Boston, MA 02111-1307, USA.  */
 /* Link this program just by running cc.  */
 #define ORDINARY_LINK
 
-#define LD_SWITCH_SYSTEM -X -noseglinkedit
+#define LD_SWITCH_SYSTEM "-X -noseglinkedit"
 
 /* Don't use -lc on the NeXT.  */
-#define LIB_STANDARD -lsys_s
-#define LIB_MATH -lm
+#define LIB_STANDARD "-lsys_s"
+#define LIB_MATH "-lm"
 
-#define START_FILES pre-crt0.o
+#define START_FILES "pre-crt0.o"
 
-#define LIB_X11_LIB -L/usr/lib/X11 -lX11
+#define LIB_X11_LIB "-L/usr/lib/X11 -lX11"
 
 /* We don't have a g library either, so override the -lg LIBS_DEBUG switch */
 
@@ -92,7 +92,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Definitions for how to dump.  */
 
-#define UNEXEC unexnext.o
+#define UNEXEC "unexnext.o"
 
 /* start_of_text isn't actually used, so make it compile without error.  */
 #define TEXT_START 0
@@ -123,7 +123,7 @@ typedef unsigned short mode_t;
 #undef HAVE_TERMIO
 #define NO_TERMIO
 #define TAB3 XTABS
-#define C_OPTIMIZE_SWITCH -pipe
+#define C_OPTIMIZE_SWITCH "-pipe"
 #undef HAVE_SETITIMER
 
 /* XEmacs addition from Axel Seibert */

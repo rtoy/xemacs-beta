@@ -50,18 +50,18 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifndef __GNUC__
-#define LINKER cc -Xc
+#define LINKER "cc -Xc"
 #else
-#define LINKER gcc
+#define LINKER "gcc"
 #endif
 
 #undef LIBX11_SYSTEM
-#define LIBX11_SYSTEM -lsocket
+#define LIBX11_SYSTEM "-lsocket"
 
 #undef LIB_X11_LIB
-#define LIB_X11_LIB -lX11 -lgen
+#define LIB_X11_LIB "-lX11 -lgen"
 
-#define LIBS_SYSTEM -lsocket -lPW -lgen -lcrypt -lmalloc
+#define LIBS_SYSTEM "-lsocket -lPW -lgen -lcrypt -lmalloc"
 
 #ifndef MAXPATHLEN
 # define MAXPATHLEN PATHSIZE
@@ -79,14 +79,14 @@ could #define sco and I think everything would work. rjl */
 #undef ADDR_CORRECT
 #define ADDR_CORRECT(x) (int)((char *)(x) - (char*)0)
 
-#define C_SWITCH_SYSTEM -D_NO_STATIC
+#define C_SWITCH_SYSTEM "-D_NO_STATIC"
 
 #ifndef __GNUC__
-#define C_OPTIMIZE_SWITCH -O3 -Xc
-#define C_DEBUG_SWITCH -g -Xc
+#define C_OPTIMIZE_SWITCH "-O3 -Xc"
+#define C_DEBUG_SWITCH "-g -Xc"
 #else
-#define C_OPTIMIZE_SWITCH -O99 -m486 -fomit-frame-pointer
-#define C_DEBUG_SWITCH -g
+#define C_OPTIMIZE_SWITCH "-O99 -m486 -fomit-frame-pointer"
+#define C_DEBUG_SWITCH "-g"
 #endif
 
 /* configure can't get this right linking fails unless -lsocket is used.  */
@@ -101,11 +101,11 @@ could #define sco and I think everything would work. rjl */
 #define NEED_PTEM_H
 
 #ifndef __GNUC__
-#define START_FILES pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/values-Xc.o
+#define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/values-Xc.o"
 #else
-#define START_FILES pre-crt0.o /usr/ccs/lib/crt1.o
+#define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o"
 #endif
-#define LIB_STANDARD -lc
+#define LIB_STANDARD "-lc"
 
 /* Send signals to subprocesses by "typing" signal chars at them.  */
 #define SIGNALS_VIA_CHARACTERS
@@ -132,8 +132,8 @@ could #define sco and I think everything would work. rjl */
 #endif
 
 #ifdef _SCO_ELF
-# undef COFF /* coz we're NOT */
-# define UNEXEC  unexelf.o
-# define LIB_GCC -lgcc-elf
+#undef COFF /* coz we're NOT */
+#define UNEXEC "unexelf.o"
+#define LIB_GCC "-lgcc-elf"
 #endif
 

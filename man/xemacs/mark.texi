@@ -139,7 +139,7 @@ Convert case with @kbd{C-x C-l} or @kbd{C-x C-u} @*(@pxref{Case}).
 @item
 Evaluate it as Lisp code with @kbd{M-x eval-region} (@pxref{Lisp Eval}).
 @item
-Fill it as text with @kbd{M-g} (@pxref{Filling}).
+Fill it as text with @kbd{M-q} (@pxref{Filling}).
 @item
 Print hardcopy with @kbd{M-x print-region} (@pxref{Hardcopy}).
 @item

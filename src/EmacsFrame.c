@@ -604,5 +604,5 @@ EmacsFrameSetCharSize (Widget widget, int columns, int rows)
   XtVaSetValues ((Widget) ew,
 		 XtNwidth, (Dimension) pixel_width,
 		 XtNheight, (Dimension) pixel_height,
-		 0);
+		 NULL);
 }

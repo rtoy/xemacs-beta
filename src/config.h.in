@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.  */
 /* No code in XEmacs #includes config.h twice, but some of the code
    intended to work with other packages as well (like gmalloc.c)
    think they can include it as many times as they like.  */
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef _SRC_CONFIG_H_
+#define _SRC_CONFIG_H_
 
 /* alloca twiddling belongs in one place, not the s&m headers
    AIX requires this to be the first thing in the file.  */
@@ -41,12 +41,32 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif /* NOT C */
 
-/* #### This will be removed in 19.15. */
-#define LOSING_BYTECODE
 
 /* Use this to add code in a structured way to FSF-maintained source
    files so as to make it obvious where XEmacs changes are. */
 #define XEMACS
+
+/* Allow s&m files to differentiate OS versions without having
+   multiple files to maintain. */
+#undef OS_RELEASE
+
+/* The configuration name.  This is used as the install directory name
+   for the lib-src programs. */
+#undef EMACS_CONFIGURATION
+
+/* The version info from version.sh. Used in #pragma ident in emacs.c */
+#undef EMACS_MAJOR_VERSION
+#undef EMACS_MINOR_VERSION
+#undef EMACS_BETA_VERSION
+#undef EMACS_VERSION
+#undef XEMACS_CODENAME
+
+
+/* Used to identify the XEmacs version in stack traces. */
+#undef CANONICAL_VERSION
+
+/* #### This will be removed in 19.15. */
+#define LOSING_BYTECODE
 
 /* Does XEmacs support floating-point numbers? */
 #undef LISP_FLOAT_TYPE
@@ -63,16 +83,23 @@ Boston, MA 02111-1307, USA.  */
 /* Compile in support for the X window system? */
 #undef HAVE_X_WINDOWS
 
-/* Slightly better type checking in X header files */
+/* Defines for building X applications */
 #ifdef HAVE_X_WINDOWS
+/* The following will be defined if xmkmf thinks they are necessary */
+#undef SVR4
+#undef SYSV
+#undef _POSIX_SOURCE
+#undef _BSD_SOURCE
+#undef _GNU_SOURCE
+#undef X_LOCALE
+#undef NARROWPROTO
+/* The following should always be defined, no matter what xmkmf thinks. */
 #ifndef NeedFunctionPrototypes
 #define NeedFunctionPrototypes 1
 #endif
 #ifndef FUNCPROTO
 #define FUNCPROTO 15
 #endif
-/* Required for most XFree86 systems */
-#undef NARROWPROTO
 #endif /* HAVE_X_WINDOWS */
 
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
@@ -118,6 +145,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_LIBINTL_H
 #undef HAVE_LIBGEN_H
 #undef HAVE_LOCALE_H
+#undef HAVE_FCNTL_H
 #undef HAVE_X11_XLOCALE_H
 #undef HAVE_LINUX_VERSION_H
 #undef HAVE_INTTYPES_H
@@ -166,10 +194,14 @@ Boston, MA 02111-1307, USA.  */
 
 #undef HAVE_MMAP
 #undef HAVE_STRCOLL
+#undef HAVE_GETPGRP
+#undef GETPGRP_VOID
 
 #undef SIZEOF_SHORT
 #undef SIZEOF_INT
 #undef SIZEOF_LONG
+#undef SIZEOF_LONG_LONG
+#undef SIZEOF_VOID_P
 
 #undef HAVE_ACOSH
 #undef HAVE_ASINH
@@ -440,15 +472,6 @@ typedef unsigned long EMACS_UINT;
 #endif
 #endif /* 0 */
 
-/* The configuration name.  This is used as the install directory name
-   for the lib-src programs. */
-#undef EMACS_CONFIGURATION
-
-/* The version string from version.el. Used in #pragma ident in emacs.c */
-#undef EMACS_VERSION
-/* Used to identify the XEmacs version in stack traces. */
-#undef main_1
-
 /* Load in the conversion definitions if this system
    needs them and the source file being compiled has not
    said to inhibit this.  There should be no need for you
@@ -472,6 +495,14 @@ typedef unsigned long EMACS_UINT;
 #define SIGTYPE RETSIGTYPE
 #define SIGRETURN return
 #endif
+
+/* Allow the source to use standard types */
+#undef size_t
+#undef pid_t
+#undef mode_t
+#undef off_t
+#undef uid_t
+#undef gid_t
 
 /* Define DYNODUMP if it is necessary to properly dump on this system.
    Currently this is only Solaris 2.x, for x < 6. */

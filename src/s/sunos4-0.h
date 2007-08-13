@@ -29,15 +29,10 @@
 # define START_FILES
 # define LD_CMD $(CC)
 # ifndef LD_SWITCH_SYSTEM
-#  ifdef USE_GCC
-/* of course gcc has to take different args than the rest of the universe */
-#   define LD_SWITCH_SYSTEM "-static"
-#  else
-#   define LD_SWITCH_SYSTEM "-Bstatic"
-#  endif
+# define LD_SWITCH_SYSTEM "-Bstatic"
 # endif
 # define UNEXEC "unexsunos4.o"
-#endif
+#endif /* NOT_C_CODE */
 
 #define RUN_TIME_REMAP
 

@@ -1036,6 +1036,7 @@ increase the score of each group you read."
   (gnus-define-keys gnus-summary-mode-map
     " " gnus-summary-next-page
     "\177" gnus-summary-prev-page
+    [backspace] gnus-summary-prev-page
     [delete] gnus-summary-prev-page
     "\r" gnus-summary-scroll-up
     "n" gnus-summary-next-unread-article
@@ -1193,7 +1194,7 @@ increase the score of each group you read."
     "j" gnus-summary-goto-article
     "g" gnus-summary-goto-subject
     "l" gnus-summary-goto-last-article
-    "p" gnus-summary-pop-article)
+    "o" gnus-summary-pop-article)
 
   (gnus-define-keys (gnus-summary-thread-map "T" gnus-summary-mode-map)
     "k" gnus-summary-kill-thread
@@ -1235,6 +1236,7 @@ increase the score of each group you read."
     " " gnus-summary-next-page
     "n" gnus-summary-next-page
     "\177" gnus-summary-prev-page
+    [backspace] gnus-summary-prev-page
     [delete] gnus-summary-prev-page
     "p" gnus-summary-prev-page
     "\r" gnus-summary-scroll-up
@@ -1307,6 +1309,7 @@ increase the score of each group you read."
     "e" gnus-summary-expire-articles
     "\M-\C-e" gnus-summary-expire-articles-now
     "\177" gnus-summary-delete-article
+    [backspace] gnus-summary-delete-article
     [delete] gnus-summary-delete-article
     "m" gnus-summary-move-article
     "r" gnus-summary-respool-article
@@ -4997,7 +5000,7 @@ which existed when entering the ephemeral is reset."
   (suppress-keymap gnus-dead-summary-mode-map)
   (substitute-key-definition
    'undefined 'gnus-summary-wake-up-the-dead gnus-dead-summary-mode-map)
-  (let ((keys '("\C-d" "\r" "\177")))
+  (let ((keys '("\C-d" "\r" "\177" [backspace] [delete])))
     (while keys
       (define-key gnus-dead-summary-mode-map
 	(pop keys) 'gnus-summary-wake-up-the-dead))))
@@ -5083,7 +5086,8 @@ in."
     (when current-prefix-arg
       (completing-read
        "Faq dir: " (and (listp gnus-group-faq-directory)
-			gnus-group-faq-directory)))))
+			(mapcar (lambda (file) (list file))
+				gnus-group-faq-directory))))))
   (let (gnus-faq-buffer)
     (when (setq gnus-faq-buffer
 		(gnus-group-fetch-faq gnus-newsgroup-name faq-dir))

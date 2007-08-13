@@ -13,7 +13,7 @@
 /* use K&R C */
 /* XEmacs change -- use ANSI, not K&R */
 #ifndef __GNUC__
-#define C_SWITCH_SYSTEM -xansi
+#define C_SWITCH_SYSTEM "-xansi"
 #endif
 
 /* SGI has all the fancy wait stuff, but we can't include sys/wait.h

@@ -22,40 +22,53 @@
 
 ;;; Code:
 
-(defconst emacs-version "20.3"
-  "Version numbers of this version of XEmacs.")
+;;(defconst emacs-version "20.3"
+;;  "Version numbers of this version of XEmacs.")
 
-(defconst xemacs-codename "Oslo"
-  "Release nickname, primarily useful for trial prereleases.
-Warning, this variable did not exist in XEmacs versions prior to 20.3")
+;;(defconst xemacs-codename "Copenhagen"
+;;  "Release nickname, primarily useful for trial prereleases.
+;;Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
-(defconst xemacs-betaname "(beta7)"
+;;(defconst xemacs-betaname "(beta8)"
+;;  "Non-nil when this is a test (beta) version of XEmacs.
+;;Warning, this variable did not exist in XEmacs versions prior to 20.3")
+
+(defconst xemacs-betaname
+  (and emacs-beta-version (format "(beta%d)" emacs-beta-version))
   "Non-nil when this is a test (beta) version of XEmacs.
 Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
-(setq emacs-version (purecopy (concat emacs-version
-				      " \""
-				      xemacs-codename
-				      "\" XEmacs Lucid "
-				      xemacs-betaname)))
+(defconst emacs-version
+  (purecopy
+   (format "%d.%d \"%s\"%s%s"
+	   emacs-major-version
+	   emacs-minor-version
+	   xemacs-codename
+	   " XEmacs Lucid"
+	   (if xemacs-betaname
+	       (concat " " xemacs-betaname)
+	     "")))
+  "Version numbers of this version of XEmacs.")
 
-(defconst emacs-major-version
-  (progn (or (string-match "^[0-9]+" emacs-version)
-	     (error "emacs-version unparsable"))
-         (string-to-int (match-string 0 emacs-version)))
-  "Major version number of this version of Emacs, as an integer.
-Warning, this variable did not exist in Emacs versions earlier than:
-  FSF Emacs:   19.23
-  XEmacs:      19.10")
+;; Moved to C code as of XEmacs 20.3
+;(defconst emacs-major-version
+;  (progn (or (string-match "^[0-9]+" emacs-version)
+;	     (error "emacs-version unparsable"))
+;         (string-to-int (match-string 0 emacs-version)))
+;  "Major version number of this version of Emacs, as an integer.
+;Warning, this variable did not exist in Emacs versions earlier than:
+;  FSF Emacs:   19.23
+;  XEmacs:      19.10")
 
-(defconst emacs-minor-version
-  (progn (or (string-match "^[0-9]+\\.\\([0-9]+\\)" emacs-version)
-	     (error "emacs-version unparsable"))
-         (string-to-int (match-string 1 emacs-version)))
-  "Minor version number of this version of Emacs, as an integer.
-Warning, this variable did not exist in Emacs versions earlier than:
-  FSF Emacs:   19.23
-  XEmacs:      19.10")
+;; Moved to C code as of XEmacs 20.3
+;(defconst emacs-minor-version
+;  (progn (or (string-match "^[0-9]+\\.\\([0-9]+\\)" emacs-version)
+;	     (error "emacs-version unparsable"))
+;         (string-to-int (match-string 1 emacs-version)))
+;  "Minor version number of this version of Emacs, as an integer.
+;Warning, this variable did not exist in Emacs versions earlier than:
+;  FSF Emacs:   19.23
+;  XEmacs:      19.10")
 
 (defconst emacs-build-time (current-time-string)
   "Time at which Emacs was dumped out.")

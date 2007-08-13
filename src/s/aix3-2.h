@@ -16,10 +16,10 @@
    additional optimization.  --nils@exp-math.uni-essen.de */
 /* XEmacs change: maxmem=-1 means unlimited.  Suggested by
    dkeller@VNET.IBM.COM */
-#define C_SWITCH_SYSTEM -ma -qmaxmem=-1
+#define C_SWITCH_SYSTEM "-ma -qmaxmem=-1"
 #else
 /* Otherwise, XEmacs is just too big ... */
-#define C_SWITCH_SYSTEM -mminimal-toc
+#define C_SWITCH_SYSTEM "-mminimal-toc"
 #endif
 
 #define HAVE_ALLOCA
@@ -43,7 +43,7 @@
 /* XEmacs change:  no evidence of this in XEmacs */
 #if 0
 #ifndef __GNUC__
-#define C_SWITCH_DEBUG -g
+#define C_SWITCH_DEBUG "-g"
 #define C_SWITCH_OPTIMIZE
 #endif
 #endif

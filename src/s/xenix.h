@@ -61,7 +61,7 @@ Boston, MA 02111-1307, USA.  */
 /* Xenix requires completely different unexec code
    which lives in a separate file.  Specify the file name.  */
 
-#define UNEXEC unexenix.o
+#define UNEXEC "unexenix.o"
 
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
@@ -110,7 +110,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Switches for linking temacs.  */
 
-#define LD_SWITCH_SYSTEM -i
+#define LD_SWITCH_SYSTEM "-i"
 
 /* Use terminfo instead of termcap.  */
 

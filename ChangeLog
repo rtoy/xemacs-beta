@@ -1,3 +1,45 @@
+1997-06-21  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta8 is released.
+
+1997-06-20  Olivier Galibert <Olivier.Galibert@mines.u-nancy.fr>
+
+	* lwlib/lwlib-Xaw.c, lwlib/lwlib-Xlw.c, lwlib/lwlib-Xm.c,
+	lwlib/lwlib.c:  Make 64 bit clean.
+	
+1997-06-20  Steven L Baur  <steve@altair.xemacs.org>
+
+	* etc/gnuserv.1: Updates and cleanup.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-06-19  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in:
+	- Autodetect X defines using xmkmf.
+	- Compute rpath on *bsd* systems as well.
+	- rewrite PRINT_VAR m4 macro.
+	- detect sizes of void* and long long for future use by unex*.c
+
+1997-06-18  Martin Buchholz  <mrb@eng.sun.com>
+
+	* */Makefile.in.in: Another rewrite
+	Make makefiles immune from being mangled by various cpp
+	implementations by quoting non-preprocessor directive lines. 
+	- random cleanup
+	- Use $(RM) and $(pwd) macros consistently
+	- Add dependencies for balloon-help source files
+	- Use getcwd by default instead of getwd.
+	* lwlib/config.h:  Now includes src/config.h
+	* lwlib/*.c: Use config.h, but DON'T use Xos.h
+	* lib-src/*.c: Fix compiler warnings
+	* lisp/version.el:
+	- Put version information in version.sh instead of version.el
+
+Wed Jun 18 16:41:43 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in (CPP): Remove hardcoding of -L/usr/local/lib
+	-I/usr/local/include.
+
 1997-06-14  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta7 is released.
@@ -120,6 +162,28 @@ Tue Jun 10 15:11:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 	* lisp/gnus/smiley.el (smiley-deformed-regexp-alist): Add Japanese
 	smiley faces.
 
+1997-06-10  Gary D. Foster  <Gary.Foster@corp.sun.com>
+	
+	* lisp/modes/view-less.el: Changed \177 bindings to 'delete
+	* lisp/modes/help.el: Changed \177 bindings to 'delete
+
+1997-06-10  Gary D. Foster  <Gary.Foster@corp.sun.com>
+
+	* lisp/prim/keydefs.el: Changed all 'delete key bindings to point to
+	  the `backward-or-forward-foo' functions.
+	* lisp/prim/simple.el:
+	- Renamed `delete-erases-forward' to `delete-key-deletes-forward'.
+	- Removed `backspace-or-delete-hook'
+	- Renamed `backspace-or-delete' to `backward-or-forward-delete-char'
+	- Added functions: `backward-or-forward-kill-word'
+	 `backward-or-forward-kill-sentence'
+	 `backward-or-forward-kill-sexp'
+	- Removed the zmacs hacks from all the `b-or-f-foo' functions and
+	  began playing nicely with pending-del.
+	* lisp/modes/cc-mode.el:
+	* lisp/modes/cperl-mode.el: Fixed references to delete functions
+	  to use the new names.
+	
 1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-b5 is released.
@@ -174,11 +238,23 @@ Tue Jun 10 15:11:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 	- Sun sound in non-standard dirs now works
 	- --native-sound-lib no longer ignored on HP & SGI
 	- gpm configure tests moved after curses configure tests
+
+1997-06-04  Gary D. Foster  <Gary.Foster@corp.sun.com>
+
+	* lisp/modes/cc-mode.el: Modified `c-electric-delete' to honor the 
+	  desired delete direction in both normal and "hungry" modes.
+	* lisp/modes/cperl-mode.el: Modified `cperl-electric-backspace' to 
+	  honor the desired delete direction.
 	
 1997-05-30  Martin Buchholz  <mrb@eng.sun.com>
 
 	* configure.in: Automagically compute -R path for gcc
 
+1997-05-30  Gary D. Foster  <Gary.Foster@corp.sun.com>
+
+	* lisp/vm/vm-vars.el: Fixed delete key binding to call
+	  `vm-scroll-down'
+	
 Thu May 29 15:35:07 1997  Martin Buchholz  <mrb@eng.sun.com>
 
 	* configure.in: Add support for Solaris2.6 -z ignore linker flags
@@ -188,6 +264,18 @@ Thu May 29 15:35:07 1997  Martin Buchholz  <mrb@eng.sun.com>
 	* configure.in: Replace standard Autoconf MMAP test with Neal
 	Becker's replacement, hacked somewhat.
 
+1997-05-16  Gary D. Foster  <Gary.Foster@corp.sun.com>
+
+	* lisp/prim/simple.el: Created `backspace-or-delete' function and
+	  `backspace-or-delete-hook'
+	* lisp/prim/keydefs.el: Changed \177 bindings to point to new
+	  delete function.
+	* lisp/modes/*.el: Removed conflicting \177 bindings.
+	* lisp/modes/cc-mode.el: Modified `c-electric-delete' to use new
+	  delete bindings.
+	* lisp/modes/cperl-mode.el: Modified `cperl-electric-backspace' to 
+	  use new delete bindings.
+	
 1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
 	* lisp/x11/x-menubar.el (default-menubar): Add menu for Mule.

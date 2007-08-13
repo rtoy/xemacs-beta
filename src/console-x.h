@@ -41,6 +41,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
 
+#if 0 /* mrb - Xos sux. */
 #ifdef USG
 #undef USG	/* ####KLUDGE for Solaris 2.2 and up */
 #include <X11/Xos.h>
@@ -48,6 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #else
 #include <X11/Xos.h>
 #endif
+#endif /* 0 */
 
 #include <X11/StringDefs.h>
 

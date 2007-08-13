@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* A machine-specific loader switch is needed.  */
 
-#define LD_SWITCH_MACHINE -k100000
+#define LD_SWITCH_MACHINE "-k100000"
 
 /* alloca is provided by the system.  */
 

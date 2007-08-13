@@ -121,7 +121,7 @@ NOTE-END  */
 #ifdef UNEXEC
 #undef UNEXEC
 #endif
-#define UNEXEC unexsni.o
+#define UNEXEC "unexsni.o"
 
 #undef ORDINARY_LINK
 
@@ -129,20 +129,20 @@ NOTE-END  */
 
 /* Alter some of the options used when linking.  */
 
-#define LIBS_MACHINE -lmld
-#define START_FILES pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o
+#define LIBS_MACHINE "-lmld"
+#define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o"
 
 #ifdef LIB_STANDARD
 #undef LIB_STANDARD
 #endif
-#define LIB_STANDARD -lc /usr/ccs/lib/crtn.o
+#define LIB_STANDARD "-lc /usr/ccs/lib/crtn.o"
 
 #ifdef __GNUC__
 #define C_DEBUG_SWITCH
-#define C_OPTIMIZE_SWITCH -O
+#define C_OPTIMIZE_SWITCH "-O"
 #define LD_SWITCH_MACHINE 
 #else
-#define C_DEBUG_SWITCH -DSYSV
-#define C_OPTIMIZE_SWITCH -DSYSV 
+#define C_DEBUG_SWITCH "-DSYSV"
+#define C_OPTIMIZE_SWITCH "-DSYSV "
 #define LD_SWITCH_MACHINE
 #endif

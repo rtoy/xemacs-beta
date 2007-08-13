@@ -566,10 +566,11 @@ If the file name is already flag, this unflags it."
 	 (failure (apply (function dired-check-process)
 			 operation
 			 "chmod" new-attribute (list file))))
-    (dired-do-redisplay) 
+    (dired-do-redisplay)
     (if failure
 	(dired-log-summary (buffer-name (current-buffer))
-			   (format "%s: error" operation) nil))))
+			   (format "%s: error" operation) nil)
+      (forward-char 1))))
 
 (defun dired-chmod-popup-menu (event menu)
   (save-excursion

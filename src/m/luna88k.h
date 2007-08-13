@@ -88,8 +88,8 @@ and this notice must be preserved on all copies.  */
 
 #define LOAD_AVE_MACH
 
-#define LIBS_MACHINE -lmach
+#define LIBS_MACHINE "-lmach"
 
-#define LIB_X11_LIB -L/usr/lib/X11 -lX11 -lXwchar
+#define LIB_X11_LIB "-L/usr/lib/X11 -lX11 -lXwchar"
 
-#define CRT0_COMPILE cc -c -O -Demacs $(ALL_CFLAGS)
+#define CRT0_COMPILE "cc -c -O -Demacs $(ALL_CFLAGS)"

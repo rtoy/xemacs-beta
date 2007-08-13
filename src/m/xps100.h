@@ -86,6 +86,6 @@ Boston, MA 02111-1307, USA.  */
 #define STACK_DIRECTION -1
 #define TERMINFO
 #define SWITCH_ENUM_BUG
-#define LIB_STANDARD  -lc
-#define LD_SWITCH_MACHINE -X
+#define LIB_STANDARD " -lc"
+#define LD_SWITCH_MACHINE "-X"
 #define SECTION_ALIGNMENT (0x3ff)

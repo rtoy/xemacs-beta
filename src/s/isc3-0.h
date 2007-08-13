@@ -16,7 +16,7 @@
    has no libX11_s, and that linking with libc_s causes sbrk not to work.  */
 #undef LIB_X11_LIB
 #undef LIBX11_SYSTEM
-#define LIBX11_SYSTEM -lpt -lnls -lnsl_s
+#define LIBX11_SYSTEM "-lpt -lnls -lnsl_s"
 
 /* TIOCGWINSZ isn't broken; you just have to know where to find it.  */
 #undef BROKEN_TIOCGWINSZ
@@ -26,7 +26,7 @@
    signal symbols; might as well use _XOPEN_SOURCE.  Defining _SYSV3
    ensures that we don't lose the traditional symbols as a side effect
    from this or __STDC__ being defined.  */
-#define C_SWITCH_SYSTEM -D_XOPEN_SOURCE -D_SYSV3
+#define C_SWITCH_SYSTEM "-D_XOPEN_SOURCE -D_SYSV3"
 
 #ifdef __GNUC__  /* Currently we use -lcposix only with gcc */
 /* This works around a bug in ISC 4.0 and 3.0; it fails

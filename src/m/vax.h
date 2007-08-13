@@ -91,7 +91,7 @@ NOTE-END  */
 /* Vax sysV has alloca in the PW library.  */
 
 #ifdef USG
-#define LIB_STANDARD -lPW -lc
+#define LIB_STANDARD "-lPW -lc"
 #define HAVE_ALLOCA
 
 /* There is some bug in unexec in for usg 5.2 on a vax

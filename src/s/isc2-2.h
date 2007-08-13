@@ -49,7 +49,7 @@
 
 /* LIB_STANDARD_1 is used both here and in LIBS_SYSTEM
    (the latter for the sake of configure).  */
-#define LIB_STANDARD LIB_STANDARD_1 -lc
+#define LIB_STANDARD LIB_STANDARD_1  -lc
 
 #define NO_X_DESTROY_DATABASE
 
@@ -66,7 +66,7 @@
    define getc and putc in the absence of _POSIX_SOURCE.  GCC's from 2.4.4
    on do this. */
 #if !defined (__GNUC__) || __GNUC__ < 2
-#  define C_SWITCH_SYSTEM -traditional
+#  define C_SWITCH_SYSTEM "-traditional"
 #endif
 
 /* Some versions of ISC are said to define S_IFLNK even tho

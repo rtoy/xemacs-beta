@@ -84,7 +84,7 @@ char *_getpty ();
    tell the linker to avoid making one.  SGI's cc does this by
    default, but GCC (at least 2.5.8 and 2.6.0) doesn't. */
 #ifdef __GNUC__
-#define LD_SWITCH_SYSTEM -G 0
+#define LD_SWITCH_SYSTEM "-G 0"
 #endif
 
 /* define MAIL_USE_FLOCK if the mailer uses flock
@@ -97,7 +97,7 @@ char *_getpty ();
 /* use K&R C */
 /* XEmacs change -- use ANSI, not K&R */
 #ifndef __GNUC__
-#define C_SWITCH_SYSTEM -xansi
+#define C_SWITCH_SYSTEM "-xansi"
 #endif
 
 /* jackr@engr.sgi.com says that you can't mix different kinds of

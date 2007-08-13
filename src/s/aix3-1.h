@@ -119,7 +119,7 @@ Boston, MA 02111-1307, USA.  */
 /* #define ADDR_CORRECT(x) (x) */
 
 #ifndef __GNUC__
-#define LINKER cc
+#define LINKER "cc"
 #endif
 
 /* Prevent -lg from being used for debugging.  Not needed.  */

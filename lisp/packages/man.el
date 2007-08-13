@@ -247,10 +247,8 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 
 		   (if (< (buffer-size) 200)
 		       (progn
-			 (goto-char (point-min))
-			 (error (buffer-substring (point)
-						  (progn (end-of-line)
-							 (point))))))
+			 (kill-buffer (current-buffer))
+			 (error "%s not found" args-string)))
 
 		   (message "%s (cleaning...)" args-string)
 		   (Manual-nuke-nroff-bs apropos-mode)

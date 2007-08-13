@@ -28,17 +28,17 @@
 /* Make room for enough symbols, so dispnew.c does not fail.  */
 /* XEmacs: cognot@ensg.u-nancy.fr: C_SWITCH_SYSTEM already defined in hpux8.h,
                            -D_BSD makes hp CC choke on process.c
-#define C_SWITCH_SYSTEM -Wp,-H200000 -D_BSD
+#define C_SWITCH_SYSTEM "-Wp,-H200000 -D_BSD"
 */
 #undef C_SWITCH_SYSTEM
-# ifdef __hp9000s300
-#  define C_SWITCH_SYSTEM -Aa -D_HPUX_SOURCE
-# else
-#  define C_SWITCH_SYSTEM -Ae -Wp,-H100000
-# endif
+#ifdef __hp9000s300
+#define C_SWITCH_SYSTEM "-Aa -D_HPUX_SOURCE"
+#else
+#define C_SWITCH_SYSTEM "-Ae -Wp,-H100000"
+#endif
 /* XEmacs: commented out
 #else
-#define C_SWITCH_SYSTEM -D_BSD
+#define C_SWITCH_SYSTEM "-D_BSD"
 */
 #endif
 
@@ -59,8 +59,8 @@
    used -- if X11R4 is used, "s/hpux9-x11r4.h" gets loaded instead.  */
 /* XEmacs change: Change LD_SWITCH_X_DEFAULT to LD_SWITCH_X_SYSTEM.
    #### Why do we need to make this change? */
-#define C_SWITCH_X_SYSTEM -I/usr/include/X11R5 -I/usr/include/Motif1.2
-#define LD_SWITCH_X_SYSTEM -L/usr/lib/X11R5 -L/usr/lib/Motif1.2
+#define C_SWITCH_X_SYSTEM "-I/usr/include/X11R5 -I/usr/include/Motif1.2"
+#define LD_SWITCH_X_SYSTEM "-L/usr/lib/X11R5 -L/usr/lib/Motif1.2"
 
 #ifndef HAVE_LIBXMU
 /* HP-UX doesn't supply Xmu.  */
@@ -78,5 +78,7 @@
 
 /* XEmacs: avoid using -lcurses, to make the binary portable from 9.X to 10.X */
 #undef LIBS_TERMCAP
-#define LIBS_TERMCAP -ltermcap
+#define LIBS_TERMCAP "-ltermcap"
 
+/* mrb */
+#undef LD_SWITCH_SYSTEM

@@ -96,7 +96,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Delete this for WICAT sys V releases before 2.0.  */
 
-#define	LIB_STANDARD -lc-nofp
+#define	LIB_STANDARD "-lc-nofp"
 
 /* Special magic number */
 
@@ -104,7 +104,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Special switches to give to ld.  */
 
-#define LD_SWITCH_MACHINE -e __start -N
+#define LD_SWITCH_MACHINE "-e __start -N"
 
 /* Sigh...cannot define this for WICAT cuz 0 length memcpy blows chunks */
 
@@ -128,5 +128,5 @@ Boston, MA 02111-1307, USA.  */
 /* there is a select() in libcurses.a that causes a conflict so use termlib */
 #ifdef HAVE_SELECT
 #undef TERMINFO
-#define LIBS_TERMCAP select.o -ltermlib
+#define LIBS_TERMCAP "select.o -ltermlib"
 #endif

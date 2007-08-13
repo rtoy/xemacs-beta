@@ -8,16 +8,16 @@
 
 /* NEWS-OS 5.0.2 */
 
-#define LIBS_MACHINE -lmld
+#define LIBS_MACHINE "-lmld"
 
 #ifdef __GNUC__
-#define C_DEBUG_SWITCH -g
-#define C_OPTIMIZE_SWITCH -g -O
-#define LD_SWITCH_MACHINE -g -Xlinker -D -Xlinker 800000
+#define C_DEBUG_SWITCH "-g"
+#define C_OPTIMIZE_SWITCH "-g -O"
+#define LD_SWITCH_MACHINE "-g -Xlinker -D -Xlinker 800000"
 #else
-#define C_DEBUG_SWITCH -g3
-#define C_OPTIMIZE_SWITCH -g3
-#define LD_SWITCH_MACHINE -g3 -D 800000 -non_shared
+#define C_DEBUG_SWITCH "-g3"
+#define C_OPTIMIZE_SWITCH "-g3"
+#define LD_SWITCH_MACHINE "-g3 -D 800000 -non_shared"
 #endif
 
 #else /* not NEWSOS5 */
@@ -28,13 +28,13 @@
 
 #define COFF
 #undef LD_SWITCH_MACHINE
-#define LD_SWITCH_MACHINE -x -D 800000
+#define LD_SWITCH_MACHINE "-x -D 800000"
 
 /* #define C_OPTIMIZE_SWITCH -O2 */
-#define C_OPTIMIZE_SWITCH -O
+#define C_OPTIMIZE_SWITCH "-O"
 
 #ifndef __GNUC__
-#define C_DEBUG_SWITCH -g3
+#define C_DEBUG_SWITCH "-g3"
 #endif
 
 #undef TERMINFO
@@ -45,7 +45,7 @@
 /* Don't use the definitions in m/mips.h.  */
 #undef LINKER
 #undef LIBS_MACHINE
-#define LIBS_MACHINE -lmld
+#define LIBS_MACHINE "-lmld"
 
 #undef KERNEL_FILE
 #define KERNEL_FILE "/vmunix"

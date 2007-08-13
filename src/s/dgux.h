@@ -88,7 +88,7 @@ Boston, MA 02111-1307, USA.  */
    panic.  ELF executables have the advantage of using shared libraries,
    while COFF executables will still work on 4.2x systems. */
 
-#define UNEXEC unexelf.o
+#define UNEXEC "unexelf.o"
 
 /* This makes sure that all segments in the executable are undumped,
    not just text, data, and bss.  In the case of Mxdb and shared
@@ -176,8 +176,8 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #define ORDINARY_LINK
-#define START_FILES pre-crt0.o
-#define LIB_GCC /usr/lib/gcc/libgcc.a
+#define START_FILES "pre-crt0.o"
+#define LIB_GCC "/usr/lib/gcc/libgcc.a"
 
 #ifdef _M88KBCS_TARGET
 /* Karl Berry says: the environment
@@ -207,7 +207,7 @@ Boston, MA 02111-1307, USA.  */
       else							\
         sprintf (pty_name, "/dev/tty%c%x", c, i);
 
-#define C_DEBUG_SWITCH -g
+#define C_DEBUG_SWITCH "-g"
 
 #else /* not COFF */
 
@@ -256,7 +256,7 @@ Boston, MA 02111-1307, USA.  */
     fatal ("ioctl I_PUSH ttcompat", errno);
 
 #ifdef __GNUC__
-#define C_DEBUG_SWITCH -g -V2 -mversion-03.00 -mstandard
+#define C_DEBUG_SWITCH "-g -V2 -mversion-03.00 -mstandard"
 #endif
 
 #endif /* ELF */
@@ -264,8 +264,8 @@ Boston, MA 02111-1307, USA.  */
 /* Extra stuff which probably should be someplace else but is here out
    of expediency. */
 
-#define LIB_X11_LIB -lX11
-#define LIB_MOTIF -lXm -lgen
+#define LIB_X11_LIB "-lX11"
+#define LIB_MOTIF "-lXm -lgen"
 
 /* Formerly "BSD_PGRPS" */
 

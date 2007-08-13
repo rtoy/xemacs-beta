@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 /*#undef getpgrp*/
 
 /* Symbols missing - I suspect this is the culprit... */
-#define LIBS_SYSTEM -lsocket -lnsl -lelf -lgen
+#define LIBS_SYSTEM "-lsocket -lnsl -lelf -lgen"
 
 /* Prevent use of a (non-existent) debugging library. */
 #define LIBS_DEBUG

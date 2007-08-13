@@ -987,7 +987,7 @@ filedesc_writer (Lstream *stream, CONST unsigned char *data, int size)
       /* To make life easy, only send out one line at the most. */
       CONST unsigned char *ptr;
 
-      ptr = memchr (data, '\n', size);
+      ptr = (CONST unsigned char *) memchr (data, '\n', size);
       if (ptr)
 	need_newline = 1;
       else

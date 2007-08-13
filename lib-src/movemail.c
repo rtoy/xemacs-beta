@@ -62,6 +62,7 @@ Boston, MA 02111-1307, USA.  */
 #include <stdio.h>
 #include <errno.h>
 #include "../src/syswait.h"
+#include "../src/systime.h"
 #include <stdlib.h>
 #include <string.h>
 #ifdef MAIL_USE_POP
@@ -92,20 +93,19 @@ Boston, MA 02111-1307, USA.  */
 #define DISABLE_DIRECT_ACCESS
 #endif /* WINDOWSNT */
 
-#ifdef USG
-#include <fcntl.h>
+#if defined (HAVE_UNISTD_H) || defined (USG)
 #include <unistd.h>
+#endif /* unistd.h */
 #ifndef F_OK
 #define F_OK 0
 #define X_OK 1
 #define W_OK 2
 #define R_OK 4
-#endif
-#endif /* USG */
+#endif /* No F_OK */
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#if defined (HAVE_FCNTL_H) || defined (USG)
+#include <fcntl.h>
+#endif /* fcntl.h */
 
 #if defined (XENIX) || defined (WINDOWSNT)
 #include <sys/locking.h>
@@ -492,15 +492,6 @@ xmalloc (size)
 #endif
 #include <stdio.h>
 #include <pwd.h>
-
-#ifdef USG
-#include <fcntl.h>
-/* Cancel substitutions made by config.h for Emacs.  */
-#undef open
-#undef read
-#undef write
-#undef close
-#endif /* USG */
 
 #define NOTOK (-1)
 #define OK 0

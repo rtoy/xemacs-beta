@@ -512,6 +512,7 @@ If SILENT, don't prompt the user."
 
 ;; Dummy to avoid byte-compile warning.
 (defvar nnspool-rejected-article-hook)
+(defvar xemacs-codename)
 
 ;;; Since the X-Newsreader/X-Mailer are ``vanity'' headers, they might
 ;;; as well include the Emacs version as well.

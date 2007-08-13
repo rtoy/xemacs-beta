@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifndef UNEXEC
-#define UNEXEC unexaix.o
+#define UNEXEC "unexaix.o"
 #endif
 
 /* Define addresses, macros, change some setup for dump */
@@ -104,7 +104,7 @@ Boston, MA 02111-1307, USA.  */
 /* Here override various assumptions in ymakefile */
 
 #ifdef AIXHFT
-#define OBJECTS_MACHINE hftctl.o
+#define OBJECTS_MACHINE "hftctl.o"
 #endif
 
 #ifndef USG5_4
@@ -116,16 +116,16 @@ Boston, MA 02111-1307, USA.  */
 /* -lpthreads seems to be necessary for Xlib in X11R6, and should be harmless
    on older versions of X where it happens to exist.  */
 #ifdef HAVE_LIBPTHREADS
-#define LIBS_MACHINE -lrts -lIM -liconv -lpthreads
+#define LIBS_MACHINE "-lrts -lIM -liconv -lpthreads"
 #else
 /* IBM's X11R5 use -lIM and -liconv in AIX 3.2.2.  */
-#define LIBS_MACHINE -lrts -lIM -liconv
+#define LIBS_MACHINE "-lrts -lIM -liconv"
 #endif
 #else
 #ifdef USG5_4
 #define LIBS_MACHINE
 #else
-#define LIBS_MACHINE -lIM
+#define LIBS_MACHINE "-lIM"
 #endif
 #endif
 
@@ -149,15 +149,15 @@ Boston, MA 02111-1307, USA.  */
 /* Avoid gcc 2.7.x collect2 bug by using /bin/ld instead.  */
 #if __GNUC__ == 2 && __GNUC_MINOR__ == 7
 #ifdef AIX_SMT_EXP
-#define LD_SWITCH_MACHINE -B/bin/ -Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp,AIX_SMT_EXP
+#define LD_SWITCH_MACHINE "-B/bin/ -Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp,AIX_SMT_EXP"
 #else
-#define LD_SWITCH_MACHINE -B/bin/ -Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp
+#define LD_SWITCH_MACHINE "-B/bin/ -Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp"
 #endif
 #else /* not gcc 2.7.x */
 #ifdef AIX_SMT_EXP
-#define LD_SWITCH_MACHINE -Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp,AIX_SMT_EXP
+#define LD_SWITCH_MACHINE "-Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp,AIX_SMT_EXP"
 #else
-#define LD_SWITCH_MACHINE -Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp
+#define LD_SWITCH_MACHINE "-Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp"
 #endif
 #endif /* __GNUC__ == 2 && __GNUC_MINOR__ == 7 */
 

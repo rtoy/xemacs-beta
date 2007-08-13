@@ -12,7 +12,7 @@
 /* murray@chemical-eng.edinburgh.ac.uk says this works, and avoids
    the problem of spurious ^M in subprocess output.  */
 #undef HAVE_TERMIOS
-#endif
+#endif /* 0 */
 
 #if 0
 /* XEmacs: FSF 19.31 mistakenly reenables this. */

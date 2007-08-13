@@ -2215,7 +2215,7 @@ x_flash (struct device *d)
   Widget shell = FRAME_X_SHELL_WIDGET (f);
   Dimension width, height;
 
-  XtVaGetValues (shell, XtNwidth, &width, XtNheight, &height, 0);
+  XtVaGetValues (shell, XtNwidth, &width, XtNheight, &height, NULL);
   XSETFRAME (frame, f);
 
   tmp_pixel = FACE_FOREGROUND (Vdefault_face, frame);

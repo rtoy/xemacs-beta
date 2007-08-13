@@ -331,14 +331,30 @@ are used."
 	(message "Generating autoloads for %s...done" file))))
 
 
+(defconst autoload-file-name "auto-autoloads.el"
+  "Generic filename to put autoloads into.
+Unless you are an XEmacs maintainer, it is probably unwise to change this.")
+
+(defvar autoload-target-directory "../lisp/prim/"
+  "Directory to put autoload declaration file into.
+Unless you know what you're doing, don't mess with this.")
+
 (defvar generated-autoload-file
-  (expand-file-name "../lisp/prim/auto-autoloads.el" data-directory)
+  (expand-file-name (concat autoload-target-directory
+			    autoload-file-name)
+		    data-directory)
   "*File `update-file-autoloads' puts autoloads into.
 A .el file can set this in its local variables section to make its
 autoloads go somewhere else.")
 
+(defconst cusload-file-name "custom-load.el"
+  "Generic filename ot put custom loads into.
+Unless you are an XEmacs maintainr, it is probably unwise to change this.")
+
 (defvar generated-custom-file
-  (expand-file-name "../lisp/prim/cus-load.el" data-directory)
+  (expand-file-name (concat autoload-target-directory
+			    cusload-file-name)
+		    data-directory)
   "*File `update-file-autoloads' puts customization into.")
 
 ;; Written by Per Abrahamsen
@@ -498,7 +514,9 @@ Obsolete autoload entries for files that no longer exist are deleted."
     (insert
      (with-output-to-string
       (mapatoms (lambda (symbol)
-		  (let ((members (get symbol 'custom-group))
+		  (let ((members (condition-case nil
+				     (get symbol 'custom-group)
+				   (t nil)))
 			item where found)
 		    (when members
 		      (princ "(put '")
@@ -541,6 +559,45 @@ For example, invoke `xemacs -batch -f batch-update-autoloads *.el'."
     (save-some-buffers t)
     (message "Done")
     (kill-emacs 0)))
+
+(defun fixup-autoload-buffer (sym)
+  (save-excursion
+    (set-buffer (find-file-noselect generated-autoload-file))
+    (goto-char (point-min))
+    (if (and (not (= (point-min) (point-max)))
+	     (not (looking-at ";;; DO NOT MODIFY THIS FILE")))
+	(progn
+	  (insert ";;; DO NOT MODIFY THIS FILE\n")
+	  (insert "(if (not (featurep '" sym "))\n")
+	  (insert "    (progn\n")
+	  (goto-char (point-max))
+	  (insert "\n(provide '" sym ")\n))\n")))))
+
+;;;###autoload
+(defun batch-update-directory ()
+  "Update the autoloads for the directory on the command line.
+Runs `update-file-autoloads' on each file in the given directory, and must
+be used only with -batch, and kills XEmacs on completion."
+  (unless noninteractive
+    (error "batch-update-autoloads is to be used only with -batch"))
+  (let ((defdir default-directory)
+	(enable-local-eval nil))	; Don't query in batch mode.
+    (dolist (arg command-line-args-left)
+      (setq arg (expand-file-name arg defdir))
+      (let ((generated-autoload-file (concat arg "/" autoload-file-name))
+	    (generated-custom-file (concat arg "/" cusload-file-name)))
+	(cond
+	 ((file-directory-p arg)
+	  (message "Updating autoloads in directory %s..." arg)
+	  (update-autoloads-from-directory arg))
+	 (t (error "No such file or directory: %s" arg)))
+	(autoload-save-customization)
+	(fixup-autoload-buffer (concat (file-name-nondirectory arg)
+				       "-autoloads"))
+	(save-some-buffers t))
+      (message "Done")
+      ;; (kill-emacs 0)
+      )))
 
 (provide 'autoload)
 

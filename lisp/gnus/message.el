@@ -2298,7 +2298,8 @@ to find out how to use this."
        (concat "^" (regexp-quote mail-header-separator) "$"))
       (while (not (eobp))
 	(when (not (looking-at "[ \t\n]"))
-	  (setq sum (logxor (ash sum 1) (following-char))))
+ 	  (setq sum (logxor (ash sum 1) (if (natnump sum) 0 1)
+ 			    (following-char))))
 	(forward-char 1)))
     sum))
 

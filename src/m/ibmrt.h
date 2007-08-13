@@ -102,15 +102,15 @@ Boston, MA 02111-1307, USA.  */
 /* Special switches to give the C compiler.  */
 
 #ifndef __GNUC__
-#define C_SWITCH_MACHINE -Dalloca=_Alloca
+#define C_SWITCH_MACHINE "-Dalloca=_Alloca"
 #endif
 
 /* XEmacs addition: */
 /* Under Mach at least, gcc doesn't seem to work as the linker. */
 #ifdef MACH
-#define START_FILES pre-crt0.o
+#define START_FILES "pre-crt0.o"
 #ifdef __GNUC__
-#define LINKER pcc
+#define LINKER "pcc"
 #endif
 #endif
 

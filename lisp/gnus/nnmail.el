@@ -806,7 +806,7 @@ is a spool.  If not using procmail, return GROUP."
 			   (= (following-char) ?\n)))
 		     (save-excursion
 		       (forward-line 1)
-		       (while (looking-at ">From ")
+		       (while (looking-at ">From \\|From ")
 			 (forward-line 1))
 		       (looking-at "[^ \n\t:]+[ \n\t]*:")))
 	    (setq found 'yes)))))
@@ -835,7 +835,7 @@ is a spool.  If not using procmail, return GROUP."
 			   (= (following-char) ?\n)))
 		     (save-excursion
 		       (forward-line 1)
-		       (while (looking-at ">From ")
+		       (while (looking-at ">From \\|From ")
 			 (forward-line 1))
 		       (looking-at "[^ \n\t:]+[ \n\t]*:")))
 	    (setq found 'yes)))))

@@ -70,7 +70,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* SysV has alloca in the PW library */
 
-#define LIB_STANDARD -lPW -lc
+#define LIB_STANDARD "-lPW -lc"
 #define HAVE_ALLOCA
 
 /* Define NO_REMAP if memory segmentation makes it not work well
@@ -91,7 +91,7 @@ Boston, MA 02111-1307, USA.  */
 #define fchmod				/* we don't have fchmod() */
 #define SECTION_ALIGNMENT (2048-1)	/* 2k boundaries required in unexec */
 #define SEGMENT_MASK (128*1024-1)	/* 128k offsets required in unexec */
-#define C_DEBUG_SWITCH -O		/* build with -O (TPIX has GCC 1.34) */
+#define C_DEBUG_SWITCH "-O"		/* build with -O (TPIX has GCC 1.34) */
 
 #define BROKEN_TIOCGWINSZ		/* Don't try to use TIOCGWINSZ.  */
 
@@ -99,4 +99,4 @@ Boston, MA 02111-1307, USA.  */
 
 #define select gnu_select		/* avoid select() name clash */
 #define HAVE_PTYS			/* we do have PTYs if we have TCP */
-#define LIBS_SYSTEM -lsocket		/* get TCP networking functions */
+#define LIBS_SYSTEM "-lsocket"		/* get TCP networking functions */

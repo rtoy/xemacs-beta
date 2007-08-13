@@ -48,7 +48,7 @@ Boston, MA 02111-1307, USA.  */
 
 #define HAVE_UNIX_DOMAIN
 
-#define LIB_X11_LIB -L/usr/lib/X11 -lX11
+#define LIB_X11_LIB "-L/usr/lib/X11 -lX11"
 
 /* This avoids a problem in Xos.h when using co-Xist 3.01.  */
 #define X_NOT_POSIX
@@ -59,7 +59,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Use our own unexec routines */
 
-#define UNEXEC unexnext.o
+#define UNEXEC "unexnext.o"
 
 /* We don't have a g library either, so override the -lg LIBS_DEBUG switch */
 

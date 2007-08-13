@@ -114,7 +114,7 @@ Boston, MA 02111-1307, USA.  */
 /* The elxsi has no debugger, so might as well optimize instead
    of trying to make a symbol table.  */
 
-#define C_DEBUG_SWITCH -O
+#define C_DEBUG_SWITCH "-O"
 
 /* Elxsi uses COFF under both Sys V and BSD environments */
 

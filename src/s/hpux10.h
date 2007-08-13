@@ -20,4 +20,4 @@
 
 /* XEmacs: -lcurses includes a broken select() call on some 10.X systems. */
 #undef LIBS_TERMCAP
-#define LIBS_TERMCAP -ltermcap
+#define LIBS_TERMCAP "-ltermcap"

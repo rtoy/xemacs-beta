@@ -11,7 +11,7 @@
 #undef C_DEBUG_SWITCH
 #undef C_OPTIMIZE_SWITCH
 #define C_DEBUG_SWITCH
-#define C_OPTIMIZE_SWITCH -O
+#define C_OPTIMIZE_SWITCH "-O"
 #endif
 
 /* Perry Smith <pedz@ddivt1.austin.ibm.com> says these are correct.  */
@@ -24,4 +24,4 @@
 
 /* Bill Woodward <wpwood@austin.ibm.com> says:
    libIM *must* precede libXm, to avoid getting aixLoadIM error messages.  */
-#define LIB_MOTIF -lIM -lXm
+#define LIB_MOTIF "-lIM -lXm"

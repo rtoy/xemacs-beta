@@ -22,10 +22,10 @@ WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
 static void
 output64chunk(int c1, int c2, int c3, int pads, FILE *outfile);
 
-static char basis_64[] =
+static signed char basis_64[] =
    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static char index_64[128] = {
+static signed char index_64[128] = {
     -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
     -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
     -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,62, -1,-1,-1,63,
@@ -243,8 +243,8 @@ from64(FILE *infile, FILE *outfile,
     if (CRpending) putc(13, outfile); /* Don't drop a lone trailing char 13 */
 }
 
-static char basis_hex[] = "0123456789ABCDEF";
-static char index_hex[128] = {
+static signed char basis_hex[] = "0123456789ABCDEF";
+static signed char index_hex[128] = {
     -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
     -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
     -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,

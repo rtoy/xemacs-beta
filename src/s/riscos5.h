@@ -8,6 +8,6 @@
 /* No declaration in system header files.  */
 extern double atof ();
 
-#define LD_SWITCH_SYSTEM -non_shared
+#define LD_SWITCH_SYSTEM "-non_shared"
 
 #define GETPGRP_NO_ARG

@@ -167,14 +167,14 @@ NOTE-END
 #ifndef __GNUC__
 /* This apparently is for the system ld as opposed to Gnu ld.  */
 #ifdef OSF1
-#define LD_SWITCH_MACHINE      -non_shared
+#define LD_SWITCH_MACHINE "-non_shared"
 #endif /* OSF1 */
 #endif /* not __GNUC__ */
 #endif /* 0 */
 
 #ifdef OSF1
 #define LIBS_DEBUG
-#define START_FILES pre-crt0.o 
+#define START_FILES "pre-crt0.o "
 #endif /* OSF1 */
 
 #ifdef LINUX
@@ -184,7 +184,7 @@ NOTE-END
 
 /* The program to be used for unexec. */
 
-#define UNEXEC unexalpha.o
+#define UNEXEC "unexalpha.o"
 
 #define PNTR_COMPARISON_TYPE unsigned long
 

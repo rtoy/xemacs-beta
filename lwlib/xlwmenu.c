@@ -34,7 +34,9 @@ Boston, MA 02111-1307, USA.  */
 #include <unistd.h>
 #endif
 
+#if 0 /* mrb */
 #include <X11/Xos.h>
+#endif
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
 #include <X11/cursorfont.h>

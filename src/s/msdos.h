@@ -125,7 +125,7 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 #endif
 #define chdir sys_chdir
 
-#define LIBS_SYSTEM -lpc  /* isn't required in DJGPP v2.0, either */
+#define LIBS_SYSTEM "-lpc"  /* isn't required in DJGPP v2.0, either */
 
 #endif /* __DJGPP__ < 2 */
 
@@ -147,7 +147,7 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 #define ORDINARY_LINK
 
 /* command.com does not understand `...` so we define this.  */
-#define LIB_GCC -Lgcc
+#define LIB_GCC "-Lgcc"
 #define DONT_NEED_ENVIRON
 #define SEPCHAR ';'
 
@@ -218,7 +218,7 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 /* We need a little extra space, see ../../lisp/loadup.el */
 #define SYSTEM_PURESIZE_EXTRA 15000
 #define HAVE_X11R5
-#define LIBX11_SYSTEM -lxext -lsys
+#define LIBX11_SYSTEM "-lxext -lsys"
 #else
 /* We need a little extra space, see ../../lisp/loadup.el */
 #define SYSTEM_PURESIZE_EXTRA 85000

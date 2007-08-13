@@ -1,4 +1,245 @@
+Sat Jun 21 21:10:57 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9931 released.
+
+Sat Jun 21 14:41:02 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* face.xpm: New file.
+	* option.xpm: New file.
+	* folder.xpm: New file.
+	* Makefile (TEXT): Added.
+	* wid-edit.el (widget-push-button-value-create): Use :tag-glyph.
+	(widget-glyph-insert-glyph): Accept nil widget.
+	* cus-edit.el (custom-tree-group-tag): Specify :tag-glyph.
+	(custom-tree-variable-tag): Ditto.
+	(custom-tree-face-tag): Ditto.
+
+	* Version 1.9930 released.
+
+Sat Jun 21 03:01:17 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+
+	* cus-edit.el (custom-buffer-indent): New option.
+	(custom-magic-value-create): Use it.
+	(custom-group-value-create): Ditto.
+	(custom-buffer-create-internal): Don't create parent groups here.
+	(custom-group-list): New variable.
+	(custom-add-parent-links): New function.
+	(custom-variable-value-create): Use it.
+	(custom-face-value-create): Use it.
+	(custom-group-value-create): Use it.
+	(custom-buffer-groups-last): Changed default.
+
+	* wid-edit.el (group-visibility): Deleted.
+	(widget-group-visibility-create): Ditto.
+	(group-link): Deleted.
+	(widget-group-link-create): Ditto.
+	(widget-group-link-action): Ditto.
+
+	* cus-edit.el (custom-nest-groups): Delete option.
+	(custom-buffer-style): Add `links' style instead.
+	(custom-group-link): New widget.
+	(custom-group-link-action): New function.
+	(custom-group-value-create): Use `custom-group-link'.
+
+	* wid-edit.el (widget-before-change): Fixed comment and debug
+	string. 
+
+	* cus-edit.el (custom-mode-customize-menu): Deleted.
+	(custom-mode-menu): Define here.
+	(custom-mode): Don't add here.
+	(custom-format-handler): Deleted.
+	(custom): Don't add here.
+
+	* all: Synched with FSF.
+	
+	* Version 1.9929 released.
+
+Sat Jun 21 02:05:08 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-browse-sort-predicate): New alias.
+	(custom-group-value-create): Use it.
+	(:custom-last): Replace :custom-extra-prefix.
+	(customize-browse): Use it.
+	(custom-group): Ditto.
+	(custom-group-value-create): Ditto.
+
+	* Version 1.9928 released.
+
+Sat Jun 21 01:35:04 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (face): Fixed format.
+	(custom-face-value-create): Browse face, not option.
+
+	* Version 1.9927 released.
+
+Sat Jun 21 00:03:48 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-group-value-create): Rewrote to replace
+	entire format string. 
+	(custom-variable-value-create): Ditto.
+	(custom-face-value-create): Ditto.
+	(custom-group): Delete :format.
+	(custom-variable): Ditto.
+	(custom-face): Delete :format and :format-handler.
+	(custom): Add :format.
+	(custom-format-handler): Removed unnecessary code.
+	(custom-face-format-handler): Deleted.
+	(custom-add-see-also): New function.
+	(custom-buffer-style): New option.
+	(widget-face-value-create): Use it here instead of :format.
+	(:custom-prefix, :custom-extra-prefix): New keywords.
+	(custom): Initialize them.
+	(custom-redraw-magic): Work with no magic button.
+	(customize-browse): New command.
+	(custom-tree-visibility): New widget.
+	(custom-tree-visibility-action): New function.
+	(custom-tree-group-tag): New widget.
+	(custom-tree-group-tag-action): New function.
+	(custom-tree-group-tag): New widget.
+	(custom-tree-group-tag-action): New function.
+	(custom-tree-variable-tag): New widget.
+	(custom-tree-variable-tag-action): New function.
+	(custom-tree-face-tag): New widget.
+	(custom-tree-face-tag-action): New function.
+
+	* custom.el (customize-browse): Added autoload.
+
+	* cus-edit.el (custom-buffer-sort-alphabetically): New option.
+	(custom-buffer-groups-last): New option.
+	(custom-buffer-sort-predicate): Use them.
+	(customize-apropos): Use it.
+	(custom-group-value-create): Ditto.
+	(custom-menu-sort-alphabetically): New option.
+	(custom-menu-groups-first): New option.
+	(custom-menu-sort-predicate): Use them.
+	(custom-menu-create): Use it.
+	(custom-buffer-sort-predicate, custom-buffer-order-predicate,
+	custom-menu-sort-predicate, custom-menu-order-predicate): Deleted.
+
+Thu Jun 19 17:29:05 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9926 released.
+
+Thu Jun 19 13:31:08 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-leave-text): Don't delete nil overlays.
+
+	* wid-edit.el (widget-get-indirect): New function.
+	(widget-default-create): Use it.
+	(widget-button-insert-indirect): Deleted.
+
+	* wid-edit.el (widget-inactive-face): Use dim gray instead of dark
+	gray.
+
+	* Version 1.9925 released.
+
+Thu Jun 19 12:09:32 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Synched with FSF.
+
+	* Version 1.9924 released.
+
+Thu Jun 19 11:05:38 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (customize-apropos): Always sort apropos.
+	Patch by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+
+	* Version 1.9923 released.
+
+Thu Jun 19 10:59:26 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-reset-saved): Call :custom-reset-saved.
+	(custom-reset-standard): Call :custom-reset-standard.
+
+	* Version 1.9922 released.
+
+1997-06-18  Steven L Baur  <steve@altair.xemacs.org>
+
+	* cus-edit.el (custom-file): Autoload, and use ~/.xemacs-custom
+	for XEmacs.
+
+Wed Jun 18 18:37:00 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-buffer-create-internal): Change parent tag.
+
+	* Version 1.9921 released.
+
+	* cus-edit.el (custom-buffer-create-internal): Add links to parent
+	groups when there is only a single item in the buffer.
+
+Wed Jun 18 13:49:20 1997  Simon Marshall  <simon@gnu.ai.mit.edu>
+
+	* cus-edit.el (customize-apropos): Extend ALL arg to restrict
+	apropos to options, groups and faces.  Doc fix.
+	(customize-apropos-options):
+	(customize-apropos-faces):
+	(customize-apropos-groups): New commands.  Call it.
+	(custom-help-menu): Add commands to menu.
+
+Mon Jun 16 11:57:14 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-documentation-link-add): Only highlight text
+	inside link. 
+	Patch by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+
+1997-06-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-specify-field): Place unreadable
+ 	text-property correctly when `widget-field-add-space' is non-nil.
+
+Sun Jun 15 17:21:34 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+
+	* Version 1.9920 released.
+
+Sun Jun 15 14:06:49 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-variable-menu): Rearranged lisp support.
+	(custom-face-menu): Ditto.
+
+	* wid-edit.el (boolean): Add explicit toggle button.
+	(choice): Add explicit value menu button.
+	* cus-face.el (custom-face-attributes): Use booleans.
+
+	* cus-edit.el (custom-format-handler): Handle %i escape.
+	(custom-face): Use it.
+	(custom-magic-value-create): Add spaces for groups.
+	(custom-format-handler): Add spaces for groups.
+
+	* widget.el (:documentation-indent): New keyword.
+	* wid-edit.el (widget-default-format-handler): Obey it.
+	(widget-documentation-link-add): Add indentation.
+	(widget-documentation-string-value-create): Ditto.
+
+	* Version 1.9919 released.
+
+Sun Jun 15 13:02:02 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (widget-glyph-insert-glyph): Make the invisible
+	extent open ended.
+
+	* cus-edit.el (custom-format-handler): Added :echo-help to
+	visibility widget.
+	(custom-variable-value-create): Ditto, also for tag.
+	* wid-edit.el (widget-documentation-string-value-create): Ditto.
+	(widget-documentation-link-help-echo): New function.
+	(documentation-link): Use it.  Make untabable.
+
+Sat Jun 14 21:57:49 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9918 released.
+
 Sat Jun 14 21:31:09 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-apply-action): Don't bind
+	`after-change-functions' here.
+
+	* cus-edit.el (custom-toggle-hide): Call `widget-setup'.
+
+	* wid-edit.el (widget-setup): Cleanup.
 
 	* Version 1.9916 released.
 

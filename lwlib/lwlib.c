@@ -24,11 +24,13 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #include <config.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <X11/StringDefs.h>
 #include "lwlib-internal.h"
 #include "lwlib-utils.h"
@@ -1257,11 +1259,11 @@ show_one_widget_busy (Widget w, Boolean flag)
   XtVaGetValues (widget_to_invert,
 		 XtNforeground, &foreground,
 		 XtNbackground, &background,
-		 0);
+		 NULL);
   XtVaSetValues (widget_to_invert,
 		 XtNforeground, background,
 		 XtNbackground, foreground,
-		 0);
+		 NULL);
 }
 
 void

@@ -43,12 +43,12 @@ Boston, MA 02111-1307, USA.  */
 
 /* AT&T SVr3 X wants to be linked with shared libraries */
 
-#define LIB_X11_LIB -lX11_s
+#define LIB_X11_LIB "-lX11_s"
 
 /* X needs to talk on the network, so search the network library.  */
 
-#define LIBX10_SYSTEM -lnsl_s
-#define LIBX11_SYSTEM -lpt -lnls -lnsl_s -lc_s
+#define LIBX10_SYSTEM "-lnsl_s"
+#define LIBX11_SYSTEM "-lpt -lnls -lnsl_s -lc_s"
 
 /* Some variants have TIOCGWINSZ, but the structures to go with it
    are not declared.  */

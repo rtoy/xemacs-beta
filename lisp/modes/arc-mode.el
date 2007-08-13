@@ -465,6 +465,12 @@ archive.
 
 ;; Archive mode is suitable only for specially formatted data.
 (put 'archive-mode 'mode-class 'special)
+
+(defun archive-quit ()
+  "Bury the current archive buffer."
+  (interactive)
+  (bury-buffer))
+
 ;; -------------------------------------------------------------------------
 ;; Section: Key maps
 
@@ -504,6 +510,7 @@ archive.
   (if archive-xemacs
       (progn
 	;; Not a nice "solution" but it'll have to do
+	(define-key archive-mode-map "q" 'archive-quit)
 	(define-key archive-mode-map "\C-xu" 'archive-undo)
 	(define-key archive-mode-map "\C-_" 'archive-undo))
     (substitute-key-definition 'undo 'archive-undo
@@ -1123,7 +1130,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
         files
 	visual)
     (while (and (< (+ p 29) (point-max))
-		(= (char-after p) ?\C-z)
+		(eq (char-after p) ?\C-z)
 		(> (char-after (1+ p)) 0))
       (let* ((namefld (buffer-substring (+ p 2) (+ p 2 13)))
 	     (fnlen   (or (string-match "\0" namefld) 13))
@@ -1198,10 +1205,10 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
              (ifnname (if fiddle (downcase efnname) efnname))
 	     (p2      (+ p 22 fnlen))
 	     (creator (if (>= (- hsize fnlen) 24) (char-after (+ p2 2)) 0))
-	     (mode    (if (= creator ?U) (archive-l-e (+ p2 8) 2) ?\666))
+	     (mode    (if (eq creator ?U) (archive-l-e (+ p2 8) 2) ?\666))
 	     (modestr (if mode (archive-int-to-mode mode) "??????????"))
-	     (uid     (if (= creator ?U) (archive-l-e (+ p2 10) 2)))
-	     (gid     (if (= creator ?U) (archive-l-e (+ p2 12) 2)))
+	     (uid     (if (eq creator ?U) (archive-l-e (+ p2 10) 2)))
+	     (gid     (if (eq creator ?U) (archive-l-e (+ p2 12) 2)))
 	     (text    (if archive-alternate-display
 			  (format "  %8d  %5S  %5S  %s"
 				  ucsize
@@ -1338,9 +1345,10 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
              (efnname (buffer-substring (+ p 46) (+ p 46 fnlen)))
 	     (isdir   (and (= ucsize 0)
 			   (string= (file-name-nondirectory efnname) "")))
-	     (mode    (cond ((memq creator '(2 3)) ; Unix + VMS
+	     (mode    (cond ((memq (char-int creator) '(2 3)) ; Unix + VMS
 			     (archive-l-e (+ p 40) 2))
-			    ((memq creator '(0 5 6 7 10 11)) ; Dos etc.
+			    ((memq (char-int creator)
+				   '(0 5 6 7 10 11)) ; Dos etc.
 			     (logior ?\444
 				     (if isdir (logior 16384 ?\111) 0)
 				     (if (zerop
@@ -1349,7 +1357,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 			    (t nil)))
 	     (modestr (if mode (archive-int-to-mode mode) "??????????"))
 	     (fiddle  (and archive-zip-case-fiddle
-			   (not (not (memq creator '(0 2 4 5 9))))))
+			   (not (not (memq (char-int creator) '(0 2 4 5 9))))))
              (ifnname (if fiddle (downcase efnname) efnname))
              (text    (format "  %10s  %8d  %-11s  %-8s  %s"
 			      modestr
@@ -1406,11 +1414,11 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
 	       (oldmode (aref fil 3))
 	       (newval  (archive-calc-mode oldmode newmode t))
 	       buffer-read-only)
-	  (cond ((memq creator '(2 3)) ; Unix + VMS
+	  (cond ((memq (char-int creator) '(2 3)) ; Unix + VMS
 		 (goto-char (+ p 40))
 		 (delete-char 2)
 		 (insert (logand newval 255) (lsh newval -8)))
-		((memq creator '(0 5 6 7 10 11)) ; Dos etc.
+		((memq (char-int creator) '(0 5 6 7 10 11)) ; Dos etc.
 		 (goto-char (+ p 38))
 		 (insert (logior (logand (char-after (point)) 254)
 				 (logand (logxor 1 (lsh newval -7)) 1)))

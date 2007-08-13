@@ -112,22 +112,22 @@ Boston, MA 02111-1307, USA.  */
 /* Here override various assumptions in ymakefile */
 
 /* On AIX 2.2.1, use these definitions instead
-#define C_SWITCH_MACHINE -I/usr/include -Nn2000
-#define LIBS_MACHINE -lX -lrts
+#define C_SWITCH_MACHINE "-I/usr/include -Nn2000"
+#define LIBS_MACHINE "-lX -lrts"
 */
 
-#define C_SWITCH_MACHINE -I/usr/include -I/usr/include/bsd -Nn2000
-#define LIBS_MACHINE -lXMenu -lX -lsock -lbsd -lrts
+#define C_SWITCH_MACHINE "-I/usr/include -I/usr/include/bsd -Nn2000"
+#define LIBS_MACHINE "-lXMenu -lX -lsock -lbsd -lrts"
 
-#define OBJECTS_MACHINE hftctl.o
-#define START_FILES /lib/crt0.o
+#define OBJECTS_MACHINE "hftctl.o"
+#define START_FILES "/lib/crt0.o"
 /* -lXMenu, -lX must precede -lsock, -lbsd */
-#define LD_SWITCH_MACHINE -n -T0x10000000 -K -e start
+#define LD_SWITCH_MACHINE "-n -T0x10000000 -K -e start"
 
 #if 0 /* I refuse to promulgate a recommendation that would make
          users unable to debug - RMS.  */
 /* delete the following line to foil optimization, enable debugging */
-#define C_DEBUG_SWITCH -O
+#define C_DEBUG_SWITCH "-O"
 #endif
 
 

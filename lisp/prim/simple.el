@@ -63,12 +63,17 @@
 ;;; Code:
 
 (defgroup editing-basics nil
-  "Most basic editing variables"
+  "Most basic editing variables."
   :group 'editing)
 
 (defgroup killing nil
-  "Killing and yanking commands"
+  "Killing and yanking commands."
   :group 'editing)
+
+(defgroup fill-comments nil
+  "Indenting and filling of comments."
+  :prefix "comment-"
+  :group 'fill)
 
 (defgroup paren-matching nil
   "Highlight (un)matching of parens and expressions."
@@ -1149,10 +1154,11 @@ to make one entry in the kill ring."
   (or (and beg end) (if zmacs-regions ;; rewritten for I18N3 snarfing
 			(error "The region is not active now")
 		      (error "The mark is not set now")))
-  (if (> beg end) (setq beg (prog1 end (setq end beg))))
   (if verbose (if buffer-read-only
-		  (message "Copying %d characters" (- end beg))
-		  (message "Killing %d characters" (- end beg))))
+		  (message "Copying %d characters"
+			   (- (max beg end) (min beg end)))
+		(message "Killing %d characters"
+			 (- (max beg end) (min beg end)))))
   (cond
 
    ;; I don't like this large change in behavior -- jwz
@@ -1991,24 +1997,34 @@ With argument 0, interchanges line point is in with line mark is in."
     (delete-char (length word1))
     (insert word2)))
 
-(defconst comment-column 32
+(defcustom comment-column 32
   "*Column to indent right-margin comments to.
 Setting this variable automatically makes it local to the current buffer.
 Each mode establishes a different default value for this variable; you
-can set the value for a particular mode using that mode's hook.")
+can set the value for a particular mode using that mode's hook."
+  :type 'integer
+  :group 'fill-comments)
 (make-variable-buffer-local 'comment-column)
 
-(defconst comment-start nil
-  "*String to insert to start a new comment, or nil if no comment syntax.")
+(defcustom comment-start nil
+  "*String to insert to start a new comment, or nil if no comment syntax."
+  :type '(choice (const :tag "None" nil)
+		 string)
+  :group 'fill-comments)
 
-(defconst comment-start-skip nil
+(defcustom comment-start-skip nil
   "*Regexp to match the start of a comment plus everything up to its body.
 If there are any \\(...\\) pairs, the comment delimiter text is held to begin
-at the place matched by the close of the first pair.")
+at the place matched by the close of the first pair."
+  :type '(choice (const :tag "None" nil)
+		 regexp)
+  :group 'fill-comments)
 
-(defconst comment-end ""
+(defcustom comment-end ""
   "*String to insert to end a new comment.
-Should be an empty string if comments are terminated by end-of-line.")
+Should be an empty string if comments are terminated by end-of-line."
+  :type 'string
+  :group 'fill-comments)
 
 (defconst comment-indent-hook nil
   "Obsolete variable for function to compute desired indentation for a comment.
@@ -2033,16 +2049,22 @@ the comment's starting delimiter.")
 This function is called with no args with point at the beginning of
 the comment's starting delimiter.")
 
-(defconst block-comment-start nil
+(defcustom block-comment-start nil
   "*String to insert to start a new comment on a line by itself.
 If nil, use `comment-start' instead.
 Note that the regular expression `comment-start-skip' should skip this string
-as well as the `comment-start' string.")
+as well as the `comment-start' string."
+  :type '(choice (const :tag "Use `comment-start'" nil)
+		 string)
+  :group 'fill-comments)
 
-(defconst block-comment-end nil
+(defcustom block-comment-end nil
   "*String to insert to end a new comment on a line by itself.
 Should be an empty string if comments are terminated by end-of-line.
-If nil, use `comment-end' instead.")
+If nil, use `comment-end' instead."
+  :type '(choice (const :tag "Use `comment-end'" nil)
+		 string)
+  :group 'fill-comments)
 
 (defun indent-for-comment ()
   "Indent this line's comment to comment column, or insert an empty comment."
@@ -2296,13 +2318,19 @@ if you a newlines is reached first, move forward instead."
 		 (buffer-substring start end)))
           (buffer-substring start end)))))
 
-(defconst fill-prefix nil
+(defcustom fill-prefix nil
   "*String for filling to insert at front of new line, or nil for none.
-Setting this variable automatically makes it local to the current buffer.")
+Setting this variable automatically makes it local to the current buffer."
+  :type '(choice (const :tag "None" nil)
+		 string)
+  :group 'fill)
 (make-variable-buffer-local 'fill-prefix)
 
-(defconst auto-fill-inhibit-regexp nil
-  "*Regexp to match lines which should not be auto-filled.")
+(defcustom auto-fill-inhibit-regexp nil
+  "*Regexp to match lines which should not be auto-filled."
+  :type '(choice (const :tag "None" nil)
+		 regexp)
+  :group 'fill)
 
 ;; This function is the auto-fill-function of a buffer
 ;; when Auto-Fill mode is enabled.
@@ -2549,10 +2577,12 @@ The variable `fill-column' has a separate value for each buffer."
 	 (error "set-fill-column requires an explicit argument")))
   (message "fill-column set to %d" fill-column))
 
-(defvar comment-multi-line t ; XEmacs - this works well with adaptive fill
+(defcustom comment-multi-line t ; XEmacs - this works well with adaptive fill
   "*Non-nil means \\[indent-new-comment-line] should continue same comment
 on new line, with no new terminator or starter.
-This is obsolete because you might as well use \\[newline-and-indent].")
+This is obsolete because you might as well use \\[newline-and-indent]."
+  :type 'boolean
+  :group 'fill-comments)
 
 (defun indent-new-comment-line (&optional soft)
   "Break line at point and indent, continuing comment if within one.

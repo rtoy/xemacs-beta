@@ -55,16 +55,16 @@ NOTE-END  */
 
 /* Must use the system's termcap.  It does special things.  */
 
-#define LIBS_TERMCAP -ltermcap
+#define LIBS_TERMCAP "-ltermcap"
 
 /* Arrange to link with sun windows, if requested.  */
 /* For details on emacstool and sunfns, see etc/SUN-SUPPORT */
 /* These programs require Sun UNIX 4.2 Release 3.2 or greater */
 
 #ifdef HAVE_SUN_WINDOWS
-#define OTHER_FILES  ${etcdir}emacstool
-#define LIBS_MACHINE -lsuntool -lsunwindow -lpixrect
-#define OBJECTS_MACHINE sunfns.o
+#define OTHER_FILES " ${etcdir}emacstool"
+#define LIBS_MACHINE "-lsuntool -lsunwindow -lpixrect"
+#define OBJECTS_MACHINE "sunfns.o"
 #define SYMS_MACHINE syms_of_sunfns ()
 #define SYSTEM_PURESIZE_EXTRA 12000
 #endif
@@ -74,11 +74,11 @@ NOTE-END  */
 
 /* XEmacs change:  from Thomas.Tornblom@nexus.comm.se */
 #ifdef USE_GCC
-#define C_SWITCH_MACHINE -static -Dmode_t="u_short" /* avoid dynamic linking */
-#define LD_SWITCH_MACHINE -Wl,-N -static
+#define C_SWITCH_MACHINE "-static -Dmode_t=\"u_short\"" /* avoid dynamic linking */
+#define LD_SWITCH_MACHINE "-Wl,-N -static"
 #else
-#define C_SWITCH_MACHINE -Bstatic -Dmode_t="u_short"/* avoid dynamic linking */
-#define LD_SWITCH_MACHINE -N -Bstatic
+#define C_SWITCH_MACHINE "-Bstatic -Dmode_t=\"u_short\""/* avoid dynamic linking */
+#define LD_SWITCH_MACHINE "-N -Bstatic"
 #endif
 
 /* Get rid of the -e __start that s-sunos4.h does.  */
@@ -87,4 +87,4 @@ NOTE-END  */
 /* XEmacs addition? */
 #undef RUN_TIME_REMAP
 #undef UNEXEC
-#define UNEXEC unexec.o
+#define UNEXEC "unexec.o"

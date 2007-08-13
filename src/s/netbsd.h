@@ -36,7 +36,7 @@
 /* -lutil is not needed for NetBSD >0.9.  */
 /* #define LIBS_SYSTEM -lutil */
 /* XEmacs change */
-#define LIBS_TERMCAP -ltermcap
+#define LIBS_TERMCAP "-ltermcap"
 
 #define NEED_ERRNO
 
@@ -49,18 +49,18 @@
 /* but they probably don't, and life's too short - jrg@doc.ic.ac.uk 
    ask for no shared libs if you have 0.9 */
 /* mrb -- ORDINARY_LINK works just fine... */
-#define LD_SWITCH_SYSTEM -e start
-#define START_FILES pre-crt0.o /usr/lib/crt0.o
+#define LD_SWITCH_SYSTEM "-e start"
+#define START_FILES "pre-crt0.o /usr/lib/crt0.o"
 #define RUN_TIME_REMAP
 #else
-#define START_FILES crt0.o
+#define START_FILES "crt0.o"
 
 #endif /* not NO_SHARED_LIBS */
 #endif /* 0 */
 
 #define HAVE_TEXT_START		/* No need to define `start_of_text'.  */
 #define ORDINARY_LINK
-#define UNEXEC unexfreebsd.o    /* ironic, considering history of unexfreebsd */
+#define UNEXEC "unexfreebsd.o"  /* ironic, considering history of unexfreebsd */
 
 #if 0
 /* Try to make this work for both 0.9 and >0.9.  */

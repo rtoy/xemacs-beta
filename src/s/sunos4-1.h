@@ -46,10 +46,28 @@ care of it properly?
 /* Define dlopen, dlclose, dlsym.  */
 #define USE_DL_STUBS
 
-/* SunOS does not define strerror since it is ANSI C, but SunPro C does. */
+#if 0 /* mrb */
 #if !defined(HAVE_STRERROR) && defined(__SUNPRO_C)
 #define HAVE_STRERROR
+#endif
 #endif
 
 /* This appears to be broken on SunOS4.1.[123] */
 #define BROKEN_SIGIO
+
+/* Suppress zillions of warnings from outdated SunOS4 prototypes */
+#ifndef NOT_C_CODE
+#ifdef __SUNPRO_C
+#include <memory.h>
+#include <string.h>
+#define memset(a,b,c) memset((char*) (a), b, c)
+#define memcpy(a,b,c) memcpy((char*) (a), (char*) (b), c)
+#define memcmp(a,b,c) memcmp((char*) (a), (char*) (b), c)
+#define memchr(a,b,c) memchr((char*) (a), b, c)
+void * __builtin_alloca(int);
+#ifdef HAVE_X_WINDOWS
+#include <X11/Xlib.h>
+#define XFree(p) XFree((char*)(p))
+#endif /* X Windows */
+#endif /* __SUNPRO_C */
+#endif /* C code */

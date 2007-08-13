@@ -142,8 +142,8 @@ char *end_of_data (void);
 /* Get_system_name returns as its value a string for system-name to return. */
 void init_system_name (void);
 
-#ifndef HAVE_GETWD
-char *getwd (char *pathname);
+#ifndef HAVE_GETCWD
+char *getcwd (char *pathname, int size);
 #endif
 
 #ifndef HAVE_RENAME

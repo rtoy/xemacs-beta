@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9916
+;; Version: 1.9931
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -47,6 +47,7 @@
   (autoload 'custom-set-value "cus-edit" nil t)
   (autoload 'custom-set-variable "cus-edit" nil t)
   (autoload 'customize "cus-edit" nil t)
+  (autoload 'customize-browse "cus-edit" nil t)
   (autoload 'customize-group "cus-edit" nil t)
   (autoload 'customize-group-other-window "cus-edit" nil t)
   (autoload 'customize-variable "cus-edit" nil t)

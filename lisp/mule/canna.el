@@ -5,7 +5,7 @@
 
 ;; Author: Akira Kon <kon@d1.bs2.mt.nec.co.jp>
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.6 $
+;; Version: $Revision: 1.7 $
 ;; Keywords: Canna, Japanese, input method, mule, multilingual
 
 ;; This file is not a part of Emacs yet.
@@ -40,6 +40,7 @@
 
 ;; by 守岡 知彦 <morioka@jaist.ac.jp> 1996/11/11
 (or (boundp 'CANNA)
+    (not (fboundp 'dynamic-link))
     (let ((handle (dynamic-link (expand-file-name "canna.so" exec-directory))))
       (dynamic-call "emacs_canna_init" handle))
     )
@@ -49,7 +50,7 @@
 ;; end
 
 (defconst canna-rcs-version
-  "$Id: canna.el,v 1.6 1997/04/27 19:30:30 steve Exp $")
+  "$Id: canna.el,v 1.7 1997/06/21 20:02:46 steve Exp $")
 
 (defun canna-version ()
   "Display version of canna.el in mini-buffer."

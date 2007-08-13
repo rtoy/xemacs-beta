@@ -93,5 +93,5 @@ Boston, MA 02111-1307, USA.  */
 
 #define SYSTEM_PURESIZE_EXTRA 20000
 
-#define START_FILES pre-crt0.o /lib/crt0.o
+#define START_FILES "pre-crt0.o /lib/crt0.o"
 #endif

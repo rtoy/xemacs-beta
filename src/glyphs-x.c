@@ -1060,8 +1060,8 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
  *                             JPEG                                   *
  **********************************************************************/
 
-#include "jpeglib.h"
-#include "jerror.h"
+#include <jpeglib.h>
+#include <jerror.h>
 
 /* The in-core jpeg code doesn't work, so I'm avoiding it for now.  -sb  */
 /* Late-breaking update, we're going to give it a try, I think it's */

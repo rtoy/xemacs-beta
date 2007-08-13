@@ -49,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #define DATA_START ({ extern int data_start; (char *) &data_start; })
 
 /* GNU now always uses the ELF format.  */
-#define UNEXEC unexelf.o
+#define UNEXEC "unexelf.o"
 
 /* Some losing code fails to include this and then assumes
    that because it is braindead that O_RDONLY==0.  */

@@ -1,39 +1,29 @@
-/* Hey Emacs, this is a -*- Makefile -*- */
+##   Makefile for dynodump subdirectory in XEmacs
+##   Copyright (C) 1995 Board of Trustees, University of Illinois
+##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 
-/* Makefile for dynodump subdirectory in XEmacs
-   Copyright (C) 1995 Board of Trustees, University of Illinois
+## This file is part of XEmacs.
 
-This file is part of XEmacs.
+## XEmacs is free software; you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by the
+## Free Software Foundation; either version 2, or (at your option) any
+## later version.
 
-XEmacs is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 2, or (at your option) any
-later version.
+## XEmacs is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+## for more details.
 
-XEmacs is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+## You should have received a copy of the GNU General Public License
+## along with XEmacs; see the file COPYING.  If not, write to
+## the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+## Boston, MA 02111-1307, USA.
 
-You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+## Synched up with: Not synched with FSF.
 
-/* Avoid trouble on systems where the "SHELL" variable might be
-   inherited from the environment. */
 SHELL = /bin/sh
 
-/* Some people use these in paths they define.  We do not want their paths
-   getting changed on them. */
-#undef sparc
-#undef sun
-#undef unix
-#undef i386
-#undef ppc
-#undef sgi
-
-/* ==================== Things "configure" will edit ==================== */
+## ==================== Things "configure" will edit ====================
 
 CC=@CC@
 CFLAGS=@CFLAGS@
@@ -41,7 +31,7 @@ ARCH=@dynodump_arch@
 
 srcdir=@srcdir@
 
-/* ========================= start of cpp stuff ========================= */
+## ========================= start of cpp stuff =========================
 
 #define NO_SHORTNAMES
 #define NOT_C_CODE

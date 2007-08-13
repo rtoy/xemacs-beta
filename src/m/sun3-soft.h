@@ -24,8 +24,8 @@ NOTE-END  */
 /* In case we are using floating point, work together with crt0.c.  */
 
 #ifndef __GNUC__
-#define C_SWITCH_MACHINE -fsoft
+#define C_SWITCH_MACHINE "-fsoft"
 #endif
 
 #define sun_soft
-#define START_FILES crt0.o /usr/lib/Fcrt1.o
+#define START_FILES "crt0.o /usr/lib/Fcrt1.o"

@@ -9,7 +9,7 @@
 /* There are some reports that the following is needed
    with some version of this system.
 #undef LIBX11_SYSTEM
-#define LIBX11_SYSTEM -linet
+#define LIBX11_SYSTEM "-linet"
 */
 
 /* This is said to be needed as a result of having _insque rather

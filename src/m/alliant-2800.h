@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #define ALLIANT
 #define ALLIANT_2800
 #define sun			/* Use X support for Sun keyboard stuff. */
-#define C_OPTIMIZE_SWITCH -Og	/* No concurrent code allowed here. */
+#define C_OPTIMIZE_SWITCH "-Og"	/* No concurrent code allowed here. */
 
 /* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
    the bit field into an int.  In other words, if bit fields
@@ -69,8 +69,8 @@ Boston, MA 02111-1307, USA.  */
    and temacs will do (load "loadup") automatically unless told otherwise.  */
 
 /* #define CANNOT_DUMP */
-#define UNEXEC unexfx2800.o
-#define LIBS_MACHINE -lalliant
+#define UNEXEC "unexfx2800.o"
+#define LIBS_MACHINE "-lalliant"
 
 /* Define VIRT_ADDR_VARIES if the virtual addresses of
    pure and impure space as loaded can vary, and even their
@@ -103,7 +103,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Alliant needs special crt0.o because system version is not reentrant */
 
-#define START_FILES crt0.o
+#define START_FILES "crt0.o"
 
 /* Alliant dependent code for dumping executing image.
    See crt0.c code for alliant.  */

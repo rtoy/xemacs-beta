@@ -29,7 +29,7 @@ Boston, MA 02111-1307, USA.  */
 #define gec63
 
 /* GEC63 has alloca in the PW/ux63 library.  */
-#define LIB_STANDARD -lPW -lc
+#define LIB_STANDARD "-lPW -lc"
 #define HAVE_ALLOCA
 
 /* Do not define LOAD_AVE_TYPE or LOAD_AVE_CVT

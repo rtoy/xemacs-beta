@@ -106,7 +106,7 @@ NOTE-END  */
 /* This machine requires completely different unexec code
    which lives in a separate file.  Specify the file name.  */
 
-#define UNEXEC unexmips.o
+#define UNEXEC "unexmips.o"
 
 /* Describe layout of the address space in an executing process.  */
 
@@ -118,24 +118,24 @@ NOTE-END  */
 #ifndef NEWSOS5
 #ifdef BSD
 
-/* DECstations don't have this library.
-   #define LIBS_MACHINE -lmld  */
+/* DECstations don't have this library. */
+/* #define LIBS_MACHINE "-lmld"  */
 
-#define LD_SWITCH_MACHINE -D 800000
+#define LD_SWITCH_MACHINE "-D 800000"
 #define LIBS_DEBUG
 
-#define LINKER /bsd43/bin/ld
+#define LINKER "/bsd43/bin/ld"
   
 #else /* not BSD */
 
-#define LIBS_MACHINE -lmld
-#define LD_SWITCH_MACHINE -D 800000 -g3
-#define START_FILES pre-crt0.o /usr/lib/crt1.o
-#define LIB_STANDARD -lbsd -lc /usr/lib/crtn.o
-#define LIBS_TERMCAP -lcurses
+#define LIBS_MACHINE "-lmld"
+#define LD_SWITCH_MACHINE "-D 800000 -g3"
+#define START_FILES "pre-crt0.o /usr/lib/crt1.o"
+#define LIB_STANDARD "-lbsd -lc /usr/lib/crtn.o"
+#define LIBS_TERMCAP "-lcurses"
 
-#define C_SWITCH_MACHINE -I/usr/include/bsd
-#define C_DEBUG_SWITCH -O -g3
+#define C_SWITCH_MACHINE "-I/usr/include/bsd"
+#define C_DEBUG_SWITCH "-O -g3"
 
 #endif /* not BSD */
 #endif /* not NEWSOS5 */

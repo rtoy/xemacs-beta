@@ -88,7 +88,7 @@ compiler is so brain damaged that it is not even worth trying to use it.
 /*#define HAVE_ALLOCA */
 
 #ifdef HAVE_ALLOCA
-#define LIB_STANDARD -lPW -lc
+#define LIB_STANDARD "-lPW -lc"
 #endif
 
 /* Define NO_REMAP if memory segmentation makes it not work well
@@ -115,7 +115,7 @@ extern int sign_extend_temp;
    proper declaration of data_start in the #undef NO_REMAP case */
 
 #ifndef NO_REMAP
-#define START_FILES pre-crt0.o /lib/crt0.o
+#define START_FILES "pre-crt0.o /lib/crt0.o"
 #endif
 
 /* Perhaps this means that the optimizer isn't safe to use.  */
@@ -124,7 +124,7 @@ extern int sign_extend_temp;
 
 /* Put text and data on non-segment boundary; makes image smaller */
 
-#define LD_SWITCH_MACHINE	-N 
+#define LD_SWITCH_MACHINE "-N"
 
 /* When writing the 'xemacs' file, make text segment ro */
 #define EXEC_MAGIC	0410

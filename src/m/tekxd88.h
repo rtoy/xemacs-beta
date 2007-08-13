@@ -79,12 +79,12 @@ Boston, MA 02111-1307, USA.  */
 #  define alloca __builtin_alloca	/* Use the gcc builtin alloca() ... */
 #  define HAVE_ALLOCA	/* ... and be sure that no other ones are tried out. */
 #  undef C_ALLOCA
-#  define C_OPTIMIZE_SWITCH -O2
+#  define C_OPTIMIZE_SWITCH "-O2"
 #else /* not __GNUC__ */
 #  undef HAVE_ALLOCA
 #  define C_ALLOCA	/* Use the alloca() supplied in alloca.c. */
 #  define STACK_DIRECTION -1  /* The stack grows towards lower addresses. */
-#  define C_OPTIMIZE_SWITCH -O
+#  define C_OPTIMIZE_SWITCH "-O"
 #endif /* __GNUC__ */
 
 #undef LIB_X11_LIB	/* Don't use shared libraries defined in usg5-3.h */
@@ -98,9 +98,9 @@ Boston, MA 02111-1307, USA.  */
 /* -X18 means do not allocate programmer-defined local variables to a
    register unless they are declared register.  (Copied from perl-4.036
    Green Hills C hints file.  Might be needed for setjmp, I don't know.) */
-#  define C_SWITCH_MACHINE -X18
+#  define C_SWITCH_MACHINE "-X18"
 /* We need /lib/default.ld so that /bin/ld can read its link directives. */
-#  define LD_SWITCH_SYSTEM /lib/default.ld
+#  define LD_SWITCH_SYSTEM "/lib/default.ld"
 #endif /* ghs */
 
 /* We need this to get dumping to work */

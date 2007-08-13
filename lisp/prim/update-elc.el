@@ -44,31 +44,98 @@
 
 ;;; Code:
 
-(setq update-elc-files-to-compile
-      (delq nil
-	    (mapcar (function
-		     (lambda (x)
-		       (if (string-match "\.elc$" x)
-			   (let ((src (substring x 0 -1)))
-			     (if (file-newer-than-file-p src x)
-				 (progn
-				   (and (file-exists-p x)
-					(null (file-writable-p x))
-					(set-file-modes x (logior (file-modes x) 128)))
-				   src))))))
-		    ;; -batch gets filtered out.
-		    (nthcdr 3 command-line-args))))
+(defvar processed nil)
+(defvar update-elc-files-to-compile nil)
+
+;(setq update-elc-files-to-compile
+;      (delq nil
+;	    (mapcar (function
+;		     (lambda (x)
+;		       (if (string-match "\.elc$" x)
+;			   (let ((src (substring x 0 -1)))
+;			     (if (file-newer-than-file-p src x)
+;				 (progn
+;				   (and (file-exists-p x)
+;					(null (file-writable-p x))
+;					(set-file-modes x (logior (file-modes x) 128)))
+;				   src))))))
+;		    ;; -batch gets filtered out.
+;		    (nthcdr 3 command-line-args))))
+
+(define-function 'defalias 'define-function)
+(require 'packages)
+
+(let ((autol (list-autoloads)))
+  ;; (print (prin1-to-string autol))
+  (while autol
+    (let ((src (car autol)))
+      (if (and (file-exists-p src)
+	       (file-newer-than-file-p src (concat src "c")))
+	  (setq update-elc-files-to-compile
+		(cons src update-elc-files-to-compile))))
+    (setq autol (cdr autol))))
+
+;; We must have some lisp support at this point
+(let ((temp-path (expand-file-name ".." (car load-path))))
+  (setq load-path (nconc (directory-files temp-path t "^[^-.]"
+					  nil 'dirs-only)
+			 (cons temp-path load-path))))
+
+;(load "backquote")
+;(load "bytecomp-runtime")
+;(load "subr")
+;(load "replace")
+;(load "version.el")
+;(load "cl")
+;(load "featurep")
+
+;; (print (prin1-to-string update-elc-files-to-compile))
+
+(let (dumped-lisp-packages site-load-packages)
+  (load (concat default-directory "../lisp/prim/dumped-lisp.el"))
+  ;; (print (prin1-to-string dumped-lisp-packages))
+  (load (concat default-directory "../site-packages") t t)
+  (setq dumped-lisp-packages
+	(append packages-hardcoded-lisp
+		dumped-lisp-packages
+		packages-useful-lisp
+		site-load-packages))
+  (while dumped-lisp-packages
+    (let ((arg (car dumped-lisp-packages)))
+      ;; (print (prin1-to-string arg))
+      (if (null (member arg packages-unbytecompiled-lisp))
+	  (progn
+	    (setq arg (locate-library arg))
+	    (if (null arg)
+		(progn
+		  (print (format "Library file %s: not found"
+				 (car dumped-lisp-packages)))
+		  (kill-emacs)))
+	    (if (string-match "\\.elc?\\'" arg)
+		(setq arg (substring arg 0 (match-beginning 0))))
+	    (if (and (null (member arg processed))
+		     (file-exists-p (concat arg ".el"))
+		     (file-newer-than-file-p (concat arg ".el")
+					     (concat arg ".elc")))
+		(setq processed (cons (concat arg ".el") processed)))))
+      (setq dumped-lisp-packages (cdr dumped-lisp-packages)))))
+
+(setq update-elc-files-to-compile (append update-elc-files-to-compile
+					  processed))
+
+;; (print (prin1-to-string update-elc-files-to-compile))
 
 (if update-elc-files-to-compile
     (progn
       (setq command-line-args
-	    (cons (car command-line-args)
+;;	    (cons (car command-line-args)
 		  (append
 		   '("-l" "loadup-el.el" "run-temacs"
 		     "-batch" "-q" "-no-site-file"
 		     "-l" "bytecomp" "-f" "batch-byte-compile")
-		   update-elc-files-to-compile)))
-      (load "loadup-el.el")))
+		   update-elc-files-to-compile)) ;; )
+      (load "loadup-el.el")
+))
 
 (kill-emacs)
 

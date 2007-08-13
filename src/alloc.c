@@ -3956,12 +3956,12 @@ garbage_collect_1 (void)
   char stack_top_variable;
   extern char *stack_bottom;
   int i;
+  struct frame *f = selected_frame ();
   int speccount = specpdl_depth ();
   Lisp_Object pre_gc_cursor = Qnil;
-  Lisp_Object changed_frames = Qnil;
   struct gcpro gcpro1;
 
-  int cursor_changed_selected_frame = 0;
+  int cursor_changed = 0;
 
   if (gc_in_progress != 0)
     return;
@@ -3972,7 +3972,7 @@ garbage_collect_1 (void)
   if (preparing_for_armageddon)
     return;
 
-  GCPRO1 (changed_frames);
+  GCPRO1 (pre_gc_cursor);
 
   /* Very important to prevent GC during any of the following
      stuff that might run Lisp code; otherwise, we'll likely
@@ -3987,55 +3987,36 @@ garbage_collect_1 (void)
   /* Now show the GC cursor/message. */
   if (!noninteractive)
     {
-      /* No need to gcpro this; gc won't catch us now. */
-      Lisp_Object frmcons, devcons, concons;
-      Lisp_Object selframe = make_frame (selected_frame ());
-
-      FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
+      if (FRAME_WIN_P (f))
 	{
-	  struct frame *f = XFRAME (XCAR (frmcons));
-	  int cursor_changed;
-
-	  if (FRAME_WIN_P (f))
+	  Lisp_Object frame = make_frame (f);
+	  Lisp_Object cursor = glyph_image_instance (Vgc_pointer_glyph,
+						     FRAME_SELECTED_WINDOW (f),
+						     ERROR_ME_NOT, 1);
+	  pre_gc_cursor = f->pointer;
+	  if (POINTER_IMAGE_INSTANCEP (cursor)
+	      /* don't change if we don't know how to change back. */
+	      && POINTER_IMAGE_INSTANCEP (pre_gc_cursor))
 	    {
-	      Lisp_Object frame = XCAR (frmcons);
-	      Lisp_Object cursor =
-		glyph_image_instance (Vgc_pointer_glyph,
-				      FRAME_SELECTED_WINDOW (f),
-				      ERROR_ME_NOT, 1);
-	      pre_gc_cursor = f->pointer;
-	      if (POINTER_IMAGE_INSTANCEP (cursor)
-		  /* don't change if we don't know how to change back. */
-		  && POINTER_IMAGE_INSTANCEP (pre_gc_cursor))
-		{
-		  Fset_frame_pointer (frame, cursor);
-		  /* Add the frame to the list. */
-		  changed_frames = Fcons (pre_gc_cursor, changed_frames);
-		  changed_frames = Fcons (XCAR (frmcons), changed_frames);
-		  if (EQ (XCAR (frmcons), selframe))
-		    cursor_changed_selected_frame = 1;
-		}
+	      cursor_changed = 1;
+	      Fset_frame_pointer (frame, cursor);
 	    }
 	}
-      /* Now handle the plain old message. */
-      {
-	struct frame *f = XFRAME (selframe);
-	/* Don't print messages to the stream device. */
-	if (!cursor_changed_selected_frame && !FRAME_STREAM_P (f))
-	  {
-	    char *msg = (STRINGP (Vgc_message)
-			 ? GETTEXT ((char *) XSTRING_DATA (Vgc_message))
-			 : 0);
-	    Lisp_Object args[2], whole_msg;
-	    args[0] =
-	      build_string (msg ? msg :
-			    GETTEXT ((CONST char *) gc_default_message));
-	    args[1] = build_string ("...");
-	    whole_msg = Fconcat (2, args);
-	    echo_area_message (f, (Bufbyte *) 0, whole_msg, 0, -1,
-			       Qgarbage_collecting);
-	  }
-      }
+
+      /* Don't print messages to the stream device. */
+      if (!cursor_changed && !FRAME_STREAM_P (f))
+	{
+	  char *msg = (STRINGP (Vgc_message)
+		       ? GETTEXT ((char *) XSTRING_DATA (Vgc_message))
+		       : 0);
+	  Lisp_Object args[2], whole_msg;
+	  args[0] = build_string (msg ? msg :
+				  GETTEXT ((CONST char *) gc_default_message));
+	  args[1] = build_string ("...");
+	  whole_msg = Fconcat (2, args);
+	  echo_area_message (f, (Bufbyte *) 0, whole_msg, 0, -1,
+			     Qgarbage_collecting);
+	}
     }
 
   /***** Now we actually start the garbage collection. */
@@ -4171,13 +4152,9 @@ garbage_collect_1 (void)
   /* Now remove the GC cursor/message */
   if (!noninteractive)
     {
-      Lisp_Object tail = changed_frames;
-      while (CONSP (tail) && CONSP (XCDR (tail)))
-	{
-	  Fset_frame_pointer (XCAR (tail), XCAR (XCDR (tail)));
-	  tail = XCDR (XCDR (tail));
-	}
-      if (!cursor_changed_selected_frame && !FRAME_STREAM_P (selected_frame ()))
+      if (cursor_changed)
+	Fset_frame_pointer (make_frame (f), pre_gc_cursor);
+      else if (!FRAME_STREAM_P (f))
 	{
 	  char *msg = (STRINGP (Vgc_message)
 		       ? GETTEXT ((char *) XSTRING_DATA (Vgc_message))

@@ -796,7 +796,7 @@ x_update_frame_menubar_internal (struct frame *f)
     XtVaGetValues (container,
 		   XtNwidth, &req.width,
 		   XtNheight, &req.height,
-		   0);
+		   NULL);
     XtQueryGeometry (container, &req, &repl);
     EmacsManagerChangeSize (container, repl.width,
 			    repl.height);

@@ -9,7 +9,7 @@
 ;;         Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: 1994/10/29
-;; Version: $Revision: 1.6 $
+;; Version: $Revision: 1.7 $
 ;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -103,7 +103,7 @@ These hooks are run in the MIME-Preview buffer.")
 ;;; @@ System/Information variables
 
 (defconst tm-vm/RCS-ID
-  "$Id: tm-vm.el,v 1.6 1997/05/14 02:01:47 steve Exp $")
+  "$Id: tm-vm.el,v 1.7 1997/06/21 20:03:15 steve Exp $")
 (defconst tm-vm/version (get-version-string tm-vm/RCS-ID))
 
 ; Ensure vm-menu-mail-menu gets properly defined *before* tm-vm/vm-emulation-map
@@ -127,7 +127,7 @@ These hooks are run in the MIME-Preview buffer.")
 	   ["      Subject:" mail-subject	t]
 	   ["      CC:" mail-cc t]
 	   ["      BCC:" mail-bcc t]
-	   ["      Reply-To:" mail-replyto t]
+	   ["      Reply-To:" mail-reply-to t]
 	   ["      Text" mail-text t]
 	   "----"
 	   ["Yank Original" vm-menu-yank-original vm-reply-list]

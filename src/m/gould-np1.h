@@ -55,14 +55,14 @@
 			      1800, 2000, 2400, 3600, 4800, 7200, 9600, \
 				  19200, 38400 }
 
-#define LD_SWITCH_SYSTEM -BS -e start
+#define LD_SWITCH_SYSTEM "-BS -e start"
 
 /* Undef C_DEBUG_SWITCH because it may have been set in gould.h */
 /* It will compile and load and works with dbx. Runs under an incomplete
    port of gdb, but gdb doesn't always find things correctly. */
 #undef C_DEBUG_SWITCH
-#define C_DEBUG_SWITCH -g
-#define LIBS_DEBUG -lg
+#define C_DEBUG_SWITCH "-g"
+#define LIBS_DEBUG "-lg"
 
 
 /* The data segment in this machine always starts at address 0x1000000 = 16M.

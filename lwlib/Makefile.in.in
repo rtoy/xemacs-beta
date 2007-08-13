@@ -1,37 +1,27 @@
-/* Makefile for Lucid Widget Library
-   Copyright (C) 1994 Lucid, Inc.
-   Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
+##   Makefile for Lucid Widget Library
+##   Copyright (C) 1994 Lucid, Inc.
+##   Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
+##   Copyright (C) 1994, 1995 Board of Trustees, University of Illinois
+##   Copyright (C) 1996, 1997 Sun Microsystems, Inc.
 
-This file is part of the Lucid Widget Library.
+## This file is part of the Lucid Widget Library.
 
-The Lucid Widget Library is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+## The Lucid Widget Library is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
 
-The Lucid Widget Library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+## The Lucid Widget Library is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+## You should have received a copy of the GNU General Public License
+## along with XEmacs; see the file COPYING.  If not, write to
+## the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+## Boston, MA 02111-1307, USA.
 
-/* Some people use these in paths they define.  We do not want their paths
-   getting changed on them. */
-#undef sparc
-#undef sun
-#undef unix
-#undef sgi
-#undef NeXT
-#undef mips
-#undef i386
-#undef linux
-
-/* For performance and consistency, no built-in rules */
+## For performance and consistency, no built-in rules
 .SUFFIXES:
 .SUFFIXES: .c .o .i .h
 
@@ -62,9 +52,9 @@ VPATH=@srcdir@
 
 #ifdef ENERGIZE
 EZ_OBJS =\
- energize/blpsheet.o energize/build.o energize/classbr_ps.o \
- energize/ctreebr_ps.o energize/debuggerps.o energize/editmode.o \
- energize/leb_psheet.o energize/projectdisp.o energize/projectps.o \
+ energize/blpsheet.o energize/build.o energize/classbr_ps.o\
+ energize/ctreebr_ps.o energize/debuggerps.o energize/editmode.o\
+ energize/leb_psheet.o energize/projectdisp.o energize/projectps.o\
  energize/search.o energize/target.o
 ENERGIZEP = -DENERGIZE
 EZ_SUBDIR = ez_dialog
@@ -91,14 +81,14 @@ ALL_CFLAGS= $(CFLAGS) $(CPPFLAGS) -I. $(c_switch_all) $(ENERGIZEP)
 .c.o:
 	$(CC) -c $(cflags) $<
 
-/* Create preprocessor output (debugging purposes only) */
+## Create preprocessor output (debugging purposes only)
 .c.i:
 	$(CC) -P $(cppflags) $<
 
 liblw.a: $(objs)
 	$(RM) $@
 	$(AR) $@ $(objs)
-	-test -n "$(RANLIB)" && $(RANLIB) $@
+	@-test -n "$(RANLIB)" && $(RANLIB) $@
 
 #ifdef ENERGIZE
 ez_dialog:
@@ -108,25 +98,26 @@ ez_dialog:
 .PHONY : mostlyclean clean distclean realclean extraclean
 FRC.mostlyclean:
 mostlyclean: FRC.mostlyclean
-	rm -f liblw.a liblw_pure_*.a *.o
+	$(RM) liblw.a liblw_pure_*.a *.o *.i
 clean: mostlyclean
 #ifdef ENERGIZE
 	cd energize && $(MAKE) $(MFLAGS) clean
 #endif
 distclean: clean
-	rm -f Makefile Makefile.in config.h .pure
+	$(RM) Makefile Makefile.in config.h .pure
 realclean: distclean
 extraclean: distclean
-	-rm -f *~ \#* m/?*~ s/?*~
+	$(RM) *~ \#* m/?*~ s/?*~
 
+CONFIG_H = ../src/config.h config.h
 
-lwlib-config.o:	lwlib.h ../src/config.h
-lwlib-Xaw.o:	lwlib.h lwlib-internal.h lwlib-Xaw.h ../src/config.h
-lwlib-Xlw.o:	lwlib.h lwlib-internal.h lwlib-Xlw.h xlwmenu.h ../src/config.h
-lwlib-Xm.o:	lwlib.h lwlib-internal.h lwlib-utils.h lwlib-Xm.h
-lwlib-Xm.o:	../src/config.h
-lwlib-utils.o:	lwlib-utils.h ../src/config.h
-lwlib.o:	lwlib.h lwlib-internal.h lwlib-utils.h ../src/config.h
-lwlib.o:	lwlib-Xlw.h lwlib-Xm.h lwlib-Xaw.h ../src/config.h
-xlwmenu.o:	lwlib.h xlwmenu.h xlwmenuP.h ../src/config.h
-xlwscrollbar.o:	lwlib.h xlwscrollbar.h xlwscrollbarP.h ../src/config.h
+lwlib-config.o:	lwlib.h $(CONFIG_H)
+lwlib-Xaw.o:	lwlib.h lwlib-internal.h lwlib-Xaw.h $(CONFIG_H)
+lwlib-Xlw.o:	lwlib.h lwlib-internal.h lwlib-Xlw.h xlwmenu.h $(CONFIG_H)
+lwlib-Xm.o:	lwlib.h lwlib-internal.h lwlib-utils.h lwlib-Xm.h $(CONFIG_H)
+lwlib-Xm.o:	$(CONFIG_H)
+lwlib-utils.o:	lwlib-utils.h $(CONFIG_H)
+lwlib.o:	lwlib.h lwlib-internal.h lwlib-utils.h $(CONFIG_H)
+lwlib.o:	lwlib-Xlw.h lwlib-Xm.h lwlib-Xaw.h $(CONFIG_H)
+xlwmenu.o:	lwlib.h xlwmenu.h xlwmenuP.h $(CONFIG_H)
+xlwscrollbar.o:	lwlib.h xlwscrollbar.h xlwscrollbarP.h $(CONFIG_H)

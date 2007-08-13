@@ -34,14 +34,21 @@
 ;;; Code:
 
 ;; Note that this variable is used by non-lisp modes too.
-(defvar defun-prompt-regexp nil
+(defcustom defun-prompt-regexp nil
   "*Non-nil => regexp to ignore, before the character that starts a defun.
 This is only necessary if the opening paren or brace is not in column 0.
-See `beginning-of-defun'.")
+See `beginning-of-defun'."
+  :type '(choice (const :tag "none" nil)
+		 regexp)
+  :group 'lisp)
+
 (make-variable-buffer-local 'defun-prompt-regexp)
 
-(defvar parens-require-spaces t
-  "Non-nil => `insert-parentheses' should insert whitespace as needed.")
+(defcustom parens-require-spaces t
+  "Non-nil => `insert-parentheses' should insert whitespace as needed."
+  :type 'boolean
+  :group 'editing-basics
+  :group 'lisp)
 
 (defun forward-sexp (&optional arg)
   "Move forward across one balanced expression (sexp).

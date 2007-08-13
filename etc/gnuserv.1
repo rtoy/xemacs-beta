@@ -1,62 +1,49 @@
 .TH GNUSERV 1 "" "XEmacs Server"
 .UC 4
 .SH NAME
-gnuserv, gnuclient, gnuattach, gnudoit \- Server and Clients for XEmacs
+gnuserv, gnuclient \- Server and Clients for XEmacs
 .SH SYNOPSIS
 .B gnuclient
-[-q] [[-h hostname] [-p port] [-r pathname]] [[+line] path] ...
-.br
-.B gnuattach
-[[-h hostname] [-p port] [-r pathname]] [[+line] path] ...
-.br
-.B gnudoit 
-[-q] [[-h hostname] [-p port]] [sexpr] ...
+[-q] [-nw] [-l library] [-f function] [-eval form] [[-h hostname]
+[-p port] [-r pathname]] [[+line] path] ...
 .br
 .B gnuserv
 .SH DESCRIPTION
 
 .PP
-\fIgnuclient\fP allows the user to request a running XEmacs process to edit
-the named files or directories (typically in a newly created X frame).
-.PP
-\fIgnuattach\fP allows the user to request a running XEmacs process to edit
-the named files or directories in the current TTY connection.  One typical
-use for this is with a dialup connection to a machine on which an XEmacs
+\fIgnuclient\fP allows the user to request a running XEmacs process to
+edit the named files or directories in a new frame.  Depending on your
+environment, it can be an X frame or a TTY frame.  One typical use for
+this is with a dialup connection to a machine on which an XEmacs
 process is currently running.
 .PP
-\fIgnudoit\fP allows the user to request a running XEmacs process to
-evaluate the given arguments inside a progn LISP form.
-.PP
-\fIgnuserv\fP is the server program that is set running by XEmacs to handle
-all incoming and outgoing requests. It is not usually invoked directly, but is
-started from XEmacs by loading the \fIgnuserv\fP package and evaluating 
-the LISP form (gnuserv-start). 
+\fIgnuserv\fP is the server program that is set running by XEmacs to
+handle all incoming and outgoing requests. It is not usually invoked
+directly, but is started from XEmacs by loading the \fIgnuserv\fP
+package and evaluating the Lisp form (gnuserv-start).
 .SH OPTIONS
 .TP 8
 .BI \-q
-This option informs both \fIgnuclient\fP and \fIgnudoit\fP to exit once
-connection has been made with the XEmacs process.  Normally \fIgnuclient\fP
-waits until all of the files on the command line have been finished with
-(their buffers killed) by the XEmacs process, and \fIgnudoit\fP normally
-waits around for evaluation of its arguments by the XEmacs process, and
-prints the results or error conditions.  This option does not exist for
-\fIgnuattach\fP because it does not make sense -- XEmacs and the shell
-would fight for input and would screw up each other's output.
+This option informs \fIgnuclient\fP to exit once connection has been
+made with the XEmacs process.  Normally \fIgnuclient\fP waits until
+all of the files on the command line have been finished with (their
+buffers killed) by the XEmacs process, and all the forms have been
+evaluated.
 .TP 8
 .BI \-h " hostname"
 Used only with Internet-domain sockets, this option specifies the host
 machine which should be running \fIgnuserv\fP.  If this option is not
 specified then the value of the environment variable GNU_HOST is used
 if set.  If no hostname is specified, and the GNU_HOST variable is not
-set, an internet connection will not be attempted.  N\.B.: \fIgnuserv\fP
-does NOT allow internet connections unless the GNU_SECURE variable has
-been specified and points at a file listing all trusted hosts. (See
-SECURITY below.)
+set, an internet connection will not be attempted.  N\.B.:
+\fIgnuserv\fP does NOT allow internet connections unless the
+GNU_SECURE variable has been specified and points at a file listing
+all trusted hosts. (See SECURITY below.)
 
 .br
-Note that an internet address may be specified instead of a hostname which can
-speed up connections to the server by quite a bit, especially if the client
-machine is running YP.
+Note that an internet address may be specified instead of a hostname
+which can speed up connections to the server by quite a bit,
+especially if the client machine is running YP.
 
 .br
 Note also that a hostname of \fBunix\fP can be used to specify that
@@ -78,23 +65,22 @@ it will have to be specified via one of the alternative methods.
 .BI \-r " pathname"
 Used only with Internet-domain sockets, the pathname argument may be
 needed to inform XEmacs how to reach the root directory of a remote
-machine.  \fIgnuclient\fP and \fIgnuattach\fP prepend this string to
-each path argument given.  For example, if you were trying to edit a
-file on a client machine called otter, whose root directory was
-accessible from the server machine via the path /net/otter, then this
-argument should be set to '/net/otter'.  If this option is omitted,
-then the value is taken from the environment variable GNU_NODE, if
-set, or the empty string otherwise.
+machine.  \fIgnuclient\fP prepends this string to each path argument
+given.  For example, if you were trying to edit a file on a client
+machine called otter, whose root directory was accessible from the
+server machine via the path /net/otter, then this argument should be
+set to '/net/otter'.  If this option is omitted, then the value is
+taken from the environment variable GNU_NODE, if set, or the empty
+string otherwise.
 .TP 8
 .BI "path"
 This is the path of the file to be edited.  If the file is a directory, then
 the directory browsers dired or monkey are usually invoked instead.
 .TP 8
 .BI "sexpr"
-This is part of an XEmacs LISP expression to evaluate.  All the sexprs are
-concatenated together and wrapped in a progn form before sending to
-XEmacs.  If no sexpr is supplied on the  \fIgnudoit\fP commandline,
-\fIgnudoit\fP will read the sexpr to be evaluated from standard input.
+This is part of an XEmacs LISP expression to evaluate.  All the sexprs
+are concatenated together and wrapped in a progn form before sending
+to XEmacs.
 
 .PP
 .SH SETUP
@@ -104,38 +90,37 @@ the XEmacs Lisp form (gnuserv-start), or equivalently by typing
 `M-x gnuserv-start'.
 .SH EXAMPLE
 .RS 4
-gnudoit -q '(mh-smail)'
+gnuclient -q -f mh-smail
 .br
 gnuclient -h cuckoo -r /ange@otter: /tmp/*
 .br
-gnuattach ../src/listproc.c
+gnuclient -nw ../src/listproc.c
 .RE
 
-.SH SYSV IPC 
-SysV IPC is used to communicate between \fIgnuclient\fP,
-\fIgnuattach\fP, \fIgnudoit\fP and \fIgnuserv\fP if the symbol
-SYSV_IPC is defined at the top of gnuserv.h. This is incompatible with
-both Unix-domain and Internet-domain socket communication as described
-below. A file called /tmp/gsrv??? is created as a key for the message
-queue, and if removed will cause the communication between server and
-client to fail until the server is restarted.
+.SH SYSV IPC
+SysV IPC is used to communicate between \fIgnuclient\fP and
+\fIgnuserv\fP if the symbol SYSV_IPC is defined at the top of
+gnuserv.h. This is incompatible with both Unix-domain and
+Internet-domain socket communication as described below. A file called
+/tmp/gsrv??? is created as a key for the message queue, and if removed
+will cause the communication between server and client to fail until
+the server is restarted.
 .SH UNIX-DOMAIN SOCKETS
-A Unix-domain socket is used to communicate between \fIgnuclient\fP,
-\fIgnuattach\fP, \fIgnudoit\fP and \fIgnuserv\fP if the symbol
-UNIX_DOMAIN_SOCKETS is defined at the top of gnuserv.h.  A file called
-/tmp/gsrvdir????/gsrv is created for communication and if deleted will
-cause communication between server and client to fail.  Only the user
-running gnuserv will be able to connect to the socket.
+A Unix-domain socket is used to communicate between \fIgnuclient\fP
+and \fIgnuserv\fP if the symbol UNIX_DOMAIN_SOCKETS is defined at the
+top of gnuserv.h.  A file called /tmp/gsrvdir????/gsrv is created for
+communication and if deleted will cause communication between server
+and client to fail.  Only the user running gnuserv will be able to
+connect to the socket.
 .SH INTERNET-DOMAIN SOCKETS
 Internet-domain sockets are used to communicate between
-\fIgnuclient\fP, \fIgnuattach\fP, \fIgnudoit\fP and \fIgnuserv\fP if
-the symbol INTERNET_DOMAIN_SOCKETS is defined at the top of
-gnuserv.h. Both Internet-domain and Unix-domain sockets can be used at
-the same time. If a hostname is specified via -h or via the GNU_HOST
-environment variable, \fIgnudoit\fP, \fIgnuclient\fP and
-\fIgnuattach\fP establish connections using an internet domain
-socket. If not, a local connection is attempted via either a
-unix-domain socket or SYSV IPC."
+\fIgnuclient\fP and \fIgnuserv\fP if the symbol
+INTERNET_DOMAIN_SOCKETS is defined at the top of gnuserv.h. Both
+Internet-domain and Unix-domain sockets can be used at the same
+time. If a hostname is specified via -h or via the GNU_HOST
+environment variable, \fIgnuclient\fP establish connections using an
+internet domain socket. If not, a local connection is attempted via
+either a unix-domain socket or SYSV IPC.
 .SH SECURITY
 Using Internet-domain sockets, a more robust form of security is
 needed that wasn't necessary with either Unix-domain sockets or SysV
@@ -230,13 +215,11 @@ XEmacs customization file, see xemacs(1).
 xauth(1X11), Xsecurity(1X11)
 .SH BUGS
 .PP 
-Ctrl-D's occurring in gnudoit input strings won't be handled correctly.
-.PP 
 NULs occurring in result strings don't get passed back to gnudoit properly.
 
 .SH AUTHOR.
 Andy Norman (ange@hplb.hpl.hp.com), based heavily upon
 etc/emacsclient.c, etc/server.c and lisp/server.el from the GNU Emacs
 18.52 distribution.  Various modifications from Bob Weiner (weiner@mot.com),
-Darrell Kindred (dkindred@cmu.edu), Arup Mukherjee (arup@cmu.edu), and
-Ben Wing (wing@666.com).
+Darrell Kindred (dkindred@cmu.edu), Arup Mukherjee (arup@cmu.edu), Ben
+Wing (wing@666.com) and Hrvoje Niksic (hniksic@srce.hr).

@@ -113,7 +113,7 @@ make_special gnus  some
 make_special w3 xemacs-w3
 make_special hyperbole elc
 make_special oobr HYPB_ELC='' elc
-make_special eos -k		# not stricly necessary...
+make_special eos -k		# not strictly necessary...
 make_special ilisp elc
 make_special auctex some
 
@@ -132,11 +132,17 @@ ignore_pattern="$ignore_pattern"'
 \!/prim/loadup.el$!d
 \!/prim/loadup-el.el$!d
 \!/prim/update-elc.el$!d
+\!/prim/packages.el$!d
+\!/prim/list-autoloads.el$!d
+\!/prim/dumped-lisp.el$!d
+\!/prim/make-docfile.el$!d
 \!/site-start.el$!d
 \!/site-load.el$!d
 \!/site-init.el$!d
 \!/version.el$!d
+\!/mule/mule-load.el$!d
 \!/sunpro/sunpro-load.el$!d
+\!/tooltalk/tooltalk-load.el$!d
 \!/language/devanagari.el$!d
 \!/language/ethiopic.el$!d
 \!/language/indian.el$!d

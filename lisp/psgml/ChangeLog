@@ -1,3 +1,8 @@
+1997-06-15  Steven L Baur  <steve@altair.xemacs.org>
+
+	* psgml-parse.el (sgml-parse-chars): De-ebolify.
+	(sgml-read-peek): Use char-after not following-char.
+
 1997-06-14  Steven L Baur  <steve@altair.xemacs.org>
 
 	* psgml-parse.el (sgml-read-model): Ebola vaccine.

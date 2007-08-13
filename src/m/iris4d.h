@@ -100,9 +100,9 @@ Boston, MA 02111-1307, USA.  */
 #ifdef USG5_4
 #undef UNEXEC
 /* FSF renames this file to unexsgi.o */
-#define UNEXEC unexelfsgi.o
+#define UNEXEC "unexelfsgi.o"
 #else
-#define UNEXEC unexmips.o
+#define UNEXEC "unexmips.o"
 #endif
 
 #define TEXT_START 0x400000
@@ -118,7 +118,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef LIBS_MACHINE
 /* -lsun in case using Yellow Pages for passwords.  */
-#define LIBS_MACHINE -lmld
+#define LIBS_MACHINE "-lmld"
 #define LIBS_DEBUG
 
 /* Define this if you have a fairly recent system,
@@ -128,13 +128,13 @@ Boston, MA 02111-1307, USA.  */
 #ifndef USG5_4
 #ifdef HAVE_CRTN
 /* Must define START-FILES so that the linker can find /usr/lib/crt0.o.  */
-#define START_FILES pre-crt0.o /usr/lib/crt1.o
-#define LIB_STANDARD -lc /usr/lib/crtn.o
+#define START_FILES "pre-crt0.o /usr/lib/crt1.o"
+#define LIB_STANDARD "-lc /usr/lib/crtn.o"
 #else
-#define START_FILES pre-crt0.o /usr/lib/crt0.o
+#define START_FILES "pre-crt0.o /usr/lib/crt0.o"
 /* The entry-point label (start of text segment) is `start', not `__start'.  */
 #define DEFAULT_ENTRY_ADDRESS start
-#define LIB_STANDARD -lc
+#define LIB_STANDARD "-lc"
 #endif
 #endif
 
@@ -152,13 +152,3 @@ Boston, MA 02111-1307, USA.  */
 
 #undef STACK_DIRECTION
 #define STACK_DIRECTION -1
-
-#ifndef __GNUC__
-/* Turn off some "helpful" error checks for type mismatches
-   that we can't fix without breaking other machines.  */
-#ifdef IRIX_FORCE_32_BITS
-#ifdef THIS_IS_MAKEFILE
-#define C_SWITCH_MACHINE -32
-#endif
-#endif /* IRIX_FORCE_32_BITS */
-#endif /* not __GNUC__ */

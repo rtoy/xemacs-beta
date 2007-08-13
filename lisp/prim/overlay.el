@@ -2,7 +2,8 @@
 
 ;;;; Copyright (C) 1997 Free Software Foundation, Inc.
 
-;; Maintainer: XEmacs
+;; Author: Joe Nuspl <nuspl@sequent.com>
+;; Maintainer: XEmacs Development Team (in <hniksic@srce.hr> incarnation)
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -24,6 +25,45 @@
 
 ;;; Synched up with: Not in FSF.
 
+;;; Commentary:
+
+;; Unlike the text-properties interface, these functions are in fact
+;; totally useless in XEmacs.  They are a more or less straightforward
+;; interface to the much better extent API, provided exclusively for
+;; GNU Emacs compatibility.  If you notice an incompatibility not
+;; mentioned below, be sure to mention it.  Anyways, you should really
+;; not use this.
+
+;; Known incompatibilities with the FSF interface:
+
+;; 1. There is not an `overlay' type.  Any extent with non-nil
+;;    'overlay property is considered an "overlay".
+;;
+;; 2. Some features of FSF overlays have not been implemented in
+;;    extents (or are unneeded).  Specifically, those are the
+;;    following special properties: window, insert-in-front-hooks,
+;;    insert-behind-hooks, and modification-hooks.  Some of these will
+;;    probably be implemented for extents in the future.
+;;
+;; 3. In FSF, beginning and end of an overlay are markers, which means
+;;    that you can use `insert-before-markers' to change insertion
+;;    property of overlay.  It will not work in this emulation, and we
+;;    have no plans of providing it.
+;;
+;; 4. The `overlays-in' and `overlays-at' functions in some cases
+;;    don't work as they should.  To be fixed RSN.
+;;
+;; 5. Finally, setting or modification of overlay properties specific
+;;    to extents will have unusual results.  While (overlay-put
+;;    overlay 'start-open t) does nothing under FSF, it has a definite
+;;    effect under XEmacs.  This is solved by simply avoiding such
+;;    names (see `set-extent-property' for a list).
+
+;; Some functions were broken; fixed-up by Hrvoje Niksic, June 1997.
+
+
+;;; Code:
+
 (defun overlayp (object)
   "Return t if OBJECT is an overlay."
   (and (extentp object)
@@ -37,23 +77,17 @@ The fourth arg FRONT-ADVANCE, if non-nil, makes the
 front delimiter advance when text is inserted there.
 The fifth arg REAR-ADVANCE, if non-nil, makes the
 rear delimiter advance when text is inserted there."
-  (let (overlay temp)
-    (if (null buffer)
-	(setq buffer (current-buffer))
-      (check-argument-type 'bufferp buffer))
+  (if (null buffer)
+      (setq buffer (current-buffer))
+    (check-argument-type 'bufferp buffer))
+  (when (> beg end)
+    (setq beg (prog1 end (setq end beg))))
 
-    (if (> beg end)
-	(setq temp beg
-	      beg end
-	      end temp))
-
-    (setq overlay (make-extent beg end buffer))
+  (let ((overlay (make-extent beg end buffer)))
     (set-extent-property overlay 'overlay t)
-
     (if front-advance
 	(set-extent-property overlay 'start-open t)
       (set-extent-property overlay 'start-closed t))
-
     (if rear-advance
 	(set-extent-property overlay 'end-closed t)
       (set-extent-property overlay 'end-open t))
@@ -65,27 +99,19 @@ rear delimiter advance when text is inserted there."
 If BUFFER is omitted, leave OVERLAY in the same buffer it inhabits now.
 If BUFFER is omitted, and OVERLAY is in no buffer, put it in the current
 buffer."
-  (let (temp)
-    (check-argument-type 'overlayp overlay)
-    (if (null buffer)
-	(setq buffer (extent-object overlay)))
-    
-    (if (null buffer)
-	(setq buffer (current-buffer)))
-    
-    (check-argument-type 'bufferp buffer)
-    
-    (if (and (= beg end)
-	     (not (null (extent-property overlay 'evaporate))))
-	(delete-overlay overlay)
-
-      (if (> beg end)
-	  (setq temp beg
-		beg end
-		end temp))
-
-      (set-extent-endpoints overlay beg end buffer)
-      overlay)))
+  (check-argument-type 'overlayp overlay)
+  (if (null buffer)
+      (setq buffer (extent-object overlay)))
+  (if (null buffer)
+      (setq buffer (current-buffer)))
+  (check-argument-type 'bufferp buffer)
+  (and (= beg end)
+       (extent-property overlay 'evaporate)
+       (delete-overlay overlay))
+  (when (> beg end)
+    (setq beg (prog1 end (setq end beg))))
+  (set-extent-endpoints overlay beg end buffer)
+  overlay)
 
 (defun delete-overlay (overlay)
   "Delete the overlay OVERLAY from its buffer."
@@ -125,37 +151,38 @@ Overlap means that at least one character is contained within the overlay
 and also contained within the specified region.
 Empty overlays are included in the result if they are located at BEG
 or between BEG and END."
-  (let (lst)
-    (mapcar (function
-	     (lambda (overlay)
-	       (and (extent-property overlay 'overlay)
-		    (setq lst (append lst (list overlay))))))
-	    (extent-list nil beg end))
-    lst))
+  (mapcar-extents #'identity nil nil beg end nil 'overlay))
 
 (defun next-overlay-change (pos)
   "Return the next position after POS where an overlay starts or ends.
 If there are no more overlay boundaries after POS, return (point-max)."
   (let ((next (point-max))
-	end)
-    (mapcar (function
-	     (lambda (overlay)
-	       (if (< (setq end (extent-end-position overlay)) next)
-		   (setq next end))))
-	    (overlays-in pos end))
+	tmp)
+    (map-extents
+     (lambda (overlay ignore)
+	    (when (or (and (< (setq tmp (extent-start-position overlay)) next)
+			   (> tmp pos))
+		      (and (< (setq tmp (extent-end-position overlay)) next)
+			   (> tmp pos)))
+	      (setq next tmp))
+       nil)
+     nil pos nil nil nil 'overlay)
     next))
 
 (defun previous-overlay-change (pos)
   "Return the previous position before POS where an overlay starts or ends.
 If there are no more overlay boundaries before POS, return (point-min)."
   (let ((prev (point-min))
-	beg)
-    (mapcar (function
-	     (lambda (overlay)
-	       (if (and (> (setq beg (extent-start-position overlay)) prev)
-			(< beg pos))
-		   (setq prev beg))))
-	    (overlays-in prev pos))
+	tmp)
+    (map-extents
+     (lambda (overlay ignore)
+       (when (or (and (> (setq tmp (extent-end-position overlay)) prev)
+		      (< tmp pos))
+		 (and (> (setq tmp (extent-start-position overlay)) prev)
+		      (< tmp pos)))
+	 (setq prev tmp))
+       nil)
+     nil nil pos nil nil 'overlay)
     prev))
 
 (defun overlay-lists ()
@@ -165,19 +192,17 @@ the cdr has all the overlays after the overlay center.
 Recentering overlays moves overlays between these lists.
 The lists you get are copies, so that changing them has no effect.
 However, the overlays you get are the real objects that the buffer uses."
-  (if (not (boundp 'xemacs-internal-overlay-center-pos))
-      (overlay-recenter (/ (- (point-max) (point-min)) 2)))
+  (or (boundp 'xemacs-internal-overlay-center-pos)
+      (overlay-recenter (1+ (/ (- (point-max) (point-min)) 2))))
   (let ((pos xemacs-internal-overlay-center-pos)
 	before after)
-    (mapcar
-     (function
-      (lambda (overlay)
-	(if (extent-property overlay 'overlay)
-	    (if (> pos (extent-end-position overlay))
-		(setq before (append before (list overlay)))
-	      (setq after (append after (list overlay)))))))
-     (extent-list))
-    (cons before after)))
+    (map-extents (lambda (overlay ignore)
+		   (if (> pos (extent-end-position overlay))
+		       (push overlay before)
+		     (push overlay after))
+		   nil)
+		 nil nil nil nil nil 'overlay)
+    (cons (nreverse before) (nreverse after))))
 
 (defun overlay-recenter (pos)
   "Recenter the overlays of the current buffer around position POS."
@@ -186,7 +211,12 @@ However, the overlays you get are the real objects that the buffer uses."
 (defun overlay-get (overlay prop)
   "Get the property of overlay OVERLAY with property name PROP."
   (check-argument-type 'overlayp overlay)
-  (extent-property overlay prop))
+  (let ((value (extent-property overlay prop))
+	category)
+    (if (and (null value)
+	     (setq category (extent-property overlay 'category)))
+	(get category prop)
+      value)))
 
 (defun overlay-put (overlay prop value)
   "Set one property of overlay OVERLAY: give property PROP value VALUE."
@@ -199,6 +229,8 @@ However, the overlays you get are the real objects that the buffer uses."
 	((eq prop 'after-string)
 	 (set-extent-property overlay 'end-glyph
 			      (make-glyph (vector 'string :data value))))
+	((eq prop 'local-map)
+	 (set-extent-property overlay 'keymap value))
 	((memq prop '(window insert-in-front-hooks insert-behind-hooks
 			     modification-hooks))
 	 (error "cannot support overlay '%s property under XEmacs"

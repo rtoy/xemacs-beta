@@ -42,7 +42,7 @@ NOTE-END  */
 /* In case we are using floating point, work together with crt0.c.  */
 
 #ifndef __GNUC__
-#define C_SWITCH_MACHINE -fsoft
+#define C_SWITCH_MACHINE "-fsoft"
 #endif
 
 /* This line is needed if you are linking with X windows

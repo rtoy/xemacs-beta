@@ -8,12 +8,12 @@
 #define SYSTEM_MALLOC 1
 #if defined (HAVE_XFREE386)
 # undef LIB_STANDARD
-# define LIB_STANDARD -lc
+# define LIB_STANDARD "-lc"
 #else
-# define LIB_X11_LIB -lsocket -lc -lX11
+# define LIB_X11_LIB "-lsocket -lc -lX11"
 # undef LIB_STANDARD
 # ifdef ORDINARY_LINK
-#   define LIB_STANDARD -lnsl -lns -lelf /usr/ucblib/libucb.a
+#   define LIB_STANDARD "-lnsl -lns -lelf /usr/ucblib/libucb.a"
 # else
-#   define LIB_STANDARD -lnsl -lns -lelf /usr/ucblib/libucb.a /usr/ccs/lib/crtn.o
+#   define LIB_STANDARD "-lnsl -lns -lelf /usr/ucblib/libucb.a /usr/ccs/lib/crtn.o"
 # endif

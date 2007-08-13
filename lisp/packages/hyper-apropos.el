@@ -57,94 +57,117 @@
 ;; Massive changes by Christoph Wedler <wedler@fmi.uni-passau.de>
 ;; Some changes for XEmacs 20.3 by hniksic
 
+;; ### The maintainer is supposed to be stig, but I haven't seen him
+;; around for ages.  The real maintainer for the moment is Hrvoje
+;; Niksic <hniksic@srce.hr>.
+
 ;;; Code:
 
 (require 'pp)
 
 (defgroup hyper-apropos nil
   "Hypertext emacs lisp documentation interface."
-  :prefix "hypropos-"
   :group 'docs
   :group 'lisp
   :group 'tools
   :group 'help
   :group 'matching)
 
-;;;###autoload
-(defcustom hypropos-show-brief-docs t
-  "*If non-nil, `hyper-apropos' will display some documentation in the
-\"*Hyper Apropos*\" buffer.  Setting this to nil will speed up searches."
+(defcustom hyper-apropos-show-brief-docs t
+  "*If non-nil, display some documentation in the \"*Hyper Apropos*\" buffer.
+Setting this to nil will speed up searches."
   :type 'boolean
   :group 'hyper-apropos)
-
+(define-obsolete-variable-alias
+  'hypropos-show-brief-docs 'hyper-apropos-show-brief-docs)
 ;; I changed this to true because I think it's more useful this way. --ben
 
-(defcustom hypropos-programming-apropos t
-  "*If non-nil, then `hyper-apropos' takes a bit longer and generates more
-output.  If nil, then only functions that are interactive and variables that
-are user variables are found by `hyper-apropos'."
+(defcustom hyper-apropos-programming-apropos t
+  "*If non-nil, list all the functions and variables.
+This will cause more output to be generated, and take a longer time.
+
+Otherwise, only the interactive functions and user variables will be listed."
   :type 'boolean
   :group 'hyper-apropos)
+(define-obsolete-variable-alias
+  'hypropos-programming-apropos 'hyper-apropos-programming-apropos)
 
-(defcustom hypropos-shrink-window nil
+(defcustom hyper-apropos-shrink-window nil
   "*If non-nil, shrink *Hyper Help* buffer if possible."
   :type 'boolean
   :group 'hyper-apropos)
+(define-obsolete-variable-alias
+  'hypropos-shrink-window 'hyper-apropos-shrink-window)
 
-(defcustom hypropos-prettyprint-long-values t
+(defcustom hyper-apropos-prettyprint-long-values t
   "*If non-nil, then try to beautify the printing of very long values."
   :type 'boolean
   :group 'hyper-apropos)
+(define-obsolete-variable-alias
+  'hypropos-prettyprint-long-values 'hyper-apropos-prettyprint-long-values)
 
-
-(defgroup hypropos-faces nil
+(defgroup hyper-apropos-faces nil
   "Faces defined by hyper-apropos."
-  :prefix "hypropos-"
+  :prefix "hyper-apropos-"
   :group 'hyper-apropos)
+(define-obsolete-variable-alias
+  'hypropos-faces 'hyper-apropos-faces)
 
-
-(defface hypropos-documentation '((((class color) (background light))
-				   (:foreground "darkred"))
-				  (((class color) (background dark))
-				   (:foreground "gray90")))
+(defface hyper-apropos-documentation
+  '((((class color) (background light))
+     (:foreground "darkred"))
+    (((class color) (background dark))
+     (:foreground "gray90")))
   "Hyper-apropos documentation."
-  :group 'hypropos-faces)
+  :group 'hyper-apropos-faces)
+(define-obsolete-variable-alias
+  'hypropos-documentation 'hyper-apropos-documentation)
 
-(defface hypropos-hyperlink '((((class color) (background light))
-			       (:foreground "blue4"))
-			      (((class color) (background dark))
-			       (:foreground "lightseagreen"))
-			      (t
-			       (:bold t)))
+(defface hyper-apropos-hyperlink
+  '((((class color) (background light))
+     (:foreground "blue4"))
+    (((class color) (background dark))
+     (:foreground "lightseagreen"))
+    (t
+     (:bold t)))
   "Hyper-apropos hyperlinks."
-  :group 'hypropos-faces)
+  :group 'hyper-apropos-faces)
+(define-obsolete-variable-alias
+  'hypropos-hyperlink 'hyper-apropos-hyperlink)
 
-(defface hypropos-major-heading '((t (:bold t)))
+(defface hyper-apropos-major-heading '((t (:bold t)))
   "Hyper-apropos major heading."
-  :group 'hypropos-faces)
+  :group 'hyper-apropos-faces)
+(define-obsolete-variable-alias
+  'hypropos-major-heading 'hyper-apropos-major-heading)
 
-(defface hypropos-section-heading '((t (:bold t :italic t)))
+(defface hyper-apropos-section-heading '((t (:bold t :italic t)))
   "Hyper-apropos section heading."
-  :group 'hypropos-faces)
+  :group 'hyper-apropos-faces)
+(define-obsolete-variable-alias
+  'hypropos-section-heading 'hyper-apropos-section-heading)
 
-(defface hypropos-heading '((t (:bold t)))
+(defface hyper-apropos-heading '((t (:bold t)))
   "Hyper-apropos heading."
-  :group 'hypropos-faces)
+  :group 'hyper-apropos-faces)
+(define-obsolete-variable-alias
+  'hypropos-heading 'hyper-apropos-heading)
 
-(defface hypropos-warning '((t (:bold t :foreground "red")))
+(defface hyper-apropos-warning '((t (:bold t :foreground "red")))
   "Hyper-apropos warning."
-  :group 'hypropos-faces)
-
+  :group 'hyper-apropos-faces)
+(define-obsolete-variable-alias
+  'hypropos-warning 'hyper-apropos-warning)
 
 ;;; Internal variables below this point
 
-(defvar hypropos-ref-buffer)
-(defvar hypropos-prev-wconfig)
+(defvar hyper-apropos-ref-buffer)
+(defvar hyper-apropos-prev-wconfig)
 
-(defvar hypropos-help-map
+(defvar hyper-apropos-help-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
-    (set-keymap-name map 'hypropos-help-map)
+    (set-keymap-name map 'hyper-apropos-help-map)
     ;; movement
     (define-key map " "     'scroll-up)
     (define-key map "b"     'scroll-down)
@@ -153,46 +176,50 @@ are user variables are found by `hyper-apropos'."
     (define-key map "/"     'isearch-forward)
     (define-key map "?"     'isearch-backward)
     ;; follow links
-    (define-key map [return] 'hypropos-get-doc)
-    (define-key map "s"     'hypropos-set-variable)
-    (define-key map "t"     'hypropos-find-tag)
-    (define-key map "l"     'hypropos-last-help)
-    (define-key map "c"     'hypropos-customize-variable)
-    (define-key map [button2] 'hypropos-mouse-get-doc)
-    (define-key map [button3] 'hypropos-popup-menu)
+    (define-key map [return] 'hyper-apropos-get-doc)
+    (define-key map "s"     'hyper-apropos-set-variable)
+    (define-key map "t"     'hyper-apropos-find-tag)
+    (define-key map "l"     'hyper-apropos-last-help)
+    (define-key map "c"     'hyper-apropos-customize-variable)
+    (define-key map [button2] 'hyper-apropos-mouse-get-doc)
+    (define-key map [button3] 'hyper-apropos-popup-menu)
     ;; for the totally hardcore...
-    (define-key map "D"     'hypropos-disassemble)
+    (define-key map "D"     'hyper-apropos-disassemble)
     ;; administrativa
     (define-key map "a"     'hyper-apropos)
     (define-key map "n"     'hyper-apropos)
-    (define-key map "q"     'hypropos-quit)
+    (define-key map "q"     'hyper-apropos-quit)
     map)
-  "Keybindings for both the *Hyper Help* buffer and the *Hyper Apropos* buffer")
+  "Keybindings for the *Hyper Help* buffer and the *Hyper Apropos* buffer")
+(define-obsolete-variable-alias
+  'hypropos-help-map 'hyper-apropos-help-map)
 
-(defvar hypropos-map
+(defvar hyper-apropos-map
   (let ((map (make-sparse-keymap)))
-    (set-keymap-name map 'hypropos-map)
-    (set-keymap-parents map (list hypropos-help-map))
+    (set-keymap-name map 'hyper-apropos-map)
+    (set-keymap-parents map (list hyper-apropos-help-map))
     ;; slightly different scrolling...
-    (define-key map " "     'hypropos-scroll-up)
-    (define-key map "b"     'hypropos-scroll-down)
-    (define-key map [delete] 'hypropos-scroll-down)
-    (define-key map [backspace] 'hypropos-scroll-down)
+    (define-key map " "     'hyper-apropos-scroll-up)
+    (define-key map "b"     'hyper-apropos-scroll-down)
+    (define-key map [delete] 'hyper-apropos-scroll-down)
+    (define-key map [backspace] 'hyper-apropos-scroll-down)
     ;; act on the current line...
-    (define-key map "w"     'hypropos-where-is)
-    (define-key map "i"     'hypropos-invoke-fn)
-    (define-key map "s"     'hypropos-set-variable)
+    (define-key map "w"     'hyper-apropos-where-is)
+    (define-key map "i"     'hyper-apropos-invoke-fn)
+    (define-key map "s"     'hyper-apropos-set-variable)
     ;; more administrativa...
-    (define-key map "P"     'hypropos-toggle-programming-flag)
-    (define-key map "k"     'hypropos-add-keyword)
-    (define-key map "e"     'hypropos-eliminate-keyword)
+    (define-key map "P"     'hyper-apropos-toggle-programming-flag)
+    (define-key map "k"     'hyper-apropos-add-keyword)
+    (define-key map "e"     'hyper-apropos-eliminate-keyword)
     map)
   "Keybindings for the *Hyper Apropos* buffer.
-This map inherits from `hypropos-help-map.'")
+This map inherits from `hyper-apropos-help-map.'")
+(define-obsolete-variable-alias
+  'hypropos-map 'hyper-apropos-map)
 
-;;(defvar hypropos-mousable-keymap
+;;(defvar hyper-apropos-mousable-keymap
 ;;  (let ((map (make-sparse-keymap)))
-;;    (define-key map [button2] 'hypropos-mouse-get-doc)
+;;    (define-key map [button2] 'hyper-apropos-mouse-get-doc)
 ;;    map))
 
 (defvar hyper-apropos-mode-hook nil
@@ -201,74 +228,77 @@ This map inherits from `hypropos-help-map.'")
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defconst hypropos-junk-regexp "^Apropos\\|^Functions\\|^Variables\\|^$")
+(defconst hyper-apropos-junk-regexp
+  "^Apropos\\|^Functions\\|^Variables\\|^$")
 
-(defvar hypropos-currently-showing nil)	; symbol documented in help buffer now
-(defvar hypropos-help-history nil)	; chain of symbols followed as links in
+(defvar hyper-apropos-currently-showing nil)	; symbol documented in
+						; help buffer now
+(defvar hyper-apropos-help-history nil)	; chain of symbols followed as links in
 					; help buffer
-(defvar hypropos-face-history nil)
-;;;(defvar hypropos-variable-history nil)
-;;;(defvar hypropos-function-history nil)
-(defvar hypropos-regexp-history nil)
-(defvar hypropos-last-regexp nil)	; regex used for last apropos
-(defconst hypropos-apropos-buf "*Hyper Apropos*")
-(defconst hypropos-help-buf "*Hyper Help*")
+(defvar hyper-apropos-face-history nil)
+;;;(defvar hyper-apropos-variable-history nil)
+;;;(defvar hyper-apropos-function-history nil)
+(defvar hyper-apropos-regexp-history nil)
+(defvar hyper-apropos-last-regexp nil)	; regex used for last apropos
+(defconst hyper-apropos-apropos-buf "*Hyper Apropos*")
+(defconst hyper-apropos-help-buf "*Hyper Help*")
 
 ;;;###autoload
 (defun hyper-apropos (regexp toggle-apropos)
   "Display lists of functions and variables matching REGEXP
-in buffer \"*Hyper Apropos*\".  If optional prefix arg is given, then the value
-of `hypropos-programming-apropos' is toggled for this search.
+in buffer \"*Hyper Apropos*\".  If optional prefix arg is given, then the
+value of `hyper-apropos-programming-apropos' is toggled for this search.
 See also `hyper-apropos-mode'."
   (interactive (list (read-from-minibuffer "List symbols matching regexp: "
-					   nil nil nil 'hypropos-regexp-history)
+					   nil nil nil 'hyper-apropos-regexp-history)
 		     current-prefix-arg))
-  (or (memq major-mode '(hyper-apropos-mode hyper-help-mode))
-      (setq hypropos-prev-wconfig (current-window-configuration)))
+  (or (memq major-mode '(hyper-apropos-mode hyper-apropos-help-mode))
+      (setq hyper-apropos-prev-wconfig (current-window-configuration)))
   (if (string= "" regexp)
-      (if (get-buffer hypropos-apropos-buf)
+      (if (get-buffer hyper-apropos-apropos-buf)
 	  (if toggle-apropos
-	      (hypropos-toggle-programming-flag)
+	      (hyper-apropos-toggle-programming-flag)
 	    (message "Using last search results"))
 	(error "Be more specific..."))
-    (set-buffer (get-buffer-create hypropos-apropos-buf))
+    (set-buffer (get-buffer-create hyper-apropos-apropos-buf))
     (setq buffer-read-only nil)
     (erase-buffer)
     (if toggle-apropos
-	(set (make-local-variable 'hypropos-programming-apropos)
-	     (not (default-value 'hypropos-programming-apropos))))
+	(set (make-local-variable 'hyper-apropos-programming-apropos)
+	     (not (default-value 'hyper-apropos-programming-apropos))))
     (let ((flist (apropos-internal regexp
-				   (if hypropos-programming-apropos
+				   (if hyper-apropos-programming-apropos
 				       #'fboundp
 				     #'commandp)))
 	  (vlist (apropos-internal regexp
-				   (if hypropos-programming-apropos
+				   (if hyper-apropos-programming-apropos
 				       #'boundp
 				     #'user-variable-p))))
       (insert-face (format "Apropos search for: %S\n\n" regexp)
-		   'hypropos-major-heading)
+		   'hyper-apropos-major-heading)
       (insert-face "* = command (M-x) or user-variable.\n"
-		   'hypropos-documentation)
+		   'hyper-apropos-documentation)
       (insert-face "\
 a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
-		   'hypropos-documentation)
-      (insert-face "Functions and Macros:\n\n" 'hypropos-major-heading)
-      (hypropos-grok-functions flist)
-      (insert-face "\n\nVariables and Constants:\n\n" 'hypropos-major-heading)
-      (hypropos-grok-variables vlist)
+		   'hyper-apropos-documentation)
+      (insert-face "Functions and Macros:\n\n" 'hyper-apropos-major-heading)
+      (hyper-apropos-grok-functions flist)
+      (insert-face "\n\nVariables and Constants:\n\n"
+		   'hyper-apropos-major-heading)
+      (hyper-apropos-grok-variables vlist)
       (goto-char (point-min))))
-  (switch-to-buffer hypropos-apropos-buf)
+  (switch-to-buffer hyper-apropos-apropos-buf)
   (hyper-apropos-mode regexp))
 
-(defun hypropos-toggle-programming-flag ()
+(defun hyper-apropos-toggle-programming-flag ()
   (interactive)
-  (eval-in-buffer hypropos-apropos-buf
-    (set (make-local-variable 'hypropos-programming-apropos)
-	 (not hypropos-programming-apropos)))
+  (eval-in-buffer hyper-apropos-apropos-buf
+    (set (make-local-variable 'hyper-apropos-programming-apropos)
+	 (not hyper-apropos-programming-apropos)))
   (message "Re-running apropos...")
-  (hyper-apropos hypropos-last-regexp nil))
+  (hyper-apropos hyper-apropos-last-regexp nil))
 
-(defun hypropos-grok-functions (fns)
+(defun hyper-apropos-grok-functions (fns)
   (let (bind doc type)
     (dolist (fn fns)
       (setq bind (symbol-function fn)
@@ -281,35 +311,35 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
 					 ??))
 		       (t ?\ )))
       (insert type (if (commandp fn) "* " "  "))
-      (let ((e (insert-face (format "%S" fn) 'hypropos-hyperlink)))
+      (let ((e (insert-face (format "%S" fn) 'hyper-apropos-hyperlink)))
 	(set-extent-property e 'mouse-face 'highlight))
       (insert-char ?\  (let ((l (- 30 (length (format "%S" fn)))))
 			 (if (natnump l) l 0)))
-      (and hypropos-show-brief-docs
+      (and hyper-apropos-show-brief-docs
 	   (setq doc (documentation fn))
 	   (insert-face (if doc
 			    (concat " - "
 				    (substring doc 0 (string-match "\n" doc)))
 			  " Not documented.")
-			'hypropos-documentation))
+			'hyper-apropos-documentation))
       (insert ?\n))))
 
-(defun hypropos-grok-variables (vars)
+(defun hyper-apropos-grok-variables (vars)
   (let (doc userp)
     (dolist (var vars)
       (setq userp (user-variable-p var))
       (insert (if userp " * " "   "))
-      (let ((e (insert-face (format "%S" var) 'hypropos-hyperlink)))
+      (let ((e (insert-face (format "%S" var) 'hyper-apropos-hyperlink)))
 	(set-extent-property e 'mouse-face 'highlight))
       (insert-char ?\  (let ((l (- 30 (length (format "%S" var)))))
 			 (if (natnump l) l 0)))
-      (and hypropos-show-brief-docs
+      (and hyper-apropos-show-brief-docs
 	   (setq doc (documentation-property var 'variable-documentation))
 	   (insert-face (if doc
 			    (concat " - " (substring doc (if userp 1 0)
 						     (string-match "\n" doc)))
 			  " - Not documented.")
-			'hypropos-documentation))
+			'hyper-apropos-documentation))
       (insert ?\n))))
 
 ;; ---------------------------------------------------------------------- ;;
@@ -345,11 +375,11 @@ General Commands:
 	major-mode 'hyper-apropos-mode
 	buffer-read-only t
 	truncate-lines t
-	hypropos-last-regexp regexp
+	hyper-apropos-last-regexp regexp
 	modeline-buffer-identification
 	(list (cons modeline-buffer-id-left-extent "Hyper Apropos: ")
 	      (cons modeline-buffer-id-right-extent (concat "\"" regexp "\""))))
-  (use-local-map hypropos-map)
+  (use-local-map hyper-apropos-map)
   (run-hooks 'hyper-apropos-mode-hook))
 
 ;; ---------------------------------------------------------------------- ;;
@@ -406,7 +436,7 @@ General Commands:
 	(if (and (or (symbolp defn) (symbolp (setq defn (car-safe defn))))
 		 defn
 		 show)
-	    (hypropos-get-doc defn t))))))
+	    (hyper-apropos-get-doc defn t))))))
 
 ;;;###autoload
 (defun hyper-describe-face (symbol &optional this-ref-buffer)
@@ -415,12 +445,12 @@ See also `hyper-apropos' and `hyper-describe-function'."
   ;; #### - perhaps a prefix arg should suppress the prompt...
   (interactive
    (let (v val)
-     (setq v (hypropos-this-symbol))	; symbol under point
+     (setq v (hyper-apropos-this-symbol))	; symbol under point
      (or (find-face v)
 	 (setq v (variable-at-point)))
      (setq val (let ((enable-recursive-minibuffers t))
                  (completing-read
-		  (concat (if (hypropos-follow-ref-buffer current-prefix-arg)
+		  (concat (if (hyper-apropos-follow-ref-buffer current-prefix-arg)
 			      "Follow face"
 			    "Describe face")
 			  (if v
@@ -428,36 +458,36 @@ See also `hyper-apropos' and `hyper-describe-function'."
 			    ": "))
 		  (mapcar (function (lambda (x) (list (symbol-name x))))
 			  (face-list))
-		  nil t nil 'hypropos-face-history)))
+		  nil t nil 'hyper-apropos-face-history)))
      (list (if (string= val "")
-	       (progn (push (symbol-name v) hypropos-face-history) v)
+	       (progn (push (symbol-name v) hyper-apropos-face-history) v)
 	     (intern-soft val))
 	   current-prefix-arg)))
   (if (null symbol)
       (message "Sorry, nothing to describe.")
-    (or (memq major-mode '(hyper-apropos-mode hyper-help-mode))
-	(setq hypropos-prev-wconfig (current-window-configuration)))
-    (hypropos-get-doc symbol t nil this-ref-buffer)))
+    (or (memq major-mode '(hyper-apropos-mode hyper-apropos-help-mode))
+	(setq hyper-apropos-prev-wconfig (current-window-configuration)))
+    (hyper-apropos-get-doc symbol t nil this-ref-buffer)))
 
 ;;;###autoload
 (defun hyper-describe-variable (symbol &optional this-ref-buffer)
   "Hypertext drop-in replacement for `describe-variable'.
 See also `hyper-apropos' and `hyper-describe-function'."
   ;; #### - perhaps a prefix arg should suppress the prompt...
-  (interactive (list (hypropos-read-variable-symbol
-		      (if (hypropos-follow-ref-buffer current-prefix-arg)
+  (interactive (list (hyper-apropos-read-variable-symbol
+		      (if (hyper-apropos-follow-ref-buffer current-prefix-arg)
 			  "Follow variable"
 			"Describe variable"))
 		     current-prefix-arg))
   (if (null symbol)
       (message "Sorry, nothing to describe.")
-    (or (memq major-mode '(hyper-apropos-mode hyper-help-mode))
-	(setq hypropos-prev-wconfig (current-window-configuration)))
-    (hypropos-get-doc symbol t nil this-ref-buffer)))
+    (or (memq major-mode '(hyper-apropos-mode hyper-apropos-help-mode))
+	(setq hyper-apropos-prev-wconfig (current-window-configuration)))
+    (hyper-apropos-get-doc symbol t nil this-ref-buffer)))
 
 (defun hyper-where-is (symbol)
   "Print message listing key sequences that invoke specified command."
-  (interactive (list (hypropos-read-function-symbol "Where is function")))
+  (interactive (list (hyper-apropos-read-function-symbol "Where is function")))
   (if (null symbol)
       (message "Sorry, nothing to describe.")
     (where-is symbol)))
@@ -468,25 +498,25 @@ See also `hyper-apropos' and `hyper-describe-function'."
 in that the symbol under the cursor is the default if it is a function.
 See also `hyper-apropos' and `hyper-describe-variable'."
   ;; #### - perhaps a prefix arg should suppress the prompt...
-  (interactive (list (hypropos-read-function-symbol
-		      (if (hypropos-follow-ref-buffer current-prefix-arg)
+  (interactive (list (hyper-apropos-read-function-symbol
+		      (if (hyper-apropos-follow-ref-buffer current-prefix-arg)
 			  "Follow function"
 			"Describe function"))
 		     current-prefix-arg))
   (if (null symbol)
       (message "Sorry, nothing to describe.")
-    (or (memq major-mode '(hyper-apropos-mode hyper-help-mode))
-	(setq hypropos-prev-wconfig (current-window-configuration)))
-    (hypropos-get-doc symbol t nil this-ref-buffer)))
+    (or (memq major-mode '(hyper-apropos-mode hyper-apropos-help-mode))
+	(setq hyper-apropos-prev-wconfig (current-window-configuration)))
+    (hyper-apropos-get-doc symbol t nil this-ref-buffer)))
 
 ;;;###autoload
-(defun hypropos-read-variable-symbol (prompt &optional predicate)
+(defun hyper-apropos-read-variable-symbol (prompt &optional predicate)
   "Hypertext drop-in replacement for `describe-variable'.
 See also `hyper-apropos' and `hyper-describe-function'."
   ;; #### - perhaps a prefix arg should suppress the prompt...
   (or predicate (setq predicate 'boundp))
   (let (v val)
-    (setq v (hypropos-this-symbol))	; symbol under point
+    (setq v (hyper-apropos-this-symbol))	; symbol under point
     (or (funcall predicate v)
 	(setq v (variable-at-point)))
     (or (funcall predicate v)
@@ -501,10 +531,13 @@ See also `hyper-apropos' and `hyper-describe-function'."
     (if (string= val "")
 	(progn (push (symbol-name v) variable-history) v)
       (intern-soft val))))
+;;;###autoload
+(define-obsolete-function-alias
+  'hypropos-read-variable-symbol 'hyper-apropos-read-variable-symbol)
 
-(defun hypropos-read-function-symbol (prompt)
+(defun hyper-apropos-read-function-symbol (prompt)
   "Read function symbol from minibuffer."
-  (let ((fn (hypropos-this-symbol))
+  (let ((fn (hyper-apropos-this-symbol))
 	val)
     (or (fboundp fn)
 	(setq fn (function-called-at-point)))
@@ -518,42 +551,43 @@ See also `hyper-apropos' and `hyper-describe-function'."
 	(progn (push (symbol-name fn) function-history) fn)
       (intern-soft val))))
 
-(defun hypropos-last-help (arg)
+(defun hyper-apropos-last-help (arg)
   "Go back to the last symbol documented in the *Hyper Help* buffer."
   (interactive "P")
-  (let ((win (get-buffer-window hypropos-help-buf)))
+  (let ((win (get-buffer-window hyper-apropos-help-buf)))
     (or arg (setq arg (if win 1 0)))
     (cond ((= arg 0))
-	  ((<= (length hypropos-help-history) arg)
+	  ((<= (length hyper-apropos-help-history) arg)
 	   ;; go back as far as we can...
-	   (setcdr (nreverse hypropos-help-history) nil))
+	   (setcdr (nreverse hyper-apropos-help-history) nil))
 	  (t
-	   (setq hypropos-help-history (nthcdr arg hypropos-help-history))))
+	   (setq hyper-apropos-help-history
+		 (nthcdr arg hyper-apropos-help-history))))
     (if (or win (> arg 0))
-	(hypropos-get-doc (car hypropos-help-history) t)
-      (display-buffer hypropos-help-buf))))
+	(hyper-apropos-get-doc (car hyper-apropos-help-history) t)
+      (display-buffer hyper-apropos-help-buf))))
 
-(defun hypropos-insert-face (string &optional face)
-  "Insert STRING and fontify some parts with face `hypropos-hyperlink'."
+(defun hyper-apropos-insert-face (string &optional face)
+  "Insert STRING and fontify some parts with face `hyper-apropos-hyperlink'."
   (let ((beg (point)) end)
-    (insert-face string (or face 'hypropos-documentation))
+    (insert-face string (or face 'hyper-apropos-documentation))
     (setq end (point))
     (goto-char beg)
     (while (re-search-forward
 	    "`\\([-a-zA-Z0-9_][-a-zA-Z0-9_][-a-zA-Z0-9_.]+\\)'"
 	    end 'limit)
       (let ((e (make-extent (match-beginning 1) (match-end 1))))
-	(set-extent-face e 'hypropos-hyperlink)
+	(set-extent-face e 'hyper-apropos-hyperlink)
 	(set-extent-property e 'mouse-face 'highlight))
     (goto-char beg)
     (while (re-search-forward
 	    "M-x \\([-a-zA-Z0-9_][-a-zA-Z0-9_][-a-zA-Z0-9_.]+\\)"
 	    end 'limit)
       (let ((e (make-extent (match-beginning 1) (match-end 1))))
-	(set-extent-face e 'hypropos-hyperlink)
+	(set-extent-face e 'hyper-apropos-hyperlink)
 	(set-extent-property e 'mouse-face 'highlight))))))
 
-(defun hypropos-insert-keybinding (keys string)
+(defun hyper-apropos-insert-keybinding (keys string)
   (if keys
       (insert "  (" string " bound to \""
 	      (mapconcat 'key-description
@@ -561,7 +595,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
 			 "\", \"")
 	      "\")\n")))
 
-(defun hypropos-insert-section-heading (alias-desc &optional desc)
+(defun hyper-apropos-insert-section-heading (alias-desc &optional desc)
   (or desc (setq desc alias-desc
 		 alias-desc nil))
   (if alias-desc
@@ -573,10 +607,10 @@ See also `hyper-apropos' and `hyper-describe-function'."
   (aset desc 0 (upcase (aref desc 0))) ; capitalize
   (goto-char (point-max))
   (newline 3) (delete-blank-lines) (newline 2)
-  (hypropos-insert-face desc 'hypropos-section-heading))
+  (hyper-apropos-insert-face desc 'hyper-apropos-section-heading))
 
-(defun hypropos-insert-value (string symbol val)
-  (insert-face string 'hypropos-heading)
+(defun hyper-apropos-insert-value (string symbol val)
+  (insert-face string 'hyper-apropos-heading)
   (insert (if (symbol-value symbol)
 	      (if (or (null val) (eq val t) (integerp val))
 		  (prog1
@@ -585,13 +619,13 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		"see below")
 	    "is void")))
 
-(defun hypropos-follow-ref-buffer (this-ref-buffer) 
+(defun hyper-apropos-follow-ref-buffer (this-ref-buffer) 
   (and (not this-ref-buffer)
-       (eq major-mode 'hyper-help-mode)
-       hypropos-ref-buffer
-       (buffer-live-p hypropos-ref-buffer)))
+       (eq major-mode 'hyper-apropos-help-mode)
+       hyper-apropos-ref-buffer
+       (buffer-live-p hyper-apropos-ref-buffer)))
 
-(defun hypropos-get-alias (symbol alias-p next-symbol &optional use)
+(defun hyper-apropos-get-alias (symbol alias-p next-symbol &optional use)
   "Return (TERMINAL-SYMBOL . ALIAS-DESC)."
   (let (aliases)
     (while (funcall alias-p symbol)
@@ -606,7 +640,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		       "'")))))
 
 ;;;###autoload
-(defun hypropos-get-doc (&optional symbol force type this-ref-buffer)
+(defun hyper-apropos-get-doc (&optional symbol force type this-ref-buffer)
   ;; #### - update this docstring
   "Toggle display of documentation for the symbol on the current line."
   ;; SYMBOL is the symbol to document.  FORCE, if non-nil, means to
@@ -619,28 +653,28 @@ See also `hyper-apropos' and `hyper-describe-function'."
   ;;
   (interactive)
   (or symbol
-      (setq symbol (hypropos-this-symbol)))
+      (setq symbol (hyper-apropos-this-symbol)))
   (or type
       (setq type '(function variable face)))
-  (if (and (eq hypropos-currently-showing symbol)
-	   (get-buffer hypropos-help-buf)
-	   (get-buffer-window hypropos-help-buf)
+  (if (and (eq hyper-apropos-currently-showing symbol)
+	   (get-buffer hyper-apropos-help-buf)
+	   (get-buffer-window hyper-apropos-help-buf)
 	   (not force))
       ;; we're already displaying this help, so toggle its display.
-      (delete-windows-on hypropos-help-buf)
+      (delete-windows-on hyper-apropos-help-buf)
     ;; OK, we've got to refresh and display it...
-    (or (eq symbol (car hypropos-help-history))
-	(setq hypropos-help-history
-	      (if (eq major-mode 'hyper-help-mode)
+    (or (eq symbol (car hyper-apropos-help-history))
+	(setq hyper-apropos-help-history
+	      (if (eq major-mode 'hyper-apropos-help-mode)
 		  ;; if we're following a link in the help buffer, then
 		  ;; record that in the help history.
-		  (cons symbol hypropos-help-history)
+		  (cons symbol hyper-apropos-help-history)
 		;; otherwise clear the history because it's a new search.
 		(list symbol))))
     (save-excursion
-      (if (hypropos-follow-ref-buffer this-ref-buffer)
-	  (set-buffer hypropos-ref-buffer)
-	(setq hypropos-ref-buffer (current-buffer)))
+      (if (hyper-apropos-follow-ref-buffer this-ref-buffer)
+	  (set-buffer hyper-apropos-ref-buffer)
+	(setq hyper-apropos-ref-buffer (current-buffer)))
       (let (standard-output
 	    ok beg
 	    newsym symtype doc obsolete
@@ -649,20 +683,20 @@ See also `hyper-apropos' and `hyper-describe-function'."
 	    font fore back undl
 	    aliases alias-desc desc)
 	(save-excursion
-	  (set-buffer (get-buffer-create hypropos-help-buf))
+	  (set-buffer (get-buffer-create hyper-apropos-help-buf))
 	  ;;(setq standard-output (current-buffer))
 	  (setq buffer-read-only nil)
 	  (erase-buffer)
-	  (insert-face (format "`%s'" symbol) 'hypropos-major-heading)
+	  (insert-face (format "`%s'" symbol) 'hyper-apropos-major-heading)
 	  (insert (format " (buffer: %s, mode: %s)\n"
-			  (buffer-name hypropos-ref-buffer)
+			  (buffer-name hyper-apropos-ref-buffer)
 			  local)))
 	;; function ----------------------------------------------------------
 	(and (memq 'function type)
 	     (fboundp symbol)
 	     (progn
 	       (setq ok t)
-	       (setq aliases (hypropos-get-alias (symbol-function symbol)
+	       (setq aliases (hyper-apropos-get-alias (symbol-function symbol)
 						 'symbolp
 						 'symbol-function)
 		     newsym (car aliases)
@@ -690,28 +724,28 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		     obsolete (get symbol 'byte-obsolete-info)
 		     doc (or (documentation symbol) "function not documented"))
 	       (save-excursion
-		 (set-buffer hypropos-help-buf)
+		 (set-buffer hyper-apropos-help-buf)
 		 (goto-char (point-max))
 		 (setq standard-output (current-buffer))
-		 (hypropos-insert-section-heading alias-desc desc)
+		 (hyper-apropos-insert-section-heading alias-desc desc)
 		 (insert ":\n")
 		 (if local
-		     (hypropos-insert-keybinding
+		     (hyper-apropos-insert-keybinding
 		      (where-is-internal symbol (list local) nil nil nil)
 		      "locally"))
-		 (hypropos-insert-keybinding
+		 (hyper-apropos-insert-keybinding
 		  (where-is-internal symbol (list global) nil nil nil)
 		  "globally")
 		 (insert "\n")
 		 (if obsolete
-		     (hypropos-insert-face
+		     (hyper-apropos-insert-face
 		      (format "%s is an obsolete function; %s\n\n" symbol
 			      (if (stringp (car obsolete))
 				  (car obsolete)
 				(format "use `%s' instead." (car obsolete))))
-		      'hypropos-warning))
+		      'hyper-apropos-warning))
 		 (setq beg (point))
-		 (insert-face "arguments: " 'hypropos-heading)
+		 (insert-face "arguments: " 'hyper-apropos-heading)
 		 (cond ((eq symtype 'lambda)
 			(princ (or (nth 1 newsym) "()")))
 		       ((eq symtype 'bytecode)
@@ -738,7 +772,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
 			(setq doc (substring doc (match-end 0))))
 		       (t (princ "[not available]")))
 		 (insert "\n\n")
-		 (hypropos-insert-face doc)
+		 (hyper-apropos-insert-face doc)
 		 (insert "\n")
 		 (indent-rigidly beg (point) 2))))
 	;; variable ----------------------------------------------------------
@@ -746,7 +780,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
 	     (or (boundp symbol) (default-boundp symbol))
 	     (progn 
 	       (setq ok t)
-	       (setq aliases (hypropos-get-alias symbol
+	       (setq aliases (hyper-apropos-get-alias symbol
 						 'variable-alias
 						 'variable-alias
 						 'variable-alias)
@@ -779,10 +813,10 @@ See also `hyper-apropos' and `hyper-describe-function'."
 						     'variable-documentation)
 			     "variable not documented"))
 	       (save-excursion
-		 (set-buffer hypropos-help-buf)
+		 (set-buffer hyper-apropos-help-buf)
 		 (goto-char (point-max))
 		 (setq standard-output (current-buffer))
-		 (hypropos-insert-section-heading alias-desc desc)
+		 (hyper-apropos-insert-section-heading alias-desc desc)
 		 (when (and (user-variable-p newsym)
 			    (get newsym 'custom-type))
 		   (let ((e (make-extent (point-at-bol) (point))))
@@ -790,17 +824,17 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		     (set-extent-property e 'help-echo
 					  (format "Customize %s" newsym))
 		     (set-extent-property
-		      e 'hypropos-custom
+		      e 'hyper-apropos-custom
 		      `(lambda () (customize-variable (quote ,newsym))))))
 		 (insert ":\n\n")
 		 (setq beg (point))
 		 (if obsolete
-		     (hypropos-insert-face
+		     (hyper-apropos-insert-face
 		      (format "%s is an obsolete function; %s\n\n" symbol
 			      (if (stringp obsolete)
 				  obsolete
 				(format "use `%s' instead." obsolete)))
-		      'hypropos-warning))
+		      'hyper-apropos-warning))
 		 ;; generally, the value of the variable is short and the
 		 ;; documentation of the variable long, so it's desirable
 		 ;; to see all of the value and the start of the
@@ -811,28 +845,28 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		 (if (and (or (null local-str) (< (length local-str) 69))
 			  (or (null global-str) (< (length global-str) 69)))
 					; 80 cols.  docstrings assume this.
-		     (progn (insert-face "value: " 'hypropos-heading)
+		     (progn (insert-face "value: " 'hyper-apropos-heading)
 			    (insert (or local-str "is void"))
 			    (if (eq symtype t)
 				(progn
 				  (insert "\n")
-				  (insert-face "default value: " 'hypropos-heading)
+				  (insert-face "default value: " 'hyper-apropos-heading)
 				  (insert (or global-str "is void"))))
 			    (insert "\n\n")
-			    (hypropos-insert-face doc))
-		   (hypropos-insert-value "value: " 'local-str local)
+			    (hyper-apropos-insert-face doc))
+		   (hyper-apropos-insert-value "value: " 'local-str local)
 		   (if (eq symtype t)
 		       (progn
 			 (insert ", ")
-			 (hypropos-insert-value "default-value: "
+			 (hyper-apropos-insert-value "default-value: "
 						'global-str global)))
 		   (insert "\n\n")
-		   (hypropos-insert-face doc)
+		   (hyper-apropos-insert-face doc)
 		   (if local-str
 		       (progn
 			 (newline 3) (delete-blank-lines) (newline 1)
-			 (insert-face "value: " 'hypropos-heading)
-			 (if hypropos-prettyprint-long-values
+			 (insert-face "value: " 'hyper-apropos-heading)
+			 (if hyper-apropos-prettyprint-long-values
 			     (condition-case nil
 				 (let ((pp-print-readably nil)) (pprint local))
 			       (error (insert local-str)))
@@ -840,8 +874,8 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		   (if global-str
 		       (progn
 			 (newline 3) (delete-blank-lines) (newline 1)
-			 (insert-face "default value: " 'hypropos-heading)
-			 (if hypropos-prettyprint-long-values
+			 (insert-face "default value: " 'hyper-apropos-heading)
+			 (if hyper-apropos-prettyprint-long-values
 			     (condition-case nil
 				 (let ((pp-print-readably nil)) (pprint global))
 			       (error (insert global-str)))
@@ -852,13 +886,13 @@ See also `hyper-apropos' and `hyper-describe-function'."
 	     (find-face symbol)
 	     (progn
 	       (setq ok t)
-	       (copy-face symbol 'hypropos-temp-face 'global)
+	       (copy-face symbol 'hyper-apropos-temp-face 'global)
 	       (mapcar (function
 			(lambda (property)
 			  (setq symtype (face-property-instance symbol
 								property))
 			  (if symtype
-			      (set-face-property 'hypropos-temp-face
+			      (set-face-property 'hyper-apropos-temp-face
 						 property
 						 symtype))))
 		       built-in-face-specifiers)
@@ -873,9 +907,9 @@ See also `hyper-apropos' and `hyper-describe-function'."
 		     doc  (face-doc-string symbol))
 	       ;; #### - add some code here
 	       (save-excursion
-		 (set-buffer hypropos-help-buf)
+		 (set-buffer hyper-apropos-help-buf)
 		 (setq standard-output (current-buffer))
-		 (hypropos-insert-section-heading
+		 (hyper-apropos-insert-section-heading
 		  (concat "Face"
 			  (when (get symbol 'face-defface-spec)
 			    (let* ((str " (customizable)")
@@ -886,27 +920,27 @@ See also `hyper-apropos' and `hyper-describe-function'."
 			      (set-extent-property e 'unique t)
 			      (set-extent-property e 'duplicable t)
 			      (set-extent-property
-			       e 'hypropos-custom
+			       e 'hyper-apropos-custom
 			       `(lambda () (customize-face (quote ,symbol))))
 			      str))
 			  ":\n\n  "))
 		 (insert-face "\
 ABCDEFHIJKLMNOPQRSTUVWXYZ abcdefhijklmnopqrstuvwxyz 0123456789"
-			      'hypropos-temp-face)
+			      'hyper-apropos-temp-face)
 		 (newline 2)
-		 (insert-face "  Font: " 'hypropos-heading)
+		 (insert-face "  Font: " 'hyper-apropos-heading)
 		 (insert (format (if (numberp (car font)) "(%s)\n" "%s\n")
 				 (and (cdr font)
 				      (font-instance-name (cdr font)))))
-		 (insert-face "  Foreground: " 'hypropos-heading)
+		 (insert-face "  Foreground: " 'hyper-apropos-heading)
 		 (insert (format (if (numberp (car fore)) "(%s)\n" "%s\n")
 				 (and (cdr fore)
 				      (color-instance-name (cdr fore)))))
-		 (insert-face "  Background: " 'hypropos-heading)
+		 (insert-face "  Background: " 'hyper-apropos-heading)
 		 (insert (format (if (numberp (car back)) "(%s)\n" "%s\n")
 				 (and (cdr back)
 				      (color-instance-name (cdr back)))))
-		 (insert-face "  Underline: " 'hypropos-heading)
+		 (insert-face "  Underline: " 'hyper-apropos-heading)
 		 (insert (format (if (numberp (car undl)) "(%s)\n" "%s\n")
 				 (cdr undl)))
 		 (if doc
@@ -918,57 +952,60 @@ ABCDEFHIJKLMNOPQRSTUVWXYZ abcdefhijklmnopqrstuvwxyz 0123456789"
 	;; not bound & property list -----------------------------------------
 	(or ok
 	    (save-excursion
-	      (set-buffer hypropos-help-buf)
-	      (hypropos-insert-section-heading
+	      (set-buffer hyper-apropos-help-buf)
+	      (hyper-apropos-insert-section-heading
 	       "symbol is not currently bound\n")))
 	(if (and (setq symtype (symbol-plist symbol))
 		 (or (> (length symtype) 2)
 		     (not (memq 'variable-documentation symtype))))
 	    (save-excursion
-	      (set-buffer hypropos-help-buf)
+	      (set-buffer hyper-apropos-help-buf)
 	      (goto-char (point-max))
 	      (setq standard-output (current-buffer))
-	      (hypropos-insert-section-heading "property-list:\n\n")
+	      (hyper-apropos-insert-section-heading "property-list:\n\n")
 	      (while symtype
 		(if (memq (car symtype)
 			  '(variable-documentation byte-obsolete-info))
 		    (setq symtype (cdr symtype))
 		  (insert-face (concat "  " (symbol-name (car symtype))
 				       ": ")
-			       'hypropos-heading)
+			       'hyper-apropos-heading)
 		  (setq symtype (cdr symtype))
 		  (indent-to 32)
 		  (insert (prin1-to-string (car symtype)) "\n"))
 		(setq symtype (cdr symtype)))))))
     (save-excursion
-      (set-buffer hypropos-help-buf)
+      (set-buffer hyper-apropos-help-buf)
       (goto-char (point-min)) 
       ;; pop up window and shrink it if it's wasting space
-      (if hypropos-shrink-window
+      (if hyper-apropos-shrink-window
 	  (shrink-window-if-larger-than-buffer
 	   (display-buffer (current-buffer)))
 	(display-buffer (current-buffer)))
-      (hyper-help-mode))
-    (setq hypropos-currently-showing symbol)))
+      (hyper-apropos-help-mode))
+    (setq hyper-apropos-currently-showing symbol)))
+;;;###autoload
+(define-obsolete-function-alias
+  'hypropos-get-doc 'hyper-apropos-get-doc)
 
 ; -----------------------------------------------------------------------------
 
-(defun hyper-help-mode ()
+(defun hyper-apropos-help-mode ()
   "Major mode for hypertext XEmacs help.  In this mode, you can quickly
 follow links between back and forth between the documentation strings for
 different variables and functions.  Common commands:
 
-\\{hypropos-help-map}"
+\\{hyper-apropos-help-map}"
   (setq buffer-read-only t
-	major-mode	     'hyper-help-mode
+	major-mode	     'hyper-apropos-help-mode
 	mode-name	     "Hyper-Help")
   (set-syntax-table emacs-lisp-mode-syntax-table)
-  (hypropos-highlightify)
-  (use-local-map hypropos-help-map))
+  (hyper-apropos-highlightify)
+  (use-local-map hyper-apropos-help-map))
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defun hypropos-highlightify ()
+(defun hyper-apropos-highlightify ()
   (save-excursion
     (goto-char (point-min))
     (let ((st (point-min))
@@ -986,10 +1023,11 @@ different variables and functions.  Common commands:
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defun hypropos-scroll-up ()
-  "Scroll up the \"*Hyper Help*\" buffer if it's visible, or scroll this window up."
+(defun hyper-apropos-scroll-up ()
+  "Scroll up the \"*Hyper Help*\" buffer if it's visible.
+Otherwise, scroll the selected window up."
   (interactive)
-  (let ((win (get-buffer-window hypropos-help-buf))
+  (let ((win (get-buffer-window hyper-apropos-help-buf))
 	(owin (selected-window)))
     (if win
 	(progn
@@ -1000,10 +1038,11 @@ different variables and functions.  Common commands:
 	  (select-window owin))
       (scroll-up nil))))
 
-(defun hypropos-scroll-down ()
-  "Scroll down the \"*Hyper Help*\" buffer if it's visible, or scroll this window down."
+(defun hyper-apropos-scroll-down ()
+  "Scroll down the \"*Hyper Help*\" buffer if it's visible.
+Otherwise, scroll the selected window down."
   (interactive)
-  (let ((win (get-buffer-window hypropos-help-buf))
+  (let ((win (get-buffer-window hyper-apropos-help-buf))
 	(owin (selected-window)))
     (if win
 	(progn
@@ -1016,32 +1055,32 @@ different variables and functions.  Common commands:
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defun hypropos-mouse-get-doc (event)
+(defun hyper-apropos-mouse-get-doc (event)
   "Get the documentation for the symbol the mouse is on."
   (interactive "e")
   (mouse-set-point event)
-  (let ((e (extent-at (point) nil 'hypropos-custom)))
+  (let ((e (extent-at (point) nil 'hyper-apropos-custom)))
     (if e
-	(funcall (extent-property e 'hypropos-custom))
+	(funcall (extent-property e 'hyper-apropos-custom))
       (save-excursion
-	(let ((symbol (hypropos-this-symbol)))
+	(let ((symbol (hyper-apropos-this-symbol)))
 	  (if symbol
-	      (hypropos-get-doc symbol)
+	      (hyper-apropos-get-doc symbol)
 	    (error "Click on a symbol")))))))
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defun hypropos-add-keyword (pattern)
+(defun hyper-apropos-add-keyword (pattern)
   "Use additional keyword to narrow regexp match.
 Deletes lines which don't match PATTERN."
   (interactive "sAdditional Keyword: ")
   (save-excursion
     (goto-char (point-min))
     (let (buffer-read-only)
-      (keep-lines (concat pattern "\\|" hypropos-junk-regexp))
+      (keep-lines (concat pattern "\\|" hyper-apropos-junk-regexp))
       )))
 
-(defun hypropos-eliminate-keyword (pattern)
+(defun hyper-apropos-eliminate-keyword (pattern)
   "Use additional keyword to eliminate uninteresting matches.
 Deletes lines which match PATTERN."
   (interactive "sKeyword to eliminate: ")
@@ -1053,11 +1092,11 @@ Deletes lines which match PATTERN."
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defun hypropos-this-symbol ()
+(defun hyper-apropos-this-symbol ()
   (save-excursion
     (cond ((eq major-mode 'hyper-apropos-mode)
 	   (beginning-of-line)
-	   (if (looking-at hypropos-junk-regexp)
+	   (if (looking-at hyper-apropos-junk-regexp)
 	       nil
 	     (forward-char 3)
 	     (read (point-marker))))
@@ -1074,14 +1113,14 @@ Deletes lines which match PATTERN."
 	     (and (not (eq st en))
 		  (intern-soft (buffer-substring st en))))))))
 
-(defun hypropos-where-is (symbol)
+(defun hyper-apropos-where-is (symbol)
   "Find keybinding for symbol on current line."
-  (interactive (list (hypropos-this-symbol)))
+  (interactive (list (hyper-apropos-this-symbol)))
   (where-is symbol))
 
-(defun hypropos-invoke-fn (fn)
+(defun hyper-apropos-invoke-fn (fn)
   "Interactively invoke the function on the current line."
-  (interactive (list (hypropos-this-symbol)))
+  (interactive (list (hyper-apropos-this-symbol)))
   (cond ((not (fboundp fn))
 	 (error "%S is not a function" fn))
 	(t (call-interactively fn))))
@@ -1089,51 +1128,54 @@ Deletes lines which match PATTERN."
 ;;;###autoload
 (defun hyper-set-variable (var val &optional this-ref-buffer)
   (interactive
-   (let ((var (hypropos-read-variable-symbol
-	       (if (hypropos-follow-ref-buffer current-prefix-arg)
+   (let ((var (hyper-apropos-read-variable-symbol
+	       (if (hyper-apropos-follow-ref-buffer current-prefix-arg)
 		   "In ref buffer, set user option"
 		 "Set user option")
 	       'user-variable-p)))
-     (list var (hypropos-read-variable-value var) current-prefix-arg)))
-  (hypropos-set-variable var val this-ref-buffer))
+     (list var (hyper-apropos-read-variable-value var) current-prefix-arg)))
+  (hyper-apropos-set-variable var val this-ref-buffer))
 
 ;;;###autoload
-(defun hypropos-set-variable (var val &optional this-ref-buffer)
+(defun hyper-apropos-set-variable (var val &optional this-ref-buffer)
   "Interactively set the variable on the current line."
   (interactive
-   (let ((var (hypropos-this-symbol)))
+   (let ((var (hyper-apropos-this-symbol)))
      (or (and var (boundp var))
-	 (and (setq var (and (eq major-mode 'hyper-help-mode)
+	 (and (setq var (and (eq major-mode 'hyper-apropos-help-mode)
 			     (save-excursion
 			       (goto-char (point-min))
-			       (hypropos-this-symbol))))
+			       (hyper-apropos-this-symbol))))
 	      (boundp var))
 	 (setq var nil))
-     (list var (hypropos-read-variable-value var))))
+     (list var (hyper-apropos-read-variable-value var))))
   (and var
        (boundp var)
        (progn
-	 (if (hypropos-follow-ref-buffer this-ref-buffer)
+	 (if (hyper-apropos-follow-ref-buffer this-ref-buffer)
 	     (save-excursion
-	       (set-buffer hypropos-ref-buffer)
+	       (set-buffer hyper-apropos-ref-buffer)
 	       (set var val))
 	   (set var val))
-	 (hypropos-get-doc var t '(variable) this-ref-buffer))))
+	 (hyper-apropos-get-doc var t '(variable) this-ref-buffer))))
+;;;###autoload
+(define-obsolete-function-alias
+  'hypropos-set-variable 'hyper-apropos-set-variable)
 
-(defun hypropos-read-variable-value (var &optional this-ref-buffer)
+(defun hyper-apropos-read-variable-value (var &optional this-ref-buffer)
   (and var
        (boundp var)
        (let ((prop (get var 'variable-interactive))
 	     (print-readably t)
 	     val str)
-	 (hypropos-get-doc var t '(variable) current-prefix-arg)
+	 (hyper-apropos-get-doc var t '(variable) current-prefix-arg)
 	 (if prop
 	     (call-interactively (list 'lambda '(arg)
 				       (list 'interactive prop)
 				       'arg))
-	   (setq val (if (hypropos-follow-ref-buffer this-ref-buffer)
+	   (setq val (if (hyper-apropos-follow-ref-buffer this-ref-buffer)
 			 (save-excursion
-			   (set-buffer hypropos-ref-buffer)
+			   (set-buffer hyper-apropos-ref-buffer)
 			   (symbol-value var))
 		       (symbol-value var))
 		 str (prin1-to-string val))
@@ -1151,28 +1193,28 @@ Deletes lines which match PATTERN."
 			  str))
 	      (error nil)))))))
 
-(defun hypropos-customize-variable ()
+(defun hyper-apropos-customize-variable ()
   (interactive)
-  (let ((var (hypropos-this-symbol)))
+  (let ((var (hyper-apropos-this-symbol)))
     (customize-variable var)))
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defun hypropos-find-tag (&optional tag-name)
+(defun hyper-apropos-find-tag (&optional tag-name)
   "Find the tag for the symbol on the current line in other window.  In
 order for this to work properly, the variable `tag-table-alist' or
 `tags-file-name' must be set so that a TAGS file with tags for the emacs
 source is found for the \"*Hyper Apropos*\" buffer."
   (interactive)
   ;; there ought to be a default tags file for this...
-  (or tag-name (setq tag-name (symbol-name (hypropos-this-symbol))))
+  (or tag-name (setq tag-name (symbol-name (hyper-apropos-this-symbol))))
   (find-tag-other-window (list tag-name)))
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defun hypropos-disassemble (sym)
+(defun hyper-apropos-disassemble (sym)
   "Disassemble FUN if it is byte-coded.  If it's a lambda, prettyprint it."
-  (interactive (list (hypropos-this-symbol)))
+  (interactive (list (hyper-apropos-this-symbol)))
   (let ((fun sym) (trail nil) macrop)
     (while (and (symbolp fun) (not (memq fun trail)))
       (setq trail (cons fun trail)
@@ -1205,20 +1247,20 @@ source is found for the \"*Hyper Apropos*\" buffer."
 
 ;; ---------------------------------------------------------------------- ;;
 
-(defun hypropos-quit ()
+(defun hyper-apropos-quit ()
   (interactive)
   "Quit Hyper Apropos and restore original window config."
-  (let ((buf (get-buffer hypropos-apropos-buf)))
+  (let ((buf (get-buffer hyper-apropos-apropos-buf)))
     (and buf (bury-buffer buf)))
-  (set-window-configuration hypropos-prev-wconfig))
+  (set-window-configuration hyper-apropos-prev-wconfig))
 
 ;; ---------------------------------------------------------------------- ;;
 
 ;;;###autoload
-(defun hypropos-popup-menu (event)
+(defun hyper-apropos-popup-menu (event)
   (interactive "e")
   (mouse-set-point event)
-  (let* ((sym (hypropos-this-symbol))
+  (let* ((sym (hyper-apropos-this-symbol))
 	 (notjunk (not (null sym)))
 	 (command-p (if (commandp sym) t))
 	 (variable-p (and sym (boundp sym)))
@@ -1230,34 +1272,37 @@ source is found for the \"*Hyper Apropos*\" buffer."
 			(save-excursion (set-buffer (event-buffer event))
 					major-mode)))
 	 (name (if sym (symbol-name sym) ""))
-	 (hypropos-menu
+	 (hyper-apropos-menu
 	  (delete
 	   nil
 	   (list (concat "Hyper-Help: " name)
-	    (vector "Display documentation" 'hypropos-get-doc   notjunk)
-	    (vector "Set variable"	'hypropos-set-variable	variable-p)
-	    (vector "Customize variable" 'hypropos-customize-variable
+	    (vector "Display documentation" 'hyper-apropos-get-doc   notjunk)
+	    (vector "Set variable"	'hyper-apropos-set-variable	variable-p)
+	    (vector "Customize variable" 'hyper-apropos-customize-variable
 		    customizable-p)
-	    (vector "Show keys for"     'hypropos-where-is      command-p)
-	    (vector "Invoke command"	'hypropos-invoke-fn	command-p)
-	    (vector "Find tag"		'hypropos-find-tag	notjunk)
+	    (vector "Show keys for"     'hyper-apropos-where-is      command-p)
+	    (vector "Invoke command"	'hyper-apropos-invoke-fn	command-p)
+	    (vector "Find tag"		'hyper-apropos-find-tag	notjunk)
 	    (and apropos-p
-		 ["Add keyword..." hypropos-add-keyword	t])
+		 ["Add keyword..." hyper-apropos-add-keyword	t])
 	    (and apropos-p
-		 ["Eliminate keyword..." hypropos-eliminate-keyword  t])
+		 ["Eliminate keyword..." hyper-apropos-eliminate-keyword  t])
 	    (if apropos-p
-		["Programmers' Apropos" hypropos-toggle-programming-flag
-		 :style toggle :selected hypropos-programming-apropos]
-	      ["Programmers' Help" hypropos-toggle-programming-flag
-	       :style toggle :selected hypropos-programming-apropos])
-	    (and hypropos-programming-apropos
+		["Programmers' Apropos" hyper-apropos-toggle-programming-flag
+		 :style toggle :selected hyper-apropos-programming-apropos]
+	      ["Programmers' Help" hyper-apropos-toggle-programming-flag
+	       :style toggle :selected hyper-apropos-programming-apropos])
+	    (and hyper-apropos-programming-apropos
 		 (vector "Disassemble function"
-			 'hypropos-disassemble
+			 'hyper-apropos-disassemble
 			 function-p))
 	    ["Help"                     describe-mode           t]
-	    ["Quit"			hypropos-quit		t]
+	    ["Quit"			hyper-apropos-quit		t]
 	    ))))
-    (popup-menu hypropos-menu)))
+    (popup-menu hyper-apropos-menu)))
+;;;###autoload
+(define-obsolete-function-alias
+  'hypropos-popup-menu 'hyper-apropos-popup-menu)
 
 (provide 'hyper-apropos)
 

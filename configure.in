@@ -58,9 +58,9 @@ dnl - suport for extra-verbosity
 dnl - ordinary libs are handled separately from X libs (might be a mistake)
 dnl - various random kludges (e.g. -with-dnet=no
 
-dnl PRINT_VAR(var, var, ...)  prints values of shell variables
-define([PRINT_VAR],[ifelse([$#] ,0, , [$#], 1, echo "[$1] = \"$[$1]\"", echo "[$1] = \"$[$1]\""
-[PRINT_VAR(builtin([shift],$@))])])
+dnl PRINT_VAR(var var ...)  prints values of shell variables
+define([PRINT_VAR],[for var in patsubst([$1],[[
+]+],[ ]); do eval "echo \"$var = '\$$var'\""; done])
 
 dnl Disable cache files:
 dnl This is controversial, but I am convinced this is the right way to go,
@@ -942,7 +942,7 @@ test "$extra_verbose" = "yes" && verbose=yes
 
 dnl Allow use of either ":" or spaces for lists of directories
 define(COLON_TO_SPACE,
-  [case "[$1]" in *:* [)] [$1]="`echo '' $[$1] | sed -e 's:^ ::' -e 's/:/ /g'`";; esac])dnl
+  [case "$[$1]" in *:* [)] [$1]="`echo '' $[$1] | sed -e 's:^ ::' -e 's/:/ /g'`";; esac])dnl
 COLON_TO_SPACE(site_includes)
 COLON_TO_SPACE(site_libraries)
 COLON_TO_SPACE(site_runtime_libraries)
@@ -1101,7 +1101,7 @@ case "$canonical" in
   romp-ibm-*       ) machine=ibmrt ;;
   rs6000-ibm-aix*  ) machine=ibmrs6000 ;;
   powerpc-ibm-aix* ) machine=ibmrs6000 ;;
-  powerpc-*-*      ) machine=powerpc ;;
+  powerpc*-*       ) machine=powerpc ;;
   hppa-*-*         ) machine=hp800 ;;
   m88k-dg-*        ) machine=aviion ;;
   m68*-sony-*      ) machine=news ;;
@@ -1410,14 +1410,14 @@ case "$canonical" in
       m68*-sunos1* )	         machine=sun1     ;;
       m68*-sunos2* )	         machine=sun2     ;;
       m68* )		         machine=sun3     ;;
-      i[[3-9]]86*-sun-sunos[[34]]* ) machine=sun386 ;;
-      i[[3-9]]86-*-* )	         machine=intel386 ;;
+      i*86*-sun-sunos[[34]]* )   machine=sun386   ;;
+      i*86-*-* )	         machine=intel386 ;;
       rs6000* )                  machine=rs6000   ;;
     esac
 
     dnl Make $canonical even more so.
     case "$canonical" in *-sunos5*)
-      canonical="`echo \"$canonical\" | sed -e s/sunos5/solaris2/`";;
+      canonical=`echo $canonical | sed -e s/sunos5/solaris2/`;;
     esac
 
     dnl On SunOS 4, use /usr/lib/cpp, sans dynodump, /bin/ranlib
@@ -1434,20 +1434,18 @@ case "$canonical" in
     esac
 
     case "$canonical" in
+      *-solaris*	  )
+	opsys=sol2
+	os_release=`uname -r | sed -e 's/^\([[0-9]]\)\.\([[0-9]]\).*/\1\2/'`
+	AC_DEFINE_UNQUOTED(OS_RELEASE, $os_release) ;;
+
       dnl The last Sun386 ran 4.0.
-      i[[3-9]]86-*-sunos4*) opsys=sunos4-0	;;
+      i*86-*-sunos4*      ) opsys=sunos4-0	;;
       *-sunos4.0*	  ) opsys=sunos4-0	;;
       *-sunos4.1.2*	  ) opsys=sunos4-1-2	;;
       *-sunos4.1.3*	  ) opsys=sunos4-1-3	;;
       *-sunos4.1.[[4-9]]* ) opsys=sunos4-1-4	;;
       *-sunos4* | *-sunos ) opsys=sunos4-1	;;
-
-      *-solaris2.3*	  ) opsys=sol2-3	;;
-      *-solaris2.4*	  ) opsys=sol2-4	;;
-      *-solaris2.5*	  ) opsys=sol2-5	;;
-      *-solaris2.[[6-9]]* ) opsys=sol2-6	;;
-      *-solaris*	  ) opsys=sol2		;;
-
       *-mach*		  ) opsys=mach-bsd4-3	;;
       *			  ) opsys=bsd4-2	;;
     esac
@@ -1455,9 +1453,7 @@ case "$canonical" in
     case "$canonical" in *-sunos4*shr* ) opsys="${opsys}-shr" ;; esac
 
     dnl Watch out for a compiler guaranteed not to work.
-    case "$canonical" in
-      *-solaris* ) case "$CC" in /usr/ucb/cc* ) CC="" ;; esac ;;
-    esac
+    test "$opsys $CC" = "sol2 /usr/ucb/cc" && CC=""
   ;;
 
   dnl Tadpole 68k
@@ -1558,7 +1554,7 @@ if test "$dynamic" = "yes" ; then
   esac
 elif test "$dynamic" = "no" ; then
   case "$opsys" in
-    sol2* | decosf1-3 | decosf3-* | decosf4-* | linux ) opsys="${opsys}-static" ;;
+    sol2 | decosf1-3 | decosf3-* | decosf4-* | linux ) opsys="${opsys}-static" ;;
   esac
 fi
 
@@ -1661,6 +1657,7 @@ echo '
 #define LD_SWITCH_SITE
 #define LD_SWITCH_X_SITE
 #define LD_SWITCH_X_SITE_AUX
+#define OS_RELEASE '$os_release'
 #include "'$srcdir'/src/'$opsysfile'"
 #include "'$srcdir'/src/'$machfile'"
 
@@ -1668,6 +1665,9 @@ CPP_to_sh(LIBS_MACHINE, libs_machine)
 CPP_to_sh(LIBS_SYSTEM,  libs_system)
 CPP_to_sh(LIBS_TERMCAP, libs_termcap)
 CPP_to_sh(LIB_STANDARD, libs_standard)
+
+CPP_to_sh(OBJECTS_MACHINE, objects_machine)
+CPP_to_sh(OBJECTS_SYSTEM,  objects_system)
 
 CPP_to_sh(C_SWITCH_MACHINE,   c_switch_machine)
 CPP_to_sh(C_SWITCH_SYSTEM,    c_switch_system)
@@ -1678,6 +1678,43 @@ CPP_to_sh(LD_SWITCH_SYSTEM,   ld_switch_system)
 CPP_to_sh(LD_SWITCH_X_SYSTEM, ld_switch_x_system)
 
 CPP_to_sh(UNEXEC, unexec, unexec.o)
+
+CPP_to_sh(LD_SWITCH_CALL_SHARED, ld_switch_call_shared)
+CPP_to_sh(LD_SWITCH_SHARED, ld_switch_shared, -c)
+
+#ifdef ORDINARY_LINK
+#define LD "$(CC) $(CFLAGS)"
+#else /* no ORDINARY LINK */
+#ifdef COFF_ENCAPSULATE
+#define LD "$(CC) -nostdlib"
+#else /* not COFF_ENCAPSULATE */
+#ifdef LINKER
+#define LD LINKER
+#else /* ! defined (LINKER) */
+#define LD "ld"
+#endif /* ! defined (LINKER) */
+#endif /* ! defined (COFF_ENCAPSULATE) */
+#endif /* not ORDINARY_LINK */
+configure___ ld=LD
+
+CPP_to_sh(LIB_GCC, lib_gcc)
+CPP_to_sh(LD_TEXT_START_ADDR, ld_text_start_addr)
+
+#if ! defined (ORDINARY_LINK) && !defined (START_FILES)
+#ifdef NO_REMAP
+#ifdef COFF_ENCAPSULATE
+#define START_FILES "pre-crt0.o /usr/local/lib/gcc-crt0.o"
+#else /* ! defined (COFF_ENCAPSULATE) */
+#define START_FILES "pre-crt0.o /lib/crt0.o"
+#endif /* ! defined (COFF_ENCAPSULATE) */
+#else /* ! defined (NO_REMAP) */
+#define START_FILES "ecrt0.o"
+#endif /* ! defined (NO_REMAP) */
+#endif /* no ORDINARY_LINK */
+#ifndef START_FILES
+#define START_FILES
+#endif
+configure___ start_files=START_FILES
 
 CPP_boolean_to_sh(ORDINARY_LINK, ordinary_link)
 CPP_boolean_to_sh(SYSTEM_MALLOC, system_malloc)
@@ -1713,7 +1750,7 @@ dnl The value of CPP is a quoted variable reference, so we need to do this
 dnl to get its actual value...
 CPP=`eval "echo $CPP"`
 eval `$CPP -Isrc $tempcname \
-	| sed -n -e "s/ *=[[ \"]]*/='/" -e "s/[[ \"]]*\$/'/" -e "s/^configure___//p"`
+	| [sed -n -e "s/[ \t]*=[ \t\"]*/='/" -e "s/[ \t\"]*\$/'/" -e "s/^configure___//p"`]
 
 dnl if test -z "$SPECIFIED_CFLAGS"; then
 dnl   eval `$CPP -Isrc -DTHIS_IS_CONFIGURE $tempcname \
@@ -1723,6 +1760,16 @@ dnl   REAL_CFLAGS="$CFLAGS"
 dnl fi
 
 rm $tempcname
+
+dnl For debugging...
+test "$extra_verbose" = "yes" && \
+  PRINT_VAR(libs_machine libs_system libs_termcap libs_standard
+  objects_machine objects_system c_switch_machine c_switch_system
+  c_switch_x_system ld_switch_machine ld_switch_system
+  ld_switch_x_system unexec ld_switch_call_shared ld_switch_shared
+  ld lib_gcc ld_text_start_addr start_files ordinary_link
+  have_terminfo mail_use_flock mail_use_lockf) && echo ""
+
 
 dnl Non-ordinary link usually requires -lc
 test "$ordinary_link" = "no" -a -z "$libs_standard" && libs_standard="-lc"
@@ -1738,16 +1785,65 @@ if test -z "$CFLAGS"; then
       CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
   elif test "$__sunpro_c" = "yes"; then
     case "$opsys" in
-      sol2*   ) CFLAGS="-v -xO4" ;;
-      sunos4* ) CFLAGS="-xO3";;
+      sol2    ) CFLAGS="-v -xO4" ;;
+      sunos4* ) CFLAGS="-xO2";;
     esac
   else
     CFLAGS="-O" # The only POSIX-approved flag
   fi
 fi
 
-dnl Add unexec object to link line
-XE_ADD_OBJS($unexec)
+dnl Make sure linker flags not understood by GCC are properly wrapped.
+if test "$GCC" = "yes"; then
+  define([XE_GCC_WRAP_LDFLAGS],
+  [[$1_tmp]="$[$1]"; [$1]=""
+  for arg in $[$1_tmp]; do
+    case "$arg" in
+      -L* | -l* | -R* | -u* | -Wl* | -f* ) [$1]="$[$1] $arg" ;;
+      -Xlinker* ) ;;
+      * ) [$1]="$[$1] -Xlinker $arg" ;;
+    esac
+  done])dnl
+  XE_GCC_WRAP_LDFLAGS(ld_switch_system)
+  XE_GCC_WRAP_LDFLAGS(ld_switch_machine)
+  XE_GCC_WRAP_LDFLAGS(LDFLAGS)
+fi
+
+dnl Add s&m-determined objects (including unexec) to link line
+test -n "$objects_machine" && XE_ADD_OBJS($objects_machine)
+test -n "$objects_system"  && XE_ADD_OBJS($objects_system)
+test -n "$unexec"          && XE_ADD_OBJS($unexec)
+
+dnl Dynodump (Solaris 2.x, x<6)
+AC_MSG_CHECKING(for dynodump)
+if test "$unexec" != "unexsol2.o"; then
+  AC_MSG_RESULT(no)
+else
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(DYNODUMP)
+  XE_APPEND(dynodump, MAKE_SUBDIR)
+  case "$machine" in
+    sparc   ) dynodump_arch=sparc ;;
+    *86*    ) dynodump_arch=i386  ;;
+    powerpc ) dynodump_arch=ppc   ;;
+  esac
+  dnl Dynodump requires the system linker
+  test "$GCC" = "yes" && XE_APPEND(-fno-gnu-linker, ld_switch_site)
+fi
+
+dnl Feed s&m crud to src/Makefile
+AC_SUBST(ld_switch_call_shared)
+AC_SUBST(ld_switch_shared)
+AC_SUBST(start_files)
+test -n "$ld_text_start_addr" && start_flags="-T $ld_text_start_addr -e __start"
+AC_SUBST(start_flags)
+if test "$ordinary_link" = "no" -a "$GCC" = "yes"; then
+ test -z "$linker" &&  linker='$(CC) -nostdlib'
+ test -z "$lib_gcc" && lib_gcc='`$(CC) -print-lib-gcc-file-name`'
+fi
+test "$GCC" != "yes" && lib_gcc=
+AC_SUBST(ld)
+AC_SUBST(lib_gcc)
 
 dnl ---------------------------------------------------------------
 dnl Add site and system specific flags to compile and link commands
@@ -1770,10 +1866,10 @@ if test -n "$site_includes" ; then
 fi
 
 dnl GNU software installs by default into /usr/local/{include,lib}
-if test -d "/usr/local/include" -a -d "/usr/local/lib"; then
-  XE_APPEND("-L/usr/local/lib",    ld_switch_site)
-  XE_APPEND("-I/usr/local/include", c_switch_site)
-fi
+dnl if test -d "/usr/local/include" -a -d "/usr/local/lib"; then
+dnl   XE_APPEND("-L/usr/local/lib",    ld_switch_site)
+dnl   XE_APPEND("-I/usr/local/include", c_switch_site)
+dnl fi
 
 dnl Extra system-specific library directories - please add to list
 for dir in "/usr/ccs/lib"; do
@@ -1792,8 +1888,8 @@ dnl -------------------------------------
 
 if   test "$dynamic" = "no"; then add_runtime_path=no
 elif test -n "$LD_RUN_PATH"; then add_runtime_path=yes
-else case "$canonical" in
-       *-solaris2.* | *-sgi-irix* ) add_runtime_path=yes ;;
+else case "$opsys" in
+       sol2 | irix* | *bsd* ) add_runtime_path=yes ;;
        * ) add_runtime_path=no ;;
      esac
 fi
@@ -1815,33 +1911,45 @@ if test "$add_runtime_path" = "yes"; then
   fi
 fi
 
+xe_add_unique_runpath_dir='
+  xe_add_p=yes
+  for xe_dir in $runpath_dirs; do   dnl Uniquify
+    test "$xe_dir" = "$xe_runpath_dir" && xe_add_p=no
+  done
+  if test "$xe_add_p" = "yes"; then
+    test -n "$runpath" && runpath="${runpath}:"
+    runpath="${runpath}${xe_runpath_dir}"
+    runpath_dirs="$runpath_dirs $xe_runpath_dir"
+  fi'
+
+
 dnl XE_ADD_RUNPATH_DIR(directory)
-define([XE_ADD_RUNPATH_DIR],[
+define([XE_ADD_RUNPATH_DIR],[{
 xe_runpath_dir=$1
-if test "$xe_runpath_dir" != "/lib"     -a \
+dnl PRINT_VAR(ld_switch_site ld_switch_x_site runpath xe_runpath_dir LD_RUN_PATH xe_ldflags)
+  test "$xe_runpath_dir" != "/lib"     -a \
 	"$xe_runpath_dir" != "/usr/lib" -a \
-	-n "`ls ${xe_runpath_dir}/*.s[[ol]] 2>/dev/null`"; then
-  test -n "$runpath" && runpath="${runpath}:"
-  runpath="${runpath}${xe_runpath_dir}"
-fi
-])dnl
+	-n "`ls ${xe_runpath_dir}/*.s[[ol]] 2>/dev/null`" && \
+  eval "$xe_add_unique_runpath_dir"
+}])dnl
 
 dnl XE_COMPUTE_RUNPATH()
 define([XE_COMPUTE_RUNPATH],[
 if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   dnl Remove runtime paths from current ld switches
-  ld_switch_site=`echo   '' $ld_switch_site   | sed -e 's:^ ::' -e "s/${dash_r}[[^ ]]*//"`
-  ld_switch_x_site=`echo '' $ld_switch_x_site | sed -e 's:^ ::' -e "s/${dash_r}[[^ ]]*//"`
-  dnl PRINT_VAR(ld_switch_site, ld_switch_x_site)
+  ld_switch_site=`echo   '' $ld_switch_site   | sed -e 's:^ ::' -e "s/$dash_r[[^ ]]*//"`
+  ld_switch_x_site=`echo '' $ld_switch_x_site | sed -e 's:^ ::' -e "s/$dash_r[[^ ]]*//"`
+  dnl PRINT_VAR(ld_switch_site ld_switch_x_site)
 
   dnl Fix up Runtime path
   dnl If LD_RUN_PATH is set in environment, use that.
   dnl In this case, assume user has set the right value.
-  runpath=""
+  runpath="" runpath_dirs=""
   if test -n "$LD_RUN_PATH"; then
     runpath="$LD_RUN_PATH"
   elif test "$GCC" = "yes"; then
     dnl Compute runpath from gcc's -v output
+    ld_switch_run_save="$ld_switch_run"; ld_switch_run=""
     echo "int main(int argc, char *argv[[]]) {return 0;}" > conftest.c
     xe_runpath_link='${CC-cc} -o conftest -v $CFLAGS '"$xe_ldflags"' conftest.$ac_ext 2>&1 1>/dev/null'
     for arg in `eval "$xe_runpath_link" | grep ' -L'`; do
@@ -1851,6 +1959,7 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
         done ;;
       esac
     done
+    ld_switch_run="$ld_switch_run_save"
     rm -f conftest*
   else
     dnl Add all directories with .so files to runpath
@@ -1858,9 +1967,10 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
       case "$arg" in -L*) XE_ADD_RUNPATH_DIR(`echo '' "$arg" | sed -e 's:^ ::' -e 's/^-L//'`);; esac
     done
     dnl Sometimes /opt/SUNWdt/lib is the only installed Motif available
-    case "$canonical" in  *-solaris2.[[1-4]]* )
-      test "$need_motif" = "yes" && runpath="${runpath}:/opt/SUNWdt/lib" ;;
-    esac
+    if test "$opsys $need_motif" = "sol2 yes"; then
+      xe_runpath_dir="/opt/SUNWdt/lib";
+      eval "$xe_add_unique_runpath_dir";
+    fi
   fi dnl Compute $runpath
 
   if test -n "$runpath"; then
@@ -1898,7 +2008,7 @@ AC_PROG_YACC
 
 dnl checks for header files
 AC_CHECK_HEADERS(mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h)
-AC_CHECK_HEADERS(utime.h locale.h libgen.h)
+AC_CHECK_HEADERS(utime.h locale.h libgen.h fcntl.h)
 AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h limits.h)
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
@@ -1926,6 +2036,11 @@ AC_TRY_COMPILE([#ifdef TIME_WITH_SYS_TIME
 
 dnl checks for typedefs
 AC_TYPE_SIGNAL
+AC_TYPE_SIZE_T
+AC_TYPE_PID_T
+AC_TYPE_UID_T
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
 
 AC_MSG_CHECKING(for struct timeval)
 AC_TRY_COMPILE([#ifdef TIME_WITH_SYS_TIME
@@ -1959,14 +2074,16 @@ AC_C_BIGENDIAN
 
 dnl define SIZEOF_TYPE
 AC_CHECK_SIZEOF(short)
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-if test "$ac_cv_sizeof_long" = 0; then
+if test "$ac_cv_sizeof_short" = 0; then
   echo ""
   echo "*** PANIC *** Configure tests are not working - compiler is broken."
   echo "*** PANIC *** Please examine config.log for compilation errors."
   exit 1
 fi
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(void *)
 
 dnl check for long file names
 AC_SYS_LONG_FILE_NAMES
@@ -1975,7 +2092,8 @@ dnl -lm is required by LISP_FLOAT_TYPE, among other things
 AC_CHECK_LIB(m, sqrt)
 
 dnl -lPW might be needed on some systems
-AC_CHECK_LIB(PW, main)
+dnl But they break more other systems.
+dnl AC_CHECK_LIB(PW, main)
 
 dnl Floating operation support is now unconditional
 AC_DEFINE(LISP_FLOAT_TYPE)
@@ -2009,31 +2127,15 @@ if   ${CC-cc} '-###' -xildon  no_such_file.c 2>&1 | grep '^[^ ]*/ild ' > /dev/nu
   else AC_MSG_RESULT(no)
 fi
 
-dnl Dynodump (Solaris 2.x, x<6)
-AC_MSG_CHECKING(for dynodump)
-case "$opsys" in sol2* )
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(DYNODUMP)
-  XE_APPEND(dynodump, MAKE_SUBDIR)
-  case "$machine" in
-    sparc   ) dynodump_arch=sparc ;;
-    *86*    ) dynodump_arch=i386  ;;
-    powerpc ) dynodump_arch=ppc   ;;
-  esac
-  dnl Dynodump requires the system linker
-  test "$GCC" = "yes" && XE_APPEND(-fno-gnu-linker, ld_switch_site) ;;
-  *) AC_MSG_RESULT(no) ;;
-esac
-
 dnl Link with "-z ignore" on Solaris if supported
-case "$opsys" in sol2-[[6-9]]* )
+if test "$opsys" = "sol2" -a "${OS_RELEASE:-0}" -ge 56; then
   AC_MSG_CHECKING(for \"-z ignore\" linker flag)
   case "`ld -h 2>&1`" in
     *-z\ ignore\|record* ) AC_MSG_RESULT(yes)
       XE_PREPEND(-z ignore, ld_switch_site) ;;
     *) AC_MSG_RESULT(no) ;;
-  esac ;;
-esac
+  esac
+fi
 
 dnl ----------------------
 dnl Choose a window system
@@ -2113,8 +2215,32 @@ if test "$with_x11" = "yes"; then
 
   if test "$extra_verbose" = "yes"; then
     echo; echo "X11 compilation variables:"
-    PRINT_VAR(x_libraries, x_includes, X_CFLAGS, X_LIBS, X_PRE_LIBS, X_EXTRA_LIBS)
+    PRINT_VAR(x_libraries x_includes X_CFLAGS X_LIBS X_PRE_LIBS X_EXTRA_LIBS)
     echo
+  fi
+
+  dnl Autodetect defines extracted from X config by xmkmf, e.g. NARROWPROTO
+  AC_CHECKING(for X defines extracted by xmkmf)
+  rm -fr conftestdir
+  if mkdir conftestdir; then
+    cd conftestdir
+    cat > Imakefile <<'EOF'
+xetest:
+	@echo ${PROTO_DEFINES} ${STD_DEFINES}
+EOF
+    if (xmkmf) >/dev/null 2>/dev/null && test -f Makefile; then
+      # GNU make sometimes prints "make[1]: Entering...", which would confuse us.
+      xmkmf_defines=`${MAKE-make} xetest 2>/dev/null | grep -v make`
+    fi
+    cd ..
+    rm -fr conftestdir
+    for word in $xmkmf_defines; do
+      case "$word" in
+	-D*=* ) ;;
+	-D* ) word=`echo '' $word | sed -e 's:^ *-D::'`
+	      AC_DEFINE_UNQUOTED($word) ;;
+      esac
+    done
   fi
 
   dnl make sure we can find Intrinsic.h
@@ -2183,27 +2309,6 @@ if test "$with_x11" = "yes"; then
 
   dnl Autodetect -lXaw
   AC_CHECK_LIB(Xaw, XawScrollbarSetThumb, have_xaw=yes, have_xaw=no)
-
-  dnl Autodetect -DNARROWPROTO
-  AC_MSG_CHECKING(for NARROWPROTO)
-  rm -fr conftestdir
-  if mkdir conftestdir; then
-    cd conftestdir
-    cat > Imakefile <<'EOF'
-xetest:
-	@echo 'proto_defines="${PROTO_DEFINES}"'
-EOF
-    if (xmkmf) >/dev/null 2>/dev/null && test -f Makefile; then
-      # GNU make sometimes prints "make[1]: Entering...", which would confuse us.
-      eval `${MAKE-make} xetest 2>/dev/null | grep -v make`
-      case "$proto_defines" in *NARROWPROTO* ) narrowproto=yes ;; esac
-    fi
-    cd ..
-    rm -fr conftestdir
-  fi
-  test -z "$narrowproto" && narrowproto=no
-  AC_MSG_RESULT($narrowproto)
-  test "$narrowproto" = "yes" && AC_DEFINE(NARROWPROTO)
 
 fi dnl $with_x11 = yes
 
@@ -2329,16 +2434,30 @@ if test "$with_gif" = "yes"; then
 fi
 
 dnl Autodetect Xpm
-AC_MSG_CHECKING(for Xpm)
+AC_MSG_CHECKING(for Xpm - no older than 3.4f)
 xe_check_libs=-lXpm
 test -z "$with_xpm" && { AC_TRY_RUN([#include <X11/xpm.h>
-int main(int argc, char *argv[]) {
-return (XpmIncludeVersion != XpmLibraryVersion()) ||
-        XpmIncludeVersion < 30406;
-}], with_xpm=yes, with_xpm=no)
+int main(int c, char **v) {
+return c == 1 ? 0 :
+  XpmIncludeVersion != XpmLibraryVersion() ? 1 :
+        XpmIncludeVersion < 30406 ? 2 :
+		0 ;
+}], [./conftest foobar; xpm_status=$?;
+  if test "$xpm_status" = "0"; then with_xpm=yes; else with_xpm=no; fi;],
+with_xpm=no, with_xpm=no)
 }
 xe_check_libs=
 AC_MSG_RESULT($with_xpm)
+if test "$xpm_status" = "1" -o "$xpm_status" = "2"; then
+  test "$xpm_status" = "1" && problem="Xpm library version and header file version don't match!"
+  test "$xpm_status" = "2" && problem="Xpm library version is too old!"
+  echo "
+*** WARNING *** $problem
+                I'm not touching that with a 10-foot pole!
+                If you really want to use the installed version of Xpm, rerun
+                configure --with-xpm=yes, but don't blame me if XEmacs crashes!
+"
+fi
 if test "$with_xpm" = "yes"; then
   AC_DEFINE(HAVE_XPM)
   XE_PREPEND(-lXpm, libs_x)
@@ -2479,7 +2598,7 @@ if test "$with_mule" = "yes" ; then
   AC_CHECKING(for Mule input methods)
   dnl Do we have the XmIm* routines?  And if so, do we want to use them?
   dnl XIM seems to be flaky except on Solaris...
-  test -z "$with_xim" && case "$opsys" in sol2* ) ;; *) with_xim=no ;; esac
+  test -z "$with_xim" -a "$opsys" != "sol2" && with_xim=no
   case "$with_xim" in "" | "yes" )
     AC_CHECKING(for XIM)
     AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif, with_xim=xlib)
@@ -2657,6 +2776,12 @@ dnl Check whether strcoll exists and works correctly. (This does more
 dnl than just check for its existence.) If so, it defines HAVE_STRCOLL.
 AC_FUNC_STRCOLL
 
+dnl If `getpgrp' takes no argument (the POSIX.1 version), define
+dnl `GETPGRP_VOID'.  Otherwise, it is the BSD version, which takes a
+dnl process ID as an argument.
+AC_CHECK_FUNCS(getpgrp)
+AC_FUNC_GETPGRP
+
 dnl We used to call AC_FUNC_MMAP here
 dnl Instead we now use following, suggested by Neal Becker
 AC_MSG_CHECKING(for working mmap)
@@ -2735,17 +2860,25 @@ for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp" ; do
 done
 
 dnl Find out which version of XEmacs this is.
-file="$srcdir/lisp/version.el"
-version=`sed -ne 's/^(defconst emacs-version "\(.*\)".*/\1/p' "$file"`
-if test  -z "$version"; then
-  echo "$progname: can't find current emacs version in \"$file\"." >&2
-  exit 1
+. "$srcdir/version.sh" || exit 1;
+#version=`sed -ne 's/^(defconst emacs-version "\(.*\)".*/\1/p' "$file"`
+#if test  -z "$version"; then
+#  echo "$progname: can't find current emacs version in \"$file\"." >&2
+#  exit 1
+#fi
+#beta=`sed -ne 's/^.*beta.*(beta\([[0-9]][[0-9]]*\)).*$/\1/p' "$file"`
+#test -n "$beta" && version="${version}-b${beta}"
+version="${emacs_major_version}.${emacs_minor_version}"
+AC_DEFINE_UNQUOTED(EMACS_MAJOR_VERSION, $emacs_major_version)
+AC_DEFINE_UNQUOTED(EMACS_MINOR_VERSION, $emacs_minor_version)
+if test -n "$emacs_beta_version"; then
+  version="${version}-b${emacs_beta_version}"
+  AC_DEFINE_UNQUOTED(EMACS_BETA_VERSION, $emacs_beta_version)
 fi
-beta=`sed -ne 's/^.*beta.*(beta\([[0-9]][[0-9]]*\)).*$/\1/p' "$file"`
-test -n "$beta" && version="${version}-b${beta}"
+AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
-main_1_id=`echo main_1_xemacs_${version}_${canonical} | sed 'y/.-/__/'`
-AC_DEFINE_UNQUOTED(main_1, $main_1_id)
+canonical_version=`echo ${version}_${canonical} | sed 'y/.-/__/'`
+AC_DEFINE_UNQUOTED(CANONICAL_VERSION, $canonical_version)
 
 
 dnl Check for sound of various sorts.
@@ -2928,6 +3061,9 @@ else dnl "$with_tty" = "no"
   done
 fi dnl with_tty
 
+dnl Do we need event-unixoid.o ?
+test "$with_x11" = "yes" -o "$with_tty" = "yes" && XE_ADD_OBJS(event-unixoid.o)
+
 dnl Database support
 dnl <mdiers@logware.de>
 dnl We do not necessarily have to have libdb/lib(g)dbm for DB/(G)DBM support.
@@ -3056,10 +3192,10 @@ done
 
 if test "$extra_verbose" = "yes"; then
   echo ""
-  PRINT_VAR(extra_objs,
-   c_switch_general,  c_switch_window_system,  c_switch_all,
-  ld_switch_general, ld_switch_window_system, ld_switch_all,
-    ld_libs_general,   ld_libs_window_system,   ld_libs_all)
+  PRINT_VAR(extra_objs
+   c_switch_general  c_switch_window_system  c_switch_all
+  ld_switch_general ld_switch_window_system ld_switch_all
+    ld_libs_general   ld_libs_window_system   ld_libs_all)
   echo ""
 fi
 
@@ -3342,21 +3478,37 @@ dnl except ./Makefile from $srcdir/Makefile.in
 AC_OUTPUT($internal_makefile_list,[
 for dir in $MAKE_SUBDIR; do
   echo creating $dir/Makefile
-  (
+  ([
     cd $dir
     rm -f junk.c
-    sed -e 's/^# Generated.*//' -e 's%/\*\*/#.*%%' < Makefile.in > junk.c;
+    < Makefile.in \
+      sed -e 's/^# Generated.*//' \
+          -e 's%/\*\*/#.*%%' \
+          -e 's/^[ \f\t]*#[ \f\t]*/#/' \
+          -e '/^##/d' \
+          -e '/^#/ {
+p
+d
+}'        -e '/./ {
+s/\([\"]\)/\\\1/g
+s/^/"/
+s/$/"/
+}'  > junk.c;
     $CPP -I. -I${top_srcdir}/src $CPPFLAGS junk.c > junk.cpp;
     < junk.cpp				\
       sed -e 's/^#.*//'			\
-	-e 's/^[[ \f\t]][[ \f\t]]*$//'	\
+	-e 's/^[ \f\t][ \f\t]*$//'	\
 	-e 's/^ /	/'		\
 	| sed -n -e '/^..*$/p'		\
-	> Makefile.new
+	| sed '/^"/ {
+s/\\\([\"]\)/\1/g
+s/^"//
+s/"$//
+}'	> Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new Makefile
     rm -f junk.c junk.cpp
-  )
+  ])
 done
 ],
 [CPP="$CPP"

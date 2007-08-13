@@ -1,5 +1,5 @@
 ;;;; psgml-parse.el --- Parser for SGML-editing mode with parsing support
-;; $Id: psgml-parse.el,v 1.6 1997/06/14 20:31:36 steve Exp $
+;; $Id: psgml-parse.el,v 1.7 1997/06/21 20:03:09 steve Exp $
 
 ;; Copyright (C) 1994, 1995 Lennart Staflin
 
@@ -1005,7 +1005,7 @@ or 2: two octets (n,m) interpreted as  (n-t-1)*256+m+t."
     (sgml-read-octet)))
 
 (defsubst sgml-read-peek ()
-  (following-char))
+  (char-after (point)))
 
 (defun sgml-read-sexp ()
   (prog1
@@ -1463,11 +1463,11 @@ in any of them."
 (defmacro sgml-parse-chars (char1 char2 &optional char3)
   "Parse two or three chars; return nil if can't"
   (if (null char3)
-      (` (cond ((and (eq (, char1) (following-char))
+      (` (cond ((and (eq (, char1) (char-after (point)))
 		 (eq (, char2) (char-after (1+ (point)))))
 	    (forward-char 2)
 	    t)))
-    (` (cond ((and (eq (, char1) (following-char))
+    (` (cond ((and (eq (, char1) (char-after (point)))
 		 (eq (, char2) (char-after (1+ (point))))
 		 (eq (, char3) (char-after (1+ (1+ (point))))))
 	    (forward-char 3)

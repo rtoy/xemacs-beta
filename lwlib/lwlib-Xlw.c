@@ -110,7 +110,7 @@ xlw_create_menubar (widget_instance* instance)
     XtVaCreateWidget (instance->info->name, xlwMenuWidgetClass,
 		      instance->parent,
 		      XtNmenu, instance->info->val,
-		      0);
+		      NULL);
   XtAddCallback (widget, XtNopen,   pre_hook,  (XtPointer)instance);
   XtAddCallback (widget, XtNselect, pick_hook, (XtPointer)instance);
   return widget;
@@ -128,7 +128,7 @@ xlw_create_popup_menu (widget_instance* instance)
 			     popup_shell,
 			     XtNmenu, instance->info->val,
 			     XtNhorizontal, False,
-			     0);
+			     NULL);
 
   XtAddCallback (widget, XtNselect, pick_hook, (XtPointer)instance);
 
@@ -269,13 +269,13 @@ xlw_update_scrollbar (widget_instance *instance, Widget widget,
 		     XtNy, data->scrollbar_y,
 		     XtNwidth, data->scrollbar_width,
 		     XtNheight, data->scrollbar_height,
-		     0);
+		     NULL);
 
       /* Now size the scrollbar's slider. */
       XtVaGetValues (widget,
 		     XmNsliderSize, &widget_sliderSize,
 		     XmNvalue,      &widget_val,
-		     0);
+		     NULL);
 
       percent = (double) data->slider_size /
 	(double) (data->maximum - data->minimum);
@@ -357,7 +357,7 @@ xlw_update_one_widget (widget_instance* instance, Widget widget,
 	mw = (XlwMenuWidget)((CompositeWidget)widget)->composite.children [0];
       else
 	mw = (XlwMenuWidget)widget;
-      XtVaSetValues (widget, XtNmenu, val, 0);
+      XtVaSetValues (widget, XtNmenu, val, NULL);
     }
 #endif
 #ifdef SCROLLBARS_LUCID

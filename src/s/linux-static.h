@@ -1,3 +1,3 @@
 #include "linux.h"
 
-#define LD_SWITCH_SYSTEM -Bstatic
+#define LD_SWITCH_SYSTEM "-Bstatic"

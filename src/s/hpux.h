@@ -135,7 +135,7 @@ Boston, MA 02111-1307, USA.  */
    `signal' fail to work.  */
 
 #ifdef HPUX_NET
-#define LIBS_SYSTEM -ln
+#define LIBS_SYSTEM "-ln"
 #else
 #define LIBS_SYSTEM
 #endif

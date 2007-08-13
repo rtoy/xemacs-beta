@@ -5,4 +5,4 @@
 #include "bsdos2.h"
 
 /* -lX11 needs shmat and shmdt from -lipc. */
-#define LIBX11_SYSTEM -lipc
+#define LIBX11_SYSTEM "-lipc"

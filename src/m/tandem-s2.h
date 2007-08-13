@@ -19,5 +19,5 @@
 #define NO_SUBPROCESSES
 
 /* Correct some library file names.  */
-#define START_FILES pre-crt0.o /usr/lib/crt1.o1.31
-#define LIB_STANDARD -lbsd -lc /usr/lib/crtn.o1.31
+#define START_FILES "pre-crt0.o /usr/lib/crt1.o1.31"
+#define LIB_STANDARD "-lbsd -lc /usr/lib/crtn.o1.31"

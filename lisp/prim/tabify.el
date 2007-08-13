@@ -54,7 +54,8 @@ The variable `tab-width' controls the spacing of tab stops."
 		(progn
 		  (message "untabify: %d%% ..." percent)
 		  (setq percent (+ 5 percent)))))))
-      (message "untabify: done"))))
+      (message "untabify: done")))
+  nil)
 
 ;;;###autoload
 (defun tabify (start end)

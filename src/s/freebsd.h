@@ -28,22 +28,22 @@
 #include <osreldate.h>
 #endif
 #if __FreeBSD_version >= 199701
-#define LIBS_SYSTEM -lutil -lxpg4
+#define LIBS_SYSTEM "-lutil -lxpg4"
 #else
-#define LIBS_SYSTEM -lutil
+#define LIBS_SYSTEM "-lutil"
 #endif
 
-#define LIBS_TERMCAP -ltermcap
-#define LIB_GCC -lgcc
+#define LIBS_TERMCAP "-ltermcap"
+#define LIB_GCC "-lgcc"
 
 /* freebsd has POSIX-style pgrp behavior. */
 #define GETPGRP_NO_ARG
 
 #ifndef NO_SHARED_LIBS
-#define LD_SWITCH_SYSTEM -dc -dp -e start
+#define LD_SWITCH_SYSTEM "-dc -dp -e start"
 #define HAVE_TEXT_START		/* No need to define `start_of_text'. */
-#define START_FILES pre-crt0.o /usr/lib/crt0.o
-#define UNEXEC unexfreebsd.o
+#define START_FILES "pre-crt0.o /usr/lib/crt0.o"
+#define UNEXEC "unexfreebsd.o"
 #define RUN_TIME_REMAP
 
 #ifndef N_TRELOFF
@@ -54,7 +54,7 @@
 #else /* NO_SHARED_LIBS */
 #ifdef __FreeBSD__  /* shared libs are available, but the user prefers
                      not to use them.  */
-#define LD_SWITCH_SYSTEM -Bstatic
+#define LD_SWITCH_SYSTEM "-Bstatic"
 #define A_TEXT_OFFSET(x) (sizeof (struct exec))
 #define A_TEXT_SEEK(hdr) (N_TXTOFF(hdr) + A_TEXT_OFFSET(hdr))
 #endif /* __FreeBSD__ */

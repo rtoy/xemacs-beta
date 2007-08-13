@@ -113,14 +113,14 @@ Boston, MA 02111-1307, USA.  */
  * if we use X11, libX11.a has these...
  */
 # undef LIB_X11_LIB
-# define LIB_X11_LIB -lX11
+# define LIB_X11_LIB "-lX11"
 # undef LIBX11_SYSTEM
-# define LIBX11_SYSTEM -lmalloc -lnsl
+# define LIBX11_SYSTEM "-lmalloc -lnsl"
 
 /*
  * useful if you have INET loaded
  */
-# define LIBS_MACHINE -linet
+# define LIBS_MACHINE "-linet"
 
 
 #if (defined(ncl_mr) || defined(ncl_el)) && !defined (NBPC)
@@ -190,7 +190,7 @@ Boston, MA 02111-1307, USA.  */
 #define SIGNALS_VIA_CHARACTERS
 
 /* This is to prevent memory clobbering on the DPX/2 200.  */
-#define LD_SWITCH_MACHINE -N -T32
+#define LD_SWITCH_MACHINE "-N -T32"
 
  /* end of dpx2.h */
 

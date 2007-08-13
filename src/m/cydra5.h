@@ -88,7 +88,7 @@ Boston, MA 02111-1307, USA.  */
    code will not be sharable; but that's better than failing completely.  */
 
 #define NO_REMAP
-#define	LIBS_MACHINE	-lsocket -lnsl
+#define	LIBS_MACHINE "-lsocket -lnsl"
 
 /* Stack grows downward in memory.  */
 #define	STACK_DIRECTION -1

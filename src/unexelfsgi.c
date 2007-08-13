@@ -479,7 +479,12 @@ Filesz      Memsz       Flags       Align
 	     new_bss_addr - roundup(old_bss_addr,0x1000)
 
      */
-
+  /* Still more mods... Olivier Galibert 19971705
+     - support for .sbss section (automagically changed to data without
+       name change)
+     - support for 64bits ABI (will need a bunch of fixes in the rest
+       of the code before it works
+     */
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -493,6 +498,26 @@ Filesz      Memsz       Flags       Align
 #include <sym.h> /* for HDRR declaration */
 #include <sys/mman.h>
 
+/* in 64bits mode, use 64bits elf */
+#ifdef _ABI64
+typedef Elf64_Shdr l_Elf_Shdr;
+typedef Elf64_Phdr l_Elf_Phdr;
+typedef Elf64_Ehdr l_Elf_Ehdr;
+typedef Elf64_Addr l_Elf_Addr;
+typedef Elf64_Word l_Elf_Word;
+typedef Elf64_Off  l_Elf_Off;
+typedef Elf64_Sym  l_Elf_Sym;
+#else
+typedef Elf32_Shdr l_Elf_Shdr;
+typedef Elf32_Phdr l_Elf_Phdr;
+typedef Elf32_Ehdr l_Elf_Ehdr;
+typedef Elf32_Addr l_Elf_Addr;
+typedef Elf32_Word l_Elf_Word;
+typedef Elf32_Off  l_Elf_Off;
+typedef Elf32_Sym  l_Elf_Sym;
+#endif
+
+
 #ifndef emacs
 #define fatal(a, b, c) fprintf(stderr, a, b, c), exit(1)
 #else
@@ -504,13 +529,13 @@ extern void fatal(char *, ...);
  */
 
 #define OLD_SECTION_H(n) \
-     (*(Elf32_Shdr *) ((byte *) old_section_h + old_file_h->e_shentsize * (n)))
+     (*(l_Elf_Shdr *) ((byte *) old_section_h + old_file_h->e_shentsize * (n)))
 #define NEW_SECTION_H(n) \
-     (*(Elf32_Shdr *) ((byte *) new_section_h + new_file_h->e_shentsize * (n)))
+     (*(l_Elf_Shdr *) ((byte *) new_section_h + new_file_h->e_shentsize * (n)))
 #define OLD_PROGRAM_H(n) \
-     (*(Elf32_Phdr *) ((byte *) old_program_h + old_file_h->e_phentsize * (n)))
+     (*(l_Elf_Phdr *) ((byte *) old_program_h + old_file_h->e_phentsize * (n)))
 #define NEW_PROGRAM_H(n) \
-     (*(Elf32_Phdr *) ((byte *) new_program_h + new_file_h->e_phentsize * (n)))
+     (*(l_Elf_Phdr *) ((byte *) new_program_h + new_file_h->e_phentsize * (n)))
 
 #define PATCH_INDEX(n) \
   do { \
@@ -542,8 +567,8 @@ find_section (name, section_names, file_name, old_file_h, old_section_h, noerror
      char *name;
      char *section_names;
      char *file_name;
-     Elf32_Ehdr *old_file_h;
-     Elf32_Shdr *old_section_h;
+     l_Elf_Ehdr *old_file_h;
+     l_Elf_Shdr *old_section_h;
      int noerror;
 {
   int idx;
@@ -591,18 +616,18 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 
   /* Pointers to the file, program and section headers for the old and new
      files.  */
-  Elf32_Ehdr *old_file_h, *new_file_h;
-  Elf32_Phdr *old_program_h, *new_program_h;
-  Elf32_Shdr *old_section_h, *new_section_h;
+  l_Elf_Ehdr *old_file_h, *new_file_h;
+  l_Elf_Phdr *old_program_h, *new_program_h;
+  l_Elf_Shdr *old_section_h, *new_section_h;
 
   /* Point to the section name table in the old file.  */
   char *old_section_names;
 
-  Elf32_Addr old_bss_addr, new_bss_addr;
-  Elf32_Word old_bss_size, new_data2_size;
-  Elf32_Off  new_data2_offset;
-  Elf32_Addr new_data2_addr;
-  Elf32_Addr new_offsets_shift;
+  l_Elf_Addr old_bss_addr, new_bss_addr;
+  l_Elf_Word old_bss_size, new_data2_size;
+  l_Elf_Off  new_data2_offset;
+  l_Elf_Addr new_data2_addr;
+  l_Elf_Addr new_offsets_shift;
 
   int n, nn, old_bss_index, old_data_index, new_data2_index;
   int old_mdebug_index;
@@ -630,9 +655,9 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 
   /* Get pointers to headers & section names.  */
 
-  old_file_h = (Elf32_Ehdr *) old_base;
-  old_program_h = (Elf32_Phdr *) ((byte *) old_base + old_file_h->e_phoff);
-  old_section_h = (Elf32_Shdr *) ((byte *) old_base + old_file_h->e_shoff);
+  old_file_h = (l_Elf_Ehdr *) old_base;
+  old_program_h = (l_Elf_Phdr *) ((byte *) old_base + old_file_h->e_phoff);
+  old_section_h = (l_Elf_Shdr *) ((byte *) old_base + old_file_h->e_shoff);
   old_section_names
     = (char *) old_base + OLD_SECTION_H (old_file_h->e_shstrndx).sh_offset;
 
@@ -656,7 +681,7 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   old_bss_size	    = OLD_SECTION_H (old_bss_index).sh_size;
 #if defined(emacs) || !defined(DEBUG)
   bss_end	    = (unsigned int) sbrk (0);
-  new_bss_addr	    = (Elf32_Addr) bss_end;
+  new_bss_addr	    = (l_Elf_Addr) bss_end;
 #else
   new_bss_addr	    = old_bss_addr + old_bss_size + 0x1234;
 #endif
@@ -702,10 +727,10 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   if (new_base == (caddr_t) -1)
     fatal ("Can't mmap (%s): errno %d\n", new_name, errno);
 
-  new_file_h = (Elf32_Ehdr *) new_base;
-  new_program_h = (Elf32_Phdr *) ((byte *) new_base + old_file_h->e_phoff);
+  new_file_h = (l_Elf_Ehdr *) new_base;
+  new_program_h = (l_Elf_Phdr *) ((byte *) new_base + old_file_h->e_phoff);
   new_section_h
-    = (Elf32_Shdr *) ((byte *) new_base + old_file_h->e_shoff
+    = (l_Elf_Shdr *) ((byte *) new_base + old_file_h->e_shoff
 		      + new_offsets_shift);
 
   /* Make our new file, program and section headers as copies of the
@@ -857,17 +882,26 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
 	  && NEW_SECTION_H (nn).sh_type != SHT_DYNSYM)
 	PATCH_INDEX (NEW_SECTION_H (nn).sh_info);
       
+      /* Fix the type and alignment for the .sbss section */
+      if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sbss"))
+	{
+	  NEW_SECTION_H (nn).sh_type = SHT_PROGBITS;
+	  NEW_SECTION_H (nn).sh_offset = round_up (NEW_SECTION_H (nn).sh_offset,
+						   NEW_SECTION_H (nn).sh_addralign);
+	}
+
       /* Now, start to copy the content of sections. */
       if (NEW_SECTION_H (nn).sh_type == SHT_NULL
 	  || NEW_SECTION_H (nn).sh_type == SHT_NOBITS)
 	continue;
       
-      /* Write out the sections. .data and .data1 (and data2, called
+      /* Write out the sections. .data, .data1 nad .sbss (and data2, called
 	 ".data" in the strings table) get copied from the current process
 	 instead of the old file.  */
       if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data")
 	  || !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data1")
-	  || !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".got"))
+	  || !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".got")
+	  || !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sbss"))
 	src = (caddr_t) OLD_SECTION_H (n).sh_addr;
       else
 	src = old_base + OLD_SECTION_H (n).sh_offset;
@@ -932,9 +966,9 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
       if (NEW_SECTION_H (nn).sh_type == SHT_SYMTAB
 	  || NEW_SECTION_H (nn).sh_type == SHT_DYNSYM)
 	{
-	  Elf32_Shdr *spt = &NEW_SECTION_H (nn);
+	  l_Elf_Shdr *spt = &NEW_SECTION_H (nn);
 	  unsigned int num = spt->sh_size / spt->sh_entsize;
-	  Elf32_Sym * sym = (Elf32_Sym *) (NEW_SECTION_H (nn).sh_offset
+	  l_Elf_Sym * sym = (l_Elf_Sym *) (NEW_SECTION_H (nn).sh_offset
 					   + new_base);
 	  for (; num--; sym++)
 	    {

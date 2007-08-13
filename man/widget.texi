@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.9916
+Version: 1.9931
 
 @menu
 * Introduction::                
@@ -1604,6 +1604,20 @@ See @code{TeX-printer-list} for an explanation.
 
 @item 
 A mailto widget.
+
+@item 
+@kbd{C-e e} in a fixed size field should go to the end of the text in
+the field, not the end of the field itself. 
+
+@item
+Use and overlay instead of markers to delimit the widget.  Create
+accessors for the end points.
+
+@item
+Clicking on documentation links should call @code{describe-function} or
+@code{widget-browse-other-window} and friends directly, instead of going
+through @code{apropos}.  If more than one function is valid for the
+symbol, it should pop up a menu.
 
 @end itemize
 

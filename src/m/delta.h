@@ -116,19 +116,19 @@ Boston, MA 02111-1307, USA.  */
    DO NOT USE -lPW. That version of alloca is broken in versions R3V5,
    R3V6, R3V7. -riku@field.fi -pot@cnuce.cnr.it. */
 
-#define LIB_STANDARD -lc881
-#define LIB_MATH -lm881
-#define LIBS_TERMCAP -lcurses
-#define LIBS_SYSTEM -lbsd
+#define LIB_STANDARD "-lc881"
+#define LIB_MATH "-lm881"
+#define LIBS_TERMCAP "-lcurses"
+#define LIBS_SYSTEM "-lbsd"
 
 #ifdef HAVE_X_WINDOWS
 # define HAVE_RANDOM
 # define HAVE_XSCREENNUMBEROFSCREEN
 # undef LIB_X11_LIB		/* no shared libraries */
-# define LIB_X11_LIB -lX11
+# define LIB_X11_LIB "-lX11"
 # undef USG_SHARED_LIBRARIES    /* once again, no shared libs */
 # undef LIBX11_SYSTEM		/* no -lpt as usg5-3.h expects */
-# define LIBX11_SYSTEM -lnls -lnsl_s
+# define LIBX11_SYSTEM "-lnls -lnsl_s"
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef __GNUC__
@@ -146,8 +146,8 @@ Boston, MA 02111-1307, USA.  */
     option for real compilation are.
     Let us set -traditional, because gmalloc.c includes <stddef.h>, and
     we don't have that (as of SYSV68 R3V7). */
-#  define C_SWITCH_MACHINE -mfp0ret -traditional -Dconst= -fdelayed-branch -fstrength-reduce -fno-inline -fcaller-saves
-#  define LIB_GCC /lib/gnulib881
+#  define C_SWITCH_MACHINE "-mfp0ret -traditional -Dconst= -fdelayed-branch -fstrength-reduce -fno-inline -fcaller-saves"
+#  define LIB_GCC "/lib/gnulib881"
 
 #else
  /* Not __GNUC__, use the alloca in alloca.s. */
@@ -158,7 +158,7 @@ Boston, MA 02111-1307, USA.  */
 	-ga	 Because alloca relies on stack frames. This option forces
 		 the Green Hills compiler to create stack frames even for
 		 functions with few local variables. */
-#  define C_SWITCH_MACHINE -ga -O
+#  define C_SWITCH_MACHINE "-ga -O"
 #  define GAP_USE_BCOPY		/* *++to = *++from  is inefficient */
 #  define BCOPY_UPWARD_SAFE 0
 #  define BCOPY_DOWNWARD_SAFE 1	/* bcopy does: mov.b (%a1)+,(%a0)+ */

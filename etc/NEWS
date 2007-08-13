@@ -109,6 +109,20 @@ the form of easy-to-install add-ons.
 * Changes in XEmacs 20.3
 ========================
 
+** .xemacs is loaded at startup if it exists.
+
+By default XEmacs now loads the user file ~/.xemacs if it exists.  If
+there is no such file, it reads ~/.emacs as usual.  If both .xemacs and
+.emacs exist, XEmacs will only load .xemacs.
+
+** Quail input method is now available.
+
+#### Need something to say about quail.
+
+** arc-mode has a new function called `archive-quit' bound to q.
+
+This function quits archive mode in the same fashion dired-quit works.
+
 ** XEmacs runs on Windows NT.
 
 Thanks to David Hobley <davidh@wr.com.au> and Marc Paquette
@@ -141,6 +155,19 @@ to your .emacs.  This will load the minibuffer histories (if any) at
 startup, as well as instruct XEmacs to save them before exiting.  You
 can use Customize to add or remove the histories being saved.
 
+** The default format for ChangeLog entries (as created by `C-x 4 a')
+is now the international ISO 8601 format.
+
+To revert to the old behaviour, use:
+
+   (setq add-log-time-format 'current-time-string)
+
+Or `M-x customize-group RET add-log RET'.
+
+** The `M-x customize' command now automatically customizes `Emacs'
+group (top of the customize tree).  Use `M-x customize-group' to
+customize settings of a specific group.
+
 ** Gnuserv changes
 
 *** The Lisp part of gnuserv has been rewritten to allow for more
@@ -151,7 +178,7 @@ flexibility and features.
 
 *** The `gnuattact' and `gnudoit' programs have been abandoned in
 favor of `gnuclient', which now accepts the standard `-nw',
-`-eval' and `-f' options.
+`-display', `-eval' and `-f' options.
 
 ** Etags changes.
 

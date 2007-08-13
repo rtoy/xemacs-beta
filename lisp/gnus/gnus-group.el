@@ -423,6 +423,7 @@ ticked: The number of ticked articles."
     "n" gnus-group-next-unread-group
     "p" gnus-group-prev-unread-group
     "\177" gnus-group-prev-unread-group
+    [backspace] gnus-group-prev-unread-group
     [delete] gnus-group-prev-unread-group
     "N" gnus-group-next-group
     "P" gnus-group-prev-group
@@ -505,6 +506,7 @@ ticked: The number of ticked articles."
     "r" gnus-group-rename-group
     "c" gnus-group-customize
     "\177" gnus-group-delete-group
+    [backspace] gnus-group-delete-group
     [delete] gnus-group-delete-group)
 
   (gnus-define-keys (gnus-group-soup-map "s" gnus-group-group-map)
@@ -1274,24 +1276,26 @@ If FIRST-TOO, the current line is also eligible as a target."
 	      (not (eobp))
 	      (not (setq
 		    found
-		    (and (or all
-			     (and
-			      (let ((unread
-				     (get-text-property (point) 'gnus-unread)))
-				(and (numberp unread) (> unread 0)))
-			      (setq lev (get-text-property (point)
+		    (and
+		     (get-text-property (point) 'gnus-group)
+		     (or all
+			 (and
+			  (let ((unread
+				 (get-text-property (point) 'gnus-unread)))
+			    (and (numberp unread) (> unread 0)))
+			  (setq lev (get-text-property (point)
+						       'gnus-level))
+			  (<= lev gnus-level-subscribed)))
+		     (or (not level)
+			 (and (setq lev (get-text-property (point)
 							   'gnus-level))
-			      (<= lev gnus-level-subscribed)))
-			 (or (not level)
-			     (and (setq lev (get-text-property (point)
-							       'gnus-level))
-				  (or (= lev level)
-				      (and (< lev low)
-					   (< level lev)
-					   (progn
-					     (setq low lev)
-					     (setq pos (point))
-					     nil))))))))
+			      (or (= lev level)
+				  (and (< lev low)
+				       (< level lev)
+				       (progn
+					 (setq low lev)
+					 (setq pos (point))
+					 nil))))))))
 	      (zerop (forward-line way)))))
     (if found
 	(progn (gnus-group-position-point) t)
@@ -2022,15 +2026,16 @@ If SOLID (the prefix), create a solid group."
   (let* ((group
 	  (if solid (gnus-read-group "Group name: ")
 	    (message-unique-id)))
+	 (default-type (or (car gnus-group-web-type-history)
+			   (symbol-name (caar nnweb-type-definition))))
 	 (type
-	  (completing-read
-	   "Search engine type: "
-	   (mapcar (lambda (elem) (list (symbol-name (car elem))))
-		   nnweb-type-definition)
-	   nil t (cons (or (car gnus-group-web-type-history)
-			   (symbol-name (caar nnweb-type-definition)))
-		       0)
-	   'gnus-group-web-type-history))
+	  (gnus-string-or
+	   (completing-read
+	    (format "Search engine type (default %s): " default-type)
+	    (mapcar (lambda (elem) (list (symbol-name (car elem))))
+		    nnweb-type-definition)
+	    nil t nil 'gnus-group-web-type-history)
+	   default-type))
 	 (search
 	  (read-string
 	   "Search string: "
@@ -2913,11 +2918,11 @@ to use."
   (interactive
    (list
     (gnus-group-group-name)
-    (cond (current-prefix-arg
-	   (completing-read
-	    "Faq dir: " (and (listp gnus-group-faq-directory)
-			     (mapcar (lambda (file) (list file))
-				     gnus-group-faq-directory)))))))
+    (when current-prefix-arg
+      (completing-read
+       "Faq dir: " (and (listp gnus-group-faq-directory)
+			(mapcar (lambda (file) (list file))
+				gnus-group-faq-directory))))))
   (unless group
     (error "No group name given"))
   (let ((dirs (or faq-dir gnus-group-faq-directory))

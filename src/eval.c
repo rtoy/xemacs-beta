@@ -148,6 +148,10 @@ Lisp_Object Vstack_trace_on_error;
    if an error is handled by the command loop's error handler.  */
 Lisp_Object Vdebug_on_error;
 
+/* List of conditions and regexps specifying error messages which
+   do not enter the debugger even if Vdebug_on_error says they should.  */
+Lisp_Object Vdebug_ignored_errors;
+
 /* List of conditions (non-nil atom means all) which cause a backtrace
    if any error is signalled.  */
 Lisp_Object Vstack_trace_on_signal;
@@ -468,6 +472,51 @@ wants_debugger (Lisp_Object list, Lisp_Object conditions)
   return 0;
 }
 
+
+/* Return 1 if an error with condition-symbols CONDITIONS,
+   and described by SIGNAL-DATA, should skip the debugger
+   according to debugger-ignore-errors.  */
+
+extern Lisp_Object Frunning_temacs_p();
+
+static int
+skip_debugger (Lisp_Object conditions, Lisp_Object data)
+{
+  Lisp_Object tail;
+  int first_string = 1;
+  Lisp_Object error_message;
+
+  if (!NILP(Frunning_temacs_p()) || NILP(Vdebug_ignored_errors))
+    {
+      return 1;
+    }
+
+  for (tail = Vdebug_ignored_errors; CONSP (tail); tail = XCDR (tail))
+    {
+      if (STRINGP (XCAR (tail)))
+	{
+	  if (first_string)
+	    {
+/*	      error_message = Ferror_message_string (data);*/
+	      error_message = build_string("Tell_Hrvoje");
+	      first_string = 0;
+	    }
+	  if (fast_lisp_string_match (XCAR (tail), error_message) >= 0)
+	    return 1;
+	}
+      else
+	{
+	  Lisp_Object contail;
+
+          for (contail = conditions; CONSP (contail); contail = XCDR (contail))
+            if (EQ (XCAR (tail), XCAR (contail)))
+	      return 1;
+	}
+    }
+
+  return 0;
+}
+
 /* Actually generate a backtrace on STREAM. */
 
 static Lisp_Object
@@ -515,12 +564,16 @@ signal_call_debugger (Lisp_Object conditions,
   Lisp_Object val = Qunbound;
   Lisp_Object all_handlers = Vcondition_handlers;
   int speccount = specpdl_depth_counter;
+  int skip_debugger_for_error = 0;
   struct gcpro gcpro1;
   GCPRO1 (all_handlers);
 
   Vcondition_handlers = active_handlers;
 
-  if (!entering_debugger && !*stack_trace_displayed && !signal_vars_only 
+  skip_debugger_for_error = skip_debugger (conditions, Fcons (sig, data));
+
+  if (!entering_debugger && !*stack_trace_displayed && !signal_vars_only
+      && !skip_debugger_for_error
       && wants_debugger (Vstack_trace_on_error, conditions))
     {
       specbind (Qdebug_on_error, Qnil);
@@ -537,6 +590,7 @@ signal_call_debugger (Lisp_Object conditions,
     }
       
   if (!entering_debugger && !*debugger_entered && !signal_vars_only
+      && !skip_debugger_for_error
       && (EQ (sig, Qquit)
 	  ? debug_on_quit
 	  : wants_debugger (Vdebug_on_error, conditions)))
@@ -5158,6 +5212,16 @@ if one of its condition symbols appears in the list.
 See also variable `stack-trace-on-error'.
 */ );
   Vstack_trace_on_signal = Qnil;
+
+  DEFVAR_LISP ("debug-ignored-errors", &Vdebug_ignored_errors /*
+*List of errors for which the debugger should not be called.
+Each element may be a condition-name or a regexp that matches error messages.
+If any element applies to a given error, that error skips the debugger
+and just returns to top level.
+This overrides the variable `debug-on-error'.
+It does not apply to errors handled by `condition-case'.
+*/ );
+  Vdebug_ignored_errors = Qnil;
 
   DEFVAR_LISP ("debug-on-error", &Vdebug_on_error /*
 *Non-nil means enter debugger if an unhandled error is signalled.

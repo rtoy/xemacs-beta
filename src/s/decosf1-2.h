@@ -16,11 +16,11 @@
    the BSD universe and not the SYSV universe.  */
 
 #ifdef __GNUC__
-# define C_SWITCH_SYSTEM -D_BSD
+#define C_SWITCH_SYSTEM "-D_BSD"
 #else
-# define C_SWITCH_SYSTEM -std -D_BSD
+#define C_SWITCH_SYSTEM "-std -D_BSD"
 #endif 
-#define LIBS_SYSTEM	-lbsd
+#define LIBS_SYSTEM	"-lbsd"
 #define SYSTEM_MALLOC
 #define GETPGRP_NO_ARG
 

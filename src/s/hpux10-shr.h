@@ -14,7 +14,7 @@
 /* Don't tell the linker to link statically */
 #ifdef NOT_C_CODE
 #define START_FILES
-#define LINKER $(CC)
+#define LINKER "$(CC)"
 #endif /* THIS IS YMAKEFILE */
 
 /* get call to brk() when rerunning XEmacs */

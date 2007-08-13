@@ -226,11 +226,6 @@ wait_without_blocking (void)
 
 #endif /* NO_SUBPROCESSES */
 
-int wait_debugging;   /* Set nonzero to make following function work under dbx
-		         (at least for bsd).  */
-
-/* Wait for subprocess with process id `pid' to terminate and
-   make sure it will get eliminated (not remain forever as a zombie). */
 
 void
 wait_for_termination (int pid)
@@ -238,169 +233,157 @@ wait_for_termination (int pid)
   /* #### With the new improved SIGCHLD handling stuff, there is much
      less danger of race conditions and some of the comments below
      don't apply.  This should be updated. */
+
+#if defined (NO_SUBPROCESSES)
   while (1)
     {
-#if !defined (NO_SUBPROCESSES)
-# ifdef VMS
-      int status;
-
-      status = SYS$FORCEX (&pid, 0, 0);
-      return;
-# else /* not VMS */
-      /* Note that, whenever any subprocess terminates (asynch. or synch.),
-	 the SIGCHLD handler will be called and it will call wait().
-	 Thus we cannot just call wait() ourselves, and we can't block
-	 SIGCHLD and then call wait(), because then if an asynch.
-	 process dies while we're waiting for our synch. process,
-	 Emacs will never notice that the asynch. process died.
-
-	 So, the general approach we take is to repeatedly block until
-	 a signal arrives, and then check if our process died
-	 using kill (pid, 0).  (We could also check the value of
-	 `synch_process_alive', since the SIGCHLD handler will reset
-	 that and we know that we're only being called on synchronous
-	 processes, but this approach is safer.  I don't trust
-	 the proper delivery of SIGCHLD.
-
-	 Note also that we cannot use any form of waitpid().
-	 A loop with WNOHANG will chew up CPU time; better to
-	 use sleep().  A loop without WNOWAIT will screw up
-	 the SIGCHLD handler (actually this is not true, if you
-	 duplicate the exit-status-reaping code; see below).
-	 A loop with WNOWAIT will result in a race condition
-	 if the process terminates between the process-status
-	 check and the call to waitpid(). */
-
-      /* Formerly, immediate_quit was set around this function call,
-	 but that could lead to problems if the QUIT happened when
-	 SIGCHLD was blocked -- it would remain blocked.  Yet another
-	 reason why immediate_quit is a bad idea.  In any case, there
-	 is no reason to resort to this because either the SIGIO or
-	 the SIGALRM will stop the block in EMACS_WAIT_FOR_SIGNAL(). */
-      QUIT;
-#  ifdef HAVE_WAITPID
-      /* Apparently there are bugs on some systems with the second
-	 method used below (the EMACS_BLOCK_SIGNAL method), whereby
-	 zombie processes get left around.  It appears in those cases
-	 that the SIGCHLD handler is never getting invoked.  It's
-	 not clear whether this is an Emacs bug or a kernel bug or
-	 both: on HPUX this problem is observed only with XEmacs,
-	 but under Solaris 2.4 all sorts of different programs have
-	 problems with zombies.  The method we use here does not
-	 require a working SIGCHLD (but will not break if it is
-	 working), and should be safe. */
-      /* 
-	 We use waitpid() contrary to the remarks above.  There is 
-	 no race condition, because the three situations when 
-	 sigchld_handler is invoked should be handled OK:
-	 - handler invoked before waitpid(): In this case, subprocess 
-	   status will be set by sigchld_handler.  waitpid() here will 
-	   return -1 with errno set to ECHILD, which is a valid 
-	   exit condition.
-
-	 - handler invoked during waitpid(): as above, except that 
-	   errno here will be set to EINTR.  This will cause waitpid() to 
-	   be called again, and this time it will exit with ECHILD.
-
-	 - handler invoked after waitpid(): The following code will reap 
-	   the subprocess. In the handler, wait()  will return -1 
-	   because there is no child to reap, and the handler will exit
-	   without modifying child subprocess status.
-      */
-      {
-	/* Because the SIGCHLD handler can potentially reap the
-	synchronous subprocess, we should take care of that.  */
-	
-	int ret;
-	int w;
-	/* Will stay in the do loop as long as:
-	   1. Process is alive
-	   2. Ctrl-G is not pressed */
-	do
-	  {
-	    QUIT;
-	    ret = waitpid (pid, &w, 0);
-	    /* waitpid returns 0 if the process is still alive. */
-	  }
-	while (ret == 0 || (ret == -1 && errno == EINTR));
-	
-	/* On exiting the loop, ret will be -1, with errno set to 
-	   ECHILD if the child has already been reaped, eg in the 
-	   signal handler.  */
-
-	if (! (ret == pid || (ret == -1 && errno == ECHILD)))
-	  {
-	    /* We've had some error condition here.  Per POSIX, the
-	       only other possibilities are:
-	       EFAULT (bus error accessing arg 2) or EINVAL (incorrect
-	       arguments), which are both program bugs.
-	     
-	       Since implementations may add their own error
-	       indicators on top, we ignore it by default.
-	       */
-	    
-	    break;
-	  }
-
-	/* Set synch process globals.  This is can also happen 
-	   in sigchld_handler, and that code is duplicated. */
-	if (ret == pid)
-	  { /* Update the global sigchld stats. */
-	    synch_process_alive = 0;
-	    if (WIFEXITED (w))
-	      synch_process_retcode = WEXITSTATUS (w);
-	    else if (WIFSIGNALED (w))
-	      synch_process_death = signal_name (WTERMSIG (w));
-	  }
-	break;
-      }
-#  elif defined (EMACS_BLOCK_SIGNAL) && !defined (BROKEN_WAIT_FOR_SIGNAL) && defined (SIGCHLD)
-      if (!wait_debugging)
-	{
-	  EMACS_BLOCK_SIGNAL (SIGCHLD);
-	  /* Block SIGCHLD from happening during this check,
-	     to avoid race conditions. */
-	  if (kill (pid, 0) < 0)
-	    {
-	      EMACS_UNBLOCK_SIGNAL (SIGCHLD);
-	      return;
-	    }
-	  else
-	    /* WARNING: Whatever this macro does *must* not allow SIGCHLD
-	       to happen between the time that it's reenabled and when we
-	       begin to block.  Otherwise we may end up blocking for a
-	       signal that has already arrived and isn't coming again.
-	       Can you say "race condition"?
-	       
-	       I assume that the system calls sigpause() or sigsuspend()
-	       to provide this atomicness.  If you're getting hangs in
-	       sigpause()/sigsuspend(), then your OS doesn't
-	       implement this properly (this applies under hpux9,
-	       for example).  Try defining BROKEN_WAIT_FOR_SIGNAL. */
-	    EMACS_WAIT_FOR_SIGNAL (SIGCHLD);
-	  continue;
-	}
-#  else /* not HAVE_WAITPID and (not EMACS_BLOCK_SIGNAL or
-	   BROKEN_WAIT_FOR_SIGNAL) */
-      /* This approach is kind of cheesy but is guaranteed(?!) to work
-	 for all systems. */
-      if (kill (pid, 0) < 0)
-	return;
-      emacs_sleep (1);
-#  endif /* not HAVE_WAITPID and (not EMACS_BLOCK_SIGNAL or
-	   BROKEN_WAIT_FOR_SIGNAL) */
-# endif /* not VMS */
-#else /* NO_SUBPROCESSES */
-      /* No need to be tricky like above; we can just call wait(). */
-      int status;
+      /* No need to be tricky like below; we can just call wait(). */
       /* #### should figure out how to write a wait_allowing_quit().
 	 Since hardly any systems don't have subprocess support,
 	 however, there doesn't seem to be much point. */
-      status = wait (0);
-      if (status == pid)
+      if (wait (0) == pid)
 	return;
-#endif /* NO_SUBPROCESSES */
     }
+#elif defined (VMS)
+  int status = SYS$FORCEX (&pid, 0, 0);
+  return;
+
+#elif defined (HAVE_WAITPID)
+  /* Note that, whenever any subprocess terminates (asynch. or synch.),
+     the SIGCHLD handler will be called and it will call wait().  Thus
+     we cannot just call wait() ourselves, and we can't block SIGCHLD
+     and then call wait(), because then if an asynch.  process dies
+     while we're waiting for our synch. process, Emacs will never
+     notice that the asynch. process died.
+
+     So, the general approach we take is to repeatedly block until a
+     signal arrives, and then check if our process died using kill
+     (pid, 0).  (We could also check the value of `synch_process_alive',
+     since the SIGCHLD handler will reset that and we know that we're
+     only being called on synchronous processes, but this approach is
+     safer.  I don't trust the proper delivery of SIGCHLD.
+
+     Note also that we cannot use any form of waitpid().  A loop with
+     WNOHANG will chew up CPU time; better to use sleep().  A loop
+     without WNOWAIT will screw up the SIGCHLD handler (actually this
+     is not true, if you duplicate the exit-status-reaping code; see
+     below).  A loop with WNOWAIT will result in a race condition if
+     the process terminates between the process-status check and the
+     call to waitpid(). */
+
+  /* Formerly, immediate_quit was set around this function call, but
+     that could lead to problems if the QUIT happened when SIGCHLD was
+     blocked -- it would remain blocked.  Yet another reason why
+     immediate_quit is a bad idea.  In any case, there is no reason to
+     resort to this because either the SIGIO or the SIGALRM will stop
+     the block in EMACS_WAIT_FOR_SIGNAL(). */
+
+  /* Apparently there are bugs on some systems with the second method
+     used below (the EMACS_BLOCK_SIGNAL method), whereby zombie
+     processes get left around.  It appears in those cases that the
+     SIGCHLD handler is never getting invoked.  It's not clear whether
+     this is an Emacs bug or a kernel bug or both: on HPUX this
+     problem is observed only with XEmacs, but under Solaris 2.4 all
+     sorts of different programs have problems with zombies.  The
+     method we use here does not require a working SIGCHLD (but will
+     not break if it is working), and should be safe. */
+  /*
+     We use waitpid(), contrary to the remarks above.  There is no
+     race condition, because the three situations when sigchld_handler
+     is invoked should be handled OK:
+
+     - handler invoked before waitpid(): In this case, subprocess
+       status will be set by sigchld_handler.  waitpid() here will
+       return -1 with errno set to ECHILD, which is a valid exit
+       condition.
+
+     - handler invoked during waitpid(): as above, except that errno
+       here will be set to EINTR.  This will cause waitpid() to be
+       called again, and this time it will exit with ECHILD.
+
+     - handler invoked after waitpid(): The following code will reap
+       the subprocess. In the handler, wait() will return -1 because
+       there is no child to reap, and the handler will exit without
+       modifying child subprocess status.  */
+  int ret, status;
+
+  /* Because the SIGCHLD handler can potentially reap the synchronous
+     subprocess, we should take care of that.  */
+
+  /* Will stay in the do loop as long as:
+     1. Process is alive
+     2. Ctrl-G is not pressed */
+  do
+    {
+      QUIT;
+      ret = waitpid (pid, &status, 0);
+      /* waitpid returns 0 if the process is still alive. */
+    }
+  while (ret == 0 || (ret == -1 && errno == EINTR));
+
+  if (ret == pid) /* Success */
+    /* Set synch process globals.  This is can also happen
+       in sigchld_handler, and that code is duplicated. */
+    {
+      synch_process_alive = 0;
+      if (WIFEXITED (status))
+	synch_process_retcode = WEXITSTATUS (status);
+      else if (WIFSIGNALED (status))
+	synch_process_death = signal_name (WTERMSIG (status));
+    }
+  /* On exiting the loop, ret will be -1, with errno set to ECHILD if
+     the child has already been reaped, e.g. in the signal handler.  */
+
+  /* Otherwise, we've had some error condition here.
+     Per POSIX, the only other possibilities are:
+     - EFAULT (bus error accessing arg 2) or
+     - EINVAL (incorrect arguments),
+     which are both program bugs.
+
+     Since implementations may add their own error indicators on top,
+     we ignore it by default.  */
+#elif defined (EMACS_BLOCK_SIGNAL) && !defined (BROKEN_WAIT_FOR_SIGNAL) && defined (SIGCHLD)
+  while (1)
+    {
+      static int wait_debugging = 0; /* Set nonzero to make following
+                           function work under dbx (at least for bsd).  */
+      QUIT;
+      if (wait_debugging)
+	return;
+
+      EMACS_BLOCK_SIGNAL (SIGCHLD);
+      /* Block SIGCHLD from happening during this check,
+	 to avoid race conditions. */
+      if (kill (pid, 0) < 0)
+	{
+	  EMACS_UNBLOCK_SIGNAL (SIGCHLD);
+	  return;
+	}
+      else
+	/* WARNING: Whatever this macro does *must* not allow SIGCHLD
+	   to happen between the time that it's reenabled and when we
+	   begin to block.  Otherwise we may end up blocking for a
+	   signal that has already arrived and isn't coming again.
+	   Can you say "race condition"?
+
+	   I assume that the system calls sigpause() or sigsuspend()
+	   to provide this atomicness.  If you're getting hangs in
+	   sigpause()/sigsuspend(), then your OS doesn't implement
+	   this properly (this applies under hpux9, for example).
+	   Try defining BROKEN_WAIT_FOR_SIGNAL. */
+	EMACS_WAIT_FOR_SIGNAL (SIGCHLD);
+    }
+#else /* not HAVE_WAITPID and (not EMACS_BLOCK_SIGNAL or BROKEN_WAIT_FOR_SIGNAL) */
+  /* This approach is kind of cheesy but is guaranteed(?!) to work
+     for all systems. */
+  while (1)
+    {
+      QUIT;
+      if (kill (pid, 0) < 0)
+	return;
+      emacs_sleep (1);
+    }
+#endif /* OS features */
 }
 
 
@@ -3299,6 +3282,16 @@ sys_execvp (CONST char *path, char * CONST * argv)
 
 /***** (these are primarily required for USG, it seems) *****/
 
+#ifndef HAVE_GETCWD
+char *
+getcwd (char *pathname, int size)
+{
+  return getwd (pathname);
+}
+#endif /* emulate getcwd */
+
+
+#if 0 /* mrb */
 /*
  *	Warning, this function may not duplicate BSD 4.2 action properly
  *	under error conditions.
@@ -3325,6 +3318,7 @@ getwd (char *pathname)
   return pathname;
 }
 #endif /* HAVE_GETWD */
+#endif /* 0 - mrb */
 
 /*
  *	Emulate rename using unlink/link.  Note that this is

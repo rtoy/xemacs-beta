@@ -64,7 +64,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define the file we use for UNEXEC. */
 
-#define UNEXEC unexapollo.o
+#define UNEXEC "unexapollo.o"
 
 /* The Apollo linker does not recognize the -X switch, so we remove it here. */
 
@@ -75,14 +75,14 @@ Boston, MA 02111-1307, USA.  */
    and use X11 libraries. */
 
 #if _ISP__A88K
-#define C_SWITCH_MACHINE -W0,-ncompress -W0,-opt,2 -A cpu,a88k -A sys,any -A run,bsd4.3
-#define LD_SWITCH_MACHINE -A cpu,a88k -A sys,any -A run,bsd4.3
+#define C_SWITCH_MACHINE "-W0,-ncompress -W0,-opt,2 -A cpu,a88k -A sys,any -A run,bsd4.3"
+#define LD_SWITCH_MACHINE "-A cpu,a88k -A sys,any -A run,bsd4.3"
 #else
-#define C_SWITCH_MACHINE -W0,-ncompress -W0,-opt,2 -A cpu,3000 -A sys,any -A run,bsd4.3
-#define LD_SWITCH_MACHINE -A cpu,m68k -A sys,any -A run,bsd4.3
+#define C_SWITCH_MACHINE "-W0,-ncompress -W0,-opt,2 -A cpu,3000 -A sys,any -A run,bsd4.3"
+#define LD_SWITCH_MACHINE "-A cpu,m68k -A sys,any -A run,bsd4.3"
 #endif
 
-#define OLDXMENU_OPTIONS ${C_SWITCH_MACHINE}
+#define OLDXMENU_OPTIONS "${C_SWITCH_MACHINE}"
 
 #if 0 /* from FSF Emacs */
 

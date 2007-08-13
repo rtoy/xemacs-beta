@@ -21,6 +21,10 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include <stdio.h>
 
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#endif
+
 #include "lwlib-Xaw.h"
 
 #include <X11/StringDefs.h>
@@ -75,7 +79,7 @@ xaw_update_scrollbar (widget_instance *instance, Widget widget,
 		     XtNy, data->scrollbar_y,
 		     XtNwidth, data->scrollbar_width,
 		     XtNheight, data->scrollbar_height,
-		     0);
+		     NULL);
 
       /*
        * Now the size the scrollbar's slider.
@@ -84,7 +88,7 @@ xaw_update_scrollbar (widget_instance *instance, Widget widget,
       XtVaGetValues (widget,
 		     XtNtopOfThumb, &widget_topOfThumb,
 		     XtNshown, &widget_shown,
-		     0);
+		     NULL);
 
       new_shown = (double) data->slider_size /
 	(double) (data->maximum - data->minimum);
@@ -123,12 +127,12 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 #ifdef DIALOGS_ATHENA
   else if (XtIsSubclass (widget, dialogWidgetClass))
       {
-	XtVaSetValues (widget, XtNlabel, val->contents->value, 0);
+	XtVaSetValues (widget, XtNlabel, val->contents->value, NULL);
       }
   else if (XtIsSubclass (widget, commandWidgetClass))
     {
       Dimension bw = 0;
-      XtVaGetValues (widget, XtNborderWidth, &bw, 0);
+      XtVaGetValues (widget, XtNborderWidth, &bw, NULL);
 
 #ifndef LWLIB_DIALOGS_ATHENA3D
       if (bw == 0)
@@ -138,7 +142,7 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 	   that I don't feel like opening right now.  Making Athena widgets
 	   not look like shit is just entirely too much work.
 	 */
-	XtVaSetValues (widget, XtNborderWidth, 1, 0);
+	XtVaSetValues (widget, XtNborderWidth, 1, NULL);
 #endif
 
       XtVaSetValues (widget,
@@ -146,7 +150,7 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 		     XtNsensitive, val->enabled,
 		     /* Force centered button text.  Se above. */
 		     XtNjustify, XtJustifyCenter,
-		     0);
+		     NULL);
 
       XtRemoveAllCallbacks (widget, XtNcallback);
       XtAddCallback (widget, XtNcallback, xaw_generic_callback, instance);
@@ -448,7 +452,7 @@ xaw_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
 
 #if 0
   user_data = NULL;
-  XtVaGetValues (widget, XtNuserData, &user_data, 0);
+  XtVaGetValues (widget, XtNuserData, &user_data, NULL);
 #else
   /* Damn!  Athena doesn't give us a way to hang our own data on the
      buttons, so we have to go find it...  I guess this assumes that
@@ -481,7 +485,7 @@ wm_delete_window (Widget shell, XtPointer closure, XtPointer call_data)
   Widget widget;
   if (! XtIsSubclass (shell, shellWidgetClass))
     abort ();
-  XtVaGetValues (shell, XtNchildren, &kids, 0);
+  XtVaGetValues (shell, XtNchildren, &kids, NULL);
   if (!kids || !*kids)
     abort ();
   widget = kids [0];

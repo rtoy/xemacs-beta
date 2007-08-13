@@ -100,4 +100,4 @@ Boston, MA 02111-1307, USA.  */
 
 /* This was formerly in LIBS_MACHINE in iris4d.h,
    but it is not needed for newer system versions.  */
-#define LIBS_SYSTEM -lsun
+#define LIBS_SYSTEM "-lsun"

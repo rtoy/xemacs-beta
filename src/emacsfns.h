@@ -1092,6 +1092,7 @@ Lisp_Object Fset_mouse_position (Lisp_Object window,
 				 Lisp_Object x, Lisp_Object y);
 Lisp_Object Fset_mouse_pixel_position (Lisp_Object window,
 				       Lisp_Object x, Lisp_Object y);
+Lisp_Object Fraise_frame (Lisp_Object frame);
 Lisp_Object Fmake_frame_visible (Lisp_Object frame);
 Lisp_Object Fmake_frame_invisible (Lisp_Object frame,
 				   Lisp_Object ignored);
@@ -1171,6 +1172,7 @@ extern Lisp_Object Qpopup;
 extern Lisp_Object Qactually_requested;
 extern Lisp_Object Qafter;
 extern Lisp_Object Qall;
+extern Lisp_Object Qand;
 extern Lisp_Object Qassoc;
 extern Lisp_Object Qat;
 extern Lisp_Object Qautodetect;
@@ -1244,10 +1246,12 @@ extern Lisp_Object Qmodifiers;
 extern Lisp_Object Qmotion;
 extern Lisp_Object Qname;
 extern Lisp_Object Qnone;
+extern Lisp_Object Qnot;
 extern Lisp_Object Qnothing;
 extern Lisp_Object Qnotice;
 extern Lisp_Object Qobject;
 extern Lisp_Object Qonly;
+extern Lisp_Object Qor;
 extern Lisp_Object Qother;
 extern Lisp_Object Qpath;
 extern Lisp_Object Qpointer;

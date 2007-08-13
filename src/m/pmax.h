@@ -19,11 +19,11 @@ NOTE-END  */
 #define MAIL_USE_FLOCK
 
 #ifdef MACH
-#define START_FILES pre-crt0.o /usr/lib/crt0.o
+#define START_FILES "pre-crt0.o /usr/lib/crt0.o"
 #else
 /* This line starts being needed with ultrix 4.0.  */
 /* You must delete it for version 3.1.  */
-#define START_FILES pre-crt0.o /usr/lib/cmplrs/cc/crt0.o
+#define START_FILES "pre-crt0.o /usr/lib/cmplrs/cc/crt0.o"
 #endif
 
 /* Supposedly the following will overcome a kernel bug.  */
@@ -56,7 +56,7 @@ NOTE-END  */
 
 /* mcc@timessqr.gc.cuny.edu says this makes Emacs work with DECnet.  */
 #ifdef HAVE_LIBDNET
-#define LIBS_MACHINE -ldnet
+#define LIBS_MACHINE "-ldnet"
 #endif
 
 /* mcc@timessqr.gc.cuny.edu says it is /vmunix on Ultrix 4.2a.  */
@@ -89,7 +89,7 @@ NOTE-END  */
    NeedVarargsPrototypes is 1 (which is its default value).  So if we're
    going to disable non-variadic prototypes, we also need to disable
    variadic prototypes.  --kwzh@gnu.ai.mit.edu */
-#define C_SWITCH_X_MACHINE -DNeedFunctionPrototypes=0 -DNeedVarargsPrototypes=0
+#define C_SWITCH_X_MACHINE "-DNeedFunctionPrototypes=0 -DNeedVarargsPrototypes=0"
 #endif
 
 /* XEmacs: the following does nothing at all any more due to cleanup

@@ -3619,9 +3619,17 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (byte-compile-out 'byte-unbind 1))
 
 (defun byte-compile-save-current-buffer (form)
-  (byte-compile-out 'byte-save-current-buffer 0)
-  (byte-compile-body-do-effect (cdr form))
-  (byte-compile-out 'byte-unbind 1))
+  (if (byte-compile-version-cond byte-compile-emacs19-compatibility)
+      ;; `save-current-buffer' special form is not available in XEmacs 19.
+      (byte-compile-form
+       `(let ((_byte_compiler_save_buffer_emulation_closure_ (current-buffer)))
+	  (unwind-protect
+	      (progn ,@(cdr form))
+	    (and (buffer-live-p _byte_compiler_save_buffer_emulation_closure_)
+		 (set-buffer _byte_compiler_save_buffer_emulation_closure_)))))
+    (byte-compile-out 'byte-save-current-buffer 0)
+    (byte-compile-body-do-effect (cdr form))
+    (byte-compile-out 'byte-unbind 1)))
 
 (defun byte-compile-save-window-excursion (form)
   (byte-compile-push-constant

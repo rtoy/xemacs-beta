@@ -18,6 +18,10 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+;;; Commentary:
+
+;; This file is obsoleted by dumped-lisp.el and will be removed shortly.
+
 ;; (load-gc) is defined in loadup.el
 
 ;; Load these two first, to set up the most basic stuff.

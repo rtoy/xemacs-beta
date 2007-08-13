@@ -13,7 +13,7 @@
 
 /* XEmacs change */
 #if 0
-#define LD_SWITCH_SYSTEM -elf "-_SYSTYPE_SVR4" -require_dynamic_link _rld_new_interface -no_unresolved -Wx,-G 0 -L. -L./lwlib -g0 -call_shared -transitive_link
+#define LD_SWITCH_SYSTEM "-elf -_SYSTYPE_SVR4 -require_dynamic_link _rld_new_interface -no_unresolved -Wx,-G 0 -L. -L./lwlib -g0 -call_shared -transitive_link"
 #endif
 
 /* By Tor Arntsen <tor@spacetec.no> for XEmacs.
@@ -24,8 +24,8 @@
 # ifdef USE_GCC
 #  undef LINKER
 #  undef LIB_GCC
-#  define LINKER ld
-#  define LIB_GCC `gcc --print`
+#  define LINKER "ld"
+#  define LIB_GCC "`gcc --print`"
 #  endif
 #endif
 

@@ -6,7 +6,7 @@
 
 /* olson@mcs.anl.gov says -li18n is needed by -lXm.  */
 #undef LIB_MOTIF
-#define LIB_MOTIF -lXm -li18n
+#define LIB_MOTIF "-lXm -li18n"
 
 #ifdef __GNUC__
 #undef _NO_PROTO
@@ -22,7 +22,7 @@
 #ifndef __GNUC__
 #undef C_DEBUG_SWITCH
 #undef C_OPTIMIZE_SWITCH
-#define C_DEBUG_SWITCH -g
+#define C_DEBUG_SWITCH "-g"
 #endif
 
 /* The X internationalization stuff is still broken in AIX 4.1, so

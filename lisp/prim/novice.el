@@ -123,13 +123,13 @@ N to do nothing (command remains disabled).")
 ;;;###autoload
 (defun enable-command (command)
   "Allow COMMAND to be executed without special confirmation from now on.
-The user's .emacs file is altered so that this will apply
+The user's `custom-file' is altered so that this will apply
 to future sessions."
   (interactive "CEnable command: ")
   (put command 'disabled nil)
   (save-excursion
    (set-buffer (find-file-noselect
-		(substitute-in-file-name user-init-file)))
+		(substitute-in-file-name custom-file)))
    (goto-char (point-min))
    (if (search-forward (concat "(put '" (symbol-name command) " ") nil t)
        (delete-region

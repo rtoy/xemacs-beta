@@ -32,14 +32,14 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifdef __GNUC__
-# define C_OPTIMIZE_SWITCH -O
+# define C_OPTIMIZE_SWITCH "-O"
 #else
 /* XEmacs change */
 # ifdef USE_LCC
-#  define C_OPTIMIZE_SWITCH -O4 -Oi
+#  define C_OPTIMIZE_SWITCH "-O4 -Oi"
 # else
      /* This level of optimization is reported to work.  */
-#  define C_OPTIMIZE_SWITCH -O2
+#  define C_OPTIMIZE_SWITCH "-O2"
 # endif
 #endif
 

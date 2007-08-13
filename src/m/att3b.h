@@ -73,7 +73,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* SysV has alloca in the PW library */
 
-#define LIB_STANDARD -lPW -lc
+#define LIB_STANDARD "-lPW -lc"
 #define HAVE_ALLOCA
 
 /* Define NO_REMAP if memory segmentation makes it not work well

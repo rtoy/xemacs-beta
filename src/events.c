@@ -63,7 +63,7 @@ Lisp_Object Qbutton_event_p;
 Lisp_Object Qmouse_event_p;
 Lisp_Object Qprocess_event_p;
 
-Lisp_Object Qkey_press, Qbutton_press, Qbutton_release, Qmisc_user, Qempty;
+Lisp_Object Qkey_press, Qbutton_press, Qbutton_release, Qmisc_user;
 Lisp_Object Qascii_character;
 
 /* #### Ad-hoc hack.  Should be part of define_lrecord_implementation */
@@ -1839,7 +1839,6 @@ syms_of_events (void)
   defsymbol (&Qbutton_press, "button-press");
   defsymbol (&Qbutton_release, "button-release");
   defsymbol (&Qmisc_user, "misc-user");
-  defsymbol (&Qempty, "empty");
   defsymbol (&Qascii_character, "ascii-character");
 }
 

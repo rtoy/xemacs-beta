@@ -5,36 +5,20 @@
 #endif
 
 /* Force static linking */
-/* Here is how to find X Windows.  The -R option says where
-   to find X windows at run time.  */
-#undef LD_SWITCH_SYSTEM
-#ifndef __GNUC__
-# ifdef USE_LCC
-#  define LD_SWITCH_SYSTEM "-R /usr/openwin/lib -Bstatic"
-# else 
-#  define LD_SWITCH_SYSTEM "-R/usr/openwin/lib -Bstatic"
-#endif
-#else /* GCC */
-/* jwz: note that we need "-Xlinker -Bstatic" and not just "-static" */
-#define LD_SWITCH_SYSTEM "-Xlinker -R/usr/openwin/lib -Xlinker -Bstatic"
-#endif /* GCC */
+#ifdef NOT_C_CODE
+
+#undef  LD_SWITCH_SYSTEM
+#define LD_SWITCH_SYSTEM "-Bstatic"
 
 /* static linking and Solaris don't mix real well */
 #undef LIB_STANDARD
-#ifndef __GNUC__
-# ifdef I18N4
-#  define LIB_STANDARD "-lw -Bdynamic -lc -ldl -Bstatic"
-# else /* !I18N4 */
-#  define LIB_STANDARD "-lw -lc -Bdynamic -ldl -Bstatic"
-# endif /* !I18N4 */
-#else
-# define LIB_STANDARD "-lw -lc -Xlinker -Bdynamic -ldl"
-#endif
+#ifdef I18N4
+# define LIB_STANDARD "-lw -Bdynamic -lc -ldl -Bstatic"
+#else /* !I18N4 */
+# define LIB_STANDARD "-lw -lc -Bdynamic -ldl -Bstatic"
+#endif /* !I18N4 */
 
 #undef LIBS_SYSTEM
-#ifdef NOT_C_CODE
-# undef LIBS_SYSTEM
-# define LIBS_SYSTEM "-lsocket -lnsl -lintl -lelf -lgen"
-#else
-# define LIBS_SYSTEM "-lsocket -lnsl -lelf -lgen"
-#endif
+#define LIBS_SYSTEM "-lsocket -lnsl -lelf -lgen"
+
+#endif /* NOT_C_CODE */

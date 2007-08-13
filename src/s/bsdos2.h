@@ -9,7 +9,7 @@
 #define ORDINARY_LINK
 
 #if 0
-#define	START_FILES	pre-crt0.o /usr/lib/crt0.o
+#define	START_FILES	"pre-crt0.o /usr/lib/crt0.o"
 #endif
 
 #define	TEXT_START	0x1020	/* for QMAGIC */

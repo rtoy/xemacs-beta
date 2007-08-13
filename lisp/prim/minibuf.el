@@ -515,7 +515,7 @@ See also the variable completion-highlight-first-word-only for control over
 	(save-excursion
 	  (set-buffer
 	   (find-file-noselect
-	    (substitute-in-file-name "~/.emacs")))
+	    (substitute-in-file-name custom-file)))
 	  (goto-char (point-min))
 	  (if (re-search-forward 
 	       "^(setq minibuffer-max-depth \\([0-9]+\\|'?nil\\|'?()\\))\n"

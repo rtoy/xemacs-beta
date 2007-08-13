@@ -95,7 +95,7 @@ so disable it for them.  */
 #if 0 /* I refuse to promulgate a recommendation that would make
          users unable to debug - RMS.  */
 /* delete the following line to foil optimization, enable debugging */
-#define C_DEBUG_SWITCH -O
+#define C_DEBUG_SWITCH "-O"
 #endif
 
 /* Send signals to subprocesses by "typing" special chars at them.  */
@@ -145,7 +145,7 @@ so disable it for them.  */
 #define HAVE_ALLOCA
 #define alloca(n) __builtin_alloca(n)
 #if __GNUC__ < 2
-#define LIB_STANDARD /usr/local/lib/gcc-gnulib -lbsd -lrts -lc 
+#define LIB_STANDARD "/usr/local/lib/gcc-gnulib -lbsd -lrts -lc "
 #endif
 /* -g fails to work, so it is omitted.  */
 /* tranle says that -fstrength-reduce does not help.  */
@@ -153,17 +153,17 @@ so disable it for them.  */
 #else
 #define C_ALLOCA
 #define STACK_DIRECTION -1 /* tell alloca.c which way it grows */
-#define LIBS_MACHINE -lbsd -lrts
+#define LIBS_MACHINE "-lbsd -lrts"
 #endif
 
-#define OBJECTS_MACHINE hftctl.o
-#define LD_SWITCH_MACHINE -T0x00400000 -K -e start
+#define OBJECTS_MACHINE "hftctl.o"
+#define LD_SWITCH_MACHINE "-T0x00400000 -K -e start"
 #define LIBS_DEBUG		/* no -lg on aix ps/2 */
 
 #ifdef USG5_3
 #define XICCC
 #undef LD_SWITCH_MACHINE
-#define LD_SWITCH_MACHINE -T0x0 -K -e start
+#define LD_SWITCH_MACHINE "-T0x0 -K -e start"
 
 /* Things defined in s-usg5-3.h that need to be overridden.  */
 #undef BROKEN_TIOCGETC
@@ -183,6 +183,6 @@ so disable it for them.  */
 #undef LIB_STANDARD
 #undef LD_SWITCH_MACHINE
 #if __GNUC__ > 1
-#define LD_SWITCH_MACHINE -shlib
+#define LD_SWITCH_MACHINE "-shlib"
 #endif
 #endif

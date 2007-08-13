@@ -1,3 +1,96 @@
+1997-06-20  Steven L Baur  <steve@altair.xemacs.org>
+
+	* events.c: Remove declaration of Qempty.
+
+1997-06-20  Olivier Galibert <Olivier.Galibert@mines.u-nancy.fr>
+
+	* frame-x.c, EmacsFrame.c, menubar-x.c, redisplay-x.c, 	scrollbar-x.c:
+	Make 64 bit clean.
+
+1997-06-19  Martin Buchholz  <mrb@eng.sun.com>
+
+	* config.h.in:
+	- Autodetect X defines using xmkmf.
+	- Compute rpath on *bsd* systems as well.
+	- rewrite PRINT_VAR m4 macro.
+	- detect sizes of void* and long long for future use by unex*.c
+	* regex.c: _GNU_SOURCE may be defined by config.h; don't redefine.
+
+1997-06-18  Martin Buchholz  <mrb@eng.sun.com>
+
+	* Makefile.in: 
+	* s/*.h:
+	* m/*.h:
+	* src/config.h.in:
+	* src/emacs.c:
+	* version.sh:
+	* configure.in: Another rewrite.
+	- support powerpcle (Solaris on ppc)
+	- Now just have one s/sol2.h for all Solaris versions
+	- Specifying colon-separated directories actually works now.
+	- OS_RELEASE is a new define to avoid proliferation of s&m files.
+	- extract more stuff from s&m files.
+	- more debugging info
+	- More changes to avoid the `echo -e' problem
+	- Add more tests: fcntl.h AC_TYPE_*, AC_FUNC_GETPGRP
+	- Back out -lPW test.
+	- More paranoid xpm test
+	- Put version information in version.sh instead of version.el
+	- Make quoted pre-processor string tokens out of all macro values
+	  to be used only by configure.
+	* xmu.c: DON'T use Xos.h
+	* sysdep.c (wait_for_termination): 
+	* search.c: 
+	* editfns.c: 
+	* console-*: 
+
+1997-06-18  Steven L Baur  <steve@altair.xemacs.org>
+
+	* unexelfsgi.c: Some things that Needed To Be Done(tm) into
+	unexelfsgi:
+	- support for .sbss section (no more -G 0 needed, 0.00001% speed
+	increase)
+	- support for Elf64 (64bits executables)
+	From Olivier Galibert <Olivier.Galibert@mines.u-nancy.fr>
+
+	* fns.c (Fmapvector): New function converted from Lisp.
+	From Hrvoje Niksic  <hniksic@srce.hr>
+
+Wed Jun 18 16:42:10 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Convert two missed C style comments.
+	(LIBES): Remove LIBS_DEBUG which is no longer defined.
+	(LIBES): lwlibs_libs was misspelled.
+
+1997-06-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* eval.c (vars_of_eval): New variable Vdebug_ignored_errors.
+	(skip_debugger): New function; use Vdebug_ignored_errors.
+	(signal_call_debugger): Use it.
+
+1997-06-17  Steven L Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (vars_of_emacs): Moved symbols emacs-version,
+	emacs-major-version, and emacs-minor-version from version.el to
+	here.
+
+	* general.c (syms_of_general): New symbols and, not, and or.
+
+	* emacsfns.h: New symbols Qand, Qnot, Qor.
+
+	* Makefile.in.in: Call temacs to compute lisp libraries to
+	include in the DOC file.
+
+1997-06-15  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (lisp): Remove explicit mention of auto-autoloads.el.
+
+Sat Jun 14 21:55:27 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* console.c (Fselect_console):
+	  Check DEVICE_SELECTED_FRAME of console's selected
+	  device for non-nil value before using it as a frame.
+
 1997-06-13  Steven L Baur  <steve@altair.xemacs.org>
 
 	* data.c (eq_with_ebola_notice): Remove horrible hack to avoid
@@ -290,11 +383,6 @@ Sat May 17 19:35:48 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* device-tty.c (tty_asynch_device_change): Make
 	`no-redraw-on-reenter' work.  Patch from Hrvoje Niksic.
-
-Wed Apr 23 16:03:20 1997  Hrvoje Niksic  <hniksic@srce.hr>
-
-	* eval.c (skip_debugger): New function.
-	(signal_call_debugger): Use it.
 
 Sat May 17 23:39:03 1997  Hrvoje Niksic  <hniksic@srce.hr>
 

@@ -5,7 +5,7 @@
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;;         Hrvoje Niksic <hniksic@srce.hr>  -- XEmacs port
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
-;; Version: 3.15
+;; Version: 3.16
 ;; Keywords: abbrev
 
 ;; This file is part of XEmacs.
@@ -538,6 +538,12 @@ doubt, use whitespace."
 	      (if (/= (length word) 2)
 		  (error "^ must be followed by one character"))
 	      `((control ,(aref word 1))))
+	     ((string-match "^M--?[0-9]+$" word)
+	      ;; Special case: M- followed by an optional hyphen and
+	      ;; one or more digits
+	      (mapcar (lambda (digit)
+			(list 'meta digit))
+		      (substring word 2)))
 	     ((string-match "^\\([MCSsAH]\\|Sh\\)-" word)
 	      ;; Parse C-* and stuff
 	      (list

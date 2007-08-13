@@ -139,16 +139,15 @@ NOTE-END */
 
 /* Since cannot purify, use standard Xenix 386 startup code. */
 
-#define START_FILES	/lib/386/Sseg.o pre-crt0.o /lib/386/Scrt0.o
+#define START_FILES "/lib/386/Sseg.o pre-crt0.o /lib/386/Scrt0.o"
 
 /* These really use terminfo.  */
 
-#define LIBS_TERMCAP /lib/386/Slibcurses.a  \
-   /lib/386/Slibtinfo.a /lib/386/Slibx.a
+#define LIBS_TERMCAP "/lib/386/Slibcurses.a /lib/386/Slibtinfo.a /lib/386/Slibx.a"
 
 /* Standard libraries for this machine.  Since `-l' doesn't work in `ld'.  */
 /* '__fltused' is unresolved w/o Slibcfp.a */
-#define LIB_STANDARD /lib/386/Slibcfp.a /lib/386/Slibc.a
+#define LIB_STANDARD "/lib/386/Slibcfp.a /lib/386/Slibc.a"
 #else /* not XENIX */
 
 /* this brings in alloca() if we're using cc */
@@ -156,9 +155,9 @@ NOTE-END */
 #if 0 /* mrb: -lPW is now autodetected, anyways */
 #ifndef LIB_STANDARD
 #ifdef USG5_4
-#define LIB_STANDARD -lc
+#define LIB_STANDARD "-lc"
 #else /* not USG5_4 */
-#define LIB_STANDARD -lPW -lc
+#define LIB_STANDARD "-lPW -lc"
 #endif /* not USG5_4 */
 #endif /* LIB_STANDARD */
 #endif /* 0 */

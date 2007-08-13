@@ -111,9 +111,11 @@ buffer appears in it currently)."
 ;; front of frame property 'window-config-unpop-stack, so you can
 ;; retrieve it using unpop-window-configuration.
 
-(defvar window-config-stack-max 16
+(defcustom window-config-stack-max 16
   "*Maximum size of window configuration stack.
-Start discarding off end if it gets this big.")
+Start discarding off end if it gets this big."
+  :type 'integer
+  :group 'windows)
 
 (defun window-config-stack (&optional frame)
   (or frame (setq frame (selected-frame)))
@@ -212,8 +214,10 @@ be used to completely replace the `display-buffer' function.
 If the return value of this function is non-nil, it should be a frame,
 and that frame will be used to display the buffer.")
 
-(defvar pop-up-frames nil
-  "*Non-nil means `display-buffer' should make a separate frame.")
+(defcustom pop-up-frames nil
+  "*Non-nil means `display-buffer' should make a separate frame."
+  :type 'boolean
+  :group 'frames)
 
 (defvar pop-up-frame-function nil
   "Function to call to handle automatic new frame creation.
@@ -222,7 +226,7 @@ It is called with no arguments and should return a newly created frame.
 A typical value might be `(lambda () (new-frame pop-up-frame-alist))'
 where `pop-up-frame-alist' would hold the default frame parameters.")
 
-(defvar special-display-buffer-names nil
+(defcustom special-display-buffer-names nil
   "*List of buffer names that should have their own special frames.
 Displaying a buffer whose name is in this list makes a special frame for it
 using `special-display-function'.
@@ -232,9 +236,19 @@ Then the car should be a buffer name, and the cdr specifies frame
 parameters for creating the frame for that buffer.
 More precisely, the cdr is passed as the second argument to
 the function found in `special-display-function', when making that frame.
-See also `special-display-regexps'.")
+See also `special-display-regexps'."
+  :type '(repeat (choice :value ""
+			 (string :tag "Name")
+			 (cons :menu-tag "Properties"
+			       :value ("" . nil)
+			       (string :tag "Name")
+			       (repeat :tag "Properties"
+				       (group :inline t
+					      (symbol :tag "Property")
+					      (sexp :tag "Value"))))))
+  :group 'frames)
 
-(defvar special-display-regexps nil
+(defcustom special-display-regexps nil
   "*List of regexps saying which buffers should have their own special frames.
 If a buffer name matches one of these regexps, it gets its own frame.
 Displaying a buffer whose name is in this list makes a special frame for it
@@ -245,7 +259,17 @@ Then the car should be the regexp, and the cdr specifies frame
 parameters for creating the frame for buffers that match.
 More precisely, the cdr is passed as the second argument to
 the function found in `special-display-function', when making that frame.
-See also `special-display-buffer-names'.")
+See also `special-display-buffer-names'."
+  :type '(repeat (choice :value ""
+			 regexp
+			 (cons :menu-tag "Properties"
+			       :value ("" . nil)
+			       regexp
+			       (repeat :tag "Properties"
+				       (group :inline t
+					      (symbol :tag "Property")
+					      (sexp :tag "Value"))))))
+  :group 'frames)
 
 (defvar special-display-function nil
   "Function to call to make a new frame for a special buffer.
@@ -257,7 +281,7 @@ using `special-display-frame-alist' to specify the frame parameters.
 A buffer is special if its is listed in `special-display-buffer-names'
 or matches a regexp in `special-display-regexps'.")
 
-(defvar same-window-buffer-names nil
+(defcustom same-window-buffer-names nil
   "*List of buffer names that should appear in the selected window.
 Displaying one of these buffers using `display-buffer' or `pop-to-buffer'
 switches to it in the selected window, rather than making it appear
@@ -268,9 +292,11 @@ Then the car must be a string, which specifies the buffer name.
 This is for compatibility with `special-display-buffer-names';
 the cdr of the cons cell is ignored.
 
-See also `same-window-regexps'.")
+See also `same-window-regexps'."
+  :type '(repeat (string :tag "Name"))
+  :group 'windows)
 
-(defvar same-window-regexps nil
+(defcustom same-window-regexps nil
   "*List of regexps saying which buffers should appear in the selected window.
 If a buffer name matches one of these regexps, then displaying it
 using `display-buffer' or `pop-to-buffer' switches to it
@@ -281,18 +307,26 @@ Then the car must be a string, which specifies the buffer name.
 This is for compatibility with `special-display-buffer-names';
 the cdr of the cons cell is ignored.
 
-See also `same-window-buffer-names'.")
+See also `same-window-buffer-names'."
+  :type '(repeat regexp)
+  :group 'windows)
 
-(defvar pop-up-windows t
-  "*Non-nil means display-buffer should make new windows.")
+(defcustom pop-up-windows t
+  "*Non-nil means display-buffer should make new windows."
+  :type 'boolean
+  :group 'windows)
 
-(defvar split-height-threshold 500
+(defcustom split-height-threshold 500
  "*display-buffer would prefer to split the largest window if this large.
-If there is only one window, it is split regardless of this value.")
+If there is only one window, it is split regardless of this value."
+ :type 'integer
+ :group 'windows)
 
-(defvar split-width-threshold 500
+(defcustom split-width-threshold 500
   "*display-buffer would prefer to split the largest window if this large.
-If there is only one window, it is split regardless of this value.")
+If there is only one window, it is split regardless of this value."
+  :type 'integer
+  :group 'windows)
 
 ;; Deiconify the frame containing the window WINDOW, then return WINDOW.
 

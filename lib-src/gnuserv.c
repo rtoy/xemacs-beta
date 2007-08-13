@@ -693,12 +693,12 @@ static void
 handle_internet_request (int ls)
 {
   int s;
-  int addrlen = sizeof(struct sockaddr_in);
+  size_t addrlen = sizeof(struct sockaddr_in);
   struct sockaddr_in peer;	/* for peer socket address */
 
   memset((char *)&peer,0,sizeof(struct sockaddr_in));
 
-  if ((s = accept(ls,(struct sockaddr *)&peer,&addrlen)) == -1)
+  if ((s = accept(ls,(struct sockaddr *)&peer, (void *) &addrlen)) == -1)
     {
       perror(progname);
       fprintf(stderr,"%s: unable to accept\n",progname);
@@ -813,12 +813,12 @@ static void
 handle_unix_request (int ls)
 {
   int s;
-  int len = sizeof(struct sockaddr_un);
+  size_t len = sizeof(struct sockaddr_un);
   struct sockaddr_un server; 	/* for unix socket address */
 
   server.sun_family = AF_UNIX;
 
-  if ((s = accept(ls,(struct sockaddr *)&server,&len)) < 0)
+  if ((s = accept(ls,(struct sockaddr *)&server, (void *)&len)) < 0)
     {
       perror(progname);
       fprintf(stderr,"%s: unable to accept\n",progname);

@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 
 #define EXPLICIT_SIGN_EXTEND
 
-#define LIB_STANDARD -lc
+#define LIB_STANDARD "-lc"
 
 #ifdef __GNUC__
 #define alloca __builtin_alloca
@@ -47,7 +47,7 @@ Boston, MA 02111-1307, USA.  */
 #undef SHORTNAMES
 #define TERMCAP
 
-#define LIBS_TERMCAP -ltermlib
+#define LIBS_TERMCAP "-ltermlib"
 #define SYSTEM_PURESIZE_EXTRA 100000
 #define ALTOS
 

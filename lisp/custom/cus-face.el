@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9916
+;; Version: 1.9931
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -255,17 +255,17 @@ examine the brightness for you."
 ;;; Font Attributes.
 
 (defconst custom-face-attributes
-  '((:bold (toggle :format "%[Bold%]: %v\n"
-		   :help-echo "Control whether a bold font should be used.")
+  '((:bold (boolean :tag "Bold"
+		    :help-echo "Control whether a bold font should be used.")
 	   custom-set-face-bold 
 	   custom-face-bold)
-    (:italic (toggle :format "%[Italic%]: %v\n"
-		     :help-echo "\
+    (:italic (boolean :tag "Italic"
+		      :help-echo "\
 Control whether an italic font should be used.")
 	     custom-set-face-italic
 	     custom-face-italic)
-    (:underline (toggle :format "%[Underline%]: %v\n"
-			:help-echo "\
+    (:underline (boolean :tag "Underline"
+			 :help-echo "\
 Control whether the text should be underlined.")
 		set-face-underline-p
 		face-underline-p)

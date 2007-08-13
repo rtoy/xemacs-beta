@@ -43,7 +43,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef C_DEBUG_SWITCH
 #undef C_DEBUG_SWITCH
-#define C_DEBUG_SWITCH -g
+#define C_DEBUG_SWITCH "-g"
 #endif
  
 /* Define the following to avoid conflicts resulting from the fact 

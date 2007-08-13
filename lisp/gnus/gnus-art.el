@@ -583,7 +583,8 @@ Initialized from `text-mode-syntax-table.")
     (let ((b (point-min)))
       (while (setq b (text-property-any b (point-max) 'article-type type))
 	(delete-region
-	 b (text-property-not-all b (point-max) 'article-type type))))))
+	 b (or (text-property-not-all b (point-max) 'article-type type)
+	       (point-max)))))))
 
 (defun gnus-article-delete-invisible-text ()
   "Delete all invisible text in the current buffer."
@@ -591,7 +592,8 @@ Initialized from `text-mode-syntax-table.")
     (let ((b (point-min)))
       (while (setq b (text-property-any b (point-max) 'invisible t))
 	(delete-region
-	 b (text-property-not-all b (point-max) 'invisible t))))))
+	 b (or (text-property-not-all b (point-max) 'invisible t)
+	       (point-max)))))))
 
 (defun gnus-article-text-type-exists-p (type)
   "Say whether any text of type TYPE exists in the buffer."
@@ -959,28 +961,28 @@ always hide."
 	;; Hide the "header".
 	(when (search-forward "\n-----BEGIN PGP SIGNED MESSAGE-----\n" nil t)
 	  (gnus-article-hide-text-type (1+ (match-beginning 0))
-				       (match-end 0) 'pgp))
-	(setq beg (point))
-	;; Hide the actual signature.
-	(and (search-forward "\n-----BEGIN PGP SIGNATURE-----\n" nil t)
-	     (setq end (1+ (match-beginning 0)))
-	     (gnus-article-hide-text-type
-	      end
-	      (if (search-forward "\n-----END PGP SIGNATURE-----\n" nil t)
-		  (match-end 0)
-		;; Perhaps we shouldn't hide to the end of the buffer
-		;; if there is no end to the signature?
-		(point-max))
-	      'pgp))
-	;; Hide "- " PGP quotation markers.
-	(when (and beg end)
-	  (narrow-to-region beg end)
-	  (goto-char (point-min))
-	  (while (re-search-forward "^- " nil t)
-	    (gnus-article-hide-text-type
-	     (match-beginning 0) (match-end 0) 'pgp))
-	  (widen)))
-      (run-hooks 'gnus-article-hide-pgp-hook))))
+				       (match-end 0) 'pgp)
+	  (setq beg (point))
+	  ;; Hide the actual signature.
+	  (and (search-forward "\n-----BEGIN PGP SIGNATURE-----\n" nil t)
+	       (setq end (1+ (match-beginning 0)))
+	       (gnus-article-hide-text-type
+		end
+		(if (search-forward "\n-----END PGP SIGNATURE-----\n" nil t)
+		    (match-end 0)
+		  ;; Perhaps we shouldn't hide to the end of the buffer
+		  ;; if there is no end to the signature?
+		  (point-max))
+		'pgp))
+	  ;; Hide "- " PGP quotation markers.
+	  (when (and beg end)
+	    (narrow-to-region beg end)
+	    (goto-char (point-min))
+	    (while (re-search-forward "^- " nil t)
+	      (gnus-article-hide-text-type
+	       (match-beginning 0) (match-end 0) 'pgp))
+	    (widen)))
+	(run-hooks 'gnus-article-hide-pgp-hook)))))
 
 (defun article-hide-pem (&optional arg)
   "Toggle hiding of any PEM headers and signatures in the current article.
@@ -1124,7 +1126,8 @@ Put point at the beginning of the signature separator."
       nil)))
 
 (eval-and-compile
-  (autoload 'w3-parse-buffer "w3-parse"))
+  (autoload 'w3-parse-buffer "w3-parse")
+  (autoload 'w3-do-setup "w3" "" t))
 
 (defun gnus-article-treat-html ()
   "Render HTML."
@@ -1132,6 +1135,7 @@ Put point at the beginning of the signature separator."
   (let ((cbuf (current-buffer)))
     (set-buffer gnus-article-buffer)
     (let (buf buffer-read-only b e)
+      (w3-do-setup)
       (goto-char (point-min))
       (narrow-to-region
        (if (search-forward "\n\n" nil t)
@@ -1746,6 +1750,7 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 (gnus-define-keys gnus-article-mode-map
   " " gnus-article-goto-next-page
   "\177" gnus-article-goto-prev-page
+  [backspace] gnus-article-goto-prev-page
   [delete] gnus-article-goto-prev-page
   "\C-c^" gnus-article-refer-article
   "h" gnus-article-show-summary

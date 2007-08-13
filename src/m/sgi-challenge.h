@@ -113,7 +113,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef UNEXEC
 #undef UNEXEC
 #endif
-#define UNEXEC unexelfsgi.o
+#define UNEXEC "unexelfsgi.o"
 
 #define TEXT_START 0x400000
 
@@ -128,7 +128,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef LIBS_MACHINE
 /* -lsun in case using Yellow Pages for passwords.  */
-#define LIBS_MACHINE -lsun -lmld
+#define LIBS_MACHINE "-lsun -lmld"
 #define LIBS_DEBUG
 
 /* Define this if you have a fairly recent system,
@@ -137,13 +137,13 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CRTN
 /* Must define START-FILES so that the linker can find /usr/lib/crt0.o.  */
-#define START_FILES pre-crt0.o /usr/lib/crt1.o
-#define LIB_STANDARD -lbsd -nocount -lc_s -lc /usr/lib/crtn.o
+#define START_FILES "pre-crt0.o /usr/lib/crt1.o"
+#define LIB_STANDARD "-lbsd -nocount -lc_s -lc /usr/lib/crtn.o"
 #else
-#define START_FILES pre-crt0.o /usr/lib/crt0.o
+#define START_FILES "pre-crt0.o /usr/lib/crt0.o"
 /* The entry-point label (start of text segment) is `start', not `__start'.  */
 #define DEFAULT_ENTRY_ADDRESS start
-#define LIB_STANDARD -lbsd -lc
+#define LIB_STANDARD "-lbsd -lc"
 #endif
 
 /* Use terminfo instead of termcap.  */
@@ -166,9 +166,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* By Tor Arntsen <tor@spacetec.no> for XEmacs. */
 #ifdef USE_GCC
-# define C_SWITCH_MACHINE -D_BSD_TYPES -mcpu=r4000 -mips2
+#define C_SWITCH_MACHINE "-D_BSD_TYPES -mcpu=r4000 -mips2"
 #else
 /* Turn off some "helpful" error checks for type mismatches
    that we can't fix without breaking other machines.  */
-# define C_SWITCH_MACHINE -D_BSD_TYPES -cckr -acpp -mips2
+#define C_SWITCH_MACHINE "-D_BSD_TYPES -cckr -acpp -mips2"
 #endif

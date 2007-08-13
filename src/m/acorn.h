@@ -140,10 +140,10 @@ extern int _edata;
 #define LIBS_DEBUG
 
 /* Avoid sharing libc */
-#define LIB_STANDARD -lc_n
+#define LIB_STANDARD "-lc_n"
 
 /* Avoid sharing libX11 */
-#define LIB_X11_LIB -lX11_n
+#define LIB_X11_LIB "-lX11_n"
 
 /* All kinds of symbol definitions, so as to avoid multiply defined symbol
    errors from the RISCiX linker. */
@@ -151,10 +151,10 @@ extern int _edata;
 #ifdef __GNUC__
 #define C_DEBUG_SWITCH
 
-#define C_OPTIMIZE_SWITCH -O1 -fomit-frame-pointer -w -g -Dgetopt=gnu_getopt -Dopterr=gnu_opterr -Doptind=gnu_optind -Doptarg=gnu_optarg -Dcfree=gnu_cfree -D___type=
+#define C_OPTIMIZE_SWITCH "-O1 -fomit-frame-pointer -w -g -Dgetopt=gnu_getopt -Dopterr=gnu_opterr -Doptind=gnu_optind -Doptarg=gnu_optarg -Dcfree=gnu_cfree -D___type="
 
 #else
-#define C_DEBUG_SWITCH -O -w -g -Dgetopt=gnu_getopt -Dopterr=gnu_opterr -Doptind=gnu_optind -Doptarg=gnu_optarg -Dcfree=gnu_cfree
+#define C_DEBUG_SWITCH "-O -w -g -Dgetopt=gnu_getopt -Dopterr=gnu_opterr -Doptind=gnu_optind -Doptarg=gnu_optarg -Dcfree=gnu_cfree"
 #endif
 
 /* Turn this on to avoid the emacs malloc and use standard one */
@@ -166,7 +166,7 @@ extern int _edata;
 
 #ifdef NO_REMAP
 /* CRT0_O is defined in s/riscix1-1.h or s/riscix1-2.h, as appropriate. */
-#define START_FILES pre-crt0.o CRT0_O
+#define START_FILES "pre-crt0.o CRT0_O"
 #else
 Cannot
 do

@@ -8,7 +8,7 @@
 @titlepage
 @title XEmacs FAQ
 @subtitle Frequently asked questions about XEmacs
-@subtitle Last Modified:  1997/04/15
+@subtitle Last Modified:  1997-06-18
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@netcom.com>
@@ -32,7 +32,7 @@ WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.
 
 If you have a Web browser, the official hypertext version is at
-<URL:http://www.miranova.com/~steve/xemacs-faq.html> and also at
+<URL:http://www.sccon.com/~andreas/xemacs-faq.html> and also at
 <URL:http://www.xemacs.org/faq/xemacs-faq.html>.  This version is much
 nicer than the unofficial hypertext versions that are archived at
 Utrecht, Oxford, Smart Pages, and other FAQ archives.
@@ -83,10 +83,10 @@ Introduction:
 * Q1.0.3::      Where can I find it?
 * Q1.0.4::      Why Another Version of Emacs?
 * Q1.0.5::      Why Haven't XEmacs and GNU Emacs Merged?
-* Q1.0.6::      Where can I get help?  @strong{update 4/97}
+* Q1.0.6::      Where can I get help?  
 * Q1.0.7::      Where is the mailing list archived?
 * Q1.0.8::      How do you pronounce XEmacs?
-* Q1.0.9::      What does XEmacs look like?  @strong{updated 4/97}
+* Q1.0.9::      What does XEmacs look like? 
 * Q1.0.10::     Is there a port of XEmacs to Microsoft ('95 or NT)?
 * Q1.0.11::     Is there a port of XEmacs to the Macintosh?
 * Q1.0.12::     Is there a port of XEmacs to NextStep?
@@ -100,21 +100,21 @@ Policies:
 
 Credits:
 * Q1.2.1::      Who wrote XEmacs?
-* Q1.2.2::      Who contributed to this version of the FAQ?  @strong{updated 4/97}
-* Q1.2.3::      Who contributed to the FAQ in the past?  @strong{updated 4/97}
+* Q1.2.2::      Who contributed to this version of the FAQ? 
+* Q1.2.3::      Who contributed to the FAQ in the past? 
 
 Internationalization:
-* Q1.3.1::      What is the status of XEmacs v20?  @strong{updated 4/97}
+* Q1.3.1::      What is the status of XEmacs v20? 
 * Q1.3.2::      What is the status of Asian-language support, aka @var{mule}?
 * Q1.3.3::      How do I type non-ASCII characters?
 * Q1.3.4::      Can XEmacs messages come out in a different language?
 * Q1.3.5::      Please explain the various input methods in MULE/XEmacs 20.0
 * Q1.3.6::      How do I portably code for MULE/XEmacs 20.0?
-* Q1.3.7::      How about Cyrillic Modes?  @strong{updated 4/97}
+* Q1.3.7::      How about Cyrillic Modes? 
 
 Getting Started:
 * Q1.4.1::      What is a @file{.emacs} and is there a sample one?
-* Q1.4.2::      Can I use the same @file{.emacs} with the other Emacs?  @strong{updated 4/97}
+* Q1.4.2::      Can I use the same @file{.emacs} with the other Emacs?
 * Q1.4.3::      Any good XEmacs tutorials around?
 * Q1.4.4::      May I see an example of a useful XEmacs Lisp function?
 * Q1.4.5::      And how do I bind it to a key?
@@ -134,13 +134,21 @@ track changes to GNU Emacs while also working to add new features.
 @node Q1.0.2, Q1.0.3, Q1.0.1, Introduction
 @section What is the current version of XEmacs?
 
-The current version is 19.15, released in March, 1997.
+The current stable version of XEmacs is 20.2, released in May, 1997.
+The next feature release will XEmacs 20.3.
 
-It has been decided that XEmacs 19.15 will be the final release of v19.
-XEmacs 19.15 is scheduled for release in late March.  After a brief
-period of further testing, XEmacs v20.1 will be released the later part
-of April, 1997.
+XEmacs 19.15 was the last release of v19, released in March, 1997.
 
+To help users who are not yet ready to move to XEmacs 20, we run a
+patch-page with official bugfixes for 19.15 at:
+
+@example
+<URL:http://www.xemacs.org/xemacs-19.15-patches/patch-page.html>
+@end example
+
+The page is maintained by Vinnie Shelton @code{<acs@@acm.org>}.  These
+fixes will be integrated to a XEmacs and released as 19.16, which would
+serve as stable XEmacs until 20.x settles completely.
 
 @node Q1.0.3, Q1.0.4, Q1.0.2, Introduction
 @section Where can I find it?
@@ -187,7 +195,8 @@ A built-in toolbar.
 Better Motif compliance.
 
 @item
-Some internationalization support (full MULE support starting with 20.0).
+Some internationalization support (including full MULE support, if
+compiled with it.)
 
 @item
 Variable-width fonts.
@@ -288,21 +297,14 @@ Screen snapshots are available in the WWW version of the FAQ.
 @node Q1.0.10, Q1.0.11, Q1.0.9, Introduction
 @section Is there a port of XEmacs to Microsoft ('95 or NT)?
 
+Altrasoft is actively seeking corporate and government sponsors to help
+fund a fully native port of XEmacs to Windows 95 and NT using full-time,
+senior-level staff working under a professionally managed project
+structure.  See <URL:http://www.altrasoft.com/> for more details or
+contact Altrasoft directly at 1-888-ALTSOFT.
+
 The closest is @dfn{Win-Emacs}, which is based on Lucid Emacs 19.6.
 Available from <URL:http://www.pearlsoft.com/>.
-
-There are some people actively working on a NT port of v20.1: David
-Hobley started the port.  Marc Paquette
-@example
-<marcpa@@cam.org>
-@end example
-has also became part of this effort.
-
-Email the beta list
-@example
-<xemacs-beta@@xemacs.org>
-@end example
-if you are interested in helping.
 
 There's a port of GNU Emacs (not XEmacs) at
 @example
@@ -352,7 +354,7 @@ purpose are defined as the 5th of the month through the 5th of the
 month.  Preexisting questions that have been changed are marked as such.
 Brand new questions are tagged.
 
-All submissions are welcome.  E-mail submissions to
+All submissions are welcome.  E-mail submissions to Andreas Kaempf
 <andreas@@sccon.com>.
 
 Please make sure that @samp{XEmacs FAQ} appears on the Subject: line.
@@ -453,11 +455,8 @@ version of the FAQ (listed in alphabetical order):
 @itemize @bullet
 @item Steven L Baur <steve@@miranova.com>
 
-@item Richard Cognot <cognot@@ensg.u-nancy.fr>
-
 @item Hrvoje Niksic <hniksic@@srce.hr>
 
-@item Aki Vehtari <Aki.Vehtari@@hut.fi>
 @end itemize
 
 @node Q1.2.3, Q1.3.1, Q1.2.2, Introduction
@@ -471,6 +470,8 @@ crash some time ago.
 
 @item Richard Caley <rjc@@cogsci.ed.ac.uk>
 
+@item Richard Cognot <cognot@@ensg.u-nancy.fr>
+
 @item William G. Dubuque <wgd@@martigny.ai.mit.edu>
 
 @item Eric Eide <eeide@@cs.utah.edu>
@@ -483,7 +484,7 @@ crash some time ago.
 
 @item Darrell Kindred <dkindred@@cmu.edu>
 
-@item  David Moore <dmoore@@ucsd.edu>
+@item David Moore <dmoore@@ucsd.edu>
 
 @item Arup Mukherjee <arup+@@cmu.edu>
 
@@ -494,17 +495,19 @@ crash some time ago.
 @item Justin Sheehy <dworkin@@ccs.neu.edu>
 
 @item Stig <stig@@hackvan.com>
+
+@item Aki Vehtari <Aki.Vehtari@@hut.fi>
 @end itemize
 
 @node Q1.3.1, Q1.3.2, Q1.2.3, Introduction
 @section What is the status of XEmacs v20?
 
 XEmacs v20 is the version of XEmacs that includes MULE (Asian-language)
-support.  XEmacs 20.0 was released in February 1997.  When compiled
-without MULE support 20.0 is currently very similar to 19.15 (except for
-some changes to the byte-code format, some new primitive types including
-@code{char}, @code{char-table}, and @code{range-table}) and equally
-stable.
+support.  XEmacs 20.0 was released in February 1997, followed by XEmacs
+20.2 in May.  When compiled without MULE support 20.2 is currently very
+similar to 19.15 (except for some changes to the byte-code format, some
+new primitive types including @code{char}, @code{char-table}, and
+@code{range-table}) and equally stable.
 
 @node Q1.3.2, Q1.3.3, Q1.3.1, Introduction
 @section What is the status of Asian-language support, aka MULE?
@@ -590,7 +593,7 @@ it will be continued.
 @end quotation
 
 @node Q1.3.6, Q1.3.7, Q1.3.5, Introduction
-@section How do I portably code for MULE/XEmacs 20.0?
+@section How do I portably code for MULE/XEmacs 20?
 
 MORIOKA Tomohiko <morioka@@jaist.ac.jp> writes:
 
@@ -716,9 +719,8 @@ insert 3 copies.
       (setq there (point))
       (setq string (buffer-substring here there)))
     (while (>= count 1)
-      (progn
-	(insert string)
-	(setq count (1- count))))))
+      (insert string)
+      (decf count))))
 @end lisp
 
 The best way to see what is going on here is to let XEmacs tell you.
@@ -741,13 +743,16 @@ To bind to a key do:
 
 Or interactively, @kbd{M-x global-set-key} and follow the prompts.
 
-Jari Aalto has written a guide to Emacs keys binding, available at
-<URL:ftp://cs.uta.fi/pub/ssjaaa/ema-keys.gui>.
+You can also view Jari Aalto's <jaalto@@tre.ntc.nokia.com> file:
+
+@example
+<URL:ftp://cs.uta.fi/pub/ssjaaa/ema-keys.html>
+@end example
 
 @node Q1.4.6, Q1.4.7, Q1.4.5, Introduction
 @section What's the difference between a macro and a function?
 
-Quoting from the Lisp Reference (a.k.a @dfn{lispref}) Manual:
+Quoting from the Lisp Reference (a.k.a @dfn{Lispref}) Manual:
 
 @dfn{Macros} enable you to define new control constructs and other
 language features.  A macro is defined much like a function, but instead
@@ -759,6 +764,10 @@ Macros can do this because they operate on the unevaluated expressions
 for the arguments, not on the argument values as functions do.  They can
 therefore construct an expansion containing these argument expressions
 or parts of them.
+
+Do not confuse the two terms with @dfn{keyboard macros}, which are
+another matter, entirely.  A keyboard macro is a key bound to several
+other keys.  Refer to manual for details.
 
 @node Q1.4.7,  , Q1.4.6, Introduction
 @section How come options saved with 19.13 don't work with 19.14 or later?
@@ -787,6 +796,7 @@ testing XEmacs v20.  You should consider changing the code to read:
                 (>= emacs-minor-version 12))
            (>= emacs-major-version 20)))
  ...
+ ))
 @end lisp
 
 @node Installation, Customization, Introduction, Top
@@ -797,25 +807,25 @@ section is devoted to Installation, Maintenance and Trouble Shooting.
 
 @menu
 Installation:
-* Q2.0.1::      Running XEmacs without installing.  @strong{updated 4/97}
-* Q2.0.2::      XEmacs is too big.  @strong{updated 4/97}
+* Q2.0.1::      Running XEmacs without installing. 
+* Q2.0.2::      XEmacs is too big. 
 * Q2.0.3::      Compiling XEmacs with Netaudio.
-* Q2.0.4::      Problems with Linux and ncurses.  @strong{updated 4/97}
+* Q2.0.4::      Problems with Linux and ncurses.
 * Q2.0.5::      Do I need X11 to run XEmacs?
 * Q2.0.6::      I'm having strange crashes.  What do I do?
 * Q2.0.7::      Libraries in non-standard locations.
 * Q2.0.8::      can't resolve symbol _h_errno
-* Q2.0.9::      Where do I find external libraries?  @strong{updated 4/97}
+* Q2.0.9::      Where do I find external libraries? 
 * Q2.0.10::     After I run configure I find a coredump, is something wrong?
 * Q2.0.11::     XEmacs can't resolve host names.
-* Q2.0.12::     Why can't I strip XEmacs?  @strong{updated 4/97}
+* Q2.0.12::     Why can't I strip XEmacs? 
 * Q2.0.13::     Can't link XEmacs on Solaris with Gcc.
-* Q2.0.14::     Make on HP/UX 9 fails after linking temacs  @strong{new 4/97}
+* Q2.0.14::     Make on HP/UX 9 fails after linking temacs 
 
 Trouble Shooting:
 * Q2.1.1::      XEmacs just crashed on me!
 * Q2.1.2::      Cryptic Minibuffer messages.
-* Q2.1.3::      Translation Table Syntax messages at Startup. @strong{updated 4/97}
+* Q2.1.3::      Translation Table Syntax messages at Startup.
 * Q2.1.4::      Startup warnings about deducing proper fonts?
 * Q2.1.5::      XEmacs cannot connect to my X Terminal.
 * Q2.1.6::      XEmacs just locked up my Linux X server.
@@ -823,7 +833,7 @@ Trouble Shooting:
 * Q2.1.8::      got (wrong-type-argument color-instance-p nil)!
 * Q2.1.9::      XEmacs causes my OpenWindows 3.0 server to crash.
 * Q2.1.10::     Warnings from incorrect key modifiers.
-* Q2.1.11::     [This question intentionally left blank] @strong{removed 4/97}
+* Q2.1.11::     [This question intentionally left blank]
 * Q2.1.12::     Regular Expression Problems on DEC OSF1.
 * Q2.1.13::     HP/UX 10.10 and @code{create_process} failure
 * Q2.1.14::     @kbd{C-g} doesn't work for me.  Is it broken?
@@ -835,7 +845,7 @@ Trouble Shooting:
 * Q2.1.20::     @samp{Symbol's function definition is void: hkey-help-show.}
 * Q2.1.21::     Every so often the XEmacs frame freezes.
 * Q2.1.22::     XEmacs seems to take a really long time to do some things.
-* Q2.1.23::     Movemail on Linux does not work for XEmacs 19.15 and later.  @strong{new 4/97}
+* Q2.1.23::     Movemail on Linux does not work for XEmacs 19.15 and later.
 @end menu
 
 @node Q2.0.1, Q2.0.2, Installation, Installation
@@ -852,11 +862,11 @@ space.  XEmacs is largely written in Lisp.
 A good method is to make a shell alias for xemacs:
 
 @example
-alias xemacs=/i/xemacs-19.15/src/xemacs
+alias xemacs=/i/xemacs-20.2/src/xemacs
 @end example
 
 (You will obviously use whatever directory you downloaded the source
-tree to instead of @file{/i/xemacs-19.15}).
+tree to instead of @file{/i/xemacs-20.2}).
 
 This will let you run XEmacs without massive copying.
 
@@ -866,7 +876,7 @@ This will let you run XEmacs without massive copying.
 Steve Baur <steve@@altair.xemacs.org> writes:
 
 @quotation
-XEmacs 20.2 will unbundle the lisp hierarchy and allow the installer
+XEmacs 20.3 will unbundle the lisp hierarchy and allow the installer
 to choose exactly how much support code gets installed.
 @end quotation
 
@@ -1003,7 +1013,7 @@ The solution is to upgrade to at least libc-5.4.23.  Sigh.  Drat.
 All external libraries used by XEmacs can be found at the XEmacs FTP
 site <URL:ftp://ftp.xemacs.org/pub/aux/>.
 
-The canonical locations are as follows:
+The canonical locations (at the time of this writing) are as follows:
 
 @table @asis
 @item JPEG
@@ -1108,19 +1118,13 @@ Here is the trick:
 
 @enumerate
 @item
-[ configure; make ]
+[ ./configure; make ]
 
 @item
-cd src
+rm src/xemacs
 
 @item
-rm xemacs
-
-@item
-strip temacs
-
-@item
-cd ..
+strip src/temacs
 
 @item
 make
@@ -1176,9 +1180,9 @@ make, or install PHCO_6552, which will bring make to revision
 @section Help!  XEmacs just crashed on me!
 
 First of all, don't panic.  Whenever XEmacs crashes, it tries extremely
-hard to auto-save all of your files before dying. (The main time that
+hard to auto-save all of your files before dying.  (The main time that
 this will not happen is if the machine physically lost power or if you
-killed the XEmacs process using @code{kill -9}). The next time you try
+killed the XEmacs process using @code{kill -9}).  The next time you try
 to edit those files, you will be informed that a more recent auto-save
 file exists.  You can use @kbd{M-x recover-file} to retrieve the
 auto-saved version of the file.
@@ -1339,12 +1343,10 @@ the host you are running XEmacs from.
 @node Q2.1.6, Q2.1.7, Q2.1.5, Installation
 @section XEmacs just locked up my Linux X server!
 
-Help! XEmacs just locked up my X server on my Linux box!
-
 There have been several reports of the X server locking up under Linux.
 In all reported cases removing speedo and scaled fonts from the font
 path corrected the problem.  This can be done with the command
-'@code{xset}.
+@code{xset}.
 
 It is possible that using a font server may also solve the problem.
 
@@ -1652,11 +1654,11 @@ authors, or to comp.os.linux.development.system).  Again, you'll have to
 use the narrowing-down process described above.
 
 @item
-If you compiled 19.14 with @samp{--debug} (or by default in 19.15), you
-will get a Lisp backtrace output when XEmacs crashes, so you'll have
-something useful.  If you're in 19.13, you could try doing @code{call
-debug_backtrace()}---sometimes this works even after a fatal signal has
-been received.
+If you compiled 19.14 with @samp{--debug} (or by default in later
+versions), you will get a Lisp backtrace output when XEmacs crashes, so
+you'll have something useful.  If you're in 19.13, you could try doing
+@code{call debug_backtrace()}---sometimes this works even after a fatal
+signal has been received.
 @end enumerate
 @end itemize
 @end quotation
@@ -1732,9 +1734,20 @@ causing a segmentation violation.
 @node Q2.1.17, Q2.1.18, Q2.1.16, Installation
 @section @samp{Marker does not point anywhere}
 
-This is a problem with line-number-mode in XEmacs 19.14, and affects a
-large number of other packages.  If you see this error message, turn off
+As with other errors, set @code{debug-on-error} to @code{t} to get the
+backtrace when the error occurs.  Specifically, two problems have been
+reported (and fixed).
+
+@enumerate
+@item
+A problem with line-number-mode in XEmacs 19.14 affected a large number
+of other packages.  If you see this error message, turn off
 line-number-mode.
+
+@item
+A problem with some early versions of Gnus 5.4 caused this error.
+Upgrade your Gnus.
+@end enumerate
 
 @node Q2.1.18, Q2.1.19, Q2.1.17, Installation
 @section 19.14 hangs on HP/UX 10.10.
@@ -1780,7 +1793,7 @@ The @samp{poll: interrupted system call} message.
 @item
 A more serious problem I had discovered in the meantime, that is the
 fact that subprocess handling was seriously broken: subprocesses
-e.g. started by AUCTeX for TeX compilation of a buffer would
+e.g. started by AUC TeX for TeX compilation of a buffer would
 @emph{hang}.  Actually they would wait forever for emacs to read the
 socket which connects stdout...
 @end enumerate
@@ -1835,12 +1848,12 @@ this just run:
 gdb /path/to/xemacs/xemacs ####
 @end example
 
-Where #### is the process id of your xemacs, instead of specifying the
-core.  When gdb attaches, the xemacs will stop [1] and you can type
-`where' in gdb to get a stack trace as usual.  To get things moving
-again, you can just type `quit' in gdb.  It'll tell you the program is
-running and ask if you want to quit anyways.  Say 'y' and it'll quit and
-have your emacs continue from where it was at.
+Where @code{####} is the process id of your xemacs, instead of
+specifying the core.  When gdb attaches, the xemacs will stop [1] and
+you can type `where' in gdb to get a stack trace as usual.  To get
+things moving again, you can just type `quit' in gdb.  It'll tell you
+the program is running and ask if you want to quit anyways.  Say 'y' and
+it'll quit and have your emacs continue from where it was at.
 
 2) Lisp level:
 
@@ -1861,12 +1874,14 @@ and 20.x.  I am using Linux.
 Steven L Baur <steve@@miranova.com> writes:
 
 @quotation
-Movemail on Linux used to default to using flock file locking.
-With 19.15 and 20.0 it now defaults to using .lock file locking.
-If this is not appropriate for your system, edit src/s/linux.h and 
-uncomment the line that reads:
+Movemail on Linux used to default to using flock file locking.  With
+19.15 and later versions it now defaults to using @code{.lock} file
+locking.  If this is not appropriate for your system, edit src/s/linux.h
+and uncomment the line that reads:
 
-@code{#define MAIL_USE_FLOCK}
+@example
+#define MAIL_USE_FLOCK
+@end example
 @end quotation
 
 @node Customization, Subsystems, Installation, Top
@@ -1877,20 +1892,20 @@ section is devoted to Customization and screen settings.
 
 @menu
 Customization---Emacs Lisp and @file{.emacs}:
-* Q3.0.1::      What version of Emacs am I running?  @strong{updated 4/97}
+* Q3.0.1::      What version of Emacs am I running? 
 * Q3.0.2::      How do I evaluate Elisp expressions?
 * Q3.0.3::      @code{(setq tab-width 6)} behaves oddly.
 * Q3.0.4::      How can I add directories to the @code{load-path}?
 * Q3.0.5::      How to check if a lisp function is defined?
 * Q3.0.6::      Can I force the output of @code{(face-list)} to a buffer?
-* Q3.0.7::      Font selections don't get saved after @code{Save Options}. @strong{updated 4/97}
+* Q3.0.7::      Font selections don't get saved after @code{Save Options}. 
 * Q3.0.8::      How do I make a single minibuffer frame?
 
 X Window System & Resources:
 * Q3.1.1::      Where is a list of X resources?
 * Q3.1.2::      How can I detect a color display?
 * Q3.1.3::      @code{(set-screen-width)} worked in 19.6, but not in 19.13?
-* Q3.1.4::      Specifiying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?  @strong{updated 4/97}
+* Q3.1.4::      Specifiying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
 * Q3.1.5::      How can I get the icon to just say @samp{XEmacs}?
 * Q3.1.6::      How can I have the window title area display the full path?
 * Q3.1.7::      @samp{xemacs -name junk} doesn't work?
@@ -1900,18 +1915,18 @@ Textual Fonts & Colors:
 * Q3.2.1::      How can I set color options from @file{.emacs}?
 * Q3.2.2::      How do I set the text, menu and modeline fonts?
 * Q3.2.3::      How can I set the colors when highlighting a region?
-* Q3.2.4::      How can I limit color map usage?  @strong{updated 4/97}
+* Q3.2.4::      How can I limit color map usage? 
 * Q3.2.5::      My tty supports color, but XEmacs doesn't use them.
 
 The Modeline:
 * Q3.3.1::      How can I make the modeline go away?
 * Q3.3.2::      How do you have XEmacs display the line number in the modeline?
 * Q3.3.3::      How do I get XEmacs to put the time of day on the modeline?
-* Q3.3.4::      How do I turn off current chapter from AUC-TeX modeline?
-* Q3.3.5::      How can one change the modeline color based on the mode used?  @strong{updated 4/97}
+* Q3.3.4::      How do I turn off current chapter from AUC TeX modeline?
+* Q3.3.5::      How can one change the modeline color based on the mode used?
 
 3.4 Multiple Device Support:
-* Q3.4.1::      How do I open a frame on another screen of my multi-headed display?  @strong{updated 4/97}
+* Q3.4.1::      How do I open a frame on another screen of my multi-headed display?  
 * Q3.4.2::      Can I really connect to a running XEmacs after calling up over a modem?  How?
 
 3.5 The Keyboard:
@@ -1920,7 +1935,7 @@ The Modeline:
 * Q3.5.3::      How do I bind C-. and C-; to scroll one line up and down?
 * Q3.5.4::      Globally binding @kbd{Delete}?
 * Q3.5.5::      Scrolling one line at a time.
-* Q3.5.6::      How to map @kbd{Help} key alone on Sun type4 keyboard?  @strong{updated 4/97}
+* Q3.5.6::      How to map @kbd{Help} key alone on Sun type4 keyboard? 
 * Q3.5.7::      How can you type in special characters in XEmacs?
 * Q3.5.8::      Why does @code{(global-set-key [delete-forward] 'delete-char)} complain?
 * Q3.5.9::      How do I make the Delete key delete forward?
@@ -1955,7 +1970,7 @@ Scrollbars:
 * Q3.9.4::      How can I get automatic horizontal scrolling?
 
 Text Selections:
-* Q3.10.1::     How can I turn off or change highlighted selections?  @strong{updated 4/97}
+* Q3.10.1::     How can I turn off or change highlighted selections? 
 * Q3.10.2::     How do I get that typing on an active region removes it?
 * Q3.10.3::     Can I turn off the highlight during isearch?
 * Q3.10.4::     How do I turn off highlighting after @kbd{C-x C-p} (mark-page)?
@@ -1986,14 +2001,10 @@ I know I can evaluate Elisp expressions from @code{*scratch*} buffer
 with @kbd{C-j} after the expression.  How do I do it from another
 buffer?
 
-Use the following code:
-
-@lisp
-(put 'eval-expression 'disabled nil)
-@end lisp
-
-This sets it so that hitting @kbd{M-:} lets you type a single expression
-to be evaluated.  This line can also be put into your @file{.emacs}.
+Press @kbd{M-:} (the default binding of @code{eval-expression}), and
+enter the expression to the minibuffer.  In XEmacs prior to 19.15
+@code{eval-expression} used to be a disabled command by default.  If
+this is the case, upgrade your XEmacs.
 
 @node Q3.0.3, Q3.0.4, Q3.0.2, Customization
 @section @code{(setq tab-width 6)} behaves oddly.
@@ -2014,14 +2025,12 @@ front of the load-path, the other at the end:
 @lisp
 ;;; Add things at the beginning of the load-path, do not add
 ;;; duplicate directories:
-(if (null (member "bar" load-path))
-    (setq load-path (cons "bar" load-path)))
+(pushnew "bar" load-path :test 'equal)
 
-(if (null (member "foo" load-path))
-    (setq load-path (cons "foo" load-path)))
+(pushnew "foo" load-path :test 'equal)
 
 ;;; Add things at the end, unconditionally
-(setq load-path (append load-path '("foo" "bar")))
+(setq load-path (nconc load-path '("foo" "bar")))
 @end lisp
 
 keith (k.p.) hanlan <keithh@@nortel.ca> writes:
@@ -2031,7 +2040,7 @@ To add directories using Unix shell metacharacters use
 @file{expand-file-name} like this:
 
 @lisp
-(setq load-path (cons (expand-file-name "~keithh/.emacsdir") load-path))
+(push (expand-file-name "~keithh/.emacsdir") load-path)
 @end lisp
 @end quotation
 
@@ -2069,6 +2078,10 @@ It would be good having it in a buffer, as the output of
 Evaluate the expression in the @samp{*scratch*} buffer with point after
 the rightmost paren and typing @kbd{C-j}.
 
+If the minibuffer smallness is the only problem you encounter, you can
+simply press @kbd{C-h l} to get the former minibuffer contents in a
+buffer.
+
 @node Q3.0.7, Q3.0.8, Q3.0.6, Customization
 @section Font selections in don't get saved after @code{Save Options}.
 
@@ -2088,7 +2101,7 @@ For XEmacs 19.15 and later:
 Implement the above as well as set the following in your @file{.emacs} 
 
 @lisp
-(setq options-save-faces 't)
+(setq options-save-faces t)
 @end lisp
 
 @node Q3.0.8, Q3.1.1, Q3.0.7, Customization
@@ -2324,9 +2337,6 @@ while menubar is a normal X thing that uses the specification
 @code{font}.  With Motif it may be necessary to use @code{fontList}
 instead of @code{font}.
 
-Suggestions on improving the answer to this question would be
-appreciated.
-
 @node Q3.2.3, Q3.2.4, Q3.2.2, Customization
 @section How can I set the colors when highlighting a region?
 
@@ -2415,12 +2425,12 @@ Use the following to display the column number:
 @end lisp
 
 @node Q3.3.4, Q3.3.5, Q3.3.3, Customization
-@section How do I turn off current chapter from AUC-TeX modeline?
+@section How do I turn off current chapter from AUC TeX modeline?
 
-With AUC-TeX, fast typing is hard because the current chapter, section
+With AUC TeX, fast typing is hard because the current chapter, section
 etc. are given in the modeline.  How can I turn this off?
 
-It's not auc-tex, it comes from @code{func-menu} in @file{func-menu.el}.
+It's not AUC TeX, it comes from @code{func-menu} in @file{func-menu.el}.
 Add this code to your @file{.emacs} to turn it off:
 
 @lisp
@@ -2455,8 +2465,8 @@ You can use something like the following:
 
 @lisp
 (add-hook 'lisp-mode-hook 
-        '(lambda () (set-face-background 'modeline "red" (current-buffer))
-                    (set-face-foreground 'modeline "yellow" (current-buffer))))
+          (lambda ()
+            (set-face-background 'modeline "red" (current-buffer))))
 @end lisp
 
 Then, when editing a Lisp file (i.e. when in Lisp mode), the modeline
@@ -2494,18 +2504,21 @@ This works in 19.15 as well, but there are additional modeline faces,
 @node Q3.4.1, Q3.4.2, Q3.3.5, Customization
 @section How do I open a frame on another screen of my multi-headed display?
 
-The support for this has been revamped for 19.14.  Use the command
+The support for this was revamped for 19.14.  Use the command
 @kbd{M-x make-frame-on-display}.  This command is also on the File menu
 in the menubar.
 
-XEmacs 19.14 and later also has the command @code{make-frame-on-tty}
-which will establish a connection to any tty-like device.
+XEmacs 19.14 and later also have the command @code{make-frame-on-tty}
+which will establish a connection to any tty-like device.  Opening the
+TTY devices should be left to @code{gnuclient}, though.
 
 @node Q3.4.2, Q3.5.1, Q3.4.1, Customization
 @section Can I really connect to a running XEmacs after calling up over a modem?  How?
 
 If you're not running at least XEmacs 19.14, you can't.  Otherwise check
-out the @code{gnuattach} program supplied with XEmacs.
+out the @code{gnuattach} program supplied with XEmacs.  Starting with
+XEmacs 20.3, @code{gnuattach} and @code{gnudoit} functionality will be
+provided by @code{gnuclient}.
 
 @node Q3.5.1, Q3.5.2, Q3.4.2, Customization
 @section How can I bind complex functions (or macros) to keys?
@@ -2526,21 +2539,21 @@ pass arguments to @code{x-insert-selection}.  This is done by wrapping
 the call in a 'lambda form:
 
 @lisp
-(define-key global-map [f18]
-  (function (lambda () (interactive) (x-insert-selection t nil))))
+(global-set-key [f18]
+                (lambda () (interactive) (x-insert-selection t nil)))
 @end lisp
 
 This binds the f18 key to a @dfn{generic} functional object.  The
 interactive spec is required because only interactive functions can be
-bound to keys.  Also take a look at the doc for @code{function}.
+bound to keys.
 
 For the FAQ example you could use:
 
 @lisp
 (global-set-key [(control ?.)]
-		(function (lambda () (interactive) (scroll-up 1))))
+		(lambda () (interactive) (scroll-up 1)))
 (global-set-key [(control ?;)]
-	        (function (lambda () (interactive) (scroll-up -1))))
+	        (lambda () (interactive) (scroll-up -1)))
 @end lisp
 
 This is fine if you only need a few functions within the lambda body.
@@ -2555,6 +2568,8 @@ Add the following line to your @file{.emacs} file:
 @lisp
 (setq next-line-add-newlines nil)
 @end lisp
+
+This has been the default setting in XEmacs for some time.
 
 @node Q3.5.3, Q3.5.4, Q3.5.2, Customization
 @section How do I bind C-. and C-; to scroll one line up and down?
@@ -2571,8 +2586,8 @@ Wayne Newberry <wayne@@zen.cac.stratus.com>) to @file{.emacs}:
   (interactive)
   (scroll-down 1))
 
-(global-set-key [(control ?.)]   'scroll-up-one-line)        ; C-.
-(global-set-key [(control ?;)]   'scroll-down-one-line)      ; C-;
+(global-set-key [(control ?.)] 'scroll-up-one-line)        ; C-.
+(global-set-key [(control ?;)] 'scroll-down-one-line)      ; C-;
 @end lisp
 
 The key point is that you can only bind simple functions to keys; you
@@ -2586,11 +2601,11 @@ I cannot manage to globally bind my @kbd{Delete} key to something other
 than the default.  How does one do this?
 
 @lisp
-(defun Foo ()
+(defun foo ()
   (interactive)
-    (message "You hit DELETE"))
+  (message "You hit DELETE"))
 
-(global-set-key 'delete 'Foo)
+(global-set-key 'delete 'foo)
 @end lisp
 
 However, some modes explicitly bind @kbd{Delete}, so you would need to
@@ -2621,10 +2636,9 @@ Try this:
   (interactive "p")
   (scroll-down (or arg 1)))
 
-(global-set-key 'up 'scroll-one-line-up)
-(global-set-key 'down  'scroll-one-line-down)
+(global-set-key [up]   'scroll-one-line-up)
+(global-set-key [down] 'scroll-one-line-down)
 @end lisp
-
 
 The following will also work but will affect more than just the cursor
 keys (i.e. @kbd{C-n} and @kbd{C-p}):
@@ -2665,7 +2679,8 @@ the null binding @code{OpenWindows.KeyboardCommand.Help:}.
 One way is to use the package @samp{x-compose}.  Then you can use
 sequences like @kbd{Compose " a} to get ä, etc.
 
-Another way is to use the iso8859-1 package.
+Another way is to use the iso-ascii package, provided in XEmacs 19.15
+and later.
 
 @node Q3.5.8, Q3.5.9, Q3.5.7, Customization
 @section Why does @code{(global-set-key [delete-forward] 'delete-char)} complain?
@@ -2694,11 +2709,15 @@ This bug has been fixed in 19.14.
 @node Q3.5.9, Q3.5.10, Q3.5.8, Customization
 @section How do I make the Delete key delete forward?
 
-Use the @file{delbackspace} package:
+Use the @file{delbs} package:
 
 @lisp
-(load-library "delbackspace")
+(require 'delbs)
 @end lisp
+
+This will give you the functions @code{delbs-enable-delete-forward} to
+set things up, and @code{delbs-disable-delete-forward} to revert to
+``normal'' behavior.
 
 Also @xref{Q3.5.4}.
 
@@ -2714,7 +2733,7 @@ Ben Wing <ben@@666.com> writes:
 
 @quotation
 One thing about the sticky modifiers is that if you move the mouse out
-of the frame and back in, it cancels all currently "stuck" modifiers.
+of the frame and back in, it cancels all currently ``stuck'' modifiers.
 @end quotation
 
 @node Q3.6.1, Q3.6.2, Q3.5.10, Customization
@@ -2774,13 +2793,12 @@ left or right paren will select to the matching one.  Note that you can
 use @code{define-key} or @code{global-set-key}.
 
 @lisp
-(defun Mouse-Set-Point-and-Select (event)
+(defun mouse-set-point-and-select (event)
   "Sets the point at the mouse location, then marks following form"
   (interactive "@@e")
   (mouse-set-point event)
-  (mark-sexp 1)
-  )
-(define-key global-map 'button2 'Mouse-Set-Point-and-Select)
+  (mark-sexp 1))
+(define-key global-map [button2] 'mouse-set-point-and-select)
 @end lisp
 
 @node Q3.7.2, Q3.7.3, Q3.7.1, Customization
@@ -2811,16 +2829,10 @@ Use the middle mouse button.
 @node Q3.7.4, Q3.7.5, Q3.7.3, Customization
 @section How can I get a list of buffers when I hit mouse button 3?
 
-The following code will actually replace the default popup on button3:
+The following code will replace the default popup on button3:
 
 @lisp
-(defun cw-build-buffers ()
-  "Popup buffer menu."
-  (interactive "@@")
-  (run-hooks 'activate-menubar-hook)
-  (popup-menu (car (find-menu-item current-menubar '("Buffers")))))
-
-(define-key global-map [(button3)] 'cw-build-buffers)
+(global-set-key [button3] 'popup-buffer-menu)
 @end lisp
 
 @node Q3.7.5, Q3.7.6, Q3.7.4, Customization
@@ -2958,11 +2970,11 @@ even though the latter is more specific.
 Try something like:
 
 @lisp
-(global-set-key [(control x) T]
-		'(lambda () (interactive)
-		   (set-specifier default-toolbar-visible-p 
-				  (not (specifier-instance
-					default-toolbar-visible-p)))))
+(defun my-toggle-toolbar ()
+  (interactive)
+  (set-specifier default-toolbar-visible-p
+                 (not (specifier-instance default-toolbar-visible-p))))
+(global-set-key "\C-xT" 'my-toggle-toolbar)
 @end lisp
 
 There are redisplay bugs in 19.14 that may make the preceding result in
@@ -2987,7 +2999,7 @@ To turn the scrollbar off on a per-frame basis, use the following
 function:
 
 @lisp
-(set-specifier scrollbar-width (cons (selected-frame) 0))
+(set-specifier scrollbar-width 0 (selected-frame))
 @end lisp
 
 You can actually turn the scrollbars on at any level you want by
@@ -2995,13 +3007,13 @@ substituting for (selected-frame) in the above command.  For example, to
 turn the scrollbars off only in a single buffer:
 
 @lisp
-(set-specifier scrollbar-width (cons (current-buffer) 0))
+(set-specifier scrollbar-width 0 (current-buffer))
 @end lisp
 
-Starting with 19.14 you can use the more logical form:
+In XEmacs versions prior to 19.14, you had to use the hairier construct:
 
 @lisp
-(set-specifier scrollbar-width 0 (selected-frame))
+(set-specifier scrollbar-width (cons (selected-frame) 0))
 @end lisp
 
 @node Q3.9.2, Q3.9.3, Q3.9.1, Customization
@@ -3180,9 +3192,10 @@ Reading Mail with VM:
 Web browsing with W3:
 * Q4.1.1::      What is W3?
 * Q4.1.2::      How do I run W3 from behind a firewall?
+* Q4.1.3::      Is it true that W3 supports style sheets and tables?
 
 Reading Netnews and Mail with Gnus:
-* Q4.2.1::      GNUS, (ding) Gnus, Gnus 5, September Gnus, Red Gnus,argh!  @strong{updated 4/97}
+* Q4.2.1::      GNUS, (ding) Gnus, Gnus 5, September Gnus, Red Gnus,argh! 
 * Q4.2.2::      [This question intentionally left blank]
 * Q4.2.3::      How do I make Gnus stay within a single frame?
 * Q4.2.4::      How do I customize the From: line?
@@ -3195,7 +3208,7 @@ Other Mail & News:
 * Q4.3.5::      Where do I find pstogif (required by tm)?
 
 Sparcworks, EOS, and WorkShop:
-* Q4.4.1::      What is SPARCworks, EOS, and WorkShop  @strong{updated 4/97}
+* Q4.4.1::      What is SPARCworks, EOS, and WorkShop 
 
 Energize:
 * Q4.5.1::      What is/was Energize?
@@ -3204,10 +3217,11 @@ Infodock:
 * Q4.6.1::      What is Infodock?
 
 Other Unbundled Packages:
-* Q4.7.1::      What is AucTeX?  Where do you get it?
+* Q4.7.1::      What is AUC TeX?  Where do you get it?
 * Q4.7.2::      Are there any Emacs Lisp Spreadsheets?
-* Q4.7.3::      Byte compiling AucTeX on XEmacs 19.14
-* Q4.7.4::      Problems installing AucTeX
+* Q4.7.3::      Byte compiling AUC TeX on XEmacs 19.14
+* Q4.7.4::      Problems installing AUC TeX
+* Q4.7.5::      Is there a reason for an Emacs package not to be included in XEmacs?
 @end menu
 
 @node Q4.0.1, Q4.0.2, Subsystems, Subsystems
@@ -3232,9 +3246,6 @@ wonderful things one can do with procmail.  Procmail may be found at
 
 Also see the Mail Filtering FAQ at:
 <URL:http://www.cis.ohio-state.edu/hypertext/faq/usenet/mail/filtering-faq/faq.html>.
-
-Another possibility is to check out Gnus 5.  Gnus 5 has mail splitting
-capability, and can use VM as a mail reading backend.
 
 @node Q4.0.3, Q4.0.4, Q4.0.2, Subsystems
 @section How can I get VM to automatically check for new mail?
@@ -3287,7 +3298,7 @@ user community knows that I'm still alive, despite the 9 months since
 the last release.
 @end quotation
 
-VM has its own newsgroup gnu.emacs.vm.info.
+VM has its own newsgroups gnu.emacs.vm.info and gnu.emacs.vm.bug.
 
 @node Q4.0.8, Q4.0.9, Q4.0.7, Subsystems
 @section Remote Mailreading with VM.
@@ -3330,7 +3341,7 @@ the time back at IU.
 @node Q4.0.9, Q4.0.10, Q4.0.8, Subsystems
 @section rmail or VM gets an error incorporating new mail.
 
->From the XEmacs PROBLEMS file:
+Quoting the XEmacs PROBLEMS file:
 
 @quotation
 rmail and VM get new mail from @file{/usr/spool/mail/$USER} using a
@@ -3448,16 +3459,28 @@ XEmacs.  It has full support for cascaded style sheets, and more...
 It has a home web page at
 <URL:http://www.cs.indiana.edu/elisp/w3/docs.html>.
 
-@node Q4.1.2, Q4.2.1, Q4.1.1, Subsystems
+@node Q4.1.2, Q4.1.3, Q4.1.1, Subsystems
 @section How do I run W3 from behind a firewall?
 
 There is a long, well-written, detailed section in the W3 manual that
 describes how to do this.  Look in the section entitled "Firewalls".
 
-@node Q4.2.1, Q4.2.2, Q4.1.2, Subsystems
+@node Q4.1.3, Q4.2.1, Q4.1.2, Subsystems
+@section Is it true that W3 supports style sheets and tables?
+
+Yes, and much more.  W3, as distributed with the latest XEmacs is a
+full-featured web browser.
+
+@node Q4.2.1, Q4.2.2, Q4.1.3, Subsystems
 @section GNUS, (ding) Gnus, Gnus 5, September Gnus, Red Gnus, Mamey Sapote Gnus, argh!
 
-Please see the FAQ <URL:http://www.ccs.neu.edu/software/gnus/> for details.
+The Gnus numbering issues are not meant for mere mortals to know them.
+If you feel you @emph{must} enter the muddy waters of Gnus, visit the
+excellent FAQ, maintained by Justin Sheehy, at:
+
+@example
+<URL:http://www.ccs.neu.edu/software/gnus/>
+@end example
 
 @node Q4.2.2, Q4.2.3, Q4.2.1, Subsystems
 @section This question intentionally left blank.
@@ -3467,25 +3490,17 @@ Obsolete question, left blank to avoid renumbering.
 @node Q4.2.3, Q4.2.4, Q4.2.2, Subsystems
 @section How do I make Gnus stay within a single frame?
 
-When starting Gnus from the toolbar it is automatically put into a new
-frame.  Gnus not being frame-aware code, has no provision to disable
-this feature.  If you feel this is a problem here are some workarounds:
-
-@enumerate
-@item
-Don't start Gnus from the toolbar, use @kbd{M-x gnus}.  This is what I
-do.
-
-@item
-Redefine the function called by the toolbar:
+The toolbar code to start Gnus opens the new frame---and it's a feature
+rather than a bug.  If you don't like it, but would still like to click
+on the seemly icon, use the following code:
 
 @lisp
 (defun toolbar-news ()
-  "Run Gnus in the frame it was started from."
-  (interactive)
   (gnus))
 @end lisp
-@end enumerate
+
+It will redefine the callback function of the icon to just call
+@code{gnus}, without all the fancy frame stuff.
 
 @node Q4.2.4, Q4.3.1, Q4.2.3, Subsystems
 @section How do I customize the From: line?
@@ -3817,10 +3832,11 @@ Read the @file{ID-INSTALL} file which you just retrieved for
 step-by-step installation instructions.
 
 @node Q4.7.1, Q4.7.2, Q4.6.1, Subsystems
-@section What is AucTeX?  Where do you get it?
+@section What is AUC TeX?  Where do you get it?
 
-AucTeX is a package written by Per Abrahamsen <abraham@@dina.kvl.dk>.
-The following information is from the @file{README} and website.
+AUC TeX is a package written by Per Abrahamsen <abraham@@dina.kvl.dk>.
+Starting with XEmacs 19.15, AUC TeX is bundled with XEmacs.  The
+following information is from the @file{README} and website.
 
 AUC TeX is an extensible package that supports writing and formatting
 TeX files for most variants of GNU Emacs. Many different macro packages
@@ -3842,7 +3858,7 @@ Yes.  Check out @dfn{dismal} (which stands for Dis' Mode Ain't Lotus) at
 <URL:ftp://cs.nyu.edu/pub/local/fox/dismal/>.
 
 @node Q4.7.3, Q4.7.4, Q4.7.2, Subsystems
-@section Byte compiling AucTeX on XEmacs 19.14.
+@section Byte compiling AUC TeX on XEmacs 19.14.
 
 Georges Brun-Cottan <bruncott@@dormeur.inria.fr> writes:
 
@@ -3854,26 +3870,26 @@ xemacs -batch -l lpath.el
 @end example
 @end quotation
 
-@node Q4.7.4,  , Q4.7.3, Subsystems
-@section Problems installing AucTeX.
+@node Q4.7.4, Q4.7.5, Q4.7.3, Subsystems
+@section Problems installing AUC TeX.
 
 Jan Vroonhof <vroonhof@@math.ethz.ch> writes:
 
 @quotation
-AucTeX works fine on both stock Emacs and XEmacs has been doing so for a
-very very long time. This is mostly due to the work of Per Abrahamsen
+AUC TeX works fine on both stock Emacs and XEmacs has been doing so for
+a very very long time. This is mostly due to the work of Per Abrahamsen
 <abraham@@dina.kvl.dk> (clap clap) in particular his @file{easymenu}
 package.  Which leads to what is probably the problem...
 @end quotation
 
-Most problems with AucTeX are one of two things:
+Most problems with AUC TeX are one of two things:
 
 @itemize @bullet
 @item
 The TeX-lisp-directory in @file{tex-site.el} and the makefile don't
 match.
 
-Fix: make sure you configure AucTeX properly @strong{before} installing.
+Fix: make sure you configure AUC TeX properly @strong{before} installing.
 
 @item
 You have an old version of easymenu.el in your path.
@@ -3881,6 +3897,46 @@ You have an old version of easymenu.el in your path.
 Fix: use @code{locate-library} and remove old versions to make sure it
 @strong{only} finds the one that came with XEmacs.
 @end itemize
+
+
+@node Q4.7.5,  , Q4.7.4, Subsystems
+@section Is there a reason for an Emacs package not to be included in XEmacs?
+
+The reason for an Emacs package not to be included in XEmacs is
+usually one or more of the following:
+
+@enumerate
+@item
+The package has not been ported to XEmacs.  This will typically happen
+when it uses GNU-Emacs-specific features, which make it fail under
+XEmacs.
+
+Porting a package to XEmacs can range from a trivial amount of change to
+a partial or full rewrite.  Fortunately, the authors of modern packages
+usually choose to support both Emacsen themselves.
+
+@item
+The package has been decided not to be appropriate for XEmacs.  It may
+have an equivalent or better replacement within XEmacs, in which case
+the developers may choose not to burden themselves with supporting an
+additional package.
+
+Each package bundled with XEmacs means more work for the maintainers,
+whether they want it or not.  If you are ready to take over the
+maintainence responsibilities for the package you port, be sure to say
+so -- we will more likely include it.
+
+@item
+The package simply hasn't been noted by the XEmacs development.  If
+that's the case, the messages like yours are very useful for attracting
+our attention.
+
+@item
+The package was noted by the developers, but they simply haven't yet
+gotten around to including/porting it.  Wait for the next release or,
+even better, offer your help.  It will be gladly accepted and
+appreciated.
+@end enumerate
 
 @node Miscellaneous, Current Events, Subsystems, Top
 @chapter The Miscellaneous Stuff
@@ -3900,8 +3956,8 @@ Major & Minor Modes:
 * Q5.0.7::      Telnet from shell filters too much.
 * Q5.0.8::      Why does edt emulation not work?
 * Q5.0.9::      How can I emulate VI and use it as my default mode?
-* Q5.0.10::     [This question intentionally left blank]  @strong{removed 4/97}
-* Q5.0.11::     Filladapt doesn't work in 19.15?  @strong{updated 4/97}
+* Q5.0.10::     [This question intentionally left blank] 
+* Q5.0.11::     Filladapt doesn't work in 19.15? 
 * Q5.0.12::     How do I disable gnuserv from opening a new frame?
 * Q5.0.13::     How do I start gnuserv so that each subsequent XEmacs is a client?
 * Q5.0.14::     Strange things are happening in Shell Mode.
@@ -3914,13 +3970,17 @@ Major & Minor Modes:
 Emacs Lisp Programming Techniques:
 * Q5.1.1::      The difference in key sequences between XEmacs and GNU Emacs?
 * Q5.1.2::      Can I generate "fake" keyboard events?
-* Q5.1.3::      [This question intentionally left blank]  @strong{removed 4/97}
-* Q5.1.4::      In 19.13, why do I get @samp{set-text-something} lisp errors with Gnus and AUC-TeX?
-* Q5.1.5::      How do I put a glyph as annotation in a buffer?
+* Q5.1.3::      Could you explain @code{read-kbd-macro} in more detail?
+* Q5.1.4::      What is the performance hit of @code{let}?
+* Q5.1.5::      What is the recommended use of @code{setq}?
+* Q5.1.6::      What is the typical misuse of @code{setq} ?
+* Q5.1.7::      I like the the @code{do} form of cl, does it slow things down?
+* Q5.1.8::      I like recursion, does it slow things down?
+* Q5.1.9::      How do I put a glyph as annotation in a buffer?
 
 Sound:
 * Q5.2.1::      How do I turn off the sound?
-* Q5.2.2::      How do I get funky sounds instead of a boring beep?  @strong{updated 4/97}
+* Q5.2.2::      How do I get funky sounds instead of a boring beep?
 * Q5.2.3::      What's NAS, how do I get it?
 * Q5.2.4::      Sunsite sounds don't play.
 
@@ -3980,13 +4040,22 @@ c++-mode.
 @node Q5.0.3, Q5.0.4, Q5.0.2, Miscellaneous
 @section How do I get @samp{More} Syntax Highlighting on by default?
 
-For C, C++, and Lisp, you can add the following to your @file{.emacs}:
+Use the following code in your @file{.emacs}:
 
 @lisp
-(setq c-font-lock-keywords c-font-lock-keywords-2)
-(setq c++-font-lock-keywords c++-font-lock-keywords-2)
-(setq lisp-font-lock-keywords lisp-font-lock-keywords-2)
+(setq-default font-lock-maximum-decoration t)
 @end lisp
+
+In versions of XEmacs prior to 19.14, you had to use a kludgy solution
+like this:
+
+@lisp
+(setq c-font-lock-keywords c-font-lock-keywords-2
+      c++-font-lock-keywords c++-font-lock-keywords-2
+      lisp-font-lock-keywords lisp-font-lock-keywords-2)
+@end lisp
+
+It will work for C, C++ and Lisp.
 
 @node Q5.0.4, Q5.0.5, Q5.0.3, Miscellaneous
 @section How can I enable auto-indent?
@@ -4003,9 +4072,12 @@ standard with XEmacs.  Put this into your @file{.emacs}:
 @lisp
 (require 'filladapt)
 (add-hook 'text-mode-hook    'turn-on-filladapt-mode)
-(add-hook 'message-mode-hook 'turn-on-filladapt-mode)
-;;; and so forth ...
+;;; and others ...
 @end lisp
+
+Note that well-behaving text-lookalike modes will run
+@code{text-mode-hook} by default (e.g. that's what Message does).  For
+the nasty ones, you'll have to provide the @code{add-hook}s yourself.
 
 Please note that the @code{fa-extras} package is no longer useful.
 
@@ -4034,17 +4106,17 @@ into auto-fill'ed @code{text-mode}:
 
 @lisp
 (setq initial-major-mode
-      (function (lambda ()
+      (lambda ()
         (text-mode)
-        (turn-on-auto-fill))))
+        (turn-on-auto-fill)))
 @end lisp
 
 Note that after your init file is loaded, if
-@code{inhibit-startup-message} is null (the default) and the startup
-buffer is @code{*scratch*} then the startup message will be inserted
-into @code{*scratch*}; it will be removed after a timeout by erasing the
-entire @code{*scratch*} buffer. Keep in mind this default usage of
-@code{*scratch*} if you desire any prior manipulation of
+@code{inhibit-startup-message} is @code{nil} (the default) and the
+startup buffer is @code{*scratch*} then the startup message will be
+inserted into @code{*scratch*}; it will be removed after a timeout by
+erasing the entire @code{*scratch*} buffer.  Keep in mind this default
+usage of @code{*scratch*} if you desire any prior manipulation of
 @code{*scratch*} from within your Emacs init file. In particular,
 anything you insert into @code{*scratch*} from your init file will be
 later erased. Also, if you change the mode of the @code{*scratch*}
@@ -4087,14 +4159,14 @@ fine and is a little fancier than the standard edt emulation.  To do
 this, add the following line to your @file{.emacs}:
 
 @lisp
-(load "tpu-edt")
+(tpu-edt)
 @end lisp
 
 If you don't want it to replace @kbd{C-h} with an edt-style help menu
 add this as well:
 
 @lisp
-(global-set-key '(control h) 'help-for-help)
+(global-set-key [(control h)] 'help-for-help)
 @end lisp
 
 @node Q5.0.9, Q5.0.10, Q5.0.8, Miscellaneous
@@ -4242,7 +4314,7 @@ David Kastrup <dak@@fsnif.neuroinformatik.ruhr-uni-bochum.de> writes:
 
 @quotation
 The standard TeX modes leave much to be desired, and are somewhat
-leniently maintained.  Serious TeX users use AucTeX (@xref{Q4.7.1}).
+leniently maintained.  Serious TeX users use AUC TeX (@xref{Q4.7.1}).
 @end quotation
 
 @node Q5.1.1, Q5.1.2, Q5.0.19, Miscellaneous
@@ -4256,27 +4328,34 @@ bits, and therefore map a variety of input systems into this scheme even
 today.  XEmacs is instead optimized for X events.  This causes an
 incompatibility in the way key sequences are specified, but both Emacs
 and XEmacs will accept a key sequence as a vector of lists of modifiers
-that ends with a key, e.g., to bind M-C-a, you would say [(meta control
-a)] in both Emacsen.  XEmacs has an abbreviated form for a single key,
-just (meta control a).  Emacs has an abbreviated form for the Control
-and the Meta modifiers to string-characters (the ASCII characters), as
-in "\M-\C-a".  XEmacs users need to be aware that the abbreviated form
-works only for one-character key sequences, while Emacs users need to be
-aware that the string-character is rather limited.  Specifically, the
-string-character can accomodate only 256 different values, 128 of which
-have the Meta modifier and 128 of which have not.  In each of these
-blocks, only 32 characters have the Control modifier.  Whereas [(meta
-control A)] differs from [(meta control a)] because the case differs,
-"\M-\C-a" and "\M-\C-A" do not.  Programmers are advised to use the full
-common form, both because it is more readable and less error-prone, and
-because it is supported by both Emacsen.
+that ends with a key, e.g., to bind @kbd{M-C-a}, you would say
+@code{[(meta control a)]} in both Emacsen.  XEmacs has an abbreviated
+form for a single key, just (meta control a).  Emacs has an abbreviated
+form for the Control and the Meta modifiers to string-characters (the
+ASCII characters), as in @samp{\M-\C-a}.  XEmacs users need to be aware
+that the abbreviated form works only for one-character key sequences,
+while Emacs users need to be aware that the string-character is rather
+limited.  Specifically, the string-character can accomodate only 256
+different values, 128 of which have the Meta modifier and 128 of which
+have not.  In each of these blocks, only 32 characters have the Control
+modifier.  Whereas @code{[(meta control A)]} differs from @code{[(meta
+control a)]} because the case differs, @samp{\M-\C-a} and @samp{\M-\C-A}
+do not.  Programmers are advised to use the full common form, both
+because it is more readable and less error-prone, and because it is
+supported by both Emacsen.
 @end quotation
+
+Another (even safer) way to be sure of the key-sequences is to use the
+@code{read-kbd-macro} function, which takes a string like @samp{C-c
+<up>}, and converts it to the internal key representation of the Emacs
+you use.  The function is available both on XEmacs and GNU Emacs.
 
 @node Q5.1.2, Q5.1.3, Q5.1.1, Miscellaneous
 @section Can I generate "fake" keyboard events?
 
-I wonder if there is an interactive function that can generate "fake"
-keyboard events.  This way, I could simply map them inside XEmacs.
+I wonder if there is an interactive function that can generate
+@dfn{fake} keyboard events.  This way, I could simply map them inside
+XEmacs.
 
 This seems to work:
 
@@ -4286,90 +4365,291 @@ This seems to work:
   (dispatch-event (character-to-event ch)))
 
 ;;  Backspace and Delete stuff
-(global-set-key '(backspace)
-                '(lambda () (interactive) (cg--generate-char-event 127)))
-(global-set-key '(unknown_keysym_0x4)
-                '(lambda () (interactive) (cg--generate-char-event 4)))
+(global-set-key [backspace]
+                (lambda () (interactive) (cg--generate-char-event 127)))
+(global-set-key [unknown_keysym_0x4]
+                (lambda () (interactive) (cg--generate-char-event 4)))
 @end lisp
 
 @node Q5.1.3, Q5.1.4, Q5.1.2, Miscellaneous
-@section [This question intentionally left blank]
+@section Could you explain @code{read-kbd-macro} in more detail?
 
-Obsolete question, left blank to avoid renumbering.
-
-@node Q5.1.4, Q5.1.5, Q5.1.3, Miscellaneous
-@section In 19.13, why do I get @samp{set-text-something} lisp errors with Gnus and AUC-TeX?
-
-The real problem is out of date software.  Upgrade to later versions of
-Gnus and AUC-TeX where this problem doesn't exist.
-
-The problem lies with the needs for an Emacs function,
-@code{set-text-properties}, which generally isn't required by XEmacs.
-The solutions include adding the following code to your @file{.emacs}:
+The @code{read-kbd-macro} function returns the internal Emacs
+representation of a human-readable string (which is its argument).
+Thus:
 
 @lisp
-(fset 'set-text-properties (symbol-function 'ignore))
+(read-kbd-macro "C-c C-a")
+     @result{} [(control ?c) (control ?a)]
+
+(read-kbd-macro "C-c C-. <up>")
+     @result{} [(control ?c) (control ?.) up]
 @end lisp
 
-or 
+In GNU Emacs the same forms will be evaluated to what GNU Emacs
+understands internally---the sequences @code{"\C-x\C-c"} and @code{[3
+67108910 up]}, respectively.
 
-@lisp
-(defadvice set-text-properties (around ignore-strings activate)
-  "Ignore strings."
-  (or (stringp (ad-get-arg 3))
-      ad-do-it))
-@end lisp
-
-The best is probably the canonical solution (posted by C.Thompson, on
-10/17/95):
-
-@lisp
-(defun set-text-properties (start end props &optional buffer)
-  "You should NEVER use this function.  It is ideologically blasphemous.
-It is provided only to ease porting of broken FSF Emacs programs."
-  (if (stringp buffer) nil
-    (map-extents 
-     #'(lambda (extent ignored)
-	 (remove-text-properties
-	  start end (list (extent-property extent 'text-prop) nil)
-	  buffer))
-     buffer start end nil nil 'text-prop)
-    (add-text-properties start end props buffer)))
-@end lisp
-
-@node Q5.1.5, Q5.2.1, Q5.1.4, Miscellaneous
-@section How do I put a glyph as annotation in a buffer?
-
-Thomas Feuster <feuster@@tp4.physik.uni-giessen.de> writes:
+The exact @dfn{human-readable} syntax is defined in the docstring of
+@code{edmacro-mode}.  I'll repeat it here, for completeness.
 
 @quotation
-@lisp
-(let ((image-glyph (make-glyph-internal)))
-(seems to be unavoidable to do 'make-glyph-internal')
-@end lisp
+Format of keyboard macros during editing:
 
-Now for viewing files:
+Text is divided into @dfn{words} separated by whitespace.  Except for
+the words described below, the characters of each word go directly as
+characters of the macro.  The whitespace that separates words is
+ignored.  Whitespace in the macro must be written explicitly, as in
+@kbd{foo SPC bar RET}.
 
-@lisp
-(set-glyph-image image-glyph view-graph-file-buf))
-@end lisp
+@itemize @bullet
+@item
+The special words @kbd{RET}, @kbd{SPC}, @kbd{TAB}, @kbd{DEL}, @kbd{LFD},
+@kbd{ESC}, and @kbd{NUL} represent special control characters.  The
+words must be written in uppercase.
 
-For viewing already loaded buffers:
+@item
+A word in angle brackets, e.g., @code{<return>}, @code{<down>}, or
+@code{<f1>}, represents a function key.  (Note that in the standard
+configuration, the function key @code{<return>} and the control key
+@kbd{RET} are synonymous.)  You can use angle brackets on the words
+@kbd{RET}, @kbd{SPC}, etc., but they are not required there.
 
-@lisp
-(setq image-glyph (make-glyph 
-                   (vector view-graph-file-format :data 
-		           (buffer-substring 
-			   (point-min) 
-		       	   (point-max)))))
-@end lisp
+@item
+Keys can be written by their @sc{ascii} code, using a backslash followed
+by up to six octal digits.  This is the only way to represent keys with
+codes above \377.
 
-The thing I couldn't figure out is how to make XEmacs guess the format
-from the contents - like it does for files. So it's a real pain to
-extract the format from the extensions of the file-name...
+@item
+One or more prefixes @kbd{M-} (meta), @kbd{C-} (control), @kbd{S-}
+(shift), @kbd{A-} (alt), @kbd{H-} (hyper), and @kbd{s-} (super) may
+precede a character or key notation.  For function keys, the prefixes
+may go inside or outside of the brackets: @code{C-<down>} @equiv{}
+@code{<C-down>}.  The prefixes may be written in any order: @kbd{M-C-x}
+@equiv{} @kbd{C-M-x}.
+
+Prefixes are not allowed on multi-key words, e.g., @kbd{C-abc}, except
+that the Meta prefix is allowed on a sequence of digits and optional
+minus sign: @kbd{M--123} @equiv{} @kbd{M-- M-1 M-2 M-3}.
+
+@item
+The @code{^} notation for control characters also works: @kbd{^M}
+@equiv{} @kbd{C-m}.
+
+@item
+Double angle brackets enclose command names: @code{<<next-line>>} is
+shorthand for @kbd{M-x next-line RET}.
+
+@item
+Finally, @code{REM} or @code{;;} causes the rest of the line to be
+ignored as a comment.
+@end itemize
+
+Any word may be prefixed by a multiplier in the form of a decimal number
+and @code{*}: @code{3*<right>} @equiv{} @code{<right> <right> <right>},
+and @code{10*foo} @equiv{} @code{foofoofoofoofoofoofoofoofoofoo}.
+
+Multiple text keys can normally be strung together to form a word, but
+you may need to add whitespace if the word would look like one of the
+above notations: @code{; ; ;} is a keyboard macro with three semicolons,
+but @code{;;;} is a comment.  Likewise, @code{\ 1 2 3} is four keys but
+@code{\123} is a single key written in octal, and @code{< right >} is
+seven keys but @code{<right>} is a single function key.  When in doubt,
+use whitespace.
 @end quotation
 
-@node Q5.2.1, Q5.2.2, Q5.1.5, Miscellaneous
+@node Q5.1.4, Q5.1.5, Q5.1.3, Miscellaneous
+@section What is the performance hit of @code{let}?
+
+In most cases, not noticable.  Besides, there's no avoiding
+@code{let}---you have to bind your local variables, after all.  Some
+pose a question whether to nest @code{let}s, or use one @code{let} per
+function.  I think because of clarity and maintenance (and possible
+future implementation), @code{let}-s should be used (nested) in a way to
+provide the clearest code.
+
+@node Q5.1.5, Q5.1.6, Q5.1.4, Miscellaneous
+@section What is the recommended use of @code{setq}?
+
+@itemize @bullet
+@item Global variables
+
+You will typically @code{defvar} your global variable to a default
+value, and use @code{setq} to set it later.
+
+It is never a good practice to @code{setq} user variables (like
+@code{case-fold-search}, etc.), as it ignores the user's choice
+unconditionally.  Note that @code{defvar} doesn't change the value of a
+variable if it was bound previously.  If you wish to change a
+user-variable temporarily, use @code{let}:
+
+@lisp
+(let ((case-fold-search nil))
+  ...       ; code with searches that must be case-sensitive
+  ...)
+@end lisp
+
+You will notice the user-variables by their docstrings beginning with an
+asterisk (a convention).
+
+@item Local variables
+
+Bind them with @code{let}, which will unbind them (or restore their
+previous value, if they were bound) after exiting from the @code{let}
+form.  Change the value of local variables with @code{setq} or whatever
+you like (e.g. @code{incf}, @code{setf} and such).  The @code{let} form
+can even return one of its local variables.
+
+Typical usage:
+
+@lisp
+;; iterate through the elements of the list returned by
+;; `hairy-function-that-returns-list'
+(let ((l (hairy-function-that-returns-list)))
+  (while l
+    ... do something with (car l) ...
+    (setq l (cdr l))))
+@end lisp
+
+Another typical usage includes building a value simply to work with it.
+
+@lisp
+;; Build the mode keymap out of the key-translation-alist
+(let ((inbox (file-truename (expand-file-name box)))
+      (i 0))
+  ... code dealing with inbox ...
+  inbox)
+@end lisp
+
+This piece of code uses the local variable @code{inbox}, which becomes
+unbound (or regains old value) after exiting the form.  The form also
+returns the value of @code{inbox}, which can be reused, for instance:
+
+@lisp
+(setq foo-processed-inbox
+      (let .....))
+@end lisp
+@end itemize
+
+@node Q5.1.6, Q5.1.7, Q5.1.5, Miscellaneous
+@section What is the typical misuse of @code{setq} ?
+
+A typical misuse is probably @code{setq}ing a variable that was meant to
+be local.  Such a variable will remain bound forever, never to be
+garbage-collected.  For example, the code doing:
+
+@lisp
+(defun my-function (whatever)
+  (setq a nil)
+  ... build a large list ...
+  ... and exit ...)
+@end lisp
+
+does a bad thing, as @code{a} will keep consuming memory, never to be
+unbound.  The correct thing is to do it like this:
+
+@lisp
+(defun my-function (whatever)
+  (let (a)             ; default initialization is to nil
+    ... build a large list ...
+    ... and exit, unbinding `a' in the process  ...)
+@end lisp
+
+Not only is this prettier syntactically, but it makes it possible for
+Emacs to garbage-collect the objects which @code{a} used to reference.
+
+Note that even global variables should not be @code{setq}ed without
+@code{defvar}ing them first, because the byte-compiler issues warnings.
+The reason for the warning is the following:
+
+@lisp
+(defun flurgoze nil)          ; ok, global internal variable
+...
+
+(setq flurghoze t)      ; ops!  a typo, but semantically correct.
+                        ; however, the byte-compiler warns.
+
+While compiling toplevel forms:
+  ** assignment to free variable flurghoze
+@end lisp
+
+@node Q5.1.7, Q5.1.8, Q5.1.6, Miscellaneous
+@section I like the the @code{do} form of cl, does it slow things down?
+
+It shouldn't.  Here is what Dave Gillespie has to say about cl.el
+performance:
+
+@quotation
+Many of the advanced features of this package, such as @code{defun*},
+@code{loop}, and @code{setf}, are implemented as Lisp macros.  In
+byte-compiled code, these complex notations will be expanded into
+equivalent Lisp code which is simple and efficient.  For example, the
+forms
+
+@lisp
+(incf i n)
+(push x (car p))
+@end lisp
+
+are expanded at compile-time to the Lisp forms
+
+@lisp
+(setq i (+ i n))
+(setcar p (cons x (car p)))
+@end lisp
+
+which are the most efficient ways of doing these respective operations
+in Lisp.  Thus, there is no performance penalty for using the more
+readable @code{incf} and @code{push} forms in your compiled code.
+
+@emph{Interpreted} code, on the other hand, must expand these macros
+every time they are executed.  For this reason it is strongly
+recommended that code making heavy use of macros be compiled.  (The
+features labelled @dfn{Special Form} instead of @dfn{Function} in this
+manual are macros.)  A loop using @code{incf} a hundred times will
+execute considerably faster if compiled, and will also garbage-collect
+less because the macro expansion will not have to be generated, used,
+and thrown away a hundred times.
+
+You can find out how a macro expands by using the @code{cl-prettyexpand}
+function.
+@end quotation
+
+@node Q5.1.8, Q5.1.9, Q5.1.7, Miscellaneous
+@section I like recursion, does it slow things down?
+
+Yes.  Emacs byte-compiler cannot do much to optimize recursion.  But
+think well whether this is a real concern in Emacs.  Much of the Emacs
+slowness comes from internal mechanisms such as redisplay, or from the
+fact that it is an interpreter.
+
+Please try not to make your code much uglier to gain a very small speed
+gain.  It's not usually worth it.
+
+@node Q5.1.9, Q5.2.1, Q5.1.8, Miscellaneous
+@section How do I put a glyph as annotation in a buffer?
+
+Here is a solution that will insert the glyph annotation at the
+beginning of buffer:
+
+@lisp
+(make-annotation (make-glyph '([FORMAT :file FILE]
+                               [string :data "fallback-text"]))
+                 (point-min)
+                 'text
+                 (current-buffer))
+@end lisp
+
+Replace @samp{FORMAT} with an unquoted symbol representing the format of 
+the image (e.g. @code{xpm}, @code{xbm}, @code{gif}, @code{jpeg}, etc.)
+Instead of @samp{FILE}, use the image file name
+(e.g. @file{/usr/local/lib/xemacs-20.2/etc/recycle.xpm}).
+
+You can turn this to a function (that optionally prompts you for a file
+name), and inserts the glyph at @code{(point)} instead of
+@code{(point-min)}.
+
+@node Q5.2.1, Q5.2.2, Q5.1.9, Miscellaneous
 @section How do I turn off the sound?
 
 Add the following line to your @file{.emacs}:
@@ -4378,6 +4658,9 @@ Add the following line to your @file{.emacs}:
 (setq bell-volume 0)
 (setq sound-alist nil)
 @end lisp
+
+That will make your XEmacs totally silent -- even the default ding sound 
+(TTY beep on TTY-s) will be gone.
 
 @node Q5.2.2, Q5.2.3, Q5.2.1, Miscellaneous
 @section How do I get funky sounds instead of a boring beep?
@@ -4452,11 +4735,6 @@ comp.emacs.xemacs on 12/9/94.  This version includes more documentation
 than previous versions.  This may prove useful if you need to customize
 any indent-functions.
 
-NB: I would have thought with the passage of time this would be the
-standard version by now, but that appears not to be the case.  The
-version of filladapt included with 19.14 is last dated 1993, and does
-not have a version number.
-
 @node Q5.3.2, Q5.3.3, Q5.3.1, Miscellaneous
 @section Fontifying hang when editing a postscript file.
 
@@ -4529,20 +4807,64 @@ Obsolete question, left blank to avoid renumbering.
 @node Q5.3.7, Q5.3.8, Q5.3.6, Miscellaneous
 @section Can I have the end of the buffer delimited in some way?
 
-Say, with: [END]?
+Say, with: @samp{[END]}?
 
-Use this:
-
-@lisp
-(make-annotation "[END]" (point-max) 'text (current-buffer))
-@end lisp
-
-Note that you might want to put this in a hook.  Since
-@code{make-annotation} is not defined by default, you might also need:
+Try this:
 
 @lisp
-(require 'annotations)
+(let ((ext (make-extent (point-min) (point-max))))
+  (set-extent-property ext 'start-closed t)
+  (set-extent-property ext 'end-closed t)
+  (set-extent-property ext 'detachable nil)  
+  (set-extent-end-glyph ext (make-glyph [string :data "[END]"])))
 @end lisp
+
+Since this is XEmacs, you can specify an icon to be shown on
+window-system devices.  To do so, change the @code{make-glyph} call to
+something like this:
+
+@lisp
+(make-glyph '([xpm :file "~/something.xpm"]
+              [string :data "[END]"]))
+@end lisp
+
+You can inline the @sc{xpm} definition yourself by specifying
+@code{:data} instead of @code{:file}.  Here is such a full-featured
+version that works on both X and TTY devices:
+
+@lisp
+(let ((ext (make-extent (point-min) (point-max))))
+  (set-extent-property ext 'start-closed t)
+  (set-extent-property ext 'end-closed t)
+  (set-extent-property ext 'detachable nil)  
+  (set-extent-end-glyph ext (make-glyph '([xpm :data "\
+/* XPM */
+static char* eye = @{
+\"20 11 7 2\",
+\"__ c None\"
+\"_` c #7f7f7f\",
+\"_a c #fefefe\",
+\"_b c #7f0000\",
+\"_c c #fefe00\",
+\"_d c #fe0000\",
+\"_e c #bfbfbf\",
+\"___________`_`_`___b_b_b_b_________`____\", 
+\"_________`_`_`___b_c_c_c_b_b____________\", 
+\"_____`_`_`_e___b_b_c_c_c___b___b_______`\", 
+\"___`_`_e_a___b_b_d___b___b___b___b______\", 
+\"_`_`_e_a_e___b_b_d_b___b___b___b___b____\", 
+\"_`_`_a_e_a___b_b_d___b___b___b___b___b__\", 
+\"_`_`_e_a_e___b_b_d_b___b___b___b___b_b__\", 
+\"___`_`_e_a___b_b_b_d_c___b___b___d_b____\", 
+\"_____`_`_e_e___b_b_b_d_c___b_b_d_b______\", 
+\"_`_____`_`_`_`___b_b_b_d_d_d_d_b________\", 
+\"___`_____`_`_`_`___b_b_b_b_b_b__________\", 
+@} ;"]
+                                          [string :data "[END]"]))))
+@end lisp
+
+Note that you might want to make this a function, and put it to a hook.
+We leave that as an excercise for the reader.
 
 @node Q5.3.8, Q5.3.9, Q5.3.7, Miscellaneous
 @section How do I insert today's date into a buffer?
@@ -4569,6 +4891,16 @@ valid abbrevs, but @samp{&d}, and @samp{x d} are not.
 If this sounds confusing to you, (re-)read the online documentation for
 abbrevs (@kbd{C-h i m XEmacs RET m Abbrevs RET}), and then come back and
 read this question/answer again.
+@end quotation
+
+Hrvoje Niksic <hniksic@@srce.hr> writes:
+
+@quotation
+I consider this a bug.  I may attempt to fix it one day (and add a
+variable to revert to the current behavior).
+
+If many people wants to see this fixed, send me mails---they will move
+me to start hacking sooner.
 @end quotation
 
 @node Q5.3.10, Q5.3.11, Q5.3.9, Miscellaneous
@@ -4616,9 +4948,9 @@ Or, alternatively, as:
   (save-excursion 
     (goto-char (point-min))
     (search-forward mail-header-separator)
-    (beginning-of-line nil)
+    (beginning-of-line)
     (insert "X-Face:")
-    (insert-file "~/.face")))
+    (insert-file-contents "~/.face")))
 
 (add-hook 'mail-setup-hook 'mail-insert-x-face)
 @end lisp
@@ -4751,22 +5083,41 @@ XEmacs distribution, please see the version on the Web or archived at the
 various FAQ FTP sites, as this file is surely out of date.
 
 @menu
-* Q6.0.1::      What is new in 20.1?  @strong{updated 4/97}
+* Q6.0.1::      What is new in 20.2?
+* Q6.0.2::      What is new in 20.3?
 * Q6.0.3::      Procedural changes in XEmacs development.
 @end menu
 
-@node Q6.0.1, Q6.0.3, Current Events, Current Events
-@section What is new in 20.1?
+@node Q6.0.1, Q6.0.2, Current Events, Current Events
+@section What is new in 20.2?
 
-The biggest changes in 20.1 include intergration of EFS (the next
-generation of ange-ftp) and AUC Tex (the Emacs subsystem that includes a 
+The biggest changes in 20.2 include intergration of EFS (the next
+generation of ange-ftp) and AUC Tex (the Emacs subsystem that includes a
 major mode for editing Tex and LaTeX, and a lot of other stuff).  Many
-bugs from 20.0 have been fixed for this release.
+bugs from 20.0 have been fixed for this release.  20.2 also contains a
+new system for customizing XEmacs options, invoked via @kbd{M-x
+customize}.
 
-XEmacs 20.1 is the development release, and is no longer considered
-unstable.
+XEmacs 20.2 is the development release (20.0 was beta), and is no longer
+considered unstable.
 
-@node Q6.0.3,  , Q6.0.1, Current Events
+@node Q6.0.2, Q6.0.3, Q6.0.1, Current Events
+@section What is new in 20.3?
+
+XEmacs release 20.3 is planned for autumn 1997.  It will likely contain
+a much smaller amount of code for basic functionality, with all the
+popular Lisp packages being available in the form of easy-to-install
+add-ons.
+
+Other input methods (such as skk) will be made available for Mule, as
+well as more user-level documentation.
+
+Many new features are planned, such as multiple TTY frames, support for
+Autoconf 2, synches with Emacs 20.1, and more; much of this is already
+running in various beta versions.  Ask at
+@code{<xemacs-beta-request@@xemacs.org>} for more details.
+
+@node Q6.0.3,  , Q6.0.2, Current Events
 @section Procedural changes in XEmacs development.
 
 @enumerate
@@ -4783,11 +5134,13 @@ Due to the long development cycle in between releases, it has been
 decided that intermediate versions will be made available in source only
 form for the truly interested.
 
-No further XEmacs 19 releases are planned.
+No further XEmacs 19 feature releases are planned.  XEmacs 19.16 will
+consist of 19.15 plus the collected bugfixes, and will probably be the
+final version of XEmacs 19.
 
 @item
 As of December 1996, Steve Baur <steve@@altair.xemacs.org> has become
 the lead maintainer of XEmacs.
+@end enumerate
 
 @bye
-<

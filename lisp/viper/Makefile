@@ -25,10 +25,10 @@ MAKEINFO = makeinfo
 INSTALL = install
 
 # --------- ONLY AUTHORIZED PERSONNEL BEYOND THIS POINT!!! ------------
-VIPER = viper.el viper-util.el viper-mous.el viper-ex.el \
+VIPER = viper.el viper-cmd.el viper-util.el viper-mous.el viper-ex.el \
         viper-macs.el viper-keym.el viper-init.el
 VIPERelc = viper-util.elc viper-mous.elc viper-ex.elc viper-macs.elc \
-	   viper-keym.elc viper.elc viper-init.elc
+	   viper-keym.elc viper.elc viper-cmd.elc viper-init.elc
 
 all: dvi info hello elc goodbye
 
@@ -57,7 +57,7 @@ hello:
 	@echo ""
 	@echo ""
 
-viper.dvi: viper.texi viper-cmd.texi
+viper.dvi: viper.texi
 	@echo ""
 	@echo ""
 	@echo "Making viper.dvi --- a Printable Version of the Viper Manual";
@@ -75,7 +75,7 @@ viper.dvi: viper.texi viper-cmd.texi
 	@echo "Texing Again";
 	$(TeX) viper.texi
 
-viper.info: viper.texi viper-cmd.texi
+viper: viper.texi 
 	@echo ""
 	@echo ""
 	@echo "Making Info Files for the Viper Manual"
@@ -117,10 +117,14 @@ viper.elc: viper.el viper-util.el viper-init.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile viper.el
 
+viper-cmd.elc: viper-cmd.el viper.el viper-util.el viper-init.el
+	@echo ""
+	$(EMACS) -batch -f batch-byte-compile viper-cmd.el
+
 
 dvi: viper.dvi viperCard.dvi
 
-info: viper.info
+info: viper
 
 install: all
 	$(INSTALL) -m444 $(VIPER) $(LISPDIR)
@@ -128,8 +132,7 @@ install: all
 	$(INSTALL) -m444 viper viper-? $(INFODIR)
 	$(INSTALL) -m644 viper.dvi viperCard.dvi $(ETCDIR)
 	@echo ""
-	@echo "Please move viper.texi and viper-cmd.texi to"
-	@echo "            emacs-distribution-directory/man/"
+	@echo "Please move viper.texi to emacs-distribution-directory/man/"
 	@echo ""
 
 clean:
@@ -138,7 +141,7 @@ clean:
 distclean: clean
  
 realclean: clean
-	rm -f *.dvi viper.info*
+	rm -f *.dvi ../info/viper ../info/viper-?
 	rm -f viper.aux viper.cp viper.cps viper.fn viper.fns viper.ky \
 	      viper.kys viper.log viper.pg viper.pgs viper.toc viper.tp \
 	      viper.tps viper.vr viper.vrs

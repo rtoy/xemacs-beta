@@ -189,7 +189,7 @@ update_one_scrollbar_bs (struct frame *f, Widget sb_widget)
   Boolean use_backing_store;
 
   XtVaGetValues (FRAME_X_TEXT_WIDGET (f),
-		 XtNuseBackingStore, &use_backing_store, 0);
+		 XtNuseBackingStore, &use_backing_store, NULL);
 
   if (use_backing_store && sb_widget)
     {
@@ -309,7 +309,7 @@ x_scrollbar_width_changed_in_frame (Lisp_Object specifier, struct frame *f,
      done. */
   if (!in_resource_setting)
     XtVaSetValues (FRAME_X_TEXT_WIDGET (f), XtNscrollBarWidth,
-		   XINT (newval), 0);
+		   XINT (newval), NULL);
 
   if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
     {
@@ -351,7 +351,7 @@ x_scrollbar_height_changed_in_frame (Lisp_Object specifier, struct frame *f,
        (which might specify a user preference). */
   if (!in_resource_setting)
     XtVaSetValues (FRAME_X_TEXT_WIDGET (f), XtNscrollBarHeight,
-		   XINT (newval), 0);
+		   XINT (newval), NULL);
 
   if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
     {

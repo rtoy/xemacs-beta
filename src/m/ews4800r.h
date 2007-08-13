@@ -96,6 +96,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Alter some of the options used when linking.  */
 
-#define LIBS_TERMCAP -lcurses
+#define LIBS_TERMCAP "-lcurses"
 
 

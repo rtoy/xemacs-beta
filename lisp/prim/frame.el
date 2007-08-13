@@ -27,12 +27,16 @@
 
 ;;; Code:
 
+(defgroup frames nil
+  "Support for Emacs frames and window systems."
+  :group 'environment)
+
 ; No need for `frame-creation-function'.
 
 ;;; The initial value given here for this must ask for a minibuffer.
 ;;; There must always exist a frame with a minibuffer, and after we
 ;;; delete the terminal frame, this will be the only frame.
-(defvar initial-frame-plist '(minibuffer t)
+(defcustom initial-frame-plist '(minibuffer t)
   "Plist of frame properties for creating the initial X window frame.
 You can set this in your `.emacs' file; for example,
   (setq initial-frame-plist '(top 1 left 1 width 80 height 55))
@@ -52,30 +56,42 @@ as it appears, you need to use this three-step process:
 * Set `default-frame-plist' to override these options so that they
   don't affect subsequent frames.
 * Set `initial-frame-plist' in a way that matches the X resources,
-  to override what you put in `default-frame-plist'.")
+  to override what you put in `default-frame-plist'."
+  :type '(repeat (group :inline t
+			(symbol :tag "Property")
+			(sexp :tag "Value")))
+  :group 'frames)
 
-(defvar minibuffer-frame-plist '(width 80 height 2 menubar-visible-p nil
+(defcustom minibuffer-frame-plist '(width 80 height 2 menubar-visible-p nil
 				       default-toolbar-visible-p nil)
   "Plist of frame properties for initially creating a minibuffer frame.
 You can set this in your `.emacs' file; for example,
   (setq minibuffer-frame-plist '(top 1 left 1 width 80 height 2))
 Properties specified here supersede the values given in
 `default-frame-plist'.
-The format of this can also be an alist for backward compatibility.")
+The format of this can also be an alist for backward compatibility."
+  :type '(repeat (group :inline t
+			(symbol :tag "Property")
+			(sexp :tag "Value")))
+  :group 'frames)
 
-(defvar pop-up-frame-plist nil
+(defcustom pop-up-frame-plist nil
   "Plist of frame properties used when creating pop-up frames.
 Pop-up frames are used for completions, help, and the like.
 This variable can be set in your init file, like this:
   (setq pop-up-frame-plist '(width 80 height 20))
 These supersede the values given in `default-frame-plist'.
-The format of this can also be an alist for backward compatibility.")
+The format of this can also be an alist for backward compatibility."
+  :type '(repeat (group :inline t
+			(symbol :tag "Property")
+			(sexp :tag "Value")))
+  :group 'frames)
 
 (setq pop-up-frame-function
       (function (lambda ()
 		  (make-frame pop-up-frame-plist))))
 
-(defvar special-display-frame-plist '(height 14 width 80 unsplittable t)
+(defcustom special-display-frame-plist '(height 14 width 80 unsplittable t)
   "*Plist of frame properties used when creating special frames.
 Special frames are used for buffers whose names are in
 `special-display-buffer-names' and for buffers whose names match
@@ -83,7 +99,11 @@ one of the regular expressions in `special-display-regexps'.
 This variable can be set in your init file, like this:
   (setq special-display-frame-plist '(width 80 height 20))
 These supersede the values given in `default-frame-plist'.
-The format of this can also be an alist for backward compatibility.")
+The format of this can also be an alist for backward compatibility."
+  :type '(repeat (group :inline t
+			(symbol :tag "Property")
+			(sexp :tag "Value")))
+  :group 'frames)
 
 (defun safe-alist-to-plist (cruftiness)
   (if (consp (car cruftiness))
@@ -767,15 +787,19 @@ all frames that were visible, and iconify all frames that were not."
 
 ;;; auto-raise and auto-lower
 
-(defvar auto-raise-frame nil
+(defcustom auto-raise-frame nil
   "*If true, frames will be raised to the top when selected.
 Under X, most ICCCM-compliant window managers will have an option to do this
-for you, but this variable is provided in case you're using a broken WM.")
+for you, but this variable is provided in case you're using a broken WM."
+  :type 'boolean
+  :group 'frames)
 
-(defvar auto-lower-frame nil
+(defcustom auto-lower-frame nil
   "*If true, frames will be lowered to the bottom when no longer selected.
 Under X, most ICCCM-compliant window managers will have an option to do this
-for you, but this variable is provided in case you're using a broken WM.")
+for you, but this variable is provided in case you're using a broken WM."
+  :type 'boolean
+  :group 'frames)
 
 (defun default-select-frame-hook ()
   "Implements the `auto-raise-frame' variable.
@@ -1050,11 +1074,15 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
 	(append (list save-frame) frames)
       frames)))
 
-(defvar temp-buffer-shrink-to-fit nil
-  "*When non-nil resize temporary output buffers to minimize blank lines.")
+(defcustom temp-buffer-shrink-to-fit nil
+  "*When non-nil resize temporary output buffers to minimize blank lines."
+  :type 'boolean
+  :group 'frames)
 
-(defvar temp-buffer-max-height .5
-  "*Proportion of frame to use for temp windows.")
+(defcustom temp-buffer-max-height .5
+  "*Proportion of frame to use for temp windows."
+  :type 'number
+  :group 'frames)
 
 (defun show-temp-buffer-in-current-frame (buffer)
   "For use as the value of temp-buffer-show-function:
