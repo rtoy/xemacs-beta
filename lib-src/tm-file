@@ -1,0 +1,20 @@
+#!/bin/sh -
+#
+# $Id: tm-file,v 1.1.1.1 1996/12/18 03:52:12 steve Exp $
+#
+
+if [ "$TM_TMP_DIR" = "" ]; then
+	TM_TMP_DIR=/tmp
+	export TM_TMP_DIR
+fi
+
+if [ "$5" = "" ]; then
+	filename="$TM_TMP_DIR/mime$$"
+else
+	filename="$TM_TMP_DIR/$5"
+fi
+
+
+echo "$2; $3 -> $filename"
+
+tmdecode $3 $1 $filename

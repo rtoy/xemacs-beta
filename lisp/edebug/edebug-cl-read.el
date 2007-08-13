@@ -1,31 +1,34 @@
-;; edebug-cl-read.el  - Edebug reader macros for use with cl-read.
+;;; edebug-cl-read.el --- Edebug reader macros for use with cl-read.
 
 ;; Copyright (C) 1993 Daniel LaLiberte
 ;; Author: Daniel LaLiberte <liberte@cs.uiuc.edu>
 ;; Keywords: lisp, tools, maint
 
-;; LCD Archive Entry:
-;; edebug-cl-read.el|Daniel LaLiberte|liberte@cs.uiuc.edu
-;; |Edebug reader macros for cl-read.el
-;; |$Date: 1996/12/18 03:33:27 $|$Revision: 1.1.1.1 $|~/modes/edebug-cl-read.el|
+;; This file is part of XEmacs.
 
-;; This file is not yet part of GNU Emacs.
-
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;;; Commentary:
+;;; Synched up with: Not in FSF
+
+;;; Commentary:
+
+;; LCD Archive Entry:
+;; edebug-cl-read.el|Daniel LaLiberte|liberte@cs.uiuc.edu
+;; |Edebug reader macros for cl-read.el
+;; |$Date: 1996/12/18 03:54:29 $|$Revision: 1.1.1.2 $|~/modes/edebug-cl-read.el|
 
 ;; If you use cl-read.el and want to use edebug with any code
 ;; in a file written with CL read syntax, then you need to use this
@@ -40,6 +43,8 @@
 
 ;; Need to mangle all local variable names that might be visible to
 ;; eval, e.g. stream, char.  Alternatively, packages could hide them.
+
+;;; Code:
 
 (require 'cl)
 ;; For byte compiling cl-read is needed.

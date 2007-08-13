@@ -294,8 +294,9 @@ prefix argument will cause you to be prompted for a core file to debug."
       (and (eq major-mode 'gdb-mode)	; doesn't work w/ energize yet
 	   (setq current-gdb-buffer (current-buffer))
 	   ;; XEmacs change:
-	   (make-local-hook 'kill-buffer-hook)
-	   (add-hook 'kill-buffer-hook 'gdbsrc-reset nil t))
+	   (progn
+	     (make-local-hook 'kill-buffer-hook)
+	     (add-hook 'kill-buffer-hook 'gdbsrc-reset nil t)))
       (error "Cannot determine current-gdb-buffer"))
 ;;;   (set-process-filter 
 ;;;    (get-buffer-process current-gdb-buffer) 'gdbsrc-mode-filter)
@@ -499,7 +500,7 @@ selection-extent, nil otherwise."
 	 epnt
 	 extent
 	 (eq (window-buffer ewin)
-	     (extent-buffer extent))
+	     (extent-object extent))
 	 (extent-start-position extent)
 	 (> epnt (extent-start-position extent))
 	 (> (extent-end-position extent) epnt))))
@@ -510,7 +511,7 @@ primary selection-extent, nil otherwise."
   ;; stig@hackvan.com
   (and extent		; FIXME - I'm such a sinner...
        (eq (current-buffer) 
-	   (extent-buffer extent))
+	   (extent-object extent))
        (> (point) (extent-start-position extent))
        (>= (extent-end-position extent) (point))))
 
@@ -560,8 +561,8 @@ buffer.  "
   (let ((gbuf (or gdbsrc-associated-buffer current-gdb-buffer)))
     (cond ((eq (current-buffer) gbuf)
 	   (and gdb-arrow-extent
-		(extent-buffer gdb-arrow-extent)
-		(progn (pop-to-buffer (extent-buffer gdb-arrow-extent))
+		(extent-object gdb-arrow-extent)
+		(progn (pop-to-buffer (extent-object gdb-arrow-extent))
 		       (goto-char (extent-start-position gdb-arrow-extent)))))
 	  ((buffer-name gbuf) (pop-to-buffer gbuf))
 	  ((y-or-n-p "No debugger.  Start a new one? ")
@@ -840,7 +841,7 @@ continues.  This can be bound to either a key or a mouse button."
   (ad-set-arg 2 'source) ; tell it not to select the gdb window
   ad-do-it
   (save-excursion
-    (let* ((buf (extent-buffer gdb-arrow-extent))
+    (let* ((buf (extent-object gdb-arrow-extent))
 	   (win (get-buffer-window buf)))
       (setq gdbsrc-last-src-buffer buf)
       (select-window win)

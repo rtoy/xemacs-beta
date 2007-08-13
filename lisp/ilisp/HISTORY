@@ -1,6 +1,53 @@
+# -*- Mode: Text -*-
+
 ILISP HISTORY
 
 ===============================================================================
+Version 5.8 alpha
+
+Fixes and enhancements since 5.7
+
+-- XLISP and XLISPSTAT support has been added on an experimental way.
+   Please give us feedback on their behavior.
+
+-- There is now a way to disable the DEFPACKAGE feature for GCL.  But
+   it is not turned on.  You have to fix it manually by transforming two
+   '#+(and nil gcl)' into '#+(and t gcl)'
+
+-- A few fixes were made to realign ILISP to Xemacs 19.14
+
+-- The file 'clisp.lisp' has been renamed to 'cl-ilisp.lisp', in order
+   to avoid confusion with the CLISP implementation of Common Lisp.
+
+-- The file ILISP.prj (if present) can be safely ignored unless you
+   want to use the PRCS project control system
+   (http://http.cs.berkeley.edu/~jmacd/prcs-home.html)
+
+-- Changed 'comint-ipc' and 'bridge'. They now use
+   'process-send-string' instead of defining specialized versions of
+   it. (This was done because it appears that the newer versions of
+   'comint' have a 'process-send-string' that does what these specialized
+   versions used to do.)
+
+-- Added constant '+ilisp-emacs-minor-version-number+' (in 'ilcompat').
+
+-- Conditionalized loading of 'bridge.el' (in 'ilisp').
+
+-- Fixed the annoying ECL/GCL glitch in 'ilisp-kcl' and the error
+   regexps for KCL and IBCL in the same file
+
+-- Patched 'comint-ipc' according to suggestion by Kazuhiro Fujieda.
+
+-- Patched 'ilisp-out'  according to suggestion by Kazuhiro Fujieda.
+
+
+Known Bugs
+
+-- Allegro multiprocessing output handling is still broken.  This is a
+   though one and the maintaners cannot fix it.
+
+-------------------------------------------------------------------------------
+
 Version 5.7
 
 Fixes and enhancements since 5.6:

@@ -2,11 +2,11 @@
 
 ;; Copyright (C) 1994 Free Software Foundation, Inc.
 
-;; Author:        1994-1995 Barry A. Warsaw
-;; Maintainer:    tools-help@merlin.cnri.reston.va.us
+;; Author:        1994-1996 Barry A. Warsaw
+;; Maintainer:    tools-help@python.org
 ;; Created:       26-Feb-1994
-;; Version:       2.32
-;; Last Modified: 1995/07/12 18:53:17
+;; Version:       2.37
+;; Last Modified: 1996/10/23 04:06:58
 ;; Keywords:      debugging lisp tools
 
 ;; This file is part of GNU Emacs.
@@ -24,12 +24,6 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;;; Synched up with: FSF 19.30.
-;;; In typical "What the hell?" fashion, the version distributed
-;;; with FSF 19.30 claims to be version 2.33 while ours is version 2.32,
-;;; but ours is actually more recent.  Is this another example of
-;;; FSFmacs version corruption?
 
 ;;; Commentary:
 ;;
@@ -80,16 +74,6 @@
 ;; You can restore any function's original function definition with
 ;; elp-restore-function.  The other instrument, restore, and reset
 ;; functions are provided for symmetry.
-
-;; Note that there are plenty of factors that could make the times
-;; reported unreliable, including the accuracy and granularity of your
-;; system clock, and the overhead spent in lisp calculating and
-;; recording the intervals.  The latter I figure is pretty constant
-;; so, while the times may not be entirely accurate, I think they'll
-;; give you a good feel for the relative amount of work spent in the
-;; various lisp routines you are profiling.  Note further that times
-;; are calculated using wall-clock time, so other system load will
-;; affect accuracy too.
 
 ;; Here is a list of variable you can use to customize elp:
 ;;   elp-function-list
@@ -145,11 +129,6 @@
 ;; Make this act like a real profiler, so that it records time spent
 ;; in all branches of execution.
 
-;; LCD Archive Entry:
-;; elp|Barry A. Warsaw|tools-help@merlin.cnri.reston.va.us|
-;; Emacs Lisp Profiler|
-;; 1995/07/12 18:53:17|2.32|~/misc/elp.el.Z|
-
 ;;; Code:
 
 
@@ -198,10 +177,10 @@ In other words, a new unique buffer is create every time you run
 ;; end of user configuration variables
 
 
-(defconst elp-version "2.32"
+(defconst elp-version "2.37"
   "ELP version number.")
 
-(defconst elp-help-address "tools-help@merlin.cnri.reston.va.us"
+(defconst elp-help-address "tools-help@python.org"
   "Address accepting submissions of bug reports and questions.")
 
 (defvar elp-results-buffer "*ELP Profiling Results*"
@@ -226,15 +205,30 @@ This variable is set by the master function.")
   "Instrument FUNSYM for profiling.
 FUNSYM must be a symbol of a defined function."
   (interactive "aFunction to instrument: ")
-  ;; raise an error if the function is already instrumented
-  (and (get funsym elp-timer-info-property)
-       (error "Symbol `%s' is already instrumented for profiling." funsym))
+  ;; restore the function.  this is necessary to avoid infinite
+  ;; recursion of already instrumented functions (i.e. elp-wrapper
+  ;; calling elp-wrapper ad infinitum).  it is better to simply
+  ;; restore the function than to throw an error.  this will work
+  ;; properly in the face of eval-defun because if the function was
+  ;; redefined, only the timer info will be nil'd out since
+  ;; elp-restore-function is smart enough not to trash the new
+  ;; definition.
+  (elp-restore-function funsym)
   (let* ((funguts (symbol-function funsym))
 	 (infovec (vector 0 0 funguts))
 	 (newguts '(lambda (&rest args))))
     ;; we cannot profile macros
     (and (eq (car-safe funguts) 'macro)
-	 (error "ELP cannot profile macro %s" funsym))
+	 (error "ELP cannot profile macro: %s" funsym))
+    ;; TBD: at some point it might be better to load the autoloaded
+    ;; function instead of throwing an error.  if we do this, then we
+    ;; probably want elp-instrument-package to be updated with the
+    ;; newly loaded list of functions.  i'm not sure it's smart to do
+    ;; the autoload here, since that could have side effects, and
+    ;; elp-instrument-function is similar (in my mind) to defun-ish
+    ;; type functionality (i.e. it shouldn't execute the function).
+    (and (eq (car-safe funguts) 'autoload)
+	 (error "ELP cannot profile autoloaded function: %s" funsym))
     ;; put rest of newguts together
     (if (commandp funsym)
 	(setq newguts (append newguts '((interactive)))))
@@ -300,10 +294,12 @@ Argument FUNSYM is the symbol of a defined function."
     ;; because its possible the function got un-instrumented due to
     ;; circumstances beyond our control.  Also, check to make sure
     ;; that the current function symbol points to elp-wrapper.  If
-    ;; not, then the user probably did an eval-defun while the
-    ;; function was instrumented and we don't want to destroy the new
-    ;; definition.
+    ;; not, then the user probably did an eval-defun, or loaded a
+    ;; byte-compiled version, while the function was instrumented and
+    ;; we don't want to destroy the new definition.  can it ever be
+    ;; the case that a lisp function can be compiled instrumented?
     (and info
+	 (not (compiled-function-p (symbol-function funsym)))
 	 (assq 'elp-wrapper (symbol-function funsym))
 	 (fset funsym (aref info 2)))))
 
@@ -313,13 +309,7 @@ Argument FUNSYM is the symbol of a defined function."
 Use optional LIST if provided instead."
   (interactive "PList of functions to instrument: ")
   (let ((list (or list elp-function-list)))
-    (mapcar
-     (function
-      (lambda (funsym)
-	(condition-case nil
-	    (elp-instrument-function funsym)
-	  (error nil))))
-     list)))
+    (mapcar 'elp-instrument-function list)))
 
 ;;;###autoload
 (defun elp-instrument-package (prefix)
@@ -597,5 +587,4 @@ displayed."
 
 
 (provide 'elp)
-
 ;; elp.el ends here

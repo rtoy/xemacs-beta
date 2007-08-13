@@ -1,0 +1,73 @@
+-*- Mode: Text -*-
+
+WELCOME TO ILISP.
+
+FIRST INSTALLATION STEP: UNPACKING AND COMPILING.
+
+SECOND INSTALLATION STEP: DIALECT REQUIREMENTS.
+
+ILISP assumes a minimum of CLtL2 compliance. This requirements
+immediately clashes with the problems of some KCL-derivativs,
+including GCL.  Here is a list of known problems for several CL
+implementations (we do not know whether there are problems with
+Scheme's - please let us know).
+
+o All dialects
+
+	Be sure that the variables:
+
+	ilisp-binary-extension
+	ilisp-init-binary-extension
+	ilisp-binary-command
+
+	Have the appropriate value.  Older versions of ILISP (< 5.8)
+	assumed a single CL installation and suggested a change to the
+	hook 'ilisp-site-hook' in the 'ilisp.emacs' file.
+
+	This should not be so anymore.
+
+
+o KCL, AKCL, Ibuki, GCL, and ECL
+
+	- DEFPACKAGE
+	  You need to have your system configured with a
+	  DEFPACKAGE. You can either generate an image which contains
+	  it or you can arrange the init file to load it for you.
+
+	  You can find a DEFPACKAGE in the AI.Repository of CMU.
+
+	- LOOP
+	  Most likely the DEFPACKAGE will require a full fledged LOOP.
+	  The same instructions apply.
+
+
+o CMUCL
+
+	Try to set the variables:
+
+	cmulisp-source-directory-regexp
+	cmulisp-local-source-directory
+
+	To sensible values.
+
+
+o Harlequin
+
+	No known extra installation glitches
+
+
+o Lucid
+
+	No known extra installation glitches
+
+
+o Allegro
+
+	No known extra installation glitches
+
+
+o CLISP
+
+	No known extra installation glitches
+
+

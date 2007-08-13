@@ -1149,8 +1149,9 @@ lisp=   ${lispdir}paths.el \
         ${lispdir}prim/paragraphs.elc ${lispdir}modes/lisp-mode.elc \
         ${lispdir}modes/text-mode.elc ${lispdir}prim/fill.elc \
         ${lispdir}prim/isearch-mode.elc ${lispdir}prim/misc.elc \
-	${lispdir}modes/cc-mode.elc ${lispdir}packages/vc-hooks.elc \
+	${lispdir}packages/vc-hooks.elc \
         ${lispdir}prim/replace.elc ${lispdir}prim/specifier.elc \
+	${lispdir}packages/scroll-in-place.elc \
         ${lispdir}modes/auto-show.elc SUNPRO_LISP TTY_LISP \
         ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP EPOCH_LISP \
         ${lispdir}prim/itimer.elc ${lispdir}ediff/ediff-hook.elc \

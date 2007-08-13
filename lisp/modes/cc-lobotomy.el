@@ -25,8 +25,6 @@
 ;; along with this program; if not, write to the Free Software
 ;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: Not in FSF.
-
 ;;; Commentary:
 ;;
 ;; Every effort has been made to improve the performance of

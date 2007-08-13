@@ -4,33 +4,38 @@
 ;; Author: Daniel LaLiberte <liberte@cs.uiuc.edu>
 ;; Keywords: lisp, tools, maint
 
-;; LCD Archive Entry:
-;; cl-specs.el|Daniel LaLiberte|liberte@cs.uiuc.edu
-;; |Edebug specs for cl.el
-;; |$Date: 1996/12/18 03:33:26 $|$Revision: 1.1.1.1 $|~/modes/cl-specs.el|
+;; This file is part of XEmacs.
 
-;; This file is part of GNU Emacs.
-
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; XEmacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;;; Commentary:
+;;; Synched up with: Not in FSF
+
+;;; Commentary:
+
+;; LCD Archive Entry:
+;; cl-specs.el|Daniel LaLiberte|liberte@cs.uiuc.edu
+;; |Edebug specs for cl.el
+;; |$Date: 1996/12/18 03:54:29 $|$Revision: 1.1.1.2 $|~/modes/cl-specs.el|
 
 ;; These specs are to be used with edebug.el version 3.3 or later and
 ;; cl.el version 2.03 or later, by Dave Gillespie <daveg@synaptics.com>.
 
-;; This file need not be byte-compiled, but it shouldnt hurt.
+;; This file need not be byte-compiled, but it shouldn't hurt.
+
+;;; Code:
 
 (provide 'cl-specs)
 ;; Do the above provide before the following require.
@@ -469,3 +474,4 @@
 (def-edebug-spec loop-d-type-spec
   (&or (loop-d-type-spec . [&or nil loop-d-type-spec]) cl-type-spec))
 
+;; cl-specs.el ends here

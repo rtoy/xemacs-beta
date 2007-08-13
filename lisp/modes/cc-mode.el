@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         4.315
-;; Last Modified:   1996/08/20 21:08:13
+;; Version:         4.322
+;; Last Modified:   1996/10/04 20:28:14
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -533,6 +533,20 @@ useful for Emacs 19.")
                          (inline-open          . 0)
                          ))
      )
+    ("linux"
+     (c-basic-offset  . 8)
+     (c-comment-only-line-offset . 0)
+     (c-hanging-braces-alist . ((brace-list-open)
+				(substatement-open after)
+				(block-close . c-snug-do-while)))
+     (c-cleanup-list . (brace-else-brace))
+     (c-offsets-alist . ((statement-block-intro . +)
+			 (knr-argdecl-intro     . 0)
+			 (substatement-open     . 0)
+			 (label                 . 0)
+			 (statement-cont        . +)
+			 ))
+     )
     ("java"
      (c-basic-offset . 2)
      (c-comment-only-line-offset . (0 . 0))
@@ -623,7 +637,7 @@ re-dump Emacs.")
     ["Backward Statement"     c-beginning-of-statement t]
     ["Forward Statement"      c-end-of-statement t]
     )
-  "XEmacs 19 menu for C/C++/ObjC modes.")
+  "XEmacs 19 menu for C/C++/ObjC/Java modes.")
 
 ;; Sadly we need this for a macro in Emacs 19.
 (eval-when-compile
@@ -851,10 +865,11 @@ All other Emacsen use the `old-re' suite.")
 	(define-key map [menu-bar c forward-stmt]
 	  '("Forward Statement" . c-end-of-statement))
 
-	;; RMS: mouse-3 should not select this menu.  mouse-3's global
-	;; definition is useful in C mode and we should not interfere
-	;; with that.  The menu is mainly for beginners, and for them,
-	;; the menubar requires less memory than a special click.
+	;; RMS says: mouse-3 should not select this menu.  mouse-3's
+	;; global definition is useful in C mode and we should not
+	;; interfere with that.  The menu is mainly for beginners, and
+	;; for them, the menubar requires less memory than a special
+	;; click.
 	t)
     (error nil)))
 
@@ -910,7 +925,7 @@ All other Emacsen use the `old-re' suite.")
   ;;
   ;; Emacs 19 defines menus in the mode map. This call will return
   ;; t on Emacs 19, otherwise no-op and return nil.
-  (if (and (not (c-mode-fsf-menu "C" c-mode-map))
+  (if (and (not (c-mode-fsf-menu "CC-Mode" c-mode-map))
 	   ;; in XEmacs 19, we want the menu to popup when the 3rd
 	   ;; button is hit.  In Lucid Emacs 19.10 and beyond this is
 	   ;; done automatically if we put the menu on mode-popup-menu
@@ -947,7 +962,8 @@ All other Emacsen use the `old-re' suite.")
   (define-key c++-mode-map ">"      'c-electric-lt-gt)
   ;; Emacs 19 defines menus in the mode map. This call will return
   ;; t on Emacs 19, otherwise no-op and return nil.
-  (c-mode-fsf-menu "C++" c++-mode-map))
+;  (c-mode-fsf-menu "C++" c++-mode-map)
+  )
 
 (defvar objc-mode-map ()
   "Keymap used in objc-mode buffers.")
@@ -971,7 +987,8 @@ All other Emacsen use the `old-re' suite.")
   (define-key objc-mode-map "/"      'c-electric-slash)
   ;; Emacs 19 defines menus in the mode map. This call will return
   ;; t on Emacs 19, otherwise no-op and return nil.
-  (c-mode-fsf-menu "ObjC" objc-mode-map))
+;  (c-mode-fsf-menu "ObjC" objc-mode-map)
+  )
 
 (defvar java-mode-map ()
   "Keymap used in java-mode buffers.")
@@ -996,7 +1013,8 @@ All other Emacsen use the `old-re' suite.")
   (define-key java-mode-map "/"      'c-electric-slash)
   ;; Emacs 19 defines menus in the mode map. This call will return t
   ;; on Emacs 19, otherwise no-op and return nil.
-  (c-mode-fsf-menu "Java" java-mode-map))
+;  (c-mode-fsf-menu "Java" java-mode-map)
+  )
 
 (defun c-populate-syntax-table (table)
   ;; Populate the syntax TABLE
@@ -1139,10 +1157,10 @@ behavior that users are familiar with.")
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
 ;; [I add it here only because c-mode has it -- BAW]
-;;(autoload 'c-macro-expand "cmacexp"
-;;  "Display the result of expanding all C macros occurring in the region.
-;;The expansion is entirely correct because it uses the C preprocessor."
-;;  t)
+;(autoload 'c-macro-expand "cmacexp"
+;  "Display the result of expanding all C macros occurring in the region.
+;The expansion is entirely correct because it uses the C preprocessor."
+;  t)
 
 
 ;; constant regular expressions for looking at various constructs
@@ -2359,6 +2377,7 @@ VALUE.  This function also sets the current style to STYLE using
       (setq c-style-alist (cons (cons style descrip) c-style-alist))))
   (and set-p (c-set-style style)))
 
+
 (defun c-fill-paragraph (&optional arg)
   "Like \\[fill-paragraph] but handles C and C++ style comments.
 If any of the current line is a comment or within a comment,
@@ -2865,18 +2884,26 @@ move backward across a preprocessor conditional."
 
 ;; commands to indent lines, regions, defuns, and expressions
 (defun c-indent-command (&optional whole-exp)
-  "Indent current line as C++ code, or in some cases insert a tab character.
+  "Indent current line as C code, and/or insert some whitespace.
 
 If `c-tab-always-indent' is t, always just indent the current line.
 If nil, indent the current line only if point is at the left margin or
-in the line's indentation; otherwise insert a tab.  If other than nil
-or t, then tab is inserted only within literals (comments and strings)
-and inside preprocessor directives, but line is always reindented.
+in the line's indentation; otherwise insert some whitespace[*].  If
+other than nil or t, then some whitespace[*] is inserted only within
+literals (comments and strings) and inside preprocessor directives,
+but the line is always reindented.
 
 A numeric argument, regardless of its value, means indent rigidly all
 the lines of the expression starting after point so that this line
 becomes properly indented.  The relative indentation among the lines
-of the expression are preserved."
+of the expression are preserved.
+
+  [*] The amount and kind of whitespace inserted is controlled by the
+  variable `c-insert-tab-function', which is called to do the actual
+  insertion of whitespace.  Normally the function in this variable
+  just inserts a tab character, or the equivalent number of spaces,
+  depending on the variable `indent-tabs-mode'."
+
   (interactive "P")
   (let ((bod (c-point 'bod)))
     (if whole-exp
@@ -4911,10 +4938,12 @@ indentation amount."
 With no argument, inserts backslashes and aligns existing backslashes.
 With an argument, deletes the backslashes.
 
-This function does not modify the last line of the region if the region ends 
-right at the start of the following line; it does not modify blank lines
-at the start of the region.  So you can put the region around an entire macro
-definition and conveniently use this command."
+This function does not modify blank lines at the start of the region.
+If the region ends at the start of a line, it always deletes the
+backslash (if any) at the end of the previous line.
+ 
+You can put the region around an entire macro definition and use this
+command to conveniently insert and align the necessary backslashes."
   (interactive "r\nP")
   (save-excursion
     (goto-char from)
@@ -4940,17 +4969,18 @@ definition and conveniently use this command."
       (while (and (< (point) endmark) (eolp))
         (forward-line 1))
       ;; Add or remove backslashes on all the lines.
-      (while (and (< (point) endmark)
-                  ;; Don't backslashify the last line
-                  ;; if the region ends right at the start of the next line.
-                  (save-excursion
-                    (forward-line 1)
-                    (< (point) endmark)))
-        (if (not delete-flag)
+      (while (< (point) endmark)
+	(if (and (not delete-flag)
+ 		 ;; Un-backslashify the last line
+ 		 ;; if the region ends right at the start of the next line.
+ 		 (save-excursion
+ 		   (forward-line 1)
+ 		   (< (point) endmark)))
             (c-append-backslash column)
           (c-delete-backslash))
         (forward-line 1))
-      (move-marker endmark nil))))
+      (move-marker endmark nil)))
+  (c-keep-region-active))
 
 (defun c-append-backslash (column)
   (end-of-line)
@@ -4974,7 +5004,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "4.315"
+(defconst c-version "4.322"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5110,15 +5140,11 @@ definition and conveniently use this command."
 			     c-block-comments-indent-p
 			     c-cleanup-list
 			     c-comment-only-line-offset
-			     c-echo-syntactic-information-p
 			     c-electric-pound-behavior
 			     c-hanging-braces-alist
 			     c-hanging-colons-alist
 			     c-hanging-comment-ender-p
 			     c-offsets-alist
-			     c-strict-syntax-p
-			     c-tab-always-indent
-			     c-inhibit-startup-warnings-p
 			     )))
       ;; the default style is now GNU.  This can be overridden in
       ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
@@ -5147,7 +5173,7 @@ definition and conveniently use this command."
 ;; there is no cc-mode equivalent for electric-c-terminator
 (fset 'mark-c-function       'c-mark-function)
 (fset 'indent-c-exp          'c-indent-exp)
-(fset 'set-c-style           'c-set-style)
+;;;###autoload (fset 'set-c-style           'c-set-style)
 ;; Lucid Emacs 19.9 + font-lock + cc-mode - c++-mode lossage
 (fset 'c++-beginning-of-defun 'beginning-of-defun)
 (fset 'c++-end-of-defun 'end-of-defun)

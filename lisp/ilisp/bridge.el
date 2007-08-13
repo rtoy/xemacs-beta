@@ -3,9 +3,9 @@
 ;;; Bridge process filter, V1.0
 ;;; Copyright (C) 1991 Chris McConnell, ccm@cs.cmu.edu  
 ;;;
-;;; Send mail to ilisp@lehman.com if you have problems.
+;;; Send mail to ilisp@naggum.no if you have problems.
 ;;;
-;;; Send mail to ilisp-request@lehman.com if you want to be on the
+;;; Send mail to ilisp-request@naggum.no if you want to be on the
 ;;; ilisp mailing list.
 
 ;;; This file is part of GNU Emacs.
@@ -149,20 +149,20 @@ to help handler-writers in their debugging.")
 		      (select-window original)))))))))
 
 ;;;
-(defun bridge-send-string (process string)
-  "Send PROCESS the contents of STRING as input.
-This is equivalent to process-send-string, except that long input strings
-are broken up into chunks of size comint-input-chunk-size. Processes
-are given a chance to output between chunks. This can help prevent processes
-from hanging when you send them long inputs on some OS's."
-  (let* ((len (length string))
-	 (i (min len bridge-chunk-size)))
-    (process-send-string process (substring string 0 i))
-    (while (< i len)
-      (let ((next-i (+ i bridge-chunk-size)))
-	(accept-process-output)
-	(process-send-string process (substring string i (min len next-i)))
-	(setq i next-i)))))
+;(defun bridge-send-string (process string)
+;  "Send PROCESS the contents of STRING as input.
+;This is equivalent to process-send-string, except that long input strings
+;are broken up into chunks of size comint-input-chunk-size. Processes
+;are given a chance to output between chunks. This can help prevent processes
+;from hanging when you send them long inputs on some OS's."
+;  (let* ((len (length string))
+;	 (i (min len bridge-chunk-size)))
+;    (process-send-string process (substring string 0 i))
+;    (while (< i len)
+;      (let ((next-i (+ i bridge-chunk-size)))
+;	(accept-process-output)
+;	(process-send-string process (substring string i (min len next-i)))
+;	(setq i next-i)))))
 
 ;;;
 (defun bridge-call-handler (handler proc string)
@@ -218,7 +218,10 @@ will be inserted at the end of the buffer."
 			     (goto-char (point-max))
 			     (insert input)))
 		    (set-buffer buffer)))
-	      (if to (bridge-send-string to input)))
+	      (if to
+		  ;; (bridge-send-string to input)
+		  (process-send-string to input)
+		  ))
 	    (error "%s is not a buffer" buffer-name)))))
 
 ;;;%Filter

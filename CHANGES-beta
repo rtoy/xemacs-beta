@@ -1,4 +1,26 @@
 							-*- indented-text -*-
+to 19.15 beta3
+
+-- EDT/TPU modes synched from GNU Emacs, should actually work for the first
+   first time.
+-- Lots of files synched with GNU Emacs 19.34.
+-- Apropos mode enhancements.
+-- locate-library is now silent when called non-interactively.
+-- Non aggressive keyboard focus throwing is supported.
+-- Various enhancements from Lars Magne Ingebrigtsen.
+-- smtpmail.el added from GNU Emacs 19.34.
+-- man.el & man-xref.el added from GNU Emacs 19.35.
+-- crisp/brief emulation courtesy of Gary D. Foster.
+-- id-select.el courtesy of Bob Weiner.
+-- m4-mode 1.8
+-- etags.c 11.78
+-- ilisp 5.8
+-- cperl-mode 1.28
+-- cc-mode 4.322
+-- elp 2.37
+-- python-mode 2.83
+-- load-warn-when-source-newer now defaults to t
+-- tm 7.95
 
 to 19.15 beta2
 

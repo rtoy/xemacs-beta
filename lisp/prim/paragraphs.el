@@ -1,7 +1,6 @@
 ;;; paragraphs.el --- paragraph and sentence parsing.
 
-;; Copyright (C) 1985, 1986, 1987, 1991, 1993, 1994, 1995
-;; Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 87, 91, 94, 95 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: wp
@@ -20,9 +19,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -43,6 +43,7 @@ paragraphs.  The fill functions always insert soft newlines.
 Each buffer has its own value of this variable.")
 (make-variable-buffer-local 'use-hard-newlines)
 
+;; XEmacs - use purecopy
 (defconst paragraph-start (purecopy "[ \t\n\f]") "\
 *Regexp for beginning of a line that starts OR separates paragraphs.
 This regexp should match lines that separate paragraphs
@@ -66,6 +67,7 @@ hard newline are considered to match.")
 ;; something very minimal, even including "." (which makes every hard newline
 ;; start a new paragraph).
 
+;; XEmacs -- use purecopy
 (defconst paragraph-separate (purecopy "[ \t\f]*$") "\
 *Regexp for beginning of a line that separates paragraphs.
 If you change this, you may have to change paragraph-start also.
@@ -75,6 +77,7 @@ the beginning of the line, so it should not use \"^\" as an anchor.  This
 ensures that the paragraph functions will work equally within a region of
 text indented by a margin setting.")
 
+;; XEmacs -- use purecopy
 (defconst sentence-end (purecopy "[.?!][]\"')}]*\\($\\| $\\|\t\\|  \\)[ \t\n]*") "\
 *Regexp describing the end of a sentence.
 All paragraph boundaries also end sentences, regardless.
@@ -83,6 +86,7 @@ In order to be recognized as the end of a sentence, the ending period,
 question mark, or exclamation point must be followed by two spaces,
 unless it's inside some sort of quotes or parenthesis.")
 
+;; XEmacs -- use purecopy
 (defconst page-delimiter (purecopy "^\014") "\
 *Regexp describing line-beginnings that separate pages.")
 
@@ -98,7 +102,7 @@ A line which `paragraph-start' matches either separates paragraphs
 \(if `paragraph-separate' matches it also) or is the first line of a paragraph.
 A paragraph end is the beginning of a line which is not part of the paragraph
 to which the end of the previous line belongs, or the end of the buffer."
-  (interactive "_p")
+  (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
   (let* ((fill-prefix-regexp
 	  (and fill-prefix (not (equal fill-prefix ""))
@@ -139,12 +143,11 @@ to which the end of the previous line belongs, or the end of the buffer."
 	  (forward-line -1)) 
 	(if (bobp)
 	    nil
-          (progn
-            ;; Go to end of the previous (non-separating) line.
-            (end-of-line)
-            ;; Search back for line that starts or separates paragraphs.
-            (if (if fill-prefix-regexp
-                    ;; There is a fill prefix; it overrides paragraph-start.
+	  ;; Go to end of the previous (non-separating) line.
+	  (end-of-line)
+	  ;; Search back for line that starts or separates paragraphs.
+	  (if (if fill-prefix-regexp
+		  ;; There is a fill prefix; it overrides paragraph-start.
 		  (let (multiple-lines)
 		    (while (and (progn (beginning-of-line) (not (bobp)))
 				(progn (move-to-left-margin)
@@ -174,15 +177,15 @@ to which the end of the previous line belongs, or the end of the buffer."
 							     'hard)))))
 		  (goto-char start))
 		(> (point) (point-min)))
-                ;; Found one.
-                (progn
-                  ;; Move forward over paragraph separators.
-                  ;; We know this cannot reach the place we started
-                  ;; because we know we moved back over a non-separator.
+	      ;; Found one.
+	      (progn
+		;; Move forward over paragraph separators.
+		;; We know this cannot reach the place we started
+		;; because we know we moved back over a non-separator.
 		(while (and (not (eobp))
 			    (progn (move-to-left-margin)
 				   (looking-at paragraph-separate)))
-                    (forward-line 1))
+		  (forward-line 1))
 		;; If line before paragraph is just margin, back up to there.
 		(end-of-line 0)
 		(if (> (current-column) (current-left-margin))
@@ -190,10 +193,11 @@ to which the end of the previous line belongs, or the end of the buffer."
 		  (skip-chars-backward " \t")
 		  (if (not (bolp))
 		      (forward-line 1))))
-                ;; No starter or separator line => use buffer beg.
-                (goto-char (point-min))))))
+	    ;; No starter or separator line => use buffer beg.
+	    (goto-char (point-min)))))
       (setq arg (1+ arg)))
     (while (and (> arg 0) (not (eobp)))
+      ;; Move forward over separator lines, and one more line.
       (while (prog1 (and (not (eobp))
 			 (progn (move-to-left-margin) (not (eobp)))
 			 (looking-at paragraph-separate))
@@ -230,7 +234,7 @@ paragraph is preceded by a blank line, the paragraph starts at that
 blank line.
 
 See `forward-paragraph' for more information."
-  (interactive "_p")
+  (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
   (forward-paragraph (- arg)))
 
@@ -246,14 +250,14 @@ The paragraph marked is the one that contains point or follows point."
   "Kill forward to end of paragraph.
 With arg N, kill forward to Nth end of paragraph;
 negative arg -N means kill backward to Nth start of paragraph."
-  (interactive "*p")
+  (interactive "*p") ; XEmacs
   (kill-region (point) (progn (forward-paragraph arg) (point))))
 
 (defun backward-kill-paragraph (arg)
   "Kill back to start of paragraph.
 With arg N, kill back to Nth start of paragraph;
 negative arg -N means kill forward to Nth end of paragraph."
-  (interactive "*p")
+  (interactive "*p") ; XEmacs
   (kill-region (point) (progn (backward-paragraph arg) (point))))
 
 (defun transpose-paragraphs (arg)
@@ -290,10 +294,9 @@ negative arg -N means kill forward to Nth end of paragraph."
   "Move forward to next `sentence-end'.  With argument, repeat.
 With negative argument, move backward repeatedly to `sentence-beginning'.
 
-The variable `sentence-end' is a regular expression that matches ends
-of sentences.  Also, every paragraph boundary terminates sentences as
-well."
-  (interactive "_p")
+The variable `sentence-end' is a regular expression that matches ends of
+sentences.  Also, every paragraph boundary terminates sentences as well."
+  (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
   (while (< arg 0)
     (let ((par-beg (save-excursion (start-of-paragraph-text) (point))))
@@ -311,25 +314,31 @@ well."
 (defun backward-sentence (&optional arg)
   "Move backward to start of sentence.  With arg, do it arg times.
 See `forward-sentence' for more information."
-  (interactive "_p")
+  (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
   (forward-sentence (- arg)))
 
 (defun kill-sentence (&optional arg)
   "Kill from point to end of sentence.
 With arg, repeat; negative arg -N means kill back to Nth start of sentence."
-  (interactive "p")
+  (interactive "*p") ; XEmacs
   (kill-region (point) (progn (forward-sentence arg) (point))))
 
 (defun backward-kill-sentence (&optional arg)
   "Kill back from point to start of sentence.
 With arg, repeat, or kill forward to Nth end of sentence if negative arg -N."
-  (interactive "p")
+  (interactive "*p") ; XEmacs
   (kill-region (point) (progn (backward-sentence arg) (point))))
 
 (defun mark-end-of-sentence (arg)
   "Put mark at end of sentence.  Arg works as in `forward-sentence'."
   (interactive "p")
+  ;; FSF Version:
+;  (push-mark
+;   (save-excursion
+;     (forward-sentence arg)
+;     (point))
+;   nil t))
   (mark-something 'mark-end-of-sentence 'forward-sentence arg))
 
 (defun transpose-sentences (arg)
@@ -338,4 +347,3 @@ With arg, repeat, or kill forward to Nth end of sentence if negative arg -N."
   (transpose-subr 'forward-sentence arg))
 
 ;;; paragraphs.el ends here
-

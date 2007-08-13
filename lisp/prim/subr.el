@@ -18,9 +18,17 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
+
+;;; Commentary:
+
+;; There's not a whole lot in common now with the FSF version,
+;; be wary when applying differences.  I've left in a number of lines
+;; of commentary just to give diff(1) something to synch itself with to
+;; provide useful context diffs. -sb
 
 ;;; Code:
 
@@ -46,11 +54,44 @@ BODY should be a list of lisp expressions."
   ;; depend on backquote.el.
   ;; #### - I don't see why.  So long as backquote.el doesn't use anything
   ;; from subr.el, there's no problem with using backquotes here.  --Stig 
-  (list 'function (cons 'lambda cdr)))
+  ;;(list 'function (cons 'lambda cdr)))
+  `(function (lambda ,@cdr)))
 
+(defmacro defun-when-void (&rest args)
+  "Define a function, just like `defun', unless it's already defined.
+Used for compatibility among different emacs variants."
+  `(if (fboundp ',(car args))
+       nil
+     (defun ,@args)))
+
+(defmacro define-function-when-void (&rest args)
+  "Define a function, just like `define-function', unless it's already defined.
+Used for compatibility among different emacs variants."
+  `(if (fboundp ,(car args))
+       nil
+     (define-function ,@args)))
+
+;;;; Keymap support.
+;; XEmacs: removed to keymap.el
+
+;;;; The global keymap tree.  
+
+;;; global-map, esc-map, and ctl-x-map have their values set up in
+;;; keymap.c; we just give them docstrings here.
+
+;;;; Event manipulation functions.
+
+;; The call to `read' is to ensure that the value is computed at load time
+;; and not compiled into the .elc file.  The value is negative on most
+;; machines, but not on all!
+;; XEmacs: This stuff is done in C Code.
+
+;;;; Obsolescent names for functions.
+;; XEmacs: not used.
+
+;; XEmacs:
 (define-function 'not 'null)
-(if (not (fboundp 'numberp))
-    (define-function 'numberp 'integerp)) ; different when floats
+(define-function-when-void 'numberp 'intergerp) ; different when floats
 
 (defun local-variable-if-set-p (sym buffer)
   "Return t if SYM would be local to BUFFER after it is set.
@@ -61,6 +102,8 @@ called on SYM."
 
 
 ;;;; Hook manipulation functions.
+
+;; (defconst run-hooks 'run-hooks ...)
 
 (defun make-local-hook (hook)
   "Make the hook HOOK local to the current buffer.
@@ -80,7 +123,7 @@ This function does nothing if HOOK is already local in the current
 buffer.
 
 Do not use `make-local-variable' to make a hook variable buffer-local."
-  (if (local-variable-p hook (current-buffer))
+  (if (local-variable-p hook (current-buffer)) ; XEmacs
       nil
     (or (boundp hook) (set hook nil))
     (make-local-variable hook)
@@ -102,7 +145,6 @@ To make a hook variable buffer-local, always use
 HOOK should be a symbol, and FUNCTION may be any valid function.  If
 HOOK is void, it is first set to nil.  If HOOK's value is a single
 function, it is changed to a list of functions."
-  ;(interactive "SAdd to hook-var (symbol): \naAdd which function to %s? ")
   (or (boundp hook) (set hook nil))
   (or (default-boundp hook) (set-default hook nil))
   ;; If the hook value is a single function, turn it into a list.
@@ -112,7 +154,7 @@ function, it is changed to a list of functions."
   (if (or local
 	  ;; Detect the case where make-local-variable was used on a hook
 	  ;; and do what we used to do.
-	  (and (local-variable-if-set-p hook (current-buffer))
+	  (and (local-variable-if-set-p hook (current-buffer)) ; XEmacs
 	       (not (memq t (symbol-value hook)))))
       ;; Alter the local value only.
       (or (if (consp function)
@@ -170,6 +212,7 @@ To make a hook variable buffer-local, always use
 
 (defun add-to-list (list-var element)
   "Add to the value of LIST-VAR the element ELEMENT if it isn't there yet.
+The test for presence of ELEMENT is done with `equal'.
 If you want to use `add-to-list' on a variable that is not defined
 until a certain package is loaded, you should put the call to `add-to-list'
 into a hook function that will be run only after loading the package.
@@ -178,6 +221,7 @@ other hooks, such as major mode hooks, can do the job."
   (or (member element (symbol-value list-var))
       (set list-var (cons element (symbol-value list-var)))))
 
+;; XEmacs additions
 ;; called by Fkill_buffer()
 (defvar kill-buffer-hook nil
   "Function or functions to be called when a buffer is killed.
@@ -193,6 +237,7 @@ just before emacs is actually killed.")
 (define-function 'rplaca 'setcar)
 (define-function 'rplacd 'setcdr)
 
+;; XEmacs
 (defun mapvector (__function __seq)
   "Apply FUNCTION to each element of SEQ, making a vector of the results.
 The result is a vector of the same length as SEQ.
@@ -209,6 +254,7 @@ SEQ may be a list, a vector or a string."
 
 ;;;; String functions.
 
+;; XEmacs
 (defun replace-in-string (str regexp newtext &optional literal)
   "Replaces all matches in STR for REGEXP with NEWTEXT string.
 Optional LITERAL non-nil means do a literal replacement.
@@ -532,3 +578,5 @@ See also: `save-current-buffer' and `save-excursion'."
 (define-function 'set-match-data 'store-match-data)
 (define-function 'send-string-to-terminal 'external-debugging-output)
 (define-function 'buffer-string 'buffer-substring)
+
+;;; subr.el ends here

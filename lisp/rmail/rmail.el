@@ -1,7 +1,6 @@
 ;;; rmail.el --- main code of "RMAIL" mail reader for Emacs.
 
-;; Copyright (C) 1985, 1986, 1987, 1988, 1993, 1994
-;;; Free Software Foundation, Inc.
+;; Copyright (C) 1985,86,87,88,93,94,95,96 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: mail
@@ -20,7 +19,8 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Code:
 
@@ -54,6 +54,15 @@
 ;  (expand-file-name "~/RMAIL")
 ;  "")
 
+(defvar rmail-movemail-program nil
+  "If non-nil, name of program for fetching new mail.")
+
+(defvar rmail-pop-password nil
+  "*Password to use when reading mail from a POP server, if required.")
+
+(defvar rmail-pop-password-required nil
+  "*Non-nil if a password is required when reading mail using POP.")
+
 ;;;###autoload
 (defvar rmail-dont-reply-to-names nil "\
 *A regexp specifying names to prune of reply to messages.
@@ -70,8 +79,28 @@ It is useful to set this variable in the site customization file.")
 ;;; XEmacs change: moved rmail-ignored-headers to sendmail.el for the
 ;;; benefit of automatically generated autoloads.
 ;;;minimalist FSF version
-;(defvar rmail-ignored-headers "^via:\\|^mail-from:\\|^origin:\\|^status:\\|^received:\\|^message-id:\\|^summary-line:" "\
+;(defvar rmail-ignored-headers "^via:\\|^mail-from:\\|^origin:\\|^status:\\|^received:\\|^x400-originator:\\|^x400-recipients:\\|^x400-received:\\|^x400-mts-identifier:\\|^x400-content-type:\\|^\\(resent-\\|\\)message-id:\\|^summary-line:\\|^resent-date:\\|^nntp-posting-host:"
 ;*Gubbish headers one would rather not see.")
+
+;;;###autoload
+(defvar rmail-displayed-headers nil
+  "*Regexp to match Header fields that Rmail should display.
+If nil, display all header fields except those matched by
+`rmail-ignored-headers'.")
+
+;;;###autoload
+(defvar rmail-retry-ignored-headers nil "\
+*Headers that should be stripped when retrying a failed message.")
+
+;;;###autoload
+(defvar rmail-highlighted-headers "^From:\\|^Subject:" "\
+*Regexp to match Header fields that Rmail should normally highlight.
+A value of nil means don't highlight.
+See also `rmail-highlight-face'.")
+
+;;;###autoload
+(defvar rmail-highlight-face nil "\
+*Face used by Rmail for highlighting headers.")
 
 ;;;###autoload
 (defvar rmail-delete-after-output nil "\

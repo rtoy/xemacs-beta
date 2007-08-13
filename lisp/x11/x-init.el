@@ -150,10 +150,18 @@
     (if (featurep 'toolbar)
         (init-x-toolbar))
     ;; these are only ever called if zmacs-regions is true.
-    (add-hook 'zmacs-deactivate-region-hook 'x-disown-selection)
-    (add-hook 'zmacs-activate-region-hook   'x-activate-region-as-selection)
-    (add-hook 'zmacs-update-region-hook     'x-activate-region-as-selection)
-
+    (add-hook 'zmacs-deactivate-region-hook 
+	      (lambda () 
+		(if (console-on-window-system-p) 
+		    (x-disown-selection))))
+    (add-hook 'zmacs-activate-region-hook
+	      (lambda () 
+		(if (console-on-window-system-p) 
+		    (x-activate-region-as-selection))))
+    (add-hook 'zmacs-update-region-hook
+	      (lambda ()
+		  (if (console-on-window-system-p)
+		      (x-activate-region-as-selection))))
     ;; Motif-ish bindings
     ;; The following two were generally unliked.
     ;;(define-key global-map '(shift delete)   'x-kill-primary-selection)

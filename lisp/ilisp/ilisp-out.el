@@ -3,17 +3,18 @@
 ;;; ilisp-out.el --
 
 ;;; This file is part of ILISP.
-;;; Version: 5.7
+;;; Version: 5.8
 ;;;
 ;;; Copyright (C) 1990, 1991, 1992, 1993 Chris McConnell
 ;;;               1993, 1994 Ivan Vasquez
-;;;               1994, 1995 Marco Antoniotti and Rick Busdiecker
+;;;               1994, 1995, 1996 Marco Antoniotti and Rick Busdiecker
+;;;               1996 Marco Antoniotti and Rick Campbell
 ;;;
 ;;; Other authors' names for which this Copyright notice also holds
 ;;; may appear later in this file.
 ;;;
-;;; Send mail to 'ilisp-request@lehman.com' to be included in the
-;;; ILISP mailing list. 'ilisp@lehman.com' is the general ILISP
+;;; Send mail to 'ilisp-request@naggum.no' to be included in the
+;;; ILISP mailing list. 'ilisp@naggum.no' is the general ILISP
 ;;; mailing list were bugs and improvements are discussed.
 ;;;
 ;;; ILISP is freely redistributable under the terms found in the file
@@ -260,7 +261,8 @@
 (defun ilisp-find-lower-window (window)
   "Find the window directly below us, if any.  This is probably the 
  window from which enlarge-window would steal lines."
-  (if (< emacs-minor-version 12)
+  (if (or (not (string-match "XEmacs" emacs-version))
+	  (< emacs-minor-version 12))
       (let* ((bottom (nth 3 (window-edges window)))
 	     (window* nil)
 	     (win window))
@@ -276,7 +278,8 @@
 ;; XEmacs change -- There is now a primitive to do this.
 (defun ilisp-find-top-left-most-window ()
   "Return the leftmost topmost window on the current screen."
-  (if (< emacs-minor-version 12)
+  (if (or (not (string-match "XEmacs" emacs-version))
+	  (< emacs-minor-version 12))
       (let* ((window* (selected-window))
 	     (edges* (window-edges window*))
 	     (win nil)
@@ -391,12 +394,17 @@
   ;; First clear any existing typeout so as to not confuse the user.
   (or (eq (selected-window) (ilisp-output-window))
       (ilisp-bury-output))
-  ;; Patch suggested by hunter@work.nlm.nih.gov (Larry Hunter)
+  
+  ;; v5.7: Patch suggested by hunter@work.nlm.nih.gov (Larry Hunter)
   ;; If output contains '%', 'message' loses.
   ;; (message (ilisp-quote-%s output))
   ;; An alternative here could be '(princ output)', as suggested by
   ;; Christopher Hoover <ch@lks.csi.com>
-  (princ output)
+  ;; (princ output)
+
+  ;; v5.7b: Patch suggested by fujieda@jaist.ac.jp (Kazuhiro Fujieda)
+  ;; Best one for FSF Emacs 19.2[89].
+  (message "%s" output)
   )
 
 

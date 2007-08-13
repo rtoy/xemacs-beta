@@ -3,17 +3,18 @@
 ;;; ilisp-mod.el --
 
 ;;; This file is part of ILISP.
-;;; Version: 5.7
+;;; Version: 5.8
 ;;;
 ;;; Copyright (C) 1990, 1991, 1992, 1993 Chris McConnell
 ;;;               1993, 1994 Ivan Vasquez
-;;;               1994, 1995 Marco Antoniotti and Rick Busdiecker
+;;;               1994, 1995, 1996 Marco Antoniotti and Rick Busdiecker
+;;;               1996 Marco Antoniotti and Rick Campbell
 ;;;
 ;;; Other authors' names for which this Copyright notice also holds
 ;;; may appear later in this file.
 ;;;
-;;; Send mail to 'ilisp-request@lehman.com' to be included in the
-;;; ILISP mailing list. 'ilisp@lehman.com' is the general ILISP
+;;; Send mail to 'ilisp-request@naggum.no' to be included in the
+;;; ILISP mailing list. 'ilisp@naggum.no' is the general ILISP
 ;;; mailing list were bugs and improvements are discussed.
 ;;;
 ;;; ILISP is freely redistributable under the terms found in the file
@@ -134,6 +135,7 @@ Takes the program name from the variable ilisp-program.
 	(funcall comint-update-status 'start)
 	(if ilisp-motd
 	    (progn (lisp-display-output (format ilisp-motd ilisp-version))
+		   (sleep-for 3)
 		   (set-window-start (selected-window) start)))
 	(if (not ilisp-prefix-match) (require 'completer)))
       (lisp-pop-to-buffer ilisp-buffer))

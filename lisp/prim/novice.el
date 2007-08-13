@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -78,6 +79,12 @@ N to do nothing (command remains disabled).")
 	(set-buffer standard-output)
 	(help-mode)))
      (message "Type y, n or Space: ")
+;     (let ((cursor-in-echo-area t))
+;       (while (not (memq (setq char (downcase (read-char)))
+;			 '(?  ?y ?n)))
+;	 (ding)
+;	 (message "Please type y, n or Space: "))))
+     ;; XEmacs version
      (let ((cursor-in-echo-area t)
 	   (inhibit-quit t)
 	   event)
@@ -109,7 +116,7 @@ N to do nothing (command remains disabled).")
 		 (not (string= "" user-init-file))
 		 (y-or-n-p "Enable command for future editing sessions also? "))
 	    (enable-command this-command)
-            (put this-command 'disabled nil)))
+	  (put this-command 'disabled nil)))
     (if (/= char ?n)
 	(call-interactively this-command))))
 

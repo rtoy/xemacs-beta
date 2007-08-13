@@ -3197,7 +3197,7 @@ Typing SPC flushes the help buffer."
 	    (set-window-configuration conf))
 	(if (eq first ?\ )
 	    (set-window-configuration conf)
-	  (setq unread-command-events (listify-key-sequence key)))))))
+	  (setq unread-command-events (append key nil)))))))
 
 ;;; Converting process modes to use term mode
 ;;; ===========================================================================

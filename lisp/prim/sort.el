@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -74,42 +75,43 @@ same as ENDRECFUN."
     (save-excursion
       (if messages (message "Finding sort keys..."))
       (let* ((sort-lists (sort-build-lists nextrecfun endrecfun
-                                           startkeyfun endkeyfun))
-             (old (reverse sort-lists))
+					   startkeyfun endkeyfun))
+	     (old (reverse sort-lists))
 	     (case-fold-search sort-fold-case))
-        (if (null sort-lists)
-            ()
-          (or reverse (setq sort-lists (nreverse sort-lists)))
-          (if messages (message "Sorting records..."))
-          (setq sort-lists
-                (if (fboundp 'sortcar)
-                    (sortcar sort-lists
-                             (cond ((numberp (car (car sort-lists)))
+	(if (null sort-lists)
+	    ()
+	  (or reverse (setq sort-lists (nreverse sort-lists)))
+	  (if messages (message "Sorting records..."))
+	  (setq sort-lists
+		(if (fboundp 'sortcar)
+		    (sortcar sort-lists
+			     (cond ((numberp (car (car sort-lists)))
 				    ;; This handles both ints and floats.
-                                    '<)
-                                   ((consp (car (car sort-lists)))
+				    '<)
+				   ((consp (car (car sort-lists)))
 				    (function
 				     (lambda (a b)
 				       (> 0 (compare-buffer-substrings 
 					     nil (car a) (cdr a)
 					     nil (car b) (cdr b))))))
-                                   (t
-                                    'string<)))
-                    (sort sort-lists
-                          (cond ((numberp (car (car sort-lists)))
+				   (t
+				    'string<)))
+		  (sort sort-lists
+			(cond ((numberp (car (car sort-lists)))
 			       'car-less-than-car)
-                                ((consp (car (car sort-lists)))
-                                 (function (lambda (a b)
-                                   (> 0 (compare-buffer-substrings 
-                                          nil (car (car a)) (cdr (car a))
-                                          nil (car (car b)) (cdr (car b)))))))
-                                (t
-                                 (function
-                                  (lambda (a b)
-                                   (string< (car a) (car b)))))))))
-            (if reverse (setq sort-lists (nreverse sort-lists)))
-            (if messages (message "Reordering buffer..."))
-            (sort-reorder-buffer sort-lists old)))
+			      ((consp (car (car sort-lists)))
+			       (function
+				(lambda (a b)
+				  (> 0 (compare-buffer-substrings
+					nil (car (car a)) (cdr (car a))
+					nil (car (car b)) (cdr (car b)))))))
+			      (t
+			       (function
+				(lambda (a b)
+				  (string< (car a) (car b)))))))))
+	  (if reverse (setq sort-lists (nreverse sort-lists)))
+	  (if messages (message "Reordering buffer..."))
+	  (sort-reorder-buffer sort-lists old)))
       (if messages (message "Reordering buffer... Done"))))
   nil)
 
@@ -138,7 +140,7 @@ same as ENDRECFUN."
 		      (let ((start (point)))
 			(funcall (or endkeyfun
 				     (prog1 endrecfun (setq done t))))
-                        (cons start (point))))))
+			(cons start (point))))))
       ;; Move to end of this record (start of next one, or end of buffer).
       (cond ((prog1 done (setq done nil)))
 	    (endrecfun (funcall endrecfun))
@@ -211,9 +213,10 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
       (narrow-to-region beg end)
       (goto-char (point-min))
       (sort-subr reverse
-		 (function (lambda ()
-                   (while (and (not (eobp)) (looking-at paragraph-separate))
-                     (forward-line 1))))
+		 (function
+		  (lambda ()
+		    (while (and (not (eobp)) (looking-at paragraph-separate))
+		      (forward-line 1))))
 		 'forward-paragraph))))
 
 ;;;###autoload
@@ -266,6 +269,7 @@ If you want to sort floating-point numbers, try `sort-float-fields'."
 				  (point))))))
 		 nil))
 
+;; This function is commented out of 19.34.
 ;;;###autoload
 (defun sort-float-fields (field beg end)
   "Sort lines in region numerically by the ARGth field of each line.
@@ -347,7 +351,6 @@ FIELD, BEG and END.  BEG and END specify region to sort."
     ;; Position at the front of the field
     ;; even if moving backwards.
     (skip-chars-backward "^ \t\n")))
-
 
 (defvar sort-regexp-fields-regexp)
 (defvar sort-regexp-record-end)
@@ -455,12 +458,12 @@ Use \\[untabify] to convert tabs to spaces before sorting."
       (setq col-start (min col-beg1 col-end1))
       (setq col-end (max col-beg1 col-end1))
       (if (search-backward "\t" beg1 t)
-	  (error
-	   "sort-columns does not work with tabs.  Use M-x untabify."))
+	  (error "sort-columns does not work with tabs.  Use M-x untabify."))
       (if (not (eq system-type 'vax-vms))
 	  ;; Use the sort utility if we can; it is 4 times as fast.
 	  (call-process-region beg1 end1 "sort" t t nil
 			       (if reverse "-rt\n" "-t\n")
+			       ;; XEmacs (use int-to-string conversion)
 			       (concat "+0." (int-to-string col-start))
 			       (concat "-0." (int-to-string col-end)))
 	;; On VMS, use Emacs's own facilities.

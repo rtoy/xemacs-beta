@@ -1,0 +1,30 @@
+#!/bin/sh -
+#
+# $Id: tm-plain,v 1.1.1.1 1996/12/18 03:52:12 steve Exp $
+#
+
+if [ "$TM_TMP_DIR" = "" ]; then
+	TM_TMP_DIR=/tmp
+	export TM_TMP_DIR
+fi
+if [ "$5" = "" ]; then
+	filename="$TM_TMP_DIR/mime$$.pln"
+else
+	filename="$TM_TMP_DIR/$5"
+fi
+
+case "$4" in
+"play")
+	echo "$2; $3 ->"
+	tmdecode "$3" "$1" /dev/stdout
+	;;
+"extract")
+	echo "$2; $3 -> $filename"
+	echo "extract to $filename"
+	tmdecode "$3" "$1" $filename
+	;;
+"print")
+	echo "$2; $3 ->"
+	tmdecode "$3" "$1" /dev/stdout | lpr
+	;;
+esac

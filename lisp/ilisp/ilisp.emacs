@@ -3,13 +3,14 @@
 ;;; ilisp.emacs --
 
 ;;; This file is part of ILISP.
-;;; Version: 5.7
+;;; Version: 5.8
 ;;;
 ;;; Copyright (C) 1990, 1991, 1992, 1993 Chris McConnell
 ;;;               1993, 1994 Ivan Vasquez
-;;;               1994, 1995 Marco Antoniotti and Rick Busdiecker
+;;;               1994, 1995, 1996 Marco Antoniotti and Rick Busdiecker
+;;;               1996 Marco Antoniotti and Rick Campbell
 ;;;
-;;; Send mail to 'ilisp-request@lehman.com' to be included in the
+;;; Send mail to 'ilisp-request@naggum.no' to be included in the
 ;;; ILISP mailing list.
 
 ;;; This file shows examples of some of the things you might want to
@@ -79,6 +80,10 @@
 (autoload 'gcl "ilisp" "Inferior GNU Common LISP." t)
 (autoload 'ecl "ilisp" "Inferior EcoLisp." t)
 
+;;; Xlisp
+(autoload 'xlisp     "ilisp" "Inferior xlisp." t)
+(autoload 'xlispstat "ilisp" "Inferior xlispstat." t)
+
 ;;; Scheme's
 ;(autoload 'scheme    "ilisp" "Inferior generic Scheme." t)
 ;(autoload 'oaklisp   "ilisp" "Inferior Oaklisp Scheme." t)
@@ -86,15 +91,23 @@
 
 ;;; Define where LISP programs are found.  (This may already be done
 ;;; at your site.)
+
 ;(setq allegro-program "/usr/misc/.allegro/bin/cl")
+
 ;(setq lucid-program "/usr/misc/.lucid/bin/lisp")
-;(setq cmulisp-program "/usr/misc/.cmucl/bin/lisp")
+
 ;(setq clisp-hs-program "clisp")
+
 ;(setq lispworks-program "/somewhere/in/the/directory/tree/lispworks")
+
 (setq cmulisp-program "/usr/robotics/shared/lang/cmu-cl/17e/bin/lisp")
+
 (setq akcl-program "kcl")
 ;(setq gcl-program "gcl")
 ;(setq ecl-program "ecl")
+
+;(setq xlisp-program "xlisp")
+;(setq xlisp-program "xlispstat")
 
 ;;; If you run cmu-cl then set this to where your source files are.
 (setq cmulisp-local-source-directory "/usr/robotics/shared/cmu-cl/17e/")

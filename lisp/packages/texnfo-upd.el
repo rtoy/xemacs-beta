@@ -1268,7 +1268,7 @@ which menu descriptions are indented. Its default value is 32."
       (save-restriction
 	(narrow-to-region beginning end)
 	(goto-char beginning)
-        (push-mark (point) t)
+        (push-mark (point) t t)
 	(while (re-search-forward "^@node" (point-max) t)
           (beginning-of-line)            
           (texinfo-update-the-node))
@@ -1279,13 +1279,14 @@ which menu descriptions are indented. Its default value is 32."
   "Update every node in a Texinfo file."
   (interactive)
   (save-excursion
-    (push-mark (point-max) t)
-    (goto-char (point-min))
-    ;; Using the mark to pass bounds this way
-    ;; is kludgy, but it's not worth fixing. -- rms.
-    (let ((mark-active t))
-      (texinfo-update-node t))
-    (message "Done...updated every node.       You may save the buffer.")))
+    (let ((zmacs-regions nil))
+      (push-mark (point-max) t t)
+      (goto-char (point-min))
+      ;; Using the mark to pass bounds this way
+      ;; is kludgy, but it's not worth fixing. -- rms.
+      (let ((mark-active t))
+	(texinfo-update-node t))
+      (message "Done...updated every node.       You may save the buffer."))))
 
 (defun texinfo-update-the-node ()
   "Update one node.  Point must be at the beginning of node line.  

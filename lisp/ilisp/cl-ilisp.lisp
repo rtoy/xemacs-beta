@@ -1,19 +1,20 @@
 ;;; -*- Mode: Lisp -*-
 
-;;; clisp.lisp --
+;;; cl-ilisp.lisp --
 
 ;;; This file is part of ILISP.
-;;; Version: 5.7
+;;; Version: 5.8
 ;;;
 ;;; Copyright (C) 1990, 1991, 1992, 1993 Chris McConnell
 ;;;               1993, 1994 Ivan Vasquez
-;;;               1994, 1995 Marco Antoniotti and Rick Busdiecker
+;;;               1994, 1995, 1996 Marco Antoniotti and Rick Busdiecker
+;;;               1996 Marco Antoniotti and Rick Campbell
 ;;;
 ;;; Other authors' names for which this Copyright notice also holds
 ;;; may appear later in this file.
 ;;;
-;;; Send mail to 'ilisp-request@lehman.com' to be included in the
-;;; ILISP mailing list. 'ilisp@lehman.com' is the general ILISP
+;;; Send mail to 'ilisp-request@naggum.no' to be included in the
+;;; ILISP mailing list. 'ilisp@naggum.no' is the general ILISP
 ;;; mailing list were bugs and improvements are discussed.
 ;;;
 ;;; ILISP is freely redistributable under the terms found in the file
@@ -52,49 +53,23 @@
   (setq excl:*cltl1-in-package-compatibility-p* t))
 
 
-;;; The following is really a kludge! The defpackage should be in a
-;;; separate file, but it looks like it is really hard to change ILISP
-;;; behavior on the subject.
-;;; Marco Antoniotti 11/22/94
-
-;;; I am commenting it out to see whether I can actually load the
-;;; package file with the kludge in the definition of the dialect.
-;;;
-;;; Result: it works! This will disappear in the next release.
-
-#|
-(eval-when (compile load eval)
-	   (defpackage "ILISP" (:use "LISP" #+:CMU "CONDITIONS")
-	     (:export "ILISP-ERRORS"
-		      "ILISP-SAVE"
-		      "ILISP-RESTORE"
-		      "ILISP-SYMBOL-NAME"
-		      "ILISP-FIND-SYMBOL"
-		      "ILISP-FIND-PACKAGE"
-		      "ILISP-EVAL"
-		      "ILISP-COMPILE"
-		      "ILISP-DESCRIBE"
-		      "ILISP-INSPECT"
-		      "ILISP-ARGLIST"
-		      "ILISP-DOCUMENTATION"
-		      "ILISP-MACROEXPAND"
-		      "ILISP-MACROEXPAND-1"
-		      "ILISP-TRACE"
-		      "ILISP-UNTRACE"
-		      "ILISP-COMPILE-FILE"
-		      "ILISP-CASIFY"
-		      "ILISP-MATCHING-SYMBOLS")
-	     ))
-|#
-
-
 (in-package "ILISP")
 
 ;;;
 ;;; GCL 2.2 doesn't have defpackage (yet) so we need to put the export
 ;;; here. (toy@rtp.ericsson.se)
+;;;
+;;; Please note that while the comment and the fix posted by Richard
+;;; Toy are correct, they are deprecated by at least one of the ILISP
+;;; maintainers. :) By removing the 'nil' in the following #+, you
+;;; will fix the problem but will not do a good service to the CL
+;;; community.  The right thing to do is to install DEFPACKAGE in your
+;;; GCL and to write the GCL maintainers and to ask them to
+;;; incorporate DEFPACKAGE in their standard builds.
+;;; Marco Antoniotti <marcoxa@icsi.berkeley.edu> 19960715
+;;;
 
-#+gcl
+#+(and nil gcl)
 (export '(ilisp-errors
 	  ilisp-save
 	  ilisp-restore
@@ -632,26 +607,11 @@ original string."
        nil))))
 
 
-;;; Make sure that functions are exported
-;;; Now this could go away. I just leave commented it for backup reasons.
+(eval-when (load eval)
+  (when
+      #+cmu (eval:interpreted-function-p #'ilisp-matching-symbols)
+      #-cmu (not (compiled-function-p #'ilisp-matching-symbols))
+      (format *standard-output*
+	      "\"ILISP: File is not compiled, use M-x ilisp-compile-inits\"")))
 
-#|
-(dolist (symbol '(ilisp-errors ilisp-save ilisp-restore
-		  ilisp-symbol-name ilisp-find-symbol ilisp-find-package
-		  ilisp-eval ilisp-compile
-		  ilisp-describe ilisp-inspect
-		  ilisp-arglist ilisp-documentation
-		  ilisp-macroexpand ilisp-macroexpand-1
-		  ilisp-trace ilisp-untrace
-		  ilisp-compile-file ilisp-casify
-		  ilisp-matching-symbols))
-  (export symbol))
-|#
-
-
-(when
-    #+cmu (eval:interpreted-function-p #'ilisp-matching-symbols)
-    #-cmu (not (compiled-function-p #'ilisp-matching-symbols))
-    (format t "\"ILISP: File is not compiled, use M-x ilisp-compile-inits\""))
-
-;;; end of file -- clisp.lisp --
+;;; end of file -- cl-ilisp.lisp --

@@ -1461,6 +1461,87 @@ then kill the related ftp process."
 		    directory))))
 
 ;;;; ------------------------------------------------------------
+;;;; Remote file name syntax support.
+;;;; ------------------------------------------------------------
+(defvar ange-ftp-name-format
+  '("^/\\(\\([^@/:]*\\)@\\)?\\([^@/:]*[^@/:.]\\):\\(.*\\)" . (3 2 4))
+  "*Format of a fully expanded remote file name.
+This is a list of the form \(REGEXP HOST USER NAME\),
+where REGEXP is a regular expression matching
+the full remote name, and HOST, USER, and NAME are the numbers of
+parenthesized expressions in REGEXP for the components (in that order).")
+
+(defun ange-ftp-real-load (&rest args)
+  (ange-ftp-run-real-handler 'load args))
+
+(defmacro ange-ftp-ftp-name-component (n ns name)
+  "Extract the Nth ftp file name component from NS."
+  (` (let ((elt (nth (, n) (, ns))))
+       (if (match-beginning elt)
+	   (substring (, name) (match-beginning elt) (match-end elt))))))
+
+(defvar ange-ftp-ftp-name-arg "")
+(defvar ange-ftp-ftp-name-res nil)
+
+;; Parse NAME according to `ange-ftp-name-format' (which see).
+;; Returns a list (HOST USER NAME), or nil if NAME does not match the format.
+(defun ange-ftp-ftp-name (name)
+  (if (string-equal name ange-ftp-ftp-name-arg)
+      ange-ftp-ftp-name-res
+    (setq ange-ftp-ftp-name-arg name
+	  ange-ftp-ftp-name-res
+	  (save-match-data
+	    (if (posix-string-match (car ange-ftp-name-format) name)
+		(let* ((ns (cdr ange-ftp-name-format))
+		       (host (ange-ftp-ftp-name-component 0 ns name))
+		       (user (ange-ftp-ftp-name-component 1 ns name))
+		       (name (ange-ftp-ftp-name-component 2 ns name)))
+		  (if (zerop (length user))
+		      (setq user (ange-ftp-get-user host)))
+		  (list host user name))
+	      nil)))))
+
+;; Take a FULLNAME that matches according to ange-ftp-name-format and
+;; replace the name component with NAME.
+(defun ange-ftp-replace-name-component (fullname name)
+  (save-match-data
+    (if (posix-string-match (car ange-ftp-name-format) fullname)
+	(let* ((ns (cdr ange-ftp-name-format))
+	       (elt (nth 2 ns)))
+	  (concat (substring fullname 0 (match-beginning elt))
+		  name
+		  (substring fullname (match-end elt)))))))
+
+(defun ange-ftp-file-local-copy (file)
+  (let* ((fn1 (expand-file-name file))
+	 (pa1 (ange-ftp-ftp-name fn1)))
+    (if pa1
+	(let ((tmp1 (ange-ftp-make-tmp-name (car pa1))))
+	  (ange-ftp-copy-file-internal fn1 tmp1 t nil
+				       (format "Getting %s" fn1))
+	  tmp1))))
+
+(defun ange-ftp-load (file &optional noerror nomessage nosuffix)
+  (if (ange-ftp-ftp-name file)
+      (let ((tryfiles (if nosuffix
+			  (list file)
+			(list (concat file ".elc") (concat file ".el") file)))
+	    copy)
+	(while (and tryfiles (not copy))
+	  (condition-case error
+	      (setq copy (ange-ftp-file-local-copy (car tryfiles)))
+	    (ftp-error nil))
+	  (setq tryfiles (cdr tryfiles)))
+	(if copy
+	    (unwind-protect
+		(funcall 'load copy noerror nomessage nosuffix)
+	      (delete-file copy))
+	  (or noerror
+	      (signal 'file-error (list "Cannot open load file" file)))))
+    (ange-ftp-real-load file noerror nomessage nosuffix)))
+(put 'load 'ange-ftp 'ange-ftp-load)
+
+;;;; ------------------------------------------------------------
 ;;;; FTP process filter support.
 ;;;; ------------------------------------------------------------
 
@@ -4958,6 +5039,7 @@ hook-var's value may be a single function or a list of functions."
 (ange-ftp-overwrite-fn 'expand-file-name)
 (ange-ftp-overwrite-fn 'file-name-all-completions)
 (ange-ftp-overwrite-fn 'file-name-completion)
+(ange-ftp-overwrite-fn 'load)
 
 (or (memq 'ange-ftp-set-buffer-mode find-file-hooks)
     (setq find-file-hooks

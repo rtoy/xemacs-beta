@@ -8,7 +8,24 @@
 ; This is in the public domain
 ; since he distributed it without copyright notice in 1985.
 
-;;; Synched up with: FSF 19.30.
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -57,57 +74,41 @@
   "Towers of Hanoi diversion.  Argument is number of rings."
   (interactive
    (list (if (null current-prefix-arg)
-	     3
-	     (prefix-numeric-value current-prefix-arg))))  
+             3
+	   (prefix-numeric-value current-prefix-arg))))  
   (if (<= nrings 0) (error "Negative number of rings"))
   (let* (floor-row
 	 fly-row
-	 (window-height (window-height (selected-window)))
+	 (window-height (1- (window-height (selected-window))))
 	 (window-width (window-width (selected-window)))
 
-	 ;; This is the unit of spacing to use between poles.  It
-	 ;; must be even.  We round down, since rounding up might
-	 ;; cause us to draw off the edge of the window.
-	 (pole-spacing (logand (/ window-width 6) (lognot 1))))
-    (let (
-	  ;; The poles are (1+ NRINGS) rows high; we also want an
-	  ;; empty row at the top for the flying rings, a base, and a
-	  ;; blank line underneath that.
-	  (h (+ nrings 4))
-
-	  ;; If we have NRINGS rings, we label them with the numbers 0
-	  ;; through NRINGS-1.  The width of ring i is 2i+3; it pokes
-	  ;; out i spaces on either side of the pole.  Rather than
-	  ;; checking if the window is wide enough to accommodate this,
-	  ;; we make sure pole-spacing is large enough, since that
-	  ;; works even when we have decremented pole-spacing to make
-	  ;; it even.
-	  (w (1+ nrings)))
-      (if (not (and (>= window-height h)
-		    (> pole-spacing w)))
-	  (progn
-	    (delete-other-windows)
-	    (if (not (and (>= (setq window-height
-				    (window-height (selected-window)))
-			      h)
-			  (> (setq pole-spacing
-				   (logand (/ window-width 6) (lognot 1)))
-			     w)))
-		(error "Screen is too small (need at least %dx%d)" w h))))
-      (setq floor-row (if (> (- window-height 3) h)
-			  (- window-height 3) window-height)))
+	 ;; This is half the spacing to use between poles.
+	 (pole-spacing (/ window-width 6)))
+    (if (not (and (> window-height (1+ nrings))
+		  (> pole-spacing nrings)))
+	(progn
+	  (delete-other-windows)
+	  (if (not (and (> (setq window-height
+				 (1- (window-height (selected-window))))
+			   (1+ nrings))
+			(> (setq pole-spacing (/ window-width 6))
+			   nrings)))
+	      (error "Window is too small (need at least %dx%d)"
+		     (* 6 (1+ nrings)) (+ 2 nrings)))))
+    (setq floor-row (if (> (- window-height 3) (1+ nrings))
+			(- window-height 3) window-height))
     (let ((fly-row (- floor-row nrings 1))
 	  ;; pole: column . fill height
-	  (pole-1 (cons pole-spacing floor-row))
-	  (pole-2 (cons (* 3 pole-spacing) floor-row))
-	  (pole-3 (cons (* 5 pole-spacing) floor-row))
+	  (pole-1 (cons (1- pole-spacing) floor-row))
+	  (pole-2 (cons (1- (* 3 pole-spacing)) floor-row))
+	  (pole-3 (cons (1- (* 5 pole-spacing)) floor-row))
 	  (rings (make-vector nrings nil)))
       ;; construct the ring list
       (let ((i 0))
 	(while (< i nrings)
 	  ;; ring: [pole-number string empty-string]
 	  (aset rings i (vector nil
-				(make-string (+ i i 3) (+ ?0 i))
+				(make-string (+ i i 3) (+ ?0 (% i 10)))
 				(make-string (+ i i 3) ?\  )))
 	  (setq i (1+ i))))
       ;;
@@ -126,7 +127,7 @@
 
       (let ((n 1))
 	(while (< n 6)
-	  (hanoi-topos fly-row (* n pole-spacing))
+	  (hanoi-topos fly-row (1- (* n pole-spacing)))
 	  (setq n (+ n 2))
 	  (let ((i fly-row))
 	    (while (< i floor-row)
@@ -151,10 +152,11 @@
 	  (setq i (1+ i))))
       (setq buffer-read-only t)
       (sit-for 0)
-      ;;
-      ;; do it!
-      ;;
-      (hanoi0 (1- nrings) pole-1 pole-2 pole-3)
+      ;; Disable display of line and column numbers, for speed.
+      (let ((line-number-mode nil)
+	    (column-number-mode nil))
+	;; do it!
+	(hanoi0 (1- nrings) pole-1 pole-2 pole-3))
       (goto-char (point-min))
       (message "Done")
       (setq buffer-read-only t)

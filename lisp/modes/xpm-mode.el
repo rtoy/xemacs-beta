@@ -109,6 +109,14 @@ Otherwise, only update on button releases or when asked to.  This is slow.")
     (next-line 1)
     (while (not (looking-at "\\s-*\""))
       (next-line 1))
+
+    (save-excursion
+      (goto-char (point-min))
+      (if (re-search-forward 
+	   "\"\\s-*\\([0-9]+\\)\\s-+\\([0-9]+\\)\\s-+\\([0-9]+\\)\\s-+\\([0-9]+\\)\\s-*"
+	   (point-max) t)
+	  (setq xpm-chars-per-pixel (string-to-int (match-string 4)))))
+
     (let ((co 0))
       (while (< co (xpm-num-colors))
 	(progn
@@ -144,7 +152,8 @@ Otherwise, only update on button releases or when asked to.  This is slow.")
     (let (ext
 	  pixel-chars
 	  pixel-color)
-      (while (< (point) (point-max))
+      (while (and (< (point) (point-max))
+		  (< (+ (point) xpm-chars-per-pixel) (point-max)))
 	(setq pixel-chars
 	      (buffer-substring (point) (+ (point) xpm-chars-per-pixel))
 	      pixel-color (assoc pixel-chars xpm-pixel-values)

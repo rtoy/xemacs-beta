@@ -1,8 +1,12 @@
-;;; minibuf.el
+;;; minibuf.el -- Minibuffer support functions for XEmacs
+
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems
 ;; Copyright (C) 1995, 1996 Ben Wing
  
+;; Author: Richard Mlynarik
+;; Keywords: internal
+
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -17,10 +21,11 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Synched up with: all the minibuffer history stuff is synched with
-;;; 19.30.  Not sure about the rest.
+;;; 19.34.  Not sure about the rest.
 
 ;;; Commentary:
 
@@ -156,6 +161,10 @@ minibuffer is reinvoked while it is the selected window.")
     (define-key map "\M-?" 'comint-dynamic-list-completions)
     map)
   "Minibuffer keymap used by shell-command and related commands.")
+
+(defvar should-use-dialog-box t
+  "Variable controlling usage of the dialog box.  If nil, the dialog box
+will never be used, even in response to mouse events.")
 
 (defvar minibuffer-electric-file-name-behavior t
   "If non-nil, slash and tilde in certain places cause immediate deletion.
@@ -2002,9 +2011,13 @@ something mousy but which wasn't actually invoked using the mouse.")
   "If non-nil, questions should be asked with a dialog box instead of the
 minibuffer.  This looks at `last-command-event' to see if it was a mouse
 event, and checks whether dialog-support exists and the current device
-supports dialog boxes."
+supports dialog boxes.
+
+The dialog box is totally disabled if the variable `should-use-dialog-box'
+is set to nil."
   (and (featurep 'dialog)
        (device-on-window-system-p)
+       should-use-dialog-box
        (or force-dialog-box-use
 	   (button-press-event-p last-command-event)
 	   (button-release-event-p last-command-event)

@@ -3,17 +3,18 @@
 ;;; ilisp-def.el --
 
 ;;; This file is part of ILISP.
-;;; Version: 5.7
+;;; Version: 5.8
 ;;;
 ;;; Copyright (C) 1990, 1991, 1992, 1993 Chris McConnell
 ;;;               1993, 1994 Ivan Vasquez
-;;;               1994, 1995 Marco Antoniotti and Rick Busdiecker
+;;;               1994, 1995, 1996 Marco Antoniotti and Rick Busdiecker
+;;;               1996 Marco Antoniotti and Rick Campbell
 ;;;
 ;;; Other authors' names for which this Copyright notice also holds
 ;;; may appear later in this file.
 ;;;
-;;; Send mail to 'ilisp-request@lehman.com' to be included in the
-;;; ILISP mailing list. 'ilisp@lehman.com' is the general ILISP
+;;; Send mail to 'ilisp-request@naggum.no' to be included in the
+;;; ILISP mailing list. 'ilisp@naggum.no' is the general ILISP
 ;;; mailing list were bugs and improvements are discussed.
 ;;;
 ;;; ILISP is freely redistributable under the terms found in the file
@@ -262,7 +263,7 @@ the filenames.")
 ;;;%%%Misc
 (deflocal ilisp-use-map nil "Keymap to use in ILISP mode.")
 
-(defvar ilisp-bugs-to "ilisp@lehman.com" "Who to send bug reports to.")
+(defvar ilisp-bugs-to "ilisp@naggum.no" "Who to send bug reports to.")
 
 (defvar ilisp-modes '(ilisp-mode) "List of all inferior ilisp modes.")
 (defvar lisp-source-modes '(lisp-mode scheme-mode)
@@ -285,7 +286,7 @@ compile-file-lisp. Used by these commands to determine defaults.")
 (defvar ilisp-epoch-running (and (boundp 'epoch::version) epoch::version)
   "Non-nil if epoch is running.")
 (defvar ilisp-version 
-  "5.7" ;; ILISP-VERSION marker
+  "5.8" ;; ILISP-VERSION marker
   "Interface version.")
 (defvar ilisp-directory nil "The directory that ilisp is found in.")
 (defvar ilisp-mode-map nil "Key map for ILISP.")

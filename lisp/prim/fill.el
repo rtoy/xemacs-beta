@@ -693,7 +693,8 @@ otherwise it is made canonical."
 			   (point) (min (point-max) (+ (length fill-prefix)
 						       (point))))))
 	      (forward-char (length fill-prefix))
-	    (if (and adaptive-fill-mode 
+	    ;; XEmacs bug fix
+	    (if (and adaptive-fill-mode adaptive-fill-regexp
 		     (looking-at adaptive-fill-regexp))
 		(goto-char (match-end 0))))
 	  (setq fp-end (point))

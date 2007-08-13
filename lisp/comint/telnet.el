@@ -1,6 +1,6 @@
 ;;; telnet.el --- run a telnet session from within an Emacs buffer
 
-;;; Copyright (C) 1985, 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
+;;; Copyright (C) 1985, 1988, 1992, 1994 Free Software Foundation, Inc.
 
 ;; Author: William F. Schelter
 ;; Keywords: comm, unix
@@ -20,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -54,17 +55,13 @@
 
 (defvar telnet-new-line "\r")
 (defvar telnet-mode-map nil)
-(make-variable-buffer-local 'telnet-new-line)
-(defvar telnet-default-prompt-pattern "^[^#$%>\n]*[#$%>] *")
-(defvar telnet-prompt-pattern telnet-default-prompt-pattern)
+(defvar telnet-prompt-pattern "^[^#$%>\n]*[#$%>] *")
 (defvar telnet-replace-c-g nil)
-(make-variable-buffer-local 'telnet-replace-c-g)
-(defvar telnet-remote-echoes t
-   "True if the telnet process will echo input.")
-(make-variable-buffer-local 'telnet-remote-echoes)
-(defvar telnet-interrupt-string "\C-c"
-  "String sent by C-c.")
-(make-variable-buffer-local 'telnet-interrupt-string)
+(make-variable-buffer-local
+ (defvar telnet-remote-echoes t
+   "True if the telnet process will echo input."))
+(make-variable-buffer-local
+ (defvar telnet-interrupt-string "\C-c" "String sent by C-c."))
 
 (defvar telnet-count 0
   "Number of output strings read from the telnet process
@@ -93,6 +90,7 @@ rejecting one login and prompting again for a username and password.")
   (interactive)
   (process-send-string nil "\C-z"))
 
+;; XEmacs change (Keep telnet- prefix)
 (defun telnet-send-process-next-char ()
   (interactive)
   (process-send-string nil
@@ -104,22 +102,19 @@ rejecting one login and prompting again for a username and password.")
 ; initialization on first load.
 (if telnet-mode-map
     nil
-  (progn
-    (setq telnet-mode-map (make-sparse-keymap))
-    (set-keymap-name telnet-mode-map 'telnet-mode-map)
-    (set-keymap-parents telnet-mode-map (list comint-mode-map))
-    (define-key telnet-mode-map "\C-m" 'telnet-send-input)
-    ;;(define-key telnet-mode-map "\C-j" 'telnet-send-input)
-    (define-key telnet-mode-map "\C-c\C-q" 'telnet-send-process-next-char)
-    (define-key telnet-mode-map "\C-c\C-c" 'telnet-interrupt-subjob) 
-    (define-key telnet-mode-map "\C-c\C-z" 'telnet-c-z)))
+  (setq telnet-mode-map (nconc (make-sparse-keymap) comint-mode-map))
+  (define-key telnet-mode-map "\C-m" 'telnet-send-input)
+;  (define-key telnet-mode-map "\C-j" 'telnet-send-input)
+  (define-key telnet-mode-map "\C-c\C-q" 'send-process-next-char)
+  (define-key telnet-mode-map "\C-c\C-c" 'telnet-interrupt-subjob) 
+  (define-key telnet-mode-map "\C-c\C-z" 'telnet-c-z))
 
 ;;maybe should have a flag for when have found type
 (defun telnet-check-software-type-initialize (string)
   "Tries to put correct initializations in.  Needs work."
   (let ((case-fold-search t))
     (cond ((string-match "unix" string)
-	   (setq telnet-prompt-pattern shell-prompt-pattern)
+	   (setq telnet-prompt-pattern comint-prompt-pattern)
 	   (setq telnet-new-line "\n"))
 	  ((string-match "tops-20" string) ;;maybe add telnet-replace-c-g
 	   (setq telnet-prompt-pattern  "[@>] *"))

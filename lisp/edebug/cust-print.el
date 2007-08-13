@@ -6,66 +6,69 @@
 ;; Adapted-By: ESR
 ;; Keywords: extensions
 
-;; LCD Archive Entry:
-;; cust-print|Daniel LaLiberte|liberte@cs.uiuc.edu
-;; |Handle print-level, print-circle and more.
-;; |$Date: 1996/12/18 03:33:26 $|$Revision: 1.1.1.1 $|
+;; This file is part of XEmacs.
 
-;; This file is part of GNU Emacs.
-
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; ===============================
-;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/edebug/cust-print.el,v 1.1.1.1 1996/12/18 03:33:26 steve Exp $
-;;; $Log: cust-print.el,v $
-;;; Revision 1.1.1.1  1996/12/18 03:33:26  steve
-;;; XEmacs 19.14 -- Release
-;;;
-;;; Revision 1.4  1994/03/23  20:34:29  liberte
-;;; * Change "emacs" to "original" - I just can't decide. 
-;;;
-;;; Revision 1.3  1994/02/21  21:25:36  liberte
-;;; * Make custom-prin1-to-string more robust when errors occur.
-;;; * Change "internal" to "emacs".
-;;;
-;;; Revision 1.2  1993/11/22  22:36:36  liberte
-;;; * Simplified and generalized printer customization.
-;;;     custom-printers is an alist of (PREDICATE . PRINTER) pairs
-;;;     for any data types.  The PRINTER function should print to
-;;;     `standard-output'  add-custom-printer and delete-custom-printer
-;;;     change custom-printers.
-;;;
-;;; * Installation function now called install-custom-print.  The
-;;;     old name is still around for now.
-;;;
-;;; * New macro with-custom-print (added earlier) - executes like
-;;;     progn but with custom-print activated temporarily.
-;;;
-;;; * Cleaned up comments for replacements of standardard printers.
-;;;
-;;; * Changed custom-prin1-to-string to use a temporary buffer.
-;;;
-;;; * Internal symbols are prefixed with CP::.
-;;;
-;;; * Option custom-print-vectors (added earlier) - controls whether
-;;;     vectors should be printed according to print-length and
-;;;     print-length.  Emacs doesnt do this, but cust-print would
-;;;     otherwise do it only if custom printing is required.
-;;;
-;;; * Uninterned symbols are treated as non-read-equivalent.
-;;;
+;;; Synched up with: Not in FSF
+
+;; LCD Archive Entry:
+;; cust-print|Daniel LaLiberte|liberte@cs.uiuc.edu
+;; |Handle print-level, print-circle and more.
+;; |$Date: 1996/12/18 03:54:29 $|$Revision: 1.1.1.2 $|
+
+;; ===============================
+;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/edebug/cust-print.el,v 1.1.1.2 1996/12/18 03:54:29 steve Exp $
+;; $Log: cust-print.el,v $
+;; Revision 1.1.1.2  1996/12/18 03:54:29  steve
+;; XEmacs 19.15-b3
+;;
+;; Revision 1.4  1994/03/23  20:34:29  liberte
+;; * Change "emacs" to "original" - I just can't decide. 
+;;
+;; Revision 1.3  1994/02/21  21:25:36  liberte
+;; * Make custom-prin1-to-string more robust when errors occur.
+;; * Change "internal" to "emacs".
+;;
+;; Revision 1.2  1993/11/22  22:36:36  liberte
+;; * Simplified and generalized printer customization.
+;;     custom-printers is an alist of (PREDICATE . PRINTER) pairs
+;;     for any data types.  The PRINTER function should print to
+;;     `standard-output'  add-custom-printer and delete-custom-printer
+;;     change custom-printers.
+;;
+;; * Installation function now called install-custom-print.  The
+;;     old name is still around for now.
+;;
+;; * New macro with-custom-print (added earlier) - executes like
+;;     progn but with custom-print activated temporarily.
+;;
+;; * Cleaned up comments for replacements of standardard printers.
+;;
+;; * Changed custom-prin1-to-string to use a temporary buffer.
+;;
+;; * Internal symbols are prefixed with CP::.
+;;
+;; * Option custom-print-vectors (added earlier) - controls whether
+;;     vectors should be printed according to print-length and
+;;     print-length.  Emacs doesnt do this, but cust-print would
+;;     otherwise do it only if custom printing is required.
+;;
+;; * Uninterned symbols are treated as non-read-equivalent.
+;;
 
 
 ;;; Commentary:

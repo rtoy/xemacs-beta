@@ -55,6 +55,6 @@
 	(while mods
 	  (let ((k1 (vector (append (car mods) foo)))
 		(k2 (vector (append (car mods) bar))))
-	    (define-key global-map k1 k2))
+	    (define-key key-translation-map k1 k2))
 	  (setq mods (cdr mods))))
       (setq mapping (cdr mapping)))))

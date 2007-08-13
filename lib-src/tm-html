@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# $Id: tm-html,v 1.1.1.1 1996/12/18 03:52:12 steve Exp $
+#
+
+if [ "$TM_TMP_DIR" = "" ]; then
+    TM_TMP_DIR=/tmp
+    export TM_TMP_DIR
+fi
+
+if [ "$TM_WWW_BROWSER" = "" ]; then
+    TM_WWW_BROWSER=netscape
+    export TM_WWW_BROWSER
+fi
+
+if [ "$5" = "" ]; then
+    filename="$TM_TMP_DIR/mime$$.html"
+else
+    filename="$TM_TMP_DIR/$5"
+fi
+
+echo "$2; $3 -> $filename"
+
+tmdecode "$3" $1 $filename
+
+case "$4" in
+"play")
+    if [ `echo $TM_WWW_BROWSER | grep netscape` ]; then
+	echo netscape
+	if [ -h $HOME/.netscape/lock ]; then
+	    netscape -remote "openURL(file:$filename,new-window)"
+        else
+	    netscape $filename
+        fi
+    else
+	echo not netscape
+	$TM_WWW_BROWSER $filename
+    fi
+    trap 'rm -f $filename' 0 1 2 3 13 15
+    ;;
+"extract")
+    echo "extract to $filename"
+    ;;
+esac

@@ -74,6 +74,9 @@ Lisp_Object Qpre_command_hook, Qpost_command_hook;
 /* Hook run when XEmacs is about to be idle. */
 Lisp_Object Qpre_idle_hook, Vpre_idle_hook;
 
+/* Control gratuitous keyboard focus throwing. */
+int focus_follows_mouse;
+
 #ifdef ILL_CONCEIVED_HOOK
 /* Hook run after a command if there's no more input soon.  */
 Lisp_Object Qpost_command_idle_hook, Vpost_command_idle_hook;
@@ -1636,6 +1639,7 @@ investigate_frame_change (void)
 	 in emacs_handle_focus_change_final() is based on the _FOR_HOOKS
 	 value, we need to do so too. */
       if (!NILP (sel_frame) &&
+	  !focus_follows_mouse &&
 	  !EQ (DEVICE_FRAME_THAT_OUGHT_TO_HAVE_FOCUS (d), sel_frame) &&
 	  !NILP (DEVICE_FRAME_WITH_FOCUS_FOR_HOOKS (d)) &&
 	  !EQ (DEVICE_FRAME_WITH_FOCUS_FOR_HOOKS (d), sel_frame))
@@ -4157,6 +4161,13 @@ This generally happens as a result of a call to `next-event',
 Errors running the hook are caught and ignored.
 */ );
   Vpre_idle_hook = Qnil;
+
+  DEFVAR_BOOL ("focus-follows-mouse", &focus_follows_mouse /*
+Variable to control XEmacs behavior with respect to focus changing.
+If this variable is set to t, then XEmacs will not gratuitously change
+the keyboard focus.
+*/ );
+  focus_follows_mouse = 0;
 
 #ifdef ILL_CONCEIVED_HOOK
   /* Ill-conceived because it's not run in all sorts of cases

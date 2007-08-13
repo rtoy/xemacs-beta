@@ -25,8 +25,6 @@
 ;; along with this program; if not, write to the Free Software
 ;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: Not in FSF.
-
 ;;; Commentary:
 ;;
 ;; This file contains routines that help guess the cc-mode style in a

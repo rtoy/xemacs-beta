@@ -19,16 +19,17 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
 ;; This package provides equivalents of certain primitives from Gosling
 ;; Emacs (including the commercial UniPress versions).  These have an
 ;; ml- prefix to distinguish them from native GNU Emacs functions with
-;; similar names.  The oackage mlconvert.el translates Mocklisp code
+;; similar names.  The package mlconvert.el translates Mocklisp code
 ;; to use these names.
 
 ;;; Code:
@@ -69,6 +70,10 @@
 
 (defun define-keymap (name)
   (fset (intern name) (make-keymap)))
+
+;; Make it work to use ml-use-...-map on "esc" and such.
+(fset 'esc-map esc-map)
+(fset 'ctl-x-map ctl-x-map)
 
 (defun ml-use-local-map (name)
   (use-local-map (intern (concat name "-map"))))
@@ -238,12 +243,14 @@
 	(define-abbrev-table symbol nil))
     (symbol-value symbol)))
 
+;; XEmacs
 (defun define-hooked-local-abbrev (name exp hook)
   (define-abbrev (or local-abbrev-table
                      (error "Major mode has no abbrev table"))
     (downcase name)
     exp (intern hook)))
 
+;; XEmacs
 (defun define-hooked-global-abbrev (name exp hook)
   (define-abbrev global-abbrev-table (downcase name)
     exp (intern hook)))
@@ -336,6 +343,7 @@
 (defvar use-csh-option-f 1
   "Mocklisp compatibility variable; 1 means pass -f when calling csh.")
 
+;; XEmacs (FSF bugfix? -sb)
 (defun filter-region (command)
   (let* ((shell (if (/= use-users-shell 0) shell-file-name "/bin/sh"))
 	 (csh (equal (file-name-nondirectory shell) "csh")))
@@ -343,6 +351,7 @@
 			 (if (and csh use-csh-option-f) "-cf" "-c")
 			 (concat "exec " command))))
 
+;; XEmacs (FSF bugfix? -sb)
 (defun execute-monitor-command (command)
   (let* ((shell (if (/= use-users-shell 0) shell-file-name "/bin/sh"))
 	 (csh (equal (file-name-nondirectory shell) "csh")))
@@ -436,7 +445,7 @@
     (if (< to 0) (setq to (+ to length)))
     (substring string from (+ from to))))
 
-
+;; XEmacs
 (defun ml-nargs ()
   "Number of arguments to currently executing mocklisp function."
   (if (eq mocklisp-arguments 'interactive)

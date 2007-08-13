@@ -135,7 +135,8 @@
      (load-gc "lisp-mode")
      (load-gc "text-mode")
      (load-gc "fill")
-     (load-gc "cc-mode")
+     ;; (load-gc "cc-mode")		; as FSF goes so go we ..
+     (load-gc "scroll-in-place")
      ;; we no longer load buff-menu automatically.
      ;; it will get autoloaded if needed.
      
@@ -204,7 +205,7 @@
      )) ;; end of call-with-condition-handler
 
 
-(setq load-warn-when-source-newer nil ; set to t at top of file
+(setq load-warn-when-source-newer t ; set to t at top of file
       load-warn-when-source-only nil)
 
 (setq debugger 'debug)

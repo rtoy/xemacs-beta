@@ -8,9 +8,9 @@
 ;;; IPC extensions for comint
 ;;; Copyright (C) 1990 Chris McConnell, ccm@cs.cmu.edu.
 ;;;
-;;; Send mail to ilisp@lehman.com if you have problems.
+;;; Send mail to ilisp@naggum.no if you have problems.
 ;;;
-;;; Send mail to ilisp-request@lehman.com if you want to be on the
+;;; Send mail to ilisp-request@naggum.no if you want to be on the
 ;;; ilisp mailing list.
 
 ;;; This file is part of GNU Emacs.
@@ -186,27 +186,29 @@ is put in the send stream.")
 	      (insert "{") (insert string) (insert "}"))
 	    (insert string)))))
 
-;;;
-(defun comint-send-string (proc str)
-  "Send PROCESS the contents of STRING as input.
-This is equivalent to process-send-string, except that long input strings
-are broken up into chunks of size comint-input-chunk-size. Processes
-are given a chance to output between chunks. This can help prevent processes
-from hanging when you send them long inputs on some OS's."
-  (comint-log proc str)
-  (let* ((len (length str))
-	 (i (min len comint-input-chunk-size)))
-    (process-send-string proc (substring str 0 i))
-    (while (< i len)
-      (let ((next-i (+ i comint-input-chunk-size)))
-	(accept-process-output)
-	(process-send-string proc (substring str i (min len next-i)))
-	(setq i next-i)))))
+;;; v5.7b Removed by suggestion of erik@naggum.no (Erik Naggum).
 
-;;;
+;;; (defun comint-send-string (proc str)
+;;;   "Send PROCESS the contents of STRING as input.
+;;; This is equivalent to process-send-string, except that long input strings
+;;; are broken up into chunks of size comint-input-chunk-size. Processes
+;;; are given a chance to output between chunks. This can help prevent
+;;; processes from hanging when you send them long inputs on some OS's."
+;;;   (comint-log proc str)
+;;;   (let* ((len (length str))
+;;; 	 (i (min len comint-input-chunk-size)))
+;;;     (process-send-string proc (substring str 0 i))
+;;;     (while (< i len)
+;;;       (let ((next-i (+ i comint-input-chunk-size)))
+;;; 	(accept-process-output)
+;;; 	(process-send-string proc (substring str i (min len next-i)))
+;;; 	(setq i next-i)))))
+
+;;; v5.7b See above
 (defun comint-sender (process string)
   "Send to PROCESS STRING with newline if comint-send-newline."
-  (comint-send-string process string)
+  ;; (comint-send-string process string)
+  (process-send-string process string)
   (if comint-send-newline
       (progn
 	(comint-log process "\n")
@@ -455,10 +457,31 @@ comint-send or comint-default-send, or results will be mixed up."
 			       (string-match comint-error-regexp
 					     comint-output))))
 		(unwind-protect
+		     ;; (if handler
+		     ;;	    (setq handler
+		     ;;		 (funcall handler comint-errorp wait-p
+		     ;;		          message output last)))
+
+		     ;; v5.7b Patch suggested by fujieda@jaist.ac.jp
+		     ;; (Kazuhiro Fujieda). Here is his comment.
+
+		     ;; "When the 'handler' is called, the current
+		     ;; buffer may be changed. 'comint-process-filter'
+		     ;; accesses some buffer-local variables, for
+		     ;; example 'comint-send-queue' and
+		     ;; 'comint-end-queue'.  If the current buffer is
+		     ;; changed in the 'handler', the entities of
+		     ;; these buffer-local variables is replaced, and
+		     ;; corrupt successive behaviors."
+
+		     ;; The code hereafter fixes the problem.
+
 		     (if handler
-			 (setq handler
-			       (funcall handler comint-errorp wait-p
-					message output last)))
+			 (save-excursion
+			   (setq handler
+				 (funcall handler comint-errorp wait-p
+					  message output last))))
+
 		  (if (and error handler no-insert comint-fix-error)
 		      (setq comint-send-queue 
 			    (cons (list comint-fix-error t nil 'fix

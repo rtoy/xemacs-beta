@@ -617,7 +617,7 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
 {
   Atom encoding = XA_STRING;
   String new_XtValue = (String) value;
-  String old_XtValue;
+  String old_XtValue = NULL;
   Bufbyte *ptr;
   Arg av[2];
 

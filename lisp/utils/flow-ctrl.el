@@ -21,27 +21,28 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.28.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
-;;;; Terminals that use XON/XOFF flow control can cause problems with
-;;;; GNU Emacs users.  This file contains Emacs Lisp code that makes it
-;;;; easy for a user to deal with this problem, when using such a
-;;;; terminal. 
-;;;;      
-;;;; To invoke these adjustments, a user need only invoke the function
-;;;; enable-flow-control-on with a list of terminal types in his/her own
-;;;; .emacs file.  As arguments, give it the names of one or more terminal
-;;;; types in use by that user which require flow control adjustments.
-;;;; Here's an example: 
-;;;; 
-;;;;	(enable-flow-control-on "vt200" "vt300" "vt101" "vt131")
+;; Terminals that use XON/XOFF flow control can cause problems with
+;; GNU Emacs users.  This file contains Emacs Lisp code that makes it
+;; easy for a user to deal with this problem, when using such a
+;; terminal. 
+;;      
+;; To invoke these adjustments, a user need only invoke the function
+;; enable-flow-control-on with a list of terminal types in his/her own
+;; .emacs file.  As arguments, give it the names of one or more terminal
+;; types in use by that user which require flow control adjustments.
+;; Here's an example: 
+;; 
+;;	(enable-flow-control-on "vt200" "vt300" "vt101" "vt131")
 
-;;; Portability note: This uses (getenv "TERM"), and therefore probably
-;;; won't work outside of UNIX-like environments.
+;; Portability note: This uses (getenv "TERM"), and therefore probably
+;; won't work outside of UNIX-like environments.
 
 ;;; Code:
 
@@ -49,6 +50,8 @@
   "Character that replaces C-s, when flow control handling is enabled.")
 (defvar flow-control-c-q-replacement ?\036
   "Character that replaces C-q, when flow control handling is enabled.")
+
+;(put 'keyboard-translate-table 'char-table-extra-slots 0)
 
 ;;;###autoload
 (defun enable-flow-control (&optional argument)
@@ -64,6 +67,7 @@ With arg, enable flow control mode if arg is positive, otherwise disable."
       (progn
 	;; Turn flow control off, and stop exchanging chars.
 	(set-input-mode t nil (nth 2 (current-input-mode)))
+	;; XEmacs
 	(keyboard-translate flow-control-c-s-replacement nil)
 	(keyboard-translate ?\^s nil)
 	(keyboard-translate flow-control-c-q-replacement nil)
@@ -73,6 +77,7 @@ With arg, enable flow control mode if arg is positive, otherwise disable."
     (set-input-mode nil t (nth 2 (current-input-mode)))
     ;; Initialize translate table, saving previous mappings, if any.
     ;; Swap C-s and C-\
+    ;; XEmacs
     (keyboard-translate flow-control-c-s-replacement ?\^s)
     (keyboard-translate ?\^s flow-control-c-s-replacement)
     ;; Swap C-q and C-^
@@ -97,12 +102,18 @@ This function has no effect unless the current device is a tty.
 The tty terminal type is determined from the TERM environment variable.
 Trailing hyphens and everything following is stripped, so a TERM
 value of \"vt100-nam\" is treated the same as \"vt100\"."
-  (and
-   (eq (device-type) 'tty)
-   (getenv "TERM")
-   (member (replace-in-string (getenv "TERM") "[-_].*$" "")
-           losing-terminal-types)
-   (enable-flow-control)))
+  (let ((term (getenv "TERM"))
+	hyphend)
+    ;; Look for TERM in LOSING-TERMINAL-TYPES.
+    ;; If we don't find it literally, try stripping off words
+    ;; from the end, one by one.
+    (while (and term (not (member term losing-terminal-types)))
+      ;; Strip off last hyphen and what follows, then try again.
+      (if (setq hyphend (string-match "[-_][^-_]+$" term))
+	  (setq term (substring term 0 hyphend))
+	(setq term nil)))
+    (if term
+	(enable-flow-control))))
 
 (provide 'flow-ctrl)
 

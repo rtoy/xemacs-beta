@@ -65,10 +65,14 @@
 
 ;; Function updating the string containing the current column.
 (defvar update-column-function 
-  (function (lambda ()
-	      (setq current-column (int-to-string (current-column)))
-	      (setq current-line   (int-to-string (current-line)))
-	      (set-buffer-modified-p (buffer-modified-p)))))
+  (lambda ()
+    (setq current-column
+	  (int-to-string (if (and (boundp 'column-number-start-at-one)
+				  column-number-start-at-one)
+			     (1+ (current-column))
+			   (current-column))))
+    (setq current-line   (int-to-string (current-line)))
+    (set-buffer-modified-p (buffer-modified-p))))
 
 (defvar display-column-mode nil
   "Show current column and line in mode line if non-nil.")

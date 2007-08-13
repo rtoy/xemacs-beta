@@ -210,10 +210,10 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2)
     ;; jwz:
     ;; IRIX 5.2
     ;; cfe: Warning 712: foo.c, line 2: illegal combination of pointer and ...
-    (" \\([^ \n,]+\\), line \\([0-9]+\\):" 1 2)
+    (" \\([^ \n,\"]+\\), line \\([0-9]+\\):" 1 2)
     ;; IRIX 5.2
     ;; cfe: Warning 600: xfe.c: 170: Not in a conditional directive while ...
-    (": \\([^ \n,]+\\): \\([0-9]+\\):" 1 2)
+    (": \\([^ \n,\"]+\\): \\([0-9]+\\):" 1 2)
 
     ;; Cray C compiler error messages
     ("\n\\(cc\\| cft\\)-[0-9]+ c\\(c\\|f77\\): ERROR \\([^,\n]+, \\)* File = \\([^,\n]+\\), Line = \\([0-9]+\\)" 4 5)

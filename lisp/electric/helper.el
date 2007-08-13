@@ -20,14 +20,15 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Code:
 
-; hey, here's a helping hand.
-  
+;; hey, here's a helping hand.
+
 ;; Bind this to a string for <blank> in "... Other keys <blank>".
 ;; Helper-help uses this to construct help string when scrolling.
 ;; Defaults to "return"

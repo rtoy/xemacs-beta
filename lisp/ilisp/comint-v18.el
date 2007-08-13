@@ -718,7 +718,7 @@ Useful if you accidentally suspend the top-level process."
 ;;; Typically, (lisp-mode) or (scheme-mode).
 ;;; 
 ;;; If the command is given in a file buffer whose major modes is in
-;;; SOURCE-MODES, then the filename is the default file, and the
+;;; SOURCE-MODES, then the the filename is the default file, and the
 ;;; file's directory is the default directory.
 ;;; 
 ;;; If the buffer isn't a source file buffer (e.g., it's the process buffer),

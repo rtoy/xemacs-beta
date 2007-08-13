@@ -1899,6 +1899,8 @@ EndDSCPage\n"))
       (if ps-razzle-dazzle
 	  (message "Formatting...done")))))
 
+;; XEmacs change
+;; Permit dynamic evaluation at print time of ps-lpr-switches
 (defun ps-do-despool (filename)
   (if (or (not (boundp 'ps-spool-buffer))
 	  (not ps-spool-buffer))
@@ -1921,12 +1923,21 @@ EndDSCPage\n"))
 	(set-buffer ps-spool-buffer)
 	(if (and (eq system-type 'ms-dos) (stringp dos-ps-printer))
 	    (write-region (point-min) (point-max) dos-ps-printer t 0)
-	  (let ((binary-process-input t)) ; for MS-DOS
+	  (let ((binary-process-input t)  ; for MS-DOS
+		(ps-lpr-sw (message-flatten-list    ; XEmacs
+			    (mapcar '(lambda (arg)  ; Dynamic evaluation
+				       (cond ((stringp arg) arg)
+					     ((functionp arg) (apply arg nil))
+					     ((symbolp arg) (eval arg))
+					     ((consp arg) (apply (car arg)
+								 (cdr arg)))
+					     (t nil)))
+				    ps-lpr-switches))))
 	    (apply 'call-process-region
 		   (point-min) (point-max) ps-lpr-command nil
 		   (if (fboundp 'start-process) 0 nil)
 		   nil
-		   ps-lpr-switches))))
+		   ps-lpr-sw))))
       (if ps-razzle-dazzle
 	  (message "Printing...done")))
     (kill-buffer ps-spool-buffer)))
@@ -2029,12 +2040,16 @@ EndDSCPage\n"))
 ;; article subjects shows up at the printer.  This function, bound to
 ;; prsc for the gnus *Summary* buffer means I don't have to switch
 ;; buffers first.
+;; sb:  Updated for Gnus 5.
 (defun ps-gnus-print-article-from-summary ()
   (interactive)
-  (if (get-buffer "*Article*")
-      (save-excursion
-	(set-buffer "*Article*")
-	(ps-spool-buffer-with-faces))))
+  (let ((ps-buf (if (boundp 'gnus-article-buffer)
+		    gnus-article-buffer
+		  "*Article*")))
+    (if (get-buffer ps-buf)
+	(save-excursion
+	  (set-buffer ps-buf)
+	  (ps-spool-buffer-with-faces)))))
 
 ;; See ps-gnus-print-article-from-summary.  This function does the
 ;; same thing for vm.

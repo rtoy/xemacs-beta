@@ -1,6 +1,6 @@
-;;; tpu-mapper.el  ---  Create a TPU-edt keymap file for x-windows emacs.
+;;; tpu-mapper.el --- Create a TPU-edt X-windows keymap file
 
-;; Copyright (C) 1993 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
 
 ;; Author: Rob Riepel <riepel@networking.stanford.edu>
 ;; Maintainer: Rob Riepel <riepel@networking.stanford.edu>
@@ -20,7 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34
 
 ;;; Commentary:
 
@@ -31,17 +34,17 @@
 
 ;;; Usage:
 
-;;  Simply load this file into the X-windows version of emacs (version 19)
-;;  using the following command.
+;;  Simply load this file into the X-windows version of XEmacs using the
+;;  following command.
 
-;;    emacs -q -l tpu-mapper.el
+;;    xemacs -q -l tpu-mapper
 
 ;;  The "-q" option prevents loading of your .emacs file (commands therein
 ;;  might confuse this program).
 
 ;;  An instruction screen showing the TPU-edt keypad will be displayed, and
 ;;  you will be prompted to press the TPU-edt editing keys.  Tpu-mapper uses
-;;  the keys you press to create an emacs lisp file that will define a
+;;  the keys you press to create an Emacs Lisp file that will define a
 ;;  TPU-edt keypad for your X server.  You can even re-arrange the standard
 ;;  EDT keypad to suit your tastes (or to cope with those silly Sun and PC
 ;;  keypads).
@@ -49,28 +52,25 @@
 ;;  Finally, you will be prompted for the name of the file to store the key
 ;;  definitions.  If you chose the default, TPU-edt will find it and load it
 ;;  automatically.  If you specify a different file name, you will need to
-;;  set the variable "tpu-xkeys-file" before loading TPU-edt.  Here's how
+;;  set the variable "tpu-xkeys-file" before starting TPU-edt.  Here's how
 ;;  you might go about doing that in your .emacs file.
 
 ;;    (setq tpu-xkeys-file (expand-file-name "~/.my-emacs-x-keys"))
-;;    (load "tpu-edt")
+;;    (tpu-edt)
 
 ;;; Known Problems:
 
 ;;  Sometimes, tpu-mapper will ignore a key you press, and just continue to
 ;;  prompt for the same key.  This can happen when your window manager sucks
-;;  up the key and doesn't pass it on to emacs, or it could be an emacs bug.
+;;  up the key and doesn't pass it on to Emacs, or it could be an Emacs bug.
 ;;  Either way, there's nothing that tpu-mapper can do about it.  You must
 ;;  press RETURN, to skip the current key and continue.  Later, you and/or
 ;;  your local X guru can try to figure out why the key is being ignored.
 
-;;; Code:
+;; NOTE: There was a very old tpu-edt in XEmacs 19.14 so I deleted it and
+;;  replaced it with the one in Emacs 19.34. -sb
 
-;;;
-;;;  Revision Information
-;;;
-(defconst tpu-mapper-revision "!Revision: 1.5 !"
-    "Revision number of TPU-edt x-windows emacs key mapper.")
+;;; Code:
 
 
 ;;;
@@ -78,27 +78,21 @@
 ;;;
 (cond
  ((not (and window-system (not (string-lessp emacs-version "19"))))
-  (insert "
-
-    Whoa!  This isn't going to work...
-
-    You must run tpu-mapper.el under X-windows and Emacs version 19.
-
-    Press any key to exit.  ")
-  (sit-for 600)
-  (kill-emacs t)))
+  (error "tpu-mapper requires running in Emacs 19, with an X display")))
 
 
 ;;;
-;;;  Decide whether we're running GNU Emacs or XEmacs.
+;;;  Decide whether we're running Lucid Emacs or Emacs itself.
 ;;;
-(defconst tpu-xemacs-emacs19-p (string-match "XEmacs" emacs-version)
-  "Non-NIL if we are running XEmacs version 19.")
+(defconst tpu-lucid-emacs19-p (string-match "Lucid" emacs-version)
+  "Non-NIL if we are running Lucid Emacs version 19.")
 
 
 ;;;
 ;;;  Key variables
 ;;;
+(defvar tpu-kp4 nil)
+(defvar tpu-kp5 nil)
 (defvar tpu-key nil)
 (defvar tpu-enter nil)
 (defvar tpu-return nil)
@@ -110,7 +104,7 @@
 ;;;
 ;;;  Make sure the window is big enough to display the instructions
 ;;;
-(if tpu-xemacs-emacs19-p (set-screen-size nil 80 36)
+(if tpu-lucid-emacs19-p (set-screen-size (selected-screen) 80 36)
   (set-frame-size (selected-frame) 80 36))
 
 
@@ -138,7 +132,7 @@
 (switch-to-buffer "Directions")
 (insert "
     This program prompts you to press keys to create a custom keymap file
-    for use with the x-windows version of emacs and TPU-edt.
+    for use with the x-windows version of Emacs and TPU-edt.
 
     Start by pressing the RETURN key, and continue by pressing the keys
     specified in the mini-buffer.  You can re-arrange the TPU-edt keypad
@@ -171,24 +165,25 @@
 
 ")
 (delete-other-windows)
+(goto-char (point-min))
 
 ;;;
 ;;;  Save <CR> for future reference
 ;;;
 (cond
- (tpu-xemacs-emacs19-p
+ (tpu-lucid-emacs19-p
   (setq tpu-return-seq (read-key-sequence "Hit carriage-return <CR> to continue "))
   (setq tpu-return (concat "[" (format "%s" (event-key (aref tpu-return-seq 0))) "]")))
  (t
   (message "Hit carriage-return <CR> to continue ")
   (setq tpu-return-seq (read-event))
-  (setq tpu-return (concat "[" (format "%s" tpu-return-seq) "]")))) 
+  (setq tpu-return (concat "[" (format "%s" tpu-return-seq) "]"))))
 
 
 ;;;
 ;;;  Key mapping functions
 ;;;
-(defun tpu-xemacs-map-key (ident descrip func gold-func)
+(defun tpu-lucid-map-key (ident descrip func gold-func)
   (interactive)
   (setq tpu-key-seq (read-key-sequence (format "Press %s%s: " ident descrip)))
   (setq tpu-key (concat "[" (format "%s" (event-key (aref tpu-key-seq 0))) "]"))
@@ -204,7 +199,7 @@
 	 (format "%s" tpu-key)))
   tpu-key)
 
-(defun tpu-gnu-map-key (ident descrip func gold-func)
+(defun tpu-emacs-map-key (ident descrip func gold-func)
   (interactive)
   (message "Press %s%s: " ident descrip)
   (setq tpu-key-seq (read-event))
@@ -221,7 +216,7 @@
 	 (format "%s" tpu-key)))
   tpu-key)
 
-(fset 'tpu-map-key (if tpu-xemacs-emacs19-p 'tpu-xemacs-map-key 'tpu-gnu-map-key))
+(fset 'tpu-map-key (if tpu-lucid-emacs19-p 'tpu-lucid-map-key 'tpu-emacs-map-key))
 
 
 (set-buffer "Keys")
@@ -275,8 +270,8 @@
 (tpu-map-key "KP-1"      " - The Word/Change-Case key"             "'tpu-word"                 "'tpu-change-case")
 (tpu-map-key "KP-2"      " - The EOL/Delete-EOL key"               "'tpu-end-of-line"          "'tpu-delete-to-eol")
 (tpu-map-key "KP-3"      " - The Character/Special-Insert key"     "'tpu-char"                 "'tpu-special-insert")
-(tpu-map-key "KP-4"      " - The Forward/Bottom key"               "'tpu-advance-direction"    "'tpu-move-to-end")
-(tpu-map-key "KP-5"      " - The Reverse/Top key"                  "'tpu-backup-direction"     "'tpu-move-to-beginning")
+(setq tpu-kp4 (tpu-map-key "KP-4"      " - The Forward/Bottom key"               "'tpu-advance-direction"    "'tpu-move-to-end"))
+(setq tpu-kp5 (tpu-map-key "KP-5"      " - The Reverse/Top key"                  "'tpu-backup-direction"     "'tpu-move-to-beginning"))
 (tpu-map-key "KP-6"      " - The Remove/Insert key"                "'tpu-cut"                  "'tpu-paste")
 (tpu-map-key "KP-7"      " - The Page/Do key"                      "'tpu-page"                 "'execute-extended-command")
 (tpu-map-key "KP-8"      " - The Section/Fill key"                 "'tpu-scroll-window"        "'tpu-fill")
@@ -344,12 +339,22 @@
   (insert (format "(define-key minibuffer-local-completion-map %s 'exit-minibuffer)\n" tpu-enter))
   (insert (format "(define-key minibuffer-local-must-match-map %s 'minibuffer-complete-and-exit)\n" tpu-enter))))
 
+(cond
+ ((not (or (equal tpu-kp4 tpu-return) (equal tpu-kp5 tpu-return)))
+  (insert "
+;;  Minibuffer map additions to allow KP-4/5 termination of search strings.
+;;
+")
+
+  (insert (format "(define-key minibuffer-local-map %s 'tpu-search-forward-exit)\n" tpu-kp4))
+  (insert (format "(define-key minibuffer-local-map %s 'tpu-search-backward-exit)\n" tpu-kp5))))
+
 (insert "
 ;;  Define the tpu-help-enter/return symbols
 ;;
 ")
 
-(cond (tpu-xemacs-emacs19-p
+(cond (tpu-lucid-emacs19-p
        (insert (format "(setq tpu-help-enter \"%s\")\n" tpu-enter-seq))
        (insert (format "(setq tpu-help-return \"%s\")\n" tpu-return-seq))
        (insert "(setq tpu-help-N \"[#<keypress-event N>]\")\n")
@@ -363,15 +368,33 @@
 (set-buffer "Keys")
 
 ;;;
-;;;  Save the key mapping program and blow this pop stand
+;;;  Save the key mapping program
 ;;;
-(let ((file (if tpu-xemacs-emacs19-p "~/.tpu-xemacs-keys" "~/.tpu-gnu-keys")))
+(let ((file
+       (convert-standard-filename
+	(if tpu-lucid-emacs19-p "~/.tpu-lucid-keys" "~/.tpu-keys"))))
   (set-visited-file-name
-   (read-file-name (format "Save key mapping to file (default %s): " file) nil file)))
+   (read-file-name (format "Save key mapping to file (default %s): " file) "" file)))
 (save-buffer)
 
-(message "That's it!  Press any key to exit")
-(sit-for 600)
-(kill-emacs t)
+;;;
+;;;  Load the newly defined keys and clean up
+;;;
+(eval-current-buffer)
+(kill-buffer (current-buffer))
+(kill-buffer "*scratch*")
+(kill-buffer "Gold-Keys")
+
+;;;
+;;;  Let them know it worked.
+;;;
+(switch-to-buffer "Directions")
+(erase-buffer)
+(insert "
+    A custom TPU-edt keymap file has been created.
+
+    Press GOLD-k to remove this buffer and continue editing.
+")
+(goto-char (point-min))
 
 ;;; tpu-mapper.el ends here

@@ -3,17 +3,18 @@
 ;;; ilisp-s2c.el --
 
 ;;; This file is part of ILISP.
-;;; Version: 5.7
+;;; Version: 5.8
 ;;;
 ;;; Copyright (C) 1990, 1991, 1992, 1993 Chris McConnell
 ;;;               1993, 1994 Ivan Vasquez
-;;;               1994, 1995 Marco Antoniotti and Rick Busdiecker
+;;;               1994, 1995, 1996 Marco Antoniotti and Rick Busdiecker
+;;;               1996 Marco Antoniotti and Rick Campbell
 ;;;
 ;;; Other authors' names for which this Copyright notice also holds
 ;;; may appear later in this file.
 ;;;
-;;; Send mail to 'ilisp-request@lehman.com' to be included in the
-;;; ILISP mailing list. 'ilisp@lehman.com' is the general ILISP
+;;; Send mail to 'ilisp-request@naggum.no' to be included in the
+;;; ILISP mailing list. 'ilisp@naggum.no' is the general ILISP
 ;;; mailing list were bugs and improvements are discussed.
 ;;;
 ;;; ILISP is freely redistributable under the terms found in the file
@@ -21,7 +22,7 @@
 
 
 ;From: Jeffrey Mark Siskind <qobi@cs.toronto.edu>
-;To: ilisp@lehman.com
+;To: ilisp@naggum.no
 ;Subject: ILisp 5.5 and Scheme->C
 ;Reply-To: Qobi@cs.toronto.edu
 ;Date: 	Thu, 15 Dec 1994 22:55:05 -0500

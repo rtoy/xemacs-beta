@@ -70,6 +70,9 @@
 ;;; /u/mi/  /usr/misc/
 ;;;
 
+
+(require 'cl)
+
 ;;;%Globals
 ;;;%%Switches
 (defvar completer-load-hook nil
@@ -123,6 +126,12 @@ string that matches the pattern will be used.")
 (defvar completer-pred nil "Last completer pred.")
 (defvar completer-mode nil "Last completer mode.")
 (defvar completer-result nil "Last completer result.")
+
+(eval-when (eval load compile)
+  (if (not (fboundp 'completion-display-completion-list-function))
+      (setf completion-display-completion-list-function
+	    'display-completion-list)))
+
 
 ;;;%Utilities
 (defun completer-message (message &optional point)
@@ -738,7 +747,7 @@ or ~ or $ and return the resulting string."
 
 ;;;
 (defun completer-new-cmd (cmd)
-  "Return t if we can't execute the old minibuffer version of CMD."
+  "Return T if we can't execute the old minibuffer version of CMD."
   (if (or completer-disable
 	  (let ((string (completer-minibuf-string)))
 	    (or

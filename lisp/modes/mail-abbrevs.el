@@ -1,6 +1,6 @@
 ;;; Abbrev-expansion of mail aliases.
 ;;; Copyright (C) 1985-1994 Free Software Foundation, Inc.
-;;; Created: 19 oct 90, Jamie Zawinski <jwz@lucid.com>
+;;; Created: 19 oct 90, Jamie Zawinski <jwz@netscape.com>
 ;;; Modified: 5 apr 92, Roland McGrath <roland@gnu.ai.mit.edu>
 ;;; Last change  4-may-94. jwz
 
@@ -404,14 +404,30 @@ mail-mode-syntax-table is used when the cursor is in the message body or in
 non-address headers.")
 
 (defvar mail-abbrev-syntax-table
-  (let* ((tab (copy-syntax-table mail-mode-header-syntax-table))
-	 (i (1- (length tab)))
-	 (_ (aref (standard-syntax-table) ?_))
-	 (w (aref (standard-syntax-table) ?w)))
-    (while (>= i 0)
-      (if (= (aref tab i) _) (aset tab i w))
-      (setq i (1- i)))
-    tab)
+  (if (fboundp 'map-syntax-table)
+      (let ((tab (copy-syntax-table mail-mode-header-syntax-table)))
+	(if (vectorp tab)
+	    (let ((i (1- (length tab)))
+		  (_ (aref (standard-syntax-table) ?_))
+		  (w (aref (standard-syntax-table) ?w)))
+	      (while (>= i 0)
+		(if (= (aref tab i) _) (aset tab i w))
+		(setq i (1- i))))
+	  (map-syntax-table
+	   #'(lambda (key val)
+	       (if (eq (char-syntax-from-code val) ?_)
+		   (put-char-table key (set-char-syntax-in-code val ?w) tab)
+		 ))
+	   tab))
+	tab)
+    (let* ((tab (copy-syntax-table mail-mode-header-syntax-table))
+	   (i (1- (length tab)))
+	   (_ (aref (standard-syntax-table) ?_))
+	   (w (aref (standard-syntax-table) ?w)))
+      (while (>= i 0)
+	(if (= (aref tab i) _) (aset tab i w))
+	(setq i (1- i)))
+      tab))
   "The syntax-table used for abbrev-expansion purposes; this is not actually
 made the current syntax table of the buffer, but simply controls the set of
 characters which may be a part of the name of a mail-alias.")

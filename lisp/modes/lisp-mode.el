@@ -367,10 +367,7 @@ if that value is non-nil."
   (if (and (consp expr)
 	   (eq (car expr) 'defvar)
 	   (> (length expr) 2))
-      (progn (eval (cons 'defconst (cdr expr)))
-	     (message "defvar treated as defconst")
-	     (sit-for 1)
-	     (message ""))
+      (eval (cons 'defconst (cdr expr)))
     (eval expr)))
 
 (defun eval-last-sexp (eval-last-sexp-arg-internal)

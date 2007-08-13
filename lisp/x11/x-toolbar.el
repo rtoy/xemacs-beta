@@ -100,17 +100,21 @@
   )
 
 (defvar compile-command)
+(defvar toolbar-compile-already-run nil)
 
 (defun toolbar-compile ()
   "Run compile without having to touch the keyboard."
   (interactive)
   (require 'compile)
-  (popup-dialog-box
-   `(,(concat "Compile:\n        " compile-command)
-     ["Compile" (compile compile-command) t]
-     ["Edit command" compile t]
-     nil
-     ["Cancel" (message "Quit") t])))
+  (if toolbar-compile-already-run
+      (compile compile-command)
+    (setq toolbar-compile-already-run t)
+    (popup-dialog-box
+     `(,(concat "Compile:\n        " compile-command)
+       ["Compile" (compile compile-command) t]
+       ["Edit command" compile t]
+       nil
+       ["Cancel" (message "Quit") t]))))
 
 ;;
 ;; toolbar news variables and defuns
@@ -137,6 +141,29 @@
       (deiconify-frame toolbar-news-frame))
   (select-frame toolbar-news-frame)
   (raise-frame toolbar-news-frame))
+
+;;
+;; toolbar printing variable and defun
+;;
+(defvar toolbar-print-command 'lpr-buffer
+  "Command to run when the Print Icon is selected from the toolbar.
+Set this to `ps-print-buffer-with-faces' if you primarily print with
+a postscript printer.")
+
+(defun toolbar-print ()
+  "Print current buffer."
+  (funcall toolbar-print-command))
+
+;;
+;; toolbar replacement variable and defun
+;;
+(defvar toolbar-replace-command 'query-replace
+  "Command to run when the Replace Icon is selected from the toolbar.
+One possibility for a different value would be `query-replace-regexp'.")
+
+(defun toolbar-replace ()
+  "Run a query-replace -type function on the current buffer."
+  (funcall toolbar-replace-command))
 
 (defvar toolbar-last-win-icon nil "A `last-win' icon set.")
 (defvar toolbar-next-win-icon nil "A `next-win' icon set.")
@@ -226,14 +253,14 @@
     [toolbar-file-icon		find-file	t	"Open a file"	]
     [toolbar-folder-icon	dired		t	"View directory"]
     [toolbar-disk-icon		save-buffer	t	"Save buffer"	]
-    [toolbar-printer-icon	lpr-buffer	t	"Print buffer"	]
+    [toolbar-printer-icon	toolbar-print	t	"Print buffer"	]
     [toolbar-cut-icon		x-kill-primary-selection t "Kill region"]
     [toolbar-copy-icon		x-copy-primary-selection t "Copy region"]
     [toolbar-paste-icon		x-yank-clipboard-selection t
 				"Paste from clipboard"]
     [toolbar-undo-icon		undo		t	"Undo edit"	]
     [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"	]
-    [toolbar-replace-icon	query-replace	t	"Replace text"	]
+    [toolbar-replace-icon	toolbar-replace	t	"Replace text"	]
     [toolbar-mail-icon		toolbar-mail	t	"Mail"		]
     [toolbar-info-icon		toolbar-info	t	"Information"	]
     [toolbar-compile-icon	toolbar-compile	t	"Compile"	]

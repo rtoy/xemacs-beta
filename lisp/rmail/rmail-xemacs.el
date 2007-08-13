@@ -1,6 +1,9 @@
-;; Mouse and font support for RMAIL running in Lucid GNU Emacs
-;; written by Wilson H. Tien (wtien@urbana.mcd.mot.com); modified by jwz.
+;;; rmail-xemacs.el --- Mouse and font support for RMAIL running on XEmacs
+
 ;; Copyright (C) 1992-1993 Free Software Foundation, Inc.
+
+;; Author: Wilson H. Tien <wtien@urbana.mcd.mot.com>
+;; Keywords: mail
 
 ;; This file is part of XEmacs.
 
@@ -16,10 +19,20 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Right button pops up a menu of commands in Rmail and Rmail summary buffers.
-;;; Middle button selects indicated mail message in Rmail summary buffer
+;;; Synched up with: Not in FSF.
+
+;;; Commentary:
+
+;; Mouse and font support for RMAIL running in Lucid GNU Emacs
+;; written by Wilson H. Tien (wtien@urbana.mcd.mot.com); modified by jwz.
+
+;; Right button pops up a menu of commands in Rmail and Rmail summary buffers.
+;; Middle button selects indicated mail message in Rmail summary buffer
+
+;;; Code:
 
 (defvar rmail-summary-mode-menu
   '("Rmail Summary Commands"
@@ -218,3 +231,5 @@
 
 
 (provide 'rmail-xemacs)
+
+;;; rmail-xemacs ends here
