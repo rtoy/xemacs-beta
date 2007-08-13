@@ -1,3 +1,11 @@
+1998-08-13  Carsten Leonhardt  <leo@arioch.oche.de>
+
+	* about.el (about-hackers): new email
+
+1998-08-16  SL Baur  <steve@altair.xemacs.org>
+
+	* lisp-mode.el (with-string-as-buffer-contents): Set indentation.
+
 1998-08-11  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre9 is released.

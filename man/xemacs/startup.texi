@@ -69,7 +69,7 @@ subdirectory @file{.xemacs} of the user's home directory.
 Moreover, XEmacs expects late hierarchies in the subdirectories
 @file{site-packages}, @file{mule-packages}, and @file{xemacs-packages}
 (in that order) of the @file{<root>/lib/xemacs} subdirectory of one of
-the installation hierarchies.  (If you run in-place, these are directr
+the installation hierarchies.  (If you run in-place, these are direct
 subdirectories of the build directory.)  Furthermore, XEmacs will also
 search these subdirectories in the @file{<root>/lib/xemacs-<VERSION>}
 subdirectory and prefer directories found there.
@@ -180,7 +180,7 @@ the package executable paths as well as @code{exec-directory}, and the
 directories of the environment variables @code{PATH}
 @vindex PATH
 and @code{EMACSPATH}.
-@vindex EMCSPATH
+@vindex EMACSPATH
 
 @item doc-directory
 @vindex doc-directory

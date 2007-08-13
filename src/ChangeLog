@@ -1,3 +1,8 @@
+1998-08-16  Martin Buchholz  <martin@xemacs.org>
+
+	* fns.c (Fremrassq, remrassq_no_quit):
+	A XCAR that should have been an XCDR turned Fremrassq into Fremassq
+
 1998-08-11  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre9 is released.

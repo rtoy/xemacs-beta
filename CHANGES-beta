@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 21.0 pre10 "Erzgeberg"
+-- configure cleanup from Jareth Hein.
+-- JPEG, GIF MS Windows native build procedure fixes from Jeff Sparkes
+-- Doc fixes from Martin Buchholz
+-- Miscellaneous bug fixes from Martin Buchholz
+
 to 21.0 pre9 "Danish Landrace"
 -- miscellaneous patches from Christoph Wedler
 -- German TUTORIAL fix from Adrian Aichner

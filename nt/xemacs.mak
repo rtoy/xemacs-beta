@@ -89,7 +89,10 @@ HAVE_PNG=0
 HAVE_TIFF=0
 !endif
 !if !defined(HAVE_JPEG)
-HAVE_TIFF=0
+HAVE_JPEG=0
+!endif
+!if !defined(HAVE_GIF)
+HAVE_GIF=1
 !endif
 !if !defined(HAVE_TOOLBARS)
 HAVE_TOOLBARS=$(HAVE_XPM)
@@ -232,6 +235,9 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if $(HAVE_XPM)
 !message Compiling in support for XPM images.
 !endif
+!if $(HAVE_GIF)
+!message Compiling in support for GIF images.
+!endif
 !if $(HAVE_PNG)
 !message Compiling in support for PNG images.
 !endif
@@ -311,6 +317,11 @@ MSW_C_DIRED_OBJ=$(OUTDIR)\dired-msw.obj
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_XPM -DFOR_MSW
 MSW_INCLUDES=$(MSW_INCLUDES) -I"$(XPM_DIR)" -I"$(XPM_DIR)\lib"
 MSW_LIBS=$(MSW_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
+!endif
+!if $(HAVE_GIF)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_GIF
+MSW_GIF_SRC=$(XEMACS)\src\dgif_lib.c $(XEMACS)\src\gif_io.c
+MSW_GIF_OBJ=$(OUTDIR)\dgif_lib.obj $(OUTDIR)\gif_io.obj
 !endif
 !if $(HAVE_PNG)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_PNG
@@ -645,7 +656,8 @@ DOC_SRC7=\
  $(XEMACS)\src\select-msw.c \
  $(MSW_C_DIRED_SRC) \
  $(MSW_TOOLBAR_SRC) \
- $(MSW_DIALOG_SRC)
+ $(MSW_DIALOG_SRC) \
+ $(MSW_GIF_SRC)
 !endif
 
 !if $(HAVE_MULE)
@@ -731,9 +743,9 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\select-msw.obj \
 	$(MSW_C_DIRED_OBJ) \
 	$(MSW_TOOLBAR_OBJ) \
-	$(MSW_DIALOG_OBJ)
+	$(MSW_DIALOG_OBJ) \
+	$(MSW_GIF_OBJ)
 !endif
-
 
 !if $(HAVE_MULE)
 TEMACS_MULE_OBJS=\

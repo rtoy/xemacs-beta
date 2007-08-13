@@ -1,3 +1,10 @@
+1998-08-17  P. E. Jareth Hein  <jareth@camelot.co.jp>
+
+	* configure.in: Alter configure so that it checks for mismatched PNG
+	header/libs, screams a little louder on old/mismatched library
+	conditions for both PNG and XPM, stop screaming if png is not found and
+	no window-system is selected, and fixed a bug in the XPM checking.
+
 1998-08-11  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre9 is released.

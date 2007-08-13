@@ -58,6 +58,7 @@
   '((ajc      "Andrew Cosgriff"   "ajc@bing.wattle.id.au")
     (baw      "Barry Warsaw"      "bwarsaw@python.org")
     (bw       "Bob Weiner"        "weiner@altrasoft.com")
+    (chr      "Christian Nybø"    "chr@mediascience.no")
     (cthomp   "Chuck Thompson"    "cthomp@xemacs.org")
     (dmoore   "David Moore"       "dmoore@ucsd.edu")
     (dkindred "Darrell Kindred"	  "dkindred@cmu.edu")
@@ -87,7 +88,7 @@
     (slb      "SL Baur"           "steve@xemacs.org")
     (stig     "Jonathan Stigelman" "stig@hackvan.com")
     (stigb    "Stig Bjorlykke"	  "stigb@tihlde.hist.no")
-    (thiessel "Marcus Thiessel"   "thiessel@rhrk.uni-kl.de")
+    (thiessel "Marcus Thiessel"   "marcus_thiessel@hp.com")
     (vladimir "Vladimir Ivanovic" "vladimir@mri.com")
     (wing     "Ben Wing"          "ben@xemacs.org")
     (wmperry  "William Perry"     "wmperry@aventail.com"))
@@ -101,6 +102,7 @@
     (altrasoft . "http://www.altrasoft.com/")
     (baw       . "http://www.python.org/~bwarsaw/")
     (cc-mode   . "http://www.python.org/ftp/emacs/")
+    (chr       . "http://www.xemacs.org/faq/")
     (dkindred  . "http://www.cs.cmu.edu/People/dkindred/me.html")
     (dmoore    . "http://oj.egbt.org/dmoore/")
     (jason     . "http://www.mastaler.com/")
@@ -807,13 +809,12 @@ He has a page at ")
      (widget-insert ".\n"))
     (thiessel
      (widget-insert "\
-On May 1, 1996 he started working at University of Kaiserslautern in
-the field of computer aided analog circuit design. His
-responsibilities include the development and design of a CAD-Tool for
-analog integrated circuits with special emphasis on distributed
-software concepts.
+Worked at University of Kaiserslautern where he took part in the 
+development and design of a CAD framework for analog integrated
+circuits with special emphasis on distributed software concepts. He 
+has now joined HP as technical consultant.  
 
-When all the daily hacking is done he tries to take care of XEmacs
+For XEmacs he does beta testing and tries to take care of XEmacs
 website at ")
      (about-url-link 'xemacs "Visit XEmacs web site")
      (widget-insert ".\n"))
@@ -974,6 +975,16 @@ skiing, puzzles, and sci-fi.  Jeff is also really interested in classical
 Roman history and enjoys making trips to Italy, where he was born, and
 seeing the sights")
      (widget-insert ".\n"))
+    (chr
+     (widget-insert "\
+Maintainer of the XEmacs FAQ and proud author of `zap-up-to-char'.
+
+Christian is a student at the Norwegian School of Economics and
+Business Administration in Bergen, Norway.  He used to work for an
+internet startup called New Media Science, doing scripting and
+violation of HTML DTD's.  After graduation, spring 1999, he'll be
+looking for a job involving lisp programming, French and Russian.")
+     (widget-insert ".\n"))
 ))
 
 ;; Setup the buffer for a maintainer.
@@ -1018,7 +1029,7 @@ seeing the sights")
 		   (format "<%s>\n%s\n" address shortinfo))))
 
 (defun about-hackers (&rest ignore)
-  (unless (about-get-buffer "*About Hackers*")
+  (unless (about-get-buffer "*About Contributors*")
     (let ((title "Other Contributors to XEmacs"))
       (widget-insert
        (about-center title)
@@ -1183,6 +1194,8 @@ Beta tester and manager of the various XEmacs mailing lists.
 Originator and maintainer of the gnus.org domain.\n")
     (about-show-linked-info 'jmiller "\
 Beta tester and last hacker of calendar.\n")
+    (about-show-linked-info 'chr "\
+Maintainer of the XEmacs FAQ and proud author of `zap-up-to-char'.\n")
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)
@@ -1369,7 +1382,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Maximilien Lincourt" "max@toonboom.com")
        (print-short "Mats Larsson" "Mats.Larsson@uab.ericsson.se")
        (print-short "Simon Leinen" "simon@instrumatic.ch")
-       (print-short "Carsten Leonhardt" "leo@arioch.tng.oche.de")
+       (print-short "Carsten Leonhardt" "leo@arioch.oche.de")
        (print-short "James LewisMoss" "moss@cs.sc.edu")
        (print-short "Mats Lidell" "mats.lidell@contactor.se")
        (print-short "Matt Liggett" "mliggett@seven.ucs.indiana.edu")
@@ -1407,7 +1420,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Andy Norman" "ange@hplb.hpl.hp.com")
        (print-short "Joe Nuspl" "nuspl@sequent.com")
        (print-short "Kim Nyberg" "kny@tekla.fi")
-       (print-short "Christian Nybø" "chr@mediascience.no")
        (print-short "Kevin Oberman" "oberman@es.net")
        (print-short "David Ofelt" "ofelt@getalife.Stanford.EDU")
        (print-short "Alexandre Oliva" "oliva@dcc.unicamp.br")
@@ -1446,6 +1458,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Cotton Seed" "cottons@cybercom.net")
        (print-short "Axel Seibert" "seiberta@informatik.tu-muenchen.de")
        (print-short "Odd-Magne Sekkingstad" "oddms@ii.uib.no")
+       (print-short "Gregory Neil Shapiro" "gshapiro@sendmail.org")
        (print-short "Justin Sheehy" "justin@linus.mitre.org")
        (print-short "John Shen" "zfs60@cas.org")
        (print-short "Murata Shuuichirou" "mrt@mickey.ai.kyutech.ac.jp")

@@ -3,8 +3,8 @@
   (standards-version 1.0
    version "1.20"
    author-version "1.20"
-   date "1998-07-20"
-   build-date "1998-07-28"
+   date "1998-08-07"
+   build-date "1998-08-11"
    maintainer "Oscar Figueiredo <Oscar.Figueiredo@epfl.ch>"
    distribution stable
    priority low
@@ -12,8 +12,8 @@
    dump nil
    description "Emacs Unified Directory Client (LDAP, PH)."
    filename "eudc-1.20-pkg.tar.gz"
-   md5sum "01d68a915ee26e535b3092f7c509a7be"
-   size 43949
+   md5sum "0f54415850524bd1e38b11b1281fd77e"
+   size 41817
    provides (eudc eudc-ldap eudc-ph)
    requires (fsf-compat xemacs-base)
    type regular
@@ -58,19 +58,19 @@
 ))
 (gnus
   (standards-version 1.0
-   version "1.23"
-   author-version "5.6.25"
-   date "1998-07-26"
-   build-date "1998-07-28"
+   version "1.24"
+   author-version "5.6.33"
+   date "1998-08-11"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "comm"
    dump nil
    description "The Gnus Newsreader and Mailreader."
-   filename "gnus-1.23-pkg.tar.gz"
-   md5sum "0ea5e56586ebaa8c154f080bccef7d9e"
-   size 1701088
+   filename "gnus-1.24-pkg.tar.gz"
+   md5sum "c88bf1bae2578ab133697cd0e8cb7f68"
+   size 1707259
    provides (gnus message)
    requires (gnus w3 mh-e mailcrypt rmail mail-lib xemacs-base)
    type regular
@@ -172,19 +172,19 @@
 ))
 (supercite
   (standards-version 1.0
-   version "1.07"
-   author-version "3.55x"
-   date "1998-05-07"
-   build-date "1998-06-14"
+   version "1.08"
+   author-version "3.55x2"
+   date "1998-08-9"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "comm"
    dump nil
    description "An Emacs citation tool for News & Mail messages."
-   filename "supercite-1.07-pkg.tar.gz"
-   md5sum "c1ef998b1819e6b19efd10bf0e48534c"
-   size 71084
+   filename "supercite-1.08-pkg.tar.gz"
+   md5sum "de5053422b5765bf48220a29bccf774b"
+   size 71088
    provides (supercite)
    requires (mail-lib xemacs-base)
    type regular
@@ -514,19 +514,19 @@
 ))
 (xemacs-base
   (standards-version 1.0
-   version "1.22"
+   version "1.23"
    author-version "21.0"
-   date "1998-07-12"
-   build-date "1998-07-18"
+   date "1998-08-06"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution mule
    priority high
    category "libs"
    dump nil
    description "Fundamental XEmacs support, you almost certainly need this."
-   filename "xemacs-base-1.22-pkg.tar.gz"
-   md5sum "875c49695bb2bfb80e8d5aaa2ccca929"
-   size 458315
+   filename "xemacs-base-1.23-pkg.tar.gz"
+   md5sum "ce47be3e72fb0b54a363f4d2722b8ec4"
+   size 458552
    provides (add-log advice annotations assoc case-table chistory comint-xemacs comint compile debug ebuff-menu echistory edmacro ehelp electric enriched env facemenu ffap helper imenu iso-syntax macros novice outline overlay passwd pp regi ring shell skeleton sort thing time-stamp timezone xbm-button xpm-button)
    requires ()
    type regular
@@ -571,19 +571,19 @@
 ))
 (egg-its
   (standards-version 1.0
-   version "1.08"
+   version "1.09"
    author-version "21.0"
-   date "1998-07-23"
-   build-date "1998-07-28"
+   date "1998-08-11"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution mule
    priority high
    category "mule"
    dump t
    description "Wnn (4.2 and 6) support.  SJ3 support."
-   filename "egg-its-1.08-pkg.tar.gz"
-   md5sum "8b5bf062d8164f2b2c59cdee4e3bb791"
-   size 260144
+   filename "egg-its-1.09-pkg.tar.gz"
+   md5sum "5f44ea2d8e1dc96fce45e651206c69cd"
+   size 260216
    provides (egg-cnpinyin egg-cnzhuyin egg-cwnn-leim egg-jisx0201 egg-jsymbol egg-kwnn-leim egg-leim egg-sj3-client egg-sj3-leim egg-sj3 egg-wnn egg)
    requires (leim mule-base fsf-compat xemacs-base)
    type regular
@@ -704,19 +704,19 @@
 ))
 (edit-utils
   (standards-version 1.0
-   version "1.26"
+   version "1.27"
    author-version "21.0"
    date "1998-07-20"
-   build-date "1998-07-28"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority high
    category "oa"
    dump nil
    description "Miscellaneous editor extensions, you probably need this."
-   filename "edit-utils-1.26-pkg.tar.gz"
-   md5sum "665d099f9c30f6efd84558a05b7d1813"
-   size 583598
+   filename "edit-utils-1.27-pkg.tar.gz"
+   md5sum "38a2397c5ded12717b256f923ab89104"
+   size 604746
    provides (abbrevlist atomic-extents avoid backup-dir balloon-help big-menubar blink-cursor blink-paren bookmark compare-w completion dabbrev desktop detached-minibuf edit-toolbar fast-lock file-part floating-toolbar flow-ctrl foldout func-menu hippie-exp icomplete id-select info-look iswitchb lazy-lock lazy-shot live-icon man mic-paren paren popper mode-motion+ outl-mouse page-ext blink-paren paren permanent-buffers recent-files redo reportmail rsz-minibuf saveconfsavehist saveplace scroll-in-place tempo toolbar-utils tree-menu uniquify where-was-i-db)
    requires (xemacs-base)
    type single
@@ -970,19 +970,19 @@
 ))
 (igrep
   (standards-version 1.0
-   version "1.01"
-   author-version "21.0b35"
-   date "1998-01-24"
-   build-date "1998-04-04"
+   version "1.02"
+   author-version "2.83"
+   date "1998-08-11"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "os"
    dump nil
    description "Enhanced front-end for Grep."
-   filename "igrep-1.01-pkg.tar.gz"
-   md5sum "e50e3a5ac2d6ca5eea67d7f664dee406"
-   size 13971
+   filename "igrep-1.02-pkg.tar.gz"
+   md5sum "b0c0551e8a48170a98dd00b5a805a7f6"
+   size 15005
    provides (igrep)
    requires (dired xemacs-base)
    type regular
@@ -1255,38 +1255,38 @@
 ))
 (vc-cc
   (standards-version 1.0
-   version "1.06"
+   version "1.07"
    author-version "21.0"
-   date "1998-07-23"
-   build-date "1998-07-28"
+   date "1998-07-24"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution contrib
    priority low
    category "prog"
    dump nil
    description "Version Control for ClearCase (UnFree) systems."
-   filename "vc-cc-1.06-pkg.tar.gz"
-   md5sum "764d34c1bb3e7eafa8afc32b6846f28d"
-   size 96274
+   filename "vc-cc-1.07-pkg.tar.gz"
+   md5sum "a50aa99e76d620f1165526529eb5980d"
+   size 96445
    provides (vc)
    requires (dired xemacs-base)
    type regular
 ))
 (vc
   (standards-version 1.0
-   version "1.10"
+   version "1.11"
    author-version "21.0"
-   date "1998-05-30"
-   build-date "1998-07-28"
+   date "1998-08-05"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority low
    category "prog"
    dump nil
    description "Version Control for Free systems."
-   filename "vc-1.10-pkg.tar.gz"
-   md5sum "bd2f10d773a64c084ffc4286ae892e71"
-   size 83688
+   filename "vc-1.11-pkg.tar.gz"
+   md5sum "4153e30aa432bbb7831522dc4d2b9905"
+   size 83755
    provides (vc)
    requires (dired xemacs-base)
    type regular
@@ -1312,19 +1312,19 @@
 ))
 (auctex
   (standards-version 1.0
-   version "1.10"
+   version "1.11"
    author-version "9.7p"
-   date "1998-07-23"
-   build-date "1998-07-28"
+   date "1998-08-05"
+   build-date "1998-08-11"
    maintainer "XEmacs Development Team <xemacs-beta@xemacs.org>"
    distribution stable
    priority medium
    category "wp"
    dump nil
    description "Basic TeX/LaTeX support."
-   filename "auctex-1.10-pkg.tar.gz"
-   md5sum "07f0106be259922da51653e4e793372f"
-   size 306691
+   filename "auctex-1.11-pkg.tar.gz"
+   md5sum "de3b63d3e1e38a3727f0c5b2108745bf"
+   size 306729
    provides (auc-old bib-cite font-latex latex multi-prompt tex-buf tex-info tex-jp tex-site tex)
    requires (xemacs-base)
    type regular
@@ -1369,19 +1369,19 @@
 ))
 (reftex
   (standards-version 1.0
-   version "1.04"
-   author-version "3.22"
-   date "1998-03-21"
-   build-date "1998-04-04"
+   version "1.05"
+   author-version "3.34"
+   date "1998-08-11"
+   build-date "1998-08-11"
    maintainer "Carsten Dominik <dominik@strw.LeidenUniv.nl>"
    distribution stable
    priority medium
    category "wp"
    dump nil
    description "Emacs support for LaTeX cross-references, citations.."
-   filename "reftex-1.04-pkg.tar.gz"
-   md5sum "817a50763a3e909449a93780f662723c"
-   size 141810
+   filename "reftex-1.05-pkg.tar.gz"
+   md5sum "d16db345599d47be1c99f6fccfdaaf90"
+   size 166434
    provides (reftex)
    requires (fsf-compat xemacs-base)
    type regular
