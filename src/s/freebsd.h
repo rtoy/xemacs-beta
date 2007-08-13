@@ -88,6 +88,8 @@
 #define BSD 199103
 #elif __FreeBSD__ == 2
 #define BSD 199306
+#elif __FreeBSD__ == 3
+#define BSD 199506
 #endif
 
 #undef HAVE_UNION_WAIT

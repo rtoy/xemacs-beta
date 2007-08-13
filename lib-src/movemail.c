@@ -62,6 +62,8 @@ Boston, MA 02111-1307, USA.  */
 #include <stdio.h>
 #include <errno.h>
 #include <../src/syswait.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef MAIL_USE_POP
 #include "pop.h"
 #endif

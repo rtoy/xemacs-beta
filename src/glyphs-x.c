@@ -104,7 +104,7 @@ Lisp_Object Qcursor_font;
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (font);
 
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (automatic_conversion);
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (autodetect);
 
 static void cursor_font_instantiate (Lisp_Object image_instance,
 				     Lisp_Object instantiator,
@@ -3115,17 +3115,17 @@ xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 
 /**********************************************************************
- *			 Automatic_Conversion                         *
+ *			 Autodetect		                         *
  **********************************************************************/
 
 static void
-automatic_conversion_validate (Lisp_Object instantiator)
+autodetect_validate (Lisp_Object instantiator)
 {
   data_must_be_present (instantiator);
 }
 
 static Lisp_Object
-automatic_conversion_normalize (Lisp_Object instantiator,
+autodetect_normalize (Lisp_Object instantiator,
 				Lisp_Object console_type)
 {
   Lisp_Object file = find_keyword_in_vector (instantiator, Q_data);
@@ -3199,14 +3199,14 @@ automatic_conversion_normalize (Lisp_Object instantiator,
      specification. (We can't do that now because we don't know
      what dest-types it's going to be instantiated into.) */
   {
-    Lisp_Object result = alist_to_tagged_vector (Qautomatic_conversion, alist);
+    Lisp_Object result = alist_to_tagged_vector (Qautodetect, alist);
     free_alist (alist);
     RETURN_UNGCPRO (result);
   }
 }
 
 static int
-automatic_conversion_possible_dest_types (void)
+autodetect_possible_dest_types (void)
 {
   return
     IMAGE_MONO_PIXMAP_MASK  |
@@ -3216,7 +3216,7 @@ automatic_conversion_possible_dest_types (void)
 }
 
 static void
-automatic_conversion_instantiate (Lisp_Object image_instance,
+autodetect_instantiate (Lisp_Object image_instance,
 				  Lisp_Object instantiator,
 				  Lisp_Object pointer_fg,
 				  Lisp_Object pointer_bg,
@@ -3939,15 +3939,15 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_VALID_KEYWORD (xface, Q_background, check_valid_string);
 #endif 
 
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (automatic_conversion,
-					"automatic-conversion");
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (autodetect,
+					"autodetect");
 
-  IIFORMAT_HAS_METHOD (automatic_conversion, validate);
-  IIFORMAT_HAS_METHOD (automatic_conversion, normalize);
-  IIFORMAT_HAS_METHOD (automatic_conversion, possible_dest_types);
-  IIFORMAT_HAS_METHOD (automatic_conversion, instantiate);
+  IIFORMAT_HAS_METHOD (autodetect, validate);
+  IIFORMAT_HAS_METHOD (autodetect, normalize);
+  IIFORMAT_HAS_METHOD (autodetect, possible_dest_types);
+  IIFORMAT_HAS_METHOD (autodetect, instantiate);
 
-  IIFORMAT_VALID_KEYWORD (automatic_conversion, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (autodetect, Q_data, check_valid_string);
 }
 
 void

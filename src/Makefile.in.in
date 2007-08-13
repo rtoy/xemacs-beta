@@ -1589,10 +1589,8 @@ Emacs.ad.h: ${srcdir}/${etcdir}Emacs.ad
 	exit 1
 
 /* Cover your eyes, please */
-xemacs-version.h: ${lispdir}version.el
-	@echo "#define main_1 xemacs_`grep emacs-version ${lispdir}version.el | sed 's/.*\"\(.*\)\.\(.*\)\"/\1_\2/ \
-1q'`_`grep -i xemacs.*lucid.*beta ${lispdir}version.el | sed 's/.*\(beta[0-9]*\).*/\1/ \
-1q'`" > xemacs-version.h
+xemacs-version.h: ../lisp/version.el
+	@echo "#define main_1 xemacs_`grep emacs-version ../lisp/version.el | sed -e 's/.*\"\(.*\)\.\(.*\)\"/\1_\2/' -e 1q`_`grep -i xemacs.*lucid.*beta ../lisp/version.el | sed -e 's/.*\(beta[0-9]*\).*/\1/' -e 1q`" > xemacs-version.h
 
 
 /* Some machines have alloca built-in.

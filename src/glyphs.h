@@ -51,7 +51,7 @@ struct image_instantiator_methods;
   font					pointer
   subwindow				subwindow
   inherit				mono-pixmap
-  automatic-conversion			mono-pixmap, color-pixmap, pointer,
+  autodetect				mono-pixmap, color-pixmap, pointer,
 					text
 */
 

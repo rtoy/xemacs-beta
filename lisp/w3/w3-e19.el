@@ -1,7 +1,7 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/01 19:23:18
-;; Version: 1.22
+;; Created: 1997/04/10 00:03:25
+;; Version: 1.23
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -119,6 +119,10 @@
 	(if fore (font-set-face-foreground face fore))
 	(if back (font-set-face-background face back))
 	(fillin-text-property (point-min) (point-max) 'face 'face face))))
+
+(defun w3-text-pixel-width (str &optional face)
+  "Return the pixel-width of a chunk of text STR with face FACE."
+  (* (length str) (frame-char-width)))
 
 (defun w3-mouse-handler (e)
   "Function to message the url under the mouse cursor"

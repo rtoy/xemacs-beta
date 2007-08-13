@@ -2316,6 +2316,11 @@ Returns a data structure containing the parsed information."
                (setq tag-attributes (cons (cons attr-name attr-value)
                                           tag-attributes)))
 
+             (if (and (eq w3-p-d-tag-name 'img)
+                      (not (assq 'alt tag-attributes)))
+                 (w3-debug-html :bad-style
+                                :outer
+                                "IMG element has no ALT attribute"))
              (cond
               ((and (eq w3-p-d-tag-name 'base)
                     (setq w3-p-s-baseobject

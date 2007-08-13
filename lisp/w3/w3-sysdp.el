@@ -994,6 +994,24 @@ Returns nil if FUNCTION was already present in HOOK-VAR, else new
 ;; NT doesn't have make-symbolic-link
 (sysdep-defalias 'make-symbolic-link 'copy-file)
 
+(sysdep-defun run-hook-with-args-until-success (hook &rest args)
+  "Run HOOK with the specified arguments ARGS.
+HOOK should be a symbol, a hook variable.  Its value should
+be a list of functions.  We call those functions, one by one,
+passing arguments ARGS to each of them, until one of them
+returns a non-nil value.  Then we return that value.
+If all the functions return nil, we return nil."
+  (let ((rval nil)
+	(todo (and (boundp hook) (symbol-value hook)))
+	(global (and (boundp hook) (default-value hook)))
+	(cur nil))
+    (while (and (setq cur (car todo)) (not rval))
+      (setq todo (cdr todo))
+      (if (eq cur t)
+	  (if global
+	      (setq todo (append global todo)))
+	(setq rval (apply cur args))))))
+
 (sysdep-defun split-string (string pattern)
   "Return a list of substrings of STRING which are separated by PATTERN."
   (let (parts (start 0))

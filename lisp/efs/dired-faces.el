@@ -16,7 +16,7 @@
 
 (defgroup dired nil
   "Directory editing."
-  :group 'emacs)
+  :group 'environment)
 
 (defcustom dired-do-highlighting t
   "Set if we should use highlighting according to filetype."

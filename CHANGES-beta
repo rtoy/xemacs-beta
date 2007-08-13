@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 20.1 beta14
+-- about.el hacking
+-- W3-3.0.81
+-- autodetect restored for use with Glyphs
+-- Gnus-5.4.43
+-- miscellaneous bug fixes
+
+[beta13 was skipped]
+
 to 20.1 beta12
 -- Synch to Emacs/MULE patches courtesy of MORIOKA Tomohiko
 -- VM-6.24

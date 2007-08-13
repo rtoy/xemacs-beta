@@ -1,7 +1,7 @@
 ;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/01 19:23:21
-;; Version: 1.17
+;; Created: 1997/04/10 00:03:38
+;; Version: 1.18
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,6 +35,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Enhancements For XEmacs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun w3-text-pixel-width (str &optional face)
+  "Return the pixel-width of a chunk of text STR with face FACE."
+  (let ((glyph (make-glyph str))
+	(todo (if (listp face) face (list face)))
+	(max 0))
+    (while (progn (set-glyph-face glyph (pop todo)) todo)
+      (setq max (max (glyph-width glyph) max)))
+    max))
+  
 (defun w3-mouse-handler (e)
   "Function to message the url under the mouse cursor"
   (interactive "e")

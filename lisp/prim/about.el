@@ -157,7 +157,7 @@
     (toggle-read-only 0)
 
     (let ((rest (if who-to-load (list who-to-load)
-		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens jareth)))
+		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens jareth morioka dmoore)))
 	  (got-error nil))
       (while rest
 	(let* ((who (car rest))
@@ -303,6 +303,7 @@
 	  ('jens "About Jens Lautenbacher")
 	  ('jareth "About Jareth Hein")
 	  ('morioka "About MORIOKA Tomohiko")
+	  ('dmoore "About David Moore")
 	  ('others "About Everyone")
 	  ('features "New XEmacs Features")
 	  ('history "XEmacs History")
@@ -836,6 +837,22 @@
 	(Japan Advanced Institute of Science and Technology, Hokuriku).
 	I'm interested in Natural Language, Affordance and writing systems.")
 
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
+	 ((eq xref 'dmoore)
+	  (about-face "David Moore" 'bold)
+	  (insert " <dmoore@UCSD.edu>
+
+	David has contributed greatly to the quest to speed up XEmacs.
+	He is a student in the Computer Systems Laboratory at UCSD.
+	When he manages to have free time, he usually spends it on 200
+	mile bicycle rides, learning german or showing people the best
+	mail & news environment he's found in 10 years.  (That'd be
+	XEmacs, Gnus and bbdb, of course.)  He can be found at
+	`druidmuck.egbt.org 4201' at various hours of the day.")
 
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
@@ -942,6 +959,16 @@
 	(Japan Advanced Institute of Science and Technology, Hokuriku).
 	I'm interested in Natural Language, Affordance and writing systems.
 
+	") (about-xref "David Moore" 'dmoore "Find out more about David Moore") (insert " <dmoore@UCSD.EDU>
+
+	David has contributed greatly to the quest to speed up XEmacs.
+	He is a student in the Computer Systems Laboratory at UCSD.
+	When he manages to have free time, he usually spends it on 200
+	mile bicycle rides, learning german or showing people the best
+	mail & news environment he's found in 10 years.  (That'd be
+	XEmacs, Gnus and bbdb, of course.)  He can be found at
+	`druidmuck.egbt.org 4201' at various hours of the day.
+
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	Unofficial maintainer of the xemacs-beta list of extant bugs
 	and contributor of an extraordinary number of important bug
@@ -983,15 +1010,6 @@
 	Author of the code used to connect XEmacs with ToolTalk, and
 	of an early client of the external Emacs widget.
 
-	David Moore <dmoore@UCSD.EDU>
-	David has contributed greatly to the quest to speed up XEmacs.
-	He is a student in the Computer Systems Laboratory at UCSD.
-	When he manages to have free time, he usually spends it on 200
-	mile bicycle rides, learning german or showing people the best
-	mail & news environment he's found in 10 years.  (That'd be
-	XEmacs, Gnus and bbdb, of course.)  He can be found at
-	`druidmuck.egbt.org 4201' at various hours of the day.
-
 	Hrvoje Niksic <hniksic@srce.hr>
 	Hrvoje is currently a student at the Faculty of Electrical
 	Engineering and Computing in Zagreb, Croatia.  He works part-
@@ -1010,11 +1028,14 @@
 	  Per Abrahamsen <abraham@dina.kvl.dk>
 	  Gary Adams <gra@zeppo.East.Sun.COM>
 	  Gennady Agranov <agranov@csa.CS.Technion.Ac.IL>
+	  Adrian Aichner <aichner@ecf.teradyne.com>
 	  Mark Allender <allender@vnet.IBM.COM>
 	  Butch Anton <butch@zaphod.uchicago.edu>
 	  Fred Appelman <Fred.Appelman@cv.ruu.nl>
 	  Erik \"The Pope\" Arneson <lazarus@mind.net>
 	  Tor Arntsen <tor@spacetec.no>
+	  Larry Auton <lda@control.att.com>
+	  Oswald P. Backus IV <backus@altagroup.com>
 	  Mike Battaglia <mbattagl@dsccc.com>
 	  Neal Becker <neal@ctd.comsat.com>
 	  Paul Bibilo <peb@delcam.com>
@@ -1028,19 +1049,23 @@
 	  Rick Campbell <rickc@lehman.com>
 	  Richard Caley <rjc@cstr.edinburgh.ac.uk>
 	  Stephen Carney <carney@gvc.dec.com>
+	  Lorenzo M. Catucci <lorenzo@argon.roma2.infn.it>
 	  Philippe Charton <charton@lmd.ens.fr>
 	  Peter Cheng <peter.cheng@sun.com>
 	  Jin S. Choi <jin@atype.com>
 	  Tomasz J. Cholewo <tjchol01@mecca.spd.louisville.edu>
 	  Serenella Ciongoli <czs00@ladybug.oes.amdahl.com>
+	  Glynn Clements <glynn@sensei.co.uk>
 	  Richard Cognot <cognot@ensg.u-nancy.fr>
 	  Andy Cohen <cohen@andy.bu.edu>
 	  Andrew J Cosgriff <ajc@bing.wattle.id.au>
 	  Nick J. Crabtree <nickc@scopic.com>
 	  Christopher Davis <ckd@kei.com>
 	  Soren Dayton <csdayton@cs.uchicago.edu>
+	  Chris Dean <ctdean@cogit.com>
 	  Michael Diers <mdiers@logware.de>
 	  William G. Dubuque <wgd@martigny.ai.mit.edu>
+	  Steve Dunham <dunham@dunham.tcimet.net>
 	  Samuel J. Eaton <samuele@cogs.susx.ac.uk>
 	  Carl Edman <cedman@Princeton.EDU>
 	  Dave Edmondson <davided@sco.com>
@@ -1051,18 +1076,22 @@
 	  David Fletcher <frodo@tsunami.com>
 	  Paul Flinders <ptf@delcam.co.uk>
 	  Jered J Floyd <jered@mit.edu>
+	  Gary D. Foster <Gary.Foster@Corp.Sun.COM>
 	  Jerry Frain <jerry@sneffels.tivoli.com>
+	  Holger Franz <hfranz@physik.rwth-aachen.de>
 	  Benjamin Fried <bf@morgan.com>
-	  Barry Friedman <friedman@bnr.ca>
+	  Barry Friedman <friedman@nortel.ca>
 	  Lew Gaiter III <lew@StarFire.com>
 	  Itay Gat <itay@cs.huji.ac.il>
 	  Tim Geisler <Tim.Geisler@informatik.uni-muenchen.de>
 	  Dave Gillespie <daveg@synaptics.com>
 	  Christian F. Goetze <cg@bigbook.com>
+	  Yusuf Goolamabbas <yusufg@iss.nus.sg>
 	  Wolfgang Grieskamp <wg@cs.tu-berlin.de>
 	  James Grinter <jrg@demon.net>
 	  Ben Gross <bgross@uiuc.edu>
 	  Dirk Grunwald <grunwald@foobar.cs.Colorado.EDU>
+	  Michael Guenther <michaelg@igor.stuttgart.netsurf.de>
 	  Dipankar Gupta <dg@hplb.hpl.hp.com>
 	  Markus Gutschke <gutschk@GOEDEL.UNI-MUENSTER.DE>
 	  Adam Hammer <hammer@cs.purdue.edu>
@@ -1070,12 +1099,19 @@
 	  ChangGil Han <cghan@phys401.phys.pusan.ac.kr>
 	  Derek Harding <dharding@lssec.bt.co.uk>
 	  Michael Harnois <mharnois@sbt.net>
+	  Yoshiaki Kasahara <kasahara@nc.kyushu-u.ac.jp>
 	  John Haxby <J.Haxby@isode.com>
+	  Karl M. Hegbloom <karlheg@inetarena.com>
 	  Benedikt Heinen <beh@icemark.thenet.ch>
 	  Stephan Herrmann <sh@first.gmd.de>
 	  Charles Hines <chuck_hines@VNET.IBM.COM>
+	  Shane Holder <holder@rsn.hp.com>
 	  David Hughes <djh@harston.cv.com>
+	  Tatsuya Ichikawa <ichikawa@hv.epson.co.jp>
+	  Kazuyuki IENAGA <ienaga@jsys.co.jp>
 	  Andrew Innes <andrewi@harlequin.co.uk>
+	  Vladimir Ivanovic <Vladimir.Ivanovic@mri.com>
+	  Andreas Jaeger <aj@arthur.pfalz.de>
 	  Markku Jarvinen <Markku.Jarvinen@simpukka.funet.fi>
 	  Robin Jeffries <robin.jeffries@sun.com>
 	  Philip Johnson <johnson@uhics.ics.Hawaii.Edu>
@@ -1089,6 +1125,8 @@
 	  Yasuhiko Kiuchi <kiuchi@dsp.ksp.fujixerox.co.jp>
 	  Greg Klanderman <greg@alphatech.com>
 	  Valdis Kletnieks <Valdis.Kletnieks@vt.edu>
+	  Rob Kooper <kooper@cc.gatech.edu>
+	  Peter Skov Knudsen <knu@dde.dk>
 	  Jens Krinke <krinke@ips.cs.tu-bs.de>
 	  Mats Larsson <Mats.Larsson@uab.ericsson.se>
 	  Simon Leinen <simon@instrumatic.ch>
@@ -1097,6 +1135,7 @@
 	  Mats Lidell <mats.lidell@contactor.se>
 	  Matt Liggett <mliggett@seven.ucs.indiana.edu>
 	  Christian Limpach <Christian.Limpach@nice.ch>
+	  Markus Linnala <maage@b14b.tupsu.ton.tut.fi>
 	  Robert Lipe <robertl@arnet.com>
 	  Damon Lipparelli <lipp@aa.net>
 	  Hamish Macdonald <hamish@bnr.ca>
@@ -1109,6 +1148,7 @@
 	  Simon Marshall <simon@gnu.ai.mit.edu>
 	  Dave Mason <dmason@plg.uwaterloo.ca>
 	  Jaye Mathisen <mrcpu@cdsnet.net>
+	  Michael McNamara <mac@silicon-sorcery.com>
 	  Michael Meissner <meissner@osf.org>
 	  David M. Meyer <meyer@ns.uoregon.edu>
 	  Brad Miller <bmiller@cs.umn.edu>
@@ -1137,17 +1177,21 @@
 	  Tibor Polgar <tlp00@eng.amdahl.com>
 	  Frederic Poncin <fp@info.ucl.ac.be>
 	  E. Rehmi Post <rehmi@asylum.sf.ca.us>
+	  Martin Pottendorfer <Martin.Pottendorfer@aut.alcatel.at>
 	  Colin Rafferty <craffert@spspme.ml.com>
 	  Paul M Reilly <pmr@pajato.com>
 	  Jack Repenning <jackr@sgi.com>
 	  Daniel Rich <drich@cisco.com>
 	  Roland Rieke <rol@darmstadt.gmd.de>
+	  Art Rijos <art.rijos@SNET.com>
 	  Russell Ritchie <ritchier@msc.ie>
 	  Roland <rol@darmstadt.gmd.de>
+	  Anthony Rossini <rossini@math.sc.edu>
 	  Mike Russell <mjruss@rchland.vnet.ibm.com>
 	  Jan Sandquist <etxquist@iqa.ericsson.se>
 	  Marty Sasaki <sasaki@spdcc.com>
 	  Mike Scheidler <c23mts@eng.delcoelect.com>
+	  Daniel Schepler <daniel@shep13.wustl.edu>
 	  Darrel Schneider <darrel@slc.com>
 	  Hayden Schultz <haydens@ll.mit.edu>
 	  Cotton Seed <cottons@cybercom.net>
@@ -1156,18 +1200,23 @@
 	  Vinnie Shelton <shelton@icd.teradyne.com>
 	  John Shen <zfs60@cas.org>
 	  Murata Shuuichirou <mrt@mickey.ai.kyutech.ac.jp>
+	  Dinesh Somasekhar <somasekh@ecn.purdue.edu>
 	  Jeffrey Sparkes <jsparkes@bnr.ca>
 	  Michael Sperber <sperber@informatik.uni-tuebingen.de>
 	  Manoj Srivastava <srivasta@pilgrim.umass.edu>
 	  Francois Staes <frans@kiwi.uia.ac.be>
+	  Anders Stenman <stenman@isy.liu.se>
 	  Jason Stewart <jasons@cs.unm.edu>
 	  Rick Tait <rickt@gnu.ai.mit.edu>
+	  Marcus Thiessel <thiessel@rhrk.uni-kl.de>
 	  James Thompson <thompson@wg2.waii.com>
 	  Raymond L. Toy <toy@rtp.ericsson.se>
+	  Remek Trzaska <remek@npac.syr.edu>
 	  John Turner <turner@xdiv.lanl.gov>
 	  Juan E. Villacis <jvillaci@cs.indiana.edu>
 	  Jan Vroonhof <vroonhof@math.ethz.ch>
 	  Vladimir Vukicevic <vladimir@intrepid.com>
+	  David Walter<djw18@cornell.edu>
 	  Peter Ware <ware@cis.ohio-state.edu>
 	  Yoav Weiss <yoav@zeus.datasrv.co.il>
 	  Rod Whitby <rwhitby@asc.corp.mot.com>

@@ -1,3 +1,28 @@
+Thu Apr 10 12:48:49 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* glyphs.c: Undo duplicate declaration of display_table.
+
+	* glyphs.h: Back out name change of autodetect to
+	automatic_conversion.
+
+	* glyphs.c: Back out name change of autodetect to
+	automatic_conversion.
+
+	* glyphs-x.c (image_instantiator_format_create_glyphs_x): Back out
+	name change of autodetect to automatic_conversion.
+
+	* events.c (Fevent_properties): Do something sensible for
+	dead_event and empty_event.
+
+	* general.c: Restore autodetect symbol.
+
+	* emacsfns.h: Declare new symbol Qempty.
+
+	* general.c: Add symbol to identify empty events.
+
+	* events.c (Fevent_type): Don't abort() when presented with an
+	empty_event or a dead_event.
+
 Mon Apr  7 18:12:26 1997  David Moore  <dmoore@ucsd.edu>
 
 	* xmu.c: Renamed local `initialized' variable to `hex_initialized'

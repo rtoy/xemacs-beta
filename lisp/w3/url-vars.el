@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/04/07 16:06:35
-;; Version: 1.48
+;; Created: 1997/04/10 21:18:12
+;; Version: 1.50
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,7 +26,7 @@
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst url-version (let ((x "p3.0.80"))
+(defconst url-version (let ((x "p3.0.81"))
 			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))
@@ -428,6 +428,13 @@ images/etc.")
 (modify-syntax-entry ?< "(>" url-mailserver-syntax-table)
 (modify-syntax-entry ?> ")<" url-mailserver-syntax-table)
 (modify-syntax-entry ?/ " " url-mailserver-syntax-table)
+
+(defvar url-handle-no-scheme-hook nil
+  "*Hooks to be run until one can successfully transform an incomplete URL.
+
+Each hook is called with a single argument URL and should return a tranformed
+url with a valid scheme (e.g., \"gnu\" --> \"http://www.gnu.org/\"), or nil
+otherwise.")
 
 ;;; Make OS/2 happy - yeeks
 (defvar	tcp-binary-process-input-services nil

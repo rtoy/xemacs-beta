@@ -167,6 +167,8 @@ struct tty_console
       CONST char *end_motion;		/* rmcup, te */
       CONST char *keypad_on;		/* smkx, ks */
       CONST char *keypad_off;		/* rmkx, ke */
+
+      CONST char *orig_pair;		/* op, op */
     } sd;
   
   /* costs of various operations */

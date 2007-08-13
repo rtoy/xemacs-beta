@@ -2,7 +2,39 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Wed Apr  9 16:46:52 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-xemac.el (w3-text-pixel-width): And a XEmacs specific version of it.
+
+* w3-e19.el (w3-text-pixel-width): New function to return the pixel width
+  of a piece of text.
+
+* url.el (url-handle-no-scheme): Use it.
+
+* url-vars.el (url-handle-no-scheme-hook): New hook that should expand a
+  partial url like 'gnu' to a full URL, like 'http://www.gnu.org/'.
+
+* w3-sysdp.el (run-hook-with-args-until-success): Added a stub for
+  run-hook-with-args-until-success
+
+Tue Apr  8 12:20:39 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-auto.el: Added autoloads for all the functions in url-ns for proxy
+  functions, and url-mail
+
+* url-ns.el (isPlainHostName): Fixed isPlainHostName
+
+* w3-parse.el (w3-parse-buffer): now throws up a bad style warning for
+  images without ALT attributes.
+
+* mm.el (mm-parse-mailcaps): Reverse the ':|;' separated path for MAILCAPS
+  so that earlier items take precedence, like standard unix PATH-like
+  variables do.
+  (mm-parse-mimetypes): Ditto for MIMETYPES
+
 Mon Apr  7 06:23:11 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.80 released
 
 * w3-parse.el: Some more transitions - don't imply <p> after some form
   tags.

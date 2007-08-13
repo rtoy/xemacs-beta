@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/04/07 16:01:55
-;; Version: 1.72
+;; Created: 1997/04/09 23:49:33
+;; Version: 1.73
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/04/07 16:01:55|1.72|Location Undetermined
+;;; 1997/04/09 23:49:33|1.73|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -850,6 +850,9 @@ or 1 second has elapsed."
      ((string-match "\\(\\.[^\\.]+\\)\\(\\.[^\\.]+\\)" url)
       ;; Ok, we have at least two dots in the filename, just stick http on it
       (url-retrieve (concat "http://" url)))
+     ((setq temp (run-hook-with-args-until-success
+		  'url-handle-no-scheme-hook url))
+      (url-retrieve temp))
      (t
       (url-retrieve (concat "http://www." url ".com"))))))
 

@@ -47,6 +47,12 @@
 
 ;; URL stuff
 (autoload 'url-gateway-nslookup-host "url-gw")
+(autoload 'url-mail "url-mail")
+(autoload 'isInNet "url-ns")
+(autoload 'isResolvable "url-ns")
+(autoload 'dnsResolve "url-ns")
+(autoload 'dnsDomainIs "url-ns")
+(autoload 'isPlainHostName "url-ns")
 
 ;; Preferences
 (autoload 'w3-preferences-edit "w3-prefs" nil t)

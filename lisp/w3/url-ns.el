@@ -1,7 +1,7 @@
 ;;; url-ns.el --- Various netscape-ish functions for proxy definitions
 ;; Author: wmperry
-;; Created: 1997/03/24 20:16:16
-;; Version: 1.1
+;; Created: 1997/04/08 21:18:23
+;; Version: 1.2
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,7 +26,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun isPlainHostName (host)
-  (string-match "\\." host))
+  (not (string-match "\\." host)))
 
 (defun dnsDomainIs (host dom)
   (setq host (url-gateway-nslookup-host host))

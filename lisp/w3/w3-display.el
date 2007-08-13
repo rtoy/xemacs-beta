@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/04/03 16:32:31
-;; Version: 1.171
+;; Created: 1997/04/07 17:01:38
+;; Version: 1.172
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -443,6 +443,9 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 
 ;; Various macros
 (eval-when-compile
+  (defmacro w3-node-visible-p ()
+    (` (not (eq (car break-style) 'none))))
+
   (defmacro w3-handle-empty-tag ()
     (`
      (progn
@@ -721,9 +724,6 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	      (widget-value-set widget glyph)
 	    (setq w3-image-widgets-waiting
 		  (cons widget w3-image-widgets-waiting)))))))
-
-(defmacro w3-node-visible-p ()
-  (` (not (eq (car break-style) 'none))))
 
 (defmacro w3-handle-image ()
   (`

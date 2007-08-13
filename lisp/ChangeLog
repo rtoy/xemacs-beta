@@ -1,6 +1,16 @@
+Thu Apr 10 13:23:14 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-xemacs-xref): Forgot to link David Moore's
+	picture (oops).
+
+Thu Apr 10 12:30:29 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* efs/dired-faces.el (dired): Move to environment group.
+
 Wed Apr  9 19:45:46 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
-	* x-menubar.el (default-menubar): Inline definition of customize menu.
+	* x11/x-menubar.el (default-menubar): Inline definition of
+	customize menu.
 
 Wed Apr  9 10:45:54 1997  Steven L Baur  <steve@altair.xemacs.org>
 
