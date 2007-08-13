@@ -22,8 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_toolbar_h_
-#define INCLUDED_toolbar_h_
+#ifndef _XEMACS_TOOLBAR_H_
+#define _XEMACS_TOOLBAR_H_
 
 #ifdef HAVE_TOOLBARS
 
@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #define FRAME_CURRENT_TOOLBAR_SIZE(frame, pos)	\
   ((frame)->current_toolbar_size[pos])
 #define DEVICE_SUPPORTS_TOOLBARS_P(d)		\
-  HAS_DEVMETH_P (d, output_frame_toolbars)
+  (HAS_DEVMETH_P ((d), output_frame_toolbars))
 
 struct toolbar_button
 {
@@ -73,6 +73,7 @@ DECLARE_LRECORD (toolbar_button, struct toolbar_button);
 #define XTOOLBAR_BUTTON(x) XRECORD (x, toolbar_button, struct toolbar_button)
 #define XSETTOOLBAR_BUTTON(x, p) XSETRECORD (x, p, toolbar_button)
 #define TOOLBAR_BUTTONP(x) RECORDP (x, toolbar_button)
+#define GC_TOOLBAR_BUTTONP(x) GC_RECORDP (x, toolbar_button)
 #define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
 #define CONCHECK_TOOLBAR_BUTTON(x) CONCHECK_RECORD (x, toolbar_button)
 
@@ -110,4 +111,4 @@ void mark_frame_toolbar_buttons_dirty (struct frame *f, enum toolbar_pos pos);
 
 #endif /* HAVE_TOOLBARS */
 
-#endif /* INCLUDED_toolbar_h_ */
+#endif /* _XEMACS_TOOLBAR_H_ */

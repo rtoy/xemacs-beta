@@ -13,23 +13,21 @@ XEmacs.
 XEmacs has a new vi emulation mode called evi mode.  To
 start evi mode in Emacs, type the command @kbd{M-x evi}.  If you want
 Emacs to automatically put you in evi-mode all the time, include this
-line in your init file:
+line in your @file{.emacs} file:
 @example
 (setq term-setup-hook 'evi)
 @end example
 @xref{evi Mode} for a brief discussion.
-@xref{Init File}.
 @end ignore
 
 @item 
 XEmacs has a new vi emulation mode called ``viper'' mode.  To start
 viper mode in XEmacs, type the command @kbd{M-x viper-mode}.  If you
 want XEmacs to automatically put you in viper-mode all the time, include
-this line in your init file:
+this line in your @file{.emacs} file:
 @example
 (viper-mode)
 @end example
-@xref{Init File}.
 
 @item
 Earlier versions of Emacs only allowed keybindings to ASCII character
@@ -242,8 +240,8 @@ commands are invoked only when you are in XEmacs:
        ))
 
 (cond ((and (string-match "XEmacs" emacs-version)
-            (or (> emacs-major-version 19)
-                (>= emacs-minor-version 12)))
+	    (or (> emacs-major-version 19)
+	        (>= emacs-minor-version 12)))
        ;;
        ;; Code which requires XEmacs version 19.12 or newer goes here
        ;;
@@ -256,7 +254,7 @@ commands are invoked only when you are in XEmacs:
        ))
 
 (cond ((and (not (string-match "Lucid" emacs-version))
-            (= emacs-major-version 19))
+	    (= emacs-major-version 19))
        ;;
        ;; Code specific to FSF Emacs 19 (not XEmacs) goes here
        ;;
@@ -269,9 +267,7 @@ commands are invoked only when you are in XEmacs:
        ))
 @end example
 
-Alternatively, use @file{.xemacs/init.el} for an init file.  @xref{Init File}.
-
-Of particular interest for use in  files are:
+Of particular interest for use in @file{.emacs} files are:
 
 @itemize @bullet
 @findex add-menu
@@ -325,20 +321,20 @@ should be used.
 XEmacs has the following new default function keybindings:
 
 @table @kbd
-@item @key{HELP}
+@item @key{HELP}	
 Same as @kbd{C-h}.
 
-@item @key{UNDO}
+@item @key{UNDO}	
 Same as @kbd{M-x undo}.
 
-@item @key{CUT}
+@item @key{CUT}  	
 Same as the Cut menu item; that is, it copies the selected text to
 the X Clipboard selection.
 
-@item @key{COPY}
+@item @key{COPY}	
 Same as the Copy menu item.
 
-@item @key{PASTE}
+@item @key{PASTE}	
 Same as the Paste menu item.
 
 @item @key{PGUP}
@@ -356,7 +352,7 @@ Same as @kbd{M->}.
 @item @key{LEFT-ARROW}
 Same as the function @code{backward-char}.
 
-@item @key{RIGHT-ARROW}
+@item @key{RIGHT-ARROW}	
 Same as the function @code{forward-char}.
 
 @item @key{UP-ARROW}

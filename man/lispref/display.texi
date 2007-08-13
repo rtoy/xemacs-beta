@@ -874,13 +874,13 @@ Character code 10 is a newline.
 All other codes in the range 0 through 31, and code 127, display in one
 of two ways according to the value of @code{ctl-arrow}.  If it is
 non-@code{nil}, these codes map to sequences of two glyphs, where the
-first glyph is the @sc{ascii} code for @samp{^}.  (A display table can
+first glyph is the @sc{ASCII} code for @samp{^}.  (A display table can
 specify a glyph to use instead of @samp{^}.)  Otherwise, these codes map
 just like the codes in the range 128 to 255.
 
 @item
 Character codes 128 through 255 map to sequences of four glyphs, where
-the first glyph is the @sc{ascii} code for @samp{\}, and the others are
+the first glyph is the @sc{ASCII} code for @samp{\}, and the others are
 digit characters representing the code in octal.  (A display table can
 specify a glyph to use instead of @samp{\}.)
 @end itemize
@@ -921,7 +921,7 @@ stops used by the command @code{tab-to-tab-stop}.  @xref{Indent Tabs}.
 @cindex display table
 You can use the @dfn{display table} feature to control how all 256
 possible character codes display on the screen.  This is useful for
-displaying European languages that have letters not in the @sc{ascii}
+displaying European languages that have letters not in the @sc{ASCII}
 character set.
 
 The display table maps each character code into a sequence of
@@ -996,71 +996,6 @@ the contents of a display table, using additional indirection
 to a ``glyph table'' and such.  Note that ``glyph'' has a different
 meaning in XEmacs.)
 
-@defvar current-display-table
-
-The display table currently in use.  This is a specifier.
-
-Display tables are used to control how characters are displayed.  Each
-time that redisplay processes a character, it is looked up in all the
-display tables that apply (obtained by calling @code{specifier-instance}
-on @code{current-display-table} and any overriding display tables
-specified in currently active faces).  The first entry found that
-matches the character determines how the character is displayed.  If
-there is no matching entry, the default display method is
-used. (Non-control characters are displayed as themselves and control
-characters are displayed according to the buffer-local variable
-@code{ctl-arrow}.  Control characters are further affected by
-@code{control-arrow-glyph} and @code{octal-escape-glyph}.)
-
-Each instantiator in this specifier and the display-table specifiers
-in faces is a display table or a list of such tables.  If a list, each
-table will be searched in turn for an entry matching a particular
-character.  Each display table is one of
-
-@itemize @bullet
-@item
-A vector, specifying values for characters starting at 0.
-@item
-A char table, either of type @code{char} or @code{generic}.
-@item
-A range table.
-@end itemize
-
-Each entry in a display table should be one of
-
-@itemize @bullet
-@item
-nil (this entry is ignored and the search continues).
-@item
-A character (use this character; if it happens to be the same as
-the original character, default processing happens, otherwise
-redisplay attempts to display this character directly;
-#### At some point recursive display-table lookup will be
-implemented).
-@item
-A string (display each character in the string directly;
-#### At some point recursive display-table lookup will be
-implemented).
-@item
-A glyph (display the glyph;
-#### At some point recursive display-table lookup will be
-implemented when a string glyph is being processed).
-@item
-A cons of the form (format "@var{string}") where @var{string} is a
-printf-like spec used to process the character. #### Unfortunately no
-formatting directives other than %% are implemented.
-@item
-A vector (each element of the vector is processed recursively;
-in such a case, nil elements in the vector are simply ignored).
-
-#### At some point in the near future, display tables are likely to
-be expanded to include other features, such as referencing characters
-in particular fonts and allowing the character search to continue
-all the way up the chain of specifier instantiators.  These features
-are necessary to properly display Unicode characters.
-@end itemize
-@end defvar
-
   Individual faces can also specify an overriding display table;
 this is set using @code{set-face-display-table}.  @xref{Faces}.
 
@@ -1105,9 +1040,9 @@ set, you can arrange to use that character set as follows:
 @end example
 
 If you are editing buffers written in the ISO Latin 1 character set and
-your terminal doesn't handle anything but @sc{ascii}, you can load the
+your terminal doesn't handle anything but @sc{ASCII}, you can load the
 file @file{iso-ascii} to set up a display table that displays the other
-ISO characters as explanatory sequences of @sc{ascii} characters.  For
+ISO characters as explanatory sequences of @sc{ASCII} characters.  For
 example, the character ``o with umlaut'' displays as @samp{@{"o@}}.
 
 Some European countries have terminals that don't support ISO Latin 1

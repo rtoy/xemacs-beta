@@ -218,14 +218,14 @@ EXFUN (Fread_from_string, 3);
 
 
 static DOESNT_RETURN
-syntax_error (const char *string)
+syntax_error (CONST char *string)
 {
   signal_error (Qinvalid_read_syntax,
 		list1 (build_translated_string (string)));
 }
 
 static Lisp_Object
-continuable_syntax_error (const char *string)
+continuable_syntax_error (CONST char *string)
 {
   return Fsignal (Qinvalid_read_syntax,
 		  list1 (build_translated_string (string)));
@@ -259,9 +259,9 @@ readchar (Lisp_Object readcharfun)
 #ifdef DEBUG_XEMACS /* testing Mule */
       static int testing_mule = 0; /* Change via debugger */
       if (testing_mule) {
-        if (c >= 0x20 && c <= 0x7E) stderr_out ("%c", c);
-        else if (c == '\n')         stderr_out ("\\n\n");
-        else                        stderr_out ("\\%o ", c);
+        if (c >= 0x20 && c <= 0x7E) fprintf (stderr, "%c", c);
+        else if (c == '\n')         fprintf (stderr, "\\n\n");
+        else                        fprintf (stderr, "\\%o ", c);
       }
 #endif
       return c;
@@ -443,6 +443,12 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
   Lisp_Object list = Vload_force_doc_string_list;
   Lisp_Object tail;
   int fd = XINT (XCAR (Vload_descriptor_list));
+  /* NOTE: If purify_flag is true, we're in-place modifying objects that
+     may be in purespace (and if not, they will be).  Therefore, we have
+     to be VERY careful to make sure that all objects that we create
+     are purecopied -- objects in purespace are not marked for GC, and
+     if we leave any impure objects inside of pure ones, we're really
+     screwed. */
 
   GCPRO1 (list);
   /* restore the old value first just in case an error occurs. */
@@ -473,12 +479,13 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
 	      ivan = Fread (juan);
 	      if (!CONSP (ivan))
 		signal_simple_error ("invalid lazy-loaded byte code", ivan);
-	      XCOMPILED_FUNCTION (john)->instructions = XCAR (ivan);
+	      /* Remember to purecopy; see above. */
+	      XCOMPILED_FUNCTION (john)->instructions = Fpurecopy (XCAR (ivan));
 	      /* v18 or v19 bytecode file.  Need to Ebolify. */
 	      if (XCOMPILED_FUNCTION (john)->flags.ebolified
 		  && VECTORP (XCDR (ivan)))
 		ebolify_bytecode_constants (XCDR (ivan));
-	      XCOMPILED_FUNCTION (john)->constants = XCDR (ivan);
+	      XCOMPILED_FUNCTION (john)->constants = Fpurecopy (XCDR (ivan));
 	      NUNGCPRO;
 	    }
 	  doc = compiled_function_documentation (XCOMPILED_FUNCTION (john));
@@ -676,7 +683,7 @@ encoding detection or end-of-line detection.
   {
     /* Lisp_Object's must be malloc'ed, not stack-allocated */
     Lisp_Object lispstream = Qnil;
-    const int block_size = 8192;
+    CONST int block_size = 8192;
     struct gcpro ngcpro1;
 
     NGCPRO1 (lispstream);
@@ -903,23 +910,22 @@ locate_file_find_directory_hash_table (Lisp_Object directory)
    nil, a list, or a string (for backward compatibility), with the
    following semantics:
 
-   a) nil    - no suffix, just search for file name intact
-               (semantically different from "empty suffix list", which
-               would be meaningless.)
+   a) nil    - no suffix, just search for file name intact (semantically
+               different from "empty suffix list")
    b) list   - list of suffixes to append to file name.  Each of these
                must be a string.
    c) string - colon-separated suffixes to append to file name (backward
                compatibility).
 
-   All of this got hairy, so I decided to use a mapper.  Calling a
-   function for each suffix shouldn't slow things down, since
-   locate_file is rarely called with enough suffixes for funcalls to
-   make any difference.  */
+   All of this got hairy, so I decided to use write a mapper.  Calling
+   a function for each suffix shouldn't slow things down, since
+   locate_file is rarely call with enough suffixes for it to make a
+   difference.  */
 
 /* Map FUN over SUFFIXES, as described above.  FUN will be called with a
    char * containing the current file name, and ARG.  Mapping stops when
    FUN returns non-zero. */
-static void
+void
 locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
 			  int (*fun) (char *, void *),
 			  void *arg)
@@ -978,12 +984,12 @@ locate_file_map_suffixes (Lisp_Object filename, Lisp_Object suffixes,
   else
     {
       /* Case c) */
-      const char *nsuffix = (const char *) XSTRING_DATA (suffixes);
+      CONST char *nsuffix = XSTRING_DATA (suffixes);
 
       while (1)
 	{
 	  char *esuffix = (char *) strchr (nsuffix, ':');
-	  int lsuffix = esuffix ? esuffix - nsuffix : strlen (nsuffix);
+	  int lsuffix = ((esuffix) ? (esuffix - nsuffix) : strlen (nsuffix));
 
 	  /* Concatenate path element/specified name with the suffix.  */
 	  strncpy (fn + fn_len, nsuffix, lsuffix);
@@ -1029,7 +1035,7 @@ locate_file_in_directory_mapper (char *fn, void *arg)
 	  if (closure->storeptr)
 	    *closure->storeptr = build_string (fn);
 
-#ifndef WIN32_NATIVE
+#ifndef WINDOWSNT
 	  /* If we actually opened the file, set close-on-exec flag
 	     on the new descriptor so that subprocesses can't whack
 	     at it.  */
@@ -1870,7 +1876,7 @@ read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
   return Lstream_byte_count (XLSTREAM (Vread_buffer_stream)) - 1;
 }
 
-static Lisp_Object parse_integer (const Bufbyte *buf, Bytecount len, int base);
+static Lisp_Object parse_integer (CONST Bufbyte *buf, Bytecount len, int base);
 
 static Lisp_Object
 read_atom (Lisp_Object readcharfun,
@@ -1941,6 +1947,7 @@ read_atom (Lisp_Object readcharfun,
       sym = Fmake_symbol ( make_string ((Bufbyte *) read_ptr, len));
     else
       {
+	/* intern will purecopy pname if necessary */
 	Lisp_Object name = make_string ((Bufbyte *) read_ptr, len);
 	sym = Fintern (name, Qnil);
       }
@@ -1950,10 +1957,10 @@ read_atom (Lisp_Object readcharfun,
 
 
 static Lisp_Object
-parse_integer (const Bufbyte *buf, Bytecount len, int base)
+parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
 {
-  const Bufbyte *lim = buf + len;
-  const Bufbyte *p = buf;
+  CONST Bufbyte *lim = buf + len;
+  CONST Bufbyte *p = buf;
   EMACS_UINT num = 0;
   int negativland = 0;
 
@@ -2036,7 +2043,6 @@ read_bit_vector (Lisp_Object readcharfun)
 {
   unsigned_char_dynarr *dyn = Dynarr_new (unsigned_char);
   Emchar c;
-  Lisp_Object val;
 
   while (1)
     {
@@ -2049,12 +2055,8 @@ read_bit_vector (Lisp_Object readcharfun)
   if (c >= 0)
     unreadchar (readcharfun, c);
 
-  val = make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
-					  Dynarr_length (dyn));
-
-  Dynarr_free (dyn);
-
-  return val;
+  return make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
+					   Dynarr_length (dyn));
 }
 
 
@@ -2696,10 +2698,10 @@ retry:
 #define EXP_INT 16
 
 int
-isfloat_string (const char *cp)
+isfloat_string (CONST char *cp)
 {
   int state = 0;
-  const Bufbyte *ucp = (const Bufbyte *) cp;
+  CONST Bufbyte *ucp = (CONST Bufbyte *) cp;
 
   if (*ucp == '+' || *ucp == '-')
     ucp++;
@@ -3002,8 +3004,13 @@ read_vector (Lisp_Object readcharfun,
        i < len;
        i++, p++)
   {
-    Lisp_Cons *otem = XCONS (tem);
-    tem = Fcar (tem);
+    struct Lisp_Cons *otem = XCONS (tem);
+#if 0 /* FSFmacs defun hack */
+    if (read_pure)
+      tem = Fpurecopy (Fcar (tem));
+    else
+#endif
+      tem = Fcar (tem);
     *p = tem;
     tem = otem->cdr;
     free_cons (otem);
@@ -3034,7 +3041,7 @@ read_compiled_function (Lisp_Object readcharfun, Emchar terminator)
 
   for (iii = 0; CONSP (stuff); iii++)
     {
-      Lisp_Cons *victim = XCONS (stuff);
+      struct Lisp_Cons *victim = XCONS (stuff);
       make_byte_code_args[iii] = Fcar (stuff);
       if ((purify_flag || load_force_doc_strings)
 	   && CONSP (make_byte_code_args[iii])
@@ -3142,17 +3149,8 @@ structure_type_create (void)
 }
 
 void
-reinit_vars_of_lread (void)
-{
-  Vread_buffer_stream = Qnil;
-  staticpro_nodump (&Vread_buffer_stream);
-}
-
-void
 vars_of_lread (void)
 {
-  reinit_vars_of_lread ();
-
   DEFVAR_LISP ("values", &Vvalues /*
 List of values of all expressions which were read, evaluated and printed.
 Order is reverse chronological.
@@ -3269,6 +3267,9 @@ character escape syntaxes or just read them incorrectly.
   /* This must be initialized in init_lread otherwise it may start out
      with values saved when the image is dumped. */
   staticpro (&Vload_descriptor_list);
+
+  Vread_buffer_stream = Qnil;
+  staticpro (&Vread_buffer_stream);
 
   /* Initialized in init_lread. */
   staticpro (&Vload_force_doc_string_list);

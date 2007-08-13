@@ -201,7 +201,9 @@ extern void *sbrk ();
 extern char *start_of_data (void);
 
 #ifdef BSD
+#ifndef DATA_SEG_BITS
 #define start_of_data() &etext
+#endif
 #endif
 
 #ifndef emacs
@@ -738,7 +740,7 @@ malloc_stats (size)
   return v;
 }
 int
-malloc_mem_used (void)
+malloc_mem_used ()
 {
   int i;
   int size_used;
@@ -757,7 +759,7 @@ malloc_mem_used (void)
 }
 
 int 
-malloc_mem_free (void)
+malloc_mem_free ()
 {
   int i;
   int size_unused;
@@ -787,7 +789,7 @@ malloc_mem_free (void)
 #ifdef USG
 
 static void
-get_lim_data (void)
+get_lim_data ()
 {
 #ifdef ULIMIT_BREAK_VALUE
   lim_data = ULIMIT_BREAK_VALUE;
@@ -802,7 +804,7 @@ get_lim_data (void)
 #ifndef BSD4_2
 
 static void
-get_lim_data (void)
+get_lim_data ()
 {
   lim_data = vlimit (LIM_DATA, -1);
 }
@@ -810,7 +812,7 @@ get_lim_data (void)
 #else /* BSD4_2 */
 
 static void
-get_lim_data (void)
+get_lim_data ()
 {
   struct rlimit XXrlimit;
 

@@ -5,6 +5,7 @@
 @dircategory XEmacs Editor
 @direntry
 * External Widget: (external-widget) External Client Widget.
+package.
 @end direntry
 @end ifinfo
 

@@ -21,8 +21,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with:  Not in FSF. */
 
-#ifndef INCLUDED_objects_tty_h_
-#define INCLUDED_objects_tty_h_
+#ifndef _XEMACS_OBJECTS_TTY_H_
+#define _XEMACS_OBJECTS_TTY_H_
 
 #include "objects.h"
 
@@ -49,4 +49,4 @@ struct tty_font_instance_data
 extern Lisp_Object Vtty_color_alist, Vtty_dynamic_color_bg;
 extern Lisp_Object Vtty_dynamic_color_fg;
 
-#endif /* INCLUDED_objects_tty_h_ */
+#endif /* _XEMACS_OBJECTS_TTY_H_ */

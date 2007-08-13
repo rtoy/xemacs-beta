@@ -33,7 +33,7 @@
 
 ;; 97/3/14 Jareth Hein (jhod@po.iijnet.or.jp) added functions for kinsoku (asian text
 ;; line break processing)
-;; 97/06/11 Steve Baur (steve@xemacs.org) converted broken
+;; 97/06/11 Steve Baur (steve@altair.xemacs.org) converted broken
 ;;  following-char/preceding-char calls to char-after/char-before.
 
 ;;; Code:
@@ -226,10 +226,9 @@ first line, insist it must match FIRST-LINE-REGEXP."
       ;; XEmacs change
       (if (not dont-skip-first)
 	  (forward-line 1))
-      (cond ((>= (point) to)
-	     (goto-char firstline))
-	    ((/= (point) from)
-	     (setq at-second t)))
+      (if (>= (point) to)
+	  (goto-char firstline)
+	(setq at-second t))
       (move-to-left-margin)
       ;; XEmacs change
       (let ((start (point))
@@ -237,7 +236,7 @@ first line, insist it must match FIRST-LINE-REGEXP."
 	    ;(eol (save-excursion (end-of-line) (point)))
 	    )
 	(setq result
-	      (if (or dont-skip-first (not (looking-at paragraph-start)))
+	      (if (not (looking-at paragraph-start))
 		  (cond ((and adaptive-fill-regexp (looking-at adaptive-fill-regexp))
 			 (buffer-substring-no-properties start (match-end 0)))
 			(adaptive-fill-function (funcall adaptive-fill-function)))))
@@ -383,7 +382,7 @@ space does not end a sentence, so don't break a line there."
 	  (skip-chars-forward " \t")
 	  ;; Then change all newlines to spaces.
 	  ;;; 97/3/14 jhod: Kinsoku change
-	  ;; Spacing is not necessary for characters of no word-separator.
+	  ;; Spacing is not necessary for charcters of no word-separater.
 	  ;; The regexp word-across-newline is used for this check.
 	  (defvar word-across-newline)
 	  (if (not (and (featurep 'mule)
@@ -430,8 +429,7 @@ space does not end a sentence, so don't break a line there."
 	  ;; This is the actual filling loop.
 	  (let ((prefixcol 0) linebeg
 		(re-break-point (if (featurep 'mule)
-				    (concat "[ \n\t]\\|" word-across-newline
-					    ".\\|." word-across-newline)
+				    (concat "[ \n\t]\\|" word-across-newline)
 				  "[ \n\t]")))
 	    (while (not (eobp))
 	      (setq linebeg (point))

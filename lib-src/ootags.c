@@ -64,18 +64,31 @@ char pot_etags_version[] = "@(#) pot revision number is 12.28";
 # define DEBUG FALSE
 #endif
 
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
+# include <fcntl.h>
+# include <sys/param.h>
+# include <io.h>
+# ifndef HAVE_CONFIG_H
+#   define DOS_NT
+#   include <sys/config.h>
+# endif
+#endif /* MSDOS */
+
+#ifdef WINDOWSNT
 # include <stdlib.h>
 # include <fcntl.h>
 # include <string.h>
 # include <io.h>
 # define MAXPATHLEN _MAX_PATH
-# ifndef HAVE_CONFIG_H
+# ifdef HAVE_CONFIG_H
+#   undef HAVE_NTGUI
+# else
+#   define DOS_NT
 #   define HAVE_GETCWD
 # endif /* not HAVE_CONFIG_H */
-#endif /* WIN32_NATIVE */
+#endif /* WINDOWSNT */
 
-#if !defined (WIN32_NATIVE) && defined (STDC_HEADERS)
+#if !defined (WINDOWSNT) && defined (STDC_HEADERS)
 #include <stdlib.h>
 #include <string.h>
 #endif
@@ -91,6 +104,9 @@ char pot_etags_version[] = "@(#) pot revision number is 12.28";
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#ifndef errno
+  extern int errno;
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -160,9 +176,9 @@ char pot_etags_version[] = "@(#) pot revision number is 12.28";
 #ifdef OO_BROWSER
 #define set_construct(construct) \
   if (!oo_browser_construct) oo_browser_construct = construct
-void oo_browser_clear_all_globals(void);
-void oo_browser_clear_some_globals(void);
-void oo_browser_check_and_clear_structtype(void);
+void oo_browser_clear_all_globals();
+void oo_browser_clear_some_globals();
+void oo_browser_check_and_clear_structtype();
 #endif
 
 /*
@@ -184,7 +200,7 @@ void oo_browser_check_and_clear_structtype(void);
 
 typedef int bool;
 
-typedef void Lang_function (FILE *);
+typedef void Lang_function ();
 
 typedef struct
 {
@@ -844,7 +860,9 @@ char *massage_name (s)
 
 
 int
-main (int argc, char *argv[])
+main (argc, argv)
+     int argc;
+     char *argv[];
 {
   int i;
   unsigned int nincluded_files;
@@ -857,9 +875,9 @@ main (int argc, char *argv[])
   bool got_err;
 #endif
 
-#ifdef WIN32_NATIVE
+#ifdef DOS_NT
   _fmode = O_BINARY;   /* all of files are treated as binary files */
-#endif /* WIN32_NATIVE */
+#endif /* DOS_NT */
 
   progname = argv[0];
   nincluded_files = 0;
@@ -1051,12 +1069,12 @@ main (int argc, char *argv[])
       if (streq (tagfile, "-"))
 	{
 	  tagf = stdout;
-#ifdef WIN32_NATIVE
+#ifdef DOS_NT
 	  /* Switch redirected `stdout' to binary mode (setting `_fmode'
 	     doesn't take effect until after `stdout' is already open). */
 	  if (!isatty (fileno (stdout)))
 	    setmode (fileno (stdout), O_BINARY);
-#endif /* WIN32_NATIVE */
+#endif /* DOS_NT */
 	}
       else
 	tagf = fopen (tagfile, append_to_tagfile ? "a" : "w");
@@ -1636,7 +1654,8 @@ static char oo_browser_prefix;
 #endif
 
 void
-put_entries (node *np)
+put_entries (np)
+     register node *np;
 {
   register char *sp;
 
@@ -1870,7 +1889,9 @@ struct C_stab_entry { char *name; int c_ext; enum sym_type type; };
 /* maximum key range = 117, duplicates = 0 */
 
 static unsigned int
-hash (char *str, unsigned int len)
+hash (str, len)
+     register char *str;
+     register int unsigned len;
 {
   static unsigned char asso_values[] =
     {
@@ -1888,13 +1909,13 @@ hash (char *str, unsigned int len)
       10,  62,  59, 130,  28,  27,  50,  19,   3, 130,
      130, 130, 130, 130, 130, 130, 130, 130,
     };
-  return len +
-    asso_values[(unsigned char) str[2]] +
-    asso_values[(unsigned char) str[0]];
+  return len + asso_values[str[2]] + asso_values[str[0]];
 }
 
-static struct C_stab_entry *
-in_word_set (char *str, unsigned int len)
+struct C_stab_entry *
+in_word_set (str, len)
+     register char *str;
+     register unsigned int len;
 {
   static struct C_stab_entry wordlist[] =
     {
@@ -2056,7 +2077,7 @@ enum sym_type structtype;
 
 #ifdef OO_BROWSER
 void
-oo_browser_check_and_clear_structtype(void)
+oo_browser_check_and_clear_structtype()
 {
   /* Allow for multiple enum_label tags. */
   if (structtype != st_C_enum)
@@ -2135,7 +2156,7 @@ int methodlen;
 
 #ifdef OO_BROWSER
 void
-oo_browser_clear_all_globals(void)
+oo_browser_clear_all_globals()
 {
   /* Initialize globals so there is no carry over between files. */
   oo_browser_construct = C_NULL;
@@ -2146,7 +2167,7 @@ oo_browser_clear_all_globals(void)
 }
 
 void
-oo_browser_clear_some_globals(void)
+oo_browser_clear_some_globals()
 {
   oo_browser_construct = C_NULL;
   structtype = st_none;
@@ -3617,7 +3638,8 @@ Fortran_functions (inf)
  * look for '^[a-zA-Z_.$][a-zA_Z0-9_.$]*[: ^I^J]'
  */
 void
-Asm_labels (FILE *inf)
+Asm_labels (inf)
+     FILE *inf;
 {
   register char *cp;
 
@@ -4947,7 +4969,7 @@ readline_internal (lbp, stream)
 	  if (p > buffer && p[-1] == '\r')
 	    {
 	      p -= 1;
-#ifdef WIN32_NATIVE
+#ifdef DOS_NT
 	     /* Assume CRLF->LF translation will be performed by Emacs
 		when loading this file, so CRs won't appear in the buffer.
 		It would be cleaner to compensate within Emacs;
@@ -5203,6 +5225,19 @@ etags_getcwd ()
   return path;
 
 #else /* not HAVE_GETCWD */
+#ifdef MSDOS
+  char *p, path[MAXPATHLEN + 1]; /* Fixed size is safe on MSDOS.  */
+
+  getwd (path);
+
+  for (p = path; *p != '\0'; p++)
+    if (*p == '\\')
+      *p = '/';
+    else
+      *p = lowcase (*p);
+
+  return strdup (path);
+#else /* not MSDOS */
   linebuffer path;
   FILE *pipe;
 
@@ -5213,6 +5248,7 @@ etags_getcwd ()
   pclose (pipe);
 
   return path.buffer;
+#endif /* not MSDOS */
 #endif /* not HAVE_GETCWD */
 }
 
@@ -5262,7 +5298,7 @@ absolute_filename (file, dir)
 
   if (filename_is_absolute (file))
     res = savestr (file);
-#ifdef WIN32_NATIVE
+#ifdef DOS_NT
   /* We don't support non-absolute file names with a drive
      letter, like `d:NAME' (it's too much hassle).  */
   else if (file[1] == ':')
@@ -5286,8 +5322,8 @@ absolute_filename (file, dir)
 	      while (cp >= res && !filename_is_absolute (cp));
 	      if (cp < res)
 		cp = slashp;	/* the absolute name begins with "/.." */
-#ifdef WIN32_NATIVE
-	      /* Under Windows we get `d:/NAME' as absolute
+#ifdef DOS_NT
+	      /* Under MSDOS and NT we get `d:/NAME' as absolute
 		 file name, so the luser could say `d:/../NAME'.
 		 We silently treat this as `d:/NAME'.  */
 	      else if (cp[0] != '/')
@@ -5342,7 +5378,7 @@ filename_is_absolute (fn)
      char *fn;
 {
   return (fn[0] == '/'
-#ifdef WIN32_NATIVE
+#ifdef DOS_NT
 	  || (isalpha(fn[0]) && fn[1] == ':' && fn[2] == '/')
 #endif
 	  );
@@ -5353,7 +5389,7 @@ void
 canonicalize_filename (fn)
      register char *fn;
 {
-#ifdef WIN32_NATIVE
+#ifdef DOS_NT
   for (; *fn != '\0'; fn++)
     if (*fn == '\\')
       *fn = '/';

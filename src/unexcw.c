@@ -39,9 +39,8 @@ unexec (char *, char *, void *, void *,	void *)
 }
 #else
 
-#ifndef MAX_PATH
-#define MAX_PATH 260
-#endif
+#undef CONST
+#include <windows.h>
 #include <a.out.h>
 
 #define ALLOC_UNIT 0xFFFF
@@ -82,9 +81,6 @@ if (lseek(a_out, 0, SEEK_CUR) != a) \
   exit(-1); \
 }
 
-void
-unexec (char *out_name, char *in_name, void *start_data, 
-	void * d1, void * d2);
 /* Dump out .data and .bss sections into a new executable.  */
 void unexec (char *out_name, char *in_name, void *start_data, 
 	     void * d1,	void * d2)

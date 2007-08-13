@@ -34,33 +34,14 @@ Boston, MA 02111-1307, USA.  */
 static void rehash (hentry *harray, struct hash_table *ht, hash_size_t size);
 
 unsigned long
-memory_hash (const void *xv, size_t size)
+memory_hash (CONST void *xv, size_t size)
 {
   unsigned int h = 0;
-  unsigned const char *x = (unsigned const char *) xv;
+  unsigned CONST char *x = (unsigned CONST char *) xv;
 
   if (!x) return 0;
 
   while (size--)
-    {
-      unsigned int g;
-      h = (h << 4) + *x++;
-      if ((g = h & 0xf0000000) != 0)
-	h = (h ^ (g >> 24)) ^ g;
-    }
-
-  return h;
-}
-
-unsigned long
-string_hash (const char *xv)
-{
-  unsigned int h = 0;
-  unsigned const char *x = (unsigned const char *) xv;
-
-  if (!x) return 0;
-
-  while (*x)
     {
       unsigned int g;
       h = (h << 4) + *x++;
@@ -78,7 +59,7 @@ hash_table_size (size_t requested_size)
   /* Return some prime near, but greater than or equal to, SIZE.
      Decades from the time of writing, someone will have a system large
      enough that the list below will be too short... */
-  static const size_t primes [] =
+  static CONST size_t primes [] =
   {
     19, 29, 41, 59, 79, 107, 149, 197, 263, 347, 457, 599, 787, 1031,
     1361, 1777, 2333, 3037, 3967, 5167, 6719, 8737, 11369, 14783,
@@ -104,8 +85,8 @@ hash_table_size (size_t requested_size)
   return primes [high];
 }
 
-const void *
-gethash (const void *key, struct hash_table *hash_table, const void **ret_value)
+CONST void *
+gethash (CONST void *key, struct hash_table *hash_table, CONST void **ret_value)
 {
   if (!key)
     {
@@ -123,7 +104,7 @@ gethash (const void *key, struct hash_table *hash_table, const void **ret_value)
 	(unsigned long) key;
       unsigned int hcode = hcode_initial % size;
       hentry *e = &harray [hcode];
-      const void *e_key = e->key;
+      CONST void *e_key = e->key;
 
       if (e_key ?
 	  KEYS_DIFFER_P (e_key, key, test_function) :
@@ -207,7 +188,7 @@ grow_hash_table (struct hash_table *hash_table, hash_size_t new_size)
 }
 
 void
-puthash (const void *key, void *contents, struct hash_table *hash_table)
+puthash (CONST void *key, void *contents, struct hash_table *hash_table)
 {
   if (!key)
     {
@@ -226,8 +207,8 @@ puthash (const void *key, void *contents, struct hash_table *hash_table)
       unsigned int hcode = hcode_initial % size;
       size_t h2 = size - 2;
       unsigned int incr = 1 + (hcode_initial % h2);
-      const void *e_key = harray [hcode].key;
-      const void *oldcontents;
+      CONST void *e_key = harray [hcode].key;
+      CONST void *oldcontents;
 
       if (e_key && KEYS_DIFFER_P (e_key, key, test_function))
 	{
@@ -288,7 +269,7 @@ rehash (hentry *harray, struct hash_table *hash_table, hash_size_t size)
 }
 
 void
-remhash (const void *key, struct hash_table *hash_table)
+remhash (CONST void *key, struct hash_table *hash_table)
 {
   if (!key)
     {
@@ -306,7 +287,7 @@ remhash (const void *key, struct hash_table *hash_table)
 	((unsigned long) key);
       unsigned int hcode = hcode_initial % size;
       hentry *e = &harray [hcode];
-      const void *e_key = e->key;
+      CONST void *e_key = e->key;
 
       if (e_key ?
 	  KEYS_DIFFER_P (e_key, key, test_function) :

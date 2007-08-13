@@ -21,16 +21,23 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
 #define NO_SHORTNAMES	/* Tell config not to load remap.h */
-#define DONT_ENCAPSULATE
-#include <config.h>
+#include <../src/config.h>
 #else
 #define MAIL_USE_POP
 #endif
 
 #ifdef MAIL_USE_POP
 
+#ifdef HAVE_CONFIG_H
+/* Cancel these substitutions made in config.h */
+#undef open
+#undef read
+#undef write
+#undef close
+#endif
+
 #include <sys/types.h>
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 #include <winsock.h>
 #undef SOCKET_ERROR
 #define RECV(s,buf,len,flags) recv(s,buf,len,flags)
@@ -60,22 +67,16 @@ Boston, MA 02111-1307, USA.  */
 extern struct servent *hes_getservbyname (/* char *, char * */);
 #endif
 
-#include "../src/syspwd.h"
-#ifndef WIN32_NATIVE
+#include <pwd.h>
 #include <netdb.h>
-#endif
 #include <errno.h>
 #include <stdio.h>
 
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <sys/stat.h>
-#ifndef WIN32_NATIVE
 #include <sys/file.h>
-#endif
 #include "../src/syswait.h"
-#ifndef WIN32_NATIVE
+#ifndef WINDOWSNT
 #include "../src/systime.h"
 #endif
 #include <stdlib.h>
@@ -102,7 +103,7 @@ extern char *krb_realmofhost (/* char * */);
 #endif /* ! KRB5 */
 #endif /* KERBEROS */
 
-#ifndef WIN32_NATIVE
+#ifndef WINDOWSNT
 #if !defined(HAVE_H_ERRNO) || !defined(HAVE_CONFIG_H)
 extern int h_errno;
 #endif
@@ -122,7 +123,7 @@ static char *find_crlf (char *);
 #define ERROR_MAX 80		/* a pretty arbitrary size */
 #define POP_PORT 110
 #define KPOP_PORT 1109
-#if defined(WIN32_NATIVE) || defined(CYGWIN)
+#if defined(WINDOWSNT) || defined(__CYGWIN32__)
 #define POP_SERVICE "pop3"	/* we don't want the POP2 port! */
 #else
 #define POP_SERVICE "pop"
@@ -183,7 +184,7 @@ pop_open (char *host, char *username, char *password, int flags)
       username = getenv ("USER");
       if (! (username && *username))
 	{
-#ifndef WIN32_NATIVE
+#ifndef WINDOWSNT
 	  username = getlogin ();
 	  if (! (username && *username))
 	    {
@@ -252,7 +253,7 @@ pop_open (char *host, char *username, char *password, int flags)
  
   if ((! password) && (! DONT_NEED_PASSWORD))
     {
-#ifndef WIN32_NATIVE
+#ifndef WINDOWSNT
       if (! (flags & POP_NO_GETPASS))
 	{
 	  password = getpass ("Enter POP password:");
@@ -921,7 +922,7 @@ pop_quit (popserver server)
 	  ret = -1;
 	}
 
-      CLOSESOCKET (server->file);
+      close (server->file);
     }
 
   if (server->buffer)
@@ -931,7 +932,7 @@ pop_quit (popserver server)
   return (ret);
 }
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 static int have_winsock = 0;
 #endif
 
@@ -976,7 +977,7 @@ socket_connection (char *host, int flags)
 
   int try_count = 0;
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
   {
     WSADATA winsockData;
     if (WSAStartup (0x101, &winsockData) == 0)
@@ -1481,7 +1482,7 @@ pop_trash (popserver server)
 	}
     }
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
   if (have_winsock)
     WSACleanup ();
 #endif

@@ -24,8 +24,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Chuck Thompson and Ben Wing. */
 
-#ifndef INCLUDED_device_h_
-#define INCLUDED_device_h_
+#ifndef _XEMACS_DEVICE_H_
+#define _XEMACS_DEVICE_H_
 
 #include "console.h"
 
@@ -168,13 +168,11 @@ struct device
   unsigned int frame_changed :1;
   unsigned int glyphs_changed :1;
   unsigned int subwindows_changed :1;
-  unsigned int subwindows_state_changed :1;
   unsigned int icon_changed :1;
   unsigned int menubar_changed :1;
   unsigned int modeline_changed :1;
   unsigned int point_changed :1;
   unsigned int size_changed :1;
-  unsigned int gutter_changed :1;
   unsigned int toolbar_changed :1;
   unsigned int windows_changed :1;
   unsigned int windows_structure_changed :1;
@@ -221,6 +219,7 @@ DECLARE_LRECORD (device, struct device);
 #define XDEVICE(x) XRECORD (x, device, struct device)
 #define XSETDEVICE(x, p) XSETRECORD (x, p, device)
 #define DEVICEP(x) RECORDP (x, device)
+#define GC_DEVICEP(x) GC_RECORDP (x, device)
 #define CHECK_DEVICE(x) CHECK_RECORD (x, device)
 #define CONCHECK_DEVICE(x) CONCHECK_RECORD (x, device)
 
@@ -238,16 +237,16 @@ DECLARE_LRECORD (device, struct device);
 #define DEVICE_TYPE_P(d, type)	EQ (DEVICE_TYPE (d), Q##type)
 
 #ifdef ERROR_CHECK_TYPECHECK
-INLINE_HEADER struct device *
+INLINE struct device *
 error_check_device_type (struct device *d, Lisp_Object sym);
-INLINE_HEADER struct device *
+INLINE struct device *
 error_check_device_type (struct device *d, Lisp_Object sym)
 {
   assert (EQ (DEVICE_TYPE (d), sym));
   return d;
 }
 # define DEVICE_TYPE_DATA(d, type)			\
-  ((struct type##_device *) error_check_device_type (d, Q##type)->device_data)
+  ((struct type##_device *) (error_check_device_type (d, Q##type))->device_data)
 #else
 # define DEVICE_TYPE_DATA(d, type)			\
   ((struct type##_device *) (d)->device_data)
@@ -268,47 +267,6 @@ error_check_device_type (struct device *d, Lisp_Object sym)
 					 type)))	\
       x = wrong_type_argument				\
 	(type##_console_methods->predicate_symbol, x);	\
-  } while (0)
-
-#define DEVICE_DISPLAY_P(dev)				\
-  (DEVICE_LIVE_P (dev) &&				\
-   (MAYBE_INT_DEVMETH (dev,				\
-		       device_implementation_flags, ())	\
-    & XDEVIMPF_IS_A_PRINTER) ? 0 : 1)
-
-#define CHECK_DISPLAY_DEVICE(dev)			\
-  do {							\
-    CHECK_DEVICE (dev);					\
-    if (!(DEVICEP (dev)					\
-          && DEVICE_DISPLAY_P (XDEVICE (dev))))		\
-      dead_wrong_type_argument (Qdisplay, dev);		\
-  } while (0)
-
-#define CONCHECK_DISPLAY_DEVICE(dev)			\
-  do {							\
-    CONCHECK_DEVICE (dev);				\
-    if (!(DEVICEP (dev)					\
-          && DEVICE_DISPLAY_P (XDEVICE (dev))))		\
-      wrong_type_argument (Qdisplay, dev);		\
-  } while (0)
-
-#define DEVICE_PRINTER_P(dev)				\
-  (DEVICE_LIVE_P (dev) && !DEVICE_DISPLAY_P (dev))
-
-#define CHECK_PRINTER_DEVICE(dev)			\
-  do {							\
-    CHECK_DEVICE (dev);					\
-    if (!(DEVICEP (dev)					\
-          && DEVICE_PRINTER_P (XDEVICE (dev))))		\
-      dead_wrong_type_argument (Qprinter, dev);		\
-  } while (0)
-
-#define CONCHECK_PRINTER_DEVICE(dev)			\
-  do {							\
-    CONCHECK_DEVICE (dev);				\
-    if (!(DEVICEP (dev)					\
-          && DEVICE_PRINTER_P (XDEVICE (dev))))		\
-      wrong_type_argument (Qprinter, dev);		\
   } while (0)
 
 /* #### These should be in the device-*.h files but there are
@@ -335,7 +293,6 @@ error_check_device_type (struct device *d, Lisp_Object sym)
 
 EXFUN (Fdevice_console, 1);
 EXFUN (Fdevice_name, 1);
-EXFUN (Ffind_device, 2);
 EXFUN (Fmake_device, 3);
 EXFUN (Fselected_device, 1);
 
@@ -390,14 +347,8 @@ int valid_device_class_p (Lisp_Object class);
 #define MARK_DEVICE_SUBWINDOWS_CHANGED(d)			\
   ((void) (subwindows_changed = (d)->subwindows_changed = 1))
 
-#define MARK_DEVICE_SUBWINDOWS_STATE_CHANGED(d)		\
-  ((void) (subwindows_state_changed = (d)->subwindows_state_changed = 1))
-
 #define MARK_DEVICE_TOOLBARS_CHANGED(d)			\
   ((void) (toolbar_changed = (d)->toolbar_changed = 1))
-
-#define MARK_DEVICE_GUTTERS_CHANGED(d)		\
-  ((void) (gutter_changed = (d)->gutter_changed = 1))
 
 #define MARK_DEVICE_SIZE_CHANGED(d)			\
   ((void) (size_changed = (d)->size_changed = 1))
@@ -410,14 +361,6 @@ int valid_device_class_p (Lisp_Object class);
   MARK_DEVICE_FACES_CHANGED (mdffc_d);			\
 } while (0)
 
-#define MARK_DEVICE_FRAMES_GLYPHS_CHANGED(d) do {	\
-  struct device *mdffc_d = (d);				\
-  Lisp_Object frmcons;					\
-  DEVICE_FRAME_LOOP (frmcons, mdffc_d)			\
-    XFRAME (XCAR (frmcons))->glyphs_changed = 1;		\
-  MARK_DEVICE_GLYPHS_CHANGED (mdffc_d);		\
-} while (0)
-
 #define MARK_DEVICE_FRAME_CHANGED(d)			\
   ((void) (frame_changed = (d)->frame_changed = 1))
 
@@ -427,8 +370,6 @@ int valid_device_class_p (Lisp_Object class);
 #define MARK_DEVICE_WINDOWS_STRUCTURE_CHANGED(d)	\
   ((void) (windows_structure_changed = (d)->windows_structure_changed = 1))
 
-/* #### unify this with DOMAIN_DEVICE once the latter has image instances
-   expunged from it. */
 /* This turns out to be used heavily so we make it a macro to make it
    inline.  Also, the majority of the time the object will turn out to
    be a window so we move it from being checked last to being checked
@@ -464,4 +405,4 @@ void set_device_selected_frame (struct device *d, Lisp_Object frame);
 Lisp_Object domain_device_type (Lisp_Object domain);
 int window_system_pixelated_geometry (Lisp_Object domain);
 
-#endif /* INCLUDED_device_h_ */
+#endif /* _XEMACS_DEVICE_H_ */

@@ -24,8 +24,8 @@ Please mail bugs and suggestions to the XEmacs maintainer.
 
 /*
 Here's the scoop. We would really like this to be a shell script, but
-the various Windows platforms don't have reliable scripting that suits
-our needs. We don't want to rely on perl or some other such language
+the various Windows platforms dont have reliable scripting that suits
+our needs. We dont want to reply on perl or some other such language
 so we have to roll our own executable to act as a front-end for the
 compiler.
 
@@ -58,31 +58,87 @@ the lines of:
 See the samples for more details.
 */
 
-#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef MSDOS
+# include <fcntl.h>
+# include <sys/param.h>
+# include <io.h>
+# ifndef HAVE_CONFIG_H
+#   define DOS_NT
+#   include <sys/config.h>
+# endif
+#endif /* MSDOS */
+
+#ifdef WINDOWSNT
+# include <stdlib.h>
+# include <fcntl.h>
+# include <string.h>
+# include <io.h>
+# define MAXPATHLEN _MAX_PATH
+# ifdef HAVE_CONFIG_H
+#   undef HAVE_NTGUI
+# else
+#   define DOS_NT
+#   define HAVE_GETCWD
+# endif /* not HAVE_CONFIG_H */
+#endif /* WINDOWSNT */
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+  /* On some systems, Emacs defines static as nothing for the sake
+     of unexec.  We don't want that here since we don't use unexec. */
+# undef static
+#endif /* HAVE_CONFIG_H */
+
+#if !defined (WINDOWSNT) && defined (STDC_HEADERS)
+#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/types.h>
+#endif
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
+#else
+# ifdef HAVE_GETCWD
+    extern char *getcwd ();
+# endif
 #endif /* HAVE_UNISTD_H */
 
-#define EMODULES_GATHER_VERSION
+#include <stdio.h>
+#include <ctype.h>
+#include <errno.h>
+#ifndef errno
+  extern int errno;
+#endif
+#include <sys/types.h>
+#include <sys/stat.h>
 
-#include <emodules.h>
-#include <ellcc.h> /* Generated files must be included using <...> */
+#define EMODULES_GATHER_VERSION
+#include "emodules.h"
+#include "ellcc.h"
+
+#if !defined (S_ISREG) && defined (S_IFREG)
+# define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
+#endif
+
+/* Exit codes for success and failure.  */
+#ifdef VMS
+# define	GOOD	1
+# define	BAD	0
+#else
+# define	GOOD	0
+# define	BAD	1
+#endif
 
 #define DEBUG
 
 #ifndef HAVE_SHLIB
 int
-main (int argc, char *argv[])
+main()
 {
   fprintf (stderr, "Dynamic modules not supported on this platform\n");
-  return EXIT_FAILURE;
+  return (BAD);
 }
 #else
 
@@ -107,12 +163,11 @@ main (int argc, char *argv[])
 # define xnew(n,Type)	  ((Type *) xmalloc ((n) * sizeof (Type)))
 # define xrnew(op,n,Type) ((Type *) xrealloc ((op), (n) * sizeof (Type)))
 #endif
-static void *xmalloc (size_t);
-static void fatal (char *, char *);
-static void add_to_argv (const char *);
-static void do_compile_mode (void);
-static void do_link_mode (void);
-static void do_init_mode (void);
+long *xmalloc (), *xrealloc ();
+void fatal (), pfatal ();
+char *ellcc_strchr (), *ellcc_strrchr ();
+void add_to_argv ();
+void do_compile_mode(), do_link_mode(), do_init_mode();
 
 #define SSTR(S) ((S)?(S):"")
 
@@ -141,7 +196,9 @@ char *ellcc, *ellld, *ellcflags, *ellldflags, *ellpicflags, *elldllflags;
     STR = DFLT
 
 int
-main (int argc, char *argv[])
+main (argc, argv)
+     int argc;
+     char *argv[];
 {
   char *tmp;
   int i, done_mode = 0;
@@ -149,12 +206,12 @@ main (int argc, char *argv[])
   prog_argc = argc;
   prog_argv = argv;
 
-#if defined(WIN32_NATIVE)
-  tmp = strrchr (argv[0], '\\');
+#if defined(MSDOS) || defined(WINDOWSNT)
+  tmp = ellcc_strrchr (argv[0], '\\');
   if (tmp != (char *)0)
     tmp++;
 #elif !defined (VMS)
-  tmp = strrchr (argv[0], '/');
+  tmp = ellcc_strrchr (argv[0], '/');
   if (tmp != (char *)0)
     tmp++;
 #else
@@ -191,7 +248,7 @@ main (int argc, char *argv[])
           char *modeopt = argv[i] + 7;
 
           if (done_mode && strcmp (modeopt, "verbose"))
-            fatal ("more than one mode specified", (char *) 0);
+            fatal ("more than one mode specified");
           if (strcmp (modeopt, "link") == 0)
             {
               done_mode++;
@@ -230,13 +287,13 @@ main (int argc, char *argv[])
           printf ("%s\n", ELLCC_CONFIG);
           return 0;
         }
-      else if (strncmp (argv[i], "--mod-name=", 11) == 0)
+      else if (strncmp (argv[i], "--mod-name=", 10) == 0)
         mod_name = argv[i] + 11;
-      else if (strncmp (argv[i], "--mod-title=", 12) == 0)
+      else if (strncmp (argv[i], "--mod-title=", 11) == 0)
         mod_title = argv[i] + 12;
-      else if (strncmp (argv[i], "--mod-version=", 14) == 0)
+      else if (strncmp (argv[i], "--mod-version=", 13) == 0)
         mod_version = argv[i] + 14;
-      else if (strncmp (argv[i], "--mod-output=", 13) == 0)
+      else if (strncmp (argv[i], "--mod-output=", 12) == 0)
         mod_output = argv[i] + 13;
       else
         {
@@ -282,7 +339,7 @@ main (int argc, char *argv[])
 #endif
 
   if (exec_argc < 2)
-    fatal ("too few arguments", (char *) 0);
+    fatal ("too few arguments");
 
   /*
    * Get the over-rides from the environment
@@ -321,23 +378,83 @@ main (int argc, char *argv[])
 }
 
 /* Like malloc but get fatal error if memory is exhausted.  */
-static void *
-xmalloc (size_t size)
+long *
+xmalloc (size)
+     unsigned int size;
 {
-  void *result = malloc (size);
+  long *result = (long *) malloc (size);
   if (result == NULL)
-    fatal ("virtual memory exhausted", (char *)0);
+    fatal ("virtual memory exhausted", (char *)NULL);
+  return result;
+}
+
+long *
+xrealloc (ptr, size)
+     char *ptr;
+     unsigned int size;
+{
+  long *result =  (long *) realloc (ptr, size);
+  if (result == NULL)
+    fatal ("virtual memory exhausted", (char *)NULL);
   return result;
 }
 
 /* Print error message and exit.  */
-static void
-fatal (char *s1, char *s2)
+void
+fatal (s1, s2)
+     char *s1, *s2;
 {
   fprintf (stderr, "%s: ", progname);
   fprintf (stderr, s1, s2);
   fprintf (stderr, "\n");
-  exit (EXIT_FAILURE);
+  exit (BAD);
+}
+
+void
+pfatal (s1)
+     char *s1;
+{
+  perror (s1);
+  exit (BAD);
+}
+
+/*
+ * Return the ptr in sp at which the character c last
+ * appears; NULL if not found
+ *
+ * Identical to System V strrchr, included for portability.
+ */
+char *
+ellcc_strrchr (sp, c)
+     register char *sp, c;
+{
+  register char *r;
+
+  r = NULL;
+  do
+    {
+      if (*sp == c)
+	r = sp;
+  } while (*sp++);
+  return r;
+}
+
+/*
+ * Return the ptr in sp at which the character c first
+ * appears; NULL if not found
+ *
+ * Identical to System V strchr, included for portability.
+ */
+char *
+ellcc_strchr (sp, c)
+     register char *sp, c;
+{
+  do
+    {
+      if (*sp == c)
+	return sp;
+    } while (*sp++);
+  return NULL;
 }
 
 /*
@@ -345,13 +462,14 @@ fatal (char *s1, char *s2)
  * to the compiler or linker. We need to split individual words into
  * arguments, taking quoting into account. This can get ugly.
  */
-static void
-add_to_argv (const char *str)
+void
+add_to_argv (str)
+     CONST char *str;
 {
   int sm = 0;
-  const char *s = (const char *)0;
+  CONST char *s = (CONST char *)0;
 
-  if ((str == (const char *)0) || (str[0] == '\0'))
+  if ((str == (CONST char *)0) || (str[0] == '\0'))
     return;
 
   while (*str)
@@ -359,7 +477,7 @@ add_to_argv (const char *str)
       switch (sm)
         {
         case 0: /* Start of case - string leading whitespace */
-          if (isspace ((unsigned char) *str))
+          if (isspace (*str))
             str++;
           else
             {
@@ -369,7 +487,7 @@ add_to_argv (const char *str)
           break;
 
         case 1: /* Non-whitespace character. Mark the start */
-          if (isspace ((unsigned char) *str))
+          if (isspace (*str))
             {
               /* Reached the end of the argument. Add it. */
               int l = str-s;
@@ -378,7 +496,7 @@ add_to_argv (const char *str)
               exec_argv[real_argc][l] = '\0';
               real_argc++;
               sm = 0; /* Back to start state */
-              s = (const char *)0;
+              s = (CONST char *)0;
               break;
             }
           else if (*str == '\\')
@@ -423,14 +541,14 @@ add_to_argv (const char *str)
         }
     }
 
-  if (s != (const char *)0)
+  if (s != (CONST char *)0)
     {
       int l = str-s;
       exec_argv[real_argc] = xnew (l+2, char);
       strncpy (exec_argv[real_argc], s, l);
       exec_argv[real_argc][l] = '\0';
       real_argc++;
-      s = (const char *)0;
+      s = (CONST char *)0;
     }
 }
 
@@ -439,8 +557,8 @@ add_to_argv (const char *str)
  * is build up the argument vector and exec() it. We must just make sure
  * that we get all of the required arguments in place.
  */
-static void
-do_compile_mode (void)
+void
+do_compile_mode()
 {
   int i;
   char ts[4096]; /* Plenty big enough */
@@ -469,8 +587,8 @@ do_compile_mode (void)
  * all of the provided arguments, then the final post arguments. Once
  * all of this has been done, the argument vector is ready to run.
  */
-static void
-do_link_mode (void)
+void
+do_link_mode()
 {
   int i,x;
   char *t, ts[4096]; /* Plenty big enough */
@@ -530,8 +648,8 @@ do_link_mode (void)
  * the header information first, as make-doc will append to the file by
  * special dispensation.
  */
-static void
-do_init_mode (void)
+void
+do_init_mode()
 {
   int i;
   char ts[4096]; /* Plenty big enough */

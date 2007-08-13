@@ -25,20 +25,7 @@
 
 PROGNAME=@PROGNAME@
 
-#define NOT_C_CODE
-#include "config.h"
-
-#ifdef PDUMP
-DUMP_TARGET = ${PROGNAME}.dmp
-EXE_TARGET  = ${PROGNAME}
-ID_FILE     = dump-id.c
-#else
-DUMP_TARGET = ${PROGNAME}
-EXE_TARGET  = temacs
-ID_FILE     =
-#endif
-
-all: ${DUMP_TARGET}
+all: ${PROGNAME}
 .PHONY : all release dump-elc dump-elcs all-elc all-elcs lint
 
 ## For performance and consistency, no built-in rules.
@@ -86,6 +73,8 @@ LD=@ld@
 lib_gcc=@lib_gcc@
 ##libmcheck=@libmcheck@
 
+#define NOT_C_CODE
+#include "config.h"
 
 ## With the traditional VPATH setting, it is not possible to
 ## simultaneously compile in-place and in another directory.  The
@@ -109,12 +98,15 @@ vpath config.h
 vpath paths.h
 vpath Emacs.ad.h
 vpath sheap-adjust.h
-vpath dump-id.c
 #else
 VPATH=@srcdir@
 #endif
 
 RM = rm -f
+
+#ifdef HAVE_NATIVE_SOUND
+sound_cflags=@sound_cflags@
+#endif
 
 LWLIB_SRCDIR = ${srcdir}/../lwlib
 
@@ -125,7 +117,7 @@ $(lwlib_libs) :
 	cd ../lwlib && $(RECURSIVE_MAKE)
 
 x_objs=balloon_help.o balloon-x.o console-x.o device-x.o event-Xt.o frame-x.o\
- glyphs-x.o objects-x.o redisplay-x.o select-x.o xgccache.o
+ glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o 
 
 #ifdef AIX4
 LIBI18N = -li18n
@@ -134,12 +126,8 @@ LIBI18N = -li18n
 X11_libs = $(LIBI18N)
 #endif /* HAVE_X_WINDOWS */
 
-#if defined (HEAP_IN_DATA) && !defined(PDUMP)
+#ifdef HEAP_IN_DATA
 sheap_obj=sheap.o
-#endif
-
-#if defined(MINGW) || defined(CYGWIN)
-res_obj=xemacs_res.o
 #endif
 
 ## -Demacs is needed to make some files produce the correct version
@@ -188,14 +176,14 @@ objs=\
  event-stream.o extents.o faces.o\
  fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o font-lock.o\
  frame.o general.o glyphs.o glyphs-eimage.o glyphs-widget.o\
- gui.o gutter.o $(gui_objs) hash.o imgproc.o indent.o insdel.o intl.o\
+ gui.o $(gui_objs) hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o lread.o lstream.o\
  macros.o marker.o md5.o minibuf.o objects.o opaque.o\
  print.o process.o profile.o\
  rangetab.o redisplay.o redisplay-output.o regex.o\
- search.o select.o $(sheap_obj) signal.o sound.o\
+ search.o $(sheap_obj) signal.o sound.o\
  specifier.o strftime.o symbols.o syntax.o sysdep.o\
- undo.o $(x_objs) widget.o window.o $(res_obj)
+ undo.o $(x_objs) widget.o window.o
 
 obj_rtl = $(objs:.o=.c.rtl)
 
@@ -248,37 +236,37 @@ external_widget_objs = ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -Xlinker -z -Xlinker text -o output
 extw_link_beg = $(CC) -shared
 extw_link_mid = -Xlinker -z -Xlinker text -o
-extw_link_end =
+extw_link_end = 
 ## I cannot figure out how to do shared a.out libraries, so just punt.
 #  elif !defined (LINUX) || defined (__ELF__)
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -o output
 extw_link_beg = $(CC) -shared
 extw_link_mid = -o
-extw_link_end =
+extw_link_end = 
 #  endif
 # elif defined (USG5)
 #  if defined (IRIX)
 #   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations objs -o output
-extw_link_beg = $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations
-extw_link_mid =  -o
-extw_link_end =
+extw_link_beg = $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations 
+extw_link_mid =  -o 
+extw_link_end = 
 #  else /* not IRIX */
 #   define EXTW_LINK(objs, output) $(CC) -G objs -z text -o output
 extw_link_beg = $(CC) -G
 extw_link_mid = -z text -o
-extw_link_end =
+extw_link_end = 
 #  endif /* not IRIX */
 # else /* not USG5 */
 #  if defined (DEC_ALPHA) && defined (OSF1)
 #   define EXTW_LINK(objs, output) $(LD) $(ldflags) $(ld_switch_shared) -d objs -o output $(LIBES)
-extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d
-extw_link_mid = -o
+extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d 
+extw_link_mid = -o 
 extw_link_end = $(LIBES)
 #  else /* !(DEC_ALPHA && OSF1) */
 #   define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
 extw_link_beg = $(LD) -dc
 extw_link_mid = -assert pure-text -o
-extw_link_end =
+extw_link_end = 
 #  endif /* !(DEC_ALPHA && OSF1) */
 # endif /* not USG5 */
 
@@ -321,50 +309,52 @@ mo_dir = ${etcdir}
 mo_file = ${mo_dir}emacs.mo
 #endif
 
-temacs_loadup = ./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/loadup.el
+#ifdef WINDOWSNT
+LOADPATH   =  EMACSBOOTSTRAPLOADPATH="${lispdir};${blddir}"
+MODULEPATH =  EMACSBOOTSTRAPMODULEPATH="${moduledir};${blddir}"
+#else
+LOADPATH   =  EMACSBOOTSTRAPLOADPATH="${lispdir}:${blddir}"
+MODULEPATH =  EMACSBOOTSTRAPMODULEPATH="${moduledir}:${blddir}"
+#endif
+DUMPENV = $(LOADPATH) $(MODULEPATH)
+temacs_loadup = $(DUMPENV) ./temacs -batch -l ${srcdir}/../lisp/loadup.el
 dump_temacs   = ${temacs_loadup} dump
 run_temacs    = ${temacs_loadup} run-temacs
-debug_temacs = gdb ${EXE_TARGET}
 
-release: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files}
+release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 #ifdef CANNOT_DUMP
-	ln ${EXE_TARGET} ${PROGNAME}
+	ln temacs ${PROGNAME}
 #else
+#ifdef HAVE_SHM
 	-if [ -w ${srcdir}/../lisp ]; then \
-	  w=`pwd`; cd ${srcdir} && $${w}/${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/inc-vers; \
+	  w=`pwd`; cd ${srcdir} && $${w}/temacs -nl -batch -l ${srcdir}/../lisp/inc-vers; \
 	else true; fi
-	-./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/loadup.el dump
+	-$(DUMPENV) ./temacs -nl -batch -l ${srcdir}/../lisp/loadup.el dump
+#else /* ! defined (HAVE_SHM) */
+	-if [ -w ${srcdir}/../lisp ]; then \
+	  w=`pwd`; cd ${srcdir} && $${w}/temacs -batch -l ${srcdir}/../lisp/inc-vers; \
+	else true; fi
+	-$(DUMPENV) ./temacs -batch -l ${srcdir}/../lisp/loadup.el dump
+#endif /* ! defined (HAVE_SHM) */
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
-${DUMP_TARGET}: ${EXE_TARGET} ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
-#ifdef HEAP_IN_DATA
-	@$(RM) $@ && touch SATISFIED
-	-${dump_temacs}
-	@if test -f $@;        then if test -f SATISFIED; then \
-		echo "Testing for Lisp shadows ..."; \
-		./${PROGNAME} -batch -vanilla -f list-load-path-shadows; fi; \
-		$(RM) SATISFIED; exit 0; fi; \
-	if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
-	@$(RM) $@; \
-	$(RECURSIVE_MAKE) $@;
-#else
+${PROGNAME}: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
 	@$(RM) $@
-	${dump_temacs}
+	-${dump_temacs}
 	@echo "Testing for Lisp shadows ..."
 	@./${PROGNAME} -batch -vanilla -f list-load-path-shadows
-#endif
 
-fastdump: ${EXE_TARGET}
-	@$(RM) ${DUMP_TARGET} && touch SATISFIED
+fastdump: temacs 
+	@$(RM) ${PROGNAME} && touch SATISFIED
 	-${dump_temacs}
 	@./${PROGNAME} -batch -vanilla -f list-load-path-shadows
 
 FRC.update-elc.stamp :
 
-update-elc.stamp : ${EXE_TARGET} FRC.update-elc.stamp
+update-elc.stamp : temacs FRC.update-elc.stamp
 	@touch NOBYTECOMPILE
-	./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/update-elc.el
+	${DUMPENV} ./temacs -batch -l ${srcdir}/../lisp/update-elc.el
 	@if test ! -f $@ -o -f NOBYTECOMPILE; then touch $@; fi; \
 	 $(RM) NOBYTECOMPILE
 
@@ -383,16 +373,16 @@ dynodump_deps = ../dynodump/dynodump.so
 	cd ../dynodump && $(RECURSIVE_MAKE)
 #endif /* DYNODUMP */
 
-${libsrc}DOC: ${EXE_TARGET} update-elc.stamp
+${libsrc}DOC: temacs update-elc.stamp
 	$(RM) ${libsrc}DOC; \
-	${DUMPENV} ./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/make-docfile.el -- \
+	${DUMPENV} ./temacs -batch -l ${srcdir}/../lisp/make-docfile.el -- \
 		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \
 		${obj_src} ${mallocdocsrc} ${rallocdocsrc}
 
 dump_elcs: dump-elcs
 
-dump-elcs: ${EXE_TARGET}
-	-${DUMPENV} ./${EXE_TARGET} -nd -batch -l ${srcdir}/../lisp/update-elc.el
+dump-elcs: temacs
+	-${DUMPENV} ./temacs -batch -l ${srcdir}/../lisp/update-elc.el
 
 all-elc all-elcs:
 	cd .. && $(RECURSIVE_MAKE) all-elc
@@ -426,9 +416,6 @@ ${libsrc}make-po:
 
 #endif /* I18N3 */
 
-${libsrc}make-dump-id:
-	cd ${libsrc} && $(RECURSIVE_MAKE) make-dump-id
-
 ${libsrc}make-docfile:
 	cd ${libsrc} && $(RECURSIVE_MAKE) make-docfile
 
@@ -442,26 +429,20 @@ lint: $(LINTFILES)
 	$(LINT.c) $(LINTFILES)
 ## end of Lint Section
 
-link_deps=\
+temacs_deps=\
  $(start_files) ${objs} ${otherobjs}\
  $(lwlib_deps) $(dynodump_deps)
 
-temacs_deps=\
- $(link_deps) $(ID_FILE)
-
 temacs_link_args=\
- ${start_flags} ${ldflags} -I${srcdir} \
- -o $@ ${start_files} ${objs} ${otherobjs} ${ID_FILE} ${LIBES}
+ ${start_flags} ${ldflags}\
+ -o $@ ${start_files} ${objs} ${otherobjs} ${LIBES}
 
-${EXE_TARGET}: $(temacs_deps)
+temacs: $(temacs_deps)
 	$(LD) $(temacs_link_args)
-
-dump-id.c: ${libsrc}make-dump-id ${link_deps}
-	${libsrc}make-dump-id
 
 .PHONY : run-temacs
 
-run-temacs: ${EXE_TARGET}
+run-temacs: temacs
 	-${run_temacs}
 
 ## We have automated tests!!
@@ -486,8 +467,8 @@ rtc_patch.o:
 	rtc_patch_area -o $@
 
 rtcmacs: $(temacs_deps) rtc_patch.o
-	$(RM) ${EXE_TARGET}; $(RECURSIVE_MAKE) ${EXE_TARGET} RTC_patch_objs=rtc_patch.o
-	mv ${EXE_TARGET} rtcmacs
+	$(RM) temacs; $(RECURSIVE_MAKE) temacs RTC_patch_objs=rtc_patch.o
+	mv temacs rtcmacs
 
 .PHONY: run-rtcmacs
 run-rtcmacs: rtcmacs
@@ -500,25 +481,17 @@ run-rtcmacs: rtcmacs
 	runargs -batch -l ${srcdir}/../lisp/loadup.el run-temacs -q; \
 	run' rtcmacs
 
-debug-temacs: ${EXE_TARGET}
-	-${debug_temacs}
-
 ## Purify, Quantify, PureCoverage are software quality products from
 ## Rational, formerly Pure Atria, formerly Pure Software.
 ##
 ## Purify
 PURIFY_PROG  = purify
-PURIFY_FLAGS =\
-#ifdef PDUMP
- -search-mmaps=yes\
-#endif
- -chain-length=32 -ignore-signals=SIGPOLL -threads=yes\
- -cache-dir=./purecache -always-use-cache-dir=yes
-
+PURIFY_FLAGS = -chain-length=32 -ignore-signals=SIGPOLL -threads=yes \
+ -cache-dir=./purecache -always-use-cache-dir=yes -pointer-mask=0x0fffffff
 PURIFY_LIBS  = -lpthread
 puremacs: $(temacs_deps)
 	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) $(PURIFY_LIBS)
-	cp $@ ${EXE_TARGET}
+	cp $@ temacs
 
 ## Quantify
 #ifdef  QUANTIFY
@@ -530,7 +503,7 @@ temacs_link_args += $(QUANTIFY_HOME)/quantify_stubs.a
 
 quantmacs: $(temacs_deps)
 	$(QUANTIFY_PROG) $(QUANTIFY_FLAGS) $(LD) $(temacs_link_args)
-	cp $@ ${EXE_TARGET}
+	cp $@ temacs
 #endif /* QUANTIFY */
 
 
@@ -687,15 +660,11 @@ alloca.o : ${srcdir}/alloca.s config.h
 #endif /* ! defined (C_ALLOCA) */
 
 #ifdef HAVE_NATIVE_SOUND
-sound_cflags=@sound_cflags@
 sunplay.o: ${srcdir}/sunplay.c
 	$(CC) -c  $(sound_cflags) $(cflags) ${srcdir}/sunplay.c
 hpplay.o: ${srcdir}/hpplay.c
 	$(CC) -c -Demacs $(sound_cflags) $(cflags) ${srcdir}/hpplay.c
 #endif /* HAVE_NATIVE_SOUND */
-
-xemacs_res.o: ${srcdir}/../nt/xemacs.rc
-	windres --include-dir ${srcdir}/../nt -i ${srcdir}/../nt/xemacs.rc -o $@
 
 ## System-specific programs to be made.
 ## ${other_files}, $(objects_system) and $(objects_machine)
@@ -759,8 +728,5 @@ install: ${PROGNAME}
 FRC.depend:
 depend: FRC.depend
 	cd ${srcdir} && $(RM) depend.tmp && \
-	perl ./make-src-depend > depend.tmp && \
-	if cmp -s depend depend.tmp; \
-	then $(RM) depend.tmp; \
-	else $(RM) depend && mv depend.tmp depend; \
-	fi
+	perl make-src-depend > depend.tmp && \
+	$(RM) depend && mv depend.tmp depend

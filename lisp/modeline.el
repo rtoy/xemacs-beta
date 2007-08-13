@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
+;; along with XEmacs; see the file COPYING.  If not, write to the 
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -59,52 +59,11 @@ buffer list and clicking on the right half cycles backward."
   :type 'boolean
   :group 'modeline)
 
-(defcustom modeline-scrolling-method nil
-  "*If non-nil, dragging the modeline with the mouse may also scroll its
-text horizontally (vertical motion controls window resizing and horizontal
-motion controls modeline scrolling).
-
-With a value of t, the modeline text is scrolled in the same direction as
-the mouse motion. With a value of 'scrollbar, the modeline is considered as
-a scrollbar for its own text, which then moves in the opposite direction."
-  :type '(choice (const :tag "none" nil)
-		 (const :tag "text" t)
-		 (const :tag "scrollbar" scrollbar))
-  :set (lambda (sym val)
-	 (set-default sym val)
-	 (when (featurep 'x)
-	   (cond ((eq val t)
-		  (set-glyph-image modeline-pointer-glyph "hand2" 'global 'x))
-		 ((eq val 'scrollbar)
-		  (set-glyph-image modeline-pointer-glyph "fleur" 'global 'x))
-		 (t
-		  (set-glyph-image modeline-pointer-glyph "sb_v_double_arrow"
-				   'global 'x))))
-	 (when (featurep 'mswindows)
-	   (cond ((eq val t)
-		  (set-glyph-image modeline-pointer-glyph
-				   [mswindows-resource :resource-type cursor
-						       :resource-id "SizeAll"]
-				   'global 'mswindows))
-		 ((eq val 'scrollbar)
-		  (set-glyph-image modeline-pointer-glyph
-				   [mswindows-resource :resource-type cursor
-						       :resource-id "Normal"]
-				   'global 'mswindows))
-		 (t
-		  (set-glyph-image modeline-pointer-glyph
-				   [mswindows-resource :resource-type cursor
-						       :resource-id "SizeNS"]
-				   'global 'mswindows)))))
-  :group 'modeline)
-
 (defun mouse-drag-modeline (event)
   "Resize a window by dragging its modeline.
 This command should be bound to a button-press event in modeline-map.
 Holding down a mouse button and moving the mouse up and down will
-make the clicked-on window taller or shorter.
-
-See also the variable `modeline-scrolling-method'."
+make the clicked-on window taller or shorter."
   (interactive "e")
   (or (button-press-event-p event)
       (error "%s must be invoked by a mouse-press" this-command))
@@ -120,9 +79,9 @@ See also the variable `modeline-scrolling-method'."
 	  (start-event-frame (event-frame event))
 	  (start-event-window (event-window event))
 	  (start-nwindows (count-windows t))
-	  (hscroll-delta (face-width 'modeline))
-	  (start-hscroll (modeline-hscroll (event-window event)))
-	  (start-x-pixel (event-x-pixel event))
+;;	  (hscroll-delta (face-width 'modeline))
+;;	  (start-hscroll (modeline-hscroll (event-window event)))
+;	  (start-x-pixel (event-x-pixel event))
 	  (last-timestamp 0)
 	  default-line-height
 	  modeline-height
@@ -182,9 +141,7 @@ See also the variable `modeline-scrolling-method'."
 	       ;; scroll) nore Y pos (modeline drag) have changed.
 	       (and modeline-click-swaps-buffers
 		    (= depress-line (event-y event))
-		    (or (not modeline-scrolling-method)
-			(= start-hscroll
-			   (modeline-hscroll start-event-window)))
+;;		    (= start-hscroll (modeline-hscroll start-event-window))
 		    (modeline-swap-buffers event)))
 	      ((button-event-p event)
 	       (setq done t))
@@ -196,14 +153,11 @@ See also the variable `modeline-scrolling-method'."
 		  drag-divider-event-lag)
 	       nil)
 	      (t
-	       (when modeline-scrolling-method
-		 (let ((delta (/ (- (event-x-pixel event) start-x-pixel)
-				 hscroll-delta)))
-		   (set-modeline-hscroll start-event-window
-					 (if (eq modeline-scrolling-method t)
-					     (- start-hscroll delta)
-					   (+ start-hscroll delta)))
-		   ))
+;;		 (set-modeline-hscroll start-event-window
+;;				       (+ (/ (- (event-x-pixel event) 
+;;						start-x-pixel)
+;;					     hscroll-delta)
+;;					  start-hscroll))
 	       (setq last-timestamp (event-timestamp event)
 		     y (event-y-pixel event)
 		     edges (window-pixel-edges start-event-window)
@@ -309,9 +263,13 @@ the buffer of the window whose modeline was clicked upon.")
 (make-face 'modeline-mousable "Face for mousable portions of the modeline.")
 (set-face-parent 'modeline-mousable 'modeline nil '(default))
 (when (featurep 'window-system)
-  (set-face-foreground 'modeline-mousable "firebrick" nil '(default color win))
-  (set-face-font 'modeline-mousable [bold] nil '(default mono win))
-  (set-face-font 'modeline-mousable [bold] nil '(default grayscale win)))
+  (set-face-foreground 'modeline-mousable 
+		       '(((default color x) . "firebrick")
+			 ((default color mswindows) . "firebrick"))
+			 'global))
+(when (featurep 'x)
+  (set-face-font 'modeline-mousable [bold] nil '(default mono x))
+  (set-face-font 'modeline-mousable [bold] nil '(default grayscale x)))
 
 (defmacro make-modeline-command-wrapper (command)
   `#'(lambda (event)
@@ -345,8 +303,12 @@ in the list takes precedence.")
 (set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable nil
 		 '(default))
 (when (featurep 'window-system)
-  (set-face-foreground 'modeline-mousable-minor-mode '("green4" "forestgreen")
-		       nil '(default color win)))
+  (set-face-foreground 'modeline-mousable-minor-mode
+		       '(((default color x) . "green4")
+			 ((default color x) . "forestgreen")
+			 ((default color mswindows) . "green4")
+			 ((default color mswindows) . "forestgreen")) 
+		       'global))
 
 (defvar modeline-mousable-minor-mode-extent (make-extent nil nil)
   ;; alliteration at its finest.
@@ -429,7 +391,7 @@ Example: (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 	       name)))
 	(if (setq el (assq toggle minor-mode-alist))
 	    (setcdr el (list hacked-name))
-	  (funcall add-elt
+	  (funcall add-elt 
 		   (list toggle hacked-name)
 		   'minor-mode-alist))))
     (when keymap
@@ -546,16 +508,20 @@ parentheses on the modeline."
 	   "Face for the buffer ID string in the modeline.")
 (set-face-parent 'modeline-buffer-id 'modeline nil '(default))
 (when (featurep 'window-system)
-  (set-face-foreground 'modeline-buffer-id "blue4" nil '(default color win))
-  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default mono win))
-  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default grayscale win)))
+  (set-face-foreground 'modeline-buffer-id 
+		       '(((default color x) . "blue4")
+			 ((default color mswindows) . "blue4"))
+		       'global))
+(when (featurep 'x)
+  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default mono x))
+  (set-face-font 'modeline-buffer-id [bold-italic] nil '(default grayscale x)))
 (when (featurep 'tty)
   (set-face-font 'modeline-buffer-id [bold-italic] nil '(default tty)))
 
 (defvar modeline-buffer-id-extent (make-extent nil nil)
   "Extent covering the whole of the buffer-id string.")
 (set-extent-face modeline-buffer-id-extent 'modeline-buffer-id)
-
+  
 (defvar modeline-buffer-id-left-extent (make-extent nil nil)
 "Extent covering the left half of the buffer-id string.")
 (set-extent-keymap modeline-buffer-id-left-extent
@@ -575,13 +541,8 @@ parentheses on the modeline."
 					; this used to be "XEmacs:"
 	(cons modeline-buffer-id-right-extent (purecopy " %17b")))
   "Modeline control for identifying the buffer being displayed.
-Its default value is
-
-  (list (cons modeline-buffer-id-left-extent (purecopy \"XEmacs%N:\"))
-	(cons modeline-buffer-id-right-extent (purecopy \" %17b\")))
-
-Major modes that edit things other than ordinary files may change this
-(e.g. Info, Dired,...).")
+Its default value is \"XEmacs: %17b\" (NOT!).  Major modes that edit things
+other than ordinary files may change this (e.g. Info, Dired,...)")
 (make-variable-buffer-local 'modeline-buffer-identification)
 
 ;; These are for the sake of minor mode menu.  #### All of this is
@@ -634,14 +595,13 @@ Normally nil in most modes, since there is no process to display.")
   (purecopy "   ")
   'global-mode-string
   (purecopy "   %[(")
-  (cons modeline-minor-mode-extent
-	(list (purecopy "") 'mode-name 'minor-mode-alist))
-  (cons modeline-narrowed-extent (purecopy "%n"))
+  (cons modeline-minor-mode-extent (list "" 'mode-name 'minor-mode-alist))
+  (cons modeline-narrowed-extent "%n")
   'modeline-process
   (purecopy ")%]----")
-  (list 'line-number-mode (purecopy "L%l--"))
-  (list 'column-number-mode (purecopy "C%c--"))
-  (cons -3 (purecopy "%p"))
+  (purecopy '(line-number-mode "L%l--"))
+  (purecopy '(column-number-mode "C%c--"))
+  (purecopy '(-3 . "%p"))
   (purecopy "-%-")))
 
 ;;; Added for XEmacs 20.3.  Provide wrapper for vc since it may not always be

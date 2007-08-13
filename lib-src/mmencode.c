@@ -18,7 +18,6 @@ WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <errno.h>
 
 static void
 output64chunk(int c1, int c2, int c3, int pads, FILE *outfile);
@@ -53,7 +52,9 @@ char c;
 static int InNewline=0;
 
 static int
-nextcharin (FILE *infile, int PortableNewlines)
+nextcharin(infile, PortableNewlines)
+FILE *infile;
+int PortableNewlines;
 {
     int c;
 
@@ -385,7 +386,7 @@ fromqp(FILE *infile, FILE *outfile, char **boundaries, int *boundaryct)
                         putc(c1<<4 | c2, outfile);
                     }
                 } else {
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
                     if (*s == '\n')
                         putc('\r', outfile);	/* insert CR for binary-mode write */
 #endif
@@ -442,8 +443,7 @@ MAKES NO REPRESENTATIONS ABOUT THE ACCURACY OR SUITABILITY
 OF THIS MATERIAL FOR ANY PURPOSE.  IT IS PROVIDED "AS IS", 
 WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
 */
-#ifdef WIN32_NATIVE
-#include <io.h>
+#ifdef MSDOS
 #include <fcntl.h>
 #endif
 
@@ -488,7 +488,7 @@ int main(int argc, char *argv[])
                     exit(-1);
             }
         } else {
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
             if (encode)
                 fp = fopen(argv[i], "rb");
             else
@@ -498,16 +498,16 @@ int main(int argc, char *argv[])
             } /* else */
 #else
             fp = fopen(argv[i], "r");
-#endif /* WIN32_NATIVE */
+#endif /* MSDOS */
             if (!fp) {
                 perror(argv[i]);
                 exit(-1);
             }
         }
     }
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
     if (fp == stdin) setmode(fileno(fp), O_BINARY);
-#endif /* WIN32_NATIVE */
+#endif /* MSDOS */
     if (which == BASE64) {
         if (encode) {
             to64(fp, fpo, portablenewlines);

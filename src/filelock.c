@@ -34,14 +34,14 @@ Lisp_Object Qask_user_about_supersession_threat;
 Lisp_Object Qask_user_about_lock;
 
 #ifdef CLASH_DETECTION
-
+  
 /* The strategy: to lock a file FN, create a symlink .#FN in FN's
    directory, with link data `user@host.pid'.  This avoids a single
    mount (== failure) point for lock files.
 
    When the host in the lock data is the current host, we can check if
    the pid is valid with kill.
-
+   
    Otherwise, we could look at a separate file that maps hostnames to
    reboot times to see if the remote pid can possibly be valid, since we
    don't want Emacs to have to communicate via pipes or sockets or
@@ -63,15 +63,12 @@ Lisp_Object Qask_user_about_lock;
    Similarly, we don't worry about a possible 14-character limit on
    file names, because those are all the same systems that don't have
    symlinks.
-
+   
    This is compatible with the locking scheme used by Interleaf (which
    has contributed this implementation for Emacs), and was designed by
    Ethan Jacobson, Kimbo Mundy, and others.
-
+   
    --karl@cs.umb.edu/karl@hq.ileaf.com.  */
-
-/* Note that muleization is provided by using mule-encapsulated
-   versions of the system calls we use like symlink(), unlink(), etc... */
 
 
 /* Here is the structure that stores information about a lock.  */
@@ -93,27 +90,27 @@ typedef struct
 /* Write the name of the lock file for FN into LFNAME.  Length will be
    that of FN plus two more for the leading `.#' plus one for the null.  */
 #define MAKE_LOCK_NAME(lock, file) \
-  (lock = (char *) alloca (XSTRING_LENGTH (file) + 2 + 1), \
-   fill_in_lock_file_name ((Bufbyte *) (lock), (file)))
+  (lock = (char *) alloca (XSTRING_LENGTH(file) + 2 + 1), \
+   fill_in_lock_file_name (lock, (file)))
 
 static void
-fill_in_lock_file_name (Bufbyte *lockfile, Lisp_Object fn)
+fill_in_lock_file_name (lockfile, fn)
+     register char *lockfile;
+     register Lisp_Object fn;
 {
-  Bufbyte *file_name = XSTRING_DATA (fn);
-  Bufbyte *p;
-  size_t dirlen;
+  register char *p;
 
-  for (p = file_name + XSTRING_LENGTH (fn) - 1;
-       p > file_name && !IS_ANY_SEP (p[-1]);
-       p--)
-    ;
-  dirlen = p - file_name;
+  strcpy (lockfile, XSTRING_DATA(fn));
 
-  memcpy (lockfile, file_name, dirlen);
-  p = lockfile + dirlen;
-  *(p++) = '.';
-  *(p++) = '#';
-  memcpy (p, file_name + dirlen, XSTRING_LENGTH (fn) - dirlen + 1);
+  /* Shift the nondirectory part of the file name (including the null)
+     right two characters.  Here is one of the places where we'd have to
+     do something to support 14-character-max file names.  */
+  for (p = lockfile + strlen (lockfile); p != lockfile && *p != '/'; p--)
+    p[2] = *p;
+
+  /* Insert the `.#'.  */
+  p[1] = '.';
+  p[2] = '#';
 }
 
 /* Lock the lock file named LFNAME.
@@ -121,21 +118,21 @@ fill_in_lock_file_name (Bufbyte *lockfile, Lisp_Object fn)
    Return 1 if successful, 0 if not.  */
 
 static int
-lock_file_1 (char *lfname, int force)
+lock_file_1 (char *lfname,int force)
 {
-  int err;
-  char *lock_info_str;
+  register int err;
+  char *user_name;
   char *host_name;
-  char *user_name = user_login_name (NULL);
+  char *lock_info_str;
 
-  if (user_name == NULL)
+  if (STRINGP (Fuser_login_name (Qnil)))
+    user_name = (char *)XSTRING_DATA((Fuser_login_name (Qnil)));
+  else
     user_name = "";
-
-  if (STRINGP (Vsystem_name))
-    host_name = (char *) XSTRING_DATA (Vsystem_name);
+  if (STRINGP (Fsystem_name ()))
+    host_name = (char *)XSTRING_DATA((Fsystem_name ()));
   else
     host_name = "";
-
   lock_info_str = (char *)alloca (strlen (user_name) + strlen (host_name)
 			  + LOCK_PID_MAX + 5);
 
@@ -143,7 +140,7 @@ lock_file_1 (char *lfname, int force)
            (unsigned long) getpid ());
 
   err = symlink (lock_info_str, lfname);
-  if (err != 0 && errno == EEXIST && force)
+  if (errno == EEXIST && force)
     {
       unlink (lfname);
       err = symlink (lock_info_str, lfname);
@@ -160,7 +157,7 @@ lock_file_1 (char *lfname, int force)
 static int
 current_lock_owner (lock_info_type *owner, char *lfname)
 {
-  int len, ret;
+  int o, p, len, ret;
   int local_owner = 0;
   char *at, *dot;
   char *lfinfo = 0;
@@ -174,7 +171,7 @@ current_lock_owner (lock_info_type *owner, char *lfname)
       len = readlink (lfname, lfinfo, bufsize);
     }
   while (len >= bufsize);
-
+  
   /* If nonexistent lock file, all is well; otherwise, got strange error. */
   if (len == -1)
     {
@@ -184,7 +181,7 @@ current_lock_owner (lock_info_type *owner, char *lfname)
 
   /* Link info exists, so `len' is its length.  Null terminate.  */
   lfinfo[len] = 0;
-
+  
   /* Even if the caller doesn't want the owner info, we still have to
      read it to determine return value, so allocate it.  */
   if (!owner)
@@ -192,7 +189,7 @@ current_lock_owner (lock_info_type *owner, char *lfname)
       owner = (lock_info_type *) alloca (sizeof (lock_info_type));
       local_owner = 1;
     }
-
+  
   /* Parse USER@HOST.PID.  If can't parse, return -1.  */
   /* The USER is everything before the first @.  */
   at = strchr (lfinfo, '@');
@@ -205,7 +202,7 @@ current_lock_owner (lock_info_type *owner, char *lfname)
   owner->user = (char *) xmalloc (len + 1);
   strncpy (owner->user, lfinfo, len);
   owner->user[len] = 0;
-
+  
   /* The PID is everything after the last `.'.  */
   owner->pid = atoi (dot + 1);
 
@@ -217,10 +214,10 @@ current_lock_owner (lock_info_type *owner, char *lfname)
 
   /* We're done looking at the link info.  */
   xfree (lfinfo);
-
+  
   /* On current host?  */
-  if (STRINGP (Fsystem_name ())
-      && strcmp (owner->host, (char *) XSTRING_DATA (Fsystem_name ())) == 0)
+  if (STRINGP (Fsystem_name ()) 
+      && strcmp (owner->host, XSTRING_DATA(Fsystem_name ())) == 0)
     {
       if (owner->pid == getpid ())
         ret = 2; /* We own it.  */
@@ -239,7 +236,7 @@ current_lock_owner (lock_info_type *owner, char *lfname)
          here's where we'd do it.  */
       ret = 1;
     }
-
+  
   /* Avoid garbage.  */
   if (local_owner || ret <= 0)
     {
@@ -263,7 +260,7 @@ lock_if_free (lock_info_type *clasher, char *lfname)
 
       if (errno != EEXIST)
 	return -1;
-
+      
       locker = current_lock_owner (clasher, lfname);
       if (locker == 2)
         {
@@ -302,7 +299,7 @@ lock_file (Lisp_Object fn)
   /* dmoore - and can destroy current_buffer and all sorts of other
      mean nasty things with pointy teeth.  If you call this make sure
      you protect things right. */
-  /* Somebody updated the code in this function and removed the previous
+  /* Somebody updated the code in this function and removed the previous 
      comment.  -slb */
 
   register Lisp_Object attack, orig_fn;
@@ -326,7 +323,7 @@ lock_file (Lisp_Object fn)
 	&& NILP (Fverify_visited_file_modtime (subject_buf))
 	&& !NILP (Ffile_exists_p (fn)))
       call1_in_buffer (XBUFFER(subject_buf),
-		       Qask_user_about_supersession_threat, fn);
+			Qask_user_about_supersession_threat, fn);
   }
 
   /* Try to lock the lock. */
@@ -340,7 +337,7 @@ lock_file (Lisp_Object fn)
   sprintf (locker, "%s@%s (pid %lu)", lock_info.user, lock_info.host,
            lock_info.pid);
   FREE_LOCK_INFO (lock_info);
-
+  
   attack = call2_in_buffer (BUFFERP (subject_buf) ? XBUFFER (subject_buf) :
 			    current_buffer, Qask_user_about_lock , fn,
 			    build_string (locker));
@@ -359,9 +356,6 @@ void
 unlock_file (Lisp_Object fn)
 {
   register char *lfname;
-  struct gcpro gcpro1;
-
-  GCPRO1 (fn);
 
   fn = Fexpand_file_name (fn, Qnil);
 
@@ -369,29 +363,28 @@ unlock_file (Lisp_Object fn)
 
   if (current_lock_owner (0, lfname) == 2)
     unlink (lfname);
-
-  UNGCPRO;
 }
 
 void
-unlock_all_files (void)
+unlock_all_files ()
 {
   register Lisp_Object tail;
+  register struct buffer *b;
 
-  for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
+  for (tail = Vbuffer_alist; GC_CONSP (tail); tail = XCDR (tail))
     {
-      struct buffer *b = XBUFFER (XCDR (XCAR (tail)));
+      b = XBUFFER (XCDR (XCAR (tail)));
       if (STRINGP (b->file_truename) && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b))
 	unlock_file (b->file_truename);
     }
 }
 
 DEFUN ("lock-buffer", Flock_buffer,   0, 1, 0, /*
-Lock FILE, if current buffer is modified.
-FILE defaults to current buffer's visited file,
+  Lock FILE, if current buffer is modified.\n\
+FILE defaults to current buffer's visited file,\n\
 or else nothing is done if current buffer isn't visiting a file.
 */
-       (file))
+  (file))
 {
   if (NILP (file))
     file = current_buffer->file_truename;
@@ -435,18 +428,15 @@ unlock_buffer (struct buffer *buffer)
 }
 
 DEFUN ("file-locked-p", Ffile_locked_p, 0, 1, 0, /*
-Return nil if the FILENAME is not locked,
+  Return nil if the FILENAME is not locked,\n\
 t if it is locked by you, else a string of the name of the locker.
 */
-       (filename))
+  (filename)) 
 {
   Lisp_Object ret;
   register char *lfname;
   int owner;
   lock_info_type locker;
-  struct gcpro gcpro1;
-
-  GCPRO1 (filename);
 
   filename = Fexpand_file_name (filename, Qnil);
 
@@ -462,8 +452,6 @@ t if it is locked by you, else a string of the name of the locker.
 
   if (owner > 0)
     FREE_LOCK_INFO (locker);
-
-  UNGCPRO;
 
   return ret;
 }

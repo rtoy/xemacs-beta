@@ -81,7 +81,7 @@
 	 #'(lambda (n p f)
 	     (list 'put (list 'quote n) (list 'quote p)
 		   (list 'function (cons 'lambda f))))))
-   'xemacs))
+   (car (or features (setq features (list 'cl-kludge))))))
 
 
 ;;; Initialization.
@@ -104,6 +104,31 @@
 	      (funcall cl-old-bc-file-form form)))))
   (put 'eql 'byte-compile 'cl-byte-compile-compiler-macro)
   (run-hooks 'cl-hack-bytecomp-hook))
+
+
+;;; Symbols.
+
+(defvar *gensym-counter*)
+
+;;;###autoload
+(defun gensym (&optional arg)
+  "Generate a new uninterned symbol.
+The name is made by appending a number to PREFIX, default \"G\"."
+  (let ((prefix (if (stringp arg) arg "G"))
+	(num (if (integerp arg) arg
+	       (prog1 *gensym-counter*
+		 (setq *gensym-counter* (1+ *gensym-counter*))))))
+    (make-symbol (format "%s%d" prefix num))))
+
+;;;###autoload
+(defun gentemp (&optional arg)
+  "Generate a new interned symbol with a unique name.
+The name is made by appending a number to PREFIX, default \"G\"."
+  (let ((prefix (if (stringp arg) arg "G"))
+	name)
+    (while (intern-soft (setq name (format "%s%d" prefix *gensym-counter*)))
+      (setq *gensym-counter* (1+ *gensym-counter*)))
+    (intern name)))
 
 
 ;;; Program structure.
@@ -1622,12 +1647,12 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf extent-priority set-extent-priority)
 (defsetf extent-property (x y &optional ignored-arg) (arg)
   (list 'set-extent-property x y arg))
-(defsetf extent-start-position (ext) (store)
-  `(progn (set-extent-endpoints ,ext ,store (extent-end-position ,ext))
-	  ,store))
 (defsetf extent-end-position (ext) (store)
-  `(progn (set-extent-endpoints ,ext (extent-start-position ,ext) ,store)
-	  ,store))
+  (list 'progn (list 'set-extent-endpoints (list 'extent-start-position ext)
+		     store) store))
+(defsetf extent-start-position (ext) (store)
+  (list 'progn (list 'set-extent-endpoints store
+		     (list 'extent-end-position ext)) store))
 (defsetf face-background (f &optional s) (x) (list 'set-face-background f x s))
 (defsetf face-background-pixmap (f &optional s) (x)
   (list 'set-face-background-pixmap f x s))
@@ -2719,11 +2744,10 @@ surrounded by (block NAME ...)."
       (setq form (list 'cons (car args) form)))
     form))
 
-(define-compiler-macro get* (sym prop &optional default)
-  (list 'get sym prop default))
-
-(define-compiler-macro getf (sym prop &optional default)
-  (list 'plist-get sym prop default))
+(define-compiler-macro get* (sym prop &optional def)
+  (if def
+      (list 'getf (list 'symbol-plist sym) prop def)
+    (list 'get sym prop)))
 
 (define-compiler-macro typep (&whole form val type)
   (if (cl-const-expr-p type)
@@ -2771,7 +2795,7 @@ surrounded by (block NAME ...)."
 ;		    abs expt signum last butlast ldiff
 ;		    pairlis gcd lcm
 ;		    isqrt floor* ceiling* truncate* round* mod* rem* subseq
-;		    list-length getf))
+;		    list-length get* getf))
 ;  (put fun 'side-effect-free t))
 
 ;;; Things that are side-effect-and-error-free.  Moved to byte-optimize.el

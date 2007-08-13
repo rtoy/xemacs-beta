@@ -20,20 +20,16 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not really in FSF. */
 
-#ifndef INCLUDED_sysdir_h_
-#define INCLUDED_sysdir_h_
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #ifdef SYSV_SYSTEM_DIR
 # include <dirent.h>
-#elif defined (WIN32_NATIVE)
-# include <direct.h>
+#elif defined (NONSYSTEM_DIR_LIBRARY) 
 # include "ndir.h"
-#elif defined (NONSYSTEM_DIR_LIBRARY)
-# include "ndir.h"
+#elif defined (MSDOS)
+# include <dirent.h>
 #else
 # include <sys/dir.h>
 #endif /* not NONSYSTEM_DIR_LIBRARY */
@@ -59,12 +55,16 @@ Boston, MA 02111-1307, USA.  */
    Since applying strlen to the name always works, we'll just do that.  */
 #define NAMLEN(p) strlen (p->d_name)
 
+#ifdef MSDOS
+#define DIRENTRY_NONEMPTY(p) ((p)->d_name[0] != 0)
+#else
 #define DIRENTRY_NONEMPTY(p) ((p)->d_ino)
+#endif
 
 /* encapsulation: directory calls */
 
 #ifdef ENCAPSULATE_CHDIR
-int sys_chdir (const char *path);
+int sys_chdir (CONST char *path);
 #endif
 #if defined (ENCAPSULATE_CHDIR) && !defined (DONT_ENCAPSULATE)
 # undef chdir
@@ -75,7 +75,7 @@ int sys_chdir (const char *path);
 #endif
 
 #ifdef ENCAPSULATE_MKDIR
-int sys_mkdir (const char *path, mode_t mode);
+int sys_mkdir (CONST char *path, mode_t mode);
 #endif
 #if defined (ENCAPSULATE_MKDIR) && !defined (DONT_ENCAPSULATE)
 # undef mkdir
@@ -86,7 +86,7 @@ int sys_mkdir (const char *path, mode_t mode);
 #endif
 
 #ifdef ENCAPSULATE_OPENDIR
-DIR *sys_opendir (const char *filename);
+DIR *sys_opendir (CONST char *filename);
 #endif
 #if defined (ENCAPSULATE_OPENDIR) && !defined (DONT_ENCAPSULATE)
 # undef opendir
@@ -119,7 +119,7 @@ int sys_closedir (DIR *dirp);
 #endif
 
 #ifdef ENCAPSULATE_RMDIR
-int sys_rmdir (const char *path);
+int sys_rmdir (CONST char *path);
 #endif
 #if defined (ENCAPSULATE_RMDIR) && !defined (DONT_ENCAPSULATE)
 # undef rmdir
@@ -129,4 +129,3 @@ int sys_rmdir (const char *path);
 # define sys_rmdir rmdir
 #endif
 
-#endif /* INCLUDED_sysdir_h_ */

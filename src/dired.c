@@ -23,16 +23,16 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "sysfile.h"
-#include "sysdir.h"
-#include "systime.h"
-#include "sysdep.h"
-#include "syspwd.h"
 #include "buffer.h"
 #include "commands.h"
 #include "elhash.h"
 #include "regex.h"
 #include "opaque.h"
+#include "sysfile.h"
+#include "sysdir.h"
+#include "systime.h"
+#include "sysdep.h"
+#include "syspwd.h"
 
 Lisp_Object Vcompletion_ignored_extensions;
 Lisp_Object Qdirectory_files;
@@ -303,11 +303,11 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 
   CHECK_STRING (file);
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
   /* Filename completion on Windows ignores case, since Windows
      filesystems do.  */
   specbind (Qcompletion_ignore_case, Qt);
-#endif /* WIN32_NATIVE */
+#endif /* WINDOWSNT */
 
 #ifdef FILE_SYSTEM_CASE
   file = FILE_SYSTEM_CASE (file);
@@ -508,7 +508,7 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 
 
 /* The *pwent() functions do not exist on NT */
-#ifndef  WIN32_NATIVE
+#ifndef  WINDOWSNT
 
 static Lisp_Object user_name_completion (Lisp_Object user,
                                          int all_flag,
@@ -542,7 +542,9 @@ if and only if the completion returned in the car was unique.
        (user))
 {
   int uniq;
-  Lisp_Object completed = user_name_completion (user, 0, &uniq);
+  Lisp_Object completed;
+
+  completed = user_name_completion (user, 0, &uniq);
   return Fcons (completed, uniq ? Qt : Qnil);
 }
 
@@ -555,15 +557,8 @@ These are all user names which begin with USER.
   return user_name_completion (user, 1, NULL);
 }
 
-struct user_name
-{
-  Bufbyte *ptr;
-  size_t len;
-};
-
-struct user_cache
-{
-  struct user_name *user_names;
+struct user_cache {
+  char **data;
   int length;
   int size;
   EMACS_TIME last_rebuild_time;
@@ -575,26 +570,27 @@ free_user_cache (struct user_cache *cache)
 {
   int i;
   for (i = 0; i < cache->length; i++)
-    xfree (cache->user_names[i].ptr);
-  xfree (cache->user_names);
-  xzero (*cache);
+    xfree (cache->data[i]);
+  xfree (cache->data);
 }
 
 static Lisp_Object
-user_name_completion_unwind (Lisp_Object cache_incomplete_p)
+user_name_completion_unwind (Lisp_Object locative)
 {
-  endpwent ();
-  speed_up_interrupts ();
+  int interrupted = !NILP (XCAR (locative));
 
-  if (! NILP (XCAR (cache_incomplete_p)))
-    free_user_cache (&user_cache);
-
-  free_cons (XCONS (cache_incomplete_p));
+  if (interrupted)
+    {
+      endpwent ();
+      speed_up_interrupts ();
+      free_user_cache (&user_cache);
+    }
+  free_cons (XCONS (locative));
 
   return Qnil;
 }
 
-#define  USER_CACHE_TTL  (24*60*60)  /* Time to live: 1 day, in seconds */
+#define  USER_CACHE_REBUILD  (24*60*60)  /* 1 day, in seconds */
 
 static Lisp_Object
 user_name_completion (Lisp_Object user, int all_flag, int *uniq)
@@ -603,6 +599,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
   int matchcount = 0;
   Lisp_Object bestmatch = Qnil;
   Charcount bestmatchsize = 0;
+  int speccount = specpdl_depth ();
   Charcount user_name_length;
   EMACS_TIME t;
   int i;
@@ -617,42 +614,41 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
   /* Cache user name lookups because it tends to be quite slow.
    * Rebuild the cache occasionally to catch changes */
   EMACS_GET_TIME (t);
-  if (user_cache.user_names &&
+  if (user_cache.data  &&
       (EMACS_SECS (t) - EMACS_SECS (user_cache.last_rebuild_time)
-       > USER_CACHE_TTL))
-    free_user_cache (&user_cache);
+       > USER_CACHE_REBUILD))
+    {
+      free_user_cache (&user_cache);
+      xzero (user_cache);
+    }
 
-  if (!user_cache.user_names)
+  if (!user_cache.data)
     {
       struct passwd *pwd;
-      Lisp_Object cache_incomplete_p = noseeum_cons (Qt, Qnil);
-      int speccount = specpdl_depth ();
-
+      Lisp_Object locative = noseeum_cons (Qt, Qnil);
       slow_down_interrupts ();
       setpwent ();
-      record_unwind_protect (user_name_completion_unwind, cache_incomplete_p);
+      record_unwind_protect (user_name_completion_unwind, locative);
       while ((pwd = getpwent ()))
         {
+	  Bufbyte *pwuser;
           QUIT;
-	  DO_REALLOC (user_cache.user_names, user_cache.size,
-		      user_cache.length + 1, struct user_name);
-	  TO_INTERNAL_FORMAT (C_STRING, pwd->pw_name,
-			      MALLOC,
-			      (user_cache.user_names[user_cache.length].ptr,
-			       user_cache.user_names[user_cache.length].len),
-			      Qnative);
-	  user_cache.length++;
+	  DO_REALLOC (user_cache.data, user_cache.size,
+		      user_cache.length + 1, char *);
+	  GET_C_CHARPTR_INT_DATA_ALLOCA (pwd->pw_name, FORMAT_OS, pwuser);
+          user_cache.data[user_cache.length++] = xstrdup (pwuser);
         }
-      XCAR (cache_incomplete_p) = Qnil;
-      unbind_to (speccount, Qnil);
-
+      endpwent ();
+      speed_up_interrupts ();
+      XCAR (locative) = Qnil;
+      unbind_to (speccount, Qnil); /* free locative cons */
       EMACS_GET_TIME (user_cache.last_rebuild_time);
     }
 
   for (i = 0; i < user_cache.length; i++)
     {
-      Bufbyte *u_name = user_cache.user_names[i].ptr;
-      Bytecount len   = user_cache.user_names[i].len;
+      Bufbyte *u_name = user_cache.data[i];
+      Bytecount len = strlen ((char *) u_name);
       /* scmp() works in chars, not bytes, so we have to compute this: */
       Charcount cclen = bytecount_to_charcount (u_name, len);
 
@@ -707,11 +703,11 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
     return Qt;
   return Fsubstring (bestmatch, Qzero, make_int (bestmatchsize));
 }
-#endif   /* ! defined WIN32_NATIVE */
+#endif   /* ! defined WINDOWSNT */
 
 
 Lisp_Object
-make_directory_hash_table (const char *path)
+make_directory_hash_table (CONST char *path)
 {
   DIR *d;
   if ((d = opendir (path)))
@@ -796,7 +792,7 @@ If file does not exist, returns nil.
   directory = Ffile_name_directory (filename);
 #endif
 
-#if 0 /* #### shouldn't this apply to WIN32_NATIVE and maybe CYGWIN? */
+#ifdef MSDOS
   {
     char *tmpnam = (char *) XSTRING_DATA (Ffile_name_nondirectory (filename));
     int l = strlen (tmpnam);
@@ -810,7 +806,7 @@ If file does not exist, returns nil.
 	s.st_mode |= S_IEXEC;
       }
   }
-#endif
+#endif /* MSDOS */
 
   switch (s.st_mode & S_IFMT)
     {
@@ -873,7 +869,7 @@ syms_of_dired (void)
   DEFSUBR (Fdirectory_files);
   DEFSUBR (Ffile_name_completion);
   DEFSUBR (Ffile_name_all_completions);
-#ifndef  WIN32_NATIVE
+#ifndef  WINDOWSNT
   DEFSUBR (Fuser_name_completion);
   DEFSUBR (Fuser_name_completion_1);
   DEFSUBR (Fuser_name_all_completions);

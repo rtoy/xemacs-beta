@@ -37,41 +37,30 @@
      (require 'test-harness))))
 
 ;; Test all combinations of make-hash-table keywords
-(dolist (test '(eq eql equal))
-  (dolist (size '(0 1 100))
-    (dolist (rehash-size '(1.1 9.9))
-      (dolist (rehash-threshold '(0.2 .9))
-	(dolist (weakness '(nil t key value))
+(dolist (type '(non-weak weak key-weak value-weak))
+  (dolist (test '(eq eql equal))
+    (dolist (size '(0 1 100))
+      (dolist (rehash-size '(1.1 9.9))
+	(dolist (rehash-threshold '(0.2 .9))
 	  (dolist (data '(() (1 2) (1 2 3 4)))
-	    (let ((ht (make-hash-table
-		       :test test
-		       :size size
-		       :rehash-size rehash-size
-		       :rehash-threshold rehash-threshold
-		       :weakness weakness)))
+	    (let ((ht (make-hash-table :test test
+				       :type type
+				       :size size
+				       :rehash-size rehash-size
+				       :rehash-threshold rehash-threshold)))
 	      (Assert (equal ht (car (let ((print-readably t))
 				       (read-from-string (prin1-to-string ht))))))
 	      (Assert (eq test (hash-table-test ht)))
+	      (Assert (eq type (hash-table-type ht)))
 	      (Assert (<= size (hash-table-size ht)))
 	      (Assert (eql rehash-size (hash-table-rehash-size ht)))
-	      (Assert (eql rehash-threshold (hash-table-rehash-threshold ht)))
-	      (Assert (eq weakness (hash-table-weakness ht))))))))))
+	      (Assert (eql rehash-threshold (hash-table-rehash-threshold ht))))))))))
 
-(loop for (fun weakness) in '((make-hashtable nil)
-			      (make-weak-hashtable t)
-			      (make-key-weak-hashtable key)
-			      (make-value-weak-hashtable value))
-  do (Assert (eq weakness (hash-table-weakness (funcall fun 10)))))
-
-(loop for (type weakness) in '((non-weak nil)
-			       (weak t)
-			       (key-weak key)
-			       (value-weak value))
-  do (Assert (equal (make-hash-table :type type)
-		    (make-hash-table :weakness weakness))))
-
-(Assert (not (equal (make-hash-table :weakness nil)
-		    (make-hash-table :weakness t))))
+(loop for (fun type) in '((make-hashtable non-weak)
+			  (make-weak-hashtable weak)
+			  (make-key-weak-hashtable key-weak)
+			  (make-value-weak-hashtable value-weak))
+  do (Assert (eq type (hash-table-type (funcall fun 10)))))
 
 (let ((ht (make-hash-table :size 20 :rehash-threshold .75 :test 'eq))
       (size 80))
@@ -80,7 +69,6 @@
   (Assert (eq 'eq (hash-table-test ht)))
   (Assert (eq 'non-weak (hash-table-type ht)))
   (Assert (eq 'non-weak (hashtable-type ht)))
-  (Assert (eq 'nil (hash-table-weakness ht)))
   (dotimes (j size)
     (puthash j (- j) ht)
     (Assert (eq (gethash j ht) (- j)))
@@ -205,13 +193,13 @@
   ))
 
 ;; Test that weak hash-tables are properly handled
-(loop for (weakness expected-count expected-k-sum expected-v-sum) in
-  '((nil 6 38 25)
-    (t 3 6 9)
-    (key 4 38 9)
-    (value 4 6 25))
+(loop for (type expected-count expected-k-sum expected-v-sum) in
+  '((non-weak 6 38 25)
+    (weak 3 6 9)
+    (key-weak 4 38 9)
+    (value-weak 4 6 25))
   do
-  (let* ((ht (make-hash-table :weakness weakness))
+  (let* ((ht (make-hash-table :type type))
        (my-obj (cons ht ht)))
   (garbage-collect)
   (puthash my-obj 1 ht)
@@ -250,9 +238,9 @@
     (Assert (= v-sum k-sum))))
 
 ;;; Test reading and printing of hash-table objects
-(let ((h1 #s(hashtable  weakness t rehash-size 3.0 rehash-threshold .2 test eq data (1 2 3 4)))
-      (h2 #s(hash-table weakness t rehash-size 3.0 rehash-threshold .2 test eq data (1 2 3 4)))
-      (h3 (make-hash-table :weakness t :rehash-size 3.0 :rehash-threshold .2 :test 'eq)))
+(let ((h1 #s(hashtable  type weak rehash-size 3.0 rehash-threshold .2 test eq data (1 2 3 4)))
+      (h2 #s(hash-table type weak rehash-size 3.0 rehash-threshold .2 test eq data (1 2 3 4)))
+      (h3 (make-hash-table :type 'weak :rehash-size 3.0 :rehash-threshold .2 :test 'eq)))
   (Assert (equal h1 h2))
   (Assert (not (equal h1 h3)))
   (puthash 1 2 h3)
@@ -279,7 +267,3 @@
   (clrhash h2)
   (Assert (equal h1 h2))
   )
-
-;;; Test sxhash
-(Assert (= (sxhash "foo") (sxhash "foo")))
-(Assert (= (sxhash '(1 2 3)) (sxhash '(1 2 3))))

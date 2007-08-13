@@ -48,7 +48,7 @@ char *UP, *BC, PC;
    format is different too.
 */
 
-#include CURSES_H_FILE
+#include CURSES_H_PATH
 /* Sun, in their infinite lameness, supplies (possibly) broken headers
    even under Solaris.  GCC feels it necessary to correct things by
    supplying its own headers.  Unfortunately, if you build GCC under
@@ -59,20 +59,20 @@ char *UP, *BC, PC;
    but not term.h.) However, it seems to work to just not include
    term.h under Solaris, so we try that.  KLUDGE! */
 #if !(defined (__GNUC__) && defined (SOLARIS2))
-#include TERM_H_FILE
+#include TERM_H_PATH
 #endif
 
 extern void *xmalloc (int size);
 
 #if 0 /* If this isn't declared somewhere, too bad */
-extern char * tparm (const char *string, int arg1, int arg2, int arg3,
+extern char * tparm (CONST char *string, int arg1, int arg2, int arg3,
                      int arg4, int arg5, int arg6, int arg7, int arg8,
                      int arg9);
 #endif
 /* XEmacs: renamed this function because just tparam() conflicts with
    ncurses (We don't use this function anyway!) */
 char *
-emacs_tparam (const char *string, char *outstring, int len, int arg1,
+emacs_tparam (CONST char *string, char *outstring, int len, int arg1,
 	      int arg2, int arg3, int arg4, int arg5, int arg6, int arg7,
 	      int arg8, int arg9)
 {
@@ -81,7 +81,7 @@ emacs_tparam (const char *string, char *outstring, int len, int arg1,
   temp = (char *) tparm (string, arg1, arg2, arg3, arg4, arg5, arg6, arg7,
 			 arg8, arg9);
   if (outstring == 0)
-    outstring = (char *) xmalloc (strlen (temp) + 1);
+    outstring = ((char *) (xmalloc ((strlen (temp)) + 1)));
   strcpy (outstring, temp);
   return outstring;
 }

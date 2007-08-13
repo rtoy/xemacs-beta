@@ -7,22 +7,33 @@
 
 /* Synched up with: FSF 19.28. */
 
-#include <config.h>
+#include <../src/config.h>
 
 #include <stdio.h>
 #include <ctype.h>
-#include <stdlib.h> /* for qsort() and malloc() */
-#include <string.h>
-static void *xmalloc (size_t);
+#if __STDC__ || defined(STDC_HEADERS)
+# include <stdlib.h> /* for qsort() and malloc() */
+# include <string.h>
+static void *xmalloc (int);
+# ifndef CONST
+#  define CONST const
+# endif
+#else
+extern char *malloc ();
+static void *xmalloc ();
+# ifndef CONST
+#  define CONST
+# endif
+#endif
 
 #define NUL	'\0'
 #define MARKER '\037'
 
 #define DEBUG 0
 
-typedef struct LINE LINE;
+typedef struct line LINE;
 
-struct LINE
+struct line
 {
   LINE *next;			/* ptr to next or NULL */
   char *line;			/* text of the line */
@@ -61,9 +72,9 @@ fatal (char *s1, char *s2)
 /* Like malloc but get fatal error if memory is exhausted.  */
 
 static void *
-xmalloc (size_t size)
+xmalloc (int size)
 {
-  void *result = malloc (size);
+  char *result = malloc ((unsigned)size);
   if (result == NULL)
     fatal ("%s", "virtual memory exhausted");
   return result;
@@ -72,9 +83,9 @@ xmalloc (size_t size)
 static char *
 strsav (char *str)
 {
-  char *buf = (char *) xmalloc (strlen (str) + 1);
-  strcpy (buf, str);
-  return buf;
+  char *buf = xmalloc (strlen (str) + 1);
+  (void) strcpy (buf, str);
+  return (buf);
 }
 
 /* Comparison function for qsort to call.  */
@@ -93,7 +104,7 @@ enum state
   WAITING, BEG_NAME, NAME_GET, BEG_DESC, DESC_GET
 };
 
-const char *states[] =
+CONST char *states[] =
 {
   "WAITING", "BEG_NAME", "NAME_GET", "BEG_DESC", "DESC_GET"
 };
@@ -198,7 +209,12 @@ main (int argc, char *argv[])
     /* sort the array by name; within each name, by type */
 
     qsort ((char*)array, cnt, sizeof (DOCSTR*),
-	   (int (*)(const void *, const void *)) cmpdoc);
+	   /* was cast to (int (*)(CONST void *, CONST void *))
+	      but that loses on HP because CONST_IS_LOSING. */
+	   /* This one loses too: (int (*)()) */
+	   /* Ok, so let's try const instead of CONST.  Fuck me!!! */
+	   (int (*)(const void *, const void *))
+	   cmpdoc);
 
     /* write the output header */
 

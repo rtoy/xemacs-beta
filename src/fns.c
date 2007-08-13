@@ -36,7 +36,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "lisp.h"
 
-#include "sysfile.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include <errno.h>
 
 #include "buffer.h"
 #include "bytecode.h"
@@ -58,7 +61,7 @@ Lisp_Object Qidentity;
 static int internal_old_equal (Lisp_Object, Lisp_Object, int);
 
 static Lisp_Object
-mark_bit_vector (Lisp_Object obj)
+mark_bit_vector (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
   return Qnil;
 }
@@ -66,10 +69,10 @@ mark_bit_vector (Lisp_Object obj)
 static void
 print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  size_t i;
-  Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
-  size_t len = bit_vector_length (v);
-  size_t last = len;
+  int i;
+  struct Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
+  int len = bit_vector_length (v);
+  int last = len;
 
   if (INTP (Vprint_length))
     last = min (len, XINT (Vprint_length));
@@ -89,8 +92,8 @@ print_bit_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 static int
 bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  Lisp_Bit_Vector *v1 = XBIT_VECTOR (obj1);
-  Lisp_Bit_Vector *v2 = XBIT_VECTOR (obj2);
+  struct Lisp_Bit_Vector *v1 = XBIT_VECTOR (obj1);
+  struct Lisp_Bit_Vector *v2 = XBIT_VECTOR (obj2);
 
   return ((bit_vector_length (v1) == bit_vector_length (v2)) &&
 	  !memcmp (v1->bits, v2->bits,
@@ -101,32 +104,17 @@ bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 static unsigned long
 bit_vector_hash (Lisp_Object obj, int depth)
 {
-  Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
+  struct Lisp_Bit_Vector *v = XBIT_VECTOR (obj);
   return HASH2 (bit_vector_length (v),
 		memory_hash (v->bits,
 			     BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)) *
 			     sizeof (long)));
 }
 
-static size_t
-size_bit_vector (const void *lheader)
-{
-  Lisp_Bit_Vector *v = (Lisp_Bit_Vector *) lheader;
-  return FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector, bits,
-				       BIT_VECTOR_LONG_STORAGE (bit_vector_length (v)));
-}
-
-static const struct lrecord_description bit_vector_description[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Bit_Vector, next) },
-  { XD_END }
-};
-
-
-DEFINE_BASIC_LRECORD_SEQUENCE_IMPLEMENTATION ("bit-vector", bit_vector,
-					      mark_bit_vector, print_bit_vector, 0,
-					      bit_vector_equal, bit_vector_hash,
-					      bit_vector_description, size_bit_vector,
-					      Lisp_Bit_Vector);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("bit-vector", bit_vector,
+				     mark_bit_vector, print_bit_vector, 0,
+				     bit_vector_equal, bit_vector_hash,
+				     struct Lisp_Bit_Vector);
 
 DEFUN ("identity", Fidentity, 1, 1, 0, /*
 Return the argument unchanged.
@@ -189,7 +177,7 @@ length_with_bytecode_hack (Lisp_Object seq)
     return XINT (Flength (seq));
   else
     {
-      Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (seq);
+      struct Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (seq);
 
       return (f->flags.interactivep ? COMPILED_INTERACTIVE :
 	      f->flags.domainp      ? COMPILED_DOMAIN :
@@ -201,7 +189,7 @@ length_with_bytecode_hack (Lisp_Object seq)
 #endif /* LOSING_BYTECODE */
 
 void
-check_losing_bytecode (const char *function, Lisp_Object seq)
+check_losing_bytecode (CONST char *function, Lisp_Object seq)
 {
   if (COMPILED_FUNCTIONP (seq))
     error_with_frob
@@ -220,7 +208,7 @@ Return the length of vector, bit vector, list or string SEQUENCE.
     return make_int (XSTRING_CHAR_LENGTH (sequence));
   else if (CONSP (sequence))
     {
-      size_t len;
+      int len;
       GET_EXTERNAL_LIST_LENGTH (sequence, len);
       return make_int (len);
     }
@@ -247,7 +235,7 @@ which is at least the number of distinct elements.
        (list))
 {
   Lisp_Object hare, tortoise;
-  size_t len;
+  int len;
 
   for (hare = tortoise = list, len = 0;
        CONSP (hare) && (! EQ (hare, tortoise) || len == 0);
@@ -273,7 +261,7 @@ Symbols are also allowed; their print names are used instead.
        (s1, s2))
 {
   Bytecount len;
-  Lisp_String *p1, *p2;
+  struct Lisp_String *p1, *p2;
 
   if (SYMBOLP (s1))
     p1 = XSYMBOL (s1)->name;
@@ -320,7 +308,7 @@ may be solved.
 */
        (s1, s2))
 {
-  Lisp_String *p1, *p2;
+  struct Lisp_String *p1, *p2;
   Charcount end, len2;
   int i;
 
@@ -351,41 +339,32 @@ may be solved.
      properly, it would still not work because strcoll() does not
      handle multiple locales.  This is the fundamental flaw in the
      locale model. */
-  {
-    Bytecount bcend = charcount_to_bytecount (string_data (p1), end);
-    /* Compare strings using collation order of locale. */
-    /* Need to be tricky to handle embedded nulls. */
+  Bytecount bcend = charcount_to_bytecount (string_data (p1), end);
+  /* Compare strings using collation order of locale. */
+  /* Need to be tricky to handle embedded nulls. */
 
-    for (i = 0; i < bcend; i += strlen((char *) string_data (p1) + i) + 1)
-      {
-	int val = strcoll ((char *) string_data (p1) + i,
-			   (char *) string_data (p2) + i);
-	if (val < 0)
-	  return Qt;
-	if (val > 0)
-	  return Qnil;
-      }
-  }
+  for (i = 0; i < bcend; i += strlen((char *) string_data (p1) + i) + 1)
+    {
+      int val = strcoll ((char *) string_data (p1) + i,
+			 (char *) string_data (p2) + i);
+      if (val < 0)
+	return Qt;
+      if (val > 0)
+	return Qnil;
+    }
 #else /* not I18N2, or MULE */
-  {
-    Bufbyte *ptr1 = string_data (p1);
-    Bufbyte *ptr2 = string_data (p2);
-
-    /* #### It is not really necessary to do this: We could compare
-       byte-by-byte and still get a reasonable comparison, since this
-       would compare characters with a charset in the same way.  With
-       a little rearrangement of the leading bytes, we could make most
-       inter-charset comparisons work out the same, too; even if some
-       don't, this is not a big deal because inter-charset comparisons
-       aren't really well-defined anyway. */
-    for (i = 0; i < end; i++)
-      {
-	if (charptr_emchar (ptr1) != charptr_emchar (ptr2))
-	  return charptr_emchar (ptr1) < charptr_emchar (ptr2) ? Qt : Qnil;
-	INC_CHARPTR (ptr1);
-	INC_CHARPTR (ptr2);
-      }
-  }
+  /* #### It is not really necessary to do this: We could compare
+     byte-by-byte and still get a reasonable comparison, since this
+     would compare characters with a charset in the same way.
+     With a little rearrangement of the leading bytes, we could
+     make most inter-charset comparisons work out the same, too;
+     even if some don't, this is not a big deal because inter-charset
+     comparisons aren't really well-defined anyway. */
+  for (i = 0; i < end; i++)
+    {
+      if (string_char (p1, i) != string_char (p2, i))
+	return string_char (p1, i) < string_char (p2, i) ? Qt : Qnil;
+    }
 #endif /* not I18N2, or MULE */
   /* Can't do i < len2 because then comparison between "foo" and "foo^@"
      won't work right in I18N2 case */
@@ -399,7 +378,7 @@ of the string are changed (e.g. with `aset').  It wraps around occasionally.
 */
        (string))
 {
-  Lisp_String *s;
+  struct Lisp_String *s;
 
   CHECK_STRING (string);
   s = XSTRING (string);
@@ -412,7 +391,7 @@ of the string are changed (e.g. with `aset').  It wraps around occasionally.
 void
 bump_string_modiff (Lisp_Object str)
 {
-  Lisp_String *s = XSTRING (str);
+  struct Lisp_String *s = XSTRING (str);
   Lisp_Object *ptr = &s->plist;
 
 #ifdef I18N3
@@ -527,7 +506,7 @@ copy_list (Lisp_Object list)
   Lisp_Object list_copy = Fcons (XCAR (list), XCDR (list));
   Lisp_Object last = list_copy;
   Lisp_Object hare, tortoise;
-  size_t len;
+  int len;
 
   for (tortoise = hare = XCDR (list), len = 1;
        CONSP (hare);
@@ -902,7 +881,7 @@ Relevant parts of the string-extent-data are copied in the new string.
        (string, from, to))
 {
   Charcount ccfr, ccto;
-  Bytecount bfr, blen;
+  Bytecount bfr, bto;
   Lisp_Object val;
 
   CHECK_STRING (string);
@@ -910,90 +889,93 @@ Relevant parts of the string-extent-data are copied in the new string.
   get_string_range_char (string, from, to, &ccfr, &ccto,
 			 GB_HISTORICAL_STRING_BEHAVIOR);
   bfr = charcount_to_bytecount (XSTRING_DATA (string), ccfr);
-  blen = charcount_to_bytecount (XSTRING_DATA (string) + bfr, ccto - ccfr);
-  val = make_string (XSTRING_DATA (string) + bfr, blen);
+  bto = charcount_to_bytecount (XSTRING_DATA (string), ccto);
+  val = make_string (XSTRING_DATA (string) + bfr, bto - bfr);
   /* Copy any applicable extent information into the new string: */
-  copy_string_extents (val, string, 0, bfr, blen);
+  copy_string_extents (val, string, 0, bfr, bto - bfr);
   return val;
 }
 
 DEFUN ("subseq", Fsubseq, 2, 3, 0, /*
-Return the subsequence of SEQUENCE starting at START and ending before END.
-END may be omitted; then the subsequence runs to the end of SEQUENCE.
-If START or END is negative, it counts from the end.
-The returned subsequence is always of the same type as SEQUENCE.
-If SEQUENCE is a string, relevant parts of the string-extent-data
-are copied to the new string.
+Return a subsequence of SEQ, starting at index FROM and ending before TO.
+TO may be nil or omitted; then the subsequence runs to the end of SEQ.
+If FROM or TO is negative, it counts from the end.
+The resulting subsequence is always the same type as the original
+ sequence.
+If SEQ is a string, relevant parts of the string-extent-data are copied
+ to the new string.
 */
-       (sequence, start, end))
+       (seq, from, to))
 {
-  EMACS_INT len, s, e;
+  int len, f, t;
 
-  if (STRINGP (sequence))
-    return Fsubstring (sequence, start, end);
+  if (STRINGP (seq))
+    return Fsubstring (seq, from, to);
 
-  len = XINT (Flength (sequence));
+  if (!LISTP (seq) && !VECTORP (seq) && !BIT_VECTORP (seq))
+    {
+      check_losing_bytecode ("subseq", seq);
+      seq = wrong_type_argument (Qsequencep, seq);
+    }
 
-  CHECK_INT (start);
-  s = XINT (start);
-  if (s < 0)
-    s = len + s;
+  len = XINT (Flength (seq));
 
-  if (NILP (end))
-    e = len;
+  CHECK_INT (from);
+  f = XINT (from);
+  if (f < 0)
+    f = len + f;
+
+  if (NILP (to))
+    t = len;
   else
     {
-      CHECK_INT (end);
-      e = XINT (end);
-      if (e < 0)
-	e = len + e;
+      CHECK_INT (to);
+      t = XINT (to);
+      if (t < 0)
+	t = len + t;
     }
 
-  if (!(0 <= s && s <= e && e <= len))
-    args_out_of_range_3 (sequence, make_int (s), make_int (e));
+  if (!(0 <= f && f <= t && t <= len))
+    args_out_of_range_3 (seq, make_int (f), make_int (t));
 
-  if (VECTORP (sequence))
+  if (VECTORP (seq))
     {
-      Lisp_Object result = make_vector (e - s, Qnil);
-      EMACS_INT i;
-      Lisp_Object *in_elts  = XVECTOR_DATA (sequence);
+      Lisp_Object result = make_vector (t - f, Qnil);
+      int i;
+      Lisp_Object *in_elts  = XVECTOR_DATA (seq);
       Lisp_Object *out_elts = XVECTOR_DATA (result);
 
-      for (i = s; i < e; i++)
-	out_elts[i - s] = in_elts[i];
+      for (i = f; i < t; i++)
+	out_elts[i - f] = in_elts[i];
       return result;
     }
-  else if (LISTP (sequence))
+
+  if (LISTP (seq))
     {
       Lisp_Object result = Qnil;
-      EMACS_INT i;
+      int i;
 
-      sequence = Fnthcdr (make_int (s), sequence);
+      seq = Fnthcdr (make_int (f), seq);
 
-      for (i = s; i < e; i++)
+      for (i = f; i < t; i++)
 	{
-	  result = Fcons (Fcar (sequence), result);
-	  sequence = Fcdr (sequence);
+	  result = Fcons (Fcar (seq), result);
+	  seq = Fcdr (seq);
 	}
 
       return Fnreverse (result);
     }
-  else if (BIT_VECTORP (sequence))
-    {
-      Lisp_Object result = make_bit_vector (e - s, Qzero);
-      EMACS_INT i;
 
-      for (i = s; i < e; i++)
-	set_bit_vector_bit (XBIT_VECTOR (result), i - s,
-			    bit_vector_bit (XBIT_VECTOR (sequence), i));
-      return result;
-    }
-  else
-    {
-      abort (); /* unreachable, since Flength (sequence) did not get
-                   an error */
-      return Qnil;
-    }
+  /* bit vector */
+  {
+    Lisp_Object result = make_bit_vector (t - f, Qzero);
+    int i;
+
+    for (i = f; i < t; i++)
+      set_bit_vector_bit (XBIT_VECTOR (result), i - f,
+			  bit_vector_bit (XBIT_VECTOR (seq), i));
+    return result;
+  }
 }
 
 
@@ -1002,7 +984,7 @@ Take cdr N times on LIST, and return the result.
 */
        (n, list))
 {
-  REGISTER size_t i;
+  REGISTER int i;
   REGISTER Lisp_Object tail = list;
   CHECK_NATNUM (n);
   for (i = XINT (n); i; i--)
@@ -1061,7 +1043,7 @@ Return element of SEQUENCE at index N.
 #ifdef LOSING_BYTECODE
   else if (COMPILED_FUNCTIONP (sequence))
     {
-      EMACS_INT idx = XINT (n);
+      int idx = XINT (n);
       if (idx < 0)
         {
         lose:
@@ -1113,7 +1095,7 @@ If N is greater than the length of LIST, then LIST itself is returned.
 */
        (list, n))
 {
-  EMACS_INT int_n, count;
+  int int_n, count;
   Lisp_Object retval, tortoise, hare;
 
   CHECK_LIST (list);
@@ -1149,7 +1131,7 @@ If LIST has N or fewer elements, nil is returned and LIST is unmodified.
 */
        (list, n))
 {
-  EMACS_INT int_n;
+  int int_n;
 
   CHECK_LIST (list);
 
@@ -1852,7 +1834,7 @@ int
 plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
 	       int laxp, int depth)
 {
-  int eqp = (depth == -1);	/* -1 as depth means use eq, not equal. */
+  int eqp = (depth == -1);	/* -1 as depth means us eq, not equal. */
   int la, lb, m, i, fill;
   Lisp_Object *keys, *vals;
   char *flags;
@@ -1896,10 +1878,10 @@ plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
 	{
 	  if (!laxp ? EQ (k, keys [i]) : internal_equal (k, keys [i], depth))
 	    {
-	      if (eqp
-		  /* We narrowly escaped being Ebolified here. */
-		  ? !EQ_WITH_EBOLA_NOTICE (v, vals [i])
-		  : !internal_equal (v, vals [i], depth))
+	      if ((eqp
+		   /* We narrowly escaped being Ebolified here. */
+		   ? !EQ_WITH_EBOLA_NOTICE (v, vals [i])
+		   : !internal_equal (v, vals [i], depth)))
 		/* a property in B has a different value than in A */
 		goto MISMATCH;
 	      flags [i] = 1;
@@ -2370,7 +2352,8 @@ This means that it's a malformed or circular plist.
 DEFUN ("valid-plist-p", Fvalid_plist_p, 1, 1, 0, /*
 Given a plist, return non-nil if its format is correct.
 If it returns nil, `check-valid-plist' will signal an error when given
-the plist; that means it's a malformed or circular plist.
+the plist; that means it's a malformed or circular plist or has non-symbols
+as keywords.
 */
        (plist))
 {
@@ -2447,7 +2430,9 @@ properties on the list.
        (lax_plist, prop, default_))
 {
   Lisp_Object val = external_plist_get (&lax_plist, prop, 1, ERROR_ME);
-  return UNBOUNDP (val) ? default_ : val;
+  if (UNBOUNDP (val))
+    return default_;
+  return val;
 }
 
 DEFUN ("lax-plist-put", Flax_plist_put, 3, 3, 0, /*
@@ -2567,87 +2552,228 @@ See also `alist-to-plist'.
   return head;
 }
 
-DEFUN ("get", Fget, 2, 3, 0, /*
-Return the value of OBJECT's PROPERTY property.
-This is the last VALUE stored with `(put OBJECT PROPERTY VALUE)'.
-If there is no such property, return optional third arg DEFAULT
-\(which defaults to `nil').  OBJECT can be a symbol, string, extent,
-face, or glyph.  See also `put', `remprop', and `object-plist'.
-*/
-       (object, property, default_))
+/* Symbol plists are directly accessible, so we need to protect against
+   invalid property list structure */
+
+static Lisp_Object
+symbol_getprop (Lisp_Object sym, Lisp_Object propname, Lisp_Object default_)
 {
-  /* Various places in emacs call Fget() and expect it not to quit,
-     so don't quit. */
-  Lisp_Object val;
-
-  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->getprop)
-    val = XRECORD_LHEADER_IMPLEMENTATION (object)->getprop (object, property);
-  else
-    signal_simple_error ("Object type has no properties", object);
-
+  Lisp_Object val = external_plist_get (&XSYMBOL (sym)->plist, propname,
+					0, ERROR_ME);
   return UNBOUNDP (val) ? default_ : val;
 }
 
+static void
+symbol_putprop (Lisp_Object sym, Lisp_Object propname, Lisp_Object value)
+{
+  external_plist_put (&XSYMBOL (sym)->plist, propname, value, 0, ERROR_ME);
+}
+
+static int
+symbol_remprop (Lisp_Object symbol, Lisp_Object propname)
+{
+  return external_remprop (&XSYMBOL (symbol)->plist, propname, 0, ERROR_ME);
+}
+
+/* We store the string's extent info as the first element of the string's
+   property list; and the string's MODIFF as the first or second element
+   of the string's property list (depending on whether the extent info
+   is present), but only if the string has been modified.  This is ugly
+   but it reduces the memory allocated for the string in the vast
+   majority of cases, where the string is never modified and has no
+   extent info. */
+
+
+static Lisp_Object *
+string_plist_ptr (struct Lisp_String *s)
+{
+  Lisp_Object *ptr = &s->plist;
+
+  if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
+    ptr = &XCDR (*ptr);
+  if (CONSP (*ptr) && INTP (XCAR (*ptr)))
+    ptr = &XCDR (*ptr);
+  return ptr;
+}
+
+static Lisp_Object
+string_getprop (struct Lisp_String *s, Lisp_Object property,
+		Lisp_Object default_)
+{
+  Lisp_Object val = external_plist_get (string_plist_ptr (s), property, 0,
+					ERROR_ME);
+  return UNBOUNDP (val) ? default_ : val;
+}
+
+static void
+string_putprop (struct Lisp_String *s, Lisp_Object property,
+		Lisp_Object value)
+{
+  external_plist_put (string_plist_ptr (s), property, value, 0, ERROR_ME);
+}
+
+static int
+string_remprop (struct Lisp_String *s, Lisp_Object property)
+{
+  return external_remprop (string_plist_ptr (s), property, 0, ERROR_ME);
+}
+
+static Lisp_Object
+string_plist (struct Lisp_String *s)
+{
+  return *string_plist_ptr (s);
+}
+
+DEFUN ("get", Fget, 2, 3, 0, /*
+Return the value of OBJECT's PROPNAME property.
+This is the last VALUE stored with `(put OBJECT PROPNAME VALUE)'.
+If there is no such property, return optional third arg DEFAULT
+\(which defaults to `nil').  OBJECT can be a symbol, face, extent,
+or string.  See also `put', `remprop', and `object-plist'.
+*/
+       (object, propname, default_))
+{
+  /* Various places in emacs call Fget() and expect it not to quit,
+     so don't quit. */
+
+  /* It's easiest to treat symbols specially because they may not
+     be an lrecord */
+  if (SYMBOLP (object))
+    return symbol_getprop (object, propname, default_);
+  else if (STRINGP (object))
+    return string_getprop (XSTRING (object), propname, default_);
+  else if (LRECORDP (object))
+    {
+      CONST struct lrecord_implementation *imp
+	= XRECORD_LHEADER_IMPLEMENTATION (object);
+      if (!imp->getprop)
+	goto noprops;
+
+      {
+	Lisp_Object val = (imp->getprop) (object, propname);
+	if (UNBOUNDP (val))
+	  val = default_;
+	return val;
+      }
+    }
+  else
+    {
+    noprops:
+      signal_simple_error ("Object type has no properties", object);
+      return Qnil;		/* Not reached */
+    }
+}
+
 DEFUN ("put", Fput, 3, 3, 0, /*
-Set OBJECT's PROPERTY to VALUE.
-It can be subsequently retrieved with `(get OBJECT PROPERTY)'.
-OBJECT can be a symbol, face, extent, or string.
+Store OBJECT's PROPNAME property with value VALUE.
+It can be retrieved with `(get OBJECT PROPNAME)'.  OBJECT can be a
+symbol, face, extent, or string.
+
 For a string, no properties currently have predefined meanings.
 For the predefined properties for extents, see `set-extent-property'.
 For the predefined properties for faces, see `set-face-property'.
+
 See also `get', `remprop', and `object-plist'.
 */
-       (object, property, value))
+       (object, propname, value))
 {
+  CHECK_SYMBOL (propname);
   CHECK_LISP_WRITEABLE (object);
 
-  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->putprop)
+  if (SYMBOLP (object))
+    symbol_putprop (object, propname, value);
+  else if (STRINGP (object))
+    string_putprop (XSTRING (object), propname, value);
+  else if (LRECORDP (object))
     {
-      if (! XRECORD_LHEADER_IMPLEMENTATION (object)->putprop
-	  (object, property, value))
-	signal_simple_error ("Can't set property on object", property);
+      CONST struct lrecord_implementation
+	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
+      if (imp->putprop)
+	{
+	  if (! (imp->putprop) (object, propname, value))
+	    signal_simple_error ("Can't set property on object", propname);
+	}
+      else
+	goto noprops;
     }
   else
-    signal_simple_error ("Object type has no settable properties", object);
+    {
+    noprops:
+      signal_simple_error ("Object type has no settable properties", object);
+    }
 
   return value;
 }
 
-DEFUN ("remprop", Fremprop, 2, 2, 0, /*
-Remove, from OBJECT's property list, PROPERTY and its corresponding value.
-OBJECT can be a symbol, string, extent, face, or glyph.  Return non-nil
-if the property list was actually modified (i.e. if PROPERTY was present
-in the property list).  See also `get', `put', and `object-plist'.
-*/
-       (object, property))
+void
+pure_put (Lisp_Object sym, Lisp_Object prop, Lisp_Object val)
 {
-  int ret = 0;
+  Fput (sym, prop, Fpurecopy (val));
+}
 
+DEFUN ("remprop", Fremprop, 2, 2, 0, /*
+Remove from OBJECT's property list the property PROPNAME and its
+value.  OBJECT can be a symbol, face, extent, or string.  Returns
+non-nil if the property list was actually changed (i.e. if PROPNAME
+was present in the property list).  See also `get', `put', and
+`object-plist'.
+*/
+       (object, propname))
+{
+  int retval = 0;
+
+  CHECK_SYMBOL (propname);
   CHECK_LISP_WRITEABLE (object);
 
-  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->remprop)
+  if (SYMBOLP (object))
+    retval = symbol_remprop (object, propname);
+  else if (STRINGP (object))
+    retval = string_remprop (XSTRING (object), propname);
+  else if (LRECORDP (object))
     {
-      ret = XRECORD_LHEADER_IMPLEMENTATION (object)->remprop (object, property);
-      if (ret == -1)
-	signal_simple_error ("Can't remove property from object", property);
+      CONST struct lrecord_implementation
+	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
+      if (imp->remprop)
+	{
+	  retval = (imp->remprop) (object, propname);
+	  if (retval == -1)
+	    signal_simple_error ("Can't remove property from object",
+				 propname);
+	}
+      else
+	goto noprops;
     }
   else
-    signal_simple_error ("Object type has no removable properties", object);
+    {
+    noprops:
+      signal_simple_error ("Object type has no removable properties", object);
+    }
 
-  return ret ? Qt : Qnil;
+  return retval ? Qt : Qnil;
 }
 
 DEFUN ("object-plist", Fobject_plist, 1, 1, 0, /*
-Return a property list of OBJECT's properties.
-For a symbol, this is equivalent to `symbol-plist'.
-OBJECT can be a symbol, string, extent, face, or glyph.
-Do not modify the returned property list directly;
-this may or may not have the desired effects.  Use `put' instead.
+Return a property list of OBJECT's props.
+For a symbol this is equivalent to `symbol-plist'.
+Do not modify the property list directly; this may or may not have
+the desired effects. (In particular, for a property with a special
+interpretation, this will probably have no effect at all.)
 */
        (object))
 {
-  if (LRECORDP (object) && XRECORD_LHEADER_IMPLEMENTATION (object)->plist)
-    return XRECORD_LHEADER_IMPLEMENTATION (object)->plist (object);
+  if (SYMBOLP (object))
+    return Fsymbol_plist (object);
+  else if (STRINGP (object))
+    return string_plist (XSTRING (object));
+  else if (LRECORDP (object))
+    {
+      CONST struct lrecord_implementation
+	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
+      if (imp->plist)
+	return (imp->plist) (object);
+      else
+	signal_simple_error ("Object type has no properties", object);
+    }
   else
     signal_simple_error ("Object type has no properties", object);
 
@@ -2668,7 +2794,7 @@ internal_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
     return 0;
   if (LRECORDP (obj1))
     {
-      const struct lrecord_implementation
+      CONST struct lrecord_implementation
 	*imp1 = XRECORD_LHEADER_IMPLEMENTATION (obj1),
 	*imp2 = XRECORD_LHEADER_IMPLEMENTATION (obj2);
 
@@ -2728,7 +2854,7 @@ Do not use it.
 
 
 DEFUN ("fillarray", Ffillarray, 2, 2, 0, /*
-Destructively modify ARRAY by replacing each element with ITEM.
+Store each element of ARRAY with ITEM.
 ARRAY is a vector, bit vector, or string.
 */
        (array, item))
@@ -2736,28 +2862,15 @@ ARRAY is a vector, bit vector, or string.
  retry:
   if (STRINGP (array))
     {
-      Lisp_String *s = XSTRING (array);
-      Bytecount old_bytecount = string_length (s);
-      Bytecount new_bytecount;
-      Bytecount item_bytecount;
-      Bufbyte item_buf[MAX_EMCHAR_LEN];
-      Bufbyte *p;
-      Bufbyte *end;
-
+      Emchar charval;
+      struct Lisp_String *s = XSTRING (array);
+      Charcount len = string_char_length (s);
+      Charcount i;
       CHECK_CHAR_COERCE_INT (item);
       CHECK_LISP_WRITEABLE (array);
-
-      item_bytecount = set_charptr_emchar (item_buf, XCHAR (item));
-      new_bytecount = item_bytecount * string_char_length (s);
-
-      resize_string (s, -1, new_bytecount - old_bytecount);
-
-      for (p = string_data (s), end = p + new_bytecount;
-	   p < end;
-	   p += item_bytecount)
-	memcpy (p, item_buf, item_bytecount);
-      *p = '\0';
-
+      charval = XCHAR (item);
+      for (i = 0; i < len; i++)
+	set_string_char (s, i, charval);
       bump_string_modiff (array);
     }
   else if (VECTORP (array))
@@ -2770,7 +2883,7 @@ ARRAY is a vector, bit vector, or string.
     }
   else if (BIT_VECTORP (array))
     {
-      Lisp_Bit_Vector *v = XBIT_VECTOR (array);
+      struct Lisp_Bit_Vector *v = XBIT_VECTOR (array);
       int len = bit_vector_length (v);
       int bit;
       CHECK_BIT (item);
@@ -2920,16 +3033,15 @@ changing the value of `foo'.
 }
 
 
-/* This is the guts of several mapping functions.
-   Apply FUNCTION to each element of SEQUENCE, one by one,
-   storing the results into elements of VALS, a C vector of Lisp_Objects.
-   LENI is the length of VALS, which should also be the length of SEQUENCE.
+/* This is the guts of all mapping functions.
+   Apply fn to each element of seq, one by one,
+   storing the results into elements of vals, a C vector of Lisp_Objects.
+   leni is the length of vals, which should also be the length of seq.
 
    If VALS is a null pointer, do not accumulate the results. */
 
 static void
-mapcar1 (size_t leni, Lisp_Object *vals,
-	 Lisp_Object function, Lisp_Object sequence)
+mapcar1 (size_t leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
 {
   Lisp_Object result;
   Lisp_Object args[2];
@@ -2942,61 +3054,21 @@ mapcar1 (size_t leni, Lisp_Object *vals,
       gcpro1.nvars = 0;
     }
 
-  args[0] = function;
+  args[0] = fn;
 
-  if (LISTP (sequence))
+  if (LISTP (seq))
     {
-      /* A devious `function' could either:
-	 - insert garbage into the list in front of us, causing XCDR to crash
-	 - amputate the list behind us using (setcdr), causing the remaining
-	   elts to lose their GCPRO status.
-
-	 if (vals != 0) we avoid this by copying the elts into the
-	 `vals' array.  By a stroke of luck, `vals' is exactly large
-	 enough to hold the elts left to be traversed as well as the
-	 results computed so far.
-
-	 if (vals == 0) we don't have any free space available and
-	 don't want to eat up any more stack with alloca().
-	 So we use EXTERNAL_LIST_LOOP_3 and GCPRO the tail. */
-
-      if (vals)
+      for (i = 0; i < leni; i++)
 	{
-	  Lisp_Object *val = vals;
-	  Lisp_Object elt;
-
-	  LIST_LOOP_2 (elt, sequence)
-	      *val++ = elt;
-
-	  gcpro1.nvars = leni;
-
-	  for (i = 0; i < leni; i++)
-	    {
-	      args[1] = vals[i];
-	      vals[i] = Ffuncall (2, args);
-	    }
-	}
-      else
-	{
-	  Lisp_Object elt, tail;
-	  struct gcpro ngcpro1;
-
-	  NGCPRO1 (tail);
-
-	  {
-	    EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
-	      {
-		args[1] = elt;
-		Ffuncall (2, args);
-	      }
-	  }
-
-	  NUNGCPRO;
+	  args[1] = XCAR (seq);
+	  seq = XCDR (seq);
+	  result = Ffuncall (2, args);
+	  if (vals) vals[gcpro1.nvars++] = result;
 	}
     }
-  else if (VECTORP (sequence))
+  else if (VECTORP (seq))
     {
-      Lisp_Object *objs = XVECTOR_DATA (sequence);
+      Lisp_Object *objs = XVECTOR_DATA (seq);
       for (i = 0; i < leni; i++)
 	{
 	  args[1] = *objs++;
@@ -3004,16 +3076,10 @@ mapcar1 (size_t leni, Lisp_Object *vals,
 	  if (vals) vals[gcpro1.nvars++] = result;
 	}
     }
-  else if (STRINGP (sequence))
+  else if (STRINGP (seq))
     {
-      /* The string data of `sequence' might be relocated during GC. */
-      Bytecount slen = XSTRING_LENGTH (sequence);
-      Bufbyte *p = alloca_array (Bufbyte, slen);
-      Bufbyte *end = p + slen;
-
-      memcpy (p, XSTRING_DATA (sequence), slen);
-
-      while (p < end)
+      Bufbyte *p = XSTRING_DATA (seq);
+      for (i = 0; i < leni; i++)
 	{
 	  args[1] = make_char (charptr_emchar (p));
 	  INC_CHARPTR (p);
@@ -3021,9 +3087,9 @@ mapcar1 (size_t leni, Lisp_Object *vals,
 	  if (vals) vals[gcpro1.nvars++] = result;
 	}
     }
-  else if (BIT_VECTORP (sequence))
+  else if (BIT_VECTORP (seq))
     {
-      Lisp_Bit_Vector *v = XBIT_VECTOR (sequence);
+      struct Lisp_Bit_Vector *v = XBIT_VECTOR (seq);
       for (i = 0; i < leni; i++)
 	{
 	  args[1] = make_int (bit_vector_bit (v, i));
@@ -3032,130 +3098,86 @@ mapcar1 (size_t leni, Lisp_Object *vals,
 	}
     }
   else
-    abort (); /* unreachable, since Flength (sequence) did not get an error */
+    abort(); /* cannot get here since Flength(seq) did not get an error */
 
   if (vals)
     UNGCPRO;
 }
 
 DEFUN ("mapconcat", Fmapconcat, 3, 3, 0, /*
-Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
-In between each pair of results, insert SEPARATOR.  Thus, using " " as
-SEPARATOR results in spaces between the values returned by FUNCTION.
-SEQUENCE may be a list, a vector, a bit vector, or a string.
+Apply FN to each element of SEQ, and concat the results as strings.
+In between each pair of results, stick in SEP.
+Thus, " " as SEP results in spaces between the values returned by FN.
 */
-       (function, sequence, separator))
+       (fn, seq, sep))
 {
-  size_t len = XINT (Flength (sequence));
+  size_t len = XINT (Flength (seq));
   Lisp_Object *args;
   int i;
+  struct gcpro gcpro1;
   int nargs = len + len - 1;
 
-  if (len == 0) return build_string ("");
+  if (nargs < 0) return build_string ("");
 
   args = alloca_array (Lisp_Object, nargs);
 
-  mapcar1 (len, args, function, sequence);
+  GCPRO1 (sep);
+  mapcar1 (len, args, fn, seq);
+  UNGCPRO;
 
   for (i = len - 1; i >= 0; i--)
     args[i + i] = args[i];
 
   for (i = 1; i < nargs; i += 2)
-    args[i] = separator;
+    args[i] = sep;
 
   return Fconcat (nargs, args);
 }
 
 DEFUN ("mapcar", Fmapcar, 2, 2, 0, /*
-Apply FUNCTION to each element of SEQUENCE; return a list of the results.
-The result is a list of the same length as SEQUENCE.
+Apply FUNCTION to each element of SEQUENCE, and make a list of the results.
+The result is a list just as long as SEQUENCE.
 SEQUENCE may be a list, a vector, a bit vector, or a string.
 */
-       (function, sequence))
+       (fn, seq))
 {
-  size_t len = XINT (Flength (sequence));
+  size_t len = XINT (Flength (seq));
   Lisp_Object *args = alloca_array (Lisp_Object, len);
 
-  mapcar1 (len, args, function, sequence);
+  mapcar1 (len, args, fn, seq);
 
   return Flist (len, args);
 }
 
 DEFUN ("mapvector", Fmapvector, 2, 2, 0, /*
-Apply FUNCTION to each element of SEQUENCE; return a vector of the results.
+Apply FUNCTION to each element of SEQUENCE, making a vector of the results.
 The result is a vector of the same length as SEQUENCE.
-SEQUENCE may be a list, a vector, a bit vector, or a string.
+SEQUENCE may be a list, a vector or a string.
 */
-       (function, sequence))
+       (fn, seq))
 {
-  size_t len = XINT (Flength (sequence));
+  size_t len = XINT (Flength (seq));
   Lisp_Object result = make_vector (len, Qnil);
   struct gcpro gcpro1;
 
   GCPRO1 (result);
-  mapcar1 (len, XVECTOR_DATA (result), function, sequence);
+  mapcar1 (len, XVECTOR_DATA (result), fn, seq);
   UNGCPRO;
 
   return result;
 }
 
-DEFUN ("mapc-internal", Fmapc_internal, 2, 2, 0, /*
+DEFUN ("mapc", Fmapc, 2, 2, 0, /*
 Apply FUNCTION to each element of SEQUENCE.
 SEQUENCE may be a list, a vector, a bit vector, or a string.
 This function is like `mapcar' but does not accumulate the results,
 which is more efficient if you do not use the results.
-
-The difference between this and `mapc' is that `mapc' supports all
-the spiffy Common Lisp arguments.  You should normally use `mapc'.
 */
-       (function, sequence))
+       (fn, seq))
 {
-  mapcar1 (XINT (Flength (sequence)), 0, function, sequence);
+  mapcar1 (XINT (Flength (seq)), 0, fn, seq);
 
-  return sequence;
-}
-
-
-
-
-DEFUN ("replace-list", Freplace_list, 2, 2, 0, /*
-Destructively replace the list OLD with NEW.
-This is like (copy-sequence NEW) except that it reuses the
-conses in OLD as much as possible.  If OLD and NEW are the same
-length, no consing will take place.
-*/
-       (old, new))
-{
-  Lisp_Object tail, oldtail = old, prevoldtail = Qnil;
-
-  EXTERNAL_LIST_LOOP (tail, new)
-    {
-      if (!NILP (oldtail))
-	{
-	  CHECK_CONS (oldtail);
-	  XCAR (oldtail) = XCAR (tail);
-	}
-      else if (!NILP (prevoldtail))
-	{
-	  XCDR (prevoldtail) = Fcons (XCAR (tail), Qnil);
-	  prevoldtail = XCDR (prevoldtail);
-	}
-      else
-	old = oldtail = Fcons (XCAR (tail), Qnil);
-
-      if (!NILP (oldtail))
-	{
-	  prevoldtail = oldtail;
-	  oldtail = XCDR (oldtail);
-	}
-    }
-
-  if (!NILP (prevoldtail))
-    XCDR (prevoldtail) = Qnil;
-  else
-    old = Qnil;
-
-  return old;
+  return seq;
 }
 
 
@@ -3230,13 +3252,10 @@ Examples:
   (featurep '(or (and xemacs 19.15) (and emacs 19.34)))
     => ; Non-nil on XEmacs 19.15 and later, or FSF Emacs 19.34 and later.
 
-  (featurep '(and xemacs 21.02))
-    => ; Non-nil on XEmacs 21.2 and later.
-
 NOTE: The advanced arguments of this function (anything other than a
 symbol) are not yet supported by FSF Emacs.  If you feel they are useful
 for supporting multiple Emacs variants, lobby Richard Stallman at
-<bug-gnu-emacs@gnu.org>.
+<bug-gnu-emacs@prep.ai.mit.edu>.
 */
        (fexp))
 {
@@ -3363,12 +3382,9 @@ If FILENAME is omitted, the printname of FEATURE is used as the file name.
 }
 
 /* base64 encode/decode functions.
+   Based on code from GNU recode. */
 
-   Originally based on code from GNU recode.  Ported to FSF Emacs by
-   Lars Magne Ingebrigtsen and Karl Heuer.  Ported to XEmacs and
-   subsequently heavily hacked by Hrvoje Niksic.  */
-
-#define MIME_LINE_LENGTH 72
+#define MIME_LINE_LENGTH 76
 
 #define IS_ASCII(Character) \
   ((Character) < 128)
@@ -3424,11 +3440,11 @@ static short base64_char_to_value[128] =
    base64 characters.  */
 
 #define ADVANCE_INPUT(c, stream)				\
- ((ec = Lstream_get_emchar (stream)) == -1 ? 0 :		\
+ (ec = Lstream_get_emchar (stream),				\
+  ec == -1 ? 0 :						\
   ((ec > 255) ?							\
-   (signal_simple_error ("Non-ascii character in base64 input",	\
-			 make_char (ec)), 0)			\
-   : (c = (Bufbyte)ec), 1))
+   (error ("Non-ascii character detected in base64 input"), 0)	\
+   : (c = (Bufbyte)ec, 1)))
 
 static Bytind
 base64_encode_1 (Lstream *istream, Bufbyte *to, int line_break)
@@ -3488,90 +3504,98 @@ base64_encode_1 (Lstream *istream, Bufbyte *to, int line_break)
 }
 #undef ADVANCE_INPUT
 
-/* Get next character from the stream, except that non-base64
-   characters are ignored.  This is in accordance with rfc2045.  EC
-   should be an Emchar, so that it can hold -1 as the value for EOF.  */
-#define ADVANCE_INPUT_IGNORE_NONBASE64(ec, stream, streampos) do {	\
-  ec = Lstream_get_emchar (stream);					\
-  ++streampos;								\
-  /* IS_BASE64 may not be called with negative arguments so check for	\
-     EOF first. */							\
-  if (ec < 0 || IS_BASE64 (ec) || ec == '=')				\
-    break;								\
-} while (1)
+#define ADVANCE_INPUT(c, stream)		\
+ (ec = Lstream_get_emchar (stream),		\
+  ec == -1 ? 0 : (c = (Bufbyte)ec, 1))
 
-#define STORE_BYTE(pos, val, ccnt) do {					\
+#define STORE_BYTE(pos, val) do {					\
   pos += set_charptr_emchar (pos, (Emchar)((unsigned char)(val)));	\
-  ++ccnt;								\
+  ++*ccptr;								\
 } while (0)
 
 static Bytind
 base64_decode_1 (Lstream *istream, Bufbyte *to, Charcount *ccptr)
 {
-  Charcount ccnt = 0;
+  Emchar ec;
   Bufbyte *e = to;
-  EMACS_INT streampos = 0;
+  unsigned long value;
 
+  *ccptr = 0;
   while (1)
     {
-      Emchar ec;
-      unsigned long value;
+      Bufbyte c;
+
+      if (!ADVANCE_INPUT (c, istream))
+	break;
+
+      /* Accept wrapping lines.  */
+      if (c == '\r')
+	{
+	  if (!ADVANCE_INPUT (c, istream)
+	      || c != '\n')
+	    return -1;
+	}
+      if (c == '\n')
+	{
+	  if (!ADVANCE_INPUT (c, istream))
+	    break;
+	  /* FSF checks for end of text here, but that's wrong. */
+	  /* FSF checks for correct line length here; that's also
+             wrong; some MIME encoders use different line lengths.  */
+	}
 
       /* Process first byte of a quadruplet.  */
-      ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
-      if (ec < 0)
-	break;
-      if (ec == '=')
-	signal_simple_error ("Illegal `=' character while decoding base64",
-			     make_int (streampos));
-      value = base64_char_to_value[ec] << 18;
+      if (!IS_BASE64 (c))
+	return -1;
+      value = base64_char_to_value[c] << 18;
 
       /* Process second byte of a quadruplet.  */
-      ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
-      if (ec < 0)
-	error ("Premature EOF while decoding base64");
-      if (ec == '=')
-	signal_simple_error ("Illegal `=' character while decoding base64",
-			     make_int (streampos));
-      value |= base64_char_to_value[ec] << 12;
-      STORE_BYTE (e, value >> 16, ccnt);
+      if (!ADVANCE_INPUT (c, istream))
+	return -1;
+
+      if (!IS_BASE64 (c))
+	return -1;
+      value |= base64_char_to_value[c] << 12;
+
+      STORE_BYTE (e, value >> 16);
 
       /* Process third byte of a quadruplet.  */
-      ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
-      if (ec < 0)
-	error ("Premature EOF while decoding base64");
+      if (!ADVANCE_INPUT (c, istream))
+	return -1;
 
-      if (ec == '=')
+      if (c == '=')
 	{
-	  ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
-	  if (ec < 0)
-	    error ("Premature EOF while decoding base64");
-	  if (ec != '=')
-	    signal_simple_error ("Padding `=' expected but not found while decoding base64",
-				 make_int (streampos));
+	  if (!ADVANCE_INPUT (c, istream))
+	    return -1;
+	  if (c != '=')
+	    return -1;
 	  continue;
 	}
 
-      value |= base64_char_to_value[ec] << 6;
-      STORE_BYTE (e, 0xff & value >> 8, ccnt);
+      if (!IS_BASE64 (c))
+	return -1;
+      value |= base64_char_to_value[c] << 6;
+
+      STORE_BYTE (e, 0xff & value >> 8);
 
       /* Process fourth byte of a quadruplet.  */
-      ADVANCE_INPUT_IGNORE_NONBASE64 (ec, istream, streampos);
-      if (ec < 0)
-	error ("Premature EOF while decoding base64");
-      if (ec == '=')
+      if (!ADVANCE_INPUT (c, istream))
+	return -1;
+
+      if (c == '=')
 	continue;
 
-      value |= base64_char_to_value[ec];
-      STORE_BYTE (e, 0xff & value, ccnt);
+      if (!IS_BASE64 (c))
+	return -1;
+      value |= base64_char_to_value[c];
+
+      STORE_BYTE (e, 0xff & value);
     }
 
-  *ccptr = ccnt;
   return e - to;
 }
 #undef ADVANCE_INPUT
-#undef ADVANCE_INPUT_IGNORE_NONBASE64
-#undef STORE_BYTE
+#undef INPUT_EOF_P
 
 static Lisp_Object
 free_malloced_ptr (Lisp_Object unwind_obj)
@@ -3648,8 +3672,8 @@ into shorter lines.
   XMALLOC_UNBIND (encoded, allength, speccount);
   buffer_delete_range (buf, begv + encoded_length, zv + encoded_length, 0);
 
-  /* Simulate FSF Emacs implementation of this function: if point was
-     in the region, place it at the beginning.  */
+  /* Simulate FSF Emacs: if point was in the region, place it at the
+     beginning.  */
   if (old_pt >= begv && old_pt < zv)
     BUF_SET_PT (buf, begv);
 
@@ -3690,7 +3714,6 @@ DEFUN ("base64-decode-region", Fbase64_decode_region, 2, 2, "r", /*
 Base64-decode the region between BEG and END.
 Return the length of the decoded text.
 If the region can't be decoded, return nil and don't modify the buffer.
-Characters out of the base64 alphabet are ignored.
 */
        (beg, end))
 {
@@ -3715,6 +3738,13 @@ Characters out of the base64 alphabet are ignored.
     abort ();
   Lstream_delete (XLSTREAM (input));
 
+  if (decoded_length < 0)
+    {
+      /* The decoding wasn't possible. */
+      XMALLOC_UNBIND (decoded, length * MAX_EMCHAR_LEN, speccount);
+      return Qnil;
+    }
+
   /* Now we have decoded the region, so we insert the new contents
      and delete the old.  (Insert first in order to preserve markers.)  */
   BUF_SET_PT (buf, begv);
@@ -3723,8 +3753,8 @@ Characters out of the base64 alphabet are ignored.
   buffer_delete_range (buf, begv + cc_decoded_length,
 		       zv + cc_decoded_length, 0);
 
-  /* Simulate FSF Emacs implementation of this function: if point was
-     in the region, place it at the beginning.  */
+  /* Simulate FSF Emacs: if point was in the region, place it at the
+     beginning.  */
   if (old_pt >= begv && old_pt < zv)
     BUF_SET_PT (buf, begv);
 
@@ -3733,7 +3763,6 @@ Characters out of the base64 alphabet are ignored.
 
 DEFUN ("base64-decode-string", Fbase64_decode_string, 1, 1, 0, /*
 Base64-decode STRING and return the result.
-Characters out of the base64 alphabet are ignored.
 */
        (string))
 {
@@ -3756,6 +3785,13 @@ Characters out of the base64 alphabet are ignored.
     abort ();
   Lstream_delete (XLSTREAM (input));
 
+  if (decoded_length < 0)
+    {
+      /* The decoding wasn't possible. */
+      XMALLOC_UNBIND (decoded, length * MAX_EMCHAR_LEN, speccount);
+      return Qnil;
+    }
+
   result = make_string (decoded, decoded_length);
   XMALLOC_UNBIND (decoded, length * MAX_EMCHAR_LEN, speccount);
   return result;
@@ -3766,8 +3802,6 @@ Lisp_Object Qyes_or_no_p;
 void
 syms_of_fns (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (bit_vector);
-
   defsymbol (&Qstring_lessp, "string-lessp");
   defsymbol (&Qidentity, "identity");
   defsymbol (&Qyes_or_no_p, "yes-or-no-p");
@@ -3845,9 +3879,8 @@ syms_of_fns (void)
   DEFSUBR (Fnconc);
   DEFSUBR (Fmapcar);
   DEFSUBR (Fmapvector);
-  DEFSUBR (Fmapc_internal);
+  DEFSUBR (Fmapc);
   DEFSUBR (Fmapconcat);
-  DEFSUBR (Freplace_list);
   DEFSUBR (Fload_average);
   DEFSUBR (Ffeaturep);
   DEFSUBR (Frequire);

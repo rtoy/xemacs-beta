@@ -502,14 +502,14 @@ This deletes all bindings in PLIST for `top', `left', `width',
 Emacs uses this to avoid overriding explicit moves and resizings from
 the user during startup."
   (setq plist (canonicalize-lax-plist (copy-sequence plist)))
-  (mapcar #'(lambda (property)
-	      (if (lax-plist-member plist property)
+  (mapcar #'(lambda (propname)
+	      (if (lax-plist-member plist propname)
 		  (progn
 		    (setq frame-initial-geometry-arguments
-			  (cons property
-				(cons (lax-plist-get plist property)
+			  (cons propname
+				(cons (lax-plist-get plist propname)
 				      frame-initial-geometry-arguments)))
-		    (setq plist (lax-plist-remprop plist property)))))
+		    (setq plist (lax-plist-remprop plist propname)))))
 	  '(height width top left user-size user-position))
   plist)
 
@@ -571,8 +571,8 @@ This is equivalent to the type of the frame's device.
 Value is `tty' for a tty frame (a character-only terminal),
 `x' for a frame that is an X window,
 `ns' for a frame that is a NeXTstep window (not yet implemented),
-`mswindows' for a frame that is a MS Windows desktop window,
-`msprinter' for a frame that is a MS Windows print job,
+`mswindows' for a frame that is a Windows NT or Windows 95/97 window,
+`pc' for a frame that is a direct-write MS-DOS frame (not yet implemented),
 `stream' for a stream frame (which acts like a stdio stream), and
 `dead' for a deleted frame."
   (or frame (setq frame (selected-frame)))

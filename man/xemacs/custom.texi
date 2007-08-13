@@ -7,12 +7,12 @@
 behavior of Emacs in minor ways.
 
   All kinds of customization affect only the particular Emacs job that you
-do them in.  They are completely lost when you kill the Emacs job, and
-have no effect on other Emacs jobs you may run at the same time or
-later.  The only way an Emacs job can affect anything outside of it is
-by writing a file; in particular, the only way to make a customization
-`permanent' is to put something in your init file or other appropriate
-file to do the customization in each session.  @xref{Init File}.
+do them in.  They are completely lost when you kill the Emacs job, and have
+no effect on other Emacs jobs you may run at the same time or later.  The
+only way an Emacs job can affect anything outside of it is by writing a
+file; in particular, the only way to make a customization `permanent' is to
+put something in your @file{.emacs} file or other appropriate file to do the
+customization in each session.  @xref{Init File}.
 
 @menu
 * Minor Modes::     Each minor mode is one feature you can turn on
@@ -26,12 +26,11 @@ file to do the customization in each session.  @xref{Init File}.
                      By changing them, you can "redefine keys".
 * Syntax::          The syntax table controls how words and expressions
                      are parsed.
-* Init File::       How to write common customizations in the init file.
-* Audible Bell::    Changing how Emacs sounds the bell.
-* Faces::           Changing the fonts and colors of a region of text.
-* Frame Components::  Controlling the presence and positions of the
-                     menubar, toolbars, and gutters.
-* X Resources::     X resources controlling various aspects of the
+* Init File::       How to write common customizations in the @file{.emacs} 
+                     file.
+* Audible Bell::    Changing how Emacs sounds the bell. 
+* Faces::           Changing the fonts and colors of a region of text. 
+* X Resources::	    X resources controlling various aspects of the
                      behavior of XEmacs.
 @end menu
 
@@ -386,10 +385,10 @@ C-j},
 @cindex saving option value
   Setting the option changes its value in the current Emacs session;
 @dfn{saving} the value changes it for future sessions as well.  This
-works by writing code into your init file so as to set the option
-variable again each time you start Emacs.  @xref{Init File}.  To save
-the option, invoke @samp{[State]} and select the @samp{Save for Future
-Sessions} operation.
+works by writing code into your @file{~/.emacs} file so as to set the
+option variable again each time you start Emacs.  To save the option,
+invoke @samp{[State]} and select the @samp{Save for Future Sessions}
+operation.
 
   You can also restore the option to its standard value by invoking
 @samp{[State]} and selecting the @samp{Reset} operation.  There are
@@ -749,7 +748,7 @@ long file that contains no page markers and has no local variables list.
 list.  That is inappropriate.  Whether you use Auto Fill mode or not is
 a matter of personal taste, not a matter of the contents of particular
 files.  If you want to use Auto Fill, set up major mode hooks with your
-file file to turn it on (when appropriate) for you alone
+@file{.emacs} file to turn it on (when appropriate) for you alone
 (@pxref{Init File}).  Don't try to use a local variable list that would
 impose your taste on everyone working with the file.
 
@@ -762,16 +761,16 @@ XEmacs uses the information between them to determine what the major
 mode and variable settings should be.  For example, these are all legal:
 
 @example
-        ;;; -*- mode: emacs-lisp -*-
-        ;;; -*- mode: postscript; version-control: never -*-
-        ;;; -*- tags-file-name: "/foo/bar/TAGS" -*-
+	;;; -*- mode: emacs-lisp -*-
+	;;; -*- mode: postscript; version-control: never -*-
+	;;; -*- tags-file-name: "/foo/bar/TAGS" -*-
 @end example
 
 For historical reasons, the syntax @code{`-*- modename -*-'} is allowed
 as well; for example, you can use:
 
 @example
-        ;;; -*- emacs-lisp -*-
+	;;; -*- emacs-lisp -*-
 @end example
 
 @vindex enable-local-variables
@@ -911,7 +910,7 @@ macro with the same definition it has now.  You need not understand Lisp
 code to do this, because @code{insert-kbd-macro} writes the Lisp code for you.
 Then save the file.  You can load the file with @code{load-file}
 (@pxref{Lisp Libraries}).  If the file you save in is your initialization file
-(@pxref{Init File}), then the macro will be defined each
+@file{~/.emacs} (@pxref{Init File}), then the macro will be defined each
 time you run Emacs.
 
   If you give @code{insert-kbd-macro} a prefix argument, it creates
@@ -1094,9 +1093,9 @@ definitions for the same key.  Or you can change the current buffer's
 local map, which affects all buffers using the same major mode.
 
 @menu
-* Interactive Rebinding::      Changing Key Bindings Interactively   
-* Programmatic Rebinding::     Changing Key Bindings Programmatically
-* Key Bindings Using Strings:: Using Strings for Changing Key Bindings 
+* Interactive Rebinding::     Changing Key Bindings Interactively   
+* Programmatic Rebinding::    Changing Key Bindings Programmatically
+* Key Bindings Using Strings::Using Strings for Changing Key Bindings 
 @end menu
 
 @node Interactive Rebinding
@@ -1154,7 +1153,7 @@ redefines @kbd{C-x 4 $} to run the (fictitious) command
 @findex define-key
 @findex substitute-key-definition
   The most general way to modify a keymap is the function
-@code{define-key}, used in Lisp code (such as your init file).
+@code{define-key}, used in Lisp code (such as your @file{.emacs} file).
 @code{define-key} takes three arguments: the keymap, the key to modify
 in it, and the new definition.  @xref{Init File}, for an example.
 @code{substitute-key-definition} is used similarly; it takes three
@@ -1233,13 +1232,13 @@ Here are some examples of programmatically binding keys:
 @example
 
 ;;;  Bind @code{my-command} to @key{f1}
-(global-set-key 'f1 'my-command)                
+(global-set-key 'f1 'my-command)		
 
 ;;;  Bind @code{my-command} to @kbd{Shift-f1}
 (global-set-key '(shift f1) 'my-command)
 
 ;;; Bind @code{my-command} to @kbd{C-c Shift-f1}
-(global-set-key '[(control c) (shift f1)] 'my-command)  
+(global-set-key '[(control c) (shift f1)] 'my-command)	
 
 ;;; Bind @code{my-command} to the middle mouse button.
 (global-set-key 'button2 'my-command)
@@ -1289,14 +1288,14 @@ sequences.
 After binding a command to two key sequences with a form like:
 
 @example
-        (define-key global-map "\^X\^I" 'command-1)
+	(define-key global-map "\^X\^I" 'command-1)
 @end example
 
 it is possible to redefine only one of those sequences like so:
 
 @example
-        (define-key global-map [(control x) (control i)] 'command-2)
-        (define-key global-map [(control x) tab] 'command-3)
+	(define-key global-map [(control x) (control i)] 'command-2)
+	(define-key global-map [(control x) tab] 'command-3)
 @end example
 
 This applies only when running under a window system.  If you are
@@ -1326,14 +1325,12 @@ beginning users from executing it by accident and being confused.
 
   The direct mechanism for disabling a command is to have a non-@code{nil}
 @code{disabled} property on the Lisp symbol for the command.  These
-properties are normally set by the user's init file with
+properties are normally set by the user's @file{.emacs} file with
 Lisp expressions such as:
 
 @example
 (put 'delete-region 'disabled t)
 @end example
-
-@xref{Init File}.
 
   If the value of the @code{disabled} property is a string, that string
 is included in the message printed when the command is used:
@@ -1345,9 +1342,9 @@ is included in the message printed when the command is used:
 
 @findex disable-command
 @findex enable-command
-  You can disable a command either by editing the init file
+  You can disable a command either by editing the @file{.emacs} file
 directly or with the command @kbd{M-x disable-command}, which edits the
-init file for you.  @xref{Init File}.
+@file{.emacs} file for you.  @xref{Init File}.
 
   When you attempt to invoke a disabled command interactively in Emacs,
 a window is displayed containing the command's name, its
@@ -1356,7 +1353,7 @@ Emacs asks for input saying whether to execute the command as requested,
 enable it and execute, or cancel it.  If you decide to enable the
 command, you are asked whether to do this permanently or just for the
 current session.  Enabling permanently works by automatically editing
-your init file.  You can use @kbd{M-x enable-command} at any
+your @file{.emacs} file.  You can use @kbd{M-x enable-command} at any
 time to enable any command permanently.
 
   Whether a command is disabled is independent of what key is used to
@@ -1533,23 +1530,27 @@ character includes both the string you have to pass to
 and some English to explain that string if necessary.
 
 @node Init File
-@section The Init File
+@section The Init File, .emacs
 @cindex init file
 @cindex Emacs initialization file
 @cindex key rebinding, permanent
 @cindex rebinding keys, permanently
 
-  When you start Emacs, it normally loads either @file{.xemacs/init.el}
-or the file @file{.emacs} (whichever comes first) in your home directory.
-This file, if it exists, should contain Lisp code.  It is called your
-initialization file or @dfn{init file}.  Use the command line switch
-@samp{-q} to tell Emacs whether to load an init file (@pxref{Entering
-Emacs}).  Use the command line switch @samp{-user-init-file}
-(@pxref{Command Switches}) to tell Emacs to load a different file
-instead of @file{~/.xemacs/init.el}/@file{~/.emacs}.
+  When you start Emacs, it normally loads the file @file{.emacs} in your
+home directory.  This file, if it exists, should contain Lisp code.  It
+is called your initialization file or @dfn{init file}.  Use the command
+line switches @samp{-q} and @samp{-u} to tell Emacs whether to load an
+init file (@pxref{Entering Emacs}).
 
-When the init file is read, the variable @code{user-init-file} says
-which init file was loaded.
+@vindex init-file-user
+When the @file{.emacs} file is read, the variable @code{init-file-user}
+says which user's init file it is.  The value may be the null string or a
+string containing a user's name.  If the value is a null string, it means
+that the init file was taken from the user that originally logged in.
+
+In all cases, @code{(concat "~" init-file-user "/")} evaluates to the
+directory name of the directory where the @file{.emacs} file was looked
+for.
 
   At some sites there is a @dfn{default init file}, which is the
 library named @file{default.el}, found via the standard search path for
@@ -1559,8 +1560,10 @@ loaded whenever you start Emacs.  But your init file, if any, is loaded
 first; if it sets @code{inhibit-default-init} non-@code{nil}, then
 @file{default} is not loaded.
 
-  If you have a large amount of code in your init file, you should
-byte-compile it to @file{~/.xemacs/init.elc} or @file{~/.emacs.elc}.
+  If you have a large amount of code in your @file{.emacs} file, you
+should move it into another file named @file{@var{something}.el},
+byte-compile it (@pxref{Lisp Libraries}), and load that file from your
+@file{.emacs} file using @code{load}.
 
 @menu
 * Init Syntax::     Syntax of constants in Emacs Lisp.
@@ -1571,7 +1574,7 @@ byte-compile it to @file{~/.xemacs/init.elc} or @file{~/.emacs.elc}.
 @node Init Syntax
 @subsection Init File Syntax
 
-  The init file contains one or more Lisp function call
+  The @file{.emacs} file contains one or more Lisp function call
 expressions.  Each consists of a function name followed by
 arguments, all surrounded by parentheses.  For example, @code{(setq
 fill-column 60)} represents a call to the function @code{setq} which is
@@ -1579,7 +1582,7 @@ used to set the variable @code{fill-column} (@pxref{Filling}) to 60.
 
   The second argument to @code{setq} is an expression for the new value
 of the variable.  This can be a constant, a variable, or a function call
-expression.  In the init file, constants are used most of the time.
+expression.  In @file{.emacs}, constants are used most of the time.
 They can be:
 
 @table @asis
@@ -1813,16 +1816,16 @@ the library @file{term/aaa}.  The code in the library can use
 
 @vindex term-file-prefix
   The library's name is constructed by concatenating the value of the
-variable @code{term-file-prefix} and the terminal type.  Your init
+variable @code{term-file-prefix} and the terminal type.  Your @file{.emacs}
 file can prevent the loading of the terminal-specific library by setting
-@code{term-file-prefix} to @code{nil}.  @xref{Init File}.
+@code{term-file-prefix} to @code{nil}.
 
 @vindex term-setup-hook
   The value of the variable @code{term-setup-hook}, if not @code{nil}, is
 called as a function of no arguments at the end of Emacs initialization,
-after both your init file and any terminal-specific library have been
-read.  @xref{Init File}.  You can set the value in the init file to
-override part of any of the terminal-specific libraries and to define
+after both your @file{.emacs} file and any terminal-specific library have
+been read.  You can set the value in the @file{.emacs} file to override
+part of any of the terminal-specific libraries and to define
 initializations for terminals that do not have a library.@refill
 
 @node Audible Bell
@@ -1920,16 +1923,16 @@ The Emacs command loop catches an error
 @item undefined-key
 You type a key that is undefined
 
-@item undefined-click
+@item undefined-click	
 You use an undefined mouse-click combination
 
-@item no-completion
+@item no-completion	
 Completion was not possible
 
-@item y-or-n-p
+@item y-or-n-p		
 You type something other than the required @code{y} or @code{n}
 
-@item yes-or-no-p       
+@item yes-or-no-p  	
 You type something other than @code{yes} or @code{no}
 @end table
 
@@ -2054,16 +2057,6 @@ to make underlining an attribute of the face or not. If the optional
 @var{frame} argument is provided, the face is changed only in that
 frame; otherwise, it is changed in all frames.
 
-@node Frame Components
-@section Frame Components
-
-You can control the presence and position of most frame components, such
-as the menubar, toolbars, and gutters.
-
-This section is not written yet.  Try the Lisp Reference Manual:
-@ref{Menubar,,,lispref,}, @ref{Toolbar Intro,,,lispref,}, and
-@ref{Gutter Intro,,,lispref,}.
-
 @node X Resources
 @section X Resources
 @cindex X resources
@@ -2078,7 +2071,7 @@ run both variants.
 Starting with XEmacs 21, XEmacs uses the class @samp{XEmacs} if it finds
 any XEmacs resources in the resource database when the X connection is
 initialized.  Otherwise, it will use the class @samp{Emacs} for
-backwards compatibility.  The variable @var{x-emacs-application-class}
+backwards compatability.  The variable @var{x-emacs-application-class}
 may be consulted to determine the application class being used.
 
 The examples in this section assume the application class is @samp{Emacs}.
@@ -2110,11 +2103,11 @@ Emacs*FRAME-NAME.parameter: value
 
 @menu
 * Geometry Resources::     Controlling the size and position of frames.
-* Iconic Resources::       Controlling whether frames come up iconic.
-* Resource List::          List of resources settable on a frame or device.
-* Face Resources::         Controlling faces using resources.
-* Widgets::                The widget hierarchy for XEmacs.
-* Menubar Resources::      Specifying resources for the menubar.
+* Iconic Resources::	   Controlling whether frames come up iconic.
+* Resource List::	   List of resources settable on a frame or device.
+* Face Resources::	   Controlling faces using resources.
+* Widgets::		   The widget hierarchy for XEmacs.
+* Menubar Resources::	   Specifying resources for the menubar.
 @end menu
 
 @node Geometry Resources
@@ -2371,8 +2364,8 @@ The font of this face.
 The foreground and background colors of this face.
 
 @item @code{attributeBackgroundPixmap} (class @code{AttributeBackgroundPixmap}): file-name
-The name of an @sc{xbm} file (or @sc{xpm} file, if your version of Emacs
-supports @sc{xpm}), to use as a background stipple.
+The name of an @sc{XBM} file (or @sc{XPM} file, if your version of Emacs
+supports @sc{XPM}), to use as a background stipple.
 
 @item @code{attributeUnderline} (class @code{AttributeUnderline}): boolean
 Whether text in this face should be underlined.
@@ -2489,7 +2482,7 @@ XEmacs executable (usually @samp{xemacs}), and
 @subsection Menubar Resources
 
 As the menubar is implemented as a widget which is not a part of XEmacs
-proper, it does not use the face mechanism for specifying fonts and
+proper, it does not use the fac" mechanism for specifying fonts and
 colors: It uses whatever resources are appropriate to the type of widget
 which is used to implement it.
 

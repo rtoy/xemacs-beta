@@ -1,13 +1,8 @@
-#include <config.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include "gifrlib.h"
-#include "sysfile.h"
 
 /******************************************************************************
 * Set up the GifFileType structure for use.  This must be called first in any *

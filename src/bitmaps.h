@@ -22,8 +22,8 @@ Boston, MA 02111-1307, USA.  */
    JWZ (?): 1992?.
  */
 
-#ifndef INCLUDED_bitmaps_h_
-#define INCLUDED_bitmaps_h_
+#ifndef _XEMACS_BITMAPS_H_
+#define _XEMACS_BITMAPS_H_
 
 #if 0
 /* A gnu, like on the back of the emacs manual, for icons. */
@@ -164,4 +164,4 @@ static unsigned char default1_stipple_bits[] = {
    0x00, 0x00, 0x22, 0x22, 0x22, 0x22, 0x00, 0x00};
 #endif
 
-#endif /* INCLUDED_bitmaps_h_ */
+#endif /* _XEMACS_BITMAPS_H_ */

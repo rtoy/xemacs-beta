@@ -2,7 +2,7 @@
 
 ;;; Copyright (c) 1991, 1994 Free Software Foundation, Inc.
 
-;; Author: Jamie Zawinski <jwz@jwz.org>
+;; Author: Jamie Zawinski <jwz@netscape.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
 ;; Keywords: internal
 
@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
+;; along with XEmacs; see the file COPYING.  If not, write to the 
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -32,7 +32,7 @@
 ;; You can, however, make a faster pig."
 ;;
 ;; Or, to put it another way, the emacs byte compiler is a VW Bug.  This code
-;; makes it be a VW Bug with fuel injection and a turbocharger...  You're
+;; makes it be a VW Bug with fuel injection and a turbocharger...  You're 
 ;; still not going to make it go faster than 70 mph, but it might be easier
 ;; to get it there.
 ;;
@@ -64,17 +64,17 @@
 ;; Simple defsubsts often produce forms like
 ;;    (let ((v1 (f1)) (v2 (f2)) ...)
 ;;       (FN v1 v2 ...))
-;; It would be nice if we could optimize this to
+;; It would be nice if we could optimize this to 
 ;;    (FN (f1) (f2) ...)
 ;; but we can't unless FN is dynamically-safe (it might be dynamically
 ;; referring to the bindings that the lambda arglist established.)
 ;; One of the uncountable lossages introduced by dynamic scope...
 ;;
-;; Maybe there should be a control-structure that says "turn on
+;; Maybe there should be a control-structure that says "turn on 
 ;; fast-and-loose type-assumptive optimizations here."  Then when
 ;; we see a form like (car foo) we can from then on assume that
 ;; the variable foo is of type cons, and optimize based on that.
-;; But, this won't win much because of (you guessed it) dynamic
+;; But, this won't win much because of (you guessed it) dynamic 
 ;; scope.  Anything down the stack could change the value.
 ;; (Another reason it doesn't work is that it is perfectly valid
 ;; to call car with a null argument.)  A better approach might
@@ -109,7 +109,7 @@
 ;;
 ;; However, if there was even a single let-binding around the COND,
 ;; it could not be byte-compiled, because there would be an "unbind"
-;; byte-op between the final "call" and "return."  Adding a
+;; byte-op between the final "call" and "return."  Adding a 
 ;; Bunbind_all byteop would fix this.
 ;;
 ;;   (defun foo (x y z) ... (foo a b c))
@@ -131,8 +131,8 @@
 ;;
 ;; Wouldn't it be nice if Emacs Lisp had lexical scope.
 ;;
-;; Idea: the form (lexical-scope) in a file means that the file may be
-;; compiled lexically.  This proclamation is file-local.  Then, within
+;; Idea: the form (lexical-scope) in a file means that the file may be 
+;; compiled lexically.  This proclamation is file-local.  Then, within 
 ;; that file, "let" would establish lexical bindings, and "let-dynamic"
 ;; would do things the old way.  (Or we could use CL "declare" forms.)
 ;; We'd have to notice defvars and defconsts, since those variables should
@@ -142,17 +142,17 @@
 ;; in the file being compiled (doing a boundp check isn't good enough.)
 ;; Fdefvar() would have to be modified to add something to the plist.
 ;;
-;; A major disadvantage of this scheme is that the interpreter and compiler
-;; would have different semantics for files compiled with (dynamic-scope).
+;; A major disadvantage of this scheme is that the interpreter and compiler 
+;; would have different semantics for files compiled with (dynamic-scope).  
 ;; Since this would be a file-local optimization, there would be no way to
-;; modify the interpreter to obey this (unless the loader was hacked
+;; modify the interpreter to obey this (unless the loader was hacked 
 ;; in some grody way, but that's a really bad idea.)
 ;;
 ;; HA!  RMS removed the following paragraph from his version of
 ;; byte-optimize.el.
 ;;
 ;; Really the Right Thing is to make lexical scope the default across
-;; the board, in the interpreter and compiler, and just FIX all of
+;; the board, in the interpreter and compiler, and just FIX all of 
 ;; the code that relies on dynamic scope of non-defvarred variables.
 
 ;; Other things to consider:
@@ -166,7 +166,7 @@
 ;; error free also they may act as true-constants.
 
 ;;(disassemble #'(lambda (x) (and (point) (foo))))
-;; When
+;; When 
 ;;   - all but one arguments to a function are constant
 ;;   - the non-constant argument is an if-expression (cond-expression?)
 ;; then the outer function can be distributed.  If the guarding
@@ -295,7 +295,7 @@
 	  (cons fn (cdr form)))))))
 
 ;;; ((lambda ...) ...)
-;;;
+;;; 
 (defun byte-compile-unfold-lambda (form &optional name)
   (or name (setq name "anonymous lambda"))
   (let ((lambda (car form))
@@ -350,7 +350,7 @@
 		(byte-compile-warn
 		 "attempt to open-code %s with too many arguments" name))
 	    form)
-	(let ((newform
+	(let ((newform 
 	       (if bindings
 		   (cons 'let (cons (nreverse bindings) body))
 		 (cons 'progn body))))
@@ -435,28 +435,28 @@
 	     (cons (byte-optimize-form (nth 1 form) t)
 	       (cons (byte-optimize-form (nth 2 form) for-effect)
 		     (byte-optimize-body (cdr (cdr (cdr form))) t)))))
-
+	  
 	  ((memq fn '(save-excursion save-restriction save-current-buffer))
 	   ;; those subrs which have an implicit progn; it's not quite good
 	   ;; enough to treat these like normal function calls.
 	   ;; This can turn (save-excursion ...) into (save-excursion) which
 	   ;; will be optimized away in the lap-optimize pass.
 	   (cons fn (byte-optimize-body (cdr form) for-effect)))
-
+	  
 	  ((eq fn 'with-output-to-temp-buffer)
 	   ;; this is just like the above, except for the first argument.
 	   (cons fn
 	     (cons
 	      (byte-optimize-form (nth 1 form) nil)
 	      (byte-optimize-body (cdr (cdr form)) for-effect))))
-
+	  
 	  ((eq fn 'if)
 	   (cons fn
 	     (cons (byte-optimize-form (nth 1 form) nil)
 	       (cons
 		(byte-optimize-form (nth 2 form) for-effect)
 		(byte-optimize-body (nthcdr 3 form) for-effect)))))
-
+	  
 	  ((memq fn '(and or))  ; remember, and/or are control structures.
 	   ;; take forms off the back until we can't any more.
 	   ;; In the future it could conceivably be a problem that the
@@ -473,10 +473,6 @@
 		     (byte-compile-log
 		      "  all subforms of %s called for effect; deleted" form))
 		 (and backwards
-                      ;; Now optimize the rest of the forms. We need the return
-                      ;; values. We already did the car.
-                      (setcdr backwards
-                              (mapcar 'byte-optimize-form (cdr backwards)))
 		      (cons fn (nreverse backwards))))
 	     (cons fn (mapcar 'byte-optimize-form (cdr form)))))
 
@@ -484,7 +480,7 @@
 	   (byte-compile-warn "misplaced interactive spec: %s"
 			      (prin1-to-string form))
 	   nil)
-
+	  
 	  ((memq fn '(defun defmacro function
 		      condition-case save-window-excursion))
 	   ;; These forms are compiled as constants or by breaking out
@@ -500,7 +496,7 @@
 	   (cons fn
 		 (cons (byte-optimize-form (nth 1 form) for-effect)
 		       (cdr (cdr form)))))
-
+	   
 	  ((eq fn 'catch)
 	   ;; the body of a catch is compiled (and thus optimized) as a
 	   ;; top-level form, so don't do it here.  The tag is never
@@ -518,7 +514,7 @@
 		    (setq form (macroexpand form
 					    byte-compile-macro-environment))))
 	   (byte-optimize-form form for-effect))
-
+	  
 	  ((not (symbolp fn))
 	   (or (eq 'mocklisp (car-safe fn)) ; ha!
 	       (byte-compile-warn "%s is a malformed function"
@@ -536,7 +532,7 @@
 	   ;; appending a nil here might not be necessary, but it can't hurt.
 	   (byte-optimize-form
 	    (cons 'progn (append (cdr form) '(nil))) t))
-
+	  
 	  (t
 	   ;; Otherwise, no args can be considered to be for-effect,
 	   ;; even if the called function is for-effect, because we
@@ -606,7 +602,7 @@
 	 ((keywordp ,form))))
 
 ;; If the function is being called with constant numeric args,
-;; evaluate as much as possible at compile-time.  This optimizer
+;; evaluate as much as possible at compile-time.  This optimizer 
 ;; assumes that the function is associative, like + or *.
 (defun byte-optimize-associative-math (form)
   (let ((args nil)
@@ -703,37 +699,37 @@
   (setq form (byte-optimize-delay-constants-math form 1 '+))
   (if (memq 0 form) (setq form (delq 0 (copy-sequence form))))
   ;;(setq form (byte-optimize-associative-two-args-math form))
+  (cond ((null (cdr form))
+	 (condition-case ()
+	     (eval form)
+	   (error form)))
 
-  (case (length (cdr form))
-    ((0)				; (+)
-     (condition-case ()
-	 (eval form)
-       (error form)))
+	;; `add1' and `sub1' are a marginally fewer instructions
+	;; than `plus' and `minus', so use them when possible.
+	((and (null (nthcdr 3 form))
+	      (eq (nth 2 form) 1))
+	 (list '1+ (nth 1 form)))	; (+ x 1)  -->  (1+ x)
+	((and (null (nthcdr 3 form))
+	      (eq (nth 1 form) 1))
+	 (list '1+ (nth 2 form)))	; (+ 1 x)  -->  (1+ x)
+	((and (null (nthcdr 3 form))
+	      (eq (nth 2 form) -1))
+	 (list '1- (nth 1 form)))	; (+ x -1)  -->  (1- x)
+	((and (null (nthcdr 3 form))
+	      (eq (nth 1 form) -1))
+	 (list '1- (nth 2 form)))	; (+ -1 x)  -->  (1- x)
 
-    ;; It is not safe to delete the function entirely
-    ;; (actually, it would be safe if we knew the sole arg
-    ;; is not a marker).
-    ;; ((1)
-    ;;  (nth 1 form))
-
-    ((2)				; (+ x y)
-     (byte-optimize-predicate
-      (cond
-       ;; `add1' and `sub1' are a marginally fewer instructions
-       ;; than `plus' and `minus', so use them when possible.
-       ((eq (nth 1 form)  1) `(1+ ,(nth 2 form))) ; (+ 1 x)   -->  (1+ x)
-       ((eq (nth 2 form)  1) `(1+ ,(nth 1 form))) ; (+ x 1)   -->  (1+ x)
-       ((eq (nth 1 form) -1) `(1- ,(nth 2 form))) ; (+ -1 x)  -->  (1- x)
-       ((eq (nth 2 form) -1) `(1- ,(nth 1 form))) ; (+ x -1)  -->  (1- x)
-       (t form))))
-
-    (t (byte-optimize-predicate form))))
+;;; It is not safe to delete the function entirely
+;;; (actually, it would be safe if we know the sole arg
+;;; is not a marker).
+;;	((null (cdr (cdr form))) (nth 1 form))
+	(t form)))
 
 (defun byte-optimize-minus (form)
   ;; Put constants at the end, except the last constant.
   (setq form (byte-optimize-delay-constants-math form 2 '+))
-  ;; Now only first and last element can be an integer.
-  (let ((last (last (nthcdr 3 form))))
+  ;; Now only first and last element can be a number.
+  (let ((last (car (reverse (nthcdr 3 form)))))
     (cond ((eq 0 last)
 	   ;; (- x y ... 0)  --> (- x y ...)
 	   (setq form (copy-sequence form))
@@ -743,55 +739,57 @@
 		(numberp last))
 	   (setq form (nconc (list '- (- (nth 1 form) last) (nth 2 form))
 			     (delq last (copy-sequence (nthcdr 3 form))))))))
+  (setq form
+;;; It is not safe to delete the function entirely
+;;; (actually, it would be safe if we know the sole arg
+;;; is not a marker).
+;;;  (if (eq (nth 2 form) 0)
+;;;      (nth 1 form)			; (- x 0)  -->  x
+    (byte-optimize-predicate
+     (if (and (null (cdr (cdr (cdr form))))
+	      (eq (nth 1 form) 0))	; (- 0 x)  -->  (- x)
+	 (cons (car form) (cdr (cdr form)))
+       form))
+;;;    )
+    )
 
-  (case (length (cdr form))
-    ((0)				; (-)
-     (condition-case ()
-	 (eval form)
-       (error form)))
-
-    ;; It is not safe to delete the function entirely
-    ;; (actually, it would be safe if we knew the sole arg
-    ;; is not a marker).
-    ;; ((1)
-    ;;  (nth 1 form)
-
-    ((2)				; (+ x y)
-     (byte-optimize-predicate
-      (cond
-       ;; `add1' and `sub1' are a marginally fewer instructions than `plus'
-       ;; and `minus', so use them when possible.
-       ((eq (nth 2 form)  1) `(1- ,(nth 1 form))) ; (- x 1)  --> (1- x)
-       ((eq (nth 2 form) -1) `(1+ ,(nth 1 form))) ; (- x -1) --> (1+ x)
-       ((eq (nth 1 form)  0) `(-  ,(nth 2 form))) ; (- 0 x)  --> (- x)
-       (t form))))
-
-    (t (byte-optimize-predicate form))))
+  ;; `add1' and `sub1' are a marginally fewer instructions than `plus'
+  ;; and `minus', so use them when possible.
+  (cond ((and (null (nthcdr 3 form))
+	      (eq (nth 2 form) 1))
+	 (list '1- (nth 1 form)))	; (- x 1)  -->  (1- x)
+	((and (null (nthcdr 3 form))
+	      (eq (nth 2 form) -1))
+	 (list '1+ (nth 1 form)))	; (- x -1)  -->  (1+ x)
+	(t
+	 form))
+  )
 
 (defun byte-optimize-multiply (form)
   (setq form (byte-optimize-delay-constants-math form 1 '*))
-  ;; If there is a constant integer in FORM, it is now the last element.
+  ;; If there is a constant in FORM, it is now the last element.
   (cond ((null (cdr form)) 1)
 ;;; It is not safe to delete the function entirely
 ;;; (actually, it would be safe if we know the sole arg
 ;;; is not a marker or if it appears in other arithmetic).
 ;;;	((null (cdr (cdr form))) (nth 1 form))
-	((let ((last (last form)))
-	   (byte-optimize-predicate
-	    (cond ((eq 0 last)  (cons 'progn (cdr form)))
-		  ((eq 1 last)  (delq 1 (copy-sequence form)))
-		  ((eq -1 last) (list '- (delq -1 (copy-sequence form))))
-		  ((and (eq 2 last)
-			(memq t (mapcar 'symbolp (cdr form))))
-		   (prog1 (setq form (delq 2 (copy-sequence form)))
-		     (while (not (symbolp (car (setq form (cdr form))))))
-		     (setcar form (list '+ (car form) (car form)))))
-		  (form)))))))
+	((let ((last (car (reverse form))))
+	   (cond ((eq 0 last)  (cons 'progn (cdr form)))
+		 ((eq 1 last)  (delq 1 (copy-sequence form)))
+		 ((eq -1 last) (list '- (delq -1 (copy-sequence form))))
+		 ((and (eq 2 last)
+		       (memq t (mapcar 'symbolp (cdr form))))
+		  (prog1 (setq form (delq 2 (copy-sequence form)))
+		    (while (not (symbolp (car (setq form (cdr form))))))
+		    (setcar form (list '+ (car form) (car form)))))
+		 (form))))))
+
+(defsubst byte-compile-butlast (form)
+  (nreverse (cdr (reverse form))))
 
 (defun byte-optimize-divide (form)
   (setq form (byte-optimize-delay-constants-math form 2 '*))
-  ;; If there is a constant integer in FORM, it is now the last element.
-  (let ((last (last (cdr (cdr form)))))
+  (let ((last (car (reverse (cdr (cdr form))))))
     (if (numberp last)
 	(cond ((= (length form) 3)
 	       (if (and (numberp (nth 1 form))
@@ -801,22 +799,22 @@
 			  (error nil)))
 		   (setq form (list 'progn (/ (nth 1 form) last)))))
 	      ((= last 1)
-	       (setq form (butlast form)))
+	       (setq form (byte-compile-butlast form)))
 	      ((numberp (nth 1 form))
 	       (setq form (cons (car form)
 				(cons (/ (nth 1 form) last)
-				      (butlast (cdr (cdr form)))))
+				      (byte-compile-butlast (cdr (cdr form)))))
 		     last nil))))
-    (cond
+    (cond 
 ;;;	  ((null (cdr (cdr form)))
 ;;;	   (nth 1 form))
-     ((eq (nth 1 form) 0)
-      (append '(progn) (cdr (cdr form)) '(0)))
-     ((eq last -1)
-      (list '- (if (nthcdr 3 form)
-		   (butlast form)
-		 (nth 1 form))))
-     (form))))
+	  ((eq (nth 1 form) 0)
+	   (append '(progn) (cdr (cdr form)) '(0)))
+	  ((eq last -1)
+	   (list '- (if (nthcdr 3 form)
+			(byte-compile-butlast form)
+		      (nth 1 form))))
+	  (form))))
 
 (defun byte-optimize-logmumble (form)
   (setq form (byte-optimize-delay-constants-math form 1 (car form)))
@@ -892,7 +890,6 @@
 (put 'stringp 'byte-optimizer 'byte-optimize-predicate)
 (put 'string< 'byte-optimizer 'byte-optimize-predicate)
 (put 'string-lessp 'byte-optimizer 'byte-optimize-predicate)
-(put 'length 'byte-optimizer 'byte-optimize-predicate)
 
 (put 'logand 'byte-optimizer 'byte-optimize-logmumble)
 (put 'logior 'byte-optimizer 'byte-optimize-logmumble)
@@ -905,7 +902,7 @@
 (put 'cdr-safe 'byte-optimizer 'byte-optimize-predicate)
 
 
-;; I'm not convinced that this is necessary.  Doesn't the optimizer loop
+;; I'm not convinced that this is necessary.  Doesn't the optimizer loop 
 ;; take care of this? - Jamie
 ;; I think this may some times be necessary to reduce eg. (quote 5) to 5,
 ;; so arithmetic optimizers recognize the numeric constant.  - Hallvard
@@ -1036,12 +1033,6 @@
 (put 'if    'byte-optimizer 'byte-optimize-if)
 (put 'while 'byte-optimizer 'byte-optimize-while)
 
-;; Remove any reason for avoiding `char-before'.
-(defun byte-optimize-char-before (form)
-  `(char-after (1- ,(or (nth 1 form) '(point))) ,@(cdr (cdr form))))
-
-(put 'char-before 'byte-optimizer 'byte-optimize-char-before)
-
 ;; byte-compile-negation-optimizer lives in bytecomp.el
 ;(put '/= 'byte-optimizer 'byte-compile-negation-optimizer)
 (put 'atom 'byte-optimizer 'byte-compile-negation-optimizer)
@@ -1112,7 +1103,7 @@
 	(setq form (list 'cdr form)))
       form)))
 
-;;; enumerating those functions which need not be called if the returned
+;;; enumerating those functions which need not be called if the returned 
 ;;; value is not used.  That is, something like
 ;;;    (progn (list (something-with-side-effects) (yow))
 ;;;           (foo))
@@ -1150,7 +1141,7 @@
 	 length log log10 logand logb logior lognot logxor lsh
 	 marker-buffer max member memq min mod
 	 next-window nth nthcdr number-to-string
-	 parse-colon-path plist-get previous-window
+	 parse-colon-path previous-window
 	 radians-to-degrees rassq regexp-quote reverse round
 	 sin sqrt string< string= string-equal string-lessp string-to-char
 	 string-to-int string-to-number substring symbol-plist
@@ -1164,7 +1155,7 @@
 	 abs expt signum last butlast ldiff
 	 pairlis gcd lcm
 	 isqrt floor* ceiling* truncate* round* mod* rem* subseq
-	 list-length getf
+	 list-length get* getf
 	 ))
       (side-effect-and-error-free-fns
        '(arrayp atom
@@ -1390,7 +1381,7 @@
     byte-current-buffer byte-interactive-p))
 
 (defconst byte-compile-side-effect-free-ops
-  (nconc
+  (nconc 
    '(byte-varref byte-nth byte-memq byte-car byte-cdr byte-length byte-aref
      byte-symbol-value byte-get byte-concat2 byte-concat3 byte-sub1 byte-add1
      byte-eqlsign byte-gtr byte-lss byte-leq byte-geq byte-diff byte-negate
@@ -1422,7 +1413,7 @@
 ;;;	varbind pop-up-windows
 ;;;	not
 ;;;
-;;; we break the program, because it will appear that pop-up-windows and
+;;; we break the program, because it will appear that pop-up-windows and 
 ;;; old-pop-ups are not EQ when really they are.  So we have to know what
 ;;; the BOOL variables are, and not perform this optimization on them.
 ;;;
@@ -1602,7 +1593,7 @@
 	      ;; goto-X-if-non-nil goto-Y X:  -->  goto-Y-if-nil     X:
 	      ;;
 	      ;; it is wrong to do the same thing for the -else-pop variants.
-	      ;;
+	      ;; 
 	      ((and (or (eq 'byte-goto-if-nil (car lap0))
 			(eq 'byte-goto-if-not-nil (car lap0)))	; gotoX
 		    (eq 'byte-goto (car lap1))			; gotoY
@@ -1705,7 +1696,7 @@
 				   str (concat str " %s")
 				   i (1+ i))))
 		 (if opt-p
-		     (let ((tagstr
+		     (let ((tagstr 
 			    (if (eq 'TAG (car (car tmp)))
 				(format "%d:" (car (cdr (car tmp))))
 			      (or (car tmp) ""))))
@@ -1887,7 +1878,7 @@
 				     (byte-goto-if-not-nil-else-pop .
 				      byte-goto-if-nil-else-pop))))
 			newtag)
-
+		  
 		  (nth 1 newtag)
 		  )
 		 (setcdr tmp (cons (setcdr lap0 newtag) (cdr tmp)))

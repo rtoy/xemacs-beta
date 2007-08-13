@@ -1,5 +1,5 @@
-#ifndef INCLUDED_lwlib_internal_h_
-#define INCLUDED_lwlib_internal_h_
+#ifndef LWLIB_INTERNAL_H
+#define LWLIB_INTERNAL_H
 
 #include "lwlib.h"
 
@@ -39,7 +39,7 @@ typedef Widget
 
 typedef struct _widget_creation_entry
 {
-  const char*			type;
+  CONST char*			type;
   widget_creation_function	function;
 } widget_creation_entry;
 
@@ -55,4 +55,5 @@ lw_get_widget_value_for_widget (widget_instance* instance, Widget w);
 
 widget_info *lw_get_widget_info (LWLIB_ID id);
 
-#endif /* INCLUDED_lwlib_internal_h_ */
+#endif /* LWLIB_INTERNAL_H */
+

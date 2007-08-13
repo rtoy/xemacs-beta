@@ -1,6 +1,6 @@
 ;;; mule-x-init.el --- initialization code for X Windows under MULE
 ;; Copyright (C) 1994 Free Software Foundation, Inc.
-;; Copyright (C) 1996 Ben Wing <ben@xemacs.org>
+;; Copyright (C) 1996 Ben Wing <wing@666.com>
 
 ;; Author: various
 ;; Keywords: mule X11
@@ -40,16 +40,16 @@ Traditionally, Asian characters have been displayed so that they
 occupy exactly twice the screen space of ASCII (`halfwidth')
 characters.  On many systems, e.g. Sun CDE systems, this can only be
 achieved by using a national variant roman font to display ASCII."
-  (let* ((charset-font-width
-	  (lambda (charset)
-	    (font-instance-width
-	     (face-font-instance 'default (selected-device) charset))))
+  (let ((charset-font-width
+	 (lambda (charset)
+	   (font-instance-width
+	    (face-font-instance 'default (selected-device) charset))))
 
-	 (twice-as-wide
-	  (lambda (cs1 cs2)
-	    (let ((width1 (funcall charset-font-width cs1))
-		  (width2 (funcall charset-font-width cs2)))
-	      (and width1 width2 (eq (+ width1 width1) width2))))))
+	(twice-as-wide
+	 (lambda (cs1 cs2)
+	   (let ((width1 (funcall charset-font-width cs1))
+		 (width2 (funcall charset-font-width cs2)))
+	     (and width1 width2 (eq (+ width1 width1) width2))))))
 
     (when (eq 'x (device-type))
       (condition-case nil

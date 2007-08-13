@@ -1,7 +1,7 @@
 ;;; process.el --- commands for subprocesses; split out of simple.el
 
 ;; Copyright (C) 1985-7, 1993,4, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 2000 Ben Wing.
+;; Copyright (C) 1995 Ben Wing.
 
 ;; Author: Ben Wing
 ;; Maintainer: XEmacs Development Team
@@ -26,13 +26,6 @@
 
 ;;; Synched up with: FSF 19.30.
 
-;;; Authorship:
-
-;; Created 1995 by Ben Wing during Mule work -- some commands split out
-;; of simple.el and wrappers of *-internal functions created so they could
-;; be redefined in a Mule world.
-;; Lisp definition of call-process-internal added Mar. 2000 by Ben Wing.
-
 ;;; Commentary:
 
 ;; This file is dumped with XEmacs.
@@ -40,6 +33,9 @@
 ;;; Code:
 
 
+(defvar binary-process-output)
+(defvar buffer-file-type)
+
 (defgroup processes nil
   "Process, subshell, compilation, and job control support."
   :group 'external
@@ -73,110 +69,6 @@ Wildcards and redirection are handled as usual in the shell."
   ;; but that failed to handle (...) and semicolon, etc.
   (start-process name buffer shell-file-name shell-command-switch
 		 (mapconcat #'identity args " ")))
-
-(defun call-process-internal (program &optional infile buffer display &rest args)
-  "Call PROGRAM synchronously in separate process, with coding-system specified.
-Arguments are
- (PROGRAM &optional INFILE BUFFER DISPLAY &rest ARGS).
-The program's input comes from file INFILE (nil means `/dev/null').
-Insert output in BUFFER before point; t means current buffer;
- nil for BUFFER means discard it; 0 means discard and don't wait.
-BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
-REAL-BUFFER says what to do with standard output, as above,
-while STDERR-FILE says what to do with standard error in the child.
-STDERR-FILE may be nil (discard standard error output),
-t (mix it with ordinary output), or a file name string.
-
-Fourth arg DISPLAY non-nil means redisplay buffer as output is inserted.
-Remaining arguments are strings passed as command arguments to PROGRAM.
-
-If BUFFER is 0, `call-process' returns immediately with value nil.
-Otherwise it waits for PROGRAM to terminate and returns a numeric exit status
- or a signal description string.
-If you quit, the process is killed with SIGINT, or SIGKILL if you
- quit again."
-  ;; #### remove windows-nt check when this is ready for prime time.
-  (if (or (noninteractive) (not (eq 'windows-nt system-type)))
-      (apply 'old-call-process-internal program infile buffer display args)
-    (let (proc inbuf errbuf discard)
-      (unwind-protect
-	  (progn
-	    (when infile
-	      (setq infile (expand-file-name infile))
-	      (setq inbuf (generate-new-buffer "*call-process*"))
-	      (with-current-buffer inbuf
-               ;; Make sure this works with jka-compr
-               (let ((file-name-handler-alist nil))
-                 (insert-file-contents-internal infile nil nil nil nil
-                                                'binary))))
-	    (let ((stderr (if (consp buffer) (second buffer) t)))
-	      (if (consp buffer) (setq buffer (car buffer)))
-	      (setq buffer
-		    (cond ((null buffer) nil)
-			  ((eq buffer t) (current-buffer))
-			  ;; use integerp for compatibility with existing
-			  ;; call-process rmsism.
-			  ((integerp buffer) (setq discard t) nil)
-			  (t (get-buffer-create buffer))))
-	      (when (and stderr (not (eq t stderr)))
-		(setq stderr (expand-file-name stderr))
-		(setq errbuf (generate-new-buffer "*call-process*")))
-	      (setq proc
-		    (apply 'start-process-internal "*call-process*"
-			   buffer
-			   ;#### not implemented until my new process
-			   ;changes go in.
-			   ;(if (eq t stderr) buffer (list buffer errbuf))
-			   program args))
-	      (if buffer
-		  (set-marker (process-mark proc) (point buffer) buffer))
-	      (unwind-protect
-		  (prog1
-		    (catch 'call-process-done
-		      (when (not discard)
-			(set-process-sentinel
-			 proc
-			 #'(lambda (proc status)
-			     (cond ((eq 'exit (process-status proc))
-				    (set-process-sentinel proc nil)
-				    (throw 'call-process-done
-					   (process-exit-status proc)))
-				   ((eq 'signal (process-status proc))
-				    (set-process-sentinel proc nil)
-				    (throw 'call-process-done status))))))
-		      (when inbuf
-			(process-send-region proc 1
-					     (1+ (buffer-size inbuf)) inbuf))
-		      (process-send-eof proc)
-		      (when discard
-			;; we're trying really really hard to emulate
-			;; the old call-process.
-			(if errbuf
-			    (set-process-sentinel
-			     proc
-			     `(lambda (proc status)
-				(write-region-internal
-				 1 (1+ (buffer-size))
-				 ,stderr
-				 nil 'major-rms-kludge-city nil
-				 coding-system-for-write))))
-			(setq errbuf nil)
-			(setq proc nil)
-			(throw 'call-process-done nil))
-		      (while t
-			(accept-process-output proc)
-			(if display (sit-for 0))))
-		    (when errbuf
-		      (with-current-buffer errbuf
-			(write-region-internal 1 (1+ (buffer-size)) stderr
-					       nil 'major-rms-kludge-city nil
-					       coding-system-for-write))))
-		(if proc (set-process-sentinel proc nil)))))
-	(if inbuf (kill-buffer inbuf))
-	(if errbuf (kill-buffer errbuf))
-	(condition-case nil
-	    (if (and proc (process-live-p proc)) (kill-process proc))
-	  (error nil))))))
 
 (defun call-process (program &optional infile buffer displayp &rest args)
   "Call PROGRAM synchronously in separate process.
@@ -223,10 +115,14 @@ If you quit, the process is first killed with SIGINT, then with SIGKILL if
 you quit again before the process exits."
   (let ((temp
 	 (make-temp-name
-	  (concat (file-name-as-directory (temp-directory)) "emacs"))))
+	  (concat (file-name-as-directory (temp-directory))
+		  (if (memq system-type '(ms-dos windows-nt)) "em" "emacs")))))
     (unwind-protect
 	(progn
-	  (write-region start end temp nil 'silent)
+	  (if (memq system-type '(ms-dos windows-nt))
+	      (let ((buffer-file-type binary-process-output))
+		(write-region start end temp nil 'silent))
+	    (write-region start end temp nil 'silent))
 	  (if deletep (delete-region start end))
 	  (apply #'call-process program temp buffer displayp args))
       (ignore-file-errors (delete-file temp)))))
@@ -403,7 +299,7 @@ Third arg is program file name.  It is searched for as in the shell.
 Remaining arguments are strings to give program as arguments."
   (apply 'start-process-internal name buffer program program-args))
 
-(defun open-network-stream (name buffer host service &optional protocol)
+(defun open-network-stream (name buffer host service)
   "Open a TCP connection for a service to a host.
 Returns a subprocess-object to represent the connection.
 Input and output work as for subprocesses; `delete-process' closes it.
@@ -416,44 +312,33 @@ BUFFER is the buffer (or buffer-name) to associate with the process.
  with any buffer
 Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
- specifying a port number to connect to.
-Fifth argument PROTOCOL is a network protocol.  Currently 'tcp
- (Transmission Control Protocol) and 'udp (User Datagram Protocol) are
- supported.  When omitted, 'tcp is assumed.
-
-Ouput via `process-send-string' and input via buffer or filter (see
-`set-process-filter') are stream-oriented.  That means UDP datagrams are
-not guaranteed to be sent and received in discrete packets. (But small
-datagrams around 500 bytes that are not truncated by `process-send-string'
-are usually fine.)  Note further that UDP protocol does not guard against
-lost packets."
-  (open-network-stream-internal name buffer host service protocol))
+ specifying a port number to connect to."
+  (open-network-stream-internal name buffer host service))
 
 (defun shell-quote-argument (argument)
   "Quote an argument for passing as argument to an inferior shell."
-  (if (and (eq system-type 'windows-nt)
-	   ;; #### this is a temporary hack.  a better solution needs
-	   ;; futzing with the c code.  i'll do this shortly.
-	   (let ((progname (downcase (file-name-nondirectory
-				      shell-file-name))))
-	     (or (equal progname "command.com")
-		 (equal progname "cmd.exe"))))
+  (if (eq system-type 'ms-dos)
+      ;; MS-DOS shells don't have quoting, so don't do any.
       argument
-    ;; Quote everything except POSIX filename characters.
-    ;; This should be safe enough even for really weird shells.
-    (let ((result "") (start 0) end)
-      (while (string-match "[^-0-9a-zA-Z_./]" argument start)
-	(setq end (match-beginning 0)
-	      result (concat result (substring argument start end)
-			     "\\" (substring argument end (1+ end)))
-	      start (1+ end)))
-      (concat result (substring argument start)))))
+    (if (eq system-type 'windows-nt)
+	(concat "\"" argument "\"")
+      ;; Quote everything except POSIX filename characters.
+      ;; This should be safe enough even for really weird shells.
+      (let ((result "") (start 0) end)
+	(while (string-match "[^-0-9a-zA-Z_./]" argument start)
+	  (setq end (match-beginning 0)
+		result (concat result (substring argument start end)
+			       "\\" (substring argument end (1+ end)))
+		start (1+ end)))
+	(concat result (substring argument start))))))
 
-(defun shell-command-to-string (command)
-  "Execute shell command COMMAND and return its output as a string."
+(defun exec-to-string (command)
+  "Execute COMMAND as an external process and return the output of that
+process as a string"
+  ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu>
   (with-output-to-string
     (call-process shell-file-name nil t nil shell-command-switch command)))
 
-(defalias 'exec-to-string 'shell-command-to-string)
+(defalias 'shell-command-to-string 'exec-to-string)
 
 ;;; process.el ends here

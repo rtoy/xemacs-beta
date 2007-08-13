@@ -143,7 +143,7 @@ Pressing the @key{BREAK} key.
 Release the middle mouse button, while pressing @key{CTRL} and
 @key{META}. 
 @end table
-@cindex shift modifier
+@cindex shift modifer
   Note: As you define keystrokes, you can use the @kbd{shift} key only
 as a modifier with characters that do not have a second keysym on the
 same key, such as @kbd{backspace} and @kbd{tab}.  It is an error to
@@ -163,15 +163,15 @@ sequence must make up a @dfn{prefix key sequence}.
 schematic representation of a complete key sequence is as follows:
 
 @example
-  [(modifier .. modifier keysym) ... (modifier .. modifier keysym)]
+  [(modifier .. modifer keysym) ... (modifier .. modifier keysym)]
 @end example
 
   Here are some examples of complete key sequences:
 
 @table @kbd
-@item [(control c) (control a)]
+@item [(control c) (control a)]	
 Typing @kbd{C-c} followed by @kbd{C-a}
-@item [(control c) (control 65)]
+@item [(control c) (control 65)]	
 Typing @kbd{C-c} followed by @kbd{C-a}. (Using the ASCII code
 for the character `a')@refill
 @item [(control c) (break)]
@@ -299,9 +299,9 @@ do the following:
   Create a file called @code{~/.xmodmap}.  In this file, place the lines
 
 @example
-        remove Lock = Caps_Lock
-        keysym Caps_Lock = Super_L
-        add Mod2 = Super_L
+	remove Lock = Caps_Lock
+	keysym Caps_Lock = Super_L
+	add Mod2 = Super_L
 @end example
 
 The first line says that the key that is currently called @code{Caps_Lock}

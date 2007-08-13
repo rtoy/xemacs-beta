@@ -457,7 +457,7 @@ string_width_u (XlwMenuWidget mw,
 }
 
 static void
-massage_resource_name (const char *in, char *out)
+massage_resource_name (CONST char *in, char *out)
 {
   /* Turn a random string into something suitable for using as a resource.
      For example:
@@ -479,26 +479,16 @@ massage_resource_name (const char *in, char *out)
   Boolean firstp = True;
   while (*in)
     {
-      if (*in == '%' && *(in + 1) == '_')
-	in += 2;
-      else
+      char ch = massaged_resource_char[(unsigned char) *in++];
+      if (ch)
 	{
-	  char ch;
-
-	  if (*in == '%' && *(in + 1) == '%')
-	    in++;
-	  ch = massaged_resource_char[(unsigned char) *in++];
-	  if (ch)
-	    {
-	      int int_ch = (int) (unsigned char) ch;
-	      *out++ = firstp ? tolower (int_ch) : toupper (int_ch);
-	      firstp = False;
-	      while ((ch = massaged_resource_char[(unsigned char) *in++])
-		     != '\0')
-		*out++ = ch;
-	      if (!*(in-1))		/* Overshot the NULL byte? */
-		break;
-	    }
+	  int int_ch = (int) (unsigned char) ch;
+	  *out++ = firstp ? tolower (int_ch) : toupper (int_ch);
+	  firstp = False;
+	  while ((ch = massaged_resource_char[(unsigned char) *in++]) != '\0')
+	    *out++ = ch;
+	  if (!*(in-1))		/* Overshot the NULL byte? */
+	    break;
 	}
     }
   *out = 0;
@@ -516,21 +506,23 @@ nameResource[] =
     0, XtRImmediate, 0 }
 };
 
-/* This function searches STRING for parameter inserts of the form:
-       %[padding]1
-   padding is either space (' ') or dash ('-') meaning
-   padding to the left or right of the inserted parameter.
-   In essence, all %1 strings are replaced by VALUE in the return value.
-   The caller is expected to free the return value using XtFree().
-   %% means insert one % (like printf).
-   %1 means insert VALUE.
-   %-1 means insert VALUE followed by one space. The latter is
-   not inserted if VALUE is a zero length string.
-*/
+/*
+ *    This function looks through string searching for parameter
+ *    inserts of the form:
+ *    %[padding]1
+ *    padding is space (' ') or dash ('-') characters meaning
+ *    padding to the left or right of the inserted parameter.
+ *    In essence all %1 strings are replaced by value in the return
+ *    value (which the caller is expected to free).
+ *    %% means insert one % (like printf).
+ *    %1 means insert value.
+ *    %-1 means insert value followed by one space. The latter is
+ *    not inserted if value is a zero length string.
+ */
 static char*
-parameterize_string (const char *string, const char *value)
+parameterize_string (CONST char *string, CONST char *value)
 {
-  const char *percent;
+  char *percent;
   char *result;
   unsigned int done = 0;
   unsigned int ntimes;
@@ -539,25 +531,24 @@ parameterize_string (const char *string, const char *value)
     {
       result = XtMalloc(1);
       result[0] = '\0';
-      return result;
+      return (result);
     }
 
   if (!value)
     value = "";
 
-  for (ntimes = 1, percent = string;
-       (percent = strchr (percent, '%'));
+  for (ntimes = 1, result = (char *) string; (percent = strchr(result, '%'));
        ntimes++)
-    percent++;
+    result = &percent[1];
 
   result = XtMalloc ((ntimes * strlen(value)) + strlen(string) + 4);
   result[0] = '\0';
 
-  while ((percent = strchr (string, '%')))
+  while ((percent = strchr(string, '%')))
     {
       unsigned int left_pad;
       unsigned int right_pad;
-      const char *p;
+      char *p;
 
       if (percent[1] == '%')
 	{	/* it's a real % */
@@ -1538,7 +1529,7 @@ label_button_size (XlwMenuWidget mw,
 	     2 * mw->menu.vertical_margin +
 	     2 * mw->menu.shadow_thickness);
   /* no left column decoration */
-  *toggle_width = mw->menu.horizontal_margin + mw->menu.shadow_thickness;
+  *toggle_width = mw->menu.horizontal_margin + mw->menu.shadow_thickness;;
 
   *label_width  = string_width_u (mw, resource_widget_value (mw, val));
   *bindings_width =  mw->menu.horizontal_margin + mw->menu.shadow_thickness;
@@ -1882,7 +1873,7 @@ radio_button_draw (XlwMenuWidget mw,
 
 static struct _shadow_names
 {
-  const char *      name;
+  CONST char *      name;
   shadow_type type;
 } shadow_names[] =
 {
@@ -2818,22 +2809,30 @@ make_shadow_gcs (XlwMenuWidget mw)
   xgcv.foreground = mw->menu.top_shadow_color;
   xgcv.background = mw->core.background_pixel;
 /*  xgcv.stipple = mw->menu.top_shadow_pixmap; gtb */
+#ifdef NEED_MOTIF
   if (mw->menu.top_shadow_pixmap &&
       mw->menu.top_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
      xgcv.stipple = mw->menu.top_shadow_pixmap;
   else
      xgcv.stipple = 0;
+#else
+  xgcv.stipple = mw->menu.top_shadow_pixmap;
+#endif /* NEED_MOTIF */
   pm = (xgcv.stipple ? GCStipple|GCFillStyle : 0);
   mw->menu.shadow_top_gc =
     XtGetGC((Widget)mw, GCForeground|GCBackground|pm, &xgcv);
 
   xgcv.foreground = mw->menu.bottom_shadow_color;
 /*  xgcv.stipple = mw->menu.bottom_shadow_pixmap; gtb */
-  if (mw->menu.bottom_shadow_pixmap &&
-      mw->menu.bottom_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
+#ifdef NEED_MOTIF
+  if (mw->menu.top_shadow_pixmap &&
+      mw->menu.top_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
      xgcv.stipple = mw->menu.bottom_shadow_pixmap;
   else
      xgcv.stipple = 0;
+#else
+  xgcv.stipple = mw->menu.bottom_shadow_pixmap;
+#endif /* NEED_MOTIF */
   pm = (xgcv.stipple ? GCStipple|GCFillStyle : 0);
   mw->menu.shadow_bottom_gc =
     XtGetGC ((Widget)mw, GCForeground|GCBackground|pm, &xgcv);

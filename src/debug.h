@@ -22,8 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Chuck Thompson */
 
-#ifndef INCLUDED_debug_h_
-#define INCLUDED_debug_h_
+#ifndef _XEMACS_DEBUG_H_
+#define _XEMACS_DEBUG_H_
 
 #define DEBUG_STDERR	1
 #define DEBUG_ABORT	2
@@ -53,6 +53,8 @@ struct debug_classes
   unsigned int types_of_byte_code;
 };
 
+extern Lisp_Object Qbuffers, Qdevices, Qfaces, Qframes, Qredisplay, Qwindows;
+
 extern struct debug_classes active_debug_classes;
 
 #define DASSERT(class, desired_type, action, assertion) do		\
@@ -76,4 +78,4 @@ extern struct debug_classes active_debug_classes;
 
 #endif /* !DEBUG_XEMACS */
 
-#endif /* INCLUDED_debug_h_ */
+#endif /* _XEMACS_DEBUG_H_ */

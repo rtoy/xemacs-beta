@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-#ifndef INCLUDED_systty_h_
-#define INCLUDED_systty_h_
+#ifndef _XEMACS_SYSTTY_H_
+#define _XEMACS_SYSTTY_H_
 
 #ifdef HAVE_TERMIOS
 # define HAVE_TCATTR
@@ -94,9 +94,9 @@ Boston, MA 02111-1307, USA.  */
 #  include <fcntl.h>
 # endif
 
-#elif defined (WIN32_NATIVE)
+#elif defined (DOS_NT)
 
-/*****             (3) The WIN32_NATIVE way              *****/
+/*****             (3) The MSDOS/NT way              *****/
 
 /* Nothing doing */
 
@@ -124,7 +124,7 @@ Boston, MA 02111-1307, USA.  */
 /* Generally useful to include this file: */
 
 /* But Sun OS has broken include files and doesn't want it included */
-#if !defined (WIN32_NATIVE) && !defined (SUNOS4)
+#if !defined (DOS_NT) && !defined (WIN32) && !defined (SUNOS4)
 # include <sys/ioctl.h>
 #endif
 /* UNIPLUS systems may have FIONREAD.  */
@@ -180,6 +180,10 @@ Boston, MA 02111-1307, USA.  */
 /*           inhibiting particular features              */
 /* ----------------------------------------------------- */
 
+
+#ifdef APOLLO
+#undef TIOCSTART
+#endif
 
 #if defined (XENIX) || defined (BROKEN_TIOCGETC)
 #undef TIOCGETC  /* Avoid confusing some conditionals that test this.  */
@@ -333,8 +337,8 @@ Boston, MA 02111-1307, USA.  */
    No big loss -- it just means that ^Z won't work right
    if we're run from sh. */
 #  define EMACS_SET_PROCESS_GROUP(pg)
-#elif defined(MINGW)
-#  define EMACS_SEPARATE_PROCESS_GROUP()
+#elif defined(__MINGW32__)
+#  define EMACS_SEPARATE_PROCESS_GROUP() 
 #else
 /* Under NeXTstep, a process group of 0 is not the same as specifying
    your own process ID, so we go ahead and specify it explicitly. */
@@ -354,11 +358,11 @@ Boston, MA 02111-1307, USA.  */
    emacs_tty should contain an element for each parameter struct
    that Emacs may change.
 
-   emacs_get_tty (int FD, struct emacs_tty *P) stores the parameters
+   EMACS_GET_TTY (int FD, struct emacs_tty *P) stores the parameters
    of the tty on FD in *P.  Return zero if all's well, or -1 if we ran
    into an error we couldn't deal with.
 
-   emacs_set_tty (int FD, struct emacs_tty *P, int flushp)
+   EMACS_SET_TTY (int FD, struct emacs_tty *P, int flushp)
    sets the parameters of the tty on FD according to the contents of
    *P.  If flushp is non-zero, we discard queued input to be
    written before making the change.
@@ -384,11 +388,11 @@ struct emacs_tty {
 #ifdef HAVE_TERMIO
   struct termio main;
 #else /* !HAVE_TERMIO */
-#ifdef WIN32_NATIVE
+#ifdef DOS_NT
   int main;
-#else  /* not WIN32_NATIVE */
+#else  /* not DOS_NT */
   struct sgttyb main;
-#endif /* not WIN32_NATIVE */
+#endif /* not DOS_NT */
 #endif /* !HAVE_TERMIO */
 #endif /* !HAVE_TCATTR */
 
@@ -405,9 +409,15 @@ struct emacs_tty {
 #endif /* HAVE_TCHARS */
 #endif /* HAVE_TERMIOS */
 };
+
+/* Define EMACS_GET_TTY and EMACS_SET_TTY,
+   the macros for reading and setting parts of `struct emacs_tty'.
 
-int emacs_get_tty (int fd, struct emacs_tty *settings);
-int emacs_set_tty (int fd, struct emacs_tty *settings, int flushp);
+   These got pretty unmanageable (huge macros are hard to debug), and
+   finally needed some code which couldn't be done as part of an
+   expression, so we moved them out to their own functions in sysdep.c.  */
+#define EMACS_GET_TTY(fd, p)        emacs_get_tty (fd, p)
+#define EMACS_SET_TTY(fd, p, waitp) emacs_set_tty (fd, p, waitp)
 
 
 /* --------------------------------------------------------- */
@@ -428,13 +438,13 @@ int emacs_set_tty (int fd, struct emacs_tty *settings, int flushp);
 #define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
 
 #else /* neither HAVE_TERMIO nor HAVE_TERMIOS */
-#ifdef WIN32_NATIVE
+#ifdef DOS_NT
 #define EMACS_TTY_TABS_OK(p) 0
-#else /* not WIN32_NATIVE */
+#else /* not DOS_NT */
 #define EMACS_TTY_TABS_OK(p) (((p)->main.sg_flags & XTABS) != XTABS)
-#endif /* not WIN32_NATIVE */
+#endif /* not DOS_NT */
 
 #endif /* not def HAVE_TERMIO */
 #endif /* not def HAVE_TERMIOS */
 
-#endif /* INCLUDED_systty_h_ */
+#endif /* _XEMACS_SYSTTY_H_ */

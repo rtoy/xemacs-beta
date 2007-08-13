@@ -52,7 +52,7 @@
 ;; Kyle Jones <kyle_jones@wonderworks.com>
 ;;   added "Exact match, then inexact" code
 ;;   added support for include directive.
-;; Hrvoje Niksic <hniksic@xemacs.org>
+;; Hrvoje Niksic <hniksic@srce.hr>
 ;;   various changes.
 
 
@@ -190,12 +190,9 @@ the current buffer."
       (when (file-readable-p parent-tag-file)
 	(push parent-tag-file result)))
     ;; tag-table-alist
-    (let* ((key (or buffer-file-name
-		    (concat default-directory (buffer-name))))
-	   (key (if (eq system-type 'windows-nt)
-		    (replace-in-string key "\\\\" "/")
-		  key))
-	   expression)
+    (let ((key (or buffer-file-name
+		   (concat default-directory (buffer-name))))
+	  expression)
       (dolist (item tag-table-alist)
 	(setq expression (car item))
 	;; If the car of the alist item is a string, apply it as a regexp
@@ -505,7 +502,6 @@ this buffer uses."
 			    ((string-match "\\.scm\\'" filename)
 			     'scheme-mode)
 			    (t nil)))
-      (defvar c-mode-syntax-table)
       (set-syntax-table (cond ((and (eq file-type 'c-mode)
 				    c-mode-syntax-table)
 			       c-mode-syntax-table)
@@ -602,8 +598,11 @@ Make it buffer-local in a mode hook.  The function is called with no
 	       (format "%s(default %s) " prompt default)
 	     prompt)
 	   tag-completion-table 'tag-completion-predicate nil nil
-	   'find-tag-history default))
-    tag-name))
+	   'find-tag-history))
+    (if (string-equal tag-name "")
+	;; #### - This is a really LAME way of doing it!  --Stig
+	default			;indicate exact symbol match
+      tag-name)))
 
 (defvar last-tag-data nil
   "Information for continuing a tag search.
@@ -642,7 +641,7 @@ If it returns non-nil, this file needs processing by evalling
 	  (t
 	   (setq tag-table-currently-matching-exact t)))
     ;; \_ in the tagname is used to indicate a symbol boundary.
-    (setq exact-tagname (format "\C-?\\_%s\\_\C-a\\|\\_%s\\_" tagname tagname))
+    (setq exact-tagname (concat "\\_" tagname "\\_"))
     (while (string-match "\\\\_" exact-tagname)
       (aset exact-tagname (1- (match-end 0)) ?b))
     (save-excursion
@@ -675,9 +674,7 @@ If it returns non-nil, this file needs processing by evalling
 		;; tag searches?
 		(while (re-search-forward tag-target nil t)
 		  (and (save-match-data
-			 (save-excursion
-			   (goto-char (match-beginning 0))
-			   (looking-at "[^\n\C-?]*\C-?")))
+			 (looking-at "[^\n\C-?]*\C-?"))
 		       ;; If we're looking for inexact matches, skip
 		       ;; exact matches since we've visited them
 		       ;; already.
@@ -696,7 +693,6 @@ If it returns non-nil, this file needs processing by evalling
 	       (if next "more " "")
 	       (if exact "matching" "containing")
 	       tagname))
-      (beginning-of-line)
       (search-forward "\C-?")
       (setq file (expand-file-name (file-of-tag)
 				   ;; In XEmacs, this needs to be
@@ -739,16 +735,6 @@ If it returns non-nil, this file needs processing by evalling
       (cons buf startpos))))
 
 ;;;###autoload
-(defun find-tag-at-point (tagname &optional other-window)
-  "*Find tag whose name contains TAGNAME.
-Identical to `find-tag' but does not prompt for tag when called interactively;
-instead, uses tag around or before point."
-  (interactive (if current-prefix-arg
-		   '(nil nil)
-		 (list (find-tag-default) nil)))
-  (find-tag tagname other-window))
-
-;;;###autoload
 (defun find-tag (tagname &optional other-window)
   "*Find tag whose name contains TAGNAME.
  Selects the buffer that the tag is contained in
@@ -785,7 +771,7 @@ Variables of note:
 		       '(find-tag find-tag-other-window tags-loop-continue))))
 	(push-tag-mark))
     (if other-window
-	(pop-to-buffer tag-buf t)
+	(pop-to-buffer tag-buf)
       (switch-to-buffer tag-buf))
     (widen)
     (push-mark)
@@ -801,7 +787,7 @@ Variables of note:
 
 ;;;###autoload
 (defun find-tag-other-window (tagname &optional next)
-  "*Find tag whose name contains TAGNAME, in another window.
+  "*Find tag whose name contains TAGNAME.
  Selects the buffer that the tag is contained in in another window
 and puts point at its definition.
  If TAGNAME is a null string, the expression in the buffer

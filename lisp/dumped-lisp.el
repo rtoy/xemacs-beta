@@ -32,7 +32,7 @@
 	"events"
 	"text-props"
 	"process" ;; This is bad. network-streams may not be defined.
-	(when-feature multicast "multicast") ; #+network-streams implicitly true
+	(when-feature multicast "multicast") ; #+network-streams implicitely true
 	"frame"			; move up here cause some stuff needs it here
 	"map-ynp"
 	"simple"
@@ -49,7 +49,6 @@
 ;; After fixing, eos/loaddefs-eos and loaddefs appear identical?!!
 ;; So just make loaddefs-eos go away...
 ;;(pureload (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
-	"cus-file"
 	"startup"		; For initialization of
 				;  `emacs-user-extension-dir'
 	"misc"
@@ -80,13 +79,12 @@
 	"text-mode"
 	"fill"
 	"auto-save"		; Added for 20.4
-	"movemail"              ; Added for 21.2
+
 	(when-feature windows-nt "winnt")
 	(when-feature lisp-float-type "float-sup")
 	"itimer"		; for vars auto-save-timeout and
 				; auto-gc-threshold
 	"itimer-autosave"
-	"printer"
 	(when-feature toolbar "toolbar")
 	(when-feature scrollbar "scrollbar")
 	(when-feature menubar "menubar")
@@ -96,6 +94,7 @@
 	(when-feature mule "mule-coding")
 ;; Handle I/O of files with extended characters.
 	(when-feature file-coding "code-files")
+	(when-feature mule "mule-files")
 ;; Handle process with encoding/decoding non-ascii coding-system.
 	(when-feature file-coding "code-process")
 	(when-feature mule "mule-help")
@@ -135,8 +134,7 @@
 	(when-feature mule "japanese")
 	(when-feature mule "korean")
 	(when-feature mule "misc-lang")
-	(when-feature mule "thai-xtis-chars")
-	(when-feature mule "mule/thai-xtis") ; overloaded in leim/quail
+	(when-feature mule "thai-xtis")
 	(when-feature mule "viet-chars")
 	(when-feature mule "vietnamese")
 
@@ -158,17 +156,15 @@
 ;; Moved to sunpro-load.el - the default only for Sun.
 ;;(pureload "mime-setup")
 ;;; mule-load.el ends here
-	(when-feature (and gutter window-system) "gutter")
 	(when-feature window-system "gui")
 	(when-feature window-system "mode-motion")
 	(when-feature window-system "mouse")
-	"select"
+	(when-feature window-system "select")
 	(when-feature dragdrop-api "dragdrop")
 ;; preload the X code, for faster startup.
 	(when-feature (and (not infodock)
 			   (or x mswindows) menubar) "menubar-items")
 	(when-feature (and infodock (or x mswindows) menubar) "id-menus")
-	(when-feature (and gutter window-system) "gutter-items")
 	(when-feature x "x-faces")
 	(when-feature x "x-iso8859-1")
 	(when-feature x "x-mouse")

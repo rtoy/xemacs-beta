@@ -31,7 +31,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defgroup pui nil
-  "Convenient interface to the package system."
+  "Conventient interface to the package system."
   :group 'package-tools
   :tag "Package User interface"
   :prefix "pui-")
@@ -140,12 +140,12 @@ Set this to `nil' to use the `default' face."
 (defun pui-directory-exists (dir)
   "Check to see if DIR exists in `package-get-remote'."
   (let (found)
-    (mapcar #'(lambda (item)
-		(if (and (null (car item))
-			 (string-equal (file-name-as-directory (car (cdr item)))
-				       (file-name-as-directory dir)))
-		    (setq found t)))
-	    package-get-remote)
+    (mapcar '(lambda (item)
+	       (if (and (null (car item))
+			(string-equal (file-name-as-directory (car (cdr item)))
+				      (file-name-as-directory dir)))
+		   (setq found t))
+	       ) package-get-remote)
     found
     ))
 
@@ -309,7 +309,7 @@ and whether or not it is up-to-date."
 	      (delete pkg-sym pui-deleted-packages))
       (setq pui-deleted-packages
 	    (cons pkg-sym pui-deleted-packages))
-      (setq pui-selected-packages
+      (setq pui-seleted-packages
 	    (delete pkg-sym pui-selected-packages)))
     (pui-update-package-display extent pkg-sym)
     ))
@@ -358,8 +358,11 @@ and whether or not it is up-to-date."
       (save-window-excursion
 	(with-output-to-temp-buffer tmpbuf
 	  (display-completion-list (sort
-				    (mapcar #'symbol-name pui-deleted-packages)
-				    #'string<)
+				    (mapcar '(lambda (pkg)
+					       (symbol-name pkg)
+					       )
+					    pui-deleted-packages)
+				    'string<)
 				   :activate-callback nil
 				   :help-string "Packages selected for removal:\n"
 				   :completion-string t
@@ -386,12 +389,16 @@ and whether or not it is up-to-date."
 	  ;; errors occur, which would normally be caused by display-buffer).
 	  (save-window-excursion
 	    (with-output-to-temp-buffer tmpbuf
-	      (display-completion-list
-	       (sort (mapcar #'symbol-name pui-selected-packages) #'string<)
-	       :activate-callback nil
-	       :help-string "Packages selected for installation:\n"
-	       :completion-string t
-	       ))
+	      (display-completion-list (sort
+					(mapcar '(lambda (pkg)
+						   (symbol-name pkg)
+						   )
+						pui-selected-packages)
+					'string<)
+				       :activate-callback nil
+				       :help-string "Packages selected for installation:\n"
+				       :completion-string t
+				       ))
 	    (setq tmpbuf (get-buffer-create tmpbuf))
 	    (display-buffer tmpbuf)
 	    (setq do-install (y-or-n-p "Install these packages? "))
@@ -528,7 +535,7 @@ Designed to be called interactively (from a keypress)."
     (set-buffer (event-buffer event))
     (goto-char (event-point event))
     (popup-menu pui-menu event)
-    ;; I agree with dired.el - this is seriously bogus.
+    ;; I agreee with dired.el this is seriously bogus.
     (while (popup-menu-up-p)
       (dispatch-event (next-event)))))
 
@@ -611,66 +618,67 @@ Warning: No download sites specified.  Package index may be out of date.
 "))
     (insert sep-string)
     (setq start (point))
-    (mapcar
-     #'(lambda (pkg)
-	 (let (pkg-sym info version desc
-		       b e extent current-vers disp)
-	   (setq pkg-sym (car pkg)
-		 info (package-get-info-version (cdr pkg) nil))
-	   (setq version (package-get-info-prop info 'version)
-		 desc (package-get-info-prop info 'description))
+    (mapcar '(lambda (pkg)
+	       (let (pkg-sym info version desc
+			     b e extent current-vers disp)
+		 (setq pkg-sym (car pkg)
+		       info (package-get-info-version (cdr pkg) nil))
+		 (setq version (package-get-info-prop info 'version)
+		       desc (package-get-info-prop info 'description))
 
-	   (setq disp (pui-package-symbol-char pkg-sym
-					       version))
-	   (setq b (point))
-	   (if pui-list-verbose
-	       (progn
-		 (setq current-vers (package-get-key pkg-sym :version))
-		 (cond
-		  ( (not current-vers)
-		    (setq current-vers "-----") )
-		  ( (stringp current-vers)
-		    (setq current-vers
-			  (format "%.2f"
-				  (string-to-number current-vers))) )
-		  ( (numberp current-vers)
-		    (setq current-vers (format "%.2f" current-vers)) )
-		  )
-		 (insert
-		  (format "%s %-15s %-5.2f  %-5s  %s\n"
-			  (car disp) pkg-sym 
-			  (if (stringp version)
-			      (string-to-number version)
-			    version)
-			  current-vers desc))
-		 ;; (insert
-		 ;;  (format "\t\t  %-12s  %s\n"
-		 ;;    (package-get-info-prop info 'author-version)
-		 ;;    (package-get-info-prop info 'date)))
-		 )
-	     (insert (format "%s %-15s %-5s %s\n"
-			     (car disp)
-			     pkg-sym version desc)))
-	   (save-excursion
-	     (setq e (progn
-		       (forward-line -1)
-		       (end-of-line)
-		       (point))))
-	   (setq extent (make-extent b e))
-	   (if (car (cdr disp))
-	       (set-extent-face extent (get-face (car (cdr disp))))
-	     (set-extent-face extent (get-face 'default)))
-	   (set-extent-property extent 'highlight t)
-	   (set-extent-property extent 'pui t)
-	   (set-extent-property extent 'pui-package pkg-sym)
-	   (set-extent-property extent 'pui-info info)
-	   (set-extent-property extent 'help-echo 'pui-help-echo)
-	   (set-extent-property extent 'keymap pui-package-keymap)
-	   ))
-     (sort (copy-sequence package-get-base)
-	   #'(lambda (a b)
-	       (string< (symbol-name (car a))
-			(symbol-name (car b))))))
+		 (setq disp (pui-package-symbol-char pkg-sym
+						     version))
+		 (setq b (point))
+		 (if pui-list-verbose
+		     (progn
+		       (setq current-vers (package-get-key pkg-sym :version))
+		       (cond
+			( (not current-vers)
+			  (setq current-vers "-----") )
+			( (stringp current-vers)
+			  (setq current-vers
+				(format "%.2f"
+					(string-to-number current-vers))) )
+			( (numberp current-vers)
+			  (setq current-vers (format "%.2f" current-vers)) )
+			)
+		       (insert
+			(format "%s %-15s %-5.2f  %-5s  %s\n"
+				(car disp) pkg-sym 
+				(if (stringp version)
+				    (string-to-number version)
+				  version)
+				current-vers desc))
+;;		       (insert
+;;			(format "\t\t  %-12s  %s\n"
+;;				(package-get-info-prop info 'author-version)
+;;				(package-get-info-prop info 'date)
+;;				))
+		       )
+		   (insert (format "%s %-15s %-5s %s\n"
+				   (car disp)
+				   pkg-sym version desc)))
+		 (save-excursion
+		   (setq e (progn
+			     (forward-line -1)
+			     (end-of-line)
+			     (point)))
+		   )
+		 (setq extent (make-extent b e))
+		 (if (car (cdr disp))
+		     (set-extent-face extent (get-face (car (cdr disp))))
+		   (set-extent-face extent (get-face 'default)))
+		 (set-extent-property extent 'highlight t)
+		 (set-extent-property extent 'pui t)
+		 (set-extent-property extent 'pui-package pkg-sym)
+		 (set-extent-property extent 'pui-info info)
+		 (set-extent-property extent 'help-echo 'pui-help-echo)
+		 (set-extent-property extent 'keymap pui-package-keymap)
+		 )) (sort (copy-sequence package-get-base)
+			  '(lambda (a b)
+			     (string< (symbol-name (car a))
+				      (symbol-name (car b)))
+			       )))
     (insert sep-string)
     (insert (documentation 'list-packages-mode))
     (set-buffer-modified-p nil)
@@ -685,7 +693,7 @@ Warning: No download sites specified.  Package index may be out of date.
       (add-submenu '() pui-menu)
       (setq mode-popup-menu pui-menu))
     (clear-message)
-    ;;    (message (substitute-command-keys "Press `\\[pui-help]' for help."))
+;    (message (substitute-command-keys "Press `\\[pui-help]' for help."))
     ))
 
 ;;;###autoload

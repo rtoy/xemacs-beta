@@ -41,9 +41,6 @@ Lisp_Object Vself_insert_face;
 
 /* This is the command that set up Vself_insert_face.  */
 Lisp_Object Vself_insert_face_command;
-
-/* A char-table for characters which may invoke auto-filling.  */
-Lisp_Object Vauto_fill_chars;
 
 DEFUN ("forward-char", Fforward_char, 0, 2, "_p", /*
 Move point right N characters (left if N negative).
@@ -330,7 +327,7 @@ internal_self_insert (Emchar c1, int noautofill)
   REGISTER enum syntaxcode synt;
   REGISTER Emchar c2;
   Lisp_Object overwrite;
-  Lisp_Char_Table *syntax_table;
+  struct Lisp_Char_Table *syntax_table;
   struct buffer *buf = current_buffer;
   int tab_width;
 
@@ -399,9 +396,7 @@ internal_self_insert (Emchar c1, int noautofill)
 #endif /* FSFmacs */
         }
     }
-  if ((CHAR_TABLEP (Vauto_fill_chars)
-       ? !NILP (XCHAR_TABLE_VALUE_UNSAFE (Vauto_fill_chars, c1))
-       : (c1 == ' ' || c1 == '\n'))
+  if ((c1 == ' ' || c1 == '\n')
       && !noautofill
       && !NILP (buf->auto_fill_function))
     {
@@ -503,12 +498,4 @@ Function called, if non-nil, whenever a close parenthesis is inserted.
 More precisely, a char with closeparen syntax is self-inserted.
 */ );
   Vblink_paren_function = Qnil;
-
-  DEFVAR_LISP ("auto-fill-chars", &Vauto_fill_chars /*
-A char-table for characters which invoke auto-filling.
-Such characters has value t in this table.
-*/);
-  Vauto_fill_chars = Fmake_char_table (Qgeneric);
-  XCHAR_TABLE (Vauto_fill_chars)->ascii[' '] = Qt;
-  XCHAR_TABLE (Vauto_fill_chars)->ascii['\n'] = Qt;
 }

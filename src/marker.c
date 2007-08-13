@@ -36,9 +36,9 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 
 static Lisp_Object
-mark_marker (Lisp_Object obj)
+mark_marker (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  Lisp_Marker *marker = XMARKER (obj);
+  struct Lisp_Marker *marker = XMARKER (obj);
   Lisp_Object buf;
   /* DO NOT mark through the marker's chain.
      The buffer's markers chain does not preserve markers from gc;
@@ -55,7 +55,7 @@ mark_marker (Lisp_Object obj)
 static void
 print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  Lisp_Marker *marker = XMARKER (obj);
+  struct Lisp_Marker *marker = XMARKER (obj);
   char buf[200];
 
   if (print_readably)
@@ -66,7 +66,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     write_c_string (GETTEXT ("in no buffer"), printcharfun);
   else
     {
-      sprintf (buf, "at %ld in ", (long) marker_position (obj));
+      sprintf (buf, "at %d in ", marker_position (obj));
       write_c_string (buf, printcharfun);
       print_internal (marker->buffer->name, printcharfun, 0);
     }
@@ -77,8 +77,8 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 static int
 marker_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  Lisp_Marker *marker1 = XMARKER (obj1);
-  Lisp_Marker *marker2 = XMARKER (obj2);
+  struct Lisp_Marker *marker1 = XMARKER (obj1);
+  struct Lisp_Marker *marker2 = XMARKER (obj2);
 
   return ((marker1->buffer == marker2->buffer) &&
 	  (marker1->memind == marker2->memind ||
@@ -95,17 +95,10 @@ marker_hash (Lisp_Object obj, int depth)
   return hash;
 }
 
-static const struct lrecord_description marker_description[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Marker, next) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Marker, prev) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Marker, buffer) },
-  { XD_END }
-};
-
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
 				     mark_marker, print_marker, 0,
-				     marker_equal, marker_hash, marker_description,
-				     Lisp_Marker);
+				     marker_equal, marker_hash,
+				     struct Lisp_Marker);
 
 /* Operations on markers. */
 
@@ -142,7 +135,7 @@ Return `nil' if marker doesn't point anywhere.
 static void
 check_marker_circularities (struct buffer *buf)
 {
-  Lisp_Marker *tortoise, *hare;
+  struct Lisp_Marker *tortoise, *hare;
 
   tortoise = BUF_MARKERS (buf);
   hare = tortoise;
@@ -173,7 +166,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object pos, Lisp_Object buffer,
 {
   Bufpos charno;
   struct buffer *b;
-  Lisp_Marker *m;
+  struct Lisp_Marker *m;
   int point_p;
 
   CHECK_MARKER (marker);
@@ -289,7 +282,7 @@ set_marker_restricted (Lisp_Object marker, Lisp_Object pos, Lisp_Object buffer)
 void
 unchain_marker (Lisp_Object m)
 {
-  Lisp_Marker *marker = XMARKER (m);
+  struct Lisp_Marker *marker = XMARKER (m);
   struct buffer *b = marker->buffer;
 
   if (b == 0)
@@ -316,7 +309,7 @@ unchain_marker (Lisp_Object m)
 Bytind
 bi_marker_position (Lisp_Object marker)
 {
-  Lisp_Marker *m = XMARKER (marker);
+  struct Lisp_Marker *m = XMARKER (marker);
   struct buffer *buf = m->buffer;
   Bytind pos;
 
@@ -353,7 +346,7 @@ marker_position (Lisp_Object marker)
 void
 set_bi_marker_position (Lisp_Object marker, Bytind pos)
 {
-  Lisp_Marker *m = XMARKER (marker);
+  struct Lisp_Marker *m = XMARKER (marker);
   struct buffer *buf = m->buffer;
 
   if (!buf)
@@ -460,7 +453,7 @@ Return t if there are markers pointing at POSITION in the current buffer.
 */
        (position))
 {
-  Lisp_Marker *marker;
+  struct Lisp_Marker *marker;
   Memind pos;
 
   /* A small optimization trick: convert POS to memind now, rather
@@ -489,12 +482,12 @@ Return t if there are markers pointing at POSITION in the current buffer.
 int
 compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
 {
-  Lisp_Marker *m;
+  struct Lisp_Marker *m;
   int total = 0;
   int overhead;
 
   for (m = BUF_MARKERS (b); m; m = m->next)
-    total += sizeof (Lisp_Marker);
+    total += sizeof (struct Lisp_Marker);
   ovstats->was_requested += total;
   overhead = fixed_type_block_overhead (total);
   /* #### claiming this is all malloc overhead is not really right,
@@ -509,8 +502,6 @@ compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
 void
 syms_of_marker (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (marker);
-
   DEFSUBR (Fmarker_position);
   DEFSUBR (Fmarker_buffer);
   DEFSUBR (Fset_marker);
@@ -542,7 +533,7 @@ uninit_buffer_markers (struct buffer *b)
 {
   /* Unchain all markers of this buffer
      and leave them pointing nowhere.  */
-  REGISTER Lisp_Marker *m, *next;
+  REGISTER struct Lisp_Marker *m, *next;
   for (m = BUF_MARKERS (b); m; m = next)
     {
       m->buffer = 0;

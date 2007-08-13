@@ -29,8 +29,8 @@ Boston, MA 02111-1307, USA.  */
       multi-device work by Chuck Thompson).
  */
 
-#ifndef INCLUDED_console_x_h_
-#define INCLUDED_console_x_h_
+#ifndef _XEMACS_CONSOLE_X_H_
+#define _XEMACS_CONSOLE_X_H_
 
 #ifdef HAVE_X_WINDOWS
 
@@ -95,7 +95,7 @@ struct x_device
   Atom Xatom_WM_TAKE_FOCUS;
   Atom Xatom_WM_STATE;
 
-  /* allocated in Xatoms_of_select_x in xselect.c */
+  /* allocated in Xatoms_of_xselect in xselect.c */
   Atom Xatom_CLIPBOARD;
   Atom Xatom_TIMESTAMP;
   Atom Xatom_TEXT;
@@ -213,7 +213,7 @@ struct x_device
 #define DEVICE_XATOM_WM_TAKE_FOCUS(d)	 (DEVICE_X_DATA (d)->Xatom_WM_TAKE_FOCUS)
 #define DEVICE_XATOM_WM_STATE(d)	 (DEVICE_X_DATA (d)->Xatom_WM_STATE)
 
-/* allocated in Xatoms_of_select_x in xselect.c */
+/* allocated in Xatoms_of_xselect in xselect.c */
 #define DEVICE_XATOM_CLIPBOARD(d) 	(DEVICE_X_DATA (d)->Xatom_CLIPBOARD)
 #define DEVICE_XATOM_TIMESTAMP(d) 	(DEVICE_X_DATA (d)->Xatom_TIMESTAMP)
 #define DEVICE_XATOM_TEXT(d) 		(DEVICE_X_DATA (d)->Xatom_TEXT)
@@ -381,7 +381,7 @@ extern struct console_type *x_console_type;
 extern Lisp_Object Vdefault_x_device;
 
 /* Number of pixels below each line. */
-extern int x_interline_space; /* #### implement me */
+extern int x_interline_space;
 
 extern int x_selection_timeout;
 
@@ -398,14 +398,14 @@ void x_handle_selection_request (XSelectionRequestEvent *event);
 void x_handle_selection_clear (XSelectionClearEvent *event);
 void x_handle_property_notify (XPropertyEvent *event);
 
-void Xatoms_of_select_x (struct device *d);
+void Xatoms_of_xselect (struct device *d);
 void Xatoms_of_objects_x (struct device *d);
 
 void x_wm_set_shell_iconic_p (Widget shell, int iconic_p);
 void x_wm_set_cell_size (Widget wmshell, int cw, int ch);
 void x_wm_set_variable_size (Widget wmshell, int width, int height);
 
-const char *x_event_name (int event_type);
+CONST char *x_event_name (int event_type);
 int x_error_handler (Display *disp, XErrorEvent *event);
 void expect_x_error (Display *dpy);
 int x_error_occurred_p (Display *dpy);
@@ -419,15 +419,16 @@ void x_output_string (struct window *w, struct display_line *dl,
 		      int start_pixpos, int width, face_index findex,
 		      int cursor, int cursor_start, int cursor_width,
 		      int cursor_height);
-void x_output_x_pixmap (struct frame *f, Lisp_Image_Instance *p,
-			int x, int y, int xoffset, int yoffset,
-			int width, int height,
+void x_output_x_pixmap (struct frame *f, struct Lisp_Image_Instance *p,
+			int x, int y, int clip_x, int clip_y,
+			int clip_width, int clip_height, int width,
+			int height, int pixmap_offset,
 			unsigned long fg, unsigned long bg,
 			GC override_gc);
 void x_output_shadows (struct frame *f, int x, int y, int width,
 		       int height, GC top_shadow_gc,
 		       GC bottom_shadow_gc, GC background_gc,
-		       int shadow_thickness, int edges);
+		       int shadow_thickness);
 void x_generate_shadow_pixels (struct frame *f,
 			       unsigned long *top_shadow,
 			       unsigned long *bottom_shadow,
@@ -438,10 +439,10 @@ int x_initialize_frame_menubar (struct frame *f);
 void x_init_modifier_mapping (struct device *d);
 
 #define X_ERROR_OCCURRED(dpy, body)	\
-     (expect_x_error (dpy), body, x_error_occurred_p (dpy))
+     (expect_x_error ((dpy)), (body), x_error_occurred_p (dpy))
 
 #define HANDLING_X_ERROR(dpy, body)	\
-     (expect_x_error (dpy), body, signal_if_x_error (dpy, 0))
+     ( expect_x_error ((dpy)), (body), signal_if_x_error ((dpy), 0))
 
 void Initialize_Locale (void);
 
@@ -492,5 +493,4 @@ extern int in_specifier_change_function;
 extern Lisp_Object Vx_initial_argv_list; /* #### ugh! */
 
 #endif /* HAVE_X_WINDOWS */
-
-#endif /* INCLUDED_console_x_h_ */
+#endif /* _XEMACS_DEVICE_X_H_ */

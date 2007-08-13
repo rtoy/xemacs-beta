@@ -8,8 +8,6 @@
 # 'installed'.
 #
 
-SHELL=/bin/sh
-RM=rm -f
 CC=../../lib-src/ellcc
 CFLAGS=-I. -I../../src
 LD=$(CC) --mode=link
@@ -27,10 +25,8 @@ MODTITLE="ZLIB compression library interface"
 
 all: $(MODNAME).ell
 
-distclean: clean
-
 clean:
-	$(RM) $(MODNAME).ell $(OBJS) zlib_i.o zlib_i.c
+	rm -f $(MODNAME).ell $(OBJS) zlib_i.o zlib_i.c
 
 $(MODNAME).ell: $(OBJS) zlib_i.o
 	$(LD) --mod-output=$@ $(OBJS) zlib_i.o

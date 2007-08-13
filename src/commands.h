@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-#ifndef INCLUDED_commands_h_
-#define INCLUDED_commands_h_
+#ifndef _XEMACS_COMMANDS_H_
+#define _XEMACS_COMMANDS_H_
 
 #if 0 /* FSFmacs */
 #define Ctl(c) ((c)&037)
@@ -125,4 +125,4 @@ Lisp_Object zmacs_region_buffer (void);
 
 extern Lisp_Object Vthis_command_keys; /* event-stream.c */
 
-#endif /* INCLUDED_commands_h_ */
+#endif /* _XEMACS_COMMANDS_H_ */

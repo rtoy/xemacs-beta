@@ -130,10 +130,9 @@ or go back to just one window (by deleting all but the selected window)."
   :group 'editing-basics)
 
 (defun command-error (error-object)
-  (let* ((old-debug-on-error debug-on-error)
-	 (inhibit-quit t)
-	 (debug-on-error nil)
-	 (etype (car-safe error-object)))
+  (let ((inhibit-quit t)
+	(debug-on-error nil)
+	(etype (car-safe error-object)))
     (setq quit-flag nil)
     (setq standard-output t)
     (setq standard-input t)
@@ -162,12 +161,7 @@ or go back to just one window (by deleting all but the selected window)."
 
     (if (noninteractive)
         (progn
-	  (if old-debug-on-error
-	      (progn
-		(message "Backtrace:\n\n")
-		(backtrace)
-		(message "\n")))
-          (message "%s exiting\n." emacs-program-name)
+          (message "%s exiting." emacs-program-name)
           (kill-emacs -1)))
     t))
 
@@ -325,36 +319,23 @@ when called from Lisp."
 
   (if (and teach-extended-commands-p
 	   (interactive-p))
-      ;; Remember the keys, run the command, and show the keys (if
-      ;; any).  The funny variable names are a poor man's guarantee
-      ;; that we don't get tripped by this-command doing something
-      ;; funny.  Quoth our forefathers: "We want lexical scope!"
+      ;; We need to fiddle with keys: remember the keys, run the
+      ;; command, and show the keys (if any).
       (let ((_execute_command_keys_ (where-is-internal this-command))
 	    (_execute_command_name_ this-command)) ; the name can change
 	(command-execute this-command t)
-	(when _execute_command_keys_
-	  ;; Normally the region is adjusted in post_command_hook;
-	  ;; however, it is not called until after we finish.  It
-	  ;; looks ugly for the region to get updated after the
-	  ;; delays, so we do it now.  The code below is a Lispified
-	  ;; copy of code in event-stream.c:post_command_hook().
-	  (if (and (not zmacs-region-stays)
-		   (or (not (eq (selected-window) (minibuffer-window)))
-		       (eq (zmacs-region-buffer) (current-buffer))))
-	      (zmacs-deactivate-region)
-	    (zmacs-update-region))
-	  ;; Wait for a while, so the user can see a message printed,
-	  ;; if any.
-	  (when (sit-for 1)
-	    (display-message
-		'no-log
-	      (format (if (cdr _execute_command_keys_)
-			  "Command `%s' is bound to keys: %s"
-			"Command `%s' is bound to key: %s")
-		      _execute_command_name_
-		      (sorted-key-descriptions _execute_command_keys_)))
-	    (sit-for teach-extended-commands-timeout)
-	    (clear-message 'no-log))))
+	(when (and _execute_command_keys_
+		   ;; Wait for a while, so the user can see a message
+		   ;; printed, if any.
+		   (sit-for 1))
+	  (display-message
+	   'no-log
+	   (format "Command `%s' is bound to key%s: %s"
+		   _execute_command_name_
+		   (if (cdr _execute_command_keys_) "s" "")
+		   (sorted-key-descriptions _execute_command_keys_)))
+	  (sit-for teach-extended-commands-timeout)
+	  (clear-message 'no-log)))
     ;; Else, just run the command.
     (command-execute this-command t)))
 

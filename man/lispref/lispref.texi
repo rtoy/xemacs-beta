@@ -1,4 +1,4 @@
-\input texinfo  @c -*-texinfo-*-
+\input ../texinfo  @c -*-texinfo-*-
 @c %**start of header
 @setfilename ../../info/lispref.info
 @c @smallbook
@@ -159,7 +159,6 @@ Reference Manual, corresponding to XEmacs version 21.0.
 * Menus::                   Defining pull-down and pop-up menus.
 * Dialog Boxes::	    Creating dialog boxes.
 * Toolbar::		    Controlling the toolbar.
-* Gutter::		    Controlling the gutter.
 * Scrollbars::		    Controlling the scrollbars.
 * Drag and Drop::	    Generic API to inter-application communication
                               via specific protocols.
@@ -205,7 +204,6 @@ Reference Manual, corresponding to XEmacs version 21.0.
 * ToolTalk Support::        Interfacing with the ToolTalk message service.
 * LDAP Support::            Interfacing with the Lightweight Directory
                               Access Protocol.
-* PostgreSQL Support::      Interfacing to the PostgreSQL libpq library.
 * Internationalization::    How Emacs supports different languages and
                               cultural conventions.
 * MULE::                    Specifics of the Asian-language support.
@@ -289,7 +287,7 @@ Editing Types
 
 * Buffer Type::             The basic object of editing.
 * Window Type::             What makes buffers visible.
-* Window Configuration Type:: Save what the screen looks like.
+* Window Configuration Type::Save what the screen looks like.
 * Marker Type::             A position in a buffer.
 * Process Type::            A process running on the underlying OS.
 * Stream Type::             Receive or send characters.
@@ -310,7 +308,7 @@ Numbers
 
 Strings and Characters
 
-* String Basics::             Basic properties of strings and characters.
+* Basics: String Basics.      Basic properties of strings and characters.
 * Predicates for Strings::    Testing whether an object is a string or char.
 * Creating Strings::          Functions to allocate new strings.
 * Predicates for Characters:: Testing whether an object is a character.
@@ -624,8 +622,6 @@ Toolbar
 * Toolbar Descriptor Format::	How to create a toolbar.
 * Specifying the Toolbar::	Setting a toolbar.
 * Other Toolbar Variables::	Controlling the size of toolbars.
-
-Gutter
 
 Scrollbars
 
@@ -1099,18 +1095,12 @@ XEmacs LDAP API
 * LDAP Variables::              Lisp variables related to LDAP
 * The High-Level LDAP API::     High-level LDAP lisp functions 
 * The Low-Level LDAP API::      Low-level LDAP lisp primitives
-* LDAP Internationalization::   I18n variables and functions
 
 The Low-Level LDAP API
 
 * The LDAP Lisp Object::        
 * Opening and Closing a LDAP Connection::  
-* Low-level Operations on a LDAP Server::  
-
-LDAP Internationalization
-
-* LDAP Internationalization Variables::  
-* Encoder/Decoder Functions::   
+* Searching on a LDAP Server (Low-level)::  
 
 Internationalization
 
@@ -1173,7 +1163,6 @@ Building XEmacs and Object Allocation
 @include menus.texi
 @include dialog.texi
 @include toolbar.texi
-@include gutter.texi
 @include scrollbars.texi
 @include dragndrop.texi
 @include modes.texi
@@ -1210,7 +1199,6 @@ Building XEmacs and Object Allocation
 @include x-windows.texi
 @include tooltalk.texi
 @include ldap.texi
-@include postgresql.texi
 @include internationalization.texi
 @include mule.texi
 

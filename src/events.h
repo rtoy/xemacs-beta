@@ -22,8 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_events_h_
-#define INCLUDED_events_h_
+#ifndef _XEMACS_EVENTS_H_
+#define _XEMACS_EVENTS_H_
 
 #include "systime.h"
 
@@ -40,8 +40,7 @@ Boston, MA 02111-1307, USA.  */
    multiple heterogeneous machines, X11 and SunView, or X11 and NeXT, for
    example, then it will be necessary to construct an event_stream structure
    that can cope with the given types.  Currently, the only implemented
-   event_streams are for dumb-ttys, and for X11 plus dumb-ttys,
-   and for mswindows.
+   event_streams are for dumb-ttys, and for X11 plus dumb-ttys.
 
    To implement this for one window system is relatively simple.
    To implement this for multiple window systems is trickier and may
@@ -276,9 +275,9 @@ Boston, MA 02111-1307, USA.  */
   The Create stream pair function is passed two void* values, which identify
   process-dependent 'handles'. The process implementation uses these handles
   to communicate with child processes. The function must be prepared to receive
-  handle types of any process implementation. Since only one process
+  handle types of any process implementation. Since there only one process
   implementation exists in a particular XEmacs configuration, preprocessing
-  is a means of compiling in the support for the code which deals with particular
+  is a mean of compiling in the support for the code which deals with particular
   handle types.
 
   For example, a unixoid type loop, which relies on file descriptors, may be
@@ -317,19 +316,21 @@ Boston, MA 02111-1307, USA.  */
 #define USID_DONTHASH ((USID)0)
 
 
+struct Lisp_Event;
+struct Lisp_Process;
+
 struct event_stream
 {
   int  (*event_pending_p)	(int);
-  void (*next_event_cb)		(Lisp_Event *);
-  void (*handle_magic_event_cb)	(Lisp_Event *);
+  void (*next_event_cb)		(struct Lisp_Event *);
+  void (*handle_magic_event_cb)	(struct Lisp_Event *);
   int  (*add_timeout_cb)	(EMACS_TIME);
   void (*remove_timeout_cb)	(int);
   void (*select_console_cb)	(struct console *);
   void (*unselect_console_cb)	(struct console *);
-  void (*select_process_cb)	(Lisp_Process *);
-  void (*unselect_process_cb)	(Lisp_Process *);
+  void (*select_process_cb)	(struct Lisp_Process *);
+  void (*unselect_process_cb)	(struct Lisp_Process *);
   void (*quit_p_cb)		(void);
-  void (*force_event_pending)	(struct frame* f);
   USID (*create_stream_pair_cb) (void* /* inhandle*/, void* /*outhandle*/ ,
 				 Lisp_Object* /* instream */,
 				 Lisp_Object* /* outstream */,
@@ -367,20 +368,20 @@ typedef enum emacs_event_type
 struct key_data
 {
   Lisp_Object       keysym;
-  int		    modifiers;
+  unsigned char     modifiers;
 };
 
 struct button_data
 {
   int               button;
-  int	            modifiers;
+  unsigned char     modifiers;
   int               x, y;
 };
 
 struct motion_data
 {
   int               x, y;
-  int	            modifiers;
+  unsigned char     modifiers;
 };
 
 struct process_data
@@ -407,7 +408,7 @@ struct misc_user_data
   Lisp_Object       function;
   Lisp_Object	    object;
   int               button;
-  int	            modifiers;
+  unsigned char     modifiers;
   int               x, y;
 };
 
@@ -433,30 +434,6 @@ union magic_data
   int		    underlying_mswindows_event;
 #endif
 };
-
-struct Lisp_Timeout
-{
-  struct lcrecord_header header;
-  int id; /* Id we use to identify the timeout over its lifetime */
-  int interval_id; /* Id for this particular interval; this may
-		      be different each time the timeout is
-		      signalled.*/
-  Lisp_Object function, object; /* Function and object associated
-				   with timeout. */
-  EMACS_TIME next_signal_time;  /* Absolute time when the timeout
-				   is next going to be signalled. */
-  unsigned int resignal_msecs;  /* How far after the next timeout
-				   should the one after that
-				   occur? */
-};
-typedef struct Lisp_Timeout Lisp_Timeout;
-
-DECLARE_LRECORD (timeout, Lisp_Timeout);
-#define XTIMEOUT(x) XRECORD (x, timeout, Lisp_Timeout)
-#define XSETTIMEOUT(x, p) XSETRECORD (x, p, timeout)
-#define TIMEOUTP(x) RECORDP (x, timeout)
-#define CHECK_TIMEOUT(x) CHECK_RECORD (x, timeout)
-#define CONCHECK_TIMEOUT(x) CONCHECK_RECORD (x, timeout)
 
 struct Lisp_Event
 {
@@ -485,10 +462,11 @@ struct Lisp_Event
     } event;
 };
 
-DECLARE_LRECORD (event, Lisp_Event);
-#define XEVENT(x) XRECORD (x, event, Lisp_Event)
+DECLARE_LRECORD (event, struct Lisp_Event);
+#define XEVENT(x) XRECORD (x, event, struct Lisp_Event)
 #define XSETEVENT(x, p) XSETRECORD (x, p, event)
 #define EVENTP(x) RECORDP (x, event)
+#define GC_EVENTP(x) GC_RECORDP (x, event)
 #define CHECK_EVENT(x) CHECK_RECORD (x, event)
 #define CONCHECK_EVENT(x) CONCHECK_RECORD (x, event)
 
@@ -533,9 +511,9 @@ extern Lisp_Object QKbackspace, QKdelete, QKescape, QKlinefeed, QKreturn;
 extern Lisp_Object QKspace, QKtab, Qmouse_event_p, Vcharacter_set_property;
 extern Lisp_Object Qcancel_mode_internal;
 
-/* Note: under X Windows, XEMACS_MOD_ALT is generated by the Alt key if there are
+/* Note: under X Windows, MOD_ALT is generated by the Alt key if there are
    both Alt and Meta keys.  If there are no Meta keys, then Alt generates
-   XEMACS_MOD_META instead.
+   MOD_META instead.
  */
 
 #ifdef emacs
@@ -543,12 +521,12 @@ extern Lisp_Object Qcancel_mode_internal;
 #define KEYSYM(x) (intern (x))
 
 /* from events.c */
-void format_event_object (char *buf, Lisp_Event *e, int brief);
-void character_to_event (Emchar c, Lisp_Event *event,
+void format_event_object (char *buf, struct Lisp_Event *e, int brief);
+void character_to_event (Emchar c, struct Lisp_Event *event,
 			 struct console *con,
 			 int use_console_meta_flag,
 			 int do_backspace_mapping);
-void zero_event (Lisp_Event *e);
+void zero_event (struct Lisp_Event *e);
 void deallocate_event_chain (Lisp_Object event);
 Lisp_Object event_chain_tail (Lisp_Object event);
 void enqueue_event (Lisp_Object event, Lisp_Object *head, Lisp_Object *tail);
@@ -565,19 +543,17 @@ Lisp_Object copy_event_chain (Lisp_Object event_chain);
 /* True if this is a non-internal event
    (keyboard press, menu, scrollbar, mouse button) */
 int command_event_p (Lisp_Object event);
-void define_self_inserting_symbol (Lisp_Object, Lisp_Object);
-Emchar event_to_character (Lisp_Event *, int, int, int);
 struct console *event_console_or_selected (Lisp_Object event);
 
 /* from event-stream.c */
 Lisp_Object allocate_command_builder (Lisp_Object console);
 void enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object);
-void event_stream_next_event (Lisp_Event *event);
-void event_stream_handle_magic_event (Lisp_Event *event);
+void event_stream_next_event (struct Lisp_Event *event);
+void event_stream_handle_magic_event (struct Lisp_Event *event);
 void event_stream_select_console   (struct console *con);
 void event_stream_unselect_console (struct console *con);
-void event_stream_select_process   (Lisp_Process *proc);
-void event_stream_unselect_process (Lisp_Process *proc);
+void event_stream_select_process   (struct Lisp_Process *proc);
+void event_stream_unselect_process (struct Lisp_Process *proc);
 USID event_stream_create_stream_pair (void* inhandle, void* outhandle,
 		Lisp_Object* instream, Lisp_Object* outstream, int flags);
 USID event_stream_delete_stream_pair (Lisp_Object instream, Lisp_Object outstream);
@@ -640,9 +616,9 @@ extern int fake_event_occurred;
 
 int event_stream_unixoid_select_console   (struct console *con);
 int event_stream_unixoid_unselect_console (struct console *con);
-int event_stream_unixoid_select_process   (Lisp_Process *proc);
-int event_stream_unixoid_unselect_process (Lisp_Process *proc);
-int read_event_from_tty_or_stream_desc (Lisp_Event *event,
+int event_stream_unixoid_select_process   (struct Lisp_Process *proc);
+int event_stream_unixoid_unselect_process (struct Lisp_Process *proc);
+int read_event_from_tty_or_stream_desc (struct Lisp_Event *event,
 					struct console *con, int fd);
 USID event_stream_unixoid_create_stream_pair (void* inhandle, void* outhandle,
 					     Lisp_Object* instream,
@@ -662,60 +638,4 @@ USID event_stream_unixoid_delete_stream_pair (Lisp_Object instream,
 
 #endif /* emacs */
 
-/* #### a hack, until accelerator shit is cleaned up */
-
-/* This structure is what we use to encapsulate the state of a command sequence
-   being composed; key events are executed by adding themselves to the command
-   builder; if the command builder is then complete (does not still represent
-   a prefix key sequence) it executes the corresponding command.
- */
-struct command_builder
-{
-  struct lcrecord_header header;
-  Lisp_Object console; /* back pointer to the console this command
-			  builder is for */
-  /* Qnil, or a Lisp_Event representing the first event read
-   *  after the last command completed.  Threaded. */
-  /* #### NYI */
-  Lisp_Object prefix_events;
-  /* Qnil, or a Lisp_Event representing event in the current
-   *  keymap-lookup sequence.  Subsequent events are threaded via
-   *  the event's next slot */
-  Lisp_Object current_events;
-  /* Last elt of above  */
-  Lisp_Object most_current_event;
-  /* Last elt before function map code took over. What this means is:
-     All prefixes up to (but not including) this event have non-nil
-     bindings, but the prefix including this event has a nil binding.
-     Any events in the chain after this one were read solely because
-     we're part of a possible function key.  If we end up with
-     something that's not part of a possible function key, we have to
-     unread all of those events. */
-  Lisp_Object last_non_munged_event;
-  /* One set of values for function-key-map, one for key-translation-map */
-  struct munging_key_translation
-  {
-    /* First event that can begin a possible function key sequence
-       (to be translated according to function-key-map).  Normally
-       this is the first event in the chain.  However, once we've
-       translated a sequence through function-key-map, this will point
-       to the first event after the translated sequence: we don't ever
-       want to translate any events twice through function-key-map, or
-       things could get really screwed up (e.g. if the user created a
-       translation loop).  If this is nil, then the next-read event is
-       the first that can begin a function key sequence. */
-    Lisp_Object first_mungeable_event;
-  } munge_me[2];
-
-  Bufbyte *echo_buf;
-  Bytecount echo_buf_length;          /* size of echo_buf */
-  Bytecount echo_buf_index;           /* index into echo_buf
-				       * -1 before doing echoing for new cmd */
-  /* Self-insert-command is magic in that it doesn't always push an undo-
-     boundary: up to 20 consecutive self-inserts can happen before an undo-
-     boundary is pushed.  This variable is that counter.
-     */
-  int self_insert_countdown;
-};
-
-#endif /* INCLUDED_events_h_ */
+#endif /* _XEMACS_EVENTS_H_ */

@@ -248,21 +248,6 @@ specifier, it will automatically be converted into a @code{generic}
 specifier.
 @end defun
 
-@defun remove-face-property face property &optional local tag-set exact-p
-This function removes a property of a @var{face}.
-
-For built-in properties, this is analogous to @code{remove-specifier}.
-For more information, @xref{Other Specification Functions}.
-
-When @var{property} is not a built-in property, this function will just
-remove its value if @var{locale} is @code{nil} or @code{all}.  However,
-if @var{locale} is other than that, this function will attempt to remove
-@var{value} as the instantiator for the given @var{locale} with
-@code{remove-specifier}.  If the value of the property is not a
-specifier, it will be converted into a @code{generic} specifier
-automatically.
-@end defun
-
 @defun face-property face property &optional locale
 This function returns @var{face}'s value of the given @var{property}.
 
@@ -476,33 +461,6 @@ This predicate returns @code{t} if @var{object} is a font specifier, and
 @code{nil} otherwise.
 @end defun
 
-@defun make-font-specifier spec-list
-
-Return a new @code{font} specifier object with the given specification
-list.  @var{spec-list} can be a list of specifications (each of which is
-a cons of a locale and a list of instantiators), a single instantiator,
-or a list of instantiators.  @xref{Specifiers}, for more information
-about specifiers.
-
-Valid instantiators for font specifiers are:
-
-@itemize @bullet
-
-@item
-A string naming a font (e.g. under X this might be
-"-*-courier-medium-r-*-*-*-140-*-*-*-*-iso8859-*" for a 14-point
-upright medium-weight Courier font).
-@item
-A font instance (use that instance directly if the device matches,
-or use the string that generated it).
-@item
-A vector of no elements (only on TTY's; this means to set no font
-at all, thus using the "natural" font of the terminal's text).
-@item
-A vector of one element (a face to inherit from).
-@end itemize
-@end defun
-
 @node Font Instances
 @subsection Font Instances
 
@@ -661,63 +619,6 @@ applying @code{font-instance-properties} to the result.
 This function returns non-@code{nil} if @var{object} is a color specifier.
 @end defun
 
-@defun make-color-specifier spec-list
-
-Return a new @code{color} specifier object with the given specification
-list.  @var{spec-list} can be a list of specifications (each of which is
-a cons of a locale and a list of instantiators), a single instantiator,
-or a list of instantiators.  @xref{Specifiers}, for a detailed
-description of how specifiers work.
-
-Valid instantiators for color specifiers are:
-
-@itemize @bullet
-@item
-A string naming a color (e.g. under X this might be "lightseagreen2" or
-"#F534B2").
-
-@item
-A color instance (use that instance directly if the device matches,
-or use the string that generated it).
-
-@item
-A vector of no elements (only on TTY's; this means to set no color at
-all, thus using the "natural" color of the terminal's text).
-
-@item
-A vector of one or two elements: a face to inherit from, and optionally
-a symbol naming which property of that face to inherit, either
-@code{foreground} or @code{background} (if omitted, defaults to the same
-property that this color specifier is used for; if this specifier is not
-part of a face, the instantiator would not be valid).
-@end itemize
-@end defun
-
-@defun make-face-boolean-specifier spec-list
-
-Return a new @code{face-boolean} specifier object with the given spec
-list.  @var{spec-list} can be a list of specifications (each of which is
-a cons of a locale and a list of instantiators), a single instantiator,
-or a list of instantiators.  @xref{Specifiers}, for a detailed
-description of how specifiers work.
-
-Valid instantiators for face-boolean specifiers are
-
-@itemize @bullet
-@item
-t or nil.
-@item
-A vector of two or three elements: a face to inherit from, optionally a
-symbol naming the property of that face to inherit from (if omitted,
-defaults to the same property that this face-boolean specifier is used
-for; if this specifier is not part of a face, the instantiator would not
-be valid), and optionally a value which, if non-nil, means to invert the
-sense of the inherited property.
-@end itemize
-
-@end defun
-
-
 @node Color Instances
 @subsection Color Instances
 @cindex color instances
@@ -771,7 +672,7 @@ result.
 @end defun
 
 @defun color-rgb-components color &optional domain
-This function returns the @sc{rgb} components of the @var{color} in the
+This function returns the @sc{RGB} components of the @var{color} in the
 specified @var{domain}, if any.  @var{color} should be a color specifier
 object and @var{domain} is normally a window and defaults to the
 selected window if omitted.  This is equivalent to using

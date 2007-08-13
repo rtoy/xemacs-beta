@@ -18,8 +18,8 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifndef INCLUDED_process_h_
-#define INCLUDED_process_h_
+#ifndef _XEMACS_PROCESS_H_
+#define _XEMACS_PROCESS_H_
 
 #if defined (NO_SUBPROCESSES)
 #undef XPROCESS
@@ -37,21 +37,16 @@ void wait_without_blocking (void);
 
 #else /* not NO_SUBPROCESSES */
 
-/* struct Lisp_Process is defined in procimpl.h; only process-*.c need
-   to know about the guts of it. */
+/* Only process.c needs to know about the guts of this */
+struct Lisp_Process;
 
-DECLARE_LRECORD (process, Lisp_Process);
-#define XPROCESS(x) XRECORD (x, process, Lisp_Process)
+DECLARE_LRECORD (process, struct Lisp_Process);
+#define XPROCESS(x) XRECORD (x, process, struct Lisp_Process)
 #define XSETPROCESS(x, p) XSETRECORD (x, p, process)
 #define PROCESSP(x) RECORDP (x, process)
+#define GC_PROCESSP(x) GC_RECORDP (x, process)
 #define CHECK_PROCESS(x) CHECK_RECORD (x, process)
-#define PROCESS_LIVE_P(x) (!NILP ((x)->pipe_instream))
-
-#define CHECK_LIVE_PROCESS(x) do {			\
-  CHECK_PROCESS (x);					\
-  if (! PROCESS_LIVE_P (XPROCESS (x)))			\
-    dead_wrong_type_argument (Qprocess_live_p, (x));	\
-} while (0)
+#define PROCESS_LIVE_P(x) (!NILP (XPROCESS(x)->pipe_instream))
 
 #ifdef emacs
 
@@ -62,7 +57,7 @@ Lisp_Object connect_to_file_descriptor (Lisp_Object name,
 					Lisp_Object buffer,
 					Lisp_Object infd,
 					Lisp_Object outfd);
-int connected_via_filedesc_p (Lisp_Process *p);
+int connected_via_filedesc_p (struct Lisp_Process *p);
 void kill_buffer_processes (Lisp_Object buffer);
 void close_process_descs (void);
 
@@ -74,7 +69,7 @@ void set_process_filter (Lisp_Object proc,
 extern volatile int synch_process_alive;
 
 /* Nonzero => this is a string explaining death of synchronous subprocess.  */
-extern const char *synch_process_death;
+extern CONST char *synch_process_death;
 
 /* If synch_process_death is zero,
    this is exit code of synchronous subprocess.  */
@@ -85,12 +80,12 @@ void update_process_status (Lisp_Object p,
 			    Lisp_Object status_symbol,
 			    int exit_code, int core_dumped);
 
-void get_process_streams (Lisp_Process *p,
+void get_process_streams (struct Lisp_Process *p,
 			  Lisp_Object *instr, Lisp_Object *outstr);
-int get_process_selected_p (Lisp_Process *p);
-void set_process_selected_p (Lisp_Process *p, int selected_p);
+int get_process_selected_p (struct Lisp_Process *p);
+void set_process_selected_p (struct Lisp_Process *p, int selected_p);
 
-Lisp_Process *get_process_from_usid (USID usid);
+struct Lisp_Process *get_process_from_usid (USID usid);
 
 #ifdef HAVE_SOCKETS
 int network_connection_p (Lisp_Object process);
@@ -98,7 +93,7 @@ int network_connection_p (Lisp_Object process);
 #define network_connection_p(x) 0
 #endif
 
-extern Lisp_Object Qclosed, Qmulticast, Qopen, Qrun, Qstop, Qtcp, Qudp;
+extern Lisp_Object Qclosed, Qmulticast, Qopen, Qrun, Qstop, Qtcpip;
 extern Lisp_Object Vprocess_connection_type, Vprocess_list;
 
 /* Report all recent events of a change in process status
@@ -109,17 +104,17 @@ void kick_status_notify (void);
 
 void deactivate_process (Lisp_Object proc);
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 int
 #else
 void
 #endif
 child_setup (int in, int out, int err,
-		  char **new_argv, const char *current_dir);
+		  char **new_argv, CONST char *current_dir);
 
 Charcount read_process_output (Lisp_Object proc);
 
-const char *signal_name (int signum);
+CONST char *signal_name (int signum);
 
 Lisp_Object canonicalize_host_name (Lisp_Object host);
 
@@ -139,13 +134,4 @@ Lisp_Object canonicalize_host_name (Lisp_Object host);
 
 #endif /* emacs */
 
-#ifdef HAVE_GETPT
-#define PTY_ITERATION
-#define PTY_OPEN \
-    if ((fd = getpt()) < 0 || grantpt (fd) < 0 || unlockpt (fd) < 0) \
-      return -1;
-#define PTY_NAME_SPRINTF
-#define PTY_TTY_NAME_SPRINTF strcpy (pty_name, ptsname (fd));
-#endif
-
-#endif /* INCLUDED_process_h_ */
+#endif /* _XEMACS_PROCESS_H_ */

@@ -12,9 +12,6 @@
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_libsst_h_
-#define INCLUDED_libsst_h_
-
 #include <sys/ioctl.h>
 #ifndef SUNOS4_0_3
 #define AUDIO_4_0_3_COMPAT
@@ -49,5 +46,3 @@ extern void message ();
 #else /* !emacs */
 # define warn(str) fprintf (stderr, "%s\n", (str))
 #endif /* emacs */
-
-#endif /* INCLUDED_libsst_h_ */

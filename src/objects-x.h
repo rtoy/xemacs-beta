@@ -22,8 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with:  Not in FSF. */
 
-#ifndef INCLUDED_objects_x_h_
-#define INCLUDED_objects_x_h_
+#ifndef _XEMACS_OBJECTS_X_H_
+#define _XEMACS_OBJECTS_X_H_
 
 #include "objects.h"
 
@@ -64,5 +64,4 @@ struct x_font_instance_data
 #define FONT_INSTANCE_X_TRUENAME(f) (X_FONT_INSTANCE_DATA (f)->truename)
 
 #endif /* HAVE_X_WINDOWS */
-
-#endif /* INCLUDED_objects_x_h_ */
+#endif /* _XEMACS_OBJECTS_X_H_ */

@@ -73,11 +73,12 @@ struct backtrace *backtrace_list;
    a SUBR with more than 8 arguments, use max_args == MANY.
    See the DEFUN macro in lisp.h)  */
 #define PRIMITIVE_FUNCALL(rv, fn, av, ac) do {			\
-  void (*PF_fn)(void) = (void (*)(void)) fn;			\
+  void (*PF_fn)() = (void (*)()) (fn);				\
   Lisp_Object *PF_av = (av);					\
   switch (ac)							\
     {								\
-    default:rv = PRIMITIVE_FUNCALL_1(PF_fn, PF_av, 0); break;	\
+    default: abort();						\
+    case 0: rv = PRIMITIVE_FUNCALL_1(PF_fn, PF_av, 0); break;	\
     case 1: rv = PRIMITIVE_FUNCALL_1(PF_fn, PF_av, 1); break;	\
     case 2: rv = PRIMITIVE_FUNCALL_1(PF_fn, PF_av, 2); break;	\
     case 3: rv = PRIMITIVE_FUNCALL_1(PF_fn, PF_av, 3); break;	\
@@ -143,6 +144,10 @@ Lisp_Object Vcurrent_warning_class;
 /* Special catch tag used in call_with_suspended_errors(). */
 Lisp_Object Qunbound_suspended_errors_tag;
 
+/* Non-nil means we're going down, so we better not run any hooks
+   or do other non-essential stuff. */
+int preparing_for_armageddon;
+
 /* Non-nil means record all fset's and provide's, to be undone
    if the file being autoloaded is not fully loaded.
    They are recorded by being consed onto the front of Vautoload_queue:
@@ -165,7 +170,7 @@ int specpdl_depth_counter;
 int max_specpdl_size;
 
 /* Depth in Lisp evaluations and function calls.  */
-static int lisp_eval_depth;
+int lisp_eval_depth;
 
 /* Maximum allowed depth in Lisp evaluations and function calls.  */
 int max_lisp_eval_depth;
@@ -263,16 +268,10 @@ Lisp_Object Vdebugger;
 static Lisp_Object Vcondition_handlers;
 
 
-#define DEFEND_AGAINST_THROW_RECURSION
-
-#ifdef DEFEND_AGAINST_THROW_RECURSION
+#if 0 /* no longer used */
 /* Used for error catching purposes by throw_or_bomb_out */
 static int throw_level;
-#endif
-
-#ifdef ERROR_CHECK_TYPECHECK
-void check_error_state_sanity (void);
-#endif
+#endif /* unused */
 
 
 /************************************************************************/
@@ -283,10 +282,10 @@ static void
 print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Subr *subr = XSUBR (obj);
-  const char *header =
+  CONST char *header =
     (subr->max_args == UNEVALLED) ? "#<special-form " : "#<subr ";
-  const char *name = subr_name (subr);
-  const char *trailer = subr->prompt ? " (interactive)>" : ">";
+  CONST char *name = subr_name (subr);
+  CONST char *trailer = subr->prompt ? " (interactive)>" : ">";
 
   if (print_readably)
     error ("printing unreadable object %s%s%s", header, name, trailer);
@@ -296,15 +295,9 @@ print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (trailer, printcharfun);
 }
 
-static const struct lrecord_description subr_description[] = {
-  { XD_DOC_STRING, offsetof (Lisp_Subr, doc) },
-  { XD_END }
-};
-
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("subr", subr,
-				     0, print_subr, 0, 0, 0,
-				     subr_description,
-				     Lisp_Subr);
+DEFINE_LRECORD_IMPLEMENTATION ("subr", subr,
+                               this_one_is_unmarkable, print_subr, 0, 0, 0,
+			       Lisp_Subr);
 
 /************************************************************************/
 /*			 Entering the debugger				*/
@@ -1011,6 +1004,8 @@ In byte compilation, `function' causes its argument to be compiled.
 static Lisp_Object
 define_function (Lisp_Object name, Lisp_Object defn)
 {
+  if (purify_flag)
+    defn = Fpurecopy (defn);
   Ffset (name, defn);
   LOADHIST_ATTACH (name);
   return name;
@@ -1057,7 +1052,7 @@ If SYMBOL is buffer-local, its default value is what is set;
  buffer-local values are not affected.
 INITVALUE and DOCSTRING are optional.
 If DOCSTRING starts with *, this variable is identified as a user option.
- This means that M-x set-variable recognizes it.
+ This means that M-x set-variable and M-x edit-options recognize it.
 If INITVALUE is missing, SYMBOL's value is not set.
 
 In lisp-interaction-mode defvar is treated as defconst.
@@ -1083,7 +1078,14 @@ In lisp-interaction-mode defvar is treated as defconst.
       if (!NILP (args = XCDR (args)))
 	{
 	  Lisp_Object doc = XCAR (args);
+#if 0 /* FSFmacs */
+	  /* #### We should probably do this but it might be dangerous */
+	  if (purify_flag)
+	    doc = Fpurecopy (doc);
 	  Fput (sym, Qvariable_documentation, doc);
+#else
+	  pure_put (sym, Qvariable_documentation, doc);
+#endif
 	  if (!NILP (args = XCDR (args)))
 	    error ("too many arguments");
 	}
@@ -1091,7 +1093,7 @@ In lisp-interaction-mode defvar is treated as defconst.
 
 #ifdef I18N3
   if (!NILP (Vfile_domain))
-    Fput (sym, Qvariable_domain, Vfile_domain);
+    pure_put (sym, Qvariable_domain, Vfile_domain);
 #endif
 
   LOADHIST_ATTACH (sym);
@@ -1107,7 +1109,7 @@ If SYMBOL is buffer-local, its default value is what is set;
  buffer-local values are not affected.
 DOCSTRING is optional.
 If DOCSTRING starts with *, this variable is identified as a user option.
- This means that M-x set-variable recognizes it.
+ This means that M-x set-variable and M-x edit-options recognize it.
 
 Note: do not use `defconst' for user options in libraries that are not
  normally loaded, since it is useful for users to be able to specify
@@ -1131,14 +1133,21 @@ Since `defconst' unconditionally assigns the variable,
   if (!NILP (args = XCDR (args)))
     {
       Lisp_Object doc = XCAR (args);
+#if 0 /* FSFmacs */
+      /* #### We should probably do this but it might be dangerous */
+      if (purify_flag)
+	doc = Fpurecopy (doc);
       Fput (sym, Qvariable_documentation, doc);
+#else
+      pure_put (sym, Qvariable_documentation, doc);
+#endif
       if (!NILP (args = XCDR (args)))
 	error ("too many arguments");
     }
 
 #ifdef I18N3
   if (!NILP (Vfile_domain))
-    Fput (sym, Qvariable_domain, Vfile_domain);
+    pure_put (sym, Qvariable_domain, Vfile_domain);
 #endif
 
   LOADHIST_ATTACH (sym);
@@ -1158,7 +1167,7 @@ for the variable is `*'.
   return
     ((INTP (documentation) && XINT (documentation) < 0) ||
 
-     (STRINGP (documentation) &&
+     ((STRINGP (documentation)) &&
       (string_byte (XSTRING (documentation), 0) == '*')) ||
 
      /* If (STRING . INTEGER), a negative integer means a user variable. */
@@ -1306,9 +1315,6 @@ internal_catch (Lisp_Object tag,
   c.val = (*func) (arg);
   if (threw) *threw = 0;
   catchlist = c.next;
-#ifdef ERROR_CHECK_TYPECHECK
-  check_error_state_sanity ();
-#endif
   return c.val;
 }
 
@@ -1365,25 +1371,19 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
       unbind_to (catchlist->pdlcount, Qnil);
       handlerlist = catchlist->handlerlist;
       catchlist = catchlist->next;
-#ifdef ERROR_CHECK_TYPECHECK
-      check_error_state_sanity ();
-#endif
     }
   while (! last_time);
 #else /* Actual XEmacs code */
   /* Unwind the specpdl stack */
   unbind_to (c->pdlcount, Qnil);
   catchlist = c->next;
-#ifdef ERROR_CHECK_TYPECHECK
-  check_error_state_sanity ();
-#endif
 #endif
 
   gcprolist = c->gcpro;
   backtrace_list = c->backlist;
   lisp_eval_depth = c->lisp_eval_depth;
 
-#ifdef DEFEND_AGAINST_THROW_RECURSION
+#if 0 /* no longer used */
   throw_level = 0;
 #endif
   LONGJMP (c->jmp, 1);
@@ -1393,7 +1393,7 @@ static DOESNT_RETURN
 throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 		   Lisp_Object sig, Lisp_Object data)
 {
-#ifdef DEFEND_AGAINST_THROW_RECURSION
+#if 0
   /* die if we recurse more than is reasonable */
   if (++throw_level > 20)
     abort();
@@ -1493,7 +1493,7 @@ If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
 static Lisp_Object
 condition_bind_unwind (Lisp_Object loser)
 {
-  Lisp_Cons *victim;
+  struct Lisp_Cons *victim;
   /* ((handler-fun . handler-args) ... other handlers) */
   Lisp_Object tem = XCAR (loser);
 
@@ -1515,7 +1515,7 @@ condition_bind_unwind (Lisp_Object loser)
 static Lisp_Object
 condition_case_unwind (Lisp_Object loser)
 {
-  Lisp_Cons *victim;
+  struct Lisp_Cons *victim;
 
   /* ((<unbound> . clauses) ... other handlers */
   victim = XCONS (XCAR (loser));
@@ -1646,9 +1646,6 @@ condition_case_1 (Lisp_Object handlers,
      have this code here, and it doesn't cost anything, so I'm leaving it.*/
   UNGCPRO;
   catchlist = c.next;
-#ifdef ERROR_CHECK_TYPECHECK
-  check_error_state_sanity ();
-#endif
   Vcondition_handlers = XCDR (c.tag);
 
   return unbind_to (speccount, c.val);
@@ -1865,8 +1862,6 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
     {
       /* who knows how much has been initialized?  Safest bet is
          just to bomb out immediately. */
-      /* let's not use stderr_out() here, because that does a bunch of
-	 things that might not be safe yet. */
       fprintf (stderr, "Error before initialization is complete!\n");
       abort ();
     }
@@ -2052,25 +2047,16 @@ signal_error (Lisp_Object sig, Lisp_Object data)
   for (;;)
     Fsignal (sig, data);
 }
-#ifdef ERROR_CHECK_TYPECHECK
-void
-check_error_state_sanity (void)
+
+static Lisp_Object
+call_with_suspended_errors_1 (Lisp_Object opaque_arg)
 {
-  struct catchtag *c;
-  int found_error_tag = 0;
-
-  for (c = catchlist; c; c = c->next)
-    {
-      if (EQ (c->tag, Qunbound_suspended_errors_tag))
-	{
-	  found_error_tag = 1;
-	  break;
-	}
-    }
-
-  assert (found_error_tag || NILP (Vcurrent_error_state));
+  Lisp_Object val;
+  Lisp_Object *kludgy_args = (Lisp_Object *) get_opaque_ptr (opaque_arg);
+  PRIMITIVE_FUNCALL (val, get_opaque_ptr (kludgy_args[0]),
+		     kludgy_args + 2, XINT (kludgy_args[1]));
+  return val;
 }
-#endif
 
 static Lisp_Object
 restore_current_warning_class (Lisp_Object warning_class)
@@ -2084,25 +2070,6 @@ restore_current_error_state (Lisp_Object error_state)
 {
   Vcurrent_error_state = error_state;
   return Qnil;
-}
-
-static Lisp_Object
-call_with_suspended_errors_1 (Lisp_Object opaque_arg)
-{
-  Lisp_Object val;
-  Lisp_Object *kludgy_args = (Lisp_Object *) get_opaque_ptr (opaque_arg);
-  Lisp_Object no_error = kludgy_args[2];
-  int speccount = specpdl_depth ();
-
-  if (!EQ (Vcurrent_error_state, no_error))
-    {
-      record_unwind_protect (restore_current_error_state,
-			     Vcurrent_error_state);
-      Vcurrent_error_state = no_error;
-    }
-  PRIMITIVE_FUNCALL (val, get_opaque_ptr (kludgy_args[0]),
-		     kludgy_args + 3, XINT (kludgy_args[1]));
-  return unbind_to (speccount, val);
 }
 
 /* Many functions would like to do one of three things if an error
@@ -2127,8 +2094,8 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
 {
   va_list vargs;
   int speccount;
-  Lisp_Object kludgy_args[23];
-  Lisp_Object *args = kludgy_args + 3;
+  Lisp_Object kludgy_args[22];
+  Lisp_Object *args = kludgy_args + 2;
   int i;
   Lisp_Object no_error;
 
@@ -2170,7 +2137,7 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
       return val;
     }
 
-  speccount = specpdl_depth ();
+  speccount = specpdl_depth();
   if (NILP (class) || NILP (Vcurrent_warning_class))
     {
       /* If we're currently calling for no warnings, then make it so.
@@ -2180,6 +2147,12 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
       record_unwind_protect (restore_current_warning_class,
 			     Vcurrent_warning_class);
       Vcurrent_warning_class = class;
+    }
+  if (!EQ (Vcurrent_error_state, no_error))
+    {
+      record_unwind_protect (restore_current_error_state,
+			     Vcurrent_error_state);
+      Vcurrent_error_state = no_error;
     }
 
   {
@@ -2192,7 +2165,6 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
     GCPRO2 (opaque1, opaque2);
     kludgy_args[0] = opaque2;
     kludgy_args[1] = make_int (nargs);
-    kludgy_args[2] = no_error;
     the_retval = internal_catch (Qunbound_suspended_errors_tag,
 				 call_with_suspended_errors_1,
 				 opaque1, &threw);
@@ -2253,13 +2225,13 @@ maybe_signal_continuable_error (Lisp_Object sig, Lisp_Object data,
 /* dump an error message; called like printf */
 
 DOESNT_RETURN
-error (const char *fmt, ...)
+error (CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt), Qnil, -1,
 				args);
   va_end (args);
 
@@ -2268,7 +2240,7 @@ error (const char *fmt, ...)
 }
 
 void
-maybe_error (Lisp_Object class, Error_behavior errb, const char *fmt, ...)
+maybe_error (Lisp_Object class, Error_behavior errb, CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2278,7 +2250,7 @@ maybe_error (Lisp_Object class, Error_behavior errb, const char *fmt, ...)
     return;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt), Qnil, -1,
 				args);
   va_end (args);
 
@@ -2287,13 +2259,13 @@ maybe_error (Lisp_Object class, Error_behavior errb, const char *fmt, ...)
 }
 
 Lisp_Object
-continuable_error (const char *fmt, ...)
+continuable_error (CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt), Qnil, -1,
 				args);
   va_end (args);
 
@@ -2303,7 +2275,7 @@ continuable_error (const char *fmt, ...)
 
 Lisp_Object
 maybe_continuable_error (Lisp_Object class, Error_behavior errb,
-			 const char *fmt, ...)
+			 CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2313,7 +2285,7 @@ maybe_continuable_error (Lisp_Object class, Error_behavior errb,
     return Qnil;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt), Qnil, -1,
 				args);
   va_end (args);
 
@@ -2330,13 +2302,13 @@ maybe_continuable_error (Lisp_Object class, Error_behavior errb,
    where the error is occurring). */
 
 DOESNT_RETURN
-signal_simple_error (const char *reason, Lisp_Object frob)
+signal_simple_error (CONST char *reason, Lisp_Object frob)
 {
   signal_error (Qerror, list2 (build_translated_string (reason), frob));
 }
 
 void
-maybe_signal_simple_error (const char *reason, Lisp_Object frob,
+maybe_signal_simple_error (CONST char *reason, Lisp_Object frob,
 			   Lisp_Object class, Error_behavior errb)
 {
   /* Optimization: */
@@ -2347,13 +2319,13 @@ maybe_signal_simple_error (const char *reason, Lisp_Object frob,
 }
 
 Lisp_Object
-signal_simple_continuable_error (const char *reason, Lisp_Object frob)
+signal_simple_continuable_error (CONST char *reason, Lisp_Object frob)
 {
   return Fsignal (Qerror, list2 (build_translated_string (reason), frob));
 }
 
 Lisp_Object
-maybe_signal_simple_continuable_error (const char *reason, Lisp_Object frob,
+maybe_signal_simple_continuable_error (CONST char *reason, Lisp_Object frob,
 				       Lisp_Object class, Error_behavior errb)
 {
   /* Optimization: */
@@ -2374,13 +2346,13 @@ maybe_signal_simple_continuable_error (const char *reason, Lisp_Object frob,
 */
 
 DOESNT_RETURN
-error_with_frob (Lisp_Object frob, const char *fmt, ...)
+error_with_frob (Lisp_Object frob, CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt), Qnil, -1,
 				args);
   va_end (args);
 
@@ -2390,7 +2362,7 @@ error_with_frob (Lisp_Object frob, const char *fmt, ...)
 
 void
 maybe_error_with_frob (Lisp_Object frob, Lisp_Object class,
-		       Error_behavior errb, const char *fmt, ...)
+		       Error_behavior errb, CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2400,7 +2372,7 @@ maybe_error_with_frob (Lisp_Object frob, Lisp_Object class,
     return;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt), Qnil, -1,
 				args);
   va_end (args);
 
@@ -2409,13 +2381,13 @@ maybe_error_with_frob (Lisp_Object frob, Lisp_Object class,
 }
 
 Lisp_Object
-continuable_error_with_frob (Lisp_Object frob, const char *fmt, ...)
+continuable_error_with_frob (Lisp_Object frob, CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt), Qnil, -1,
 				args);
   va_end (args);
 
@@ -2425,7 +2397,7 @@ continuable_error_with_frob (Lisp_Object frob, const char *fmt, ...)
 
 Lisp_Object
 maybe_continuable_error_with_frob (Lisp_Object frob, Lisp_Object class,
-				   Error_behavior errb, const char *fmt, ...)
+				   Error_behavior errb, CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
@@ -2435,7 +2407,7 @@ maybe_continuable_error_with_frob (Lisp_Object frob, Lisp_Object class,
     return Qnil;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt), Qnil, -1,
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt), Qnil, -1,
 				args);
   va_end (args);
 
@@ -2452,7 +2424,7 @@ maybe_continuable_error_with_frob (Lisp_Object frob, Lisp_Object class,
    is three objects, a string and two related Lisp objects. */
 
 DOESNT_RETURN
-signal_simple_error_2 (const char *reason,
+signal_simple_error_2 (CONST char *reason,
                        Lisp_Object frob0, Lisp_Object frob1)
 {
   signal_error (Qerror, list3 (build_translated_string (reason), frob0,
@@ -2460,7 +2432,7 @@ signal_simple_error_2 (const char *reason,
 }
 
 void
-maybe_signal_simple_error_2 (const char *reason, Lisp_Object frob0,
+maybe_signal_simple_error_2 (CONST char *reason, Lisp_Object frob0,
 			     Lisp_Object frob1, Lisp_Object class,
 			     Error_behavior errb)
 {
@@ -2473,7 +2445,7 @@ maybe_signal_simple_error_2 (const char *reason, Lisp_Object frob0,
 
 
 Lisp_Object
-signal_simple_continuable_error_2 (const char *reason, Lisp_Object frob0,
+signal_simple_continuable_error_2 (CONST char *reason, Lisp_Object frob0,
 				   Lisp_Object frob1)
 {
   return Fsignal (Qerror, list3 (build_translated_string (reason), frob0,
@@ -2481,7 +2453,7 @@ signal_simple_continuable_error_2 (const char *reason, Lisp_Object frob0,
 }
 
 Lisp_Object
-maybe_signal_simple_continuable_error_2 (const char *reason, Lisp_Object frob0,
+maybe_signal_simple_continuable_error_2 (CONST char *reason, Lisp_Object frob0,
 					 Lisp_Object frob1, Lisp_Object class,
 					 Error_behavior errb)
 {
@@ -2509,48 +2481,47 @@ signal_quit (void)
 
 
 /* Used in core lisp functions for efficiency */
-Lisp_Object
+void
 signal_void_function_error (Lisp_Object function)
 {
-  return Fsignal (Qvoid_function, list1 (function));
+  Fsignal (Qvoid_function, list1 (function));
 }
 
-Lisp_Object
+static void
 signal_invalid_function_error (Lisp_Object function)
 {
-  return Fsignal (Qinvalid_function, list1 (function));
+  Fsignal (Qinvalid_function, list1 (function));
 }
 
-Lisp_Object
+static void
 signal_wrong_number_of_arguments_error (Lisp_Object function, int nargs)
 {
-  return Fsignal (Qwrong_number_of_arguments,
-		  list2 (function, make_int (nargs)));
+  Fsignal (Qwrong_number_of_arguments, list2 (function, make_int (nargs)));
 }
 
 /* Used in list traversal macros for efficiency. */
-DOESNT_RETURN
+void
 signal_malformed_list_error (Lisp_Object list)
 {
-  signal_error (Qmalformed_list, list1 (list));
+  Fsignal (Qmalformed_list, list1 (list));
 }
 
-DOESNT_RETURN
+void
 signal_malformed_property_list_error (Lisp_Object list)
 {
-  signal_error (Qmalformed_property_list, list1 (list));
+  Fsignal (Qmalformed_property_list, list1 (list));
 }
 
-DOESNT_RETURN
+void
 signal_circular_list_error (Lisp_Object list)
 {
-  signal_error (Qcircular_list, list1 (list));
+  Fsignal (Qcircular_list, list1 (list));
 }
 
-DOESNT_RETURN
+void
 signal_circular_property_list_error (Lisp_Object list)
 {
-  signal_error (Qcircular_property_list, list1 (list));
+  Fsignal (Qcircular_property_list, list1 (list));
 }
 
 /************************************************************************/
@@ -2662,7 +2633,7 @@ when reading the arguments.
     {
       Fsignal (Qwrong_type_argument,
 	       Fcons (Qcommandp,
-		      (EQ (cmd, final)
+		      ((EQ (cmd, final))
                        ? list1 (cmd)
                        : list2 (cmd, final))));
       return Qnil;
@@ -2780,10 +2751,11 @@ this does nothing and returns nil.
       file = Fsymbol_name (Fintern (file, Qnil));
     }
 
-  return Ffset (function, Fcons (Qautoload, list4 (file,
-						   docstring,
-						   interactive,
-						   type)));
+  return Ffset (function,
+                Fpurecopy (Fcons (Qautoload, list4 (file,
+                                                    docstring,
+                                                    interactive,
+                                                    type))));
 }
 
 Lisp_Object
@@ -2870,7 +2842,7 @@ do_autoload (Lisp_Object fundef,
 /************************************************************************/
 
 static Lisp_Object funcall_lambda (Lisp_Object fun,
-				   int nargs, Lisp_Object args[]);
+                                   int nargs, Lisp_Object args[]);
 static int in_warnings;
 
 static Lisp_Object
@@ -2983,7 +2955,7 @@ Evaluate FORM and return its value.
       if (max_args == UNEVALLED) /* Optimize for the common case */
 	{
 	  backtrace.evalargs = 0;
-	  val = (((Lisp_Object (*) (Lisp_Object)) subr_function (subr))
+	  val = (((Lisp_Object (*) (Lisp_Object)) (subr_function (subr)))
 		 (original_args));
 	}
       else if (nargs <= max_args)
@@ -3037,7 +3009,7 @@ Evaluate FORM and return its value.
 	  backtrace.args  = args;
 	  backtrace.nargs = nargs;
 
-	  val = (((Lisp_Object (*) (int, Lisp_Object *)) subr_function (subr))
+	  val = (((Lisp_Object (*) (int, Lisp_Object *)) (subr_function (subr)))
 		 (nargs, args));
 
 	  UNGCPRO;
@@ -3045,7 +3017,7 @@ Evaluate FORM and return its value.
       else
 	{
 	wrong_number_of_arguments:
-	  val = signal_wrong_number_of_arguments_error (original_fun, nargs);
+	  signal_wrong_number_of_arguments_error (fun, nargs);
 	}
     }
   else if (COMPILED_FUNCTIONP (fun))
@@ -3133,7 +3105,7 @@ Evaluate FORM and return its value.
   else /* ! (SUBRP (fun) || COMPILED_FUNCTIONP (fun) || CONSP (fun)) */
     {
     invalid_function:
-      val = signal_invalid_function_error (fun);
+      signal_invalid_function_error (fun);
     }
 
   lisp_eval_depth--;
@@ -3208,14 +3180,13 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
       int max_args = subr->max_args;
       Lisp_Object spacious_args[SUBR_MAX_ARGS];
 
+      if (fun_nargs < subr->min_args)
+	goto wrong_number_of_arguments;
+
       if (fun_nargs == max_args) /* Optimize for the common case */
 	{
 	funcall_subr:
 	  FUNCALL_SUBR (val, subr, fun_args, max_args);
-	}
-      else if (fun_nargs < subr->min_args)
-	{
-	  goto wrong_number_of_arguments;
 	}
       else if (fun_nargs < max_args)
 	{
@@ -3232,7 +3203,8 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
 	}
       else if (max_args == MANY)
 	{
-	  val = SUBR_FUNCTION (subr, MANY) (fun_nargs, fun_args);
+	  val = ((Lisp_Object (*) (int, Lisp_Object *)) (subr_function (subr)))
+	    (fun_nargs, fun_args);
 	}
       else if (max_args == UNEVALLED) /* Can't funcall a special form */
 	{
@@ -3241,7 +3213,7 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
       else
 	{
 	wrong_number_of_arguments:
-	  val = signal_wrong_number_of_arguments_error (fun, fun_nargs);
+	  signal_wrong_number_of_arguments_error (fun, fun_nargs);
 	}
     }
   else if (COMPILED_FUNCTIONP (fun))
@@ -3268,12 +3240,12 @@ Thus, (funcall 'cons 'x 'y) returns (x . y).
     }
   else if (UNBOUNDP (fun))
     {
-      val = signal_void_function_error (args[0]);
+      signal_void_function_error (args[0]);
     }
   else
     {
     invalid_function:
-      val = signal_invalid_function_error (fun);
+      signal_invalid_function_error (fun);
     }
 
   lisp_eval_depth--;
@@ -3315,11 +3287,9 @@ function_argcount (Lisp_Object function, int function_min_args_p)
 
   if (SUBRP (function))
     {
-      /* Using return with the ?: operator tickles a DEC CC compiler bug. */
-      if (function_min_args_p)
-	return Fsubr_min_args (function);
-      else
-	return Fsubr_max_args (function);
+      return function_min_args_p ?
+	Fsubr_min_args (function):
+	Fsubr_max_args (function);
    }
   else if (COMPILED_FUNCTIONP (function))
     {
@@ -3351,7 +3321,7 @@ function_argcount (Lisp_Object function, int function_min_args_p)
   else
     {
     invalid_function:
-      return signal_invalid_function_error (function);
+      return Fsignal (Qinvalid_function, list1 (function));
     }
 
   {
@@ -3538,10 +3508,10 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object args[])
   return unbind_to (speccount, Fprogn (body));
 
  wrong_number_of_arguments:
-  return signal_wrong_number_of_arguments_error (fun, nargs);
+  return Fsignal (Qwrong_number_of_arguments, list2 (fun, make_int (nargs)));
 
  invalid_function:
-  return signal_invalid_function_error (fun);
+  return Fsignal (Qinvalid_function, list1 (fun));
 }
 
 
@@ -3657,9 +3627,8 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
     }
   else
     {
-      struct gcpro gcpro1, gcpro2, gcpro3;
-      Lisp_Object globals = Qnil;
-      GCPRO3 (sym, val, globals);
+      struct gcpro gcpro1, gcpro2;
+      GCPRO2 (sym, val);
 
       for (;
 	   CONSP (val) && ((cond == RUN_HOOKS_TO_COMPLETION)
@@ -3671,7 +3640,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 	    {
 	      /* t indicates this hook has a local binding;
 		 it means to run the global binding too.  */
-	      globals = Fdefault_value (sym);
+	      Lisp_Object globals = Fdefault_value (sym);
 
 	      if ((! CONSP (globals) || EQ (XCAR (globals), Qlambda)) &&
 		  ! NILP (globals))
@@ -4179,7 +4148,7 @@ caught_a_squirmer (Lisp_Object errordata, Lisp_Object arg)
       args[1] = errordata;
       warn_when_safe_lispobj
 	(Qerror, Qwarning,
-	 emacs_doprnt_string_lisp ((const Bufbyte *) "%s: %s",
+	 emacs_doprnt_string_lisp ((CONST Bufbyte *) "%s: %s",
 				   Qnil, -1, 2, args));
     }
   return Qunbound;
@@ -4222,7 +4191,7 @@ catch_them_squirmers_eval_in_buffer (Lisp_Object cons)
 }
 
 Lisp_Object
-eval_in_buffer_trapping_errors (const char *warning_string,
+eval_in_buffer_trapping_errors (CONST char *warning_string,
 				struct buffer *buf, Lisp_Object form)
 {
   int speccount = specpdl_depth();
@@ -4238,14 +4207,14 @@ eval_in_buffer_trapping_errors (const char *warning_string,
   /* gc_currently_forbidden = 1; Currently no reason to do this; */
 
   cons = noseeum_cons (buffer, form);
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
+  opaque = (warning_string ? make_opaque_ptr (warning_string) : Qnil);
   GCPRO2 (cons, opaque);
   /* Qerror not Qt, so you can get a backtrace */
   tem = condition_case_1 (Qerror,
                           catch_them_squirmers_eval_in_buffer, cons,
 			  caught_a_squirmer, opaque);
   free_cons (XCONS (cons));
-  if (OPAQUE_PTRP (opaque))
+  if (OPAQUEP (opaque))
     free_opaque_ptr (opaque);
   UNGCPRO;
 
@@ -4262,7 +4231,7 @@ catch_them_squirmers_run_hook (Lisp_Object hook_symbol)
 }
 
 Lisp_Object
-run_hook_trapping_errors (const char *warning_string, Lisp_Object hook_symbol)
+run_hook_trapping_errors (CONST char *warning_string, Lisp_Object hook_symbol)
 {
   int speccount;
   Lisp_Object tem;
@@ -4278,13 +4247,13 @@ run_hook_trapping_errors (const char *warning_string, Lisp_Object hook_symbol)
   speccount = specpdl_depth();
   specbind (Qinhibit_quit, Qt);
 
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
+  opaque = (warning_string ? make_opaque_ptr (warning_string) : Qnil);
   GCPRO1 (opaque);
   /* Qerror not Qt, so you can get a backtrace */
   tem = condition_case_1 (Qerror,
                           catch_them_squirmers_run_hook, hook_symbol,
                           caught_a_squirmer, opaque);
-  if (OPAQUE_PTRP (opaque))
+  if (OPAQUEP (opaque))
     free_opaque_ptr (opaque);
   UNGCPRO;
 
@@ -4295,7 +4264,7 @@ run_hook_trapping_errors (const char *warning_string, Lisp_Object hook_symbol)
    if an error occurs. */
 
 Lisp_Object
-safe_run_hook_trapping_errors (const char *warning_string,
+safe_run_hook_trapping_errors (CONST char *warning_string,
 			       Lisp_Object hook_symbol,
 			       int allow_quit)
 {
@@ -4314,7 +4283,7 @@ safe_run_hook_trapping_errors (const char *warning_string,
     specbind (Qinhibit_quit, Qt);
 
   cons = noseeum_cons (hook_symbol,
-		       warning_string ? make_opaque_ptr ((void *)warning_string)
+		       warning_string ? make_opaque_ptr (warning_string)
 		       : Qnil);
   GCPRO1 (cons);
   /* Qerror not Qt, so you can get a backtrace */
@@ -4325,7 +4294,7 @@ safe_run_hook_trapping_errors (const char *warning_string,
 			  allow_quit_safe_run_hook_caught_a_squirmer :
                           safe_run_hook_caught_a_squirmer,
 			  cons);
-  if (OPAQUE_PTRP (XCDR (cons)))
+  if (OPAQUEP (XCDR (cons)))
     free_opaque_ptr (XCDR (cons));
   free_cons (XCONS (cons));
   UNGCPRO;
@@ -4341,7 +4310,7 @@ catch_them_squirmers_call0 (Lisp_Object function)
 }
 
 Lisp_Object
-call0_trapping_errors (const char *warning_string, Lisp_Object function)
+call0_trapping_errors (CONST char *warning_string, Lisp_Object function)
 {
   int speccount;
   Lisp_Object tem;
@@ -4360,12 +4329,12 @@ call0_trapping_errors (const char *warning_string, Lisp_Object function)
   specbind (Qinhibit_quit, Qt);
   /* gc_currently_forbidden = 1; Currently no reason to do this; */
 
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
+  opaque = (warning_string ? make_opaque_ptr (warning_string) : Qnil);
   /* Qerror not Qt, so you can get a backtrace */
   tem = condition_case_1 (Qerror,
                           catch_them_squirmers_call0, function,
                           caught_a_squirmer, opaque);
-  if (OPAQUE_PTRP (opaque))
+  if (OPAQUEP (opaque))
     free_opaque_ptr (opaque);
   UNGCPRO;
 
@@ -4388,7 +4357,7 @@ catch_them_squirmers_call2 (Lisp_Object cons)
 }
 
 Lisp_Object
-call1_trapping_errors (const char *warning_string, Lisp_Object function,
+call1_trapping_errors (CONST char *warning_string, Lisp_Object function,
 		       Lisp_Object object)
 {
   int speccount = specpdl_depth();
@@ -4410,12 +4379,12 @@ call1_trapping_errors (const char *warning_string, Lisp_Object function,
   /* gc_currently_forbidden = 1; Currently no reason to do this; */
 
   cons = noseeum_cons (function, object);
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
+  opaque = (warning_string ? make_opaque_ptr (warning_string) : Qnil);
   /* Qerror not Qt, so you can get a backtrace */
   tem = condition_case_1 (Qerror,
                           catch_them_squirmers_call1, cons,
                           caught_a_squirmer, opaque);
-  if (OPAQUE_PTRP (opaque))
+  if (OPAQUEP (opaque))
     free_opaque_ptr (opaque);
   free_cons (XCONS (cons));
   UNGCPRO;
@@ -4425,7 +4394,7 @@ call1_trapping_errors (const char *warning_string, Lisp_Object function,
 }
 
 Lisp_Object
-call2_trapping_errors (const char *warning_string, Lisp_Object function,
+call2_trapping_errors (CONST char *warning_string, Lisp_Object function,
 		       Lisp_Object object1, Lisp_Object object2)
 {
   int speccount = specpdl_depth();
@@ -4446,12 +4415,12 @@ call2_trapping_errors (const char *warning_string, Lisp_Object function,
   /* gc_currently_forbidden = 1; Currently no reason to do this; */
 
   cons = list3 (function, object1, object2);
-  opaque = (warning_string ? make_opaque_ptr ((void *)warning_string) : Qnil);
+  opaque = (warning_string ? make_opaque_ptr (warning_string) : Qnil);
   /* Qerror not Qt, so you can get a backtrace */
   tem = condition_case_1 (Qerror,
                           catch_them_squirmers_call2, cons,
                           caught_a_squirmer, opaque);
-  if (OPAQUE_PTRP (opaque))
+  if (OPAQUEP (opaque))
     free_opaque_ptr (opaque);
   free_list (cons);
   UNGCPRO;
@@ -4504,7 +4473,7 @@ specbind_unwind_local (Lisp_Object ovalue)
 {
   Lisp_Object current = Fcurrent_buffer ();
   Lisp_Object symbol = specpdl_ptr->symbol;
-  Lisp_Cons *victim = XCONS (ovalue);
+  struct Lisp_Cons *victim = XCONS (ovalue);
   Lisp_Object buf = get_buffer (victim->car, 0);
   ovalue = victim->cdr;
 
@@ -4639,12 +4608,12 @@ unbind_to_hairy (int count)
 {
   int quitf;
 
-  ++specpdl_ptr;
-  ++specpdl_depth_counter;
-
   check_quit (); /* make Vquit_flag accurate */
   quitf = !NILP (Vquit_flag);
   Vquit_flag = Qnil;
+
+  ++specpdl_ptr;
+  ++specpdl_depth_counter;
 
   while (specpdl_depth_counter != count)
     {
@@ -4658,7 +4627,7 @@ unbind_to_hairy (int count)
 	{
 	  /* We checked symbol for validity when we specbound it,
 	     so only need to call Fset if symbol has magic value.  */
-	  Lisp_Symbol *sym = XSYMBOL (specpdl_ptr->symbol);
+	  struct Lisp_Symbol *sym = XSYMBOL (specpdl_ptr->symbol);
 	  if (!SYMBOL_VALUE_MAGIC_P (sym->value))
 	    sym->value = specpdl_ptr->old_value;
 	  else
@@ -4784,7 +4753,7 @@ backtrace_specials (int speccount, int speclimit, Lisp_Object stream)
 
 DEFUN ("backtrace", Fbacktrace, 0, 2, "", /*
 Print a trace of Lisp function calls currently active.
-Optional arg STREAM specifies the output stream to send the backtrace to,
+Option arg STREAM specifies the output stream to send the backtrace to,
 and defaults to the value of `standard-output'.  Optional second arg
 DETAILED means show places where currently active variable bindings,
 catches, condition-cases, and unwind-protects were made as well as
@@ -4827,8 +4796,8 @@ function calls.
       if (!NILP (detailed) && catches && catches->backlist == backlist)
 	{
           int catchpdl = catches->pdlcount;
-          if (speccount > catchpdl
-	      && specpdl[catchpdl].func == condition_case_unwind)
+          if (specpdl[catchpdl].func == condition_case_unwind
+              && speccount > catchpdl)
             /* This is a condition-case catchpoint */
             catchpdl = catchpdl + 1;
 
@@ -4899,8 +4868,8 @@ function calls.
 		      Fprin1 (backlist->args[i], stream);
 		    }
 		}
-	      write_c_string (")\n", stream);
 	    }
+	  write_c_string (")\n", stream);
 	  backlist = backlist->next;
 	}
     }
@@ -4978,13 +4947,13 @@ warn_when_safe_lispobj (Lisp_Object class, Lisp_Object level,
    automatically be called when it is safe to do so. */
 
 void
-warn_when_safe (Lisp_Object class, Lisp_Object level, const char *fmt, ...)
+warn_when_safe (Lisp_Object class, Lisp_Object level, CONST char *fmt, ...)
 {
   Lisp_Object obj;
   va_list args;
 
   va_start (args, fmt);
-  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (fmt),
+  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (fmt),
 				Qnil, -1, args);
   va_end (args);
 
@@ -5001,8 +4970,6 @@ warn_when_safe (Lisp_Object class, Lisp_Object level, const char *fmt, ...)
 void
 syms_of_eval (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (subr);
-
   defsymbol (&Qinhibit_quit, "inhibit-quit");
   defsymbol (&Qautoload, "autoload");
   defsymbol (&Qdebug_on_error, "debug-on-error");
@@ -5086,28 +5053,8 @@ reinit_eval (void)
 }
 
 void
-reinit_vars_of_eval (void)
-{
-  preparing_for_armageddon = 0;
-  in_warnings = 0;
-  Qunbound_suspended_errors_tag = make_opaque_ptr (&Qunbound_suspended_errors_tag);
-  staticpro_nodump (&Qunbound_suspended_errors_tag);
-
-  specpdl_size = 50;
-  specpdl = xnew_array (struct specbinding, specpdl_size);
-  /* XEmacs change: increase these values. */
-  max_specpdl_size = 3000;
-  max_lisp_eval_depth = 500;
-#ifdef DEFEND_AGAINST_THROW_RECURSION
-  throw_level = 0;
-#endif
-}
-
-void
 vars_of_eval (void)
 {
-  reinit_vars_of_eval ();
-
   DEFVAR_INT ("max-specpdl-size", &max_specpdl_size /*
 Limit on number of Lisp variable bindings & unwind-protects before error.
 */ );
@@ -5209,10 +5156,13 @@ If due to `eval' entry, one arg, t.
 */ );
   Vdebugger = Qnil;
 
+  preparing_for_armageddon = 0;
+
   staticpro (&Vpending_warnings);
   Vpending_warnings = Qnil;
-  pdump_wire (&Vpending_warnings_tail);
-  Vpending_warnings_tail = Qnil;
+  Vpending_warnings_tail = Qnil; /* no need to protect this */
+
+  in_warnings = 0;
 
   staticpro (&Vautoload_queue);
   Vautoload_queue = Qnil;
@@ -5224,6 +5174,19 @@ If due to `eval' entry, one arg, t.
 
   staticpro (&Vcurrent_error_state);
   Vcurrent_error_state = Qnil; /* errors as normal */
+
+  Qunbound_suspended_errors_tag = make_opaque_long (0);
+  staticpro (&Qunbound_suspended_errors_tag);
+
+  specpdl_size = 50;
+  specpdl_depth_counter = 0;
+  specpdl = xnew_array (struct specbinding, specpdl_size);
+  /* XEmacs change: increase these values. */
+  max_specpdl_size = 3000;
+  max_lisp_eval_depth = 500;
+#if 0 /* no longer used */
+  throw_level = 0;
+#endif
 
   reinit_eval ();
 }

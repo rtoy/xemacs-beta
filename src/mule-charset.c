@@ -32,7 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "device.h"
 #include "faces.h"
-#include "mule-ccl.h"
 
 /* The various pre-defined charsets. */
 
@@ -74,17 +73,11 @@ static int composite_char_col_next;
 
 #endif /* ENABLE_COMPOSITE_CHARS */
 
-struct charset_lookup *chlook;
+/* Table of charsets indexed by leading byte. */
+Lisp_Object charset_by_leading_byte[128];
 
-static const struct lrecord_description charset_lookup_description_1[] = {
-  { XD_LISP_OBJECT_ARRAY, offsetof (struct charset_lookup, charset_by_leading_byte), 128+4*128*2 },
-  { XD_END }
-};
-
-static const struct struct_description charset_lookup_description = {
-  sizeof (struct charset_lookup),
-  charset_lookup_description_1
-};
+/* Table of charsets indexed by type/final-byte/direction. */
+Lisp_Object charset_by_attributes[4][128][2];
 
 /* Table of number of bytes in the string representation of a character
    indexed by the first byte of that representation.
@@ -92,9 +85,9 @@ static const struct struct_description charset_lookup_description = {
    rep_bytes_by_first_byte(c) is more efficient than the equivalent
    canonical computation:
 
-   XCHARSET_REP_BYTES (CHARSET_BY_LEADING_BYTE (c)) */
+   (BYTE_ASCII_P (c) ? 1 : XCHARSET_REP_BYTES (CHARSET_BY_LEADING_BYTE (c))) */
 
-const Bytecount rep_bytes_by_first_byte[0xA0] =
+Bytecount rep_bytes_by_first_byte[0xA0] =
 { /* 0x00 - 0x7f are for straight ASCII */
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -118,6 +111,7 @@ Lisp_Object Qcharsetp;
 Lisp_Object Qregistry, Qfinal, Qgraphic;
 Lisp_Object Qdirection;
 Lisp_Object Qreverse_direction_charset;
+Lisp_Object Qccl_program;
 Lisp_Object Qleading_byte;
 Lisp_Object Qshort_name, Qlong_name;
 
@@ -149,6 +143,9 @@ Lisp_Object Qascii,
 Lisp_Object Ql2r, Qr2l;
 
 Lisp_Object Vcharset_hash_table;
+
+static Bufbyte next_allocated_1_byte_leading_byte;
+static Bufbyte next_allocated_2_byte_leading_byte;
 
 /* Composite characters are characters constructed by overstriking two
    or more regular characters.
@@ -217,7 +214,7 @@ non_ascii_set_charptr_emchar (Bufbyte *str, Emchar c)
    Use the macro charptr_emchar() instead. */
 
 Emchar
-non_ascii_charptr_emchar (const Bufbyte *str)
+non_ascii_charptr_emchar (CONST Bufbyte *str)
 {
   Bufbyte i0 = *str, i1, i2 = 0;
   Lisp_Object charset;
@@ -264,8 +261,7 @@ non_ascii_valid_char_p (Emchar ch)
       if (f3 < 0x20)
 	return 0;
 
-      if (f3 != 0x20 && f3 != 0x7F && !(f2 >= MIN_CHAR_FIELD2_PRIVATE &&
-					f2 <= MAX_CHAR_FIELD2_PRIVATE))
+      if (f3 != 0x20 && f3 != 0x7F)
 	return 1;
 
       /*
@@ -274,8 +270,6 @@ non_ascii_valid_char_p (Emchar ch)
 	 FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
 	 */
       charset = CHARSET_BY_LEADING_BYTE (f2 + FIELD2_TO_OFFICIAL_LEADING_BYTE);
-      if (EQ (charset, Qnil))
-	return 0;
       return (XCHARSET_CHARS (charset) == 96);
     }
   else
@@ -300,8 +294,7 @@ non_ascii_valid_char_p (Emchar ch)
 	}
 #endif /* ENABLE_COMPOSITE_CHARS */
 
-      if (f2 != 0x20 && f2 != 0x7F && f3 != 0x20 && f3 != 0x7F
-	  && !(f1 >= MIN_CHAR_FIELD1_PRIVATE && f1 <= MAX_CHAR_FIELD1_PRIVATE))
+      if (f2 != 0x20 && f2 != 0x7F && f3 != 0x20 && f3 != 0x7F)
 	return 1;
 
       if (f1 <= MAX_CHAR_FIELD1_OFFICIAL)
@@ -311,8 +304,6 @@ non_ascii_valid_char_p (Emchar ch)
 	charset =
 	  CHARSET_BY_LEADING_BYTE (f1 + FIELD1_TO_PRIVATE_LEADING_BYTE);
 
-      if (EQ (charset, Qnil))
-	return 0;
       return (XCHARSET_CHARS (charset) == 96);
     }
 }
@@ -327,7 +318,7 @@ non_ascii_valid_char_p (Emchar ch)
    charptr_copy_char() instead. */
 
 Bytecount
-non_ascii_charptr_copy_char (const Bufbyte *ptr, Bufbyte *str)
+non_ascii_charptr_copy_char (CONST Bufbyte *ptr, Bufbyte *str)
 {
   Bufbyte *strptr = str;
   *strptr = *ptr++;
@@ -404,22 +395,22 @@ Lstream_funget_emchar (Lstream *stream, Emchar ch)
 /************************************************************************/
 
 static Lisp_Object
-mark_charset (Lisp_Object obj)
+mark_charset (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  Lisp_Charset *cs = XCHARSET (obj);
+  struct Lisp_Charset *cs = XCHARSET (obj);
 
-  mark_object (cs->short_name);
-  mark_object (cs->long_name);
-  mark_object (cs->doc_string);
-  mark_object (cs->registry);
-  mark_object (cs->ccl_program);
+  markobj (cs->short_name);
+  markobj (cs->long_name);
+  markobj (cs->doc_string);
+  markobj (cs->registry);
+  markobj (cs->ccl_program);
   return cs->name;
 }
 
 static void
 print_charset (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  Lisp_Charset *cs = XCHARSET (obj);
+  struct Lisp_Charset *cs = XCHARSET (obj);
   char buf[200];
 
   if (print_readably)
@@ -450,20 +441,9 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
-static const struct lrecord_description charset_description[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Charset, name) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Charset, doc_string) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Charset, registry) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Charset, short_name) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Charset, long_name) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Charset, reverse_direction_charset) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Charset, ccl_program) },
-  { XD_END }
-};
-
 DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
-                               mark_charset, print_charset, 0, 0, 0, charset_description,
-			       Lisp_Charset);
+                               mark_charset, print_charset, 0, 0, 0,
+			       struct Lisp_Charset);
 /* Make a new charset. */
 
 static Lisp_Object
@@ -474,10 +454,8 @@ make_charset (int id, Lisp_Object name, unsigned char rep_bytes,
 	      Lisp_Object reg)
 {
   Lisp_Object obj;
-  Lisp_Charset *cs = alloc_lcrecord_type (Lisp_Charset, &lrecord_charset);
-
-  zero_lcrecord (cs);
-
+  struct Lisp_Charset *cs =
+    alloc_lcrecord_type (struct Lisp_Charset, &lrecord_charset);
   XSETCHARSET (obj, cs);
 
   CHARSET_ID		(cs) = id;
@@ -505,12 +483,15 @@ make_charset (int id, Lisp_Object name, unsigned char rep_bytes,
       /* some charsets do not have final characters.  This includes
 	 ASCII, Control-1, Composite, and the two faux private
 	 charsets. */
-      assert (NILP (chlook->charset_by_attributes[type][final][direction]));
-      chlook->charset_by_attributes[type][final][direction] = obj;
+      assert (NILP (charset_by_attributes[type][final][direction]));
+      charset_by_attributes[type][final][direction] = obj;
     }
 
-  assert (NILP (chlook->charset_by_leading_byte[id - 128]));
-  chlook->charset_by_leading_byte[id - 128] = obj;
+  assert (NILP (charset_by_leading_byte[id - 128]));
+  charset_by_leading_byte[id - 128] = obj;
+  if (id < 0xA0)
+    /* official leading byte */
+    rep_bytes_by_first_byte[id] = rep_bytes;
 
   /* Some charsets are "faux" and don't have names or really exist at
      all except in the leading-byte table. */
@@ -526,17 +507,17 @@ get_unallocated_leading_byte (int dimension)
 
   if (dimension == 1)
     {
-      if (chlook->next_allocated_1_byte_leading_byte > MAX_LEADING_BYTE_PRIVATE_1)
+      if (next_allocated_1_byte_leading_byte > MAX_LEADING_BYTE_PRIVATE_1)
 	lb = 0;
       else
-	lb = chlook->next_allocated_1_byte_leading_byte++;
+	lb = next_allocated_1_byte_leading_byte++;
     }
   else
     {
-      if (chlook->next_allocated_2_byte_leading_byte > MAX_LEADING_BYTE_PRIVATE_2)
+      if (next_allocated_2_byte_leading_byte > MAX_LEADING_BYTE_PRIVATE_2)
 	lb = 0;
       else
-	lb = chlook->next_allocated_2_byte_leading_byte++;
+	lb = next_allocated_2_byte_leading_byte++;
     }
 
   if (!lb)
@@ -833,7 +814,7 @@ NEW-NAME is the name of the new charset.  Return the new charset.
   int id, dimension, columns, graphic, final;
   int direction, type;
   Lisp_Object registry, doc_string, short_name, long_name;
-  Lisp_Charset *cs;
+  struct Lisp_Charset *cs;
 
   charset = Fget_charset (charset);
   if (!NILP (XCHARSET_REVERSE_DIRECTION_CHARSET (charset)))
@@ -982,7 +963,7 @@ Recognized properties are those listed in `make-charset', as well as
 */
        (charset, prop))
 {
-  Lisp_Charset *cs;
+  struct Lisp_Charset *cs;
 
   charset = Fget_charset (charset);
   cs = XCHARSET (charset);
@@ -1069,14 +1050,11 @@ Set the 'registry property of CHARSET to REGISTRY.
 /************************************************************************/
 
 DEFUN ("make-char", Fmake_char, 2, 3, 0, /*
-Make a character from CHARSET and octets ARG1 and ARG2.
-ARG2 is required only for characters from two-dimensional charsets.
-For example, (make-char 'latin-iso8859-2 185) will return the Latin 2
-character s with caron.
+Make a multi-byte character from CHARSET and octets ARG1 and ARG2.
 */
        (charset, arg1, arg2))
 {
-  Lisp_Charset *cs;
+  struct Lisp_Charset *cs;
   int a1, a2;
   int lowlim, highlim;
 
@@ -1089,11 +1067,7 @@ character s with caron.
   else	/* CHARSET_CHARS (cs) == 96) */	     lowlim = 32, highlim = 127;
 
   CHECK_INT (arg1);
-  /* It is useful (and safe, according to Olivier Galibert) to strip
-     the 8th bit off ARG1 and ARG2 becaue it allows programmers to
-     write (make-char 'latin-iso8859-2 CODE) where code is the actual
-     Latin 2 code of the character.  */
-  a1 = XINT (arg1) & 0x7f;
+  a1 = XINT (arg1);
   if (a1 < lowlim || a1 > highlim)
     args_out_of_range_3 (arg1, make_int (lowlim), make_int (highlim));
 
@@ -1106,7 +1080,7 @@ character s with caron.
     }
 
   CHECK_INT (arg2);
-  a2 = XINT (arg2) & 0x7f;
+  a2 = XINT (arg2);
   if (a2 < lowlim || a2 > highlim)
     args_out_of_range_3 (arg2, make_int (lowlim), make_int (highlim));
 
@@ -1131,47 +1105,20 @@ N defaults to 0 if omitted.
        (ch, n))
 {
   Lisp_Object charset;
-  int octet0, octet1;
+  int c1, c2, int_n;
 
   CHECK_CHAR_COERCE_INT (ch);
-
-  BREAKUP_CHAR (XCHAR (ch), charset, octet0, octet1);
-
-  if (NILP (n) || EQ (n, Qzero))
-    return make_int (octet0);
-  else if (EQ (n, make_int (1)))
-    return make_int (octet1);
-  else
-    signal_simple_error ("Octet number must be 0 or 1", n);
-}
-
-DEFUN ("split-char", Fsplit_char, 1, 1, 0, /*
-Return list of charset and one or two position-codes of CHAR.
-*/
-       (character))
-{
-  /* This function can GC */
-  struct gcpro gcpro1, gcpro2;
-  Lisp_Object charset = Qnil;
-  Lisp_Object rc = Qnil;
-  int c1, c2;
-
-  GCPRO2 (charset, rc);
-  CHECK_CHAR_COERCE_INT (character);
-
-  BREAKUP_CHAR (XCHAR (character), charset, c1, c2);
-
-  if (XCHARSET_DIMENSION (Fget_charset (charset)) == 2)
-    {
-      rc = list3 (XCHARSET_NAME (charset), make_int (c1), make_int (c2));
-    }
+  if (NILP (n))
+    int_n = 0;
   else
     {
-      rc = list2 (XCHARSET_NAME (charset), make_int (c1));
+      CHECK_INT (n);
+      int_n = XINT (n);
+      if (int_n != 0 && int_n != 1)
+	signal_simple_error ("Octet number must be 0 or 1", n);
     }
-  UNGCPRO;
-
-  return rc;
+  BREAKUP_CHAR (XCHAR (ch), charset, c1, c2);
+  return make_int (int_n == 0 ? c1 : c2);
 }
 
 
@@ -1256,8 +1203,6 @@ Return a string of the characters comprising a composite character.
 void
 syms_of_mule_charset (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (charset);
-
   DEFSUBR (Fcharsetp);
   DEFSUBR (Ffind_charset);
   DEFSUBR (Fget_charset);
@@ -1279,7 +1224,6 @@ syms_of_mule_charset (void)
   DEFSUBR (Fmake_char);
   DEFSUBR (Fchar_charset);
   DEFSUBR (Fchar_octet);
-  DEFSUBR (Fsplit_char);
 
 #ifdef ENABLE_COMPOSITE_CHARS
   DEFSUBR (Fmake_composite_char);
@@ -1292,6 +1236,7 @@ syms_of_mule_charset (void)
   defsymbol (&Qgraphic, "graphic");
   defsymbol (&Qdirection, "direction");
   defsymbol (&Qreverse_direction_charset, "reverse-direction-charset");
+  defsymbol (&Qccl_program, "ccl-program");
   defsymbol (&Qshort_name, "short-name");
   defsymbol (&Qlong_name, "long-name");
 
@@ -1332,21 +1277,18 @@ vars_of_mule_charset (void)
 {
   int i, j, k;
 
-  chlook = xnew (struct charset_lookup);
-  dumpstruct (&chlook, &charset_lookup_description);
-
   /* Table of charsets indexed by leading byte. */
-  for (i = 0; i < countof (chlook->charset_by_leading_byte); i++)
-    chlook->charset_by_leading_byte[i] = Qnil;
+  for (i = 0; i < countof (charset_by_leading_byte); i++)
+    charset_by_leading_byte[i] = Qnil;
 
   /* Table of charsets indexed by type/final-byte/direction. */
-  for (i = 0; i < countof (chlook->charset_by_attributes); i++)
-    for (j = 0; j < countof (chlook->charset_by_attributes[0]); j++)
-      for (k = 0; k < countof (chlook->charset_by_attributes[0][0]); k++)
-	chlook->charset_by_attributes[i][j][k] = Qnil;
+  for (i = 0; i < countof (charset_by_attributes); i++)
+    for (j = 0; j < countof (charset_by_attributes[0]); j++)
+      for (k = 0; k < countof (charset_by_attributes[0][0]); k++)
+	charset_by_attributes[i][j][k] = Qnil;
 
-  chlook->next_allocated_1_byte_leading_byte = MIN_LEADING_BYTE_PRIVATE_1;
-  chlook->next_allocated_2_byte_leading_byte = MIN_LEADING_BYTE_PRIVATE_2;
+  next_allocated_1_byte_leading_byte = MIN_LEADING_BYTE_PRIVATE_1;
+  next_allocated_2_byte_leading_byte = MIN_LEADING_BYTE_PRIVATE_2;
 }
 
 void
@@ -1359,7 +1301,6 @@ complex_vars_of_mule_charset (void)
   /* Predefined character sets.  We store them into variables for
      ease of access. */
 
-  staticpro (&Vcharset_ascii);
   Vcharset_ascii =
     make_charset (LEADING_BYTE_ASCII, Qascii, 1,
 		  CHARSET_TYPE_94, 1, 0, 'B',
@@ -1368,7 +1309,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ASCII)"),
 		  build_string ("ASCII (ISO646 IRV)"),
 		  build_string ("\\(iso8859-[0-9]*\\|-ascii\\)"));
-  staticpro (&Vcharset_control_1);
   Vcharset_control_1 =
     make_charset (LEADING_BYTE_CONTROL_1, Qcontrol_1, 2,
 		  CHARSET_TYPE_94, 1, 1, 0,
@@ -1377,7 +1317,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Control characters"),
 		  build_string ("Control characters 128-191"),
 		  build_string (""));
-  staticpro (&Vcharset_latin_iso8859_1);
   Vcharset_latin_iso8859_1 =
     make_charset (LEADING_BYTE_LATIN_ISO8859_1, Qlatin_iso8859_1, 2,
 		  CHARSET_TYPE_96, 1, 1, 'A',
@@ -1386,7 +1325,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-1 (Latin-1)"),
 		  build_string ("ISO8859-1 (Latin-1)"),
 		  build_string ("iso8859-1"));
-  staticpro (&Vcharset_latin_iso8859_2);
   Vcharset_latin_iso8859_2 =
     make_charset (LEADING_BYTE_LATIN_ISO8859_2, Qlatin_iso8859_2, 2,
 		  CHARSET_TYPE_96, 1, 1, 'B',
@@ -1395,7 +1333,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-2 (Latin-2)"),
 		  build_string ("ISO8859-2 (Latin-2)"),
 		  build_string ("iso8859-2"));
-  staticpro (&Vcharset_latin_iso8859_3);
   Vcharset_latin_iso8859_3 =
     make_charset (LEADING_BYTE_LATIN_ISO8859_3, Qlatin_iso8859_3, 2,
 		  CHARSET_TYPE_96, 1, 1, 'C',
@@ -1404,7 +1341,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-3 (Latin-3)"),
 		  build_string ("ISO8859-3 (Latin-3)"),
 		  build_string ("iso8859-3"));
-  staticpro (&Vcharset_latin_iso8859_4);
   Vcharset_latin_iso8859_4 =
     make_charset (LEADING_BYTE_LATIN_ISO8859_4, Qlatin_iso8859_4, 2,
 		  CHARSET_TYPE_96, 1, 1, 'D',
@@ -1413,7 +1349,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-4 (Latin-4)"),
 		  build_string ("ISO8859-4 (Latin-4)"),
 		  build_string ("iso8859-4"));
-  staticpro (&Vcharset_thai_tis620);
   Vcharset_thai_tis620 =
     make_charset (LEADING_BYTE_THAI_TIS620, Qthai_tis620, 2,
 		  CHARSET_TYPE_96, 1, 1, 'T',
@@ -1422,7 +1357,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("TIS620 (Thai)"),
 		  build_string ("TIS620.2529 (Thai)"),
 		  build_string ("tis620"));
-  staticpro (&Vcharset_greek_iso8859_7);
   Vcharset_greek_iso8859_7 =
     make_charset (LEADING_BYTE_GREEK_ISO8859_7, Qgreek_iso8859_7, 2,
 		  CHARSET_TYPE_96, 1, 1, 'F',
@@ -1431,7 +1365,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-7 (Greek)"),
 		  build_string ("ISO8859-7 (Greek)"),
 		  build_string ("iso8859-7"));
-  staticpro (&Vcharset_arabic_iso8859_6);
   Vcharset_arabic_iso8859_6 =
     make_charset (LEADING_BYTE_ARABIC_ISO8859_6, Qarabic_iso8859_6, 2,
 		  CHARSET_TYPE_96, 1, 1, 'G',
@@ -1440,7 +1373,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-6 (Arabic)"),
 		  build_string ("ISO8859-6 (Arabic)"),
 		  build_string ("iso8859-6"));
-  staticpro (&Vcharset_hebrew_iso8859_8);
   Vcharset_hebrew_iso8859_8 =
     make_charset (LEADING_BYTE_HEBREW_ISO8859_8, Qhebrew_iso8859_8, 2,
 		  CHARSET_TYPE_96, 1, 1, 'H',
@@ -1449,7 +1381,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-8 (Hebrew)"),
 		  build_string ("ISO8859-8 (Hebrew)"),
 		  build_string ("iso8859-8"));
-  staticpro (&Vcharset_katakana_jisx0201);
   Vcharset_katakana_jisx0201 =
     make_charset (LEADING_BYTE_KATAKANA_JISX0201, Qkatakana_jisx0201, 2,
 		  CHARSET_TYPE_94, 1, 1, 'I',
@@ -1458,7 +1389,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("JISX0201.1976 (Japanese Kana)"),
 		  build_string ("JISX0201.1976 Japanese Kana"),
 		  build_string ("jisx0201.1976"));
-  staticpro (&Vcharset_latin_jisx0201);
   Vcharset_latin_jisx0201 =
     make_charset (LEADING_BYTE_LATIN_JISX0201, Qlatin_jisx0201, 2,
 		  CHARSET_TYPE_94, 1, 0, 'J',
@@ -1467,7 +1397,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("JISX0201.1976 (Japanese Roman)"),
 		  build_string ("JISX0201.1976 Japanese Roman"),
 		  build_string ("jisx0201.1976"));
-  staticpro (&Vcharset_cyrillic_iso8859_5);
   Vcharset_cyrillic_iso8859_5 =
     make_charset (LEADING_BYTE_CYRILLIC_ISO8859_5, Qcyrillic_iso8859_5, 2,
 		  CHARSET_TYPE_96, 1, 1, 'L',
@@ -1476,7 +1405,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-5 (Cyrillic)"),
 		  build_string ("ISO8859-5 (Cyrillic)"),
 		  build_string ("iso8859-5"));
-  staticpro (&Vcharset_latin_iso8859_9);
   Vcharset_latin_iso8859_9 =
     make_charset (LEADING_BYTE_LATIN_ISO8859_9, Qlatin_iso8859_9, 2,
 		  CHARSET_TYPE_96, 1, 1, 'M',
@@ -1485,7 +1413,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("ISO8859-9 (Latin-5)"),
 		  build_string ("ISO8859-9 (Latin-5)"),
 		  build_string ("iso8859-9"));
-  staticpro (&Vcharset_japanese_jisx0208_1978);
   Vcharset_japanese_jisx0208_1978 =
     make_charset (LEADING_BYTE_JAPANESE_JISX0208_1978, Qjapanese_jisx0208_1978, 3,
 		  CHARSET_TYPE_94X94, 2, 0, '@',
@@ -1494,8 +1421,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("JISX0208.1978 (Japanese)"),
 		  build_string
 		  ("JISX0208.1978 Japanese Kanji (so called \"old JIS\")"),
-		  build_string ("\\(jisx0208\\|jisc6226\\)\\.1978"));
-  staticpro (&Vcharset_chinese_gb2312);
+		  build_string ("\\(jisx0208\\|jisc6226\\).19"));
   Vcharset_chinese_gb2312 =
     make_charset (LEADING_BYTE_CHINESE_GB2312, Qchinese_gb2312, 3,
 		  CHARSET_TYPE_94X94, 2, 0, 'A',
@@ -1504,7 +1430,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("GB2312)"),
 		  build_string ("GB2312 Chinese simplified"),
 		  build_string ("gb2312"));
-  staticpro (&Vcharset_japanese_jisx0208);
   Vcharset_japanese_jisx0208 =
     make_charset (LEADING_BYTE_JAPANESE_JISX0208, Qjapanese_jisx0208, 3,
 		  CHARSET_TYPE_94X94, 2, 0, 'B',
@@ -1513,7 +1438,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("JISX0208.1983/1990 (Japanese)"),
 		  build_string ("JISX0208.1983/1990 Japanese Kanji"),
 		  build_string ("jisx0208.19\\(83\\|90\\)"));
-  staticpro (&Vcharset_korean_ksc5601);
   Vcharset_korean_ksc5601 =
     make_charset (LEADING_BYTE_KOREAN_KSC5601, Qkorean_ksc5601, 3,
 		  CHARSET_TYPE_94X94, 2, 0, 'C',
@@ -1522,7 +1446,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("KSC5601 (Korean"),
 		  build_string ("KSC5601 Korean Hangul and Hanja"),
 		  build_string ("ksc5601"));
-  staticpro (&Vcharset_japanese_jisx0212);
   Vcharset_japanese_jisx0212 =
     make_charset (LEADING_BYTE_JAPANESE_JISX0212, Qjapanese_jisx0212, 3,
 		  CHARSET_TYPE_94X94, 2, 0, 'D',
@@ -1533,7 +1456,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("jisx0212"));
 
 #define CHINESE_CNS_PLANE_RE(n) "cns11643[.-]\\(.*[.-]\\)?" n "$"
-  staticpro (&Vcharset_chinese_cns11643_1);
   Vcharset_chinese_cns11643_1 =
     make_charset (LEADING_BYTE_CHINESE_CNS11643_1, Qchinese_cns11643_1, 3,
 		  CHARSET_TYPE_94X94, 2, 0, 'G',
@@ -1543,7 +1465,6 @@ complex_vars_of_mule_charset (void)
 		  build_string
 		  ("CNS 11643 Plane 1 Chinese traditional"),
 		  build_string (CHINESE_CNS_PLANE_RE("1")));
-  staticpro (&Vcharset_chinese_cns11643_2);
   Vcharset_chinese_cns11643_2 =
     make_charset (LEADING_BYTE_CHINESE_CNS11643_2, Qchinese_cns11643_2, 3,
 		  CHARSET_TYPE_94X94, 2, 0, 'H',
@@ -1553,7 +1474,6 @@ complex_vars_of_mule_charset (void)
 		  build_string
 		  ("CNS 11643 Plane 2 Chinese traditional"),
 		  build_string (CHINESE_CNS_PLANE_RE("2")));
-  staticpro (&Vcharset_chinese_big5_1);
   Vcharset_chinese_big5_1 =
     make_charset (LEADING_BYTE_CHINESE_BIG5_1, Qchinese_big5_1, 3,
 		  CHARSET_TYPE_94X94, 2, 0, '0',
@@ -1563,7 +1483,6 @@ complex_vars_of_mule_charset (void)
 		  build_string
 		  ("Big5 Level-1 Chinese traditional"),
 		  build_string ("big5"));
-  staticpro (&Vcharset_chinese_big5_2);
   Vcharset_chinese_big5_2 =
     make_charset (LEADING_BYTE_CHINESE_BIG5_2, Qchinese_big5_2, 3,
 		  CHARSET_TYPE_94X94, 2, 0, '1',
@@ -1579,7 +1498,6 @@ complex_vars_of_mule_charset (void)
   /* #### For simplicity, we put composite chars into a 96x96 charset.
      This is going to lead to problems because you can run out of
      room, esp. as we don't yet recycle numbers. */
-  staticpro (&Vcharset_composite);
   Vcharset_composite =
     make_charset (LEADING_BYTE_COMPOSITE, Qcomposite, 3,
 		  CHARSET_TYPE_96X96, 2, 0, 0,
@@ -1589,7 +1507,6 @@ complex_vars_of_mule_charset (void)
 		  build_string ("Composite characters"),
 		  build_string (""));
 
-  /* #### not dumped properly */
   composite_char_row_next = 32;
   composite_char_col_next = 32;
 

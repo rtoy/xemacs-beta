@@ -1,4 +1,5 @@
-\input texinfo  @c -*-texinfo-*-
+
+\input ../texinfo  @c -*-texinfo-*-
 @setfilename ../../info/xemacs.info
 @comment  node-name,  next,  previous,  up
 
@@ -90,8 +91,9 @@ translation approved by the author instead of in the original English.
 @page
 @ifinfo
 @node Top, License,, (dir)
-@top The XEmacs Editor
 
+The XEmacs Editor
+*****************
 
 XEmacs is the extensible, customizable, self-documenting real-time
 display editor.  This Info file describes how to edit with Emacs
@@ -271,13 +273,9 @@ Using X Selections
 
 Registers
 
-* Position: RegPos.           Saving positions in registers.
-* Text: RegText.              Saving text in registers.
-* Rectangle: RegRect.         Saving rectangles in registers.
-* Configurations: RegConfig.  Saving window configurations in registers.
-* Files: RegFiles.            File names in registers.
-* Numbers: RegNumbers.        Numbers in registers.
-* Bookmarks::                 Bookmarks are like registers, but persistent.
+* RegPos::    Saving positions in registers.
+* RegText::   Saving text in registers.
+* RegRect::   Saving rectangles in registers.
 
 Controlling the Display
 
@@ -551,7 +549,8 @@ Customization
                      By changing them, you can "redefine keys".
 * Syntax::          The syntax table controls how words and expressions
                      are parsed.
-* Init File::       How to write common customizations in the init file.
+* Init File::       How to write common customizations in the @file{.emacs} 
+                     file.
 * Audible Bell::    Changing how XEmacs sounds the bell. 
 * Faces::           Changing the fonts and colors of a region of text. 
 * X Resources::	    X resources controlling various aspects of the
@@ -585,7 +584,7 @@ The Syntax Table
 * Entry: Syntax Entry.    What the syntax table records for each character.
 * Change: Syntax Change.  How to change the information.
 
-The Init File
+The Init File, @file{~/.emacs}
 
 * Init Syntax::     Syntax of constants in Emacs Lisp.
 * Init Examples::   How to do some things with an init file.

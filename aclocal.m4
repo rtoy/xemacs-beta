@@ -92,7 +92,7 @@ if test "$XEGCC" = yes; then
     # PIC is the default for these OSes.
     ;;
 
-  aix3* | aix4* | os2*)
+  os2*)
     # We can build DLLs from non-PIC.
     ;;
   amigaos*)
@@ -101,9 +101,6 @@ if test "$XEGCC" = yes; then
     # like `-m68040'.
     dll_cflags='-m68020 -resident32 -malways-restore-a4'
     ;;
-  *cygwin* | *mingw* )
-    # PIC is the default
-    ;;
   *)
     dll_cflags='-fPIC'
     ;;
@@ -111,7 +108,7 @@ if test "$XEGCC" = yes; then
 else
   # PORTME Check for PIC flags for the system compiler.
   case "$xehost_os" in
-  hpux9* | hpux1[[0-9]]*)
+  hpux9* | hpux10*)
     # Is there a better link_static_flag that works with the bundled CC?
     wl='-Wl,'
     dll_cflags='+Z'
@@ -389,7 +386,6 @@ if test "$cc_produces_so" = "yes"; then
   dll_ld=$CC
   dll_ldflags=$xcldf
   can_build_shared=yes
-  ld_shlibs=yes
 else
   # OK - only NOW do we futz about with ld.
   # See if the linker supports building shared libraries.
@@ -573,7 +569,7 @@ if test -z "$ld_dynamic_link_flags"; then
     ;;
 
   solaris2* | solaris7*)
-    ld_dynamic_link_flags=
+    ld_dynamic_link_flags="${wl}-Bdynamic"
     ;;
 
   sco3.2v5* | unixware* | sysv5* | sysv4*)

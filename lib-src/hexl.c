@@ -1,19 +1,16 @@
 /* Synched up with: FSF 19.28. */
 
-#include <config.h>
+#include <../src/config.h>
 
 #include <stdio.h>
 #include <ctype.h>
-#ifdef WIN32_NATIVE
-#include <io.h>
+#ifdef MSDOS
 #include <fcntl.h>
 #endif
 
 #if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <string.h>
 #endif
 
@@ -32,7 +29,9 @@ char *progname;
 void usage (void);
 
 int
-main (int argc, char *argv[])
+main(argc, argv)
+     int argc;
+     char *argv[];
 {
   register long address;
   char string[18];
@@ -144,8 +143,9 @@ main (int argc, char *argv[])
 	{
 	  char buf[18];
 
-#ifdef WIN32_NATIVE
-	  _setmode (_fileno (stdout), O_BINARY);
+#ifdef MSDOS
+	  (stdout)->_flag &= ~_IOTEXT; /* print binary */
+	  _setmode (fileno (stdout), O_BINARY);
 #endif
 	  for (;;)
 	    {
@@ -187,8 +187,9 @@ main (int argc, char *argv[])
 	}
       else
 	{
-#ifdef WIN32_NATIVE
-	  _setmode (_fileno (fp), O_BINARY);
+#ifdef MSDOS
+	  (fp)->_flag &= ~_IOTEXT; /* read binary */
+	  _setmode (fileno (fp), O_BINARY);
 #endif
 	  address = 0;
 	  string[0] = ' ';
@@ -244,7 +245,7 @@ main (int argc, char *argv[])
 }
 
 void
-usage (void)
+usage ()
 {
   (void) fprintf (stderr, "usage: %s [-de] [-iso]\n", progname);
   exit (1);

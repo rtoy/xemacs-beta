@@ -109,10 +109,6 @@ from the search."
     (paths-file-readable-directory-p (paths-construct-path (list directory "lisp")))
     (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))))
 
-(defun paths-root-in-place-p (root)
-  "Check if ROOT is an in-place installation root for XEmacs."
-  (paths-file-readable-directory-p (paths-construct-path (list root "lisp"))))
-
 (defun paths-chase-symlink (file-name)
   "Chase a symlink until the bitter end."
       (let ((maybe-symlink (file-symlink-p file-name)))
@@ -163,8 +159,7 @@ to EXPAND-FILE-NAME."
      base))))
 
 (defun paths-find-emacs-directory (roots suffix base
-				   &optional envvar default keep-suffix
-				   	     in-place-external)
+				   &optional envvar default keep-suffix)
   "Find a directory in the XEmacs hierarchy.
 ROOTS must be a list of installation roots.
 SUFFIX is the subdirectory from there.
@@ -173,9 +168,7 @@ ENVVAR is the name of the environment variable that might also
 specify the directory.
 DEFAULT is the preferred value.
 If KEEP-SUFFIX is non-nil, the suffix must be respected in searching
-the directory.
-If IN-PLACE-EXTERNAL is non-nil, the directory might be found outside
-an in-place root-hierarchy."
+the directory."
   (let ((preferred-value (or (and envvar (getenv envvar))
 			     default)))
     (if (and preferred-value
@@ -183,39 +176,28 @@ an in-place root-hierarchy."
 	(file-name-as-directory preferred-value)
       (catch 'gotcha
 	(while roots
-	  (let ((root (car roots)))
-	    ;; installed
-	    (let ((path (paths-construct-emacs-directory root suffix base)))
-	      (if (paths-file-readable-directory-p path)
-		  (throw 'gotcha path)))
-	    ;; in-place
-	    (if (null keep-suffix)
-		(let ((path (paths-construct-emacs-directory root "" base)))
-		  (if (paths-file-readable-directory-p path)
-		      (throw 'gotcha path))))
-	    (if (and in-place-external
-		     (paths-root-in-place-p root))
-		(let ((path (paths-construct-emacs-directory
-			     (paths-construct-path '("..") root)
-			     "" base)))
-		  (if (paths-file-readable-directory-p path)
-		      (throw 'gotcha path)))))
+	  (let* ((root (car roots))
+		 ;; installed
+		 (path (paths-construct-emacs-directory root suffix base)))
+	    (if (paths-file-readable-directory-p path)
+		(throw 'gotcha path)
+	      ;; in-place
+	      (if (null keep-suffix)
+		  (let ((path (paths-construct-emacs-directory root "" base)))
+		    (if (paths-file-readable-directory-p path)
+			(throw 'gotcha path))))))
 	  (setq roots (cdr roots)))
 	nil))))
 
-(defun paths-find-site-directory (roots base &optional envvar default in-place-external)
-  "Find a site-specific directory in the XEmacs hierarchy.
-If IN-PLACE-EXTERNAL is non-nil, the directory might be found outside
-an in-place root-hierarchy."
+(defun paths-find-site-directory (roots base &optional envvar default)
+  "Find a site-specific directory in the XEmacs hierarchy."
   (paths-find-emacs-directory roots
 			      (file-name-as-directory
 			       (paths-construct-path (list
 						      "lib"
 						      emacs-program-name)))
 			      base
-			      envvar default
-			      nil
-			      in-place-external))
+			      envvar default))
 
 (defun paths-find-version-directory (roots base
 				     &optional envvar default enforce-version)
@@ -236,13 +218,13 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
    ;; from more to less specific
    (paths-find-version-directory roots
 				 (concat base system-configuration)
-				 envvar default)
+				 envvar)
    (paths-find-version-directory roots
 				 base
 				 envvar)
    (paths-find-version-directory roots
 				 system-configuration
-				 envvar)))
+				 envvar default)))
 
 (defun construct-emacs-version-name ()
   "Construct the raw XEmacs version number."

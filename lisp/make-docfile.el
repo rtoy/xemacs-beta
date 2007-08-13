@@ -3,7 +3,7 @@
 ;; Copyright (C) 1985, 1986, 1992-1995, 1997 Free Software Foundation, Inc.
 
 ;; Author: Unknown
-;; Maintainer: Steven L Baur <steve@xemacs.org>
+;; Maintainer: Steven L Baur <steve@altair.xemacs.org>
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -75,8 +75,7 @@
   (setq command-line-args (cdr command-line-args)))
 
 ;; Then process the list of Lisp files.
-(let ((build-root (expand-file-name ".." invocation-directory)))
-  (setq load-path (list (expand-file-name "lisp" build-root))))
+(setq load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH")))
 
 (load "very-early-lisp" nil t)
 
@@ -86,11 +85,13 @@
 (load "packages.el")
 (load "setup-paths.el")
 (load "dump-paths.el")
-(require 'custom)
-(load "process")
+
+(setq
+ load-path
+ (nconc load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH"))))
 
 (let (preloaded-file-list)
-  (load (expand-file-name "../lisp/dumped-lisp.el"))
+  (load (concat default-directory "../lisp/dumped-lisp.el"))
 
   (let ((package-preloaded-file-list
 	 (packages-collect-package-dumped-lisps late-package-load-path)))

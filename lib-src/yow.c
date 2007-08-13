@@ -10,7 +10,7 @@
 /* Synched up with: FSF 19.28. */
 
 #define DONT_ENCAPSULATE
-#include <config.h>
+#include <../src/config.h>
 
 #include <stdio.h>
 #include <ctype.h>
@@ -33,7 +33,7 @@
 void yow (FILE *fp);
 void setup_yow (FILE *fp);
 
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
 #define rootrelativepath(rel) \
 ({\
     static char res[BUFSIZE], *p;\
@@ -91,7 +91,8 @@ static long header_len;
 
 /* Sets len and header_len */
 void
-setup_yow (FILE *fp)
+setup_yow(fp)
+     FILE *fp;
 {
   int c;
 
@@ -119,7 +120,8 @@ setup_yow (FILE *fp)
 
 /* go to a random place in the file and print the quotation there */
 void
-yow (FILE *fp)
+yow (fp)
+     FILE *fp;
 {
   long offset;
   int c, i = 0;

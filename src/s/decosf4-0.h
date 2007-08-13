@@ -2,15 +2,9 @@
 
 #include "decosf3-2.h"
 
-/* etext and edata are only available when compiling in non-ANSI mode,
-   while _etext and _edata are always available, hence more portable.
-   This allows `configure --compiler=cc --cflags=-std1' to work. */
-#define etext _etext
-#define edata _edata
-
 #ifndef NOT_C_CODE
-#include "sys/lc_core.h"
-#include "reg_types.h"
+#include "/usr/include/sys/lc_core.h"
+#include "/usr/include/reg_types.h"
 #endif /* C code */
 
 #define re_compile_pattern sys_re_compile_pattern
@@ -30,12 +24,13 @@
 #define regoff_t sys_regoff_t
 #define regmatch_t sys_regmatch_t
 
+/* A perfectly ordinary link wins again - martin */
 #undef C_SWITCH_SYSTEM
 #undef LIBS_SYSTEM
 #undef LIBS_DEBUG
-/* #define ORDINARY_LINK */
+#define ORDINARY_LINK
 
-#undef SYSTEM_MALLOC
+#define SYSTEM_MALLOC
 
 #if 0 /* martin */
 /* Some V4.0* versions before V4.0B don't detect rename properly. */

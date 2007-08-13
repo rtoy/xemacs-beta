@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1998 by Free Software Foundation, Inc.
 
-;; Author: SL Baur <steve@xemacs.org>
+;; Author: SL Baur <steve@altair.xemacs.org>
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -48,11 +48,12 @@
 ;      (setq result (md5 (current-buffer))))
 ;    result))
 
-;;; APA: Stolen from package-get in package-get.el
 (defun pi-md5sum (file)
   (with-temp-buffer
-	(insert-file-contents-literally file)
-	(md5 (current-buffer))))
+    (call-process "md5sum" file t)
+    (goto-char (point-min))
+    (looking-at "[a-z0-9]+")
+    (buffer-substring (match-beginning 0) (match-end 0))))
 
 (defun pi-update-key (key value)
   (save-excursion

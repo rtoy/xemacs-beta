@@ -24,14 +24,14 @@ Boston, MA 02111-1307, USA.  */
 /* 91.10.09 written by K.Handa <handa@etl.go.jp> */
 /* Rewritten by Ben Wing <ben@xemacs.org>. */
 
-#ifndef INCLUDED_file_coding_h_
-#define INCLUDED_file_coding_h_
+#ifndef _XEMACS_MULE_CODING_H_
+#define _XEMACS_MULE_CODING_H_
 
 struct decoding_stream;
 struct encoding_stream;
 
 /* Coding system types.  These go into the TYPE field of a
-   Lisp_Coding_System. */
+   struct Lisp_Coding_System. */
 
 enum coding_system_type
 {
@@ -84,8 +84,7 @@ struct Lisp_Coding_System
   struct lcrecord_header header;
 
   /* Name and doc string of this coding system. */
-  Lisp_Object name;
-  Lisp_Object doc_string;
+  Lisp_Object name, doc_string;
 
   /* This is the major type of the coding system -- one of Big5, ISO2022,
      Shift-JIS, etc.  See the constants above. */
@@ -95,17 +94,14 @@ struct Lisp_Coding_System
      system is active for a particular buffer. */
   Lisp_Object mnemonic;
 
-  Lisp_Object post_read_conversion;
-  Lisp_Object pre_write_conversion;
+  Lisp_Object post_read_conversion, pre_write_conversion;
 
-  eol_type_t eol_type;
+  enum eol_type eol_type;
 
   /* Subsidiary coding systems that specify a particular type of EOL
      marking, rather than autodetecting it.  These will only be non-nil
      if (eol_type == EOL_AUTODETECT). */
-  Lisp_Object eol_lf;
-  Lisp_Object eol_crlf;
-  Lisp_Object eol_cr;
+  Lisp_Object eol_lf, eol_crlf, eol_cr;
 #ifdef MULE
   struct
   {
@@ -134,17 +130,17 @@ struct Lisp_Coding_System
   {
     /* For a CCL coding system, these specify the CCL programs used for
        decoding (input) and encoding (output). */
-    Lisp_Object decode;
-    Lisp_Object encode;
+    Lisp_Object decode, encode;
   } ccl;
 #endif
 };
 typedef struct Lisp_Coding_System Lisp_Coding_System;
 
-DECLARE_LRECORD (coding_system, Lisp_Coding_System);
-#define XCODING_SYSTEM(x) XRECORD (x, coding_system, Lisp_Coding_System)
+DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);
+#define XCODING_SYSTEM(x) XRECORD (x, coding_system, struct Lisp_Coding_System)
 #define XSETCODING_SYSTEM(x, p) XSETRECORD (x, p, coding_system)
 #define CODING_SYSTEMP(x) RECORDP (x, coding_system)
+#define GC_CODING_SYSTEMP(x) GC_RECORDP (x, coding_system)
 #define CHECK_CODING_SYSTEM(x) CHECK_RECORD (x, coding_system)
 #define CONCHECK_CODING_SYSTEM(x) CONCHECK_RECORD (x, coding_system)
 
@@ -254,15 +250,14 @@ EXFUN (Fset_coding_priority_list, 1);
 EXFUN (Fsubsidiary_coding_system, 2);
 
 extern Lisp_Object Qucs4, Qutf8;
-extern Lisp_Object Qbig5, Qccl, Qcharset_g0;
+extern Lisp_Object Qbig5, Qbuffer_file_coding_system, Qccl, Qcharset_g0;
 extern Lisp_Object Qcharset_g1, Qcharset_g2, Qcharset_g3, Qcoding_system_error;
-extern Lisp_Object Qcoding_systemp, Qcr, Qcrlf, Qdecode, Qencode;
+extern Lisp_Object Qcoding_system_p, Qcr, Qcrlf, Qctext, Qdecode, Qencode;
 extern Lisp_Object Qeol_cr, Qeol_crlf, Qeol_lf, Qeol_type, Qescape_quoted;
 extern Lisp_Object Qforce_g0_on_output, Qforce_g1_on_output;
 extern Lisp_Object Qforce_g2_on_output, Qforce_g3_on_output;
 extern Lisp_Object Qinput_charset_conversion, Qiso2022, Qlf, Qlock_shift;
 extern Lisp_Object Qmnemonic, Qno_ascii_cntl, Qno_ascii_eol, Qno_conversion;
-extern Lisp_Object Qraw_text;
 extern Lisp_Object Qno_iso6429, Qoutput_charset_conversion;
 extern Lisp_Object Qpost_read_conversion, Qpre_write_conversion, Qseven;
 extern Lisp_Object Qshift_jis, Qshort, Vcoding_system_for_read;
@@ -505,7 +500,7 @@ void set_decoding_stream_coding_system (Lstream *stream,
 void set_encoding_stream_coding_system (Lstream *stream,
 					Lisp_Object codesys);
 void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
-				   eol_type_t *eol_type_in_out);
+				   enum eol_type *eol_type_in_out);
 
 
 #ifndef MULE
@@ -520,6 +515,5 @@ void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
 #define BUFBYTE_FIRST_BYTE_P(c) ((c) < 0xA0)
 #define BUFBYTE_LEADING_BYTE_P(c) BYTE_C1_P (c)
 #endif /* not MULE */
-
-#endif /* INCLUDED_file_coding_h_ */
+#endif /* _XEMACS_MULE_CODING_H_ */
 

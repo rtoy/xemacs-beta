@@ -1,4 +1,4 @@
-/* System description file for Windows 9x and NT.
+/* System description file for Windows NT.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -20,73 +20,12 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.31. */
 
-/* Capsule summary of different preprocessor flags:
+#ifndef WINDOWSNT
+#define WINDOWSNT
+#endif
 
-1. Keep in mind that there are two possible OS environments we are dealing
-   with -- Cygwin and Native Windows.  Cygwin provides a POSIX emulation
-   layer on top of MS Windows -- in particular, providing the file-system,
-   process, tty, and signal semantics that are part of a modern, standard
-   Unix operating system.  MS Windows also provides these services, but
-   through their own API, called Win32.  When compiling in a Cygwin
-   environment, the Win32 API's are also available, and in fact are used
-   to do native GUI programming.
-
-2. There are two windowing environments we can target XEmacs for when
-   running under MS Windows -- Windows native, and X. (It may seem strange
-   to write an X application under Windows, but there are in fact many X
-   servers out there running on Windows, and as far as I know there is no
-   real (or at least, that works well) networking Window-system extension
-   under MS Windows.  Furthermore, if you're porting a Unix application to
-   Windows and use Cygwin to assist you, it might seem natural to use an
-   X server to avoid having to port all the code to Windows.) For XEmacs,
-   there are various reasons people could come up with for why we would
-   want to keep maintaining X Windows under MS Windows support.
-
-That gives us four possible build environments.  I (Ben) build
-regularly on fully-native-everything, Andy builds on Cygwin + MS
-Windows + X Windows for windowing.
-
-The build flags used for these divisions are:
-
-CYGWIN -- for Cygwin-only stuff.
-WIN32_NATIVE -- Win32 native OS-level stuff (files, process, etc.).
-HAVE_X_WINDOWS -- for X Windows (regardless of whether under MS Win)
-HAVE_MS_WINDOWS -- MS Windows native windowing system (anything related to
-                   the appearance of the graphical screen).
-
-Finally, there's also the MINGW build environment, which uses GCC
-\(similar to Cygwin), but native MS Windows libraries rather than a
-POSIX emulation layer (the Cygwin approach).  This environment defines
-WIN32_NATIVE, but also defines MINGW, which is used mostly because
-uses its own include files (related to Cygwin), which have a few
-things messed up.
-
-
-Formerly, we had a whole host of flags.  Here's the conversion, for porting
-code from GNU Emacs and such:
-
-
-WINDOWSNT -> WIN32_NATIVE
-WIN32 -> WIN32_NATIVE
-_WIN32 -> WIN32_NATIVE
-HAVE_WIN32 -> WIN32_NATIVE
-DOS_NT -> WIN32_NATIVE
-HAVE_NTGUI -> WIN32_NATIVE, unless it ends up already bracketed by this
-HAVE_FACES -> always true
-MSDOS -> determine whether this code is really specific to MS-DOS (and not
-         Windows -- e.g. DJGPP code); if so, delete the code; otherwise,
-         convert to WIN32_NATIVE (we do not support MS-DOS w/DOS Extender
-         under XEmacs)
-
-__CYGWIN__ -> CYGWIN
-__CYGWIN32__ -> CYGWIN
-__MINGW32__ -> MINGW
-
-*/
-
-/* Identify ourselves */
-#ifndef WIN32_NATIVE
-#define WIN32_NATIVE
+#ifndef DOS_NT
+#define DOS_NT 	/* MSDOS or WINDOWSNT */
 #endif
 
 /* In case non-Microsoft compiler is used, we fake _MSC_VER */
@@ -119,7 +58,7 @@ typedef int pid_t;
 #define SIZEOF_SHORT 2
 #define SIZEOF_INT 4
 #define SIZEOF_LONG 4
-#define SIZEOF_LONG_LONG 0
+#define SIZEOF_LONG_LONG 8
 #define SIZEOF_VOID_P 4
 
 /* NOMULTIPLEJOBS should be defined if your system's shell
@@ -166,9 +105,9 @@ typedef int pid_t;
    The alternative is that a lock file named
    /usr/spool/mail/$USER.lock.  */
 
+/* #define MAIL_USE_FLOCK */
 #define MAIL_USE_POP
-#define HAVE_LOCKING
-#define MAIL_USE_LOCKING
+#define MAIL_USE_SYSTEM_LOCK
 
 /* If the character used to separate elements of the executable path
    is not ':', #define this to be the appropriate character constant.  */
@@ -186,7 +125,7 @@ typedef int pid_t;
 /* XEmacs file I/O for DOS text files requires FILE_CODING */
 #define FILE_CODING
 
-#define DIRECTORY_SEP ((char)XCHAR(Vdirectory_sep_char))
+#define DIRECTORY_SEP '\\'
 
 /* Define this to be the separator between devices and paths */
 #define DEVICE_SEP ':'
@@ -228,6 +167,11 @@ typedef int pid_t;
 #define HAVE_H_ERRNO
 #define HAVE_STRUCT_UTIMBUF
 
+#ifdef HAVE_NTGUI
+#define HAVE_WINDOW_SYSTEM
+#define HAVE_FACES
+#endif
+
 #define HAVE_STRCASECMP
 
 /* Compatibility macros. Some used to be routines in nt.c */
@@ -238,15 +182,49 @@ typedef int pid_t;
 
 #define MODE_LINE_BINARY_TEXT(_b_) (NILP ((_b_)->buffer_file_type) ? "T" : "B")
 
+/* get some redefinitions in place */
+
+#if 0
+/* IO calls that are emulated or shadowed */
+#define access  sys_access
+#define chdir   sys_chdir
+#define chmod   sys_chmod
+#define close   sys_close
+#define creat   sys_creat
+#define ctime sys_ctime
+#define dup     sys_dup
+#define dup2    sys_dup2
+#define fopen   sys_fopen
+#define link    sys_link
+#define mktemp  sys_mktemp
+#define open    sys_open
+#define read    sys_read
+#define rename  sys_rename
+#define unlink  sys_unlink
+#define write   sys_write
+#define mkdir   sys_mkdir
+#define rmdir   sys_rmdir
+
+#endif
+
+#if 0
+/* this is hacky, but is necessary to avoid warnings about macro
+   redefinitions using the SDK compilers */
+#ifndef __STDC__
+#define __STDC__ 1
+#define MUST_UNDEF__STDC__
+#endif
+#include <direct.h>
+#include <io.h>
+#include <stdio.h>
+#ifdef MUST_UNDEF__STDC__
+#undef __STDC__
+#undef MUST_UNDEF__STDC__
+#endif
+#endif
 
 #include <stdio.h>
 
-/* subprocess calls that are emulated */
-#ifndef DONT_ENCAPSULATE
-#define spawnve sys_spawnve
-int spawnve (int mode, const char *cmdname, 
-	     const char * const *argv, const char *const *envp);
-#endif
 
 /* IO calls that are emulated or shadowed */
 #define pipe    sys_pipe
@@ -256,6 +234,11 @@ int sys_pipe (int * phandles);
 #define sleep   sys_sleep
 void sleep (int seconds);
 #endif
+
+/* subprocess calls that are emulated */
+#define spawnve sys_spawnve
+int spawnve (int mode, CONST char *cmdname, 
+	     CONST char * CONST *argv, CONST char *CONST *envp);
 
 #define wait    sys_wait
 int wait (int *status);
@@ -267,15 +250,41 @@ int kill (int pid, int sig);
 #define popen     _popen
 #define pclose    _pclose
 
-typedef int uid_t;
-typedef int gid_t;
-typedef int pid_t;
-typedef int ssize_t;
+#if 0
+#define chdir     _chdir
+#define execlp    _execlp
+#define execvp    _execvp
+#define fcloseall _fcloseall
+#define fdopen    _fdopen
+#define fgetchar  _fgetchar
+#define fileno    _fileno
+#define flushall  _flushall
+#define fputchar  _fputchar
+#define getw      _getw
+#define getpid    _getpid
+#define isatty    _isatty
+#define logb      _logb
+#define _longjmp  longjmp
+#define lseek     _lseek
+#define putw      _putw
+#define umask     _umask
+/* #define utime     _utime */
+/* #define index     strchr */
+/* #define rindex    strrchr */
+#define read	  _read
+#define write	  _write
+#define getcwd    _getcwd
+
+#ifdef HAVE_NTGUI
+#define abort	win32_abort
+#endif
+
+#endif /* 0 */
 
 /* Encapsulation of system calls */
 #ifndef DONT_ENCAPSULATE
 #define getpid sys_getpid
-pid_t getpid (void);
+int getpid (void);
 #endif
 
 /* Random global functions called everywhere. Implemented in nt.c */
@@ -290,22 +299,23 @@ char *getwd (char *dir);
 void *sbrk (unsigned long increment);
 
 struct passwd;
-struct passwd *getpwuid (uid_t uid);
+struct passwd *getpwuid (int uid);
 struct passwd *getpwnam (const char *name);
-uid_t getuid (void);
-uid_t geteuid (void);
-gid_t getgid (void);
-gid_t getegid (void);
+int getuid ();
+int geteuid ();
+int getgid (void);
+int getegid ();
 
 /* Setitimer is emulated */
 #define HAVE_SETITIMER
 
 /* We now have emulation for some signals */
 #define HAVE_SIGHOLD
-#define sigset(s,h) mswindows_sigset(s,h)
-#define sighold(s) mswindows_sighold(s)
-#define sigrelse(s) mswindows_sigrelse(s)
-#define sigpause(s) mswindows_sigpause(s)
+#define sigset(s,h) msw_sigset(s,h)
+#define sighold(s) msw_sighold(s)
+#define sigrelse(s) msw_sigrelse(s)
+#define sigpause(s) msw_sigpause(s)
+#define signal sigset
 
 /* Defines that we need that aren't in the standard signal.h  */
 #define SIGHUP  1               /* Hang up */
@@ -313,6 +323,17 @@ gid_t getegid (void);
 #define SIGKILL 9               /* Die, die die */
 #define SIGALRM 14              /* Alarm */
 #define SIGPROF 29		/* Profiling timer exp */
+
+/* For integration with MSDOS support.  */
+#define getdisk()               (_getdrive () - 1)
+#define getdefdir(_drv, _buf)   _getdcwd (_drv, _buf, MAXPATHLEN)
+
+#if 0 /* they do. -kkm */
+/* Define this so that winsock.h definitions don't get included when windows.h
+   is...  I don't know if they do the right thing for emacs.  For this to
+   have proper effect, config.h must always be included before windows.h.  */
+#define _WINSOCKAPI_    1
+#endif /* 0 */
 
 /* Defines size_t and alloca ().  */
 #include <malloc.h>
@@ -349,23 +370,3 @@ gid_t getegid (void);
 #pragma data_seg("xdata")
 #pragma bss_seg("xdata")
 #endif
-
-#ifdef HAVE_SCROLLBARS
-/* Ensure the NT 4 mouse definitions in winuser.h are available */
- #ifndef _WIN32_WINNT
-  #define _WIN32_WINNT 0x0400
- #endif
-#endif
-
-/* MSVC 6.0 has a mechanism to declare functions which never return */
-#if (_MSC_VER >= 1200)
-#define DOESNT_RETURN __declspec(noreturn) void
-#define DECLARE_DOESNT_RETURN(decl) __declspec(noreturn) extern void decl
-#define DECLARE_DOESNT_RETURN_GCC_ATTRIBUTE_SYNTAX_SUCKS(decl,str,idx) \
-          __declspec(noreturn) extern void decl PRINTF_ARGS(str,idx)
-#endif /* MSVC 6.0 */
-
-#define CORRECT_DIR_SEPS(s) \
-  do { if ('/' == DIRECTORY_SEP) dostounix_filename (s); \
-       else unixtodos_filename (s); \
-  } while (0)

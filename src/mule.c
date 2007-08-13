@@ -40,7 +40,7 @@ accept a pattern compiled by 'regexp-compile' with word-option t.
   int i, len;
   char *p;
   Lisp_Object temp;
-  Lisp_String *s;
+  struct Lisp_String *s;
 
   CHECK_CONS (pattern);
   len = XINT (Flength (pattern));

@@ -22,23 +22,23 @@ Boston, MA 02111-1307, USA.  */
 
 /* The purpose of this file is so that there is at least one actual
    definition of each inline function.  This is needed under GCC.  The
-   reason is that under GCC we declare our inline functions `inline
-   extern', which causes the inlined version to get used only for
+   reason is that under GCC we declare our inline functions `extern
+   inline', which causes the inlined version to get used only for
    inlining, and in other cases to generate an external reference to
    the function.  This is more efficient than declaring our inline
-   functions `inline static', which (in many cases) would cause a separate
+   functions `static inline', which (in many cases) would cause a separate
    version of the function to get inserted into every source file that
-   included the corresponding header file.  See internals.texi.
+   included the corresponding header file.
 
    Some compilers that recognize `inline' may not do the same
-   `inline extern' business, so on those we just do `inline static'.
+   `extern inline' business, so on those we just do `static inline'.
    */
 
 /* Note to maintainers: This file contains a list of all header files
    that use the INLINE macro, either directly, or by using DECLARE_LRECORD.
-   i.e. the output of ``grep -l -w 'DECLARE_LRECORD|INLINE_HEADER' *.h'' */
+   i.e. the output of ``grep -l -w 'DECLARE_LRECORD|INLINE' *.h'' */
 
-#define DONT_EXTERN_INLINE_HEADER_FUNCTIONS
+#define DONT_EXTERN_INLINE_FUNCTIONS
 
 #include <config.h>
 #include "lisp.h"
@@ -53,7 +53,6 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame.h"
 #include "glyphs.h"
-#include "gui.h"
 #include "keymap.h"
 #include "lstream.h"
 #include "objects.h"
@@ -66,10 +65,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_LDAP
 #include "eldap.h"
-#endif
-
-#ifdef HAVE_POSTGRESQL
-#include "postgresql.h"
 #endif
 
 #ifdef HAVE_TOOLBARS

@@ -53,6 +53,8 @@ typedef unsigned char *POINTER;
 /* Unconditionally use unsigned char * for this.  */
 typedef unsigned char *POINTER;
 
+typedef unsigned long SIZE;
+
 #ifdef DOUG_LEA_MALLOC
 #define M_TOP_PAD -2
 #include <malloc.h>
@@ -67,6 +69,7 @@ void refill_memory_reserve (void);
 
 #include <stddef.h>
 
+typedef size_t SIZE;
 typedef void *POINTER;
 
 #include <unistd.h>
@@ -76,6 +79,7 @@ typedef void *POINTER;
 #endif	/* emacs.  */
 
 void init_ralloc (void);
+#define safe_bcopy(x, y, z) memmove (y, x, z)
 
 #define NIL ((POINTER) 0)
 
@@ -94,7 +98,7 @@ static int r_alloc_initialized = 0;
 /* Declarations for working with the malloc, ralloc, and system breaks.  */
 
 /* Function to set the real break value. */
-static POINTER (*real_morecore) (ptrdiff_t size);
+static POINTER (*real_morecore) (long size);
 
 /* The break value, as seen by malloc (). */
 static POINTER virtual_break_value;
@@ -181,7 +185,7 @@ typedef struct bp
   struct bp *prev;
   POINTER *variable;
   POINTER data;
-  size_t size;
+  SIZE size;
   POINTER new_data;		/* temporarily used for relocation */
   struct heap *heap; 		/* Heap this bloc is in.  */
 } *bloc_ptr;
@@ -241,10 +245,10 @@ find_heap (POINTER address)
    allocate the memory.  */
 
 static POINTER
-obtain (POINTER address, size_t size)
+obtain (POINTER address, SIZE size)
 {
   heap_ptr heap;
-  size_t already_available;
+  SIZE already_available;
 
   /* Find the heap that ADDRESS falls within.  */
   for (heap = last_heap; heap; heap = heap->prev)
@@ -271,7 +275,7 @@ obtain (POINTER address, size_t size)
   if (heap == NIL_HEAP)
     {
       POINTER new = (*real_morecore)(0);
-      size_t get;
+      SIZE get;
 
       already_available = (char *)last_heap->end - (char *)address;
 
@@ -321,7 +325,7 @@ obtain (POINTER address, size_t size)
    If we could not allocate the space, return zero.  */
 
 static POINTER
-get_more_space (size_t size)
+get_more_space (SIZE size)
 {
   POINTER ptr = break_value;
   if (obtain (size))
@@ -335,7 +339,7 @@ get_more_space (size_t size)
    If SIZE is more than a page, return the space to the system. */
 
 static void
-relinquish (void)
+relinquish ()
 {
   register heap_ptr h;
   int excess = 0;
@@ -384,7 +388,7 @@ relinquish (void)
 
 long r_alloc_size_in_use (void);
 long
-r_alloc_size_in_use (void)
+r_alloc_size_in_use ()
 {
   return break_value - virtual_break_value;
 }
@@ -416,7 +420,7 @@ find_bloc (POINTER *ptr)
    memory for the new block.  */
 
 static bloc_ptr
-get_bloc (size_t size)
+get_bloc (SIZE size)
 {
   register bloc_ptr new_bloc;
   register heap_ptr heap;
@@ -497,7 +501,7 @@ relocate_blocs (bloc_ptr bloc, heap_ptr heap, POINTER address)
       if (heap == NIL_HEAP)
 	{
 	  register bloc_ptr tb = b;
-	  register size_t s = 0;
+	  register SIZE s = 0;
 
 	  /* Add up the size of all the following blocs.  */
 	  while (tb != NIL_BLOC)
@@ -624,12 +628,12 @@ update_heap_bloc_correspondence (bloc_ptr bloc, heap_ptr heap)
    that come after BLOC in memory.  */
 
 static int
-resize_bloc (bloc_ptr bloc, size_t size)
+resize_bloc (bloc_ptr bloc, SIZE size)
 {
   register bloc_ptr b;
   heap_ptr heap;
   POINTER address;
-  size_t old_size;
+  SIZE old_size;
 
   /* No need to ever call this if arena is frozen, bug somewhere!  */
   if (r_alloc_freeze_level)
@@ -677,7 +681,7 @@ resize_bloc (bloc_ptr bloc, size_t size)
             }
 	  else
 	    {
-	      memmove (b->new_data, b->data, b->size);
+	      safe_bcopy (b->data, b->new_data, b->size);
 	      *b->variable = b->data = b->new_data;
             }
 	}
@@ -688,7 +692,7 @@ resize_bloc (bloc_ptr bloc, size_t size)
 	}
       else
 	{
-	  memmove (bloc->new_data, bloc->data, old_size);
+	  safe_bcopy (bloc->data, bloc->new_data, old_size);
 	  memset (bloc->new_data + old_size, 0, size - old_size);
 	  *bloc->variable = bloc->data = bloc->new_data;
 	}
@@ -704,7 +708,7 @@ resize_bloc (bloc_ptr bloc, size_t size)
             }
 	  else
 	    {
-	      memmove (b->new_data, b->data, b->size);
+	      safe_bcopy (b->data, b->new_data, b->size);
 	      *b->variable = b->data = b->new_data;
 	    }
 	}
@@ -786,9 +790,9 @@ free_bloc (bloc_ptr bloc)
    __morecore hook values - in particular, __default_morecore in the
    GNU malloc package.  */
 
-POINTER r_alloc_sbrk (ptrdiff_t size);
+POINTER r_alloc_sbrk (long size);
 POINTER
-r_alloc_sbrk (ptrdiff_t size)
+r_alloc_sbrk (long size)
 {
   register bloc_ptr b;
   POINTER address;
@@ -809,7 +813,7 @@ r_alloc_sbrk (ptrdiff_t size)
 	 not always find a space which is contiguous to the previous.  */
       POINTER new_bloc_start;
       heap_ptr h = first_heap;
-      size_t get = ROUNDUP (size);
+      SIZE get = ROUNDUP (size);
 
       address = (POINTER) ROUNDUP (virtual_break_value);
 
@@ -858,7 +862,7 @@ r_alloc_sbrk (ptrdiff_t size)
 	     header.  */
 	  for (b = last_bloc; b != NIL_BLOC; b = b->prev)
 	    {
-	      memmove (b->new_data, b->data, b->size);
+	      safe_bcopy (b->data, b->new_data, b->size);
 	      *b->variable = b->data = b->new_data;
 	    }
 
@@ -889,7 +893,7 @@ r_alloc_sbrk (ptrdiff_t size)
     }
   else /* size < 0 */
     {
-      size_t excess = (char *)first_heap->bloc_start
+      SIZE excess = (char *)first_heap->bloc_start
 		      - ((char *)virtual_break_value + size);
 
       address = virtual_break_value;
@@ -904,7 +908,7 @@ r_alloc_sbrk (ptrdiff_t size)
 
 	  for (b = first_bloc; b != NIL_BLOC; b = b->next)
 	    {
-	      memmove (b->new_data, b->data, b->size);
+	      safe_bcopy (b->data, b->new_data, b->size);
 	      *b->variable = b->data = b->new_data;
 	    }
 	}
@@ -937,9 +941,9 @@ r_alloc_sbrk (ptrdiff_t size)
    If we can't allocate the necessary memory, set *PTR to zero, and
    return zero.  */
 
-POINTER r_alloc (POINTER *ptr, size_t size);
+POINTER r_alloc (POINTER *ptr, SIZE size);
 POINTER
-r_alloc (POINTER *ptr, size_t size)
+r_alloc (POINTER *ptr, SIZE size)
 {
   bloc_ptr new_bloc;
 
@@ -996,9 +1000,9 @@ r_alloc_free (POINTER *ptr)
    If more memory cannot be allocated, then leave *PTR unchanged, and
    return zero.  */
 
-POINTER r_re_alloc (POINTER *ptr, size_t size);
+POINTER r_re_alloc (POINTER *ptr, SIZE size);
 POINTER
-r_re_alloc (POINTER *ptr, size_t size)
+r_re_alloc (POINTER *ptr, SIZE size)
 {
   register bloc_ptr bloc;
 
@@ -1078,7 +1082,7 @@ r_alloc_freeze (long size)
 
 void r_alloc_thaw (void);
 void
-r_alloc_thaw (void)
+r_alloc_thaw ()
 {
 
   if (! r_alloc_initialized)
@@ -1088,7 +1092,7 @@ r_alloc_thaw (void)
     abort ();
 
   /* This frees all unused blocs.  It is not too inefficient, as the resize
-     and memmove is done only once.  Afterwards, all unreferenced blocs are
+     and bcopy is done only once.  Afterwards, all unreferenced blocs are
      already shrunk to zero size.  */
   if (!r_alloc_freeze_level)
     {
@@ -1105,10 +1109,13 @@ r_alloc_thaw (void)
 /* The hook `malloc' uses for the function which gets more space
    from the system.  */
 #ifndef DOUG_LEA_MALLOC
-extern POINTER (*__morecore) (ptrdiff_t size);
+extern POINTER (*__morecore) (long size);
 #endif
 
 /* Initialize various things for memory allocation. */
+
+#define SET_FUN_PTR(fun_ptr, fun_val) \
+  (*((void **) (&fun_ptr)) = ((void *) (fun_val)))
 
 void
 init_ralloc (void)
@@ -1117,12 +1124,8 @@ init_ralloc (void)
     return;
 
   r_alloc_initialized = 1;
-  real_morecore = (POINTER (*) (ptrdiff_t)) __morecore;
-  __morecore =
-#ifdef __GNUC__
-    (__typeof__ (__morecore))
-#endif
-    r_alloc_sbrk;
+  SET_FUN_PTR (real_morecore, __morecore);
+  SET_FUN_PTR (__morecore, r_alloc_sbrk);
 
   first_heap = last_heap = &heap_base;
   first_heap->next = first_heap->prev = NIL_HEAP;
@@ -1169,25 +1172,21 @@ init_ralloc (void)
    Emacs.  This is needed when using Doug Lea's malloc from GNU libc.  */
 void r_alloc_reinit (void);
 void
-r_alloc_reinit (void)
+r_alloc_reinit ()
 {
   /* Only do this if the hook has been reset, so that we don't get an
      infinite loop, in case Emacs was linked statically.  */
-  if ( (POINTER (*) (ptrdiff_t)) __morecore !=  r_alloc_sbrk)
+  if ( ((void*) __morecore) !=  (void *) (r_alloc_sbrk))
     {
-      real_morecore = (POINTER (*) (ptrdiff_t)) __morecore;
-      __morecore =
-#ifdef __GNUC__
-	(__typeof__ (__morecore))
-#endif
-	r_alloc_sbrk;
+      SET_FUN_PTR (real_morecore, __morecore);
+      SET_FUN_PTR (__morecore, r_alloc_sbrk);
     }
 }
 #if 0
 #ifdef DEBUG
 
 void
-r_alloc_check (void)
+r_alloc_check ()
 {
   int found = 0;
   heap_ptr h, ph = 0;
@@ -1233,7 +1232,7 @@ r_alloc_check (void)
     {
       assert (b->prev == pb);
       assert ((POINTER) MEM_ROUNDUP (b->data) == b->data);
-      assert ((size_t) MEM_ROUNDUP (b->size) == b->size);
+      assert ((SIZE) MEM_ROUNDUP (b->size) == b->size);
 
       ph = 0;
       for (h = first_heap; h; h = h->next)
@@ -1319,7 +1318,7 @@ r_alloc_check (void)
 #include <stdio.h>
 
 typedef void *VM_ADDR;		/* VM addresses */
-static const VM_ADDR VM_FAILURE_ADDR = (VM_ADDR) -1; /* mmap returns this when it fails. */
+static CONST VM_ADDR VM_FAILURE_ADDR = (VM_ADDR) -1; /* mmap returns this when it fails. */
 
 /* Configuration for relocating allocator. */
 
@@ -1693,10 +1692,10 @@ find_mmap_handle (POINTER *alias)
 static void Addr_Block_initialize(void);
 
 /* Get a suitable VM_ADDR via mmap */
-static VM_ADDR New_Addr_Block (size_t sz);
+static VM_ADDR New_Addr_Block( SIZE sz );
 
 /* Free a VM_ADDR allocated via New_Addr_Block */
-static void Free_Addr_Block (VM_ADDR addr, size_t sz);
+static void Free_Addr_Block( VM_ADDR addr, SIZE sz );
 
 #ifdef MMAP_GENERATE_ADDRESSES
 /* Implementation of the three calls for address picking when XEmacs is incharge */
@@ -1707,7 +1706,7 @@ typedef enum { empty = 0, occupied, unavailable } addr_status;
 typedef struct addr_chain
 {
   POINTER addr;
-  size_t sz;
+  SIZE sz;
   addr_status flag;
   struct addr_chain *next;
 } ADDRESS_BLOCK, *ADDRESS_CHAIN;
@@ -1719,21 +1718,19 @@ static ADDRESS_CHAIN addr_chain = 0;
    WRT the addition/deletion of address blocks because of the assert
    in Coalesce() and the strict ordering of blocks by their address
    */
-static void
-Addr_Block_initialize (void)
+static void Addr_Block_initialize()
 {
   MEMMETER( MVAL( M_Addrlist_Size )++)
   addr_chain = (ADDRESS_CHAIN) UNDERLYING_MALLOC( sizeof( ADDRESS_BLOCK ));
   addr_chain->next = 0;		/* Last block in chain */
   addr_chain->sz = 0x0c000000;	/* Size */
-  addr_chain->addr = (POINTER) (0x04000000);
+  addr_chain->addr = (POINTER) (0x04000000 | DATA_SEG_BITS);
   addr_chain->flag = empty;
 }
 
 /* Coalesce address blocks if they are contiguous.  Only empty and
    unavailable slots are coalesced. */
-static void
-Coalesce_Addr_Blocks (void)
+static void Coalesce_Addr_Blocks()
 {
   ADDRESS_CHAIN p;
   for (p = addr_chain; p; p = p->next)
@@ -1759,8 +1756,7 @@ Coalesce_Addr_Blocks (void)
 }
 
 /* Get an empty address block of specified size. */
-static VM_ADDR
-New_Addr_Block (size_t sz)
+static VM_ADDR New_Addr_Block( SIZE sz )
 {
   ADDRESS_CHAIN p = addr_chain;
   VM_ADDR new_addr = VM_FAILURE_ADDR;
@@ -1797,8 +1793,7 @@ New_Addr_Block (size_t sz)
 
 /* Free an address block.  We mark the block as being empty, and attempt to
    do any coalescing that may have resulted from this. */
-static void
-Free_Addr_Block (VM_ADDR addr, size_t sz)
+static void Free_Addr_Block( VM_ADDR addr, SIZE sz )
 {
   ADDRESS_CHAIN p = addr_chain;
   for (; p; p = p->next )
@@ -1819,21 +1814,18 @@ Free_Addr_Block (VM_ADDR addr, size_t sz)
 /* This is an alternate (simpler) implementation in cases where the
    address is picked by the kernel. */
 
-static void
-Addr_Block_initialize (void)
+static void Addr_Block_initialize(void)
 {
   /* Nothing. */
 }
 
-static VM_ADDR
-New_Addr_Block (size_t sz)
+static VM_ADDR New_Addr_Block( SIZE sz )
 {
   return mmap (0, sz, PROT_READ|PROT_WRITE, MAP_FLAGS,
 	       DEV_ZERO_FD, 0 );
 }
 
-static void
-Free_Addr_Block (VM_ADDR addr, size_t sz)
+static void Free_Addr_Block( VM_ADDR addr, SIZE sz )
 {
   munmap ((caddr_t) addr, sz );
 }
@@ -1844,13 +1836,13 @@ Free_Addr_Block (VM_ADDR addr, size_t sz)
 /* IMPLEMENTATION OF EXPORTED RELOCATOR INTERFACE */
 
 /*
- r_alloc (POINTER, SIZE): Allocate a relocatable area with the start
+ r_alloc( POINTER, SIZE ): Allocate a relocatable area with the start
  address aliased to the first parameter.
  */
 
-POINTER r_alloc (POINTER *ptr, size_t size);
+POINTER r_alloc (POINTER *ptr, SIZE size);
 POINTER
-r_alloc (POINTER *ptr, size_t size)
+r_alloc (POINTER *ptr, SIZE size)
 {
   MMAP_HANDLE mh;
 
@@ -1865,8 +1857,8 @@ r_alloc (POINTER *ptr, size_t size)
       mh = new_mmap_handle( size );
       if (mh)
 	{
-	  size_t hysteresis = (mmap_hysteresis > 0 ?  mmap_hysteresis  : 0);
-	  size_t mmapped_size = ROUNDUP( size + hysteresis );
+	  SIZE hysteresis = (mmap_hysteresis > 0 ?  mmap_hysteresis  : 0);
+	  SIZE  mmapped_size = ROUNDUP( size + hysteresis );
 	  MEMMETER( MVAL(M_Map)++ )
 	  MEMMETER( MVAL(M_Pages_Map) += (mmapped_size/page_size) )
 	  MEMMETER( MVAL(M_Wastage) += mmapped_size - size )
@@ -1934,9 +1926,9 @@ r_alloc_free (POINTER *ptr)
    If more memory cannot be allocated, then leave *PTR unchanged, and
    return zero.  */
 
-POINTER r_re_alloc (POINTER *ptr, size_t sz);
+POINTER r_re_alloc (POINTER *ptr, SIZE sz);
 POINTER
-r_re_alloc (POINTER *ptr, size_t sz)
+r_re_alloc (POINTER *ptr, SIZE sz)
 {
   if (r_alloc_initialized == 0)
     {
@@ -1952,8 +1944,8 @@ r_re_alloc (POINTER *ptr, size_t sz)
     }
   else
     {
-      size_t hysteresis = (mmap_hysteresis > 0 ?  mmap_hysteresis : 0);
-      size_t actual_sz = ROUNDUP( sz + hysteresis );
+      SIZE hysteresis = (mmap_hysteresis > 0 ?  mmap_hysteresis : 0);
+      SIZE actual_sz = ROUNDUP( sz + hysteresis );
       MMAP_HANDLE h = find_mmap_handle( ptr );
       VM_ADDR new_vm_addr;
 

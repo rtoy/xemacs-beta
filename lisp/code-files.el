@@ -6,6 +6,8 @@
 
 ;; This file is part of XEmacs.
 
+;; This file is very similar to mule-files.el
+
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
@@ -21,21 +23,16 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: Not synched.
-
 ;;; Commentary:
 
-;; Derived from mule.el in the original Mule but heavily modified
-;; by Ben Wing.
+;;; Derived from mule.el in the original Mule but heavily modified
+;;; by Ben Wing.
 
 ;; 1997/3/11 modified by MORIOKA Tomohiko to sync with Emacs 20 API.
 
-;; This file was derived from the former mule-files.el which has been removed
-;; as of XEmacs 21.2.15.
-
 ;;; Code:
 
-(setq-default buffer-file-coding-system 'raw-text)
+(setq-default buffer-file-coding-system 'no-conversion)
 (put 'buffer-file-coding-system 'permanent-local t)
 
 (define-obsolete-variable-alias
@@ -68,13 +65,7 @@ global environment specification.")
     ("TUTORIAL\\.\\(?:hr\\|pl\\|ro\\)\\'" . iso-8859-2)
     ;; ("\\.\\(el\\|emacs\\|info\\(-[0-9]+\\)?\\|texi\\)$" . iso-2022-8)
     ;; ("\\(ChangeLog\\|CHANGES-beta\\)$" . iso-2022-8)
-
-    ;; This idea is totally broken, and the code didn't work anyway.
-    ;; Mailboxes should be decoded by mail clients, who actually know
-    ;; how to deal with them.  Otherwise, their contents should be
-    ;; treated as `binary'.
-    ;("/spool/mail/.*$" . convert-mbox-coding-system)
-    )
+    ("/spool/mail/.*$" . convert-mbox-coding-system))
   "Alist to decide a coding system to use for a file I/O operation.
 The format is ((PATTERN . VAL) ...),
 where PATTERN is a regular expression matching a file name,
@@ -197,12 +188,22 @@ object (the entry specified a coding system)."
 	    ((find-coding-system codesys))
 	    ))))
 
-;; This is completely broken, not only in implementation (does not
-;; understand MIME), but in concept -- such high-level decoding should
-;; be done by mail readers, not by IO code!
-
-;(defun convert-mbox-coding-system (filename visit start end)
-;...
+(defun convert-mbox-coding-system (filename visit start end)
+  "Decoding function for Unix mailboxes.
+Does separate detection and decoding on each message, since each
+message might be in a different encoding."
+  (let ((buffer-read-only nil))
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      (while (not (eobp))
+	(let ((start (point))
+	      end)
+	  (forward-char 1)
+	  (if (re-search-forward "^From" nil 'move)
+	      (beginning-of-line))
+	  (setq end (point))
+	  (decode-coding-region start end 'undecided))))))
 
 (defun find-coding-system-magic-cookie ()
   "Look for the coding-system magic cookie in the current buffer.\n"
@@ -283,7 +284,7 @@ Return t if file exists."
 	       (save-excursion
 		 (set-buffer (get-buffer-create " *load*"))
 		 (erase-buffer)
-		 (let ((coding-system-for-read 'raw-text))
+		 (let ((coding-system-for-read 'no-conversion))
 		   (insert-file-contents path nil 1 3001))
 		 (find-coding-system-magic-cookie))
 	       (if elc
@@ -370,6 +371,9 @@ with the file contents.  This is better than simply deleting and inserting
 the whole thing because (1) it preserves some marker positions
 and (2) it puts less data in the undo list.
 
+NOTE: When Mule support is enabled, the REPLACE argument is
+currently ignored.
+
 The coding system used for decoding the file is determined as follows:
 
 1. `coding-system-for-read', if non-nil.
@@ -377,7 +381,7 @@ The coding system used for decoding the file is determined as follows:
 3. The matching value for this filename from
    `file-coding-system-alist', if any.
 4. `buffer-file-coding-system-for-read', if non-nil.
-5. The coding system 'raw-text.
+5. The coding system 'no-conversion.
 
 If a local value for `buffer-file-coding-system' in the current buffer
 does not exist, it is set to the coding system which was actually used
@@ -406,7 +410,7 @@ and `insert-file-contents-post-hook'."
 		 ;; #4.
 		 buffer-file-coding-system-for-read
 		 ;; #5.
-		 'raw-text))
+		 'no-conversion))
 	  (if (consp coding-system)
 	      (setq return-val coding-system)
 	    (if (null (find-coding-system coding-system))
@@ -551,9 +555,4 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
 			start end filename append visit lockname
 			coding-system)))
 
-;;; The following was all that remained in mule-files.el, so I moved it
-;;; here for neatness.  -sb
-(when (featurep 'mule)
-  (setq-default buffer-file-coding-system 'iso-2022-8))
-
-;;; code-files.el ends here
+;;; mule-files.el ends here

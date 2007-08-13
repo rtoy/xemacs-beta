@@ -295,8 +295,8 @@ or if the window is the only window of its frame."
 			(select-frame frame))))
 	       ;; check to make sure that the window is the full width
 	       ;; of the frame
-	       (window-leftmost-p window)
-	       (window-rightmost-p window)
+	       (eq (nth 2 edges)
+		   (frame-pixel-width))
 	       (zerop (nth 0 edges))
 	       ;; The whole buffer must be visible.
 	       (pos-visible-in-window-p (point-min) window)
@@ -350,5 +350,6 @@ Any other non-nil value means search frames on all devices."
                     (push win wins))
                   minibuf all-frames device)
     wins))
+
 
 ;;; window.el ends here

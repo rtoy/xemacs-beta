@@ -136,7 +136,7 @@ before writing it (above and beyond the number of bytes of actual
 program text).  HDR's standard fields are already correct, except that
 this adjustment to the `a_text' field has not yet been made;
 thus, the amount of offset can depend on the data in the file.
-
+  
 * A_TEXT_SEEK(HDR)
 
 If defined, this macro specifies the number of bytes to seek into the
@@ -186,12 +186,19 @@ pointer looks like an int) but not on all machines.
 #  undef _POSIX_SOURCE
 # endif
 
+# if defined(__lucid) && !defined(__STDC_EXTENDED__)
+#  define __STDC_EXTENDED__ 1
+# endif
+
 # include <stddef.h>
 # include <stdlib.h>
 # include <unistd.h>
 # include <string.h>
 # include <stddef.h>
-# include <errno.h>
+
+# ifdef __lucid
+#  include <sysent.h>
+# endif
 
 #endif
 
@@ -209,7 +216,33 @@ pointer looks like an int) but not on all machines.
 int need_coff_header = 1;
 #include <coff-encap/a.out.encap.h> /* The location might be a poor assumption */
 #else
+#ifdef MSDOS
+#if __DJGPP__ > 1
+#include <fcntl.h>  /* for O_RDONLY, O_RDWR */
+#endif
+#include <coff.h>
+#define filehdr external_filehdr
+#define scnhdr external_scnhdr
+#define syment external_syment
+#define auxent external_auxent
+#define n_numaux e_numaux
+#define n_type e_type
+struct aouthdr
+{
+  unsigned short	magic;	/* type of file				*/
+  unsigned short	vstamp;	/* version stamp			*/
+  unsigned long		tsize;	/* text size in bytes, padded to FW bdry*/
+  unsigned long		dsize;	/* initialized data "  "		*/
+  unsigned long		bsize;	/* uninitialized data "   "		*/
+  unsigned long		entry;	/* entry pt.				*/
+  unsigned long	 	text_start;/* base of text used for this file */
+  unsigned long	 	data_start;/* base of data used for this file */
+};
+
+
+#else /* not MSDOS */
 #include <a.out.h>
+#endif /* not MSDOS */
 #endif /* not COFF_ENCAPSULATE */
 
 /* Define getpagesize if the system does not.
@@ -340,12 +373,14 @@ static int pagemask;
 #include "lisp.h"
 
 static void
-report_error (const char *file, int fd)
+report_error (file, fd)
+     CONST char *file;
+     int fd;
 {
   if (fd)
     close (fd);
   report_file_error ("Cannot unexec",
-		     Fcons (build_ext_string (file, Qfile_name), Qnil));
+		     Fcons (build_ext_string (file, FORMAT_FILENAME), Qnil));
 }
 #endif /* emacs */
 
@@ -356,7 +391,7 @@ report_error (const char *file, int fd)
 static void
 report_error_1 (fd, msg, a1, a2)
      int fd;
-     const char *msg;
+     CONST char *msg;
      int a1, a2;
 {
   close (fd);
@@ -408,7 +443,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
     {
       close (new);
       /* unlink (new_name);	    	/ * Failed, unlink new a.out */
-      return -1;
+      return -1;	
     }
 
   close (new);
@@ -885,6 +920,14 @@ copy_text_and_data (int new, int a_out)
 
 #else /* COFF, but not USG_SHARED_LIBRARIES */
 
+#ifdef MSDOS
+#if __DJGPP__ >= 2
+  /* Dump the original table of exception handlers, not the one
+     where our exception hooks are registered.  */
+  __djgpp_exception_toggle ();
+#endif
+#endif
+
   lseek (new, (long) text_scnptr, 0);
   ptr = (char *) f_ohdr.text_start;
 #ifdef HEADER_INCL_IN_TEXT
@@ -898,6 +941,13 @@ copy_text_and_data (int new, int a_out)
   ptr = (char *) f_ohdr.data_start;
   end = ptr + f_ohdr.dsize;
   write_segment (new, ptr, end);
+
+#ifdef MSDOS
+#if __DJGPP__ >= 2
+  /* Restore our exception hooks.  */
+  __djgpp_exception_toggle ();
+#endif
+#endif
 
 #endif /* USG_SHARED_LIBRARIES */
 
@@ -948,7 +998,7 @@ copy_text_and_data (int new, int a_out)
     char c;
     int mcount_address, mcount_offset, count;
     extern char *_execname;
-
+   
 
     /* The use of _execname is incompatible with RISCiX 1.1 */
     sprintf (command, "nm %s | fgrep mcount", _execname);
@@ -968,7 +1018,7 @@ copy_text_and_data (int new, int a_out)
     {
       sprintf (errbuf, "Failed to execute the command '%s'\n", command);
       PERROR (errbuf);
-    }
+    }  
 
     sscanf(address_text, "%x", &mcount_address);
     ptr = (char *) unexec_text_start;
@@ -1026,6 +1076,7 @@ write_segment (new, ptr, end)
 #if 0
   char buf[80];
 #endif
+  extern int errno;
   /* This is the normal amount to write at once.
      It is the size of block that NFS uses.  */
   int writesize = 1 << 13;
@@ -1180,7 +1231,11 @@ adjust_lnnoptrs (writedesc, readdesc, new_name)
   if (!lnnoptr || !f_hdr.f_symptr)
     return 0;
 
+#ifdef MSDOS
+  if ((new = writedesc) < 0)
+#else
   if ((new = open (new_name, O_RDWR)) < 0)
+#endif
     {
       PERROR (new_name);
       return -1;
@@ -1202,7 +1257,9 @@ adjust_lnnoptrs (writedesc, readdesc, new_name)
 	    }
 	}
     }
+#ifndef MSDOS
   close (new);
+#endif
   return 0;
 }
 

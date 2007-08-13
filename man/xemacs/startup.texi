@@ -63,9 +63,8 @@ up in the various XEmacs paths.  Early package hierarchies are at the
 very front, late ones somewhere in the middle, and last hierarchies are
 (you guessed it) last.
 
-By default, XEmacs expects an early package hierarchy in the
-subdirectory @file{.xemacs/xemacs-packages} of the user's home
-directory.
+By default, XEmacs expects an early package hierarchy in the a
+subdirectory @file{.xemacs} of the user's home directory.
 
 Moreover, XEmacs expects late hierarchies in the subdirectories
 @file{site-packages}, @file{mule-packages}, and @file{xemacs-packages}
@@ -78,7 +77,7 @@ subdirectory and prefer directories found there.
 By default, XEmacs does not have a pre-configured last package
 hierarchy.  Last hierarchies are primarily for using package hierarchies
 of outdated versions of XEmacs as a fallback option.  For example, it is
-possible to run XEmacs 21 with the 20.4 package hierarchy as a last
+possible to run XEmacs 21.0 with the 20.4 package hierarchy as a last
 hierarchy.
 
 It is possible to specify at configure-time the location of the various
@@ -90,7 +89,7 @@ they are locate the early, late, and last package hierarchies
 respectively.  If two components are present, they locate the early and
 late hierarchies.  If only one component is present, it locates the late
 hierarchy.  At run time, the package path may also be specified via the
-@code{EMACSPACKAGEPATH} environment variable.
+@code{PACKAGEPATH} environment variable.
 
 An XEmacs package is laid out just like a normal installed XEmacs lisp
 directory.  It may have @file{lisp}, @file{etc}, @file{info}, and
@@ -158,6 +157,16 @@ documentation.  Moreover, XEmacs will add @file{/usr/info},
 variable @code{INFOPATH}
 @vindex INFOPATH
 to @code{Info-directory-list}.
+
+@item lock-directory
+@itemx superlock-file
+@vindex lock-directory
+@vindex superlock-file
+Are the site-specific locations of the lock directory and the superlock
+file, respectively.  The @code{lock-directory} variable may also be
+initialized from the @code{EMACSLOCKDIR}
+@vindex EMACSLOCKDIR
+environment variable.
 
 @item exec-directory
 @vindex exec-directory

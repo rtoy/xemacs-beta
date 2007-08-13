@@ -47,7 +47,6 @@
 	(if (featurep 'infodock)
 	    (require 'id-x-toolbar)
 	  (init-x-toolbar)))
-    (if (featurep 'gutter) (init-gutter))
     (add-hook 'zmacs-deactivate-region-hook
 	      (lambda ()
 		(if (console-on-window-system-p)
@@ -62,15 +61,13 @@
 		    (activate-region-as-selection))))
     ;; Old-style mswindows bindings. The new-style mswindows bindings
     ;; (namely Ctrl-X, Ctrl-C and Ctrl-V) are already spoken for by XEmacs.
-    (global-set-key '(shift delete)   'kill-primary-selection)
-    (global-set-key '(control delete) 'delete-primary-selection)
-    (global-set-key '(shift insert)   'yank-clipboard-selection)
-    (global-set-key '(control insert) 'copy-primary-selection)
-
-    (global-set-key '(meta f4)	      'save-buffers-kill-emacs)
+    (define-key global-map '(shift delete)   'kill-primary-selection)
+    (define-key global-map '(control delete) 'delete-primary-selection)
+    (define-key global-map '(shift insert)   'yank-clipboard-selection)
+    (define-key global-map '(control insert) 'copy-primary-selection)
 
     ;; Random stuff
-    (global-set-key 'menu	'popup-mode-menu)
+    (define-key global-map 'menu	'popup-mode-menu)
 
     (setq mswindows-post-win-initted t)))
 

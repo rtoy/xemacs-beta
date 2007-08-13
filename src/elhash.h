@@ -20,25 +20,23 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_elhash_h_
-#define INCLUDED_elhash_h_
+#ifndef _XEMACS_ELHASH_H_
+#define _XEMACS_ELHASH_H_
 
-typedef struct Lisp_Hash_Table Lisp_Hash_Table;
+DECLARE_LRECORD (hash_table, struct Lisp_Hash_Table);
 
-DECLARE_LRECORD (hash_table, Lisp_Hash_Table);
-
-#define XHASH_TABLE(x) XRECORD (x, hash_table, Lisp_Hash_Table)
+#define XHASH_TABLE(x) XRECORD (x, hash_table, struct Lisp_Hash_Table)
 #define XSETHASH_TABLE(x, p) XSETRECORD (x, p, hash_table)
 #define HASH_TABLEP(x) RECORDP (x, hash_table)
+#define GC_HASH_TABLEP(x) GC_RECORDP (x, hash_table)
 #define CHECK_HASH_TABLE(x) CHECK_RECORD (x, hash_table)
 #define CONCHECK_HASH_TABLE(x) CONCHECK_RECORD (x, hash_table)
 
-enum hash_table_weakness
+enum hash_table_type
 {
   HASH_TABLE_NON_WEAK,
   HASH_TABLE_KEY_WEAK,
   HASH_TABLE_VALUE_WEAK,
-  HASH_TABLE_KEY_VALUE_WEAK,
   HASH_TABLE_KEY_CAR_WEAK,
   HASH_TABLE_VALUE_CAR_WEAK,
   HASH_TABLE_WEAK
@@ -50,8 +48,6 @@ enum hash_table_test
   HASH_TABLE_EQL,
   HASH_TABLE_EQUAL
 };
-
-extern const struct lrecord_description hash_table_description[];
 
 EXFUN (Fcopy_hash_table, 1);
 EXFUN (Fhash_table_count, 1);
@@ -66,14 +62,15 @@ typedef unsigned long (*hash_table_hash_function_t) (Lisp_Object obj);
 typedef int (*maphash_function_t) (Lisp_Object key, Lisp_Object value,
 				   void* extra_arg);
 
-Lisp_Object make_general_lisp_hash_table (enum hash_table_test test,
-					  size_t size,
-					  double rehash_size,
+
+Lisp_Object make_general_lisp_hash_table (size_t size,
+					  enum hash_table_type type,
+					  enum hash_table_test test,
 					  double rehash_threshold,
-					  enum hash_table_weakness weakness);
+					  double rehash_size);
 
 Lisp_Object make_lisp_hash_table (size_t size,
-				  enum hash_table_weakness weakness,
+				  enum hash_table_type type,
 				  enum hash_table_test test);
 
 void elisp_maphash (maphash_function_t function,
@@ -82,9 +79,8 @@ void elisp_maphash (maphash_function_t function,
 void elisp_map_remhash (maphash_function_t predicate,
 			Lisp_Object hash_table, void *extra_arg);
 
-int finish_marking_weak_hash_tables (void);
-void prune_weak_hash_tables (void);
+int finish_marking_weak_hash_tables (int (*obj_marked_p) (Lisp_Object),
+				     void (*markobj) (Lisp_Object));
+void prune_weak_hash_tables (int (*obj_marked_p) (Lisp_Object));
 
-void pdump_reorganize_hash_table (Lisp_Object);
-
-#endif /* INCLUDED_elhash_h_ */
+#endif /* _XEMACS_ELHASH_H_ */

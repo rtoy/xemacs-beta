@@ -246,10 +246,8 @@ to more mnemonic ones,like `kp-3'."
 ;;; themselves are in x-win.el in case someone wants to use them when
 ;;; not running on a Sun display.)
 
-  (or (lookup-key global-map 'find)
-      (define-key global-map 'find 'ow-find))
-  (or (lookup-key global-map '(shift find))
-       (define-key global-map '(shift find) 'ow-find-backward))
+  (define-key global-map 'find		'ow-find)
+  (define-key global-map '(shift find)	'ow-find-backward)
 
   )
 

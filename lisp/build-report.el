@@ -2,8 +2,8 @@
 
 ;; Copyright (C) 1997 Adrian Aichner
 
-;; Author: Adrian Aichner <adrian@xemacs.org>
-;; Date: Sun., Apr. 20, 1997, 1998, 1999.
+;; Author: Adrian Aichner, Teradyne GmbH Munich <aichner@ecf.teradyne.com>
+;; Date: Sun., Apr. 20, 1997.
 ;; Version: 1.35
 ;; Keywords: internal
 
@@ -138,7 +138,7 @@ available."
 ;; Bandaid
 (when (featurep 'mime-setup)
   ;; No (defvaralias ...) so far. Thanks to "Didier Verna"
-  ;; <didier@xemacs.org> for reporting my incorrect defvaraliasing of
+  ;; <verna@inf.enst.fr> for reporting my incorrect defvaraliasing of
   ;; `mime-editor/insert-tag'.
   ;; Thanks to Jens-Ulrik Holger Petersen
   ;; <petersen@kurims.kyoto-u.ac.jp> for suggesting the conditional
@@ -151,7 +151,6 @@ available."
     (defalias 'mime-edit-insert-binary-file
       'mime-editor/insert-binary-file)))
 
-;;;###autoload
 (defun build-report (&rest args)
   "Initializes a fresh mail composition buffer using `compose-mail'
 with the contents of XEmacs Installation file and excerpts from XEmacs
@@ -214,7 +213,7 @@ The make process output must have been saved in
 	      (progn
 		(mime-edit-insert-tag
 		 "text"
-		 "plain"
+		 "plain" 
 		 (concat
 		  "\nContent-Disposition: attachment;"
 		  " filename=\""
@@ -230,7 +229,7 @@ The make process output must have been saved in
 	  (goto-char (point-min))
 	  (delete-matching-lines (build-report-delete))
 	  (goto-char (point-min))
-	  (insert "> Contents of "
+	  (insert "> Contents of " 
 		  build-report-make-output-file
 		  "\n> keeping lines matching\n> \""
 		  (build-report-keep)
@@ -240,7 +239,7 @@ The make process output must have been saved in
       (insert "> " build-report-make-output-file
 	      " does not exist!\n\n"))
     (buffer-string)))
-
+      
 (defun build-report-insert-installation-file (where all)
   "Inserts the contents of the `build-report-installation-file'
 created by the XEmacs Beta configure process."
@@ -259,7 +258,7 @@ created by the XEmacs Beta configure process."
 	      (progn
 		(mime-edit-insert-tag
 		 "text"
-		 "plain"
+		 "plain" 
 		 (concat
 		  "\nContent-Disposition: attachment;"
 		  " filename=\""

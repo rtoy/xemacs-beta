@@ -25,6 +25,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 /* Sync'ed with Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
 
 #include <config.h>
+
+#undef signal
 #define getwd _getwd
 #include "lisp.h"
 #undef getwd
@@ -33,12 +35,37 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "syssignal.h"
 #include "sysproc.h"
 #include "sysfile.h"
-#include "syspwd.h"
-#include "sysdir.h"
 
-#include "syswindows.h"
+#include <ctype.h>
+#include <direct.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <io.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stddef.h> /* for offsetof */
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <windows.h>
+#ifndef __MINGW32__
+#include <mmsystem.h>
+#else
+typedef void (CALLBACK TIMECALLBACK)(UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2);
+
+typedef TIMECALLBACK FAR *LPTIMECALLBACK;
+DWORD WINAPI timeGetTime(void);
+MMRESULT WINAPI timeSetEvent(UINT uDelay, UINT uResolution,
+    LPTIMECALLBACK fptc, DWORD dwUser, UINT fuEvent);
+MMRESULT WINAPI timeKillEvent(UINT uTimerID);
+MMRESULT WINAPI timeGetDevCaps(TIMECAPS* ptc, UINT cbtc);
+MMRESULT WINAPI timeBeginPeriod(UINT uPeriod);
+MMRESULT WINAPI timeEndPeriod(UINT uPeriod);
+#endif
 
 #include "nt.h"
+#include <sys/dir.h>
 #include "ntheap.h"
 
 
@@ -48,7 +75,7 @@ extern Lisp_Object Vwin32_generate_fake_inodes;
 #endif
 extern Lisp_Object Vmswindows_get_true_file_attributes;
 
-int nt_fake_unix_uid;
+extern char *get_home_directory(void);
 
 static char startup_dir[ MAXPATHLEN ];
 
@@ -105,40 +132,39 @@ static struct passwd the_passwd =
   the_passwd_shell,
 };
 
-uid_t
-getuid (void) 
-{
-  return nt_fake_unix_uid;
-}
-
-uid_t 
-geteuid (void) 
+int 
+getuid () 
 { 
-  return nt_fake_unix_uid;
+  return the_passwd.pw_uid;
 }
 
-gid_t
-getgid (void) 
+int 
+geteuid () 
+{ 
+  /* I could imagine arguing for checking to see whether the user is
+     in the Administrators group and returning a UID of 0 for that
+     case, but I don't know how wise that would be in the long run.  */
+  return getuid (); 
+}
+
+int 
+getgid () 
 { 
   return the_passwd.pw_gid;
 }
 
-gid_t
-getegid (void) 
+int 
+getegid () 
 { 
   return getgid ();
 }
 
 struct passwd *
-getpwuid (uid_t uid)
+getpwuid (int uid)
 {
-  if (uid == nt_fake_unix_uid)
-    {
-      the_passwd.pw_gid = the_passwd.pw_uid = uid;
-      return &the_passwd;
-    }
-  else
-    return NULL;
+  if (uid == the_passwd.pw_uid)
+    return &the_passwd;
+  return NULL;
 }
 
 struct passwd *
@@ -157,14 +183,8 @@ getpwnam (const char *name)
 }
 
 void
-init_user_info (void)
+init_user_info ()
 {
-  /* This code is pretty much of ad hoc nature. There is no unix-like
-     UIDs under Windows NT. There is no concept of root user, because
-     all security is ACL-based. Instead, let's use a simple variable,
-     nt-fake-unix-uid, which would allow the user to have a uid of
-     choice. --kkm, 02/03/2000 */
-#if 0
   /* Find the user's real name by opening the process token and
      looking up the name associated with the user-sid in that token.
 
@@ -240,18 +260,6 @@ init_user_info (void)
       the_passwd.pw_gid = 123;
     }
 
-  if (token)
-    CloseHandle (token);
-#else
-  /* Obtain only logon id here, uid part is moved to getuid */
-  char name[256];
-  DWORD length = sizeof (name);
-  if (GetUserName (name, &length))
-    strcpy (the_passwd.pw_name, name);
-  else
-    strcpy (the_passwd.pw_name, "unknown");
-#endif
-
   /* Ensure HOME and SHELL are defined. */
 #if 0
   /*
@@ -264,8 +272,11 @@ init_user_info (void)
     putenv ((GetVersion () & 0x80000000) ? "SHELL=command" : "SHELL=cmd");
 
   /* Set dir and shell from environment variables. */
-  strcpy (the_passwd.pw_dir, (char *)get_home_directory());
+  strcpy (the_passwd.pw_dir, get_home_directory());
   strcpy (the_passwd.pw_shell, getenv ("SHELL"));
+
+  if (token)
+    CloseHandle (token);
 }
 
 /* Normalize filename by converting all path separators to
@@ -273,7 +284,9 @@ init_user_info (void)
    case path name components to lower case.  */
 
 static void
-normalize_filename (char *fp, char path_sep)
+normalize_filename (fp, path_sep)
+     REGISTER char *fp;
+     char path_sep;
 {
   char sep;
   char *elem;
@@ -329,14 +342,16 @@ normalize_filename (char *fp, char path_sep)
 
 /* Destructively turn backslashes into slashes.  */
 void
-dostounix_filename (char *p)
+dostounix_filename (p)
+     REGISTER char *p;
 {
   normalize_filename (p, '/');
 }
 
 /* Destructively turn slashes into backslashes.  */
 void
-unixtodos_filename (char *p)
+unixtodos_filename (p)
+     REGISTER char *p;
 {
   normalize_filename (p, '\\');
 }
@@ -345,7 +360,10 @@ unixtodos_filename (char *p)
    (From msdos.c...probably should figure out a way to share it,
    although this code isn't going to ever change.)  */
 int
-crlf_to_lf (int n, unsigned char *buf, unsigned *lf_count)
+crlf_to_lf (n, buf, lf_count)
+     REGISTER int n;
+     REGISTER unsigned char *buf;
+     REGISTER unsigned *lf_count;
 {
   unsigned char *np = buf;
   unsigned char *startp = buf;
@@ -522,7 +540,9 @@ request_sigio (void)
 #define REG_ROOT "SOFTWARE\\GNU\\XEmacs"
 
 LPBYTE 
-nt_get_resource (char *key, LPDWORD lpdwtype)
+nt_get_resource (key, lpdwtype)
+    char *key;
+    LPDWORD lpdwtype;
 {
   LPBYTE lpvalue;
   HKEY hrootkey = NULL;
@@ -567,7 +587,7 @@ nt_get_resource (char *key, LPDWORD lpdwtype)
 }
 
 void
-init_environment (void)
+init_environment ()
 {
   /* Check for environment variables and use registry if they don't exist */
   {
@@ -589,9 +609,7 @@ init_environment (void)
       "EMACSLOCKDIR",
       "INFOPATH"
     };
-#if defined (HEAP_IN_DATA) && !defined(PDUMP)
-    cache_system_info ();
-#endif
+
     for (i = 0; i < countof (env_vars); i++) 
       {
 	if (!getenv (env_vars[i]) &&
@@ -1063,22 +1081,16 @@ opendir (const char *filename)
   return dirp;
 }
 
-int
+void
 closedir (DIR *dirp)
 {
-  BOOL retval;
-
   /* If we have a find-handle open, close it.  */
   if (dir_find_handle != INVALID_HANDLE_VALUE)
     {
-      retval = FindClose (dir_find_handle);
+      FindClose (dir_find_handle);
       dir_find_handle = INVALID_HANDLE_VALUE;
     }
   xfree (dirp);
-  if (retval)
-    return 0;
-  else
-    return -1;
 }
 
 struct direct *
@@ -1191,11 +1203,8 @@ sys_rename (const char * oldname, const char * newname)
 #endif /* 0 */
 
 static FILETIME utc_base_ft;
-static int init = 0;
-
-#if 0
-
 static long double utc_base;
+static int init = 0;
 
 time_t
 convert_time (FILETIME ft)
@@ -1228,86 +1237,6 @@ convert_time (FILETIME ft)
   ret -= utc_base;
   return (time_t) (ret * 1e-7);
 }
-#else
-
-#if defined(MINGW) && CYGWIN_VERSION_DLL_MAJOR <= 21
-#define LowPart u.LowPart
-#define HighPart u.HighPart
-#endif
-
-static LARGE_INTEGER utc_base_li;
-
-time_t
-convert_time (FILETIME uft)
-{
-  time_t ret;
-#ifndef MAXLONGLONG
-  SYSTEMTIME st;
-  struct tm t;
-  FILETIME ft;
-  TIME_ZONE_INFORMATION tzi;
-  DWORD tzid;
-#else
-  LARGE_INTEGER lft;
-#endif
-
-  if (!init)
-    {
-      /* Determine the delta between 1-Jan-1601 and 1-Jan-1970. */
-      SYSTEMTIME st;
-
-      st.wYear = 1970;
-      st.wMonth = 1;
-      st.wDay = 1;
-      st.wHour = 0;
-      st.wMinute = 0;
-      st.wSecond = 0;
-      st.wMilliseconds = 0;
-
-      SystemTimeToFileTime (&st, &utc_base_ft);
-
-      utc_base_li.LowPart = utc_base_ft.dwLowDateTime;
-      utc_base_li.HighPart = utc_base_ft.dwHighDateTime;
-
-      init = 1;
-    }
-
-#ifdef MAXLONGLONG
-
-  /* On a compiler that supports long integers, do it the easy way */
-  lft.LowPart = uft.dwLowDateTime;
-  lft.HighPart = uft.dwHighDateTime;
-  ret = (time_t) ((lft.QuadPart - utc_base_li.QuadPart) / 10000000);
-
-#else
-
-  /* Do it the hard way using mktime. */
-  FileTimeToLocalFileTime(&uft, &ft);
-  FileTimeToSystemTime (&ft, &st);
-  tzid = GetTimeZoneInformation (&tzi);
-  t.tm_year = st.wYear - 1900;
-  t.tm_mon = st.wMonth - 1;
-  t.tm_mday = st.wDay;
-  t.tm_hour = st.wHour;
-  t.tm_min = st.wMinute;
-  t.tm_sec = st.wSecond;
-  t.tm_isdst = (tzid == TIME_ZONE_ID_DAYLIGHT);
-  /* st.wMilliseconds not applicable */
-  ret = mktime(&t);
-  if (ret == -1)
-    {
-      ret = 0;
-    }
-
-#endif
-
-  return ret;
-}
-#endif
-#if defined(MINGW) && CYGWIN_VERSION_DLL_MAJOR <= 21
-#undef LowPart
-#undef HighPart
-#endif
 
 #if 0
 /* in case we ever have need of this */
@@ -1385,51 +1314,11 @@ generate_inode_val (const char * name)
 
 #endif
 
-/* #### aichner@ecf.teradyne.com reported that with the library
-   provided stat/fstat, (file-exist "d:\\tmp\\") =>> nil,
-   (file-exist "d:\\tmp") =>> t, when d:\tmp exists. Whenever
-   we opt to use non-encapsulated stat(), this should serve as
-   a compatibility test. --kkm */
-
-/* Since stat is encapsulated on Windows NT, we need to encapsulate
-   the equally broken fstat as well. */
-int
-mswindows_fstat (int handle, struct stat *buffer)
-{
-  int ret;
-  BY_HANDLE_FILE_INFORMATION lpFileInfo;
-  /* Initialize values */
-  buffer->st_mode = 0;
-  buffer->st_size = 0;
-  buffer->st_dev = 0;
-  buffer->st_rdev = 0;
-  buffer->st_atime = 0;
-  buffer->st_ctime = 0;
-  buffer->st_mtime = 0;
-  buffer->st_nlink = 0;
-  ret = GetFileInformationByHandle((HANDLE) _get_osfhandle(handle), &lpFileInfo);
-  if (!ret)
-    {
-      return -1;
-    }
-  else
-    {
-      buffer->st_mtime = convert_time (lpFileInfo.ftLastWriteTime);
-      buffer->st_atime = convert_time (lpFileInfo.ftLastAccessTime);
-      if (buffer->st_atime == 0) buffer->st_atime = buffer->st_mtime;
-      buffer->st_ctime = convert_time (lpFileInfo.ftCreationTime);
-      if (buffer->st_ctime == 0) buffer->st_ctime = buffer->st_mtime;
-      buffer->st_size = lpFileInfo.nFileSizeLow;
-      buffer->st_nlink = (short) lpFileInfo.nNumberOfLinks;
-      return 0;
-    }
-}
-
 /* MSVC stat function can't cope with UNC names and has other bugs, so
    replace it with our own.  This also allows us to calculate consistent
    inode values without hacks in the main Emacs code. */
 int
-mswindows_stat (const char * path, struct stat * buf)
+stat (const char * path, struct stat * buf)
 {
   char * name;
   WIN32_FIND_DATA wfd;
@@ -1459,7 +1348,7 @@ mswindows_stat (const char * path, struct stat * buf)
   len = strlen (name);
   rootdir = (path >= name + len - 1
 	     && (IS_DIRECTORY_SEP (*path) || *path == 0));
-  name = strcpy ((char *)alloca (len + 2), name);
+  name = strcpy (alloca (len + 2), name);
 
   if (rootdir)
     {
@@ -1577,11 +1466,13 @@ mswindows_stat (const char * path, struct stat * buf)
   buf->st_ino = (unsigned short) (fake_inode ^ (fake_inode >> 16));
 
   /* consider files to belong to current user */
-  buf->st_uid = buf->st_gid = nt_fake_unix_uid;
+  buf->st_uid = the_passwd.pw_uid;
+  buf->st_gid = the_passwd.pw_gid;
 
   /* volume_info is set indirectly by map_win32_filename */
   buf->st_dev = volume_info.serialnum;
   buf->st_rdev = volume_info.serialnum;
+
 
   buf->st_size = wfd.nFileSizeLow;
 
@@ -1655,7 +1546,7 @@ term_ntproc (int unused)
 }
 
 void
-init_ntproc (void)
+init_ntproc ()
 {
   /* Initial preparation for subprocess support: replace our standard
      handles with non-inheritable versions. */
@@ -1788,7 +1679,7 @@ unsigned signal_block_mask = 0;
 /* Signal pending mask: bit set to 1 means sig is pending */
 unsigned signal_pending_mask = 0;
 
-mswindows_sighandler mswindows_sigset (int nsig, mswindows_sighandler handler)
+msw_sighandler msw_sigset (int nsig, msw_sighandler handler)
 {
   /* We delegate some signals to the system function */
   if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
@@ -1802,13 +1693,13 @@ mswindows_sighandler mswindows_sigset (int nsig, mswindows_sighandler handler)
 
   /* Store handler ptr */
   {
-    mswindows_sighandler old_handler = signal_handlers[nsig];
+    msw_sighandler old_handler = signal_handlers[nsig];
     signal_handlers[nsig] = handler;
     return old_handler;
   }
 }
   
-int mswindows_sighold (int nsig)
+int msw_sighold (int nsig)
 {
   if (nsig < 0 || nsig > SIG_MAX)
     return errno = EINVAL;
@@ -1817,7 +1708,7 @@ int mswindows_sighold (int nsig)
   return 0;
 }
 
-int mswindows_sigrelse (int nsig)
+int msw_sigrelse (int nsig)
 {
   if (nsig < 0 || nsig > SIG_MAX)
     return errno = EINVAL;
@@ -1825,12 +1716,12 @@ int mswindows_sigrelse (int nsig)
   signal_block_mask &= ~sigmask(nsig);
 
   if (signal_pending_mask & sigmask(nsig))
-    mswindows_raise (nsig);
+    msw_raise (nsig);
 
   return 0;
 }
 
-int mswindows_sigpause (int nsig)
+int msw_sigpause (int nsig)
 {
   /* This is currently not called, because the only
      call to sigpause inside XEmacs is with SIGCHLD
@@ -1841,7 +1732,7 @@ int mswindows_sigpause (int nsig)
   return 0;
 }
 
-int mswindows_raise (int nsig)
+int msw_raise (int nsig)
 {
   /* We delegate some raises to the system routine */
   if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
@@ -1907,7 +1798,7 @@ static void CALLBACK timer_proc (UINT uID, UINT uMsg, DWORD dwUser,
 				 DWORD dw1, DWORD dw2)
 {
   /* Just raise a signal indicated by dwUser parameter */
-  mswindows_raise (dwUser);
+  msw_raise (dwUser);
 }
 
 /* Divide time in ms specified by IT by DENOM. Return 1 ms
@@ -1990,15 +1881,9 @@ int setitimer (int kind, const struct itimerval* itnew,
     return errno = EINVAL;
 }
 
-
-/*--------------------------------------------------------------------*/
-/*                        Memory-mapped files                         */
-/*--------------------------------------------------------------------*/
-
 int
-open_input_file (file_data *p_file, const char *filename)
+open_input_file (file_data *p_file, CONST char *filename)
 {
-  /* Synched with FSF 20.6.  We fixed some warnings. */
   HANDLE file;
   HANDLE file_mapping;
   void  *file_base;
@@ -2019,186 +1904,13 @@ open_input_file (file_data *p_file, const char *filename)
   if (file_base == 0) 
     return FALSE;
 
-  p_file->name = (char *)filename;
+  p_file->name = (char*)filename;
   p_file->size = size;
   p_file->file = file;
   p_file->file_mapping = file_mapping;
-  p_file->file_base = (char *)file_base;
+  p_file->file_base = file_base;
 
   return TRUE;
-}
-
-int
-open_output_file (file_data *p_file, const char *filename, unsigned long size)
-{
-  /* Synched with FSF 20.6.  We fixed some warnings. */
-  HANDLE file;
-  HANDLE file_mapping;
-  void  *file_base;
-
-  file = CreateFile (filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-		     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-  if (file == INVALID_HANDLE_VALUE) 
-    return FALSE;
-
-  file_mapping = CreateFileMapping (file, NULL, PAGE_READWRITE, 
-				    0, size, NULL);
-  if (!file_mapping) 
-    return FALSE;
-  
-  file_base = MapViewOfFile (file_mapping, FILE_MAP_WRITE, 0, 0, size);
-  if (file_base == NULL) 
-    return FALSE;
-  
-  p_file->name = filename;
-  p_file->size = size;
-  p_file->file = file;
-  p_file->file_mapping = file_mapping;
-  p_file->file_base = (char*) file_base;
-
-  return TRUE;
-}
-
-#if 1 /* !defined(MINGW) */
-/* Return pointer to section header for section containing the given
-   relative virtual address. */
-static IMAGE_SECTION_HEADER *
-rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header)
-{
-  /* Synched with FSF 20.6.  We added MINGW stuff. */
-  PIMAGE_SECTION_HEADER section;
-  int i;
-
-  section = IMAGE_FIRST_SECTION (nt_header);
-
-  for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++)
-    {
-      /* Some linkers (eg. the NT SDK linker I believe) swapped the
-	 meaning of these two values - or rather, they ignored
-	 VirtualSize entirely and always set it to zero.  This affects
-	 some very old exes (eg. gzip dated Dec 1993).  Since
-	 mswindows_executable_type relies on this function to work reliably,
-	 we need to cope with this.  */
-      DWORD real_size = max (section->SizeOfRawData,
-			     section->Misc.VirtualSize);
-      if (rva >= section->VirtualAddress
-	  && rva < section->VirtualAddress + real_size)
-	return section;
-      section++;
-    }
-  return NULL;
-}
-#endif
-
-void
-mswindows_executable_type (const char * filename, int * is_dos_app,
-			   int * is_cygnus_app)
-{
-  /* Synched with FSF 20.6.  We added MINGW stuff and casts. */
-  file_data executable;
-  char * p;
-
-  /* Default values in case we can't tell for sure.  */
-  *is_dos_app = FALSE;
-  *is_cygnus_app = FALSE;
-
-  if (!open_input_file (&executable, filename))
-    return;
-
-  p = strrchr (filename, '.');
-
-  /* We can only identify DOS .com programs from the extension. */
-  if (p && stricmp (p, ".com") == 0)
-    *is_dos_app = TRUE;
-  else if (p && (stricmp (p, ".bat") == 0 ||
-		 stricmp (p, ".cmd") == 0))
-    {
-      /* A DOS shell script - it appears that CreateProcess is happy to
-	 accept this (somewhat surprisingly); presumably it looks at
-	 COMSPEC to determine what executable to actually invoke.
-	 Therefore, we have to do the same here as well. */
-      /* Actually, I think it uses the program association for that
-	 extension, which is defined in the registry.  */
-      p = egetenv ("COMSPEC");
-      if (p)
-	mswindows_executable_type (p, is_dos_app, is_cygnus_app);
-    }
-  else
-    {
-      /* Look for DOS .exe signature - if found, we must also check that
-	 it isn't really a 16- or 32-bit Windows exe, since both formats
-	 start with a DOS program stub.  Note that 16-bit Windows
-	 executables use the OS/2 1.x format. */
-
-#if 0 /* defined( MINGW ) */
-      /* mingw32 doesn't have enough headers to detect cygwin
-	 apps, just do what we can. */
-      FILHDR * exe_header;
-
-      exe_header = (FILHDR*) executable.file_base;
-      if (exe_header->e_magic != DOSMAGIC)
-	goto unwind;
-
-      if ((char*) exe_header->e_lfanew > (char*) executable.size)
-	{
-	  /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
-	  *is_dos_app = TRUE;
-	} 
-      else if (exe_header->nt_signature != NT_SIGNATURE)
-	{
-	  *is_dos_app = TRUE;
-	}
-#else
-      IMAGE_DOS_HEADER * dos_header;
-      IMAGE_NT_HEADERS * nt_header;
-
-      dos_header = (PIMAGE_DOS_HEADER) executable.file_base;
-      if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
-	goto unwind;
-	  
-      nt_header = (PIMAGE_NT_HEADERS) ((char*) dos_header + dos_header->e_lfanew);
-	  
-      if ((char*) nt_header > (char*) dos_header + executable.size) 
-	{
-	  /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
-	  *is_dos_app = TRUE;
-	} 
-      else if (nt_header->Signature != IMAGE_NT_SIGNATURE &&
-	       LOWORD (nt_header->Signature) != IMAGE_OS2_SIGNATURE)
-	{
-	  *is_dos_app = TRUE;
-	}
-      else if (nt_header->Signature == IMAGE_NT_SIGNATURE)
-	{
-	  /* Look for cygwin.dll in DLL import list. */
-	  IMAGE_DATA_DIRECTORY import_dir =
-	    nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-	  IMAGE_IMPORT_DESCRIPTOR * imports;
-	  IMAGE_SECTION_HEADER * section;
-
-	  section = rva_to_section (import_dir.VirtualAddress, nt_header);
-	  imports = (IMAGE_IMPORT_DESCRIPTOR *) RVA_TO_PTR (import_dir.VirtualAddress,
-							    section, executable);
-	      
-	  for ( ; imports->Name; imports++)
-	    {
-	      char *dllname = (char*) RVA_TO_PTR (imports->Name, section, executable);
-
-	      /* The exact name of the cygwin dll has changed with
-		 various releases, but hopefully this will be reasonably
-		 future proof.  */
-	      if (strncmp (dllname, "cygwin", 6) == 0)
-		{
-		  *is_cygnus_app = TRUE;
-		  break;
-		}
-	    }
-	}
-#endif
-    }
-
- unwind:
-  close_file_data (&executable);
 }
 
 /* Close the system structures associated with the given file.  */
@@ -2208,18 +1920,6 @@ close_file_data (file_data *p_file)
     UnmapViewOfFile (p_file->file_base);
     CloseHandle (p_file->file_mapping);
     CloseHandle (p_file->file);
-}
-
-void
-vars_of_nt (void)
-{
-  DEFVAR_INT ("nt-fake-unix-uid", &nt_fake_unix_uid /*
-*Set uid returned by `user-uid' and `user-real-uid'.
-Under NT and 9x, there is no uids, and even no almighty user called root.
-By setting this variable, you can have any uid of choice. Default is 0.
-Changes to this variable take effect immediately.
-*/ );
-  nt_fake_unix_uid = 0;
 }
 
 /* end of nt.c */

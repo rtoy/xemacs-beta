@@ -85,14 +85,14 @@ void *malloc (size_t);
 /* System function prototypes don't belong in C source files */
 /* extern void free (void *); */
 
-static struct hash_table *pointer_table;
+struct hash_table *pointer_table;
 
 extern void (*__free_hook) (void *);
 extern void *(*__malloc_hook) (size_t);
 
 static void *check_malloc (size_t);
 
-typedef void (*fun_ptr) (void);
+typedef void (*fun_ptr) ();
 
 /* free_queue is not too useful without backtrace logging */
 #define FREE_QUEUE_LIMIT 1
@@ -110,11 +110,11 @@ typedef struct {
   unsigned long length;
 } free_queue_entry;
 
-static free_queue_entry free_queue[FREE_QUEUE_LIMIT];
+free_queue_entry free_queue[FREE_QUEUE_LIMIT];
 
-static int current_free;
+int current_free;
 
-static int strict_free_check;
+int strict_free_check;
 
 static void
 check_free (void *ptr)
@@ -131,7 +131,7 @@ check_free (void *ptr)
 #endif
 
       EMACS_INT present = (EMACS_INT) gethash (ptr, pointer_table,
-					       (const void **) &size);
+					       (CONST void **) &size);
 
       if (!present)
 	{
@@ -257,7 +257,7 @@ check_realloc (void * ptr, size_t size)
   void *result = malloc (size);
 
   if (!ptr) return result;
-  present = (EMACS_INT) gethash (ptr, pointer_table, (const void **) &old_size);
+  present = (EMACS_INT) gethash (ptr, pointer_table, (CONST void **) &old_size);
   if (!present)
     {
     /* This can only happen by reallocing a pointer that didn't

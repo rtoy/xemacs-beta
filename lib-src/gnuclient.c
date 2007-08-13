@@ -27,17 +27,6 @@ Boston, MA 02111-1307, USA.
  Please mail bugs and suggestions to the XEmacs maintainer.
 */
 
-/* #### This file should be a windows-mode, not console-mode program under
-   Windows. (i.e. its entry point should be WinMain.) gnuattach functionality,
-   to the extent it's used at all, should be retrieved using a script that
-   calls the i.exe wrapper program, to obtain stdio handles.
-
-   #### For that matter, both the functionality of gnuclient and gnuserv
-   should be merged into XEmacs itself using a -remote arg, just like
-   Netscape and other modern programs.
-
-   --ben */
-
 /*
  * This file incorporates new features added by Bob Weiner <weiner@mot.com>,
  * Darrell Kindred <dkindred@cmu.edu> and Arup Mukherjee <arup@cmu.edu>.
@@ -59,6 +48,7 @@ static char rcsid [] = "!Header: gnuclient.c,v 2.2 95/12/12 01:39:21 wing nene !
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#define DONT_ENCAPSULATE
 #include <sysfile.h>
 
 #ifdef HAVE_STRING_H
@@ -131,7 +121,7 @@ pass_signal_to_emacs (int sig)
 }
 
 void
-initialize_signals (void)
+initialize_signals ()
 {
   /* Set up signal handler to pass relevant signals to emacs process.
      We used to send SIGSEGV, SIGBUS, SIGPIPE, SIGILL and others to
@@ -200,7 +190,7 @@ filename_expand (char *fullpath, char *filename)
        /* Absolute (unix-style) pathname.  Do nothing */
        strcat (fullpath, filename);
      }
-#ifdef  CYGWIN
+#ifdef  __CYGWIN32__
   else if (filename[0] && filename[0] == '\\' &&
            filename[1] && filename[1] == '\\')
     {
@@ -241,13 +231,13 @@ filename_expand (char *fullpath, char *filename)
 /* Encase the string in quotes, escape all the backslashes and quotes
    in string.  */
 static char *
-clean_string (const char *s)
+clean_string (CONST char *s)
 {
   int i = 0;
   char *p, *res;
 
   {
-    const char *const_p;
+    CONST char *const_p;
     for (const_p = s; *const_p; const_p++, i++)
       {
 	if (*const_p == '\\' || *const_p == '\"')
@@ -301,14 +291,14 @@ clean_string (const char *s)
   over = 1;								   \
 } while (0)
 
-/* A strdup imitation. */
+/* A strdup immitation. */
 static char *
-my_strdup (const char *s)
+my_strdup (CONST char *s)
 {
-  char *new_s = (char *) malloc (strlen (s) + 1);
-  if (new_s)
-    strcpy (new_s, s);
-  return new_s;
+  char *new = malloc (strlen (s) + 1);
+  if (new)
+    strcpy (new, s);
+  return new;
 }
 
 int
@@ -670,7 +660,7 @@ main (int argc, char *argv[])
 	    }
 	  filename_expand (fullpath, argv[i]);
 #ifdef INTERNET_DOMAIN_SOCKETS
-	  path = (char *) malloc (strlen (remotepath) + strlen (fullpath) + 1);
+	  path = malloc (strlen (remotepath) + strlen (fullpath) + 1);
 	  sprintf (path, "%s%s", remotepath, fullpath);
 #else
 	  path = my_strdup (fullpath);

@@ -19,7 +19,7 @@
    by Francesco Potorti` <pot@cnuce.cnr.it>. */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <../src/config.h>
 /* On some systems, Emacs defines static as nothing for the sake
    of unexec.  We don't want that here since we don't use unexec. */
 #undef static
@@ -30,7 +30,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
 #include <fcntl.h>
 #endif
 
@@ -88,12 +88,17 @@ main (int argc, char *argv[])
   char *labels = NULL, *p, *today;
   struct linebuffer data;
 
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
   _fmode = O_BINARY;		/* all of files are treated as binary files */
+#if __DJGPP__ > 1
   if (!isatty (fileno (stdout)))
     setmode (fileno (stdout), O_BINARY);
   if (!isatty (fileno (stdin)))
     setmode (fileno (stdin), O_BINARY);
+#else /* not __DJGPP__ > 1 */
+  (stdout)->_flag &= ~_IOTEXT;
+  (stdin)->_flag &= ~_IOTEXT;
+#endif /* not __DJGPP__ > 1 */
 #endif
   progname = argv[0];
 

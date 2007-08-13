@@ -22,8 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Mostly rewritten by Ben Wing. */
 
-#ifndef INCLUDED_insdel_h_
-#define INCLUDED_insdel_h_
+#ifndef _XEMACS_INSDEL_H_
+#define _XEMACS_INSDEL_H_
 
 /************************************************************************/
 /*                        changing a buffer's text                      */
@@ -38,16 +38,16 @@ void end_multiple_change (struct buffer *buf, int count);
 #define INSDEL_NO_LOCKING 2
 
 Charcount buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
-				  const Bufbyte *nonreloc, Lisp_Object reloc,
+				  CONST Bufbyte *nonreloc, Lisp_Object reloc,
 				  Bytecount offset, Bytecount length,
 				  int flags);
 Charcount buffer_insert_raw_string_1 (struct buffer *buf, Bufpos pos,
-				      const Bufbyte *nonreloc,
+				      CONST Bufbyte *nonreloc,
 				      Bytecount length, int flags);
 Charcount buffer_insert_lisp_string_1 (struct buffer *buf, Bufpos pos,
 				       Lisp_Object str, int flags);
 Charcount buffer_insert_c_string_1 (struct buffer *buf, Bufpos pos,
-				    const char *s, int flags);
+				    CONST char *s, int flags);
 Charcount buffer_insert_emacs_char_1 (struct buffer *buf, Bufpos pos,
 				      Emchar ch, int flags);
 Charcount buffer_insert_c_char_1 (struct buffer *buf, Bufpos pos, char c,
@@ -140,11 +140,11 @@ void buffer_reset_changes (struct buffer *buf);
 /************************************************************************/
 
 Memind do_marker_adjustment (Memind mpos, Memind from,
-			     Memind to, Bytecount amount);
+			     Memind to, int amount);
 
-void fixup_internal_substring (const Bufbyte *nonreloc,
+void fixup_internal_substring (CONST Bufbyte *nonreloc,
 			       Lisp_Object reloc,
-			       Bytecount offset, Bytecount *len);
+			       int offset, int *len);
 
 /* In font-lock.c */
 void font_lock_maybe_update_syntactic_caches (struct buffer *buf,
@@ -159,4 +159,4 @@ void barf_if_buffer_read_only (struct buffer *buf, Bufpos from,
 void init_buffer_text (struct buffer *b);
 void uninit_buffer_text (struct buffer *b);
 
-#endif /* INCLUDED_insdel_h_ */
+#endif /* _XEMACS_INSDEL_H_ */

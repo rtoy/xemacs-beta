@@ -40,44 +40,46 @@ Boston, MA 02111-1307, USA.  */
  */
 
 #define NO_SHORTNAMES   /* Tell config not to load remap.h */
-#include <config.h>
+#include <../src/config.h>
 
 #include <stdio.h>
 #include <errno.h>
 #if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <string.h>
 #include <ctype.h>
 #endif
 
-#ifdef CYGWIN
+#if defined(MSDOS) || defined(__CYGWIN32__)
 #include <fcntl.h>
-#endif
-#ifdef WIN32_NATIVE
+#endif /* MSDOS */
+#ifdef WINDOWSNT
 #include <direct.h>
 #include <fcntl.h>
 #include <io.h>
 #include <stdlib.h>
-#endif /* WIN32_NATIVE */
+#endif /* WINDOWSNT */
 
-#ifndef WIN32_NATIVE
 #include <sys/param.h>
-#endif /* not WIN32_NATIVE */
 
-#if defined(WIN32_NATIVE) || defined(CYGWIN)
+#if defined(DOS_NT) || defined(__CYGWIN32__)
 #define READ_TEXT "rt"
 #define READ_BINARY "rb"
 #define WRITE_BINARY "wb"
 #define APPEND_BINARY "ab"
-#else  /* not WIN32_NATIVE */
+#else  /* not DOS_NT */
 #define READ_TEXT "r"
 #define READ_BINARY "r"
 #define WRITE_BINARY "w"
 #define APPEND_BINARY "a"
-#endif /* not WIN32_NATIVE */
+#endif /* not DOS_NT */
+
+#ifdef MSDOS
+/* s/msdos.h defines this as sys_chdir, but we're not linking with the
+   file where that function is defined.  */
+#undef chdir
+#endif
 
 /* Stdio stream for output to the DOC file.  */
 static FILE *outfile;
@@ -89,14 +91,14 @@ enum
   c_file
 } Current_file_type;
 
-static int scan_file (const char *filename);
+static int scan_file (CONST char *filename);
 static int read_c_string (FILE *, int, int);
-static void write_c_args (FILE *out, const char *func, char *buf, int minargs,
+static void write_c_args (FILE *out, CONST char *func, char *buf, int minargs,
 			  int maxargs);
-static int scan_c_file (const char *filename, const char *mode);
+static int scan_c_file (CONST char *filename, CONST char *mode);
 static void skip_white (FILE *);
 static void read_lisp_symbol (FILE *, char *);
-static int scan_lisp_file (const char *filename, const char *mode);
+static int scan_lisp_file (CONST char *filename, CONST char *mode);
 
 #define C_IDENTIFIER_CHAR_P(c) \
  (('A' <= c && c <= 'Z') || \
@@ -113,7 +115,7 @@ int ellcc = 0;
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
 
 static void
-error (const char *s1, const char *s2)
+error (CONST char *s1, CONST char *s2)
 {
   fprintf (stderr, "%s: ", progname);
   fprintf (stderr, s1, s2);
@@ -123,7 +125,7 @@ error (const char *s1, const char *s2)
 /* Print error message and exit.  */
 
 static void
-fatal (const char *s1, const char *s2)
+fatal (CONST char *s1, CONST char *s2)
 {
   error (s1, s2);
   exit (1);
@@ -189,10 +191,19 @@ main (int argc, char **argv)
   outfile = stdout;
 
   /* Don't put CRs in the DOC file.  */
-#ifdef WIN32_NATIVE
+#ifdef MSDOS
+  _fmode = O_BINARY;
+#if 0  /* Suspicion is that this causes hanging.
+	  So instead we require people to use -o on MSDOS.  */
+  (stdout)->_flag &= ~_IOTEXT;
+  _setmode (fileno (stdout), O_BINARY);
+#endif
+  outfile = 0;
+#endif /* MSDOS */
+#ifdef WINDOWSNT
   _fmode = O_BINARY;
   _setmode (fileno (stdout), O_BINARY);
-#endif /* WIN32_NATIVE */
+#endif /* WINDOWSNT */
 
   /* If first two args are -o FILE, output to FILE.  */
   i = 1;
@@ -263,7 +274,7 @@ main (int argc, char **argv)
 /* Return 1 if file is not found, 0 if it is found.  */
 
 static int
-scan_file (const char *filename)
+scan_file (CONST char *filename)
 {
   int len = strlen (filename);
   if (ellcc == 0 && len > 4 && !strcmp (filename + len - 4, ".elc"))
@@ -292,59 +303,48 @@ char buf[128];
  Convert escape sequences \n and \t to newline and tab;
  discard \ followed by newline.  */
 
-#define MDGET do { prevc = c; c = getc (infile); } while (0)
 static int
 read_c_string (FILE *infile, int printflag, int c_docstring)
 {
-  register int prevc = 0, c = 0;
+  register int c;
   char *p = buf;
   int start = -1;
 
-  MDGET;
+  c = getc (infile);
   while (c != EOF)
     {
       while ((c_docstring || c != '"') && c != EOF)
 	{
-	  if (c == '*')
+	  if (start)
 	    {
-	      int cc = getc (infile);
-	      if (cc == '/')
+	      if (c == '*')
 		{
-		  if (prevc != '\n')
-		    {
-		      if (printflag > 0)
-			{
-			  if (ellcc)
-			    fprintf (outfile, "\\n\\");
-			  putc ('\n', outfile);
-			}
-		      else if (printflag < 0)
-			*p++ = '\n';
-		    }
-		  break;
+		  int cc = getc (infile);
+		  if (cc == '/')
+		    break;
+		  else
+		    ungetc (cc, infile);
 		}
-	      else
-		ungetc (cc, infile);
-	    }
 
-	  if (start == 1)
-	    {
-	      if (printflag > 0)
+	      if (start != -1)
 		{
-		  if (ellcc)
-		    fprintf (outfile, "\\n\\");
-		  putc ('\n', outfile);
+		  if (printflag > 0)
+            {
+              if (ellcc)
+                fprintf (outfile, "\\n\\");
+              putc ('\n', outfile);
+            }
+		  else if (printflag < 0)
+		    *p++ = '\n';
 		}
-	      else if (printflag < 0)
-		*p++ = '\n';
 	    }
 
 	  if (c == '\\')
 	    {
-	      MDGET;
+	      c = getc (infile);
 	      if (c == '\n')
 		{
-		  MDGET;
+		  c = getc (infile);
 		  start = 1;
 		  continue;
 		}
@@ -358,36 +358,32 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
 	  else
 	    {
 	      start = 0;
-	      if (printflag > 0)
-		{
-		  if (ellcc && c == '"')
-		    putc ('\\', outfile);
-		  putc (c, outfile);
-		}
+	      if (printflag > 0) {
+                if (ellcc && c == '"')
+                  putc ('\\', outfile);
+		putc (c, outfile);
+              }
 	      else if (printflag < 0)
 		*p++ = c;
 	    }
-	  MDGET;
+	  c = getc (infile);
 	}
       /* look for continuation of string */
       if (Current_file_type == c_file)
 	{
-	  do
-	    {
-	      MDGET;
-	    }
-	  while (isspace (c));
+	  while (isspace (c = getc (infile)))
+	    ;
 	  if (c != '"')
 	    break;
 	}
       else
 	{
-	  MDGET;
+	  c = getc (infile);
 	  if (c != '"')
 	    break;
 	  /* If we had a "", concatenate the two strings.  */
 	}
-      MDGET;
+      c = getc (infile);
     }
 
   if (printflag < 0)
@@ -400,7 +396,7 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
    MINARGS and MAXARGS are the minimum and maximum number of arguments.  */
 
 static void
-write_c_args (FILE *out, const char *func, char *buff, int minargs,
+write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
 	      int maxargs)
 {
   register char *p;
@@ -433,10 +429,10 @@ write_c_args (FILE *out, const char *func, char *buff, int minargs,
       static char lo[] = "Lisp_Object";
       if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
 	  (strncmp (p, lo, sizeof (lo) - 1) == 0) &&
-	  isspace((unsigned char) (* (p + sizeof (lo) - 1))))
+	  isspace(*(p + sizeof (lo) - 1)))
 	{
 	  p += (sizeof (lo) - 1);
-	  while (isspace ((unsigned char) (*p)))
+	  while (isspace (*p))
 	    p++;
 	  c = *p;
 	}
@@ -500,7 +496,7 @@ write_c_args (FILE *out, const char *func, char *buff, int minargs,
    Accepts any word starting DEF... so it finds DEFSIMPLE and DEFPRED.  */
 
 static int
-scan_c_file (const char *filename, const char *mode)
+scan_c_file (CONST char *filename, CONST char *mode)
 {
   FILE *infile;
   register int c;
@@ -791,7 +787,7 @@ read_lisp_symbol (FILE *infile, char *buffer)
 }
 
 static int
-scan_lisp_file (const char *filename, const char *mode)
+scan_lisp_file (CONST char *filename, CONST char *mode)
 {
   FILE *infile;
   register int c;
@@ -919,7 +915,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	      /* Skip until the first newline; remember the two previous chars. */
 	      while (c != '\n' && c >= 0)
 		{
-		  /* #### Kludge -- Ignore any ESC x x ISO2022 sequences */
+		  /* ### Kludge -- Ignore any ESC x x ISO2022 sequences */
 		  if (c == 27)
 		    {
 		      getc (infile);

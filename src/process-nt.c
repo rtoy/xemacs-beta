@@ -2,7 +2,7 @@
    Copyright (C) 1985, 1986, 1987, 1988, 1992, 1993, 1994, 1995
    Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2000 Ben Wing.
+   Copyright (C) 1995, 1996 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -26,17 +26,18 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "buffer.h"
-#include "console-msw.h"
 #include "hash.h"
 #include "lstream.h"
-#include "nt.h"
 #include "process.h"
 #include "procimpl.h"
 #include "sysdep.h"
 
+#include <windows.h>
+#ifndef __MINGW32__
 #include <shellapi.h>
+#else
 #include <errno.h>
+#endif
 #include <signal.h>
 #ifdef HAVE_SOCKETS
 #include <winsock.h>
@@ -45,28 +46,14 @@ Boston, MA 02111-1307, USA.  */
 /* Arbitrary size limit for code fragments passed to run_in_other_process */
 #define FRAGMENT_CODE_SIZE 32
 
+/* Bound by winnt.el */
+Lisp_Object Qnt_quote_process_args;
+
 /* Implementation-specific data. Pointed to by Lisp_Process->process_data */
 struct nt_process_data
 {
   HANDLE h_process;
-  DWORD dwProcessId;
-  HWND hwnd; /* console window */
 };
-
-/* Control how args are quoted to ensure correct parsing by child
-   process. */
-Lisp_Object Vmswindows_quote_process_args;
-
-/* Control whether create_child causes the process to inherit Emacs'
-   console window, or be given a new one of its own.  The default is
-   nil, to allow multiple DOS programs to run on Win95.  Having separate
-   consoles also allows Emacs to cleanly terminate process groups.  */
-Lisp_Object Vmswindows_start_process_share_console;
-
-/* Control whether create_child cause the process to inherit Emacs'
-   error mode setting.  The default is t, to minimize the possibility of
-   subprocesses blocking when accessing unmounted drives.  */
-Lisp_Object Vmswindows_start_process_inherit_error_mode;
 
 #define NT_DATA(p) ((struct nt_process_data*)((p)->process_data))
 
@@ -77,25 +64,10 @@ Lisp_Object Vmswindows_start_process_inherit_error_mode;
 /* This one breaks process abstraction. Prototype is in console-msw.h,
    used by select_process method in event-msw.c */
 HANDLE
-get_nt_process_handle (Lisp_Process *p)
+get_nt_process_handle (struct Lisp_Process *p)
 {
   return (NT_DATA (p)->h_process);
 }
-
-static struct Lisp_Process *
-find_process_from_pid (DWORD pid)
-{
-  Lisp_Object tail, proc;
-
-  for (tail = Vprocess_list; CONSP (tail); tail = XCDR (tail))
-    {
-      proc = XCAR (tail);
-      if (NT_DATA (XPROCESS (proc))->dwProcessId == pid)
-	return XPROCESS (proc);
-    }
-  return 0;
-}
-
 
 /*-----------------------------------------------------------------------*/
 /* Running remote threads. See Microsoft Systems Journal 1994 Number 5	 */
@@ -196,7 +168,7 @@ run_in_other_process (HANDLE h_process,
 		      LPVOID data, size_t data_size)
 {
   process_memory pm;
-  const size_t code_size = FRAGMENT_CODE_SIZE;
+  CONST size_t code_size = FRAGMENT_CODE_SIZE;
   /* Need at most 3 extra bytes of memory, for data alignment */
   size_t total_size = code_size + data_size + 3;
   LPVOID remote_data;
@@ -251,8 +223,6 @@ run_in_other_process (HANDLE h_process,
 /*-----------------------------------------------------------------------*/
 /* Sending signals							 */
 /*-----------------------------------------------------------------------*/
-
-/* ---------------------------- the NT way ------------------------------- */
 
 /*
  * We handle the following signals:
@@ -317,34 +287,19 @@ sig_enable_proc (sig_enable_data* data)
  * Return nonzero if successful.
  */
 
+/* This code assigns a return value of GetProcAddress to function pointers
+   of many different types. Instead of heavy obscure casts, we just disable
+   warnings about assignments to different function pointer types. */
+#pragma warning (disable : 4113)
+
 static int
-send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
+send_signal (HANDLE h_process, int signo)
 {
-  HANDLE h_process;
   HMODULE h_kernel = GetModuleHandle ("kernel32");
-  int close_process = 0;
   DWORD retval;
   
   assert (h_kernel != NULL);
   
-  if (cp)
-    {
-      pid = cp->dwProcessId;
-      h_process = cp->h_process;
-    }
-  else
-    {
-      close_process = 1;
-      /* Try to open the process with required privileges */
-      h_process = OpenProcess (PROCESS_CREATE_THREAD
-			       | PROCESS_QUERY_INFORMATION 
-			       | PROCESS_VM_OPERATION
-			       | PROCESS_VM_WRITE,
-			       FALSE, pid);
-      if (!h_process)
-	return 0;
-    }
-
   switch (signo)
     {
     case SIGKILL:
@@ -353,9 +308,7 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
     case SIGHUP:
       {
 	sigkill_data d;
-
-	d.adr_ExitProcess =
-	  (void (WINAPI *) (UINT)) GetProcAddress (h_kernel, "ExitProcess");
+	d.adr_ExitProcess = GetProcAddress (h_kernel, "ExitProcess");
 	assert (d.adr_ExitProcess);
 	retval = run_in_other_process (h_process, 
 				       (LPTHREAD_START_ROUTINE)sigkill_proc,
@@ -366,7 +319,6 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
       {
 	sigint_data d;
 	d.adr_GenerateConsoleCtrlEvent =
-	  (BOOL (WINAPI *) (DWORD, DWORD))
 	  GetProcAddress (h_kernel, "GenerateConsoleCtrlEvent");
 	assert (d.adr_GenerateConsoleCtrlEvent);
 	d.event = CTRL_C_EVENT;
@@ -379,8 +331,6 @@ send_signal_the_nt_way (struct nt_process_data *cp, int pid, int signo)
       assert (0);
     }
 
-  if (close_process)
-    CloseHandle (h_process);
   return (int)retval > 0 ? 1 : 0;
 }
 
@@ -395,7 +345,6 @@ enable_child_signals (HANDLE h_process)
   
   assert (h_kernel != NULL);
   d.adr_SetConsoleCtrlHandler =
-    (BOOL (WINAPI *) (LPVOID, BOOL))
     GetProcAddress (h_kernel, "SetConsoleCtrlHandler");
   assert (d.adr_SetConsoleCtrlHandler);
   run_in_other_process (h_process, (LPTHREAD_START_ROUTINE)sig_enable_proc,
@@ -403,214 +352,6 @@ enable_child_signals (HANDLE h_process)
 }
   
 #pragma warning (default : 4113)
-
-/* ---------------------------- the 95 way ------------------------------- */
-
-static BOOL CALLBACK
-find_child_console (HWND hwnd, struct nt_process_data *cp)
-{
-  DWORD thread_id;
-  DWORD process_id;
-
-  thread_id = GetWindowThreadProcessId (hwnd, &process_id);
-  if (process_id == cp->dwProcessId)
-    {
-      char window_class[32];
-
-      GetClassName (hwnd, window_class, sizeof (window_class));
-      if (strcmp (window_class,
-		  mswindows_windows9x_p ()
-		  ? "tty"
-		  : "ConsoleWindowClass") == 0)
-	{
-	  cp->hwnd = hwnd;
-	  return FALSE;
-	}
-    }
-  /* keep looking */
-  return TRUE;
-}
-
-static int
-send_signal_the_95_way (struct nt_process_data *cp, int pid, int signo)
-{
-  HANDLE h_process;
-  int close_process = 0;
-  int rc = 1;
-  
-  if (cp)
-    {
-      pid = cp->dwProcessId;
-      h_process = cp->h_process;
-
-      /* Try to locate console window for process. */
-      EnumWindows (find_child_console, (LPARAM) cp);
-    }
-  else
-    {
-      close_process = 1;
-      /* Try to open the process with required privileges */
-      h_process = OpenProcess (PROCESS_TERMINATE, FALSE, pid);
-      if (!h_process)
-	return 0;
-    }
-    
-  if (signo == SIGINT)
-    {
-      if (NILP (Vmswindows_start_process_share_console) && cp && cp->hwnd)
-	{
-	  BYTE control_scan_code = (BYTE) MapVirtualKey (VK_CONTROL, 0);
-	  BYTE vk_break_code = VK_CANCEL;
-	  BYTE break_scan_code = (BYTE) MapVirtualKey (vk_break_code, 0);
-	  HWND foreground_window;
-
-	  if (break_scan_code == 0)
-	    {
-	      /* Fake Ctrl-C if we can't manage Ctrl-Break. */
-	      vk_break_code = 'C';
-	      break_scan_code = (BYTE) MapVirtualKey (vk_break_code, 0);
-	    }
-
-	  foreground_window = GetForegroundWindow ();
-	  if (foreground_window)
-	    {
-              /* NT 5.0, and apparently also Windows 98, will not allow
-		 a Window to be set to foreground directly without the
-		 user's involvement. The workaround is to attach
-		 ourselves to the thread that owns the foreground
-		 window, since that is the only thread that can set the
-		 foreground window.  */
-              DWORD foreground_thread, child_thread;
-              foreground_thread =
-		GetWindowThreadProcessId (foreground_window, NULL);
-	      if (foreground_thread == GetCurrentThreadId ()
-                  || !AttachThreadInput (GetCurrentThreadId (),
-                                         foreground_thread, TRUE))
-                foreground_thread = 0;
-
-              child_thread = GetWindowThreadProcessId (cp->hwnd, NULL);
-	      if (child_thread == GetCurrentThreadId ()
-                  || !AttachThreadInput (GetCurrentThreadId (),
-                                         child_thread, TRUE))
-                child_thread = 0;
-
-              /* Set the foreground window to the child.  */
-              if (SetForegroundWindow (cp->hwnd))
-                {
-                  /* Generate keystrokes as if user had typed Ctrl-Break or
-                     Ctrl-C.  */
-                  keybd_event (VK_CONTROL, control_scan_code, 0, 0);
-                  keybd_event (vk_break_code, break_scan_code,
-		    (vk_break_code == 'C' ? 0 : KEYEVENTF_EXTENDEDKEY), 0);
-                  keybd_event (vk_break_code, break_scan_code,
-                    (vk_break_code == 'C' ? 0 : KEYEVENTF_EXTENDEDKEY)
-                    | KEYEVENTF_KEYUP, 0);
-                  keybd_event (VK_CONTROL, control_scan_code,
-                               KEYEVENTF_KEYUP, 0);
-
-                  /* Sleep for a bit to give time for Emacs frame to respond
-                     to focus change events (if Emacs was active app).  */
-                  Sleep (100);
-
-                  SetForegroundWindow (foreground_window);
-                }
-              /* Detach from the foreground and child threads now that
-                 the foreground switching is over.  */
-              if (foreground_thread)
-                AttachThreadInput (GetCurrentThreadId (),
-                                   foreground_thread, FALSE);
-              if (child_thread)
-                AttachThreadInput (GetCurrentThreadId (),
-                                   child_thread, FALSE);
-            }
-        }
-      /* Ctrl-Break is NT equivalent of SIGINT.  */
-      else if (!GenerateConsoleCtrlEvent (CTRL_BREAK_EVENT, pid))
-        {
-#if 0 /* FSF Emacs */
-	  DebPrint (("sys_kill.GenerateConsoleCtrlEvent return %d "
-		     "for pid %lu\n", GetLastError (), pid));
-	  errno = EINVAL;
-#endif
-	  rc = 0;
-	}
-    }
-  else
-    {
-      if (NILP (Vmswindows_start_process_share_console) && cp && cp->hwnd)
-	{
-#if 1
-	  if (mswindows_windows9x_p ())
-	    {
-/*
-   Another possibility is to try terminating the VDM out-right by
-   calling the Shell VxD (id 0x17) V86 interface, function #4
-   "SHELL_Destroy_VM", ie.
-
-     mov edx,4
-     mov ebx,vm_handle
-     call shellapi
-
-   First need to determine the current VM handle, and then arrange for
-   the shellapi call to be made from the system vm (by using
-   Switch_VM_and_callback).
-
-   Could try to invoke DestroyVM through CallVxD.
-
-*/
-#if 0
-	      /* On Win95, posting WM_QUIT causes the 16-bit subsystem
-		 to hang when cmdproxy is used in conjunction with
-		 command.com for an interactive shell.  Posting
-		 WM_CLOSE pops up a dialog that, when Yes is selected,
-		 does the same thing.  TerminateProcess is also less
-		 than ideal in that subprocesses tend to stick around
-		 until the machine is shutdown, but at least it
-		 doesn't freeze the 16-bit subsystem.  */
-	      PostMessage (cp->hwnd, WM_QUIT, 0xff, 0);
-#endif
-	      if (!TerminateProcess (h_process, 0xff))
-		{
-#if 0 /* FSF Emacs */
-		  DebPrint (("sys_kill.TerminateProcess returned %d "
-			     "for pid %lu\n", GetLastError (), pid));
-		  errno = EINVAL;
-#endif
-		  rc = 0;
-		}
-	    }
-	  else
-#endif
-	    PostMessage (cp->hwnd, WM_CLOSE, 0, 0);
-	}
-      /* Kill the process.  On W32 this doesn't kill child processes
-	 so it doesn't work very well for shells which is why it's not
-	 used in every case.  */
-      else if (!TerminateProcess (h_process, 0xff))
-        {
-#if 0 /* FSF Emacs */
-	  DebPrint (("sys_kill.TerminateProcess returned %d "
-		     "for pid %lu\n", GetLastError (), pid));
-	  errno = EINVAL;
-#endif
-	  rc = 0;
-        }
-    }
-
-  if (close_process)
-    CloseHandle (h_process);
-
-  return rc;
-}
-
-/* -------------------------- all-OS functions ---------------------------- */
-
-static int
-send_signal (struct nt_process_data *cp, int pid, int signo)
-{
-  return send_signal_the_nt_way (cp, pid, signo)
-    || send_signal_the_95_way (cp, pid, signo);
-}
 
 /*
  * Signal error if SIGNO is not supported
@@ -633,17 +374,17 @@ validate_signal_number (int signo)
  */
 
 static void
-nt_alloc_process_data (Lisp_Process *p)
+nt_alloc_process_data (struct Lisp_Process *p)
 {
   p->process_data = xnew_and_zero (struct nt_process_data);
 }
 
 static void
-nt_finalize_process_data (Lisp_Process *p, int for_disksave)
+nt_finalize_process_data (struct Lisp_Process *p, int for_disksave)
 {
   assert (!for_disksave);
-  if (NT_DATA (p)->h_process)
-    CloseHandle (NT_DATA (p)->h_process);
+  if (NT_DATA(p)->h_process)
+    CloseHandle (NT_DATA(p)->h_process);
 }
 
 /*
@@ -668,6 +409,8 @@ nt_init_process (void)
  * must signal an error instead.
  */
 
+/* #### This function completely ignores Vprocess_environment */
+
 static void
 signal_cannot_launch (Lisp_Object image_file, DWORD err)
 {
@@ -675,49 +418,14 @@ signal_cannot_launch (Lisp_Object image_file, DWORD err)
   signal_simple_error_2 ("Error starting", image_file, lisp_strerror (errno));
 }
 
-static void
-ensure_console_window_exists (void)
-{
-  if (mswindows_windows9x_p ())
-    mswindows_hide_console ();
-}
-
-int
-compare_env (const void *strp1, const void *strp2)
-{
-  const char *str1 = *(const char**)strp1, *str2 = *(const char**)strp2;
-
-  while (*str1 && *str2 && *str1 != '=' && *str2 != '=')
-    {
-      if ((*str1) > (*str2))
-	return 1;
-      else if ((*str1) < (*str2))
-	return -1;
-      str1++, str2++;
-    }
-
-  if (*str1 == '=' && *str2 == '=')
-    return 0;
-  else if (*str1 == '=')
-    return -1;
-  else
-    return 1;
-}
-
 static int
-nt_create_process (Lisp_Process *p,
+nt_create_process (struct Lisp_Process *p,
 		   Lisp_Object *argv, int nargv,
 		   Lisp_Object program, Lisp_Object cur_dir)
 {
-  /* Synched up with sys_spawnve in FSF 20.6.  Significantly different
-     but still synchable. */
-  HANDLE hmyshove, hmyslurp, hprocin, hprocout, hprocerr;
-  Extbyte *command_line;
+  HANDLE hmyshove, hmyslurp, hprocin, hprocout;
+  LPTSTR command_line;
   BOOL do_io, windowed;
-  char *proc_env;
-
-  /* No need to DOS-ize the filename; expand-file-name (called prior)
-     already does this. */
 
   /* Find out whether the application is windowed or not */
   {
@@ -765,371 +473,51 @@ nt_create_process (Lisp_Process *p,
       CreatePipe (&hprocin, &hmyshove, &sa, 0);
       CreatePipe (&hmyslurp, &hprocout, &sa, 0);
 
-      /* Duplicate the stdout handle for use as stderr */
-      DuplicateHandle(GetCurrentProcess(), hprocout, GetCurrentProcess(),
-                      &hprocerr, 0, TRUE, DUPLICATE_SAME_ACCESS);
-
       /* Stupid Win32 allows to create a pipe with *both* ends either
 	 inheritable or not. We need process ends inheritable, and local
 	 ends not inheritable. */
-      DuplicateHandle (GetCurrentProcess(), hmyshove, GetCurrentProcess(),
-		       &htmp, 0, FALSE,
-		       DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
+      DuplicateHandle (GetCurrentProcess(), hmyshove, GetCurrentProcess(), &htmp,
+		       0, FALSE, DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
       hmyshove = htmp;
-      DuplicateHandle (GetCurrentProcess(), hmyslurp, GetCurrentProcess(),
-		       &htmp, 0, FALSE,
-		       DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
+      DuplicateHandle (GetCurrentProcess(), hmyslurp, GetCurrentProcess(), &htmp,
+		       0, FALSE, DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS);
       hmyslurp = htmp;
     }
 
-  /* Convert an argv vector into Win32 style command line. */
+  /* Convert an argv vector into Win32 style command line by a call to
+     lisp function `nt-quote-process-args' which see (in winnt.el)*/
   {
     int i;
-    Bufbyte **quoted_args;
-    int is_dos_app, is_cygnus_app;
-    int is_command_shell;
-    int do_quoting = 0;
-    char escape_char = 0;
+    Lisp_Object args_or_ret = Qnil;
+    struct gcpro gcpro1;
 
-    nargv++; /* include program; we access argv offset by 1 below */
-    quoted_args = alloca_array (Bufbyte *, nargv);
-
-    /* Determine whether program is a 16-bit DOS executable, or a Win32
-       executable that is implicitly linked to the Cygnus dll (implying it
-       was compiled with the Cygnus GNU toolchain and hence relies on
-       cygwin.dll to parse the command line - we use this to decide how to
-       escape quote chars in command line args that must be quoted). */
-    mswindows_executable_type (XSTRING_DATA (program),
-			       &is_dos_app, &is_cygnus_app);
-
-    {
-      /* #### Bleeeeeeeeeeeeeeeeech!!!!  The command shells appear to
-	 use '^' as a quote character, at least under NT.  #### I haven't
-	 tested 95.  If it allows no quoting conventions at all, set
-	 escape_char to 0 and the code below will work. (e.g. NT tolerates
-         no quoting -- this command
-
-         cmd /c "ls "/Program Files""
-
-         actually works.) */
-	 
-      struct gcpro gcpro1, gcpro2;
-      Lisp_Object progname = Qnil;
-
-      GCPRO2 (program, progname);
-      progname = Ffile_name_nondirectory (program);
-      progname = Fdowncase (progname, Qnil);
-
-      is_command_shell =
-	internal_equal (progname, build_string ("command.com"), 0)
-	|| internal_equal (progname, build_string ("cmd.exe"), 0);
-      UNGCPRO;
-    }
-	
-#if 0
-    /* #### we need to port this. */
-    /* On Windows 95, if cmdname is a DOS app, we invoke a helper
-       application to start it by specifying the helper app as cmdname,
-       while leaving the real app name as argv[0].  */
-    if (is_dos_app)
-      {
-	cmdname = (char*) alloca (MAXPATHLEN);
-	if (egetenv ("CMDPROXY"))
-	  strcpy ((char*)cmdname, egetenv ("CMDPROXY"));
-	else
-	  {
-	    strcpy ((char*)cmdname, XSTRING_DATA (Vinvocation_directory));
-	    strcat ((char*)cmdname, "cmdproxy.exe");
-	  }
-      }
-#endif
-  
-    /* we have to do some conjuring here to put argv and envp into the
-       form CreateProcess wants...  argv needs to be a space separated/null
-       terminated list of parameters, and envp is a null
-       separated/double-null terminated list of parameters.
-
-       Additionally, zero-length args and args containing whitespace or
-       quote chars need to be wrapped in double quotes - for this to work,
-       embedded quotes need to be escaped as well.  The aim is to ensure
-       the child process reconstructs the argv array we start with
-       exactly, so we treat quotes at the beginning and end of arguments
-       as embedded quotes.
-
-       The Win32 GNU-based library from Cygnus doubles quotes to escape
-       them, while MSVC uses backslash for escaping.  (Actually the MSVC
-       startup code does attempt to recognize doubled quotes and accept
-       them, but gets it wrong and ends up requiring three quotes to get a
-       single embedded quote!)  So by default we decide whether to use
-       quote or backslash as the escape character based on whether the
-       binary is apparently a Cygnus compiled app.
-
-       Note that using backslash to escape embedded quotes requires
-       additional special handling if an embedded quote is already
-       preceded by backslash, or if an arg requiring quoting ends with
-       backslash.  In such cases, the run of escape characters needs to be
-       doubled.  For consistency, we apply this special handling as long
-       as the escape character is not quote.
-   
-       Since we have no idea how large argv and envp are likely to be we
-       figure out list lengths on the fly and allocate them.  */
-  
-    if (!NILP (Vmswindows_quote_process_args))
-      {
-	do_quoting = 1;
-	/* Override escape char by binding mswindows-quote-process-args to
-	   desired character, or use t for auto-selection.  */
-	if (INTP (Vmswindows_quote_process_args))
-	  escape_char = (char) XINT (Vmswindows_quote_process_args);
-	else
-	  escape_char = is_command_shell ? '^' : is_cygnus_app ? '"' : '\\';
-      }
-  
-    /* do argv...  */
-    for (i = 0; i < nargv; ++i)
-      {
-	Bufbyte *targ = XSTRING_DATA (i == 0 ? program : argv[i - 1]);
-	Bufbyte *p = targ;
-	int need_quotes = 0;
-	int escape_char_run = 0;
-	int arglen = 0;
-
-	if (*p == 0)
-	  need_quotes = 1;
-	for ( ; *p; p++)
-	  {
-	    if (*p == '"')
-	      {
-		/* allow for embedded quotes to be escaped */
-		if (escape_char)
-		  arglen++;
-		need_quotes = 1;
-		/* handle the case where the embedded quote is already escaped */
-		if (escape_char_run > 0)
-		  {
-		    /* To preserve the arg exactly, we need to double the
-		       preceding escape characters (plus adding one to
-		       escape the quote character itself).  */
-		    arglen += escape_char_run;
-		  }
-	      }
-	    else if (*p == ' ' || *p == '\t')
-	      {
-		need_quotes = 1;
-	      }
-
-	    if (escape_char && *p == escape_char && escape_char != '"')
-	      escape_char_run++;
-	    else
-	      escape_char_run = 0;
-	  }
-	if (need_quotes)
-	  {
-	    arglen += 2;
-	    /* handle the case where the arg ends with an escape char - we
-	       must not let the enclosing quote be escaped.  */
-	    if (escape_char_run > 0)
-	      arglen += escape_char_run;
-	  }
-	arglen += strlen (targ) + 1;
-
-	quoted_args[i] = alloca_array (Bufbyte, arglen); 
-      }
+    GCPRO1 (args_or_ret);
 
     for (i = 0; i < nargv; ++i)
-      {
-	Bufbyte *targ = XSTRING_DATA (i == 0 ? program : argv[i - 1]);
-	Bufbyte *p = targ;
-	int need_quotes = 0;
-	Bufbyte *parg = quoted_args[i];
+      args_or_ret = Fcons (*argv++, args_or_ret);
+    args_or_ret = Fnreverse (args_or_ret);
+    args_or_ret = Fcons (program, args_or_ret);
 
-	if (*p == 0)
-	  need_quotes = 1;
+    args_or_ret = call1 (Qnt_quote_process_args, args_or_ret);
 
-	if (do_quoting)
-	  {
-	    for ( ; *p; p++)
-	      if (*p == ' ' || *p == '\t' || *p == '"')
-		need_quotes = 1;
-	  }
-	if (need_quotes)
-	  {
-	    int escape_char_run = 0;
-	    Bufbyte * first;
-	    Bufbyte * last;
+    if (!STRINGP (args_or_ret))
+      /* Luser wrote his/her own clever version */
+      error ("Bogus return value from `nt-quote-process-args'");
 
-	    p = targ;
-	    first = p;
-	    last = p + strlen (p) - 1;
-	    *parg++ = '"';
-#if 0
-	    /* This version does not escape quotes if they occur at the
-	       beginning or end of the arg - this could lead to incorrect
-	       behavior when the arg itself represents a command line
-	       containing quoted args.  I believe this was originally done
-	       as a hack to make some things work, before
-	       `mswindows-quote-process-args' was added.  */
-	    while (*p)
-	      {
-		if (*p == '"' && p > first && p < last)
-		  *parg++ = escape_char;	/* escape embedded quotes */
-		*parg++ = *p++;
-	      }
-#else
-	    for ( ; *p; p++)
-	      {
-		if (escape_char && *p == '"')
-		  {
-		    /* double preceding escape chars if any */
-		    while (escape_char_run > 0)
-		      {
-			*parg++ = escape_char;
-			escape_char_run--;
-		      }
-		    /* escape all quote chars, even at beginning or end */
-		    *parg++ = escape_char;
-		  }
-		*parg++ = *p;
+    command_line = alloca_array (char, (XSTRING_LENGTH (program)
+					+ XSTRING_LENGTH (args_or_ret) + 2));
+    strcpy (command_line, XSTRING_DATA (program));
+    strcat (command_line, " ");
+    strcat (command_line, XSTRING_DATA (args_or_ret));
 
-		if (escape_char && *p == escape_char && escape_char != '"')
-		  escape_char_run++;
-		else
-		  escape_char_run = 0;
-	      }
-	    /* double escape chars before enclosing quote */
-	    while (escape_char_run > 0)
-	      {
-		*parg++ = escape_char;
-		escape_char_run--;
-	      }
-#endif
-	    *parg++ = '"';
-	  }
-	else
-	  {
-	    strcpy (parg, targ);
-	    parg += strlen (targ);
-	  }
-	*parg = '\0';
-      }
-
-    {
-      int total_cmdline_len = 0;
-      Extcount *extargcount = (Extcount *) alloca_array (Extcount, nargv);
-      Extbyte **extarg = (Extbyte **) alloca_array (Extbyte *, nargv);
-      Extbyte *command_ptr;
-
-      for (i = 0; i < nargv; ++i)
-	{
-	  TO_EXTERNAL_FORMAT (C_STRING, quoted_args[i], ALLOCA,
-			      (extarg[i], extargcount[i]), Qmswindows_tstr);
-	  /* account for space and terminating null */
-	  total_cmdline_len += extargcount[i] + EITCHAR_SIZE;
-	}
-
-      command_line = alloca_array (char, total_cmdline_len);
-      command_ptr = command_line;
-      for (i = 0; i < nargv; ++i)
-	{
-	  memcpy (command_ptr, extarg[i], extargcount[i]);
-	  command_ptr += extargcount[i];
-	  EICOPY_TCHAR (command_ptr, ' ');
-	  command_ptr += EITCHAR_SIZE;
-	}
-      EICOPY_TCHAR (command_ptr, '\0');
-      command_ptr += EITCHAR_SIZE;
-    }
+    UNGCPRO; /* args_or_ret */
   }
-  /* Set `proc_env' to a nul-separated array of the strings in
-     Vprocess_environment terminated by 2 nuls.  */
- 
-  {
-    char **env;
-    REGISTER Lisp_Object tem;
-    REGISTER char **new_env;
-    REGISTER int new_length = 0, i, new_space;
-    char *penv;
-    
-    for (tem = Vprocess_environment;
- 	 (CONSP (tem)
- 	  && STRINGP (XCAR (tem)));
- 	 tem = XCDR (tem))
-      new_length++;
 
-    /* FSF adds an extra env var to hold the current process ID of the
-       Emacs process.  Apparently this is used only by emacsserver.c,
-       which we have superseded to gnuserv.c. (#### Does it work under
-       MS Windows?)
-
-       sprintf (ppid_env_var_buffer, "EM_PARENT_PROCESS_ID=%d", 
-         GetCurrentProcessId ());
-       arglen += strlen (ppid_env_var_buffer) + 1;
-       numenv++;
-    */
-    
-    /* new_length + 1 to include terminating 0.  */
-    env = new_env = alloca_array (char *, new_length + 1);
- 
-    /* Copy the Vprocess_environment strings into new_env.  */
-    for (tem = Vprocess_environment;
- 	 (CONSP (tem)
- 	  && STRINGP (XCAR (tem)));
- 	 tem = XCDR (tem))
-      {
-	char **ep = env;
-	char *string = (char *) XSTRING_DATA (XCAR (tem));
-	/* See if this string duplicates any string already in the env.
-	   If so, don't put it in.
-	   When an env var has multiple definitions,
-	   we keep the definition that comes first in process-environment.  */
-	for (; ep != new_env; ep++)
-	  {
-	    char *p = *ep, *q = string;
-	    while (1)
-	      {
-		if (*q == 0)
-		  /* The string is malformed; might as well drop it.  */
-		  goto duplicate;
-		if (*q != *p)
-		  break;
-		if (*q == '=')
-		  goto duplicate;
-		p++, q++;
-	      }
-	  }
-	*new_env++ = string;
-      duplicate: ;
-      }
-    *new_env = 0;
-    
-    /* Sort the environment variables */
-    new_length = new_env - env;
-    qsort (env, new_length, sizeof (char *), compare_env);
-    
-    /* Work out how much space to allocate */
-    new_space = 0;
-    for (i = 0; i < new_length; i++)
-      {
- 	new_space += strlen(env[i]) + 1;
-      }
-    new_space++;
-    
-    /* Allocate space and copy variables into it */
-    penv = proc_env = (char*) alloca(new_space);
-    for (i = 0; i < new_length; i++)
-      {
- 	strcpy(penv, env[i]);
- 	penv += strlen(env[i]) + 1;
-      }
-    *penv = 0;
-  }
-  
   /* Create process */
   {
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     DWORD err;
-    DWORD flags;
 
     xzero (si);
     si.dwFlags = STARTF_USESHOWWINDOW;
@@ -1138,24 +526,14 @@ nt_create_process (Lisp_Process *p,
       {
 	si.hStdInput = hprocin;
 	si.hStdOutput = hprocout;
-	si.hStdError = hprocerr;
+	si.hStdError = hprocout;
 	si.dwFlags |= STARTF_USESTDHANDLES;
       }
 
-    flags = CREATE_SUSPENDED;
-    if (mswindows_windows9x_p ())
-      flags |= (!NILP (Vmswindows_start_process_share_console)
-		? CREATE_NEW_PROCESS_GROUP
-		: CREATE_NEW_CONSOLE);
-    else
-      flags |= CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP;
-    if (NILP (Vmswindows_start_process_inherit_error_mode))
-      flags |= CREATE_DEFAULT_ERROR_MODE;
-
-    ensure_console_window_exists ();
-
-    err = (CreateProcess (NULL, command_line, NULL, NULL, TRUE, flags,
-			  proc_env, (char *) XSTRING_DATA (cur_dir), &si, &pi)
+    err = (CreateProcess (NULL, command_line, NULL, NULL, TRUE,
+			  CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP
+			  | CREATE_SUSPENDED,
+			  NULL, (char *) XSTRING_DATA (cur_dir), &si, &pi)
 	   ? 0 : GetLastError ());
 
     if (do_io)
@@ -1163,7 +541,6 @@ nt_create_process (Lisp_Process *p,
 	/* These just have been inherited; we do not need a copy */
 	CloseHandle (hprocin);
 	CloseHandle (hprocout);
-	CloseHandle (hprocerr);
       }
     
     /* Handle process creation failure */
@@ -1181,7 +558,6 @@ nt_create_process (Lisp_Process *p,
     if (do_io)
       {
 	NT_DATA(p)->h_process = pi.hProcess;
-	NT_DATA(p)->dwProcessId = pi.dwProcessId;
 	init_process_io_handles (p, (void*)hmyslurp, (void*)hmyshove, 0);
       }
     else
@@ -1197,7 +573,9 @@ nt_create_process (Lisp_Process *p,
     ResumeThread (pi.hThread);
     CloseHandle (pi.hThread);
 
-    return ((int)pi.dwProcessId);
+    /* Hack to support Windows 95 negative pids */
+    return ((int)pi.dwProcessId < 0
+	    ? -(int)pi.dwProcessId : (int)pi.dwProcessId);
   }
 }
 
@@ -1210,7 +588,7 @@ nt_create_process (Lisp_Process *p,
  */
 
 static void
-nt_update_status_if_terminated (Lisp_Process* p)
+nt_update_status_if_terminated (struct Lisp_Process* p)
 {
   DWORD exit_code;
   if (GetExitCodeProcess (NT_DATA(p)->h_process, &exit_code)
@@ -1244,20 +622,19 @@ nt_update_status_if_terminated (Lisp_Process* p)
 static void
 nt_send_process (Lisp_Object proc, struct lstream* lstream)
 {
-  volatile Lisp_Object vol_proc = proc;
-  Lisp_Process *volatile p = XPROCESS (proc);
+  struct Lisp_Process *p = XPROCESS (proc);
 
   /* use a reasonable-sized buffer (somewhere around the size of the
      stream buffer) so as to avoid inundating the stream with blocked
      data. */
-  Bufbyte chunkbuf[512];
+  Bufbyte chunkbuf[128];
   Bytecount chunklen;
 
   while (1)
     {
-      ssize_t writeret;
+      int writeret;
 
-      chunklen = Lstream_read (lstream, chunkbuf, 512);
+      chunklen = Lstream_read (lstream, chunkbuf, 128);
       if (chunklen <= 0)
 	break; /* perhaps should abort() if < 0?
 		  This should never happen. */
@@ -1275,7 +652,7 @@ nt_send_process (Lisp_Object proc, struct lstream* lstream)
 	  p->core_dumped = 0;
 	  p->tick++;
 	  process_tick++;
-	  deactivate_process (*((Lisp_Object *) (&vol_proc)));
+	  deactivate_process (proc);
 	  error ("Broken pipe error sending to process %s; closed it",
 		 XSTRING_DATA (p->name));
 	}
@@ -1313,18 +690,18 @@ static void
 nt_kill_child_process (Lisp_Object proc, int signo,
 		       int current_group, int nomsg)
 {
-  Lisp_Process *p = XPROCESS (proc);
+  struct Lisp_Process *p = XPROCESS (proc);
 
   /* Signal error if SIGNO cannot be sent */
   validate_signal_number (signo);
 
   /* Send signal */
-  if (!send_signal (NT_DATA (p), 0, signo))
-    signal_simple_error ("Cannot send signal to process", proc);
+  if (!send_signal (NT_DATA(p)->h_process, signo))
+    error ("Cannot send signal to process");
 }
 
 /*
- * Kill any process in the system given its PID
+ * Kill any process in the system given its PID.
  *
  * Returns zero if a signal successfully sent, or
  * negative number upon failure
@@ -1332,13 +709,26 @@ nt_kill_child_process (Lisp_Object proc, int signo,
 static int
 nt_kill_process_by_pid (int pid, int signo)
 {
-  struct Lisp_Process *p;
-
+  HANDLE h_process;
+  int send_result;
+  
   /* Signal error if SIGNO cannot be sent */
   validate_signal_number (signo);
 
-  p = find_process_from_pid (pid);
-  return send_signal (p ? NT_DATA (p) : 0, pid, signo) ? 0 : -1;
+  /* Try to open the process with required privileges */
+  h_process = OpenProcess (PROCESS_CREATE_THREAD
+			   | PROCESS_QUERY_INFORMATION 
+			   | PROCESS_VM_OPERATION
+			   | PROCESS_VM_WRITE,
+			   FALSE, pid);
+  if (h_process == NULL)
+    return -1;
+  
+  send_result = send_signal (h_process, signo);
+  
+  CloseHandle (h_process);
+
+  return send_result ? 0 : -1;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -1395,12 +785,6 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 	  /* Ok, got an answer */
 	  if (WSAGETASYNCERROR(msg.lParam) == NO_ERROR)
 	    success = 1;
-	  else
-	    {
-	      warn_when_safe(Qstream, Qwarning,
-			     "cannot get IP address for host \"%s\"",
-			     XSTRING_DATA (host));
-	    }
 	  goto done;
 	}
       else if (msg.message == WM_TIMER && msg.wParam == SOCK_TIMER_ID)
@@ -1449,11 +833,9 @@ nt_canonicalize_host_name (Lisp_Object host)
    deactivate and close it via delete-process */
 
 static void
-nt_open_network_stream (Lisp_Object name, Lisp_Object host,
-			Lisp_Object service,
-			Lisp_Object protocol, void** vinfd, void** voutfd)
+nt_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object service,
+			Lisp_Object family, void** vinfd, void** voutfd)
 {
-  /* !!#### not Mule-ized */
   struct sockaddr_in address;
   SOCKET s;
   int port;
@@ -1461,8 +843,9 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
 
   CHECK_STRING (host);
 
-  if (!EQ (protocol, Qtcp))
-    signal_simple_error ("Unsupported protocol", protocol);
+  if (!EQ (family, Qtcpip))
+    error ("Unsupported protocol family \"%s\"",
+	   string_data (symbol_name (XSYMBOL (family))));
 
   if (INTP (service))
     port = htons ((unsigned short) XINT (service));
@@ -1472,7 +855,7 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
       CHECK_STRING (service);
       svc_info = getservbyname ((char *) XSTRING_DATA (service), "tcp");
       if (svc_info == 0)
-	signal_simple_error ("Unknown service", service);
+	error ("Unknown service \"%s\"", XSTRING_DATA (service));
       port = svc_info->s_port;
     }
 
@@ -1492,6 +875,7 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
   retval = connect (s, (struct sockaddr *) &address, sizeof (address));
   if (retval != NO_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
     goto connect_failed;
+
   /* Wait while connection is established */
   while (1)
     {
@@ -1534,20 +918,6 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host,
 
  connect_failed:  
   closesocket (s);
-  if (INTP (service))
-    {
-      warn_when_safe (Qstream, Qwarning,
-		      "failure to open network stream to host \"%s\" for service \"%d\"",
-		      XSTRING_DATA (host),
-		      (unsigned short) XINT (service));
-    }
-  else
-    {
-      warn_when_safe (Qstream, Qwarning,
-		      "failure to open network stream to host \"%s\" for service \"%s\"",
-		      XSTRING_DATA (host),
-		      XSTRING_DATA (service));
-    }
   report_file_error ("connection failed", list2 (host, name));
 }
 
@@ -1581,41 +951,10 @@ process_type_create_nt (void)
 void
 syms_of_process_nt (void)
 {
+  defsymbol (&Qnt_quote_process_args, "nt-quote-process-args");
 }
 
 void
 vars_of_process_nt (void)
 {
-  DEFVAR_LISP ("mswindows-quote-process-args",
-	       &Vmswindows_quote_process_args /*
-Non-nil enables quoting of process arguments to ensure correct parsing.
-Because Windows does not directly pass argv arrays to child processes,
-programs have to reconstruct the argv array by parsing the command
-line string.  For an argument to contain a space, it must be enclosed
-in double quotes or it will be parsed as multiple arguments.
-
-If the value is a character, that character will be used to escape any
-quote characters that appear, otherwise a suitable escape character
-will be chosen based on the type of the program (normal or Cygwin).
-*/ );								  
-  Vmswindows_quote_process_args = Qt;
-
-  DEFVAR_LISP ("mswindows-start-process-share-console",
-	       &Vmswindows_start_process_share_console /*
-When nil, new child processes are given a new console.
-When non-nil, they share the Emacs console; this has the limitation of
-allowing only only DOS subprocess to run at a time (whether started directly
-or indirectly by Emacs), and preventing Emacs from cleanly terminating the
-subprocess group, but may allow Emacs to interrupt a subprocess that doesn't
-otherwise respond to interrupts from Emacs.
-*/ );
-  Vmswindows_start_process_share_console = Qnil;
-
-  DEFVAR_LISP ("mswindows-start-process-inherit-error-mode",
-	       &Vmswindows_start_process_inherit_error_mode /*
-    "When nil, new child processes revert to the default error mode.
-When non-nil, they inherit their error mode setting from Emacs, which stops
-them blocking when trying to access unmounted drives etc.
-*/ );
-  Vmswindows_start_process_inherit_error_mode = Qt;
 }

@@ -31,7 +31,10 @@ Boston, MA 02111-1307, USA.  */
 #include "syssignal.h"
 #include "systime.h"
 
-#include "sysfile.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include <errno.h>
 
 /* Set to 1 when a quit-check signal (either a SIGIO interrupt or
    the asynch. timeout for poll-for-quit) occurs.  The QUITP
@@ -177,7 +180,7 @@ alarm_signal (int signo)
 	 it needs to stay the way it is. */
       quit_check_signal_happened = 1;
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
       can_break_system_calls = 0;
 #else
       /* can_break_system_calls is set when we want to break out of
@@ -417,16 +420,19 @@ interrupt_signal (int sig)
       stdout_out ("you can continue or abort.\n");
 #endif /* not SIGTSTP */
       stdout_out ("Auto-save? (y or n) ");
+      fflush (stdout);
       if (((c = getc (stdin)) & ~040) == 'Y')
 	Fdo_auto_save (Qnil, Qnil);
       while (c != '\n')
         c = getc (stdin);
       stdout_out ("Abort (and dump core)? (y or n) ");
+      fflush (stdout);
       if (((c = getc (stdin)) & ~040) == 'Y')
 	abort ();
       while (c != '\n')
         c = getc (stdin);
       stdout_out ("Continuing...\n");
+      fflush (stdout);
       reinit_initial_console ();
       MARK_FRAME_CHANGED (XFRAME (DEVICE_SELECTED_FRAME
 				  (XDEVICE (CONSOLE_SELECTED_DEVICE

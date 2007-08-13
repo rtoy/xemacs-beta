@@ -110,6 +110,12 @@ static Lisp_Object Vdialog_data_list;
 
 #define ID_ITEM_BIAS 32
 
+typedef struct gui_item struct_gui_item;
+typedef struct
+{
+  Dynarr_declare (struct gui_item);
+} struct_gui_item_dynarr;
+
 /* Dialog procedure */
 static BOOL CALLBACK 
 dialog_proc (HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param)
@@ -159,28 +165,8 @@ push_lisp_string_as_unicode (unsigned_char_dynarr* dynarr, Lisp_Object string)
   Charcount length = XSTRING_CHAR_LENGTH (string);
   LPWSTR uni_string;
 
-  TO_EXTERNAL_FORMAT (LISP_STRING, string,
-		      C_STRING_ALLOCA, mbcs_string,
-		      Qnative);
-  uni_string = alloca_array (WCHAR, length + 1);
-  length = MultiByteToWideChar (CP_ACP, 0, mbcs_string, -1,
-				uni_string, sizeof(WCHAR) * (length + 1));
-  Dynarr_add_many (dynarr, uni_string, sizeof(WCHAR) * length);
-}
-
-/* Helper function which converts the supplied string STRING into Unicode and
-   pushes it at the end of DYNARR */
-static void
-push_bufbyte_string_as_unicode (unsigned_char_dynarr* dynarr, Bufbyte *string,
-				Bytecount len)
-{
-  Extbyte *mbcs_string;
-  Charcount length = bytecount_to_charcount (string, len);
-  LPWSTR uni_string;
-
-  TO_EXTERNAL_FORMAT (C_STRING, string,
-		      C_STRING_ALLOCA, mbcs_string,
-		      Qnative);
+  GET_C_CHARPTR_EXT_DATA_ALLOCA (XSTRING_DATA (string),
+				 FORMAT_OS, mbcs_string);
   uni_string = alloca_array (WCHAR, length + 1);
   length = MultiByteToWideChar (CP_ACP, 0, mbcs_string, -1,
 				uni_string, sizeof(WCHAR) * (length + 1));
@@ -214,7 +200,7 @@ free_dynarr_opaque_ptr (Lisp_Object arg)
 static void
 mswindows_popup_dialog_box (struct frame* f, Lisp_Object desc)
 {
-  Lisp_Object_dynarr *dialog_items = Dynarr_new (Lisp_Object);
+  struct_gui_item_dynarr *dialog_items = Dynarr_new (struct_gui_item);
   unsigned_char_dynarr *template = Dynarr_new (unsigned_char);
   unsigned int button_row_width = 0;
   unsigned int text_width, text_height;
@@ -237,10 +223,11 @@ mswindows_popup_dialog_box (struct frame* f, Lisp_Object desc)
       {
 	if (!NILP (XCAR (item_cons)))
 	  {
-	    Lisp_Object gitem = gui_parse_item_keywords (XCAR (item_cons));
+	    struct gui_item gitem;
+	    gui_item_init (&gitem);
+	    gui_parse_item_keywords (XCAR (item_cons), &gitem);
 	    Dynarr_add (dialog_items, gitem);
-	    button_row_width += button_width (XGUI_ITEM (gitem)->name) 
-	      + X_BUTTON_MARGIN;
+	    button_row_width += button_width (gitem.name) + X_BUTTON_MARGIN;
 	  }
       }
     if (Dynarr_length (dialog_items) == 0)
@@ -363,11 +350,10 @@ mswindows_popup_dialog_box (struct frame* f, Lisp_Object desc)
 
     for (i = 0; i < Dynarr_length (dialog_items); ++i)
       {
-	Lisp_Object* gui_item = Dynarr_atp (dialog_items, i);
-	Lisp_Gui_Item *pgui_item = XGUI_ITEM (*gui_item);
+	struct gui_item *pgui_item = Dynarr_atp (dialog_items, i);
 
 	item_tem.style = (WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON
-			  | (gui_item_active_p (*gui_item) ? 0 : WS_DISABLED));
+			  | (gui_item_active_p (pgui_item) ? 0 : WS_DISABLED));
 	item_tem.cx = button_width (pgui_item->name);
 	/* Item ids are indices into dialog_items plus offset, to avoid having
            items by reserved ids (IDOK, IDCANCEL) */
@@ -381,21 +367,7 @@ mswindows_popup_dialog_box (struct frame* f, Lisp_Object desc)
 	Dynarr_add_many (template, &button_class_id, sizeof (button_class_id));
 
 	/* Next thing to add is control text, as Unicode string */
-	{
-	  Lisp_Object ctext = pgui_item->name;
-	  Emchar accel_unused;
-	  Bufbyte *trans = (Bufbyte *) alloca (2 * XSTRING_LENGTH (ctext) + 3);
-	  Bytecount translen;
-
-	  memcpy (trans, XSTRING_DATA (ctext), XSTRING_LENGTH (ctext) + 1);
-	  translen =
-	    mswindows_translate_menu_or_dialog_item (trans,
-					       XSTRING_LENGTH (ctext),
-					       2 * XSTRING_LENGTH (ctext) + 3,
-					       &accel_unused,
-					       ctext);
-	  push_bufbyte_string_as_unicode (template, trans, translen);
-	}
+	push_lisp_string_as_unicode (template, pgui_item->name);
 
 	/* Specify 0 length creation data. */
 	Dynarr_add_many (template, &zeroes, 2);
@@ -418,8 +390,7 @@ mswindows_popup_dialog_box (struct frame* f, Lisp_Object desc)
     vector = make_vector (Dynarr_length (dialog_items), Qunbound);
     dialog_data = Fcons (frame, vector);
     for (i = 0; i < Dynarr_length (dialog_items); i++)
-      XVECTOR_DATA (vector) [i] =
-	XGUI_ITEM (*Dynarr_atp (dialog_items, i))->callback;
+      XVECTOR_DATA (vector) [i] = Dynarr_atp (dialog_items, i)->callback;
 
     /* Woof! Everything is ready. Pop pop pop in now! */
     if (!CreateDialogIndirectParam (NULL,

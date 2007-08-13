@@ -50,14 +50,14 @@ Lisp_Object Qio_error, Qend_of_file;
 Lisp_Object Qarith_error, Qrange_error, Qdomain_error;
 Lisp_Object Qsingularity_error, Qoverflow_error, Qunderflow_error;
 Lisp_Object Qbeginning_of_buffer, Qend_of_buffer, Qbuffer_read_only;
-Lisp_Object Qintegerp, Qnatnump, Qsymbolp;
+Lisp_Object Qintegerp, Qnatnump, Qsymbolp, Qkeywordp;
 Lisp_Object Qlistp, Qtrue_list_p, Qweak_listp;
 Lisp_Object Qconsp, Qsubrp;
 Lisp_Object Qcharacterp, Qstringp, Qarrayp, Qsequencep, Qvectorp;
 Lisp_Object Qchar_or_string_p, Qmarkerp, Qinteger_or_marker_p, Qbufferp;
 Lisp_Object Qinteger_or_char_p, Qinteger_char_or_marker_p;
-Lisp_Object Qnumberp, Qnumber_char_or_marker_p;
-Lisp_Object Qbit_vectorp, Qbitp, Qcdr;
+Lisp_Object Qnumberp, Qnumber_or_marker_p, Qnumber_char_or_marker_p;
+Lisp_Object Qbit_vectorp, Qbitp, Qcons, Qkeyword, Qcdr, Qignore;
 
 Lisp_Object Qfloatp;
 
@@ -147,7 +147,7 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 }
 
 void
-check_int_range (EMACS_INT val, EMACS_INT min, EMACS_INT max)
+check_int_range (int val, int min, int max)
 {
   if (val < min || val > max)
     args_out_of_range_3 (make_int (val), make_int (min), make_int (max));
@@ -160,8 +160,8 @@ EMACS_INT sign_extend_temp;
 
 /* On a few machines, XINT can only be done by calling this.  */
 /* XEmacs:  only used by m/convex.h */
-EMACS_INT sign_extend_lisp_int (EMACS_INT num);
-EMACS_INT
+int sign_extend_lisp_int (EMACS_INT num);
+int
 sign_extend_lisp_int (EMACS_INT num)
 {
   if (num & (1L << (VALBITS - 1)))
@@ -357,7 +357,7 @@ If non-nil, the return value will be a list whose first element is
 */
        (subr))
 {
-  const char *prompt;
+  CONST char *prompt;
   CHECK_SUBR (subr);
   prompt = XSUBR (subr)->prompt;
   return prompt ? list2 (Qinteractive, build_string (prompt)) : Qnil;
@@ -615,6 +615,7 @@ Set the car of CONSCELL to be NEWCAR.  Return NEWCAR.
   if (!CONSP (conscell))
     conscell = wrong_type_argument (Qconsp, conscell);
 
+  CHECK_LISP_WRITEABLE (conscell);
   XCAR (conscell) = newcar;
   return newcar;
 }
@@ -627,6 +628,7 @@ Set the cdr of CONSCELL to be NEWCDR.  Return NEWCDR.
   if (!CONSP (conscell))
     conscell = wrong_type_argument (Qconsp, conscell);
 
+  CHECK_LISP_WRITEABLE (conscell);
   XCDR (conscell) = newcdr;
   return newcdr;
 }
@@ -660,7 +662,7 @@ indirect_function (Lisp_Object object, int errorp)
     }
 
   if (errorp && UNBOUNDP (hare))
-    return signal_void_function_error (object);
+    signal_void_function_error (object);
 
   return hare;
 }
@@ -687,7 +689,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 */
        (array, index_))
 {
-  EMACS_INT idx;
+  int idx;
 
  retry:
 
@@ -741,7 +743,7 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
 */
        (array, index_, newval))
 {
-  EMACS_INT idx;
+  int idx;
 
  retry:
 
@@ -754,6 +756,8 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     }
 
   if (idx < 0) goto range_error;
+
+  CHECK_LISP_WRITEABLE (array);
 
   if (VECTORP (array))
     {
@@ -795,7 +799,7 @@ typedef struct
   int int_p;
   union
   {
-    EMACS_INT ival;
+    int ival;
     double dval;
   } c;
 } int_or_double;
@@ -835,7 +839,7 @@ number_char_or_marker_to_double (Lisp_Object obj)
     }
 }
 
-static EMACS_INT
+static int
 integer_char_or_marker_to_int (Lisp_Object obj)
 {
  retry:
@@ -1064,7 +1068,7 @@ Floating point numbers always use base 10.
     p++;
 
 #ifdef LISP_FLOAT_TYPE
-  if (isfloat_string (p) && b == 10)
+  if (isfloat_string (p))
     return make_float (atof (p));
 #endif /* LISP_FLOAT_TYPE */
 
@@ -1412,8 +1416,8 @@ Both must be integers, characters or markers.
 */
        (num1, num2))
 {
-  EMACS_INT ival1 = integer_char_or_marker_to_int (num1);
-  EMACS_INT ival2 = integer_char_or_marker_to_int (num2);
+  int ival1 = integer_char_or_marker_to_int (num1);
+  int ival2 = integer_char_or_marker_to_int (num2);
 
   if (ival2 == 0)
     Fsignal (Qarith_error, Qnil);
@@ -1464,7 +1468,7 @@ If either argument is a float, a float will be returned.
     }
 #endif /* LISP_FLOAT_TYPE */
   {
-    EMACS_INT ival;
+    int ival;
     if (iod2.c.ival == 0) goto divide_by_zero;
 
     ival = iod1.c.ival % iod2.c.ival;
@@ -1566,7 +1570,7 @@ static Lisp_Object Vall_weak_lists; /* Gemarke es nicht!!! */
 static Lisp_Object encode_weak_list_type (enum weak_list_type type);
 
 static Lisp_Object
-mark_weak_list (Lisp_Object obj)
+mark_weak_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
   return Qnil; /* nichts ist gemarkt */
 }
@@ -1619,16 +1623,9 @@ make_weak_list (enum weak_list_type type)
   return result;
 }
 
-static const struct lrecord_description weak_list_description[] = {
-  { XD_LISP_OBJECT, offsetof (struct weak_list, list) },
-  { XD_LO_LINK,     offsetof (struct weak_list, next_weak) },
-  { XD_END }
-};
-
 DEFINE_LRECORD_IMPLEMENTATION ("weak-list", weak_list,
 			       mark_weak_list, print_weak_list,
 			       0, weak_list_equal, weak_list_hash,
-			       weak_list_description,
 			       struct weak_list);
 /*
    -- we do not mark the list elements (either the elements themselves
@@ -1648,19 +1645,20 @@ DEFINE_LRECORD_IMPLEMENTATION ("weak-list", weak_list,
 */
 
 int
-finish_marking_weak_lists (void)
+finish_marking_weak_lists (int (*obj_marked_p) (Lisp_Object),
+			   void (*markobj) (Lisp_Object))
 {
   Lisp_Object rest;
   int did_mark = 0;
 
   for (rest = Vall_weak_lists;
-       !NILP (rest);
+       !GC_NILP (rest);
        rest = XWEAK_LIST (rest)->next_weak)
     {
       Lisp_Object rest2;
       enum weak_list_type type = XWEAK_LIST (rest)->type;
 
-      if (! marked_p (rest))
+      if (! obj_marked_p (rest))
 	/* The weak list is probably garbage.  Ignore it. */
 	continue;
 
@@ -1668,7 +1666,7 @@ finish_marking_weak_lists (void)
 	   /* We need to be trickier since we're inside of GC;
 	      use CONSP instead of !NILP in case of user-visible
 	      imperfect lists */
-	   CONSP (rest2);
+	   GC_CONSP (rest2);
 	   rest2 = XCDR (rest2))
 	{
 	  Lisp_Object elem;
@@ -1683,7 +1681,7 @@ finish_marking_weak_lists (void)
 	     (either because of an external pointer or because of
 	     a previous call to this function), and likewise for all
 	     the rest of the elements in the list, so we can stop now. */
-	  if (marked_p (rest2))
+	  if (obj_marked_p (rest2))
 	    break;
 
 	  elem = XCAR (rest2);
@@ -1691,19 +1689,19 @@ finish_marking_weak_lists (void)
 	  switch (type)
 	    {
 	    case WEAK_LIST_SIMPLE:
-	      if (marked_p (elem))
+	      if (obj_marked_p (elem))
 		need_to_mark_cons = 1;
 	      break;
 
 	    case WEAK_LIST_ASSOC:
-	      if (!CONSP (elem))
+	      if (!GC_CONSP (elem))
 		{
 		  /* just leave bogus elements there */
 		  need_to_mark_cons = 1;
 		  need_to_mark_elem = 1;
 		}
-	      else if (marked_p (XCAR (elem)) &&
-		       marked_p (XCDR (elem)))
+	      else if (obj_marked_p (XCAR (elem)) &&
+		       obj_marked_p (XCDR (elem)))
 		{
 		  need_to_mark_cons = 1;
 		  /* We still need to mark elem, because it's
@@ -1713,13 +1711,13 @@ finish_marking_weak_lists (void)
 	      break;
 
 	    case WEAK_LIST_KEY_ASSOC:
-	      if (!CONSP (elem))
+	      if (!GC_CONSP (elem))
 		{
 		  /* just leave bogus elements there */
 		  need_to_mark_cons = 1;
 		  need_to_mark_elem = 1;
 		}
-	      else if (marked_p (XCAR (elem)))
+	      else if (obj_marked_p (XCAR (elem)))
 		{
 		  need_to_mark_cons = 1;
 		  /* We still need to mark elem and XCDR (elem);
@@ -1729,30 +1727,13 @@ finish_marking_weak_lists (void)
 	      break;
 
 	    case WEAK_LIST_VALUE_ASSOC:
-	      if (!CONSP (elem))
+	      if (!GC_CONSP (elem))
 		{
 		  /* just leave bogus elements there */
 		  need_to_mark_cons = 1;
 		  need_to_mark_elem = 1;
 		}
-	      else if (marked_p (XCDR (elem)))
-		{
-		  need_to_mark_cons = 1;
-		  /* We still need to mark elem and XCAR (elem);
-		     marking elem does both */
-		  need_to_mark_elem = 1;
-		}
-	      break;
-
-	    case WEAK_LIST_FULL_ASSOC:
-	      if (!CONSP (elem))
-		{
-		  /* just leave bogus elements there */
-		  need_to_mark_cons = 1;
-		  need_to_mark_elem = 1;
-		}
-	      else if (marked_p (XCAR (elem)) ||
-		       marked_p (XCDR (elem)))
+	      else if (obj_marked_p (XCDR (elem)))
 		{
 		  need_to_mark_cons = 1;
 		  /* We still need to mark elem and XCAR (elem);
@@ -1765,23 +1746,23 @@ finish_marking_weak_lists (void)
 	      abort ();
 	    }
 
-	  if (need_to_mark_elem && ! marked_p (elem))
+	  if (need_to_mark_elem && ! obj_marked_p (elem))
 	    {
-	      mark_object (elem);
+	      markobj (elem);
 	      did_mark = 1;
 	    }
 
 	  /* We also need to mark the cons that holds the elem or
-	     assoc-pair.  We do *not* want to call (mark_object) here
+	     assoc-pair.  We do *not* want to call (markobj) here
 	     because that will mark the entire list; we just want to
 	     mark the cons itself.
 	     */
 	  if (need_to_mark_cons)
 	    {
-	      Lisp_Cons *c = XCONS (rest2);
-	      if (!CONS_MARKED_P (c))
+	      struct Lisp_Cons *ptr = XCONS (rest2);
+	      if (!CONS_MARKED_P (ptr))
 		{
-		  MARK_CONS (c);
+		  MARK_CONS (ptr);
 		  did_mark = 1;
 		}
 	    }
@@ -1789,9 +1770,9 @@ finish_marking_weak_lists (void)
 
       /* In case of imperfect list, need to mark the final cons
          because we're not removing it */
-      if (!NILP (rest2) && ! marked_p (rest2))
+      if (!GC_NILP (rest2) && ! obj_marked_p (rest2))
 	{
-	  mark_object (rest2);
+	  markobj (rest2);
 	  did_mark = 1;
 	}
     }
@@ -1800,18 +1781,18 @@ finish_marking_weak_lists (void)
 }
 
 void
-prune_weak_lists (void)
+prune_weak_lists (int (*obj_marked_p) (Lisp_Object))
 {
   Lisp_Object rest, prev = Qnil;
 
   for (rest = Vall_weak_lists;
-       !NILP (rest);
+       !GC_NILP (rest);
        rest = XWEAK_LIST (rest)->next_weak)
     {
-      if (! (marked_p (rest)))
+      if (! (obj_marked_p (rest)))
 	{
 	  /* This weak list itself is garbage.  Remove it from the list. */
-	  if (NILP (prev))
+	  if (GC_NILP (prev))
 	    Vall_weak_lists = XWEAK_LIST (rest)->next_weak;
 	  else
 	    XWEAK_LIST (prev)->next_weak =
@@ -1827,7 +1808,7 @@ prune_weak_lists (void)
 	       /* We need to be trickier since we're inside of GC;
 		  use CONSP instead of !NILP in case of user-visible
 		  imperfect lists */
-	       CONSP (rest2);)
+	       GC_CONSP (rest2);)
 	    {
 	      /* It suffices to check the cons for marking,
 		 regardless of the type of weak list:
@@ -1838,10 +1819,10 @@ prune_weak_lists (void)
 		    have been marked in finish_marking_weak_lists().
 		 -- otherwise, it's not marked and should disappear.
 		 */
-	      if (! marked_p (rest2))
+	      if (! obj_marked_p (rest2))
 		{
 		  /* bye bye :-( */
-		  if (NILP (prev2))
+		  if (GC_NILP (prev2))
 		    XWEAK_LIST (rest)->list = XCDR (rest2);
 		  else
 		    XCDR (prev2) = XCDR (rest2);
@@ -1882,7 +1863,7 @@ prune_weak_lists (void)
 		  if (go_tortoise)
 		    tortoise = XCDR (tortoise);
 		  go_tortoise = !go_tortoise;
-		  if (EQ (rest2, tortoise))
+		  if (GC_EQ (rest2, tortoise))
 		    break;
 		}
 	    }
@@ -1901,7 +1882,6 @@ decode_weak_list_type (Lisp_Object symbol)
   if (EQ (symbol, Qold_assoc))	 return WEAK_LIST_ASSOC;  /* EBOLA ALERT! */
   if (EQ (symbol, Qkey_assoc))	 return WEAK_LIST_KEY_ASSOC;
   if (EQ (symbol, Qvalue_assoc)) return WEAK_LIST_VALUE_ASSOC;
-  if (EQ (symbol, Qfull_assoc))  return WEAK_LIST_FULL_ASSOC;
 
   signal_simple_error ("Invalid weak list type", symbol);
   return WEAK_LIST_SIMPLE; /* not reached */
@@ -1916,7 +1896,6 @@ encode_weak_list_type (enum weak_list_type type)
     case WEAK_LIST_ASSOC:       return Qassoc;
     case WEAK_LIST_KEY_ASSOC:   return Qkey_assoc;
     case WEAK_LIST_VALUE_ASSOC: return Qvalue_assoc;
-    case WEAK_LIST_FULL_ASSOC:  return Qfull_assoc;
     default:
       abort ();
     }
@@ -1955,8 +1934,6 @@ to `simple'.  Recognized types are
 		and the car is not pointed to.
 `value-assoc'	Objects in the list disappear if they are conses
 		and the cdr is not pointed to.
-`full-assoc'	Objects in the list disappear if they are conses
-		and neither the car nor the cdr is pointed to.
 */
        (type))
 {
@@ -2097,15 +2074,17 @@ init_errors_once_early (void)
 void
 syms_of_data (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (weak_list);
-
+  defsymbol (&Qcons, "cons");
+  defsymbol (&Qkeyword, "keyword");
   defsymbol (&Qquote, "quote");
   defsymbol (&Qlambda, "lambda");
+  defsymbol (&Qignore, "ignore");
   defsymbol (&Qlistp, "listp");
   defsymbol (&Qtrue_list_p, "true-list-p");
   defsymbol (&Qconsp, "consp");
   defsymbol (&Qsubrp, "subrp");
   defsymbol (&Qsymbolp, "symbolp");
+  defsymbol (&Qkeywordp, "keywordp");
   defsymbol (&Qintegerp, "integerp");
   defsymbol (&Qcharacterp, "characterp");
   defsymbol (&Qnatnump, "natnump");
@@ -2122,6 +2101,7 @@ syms_of_data (void)
   defsymbol (&Qinteger_or_char_p, "integer-or-char-p");
   defsymbol (&Qinteger_char_or_marker_p, "integer-char-or-marker-p");
   defsymbol (&Qnumberp, "numberp");
+  defsymbol (&Qnumber_or_marker_p, "number-or-marker-p");
   defsymbol (&Qnumber_char_or_marker_p, "number-char-or-marker-p");
   defsymbol (&Qcdr, "cdr");
   defsymbol (&Qweak_listp, "weak-list-p");
@@ -2220,7 +2200,6 @@ vars_of_data (void)
 {
   /* This must not be staticpro'd */
   Vall_weak_lists = Qnil;
-  pdump_wire_list (&Vall_weak_lists);
 
 #ifdef DEBUG_XEMACS
   DEFVAR_BOOL ("debug-issue-ebola-notices", &debug_issue_ebola_notices /*

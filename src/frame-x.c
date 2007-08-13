@@ -50,7 +50,6 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame.h"
 #include "window.h"
-#include "gutter.h"
 
 #ifdef HAVE_DRAGNDROP
 #include "dragdrop.h"
@@ -104,34 +103,19 @@ x_window_to_frame (struct device *d, Window wdesc)
 struct frame *
 x_any_window_to_frame (struct device *d, Window wdesc)
 {
-  Widget w;
-  assert (DEVICE_X_P (d));
-
-  w = XtWindowToWidget (DEVICE_X_DISPLAY (d), wdesc);
-
-  if (!w)
-    return 0;
-
-  /* We used to map over all frames here and then map over all widgets
-     belonging to that frame. However it turns out that this was very fragile
-     as it requires our display stuctures to be in sync _and_ that the
-     loop is told about every new widget somebody adds. Therefore we
-     now let Xt find it for us (which does a bottom-up search which
-     could even be faster) */
-  return  x_any_widget_or_parent_to_frame (d, w);
-}
-
-static struct frame *
-x_find_frame_for_window (struct device *d, Window wdesc)
-{
   Lisp_Object tail, frame;
   struct frame *f;
+
+  assert (DEVICE_X_P (d));
+
   /* This function was previously written to accept only a window argument
      (and to loop over all devices looking for a matching window), but
      that is incorrect because window ID's are not unique across displays. */
 
   for (tail = DEVICE_FRAME_LIST (d); CONSP (tail); tail = XCDR (tail))
     {
+      int i;
+
       frame = XCAR (tail);
       f = XFRAME (frame);
       /* This frame matches if the window is any of its widgets. */
@@ -154,18 +138,18 @@ x_find_frame_for_window (struct device *d, Window wdesc)
 	 would incorrectly get sucked away by Emacs if this function matched
 	 on psheet widgets. */
 
-      /* Note: that this called only from
-         x_any_widget_or_parent_to_frame it is unnecessary to iterate
-         over the top level widgets. */
+      for (i = 0; i < FRAME_X_NUM_TOP_WIDGETS (f); i++)
+	{
+	  Widget wid = FRAME_X_TOP_WIDGETS (f)[i];
+	  if (wid && XtIsManaged (wid) && wdesc == XtWindow (wid))
+	    return f;
+	}
 
-      /* Note:  we use to special case scrollbars but this turns out to be a bad idea
-         because
-         1. We sometimes get events for _unmapped_ scrollbars and our
-         callers don't want us to fail.
-         2. Starting with the 21.2 widget stuff there are now loads of
-         widgets to check and it is easy to forget adding them in a loop here.
-         See x_any_window_to_frame
-         3. We pick up all widgets now anyway. */
+#ifdef HAVE_SCROLLBARS
+      /* Match if the window is one of this frame's scrollbars. */
+      if (x_window_is_scrollbar (f, wdesc))
+	return f;
+#endif
     }
 
   return 0;
@@ -176,7 +160,7 @@ x_any_widget_or_parent_to_frame (struct device *d, Widget widget)
 {
   while (widget)
     {
-      struct frame *f = x_find_frame_for_window (d, XtWindow (widget));
+      struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
       if (f)
 	return f;
       widget = XtParent (widget);
@@ -344,7 +328,7 @@ x_wm_store_class_hints (Widget shell, char *frame_name)
   XSetClassHint (dpy, XtWindow (shell), &classhint);
 }
 
-#ifndef HAVE_WMCOMMAND
+#ifndef HAVE_SESSION
 static void
 x_wm_maybe_store_wm_command (struct frame *f)
 {
@@ -395,7 +379,7 @@ x_wm_maybe_move_wm_command (struct frame *f)
 
     }
 }
-#endif /* !HAVE_WMCOMMAND */
+#endif /* !HAVE_SESSION */
 
 static int
 x_frame_iconified_p (struct frame *f)
@@ -437,9 +421,9 @@ static void
 init_x_prop_symbols (void)
 {
 #define def(sym, rsrc) \
-   Fput (sym, Qx_resource_name, build_string (rsrc))
+   pure_put (sym, Qx_resource_name, build_string (rsrc))
 #define defi(sym,rsrc) \
-   def (sym, rsrc); Fput (sym, Qintegerp, Qt)
+   def (sym, rsrc); pure_put (sym, Qintegerp, Qt)
 
 #if 0 /* this interferes with things. #### fix this right */
   def (Qminibuffer, XtNminibuffer);
@@ -660,17 +644,15 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
   for (ptr = value; *ptr; ptr++)
     if (!BYTE_ASCII_P (*ptr))
       {
-        const char * tmp;
+        CONST char * tmp;
         encoding = DEVICE_XATOM_COMPOUND_TEXT (XDEVICE (FRAME_DEVICE (f)));
-	TO_EXTERNAL_FORMAT (C_STRING, value,
-			    C_STRING_ALLOCA, tmp,
-			    Qctext);
+        GET_C_CHARPTR_EXT_CTEXT_DATA_ALLOCA ((CONST char *) value, tmp);
         new_XtValue = (String) tmp;
         break;
       }
 #endif /* MULE */
 
-  /* #### Caching is device-independent - belongs in update_frame_title. */
+  /* ### Caching is device-independent - belongs in update_frame_title. */
   Xt_GET_VALUE (FRAME_X_SHELL_WIDGET (f), Xt_resource_name, &old_XtValue);
   if (!old_XtValue || strcmp (new_XtValue, old_XtValue))
     {
@@ -761,22 +743,18 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 
       if (STRINGP (prop))
 	{
-	  const char *extprop;
+	  CONST char *extprop;
 
 	  if (XSTRING_LENGTH (prop) == 0)
 	    continue;
 
-	  TO_EXTERNAL_FORMAT (LISP_STRING, prop,
-			      C_STRING_ALLOCA, extprop,
-			      Qctext);
+	  GET_C_STRING_CTEXT_DATA_ALLOCA (prop, extprop);
 	  if (STRINGP (val))
 	    {
-	      const Extbyte *extval;
+	      CONST Extbyte *extval;
 	      Extcount extvallen;
 
-	      TO_EXTERNAL_FORMAT (LISP_STRING, val,
-				  ALLOCA, (extval, extvallen),
-				  Qctext);
+	      GET_STRING_CTEXT_DATA_ALLOCA (val, extval, extvallen);
 	      XtVaSetValues (w, XtVaTypedArg, extprop,
 			     XtRString, extval, extvallen + 1,
 			     (XtArgVal) NULL);
@@ -1110,7 +1088,7 @@ WARNING: can only handle plain/text and file: transfers!
       unsigned int modifier = 0, state = 0;
       char *Ctext;
       int numItems = 0, textlen = 0, pos = 0;
-      Lisp_Event *lisp_event = XEVENT (event);
+      struct Lisp_Event *lisp_event = XEVENT(event);
       Lisp_Object item = Qnil;
       struct gcpro gcpro1;
 
@@ -1147,12 +1125,12 @@ WARNING: can only handle plain/text and file: transfers!
 	  x_event.xbutton.y_root = lisp_event->event.button.y;
 	}
       modifier = lisp_event->event.button.modifiers;
-      if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
-      if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
-      if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
-      if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
-      if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
-      if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
+      if (modifier & MOD_SHIFT)   state |= ShiftMask;
+      if (modifier & MOD_CONTROL) state |= ControlMask;
+      if (modifier & MOD_META)    state |= xd->MetaMask;
+      if (modifier & MOD_SUPER)   state |= xd->SuperMask;
+      if (modifier & MOD_HYPER)   state |= xd->HyperMask;
+      if (modifier & MOD_ALT)     state |= xd->AltMask;
       state |= Button1Mask << (lisp_event->event.button.button-1);
 
       x_event.xbutton.state = state;
@@ -1192,7 +1170,7 @@ WARNING: can only handle plain/text and file: transfers!
 		  Ctext=NULL;
 		  break;
 		}
-	      strcpy (Ctext+pos, (const char *)XSTRING_DATA (XCAR (item)));
+	      strcpy (Ctext+pos, (CONST char *)XSTRING_DATA (XCAR (item)));
 	      pos += XSTRING_LENGTH (XCAR (item)) + 1;
 	      item = XCDR (item);
 	    }
@@ -1262,7 +1240,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
 	{
 	  filePath = transferInfo->dropData->data.files[ii];
 	  hurl = dnd_url_hexify_string ((char *)filePath, "file:");
-          /* #### Mule-izing required */
+          /* ### Mule-izing required */
 	  l_data = Fcons (make_string ((Bufbyte* )hurl,
 				       strlen (hurl)),
 			  l_data);
@@ -1337,7 +1315,7 @@ The type defaults to DndText (4).
       char *dnd_data = NULL;
       unsigned long dnd_len = 0;
       int dnd_typ = DndText, dnd_dealloc = 0;
-      Lisp_Event *lisp_event = XEVENT (event);
+      struct Lisp_Event *lisp_event = XEVENT(event);
 
       /* only drag if this is really a press */
       if (EVENT_TYPE(lisp_event) != button_press_event)
@@ -1368,7 +1346,7 @@ The type defaults to DndText (4).
 		}
 	      len = XSTRING_LENGTH (XCAR (run)) + 1;
 	      dnd_data = (char *) xrealloc (dnd_data, dnd_len + len);
-	      strcpy (dnd_data + dnd_len - 1, (const char *)XSTRING_DATA (XCAR (run)));
+	      strcpy (dnd_data + dnd_len - 1, (CONST char *)XSTRING_DATA (XCAR (run)));
 	      dnd_len += len;
 	      run = XCDR (run);
 	    }
@@ -1413,12 +1391,12 @@ The type defaults to DndText (4).
 	}
 
       modifier = lisp_event->event.button.modifiers;
-      if (modifier & XEMACS_MOD_SHIFT)   state |= ShiftMask;
-      if (modifier & XEMACS_MOD_CONTROL) state |= ControlMask;
-      if (modifier & XEMACS_MOD_META)    state |= xd->MetaMask;
-      if (modifier & XEMACS_MOD_SUPER)   state |= xd->SuperMask;
-      if (modifier & XEMACS_MOD_HYPER)   state |= xd->HyperMask;
-      if (modifier & XEMACS_MOD_ALT)     state |= xd->AltMask;
+      if (modifier & MOD_SHIFT)   state |= ShiftMask;
+      if (modifier & MOD_CONTROL) state |= ControlMask;
+      if (modifier & MOD_META)    state |= xd->MetaMask;
+      if (modifier & MOD_SUPER)   state |= xd->SuperMask;
+      if (modifier & MOD_HYPER)   state |= xd->HyperMask;
+      if (modifier & MOD_ALT)     state |= xd->AltMask;
       state |= Button1Mask << (lisp_event->event.button.button-1);
 
       x_event.xbutton.state = state;
@@ -1551,16 +1529,13 @@ x_initialize_frame_size (struct frame *f)
   {
     struct window *win = XWINDOW (f->root_window);
 
-    WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f)
-      + FRAME_LEFT_GUTTER_BOUNDS (f);
-    WINDOW_TOP (win) = FRAME_TOP_BORDER_END (f)
-      + FRAME_TOP_GUTTER_BOUNDS (f);
+    WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f);
+    WINDOW_TOP (win) = FRAME_TOP_BORDER_END (f);
 
     if (!NILP (f->minibuffer_window))
       {
 	win = XWINDOW (f->minibuffer_window);
-	WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f)
-	  + FRAME_LEFT_GUTTER_BOUNDS (f);
+	WINDOW_LEFT (win) = FRAME_LEFT_BORDER_END (f);
       }
   }
 
@@ -1865,7 +1840,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 #ifdef EXTERNAL_WIDGET
   Window window_id = 0;
 #endif
-  const char *name;
+  CONST char *name;
   Arg al [25];
   int ac = 0;
   Widget text, container, shell;
@@ -1876,9 +1851,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
 #endif
 
   if (STRINGP (f->name))
-    TO_EXTERNAL_FORMAT (LISP_STRING, f->name,
-			C_STRING_ALLOCA, name,
-			Qctext);
+    GET_C_STRING_CTEXT_DATA_ALLOCA (f->name, name);
   else
     name = "emacs";
 
@@ -1907,7 +1880,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       char *string;
 
       CHECK_STRING (lisp_window_id);
-      string = (char *) XSTRING_DATA (lisp_window_id);
+      string = (char *) (XSTRING_DATA (lisp_window_id));
       if (string[0] == '0' && (string[1] == 'x' || string[1] == 'X'))
 	sscanf (string+2, "%lxu", &window_id);
 #if 0
@@ -2086,9 +2059,9 @@ x_popup_frame (struct frame *f)
 	/* tell the window manager about us. */
 	x_wm_store_class_hints (shell_widget, XtName (frame_widget));
 
-#ifndef HAVE_WMCOMMAND
+#ifndef HAVE_SESSION
 	x_wm_maybe_store_wm_command (f);
-#endif /* HAVE_WMCOMMAND */
+#endif /* HAVE_SESSION */
 
 	x_wm_hack_wm_protocols (shell_widget);
       }
@@ -2217,10 +2190,10 @@ x_init_frame_3 (struct frame *f)
 }
 
 static void
-x_mark_frame (struct frame *f)
+x_mark_frame (struct frame *f, void (*markobj) (Lisp_Object))
 {
-  mark_object (FRAME_X_ICON_PIXMAP (f));
-  mark_object (FRAME_X_ICON_PIXMAP_MASK (f));
+  markobj (FRAME_X_ICON_PIXMAP (f));
+  markobj (FRAME_X_ICON_PIXMAP_MASK (f));
 }
 
 static void
@@ -2652,10 +2625,10 @@ x_delete_frame (struct frame *f)
 {
   Display *dpy;
 
-#ifndef HAVE_WMCOMMAND
+#ifndef HAVE_SESSION
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_maybe_move_wm_command (f);
-#endif /* HAVE_WMCOMMAND */
+#endif /* HAVE_SESSION */
 
 #ifdef HAVE_CDE
   DtDndDropUnregister (FRAME_X_TEXT_WIDGET (f));
@@ -2676,7 +2649,7 @@ x_delete_frame (struct frame *f)
 #else
   XtDestroyWidget (FRAME_X_SHELL_WIDGET (f));
   /* make sure the windows are really gone! */
-  /* #### Is this REALLY necessary? */
+  /* ### Is this REALLY necessary? */
   XFlush (dpy);
 #endif /* EXTERNAL_WIDGET */
 

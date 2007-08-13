@@ -1,4 +1,4 @@
-/* CANNA interface -*- coding: euc-jp -*-
+/* CANNA interface
 
    Copyright (C) 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
@@ -190,7 +190,6 @@ static int IRCP_context;
 
 static Lisp_Object storeResults (unsigned char *, int, jrKanjiStatus *);
 static Lisp_Object kanjiYomiList (int, int);
-static Lisp_Object CANNA_mode_keys (void);
 
 #ifdef CANNA_MULE
 static void m2c (unsigned char *, int, unsigned char *);
@@ -327,9 +326,10 @@ No separator will be used otherwise.
 }
 
 /* For whatever reason, calling Fding directly from libCanna loses */
-static void
-call_Fding (void)
+static void call_Fding()
 {
+  extern Lisp_Object Fding();
+
   Fding (Qnil, Qnil, Qnil);
 }
 
@@ -421,7 +421,8 @@ If nil is specified for each arg, the default value will be used.
     }
   else
     {
-      extern void (*jrBeepFunc) (void);
+      extern void (*jrBeepFunc)();
+      Lisp_Object CANNA_mode_keys ();
 
       jrBeepFunc = call_Fding;
 
@@ -534,7 +535,7 @@ Change Japanese pre-edit mode.
   return val;
 }
 
-static Lisp_Object
+Lisp_Object
 CANNA_mode_keys (void)
 {
 #define CANNAWORKBUFSIZE 32
@@ -717,8 +718,7 @@ byteLen (int bun, int len)
 }
 
 DEFUN ("canna-henkan-begin", Fcanna_henkan_begin, 1, 1, 0, /*
-Return the result of kana-to-kanji conversion.
-Clause separator is set.
+かな漢字変換した結果を返還する。文節切りがしてある。
 */
        (yomi))
 {
@@ -773,7 +773,7 @@ kanjiYomiList (int context, int nbun)
 }
 
 DEFUN ("canna-henkan-next", Fcanna_henkan_next, 1, 1, 0, /*
-Return the list of candidates.
+候補一覧を求める。
 */
        (bunsetsu))
 {
@@ -798,7 +798,7 @@ Return the list of candidates.
 	}
       else
 	{
-	  endp = XCDR (res) = Fcons (make_string (p, slen), Qnil);
+	  endp = XCDR (endp) = Fcons (make_string (p, slen), Qnil);
 	}
       p += slen + 1;
     }
@@ -806,7 +806,7 @@ Return the list of candidates.
 }
 
 DEFUN ("canna-bunsetu-henkou", Fcanna_bunsetu_henkou, 2, 2, 0, /*
-Specify the length of a clause.
+文節の長さを指定する。
 */
        (bunsetsu, bunlen))
 {
@@ -826,7 +826,7 @@ Specify the length of a clause.
 }
 
 DEFUN ("canna-henkan-kakutei", Fcanna_henkan_kakutei, 2, 2, 0, /*
-Select a candidate.
+候補選択。
 */
        (bun, kouho))
 {
@@ -845,7 +845,7 @@ Select a candidate.
 }
 
 DEFUN ("canna-henkan-end", Fcanna_henkan_end, 0, 0, 0, /*
-End conversion.
+変換終了。
 */
        ())
 {
@@ -858,7 +858,7 @@ End conversion.
 }
 
 DEFUN ("canna-henkan-quit", Fcanna_henkan_quit, 0, 0, 0, /*
-Quit conversion.
+変換終了。
 */
        ())
 {
@@ -1022,6 +1022,9 @@ Lisp_Object VCANNA; /* by MORIOKA Tomohiko <morioka@jaist.ac.jp>
 void
 syms_of_mule_canna (void)
 {
+  DEFVAR_LISP ("CANNA", &VCANNA);		/* hir@nec, 1992.5.21 */
+  VCANNA = Qt;					/* hir@nec, 1992.5.21 */
+
   DEFSUBR (Fcanna_key_proc);
   DEFSUBR (Fcanna_initialize);
   DEFSUBR (Fcanna_finalize);
@@ -1045,9 +1048,6 @@ syms_of_mule_canna (void)
 void
 vars_of_mule_canna (void)
 {
-  DEFVAR_LISP ("CANNA", &VCANNA);		/* hir@nec, 1992.5.21 */
-  VCANNA = Qt;					/* hir@nec, 1992.5.21 */
-
   DEFVAR_LISP ("canna-kakutei-string", &Vcanna_kakutei_string /*
 
 */ );
@@ -1777,9 +1777,9 @@ For canna
 /* EUC multibyte string to MULE internal string */
 
 static void
-c2mu (unsigned char *cp, int l, unsigned char *mp)
+c2mu (char *cp, int l, char *mp)
 {
-  unsigned char ch, *ep = cp+l;
+  char	ch, *ep = cp+l;
 
   while ((cp < ep) && (ch = *cp))
     {

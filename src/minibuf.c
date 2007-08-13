@@ -205,7 +205,7 @@ Lowest-level interface to minibuffers.  Don't call this.
    if IGNORE_CASE is true. */
 
 Charcount
-scmp_1 (const Bufbyte *s1, const Bufbyte *s2, Charcount len,
+scmp_1 (CONST Bufbyte *s1, CONST Bufbyte *s2, Charcount len,
 	int ignore_case)
 {
   Charcount l = len;
@@ -244,7 +244,7 @@ scmp_1 (const Bufbyte *s1, const Bufbyte *s2, Charcount len,
 
 
 int
-regexp_ignore_completion_p (const Bufbyte *nonreloc,
+regexp_ignore_completion_p (CONST Bufbyte *nonreloc,
 			    Lisp_Object reloc, Bytecount offset,
 			    Bytecount length)
 {
@@ -387,7 +387,7 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 	{
 	  if (!ZEROP (bucket))
 	    {
-              Lisp_Symbol *next;
+              struct Lisp_Symbol *next;
 	      if (!SYMBOLP (bucket))
 		{
 		  signal_simple_error ("Bad obarray passed to try-completions",
@@ -590,7 +590,7 @@ the symbol from the obarray.
 	{
 	  if (!ZEROP (bucket))
 	    {
-              Lisp_Symbol *next = symbol_next (XSYMBOL (bucket));
+              struct Lisp_Symbol *next = symbol_next (XSYMBOL (bucket));
 	      elt = bucket;
 	      eltstring = Fsymbol_name (elt);
               if (next)
@@ -681,8 +681,8 @@ clear_echo_area_internal (struct frame *f, Lisp_Object label, int from_print,
     }
   else
     {
-      write_string_to_stdio_stream (stderr, 0, (const Bufbyte *) "\n", 0, 1,
-				    Qterminal, 0);
+      write_string_to_stdio_stream (stderr, 0, (CONST Bufbyte *) "\n", 0, 1,
+				    FORMAT_TERMINAL);
       return Qnil;
     }
 }
@@ -702,7 +702,7 @@ clear_echo_area_from_print (struct frame *f, Lisp_Object label, int no_restore)
 }
 
 void
-echo_area_append (struct frame *f, const Bufbyte *nonreloc, Lisp_Object reloc,
+echo_area_append (struct frame *f, CONST Bufbyte *nonreloc, Lisp_Object reloc,
 		  Bytecount offset, Bytecount length,
 		  Lisp_Object label)
 {
@@ -710,12 +710,6 @@ echo_area_append (struct frame *f, const Bufbyte *nonreloc, Lisp_Object reloc,
   Lisp_Object obj;
   struct gcpro gcpro1;
   Lisp_Object frame;
-
-  /* There is an inlining bug in egcs-20000131 c++ that can be worked
-     around as follows:  */
-#if defined (__GNUC__) && defined (__cplusplus)
-  alloca (4);
-#endif
 
   /* some callers pass in a null string as a way of clearing the echo area.
      check for length == 0 now; if this case, neither nonreloc nor reloc
@@ -751,12 +745,12 @@ echo_area_append (struct frame *f, const Bufbyte *nonreloc, Lisp_Object reloc,
       if (STRINGP (reloc))
 	nonreloc = XSTRING_DATA (reloc);
       write_string_to_stdio_stream (stderr, 0, nonreloc, offset, length,
-				    Qterminal, 0);
+				    FORMAT_TERMINAL);
     }
 }
 
 void
-echo_area_message (struct frame *f, const Bufbyte *nonreloc,
+echo_area_message (struct frame *f, CONST Bufbyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset, Bytecount length,
 		   Lisp_Object label)
 {
@@ -801,7 +795,7 @@ echo_area_contents (struct frame *f)
 /* Dump an informative message to the echo area.  This function takes a
    string in internal format. */
 void
-message_internal (const Bufbyte *nonreloc, Lisp_Object reloc,
+message_internal (CONST Bufbyte *nonreloc, Lisp_Object reloc,
 		  Bytecount offset, Bytecount length)
 {
   /* This function can call lisp  */
@@ -811,7 +805,7 @@ message_internal (const Bufbyte *nonreloc, Lisp_Object reloc,
 }
 
 void
-message_append_internal (const Bufbyte *nonreloc, Lisp_Object reloc,
+message_append_internal (CONST Bufbyte *nonreloc, Lisp_Object reloc,
 			 Bytecount offset, Bytecount length)
 {
   /* This function can call lisp  */
@@ -825,7 +819,7 @@ message_append_internal (const Bufbyte *nonreloc, Lisp_Object reloc,
    on the format string; message_no_translate() does not. */
 
 static void
-message_1 (const char *fmt, va_list args)
+message_1 (CONST char *fmt, va_list args)
 {
   /* This function can call lisp */
   if (fmt)
@@ -833,7 +827,7 @@ message_1 (const char *fmt, va_list args)
       struct gcpro gcpro1;
       /* message_internal() might GC, e.g. if there are after-change-hooks
 	 on the echo area buffer */
-      Lisp_Object obj = emacs_doprnt_string_va ((const Bufbyte *) fmt, Qnil,
+      Lisp_Object obj = emacs_doprnt_string_va ((CONST Bufbyte *) fmt, Qnil,
 						-1, args);
       GCPRO1 (obj);
       message_internal (0, obj, 0, -1);
@@ -844,7 +838,7 @@ message_1 (const char *fmt, va_list args)
 }
 
 static void
-message_append_1 (const char *fmt, va_list args)
+message_append_1 (CONST char *fmt, va_list args)
 {
   /* This function can call lisp */
   if (fmt)
@@ -852,7 +846,7 @@ message_append_1 (const char *fmt, va_list args)
       struct gcpro gcpro1;
       /* message_internal() might GC, e.g. if there are after-change-hooks
 	 on the echo area buffer */
-      Lisp_Object obj = emacs_doprnt_string_va ((const Bufbyte *) fmt, Qnil,
+      Lisp_Object obj = emacs_doprnt_string_va ((CONST Bufbyte *) fmt, Qnil,
 						-1, args);
       GCPRO1 (obj);
       message_append_internal (0, obj, 0, -1);
@@ -870,7 +864,7 @@ clear_message (void)
 }
 
 void
-message (const char *fmt, ...)
+message (CONST char *fmt, ...)
 {
   /* This function can call lisp */
   /* I think it's OK to pass the data of Lisp strings as arguments to
@@ -886,7 +880,7 @@ message (const char *fmt, ...)
 }
 
 void
-message_append (const char *fmt, ...)
+message_append (CONST char *fmt, ...)
 {
   /* This function can call lisp */
   va_list args;
@@ -899,7 +893,7 @@ message_append (const char *fmt, ...)
 }
 
 void
-message_no_translate (const char *fmt, ...)
+message_no_translate (CONST char *fmt, ...)
 {
   /* This function can call lisp */
   /* I think it's OK to pass the data of Lisp strings as arguments to
@@ -942,15 +936,9 @@ syms_of_minibuf (void)
 }
 
 void
-reinit_vars_of_minibuf (void)
-{
-  minibuf_level = 0;
-}
-
-void
 vars_of_minibuf (void)
 {
-  reinit_vars_of_minibuf ();
+  minibuf_level = 0;
 
   staticpro (&Vminibuf_prompt);
   Vminibuf_prompt = Qnil;
@@ -977,7 +965,7 @@ Each completion has to match all regexps in this list.
 }
 
 void
-reinit_complex_vars_of_minibuf (void)
+complex_vars_of_minibuf (void)
 {
   /* This function can GC */
 #ifdef I18N3
@@ -986,14 +974,8 @@ reinit_complex_vars_of_minibuf (void)
 #endif
   Vminibuffer_zero
     = Fget_buffer_create
-      (build_string (DEFER_GETTEXT (" *Minibuf-0*")));
+      (Fpurecopy (build_string (DEFER_GETTEXT (" *Minibuf-0*"))));
   Vecho_area_buffer
     = Fget_buffer_create
-      (build_string (DEFER_GETTEXT (" *Echo Area*")));
-}
-
-void
-complex_vars_of_minibuf (void)
-{
-  reinit_complex_vars_of_minibuf ();
+      (Fpurecopy (build_string (DEFER_GETTEXT (" *Echo Area*"))));
 }

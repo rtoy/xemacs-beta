@@ -26,12 +26,6 @@ Boston, MA 02111-1307, USA.  */
 #define USG
 #define LINUX
 
-/* powerpc gcc 2.8.0 doesn't define __ELF__, but it is */
-
-#if defined(__ELF__) || defined(powerpc)
-#define LINUX_ELF
-#endif
-
 /* SYSTEM_TYPE should indicate the kind of system you are using.
  It sets the Lisp variable system-type.  */
 
@@ -87,7 +81,7 @@ Boston, MA 02111-1307, USA.  */
 /* Ask GCC where to find libgcc.a.  */
 #define LIB_GCC "`$(CC) $(C_SWITCH_X_SITE) -print-libgcc-file-name`"
 
-#ifndef LINUX_ELF
+#ifndef __ELF__
 /* Linux has crt0.o in a non-standard place */
 #define START_FILES "pre-crt0.o /usr/lib/crt0.o"
 #else
@@ -112,7 +106,7 @@ Boston, MA 02111-1307, USA.  */
 /* Best not to include -lg, unless it is last on the command line */
 #define LIBS_DEBUG
 #define LIBS_TERMCAP "-ltermcap -lcurses" /* save some space with shared libs*/
-#ifndef LINUX_ELF
+#ifndef __ELF__
 #define LIB_STANDARD "-lc" /* avoid -lPW */
 #else
 /*#undef LIB_GCC
@@ -130,7 +124,7 @@ Boston, MA 02111-1307, USA.  */
 #define LIBS_SYSTEM
 #endif
 
-#ifdef LINUX_ELF
+#ifdef __ELF__
 #define UNEXEC "unexelf.o"
 #define UNEXEC_USE_MAP_PRIVATE
 #if 0
@@ -148,7 +142,7 @@ Boston, MA 02111-1307, USA.  */
 #undef START_FILES
 #undef LIB_GCC
 #endif
-#endif /* LINUX_ELF */
+#endif /* __ELF__ */
 
 #ifdef LINUX_QMAGIC
 

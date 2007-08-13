@@ -21,14 +21,16 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_gui_x_h_
-#define INCLUDED_gui_x_h_
+#ifndef _XEMACS_XLWLIB_H_
+#define _XEMACS_XLWLIB_H_
 
 #include "../lwlib/lwlib.h"
 
 widget_value *xmalloc_widget_value (void);
 
 LWLIB_ID new_lwlib_id (void);
+
+#ifdef HAVE_POPUPS
 
 /* Each frame has one of these, and they are also contained in
    Vpopup_callbacks.
@@ -60,6 +62,7 @@ DECLARE_LRECORD (popup_data, struct popup_data);
 #define XPOPUP_DATA(x) XRECORD (x, popup_data, struct popup_data)
 #define XSETPOPUP_DATA(x, p) XSETRECORD (x, p, popup_data)
 #define POPUP_DATAP(x) RECORDP (x, popup_data)
+#define GC_POPUP_DATAP(x) GC_RECORDP (x, popup_data)
 #define CHECK_POPUP_DATA(x) CHECK_RECORD (x, popup_data)
 
 void gcpro_popup_callbacks (LWLIB_ID id);
@@ -68,15 +71,12 @@ int popup_handled_p (LWLIB_ID id);
 void free_popup_widget_value_tree (widget_value *wv);
 void popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 			       XtPointer client_data);
-char *strdup_and_add_accel (char *name);
-int button_item_to_widget_value (Lisp_Object gui_object_instance,
-				 Lisp_Object gui_item, widget_value *wv,
-				 int allow_text_field_p, int no_keys_p, 
-				 int menu_entry_p);
-widget_value * gui_items_to_widget_values (Lisp_Object gui_object_instance,
-					   Lisp_Object items);
+int button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
+				 int allow_text_field_p, int no_keys_p);
 Lisp_Object menu_name_to_accelerator (char *name);
-char *menu_separator_style (const char *s);
+char *menu_separator_style (CONST char *s);
 Lisp_Object widget_value_unwind (Lisp_Object closure);
 
-#endif /* INCLUDED_gui_x_h_ */
+#endif /* HAVE_POPUPS */
+
+#endif /* _XEMACS_XLWLIB_H_ */

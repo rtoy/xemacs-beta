@@ -27,47 +27,6 @@ Boston, MA 02111-1307, USA.  */
    and X11 R6 release guide chapters on internationalized input,
    for further details */
 
-/*
-  Policy:
-
-  The XIM is of the device, by the device, for the device.
-  The XIC is of each frame, by each frame, for each frame.
-  The exceptions are:
-      1.  Activate XICs on poor frames when the XIM is back.
-      2.  Deactivate all the XICs when the XIM go down.
-
-  Methods:
-
-    -  Register a callback for an XIM when the X device is being initialized.
-       XIM_init_device (d) { XRegisterIMInstantiateCallback (); }
-       The "XRegisterIMInstantiateCallback" is called when an XIM become
-       available on the X display.
-
-    -  Catch the XIC when the frame is being initialized if XIM was available.
-       XIM_init_frame (f) { ... XCreateIC (); ... }
-
-    -  Release the XIC when the frame is being closed.
-       XIM_delete_frame (f) { ... FRAME_X_XIC (f) = NULL; ... }
-       "XIM_delete_frame" is a "DestroyCallback" function declared in
-       XIM_init_frame ();
-
-    -  Release all the XICs when the XIM was down accidentally.
-       In IMDestroyCallback:
-           DEVICE_FRAME_LOOP (...) { FRAME_X_XIC (f) = NULL; }
-
-    -  Re-enable XIC for all the frames which doesn't have XIC when the XIM
-       is back.
-       In IMInstantiateCallback:
-           DEVICE_FRAME_LOOP (...) { XIM_init_frame (f); }
-
-
-  Note:
-
-    -  Currently, we don't use XDestroyIC because of _XimProtoCloseIM
-       (internally registered as im->methods->close) does "Xfree (ic)".
-
- */
-
 #include <config.h>
 #include "lisp.h"
 #include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
@@ -79,18 +38,9 @@ Boston, MA 02111-1307, USA.  */
 #include "EmacsFrame.h"
 #include "events.h"
 
-#ifdef THIS_IS_X11R6
-#include <X11/IntrinsicP.h>
-#endif
-
 #ifndef XIM_XLIB
 #error  XIM_XLIB is not defined??
 #endif
-
-Lisp_Object Qxim_xlib;
-#define xim_warn(str) warn_when_safe (Qxim_xlib, Qwarning, str);
-#define xim_warn1(fmt, str) warn_when_safe (Qxim_xlib, Qwarning, fmt, str);
-#define xim_info(str) warn_when_safe (Qxim_xlib, Qinfo, str);
 
 /* Get/Set IC values for just one attribute */
 #ifdef DEBUG_XEMACS
@@ -122,8 +72,6 @@ static char DefaultXIMStyles[] =
 "XIMPreeditNone|XIMStatusNothing\n"
 "XIMPreeditNone|XIMStatusNone";
 
-static Boolean xim_initted = False;
-
 static XIMStyle best_style (XIMStyles *user, XIMStyles *xim);
 
 void
@@ -131,7 +79,7 @@ Initialize_Locale (void)
 {
   char *locale;
 
-  /* dverna - Nov. 98: #### DON'T DO THIS !!! The default XtLanguageProc
+  /* dverna - Nov. 98: ### DON'T DO THIS !!! The default XtLanguageProc
      routine calls setlocale(LC_ALL, lang) which fucks up our lower-level
      locale management, and especially the value of LC_NUMERIC. Anyway, since
      at this point, we don't know yet whether we're gonna need an X11 frame,
@@ -139,31 +87,31 @@ Initialize_Locale (void)
   /*XtSetLanguageProc (NULL, (XtLanguageProc) NULL, NULL);*/
   if ((locale = setlocale (LC_ALL, "")) == NULL)
     {
-      xim_warn ("Can't set locale.\n"
-		"Using C locale instead.\n");
+      stderr_out ("Can't set locale.\n");
+      stderr_out ("Using C locale instead.\n");
       putenv ("LANG=C");
       putenv ("LC_ALL=C");
       if ((locale = setlocale (LC_ALL, "C")) == NULL)
 	{
-	  xim_warn ("Can't even set locale to `C'!\n");
+	  stderr_out ("Can't even set locale to `C'!\n");
 	  return;
 	}
     }
 
   if (!XSupportsLocale ())
     {
-      xim_warn1 ("X Windows does not support locale `%s'\n"
-		 "Using C Locale instead\n", locale);
+      stderr_out ("X Windows does not support locale `%s'\n", locale);
+      stderr_out ("Using C Locale instead\n");
       putenv ("LANG=C");
       putenv ("LC_ALL=C");
       if ((locale = setlocale (LC_ALL, "C")) == NULL)
 	{
-	  xim_warn ("Can't even set locale to `C'!\n");
+	  stderr_out ("Can't even set locale to `C'!\n");
 	  return;
 	}
       if (!XSupportsLocale ())
         {
-          xim_warn ("X Windows does not even support locale `C'!\n");
+          stderr_out ("X Windows does not even support locale `C'!\n");
           return;
         }
     }
@@ -172,148 +120,65 @@ Initialize_Locale (void)
 
   if (XSetLocaleModifiers ("") == NULL)
     {
-      xim_warn ("XSetLocaleModifiers(\"\") failed\n"
-		"Check the value of the XMODIFIERS environment variable.\n");
+      stderr_out ("XSetLocaleModifiers(\"\") failed\n");
+      stderr_out ("Check the value of the XMODIFIERS environment variable.\n");
     }
 }
 
-#ifdef THIS_IS_X11R6 /* Callbacks for IM are supported from X11R6 or later. */
-/* Called from when XIM is destroying.
-   Clear all the XIC when the XIM was destroying... */
-static void
-IMDestroyCallback (XIM im, XPointer client_data, XPointer call_data)
-{
-  struct device *d = (struct device *)client_data;
-  Lisp_Object tail;
-
-  DEVICE_FRAME_LOOP (tail, d)
-    {
-      struct frame *target_frame = XFRAME (XCAR (tail));
-      if (FRAME_X_P (target_frame) && FRAME_X_XIC (target_frame))
-	{
-	  /* XDestroyIC (FRAME_X_XIC (target_frame)); */
-	  FRAME_X_XIC (target_frame) = NULL;
-	}
-    }
-
-  DEVICE_X_XIM (d) = NULL;
-  xim_initted = False;
-  return;
-}
-
-/* This is registered in XIM_init_device (when DEVICE is initializing).
-   This activates XIM when XIM becomes available. */
-static void
-IMInstantiateCallback (Display *dpy, XPointer client_data, XPointer call_data)
-{
-  struct device *d = (struct device *)client_data;
-  XIM xim;
-  char *name, *class;
-  XIMCallback ximcallback;
-  Lisp_Object tail;
-
-  /* if no xim is presented, initialize xim ... */
-  if ( xim_initted == False )
-    {
-      xim_initted = True;
-      XtGetApplicationNameAndClass (dpy, &name, &class);
-      DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class);
-
-      /* destroy callback for im */
-      ximcallback.callback = IMDestroyCallback;
-      ximcallback.client_data = (XPointer) d;
-      XSetIMValues (xim, XNDestroyCallback, &ximcallback, NULL);
-    }
-
-  /* activate XIC on all the X frames... */
-  DEVICE_FRAME_LOOP (tail, d)
-    {
-      struct frame *target_frame = XFRAME (XCAR (tail));
-      if (FRAME_X_P (target_frame) && !FRAME_X_XIC (target_frame))
-	{
-	  XIM_init_frame (target_frame);
-	}
-    }
-  return;
-}
-#endif /* if THIS_IS_X11R6 */
-
-/* Initialize XIM for X device.
-   Register the use of XIM using XRegisterIMInstantiateCallback. */
+/* Create X input method for device */
 void
 XIM_init_device (struct device *d)
 {
-#ifdef THIS_IS_X11R6
-  DEVICE_X_XIM (d) = NULL;
-  XRegisterIMInstantiateCallback (DEVICE_X_DISPLAY (d), NULL, NULL, NULL,
-				  IMInstantiateCallback, (XPointer) d);
-  return;
-#else
   Display *dpy = DEVICE_X_DISPLAY (d);
   char *name, *class;
   XIM xim;
 
   XtGetApplicationNameAndClass (dpy, &name, &class);
+
   DEVICE_X_XIM (d) = xim = XOpenIM (dpy, XtDatabase (dpy), name, class);
+
   if (xim == NULL)
     {
-      xim_warn ("XOpenIM() failed...no input server available\n");
+      stderr_out ("Warning: XOpenIM() failed...no input server available\n");
       return;
     }
   else
     {
+      /* Get supported styles */
       XGetIMValues (xim, XNQueryInputStyle, &DEVICE_X_XIM_STYLES (d), NULL);
-      return;
-    }
+#ifdef DEBUG_XIM
+      describe_XIM (xim);
 #endif
-}
-
-
-/*
- * For the frames
- */
-
-/* Callback for the deleting frame. */
-static void
-XIM_delete_frame (Widget w, XtPointer client_data, XtPointer call_data)
-{
-  struct frame *f = (struct frame *) client_data;
-  struct device *d = XDEVICE (FRAME_DEVICE (f));
-
-  if (DEVICE_X_XIM (d))
-    {
-      if (FRAME_X_XIC (f))
-	{
-	  XDestroyIC (FRAME_X_XIC (f));
-	  FRAME_X_XIC (f) = NULL;
-	}
     }
-  return;
 }
 
-/* Initialize XIC for new frame.
-   Create an X input context (XIC) for this frame. */
+/* Create an X input context for this frame. */
 void
 XIM_init_frame (struct frame *f)
 {
   struct device *d = XDEVICE (FRAME_DEVICE (f));
-  XIM xim;
+  XIM xim = DEVICE_X_XIM (d);
+  XIC xic;
   Widget w = FRAME_X_TEXT_WIDGET (f);
   Window win = XtWindow (w);
-  XRectangle p_area = {0,0,1,1}, s_area = {0,0,1,1};
+  XRectangle p_area = {0,0,1,1}, s_area={0,0,1,1};
   XPoint spot = {0,0};
   XIMStyle style;
   XVaNestedList p_list, s_list;
+
   typedef struct
   {
     XIMStyles styles;
     XFontSet  fontset;
     Pixel     fg;
     Pixel     bg;
-    char      *inputmethod;
   } xic_vars_t;
+
   xic_vars_t xic_vars;
-  XIC xic;
+
+  /* mrb: #### Fix so that background and foreground is set from
+     default face, rather than foreground and background resources, or
+     that the user can use set-frame-parameters to set xic attributes */
 
 #define res(name, class, representation, field, default_value) \
   { name, class, representation, sizeof(xic_vars.field), \
@@ -328,70 +193,64 @@ XIM_init_frame (struct frame *f)
     res(XtNximBackground, XtCBackground, XtRPixel,     bg,      (XtPointer) XtDefaultBackground)
   };
 
-
-  xim = DEVICE_X_XIM (d);
+  assert (win != 0 && w != NULL && d != NULL);
 
   if (!xim)
-    {
-      return;
-    }
-
-  w = FRAME_X_TEXT_WIDGET (f);
-
-  /*
-   * initialize XIC
-   */
-  if (FRAME_X_XIC (f)) return;
-  XtGetApplicationResources (w, &xic_vars,
-			     resources, XtNumber (resources),
-			     NULL, 0);
-  if (!xic_vars.fontset)
-    {
-      xim_warn ("Can't get fontset resource for Input Method\n");
+    {                   /* No input method? */
       FRAME_X_XIC (f) = NULL;
       return;
     }
 
-  /* construct xic */
-  XGetIMValues (xim, XNQueryInputStyle, &DEVICE_X_XIM_STYLES(d), NULL);
-  FRAME_X_XIC_STYLE (f) = style =
-    best_style (&xic_vars.styles, (XIMStyles *)DEVICE_X_XIM_STYLES(d));
+  XtGetApplicationResources (w, &xic_vars,
+			     resources, XtNumber (resources),
+			     NULL, 0);
 
+  if (!xic_vars.fontset)
+    {
+      stderr_out ("Can't get fontset resource for Input Method\n");
+      FRAME_X_XIC (f) = NULL;
+      return;
+    }
+
+  FRAME_X_XIC_STYLE (f) = style =
+    best_style (&xic_vars.styles, DEVICE_X_XIM_STYLES (d));
+
+  /* Hopefully we don't have to conditionalize the following based on
+     style; the IM should ignore values it doesn't use */
   p_list = XVaCreateNestedList (0,
-				XNArea,         &p_area,
-				XNSpotLocation, &spot,
-				XNForeground,   xic_vars.fg,
-				XNBackground,   xic_vars.bg,
-				XNFontSet,      xic_vars.fontset,
-				NULL);
+                                XNArea,         &p_area,
+                                XNSpotLocation, &spot,
+                                XNForeground,   xic_vars.fg,
+                                XNBackground,   xic_vars.bg,
+                                XNFontSet,      xic_vars.fontset,
+                                NULL);
 
   s_list = XVaCreateNestedList (0,
-				XNArea,         &s_area,
-				XNForeground,   xic_vars.fg,
-				XNBackground,   xic_vars.bg,
-				XNFontSet,      xic_vars.fontset,
-				NULL);
-
+                                XNArea,         &s_area,
+                                XNForeground,   xic_vars.fg,
+                                XNBackground,   xic_vars.bg,
+                                XNFontSet,      xic_vars.fontset,
+                                NULL);
   FRAME_X_XIC (f) = xic =
     XCreateIC (xim,
-	       XNInputStyle, style,
-	       XNClientWindow, win,
-	       XNFocusWindow, win,
-	       XNPreeditAttributes, p_list,
-	       XNStatusAttributes, s_list,
-	       NULL);
+               XNInputStyle,        style,
+               XNClientWindow,      win,
+               XNFocusWindow,       win,
+               XNPreeditAttributes, p_list,
+               XNStatusAttributes,  s_list,
+               NULL);
   XFree (p_list);
   XFree (s_list);
 
   if (!xic)
     {
-      xim_warn ("Warning: XCreateIC failed.\n");
+      stderr_out ("Warning: XCreateIC failed\n");
       return;
     }
 
   if (style & XIMPreeditPosition)
-    {
-      XPoint *frame_spot = &(FRAME_X_XIC_SPOT(f));
+    { /* Init spot to invalid values */
+      XPoint *frame_spot = &(FRAME_X_XIC_SPOT (f));
       frame_spot->x = frame_spot->y = -1;
     }
 
@@ -399,13 +258,10 @@ XIM_init_frame (struct frame *f)
 
   XSetICFocus (xic);
 
-#ifdef THIS_IS_X11R6
-  /* when frame is going to be destroyed (closed) */
-  XtAddCallback (FRAME_X_TEXT_WIDGET(f), XNDestroyCallback,
-		 XIM_delete_frame, (XtPointer)f);
+#ifdef DEBUG_XIM
+  describe_XIC (xic);
 #endif
 }
-
 
 void
 XIM_SetGeometry (struct frame *f)
@@ -480,7 +336,7 @@ XIM_SetSpotLocation (struct frame *f, int x, int y)
   spot->x = (short) x;
   spot->y = (short) y;
 
-  /* #### FIX: Must make sure spot fits within Preedit Area */
+  /* ### FIX: Must make sure spot fits within Preedit Area */
   XIC_Value (Set, xic, XNPreeditAttributes, XNSpotLocation, spot);
 #ifdef DEBUG_XIM
   stderr_out ("Spot: %d %d\n", spot->x, spot->y);
@@ -490,7 +346,7 @@ XIM_SetSpotLocation (struct frame *f, int x, int y)
 void
 XIM_focus_event (struct frame *f, int in_p)
 {
-  if (FRAME_X_XIC (f) /* && FRAME_X_XIM_REGISTERED(f) */)
+  if (FRAME_X_XIC (f))
     (in_p ? XSetICFocus : XUnsetICFocus) (FRAME_X_XIC (f));
 }
 
@@ -608,9 +464,9 @@ EmacsXtCvtStringToXIMStyles (
 #define STYLE_INFO(style) { style, #style, sizeof(#style) }
   static struct XIMStyleInfo
   {
-    const XIMStyle style;
-    const char   * const name;
-    const int      namelen;
+    CONST XIMStyle style;
+    CONST char   * CONST name;
+    CONST int      namelen;
   } emacs_XIMStyleInfo[] = {
     STYLE_INFO (XIMPreeditPosition|XIMStatusArea),
     STYLE_INFO (XIMPreeditPosition|XIMStatusNothing),
@@ -626,9 +482,9 @@ EmacsXtCvtStringToXIMStyles (
 
   char *s   = (char *) fromVal->addr;
   char *end = s + fromVal->size;
-  XIMStyles * const p = (XIMStyles *) toVal->addr;
-  const char * const delimiter = " \t\n\r:;," ;
-  const int  max_styles = XtNumber(emacs_XIMStyleInfo);
+  XIMStyles * CONST p = (XIMStyles *) toVal->addr;
+  CONST char * CONST delimiter = " \t\n\r:;," ;
+  CONST int  max_styles = XtNumber(emacs_XIMStyleInfo);
   int i;
   char *c;
 
@@ -781,65 +637,6 @@ best_style (XIMStyles *user, XIMStyles *xim)
   return DEFAULTStyle; /* Default Style */
 }
 
-/* These lisp-callable functions will be sealed until xim-leim is needed. 
-   Oct 22 1999 - kazz */
-#if 0
-/*
- * External callable function for XIM
- */
-DEFUN ("x-open-xim", Fx_open_xim, 1, 1, 0, /*
-Open the XIC on the frame if XIM is available.
-Commonly, use this as \(x-open-xim \(selected-frame)).
-If the frame is not on X device, return signal.
-If XIC is created successfully return t.  If not return nil.
-*/
-       (frame))
-{
-  struct frame *f;
-
-  CHECK_LIVE_FRAME (frame);
-  f = XFRAME (frame);
-  if (!FRAME_X_P (f))
-    return signal_simple_error ("This frame is not on X device", frame);
-
-  XIM_init_frame (f);
-  return FRAME_X_XIC (f) ? Qt : Qnil;
-}
-
-DEFUN ("x-close-xim", Fx_close_xim, 1, 1, 0, /*
-Close the XIC on the frame if it exists.
-Commonly, use this as \(x-close-xim \(selected-frame)).
-If the frame is not on X device, return signal.
-Otherwise, it destroys the XIC if it exists, then returns t anyway.
-*/
-       (frame))
-{
-  struct frame *f;
-  struct device *d;
-
-  CHECK_LIVE_FRAME (frame);
-  f = XFRAME (frame);
-  if (!FRAME_X_P (f))
-    return signal_simple_error ("This frame is not on X device", frame);
-
-  d = XDEVICE (FRAME_DEVICE (f));
-  if (DEVICE_X_XIM (d)) {
-    /* XDestroyIC (FRAME_X_XIC (XFRAME (f))); */
-    FRAME_X_XIC (XFRAME (f)) = NULL;
-  }
-  return Qt;
-}
-#endif /* if 0 */
-
-void
-syms_of_input_method_xlib (void)
-{
-  defsymbol (&Qxim_xlib, "xim-xlib");
-#if 0 /* see above */
-  DEFSUBR (Fx_open_xim);
-  DEFSUBR (Fx_close_xim);
-#endif
-}
 
 void
 vars_of_input_method_xlib (void)

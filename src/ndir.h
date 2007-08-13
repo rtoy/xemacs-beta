@@ -23,15 +23,12 @@ Boston, MA 02111-1307, USA.  */
 	last edit:	09-Jul-1983	D A Gwyn
 */
 
-#ifndef INCLUDED_ndir_h_
-#define INCLUDED_ndir_h_
-
 #define DIRBLKSIZ	512		/* size of directory block */
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 #define MAXNAMLEN	255
-#else  /* not WIN32_NATIVE */
+#else  /* not WINDOWSNT */
 #define MAXNAMLEN	15		/* maximum filename length */
-#endif /* not WIN32_NATIVE */
+#endif /* not WINDOWSNT */
 	/* NOTE:  MAXNAMLEN must be one less than a multiple of 4 */
 
 struct direct				/* data from readdir() */
@@ -50,7 +47,7 @@ typedef struct
   char	dd_buf[DIRBLKSIZ];	/* directory block */
 }	DIR;			/* stream data from opendir() */
 
-DIR *opendir (const char *filename);
+DIR *opendir (CONST char *filename);
 int closedir (DIR *dirp);
 struct direct *readdir (DIR *dirp);
 struct direct *readdirver (DIR *dirp);
@@ -58,5 +55,3 @@ long telldir (DIR *dirp);
 void seekdir (DIR *dirp, long loc);
 
 #define rewinddir( dirp )	seekdir( dirp, 0L )
-
-#endif /* INCLUDED_ndir_h_ */

@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Rewritten by Ben Wing <ben@xemacs.org>. */
 
-#ifndef INCLUDED_mule_charset_h_
-#define INCLUDED_mule_charset_h_
+#ifndef _XEMACS_MULE_CHARSET_H
+#define _XEMACS_MULE_CHARSET_H
 
 /*
    1. Character Sets
@@ -239,7 +239,7 @@ Boston, MA 02111-1307, USA.  */
 
    Character set		Encoding (PC == position-code)
    -------------		-------- (LB == leading-byte)
-   ASCII			PC1  |
+   ASCII			PC1 |
    Control-1			LB   | PC1 + 0xA0
    Dimension-1 official		LB   | PC1 + 0x80
    Dimension-1 private		0x9E | LB         | PC1 + 0x80
@@ -332,48 +332,40 @@ Boston, MA 02111-1307, USA.  */
 #define LEADING_BYTE_COMPOSITE		0x80 /* for a composite character */
 #define LEADING_BYTE_CONTROL_1		0x8F /* represent normal 80-9F */
 
-/* Note the gap in each official charset can cause core dump
-   as first and last values are used to determine whether
-   charset is defined or not in non_ascii_valid_char_p */
-
 /** The following are for 1-byte characters in an official charset. **/
-enum LEADING_BYTE_OFFICIAL_1
-{
-  LEADING_BYTE_LATIN_ISO8859_1 = 0x81, /* Right half of ISO 8859-1 */
-  LEADING_BYTE_LATIN_ISO8859_2,   /* 0x82 Right half of ISO 8859-2 */
-  LEADING_BYTE_LATIN_ISO8859_3,   /* 0x83 Right half of ISO 8859-3 */
-  LEADING_BYTE_LATIN_ISO8859_4,   /* 0x84 Right half of ISO 8859-4 */
-  LEADING_BYTE_THAI_TIS620,       /* 0x85 TIS620-2533 */
-  LEADING_BYTE_GREEK_ISO8859_7,   /* 0x86 Right half of ISO 8859-7 */
-  LEADING_BYTE_ARABIC_ISO8859_6,  /* 0x87 Right half of ISO 8859-6 */
-  LEADING_BYTE_HEBREW_ISO8859_8,  /* 0x88 Right half of ISO 8859-8 */
-  LEADING_BYTE_KATAKANA_JISX0201, /* 0x89 Right half of JIS X0201-1976 */
-  LEADING_BYTE_LATIN_JISX0201,    /* 0x8A Left  half of JIS X0201-1976 */
-  LEADING_BYTE_CYRILLIC_ISO8859_5,/* 0x8B Right half of ISO 8859-5 */
-  LEADING_BYTE_LATIN_ISO8859_9    /* 0x8C Right half of ISO 8859-9 */
-                                  /* 0x8D unused */
-};
+
+#define LEADING_BYTE_LATIN_ISO8859_1	0x81 /* Right half of ISO 8859-1 */
+#define LEADING_BYTE_LATIN_ISO8859_2	0x82 /* Right half of ISO 8859-2 */
+#define LEADING_BYTE_LATIN_ISO8859_3	0x83 /* Right half of ISO 8859-3 */
+#define LEADING_BYTE_LATIN_ISO8859_4	0x84 /* Right half of ISO 8859-4 */
+#define LEADING_BYTE_THAI_TIS620	0x85 /* TIS620-2533 */
+#define LEADING_BYTE_GREEK_ISO8859_7	0x86 /* Right half of ISO 8859-7 */
+#define LEADING_BYTE_ARABIC_ISO8859_6	0x87 /* Right half of ISO 8859-6 */
+#define LEADING_BYTE_HEBREW_ISO8859_8	0x88 /* Right half of ISO 8859-8 */
+#define LEADING_BYTE_KATAKANA_JISX0201	0x89 /* Right half of JIS X0201-1976 */
+#define LEADING_BYTE_LATIN_JISX0201	0x8A /* Left  half of JIS X0201-1976 */
+#define LEADING_BYTE_CYRILLIC_ISO8859_5	0x8C /* Right half of ISO 8859-5 */
+#define LEADING_BYTE_LATIN_ISO8859_9	0x8D /* Right half of ISO 8859-9 */
 
 #define MIN_LEADING_BYTE_OFFICIAL_1	LEADING_BYTE_LATIN_ISO8859_1
 #define MAX_LEADING_BYTE_OFFICIAL_1	LEADING_BYTE_LATIN_ISO8859_9
 
 /** The following are for 2-byte characters in an official charset. **/
-enum LEADING_BYTE_OFFICIAL_2
-{
-  LEADING_BYTE_JAPANESE_JISX0208_1978 = 0x90, /* Japanese JIS X0208-1978 */
-  LEADING_BYTE_CHINESE_GB2312,           /* 0x91 Chinese Hanzi GB2312-1980 */
-  LEADING_BYTE_JAPANESE_JISX0208,        /* 0x92 Japanese JIS X0208-1983 */
-  LEADING_BYTE_KOREAN_KSC5601,           /* 0x93 Hangul KS C5601-1987 */
-  LEADING_BYTE_JAPANESE_JISX0212,        /* 0x94 Japanese JIS X0212-1990 */
-  LEADING_BYTE_CHINESE_CNS11643_1,       /* 0x95 Chinese CNS11643 Set 1 */
-  LEADING_BYTE_CHINESE_CNS11643_2,       /* 0x96 Chinese CNS11643 Set 2 */
-  LEADING_BYTE_CHINESE_BIG5_1,           /* 0x97 Big5 Level 1 */
-  LEADING_BYTE_CHINESE_BIG5_2            /* 0x98 Big5 Level 2 */
-                                         /* 0x99 unused */
-                                         /* 0x9A unused */
-                                         /* 0x9B unused */
-                                         /* 0x9C unused */
-};
+
+#define LEADING_BYTE_JAPANESE_JISX0208_1978 0x90/* Japanese JIS X0208-1978 */
+#define LEADING_BYTE_CHINESE_GB2312	0x91	/* Chinese Hanzi GB2312-1980 */
+#define LEADING_BYTE_JAPANESE_JISX0208	0x92	/* Japanese JIS X0208-1983 */
+#define LEADING_BYTE_KOREAN_KSC5601	0x93	/* Hangul KS C5601-1987 */
+#define LEADING_BYTE_JAPANESE_JISX0212	0x94	/* Japanese JIS X0212-1990 */
+#define LEADING_BYTE_CHINESE_CNS11643_1	0x95	/* Chinese CNS11643 Set 1 */
+#define LEADING_BYTE_CHINESE_CNS11643_2	0x96	/* Chinese CNS11643 Set 2 */
+#define LEADING_BYTE_CHINESE_BIG5_1	0x97	/* Big5 Level 1 */
+#define LEADING_BYTE_CHINESE_BIG5_2	0x98	/* Big5 Level 2 */
+				     /* 0x99	   unused */
+				     /* 0x9A       unused */
+				     /* 0x9B       unused */
+				     /* 0x9C       unused */
+				     /* 0x9D       unused */
 
 #define MIN_LEADING_BYTE_OFFICIAL_2	LEADING_BYTE_JAPANESE_JISX0208_1978
 #define MAX_LEADING_BYTE_OFFICIAL_2	LEADING_BYTE_CHINESE_BIG5_2
@@ -401,8 +393,8 @@ enum LEADING_BYTE_OFFICIAL_2
 
 /* Is this a prefix for a private leading byte? */
 
-INLINE_HEADER int LEADING_BYTE_PREFIX_P (unsigned char lb);
-INLINE_HEADER int
+INLINE int LEADING_BYTE_PREFIX_P (unsigned char lb);
+INLINE int
 LEADING_BYTE_PREFIX_P (unsigned char lb)
 {
   return (lb == PRE_LEADING_BYTE_PRIVATE_1 ||
@@ -456,10 +448,7 @@ struct Lisp_Charset
 
   int id;
   Lisp_Object name;
-  Lisp_Object doc_string;
-  Lisp_Object registry;
-  Lisp_Object short_name;
-  Lisp_Object long_name;
+  Lisp_Object doc_string, registry, short_name, long_name;
 
   Lisp_Object reverse_direction_charset;
 
@@ -492,12 +481,12 @@ struct Lisp_Charset
   /* Which half of font to be used to display this character set */
   unsigned int graphic;
 };
-typedef struct Lisp_Charset Lisp_Charset;
 
-DECLARE_LRECORD (charset, Lisp_Charset);
-#define XCHARSET(x) XRECORD (x, charset, Lisp_Charset)
+DECLARE_LRECORD (charset, struct Lisp_Charset);
+#define XCHARSET(x) XRECORD (x, charset, struct Lisp_Charset)
 #define XSETCHARSET(x, p) XSETRECORD (x, p, charset)
 #define CHARSETP(x) RECORDP (x, charset)
+#define GC_CHARSETP(x) GC_RECORDP (x, charset)
 #define CHECK_CHARSET(x) CHECK_RECORD (x, charset)
 #define CONCHECK_CHARSET(x) CONCHECK_RECORD (x, charset)
 
@@ -511,7 +500,7 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 
 /* Leading byte and id have been regrouped. -- OG */
 #define CHARSET_ID(cs)		 ((cs)->id)
-#define CHARSET_LEADING_BYTE(cs) ((Bufbyte) CHARSET_ID(cs))
+#define CHARSET_LEADING_BYTE(cs) ((Bufbyte)(CHARSET_ID(cs)))
 #define CHARSET_NAME(cs)	 ((cs)->name)
 #define CHARSET_SHORT_NAME(cs)	 ((cs)->short_name)
 #define CHARSET_LONG_NAME(cs)	 ((cs)->long_name)
@@ -551,58 +540,58 @@ DECLARE_LRECORD (charset, Lisp_Charset);
 #define XCHARSET_REVERSE_DIRECTION_CHARSET(cs) \
   CHARSET_REVERSE_DIRECTION_CHARSET (XCHARSET (cs))
 
-struct charset_lookup {
-  /* Table of charsets indexed by leading byte. */
-  Lisp_Object charset_by_leading_byte[128];
+/* Table of charsets indexed by (leading byte - 128). */
+extern Lisp_Object charset_by_leading_byte[128];
 
-  /* Table of charsets indexed by type/final-byte/direction. */
-  Lisp_Object charset_by_attributes[4][128][2];
-  Bufbyte next_allocated_1_byte_leading_byte;
-  Bufbyte next_allocated_2_byte_leading_byte;
-};
+/* Table of charsets indexed by type/final-byte/direction. */
+extern Lisp_Object charset_by_attributes[4][128][2];
 
-extern struct charset_lookup *chlook;
+/* Table of number of bytes in the string representation of a character
+   indexed by the first byte of that representation.
+
+   This value can be derived other ways -- e.g. something like
+
+   (BYTE_ASCII_P (first_byte) ? 1 :
+    XCHARSET_REP_BYTES (CHARSET_BY_LEADING_BYTE (first_byte)))
+
+   but it's faster this way. */
+extern Bytecount rep_bytes_by_first_byte[0xA0];
 
 #ifdef ERROR_CHECK_TYPECHECK
 /* int not Bufbyte even though that is the actual type of a leading byte.
    This way, out-ot-range values will get caught rather than automatically
    truncated. */
-INLINE_HEADER Lisp_Object CHARSET_BY_LEADING_BYTE (int lb);
-INLINE_HEADER Lisp_Object
+INLINE Lisp_Object CHARSET_BY_LEADING_BYTE (int lb);
+INLINE Lisp_Object
 CHARSET_BY_LEADING_BYTE (int lb)
 {
   assert (lb >= 0x80 && lb <= 0xFF);
-  return chlook->charset_by_leading_byte[lb - 128];
+  return charset_by_leading_byte[lb - 128];
 }
 
 #else
 
-#define CHARSET_BY_LEADING_BYTE(lb) (chlook->charset_by_leading_byte[(lb) - 128])
+#define CHARSET_BY_LEADING_BYTE(lb) (charset_by_leading_byte[(lb) - 128])
 
 #endif
 
 #define CHARSET_BY_ATTRIBUTES(type, final, dir) \
-  (chlook->charset_by_attributes[type][final][dir])
+  (charset_by_attributes[type][final][dir])
 
+#ifdef ERROR_CHECK_TYPECHECK
 
-/* Table of number of bytes in the string representation of a character
-   indexed by the first byte of that representation.
-
-   This value can be derived in other ways -- e.g. something like
-   XCHARSET_REP_BYTES (CHARSET_BY_LEADING_BYTE (first_byte))
-   but it's faster this way. */
-extern const Bytecount rep_bytes_by_first_byte[0xA0];
-
-/* Number of bytes in the string representation of a character. */
-INLINE_HEADER int REP_BYTES_BY_FIRST_BYTE (int fb);
-INLINE_HEADER int
+/* Number of bytes in the string representation of a character */
+INLINE int REP_BYTES_BY_FIRST_BYTE (int fb);
+INLINE int
 REP_BYTES_BY_FIRST_BYTE (int fb)
 {
-#ifdef ERROR_CHECK_TYPECHECK
-  assert (0 <= fb && fb < 0xA0);
-#endif
+  assert (fb >= 0 && fb < 0xA0);
   return rep_bytes_by_first_byte[fb];
 }
+
+#else
+#define REP_BYTES_BY_FIRST_BYTE(fb) (rep_bytes_by_first_byte[fb])
+#endif
 
 
 /************************************************************************/
@@ -677,8 +666,8 @@ REP_BYTES_BY_FIRST_BYTE (int fb)
    FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
    */
 
-INLINE_HEADER Bufbyte CHAR_LEADING_BYTE (Emchar c);
-INLINE_HEADER Bufbyte
+INLINE Bufbyte CHAR_LEADING_BYTE (Emchar c);
+INLINE Bufbyte
 CHAR_LEADING_BYTE (Emchar c)
 {
   if (CHAR_ASCII_P (c))
@@ -712,8 +701,8 @@ CHAR_LEADING_BYTE (Emchar c)
    FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
    */
 
-INLINE_HEADER Emchar MAKE_CHAR (Lisp_Object charset, int c1, int c2);
-INLINE_HEADER Emchar
+INLINE Emchar MAKE_CHAR (Lisp_Object charset, int c1, int c2);
+INLINE Emchar
 MAKE_CHAR (Lisp_Object charset, int c1, int c2)
 {
   if (EQ (charset, Vcharset_ascii))
@@ -750,8 +739,8 @@ MAKE_CHAR (Lisp_Object charset, int c1, int c2)
   : ((c1) = CHAR_FIELD2 (c),				\
      (c2) = CHAR_FIELD3 (c))
 
-INLINE_HEADER void breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2);
-INLINE_HEADER void
+INLINE void breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2);
+INLINE void
 breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2)
 {
   *charset = CHAR_CHARSET (c);
@@ -788,9 +777,9 @@ Emchar Lstream_get_emchar_1 (Lstream *stream, int first_char);
 int Lstream_fput_emchar (Lstream *stream, Emchar ch);
 void Lstream_funget_emchar (Lstream *stream, Emchar ch);
 
-int copy_internal_to_external (const Bufbyte *internal, Bytecount len,
+int copy_internal_to_external (CONST Bufbyte *internal, Bytecount len,
 			       unsigned char *external);
-Bytecount copy_external_to_internal (const unsigned char *external,
+Bytecount copy_external_to_internal (CONST unsigned char *external,
 				     int len, Bufbyte *internal);
 
-#endif /* INCLUDED_mule_charset_h_ */
+#endif /* _XEMACS_MULE_CHARSET_H */

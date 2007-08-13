@@ -1,6 +1,6 @@
 /* Lisp object printing and output streams.
    Copyright (C) 1985, 1986, 1988, 1992-1995 Free Software Foundation, Inc.
-   Copyright (C) 1995, 1996, 2000 Ben Wing.
+   Copyright (C) 1995, 1996 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -38,10 +38,8 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 #include "lstream.h"
 #include "sysfile.h"
-#ifdef WIN32_NATIVE
-#include "console-msw.h"
-#endif
 
+#include <limits.h>
 #include <float.h>
 /* Define if not in float.h */
 #ifndef DBL_DIG
@@ -53,13 +51,14 @@ Lisp_Object Vstandard_output, Qstandard_output;
 /* The subroutine object for external-debugging-output is kept here
    for the convenience of the debugger.  */
 Lisp_Object Qexternal_debugging_output;
+Lisp_Object Qalternate_debugging_output;
 
 /* Avoid actual stack overflow in print.  */
 static int print_depth;
 
 /* Detect most circularities to print finite output.  */
 #define PRINT_CIRCLE 200
-static Lisp_Object being_printed[PRINT_CIRCLE];
+Lisp_Object being_printed[PRINT_CIRCLE];
 
 /* Maximum length of list or vector to print in full; noninteger means
    effectively infinity */
@@ -93,6 +92,9 @@ int print_readably;
 Lisp_Object Vprint_gensym;
 Lisp_Object Vprint_gensym_alist;
 
+Lisp_Object Qprint_escape_newlines;
+Lisp_Object Qprint_readably;
+
 Lisp_Object Qdisplay_error;
 Lisp_Object Qprint_message_label;
 
@@ -105,47 +107,38 @@ FILE *termscript;	/* Stdio stream being used for copy of all output.  */
 
 int stdout_needs_newline;
 
-#ifdef WIN32_NATIVE
-static int no_useful_stderr;
-#endif
+/* Write a string (in internal format) to stdio stream STREAM. */
 
-static void
-std_handle_out_external (FILE *stream, Lisp_Object lstream,
-			 const Extbyte *extptr, Extcount extlen,
-			 /* is this really stdout/stderr?
-			    (controls termscript writing) */
-			 int output_is_std_handle,
-			 int must_flush)
+void
+write_string_to_stdio_stream (FILE *stream, struct console *con,
+			      CONST Bufbyte *str,
+			      Bytecount offset, Bytecount len,
+			      enum external_data_format fmt)
 {
+  int extlen;
+  CONST Extbyte *extptr;
+
+  GET_CHARPTR_EXT_DATA_ALLOCA (str + offset, len, fmt, extptr, extlen);
   if (stream)
     {
-#ifdef WIN32_NATIVE
-      if (!no_useful_stderr)
-	no_useful_stderr = GetStdHandle (STD_ERROR_HANDLE) == 0 ? 1 : -1;
-
-      /* we typically have no useful stdout/stderr under windows if we're
-	 being invoked graphically. */
-      if (!noninteractive || no_useful_stderr > 0)
-	mswindows_output_console_string (extptr, extlen);
-      else
+      fwrite (extptr, 1, extlen, stream);
+#ifdef WINDOWSNT
+      /* Q122442 says that pipes are "treated as files, not as
+	 devices", and that this is a feature. Before I found that
+	 article, I thought it was a bug. Thanks MS, I feel much
+	 better now. - kkm */
+      if (stream == stdout || stream == stderr)
+	fflush (stream);
 #endif
-	{
-	  fwrite (extptr, 1, extlen, stream);
-#ifdef WIN32_NATIVE
-	  /* Q122442 says that pipes are "treated as files, not as
-	     devices", and that this is a feature. Before I found that
-	     article, I thought it was a bug. Thanks MS, I feel much
-	     better now. - kkm */
-	  must_flush = 1;
-#endif
-	  if (must_flush)
-	    fflush (stream);
-	}
     }
   else
-    Lstream_write (XLSTREAM (lstream), extptr, extlen);
-
-  if (output_is_std_handle)
+    {
+      assert (CONSOLE_TTY_P (con));
+      Lstream_write (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
+		     extptr, extlen);
+    }
+  if (stream == stdout || stream == stderr ||
+      (!stream && CONSOLE_TTY_DATA (con)->is_stdio))
     {
       if (termscript)
 	{
@@ -156,132 +149,12 @@ std_handle_out_external (FILE *stream, Lisp_Object lstream,
     }
 }
 
-/* #### The following function should be replaced a call to the
-   emacs_doprnt_*() functions.  This is the only way to ensure that
-   I18N3 works properly (many implementations of the *printf()
-   functions, including the ones included in glibc, do not implement
-   the %###$ argument-positioning syntax).
-
-   Note, however, that to do this, we'd have to
-
-   1) pre-allocate all the lstreams and do whatever else was necessary
-   to make sure that no allocation occurs, since these functions may be
-   called from fatal_error_signal().
-
-   2) (to be really correct) make a new lstream that outputs using
-   mswindows_output_console_string().  */
-
-static int
-std_handle_out_va (FILE *stream, const char *fmt, va_list args)
-{
-  Bufbyte kludge[8192];
-  Extbyte *extptr;
-  Extcount extlen;
-  int retval;
-
-  retval = vsprintf ((char *) kludge, fmt, args);
-  if (initialized && !fatal_error_in_progress)
-    TO_EXTERNAL_FORMAT (DATA, (kludge, strlen ((char *) kludge)),
-			ALLOCA, (extptr, extlen),
-			Qnative);
-  else
-    {
-      extptr = (Extbyte *) kludge;
-      extlen = (Extcount) strlen ((char *) kludge);
-    }
-  
-  std_handle_out_external (stream, Qnil, extptr, extlen, 1, 1);
-  return retval;
-}
-
-/* Output portably to stderr or its equivalent; call GETTEXT on the
-   format string.  Automatically flush when done. */
-
-int
-stderr_out (const char *fmt, ...)
-{
-  int retval;
-  va_list args;
-  va_start (args, fmt);
-  retval =
-    std_handle_out_va
-    (stderr, initialized && !fatal_error_in_progress ? GETTEXT (fmt) : fmt,
-     args);
-  va_end (args);
-  return retval;
-}
-
-/* Output portably to stdout or its equivalent; call GETTEXT on the
-   format string.  Automatically flush when done. */
-
-int
-stdout_out (const char *fmt, ...)
-{
-  int retval;
-  va_list args;
-  va_start (args, fmt);
-  retval =
-    std_handle_out_va
-    (stdout, initialized && !fatal_error_in_progress ? GETTEXT (fmt) : fmt,
-     args);
-  va_end (args);
-  return retval;
-}
-
-DOESNT_RETURN
-fatal (const char *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-
-  stderr_out ("\nXEmacs: ");
-  std_handle_out_va (stderr, GETTEXT (fmt), args);
-  stderr_out ("\n");
-
-  va_end (args);
-  exit (1);
-}
-
-/* Write a string (in internal format) to stdio stream STREAM. */
-
-void
-write_string_to_stdio_stream (FILE *stream, struct console *con,
-			      const Bufbyte *str,
-			      Bytecount offset, Bytecount len,
-			      Lisp_Object coding_system,
-			      int must_flush)
-{
-  Extcount extlen;
-  const Extbyte *extptr;
-
-  /* #### yuck! sometimes this function is called with string data,
-     and the following call may gc. */
-  {
-    Bufbyte *puta = (Bufbyte *) alloca (len);
-    memcpy (puta, str + offset, len);
-    TO_EXTERNAL_FORMAT (DATA, (puta, len),
-			ALLOCA, (extptr, extlen),
-			coding_system);
-  }
-
-  if (stream)
-    std_handle_out_external (stream, Qnil, extptr, extlen,
-			     stream == stdout || stream == stderr, must_flush);
-  else
-    {
-      assert (CONSOLE_TTY_P (con));
-      std_handle_out_external (0, CONSOLE_TTY_DATA (con)->outstream,
-			       extptr, extlen,
-			       CONSOLE_TTY_DATA (con)->is_stdio, must_flush);
-    }
-}
-
 /* Write a string to the output location specified in FUNCTION.
    Arguments NONRELOC, RELOC, OFFSET, and LEN are as in
    buffer_insert_string_1() in insdel.c. */
 
 static void
-output_string (Lisp_Object function, const Bufbyte *nonreloc,
+output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
 	       Lisp_Object reloc, Bytecount offset, Bytecount len)
 {
   /* This function can GC */
@@ -291,7 +164,7 @@ output_string (Lisp_Object function, const Bufbyte *nonreloc,
      other functions that take both a nonreloc and a reloc, or things
      may get confused and an assertion failure in
      fixup_internal_substring() may get triggered. */
-  const Bufbyte *newnonreloc = nonreloc;
+  CONST Bufbyte *newnonreloc = nonreloc;
   struct gcpro gcpro1, gcpro2;
 
   /* Emacs won't print while GCing, but an external debugger might */
@@ -367,7 +240,7 @@ output_string (Lisp_Object function, const Bufbyte *nonreloc,
   else if (EQ (function, Qt) || EQ (function, Qnil))
     {
       write_string_to_stdio_stream (stdout, 0, newnonreloc, offset, len,
-				    Qterminal, print_unbuffered);
+				    FORMAT_TERMINAL);
     }
   else
     {
@@ -476,7 +349,7 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
 
 /* Used for printing a single-byte character (*not* any Emchar).  */
 #define write_char_internal(string_of_length_1, stream)			\
-  output_string (stream, (const Bufbyte *) (string_of_length_1),	\
+  output_string (stream, (CONST Bufbyte *) (string_of_length_1),	\
 		 Qnil, 0, 1)
 
 /* NOTE: Do not call this with the data of a Lisp_String, as
@@ -489,7 +362,7 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
    canonicalize_printcharfun() (i.e. Qnil means stdout, not
    Vstandard_output, etc.)  */
 void
-write_string_1 (const Bufbyte *str, Bytecount size, Lisp_Object stream)
+write_string_1 (CONST Bufbyte *str, Bytecount size, Lisp_Object stream)
 {
   /* This function can GC */
 #ifdef ERROR_CHECK_BUFPOS
@@ -499,10 +372,10 @@ write_string_1 (const Bufbyte *str, Bytecount size, Lisp_Object stream)
 }
 
 void
-write_c_string (const char *str, Lisp_Object stream)
+write_c_string (CONST char *str, Lisp_Object stream)
 {
   /* This function can GC */
-  write_string_1 ((const Bufbyte *) str, strlen (str), stream);
+  write_string_1 ((CONST Bufbyte *) str, strlen (str), stream);
 }
 
 
@@ -758,13 +631,8 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
   {
     int first = 1;
     int speccount = specpdl_depth ();
-    Lisp_Object frame = Qnil;
-    struct gcpro gcpro1;
-    GCPRO1 (stream);
 
     specbind (Qprint_message_label, Qerror);
-    stream = print_prepare (stream, &frame);
-
     tail = Fcdr (error_object);
     if (EQ (type, Qerror))
       {
@@ -786,8 +654,6 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
 	tail = Fcdr (tail);
 	first = 0;
       }
-    print_finish (stream, frame);
-    UNGCPRO;
     unbind_to (speccount, Qnil);
     return;
     /* not reached */
@@ -845,10 +711,11 @@ Display ERROR-OBJECT on STREAM in a user-friendly way.
 #ifdef LISP_FLOAT_TYPE
 
 Lisp_Object Vfloat_output_format;
+Lisp_Object Qfloat_output_format;
 
 /*
  * This buffer should be at least as large as the max string size of the
- * largest float, printed in the biggest notation.  This is undoubtedly
+ * largest float, printed in the biggest notation.  This is undoubtably
  * 20d float_output_format, with the negative of the C-constant "HUGE"
  * from <math.h>.
  *
@@ -933,60 +800,47 @@ float_to_string (char *buf, double data)
 }
 #endif /* LISP_FLOAT_TYPE */
 
-/* Print NUMBER to BUFFER.  This is equivalent to sprintf(buffer,
-   "%ld", number), only much faster.
+/* Print NUMBER to BUFFER.  The digits are first written in reverse
+   order (the least significant digit first), and are then reversed.
+   This is equivalent to sprintf(buffer, "%ld", number), only much
+   faster.
 
    BUFFER should accept 24 bytes.  This should suffice for the longest
-   numbers on 64-bit machines, including the `-' sign and the trailing
-   \0.  */
+   numbers on 64-bit machines.  */
 void
 long_to_string (char *buffer, long number)
 {
-#if (SIZEOF_LONG != 4) && (SIZEOF_LONG != 8)
-  /* Huh? */
-  sprintf (buffer, "%ld", number);
-#else /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
-  char *p = buffer;
-  int force = 0;
+  char *p;
+  int i, len;
 
   if (number < 0)
     {
-      *p++ = '-';
+      *buffer++ = '-';
       number = -number;
     }
+  p = buffer;
 
-#define FROB(figure) do {						\
-    if (force || number >= figure)					\
-      *p++ = number / figure + '0', number %= figure, force = 1;	\
-    } while (0)
-#if SIZEOF_LONG == 8
-  FROB (1000000000000000000L);
-  FROB (100000000000000000L);
-  FROB (10000000000000000L);
-  FROB (1000000000000000L);
-  FROB (100000000000000L);
-  FROB (10000000000000L);
-  FROB (1000000000000L);
-  FROB (100000000000L);
-  FROB (10000000000L);
-#endif /* SIZEOF_LONG == 8 */
-  FROB (1000000000);
-  FROB (100000000);
-  FROB (10000000);
-  FROB (1000000);
-  FROB (100000);
-  FROB (10000);
-  FROB (1000);
-  FROB (100);
-  FROB (10);
-#undef FROB
-  *p++ = number + '0';
-  *p = '\0';
-#endif /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
+  /* Print the digits to the string.  */
+  do
+    {
+      *p++ = number % 10 + '0';
+      number /= 10;
+    }
+  while (number);
+
+  /* And reverse them.  */
+  len = p - buffer - 1;
+  for (i = len / 2; i >= 0; i--)
+    {
+      char c = buffer[i];
+      buffer[i] = buffer[len - i];
+      buffer[len - i] = c;
+    }
+  buffer[len + 1] = '\0';
 }
 
 static void
-print_vector_internal (const char *start, const char *end,
+print_vector_internal (CONST char *start, CONST char *end,
                        Lisp_Object obj,
                        Lisp_Object printcharfun, int escapeflag)
 {
@@ -1093,7 +947,7 @@ print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 void
 print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  Lisp_String *s = XSTRING (obj);
+  struct Lisp_String *s = XSTRING (obj);
   /* We distinguish between Bytecounts and Charcounts, to make
      Vprint_string_length work correctly under Mule.  */
   Charcount size = string_char_length (s);
@@ -1242,9 +1096,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Int_Even:
     case Lisp_Type_Int_Odd:
       {
-	/* ASCII Decimal representation uses 2.4 times as many bits as
-	   machine binary.  */
-	char buf[3 * sizeof (EMACS_INT) + 5];
+	char buf[24];
 	long_to_string (buf, XINT (obj));
 	write_c_string (buf, printcharfun);
 	break;
@@ -1257,61 +1109,36 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	Emchar ch = XCHAR (obj);
 	char *p = buf;
 	*p++ = '?';
-	if (ch < 32)
-	  {
-	    *p++ = '\\';
-	    switch (ch)
-	      {
-	      case '\t': *p++ = 't'; break;
-	      case '\n': *p++ = 'n'; break;
-	      case '\r': *p++ = 'r'; break;
-	      default:
-		*p++ = '^';
-		*p++ = ch + 64;
-		if ((ch + 64) == '\\')
-		  *p++ = '\\';
-		break;
-	      }
-	  }
-	else if (ch < 127)
-	  {
-	    /* syntactically special characters should be escaped. */
-	    switch (ch)
-	      {
-	      case ' ':
-	      case '"':
-	      case '#':
-	      case '\'':
-	      case '(':
-	      case ')':
-	      case ',':
-	      case '.':
-	      case ';':
-	      case '?':
-	      case '[':
-	      case '\\':
-	      case ']':
-	      case '`':
-		*p++ = '\\';
-	      }
-	    *p++ = ch;
-	  }
-	else if (ch == 127)
-	  {
-	    *p++ = '\\', *p++ = '^', *p++ = '?';
-	  }
-	else if (ch < 160)
+	if (ch == '\n')
+	  *p++ = '\\', *p++ = 'n';
+	else if (ch == '\r')
+	  *p++ = '\\', *p++ = 'r';
+	else if (ch == '\t')
+	  *p++ = '\\', *p++ = 't';
+	else if (ch < 32)
 	  {
 	    *p++ = '\\', *p++ = '^';
-	    p += set_charptr_emchar ((Bufbyte *) p, ch + 64);
+	    *p++ = ch + 64;
+	    if ((ch + 64) == '\\')
+	      *p++ = '\\';
 	  }
-	else
+	else if (ch == 127)
+	  *p++ = '\\', *p++ = '^', *p++ = '?';
+	else if (ch >= 128 && ch < 160)
 	  {
-	    p += set_charptr_emchar ((Bufbyte *) p, ch);
+	    *p++ = '\\', *p++ = '^';
+	    p += set_charptr_emchar ((Bufbyte *)p, ch + 64);
 	  }
-
-	output_string (printcharfun, (Bufbyte *) buf, Qnil, 0, p - buf);
-
+	else if (ch < 127
+		 && !isdigit (ch)
+		 && !isalpha (ch)
+		 && ch != '^') /* must not backslash this or it will
+				  be interpreted as the start of a
+				  control char */
+	  *p++ = '\\', *p++ = ch;
+	else
+	  p += set_charptr_emchar ((Bufbyte *)p, ch);
+	output_string (printcharfun, (Bufbyte *)buf, Qnil, 0, p - buf);
 	break;
       }
 
@@ -1386,7 +1213,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   /* This function can GC */
   /* #### Bug!! (intern "") isn't printed in some distinguished way */
   /* ####  (the reader also loses on it) */
-  Lisp_String *name = symbol_name (XSYMBOL (obj));
+  struct Lisp_String *name = symbol_name (XSYMBOL (obj));
   Bytecount size = string_length (name);
   struct gcpro gcpro1, gcpro2;
 
@@ -1520,8 +1347,8 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
    getting rid of this function altogether?  Does anything actually
    *use* it?  --hniksic */
 
-static int alternate_do_pointer;
-static char alternate_do_string[5000];
+int alternate_do_pointer;
+char alternate_do_string[5000];
 
 DEFUN ("alternate-debugging-output", Falternate_debugging_output, 1, 1, 0, /*
 Append CHARACTER to the array `alternate_do_string'.
@@ -1534,13 +1361,11 @@ to 0.
   Bufbyte str[MAX_EMCHAR_LEN];
   Bytecount len;
   int extlen;
-  const Extbyte *extptr;
+  CONST Extbyte *extptr;
 
   CHECK_CHAR_COERCE_INT (character);
   len = set_charptr_emchar (str, XCHAR (character));
-  TO_EXTERNAL_FORMAT (DATA, (str, len),
-		      ALLOCA, (extptr, extlen),
-		      Qterminal);
+  GET_CHARPTR_EXT_DATA_ALLOCA (str, len, FORMAT_TERMINAL, extptr, extlen);
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
   alternate_do_string[alternate_do_pointer] = 0;
@@ -1553,10 +1378,6 @@ Write CHAR-OR-STRING to stderr or stdout.
 If optional arg STDOUT-P is non-nil, write to stdout; otherwise, write
 to stderr.  You can use this function to write directly to the terminal.
 This function can be used as the STREAM argument of Fprint() or the like.
-
-Under MS Windows, this writes output to the console window (which is
-created, if necessary), unless XEmacs is being run noninteractively
-\(i.e. using the `-batch' argument).
 
 If you have opened a termscript file (using `open-termscript'), then
 the output also will be logged to this file.
@@ -1592,7 +1413,7 @@ the output also will be logged to this file.
     write_string_to_stdio_stream (file, con,
 				  XSTRING_DATA (char_or_string),
 				  0, XSTRING_LENGTH (char_or_string),
-				  Qterminal, 1);
+				  FORMAT_TERMINAL);
   else
     {
       Bufbyte str[MAX_EMCHAR_LEN];
@@ -1600,7 +1421,7 @@ the output also will be logged to this file.
 
       CHECK_CHAR_COERCE_INT (char_or_string);
       len = set_charptr_emchar (str, XCHAR (char_or_string));
-      write_string_to_stdio_stream (file, con, str, 0, len, Qterminal, 1);
+      write_string_to_stdio_stream (file, con, str, 0, len, FORMAT_TERMINAL);
     }
 
   return char_or_string;
@@ -1629,41 +1450,39 @@ FILE = nil means just close any termscript file currently open.
 
 #if 1
 /* Debugging kludge -- unbuffered */
-static int debug_print_length   = 50;
-static int debug_print_level    = 15;
-static int debug_print_readably = -1;
+static int debug_print_length = 50;
+static int debug_print_level = 15;
+Lisp_Object debug_temp;
 
 static void
 debug_print_no_newline (Lisp_Object debug_print_obj)
 {
   /* This function can GC */
-  int save_print_readably = print_readably;
-  int save_print_depth    = print_depth;
-  Lisp_Object save_Vprint_length = Vprint_length;
-  Lisp_Object save_Vprint_level  = Vprint_level;
-  Lisp_Object save_Vinhibit_quit = Vinhibit_quit;
+  int old_print_readably = print_readably;
+  int old_print_depth = print_depth;
+  Lisp_Object old_print_length = Vprint_length;
+  Lisp_Object old_print_level = Vprint_level;
+  Lisp_Object old_inhibit_quit = Vinhibit_quit;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  GCPRO3 (save_Vprint_level, save_Vprint_length, save_Vinhibit_quit);
+  GCPRO3 (old_print_level, old_print_length, old_inhibit_quit);
 
   if (gc_in_progress)
     stderr_out ("** gc-in-progress!  Bad idea to print anything! **\n");
 
   print_depth = 0;
-  print_readably = debug_print_readably != -1 ? debug_print_readably : 0;
+  print_readably = 0;
   print_unbuffered++;
   /* Could use unwind-protect, but why bother? */
   if (debug_print_length > 0)
     Vprint_length = make_int (debug_print_length);
   if (debug_print_level > 0)
     Vprint_level = make_int (debug_print_level);
-
   print_internal (debug_print_obj, Qexternal_debugging_output, 1);
-
-  Vinhibit_quit  = save_Vinhibit_quit;
-  Vprint_level   = save_Vprint_level;
-  Vprint_length  = save_Vprint_length;
-  print_depth    = save_print_depth;
-  print_readably = save_print_readably;
+  Vinhibit_quit = old_inhibit_quit;
+  Vprint_level = old_print_level;
+  Vprint_length = old_print_length;
+  print_depth = old_print_depth;
+  print_readably = old_print_readably;
   print_unbuffered--;
   UNGCPRO;
 }
@@ -1673,6 +1492,7 @@ debug_print (Lisp_Object debug_print_obj)
 {
   debug_print_no_newline (debug_print_obj);
   stderr_out ("\n");
+  fflush (stderr);
 }
 
 /* Debugging kludge -- unbuffered */
@@ -1705,6 +1525,7 @@ debug_backtrace (void)
 
   Fbacktrace (Qexternal_debugging_output, Qt);
   stderr_out ("\n");
+  fflush (stderr);
 
   Vinhibit_quit  = old_inhibit_quit;
   Vprint_level   = old_print_level;
@@ -1722,11 +1543,13 @@ debug_short_backtrace (int length)
   int first = 1;
   struct backtrace *bt = backtrace_list;
   stderr_out ("   [");
+  fflush (stderr);
   while (length > 0 && bt)
     {
       if (!first)
 	{
 	  stderr_out (", ");
+	  fflush (stderr);
 	}
       if (COMPILED_FUNCTIONP (*bt->function))
 	{
@@ -1739,12 +1562,15 @@ debug_short_backtrace (int length)
 	  if (!NILP (ann))
 	    {
 	      stderr_out ("<compiled-function from ");
+	      fflush (stderr);
 	      debug_print_no_newline (ann);
 	      stderr_out (">");
+	      fflush (stderr);
 	    }
 	  else
 	    {
 	      stderr_out ("<compiled-function of unknown origin>");
+	      fflush (stderr);
 	    }
 	}
       else
@@ -1754,6 +1580,7 @@ debug_short_backtrace (int length)
       bt = bt->next;
     }
   stderr_out ("]\n");
+  fflush (stderr);
 }
 
 #endif /* debugging kludge */
@@ -1762,7 +1589,14 @@ debug_short_backtrace (int length)
 void
 syms_of_print (void)
 {
+  defsymbol (&Qprint_escape_newlines, "print-escape-newlines");
+  defsymbol (&Qprint_readably, "print-readably");
+
   defsymbol (&Qstandard_output, "standard-output");
+
+#ifdef LISP_FLOAT_TYPE
+  defsymbol (&Qfloat_output_format, "float-output-format");
+#endif
 
   defsymbol (&Qprint_length, "print-length");
 
@@ -1780,6 +1614,7 @@ syms_of_print (void)
   DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
   DEFSUBR (Falternate_debugging_output);
+  defsymbol (&Qalternate_debugging_output, "alternate-debugging-output");
   DEFSUBR (Fexternal_debugging_output);
   DEFSUBR (Fopen_termscript);
   defsymbol (&Qexternal_debugging_output, "external-debugging-output");
@@ -1787,15 +1622,9 @@ syms_of_print (void)
 }
 
 void
-reinit_vars_of_print (void)
-{
-  alternate_do_pointer = 0;
-}
-
-void
 vars_of_print (void)
 {
-  reinit_vars_of_print ();
+  alternate_do_pointer = 0;
 
   DEFVAR_LISP ("standard-output", &Vstandard_output /*
 Output stream `print' uses by default for outputting a character.

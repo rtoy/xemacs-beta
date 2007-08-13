@@ -8,8 +8,6 @@
 # 'installed'.
 #
 
-SHELL=/bin/sh
-RM=rm -f
 CC=../../lib-src/ellcc
 CFLAGS=-I. -I../../src
 LD=$(CC) --mode=link
@@ -27,10 +25,8 @@ MODTITLE="Sample loadable module"
 
 all: $(MODNAME).ell
 
-distclean: clean
-
 clean:
-	$(RM) $(MODNAME).ell $(OBJS) sample_i.o sample_i.c
+	rm -f $(MODNAME).ell $(OBJS) sample_i.o sample_i.c
 
 $(MODNAME).ell: $(OBJS) sample_i.o
 	$(LD) --mod-output=$@ $(OBJS) sample_i.o

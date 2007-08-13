@@ -79,7 +79,7 @@
 ;;; Acknowledgement:
 
 ;; This code is loosely derived from autosave-in-tmp.el by Jamie
-;; Zawinski <jwz@jwz.org> (the version I had was last modified 22
+;; Zawinski <jwz@netscape.com> (the version I had was last modified 22
 ;; dec 90 jwz) and code submitted to ange-ftp-lovers on Sun, 5 Apr
 ;; 92 23:20:47 EDT by drw@BOURBAKI.MIT.EDU (Dale R. Worley).
 ;; auto-save.el tries to cover the functionality of those two
@@ -373,7 +373,7 @@ Hashed files are not understood, see `auto-save-hash-p'."
   ;; save file in the same directory as FILENAME.  But if this
   ;; directory is not writable, use auto-save-directory-fallback.
   ;; FILENAME is assumed to be in non-directory form (no trailing slash).
-  ;; It may be a name without a directory part (presumably it really
+  ;; It may be a name without a directory part (pesumably it really
   ;; comes from a buffer name then), the fallback is used then.
   ;; Optional PREFIX is string to use instead of "#" to prefix name.
   (let ((directory (file-name-directory filename)))

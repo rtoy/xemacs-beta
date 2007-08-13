@@ -37,15 +37,12 @@ Boston, MA 02111-1307, USA.  */
 
 static XtResource resources[] = {
 #define offset(field) XtOffset(EmacsManagerWidget, emacs_manager.field)
-  { XtNresizeCallback, XtCCallback,
-    XtRCallback, sizeof (XtCallbackList),
-    offset(resize_callback), XtRImmediate, (XtPointer) 0 },
-  { XtNqueryGeometryCallback, XtCCallback,
-    XtRCallback, sizeof (XtCallbackList),
-    offset(query_geometry_callback), XtRImmediate, (XtPointer) 0 },
-  { XtNuserData, XtCUserData,
-    XtRPointer, sizeof (XtPointer),
-    offset(user_data), XtRImmediate, (XtPointer) 0 },
+  { XtNresizeCallback, XtCCallback, XtRCallback, sizeof(XtCallbackList),
+      offset(resize_callback), XtRImmediate, (XtPointer) 0 },
+  { XtNqueryGeometryCallback, XtCCallback, XtRCallback, sizeof(XtCallbackList),
+      offset(query_geometry_callback), XtRImmediate, (XtPointer) 0 },
+  { XtNuserData, XtCUserData, XtRPointer, sizeof(XtPointer),
+      offset(user_data), XtRImmediate, (XtPointer) 0 },
 };
 
 /****************************************************************
@@ -74,7 +71,7 @@ EmacsManagerClassRec emacsManagerClassRec = {
     /* superclass         */    (WidgetClass) &compositeClassRec,
 #endif
     /* class_name         */    "EmacsManager",
-    /* widget_size        */    sizeof (EmacsManagerRec),
+    /* widget_size        */    sizeof(EmacsManagerRec),
     /* class_initialize   */    ClassInitialize,
     /* class_part_init    */	NULL,
     /* class_inited       */	FALSE,
@@ -150,17 +147,17 @@ QueryGeometry (Widget w, XtWidgetGeometry *request, XtWidgetGeometry *reply)
 {
   EmacsManagerWidget emw = (EmacsManagerWidget) w;
   EmacsManagerQueryGeometryStruct struc;
-  int request_mode = request->request_mode;
+  int mask = request->request_mode & (CWWidth | CWHeight);
 
-  struc.request_mode = request_mode;
-  struc.proposed_width  = (request_mode & CWWidth)  ? request->width  : 0;
-  struc.proposed_height = (request_mode & CWHeight) ? request->height : 0;
+  struc.request_mode = mask;
+  if (mask & CWWidth)  struc.proposed_width  = request->width;
+  if (mask & CWHeight) struc.proposed_height = request->height;
   XtCallCallbackList (w, emw->emacs_manager.query_geometry_callback, &struc);
   reply->request_mode = CWWidth | CWHeight;
   reply->width  = struc.proposed_width;
   reply->height = struc.proposed_height;
-  if (((request_mode & CWWidth)  && (request->width  != reply->width)) ||
-      ((request_mode & CWHeight) && (request->height != reply->height)))
+  if (((mask & CWWidth)  && (request->width  != reply->width)) ||
+      ((mask & CWHeight) && (request->height != reply->height)))
     return XtGeometryAlmost;
   return XtGeometryYes;
 }
@@ -180,21 +177,23 @@ static XtGeometryResult
 GeometryManager (Widget w, XtWidgetGeometry *request, XtWidgetGeometry *reply)
 {
   /* Sure, any changes are fine. */
+#define COPY(field, mask) \
+  if (request->request_mode & mask) w->core.field = request->field
 
-#ifdef LWLIB_MENUBARS_MOTIF
   /* The Motif menubar will merrily request a new size every time a
      child is added or deleted.  Blow it off because it doesn't know
      what it's talking about. */
-  if (XtClass (w) != xmRowColumnWidgetClass)
+#ifdef LWLIB_MENUBARS_MOTIF
+  if (!(XtClass (w) == xmRowColumnWidgetClass))
 #endif /* LWLIB_MENUBARS_MOTIF */
     {
-      if (request->request_mode & CWWidth)  w->core.width  = request->width;
-      if (request->request_mode & CWHeight) w->core.height = request->height;
+      COPY (width, CWWidth);
+      COPY (height, CWHeight);
     }
-  if (request->request_mode & CWBorderWidth)
-    w->core.border_width = request->border_width;
-  if (request->request_mode & CWX) w->core.x = request->x;
-  if (request->request_mode & CWY) w->core.y = request->y;
+  COPY (border_width, CWBorderWidth);
+  COPY (x, CWX);
+  COPY (y, CWY);
+#undef COPY
 
   return XtGeometryYes;
 }
@@ -204,13 +203,13 @@ ChangeManaged (Widget w)
 {
   if (!XtIsRealized (w))
     {
-      XtWidgetGeometry request, reply;
+      XtWidgetGeometry req, repl;
 
       /* find out how big we'd like to be ... */
 
-      request.request_mode = 0;
-      XtQueryGeometry (w, &request, &reply);
-      EmacsManagerChangeSize (w, reply.width, reply.height);
+      req.request_mode = 0;
+      XtQueryGeometry (w, &req, &repl);
+      EmacsManagerChangeSize (w, repl.width, repl.height);
     }
 }
 

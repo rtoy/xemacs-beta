@@ -34,7 +34,6 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "frame.h"
 #include "glyphs.h"
-#include "gutter.h"
 #include "window.h"
 
 Lisp_Object Qinit_scrollbar_from_resources;
@@ -453,35 +452,23 @@ update_scrollbar_instance (struct window *w, int vertical,
   {
     int x_offset, y_offset;
 
-    /* Scrollbars are always the farthest from the text area, barring
-       gutters. */
+    /* Scrollbars are always the farthest from the text area. */
     if (vertical)
       {
-	if (!NILP (w->scrollbar_on_left_p))
-	  {
-	    x_offset = WINDOW_LEFT (w);
-	  }
-	else 
-	  {
-	    x_offset = WINDOW_RIGHT (w) - scrollbar_width;
-	    if (window_needs_vertical_divider (w))
-	      x_offset -= window_divider_width (w);
-	  }
+	x_offset = (!NILP (w->scrollbar_on_left_p)
+		    ? WINDOW_LEFT (w)
+		    : (WINDOW_RIGHT (w) - scrollbar_width
+		       - (window_needs_vertical_divider (w)
+			  ? window_divider_width (w) : 0)));
 	y_offset = WINDOW_TEXT_TOP (w) + f->scrollbar_y_offset;
       }
     else
       {
 	x_offset = WINDOW_TEXT_LEFT (w);
-	y_offset = f->scrollbar_y_offset;
-
-	if (!NILP (w->scrollbar_on_top_p))
-	  {
-	    y_offset += WINDOW_TOP (w);
-	  }
-	else
-	  {
-	    y_offset += WINDOW_TEXT_BOTTOM (w);
-	  }
+	y_offset = f->scrollbar_y_offset +
+	  (!NILP (w->scrollbar_on_top_p)
+	   ? WINDOW_TOP (w)
+	   : WINDOW_TEXT_BOTTOM (w) + window_bottom_toolbar_height (w));
       }
 
     new_x = x_offset;
@@ -735,26 +722,26 @@ behavior.
      with their standard behaviors.  It is not possible to hide the
      differences down in lwlib because knowledge of XEmacs buffer and
      cursor motion routines is necessary. */
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
+    defined (LWLIB_SCROLLBARS_ATHENA3D) || defined(HAVE_MS_WINDOWS)
+  window_scroll (window, Qnil, -1, ERROR_ME_NOT);
+#else /* Athena */
+  {
+    Bufpos bufpos;
+    Lisp_Object value = Fcdr (object);
 
-  if (NILP (XCDR (object)))
-    window_scroll (window, Qnil, -1, ERROR_ME_NOT);
-  else
-    {
-      Bufpos bufpos;
-      Lisp_Object value = Fcdr (object);
+    CHECK_INT (value);
+    Fmove_to_window_line (Qzero, window);
+    /* can't use Fvertical_motion() because it moves the buffer point
+       rather than the window's point.
 
-      CHECK_INT (value);
-      Fmove_to_window_line (Qzero, window);
-      /* can't use Fvertical_motion() because it moves the buffer point
-	 rather than the window's point.
-
-	 #### It does?  Why does it take a window argument then? */
-      bufpos = vmotion (XWINDOW (window), XINT (Fwindow_point (window)),
-			XINT (value), 0);
-      Fset_window_point (window, make_int (bufpos));
-      Fcenter_to_window_line (Qzero, window);
-    }
-
+       #### It does?  Why does it take a window argument then? */
+    bufpos = vmotion (XWINDOW (window), XINT (Fwindow_point (window)),
+		      XINT (value), 0);
+    Fset_window_point (window, make_int (bufpos));
+    Fcenter_to_window_line (Qzero, window);
+  }
+#endif /* Athena */
   zmacs_region_stays = 1;
   return Qnil;
 }
@@ -776,17 +763,17 @@ behavior.
      with their standard behaviors.  It is not possible to hide the
      differences down in lwlib because knowledge of XEmacs buffer and
      cursor motion routines is necessary. */
-
-  if (NILP (XCDR (object)))
-    window_scroll (window, Qnil, 1, ERROR_ME_NOT);
-  else
-    {
-      Lisp_Object value = Fcdr (object);
-      CHECK_INT (value);
-      Fmove_to_window_line (value, window);
-      Fcenter_to_window_line (Qzero, window);
-    }
-
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
+    defined (LWLIB_SCROLLBARS_ATHENA3D) || defined (HAVE_MS_WINDOWS)
+  window_scroll (window, Qnil, 1, ERROR_ME_NOT);
+#else /* Athena */
+  {
+    Lisp_Object value = Fcdr (object);
+    CHECK_INT (value);
+    Fmove_to_window_line (value, window);
+    Fcenter_to_window_line (Qzero, window);
+  }
+#endif /* Athena */
   zmacs_region_stays = 1;
   return Qnil;
 }
@@ -863,7 +850,7 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
 
   w = XWINDOW (window);
   wcw = window_char_width (w, 0) - 1;
-  /* #### We should be able to scroll further right as long as there is
+  /* ### We should be able to scroll further right as long as there is
      a visible truncation glyph.  This calculation for max is bogus.  */
   max_len = w->max_line_len + 2;
 
@@ -950,9 +937,11 @@ This is a specifier; use `set-specifier' to change it.
     (Vscrollbar_width,
      list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_WIDTH))));
   set_specifier_caching (Vscrollbar_width,
-			 offsetof (struct window, scrollbar_width),
+			 slot_offset (struct window,
+				      scrollbar_width),
 			 vertical_scrollbar_changed_in_window,
-			 offsetof (struct frame, scrollbar_width),
+			 slot_offset (struct frame,
+				      scrollbar_width),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("scrollbar-height", &Vscrollbar_height /*
@@ -964,9 +953,11 @@ This is a specifier; use `set-specifier' to change it.
     (Vscrollbar_height,
      list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_HEIGHT))));
   set_specifier_caching (Vscrollbar_height,
-			 offsetof (struct window, scrollbar_height),
+			 slot_offset (struct window,
+				      scrollbar_height),
 			 some_window_value_changed,
-			 offsetof (struct frame, scrollbar_height),
+			 slot_offset (struct frame,
+				      scrollbar_height),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("horizontal-scrollbar-visible-p", &Vhorizontal_scrollbar_visible_p /*
@@ -977,11 +968,11 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback (Vhorizontal_scrollbar_visible_p,
 			  list1 (Fcons (Qnil, Qt)));
   set_specifier_caching (Vhorizontal_scrollbar_visible_p,
-			 offsetof (struct window,
-				   horizontal_scrollbar_visible_p),
+			 slot_offset (struct window,
+				      horizontal_scrollbar_visible_p),
 			 some_window_value_changed,
-			 offsetof (struct frame,
-				   horizontal_scrollbar_visible_p),
+			 slot_offset (struct frame,
+				      horizontal_scrollbar_visible_p),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("vertical-scrollbar-visible-p", &Vvertical_scrollbar_visible_p /*
@@ -992,11 +983,11 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback (Vvertical_scrollbar_visible_p,
 			  list1 (Fcons (Qnil, Qt)));
   set_specifier_caching (Vvertical_scrollbar_visible_p,
-			 offsetof (struct window,
-				   vertical_scrollbar_visible_p),
+			 slot_offset (struct window,
+				      vertical_scrollbar_visible_p),
 			 vertical_scrollbar_changed_in_window,
-			 offsetof (struct frame,
-				   vertical_scrollbar_visible_p),
+			 slot_offset (struct frame,
+				      vertical_scrollbar_visible_p),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("scrollbar-on-left-p", &Vscrollbar_on_left_p /*
@@ -1020,9 +1011,11 @@ This is a specifier; use `set-specifier' to change it.
   }
 
   set_specifier_caching (Vscrollbar_on_left_p,
-			 offsetof (struct window, scrollbar_on_left_p),
+			 slot_offset (struct window,
+				      scrollbar_on_left_p),
 			 vertical_scrollbar_changed_in_window,
-			 offsetof (struct frame, scrollbar_on_left_p),
+			 slot_offset (struct frame,
+				      scrollbar_on_left_p),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("scrollbar-on-top-p", &Vscrollbar_on_top_p /*
@@ -1033,9 +1026,11 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback (Vscrollbar_on_top_p,
 			  list1 (Fcons (Qnil, Qnil)));
   set_specifier_caching (Vscrollbar_on_top_p,
-			 offsetof (struct window, scrollbar_on_top_p),
+			 slot_offset (struct window,
+				      scrollbar_on_top_p),
 			 some_window_value_changed,
-			 offsetof (struct frame, scrollbar_on_top_p),
+			 slot_offset (struct frame,
+				      scrollbar_on_top_p),
 			 frame_size_slipped);
 }
 
@@ -1045,7 +1040,8 @@ complex_vars_of_scrollbar (void)
   Vscrollbar_pointer_glyph = Fmake_glyph_internal (Qpointer);
 
   set_specifier_caching (XGLYPH (Vscrollbar_pointer_glyph)->image,
-			 offsetof (struct window, scrollbar_pointer),
+			 slot_offset (struct window,
+				      scrollbar_pointer),
 			 scrollbar_pointer_changed_in_window,
 			 0, 0);
 }

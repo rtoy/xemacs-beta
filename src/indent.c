@@ -40,8 +40,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include "window.h"
 
-Lisp_Object Qcoerce;
-
 /* Indentation can insert tabs if this is non-zero;
    otherwise always uses spaces */
 int indent_tabs_mode;
@@ -189,53 +187,6 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
       last_known_column = col;
       last_known_column_point = init_pos;
       last_known_column_modified = BUF_MODIFF (buf);
-    }
-
-  return col;
-}
-
-int
-string_column_at_point (Lisp_String* s, Bufpos init_pos, int tab_width)
-{
-  int col;
-  int tab_seen;
-  int post_tab;
-  Bufpos pos = init_pos;
-  Emchar c;
-
-  if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
-  col = tab_seen = post_tab = 0;
-
-  while (1)
-    {
-      if (pos <= 0)
-	break;
-
-      pos--;
-      c = string_char (s, pos);
-      if (c == '\t')
-	{
-	  if (tab_seen)
-	    col = ((col + tab_width) / tab_width) * tab_width;
-
-	  post_tab += col;
-	  col = 0;
-	  tab_seen = 1;
-	}
-      else if (c == '\n')
-	break;
-      else
-#ifdef MULE
-	  col += XCHARSET_COLUMNS (CHAR_CHARSET (c));
-#else
-	  col ++;
-#endif /* MULE */
-    }
-
-  if (tab_seen)
-    {
-      col = ((col + tab_width) / tab_width) * tab_width;
-      col += post_tab;
     }
 
   return col;
@@ -391,11 +342,9 @@ and horizontal scrolling has no effect.
 If specified column is within a character, point goes after that character.
 If it's past end of line, point goes to end of line.
 
-A value of 'coerce for the second (optional) argument FORCE means if
-COLUMN is in the middle of a tab character, change it to spaces.
-Any other non-nil value means the same, plus if the line is too short to
-reach column COLUMN, then add spaces/tabs to get there.
-
+A non-nil second (optional) argument FORCE means, if the line
+is too short to reach column COLUMN then add spaces/tabs to get there,
+and if COLUMN is in the middle of a tab character, change it to spaces.
 Returns the actual column that it moved to.
 */
        (column, force, buffer))
@@ -479,7 +428,7 @@ Returns the actual column that it moved to.
     }
 
   /* If line ends prematurely, add space to the end.  */
-  if (col < goal && !NILP (force) && !EQ (force, Qcoerce))
+  if (col < goal && !NILP (force))
     {
       col = goal;
       Findent_to (make_int (col), Qzero, buffer);
@@ -592,7 +541,7 @@ vpix_motion (line_start_cache_dynarr *cache, int start, int end)
   assert (start <= end);
   assert (start >= 0);
   assert (end < Dynarr_length (cache));
-
+  
   vpix = 0;
   for (i = start; i <= end; i++)
     vpix += Dynarr_atp (cache, i)->height;
@@ -716,7 +665,7 @@ Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
   if (NILP (window))
     window = Fselected_window (Qnil);
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   CHECK_INT (lines);
 
   selected = (EQ (window, Fselected_window (Qnil)));
@@ -732,7 +681,7 @@ Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
   bufpos = vmotion_1 (w, orig, XINT (lines), vpos, vpix);
 
   /* Note that the buffer's point is set, not the window's point. */
-  if (selected)
+  if (selected) 
     BUF_SET_PT (XBUFFER (w->buffer), bufpos);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP],
@@ -790,7 +739,7 @@ vmotion_pixels (Lisp_Object window, Bufpos start, int pixels, int how,
   if (NILP (window))
     window = Fselected_window (Qnil);
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   w = XWINDOW (window);
 
   eobuf = BUF_ZV (XBUFFER (w->buffer));
@@ -893,7 +842,7 @@ that the motion should be as close as possible to PIXELS.
   if (NILP (window))
     window = Fselected_window (Qnil);
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   CHECK_INT (pixels);
 
   selected = (EQ (window, Fselected_window (Qnil)));
@@ -907,7 +856,7 @@ that the motion should be as close as possible to PIXELS.
 
   bufpos = vmotion_pixels (window, orig, XINT (pixels), howto, &motion);
 
-  if (selected)
+  if (selected) 
     BUF_SET_PT (XBUFFER (w->buffer), bufpos);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP],
@@ -930,8 +879,6 @@ syms_of_indent (void)
 #endif
   DEFSUBR (Fvertical_motion);
   DEFSUBR (Fvertical_motion_pixels);
-
-  defsymbol (&Qcoerce, "coerce");
 }
 
 void

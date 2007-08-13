@@ -414,7 +414,8 @@ static void
 find_context (struct buffer *buf, Bufpos pt)
 {
   /* This function can GC */
-  Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
+  struct Lisp_Char_Table *mirrortab =
+    XCHAR_TABLE (buf->mirror_syntax_table);
   Lisp_Object syntaxtab = buf->syntax_table;
   Emchar prev_c, c;
   Bufpos target = pt;
@@ -768,14 +769,8 @@ syms_of_font_lock (void)
 }
 
 void
-reinit_vars_of_font_lock (void)
+vars_of_font_lock (void)
 {
   xzero (context_cache);
   xzero (bol_context_cache);
-}
-
-void
-vars_of_font_lock (void)
-{
-  reinit_vars_of_font_lock ();
 }

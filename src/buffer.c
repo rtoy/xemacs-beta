@@ -74,17 +74,12 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "extents.h"
 #include "faces.h"
-#ifdef FILE_CODING
-#include "file-coding.h"
-#endif
 #include "frame.h"
 #include "insdel.h"
-#include "lstream.h"
 #include "process.h"            /* for kill_buffer_processes */
 #ifdef REGION_CACHE_NEEDS_WORK
 #include "region-cache.h"
 #endif
-#include "select.h"     /* for select_notify_buffer_kill */
 #include "specifier.h"
 #include "syntax.h"
 #include "sysdep.h"	/* for getwd */
@@ -101,7 +96,6 @@ struct buffer *current_buffer;	/* the current buffer */
    Setting the default value also goes through the alist of buffers
    and stores into each buffer that does not say it has a local value.  */
 Lisp_Object Vbuffer_defaults;
-static void *buffer_defaults_saved_slots;
 
 /* This structure marks which slots in a buffer have corresponding
    default values in Vbuffer_defaults.
@@ -139,7 +133,6 @@ char initial_directory[MAXPATHLEN+1];
 /* This structure holds the names of symbols whose values may be
    buffer-local.  It is indexed and accessed in the same way as the above. */
 static Lisp_Object Vbuffer_local_symbols;
-static void *buffer_local_symbols_saved_slots;
 
 /* Alist of all buffer names vs the buffers. */
 /* This used to be a variable, but is no longer,
@@ -196,6 +189,7 @@ Lisp_Object QSscratch;          /* "*scratch*" */
 Lisp_Object Qdefault_directory;
 
 Lisp_Object Qkill_buffer_hook;
+Lisp_Object Qbuffer_file_name, Qbuffer_undo_list;
 
 Lisp_Object Qrename_auto_save_file;
 
@@ -226,7 +220,7 @@ make_buffer (struct buffer *buf)
 }
 
 static Lisp_Object
-mark_buffer (Lisp_Object obj)
+mark_buffer (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
   struct buffer *buf = XBUFFER (obj);
 
@@ -235,13 +229,13 @@ mark_buffer (Lisp_Object obj)
                                        undo_threshold,
                                        undo_high_threshold);
 
-#define MARKED_SLOT(x) mark_object (buf->x)
+#define MARKED_SLOT(x) ((void) (markobj (buf->x)));
 #include "bufslots.h"
 #undef MARKED_SLOT
 
-  mark_object (buf->extent_info);
+  markobj (buf->extent_info);
   if (buf->text)
-    mark_object (buf->text->line_number_cache);
+    markobj (buf->text->line_number_cache);
 
   /* Don't mark normally through the children slot.
      (Actually, in this case, it doesn't matter.)  */
@@ -282,7 +276,7 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
    because all buffers have `kill-buffer' applied to them before
    they disappear, and the children removal happens then. */
 DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
-                               mark_buffer, print_buffer, 0, 0, 0, 0,
+                               mark_buffer, print_buffer, 0, 0, 0,
 			       struct buffer);
 
 DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
@@ -567,7 +561,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
      local_var_alist is set to Qnil at the same point, in
      nuke_all_buffer_slots(). */
   reset_buffer_local_variables (b, 1);
-  b->directory = current_buffer ? current_buffer->directory : Qnil;
+  b->directory = ((current_buffer) ? current_buffer->directory : Qnil);
 
   b->last_window_start = 1;
 
@@ -1027,7 +1021,6 @@ This does not change the name of the visited file (if any).
   /* The aconses in the Vbuffer_alist are shared with frame->buffer_alist,
      so this will change it in the per-frame ordering as well. */
   Fsetcar (Frassq (buf, Vbuffer_alist), newname);
-
   if (NILP (current_buffer->filename)
       && !NILP (current_buffer->auto_save_file_name))
     call0 (Qrename_auto_save_file);
@@ -1187,7 +1180,7 @@ with `delete-process'.
       killp = call1
 	(Qyes_or_no_p,
 	 (emacs_doprnt_string_c
-	  ((const Bufbyte *) GETTEXT ("Buffer %s modified; kill anyway? "),
+	  ((CONST Bufbyte *) GETTEXT ("Buffer %s modified; kill anyway? "),
 	   Qnil, -1, XSTRING_DATA (b->name))));
       UNGCPRO;
       if (NILP (killp))
@@ -1221,13 +1214,15 @@ with `delete-process'.
 
       /* Then run the hooks.  */
       run_hook (Qkill_buffer_hook);
-
-      /* Inform the selection code that a buffer just got killed.
-	 We do this in C because (a) it's faster, and (b) it needs
-         to access data internal to select.c that can't be seen from
-         Lisp (so the Lisp code would just call into C anyway. */
-      select_notify_buffer_kill (buf);
-      
+#ifdef HAVE_X_WINDOWS
+      /* If an X selection was in this buffer, disown it.
+	 We could have done this by simply adding this function to the
+	 kill-buffer-hook, but the user might mess that up.
+	 */
+      if (EQ (Vwindow_system, Qx))
+	call0 (intern ("xselect-kill-buffer-hook"));
+      /* #### generalize me! */
+#endif /* HAVE_X_WINDOWS */
       unbind_to (speccount, Qnil);
       UNGCPRO;
       b = XBUFFER (buf);        /* Hypothetical relocating GC. */
@@ -1303,12 +1298,12 @@ with `delete-process'.
 
     kill_buffer_processes (buf);
 
-    delete_from_buffer_alist (buf);
-
     /* #### This is a problem if this buffer is in a dedicated window.
        Need to undedicate any windows of this buffer first (and delete them?)
        */
     Freplace_buffer_in_windows (buf);
+
+    delete_from_buffer_alist (buf);
 
     font_lock_buffer_was_killed (b);
 
@@ -1411,7 +1406,6 @@ buffer.  See `other-buffer' for more information.
     XCDR (prev) = XCDR (XCDR (prev));
   XCDR (lynk) = f->buffer_alist;
   f->buffer_alist = lynk;
-
   return Qnil;
 }
 
@@ -1479,6 +1473,20 @@ set_buffer_internal (struct buffer *b)
   old_buf = current_buffer;
   current_buffer = b;
   invalidate_current_column ();   /* invalidate indentation cache */
+
+#ifdef HAVE_FEP
+  if (!noninteractive && initialized)
+    {
+      extern Lisp_Object Ffep_force_on (), Ffep_force_off (), Ffep_get_mode ();
+
+      old_buf->fep_mode = Ffep_get_mode ();
+
+      if (!NILP (current_buffer->fep_mode))
+	Ffep_force_on ();
+      else
+	Ffep_force_off ();
+  }
+#endif /* HAVE_FEP */
 
   if (old_buf)
     {
@@ -1611,8 +1619,6 @@ thus, the least likely buffer for \\[switch-to-buffer] to select by default.
 If BUFFER is nil or omitted, bury the current buffer.
 Also, if BUFFER is nil or omitted, remove the current buffer from the
 selected window if it is displayed there.
-Because of this, you may need to specify (current-buffer) as
-BUFFER when calling from minibuffer.
 If BEFORE is non-nil, it specifies a buffer before which BUFFER
 will be placed, instead of being placed at the end.
 */
@@ -1792,359 +1798,9 @@ represents all the memory concerned.
 
 #endif /* MEMORY_USAGE_STATS */
 
-
-/************************************************************************/
-/*           Implement TO_EXTERNAL_FORMAT, TO_INTERNAL_FORMAT           */
-/************************************************************************/
-
-/* This implementation should probably be elsewhere, but it can't be
-   in file-coding.c since that file is only available if FILE_CODING
-   is defined. */
-#ifdef FILE_CODING
-static int
-coding_system_is_binary (Lisp_Object coding_system)
-{
-  Lisp_Coding_System *cs = XCODING_SYSTEM (coding_system);
-  return
-    (CODING_SYSTEM_TYPE (cs) == CODESYS_NO_CONVERSION &&
-     CODING_SYSTEM_EOL_TYPE (cs) == EOL_LF &&
-     EQ (CODING_SYSTEM_POST_READ_CONVERSION (cs), Qnil) &&
-     EQ (CODING_SYSTEM_PRE_WRITE_CONVERSION (cs), Qnil));
-}
-#else
-#define coding_system_is_binary(coding_system) 1
-#endif
-
-typedef struct
-{
-  Dynarr_declare (Bufbyte_dynarr *);
-} Bufbyte_dynarr_dynarr;
-
-typedef struct
-{
-  Dynarr_declare (Extbyte_dynarr *);
-} Extbyte_dynarr_dynarr;
-
-static Extbyte_dynarr_dynarr *conversion_out_dynarr_list;
-static Bufbyte_dynarr_dynarr *conversion_in_dynarr_list;
-
-static int dfc_convert_to_external_format_in_use;
-static int dfc_convert_to_internal_format_in_use;
-
-static Lisp_Object
-dfc_convert_to_external_format_reset_in_use (Lisp_Object value)
-{
-  dfc_convert_to_external_format_in_use = XINT (value);
-  return Qnil;
-}
-
-static Lisp_Object
-dfc_convert_to_internal_format_reset_in_use (Lisp_Object value)
-{
-  dfc_convert_to_internal_format_in_use = XINT (value);
-  return Qnil;
-}
-
-void
-dfc_convert_to_external_format (dfc_conversion_type source_type,
-				dfc_conversion_data *source,
-#ifdef FILE_CODING
-				Lisp_Object coding_system,
-#endif
-				dfc_conversion_type sink_type,
-				dfc_conversion_data *sink)
-{
-  int count = specpdl_depth ();
-  Extbyte_dynarr *conversion_out_dynarr;
-
-  type_checking_assert
-    (((source_type == DFC_TYPE_DATA) ||
-      (source_type == DFC_TYPE_LISP_LSTREAM && LSTREAMP (source->lisp_object)) ||
-      (source_type == DFC_TYPE_LISP_STRING && STRINGP (source->lisp_object)))
-     &&
-     ((sink_type == DFC_TYPE_DATA) ||
-      (sink_type == DFC_TYPE_LISP_LSTREAM && LSTREAMP (source->lisp_object))));
-
-  record_unwind_protect (dfc_convert_to_external_format_reset_in_use,
-			 make_int (dfc_convert_to_external_format_in_use));
-  if (Dynarr_length (conversion_out_dynarr_list) <=
-      dfc_convert_to_external_format_in_use)
-    Dynarr_add (conversion_out_dynarr_list, Dynarr_new (Extbyte));
-  conversion_out_dynarr = Dynarr_at (conversion_out_dynarr_list,
-				     dfc_convert_to_external_format_in_use);
-  dfc_convert_to_external_format_in_use++;
-  Dynarr_reset (conversion_out_dynarr);
-
-#ifdef FILE_CODING
-  coding_system = Fget_coding_system (coding_system);
-#endif
-
-  /* Here we optimize in the case where the coding system does no
-     conversion. However, we don't want to optimize in case the source
-     or sink is an lstream, since writing to an lstream can cause a
-     garbage collection, and this could be problematic if the source
-     is a lisp string. */
-  if (source_type != DFC_TYPE_LISP_LSTREAM &&
-      sink_type   != DFC_TYPE_LISP_LSTREAM &&
-      coding_system_is_binary (coding_system))
-    {
-      const Bufbyte *ptr;
-      Bytecount len;
-
-      if (source_type == DFC_TYPE_LISP_STRING)
-	{
-	  ptr = XSTRING_DATA   (source->lisp_object);
-	  len = XSTRING_LENGTH (source->lisp_object);
-	}
-      else
-	{
-	  ptr = (Bufbyte *) source->data.ptr;
-	  len = source->data.len;
-	}
-
-#ifdef MULE
-      {
-	const Bufbyte *end;
-	for (end = ptr + len; ptr < end;)
-	  {
-	    Bufbyte c =
-	      (BYTE_ASCII_P (*ptr))		   ? *ptr :
-	      (*ptr == LEADING_BYTE_CONTROL_1)	   ? (*(ptr+1) - 0x20) :
-	      (*ptr == LEADING_BYTE_LATIN_ISO8859_1) ? (*(ptr+1)) :
-	      '~';
-
-	    Dynarr_add (conversion_out_dynarr, (Extbyte) c);
-	    INC_CHARPTR (ptr);
-	  }
-	bufpos_checking_assert (ptr == end);
-      }
-#else
-      Dynarr_add_many (conversion_out_dynarr, ptr, len);
-#endif
-
-    }
-  else
-    {
-      Lisp_Object streams_to_delete[3];
-      int delete_count = 0;
-      Lisp_Object instream, outstream;
-      Lstream *reader, *writer;
-      struct gcpro gcpro1, gcpro2;
-
-      if (source_type == DFC_TYPE_LISP_LSTREAM)
-	instream = source->lisp_object;
-      else if (source_type == DFC_TYPE_DATA)
-	streams_to_delete[delete_count++] = instream =
-	  make_fixed_buffer_input_stream (source->data.ptr, source->data.len);
-      else
-	{
-	  type_checking_assert (source_type == DFC_TYPE_LISP_STRING);
-	  streams_to_delete[delete_count++] = instream =
-	    make_lisp_string_input_stream (source->lisp_object, 0, -1);
-	}
-
-      if (sink_type == DFC_TYPE_LISP_LSTREAM)
-	outstream = sink->lisp_object;
-      else
-	{
-	  type_checking_assert (sink_type == DFC_TYPE_DATA);
-	  streams_to_delete[delete_count++] = outstream =
-	    make_dynarr_output_stream
-	    ((unsigned_char_dynarr *) conversion_out_dynarr);
-	}
-
-#ifdef FILE_CODING
-      streams_to_delete[delete_count++] = outstream =
-	make_encoding_output_stream (XLSTREAM (outstream), coding_system);
-#endif
-
-      reader = XLSTREAM (instream);
-      writer = XLSTREAM (outstream);
-      /* decoding_stream will gc-protect outstream */
-      GCPRO2 (instream, outstream);
-
-      while (1)
-        {
-          ssize_t size_in_bytes;
-	  char tempbuf[1024]; /* some random amount */
-
-	  size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
-
-          if (size_in_bytes == 0)
-            break;
-	  else if (size_in_bytes < 0)
-	    error ("Error converting to external format");
-
-	  size_in_bytes = Lstream_write (writer, tempbuf, size_in_bytes);
-
-	  if (size_in_bytes <= 0)
-	    error ("Error converting to external format");
-        }
-
-      /* Closing writer will close any stream at the other end of writer. */
-      Lstream_close (writer);
-      Lstream_close (reader);
-      UNGCPRO;
-
-      /* The idea is that this function will create no garbage. */
-      while (delete_count)
-	Lstream_delete (XLSTREAM (streams_to_delete [--delete_count]));
-    }
-
-  unbind_to (count, Qnil);
-
-  if (sink_type != DFC_TYPE_LISP_LSTREAM)
-    {
-      sink->data.len = Dynarr_length (conversion_out_dynarr);
-      Dynarr_add (conversion_out_dynarr, 0);
-      sink->data.ptr = Dynarr_atp (conversion_out_dynarr, 0);
-    }
-}
-
-void
-dfc_convert_to_internal_format (dfc_conversion_type source_type,
-				dfc_conversion_data *source,
-#ifdef FILE_CODING
-				Lisp_Object coding_system,
-#endif
-				dfc_conversion_type sink_type,
-				dfc_conversion_data *sink)
-{
-  int count = specpdl_depth ();
-  Bufbyte_dynarr *conversion_in_dynarr;
-
-  type_checking_assert
-    ((source_type == DFC_TYPE_DATA ||
-      source_type == DFC_TYPE_LISP_LSTREAM)
-    &&
-    (sink_type   == DFC_TYPE_DATA ||
-     sink_type   == DFC_TYPE_LISP_LSTREAM));
-
-  record_unwind_protect (dfc_convert_to_internal_format_reset_in_use,
-			 make_int (dfc_convert_to_internal_format_in_use));
-  if (Dynarr_length (conversion_in_dynarr_list) <=
-      dfc_convert_to_internal_format_in_use)
-    Dynarr_add (conversion_in_dynarr_list, Dynarr_new (Bufbyte));
-  conversion_in_dynarr = Dynarr_at (conversion_in_dynarr_list,
-				    dfc_convert_to_internal_format_in_use);
-  dfc_convert_to_internal_format_in_use++;
-  Dynarr_reset (conversion_in_dynarr);
-
-#ifdef FILE_CODING
-  coding_system = Fget_coding_system (coding_system);
-#endif
-
-  if (source_type != DFC_TYPE_LISP_LSTREAM &&
-      sink_type   != DFC_TYPE_LISP_LSTREAM &&
-      coding_system_is_binary (coding_system))
-    {
-#ifdef MULE
-      const Bufbyte *ptr = (const Bufbyte *) source->data.ptr;
-      Bytecount len = source->data.len;
-      const Bufbyte *end = ptr + len;
-
-      for (; ptr < end; ptr++)
-        {
-          Extbyte c = *ptr;
-
-	  if (BYTE_ASCII_P (c))
-	    Dynarr_add (conversion_in_dynarr, c);
-	  else if (BYTE_C1_P (c))
-	    {
-	      Dynarr_add (conversion_in_dynarr, LEADING_BYTE_CONTROL_1);
-	      Dynarr_add (conversion_in_dynarr, c + 0x20);
-	    }
-	  else
-	    {
-	      Dynarr_add (conversion_in_dynarr, LEADING_BYTE_LATIN_ISO8859_1);
-	      Dynarr_add (conversion_in_dynarr, c);
-	    }
-        }
-#else
-      Dynarr_add_many (conversion_in_dynarr, source->data.ptr, source->data.len);
-#endif
-    }
-  else
-    {
-      Lisp_Object streams_to_delete[3];
-      int delete_count = 0;
-      Lisp_Object instream, outstream;
-      Lstream *reader, *writer;
-      struct gcpro gcpro1, gcpro2;
-
-      if (source_type == DFC_TYPE_LISP_LSTREAM)
-	instream = source->lisp_object;
-      else
-	{
-	  type_checking_assert (source_type == DFC_TYPE_DATA);
-	  streams_to_delete[delete_count++] = instream =
-	    make_fixed_buffer_input_stream (source->data.ptr, source->data.len);
-	}
-
-      if (sink_type == DFC_TYPE_LISP_LSTREAM)
-	outstream = sink->lisp_object;
-      else
-	{
-	  type_checking_assert (sink_type == DFC_TYPE_DATA);
-	  streams_to_delete[delete_count++] = outstream =
-	    make_dynarr_output_stream
-	    ((unsigned_char_dynarr *) conversion_in_dynarr);
-	}
-
-#ifdef FILE_CODING
-      streams_to_delete[delete_count++] = outstream =
-	make_decoding_output_stream (XLSTREAM (outstream), coding_system);
-#endif
-
-      reader = XLSTREAM (instream);
-      writer = XLSTREAM (outstream);
-      /* outstream will gc-protect its sink stream, if necessary */
-      GCPRO2 (instream, outstream);
-
-      while (1)
-        {
-          ssize_t size_in_bytes;
-	  char tempbuf[1024]; /* some random amount */
-
-	  size_in_bytes = Lstream_read (reader, tempbuf, sizeof (tempbuf));
-
-          if (size_in_bytes == 0)
-            break;
-	  else if (size_in_bytes < 0)
-	    error ("Error converting to internal format");
-
-	  size_in_bytes = Lstream_write (writer, tempbuf, size_in_bytes);
-
-	  if (size_in_bytes <= 0)
-	    error ("Error converting to internal format");
-        }
-
-      /* Closing writer will close any stream at the other end of writer. */
-      Lstream_close (writer);
-      Lstream_close (reader);
-      UNGCPRO;
-
-      /* The idea is that this function will create no garbage. */
-      while (delete_count)
-	Lstream_delete (XLSTREAM (streams_to_delete [--delete_count]));
-    }
-
-  unbind_to (count, Qnil);
-
-  if (sink_type != DFC_TYPE_LISP_LSTREAM)
-    {
-      sink->data.len = Dynarr_length (conversion_in_dynarr);
-      Dynarr_add (conversion_in_dynarr, 0); /* remember to zero-terminate! */
-      sink->data.ptr = Dynarr_atp (conversion_in_dynarr, 0);
-    }
-}
-
-
 void
 syms_of_buffer (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (buffer);
-
   defsymbol (&Qbuffer_live_p, "buffer-live-p");
   defsymbol (&Qbuffer_or_string_p, "buffer-or-string-p");
   defsymbol (&Qmode_class, "mode-class");
@@ -2160,6 +1816,8 @@ syms_of_buffer (void)
   defsymbol (&Qbefore_change_function, "before-change-function");
   defsymbol (&Qafter_change_function, "after-change-function");
 
+  defsymbol (&Qbuffer_file_name, "buffer-file-name");
+  defsymbol (&Qbuffer_undo_list, "buffer-undo-list");
   defsymbol (&Qdefault_directory, "default-directory");
 
   defsymbol (&Qget_file_buffer, "get-file-buffer");
@@ -2212,31 +1870,20 @@ syms_of_buffer (void)
 	    "Attempt to modify a protected field", Qerror);
 }
 
-void
-reinit_vars_of_buffer (void)
-{
-  conversion_in_dynarr_list = Dynarr_new2 (Bufbyte_dynarr_dynarr,
-					   Bufbyte_dynarr *);
-  conversion_out_dynarr_list = Dynarr_new2 (Extbyte_dynarr_dynarr,
-					    Extbyte_dynarr *);
-
-  staticpro_nodump (&Vbuffer_alist);
-  Vbuffer_alist = Qnil;
-  current_buffer = 0;
-}
-
 /* initialize the buffer routines */
 void
 vars_of_buffer (void)
 {
   /* This function can GC */
-  reinit_vars_of_buffer ();
-
   staticpro (&QSFundamental);
   staticpro (&QSscratch);
+  staticpro (&Vbuffer_alist);
 
-  QSFundamental = build_string ("Fundamental");
-  QSscratch = build_string (DEFER_GETTEXT ("*scratch*"));
+  QSFundamental = Fpurecopy (build_string ("Fundamental"));
+  QSscratch = Fpurecopy (build_string (DEFER_GETTEXT ("*scratch*")));
+
+  Vbuffer_alist = Qnil;
+  current_buffer = 0;
 
   DEFVAR_LISP ("change-major-mode-hook", &Vchange_major_mode_hook /*
 List of hooks to be run before killing local variables in a buffer.
@@ -2371,27 +2018,15 @@ List of functions called with no args to query before killing a buffer.
 
 /* Renamed from DEFVAR_PER_BUFFER because FSFmacs D_P_B takes
    a bogus extra arg, which confuses an otherwise identical make-docfile.c */
+
+/* Declaring this stuff as const produces 'Cannot reinitialize' messages
+   from SunPro C's fix-and-continue feature (a way neato feature that
+   makes debugging unbelievably more bearable) */
 #define DEFVAR_BUFFER_LOCAL_1(lname, field_name, forward_type, magicfun) do {	\
-  static const struct symbol_value_forward I_hate_C =				\
-  { /* struct symbol_value_forward */						\
-    { /* struct symbol_value_magic */						\
-      { /* struct lcrecord_header */						\
-	{ /* struct lrecord_header */						\
-	  lrecord_type_symbol_value_forward, /* lrecord_type_index */		\
-	  1, /* mark bit */							\
-	  1, /* c_readonly bit */						\
-	  1  /* lisp_readonly bit */						\
-	},									\
-	0, /* next */								\
-	0, /* uid  */								\
-	0  /* free */								\
-      },									\
-      &(buffer_local_flags.field_name),						\
-      forward_type								\
-    },										\
-    magicfun									\
-  };										\
-										\
+  static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
+    = { { { symbol_value_forward_lheader_initializer,				\
+	    (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
+	  forward_type }, magicfun };						\
   {										\
     int offset = ((char *)symbol_value_forward_forward (&I_hate_C) -		\
 		  (char *)&buffer_local_flags);					\
@@ -2428,21 +2063,21 @@ nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap)
   b->indirect_children = Qnil;
   b->own_text.line_number_cache = Qnil;
 
-#define MARKED_SLOT(x)	b->x = zap
+#define MARKED_SLOT(x)	b->x = (zap);
 #include "bufslots.h"
 #undef MARKED_SLOT
 }
 
-static void
-common_init_complex_vars_of_buffer (void)
+void
+complex_vars_of_buffer (void)
 {
   /* Make sure all markable slots in buffer_defaults
      are initialized reasonably, so mark_buffer won't choke. */
   struct buffer *defs = alloc_lcrecord_type (struct buffer, &lrecord_buffer);
   struct buffer *syms = alloc_lcrecord_type (struct buffer, &lrecord_buffer);
 
-  staticpro_nodump (&Vbuffer_defaults);
-  staticpro_nodump (&Vbuffer_local_symbols);
+  staticpro (&Vbuffer_defaults);
+  staticpro (&Vbuffer_local_symbols);
   XSETBUFFER (Vbuffer_defaults, defs);
   XSETBUFFER (Vbuffer_local_symbols, syms);
 
@@ -2558,56 +2193,10 @@ common_init_complex_vars_of_buffer (void)
     buffer_local_flags.buffer_file_coding_system  = make_int (1<<14);
 #endif
 
-    /* #### Warning: 1<<31 is the largest number currently allowable
+    /* #### Warning: 1<<28 is the largest number currently allowable
        due to the XINT() handling of this value.  With some
        rearrangement you can get 3 more bits. */
   }
-}
-
-#define BUFFER_SLOTS_SIZE (offsetof (struct buffer, BUFFER_SLOTS_LAST_NAME) - offsetof (struct buffer, BUFFER_SLOTS_FIRST_NAME) + sizeof (Lisp_Object))
-#define BUFFER_SLOTS_COUNT (BUFFER_SLOTS_SIZE / sizeof (Lisp_Object))
-
-void
-reinit_complex_vars_of_buffer (void)
-{
-  struct buffer *defs, *syms;
-
-  common_init_complex_vars_of_buffer ();
-
-  defs = XBUFFER (Vbuffer_defaults);
-  syms = XBUFFER (Vbuffer_local_symbols);
-  memcpy (&defs->BUFFER_SLOTS_FIRST_NAME,
-	  buffer_defaults_saved_slots,
-	  BUFFER_SLOTS_SIZE);
-  memcpy (&syms->BUFFER_SLOTS_FIRST_NAME,
-	  buffer_local_symbols_saved_slots,
-	  BUFFER_SLOTS_SIZE);
-}
-
-
-static const struct lrecord_description buffer_slots_description_1[] = {
-  { XD_LISP_OBJECT_ARRAY, 0, BUFFER_SLOTS_COUNT },
-  { XD_END }
-};
-
-static const struct struct_description buffer_slots_description = {
-  BUFFER_SLOTS_SIZE,
-  buffer_slots_description_1
-};
-
-void
-complex_vars_of_buffer (void)
-{
-  struct buffer *defs, *syms;
-
-  common_init_complex_vars_of_buffer ();
-
-  defs = XBUFFER (Vbuffer_defaults);
-  syms = XBUFFER (Vbuffer_local_symbols);
-  buffer_defaults_saved_slots      = &defs->BUFFER_SLOTS_FIRST_NAME;
-  buffer_local_symbols_saved_slots = &syms->BUFFER_SLOTS_FIRST_NAME;
-  dumpstruct (&buffer_defaults_saved_slots,      &buffer_slots_description);
-  dumpstruct (&buffer_local_symbols_saved_slots, &buffer_slots_description);
 
   DEFVAR_BUFFER_DEFAULTS ("default-modeline-format", modeline_format /*
 Default value of `modeline-format' for buffers that don't override it.
@@ -2660,31 +2249,31 @@ This is the same as (default-value 'case-fold-search).
   DEFVAR_BUFFER_LOCAL ("modeline-format", modeline_format /*
 Template for displaying modeline for current buffer.
 Each buffer has its own value of this variable.
-Value may be a string, symbol, glyph, generic specifier, list or cons cell.
-For a symbol, its value is processed (but it is ignored if t or nil).
+Value may be a string, a symbol or a list or cons cell.
+For a symbol, its value is used (but it is ignored if t or nil).
  A string appearing directly as the value of a symbol is processed verbatim
  in that the %-constructs below are not recognized.
 For a glyph, it is inserted as is.
-For a generic specifier (i.e. a specifier of type `generic'), its instance
- is computed in the current window using the equivalent of `specifier-instance'
- and the value is processed.
 For a list whose car is a symbol, the symbol's value is taken,
  and if that is non-nil, the cadr of the list is processed recursively.
  Otherwise, the caddr of the list (if there is one) is processed.
 For a list whose car is a string or list, each element is processed
  recursively and the results are effectively concatenated.
 For a list whose car is an integer, the cdr of the list is processed
- and padded (if the number is positive) or truncated (if negative)
- to the width specified by that number.
+  and padded (if the number is positive) or truncated (if negative)
+  to the width specified by that number.
 For a list whose car is an extent, the cdr of the list is processed
  normally but the results are displayed using the face of the
  extent, and mouse clicks over this section are processed using the
  keymap of the extent. (In addition, if the extent has a help-echo
  property, that string will be echoed when the mouse moves over this
- section.) If extents are nested, all keymaps are properly consulted
- when processing mouse clicks, but multiple faces are not correctly
- merged (only the first face is used), and lists of faces are not
- correctly handled.  See `generated-modeline-string' for more information.
+ section.) See `generated-modeline-string' for more information.
+For a list whose car is a face, the cdr of the list is processed
+ normally but the results will be displayed using the face in the car.
+For a list whose car is a keymap, the cdr of the list is processed
+ normally but the keymap will apply for mouse clicks over the results,
+ in addition to `modeline-map'.  Nested keymap specifications are
+ handled properly.
 A string is printed verbatim in the modeline except for %-constructs:
   (%-constructs are processed when the string is the entire modeline-format
    or when it is found in a cons-cell or a list)
@@ -3099,49 +2688,39 @@ handled:
   }
 }
 
-#ifndef WIN32_NATIVE
 /* Is PWD another name for `.' ? */
 static int
-directory_is_current_directory (Extbyte *pwd)
+directory_is_current_directory (char *pwd)
 {
   Bufbyte *pwd_internal;
-  Bytecount pwd_internal_len;
   struct stat dotstat, pwdstat;
 
-  TO_INTERNAL_FORMAT (DATA, (pwd, strlen ((char *)pwd) + 1),
-		      ALLOCA, (pwd_internal, pwd_internal_len),
-		      Qfile_name);
+  GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA (pwd, pwd_internal);
 
   return (IS_DIRECTORY_SEP (*pwd_internal)
 	  && stat ((char *) pwd_internal, &pwdstat) == 0
 	  && stat (".", &dotstat) == 0
 	  && dotstat.st_ino == pwdstat.st_ino
 	  && dotstat.st_dev == pwdstat.st_dev
-	  && pwd_internal_len < MAXPATHLEN);
+	  && (int) strlen ((char *) pwd_internal) < MAXPATHLEN);
 }
-#endif
 
 void
 init_initial_directory (void)
 {
   /* This function can GC */
 
-#ifndef WIN32_NATIVE
-  Extbyte *pwd;
-#endif
+  char *pwd;
 
   initial_directory[0] = 0;
 
   /* If PWD is accurate, use it instead of calling getcwd.  This is faster
      when PWD is right, and may avoid a fatal error.  */
-#ifndef WIN32_NATIVE
-  if ((pwd = (Extbyte *) getenv ("PWD")) != NULL
+  if ((pwd = getenv ("PWD")) != NULL
       && directory_is_current_directory (pwd))
-    strcpy (initial_directory, (char *) pwd);
-  else
-#endif
-    if (getcwd (initial_directory, MAXPATHLEN) == NULL)
-      fatal ("`getcwd' failed: %s\n", strerror (errno));
+    strcpy (initial_directory, pwd);
+  else if (getcwd (initial_directory, MAXPATHLEN) == NULL)
+    fatal ("`getcwd' failed: %s\n", strerror (errno));
 
   /* Make sure pwd is DIRECTORY_SEP-terminated.
      Maybe this should really use some standard subroutine
@@ -3156,8 +2735,16 @@ init_initial_directory (void)
       }
   }
 
-#ifdef CORRECT_DIR_SEPS
-  CORRECT_DIR_SEPS (initial_directory);
+  /* XEmacs change: store buffer's default directory
+     using preferred (i.e. as defined at compile-time)
+     directory separator. --marcpa */
+#ifdef DOS_NT
+#define CORRECT_DIR_SEPS(s) \
+  do { if ('/' == DIRECTORY_SEP) dostounix_filename (s); \
+       else unixtodos_filename (s); \
+  } while (0)
+
+  CORRECT_DIR_SEPS(initial_directory);
 #endif
 }
 
@@ -3169,7 +2756,7 @@ init_buffer (void)
   Fset_buffer (Fget_buffer_create (QSscratch));
 
   current_buffer->directory =
-    build_ext_string (initial_directory, Qfile_name);
+    build_ext_string (initial_directory, FORMAT_FILENAME);
 
 #if 0 /* FSFmacs */
   /* #### is this correct? */

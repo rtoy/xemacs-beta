@@ -794,36 +794,29 @@ If optional argument HACK-HOMEDIR is non-nil, then this also substitutes
 	  (setq tail (cdr tail))))
       (when hack-homedir
 	;; Compute and save the abbreviated homedir name.
-	;; We defer computing this until the first time it's needed,
-	;; to give time for directory-abbrev-alist to be set properly.
-	;; We include the separator at the end, to avoid spurious
-	;; matches such as `/usr/foobar' when the home dir is
-	;; `/usr/foo'.
+	;; We defer computing this until the first time it's needed, to
+	;; give time for directory-abbrev-alist to be set properly.
+	;; We include a slash at the end, to avoid spurious matches
+	;; such as `/usr/foobar' when the home dir is `/usr/foo'.
 	(or abbreviated-home-dir
 	    (setq abbreviated-home-dir
 		  (let ((abbreviated-home-dir "$foo"))
-		    (concat "\\`"
-			    (regexp-quote
-			     (abbreviate-file-name (expand-file-name "~")))
-			    "\\("
-			    (regexp-quote (string directory-sep-char))
-			    "\\|\\'\\)"))))
+		    (concat "\\`" (regexp-quote (abbreviate-file-name
+						 (expand-file-name "~")))
+			    "\\(/\\|\\'\\)"))))
 	;; If FILENAME starts with the abbreviated homedir,
 	;; make it start with `~' instead.
 	(if (and (string-match abbreviated-home-dir filename)
 		 ;; If the home dir is just /, don't change it.
-		 (not (and (= (match-end 0) 1)
-			   (= (aref filename 0) directory-sep-char)))
-		 (not (and (eq system-type 'windows-nt)
+		 (not (and (= (match-end 0) 1) ;#### unix-specific
+			   (= (aref filename 0) ?/)))
+		 (not (and (memq system-type '(ms-dos windows-nt))
 			   (save-match-data
-			     (string-match (concat "\\`[a-zA-Z]:"
-						   (regexp-quote
-						    (string directory-sep-char))
-						   "\\'")
-					   filename)))))
+			     (string-match "^[a-zA-Z]:/$" filename)))))
 	    (setq filename
 		  (concat "~"
-			  (match-string 1 filename)
+			  (substring filename
+				     (match-beginning 1) (match-end 1))
 			  (substring filename (match-end 0))))))
       filename)))
 
@@ -1028,8 +1021,7 @@ If RAWFILE is non-nil, the file is read literally."
 		  (setq buf (current-buffer))))
 	    (t
 	     (kill-buffer buf)
-	     (signal (car data) (cdr data))))
-	))
+	     (signal (car data) (cdr data))))))
       buf)))
 
 ;; FSF has `insert-file-literally' and `find-file-literally' here.
@@ -1165,7 +1157,6 @@ run `normal-mode' explicitly."
     ("\\.m\\(?:[mes]\\|an\\)\\'" . nroff-mode)
     ("\\.icn\\'" . icon-mode)
     ("\\.\\(?:[ckz]?sh\\|shar\\)\\'" . sh-mode)
-    ("\\.pro\\'" . idlwave-mode)
     ;; #### Unix-specific!
     ("/\\.\\(?:bash_\\|z\\)?\\(profile\\|login\\|logout\\)\\'" . sh-mode)
     ("/\\.\\(?:[ckz]sh\\|bash\\|tcsh\\|es\\|xinit\\|startx\\)rc\\'" . sh-mode)
@@ -1194,9 +1185,7 @@ run `normal-mode' explicitly."
     ("\\.lex\\'" . c-mode)
     ("\\.m\\'" . objc-mode)
     ("\\.oak\\'" . scheme-mode)
-    ("\\.[sj]?html?\\'" . html-mode)
-    ("\\.jsp\\'" . html-mode)
-    ("\\.xml\\'" . xml-mode)
+    ("\\.s?html?\\'" . html-mode)
     ("\\.htm?l?3\\'" . html3-mode)
     ("\\.\\(?:sgml?\\|dtd\\)\\'" . sgml-mode)
     ("\\.c?ps\\'" . postscript-mode)
@@ -1206,7 +1195,7 @@ run `normal-mode' explicitly."
     ("\\.m4\\'" . autoconf-mode)
     ("configure\\.in\\'" . autoconf-mode)
     ("\\.ml\\'" . lisp-mode)
-    ("\\.ma?ke?\\'" . makefile-mode)
+    ("\\.ma?k\\'" . makefile-mode)
     ("[Mm]akefile\\(\\.\\|\\'\\)" . makefile-mode)
     ("\\.X\\(defaults\\|environment\\|resources\\|modmap\\)\\'" . xrdb-mode)
     ;; #### The following three are Unix-specific (but do we care?)
@@ -1232,9 +1221,7 @@ REGEXP and search the list again for another match.")
     ("python" . python-mode)
     ("awk\\b" . awk-mode)
     ("rexx"   . rexx-mode)
-    ("scm\\|guile" . scheme-mode)
-    ("emacs" . emacs-lisp-mode)
-    ("make" . makefile-mode)
+    ("scm"    . scheme-mode)
     ("^:"     . sh-mode))
   "Alist mapping interpreter names to major modes.
 This alist is used to guess the major mode of a file based on the
@@ -1283,7 +1270,7 @@ When checking `inhibit-first-line-modes-regexps', we first discard
 from the end of the file name anything that matches one of these regexps.")
 
 (defvar user-init-file
-  nil ; set by command-line
+  "" ; set by command-line
   "File name including directory of user's initialization file.")
 
 (defun set-auto-mode (&optional just-from-file-name)
@@ -1322,15 +1309,9 @@ and we don't even do that unless it would come from the file name."
             (setq keep-going nil)
             (let ((alist auto-mode-alist)
                   (mode nil))
-
               ;; Find first matching alist entry.
-
-	      ;; #### This is incorrect. In NT, case sensitivity is a volume
-	      ;; property. For instance, NFS mounts *are* case sensitive.
-	      ;; Need internal function (file-name-case-sensitive f), F
-	      ;; being file or directory name. - kkm
 	      (let ((case-fold-search
-		     (eq system-type 'windows-nt)))
+		     (memq system-type '(windows-nt))))
 		(while (and (not mode) alist)
 		  (if (string-match (car (car alist)) name)
 		      (if (and (consp (cdr (car alist)))
@@ -1542,7 +1523,7 @@ for current buffer."
 	(cond ((not (search-forward "-*-" end t))
 	       ;; doesn't have one.
 	       (setq force t))
-	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+?\\)\\([ \t]*-\\*-\\)")
+	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+\\)\\([ \t]*-\\*-\\)")
 	       ;; Antiquated form: "-*- ModeName -*-".
 	       (setq result
 		     (list (cons 'mode
@@ -1834,7 +1815,7 @@ with a prefix argument, you will be prompted for the coding system."
 					  (buffer-local-variables)))
 			       nil nil (buffer-name)))
 	 t
-	 (if (and current-prefix-arg (featurep 'file-coding))
+	 (if (and current-prefix-arg (featurep 'mule))
 	     (read-coding-system "Coding system: "))))
   (and (eq (current-buffer) mouse-grabbed-buffer)
        (error "Can't write minibuffer window"))
@@ -1888,7 +1869,7 @@ of the new file to agree with the old modes."
 			(let ((delete-old-versions
 			       ;; If have old versions to maybe delete,
 			       ;; ask the user to confirm now, before doing anything.
-			       ;; But don't actually delete till later.
+			       ;; But don't actually delete til later.
 			       (and targets
 				    (or (eq delete-old-versions t)
 					(eq delete-old-versions nil))
@@ -2006,13 +1987,21 @@ the value is \"\"."
 (defun make-backup-file-name (file)
   "Create the non-numeric backup file name for FILE.
 This is a separate function so you can redefine it for customization."
-    (concat file "~"))
+  (if (eq system-type 'ms-dos)
+      (let ((fn (file-name-nondirectory file)))
+	(concat (file-name-directory file)
+		(if (string-match "\\([^.]*\\)\\(\\..*\\)?" fn)
+		    (substring fn 0 (match-end 1)))
+		".bak"))
+    (concat file "~")))
 
 (defun backup-file-name-p (file)
   "Return non-nil if FILE is a backup file name (numeric or not).
 This is a separate function so you can redefine it for customization.
 You may need to redefine `file-name-sans-versions' as well."
-  (string-match "~\\'" file))
+  (if (eq system-type 'ms-dos)
+      (string-match "\\.bak\\'" file)
+      (string-match "~\\'" file)))
 
 ;; This is used in various files.
 ;; The usage of bv-length is not very clean,
@@ -2083,15 +2072,16 @@ If the value is nil, don't make a backup."
   "Convert FILENAME to be relative to DIRECTORY (default: default-directory).
 This function returns a relative file name which is equivalent to FILENAME
 when used with that default directory as the default.
-If this is impossible (which can happen on MS Windows when the file name
-and directory use different drive names) then it returns FILENAME."
+If this is impossible (which can happen on MSDOS and Windows
+when the file name and directory use different drive names)
+then it returns FILENAME."
   (save-match-data
     (let ((fname (expand-file-name filename)))
       (setq directory (file-name-as-directory
 		       (expand-file-name (or directory default-directory))))
       ;; On Microsoft OSes, if FILENAME and DIRECTORY have different
       ;; drive names, they can't be relative, so return the absolute name.
-      (if (and (eq system-type 'windows-nt)
+      (if (and (memq system-type '(ms-dos windows-nt))
 	       (not (string-equal (substring fname  0 2)
 				  (substring directory 0 2))))
 	  filename
@@ -2221,21 +2211,19 @@ After saving the buffer, run `after-save-hook'."
 	      (error "Save not confirmed"))
 	  (save-restriction
 	    (widen)
-
-	    ;; Add final newline if required.  See `require-final-newline'.
-	    (when (and (not (eq (char-before (point-max)) ?\n)) ; common case
-		       (char-before (point-max))                ; empty buffer?
-		       (not (and (eq selective-display t)
-				 (eq (char-before (point-max)) ?\r)))
-		       (or (eq require-final-newline t)
-			   (and require-final-newline
-				(y-or-n-p
-				 (format "Buffer %s does not end in newline.  Add one? "
-					 (buffer-name))))))
-	      (save-excursion
-		(goto-char (point-max))
-		(insert ?\n)))
-
+	    (and (> (point-max) 1)
+		 (/= (char-after (1- (point-max))) ?\n)
+		 (not (and (eq selective-display t)
+			   (= (char-after (1- (point-max))) ?\r)))
+		 (or (eq require-final-newline t)
+		     (and require-final-newline
+			  (y-or-n-p
+			   (format "Buffer %s does not end in newline.  Add one? "
+				   (buffer-name)))))
+		 (save-excursion
+		   (goto-char (point-max))
+		   (insert ?\n)))
+	    ;;
 	    ;; Run the write-file-hooks until one returns non-null.
 	    ;; Bind after-save-hook to nil while running the
 	    ;; write-file-hooks so that if this function is called
@@ -2461,7 +2449,7 @@ Optional second argument EXITING means ask about certain non-file buffers
 			       (recursive-edit)
 			       ;; Return nil to ask about BUF again.
 			       nil)
-		       "%_Display Buffer"))))
+		       "display the current buffer"))))
 	 (abbrevs-done
 	  (and save-abbrevs abbrevs-changed
 	       (progn
@@ -2692,7 +2680,7 @@ non-nil, it is called instead of rereading visited file contents."
 				      file-name)))
 	     (run-hooks 'before-revert-hook)
 	     ;; If file was backed up but has changed since,
-	     ;; we should make another backup.
+	     ;; we shd make another backup.
 	     (and (not auto-save-p)
 		  (not (verify-visited-file-modtime (current-buffer)))
 		  (setq buffer-backed-up nil))
@@ -2763,12 +2751,11 @@ non-nil, it is called instead of rereading visited file contents."
 		 (not (file-exists-p file-name)))
 	       (error "Auto-save file %s not current" file-name))
 	      ((save-window-excursion
-		 (if (not (eq system-type 'windows-nt))
-		     (with-output-to-temp-buffer "*Directory*"
-		       (buffer-disable-undo standard-output)
-		       (call-process "ls" nil standard-output nil
-				     (if (file-symlink-p file) "-lL" "-l")
-				     file file-name)))
+		 (with-output-to-temp-buffer "*Directory*"
+		   (buffer-disable-undo standard-output)
+		   (call-process "ls" nil standard-output nil
+				 (if (file-symlink-p file) "-lL" "-l")
+				 file file-name))
 		 (yes-or-no-p (format "Recover auto save file %s? " file-name)))
 	       (switch-to-buffer (find-file-noselect file t))
 	       (let ((buffer-read-only nil))
@@ -3143,8 +3130,6 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 	(funcall handler 'insert-directory file switches
 		 wildcard full-directory-p)
       (cond
-       ;; #### mswindows-insert-directory should be called
-       ;; nt-insert-directory - kkm.
        ((and (fboundp 'mswindows-insert-directory)
 	     (eq system-type 'windows-nt))
 	(mswindows-insert-directory file switches wildcard full-directory-p))

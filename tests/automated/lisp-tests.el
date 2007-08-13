@@ -229,8 +229,6 @@
 (Assert (= (+ 1.0 1) 2.0))
 (Assert (= (+ 1.0 1 1) 3.0))
 (Assert (= (+ 1 1 1.0) 3.0))
-(Assert (eq (1+ most-positive-fixnum) most-negative-fixnum))
-(Assert (eq (+ most-positive-fixnum 1) most-negative-fixnum))
 
 ;; Test `-'
 (Check-Error wrong-number-of-arguments (-))
@@ -254,9 +252,6 @@
 
 (Assert (= (- 1.5 1) .5))
 (Assert (= (- 1 1.5) (- .5)))
-
-(Assert (eq (1- most-negative-fixnum) most-positive-fixnum))
-(Assert (eq (- most-negative-fixnum 1) most-positive-fixnum))
 
 ;; Test `/'
 
@@ -755,29 +750,6 @@
 (Assert (equal (mapconcat #'identity '("1" "2" "3") "|") "1|2|3"))
 (Assert (equal (mapconcat #'identity ["1" "2" "3"]  "|") "1|2|3"))
 
-;; The following 2 functions used to crash XEmacs via mapcar1().
-;; We don't test the actual values of the mapcar, since they're undefined.
-(Assert 
- (let ((x (list (cons 1 1) (cons 2 2) (cons 3 3))))
-   (mapcar
-    (lambda (y)
-      "Devious evil mapping function"
-      (when (eq (car y) 2) ; go out onto a limb
-	(setcdr x nil)     ; cut it off behind us
-	(garbage-collect)) ; are we riding a magic broomstick?
-      (car y))             ; sorry, hard landing
-    x)))
-
-(Assert 
- (let ((x (list (cons 1 1) (cons 2 2) (cons 3 3))))
-   (mapcar
-    (lambda (y)
-      "Devious evil mapping function"
-      (when (eq (car y) 1)
-	(setcdr (cdr x) 42)) ; drop a brick wall onto the freeway
-      (car y))
-    x)))
-
 ;;-----------------------------------------------------
 ;; Test vector functions
 ;;-----------------------------------------------------
@@ -813,128 +785,3 @@
  (defun test-emacs-buffer-local-parameter (test-emacs-buffer-local-variable)
    (setq test-emacs-buffer-local-variable nil)))
 (test-emacs-buffer-local-parameter nil)
-
-;;-----------------------------------------------------
-;; Test split-string
-;;-----------------------------------------------------
-;; Hrvoje didn't like these tests so I'm disabling them for now. -sb
-;(Assert (equal (split-string "foo" "") '("" "f" "o" "o" "")))
-;(Assert (equal (split-string "foo" "^") '("" "foo")))
-;(Assert (equal (split-string "foo" "$") '("foo" "")))
-(Assert (equal (split-string "foo,bar" ",") '("foo" "bar")))
-(Assert (equal (split-string ",foo,bar," ",") '("" "foo" "bar" "")))
-(Assert (equal (split-string ",foo,bar," "^,") '("" "foo,bar,")))
-(Assert (equal (split-string ",foo,bar," ",$") '(",foo,bar" "")))
-(Assert (equal (split-string ",foo,,bar," ",") '("" "foo" "" "bar" "")))
-(Assert (equal (split-string "foo,,,bar" ",") '("foo" "" "" "bar")))
-(Assert (equal (split-string "foo,,bar,," ",") '("foo" "" "bar" "" "")))
-(Assert (equal (split-string "foo,,bar" ",+") '("foo" "bar")))
-(Assert (equal (split-string ",foo,,bar," ",+") '("" "foo" "bar" "")))
-
-;;-----------------------------------------------------
-;; Test near-text buffer functions.
-;;-----------------------------------------------------
-(with-temp-buffer
-  (erase-buffer)
-  (Assert (eq (char-before) nil))
-  (Assert (eq (char-before (point)) nil))
-  (Assert (eq (char-before (point-marker)) nil))
-  (Assert (eq (char-before (point) (current-buffer)) nil))
-  (Assert (eq (char-before (point-marker) (current-buffer)) nil))
-  (Assert (eq (char-after) nil))
-  (Assert (eq (char-after (point)) nil))
-  (Assert (eq (char-after (point-marker)) nil))
-  (Assert (eq (char-after (point) (current-buffer)) nil))
-  (Assert (eq (char-after (point-marker) (current-buffer)) nil))
-  (Assert (eq (preceding-char) 0))
-  (Assert (eq (preceding-char (current-buffer)) 0))
-  (Assert (eq (following-char) 0))
-  (Assert (eq (following-char (current-buffer)) 0))
-  (insert "foobar")
-  (Assert (eq (char-before) ?r))
-  (Assert (eq (char-after) nil))
-  (Assert (eq (preceding-char) ?r))
-  (Assert (eq (following-char) 0))
-  (goto-char (point-min))
-  (Assert (eq (char-before) nil))
-  (Assert (eq (char-after) ?f))
-  (Assert (eq (preceding-char) 0))
-  (Assert (eq (following-char) ?f))
-  )
-
-;;-----------------------------------------------------
-;; Test plist manipulation functions.
-;;-----------------------------------------------------
-(let ((sym (make-symbol "test-symbol")))
-  (Assert (eq t (get* sym t t)))
-  (Assert (eq t (get  sym t t)))
-  (Assert (eq t (getf nil t t)))
-  (Assert (eq t (plist-get nil t t)))
-  (put sym 'bar 'baz)
-  (Assert (eq 'baz (get sym 'bar)))
-  (Assert (eq 'baz (getf '(bar baz) 'bar)))
-  (Assert (eq 'baz (getf (symbol-plist sym) 'bar)))
-  (Assert (eq 2 (getf '(1 2) 1)))
-  (Assert (eq 4 (put sym 3 4)))
-  (Assert (eq 4 (get sym 3)))
-  (Assert (eq t (remprop sym 3)))
-  (Assert (eq nil (remprop sym 3)))
-  (Assert (eq 5 (get sym 3 5)))
-  )
-
-(loop for obj in
-  (list (make-symbol "test-symbol")
-	"test-string"
-	(make-extent nil nil nil)
-	(make-face 'test-face))
-  do
-  (Assert (eq 2 (get obj ?1 2)))
-  (Assert (eq 4 (put obj ?3 4)))
-  (Assert (eq 4 (get obj ?3)))
-  (when (or (stringp obj) (symbolp obj))
-    (Assert (equal '(?3 4) (object-plist obj))))
-  (Assert (eq t (remprop obj ?3)))
-  (when (or (stringp obj) (symbolp obj))
-    (Assert (eq '() (object-plist obj))))
-  (Assert (eq nil (remprop obj ?3)))
-  (when (or (stringp obj) (symbolp obj))
-    (Assert (eq '() (object-plist obj))))
-  (Assert (eq 5 (get obj ?3 5)))
-  )
-
-(Check-Error-Message
- error "Object type has no properties"
- (get 2 'property))
-
-(Check-Error-Message
- error "Object type has no settable properties"
- (put (current-buffer) 'property 'value))
-
-(Check-Error-Message
- error "Object type has no removable properties"
- (remprop ?3 'property))
-
-(Check-Error-Message
- error "Object type has no properties"
- (object-plist (symbol-function 'car)))
-
-(Check-Error-Message
- error "Can't remove property from object"
- (remprop (make-extent nil nil nil) 'detachable))
-
-;;-----------------------------------------------------
-;; Test subseq
-;;-----------------------------------------------------
-(Assert (equal (subseq nil 0) nil))
-(Assert (equal (subseq [1 2 3] 0) [1 2 3]))
-(Assert (equal (subseq [1 2 3] 1 -1) [2]))
-(Assert (equal (subseq "123" 0) "123"))
-(Assert (equal (subseq "1234" -3 -1) "23"))
-(Assert (equal (subseq #*0011 0) #*0011))
-(Assert (equal (subseq #*0011 -3 3) #*01))
-(Assert (equal (subseq '(1 2 3) 0) '(1 2 3)))
-(Assert (equal (subseq '(1 2 3 4) -3 nil) '(2 3 4)))
-
-(Check-Error 'wrong-type-argument (subseq 3 2))
-(Check-Error 'args-out-of-range (subseq [1 2 3] -42))
-(Check-Error 'args-out-of-range (subseq [1 2 3] 0 42))

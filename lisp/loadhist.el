@@ -123,11 +123,7 @@ is nil, raise an error."
       (when dependents
 	(error "Loaded libraries %s depend on %s"
 	       (prin1-to-string dependents) file))))
-  (let* ((flist (feature-symbols feature))
-	 (file (car flist)))
-    (flet ((reset-aload (x)
-	     (let ((aload (get x 'autoload)))
-	       (if aload (fset x (cons 'autoload aload))))))
+  (let* ((flist (feature-symbols feature)) (file (car flist)))
     (mapcar
      #'(lambda (x)
 	 (cond ((stringp x) nil)
@@ -135,17 +131,12 @@ is nil, raise an error."
 		;; Remove any feature names that this file provided.
 		(if (eq (car x) 'provide)
 		    (setq features (delq (cdr x) features))))
-	       ((and (boundp x)
-		     (fboundp x))
-		(makunbound x)
-		(fmakunbound x)
-		(reset-aload x))
-	       ((boundp x)
-		(makunbound x))
+	       ((boundp x) (makunbound x))
 	       ((fboundp x)
 		(fmakunbound x)
-		(reset-aload x))))
-     (cdr flist)))
+		(let ((aload (get x 'autoload)))
+		  (if aload (fset x (cons 'autoload aload)))))))
+     (cdr flist))
     ;; Delete the load-history element for this file.
     (let ((elt (assoc file load-history)))
       (setq load-history (delq elt load-history)))))

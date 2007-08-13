@@ -679,7 +679,6 @@ When searching for a match, this function use `replace-search-function' and `rep
 	;; Loop finding occurrences that perhaps should be replaced.
 	(while (and keep-going
 		    (not (eobp))
-		    (or (null limit) (< (point) limit))
 		    (let ((case-fold-search qr-case-fold-search))
 		      (funcall search-function search-string limit))
 		    ;; If the search string matches immediately after
@@ -689,8 +688,7 @@ When searching for a match, this function use `replace-search-function' and `rep
 			    (and regexp-flag
 				 (eq lastrepl (match-beginning 0))
 				 (not match-again)))
-			(if (or (eobp)
-				(and limit (>= (point) limit)))
+			(if (eobp)
 			    nil
 			  ;; Don't replace the null string 
 			  ;; right after end of previous replacement.

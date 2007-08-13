@@ -3,7 +3,7 @@
 ;;; Copyright (C) 1985-1987, 1991-1994 Free Software Foundation, Inc.
 ;;; Copyright (C) 1996 Ben Wing.
 
-;; Author: Jamie Zawinski <jwz@jwz.org>
+;; Author: Jamie Zawinski <jwz@netscape.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
 ;; Keywords: internal
 
@@ -1355,7 +1355,7 @@ otherwise pop it")
   "Recompile every `.el' file in DIRECTORY that already has a `.elc' file.
 Files in subdirectories of DIRECTORY are processed also."
   (interactive "DByte force recompile (directory): ")
-  (byte-recompile-directory directory nil nil t))
+  (byte-recompile-directory directory nil t))
 
 ;;;###autoload
 (defun byte-recompile-directory (directory &optional arg norecursion force)
@@ -1522,7 +1522,11 @@ With prefix arg (noninteractively: 2nd arg), load the file after compiling."
 	(unless byte-compile-overwrite-file
 	  (ignore-file-errors (delete-file target-file)))
 	(if (file-writable-p target-file)
-	    (write-region 1 (point-max) target-file)
+	    (progn
+	      (when (memq system-type '(ms-dos windows-nt))
+		(defvar buffer-file-type)
+		(setq buffer-file-type t))
+	      (write-region 1 (point-max) target-file))
 	  ;; This is just to give a better error message than write-region
 	  (signal 'file-error
 		  (list "Opening output file"
@@ -1743,19 +1747,18 @@ With argument, insert value in current buffer after the form."
   ;; file if under Mule.  If there are any extended characters in the
   ;; input file, use `escape-quoted' to make sure that both binary and
   ;; extended characters are output properly and distinguished properly.
-  ;; Otherwise, use `raw-text' for maximum portability with non-Mule
+  ;; Otherwise, use `no-conversion' for maximum portability with non-Mule
   ;; Emacsen.
-  (when (featurep '(or mule file-coding))
+  (when (featurep 'mule)
     (defvar buffer-file-coding-system)
-    (if (or (featurep '(not mule)) ;; Don't scan buffer if we are not muleized
-	    (save-excursion
-	      (set-buffer byte-compile-inbuffer)
-	      (goto-char (point-min))
-	      ;; mrb- There must be a better way than skip-chars-forward
-	      (skip-chars-forward (concat (char-to-string 0) "-"
-					  (char-to-string 255)))
-	      (eq (point) (point-max))))
-	(setq buffer-file-coding-system 'raw-text-unix)
+    (if (save-excursion
+	  (set-buffer byte-compile-inbuffer)
+	  (goto-char (point-min))
+	  ;; mrb- There must be a better way than skip-chars-forward
+	  (skip-chars-forward (concat (char-to-string 0) "-"
+				      (char-to-string 255)))
+	  (eq (point) (point-max)))
+	(setq buffer-file-coding-system 'no-conversion)
       (insert "(require 'mule)\n;;;###coding system: escape-quoted\n")
       (setq buffer-file-coding-system 'escape-quoted)
       ;; #### Lazy loading not yet implemented for MULE files
@@ -1964,7 +1967,7 @@ list that represents a doc string reference.
 	       (while (if (setq form (cdr form))
 			  (byte-compile-constp (car form))))
 	       (null form)))
-	;; eval the macro autoload into the compilation environment
+	;; eval the macro autoload into the compilation enviroment
 	(eval form))
 
     (if name
@@ -4037,41 +4040,26 @@ For example, invoke \"xemacs -batch -f batch-byte-compile $emacs/ ~/*.el\""
       (error "`batch-byte-compile' is to be used only with -batch"))
   (let ((error nil))
     (while command-line-args-left
-      (if (null (batch-byte-compile-one-file))
-	  (setq error t)))
+      (if (file-directory-p (expand-file-name (car command-line-args-left)))
+	  (let ((files (directory-files (car command-line-args-left)))
+		source dest)
+	    (while files
+	      (if (and (string-match emacs-lisp-file-regexp (car files))
+		       (not (auto-save-file-name-p (car files)))
+		       (setq source (expand-file-name
+				     (car files)
+				     (car command-line-args-left)))
+		       (setq dest (byte-compile-dest-file source))
+		       (file-exists-p dest)
+		       (file-newer-than-file-p source dest))
+		  (if (null (batch-byte-compile-1 source))
+		      (setq error t)))
+	      (setq files (cdr files))))
+	(if (null (batch-byte-compile-1 (car command-line-args-left)))
+	    (setq error t)))
+      (setq command-line-args-left (cdr command-line-args-left)))
     (message "Done")
     (kill-emacs (if error 1 0))))
-
-;;;###autoload
-(defun batch-byte-compile-one-file ()
-  "Run `byte-compile-file' on a single file remaining on the command line.
-Use this from the command line, with `-batch';
-it won't work in an interactive Emacs."
-  ;; command-line-args-left is what is left of the command line (from
-  ;; startup.el)
-  (defvar command-line-args-left)	;Avoid 'free variable' warning
-  (if (not noninteractive)
-      (error "`batch-byte-compile-one-file' is to be used only with -batch"))
-  (let (error
-	(file-to-process (car command-line-args-left)))
-    (setq command-line-args-left (cdr command-line-args-left))
-    (if (file-directory-p (expand-file-name file-to-process))
-	(let ((files (directory-files file-to-process))
-	      source dest)
-	  (while files
-	    (if (and (string-match emacs-lisp-file-regexp (car files))
-		     (not (auto-save-file-name-p (car files)))
-		     (setq source (expand-file-name
-				   (car files)
-				   file-to-process))
-		     (setq dest (byte-compile-dest-file source))
-		     (file-exists-p dest)
-		     (file-newer-than-file-p source dest))
-		(if (null (batch-byte-compile-1 source))
-		    (setq error t)))
-	    (setq files (cdr files)))
-	  (null error))
-      (batch-byte-compile-1 file-to-process))))
 
 (defun batch-byte-compile-1 (file)
   (condition-case err

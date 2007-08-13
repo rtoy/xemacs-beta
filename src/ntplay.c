@@ -18,14 +18,19 @@ along with XEmacs; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.*/
 
+#include <windows.h>
+#undef CONST
 #include <config.h>
+#include <stdio.h>
+#include "sysfile.h"
 #include "lisp.h"
 
-#include "sysfile.h"
-#include "nt.h"
-#include "nativesound.h"
-
-static int play_sound_data_1 (unsigned char *data, int length,
+#if defined (__CYGWIN32__) || defined(__MINGW32__)
+extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);
+#else
+#include <mmsystem.h>
+#endif
+static void play_sound_data_1 (unsigned char *data, int length,
 			       int volume, int convert);
 
 void play_sound_file (char *sound_file, int volume)
@@ -46,7 +51,7 @@ void play_sound_file (char *sound_file, int volume)
 	return;
 
       size = lseek (ofd, 0, SEEK_END);
-      data = (unsigned char *)xmalloc (size);
+      data = xmalloc (size);
       lseek (ofd, 0, SEEK_SET);
       
       if (!data)
@@ -71,7 +76,7 @@ void play_sound_file (char *sound_file, int volume)
 
 /* mswindows can't cope with playing a sound from alloca space so we
    have to convert if necessary */
-static int play_sound_data_1 (unsigned char *data, int length, int volume,
+static void play_sound_data_1 (unsigned char *data, int length, int volume,
 			       int convert_to_malloc)
 {
   DWORD flags = SND_ASYNC | SND_MEMORY | SND_NODEFAULT;
@@ -85,7 +90,7 @@ static int play_sound_data_1 (unsigned char *data, int length, int volume,
 
   if (convert_to_malloc)
     {
-      sound_data = (unsigned char *)xmalloc (length);
+      sound_data = xmalloc (length);
       memcpy (sound_data, data, length);
     }
   else
@@ -93,11 +98,10 @@ static int play_sound_data_1 (unsigned char *data, int length, int volume,
 
   PlaySound(sound_data, NULL, flags);
 
-  /* #### Error handling? */ 
-  return 1;
+  return;
 }
 
-int play_sound_data (unsigned char *data, int length, int volume)
+void play_sound_data (unsigned char *data, int length, int volume)
 {
-  return play_sound_data_1 (data, length, volume, TRUE);
+  play_sound_data_1 (data, length, volume, TRUE);
 }

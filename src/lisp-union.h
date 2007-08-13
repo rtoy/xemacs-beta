@@ -30,7 +30,7 @@ typedef
 union Lisp_Object
 {
   /* if non-valbits are at lower addresses */
-#ifdef WORDS_BIGENDIAN
+#if defined(WORDS_BIGENDIAN)
   struct
   {
     EMACS_UINT val : VALBITS;
@@ -76,7 +76,7 @@ union Lisp_Object
      GCC to accept any (yes, any) pointer as the argument of
      a function declared to accept a Lisp_Object. */
   struct nosuchstruct *v;
-  const struct nosuchstruct *cv;
+  CONST struct nosuchstruct *cv;
 }
 Lisp_Object;
 
@@ -100,8 +100,8 @@ Lisp_Object;
 } while (0)
 # define XPNTRVAL(x) ((x).ui)
 
-INLINE_HEADER Lisp_Object make_int (EMACS_INT val);
-INLINE_HEADER Lisp_Object
+INLINE Lisp_Object make_int (EMACS_INT val);
+INLINE Lisp_Object
 make_int (EMACS_INT val)
 {
   Lisp_Object obj;
@@ -109,8 +109,8 @@ make_int (EMACS_INT val)
   return obj;
 }
 
-INLINE_HEADER Lisp_Object make_char (Emchar val);
-INLINE_HEADER Lisp_Object
+INLINE Lisp_Object make_char (Emchar val);
+INLINE Lisp_Object
 make_char (Emchar val)
 {
   Lisp_Object obj;
@@ -123,22 +123,20 @@ extern Lisp_Object Qnull_pointer, Qzero;
 #define XREALINT(x) ((x).s.val)
 #define XUINT(x) ((x).u.val)
 #define XTYPE(x) ((x).gu.type)
+#define XGCTYPE(x) XTYPE (x)
 #define EQ(x,y) ((x).v == (y).v)
 
 #define INTP(x) ((x).s.bits)
-#define INT_PLUS(x,y)  make_int (XINT (x) + XINT (y))
-#define INT_MINUS(x,y) make_int (XINT (x) - XINT (y))
-#define INT_PLUS1(x)   make_int (XINT (x) + 1)
-#define INT_MINUS1(x)  make_int (XINT (x) - 1)
+#define GC_EQ(x,y) EQ (x, y)
 
 /* Convert between a (void *) and a Lisp_Object, as when the
    Lisp_Object is passed to a toolkit callback function */
 #define VOID_TO_LISP(larg,varg) \
      ((void) ((larg).v = (struct nosuchstruct *) (varg)))
 #define CVOID_TO_LISP(larg,varg) \
-     ((void) ((larg).cv = (const struct nosuchstruct *) (varg)))
+     ((void) ((larg).cv = (CONST struct nosuchstruct *) (varg)))
 #define LISP_TO_VOID(larg) ((void *) ((larg).v))
-#define LISP_TO_CVOID(larg) ((const void *) ((larg).cv))
+#define LISP_TO_CVOID(larg) ((CONST void *) ((larg).cv))
 
 /* Convert a Lisp_Object into something that can't be used as an
    lvalue.  Useful for type-checking. */

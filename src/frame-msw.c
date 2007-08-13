@@ -58,7 +58,7 @@ Boston, MA 02111-1307, USA.  */
 #define POPUP_WIDTH 30
 #define POPUP_HEIGHT 10
 
-/* Default regular frame size, in characters */
+/* Default popup size, in characters */
 #define DEFAULT_FRAME_WIDTH 80
 #define DEFAULT_FRAME_HEIGHT 35
 
@@ -70,31 +70,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_mswindows_frame_plist;
-Lisp_Object Vdefault_msprinter_frame_plist;
 Lisp_Object Vmswindows_use_system_frame_size_defaults;
 
 /* This does not need to be GC protected, as it holds a
    frame Lisp_Object already protected by Fmake_frame */
 Lisp_Object Vmswindows_frame_being_created;
-
-/*---------------------------------------------------------------------*/
-/*-----                    DISPLAY FRAME                          -----*/
-/*---------------------------------------------------------------------*/
-
-HWND
-mswindows_get_selected_frame_hwnd (void)
-{
-  Lisp_Object frame, device;
-
-  device = Ffind_device (Qnil, Qmswindows);
-  if (NILP (device))
-    return NULL;
-  frame = DEVICE_SELECTED_FRAME (XDEVICE (device));
-  if (NILP (frame))
-    return NULL;
-
-  return FRAME_MSWINDOWS_HANDLE (XFRAME (frame));
-}
 
 static void
 mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
@@ -142,17 +122,19 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
     abs (XINT (height));
       
   /* Misc frame stuff */
+  FRAME_MSWINDOWS_DATA(f)->button2_need_lbutton = 0;
+  FRAME_MSWINDOWS_DATA(f)->button2_need_rbutton = 0;
+  FRAME_MSWINDOWS_DATA(f)->button2_is_down = 0;
+  FRAME_MSWINDOWS_DATA(f)->ignore_next_lbutton_up = 0;
+  FRAME_MSWINDOWS_DATA(f)->ignore_next_rbutton_up = 0;
+  FRAME_MSWINDOWS_DATA(f)->sizing = 0;
   FRAME_MSWINDOWS_MENU_HASH_TABLE(f) = Qnil;
 #ifdef HAVE_TOOLBARS
   FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE(f) = 
     make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
 #endif
   /* hashtable of instantiated glyphs on the frame. */
-  FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f) = 
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
-  FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f) = 
-    make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
-  FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f) = 
+  FRAME_MSWINDOWS_WIDGET_HASH_TABLE (f) = 
     make_lisp_hash_table (50, HASH_TABLE_VALUE_WEAK, HASH_TABLE_EQUAL);
   /* Will initialize these in WM_SIZE handler. We cannot do it now,
      because we do not know what is CW_USEDEFAULT height and width */
@@ -200,8 +182,8 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 			 XEMACS_CLASS,
 			 STRINGP(f->name) ? XSTRING_DATA(f->name) :
 			 (STRINGP(name) ? 
-			  (const Extbyte*)XSTRING_DATA(name) : 
-			  (const Extbyte*)XEMACS_CLASS),
+			  (CONST Extbyte*)XSTRING_DATA(name) : 
+			  (CONST Extbyte*)XEMACS_CLASS),
 			 style,
 			 rect_default.left, rect_default.top,
 			 rect_default.width, rect_default.height,
@@ -216,6 +198,7 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 
   SetWindowLong (hwnd, XWL_FRAMEOBJ, (LONG)LISP_TO_VOID(frame_obj));
   FRAME_MSWINDOWS_DC(f) = GetDC (hwnd);
+  FRAME_MSWINDOWS_CDC(f) = CreateCompatibleDC (FRAME_MSWINDOWS_CDC(f));
   SetTextAlign (FRAME_MSWINDOWS_DC(f), TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
 }
 
@@ -265,15 +248,13 @@ mswindows_after_init_frame (struct frame *f, int first_on_device,
 }
 
 static void
-mswindows_mark_frame (struct frame *f)
+mswindows_mark_frame (struct frame *f, void (*markobj) (Lisp_Object))
 {
-  mark_object (FRAME_MSWINDOWS_MENU_HASH_TABLE (f));
+  markobj (FRAME_MSWINDOWS_MENU_HASH_TABLE (f));
 #ifdef HAVE_TOOLBARS
-  mark_object (FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f));
+  markobj (FRAME_MSWINDOWS_TOOLBAR_HASH_TABLE (f));
 #endif
-  mark_object (FRAME_MSWINDOWS_WIDGET_HASH_TABLE1 (f));
-  mark_object (FRAME_MSWINDOWS_WIDGET_HASH_TABLE2 (f));
-  mark_object (FRAME_MSWINDOWS_WIDGET_HASH_TABLE3 (f));
+  markobj (FRAME_MSWINDOWS_WIDGET_HASH_TABLE (f));
 }
 
 static void
@@ -287,6 +268,7 @@ mswindows_delete_frame (struct frame *f)
 {
   if (f->frame_data)
     {
+      DeleteDC(FRAME_MSWINDOWS_CDC(f));
       ReleaseDC(FRAME_MSWINDOWS_HANDLE(f), FRAME_MSWINDOWS_DC(f));
       DestroyWindow(FRAME_MSWINDOWS_HANDLE(f));
       xfree (f->frame_data);
@@ -612,8 +594,7 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
      bugs (and is more consistent with X) so I am going to reenable it.
      --andyp */
   if ( FRAME_PIXWIDTH (f) && FRAME_PIXHEIGHT (f)
-       && (width_specified_p || height_specified_p
-	   || x_specified_p || y_specified_p))
+       && (width_specified_p || height_specified_p || x_specified_p || y_specified_p))
     {
       XEMACS_RECT_WH dest = { x, y, width, height };
 
@@ -623,10 +604,11 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 
 void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
 {
-  RECT rect, ws_rect;
+  RECT rect;
   int pixel_width, pixel_height;
   int size_p = (dest->width >=0 || dest->height >=0);
   int move_p = (dest->top >=0 || dest->left >=0);
+  struct device* d = XDEVICE (FRAME_DEVICE (f));
   char_to_real_pixel_size (f, dest->width, dest->height, &pixel_width, &pixel_height);
   
   if (dest->width < 0)
@@ -649,44 +631,32 @@ void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
 		      GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
 		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
 
-  /* resize and move the window so that it fits in the workspace. This is
+  /* resize and move the window so that it fits on the screen. This is
   not restrictive since this will happen later anyway in WM_SIZE.  We
   have to do this after adjusting the rect to account for menubar
   etc. */
-  mswindows_get_workspace_coords (&ws_rect);
   pixel_width = rect.right - rect.left;
   pixel_height = rect.bottom - rect.top;
-  if (pixel_width > ws_rect.right - ws_rect.left)
+  if (pixel_width > DEVICE_MSWINDOWS_HORZRES(d))
     {
-      pixel_width = ws_rect.right - ws_rect.left;
+      pixel_width = DEVICE_MSWINDOWS_HORZRES(d);
       size_p=1;
     }
-  if (pixel_height > ws_rect.bottom - ws_rect.top)
+  if (pixel_height > DEVICE_MSWINDOWS_VERTRES(d))
     {
-      pixel_height = ws_rect.bottom - ws_rect.top;
+      pixel_height = DEVICE_MSWINDOWS_VERTRES(d);
       size_p=1;
     }
 
-  /* adjust position so window is in workspace */
-  if (dest->left + pixel_width > ws_rect.right)
+  /* adjust position so window is on screen */
+  if (dest->left + pixel_width > DEVICE_MSWINDOWS_HORZRES(d))
     {
-      dest->left = ws_rect.right - pixel_width;
+      dest->left = DEVICE_MSWINDOWS_HORZRES(d) - pixel_width;
       move_p=1;
     }
-  if (dest->left < ws_rect.left)
+  if (dest->top + pixel_height > DEVICE_MSWINDOWS_VERTRES(d))
     {
-      dest->left = ws_rect.left;
-      move_p=1;
-    }
-
-  if (dest->top + pixel_height > ws_rect.bottom)
-    {
-      dest->top = ws_rect.bottom - pixel_height;
-      move_p=1;
-    }
-  if (dest->top < ws_rect.top)
-    {
-      dest->top = ws_rect.top;
+      dest->top = DEVICE_MSWINDOWS_VERTRES(d) - pixel_height;
       move_p=1;
     }
 
@@ -729,307 +699,10 @@ mswindows_frame_size_fixed_p (struct frame *f)
   return IsZoomed (FRAME_MSWINDOWS_HANDLE (f));
 }
 
-/*---------------------------------------------------------------------*/
-/*-----                    PRINTER FRAME                          -----*/
-/*---------------------------------------------------------------------*/
-
-/*
- * With some drvier/os combination (I discovered this with HP drviers
- * under W2K), DC geometry is reset upon StartDoc and EndPage
- * calls. This is called every time one of these calls is made.
- */
-static void
-apply_dc_geometry (struct frame* f)
-{
-  HDC hdc = DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f)));
-  SetTextAlign (hdc, TA_BASELINE | TA_LEFT | TA_NOUPDATECP);
-  SetViewportOrgEx (hdc, FRAME_MSPRINTER_PIXLEFT(f),
-		    FRAME_MSPRINTER_PIXTOP(f), NULL);
-}
-
-void
-msprinter_start_page (struct frame *f)
-{
-  if (!FRAME_MSPRINTER_PAGE_STARTED (f))
-    {
-      FRAME_MSPRINTER_PAGE_STARTED (f) = 1;
-      StartPage (DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f))));
-      apply_dc_geometry (f);
-    }
-}
-
-static void
-error_frame_unsizable (struct frame *f)
-{
-  Lisp_Object frame;
-  XSETFRAME (frame, f);
-  signal_simple_error ("Cannot resize frame (margins)"
-		       " after print job has started.", frame);
-}
-
-static void
-maybe_error_if_job_active (struct frame *f)
-{
-  if (FRAME_MSPRINTER_JOB_STARTED (f))
-    error_frame_unsizable (f);
-}
-
-static void
-msprinter_init_frame_1 (struct frame *f, Lisp_Object props)
-{
-  /* Make sure this is the only frame on device. Windows printer can
-     handle only one job at a time. */
-  if (!NILP (DEVICE_FRAME_LIST (XDEVICE (FRAME_DEVICE (f)))))
-    error ("Only one frame (print job) at a time is allowed on "
-	   "this printer device.");
-
-  f->frame_data = xnew_and_zero (struct msprinter_frame);
-
-  /* Default margin size is 1" = 1440 twips */
-  FRAME_MSPRINTER_TOP_MARGIN(f) = 1440;
-  FRAME_MSPRINTER_BOTTOM_MARGIN(f) = 1440;
-  FRAME_MSPRINTER_LEFT_MARGIN(f) = 1440;
-  FRAME_MSPRINTER_RIGHT_MARGIN(f) = 1440;
-
-  /* Negative for "uinspecified" */
-  FRAME_MSPRINTER_CHARWIDTH(f) = -1;
-  FRAME_MSPRINTER_CHARHEIGHT(f) = -1;
-}
-
-static void
-msprinter_init_frame_3 (struct frame *f)
-{
-  DOCINFO di;
-  struct device *device = XDEVICE (FRAME_DEVICE (f));
-  HDC hdc;
-  int frame_left, frame_top, frame_width, frame_height;
-
-  /* DC might be recreated in msprinter_apply_devmode,
-     so do not initialize until now */
-  hdc = DEVICE_MSPRINTER_HDC (device);
-
-  /* Compute geometry properties */
-  frame_left = (MulDiv (GetDeviceCaps (hdc, LOGPIXELSX),
-			FRAME_MSPRINTER_LEFT_MARGIN(f), 1440)
-		- GetDeviceCaps (hdc, PHYSICALOFFSETX));
-  
-  if (FRAME_MSPRINTER_CHARWIDTH(f) > 0)
-    {
-      char_to_real_pixel_size (f, FRAME_MSPRINTER_CHARWIDTH(f), 0,
-			       &frame_width, NULL);
-      FRAME_MSPRINTER_RIGHT_MARGIN(f) = 
-	MulDiv (GetDeviceCaps (hdc, PHYSICALWIDTH)
-		- (frame_left + frame_width), 1440,
-		GetDeviceCaps (hdc, LOGPIXELSX));
-    }		
-  else
-    frame_width = (GetDeviceCaps (hdc, PHYSICALWIDTH)
-		   - frame_left
-		   - MulDiv (GetDeviceCaps (hdc, LOGPIXELSX),
-			     FRAME_MSPRINTER_RIGHT_MARGIN(f), 1440));
-
-  frame_top = (MulDiv (GetDeviceCaps (hdc, LOGPIXELSY),
-		       FRAME_MSPRINTER_TOP_MARGIN(f), 1440)
-	       - GetDeviceCaps (hdc, PHYSICALOFFSETY));
-
-  if (FRAME_MSPRINTER_CHARHEIGHT(f) > 0)
-    {
-      char_to_real_pixel_size (f, 0, FRAME_MSPRINTER_CHARHEIGHT(f),
-			       NULL, &frame_height);
-
-      FRAME_MSPRINTER_BOTTOM_MARGIN(f) = 
-	MulDiv (GetDeviceCaps (hdc, PHYSICALHEIGHT)
-		- (frame_top + frame_height), 1440,
-		GetDeviceCaps (hdc, LOGPIXELSY));
-    }		
-  else
-    frame_height = (GetDeviceCaps (hdc, PHYSICALHEIGHT)
-		    - frame_top
-		    - MulDiv (GetDeviceCaps (hdc, LOGPIXELSY),
-			      FRAME_MSPRINTER_BOTTOM_MARGIN(f), 1440));
-
-  /* Geometry sanity checks */
-  if (!frame_pixsize_valid_p (f, frame_width, frame_height))
-    error ("Area inside print margins has shrunk to naught.");
-
-  if (frame_left < 0
-      || frame_top < 0
-      || frame_left + frame_width > GetDeviceCaps (hdc, HORZRES)
-      || frame_top + frame_height > GetDeviceCaps (hdc, VERTRES))
-    error ("Print area is ouside of the printer's hardware printable area.");
-
-  /* Apply XEmacs frame geometry and layout windows */
-  {
-    int rows, columns;
-    FRAME_PIXWIDTH(f) = frame_width;
-    FRAME_PIXHEIGHT(f) = frame_height;
-    pixel_to_char_size (f, frame_width, frame_height, &columns, &rows);
-    change_frame_size (f, rows, columns, 0);
-  }
-
-  FRAME_MSPRINTER_PIXLEFT(f) = frame_left;
-  FRAME_MSPRINTER_PIXTOP(f) = frame_top;
-
-  /* Start print job */
-  di.cbSize = sizeof (di);
-  di.lpszDocName = (STRINGP(f->name)
-		    ? (char*) XSTRING_DATA(f->name)
-		    : "XEmacs print document");
-  di.lpszOutput = NULL;
-  di.lpszDatatype = NULL;
-  di.fwType = 0;
-
-  if (StartDoc (hdc, &di) <= 0)
-    error ("Cannot start print job");
-
-  apply_dc_geometry (f);
-
-  /* Finish frame setup */
-  FRAME_MSPRINTER_JOB_STARTED (f) = 1;
-  FRAME_VISIBLE_P(f) = 0;
-}
-
-static void
-msprinter_mark_frame (struct frame *f)
-{
-}
-
-static void
-msprinter_delete_frame (struct frame *f)
-{
-  if (f->frame_data)
-    {
-      HDC hdc = DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f)));
-      if (FRAME_MSPRINTER_PAGE_STARTED (f))
-	EndPage (hdc);
-      if (FRAME_MSPRINTER_JOB_STARTED (f))
-	EndDoc (hdc);
-      xfree (f->frame_data);
-    }
-
-  f->frame_data = 0;
-}
-
-static Lisp_Object
-msprinter_frame_property (struct frame *f, Lisp_Object property)
-{
-  if (EQ (Qleft_margin, property))
-    return make_int (FRAME_MSPRINTER_LEFT_MARGIN(f));
-  else if (EQ (Qtop_margin, property))
-    return make_int (FRAME_MSPRINTER_TOP_MARGIN(f));
-  if (EQ (Qright_margin, property))
-    return make_int (FRAME_MSPRINTER_RIGHT_MARGIN(f));
-  else if (EQ (Qbottom_margin, property))
-    return make_int (FRAME_MSPRINTER_BOTTOM_MARGIN(f));
-  else
-    return Qunbound;
-}
-
-static int
-msprinter_internal_frame_property_p (struct frame *f, Lisp_Object property)
-{
-  return (EQ (Qleft_margin, property) || EQ (Qtop_margin, property) ||
-	  EQ (Qright_margin, property) || EQ (Qbottom_margin, property));
-}
-
-static Lisp_Object
-msprinter_frame_properties (struct frame *f)
-{
-  Lisp_Object props = Qnil;
-  props = cons3 (Qbottom_margin,
-		 make_int (FRAME_MSPRINTER_BOTTOM_MARGIN(f)), props);
-  props = cons3 (Qright_margin,
-		 make_int (FRAME_MSPRINTER_RIGHT_MARGIN(f)), props);
-  props = cons3 (Qtop_margin,
-		 make_int (FRAME_MSPRINTER_TOP_MARGIN(f)), props);
-  props = cons3 (Qleft_margin,
-		 make_int (FRAME_MSPRINTER_LEFT_MARGIN(f)), props);
-  return props;
-}
-
-static void
-msprinter_set_frame_properties (struct frame *f, Lisp_Object plist)
-{
-  Lisp_Object tail;
-
-  /* Extract the properties from plist */
-  for (tail = plist; !NILP (tail); tail = Fcdr (Fcdr (tail)))
-    {
-      Lisp_Object prop = Fcar (tail);
-      Lisp_Object val = Fcar (Fcdr (tail));
-
-      if (SYMBOLP (prop))
-	{
-	  if (EQ (prop, Qwidth))
-	    {
-	      maybe_error_if_job_active (f);
-	      if (!NILP (val))
-		{
-		  CHECK_NATNUM (val);
-		  FRAME_MSPRINTER_CHARWIDTH(f) = XINT (val);
-		}
-	    }
-	  if (EQ (prop, Qheight))
-	    {
-	      maybe_error_if_job_active (f);
-	      if (!NILP (val))
-		{
-		  CHECK_NATNUM (val);
-		  FRAME_MSPRINTER_CHARHEIGHT(f) = XINT (val);
-		}
-	    }
-	  else if (EQ (prop, Qleft_margin))
-	    {
-	      maybe_error_if_job_active (f);
-	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_LEFT_MARGIN(f) = XINT (val);
-	    }
-	  else if (EQ (prop, Qtop_margin))
-	    {
-	      maybe_error_if_job_active (f);
-	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_TOP_MARGIN(f) = XINT (val);
-	    }
-	  else if (EQ (prop, Qright_margin))
-	    {
-	      maybe_error_if_job_active (f);
-	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_RIGHT_MARGIN(f) = XINT (val);
-	    }
-	  else if (EQ (prop, Qbottom_margin))
-	    {
-	      maybe_error_if_job_active (f);
-	      CHECK_NATNUM (val);
-	      FRAME_MSPRINTER_BOTTOM_MARGIN(f) = XINT (val);
-	    }
-	}
-    }
-}
-
-static void
-msprinter_set_frame_size (struct frame *f, int width, int height)
-{
-  /* We're absolutely unsizeable */
-  error_frame_unsizable (f);
-}
-
-static void
-msprinter_eject_page (struct frame *f)
-{
-  /* #### Should we eject empty pages? */
-  if (FRAME_MSPRINTER_PAGE_STARTED (f))
-    {
-      FRAME_MSPRINTER_PAGE_STARTED (f) = 0;
-      EndPage (DEVICE_MSPRINTER_HDC (XDEVICE (FRAME_DEVICE (f))));
-      apply_dc_geometry (f);
-    }
-}
-
-
 void
 console_type_create_frame_mswindows (void)
 {
-  /* Display frames */
+  /* frame methods */
   CONSOLE_HAS_METHOD (mswindows, init_frame_1);
   CONSOLE_HAS_METHOD (mswindows, init_frame_2); 
   CONSOLE_HAS_METHOD (mswindows, init_frame_3);
@@ -1060,18 +733,6 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, get_frame_parent);
   CONSOLE_HAS_METHOD (mswindows, update_frame_external_traits);
   CONSOLE_HAS_METHOD (mswindows, frame_size_fixed_p);
-
-  /* Printer frames, aka print jobs */
-  CONSOLE_HAS_METHOD (msprinter, init_frame_1);
-  CONSOLE_HAS_METHOD (msprinter, init_frame_3);
-  CONSOLE_HAS_METHOD (msprinter, mark_frame);
-  CONSOLE_HAS_METHOD (msprinter, delete_frame);
-  CONSOLE_HAS_METHOD (msprinter, frame_property);
-  CONSOLE_HAS_METHOD (msprinter, internal_frame_property_p);
-  CONSOLE_HAS_METHOD (msprinter, frame_properties);
-  CONSOLE_HAS_METHOD (msprinter, set_frame_properties);
-  CONSOLE_HAS_METHOD (msprinter, set_frame_size);
-  CONSOLE_HAS_METHOD (msprinter, eject_page);
 }
 
 void
@@ -1080,16 +741,10 @@ syms_of_frame_mswindows (void)
 }
 
 void
-reinit_vars_of_frame_mswindows (void)
+vars_of_frame_mswindows (void)
 {
   /* Needn't staticpro -- see comment above.  */
   Vmswindows_frame_being_created = Qnil;
-}
-
-void
-vars_of_frame_mswindows (void)
-{
-  reinit_vars_of_frame_mswindows ();
 
   DEFVAR_LISP ("mswindows-use-system-frame-size-defaults", &Vmswindows_use_system_frame_size_defaults /*
 Controls whether to use system or XEmacs defaults for frame size.
@@ -1138,43 +793,4 @@ to all frames, not just mswindows frames.
 
   mswindows_console_methods->device_specific_frame_props =
     &Vdefault_mswindows_frame_plist;
-
-  DEFVAR_LISP ("default-msprinter-frame-plist", &Vdefault_msprinter_frame_plist /*
-Plist of default frame-creation properties for msprinter print job frames.
-These override what is specified in `default-frame-plist', but are
-overridden by the arguments to the particular call to `make-frame'.
-
-Note: In many cases, properties of a frame are available as specifiers
-instead of through the frame-properties mechanism.
-
-Here is a list of recognized frame properties, other than those
-documented in `set-frame-properties' (they can be queried and
-set at any time, except as otherwise noted):
-
-  left-margin                   Margin of the page, in twips. Twip is a
-  top-margin			typographical unit of measurement,
-  right-margin                  equal to 1/1440 of an inch, or 1/20 of a
-  bottom-margin			point, and roughly equal to 7/400 of a
-				millimeter. If not specifified, each margin
-				defaults to one inch (25.4 mm).
-
-     MARGINS NOTE. right-margin and bottom-margin are overridden by
-       the height and width properties. If you want to specify size
-       of the printable area in character, as with the rest of XEmacs,
-       use these properties. If height and/or width are nil, then
-       corresponding margin setting is taken into account. If you
-       specify height and/or width in `default-frame-plist', but still
-       want to specify right/bottom margins, set height/width in this
-       plist to nil, as in this example:
-
-	  (setq default-frame-plist '(height 55 'width 80)
-		default-msprinter-frame-plist '(height nil 'width nil))
-
-See also `default-frame-plist', which specifies properties which apply
-to all frames, not just mswindows frames.
-*/ );
-  Vdefault_msprinter_frame_plist = Qnil;
-
-  msprinter_console_methods->device_specific_frame_props =
-    &Vdefault_msprinter_frame_plist;
 }

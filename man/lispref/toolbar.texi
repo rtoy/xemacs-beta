@@ -3,15 +3,13 @@
 @c Copyright (C) 1995, 1996 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/toolbar.info
-@node Toolbar, Gutter, Dialog Boxes, top
+@node Toolbar, Scrollbars, Dialog Boxes, top
 @chapter Toolbar
 @cindex toolbar
 
 @menu
 * Toolbar Intro::		An introduction.
-* Creating Toolbar::            How to create a toolbar.
-* Toolbar Descriptor Format::	Accessing and modifying a toolbar's
-                                  properties.
+* Toolbar Descriptor Format::	How to create a toolbar.
 * Specifying the Toolbar::	Setting a toolbar's contents.
 * Other Toolbar Variables::	Controlling the size of toolbars.
 @end menu
@@ -20,7 +18,7 @@
 @section Toolbar Intro
 
 A @dfn{toolbar} is a bar of icons displayed along one edge of a frame.
-You can view a toolbar as a series of menu shortcuts---the most
+You can view a toolbar as a series of menu shortcuts -- the most
 common menu options can be accessed with a single click rather than
 a series of clicks and/or drags to select the option from a menu.
 Consistent with this, a help string (called the @dfn{help-echo})
@@ -58,27 +56,6 @@ such as VM that wants to put its own toolbar in a different location
 from the default just sets the position-specific specifiers, and if
 the user sets the default toolbar to the same position, it will just
 not be visible.
-
-@node Creating Toolbar
-@section Creating Toolbar
-
-@defun make-toolbar-specifier spec-list
-
-Return a new @code{toolbar} specifier object with the given
-specification list.  @var{spec-list} can be a list of specifications
-(each of which is a cons of a locale and a list of instantiators), a
-single instantiator, or a list of instantiators.  @xref{Specifiers}, for
-more information about specifiers.
-
-Toolbar specifiers are used to specify the format of a toolbar.  The
-values of the variables @code{default-toolbar}, @code{top-toolbar},
-@code{left-toolbar}, @code{right-toolbar}, and @code{bottom-toolbar} are
-always toolbar specifiers.
-
-Valid toolbar instantiators are called "toolbar descriptors"
-and are lists of vectors.  See @code{default-toolbar} for a description
-of the exact format.
-@end defun
 
 @node Toolbar Descriptor Format
 @section Toolbar Descriptor Format
@@ -369,7 +346,7 @@ set the left toolbar width to 0 for a particular buffer (or if that
 buffer does not specify a left toolbar or has a nil value specified for
 @code{left-toolbar-visible-p}), you will find that, when that buffer is
 displayed in the selected window, the window will have a width of 86 or
-87 characters---the frame is sized for a 68-pixel left toolbar but the
+87 characters -- the frame is sized for a 68-pixel left toolbar but the
 selected window specifies that the left toolbar is not visible, so it is
 expanded to take up the slack.
 

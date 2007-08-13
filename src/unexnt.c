@@ -61,22 +61,19 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <fcntl.h>
 #include <windows.h>
 
-#include "nt.h"
-#include "ntheap.h"
-
 /* From IMAGEHLP.H which is not installed by default by MSVC < 5 */
 /* The IMAGEHLP.DLL library is not distributed by default with Windows95 */
-typedef PIMAGE_NT_HEADERS
-(__stdcall * pfnCheckSumMappedFile_t) (LPVOID BaseAddress, DWORD FileLength,
-				       LPDWORD HeaderSum, LPDWORD CheckSum);
-
+PIMAGE_NT_HEADERS
+(__stdcall * pfnCheckSumMappedFile) (LPVOID BaseAddress, DWORD FileLength,
+				     LPDWORD HeaderSum, LPDWORD CheckSum);
 
 #if 0
 extern BOOL ctrl_c_handler (unsigned long type);
 #endif
 
-/* Sync with FSF Emacs 19.34.6
-   note: struct file_data is now defined in nt.h */
+#include "ntheap.h"
+
+/* Sync with FSF Emacs 19.34.6 note: struct file_data is now defined in ntheap.h */
 
 enum {
   HEAP_UNINITIALIZED = 1,
@@ -103,20 +100,21 @@ DWORD  data_size = UNINIT_LONG;
 PUCHAR bss_start = UNINIT_PTR;
 DWORD  bss_size = UNINIT_LONG;
 
+#ifdef HAVE_NTGUI
+HINSTANCE hinst = NULL;
+HINSTANCE hprevinst = NULL;
+LPSTR lpCmdLine = "";
+int nCmdShow = 0;
+#endif /* HAVE_NTGUI */
+
 /* Startup code for running on NT.  When we are running as the dumped
    version, we need to bootstrap our heap and .bss section into our
    address space before we can actually hand off control to the startup
    code supplied by NT (primarily because that code relies upon malloc ()).  */
-
-/* **********************
-   Hackers please remember, this _start() thingy is *not* called neither
-   when dumping portably, nor when running from temacs! Do not put
-   significant XEmacs initialization here!
-   ********************** */
-
 void
 _start (void)
 {
+  char * p;
   extern void mainCRTStartup (void);
 
   /* Cache system info, e.g., the NT page size.  */
@@ -136,29 +134,18 @@ _start (void)
 	  exit (1);
 	}
 
-      /* #### This is super-bogus. When I rename xemacs.exe,
-	 the renamed file still loads its heap from xemacs.exe --kkm */
-#if 0
-      {
-	/* To allow profiling, make sure executable_path names the .exe
-	   file, not the file created by the profiler */
-	char *p = strrchr (executable_path, '\\');
-	strcpy (p+1, PATH_PROGNAME ".exe");
-      }
-#endif
+      /* To allow profiling, make sure executable_path names the .exe
+	 file, not the file created by the profiler */
+      p = strrchr (executable_path, '\\');
+      strcpy (p+1, PATH_PROGNAME ".exe");
 
       recreate_heap (executable_path);
       heap_state = HEAP_LOADED;
     }
 
-  /* #### This is bogus, too. _fmode is set to different values
-     when we run `xemacs' and `temacs run-emacs'. The sooner we
-     hit and fix all the weirdities this causes us, the better --kkm */
-#if 0
   /* The default behavior is to treat files as binary and patch up
-     text files appropriately.  */
+     text files appropriately, in accordance with the MSDOS code.  */
   _fmode = O_BINARY;
-#endif
 
 #if 0
   /* This prevents ctrl-c's in shells running while we're suspended from
@@ -166,6 +153,14 @@ _start (void)
   SetConsoleCtrlHandler ((PHANDLER_ROUTINE) ctrl_c_handler, TRUE);
 #endif
 
+  /* Invoke the NT CRT startup routine now that our housecleaning
+     is finished.  */
+#ifdef HAVE_NTGUI
+  /* determine WinMain args like crt0.c does */
+  hinst = GetModuleHandle(NULL);
+  lpCmdLine = GetCommandLine();
+  nCmdShow = SW_SHOWDEFAULT;
+#endif
   mainCRTStartup ();
 }
 
@@ -178,7 +173,7 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
   char out_filename[MAX_PATH], in_filename[MAX_PATH];
   unsigned long size;
   char *ptr;
-  HINSTANCE hImagehelp;
+  HANDLE hImagehelp;
   
   /* Make sure that the input and output filenames have the
      ".exe" extension...patch them up if they don't.  */
@@ -233,29 +228,21 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
   {
     PIMAGE_DOS_HEADER dos_header;
     PIMAGE_NT_HEADERS nt_header;
-
     DWORD  headersum;
     DWORD  checksum;
-    pfnCheckSumMappedFile_t pfnCheckSumMappedFile;
 
     dos_header = (PIMAGE_DOS_HEADER) out_file.file_base;
     nt_header = (PIMAGE_NT_HEADERS) ((char *) dos_header + dos_header->e_lfanew);
 
     nt_header->OptionalHeader.CheckSum = 0;
-#if 0
-    nt_header->FileHeader.TimeDateStamp = time (NULL);
-    dos_header->e_cp = size / 512;
-    nt_header->OptionalHeader.SizeOfImage = size;
-#endif
+//    nt_header->FileHeader.TimeDateStamp = time (NULL);
+//    dos_header->e_cp = size / 512;
+//    nt_header->OptionalHeader.SizeOfImage = size;
 
-    pfnCheckSumMappedFile =
-      (pfnCheckSumMappedFile_t) GetProcAddress (hImagehelp,
-						"CheckSumMappedFile");
+    pfnCheckSumMappedFile = (void *) GetProcAddress (hImagehelp, "CheckSumMappedFile");
     if (pfnCheckSumMappedFile)
       {
-#if 0
-	nt_header->FileHeader.TimeDateStamp = time (NULL);
-#endif
+//	nt_header->FileHeader.TimeDateStamp = time (NULL);
 	pfnCheckSumMappedFile (out_file.file_base,
 			       out_file.size,
 			       &headersum,
@@ -267,6 +254,40 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
 
   close_file_data (&in_file);
   close_file_data (&out_file);
+}
+
+
+/* File handling.  */
+
+
+int
+open_output_file (file_data *p_file, char *filename, unsigned long size)
+{
+  HANDLE file;
+  HANDLE file_mapping;
+  void  *file_base;
+
+  file = CreateFile (filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+		     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+  if (file == INVALID_HANDLE_VALUE) 
+    return FALSE;
+
+  file_mapping = CreateFileMapping (file, NULL, PAGE_READWRITE, 
+				    0, size, NULL);
+  if (!file_mapping) 
+    return FALSE;
+  
+  file_base = MapViewOfFile (file_mapping, FILE_MAP_WRITE, 0, 0, size);
+  if (file_base == 0) 
+    return FALSE;
+  
+  p_file->name = filename;
+  p_file->size = size;
+  p_file->file = file;
+  p_file->file_mapping = file_mapping;
+  p_file->file_base = file_base;
+
+  return TRUE;
 }
 
 /* Routines to manipulate NT executable file sections.  */
@@ -448,7 +469,7 @@ copy_executable_and_dump_data_section (file_data *p_infile,
   DUMP_MSG (("Dumping data section...\n"));
   DUMP_MSG (("\t0x%08x Address in process.\n", data_va));
   DUMP_MSG (("\t0x%08x Offset in output file.\n", 
-	     (char*)data_file - p_outfile->file_base));
+	     data_file - p_outfile->file_base));
   DUMP_MSG (("\t0x%08x Size in bytes.\n", size));
   memcpy (data_file, data_va, size);
 

@@ -150,9 +150,7 @@ arguments compiles from `load-path'."
     (let ((processed nil)
 	  (directory-abbrev-alist
 	   (append
-           (mapcar (function (lambda (dir)
-                               (cons (concat "^" (regexp-quote dir))
-                                     "")))
+	    (mapcar (function (lambda (dir) (cons dir "")))
 		    finder-abbreviate-directory-list)
 	    directory-abbrev-alist))
 	  (using-load-path))
@@ -169,7 +167,7 @@ arguments compiles from `load-path'."
        (lambda (d)
 	 (mapcar
 	  (lambda (f) 
-	    (when (and (not (member f processed)) (file-readable-p f))
+	    (when (not (member f processed))
 	      (let (summary keystart keywords)
 		(setq processed (cons f processed))
 		(if (not finder-compile-keywords-quiet)
@@ -287,12 +285,8 @@ arguments compiles from `load-path'."
       found)))
 
 (defun finder-commentary (file)
-  "Display FILE's commentary section.
-FILE should be in a form suitable for passing to `locate-library'."
-  (interactive "sLibrary name: ")
-  (let* ((str (lm-commentary (or (finder-find-library file)
-				 (finder-find-library (concat file ".el"))
-				 (error "Can't find library %s" file)))))
+  (interactive)
+  (let* ((str (lm-commentary (finder-find-library file))))
     (if (null str)
 	(error "Can't find any Commentary section"))
     (pop-to-buffer "*Finder*")

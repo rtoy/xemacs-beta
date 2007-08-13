@@ -31,6 +31,11 @@ NOTE-END */
 /* NOTE: this file works for DYNIX release 2.0 
 	  (not tested on 1.3) on NS32000's */
 
+/* Define WORD_MACHINE if addresses and such have
+ * to be corrected before they can be used as byte counts.  */
+
+/* #define WORD_MACHINE */
+
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    vax, m68000, ns16000, pyramid, orion, tahoe and APOLLO
@@ -48,6 +53,14 @@ NOTE-END */
 /* crt0.c should define a symbol `start' and do .globl with a dot.  */
 
 #define DOT_GLOBAL_START
+
+/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
+   the bit field into an int.  In other words, if bit fields
+   are always unsigned.
+
+   If you use NO_UNION_TYPE, this flag does not matter.  */
+
+#define EXPLICIT_SIGN_EXTEND
 
 /* Data type of load average, as read out of kmem.  */
 
@@ -131,7 +144,6 @@ NOTE-END */
  * config.h (or elsewhere) to decide when (not) to use SIGIO.
  */
 
-/* Note: This definition not used under XEmacs */
 #define NO_SOCK_SIGIO
 
 /* Define how to search all pty names.

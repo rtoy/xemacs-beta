@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-#ifndef INCLUDED_syssignal_h_
-#define INCLUDED_syssignal_h_
+#ifndef _XEMACS_SYSSIGNAL_H_
+#define _XEMACS_SYSSIGNAL_H_
 
 /* In the old world, one could not #include <signal.h> here.  The party line
    was that that header should always be #included before <config.h>, because
@@ -212,8 +212,8 @@ signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
 #ifdef BSD
 #define EMACS_KILLPG(gid, signo) killpg (gid, signo)
 #else
-#ifdef WIN32_NATIVE
-#define EMACS_KILLPG(gid, signo) kill (gid, signo)
+#ifdef WINDOWSNT
+#define EMACS_KILLPG(gid, signo) (kill (gid, signo))
 #else
 #define EMACS_KILLPG(gid, signo) kill (-(gid), signo)
 #endif
@@ -227,21 +227,21 @@ signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
    configure incorrectly fails to find it, so s/linux.h defines
    HAVE_SYS_SIGLIST. */
 #if !defined (SYS_SIGLIST_DECLARED) && !defined (HAVE_SYS_SIGLIST)
-extern const char *sys_siglist[];
+extern CONST char *sys_siglist[];
 #endif
 
 #ifdef SIGDANGER
 SIGTYPE memory_warning_signal (int sig);
 #endif
 
-#ifdef WIN32_NATIVE
+#ifdef _WIN32
 /* Prototypes for signal functions, see nt.c */
-typedef void (__cdecl *mswindows_sighandler) (int);
-mswindows_sighandler mswindows_sigset (int sig, mswindows_sighandler handler);
-int mswindows_sighold (int nsig);
-int mswindows_sigrelse (int nsig);
-int mswindows_sigpause (int nsig);
-int mswindows_raise (int nsig);
-#endif /* WIN32_NATIVE */
+typedef void (__cdecl *msw_sighandler) (int);
+msw_sighandler msw_sigset (int sig, msw_sighandler handler);
+int msw_sighold (int nsig);
+int msw_sigrelse (int nsig);
+int msw_sigpause (int nsig);
+int msw_raise (int nsig);
+#endif /* _WIN32 */
 
-#endif /* INCLUDED_syssignal_h_ */
+#endif /* _XEMACS_SYSSIGNAL_H_ */

@@ -69,9 +69,7 @@ stream_init_console (struct console *con, Lisp_Object params)
     {
       CHECK_STRING (tty);
       stream_con->in = stream_con->out = stream_con->err =
-	/* #### We don't currently do coding-system translation on
-	   this descriptor. */
-	fopen ((char *) XSTRING_DATA (tty), READ_PLUS_TEXT);
+	fopen ((char *) XSTRING_DATA (tty), "r+");
       if (!stream_con->in)
 	error ("Unable to open tty %s", XSTRING_DATA (tty));
     }
@@ -173,7 +171,7 @@ stream_init_frame_1 (struct frame *f, Lisp_Object props)
 
 static int
 stream_text_width (struct frame *f, struct face_cachel *cachel,
-		   const Emchar *str, Charcount len)
+		   CONST Emchar *str, Charcount len)
 {
   return len;
 }
@@ -203,6 +201,16 @@ stream_eol_cursor_width (void)
 }
 
 static void
+stream_output_begin (struct device *d)
+{
+}
+
+static void
+stream_output_end (struct device *d)
+{
+}
+
+static void
 stream_output_display_block (struct window *w, struct display_line *dl,
 			     int block, int start, int end,
 			     int start_pixpos, int cursor_start,
@@ -211,10 +219,25 @@ stream_output_display_block (struct window *w, struct display_line *dl,
 }
 
 static void
+stream_output_vertical_divider (struct window *w, int clear)
+{
+}
+
+static void
+stream_clear_to_window_end (struct window *w, int ypos1, int ypos2)
+{
+}
+
+static void
 stream_clear_region (Lisp_Object window, struct device* d, struct frame * f,
 		  face_index findex, int x, int y,
 		  int width, int height, Lisp_Object fcolor, Lisp_Object bcolor,
 		  Lisp_Object background_pixmap)
+{
+}
+
+static void
+stream_clear_frame (struct frame *f)
 {
 }
 
@@ -262,17 +285,16 @@ console_type_create_stream (void)
   CONSOLE_HAS_METHOD (stream, right_margin_width);
   CONSOLE_HAS_METHOD (stream, text_width);
   CONSOLE_HAS_METHOD (stream, output_display_block);
+  CONSOLE_HAS_METHOD (stream, output_vertical_divider);
   CONSOLE_HAS_METHOD (stream, divider_height);
   CONSOLE_HAS_METHOD (stream, eol_cursor_width);
+  CONSOLE_HAS_METHOD (stream, clear_to_window_end);
   CONSOLE_HAS_METHOD (stream, clear_region);
+  CONSOLE_HAS_METHOD (stream, clear_frame);
+  CONSOLE_HAS_METHOD (stream, output_begin);
+  CONSOLE_HAS_METHOD (stream, output_end);
   CONSOLE_HAS_METHOD (stream, flash);
   CONSOLE_HAS_METHOD (stream, ring_bell);
-}
-
-void
-reinit_console_type_create_stream (void)
-{
-  REINITIALIZE_CONSOLE_TYPE (stream);
 }
 
 void
@@ -298,9 +320,8 @@ The initial frame-object, which represents XEmacs' stdout.
   staticpro (&Vstdio_str);
 }
 
-#ifndef PDUMP
 void
-init_console_stream (int reinit)
+init_console_stream (void)
 {
   /* This function can GC */
   if (!initialized)
@@ -318,25 +339,3 @@ init_console_stream (int reinit)
         event_stream_select_console (XCONSOLE (Vterminal_console));
     }
 }
-
-#else
-
-void
-init_console_stream (int reinit)
-{
-  /* This function can GC */
-  if (!reinit)
-    {
-      Vterminal_device = Fmake_device (Qstream, Qnil, Qnil);
-      Vterminal_console = Fdevice_console (Vterminal_device);
-      Vterminal_frame = Fmake_frame (Qnil, Vterminal_device);
-      minibuf_window = XFRAME (Vterminal_frame)->minibuffer_window;
-    }
-  if (initialized)
-    {
-      stream_init_console (XCONSOLE (Vterminal_console), Qnil);
-      if (noninteractive)
-	event_stream_select_console (XCONSOLE (Vterminal_console));
-    }
-}
-#endif

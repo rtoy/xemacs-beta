@@ -20,9 +20,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not really in FSF. */
 
-#ifndef INCLUDED_sysfloat_h_
-#define INCLUDED_sysfloat_h_
-
 /* Work around a problem that happens because math.h on hpux 7
    defines two static variables--which, in Emacs, are not really static,
    because `static' is defined as nothing.  The problem is that they are
@@ -37,7 +34,8 @@ Boston, MA 02111-1307, USA.  */
 #  define _NMAXLDBL THIS_FILENAME ## _nmaxldbl
 # endif
 
-#if defined(LINUX) && !(defined (__GLIBC__) && (__GLIBC__ >= 2))
+#if defined(MSDOS) || (defined(LINUX) && \
+		       !(defined (__GLIBC__) && (__GLIBC__ >= 2)))
 /* These are redefined (correctly, but differently) in values.h.  */
 #undef INTBITS
 #undef LONGBITS
@@ -46,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <math.h>
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 /* A quirky way to obtain logb prototype */
 #include <float.h>
 #define logb _logb
@@ -88,4 +86,3 @@ Boston, MA 02111-1307, USA.  */
 # define isnan(x) ((x) != (x))
 #endif
 
-#endif /* INCLUDED_sysfloat_h_ */

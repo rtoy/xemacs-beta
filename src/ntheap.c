@@ -38,10 +38,38 @@ unsigned long syspage_mask = 0;
 int edata;
 int etext;
 
+/* The major and minor versions of NT.  */
+int nt_major_version;
+int nt_minor_version;
+
+/* Distinguish between Windows NT and Windows 95.  */
+int os_subtype;
+
 /* Cache information describing the NT system for later use.  */
 void
 cache_system_info (void)
 {
+  union 
+    {
+      struct info 
+	{
+	  char  major;
+	  char  minor;
+	  short platform;
+	} info;
+      DWORD data;
+    } version;
+
+  /* Cache the version of the operating system.  */
+  version.data = GetVersion ();
+  nt_major_version = version.info.major;
+  nt_minor_version = version.info.minor;
+
+  if (version.info.platform & 0x8000)
+    os_subtype = OS_WIN95;
+  else
+    os_subtype = OS_NT;
+
   /* Cache page size, allocation unit, processor type, etc.  */
   GetSystemInfo (&sysinfo_cache);
   syspage_mask = sysinfo_cache.dwPageSize - 1;
@@ -80,7 +108,7 @@ get_data_end (void)
   return data_region_end;
 }
 
-static unsigned char *
+static char *
 allocate_heap (void)
 {
   /* The base address for our GNU malloc heap is chosen in conjunction
@@ -120,8 +148,7 @@ allocate_heap (void)
      still a pretty decent arena to play in!  */
 
   unsigned long base = 0x01B00000;   /*  27MB */
-  /* Temporary hack for the non-starting problem - use 28 (256Mb) rather than VALBITS (1Gb) */
-  unsigned long end  = 1 << 28;      /* 256MB */
+  unsigned long end  = 1 << VALBITS; /* 256MB */
   void *ptr = NULL;
 
 #define NTHEAP_PROBE_BASE 1
@@ -144,7 +171,7 @@ allocate_heap (void)
 		      PAGE_NOACCESS);
 #endif
 
-  return (unsigned char*) ptr;
+  return ptr;
 }
 
 
@@ -220,51 +247,24 @@ sbrk (unsigned long increment)
   return result;
 }
 
-#if !defined (CANNOT_DUMP) && !defined(HEAP_IN_DATA) && !defined(PDUMP)
+#if !defined (CANNOT_DUMP) && !defined(HEAP_IN_DATA)
 
 /* Recreate the heap from the data that was dumped to the executable.
    EXECUTABLE_PATH tells us where to find the executable.  */
 void
 recreate_heap (char *executable_path)
 {
+  unsigned char *tmp;
+
   /* First reserve the upper part of our heap.  (We reserve first
-	 because there have been problems in the past where doing the
-	 mapping first has loaded DLLs into the VA space of our heap.)  */
-
-  /* Query the region at the end of the committed heap */
-  void *tmp;
-  MEMORY_BASIC_INFORMATION info;
-  DWORD size;
-  unsigned char* base = get_heap_end ();
-  unsigned char* end  = base + get_reserved_heap_size () - get_committed_heap_size ();
-  VirtualQuery (base, &info, sizeof info);
-  if (info.State != MEM_FREE)
-	{
-	  /* Oops, something has already reserved or commited it, nothing we can do but exit */
-	  char buf[256];
-	  wsprintf(buf,
-			   "XEmacs cannot start because the memory region required by the heap is not available.\n"
-			   "(BaseAddress = 0x%lx, AllocationBase = 0x%lx, Size = 0x%lx, State = %s, Type = %s)",
-			   info.BaseAddress, info.AllocationBase, info.RegionSize,
-			   info.State == MEM_COMMIT ? "COMMITED" : "RESERVED",
-			   info.Type == MEM_IMAGE ? "IMAGE" : info.Type == MEM_MAPPED ? "MAPPED" : "PRIVATE");
-	  MessageBox(NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
-	  exit(1);
-	}
-
-  /* Now try and reserve as much as possible */
-  size = min (info.RegionSize, end - base);
-  tmp = VirtualAlloc (base, size, MEM_RESERVE, PAGE_NOACCESS);
+     because there have been problems in the past where doing the
+     mapping first has loaded DLLs into the VA space of our heap.)  */
+  tmp = VirtualAlloc ((void *) get_heap_end (),
+		      get_reserved_heap_size () - get_committed_heap_size (),
+		      MEM_RESERVE,
+		      PAGE_NOACCESS);
   if (!tmp)
-	{
-	  /* Can't reserve it, nothing we can do but exit */
-	  char buf[256];
-	  wsprintf(buf,
-			   "XEmacs cannot start because it couldn't reserve space required for the heap.\n"
-			   "(VirtualAlloc at 0x%lx of 0x%lx failed (%d))", base, size, GetLastError());
-	  MessageBox(NULL, buf, "XEmacs", MB_OK | MB_ICONSTOP);
-	  exit (1);
-	}
+    exit (1);
 
   /* We read in the data for the .bss section from the executable
      first and map in the heap from the executable second to prevent

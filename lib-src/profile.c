@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
  **  abstraction : a stopwatch
  **  operations: reset_watch, get_time
  */
-#include <config.h>
+#include <../src/config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "../src/systime.h"
@@ -41,7 +41,7 @@ static struct timeval TV1, TV2;
 static int watch_not_started = 1; /* flag */
 static char time_string[30];
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 #include <sys/timeb.h>
 /* Emulate gettimeofday (Ulrich Leodolter, 1/11/95).  */
 void 

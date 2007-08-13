@@ -29,18 +29,4 @@ Boston, MA 02111-1307, USA.  */
 #undef NEED_ATHENA
 #undef NEED_LUCID
 
-/* The exact path to the Athena header files depends on which `flavor'
-   of Athena is being used - hence configure defines them for us. */
-
-#undef ATHENA_Scrollbar_h_
-#undef ATHENA_Dialog_h_
-#undef ATHENA_Form_h_
-#undef ATHENA_Command_h_
-#undef ATHENA_Label_h_
-#undef ATHENA_LabelP_h_
-#undef ATHENA_Toggle_h_
-#undef ATHENA_ToggleP_h_
-#undef ATHENA_AsciiText_h_
-#undef ATHENA_XawInit_h_
-
 #endif /* _LWLIB_CONFIG_H_ */

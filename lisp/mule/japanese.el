@@ -1,4 +1,4 @@
-;;; japanese.el --- Japanese support -*- coding: iso-2022-7bit; -*-
+;;; japanese.el --- Japanese support
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -144,11 +144,10 @@
 ;;  'iso-2022-jp 2 ?J
 ;;  "ISO 2022 based 7bit encoding for Japanese (MIME:ISO-2022-JP)"
 ;;  '((ascii japanese-jisx0208-1978 japanese-jisx0208
-;;           latin-jisx0201 japanese-jisx0212 katakana-jisx0201) nil nil nil
-;;    short ascii-eol ascii-cntl seven)
-;;  '((safe-charsets ascii japanese-jisx0208-1978 japanese-jisx0208
-;;                   latin-jisx0201 japanese-jisx0212 katakana-jisx0201)
-;;    (mime-charset . iso-2022-jp)))
+;;           latin-jisx0201 japanese-jisx0212 katakana-jisx0201 t) nil nil nil
+;;    short ascii-eol ascii-cntl seven))
+
+;; (define-coding-system-alias 'junet 'iso-2022-jp)
 
 (make-coding-system
  'iso-2022-jp 'iso2022
@@ -161,47 +160,26 @@
    mnemonic "MULE/7bit"
    ))
 
-(define-coding-system-alias 'junet 'iso-2022-jp)
+(copy-coding-system 'iso-2022-jp 'junet)
 
 ;; (make-coding-system
-;;  'iso-2022-jp-2 2 ?J
-;;  "ISO 2022 based 7bit encoding for CJK, Latin-1, and Greek (MIME:ISO-2022-JP-2)"
-;;  '((ascii japanese-jisx0208-1978 japanese-jisx0208
-;;           latin-jisx0201 japanese-jisx0212 katakana-jisx0201
-;;           chinese-gb2312 korean-ksc5601) nil
-;;           (nil latin-iso8859-1 greek-iso8859-7) nil
-;;  short ascii-eol ascii-cntl seven nil single-shift)
-;;  '((safe-charsets ascii japanese-jisx0208-1978 japanese-jisx0208
-;;                   latin-jisx0201 japanese-jisx0212 katakana-jisx0201
-;;                   chinese-gb2312 korean-ksc5601
-;;                   latin-iso8859-1 greek-iso8859-7)
-;;    (mime-charset . iso-2022-jp-2)))
-
-;; (make-coding-system
-;;  'japanese-shift-jis 1 ?S
-;;  "Shift-JIS 8-bit encoding for Japanese (MIME:SHIFT_JIS)"
-;;  nil
-;;  '((safe-charsets ascii japanese-jisx0208 japanese-jisx0208-1978
-;;                   latin-jisx0201 katakana-jisx0201)
-;;    (mime-charset . shift_jis)
-;;    (charset-origin-alist (japanese-jisx0208 "SJIS" encode-sjis-char)
-;;                          (katakana-jisx0201 "SJIS" encode-sjis-char))))
+;;  'shift_jis 1 ?S
+;;  "Coding-system of Shift-JIS used in Japan." t)
 
 (make-coding-system
  'shift_jis 'shift-jis
  "Coding-system of Shift-JIS used in Japan."
  '(mnemonic "Ja/SJIS"))
 
-;; (define-coding-system-alias 'shift_jis 'japanese-shift-jis)
-;; (define-coding-system-alias 'sjis 'japanese-shift-jis)
+;;(define-coding-system-alias 'shift_jis 'sjis)
+
+(copy-coding-system 'shift_jis 'sjis)
 
 ;; (make-coding-system
-;;  'japanese-iso-7bit-1978-irv 2 ?j
-;;  "ISO 2022 based 7-bit encoding for Japanese JISX0208-1978 and JISX0201-Roman"
-;;  '((ascii japanese-jisx0208-1978 japanese-jisx0208
-;;           latin-jisx0201 japanese-jisx0212 katakana-jisx0201 t) nil nil nil
-;;    short ascii-eol ascii-cntl seven nil nil use-roman use-oldjis)
-;;  '(ascii japanese-jisx0208-1978 japanese-jisx0208 latin-jisx0201))
+;;  'iso-2022-jp-1978-irv 2 ?J
+;;  "Coding-system used for old jis terminal."
+;;  '((ascii t) nil nil nil
+;;    short ascii-eol ascii-cntl seven nil nil use-roman use-oldjis))
 
 (make-coding-system
  'iso-2022-jp-1978-irv 'iso2022
@@ -214,19 +192,15 @@
    mnemonic "Ja-78/7bit"
    ))
 
-;; (define-coding-system-alias 'iso-2022-jp-1978-irv 'japanese-iso-7bit-1978-irv)
-;; (define-coding-system-alias 'old-jis 'japanese-iso-7bit-1978-irv)
+;;(define-coding-system-alias 'iso-2022-jp-1978-irv 'old-jis)
 
-(define-coding-system-alias 'old-jis 'iso-2022-jp-1978-irv)
+(copy-coding-system 'iso-2022-jp-1978-irv 'old-jis)
 
 ;; (make-coding-system
-;;  'japanese-iso-8bit 2 ?E
-;;  "ISO 2022 based EUC encoding for Japanese (MIME:EUC-JP)"
+;;  'euc-japan-1990 2 ?E
+;;  "Coding-system of Japanese EUC (Extended Unix Code)."
 ;;  '(ascii japanese-jisx0208 katakana-jisx0201 japanese-jisx0212
-;;    short ascii-eol ascii-cntl nil nil single-shift)
-;;  '((safe-charsets ascii latin-jisx0201 japanese-jisx0208 japanese-jisx0208-1978
-;;                  katakana-jisx0201 japanese-jisx0212)
-;;    (mime-charset . euc-jp)))
+;;          short ascii-eol ascii-cntl nil nil single-shift))
 
 (make-coding-system
  'euc-jp 'iso2022
@@ -239,26 +213,20 @@
    mnemonic "Ja/EUC"
    ))
 
-;; (define-coding-system-alias 'euc-japan-1990 'japanese-iso-8bit)
-;; (define-coding-system-alias 'euc-japan 'japanese-iso-8bit)
-;; (define-coding-system-alias 'euc-jp 'japanese-iso-8bit)
+;;(define-coding-system-alias 'euc-japan-1990 'euc-japan)
 
-(define-coding-system-alias 'euc-japan 'euc-jp) ; only for w3
-(define-coding-system-alias 'japanese-euc 'euc-jp)
+(copy-coding-system 'euc-jp 'euc-japan) ; only for w3
+(copy-coding-system 'euc-jp 'japanese-euc)
 
 (set-language-info-alist
- "Japanese" '((setup-function . setup-japanese-environment-internal)
-	      (exit-function . exit-japanese-environment)
+ "Japanese" '((setup-function . setup-japanese-environment)
 	      (tutorial . "TUTORIAL.ja")
-	      (charset japanese-jisx0208 japanese-jisx0208-1978
-		       japanese-jisx0212 latin-jisx0201 katakana-jisx0201)
-	      (coding-system iso-2022-jp euc-jp
-			     shift_jis iso-2022-jp-2)
-	      (coding-priority iso-2022-jp euc-jp
-			       shift_jis iso-2022-jp-2)
-;;	      (input-method . "japanese")
-	      (features japan-util)
-	      (sample-text . "Japanese ($BF|K\8l(B)	$B$3$s$K$A$O(B, )I∫›∆¡ ")-A
+	      (charset . (japanese-jisx0208 japanese-jisx0208-1978
+			  japanese-jisx0212 latin-jisx0201
+			  katakana-jisx0201))
+	      (coding-system . (iso-2022-jp euc-jp
+				shift_jis iso-2022-jp-1978-irv))
+	      (sample-text . "Japanese ($BF|K\8l(B)		$B$3$s$K$A$O(B, (I:]FAJ(B")
 	      (documentation . t)))
 
 ;;; japanese.el ends here

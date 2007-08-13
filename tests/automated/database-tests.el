@@ -37,10 +37,7 @@
      (require 'test-harness))))
 
 (flet ((delete-database-files (filename)
-	(dolist (fn (list filename
-			  (concat filename ".db")
-			  (concat filename ".pag")
-			  (concat filename ".dir")))
+	(dolist (fn (list filename (concat filename ".db")))
 	  (ignore-file-errors (delete-file fn))))
 
        (test-database (db)

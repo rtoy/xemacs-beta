@@ -117,14 +117,14 @@ buffer list:@refill
  MR Buffer         Size  Mode           File
  -- ------         ----  ----           ----
 .*  emacs.tex      383402 Texinfo       /u2/emacs/man/emacs.tex
-    *Help*         1287  Fundamental    
+    *Help*         1287  Fundamental	
     files.el       23076 Emacs-Lisp     /u2/emacs/lisp/files.el
   % RMAIL          64042 RMAIL          /u/rms/RMAIL
- *% man            747   Dired          /u2/emacs/man/
+ *% man            747   Dired		/u2/emacs/man/
     net.emacs      343885 Fundamental   /u/rms/net.emacs
     fileio.c       27691 C              /u2/emacs/src/fileio.c
     NEWS           67340 Text           /u2/emacs/etc/NEWS
-    *scratch*      0     Lisp Interaction
+    *scratch*	   0	 Lisp Interaction
 @end smallexample
 
 @noindent
@@ -248,7 +248,7 @@ Synonym for @kbd{d}.
 @item C-d
 Like @kbd{d} but move up afterwards instead of down.
 @item s
-Request to save the buffer.  An @samp{S} before the buffer name on a line
+Request to save the buffer.  An @samp{S} befor the buffer name on a line
 indicates the request.  Requested saves actually take place when you use
 the @kbd{x} command.  You can request both saving and deletion for the
 same buffer.

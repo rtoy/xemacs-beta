@@ -32,7 +32,7 @@
 ;;	Retrieve a package and any other required packages from an archive
 ;;
 ;;
-;; Note (JV): Most of this no longer applies!
+;; Note (JV): Most of this no longer aplies!
 ;;
 ;; The idea:
 ;;	A new XEmacs lisp-only release is generated with the following steps:
@@ -68,7 +68,7 @@
 ;;	vm	- a mail reader
 ;;	[]	Always install
 ;;	[]	Needs updating
-;;	[]	Required by other [packages]
+;;	[]	Required by other [packages]	
 ;;
 ;;	Where `[]' indicates a toggle box
 ;;
@@ -79,7 +79,7 @@
 ;;	- "Required by other" means some other packages are going to force
 ;;	  this to be installed.  Clicking on  [packages] gives a list
 ;;	  of packages that require this.
-;;
+;;	
 ;;	The `package-get-base' should be installed in a file in
 ;;	`data-directory'.  The `package-get-here' should be installed in
 ;;	site-lisp.  Both are then read at run time.
@@ -113,7 +113,7 @@
   :prefix "package-get"
   :group 'package-tools)
 
-;;;###autoload
+;;;###autoload  
 (defvar package-get-base nil
   "List of packages that are installed at this site.
 For each element in the alist,  car is the package name and the cdr is
@@ -180,56 +180,37 @@ order until the package is found.  As a special case, `site-name' can be
 			 (list :tag "Remote" host-name directory) ))
   :group 'package-get)
 
-;;;###autoload
 (defcustom package-get-download-sites
   '(
     ;; North America
     ("xemacs.org" "ftp.xemacs.org" "pub/xemacs/packages")
-    ("crc.ca (Canada)" "ftp.crc.ca" "pub/packages/editors/xemacs/packages")
-    ("ualberta.ca (Canada)" "sunsite.ualberta.ca" "pub/Mirror/xemacs/packages")
-    ("uiuc.edu (United States)" "uiarchive.uiuc.edu" "pub/packages/xemacs/packages")
-    ("unc.edu (United States)" "metalab.unc.edu" "pub/packages/editors/xemacs/packages")
-    ("utk.edu (United States)" "ftp.sunsite.utk.edu" "pub/xemacs/packages")
+    ("cso.uiuc.edu" "ftp.cso.uiuc.edu" "pub/packages/xemacs/packages")
 
     ;; South America
-    ("unicamp.br (Brazil)" "ftp.unicamp.br" "pub/xemacs/packages")
+    ("unicamp.br" "ftp.unicamp.br" "pub/xemacs/packages")
 
     ;; Europe
-    ("tuwien.ac.at (Austria)" "gd.tuwien.ac.at" "editors/xemacs/packages")
-    ("auc.dk (Denmark)" "sunsite.auc.dk" "pub/emacs/xemacs/packages")
-    ("doc.ic.ac.uk (England)" "sunsite.doc.ic.ac.uk" "packages/xemacs/packages")
-    ("funet.fi (Finland)" "ftp.funet.fi" "pub/mirrors/ftp.xemacs.org/pub/tux/xemacs/packages")
-    ("cenatls.cena.dgac.fr (France)" "ftp.cenatls.cena.dgac.fr" "Emacs/xemacs/packages")
-    ("pasteur.fr (France)" "ftp.pasteur.fr" "pub/computing/xemacs/packages")
-    ("tu-darmstadt.de (Germany)" "ftp.tu-darmstadt.de" "pub/editors/xemacs/packages")
-    ("kfki.hu (Hungary)" "ftp.kfki.hu" "pub/packages/xemacs/packages")
-    ("eunet.ie (Ireland)" "ftp.eunet.ie" "mirrors/ftp.xemacs.org/pub/xemacs/packages")
-    ("uniroma2.it (Italy)" "ftp.uniroma2.it" "unix/misc/dist/XEMACS/packages")
-    ("uio.no (Norway)" "sunsite.uio.no" "pub/xemacs/packages")
-    ("icm.edu.pl (Poland)" "ftp.icm.edu.pl" "pub/unix/editors/xemacs/packages")
-    ("srcc.msu.su (Russia)" "ftp.srcc.msu.su" "mirror/ftp.xemacs.org/packages")
-    ("sunet.se (Sweden)" "ftp.sunet.se" "pub/gnu/xemacs/packages")
-    ("cnlab-switch.ch (Switzerland)" "sunsite.cnlab-switch.ch" "mirror/xemacs/packages")
+    ("sunsite.cnlab-switch.ch" "sunsite.cnlab-switch.ch" "mirror/xemacs/packages")
+    ("tu-darmstadt.de" "ftp.tu-darmstadt.de" "pub/editors/xemacs/packages")
+    ("sunsite.auc.dk" "sunsite.auc.dk" "pub/emacs/xemacs/packages")
+    ("pasteur.fr" "ftp.pasteur.fr" "pub/computing/xemacs/packages")
+    ("cenatls.cena.dgac.fr" "ftp.cenatls.cena.dgac.fr" "pub/Emacs/xemacs/packages")
+    ("kfki.hu" "ftp.kfki.hu" "pub/packages/xemacs/packages")
+    ("uniroma2.it" "ftp.uniroma2.it" "unix/misc/dist/XEMACS/packages")
+    ("icm.edu.pl" "ftp.icm.edu.pl" "pub/unix/editors/xemacs/packages")
+    ("sunet.se" "ftp.sunet.se" "pub/gnu/xemacs/packages")
+    ("doc.ic.ac.uk" "sunsite.doc.ic.ac.uk" "packages/xemacs/packages")
+    ("srcc.msu.su" "ftp1.srcc.msu.su" "mirror/ftp.xemacs.org/packages")
 
     ;; Asia
-    ("aist.go.jp (Japan)" "ring.aist.go.jp" "pub/text/xemacs/packages")
-    ("asahi-net.or.jp (Japan)" "ring.asahi-net.or.jp" "pub/text/xemacs/packages")
-    ("dti.ad.jp (Japan)" "ftp.dti.ad.jp" "pub/unix/editor/xemacs/packages")
-    ("jaist.ac.jp (Japan)" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages")
-    ("nucba.ac.jp (Japan)" "mirror.nucba.ac.jp" "mirror/xemacs/packages")
-    ("sut.ac.jp (Japan)" "sunsite.sut.ac.jp" "pub/archives/packages/xemacs/packages")
-    ("tsukuba.ac.jp (Japan)" "ftp.netlab.is.tsukuba.ac.jp" "pub/GNU/xemacs/packages")
-    ("kreonet.re.kr (Korea)" "ftp.kreonet.re.kr" "pub/tools/emacs/xemacs/packages")
-    ("nctu.edu.tw (Taiwan)" "coda.nctu.edu.tw" "Editors/xemacs/packages")
-
-    ;; Africa
-    ("sun.ac.za (South Africa)" "ftp.sun.ac.za" "xemacs/packages")
-
-    ;; Middle East
-    ("isu.net.sa (Saudi Arabia)" "ftp.isu.net.sa" "pub/mirrors/ftp.xemacs.org/packages")
-
-    ;; Australia
-    ("aarnet.edu.au (Australia)" "mirror.aarnet.edu.au" "pub/xemacs/packages")
+    ("usyd.edu.au" "ftp.usyd.edu.au" "pub/Xemacs/packages")
+    ("netlab.is.tsukuba.ac.jp" "ftp.netlab.is.tsukuba.ac.jp" "pub/GNU/xemacs/packages")
+    ("jaist.ac.jp" "ftp.jaist.ac.jp" "pub/GNU/xemacs/packages")
+    ("ring.aist.go.jp" "ring.aist.go.jp" "pub/text/xemacs/packages")
+    ("ring.asahi-net.or.jp" "ring.asahi-net.or.jp" "pub/text/xemacs/packages")
+    ("SunSITE.sut.ac.jp" "SunSITE.sut.ac.jp" "pub/archives/packages/xemacs/packages")
+    ("dti.ad.jp" "ftp.dti.ad.jp" "pub/unix/editor/xemacs/packages")
+    ("kreonet.re.kr" "ftp.kreonet.re.kr" "pub/tools/emacs/xemacs/packages")
     )
   "*List of remote sites available for downloading packages.
 List format is '(site-description site-name directory-on-site).
@@ -239,11 +220,11 @@ is the directory on the site in which packages may be found.
 This variable is used to initialize `package-get-remote', the
 variable actually used to specify package download sites."
   :tag "Package download sites"
-  :type '(repeat (list (string :tag "Name") host-name directory))
+  :type '(repeat (list hostname directory))
   :group 'package-get)
 
 (defcustom package-get-remove-copy t
-  "*After copying and installing a package, if this is t, then remove the
+  "*After copying and installing a package, if this is T, then remove the
 copy.  Otherwise, keep it around."
   :type 'boolean
   :group 'package-get)
@@ -257,10 +238,6 @@ This may either be a relative path, in which case it is interpreted
 with respect to `package-get-remote', or an absolute path."
   :type 'file
   :group 'package-get)
-
-(defvar package-get-user-index-filename
-  (paths-construct-path (list user-init-directory package-get-base-filename))
-  "Name for the user-specific location of the package-get database file.")
 
 (defcustom package-get-always-update nil
   "*If Non-nil always make sure we are using the latest package index (base).
@@ -284,17 +261,11 @@ When nil, updates which are not PGP signed are allowed without confirmation."
 (defun package-get-download-menu ()
   "Build the `Add Download Site' menu."
   (mapcar (lambda (site)
-	    (vector (car site)
-		    `(if (member (quote ,(cdr site))
-				 package-get-remote)
-			 (setq package-get-remote
-			       (delete (quote ,(cdr site))
-				       package-get-remote))
-		       (package-ui-add-site (quote ,(cdr site))))
-		    :style 'toggle
-		    :selected `(member (quote ,(cdr site))
-				       package-get-remote)))
-	  package-get-download-sites))
+            (vector (car site)
+               `(package-ui-add-site (quote ,(cdr site)))
+		    :style 'toggle :selected
+		    `(member (quote ,(cdr site)) package-get-remote)))
+          package-get-download-sites))
 
 ;;;###autoload
 (defun package-get-require-base (&optional force-current)
@@ -357,25 +328,26 @@ If NO-REMOTE is non-nil never search remote locations."
   "Locate the package-get index file.  Do not return remote paths if NO-REMOTE
 is non-nil."
   (or (package-get-locate-file package-get-base-filename t no-remote)
-      (if (file-exists-p package-get-user-index-filename)
-	  package-get-user-index-filename)))
+      (locate-data-file package-get-base-filename)
+      package-get-base-filename))
+
+(defvar package-get-user-package-location user-init-directory)
 
 (defun package-get-maybe-save-index (filename)
   "Offer to save the current buffer as the local package index file,
 if different."
   (let ((location (package-get-locate-index-file t)))
     (unless (and filename (equal filename location))
-      (unless (and location
-		   (equal (md5 (current-buffer))
-			  (with-temp-buffer
-			    (insert-file-contents-literally location)
-			    (md5 (current-buffer)))))
-	(unless (and location (file-writable-p location))
-	  (setq location package-get-user-index-filename))
-	(when (y-or-n-p (concat "Update package index in " location "? "))
-	  (let ((coding-system-for-write 'binary))
-	    (write-file location)))))))
-
+      (unless (equal (md5 (current-buffer))
+		     (with-temp-buffer
+		       (insert-file-contents location)
+		       (md5 (current-buffer))))
+	(unless (file-writable-p location)
+	  (setq location (expand-file-name package-get-base-filename
+		(expand-file-name "etc/" package-get-user-package-location))))
+	(when (y-or-n-p (concat "Update package index in" location "? "))
+	  (write-file location))))))
+      
 
 ;;;###autoload
 (defun package-get-update-base (&optional db-file force-current)
@@ -400,7 +372,7 @@ Unless FORCE-CURRENT is non-nil never try to update the database."
         (save-excursion
           (set-buffer buf)
           (erase-buffer buf)
-          (insert-file-contents-literally db-file)
+          (insert-file-contents-internal db-file)
           (package-get-update-base-from-buffer buf)
 	  (if (file-remote-p db-file)
 	      (package-get-maybe-save-index db-file)))
@@ -453,7 +425,7 @@ used interactively, for example from a mail or news buffer."
                                          "package-get DB verification? ")))))
                       (t nil)))))
           (error "Package-get PGP signature failed to verify"))
-      ;; ToDo: We should call package-get-maybe-save-index on the region
+      ;; ToDo: We shoud call package-get-maybe-save-index on the region
       (package-get-update-base-entries content-beg content-end)
       (message "Updated package-get database"))))
 
@@ -517,18 +489,19 @@ Query for a version if GET-VERSION is non-nil.  Return package name as
 a symbol instead of a string if PACKAGE-SYMBOL is non-nil.
 The return value is suitable for direct passing to `interactive'."
   (package-get-require-base t)
-  (let ((table (mapcar #'(lambda (item)
-			   (let ((name (symbol-name (car item))))
-			     (cons name name)))
-		       package-get-base))
-	package package-symbol default-version version)
+  (let ( (table (mapcar '(lambda (item)
+			   (let ( (name (symbol-name (car item))) )
+			     (cons name name)
+			     ))
+			package-get-base)) 
+	 package package-symbol default-version version)
     (save-window-excursion
       (setq package (completing-read "Package: " table nil t))
       (setq package-symbol (intern package))
       (if get-version
 	  (progn
-	    (setq default-version
-		  (package-get-info-prop
+	    (setq default-version 
+		  (package-get-info-prop 
 		   (package-get-info-version
 		    (package-get-info-find-package package-get-base
 						   package-symbol) nil)
@@ -543,7 +516,8 @@ The return value is suitable for direct passing to `interactive'."
 	    )
 	(if package-symbol
 	    (list package-symbol)
-	  (list package))))))
+	  (list package)))
+      )))
 
 ;;;###autoload
 (defun package-get-delete-package (package &optional pkg-topdir)
@@ -706,7 +680,7 @@ package is already installed.  Valid values for CONFLICT are:
 INSTALL-DIR, if non-nil, specifies the package directory where
 fetched packages should be installed.
 
-The value of `package-get-base' is used to determine what files should
+The value of `package-get-base' is used to determine what files should 
 be retrieved.  The value of `package-get-remote' is used to determine
 where a package should be retrieved from.  The sites are tried in
 order so one is better off listing easily reached sites first.
@@ -814,7 +788,7 @@ successfully installed but errors occurred during initialization, or
 				 current-dir-entry current-filename))
 		 ;; Get it
 		 (setq full-package-filename dest-filename)
-		 (message "Retrieving package `%s' ..."
+		 (message "Retrieving package `%s' ..." 
 			  current-filename)
 		 (sit-for 0)
 		 (copy-file (package-get-remote-filename current-dir-entry
@@ -845,7 +819,9 @@ successfully installed but errors occurred during initialization, or
       ;; Doing it with XEmacs removes the need for an external md5 program
       (message "Validating checksum for `%s'..." package) (sit-for 0)
       (with-temp-buffer
-	(insert-file-contents-literally full-package-filename)
+	;; What ever happened to i-f-c-literally
+	(let (file-name-handler-alist)
+	  (insert-file-contents-internal full-package-filename))
 	(if (not (string= (md5 (current-buffer))
 			  (package-get-info-prop this-package
 						 'md5sum)))
@@ -898,7 +874,7 @@ returned.
 
  To access fields returned from this, use
 `package-get-info-version' to return information about particular a
-version.  Use `package-get-info-find-prop' to find particular property
+version.  Use `package-get-info-find-prop' to find particular property 
 from a version returned by `package-get-info-version'."
   (interactive "xPackage list: \nsPackage Name: ")
   (if which
@@ -910,7 +886,7 @@ from a version returned by `package-get-info-version'."
 (defun package-get-info-version (package version)
   "In PACKAGE, return the plist associated with a particular VERSION of the
   package.  PACKAGE is typically as returned by
-  `package-get-info-find-package'.  If VERSION is nil, then return the
+  `package-get-info-find-package'.  If VERSION is nil, then return the 
   first (aka most recent) version.  Use `package-get-info-find-prop'
   to retrieve a particular property from the value returned by this."
   (interactive (package-get-interactive-package-query t t))
@@ -987,7 +963,7 @@ If (car search) is nil, (cadr search is interpreted as  a local directory).
 
 (defun package-get-installedp (package version)
   "Determine if PACKAGE with VERSION has already been installed.
-I'm not sure if I want to do this by searching directories or checking
+I'm not sure if I want to do this by searching directories or checking 
 some built in variables.  For now, use packages-package-list."
   ;; Use packages-package-list which contains name and version
   (equal (plist-get
@@ -999,7 +975,7 @@ some built in variables.  For now, use packages-package-list."
 (defun package-get-package-provider (sym &optional force-current)
   "Search for a package that provides SYM and return the name and
   version.  Searches in `package-get-base' for SYM.   If SYM is a
-  consp, then it must match a corresponding (provide (SYM VERSION)) from
+  consp, then it must match a corresponding (provide (SYM VERSION)) from 
   the package.
 
 If FORCE-CURRENT is non-nil make sure the database is up to date. This might
@@ -1025,10 +1001,6 @@ lead to Emacs accessing remote sites."
 			 (package-get-info-prop (car this-package) 'version))))
 	    (setq this-package (cdr this-package)))))
       (setq packages (cdr packages)))
-    (when (interactive-p)
-      (if found
-          (message "%S" found)
-        (message "No appropriate package found")))
     found))
 
 ;;
@@ -1052,10 +1024,10 @@ lead to Emacs accessing remote sites."
 
 (defun package-get-ever-installed-p (pkg &optional notused)
   (string-match "-package$" (symbol-name pkg))
-  (custom-initialize-set
-   pkg
-   (if (package-get-info-find-package
-	packages-package-list
+  (custom-initialize-set 
+   pkg 
+   (if (package-get-info-find-package 
+	packages-package-list 
 	(intern (substring (symbol-name pkg) 0 (match-beginning 0))))
        t)))
 

@@ -28,9 +28,6 @@ Boston, MA 02111-1307, USA.  */
    Kirill M. Katsnelson <kkm@kis.ru>, so please bash him and not
    the original author(s) */
 
-/* The IPv6 support is derived from the code for GNU Emacs-20.3
-   written by Wolfgang S. Rupprecht */
-
 #include <config.h>
 
 #if !defined (NO_SUBPROCESSES)
@@ -127,7 +124,7 @@ close_descriptor_pair (int in, int out)
    to get rid of irrelevant descriptors.  */
 
 static int
-close_process_descs_mapfun (const void* key, void* contents, void* arg)
+close_process_descs_mapfun (CONST void* key, void* contents, void* arg)
 {
   Lisp_Object proc;
   CVOID_TO_LISP (proc, contents);
@@ -215,11 +212,9 @@ allocate_pty (void)
      end of the ptys.  */
   int failed_count = 0;
 #endif
-  int fd;
-#ifndef HAVE_GETPT
   int i;
+  int fd;
   int c;
-#endif
 
 #ifdef PTY_ITERATION
   PTY_ITERATION
@@ -266,7 +261,7 @@ allocate_pty (void)
 #else
             sprintf (pty_name, "/dev/tty%c%x", c, i);
 #endif /* no PTY_TTY_NAME_SPRINTF */
-#if !defined(UNIPLUS) && !defined(HAVE_GETPT)
+#ifndef UNIPLUS
 	    if (access (pty_name, 6) != 0)
 	      {
 		close (fd);
@@ -313,7 +308,6 @@ create_bidirectional_pipe (int *inchannel, int *outchannel,
 
 #ifdef HAVE_SOCKETS
 
-#if !(defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO))
 static int
 get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 		      Error_behavior errb)
@@ -369,10 +363,9 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 
   return 1;
 }
-#endif /*  !(HAVE_GETADDRINFO && HAVE_GETNAMEINFO) */
 
 static void
-set_socket_nonblocking_maybe (int fd, int port, const char* proto)
+set_socket_nonblocking_maybe (int fd, int port, CONST char* proto)
 {
 #ifdef PROCESS_IO_BLOCKING
   Lisp_Object tail;
@@ -391,7 +384,7 @@ set_socket_nonblocking_maybe (int fd, int port, const char* proto)
 	  else
 	    continue;
 	}
-      else if (INTP (tail_port) && (htons ((unsigned short) XINT (tail_port)) == port))
+      else if ((INTP (tail_port)) && (htons ((unsigned short) XINT (tail_port)) == port))
 	break;
     }
 
@@ -410,7 +403,7 @@ set_socket_nonblocking_maybe (int fd, int port, const char* proto)
    the numeric status that was returned by `wait'.  */
 
 static void
-update_status_from_wait_code (Lisp_Process *p, int *w_fmh)
+update_status_from_wait_code (struct Lisp_Process *p, int *w_fmh)
 {
   /* C compiler lossage when attempting to pass w directly */
   int w = *w_fmh;
@@ -525,7 +518,7 @@ record_exited_processes (int block_sigchld)
 }
 
 /* For any processes that have changed status and are recorded
-   and such, update the corresponding Lisp_Process.
+   and such, update the corresponding struct Lisp_Process.
    We separate this from record_exited_processes() so that
    we never have to call this function from within a signal
    handler.  We block SIGCHLD in case record_exited_processes()
@@ -654,7 +647,7 @@ process_signal_char (int tty_fd, int signo)
  */
 
 static void
-unix_alloc_process_data (Lisp_Process *p)
+unix_alloc_process_data (struct Lisp_Process *p)
 {
   p->process_data = xnew (struct unix_process_data);
 
@@ -670,9 +663,10 @@ unix_alloc_process_data (Lisp_Process *p)
  */
 
 static void
-unix_mark_process_data (Lisp_Process *proc)
+unix_mark_process_data (struct Lisp_Process *proc,
+			void (*markobj) (Lisp_Object))
 {
-  mark_object (UNIX_DATA(proc)->tty_name);
+  markobj (UNIX_DATA(proc)->tty_name);
 }
 
 /*
@@ -698,7 +692,7 @@ unix_init_process (void)
  */
 
 static void
-unix_init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
+unix_init_process_io_handles (struct Lisp_Process *p, void* in, void* out, int flags)
 {
   UNIX_DATA(p)->infd = (int)in;
 }
@@ -714,7 +708,7 @@ unix_init_process_io_handles (Lisp_Process *p, void* in, void* out, int flags)
  */
 
 static int
-unix_create_process (Lisp_Process *p,
+unix_create_process (struct Lisp_Process *p,
 		     Lisp_Object *argv, int nargv,
 		     Lisp_Object program, Lisp_Object cur_dir)
 {
@@ -779,7 +773,7 @@ unix_create_process (Lisp_Process *p,
   UNIX_DATA(p)->subtty = forkin;
 
   {
-#if !defined(CYGWIN)
+#if !defined(__CYGWIN32__)
     /* child_setup must clobber environ on systems with true vfork.
        Protect it from permanent change.  */
     char **save_environ = environ;
@@ -928,9 +922,7 @@ unix_create_process (Lisp_Process *p,
 	    }
 	  new_argv[i + 1] = 0;
 
-	  TO_EXTERNAL_FORMAT (LISP_STRING, cur_dir,
-			      C_STRING_ALLOCA, current_dir,
-			      Qfile_name);
+	  GET_C_STRING_FILENAME_DATA_ALLOCA (cur_dir, current_dir);
 
 	  child_setup (xforkin, xforkout, xforkout, new_argv, current_dir);
 	}
@@ -938,7 +930,7 @@ unix_create_process (Lisp_Process *p,
       } /**** End of child code ****/
 
     /**** Back in parent process ****/
-#if !defined(CYGWIN)
+#if !defined(__CYGWIN32__)
     environ = save_environ;
 #endif
   }
@@ -989,7 +981,7 @@ io_failure:
 /* Return nonzero if this process is a ToolTalk connection. */
 
 static int
-unix_tooltalk_connection_p (Lisp_Process *p)
+unix_tooltalk_connection_p (struct Lisp_Process *p)
 {
   return UNIX_DATA(p)->connected_via_filedesc_p;
 }
@@ -997,7 +989,7 @@ unix_tooltalk_connection_p (Lisp_Process *p)
 /* This is called to set process' virtual terminal size */
 
 static int
-unix_set_window_size (Lisp_Process* p, int cols, int rows)
+unix_set_window_size (struct Lisp_Process* p, int cols, int rows)
 {
   return set_window_size (UNIX_DATA(p)->infd, cols, rows);
 }
@@ -1012,7 +1004,7 @@ unix_set_window_size (Lisp_Process* p, int cols, int rows)
 
 #ifdef HAVE_WAITPID
 static void
-unix_update_status_if_terminated (Lisp_Process* p)
+unix_update_status_if_terminated (struct Lisp_Process* p)
 {
   int w;
 #ifdef SIGCHLD
@@ -1038,7 +1030,7 @@ static void
 unix_reap_exited_processes (void)
 {
   int i;
-  Lisp_Process *p;
+  struct Lisp_Process *p;
 
 #ifndef OBNOXIOUS_SYSV_SIGCLD_BEHAVIOR
   record_exited_processes (1);
@@ -1137,16 +1129,8 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
   /* Use volatile to protect variables from being clobbered by longjmp.  */
   SIGTYPE (*volatile old_sigpipe) (int) = 0;
   volatile Lisp_Object vol_proc = proc;
-  Lisp_Process *volatile p = XPROCESS (proc);
+  struct Lisp_Process *volatile p = XPROCESS (proc);
 
-  /* #### JV: layering violation?
-
-     This function knows too much about the relation between the encodingstream
-     (DATA_OUTSTREAM) and te actual output stream p->output_stream.
-
-     If encoding streams properly forwarded all calls, we could simply
-     use DATA_OUTSTREAM everywhere. */
-  
   if (!SETJMP (send_process_frame))
     {
       /* use a reasonable-sized buffer (somewhere around the size of the
@@ -1157,7 +1141,7 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 
       while (1)
 	{
-	  ssize_t writeret;
+	  int writeret;
 
 	  chunklen = Lstream_read (lstream, chunkbuf, 512);
 	  if (chunklen <= 0)
@@ -1181,9 +1165,6 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 		 that may allow the program
 		 to finish doing output and read more.  */
 	      Faccept_process_output (Qnil, make_int (1), Qnil);
-	      /* It could have *really* finished, deleting the process */
-	      if (NILP(p->pipe_outstream))
-		return;
 	      old_sigpipe =
 		(SIGTYPE (*) (int)) signal (SIGPIPE, send_process_trap);
 	      Lstream_flush (XLSTREAM (p->pipe_outstream));
@@ -1234,7 +1215,7 @@ unix_process_send_eof (Lisp_Object proc)
   Bufbyte eof_char = get_eof_char (XPROCESS (proc));
   send_process (proc, Qnil, &eof_char, 0, 1);
 #else
-  send_process (proc, Qnil, (const Bufbyte *) "\004", 0, 1);
+  send_process (proc, Qnil, (CONST Bufbyte *) "\004", 0, 1);
 #endif
   return 1;
 }
@@ -1254,7 +1235,7 @@ unix_process_send_eof (Lisp_Object proc)
  */
 
 static USID
-unix_deactivate_process (Lisp_Process *p)
+unix_deactivate_process (struct Lisp_Process *p)
 {
   SIGTYPE (*old_sigpipe) (int) = 0;
   USID usid;
@@ -1293,7 +1274,7 @@ unix_kill_child_process (Lisp_Object proc, int signo,
   int gid;
   int no_pgrp = 0;
   int kill_retval;
-  Lisp_Process *p = XPROCESS (proc);
+  struct Lisp_Process *p = XPROCESS (proc);
 
   if (!UNIX_DATA(p)->pty_flag)
     current_group = 0;
@@ -1413,7 +1394,7 @@ unix_kill_process_by_pid (int pid, int sigcode)
  */
 
 static Lisp_Object
-unix_get_tty_name (Lisp_Process *p)
+unix_get_tty_name (struct Lisp_Process *p)
 {
   return UNIX_DATA (p)->tty_name;
 }
@@ -1428,43 +1409,6 @@ unix_get_tty_name (Lisp_Process *p)
 static Lisp_Object
 unix_canonicalize_host_name (Lisp_Object host)
 {
-#if defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO)
-  struct addrinfo hints, *res;
-  static char addrbuf[NI_MAXHOST];
-  Lisp_Object canonname;
-  int retval;
-  char *ext_host;
-
-  xzero (hints);
-  hints.ai_flags = AI_CANONNAME;
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_protocol = 0;
-  TO_EXTERNAL_FORMAT (LISP_STRING, host, C_STRING_ALLOCA, ext_host, Qnative);
-  retval = getaddrinfo (ext_host, NULL, &hints, &res);
-  if (retval != 0)
-    {
-      char *gai_error;
-
-      TO_INTERNAL_FORMAT (C_STRING, gai_strerror (retval),
-			  C_STRING_ALLOCA, gai_error,
-			  Qnative);
-      maybe_error (Qprocess, ERROR_ME_NOT,
-		   "%s \"%s\"", gai_error, XSTRING_DATA (host));
-      canonname = host;
-    }
-  else
-    {
-      int gni = getnameinfo (res->ai_addr, res->ai_addrlen,
-			     addrbuf, sizeof(addrbuf),
-			     NULL, 0, NI_NUMERICHOST);
-      canonname = gni ? host : build_ext_string (addrbuf, Qnative);
-
-      freeaddrinfo (res);
-    }
-
-  return canonname;
-#else /* ! HAVE_GETADDRINFO */
   struct sockaddr_in address;
 
   if (!get_internet_address (host, &address, ERROR_ME_NOT))
@@ -1475,7 +1419,6 @@ unix_canonicalize_host_name (Lisp_Object host)
   else
     /* #### any clue what to do here? */
     return host;
-#endif /* ! HAVE_GETADDRINFO */
 }
 
 /* open a TCP network connection to a given HOST/SERVICE.  Treated
@@ -1486,278 +1429,104 @@ unix_canonicalize_host_name (Lisp_Object host)
 
 static void
 unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object service,
-			  Lisp_Object protocol, void** vinfd, void** voutfd)
+			  Lisp_Object family, void** vinfd, void** voutfd)
 {
-  int inch;
-  int outch;
-  volatile int s;
+  struct sockaddr_in address;
+  int s, inch, outch;
   volatile int port;
   volatile int retry = 0;
   int retval;
 
   CHECK_STRING (host);
 
-  if (!EQ (protocol, Qtcp) && !EQ (protocol, Qudp))
-    error ("Unsupported protocol \"%s\"",
-	   string_data (symbol_name (XSYMBOL (protocol))));
+  if (!EQ (family, Qtcpip))
+    error ("Unsupported protocol family \"%s\"",
+	   string_data (symbol_name (XSYMBOL (family))));
 
-  {
-#if defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO)
-    struct addrinfo hints, *res;
-    struct addrinfo * volatile lres;
-    char *portstring;
-    volatile int xerrno = 0;
-    volatile int failed_connect = 0;
-    char *ext_host;
-    /*
-     * Caution: service can either be a string or int.
-     * Convert to a C string for later use by getaddrinfo.
-     */
-    if (INTP (service))
-      {
-	char portbuf[128];
-	snprintf (portbuf, sizeof (portbuf), "%ld", (long) XINT (service));
-	portstring = portbuf;
-	port = htons ((unsigned short) XINT (service));
-      }
-    else
-      {
-	CHECK_STRING (service);
-	TO_EXTERNAL_FORMAT (LISP_STRING, service,
-			    C_STRING_ALLOCA, portstring,
-			    Qnative);
-	port = 0;
-      }
+  if (INTP (service))
+    port = htons ((unsigned short) XINT (service));
+  else
+    {
+      struct servent *svc_info;
+      CHECK_STRING (service);
+      svc_info = getservbyname ((char *) XSTRING_DATA (service), "tcp");
+      if (svc_info == 0)
+	error ("Unknown service \"%s\"", XSTRING_DATA (service));
+      port = svc_info->s_port;
+    }
 
-    xzero (hints);
-    hints.ai_flags = 0;
-    hints.ai_family = AF_UNSPEC;
-    if (EQ (protocol, Qtcp))
-      hints.ai_socktype = SOCK_STREAM;
-    else /* EQ (protocol, Qudp) */
-      hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = 0;
-    TO_EXTERNAL_FORMAT (LISP_STRING, host, C_STRING_ALLOCA, ext_host, Qnative);
-    retval = getaddrinfo (ext_host, portstring, &hints, &res);
-    if (retval != 0)
-      {
-	char *gai_error;
+  get_internet_address (host, &address, ERROR_ME);
+  address.sin_port = port;
 
-	TO_INTERNAL_FORMAT (C_STRING, gai_strerror (retval),
-			    C_STRING_ALLOCA, gai_error,
-			    Qnative);
-	error ("%s/%s %s", XSTRING_DATA (host), portstring, gai_error);
-      }
+  s = socket (address.sin_family, SOCK_STREAM, 0);
+  if (s < 0)
+    report_file_error ("error creating socket", list1 (name));
 
-    /* address loop */
-    for (lres = res; lres ; lres = lres->ai_next)
-      {
-	if (EQ (protocol, Qtcp))
-	  s = socket (lres->ai_family, SOCK_STREAM, 0);
-	else /* EQ (protocol, Qudp) */
-	  s = socket (lres->ai_family, SOCK_DGRAM, 0);
+  /* Turn off interrupts here -- see comments below.  There used to
+     be code which called bind_polling_period() to slow the polling
+     period down rather than turn it off, but that seems rather
+     bogus to me.  Best thing here is to use a non-blocking connect
+     or something, to check for QUIT. */
 
-	if (s < 0)
-	  continue;
+  /* Comments that are not quite valid: */
 
-	/* Turn off interrupts here -- see comments below.  There used to
-	   be code which called bind_polling_period() to slow the polling
-	   period down rather than turn it off, but that seems rather
-	   bogus to me.  Best thing here is to use a non-blocking connect
-	   or something, to check for QUIT. */
+  /* Kernel bugs (on Ultrix at least) cause lossage (not just EINTR)
+     when connect is interrupted.  So let's not let it get interrupted.
+     Note we do not turn off polling, because polling is only used
+     when not interrupt_input, and thus not normally used on the systems
+     which have this bug.  On systems which use polling, there's no way
+     to quit if polling is turned off.  */
 
-	/* Comments that are not quite valid: */
+  /* Slow down polling.  Some kernels have a bug which causes retrying
+     connect to fail after a connect.  */
 
-	/* Kernel bugs (on Ultrix at least) cause lossage (not just EINTR)
-	   when connect is interrupted.  So let's not let it get interrupted.
-	   Note we do not turn off polling, because polling is only used
-	   when not interrupt_input, and thus not normally used on the systems
-	   which have this bug.  On systems which use polling, there's no way
-	   to quit if polling is turned off.  */
+  slow_down_interrupts ();
 
-	/* Slow down polling.  Some kernels have a bug which causes retrying
-	   connect to fail after a connect.  */
+ loop:
 
-	slow_down_interrupts ();
+  /* A system call interrupted with a SIGALRM or SIGIO comes back
+     here, with can_break_system_calls reset to 0. */
+  SETJMP (break_system_call_jump);
+  if (QUITP)
+    {
+      speed_up_interrupts ();
+      REALLY_QUIT;
+      /* In case something really weird happens ... */
+      slow_down_interrupts ();
+    }
 
-      loop:
-
-	/* A system call interrupted with a SIGALRM or SIGIO comes back
-	   here, with can_break_system_calls reset to 0. */
-	SETJMP (break_system_call_jump);
-	if (QUITP)
-	  {
-	    speed_up_interrupts ();
-	    REALLY_QUIT;
-	    /* In case something really weird happens ... */
-	    slow_down_interrupts ();
-	  }
-
-	/* Break out of connect with a signal (it isn't otherwise possible).
-	   Thus you don't get screwed with a hung network. */
-	can_break_system_calls = 1;
-	retval = connect (s, lres->ai_addr, lres->ai_addrlen);
-	can_break_system_calls = 0;
-	if (retval == -1)
-	  {
-	    xerrno = errno;
-	    if (errno != EISCONN)
-	      {
-		if (errno == EINTR)
-		  goto loop;
-		if (errno == EADDRINUSE && retry < 20)
-		  {
-		    /* A delay here is needed on some FreeBSD systems,
-		       and it is harmless, since this retrying takes time anyway
-		       and should be infrequent.
-		       `sleep-for' allowed for quitting this loop with interrupts
-		       slowed down so it can't be used here.  Async timers should
-		       already be disabled at this point so we can use `sleep'. */
-		    sleep (1);
-		    retry++;
-		    goto loop;
-		  }
-	      }
-
-	    failed_connect = 1;
-	    close (s);
-
-	    speed_up_interrupts ();
-
-	    continue;
-	  }
-
-	if (port == 0)
-	  {
-	    int gni;
-	    char servbuf[NI_MAXSERV];
-
-	    if (EQ (protocol, Qtcp))
-	      gni = getnameinfo (lres->ai_addr, lres->ai_addrlen,
-				 NULL, 0, servbuf, sizeof(servbuf),
-				 NI_NUMERICSERV);
-	    else /* EQ (protocol, Qudp) */
-	      gni = getnameinfo (lres->ai_addr, lres->ai_addrlen,
-				 NULL, 0, servbuf, sizeof(servbuf),
-				 NI_NUMERICSERV | NI_DGRAM);
-
-	    if (gni == 0)
-	      port = strtol (servbuf, NULL, 10);
-	  }
-
-	break;
-      } /* address loop */
-
-    speed_up_interrupts ();
-
-    freeaddrinfo (res);
-    if (s < 0)
-      {
-	errno = xerrno;
-
-	if (failed_connect)
-	  report_file_error ("connection failed", list2 (host, name));
-	else
-	  report_file_error ("error creating socket", list1 (name));
-      }
-#else /* ! HAVE_GETADDRINFO */
-    struct sockaddr_in address;
-
-    if (INTP (service))
-      port = htons ((unsigned short) XINT (service));
-    else
-      {
-	struct servent *svc_info;
-	CHECK_STRING (service);
-
-	if (EQ (protocol, Qtcp))
-	  svc_info = getservbyname ((char *) XSTRING_DATA (service), "tcp");
-	else /* EQ (protocol, Qudp) */
-	  svc_info = getservbyname ((char *) XSTRING_DATA (service), "udp");
-
-	if (svc_info == 0)
-	  error ("Unknown service \"%s\"", XSTRING_DATA (service));
-	port = svc_info->s_port;
-      }
-
-    get_internet_address (host, &address, ERROR_ME);
-    address.sin_port = port;
-
-    if (EQ (protocol, Qtcp))
-      s = socket (address.sin_family, SOCK_STREAM, 0);
-    else /* EQ (protocol, Qudp) */
-      s = socket (address.sin_family, SOCK_DGRAM, 0);
-
-    if (s < 0)
-      report_file_error ("error creating socket", list1 (name));
-
-    /* Turn off interrupts here -- see comments below.  There used to
-       be code which called bind_polling_period() to slow the polling
-       period down rather than turn it off, but that seems rather
-       bogus to me.  Best thing here is to use a non-blocking connect
-       or something, to check for QUIT. */
-
-    /* Comments that are not quite valid: */
-
-    /* Kernel bugs (on Ultrix at least) cause lossage (not just EINTR)
-       when connect is interrupted.  So let's not let it get interrupted.
-       Note we do not turn off polling, because polling is only used
-       when not interrupt_input, and thus not normally used on the systems
-       which have this bug.  On systems which use polling, there's no way
-       to quit if polling is turned off.  */
-
-    /* Slow down polling.  Some kernels have a bug which causes retrying
-       connect to fail after a connect.  */
-
-    slow_down_interrupts ();
-
-  loop:
-
-    /* A system call interrupted with a SIGALRM or SIGIO comes back
-       here, with can_break_system_calls reset to 0. */
-    SETJMP (break_system_call_jump);
-    if (QUITP)
-      {
-	speed_up_interrupts ();
-	REALLY_QUIT;
-	/* In case something really weird happens ... */
-	slow_down_interrupts ();
-      }
-
-    /* Break out of connect with a signal (it isn't otherwise possible).
-       Thus you don't get screwed with a hung network. */
-    can_break_system_calls = 1;
-    retval = connect (s, (struct sockaddr *) &address, sizeof (address));
-    can_break_system_calls = 0;
-    if (retval == -1 && errno != EISCONN)
-      {
-	int xerrno = errno;
-	if (errno == EINTR)
+  /* Break out of connect with a signal (it isn't otherwise possible).
+     Thus you don't get screwed with a hung network. */
+  can_break_system_calls = 1;
+  retval = connect (s, (struct sockaddr *) &address, sizeof (address));
+  can_break_system_calls = 0;
+  if (retval == -1 && errno != EISCONN)
+    {
+      int xerrno = errno;
+      if (errno == EINTR)
+	goto loop;
+      if (errno == EADDRINUSE && retry < 20)
+	{
+	  /* A delay here is needed on some FreeBSD systems,
+	     and it is harmless, since this retrying takes time anyway
+	     and should be infrequent.
+             `sleep-for' allowed for quitting this loop with interrupts
+             slowed down so it can't be used here.  Async timers should
+             already be disabled at this point so we can use `sleep'. */
+          sleep (1);
+	  retry++;
 	  goto loop;
-	if (errno == EADDRINUSE && retry < 20)
-	  {
-	    /* A delay here is needed on some FreeBSD systems,
-	       and it is harmless, since this retrying takes time anyway
-	       and should be infrequent.
-	       `sleep-for' allowed for quitting this loop with interrupts
-	       slowed down so it can't be used here.  Async timers should
-	       already be disabled at this point so we can use `sleep'. */
-	    sleep (1);
-	    retry++;
-	    goto loop;
-	  }
+	}
 
-	close (s);
+      close (s);
 
-	speed_up_interrupts ();
+      speed_up_interrupts ();
 
-	errno = xerrno;
-	report_file_error ("connection failed", list2 (host, name));
-      }
+      errno = xerrno;
+      report_file_error ("connection failed", list2 (host, name));
+    }
 
-    speed_up_interrupts ();
-#endif /* ! HAVE_GETADDRINFO */
-  }
+  speed_up_interrupts ();
 
   inch = s;
   outch = dup (s);
@@ -1776,7 +1545,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object servic
 
 #ifdef HAVE_MULTICAST
 
-/* Didier Verna <didier@xemacs.org> Nov. 28 1997.
+/* Didier Verna <verna@inf.enst.fr> Nov. 28 1997.
 
    This function is similar to open-network-stream-internal, but provides a
    mean to open an UDP multicast connection instead of a TCP one. Like in the
@@ -1855,7 +1624,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
   imr.imr_multiaddr.s_addr = htonl (inet_addr ((char *) XSTRING_DATA (dest)));
   imr.imr_interface.s_addr = htonl (INADDR_ANY);
   if (setsockopt (rs, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-		  &imr, sizeof (struct ip_mreq)) < 0)
+		 (char *) &imr, sizeof (struct ip_mreq)) < 0)
     {
       close (ws);
       close (rs);
@@ -1921,7 +1690,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
 
   /* scope */
   if (setsockopt (ws, IPPROTO_IP, IP_MULTICAST_TTL,
-		  &thettl, sizeof (thettl)) < 0)
+		  (char *) &thettl, sizeof (thettl)) < 0)
     {
       close (rs);
       close (ws);

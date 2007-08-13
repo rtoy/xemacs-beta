@@ -56,7 +56,6 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "frame.h"
 #include "opaque.h"
-#include "window.h"
 
 #include "sysfile.h"
 
@@ -315,7 +314,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		  int dest_mask, Lisp_Object domain)
 {
-  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   /* It is OK for the unwind data to be local to this function,
      because the unwind-protect is always executed when this
      stack frame is still valid. */
@@ -373,13 +372,13 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    const Extbyte *bytes;
+    CONST Extbyte *bytes;
     Extcount len;
 
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Need to be able to convert and
        write out to a file. */
-    TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (bytes, len), Qbinary);
+    GET_STRING_BINARY_DATA_ALLOCA (data, bytes, len);
     jpeg_memory_src (&cinfo, (JOCTET *) bytes, len);
   }
 
@@ -481,9 +480,9 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Step 6.5: Create the pixmap and set up the image instance */
   /* now instantiate */
-  MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
+  MAYBE_DEVMETH (XDEVICE (ii->device),
 		 init_image_instance_from_eimage,
-		 (ii, cinfo.output_width, cinfo.output_height, 1,
+		 (ii, cinfo.output_width, cinfo.output_height,
 		  unwind.eimage, dest_mask,
 		  instantiator, domain));
 
@@ -581,12 +580,12 @@ gif_memory_close(VoidPtr data)
 
 struct gif_error_struct
 {
-  const char *err_str;		/* return the error string */
+  CONST char *err_str;		/* return the error string */
   jmp_buf setjmp_buffer;	/* for return to caller */
 };
 
 static void
-gif_error_func(const char *err_str, VoidPtr error_ptr)
+gif_error_func(CONST char *err_str, VoidPtr error_ptr)
 {
   struct gif_error_struct *error_data = (struct gif_error_struct*)error_ptr;
 
@@ -600,7 +599,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		 int dest_mask, Lisp_Object domain)
 {
-  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   /* It is OK for the unwind data to be local to this function,
      because the unwind-protect is always executed when this
      stack frame is still valid. */
@@ -624,7 +623,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     assert (!NILP (data));
 
     if (!(unwind.giffile = GifSetup()))
-      signal_image_error ("Insufficient memory to instantiate GIF image", instantiator);
+      signal_image_error ("Insufficent memory to instantiate GIF image", instantiator);
 
     /* set up error facilities */
     if (setjmp(gif_err.setjmp_buffer))
@@ -637,7 +636,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       }
     GifSetErrorFunc(unwind.giffile, (Gif_error_func)gif_error_func, (VoidPtr)&gif_err);
 
-    TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (bytes, len), Qbinary);
+    GET_STRING_BINARY_DATA_ALLOCA (data, bytes, len);
     mem_struct.bytes = bytes;
     mem_struct.len = len;
     mem_struct.index = 0;
@@ -652,10 +651,10 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     DGifSlurp (unwind.giffile);
   }
 
-  /* 3. Now create the EImage(s) */
+  /* 3. Now create the EImage */
   {
     ColorMapObject *cmo = unwind.giffile->SColorMap;
-    int i, j, row, pass, interlace, slice;
+    int i, j, row, pass, interlace;
     unsigned char *eip;
     /* interlaced gifs have rows in this order:
        0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
@@ -664,80 +663,51 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     height = unwind.giffile->SHeight;
     width = unwind.giffile->SWidth;
-    unwind.eimage = (unsigned char*)
-      xmalloc (width * height * 3 * unwind.giffile->ImageCount);
+    unwind.eimage = (unsigned char*) xmalloc (width * height * 3);
     if (!unwind.eimage)
       signal_image_error("Unable to allocate enough memory for image", instantiator);
 
     /* write the data in EImage format (8bit RGB triples) */
 
-    for (slice = 0; slice < unwind.giffile->ImageCount; slice++)
+    /* Note: We just use the first image in the file and ignore the rest.
+       We check here that that image covers the full "screen" size.
+       I don't know whether that's always the case.
+       -dkindred@cs.cmu.edu  */
+    if (unwind.giffile->SavedImages[0].ImageDesc.Height != height
+	|| unwind.giffile->SavedImages[0].ImageDesc.Width != width
+	|| unwind.giffile->SavedImages[0].ImageDesc.Left != 0
+	|| unwind.giffile->SavedImages[0].ImageDesc.Top != 0)
+      signal_image_error ("First image in GIF file is not full size",
+			  instantiator);
+
+    interlace = unwind.giffile->SavedImages[0].ImageDesc.Interlace;
+    pass = 0;
+    row = interlace ? InterlacedOffset[pass] : 0;
+    eip = unwind.eimage;
+    for (i = 0; i < height; i++)
       {
-	/* We check here that that the current image covers the full "screen" size. */
-	if (unwind.giffile->SavedImages[slice].ImageDesc.Height != height
-	    || unwind.giffile->SavedImages[slice].ImageDesc.Width != width
-	    || unwind.giffile->SavedImages[slice].ImageDesc.Left != 0
-	    || unwind.giffile->SavedImages[slice].ImageDesc.Top != 0)
-	  signal_image_error ("Image in GIF file is not full size",
-			      instantiator);
-
-	interlace = unwind.giffile->SavedImages[slice].ImageDesc.Interlace;
-	pass = 0;
-	row = interlace ? InterlacedOffset[pass] : 0;
-	eip = unwind.eimage + (width * height * 3 * slice);
-	for (i = 0; i < height; i++)
-	  {
-	    if (interlace)
-	      if (row >= height) {
-		row = InterlacedOffset[++pass];
-		while (row >= height)
-		  row = InterlacedOffset[++pass];
-	      }
-	    eip = unwind.eimage + (width * height * 3 * slice) + (row * width * 3);
-	    for (j = 0; j < width; j++)
-	      {
-		unsigned char pixel =
-		  unwind.giffile->SavedImages[slice].RasterBits[(i * width) + j];
-		*eip++ = cmo->Colors[pixel].Red;
-		*eip++ = cmo->Colors[pixel].Green;
-		*eip++ = cmo->Colors[pixel].Blue;
-	      }
-	    row += interlace ? InterlacedJumps[pass] : 1;
+	if (interlace)
+	  if (row >= height) {
+	    row = InterlacedOffset[++pass];
+	    while (row >= height)
+	      row = InterlacedOffset[++pass];
 	  }
+	eip = unwind.eimage + (row * width * 3);
+	for (j = 0; j < width; j++)
+	  {
+	    unsigned char pixel = unwind.giffile->SavedImages[0].RasterBits[(i * width) + j];
+	    *eip++ = cmo->Colors[pixel].Red;
+	    *eip++ = cmo->Colors[pixel].Green;
+	    *eip++ = cmo->Colors[pixel].Blue;
+	  }
+	row += interlace ? InterlacedJumps[pass] : 1;
       }
-
-    /* now instantiate */
-    MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
-		   init_image_instance_from_eimage,
-		   (ii, width, height, unwind.giffile->ImageCount, unwind.eimage, dest_mask,
-		    instantiator, domain));
   }
-
-  /* We read the gif successfully. If we have more than one slice then
-     animate the gif. */
-  if (unwind.giffile->ImageCount > 1)
-    {
-    /* See if there is a timeout value. In theory there could be one
-       for every image - but that makes the implementation way to
-       complicated for now so we just take the first. */
-      unsigned short timeout = 0;
-      Lisp_Object tid;
-
-      if (unwind.giffile->SavedImages[0].Function == GRAPHICS_EXT_FUNC_CODE
-	  &&
-	  unwind.giffile->SavedImages[0].ExtensionBlockCount)
-	{
-	  timeout = (unsigned short)
-	    ((unwind.giffile->SavedImages[0].ExtensionBlocks[0].Bytes[2] << 8) +
-	     unwind.giffile-> SavedImages[0].ExtensionBlocks[0].Bytes[1]) * 10;
-	}
-
-      /* Too short a timeout will crucify us performance-wise. */
-      tid = add_glyph_animated_timeout (timeout > 10 ? timeout : 10, image_instance);
-
-      if (!NILP (tid))
-	IMAGE_INSTANCE_PIXMAP_TIMEOUT (ii) = XINT (tid);
-    }
+  /* now instantiate */
+  MAYBE_DEVMETH (XDEVICE (ii->device),
+		 init_image_instance_from_eimage,
+		 (ii, width, height, unwind.eimage, dest_mask,
+		  instantiator, domain));
 
   unbind_to (speccount, Qnil);
 }
@@ -770,7 +740,7 @@ png_possible_dest_types (void)
 
 struct png_memory_storage
 {
-  const Extbyte *bytes;		/* The data       */
+  CONST Extbyte *bytes;		/* The data       */
   Extcount len;			/* How big is it? */
   int index;			/* Where are we?  */
 };
@@ -790,7 +760,7 @@ png_read_from_memory(png_structp png_ptr, png_bytep data,
 
 struct png_error_struct
 {
-  const char *err_str;
+  CONST char *err_str;
   jmp_buf setjmp_buffer;	/* for return to caller */
 };
 
@@ -845,7 +815,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		 int dest_mask, Lisp_Object domain)
 {
-  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   struct png_unwind_data unwind;
   int speccount = specpdl_depth ();
   int height, width;
@@ -894,14 +864,14 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* Initialize the IO layer and read in header information */
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    const Extbyte *bytes;
+    CONST Extbyte *bytes;
     Extcount len;
 
     assert (!NILP (data));
 
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Need to think about using Lstreams */
-    TO_EXTERNAL_FORMAT (LISP_STRING, data, ALLOCA, (bytes, len), Qbinary);
+    GET_STRING_BINARY_DATA_ALLOCA (data, bytes, len);
     tbr.bytes = bytes;
     tbr.len = len;
     tbr.index = 0;
@@ -943,16 +913,16 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	}
       else
 	{
-	  Lisp_Color_Instance *c;
+	  struct Lisp_Color_Instance *c;
 	  Lisp_Object rgblist;
 
 	  c = XCOLOR_INSTANCE (bkgd);
 	  rgblist = MAYBE_LISP_DEVMETH (XDEVICE (c->device),
 					color_instance_rgb_components,
 					(c));
-	  my_background.red = (unsigned short) XINT (XCAR (rgblist));
-	  my_background.green = (unsigned short) XINT (XCAR (XCDR (rgblist)));
-	  my_background.blue = (unsigned short) XINT (XCAR (XCDR (XCDR (rgblist))));
+	  my_background.red = XINT (XCAR (rgblist));
+	  my_background.green = XINT (XCAR (XCDR (rgblist)));
+	  my_background.blue = XINT (XCAR (XCDR (XCDR (rgblist))));
 	}
 
       if (png_get_bKGD (png_ptr, info_ptr, &image_background))
@@ -1018,9 +988,9 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   }
 
   /* now instantiate */
-  MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
+  MAYBE_DEVMETH (XDEVICE (ii->device),
 		 init_image_instance_from_eimage,
-		 (ii, width, height, 1, unwind.eimage, dest_mask,
+		 (ii, width, height, unwind.eimage, dest_mask,
 		  instantiator, domain));
 
   /* This will clean up everything else. */
@@ -1156,7 +1126,7 @@ tiff_memory_size(thandle_t data)
 
 struct tiff_error_struct
 {
-#ifdef HAVE_VSNPRINTF
+#if HAVE_VSNPRINTF
   char err_str[256];
 #else
   char err_str[1024];		/* return the error string */
@@ -1171,12 +1141,12 @@ struct tiff_error_struct
 static struct tiff_error_struct tiff_err_data;
 
 static void
-tiff_error_func(const char *module, const char *fmt, ...)
+tiff_error_func(CONST char *module, CONST char *fmt, ...)
 {
   va_list vargs;
 
   va_start (vargs, fmt);
-#ifdef HAVE_VSNPRINTF
+#if HAVE_VSNPRINTF
   vsnprintf (tiff_err_data.err_str, 255, fmt, vargs);
 #else
   /* pray this doesn't overflow... */
@@ -1188,17 +1158,17 @@ tiff_error_func(const char *module, const char *fmt, ...)
 }
 
 static void
-tiff_warning_func(const char *module, const char *fmt, ...)
+tiff_warning_func(CONST char *module, CONST char *fmt, ...)
 {
   va_list vargs;
-#ifdef HAVE_VSNPRINTF
+#if HAVE_VSNPRINTF
   char warn_str[256];
 #else
   char warn_str[1024];
 #endif
 
   va_start (vargs, fmt);
-#ifdef HAVE_VSNPRINTF
+#if HAVE_VSNPRINTF
   vsnprintf (warn_str, 255, fmt, vargs);
 #else
   vsprintf (warn_str, fmt, vargs);
@@ -1213,7 +1183,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		  int dest_mask, Lisp_Object domain)
 {
-  Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   tiff_memory_storage mem_struct;
   /* It is OK for the unwind data to be local to this function,
      because the unwind-protect is always executed when this
@@ -1248,9 +1218,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* #### This is a definite problem under Mule due to the amount of
        stack data it might allocate.  Think about Lstreams... */
-    TO_EXTERNAL_FORMAT (LISP_STRING, data,
-			ALLOCA, (bytes, len),
-			Qbinary);
+    GET_STRING_BINARY_DATA_ALLOCA (data, bytes, len);
     mem_struct.bytes = bytes;
     mem_struct.len = len;
     mem_struct.index = 0;
@@ -1261,13 +1229,13 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 				  tiff_memory_seek, tiff_memory_close, tiff_memory_size,
 				  tiff_map_noop, tiff_unmap_noop);
     if (!unwind.tiff)
-      signal_image_error ("Insufficient memory to instantiate TIFF image", instantiator);
+      signal_image_error ("Insufficent memory to instantiate TIFF image", instantiator);
 
     TIFFGetField (unwind.tiff, TIFFTAG_IMAGEWIDTH, &width);
     TIFFGetField (unwind.tiff, TIFFTAG_IMAGELENGTH, &height);
     unwind.eimage = (unsigned char *) xmalloc (width * height * 3);
 
-    /* #### This is little more than proof-of-concept/function testing.
+    /* ### This is little more than proof-of-concept/function testing.
        It needs to be reimplemented via scanline reads for both memory
        compactness. */
     raster = (uint32*) _TIFFmalloc (width * height * sizeof (uint32));
@@ -1300,9 +1268,9 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   }
 
   /* now instantiate */
-  MAYBE_DEVMETH (DOMAIN_XDEVICE (ii->domain),
+  MAYBE_DEVMETH (XDEVICE (ii->device),
 		 init_image_instance_from_eimage,
-		 (ii, width, height, 1, unwind.eimage, dest_mask,
+		 (ii, width, height, unwind.eimage, dest_mask,
 		  instantiator, domain));
 
   unbind_to (speccount, Qnil);

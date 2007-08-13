@@ -45,7 +45,7 @@ static int warnlevel;
 
 /* Function to call to issue a warning;
    0 means don't issue them.  */
-static void (*warn_function) (const char *);
+static void (*warn_function) (CONST char *);
 
 /* Get more memory space, complaining if we're near the end. */
 
@@ -57,7 +57,6 @@ check_memory_limits (void)
   POINTER cp;
   unsigned long five_percent;
   unsigned long data_size;
-  void (*save_warn_fun) (const char *);
 
   if (lim_data == 0)
     get_lim_data ();
@@ -68,43 +67,36 @@ check_memory_limits (void)
   data_size = (char *) cp - (char *) data_space_start;
 
   if (warn_function)
-    {
-      /* temporarily reset the warn_function to 0 or we will get infinite
-	 looping. */
-      save_warn_fun = warn_function;
-      warn_function = 0;
-      switch (warnlevel)
-	{
-	case 0:
-	  if (data_size > five_percent * 15)
-	    {
-	      warnlevel++;
-	      (*warn_function) ("Warning: past 75% of memory limit");
-	    }
-	  break;
+    switch (warnlevel)
+      {
+      case 0:
+	if (data_size > five_percent * 15)
+	  {
+	    warnlevel++;
+	    (*warn_function) ("Warning: past 75% of memory limit");
+	  }
+	break;
 
-	case 1:
-	  if (data_size > five_percent * 17)
-	    {
-	      warnlevel++;
-	      (*warn_function) ("Warning: past 85% of memory limit");
-	    }
-	  break;
+      case 1:
+	if (data_size > five_percent * 17)
+	  {
+	    warnlevel++;
+	    (*warn_function) ("Warning: past 85% of memory limit");
+	  }
+	break;
 
-	case 2:
-	  if (data_size > five_percent * 19)
-	    {
-	      warnlevel++;
-	      (*warn_function) ("Warning: past 95% of memory limit");
-	    }
-	  break;
+      case 2:
+	if (data_size > five_percent * 19)
+	  {
+	    warnlevel++;
+	    (*warn_function) ("Warning: past 95% of memory limit");
+	  }
+	break;
 
-	default:
-	  (*warn_function) ("Warning: past acceptable memory limits");
-	  break;
-	}
-      warn_function = save_warn_fun;
-    }
+      default:
+	(*warn_function) ("Warning: past acceptable memory limits");
+	break;
+      }
 
   /* If we go down below 70% full, issue another 75% warning
      when we go up again.  */
@@ -127,12 +119,12 @@ check_memory_limits (void)
    also declare where the end of pure storage is. */
 
 void
-memory_warnings (void *start, void (*warnfun) (const char *))
+memory_warnings (void *start, void (*warnfun) (CONST char *))
 {
   extern void (* __after_morecore_hook) (void);	/* From gmalloc.c */
 
   if (start)
-    data_space_start = (char*) start;
+    data_space_start = start;
   else
     data_space_start = start_of_data ();
 

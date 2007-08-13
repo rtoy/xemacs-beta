@@ -1,4 +1,4 @@
-;;; korean.el --- Support for Korean -*- coding: iso-2022-7bit; -*-
+;;; korean.el --- Support for Korean
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -66,12 +66,10 @@
     (setq-default its:*current-map* (its:get-mode-map "hangul"))))
 
 ;; (make-coding-system
-;;  'korean-iso-8bit 2 ?K
-;;  "ISO 2022 based EUC encoding for Korean KSC5601 (MIME:EUC-KR)"
-;;  '(ascii korean-ksc5601 nil nil
-;;    nil ascii-eol ascii-cntl)
-;;  '((safe-charsets ascii korean-ksc5601)
-;;    (mime-charset . euc-kr)))
+;;  'euc-kr 2 ?K
+;;  "Coding-system of Korean EUC (Extended Unix Code)."
+;;  '((ascii t) korean-ksc5601 nil nil
+;;    nil ascii-eol ascii-cntl))
 
 (make-coding-system
  'euc-kr 'iso2022
@@ -83,16 +81,14 @@
 
 ;;(define-coding-system-alias 'euc-kr 'euc-korea)
 
-(define-coding-system-alias 'korean-euc 'euc-kr)
+(copy-coding-system 'euc-kr 'korean-euc)
 
 ;; (make-coding-system
 ;;  'iso-2022-kr 2 ?k
-;;  "ISO 2022 based 7-bit encoding for Korean KSC5601 (MIME:ISO-2022-KR)."
+;;  "MIME ISO-2022-KR"
 ;;  '(ascii (nil korean-ksc5601) nil nil
 ;;          nil ascii-eol ascii-cntl seven locking-shift nil nil nil nil nil
-;;          designation-bol)
-;;  '((safe-charsets ascii korean-ksc5601)
-;;    (mime-charset . iso-2022-kr)))
+;;          designation-bol))
 
 (make-coding-system
  'iso-2022-kr 'iso2022
@@ -105,23 +101,49 @@
    mnemonic "Ko/7bit"
    eol-type lf))
 
-;; (define-coding-system-alias 'korean-iso-7bit-lock 'iso-2022-kr)
+(defun setup-korean-environment ()
+  "Setup multilingual environment (MULE) for Korean."
+  (interactive)
+  (setup-english-environment)
+  ;; (setq coding-category-iso-8-2 'euc-kr)
+  (set-coding-category-system 'iso-8-2 'euc-kr)
+
+  ;; (set-coding-priority
+  ;;  '(coding-category-iso-7
+  ;;    coding-category-iso-8-2
+  ;;    coding-category-iso-8-1))
+  (set-coding-priority-list
+   '(iso-8-2
+     iso-7
+     iso-8-1
+     iso-8-designate
+     iso-lock-shift
+     no-conversion
+     shift-jis
+     big5))
+
+  (set-default-coding-systems 'euc-kr)
+
+  ;; (when (eq 'x (device-type (selected-device)))
+  ;;   (x-use-halfwidth-roman-font 'korean-ksc5601 "ksc5636"))
+
+  ;; EGG specific setup 97.02.05 jhod
+  (when (featurep 'egg)
+    (when (not (featurep 'egg-kor))
+      (provide 'egg-kor)
+      (load "its-hangul")
+      (setq its:*standard-modes*
+	    (cons (its:get-mode-map "hangul") its:*standard-modes*)))
+    (setq-default its:*current-map* (its:get-mode-map "hangul")))
+
+  (setq default-input-method "korean-hangul"))
 
 (set-language-info-alist
- "Korean" '((setup-function . setup-korean-environment-internal)
-	    (exit-function . exit-korean-environment)
+ "Korean" '((setup-function . setup-korean-environment)
 	    (tutorial . "TUTORIAL.ko")
-	    (charset korean-ksc5601)
-	    (coding-system euc-kr iso-2022-kr)
-	    (coding-priority euc-kr iso-2022-kr)
-	    (input-method . "korean-hangul")
-	    (features korea-util)
+	    (charset . (korean-ksc5601))
+	    (coding-system . (iso-2022-kr euc-kr))
 	    (sample-text . "Hangul (한글)	안녕하세요, 안녕하십니까")
-	    (documentation . "\
-The following key bindings are available while using Korean input methods:
-  Shift-SPC:	toggle-korean-input-mthod
-  Control-F9:	quail-hangul-switch-symbol-ksc
-  F9:		quail-hangul-switch-hanja")
-	    ))
+	    (documentation . t)))
 
 ;;; korean.el ends here

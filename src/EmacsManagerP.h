@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Ben Wing. */
 
-#ifndef INCLUDED_EmacsManagerP_h_
-#define INCLUDED_EmacsManagerP_h_
+#ifndef _EmacsManagerP_h
+#define _EmacsManagerP_h
 
 
 #include "xintrinsicp.h"
@@ -65,4 +65,4 @@ typedef struct _EmacsManagerRec {	/* full instance record */
 
 extern EmacsManagerClassRec emacsManagerClassRec;	 /* class pointer */
 
-#endif /* INCLUDED_EmacsManagerP_h_ */
+#endif /* _EmacsManagerP_h */

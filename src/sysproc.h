@@ -20,16 +20,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not really in FSF. */
 
-#ifndef INCLUDED_sysproc_h_
-#define INCLUDED_sysproc_h_
-
 #ifdef HAVE_VFORK_H
 # include <vfork.h>
 #endif
 
 #include "systime.h" /* necessary for sys/resource.h; also gets the
 			FD_* defines on some systems. */
-#ifndef WIN32_NATIVE
+#ifndef WINDOWSNT
 #include <sys/resource.h>
 #endif
 
@@ -37,60 +34,16 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_SOCKETS	/* TCP connection support, if kernel can do it */
 # include <sys/types.h>  /* AJK */
-# ifndef WIN32_NATIVE
-#  include <sys/socket.h>
-#  include <netdb.h>
-#  include <netinet/in.h>
-#  include <arpa/inet.h>
-# endif
-# ifdef NEED_NET_ERRNO_H
-#  include <net/errno.h>
-# endif /* NEED_NET_ERRNO_H */
+# include <sys/socket.h>
+# include <netdb.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+#ifdef NEED_NET_ERRNO_H
+#include <net/errno.h>
+#endif /* NEED_NET_ERRNO_H */
 #elif defined (SKTPAIR)
 # include <sys/socket.h>
 #endif /* HAVE_SOCKETS */
-
-#ifdef WIN32_NATIVE
-/* Note: winsock.h already included in systime.h above */
-/* map winsock error codes to standard names */
-#define EWOULDBLOCK             WSAEWOULDBLOCK
-#define EINPROGRESS             WSAEINPROGRESS
-#define EALREADY                WSAEALREADY
-#define ENOTSOCK                WSAENOTSOCK
-#define EDESTADDRREQ            WSAEDESTADDRREQ
-#define EMSGSIZE                WSAEMSGSIZE
-#define EPROTOTYPE              WSAEPROTOTYPE
-#define ENOPROTOOPT             WSAENOPROTOOPT
-#define EPROTONOSUPPORT         WSAEPROTONOSUPPORT
-#define ESOCKTNOSUPPORT         WSAESOCKTNOSUPPORT
-#define EOPNOTSUPP              WSAEOPNOTSUPP
-#define EPFNOSUPPORT            WSAEPFNOSUPPORT
-#define EAFNOSUPPORT            WSAEAFNOSUPPORT
-#define EADDRINUSE              WSAEADDRINUSE
-#define EADDRNOTAVAIL           WSAEADDRNOTAVAIL
-#define ENETDOWN                WSAENETDOWN
-#define ENETUNREACH             WSAENETUNREACH
-#define ENETRESET               WSAENETRESET
-#define ECONNABORTED            WSAECONNABORTED
-#define ECONNRESET              WSAECONNRESET
-#define ENOBUFS                 WSAENOBUFS
-#define EISCONN                 WSAEISCONN
-#define ENOTCONN                WSAENOTCONN
-#define ESHUTDOWN               WSAESHUTDOWN
-#define ETOOMANYREFS            WSAETOOMANYREFS
-#define ETIMEDOUT               WSAETIMEDOUT
-#define ECONNREFUSED            WSAECONNREFUSED
-#define ELOOP                   WSAELOOP
-/* #define ENAMETOOLONG            WSAENAMETOOLONG */
-#define EHOSTDOWN               WSAEHOSTDOWN
-#define EHOSTUNREACH            WSAEHOSTUNREACH
-/* #define ENOTEMPTY               WSAENOTEMPTY */
-#define EPROCLIM                WSAEPROCLIM
-#define EUSERS                  WSAEUSERS
-#define EDQUOT                  WSAEDQUOT
-#define ESTALE                  WSAESTALE
-#define EREMOTE                 WSAEREMOTE
-#endif /* WIN32_NATIVE */
 
 /* On some systems, e.g. DGUX, inet_addr returns a 'struct in_addr'. */
 #ifdef HAVE_BROKEN_INET_ADDR
@@ -145,4 +98,8 @@ Boston, MA 02111-1307, USA.  */
 
 int poll_fds_for_input (SELECT_TYPE mask);
 
-#endif /* INCLUDED_sysproc_h_ */
+#ifdef MSDOS
+/* #include <process.h> */
+/* Damn that local process.h!  Instead we can define P_WAIT ourselves.  */
+#define P_WAIT 1
+#endif

@@ -27,8 +27,8 @@ Boston, MA 02111-1307, USA.  */
    Jon Reid: some changes for I18N3 (domain, etc), for 19.8.
  */
 
-#ifndef INCLUDED_bytecode_h_
-#define INCLUDED_bytecode_h_
+#ifndef _XEMACS_BYTECODE_H_
+#define _XEMACS_BYTECODE_H_
 
 /* Meanings of slots in a Lisp_Compiled_Function.
    Don't use these!  For backward compatibility only.  */
@@ -93,6 +93,7 @@ DECLARE_LRECORD (compiled_function, Lisp_Compiled_Function);
 				       Lisp_Compiled_Function)
 #define XSETCOMPILED_FUNCTION(x, p) XSETRECORD (x, p, compiled_function)
 #define COMPILED_FUNCTIONP(x) RECORDP (x, compiled_function)
+#define GC_COMPILED_FUNCTIONP(x) GC_RECORDP (x, compiled_function)
 #define CHECK_COMPILED_FUNCTION(x) CHECK_RECORD (x, compiled_function)
 #define CONCHECK_COMPILED_FUNCTION(x) CONCHECK_RECORD (x, compiled_function)
 
@@ -119,5 +120,5 @@ extern Lisp_Object Qbyte_code;
     neither     -                   : (*  559 0)  =   0 = 3530
 */
 
-#endif /* INCLUDED_bytecode_h_ */
+#endif /* _XEMACS_BYTECODE_H_ */
 

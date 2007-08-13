@@ -36,13 +36,18 @@ static char header_rcsid [] = "!Header: gnuserv.h,v 2.4 95/02/16 11:58:11 arup a
 
 #define USE_TMPDIR
 
+#define NO_SHORTNAMES
+
 #define PATCHLEVEL 2
 
 #define NO_SHORTNAMES
 /* gnuserv should not be compiled using SOCKS */
 #define DO_NOT_SOCKSIFY
-#define DONT_ENCAPSULATE
-#include <config.h>
+#include <../src/config.h>
+#undef read
+#undef write
+#undef open
+#undef close
 #undef signal
 
 /* Define the communication method between server and clients:
@@ -169,7 +174,7 @@ static char header_rcsid [] = "!Header: gnuserv.h,v 2.4 95/02/16 11:58:11 arup a
  */
 #ifndef DONT_USE_LITOUT
 #if !defined(HAVE_TERMIO) && !defined(HAVE_TERMIOS) && !defined(VMS)
-#if !defined(BSD4_1)
+#if !defined(MSDOS) && !defined(BSD4_1)
 #define USE_LITOUT
 #endif
 #endif
@@ -211,7 +216,7 @@ int make_connection (char *hostarg, int portarg, int *s);
 void disconnect_from_ipc_server();
 #endif
 #if defined(INTERNET_DOMAIN_SOCKETS) || defined(UNIX_DOMAIN_SOCKETS)
-void send_string (int s, const char *msg);
+void send_string (int s, CONST char *msg);
 void disconnect_from_server (int s, int echo);
 int read_line (int s, char *dest);
 #endif

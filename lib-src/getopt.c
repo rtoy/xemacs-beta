@@ -31,7 +31,7 @@ USA.  */
 #endif
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <../src/config.h>
 #endif
 
 #include <stdio.h>
@@ -73,7 +73,7 @@ USA.  */
 #endif
 #endif
 
-#if defined (WIN32_NATIVE) && !defined (CYGWIN)
+#if defined (WIN32) && !defined (__CYGWIN32__)
 /* It's not Unix, really.  See?  Capital letters.  */
 #include <windows.h>
 #undef getpid
@@ -201,6 +201,11 @@ static char *posixly_correct;
 #include <string.h>
 #define	my_index	strchr
 #else
+
+/* Avoid depending on library functions or files
+   whose names are inconsistent.  */
+
+char *getenv ();
 
 static char *
 my_index (const char *str, int chr)

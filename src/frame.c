@@ -34,7 +34,6 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame.h"
 #include "glyphs.h"
-#include "gutter.h"
 #include "menubar.h"
 #include "redisplay.h"
 #include "scrollbar.h"
@@ -86,6 +85,7 @@ Lisp_Object Qborder_color;
 Lisp_Object Qborder_width;
 
 Lisp_Object Qframep, Qframe_live_p;
+Lisp_Object Qframe_x_p, Qframe_tty_p;
 Lisp_Object Qdelete_frame;
 
 Lisp_Object Qframe_title_format, Vframe_title_format;
@@ -116,22 +116,22 @@ Lisp_Object Vframe_being_created;
 Lisp_Object Qframe_being_created;
 
 static void store_minibuf_frame_prop (struct frame *f, Lisp_Object val);
-static struct display_line title_string_display_line;
-/* Used by generate_title_string. Global because they get used so much that
-   the dynamic allocation time adds up. */
-static Emchar_dynarr *title_string_emchar_dynarr;
+
+EXFUN (Fset_frame_properties, 2);
 
 
 static Lisp_Object
-mark_frame (Lisp_Object obj)
+mark_frame (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
   struct frame *f = XFRAME (obj);
 
-#define MARKED_SLOT(x) mark_object (f->x)
+#define MARKED_SLOT(x) ((void) (markobj (f->x)));
 #include "frameslots.h"
 
+  mark_subwindow_cachels (f->subwindow_cachels, markobj);
+
   if (FRAME_LIVE_P (f)) /* device is nil for a dead frame */
-    MAYBE_FRAMEMETH (f, mark_frame, (f));
+    MAYBE_FRAMEMETH (f, mark_frame, (f, markobj));
 
   return Qnil;
 }
@@ -155,13 +155,13 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
-                               mark_frame, print_frame, 0, 0, 0, 0,
+                               mark_frame, print_frame, 0, 0, 0,
 			       struct frame);
 
 static void
 nuke_all_frame_slots (struct frame *f)
 {
-#define MARKED_SLOT(x)	f->x = Qnil
+#define MARKED_SLOT(x)	f->x = Qnil;
 #include "frameslots.h"
 }
 
@@ -206,13 +206,7 @@ allocate_frame_core (Lisp_Object device)
   f->last_nonminibuf_window = root_window;
 
   /* cache of subwindows visible on frame */
-  f->subwindow_instance_cache    = make_weak_list (WEAK_LIST_SIMPLE);
-
-  /* associated exposure ignore list */
-  f->subwindow_exposures = 0;
-  f->subwindow_exposures_tail = 0;
-
-  FRAME_SET_PAGENUMBER (f, 1);
+  f->subwindow_cachels    = Dynarr_new (subwindow_cachel);
 
   /* Choose a buffer for the frame's root window.  */
   XWINDOW (root_window)->buffer = Qt;
@@ -224,7 +218,7 @@ allocate_frame_core (Lisp_Object device)
        a space), try to find another one.  */
     if (string_char (XSTRING (Fbuffer_name (buf)), 0) == ' ')
       buf = Fother_buffer (buf, Qnil, Qnil);
-    Fset_window_buffer (root_window, buf, Qnil);
+    Fset_window_buffer (root_window, buf);
   }
 
   return f;
@@ -247,7 +241,7 @@ setup_normal_frame (struct frame *f)
   f->has_minibuffer = 1;
 
   XWINDOW (mini_window)->buffer = Qt;
-  Fset_window_buffer (mini_window, Vminibuffer_zero, Qt);
+  Fset_window_buffer (mini_window, Vminibuffer_zero);
 }
 
 /* Make a frame using a separate minibuffer window on another frame.
@@ -268,9 +262,7 @@ setup_frame_without_minibuffer (struct frame *f, Lisp_Object mini_window)
 	      FRAME_CONSOLE (XFRAME (XWINDOW (mini_window)->frame))))
     error ("frame and minibuffer must be on the same console");
 
-  /* Do not create a default minibuffer frame on printer devices.  */
-  if (NILP (mini_window)
-      && DEVICE_DISPLAY_P (XDEVICE (FRAME_DEVICE (f))))
+  if (NILP (mini_window))
     {
       struct console *con = XCONSOLE (FRAME_CONSOLE (f));
       /* Use default-minibuffer-frame if possible.  */
@@ -285,13 +277,8 @@ setup_frame_without_minibuffer (struct frame *f, Lisp_Object mini_window)
     }
 
   /* Install the chosen minibuffer window, with proper buffer.  */
-  if (!NILP (mini_window))
-    {
-      store_minibuf_frame_prop (f, mini_window);
-      Fset_window_buffer (mini_window, Vminibuffer_zero, Qt);
-    }
-  else
-    f->minibuffer_window = Qnil;
+  store_minibuf_frame_prop (f, mini_window);
+  Fset_window_buffer (mini_window, Vminibuffer_zero);
 }
 
 /* Make a frame containing only a minibuffer window.  */
@@ -321,7 +308,7 @@ setup_minibuffer_frame (struct frame *f)
 
   /* Put the proper buffer in that window.  */
 
-  Fset_window_buffer (mini_window, Vminibuffer_zero, Qt);
+  Fset_window_buffer (mini_window, Vminibuffer_zero);
 }
 
 static Lisp_Object
@@ -385,7 +372,7 @@ See `set-frame-properties', `default-x-frame-plist', and
   else
     name = build_string ("emacs");
 
-  if (!NILP (Fstring_match (make_string ((const Bufbyte *) "\\.", 2), name,
+  if (!NILP (Fstring_match (make_string ((CONST Bufbyte *) "\\.", 2), name,
 			    Qnil, Qnil)))
     signal_simple_error (". not allowed in frame names", name);
 
@@ -422,7 +409,7 @@ See `set-frame-properties', `default-x-frame-plist', and
 
   update_frame_window_mirror (f);
 
-  if (initialized && !DEVICE_STREAM_P (d))
+  if (initialized)
     {
       if (!NILP (f->minibuffer_window))
         reset_face_cachels (XWINDOW (f->minibuffer_window));
@@ -471,7 +458,7 @@ See `set-frame-properties', `default-x-frame-plist', and
 #endif
       reset_face_cachels (XWINDOW (FRAME_SELECTED_WINDOW (f)));
       reset_glyph_cachels (XWINDOW (FRAME_SELECTED_WINDOW (f)));
-
+      reset_subwindow_cachels (f);
       change_frame_size (f, f->height, f->width, 0);
     }
 
@@ -503,18 +490,6 @@ See `set-frame-properties', `default-x-frame-plist', and
      to strange console-type-specific things that need to be done. */
   MAYBE_FRAMEMETH (f, after_init_frame, (f, first_frame_on_device,
 					 first_frame_on_console));
-
-  if (!DEVICE_STREAM_P (d))
-    {
-      /* Now initialise the gutters. This won't change the frame size,
-         but is needed as input to the layout that change_frame_size
-         will eventually do. Unfortunately gutter sizing code relies
-         on the frame in question being visible so we can't do this
-         earlier. */
-      init_frame_gutters (f);
-
-      change_frame_size (f, f->height, f->width, 0);
-    }
 
   if (first_frame_on_device)
     {
@@ -916,13 +891,10 @@ set_frame_selected_window (struct frame *f, Lisp_Object window)
   f->selected_window = window;
   if (!MINI_WINDOW_P (XWINDOW (window)) || FRAME_MINIBUF_ONLY_P (f))
     {
-      if (!EQ (f->last_nonminibuf_window, window))
-	{
 #ifdef HAVE_TOOLBARS
-	  MARK_TOOLBAR_CHANGED;
+      if (!EQ (f->last_nonminibuf_window, window))
+	MARK_TOOLBAR_CHANGED;
 #endif
-	  MARK_GUTTER_CHANGED;
-	}
       f->last_nonminibuf_window = window;
     }
 }
@@ -1333,9 +1305,7 @@ delete_frame_internal (struct frame *f, int force,
   console = DEVICE_CONSOLE (d);
   con = XCONSOLE (console);
 
-  if (!called_from_delete_device &&
-      !(MAYBE_INT_DEVMETH (d, device_implementation_flags, ())
-	& XDEVIMPF_FRAMELESS_OK))
+  if (!called_from_delete_device)
     {
       /* If we're deleting the only non-minibuffer frame on the
 	 device, delete the device. */
@@ -1521,7 +1491,7 @@ delete_frame_internal (struct frame *f, int force,
 		    next_frame_internal (frame, Qt, device,
 					 called_from_delete_device);
 		if (NILP (next_f) || EQ (next_f, frame))
-		  set_device_selected_frame (d, Qnil);
+		  ;
 		else
 		  set_device_selected_frame (d, next_f);
 	    }
@@ -1536,7 +1506,7 @@ delete_frame_internal (struct frame *f, int force,
     {
       struct frame *sel_frame = selected_frame ();
       Fset_window_buffer (sel_frame->minibuffer_window,
-			  XWINDOW (minibuf_window)->buffer, Qt);
+			  XWINDOW (minibuf_window)->buffer);
       minibuf_window = sel_frame->minibuffer_window;
 
       /* If the dying minibuffer window was selected,
@@ -1556,13 +1526,6 @@ delete_frame_internal (struct frame *f, int force,
 #ifdef HAVE_TOOLBARS
   free_frame_toolbars (f);
 #endif
-  free_frame_gutters (f);
-  /* Unfortunately deleting the frame will also delete the parent of
-     all of the subwindow instances current on the frame. I think this
-     can lead to bad things when trying to finalize the
-     instances. Thus we loop over the instance cache calling the
-     finalize method for each instance. */
-  free_frame_subwindow_instance_cache (f);
 
   /* This must be done before the window and window_mirror structures
      are freed.  The scrollbar information is attached to them. */
@@ -1574,7 +1537,11 @@ delete_frame_internal (struct frame *f, int force,
   f->root_window = Qnil;
 
   /* clear out the cached glyph information */
-  f->subwindow_instance_cache = Qnil;
+  if (f->subwindow_cachels)
+    {
+      Dynarr_free (f->subwindow_cachels);
+      f->subwindow_cachels = 0;
+    }
 
   /* Remove the frame now from the list.  This way, any events generated
      on this frame by the maneuvers below will disperse themselves. */
@@ -1871,7 +1838,7 @@ Note also: Warping the mouse is contrary to the ICCCM, so be very sure
   struct window *w;
   int pix_x, pix_y;
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   CHECK_INT (x);
   CHECK_INT (y);
 
@@ -1895,7 +1862,7 @@ before calling this function on it, like this.
 {
   struct window *w;
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   CHECK_INT (x);
   CHECK_INT (y);
 
@@ -1944,7 +1911,7 @@ you may do so.
   if (EQ (f->minibuffer_window, minibuf_window))
     {
       Fset_window_buffer (sel_frame->minibuffer_window,
-			  XWINDOW (minibuf_window)->buffer, Qt);
+			  XWINDOW (minibuf_window)->buffer);
       minibuf_window = sel_frame->minibuffer_window;
     }
 
@@ -1970,7 +1937,7 @@ If omitted, FRAME defaults to the currently selected frame.
   if (EQ (f->minibuffer_window, minibuf_window))
     {
       Fset_window_buffer (sel_frame->minibuffer_window,
-			  XWINDOW (minibuf_window)->buffer, Qt);
+			  XWINDOW (minibuf_window)->buffer);
       minibuf_window = sel_frame->minibuffer_window;
     }
 
@@ -2102,31 +2069,6 @@ doesn't support multiple overlapping frames, this function does nothing.
 
 /* Ben thinks there is no need for `redirect-frame-focus' or `frame-focus',
    crockish FSFmacs functions.  See summary on focus in event-stream.c. */
-
-DEFUN ("print-job-page-number", Fprint_job_page_number, 1, 1, 0, /*
-Return current page number for the print job FRAME.
-*/
-       (frame))
-{
-  CHECK_PRINTER_FRAME (frame);
-  return make_int (FRAME_PAGENUMBER (XFRAME (frame)));
-}
-
-DEFUN ("print-job-eject-page", Fprint_job_eject_page, 1, 1, 0, /*
-Eject page in the print job FRAME.
-*/
-       (frame))
-{
-  struct frame *f;
-
-  CHECK_PRINTER_FRAME (frame);
-  f = XFRAME (frame);
-  FRAMEMETH (f, eject_page, (f));
-  FRAME_SET_PAGENUMBER (f, 1 + FRAME_PAGENUMBER (f));
-  f->clear = 1;
-
-  return Qnil;
-}
 
 
 /***************************************************************************/
@@ -2182,7 +2124,7 @@ dissect_as_face_setting (Lisp_Object sym, Lisp_Object *face_out,
 			 Lisp_Object *face_prop_out)
 {
   Lisp_Object list = Vbuilt_in_face_specifiers;
-  Lisp_String *s;
+  struct Lisp_String *s;
 
   if (!SYMBOLP (sym))
     return 0;
@@ -2192,7 +2134,7 @@ dissect_as_face_setting (Lisp_Object sym, Lisp_Object *face_out,
   while (!NILP (list))
     {
       Lisp_Object prop = Fcar (list);
-      Lisp_String *prop_name;
+      struct Lisp_String *prop_name;
 
       if (!SYMBOLP (prop))
 	continue;
@@ -2270,9 +2212,8 @@ The following symbols etc. have predefined meanings:
 
  minibuffer	Gives the minibuffer behavior for this frame.  Either
 		t (frame has its own minibuffer), `only' (frame is
-		a minibuffer-only frame), `none' (frame has no minibuffer)
-		or a window (frame uses that window, which is on another
-		frame, as the minibuffer).
+		a minibuffer-only frame), or a window (frame uses that
+		window, which is on another frame, as the minibuffer).
 
  unsplittable	If non-nil, frame cannot be split by `display-buffer'.
 
@@ -2286,13 +2227,7 @@ The following symbols etc. have predefined meanings:
  left-toolbar-visible-p, right-toolbar-visible-p, toolbar-buttons-captioned-p,
  top-toolbar-border-width, bottom-toolbar-border-width,
  left-toolbar-border-width, right-toolbar-border-width,
- modeline-shadow-thickness, has-modeline-p,
- default-gutter, top-gutter, bottom-gutter, left-gutter, right-gutter,
- default-gutter-height, default-gutter-width, top-gutter-height,
- bottom-gutter-height, left-gutter-width, right-gutter-width,
- default-gutter-visible-p, top-gutter-visible-p, bottom-gutter-visible-p,
- left-gutter-visible-p, right-gutter-visible-p, top-gutter-border-width,
- bottom-gutter-border-width, left-gutter-border-width, right-gutter-border-width,
+ modeline-shadow-thickness, has-modeline-p
 		[Giving the name of any built-in specifier variable is
 		equivalent to calling `set-specifier' on the specifier,
 		with a locale of FRAME.  Giving the name to `frame-property'
@@ -2725,8 +2660,8 @@ frame_conversion_internal (struct frame *f, int pixel_to_char,
 
   window = FRAME_SELECTED_WINDOW (f);
 
-  egw = max (glyph_width (Vcontinuation_glyph, window),
-	     glyph_width (Vtruncation_glyph, window));
+  egw = max (glyph_width (Vcontinuation_glyph, Vdefault_face, 0, window),
+	     glyph_width (Vtruncation_glyph, Vdefault_face, 0, window));
   egw = max (egw, cpw);
   bdr = 2 * f->internal_border_width;
   obw = FRAME_SCROLLBAR_WIDTH (f) + FRAME_THEORETICAL_LEFT_TOOLBAR_WIDTH (f) +
@@ -2901,9 +2836,9 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
   {
     int adjustment, trunc_width, cont_width;
 
-    trunc_width = glyph_width (Vtruncation_glyph,
+    trunc_width = glyph_width (Vtruncation_glyph, Vdefault_face, 0,
 			       FRAME_SELECTED_WINDOW (f));
-    cont_width = glyph_width (Vcontinuation_glyph,
+    cont_width = glyph_width (Vcontinuation_glyph, Vdefault_face, 0,
 			      FRAME_SELECTED_WINDOW (f));
     adjustment = max (trunc_width, cont_width);
     adjustment = max (adjustment, font_width);
@@ -2917,14 +2852,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
   if (new_pixheight)
     {
-      /* Adjust for gutters here so that we always get set
-         properly. */
-      new_pixheight -= 
-	(FRAME_TOP_GUTTER_BOUNDS (f)
-	 + FRAME_BOTTOM_GUTTER_BOUNDS (f));
-
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top 
-	= FRAME_TOP_BORDER_END (f) + FRAME_TOP_GUTTER_BOUNDS (f);
+      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = FRAME_TOP_BORDER_END (f);
 
       if (FRAME_HAS_MINIBUF_P (f)
 	  && ! FRAME_MINIBUF_ONLY_P (f))
@@ -2950,10 +2878,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 				new_pixheight - minibuf_height, 0);
 
 	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
-	    FRAME_TOP_BORDER_END (f) +
-	    FRAME_TOP_GUTTER_BOUNDS (f) + 
-	    FRAME_BOTTOM_GUTTER_BOUNDS (f) +
-	    new_pixheight - minibuf_height;
+	    new_pixheight - minibuf_height + FRAME_TOP_BORDER_END (f);
 
 	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
 	}
@@ -2968,20 +2893,13 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
   if (new_pixwidth)
     {
-      /* Adjust for gutters here so that we always get set
-         properly. */
-      new_pixwidth -= 
-	(FRAME_LEFT_GUTTER_BOUNDS (f)
-	 + FRAME_RIGHT_GUTTER_BOUNDS (f));
-      
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = 
-	FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
+      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = FRAME_LEFT_BORDER_END (f);
       set_window_pixwidth (FRAME_ROOT_WINDOW (f), new_pixwidth, 0);
 
       if (FRAME_HAS_MINIBUF_P (f))
 	{
 	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_left =
-	    FRAME_LEFT_BORDER_END (f) + FRAME_LEFT_GUTTER_BOUNDS (f);
+	    FRAME_LEFT_BORDER_END (f);
 	  set_window_pixwidth (FRAME_MINIBUF_WINDOW (f), new_pixwidth, 0);
 	}
 
@@ -3000,7 +2918,6 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
     }
 
   MARK_FRAME_TOOLBARS_CHANGED (f);
-  MARK_FRAME_GUTTERS_CHANGED (f);
   MARK_FRAME_CHANGED (f);
   f->echo_area_garbaged = 1;
 }
@@ -3036,37 +2953,6 @@ change_frame_size (struct frame *f, int newheight, int newwidth, int delay)
 }
 
 
-/* The caller is responsible for freeing the returned string. */
-static Bufbyte *
-generate_title_string (struct window *w, Lisp_Object format_str,
-		       face_index findex, int type)
-{
-  struct display_line *dl;
-  struct display_block *db;
-  int elt = 0;
-
-  dl = &title_string_display_line;
-  db = get_display_block_from_line (dl, TEXT);
-  Dynarr_reset (db->runes);
-
-  generate_formatted_string_db (format_str, Qnil, w, dl, db, findex, 0,
-                                -1, type);
-
-  Dynarr_reset (title_string_emchar_dynarr);
-  while (elt < Dynarr_length (db->runes))
-    {
-      if (Dynarr_atp (db->runes, elt)->type == RUNE_CHAR)
-	Dynarr_add (title_string_emchar_dynarr,
-		    Dynarr_atp (db->runes, elt)->object.chr.ch);
-      elt++;
-    }
-
-  return
-    convert_emchar_string_into_malloced_string
-    (Dynarr_atp (title_string_emchar_dynarr, 0),
-     Dynarr_length (title_string_emchar_dynarr), 0);
-}
-
 void
 update_frame_title (struct frame *f)
 {
@@ -3090,8 +2976,8 @@ update_frame_title (struct frame *f)
 
   if (HAS_FRAMEMETH_P (f, set_title_from_bufbyte))
     {
-      title = generate_title_string (w, title_format,
-				     DEFAULT_INDEX, CURRENT_DISP);
+      title = generate_formatted_string (w, title_format, Qnil,
+                                         DEFAULT_INDEX, CURRENT_DISP);
       FRAMEMETH (f, set_title_from_bufbyte, (f, title));
     }
 
@@ -3102,8 +2988,8 @@ update_frame_title (struct frame *f)
 	  if (title)
 	    xfree (title);
 
-	  title = generate_title_string (w, icon_format,
-					 DEFAULT_INDEX, CURRENT_DISP);
+	  title = generate_formatted_string (w, icon_format, Qnil,
+                                             DEFAULT_INDEX, CURRENT_DISP);
 	}
       FRAMEMETH (f, set_icon_name_from_bufbyte, (f, title));
     }
@@ -3162,29 +3048,9 @@ icon_glyph_changed (Lisp_Object glyph, Lisp_Object property,
 }
 
 
-/***************************************************************************/
-/*									   */
-/*                              initialization                             */
-/*									   */
-/***************************************************************************/
-
-void
-init_frame (void)
-{
-#ifndef PDUMP
-  if (!initialized)
-#endif
-    {
-      title_string_emchar_dynarr = Dynarr_new (Emchar);
-      xzero (title_string_display_line);
-    }
-}
-
 void
 syms_of_frame (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (frame);
-
   defsymbol (&Qdelete_frame_hook, "delete-frame-hook");
   defsymbol (&Qselect_frame_hook, "select-frame-hook");
   defsymbol (&Qdeselect_frame_hook, "deselect-frame-hook");
@@ -3197,6 +3063,8 @@ syms_of_frame (void)
 
   defsymbol (&Qframep, "framep");
   defsymbol (&Qframe_live_p, "frame-live-p");
+  defsymbol (&Qframe_x_p, "frame-x-p");
+  defsymbol (&Qframe_tty_p, "frame-tty-p");
   defsymbol (&Qdelete_frame, "delete-frame");
   defsymbol (&Qsynchronize_minibuffers, "synchronize-minibuffers");
   defsymbol (&Qbuffer_predicate, "buffer-predicate");
@@ -3295,8 +3163,6 @@ syms_of_frame (void)
   DEFSUBR (Fset_frame_size);
   DEFSUBR (Fset_frame_position);
   DEFSUBR (Fset_frame_pointer);
-  DEFSUBR (Fprint_job_page_number);
-  DEFSUBR (Fprint_job_eject_page);
 }
 
 void
@@ -3410,34 +3276,27 @@ visible frames.
   Vsynchronize_minibuffers = Qnil;
 
   DEFVAR_LISP ("frame-title-format", &Vframe_title_format /*
-Controls the title of the window-system window of the selected frame.
+Controls the title of the X window corresponding to the selected frame.
 This is the same format as `modeline-format' with the exception that
 %- is ignored.
 */ );
-/* #### I would change this unilaterally but for the wrath of the Kyles
-of the world. */
-#ifdef WIN32_NATIVE
-  Vframe_title_format = build_string ("%b - XEmacs");
-#else
-  Vframe_title_format = build_string ("%S: %b");
-#endif
+  Vframe_title_format = Fpurecopy (build_string ("%S: %b"));
 
   DEFVAR_LISP ("frame-icon-title-format", &Vframe_icon_title_format /*
 Controls the title of the icon corresponding to the selected frame.
 See also the variable `frame-title-format'.
 */ );
-  Vframe_icon_title_format = build_string ("%b");
+  Vframe_icon_title_format = Fpurecopy (build_string ("%b"));
 
   DEFVAR_LISP ("default-frame-name", &Vdefault_frame_name /*
 The default name to assign to newly-created frames.
-This can be overridden by arguments to `make-frame'.  This must be a string.
-This is used primarily for picking up X resources, and is *not* the title
-of the frame. (See `frame-title-format'.)
+This can be overridden by arguments to `make-frame'.
+This must be a string.
 */ );
 #ifndef INFODOCK
-  Vdefault_frame_name = build_string ("emacs");
+  Vdefault_frame_name = Fpurecopy (build_string ("emacs"));
 #else
-  Vdefault_frame_name = build_string ("InfoDock");
+  Vdefault_frame_name = Fpurecopy (build_string ("InfoDock"));
 #endif
 
   DEFVAR_LISP ("default-frame-plist", &Vdefault_frame_plist /*

@@ -24,8 +24,8 @@ Boston, MA 02111-1307, USA.  */
    This file was written independently of the FSF implementation,
    and is not compatible. */
 
-#ifndef INCLUDED_chartab_h_
-#define INCLUDED_chartab_h_
+#ifndef _MULE_CHARTAB_H
+#define _MULE_CHARTAB_H
 
 /************************************************************************/
 /*                               Char Tables                            */
@@ -37,6 +37,15 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef MULE
 
+DECLARE_LRECORD (char_table_entry, struct Lisp_Char_Table_Entry);
+#define XCHAR_TABLE_ENTRY(x) \
+  XRECORD (x, char_table_entry, struct Lisp_Char_Table_Entry)
+#define XSETCHAR_TABLE_ENTRY(x, p) XSETRECORD (x, p, char_table_entry)
+#define CHAR_TABLE_ENTRYP(x) RECORDP (x, char_table_entry)
+#define GC_CHAR_TABLE_ENTRYP(x) GC_RECORDP (x, char_table_entry)
+/* #define CHECK_CHAR_TABLE_ENTRY(x) CHECK_RECORD (x, char_table_entry)
+   char table entries should never escape to Lisp */
+
 struct Lisp_Char_Table_Entry
 {
   struct lcrecord_header header;
@@ -46,17 +55,20 @@ struct Lisp_Char_Table_Entry
      variable-size and add an offset value into this structure. */
   Lisp_Object level2[96];
 };
-typedef struct Lisp_Char_Table_Entry Lisp_Char_Table_Entry;
-
-DECLARE_LRECORD (char_table_entry, Lisp_Char_Table_Entry);
-#define XCHAR_TABLE_ENTRY(x) \
-  XRECORD (x, char_table_entry, Lisp_Char_Table_Entry)
-#define XSETCHAR_TABLE_ENTRY(x, p) XSETRECORD (x, p, char_table_entry)
-#define CHAR_TABLE_ENTRYP(x) RECORDP (x, char_table_entry)
-/* #define CHECK_CHAR_TABLE_ENTRY(x) CHECK_RECORD (x, char_table_entry)
-   char table entries should never escape to Lisp */
 
 #endif /* MULE */
+
+DECLARE_LRECORD (char_table, struct Lisp_Char_Table);
+#define XCHAR_TABLE(x) \
+  XRECORD (x, char_table, struct Lisp_Char_Table)
+#define XSETCHAR_TABLE(x, p) XSETRECORD (x, p, char_table)
+#define CHAR_TABLEP(x) RECORDP (x, char_table)
+#define GC_CHAR_TABLEP(x) GC_RECORDP (x, char_table)
+#define CHECK_CHAR_TABLE(x) CHECK_RECORD (x, char_table)
+#define CONCHECK_CHAR_TABLE(x) CONCHECK_RECORD (x, char_table)
+
+#define CHAR_TABLE_TYPE(ct) ((ct)->type)
+#define XCHAR_TABLE_TYPE(ct) CHAR_TABLE_TYPE (XCHAR_TABLE (ct))
 
 enum char_table_type
 {
@@ -117,28 +129,17 @@ struct Lisp_Char_Table
   Lisp_Object mirror_table;
   Lisp_Object next_table; /* DO NOT mark through this. */
 };
-typedef struct Lisp_Char_Table Lisp_Char_Table;
-
-DECLARE_LRECORD (char_table, Lisp_Char_Table);
-#define XCHAR_TABLE(x) XRECORD (x, char_table, Lisp_Char_Table)
-#define XSETCHAR_TABLE(x, p) XSETRECORD (x, p, char_table)
-#define CHAR_TABLEP(x) RECORDP (x, char_table)
-#define CHECK_CHAR_TABLE(x) CHECK_RECORD (x, char_table)
-#define CONCHECK_CHAR_TABLE(x) CONCHECK_RECORD (x, char_table)
-
-#define CHAR_TABLE_TYPE(ct) ((ct)->type)
-#define XCHAR_TABLE_TYPE(ct) CHAR_TABLE_TYPE (XCHAR_TABLE (ct))
 
 #ifdef MULE
 
-Lisp_Object get_non_ascii_char_table_value (Lisp_Char_Table *ct,
-					    int leading_byte,
-					    Emchar c);
+Lisp_Object get_non_ascii_char_table_value (struct Lisp_Char_Table *ct,
+					   int leading_byte,
+					   Emchar c);
 
-INLINE_HEADER Lisp_Object
-CHAR_TABLE_NON_ASCII_VALUE_UNSAFE (Lisp_Char_Table *ct, Emchar ch);
-INLINE_HEADER Lisp_Object
-CHAR_TABLE_NON_ASCII_VALUE_UNSAFE (Lisp_Char_Table *ct, Emchar ch)
+INLINE Lisp_Object
+CHAR_TABLE_NON_ASCII_VALUE_UNSAFE (struct Lisp_Char_Table *ct, Emchar ch);
+INLINE Lisp_Object
+CHAR_TABLE_NON_ASCII_VALUE_UNSAFE (struct Lisp_Char_Table *ct, Emchar ch)
 {
   unsigned char lb = CHAR_LEADING_BYTE (ch);
   if (!CHAR_TABLE_ENTRYP ((ct)->level1[lb - MIN_LEADING_BYTE]))
@@ -158,9 +159,6 @@ CHAR_TABLE_NON_ASCII_VALUE_UNSAFE (Lisp_Char_Table *ct, Emchar ch)
 
 #endif /* not MULE */
 
-#define XCHAR_TABLE_VALUE_UNSAFE(ct, ch) \
-  CHAR_TABLE_VALUE_UNSAFE (XCHAR_TABLE (ct), ch)
-
 enum chartab_range_type
 {
   CHARTAB_RANGE_ALL,
@@ -179,16 +177,16 @@ struct chartab_range
   int row;
 };
 
-void fill_char_table (Lisp_Char_Table *ct, Lisp_Object value);
-void put_char_table (Lisp_Char_Table *ct, struct chartab_range *range,
+void fill_char_table (struct Lisp_Char_Table *ct, Lisp_Object value);
+void put_char_table (struct Lisp_Char_Table *ct, struct chartab_range *range,
 		     Lisp_Object val);
-Lisp_Object get_char_table (Emchar, Lisp_Char_Table *);
-int map_char_table (Lisp_Char_Table *ct,
+Lisp_Object get_char_table (Emchar, struct Lisp_Char_Table *);
+int map_char_table (struct Lisp_Char_Table *ct,
 		    struct chartab_range *range,
 		    int (*fn) (struct chartab_range *range,
 			       Lisp_Object val, void *arg),
 		    void *arg);
-void prune_syntax_tables (void);
+void prune_syntax_tables (int (*obj_marked_p) (Lisp_Object));
 
 EXFUN (Fcopy_char_table, 1);
 EXFUN (Fmake_char_table, 1);
@@ -233,4 +231,4 @@ extern Lisp_Object Vstandard_category_table;
 
 #endif /* MULE */
 
-#endif /* INCLUDED_chartab_h_ */
+#endif /* _MULE_CHARTAB_H */

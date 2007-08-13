@@ -1,25 +1,23 @@
 /* Program to produce output at regular intervals.  */
 
-#include <config.h>
+#include <../src/config.h>
 
 #if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #endif
 
 #include <stdio.h>
 #include <sys/types.h>
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef sleep
 #define sleep(t) Sleep ((t) * 1000)
 #define getppid() (0)
 #undef HAVE_SYS_TIME_H
-#endif /* WIN32_NATIVE */
+#endif /* WINDOWSNT */
 
 #ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>

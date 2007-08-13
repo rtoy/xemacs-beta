@@ -439,6 +439,7 @@ write_segment (int new, char *ptr, char *end)
 {
   int i, nwrite, ret;
   char buf[80];
+  extern int errno;
   char zeros[UnexBlockSz];
 
   for (i = 0; ptr < end;)

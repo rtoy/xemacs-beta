@@ -2,8 +2,8 @@
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 
-;; Author: Steven L Baur <steve@xemacs.org>
-;; Maintainer: Steven L Baur <steve@xemacs.org>
+;; Author: Steven L Baur <steve@altair.xemacs.org>
+;; Maintainer: Steven L Baur <steve@altair.xemacs.org>
 ;; Keywords: internal, lisp, dumped
 
 ;; This file is part of XEmacs.
@@ -38,8 +38,8 @@
 ;;   (this goes for any package loaded before `subr.el'.)
 ;;
 ;; - not to use macros, because they are not yet available (and this
-;;   file must be loadable uncompiled.)  Built in macros, such as
-;;   `when' and `unless' are fine, of course.
+;;   file must be loadable uncompiled.)  This rules out CL-style
+;;   macros like `when', for instance.
 ;;
 ;; - not to use `defcustom'.  If you must add user-customizable
 ;;   variables here, use `defvar', and add the variable to
@@ -55,7 +55,7 @@
 ;;; Package versioning
 
 (defvar packages-package-list nil
-  "Database of loaded packages and version numbers")
+  "database of loaded packages and version numbers")
 
 (defvar packages-hierarchy-depth 1
   "Depth of package hierarchies.")
@@ -84,8 +84,16 @@
 (defvar last-package-load-path nil
   "Load path for packages last in the load path.")
 
-(defun packages-compute-package-locations (user-init-directory)
-  "Compute locations of the various package directories.
+(defvar package-locations
+  (list
+   (list (paths-construct-path '("~" ".xemacs"))
+                             'early #'(lambda () t))
+   (list "site-packages"     'late  #'(lambda () t))
+   (list "infodock-packages" 'late  #'(lambda () (featurep 'infodock)))
+   (list "mule-packages"     'late  #'(lambda () (featurep 'mule)))
+   (list "xemacs-packages"   'late  #'(lambda () t))
+   (list "packages"          'late  #'(lambda () t)))
+  "Locations of the various package directories.
 This is a list each of whose elements describes one directory.
 A directory description is a three-element list.
 The first element is either an absolute path or a subdirectory
@@ -94,16 +102,7 @@ The second component is one of the symbols EARLY, LATE, LAST,
 depending on the load-path segment the hierarchy is supposed to
 show up in.
 The third component is a thunk which, if it returns NIL, causes
-the directory to be ignored."
-  (list
-   (list (paths-construct-path (list user-init-directory "mule-packages"))
-	 'early #'(lambda () (featurep 'mule)))
-   (list (paths-construct-path (list user-init-directory "xemacs-packages"))
-	 'early #'(lambda () t))
-   (list "site-packages"     'late  #'(lambda () t))
-   (list "infodock-packages" 'late  #'(lambda () (featurep 'infodock)))
-   (list "mule-packages"     'late  #'(lambda () (featurep 'mule)))
-   (list "xemacs-packages"   'late  #'(lambda () t))))
+the directory to be ignored.")
 
 (defun package-get-key-1 (info key)
   "Locate keyword `key' in list."
@@ -123,8 +122,9 @@ the directory to be ignored."
   (let ((info (if (and attributes (floatp (car attributes)))
 		  (list :version (car attributes))
 		attributes)))
+    (remassq name packages-package-list)
     (setq packages-package-list
-	  (cons (cons name info) (remassq name packages-package-list)))))
+	  (cons (cons name info) packages-package-list))))
 
 (defun package-require (name version)
   (let ((pkg (assq name packages-package-list)))
@@ -350,7 +350,7 @@ This function is basically a wrapper over `locate-file'."
   ;; make sure paths-find-version-directory and paths-find-site-directory
   ;; don't both pick up version-independent directories ...
   (let ((version-directory (paths-find-version-directory roots base nil nil t))
-	(site-directory (paths-find-site-directory roots base nil nil t)))
+	(site-directory (paths-find-site-directory roots base)))
     (paths-uniq-append
      (and version-directory (list version-directory))
      (and site-directory (list site-directory)))))
@@ -429,7 +429,7 @@ DEFAULT is a default list of packages."
 	  (setq package-locations (cdr package-locations)))
 	packages)))
 
-(defun packages-find-packages (roots package-locations)
+(defun packages-find-packages (roots)
   "Find the packages."
   (let ((envvar-value (getenv "EMACSPACKAGEPATH")))
     (if envvar-value
@@ -452,7 +452,7 @@ PACKAGES is a list of package directories.
 SUFFIXES is a list of names of package subdirectories to look for."
   (let ((directories
 	 (apply
-	  #'nconc
+	  #'append
 	  (mapcar #'(lambda (package)
 		      (mapcar #'(lambda (suffix)
 				  (file-name-as-directory (concat package suffix)))
@@ -494,7 +494,7 @@ PACKAGES is a list of package directories."
 (defun packages-load-package-lisps (package-load-path base)
   "Load all Lisp files of a certain name along a load path.
 BASE is the base name of the files."
-  (mapcar #'(lambda (dir)
+  (mapc #'(lambda (dir)
 	    (let ((file-name (expand-file-name base dir)))
 	      (condition-case error
 		  (load file-name t t)
@@ -513,7 +513,7 @@ BASE is the base name of the files."
 (defun packages-handle-package-dumped-lisps (handle package-load-path)
   "Load dumped-lisp.el files along a load path.
 Call HANDLE on each file off definitions of PACKAGE-LISP there."
-  (mapcar #'(lambda (dir)
+  (mapc #'(lambda (dir)
 	    (let ((file-name (expand-file-name "dumped-lisp.el" dir)))
 	      (if (file-exists-p file-name)
 		  (let (package-lisp
@@ -522,7 +522,7 @@ Call HANDLE on each file off definitions of PACKAGE-LISP there."
 		    (load file-name)
 		    ;; dumped-lisp.el could have set this ...
 		    (if package-lisp
-			(mapcar #'(lambda (base)
+			(mapc #'(lambda (base)
 				  (funcall handle base))
 			      package-lisp))))))
 	package-load-path))

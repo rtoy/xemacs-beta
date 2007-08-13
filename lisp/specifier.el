@@ -1,7 +1,7 @@
 ;;; specifier.el --- Lisp interface to specifiers
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1995, 1996, 2000 Ben Wing.
+;; Copyright (C) 1995, 1996 Ben Wing.
 
 ;; Author: Ben Wing <ben@xemacs.org>
 ;; Keywords: internal, dumped
@@ -275,20 +275,18 @@ indicate that it applies everywhere.  LOCALE usually defaults to
 
 VALUE is usually what is called an \"instantiator\" (which, roughly
 speaking, corresponds to the \"value\" of the property governed by
-SPECIFIER).  The valid instantiators for SPECIFIER depend on the type
-of SPECIFIER (which you can determine using `specifier-type').  The
-specifier `scrollbar-width', for example, is of type `integer',
-meaning its valid instantiators are integers.  The specifier governing
-the background color of the `default' face (you can retrieve this
-specifier using `(face-background 'default)') is of type `color',
-meaning its valid instantiators are strings naming colors and
-color-instance objects.  For some types of specifiers, such as `image'
-and `toolbar', the instantiators can be very complex.  Generally this
-is documented in the appropriate creation function --
-e.g. `make-color-specifier', `make-font-specifier',
-`make-image-specifier' -- or in the global variable holding the most
-common specifier for that type (`default-toolbar', `default-gutter',
-`current-display-table').
+SPECIFIER).  The valid instantiators for SPECIFIER depend on the
+type of SPECIFIER (which you can determine using `specifier-type').
+The specifier `scrollbar-width', for example, is of type `integer',
+meaning its valid instantiators are integers.  The specifier
+governing the background color of the `default' face (you can
+retrieve this specifier using `(face-background 'default)') is
+of type `color', meaning its valid instantiators are strings naming
+colors and color-instance objects.  For some types of specifiers,
+such as `image' and `toolbar', the instantiators can be very
+complex.  Generally this is documented in the appropriate predicate
+function -- `color-specifier-p', `image-specifier-p',
+`toolbar-specifier-p', etc.
 
 NOTE: It does *not* work to give a VALUE of nil as a way of
 removing the specifications for a locale.  Use `remove-specifier'
@@ -405,40 +403,6 @@ is no possibility for ambiguity and no need to go through the function
 	    how-to-add))))
   value)
 
-(defun modify-specifier-instances (specifier func &optional args force default
-					     locale tag-set)
-  "Modify all specifications that match LOCALE and TAG-SET by FUNC.
-
-For each specification that exists for SPECIFIER, in locale LOCALE
-that matches TAG-SET, call the function FUNC with the instance as its
-first argument and with optional arguments ARGS.  The result is then
-used as the new value of the instantiator.
-
-If there is no specification in the domain LOCALE matching TAG-SET and
-FORCE is non-nil, an explicit one is created from the matching
-specifier instance if that exists or DEFAULT otherwise. If LOCALE is
-not a domain (i.e. a buffer), DEFAULT is always used. FUNC is then
-applied like above and the resulting specification is added."
-
-  (let ((spec-list (specifier-spec-list specifier locale tag-set)))
-    (cond
-     (spec-list
-      ;; Destructively edit the spec-list
-      (mapc #'(lambda (spec)
-		(mapc #'(lambda (inst-pair)
-			  (setcdr inst-pair
-				  (apply func (cdr inst-pair) args)))
-		      (cdr spec)))
-	    spec-list)
-      (add-spec-list-to-specifier specifier spec-list))
-     (force
-      (set-specifier specifier
-                     (apply func
-                            (or (and (valid-specifier-domain-p locale)
-                                     (specifier-instance specifier))
-                                default) args)
-                     locale tag-set)))))
-
 (defmacro let-specifier (specifier-list &rest body)
   "Add specifier specs, evaluate forms in BODY and restore the specifiers.
 \(let-specifier SPECIFIER-LIST BODY...)
@@ -527,58 +491,6 @@ Example:
 					      ,(car (nth 0 varel))
 					      ,(car oldval))))
 				       oldvallist varlist))))))))
-
-(defun make-integer-specifier (spec-list)
-  "Return a new `integer' specifier object with the given specification list.
-SPEC-LIST can be a list of specifications (each of which is a cons of a
-locale and a list of instantiators), a single instantiator, or a list
-of instantiators.  See `make-specifier' for more information about
-specifiers.
-
-Valid instantiators for integer specifiers are integers."
-  (make-specifier-and-init 'integer spec-list))
-
-(defun make-boolean-specifier (spec-list)
-  "Return a new `boolean' specifier object with the given specification list.
-SPEC-LIST can be a list of specifications (each of which is a cons of a
-locale and a list of instantiators), a single instantiator, or a list
-of instantiators.  See `make-specifier' for more information about
-specifiers.
-
-Valid instantiators for boolean specifiers are t and nil."
-  (make-specifier-and-init 'boolean spec-list))
-
-(defun make-natnum-specifier (spec-list)
-  "Return a new `natnum' specifier object with the given specification list.
-SPEC-LIST can be a list of specifications (each of which is a cons of a
-locale and a list of instantiators), a single instantiator, or a list
-of instantiators.  See `make-specifier' for more information about
-specifiers.
-
-Valid instantiators for natnum specifiers are non-negative integers."
-  (make-specifier-and-init 'natnum spec-list))
-
-(defun make-generic-specifier (spec-list)
-  "Return a new `generic' specifier object with the given specification list.
-SPEC-LIST can be a list of specifications (each of which is a cons of a
-locale and a list of instantiators), a single instantiator, or a list
-of instantiators.  See `make-specifier' for more information about
-specifiers.
-
-Valid instantiators for generic specifiers are all Lisp values.
-They are returned back unchanged when a specifier is instantiated."
-  (make-specifier-and-init 'generic spec-list))
-
-(defun make-display-table-specifier (spec-list)
-  "Return a new `display-table' specifier object with the given spec list.
-SPEC-LIST can be a list of specifications (each of which is a cons of a
-locale and a list of instantiators), a single instantiator, or a list
-of instantiators.  See `make-specifier' for more information about
-specifiers.
-
-Valid instantiators for display-table specifiers are described in
-detail in the doc string for `current-display-table'."
-  (make-specifier-and-init 'display-table spec-list))
 
 ;; Evaluate this for testing:
 ; (cl-prettyexpand '(let-specifier ((modeline-shadow-thickness 0 (selected-window) 'x) (fubar (value) baz)) (sit-for 1)))

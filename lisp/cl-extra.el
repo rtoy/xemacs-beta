@@ -183,14 +183,16 @@ the elements themselves."
       (nreverse cl-res))))
 
 
-(defun mapc (cl-func cl-seq &rest cl-rest)
-  "Like `mapcar', but does not accumulate values returned by the function."
-  (if cl-rest
-      (apply 'map nil cl-func cl-seq cl-rest)
-    ;; XEmacs change: in the simplest case we call mapc-internal,
-    ;; which really doesn't accumulate any results.
-    (mapc-internal cl-func cl-seq))
-  cl-seq)
+;; mapc is now in C, renamed from `mapc-internal'.
+
+;(defun mapc (cl-func cl-seq &rest cl-rest)
+;  "Like `mapcar', but does not accumulate values returned by the function."
+;  (if cl-rest
+;      (apply 'map nil cl-func cl-seq cl-rest)
+;    ;; XEmacs change: we call mapc-internal, which really doesn't
+;    ;; accumulate any results.
+;    (mapc-internal cl-func cl-seq))
+;  cl-seq)
 
 (defun mapl (cl-func cl-list &rest cl-rest)
   "Like `maplist', but does not accumulate values returned by the function."
@@ -638,7 +640,13 @@ argument VECP, this copies vectors as well as conses."
 
 ;; XEmacs: our `get' groks DEFAULT.
 (defalias 'get* 'get)
-(defalias 'getf 'plist-get)
+
+(defun getf (plist tag &optional def)
+  "Search PROPLIST for property PROPNAME; return its value or DEFAULT.
+PROPLIST is a list of the sort returned by `symbol-plist'."
+  (setplist '--cl-getf-symbol-- plist)
+  (or (get '--cl-getf-symbol-- tag)
+      (and def (get* '--cl-getf-symbol-- tag def))))
 
 (defun cl-set-getf (plist tag val)
   (let ((p plist))
@@ -650,18 +658,29 @@ argument VECP, this copies vectors as well as conses."
     (while (and (cdr p) (not (eq (car (cdr p)) tag))) (setq p (cdr (cdr p))))
     (and (cdr p) (progn (setcdr p (cdr (cdr (cdr p)))) t))))
 
+(defun cl-remprop (sym tag)
+  "Remove from SYMBOL's plist the property PROP and its value."
+  (let ((plist (symbol-plist sym)))
+    (if (and plist (eq tag (car plist)))
+	(progn (setplist sym (cdr (cdr plist))) t)
+      (cl-do-remf plist tag))))
+(or (and (fboundp 'remprop) (subrp (symbol-function 'remprop)))
+    (defalias 'remprop 'cl-remprop))
+
+
+
 ;;; Hash tables.
 
 ;; The `regular' Common Lisp hash-table stuff has been moved into C.
 ;; Only backward compatibility stuff remains here.
 (defun make-hashtable (size &optional test)
-  (make-hash-table :test test :size size))
+  (make-hash-table :size size :test test :type 'non-weak))
 (defun make-weak-hashtable (size &optional test)
-  (make-hash-table :test test :size size :weakness t))
+  (make-hash-table :size size :test test :type 'weak))
 (defun make-key-weak-hashtable (size &optional test)
-  (make-hash-table :test test :size size :weakness 'key))
+  (make-hash-table :size size :test test :type 'key-weak))
 (defun make-value-weak-hashtable (size &optional test)
-  (make-hash-table :test test :size size :weakness 'value))
+  (make-hash-table :size size :test test :type 'value-weak))
 
 (define-obsolete-function-alias 'hashtablep 'hash-table-p)
 (define-obsolete-function-alias 'hashtable-fullness 'hash-table-count)
@@ -674,7 +693,6 @@ argument VECP, this copies vectors as well as conses."
 (make-obsolete 'make-weak-hashtable       'make-hash-table)
 (make-obsolete 'make-key-weak-hashtable   'make-hash-table)
 (make-obsolete 'make-value-weak-hashtable 'make-hash-table)
-(make-obsolete 'hash-table-type           'hash-table-weakness)
 
 (when (fboundp 'x-keysym-hash-table)
   (make-obsolete 'x-keysym-hashtable 'x-keysym-hash-table))

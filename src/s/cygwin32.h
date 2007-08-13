@@ -20,14 +20,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* Building under cygwin
  *
- * The approach I have taken with this port is to use primarily the
- * UNIX code base adding stuff that is MS-Windows specific. This works
- * quite well, and is in keeping with my perception of the cygwin
- * philosophy.  Note that if you make changes to this file you do NOT
- * want to define WIN32_NATIVE (formerly "WINDOWSNT"), I repeat - do
- * not define this, it will break everything horribly. What does get
- * defined is HAVE_MS_WINDOWS, but this is done by configure and only
- * applies to the window system.
+ * The approach I have taken with this port is to use primarily the UNIX 
+ * code base adding stuff that is MS-Windows specific. This works quite 
+ * well, and is in keeping with my perception of the cygwin philosophy.
+ * Note that if you make changes to this file you do NOT want to define 
+ * WINDOWSNT, I repeat - do not define this, it will break everything 
+ * horribly. What does get defined is HAVE_MS_WINDOWS, but this is 
+ * done by configure and only applies to the window system.
  *
  * When building make sure your HOME path is unix style - i.e. without
  * a drive letter.
@@ -39,63 +38,78 @@ Boston, MA 02111-1307, USA.  */
  * YMMV. I build with NT4 SP3.
  *
  * Andy Piper <andy@xemacs.org> 8/1/98 
- * http://www.xemacs.freeserve.co.uk/ */
-
-/* Identify ourselves */
-#define CYGWIN
+ * http://www.parallax.co.uk/~andyp */
 
 /* cheesy way to determine cygwin version */
 #ifndef NOT_C_CODE
-# include <signal.h>
-# ifdef HAVE_CYGWIN_VERSION_H
-#  include <cygwin/version.h>
-# else
-#  ifdef SIGIO
-#   define CYGWIN_VERSION_DLL_MAJOR 19
-#   define CYGWIN_VERSION_DLL_MINOR 0
-#   define CYGWIN_B19
-#  else
-#   define CYGWIN_VERSION_DLL_MAJOR 18
-#   define CYGWIN_VERSION_DLL_MINOR 0
-#   define BROKEN_CYGWIN
-#  endif
-# endif
+#include <signal.h>
+#ifdef HAVE_CYGWIN_VERSION_H
+#include <cygwin/version.h>
+#else
+#ifdef SIGIO
+#define CYGWIN_B19
+#else
+#define BROKEN_CYGWIN
+#endif
+#endif
 
-void cygwin32_win32_to_posix_path_list (const char*, char*);
-int cygwin32_win32_to_posix_path_list_buf_size (const char*);
-void cygwin32_posix_to_win32_path_list (const char*, char*);
-int cygwin32_posix_to_win32_path_list_buf_size (const char*);
-# if CYGWIN_VERSION_DLL_MAJOR < 20
+extern void cygwin32_win32_to_posix_path_list(const char*, char*);
+extern int cygwin32_win32_to_posix_path_list_buf_size(const char*);
+extern void cygwin32_posix_to_win32_path_list(const char*, char*);
+extern int cygwin32_posix_to_win32_path_list_buf_size(const char*);
+#ifndef CYGWIN_VERSION_DLL_MAJOR
 struct timeval;
 struct timezone;
 struct itimerval;
 struct stat;
-int gettimeofday (struct timeval *tp, struct timezone *tzp);
-int gethostname (char* name, int namelen);
-char*	mktemp (char *);
-double	logb (double);
-void	sync (void);
-int	ioctl (int, int, ...);
- 			/* sys/stat.h */
-int lstat (const char *path, struct stat *buf);
- 			/* unistd.h */
-int readlink (const char *path, void *buf, unsigned int bufsiz);
-int symlink (const char *name1, const char *name2);
- 			/* sys/time.h */
-int setitimer (int which, const struct itimerval *value,
- 	      struct itimerval *ovalue);
-int utimes (char *file, struct timeval *tvp);
+extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
+extern int gethostname (char* name, int namelen);
+extern char*	mktemp(char *);
+extern double	logb(double);
+extern void	sync();
+extern int	ioctl(int, int, ...);
+				/* sys/stat.h */
+extern int lstat(const char *path, struct stat *buf);
+				/* unistd.h */
+extern int readlink(const char *path, void *buf, unsigned int bufsiz);
+extern int symlink(const char *name1, const char *name2);
+				/* sys/time.h */
+extern int setitimer(int which, const struct itimerval *value,
+		     struct itimerval *ovalue);
+extern int utimes(char *file, struct timeval *tvp);
 
-int srandom (unsigned seed);
-long random (void);
+extern int srandom( unsigned seed);
+extern long random();
 
-# endif /* CYGWIN_VERSION_DLL_MAJOR < 20 */
+#define SND_ASYNC		1
+#define SND_NODEFAULT		2
+#define SND_MEMORY		4
+#define SND_FILENAME		0x2000L
+#define VK_APPS			0x5D
+#define SIF_TRACKPOS	0x0010
+#define ICC_BAR_CLASSES 4
+#define FW_BLACK	FW_HEAVY
+#define FW_ULTRABOLD	FW_EXTRABOLD
+#define FW_DEMIBOLD	FW_SEMIBOLD
+#define FW_ULTRALIGHT	FW_EXTRALIGHT
+#define APPCMD_FILTERINITS	0x20L
+#define CBF_FAIL_SELFCONNECTIONS 0x1000
+#define CBF_SKIP_ALLNOTIFICATIONS	0x3C0000
+#define CBF_FAIL_ADVISES	0x4000
+#define CBF_FAIL_POKES		0x10000
+#define CBF_FAIL_REQUESTS	0x20000
+#define SZDDESYS_TOPIC		"System"
+#define JOHAB_CHARSET 		130
+#define MAC_CHARSET 		77
 
-# if CYGWIN_VERSION_DLL_MAJOR <= 20
-char *getpass (const char *prompt);
-double logb (double);
-# endif /* CYGWIN_VERSION_DLL_MAJOR <= 20 */
+#endif
+#endif
 
+#define PBS_SMOOTH              0x01
+
+#ifdef HAVE_MS_WINDOWS
+#define HAVE_NTGUI
+#define HAVE_FACES
 #endif
 
 #ifndef ORDINARY_LINK
@@ -104,18 +118,17 @@ double logb (double);
 
 #define C_SWITCH_SYSTEM -Wno-sign-compare -fno-caller-saves
 #define LIBS_SYSTEM -lwinmm
-#define WIN32_LEAN_AND_MEAN
+
 
 #define TEXT_START -1
 #define TEXT_END -1
 #define DATA_END -1
 #define HEAP_IN_DATA
-#define NO_LIM_DATA
 #define UNEXEC "unexcw.o"
 
 #ifdef CYGWIN_VERSION_DLL_MAJOR
 #if 0
-/* #### FIXME: although defining BROKEN_SIGIO is correct for proper ^G
+/* ### FIXME: although defining BROKEN_SIGIO is correct for proper ^G
    behavior, bugs in cygwin mean that xemacs locks up frequently if
    this is defined.  */
 #define BROKEN_SIGIO
@@ -128,13 +141,28 @@ double logb (double);
 #define HAVE_SOCKETS
 #endif
 #define OBJECTS_SYSTEM	ntplay.o
+#define HAVE_NATIVE_SOUND
 
 #undef MAIL_USE_SYSTEM_LOCK
+#define MAIL_USE_POP
 
 /* Define NO_ARG_ARRAY if you cannot take the address of the first of a
  * group of arguments and treat it as an array of the arguments.  */
 
 #define NO_ARG_ARRAY
+
+/* Define WORD_MACHINE if addresses and such have
+ * to be corrected before they can be used as byte counts.  */
+
+#define WORD_MACHINE
+
+/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
+   the 24-bit bit field into an int.  In other words, if bit fields
+   are always unsigned.
+
+   If you use NO_UNION_TYPE, this flag does not matter.  */
+
+#define EXPLICIT_SIGN_EXTEND
 
 /* Data type of load average, as read out of kmem.  */
 
@@ -153,6 +181,10 @@ double logb (double);
 
 /* Text does precede data space, but this is never a safe assumption.  */
 #define VIRT_ADDR_VARIES
+
+/* set this if you have a new version of cygwin
+#define DATA_SEG_BITS 0x10000000
+*/
 
 /* If you are compiling with a non-C calling convention but need to
    declare vararg routines differently, put it here */

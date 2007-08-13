@@ -20,13 +20,14 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_extents_h_
-#define INCLUDED_extents_h_
+#ifndef _XEMACS_EXTENTS_H_
+#define _XEMACS_EXTENTS_H_
 
 DECLARE_LRECORD (extent, struct extent);
 #define XEXTENT(x) XRECORD (x, extent, struct extent)
 #define XSETEXTENT(x, p) XSETRECORD (x, p, extent)
 #define EXTENTP(x) RECORDP (x, extent)
+#define GC_EXTENTP(x) GC_RECORDP (x, extent)
 #define CHECK_EXTENT(x) CHECK_RECORD (x, extent)
 #define CONCHECK_EXTENT(x) CONCHECK_RECORD (x, extent)
 
@@ -146,6 +147,7 @@ DECLARE_LRECORD (extent_auxiliary, struct extent_auxiliary);
   XRECORD (x, extent_auxiliary, struct extent_auxiliary)
 #define XSETEXTENT_AUXILIARY(x, p) XSETRECORD (x, p, extent_auxiliary)
 #define EXTENT_AUXILIARYP(x) RECORDP (x, extent_auxiliary)
+#define GC_EXTENT_AUXILIARYP(x) GC_RECORDP (x, extent_auxiliary)
 #define CHECK_EXTENT_AUXILIARY(x) CHECK_RECORD (x, extent_auxiliary)
 #define CONCHECK_EXTENT_AUXILIARY(x) CONCHECK_RECORD (x, extent_auxiliary)
 
@@ -161,6 +163,7 @@ DECLARE_LRECORD (extent_info, struct extent_info);
 #define XEXTENT_INFO(x) XRECORD (x, extent_info, struct extent_info)
 #define XSETEXTENT_INFO(x, p) XSETRECORD (x, p, extent_info)
 #define EXTENT_INFOP(x) RECORDP (x, extent_info)
+#define GC_EXTENT_INFOP(x) GC_RECORDP (x, extent_info)
 #define CHECK_EXTENT_INFO(x) CHECK_RECORD (x, extent_info)
 #define CONCHECK_EXTENT_INFO(x) CONCHECK_RECORD (x, extent_info)
 
@@ -177,8 +180,8 @@ void flush_cached_extent_info (Lisp_Object extent_info);
 
 #define extent_no_chase_normal_field(e, field) ((e)->flags.field)
 
-INLINE_HEADER struct extent_auxiliary *extent_aux_or_default (EXTENT e);
-INLINE_HEADER struct extent_auxiliary *
+INLINE struct extent_auxiliary *extent_aux_or_default (EXTENT e);
+INLINE struct extent_auxiliary *
 extent_aux_or_default (EXTENT e)
 {
   return e->flags.has_aux ?
@@ -259,8 +262,8 @@ extent_aux_or_default (EXTENT e)
 #define extent_internal_p(e)	     extent_normal_field (e, internal)
 #define extent_in_red_event_p(e)     extent_normal_field (e, in_red_event)
 
-INLINE_HEADER Lisp_Object * extent_no_chase_plist_addr (EXTENT e);
-INLINE_HEADER Lisp_Object *
+INLINE Lisp_Object * extent_no_chase_plist_addr (EXTENT e);
+INLINE Lisp_Object *
 extent_no_chase_plist_addr (EXTENT e)
 {
   return e->flags.has_aux ? &XCDR (e->plist) : &e->plist;
@@ -318,7 +321,6 @@ EXFUN (Fset_extent_endpoints, 4);
 EXFUN (Fset_extent_parent, 2);
 
 extern int inside_undo;
-extern int in_modeline_generation;
 
 struct extent_fragment *extent_fragment_new (Lisp_Object buffer_or_string,
 					     struct frame *frm);
@@ -340,8 +342,8 @@ EXTENT extent_ancestor_1 (EXTENT e);
 /* extent_ancestor() chases all the parent links until there aren't any
    more.  extent_ancestor_1() does the same thing but it a function;
    the following optimizes the most common case. */
-INLINE_HEADER EXTENT extent_ancestor (EXTENT e);
-INLINE_HEADER EXTENT
+INLINE EXTENT extent_ancestor (EXTENT e);
+INLINE EXTENT
 extent_ancestor (EXTENT e)
 {
   return e->flags.has_parent ? extent_ancestor_1 (e) : e;
@@ -368,7 +370,7 @@ void process_extents_for_insertion (Lisp_Object object,
 				    Bytind opoint, Bytecount length);
 void process_extents_for_deletion (Lisp_Object object, Bytind from,
 				   Bytind to, int destroy_them);
-void report_extent_modification (Lisp_Object, Bufpos, Bufpos, int);
+void report_extent_modification (Lisp_Object, Bufpos, Bufpos, int *, int);
 
 void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
 		       glyph_layout layout);
@@ -398,4 +400,4 @@ int compute_buffer_extent_usage (struct buffer *b,
 
 #endif /* emacs */
 
-#endif /* INCLUDED_extents_h_ */
+#endif /* _XEMACS_EXTENTS_H_ */

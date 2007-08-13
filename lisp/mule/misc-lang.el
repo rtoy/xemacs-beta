@@ -1,6 +1,6 @@
 ;;; misc-lang.el --- support for miscellaneous languages (characters)
 
-;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
+;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
 
@@ -40,13 +40,11 @@
 (defun setup-ipa-environment ()
   "Setup multilingual environment (MULE) for IPA."
   (interactive)
-  (set-language-environment "IPA"))
+  (setup-english-environment))
 
 (set-language-info-alist
- "IPA" '((charset . (ipa))
-	 (coding-priority iso-2022-7bit)
-	 (coding-system iso-2022-7bit)
-	 (input-method . "ipa")
+ "IPA" '((setup-function . setup-ipa-environment)
+	 (charset . (ipa))
 	 (documentation . "\
 IPA is International Phonetic Alphabet for English, French, German
 and Italian.")))

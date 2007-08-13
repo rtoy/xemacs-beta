@@ -40,6 +40,9 @@ Boston, MA 02111-1307, USA.  */
 /* Current depth in recursive edits.  */
 int command_loop_level;
 
+/* Total number of times command_loop has read a key sequence.  */
+int num_input_keys;
+
 #ifndef LISP_COMMAND_LOOP
 /* Form to evaluate (if non-nil) when Emacs is started.  */
 Lisp_Object Vtop_level;
@@ -121,10 +124,6 @@ You should almost certainly not be using this.
   stderr_out ("*** Backtrace\n");
   Fbacktrace (Qexternal_debugging_output, Qt);
   stderr_out ("*** Killing XEmacs\n");
-#ifdef HAVE_MS_WINDOWS
-  Fmswindows_message_box (build_string ("Initialization error"),
-			  Qnil, Qnil);
-#endif
   return Fkill_emacs (make_int (-1));
 }
 
@@ -522,8 +521,8 @@ Don't call this unless you know what you're doing.
      like the real thing.  This is slightly bogus, but it's in here for
      compatibility with Emacs 18.  It's not even clear what the "right
      thing" is. */
-  if (!((STRINGP (Vexecuting_macro) || VECTORP (Vexecuting_macro))
-	&& XINT (Flength (Vexecuting_macro)) == 1))
+  if (!(((STRINGP (Vexecuting_macro) || VECTORP (Vexecuting_macro))
+         && XINT (Flength (Vexecuting_macro)) == 1)))
     Vlast_command = Qt;
 
 #ifndef LISP_COMMAND_LOOP
@@ -537,7 +536,7 @@ Don't call this unless you know what you're doing.
          focus is selected. */
       if (focus_follows_mouse)
         investigate_frame_change ();
-
+      
       /* Make sure the current window's buffer is selected.  */
       {
 	Lisp_Object selected_window = Fselected_window (Qnil);

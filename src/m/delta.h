@@ -26,6 +26,11 @@ Boston, MA 02111-1307, USA.  */
    operating system this machine is likely to run.
    USUAL-OPSYS="usg5-3"  */
 
+/* Define WORD_MACHINE if addresses and such have
+ * to be corrected before they can be used as byte counts.  */
+
+/* #define WORD_MACHINE */
+
 /* Now define a symbol for the cpu type, if your compiler
    does not define it automatically:
    Ones defined so far include vax, m68000, ns16000, pyramid,
@@ -33,6 +38,14 @@ Boston, MA 02111-1307, USA.  */
 
 #define m68000
 #define MOTOROLA_DELTA
+
+/* Define EXPLICIT_SIGN_EXTEND if XINT must explicitly sign-extend
+   the bit field into an int.  In other words, if bit fields
+   are always unsigned.
+
+   If you use NO_UNION_TYPE, this flag does not matter.  */
+
+#define EXPLICIT_SIGN_EXTEND
 
 /* Data type of load average, as read out of kmem.  */
 
@@ -73,6 +86,20 @@ Boston, MA 02111-1307, USA.  */
    code will not be sharable; but that's better than failing completely.  */
 
 #define NO_REMAP
+
+/* Some really obscure 4.2-based systems (like Sequent DYNIX)
+ * do not support asynchronous I/O (using SIGIO) on sockets,
+ * even though it works fine on tty's.  If you have one of
+ * these systems, define the following, and then use it in
+ * config.h (or elsewhere) to decide when (not) to use SIGIO.
+ *
+ * You'd think this would go in an operating-system description file,
+ * but since it only occurs on some, but not all, BSD systems, the
+ * reasonable place to select for it is in the machine description
+ * file.
+ */
+
+/* #define NO_SOCK_SIGIO */
 
 
 /* Machine specific stuff */

@@ -4,8 +4,8 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>, then
 ;;         Richard Stallman <rms@gnu.ai.mit.edu>, then
-;;         Hrvoje Niksic <hniksic@xemacs.org>       (rewritten for XEmacs)
-;; Maintainer: Hrvoje Niksic <hniksic@xemacs.org>
+;;         Hrvoje Niksic <hniksic@srce.hr>       (rewritten for XEmacs)
+;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -158,8 +158,7 @@ Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS"
 	      (with-temp-file cusload-file
 		(insert ";;; " cusload-base-file
 			" --- automatically extracted custom dependencies\n"
-			"\n;;; Code:\n\n"
-			"(autoload 'custom-add-loads \"cus-load\")\n\n")
+			"\n;;; Code:\n\n")
 		(mapatoms
 		 (lambda (sym)
 		   (let ((members (get sym 'custom-group))

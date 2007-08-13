@@ -23,11 +23,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Ben Wing, October 1993. */
 
-#ifndef INCLUDED_opaque_h_
-#define INCLUDED_opaque_h_
+#ifndef _XEMACS_OPAQUE_H_
+#define _XEMACS_OPAQUE_H_
 
-typedef union
-{
+typedef union {
   struct { Lisp_Object obj; } obj;
   struct { void *p; } p;
   struct { double d; } d;
@@ -36,46 +35,69 @@ typedef union
 typedef struct Lisp_Opaque
 {
   struct lcrecord_header header;
-  size_t size;
+  Lisp_Object (*markfun) (Lisp_Object obj, void (*markobj) (Lisp_Object));
+  /* An integral size for non-freed objects, an opaque or nil for
+     freed objects. */
+  Lisp_Object size_or_chain;
   max_align_t data[1];
 } Lisp_Opaque;
+
+typedef struct Lisp_Opaque_List
+{
+  struct lcrecord_header header;
+  /* `markfun' allows you to put lisp objects inside of opaque objects
+     without having to create a new object type. */
+  Lisp_Object (*markfun) (Lisp_Object obj, void (*markobj) (Lisp_Object));
+  Lisp_Object free;
+  size_t size;
+} Lisp_Opaque_List;
 
 DECLARE_LRECORD (opaque, Lisp_Opaque);
 #define XOPAQUE(x) XRECORD (x, opaque, Lisp_Opaque)
 #define XSETOPAQUE(x, p) XSETRECORD (x, p, opaque)
 #define OPAQUEP(x) RECORDP (x, opaque)
+#define GC_OPAQUEP(x) GC_RECORDP (x, opaque)
 /* #define CHECK_OPAQUE(x) CHECK_RECORD (x, opaque)
    Opaque pointers should never escape to the Lisp level, so
    functions should not be doing this. */
 
-/* Alternative DATA arguments to make_opaque() */
-#define OPAQUE_CLEAR  ((const void *)  0)
-#define OPAQUE_UNINIT ((const void *) -1)
+DECLARE_LRECORD (opaque_list, Lisp_Opaque_List);
+#define XOPAQUE_LIST(x) XRECORD (x, opaque_list, Lisp_Opaque_List)
+#define XSETOPAQUE_LIST(x, p) XSETRECORD (x, p, opaque_list)
+#define OPAQUE_LISTP(x) RECORDP (x, opaque_list)
+#define GC_OPAQUE_LISTP(x) GC_RECORDP (x, opaque_list)
+/* #define CHECK_OPAQUE_LIST(x) CHECK_RECORD (x, opaque_list)
+   Opaque lists should never escape to the Lisp level, so
+   functions should not be doing this. */
 
-#define OPAQUE_SIZE(op) ((op)->size)
+/* Alternative DATA arguments to make_opaque */
+#define OPAQUE_CLEAR  ((CONST void *)  0)
+#define OPAQUE_UNINIT ((CONST void *) -1)
+
+Lisp_Object make_opaque (size_t size, CONST void *data);
+Lisp_Object make_opaque_ptr (CONST void *val);
+Lisp_Object make_opaque_long (long val);
+void free_opaque_ptr (Lisp_Object ptr);
+
+#define OPAQUE_SIZE(op) XINT ((op)->size_or_chain)
 #define OPAQUE_DATA(op) ((void *) ((op)->data))
 #define OPAQUE_MARKFUN(op) ((op)->markfun)
 #define XOPAQUE_SIZE(op) OPAQUE_SIZE (XOPAQUE (op))
 #define XOPAQUE_DATA(op) OPAQUE_DATA (XOPAQUE (op))
 #define XOPAQUE_MARKFUN(op) OPAQUE_MARKFUN (XOPAQUE (op))
 
-Lisp_Object make_opaque (const void *data, size_t size);
+#define get_opaque_ptr(op) (* (void **) XOPAQUE_DATA (op))
+#define set_opaque_ptr(op, ptr) (get_opaque_ptr (op) = (void *) ptr)
+#define get_opaque_long(op) (* (long *) XOPAQUE_DATA (op))
+#define set_opaque_long(op, ptr) (get_opaque_long (op) = ptr)
+#define set_opaque_markfun(op, fun) (XOPAQUE_MARKFUN (op) = fun)
 
-typedef struct Lisp_Opaque_Ptr
-{
-  struct lcrecord_header header;
-  void *ptr;
-} Lisp_Opaque_Ptr;
+Lisp_Object make_opaque_list (size_t size,
+			      Lisp_Object (*markfun)
+			      (Lisp_Object obj,
+			       void (*markobj) (Lisp_Object)));
+Lisp_Object allocate_managed_opaque (Lisp_Object opaque_list,
+				     CONST void *data);
+void free_managed_opaque (Lisp_Object opaque_list, Lisp_Object opaque);
 
-DECLARE_LRECORD (opaque_ptr, Lisp_Opaque_Ptr);
-#define XOPAQUE_PTR(x) XRECORD (x, opaque_ptr, Lisp_Opaque_Ptr)
-#define XSETOPAQUE_PTR(x, p) XSETRECORD (x, p, opaque_ptr)
-#define OPAQUE_PTRP(x) RECORDP (x, opaque_ptr)
-
-Lisp_Object make_opaque_ptr (void *val);
-void free_opaque_ptr (Lisp_Object ptr);
-
-#define get_opaque_ptr(op) (XOPAQUE_PTR (op)->ptr)
-#define set_opaque_ptr(op, ptr_) (XOPAQUE_PTR (op)->ptr = (ptr_))
-
-#endif /* INCLUDED_opaque_h_ */
+#endif /* _XEMACS_OPAQUE_H_ */

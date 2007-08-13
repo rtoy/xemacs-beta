@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_scrollbar_x_h_
-#define INCLUDED_scrollbar_x_h_
+#ifndef _XEMACS_SCROLLBAR_X_H_
+#define _XEMACS_SCROLLBAR_X_H_
 
 #if defined (HAVE_X_WINDOWS) && defined (HAVE_SCROLLBARS)
 
@@ -69,7 +69,7 @@ struct x_scrollbar_data
 
 void x_update_frame_scrollbars (struct frame *f);
 void x_set_scrollbar_pointer (struct frame *f, Lisp_Object cursor);
+EMACS_INT x_window_is_scrollbar (struct frame *f, Window win);
 
 #endif /* HAVE_X_WINDOWS and HAVE_SCROLLBARS */
-
-#endif /* INCLUDED_scrollbar_x_h_ */
+#endif /* _XEMACS_SCROLLBAR_H_ */

@@ -1,8 +1,7 @@
 /* Implements an elisp-programmable menubar -- Win32
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-   Copyright (C) 1997 Kirill M. Katsnelson <kkm@kis.ru>.
-   Copyright (C) 2000 Ben Wing.
+   Copyright (C) 1997 Kirill M. Katsnelson <kkm@kis.ru>
 
 This file is part of XEmacs.
 
@@ -71,13 +70,14 @@ Boston, MA 02111-1307, USA.  */
  * particular knowledge is bad because this may break in Windows NT
  * 5.0, or Windows 98, or other future version. Instead, I allow the
  * hash tables to hang around, and not clear them, unless WM_COMMAND is
- * received. This is worth some memory but more safe. Hacks welcome,
+ * received. This is worthy some memory but more safe. Hacks welcome,
  * anyways!
  *
  */
 
 #include <config.h>
 #include "lisp.h"
+#include <limits.h>
 
 #include "buffer.h"
 #include "commands.h"
@@ -93,7 +93,7 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 /* #### */
-#define REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIGHT_FLUSH 0
+#define REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIHGT_FLUSH 0
 
 #define EMPTY_ITEM_ID ((UINT)LISP_TO_VOID (Qunbound))
 #define EMPTY_ITEM_NAME "(empty)"
@@ -116,109 +116,56 @@ static Lisp_Object current_hash_table;
 #define MENU_ITEM_ID_BITS(x) (((x) & 0x7FFF) | 0x8000)
 static HMENU top_level_menu;
 
-/* Translate (in place) %_ to &, %% to %.
-   Return new length, and (through accel) the accelerator character.
-   (If there is no accelerator, it will be added on the first character.)
-   len = number of bytes (not including zero terminator).
-   maxlen = size of buffer.
-   We assume and maintain zero-termination.  To be absolutely sure
-   of not hitting an error, maxlen should be >= 2*len + 3. */
-
-Bytecount
-mswindows_translate_menu_or_dialog_item (Bufbyte *item, Bytecount len,
-				   Bytecount maxlen, Emchar *accel,
-				   Lisp_Object error_name)
-{
-  Bufbyte *ptr;
-
-  *accel = '\0';
-
-  /* Escape '&' as '&&' */
-  
-  ptr = item;
-  while ((ptr = (Bufbyte *) memchr (ptr, '&', len - (ptr - item))) != NULL)
-    {
-      if (len + 2 > maxlen)
-	signal_simple_error ("Menu item produces too long displayable string",
-			     error_name);
-      memmove (ptr + 1, ptr, (len - (ptr - item)) + 1);
-      len++;
-      ptr += 2;
-    }
-
-  /* Replace XEmacs accelerator '%_' with Windows accelerator '&'
-     and `%%' with `%'. */
-  ptr = item;
-  while ((ptr = memchr (ptr, '%', len - (ptr - item))) != NULL)
-    {
-      if (*(ptr + 1) == '_')
-	{
-	  *ptr = '&';
-	  if (!*accel)
-	    /* #### urk !  We need a reference translation table for
-	       case changes that aren't buffer-specific. */
-	    *accel = DOWNCASE (current_buffer, charptr_emchar (ptr + 2));
-	  memmove (ptr + 1, ptr + 2, len - (ptr - item + 2) + 1);
-	  len--;
-	}
-      else if (*(ptr + 1) == '%')
-	{
-	  memmove (ptr + 1, ptr + 2, len - (ptr - item + 2) + 1);
-	  len--;
-	}
-      ptr++;
-    }
-
-  if (!*accel)
-    {
-      if (len + 2 > maxlen)
-	signal_simple_error ("Menu item produces too long displayable string",
-			     error_name);
-      ptr = item;
-      memmove (ptr + 1, ptr, len + 1);
-      /* #### urk !  We need a reference translation table for
-	 case changes that aren't buffer-specific. */
-      *accel = DOWNCASE (current_buffer, charptr_emchar (ptr + 1));
-      *ptr = '&';
-
-      len++;
-    }
-
-  return len;
-}
+#define MAX_MENUITEM_LENGTH 128
 
 /*
  * This returns Windows-style menu item string:
  * "Left Flush\tRight Flush"
  */
-
-/* #### This is junk.  Need correct handling of sizes.  Use a Bufbyte_dynarr,
-   not a static buffer. */
 static char*
-displayable_menu_item (Lisp_Object gui_item, int bar_p, Emchar *accel)
+displayable_menu_item (struct gui_item* pgui_item, int bar_p)
 {
-  unsigned int ll;
-
   /* We construct the name in a static buffer. That's fine, because
      menu items longer than 128 chars are probably programming errors,
      and better be caught than displayed! */
   
   static char buf[MAX_MENUITEM_LENGTH+2];
+  char *ptr;
+  unsigned int ll, lr;
 
   /* Left flush part of the string */
-  ll = gui_item_display_flush_left (gui_item, buf, MAX_MENUITEM_LENGTH);
+  ll = gui_item_display_flush_left (pgui_item, buf, MAX_MENUITEM_LENGTH);
 
-  ll = mswindows_translate_menu_or_dialog_item ((Bufbyte *) buf, ll,
-					  MAX_MENUITEM_LENGTH, accel,
-					  XGUI_ITEM (gui_item)->name);
+  /* Escape '&' as '&&' */
+  ptr = buf;
+  while ((ptr=memchr (ptr, '&', ll-(ptr-buf))) != NULL)
+    {
+      if (ll+2 >= MAX_MENUITEM_LENGTH)
+	signal_simple_error ("Menu item produces too long displayable string",
+			     pgui_item->name);
+      memmove (ptr+1, ptr, (ll-(ptr-buf))+1);
+      ll++;
+      ptr+=2;
+    }
+
+  /* Replace XEmacs accelerator '%_' with Windows accelerator '&' */
+  ptr = buf;
+  while ((ptr=memchr (ptr, '%', ll-(ptr-buf))) != NULL)
+    {
+      if (*(ptr+1) == '_')
+	{
+	  *ptr = '&';
+	  memmove (ptr+1, ptr+2, ll-(ptr-buf+2));
+	  ll--;
+	}
+      ptr++;
+    }
 
   /* Right flush part, unless we're at the top-level where it's not allowed */
   if (!bar_p)
     {
-      unsigned int lr;
-
       assert (MAX_MENUITEM_LENGTH > ll + 1);
-      lr = gui_item_display_flush_right (gui_item, buf + ll + 1,
+      lr = gui_item_display_flush_right (pgui_item, buf + ll + 1,
 					 MAX_MENUITEM_LENGTH - ll - 1);
       if (lr)
 	buf [ll] = '\t';
@@ -306,7 +253,6 @@ checksum_menu_item (Lisp_Object item)
 static void
 populate_menu_add_item (HMENU menu, Lisp_Object path,
 			Lisp_Object hash_tab, Lisp_Object item,
-			Lisp_Object *accel_list,
 			int flush_right, int bar_p)
 {
   MENUITEMINFO item_info;
@@ -333,82 +279,72 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
     {
       /* Submenu */
       HMENU submenu;
-      Lisp_Object gui_item = allocate_gui_item ();
-      Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
-      struct gcpro gcpro1, gcpro2, gcpro3;
-      Emchar accel;
+      struct gui_item gui_item;
+      struct gcpro gcpro1;
 
-      GCPRO3 (gui_item, path, *accel_list);
+      gui_item_init (&gui_item);
+      GCPRO_GUI_ITEM (&gui_item);
 
-      menu_parse_submenu_keywords (item, gui_item);
+      menu_parse_submenu_keywords (item, &gui_item);
 
-      if (!STRINGP (pgui_item->name))
-	signal_simple_error ("Menu name (first element) must be a string",
-			     item);
+      if (!STRINGP (gui_item.name))
+	signal_simple_error ("Menu name (first element) must be a string", item);
 
-      if (!gui_item_included_p (gui_item, Vmenubar_configuration))
-      {
-	UNGCPRO;
-	goto done;
-      }
+      if (!gui_item_included_p (&gui_item, Vmenubar_configuration))
+	return;
 
-      if (!gui_item_active_p (gui_item))
+      if (!gui_item_active_p (&gui_item))
 	item_info.fState = MFS_GRAYED;
       /* Temptation is to put 'else' right here. Although, the
 	 displayed item won't have an arrow indicating that it is a
 	 popup.  So we go ahead a little bit more and create a popup */
-      submenu = create_empty_popup_menu ();
+      submenu = create_empty_popup_menu();
 
       item_info.fMask |= MIIM_SUBMENU;
-      item_info.dwTypeData = displayable_menu_item (gui_item, bar_p, &accel);
+      item_info.dwTypeData = displayable_menu_item (&gui_item, bar_p);
       item_info.hSubMenu = submenu;
-
-      if (accel && bar_p)
-	*accel_list = Fcons (make_char (accel), *accel_list);
 
       if (!(item_info.fState & MFS_GRAYED))
 	{
 	  /* Now add the full submenu path as a value to the hash table,
 	     keyed by menu handle */
 	  if (NILP(path))
-	    path = list1 (pgui_item->name);
+	    /* list1 cannot GC */
+	    path = list1 (gui_item.name);
 	  else
 	    {
 	      Lisp_Object arg[2];
 	      arg[0] = path;
-	      arg[1] = list1 (pgui_item->name);
+	      arg[1] = list1 (gui_item.name);
+	      /* Fappend gcpro'es its arg */
 	      path = Fappend (2, arg);
 	    }
 
+	  /* Fputhash GCPRO'es PATH */
 	  Fputhash (hmenu_to_lisp_object (submenu), path, hash_tab);
 	}
-      UNGCPRO;
+      UNGCPRO; /* gui_item */
     } 
   else if (VECTORP (item))
     {
       /* An ordinary item */
       Lisp_Object style, id;
-      Lisp_Object gui_item = gui_parse_item_keywords (item);
-      Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
-      struct gcpro gcpro1, gcpro2;
-      Emchar accel;
+      struct gui_item gui_item;
+      struct gcpro gcpro1;
 
-      GCPRO2 (gui_item, *accel_list);
+      gui_item_init (&gui_item);
+      GCPRO_GUI_ITEM (&gui_item);
 
-      if (!gui_item_included_p (gui_item, Vmenubar_configuration))
-      {
-	UNGCPRO;
-	goto done;
-      }
+      gui_parse_item_keywords (item, &gui_item);
 
-      if (!STRINGP (pgui_item->name))
-	pgui_item->name = Feval (pgui_item->name);
+      if (!gui_item_included_p (&gui_item, Vmenubar_configuration))
+	return;
 
-      if (!gui_item_active_p (gui_item))
+      if (!gui_item_active_p (&gui_item))
 	item_info.fState = MFS_GRAYED;
 
-      style = (NILP (pgui_item->selected) || NILP (Feval (pgui_item->selected))
-	       ? Qnil : pgui_item->style);
+      style = (NILP (gui_item.selected) || NILP (Feval (gui_item.selected))
+	       ? Qnil : gui_item.style);
 
       if (EQ (style, Qradio))
 	{
@@ -420,18 +356,15 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
 	  item_info.fState |= MFS_CHECKED;
 	}
 
-      id = allocate_menu_item_id (path, pgui_item->name,
-				  pgui_item->suffix);
-      Fputhash (id, pgui_item->callback, hash_tab);
+      id = allocate_menu_item_id (path, gui_item.name,
+				  gui_item.suffix);
+      Fputhash (id, gui_item.callback, hash_tab);
 
-      item_info.wID = (UINT) XINT (id);
+      item_info.wID = (UINT) XINT(id);
       item_info.fType |= MFT_STRING;
-      item_info.dwTypeData = displayable_menu_item (gui_item, bar_p, &accel);
+      item_info.dwTypeData = displayable_menu_item (&gui_item, bar_p);
 
-      if (accel && bar_p)
-	*accel_list = Fcons (make_char (accel), *accel_list);
-
-      UNGCPRO;
+      UNGCPRO; /* gui_item */
     }
   else
     {
@@ -442,8 +375,6 @@ populate_menu_add_item (HMENU menu, Lisp_Object path,
     item_info.fType |= MFT_RIGHTJUSTIFY;
 
   InsertMenuItem (menu, UINT_MAX, TRUE, &item_info);
-
-done:;
 }  
 
 /*
@@ -463,18 +394,17 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
 {
   Lisp_Object item_desc;
   int deep_p, flush_right;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1;
   unsigned long checksum;
-  Lisp_Object gui_item = allocate_gui_item ();
-  Lisp_Object accel_list = Qnil;
-  Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
+  struct gui_item gui_item;
 
-  GCPRO3 (gui_item, accel_list, desc);
+  gui_item_init (&gui_item);
+  GCPRO_GUI_ITEM (&gui_item);
 
   /* We are sometimes called with the menubar unchanged, and with changed
      right flush. We have to update the menubar in this case,
      so account for the compliance setting in the hash value */
-  checksum = REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIGHT_FLUSH;
+  checksum = REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIHGT_FLUSH;
 
   /* Will initially contain only "(empty)" */
   if (populate_p)
@@ -484,15 +414,15 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
   deep_p = !NILP (path);
 
   /* Fetch keywords prepending the item list */
-  desc = menu_parse_submenu_keywords (desc, gui_item);
+  desc = menu_parse_submenu_keywords (desc, &gui_item);
 
   /* Check that menu name is specified when expected */
-  if (NILP (pgui_item->name) && deep_p)
+  if (NILP (gui_item.name) && deep_p)
     signal_simple_error ("Menu must have a name", desc);
 
   /* Apply filter if specified */
-  if (!NILP (pgui_item->filter))
-    desc = call1 (pgui_item->filter, desc);
+  if (!NILP (gui_item.filter))
+    desc = call1 (gui_item.filter, desc);
 
   /* Loop thru the desc's CDR and add items for each entry */
   flush_right = 0;
@@ -501,15 +431,14 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
       if (NILP (XCAR (item_desc)))
 	{
 	  /* Do not flush right menubar items when MS style compliant */
-	  if (bar_p && !REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIGHT_FLUSH)
+	  if (bar_p && !REPLACE_ME_WITH_GLOBAL_VARIABLE_WHICH_CONTROLS_RIHGT_FLUSH)
 	    flush_right = 1;
 	  if (!populate_p)
 	    checksum = HASH2 (checksum, LISP_HASH (Qnil));
 	}
       else if (populate_p)
 	populate_menu_add_item (menu, path, hash_tab,
-				XCAR (item_desc), &accel_list,
-				flush_right, bar_p);
+				XCAR (item_desc), flush_right, bar_p);
       else
 	checksum = HASH2 (checksum,
 			  checksum_menu_item (XCAR (item_desc)));
@@ -523,27 +452,23 @@ populate_or_checksum_helper (HMENU menu, Lisp_Object path, Lisp_Object desc,
 
       /* Add the header to the popup, if told so. The same as in X - an
 	 insensitive item, and a separator (Seems to me, there were
-	 two separators in X... In Windows this looks ugly, anyways.) */
-      if (!bar_p && !deep_p && popup_menu_titles && !NILP (pgui_item->name))
+	 two separators in X... In Windows this looks ugly, anyways. */
+      if (!bar_p && !deep_p && popup_menu_titles && !NILP(gui_item.name))
 	{
-	  CHECK_STRING (pgui_item->name);
+	  CHECK_STRING (gui_item.name);
 	  InsertMenu (menu, 0, MF_BYPOSITION | MF_STRING | MF_DISABLED,
-		      0, XSTRING_DATA(pgui_item->name));
+		      0, XSTRING_DATA(gui_item.name));
 	  InsertMenu (menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 	  SetMenuDefaultItem (menu, 0, MF_BYPOSITION);
 	}
     }
-
-  if (bar_p)
-    Fputhash (Qt, accel_list, hash_tab);
-
-  UNGCPRO;
+  UNGCPRO; /* gui_item */
   return checksum;
 }
 
 static void
 populate_menu (HMENU menu, Lisp_Object path, Lisp_Object desc,
-	       Lisp_Object hash_tab, int bar_p)
+			     Lisp_Object hash_tab, int bar_p)
 {
   populate_or_checksum_helper (menu, path, desc, hash_tab, bar_p, 1);
 }
@@ -555,28 +480,23 @@ checksum_menu (Lisp_Object desc)
 }
 
 static void
-update_frame_menubar_maybe (struct frame *f)
+update_frame_menubar_maybe (struct frame* f)
 {
   HMENU menubar = GetMenu (FRAME_MSWINDOWS_HANDLE (f));
   struct window *w = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f));
   Lisp_Object desc = (!NILP (w->menubar_visible_p)
 		      ? symbol_value_in_buffer (Qcurrent_menubar, w->buffer)
 		      : Qnil);
-  struct gcpro gcpro1;
-
-  GCPRO1 (desc); /* it's safest to do this, just in case some filter
-		    or something changes the value of current-menubar */
 
   top_level_menu = menubar;
 
   if (NILP (desc) && menubar != NULL)
     {
       /* Menubar has gone */
-      FRAME_MSWINDOWS_MENU_HASH_TABLE (f) = Qnil;
+      FRAME_MSWINDOWS_MENU_HASH_TABLE(f) = Qnil;
       SetMenu (FRAME_MSWINDOWS_HANDLE (f), NULL);
       DestroyMenu (menubar);
       DrawMenuBar (FRAME_MSWINDOWS_HANDLE (f));
-      UNGCPRO;
       return;
     }
 
@@ -590,35 +510,29 @@ update_frame_menubar_maybe (struct frame *f)
   if (NILP (desc))
     {
       /* We did not have the bar and are not going to */
-      UNGCPRO;
       return;
     }
 
   /* Now we bail out if the menubar has not changed */
-  if (FRAME_MSWINDOWS_MENU_CHECKSUM (f) == checksum_menu (desc))
-    {
-      UNGCPRO;
-      return;
-    }
+  if (FRAME_MSWINDOWS_MENU_CHECKSUM(f) == checksum_menu (desc))
+    return;
 
 populate:
   /* Come with empty hash table */
-  if (NILP (FRAME_MSWINDOWS_MENU_HASH_TABLE (f)))
-    FRAME_MSWINDOWS_MENU_HASH_TABLE (f) =
+  if (NILP (FRAME_MSWINDOWS_MENU_HASH_TABLE(f)))
+    FRAME_MSWINDOWS_MENU_HASH_TABLE(f) =
       make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
   else
-    Fclrhash (FRAME_MSWINDOWS_MENU_HASH_TABLE (f));
+    Fclrhash (FRAME_MSWINDOWS_MENU_HASH_TABLE(f));
 
   Fputhash (hmenu_to_lisp_object (menubar), Qnil,
-	    FRAME_MSWINDOWS_MENU_HASH_TABLE (f));
+	    FRAME_MSWINDOWS_MENU_HASH_TABLE(f));
   populate_menu (menubar, Qnil, desc,
-		 FRAME_MSWINDOWS_MENU_HASH_TABLE (f), 1);
+		 FRAME_MSWINDOWS_MENU_HASH_TABLE(f), 1);
   SetMenu (FRAME_MSWINDOWS_HANDLE (f), menubar);
   DrawMenuBar (FRAME_MSWINDOWS_HANDLE (f));
 
-  FRAME_MSWINDOWS_MENU_CHECKSUM (f) = checksum_menu (desc);
-
-  UNGCPRO;
+  FRAME_MSWINDOWS_MENU_CHECKSUM(f) = checksum_menu (desc);
 }
 
 static void
@@ -626,8 +540,6 @@ prune_menubar (struct frame *f)
 {
   HMENU menubar = GetMenu (FRAME_MSWINDOWS_HANDLE (f));
   Lisp_Object desc = current_frame_menubar (f);
-  struct gcpro gcpro1;
-
   if (menubar == NULL)
     return;
 
@@ -635,22 +547,20 @@ prune_menubar (struct frame *f)
      triggers. To resolve, we must prevent filters explicitly from
      mangling with the active menu. In apply_filter probably?
      Is copy-tree on the whole menu too expensive? */
-  if (NILP (desc))
+  if (NILP(desc))
     /* abort(); */
     return;
 
-  GCPRO1 (desc); /* just to be safe -- see above */
   /* We do the trick by removing all items and re-populating top level */
   empty_menu (menubar, 0);
 
-  assert (HASH_TABLEP (FRAME_MSWINDOWS_MENU_HASH_TABLE (f)));
-  Fclrhash (FRAME_MSWINDOWS_MENU_HASH_TABLE (f));
+  assert (HASH_TABLEP (FRAME_MSWINDOWS_MENU_HASH_TABLE(f)));
+  Fclrhash (FRAME_MSWINDOWS_MENU_HASH_TABLE(f));
 
   Fputhash (hmenu_to_lisp_object (menubar), Qnil,
-	    FRAME_MSWINDOWS_MENU_HASH_TABLE (f));
+	    FRAME_MSWINDOWS_MENU_HASH_TABLE(f));
   populate_menu (menubar, Qnil, desc, 
-		 FRAME_MSWINDOWS_MENU_HASH_TABLE (f), 1);
-  UNGCPRO;
+		 FRAME_MSWINDOWS_MENU_HASH_TABLE(f), 1);
 }
 
 /*
@@ -665,24 +575,13 @@ menu_cleanup (struct frame *f)
   current_hash_table = Qnil;
   prune_menubar (f);
 }
-
-int
-mswindows_char_is_accelerator (struct frame *f, Emchar ch)
-{
-  Lisp_Object hash = FRAME_MSWINDOWS_MENU_HASH_TABLE (f);
-
-  assert (HASH_TABLEP (hash));
-  /* !!#### not Mule-ized */
-  return !NILP (memq_no_quit (make_char (tolower (ch)),
-			      Fgethash (Qt, hash, Qnil)));
-}
   
 
 /*------------------------------------------------------------------------*/
 /* Message handlers                                                       */
 /*------------------------------------------------------------------------*/
 static Lisp_Object
-unsafe_handle_wm_initmenupopup_1 (HMENU menu, struct frame *f)
+unsafe_handle_wm_initmenupopup_1 (HMENU menu, struct frame* f)
 {
   /* This function can call lisp, beat dogs and stick chewing gum to
      everything! */
@@ -714,7 +613,7 @@ unsafe_handle_wm_initmenupopup_1 (HMENU menu, struct frame *f)
 }
 
 static Lisp_Object
-unsafe_handle_wm_initmenu_1 (struct frame *f)
+unsafe_handle_wm_initmenu_1 (struct frame* f)
 {
   /* This function can call lisp */
 
@@ -731,7 +630,7 @@ unsafe_handle_wm_initmenu_1 (struct frame *f)
   update_frame_menubar_maybe (f);
 
   current_menudesc = current_frame_menubar (f);
-  current_hash_table = FRAME_MSWINDOWS_MENU_HASH_TABLE (f);
+  current_hash_table = FRAME_MSWINDOWS_MENU_HASH_TABLE(f);
   assert (HASH_TABLEP (current_hash_table));
 
   return Qt;
@@ -744,7 +643,7 @@ unsafe_handle_wm_initmenu_1 (struct frame *f)
  * command if we return nil
  */
 Lisp_Object
-mswindows_handle_wm_command (struct frame *f, WORD id)
+mswindows_handle_wm_command (struct frame* f, WORD id)
 {
   /* Try to map the command id through the proper hash table */
   Lisp_Object data, fn, arg, frame;
@@ -786,7 +685,7 @@ mswindows_handle_wm_command (struct frame *f, WORD id)
 /*------------------------------------------------------------------------*/
 
 static HMENU wm_initmenu_menu;
-static struct frame *wm_initmenu_frame;
+static struct frame* wm_initmenu_frame;
 
 static Lisp_Object
 unsafe_handle_wm_initmenupopup (Lisp_Object u_n_u_s_e_d)
@@ -801,7 +700,7 @@ unsafe_handle_wm_initmenu (Lisp_Object u_n_u_s_e_d)
 }
 
 Lisp_Object
-mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame *frm)
+mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame* frm)
 {
   /* We cannot pass hmenu as a lisp object. Use static var */
   wm_initmenu_menu = hmenu;
@@ -810,10 +709,10 @@ mswindows_handle_wm_initmenupopup (HMENU hmenu, struct frame *frm)
 }
 
 Lisp_Object
-mswindows_handle_wm_initmenu (HMENU hmenu, struct frame *f)
+mswindows_handle_wm_initmenu (HMENU hmenu, struct frame* f)
 {
   /* Handle only frame menubar, ignore if from popup or system menu */
-  if (GetMenu (FRAME_MSWINDOWS_HANDLE (f)) == hmenu)
+  if (GetMenu (FRAME_MSWINDOWS_HANDLE(f)) == hmenu)
     {
       wm_initmenu_frame = f;
       return mswindows_protect_modal_loop (unsafe_handle_wm_initmenu, Qnil);
@@ -827,28 +726,25 @@ mswindows_handle_wm_initmenu (HMENU hmenu, struct frame *f)
 /*------------------------------------------------------------------------*/
 
 static void
-mswindows_update_frame_menubars (struct frame *f)
+mswindows_update_frame_menubars (struct frame* f)
 {
   update_frame_menubar_maybe (f);
 }
 
 static void
-mswindows_free_frame_menubars (struct frame *f)
+mswindows_free_frame_menubars (struct frame* f)
 {
-  FRAME_MSWINDOWS_MENU_HASH_TABLE (f) = Qnil;
+  FRAME_MSWINDOWS_MENU_HASH_TABLE(f) = Qnil;
 }
 
 static void
 mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
 {
   struct frame *f = selected_frame ();
-  Lisp_Event *eev = NULL;
+  struct Lisp_Event *eev = NULL;
   HMENU menu;
   POINT pt;
   int ok;
-  struct gcpro gcpro1;
-
-  GCPRO1 (menu_desc); /* to be safe -- see above */
 
   if (!NILP (event))
     {
@@ -886,7 +782,7 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   current_menudesc = menu_desc;
   current_hash_table =
     make_lisp_hash_table (10, HASH_TABLE_NON_WEAK, HASH_TABLE_EQUAL);
-  menu = create_empty_popup_menu ();
+  menu = create_empty_popup_menu();
   Fputhash (hmenu_to_lisp_object (menu), Qnil, current_hash_table);
   top_level_menu = menu;
   
@@ -905,13 +801,11 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   mswindows_unmodalize_signal_maybe ();
 
   /* This is probably the only real reason for failure */
-  if (!ok)
-    {
-      menu_cleanup (f);
-      signal_simple_error ("Cannot track popup menu while in menu",
-			   menu_desc);
-    }
-  UNGCPRO;
+  if (!ok) {
+    menu_cleanup (f);
+    signal_simple_error ("Cannot track popup menu while in menu",
+			 menu_desc);
+  }
 }
 
 

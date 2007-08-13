@@ -40,9 +40,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #ifdef NEED_MOTIF
 #include "lwlib-Xm.h"
-#ifdef LWLIB_WIDGETS_MOTIF
-#include <Xm/Xm.h>
-#endif
 #endif
 #ifdef NEED_ATHENA
 #include "lwlib-Xaw.h"
@@ -70,13 +67,13 @@ int lw_menu_accelerate = False;
 
 
 /* Forward declarations */
-static void instantiate_widget_instance (widget_instance *instance);
-static void free_widget_value_args (widget_value* wv);
+static void
+instantiate_widget_instance (widget_instance *instance);
 
 
 /* utility functions for widget_instance and widget_info */
 static char *
-safe_strdup (const char *s)
+safe_strdup (CONST char *s)
 {
   char *result;
   if (! s) return 0;
@@ -111,7 +108,7 @@ malloc_widget_value (void)
     }
   if (wv)
     {
-      memset (wv, '\0', sizeof (widget_value));
+      memset (wv, 0, sizeof (widget_value));
     }
   return wv;
 }
@@ -127,6 +124,8 @@ free_widget_value (widget_value *wv)
   wv->free_list = widget_value_free_list;
   widget_value_free_list = wv;
 }
+
+static void free_widget_value_tree (widget_value *wv);
 
 static void
 free_widget_value_contents (widget_value *wv)
@@ -156,9 +155,6 @@ free_widget_value_contents (widget_value *wv)
       free_widget_value_tree (wv->contents);
       wv->contents = (widget_value *) 0xDEADBEEF;
     }
-
-  free_widget_value_args (wv);
-
   if (wv->next)
     {
       free_widget_value_tree (wv->next);
@@ -166,7 +162,7 @@ free_widget_value_contents (widget_value *wv)
     }
 }
 
-void
+static void
 free_widget_value_tree (widget_value *wv)
 {
   if (!wv)
@@ -188,7 +184,7 @@ copy_scrollbar_values (widget_value *val, widget_value *copy)
   if (val->scrollbar_data)
     *copy->scrollbar_data = *val->scrollbar_data;
   else
-    memset (copy->scrollbar_data, '\0', sizeof (scrollbar_values));
+    memset (copy->scrollbar_data, 0, sizeof (scrollbar_values));
 }
 
 /*
@@ -235,40 +231,6 @@ merge_scrollbar_values (widget_value *old, widget_value *new)
 
 #endif /* NEED_SCROLLBARS */
 
-#ifdef HAVE_WIDGETS
-/*
- * Return true if old->args was not equivalent
- * to new->args.
- */
-static Boolean
-merge_widget_value_args (widget_value *old, widget_value *new)
-{
-  Boolean changed = False;
-
-  if (new->args && !old->args)
-    {
-      lw_copy_widget_value_args (new, old);
-      changed = True;
-    }
-  /* Generally we don't want to lose values that are already in the
-     widget. */
-  else if (!new->args && old->args)
-    {
-      lw_copy_widget_value_args (old, new);
-      changed = True;
-    }
-  else if (new->args && old->args && new->args != old->args)
-    {
-      /* #### Do something more sensible here than just copying the
-         new values (like actually merging the values). */
-      lw_copy_widget_value_args (new, old);
-      changed = True;
-    }
-
-  return changed;
-}
-#endif /* HAVE_WIDGETS */
-
 /* Make a complete copy of a widget_value tree.  Store CHANGE into
    the widget_value tree's `change' field. */
 
@@ -301,8 +263,6 @@ copy_widget_value_tree (widget_value *val, change_type change)
       copy->next = copy_widget_value_tree (val->next, change);
       copy->toolkit_data = NULL;
       copy->free_toolkit_data = False;
-
-      lw_copy_widget_value_args (val, copy);
 #ifdef NEED_SCROLLBARS
       copy_scrollbar_values (val, copy);
 #endif
@@ -329,7 +289,7 @@ replace_widget_value_tree (widget_value *node, widget_value *newtree)
 }
 
 static widget_info *
-allocate_widget_info (const char *type, const char *name,
+allocate_widget_info (CONST char *type, CONST char *name,
                       LWLIB_ID id, widget_value *val,
 		      lw_callback pre_activate_cb, lw_callback selection_cb,
 		      lw_callback post_activate_cb)
@@ -357,7 +317,7 @@ free_widget_info (widget_info *info)
   safe_free_str (info->type);
   safe_free_str (info->name);
   free_widget_value_tree (info->val);
-  memset (info, '\0', sizeof (widget_info));
+  memset ((void*)info, 0xDEADBEEF, sizeof (widget_info));
   free (info);
 }
 
@@ -392,7 +352,7 @@ allocate_widget_instance (widget_info *info, Widget parent, Boolean pop_up_p)
 static void
 free_widget_instance (widget_instance *instance)
 {
-  memset (instance, '\0', sizeof (widget_instance));
+  memset ((void *) instance, 0xDEADBEEF, sizeof (widget_instance));
   free (instance);
 }
 
@@ -502,13 +462,13 @@ find_instance (LWLIB_ID id, Widget parent, Boolean pop_up_p)
 
 /* utility function for widget_value */
 static Boolean
-safe_strcmp (const char *s1, const char *s2)
+safe_strcmp (CONST char *s1, CONST char *s2)
 {
   if (!!s1 ^ !!s2) return True;
   return (s1 && s2) ? strcmp (s1, s2) : s1 ? False : !!s2;
 }
 
-#ifndef WIN32_NATIVE
+#ifndef WINDOWSNT
 static change_type
 max (change_type i1, change_type i2)
 {
@@ -617,14 +577,6 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
       change = max (change, INVISIBLE_CHANGE);
       val1->call_data = val2->call_data;
     }
-#ifdef HAVE_WIDGETS
-  if (merge_widget_value_args (val1, val2))
-    {
-      EXPLAIN (val1->name, change, VISIBLE_CHANGE, "widget change", 0, 0);
-      change = max (change, VISIBLE_CHANGE);
-    }
-#endif
-
 #ifdef NEED_SCROLLBARS
   if (merge_scrollbar_values (val1, val2))
     {
@@ -689,7 +641,7 @@ merge_widget_value (widget_value *val1, widget_value *val2, int level)
 
 /* modifying the widgets */
 static Widget
-name_to_widget (widget_instance *instance, const char *name)
+name_to_widget (widget_instance *instance, CONST char *name)
 {
   Widget widget = NULL;
 
@@ -826,7 +778,7 @@ initialize_widget_instance (widget_instance *instance)
 
 
 static widget_creation_function
-find_in_table (const char *type, widget_creation_entry *table)
+find_in_table (CONST char *type, widget_creation_entry *table)
 {
   widget_creation_entry *cur;
   for (cur = table; cur->type; cur++)
@@ -836,7 +788,7 @@ find_in_table (const char *type, widget_creation_entry *table)
 }
 
 static Boolean
-dialog_spec_p (const char *name)
+dialog_spec_p (CONST char *name)
 {
   /* return True if name matches [EILPQeilpq][1-9][Bb] or
      [EILPQeilpq][1-9][Bb][Rr][1-9] */
@@ -920,7 +872,7 @@ instantiate_widget_instance (widget_instance *instance)
 }
 
 void
-lw_register_widget (const char *type, const char *name,
+lw_register_widget (CONST char *type, CONST char *name,
                     LWLIB_ID id, widget_value *val,
 		    lw_callback pre_activate_cb, lw_callback selection_cb,
 		    lw_callback post_activate_cb)
@@ -956,7 +908,7 @@ lw_make_widget (LWLIB_ID id, Widget parent, Boolean pop_up_p)
 }
 
 Widget
-lw_create_widget (const char *type, const char *name,
+lw_create_widget (CONST char *type, CONST char *name,
                   LWLIB_ID id, widget_value *val,
 		  Widget parent, Boolean pop_up_p, lw_callback pre_activate_cb,
 		  lw_callback selection_cb, lw_callback post_activate_cb)
@@ -1048,14 +1000,14 @@ lw_destroy_all_widgets (LWLIB_ID id)
 }
 
 void
-lw_destroy_everything (void)
+lw_destroy_everything ()
 {
   while (all_widget_info)
     lw_destroy_all_widgets (all_widget_info->id);
 }
 
 void
-lw_destroy_all_pop_ups (void)
+lw_destroy_all_pop_ups ()
 {
   widget_info *info;
   widget_info *next;
@@ -1348,86 +1300,3 @@ lw_show_busy (Widget w, Boolean busy)
 	}
     }
 }
-
-void lw_add_value_args_to_args (widget_value* wv, ArgList addto, int* offset)
-{
-  int i;
-  if (wv->args && wv->args->nargs)
-    {
-      for (i = 0; i<wv->args->nargs; i++)
-	{
-	  addto[i + *offset] = wv->args->args[i];
-	}
-      *offset += wv->args->nargs;
-    }
-}
-
-void lw_add_widget_value_arg (widget_value* wv, String name, XtArgVal value)
-{
-  int i = 0;
-  if (!wv->args)
-    {
-      wv->args = (widget_args *) malloc (sizeof (widget_args));
-      memset (wv->args, '\0', sizeof (widget_args));
-      wv->args->ref_count = 1;
-      wv->args->nargs = 0;
-      wv->args->args = (ArgList) malloc (sizeof (Arg) * 10);
-      memset (wv->args->args, '\0', sizeof (Arg) * 10);
-    }
-  
-  if (wv->args->nargs > 10)
-    return;
-
-  /* If the arg is already there then we must replace it. */
-  for (i = 0; i < wv->args->nargs; i++)
-    {
-      if (!strcmp (wv->args->args[i].name, name))
-	{
-	  XtSetArg (wv->args->args [i], name, value);
-	  break;
-	}
-    }
-  if (i >= wv->args->nargs)
-    {
-      XtSetArg (wv->args->args [wv->args->nargs], name, value);   wv->args->nargs++;
-    }
-}
-
-static void free_widget_value_args (widget_value* wv)
-{
-  if (wv->args)
-    {
-      if (--wv->args->ref_count <= 0)
-	{
-#ifdef LWLIB_WIDGETS_MOTIF
-	  int i;
-	  for (i = 0; i < wv->args->nargs; i++)
-	    {
-	      if (!strcmp (wv->args->args[i].name, XmNfontList))
-		XmFontListFree ((XmFontList)wv->args->args[i].value);
-	    }
-#endif
-	  free (wv->args->args);
-	  free (wv->args);
-	  wv->args = 0;
-	}
-    }
-}
-
-void lw_copy_widget_value_args (widget_value* val, widget_value* copy)
-{
-  if (val == copy || val->args == copy->args)
-    return;
-
-  if (copy->args)
-    {
-      free_widget_value_args (copy);
-    }
-
-  if (val->args)
-    {
-      copy->args = val->args;
-      copy->args->ref_count++;
-    }
-}
-

@@ -19,11 +19,14 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_xintrinsicp_h_
-#define INCLUDED_xintrinsicp_h_
+#undef CONST                    /* X11R4 header thinks it can define CONST */
 
 #include <X11/Intrinsic.h>
 #include <X11/IntrinsicP.h>
 #include <X11/ObjectP.h>     /* apparently some IntrinsicP.h don't have this */
 
-#endif /* INCLUDED_xintrinsicp_h_ */
+#ifdef CONST_IS_LOSING
+# define CONST
+#else
+# define CONST const
+#endif

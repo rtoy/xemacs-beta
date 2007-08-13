@@ -26,7 +26,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _SRC_CONFIG_H_
 #define _SRC_CONFIG_H_
 
-
 /* alloca twiddling belongs in one place, not the s&m headers
    AIX requires this to be the first thing in the file.  */
 #undef HAVE_ALLOCA_H
@@ -39,16 +38,14 @@ Boston, MA 02111-1307, USA.  */
 #elif defined(_AIX)
 #pragma alloca
 #elif ! defined (alloca)
-char *alloca ();
+char *alloca();
 #endif
 #endif /* C code */
+
 
 /* Use this to add code in a structured way to FSF-maintained source
    files so as to make it obvious where XEmacs changes are. */
 #define XEMACS 1
-
-/* Program name */
-#undef EMACS_PROGNAME
 
 /* Allow s&m files to differentiate OS versions without having
    multiple files to maintain. */
@@ -64,7 +61,6 @@ char *alloca ();
 /* The version info from version.sh. Used in #pragma ident in emacs.c */
 #undef EMACS_MAJOR_VERSION
 #undef EMACS_MINOR_VERSION
-#undef EMACS_PATCH_LEVEL
 #undef EMACS_BETA_VERSION
 #undef EMACS_VERSION
 #undef XEMACS_CODENAME
@@ -73,23 +69,11 @@ char *alloca ();
 #undef INFODOCK_MINOR_VERSION
 #undef INFODOCK_BUILD_VERSION
 
-/* Make all functions from all IEEE Stds 1003.[123] available. */
-#undef _POSIX_C_SOURCE
-
-/* Make all functions from Unix98 available. */
-#undef _XOPEN_SOURCE
-
-/* Make extensions from Unix98 available. */
-#undef _XOPEN_SOURCE_EXTENDED
-
 /* Make all functions available on AIX.  See AC_AIX. */
 #undef _ALL_SOURCE
 
 /* Make all functions available on GNU libc systems.  See features.h. */
 #undef _GNU_SOURCE
-
-/* Make all functions available on Solaris 2 systems. */
-#undef __EXTENSIONS__
 
 /* Used to identify the XEmacs version in stack traces. */
 #undef STACK_TRACE_EYE_CATCHER
@@ -179,8 +163,6 @@ char *alloca ();
 #undef THIS_IS_X11R5
 #undef THIS_IS_X11R6
 
-#undef HAVE_XCONVERTCASE
-
 /* Where do we find bitmaps? */
 #undef BITMAPDIR
 
@@ -201,31 +183,30 @@ char *alloca ();
 /* Some things figured out by the configure script, grouped as they are in
    configure.in. */
 #undef HAVE_MCHECK_H
-#undef HAVE_A_OUT_H
-#undef HAVE_CYGWIN_VERSION_H
-#undef HAVE_FCNTL_H
-#undef HAVE_INTTYPES_H
-#undef HAVE_LIBGEN_H
-#undef HAVE_LOCALE_H
 #undef HAVE_MACH_MACH_H
-#undef HAVE_SYS_PARAM_H
-#undef HAVE_SYS_PSTAT_H
 #undef HAVE_SYS_STROPTS_H
-#undef HAVE_SYS_TIME_H
 #undef HAVE_SYS_TIMEB_H
-#undef HAVE_SYS_UN_H
-#undef HAVE_ULIMIT_H
+#undef HAVE_SYS_TIME_H
 #undef HAVE_UNISTD_H
 #undef HAVE_UTIME_H
-
 #undef HAVE_SYS_WAIT_H
 #undef HAVE_LIBINTL_H
+#undef HAVE_LIBGEN_H
+#undef HAVE_LOCALE_H
+#undef HAVE_FCNTL_H
+#undef HAVE_ULIMIT_H
 #undef HAVE_X11_XLOCALE_H
+#undef HAVE_LINUX_VERSION_H
+#undef HAVE_CYGWIN_VERSION_H
+#undef HAVE_INTTYPES_H
+#undef HAVE_SYS_UN_H
+#undef HAVE_A_OUT_H
 #undef STDC_HEADERS
 #undef TIME_WITH_SYS_TIME
 #undef WORDS_BIGENDIAN
 #undef HAVE_VFORK_H
 #undef HAVE_KSTAT_H
+#undef HAVE_SYS_PSTAT_H
 #undef vfork
 
 #undef HAVE_LONG_FILE_NAMES
@@ -285,14 +266,11 @@ char *alloca ();
 #undef HAVE_FPATHCONF
 #undef HAVE_FREXP
 #undef HAVE_FTIME
-#undef HAVE_GETADDRINFO
 #undef HAVE_GETHOSTNAME
-#undef HAVE_GETNAMEINFO
 #undef HAVE_GETPAGESIZE
 #undef HAVE_GETTIMEOFDAY
 #undef HAVE_GETWD
 #undef HAVE_GETCWD
-#undef HAVE_GETPT
 #undef HAVE_LOGB
 #undef HAVE_LRAND48
 #undef HAVE_MATHERR
@@ -315,7 +293,6 @@ char *alloca ();
 #undef HAVE_SIGPROCMASK
 #undef HAVE_SIGSETJMP
 #undef HAVE_SNPRINTF
-#undef HAVE_STPCPY
 #undef HAVE_STRCASECMP
 #undef HAVE_STRERROR
 #undef HAVE_TZSET
@@ -328,11 +305,6 @@ char *alloca ();
 #undef HAVE_SOCKADDR_SUN_LEN
 #undef HAVE_MULTICAST
 #undef HAVE_SYSVIPC
-#undef HAVE_LOCKF
-#undef HAVE_FLOCK
-#undef HAVE_FSYNC
-#undef HAVE_FTRUNCATE
-#undef HAVE_UMASK
 
 #undef SYSV_SYSTEM_DIR
 #undef NONSYSTEM_DIR_LIBRARY
@@ -377,26 +349,17 @@ char *alloca ();
 /* Compile in support for Berkeley DB style databases?  May require libdb. */
 #undef HAVE_BERKELEY_DB
 /* Full #include file path for Berkeley DB's db.h */
-#undef DB_H_FILE
+#undef DB_H_PATH
 
 /* Do we have either DBM or Berkeley DB database support? */
 #undef HAVE_DATABASE
 
 /* Do we have LDAP support? */
 #undef HAVE_LDAP
-/* Does the library define ldap_set_option () ? */
-#undef HAVE_LDAP_SET_OPTION
-/* Does the library define ldap_get_lderrno () ? */
-#undef HAVE_LDAP_GET_LDERRNO
-/* Does the library define ldap_result2error () ? */
-#undef HAVE_LDAP_RESULT2ERROR
-/* Does the library define ldap_parse_result () ? */
-#undef HAVE_LDAP_PARSE_RESULT
-
-/* Do we have PostgreSQL RDBMS support? */
-#undef HAVE_POSTGRESQL
-#undef HAVE_POSTGRESQLV7
-#undef LIBPQ_FE_H_FILE /* main PostgreSQL header file */
+/* Do we have the LDAP library of the University of Michigan ? */
+#undef HAVE_UMICH_LDAP
+/* Do we have Netscape LDAP SDK library */
+#undef HAVE_NS_LDAP
 
 /* Do you have the Xauth library present?  This will add some extra
    functionality to gnuserv. */
@@ -408,8 +371,8 @@ char *alloca ();
 /* Compile in support for ncurses?  */
 #undef HAVE_NCURSES
 /* Full #include file paths for ncurses' curses.h and term.h. */
-#undef CURSES_H_FILE
-#undef TERM_H_FILE
+#undef CURSES_H_PATH
+#undef TERM_H_PATH
 
 /* Define USE_ASSERTIONS if you want the abort() to be changed to assert().
    If the assertion fails, assert_failed() will be called.  This is
@@ -425,44 +388,17 @@ char *alloca ();
 /* Check the entire extent structure of a buffer each time an extent
    change is done, and do other extent-related checks. */
 #undef ERROR_CHECK_EXTENTS
-
 /* Make sure that all X... macros are dereferencing the correct type,
    and that all XSET... macros (as much as possible) are setting the
    correct type of structure.  Highly recommended for all
    development work. */
 #undef ERROR_CHECK_TYPECHECK
-#ifdef ERROR_CHECK_TYPECHECK
-#define type_checking_assert(assertion) assert (assertion)
-#else
-#define type_checking_assert(assertion)
-#endif
-
 /* Make sure valid buffer positions are passed to BUF_* macros. */
 #undef ERROR_CHECK_BUFPOS
-#ifdef ERROR_CHECK_BUFPOS
-#define bufpos_checking_assert(assertion) assert (assertion)
-#else
-#define bufpos_checking_assert(assertion)
-#endif
-
 /* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */
 #undef ERROR_CHECK_GC
-#ifdef ERROR_CHECK_GC
-#define gc_checking_assert(assertion) assert (assertion)
-#else
-#define gc_checking_assert(assertion)
-#endif
-
 /* Attempt to catch freeing of a non-malloc()ed block, heap corruption, etc. */
 #undef ERROR_CHECK_MALLOC
-
-/* Minor sanity checking of the bytecode interpreter.  Useful for
-   debugging the byte compiler.  */
-#undef ERROR_CHECK_BYTE_CODE
-
-/* Minor sanity checking of glyphs, especially subwindows and
-   widgets. */
-#undef ERROR_CHECK_GLYPHS
 
 /* Define DEBUG_XEMACS if you want extra debugging code compiled in.
    This is mainly intended for use by developers. */
@@ -517,8 +453,8 @@ char *alloca ();
 /* Compile in generic Drag'n'Drop API */
 #undef HAVE_DRAGNDROP
 
-/* Compile in support for proper handling of WM_COMMAND. */
-#undef HAVE_WMCOMMAND
+/* Compile in support for proper session-management. */
+#undef HAVE_SESSION
 
 /* Define this if you want Mule support (multi-byte character support).
    There may be some performance penalty, although it should be small
@@ -543,28 +479,15 @@ char *alloca ();
 /* Enable special GNU Make features in the Makefiles. */
 #undef USE_GNU_MAKE
 
-/* Debugging development option: Remove inessential but time consuming
-   actions from happening during build.  This saves a lot of time when
-   you're repeatedly compiling-running-crashing.  This (1) doesn't
-   garbage-collect after loading each file during dumping, and (2)
-   doesn't automatically rebuild the DOC file. (Remove it by hand to
-   get it rebuilt.)
- */
-#undef QUICK_BUILD
+/* Debugging option: Don't automatically rebuild the DOC file.
+   This saves a lot of time when you're repeatedly
+   compiling-running-crashing. */
+#undef NO_DOC_FILE
 
 /* Defined by AC_C_CONST in configure.in */
 #undef const
 
-/* Allow the source to use standard types. Include these before the
- s&m files so that they can use them. */
-#undef ssize_t
-#undef size_t
-#undef pid_t
-#undef mode_t
-#undef off_t
-#undef uid_t
-#undef gid_t
-#undef socklen_t
+#define CONST const
 
 /* If defined, use unions instead of ints.  A few systems (DEC Alpha)
    seem to require this, probably because something with the int
@@ -617,6 +540,14 @@ extern "C" {
 #define SIGRETURN return
 #endif
 
+/* Allow the source to use standard types */
+#undef size_t
+#undef pid_t
+#undef mode_t
+#undef off_t
+#undef uid_t
+#undef gid_t
+
 /* Define DYNODUMP if it is necessary to properly dump on this system.
    Currently this is only Solaris 2.x, for x < 6. */
 #undef DYNODUMP
@@ -630,7 +561,7 @@ extern "C" {
    "SUNWaudmo" package.) */
 #undef HAVE_NATIVE_SOUND
 /* Native sound may be provided via soundcard.h, in various directories */
-#undef SOUNDCARD_H_FILE
+#undef SOUNDCARD_H_PATH
 
 /* Compile in support for NAS (Network Audio System)?
    NAS_NO_ERROR_JUMP means that the NAS libraries don't include some
@@ -638,16 +569,13 @@ extern "C" {
 #undef HAVE_NAS_SOUND
 #undef NAS_NO_ERROR_JUMP
 
-/* Compile in support for ESD (Enlightened Sound Daemon)? */
-#undef HAVE_ESD_SOUND
-
 /* Compile in support for SunPro usage-tracking code? */
 #undef USAGE_TRACKING
 
 /* Compile in support for Tooltalk? */
 #undef TOOLTALK
 /* tt_c.h might be in "Tt" or "desktop" subdirectories */
-#undef TT_C_H_FILE
+#undef TT_C_H_PATH
 
 /* Toolkits used by lwlib for various widgets... */
 #undef LWLIB_USES_MOTIF
@@ -661,17 +589,12 @@ extern "C" {
 #undef LWLIB_DIALOGS_MOTIF
 #undef LWLIB_DIALOGS_ATHENA
 #undef LWLIB_DIALOGS_ATHENA3D
-#undef LWLIB_TABS_LUCID
-#undef LWLIB_WIDGETS_MOTIF
-#undef LWLIB_WIDGETS_ATHENA
-#undef HAVE_ATHENA_3D
 
 /* Other things that can be disabled by configure. */
 #undef HAVE_MENUBARS
 #undef HAVE_SCROLLBARS
 #undef HAVE_DIALOGS
 #undef HAVE_TOOLBARS
-#undef HAVE_WIDGETS
 
 
 #if defined (HAVE_MENUBARS) || defined (HAVE_DIALOGS)
@@ -765,6 +688,10 @@ on various systems. */
 #  define CANNA_PURESIZE 0
 #endif /* not CANNA */
 
+#if (defined (MSDOS) && defined (FEPCTRL)) || (defined (WIN32) && defined (USE_IME))
+#define HAVE_FEP
+#endif
+
 #if defined (HAVE_SOCKS) && !defined (DO_NOT_SOCKSIFY)
 #define accept Raccept
 #define bind Rbind
@@ -788,35 +715,38 @@ on various systems. */
 #define LONG_LONG_BITS (SIZEOF_LONG_LONG * BITS_PER_CHAR)
 #define VOID_P_BITS (SIZEOF_VOID_P * BITS_PER_CHAR)
 
-/* Use `INLINE_HEADER' to define inline functions in .h files.
-   Use `inline static' to define inline functions in .c files.
-   See the Internals manual for examples and more information. */
-
+#ifndef NOT_C_CODE
+#ifdef __cplusplus
+#define HAVE_INLINE 1
+#define INLINE inline
+#else /* not C++ */
 /* Does the keyword `inline' exist?  */
+#undef HAVE_INLINE
 #undef inline
 
-#if defined (__cplusplus) || ! defined (__GNUC__)
-# define INLINE_HEADER inline static
-#elif defined (DONT_EXTERN_INLINE_HEADER_FUNCTIONS)
-# define INLINE_HEADER inline
-#else
-# define INLINE_HEADER inline extern
-#endif
+# ifdef HAVE_INLINE
+#  ifdef __GNUC__
+#   ifdef DONT_EXTERN_INLINE_FUNCTIONS
+#    define INLINE inline
+#   else
+#    define INLINE extern inline
+#   endif
+#  else
+#   define INLINE static inline
+#  endif /* __GNUC__ */
+# else
+#  define INLINE static
+# endif /* HAVE_INLINE */
+#endif /* not C++ */
+#endif /* C code */
 
-#ifndef NOT_C_CODE /* Actually means C or C++ */
-# if defined (__cplusplus)
+#if defined (__cplusplus) && !defined (NOT_C_CODE)
 /* Avoid C++ keywords used as ordinary C identifiers */
-#  define class c_class
-#  define new   c_new
-#  define this  c_this
-#  define catch c_catch
-#  define not   c_not
-
-#  define EXTERN_C extern "C"
-# else /* C code */
-#  define EXTERN_C extern
-# endif
-#endif /* C or C++ */
+#define class c_class
+#define new   c_new
+#define this  c_this
+#define catch c_catch
+#endif /* C++ */
 
 /* Strictly speaking, only int or unsigned int are valid types in a
    bitfield.  In practice, we would like to use enums as bitfields.
@@ -848,25 +778,25 @@ on various systems. */
 /* Should movemail use hesiod for getting POP server host? */
 #undef HESIOD
 /* Determine type of mail locking. */
-#undef MAIL_LOCK_LOCKF
-#undef MAIL_LOCK_FLOCK
-#undef MAIL_LOCK_DOT
-#undef MAIL_LOCK_LOCKING
-#undef MAIL_LOCK_MMDF
+/* Play preprocessor games so that configure options override s&m files */
+#undef REAL_MAIL_USE_LOCKF
+#undef REAL_MAIL_USE_FLOCK
+#undef MAIL_USE_LOCKF
+#undef MAIL_USE_FLOCK
+#ifdef REAL_MAIL_USE_FLOCK
+#define MAIL_USE_FLOCK
+#endif
+#ifdef REAL_MAIL_USE_LOCKF
+#define MAIL_USE_LOCKF
+#endif
 
-#undef PREFIX_USER_DEFINED
-#undef EXEC_PREFIX_USER_DEFINED
-#undef MODULEDIR_USER_DEFINED
-#undef SITEMODULEDIR_USER_DEFINED
-#undef DOCDIR_USER_DEFINED
 #undef LISPDIR_USER_DEFINED
 #undef PACKAGE_PATH_USER_DEFINED
 #undef SITELISPDIR_USER_DEFINED
 #undef ARCHLIBDIR_USER_DEFINED
 #undef ETCDIR_USER_DEFINED
+#undef LOCKDIR_USER_DEFINED
 #undef INFODIR_USER_DEFINED
 #undef INFOPATH_USER_DEFINED
-
-#undef PDUMP
 
 #endif /* _SRC_CONFIG_H_ */

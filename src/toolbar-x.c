@@ -77,8 +77,7 @@ x_draw_blank_toolbar_button (struct frame *f, int x, int y, int width,
 
   /* Draw the outline. */
   x_output_shadows (f, sx, sy, swidth, sheight, top_shadow_gc,
-		    bottom_shadow_gc, background_gc, shadow_thickness,
-		    EDGE_ALL);
+		    bottom_shadow_gc, background_gc, shadow_thickness);
 
   /* Blank the middle. */
   XFillRectangle (dpy, x_win, background_gc, sx + shadow_thickness,
@@ -109,7 +108,7 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
   GC top_shadow_gc, bottom_shadow_gc, background_gc;
   Lisp_Object instance, frame, window, glyph;
   struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
-  Lisp_Image_Instance *p;
+  struct Lisp_Image_Instance *p;
   struct window *w;
   int vertical = tb->vertical;
   int border_width = tb->border_width;
@@ -159,8 +158,7 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
   x_output_shadows (f, tb->x + x_adj, tb->y + y_adj,
 		    tb->width + width_adj, tb->height + height_adj,
 		    top_shadow_gc,
-		    bottom_shadow_gc, background_gc, shadow_thickness,
-		    EDGE_ALL);
+		    bottom_shadow_gc, background_gc, shadow_thickness);
 
   /* Clear the pixmap area. */
   XFillRectangle (dpy, x_win, background_gc, tb->x + x_adj + shadow_thickness,
@@ -213,8 +211,8 @@ x_output_toolbar_button (struct frame *f, Lisp_Object button)
 	    }
 
 	  x_output_x_pixmap (f, XIMAGE_INSTANCE (instance), tb->x + x_offset,
-			     tb->y + y_offset, 0, 0, width, height,
-			     0, 0, background_gc);
+			     tb->y + y_offset, 0, 0, 0, 0, width, height,
+			     0, 0, 0, background_gc);
 	}
       else if (IMAGE_INSTANCE_TYPE (p) == IMAGE_TEXT)
 	{
@@ -296,9 +294,9 @@ x_get_button_size (struct frame *f, Lisp_Object window,
 	return XINT (f->toolbar_size[pos]);
 
       if (vert)
-	size = glyph_height (glyph, window);
+	size = glyph_height (glyph, Vdefault_face, 0, window);
       else
-	size = glyph_width (glyph, window);
+	size = glyph_width (glyph, Vdefault_face, 0, window);
     }
 
   if (!size)

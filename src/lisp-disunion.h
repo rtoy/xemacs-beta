@@ -70,8 +70,8 @@ Boston, MA 02111-1307, USA.  */
  XUINT     The value bits of a Lisp_Object storing an integer, unsigned
  INTP      Non-zero if this Lisp_Object an integer?
  Qzero     Lisp Integer 0
- EQ        Non-zero if two Lisp_Objects are identical */
-
+ EQ        Non-zero if two Lisp_Objects are identical
+ GC_EQ Version of EQ used during garbage collection */
 
 typedef EMACS_INT Lisp_Object;
 
@@ -83,16 +83,14 @@ typedef EMACS_INT Lisp_Object;
 #define XTYPE(x) ((enum Lisp_Type) (((EMACS_UINT)(x)) & ~VALMASK))
 #define XPNTRVAL(x) (x) /* This depends on Lisp_Type_Record == 0 */
 #define XCHARVAL(x) ((x) >> GCBITS)
+#define GC_EQ(x,y) EQ (x,y)
 #define XREALINT(x) ((x) >> INT_GCBITS)
 #define XUINT(x) ((EMACS_UINT)(x) >> INT_GCBITS)
 #define INTP(x) ((EMACS_UINT)(x) & Lisp_Type_Int_Bit)
-#define INT_PLUS(x,y)  ((x)+(y)-Lisp_Type_Int_Bit)
-#define INT_MINUS(x,y) ((x)-(y)+Lisp_Type_Int_Bit)
-#define INT_PLUS1(x)   INT_PLUS  (x, make_int (1))
-#define INT_MINUS1(x)  INT_MINUS (x, make_int (1))
 
 #define Qzero make_int (0)
 #define Qnull_pointer ((Lisp_Object) 0)
+#define XGCTYPE(x) XTYPE(x)
 #define EQ(x,y) ((x) == (y))
 #define XSETINT(var,  value) ((void) ((var) = make_int (value)))
 #define XSETCHAR(var, value) ((void) ((var) = make_char (value)))
@@ -103,7 +101,7 @@ typedef EMACS_INT Lisp_Object;
 #define VOID_TO_LISP(larg,varg) ((void) ((larg) = ((Lisp_Object) (varg))))
 #define CVOID_TO_LISP VOID_TO_LISP
 #define LISP_TO_VOID(larg) ((void *) (larg))
-#define LISP_TO_CVOID(varg) ((const void *) (larg))
+#define LISP_TO_CVOID(varg) ((CONST void *) (larg))
 
 /* Convert a Lisp_Object into something that can't be used as an
    lvalue.  Useful for type-checking. */

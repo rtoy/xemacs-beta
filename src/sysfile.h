@@ -20,12 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not really in FSF. */
 
-#ifndef INCLUDED_sysfile_h_
-#define INCLUDED_sysfile_h_
-
 #include <errno.h>
 
-#ifndef WIN32_NATIVE
+#ifndef WINDOWSNT
 #include <sys/errno.h>          /* <errno.h> does not always imply this */
 #endif
 
@@ -43,24 +40,17 @@ Boston, MA 02111-1307, USA.  */
 #ifndef makedev
 #include <sys/types.h>		/* some typedefs are used in sys/file.h */
 #endif
-
-#ifndef WIN32_NATIVE
 #include <sys/file.h>
-#endif
-
 #include <sys/stat.h>
-
-#ifndef WIN32_NATIVE
 #include <sys/param.h>
-#endif
 
-#if defined (NeXT) || defined(CYGWIN)
+#if defined (NeXT) || defined(__CYGWIN32__)
 /* what is needed from here?  Do others need it too?
  O_BINARY is in here under cygwin. */
 # include <sys/fcntl.h>
 #endif /* NeXT */
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 #include <io.h>
 #include <direct.h>
 #endif
@@ -101,7 +91,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifndef CREAT_MODE
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 #define CREAT_MODE	(S_IREAD | S_IWRITE)
 #else
 #define CREAT_MODE	(0666)
@@ -121,30 +111,6 @@ Boston, MA 02111-1307, USA.  */
 #define READ_BINARY "rb"
 #else
 #define READ_BINARY "r"
-#endif
-#endif
-
-#ifndef READ_PLUS_TEXT
-#ifdef O_TEXT
-#define READ_PLUS_TEXT "r+t"
-#else
-#define READ_PLUS_TEXT "r+"
-#endif
-#endif
-
-#ifndef READ_PLUS_BINARY
-#ifdef O_BINARY
-#define READ_PLUS_BINARY "r+b"
-#else
-#define READ_PLUS_BINARY "r+"
-#endif
-#endif
-
-#ifndef WRITE_TEXT
-#ifdef O_TEXT
-#define WRITE_TEXT "wt"
-#else
-#define WRITE_TEXT "w"
 #endif
 #endif
 
@@ -237,37 +203,17 @@ Boston, MA 02111-1307, USA.  */
 #define S_ISNWK(m) (((m) & S_IFMT) == S_IFNWK)
 #endif
 
-/* Client .c files should simply use `PATH_MAX'. */
-#ifndef PATH_MAX
-# if defined (_POSIX_PATH_MAX)
-#  define PATH_MAX _POSIX_PATH_MAX
-# elif defined (MAXPATHLEN)
-#  define PATH_MAX MAXPATHLEN
-# else
-#  define PATH_MAX 1024
-# endif
+#if !defined (USG)  && !defined (WINDOWSNT)
+# define HAVE_FSYNC
 #endif
 
-/* MAXPATHLEN is deprecated, but, as of this writing, still used. */
 #ifndef MAXPATHLEN
-# define MAXPATHLEN 1024
-#endif
+/* in 4.1, param.h fails to define this. */
+#define MAXPATHLEN 1024
+#endif /* not MAXPATHLEN */
 
-/* The following definitions are needed under Windows, at least */
 #ifndef X_OK
-# define X_OK 1
-#endif
-
-#ifndef R_OK
-# define R_OK 4
-#endif
-
-#ifndef W_OK
-# define W_OK 2
-#endif
-
-#ifndef F_OK
-# define F_OK 0
+# define X_OK 01
 #endif
 
 #ifndef FD_CLOEXEC
@@ -298,7 +244,7 @@ Boston, MA 02111-1307, USA.  */
    Other encapsulations are declared in the appropriate sys*.h file. */
 
 #ifdef ENCAPSULATE_READ
-ssize_t sys_read (int, void *, size_t);
+int sys_read (int, void *, size_t);
 #endif
 #if defined (ENCAPSULATE_READ) && !defined (DONT_ENCAPSULATE)
 # undef read
@@ -309,7 +255,7 @@ ssize_t sys_read (int, void *, size_t);
 #endif
 
 #ifdef ENCAPSULATE_WRITE
-ssize_t sys_write (int, const void *, size_t);
+int sys_write (int, CONST void *, size_t);
 #endif
 #if defined (ENCAPSULATE_WRITE) && !defined (DONT_ENCAPSULATE)
 # undef write
@@ -320,7 +266,7 @@ ssize_t sys_write (int, const void *, size_t);
 #endif
 
 #ifdef ENCAPSULATE_OPEN
-int sys_open (const char *, int, ...);
+int sys_open (CONST char *, int, ...);
 #endif
 #if defined (ENCAPSULATE_OPEN) && !defined (DONT_ENCAPSULATE)
 # undef open
@@ -355,7 +301,7 @@ size_t sys_fread (void *, size_t, size_t, FILE *);
 #endif
 
 #ifdef ENCAPSULATE_FWRITE
-size_t sys_fwrite (const void *, size_t, size_t, FILE *);
+size_t sys_fwrite (CONST void *, size_t, size_t, FILE *);
 #endif
 #if defined (ENCAPSULATE_FWRITE) && !defined (DONT_ENCAPSULATE)
 # undef fwrite
@@ -366,7 +312,7 @@ size_t sys_fwrite (const void *, size_t, size_t, FILE *);
 #endif
 
 #ifdef ENCAPSULATE_FOPEN
-FILE *sys_fopen (const char *, const char *);
+FILE *sys_fopen (CONST char *, CONST char *);
 #endif
 #if defined (ENCAPSULATE_FOPEN) && !defined (DONT_ENCAPSULATE)
 # undef fopen
@@ -391,7 +337,7 @@ int sys_fclose (FILE *);
 /* encapsulations: file-information calls */
 
 #ifdef ENCAPSULATE_ACCESS
-int sys_access (const char *path, int mode);
+int sys_access (CONST char *path, int mode);
 #endif
 #if defined (ENCAPSULATE_ACCESS) && !defined (DONT_ENCAPSULATE)
 # undef access
@@ -402,7 +348,7 @@ int sys_access (const char *path, int mode);
 #endif
 
 #ifdef ENCAPSULATE_EACCESS
-int sys_eaccess (const char *path, int mode);
+int sys_eaccess (CONST char *path, int mode);
 #endif
 #if defined (ENCAPSULATE_EACCESS) && !defined (DONT_ENCAPSULATE)
 # undef eaccess
@@ -413,7 +359,7 @@ int sys_eaccess (const char *path, int mode);
 #endif
 
 #ifdef ENCAPSULATE_LSTAT
-int sys_lstat (const char *path, struct stat *buf);
+int sys_lstat (CONST char *path, struct stat *buf);
 #endif
 #if defined (ENCAPSULATE_LSTAT) && !defined (DONT_ENCAPSULATE)
 # undef lstat
@@ -424,7 +370,7 @@ int sys_lstat (const char *path, struct stat *buf);
 #endif
 
 #ifdef ENCAPSULATE_READLINK
-int sys_readlink (const char *path, char *buf, size_t bufsiz);
+int sys_readlink (CONST char *path, char *buf, size_t bufsiz);
 #endif
 #if defined (ENCAPSULATE_READLINK) && !defined (DONT_ENCAPSULATE)
 # undef readlink
@@ -434,20 +380,8 @@ int sys_readlink (const char *path, char *buf, size_t bufsiz);
 # define sys_readlink readlink
 #endif
 
-#ifdef ENCAPSULATE_FSTAT
-int sys_fstat (int fd, struct stat *buf);
-#endif
-#if defined (ENCAPSULATE_FSTAT) && !defined (DONT_ENCAPSULATE)
-# undef fstat
-/* Need to use arguments to avoid messing with struct stat */
-# define fstat(fd, buf) sys_fstat (fd, buf)
-#endif
-#if !defined (ENCAPSULATE_FSTAT) && defined (DONT_ENCAPSULATE)
-# define sys_fstat fstat
-#endif
-
 #ifdef ENCAPSULATE_STAT
-int sys_stat (const char *path, struct stat *buf);
+int sys_stat (CONST char *path, struct stat *buf);
 #endif
 #if defined (ENCAPSULATE_STAT) && !defined (DONT_ENCAPSULATE)
 # undef stat
@@ -461,7 +395,7 @@ int sys_stat (const char *path, struct stat *buf);
 /* encapsulations: file-manipulation calls */
 
 #ifdef ENCAPSULATE_CHMOD
-int sys_chmod (const char *path, mode_t mode);
+int sys_chmod (CONST char *path, mode_t mode);
 #endif
 #if defined (ENCAPSULATE_CHMOD) && !defined (DONT_ENCAPSULATE)
 # undef chmod
@@ -472,7 +406,7 @@ int sys_chmod (const char *path, mode_t mode);
 #endif
 
 #ifdef ENCAPSULATE_CREAT
-int sys_creat (const char *path, mode_t mode);
+int sys_creat (CONST char *path, mode_t mode);
 #endif
 #if defined (ENCAPSULATE_CREAT) && !defined (DONT_ENCAPSULATE)
 # undef creat
@@ -483,7 +417,7 @@ int sys_creat (const char *path, mode_t mode);
 #endif
 
 #ifdef ENCAPSULATE_LINK
-int sys_link (const char *existing, const char *new);
+int sys_link (CONST char *existing, CONST char *new);
 #endif
 #if defined (ENCAPSULATE_LINK) && !defined (DONT_ENCAPSULATE)
 # undef link
@@ -494,7 +428,7 @@ int sys_link (const char *existing, const char *new);
 #endif
 
 #ifdef ENCAPSULATE_RENAME
-int sys_rename (const char *old, const char *new);
+int sys_rename (CONST char *old, CONST char *new);
 #endif
 #if defined (ENCAPSULATE_RENAME) && !defined (DONT_ENCAPSULATE)
 # undef rename
@@ -505,7 +439,7 @@ int sys_rename (const char *old, const char *new);
 #endif
 
 #ifdef ENCAPSULATE_SYMLINK
-int sys_symlink (const char *name1, const char *name2);
+int sys_symlink (CONST char *name1, CONST char *name2);
 #endif
 #if defined (ENCAPSULATE_SYMLINK) && !defined (DONT_ENCAPSULATE)
 # undef symlink
@@ -516,7 +450,7 @@ int sys_symlink (const char *name1, const char *name2);
 #endif
 
 #ifdef ENCAPSULATE_UNLINK
-int sys_unlink (const char *path);
+int sys_unlink (CONST char *path);
 #endif
 #if defined (ENCAPSULATE_UNLINK) && !defined (DONT_ENCAPSULATE)
 # undef unlink
@@ -527,7 +461,7 @@ int sys_unlink (const char *path);
 #endif
 
 #ifdef ENCAPSULATE_EXECVP
-int sys_execvp (const char *, char * const *);
+int sys_execvp (CONST char *, char * CONST *);
 #endif
 #if defined (ENCAPSULATE_EXECVP) && !defined (DONT_ENCAPSULATE)
 # undef execvp
@@ -536,5 +470,3 @@ int sys_execvp (const char *, char * const *);
 #if !defined (ENCAPSULATE_EXECVP) && defined (DONT_ENCAPSULATE)
 # define sys_execvp execvp
 #endif
-
-#endif /* INCLUDED_sysfile_h_ */

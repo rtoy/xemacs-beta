@@ -20,17 +20,21 @@
 #include "lisp.h"
 #endif
 
+#ifdef STDC_HEADERS
 #include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
+#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+#include <stdio.h>
+#include <fcntl.h>
 #include "libsst.h"
 
 #define AUDBUF 1024
+
+extern void usleep();
 
 int
 sst_open(play_level, record_level)
@@ -38,7 +42,7 @@ sst_open(play_level, record_level)
     {
     int fd, i, gr, ger, gx;
     struct audio_ioctl ai;
-    char *ep;
+    char *getenv(), *ep;
 
     fd = open( "/dev/audio", O_RDWR );
     if ( fd < 0 )

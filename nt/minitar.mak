@@ -1,12 +1,10 @@
 ZLIB=\path\to\zlib
-LIB_SRC=.
-NT=.
 
-all: $(LIB_SRC)\minitar.exe
+all: minitar.exe
 
-$(LIB_SRC)\minitar.exe: $(LIB_SRC)\minitar.obj
-	cl -o $@ $(LIB_SRC)\minitar.obj $(ZLIB)\zlib.lib
+minitar.exe: minitar.obj
+	cl -o minitar.exe minitar.obj $(ZLIB)\zlib.lib
 
-$(LIB_SRC)\minitar.obj: $(NT)\minitar.c
-	cl -Fo$@ -c $(NT)\minitar.c -I $(ZLIB)
+minitar.obj: minitar.c
+	cl -c minitar.c -I $(ZLIB)
 

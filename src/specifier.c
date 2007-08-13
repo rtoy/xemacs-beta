@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 #include "rangetab.h"
 
 Lisp_Object Qspecifierp;
-Lisp_Object Qprepend, Qremove_tag_set_prepend, Qremove_tag_set_append;
+Lisp_Object Qprepend, Qappend, Qremove_tag_set_prepend, Qremove_tag_set_append;
 Lisp_Object Qremove_locale, Qremove_locale_type, Qremove_all;
 Lisp_Object Qfallback;
 
@@ -64,28 +64,7 @@ typedef struct
   Dynarr_declare (specifier_type_entry);
 } specifier_type_entry_dynarr;
 
-static specifier_type_entry_dynarr *the_specifier_type_entry_dynarr;
-
-static const struct lrecord_description ste_description_1[] = {
-  { XD_LISP_OBJECT, offsetof (specifier_type_entry, symbol) },
-  { XD_STRUCT_PTR,  offsetof (specifier_type_entry, meths), 1, &specifier_methods_description },
-  { XD_END }
-};
-
-static const struct struct_description ste_description = {
-  sizeof (specifier_type_entry),
-  ste_description_1
-};
-
-static const struct lrecord_description sted_description_1[] = {
-  XD_DYNARR_DESC (specifier_type_entry_dynarr, &ste_description),
-  { XD_END }
-};
-
-static const struct struct_description sted_description = {
-  sizeof (specifier_type_entry_dynarr),
-  sted_description_1
-};
+specifier_type_entry_dynarr *the_specifier_type_entry_dynarr;
 
 static Lisp_Object Vspecifier_type_list;
 
@@ -162,7 +141,7 @@ cleanup_specifiers (void)
        !NILP (rest);
        rest = XSPECIFIER (rest)->next_specifier)
     {
-      Lisp_Specifier *sp = XSPECIFIER (rest);
+      struct Lisp_Specifier *sp = XSPECIFIER (rest);
       /* This effectively changes the specifier specs.
 	 However, there's no need to call
 	 recompute_cached_specifier_everywhere() or the
@@ -189,7 +168,7 @@ kill_specifier_buffer_locals (Lisp_Object buffer)
        !NILP (rest);
        rest = XSPECIFIER (rest)->next_specifier)
     {
-      Lisp_Specifier *sp = XSPECIFIER (rest);
+      struct Lisp_Specifier *sp = XSPECIFIER (rest);
 
       /* Make sure we're actually going to be changing something.
 	 Fremove_specifier() always calls
@@ -201,19 +180,19 @@ kill_specifier_buffer_locals (Lisp_Object buffer)
 }
 
 static Lisp_Object
-mark_specifier (Lisp_Object obj)
+mark_specifier (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  Lisp_Specifier *specifier = XSPECIFIER (obj);
+  struct Lisp_Specifier *specifier = XSPECIFIER (obj);
 
-  mark_object (specifier->global_specs);
-  mark_object (specifier->device_specs);
-  mark_object (specifier->frame_specs);
-  mark_object (specifier->window_specs);
-  mark_object (specifier->buffer_specs);
-  mark_object (specifier->magic_parent);
-  mark_object (specifier->fallback);
+  markobj (specifier->global_specs);
+  markobj (specifier->device_specs);
+  markobj (specifier->frame_specs);
+  markobj (specifier->window_specs);
+  markobj (specifier->buffer_specs);
+  markobj (specifier->magic_parent);
+  markobj (specifier->fallback);
   if (!GHOST_SPECIFIER_P (XSPECIFIER (obj)))
-    MAYBE_SPECMETH (specifier, mark, (obj));
+    MAYBE_SPECMETH (specifier, mark, (obj, markobj));
   return Qnil;
 }
 
@@ -237,24 +216,24 @@ mark_specifier (Lisp_Object obj)
 */
 
 void
-prune_specifiers (void)
+prune_specifiers (int (*obj_marked_p) (Lisp_Object))
 {
   Lisp_Object rest, prev = Qnil;
 
   for (rest = Vall_specifiers;
-       !NILP (rest);
+       !GC_NILP (rest);
        rest = XSPECIFIER (rest)->next_specifier)
     {
-      if (! marked_p (rest))
+      if (! obj_marked_p (rest))
 	{
-	  Lisp_Specifier* sp = XSPECIFIER (rest);
+	  struct Lisp_Specifier* sp = XSPECIFIER (rest);
 	  /* A bit of assertion that we're removing both parts of the
              magic one altogether */
-	  assert (!MAGIC_SPECIFIER_P(sp)
-		  || (BODILY_SPECIFIER_P(sp) && marked_p (sp->fallback))
-		  || (GHOST_SPECIFIER_P(sp) && marked_p (sp->magic_parent)));
+	  assert (!GC_MAGIC_SPECIFIER_P(sp)
+		  || (GC_BODILY_SPECIFIER_P(sp) && obj_marked_p (sp->fallback))
+		  || (GC_GHOST_SPECIFIER_P(sp) && obj_marked_p (sp->magic_parent)));
 	  /* This specifier is garbage.  Remove it from the list. */
-	  if (NILP (prev))
+	  if (GC_NILP (prev))
 	    Vall_specifiers = sp->next_specifier;
 	  else
 	    XSPECIFIER (prev)->next_specifier = sp->next_specifier;
@@ -267,7 +246,7 @@ prune_specifiers (void)
 static void
 print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  Lisp_Specifier *sp = XSPECIFIER (obj);
+  struct Lisp_Specifier *sp = XSPECIFIER (obj);
   char buf[100];
   int count = specpdl_depth ();
   Lisp_Object the_specs;
@@ -299,9 +278,9 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 static void
 finalize_specifier (void *header, int for_disksave)
 {
-  Lisp_Specifier *sp = (Lisp_Specifier *) header;
+  struct Lisp_Specifier *sp = (struct Lisp_Specifier *) header;
   /* don't be snafued by the disksave finalization. */
-  if (!for_disksave && !GHOST_SPECIFIER_P(sp) && sp->caching)
+  if (!for_disksave && !GC_GHOST_SPECIFIER_P(sp) && sp->caching)
     {
       xfree (sp->caching);
       sp->caching = 0;
@@ -311,8 +290,8 @@ finalize_specifier (void *header, int for_disksave)
 static int
 specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  Lisp_Specifier *s1 = XSPECIFIER (obj1);
-  Lisp_Specifier *s2 = XSPECIFIER (obj2);
+  struct Lisp_Specifier *s1 = XSPECIFIER (obj1);
+  struct Lisp_Specifier *s2 = XSPECIFIER (obj2);
   int retval;
   Lisp_Object old_inhibit_quit = Vinhibit_quit;
 
@@ -340,7 +319,7 @@ specifier_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 static unsigned long
 specifier_hash (Lisp_Object obj, int depth)
 {
-  Lisp_Specifier *s = XSPECIFIER (obj);
+  struct Lisp_Specifier *s = XSPECIFIER (obj);
 
   /* specifier hashing is a bit problematic because there are so
      many places where data can be stored.  We pick what are perhaps
@@ -354,61 +333,23 @@ specifier_hash (Lisp_Object obj, int depth)
 }
 
 static size_t
-sizeof_specifier (const void *header)
+sizeof_specifier (CONST void *header)
 {
-  if (GHOST_SPECIFIER_P ((Lisp_Specifier *) header))
-    return offsetof (Lisp_Specifier, data);
+  if (GHOST_SPECIFIER_P ((struct Lisp_Specifier *) header))
+    return sizeof (struct Lisp_Specifier);
   else
     {
-      const Lisp_Specifier *p = (const Lisp_Specifier *) header;
-      return offsetof (Lisp_Specifier, data) + p->methods->extra_data_size;
+      CONST struct Lisp_Specifier *p = (CONST struct Lisp_Specifier *) header;
+      return sizeof (*p) + p->methods->extra_data_size - 1;
     }
 }
-
-static const struct lrecord_description specifier_methods_description_1[] = {
-  { XD_LISP_OBJECT, offsetof (struct specifier_methods, predicate_symbol) },
-  { XD_END }
-};
-
-const struct struct_description specifier_methods_description = {
-  sizeof (struct specifier_methods),
-  specifier_methods_description_1
-};
-
-static const struct lrecord_description specifier_caching_description_1[] = {
-  { XD_END }
-};
-
-static const struct struct_description specifier_caching_description = {
-  sizeof (struct specifier_caching),
-  specifier_caching_description_1
-};
-
-static const struct lrecord_description specifier_description[] = {
-  { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, methods), 1, &specifier_methods_description },
-  { XD_LO_LINK,     offsetof (Lisp_Specifier, next_specifier) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Specifier, global_specs) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Specifier, device_specs) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Specifier, frame_specs) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Specifier, window_specs) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Specifier, buffer_specs) },
-  { XD_STRUCT_PTR,  offsetof (Lisp_Specifier, caching), 1, &specifier_caching_description },
-  { XD_LISP_OBJECT, offsetof (Lisp_Specifier, magic_parent) },
-  { XD_LISP_OBJECT, offsetof (Lisp_Specifier, fallback) },
-  { XD_SPECIFIER_END }
-};
-
-const struct lrecord_description specifier_empty_extra_description[] = {
-  { XD_END }
-};
 
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("specifier", specifier,
 					mark_specifier, print_specifier,
 					finalize_specifier,
 					specifier_equal, specifier_hash,
-					specifier_description,
 					sizeof_specifier,
-					Lisp_Specifier);
+					struct Lisp_Specifier);
 
 /************************************************************************/
 /*                       Creating specifiers                            */
@@ -472,9 +413,9 @@ make_specifier_internal (struct specifier_methods *spec_meths,
 			 size_t data_size, int call_create_meth)
 {
   Lisp_Object specifier;
-  Lisp_Specifier *sp = (Lisp_Specifier *)
-    alloc_lcrecord (offsetof (Lisp_Specifier, data) + data_size,
-		    &lrecord_specifier);
+  struct Lisp_Specifier *sp = (struct Lisp_Specifier *)
+    alloc_lcrecord (sizeof (struct Lisp_Specifier) +
+		    data_size - 1, &lrecord_specifier);
 
   sp->methods = spec_meths;
   sp->global_specs = Qnil;
@@ -532,52 +473,29 @@ Return a new specifier object of type TYPE.
 
 A specifier is an object that can be used to keep track of a property
 whose value can be per-buffer, per-window, per-frame, or per-device,
-and can further be restricted to a particular console-type or
-device-class.  Specifiers are used, for example, for the various
-built-in properties of a face; this allows a face to have different
-values in different frames, buffers, etc.
-
-When speaking of the value of a specifier, it is important to
-distinguish between the *setting* of a specifier, called an
-\"instantiator\", and the *actual value*, called an \"instance\".  You
-put various possible instantiators (i.e. settings) into a specifier
-and associate them with particular locales (buffer, window, frame,
-device, global), and then the instance (i.e. actual value) is
-retrieved in a specific domain (window, frame, device) by looking
-through the possible instantiators (i.e. settings).  This process is
-called \"instantiation\".
- 
-To put settings into a specifier, use `set-specifier', or the
-lower-level functions `add-spec-to-specifier' and
-`add-spec-list-to-specifier'.  You can also temporarily bind a setting
-to a specifier using `let-specifier'.  To retrieve settings, use
-`specifier-specs', or its lower-level counterpart
-`specifier-spec-list'.  To determine the actual value, use
-`specifier-instance'.
-
-For more information, see `set-specifier', `specifier-instance',
+and can further be restricted to a particular console-type or device-class.
+Specifiers are used, for example, for the various built-in properties of a
+face; this allows a face to have different values in different frames,
+buffers, etc.  For more information, see `specifier-instance',
 `specifier-specs', and `add-spec-to-specifier'; or, for a detailed
-description of specifiers, including how exactly the instantiation
-process works, see the chapter on specifiers in the XEmacs Lisp
-Reference Manual.
+description of specifiers, including how they are instantiated over a
+particular domain (i.e. how their value in that domain is determined),
+see the chapter on specifiers in the XEmacs Lisp Reference Manual.
 
 TYPE specifies the particular type of specifier, and should be one of
-the symbols 'generic, 'integer, 'natnum, 'boolean, 'color, 'font,
-'image, 'face-boolean, 'display-table, 'gutter, 'gutter-size,
-'gutter-visible or 'toolbar.
+the symbols 'generic, 'integer, 'boolean, 'color, 'font, 'image,
+'face-boolean, or 'toolbar.
 
-For more information on particular types of specifiers, see the
-functions `make-generic-specifier', `make-integer-specifier',
-`make-natnum-specifier', `make-boolean-specifier',
-`make-color-specifier', `make-font-specifier', `make-image-specifier',
-`make-face-boolean-specifier', `make-gutter-size-specifier',
-`make-gutter-visible-specifier', `default-toolbar', `default-gutter',
-and `current-display-table'.
+For more information on particular types of specifiers, see the functions
+`generic-specifier-p', `integer-specifier-p', `boolean-specifier-p',
+`color-specifier-p', `font-specifier-p', `image-specifier-p',
+`face-boolean-specifier-p', and `toolbar-specifier-p'.
 */
        (type))
 {
   /* This function can GC */
-  struct specifier_methods *meths = decode_specifier_type (type, ERROR_ME);
+  struct specifier_methods *meths = decode_specifier_type (type,
+							   ERROR_ME);
 
   return make_specifier (meths);
 }
@@ -630,19 +548,15 @@ Valid locales are devices, frames, windows, buffers, and 'global.
 DEFUN ("valid-specifier-domain-p", Fvalid_specifier_domain_p, 1, 1, 0, /*
 Return t if DOMAIN is a valid specifier domain.
 A domain is used to instance a specifier (i.e. determine the specifier's
-value in that domain).  Valid domains are image instances, windows, frames,
-and devices. \(nil is not valid.) image instances are pseudo-domains since
-instantiation will actually occur in the window the image instance itself is
-instantiated in.
+value in that domain).  Valid domains are windows, frames, and devices.
+\(nil is not valid.)
 */
      (domain))
 {
   /* This cannot GC. */
   return ((DEVICEP (domain) && DEVICE_LIVE_P (XDEVICE (domain))) ||
 	  (FRAMEP  (domain) && FRAME_LIVE_P  (XFRAME  (domain))) ||
-	  (WINDOWP (domain) && WINDOW_LIVE_P (XWINDOW (domain))) ||
-	  /* #### get image instances out of domains! */
-	  IMAGE_INSTANCEP (domain))
+	  (WINDOWP (domain) && WINDOW_LIVE_P (XWINDOW (domain))))
     ? Qt : Qnil;
 }
 
@@ -754,7 +668,7 @@ check_valid_domain (Lisp_Object domain)
     signal_simple_error ("Invalid specifier domain", domain);
 }
 
-Lisp_Object
+static Lisp_Object
 decode_domain (Lisp_Object domain)
 {
   if (NILP (domain))
@@ -1673,22 +1587,16 @@ build_up_processed_list (Lisp_Object specifier, Lisp_Object locale,
 {
   /* The return value of this function must be GCPRO'd. */
   Lisp_Object rest, list_to_build_up = Qnil;
-  Lisp_Specifier *sp = XSPECIFIER (specifier);
+  struct Lisp_Specifier *sp = XSPECIFIER (specifier);
   struct gcpro gcpro1;
 
   GCPRO1 (list_to_build_up);
   LIST_LOOP (rest, inst_list)
     {
       Lisp_Object tag_set = XCAR (XCAR (rest));
+      Lisp_Object instantiator = Fcopy_tree (XCDR (XCAR (rest)), Qt);
       Lisp_Object sub_inst_list = Qnil;
-      Lisp_Object instantiator;
       struct gcpro ngcpro1, ngcpro2;
-
-      if (HAS_SPECMETH_P (sp, copy_instantiator))
-	instantiator = SPECMETH (sp, copy_instantiator,
-				 (XCDR (XCAR (rest))));
-      else
-	instantiator = Fcopy_tree (XCDR (XCAR (rest)), Qt);
 
       NGCPRO2 (instantiator, sub_inst_list);
       /* call the will-add method; it may GC */
@@ -1730,7 +1638,7 @@ static void
 specifier_add_spec (Lisp_Object specifier, Lisp_Object locale,
 		    Lisp_Object inst_list, enum spec_add_meth add_meth)
 {
-  Lisp_Specifier *sp = XSPECIFIER (specifier);
+  struct Lisp_Specifier *sp = XSPECIFIER (specifier);
   enum spec_locale_type type = locale_type_from_locale (locale);
   Lisp_Object *orig_inst_list, tem;
   Lisp_Object list_to_build_up = Qnil;
@@ -2401,7 +2309,7 @@ See `specifier-matching-instance' for a description of matchspecs.
 void
 set_specifier_fallback (Lisp_Object specifier, Lisp_Object fallback)
 {
-  Lisp_Specifier *sp = XSPECIFIER (specifier);
+  struct Lisp_Specifier *sp = XSPECIFIER (specifier);
   assert (SPECIFIERP (fallback) ||
 	  !NILP (Fvalid_inst_list_p (fallback, Fspecifier_type (specifier))));
   if (SPECIFIERP (fallback))
@@ -2451,7 +2359,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 				   Lisp_Object depth)
 {
   /* This function can GC */
-  Lisp_Specifier *sp;
+  struct Lisp_Specifier *sp;
   Lisp_Object device;
   Lisp_Object rest;
   int count = specpdl_depth ();
@@ -2460,7 +2368,7 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
   GCPRO2 (specifier, inst_list);
 
   sp = XSPECIFIER (specifier);
-  device = DOMAIN_DEVICE (domain);
+  device = DFW_DEVICE (domain);
 
   if (no_quit)
   /* The instantiate method is allowed to call eval.  Since it
@@ -2534,26 +2442,22 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
   Lisp_Object device = Qnil;
   Lisp_Object tag = Qnil;
   struct device *d;
-  Lisp_Specifier *sp;
+  struct Lisp_Specifier *sp;
 
   sp = XSPECIFIER (specifier);
 
   /* Attempt to determine buffer, window, frame, and device from the
      domain. */
-  /* #### get image instances out of domains! */
-  if (IMAGE_INSTANCEP (domain))
-    window = DOMAIN_WINDOW (domain);
-  else if (WINDOWP (domain))
+  if (WINDOWP (domain))
     window = domain;
   else if (FRAMEP (domain))
     frame = domain;
   else if (DEVICEP (domain))
     device = domain;
   else
-    /* dmoore writes: [dammit, this should just signal an error or something
-       shouldn't it?]
-
-       No. Errors are handled in Lisp primitives implementation.
+    /* #### dmoore - dammit, this should just signal an error or something
+       shouldn't it?
+       #### No. Errors are handled in Lisp primitives implementation.
        Invalid domain is a design error here - kkm. */
     abort ();
 
@@ -2581,7 +2485,7 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
       goto do_fallback;
     }
 
- retry:
+retry:
   /* First see if we can generate one from the window specifiers. */
   if (!NILP (window))
     CHECK_INSTANCE_ENTRY (window, matchspec, LOCALE_WINDOW);
@@ -2600,7 +2504,7 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
   /* Last and least try the global specifiers. */
   CHECK_INSTANCE_ENTRY (Qglobal, matchspec, LOCALE_GLOBAL);
 
- do_fallback:
+do_fallback:
   /* We're out of specifiers and we still haven't generated an
      instance.  At least try the fallback ...  If this fails,
      then we just return Qunbound. */
@@ -2741,7 +2645,7 @@ you should not use this function; use `specifier-instance' instead.
        (specifier, domain, inst_list, default_))
 {
   Lisp_Object val = Qunbound;
-  Lisp_Specifier *sp = XSPECIFIER (specifier);
+  struct Lisp_Specifier *sp = XSPECIFIER (specifier);
   struct gcpro gcpro1;
   Lisp_Object built_up_list = Qnil;
 
@@ -2773,7 +2677,7 @@ works.
        (specifier, matchspec, domain, inst_list, default_))
 {
   Lisp_Object val = Qunbound;
-  Lisp_Specifier *sp = XSPECIFIER (specifier);
+  struct Lisp_Specifier *sp = XSPECIFIER (specifier);
   struct gcpro gcpro1;
   Lisp_Object built_up_list = Qnil;
 
@@ -2813,7 +2717,7 @@ set_specifier_caching (Lisp_Object specifier, int struct_window_offset,
 		       (Lisp_Object specifier, struct frame *f,
 			Lisp_Object oldval))
 {
-  Lisp_Specifier *sp = XSPECIFIER (specifier);
+  struct Lisp_Specifier *sp = XSPECIFIER (specifier);
   assert (!GHOST_SPECIFIER_P (sp));
 
   if (!sp->caching)
@@ -2847,13 +2751,6 @@ recompute_one_cached_specifier_in_window (Lisp_Object specifier,
      method. */
   location = (Lisp_Object *)
     ((char *) w + XSPECIFIER (specifier)->caching->offset_into_struct_window);
-  /* #### What's the point of this check, other than to optimize image
-     instance instantiation? Unless you specify a caching instantiate
-     method the instantiation that specifier_instance will do will
-     always create a new copy. Thus EQ will always fail. Unfortunately
-     calling equal is no good either as this doesn't take into account
-     things attached to the specifier - for instance strings on
-     extents. --andyp */
   if (!EQ (newval, *location))
     {
       Lisp_Object oldval = *location;
@@ -2988,9 +2885,8 @@ DEFINE_SPECIFIER_TYPE (generic);
 
    What really needs to be done is to write a function
    `make-specifier-type' that creates new specifier types.
-
-   #### [I'll look into this for 19.14.]  Well, sometime. (Currently
-   May 2000, 21.2 is in development.  19.14 was released in June 1996.) */
+   #### I'll look into this for 19.14.
+ */
 
 "A generic specifier is a generalized kind of specifier with user-defined\n"
 "semantics.  The instantiator can be any kind of Lisp object, and the\n"
@@ -3027,8 +2923,8 @@ DEFINE_SPECIFIER_TYPE (generic);
 DEFUN ("generic-specifier-p", Fgeneric_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a generic specifier.
 
-See `make-generic-specifier' for a description of possible generic
-instantiators.
+A generic specifier allows any kind of Lisp object as an instantiator,
+and returns back the Lisp object unchanged when it is instantiated.
 */
        (object))
 {
@@ -3050,9 +2946,6 @@ integer_validate (Lisp_Object instantiator)
 
 DEFUN ("integer-specifier-p", Finteger_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is an integer specifier.
-
-See `make-integer-specifier' for a description of possible integer
-instantiators.
 */
        (object))
 {
@@ -3073,9 +2966,6 @@ natnum_validate (Lisp_Object instantiator)
 
 DEFUN ("natnum-specifier-p", Fnatnum_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a natnum (non-negative-integer) specifier.
-
-See `make-natnum-specifier' for a description of possible natnum
-instantiators.
 */
        (object))
 {
@@ -3097,9 +2987,6 @@ boolean_validate (Lisp_Object instantiator)
 
 DEFUN ("boolean-specifier-p", Fboolean_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a boolean specifier.
-
-See `make-boolean-specifier' for a description of possible boolean
-instantiators.
 */
        (object))
 {
@@ -3112,11 +2999,11 @@ instantiators.
 
 DEFINE_SPECIFIER_TYPE (display_table);
 
-#define VALID_SINGLE_DISPTABLE_INSTANTIATOR_P(instantiator)		   \
-  (VECTORP (instantiator)						   \
-   || (CHAR_TABLEP (instantiator)					   \
-       && (XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_CHAR	   \
-	   || XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_GENERIC)) \
+#define VALID_SINGLE_DISPTABLE_INSTANTIATOR_P(instantiator)			\
+  (VECTORP (instantiator)							\
+   || (CHAR_TABLEP (instantiator)						\
+       && (XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_CHAR		\
+	   || XCHAR_TABLE_TYPE (instantiator) == CHAR_TABLE_TYPE_GENERIC))	\
    || RANGE_TABLEP (instantiator))
 
 static void
@@ -3148,9 +3035,6 @@ display_table_validate (Lisp_Object instantiator)
 
 DEFUN ("display-table-specifier-p", Fdisplay_table_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a display-table specifier.
-
-See `current-display-table' for a description of possible display-table
-instantiators.
 */
        (object))
 {
@@ -3165,8 +3049,6 @@ instantiators.
 void
 syms_of_specifier (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (specifier);
-
   defsymbol (&Qspecifierp, "specifierp");
 
   defsymbol (&Qconsole_type, "console-type");
@@ -3229,6 +3111,7 @@ syms_of_specifier (void)
   /* locales are defined in general.c. */
 
   defsymbol (&Qprepend, "prepend");
+  defsymbol (&Qappend, "append");
   defsymbol (&Qremove_tag_set_prepend, "remove-tag-set-prepend");
   defsymbol (&Qremove_tag_set_append, "remove-tag-set-append");
   defsymbol (&Qremove_locale, "remove-locale");
@@ -3242,7 +3125,6 @@ void
 specifier_type_create (void)
 {
   the_specifier_type_entry_dynarr = Dynarr_new (specifier_type_entry);
-  dumpstruct (&the_specifier_type_entry_dynarr, &sted_description);
 
   Vspecifier_type_list = Qnil;
   staticpro (&Vspecifier_type_list);
@@ -3267,16 +3149,6 @@ specifier_type_create (void)
 }
 
 void
-reinit_specifier_type_create (void)
-{
-  REINITIALIZE_SPECIFIER_TYPE (generic);
-  REINITIALIZE_SPECIFIER_TYPE (integer);
-  REINITIALIZE_SPECIFIER_TYPE (natnum);
-  REINITIALIZE_SPECIFIER_TYPE (boolean);
-  REINITIALIZE_SPECIFIER_TYPE (display_table);
-}
-
-void
 vars_of_specifier (void)
 {
   Vcached_specifiers = Qnil;
@@ -3285,7 +3157,6 @@ vars_of_specifier (void)
   /* Do NOT mark through this, or specifiers will never be GC'd.
      This is the same deal as for weak hash tables. */
   Vall_specifiers = Qnil;
-  pdump_wire_list (&Vall_specifiers);
 
   Vuser_defined_tags = Qnil;
   staticpro (&Vuser_defined_tags);

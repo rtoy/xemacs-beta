@@ -41,20 +41,20 @@ Lisp_Object Qrange_table;
    is not hard but just requires moving that stuff out of that file. */
 
 static Lisp_Object
-mark_range_table (Lisp_Object obj)
+mark_range_table (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  Lisp_Range_Table *rt = XRANGE_TABLE (obj);
+  struct Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
 
   for (i = 0; i < Dynarr_length (rt->entries); i++)
-    mark_object (Dynarr_at (rt->entries, i).val);
+    markobj (Dynarr_at (rt->entries, i).val);
   return Qnil;
 }
 
 static void
 print_range_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  Lisp_Range_Table *rt = XRANGE_TABLE (obj);
+  struct Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   char buf[200];
   int i;
 
@@ -77,8 +77,8 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 static int
 range_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  Lisp_Range_Table *rt1 = XRANGE_TABLE (obj1);
-  Lisp_Range_Table *rt2 = XRANGE_TABLE (obj2);
+  struct Lisp_Range_Table *rt1 = XRANGE_TABLE (obj1);
+  struct Lisp_Range_Table *rt2 = XRANGE_TABLE (obj2);
   int i;
 
   if (Dynarr_length (rt1->entries) != Dynarr_length (rt2->entries))
@@ -107,7 +107,7 @@ range_table_entry_hash (struct range_table_entry *rte, int depth)
 static unsigned long
 range_table_hash (Lisp_Object obj, int depth)
 {
-  Lisp_Range_Table *rt = XRANGE_TABLE (obj);
+  struct Lisp_Range_Table *rt = XRANGE_TABLE (obj);
   int i;
   int size = Dynarr_length (rt->entries);
   unsigned long hash = size;
@@ -132,36 +132,10 @@ range_table_hash (Lisp_Object obj, int depth)
   return hash;
 }
 
-static const struct lrecord_description rte_description_1[] = {
-  { XD_LISP_OBJECT, offsetof (range_table_entry, val) },
-  { XD_END }
-};
-
-static const struct struct_description rte_description = {
-  sizeof (range_table_entry),
-  rte_description_1
-};
-
-static const struct lrecord_description rted_description_1[] = {
-  XD_DYNARR_DESC (range_table_entry_dynarr, &rte_description),
-  { XD_END }
-};
-
-static const struct struct_description rted_description = {
-  sizeof (range_table_entry_dynarr),
-  rted_description_1
-};
-
-static const struct lrecord_description range_table_description[] = {
-  { XD_STRUCT_PTR,  offsetof (Lisp_Range_Table, entries),  1, &rted_description },
-  { XD_END }
-};
-
 DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
                                mark_range_table, print_range_table, 0,
 			       range_table_equal, range_table_hash,
-			       range_table_description,
-			       Lisp_Range_Table);
+			       struct Lisp_Range_Table);
 
 /************************************************************************/
 /*                        Range table operations                        */
@@ -170,7 +144,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
 #ifdef ERROR_CHECK_TYPECHECK
 
 static void
-verify_range_table (Lisp_Range_Table *rt)
+verify_range_table (struct Lisp_Range_Table *rt)
 {
   int i;
 
@@ -233,8 +207,8 @@ You can manipulate it using `put-range-table', `get-range-table',
        ())
 {
   Lisp_Object obj;
-  Lisp_Range_Table *rt = alloc_lcrecord_type (Lisp_Range_Table,
-					      &lrecord_range_table);
+  struct Lisp_Range_Table *rt = alloc_lcrecord_type (struct Lisp_Range_Table,
+						     &lrecord_range_table);
   rt->entries = Dynarr_new (range_table_entry);
   XSETRANGE_TABLE (obj, rt);
   return obj;
@@ -246,13 +220,13 @@ ranges as the given table.  The values will not themselves be copied.
 */
        (old_table))
 {
-  Lisp_Range_Table *rt, *rtnew;
+  struct Lisp_Range_Table *rt, *rtnew;
   Lisp_Object obj;
 
   CHECK_RANGE_TABLE (old_table);
   rt = XRANGE_TABLE (old_table);
 
-  rtnew = alloc_lcrecord_type (Lisp_Range_Table, &lrecord_range_table);
+  rtnew = alloc_lcrecord_type (struct Lisp_Range_Table, &lrecord_range_table);
   rtnew->entries = Dynarr_new (range_table_entry);
 
   Dynarr_add_many (rtnew->entries, Dynarr_atp (rt->entries, 0),
@@ -267,7 +241,7 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
 */
        (pos, table, default_))
 {
-  Lisp_Range_Table *rt;
+  struct Lisp_Range_Table *rt;
 
   CHECK_RANGE_TABLE (table);
   rt = XRANGE_TABLE (table);
@@ -284,7 +258,7 @@ put_range_table (Lisp_Object table, EMACS_INT first,
 {
   int i;
   int insert_me_here = -1;
-  Lisp_Range_Table *rt = XRANGE_TABLE (table);
+  struct Lisp_Range_Table *rt = XRANGE_TABLE (table);
 
   /* Now insert in the proper place.  This gets tricky because
      we may be overlapping one or more existing ranges and need
@@ -443,47 +417,10 @@ Flush TABLE.
 DEFUN ("map-range-table", Fmap_range_table, 2, 2, 0, /*
 Map FUNCTION over entries in TABLE, calling it with three args,
 the beginning and end of the range and the corresponding value.
-
-Results are guaranteed to be correct (i.e. each entry processed
-exactly once) if FUNCTION modifies or deletes the current entry
-(i.e. passes the current range to `put-range-table' or
-`remove-range-table'), but not otherwise.
 */
        (function, table))
 {
-  Lisp_Range_Table *rt;
-  int i;
-
-  CHECK_RANGE_TABLE (table);
-  CHECK_FUNCTION (function);
-
-  rt = XRANGE_TABLE (table);
-
-  /* Do not "optimize" by pulling out the length computation below!
-     FUNCTION may have changed the table. */
-  for (i = 0; i < Dynarr_length (rt->entries); i++)
-    {
-      struct range_table_entry *entry = Dynarr_atp (rt->entries, i);
-      EMACS_INT first, last;
-      Lisp_Object args[4];
-      int oldlen;
-      
-    again:
-      first = entry->first;
-      last = entry->last;
-      oldlen = Dynarr_length (rt->entries);
-      args[0] = function;
-      args[1] = make_int (first);
-      args[2] = make_int (last);
-      args[3] = entry->val;
-      Ffuncall (countof (args), args);
-      /* Has FUNCTION removed the entry? */
-      if (oldlen > Dynarr_length (rt->entries)
-	  && i < Dynarr_length (rt->entries)
-	  && (first != entry->first || last != entry->last))
-	goto again;
-      }
-
+  error ("not yet implemented");
   return Qnil;
 }
 
@@ -741,8 +678,6 @@ unified_range_table_get_range (void *unrangetab, int offset,
 void
 syms_of_rangetab (void)
 {
-  INIT_LRECORD_IMPLEMENTATION (range_table);
-
   defsymbol (&Qrange_tablep, "range-table-p");
   defsymbol (&Qrange_table, "range-table");
 

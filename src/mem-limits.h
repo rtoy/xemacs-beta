@@ -27,8 +27,8 @@ Boston, MA 02111-1307, USA.  */
    getrlimit() should be preferred to ulimit().
    On Linux, ulimit() is deprecated and always returns -1. */
 
-#ifndef INCLUDED_mem_limits_h_
-#define INCLUDED_mem_limits_h_
+#ifndef _XEMACS_MEM_LIMITS_H_
+#define _XEMACS_MEM_LIMITS_H_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -36,6 +36,10 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_ULIMIT_H
 #include <ulimit.h>
+#endif
+
+#ifdef MSDOS
+#include <dpmi.h>
 #endif
 
 /* Some systems need this before <sys/resource.h>.  */
@@ -66,14 +70,16 @@ extern int etext, __data_start; weak_symbol (__data_start)
 
 #ifndef BSD4_2
 #ifndef USG
-#ifndef WIN32_NATIVE
-#ifndef CYGWIN
+#ifndef MSDOS
+#ifndef WINDOWSNT
+#ifndef __CYGWIN32__
 #if defined(__linux__) && defined(powerpc)	/*Added Kaoru Fukui*/
 #else						/*Added Kaoru Fukui*/
 #include <sys/vlimit.h>
 #endif				/*Added by Fukui*/
-#endif /* not CYGWIN */
-#endif /* not WIN32_NATIVE */
+#endif /* not __CYGWIN32__ */
+#endif /* not WINDOWSNT */
+#endif /* not MSDOS */
 #endif /* not USG */
 #else /* if BSD4_2 */
 #include <sys/time.h>
@@ -90,7 +96,7 @@ typedef void *POINTER;
 typedef char *POINTER;
 #endif
 
-#ifndef CYGWIN
+#ifndef __CYGWIN32__
 typedef unsigned long SIZE;
 #endif
 
@@ -98,8 +104,10 @@ extern POINTER start_of_data (void);
 #define EXCEEDS_LISP_PTR(ptr) 0
 
 #ifdef BSD
+#ifndef DATA_SEG_BITS
 extern int etext;
 #define start_of_data() &etext
+#endif
 #endif
 
 #else  /* not emacs */
@@ -117,7 +125,7 @@ static POINTER data_space_start;
 /* Number of bytes of writable memory we can expect to be able to get */
 extern unsigned int lim_data;
 
-#if defined (HEAP_IN_DATA) && !defined(PDUMP)
+#ifdef HEAP_IN_DATA
 extern unsigned long static_heap_size;
 extern int initialized;
 static void
@@ -163,7 +171,7 @@ get_lim_data (void)
 }
 
 #else /* not USG */
-#if defined( WIN32_NATIVE )
+#if defined( WINDOWSNT )
 
 static void
 get_lim_data (void)
@@ -175,11 +183,22 @@ get_lim_data (void)
 #else
 #if !defined (BSD4_2) && !defined (__osf__)
 
+#ifdef MSDOS
+void
+get_lim_data (void)
+{
+  _go32_dpmi_meminfo info;
+
+  _go32_dpmi_get_free_memory_information (&info);
+  lim_data = info.available_memory;
+}
+#else /* not MSDOS */
 static void
 get_lim_data (void)
 {
   lim_data = vlimit (LIM_DATA, -1);
 }
+#endif /* not MSDOS */
 
 #else /* BSD4_2 */
 
@@ -196,9 +215,9 @@ get_lim_data (void)
 #endif
 }
 #endif /* BSD4_2 */
-#endif /* not WIN32_NATIVE */
+#endif /* not WINDOWSNT */
 #endif /* not USG */
 #endif /* not NO_LIM_DATA */
 #endif /* not HEAP_IN_DATA */
 
-#endif /* INCLUDED_mem_limits_h_ */
+#endif /* _XEMACS_MEM_LIMITS_H_ */

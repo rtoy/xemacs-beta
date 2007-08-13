@@ -139,7 +139,7 @@ XEmacs as a server (e.g. for gnuserv screens or external client widgets).
 
 @item -no-init-file
 @itemx -q
-Do not load your Emacs init file.  @xref{Init File}.
+Do not load your Emacs init file @file{~/.emacs}.
 
 @item -no-site-file
 Do not load the site-specific init file @file{lisp/site-start.el}.
@@ -155,20 +155,11 @@ concerning the package system, @xref{Startup Paths}.)
 @item -vanilla
 This is equivalent to @samp{-q -no-site-file -no-early-packages}.
 
-@item -user-init-file @var{file}
-Load @var{file} as your Emacs init file instead of
-@file{~/.xemacs/init.el}/@file{~/.emacs}.
-
-@item -user-init-directory @var{directory}
-Use @var{directory} as the location of your early package hierarchies
-and the various user-specific initialization files.
-
 @item -user @var{user}
 @itemx -u @var{user}
-Equivalent to @samp{-user-init-file ~@var{user}/.xemacs/init.el
--user-init-directory ~@var{user}/.xemacs}, or @samp{-user-init-file
-~@var{user}/.emacs -user-init-directory ~@var{user}/.xemacs}.  whichever
-init file comes first.  @xref{Init File}.
+Load @var{user}'s Emacs init file @file{~@var{user}/.emacs} instead of
+your own.
+
 
 @end table
 
@@ -233,9 +224,6 @@ Use @var{color} as the mouse color.
 
 @item -cr @var{color}
 Use @var{color} as the text-cursor foreground color.
-
-@item -private
-Install a private colormap for XEmacs.
 @end table
 
 In addition, XEmacs allows you to use a number of standard Xt

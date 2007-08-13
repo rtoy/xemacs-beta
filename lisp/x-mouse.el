@@ -36,8 +36,6 @@
 ;;(define-key global-map '(shift button2) 'x-mouse-kill)
 (define-key global-map '(control button2) 'x-set-point-and-move-selection)
 
-(define-obsolete-function-alias 'x-insert-selection 'insert-selection)
-
 (defun x-mouse-kill (event)
   "Kill the text between the point and mouse and copy it to the clipboard and
 to the cut buffer"
@@ -45,9 +43,50 @@ to the cut buffer"
   (let ((old-point (point)))
     (mouse-set-point event)
     (let ((s (buffer-substring old-point (point))))
-      (own-clipboard s)
+      (x-own-clipboard s)
       (x-store-cutbuffer s))
     (kill-region old-point (point))))
+
+(defun x-yank-function ()
+  "Insert the current X selection or, if there is none, insert the X cutbuffer.
+A mark is pushed, so that the inserted text lies between point and mark."
+  (push-mark)
+  (if (region-active-p)
+      (if (consp zmacs-region-extent)
+	  ;; pirated code from insert-rectangle in rect.el
+	  ;; perhaps that code should be modified to handle a list of extents
+	  ;; as the rectangle to be inserted?
+	  (let ((lines zmacs-region-extent)
+		(insertcolumn (current-column))
+		(first t))
+	    (push-mark)
+	    (while lines
+	      (or first
+		  (progn
+		    (forward-line 1)
+		    (or (bolp) (insert ?\n))
+		    (move-to-column insertcolumn t)))
+	      (setq first nil)
+	      (insert (extent-string (car lines)))
+	      (setq lines (cdr lines))))
+	(insert (extent-string zmacs-region-extent)))
+    (x-insert-selection t)))
+
+(defun x-insert-selection (&optional check-cutbuffer-p move-point-event)
+  "Insert the current selection into buffer at point."
+  (interactive "P")
+  (let ((text (if check-cutbuffer-p
+		  (or (condition-case () (x-get-selection) (error ()))
+		      (x-get-cutbuffer)
+		      (error "No selection or cut buffer available"))
+		(x-get-selection))))
+    (cond (move-point-event
+	   (mouse-set-point move-point-event)
+	   (push-mark (point)))
+	  ((interactive-p)
+	   (push-mark (point))))
+    (insert text)
+    ))
 
 (make-obsolete 'x-set-point-and-insert-selection 'mouse-yank)
 (defun x-set-point-and-insert-selection (event)
@@ -63,9 +102,9 @@ to the cut buffer"
   ;; to fail; just let the appropriate error message get issued. (We need
   ;; to insert the selection and set point first, or the selection may
   ;; get inserted at the wrong place.)
-  (and (selection-owner-p)
+  (and (x-selection-owner-p)
        primary-selection-extent
-       (insert-selection t event))
+       (x-insert-selection t event))
   (kill-primary-selection))
 
 (defun mouse-track-and-copy-to-cutbuffer (event)
@@ -100,48 +139,41 @@ to the cut buffer"
   (if x-pointers-initialized  ; only do it when the first device is created
       nil
     (set-glyph-image text-pointer-glyph
-	  (or (x-get-resource "textPointer" "Cursor" 'string device nil 'warn)
+	  (or (x-get-resource "textPointer" "Cursor" 'string device)
 	      "xterm"))
     (set-glyph-image selection-pointer-glyph
-	  (or (x-get-resource "selectionPointer" "Cursor" 'string device
-			      nil 'warn)
+	  (or (x-get-resource "selectionPointer" "Cursor" 'string device)
 	      "top_left_arrow"))
     (set-glyph-image nontext-pointer-glyph
-	  (or (x-get-resource "spacePointer" "Cursor" 'string device nil 'warn)
+	  (or (x-get-resource "spacePointer" "Cursor" 'string device)
 	      "xterm")) ; was "crosshair"
     (set-glyph-image modeline-pointer-glyph
-	  (or (x-get-resource "modeLinePointer" "Cursor" 'string device
-			      nil 'warn)
+	  (or (x-get-resource "modeLinePointer" "Cursor" 'string device)
 ;;	      "fleur"))
 	      "sb_v_double_arrow"))
     (set-glyph-image gc-pointer-glyph
-	  (or (x-get-resource "gcPointer" "Cursor" 'string device nil 'warn)
+	  (or (x-get-resource "gcPointer" "Cursor" 'string device)
 	      "watch"))
     (when (featurep 'scrollbar)
       (set-glyph-image
        scrollbar-pointer-glyph
-       (or (x-get-resource "scrollbarPointer" "Cursor" 'string device
-			   nil 'warn)
+       (or (x-get-resource "scrollbarPointer" "Cursor" 'string device)
 	   "top_left_arrow")))
     (set-glyph-image busy-pointer-glyph
-	  (or (x-get-resource "busyPointer" "Cursor" 'string device nil 'warn)
+	  (or (x-get-resource "busyPointer" "Cursor" 'string device)
 	      "watch"))
     (set-glyph-image toolbar-pointer-glyph
-	  (or (x-get-resource "toolBarPointer" "Cursor" 'string device
-			      nil 'warn)
+	  (or (x-get-resource "toolBarPointer" "Cursor" 'string device)
 	      "left_ptr"))
     (set-glyph-image divider-pointer-glyph
-	  (or (x-get-resource "dividerPointer" "Cursor" 'string device
-			      nil 'warn)
+	  (or (x-get-resource "dividerPointer" "Cursor" 'string device)
 	      "sb_h_double_arrow"))
     (let ((fg
-	   (x-get-resource "pointerColor" "Foreground" 'string device
-			   nil 'warn)))
+	   (x-get-resource "pointerColor" "Foreground" 'string device)))
       (and fg
 	   (set-face-foreground 'pointer fg)))
     (let ((bg
-	   (x-get-resource "pointerBackground" "Background" 'string device
-			   nil 'warn)))
+	   (x-get-resource "pointerBackground" "Background" 'string device)))
       (and bg
 	   (set-face-background 'pointer bg)))
     (setq x-pointers-initialized t))

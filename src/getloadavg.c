@@ -44,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
    convex
    DGUX
    hpux
+   MSDOS			No-op for MSDOS.
    NeXT
    sgi
    sequent			Sequent Dynix 3.x.x (BSD)
@@ -51,7 +52,7 @@ Boston, MA 02111-1307, USA.  */
    sony_news                    NEWS-OS (works at least for 4.1C)
    UMAX
    UMAX4_3
-   WIN32_NATIVE			No-op for Windows95/NT.
+   WIN32			No-op for Windows95/NT.
    __linux__			Linux: assumes /proc filesystem mounted.
    				Support from Michael K. Johnson.
    __NetBSD__			NetBSD: assumes /kern filesystem mounted.
@@ -68,11 +69,8 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #endif
 
-#include "lisp.h"
-#include "sysfile.h" /* for encapsulated open, close, read, write */
-
-#ifndef WIN32_NATIVE
-#ifndef CYGWIN
+#ifndef WINDOWSNT
+#ifndef __CYGWIN32__
 
 #include <sys/types.h>
 
@@ -83,6 +81,10 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/param.h>
 #endif
 
+#ifdef XEMACS
+#include "lisp.h"
+#include "sysfile.h" /* for encapsulated open, close, read, write */
+#endif /* XEMACS */
 
 /* Exclude all the code except the test program at the end
    if the system has its own `getloadavg' function.
@@ -91,6 +93,10 @@ Boston, MA 02111-1307, USA.  */
    as well as the function itself, so it comes first.  */
 
 #include <errno.h>
+
+#ifndef errno
+extern int errno;
+#endif
 
 #ifndef HAVE_GETLOADAVG
 
@@ -108,9 +114,11 @@ Boston, MA 02111-1307, USA.  */
 #define LDAV_CVT(n) (LOAD_AVE_CVT (n) / 100.0)
 #endif
 
+#ifdef XEMACS
 #if defined (HAVE_KSTAT_H)
 #include <kstat.h>
 #endif /* HAVE_KSTAT_H */
+#endif /* XEMACS */
 
 #if !defined (BSD) && defined (ultrix)
 /* Ultrix behaves like BSD on Vaxen.  */
@@ -453,9 +461,11 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/dg_sys_info.h>
 #endif
 
+#ifdef XEMACS
 #if defined (HAVE_SYS_PSTAT_H)
 #include <sys/pstat.h>
 #endif /* HAVE_SYS_PSTAT_H (on HPUX) */
+#endif /* XEMACS */
 
 #if defined(HAVE_FCNTL_H) || defined(_POSIX_VERSION)
 #include <fcntl.h>
@@ -526,7 +536,7 @@ getloadavg (double loadavg[], int nelem)
    privileges to use it.
 
    Initial implementation courtesy Zlatko Calusic <zcalusic@carnet.hr>.
-   Integrated to XEmacs by Hrvoje Niksic <hniksic@xemacs.org>.
+   Integrated to XEmacs by Hrvoje Niksic <hniksic@srce.hr>.
    Additional cleanup by Hrvoje Niksic, based on code published by
    Casper Dik <Casper.Dik@Holland.Sun.Com>.  */
   kstat_ctl_t *kc;
@@ -762,6 +772,31 @@ getloadavg (double loadavg[], int nelem)
     loadavg[elem++] = load_info.fifteen_minute;
 #endif /* DGUX */
 
+#if !defined (LDAV_DONE) && defined (apollo)
+#define LDAV_DONE
+/* Apollo code from lisch@mentorg.com (Ray Lischner).
+
+   This system call is not documented.  The load average is obtained as
+   three long integers, for the load average over the past minute,
+   five minutes, and fifteen minutes.  Each value is a scaled integer,
+   with 16 bits of integer part and 16 bits of fraction part.
+
+   I'm not sure which operating system first supported this system call,
+   but I know that SR10.2 supports it.  */
+
+  extern void proc1_$get_loadav ();
+  unsigned long load_ave[3];
+
+  proc1_$get_loadav (load_ave);
+
+  if (nelem > 0)
+    loadavg[elem++] = load_ave[0] / 65536.0;
+  if (nelem > 1)
+    loadavg[elem++] = load_ave[1] / 65536.0;
+  if (nelem > 2)
+    loadavg[elem++] = load_ave[2] / 65536.0;
+#endif /* apollo */
+
 #if !defined (LDAV_DONE) && defined (OSF_MIPS)
 #define LDAV_DONE
 
@@ -773,7 +808,7 @@ getloadavg (double loadavg[], int nelem)
        : (load_ave.tl_avenrun.l[0] / (double) load_ave.tl_lscale));
 #endif	/* OSF_MIPS */
 
-#if !defined (LDAV_DONE) && defined (WIN32_NATIVE)
+#if !defined (LDAV_DONE) && (defined (MSDOS) || defined (WIN32))
 #define LDAV_DONE
 
   /* A faithful emulation is going to have to be saved for a rainy day.  */
@@ -781,7 +816,7 @@ getloadavg (double loadavg[], int nelem)
     {
       loadavg[elem] = 0.0;
     }
-#endif  /* WIN32_NATIVE */
+#endif  /* MSDOS */
 
 #if !defined (LDAV_DONE) && defined (OSF_ALPHA)
 #define LDAV_DONE
@@ -972,4 +1007,4 @@ getloadavg (double loadavg[], int nelem)
 }
 
 #endif /*__GNUWIN32__*/
-#endif /* WIN32_NATIVE */
+#endif /* WINDOWSNT */

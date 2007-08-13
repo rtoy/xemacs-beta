@@ -22,48 +22,53 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-
-#ifdef HAVE_UNISTD_H
+#if defined(HAVE_UNISTD_H) || defined(STDC_HEADERS)
 #include <unistd.h>
 #endif
-
-#if defined (HAVE_SYS_PARAM_H)
-#include <sys/param.h>
+#include <stdio.h>
+#include <string.h>
+#ifdef _POSIX_VERSION
+#include <limits.h>			/* for PATH_MAX */
+#else
+#include <sys/param.h>			/* for MAXPATHLEN */
+#endif
+#include <errno.h>
+#ifndef STDC_HEADERS
+extern int errno;
 #endif
 
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
 #include <direct.h>
 #endif
 
 #include <sys/stat.h>			/* for S_IFLNK */
 
-#if !defined (HAVE_GETCWD) && defined (HAVE_GETWD)
-#undef getcwd
-#define getcwd(buffer, len) getwd (buffer)
-#endif
-
 #ifndef PATH_MAX
-# if defined (_POSIX_PATH_MAX)
-#  define PATH_MAX _POSIX_PATH_MAX
-# elif defined (MAXPATHLEN)
-#  define PATH_MAX MAXPATHLEN
-# else
-#  define PATH_MAX 1024
-# endif
+#ifdef _POSIX_VERSION
+#define PATH_MAX _POSIX_PATH_MAX
+#else
+#ifdef MAXPATHLEN
+#define PATH_MAX MAXPATHLEN
+#else
+#define PATH_MAX 1024
+#endif
+#endif
 #endif
 
 #define MAX_READLINKS 32
 
-char * xrealpath (const char *path, char resolved_path []);
-char *
-xrealpath (const char *path, char resolved_path [])
+#ifdef __STDC__
+char *xrealpath(const char *path, char resolved_path [])
+#else
+char *xrealpath(path, resolved_path)
+const char *path;
+char resolved_path [];
+#endif
 {
   char copy_path[PATH_MAX];
   char *new_path = resolved_path;
@@ -75,10 +80,10 @@ xrealpath (const char *path, char resolved_path [])
 #endif
 
   /* Make a copy of the source path since we may need to modify it. */
-  strcpy (copy_path, path);
+  strcpy(copy_path, path);
   path = copy_path;
   max_path = copy_path + PATH_MAX - 2;
-#ifdef WIN32_NATIVE
+#ifdef WINDOWSNT
   /*
   ** In NT we have two different cases:  (1) the path name begins
   ** with a drive letter, e.g., "C:"; and (2) the path name begins
@@ -104,7 +109,7 @@ xrealpath (const char *path, char resolved_path [])
   */
   else if (*path == '/')
     {
-      getcwd (new_path, PATH_MAX - 1);
+      getcwd(new_path, PATH_MAX - 1);
       new_path += 3;
       path++;
     }
@@ -114,17 +119,21 @@ xrealpath (const char *path, char resolved_path [])
   */
   else
     {
-      getcwd (new_path, PATH_MAX - 1);
+      getcwd(new_path, PATH_MAX - 1);
       new_path += strlen(new_path);
       if (new_path[-1] != '/')
 	*new_path++ = '/';
     }
 
 #else
-  /* If it's a relative pathname use getcwd for starters. */
+  /* If it's a relative pathname use getwd for starters. */
   if (*path != '/')
     {
-      getcwd (new_path, PATH_MAX - 1);
+#ifdef HAVE_GETCWD
+      getcwd(new_path, PATH_MAX - 1);
+#else
+      getwd(new_path);
+#endif
       new_path += strlen(new_path);
       if (new_path[-1] != '/')
 	*new_path++ = '/';
@@ -154,20 +163,21 @@ xrealpath (const char *path, char resolved_path [])
 	      continue;
 	    }
 
-	  /* Handle ".." */
-	  if (path[1] == '.' &&
-	      (path[2] == '\0' || path[2] == '/'))
+	  if (path[1] == '.')
 	    {
-	      path += 2;
+	      if (path[2] == '\0' || path[2] == '/')
+		{
+		  path += 2;
 
-	      /* Ignore ".." at root. */
-	      if (new_path == resolved_path + 1)
-		continue;
+		  /* Ignore ".." at root. */
+		  if (new_path == resolved_path + 1)
+		    continue;
 
-	      /* Handle ".." by backing up. */
-	      while ((--new_path)[-1] != '/')
-		;
-	      continue;
+		  /* Handle ".." by backing up. */
+		  while ((--new_path)[-1] != '/')
+		    ;
+		  continue;
+		}
 	    }
 	}
 
@@ -185,7 +195,7 @@ xrealpath (const char *path, char resolved_path [])
 #ifdef S_IFLNK
       /* See if latest pathname component is a symlink. */
       *new_path = '\0';
-      n = readlink (resolved_path, link_path, PATH_MAX - 1);
+      n = readlink(resolved_path, link_path, PATH_MAX - 1);
 
       if (n < 0)
 	{

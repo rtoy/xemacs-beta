@@ -39,12 +39,7 @@
       (princ (format "XEmacs thinks the roots of its hierarchy are:\n%S\n"
 		     roots)))
 
-  (let* ((package-locations
-	  (packages-compute-package-locations
-	   ;; temporary kludge:
-	   ;; this should be synched with startup.el
-	   (paths-construct-path '("~" ".xemacs"))))
-	 (stuff (packages-find-packages roots package-locations)))
+  (let ((stuff (packages-find-packages roots)))
     (setq late-packages (car (cdr stuff))))
 
   (setq late-package-load-path (packages-find-package-load-path late-packages))

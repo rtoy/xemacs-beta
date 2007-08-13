@@ -41,6 +41,10 @@ Boston, MA 02111-1307, USA.  */
 #include "sysproc.h"		/* select stuff */
 #include "systime.h"
 
+#ifdef HAVE_GPM
+#include "gpmevent.h"
+#endif
+
 /* Mask of bits indicating the descriptors that we wait for input on.
    These work as follows:
 
@@ -71,7 +75,7 @@ int signal_event_pipe_initialized;
 int fake_event_occurred;
 
 int
-read_event_from_tty_or_stream_desc (Lisp_Event *event,
+read_event_from_tty_or_stream_desc (struct Lisp_Event *event,
 				    struct console *con, int fd)
 {
   unsigned char ch;
@@ -79,6 +83,12 @@ read_event_from_tty_or_stream_desc (Lisp_Event *event,
   Lisp_Object console;
 
   XSETCONSOLE (console, con);
+
+#ifdef HAVE_GPM
+  if (fd == CONSOLE_TTY_MOUSE_FD (con)) {
+    return handle_gpm_read (event,con,fd);
+  }
+#endif
 
   nread = read (fd, &ch, 1);
   if (nread <= 0)
@@ -174,7 +184,7 @@ event_stream_unixoid_unselect_console (struct console *con)
 }
 
 static int
-get_process_infd (Lisp_Process *p)
+get_process_infd (struct Lisp_Process *p)
 {
   Lisp_Object instr, outstr;
   get_process_streams (p, &instr, &outstr);
@@ -183,7 +193,7 @@ get_process_infd (Lisp_Process *p)
 }
 
 int
-event_stream_unixoid_select_process (Lisp_Process *proc)
+event_stream_unixoid_select_process (struct Lisp_Process *proc)
 {
   int infd = get_process_infd (proc);
 
@@ -194,7 +204,7 @@ event_stream_unixoid_select_process (Lisp_Process *proc)
 }
 
 int
-event_stream_unixoid_unselect_process (Lisp_Process *proc)
+event_stream_unixoid_unselect_process (struct Lisp_Process *proc)
 {
   int infd = get_process_infd (proc);
 
@@ -225,7 +235,7 @@ poll_fds_for_input (SELECT_TYPE mask)
 	{
 	  /* Something went seriously wrong; don't abort since maybe
 	     the TTY just died at the wrong time. */
-	  stderr_out ("xemacs: select failed: errno = %d\n", errno);
+	  fprintf (stderr, "xemacs: select failed: errno = %d\n", errno);
 	  return 0;
 	}
       /* else, we got interrupted by a signal, so try again. */

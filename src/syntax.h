@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.28. */
 
-#ifndef INCLUDED_syntax_h_
-#define INCLUDED_syntax_h_
+#ifndef _XEMACS_SYNTAX_H_
+#define _XEMACS_SYNTAX_H_
 
 #include "chartab.h"
 
@@ -72,9 +72,9 @@ enum syntaxcode charset_syntax (struct buffer *buf, Lisp_Object charset,
 #define SYNTAX_CODE_UNSAFE(table, c) \
    XINT (CHAR_TABLE_VALUE_UNSAFE (table, c))
 
-INLINE_HEADER int SYNTAX_CODE (Lisp_Char_Table *table, Emchar c);
-INLINE_HEADER int
-SYNTAX_CODE (Lisp_Char_Table *table, Emchar c)
+INLINE int SYNTAX_CODE (struct Lisp_Char_Table *table, Emchar c);
+INLINE int
+SYNTAX_CODE (struct Lisp_Char_Table *table, Emchar c)
 {
   return SYNTAX_CODE_UNSAFE (table, c);
 }
@@ -85,9 +85,9 @@ SYNTAX_CODE (Lisp_Char_Table *table, Emchar c)
 #define SYNTAX_FROM_CODE(code) ((enum syntaxcode) ((code) & 0177))
 #define SYNTAX(table, c) SYNTAX_FROM_CODE (SYNTAX_CODE (table, c))
 
-INLINE_HEADER int WORD_SYNTAX_P (Lisp_Char_Table *table, Emchar c);
-INLINE_HEADER int
-WORD_SYNTAX_P (Lisp_Char_Table *table, Emchar c)
+INLINE int WORD_SYNTAX_P (struct Lisp_Char_Table *table, Emchar c);
+INLINE int
+WORD_SYNTAX_P (struct Lisp_Char_Table *table, Emchar c)
 {
   return SYNTAX (table, c) == Sword;
 }
@@ -170,19 +170,13 @@ WORD_SYNTAX_P (Lisp_Char_Table *table, Emchar c)
 #define SYNTAX_SECOND_CHAR_END   0x03
 #define SYNTAX_SECOND_CHAR       0x33
 
+#define SYNTAX_START_P(table, a, b)					\
+  ((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_START)		\
+   && (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_START))
 
-/* #### These are now more or less equivalent to
-   SYNTAX_COMMENT_MATCH_START ...*/
-/* a and b must be first and second start chars for a common type */
-#define SYNTAX_START_P(table, a, b)                                     \
-  (((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_START) >> 2)    \
-   & (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_START))
-
-/* ... and  SYNTAX_COMMENT_MATCH_END */
-/* a and b must be first and second end chars for a common type */
-#define SYNTAX_END_P(table, a, b)                                       \
-  (((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_END) >> 2)      \
-   & (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_END))
+#define SYNTAX_END_P(table, a, b)					\
+  ((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_END)		\
+   && (SYNTAX_COMMENT_BITS (table, b) & SYNTAX_SECOND_CHAR_END))
 
 #define SYNTAX_STYLES_MATCH_START_P(table, a, b, mask)			    \
   ((SYNTAX_COMMENT_BITS (table, a) & SYNTAX_FIRST_CHAR_START & (mask))	    \
@@ -238,15 +232,15 @@ extern Lisp_Object Vstandard_syntax_table;
    that character signifies (as a char).
    For example, (enum syntaxcode) syntax_spec_code['w'] is Sword. */
 
-extern const unsigned char syntax_spec_code[0400];
+extern CONST unsigned char syntax_spec_code[0400];
 
 /* Indexed by syntax code, give the letter that describes it. */
 
-extern const unsigned char syntax_code_spec[];
+extern CONST unsigned char syntax_code_spec[];
 
-Lisp_Object scan_lists (struct buffer *buf, Bufpos from, int count,
+Lisp_Object scan_lists (struct buffer *buf, int from, int count,
 			int depth, int sexpflag, int no_error);
-int char_quoted (struct buffer *buf, Bufpos pos);
+int char_quoted (struct buffer *buf, int pos);
 
 /* NOTE: This does not refer to the mirror table, but to the
    syntax table itself. */
@@ -255,6 +249,6 @@ Lisp_Object syntax_match (Lisp_Object table, Emchar ch);
 extern int no_quit_in_re_search;
 extern struct buffer *regex_emacs_buffer;
 
-void update_syntax_table (Lisp_Char_Table *ct);
+void update_syntax_table (struct Lisp_Char_Table *ct);
 
-#endif /* INCLUDED_syntax_h_ */
+#endif /* _XEMACS_SYNTAX_H_ */

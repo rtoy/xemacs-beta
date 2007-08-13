@@ -1,4 +1,5 @@
 #
+# Sample makefile for a simple Emacs module.
 # This is slightly more complicated than would normally be the case,
 # as this makefile has been tailored to work in the Emacs source tree.
 # For samples of how to compile modules outside of the source tree
@@ -7,8 +8,6 @@
 # 'installed'.
 #
 
-SHELL=/bin/sh
-RM=rm -f
 CC=../../lib-src/ellcc
 CFLAGS=-I. -I../../src
 LD=$(CC) --mode=link
@@ -26,10 +25,8 @@ MODTITLE="LDAP Client Interface for XEmacs"
 
 all: $(MODNAME).ell
 
-distclean: clean
-
 clean:
-	$(RM) $(MODNAME).ell $(OBJS) eldap_i.o eldap_i.c
+	rm -f $(MODNAME).ell $(OBJS) eldap_i.o eldap_i.c
 
 $(MODNAME).ell: $(OBJS) eldap_i.o
 	$(LD) --mod-output=$@ $(OBJS) eldap_i.o

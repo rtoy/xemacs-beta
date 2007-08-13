@@ -21,8 +21,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef INCLUDED_specifier_h_
-#define INCLUDED_specifier_h_
+#ifndef _XEMACS_SPECIFIER_H_
+#define _XEMACS_SPECIFIER_H_
 
 /*
   MAGIC SPECIFIERS
@@ -83,11 +83,9 @@ Boston, MA 02111-1307, USA.  */
      same time.
 */
 
-extern const struct struct_description specifier_methods_description;
-
 struct specifier_methods
 {
-  const char *name;
+  CONST char *name;
   Lisp_Object predicate_symbol;
 
   /* Implementation specific methods: */
@@ -97,7 +95,7 @@ struct specifier_methods
 
   /* Mark method: Mark any lisp object within specifier data
      structure. Not required if no specifier data are Lisp_Objects. */
-  void (*mark_method) (Lisp_Object specifier);
+  void (*mark_method) (Lisp_Object specifier, void (*markobj) (Lisp_Object));
 
   /* Equal method: Compare two specifiers. This is called after
      ensuring that the two specifiers are of the same type, and have
@@ -123,13 +121,6 @@ struct specifier_methods
      If this function is not present, all instantiators are considered
      valid. */
   void (*validate_method) (Lisp_Object instantiator);
-
-
-  /* Copy method: Given an instantiator, copy the bits that we need to
-     for this specifier type.
-
-     If this function is not present, then Fcopy_tree is used. */
-  Lisp_Object (*copy_instantiator_method) (Lisp_Object instantiator);
 
   /* Validate-matchspec method: Given a matchspec, verify that it's
      valid for this specifier type.  If not, signal an error.
@@ -194,7 +185,6 @@ struct specifier_methods
   void (*after_change_method) (Lisp_Object specifier,
 			       Lisp_Object locale);
 
-  const struct lrecord_description *extra_description;
   int extra_data_size;
 };
 
@@ -237,12 +227,12 @@ struct Lisp_Specifier
   /* type-specific extra data attached to a specifier */
   char data[1];
 };
-typedef struct Lisp_Specifier Lisp_Specifier;
 
-DECLARE_LRECORD (specifier, Lisp_Specifier);
-#define XSPECIFIER(x) XRECORD (x, specifier, Lisp_Specifier)
+DECLARE_LRECORD (specifier, struct Lisp_Specifier);
+#define XSPECIFIER(x) XRECORD (x, specifier, struct Lisp_Specifier)
 #define XSETSPECIFIER(x, p) XSETRECORD (x, p, specifier)
 #define SPECIFIERP(x) RECORDP (x, specifier)
+#define GC_SPECIFIERP(x) GC_RECORDP (x, specifier)
 #define CHECK_SPECIFIER(x) CHECK_RECORD (x, specifier)
 #define CONCHECK_SPECIFIER(x) CONCHECK_RECORD (x, specifier)
 
@@ -253,24 +243,21 @@ DECLARE_LRECORD (specifier, Lisp_Specifier);
 #define SPECMETH(sp, m, args) (((sp)->methods->m##_method) args)
 
 /* Call a void-returning specifier method, if it exists.  */
-#define MAYBE_SPECMETH(sp, m, args) do {	\
-  Lisp_Specifier *maybe_specmeth_sp = (sp);	\
-  if (HAS_SPECMETH_P (maybe_specmeth_sp, m))	\
-    SPECMETH (maybe_specmeth_sp, m, args);	\
+#define MAYBE_SPECMETH(sp, m, args) do {		\
+  struct Lisp_Specifier *maybe_specmeth_sp = (sp);	\
+  if (HAS_SPECMETH_P (maybe_specmeth_sp, m))		\
+    SPECMETH (maybe_specmeth_sp, m, args);		\
 } while (0)
 
 /***** Defining new specifier types *****/
 
-#define specifier_data_offset (offsetof (Lisp_Specifier, data))
-extern const struct lrecord_description specifier_empty_extra_description[];
-
 #ifdef ERROR_CHECK_TYPECHECK
 #define DECLARE_SPECIFIER_TYPE(type)					\
 extern struct specifier_methods * type##_specifier_methods;		\
-INLINE_HEADER struct type##_specifier *					\
-error_check_##type##_specifier_data (Lisp_Specifier *sp);		\
-INLINE_HEADER struct type##_specifier *					\
-error_check_##type##_specifier_data (Lisp_Specifier *sp)		\
+INLINE struct type##_specifier *					\
+error_check_##type##_specifier_data (struct Lisp_Specifier *sp);	\
+INLINE struct type##_specifier *					\
+error_check_##type##_specifier_data (struct Lisp_Specifier *sp)		\
 {									\
   if (SPECIFIERP (sp->magic_parent))					\
     {									\
@@ -282,36 +269,20 @@ error_check_##type##_specifier_data (Lisp_Specifier *sp)		\
   assert (SPECIFIER_TYPE_P (sp, type));					\
   return (struct type##_specifier *) sp->data;				\
 }									\
-INLINE_HEADER Lisp_Specifier *						\
-error_check_##type##_specifier_type (Lisp_Object obj);			\
-INLINE_HEADER Lisp_Specifier *						\
-error_check_##type##_specifier_type (Lisp_Object obj)			\
-{									\
-  Lisp_Specifier *sp = XSPECIFIER (obj);				\
-  assert (SPECIFIER_TYPE_P (sp, type));					\
-  return sp;								\
-}									\
 DECLARE_NOTHING
 #else
-#define DECLARE_SPECIFIER_TYPE(type)					\
+#define DECLARE_SPECIFIER_TYPE(type)				\
 extern struct specifier_methods * type##_specifier_methods
 #endif /* ERROR_CHECK_TYPECHECK */
 
-#define DEFINE_SPECIFIER_TYPE(type)					\
+#define DEFINE_SPECIFIER_TYPE(type)			\
 struct specifier_methods * type##_specifier_methods
 
 #define INITIALIZE_SPECIFIER_TYPE(type, obj_name, pred_sym) do {	\
-  type##_specifier_methods = xnew_and_zero (struct specifier_methods);	\
-  type##_specifier_methods->name = obj_name;				\
-  type##_specifier_methods->extra_description =				\
-    specifier_empty_extra_description;					\
-  defsymbol_nodump (&type##_specifier_methods->predicate_symbol, pred_sym); \
-  add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);	    \
-  dumpstruct (&type##_specifier_methods, &specifier_methods_description);   \
-} while (0)
-
-#define REINITIALIZE_SPECIFIER_TYPE(type) do {				\
-  staticpro_nodump (&type##_specifier_methods->predicate_symbol);	\
+ type##_specifier_methods = xnew_and_zero (struct specifier_methods);	\
+ type##_specifier_methods->name = obj_name;				\
+ defsymbol (&type##_specifier_methods->predicate_symbol, pred_sym);	\
+ add_entry_to_specifier_type_list (Q##type, type##_specifier_methods);	\
 } while (0)
 
 #define INITIALIZE_SPECIFIER_TYPE_WITH_DATA(type, obj_name, pred_sym)	\
@@ -319,8 +290,6 @@ do {									\
   INITIALIZE_SPECIFIER_TYPE (type, obj_name, pred_sym);			\
   type##_specifier_methods->extra_data_size =				\
     sizeof (struct type##_specifier);					\
-  type##_specifier_methods->extra_description = 			\
-    type##_specifier_description;					\
 } while (0)
 
 /* Declare that specifier-type TYPE has method METH; used in
@@ -334,13 +303,24 @@ do {									\
   ((sp)->methods == type##_specifier_methods)
 
 /* Any of the two of the magic spec */
-#define MAGIC_SPECIFIER_P(sp) (!NILP((sp)->magic_parent))
+#define MAGIC_SPECIFIER_P(sp) \
+  (!NILP((sp)->magic_parent))
 /* Normal part of the magic specifier */
-#define BODILY_SPECIFIER_P(sp) EQ ((sp)->magic_parent, Qt)
+#define BODILY_SPECIFIER_P(sp) \
+  (EQ ((sp)->magic_parent, Qt))
 /* Ghost part of the magic specifier */
-#define GHOST_SPECIFIER_P(sp) SPECIFIERP((sp)->magic_parent)
+#define GHOST_SPECIFIER_P(sp) \
+  (SPECIFIERP((sp)->magic_parent))
+/* The same three, when used in GC */
+#define GC_MAGIC_SPECIFIER_P(sp) \
+  (!GC_NILP((sp)->magic_parent))
+#define GC_BODILY_SPECIFIER_P(sp) \
+  (GC_EQ ((sp)->magic_parent, Qt))
+#define GC_GHOST_SPECIFIER_P(sp) \
+  (GC_SPECIFIERP((sp)->magic_parent))
 
-#define GHOST_SPECIFIER(sp) XSPECIFIER ((sp)->fallback)
+#define GHOST_SPECIFIER(sp) \
+  (XSPECIFIER ((sp)->fallback))
 
 #ifdef ERROR_CHECK_TYPECHECK
 # define SPECIFIER_TYPE_DATA(sp, type) \
@@ -353,20 +333,11 @@ do {									\
      : (sp)->data))
 #endif
 
-#ifdef ERROR_CHECK_TYPECHECK
-# define XSPECIFIER_TYPE(x, type)	\
-   error_check_##type##_specifier_type (x)
-# define XSETSPECIFIER_TYPE(x, p, type)	do		\
-{							\
-  XSETSPECIFIER (x, p);					\
-  assert (SPECIFIER_TYPEP (XSPECIFIER(x), type));	\
-} while (0)
-#else
-# define XSPECIFIER_TYPE(x, type) XSPECIFIER (x)
-# define XSETSPECIFIER_TYPE(x, p, type) XSETSPECIFIER (x, p)
-#endif /* ERROR_CHECK_TYPE_CHECK */
+/* #### Need to create ERROR_CHECKING versions of these. */
 
-#define SPECIFIER_TYPEP(x, type)			\
+#define XSPECIFIER_TYPE(x, type) XSPECIFIER (x)
+#define XSETSPECIFIER_TYPE(x, p, type) XSETSPECIFIER (x, p)
+#define SPECIFIER_TYPEP(x, type)				\
   (SPECIFIERP (x) && SPECIFIER_TYPE_P (XSPECIFIER (x), type))
 #define CHECK_SPECIFIER_TYPE(x, type) do {		\
   CHECK_SPECIFIER (x);					\
@@ -413,48 +384,6 @@ struct specifier_caching
 				  Lisp_Object oldval);
 };
 
-/* #### get image instances out of domains! */
-
-/* #### I think the following should abort() rather than return nil
-   when an invalid domain is given; much more likely we'll catch design
-   errors early. --ben */
-
-/* This turns out to be used heavily so we make it a macro to make it
-   inline.  Also, the majority of the time the object will turn out to
-   be a window so we move it from being checked last to being checked
-   first. */
-#define DOMAIN_DEVICE(obj)					\
-   (WINDOWP (obj) ? WINDOW_DEVICE (XWINDOW (obj))		\
-  : (FRAMEP  (obj) ? FRAME_DEVICE (XFRAME (obj))		\
-  : (DEVICEP (obj) ? obj					\
-  : (IMAGE_INSTANCEP (obj) ? image_instance_device (obj)	\
-  : Qnil))))
-
-#define DOMAIN_FRAME(obj)				\
-   (WINDOWP (obj) ? WINDOW_FRAME (XWINDOW (obj))	\
-  : (FRAMEP  (obj) ? obj				\
-  : (IMAGE_INSTANCEP (obj) ? image_instance_frame (obj)	\
-  : Qnil)))
-
-#define DOMAIN_WINDOW(obj)					\
-   (WINDOWP (obj) ? obj						\
-  : (IMAGE_INSTANCEP (obj) ? image_instance_window (obj)	\
-  : Qnil))
-
-#define DOMAIN_LIVE_P(obj)					\
-   (WINDOWP (obj) ? WINDOW_LIVE_P (XWINDOW (obj))		\
-  : (FRAMEP  (obj) ? FRAME_LIVE_P (XFRAME (obj))		\
-  : (DEVICEP (obj) ? DEVICE_LIVE_P (XDEVICE (obj))		\
-  : (IMAGE_INSTANCEP (obj) ? image_instance_live_p (obj)	\
-  : 0))))
-
-#define DOMAIN_XDEVICE(obj)			\
-  (XDEVICE (DOMAIN_DEVICE (obj)))
-#define DOMAIN_XFRAME(obj)			\
-  (XFRAME (DOMAIN_FRAME (obj)))
-#define DOMAIN_XWINDOW(obj)			\
-  (XWINDOW (DOMAIN_WINDOW (obj)))
-
 EXFUN (Fcopy_specifier, 6);
 EXFUN (Fmake_specifier, 1);
 EXFUN (Fset_specifier_dirty_flag, 1);
@@ -468,7 +397,6 @@ Lisp_Object decode_locale_list (Lisp_Object locale);
 extern enum spec_add_meth
 decode_how_to_add_specification (Lisp_Object how_to_add);
 Lisp_Object decode_specifier_tag_set (Lisp_Object tag_set);
-Lisp_Object decode_domain (Lisp_Object domain);
 
 void add_entry_to_specifier_type_list (Lisp_Object symbol,
 				       struct specifier_methods *meths);
@@ -497,7 +425,7 @@ void remove_ghost_specifier (Lisp_Object specifier, Lisp_Object locale,
 int unlock_ghost_specifiers_protected (void);
 
 void cleanup_specifiers (void);
-void prune_specifiers (void);
+void prune_specifiers (int (*obj_marked_p) (Lisp_Object));
 void setup_device_initial_specifier_tags (struct device *d);
 void kill_specifier_buffer_locals (Lisp_Object buffer);
 
@@ -536,4 +464,4 @@ DECLARE_SPECIFIER_TYPE (display_table);
 #define CHECK_DISPLAYTABLE_SPECIFIER(x) CHECK_SPECIFIER_TYPE (x, display_table)
 #define CONCHECK_DISPLAYTABLE_SPECIFIER(x) CONCHECK_SPECIFIER_TYPE (x, display_table)
 
-#endif /* INCLUDED_specifier_h_ */
+#endif /* _XEMACS_SPECIFIER_H_ */

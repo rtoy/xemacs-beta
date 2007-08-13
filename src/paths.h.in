@@ -50,6 +50,11 @@
 			is where architecture-independent files are
 			searched for.
 
+   PATH_LOCK		The name of the directory that contains lock files
+			with which we record what files are being modified in 
+			Emacs.  This directory should be writable by everyone.
+			If this is specified, the string must end with a slash!
+
    PATH_INFO		This is where the info documentation is installed.
 
    PATH_INFOPATH	The default value of `Info-directory-list'.
@@ -60,13 +65,9 @@
 
 #define PATH_VERSION "@version@"
 
-#ifdef EXEC_PREFIX_USER_DEFINED
 #define PATH_EXEC_PREFIX "@EXEC_PREFIX@"
-#endif
 
-#ifdef PREFIX_USER_DEFINED
 #define PATH_PREFIX "@PREFIX@"
-#endif
 
 #ifdef LISPDIR_USER_DEFINED
 #define  PATH_LOADSEARCH "@LISPDIR@"
@@ -96,8 +97,8 @@
 #define PATH_DATA "@ETCDIR@"
 #endif
 
-#ifdef DOCDIR_USER_DEFINED
-#define PATH_DOC "@DOCDIR@"
+#ifdef LOCKDIR_USER_DEFINED
+#define PATH_LOCK "@LOCKDIR@"
 #endif
 
 #ifdef INFODIR_USER_DEFINED

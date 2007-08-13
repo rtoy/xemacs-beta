@@ -1,4 +1,4 @@
-;;; european.el --- European languages -*- coding: iso-2022-7bit; -*-
+;;; european.el --- Support for European languages
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
@@ -27,8 +27,6 @@
 
 ;; For Europeans, five character sets ISO8859-1,2,3,4,9 are supported.
 
-;; #### latin.el would be a better name for this file.
-
 ;;; Code:
 
 ;; For syntax of Latin-1 characters.
@@ -50,114 +48,130 @@
 (modify-syntax-entry ?,BW(B ".")
 (modify-syntax-entry ?,Bw(B ".")
 
-;; For syntax of Latin-3
-(loop for c in '(?,C!(B ?,C&(B ?,C)(B ?,C*(B ?,C+(B ?,C,(B ?,C/(B ?,C1(B ?,C5(B ?,C6(B ?,C:(B ?,C;(B ?,C<(B ?,C?(B)
-  do (modify-syntax-entry c "w"))
-
-(loop for c from 64 to 126
-  do (modify-syntax-entry (make-char 'latin-iso8859-3 c) "w"))
-
-(modify-syntax-entry (make-char 'latin-iso8859-3 32) "w") ; no-break space
-(modify-syntax-entry ?,CW(B ".")
-(modify-syntax-entry ?,Cw(B ".")
-
-;; For syntax of Latin-4
-(loop for c in '(?,D!(B ?,D"(B ?,D#(B ?,D%(B ?,D&(B ?,D)(B ?,D*(B ?,D+(B ?,D,(B ?,D.(B ?,D1(B ?,D3(B ?,D5(B ?,D6(B ?,D9(B ?,D:(B ?,D;(B ?,D<(B ?,D=(B ?,D>(B ?,D?(B)
-  do (modify-syntax-entry c "w"))
-
-(loop for c from 64 to 126
-  do (modify-syntax-entry (make-char 'latin-iso8859-4 c) "w"))
-
-(modify-syntax-entry (make-char 'latin-iso8859-4 32) "w") ; no-break space
-(modify-syntax-entry ?,DW(B ".")
-(modify-syntax-entry ?,Dw(B ".")
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EUROPEANS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; (define-prefix-command 'describe-european-environment-map)
+;; (define-key-after describe-language-environment-map [European]
+;;   '("European" . describe-european-environment-map)
+;;   t)
+
+;; (define-prefix-command 'setup-european-environment-map)
+;; (define-key-after setup-language-environment-map [European]
+;;   '("European" . setup-european-environment-map)
+;;   t)
+
+;; Setup for LANGAUGE which uses one-byte 8-bit CHARSET, one-byte
+;; 8-bit CODING-SYSTEM, and INPUT-METHOD.
+(defun setup-8-bit-environment (language charset coding-system input-method)
+  (setup-english-environment)
+  (set-default-coding-systems coding-system)
+  ;; (setq coding-category-iso-8-1 coding-system
+  ;;       coding-category-iso-8-2 coding-system)
+  (set-coding-category-system 'iso-8-1 coding-system)
+  (set-coding-category-system 'iso-8-2 coding-system)
+
+  ;; (if charset
+  ;;     (let ((nonascii-offset (- (make-char charset) 128)))
+  ;;       ;; Set up for insertion of characters in this character set
+  ;;       ;; when codes 0200 - 0377 are typed in.
+  ;;       (setq nonascii-insert-offset nonascii-offset)))
+
+  (if input-method
+      (setq default-input-method input-method))
+
+  ;; If this is a Latin-N character set, set up syntax for it in
+  ;; single-byte mode.  We can't use require because the file
+  ;; must be eval'd each time in case we change from one Latin-N to another.
+  ;; (if (string-match "^Latin-\\([1-9]\\)$" language)
+  ;;     (load (downcase language) nil t))
+  )
 
 ;; Latin-1 (ISO-8859-1)
 
 ;; (make-coding-system
 ;;  'iso-latin-1 2 ?1
-;;  "ISO 2022 based 8-bit encoding for Latin-1 (MIME:ISO-8859-1)"
-;;  '(ascii latin-iso8859-1 nil nil
-;;    nil nil nil nil nil nil nil nil nil nil nil nil t)
-;;  '((safe-charsets ascii latin-iso8859-1)
-;;    (mime-charset . iso-8859-1)))
+;;  "ISO 2022 based 8-bit encoding (MIME:ISO-8859-1, Compound Text Encoding)"
+;;  '((ascii t) (latin-iso8859-1 t) nil nil
+;;    nil ascii-eol ascii-cntl nil nil nil nil nil nil nil nil nil t))
 
 ;; (define-coding-system-alias 'iso-8859-1 'iso-latin-1)
 ;; (define-coding-system-alias 'latin-1 'iso-latin-1)
-
-;; (make-coding-system
-;;  'compound-text 2 ?1
-;;  "ISO 2022 based encoding used in inter client communication of X"
-;;  '((ascii t) (latin-iso8859-1 t) nil nil
-;;    nil ascii-eol ascii-cntl nil nil nil nil nil nil nil nil nil t)
-;;  '((safe-charsets . t)))
-
-;; (define-coding-system-alias 'ctext 'compound-text)
+;; (define-coding-system-alias 'ctext 'iso-latin-1)
 
 (defun setup-latin1-environment ()
   "Set up multilingual environment (MULE) for European Latin-1 users."
   (interactive)
-  (set-language-environment "Latin-1"))
+  (setup-8-bit-environment "Latin-1" 'latin-iso8859-1 'iso-8859-1
+			   "latin-1-prefix"))
 
 (set-language-info-alist
- "Latin-1" '((charset ascii latin-iso8859-1)
-	     (coding-system iso-8859-1)
-	     (coding-priority iso-8859-1)
-	     (input-method . "latin-1-prefix")
+ "Latin-1" '((setup-function . (setup-latin1-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-1))
+	     (coding-system . (iso-8859-1))
 	     (sample-text
 	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
-	     (documentation . "\
-This language environment is a generic one for Latin-1 (ISO-8859-1)
-character set which supports the following languages:
- Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
- Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
-We also have a German specific language environment \"German\"."))
- '("European"))
-
-(set-language-info-alist
- "French" '((charset ascii latin-iso8859-1)
-	    (coding-system iso-8859-1)
-	    (coding-priority iso-8859-1)
-	    (tutorial . "TUTORIAL.fr")
-	    (sample-text
-	     . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
-	    (documentation . ("\
+	     (documentation . ("\
 These languages are supported with the Latin-1 (ISO-8859-1) character set:
  Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
  Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
-")))
- '("European"))
+" . describe-european-environment-map))
+	     ))
 
 (set-language-info-alist
- "Norwegian" '((charset ascii latin-iso8859-1)
-	       (coding-system iso-8859-1)
-	       (coding-priority iso-8859-1)
-	       (tutorial . "TUTORIAL.no")
-	       (sample-text
-		. "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
-	       (documentation . ("\
+ "German" '((setup-function . (setup-latin1-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-1))
+	     (coding-system . (iso-8859-1))
+	     (tutorial . "TUTORIAL.de")
+	     (sample-text
+	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
+	     (documentation . ("\
 These languages are supported with the Latin-1 (ISO-8859-1) character set:
  Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
  Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
-")))
- '("European"))
+" . describe-european-environment-map))
+	     ))
 
+(set-language-info-alist
+ "French" '((setup-function . (setup-latin1-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-1))
+	     (coding-system . (iso-8859-1))
+	     (tutorial . "TUTORIAL.fr")
+	     (sample-text
+	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
+	     (documentation . ("\
+These languages are supported with the Latin-1 (ISO-8859-1) character set:
+ Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
+ Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
+" . describe-european-environment-map))
+	     ))
+
+(set-language-info-alist
+ "Norwegian" '((setup-function . (setup-latin1-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-1))
+	     (coding-system . (iso-8859-1))
+	     (tutorial . "TUTORIAL.no")
+	     (sample-text
+	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
+	     (documentation . ("\
+These languages are supported with the Latin-1 (ISO-8859-1) character set:
+ Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
+ Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
+" . describe-european-environment-map))
+	     ))
 
 ;; Latin-2 (ISO-8859-2)
 
 ;; (make-coding-system
 ;;  'iso-latin-2 2 ?2
 ;;  "ISO 2022 based 8-bit encoding (MIME:ISO-8859-2)"
-;;  '(ascii latin-iso8859-2 nil nil
-;;    nil nil nil nil nil nil nil)
-;;  '((safe-charsets ascii latin-iso8859-2)
-;;    (mime-charset . iso-8859-2)))
+;;  '((ascii t) (latin-iso8859-2 t) nil nil
+;;    nil ascii-eol ascii-cntl nil nil nil nil))
 
 ;; (define-coding-system-alias 'iso-8859-2 'iso-latin-2)
 ;; (define-coding-system-alias 'latin-2 'iso-latin-2)
@@ -174,65 +188,67 @@ These languages are supported with the Latin-1 (ISO-8859-1) character set:
 (defun setup-latin2-environment ()
   "Set up multilingual environment (MULE) for European Latin-2 users."
   (interactive)
-  (set-language-environment "Latin-2"))
+  (setup-8-bit-environment "Latin-2" 'latin-iso8859-2 'iso-8859-2
+			   "latin-2-prefix"))
 
 (set-language-info-alist
- "Latin-2" '((charset ascii latin-iso8859-2)
-	     (coding-system iso-8859-2)
-	     (coding-priority iso-8859-2)
-	     (input-method . "latin-2-prefix")
-	     (documentation . "\
-This language environment is a generic one for Latin-2 (ISO-8859-2)
-character set which supports the following languages:
+ "Latin-2" '((setup-function . (setup-latin2-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-2))
+	     (coding-system . (iso-8859-2))
+	     (documentation . ("\
+These languages are supported with the Latin-2 (ISO-8859-2) character set:
  Albanian, Czech, English, German, Hungarian, Polish, Romanian,
- Serbian, Croatian, Slovak, Slovene, Sorbian (upper and lower),
- and Swedish."))
- '("European"))
+ Serbian, Croatian, Slovak, Slovene, and Swedish.
+" . describe-european-environment-map))
+	     ))
 
 (set-language-info-alist
- "Croatian" '((charset ascii latin-iso8859-2)
-	      (coding-system iso-8859-2)
-	      (coding-priority iso-8859-2)
+ "Croatian" '((setup-function . (setup-latin2-environment
+				. setup-european-environment-map))
+	      (charset . (ascii latin-iso8859-2))
 	      (tutorial . "TUTORIAL.hr")
-	      (documentation . "\
-This language environment is a generic one for Latin-2 (ISO-8859-2)
-character set which supports the following languages:
+	      (coding-system . (iso-8859-2))
+	      (documentation . ("\
+These languages are supported with the Latin-2 (ISO-8859-2) character set:
  Albanian, Czech, English, German, Hungarian, Polish, Romanian,
- Serbian, Croatian, Slovak, Slovene, Sorbian (upper and lower),
- and Swedish."))
- '("European"))
+ Serbian, Croatian, Slovak, Slovene, and Swedish.
+" . describe-european-environment-map))
+	      ))
 
 (set-language-info-alist
- "Polish" '((charset ascii latin-iso8859-2)
-	    (coding-system iso-8859-2)
-	    (coding-priority iso-8859-2)
-	    (tutorial . "TUTORIAL.pl")
-	    (documentation . "\
-This language environment is a generic one for Latin-2 (ISO-8859-2)
-character set which supports the following languages:
+ "Polish" '((setup-function . (setup-latin2-environment
+				. setup-european-environment-map))
+	      (charset . (ascii latin-iso8859-2))
+	      (tutorial . "TUTORIAL.pl")
+	      (coding-system . (iso-8859-2))
+	      (documentation . ("\
+These languages are supported with the Latin-2 (ISO-8859-2) character set:
  Albanian, Czech, English, German, Hungarian, Polish, Romanian,
- Serbian, Croatian, Slovak, Slovene, Sorbian (upper and lower),
- and Swedish."))
- '("European"))
+ Serbian, Croatian, Slovak, Slovene, and Swedish.
+" . describe-european-environment-map))
+	      ))
 
 ;; Romanian support originally from romanian.el
 
 (defun setup-romanian-environment ()
   "Setup multilingual environment (MULE) for Romanian."
   (interactive)
-  (set-language-environment "Romanian"))
+  (setup-8-bit-environment "Romanian" 'latin-iso8859-2 'iso-8859-2
+			   "romanian"))
 
 (set-language-info-alist
- "Romanian" '((charset ascii latin-iso8859-2)
-	      (coding-system iso-8859-2)
-	      (coding-priority iso-8859-2)
-	      (input-method . "latin-2-postfix")
+ "Romanian" '((setup-function . (setup-romanian-environment
+				 . setup-european-environment-map))
+	      (charset . (ascii latin-iso8859-2))
 	      (tutorial . "TUTORIAL.ro")
-	      (sample-text . "Bun,Bc(B ziua, bine a,B~(Bi venit!")
-	      (documentation . t))
- '("European"))
-
-(provide 'romanian)
+	      (coding-system . (iso-8859-2))
+	      (documentation . ("\
+These languages are supported with the Latin-2 (ISO-8859-2) character set:
+ Albanian, Czech, English, German, Hungarian, Polish, Romanian,
+ Serbian, Croatian, Slovak, Slovene, and Swedish.
+" . describe-european-environment-map))
+	      ))
 
 ;; Czech support originally from czech.el
 ;; Author: Milan Zamazal <pdm@fi.muni.cz>
@@ -241,18 +257,24 @@ character set which supports the following languages:
 (defun setup-czech-environment ()
   "Set up multilingual environment (MULE) for czech users."
   (interactive)
-  (set-language-environment "Czech"))
+  (setup-8-bit-environment "Czech" 'latin-iso8859-2 'iso-8859-2
+			   "czech"))
+
 
 (set-language-info-alist
- "Czech" '((charset ascii latin-iso8859-2)
-	   (coding-system iso-8859-2)
-	   (coding-priority iso-8859-2)
-	   (tutorial . "TUTORIAL.cs")
-	   (sample-text . "P,Bx(Bejeme v,Ba(Bm hezk,B}(B den!")
-	   (documentation . t))
- '("European"))
+ "Czech" 
+ '((setup-function . (setup-czech-environment
+		      . setup-european-environment-map))
+   (charset . (ascii latin-iso8859-2))
+   (coding-system . (iso-8859-2))
+   (tutorial . "TUTORIAL.cs")
+   (documentation . ("\
+These languages are supported with the Latin-2 (ISO-8859-2) character set:
+Albanian, Czech, English, German, Hungarian, Polish, Romanian,
+Serbian, Croatian, Slovak, Slovene, and Swedish.
+" . describe-european-environment-map))
+))
 
-(provide 'czech)
 
 
 ;; Latin-3 (ISO-8859-3)
@@ -260,10 +282,8 @@ character set which supports the following languages:
 ;; (make-coding-system
 ;;  'iso-latin-3 2 ?3
 ;;  "ISO 2022 based 8-bit encoding (MIME:ISO-8859-3)"
-;;  '(ascii latin-iso8859-3 nil nil
-;;    nil nil nil nil nil nil nil)
-;;  '((safe-charsets ascii latin-iso8859-3)
-;;    (mime-charset . iso-8859-3)))
+;;  '((ascii t) (latin-iso8859-3 t) nil nil
+;;    nil ascii-eol ascii-cntl nil nil nil nil))
 
 ;; (define-coding-system-alias 'iso-8859-3 'iso-latin-3)
 ;; (define-coding-system-alias 'latin-3 'iso-latin-3)
@@ -280,29 +300,28 @@ character set which supports the following languages:
 (defun setup-latin3-environment ()
   "Set up multilingual environment (MULE) for European Latin-3 users."
   (interactive)
-  (set-language-environment "Latin-3"))
+  (setup-8-bit-environment "Latin-3" 'latin-iso8859-3 'iso-8859-3
+			   "latin-3-prefix"))
 
 (set-language-info-alist
- "Latin-3" '((charset ascii latin-iso8859-3)
-	     (coding-system iso-8859-3)
-	     (coding-priority iso-8859-3)
-	     (input-method . "latin-3-prefix")
-	     (documentation . "\
+ "Latin-3" '((setup-function . (setup-latin3-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-3))
+	     (coding-system . (iso-8859-3))
+	     (documentation . ("\
 These languages are supported with the Latin-3 (ISO-8859-3) character set:
  Afrikaans, Catalan, Dutch, English, Esperanto, French, Galician,
- German, Italian, Maltese, Spanish, and Turkish."))
- '("European"))
-
+ German, Italian, Maltese, Spanish, and Turkish.
+" . describe-european-environment-map))
+	     ))
 
 ;; Latin-4 (ISO-8859-4)
 
 ;; (make-coding-system
 ;;  'iso-latin-4 2 ?4
 ;;  "ISO 2022 based 8-bit encoding (MIME:ISO-8859-4)"
-;;  '(ascii latin-iso8859-4 nil nil
-;;    nil nil nil nil nil nil nil)
-;;  '((safe-charsets ascii latin-iso8859-4)
-;;    (mime-charset . iso-8895-4)))
+;;  '((ascii t) (latin-iso8859-4 t) nil nil
+;;    nil ascii-eol ascii-cntl nil nil nil nil))
 
 ;; (define-coding-system-alias 'iso-8859-4 'iso-latin-4)
 ;; (define-coding-system-alias 'latin-4 'iso-latin-4)
@@ -319,29 +338,28 @@ These languages are supported with the Latin-3 (ISO-8859-3) character set:
 (defun setup-latin4-environment ()
   "Set up multilingual environment (MULE) for European Latin-4 users."
   (interactive)
-  (set-language-environment "Latin-4"))
+  (setup-8-bit-environment "Latin-4" 'latin-iso8859-4 'iso-8859-4
+			   "latin-4-prefix"))
 
 (set-language-info-alist
- "Latin-4" '((charset ascii latin-iso8859-4)
-	     (coding-system iso-8859-4)
-	     (coding-priority iso-8859-4)
-	     (input-method . "latin-4-prefix")
-	     (documentation . "\
+ "Latin-4" '((setup-function . (setup-latin4-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-4))
+	     (coding-system . (iso-8859-4))
+	     (documentation . ("\
 These languages are supported with the Latin-4 (ISO-8859-4) character set:
  Danish, English, Estonian, Finnish, German, Greenlandic, Lappish,
- Latvian, Lithuanian, and Norwegian."))
- '("European"))
-
+ Latvian, Lithuanian, and Norwegian.
+" . describe-european-environment-map))
+	     ))
 
 ;; Latin-5 (ISO-8859-9)
 
 ;; (make-coding-system
 ;;  'iso-latin-5 2 ?9
 ;;  "ISO 2022 based 8-bit encoding (MIME:ISO-8859-9)"
-;;  '(ascii latin-iso8859-9 nil nil
-;;    nil nil nil nil nil nil nil)
-;;  '((safe-charsets ascii latin-iso8859-9)
-;;    (mime-charset . iso-8859-9)))
+;;  '((ascii t) (latin-iso8859-9 t) nil nil
+;;    nil ascii-eol ascii-cntl nil nil nil nil))
 
 ;; (define-coding-system-alias 'iso-8859-9 'iso-latin-5)
 ;; (define-coding-system-alias 'latin-5 'iso-latin-5)
@@ -358,52 +376,46 @@ These languages are supported with the Latin-4 (ISO-8859-4) character set:
 (defun setup-latin5-environment ()
   "Set up multilingual environment (MULE) for European Latin-5 users."
   (interactive)
-  (set-language-environment "Latin-5"))
+  (setup-8-bit-environment "Latin-5" 'latin-iso8859-9 'iso-8859-5
+			   "latin-5-prefix"))
 
 (set-language-info-alist
- "Latin-5" '((charset ascii latin-iso8859-9)
-	     (coding-system iso-8859-9)
-	     (coding-priority iso-8859-9)
-	     (input-method . "latin-5-prefix")
-	     (documentation . "\
-These languages are supported with the Latin-5 (ISO-8859-9) character set."))
- '("European"))
+ "Latin-5" '((setup-function . (setup-latin5-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-9))
+	     (coding-system . (iso-8859-5))
+	     (documentation . ("\
+These languages are supported with the Latin-5 (ISO-8859-9) character set.
+" . describe-european-environment-map))
+	     ))
 
-
-(defun setup-german-environment ()
-  "Set up multilingual environment (MULE) for German users."
-  (interactive)
-  (set-language-environment "German"))
+;; (defun setup-european-environment ()
+;;   "Setup multilingual environment (MULE) for European languages users.
+;; It actually reset MULE to the default status, and
+;; set quail-latin-1 as the default input method to be selected.
+;; See also the documentation of setup-english-environment."
+;;   (setup-english-environment)
+;;   (setq default-input-method '("European" . "quail-latin-1")))
 
-(set-language-info-alist
- "German" '((tutorial . "TUTORIAL.de")
-	    (charset ascii latin-iso8859-1)
-	    (coding-system iso-8859-1)
-	    (coding-priority iso-8859-1)
-	    (input-method . "german-postfix")
-	    (sample-text . "\
-German (Deutsch Nord)	Guten Tag
-German (Deutsch S,A|(Bd)	Gr,A|_(B Gott")
-	    (documentation . "\
-This language environment is almost the same as Latin-1,
-but default input method is set to \"german-postfix\"."))
- '("European"))
+;; (defun describe-european-support ()
+;;   "Describe how Emacs support European languages."
+;;   (interactive)
+;;   (describe-language-support-internal "European"))
 
-(defun setup-slovenian-environment ()
-  "Setup multilingual environment (MULE) for Slovenian."
-  (interactive)
-  (set-language-environment "Slovenian"))
-
-(set-language-info-alist
- "Slovenian" '((charset . (ascii latin-iso8859-2))
-	       (coding-system . (iso-8859-2))
-	       (coding-priority . (iso-8859-2))
-	       (input-method . "latin-2-postfix")
-	       (tutorial . "TUTORIAL.sl")
-	       (sample-text . ",B.(Belimo vam uspe,B9(Ben dan!")
-	       (documentation . t))
- '("European"))
-
-(provide 'slovenian)
+;; (set-language-info-alist
+;;  "European" '((setup-function . setup-european-environment)
+;;               (describe-function . describe-european-support)
+;;               (charset . (ascii latin-iso8859-1 latin-iso8859-2
+;;                           latin-iso8859-3 latin-iso8859-4 latin-iso8859-9))
+;;               (coding-system . (iso-8859-1 iso-8859-2 iso-8859-3
+;;                                 iso-8859-4 iso-8859-9))
+;;               (sample-text
+;;                . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
+;;               (documentation . "\
+;; Almost all of European languages are supported by the character sets and
+;; coding systems listed below.
+;; To input them, LEIM (Libraries for Emacs Input Methods) should have been
+;; installed.")
+;;               ))
 
 ;;; european.el ends here

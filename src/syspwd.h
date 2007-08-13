@@ -19,21 +19,5 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not really in FSF. */
 
-#ifndef WIN32_NATIVE
+#include <pwd.h>
 
-# include <pwd.h>
-
-#else /* WIN32_NATIVE */
-
-struct passwd {
-    char *pw_name;
-    char *pw_passwd;
-    int   pw_uid;
-    int   pw_gid;
-    int   pw_quota;
-    char *pw_gecos;
-    char *pw_dir;
-    char *pw_shell;
-};
-
-#endif /* WIN32_NATIVE */

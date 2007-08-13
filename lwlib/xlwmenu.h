@@ -1,5 +1,5 @@
-#ifndef INCLUDED_xlwmenu_h_
-#define INCLUDED_xlwmenu_h_
+#ifndef _XlwMenu_h
+#define _XlwMenu_h
 
 /***********************************************************************
  *
@@ -56,7 +56,6 @@
 # define XmCTopShadowPixmap	"TopShadowPixmap"
 # define XmNbottomShadowPixmap	"bottomShadowPixmap"
 # define XmCBottomShadowPixmap	"BottomShadowPixmap"
-# define XmUNSPECIFIED_PIXMAP   2
 # define XmRHorizontalDimension	"HorizontalDimension"
 # define XmNspacing		"spacing"
 # define XmCSpacing		"Spacing"
@@ -91,4 +90,4 @@ void xlw_kill_menus (widget_value *val);
 widget_value *xlw_get_entries (int allp);
 int xlw_menu_level (void);
 
-#endif /* INCLUDED_xlwmenu_h_ */
+#endif /* _XlwMenu_h */

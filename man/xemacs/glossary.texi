@@ -278,7 +278,7 @@ screen.  When running Emacs under X, you can have multiple frames,
 each corresponding to a top-level X window and each looking like
 the screen on a TTY.  Each frame contains one or more non-overlapping
 Emacs windows (possibly with associated scrollbars, under X), an
-echo area, and (under X) possibly a menubar, toolbar, and/or gutter.
+echo area, and (under X) possibly a menubar.
 
 @item Global
 Global means `independent of the current environment; in effect
@@ -568,7 +568,7 @@ allow quoting.  @xref{Basic,Quoting,Basic Editing}.
 @item Read-only Buffer
 A read-only buffer is one whose text you are not allowed to change.
 Normally Emacs makes buffers read-only when they contain text which
-has a special significance to Emacs, such as Dired buffers.
+has a special significance to Emacs, such asDired buffers.
 Visiting a file that is write-protected also makes a read-only buffer.
 @xref{Buffers}.
 
