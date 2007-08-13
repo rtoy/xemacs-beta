@@ -28,12 +28,19 @@ A general advice:
 * Problems with building XEmacs
 ===============================
 
-** Don't use -O2 with gcc 2.7.2 under Linux without also using
+** Don't use -O2 with gcc 2.7.2 under Intel/XXX without also using
 `-fno-strength-reduce'.
 
 gcc will generate incorrect code otherwise.  This bug is present in at
 least 2.6.x and 2.7.[0-2].  This bug has been fixed in GCC 2.7.2.1 and
-later.
+later.  This bug is also O/S independent.
+
+** Don't use -O2 with gcc 2.7.2 under Intel architectures without also
+using `-fno-caller-saves'.
+
+gcc will generate incorrect code otherwise.  This bug is still present
+in gcc 2.7.2.3.  There have been no reports to indicate the bug is
+present in egcs 1.0 (or pgcc 1.0) or later.  This bug is O/S independent.
 
 ** Excessive optimization with pgcc can break XEmacs
 
@@ -41,7 +48,17 @@ It has been reported on some systems that compiling with -O6 can lead
 to XEmacs failures.  The workaround is to use a lower optimization
 level.  -O2 and -O4 have been tested extensively.
 
-All of this depends heavily on the version of pgcc.
+All of this depends heavily on the version of pgcc and the version
+of libc.  Snapshots near the release of pgcc-1.0 have been tested
+extensively and no sign of breakage has been seen on systems using
+glibc-2.
+
+** `compress' and `uncompress' not found and XFree86
+
+XFree86 installs a very old version of libz.a by default ahead of where
+more modern version of libz might be installed.  This will cause problems
+when attempting to link against libMagick.  The fix is to remove the old
+libz.a in the X11 binary directory.
 
 ** Excessive optimization on AIX 4.2 can lead to compiler failure.
 

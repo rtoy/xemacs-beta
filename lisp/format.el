@@ -77,6 +77,13 @@
 	       image-decode-png nil t image-mode)
     (image/x-xpm "XPM image" "/\\* XPM \\*/"
 		 image-decode-xpm nil t image-mode)
+
+    ;; TIFF files have lousy magic
+    (image/tiff "TIFF image" "\111\111\052\000"
+		image-decode-tiff nil t image-mode) ;; TIFF 6.0 big-endian
+    (image/tiff "TIFF image" "\111\111\000\052"
+		image-decode-tiff nil t image-mode) ;; TIFF 6.0 little-endian
+
     (text/enriched "Extended MIME text/enriched format."
 		   "Content-[Tt]ype:[ \t]*text/enriched"
 		   enriched-decode enriched-encode t enriched-mode)

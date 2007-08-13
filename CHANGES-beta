@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 20.5 beta13 "Boer"
+-- Run time dependencies on x-win*.el removed.
+-- Total package upgrade
+-- Miscellaneous bug fixes
+-- Documentation fixes
+
 to 20.5 beta12 "Bhuj"
 -- MS Windows NT patches courtesy of Jeff Sparkes and Kirill Katsnelson
 -- userlock.el is now unpackaged

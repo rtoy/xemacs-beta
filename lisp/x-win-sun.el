@@ -64,6 +64,8 @@
 
 ;;; Code:
 
+(defun x-win-init-sun ()
+
 (defun x-remap-keysyms-using-function-key-map (from-key to-key)
   (dolist (prefix '(() (shift) (control) (meta) (alt)
 		    (shift control) (shift alt) (shift meta)
@@ -250,5 +252,7 @@ to more mnemonic ones,like `kp-3'."
 
 (define-key global-map 'find		'ow-find)
 (define-key global-map '(shift find)	'ow-find-backward)
+
+)
 
 ;;; x-win-sun.el ends here

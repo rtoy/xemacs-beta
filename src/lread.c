@@ -777,7 +777,17 @@ encoding detection or end-of-line detection.
     Lisp_Object tem;
     /* #### Disgusting kludge */
     /* Run any load-hooks for this file.  */
-    tem = Fassoc (file, Vafter_load_alist);
+    /* #### An even more disgusting kludge.  There is horrible code */
+    /* this is relying on the fact that dumped lisp files are found */
+    /* via `load-path' search. */
+    Lisp_Object name = file;
+
+    if (!NILP(Ffile_name_absolute_p(file)))
+      {
+	name = Ffile_name_nondirectory(file);
+      }
+
+    tem = Fassoc (name, Vafter_load_alist);
     if (!NILP (tem))
       {
 	struct gcpro ngcpro1;

@@ -42,7 +42,7 @@ SUBDIR = xemacs lispref new-users-guide internals
 ../info/%.info : %.texi
 	-$(MAKEINFO) -o $@ $<
 
-srcs = cl custom external-widget forms \
+srcs = cl custom external-widget \
 	info \
 	standards term \
 	termcap texinfo widget xemacs-faq

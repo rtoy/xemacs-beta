@@ -1,3 +1,12 @@
+1997-12-25  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta13 is released.
+
+1997-12-21  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/BETA (Prerequisite): Add cookbook procedures for maintaining 
+	package lisp directories.
+
 1997-12-20  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta 12 is released.

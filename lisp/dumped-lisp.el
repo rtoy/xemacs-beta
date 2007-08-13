@@ -160,6 +160,8 @@
 	#+x "x-misc"
 	#+x "x-init"
 	#+(and x toolbar) "x-toolbar"
+	#+x "x-win-xfree86"
+	#+x "x-win-sun"
 ;; preload the mswindows code.
 	#+mswindows "msw-faces"
 	#+mswindows "msw-init"

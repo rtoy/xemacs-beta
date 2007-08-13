@@ -1090,4 +1090,7 @@ One argument, the to-be-deleted device.
 
   Vdevice_class_list = list3 (Qcolor, Qgrayscale, Qmono);
   staticpro (&Vdevice_class_list);
+
+  /* Death to devices.el !!! */
+  Fprovide(intern("devices"));
 }

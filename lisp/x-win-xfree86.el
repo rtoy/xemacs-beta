@@ -39,6 +39,8 @@
 ;; For no obvious reason, shift-F1 is called F13, although Meta-F1 and
 ;; Control-F1 have normal names.
 
+(defun x-win-init-xfree86 ()
+
 (loop for (x-key key sane-key) in
   '(("F13" f13 f1)
     ("F14" f14 f2)
@@ -86,3 +88,6 @@
 ;; 	    (define-key global-map k1 k2))
 ;; 	  (setq mods (cdr mods))))
 ;;       (setq mapping (cdr mapping)))))
+)
+
+;;; x-win-xfree86.el ends here

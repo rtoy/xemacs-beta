@@ -126,8 +126,6 @@
 		(setq processed (cons arg processed)))))
 	(setq site-load-packages (cdr site-load-packages)))))
 
-(packages-find-packages package-path t)
-
 (let ((autoloads (list-autoloads-path)))
   ;; (print (concat "Autoloads: " (prin1-to-string autoloads)))
   (while autoloads

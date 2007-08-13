@@ -229,10 +229,12 @@
 	       (string-equal "MIT X Consortium" vendor)
 	       (string-equal "X Consortium" vendor))
            ;; Ok, we think this could be a Sun keyboard.  Load the Sun code.
-           (load "x-win-sun"))
+           ;; (load "x-win-sun"))
+	   (x-win-init-sun))
           ((string-match "XFree86" vendor)
            ;; Those XFree86 people do some weird keysym stuff, too.
-           (load "x-win-xfree86")))))
+           ;; (load "x-win-xfree86")))))
+	   (x-win-init-xfree86)))))
 
 
 (defvar pre-x-win-initted nil)

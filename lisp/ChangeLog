@@ -1,3 +1,29 @@
+1997-12-25  SL Baur  <steve@altair.xemacs.org>
+
+	* x-init.el (x-initialize-keyboard): Don't load x-win*.el files,
+	call a dumped routine instead.
+
+	* x-win-xfree86.el: Wrap file in defun.
+	* x-win-sun.el: Ditto.
+
+1997-12-23  SL Baur  <steve@altair.xemacs.org>
+
+	* help.el (view-emacs-news): Remove usage of outl-mouse which
+	advises functions and does other evil things.
+
+1997-12-22  SL Baur  <steve@altair.xemacs.org>
+
+	* format.el (format-alist): Add `image/tiff'.
+	From P. E. Jareth Hein <jareth@camelot-soft.com>
+
+1997-12-21  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): More names added.
+
+	* make-docfile.el: Remove superfluous package path search.
+
+	* loaddefs.el: Commentary changes.  Removal of VM autoloads.
+
 1997-12-20  SL Baur  <steve@altair.xemacs.org>
 
 	* shadow.el (find-emacs-lisp-shadows): Add _pkg to the list of

@@ -307,7 +307,7 @@ command to install.
 ** Binary package installation (binary-packages)
 ================================================
 
-Prerequisite:  XEmacs 20.4-b1.
+Prerequisite:  XEmacs 20.5-b1.
 
 Binary packages are complete entities that can be untarred at the top
 level of an XEmacs package hierarchy and work at runtime.  To install files
@@ -317,9 +317,32 @@ and fill in appropriate values to the prompts.
 ** Single file package installation
 ===================================
 
-Prerequisite:  XEmacs 20.4-b1.
+Prerequisite:  XEmacs 20.5-b1.
 
 These are single file, self-contained lisp packages that don't need a
 separate directory.  To install something from this directory, run
 the command `M-x package-admin-add-single-file-package' and fill in the
 prompts.
+
+** Manual procedures for package management
+===========================================
+
+Prerequisite: XEmacs 20.5
+
+When adding and deleting files from a lisp directory the
+auto-autoloads.el (global symbols) and custom-load.el (Customization
+groups) must be kept in synch.  Assuming one is manipulating a
+directory called `lisp-utils', the command to rebuild the
+auto-autoloads.el file is:
+
+xemacs-20.5 -vanilla -batch -l autoload -f batch-update-directory lisp-utils
+
+The command to rebuild the custom-load.el file is:
+
+xemacs-20.5 -vanilla -batch -l cus-dep \
+	-f Custom-make-dependencies lisp-utils
+
+To bytecompile both of these files the command is:
+
+xemacs-20.5 -vanilla -batch -f batch-byte-compile \
+	lisp-utils/auto-autoloads.el lisp-utils/custom-laod.el
