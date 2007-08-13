@@ -37,13 +37,16 @@ Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
 (defconst emacs-version
   (purecopy
-   (format "%d.%d %s%s%s"
+   (format "%d.%d %s%s%s%s"
 	   emacs-major-version
 	   emacs-minor-version
 	   (if xemacs-codename
 	       (concat "\"" xemacs-codename "\"")
 	     "")
 	   " XEmacs Lucid"
+	   (if emacs-patch-level
+	       (format " (patch %d)" emacs-patch-level)
+	     "")
 	   (if xemacs-betaname
 	       (concat " " xemacs-betaname)
 	     "")))

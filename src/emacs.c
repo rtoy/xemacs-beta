@@ -107,6 +107,7 @@ Lisp_Object Vsystem_configuration_options;
 /* Version numbers and strings */
 Lisp_Object Vemacs_major_version;
 Lisp_Object Vemacs_minor_version;
+Lisp_Object Vemacs_patch_level;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 #ifdef INFODOCK
@@ -1978,7 +1979,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
       total_len += wampum_all_len[ac];
     }
   DO_REALLOC (run_temacs_args, run_temacs_args_size, total_len, char);
-  DO_REALLOC (run_temacs_argv, run_temacs_argv_size, nargs+1, char *);
+  DO_REALLOC (run_temacs_argv, run_temacs_argv_size, nargs+2, char *);
 
   memcpy (run_temacs_args, wampum, namesize);
   run_temacs_argv [0] = run_temacs_args;
@@ -2747,7 +2748,20 @@ Warning: this variable did not exist in Emacs versions earlier than:
 */ );
   Vemacs_minor_version = make_int (EMACS_MINOR_VERSION);
 
-  DEFVAR_LISP ("emacs-beta-version", &Vemacs_beta_version /*
+  DEFVAR_LISP ("emacs-patch-level", &Vemacs_patch_level /*
+The patch level of this version of Emacs, as an integer.
+The value is non-nil if this version of XEmacs is part of a series of
+stable XEmacsen, but has bug fixes applied.
+Warning: this variable does not exist in FSF Emacs or in XEmacs versions
+earlier than 21.1.1
+*/ );
+#ifdef EMACS_PATCH_LEVEL
+  Vemacs_patch_level = make_int (EMACS_PATCH_LEVEL);
+#else
+  Vemacs_patch_level = Qnil;
+#endif
+
+    DEFVAR_LISP ("emacs-beta-version", &Vemacs_beta_version /*
 Beta number of this version of Emacs, as an integer.
 The value is nil if this is an officially released version of XEmacs.
 Warning: this variable does not exist in FSF Emacs or in XEmacs versions

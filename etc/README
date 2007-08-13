@@ -21,11 +21,11 @@ LPF			Information about the League for Programming Freedom
 MACHINES		List of known machines configurations (OLD)
 MAILINGLISTS		List of available Mailing lists
 MORE.STUFF		List of useful unbundled packages
-NEWS			XEmacs 21.0 release information
+NEWS			XEmacs release information
 ORDERS
 ORDERS.EUROPE
 ORDERS.JAPAN		Order forms for GNU software
-PACKAGES		List of packages available for 21.0 release
+PACKAGES		List of packages available
 README			This file
 README.HYPERBOLE
 README.OO-BROWSER	How to obtain Hyperbole and the OO-Browser

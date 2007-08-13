@@ -1,3 +1,66 @@
+1999-05-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.1 is released
+
+1999-05-11  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* emacs.c (Frun_emacs_from_temacs): (re)alloc natgs+2 entries for
+	run_temacs_argv array -- fixes random memory corruption crash
+
+1999-05-12  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* window.c (Fcurrent_window_configuration):
+	Save minibuffer height;
+
+	* window.c (set_window_configuration): use it.
+
+1999-05-10  Robert Pluim  <rpluim@bigfoot.com>
+
+	* lisp.h (NNUNGCPRO): fix typo in name of DEBUG_GCPRO version
+
+1999-04-22  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* objects.c (print_font_instance): Check for NILP(f->device),
+	i.e. Vthe_null_font_instance.
+	(font_instance_truename_internal): ditto.
+	(Ffont_instance_properties): ditto.
+
+1999-04-21  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* redisplay.c (redisplay_window): Do not put data
+	in the line start cache if it is not guaranteed to be correct
+
+1999-04-02  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* window.c (struct window_config): Removed frame
+	size members.
+	(window_config_equal): No longer compare frame sizes.
+	(Fset_window_configuration): Resize old top window to fit in the
+	current frame directly, no longer use a fake frame resize.
+	(Fcurrent_window_configuration): No longer save frame size
+
+1999-04-19  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* symbols.c (Fintern): Obey new ->obarray_flags semantics.
+	(reject_constant_symbols): Ditto.
+	(init_symbols_once_early): Ditto.
+
+	* print.c (print_symbol): Obey new ->obarray_flags semantics.
+
+	* alloc.c (Fmake_symbol): Initialize ->obarray_flags to 0.
+	(Fpurecopy): Obey new ->obarray_flags semantics.
+
+	* lisp.h (struct Lisp_Symbol): Renamed .obarray to .obarray_flags,
+ 	and documented their new meaning.
+
+	* alloc.c (Fpurecopy): When purecopy-ing an *interned* symbol,
+ 	still mark it as purecopied, so that Funintern() can deal with it
+ 	later.
+
+	* symbols.c (Funintern): When uninterning symbols that are
+ 	referenced by pure structures, provide a pointer to them in
+ 	Vpure_uninterned_symbol_table.
+
 1999-03-25  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.67 is released

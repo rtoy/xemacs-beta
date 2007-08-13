@@ -1,3 +1,25 @@
+1999-05-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.1 is released
+
+1999-05-13  SL Baur  <steve@gneiss.etl.go.jp>
+
+	* PROBLEMS: Update version numbers.
+	* README: Ditto.
+
+	* etc/README: Strip version numbers.
+	* info/dir (File): Ditto.
+
+1999-04-22  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* lwlib/xlwmenu.c (string_width_u): Initialise chars before
+	calling XmStringGetLtoR
+	(string_draw_u): ditto and check return value of XmStringGetLtoR()
+
+1999-05-11  SL Baur  <steve@altair.xemacs.org>
+
+	* version.sh (infodock_build_version): Synch InfoDock version.
+
 1999-03-25  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.67 is released

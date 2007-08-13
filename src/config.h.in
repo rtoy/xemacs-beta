@@ -61,6 +61,7 @@ char *alloca();
 /* The version info from version.sh. Used in #pragma ident in emacs.c */
 #undef EMACS_MAJOR_VERSION
 #undef EMACS_MINOR_VERSION
+#undef EMACS_PATCH_LEVEL
 #undef EMACS_BETA_VERSION
 #undef EMACS_VERSION
 #undef XEMACS_CODENAME

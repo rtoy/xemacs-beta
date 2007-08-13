@@ -1027,9 +1027,25 @@ struct Lisp_Symbol
   struct Lisp_String *name;
   Lisp_Object value;
   Lisp_Object function;
-  /* non-nil if the symbol is interned in Vobarray */
-  Lisp_Object obarray;
   Lisp_Object plist;
+ /* Information on obarray status of the symbol.  Each symbol can be
+    interned into one and only one obarray during its life-time.  An
+    interned symbol can be uninterned, but the reverse does not hold
+    true.  We need to know whether the symbol is interned to Vobarray
+    (for the purposes of printing), and whether the symbol is
+    interned anywhere at all.  We also need to know whether the
+    symbol is being referenced through a pure structure.
+
+    The .obarray_flags field is an integer mask with the following
+    meanings for bits:
+
+    * 1 - symbol is interned somewhere;
+    * 2 - symbol is interned to Vobarray;
+    * 4 - symbol is referenced by a pure structure.
+
+    All of this is unneeded in 21.2, which does not have pure space in
+    our sense of the word, thanks to Olivier.  */
+ int obarray_flags;
 };
 
 #define SYMBOL_IS_KEYWORD(sym) (string_byte (XSYMBOL(sym)->name, 0) == ':')
@@ -1062,6 +1078,9 @@ DECLARE_NONRECORD (symbol, Lisp_Type_Symbol, struct Lisp_Symbol);
 #define symbol_value(s) ((s)->value)
 #define symbol_function(s) ((s)->function)
 #define symbol_plist(s) ((s)->plist)
+
+#define symbol_obarray_flags(s) ((s)->obarray_flags)
+#define XSYMBOL_OBARRAY_FLAGS(x) (XSYMBOL (x)->obarray_flags)
 
 /*********** subr ***********/
 
@@ -1703,7 +1722,7 @@ void debug_ungcpro(char *, int, struct gcpro *);
 #define NNGCPRO5(v1,v2,v3,v4,v5) \
  debug_gcpro5 (__FILE__, __LINE__,&nngcpro1,&nngcpro2,&nngcpro3,&nngcpro4,\
 	       &nngcpro5,&v1,&v2,&v3,&v4,&v5)
-#define NUNNGCPRO \
+#define NNUNGCPRO \
  debug_ungcpro(__FILE__, __LINE__,&nngcpro1)
 
 #else /* ! DEBUG_GCPRO */

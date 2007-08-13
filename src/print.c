@@ -1352,7 +1352,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   /* If we print an uninterned symbol as part of a complex object and
      the flag print-gensym is non-nil, prefix it with #n= to read the
      object back with the #n# reader syntax later if needed.  */
-  if (!NILP (Vprint_gensym) && NILP (XSYMBOL (obj)->obarray))
+  if (!NILP (Vprint_gensym) && !(XSYMBOL_OBARRAY_FLAGS (obj) & 2))
     {
       if (print_depth > 1)
 	{

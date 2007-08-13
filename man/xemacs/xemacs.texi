@@ -5,6 +5,11 @@
 
 
 @ifinfo
+@dircategory XEmacs Editor
+@direntry
+* XEmacs: (xemacs).		XEmacs Editor.
+@end direntry
+
 This file documents the XEmacs editor.
 
 Copyright (C) 1985, 1986, 1988 Richard M. Stallman.
@@ -93,7 +98,7 @@ The XEmacs Editor
 XEmacs is the extensible, customizable, self-documenting real-time
 display editor.  This Info file describes how to edit with Emacs
 and some of how to customize it, but not how to extend it.  It
-corresponds to XEmacs version 21.0.
+corresponds to XEmacs version 21.
 
 This manual is intended as a detailed reference to XEmacs.  If
 you are looking for an introductory manual, see the New User's

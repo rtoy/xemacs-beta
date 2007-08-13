@@ -1,3 +1,33 @@
+1999-05-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.1 is released
+
+1999-05-13  SL Baur  <steve@gneiss.etl.go.jp>
+
+	* about.el: update contact info for jason and slb.
+
+1999-05-06  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* files.el (auto-mode-alist): fix typo in regex for .bash_* files
+	From Anders Stenman <stenman@isy.liu.se>
+
+1999-04-14  Colin Rafferty  <colin@xemacs.org>
+
+	* x-faces.el (x-make-font-bold-italic): honor
+	*try-oblique-before-italic-fonts*
+
+1999-04-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cl-extra.el (coerce): Coerce numbers to characters correctly.
+
+1999-04-14  Dave Gillesipe  <daveg@synaptics.com>
+
+	* cl-extra.el (equalp): Would bug out for lists.
+
+1999-03-16  Colin Rafferty  <colin@xemacs.org>
+
+	* view-less.el (toggle-truncate-lines): add autoload tag
+
 1999-03-25  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.67 is released

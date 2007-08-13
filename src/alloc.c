@@ -1895,8 +1895,8 @@ Its value and function definition are void, and its property list is nil.
   p->plist = Qnil;
   p->value = Qunbound;
   p->function = Qunbound;
-  p->obarray = Qnil;
-  symbol_next (p) = 0;
+  p->obarray_flags = 0;
+  symbol_next (p)  = 0;
   XSETSYMBOL (val, p);
   return val;
 }
@@ -2909,10 +2909,11 @@ Does not copy symbols.
 #endif /* LISP_FLOAT_TYPE */
 	else if (SYMBOLP (obj))
 	  {
+	    int mask = XSYMBOL_OBARRAY_FLAGS (obj);
 	    /*
 	     * Symbols can't be made pure (and thus read-only),
 	     * because assigning to their function, value or plist
-	     * slots would produced a SEGV in the dumped XEmacs.  So
+	     * slots would produce a SEGV in the dumped XEmacs.  So
 	     * we previously would just return the symbol unchanged.
 	     *
 	     * But purified aggregate objects like lists and vectors
@@ -2927,9 +2928,16 @@ Does not copy symbols.
 	     * Vpure_uninterned_symbol_table, which is itself
 	     * staticpro'd.
 	     */
-	    if (!NILP (XSYMBOL (obj)->obarray))
-	      return obj;
-	    Fputhash (obj, Qnil, Vpure_uninterned_symbol_table);
+	    if (!(mask & 1))
+	      /* Symbol is not interned anywhere.  Keep a reference to the
+		 end of time.  */
+	      Fputhash (obj, Qnil, Vpure_uninterned_symbol_table);
+
+	    /* Mark symbol as being referenced by a pure structure.
+	       Funintern() will recognize this mark and place the symbol to
+	       Vpure_uninterned_symbol_table at the time of uninterning.  */
+	    XSYMBOL (obj)->obarray_flags = mask | 4;
+
 	    return obj;
 	  }
 	else

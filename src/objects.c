@@ -261,8 +261,9 @@ print_font_instance (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   print_internal (f->name, printcharfun, 1);
   write_c_string (" on ", printcharfun);
   print_internal (f->device, printcharfun, 0);
-  MAYBE_DEVMETH (XDEVICE (f->device), print_font_instance,
-		 (f, printcharfun, escapeflag));
+  if (!NILP (f->device))
+    MAYBE_DEVMETH (XDEVICE (f->device), print_font_instance,
+		   (f, printcharfun, escapeflag));
   sprintf (buf, " 0x%x>", f->header.uid);
   write_c_string (buf, printcharfun);
 }
@@ -419,8 +420,16 @@ font_instance_truename_internal (Lisp_Object font_instance,
 				 Error_behavior errb)
 {
   struct Lisp_Font_Instance *f = XFONT_INSTANCE (font_instance);
-  struct device *d = XDEVICE (f->device);
-  return DEVMETH_OR_GIVEN (d, font_instance_truename, (f, errb), f->name);
+  
+  if (NILP (f->device))
+    {
+      maybe_signal_simple_error ("Couldn't determine font truename",
+				 font_instance, Qfont, errb);
+      return Qnil;
+    }
+  
+  return DEVMETH_OR_GIVEN (XDEVICE (f->device),
+			   font_instance_truename, (f, errb), f->name);
 }
 
 DEFUN ("font-instance-truename", Ffont_instance_truename, 1, 1, 0, /*
@@ -444,6 +453,9 @@ Return the properties (an alist or nil) of FONT-INSTANCE.
 
   CHECK_FONT_INSTANCE (font_instance);
   f = XFONT_INSTANCE (font_instance);
+
+  if (NILP (f->device))
+    return Qnil;
 
   return MAYBE_LISP_DEVMETH (XDEVICE (f->device),
 			     font_instance_properties, (f));
