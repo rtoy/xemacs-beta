@@ -42,6 +42,8 @@
 ;; After fixing, eos/loaddefs-eos and loaddefs appear identical?!!
 ;; So just make loaddefs-eos go away...
 ;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
+	"startup"		; For initialization of
+				;  `emacs-user-extension-dir'
 	"loaddefs"		; <=== autoloads get loaded here
 	"misc"
 	;; (load-gc "profile")
@@ -59,7 +61,6 @@
 	"window"
 	"window-xemacs"
 	"paths.el"		; don't get confused if paths compiled.
-	"startup"
 	"lisp"
 	"page"
 	"register"

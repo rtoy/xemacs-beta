@@ -161,7 +161,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (print_readably)
     error ("printing unreadable object #<event>");
 
-  switch (XEVENT (obj)->event_type) 
+  switch (XEVENT (obj)->event_type)
     {
     case key_press_event:
       print_event_1 ("#<keypress-event ", obj, printcharfun);
@@ -217,7 +217,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       }
   write_c_string (">", printcharfun);
 }
-  
+
 static int
 event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 {
@@ -231,13 +231,13 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
     {
     case process_event:
       return EQ (e1->event.process.process, e2->event.process.process);
-    
+
     case timeout_event:
       return (!NILP (Fequal (e1->event.timeout.function,
 			     e2->event.timeout.function)) &&
 	      !NILP (Fequal (e1->event.timeout.object,
 			     e2->event.timeout.object)));
-    
+
     case key_press_event:
       return (EQ (e1->event.key.keysym, e2->event.key.keysym) &&
 	      (e1->event.key.modifiers == e2->event.key.modifiers));
@@ -306,11 +306,11 @@ event_hash (Lisp_Object obj, int depth)
     {
     case process_event:
       return HASH2 (hash, LISP_HASH (e->event.process.process));
-    
+
     case timeout_event:
       return HASH3 (hash, internal_hash (e->event.timeout.function, depth + 1),
 		    internal_hash (e->event.timeout.object, depth + 1));
-    
+
     case key_press_event:
       return HASH3 (hash, LISP_HASH (e->event.key.keysym),
 		    e->event.key.modifiers);
@@ -406,25 +406,26 @@ that it is safe to do so.
   assert (XEVENT_TYPE (event) <= last_event_type);
 
 #if 0
-  {  
-    int i;
+  {
+    int i, len;
     extern Lisp_Object Vlast_command_event;
     extern Lisp_Object Vlast_input_event, Vunread_command_event;
     extern Lisp_Object Vthis_command_keys, Vrecent_keys_ring;
 
-    if (EQ (event, Vlast_command_event))
+    if (EQ (event, Vlast_command_event) ||
+	EQ (event, Vlast_input_event)   ||
+	EQ (event, Vunread_command_event))
       abort ();
-    if (EQ (event, Vlast_input_event))
-      abort ();
-    if (EQ (event, Vunread_command_event))
-      abort ();
-    for (i = 0; i < XVECTOR (Vthis_command_keys)->size; i++)
-      if (EQ (event, vector_data (XVECTOR (Vthis_command_keys)) [i]))
+
+    len = XVECTOR_LENGTH (Vthis_command_keys);
+    for (i = 0; i < len; i++)
+      if (EQ (event, XVECTOR_DATA (Vthis_command_keys) [i]))
 	abort ();
     if (!NILP (Vrecent_keys_ring))
       {
-	for (i = 0; i < XVECTOR (Vrecent_keys_ring)->size; i++)
-	  if (EQ (event, vector_data (XVECTOR (Vrecent_keys_ring)) [i]))
+	int recent_ring_len = XVECTOR_LENGTH (Vrecent_keys_ring);
+	for (i = 0; i < recent_ring_len; i++)
+	  if (EQ (event, XVECTOR_DATA (Vrecent_keys_ring) [i]))
 	    abort ();
       }
   }
@@ -464,7 +465,7 @@ the function `deallocate-event'.
 
     *XEVENT (event2) = *XEVENT (event1);
     XSET_EVENT_NEXT (event2, save_next);
-    return (event2);
+    return event2;
   }
 }
 
@@ -520,7 +521,7 @@ enqueue_event (Lisp_Object event, Lisp_Object *head, Lisp_Object *tail)
 
 /* Remove an event off the head of a chain of events and return it.
    HEAD points to the first event in the chain, TAIL to the last event. */
-   
+
 Lisp_Object
 dequeue_event (Lisp_Object *head, Lisp_Object *tail)
 {
@@ -635,9 +636,9 @@ command_event_p (Lisp_Object event)
     case button_press_event:
     case button_release_event:
     case misc_user_event:
-      return (1);
+      return 1;
     default:
-      return (0);
+      return 0;
     }
 }
 
@@ -692,7 +693,7 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
     k = QKdelete;
   else if (c == ' ')
     k = QKspace;
-  
+
   event->event_type	     = key_press_event;
   event->timestamp	     = 0; /* #### */
   event->channel	     = make_console (con);
@@ -751,7 +752,7 @@ event_to_character (struct Lisp_Event *event,
 	/* reject Control-Shift- keys */
 	if (c >= 'A' && c <= 'Z' && !allow_extra_modifiers)
 	  return -1;
-      
+
       if (c >= '@' && c <= '_')
 	c -= '@';
       else if (c == ' ')  /* C-space and C-@ are the same. */
@@ -799,7 +800,7 @@ Note that specifying both ALLOW-META and ALLOW-NON-ASCII is ambiguous, as
 			  !NILP (allow_extra_modifiers),
 			  !NILP (allow_meta),
 			  !NILP (allow_non_ascii));
-  return (c < 0 ? Qnil : make_char (c));
+  return c < 0 ? Qnil : make_char (c);
 }
 
 DEFUN ("character-to-event", Fcharacter_to_event, 1, 4, 0, /*
@@ -861,7 +862,7 @@ nth_of_key_sequence_as_event (Lisp_Object seq, int n, Lisp_Object event)
     }
   else
     {
-      Lisp_Object keystroke = vector_data (XVECTOR (seq))[n];
+      Lisp_Object keystroke = XVECTOR_DATA (seq)[n];
       if (EVENTP (keystroke))
 	Fcopy_event (keystroke, event);
       else
@@ -1042,7 +1043,7 @@ NEXT-EVENT must be an event object or nil.
   if (NILP (next_event))
     {
       XSET_EVENT_NEXT (event, Qnil);
-      return (Qnil);
+      return Qnil;
     }
 
   CHECK_LIVE_EVENT (next_event);
@@ -1051,9 +1052,9 @@ NEXT-EVENT must be an event object or nil.
     {
       QUIT;
       if (EQ (ev, event))
-	signal_error (Qerror, 
+	signal_error (Qerror,
 		      list3 (build_string ("Cyclic event-next"),
-			     event, 
+			     event,
 			     next_event));
     }
   XSET_EVENT_NEXT (event, next_event);
@@ -1328,7 +1329,7 @@ See also `mouse-event-p' `event-window-y-pixel'.
 
    OBJ_X, OBJ_Y, OBJ1, and OBJ2 are as in pixel_to_glyph_translation().
 */
-   
+
 static int
 event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
 			 int *obj_x, int *obj_y,
@@ -1339,30 +1340,30 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
   int pix_x = 0;
   int pix_y = 0;
   int result;
-  Lisp_Object frame;
+  Lisp_Object frame = Qnil;
 
   int ret_x, ret_y, ret_obj_x, ret_obj_y;
   struct window *ret_w;
   Bufpos ret_bufp, ret_closest;
   Charcount ret_modeline_closest;
   Lisp_Object ret_obj1, ret_obj2;
-  
+
   CHECK_LIVE_EVENT (event);
-  if (XEVENT (event)->event_type == pointer_motion_event)
+  frame = XEVENT (event)->channel;
+  switch (XEVENT (event)->event_type)
     {
+    case pointer_motion_event :
       pix_x = XEVENT (event)->event.motion.x;
       pix_y = XEVENT (event)->event.motion.y;
-      frame = XEVENT (event)->channel;
-    }
-  else if (XEVENT (event)->event_type == button_press_event ||
-	   XEVENT (event)->event_type == button_release_event)
-    {
+      break;
+    case button_press_event :
+    case button_release_event :
       pix_x = XEVENT (event)->event.button.x;
       pix_y = XEVENT (event)->event.button.y;
-      frame = XEVENT (event)->channel;
+      break;
+    default:
+      dead_wrong_type_argument (Qmouse_event_p, event);
     }
-  else
-    wrong_type_argument (Qmouse_event_p, event);
 
   result = pixel_to_glyph_translation (XFRAME (frame), pix_x, pix_y,
 				       &ret_x, &ret_y, &ret_obj_x, &ret_obj_y,
@@ -1388,8 +1389,7 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
 #endif
      ))
     abort ();
-  if (!NILP (ret_obj2) && !(EXTENTP (ret_obj2)
-			    || CONSP (ret_obj2)))
+  if (!NILP (ret_obj2) && !(EXTENTP (ret_obj2) || CONSP (ret_obj2)))
     abort ();
 
   if (char_x)
@@ -1678,10 +1678,10 @@ EVENT should be a timeout, misc-user, or eval event.
   switch (XEVENT (event)->event_type)
     {
     case timeout_event:
-      return (XEVENT (event)->event.timeout.function);
+      return XEVENT (event)->event.timeout.function;
     case misc_user_event:
     case eval_event:
-      return (XEVENT (event)->event.eval.function);
+      return XEVENT (event)->event.eval.function;
     default:
       return wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
     }
@@ -1698,10 +1698,10 @@ EVENT should be a timeout, misc-user, or eval event.
   switch (XEVENT (event)->event_type)
     {
     case timeout_event:
-      return (XEVENT (event)->event.timeout.object);
+      return XEVENT (event)->event.timeout.object;
     case misc_user_event:
     case eval_event:
-      return (XEVENT (event)->event.eval.object);
+      return XEVENT (event)->event.eval.object;
     default:
       event = wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
       goto again;
@@ -1729,7 +1729,7 @@ This is in the form of a property list (alternating keyword/value pairs).
     case process_event:
       props = Fcons (Qprocess, Fcons (e->event.process.process, props));
       break;
-    
+
     case timeout_event:
       props = Fcons (Qobject, Fcons (Fevent_object (event), props));
       props = Fcons (Qfunction, Fcons (Fevent_function (event), props));

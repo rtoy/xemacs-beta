@@ -61,7 +61,7 @@ void clrhash (c_hashtable hash);
 void free_hashtable (c_hashtable hash);
 
 /* returns a hentry whose key is 0 if the entry does not exist in hashtable */
-CONST void *gethash (CONST void *key, c_hashtable hash, 
+CONST void *gethash (CONST void *key, c_hashtable hash,
 		     CONST void **ret_value);
 
 /* key should be different from 0 */
@@ -70,16 +70,15 @@ void puthash (CONST void *key, void *contents, c_hashtable hash);
 /* delete the entry which key is key */
 void remhash (CONST void *key, c_hashtable hash);
 
-typedef void (*maphash_function) (CONST void* key, void* contents, 
-                                  void* arg);
+typedef void (*maphash_function) (CONST void* key, void* contents, void* arg);
 
 typedef int (*remhash_predicate) (CONST void* key, CONST void* contents,
                                   void* arg);
 
-typedef void (*generic_hashtable_op) (c_hashtable table, 
+typedef void (*generic_hashtable_op) (c_hashtable table,
                                       void *arg1, void *arg2, void *arg3);
 
-/* calls mf with the following arguments:  key, contents, arg; for every 
+/* calls mf with the following arguments:  key, contents, arg; for every
    entry in the hashtable */
 void maphash (maphash_function fn, c_hashtable hash, void* arg);
 
@@ -87,7 +86,7 @@ void maphash (maphash_function fn, c_hashtable hash, void* arg);
 void map_remhash (remhash_predicate predicate, c_hashtable hash, void *arg);
 
 /* copies all the entries of src into dest -- dest is modified as needed
-   so it is as big as src. */ 
+   so it is as big as src. */
 void copy_hash (c_hashtable dest, c_hashtable src);
 
 /* makes sure that hashtable can hold at least needed_size entries */

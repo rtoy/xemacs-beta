@@ -54,6 +54,9 @@ Boston, MA 02111-1307, USA.  */
    for the lib-src programs. */
 #undef EMACS_CONFIGURATION
 
+/* The configuration options.  This is exported to Lisp. */
+#undef EMACS_CONFIG_OPTIONS
+
 /* The version info from version.sh. Used in #pragma ident in emacs.c */
 #undef EMACS_MAJOR_VERSION
 #undef EMACS_MINOR_VERSION
@@ -64,6 +67,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Used to identify the XEmacs version in stack traces. */
 #undef CANONICAL_VERSION
+
+/* Allow the configurer to specify (additional) package directories. */
+#undef PACKAGE_PATH
 
 /* This will be removed in 19.15. */
 /* Hah!  Try 20.3 ... */
@@ -164,9 +170,8 @@ Boston, MA 02111-1307, USA.  */
 
 #undef HAVE_LONG_FILE_NAMES
 
-#ifdef HAVE_LONG_FILE_NAMES
-#define CLASH_DETECTION
-#endif
+/* Use lock files to detect multiple edits of the same file? */
+#undef CLASH_DETECTION
 
 #undef HAVE_LIBKSTAT
 #undef HAVE_LIBINTL
@@ -466,28 +471,6 @@ Boston, MA 02111-1307, USA.  */
 #if defined (USE_SYSTEM_MALLOC) && !defined (SYSTEM_MALLOC)
 #define SYSTEM_MALLOC
 #endif
-
-#if 0 /* RMSmacs */
-/* These typedefs shouldn't appear when alloca.s or Makefile.in
-   includes config.h.  */
-#ifndef NOT_C_CODE
-#ifndef SPECIAL_EMACS_INT
-typedef long EMACS_INT;
-typedef unsigned long EMACS_UINT;
-#endif
-#endif
-#endif /* 0 */
-
-/* Load in the conversion definitions if this system
-   needs them and the source file being compiled has not
-   said to inhibit this.  There should be no need for you
-   to alter these lines. */
-
-#ifdef SHORTNAMES
-#ifndef NO_SHORTNAMES
-#include "../shortnames/remap.h"
-#endif /* not NO_SHORTNAMES */
-#endif /* SHORTNAMES */
 
 /* Use the relocating allocator for buffer space? */
 #undef REL_ALLOC

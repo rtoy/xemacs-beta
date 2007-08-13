@@ -28,8 +28,12 @@
 ;;; Code:
 
 (defvar x-selected-text-type
-  (if (featurep 'mule) 'COMPOUND_TEXT 'STRING)
-  "The type atom used to obtain selections from the X server.")
+  (if (featurep 'mule) '(COMPOUND_TEXT STRING) 'STRING)
+  "The type atom used to obtain selections from the X server.
+Can be either a valid X selection data type, or a list of such types.
+COMPOUND_TEXT and STRING are the most commonly used data types.
+If a list is provided, the types are tried in sequence until
+there is a successful conversion.")
 
 (defun x-get-selection (&optional type data-type)
   "Return the value of an X Windows selection.
@@ -38,12 +42,20 @@ and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
 says how to convert the data."
   (or type (setq type 'PRIMARY))
   (or data-type (setq data-type x-selected-text-type))
-  (let ((text (x-get-selection-internal type data-type)))
-    (if (and (consp text) (symbolp (car text)))
-	(setq text (cdr text)))
-    (if (not (stringp text))
-	(error "Selection is not a string: %S" text)
-      text)))
+  (let ((text
+	 (if (consp data-type)
+	     (condition-case err
+		 (x-get-selection-internal type (car data-type))
+	       (selection-conversion-error
+		(if (cdr data-type)
+		    (x-get-selection type (cdr data-type))
+		  (signal (car err) (cdr err)))))
+	   (x-get-selection-internal type data-type))))
+    (when (and (consp text) (symbolp (car text)))
+      (setq text (cdr text)))
+    (when (not (stringp text))
+      (error "Selection is not a string: %S" text))
+    text))
 
 (defun x-get-secondary-selection ()
   "Return text selected from some X window."

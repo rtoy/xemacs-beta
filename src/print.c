@@ -50,7 +50,7 @@ Lisp_Object Vstandard_output, Qstandard_output;
    for the convenience of the debugger.  */
 Lisp_Object Qexternal_debugging_output;
 Lisp_Object Qalternate_debugging_output;
- 
+
 /* Avoid actual stack overflow in print.  */
 static int print_depth;
 
@@ -97,7 +97,7 @@ FILE *termscript;	/* Stdio stream being used for copy of all output.  */
 int stdout_needs_newline;
 
 /* Write a string (in internal format) to stdio stream STREAM. */
-   
+
 void
 write_string_to_stdio_stream (FILE *stream, struct console *con,
 			      CONST Bufbyte *str,
@@ -308,7 +308,7 @@ canonicalize_printcharfun (Lisp_Object printcharfun)
       printcharfun = Fselected_frame (Qnil); /* print to minibuffer */
 #endif
     }
-  return (printcharfun);
+  return printcharfun;
 }
 
 
@@ -319,7 +319,7 @@ print_prepare (Lisp_Object printcharfun)
 
   /* Emacs won't print whilst GCing, but an external debugger might */
   if (gc_in_progress)
-    return (Qnil);
+    return Qnil;
 
   printcharfun = canonicalize_printcharfun (printcharfun);
   if (EQ (printcharfun, Qnil))
@@ -328,13 +328,13 @@ print_prepare (Lisp_Object printcharfun)
     }
 #if 0 /* Don't bother */
   else if (SUBRP (indirect_function (printcharfun, 0))
-           && (XSUBR (indirect_function (printcharfun, 0)) 
+           && (XSUBR (indirect_function (printcharfun, 0))
                == Sexternal_debugging_output))
     {
       stdio_stream = stderr;
     }
 #endif
-  
+
   return make_print_output_stream (stdio_stream, printcharfun);
 }
 
@@ -422,9 +422,9 @@ temp_output_buffer_setup (CONST char *bufname)
 }
 
 Lisp_Object
-internal_with_output_to_temp_buffer (CONST char *bufname, 
+internal_with_output_to_temp_buffer (CONST char *bufname,
                                      Lisp_Object (*function) (Lisp_Object arg),
-                                     Lisp_Object arg, 
+                                     Lisp_Object arg,
                                      Lisp_Object same_frame)
 {
   int speccount = specpdl_depth ();
@@ -542,13 +542,13 @@ second argument NOESCAPE is non-nil.
   print_internal (object, stream, NILP (noescape));
   print_finish (stream);
   stream = Qnil;                /* No GC surprises! */
-  object = make_string_from_buffer (out, 
+  object = make_string_from_buffer (out,
 				    BUF_BEG (out),
 				    BUF_Z (out) - 1);
   Ferase_buffer (Fcurrent_buffer ());
   Fset_buffer (old);
   UNGCPRO;
-  return (object);
+  return object;
 }
 
 DEFUN ("princ", Fprinc, 1, 2, 0, /*
@@ -569,7 +569,7 @@ Output stream is STREAM, or value of standard-output (which see).
   print_internal (obj, the_stream, 0);
   print_finish (the_stream);
   UNGCPRO;
-  return (obj);
+  return obj;
 }
 
 DEFUN ("print", Fprint, 1, 2, 0, /*
@@ -739,9 +739,9 @@ float_to_string (char *buf, double data)
  * largest float, printed in the biggest notation.  This is undoubtably
  * 20d float_output_format, with the negative of the C-constant "HUGE"
  * from <math.h>.
- * 
+ *
  * On the vax the worst case is -1e38 in 20d format which takes 61 bytes.
- * 
+ *
  * I assume that IEEE-754 format numbers can take 329 bytes for the worst
  * case of -1e307 in 20d float_output_format. What is one to do (short of
  * re-writing _doprnt to be more sane)?
@@ -750,7 +750,7 @@ float_to_string (char *buf, double data)
 {
   Bufbyte *cp, c;
   int width;
-      
+
   if (NILP (Vfloat_output_format)
       || !STRINGP (Vfloat_output_format))
   lose:
@@ -774,7 +774,7 @@ float_to_string (char *buf, double data)
 	  width += c - '0';
 	}
 
-      if (*cp != 'e' && *cp != 'f' && *cp != 'g' && *cp != 'E' && *cp != 'G') 
+      if (*cp != 'e' && *cp != 'f' && *cp != 'g' && *cp != 'E' && *cp != 'G')
 	goto lose;
 
       if (width < (int) (*cp != 'e' && *cp != 'E') || width > DBL_DIG)
@@ -821,12 +821,12 @@ float_to_string (char *buf, double data)
 
 static void
 print_vector_internal (CONST char *start, CONST char *end,
-                       Lisp_Object obj, 
+                       Lisp_Object obj,
                        Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
   int i;
-  int len = vector_length (XVECTOR (obj));
+  int len = XVECTOR_LENGTH (obj);
   int last = len;
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
@@ -840,7 +840,7 @@ print_vector_internal (CONST char *start, CONST char *end,
   write_c_string (start, printcharfun);
   for (i = 0; i < last; i++)
     {
-      Lisp_Object elt = vector_data (XVECTOR (obj))[i];
+      Lisp_Object elt = XVECTOR_DATA (obj)[i];
       if (i != 0) write_char_internal (" ", printcharfun);
       print_internal (elt, printcharfun, escapeflag);
     }
@@ -872,9 +872,9 @@ internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			 int escapeflag)
 {
   char buf[200];
-  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%x>",
-	   XRECORD_LHEADER (obj)->implementation->name,
-	   (EMACS_INT) XPNTR (obj));
+  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%p>",
+	   XRECORD_LHEADER (obj)->implementation->name, 
+	   (void *) XPNTR (obj));
   write_c_string (buf, printcharfun);
 }
 
@@ -910,7 +910,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     {
     case Lisp_Int:
       {
-	sprintf (buf, "%d", XINT (obj));
+	sprintf (buf, "%ld", (long) XINT (obj));
 	write_c_string (buf, printcharfun);
 	break;
       }
@@ -985,7 +985,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	    for (i = 0; i < max; i++)
 	      {
 		Bufbyte ch = string_byte (s, i);
-		if (ch == '\"' || ch == '\\' 
+		if (ch == '\"' || ch == '\\'
 		    || (ch == '\n' && print_escape_newlines))
 		  {
 		    if (i > last)
@@ -1146,7 +1146,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
 static void
 print_compiled_function_internal (CONST char *start, CONST char *end,
-				  Lisp_Object obj, 
+				  Lisp_Object obj,
 				  Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
@@ -1249,7 +1249,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     }
   GCPRO2 (obj, printcharfun);
 
-  if (print_gensym) 
+  if (print_gensym)
     {
       Lisp_Object tem = oblookup (Vobarray, string_data (name), size);
       if (!EQ (tem, obj))
@@ -1279,7 +1279,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       goto not_yet_confused;
 
     for (; confusing < size; confusing++)
-      { 
+      {
         if (!isdigit (data[confusing]))
           {
             confusing = 0;
@@ -1300,7 +1300,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     Lisp_Object nameobj;
     Bytecount i;
     Bytecount last = 0;
-        
+
     XSETSTRING (nameobj, name);
     for (i = 0; i < size; i++)
       {

@@ -5,7 +5,7 @@
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: May 1997
-;; Version: 2.1
+;; Version: 2.6
 ;; Keywords: help
 
 ;; This file is part of XEmacs
@@ -46,6 +46,9 @@
 ;;                       '(define-key message-mode-map [(control ?c) (tab)] 'ph-expand-inline))
 ;;      (eval-after-load "mail"
 ;;                       '(define-key mail-mode-map [(control ?c) (tab)] 'ph-expand-inline))
+;;    See the info file for details
+
+;;    This package runs under XEmacs 19.15 or 20 and under Emacs 19.34 and above
 
 ;;; Usage:
 ;;    - Provided you did the installation as proposed in the above section, 
@@ -56,12 +59,13 @@
 ;;    - M-x ph-customize to customize inline expansion and other features to
 ;;      your needs.
 ;;    - Look for the Ph submenu in the Tools menu for more.
+;;    See the info file for details.
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'wid-edit))
+(require 'wid-edit)
 (require 'custom)
+
 (if (not (fboundp 'make-overlay))
     (require 'overlay))
 (if (locate-library "timer")
@@ -69,6 +73,7 @@
 
 (autoload 'custom-menu-create "cus-edit")
 (autoload 'bbdb-create-internal "bbdb-com")
+(autoload 'bbdb-parse-phone-number "bbdb-com")
 (autoload 'bbdb-display-records "bbdb")
 
 ;;{{{      Package customization variables
@@ -173,22 +178,13 @@ as additional arguments to format."
   :group 'ph)
 
 (defcustom ph-fieldname-formstring-alist '((url . "URL")
-					   (unix_gid . "Unix GID")
-					   (unix_uid . "Unix UID")
-					   (unit_code . "Unit Code")
-					   (department_code . "Department Code")
-					   (high_school . "High School")
-					   (home_phone . "Home Phone")
-					   (office_phone . "Office Phone")
 					   (callsign . "HAM Call Sign")
-					   (office_address . "Office Address")
-					   (office_location . "Office Location")
 					   (id . "ID")
 					   (email . "E-Mail")
 					   (firstname . "First Name"))
   "*A mapping of CCSO database field names onto prompt strings used in query/response forms.
-Prompt strings for fields that are not in this are derived by capitalizing
-the field name."
+Prompt strings for fields that are not in this are derived by splitting the field name
+at `_' signs and capitalizing the individual words."
   :tag   "Mapping of Field Names onto Prompt Strings"
   :type  '(repeat (cons :tag "Field"
 			(symbol :tag "Name")
@@ -201,37 +197,40 @@ the field name."
 				      (phone . ((ph-bbdbify-phone phone "Phone")
 						(ph-bbdbify-phone office_phone "Office Phone"))))
   "*A mapping from BBDB to PH/QI fields.
-This is a list of cons cells (BBDB-FIELD . SPEC-OR-LIST) where BBDB-FIELD
-is the name of a field that must be defined in your BBDB (standard field
-names are `name', `company', `net', `phone', `address' and `notes').
-SPEC-OR-LIST is either a single SPEC or a list of SPECs. Lists of specs are
-valid only for the `phone' and `address' BBDB fields. 
-SPECs are sexps which are evaluated:
-  -a string evaluates to itself
-  -a symbol evaluates to the symbol value. Symbols naming PH/QI fields
-   present in the record evaluate to the value of the field in the record
-  -a form is evaluated as a function. The argument list may contain PH/QI 
-   field names which eval to the corresponding values in the record. The form
-   evaluation should return something appropriate for the particular 
-   BBDB-FIELD (see bbdb-create-internal). ph-bbdbify-phone and 
-   ph-bbdbify-address are provided as convenience functions to parse phones
-   and addresses."
+This is a list of cons cells (BBDB-FIELD . SPEC-OR-LIST) where
+BBDB-FIELD is the name of a field that must be defined in your BBDB
+environment (standard field names are `name', `company', `net', `phone',
+`address' and `notes').  SPEC-OR-LIST is either a single SPEC or a list
+of SPECs. Lists of specs are valid only for the `phone' and `address'
+BBDB fields.  SPECs are sexps which are evaluated:
+  a string evaluates to itself
+  a symbol evaluates to the symbol value. Symbols naming PH/QI fields
+    present in the record evaluate to the value of the field in the record
+  a form is evaluated as a function. The argument list may contain PH/QI 
+    field names which eval to the corresponding values in the
+    record. The form evaluation should return something appropriate for
+    the particular BBDB-FIELD (see bbdb-create-internal).
+    ph-bbdbify-phone and ph-bbdbify-address are provided as convenience
+    functions to parse phones and addresses."
   :tag "BBDB to CCSO Field Name Mapping"
   :type '(repeat (cons :tag "Field Name"
 		       (symbol :tag "BBDB Field")
 		       (sexp :tag "Conversion Spec")))
   :group 'ph)
 
-(defcustom ph-options-file "~/.emacs"
-  "*A file where the servers hotlist is stored. 
-It should be loaded automatically at startup so ~/.emacs is a reasonable
-choice."
+(defcustom ph-options-file "~/.ph-options"
+  "*A file where the `servers' hotlist (and maybe other variables in the future) is stored."
   :type '(file :Tag "File Name:"))
+
+(defcustom ph-mode-hook nil
+  "*A list of functions called when ph-mode is entered in buffers displaying query results."
+  :type '(repeat (sexp :tag "Hook")))
 
 ;;}}}
 
 
 ;;{{{      Internal cooking
+
 
 (defconst ph-xemacs-p (string-match "XEmacs" emacs-version))
 (defconst ph-fsfemacs-p (not ph-xemacs-p))
@@ -249,9 +248,12 @@ choice."
 (defvar ph-process-buffer nil)
 (defvar ph-read-point)
 
-
-
-
+;;; Load the options file
+(if (and (and (locate-library ph-options-file)
+	      (message ""))		; Remove modeline message
+	 (not (featurep 'ph-options-file)))
+    (load ph-options-file))
+	 
 ;;; FSF Emacs does not provide that one
 (if (not (fboundp 'split-string))
     (defun split-string (string pattern)
@@ -263,10 +265,26 @@ choice."
 	(nreverse (cons (substring string start) parts))
 	)))
 
+(defun ph-mode ()
+  "Major mode used in buffers displaying the results of PH queries.
+There is no sense in calling this command from a buffer other than
+one containing the results of a PH query.
+
+Available bindings:
+\\{ph-mode-map}"
+  (interactive)
+  (kill-all-local-variables)
+  (setq major-mode 'ph-mode)
+  (setq mode-name "PH")
+  (use-local-map ph-mode-map)
+  (setq mode-popup-menu (ph-menu))
+  (run-hooks 'ph-mode-hook)
+)
+
 (defun ph-display-records (records &optional raw-field-names)
   "Display the record list RECORDS in a formatted buffer. 
-If RAW-FIELD-NAMES is non nil, no translation to form strings or 
-capitalization is done on field names."
+If RAW-FIELD-NAMES is non-nil, field names will be formatted to look
+more attractive byi capitalizing and forming strings."
   (let ((buffer (get-buffer-create "*PH Query Results*"))
 	inhibit-read-only
 	precords
@@ -277,7 +295,6 @@ capitalization is done on field names."
     (setq buffer-read-only t)
     (setq inhibit-read-only t)
     (erase-buffer)
-    (kill-all-local-variables)
     (insert "PH Query Result\n")
     (insert "===============\n\n\n")
     (if (null records)
@@ -297,7 +314,12 @@ capitalization is done on field names."
 					 (symbol-name (car field))
 				       (or (and (assq (car field) ph-fieldname-formstring-alist)
 						(cdr (assq (car field) ph-fieldname-formstring-alist)))
-					   (capitalize (symbol-name (car field))))))
+					   (capitalize (mapconcat '(lambda (char)
+								     (if (eq char ?_)
+									 " "
+								       (char-to-string char)))
+								  (symbol-name (car field))
+								  "")))))
 		    (if (> (length field-name) width)
 			(setq width (length field-name)))
 		    (cons field-name (cdr field))))
@@ -337,7 +359,7 @@ capitalization is done on field names."
 		   :notify (lambda (&rest ignore)
 			     (kill-this-buffer))
 		   "Quit")
-    (use-local-map widget-keymap)
+    (ph-mode)
     (widget-setup)      
     )
 )
@@ -680,7 +702,7 @@ If RECURSE is non-nil then SPEC may be a list of atomic specs"
 
 (defun ph-bbdbify-address (addr location)
   "Parse ADDR into a vector compatible with bbdb-create-internal.
-ADR should be an address string of no more than four lines or a
+ADDR should be an address string of no more than four lines or a
 list of lines. 
 The last line is searched for the zip code, city and state name.
 LOCATION is used as the address location for bbdb"
@@ -715,14 +737,24 @@ LOCATION is used as the address location for bbdb"
 PHONE is either a string supposedly containing a phone number or
 a list of such strings which are concatenated.
 LOCATION is used as the phone location for bbdb"
-  (let ((phone-string (cond
-		       ((stringp phone)
-			phone)
-		       ((listp phone)
-			(mapconcat 'identity phone ", "))
-		       (t
-			(error "Invalid phone specification. Cannot create bbdb record")))))
-    (vector location phone-string)))
+  (cond 
+   ((stringp phone)
+    (let (phone-list)
+      (condition-case err
+	  (setq phone-list (bbdb-parse-phone-number phone))
+	(error
+	 (if (string= "phone number unparsable." (cadr err))
+	     (if (not (y-or-n-p (format "BBDB claims %S to be unparsable. Insert it unparsed ? " phone)))
+		 (error "phone number unparsable.")
+	       (setq phone-list (list (bbdb-string-trim phone))))
+	   (signal (car err) (cdr err)))))
+      (if (= 3 (length phone-list))
+	  (setq phone-list (append phone-list '(nil))))
+      (apply 'vector location phone-list)))
+   ((listp phone)
+    (vector location (mapconcat 'identity phone ", ")))
+   (t
+    (error "Invalid phone specification. Cannot create bbdb record"))))
 			
 ;;}}}				 
 
@@ -933,47 +965,60 @@ for the existing fields and displays a corresponding form."
   )
 
 (defun ph-bookmark-server (server)
-  "Add SERVER to the servers' hotlist."
+  "Add SERVER to the `servers' hotlist."
   (interactive "sServer: ")
   (if (member server ph-server-hotlist)
       (error "%s is already in the hotlist" server)
     (setq ph-server-hotlist (cons server ph-server-hotlist))
     (ph-install-menu)
-    (ph-save-hotlist)))
+    (ph-save-options)))
 
 (defun ph-bookmark-current-server ()
-  "Add current server to the servers' hotlist."
+  "Add current server to the `servers' hotlist."
   (interactive)
   (ph-bookmark-server ph-server))
 
-(defun ph-save-hotlist ()
-  "Save the servers hotlist to ph-options-file"
+(defun ph-save-options ()
+  "Save options (essentially the hotlist) to ph-options-file"
+  (interactive)
   (save-excursion
-    (set-buffer (find-file-noselect ph-options-file))
+    (set-buffer (find-file-noselect ph-options-file t))
     ;; delete the previous setq
-    (catch 'found
-      (while t
-	(let ((sexp (condition-case nil
-			(read (current-buffer))
-		      (end-of-file (throw 'found nil)))))
-	  (if (and (listp sexp)
-		   (eq (car sexp)  'setq)
-		   (eq (cadr sexp) 'ph-server-hotlist))
-	      (progn
-		(delete-region (save-excursion
-				 (backward-sexp)
-				 (point))
-			       (point))
-		(throw 'found t))))))
-    (let ((standard-output (current-buffer)))
+    (let ((standard-output (current-buffer))
+	  provide-p
+	  setq-p)
+      (catch 'found
+	(while t
+	  (let ((sexp (condition-case nil
+			  (read (current-buffer))
+			(end-of-file (throw 'found nil)))))
+	    (if (listp sexp)
+		(progn
+		  (if (and (eq (car sexp)  'setq)
+			   (eq (cadr sexp) 'ph-server-hotlist))
+		      (progn 
+			(delete-region (save-excursion
+					 (backward-sexp)
+					 (point))
+				       (point))
+			(setq setq-p t)))
+		  (if (and (eq (car sexp)  'provide)
+			   (equal (cadr sexp) '(quote ph-options-file)))
+		      (setq provide-p t))
+		  (if (and provide-p
+			   setq-p)
+		      (throw 'found t)))))))
+      (if (eq (point-min) (point-max))
+	  (princ ";; This file was automatically generated by ph.el\n\n"))
       (if (not (bolp))
 	  (princ "\n"))
       (princ "(setq ph-server-hotlist '")
       (prin1 ph-server-hotlist)
-      (princ ")\n"))
-    (save-buffer))
+      (princ ")\n")
+      (if (not provide-p)
+	  (princ "(provide 'ph-options-file)\n"))
+    (save-buffer)))
 )
-
 
 (defun ph-insert-record-at-point-into-bbdb ()
   "Insert record at point into the BBDB database.
@@ -984,12 +1029,53 @@ This function can only be called from a PH/QI query result buffer."
     (if (null record)
 	(error "Point is not over a record.")
       (ph-create-bbdb-record record))))
-    
+
+(defun ph-try-bbdb-insert ()
+  "Call ph-insert-record-at-point-into-bbdb if on a record"
+  (interactive)
+  (and (or (featurep 'bbdb)
+	   (prog1 (locate-library "bbdb") (message "")))
+       (overlays-at (point))
+       (overlay-get (car (overlays-at (point))) 'ph-record)
+       (ph-insert-record-at-point-into-bbdb)))
+
+(defun ph-move-to-next-record ()
+  "Move to next record in a buffer displaying ph query results"
+  (interactive)
+  (if (not (eq major-mode 'ph-mode))
+      (error "Not in a PH buffer")
+    (let ((pt (next-overlay-change (point))))
+      (if (< pt (point-max))
+	  (goto-char (1+ pt))
+	(error "No more records after point")))))
+
+(defun ph-move-to-previous-record ()
+  "Move to next record in a buffer displaying ph query results"
+  (interactive)
+  (if (not (eq major-mode 'ph-mode))
+      (error "Not in a PH buffer")
+    (let ((pt (previous-overlay-change (point))))
+      (if (> pt (point-min))
+	  (goto-char pt)
+	(error "No more records before point")))))
+
+
+      
 ;;}}}
 
-;;{{{      Menu interface
+;;{{{      Menus an keymaps
 
 (require 'easymenu)
+
+(defvar ph-mode-map (let ((map (make-sparse-keymap)))
+		      (define-key map "q" 'kill-this-buffer)
+		      (define-key map "x" 'kill-this-buffer)
+		      (define-key map "f" 'ph-query-form)
+		      (define-key map "b" 'ph-try-bbdb-insert)
+		      (define-key map "n" 'ph-move-to-next-record)
+		      (define-key map "p" 'ph-move-to-previous-record)
+		      map))
+(set-keymap-parent ph-mode-map widget-keymap)
 
 (defconst ph-tail-menu 
   `(["---" nil nil]
@@ -997,7 +1083,7 @@ This function can only be called from a PH/QI query result buffer."
     ["Expand Inline" ph-expand-inline t]
     ["Insert Record into BBDB" ph-insert-record-at-point-into-bbdb 
      (and (or (featurep 'bbdb)
-	      (locate-library 'bbdb))
+	      (prog1 (locate-library "bbdb") (message "")))
 	  (overlays-at (point))
 	  (overlay-get (car (overlays-at (point))) 'ph-record))]
     ["---" nil nil]
@@ -1036,6 +1122,7 @@ This function can only be called from a PH/QI query result buffer."
    (ph-xemacs-p
     (add-submenu '("Tools") (ph-menu)))
    (ph-fsfemacs-p
+    (easy-menu-define ph-menu-map ph-mode-map "PH Menu" (ph-menu))
     (define-key 
       global-map
       [menu-bar tools ph] 

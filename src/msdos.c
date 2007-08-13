@@ -49,14 +49,14 @@ event_timestamp (void)
 {
   struct time t;
   unsigned long s;
-  
+
   gettime (&t);
   s = t.ti_min;
   s *= 60;
   s += t.ti_sec;
   s *= 1000;
   s += t.ti_hund * 10;
-  
+
   return s;
 }
 
@@ -258,7 +258,7 @@ static
 dos_direct_output (int y, int x, char *buf, int len)
 {
   int t = (int) ScreenPrimary + 2 * (x + y * screen_size_X);
-  
+
   while (--len >= 0) {
     dosmemput (buf++, 1, t);
     t += 2;
@@ -324,14 +324,14 @@ static void
 mouse_off_maybe (void)
 {
   int x, y;
-  
+
   if (!mouse_visible)
     return;
-  
+
   mouse_get_xy (&x, &y);
   if (y != new_pos_Y || x < new_pos_X)
     return;
-  
+
   mouse_off ();
 }
 
@@ -378,9 +378,9 @@ IT_write_glyphs (GLYPH *str, int len)
   unsigned char *buf, *bp;
 
   if (len == 0) return;
-  
+
   buf = bp = alloca (len * 2);
-  
+
   while (--l >= 0)
     {
       newface = FAST_GLYPH_FACE (*str);
@@ -389,14 +389,14 @@ IT_write_glyphs (GLYPH *str, int len)
       ch = FAST_GLYPH_CHAR (*str);
       *bp++ = (unsigned char)ch;
       *bp++ = ScreenAttrib;
-      
+
       if (termscript)
 	fputc (ch, termscript);
       str++;
     }
 
   mouse_off_maybe ();
-  dosmemput (buf, 2 * len, 
+  dosmemput (buf, 2 * len,
 	     (int)ScreenPrimary + 2 * (new_pos_X + screen_size_X * new_pos_Y));
   new_pos_X += len;
 }
@@ -412,7 +412,7 @@ IT_clear_end_of_line (int first_unused)
     fprintf (termscript, "<CLR:EOL>");
   i = (j = screen_size_X - new_pos_X) * 2;
   spaces = sp = alloca (i);
-  
+
   while (--j >= 0)
     {
       *sp++ = ' ';
@@ -420,7 +420,7 @@ IT_clear_end_of_line (int first_unused)
     }
 
   mouse_off_maybe ();
-  dosmemput (spaces, i, 
+  dosmemput (spaces, i,
 	     (int)ScreenPrimary + 2 * (new_pos_X + screen_size_X * new_pos_Y));
 }
 
@@ -527,14 +527,14 @@ IT_set_terminal_modes (void)
   screen_size_X = ScreenCols ();
   screen_size_Y = ScreenRows ();
   screen_size = screen_size_X * screen_size_Y;
-  
+
   new_pos_X = new_pos_Y = 0;
   current_pos_X = current_pos_Y = -1;
 
   if (term_setup_done)
     return;
   term_setup_done = 1;
-  
+
   startup_screen_size_X = screen_size_X;
   startup_screen_size_Y = screen_size_Y;
 
@@ -560,7 +560,7 @@ IT_reset_terminal_modes (void)
 
   if (!term_setup_done)
     return;
-  
+
   ScreenUpdate (startup_screen_buffer);
   ScreenSetCursor (startup_pos_Y, startup_pos_X);
   xfree (startup_screen_buffer);
@@ -653,7 +653,7 @@ internal_terminal_init (void)
 
   if (getenv ("EMACSTEST"))
     termscript = fopen (getenv ("EMACSTEST"), "wt");
-  
+
 #ifndef HAVE_X_WINDOWS
   if (!internal_terminal || inhibit_window_system)
     {
@@ -662,7 +662,7 @@ internal_terminal_init (void)
     }
 
   Vwindow_system = intern ("pc");
- 
+
   bzero (&the_only_x_display, sizeof the_only_x_display);
   the_only_x_display.background_pixel = 7; /* White */
   the_only_x_display.foreground_pixel = 0; /* Black */
@@ -706,7 +706,7 @@ dos_get_saved_screen (char **screen, int *rows, int *cols)
   return 1;
 #else
   return 0;
-#endif  
+#endif
 }
 
 
@@ -784,7 +784,7 @@ dos_set_keyboard (int code, int always)
   keyboard = keyboard_layout_list[0].keyboard_map;
   keyboard_map_all = always;
   dos_keyboard_layout = 1;
-  
+
   for (i = 0; i < (sizeof (keyboard_layout_list)/sizeof (struct keyboard_layout_list)); i++)
     if (code == keyboard_layout_list[i].country_code)
       {
@@ -874,7 +874,7 @@ ibmpc_translate_map[] =
   Map | 23,			/* 'o' */
   Map | 24,			/* 'p' */
   Map | 25,			/* '[' */
-  Map | 26,			/* ']' */ 
+  Map | 26,			/* ']' */
   ModFct | 0x0d,		/* Return */
   Ignore,			/* Ctrl */
   Map | 30,			/* 'a' */
@@ -1051,21 +1051,21 @@ dos_get_modifiers (int *keymask)
   union REGS regs;
   int mask;
   int modifiers = 0;
-  
+
   /* Calculate modifier bits */
   regs.h.ah = extended_kbd ? 0x12 : 0x02;
   int86 (0x16, &regs, &regs);
 
   if (!extended_kbd)
     {
-      mask = regs.h.al & (SHIFT_P | CTRL_P | ALT_P | 
+      mask = regs.h.al & (SHIFT_P | CTRL_P | ALT_P |
 			  SCRLOCK_P | NUMLOCK_P | CAPSLOCK_P);
     }
   else
     {
       mask = regs.h.al & (SHIFT_P |
 			  SCRLOCK_P | NUMLOCK_P | CAPSLOCK_P);
-  
+
       /* Do not break international keyboard support.   */
       /* When Keyb.Com is loaded, the right Alt key is  */
       /* used for accessing characters like { and } 	  */
@@ -1086,7 +1086,7 @@ dos_get_modifiers (int *keymask)
 	      modifiers |= super_modifier;
 	    }
 	}
-      
+
       if (regs.h.ah & 1)		/* Left CTRL pressed
 	mask |= CTRL_P;
 
@@ -1131,7 +1131,7 @@ and then the scan code.
 */
        ())
 {
-  Lisp_Object *keys = XVECTOR (recent_doskeys)->contents;
+  Lisp_Object *keys = XVECTOR_DATA (recent_doskeys);
   Lisp_Object val;
 
   if (total_doskeys < NUM_RECENT_DOSKEYS)
@@ -1140,10 +1140,10 @@ and then the scan code.
     {
       val = Fvector (NUM_RECENT_DOSKEYS, keys);
       bcopy (keys + recent_doskeys_index,
-	     XVECTOR (val)->contents,
+	     XVECTOR_DATA (val),
 	     (NUM_RECENT_DOSKEYS - recent_doskeys_index) * sizeof (Lisp_Object));
       bcopy (keys,
-	     XVECTOR (val)->contents + NUM_RECENT_DOSKEYS - recent_doskeys_index,
+	     XVECTOR_DATA (val) + NUM_RECENT_DOSKEYS - recent_doskeys_index,
 	     recent_doskeys_index * sizeof (Lisp_Object));
       return val;
     }
@@ -1155,12 +1155,12 @@ dos_rawgetc (void)
 {
   struct input_event event;
   union REGS regs;
-  
+
 #ifndef HAVE_X_WINDOWS
   SCREEN_SET_CURSOR ();
   if (!mouse_visible) mouse_on ();
 #endif
-    
+
   /* The following condition is equivalent to `kbhit ()', except that
      it uses the bios to do its job.  This pleases DESQview/X.  */
   while ((regs.h.ah = extended_kbd ? 0x11 : 0x01),
@@ -1178,17 +1178,15 @@ dos_rawgetc (void)
       sc = regs.h.ah;
 
       total_doskeys += 2;
-      XVECTOR (recent_doskeys)->contents[recent_doskeys_index++]
-	= make_int (c);
+      XVECTOR_DATA (recent_doskeys)[recent_doskeys_index++] = make_int (c);
       if (recent_doskeys_index == NUM_RECENT_DOSKEYS)
 	recent_doskeys_index = 0;
-      XVECTOR (recent_doskeys)->contents[recent_doskeys_index++]
-	= make_int (sc);
+      XVECTOR_DATA (recent_doskeys)[recent_doskeys_index++] = make_int (sc);
       if (recent_doskeys_index == NUM_RECENT_DOSKEYS)
 	recent_doskeys_index = 0;
 
       modifiers = dos_get_modifiers (&mask);
-      
+
 #ifndef HAVE_X_WINDOWS
       if (!NILP (Vdos_display_scancodes))
 	{
@@ -1224,7 +1222,7 @@ dos_rawgetc (void)
 	  if ((code = ibmpc_translate_map[sc]) == Ignore)
 	    continue;
 	}
-      
+
       if (c == 0)
 	{
 	  if (code & Alt)
@@ -1234,22 +1232,22 @@ dos_rawgetc (void)
 	  if (code & Shift)
 	    modifiers |= shift_modifier;
 	}
-      
+
       switch (code & 0xf000)
 	{
 	case ModFct:
 	  if (c && !(mask & (SHIFT_P | ALT_P | CTRL_P | HYPER_P | SUPER_P)))
 	    return c;
 	  c = 0;		/* Special */
-	  
+
 	case FctKey:
 	  if (c != 0)
 	    return c;
-	    
+
 	case Special:
 	  code |= 0xff00;
 	  break;
-	  
+
 	case Normal:
 	  if (sc == 0)
 	    {
@@ -1264,7 +1262,7 @@ dos_rawgetc (void)
 	      code = c;
 	      break;
 	    }
-	  
+
 	case Map:
 	  if (c && !(mask & ALT_P) && !((mask & SHIFT_P) && (mask & CTRL_P)))
 	    if (!keyboard_map_all)
@@ -1273,7 +1271,7 @@ dos_rawgetc (void)
 	  code &= 0xff;
 	  if (mask & ALT_P && code <= 10 && code > 0 && dos_keypad_mode & 0x200)
 	    mask |= SHIFT_P;	/* ALT-1 => M-! etc. */
-	  
+
 	  if (mask & SHIFT_P)
 	    {
 	      code = keyboard->shifted[code];
@@ -1296,7 +1294,7 @@ dos_rawgetc (void)
 	      kp_mode = dos_keypad_mode & 0x03;
 	    else
 	      kp_mode = (dos_keypad_mode >> 4) & 0x03;
-	  
+
 	  switch (kp_mode)
 	    {
 	    case 0:
@@ -1312,13 +1310,13 @@ dos_rawgetc (void)
 	      code = keypad_translate_map[code].meta_code;
 	      modifiers = meta_modifier;
 	      break;
-	      
+
 	    case 3:
 	      code = 0xff00 | keypad_translate_map[code].editkey_code;
 	      break;
 	    }
 	  break;
-	  
+
 	case Grey:
 	  code &= 0xff;
 	  kp_mode = ((mask & (NUMLOCK_P|CTRL_P|SHIFT_P|ALT_P)) == NUMLOCK_P) ? 0x04 : 0x40;
@@ -1328,11 +1326,11 @@ dos_rawgetc (void)
 	    code = grey_key_translate_map[code].char_code;
 	  break;
 	}
-      
+
     make_event:
       if (code == 0)
 	continue;
-      
+
       if (code >= 0x100)
 	event.kind = non_ascii_keystroke;
       else
@@ -1727,7 +1725,7 @@ XMenuActivate (Display *foo, XMenu *menu, int *pane, int *selidx,
 			state[statecount].x
 			  = state[i].x + state[i].menu->width + 2;
 			state[statecount].y = y;
-			statecount++;			  
+			statecount++;
 		      }
 		  }
 	      }
@@ -2029,7 +2027,7 @@ dos_ttraw (void)
 {
   union REGS inregs, outregs;
   static int first_time = 1;
-  
+
   break_stat = getcbrk ();
   setcbrk (0);
   install_ctrl_break_check ();
@@ -2039,7 +2037,7 @@ dos_ttraw (void)
       inregs.h.ah = 0xc0;
       int86 (0x15, &inregs, &outregs);
       extended_kbd = (!outregs.x.cflag) && (outregs.h.ah == 0);
-  
+
       have_mouse = 0;
 
       if (internal_terminal
@@ -2065,7 +2063,7 @@ dos_ttraw (void)
 	    {
 	      have_mouse = 1;	/* enable mouse */
 	      mouse_visible = 0;
-	      
+
 	      if (outregs.x.bx == 3)
 		{
 		  mouse_button_count = 3;
@@ -2083,7 +2081,7 @@ dos_ttraw (void)
 	      mouse_init ();
 	    }
 	}
-      
+
       first_time = 0;
     }
 
@@ -2187,13 +2185,13 @@ run_msdos_command (unsigned char **argv, Lisp_Object dir,
     mouse_get_xy (&x, &y);
 
   dos_ttcooked ();	/* do it here while 0 = stdin */
-  
+
   dup2 (tempin, 0);
   dup2 (tempout, 1);
   dup2 (tempout, 2);
 
   result = spawnve (P_WAIT, argv[0], argv, envv);
-  
+
   dup2 (inbak, 0);
   dup2 (outbak, 1);
   dup2 (errbak, 2);
@@ -2207,7 +2205,7 @@ run_msdos_command (unsigned char **argv, Lisp_Object dir,
       mouse_init ();
       mouse_moveto (x, y);
     }
-  
+
  done:
   chdir (oldwd);
   if (msshell)
@@ -2248,7 +2246,7 @@ gethostname (char *p, int size)
 /* When time zones are set from Ms-Dos too many C-libraries are playing
    tricks with time values.  We solve this by defining our own version
    of `gettimeofday' bypassing GO32.  Our version needs to be initialized
-   once and after each call to `tzset' with TZ changed.  That is 
+   once and after each call to `tzset' with TZ changed.  That is
    accomplished by aliasing tzset to init_gettimeofday. */
 
 static struct tm time_rec;
@@ -2260,7 +2258,7 @@ gettimeofday (struct timeval *tp, struct timezone *tzp)
     {
       struct time t;
       struct tm tm;
-      
+
       gettime (&t);
       if (t.ti_hour < time_rec.tm_hour) /* midnight wrap */
 	{
@@ -2270,14 +2268,14 @@ gettimeofday (struct timeval *tp, struct timezone *tzp)
 	  time_rec.tm_mon = d.da_mon - 1;
 	  time_rec.tm_mday = d.da_day;
 	}
-      
+
       time_rec.tm_hour = t.ti_hour;
       time_rec.tm_min = t.ti_min;
       time_rec.tm_sec = t.ti_sec;
 
       tm = time_rec;
       tm.tm_gmtoff = dos_timezone_offset;
-      
+
       tp->tv_sec = mktime (&tm);	/* may modify tm */
       tp->tv_usec = t.ti_hund * (1000000 / 100);
     }
@@ -2313,7 +2311,7 @@ static void
 check_timer (struct time *t)
 {
   gettime (t);
-  
+
   if (t->ti_sec == last_ti_sec)
     return;
   last_ti_sec = t->ti_sec;
@@ -2334,13 +2332,13 @@ check_timer (struct time *t)
 	  else
 	    if (min >= 60)
 	      min -= 60, hour++;
-	  
+
 	  if ((hour -= (tz / 60)) < 0)
 	    hour += 24;
 	  else
 	    hour %= 24;
 	}
-      
+
       if ((dos_country_info[0x11] & 0x01) == 0) /* 12 hour clock */
 	{
 	  hour %= 12;
@@ -2357,7 +2355,7 @@ check_timer (struct time *t)
       dos_direct_output (0, screen_size_X - 9, "        ", 8);
       dos_menubar_clock_displayed = 0;
     }
-  
+
   if (!NILP (Vdos_timer_hooks))
     run_dos_timer_hooks++;
 }
@@ -2384,7 +2382,7 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 
   if (nfds != 1)
     abort ();
-  
+
   /* If we are looking only for the terminal, with no timeout,
      just read it and wait -- that's more efficient.  */
   if (!timeout)
@@ -2411,7 +2409,7 @@ sys_select (int nfds, SELECT_TYPE *rfds, SELECT_TYPE *wfds, SELECT_TYPE *efds,
 	  cllast = clnow;
 	}
     }
-  
+
   FD_SET (0, rfds);
   return 1;
 }
@@ -2442,7 +2440,7 @@ sys_chdir (CONST char* path)
       tmp += 2;	/* strip drive: KFS 1995-07-06 */
       len -= 2;
     }
-  
+
   if (len > 1 && (tmp[len - 1] == '/'))
     {
       char *tmp1 = (char *) alloca (len + 1);
@@ -2481,7 +2479,7 @@ dos_abort (char *file, int line)
 {
   char buffer1[200], buffer2[400];
   int i, j;
-  
+
   sprintf (buffer1, "<EMACS FATAL ERROR IN %s LINE %d>", file, line);
   for (i = j = 0; buffer1[i]; i++) {
     buffer2[j++] = buffer1[i];

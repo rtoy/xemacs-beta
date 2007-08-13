@@ -90,7 +90,7 @@ abbrev_match (struct buffer *buf, Lisp_Object obarray)
   struct Lisp_Char_Table *chartab = XCHAR_TABLE (buf->mirror_syntax_table);
   struct Lisp_String *abbrev;
   struct Lisp_Vector *obvec;
-  struct Lisp_Symbol *sym;
+  struct Lisp_Symbol *sym = NULL;
   Charcount abbrev_length;
   Lisp_Object tail;
   int i, found;

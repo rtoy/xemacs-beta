@@ -22,12 +22,20 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: Not synched.
+;;; Synched up with: Not synched with FSF.
 
 ;;; Commentary:
 ;;
+;; The following code is used to define the customization properties
+;; for builtin variables, and variables in the packages that are
+;; preloaded /very/ early, before custom.el itself (replace.el is such
+;; an example).  The way it handles custom stuff is dirty, and should
+;; be regarded as a last resort.  DO NOT add variables here, unless
+;; you know what you are doing.
+
 ;; Must be run before the user has changed the value of any options!
 
+
 ;;; Code:
 
 (require 'custom)
@@ -159,7 +167,12 @@
 			     (function :tag "Other")))
 	     (undo-threshold undo integer)
 	     (undo-high-threshold undo integer)
-	     (words-include-escapes editing-basics boolean)))
+	     (words-include-escapes editing-basics boolean)
+	     ;; These are from replace.el, which is loaded too early
+	     ;; to be customizable.
+	     (case-replace matching boolean)
+	     (query-replace-highlight matching boolean)
+	     (list-matching-lines-default-context-lines matching integer)))
       this symbol group type)
   (while all 
     (setq this (car all)

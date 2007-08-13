@@ -57,6 +57,8 @@ Any other value means use `view-buffer-other-window'."
 (defvar Manual-page-history nil "\
 A list of names of previously visited man page buffers.")
 
+(defvar Manual-page-minibuffer-history nil "\
+Minibuffer completion history for `manual-entry'.")
 
 ;; New variables.
 
@@ -165,7 +167,7 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 (defun manual-entry (topic &optional arg silent)
   "Display the Unix manual entry (or entries) for TOPIC."
   (interactive
-   (list (let* ((fmh "-A-Za-z0-9_.")
+   (list (let* ((fmh "-A-Za-z0-9_.:")
 		(default (save-excursion
 			   (buffer-substring
 			    (progn
@@ -174,7 +176,8 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 			    (progn (skip-chars-forward fmh) (point)))))
 		(thing (read-string
 			(if (equal default "") "Manual entry: "
-			  (concat "Manual entry: (default " default ") ")))))
+			  (concat "Manual entry: (default " default ") "))
+			nil 'Manual-page-minibuffer-history)))
 	   (if (equal thing "") default thing))
 	 (prefix-numeric-value current-prefix-arg)))
   ;;(interactive "sManual entry (topic): \np")
@@ -488,26 +491,29 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 
 (defun Manual-mouseify-xrefs ()
   (goto-char (point-min))
-  (forward-line 1)
   (let ((case-fold-search nil)
 	s e name extent)
     ;; possibly it would be faster to rewrite this expression to search for
     ;; a less common sequence first (like "([0-9]") and then back up to see
     ;; if it's really a match.  This function is 15% of the total time, 13%
     ;; of which is this call to re-search-forward.
-    (while (re-search-forward "[a-zA-Z_][-a-zA-Z0-9_.]*([0-9][a-zA-Z0-9]*)"
+    (while (re-search-forward "[a-zA-Z_][-a-zA-Z0-9_.:]*([0-9][a-zA-Z0-9]*)"
 			      nil t)
       (setq s (match-beginning 0)
 	    e (match-end 0)
 	    name (buffer-substring s e))
       (goto-char s)
       (skip-chars-backward " \t")
-      (if (and (bolp)
-	       (progn (backward-char 1) (= (preceding-char) ?-)))
+      (if (and (bolp) (not (bobp))
+	       (progn (backward-char 1) (equal (char-before) ?-)))
 	  (progn
 	    (setq s (point))
-	    (skip-chars-backward "-a-zA-Z0-9_.")
-	    (setq name (concat (buffer-substring (point) (1- s)) name))
+	    (skip-chars-backward "-a-zA-Z0-9_.:")
+	    (setq name (concat (buffer-substring (point)
+						 (if (>= s 0)
+						     (1- s)
+						   0))
+			       name))
 	    (setq s (point))))
       ;; if there are upper case letters in the section, downcase them.
       (if (string-match "(.*[A-Z]+.*)$" name)

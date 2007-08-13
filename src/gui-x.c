@@ -104,8 +104,8 @@ mark_popup_data (Lisp_Object obj, void (*markobj) (Lisp_Object))
       closure.markobj = markobj;
       lw_map_widget_values (data->id, mark_widget_value_mapper, &closure);
     }
-  
-  return (data->last_menubar_buffer);
+
+  return data->last_menubar_buffer;
 }
 
 /* This is like FRAME_MENUBAR_DATA (f), but contains an alist of
@@ -141,7 +141,7 @@ ungcpro_popup_callbacks (LWLIB_ID id)
 int
 popup_handled_p (LWLIB_ID id)
 {
-  return (NILP (assq_no_quit (make_int (id), Vpopup_callbacks)));
+  return NILP (assq_no_quit (make_int (id), Vpopup_callbacks));
 }
 
 /* menu_item_descriptor_to_widget_value() et al. mallocs a
@@ -344,7 +344,7 @@ menu_separator_style (CONST char *s)
 	    : xstrdup ("shadowDoubleEtchedIn"));
   else if (*p == ':')
     return xstrdup (p+1);
-    
+
   return NULL;
 }
 
@@ -367,8 +367,8 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
   Lisp_Object keys       = Qnil;
   Lisp_Object style      = Qnil;
   Lisp_Object config_tag = Qnil;
-  int length = vector_length (XVECTOR (desc));
-  Lisp_Object *contents = vector_data (XVECTOR (desc));
+  int length = XVECTOR_LENGTH (desc);
+  Lisp_Object *contents = XVECTOR_DATA (desc);
   int plist_p;
   int selected_spec = 0, included_spec = 0;
 
@@ -418,7 +418,7 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 	  else if (EQ (key, Q_config))	 config_tag = val;
 	  else if (EQ (key, Q_filter))
 	    signal_simple_error(":filter keyword not permitted on leaf nodes", desc);
-	  else 
+	  else
 	    signal_simple_error_2 ("unknown menu item keyword", key, desc);
 	}
     }
@@ -515,7 +515,7 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 #if 0
       wv->value = wv->name;
       wv->name = "value";
-#endif 
+#endif
     }
   else
     signal_simple_error_2 ("unknown style", style, desc);

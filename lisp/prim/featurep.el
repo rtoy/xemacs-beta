@@ -29,6 +29,10 @@
 ;; `featurep' is enhanced in the C code.  This support code is written in
 ;; Lisp to make it easier to experiment with the code.
 
+;; XEmacs: this code has been ported to C by Steve Baur.  The
+;; implementations should be equivalent.
+
+
 ;;; Code:
 
 (eval-when-compile (require 'cl))

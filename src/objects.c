@@ -42,7 +42,7 @@ Lisp_Object Vthe_null_color_instance, Vthe_null_font_instance;
 void
 finalose (void *ptr)
 {
-  Lisp_Object obj; 
+  Lisp_Object obj;
   XSETOBJ (obj, Lisp_Record, ptr);
 
   signal_simple_error
@@ -74,7 +74,7 @@ mark_color_instance (Lisp_Object obj, void (*markobj) (Lisp_Object))
   if (!NILP (c->device)) /* Vthe_null_color_instance */
     MAYBE_DEVMETH (XDEVICE (c->device), mark_color_instance, (c, markobj));
 
-  return (c->device);
+  return c->device;
 }
 
 static void
@@ -181,7 +181,7 @@ Return non-nil if OBJECT is a color instance.
 */
        (object))
 {
-  return (COLOR_INSTANCEP (object) ? Qt : Qnil);
+  return COLOR_INSTANCEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("color-instance-name", Fcolor_instance_name, 1, 1, 0, /*
@@ -190,7 +190,7 @@ Return the name used to allocate COLOR-INSTANCE.
        (color_instance))
 {
   CHECK_COLOR_INSTANCE (color_instance);
-  return (XCOLOR_INSTANCE (color_instance)->name);
+  return XCOLOR_INSTANCE (color_instance)->name;
 }
 
 DEFUN ("color-instance-rgb-components", Fcolor_instance_rgb_components, 1, 1, 0, /*
@@ -298,9 +298,9 @@ static int
 font_instance_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 {
   /* #### should this be moved into a device method? */
-  return (internal_equal (font_instance_truename_internal (o1, ERROR_ME_NOT),
-			  font_instance_truename_internal (o2, ERROR_ME_NOT),
-			  depth + 1));
+  return internal_equal (font_instance_truename_internal (o1, ERROR_ME_NOT),
+			 font_instance_truename_internal (o2, ERROR_ME_NOT),
+			 depth + 1);
 }
 
 static unsigned long
@@ -348,7 +348,7 @@ these objects are GCed, the underlying X data is deallocated as well.
   f->descent = 0;
   f->width = 1;
   f->proportional_p = 0;
-  
+
   retval = MAYBE_INT_DEVMETH (XDEVICE (device), initialize_font_instance,
 			      (f, name, device, errb));
 
@@ -364,7 +364,7 @@ Return non-nil if OBJECT is a font instance.
 */
        (object))
 {
-  return (FONT_INSTANCEP (object) ? Qt : Qnil);
+  return FONT_INSTANCEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("font-instance-name", Ffont_instance_name, 1, 1, 0, /*
@@ -373,7 +373,7 @@ Return the name used to allocate FONT-INSTANCE.
        (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
-  return (XFONT_INSTANCE (font_instance)->name);
+  return XFONT_INSTANCE (font_instance)->name;
 }
 
 DEFUN ("font-instance-ascent", Ffont_instance_ascent, 1, 1, 0, /*
@@ -418,7 +418,7 @@ This means that different characters in the font have different widths.
        (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
-  return (XFONT_INSTANCE (font_instance)->proportional_p ? Qt : Qnil);
+  return XFONT_INSTANCE (font_instance)->proportional_p ? Qt : Qnil;
 }
 
 static Lisp_Object
@@ -532,11 +532,11 @@ color_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	  Fputhash (instantiator, instance, d->color_instance_cache);
 	}
 
-      return (NILP (instance) ? Qunbound : instance);
+      return NILP (instance) ? Qunbound : instance;
     }
   else if (VECTORP (instantiator))
     {
-      switch (XVECTOR (instantiator)->size)
+      switch (XVECTOR_LENGTH (instantiator))
 	{
 	case 0:
 	  if (DEVICE_TTY_P (d))
@@ -550,16 +550,14 @@ color_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	    signal_simple_error ("Color specifier not attached to a face",
 				 instantiator);
 	  return (FACE_PROPERTY_INSTANCE_1
-		  (Fget_face (vector_data (XVECTOR (instantiator))[0]),
-		   COLOR_SPECIFIER_FACE_PROPERTY
-		   (XCOLOR_SPECIFIER (specifier)), domain,
-		   ERROR_ME, 0, depth));
+		  (Fget_face (XVECTOR_DATA (instantiator)[0]),
+		   COLOR_SPECIFIER_FACE_PROPERTY (XCOLOR_SPECIFIER (specifier)),
+		   domain, ERROR_ME, 0, depth));
 
 	case 2:
 	  return (FACE_PROPERTY_INSTANCE_1
-		  (Fget_face (vector_data (XVECTOR (instantiator))[0]),
-		   vector_data (XVECTOR (instantiator))[1], domain,
-		   ERROR_ME, 0, depth));
+		  (Fget_face (XVECTOR_DATA (instantiator)[0]),
+		   XVECTOR_DATA (instantiator)[1], domain, ERROR_ME, 0, depth));
 
 	default:
 	  abort ();
@@ -586,17 +584,17 @@ color_validate (Lisp_Object instantiator)
     return;
   if (VECTORP (instantiator))
     {
-      if (XVECTOR (instantiator)->size > 2)
+      if (XVECTOR_LENGTH (instantiator) > 2)
 	signal_simple_error ("Inheritance vector must be of size 0 - 2",
 			     instantiator);
-      else if (XVECTOR (instantiator)->size > 0)
+      else if (XVECTOR_LENGTH (instantiator) > 0)
 	{
-	  Lisp_Object face = vector_data (XVECTOR (instantiator))[0];
-      
+	  Lisp_Object face = XVECTOR_DATA (instantiator)[0];
+
 	  Fget_face (face);
-	  if (XVECTOR (instantiator)->size == 2)
+	  if (XVECTOR_LENGTH (instantiator) == 2)
 	    {
-	      Lisp_Object field = vector_data (XVECTOR (instantiator))[1];
+	      Lisp_Object field = XVECTOR_DATA (instantiator)[1];
 	      if (!EQ (field, Qforeground) && !EQ (field, Qbackground))
 		signal_simple_error
 		  ("Inheritance field must be `foreground' or `background'",
@@ -646,7 +644,7 @@ Valid instantiators for color specifiers are:
 */
        (object))
 {
-  return (COLOR_SPECIFIERP (object) ? Qt : Qnil);
+  return COLOR_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 
@@ -731,7 +729,7 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	}
       instantiator = Ffont_instance_name (instantiator);
     }
-  
+
   if (STRINGP (instantiator))
     {
 #ifdef MULE
@@ -782,13 +780,13 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	  Fputhash (instantiator, instance, d->font_instance_cache);
 	}
 
-      return (NILP (instance) ? Qunbound : instance);
+      return NILP (instance) ? Qunbound : instance;
     }
   else if (VECTORP (instantiator))
     {
-      assert (XVECTOR (instantiator)->size == 1);
+      assert (XVECTOR_LENGTH (instantiator) == 1);
       return (face_property_matching_instance
-	      (Fget_face (vector_data (XVECTOR (instantiator))[0]), Qfont,
+	      (Fget_face (XVECTOR_DATA (instantiator)[0]), Qfont,
 	       matchspec, domain, ERROR_ME, 0, depth));
     }
   else if (NILP (instantiator))
@@ -806,12 +804,12 @@ font_validate (Lisp_Object instantiator)
     return;
   if (VECTORP (instantiator))
     {
-      if (vector_length (XVECTOR (instantiator)) != 1)
+      if (XVECTOR_LENGTH (instantiator) != 1)
 	{
 	  signal_simple_error
 	    ("Vector length must be one for font inheritance", instantiator);
 	}
-      Fget_face (vector_data (XVECTOR (instantiator))[0]);
+      Fget_face (XVECTOR_DATA (instantiator)[0]);
     }
   else
     signal_simple_error ("Must be string, vector, or font-instance",
@@ -853,7 +851,7 @@ Valid instantiators for font specifiers are:
 */
        (object))
 {
-  return (FONT_SPECIFIERP (object) ? Qt : Qnil);
+  return FONT_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 
@@ -897,11 +895,11 @@ face_boolean_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
     {
       Lisp_Object retval;
       Lisp_Object prop;
+      int instantiator_len = XVECTOR_LENGTH (instantiator);
 
-      assert (XVECTOR (instantiator)->size >= 1 &&
-	      XVECTOR (instantiator)->size <= 3);
-      if (XVECTOR (instantiator)->size > 1)
-	prop = vector_data (XVECTOR (instantiator))[1];
+      assert (instantiator_len >= 1 && instantiator_len <= 3);
+      if (instantiator_len > 1)
+	prop = XVECTOR_DATA (instantiator)[1];
       else
 	{
 	  if (NILP (FACE_BOOLEAN_SPECIFIER_FACE
@@ -913,12 +911,11 @@ face_boolean_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	}
 
       retval = (FACE_PROPERTY_INSTANCE_1
-		(Fget_face (vector_data (XVECTOR (instantiator))[0]),
+		(Fget_face (XVECTOR_DATA (instantiator)[0]),
 		 prop, domain, ERROR_ME, 0, depth));
 
-      if (XVECTOR (instantiator)->size == 3 &&
-	  !NILP (vector_data (XVECTOR (instantiator))[2]))
-	retval = (NILP (retval) ? Qt : Qnil);
+      if (instantiator_len == 3 && !NILP (XVECTOR_DATA (instantiator)[2]))
+	retval = NILP (retval) ? Qt : Qnil;
 
       return retval;
     }
@@ -934,16 +931,16 @@ face_boolean_validate (Lisp_Object instantiator)
   if (NILP (instantiator) || EQ (instantiator, Qt))
     return;
   else if (VECTORP (instantiator) &&
-	   (XVECTOR (instantiator)->size >= 1 &&
-	    XVECTOR (instantiator)->size <= 3))
+	   (XVECTOR_LENGTH (instantiator) >= 1 &&
+	    XVECTOR_LENGTH (instantiator) <= 3))
     {
-      Lisp_Object face = vector_data (XVECTOR (instantiator))[0];
-      
+      Lisp_Object face = XVECTOR_DATA (instantiator)[0];
+
       Fget_face (face);
 
-      if (XVECTOR (instantiator)->size > 1)
+      if (XVECTOR_LENGTH (instantiator) > 1)
 	{
-	  Lisp_Object field = vector_data (XVECTOR (instantiator))[1];
+	  Lisp_Object field = XVECTOR_DATA (instantiator)[1];
 	  if (!EQ (field, Qunderline)
 	      && !EQ (field, Qstrikethru)
 	      && !EQ (field, Qhighlight)
@@ -998,7 +995,7 @@ Valid instantiators for face-boolean specifiers are
 */
        (object))
 {
-  return (FACE_BOOLEAN_SPECIFIERP (object) ? Qt : Qnil);
+  return FACE_BOOLEAN_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 
@@ -1084,7 +1081,7 @@ vars_of_objects (void)
 
     XSETCOLOR_INSTANCE (Vthe_null_color_instance, c);
   }
-  
+
   staticpro (&Vthe_null_font_instance);
   {
     struct Lisp_Font_Instance *f;
@@ -1099,7 +1096,7 @@ vars_of_objects (void)
     f->descent = 0;
     f->width = 0;
     f->proportional_p = 0;
-  
+
     XSETFONT_INSTANCE (Vthe_null_font_instance, f);
   }
 }

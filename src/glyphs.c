@@ -3,7 +3,7 @@
    Copyright (C) 1995 Tinker Systems
    Copyright (C) 1995, 1996 Ben Wing
    Copyright (C) 1995 Sun Microsystems
-   
+
 This file is part of XEmacs.
 
 XEmacs is free software; you can redistribute it and/or modify it
@@ -237,15 +237,14 @@ specifiers will not be affected.
 	      pos = XCAR (XCDR (XCDR (mapping)));
 	      CHECK_INT (pos);
 	      if (XINT (pos) < 0 ||
-		  XINT (pos) >= vector_length (XVECTOR (typevec)))
+		  XINT (pos) >= XVECTOR_LENGTH (typevec))
 		args_out_of_range_3
-		  (pos, Qzero, make_int
-		   (vector_length (XVECTOR (typevec)) - 1));
+		  (pos, Qzero, make_int (XVECTOR_LENGTH (typevec) - 1));
 	    }
-	  
+
 	  newvec = Fcopy_sequence (typevec);
 	  if (INTP (pos))
-	    vector_data (XVECTOR (newvec))[XINT (pos)] = exp;
+	    XVECTOR_DATA (newvec)[XINT (pos)] = exp;
 	  GCPRO1 (newvec);
 	  image_validate (newvec);
 	  UNGCPRO;
@@ -289,7 +288,7 @@ process_image_string_instantiator (Lisp_Object data,
 	 skip it. */
       if (!(dest_mask &
 	    IIFORMAT_METH (decode_image_instantiator_format
-			   (vector_data (XVECTOR (typevec))[0], ERROR_ME),
+			   (XVECTOR_DATA (typevec)[0], ERROR_ME),
 			   possible_dest_types, ())))
 	continue;
       if (fast_string_match (exp, 0, data, 0, -1, 0, ERROR_ME, 0) >= 0)
@@ -298,7 +297,7 @@ process_image_string_instantiator (Lisp_Object data,
 	    {
 	      int pos = XINT (XCAR (XCDR (XCDR (mapping))));
 	      Lisp_Object newvec = Fcopy_sequence (typevec);
-	      vector_data (XVECTOR (newvec))[pos] = data;
+	      XVECTOR_DATA (newvec)[pos] = data;
 	      return newvec;
 	    }
 	  else
@@ -309,19 +308,19 @@ process_image_string_instantiator (Lisp_Object data,
   /* Oh well. */
   signal_simple_error ("Unable to interpret glyph instantiator",
 		       data);
-  
+
   return Qnil;
 }
 
 Lisp_Object
 find_keyword_in_vector_or_given (Lisp_Object vector, Lisp_Object keyword,
-				 Lisp_Object defalt)
+				 Lisp_Object default_)
 {
   Lisp_Object *elt;
   int instantiator_len;
 
-  elt = vector_data (XVECTOR (vector));
-  instantiator_len = vector_length (XVECTOR (vector));
+  elt = XVECTOR_DATA (vector);
+  instantiator_len = XVECTOR_LENGTH (vector);
 
   elt++;
   instantiator_len--;
@@ -334,7 +333,7 @@ find_keyword_in_vector_or_given (Lisp_Object vector, Lisp_Object keyword,
       instantiator_len -= 2;
     }
 
-  return defalt;
+  return default_;
 }
 
 Lisp_Object
@@ -394,7 +393,7 @@ make_string_from_file (Lisp_Object file)
   Lisp_Object temp_buffer;
   struct gcpro gcpro1;
   Lisp_Object data;
-  
+
   specbind (Qinhibit_quit, Qt);
   record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
   temp_buffer = Fget_buffer_create (build_string (" *pixmap conversion*"));
@@ -423,8 +422,8 @@ make_string_from_file (Lisp_Object file)
 Lisp_Object
 tagged_vector_to_alist (Lisp_Object vector)
 {
-  Lisp_Object *elt = vector_data (XVECTOR (vector));
-  int len = vector_length (XVECTOR (vector));
+  Lisp_Object *elt = XVECTOR_DATA (vector);
+  int len = XVECTOR_LENGTH (vector);
   Lisp_Object result = Qnil;
 
   assert (len & 1);
@@ -475,8 +474,8 @@ normalize_image_instantiator (Lisp_Object instantiator,
      longer exist (e.g. w3 pixmaps are almost always from temporary
      files). */
   instantiator = IIFORMAT_METH_OR_GIVEN
-    (decode_image_instantiator_format
-     (vector_data (XVECTOR (instantiator))[0], ERROR_ME),
+    (decode_image_instantiator_format (XVECTOR_DATA (instantiator)[0],
+				       ERROR_ME),
      normalize, (instantiator, contype), instantiator);
 
   return instantiator;
@@ -496,8 +495,8 @@ instantiate_image_instantiator (Lisp_Object device, Lisp_Object domain,
   GCPRO1 (ii);
   {
     struct image_instantiator_methods *meths =
-      decode_image_instantiator_format
-	(vector_data (XVECTOR (instantiator))[0], ERROR_ME);
+      decode_image_instantiator_format (XVECTOR_DATA (instantiator)[0],
+					ERROR_ME);
 
     if (!HAS_IIFORMAT_METH_P (meths, instantiate))
       signal_simple_error
@@ -556,7 +555,7 @@ mark_image_instance (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
   MAYBE_DEVMETH (XDEVICE (i->device), mark_image_instance, (i, markobj));
 
-  return (i->device);
+  return i->device;
 }
 
 static void
@@ -616,7 +615,8 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	  write_c_string (" @", printcharfun);
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)))
 	    {
-	      sprintf (buf, "%d", XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)));
+	      sprintf (buf, "%ld", 
+		       (long) XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii)));
 	      write_c_string (buf, printcharfun);
 	    }
 	  else
@@ -624,7 +624,8 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	  write_c_string (",", printcharfun);
 	  if (!NILP (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)))
 	    {
-	      sprintf (buf, "%d", XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)));
+	      sprintf (buf, "%ld", 
+		       (long) XINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii)));
 	      write_c_string (buf, printcharfun);
 	    }
 	  else
@@ -984,8 +985,7 @@ make_image_instance_1 (Lisp_Object data, Lisp_Object device,
   data = normalize_image_instantiator (data, DEVICE_TYPE (XDEVICE (device)),
 				       make_int (dest_mask));
   GCPRO1 (data);
-  if (VECTORP (data)
-	   && EQ (vector_data (XVECTOR (data))[0], Qinherit))
+  if (VECTORP (data) && EQ (XVECTOR_DATA (data)[0], Qinherit))
     signal_simple_error ("inheritance not allowed here", data);
   ii = instantiate_image_instantiator (device, device, data,
 				       Qnil, Qnil, dest_mask);
@@ -1065,7 +1065,7 @@ Return non-nil if OBJECT is an image instance.
 */
        (object))
 {
-  return (IMAGE_INSTANCEP (object) ? Qt : Qnil);
+  return IMAGE_INSTANCEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("image-instance-type", Fimage_instance_type, 1, 1, 0, /*
@@ -1085,7 +1085,7 @@ Return the name of the given image instance.
        (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
-  return (XIMAGE_INSTANCE_NAME (image_instance));
+  return XIMAGE_INSTANCE_NAME (image_instance);
 }
 
 DEFUN ("image-instance-string", Fimage_instance_string, 1, 1, 0, /*
@@ -1096,7 +1096,7 @@ This will only be non-nil for text image instances.
 {
   CHECK_IMAGE_INSTANCE (image_instance);
   if (XIMAGE_INSTANCE_TYPE (image_instance) == IMAGE_TEXT)
-    return (XIMAGE_INSTANCE_TEXT_STRING (image_instance));
+    return XIMAGE_INSTANCE_TEXT_STRING (image_instance);
   else
     return Qnil;
 }
@@ -1152,7 +1152,7 @@ This is 0 for a bitmap, or a positive integer for a pixmap.
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      return (make_int (XIMAGE_INSTANCE_PIXMAP_DEPTH (image_instance)));
+      return make_int (XIMAGE_INSTANCE_PIXMAP_DEPTH (image_instance));
 
     default:
       return Qnil;
@@ -1171,7 +1171,7 @@ Return the height of the image instance, in pixels.
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      return (make_int (XIMAGE_INSTANCE_PIXMAP_HEIGHT (image_instance)));
+      return make_int (XIMAGE_INSTANCE_PIXMAP_HEIGHT (image_instance));
 
     default:
       return Qnil;
@@ -1190,7 +1190,7 @@ Return the width of the image instance, in pixels.
     case IMAGE_MONO_PIXMAP:
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
-      return (make_int (XIMAGE_INSTANCE_PIXMAP_WIDTH (image_instance)));
+      return make_int (XIMAGE_INSTANCE_PIXMAP_WIDTH (image_instance));
 
     default:
       return Qnil;
@@ -1359,8 +1359,8 @@ inherit_normalize (Lisp_Object inst, Lisp_Object console_type)
 {
   Lisp_Object face;
 
-  assert (XVECTOR (inst)->size == 3);
-  face = vector_data (XVECTOR (inst))[2];
+  assert (XVECTOR_LENGTH (inst) == 3);
+  face = XVECTOR_DATA (inst)[2];
   if (!FACEP (face))
     inst = vector3 (Qinherit, Q_face, Fget_face (face));
   return inst;
@@ -1528,11 +1528,11 @@ image_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 			       instantiator, device);
     }
   else if (VECTORP (instantiator)
-	   && EQ (vector_data (XVECTOR (instantiator))[0], Qinherit))
+	   && EQ (XVECTOR_DATA (instantiator)[0], Qinherit))
     {
-      assert (XVECTOR (instantiator)->size == 3);
+      assert (XVECTOR_LENGTH (instantiator) == 3);
       return (FACE_PROPERTY_INSTANCE
-	      (Fget_face (vector_data (XVECTOR (instantiator))[2]),
+	      (Fget_face (XVECTOR_DATA (instantiator)[2]),
 	       Qbackground_pixmap, domain, 0, depth));
     }
   else
@@ -1631,8 +1631,8 @@ image_validate (Lisp_Object instantiator)
     return;
   else if (VECTORP (instantiator))
     {
-      Lisp_Object *elt = vector_data (XVECTOR (instantiator));
-      int instantiator_len = XVECTOR (instantiator)->size;
+      Lisp_Object *elt = XVECTOR_DATA (instantiator);
+      int instantiator_len = XVECTOR_LENGTH (instantiator);
       struct image_instantiator_methods *meths;
       Lisp_Object already_seen = Qnil;
       struct gcpro gcpro1;
@@ -1922,7 +1922,7 @@ file).
 */
        (object))
 {
-  return (IMAGE_SPECIFIERP (object) ? Qt : Qnil);
+  return IMAGE_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 
@@ -1956,7 +1956,7 @@ mark_glyph (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (glyph->baseline));
   ((markobj) (glyph->face));
 
-  return (glyph->plist);
+  return glyph->plist;
 }
 
 static void
@@ -2118,7 +2118,7 @@ allocate_glyph (enum glyph_type type,
   Lisp_Object obj = Qnil;
   struct Lisp_Glyph *g =
     alloc_lcrecord (sizeof (struct Lisp_Glyph), lrecord_glyph);
-  
+
   g->type = type;
   g->image = Fmake_specifier (Qimage);
   switch (g->type)
@@ -2299,18 +2299,18 @@ glyph_width (Lisp_Object glyph, Lisp_Object frame_face,
         Lisp_Object private_face = XGLYPH_FACE(glyph);
 
 	if (!NILP (private_face))
-	  return (redisplay_frame_text_width_string (XFRAME (frame),
-						     private_face,
-						     0, str, 0, -1));
+	  return redisplay_frame_text_width_string (XFRAME (frame),
+						    private_face,
+						    0, str, 0, -1);
 	else
 	if (!NILP (frame_face))
-	  return (redisplay_frame_text_width_string (XFRAME (frame),
-						     frame_face,
-						     0, str, 0, -1));
+	  return redisplay_frame_text_width_string (XFRAME (frame),
+						    frame_face,
+						    0, str, 0, -1);
 	else
-	  return (redisplay_text_width_string (XWINDOW (window),
-					       window_findex,
-					       0, str, 0, -1));
+	  return redisplay_text_width_string (XWINDOW (window),
+					      window_findex,
+					      0, str, 0, -1);
       }
 
     case IMAGE_MONO_PIXMAP:
@@ -2341,7 +2341,7 @@ that redisplay will.
   XSETWINDOW (window, decode_window (window));
   CHECK_GLYPH (glyph);
 
-  return (make_int (glyph_width (glyph, Qnil, DEFAULT_INDEX, window)));
+  return make_int (glyph_width (glyph, Qnil, DEFAULT_INDEX, window));
 }
 
 #define RETURN_ASCENT	0
@@ -2401,7 +2401,7 @@ glyph_height_internal (Lisp_Object glyph, Lisp_Object frame_face,
 	ensure_face_cachel_complete (cachel, window, charsets);
 
 	face_cachel_charset_font_metric_info (cachel, charsets, &fm);
-	
+
 	if (function == RETURN_ASCENT)
 	  return fm.ascent;
 	else if (function == RETURN_DESCENT)
@@ -2470,7 +2470,7 @@ that redisplay will.
   XSETWINDOW (window, decode_window (window));
   CHECK_GLYPH (glyph);
 
-  return (make_int (glyph_ascent (glyph, Qnil, DEFAULT_INDEX, window)));
+  return make_int (glyph_ascent (glyph, Qnil, DEFAULT_INDEX, window));
 }
 
 DEFUN ("glyph-descent", Fglyph_descent, 1, 2, 0, /*
@@ -2483,7 +2483,7 @@ that redisplay will.
   XSETWINDOW (window, decode_window (window));
   CHECK_GLYPH (glyph);
 
-  return (make_int (glyph_descent (glyph, Qnil, DEFAULT_INDEX, window)));
+  return make_int (glyph_descent (glyph, Qnil, DEFAULT_INDEX, window));
 }
 
 /* This is redundant but I bet a lot of people expect it to exist. */
@@ -2497,7 +2497,7 @@ that redisplay will.
   XSETWINDOW (window, decode_window (window));
   CHECK_GLYPH (glyph);
 
-  return (make_int (glyph_height (glyph, Qnil, DEFAULT_INDEX, window)));
+  return make_int (glyph_height (glyph, Qnil, DEFAULT_INDEX, window));
 }
 
 #undef RETURN_ASCENT
@@ -2547,10 +2547,10 @@ glyph_contrib_p (Lisp_Object glyph, Lisp_Object domain)
   if (!GLYPHP (glyph))
     return 0;
   else
-    return (!NILP (specifier_instance_no_quit
-		   (GLYPH_CONTRIB_P (XGLYPH (glyph)), Qunbound, domain,
-		    /* #### look into ERROR_ME_NOT */
-		    ERROR_ME_NOT, 0, Qzero)));
+    return !NILP (specifier_instance_no_quit
+		  (GLYPH_CONTRIB_P (XGLYPH (glyph)), Qunbound, domain,
+		   /* #### look into ERROR_ME_NOT */
+		   ERROR_ME_NOT, 0, Qzero));
 }
 
 static void
@@ -2730,11 +2730,11 @@ get_display_table (struct window *w, face_index findex)
   Lisp_Object tem = Qnil;
 
   tem = WINDOW_FACE_CACHEL_DISPLAY_TABLE (w, findex);
-  if (VECTORP (tem) && XVECTOR (tem)->size == DISP_TABLE_SIZE)
+  if (VECTORP (tem) && XVECTOR_LENGTH (tem) == DISP_TABLE_SIZE)
     return XVECTOR (tem);
 
   tem = w->display_table;
-  if (VECTORP (tem) && XVECTOR (tem)->size == DISP_TABLE_SIZE)
+  if (VECTORP (tem) && XVECTOR_LENGTH (tem) == DISP_TABLE_SIZE)
     return XVECTOR (tem);
 
   return 0;

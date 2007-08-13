@@ -53,10 +53,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define SWITCH_ENUM_BUG 1
 
-/* The NU machine has a compiler that can handle long names.  */
-
-#undef SHORTNAMES
-
 /* Specify alignment requirement for start of text and data sections
    in the executable file.  */
 

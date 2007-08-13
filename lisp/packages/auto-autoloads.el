@@ -48,7 +48,7 @@ Runs `change-log-mode-hook'." t nil)
 (defvar add-log-lisp-like-modes '(emacs-lisp-mode lisp-mode scheme-mode lisp-interaction-mode) "\
 *Modes that look like Lisp to `add-log-current-defun'.")
 
-(defvar add-log-c-like-modes '(c-mode c++-mode c++-c-mode objc-mode) "\
+(defvar add-log-c-like-modes '(c-mode c++-mode c++-c-mode objc-mode java-mode) "\
 *Modes that look like C to `add-log-current-defun'.")
 
 (defvar add-log-tex-like-modes '(TeX-mode plain-TeX-mode LaTeX-mode plain-tex-mode latex-mode) "\
@@ -1227,7 +1227,7 @@ This discards the buffer's undo information." t nil)
 
 ;;;***
 
-;;;### (autoloads (hyper-apropos-popup-menu hyper-apropos-set-variable hyper-set-variable hyper-apropos-get-doc hyper-apropos-read-variable-symbol hyper-describe-function hyper-describe-variable hyper-describe-face hyper-describe-key-briefly hyper-describe-key hyper-apropos) "hyper-apropos" "packages/hyper-apropos.el")
+;;;### (autoloads (hyper-apropos-popup-menu hyper-apropos-set-variable hyper-set-variable hyper-apropos-read-variable-symbol hyper-describe-function hyper-describe-variable hyper-describe-face hyper-describe-key-briefly hyper-describe-key hyper-apropos) "hyper-apropos" "packages/hyper-apropos.el")
 
 (autoload 'hyper-apropos "hyper-apropos" "\
 Display lists of functions and variables matching REGEXP
@@ -1258,9 +1258,6 @@ See also `hyper-apropos' and `hyper-describe-function'." nil nil)
 
 (define-obsolete-function-alias 'hypropos-read-variable-symbol 'hyper-apropos-read-variable-symbol)
 
-(autoload 'hyper-apropos-get-doc "hyper-apropos" "\
-Toggle display of documentation for the symbol on the current line." t nil)
-
 (define-obsolete-function-alias 'hypropos-get-doc 'hyper-apropos-get-doc)
 
 (autoload 'hyper-set-variable "hyper-apropos" nil t nil)
@@ -1288,7 +1285,10 @@ Usually run by inclusion in `minibuffer-setup-hook'." nil nil)
 
 ;;;***
 
-;;;### (autoloads (dired-do-igrep-find dired-do-igrep igrep-find-define igrep-find igrep-define igrep) "igrep" "packages/igrep.el")
+;;;### (autoloads (dired-do-igrep-find dired-do-igrep igrep-find-define igrep-find igrep-define igrep igrep-insinuate) "igrep" "packages/igrep.el")
+
+(autoload 'igrep-insinuate "igrep" "\
+Replace the `grep' functions with `igrep'." nil nil)
 
 (autoload 'igrep "igrep" "\
 *Run `grep` PROGRAM to match EXPRESSION in FILES.
@@ -1337,13 +1337,9 @@ Optional (VARIABLE VALUE) arguments specify temporary bindings for the command."
 *Run `grep` PROGRAM to match EXPRESSION (with optional OPTIONS)
 on the marked (or next prefix ARG) files." t nil)
 
-(defalias 'dired-do-grep 'dired-do-igrep)
-
 (autoload 'dired-do-igrep-find "igrep" "\
 *Run `grep` PROGRAM to match EXPRESSION (with optional OPTIONS)
 on the marked (or next prefix ARG) directories." t nil)
-
-(defalias 'dired-do-grep-find 'dired-do-igrep-find)
 
 ;;;***
 
@@ -1778,23 +1774,27 @@ Obsolete.  Use `paren-set-mode' instead." t nil)
 
 ;;;***
 
-;;;### (autoloads (pending-delete pending-delete-off pending-delete-on) "pending-del" "packages/pending-del.el")
+;;;### (autoloads (pending-delete-mode turn-off-pending-delete turn-on-pending-delete) "pending-del" "packages/pending-del.el")
 
-(autoload 'pending-delete-on "pending-del" "\
-Turn on pending delete.
-When it is ON, typed text replaces the selection if the selection is active.
-When it is OFF, typed text is just inserted at point." t nil)
+(autoload 'turn-on-pending-delete "pending-del" "\
+Turn on pending delete minor mode unconditionally." t nil)
 
-(autoload 'pending-delete-off "pending-del" "\
-Turn off pending delete.
-When it is ON, typed text replaces the selection if the selection is active.
-When it is OFF, typed text is just inserted at point." t nil)
+(autoload 'turn-off-pending-delete "pending-del" "\
+Turn off pending delete minor mode unconditionally." t nil)
 
-(autoload 'pending-delete "pending-del" "\
-Toggle automatic deletion of the selected region.
+(autoload 'pending-delete-mode "pending-del" "\
+Toggle Pending Delete minor mode.
+When the pending delete is on, typed text replaces the selection.
 With a positive argument, turns it on.
-With a non-positive argument, turns it off.
-When active, typed text replaces the selection." t nil)
+With a non-positive argument, turns it off." t nil)
+
+(define-obsolete-function-alias 'pending-delete-on 'turn-on-pending-delete)
+
+(define-obsolete-function-alias 'pending-delete-off 'turn-off-pending-delete)
+
+(define-compatible-function-alias 'delete-selection-mode 'pending-delete-mode)
+
+(defalias 'pending-delete 'pending-delete-mode)
 
 ;;;***
 

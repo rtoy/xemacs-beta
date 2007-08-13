@@ -1,3 +1,26 @@
+1997-07-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Finsert_file_contents_internal): Handle non-regular
+ 	files.
+
+1997-07-12  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (LOCK_OBJ): Only include filelock.[co] when
+	CLASH_DETECTION is defined.
+
+1997-07-11  Steven L Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (main_1): Spelling fix.
+
+1997-07-10  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (dump-elcs): Shouldn't use SATISFIED hack.
+	(xemacs-no-site-file): Not supported any more.
+	(binary): New dependency for dumping XEmacs.
+	(xemacs): Attempt to be a little smarter about not dumping a new
+	XEmacs if it is not needed.
+	(temacs): Remove `xemacs' after success.
+
 1997-07-09  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* extents.c: Allow non-symbol properties of extents.

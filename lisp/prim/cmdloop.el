@@ -305,11 +305,7 @@ when called from Lisp."
 	   (format "Command `%s' is bound to key%s: %s"
 		   _execute_command_name_
 		   (if (cdr _execute_command_keys_) "s" "")
-		   (mapconcat 'key-description
-			      (sort _execute_command_keys_
-				    #'(lambda (x y)
-					(< (length x) (length y))))
-			      ", ")))
+		   (sorted-key-descriptions _execute_command_keys_)))
 	  (sit-for teach-extended-commands-timeout)
 	  (clear-message 'no-log)))
     ;; Else, just run the command.
@@ -431,8 +427,8 @@ signalled.  The character typed is returned as an ASCII value.  This
 is most likely the wrong thing for you to be using: consider using
 the `next-command-event' function instead."
   (save-excursion
-    (let ((inhibit-quit t)
-          (event (next-command-event)))
+    (let* ((inhibit-quit t)
+	   (event (next-command-event)))
       (prog1 (or (event-to-character event)
                  ;; Kludge.  If the event we read was a mouse-release,
                  ;; discard it and read the next one.

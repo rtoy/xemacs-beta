@@ -217,7 +217,7 @@ If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
-  return (make_int (current_column (decode_buffer (buffer, 0))));
+  return make_int (current_column (decode_buffer (buffer, 0)));
 }
 
 
@@ -287,7 +287,7 @@ If BUFFER is nil, the current buffer is assumed.
   if (opoint > 0)
     BUF_SET_PT (buf, opoint);
 
-  return (make_int (mincol));
+  return make_int (mincol);
 }
 
 int
@@ -358,7 +358,7 @@ Returns the actual column that it moved to.
   int tab_width = XINT (buf->tab_width);
 
   int prev_col = 0;
-  Emchar c;
+  Emchar c = 0;
 
   XSETBUFFER (buffer, buf);
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
@@ -576,7 +576,7 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
 	}
 
       if (ret_vpos) *ret_vpos = cur_line;
-      return (ret_pt);
+      return ret_pt;
     }
   else if (vtarget < 0)
     {
@@ -584,12 +584,12 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
 	{
 	  if (ret_vpos) *ret_vpos = -elt;
 	  /* #### This should be BUF_BEGV (b), right? */
-	  return (Dynarr_atp (w->line_start_cache, 0)->start);
+	  return Dynarr_atp (w->line_start_cache, 0)->start;
 	}
       else
 	{
 	  if (ret_vpos) *ret_vpos = vtarget;
-	  return (Dynarr_atp (w->line_start_cache, elt + vtarget)->start);
+	  return Dynarr_atp (w->line_start_cache, elt + vtarget)->start;
 	}
     }
   else
@@ -598,7 +598,7 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
          of the beginning of the current line. */
       if (ret_vpos) *ret_vpos = 0;
 
-      return (Dynarr_atp (w->line_start_cache, elt)->start);
+      return Dynarr_atp (w->line_start_cache, elt)->start;
     }
 
   RETURN_NOT_REACHED(0)	/* shut up compiler */

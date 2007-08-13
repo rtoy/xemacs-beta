@@ -29,6 +29,10 @@
 
 ;;; Code:
 
+;; XEmacs: the byte-compiler warns on `beginning-of-fortran-subprogram'.
+(eval-when-compile
+  (require 'fortran))
+
 (defgroup change-log nil
   "Change log maintenance"
   :group 'tools
@@ -91,7 +95,7 @@ and `current-time-string' are valid values."
      ("\\=, \\([^ ,:([\n]+\\)" nil nil (1 font-lock-function-name-face)))
     ;;
     ;; Function or variable names.
-    ("(\\([^ ,:\n]+\\)"
+    ("(\\([^ ,:)\n]+\\)"
      (1 font-lock-keyword-face)
      ("\\=, \\([^ ,:\n]+\\)" nil nil (1 font-lock-keyword-face)))
     ;;
@@ -412,7 +416,7 @@ Prefix arg means justify as well."
 
 ;;;###autoload
 (defvar add-log-c-like-modes
-    '(c-mode c++-mode c++-c-mode objc-mode)
+    '(c-mode c++-mode c++-c-mode objc-mode java-mode)
   "*Modes that look like C to `add-log-current-defun'.")
 
 ;;;###autoload

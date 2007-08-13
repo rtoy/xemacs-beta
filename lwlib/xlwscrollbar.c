@@ -1527,7 +1527,7 @@ timer (XtPointer data, XtIntervalId *id)
   if (w->sb.armed != ARM_NONE)
     {
       int last_value = w->sb.value;
-      int reason     = XmCR_NONE;
+      int reason;
 
       switch (w->sb.armed)
 	{
@@ -1547,6 +1547,8 @@ timer (XtPointer data, XtIntervalId *id)
 	  increment_value (w, w->sb.increment);
 	  reason = XmCR_INCREMENT;
 	  break;
+	default:
+	  reason = XmCR_NONE;
 	}
 
       verify_values (w);
@@ -1606,24 +1608,6 @@ what_button (XlwScrollBarWidget w, int mouse_x, int mouse_y)
 }
 
 static void
-PageDownOrRight (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
-{
-  XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
-  w->sb.forced_scroll = FORCED_SCROLL_DOWNRIGHT;
-  Select (widget, event, parms, num_parms);
-  w->sb.forced_scroll = FORCED_SCROLL_NONE;
-}
-
-static void
-PageUpOrLeft (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
-{
-  XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
-  w->sb.forced_scroll = FORCED_SCROLL_UPLEFT;
-  Select (widget, event, parms, num_parms);
-  w->sb.forced_scroll = FORCED_SCROLL_NONE;
-}
-
-static void
 Select (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 {
   XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
@@ -1663,6 +1647,8 @@ Select (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 	      break;
 	    }
 	  abort();
+	default:
+	  ; /* Do nothing */
 	}
     }
 
@@ -1711,6 +1697,8 @@ Select (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
       w->sb.armed = ARM_DOWN;
       redraw_down_arrow (w, True, False);
       break;
+    case BUTTON_NONE:
+      ; /* Do nothing */
     }
 
   verify_values (w);
@@ -1733,6 +1721,24 @@ Select (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
     }
 
   CHECK (w);
+}
+
+static void
+PageDownOrRight (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
+{
+  XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
+  w->sb.forced_scroll = FORCED_SCROLL_DOWNRIGHT;
+  Select (widget, event, parms, num_parms);
+  w->sb.forced_scroll = FORCED_SCROLL_NONE;
+}
+
+static void
+PageUpOrLeft (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
+{
+  XlwScrollBarWidget w = (XlwScrollBarWidget) widget;
+  w->sb.forced_scroll = FORCED_SCROLL_UPLEFT;
+  Select (widget, event, parms, num_parms);
+  w->sb.forced_scroll = FORCED_SCROLL_NONE;
 }
 
 static void
@@ -1793,6 +1799,8 @@ Release (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
     case ARM_DOWN:
       redraw_down_arrow (w, False, False);
       break;
+    default:
+      ; /* Do nothing */
     }
 
   XtUngrabKeyboard ((Widget) w, event->xbutton.time);
@@ -1853,6 +1861,8 @@ Jump (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 	call_callbacks (w, XmCR_DRAG, w->sb.value, mouse_y, event);
       
       break;
+    default:
+      ; /* Do nothing */
     }
   CHECK (w);
 }
@@ -1879,6 +1889,7 @@ Abort (Widget widget, XEvent *event, String *parms, Cardinal *num_parms)
 	{
 	case ARM_UP:   redraw_up_arrow   (w, False, False); break;
 	case ARM_DOWN: redraw_down_arrow (w, False, False); break;
+	default: ; /* Do nothing */
 	}
 
       w->sb.armed = ARM_NONE;

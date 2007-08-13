@@ -60,7 +60,7 @@ mark_toolbar_data (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
   struct toolbar_data *data = (struct toolbar_data *) XPNTR (obj);
   ((markobj) (data->last_toolbar_buffer));
-  return (data->toolbar_buttons);
+  return data->toolbar_buttons;
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("toolbar-data", toolbar_data,
@@ -81,7 +81,7 @@ mark_toolbar_button (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (data->cap_disabled_glyph));
   ((markobj) (data->callback));
   ((markobj) (data->enabled_p));
-  return (data->help_string);
+  return data->help_string;
 }
 
 static void
@@ -109,7 +109,7 @@ Return non-nil if OBJECT is a toolbar button.
 */
        (object))
 {
-  return (TOOLBAR_BUTTONP (object) ? Qt : Qnil);
+  return TOOLBAR_BUTTONP (object) ? Qt : Qnil;
 }
 
 /* Only query functions are provided for toolbar buttons.  They are
@@ -129,7 +129,7 @@ Return the callback function associated with the toolbar BUTTON.
 {
   CHECK_TOOLBAR_BUTTON (button);
 
-  return (XTOOLBAR_BUTTON (button)->callback);
+  return XTOOLBAR_BUTTON (button)->callback;
 }
 
 DEFUN ("toolbar-button-help-string", Ftoolbar_button_help_string, 1, 1, 0, /*
@@ -139,7 +139,7 @@ Return the help string function associated with the toolbar BUTTON.
 {
   CHECK_TOOLBAR_BUTTON (button);
 
-  return (XTOOLBAR_BUTTON (button)->help_string);
+  return XTOOLBAR_BUTTON (button)->help_string;
 }
 
 DEFUN ("toolbar-button-enabled-p", Ftoolbar_button_enabled_p, 1, 1, 0, /*
@@ -149,7 +149,7 @@ Return t if BUTTON is active.
 {
   CHECK_TOOLBAR_BUTTON (button);
 
-  return (XTOOLBAR_BUTTON (button)->enabled ? Qt : Qnil);
+  return XTOOLBAR_BUTTON (button)->enabled ? Qt : Qnil;
 }
 
 DEFUN ("set-toolbar-button-down-flag", Fset_toolbar_button_down_flag, 2, 2, 0, /*
@@ -195,7 +195,7 @@ Don't touch.
     }
 
   return Qnil;
-}    
+}
 
 Lisp_Object
 get_toolbar_button_glyph (struct window *w, struct toolbar_button *tb)
@@ -218,7 +218,7 @@ get_toolbar_button_glyph (struct window *w, struct toolbar_button *tb)
 	glyph = tb->cap_down_glyph;
       else if (!tb->enabled)
 	glyph = tb->cap_disabled_glyph;
-      
+
       if (NILP (glyph))
 	glyph = tb->cap_up_glyph;
     }
@@ -248,7 +248,7 @@ decode_toolbar_position (Lisp_Object position)
   if (EQ (position, Qleft))   return LEFT_TOOLBAR;
   if (EQ (position, Qright))  return RIGHT_TOOLBAR;
   signal_simple_error ("Invalid toolbar position", position);
-  
+
   return TOP_TOOLBAR; /* not reached */
 }
 
@@ -304,7 +304,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
   Lisp_Object *elt, glyphs, retval, buffer;
   struct gcpro gcpro1, gcpro2;
 
-  elt = vector_data (XVECTOR (desc));
+  elt = XVECTOR_DATA (desc);
   buffer = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer;
 
   if (!tb)
@@ -345,6 +345,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
       int pos;
       int style_seen = 0;
       int size_seen = 0;
+      int len = XVECTOR_LENGTH (desc);
 
       if (!tb->blank)
 	{
@@ -352,7 +353,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 	  tb->dirty = 1;
 	}
 
-      for (pos = 0; pos < vector_length (XVECTOR (desc)); pos += 2)
+      for (pos = 0; pos < len; pos += 2)
 	{
 	  Lisp_Object key = elt[pos];
 	  Lisp_Object val = elt[pos + 1];
@@ -729,7 +730,7 @@ set_frame_toolbar (struct frame *f, enum toolbar_pos pos, int first_time_p)
   FRAME_TOOLBAR_DATA (f, pos)->last_toolbar_buffer = buffer;
   FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons = buttons;
 
-  return (visible);
+  return visible;
 }
 
 #define COMPUTE_TOOLBAR_DATA(position)					 \
@@ -921,9 +922,7 @@ get_toolbar_coords (struct frame *f, enum toolbar_pos pos, int *x, int *y,
       if ((x_coord >= x) && (x_coord < (x + width)))			\
 	{								\
 	  if ((y_coord >= y) && (y_coord < (y + height)))		\
-	    {								\
-	      return (FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons);	\
-	    }								\
+	    return FRAME_TOOLBAR_DATA (f, pos)->toolbar_buttons;	\
 	}								\
     } while (0)
 
@@ -1045,9 +1044,9 @@ whole, use `check-valid-instantiator' with a specifier type of 'toolbar.
 
   if (!VECTORP (button))
     CTB_ERROR ("toolbar button descriptors must be vectors");
-  elt = vector_data (XVECTOR (button));
+  elt = XVECTOR_DATA (button);
 
-  if (vector_length (XVECTOR (button)) == 2)
+  if (XVECTOR_LENGTH (button) == 2)
     {
       if (!EQ (Q_style, check_toolbar_button_keywords (button, elt[0],
 						       elt[1], errb)))
@@ -1056,7 +1055,7 @@ whole, use `check-valid-instantiator' with a specifier type of 'toolbar.
       return Qt;
     }
 
-  if (vector_length (XVECTOR (button)) != 4)
+  if (XVECTOR_LENGTH (button) != 4)
     CTB_ERROR ("toolbar button descriptors must be 2 or 4 long");
 
   /* The first element must be a list of glyphs of length 1-6.  The
@@ -1110,7 +1109,7 @@ whole, use `check-valid-instantiator' with a specifier type of 'toolbar.
   len = XINT (Flength (value));
   if (len < 1)
     CTB_ERROR ("toolbar button glyph list must have at least 1 entry");
-  
+
   if (len > 6)
     CTB_ERROR ("toolbar button glyph list can have at most 6 entries");
 
@@ -1202,7 +1201,7 @@ of the exact format.
 */
        (object))
 {
-  return (TOOLBAR_SPECIFIERP (object) ? Qt : Qnil);
+  return TOOLBAR_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 
@@ -1347,7 +1346,7 @@ void
 specifier_vars_of_toolbar (void)
 {
   Lisp_Object elt;
-      
+
   DEFVAR_SPECIFIER ("default-toolbar", &Vdefault_toolbar /*
 Specifier for a fallback toolbar.
 Use `set-specifier' to change this.

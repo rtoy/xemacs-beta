@@ -975,7 +975,7 @@ Match addresses of the style ``name%[stuff].'' when called with DELIM
 of \"%\" and addresses of the style ``[stuff]name@[stuff]'' when
 called with DELIM \"@\".  If DELIM is nil or not provided, matches
 addresses of the style ``name''."
-  (and (string-match (concat "[-a-zA-Z0-9_.]+" delim) from 0)
+  (and (string-match (concat "[-+a-zA-Z0-9_.]+" delim) from 0)
        (substring from
 		  (match-beginning 0)
 		  (- (match-end 0) (if (null delim) 0 1)))))
@@ -1008,7 +1008,7 @@ AUTHOR is the author's name (which is removed from the address)."
 		   (= (aref address (1- (length address))) ?>))
 	      (substring address 1 (1- (length address)))
 	    address))
-      (if (string-match "[-a-zA-Z0-9!@%._]+" from 0)
+      (if (string-match "[-+a-zA-Z0-9!@%._]+" from 0)
 	  (sc-submatch 0 from)
 	"")
       )))

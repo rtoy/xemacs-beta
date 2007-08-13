@@ -21,6 +21,11 @@
 
 ## Synched up with: Not synched with FSF.
 
+## For performance and consistency, no built-in rules.
+.SUFFIXES:
+.SUFFIXES: .c .o .i .h
+
+@SET_MAKE@
 SHELL = /bin/sh
 RM = rm -f
 

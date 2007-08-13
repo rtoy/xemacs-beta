@@ -193,7 +193,7 @@ Lisp_Object find_keyword_in_vector (Lisp_Object vector,
 				    Lisp_Object keyword);
 Lisp_Object find_keyword_in_vector_or_given (Lisp_Object vector,
 					     Lisp_Object keyword,
-					     Lisp_Object defalt);
+					     Lisp_Object default_);
 void check_valid_string (Lisp_Object data);
 void check_valid_int (Lisp_Object data);
 DECLARE_DOESNT_RETURN (incompatible_image_types (Lisp_Object instantiator,

@@ -95,6 +95,10 @@
     ;; Extended commands
     read-command-history
 
+    ;; Info, lookup, and bookmark historys
+    Info-minibuffer-history
+    Manual-page-minibuffer-history
+
     ;; GNU Emacs-specific:
     ;; Extended commands
     extended-command-history)

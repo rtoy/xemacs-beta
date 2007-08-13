@@ -3214,57 +3214,70 @@ as the second argument.")
   "Maximum size of the \" *Message-Log*\" buffer.  See `log-message'.")
 (make-compatible-variable 'message-log-max 'log-message-max-size)
 
+;; We used to reject quite a lot of stuff here, but it was a bad idea,
+;; for two reasons:
+;;
+;; a) In most circumstances, you *want* to see the message in the log.
+;;    The explicitly non-loggable messages should be marked as such by
+;;    the issuer.  Gratuitous non-displaying of random regexps made
+;;    debugging harder, too (because various reasonable debugging
+;;    messages would get eaten).
+;;
+;; b) It slowed things down.  Yes, visibly.
+;;
+;; So, I left only a few of the really useless ones on this kill-list.
+;;
+;;                                            --hniksic
 (defvar log-message-ignore-regexps
   '(;; Often-seen messages
-    "^$"				; empty message
-    "^Mark set$"
-    "^\\(Beginning\\|End\\) of buffer$"
-    "^Quit$"
-    "^Killing [0-9]+ characters$"
+    "\\`\\'"				; empty message
+    ;;"^Mark set$"
+    ;;"^\\(Beginning\\|End\\) of buffer$"
+    ;;"^Quit$"
+    ;;"^Killing [0-9]+ characters$"
     ;; saving
-    "^Saving file .*\\.\\.\\.$"		; note: cannot ignore ^Wrote, because
+    ;;"^Saving file .*\\.\\.\\.$"		; note: cannot ignore ^Wrote, because
 					; it would kill off too much stuff.
-    "^(No changes need to be saved)$"
-    "^(No files need saving)$"
+    ;;"^(No changes need to be saved)$"
+    ;;"^(No files need saving)$"
     ;; undo, with the output of redo.el
-    "^Undo[!.]+$"
-    "^Redo[!.]+$"
+    "\\`Undo[!.]+\\'"
+    "\\`Redo[!.]+\\'"
     ;; M-x compile
-    "^Parsing error messages\\.\\.\\."
+    ;;"^Parsing error messages\\.\\.\\."
     ;; M-!
-    "^(Shell command completed with no output)"
+    ;;"^(Shell command completed with no output)"
     ;; font-lock
-    "^Fontifying"
+    "\\`Fontifying"
     ;; isearch
-    "^\\(Failing \\)?\\([Ww]rapped \\)?\\([Rr]egexp \\)?I-search\\( backward\\)?:"
-    "^Mark saved where search started$"
+    ;;"^\\(Failing \\)?\\([Ww]rapped \\)?\\([Rr]egexp \\)?I-search\\( backward\\)?:"
+    ;;"^Mark saved where search started$"
     ;; menus
-    "^Selecting menu item"
+    ;;"^Selecting menu item"
     ;; completions
-    "^Making completion list"
-    "^Matches "				; paren-matching message
+    ;;"^Making completion list"
+    ;;"^Matches "				; paren-matching message
     ;; help
-    "^Type .* to \\(remove help\\|restore the other\\) window."
-    "^M-x .* (bound to key"		; teach-extended-commands
+    ;;"^Type .* to \\(remove help\\|restore the other\\) window."
     ;; VM
-    "^\\(Parsing messages\\|Reading attributes\\|Generating summary\\|Building threads\\|Converting\\)\\.\\.\\. [0-9]+$"
-    "^End of message"			; + Gnus
+    ;;"^\\(Parsing messages\\|Reading attributes\\|Generating summary\\|Building threads\\|Converting\\)\\.\\.\\. [0-9]+$"
+    ;;"^End of message"			; + Gnus
     ;; Gnus
-    "^No news is no news$"
-    "^No more\\( unread\\)? newsgroups$"
-    "^Opening [^ ]+ server\\.\\.\\."
-    "^[^:]+: Reading incoming mail"
-    "^Getting mail from "
-    "^\\(Generating Summary\\|Sorting threads\\|Making sparse threads\\|Scoring\\|Checking new news\\|Expiring articles\\|Sending\\)\\.\\.\\."
-    "^\\(Fetching headers for\\|Retrieving newsgroup\\|Reading active file\\)"
-    "^No more\\( unread\\)? articles"
-    "^Deleting article "
+    ;;"^No news is no news$"
+    ;;"^No more\\( unread\\)? newsgroups$"
+    ;;"^Opening [^ ]+ server\\.\\.\\."
+    ;;"^[^:]+: Reading incoming mail"
+    ;;"^Getting mail from "
+    ;;"^\\(Generating Summary\\|Sorting threads\\|Making sparse threads\\|Scoring\\|Checking new news\\|Expiring articles\\|Sending\\)\\.\\.\\."
+    ;;"^\\(Fetching headers for\\|Retrieving newsgroup\\|Reading active file\\)"
+    ;;"^No more\\( unread\\)? articles"
+    ;;"^Deleting article "
     ;; W3
-    "^Parsed [0-9]+ of [0-9]+ ([0-9]+%)"
+    ;;"^Parsed [0-9]+ of [0-9]+ ([0-9]+%)"
     ;; outl-mouse
-    "^Adding glyphs\\.\\.\\."
+    ;;"^Adding glyphs\\.\\.\\."
     ;; bbdb
-    "^->"
+    ;;"^->"
     )
   "List of regular expressions matching messages which shouldn't be logged.
 See `log-message'.  

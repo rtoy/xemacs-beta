@@ -40,9 +40,7 @@
 (require 'sendmail)
 
 ;; XEmacs:  Screen for whether a beta version is running and redirect
-;; reports to the beta list instead of the newsgroup.  I don't think
-;; there's an XEmacs equivalent to system-configuration-options, but
-;; there should be.  -sb
+;; reports to the beta list instead of the newsgroup.
 (defvar report-emacs-bug-pretest-address "xemacs-beta@xemacs.org"
   "Address of mailing list for XEmacs beta bugs.")
 
@@ -70,8 +68,7 @@ Prompts for bug subject.  Leaves you in a mail buffer."
 	(goto-char (point-min))
 	(re-search-forward (concat "^" (regexp-quote mail-header-separator) "\n"))
 	(insert "In " (emacs-version) "\n")
-	(if (and (boundp 'system-configuration-options)
-		 system-configuration-options
+	(if (and system-configuration-options
 		 (not (equal system-configuration-options "")))
 	    (insert "configured using `configure "
 		    system-configuration-options "'\n"))
@@ -115,7 +112,10 @@ Prompts for bug subject.  Leaves you in a mail buffer."
 	;; in order to send easily.
 	;; XEmacs:  FSF non-abstraction of data?
 	;; (use-local-map (nconc (make-sparse-keymap) (current-local-map)))
-	(use-local-map (current-local-map))
+	;; Ghod intended it this way:
+	(use-local-map (let ((map (make-sparse-keymap)))
+			 (set-keymap-parents map (list (current-local-map)))
+			 map))
 	(define-key (current-local-map) "\C-c\C-i" 'report-emacs-bug-info)
 	(with-output-to-temp-buffer "*Bug Help*"
 	  (princ (substitute-command-keys
@@ -123,11 +123,11 @@ Prompts for bug subject.  Leaves you in a mail buffer."
 	  (princ (substitute-command-keys
 		  "Type \\[kill-buffer] RET to cancel (don't send it).\n"))
 	  (terpri)
-	  (princ (substitute-command-keys
-		  "Type \\[report-emacs-bug-info] to visit in Info the Emacs Manual section
-about when and how to write a bug report,
-and what information to supply so that the bug can be fixed.
-Type SPC to scroll through this section and its subsections.")))
+	  (princ (substitute-command-keys "\
+Type \\[report-emacs-bug-info] to visit in Info the Emacs Manual section
+about when and how to write a bug report, and what information to supply
+so that the bug can be fixed.
+Type `\\[delete-other-windows]' to remove this window.")))
 	;; Make it less likely people will send empty messages.
 	(make-local-variable 'mail-send-hook)
 	(add-hook 'mail-send-hook 'report-emacs-bug-hook)

@@ -1,4 +1,19 @@
 							-*- indented-text -*-
+to 20.3 beta13 "Brussels"
+-- W3-3.0.94
+-- ph.el-2.6 courtesy of Oscar Figueiredo
+-- Miscellaneous Configure changes from Martin and Hrvoje.
+-- crisp.el-1.19 courtesy of Gary Foster
+-- Gnus-5.4.63
+-- Major and sundry changes by Martin Buchholz
+-- gnuserv.el-3.9 (Add done button on menubar) courtesy of Hrvoje Niksic
+-- edit-toolbar.el-1.01 courtesy of Peter Pezaris
+-- toolbar-utils.el courtesy of Jeff Miller (was called toolbar-func.el on
+   xemacs-beta)
+-- Miscellaneous build fixes
+-- Custom-1.9951
+-- Miscellaneous bug fixes
+
 to 20.3 beta12 "Helsinki"
 -- cc-mode-5.12.
 -- ~/.xemacs --> ~/.xemacs/init.el

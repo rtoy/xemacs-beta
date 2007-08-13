@@ -610,7 +610,6 @@ Lisp_Object maybe_signal_simple_continuable_error_2 (CONST char *reason,
 						     Lisp_Object class,
 						     Error_behavior errb);
 Lisp_Object Fprogn (Lisp_Object args);
-Lisp_Object Fstrerror (Lisp_Object errnum);
 Lisp_Object Fcommandp (Lisp_Object obj);
 Lisp_Object Feval (Lisp_Object form);
 Lisp_Object Fapply (int nargs, Lisp_Object *args);
@@ -846,7 +845,7 @@ Lisp_Object Fextent_end_glyph_layout (Lisp_Object extent);
 Lisp_Object Fset_extent_priority (Lisp_Object extent, Lisp_Object pri);
 Lisp_Object Fset_extent_property (Lisp_Object,Lisp_Object,Lisp_Object);
 Lisp_Object Fextent_property (Lisp_Object extent, Lisp_Object,
-			      Lisp_Object defalt);
+			      Lisp_Object default_);
 Lisp_Object Fextent_properties (Lisp_Object extent);
 Lisp_Object Fforce_highlight_extent (Lisp_Object extent,
 				     Lisp_Object flag);
@@ -985,7 +984,7 @@ Lisp_Object Fstring_equal (Lisp_Object s1, Lisp_Object s2);
 Lisp_Object Fstring_lessp (Lisp_Object s1, Lisp_Object s2);
 Lisp_Object string_getprop (struct Lisp_String *s,
 			    Lisp_Object property,
-			    Lisp_Object defalt);
+			    Lisp_Object default_);
 void string_putprop (struct Lisp_String *s, Lisp_Object property,
 		     Lisp_Object value);
 void bump_string_modiff (Lisp_Object str);
@@ -1056,13 +1055,13 @@ Lisp_Object Fcopy_alist (Lisp_Object alist);
 Lisp_Object Fcopy_tree (Lisp_Object arg, Lisp_Object vecp);
 Lisp_Object Fplist_put (Lisp_Object plist, Lisp_Object prop, Lisp_Object val);
 Lisp_Object Fplist_get (Lisp_Object plist, Lisp_Object prop,
-			Lisp_Object defalt);
+			Lisp_Object default_);
 Lisp_Object Fcanonicalize_plist (Lisp_Object plist,
 				 Lisp_Object infected_with_hemorrhagic_fever);
 Lisp_Object Flax_plist_put (Lisp_Object plist, Lisp_Object prop,
 			    Lisp_Object val);
 Lisp_Object Flax_plist_get (Lisp_Object plist, Lisp_Object prop,
-			    Lisp_Object defalt);
+			    Lisp_Object default_);
 Lisp_Object Flax_plist_remprop (Lisp_Object plist, Lisp_Object prop);
 Lisp_Object Fcanonicalize_lax_plist (Lisp_Object plist,
 				     Lisp_Object
@@ -1119,7 +1118,7 @@ Lisp_Object Fset_frame_position (Lisp_Object frame,
 Lisp_Object Fdelete_frame (Lisp_Object frame, Lisp_Object force);
 Lisp_Object Fset_frame_properties (Lisp_Object frame, Lisp_Object plist);
 Lisp_Object Fframe_property (Lisp_Object frame, Lisp_Object property,
-			     Lisp_Object defalt);
+			     Lisp_Object default_);
 Lisp_Object Fset_frame_pointer (Lisp_Object frame, Lisp_Object pointer);
 
 extern Lisp_Object Vcreate_frame_hook, Qcreate_frame_hook;
@@ -1580,7 +1579,7 @@ Lisp_Object Fmake_range_table (void);
 Lisp_Object Fput_range_table (Lisp_Object start, Lisp_Object end,
 			      Lisp_Object val, Lisp_Object table);
 Lisp_Object Fget_range_table (Lisp_Object pos, Lisp_Object table,
-			      Lisp_Object defalt);
+			      Lisp_Object default_);
 Lisp_Object Fclear_range_table (Lisp_Object table);
 void put_range_table (Lisp_Object table, EMACS_INT first,
 		      EMACS_INT last, Lisp_Object val);
@@ -1588,7 +1587,7 @@ int unified_range_table_bytes_needed (Lisp_Object rangetab);
 int unified_range_table_bytes_used (void *unrangetab);
 void unified_range_table_copy_data (Lisp_Object rangetab, void *dest);
 Lisp_Object unified_range_table_lookup (void *unrangetab, EMACS_INT pos,
-					Lisp_Object defalt);
+					Lisp_Object default_);
 int unified_range_table_nentries (void *unrangetab);
 void unified_range_table_get_range (void *unrangetab, int offset,
 				    EMACS_INT *min, EMACS_INT *max,
@@ -1660,7 +1659,7 @@ extern Lisp_Object Qnas;
 /* Defined in specifier.c */
 Lisp_Object Fspecifier_instance (Lisp_Object specifier,
 				 Lisp_Object locale,
-				 Lisp_Object defalt,
+				 Lisp_Object default_,
 				 Lisp_Object no_fallback);
 Lisp_Object Fspecifier_specs (Lisp_Object specifier,
 			      Lisp_Object locale,

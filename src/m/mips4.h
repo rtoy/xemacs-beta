@@ -42,7 +42,7 @@ NOTE-END  */
    The -L is used to force second -lc to find the sysv version
    of libc.a, which is needed because the BSD libc.a
    doesn't have _ctype.  */
-#define LIB_STANDARD "-lmld -lc /lib/crtn.o -L/usr/lib -lc"
+#define LIB_STANDARD "-lc /lib/crtn.o -L/usr/lib -lc"
 
 
 #define COFF

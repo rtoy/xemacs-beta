@@ -1,7 +1,7 @@
 ;;; w3-cus.el --- Customization support for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/05/28 13:51:24
-;; Version: 1.9
+;; Created: 1997/07/06 22:30:54
+;; Version: 1.10
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -346,6 +346,7 @@ of the menu."
 	(40 (-40 "%b"))
 	" "
 	(w3-current-isindex "[Searchable]  ")
+	(w3-current-badhtml "[BAD HTML]  ")
 	"%p" "  " global-mode-string))
   "*The modeline format string when in w3 mode"
   :group 'w3-advanced

@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.9940
+Version: 1.9951
 
 @menu
 * Introduction::                

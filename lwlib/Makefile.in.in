@@ -27,7 +27,10 @@
 
 srcdir=@srcdir@
 
+@SET_MAKE@
 SHELL=/bin/sh
+RM = rm -f
+AR = ar cq
 
 CC=@CC@
 CPP=@CPP@
@@ -35,10 +38,6 @@ CFLAGS=@CFLAGS@
 LDFLAGS=@LDFLAGS@
 CPPFLAGS=@CPPFLAGS@
 RANLIB=@RANLIB@
-
-RM = rm -f
-AR = ar cq
-@SET_MAKE@
 
 #define NOT_C_CODE
 #include "../src/config.h"
@@ -92,7 +91,7 @@ liblw.a: $(objs)
 
 #ifdef ENERGIZE
 ez_dialog:
-	cd energize && $(MAKE) $(MFLAGS)
+	cd energize && $(RECURSIVE_MAKE)
 #endif
 
 .PHONY: mostlyclean clean distclean realclean extraclean
@@ -100,7 +99,7 @@ mostlyclean:
 	$(RM) liblw.a liblw_pure_*.a *.o *.i core
 clean: mostlyclean
 #ifdef ENERGIZE
-	cd energize && $(MAKE) $(MFLAGS) clean
+	cd energize && $(RECURSIVE_MAKE) clean
 #endif
 distclean: clean
 	$(RM) Makefile Makefile.in config.h TAGS

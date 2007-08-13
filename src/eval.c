@@ -289,7 +289,7 @@ mark_compiled_function (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (b->annotated));
 #endif
   /* tail-recurse on constants */
-  return (b->constants);
+  return b->constants;
 }
 
 static int
@@ -419,7 +419,7 @@ do_debug_on_exit (Lisp_Object val)
   /* This is falsified by call_debugger */
   Lisp_Object v = call_debugger (list2 (Qexit, val));
 
-  return ((!UNBOUNDP (v)) ? v : val);
+  return !UNBOUNDP (v) ? v : val;
 }
 
 /* Called when debug-on-call behavior is called for.  Enter the debugger
@@ -483,7 +483,7 @@ skip_debugger (Lisp_Object conditions, Lisp_Object data)
   /* This function can GC */
   Lisp_Object tail;
   int first_string = 1;
-  Lisp_Object error_message;
+  Lisp_Object error_message = Qnil;
 
   for (tail = Vdebug_ignored_errors; CONSP (tail); tail = XCDR (tail))
     {
@@ -515,7 +515,7 @@ skip_debugger (Lisp_Object conditions, Lisp_Object data)
 static Lisp_Object
 backtrace_259 (Lisp_Object stream)
 {
-  return (Fbacktrace (stream, Qt));
+  return Fbacktrace (stream, Qt);
 }
 
 /* An error was signalled.  Maybe call the debugger, if the `debug-on-error'
@@ -631,7 +631,7 @@ signal_call_debugger (Lisp_Object conditions,
 
   UNGCPRO;
   Vcondition_handlers = all_handlers;
-  return (unbind_to (speccount, val));
+  return unbind_to (speccount, val);
 }
 
 
@@ -1356,12 +1356,12 @@ internal_catch (Lisp_Object tag,
     {
       /* Throw works by a longjmp that comes right here.  */
       if (threw) *threw = 1;
-      return (c.val);
+      return c.val;
     }
   c.val = (*func) (arg);
   if (threw) *threw = 0;
   catchlist = c.next;
-  return (c.val);
+  return c.val;
 }
 
 
@@ -1553,7 +1553,7 @@ condition_bind_unwind (Lisp_Object loser)
     Vcondition_handlers = victim->cdr;
 
   free_cons (victim);
-  return (Qnil);
+  return Qnil;
 }
 
 static Lisp_Object
@@ -1570,7 +1570,7 @@ condition_case_unwind (Lisp_Object loser)
     Vcondition_handlers = victim->cdr;
 
   free_cons (victim);
-  return (Qnil);
+  return Qnil;
 }
 
 /* Split out from condition_case_3 so that primitive C callers
@@ -1664,7 +1664,7 @@ condition_case_1 (Lisp_Object handlers,
   if (SETJMP (c.jmp))
     {
       /* throw does ungcpro, etc */
-      return ((*hfun) (c.val, harg));
+      return (*hfun) (c.val, harg);
     }
 
   record_unwind_protect (condition_case_unwind, c.tag);
@@ -1692,7 +1692,7 @@ condition_case_1 (Lisp_Object handlers,
   catchlist = c.next;
   Vcondition_handlers = XCDR (c.tag);
 
-  return (unbind_to (speccount, c.val));
+  return unbind_to (speccount, c.val);
 }
 
 static Lisp_Object
@@ -1713,7 +1713,7 @@ run_condition_case_handlers (Lisp_Object val, Lisp_Object var)
   int speccount;
 
   if (NILP (var))
-    return (Fprogn (Fcdr (val))); /* tailcall */
+    return Fprogn (Fcdr (val)); /* tailcall */
 
   speccount = specpdl_depth_counter;
   specbind (var, Fcar (val));
@@ -1824,7 +1824,7 @@ and invokes the standard error-handler if none is found.)
 
   /* Caller should have GC-protected args */
   tem = Ffuncall (nargs - 1, args + 1);
-  return (unbind_to (speccount, tem));
+  return unbind_to (speccount, tem);
 }
 
 static int
@@ -1833,12 +1833,12 @@ condition_type_p (Lisp_Object type, Lisp_Object conditions)
   if (EQ (type, Qt))
     /* (condition-case c # (t c)) catches -all- signals
      *   Use with caution! */
-    return (1);
+    return 1;
   else
     {
       if (SYMBOLP (type))
 	{
-	  return (!NILP (Fmemq (type, conditions)));
+	  return !NILP (Fmemq (type, conditions));
 	}
       else if (CONSP (type))
 	{
@@ -1863,7 +1863,7 @@ return_from_signal (Lisp_Object value)
      returns.  So, since this feature is not very useful,
      take it out.  */
   /* Have called debugger; return value to signaller  */
-  return (value);
+  return value;
 #else  /* But the reality is that that stinks, because: */
   /* GACK!!! Really want some way for debug-on-quit errors
      to be continuable!! */
@@ -1955,7 +1955,7 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
           NUNGCPRO;
 #if 0
           if (!EQ (tem, Qsignal))
-            return (return_from_signal (tem));
+            return return_from_signal (tem);
 #endif
           /* If handler didn't throw, try another handler */
           Vcondition_handlers = all_handlers;
@@ -1968,7 +1968,7 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
       else if (EQ (handler_data, Qt))
 	{
           UNGCPRO;
-          return (Fthrow (handlers, Fcons (sig, data)));
+          return Fthrow (handlers, Fcons (sig, data));
 	}
       /* `error' is used similarly to the way `t' is used, but in
          addition it invokes the debugger if debug_on_error.
@@ -1983,10 +1983,10 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
 
           UNGCPRO;
           if (!UNBOUNDP (tem))
-            return (return_from_signal (tem));
+            return return_from_signal (tem);
 
           tem = Fcons (sig, data);
-          return (Fthrow (handlers, tem));
+          return Fthrow (handlers, tem);
         }
       else
 	{
@@ -2006,11 +2006,11 @@ signal_1 (Lisp_Object sig, Lisp_Object data)
 					      &debugger_entered);
                   UNGCPRO;
 		  if (!UNBOUNDP (tem))
-                    return (return_from_signal (tem));
+                    return return_from_signal (tem);
 
                   /* Doesn't return */
                   tem = Fcons (Fcons (sig, data), Fcdr (clause));
-                  return (Fthrow (handlers, tem));
+                  return Fthrow (handlers, tem);
                 }
 	    }
 	}
@@ -2090,8 +2090,8 @@ static Lisp_Object
 call_with_suspended_errors_1 (Lisp_Object opaque_arg)
 {
   Lisp_Object *kludgy_args = (Lisp_Object *) get_opaque_ptr (opaque_arg);
-  return (primitive_funcall ((lisp_fn_t) get_opaque_ptr (kludgy_args[0]),
-			     XINT (kludgy_args[1]), kludgy_args + 2));
+  return primitive_funcall ((lisp_fn_t) get_opaque_ptr (kludgy_args[0]),
+			    XINT (kludgy_args[1]), kludgy_args + 2);
 }
 
 static Lisp_Object
@@ -2512,18 +2512,6 @@ signal_quit (void)
 }
 
 
-DEFUN ("strerror", Fstrerror, 1, 1, 0, /*
-Return the error string associated with integer ERRNUM.
-This function is an interface to strerror(3).
-The returned string may or may not be translated.
-*/
-       (errnum))
-{
-  CHECK_INT (errnum);
-  return build_ext_string (strerror (XINT (errnum)), FORMAT_NATIVE);
-}
-
-
 /**********************************************************************/
 /*                            User commands                           */
 /**********************************************************************/
@@ -2631,7 +2619,7 @@ when reading the arguments.
       final = Fcall_interactively (cmd, record, keys);
 
       POP_BACKTRACE (backtrace);
-      return (final);
+      return final;
     }
   else if (STRINGP (final) || VECTORP (final))
     {
@@ -3019,7 +3007,7 @@ Evaluate FORM and return its value.
             val = do_debug_on_exit (val);
 	  POP_BACKTRACE (backtrace);
 	  UNGCPRO;
-          return (val);
+          return val;
 	}
 
       else
@@ -3078,7 +3066,7 @@ Evaluate FORM and return its value.
   if (backtrace.debug_on_exit)
     val = do_debug_on_exit (val);
   POP_BACKTRACE (backtrace);
-  return (val);
+  return val;
 }
 
 
@@ -3516,7 +3504,7 @@ apply_lambda (Lisp_Object fun, int numargs, Lisp_Object unevalled_args)
     tem = do_debug_on_exit (tem);
   /* Don't do it again when we return to eval.  */
   backtrace_list->debug_on_exit = 0;
-  return (tem);
+  return tem;
 }
 
 /* Apply a Lisp function FUN to the NARGS evaluated arguments in ARG_VECTOR
@@ -3897,7 +3885,7 @@ apply1 (Lisp_Object fn, Lisp_Object arg)
   Lisp_Object args[2];
 
   if (NILP (arg))
-    return (Ffuncall (1, &fn));
+    return Ffuncall (1, &fn);
   GCPRO1 (args[0]);
   gcpro1.nvars = 2;
   args[0] = fn;
@@ -4445,7 +4433,7 @@ call0_trapping_errors (CONST char *warning_string, Lisp_Object function)
     {
       tem = XSYMBOL (function)->function;
       if (NILP (tem) || UNBOUNDP (tem))
-	return (Qnil);
+	return Qnil;
     }
 
   GCPRO2 (opaque, function);
@@ -4493,7 +4481,7 @@ call1_trapping_errors (CONST char *warning_string, Lisp_Object function,
     {
       tem = XSYMBOL (function)->function;
       if (NILP (tem) || UNBOUNDP (tem))
-	return (Qnil);
+	return Qnil;
     }
 
   GCPRO4 (cons, opaque, function, object);
@@ -4530,7 +4518,7 @@ call2_trapping_errors (CONST char *warning_string, Lisp_Object function,
     {
       tem = XSYMBOL (function)->function;
       if (NILP (tem) || UNBOUNDP (tem))
-	return (Qnil);
+	return Qnil;
     }
 
   GCPRO5 (cons, opaque, function, object1, object2);
@@ -4619,7 +4607,7 @@ specbind_unwind_local (Lisp_Object ovalue)
     Fset_buffer (current);
     UNGCPRO;
   }
-  return (symbol);
+  return symbol;
 }
 
 static Lisp_Object
@@ -4652,7 +4640,7 @@ specbind_unwind_wasnt_local (Lisp_Object buffer)
       Fset_buffer (current);
       UNGCPRO;
     }
-  return (symbol);
+  return symbol;
 }
 
 
@@ -4759,14 +4747,14 @@ unbind_to (int count, Lisp_Object value)
 
   UNGCPRO;
 
-  return (value);
+  return value;
 }
 
 
 int
 specpdl_depth (void)
 {
-  return (specpdl_depth_counter);
+  return specpdl_depth_counter;
 }
 
 
@@ -5122,7 +5110,6 @@ syms_of_eval (void)
   DEFSUBR (Fcall_with_condition_handler);
   DEFSUBR (Fsignal);
   DEFSUBR (Finteractive_p);
-  DEFSUBR (Fstrerror);
   DEFSUBR (Fcommandp);
   DEFSUBR (Fcommand_execute);
   DEFSUBR (Fautoload);

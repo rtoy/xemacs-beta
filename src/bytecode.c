@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 hacked on by jwz@netscape.com 17-jun-91
   o  added a compile-time switch to turn on simple sanity checking;
   o  put back the obsolete byte-codes for error-detection;
-  o  added a new instruction, unbind_all, which I will use for 
+  o  added a new instruction, unbind_all, which I will use for
      tail-recursion elimination;
   o  made temp_output_buffer_show be called with the right number
      of args;
@@ -50,11 +50,11 @@ by Hallvard:
 #include "syntax.h"
 
 /*
- * define BYTE_CODE_SAFE to enable some minor sanity checking (useful for 
+ * define BYTE_CODE_SAFE to enable some minor sanity checking (useful for
  * debugging the byte compiler...)  Somewhat surprisingly, defining this
  * makes Fbyte_code about 8% slower.
  *
- * define BYTE_CODE_METER to enable generation of a byte-op usage histogram. 
+ * define BYTE_CODE_METER to enable generation of a byte-op usage histogram.
  */
 #define BYTE_CODE_SAFE
 /* #define BYTE_CODE_METER */
@@ -66,8 +66,7 @@ Lisp_Object Vbyte_code_meter, Qbyte_code_meter;
 int byte_metering_on;
 
 #define METER_2(code1, code2) \
-  XINT (XVECTOR (vector_data (XVECTOR (Vbyte_code_meter))[(code1)]) \
-	->contents[(code2)])
+  XINT (XVECTOR_DATA (XVECTOR_DATA (Vbyte_code_meter)[(code1)])[(code2)])
 
 #define METER_1(code) METER_2 (0, (code))
 
@@ -283,9 +282,9 @@ If the third argument is incorrect, Emacs may crash.
   REGISTER Lisp_Object *stackp;
   Lisp_Object *stacke;
   REGISTER Lisp_Object v1, v2;
-  REGISTER Lisp_Object *vectorp = vector_data (XVECTOR (vector));
+  REGISTER Lisp_Object *vectorp = XVECTOR_DATA (vector);
 #ifdef BYTE_CODE_SAFE
-  REGISTER int const_length = vector_length (XVECTOR (vector));
+  REGISTER int const_length = XVECTOR_LENGTH (vector);
 #endif
   REGISTER Emchar *massaged_code;
   int massaged_code_len;
@@ -315,13 +314,13 @@ If the third argument is incorrect, Emacs may crash.
 				      massaged_code);
   massaged_code[massaged_code_len] = 0;
   pc = 0;
-  
+
   while (1)
     {
 #ifdef BYTE_CODE_SAFE
       if (stackp > stacke)
-	error ("Byte code stack overflow (byte compiler bug), pc %d, depth %d",
-	       pc, stacke - stackp);
+	error ("Byte code stack overflow (byte compiler bug), pc %d, depth %ld",
+	       pc, (long) (stacke - stackp));
       if (stackp < stack)
 	error ("Byte code stack underflow (byte compiler bug), pc %d",
 	       pc);
@@ -1188,7 +1187,7 @@ integer, it is incremented each time that symbol's function is called.
   {
     int i = 256;
     while (i--)
-      vector_data (XVECTOR (Vbyte_code_meter))[i] =
+      XVECTOR_DATA (Vbyte_code_meter)[i] =
 	make_vector (256, Qzero);
   }
 #endif

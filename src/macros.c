@@ -118,8 +118,8 @@ An argument of zero means repeat until error.
       int size = con->kbd_macro_end;
       con->last_kbd_macro = make_vector (size, Qnil);
       for (i = 0; i < con->kbd_macro_end; i++)
-	vector_data (XVECTOR (con->last_kbd_macro)) [i] =
-	  vector_data (XVECTOR (con->kbd_macro_builder)) [i];
+	XVECTOR_DATA (con->last_kbd_macro) [i] =
+	  XVECTOR_DATA (con->kbd_macro_builder) [i];
       con->defining_kbd_macro = Qnil;
       MARK_MODELINE_CHANGED;
       message ("Keyboard macro defined");
@@ -144,18 +144,17 @@ store_kbd_macro_event (Lisp_Object event)
 {
   struct console *con = event_console_or_selected (event);
 
-  if (con->kbd_macro_ptr == XVECTOR (con->kbd_macro_builder)->size)
+  if (con->kbd_macro_ptr == XVECTOR_LENGTH (con->kbd_macro_builder))
     {
       int i;
-      int old_size = XVECTOR (con->kbd_macro_builder)->size;
+      int old_size = XVECTOR_LENGTH (con->kbd_macro_builder);
       int new_size = old_size * 2;
       Lisp_Object new = make_vector (new_size, Qnil);
       for (i = 0; i < old_size; i++)
-	vector_data (XVECTOR (new)) [i] =
-	  vector_data (XVECTOR (con->kbd_macro_builder)) [i];
+	XVECTOR_DATA (new) [i] = XVECTOR_DATA (con->kbd_macro_builder) [i];
       con->kbd_macro_builder = new;
     }
-  vector_data (XVECTOR (con->kbd_macro_builder)) [con->kbd_macro_ptr++] =
+  XVECTOR_DATA (con->kbd_macro_builder) [con->kbd_macro_ptr++] =
     Fcopy_event (event, Qnil);
 }
 

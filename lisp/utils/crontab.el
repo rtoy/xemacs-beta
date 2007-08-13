@@ -40,15 +40,26 @@
 
 ;;; Local Variables.  Define these to your liking.
 
-(defvar crontab-filename "~/.crontab"
-  "*The name of the file to store the User's Crontab.")
+(defgroup crontab nil
+  "Assist in editing crontab files."
+  :group 'languages)
 
-(defvar crontab-directory "/usr/spool/cron/crontabs"
-  "*The name of the directory in which crontab stores it's entries.")
 
-(defvar crontab-use-local-file nil
+(defcustom crontab-filename "~/.crontab"
+  "*The name of the file to store the User's Crontab."
+  :type 'file
+  :group 'crontab)
+
+(defcustom crontab-directory "/usr/spool/cron/crontabs"
+  "*The name of the directory in which crontab stores it's entries."
+  :type 'file
+  :group 'crontab)
+
+(defcustom crontab-use-local-file nil
   "*Non-nil means use file stored in User's Home directory, if it exists.
-Otherwise, always ask crontab for the current entry (maybe).")
+Otherwise, always ask crontab for the current entry (maybe)."
+  :type 'boolean
+  :group 'crontab)
 
 
 ;;; Interactive Function called to edit a Crontab Entry.  It is called

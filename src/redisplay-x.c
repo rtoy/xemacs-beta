@@ -1949,8 +1949,8 @@ static void
 x_clear_region (Lisp_Object locale, face_index findex, int x, int y,
 		int width, int height)
 {
-  struct window *w = 0;
-  struct frame *f = 0;
+  struct window *w = NULL;
+  struct frame *f = NULL;
   struct device *d;
   Lisp_Object background_pixmap;
 
@@ -1964,7 +1964,7 @@ x_clear_region (Lisp_Object locale, face_index findex, int x, int y,
     }
   else if (FRAMEP (locale))
     {
-      w = 0;
+      w = NULL;
       f = XFRAME (locale);
     }
   else
@@ -1977,8 +1977,7 @@ x_clear_region (Lisp_Object locale, face_index findex, int x, int y,
   /* #### This function is going to have to be made cursor aware. */
   if (width && height)
     {
-      int values_set = 0;
-      GC gc;
+      GC gc = NULL;
 
       /* #### This isn't quite right for when this function is called
          from the toolbar code. */
@@ -2031,36 +2030,25 @@ x_clear_region (Lisp_Object locale, face_index findex, int x, int y,
 		  bcolor = FACE_BACKGROUND (Vdefault_face, locale);
 		}
 
-	      gc = x_get_gc (d, Qnil, fcolor, bcolor, background_pixmap,
-			     Qnil);
-	      values_set = 1;
+	      gc = x_get_gc (d, Qnil, fcolor, bcolor, background_pixmap, Qnil);
 	    }
 	  else
 	    {
-	      Lisp_Object color;
+	      Lisp_Object color = (w ?
+				   WINDOW_FACE_CACHEL_BACKGROUND (w, findex) :
+				   FACE_BACKGROUND (Vdefault_face, locale));
 
 	      if (UNBOUNDP (background_pixmap))
 		background_pixmap = Qnil;
 
-	      if (w)
-		color = WINDOW_FACE_CACHEL_BACKGROUND (w, findex);
-	      else
-		color = FACE_BACKGROUND (Vdefault_face, locale);
-
-	      gc = x_get_gc (d, Qnil, color, Qnil, background_pixmap,
-			     Qnil);
-	      values_set = 1;
+	      gc = x_get_gc (d, Qnil, color, Qnil, background_pixmap, Qnil);
 	    }
 	}
 
-      if (values_set)
-	{
-	  XFillRectangle (dpy, x_win, gc, x, y, width, height);
-	}
+      if (gc)
+	XFillRectangle (dpy, x_win, gc, x, y, width, height);
       else
-	{
-	  XClearArea (dpy, x_win, x, y, width, height, False);
-	}
+	XClearArea (dpy, x_win, x, y, width, height, False);
     }
 }
 

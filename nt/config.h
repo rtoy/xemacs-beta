@@ -435,17 +435,6 @@ Boston, MA 02111-1307, USA.  */
    for the lib-src programs. */
 #undef EMACS_CONFIGURATION
 
-/* Load in the conversion definitions if this system
-   needs them and the source file being compiled has not
-   said to inhibit this.  There should be no need for you
-   to alter these lines.  */
-
-#ifdef SHORTNAMES
-#ifndef NO_SHORTNAMES
-#include "../shortnames/remap.h"
-#endif /* not NO_SHORTNAMES */
-#endif /* SHORTNAMES */
-
 /* Define REL_ALLOC if you want to use the relocating allocator for
    buffer space. */
 #undef REL_ALLOC

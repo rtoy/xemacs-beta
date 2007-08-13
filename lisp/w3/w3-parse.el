@@ -66,13 +66,6 @@
 w3-parse-buffer which it is w3-parse-buffer's responsibility to
 \"let\"-bind.")
 
-  ;; *** This is unused and does not belong right here anyway.
-  (defmacro w3-resolve-numeric-entity (ent)
-    "Return a string representing the numeric entity ENT (&#ENT;)"
-    (` (if (< (, ent) 256)
-           (char-to-string (, ent))
-         (format "[Too large character: %s]" (, ent)))))
-
   (defmacro w3-p-s-var-def (var)
     "Declare VAR as a scratch variable which w3-parse-buffer must
 \"let\"-bind."
@@ -219,40 +212,25 @@ which must be a string to use as the error message."
   )
 
 (defun w3-debug-html-aux (message &optional outer nocontext)
-  (let (
-        ;; We have already determined whether the user should see the
-        ;; message, so don't let w3-warn suppress it.
-        (w3-debug-html t))
-    ;; Print the URL before the first error message for a document.
-    (cond (w3-p-d-debug-url
-           (let ((url (url-view-url t)))
-             (w3-warn 'html
-                      (if (or (null url)
-                              (string-equal "" url))
-                          (format "HTML errors for buffer %s"
-                                  (current-buffer))
-                        (format "HTML errors for <URL:%s>" url))))
-           (setq w3-p-d-debug-url nil)))
-    (w3-warn 'html
-             (if nocontext
-                 message
-               (concat message
-                       ;; Display context information for each error
-                       ;; message.
-                       "\n  Containing elements: "
-                       (w3-open-elements-string (if outer 1))
-                       (concat
-                        "\n  Text around error: "
-                        (save-restriction
-                          (widen)
-                          (progn
-                            (insert "*ERROR*")
-                            (prog1
-                                (w3-quote-for-string
-                                 (buffer-substring 
-                                  (max (- (point) 27) (point-min))
-                                  (min (+ (point) 20) (point-max))))
-                              (delete-char -7))))))))))
+  (push (if nocontext
+            message
+          (concat message
+                  ;; Display context information for each error
+                  ;; message.
+                  "\n  Containing elements: "
+                  (w3-open-elements-string (if outer 1))
+                  (concat
+                   "\n  Text around error: "
+                   (save-restriction
+                     (widen)
+                     (progn
+                       (insert "*ERROR*")
+                       (prog1
+                           (w3-quote-for-string
+                            (buffer-substring 
+                             (max (- (point) 27) (point-min))
+                             (min (+ (point) 20) (point-max))))
+                         (delete-char -7))))))) w3-current-badhtml))
 
 (defun w3-quote-for-string (string)
   (save-excursion

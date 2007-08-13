@@ -625,7 +625,6 @@ See also `hyper-apropos' and `hyper-describe-function'."
 				  "',\nwhich is an alias for `")
 		       "'")))))
 
-;;;###autoload
 (defun hyper-apropos-get-doc (&optional symbol force type this-ref-buffer)
   ;; #### - update this docstring
   "Toggle display of documentation for the symbol on the current line."

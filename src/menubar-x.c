@@ -144,7 +144,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
       if (STRINGP (XCAR (desc)))
 	{
 	  Lisp_Object key, val;
-	  Lisp_Object include_p, hook_fn = Qnil, config_tag = Qnil;
+	  Lisp_Object include_p = Qnil, hook_fn = Qnil, config_tag = Qnil;
 	  int included_spec = 0;
 	  wv->type = CASCADE_TYPE;
 	  wv->enabled = 1;

@@ -165,7 +165,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *src,
 	    unsigned_char_dynarr *dst, int n, int end_flag)
 {
   int code, op, rrr, cc, i, j;
-  CONST unsigned char *s, *s_end;
+  CONST unsigned char *s = NULL, *s_end = NULL;
   int   ic = ccl->ic;
   int *reg = ccl->reg;
   Lisp_Object *prog = ccl->prog;
@@ -432,8 +432,8 @@ set_ccl_program (struct ccl_program *ccl, Lisp_Object val, int *regs,
   int i;
 
   ccl->saved_vector = val;
-  ccl->prog = XVECTOR (val)->contents;
-  ccl->size = XVECTOR (val)->size;
+  ccl->prog = XVECTOR_DATA (val);
+  ccl->size = XVECTOR_LENGTH (val);
   if (initial_ic == 0)
     ccl->ic = CCL_HEADER_MAIN;
   else
@@ -460,12 +460,12 @@ set_ccl_program_from_lisp_values (struct ccl_program *ccl,
   CHECK_VECTOR (prog);
   CHECK_VECTOR (status);
 
-  if (vector_length (XVECTOR (status)) != 9)
+  if (XVECTOR_LENGTH (status) != 9)
     signal_simple_error ("Must specify values for the eight registers and IC",
 			 status);
   for (i = 0; i < 8; i++)
     {
-      Lisp_Object regval = XVECTOR (status)->contents[i];
+      Lisp_Object regval = XVECTOR_DATA (status)[i];
       if (NILP (regval))
 	intregs[i] = 0;
       else
@@ -476,7 +476,7 @@ set_ccl_program_from_lisp_values (struct ccl_program *ccl,
     }
 
   {
-    Lisp_Object lic = XVECTOR (status)->contents[8];
+    Lisp_Object lic = XVECTOR_DATA (status)[8];
     if (NILP (lic))
       ic = 0;
     else
@@ -496,10 +496,10 @@ set_lisp_status_from_ccl_program (Lisp_Object status,
   int i;
 
   for (i = 0; i < 8; i++)
-    XVECTOR (status)->contents[i] = make_int (ccl->reg[i]);
-  XVECTOR (status)->contents[8] = make_int (ccl->ic);
+    XVECTOR_DATA (status)[i] = make_int (ccl->reg[i]);
+  XVECTOR_DATA (status)[8] = make_int (ccl->ic);
 }
-				  
+
 
 DEFUN ("execute-ccl-program", Fexecute_ccl_program, 2, 2, 0, /*
 Execute CCL-PROGRAM with registers initialized by STATUS.
@@ -614,9 +614,9 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  XVECTOR (ccl_prog)->size = 0;
+  XVECTOR_LENGTH (ccl_prog) = 0;
   while (fscanf (progf, "%x", &i) == 1)
-    XVECTOR (ccl_prog)->contents[XVECTOR (ccl_prog)->size++] = make_int (i);
+    XVECTOR_DATA (ccl_prog)[XVECTOR_LENGTH (ccl_prog)++] = make_int (i);
   set_ccl_program (&ccl, ccl_prog, 0, 0, 0);
 
   outbuf = Dynarr_new (unsigned char);

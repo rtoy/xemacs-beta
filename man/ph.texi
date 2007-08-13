@@ -1,0 +1,574 @@
+\input texinfo.tex
+@c %**start of header
+@setfilename ph.info
+@settitle ph.el Manual
+@iftex
+@afourpaper
+@end iftex
+@c %**end of header
+
+@footnotestyle end
+
+@ifinfo
+This file documents ph.el v2.6
+
+ph.el is part of GNU Emacs.
+
+ph.el is an E-Lisp client interface to the CCSO white pages directory system
+also known as PH/QI
+
+Copyright @copyright{} 1997 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim
+copies of this manual provided the copyright notice and
+this permission notice are preserved on all copies.
+     
+@ignore
+Permission is granted to process this file through TeX
+and print the results, provided the printed document
+carries a copying permission notice identical to this
+one except for the removal of this paragraph (this
+paragraph not being relevant to the printed manual).
+@end ignore
+
+Permission is granted to copy and distribute modified
+versions of this manual under the conditions for
+verbatim copying and the terms of the ``GNU General
+Public License'', and provided that the entire
+resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+     
+Permission is granted to copy and distribute
+translations of this manual into another language,
+under the above conditions for modified versions,
+except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
+@end ifinfo
+
+@titlepage
+@title{ph Manual}
+@subtitle{An Emacs client to the CCSO Nameserver}
+@author by Oscar Figueiredo
+@code{1.3}
+
+@page
+@vskip 0pt plus 1fill
+     Copyright @copyright{} 1997 Free Software Foundation, Inc.
+
+     Permission is granted to make and distribute verbatim
+     copies of this manual provided the copyright notice and
+     this permission notice are preserved on all copies.
+     
+     @ignore
+     Permission is granted to process this file through TeX
+     and print the results, provided the printed document
+     carries a copying permission notice identical to this
+     one except for the removal of this paragraph (this
+     paragraph not being relevant to the printed manual).
+     
+     @end ignore
+
+     Permission is granted to copy and distribute modified
+     versions of this manual under the conditions for
+     verbatim copying and the terms of the ``GNU General 
+     Public License'', and provided that the entire
+     resulting derived work is distributed under the terms
+     of a permission notice identical to this one.
+     
+     Permission is granted to copy and distribute
+     translations of this manual into another language,
+     under the above conditions for modified versions,
+     except that this permission notice may be stated in a
+     translation approved by the Free Software Foundation.
+@end titlepage
+
+@ifinfo
+@node     Top, Introduction, (dir), (dir)
+@comment  node-name,  next,         previous, up
+
+
+This manual documents ph.el v2.6, an E-lisp client interface to the CCSO
+PH/QI directory system.
+@end ifinfo
+
+@menu
+* Introduction::                General info about the PH/QI directory system
+* Installation::                How to install the package
+* Usage::                       The various usage possibilities explained
+* Credits::                     Who's done what
+* Variables Index::             
+@end menu
+
+
+
+
+
+@node     Introduction, Installation, Top, Top
+@comment  node-name,   next,  previous,  up
+@chapter Introduction
+
+The Central Computing Services Office (CCSO) of the University of
+Illinois at Urbana Champaign (UIUC) created and freely distributes a
+directory system that is currently in use in more than 300 organizations
+around the world. The system records information about people such as
+their address, phone number, e-mail, academic information or any other
+details it was configured to.
+
+The system consists of two parts: a database server traditionally called
+@code{qi} and a command-line client called
+@code{ph}. @file{ftp://uiarchive.cso.uiuc.edu/pub/packages/ph} is the
+main distribution site.
+@file{http://www.uiuc.edu/cgi-bin/ph/lookup?Query=.} provides a listing
+of the QI servers in activity.
+
+@code{ph.el} provides a client interface to this directory system
+letting you:
+
+@itemize @bullet
+@item 
+query the server through a customizable form
+@item
+expand inline queries in buffers (for instance you can expand a name
+to a mailing address in a mail message buffer)
+@item
+insert server records into your own BBDB database
+(@pxref{Top,,BBDB,bbdb,BBDB Manual})
+@end itemize
+
+The original command-line @code{ph} client that comes with the
+@code{ph/qi} distribution provides additional features like the
+possibility to communicate with the server in login mode which makes it
+possible to change records in the database. This is not implemented in
+this e-lisp client.
+
+@node Installation, Usage, Introduction, Top
+@comment  node-name,  next,  previous,  up
+@chapter Installation
+
+If you are using @code{ph} from your GNU Emacs or XEmacs distribution
+you can skip this section.
+
+@code{ph} should work right out of the box with XEmacs 19.15 and above. 
+It will not work with versions of XEmacs below.
+
+@code{ph} will work with Emacs 19.34 provided you have the @code{custom}
+and @code{widget} libraries by Per Abrahmsen installed. You can get them 
+from @file{http://www.dina.kvl.dk/~abraham/custom/}
+
+When installing @code{ph} yourself you should move @code{ph.el} to a
+proper directory in your @code{load-path} and byte-compile it (see the
+section on byte-compilation in your users manual if you do not know what 
+that means). Install @code{ph.info} into a directory where the info
+system can find it or update your @code{Info-default-directory-list}
+variable. 
+
+Then you can add the following into your @file{.emacs} startup file:
+@lisp
+(require 'ph)
+(eval-after-load 
+ "message"
+ '(define-key message-mode-map [(control ?c) (tab)] 'ph-expand-inline))
+(eval-after-load 
+ "mail"
+ '(define-key mail-mode-map [(control ?c) (tab)] 'ph-expand-inline))
+@end lisp
+
+Upon starting a new session you will find a new @code{Ph} sub-menu in the 
+@code{Tools} menu that will let you access all the interesting @code{ph} 
+functions.
+
+
+
+
+
+
+
+@node Usage, Credits, Installation, Top
+@comment  node-name,  next,  previous,  up
+@chapter Usage
+
+This chapter describes the usage of @code{ph.el}. Most functions are
+available through the @code{Ph} sub-menu of the @code{Tools} sub-menu.
+
+@menu
+* Querying QI Servers::         How queries are performed and handled 
+* Query Form::                  How to use and customize the query form
+* Inline Query Expansion::      How to use and customize inline queries
+* Creating BBDB Records::       How to insert query results into your BBDB
+* The Server Hotlist::          How to use and manage the server hotlist
+@end menu
+
+
+@node Querying QI Servers, Query Form, Usage, Usage
+@comment  node-name,  next,  previous,  up
+@section Querying Servers
+
+@code{ph} basic functionality is to let you query a QI server and return 
+the results back to you. There are several things you may want to
+customize in this process.
+
+
+@menu
+* Selecting a Server::          The first thing to do
+* Return Fields::               How to configure query results
+* Handling Duplicate Fields::   What to do when records have duplicate fields
+@end menu
+
+@node Selecting a Server, Return Fields, Querying QI Servers, Querying QI Servers
+@subsection Selecting a Server
+
+Before doing any query you will need to set the query server, this is
+the name of the host machine running the @code{qi} software. If you do
+not set it in any fashion, @code{ph} will ask you for one when you
+make your first query.
+
+@defvar ph-server
+The name or IP address of the CCSO (PH/QI) server. A port number may be
+specified by appending a colon and a number to the name of the
+server. You will not need this unless your server runs on different port 
+than the usual 105.
+@end defvar
+
+@node Return Fields, Handling Duplicate Fields, Selecting a Server, Querying QI Servers
+@subsection Return Fields
+
+@code{qi} servers are configured to return a default set of fields for
+each record matching a query if the query specifies none. The variable
+@code{ph-default-return-fields} controls the return fields you want for
+your queries.
+
+@defvar ph-default-return-fields
+A list of the default fields to extract from CCSO entries.  If it
+contains @code{all} then all available fields are returned. @code{nil}
+means return the default fields as configured in the server. Default is
+@code{nil}
+@end defvar
+
+The server may return several matching records to a query. Some of the
+records may however not contain all the fields you requested. You can
+chose to discard those records.
+
+@defopt ph-strict-return-matches
+If non-@code{nil}, entries that do not contain all the requested return
+fields are ignored.  Default is @code{t}.
+@end defopt
+
+@node Handling Duplicate Fields,  , Return Fields, Querying QI Servers
+@subsection Handling Duplicate Fields
+
+@code{qi} authorizes records to have different instances of the same
+field. For instance the record of a person may contain several e-mail
+fields containing different e-mail addresses. This is difficult to
+distinguish from fields having multi-line values such as the postal
+address that may contain a line for the street and another one for the
+zip code and city name. In both cases, @code{ph} considers the field be
+duplicated. 
+
+@code{ph} has several methods to deal with duplicate fields. The
+available methods are:
+
+@table @code
+@item list
+Makes a list with the different values of the duplicate field. The
+record keeps only one instance of the field the value of which is a list
+of all the different values. This is the default method that is used to
+handle duplicate fields for which no other method has been specified.
+@item first
+Discards all the duplicate values of the field keeping only the first
+one.
+@item concat
+Concatenates the different values using @code{\n} as a separator. The
+record keeps only one instance of the field the value of which is a
+single multi-line string.
+@item duplicate
+Duplicates the whole record into as many instances as there are different
+values for the field. This is the default for the e-mail field. Thus a
+record containing 3 different e-mail addresses is duplicated into three
+different records each having a single e-mail address. This is
+particularly useful in combination with @code{select} as the method to
+handle multiple matches in inline expansion queries (@pxref{Inline Query
+Expansion}) because you are presented with the 3 addresses in a
+selection buffer
+@end table
+
+Because a method may not be applicable to all fields, the variable
+@code{ph-duplicate-fields-handling-method} lets you specify either a
+default method for all fields or a method for each individual field.
+
+@defvar ph-duplicate-fields-handling-method
+A method to handle entries containing duplicate fields.  This is either
+an alist (@var{field} . @var{method}) or a symbol @var{method}.  The
+alist form of the variable associates a method to an individual field,
+the second form specifies a method applicable to all fields. Available
+methods are: @code{list}, @code{first}, @code{concat}, @code{duplicate}
+duplicates the entire entry into as many instances as different values.
+Defaults to @code{list}.
+@end defvar
+
+
+
+@node Query Form, Inline Query Expansion, Querying QI Servers, Usage
+@comment  node-name,  next,  previous,  up
+@section Query Form
+
+The simplest way to query your directory server is to use the query
+form. You display the query form with the @code{Query Form} menu item or
+by typing @kbd{M-x ph-query-form}. The fields presented in this form are
+defined by the @code{ph-form-fields} variable (unless a non-@code{nil}
+argument is supplied to @code{ph-query-form}).
+
+@defvar ph-form-fields
+A list of fields presented in the query form. You can get a list of
+valid field names with the @code{List Valid Field Names} menu item or
+@kbd{M-x ph-get-field-list}. Defaults to @code{name}, @code{email} and
+@code{phone}.
+@end defvar
+
+@deffn Command ph-query-form get-fields-from-server
+Display a form to query the CCSO PH/QI Nameserver.
+If given a non-nil argument the function first queries the  server 
+for the existing fields and displays a corresponding form.
+@end deffn
+
+Since the names of the fields may not be explicit enough or adapted to
+be directly displayed as prompt strings in the form, the variable
+@code{ph-fieldname-formstring-alist} lets you define prompt strings for
+the various fields.
+
+@defvar ph-fieldname-formstring-alist
+This is an alist mapping CCSO database field names onto prompt strings
+used in query/response forms. Prompt strings for fields that are not in
+this alist are derived by replacing underscores with spaces and
+capitalizing the individual words.
+@end defvar
+
+Upon successful completion the command will display a buffer containing
+the results of the query. The fields that are returned for each record
+are controlled by @code{ph-default-return-fields} (@pxref{Return
+Fields}) 
+
+@node Inline Query Expansion, Creating BBDB Records, Query Form, Usage
+@comment  node-name,  next,  previous,  up
+@section Inline Query Expansion
+
+Instead of using a query form, you may prefer inline expansion. This is
+a powerful method to get completion from your directory server. The most
+common usage is for expanding names to e-mail addresses in mail message
+buffers. The expansion is performed by the command
+@code{ph-expand-inline}. The operation is controlled by the variables
+@code{ph-inline-expansion-format}, @code{ph-inline-query-format-list},
+@code{ph-expanding-overwrites-query} and
+@code{ph-multiple-match-handling-method}
+
+@deffn Command ph-expand-inline replace-p
+Query the server and expand the query string before point.  The query
+string consists of the buffer substring from the point back to the
+preceding comma, colon or beginning of line. If it consists of more than
+one word the variable @code{ph-inline-query-format-list} controls how
+these are mapped onto CCSO database field names.  After querying the
+server for the given string, the expansion specified by
+@code{ph-inline-expansion-format} is inserted in the buffer at point. If
+@var{replace-p} is @code{t} then this expansion replaces the query
+string in the buffer.  If @code{ph-expanding-overwrites-query} is
+non-@code{nil} then the meaning of @var{replace-p} is negated.
+@end deffn
+
+@defvar ph-inline-query-format-list
+Format of an inline expansion query.  If the inline query string
+consists of several words, this list specifies how these individual
+words are associated to CCSO database field names.  If @code{nil} all
+the words will be mapped onto the default CCSO database key (generally
+@code{name}). Default is @code{nil}.
+@end defvar
+
+@defvar ph-inline-expansion-format
+This variable lets you control what is exactly inserted into the buffer
+upon an inline expansion request. It is a list whose first element is a
+string passed to @code{format}. Remaining elements are symbols
+corresponding to CCSO database field names, corresponding field values
+are passed as additional arguments to format. Default is @code{("%s"
+email)} but you may want to consider a value like @code{("%s <%s>" name
+email)}
+@end defvar
+
+@defvar ph-multiple-match-handling-method
+This variable controls what to do when multiple entries match a query
+for an inline expansion.  Possible values are:
+@table @code
+@item first
+The first match is considered as being the only one, the others are
+discarded.
+@item select
+A selection buffer pops-up where you can choose a particular match. This 
+is the default value of the variable.
+@item all
+The expansion uses all records successively
+@item abort
+An error is signaled. The expansion aborts.
+@end table
+
+
+Defaults to @code{select}
+@end defvar
+
+
+
+@node Creating BBDB Records, The Server Hotlist, Inline Query Expansion, Usage
+@comment  node-name,  next,  previous,  up
+@section Creating BBDB Records
+
+With @code{ph}, you can automatically create BBDB records
+(@pxref{Top,,BBDB,bbdb,BBDB Manual}) from records you get from a PH/QI
+server. You do this by moving the point to the appropriate record in a
+query result display buffer and invoking the command
+@code{ph-insert-record-at-point-into-bbdb} with the corresponding
+keyboard binding, @kbd{b} @footnote{This keybinding does not actually
+call @code{ph-insert-record-at-point-into-bbdb} but uses
+@code{ph-try-bbdb-insert} instead.} or with the menu. @code{ph} cannot
+update an existing BBDB record and will signal an error if you try to
+insert a record matching an existing one.
+
+Because the CCSO directory system does not enforce a strict record
+format, local installations of the QI server use different names for the
+record fields and have different ways to organize the
+information. Furthermore BBDB has its own record structure that has
+little to do with what is commonly found on QI servers. For these
+reasons the process of converting a record from its QI format to the
+BBDB format is highly customizable.
+
+@defvar ph-bbdb-conversion-alist
+This is the variable that lets you customize how BBDB fields map to
+PH/QI records. Its value is an alist of cells of the form
+@code{(}@var{bbdb-field} . @var{spec-or-list}@code{)}. @var{bbdb-field} is the name of a field that must be defined in your BBDB
+environment (standard field names are @code{name}, @code{company}, @code{net}, @code{phone},
+@code{address} and @code{notes}). @var{spec-or-list} is either a single
+mapping specification or a list of mapping specifications. Lists of
+mapping specifications are valid for the @code{phone} and
+@code{address} BBDB fields only. @var{spec}s are actually s-expressions
+which are evaluated as follows:
+
+@table @asis
+@item a string 
+evaluates to itself
+@item a symbol
+evaluates to the symbol value. Symbols corresponding to PH/QI fields
+present in the record evaluate to the value of the field in the record
+@item a form
+is evaluated as a function. The argument list may contain PH/QI field
+names which evaluate to the corresponding values in the record. The form
+evaluation should return something appropriate for the particular
+@var{bbdb-field} (see @code{bbdb-create-internal}).
+@code{ph-bbdbify-phone} and @code{ph-bbdbify-address} are provided as
+convenience functions to parse phones and addresses.
+@end table
+@end defvar
+
+The default value of @code{ph-bbdb-conversion-alist} is:
+
+@lisp
+((name . name)
+ (net . email)
+ (address . (ph-bbdbify-address address "Address"))
+ (phone . ((ph-bbdbify-phone phone "Phone")
+           (ph-bbdbify-phone office_phone "Office Phone"))))
+@end lisp
+
+This means that:
+
+@itemize @bullet
+@item 
+the @code{name} field of the BBDB record gets its value
+from the @code{name} field of the PH/QI record
+@item
+the @code{net} field of the BBDB record gets its value
+from the @code{email} field of the PH/QI record
+@item
+the @code{address} field of the BBDB record is obtained by parsing the
+@code{address} field of the PH/QI record with the function
+@code{ph-bbdbify-address}
+@item
+two @code{phone} fields are created (when possible) in the BBDB record.
+The first one has "Phone" for location and its value is obtained by
+parsing the @code{phone} field of the PH/QI record with the function
+@code{ph-bbdbify-phone}. The second one has "Office Phone" for location
+its value is obtained by parsing the @code{office_phone} field of the
+PH/QI record with the function @code{ph-bbdbify-phone}.
+@end itemize
+
+@defun ph-bbdbify-phone @var{phone} @var{location}
+This is a convenience function provided for use in
+@code{ph-bbdb-conversion-alist}. It parses @var{phone} into a vector
+compatible with @code{bbdb-create-internal}. @var{phone} is either a string
+supposedly containing a phone number or a list of such strings which are
+concatenated. @var{location} is used as the phone location for BBDB.
+@end defun
+
+@defun ph-bbdbify-address @var{addr} @var{location}
+This is a convenience function provided for use in
+@code{ph-bbdb-conversion-alist}. It parses @var{addr} into a vector
+compatible with @code{bbdb-create-internal}. @var{addr} should be an
+address string of no more than four lines or a list of lines. The last
+line is searched for the zip code, city and state name. @var{location}
+is used as the phone location for BBDB.
+@end defun
+
+Note that only a subset of the fields you selected with
+@code{ph-default-return-fields} and that are actually displayed may
+actually be inserted as part of the newly created BBDB record.
+
+
+@node The Server Hotlist,  , Creating BBDB Records, Usage
+@comment  node-name,  next,  previous,  up
+@section The Server Hotlist
+
+@code{ph} lets you maintain a list of frequently used servers so that you 
+can easily switch from one to another. This hotlist appears in the
+@code{Server} sub-menu. You select a server in this list by clicking on
+its name. You can add the current server to the list with the command
+@code{ph-bookmark-current-server}. The list is contained in the variable
+@code{ph-server-hotlist} which is stored in and retrieved from the file
+designated by @code{ph-options-file}.
+
+@deffn Command ph-bookmark-server server
+Add @var{server} to the hotlist of servers
+@end deffn
+
+@deffn Command ph-bookmark-current-server
+Add the current server to the hotlist of servers
+@end deffn
+
+@defvar ph-options-file
+The name of a file where @code{ph} stores its internal variables
+(currently only the hotlist is stored there). @code{ph} will try to load 
+that file upon initialization so, if you choose a file name
+different from the defaults @file{~/.ph-options}, be sure to set this
+variable to the appropriate value @emph{before} @code{ph} is itself
+loaded.
+@end defvar
+
+There is currently no way to remove a server from the list other than
+editing directly the @code{ph-options-file}.
+
+
+
+@node Credits, Variables Index, Usage, Top
+@comment  node-name,  next,  previous,  up
+@chapter Credits
+
+The original CCSO Nameserver software (@code{ph} & @code{qi}) was
+written at the University of Illinois at Urbana Champaign.
+
+The Emacs client @code{ph.el} was written and is maintained by Oscar
+Figueiredo.
+
+Thanks to Soren Dayton for his suggestions, his enthusiasm and his help
+in testing and proofreading the code and docs.
+
+@node Variables Index,  , Credits, Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Variables Index
+
+@printindex vr
+
+@contents
+@bye

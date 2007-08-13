@@ -68,7 +68,7 @@ Lisp_Object Vx_sent_selection_hooks;
 /* If this is a smaller number than the max-request-size of the display,
    emacs will use INCR selection transfer when the selection is larger
    than this.  The max-request-size is usually around 64k, so if you want
-   emacs to use incremental selection transfers when the selection is 
+   emacs to use incremental selection transfers when the selection is
    smaller than that, set this.  I added this mostly for debugging the
    incremental transfer stuff, but it might improve server performance.
  */
@@ -92,11 +92,14 @@ Lisp_Object Vselection_alist;
 
 /* This is an alist whose CARs are selection-types (whose names are the same
    as the names of X Atoms) and whose CDRs are the names of Lisp functions to
-   call to convert the given Emacs selection value to a string representing 
+   call to convert the given Emacs selection value to a string representing
    the given selection type.  This is for elisp-level extension of the emacs
    selection handling.
  */
 Lisp_Object Vselection_converter_alist;
+
+/* "Selection owner couldn't convert selection" */
+Lisp_Object Qselection_conversion_error;
 
 /* If the selection owner takes too long to reply to a selection request,
    we give up on it.  This is in seconds (0 = no timeout).
@@ -128,14 +131,14 @@ static void wait_for_property_change (long);
 static void unexpect_property_change (int);
 static int waiting_for_other_props_on_window (Display *, Window);
 
-/* This converts a Lisp symbol to a server Atom, avoiding a server 
+/* This converts a Lisp symbol to a server Atom, avoiding a server
    roundtrip whenever possible.
  */
 Atom
 symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 {
   Display *display = DEVICE_X_DISPLAY (d);
-  Atom val;
+
   if (NILP (sym))	    return XA_PRIMARY;
   if (EQ (sym, Qt))	    return XA_SECONDARY;
   if (EQ (sym, QPRIMARY))   return XA_PRIMARY;
@@ -145,13 +148,13 @@ symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
   if (EQ (sym, QATOM))	    return XA_ATOM;
   if (EQ (sym, QCLIPBOARD)) return DEVICE_XATOM_CLIPBOARD (d);
   if (EQ (sym, QTIMESTAMP)) return DEVICE_XATOM_TIMESTAMP (d);
-  if (EQ (sym, QTEXT))	    return DEVICE_XATOM_TEXT (d);
-  if (EQ (sym, QDELETE))    return DEVICE_XATOM_DELETE (d);
-  if (EQ (sym, QMULTIPLE))  return DEVICE_XATOM_MULTIPLE (d);
-  if (EQ (sym, QINCR))	    return DEVICE_XATOM_INCR (d);
+  if (EQ (sym, QTEXT))	    return DEVICE_XATOM_TEXT      (d);
+  if (EQ (sym, QDELETE))    return DEVICE_XATOM_DELETE    (d);
+  if (EQ (sym, QMULTIPLE))  return DEVICE_XATOM_MULTIPLE  (d);
+  if (EQ (sym, QINCR))	    return DEVICE_XATOM_INCR      (d);
   if (EQ (sym, QEMACS_TMP)) return DEVICE_XATOM_EMACS_TMP (d);
-  if (EQ (sym, QTARGETS))   return DEVICE_XATOM_TARGETS (d);
-  if (EQ (sym, QNULL))	    return DEVICE_XATOM_NULL (d);
+  if (EQ (sym, QTARGETS))   return DEVICE_XATOM_TARGETS   (d);
+  if (EQ (sym, QNULL))	    return DEVICE_XATOM_NULL      (d);
   if (EQ (sym, QATOM_PAIR)) return DEVICE_XATOM_ATOM_PAIR (d);
   if (EQ (sym, QCOMPOUND_TEXT)) return DEVICE_XATOM_COMPOUND_TEXT (d);
 #ifdef EPOCH
@@ -179,15 +182,15 @@ symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
   if (EQ (sym, QCUT_BUFFER5)) return XA_CUT_BUFFER5;
   if (EQ (sym, QCUT_BUFFER6)) return XA_CUT_BUFFER6;
   if (EQ (sym, QCUT_BUFFER7)) return XA_CUT_BUFFER7;
-#endif
+#endif /* CUT_BUFFER_SUPPORT */
+
   {
     CONST char *nameext;
     Lisp_Object namesym;
     XSETSTRING (namesym, XSYMBOL (sym)->name);
     GET_C_STRING_CTEXT_DATA_ALLOCA (namesym, nameext);
-    val = XInternAtom (display, nameext, only_if_exists ? True : False);
+    return XInternAtom (display, nameext, only_if_exists ? True : False);
   }
-  return val;
 }
 
 
@@ -197,7 +200,6 @@ symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 Lisp_Object
 x_atom_to_symbol (struct device *d, Atom atom)
 {
-  char *str;
   Display *display = DEVICE_X_DISPLAY (d);
 
   if (! atom) return Qnil;
@@ -208,13 +210,13 @@ x_atom_to_symbol (struct device *d, Atom atom)
   if (atom == XA_ATOM)	       return QATOM;
   if (atom == DEVICE_XATOM_CLIPBOARD (d)) return QCLIPBOARD;
   if (atom == DEVICE_XATOM_TIMESTAMP (d)) return QTIMESTAMP;
-  if (atom == DEVICE_XATOM_TEXT (d))      return QTEXT;
-  if (atom == DEVICE_XATOM_DELETE (d))    return QDELETE;
-  if (atom == DEVICE_XATOM_MULTIPLE (d))  return QMULTIPLE;
-  if (atom == DEVICE_XATOM_INCR (d))      return QINCR;
+  if (atom == DEVICE_XATOM_TEXT      (d)) return QTEXT;
+  if (atom == DEVICE_XATOM_DELETE    (d)) return QDELETE;
+  if (atom == DEVICE_XATOM_MULTIPLE  (d)) return QMULTIPLE;
+  if (atom == DEVICE_XATOM_INCR      (d)) return QINCR;
   if (atom == DEVICE_XATOM_EMACS_TMP (d)) return QEMACS_TMP;
-  if (atom == DEVICE_XATOM_TARGETS (d))   return QTARGETS;
-  if (atom == DEVICE_XATOM_NULL (d))      return QNULL;
+  if (atom == DEVICE_XATOM_TARGETS   (d)) return QTARGETS;
+  if (atom == DEVICE_XATOM_NULL      (d)) return QNULL;
   if (atom == DEVICE_XATOM_ATOM_PAIR (d)) return QATOM_PAIR;
   if (atom == DEVICE_XATOM_COMPOUND_TEXT (d)) return QCOMPOUND_TEXT;
 
@@ -244,22 +246,21 @@ x_atom_to_symbol (struct device *d, Atom atom)
   if (atom == XA_CUT_BUFFER7) return QCUT_BUFFER7;
 #endif
 
-  str = XGetAtomName (display, atom);
-  if (! str) return Qnil;
   {
     CONST char *intstr;
-    Lisp_Object val;
+    char *str = XGetAtomName (display, atom);
+
+    if (! str) return Qnil;
 
     GET_C_CHARPTR_INT_CTEXT_DATA_ALLOCA (str, intstr);
-    val = intern (intstr);
     XFree (str);
-    return val;
+    return intern (intstr);
   }
 }
 
 
 /* Do protocol to assert ourself as a selection owner.
-   Update the Vselection_alist so that we can reply to later requests for 
+   Update the Vselection_alist so that we can reply to later requests for
    our selection.
  */
 static void
@@ -269,7 +270,7 @@ x_own_selection (Lisp_Object selection_name, Lisp_Object selection_value)
   Display *display = DEVICE_X_DISPLAY (d);
   struct frame *sel_frame = selected_frame ();
   Window selecting_window = XtWindow (FRAME_X_TEXT_WIDGET (sel_frame));
-  /* Use the time of the last-read mouse or keyboard event. 
+  /* Use the time of the last-read mouse or keyboard event.
      For selection purposes, we use this as a sleazy way of knowing what the
      current time is in server-time.  This assumes that the most recently read
      mouse or keyboard event has something to do with the assertion of the
@@ -391,7 +392,7 @@ hack_motif_clipboard_selection (Atom selection_atom,
 		ptr += 2;
 		continue;
 	      }
- 
+
 	    chartypes = WORLD;
 	    break;
 	  }
@@ -497,19 +498,19 @@ x_get_local_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
 	   XCAR (target_type) == QMULTIPLE)
     {
       Lisp_Object pairs = XCDR (target_type);
-      int size = XVECTOR (pairs)->size;
+      int len = XVECTOR_LENGTH (pairs);
       int i;
       /* If the target is MULTIPLE, then target_type looks like
 	  (MULTIPLE . [[SELECTION1 TARGET1] [SELECTION2 TARGET2] ... ])
 	 We modify the second element of each pair in the vector and
 	 return it as [[SELECTION1 <value1>] [SELECTION2 <value2>] ... ]
        */
-      for (i = 0; i < size; i++)
+      for (i = 0; i < len; i++)
 	{
-	  Lisp_Object pair = vector_data (XVECTOR (pairs)) [i];
-	  vector_data (XVECTOR (pair)) [1] =
-	    x_get_local_selection (vector_data (XVECTOR (pair)) [0],
-				   vector_data (XVECTOR (pair)) [1]);
+	  Lisp_Object pair = XVECTOR_DATA (pairs) [i];
+	  XVECTOR_DATA (pair) [1] =
+	    x_get_local_selection (XVECTOR_DATA (pair) [0],
+				   XVECTOR_DATA (pair) [1]);
 	}
       return pairs;
     }
@@ -531,7 +532,7 @@ x_get_local_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
   check = value;
   if (CONSP (value) && SYMBOLP (XCAR (value)))
     check = XCDR (value);
-  
+
   /* Strings, vectors, and symbols are converted to selection data format in
      the obvious way.  Integers are converted to 16 bit quantities if they're
      small enough, otherwise 32 bits are used.
@@ -555,7 +556,7 @@ x_get_local_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
 	     INTP (XCAR (XCDR (check))) &&
 	     NILP (XCDR (XCDR (check))))))
     return value;
-  /* Otherwise the lisp converter function returned something unrecognized. 
+  /* Otherwise the lisp converter function returned something unrecognized.
    */
   else
     signal_error (Qerror,
@@ -576,16 +577,15 @@ static void
 x_decline_selection_request (XSelectionRequestEvent *event)
 {
   XSelectionEvent reply;
-  reply.type = SelectionNotify;
-  reply.display = event->display;
+  reply.type      = SelectionNotify;
+  reply.display   = event->display;
   reply.requestor = event->requestor;
   reply.selection = event->selection;
-  reply.time = event->time;
-  reply.target = event->target;
-  reply.property = None;
+  reply.time      = event->time;
+  reply.target    = event->target;
+  reply.property  = None;
 
-  (void) XSendEvent (reply.display, reply.requestor, False, 0L,
-		     (XEvent *) &reply);
+  XSendEvent (reply.display, reply.requestor, False, 0L, (XEvent *) &reply);
   XFlush (reply.display);
 }
 
@@ -625,13 +625,13 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
   int max_bytes = SELECTION_QUANTUM (display);
   if (max_bytes > MAX_SELECTION_QUANTUM) max_bytes = MAX_SELECTION_QUANTUM;
 
-  reply.type = SelectionNotify;
-  reply.display = display;
+  reply.type      = SelectionNotify;
+  reply.display   = display;
   reply.requestor = window;
   reply.selection = event->selection;
-  reply.time = event->time;
-  reply.target = event->target;
-  reply.property = (event->property == None ? event->target : event->property);
+  reply.time      = event->time;
+  reply.target    = event->target;
+  reply.property  = (event->property == None ? event->target : event->property);
 
   /* #### XChangeProperty can generate BadAlloc, and we must handle it! */
 
@@ -648,7 +648,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
       XChangeProperty (display, window, reply.property, type, format,
 		       PropModeReplace, data, size);
       /* At this point, the selection was successfully stored; ack it. */
-      (void) XSendEvent (display, window, False, 0L, (XEvent *) &reply);
+      XSendEvent (display, window, False, 0L, (XEvent *) &reply);
       XFlush (display);
     }
   else
@@ -669,7 +669,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
 		       &bytes_remaining, 1);
       XSelectInput (display, window, PropertyChangeMask);
       /* Tell 'em the INCR data is there... */
-      (void) XSendEvent (display, window, False, 0L, (XEvent *) &reply);
+      XSendEvent (display, window, False, 0L, (XEvent *) &reply);
       XFlush (display);
 
       /* First, wait for the requestor to ack by deleting the property.
@@ -732,18 +732,18 @@ x_handle_selection_request (XSelectionRequestEvent *event)
 
   GCPRO3 (local_selection_data, converted_selection, target_symbol);
 
-  reply.type = SelectionNotify;		/* Construct the reply event */
-  reply.display = event->display;
+  reply.type      = SelectionNotify;		/* Construct the reply event */
+  reply.display   = event->display;
   reply.requestor = event->requestor;
   reply.selection = event->selection;
-  reply.time = event->time;
-  reply.target = event->target;
-  reply.property = (event->property == None ? event->target : event->property);
+  reply.time      = event->time;
+  reply.target    = event->target;
+  reply.property  = (event->property == None ? event->target : event->property);
 
   selection_symbol = x_atom_to_symbol (d, event->selection);
 
   local_selection_data = assq_no_quit (selection_symbol, Vselection_alist);
-  
+
 #if 0
 # define CDR(x) (XCDR (x))
 # define CAR(x) (XCAR (x))
@@ -789,12 +789,12 @@ x_handle_selection_request (XSelectionRequestEvent *event)
   if (EQ (target_symbol, QMULTIPLE))
     target_symbol = fetch_multiple_target (event);
 #endif
-  
+
   /* Convert lisp objects back into binary data */
-  
+
   converted_selection =
     x_get_local_selection (selection_symbol, target_symbol);
-  
+
   if (! NILP (converted_selection))
     {
       unsigned char *data;
@@ -803,7 +803,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
       Atom type;
       lisp_data_to_selection_data (d, converted_selection,
 				   &data, &type, &size, &format);
-      
+
       x_reply_selection_request (event, format, data, size, type);
       successful_p = Qt;
       /* Tell x_selection_request_lisp_error() it's cool. */
@@ -816,8 +816,7 @@ x_handle_selection_request (XSelectionRequestEvent *event)
 
   UNGCPRO;
 
-  /* Let random lisp code notice that the selection has been asked for.
-   */
+  /* Let random lisp code notice that the selection has been asked for. */
   {
     Lisp_Object rest;
     Lisp_Object val = Vx_sent_selection_hooks;
@@ -844,7 +843,7 @@ x_handle_selection_clear (XSelectionClearEvent *event)
   struct device *d = get_device_from_display (display);
   Atom selection = event->selection;
   Time changed_owner_time = event->time;
-  
+
   Lisp_Object selection_symbol, local_selection_data;
   Time local_selection_time;
 
@@ -1046,26 +1045,24 @@ copy_multiple_data (Lisp_Object obj)
 {
   Lisp_Object vec;
   int i;
-  int size;
+  int len;
   if (CONSP (obj))
     return Fcons (XCAR (obj), copy_multiple_data (XCDR (obj)));
-    
+
   CHECK_VECTOR (obj);
-  size = XVECTOR (obj)->size;
-  vec = make_vector (size, Qnil);
-  for (i = 0; i < size; i++)
+  len = XVECTOR_LENGTH (obj);
+  vec = make_vector (len, Qnil);
+  for (i = 0; i < len; i++)
     {
-      Lisp_Object vec2 = vector_data (XVECTOR (obj)) [i];
+      Lisp_Object vec2 = XVECTOR_DATA (obj) [i];
       CHECK_VECTOR (vec2);
-      if (XVECTOR (vec2)->size != 2)
+      if (XVECTOR_LENGTH (vec2) != 2)
 	signal_error (Qerror, list2 (build_string
 				     ("vectors must be of length 2"),
                                      vec2));
-      vector_data (XVECTOR (vec)) [i] = make_vector (2, Qnil);
-      vector_data (XVECTOR (vector_data (XVECTOR (vec)) [i])) [0] =
-	vector_data (XVECTOR (vec2)) [0];
-      vector_data (XVECTOR (vector_data (XVECTOR (vec)) [i])) [1] =
-	vector_data (XVECTOR (vec2)) [1];
+      XVECTOR_DATA (vec) [i] = make_vector (2, Qnil);
+      XVECTOR_DATA (XVECTOR_DATA (vec) [i]) [0] = XVECTOR_DATA (vec2) [0];
+      XVECTOR_DATA (XVECTOR_DATA (vec) [i]) [1] = XVECTOR_DATA (vec2) [1];
     }
   return vec;
 }
@@ -1111,13 +1108,9 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
   Time requestor_time = DEVICE_X_MOUSE_TIMESTAMP (d);
   Atom target_property = DEVICE_XATOM_EMACS_TMP (d);
   Atom selection_atom = symbol_to_x_atom (d, selection_symbol, 0);
-  Atom type_atom;
   int speccount;
-
-  if (CONSP (target_type))
-    type_atom = symbol_to_x_atom (d, XCAR (target_type), 0);
-  else
-    type_atom = symbol_to_x_atom (d, target_type, 0);
+  Atom type_atom = symbol_to_x_atom (d, (CONSP (target_type) ?
+					 XCAR (target_type) : target_type), 0);
 
   XConvertSelection (display, selection_atom, type_atom, target_property,
 		     requestor_window, requestor_time);
@@ -1167,7 +1160,7 @@ x_get_window_property (Display *display, Window window, Atom property,
   int result;
   int buffer_size = SELECTION_QUANTUM (display);
   if (buffer_size > MAX_SELECTION_QUANTUM) buffer_size = MAX_SELECTION_QUANTUM;
-  
+
   /* First probe the thing to find out how big it is. */
   result = XGetWindowProperty (display, window, property,
 			       0, 0, False, AnyPropertyType,
@@ -1181,7 +1174,7 @@ x_get_window_property (Display *display, Window window, Atom property,
       return;
     }
   XFree ((char *) tmp_data);
-  
+
   if (*actual_type_ret == None || *actual_format_ret == 0)
     {
       if (delete_p) XDeleteProperty (display, window, property);
@@ -1192,7 +1185,7 @@ x_get_window_property (Display *display, Window window, Atom property,
 
   total_size = bytes_remaining + 1;
   *data_ret = (unsigned char *) xmalloc (total_size);
-  
+
   /* Now read, until weve gotten it all. */
   while (bytes_remaining)
     {
@@ -1305,7 +1298,7 @@ x_get_window_property_as_lisp_data (Display *display,
   Atom actual_type;
   int actual_format;
   unsigned long actual_size;
-  unsigned char *data = 0;
+  unsigned char *data = NULL;
   int bytes = 0;
   Lisp_Object val;
   struct device *d = get_device_from_display (display);
@@ -1314,26 +1307,27 @@ x_get_window_property_as_lisp_data (Display *display,
 			 &actual_type, &actual_format, &actual_size, 1);
   if (! data)
     {
-      int there_is_a_selection_owner;
-      there_is_a_selection_owner =
-	XGetSelectionOwner (display, selection_atom);
-      signal_error (Qerror,
-        (there_is_a_selection_owner
-	 ? Fcons (build_string ("selection owner couldn't convert"),
-		  (actual_type
-		   ? list2 (target_type,
-			    x_atom_to_symbol (d, actual_type))
-		   : list1 (target_type)))
-	 : list2 (build_string ("no selection"),
-		  x_atom_to_symbol (d, selection_atom))));
+      if (XGetSelectionOwner (display, selection_atom))
+	/* there is a selection owner */
+	signal_error
+	  (Qselection_conversion_error,
+	   Fcons (build_string ("selection owner couldn't convert"),
+		  Fcons (x_atom_to_symbol (d, selection_atom),
+			 actual_type ?
+			 list2 (target_type, x_atom_to_symbol (d, actual_type)) :
+			 list1 (target_type))));
+      else
+	signal_error (Qerror,
+		      list2 (build_string ("no selection"),
+			     x_atom_to_symbol (d, selection_atom)));
     }
-  
+
   if (actual_type == DEVICE_XATOM_INCR (d))
     {
-      /* Ok, that data wasnt *the* data, it was just the beginning. */
+      /* Ok, that data wasn't *the* data, it was just the beginning. */
 
       unsigned int min_size_bytes = * ((unsigned int *) data);
-      XFree ((char *) data);
+      xfree (data);
       receive_incremental_selection (display, window, property, target_type,
 				     min_size_bytes, &data, &bytes,
 				     &actual_type, &actual_format,
@@ -1341,11 +1335,10 @@ x_get_window_property_as_lisp_data (Display *display,
     }
 
   /* It's been read.  Now convert it to a lisp object in some semi-rational
-     manner.
-   */
+     manner. */
   val = selection_data_to_lisp_data (d, data, bytes,
 				     actual_type, actual_format);
-  
+
   xfree (data);
   return val;
 }
@@ -1395,8 +1388,8 @@ selection_data_to_lisp_data (struct device *d,
   /* Convert any 8-bit data to a string, for compactness. */
   else if (format == 8)
     return make_ext_string (data, size,
-			    type == DEVICE_XATOM_TEXT (d)
-			    || type == DEVICE_XATOM_COMPOUND_TEXT (d)
+			    type == DEVICE_XATOM_TEXT (d) ||
+			    type == DEVICE_XATOM_COMPOUND_TEXT (d)
 			    ? FORMAT_CTEXT : FORMAT_BINARY);
 
   /* Convert a single atom to a Lisp_Symbol.  Convert a set of atoms to
@@ -1568,17 +1561,17 @@ lisp_data_to_selection_data (struct device *d,
        */
       int i;
 
-      if (SYMBOLP (vector_data (XVECTOR (obj)) [0]))
+      if (SYMBOLP (XVECTOR_DATA (obj) [0]))
 	/* This vector is an ATOM set */
 	{
 	  if (NILP (type)) type = QATOM;
-	  *size_ret = XVECTOR (obj)->size;
+	  *size_ret = XVECTOR_LENGTH (obj);
 	  *format_ret = 32;
 	  *data_ret = (unsigned char *) xmalloc ((*size_ret) * sizeof (Atom));
 	  for (i = 0; i < *size_ret; i++)
-	    if (SYMBOLP (vector_data (XVECTOR (obj)) [i]))
+	    if (SYMBOLP (XVECTOR_DATA (obj) [i]))
 	      (*(Atom **) data_ret) [i] =
-		symbol_to_x_atom (d, vector_data (XVECTOR (obj)) [i], 0);
+		symbol_to_x_atom (d, XVECTOR_DATA (obj) [i], 0);
 	    else
               signal_error (Qerror, /* Qselection_error */
                             list2 (build_string
@@ -1586,28 +1579,28 @@ lisp_data_to_selection_data (struct device *d,
                                    obj));
 	}
 #if 0 /* #### MULTIPLE doesn't work yet */
-      else if (VECTORP (vector_data (XVECTOR (obj)) [0]))
+      else if (VECTORP (XVECTOR_DATA (obj) [0]))
 	/* This vector is an ATOM_PAIR set */
 	{
 	  if (NILP (type)) type = QATOM_PAIR;
-	  *size_ret = XVECTOR (obj)->size;
+	  *size_ret = XVECTOR_LENGTH (obj);
 	  *format_ret = 32;
 	  *data_ret = (unsigned char *)
 	    xmalloc ((*size_ret) * sizeof (Atom) * 2);
 	  for (i = 0; i < *size_ret; i++)
-	    if (VECTORP (vector_data (XVECTOR (obj)) [i]))
+	    if (VECTORP (XVECTOR_DATA (obj) [i]))
 	      {
-		Lisp_Object pair = vector_data (XVECTOR (obj)) [i];
-		if (XVECTOR (pair)->size != 2)
+		Lisp_Object pair = XVECTOR_DATA (obj) [i];
+		if (XVECTOR_LENGTH (pair) != 2)
 		  signal_error (Qerror,
-                                list2 (build_string 
+                                list2 (build_string
        ("elements of the vector must be vectors of exactly two elements"),
 				  pair));
-		
+
 		(*(Atom **) data_ret) [i * 2] =
-		  symbol_to_x_atom (d, vector_data (XVECTOR (pair)) [0], 0);
+		  symbol_to_x_atom (d, XVECTOR_DATA (pair) [0], 0);
 		(*(Atom **) data_ret) [(i * 2) + 1] =
-		  symbol_to_x_atom (d, vector_data (XVECTOR (pair)) [1], 0);
+		  symbol_to_x_atom (d, XVECTOR_DATA (pair) [1], 0);
 	      }
 	    else
 	      signal_error (Qerror,
@@ -1619,13 +1612,13 @@ lisp_data_to_selection_data (struct device *d,
       else
 	/* This vector is an INTEGER set, or something like it */
 	{
-	  *size_ret = XVECTOR (obj)->size;
+	  *size_ret = XVECTOR_LENGTH (obj);
 	  if (NILP (type)) type = QINTEGER;
 	  *format_ret = 16;
 	  for (i = 0; i < *size_ret; i++)
-	    if (CONSP (vector_data (XVECTOR (obj)) [i]))
+	    if (CONSP (XVECTOR_DATA (obj) [i]))
 	      *format_ret = 32;
-	    else if (!INTP (vector_data (XVECTOR (obj)) [i]))
+	    else if (!INTP (XVECTOR_DATA (obj) [i]))
 	      signal_error (Qerror, /* Qselection_error */
                             list2 (build_string
 	("all elements of the vector must be integers or conses of integers"),
@@ -1635,10 +1628,10 @@ lisp_data_to_selection_data (struct device *d,
 	  for (i = 0; i < *size_ret; i++)
 	    if (*format_ret == 32)
 	      (*((unsigned long **) data_ret)) [i] =
-		lisp_to_word (vector_data (XVECTOR (obj)) [i]);
+		lisp_to_word (XVECTOR_DATA (obj) [i]);
 	    else
 	      (*((unsigned short **) data_ret)) [i] =
-		(unsigned short) lisp_to_word (vector_data (XVECTOR (obj)) [i]);
+		(unsigned short) lisp_to_word (XVECTOR_DATA (obj) [i]);
 	}
     }
   else
@@ -1671,14 +1664,14 @@ clean_local_selection_data (Lisp_Object obj)
   if (VECTORP (obj))
     {
       int i;
-      int size = XVECTOR (obj)->size;
+      int len = XVECTOR_LENGTH (obj);
       Lisp_Object copy;
-      if (size == 1)
-	return clean_local_selection_data (vector_data (XVECTOR (obj)) [0]);
-      copy = make_vector (size, Qnil);
-      for (i = 0; i < size; i++)
-	vector_data (XVECTOR (copy)) [i] =
-	  clean_local_selection_data (vector_data (XVECTOR (obj)) [i]);
+      if (len == 1)
+	return clean_local_selection_data (XVECTOR_DATA (obj) [0]);
+      copy = make_vector (len, Qnil);
+      for (i = 0; i < len; i++)
+	XVECTOR_DATA (copy) [i] =
+	  clean_local_selection_data (XVECTOR_DATA (obj) [i]);
       return copy;
     }
   return obj;
@@ -1692,22 +1685,13 @@ void
 x_handle_selection_notify (XSelectionEvent *event)
 {
   if (! reading_selection_reply)
-    {
-      message ("received an unexpected SelectionNotify event");
-      return;
-    }
-  if (event->requestor != reading_selection_reply)
-    {
-      message ("received a SelectionNotify event for the wrong window");
-      return;
-    }
-  if (event->selection != reading_which_selection)
-    {
-      message ("received the wrong selection type in SelectionNotify!");
-      return;
-    }
-
-  reading_selection_reply = 0; /* we're done now. */
+    message ("received an unexpected SelectionNotify event");
+  else if (event->requestor != reading_selection_reply)
+    message ("received a SelectionNotify event for the wrong window");
+  else if (event->selection != reading_which_selection)
+    message ("received the wrong selection type in SelectionNotify!");
+  else
+    reading_selection_reply = 0; /* we're done now. */
 }
 
 
@@ -1732,8 +1716,8 @@ anything that the functions on selection-converter-alist know about.
  */
 DEFUN ("x-get-selection-internal", Fx_get_selection_internal, 2, 2, 0, /*
 Return text selected from some X window.
-SELECTION is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
-TYPE is the type of data desired, typically STRING or COMPOUND_TEXT.
+SELECTION_SYMBOL is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
+TARGET_TYPE is the type of data desired, typically STRING or COMPOUND_TEXT.
 Under Mule, if the resultant data comes back as 8-bit data in type
 TEXT or COMPOUND_TEXT, it will be decoded as Compound Text.
 */
@@ -1761,20 +1745,18 @@ TEXT or COMPOUND_TEXT, it will be decoded as Compound Text.
 
   if (NILP (val))
     {
-      val = x_get_foreign_selection (selection_symbol,
-				     target_type);
-      goto DONE_LABEL;
+      val = x_get_foreign_selection (selection_symbol, target_type);
     }
-
-  if (CONSP (val) &&
-      SYMBOLP (XCAR (val)))
+  else
     {
-      val = XCDR (val);
-      if (CONSP (val) && NILP (XCDR (val)))
-	val = XCAR (val);
+      if (CONSP (val) && SYMBOLP (XCAR (val)))
+	{
+	  val = XCDR (val);
+	  if (CONSP (val) && NILP (XCDR (val)))
+	    val = XCAR (val);
+	}
+      val = clean_local_selection_data (val);
     }
-  val = clean_local_selection_data (val);
- DONE_LABEL:
   UNGCPRO;
   return val;
 }
@@ -1836,11 +1818,9 @@ nil is the same as PRIMARY, and t is the same as SECONDARY.)
 {
   CHECK_SYMBOL (selection);
   if (EQ (selection, Qnil)) selection = QPRIMARY;
-  if (EQ (selection, Qt)) selection = QSECONDARY;
-  
-  if (NILP (Fassq (selection, Vselection_alist)))
-    return Qnil;
-  return Qt;
+  if (EQ (selection, Qt))   selection = QSECONDARY;
+
+  return NILP (Fassq (selection, Vselection_alist)) ? Qnil: Qt;
 }
 
 DEFUN ("x-selection-exists-p", Fx_selection_exists_p, 0, 1, 0, /*
@@ -1851,14 +1831,13 @@ nil is the same as PRIMARY, and t is the same as SECONDARY.)
 */
        (selection))
 {
-  Window owner;
   struct device *d = decode_x_device (Qnil);
   Display *dpy = DEVICE_X_DISPLAY (d);
   CHECK_SYMBOL (selection);
   if (!NILP (Fx_selection_owner_p (selection)))
     return Qt;
-  owner = XGetSelectionOwner (dpy, symbol_to_x_atom (d, selection, 0));
-  return (owner ? Qt : Qnil);
+  return XGetSelectionOwner (dpy, symbol_to_x_atom (d, selection, 0)) != NULL ?
+    Qt : Qnil;
 }
 
 
@@ -1971,7 +1950,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
      The ICCCM requires that this be so, and other clients assume it,
      as we do ourselves in initialize_cut_buffers.  */
 
-#ifdef MULE 
+#ifdef MULE
   /* Optimize for the common ASCII case */
   for (ptr = data, end = ptr + bytes; ptr <= end; )
     {
@@ -1980,7 +1959,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 	  ptr++;
 	  continue;
 	}
-      
+
       if ((*ptr) == LEADING_BYTE_LATIN_ISO8859_1 ||
 	  (*ptr) == LEADING_BYTE_CONTROL_1)
 	{
@@ -1988,7 +1967,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 	  ptr += 2;
 	  continue;
 	}
-      
+
       chartypes = WORLD;
       break;
     }
@@ -1998,7 +1977,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   else if (chartypes == WORLD)
     GET_STRING_CTEXT_DATA_ALLOCA  (string, data, bytes);
 #endif /* MULE */
-  
+
   bytes_remaining = bytes;
 
   while (bytes_remaining)
@@ -2104,7 +2083,7 @@ syms_of_xselect (void)
   defsymbol (&QWM_HINTS, "WM_HINTS");
   defsymbol (&QWM_SIZE_HINTS, "WM_SIZE_HINTS");
 #endif /* EPOCH */
-  
+
 #ifdef CUT_BUFFER_SUPPORT
   defsymbol (&QCUT_BUFFER0, "CUT_BUFFER0");
   defsymbol (&QCUT_BUFFER1, "CUT_BUFFER1");
@@ -2114,7 +2093,11 @@ syms_of_xselect (void)
   defsymbol (&QCUT_BUFFER5, "CUT_BUFFER5");
   defsymbol (&QCUT_BUFFER6, "CUT_BUFFER6");
   defsymbol (&QCUT_BUFFER7, "CUT_BUFFER7");
-#endif
+#endif /* CUT_BUFFER_SUPPORT */
+
+  deferror (&Qselection_conversion_error,
+	    "selection-conversion-error",
+	    "selection-conversion error", Qio_error);
 }
 
 void

@@ -1821,7 +1821,7 @@ describe_event_window (Window window, Display *display)
 {
   struct frame *f;
   Widget w;
-  stderr_out ("   window: 0x%x", (int) window);
+  stderr_out ("   window: 0x%x", window);
   w = XtWindowToWidget (display, window);
   if (w)
     stderr_out (" %s", w->core.widget_class->core_class.class_name);

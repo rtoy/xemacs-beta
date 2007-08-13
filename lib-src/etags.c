@@ -31,7 +31,7 @@ Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
  *	Francesco Potorti` (F.Potorti@cnuce.cnr.it) is the current maintainer.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 12.11";
+char pot_etags_version[] = "@(#) pot revision number is 12.19";
 
 #define	TRUE	1
 #define	FALSE	0
@@ -41,9 +41,13 @@ char pot_etags_version[] = "@(#) pot revision number is 12.11";
 #endif
 
 #ifdef MSDOS
-# include <string.h>
 # include <fcntl.h>
 # include <sys/param.h>
+# include <io.h>
+# ifndef HAVE_CONFIG_H
+#   define DOS_NT
+#   include <sys/config.h>
+# endif
 #endif /* MSDOS */
 
 #ifdef WINDOWSNT
@@ -52,27 +56,41 @@ char pot_etags_version[] = "@(#) pot revision number is 12.11";
 # include <string.h>
 # include <io.h>
 # define MAXPATHLEN _MAX_PATH
-#endif
+# ifdef HAVE_CONFIG_H
+#   undef HAVE_NTGUI
+# else
+#   define DOS_NT
+#   define HAVE_GETCWD
+# endif /* not HAVE_CONFIG_H */
+#endif /* WINDOWSNT */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
   /* On some systems, Emacs defines static as nothing for the sake
      of unexec.  We don't want that here since we don't use unexec. */
 # undef static
-# define ETAGS_REGEXPS
-# define LONG_OPTIONS
-#endif
+# define ETAGS_REGEXPS		/* use the regexp features */
+# define LONG_OPTIONS		/* accept long options */
+#endif /* HAVE_CONFIG_H */
 
-#if !defined (MSDOS) && !defined (WINDOWSNT) && defined (STDC_HEADERS)
+#if !defined (WINDOWSNT) && defined (STDC_HEADERS)
 #include <stdlib.h>
 #include <string.h>
 #endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#else
+# ifdef HAVE_GETCWD
+    extern char *getcwd ();
+# endif
+#endif /* HAVE_UNISTD_H */
 
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
 #ifndef errno
-extern int errno;
+  extern int errno;
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -81,12 +99,8 @@ extern int errno;
 # define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
 #endif
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #ifdef LONG_OPTIONS
-# include "getopt.h"
+# include <getopt.h>
 #else
 # define getopt_long(argc,argv,optstr,lopts,lind) getopt (argc, argv, optstr)
   extern char *optarg;
@@ -94,7 +108,7 @@ extern int errno;
 #endif /* LONG_OPTIONS */
 
 #ifdef ETAGS_REGEXPS
-# include "../src/regex.h"
+# include <regex.h>
 #endif /* ETAGS_REGEXPS */
 
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
@@ -272,11 +286,11 @@ struct
 bool _wht[CHARS], _nin[CHARS], _itk[CHARS], _btk[CHARS], _etk[CHARS];
 char
   /* white chars */
-  *white = " \f\t\n\013",
+  *white = " \f\t\n\r",
   /* not in a name */
-  *nonam =" \f\t\n\013(=,[;",
+  *nonam =" \f\t\n\r(=,[;",
   /* token ending chars */
-  *endtk = " \t\n\013\"'#()[]{}=-+%*/&|^~!<>;,.:?",
+  *endtk = " \t\n\r\"'#()[]{}=-+%*/&|^~!<>;,.:?",
   /* token starting chars */
   *begtk = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz$~@",
   /* valid in-token chars */
@@ -490,7 +504,7 @@ Fortran is tried first; if no tags are found, C is tried next.");
 }
 
 #ifndef VERSION
-# define VERSION "19"
+# define VERSION "20"
 #endif
 void
 print_version ()
@@ -793,7 +807,7 @@ main (argc, argv)
 
 #ifdef ETAGS_REGEXPS
   /* Set syntax for regular expression routines. */
-  re_set_syntax (RE_SYNTAX_EMACS);
+  re_set_syntax (RE_SYNTAX_EMACS | RE_INTERVALS);
 #endif /* ETAGS_REGEXPS */
 
   /*
@@ -1510,10 +1524,10 @@ put_entries (node)
   if (!CTAGS)
     {
       if (node->name != NULL)
-	fprintf (tagf, "%s\177%s\001%d,%d\n",
+	fprintf (tagf, "%s\177%s\001%d,%ld\n",
 		 node->pat, node->name, node->lno, node->cno);
       else
-	fprintf (tagf, "%s\177%d,%d\n",
+	fprintf (tagf, "%s\177%d,%ld\n",
 		 node->pat, node->lno, node->cno);
     }
   else
@@ -1631,6 +1645,7 @@ package,	C_JAVA,	st_C_ignore
 friend,		C_PLPL,	st_C_ignore
 extends,  	C_JAVA,	st_C_javastruct
 implements,  	C_JAVA,	st_C_javastruct
+interface,	C_JAVA, st_C_struct
 class,  	C_PLPL,	st_C_struct
 namespace,	C_PLPL,	st_C_struct
 domain, 	C_STAR,	st_C_struct
@@ -1669,7 +1684,7 @@ PSEUDO,		0,	st_C_gnumacro
 %]
 and replace lines between %< and %> with its output. */
 /*%<*/
-/* starting time is 10:31:16 */
+/* starting time is 10:15:51 */
 /* C code produced by gperf version 2.1 (K&R C version) */
 /* Command-line: gperf -c -k 1,3 -o -p -r -t  */
 
@@ -1678,11 +1693,11 @@ struct C_stab_entry { char *name; int c_ext; enum sym_type type; };
 
 #define MIN_WORD_LENGTH 3
 #define MAX_WORD_LENGTH 15
-#define MIN_HASH_VALUE 15
-#define MAX_HASH_VALUE 128
+#define MIN_HASH_VALUE 11
+#define MAX_HASH_VALUE 117
 /*
-   39 keywords
-  114 is the maximum key range
+   40 keywords
+  107 is the maximum key range
 */
 
 static int
@@ -1692,19 +1707,19 @@ hash (str, len)
 {
   static unsigned char hash_table[] =
     {
-     128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-     128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-     128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-     128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-     128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-     128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-     128, 128, 128, 128,  39, 128, 128, 128,  54,  48,
-      46, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-      28, 128, 128,  40,  32, 128, 128, 128, 128, 128,
-     128, 128, 128, 128, 128, 128, 128,  24,  30,  47,
-      62,   7,  60,  27, 128,  60, 128, 128,  59,  16,
-      31,  23,  45, 128,   4,  14,   2,  55,   5, 128,
-     128, 128, 128, 128, 128, 128, 128, 128,
+     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
+     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
+     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
+     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
+     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
+     117, 117, 117, 117, 117, 117, 117, 117, 117, 117,
+     117, 117, 117, 117,   1, 117, 117, 117,   2,  42,
+      16, 117, 117, 117, 117, 117, 117, 117, 117, 117,
+       5, 117, 117,  21,  54, 117, 117, 117, 117, 117,
+     117, 117, 117, 117, 117, 117, 117,  24,  19,  43,
+       2,  35,   3,  10, 117,  26, 117, 117,   9,  20,
+      35,   9,  61, 117,  40,  52,  10,  57,   3, 117,
+     117, 117, 117, 117, 117, 117, 117, 117,
   };
   return len + hash_table[str[2]] + hash_table[str[0]];
 }
@@ -1718,71 +1733,68 @@ in_word_set (str, len)
   static struct C_stab_entry  wordlist[] =
     {
       {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"extern",   	0,	st_C_typespec},
-      {"extends",   	C_JAVA,	st_C_javastruct},
-      {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"struct",  	0,	st_C_struct},
-      {"mutable", 	C_PLPL,	st_C_typespec},
-      {"",}, {"",}, {"",}, {"",}, 
-      {"auto",     	0,	st_C_typespec},
-      {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
       {"",}, {"",}, 
-      {"short",    	0,	st_C_typespec},
-      {"",}, 
-      {"static",   	0,	st_C_typespec},
+      {"define",   	0,	st_C_define},
+      {"",}, {"",}, {"",}, {"",}, {"",}, 
+      {"float",    	0,	st_C_typespec},
       {"",}, {"",}, 
-      {"signed",   	0,	st_C_typespec},
-      {"",}, {"",}, {"",}, {"",}, 
-      {"@protocol", 	0,	st_C_objprot},
-      {"",}, 
-      {"typedef",  	0,	st_C_typedef},
-      {"typename", 	C_PLPL,	st_C_typespec},
-      {"namespace", 	C_PLPL,	st_C_struct},
-      {"bool", 		C_PLPL,	st_C_typespec},
-      {"",}, {"",}, 
-      {"explicit", 	C_PLPL,	st_C_typespec},
-      {"",}, {"",}, {"",}, {"",}, 
-      {"int",      	0,	st_C_typespec},
-      {"enum",     	0,	st_C_enum},
-      {"",}, {"",}, 
-      {"void",     	0,	st_C_typespec},
-      {"@implementation", 0,	st_C_objimpl},
-      {"",}, 
       {"volatile", 	0,	st_C_typespec},
-      {"",}, 
-      {"@end", 		0,	st_C_objend},
-      {"char",     	0,	st_C_typespec},
-      {"class",   	C_PLPL,	st_C_struct},
-      {"unsigned", 	0,	st_C_typespec},
       {"",}, {"",}, 
+      {"DEFUN", 		0,	st_C_gnumacro},
+      {"",}, {"",}, {"",}, {"",}, 
+      {"domain",  	C_STAR,	st_C_struct},
+      {"",}, {"",}, {"",}, 
+      {"bool", 		C_PLPL,	st_C_typespec},
+      {"void",     	0,	st_C_typespec},
+      {"",}, 
+      {"friend", 		C_PLPL,	st_C_ignore},
+      {"@implementation", 0,	st_C_objimpl},
+      {"mutable", 	C_PLPL,	st_C_typespec},
+      {"auto",     	0,	st_C_typespec},
+      {"int",      	0,	st_C_typespec},
+      {"@end", 		0,	st_C_objend},
+      {"",}, {"",}, {"",}, {"",}, 
+      {"interface", 	C_JAVA, st_C_struct},
       {"@interface", 	0,	st_C_objprot},
       {"",}, 
-      {"PSEUDO", 		0,	st_C_gnumacro},
-      {"const",    	0,	st_C_typespec},
-      {"domain",  	C_STAR,	st_C_struct},
-      {"ENTRY", 		0,	st_C_gnumacro},
-      {"",}, 
-      {"SYSCALL", 	0,	st_C_gnumacro},
-      {"float",    	0,	st_C_typespec},
-      {"",}, {"",}, {"",}, {"",}, {"",}, 
       {"long",     	0,	st_C_typespec},
-      {"",}, {"",}, {"",}, {"",}, 
-      {"package", 	C_JAVA,	st_C_ignore},
+      {"SYSCALL", 	0,	st_C_gnumacro},
+      {"@protocol", 	0,	st_C_objprot},
+      {"extern",   	0,	st_C_typespec},
+      {"extends",   	C_JAVA,	st_C_javastruct},
+      {"PSEUDO", 		0,	st_C_gnumacro},
+      {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
+      {"",}, 
+      {"namespace", 	C_PLPL,	st_C_struct},
+      {"double",   	0,	st_C_typespec},
+      {"short",    	0,	st_C_typespec},
+      {"",}, 
+      {"signed",   	0,	st_C_typespec},
+      {"",}, {"",}, 
+      {"char",     	0,	st_C_typespec},
+      {"class",   	C_PLPL,	st_C_struct},
       {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"DEFUN", 		0,	st_C_gnumacro},
-      {"",}, {"",}, {"",}, {"",}, {"",}, 
-      {"import", 		C_JAVA,	st_C_ignore},
-      {"",}, {"",}, {"",}, 
-      {"implements",   	C_JAVA,	st_C_javastruct},
+      {"typedef",  	0,	st_C_typedef},
+      {"typename", 	C_PLPL,	st_C_typespec},
+      {"",}, {"",}, 
+      {"static",   	0,	st_C_typespec},
+      {"const",    	0,	st_C_typespec},
       {"",}, {"",}, {"",}, {"",}, 
       {"union",   	0,	st_C_struct},
+      {"",}, {"",}, {"",}, {"",}, 
+      {"import", 		C_JAVA,	st_C_ignore},
       {"",}, {"",}, 
-      {"double",   	0,	st_C_typespec},
+      {"enum",     	0,	st_C_enum},
+      {"implements",   	C_JAVA,	st_C_javastruct},
+      {"struct",  	0,	st_C_struct},
       {"",}, {"",}, 
-      {"friend", 		C_PLPL,	st_C_ignore},
-      {"",}, 
-      {"define",   	0,	st_C_define},
+      {"ENTRY", 		0,	st_C_gnumacro},
+      {"",}, {"",}, 
+      {"explicit", 	C_PLPL,	st_C_typespec},
+      {"",}, {"",}, {"",}, {"",}, {"",}, {"",}, 
+      {"package", 	C_JAVA,	st_C_ignore},
+      {"",}, {"",}, {"",}, {"",}, {"",}, 
+      {"unsigned", 	0,	st_C_typespec},
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
@@ -1799,7 +1811,7 @@ in_word_set (str, len)
     }
   return 0;
 }
-/* ending time is 10:31:16 */
+/* ending time is 10:15:52 */
 /*%>*/
 
 enum sym_type
@@ -4280,7 +4292,6 @@ add_regex (regexp_pattern)
   patbuf->buffer = NULL;
   patbuf->allocated = 0;
 
-  re_syntax_options = RE_INTERVALS;
   err = re_compile_pattern (regexp_pattern, strlen (regexp_pattern), patbuf);
   if (err != NULL)
     {
@@ -4593,8 +4604,14 @@ pfatal (s1)
 void
 suggest_asking_for_help ()
 {
-  fprintf (stderr, "\tTry `%s --help' for a complete list of options.\n",
-	   progname);
+  fprintf (stderr, "\tTry `%s %s' for a complete list of options.\n",
+	   progname,
+#ifdef LONG_OPTIONS
+	   "--help"
+#else
+	   "-h"
+#endif
+	   );
   exit (BAD);
 }
 

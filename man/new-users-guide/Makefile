@@ -38,6 +38,7 @@ dvi : $(NAME).dvi
 .texi.dvi :
 	$(TEXI2DVI) $<
 
+.PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
 	rm -f *.toc *.aux *.oaux *.log *.cp *.cps *.fn *.fns *.tp *.tps \
               *.vr *.vrs *.pg *.pgs *.ky *.kys

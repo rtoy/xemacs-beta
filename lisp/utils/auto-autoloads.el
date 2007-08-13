@@ -236,7 +236,15 @@ See also \\(f@docref-subst)." t nil)
 
 ;;;***
 
-;;;### (autoloads (insert-kbd-macro format-kbd-macro kbd read-kbd-macro edit-named-kbd-macro edit-last-kbd-macro edit-kbd-macro) "edmacro" "utils/edmacro.el")
+;;;### (autoloads (edit-toolbar) "edit-toolbar" "utils/edit-toolbar.el")
+
+(autoload 'edit-toolbar "edit-toolbar" "\
+Alter toolbar characteristics by editing a buffer representing the current toolbar.
+Pops up a buffer containing a list of the current toobar." t nil)
+
+;;;***
+
+;;;### (autoloads (format-kbd-macro kbd read-kbd-macro edit-named-kbd-macro edit-last-kbd-macro edit-kbd-macro) "edmacro" "utils/edmacro.el")
 
 (define-key ctl-x-map "\C-k" 'edit-kbd-macro)
 
@@ -275,20 +283,6 @@ This string is suitable for passing to `read-kbd-macro'.
 Second argument VERBOSE means to put one command per line with comments.
 If VERBOSE is `1', put everything on one line.  If VERBOSE is omitted
 or nil, use a compact 80-column format." nil nil)
-
-(autoload 'insert-kbd-macro "edmacro" "\
-Insert in buffer the definition of kbd macro NAME, as Lisp code.
-Optional second arg KEYS means also record the keys it is on
-\(this is the prefix argument, when calling interactively).
-
-This Lisp code will, when executed, define the kbd macro with the same
-definition it has now.  If you say to record the keys, the Lisp code
-will also rebind those keys to the macro.  Only global key bindings
-are recorded since executing this Lisp code always makes global
-bindings.
-
-To save a kbd macro, visit a file of Lisp code such as your `~/.emacs',
-use this command, and then save the file." t nil)
 
 ;;;***
 
@@ -941,6 +935,31 @@ symmetrical ones, and the same character twice for the others." t nil)
 ;;;### (autoloads nil "timezone" "utils/timezone.el")
 
 (define-error 'invalid-date "Invalid date string")
+
+;;;***
+
+;;;### (autoloads (toolbar-kill-item toolbar-kill-item-pos toolbar-add-item restore-initial-toolbar) "toolbar-utils" "utils/toolbar-utils.el")
+
+(autoload 'restore-initial-toolbar "toolbar-utils" "\
+Restores the default toolbar defined by initial-toolbar-spec." t nil)
+
+(autoload 'toolbar-add-item "toolbar-utils" "\
+Add a toolbar item ITEM at the first location of the toolbar specifier. 
+Optionally, can specify an INDEX position to insert the ITEM.  The default is
+to use default-toolbar, but a different specifier can by specified with 
+TOOLBAR-SPEC." nil nil)
+
+(autoload 'toolbar-kill-item-pos "toolbar-utils" "\
+Remove a toolbar item ITEM at the first location of the toolbar specifier.  
+Optionally, can specify an INDEX position where to remove the ITEM.  The 
+default is to use default-toolbar, but a different specifier can by 
+specified with TOOLBAR-SPEC." nil nil)
+
+(autoload 'toolbar-kill-item "toolbar-utils" "\
+Remove a toolbar item ITEM at the first location of the toolbar specifier.  
+Optionally, can specify an ITEM to remove.  The ITEM must be in form of a 
+vector.  The default is to use default-toolbar, but a different specifier 
+can by specified with TOOLBAR-SPEC." nil nil)
 
 ;;;***
 

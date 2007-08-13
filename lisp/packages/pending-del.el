@@ -3,6 +3,8 @@
 ;; Copyright (C) 1992, 1994 Free Software Foundation, Inc.
 
 ;; Author: Matthieu Devin <devin@lucid.com>, 14 Jul 92.
+;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
+;; Version 2.1
 
 ;; This file is part of XEmacs.
 
@@ -21,51 +23,61 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: Not in FSF.
+;;; Synched up with: 19.34  (distributed as delsel.el in FSF)
 
+;;; Commentary:
+
+;; Much of this code was revamped by Hrvoje Niksic, July 1997, with
+;; version number set to 2.x.
+
+;; Pending-del is now a minor mode, with all the normal toggle
+;; functions.  It should be somewhat faster, too.
+
+
 ;;; Code:
 
-(defvar pending-delete-verbose
-  1
-  "*nil disables on/off messages for pending-del mode
-1 suppresses messages on loading
-t enables all messages")
+(defvar pending-delete-mode nil
+  "Non-nil when Pending Delete mode is enabled.
+In Pending Delete mode, typed text replaces the selected region.")
 
-(defun delete-active-region (&optional killp)
-  (if (and (not buffer-read-only)
-	   (extentp zmacs-region-extent)
-	   (eq (current-buffer) (extent-buffer zmacs-region-extent))
-	   (extent-start-position zmacs-region-extent)
-	   (<= (extent-start-position zmacs-region-extent) (point))
-	   (<= (point) (extent-end-position zmacs-region-extent)))
-      (progn
-	(if killp
-	    (kill-region (extent-start-position zmacs-region-extent)
-			 (extent-end-position zmacs-region-extent))
-	  (delete-region (extent-start-position zmacs-region-extent)
-			 (extent-end-position zmacs-region-extent)))
-	(zmacs-deactivate-region)
-	t)))
+(add-minor-mode 'pending-delete-mode " PenDel")
+
+
+(defun pending-delete-active-region (&optional killp)
+  (when (and (region-active-p)
+	     (eq (extent-object zmacs-region-extent) (current-buffer))
+	     (not buffer-read-only))
+    ;; Here we used to check whether the point lies between the
+    ;; beginning and end of the extent.  I don't see how it is
+    ;; necessary, as the C code makes sure that this is so; it only
+    ;; slow things down.
+    (if killp
+	(kill-region (region-beginning) (region-end))
+      (delete-region (region-beginning) (region-end)))
+    (zmacs-deactivate-region)
+    t))
 
 (defun pending-delete-pre-hook ()
-  ;; don't ever signal an error in pre-command-hook!
   (condition-case e
       (let ((type (and (symbolp this-command)
 		       (get this-command 'pending-delete))))
 	(cond ((eq type 'kill)
-	       (delete-active-region t))
+	       (pending-delete-active-region t))
 	      ((eq type 'supersede)
-	       (if (delete-active-region ())
-		   (setq this-command '(lambda () (interactive)))))
+	       (if (pending-delete-active-region ())
+		   (setq this-command (lambda () (interactive)))))
 	      (type
-	       (delete-active-region ()))))
+	       (pending-delete-active-region ()))))
     (error
-     (warn "Error caught in `pending-delete-pre-hook': %s" e))))
+     (warn "Error caught in `pending-delete-pre-hook': %s"
+	   (error-message-string e)))))
 
+
 (put 'self-insert-command 'pending-delete t)
 
 (put 'yank 'pending-delete t)
 (put 'x-yank-clipboard-selection 'pending-delete t)
+(put 'toolbar-paste 'pending-delete t)
 
 (put 'delete-backward-char 'pending-delete 'supersede)
 (put 'backward-delete-char-untabify 'pending-delete 'supersede)
@@ -86,46 +98,56 @@ t enables all messages")
 
 (put 'insert-register 'pending-delete t)
 
+
 ;;;###autoload
-(defun pending-delete-on (verbose)
-  "Turn on pending delete.
-When it is ON, typed text replaces the selection if the selection is active.
-When it is OFF, typed text is just inserted at point."
-  (interactive "P")
-  (add-hook 'pre-command-hook 'pending-delete-pre-hook)
-  (and verbose
-    (message "Pending delete is ON, use M-x pending-delete to turn it OFF")))
+(defun turn-on-pending-delete (&optional ignored)
+  "Turn on pending delete minor mode unconditionally."
+  (interactive)
+  (pending-delete-mode 1))
 
 ;;;###autoload
-(defun pending-delete-off (verbose)
-  "Turn off pending delete.
-When it is ON, typed text replaces the selection if the selection is active.
-When it is OFF, typed text is just inserted at point."
-  (interactive "P")
-  (remove-hook 'pre-command-hook 'pending-delete-pre-hook)
-  (and verbose (message "pending delete is OFF")))
+(defun turn-off-pending-delete (&optional ignored)
+  "Turn off pending delete minor mode unconditionally."
+  (interactive)
+  (pending-delete-mode 0))
 
 ;;;###autoload
-(defun pending-delete (&optional arg)
-  "Toggle automatic deletion of the selected region.
+(defun pending-delete-mode (&optional arg)
+  "Toggle Pending Delete minor mode.
+When the pending delete is on, typed text replaces the selection.
 With a positive argument, turns it on.
-With a non-positive argument, turns it off.
-When active, typed text replaces the selection."
+With a non-positive argument, turns it off."
   (interactive "P")
-  (let* ((was-on (not (not (memq 'pending-delete-pre-hook pre-command-hook))))
-	 (on-p (if (null arg)
-		   (not was-on)
-		(> (prefix-numeric-value arg) 0))))
-    (cond ((eq on-p was-on)
-	   nil)
-	  (on-p
-	   (pending-delete-on pending-delete-verbose))
-	  (t
-	   (pending-delete-off pending-delete-verbose)))))
-  
-;; Add pending-del mode.  Assume that if we load it then we obviously wanted
-;; it on, even if it is already on.
-(pending-delete-on (eq pending-delete-verbose t))
+  (setq pending-delete-mode
+	(if (null arg) (not pending-delete-mode)
+	  (> (prefix-numeric-value arg) 0)))
+  (if pending-delete-mode
+      (add-hook 'pre-command-hook 'pending-delete-pre-hook)
+    (remove-hook 'pre-command-hook 'pending-delete-pre-hook))
+  (force-mode-line-update))
+
+
+;; Backward compatibility:
+;;;###autoload
+(define-obsolete-function-alias 'pending-delete-on 'turn-on-pending-delete)
+;;;###autoload
+(define-obsolete-function-alias 'pending-delete-off 'turn-off-pending-delete)
+
+;; FSF compatibility:
+;;;###autoload
+(define-compatible-function-alias 'delete-selection-mode 'pending-delete-mode)
+
+;; Compatibility and convenience:
+;;;###autoload
+(defalias 'pending-delete 'pending-delete-mode)
+
+
+;; The following code used to turn the mode on unconditionally.
+;; However, this is a very bad idea -- since pending-del is
+;; autoloaded, (turn-on-pending-delete) is as easy to add to `.emacs'
+;; as (require 'pending-del) used to be.
+
+;(pending-delete-on (eq pending-delete-verbose t))
 
 (provide 'pending-del)
 

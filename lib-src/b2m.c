@@ -70,12 +70,12 @@ struct linebuffer
   char *buffer;
 };
 
-extern char *strtok();
 
-long *xmalloc (), *xrealloc ();
-char *concat ();
-long readline ();
-void fatal (char *);
+static long *xmalloc (unsigned int);
+static long *xrealloc (void *, unsigned int);
+static char *concat (char *s1, char *s2, char *s3);
+static long readline (struct linebuffer *, FILE *);
+static void fatal (char *);
 
 /*
  * xnew -- allocate storage.  SYNOPSIS: Type *xnew (int n, Type);
@@ -87,11 +87,11 @@ void fatal (char *);
 char *progname;
 
 int
-main (int argc, char **argv)
+main (int argc, char *argv[])
 {
   logical labels_saved, printing, header;
   time_t ltoday;
-  char *labels, *p, *today;
+  char *labels = NULL, *p, *today;
   struct linebuffer data;
 
 #ifdef MSDOS
@@ -143,7 +143,7 @@ main (int argc, char **argv)
 	      p = strtok (data.buffer, " ,\r\n\t");
 	      labels = "X-Babyl-Labels: ";
 
-	      while (p = strtok (NULL, " ,\r\n\t"))
+	      while ((p = strtok (NULL, " ,\r\n\t")))
 		labels = concat (labels, p, ", ");
 
 	      p = &labels[strlen (labels) - 2];
@@ -174,7 +174,7 @@ main (int argc, char **argv)
  * Return a newly-allocated string whose contents
  * concatenate those of s1, s2, s3.
  */
-char *
+static char *
 concat (char *s1, char *s2, char *s3)
 {
   int len1 = strlen (s1), len2 = strlen (s2), len3 = strlen (s3);
@@ -193,8 +193,8 @@ concat (char *s1, char *s2, char *s3)
  * Return the number of characters read from `stream',
  * which is the length of the line including the newline, if any.
  */
-long
-readline (struct linebuffer *linebuffer, register FILE *stream)
+static long
+readline (struct linebuffer *linebuffer, FILE *stream)
 {
   char *buffer = linebuffer->buffer;
   register char *p = linebuffer->buffer;
@@ -242,7 +242,7 @@ readline (struct linebuffer *linebuffer, register FILE *stream)
 /*
  * Like malloc but get fatal error if memory is exhausted.
  */
-long *
+static long *
 xmalloc (unsigned int size)
 {
   long *result = (long *) malloc (size);
@@ -251,8 +251,8 @@ xmalloc (unsigned int size)
   return result;
 }
 
-long *
-xrealloc (char *ptr, unsigned int size)
+static long *
+xrealloc (void *ptr, unsigned int size)
 {
   long *result = (long *) realloc (ptr, size);
   if (result == NULL)
@@ -260,7 +260,7 @@ xrealloc (char *ptr, unsigned int size)
   return result;
 }
 
-void
+static void
 fatal (char *message)
 {
   fprintf (stderr, "%s: %s\n", progname, message);

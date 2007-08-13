@@ -199,7 +199,7 @@ dnl # $c_switch_x_machine  $c_switch_x_system
 dnl # $ld_switch_x_machine $ld_switch_x_system
 xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_switch_x_site $X_CFLAGS'
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
-xe_libs='$xe_check_libs $X_EXTRA_LIBS $libs_x $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
+xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
 ac_cpp='$CPP '"$xe_cppflags"
 ac_compile='${CC-cc} -c $CFLAGS '"$xe_cppflags"' conftest.$ac_ext 1>&AC_FD_CC'
 ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_ext '"$xe_libs"' 1>&AC_FD_CC'
@@ -538,6 +538,8 @@ Other options:
 --puresize=VALUE	Override default amount of space for pure Lisp code.
 --rel-alloc		Use the relocating allocator (default for this option
   			is system-dependent).
+--with-clash-detection	Use lock files to detect multiple edits of the same file.
+			The default is to not do clash detection.
 --use-system-malloc	Force use of the system malloc, rather than GNU
 			malloc.
 
@@ -679,6 +681,7 @@ while test $# != 0; do
 	debug		| \
 	use_assertions	| \
 	memory_usage_stats | \
+	with_clash_detection | \
 	no_doc_file )
 	  dnl Make sure the value given was either "yes" or "no".
 	  case "$val" in
@@ -697,6 +700,7 @@ while test $# != 0; do
 	puresize	| \
 	cache_file	| \
 	native_sound_lib | \
+	package_path	| \
 	x_includes	| \
 	x_libraries	| \
 	site_includes	| \
@@ -1039,6 +1043,9 @@ dnl ----------------------------------------
 dnl Find out which version of XEmacs this is
 dnl ----------------------------------------
 . "$srcdir/version.sh" || exit 1;
+dnl Must do the following first to determine verbosity for AC_DEFINE
+if test -n "$emacs_beta_version"; then beta=yes; else beta=no; fi
+: "${extra_verbose=$beta}"
 version="${emacs_major_version}.${emacs_minor_version}"
 AC_DEFINE_UNQUOTED(EMACS_MAJOR_VERSION, $emacs_major_version)
 AC_DEFINE_UNQUOTED(EMACS_MINOR_VERSION, $emacs_minor_version)
@@ -1048,8 +1055,6 @@ if test -n "$emacs_beta_version"; then
 fi
 AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
-canonical_version=`echo ${version}_${canonical} | sed 'y/.-/__/'`
-AC_DEFINE_UNQUOTED(CANONICAL_VERSION, $canonical_version)
 
 dnl ----------------------------------
 dnl Error checking and debugging flags
@@ -1062,7 +1067,6 @@ test "${error_check_typecheck=$beta}" = yes && AC_DEFINE(ERROR_CHECK_TYPECHECK)
 test "${error_check_bufpos=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_BUFPOS)
 test "${error_check_gc=$beta}"        = yes && AC_DEFINE(ERROR_CHECK_GC)
 test "${error_check_malloc=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_MALLOC)
-: "${extra_verbose=$beta}"
 dnl debug=yes must be set when error checking is present.  This should be
 dnl fixed up.
 dnl debug implies other options
@@ -1570,15 +1574,30 @@ if test -z "$machine" -o -z "$opsys"; then
   exit 1
 fi
 
-if test "$dynamic" = "yes" ; then
+if test -z "$dynamic"; then
   case "$opsys" in
-    hpux* | sunos4* | sco5 ) opsys="${opsys}-shr" ;;
-  esac
-elif test "$dynamic" = "no" ; then
-  case "$opsys" in
-    sol2 | decosf1-3 | decosf3-* | decosf4-* | linux ) opsys="${opsys}-static" ;;
+    hpux* | sunos4* | sco5 ) dynamic=no ;;
+    *) dynamic=yes ;;
   esac
 fi
+if test "$dynamic" = "yes"; then
+  case "$opsys" in
+    hpux* | sunos4* | sco5 ) opsys="${opsys}-shr" ;;
+    decosf* ) ld_call_shared="-call_shared" ;;
+  esac
+else dnl "$dynamic" = "no"
+  case "$opsys" in
+    sol2 ) 
+      echo "Static linking is not supported on Solaris 2."
+      echo "Rerun configure without specifying --dynamic=no."
+      exit 1 ;;
+    linux   ) ld_call_shared="-Bstatic" ;;
+    decosf* ) ld_call_shared="-non_shared" ;;
+  esac
+fi
+
+canonical_version=`echo ${version}_${canonical} | sed 'y/.-/__/'`
+AC_DEFINE_UNQUOTED(CANONICAL_VERSION, $canonical_version)
 
 machfile="m/${machine}.h"
 opsysfile="s/${opsys}.h"
@@ -1703,7 +1722,6 @@ CPP_to_sh(LD_SWITCH_X_SYSTEM, ld_switch_x_system)
 
 CPP_to_sh(UNEXEC, unexec, unexec.o)
 
-CPP_to_sh(LD_SWITCH_CALL_SHARED, ld_switch_call_shared)
 CPP_to_sh(LD_SWITCH_SHARED, ld_switch_shared, -c)
 
 #ifdef ORDINARY_LINK
@@ -1792,10 +1810,9 @@ test "$extra_verbose" = "yes" && \
   PRINT_VAR(libs_machine libs_system libs_termcap libs_standard
   objects_machine objects_system c_switch_machine c_switch_system
   c_switch_x_system ld_switch_machine ld_switch_system
-  ld_switch_x_system unexec ld_switch_call_shared ld_switch_shared
+  ld_switch_x_system unexec ld_switch_shared
   ld lib_gcc ld_text_start_addr start_files ordinary_link
   have_terminfo mail_use_flock mail_use_lockf) && echo ""
-
 
 dnl Non-ordinary link usually requires -lc
 test "$ordinary_link" = "no" -a -z "$libs_standard" && libs_standard="-lc"
@@ -1806,7 +1823,7 @@ if test -z "$CFLAGS"; then
   dnl Following values of CFLAGS are known to work well.
   dnl Should we take debugging options into consideration?
   if   test "$GCC" = "yes"; then
-    CFLAGS="-g -O2"
+    CFLAGS="-g -O2 -Wall"
     test "$opsys" = "linux" -a "$machine" = "intel386" && \
       CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
   elif test "$__sunpro_c" = "yes"; then
@@ -1833,6 +1850,7 @@ if test "$GCC" = "yes"; then
   XE_GCC_WRAP_LDFLAGS(ld_switch_system)
   XE_GCC_WRAP_LDFLAGS(ld_switch_machine)
   XE_GCC_WRAP_LDFLAGS(LDFLAGS)
+  XE_GCC_WRAP_LDFLAGS(ld_call_shared)
 fi
 
 dnl Add s&m-determined objects (including unexec) to link line
@@ -1858,7 +1876,6 @@ else
 fi
 
 dnl Feed s&m crud to src/Makefile
-AC_SUBST(ld_switch_call_shared)
 AC_SUBST(ld_switch_shared)
 AC_SUBST(start_files)
 test -n "$ld_text_start_addr" && start_flags="-T $ld_text_start_addr -e __start"
@@ -3284,13 +3301,23 @@ AC_SUBST(libsrc_libs)
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
+RECURSIVE_MAKE="\$(MAKE) \$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)'"
+AC_SUBST(RECURSIVE_MAKE)
 
 AC_SUBST(native_sound_lib)
 AC_SUBST(sound_cflags)
 AC_SUBST(RANLIB)
 AC_SUBST(dynodump_arch)
 
+
+dnl change blanks to colons in package path, and make available to config.h
+if test -n "$package_path"; then
+  package_path=`echo $package_path | sed 'y/ /:/'`
+  AC_DEFINE_UNQUOTED(PACKAGE_PATH, "$package_path")
+fi
+
 AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION, "$canonical")
+AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${ac_configure_args}")
 AC_DEFINE_UNQUOTED(config_machfile,  "$machfile")
 AC_DEFINE_UNQUOTED(config_opsysfile, "$opsysfile")
 
@@ -3325,7 +3352,7 @@ test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
 test "$with_pop"           = "yes" && AC_DEFINE(MAIL_USE_POP)
 test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
-
+test "$with_clash_detection" = "yes" && AC_DEFINE(CLASH_DETECTION)
 test "$use_union_type" != yes && AC_DEFINE(NO_UNION_TYPE)
 
 dnl -------------------------------

@@ -244,7 +244,7 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
   "Returns the topmost, leftmost window of FRAME.
 If omitted, FRAME defaults to the currently selected frame."
   (frame-highest-window frame 0))
-(make-obsolete 'frame-first-window 'frame-highest-window)
+(make-compatible 'frame-first-window 'frame-highest-window)
 
 (define-obsolete-variable-alias 'initial-frame-alist 'initial-frame-plist)
 (define-obsolete-variable-alias 'minibuffer-frame-alist

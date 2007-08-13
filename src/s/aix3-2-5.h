@@ -17,7 +17,6 @@
 /* Perry Smith <pedz@ddivt1.austin.ibm.com> says these are correct.  */
 #define SIGNALS_VIA_CHARACTERS
 #define MAIL_USE_LOCKF
-#define CLASH_DETECTION
 
 /* XEmacs: from dkeller@VNET.IBM.COM */
 #define BROKEN_SIGIO

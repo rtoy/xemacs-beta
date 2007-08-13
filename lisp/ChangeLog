@@ -1,3 +1,184 @@
+1997-07-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (save-some-buffers): Guard call to
+	`delete-other-windows'.
+
+1997-07-13  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* prim/minibuf.el: (read-from-minibuffer) Corrected indentation,
+ 	History lists don't contain dups anymore, newest is put on top and
+ 	removed from the cdr.
+
+1997-07-13  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/man.el: (manual-entry) Added `Manual-page-
+ 	minibuffer-history', and added it to the read-string statement.
+  	Added #\: to `fmh' so that manuals named like MIME::Parser(3) are
+ 	found at point.
+	(Manual-mouseify-xrefs) Fixed it so now it will mousify the manual
+ 	entry on the first line of an apropos listing.
+
+1997-07-10  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el: Added `Info-minibuffer-history', and made it
+ 	the minibuffer history variable in the `completing-read' calls.
+
+	* utils/savehist.el: Added `Info-minibuffer-history' to default
+ 	value of `savehist-history-variables'.
+
+1997-07-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* modes/lisp-mode.el: Restore verbosity as an option.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-07-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/cmdloop.el (execute-extended-command): Use
+ 	`sorted-key-descriptions'.
+
+	* prim/help.el (sorted-key-descriptions): New function.
+	(where-is): Use it.
+	(where-is): Use `read-command'.
+
+	* prim/macros.el (kbd-macro-query): Use `read-char-exclusive'
+	instead of `read-char'.
+
+	* prim/cmdloop.el (read-char): Correctly inhibit quit.
+
+	* prim/files.el: Use `files' group.
+
+	* prim/disp-table.el (describe-display-table): Made it work; don't 
+	use `describe-vector'.
+
+	* prim/gui.el: Customized.
+
+	* utils/edmacro.el (insert-kbd-macro): Move to macros.el.
+
+	* prim/macros.el: Synch with FSF 19.34.
+
+	* prim/featurep.el: Comment addition.
+
+	* prim/cus-start.el: Add variables from replace.el.
+
+	* prim/replace.el (case-replace): Use `defvar', not `defconst'.
+
+	* utils/crontab.el: Customized.
+
+	* utils/highlight-headers.el: Define -faces as a separate group;
+	customize the variables.
+
+	* utils/uniquify.el: Hide from the Customize tree; the package
+	changes state of XEmacs on load.
+
+	* packages/igrep.el: Don't insinuate XEmacs when loading.
+	(igrep-insinuate): New function.
+
+	* packages/blink-cursor.el (blink-cursor-callback): Don't blink on 
+	TTY-s.
+
+	* prim/console.el (resume-pid-console): Use `eql'.
+
+	* prim/profile.el (profile): Restore old profiling state, instead
+	of blindly turning off profiling.
+
+	* packages/add-log.el (add-log-c-like-modes): Add java-mode.
+
+	* packages/add-log.el: Require fortran when compiling.
+
+	* prim/device.el (device-list): Use `nconc' instead of `append'.
+
+1997-07-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (save-some-buffers): Only delete other windows the
+	first time through.
+	Based on code from Hrvoje Niksic <hniksic@srce.hr>
+
+1997-07-12  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/modeline.el (mouse-drag-modeline): Don't queue dummy eval
+	events.
+	From Kyle Jones <kyle_jones@wonderworks.com>
+
+1997-07-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/gnuserv.el (gnuserv-edit-files): Operate on this
+	buffer's menubar.
+
+1997-07-11  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/gnuserv.el: Add done button.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-07-10  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/edit-toolbar.el: (edit-toolbar-file-name): Use
+	`emacs-user-extension-dir'.
+	(edit-toolbar-add-initialization): Ditto.
+	(edit-toolbar-prompt-for-initialization): Ditto.
+
+	* utils/edit-toolbar.el: New file.
+	From Peter Pezaris <pez@dwwc.com>
+
+	* utils/toolbar-utils.el: New file.
+	From Jeff Miller <jmiller@smart.net>
+
+1997-07-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/add-log.el (change-log-font-lock-keywords): Don't
+	fontify closing paren.
+
+	* packages/pending-del.el: Some renamings, synch with Emacs 19.34.
+
+1997-07-10  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/hyper-apropos.el (hyper-apropos-get-doc): Don't
+	autoload, there is very little point.
+
+	* prim/obsolete.el (frame-first-window): Make compatible, not
+	obsolete.
+
+1997-07-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/pending-del.el (pending-delete-pre-hook): Don't quote
+ 	lambda.
+	(pending-delete-pre-hook): Use `error-message-string'.
+	(pending-delete): Treat as minor mode; define the standard turn-on 
+	and turn-off functions.
+	(delete-active-region): Simplified.
+
+	* packages/pending-del.el: Don't turn on by default.
+
+1997-07-09  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/pending-del.el: Correct typo in Hrvoje's upgrade.
+
+	* mel/mel-u.el (uuencode-external-decode-region): Force
+	buffer-read-only nil because it gets changed magically to t during 
+	the call to `insert-file-contents'.
+
+	* tm/tm-image.el (mime-preview/filter-for-image): Comment out test 
+	for invalid glyph.  It appears to be non-functional.
+
+	* modes/lisp-mode.el (lisp-interaction-mode-popup-menu-1): Add
+	entry for debug on signal.
+
+	* packages/supercite.el (sc-attribs-%@-addresses): + is valid in
+	an Email address.
+	(sc-attribs-<>-addresses): Ditto.
+	(sc-get-address): Ditto.
+
+	* cc-mode/cc-cmds.el (c-electric-brace): Fix Ebola infection.
+
+	* prim/dumped-lisp.el (dumped-lisp-packages): Tweak dump order
+	so "startup" is loaded before the autoloads.
+
+	* custom/cus-edit.el (custom-file): Use same logic as startup.el
+
+j1997-07-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/simple.el (log-message-ignore-regexps): Reduced
+	significantly.
+
 Tue Jul  8 23:47:47 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode/Release 5.12

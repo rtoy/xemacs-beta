@@ -67,6 +67,7 @@ index.texi:
 	else ln -s index.unperm index.texi; \
 	fi
 
+.PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
 	rm -f *.toc *.aux *.log *.cp *.cps *.fn *.fns *.tp *.tps \
               *.vr *.vrs *.pg *.pgs *.ky *.kys

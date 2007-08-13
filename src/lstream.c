@@ -160,8 +160,8 @@ print_lstream (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   Lstream *lstr = XLSTREAM (obj);
   char buf[200];
 
-  sprintf (buf, "#<INTERNAL EMACS BUG (%s lstream) 0x%x>",
-	   lstr->imp->name, (EMACS_INT) lstr);
+  sprintf (buf, "#<INTERNAL EMACS BUG (%s lstream) 0x%p>",
+	   lstr->imp->name, lstr);
   write_c_string (buf, printcharfun);
 }
 

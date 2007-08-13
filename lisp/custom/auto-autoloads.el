@@ -2,7 +2,7 @@
 (if (not (featurep 'custom-autoloads))
     (progn
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all customize-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-option customize-group-other-window customize-group customize customize-set-variable customize-set-value) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all customize-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-option customize-group-other-window customize-group customize customize-save-variable customize-set-variable customize-set-value) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'customize-set-value "cus-edit" "\
 Set VARIABLE to VALUE.  VALUE is a Lisp object.
@@ -16,6 +16,20 @@ If VARIABLE has a `custom-type' property, it must be a widget and the
 (autoload 'customize-set-variable "cus-edit" "\
 Set the default for VARIABLE to VALUE.  VALUE is a Lisp object.
 
+If VARIABLE has a `custom-set' property, that is used for setting
+VARIABLE, otherwise `set-default' is used.
+
+The `customized-value' property of the VARIABLE will be set to a list
+with a quoted VALUE as its sole list member.
+
+If VARIABLE has a `variable-interactive' property, that is used as if
+it were the arg to `interactive' (which see) to interactively read the value.
+
+If VARIABLE has a `custom-type' property, it must be a widget and the
+`:prompt-value' property of that widget will be used for reading the value. " t nil)
+
+(autoload 'customize-save-variable "cus-edit" "\
+Set the default for VARIABLE to VALUE, and save it for future sessions.
 If VARIABLE has a `custom-set' property, that is used for setting
 VARIABLE, otherwise `set-default' is used.
 
@@ -99,7 +113,7 @@ that option." nil nil)
 (autoload 'customize-browse "cus-edit" "\
 Create a tree browser for the customize hierarchy." t nil)
 
-(defcustom custom-file (if (boundp 'emacs-user-extension-dir) (concat emacs-user-extension-dir "options.el") "~/.emacs") "File used for storing customization information.\nIf you change this from the default \"~/.emacs\" you need to\nexplicitly load that file for the settings to take effect." :type 'file :group 'customize)
+(defcustom custom-file (if (boundp 'emacs-user-extension-dir) (concat "~" init-file-user emacs-user-extension-dir "options.el") "~/.emacs") "File used for storing customization information.\nIf you change this from the default \"~/.emacs\" you need to\nexplicitly load that file for the settings to take effect." :type 'file :group 'customize)
 
 (autoload 'customize-save-customized "cus-edit" "\
 Save all user options which have been set in this session." t nil)

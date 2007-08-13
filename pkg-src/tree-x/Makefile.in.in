@@ -34,6 +34,9 @@ ld_libs_all=@ld_libs_all@
 
 build_top=../..
 
+cflags  = -I${build_top}/src $(CPPFLAGS) $(c_switch_all)
+ldflags = $(ld_switch_all) -lXaw $(ld_libs_all)
+
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
 vpath %.h @srcdir@
@@ -51,13 +54,10 @@ objs = draw.o tree.o input.o dissolve.o dbl.o intf.o $(usleep_objs)
 all : xoobr
 
 xoobr: $(objs)
-	$(CC) $(CFLAGS) $(objs) $(ldflags) -o $@
-
-cflags  = $(CFLAGS) -I${build_top}/src $(CPPFLAGS) $(c_switch_all)
-ldflags = $(LDFLAGS) $(ld_switch_all) -lXaw $(ld_libs_all)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(objs) $(ldflags) -o $@
 
 .c.o :
-	${CC} -c $(cflags) $<
+	$(CC) $(CFLAGS) $(cflags) -c $<
 
 install: $(progs)
 	../../lib-src/make-path ${archlibdir}
@@ -75,9 +75,6 @@ distclean: clean
 realclean: distclean
 extraclean: distclean
 	$(RM) *~ \#*
-
-distclean: clean
-	$(RM) Makefile.in Makefile
 
 size:
 	wc *.c *.h

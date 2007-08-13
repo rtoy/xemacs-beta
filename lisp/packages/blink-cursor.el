@@ -33,7 +33,9 @@
 (defun blink-cursor-callback (foo)
   (let ((inhibit-quit t)
 	(window (selected-window)))
-    (if blink-cursor-lost-focus
+    ;; Blinking cursor just doesn't cut it on TTY-s.  Rather give it up.
+    (if (or (eq (console-type) 'tty)
+	    blink-cursor-lost-focus)
 	nil
       (or blink-cursor-last-selected-window
 	  (setq blink-cursor-last-selected-window window))

@@ -143,10 +143,10 @@ MD5Init (MD5_CTX *context)
 void
 MD5Update (MD5_CTX *context, CONST unsigned char *input, unsigned int inputLen)
 {
-  unsigned int i, indecks, partLen;
+  unsigned int i, indice, partLen;
 
   /* Compute number of bytes mod 64 */
-  indecks = (unsigned int)((context->count[0] >> 3) & 0x3F);
+  indice = (unsigned int)((context->count[0] >> 3) & 0x3F);
 
   /* Update number of bits */
   if ((context->count[0] += ((UINT4)inputLen << 3))
@@ -154,25 +154,25 @@ MD5Update (MD5_CTX *context, CONST unsigned char *input, unsigned int inputLen)
     context->count[1]++;
   context->count[1] += ((UINT4)inputLen >> 29);
 
-  partLen = 64 - indecks;
+  partLen = 64 - indice;
 
   /* Transform as many times as possible. */
   if (inputLen >= partLen)
     {
-      MD5_memcpy ((POINTER)&context->buffer[indecks], (CONST POINTER)input,
+      MD5_memcpy ((POINTER)&context->buffer[indice], (CONST POINTER)input,
 		  partLen);
       MD5Transform (context->state, context->buffer);
 
       for (i = partLen; i + 63 < inputLen; i += 64)
 	MD5Transform (context->state, &input[i]);
 
-      indecks = 0;
+      indice = 0;
     }
   else
     i = 0;
 
   /* Buffer remaining input */
-  MD5_memcpy ((POINTER)&context->buffer[indecks], (CONST POINTER)&input[i],
+  MD5_memcpy ((POINTER)&context->buffer[indice], (CONST POINTER)&input[i],
 	      inputLen-i);
 }
 
@@ -182,15 +182,15 @@ void
 MD5Final (unsigned char digest[16], MD5_CTX *context)
 {
   unsigned char bits[8];
-  unsigned int indecks, padLen;
+  unsigned int indice, padLen;
 
   /* Save number of bits */
   Encode (bits, context->count, 8);
 
   /* Pad out to 56 mod 64.
 */
-  indecks = (unsigned int)((context->count[0] >> 3) & 0x3f);
-  padLen = (indecks < 56) ? (56 - indecks) : (120 - indecks);
+  indice = (unsigned int)((context->count[0] >> 3) & 0x3f);
+  padLen = (indice < 56) ? (56 - indice) : (120 - indice);
   MD5Update (context, PADDING, padLen);
 
   /* Append length (before padding) */
@@ -364,7 +364,7 @@ Lisp_Object Qmd5;
    will get sent over the wire in an external form that is different
    from their internal representation, and thus their MD5 hash would
    be different. */
-     
+
 DEFUN ("md5", Fmd5, 1, 3, 0, /*
 Return the MD5 (a secure message digest algorithm) of an object.
 OBJECT is either a string or a buffer.
@@ -377,7 +377,7 @@ hash of a portion of OBJECT.
   unsigned char digest[16];
   unsigned char thehash[32];
   int i;
-  
+
   MDInit (&context);
 
   if (NILP (object))

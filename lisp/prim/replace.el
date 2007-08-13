@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(defconst case-replace t "\
+(defvar case-replace t "\
 *Non-nil means `query-replace' should preserve case in replacements.
 What this means is that `query-replace' will change the case of the
 replacement text so that it matches the text that was replaced.

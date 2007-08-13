@@ -1228,7 +1228,7 @@ LayoutMenu_CB(Widget w, XtPointer client_data, XtPointer call_data)
       SetupTree(TheTree);
     }
     break;
-#endif COMMENT
+#endif /* COMMENT */
   case LAYOUT_MENU_SPACING:
     dlgLevelValue = TreeParentDistance;
     dlgSiblingValue = TreeBorderSize;

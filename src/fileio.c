@@ -249,7 +249,7 @@ static Lisp_Object
 restore_point_unwind (Lisp_Object point_marker)
 {
   BUF_SET_PT (current_buffer, marker_position (point_marker));
-  return (Fset_marker (point_marker, Qnil, Qnil));
+  return Fset_marker (point_marker, Qnil, Qnil);
 }
 
 /* Versions of read() and write() that allow quitting out of the actual
@@ -354,7 +354,7 @@ use the standard functions without calling themselves recursively.
 	    {
 	      Lisp_Object handler = XCDR (elt);
 	      if (NILP (Fmemq (handler, inhibited_handlers)))
-		return (handler);
+		return handler;
 	    }
 	}
       QUIT;
@@ -368,7 +368,7 @@ call2_check_string (Lisp_Object fn, Lisp_Object arg0, Lisp_Object arg1)
   /* This function can call lisp */
   Lisp_Object result = call2 (fn, arg0, arg1);
   CHECK_STRING (result);
-  return (result);
+  return result;
 }
 
 static Lisp_Object
@@ -378,7 +378,7 @@ call2_check_string_or_nil (Lisp_Object fn, Lisp_Object arg0, Lisp_Object arg1)
   Lisp_Object result = call2 (fn, arg0, arg1);
   if (!NILP (result))
     CHECK_STRING (result);
-  return (result);
+  return result;
 }
 
 static Lisp_Object
@@ -388,7 +388,7 @@ call3_check_string (Lisp_Object fn, Lisp_Object arg0,
   /* This function can call lisp */
   Lisp_Object result = call3 (fn, arg0, arg1, arg2);
   CHECK_STRING (result);
-  return (result);
+  return result;
 }
 
 
@@ -412,8 +412,7 @@ on VMS, perhaps instead a string ending in `:', `]' or `>'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (file, Qfile_name_directory);
   if (!NILP (handler))
-    return (call2_check_string_or_nil (handler, Qfile_name_directory,
-				       file));
+    return call2_check_string_or_nil (handler, Qfile_name_directory, file);
 
 #ifdef FILE_SYSTEM_CASE
   file = FILE_SYSTEM_CASE (file);
@@ -479,8 +478,7 @@ or the entire name if it contains no slash.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (file, Qfile_name_nondirectory);
   if (!NILP (handler))
-    return (call2_check_string (handler, Qfile_name_nondirectory,
-				file));
+    return call2_check_string (handler, Qfile_name_nondirectory, file);
 
   beg = XSTRING_DATA (file);
   end = p = beg + XSTRING_LENGTH (file);
@@ -615,8 +613,7 @@ On VMS, converts \"[X]FOO.DIR\" to \"[X.FOO]\", etc.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (file, Qfile_name_as_directory);
   if (!NILP (handler))
-    return (call2_check_string (handler, Qfile_name_as_directory,
-				file));
+    return call2_check_string (handler, Qfile_name_as_directory, file);
 
   buf = (char *) alloca (XSTRING_LENGTH (file) + 10);
   return build_string (file_name_as_directory
@@ -806,8 +803,7 @@ it returns a file name such as \"[X]Y.DIR.1\".
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (directory, Qdirectory_file_name);
   if (!NILP (handler))
-    return (call2_check_string (handler, Qdirectory_file_name,
-				directory));
+    return call2_check_string (handler, Qdirectory_file_name, directory);
 #ifdef VMS
   /* 20 extra chars is insufficient for VMS, since we might perform a
      logical name translation. an equivalence string can be up to 255
@@ -857,7 +853,7 @@ An initial `~/' expands to your home directory.
 An initial `~USER/' expands to USER's home directory.
 See also the function `substitute-in-file-name'.
 */
-       (name, defalt))
+       (name, default_))
 {
   /* This function can GC.  GC checked 1997.04.06. */
   Bufbyte *nm;
@@ -888,13 +884,12 @@ See also the function `substitute-in-file-name'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (name, Qexpand_file_name);
   if (!NILP (handler))
-    return (call3_check_string (handler, Qexpand_file_name, name,
-				defalt));
+    return call3_check_string (handler, Qexpand_file_name, name, default_);
 
-  /* Use the buffer's default-directory if DEFALT is omitted.  */
-  if (NILP (defalt))
-    defalt = current_buffer->directory;
-  if (NILP (defalt))		/* this should be a meaningful error */
+  /* Use the buffer's default-directory if DEFAULT_ is omitted.  */
+  if (NILP (default_))
+    default_ = current_buffer->directory;
+  if (NILP (default_))		/* this should be a meaningful error */
     {
       /* #### If we had a minibuffer-only frame up then current_buffer
 	 is likely to not have a directory setting.  We should
@@ -905,22 +900,22 @@ See also the function `substitute-in-file-name'.
 			     make_buffer (current_buffer));
     }
   else
-    CHECK_STRING (defalt);
+    CHECK_STRING (default_);
 
-  if (!NILP (defalt))
+  if (!NILP (default_))
     {
       struct gcpro gcpro1;
 
-      GCPRO1 (defalt);		/* might be current_buffer->directory */
-      handler = Ffind_file_name_handler (defalt, Qexpand_file_name);
+      GCPRO1 (default_);	/* might be current_buffer->directory */
+      handler = Ffind_file_name_handler (default_, Qexpand_file_name);
       UNGCPRO;
       if (!NILP (handler))
-	return call3 (handler, Qexpand_file_name, name, defalt);
+	return call3 (handler, Qexpand_file_name, name, default_);
     }
 
-  /* Make sure DEFALT is properly expanded.
+  /* Make sure DEFAULT_ is properly expanded.
      It would be better to do this down below where we actually use
-     defalt.  Unfortunately, calling Fexpand_file_name recursively
+     default_.  Unfortunately, calling Fexpand_file_name recursively
      could invoke GC, and the strings might be relocated.  This would
      be annoying because we have pointers into strings lying around
      that would need adjusting, and people would add new pointers to
@@ -928,16 +923,16 @@ See also the function `substitute-in-file-name'.
      Putting this call here avoids all that crud.
 
      The EQ test avoids infinite recursion.  */
-  if (! NILP(defalt) && !EQ (defalt, name)
+  if (! NILP(default_) && !EQ (default_, name)
       /* This saves time in a common case.  */
-      && ! (XSTRING_LENGTH (defalt) >= 3
-	    && (IS_DIRECTORY_SEP (XSTRING_BYTE (defalt, 0))
-		|| IS_DEVICE_SEP (XSTRING_BYTE (defalt, 1)))))
+      && ! (XSTRING_LENGTH (default_) >= 3
+	    && (IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 0))
+		|| IS_DEVICE_SEP (XSTRING_BYTE (default_, 1)))))
     {
       struct gcpro gcpro1;
 
-      GCPRO1 (defalt);		/* may be current_buffer->directory */
-      defalt = Fexpand_file_name (defalt, Qnil);
+      GCPRO1 (default_);	/* may be current_buffer->directory */
+      default_ = Fexpand_file_name (default_, Qnil);
       UNGCPRO;
     }
 
@@ -1194,9 +1189,9 @@ See also the function `substitute-in-file-name'.
       && drive == -1
 #endif /* DOS_NT */
       && !newdir
-      && STRINGP (defalt))
+      && STRINGP (default_))
     {
-      newdir = XSTRING_DATA (defalt);
+      newdir = XSTRING_DATA (default_);
     }
 
 #ifdef DOS_NT
@@ -1382,7 +1377,7 @@ Second arg DEFAULT is directory to start with if FILE is relative
 No component of the resulting pathname will be a symbolic link, as
  in the realpath() function.
 */
-       (filename, defalt))
+       (filename, default_))
 {
   /* This function can GC.  GC checked 1997.04.06. */
   Lisp_Object expanded_name;
@@ -1391,7 +1386,7 @@ No component of the resulting pathname will be a symbolic link, as
 
   CHECK_STRING (filename);
 
-  expanded_name = Fexpand_file_name (filename, defalt);
+  expanded_name = Fexpand_file_name (filename, default_);
 
   if (!STRINGP (expanded_name))
     return Qnil;
@@ -1401,11 +1396,10 @@ No component of the resulting pathname will be a symbolic link, as
   UNGCPRO;
 
   if (!NILP (handler))
-    return (call2_check_string (handler, Qfile_truename,
-				expanded_name));
+    return call2_check_string (handler, Qfile_truename, expanded_name);
 
 #ifdef VMS
-  return (expanded_name);
+  return expanded_name;
 #else
   {
     char resolved_path[MAXPATHLEN];
@@ -1527,8 +1521,8 @@ duplicates what `expand-file-name' does.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (string, Qsubstitute_in_file_name);
   if (!NILP (handler))
-    return (call2_check_string_or_nil (handler, Qsubstitute_in_file_name,
-				       string));
+    return call2_check_string_or_nil (handler, Qsubstitute_in_file_name,
+				      string);
 
   nm = XSTRING_DATA (string);
 #ifdef MSDOS
@@ -1978,35 +1972,35 @@ A prefix arg makes KEEP-TIME non-nil.
 DEFUN ("make-directory-internal", Fmake_directory_internal, 1, 1, 0, /*
 Create a directory.  One argument, a file name string.
 */
-       (dirname))
+       (dirname_))
 {
   /* This function can GC.  GC checked 1997.04.06. */
   char dir [MAXPATHLEN];
   Lisp_Object handler;
   struct gcpro gcpro1;
 
-  CHECK_STRING (dirname);
-  dirname = Fexpand_file_name (dirname, Qnil);
+  CHECK_STRING (dirname_);
+  dirname_ = Fexpand_file_name (dirname_, Qnil);
 
-  GCPRO1 (dirname);
-  handler = Ffind_file_name_handler (dirname, Qmake_directory_internal);
+  GCPRO1 (dirname_);
+  handler = Ffind_file_name_handler (dirname_, Qmake_directory_internal);
   UNGCPRO;
   if (!NILP (handler))
-    return (call2 (handler, Qmake_directory_internal, dirname));
+    return (call2 (handler, Qmake_directory_internal, dirname_));
 
-  if (XSTRING_LENGTH (dirname) > (sizeof (dir) - 1))
+  if (XSTRING_LENGTH (dirname_) > (sizeof (dir) - 1))
     {
       return Fsignal (Qfile_error,
 		      list3 (build_translated_string ("Creating directory"),
 			     build_translated_string ("pathame too long"),
-			     dirname));
+			     dirname_));
     }
-  strncpy (dir, (char *) XSTRING_DATA (dirname),
-	   XSTRING_LENGTH (dirname) + 1);
+  strncpy (dir, (char *) XSTRING_DATA (dirname_),
+	   XSTRING_LENGTH (dirname_) + 1);
 
 #ifndef VMS
-  if (dir [XSTRING_LENGTH (dirname) - 1] == '/')
-    dir [XSTRING_LENGTH (dirname) - 1] = 0;
+  if (dir [XSTRING_LENGTH (dirname_) - 1] == '/')
+    dir [XSTRING_LENGTH (dirname_) - 1] = 0;
 #endif
 
 #ifdef WINDOWSNT
@@ -2014,7 +2008,7 @@ Create a directory.  One argument, a file name string.
 #else
   if (mkdir (dir, 0777) != 0)
 #endif
-    report_file_error ("Creating directory", list1 (dirname));
+    report_file_error ("Creating directory", list1 (dirname_));
 
   return Qnil;
 }
@@ -2022,25 +2016,25 @@ Create a directory.  One argument, a file name string.
 DEFUN ("delete-directory", Fdelete_directory, 1, 1, "FDelete directory: ", /*
 Delete a directory.  One argument, a file name or directory name string.
 */
-       (dirname))
+       (dirname_))
 {
   /* This function can GC.  GC checked 1997.04.06. */
   Lisp_Object handler;
   struct gcpro gcpro1;
 
-  CHECK_STRING (dirname);
+  CHECK_STRING (dirname_);
 
-  GCPRO1 (dirname);
-  dirname = Fexpand_file_name (dirname, Qnil);
-  dirname = Fdirectory_file_name (dirname);
+  GCPRO1 (dirname_);
+  dirname_ = Fexpand_file_name (dirname_, Qnil);
+  dirname_ = Fdirectory_file_name (dirname_);
 
-  handler = Ffind_file_name_handler (dirname, Qdelete_directory);
+  handler = Ffind_file_name_handler (dirname_, Qdelete_directory);
   UNGCPRO;
   if (!NILP (handler))
-    return (call2 (handler, Qdelete_directory, dirname));
+    return (call2 (handler, Qdelete_directory, dirname_));
 
-  if (rmdir ((char *) XSTRING_DATA (dirname)) != 0)
-    report_file_error ("Removing directory", list1 (dirname));
+  if (rmdir ((char *) XSTRING_DATA (dirname_)) != 0)
+    report_file_error ("Removing directory", list1 (dirname_));
 
   return Qnil;
 }
@@ -2939,14 +2933,6 @@ positions), even in Mule. (Fixing this is very difficult.)
   if ( (!NILP (beg) || !NILP (end)) && !NILP (visit) )
     error ("Attempt to visit less than an entire file");
 
-  if (!NILP (beg))
-    CHECK_INT (beg);
-  else
-    beg = Qzero;
-
-  if (!NILP (end))
-    CHECK_INT (end);
-
   fd = -1;
 
 #ifndef APOLLO
@@ -2971,7 +2957,12 @@ positions), even in Mule. (Fixing this is very difficult.)
      least signal an error.  */
   if (!S_ISREG (st.st_mode))
     {
-      if (NILP (visit))
+      not_regular = 1;
+
+      if (!NILP (visit))
+	goto notfound;
+
+      if (!NILP (replace) || !NILP (beg) || !NILP (end))
 	{
 	  end_multiple_change (buf, mc_count);
 
@@ -2979,13 +2970,16 @@ positions), even in Mule. (Fixing this is very difficult.)
 			  list2 (build_translated_string("not a regular file"),
 				 filename));
 	}
-      else
-	{
-	  not_regular = 1;
-	  goto notfound;
-	}
     }
 #endif
+
+  if (!NILP (beg))
+    CHECK_INT (beg);
+  else
+    beg = Qzero;
+
+  if (!NILP (end))
+    CHECK_INT (end);
 
   if (fd < 0)
     if ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0)) < 0)
@@ -3003,9 +2997,12 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   if (NILP (end))
     {
-      end = make_int (st.st_size);
-      if (XINT (end) != st.st_size)
-	error ("maximum buffer size exceeded");
+      if (!not_regular)
+	{
+	  end = make_int (st.st_size);
+	  if (XINT (end) != st.st_size)
+	    error ("Maximum buffer size exceeded");
+	}
     }
 
   /* If requested, replace the accessible part of the buffer
@@ -3131,7 +3128,20 @@ positions), even in Mule. (Fixing this is very difficult.)
     }
 #endif /* FSFMACS_SPEEDY_INSERT */
 
-  total = XINT (end) - XINT (beg);
+  if (!not_regular)
+    {
+      Lisp_Object temp;
+
+      total = XINT (end) - XINT (beg);
+
+      /* Make sure point-max won't overflow after this insertion.  */
+      XSETINT (temp, total);
+      if (total != XINT (temp))
+	error ("Maximum buffer size exceeded");
+    }
+  else
+    /* For a special file, all we can do is guess.  */
+    total = READ_BUF_SIZE;
 
   if (XINT (beg) != 0
 #ifdef FSFMACS_SPEEDY_INSERT

@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/07/01 15:54:50
-;; Version: 1.192
+;; Created: 1997/07/08 13:58:52
+;; Version: 1.195
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -51,6 +51,7 @@
 (w3-d-s-var-def w3-display-list-stack)
 (w3-d-s-var-def w3-display-form-id)
 (w3-d-s-var-def w3-display-whitespace-stack)
+(w3-d-s-var-def w3-display-liststyle-stack)
 (w3-d-s-var-def w3-display-font-family-stack)
 (w3-d-s-var-def w3-display-font-weight-stack)
 (w3-d-s-var-def w3-display-font-variant-stack)
@@ -316,7 +317,8 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 
 
 (if (not (fboundp 'char-before))
-    (fset 'char-before 'preceding-char))
+    (defun char-before (&optional pos)
+      (char-after (1- (or pos (point))))))
 
 (defsubst w3-display-line-break (n)
   (if (or
@@ -488,7 +490,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
       (progn
 	(case (car break-style)
 	  (list-item
-	   (let ((list-style (w3-get-style-info 'list-style-type node))
+	   (let ((list-style (or (car w3-display-liststyle-stack) 'disc))
 		 (list-num (if (car w3-display-list-stack)
 			       (incf (car w3-display-list-stack))
 			     1))
@@ -566,6 +568,11 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 			    (car w3-display-whitespace-stack))
 	 w3-display-whitespace-stack)
 	(push
+	 (or (w3-get-attribute 'foobarblatz)
+	     (w3-get-style-info 'list-style-type node
+				(car w3-display-liststyle-stack)))
+	 w3-display-liststyle-stack)
+	(push
 	 (or (w3-get-attribute 'align)
 	     (w3-get-style-info 'text-align node
 				(car w3-display-alignment-stack)))
@@ -574,6 +581,11 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
        ((line list-item)		; Single line break
 	(w3-display-line-break 0)
 	(w3-display-set-margins)
+	(push
+	 (or (w3-get-attribute 'foobarblatz)
+	     (w3-get-style-info 'list-style-type node
+				(car w3-display-liststyle-stack)))
+	 w3-display-liststyle-stack)
 	(push
 	 (w3-get-style-info 'white-space node
 			    (car w3-display-whitespace-stack))
@@ -599,12 +611,14 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	(w3-display-line-break 1)
 	(w3-display-restore-margins)
 	(pop w3-display-whitespace-stack)
+	(pop w3-display-liststyle-stack)
 	(pop w3-display-alignment-stack)
 	(and w3-do-incremental-display (w3-pause)))
        ((line list-item)		; Single line break
 	(w3-display-restore-margins)
 	(w3-display-line-break 0)
 	(pop w3-display-whitespace-stack)
+	(pop w3-display-liststyle-stack)
 	(pop w3-display-alignment-stack))      
        (otherwise			; Assume 'inline' rendering as default
 	nil))
@@ -1684,6 +1698,9 @@ Can sometimes make the structure of a document clearer")
 	  plist (plist-put plist 'maxlength maxlength))
     plist))
 
+(defun w3-resurrect-images ()
+  )
+
 (defun w3-resurrect-hyperlinks ()
   (let ((st (point-min))
 	(inhibit-read-only t)
@@ -2283,8 +2300,11 @@ Can sometimes make the structure of a document clearer")
     (w3-display-node (car tree))
     (setq tree (cdr tree)))
   (w3-display-fix-widgets)
-  (w3-resurrect-hyperlinks)
-  (w3-form-resurrect-widgets))
+  (let ((inhibit-read-only t))
+    (put-text-property (point-min) (point-max) 'read-only t)
+    (w3-resurrect-images)
+    (w3-resurrect-hyperlinks)
+    (w3-form-resurrect-widgets)))
 
 (defun time-display (&optional tree)
   ;; Return the # of seconds it took to draw 'tree'

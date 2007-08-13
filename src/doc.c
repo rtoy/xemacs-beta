@@ -171,7 +171,7 @@ get_doc_string (Lisp_Object filepos)
   int minsize;
   EMACS_INT position;
   Lisp_Object file, tem;
-  Lisp_Object name_reloc;
+  Lisp_Object name_reloc = Qnil;
 
   if (INTP (filepos))
     {
@@ -700,7 +700,7 @@ Writes to stderr if not.
 "This is usually because some files were preloaded by loaddefs.el or\n"
 "site-load.el, but were not passed to make-docfile by Makefile.\n");
   UNGCPRO;
-  return (NILP (Fcdr (closure)) ? Qt : Qnil);
+  return NILP (Fcdr (closure)) ? Qt : Qnil;
 }
 
 
@@ -936,7 +936,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
     tem = str;
   xfree (buf);
   UNGCPRO;
-  return (tem);
+  return tem;
 }
 
 

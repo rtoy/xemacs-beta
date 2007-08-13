@@ -77,7 +77,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Stdio stream for output to the DOC file.  */
 static FILE *outfile;
-static char *extra_elcs = NULL;
 
 enum
 {
@@ -176,6 +175,7 @@ main (int argc, char **argv)
   int i;
   int err_count = 0;
   int first_infile;
+  char *extra_elcs = NULL;
 
   progname = argv[0];
 
@@ -378,16 +378,16 @@ write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
 #if 0
   int need_space = 1;
 
-  fprintf (out, "(%s", func); 
-#else 
+  fprintf (out, "(%s", func);
+#else
   /* XEmacs - "arguments:" is for parsing the docstring.  FSF's help system
      doesn't parse the docstring for arguments like we do, so we're also
      going to omit the function name to preserve compatibility with elisp
      that parses the docstring.  Finally, not prefixing the arglist with
      anything is asking for trouble because it's not uncommon to have an
      unescaped parenthesis at the beginning of a line. --Stig */
-  fprintf (out, "arguments: ("); 
-#endif 
+  fprintf (out, "arguments: (");
+#endif
 
   if (*buff == '(')
     ++buff;
@@ -409,7 +409,7 @@ write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
 	    p++;
 	  c = *p;
 	}
-      
+
       /* Notice when we start printing a new identifier.  */
       if (C_IDENTIFIER_CHAR_P (c) != in_ident)
 	{
@@ -435,18 +435,14 @@ write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
 
       /* Print the C argument list as it would appear in lisp:
 	 print underscores as hyphens, and print commas as spaces.
-	 Collapse adjacent spaces into one.  */
+	 Collapse adjacent spaces into one. */
       if (c == '_') c = '-';
       if (c == ',') c = ' ';
 
-      /* In C code, `default' is a reserved word, so we spell it
-	 `defalt'; unmangle that here.  */
-      if (ident_start
-	  && strncmp (p, "defalt", 6) == 0
-	  && ! C_IDENTIFIER_CHAR_P (p[6]))
+      /* If the C argument name ends with `_', change it to ' ',
+	 to allow use of C reserved words or global symbols as Lisp args. */
+      if (c == '-' && ! C_IDENTIFIER_CHAR_P (p[1]))
 	{
-	  fprintf (out, "DEFAULT");
-	  p += 5;
 	  in_ident = 0;
 	  just_spaced = 0;
 	}
@@ -700,9 +696,9 @@ scan_c_file (CONST char *filename, CONST char *mode)
  and we use that instead of reading a doc string within that defining-form.
 
  For defun, defmacro, and autoload, we know how to skip over the arglist.
- For defvar, defconst, and fset we skip to the docstring with a kludgy 
+ For defvar, defconst, and fset we skip to the docstring with a kludgy
  formatting convention: all docstrings must appear on the same line as the
- initial open-paren (the one in column zero) and must contain a backslash 
+ initial open-paren (the one in column zero) and must contain a backslash
  and a double-quote immediately after the initial double-quote.  No newlines
  must appear between the beginning of the form and the first double-quote.
  The only source file that must follow this convention is loaddefs.el; aside
@@ -747,7 +743,7 @@ read_lisp_symbol (FILE *infile, char *buffer)
 
   if (! buffer[0])
     fprintf (stderr, "## expected a symbol, got '%c'\n", c);
-  
+
   skip_white (infile);
 }
 
@@ -887,13 +883,13 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 		      getc (infile);
 		      goto nextchar;
 		    }
-		  
+
 		  c2 = c1;
 		  c1 = c;
 		nextchar:
 		  c = getc (infile);
 		}
-	  
+
 	      /* If two previous characters were " and \,
 		 this is a doc string.  Otherwise, there is none.  */
 	      if (c2 != '"' || c1 != '\\')
@@ -950,7 +946,7 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 		  c1 = c;
 		  c = getc (infile);
 		}
-	  
+
 	      /* If two previous characters were " and \,
 		 this is a doc string.  Otherwise, there is none.  */
 	      if (c2 != '"' || c1 != '\\')

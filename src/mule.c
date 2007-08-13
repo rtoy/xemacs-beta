@@ -50,8 +50,8 @@ accept a pattern compiled by 'regexp-compile' with word-option t.
     {
       temp =XCONS (pattern)->car;
       CHECK_VECTOR (temp);
-      CHECK_STRING (XVECTOR (temp)->contents[0]);
-      s = XSTRING (XVECTOR (temp)->contents[0]);
+      CHECK_STRING (XVECTOR_DATA (temp)[0]);
+      s = XSTRING (XVECTOR_DATA (temp)[0]);
       if (!wordbuf[i])
 	wordbuf[i] = (struct re_pattern_buffer *)
 	  xmalloc (sizeof (struct re_pattern_buffer));

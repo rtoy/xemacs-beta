@@ -1144,7 +1144,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	    }
 	  else
 	    {
-	      return (n);
+	      return n;
 	    }
 	  n++;
 	}
@@ -1180,11 +1180,11 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	    }
 	  else
 	    {
-	      return (0 - n);
+	      return 0 - n;
 	    }
 	  n--;
 	}
-      return (bufpos);
+      return bufpos;
     }
   else				/* non-RE case */
     /* #### Someone really really really needs to comment the workings
@@ -1323,7 +1323,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	     Boolean expressions in an arithmetic context are unsigned.
 	     Using an explicit ?1:0 prevents this.  */
 	  if ((lim - pos - ((direction > 0) ? 1 : 0)) * direction < 0)
-	    return (n * (0 - direction));
+	    return n * (0 - direction);
 	  /* First we do the part we can by pointers (maybe nothing) */
 	  QUIT;
 	  pat = base_pat;
@@ -1495,7 +1495,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	      }
 	  /* We have done one clump.  Can we continue? */
 	  if ((lim - pos) * direction < 0)
-	    return ((0 - n) * direction);
+	    return (0 - n) * direction;
 	}
       return bytind_to_bufpos (buf, pos);
     }
@@ -1956,7 +1956,7 @@ and you do not need to specify it.)
 	      /* If SUBSTART is set, we need to also insert the
 		 text from SUBSTART to SUBEND in the original string. */
 	      Charcount substart = -1;
-	      Charcount subend;
+	      Charcount subend   = -1;
 
 	      c = string_char (XSTRING (newtext), strpos);
 	      if (c == '\\')
@@ -2215,11 +2215,10 @@ match_limit (Lisp_Object num, int beginningp)
   n = XINT (num);
   if (n < 0 || n >= search_regs.num_regs)
     args_out_of_range (num, make_int (search_regs.num_regs));
-  if (search_regs.num_regs <= 0
-      || search_regs.start[n] < 0)
+  if (search_regs.num_regs <= 0 ||
+      search_regs.start[n] < 0)
     return Qnil;
-  return (make_int ((beginningp) ? search_regs.start[n]
-		                    : search_regs.end[n]));
+  return make_int (beginningp ? search_regs.start[n] : search_regs.end[n]);
 }
 
 DEFUN ("match-beginning", Fmatch_beginning, 1, 1, 0, /*

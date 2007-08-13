@@ -213,7 +213,7 @@ mark_window (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (window->dedicated));
   mark_face_cachels (window->face_cachels, markobj);
   mark_glyph_cachels (window->glyph_cachels, markobj);
-  return (Qnil);
+  return Qnil;
 }
 
 static void
@@ -353,7 +353,7 @@ allocate_window (void)
   p->windows_changed = 1;
   p->shadow_thickness_changed = 1;
 
-  return (val);
+  return val;
 }
 #undef INIT_DISP_VARIABLE
 
@@ -949,7 +949,7 @@ margin_width_internal (struct window *w, int left_margin)
 
   /* At the user level the margin is always specified in characters.
      Internally however it is manipulated in terms of pixels. */
-  return (margin_cwidth * font_width);
+  return margin_cwidth * font_width;
 }
 
 int
@@ -1117,7 +1117,7 @@ Return t if OBJ is a window.
 */
        (obj))
 {
-  return (WINDOWP (obj) ? Qt : Qnil);
+  return WINDOWP (obj) ? Qt : Qnil;
 }
 
 DEFUN ("window-live-p", Fwindow_live_p, 1, 1, 0, /*
@@ -1125,7 +1125,7 @@ Return t if OBJ is a window which is currently visible.
 */
        (obj))
 {
-  return (WINDOWP (obj) && WINDOW_LIVE_P (XWINDOW (obj)) ? Qt : Qnil);
+  return WINDOWP (obj) && WINDOW_LIVE_P (XWINDOW (obj)) ? Qt : Qnil;
 }
 
 DEFUN ("selected-window", Fselected_window, 0, 1, 0, /*
@@ -1167,7 +1167,7 @@ Return non-nil if WINDOW is a minibuffer window.
 */
        (window))
 {
-  return (MINI_WINDOW_P (decode_window (window)) ? Qt : Qnil);
+  return MINI_WINDOW_P (decode_window (window)) ? Qt : Qnil;
 }
 
 DEFUN ("window-first-hchild", Fwindow_first_hchild, 1, 1, 0, /*
@@ -1341,7 +1341,7 @@ This includes the window's modeline and horizontal scrollbar (if any).
 */
        (window))
 {
-  return (make_int (decode_window (window)->pixel_height));
+  return make_int (decode_window (window)->pixel_height);
 }
 
 DEFUN ("window-width", Fwindow_width, 0, 1, 0, /*
@@ -1350,7 +1350,7 @@ This is the width that is usable columns available for text in WINDOW.
 */
        (window))
 {
-  return (make_int (window_char_width (decode_window (window), 0)));
+  return make_int (window_char_width (decode_window (window), 0));
 }
 
 DEFUN ("window-pixel-width", Fwindow_pixel_width, 0, 1, 0, /*
@@ -1358,7 +1358,7 @@ Return the width of WINDOW in pixels.  Defaults to current window.
 */
        (window))
 {
-  return (make_int (decode_window (window)->pixel_width));
+  return make_int (decode_window (window)->pixel_width);
 }
 
 DEFUN ("window-hscroll", Fwindow_hscroll, 0, 1, 0, /*
@@ -1366,7 +1366,7 @@ Return the number of columns by which WINDOW is scrolled from left margin.
 */
        (window))
 {
-  return (make_int (decode_window (window)->hscroll));
+  return make_int (decode_window (window)->hscroll);
 }
 
 DEFUN ("set-window-hscroll", Fset_window_hscroll, 2, 2, 0, /*
@@ -1495,7 +1495,7 @@ slower with this flag set.
   else
     {
       Bufpos startp = marker_position (w->start[CURRENT_DISP]);
-      return (make_int (end_of_last_line (w, startp)));
+      return make_int (end_of_last_line (w, startp));
     }
 }
 
@@ -2567,10 +2567,7 @@ window_loop (enum window_loop type,
 	}
     }
 
-  if (type == GET_BUFFER_WINDOW_COUNT)
-    return (make_int (count));
-  else
-    return (best_window);
+  return type == GET_BUFFER_WINDOW_COUNT ? make_int (count) : best_window;
 }
 
 #if 0 /* not currently used */
@@ -2651,7 +2648,7 @@ Otherwise, all windows are considered.
   if (NILP (w)) abort ();
 #endif
 
-  return (w);
+  return w;
 }
 
 DEFUN ("get-largest-window", Fget_largest_window, 0, 2, 0, /*
@@ -5032,6 +5029,8 @@ by `current-window-configuration' (which see).
       else
 	set_frame_selected_window (f, config->current_window);
     }
+  else
+    old_window_config = Qnil; /* Warning suppression */
 
   /* Restore the minimum heights recorded in the configuration.  */
   window_min_height = config->min_height;

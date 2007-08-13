@@ -32,17 +32,16 @@ Boston, MA 02111-1307, USA.  */
 
 #endif /* !emacs */
 
-#include <string.h>
 #include "hash.h"
 #include "elhash.h"
 
-static CONST int 
+static CONST int
 primes []={
   13,
-  29, 37, 47, 59, 71, 89, 107, 131, 163, 197, 239, 293, 353, 431, 521, 631, 
-  761, 919, 1103, 1327, 1597, 1931, 2333, 2801, 3371, 4049, 4861, 5839, 7013, 
-  8419, 10103, 12143, 14591, 17519, 21023, 25229, 30293, 36353, 43627, 52361, 
-  62851, 75431, 90523, 108631, 130363, 156437, 187751, 225307, 270371, 324449, 
+  29, 37, 47, 59, 71, 89, 107, 131, 163, 197, 239, 293, 353, 431, 521, 631,
+  761, 919, 1103, 1327, 1597, 1931, 2333, 2801, 3371, 4049, 4861, 5839, 7013,
+  8419, 10103, 12143, 14591, 17519, 21023, 25229, 30293, 36353, 43627, 52361,
+  62851, 75431, 90523, 108631, 130363, 156437, 187751, 225307, 270371, 324449,
   389357, 467237, 560689, 672827, 807403, 968897, 1162687, 1395263, 1674319,
   2009191, 2411033, 2893249
 };
@@ -52,7 +51,7 @@ primes []={
 /* from base/generic-hash.cc, and hence from Dragon book, p436 */
 unsigned long
 string_hash (CONST void *xv)
-{ 
+{
   unsigned int h = 0;
   unsigned int g;
   unsigned CONST char *x = (unsigned CONST char *) xv;
@@ -71,7 +70,7 @@ string_hash (CONST void *xv)
 
 unsigned long
 memory_hash (CONST void *xv, int size)
-{ 
+{
   unsigned int h = 0;
   unsigned int g;
   unsigned CONST char *x = (unsigned CONST char *) xv;
@@ -89,7 +88,7 @@ memory_hash (CONST void *xv, int size)
   return h;
 }
 
-static int 
+static int
 string_eq (CONST void *st1v, CONST void *st2v)
 {
   CONST char *st1 = (CONST char *)st1v;
@@ -104,7 +103,7 @@ string_eq (CONST void *st1v, CONST void *st2v)
 }
 
 
-static unsigned int 
+static unsigned int
 prime_size (unsigned int size)
 {
   unsigned int i;
@@ -125,18 +124,18 @@ gethash (CONST void *key, c_hashtable hash, CONST void **ret_value)
   hentry *harray = hash->harray;
   int (*test_function) (CONST void *, CONST void *) = hash->test_function;
   unsigned int hsize = hash->size;
-  unsigned int hcode_initial = 
+  unsigned int hcode_initial =
     (hash->hash_function)?(hash->hash_function(key)):((unsigned long) key);
   unsigned int hcode = hcode_initial % hsize;
   hentry *e = &harray [hcode];
   CONST void *e_key = e->key;
 
-  if (!key) 
+  if (!key)
     {
       *ret_value = hash->zero_entry;
       return (void *) hash->zero_set;
     }
-    
+
   if ((e_key)?
       (KEYS_DIFFER_P (e_key, key, test_function)):
       (e->contents == NULL_ENTRY))
@@ -149,7 +148,7 @@ gethash (CONST void *key, c_hashtable hash, CONST void **ret_value)
           if (hcode >= hsize) hcode = hcode - hsize;
           e = &harray [hcode];
           e_key = e->key;
-        } 
+        }
       while ((e_key)?
              (KEYS_DIFFER_P (e_key, key, test_function)):
              (e->contents == NULL_ENTRY));
@@ -159,7 +158,7 @@ gethash (CONST void *key, c_hashtable hash, CONST void **ret_value)
   return e->key;
 }
 
-void 
+void
 clrhash (c_hashtable hash)
 {
   memset (hash->harray, 0, sizeof (hentry) * hash->size);
@@ -211,7 +210,7 @@ make_general_hashtable (unsigned int hsize,
   return res;
 }
 
-c_hashtable 
+c_hashtable
 make_strings_hashtable (unsigned int hsize)
 {
   return make_general_hashtable (hsize, string_hash, string_eq);
@@ -249,9 +248,9 @@ copy_hash (c_hashtable dest, c_hashtable src)
       dest->size = src->size;
 #ifdef emacs
       if (!NILP (dest->elisp_table))
-        dest->harray = 
-          (hentry *) elisp_hvector_malloc
-            (sizeof (hentry) * dest->size, dest->elisp_table);
+        dest->harray = (hentry *)
+	  elisp_hvector_malloc (sizeof (hentry) * dest->size,
+				dest->elisp_table);
       else
 #endif
         dest->harray = (hentry *) xmalloc (sizeof (hentry) * dest->size);
@@ -263,7 +262,7 @@ copy_hash (c_hashtable dest, c_hashtable src)
   dest->test_function = src->test_function;
   memcpy (dest->harray, src->harray, sizeof (hentry) * dest->size);
 }
-  
+
 static void
 grow_hashtable (c_hashtable hash, unsigned int new_size)
 {
@@ -283,8 +282,7 @@ grow_hashtable (c_hashtable hash, unsigned int new_size)
 						  hash->elisp_table);
   else
 #endif
-    new_harray =
-      (hentry *) xmalloc (sizeof (hentry) * new_hsize);
+    new_harray = (hentry *) xmalloc (sizeof (hentry) * new_hsize);
 
   hash->size = new_hsize;
   hash->harray = new_harray;
@@ -316,7 +314,7 @@ expand_hashtable (c_hashtable hash, unsigned int needed_size)
     grow_hashtable (hash, comfortable_size + 1);
 }
 
-void 
+void
 puthash (CONST void *key, void *cont, c_hashtable hash)
 {
   unsigned int hsize = hash->size;
@@ -325,16 +323,16 @@ puthash (CONST void *key, void *cont, c_hashtable hash)
   hentry *harray;
   CONST void *e_key;
   hentry *e;
-  unsigned int hcode_initial = 
+  unsigned int hcode_initial =
     (hash->hash_function)?(hash->hash_function(key)):((unsigned long) key);
   unsigned int hcode;
   unsigned int incr = 0;
   unsigned int h2;
   CONST void *oldcontents;
 
-  if (!key) 
+  if (!key)
     {
-      hash->zero_entry = cont;      
+      hash->zero_entry = cont;
       hash->zero_set = 1;
       return;
     }
@@ -350,7 +348,7 @@ puthash (CONST void *key, void *cont, c_hashtable hash)
   h2 = hsize - 2;
 
   hcode = hcode_initial % hsize;
-  
+
   e_key = harray [hcode].key;
   if (e_key && (KEYS_DIFFER_P (e_key, key, test_function)))
     {
@@ -361,7 +359,7 @@ puthash (CONST void *key, void *cont, c_hashtable hash)
           hcode = hcode + incr;
           if (hcode >= hsize) hcode = hcode - hsize;
           e_key = harray [hcode].key;
-        } 
+        }
       while (e_key && (KEYS_DIFFER_P (e_key, key, test_function)));
     }
   oldcontents = harray [hcode].contents;
@@ -409,19 +407,19 @@ rehash (hentry *harray, c_hashtable hash, unsigned int size)
     }
 }
 
-void 
+void
 remhash (CONST void *key, c_hashtable hash)
 {
   hentry *harray = hash->harray;
   int (*test_function) (CONST void*, CONST void*) = hash->test_function;
   unsigned int hsize = hash->size;
-  unsigned int hcode_initial = 
+  unsigned int hcode_initial =
     (hash->hash_function)?(hash->hash_function(key)):((unsigned long) key);
   unsigned int hcode = hcode_initial % hsize;
   hentry *e = &harray [hcode];
   CONST void *e_key = e->key;
 
-  if (!key) 
+  if (!key)
     {
       hash->zero_entry = 0;
       hash->zero_set = 0;
@@ -453,13 +451,13 @@ remhash (CONST void *key, c_hashtable hash)
     }
 }
 
-void 
+void
 maphash (maphash_function mf, c_hashtable hash, void *arg)
 {
   hentry *e;
   hentry *limit;
-  
-  if (hash->zero_set) 
+
+  if (hash->zero_set)
     ((*mf) (0, hash->zero_entry, arg));
 
   for (e = hash->harray, limit = e + hash->size; e < limit; e++)
@@ -469,12 +467,12 @@ maphash (maphash_function mf, c_hashtable hash, void *arg)
     }
 }
 
-void 
+void
 map_remhash (remhash_predicate predicate, c_hashtable hash, void *arg)
 {
   hentry *e;
   hentry *limit;
-  
+
   if (hash->zero_set && ((*predicate) (0, hash->zero_entry, arg)))
     {
       hash->zero_set = 0;

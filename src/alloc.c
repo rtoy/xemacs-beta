@@ -197,9 +197,7 @@ Error_behavior ERROR_ME, ERROR_ME_NOT, ERROR_ME_WARN;
 int
 purified (Lisp_Object obj)
 {
-  if (!POINTER_TYPE_P (XGCTYPE (obj)))
-    return (0);
-  return (PURIFIED (XPNTR (obj)));
+  return !POINTER_TYPE_P (XGCTYPE (obj)) ? 0 : PURIFIED (XPNTR (obj));
 }
 
 int
@@ -214,7 +212,7 @@ check_purespace (EMACS_INT size)
   if (pure_lossage)
     {
       pure_lossage += size;
-      return (0);
+      return 0;
     }
   else if (pureptr + size > get_PURESIZE())
     {
@@ -222,10 +220,10 @@ check_purespace (EMACS_INT size)
       /* when we're done. */
       /* message ("\nERROR:  Pure Lisp storage exhausted!\n"); */
       pure_lossage = size;
-      return (0);
+      return 0;
     }
   else
-    return (1);
+    return 1;
 }
 
 
@@ -464,7 +462,7 @@ xstrdup (CONST char *str)
   val = xmalloc (len);
   if (val == 0) return 0;
   memcpy (val, str, len);
-  return (val);
+  return val;
 }
 
 #ifdef NEED_STRDUP
@@ -489,7 +487,7 @@ allocate_lisp_storage (int size)
       xfree (p);
       memory_full ();
     }
-  return (p);
+  return p;
 }
 
 
@@ -534,7 +532,7 @@ alloc_lcrecord (int size, CONST struct lrecord_implementation *implementation)
   lcheader->free = 0;
   all_lcrecords = lcheader;
   INCREMENT_CONS_COUNTER (size, implementation->name);
-  return (lcheader);
+  return lcheader;
 }
 
 #if 0 /* Presently unused */
@@ -1038,7 +1036,7 @@ Lisp_Object
 list1 (Lisp_Object obj0)
 {
   /* This cannot GC. */
-  return (Fcons (obj0, Qnil));
+  return Fcons (obj0, Qnil);
 }
 
 Lisp_Object
@@ -1123,7 +1121,7 @@ make_float (double float_value)
   float_next (f) = ((struct Lisp_Float *) -1);
   float_data (f) = float_value;
   XSETFLOAT (val, f);
-  return (val);
+  return val;
 }
 
 #endif /* LISP_FLOAT_TYPE */
@@ -1154,7 +1152,7 @@ make_vector_internal (EMACS_INT sizei)
   p->size = sizei;
   vector_next (p) = all_vectors;
   XSETVECTOR (all_vectors, p);
-  return (p);
+  return p;
 }
 
 Lisp_Object
@@ -1180,14 +1178,14 @@ make_vector (EMACS_INT length, Lisp_Object init)
         goto fill;
     }
     memset (vector_data (p), travesty[0], length * sizeof (Lisp_Object));
-    return (vector);
+    return vector;
   }
  fill:
 #endif
   for (elt = 0; elt < length; elt++)
     vector_data(p)[elt] = init;
 
-  return (vector);
+  return vector;
 }
 
 DEFUN ("make-vector", Fmake_vector, 2, 2, 0, /*
@@ -1199,7 +1197,7 @@ See also the function `vector'.
   if (!INTP (length) || XINT (length) < 0)
     length = wrong_type_argument (Qnatnump, length);
 
-  return (make_vector (XINT (length), init));
+  return make_vector (XINT (length), init);
 }
 
 DEFUN ("vector", Fvector, 0, MANY, 0, /*
@@ -1218,7 +1216,7 @@ Any number of arguments, even zero arguments, are allowed.
   for (elt = 0; elt < nargs; elt++)
     vector_data(p)[elt] = args[elt];
 
-  return (vector);
+  return vector;
 }
 
 Lisp_Object
@@ -1342,7 +1340,7 @@ make_bit_vector_internal (EMACS_INT sizei)
      functions might not set them. */
   p->bits[BIT_VECTOR_LONG_STORAGE (sizei) - 1] = 0;
   XSETBIT_VECTOR (all_bit_vectors, p);
-  return (p);
+  return p;
 }
 
 Lisp_Object
@@ -1373,7 +1371,7 @@ make_bit_vector (EMACS_INT length, Lisp_Object init)
 	p->bits[num_longs - 1] &= (1 << bits_in_last) - 1;
     }
 
-  return (bit_vector);
+  return bit_vector;
 }
 
 Lisp_Object
@@ -1404,7 +1402,7 @@ Each element is set to INIT.  See also the function `bit-vector'.
   if (!INTP (length) || XINT (length) < 0)
     length = wrong_type_argument (Qnatnump, length);
 
-  return (make_bit_vector (XINT (length), init));
+  return make_bit_vector (XINT (length), init);
 }
 
 DEFUN ("bit-vector", Fbit_vector, 0, MANY, 0, /*
@@ -1426,7 +1424,7 @@ Any number of arguments, even zero arguments, are allowed.
   for (elt = 0; elt < nargs; elt++)
     set_bit_vector_bit (p, elt, !ZEROP (args[elt]));
 
-  return (bit_vector);
+  return bit_vector;
 }
 
 
@@ -1469,7 +1467,7 @@ make_compiled_function (int make_pure)
   b->annotated = Qnil;
 #endif
   XSETCOMPILED_FUNCTION (new, b);
-  return (new);
+  return new;
 }
 
 DEFUN ("make-byte-code", Fmake_byte_code, 4, MANY, 0, /*
@@ -1633,7 +1631,7 @@ This is terrible behavior which is retained for compatibility with old
     else
       b->doc_and_interactive = doc_string;
 
-    return (val);
+    return val;
   }
 }
 
@@ -1696,7 +1694,7 @@ allocate_extent (void)
   e->flags.end_open = 1;  /* default is for endpoints to behave like markers */
   e->flags.detachable = 1;
 
-  return (e);
+  return e;
 }
 
 
@@ -1818,7 +1816,7 @@ struct string_chars_block *current_string_chars_block;
 
 #define CHARS_TO_STRING_CHAR(x) \
   ((struct string_chars *) \
-   (((char *) (x)) - (slot_offset (struct string_chars, chars))))
+   (((char *) (x)) - (slot_offset (struct string_chars, chars[0]))))
 
 
 struct string_chars
@@ -1911,7 +1909,7 @@ make_uninit_string (Bytecount length)
   set_string_byte (s, length, 0);
 
   XSETSTRING (val, s);
-  return (val);
+  return val;
 }
 
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
@@ -2106,7 +2104,7 @@ LENGTH must be an integer and INIT must be a character.
 	    ptr[k++] = str[j];
       }
   }
-  return (val);
+  return val;
 }
 
 /* Take some raw memory, which MUST already be in internal format,
@@ -2123,7 +2121,7 @@ make_string (CONST Bufbyte *contents, Bytecount length)
   
   val = make_uninit_string (length);
   memcpy (XSTRING_DATA (val), contents, length);
-  return (val);
+  return val;
 }
 
 /* Take some raw memory, encoded in some external data format,
@@ -2360,12 +2358,12 @@ make_pure_string (CONST Bufbyte *data, Bytecount length,
 	  s = XSYMBOL (tem)->name;
 	  if (!PURIFIED (s)) abort ();
 	  XSETSTRING (new, s);
-	  return (new);
+	  return new;
 	}
     }
 
   if (!check_purespace (size))
-    return (make_string (data, length));
+    return make_string (data, length);
 
   s = (struct Lisp_String *) (PUREBEG + pureptr);
   set_string_length (s, length);
@@ -2392,7 +2390,7 @@ make_pure_string (CONST Bufbyte *data, Bytecount length,
   s->plist = Fpurecopy (plist);
 
   XSETSTRING (new, s);
-  return (new);
+  return new;
 }
 
 
@@ -2407,7 +2405,7 @@ make_pure_pname (CONST Bufbyte *data, Bytecount length,
   /* We've made (at least) Qnil now, and Vobarray will soon be set up. */
   symbols_initialized = 1;
 
-  return (name);
+  return name;
 }
 
 
@@ -2417,7 +2415,7 @@ pure_cons (Lisp_Object car, Lisp_Object cdr)
   Lisp_Object new;
 
   if (!check_purespace (sizeof (struct Lisp_Cons)))
-    return (Fcons (Fpurecopy (car), Fpurecopy (cdr)));
+    return Fcons (Fpurecopy (car), Fpurecopy (cdr));
 
   XSETCONS (new, PUREBEG + pureptr);
   pureptr += sizeof (struct Lisp_Cons);
@@ -2425,7 +2423,7 @@ pure_cons (Lisp_Object car, Lisp_Object cdr)
 
   XCAR (new) = Fpurecopy (car);
   XCDR (new) = Fpurecopy (cdr);
-  return (new);
+  return new;
 }
 
 Lisp_Object
@@ -2474,7 +2472,7 @@ make_pure_float (double num)
   }
 
   if (!check_purespace (sizeof (struct Lisp_Float)))
-    return (make_float (num));
+    return make_float (num);
 
   f = (struct Lisp_Float *) (PUREBEG + pureptr);
   set_lheader_implementation (&(f->lheader), lrecord_float);
@@ -2484,7 +2482,7 @@ make_pure_float (double num)
   float_next (f) = ((struct Lisp_Float *) -1);
   float_data (f) = num;
   XSETFLOAT (val, f);
-  return (val);
+  return val;
 }
 
 #endif /* LISP_FLOAT_TYPE */
@@ -2499,18 +2497,18 @@ make_pure_vector (EMACS_INT len, Lisp_Object init)
   init = Fpurecopy (init);
 
   if (!check_purespace (size))
-    return (make_vector (len, init));
+    return make_vector (len, init);
 
   XSETVECTOR (new, PUREBEG + pureptr);
   pureptr += size;
   bump_purestat (&purestat_vector_all, size);
 
-  XVECTOR (new)->size = len;
+  XVECTOR_LENGTH (new) = len;
 
   for (size = 0; size < len; size++)
-    vector_data (XVECTOR (new))[size] = init;
+    XVECTOR_DATA (new)[size] = init;
 
-  return (new);
+  return new;
 }
 
 #if 0
@@ -2525,7 +2523,7 @@ alloc_pure_lrecord (int size, struct lrecord_implementation *implementation)
 
   set_lheader_implementation (header, implementation);
   header->next = 0;
-  return (header);
+  return header;
 }
 #endif
 
@@ -2540,11 +2538,11 @@ Does not copy symbols.
 {
   int i;
   if (!purify_flag)
-    return (obj);
+    return obj;
 
   if (!POINTER_TYPE_P (XTYPE (obj))
       || PURIFIED (XPNTR (obj)))
-    return (obj);
+    return obj;
 
   switch (XTYPE (obj))
     {
@@ -2562,8 +2560,8 @@ Does not copy symbols.
         struct Lisp_Vector *o = XVECTOR (obj);
         Lisp_Object new = make_pure_vector (vector_length (o), Qnil);
         for (i = 0; i < vector_length (o); i++)
-	  vector_data (XVECTOR (new))[i] = Fpurecopy (o->contents[i]);
-        return (new);
+	  XVECTOR_DATA (new)[i] = Fpurecopy (o->contents[i]);
+        return new;
       }
 
     default:
@@ -2580,7 +2578,7 @@ Does not copy symbols.
             n->arglist = Fpurecopy (o->arglist);
             n->doc_and_interactive = Fpurecopy (o->doc_and_interactive);
 	    n->maxdepth = o->maxdepth;
-            return (new);
+            return new;
           }
 #ifdef LISP_FLOAT_TYPE
         else if (FLOATP (obj))
@@ -2590,7 +2588,7 @@ Does not copy symbols.
           signal_simple_error ("Can't purecopy %S", obj);
       }
     }
-  return (obj);
+  return obj;
 }
 
 
@@ -2948,11 +2946,11 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
   /*tail_recurse: */
   if (!POINTER_TYPE_P (XTYPE (obj))
       || !PURIFIED (XPNTR (obj)))
-    return (total);
+    return total;
 
   /* symbol's sizes are accounted for separately */
   if (SYMBOLP (obj))
-    return (total);
+    return total;
 
   switch (XTYPE (obj))
     {
@@ -3057,7 +3055,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
     default:
       abort ();
     }
-  return (total);
+  return total;
 }
 #endif /* PURESTAT */
 
@@ -3099,7 +3097,7 @@ lrecord_type_index (CONST struct lrecord_implementation *implementation)
       lrecord_implementations_table[type_index] = implementation;
       *(implementation->lrecord_type_index) = type_index;
     }
-  return (type_index);
+  return type_index;
 }
 
 /* stats on lcrecords in use - kinda kludgy */
@@ -3798,7 +3796,7 @@ marked_p (Lisp_Object obj)
     case Lisp_String:
       return XMARKBIT (XSTRING (obj)->plist);
     case Lisp_Vector:
-      return (vector_length (XVECTOR (obj)) < 0);
+      return XVECTOR_LENGTH (obj) < 0;
 #ifndef LRECORD_SYMBOL
     case Lisp_Symbol:
       return XMARKBIT (XSYMBOL (obj)->plist);
@@ -4202,7 +4200,7 @@ gc_plist_hack (CONST char *name, int value, Lisp_Object tail)
   /* C doesn't have local functions (or closures, or GC, or readable syntax,
      or portable numeric datatypes, or bit-vectors, or characters, or
      arrays, or exceptions, or ...) */
-  return (cons3 (intern (name), make_int (value), tail));
+  return cons3 (intern (name), make_int (value), tail);
 }
 
 #define HACK_O_MATIC(type, name, pl)					\
@@ -4332,7 +4330,7 @@ Garbage collection happens automatically if you cons more than
   ret[3] = make_int (gc_count_string_total_size);
   ret[4] = make_int (gc_count_vector_total_size);
   ret[5] = pl;
-  return (Flist (6, ret));
+  return Flist (6, ret);
 }
 #undef HACK_O_MATIC
 
@@ -4345,7 +4343,7 @@ If this value exceeds `gc-cons-threshold', a garbage collection happens.
 */
        ())
 {
-  return (make_int (consing_since_gc));
+  return make_int (consing_since_gc);
 }
   
 DEFUN ("memory-limit", Fmemory_limit, 0, 0, "", /*
@@ -4355,7 +4353,7 @@ The value is divided by 1024 to make sure it will fit in a lisp integer.
 */
        ())
 {
-  return (make_int ((EMACS_INT) sbrk (0) / 1024));
+  return make_int ((EMACS_INT) sbrk (0) / 1024);
 }
 
 
@@ -4363,13 +4361,13 @@ The value is divided by 1024 to make sure it will fit in a lisp integer.
 int
 object_dead_p (Lisp_Object obj)
 {
-  return ((BUFFERP (obj) && !BUFFER_LIVE_P (XBUFFER (obj))) ||
-	  (FRAMEP (obj) && !FRAME_LIVE_P (XFRAME (obj))) ||
-	  (WINDOWP (obj) && !WINDOW_LIVE_P (XWINDOW (obj))) ||
-	  (DEVICEP (obj) && !DEVICE_LIVE_P (XDEVICE (obj))) ||
+  return ((BUFFERP  (obj) && !BUFFER_LIVE_P  (XBUFFER  (obj))) ||
+	  (FRAMEP   (obj) && !FRAME_LIVE_P   (XFRAME   (obj))) ||
+	  (WINDOWP  (obj) && !WINDOW_LIVE_P  (XWINDOW  (obj))) ||
+	  (DEVICEP  (obj) && !DEVICE_LIVE_P  (XDEVICE  (obj))) ||
 	  (CONSOLEP (obj) && !CONSOLE_LIVE_P (XCONSOLE (obj))) ||
-	  (EVENTP (obj) && !EVENT_LIVE_P (XEVENT (obj))) ||
-	  (EXTENTP (obj) && !EXTENT_LIVE_P (XEXTENT (obj))));
+	  (EVENTP   (obj) && !EVENT_LIVE_P   (XEVENT   (obj))) ||
+	  (EXTENTP  (obj) && !EXTENT_LIVE_P  (XEXTENT  (obj))));
 	  
 }
 

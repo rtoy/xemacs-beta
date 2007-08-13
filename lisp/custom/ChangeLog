@@ -1,16 +1,190 @@
+Sat Jul 12 01:24:32 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9951 released.
+
+Sat Jul 12 00:29:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (customize-save-variable): New command.
+
+	* wid-edit.el (widget-move): Use `previous-overlay-change' and
+	`next-overlay-change'. 
+	(widget-use-overlay-change): New option to control it.
+
+Fri Jul 11 14:25:34 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-save-all): Inhibit read only.
+	Reported by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+
+	* wid-edit.el (regexp): Outcomment :value-face.
+	(file): Ditto.
+
+Thu Jul 10 16:13:36 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9950 released.
+
+Thu Jul 10 16:12:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-add-change): Use local hooks.
+	(widget-before-change): Ditto.
+	Suggested by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+
+Wed Jul 09 21:35:05 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9949 released.
+
+Wed Jul  9 20:26:58 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:doc-overlay): New keyword.
+	* wid-edit.el (set-text-properties): Don't define.
+	(widget-specify-none): Delete.
+	(widget-specify-text): Delete.
+	(widget-field-use-before-change): Don't enable for XEmacs.
+	(widget-specify-field): Don't use text properties.
+	(widget-specify-field): Ditto.
+	(widget-specify-doc): Ditto.
+	(widget-specify-insert): Ditto.
+	(widget-insert): Ditto.
+	(widget-convert-text): Ditto.
+	(widget-leave-text): Ditto.
+	(widget-setup): Ditto.
+	(widget-before-change): Ditto.
+	(widget-default-create): Ditto.
+	(widget-default-delete): Ditto.
+	(widget-editable-list-insert-before): Ditto.
+	(widget-editable-list-entry-create): Ditto.
+	(widget-add-change): New function.
+
+	* cus-edit.el (custom-buffer-create-internal): Refer to `mouse-2'
+	instead of `mouse-1'.
+	(custom-mode-map): Don't bind `mouse-1'.
+
+1997-07-09  Steven L Baur  <steve@altair.xemacs.org>
+
+	* custom/cus-edit.el (custom-file): Use same logic as startup.el
+
+Tue Jul 08 13:30:11 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9948 released.
+
+Tue Jul  8 11:34:44 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-field-use-before-change): Doc fix.
+
 1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
 
 	* cus-edit.el (custom-file): Rename .xemacs-custom to something
 	more general.
 
-1997-06-28  Steven L Baur  <steve@altair.xemacs.org>
+Mon Jul 07 14:20:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
-	* cus-edit.el (customize-customized): Trap errors.
-	(customize-saved): Ditto.
-	(custom-add-parent-links): Ditto.
-	(custom-save-variables): Ditto.
-	(custom-save-faces): Ditto.
-	(customize-save-customized): Ditto.
+	* Version 1.9947 released.
+
+Mon Jul  7 14:16:10 1997  Simon Marshall <Simon.Marshall@esrin.esa.it>
+
+	* cus-edit.el (custom-group-members): New function.
+	(custom-group-value-create): Use it rather than get.
+
+Mon Jul  7 11:39:31 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (emacs-library-link): New widget.
+	(widget-emacs-library-link-action): New function.
+	Provided by Stephen Eglen <stephene@cogs.susx.ac.uk>.
+
+1997-07-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-beginning-of-line): Preserve zmacs region.
+	(widget-end-of-line): Ditto.
+
+Sun Jul  6 21:57:32 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-field-use-before-change): Enable for Emacs
+	20. 
+
+Fri Jul 04 16:24:21 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9946 released.
+
+Fri Jul  4 15:31:45 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-color-sample-face-get): Kludge to make it
+	work before widget is fully created.
+	(widget-color-action): Try to use same relative position of point
+	in minibuffer as it had in the field.
+
+	* cus-edit.el (custom-mode): Document `M-TAB'.
+
+	* custom.texi (Usage for Package Authors): Fixed typo.
+	Patch by Adrian Aichner <aichner@ecf.teradyne.com>.
+
+Fri Jul 04 13:58:14 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+	
+	* Version 1.9945 released.
+
+Fri Jul  4 12:40:13 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:sample-overlay): New keyword.
+	* wid-edit.el (widget-leave-text): Use it.
+	(widget-specify-sample): Use it.
+	(widget-default-delete): Ditto.
+	 (color): Make it an editable field.
+	(widget-color-value-create): Deleted.
+	(widget-color-value-get): Deleted.
+	(widget-color-value-set): Deleted.
+	(color-item): Deleted.
+	(widget-color-item-button-face-get): Renamed to
+	`widget-color-sample-face-get'. 
+	(color-sample): Deleted.
+	(editable-color): Deleted.
+	(widget-editable-color-value-create): Deleted.
+
+Fri Jul 04 11:33:31 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+	
+	* Version 1.9944 released.
+
+Fri Jul  4 11:32:04 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-specify-field): Add newline in overlay for
+	nil-:sized fields.
+	(widget-field-end): Ditto.
+
+Thu Jul  3 19:12:13 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (emacs-library-link): New widget.
+	(widget-emacs-library-link-action): New function.
+	(widgets): Use it.
+	Suggested by Stephen Eglen <stephene@cogs.susx.ac.uk>.
+	(file-link): New widget.
+	(widget-file-link-action): New function.
+
+Wed Jul 02 17:44:40 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9943 released.
+
+Wed Jul  2 17:35:42 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+
+Wed Jul 02 17:19:13 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9942 released.
+
+Wed Jul  2 17:18:08 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (customize-browse): Use glyphs in description, if
+	possible. 
+
+Mon Jun 30 17:07:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9941 released.
+
+Mon Jun 30 17:02:21 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-menu-minibuffer-flag): Default to t on
+	XEmacs. 
 
 Thu Jun 26 16:49:32 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 

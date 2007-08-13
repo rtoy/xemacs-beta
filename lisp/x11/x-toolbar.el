@@ -25,6 +25,9 @@
 ;; order to get different behaviour.
 ;;
 
+(eval-when-compile
+  (require 'pending-del))
+
 (defgroup toolbar nil
   "Configure XEmacs Toolbar functions and properties"
   :group 'environment)
@@ -97,6 +100,11 @@
 
 (defun toolbar-paste ()
   (interactive)
+  ;; This horrible kludge is for pending-delete to work correctly.
+  (and (boundp 'pending-delete)
+       pending-delete
+       (let ((this-command toolbar-paste-function))
+	 (pending-delete-pre-hook)))
   (call-interactively toolbar-paste-function))
 
 (defcustom toolbar-undo-function 'undo
@@ -342,9 +350,17 @@ netscape."
     (toolbar-news-icon     . "news")))
 
 (defun init-x-toolbar ()
+  (toolbar-add-item-data init-x-toolbar-list )
+  ;; do this now because errors will occur if the icon symbols
+  ;; are not initted
+  (set-specifier default-toolbar initial-toolbar-spec))
+  
+(defun toolbar-add-item-data ( icon-list &optional icon-dir )
+  (if (eq icon-dir nil)
+      (setq icon-dir toolbar-icon-directory))
   (mapcar
    (lambda (cons)
-     (let ((prefix (expand-file-name (cdr cons) toolbar-icon-directory)))
+     (let ((prefix (expand-file-name (cdr cons)  icon-dir)))
        (set (car cons)
 	    (if (featurep 'xpm)
 		(toolbar-make-button-list
@@ -359,11 +375,9 @@ netscape."
 	       (concat prefix "-dn.xbm")
 	       (concat prefix "-xx.xbm")
 	       )))))
-   init-x-toolbar-list)
-  ;; do this now because errors will occur if the icon symbols
-  ;; are not initted
-  (set-specifier default-toolbar initial-toolbar-spec))
-  
+   icon-list  )
+  )
+
 (defvar initial-toolbar-spec
   '(;;[toolbar-last-win-icon	pop-window-configuration
     ;;(frame-property (selected-frame)

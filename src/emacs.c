@@ -397,7 +397,7 @@ static int
 argmatch (char **argv, int argc, char *sstr, char *lstr,
 	  int minlen, char **valptr, int *skipptr)
 {
-  char *p;
+  char *p = NULL;
   int arglen;
   char *arg;
 
@@ -1410,7 +1410,7 @@ main_1 (int argc, char **argv, char **envp)
 #endif
   init_console_stream (); /* Create the first console */
 
-  /* try to get the actually pathname of the exec file we are running */
+  /* try to get the actual pathname of the exec file we are running */
   {
     Vinvocation_name = Fcar (Vcommand_line_args);
     Vinvocation_directory = Vinvocation_name;
@@ -2017,7 +2017,7 @@ This function exists on systems that use HAVE_SHM.
   /* Tell malloc where start of impure now is */
   /* Also arrange for warnings when nearly out of space.  */
 #ifndef SYSTEM_MALLOC
-  memory_warnings (&my_edata, malloc_warning);
+  memory_warnings (my_edata, malloc_warning);
 #endif
   UNGCPRO;
   map_out_data (XSTRING_DATA (intoname));
@@ -2082,7 +2082,7 @@ and announce itself normally when it is run.
   /* Tell malloc where start of impure now is */
   /* Also arrange for warnings when nearly out of space.  */
 #ifndef SYSTEM_MALLOC
-  memory_warnings (&my_edata, malloc_warning);
+  memory_warnings (my_edata, malloc_warning);
 #endif
 
   UNGCPRO;
@@ -2115,7 +2115,7 @@ and announce itself normally when it is run.
        conversion is applied everywhere.  Don't worry about memory
        leakage because this call only happens once. */
     unexec ((char *) intoname_ext, (char *) symname_ext,
-	    (uintptr_t) &my_edata,
+	    (uintptr_t) my_edata,
 	    0, 0);
   }
 #endif /* not MSDOS and EMX */
@@ -2135,7 +2135,7 @@ and announce itself normally when it is run.
 #endif
 
 Lisp_Object
-decode_env_path (CONST char *evarname, CONST char *defalt)
+decode_env_path (CONST char *evarname, CONST char *default_)
 {
   REGISTER CONST char *path = 0;
   REGISTER CONST char *p;
@@ -2144,9 +2144,9 @@ decode_env_path (CONST char *evarname, CONST char *defalt)
   if (evarname)
     path = (char *) egetenv (evarname);
   if (!path)
-    path = defalt;
+    path = default_;
   if (!path)
-    return (Qnil);
+    return Qnil;
 
 #if defined (MSDOS) || defined (WIN32)
   dostounix_filename (path);
@@ -2173,7 +2173,7 @@ Non-nil return value means XEmacs is running without interactive terminal.
 */
        ())
 {
-  return ((noninteractive) ? Qt : Qnil);
+  return noninteractive ? Qt : Qnil;
 }
 
 /* This flag is useful to define if you're under a debugger; this way, you

@@ -479,7 +479,7 @@ Return the name of the given coding system.
        (coding_system))
 {
   coding_system = Fget_coding_system (coding_system);
-  return (XCODING_SYSTEM_NAME (coding_system));
+  return XCODING_SYSTEM_NAME (coding_system);
 }
 
 static struct Lisp_Coding_System *
@@ -2933,13 +2933,12 @@ encode_coding_big5 (Lstream *encoding, CONST unsigned char *src,
 
 DEFUN ("decode-big5-char", Fdecode_big5_char, 1, 1, 0, /*
 Decode a Big5 character CODE of BIG5 coding-system.
-CODE is the character code in BIG5.
+CODE is the character code in BIG5, a cons of two integers.
 Return the corresponding character.
 */
        (code))
 {
   unsigned char c1, c2, b1, b2;
-  Lisp_Object charset;
  
   CHECK_CONS (code);
   CHECK_INT (XCAR (code));
@@ -2949,7 +2948,10 @@ Return the corresponding character.
   if (BYTE_BIG5_TWO_BYTE_1_P (b1) &&
       BYTE_BIG5_TWO_BYTE_2_P (b2))
     {
-      DECODE_BIG5 (b1, b2, XCHARSET_LEADING_BYTE (charset), c1, c2);
+      int leading_byte;
+      Lisp_Object charset;
+      DECODE_BIG5 (b1, b2, leading_byte, c1, c2);
+      charset = CHARSET_BY_LEADING_BYTE (leading_byte);
       return make_char (MAKE_CHAR (charset, c1 & 0x7F, c2 & 0x7F));
     }
   else
@@ -3436,19 +3438,15 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	if (iso->esc >= ISO_ESC_2_8 &&
 	    iso->esc <= ISO_ESC_2_15)
 	  {
-	    if (iso->esc >= ISO_ESC_2_12)
-	      type = CHARSET_TYPE_96;
-	    else
-	      type = CHARSET_TYPE_94;
+	    type = ((iso->esc >= ISO_ESC_2_12) ?
+		    CHARSET_TYPE_96 : CHARSET_TYPE_94);
 	    reg = (iso->esc - ISO_ESC_2_8) & 3;
 	  }
 	else if (iso->esc >= ISO_ESC_2_4_8 &&
 		 iso->esc <= ISO_ESC_2_4_15)
 	  {
-	    if (iso->esc >= ISO_ESC_2_4_12)
-	      type = CHARSET_TYPE_96X96;
-	    else
-	      type = CHARSET_TYPE_94X94;
+	    type = ((iso->esc >= ISO_ESC_2_4_12) ?
+		    CHARSET_TYPE_96X96 : CHARSET_TYPE_94X94);
 	    reg = (iso->esc - ISO_ESC_2_4_8) & 3;
 	  }
 	
@@ -4066,8 +4064,8 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 
   /* flags for handling composite chars.  We do a little switcharoo
      on the source while we're outputting the composite char. */
-  unsigned int saved_n;
-  CONST unsigned char *saved_src;
+  unsigned int saved_n = 0;
+  CONST unsigned char *saved_src = NULL;
   int in_composite = 0;
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);

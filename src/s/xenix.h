@@ -70,12 +70,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define MAIL_USE_FLOCK
 
-/* Define SHORTNAMES if the C compiler can distinguish only
-   short names.  It means that the stuff in ../shortnames
-   must be run to convert the long names to short ones.  */
-
-/* #define SHORTNAMES */
-
 /* Compensate for one incompatibility between Xenix and V.0.  */
 #define n_zeroes n_name[0]
 

@@ -95,8 +95,7 @@ make the clicked-on window taller or shorter."
       ;;   drag-modeline-event-lag.
       ;; do nothing if this is any other kind of event.
       (cond ((or (misc-user-event-p event)
-		 (key-press-event-p event)
-		 (eval-event-p event))
+		 (key-press-event-p event))
 	     (setq unread-command-events (nconc unread-command-events
 						(list event))
 		   done t))

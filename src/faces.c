@@ -115,7 +115,7 @@ mark_face (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
   ((markobj) (face->charsets_warned_about));
 
-  return (face->plist);
+  return face->plist;
 }
 
 static void
@@ -339,7 +339,7 @@ static int
 face_validate (Lisp_Object data, Error_behavior errb)
 {
   int name_seen = 0;
-  Lisp_Object valw;
+  Lisp_Object valw = Qnil;
 
   data = Fcdr (data); /* skip over Qface */
   while (!NILP (data))
@@ -528,9 +528,9 @@ update_inheritance_mapper_internal (Lisp_Object cur_face,
       for (; !NILP (values); values = XCDR (values))
 	{
 	  Lisp_Object value = XCDR (XCAR (values));
-	  if (VECTORP (value) && XVECTOR (value)->size)
+	  if (VECTORP (value) && XVECTOR_LENGTH (value))
 	    {
-	      if (EQ (Ffind_face (vector_data (XVECTOR (value))[0]), inh_face))
+	      if (EQ (Ffind_face (XVECTOR_DATA (value)[0]), inh_face))
 		Fset_specifier_dirty_flag
 		  (FACE_PROPERTY_SPECIFIER (inh_face, property));
 	    }
@@ -641,7 +641,7 @@ Return non-nil if OBJECT is a face.
 */
        (object))
 {
-  return (FACEP (object) ? Qt : Qnil);
+  return FACEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("find-face", Ffind_face, 1, 1, 0, /*
@@ -686,7 +686,7 @@ Return the name of the given face.
 */
        (face))
 {
-  return (XFACE (Fget_face (face))->name);
+  return XFACE (Fget_face (face))->name;
 }
 
 DEFUN ("built-in-face-specifiers", Fbuilt_in_face_specifiers, 0, 0, 0, /*
@@ -1076,12 +1076,12 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
       for (i = 0; i < cachel->nfaces; i++)
 	{
 	  struct face_cachel *oth;
-	  
+
 	  oth = Dynarr_atp (w->face_cachels,
 			    FACE_CACHEL_FINDEX_UNSAFE (cachel, i));
 	  /* Tout le monde aime la recursion */
 	  ensure_face_cachel_contains_charset (oth, domain, charset);
-	  
+
 	  if (oth->font_specified[offs])
 	    {
 	      new_val = oth->font[offs];
@@ -1135,12 +1135,12 @@ ensure_face_cachel_complete (struct face_cachel *cachel,
 			     Lisp_Object domain, unsigned char *charsets)
 {
   int i;
-  
+
   for (i = 0; i < NUM_LEADING_BYTES; i++)
     if (charsets[i])
       {
 	Lisp_Object charset;
-	
+
 	charset = CHARSET_BY_LEADING_BYTE (i + MIN_LEADING_BYTE);
 	assert (CHARSETP (charset));
 	ensure_face_cachel_contains_charset (cachel, domain, charset);
@@ -1153,7 +1153,7 @@ face_cachel_charset_font_metric_info (struct face_cachel *cachel,
 				      struct font_metric_info *fm)
 {
   int i;
-  
+
   fm->width = 1;
   fm->height = fm->ascent = 1;
   fm->descent = 0;
@@ -1166,7 +1166,7 @@ face_cachel_charset_font_metric_info (struct face_cachel *cachel,
 	  Lisp_Object charset;
 	  Lisp_Object font_instance;
 	  struct Lisp_Font_Instance *fi;
-	
+
 	  charset = CHARSET_BY_LEADING_BYTE (i + MIN_LEADING_BYTE);
 	  assert (CHARSETP (charset));
 	  font_instance = FACE_CACHEL_FONT (cachel, charset);
@@ -1216,7 +1216,7 @@ update_face_cachel_data (struct face_cachel *cachel,
       }									     \
     cachel->field##_specified = (bound || default_face);		     \
   } while (0)
-      
+
       FROB (foreground);
       FROB (background);
       FROB (display_table);
@@ -1514,7 +1514,7 @@ get_extent_fragment_face_cache_index (struct window *w,
 {
   struct face_cachel cachel;
   int len = Dynarr_length (ef->extents);
-  face_index findex;
+  face_index findex = 0;
   Lisp_Object window = Qnil;
   XSETWINDOW (window, w);
 
@@ -1550,7 +1550,7 @@ get_extent_fragment_face_cache_index (struct window *w,
 		{
 		  findex = get_builtin_face_cache_index (w, one_face);
 		  merge_face_cachel_data (w, findex, &cachel);
-		  
+
 		  /* code duplication here but there's no clean
 		     way to avoid it. */
 		  if (cachel.nfaces >= NUM_STATIC_CACHEL_FACES)
@@ -1565,7 +1565,7 @@ get_extent_fragment_face_cache_index (struct window *w,
 		}
 	      face = XCDR (face);
 	    }
-      
+
 	  if (has_findex)
 	    {
 	      if (cachel.nfaces >= NUM_STATIC_CACHEL_FACES)
@@ -1604,7 +1604,7 @@ update_EmacsFrame (Lisp_Object frame, Lisp_Object name)
      {
        Arg av[10];
        int ac = 0;
-     
+
        if (EQ (name, Qforeground))
 	 {
 	   Lisp_Object color = FACE_FOREGROUND (Vdefault_face, frame);
@@ -1688,7 +1688,7 @@ update_EmacsFrames (Lisp_Object locale, Lisp_Object name)
   else if (EQ (locale, Qglobal) || EQ (locale, Qfallback))
     {
       Lisp_Object frmcons, devcons, concons;
-      
+
       FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
 	update_EmacsFrame (XCAR (frmcons), name);
     }
@@ -1734,11 +1734,11 @@ face_property_was_changed (Lisp_Object face, Lisp_Object property,
   else
     {
       Lisp_Object devcons, concons;
-      
+
       DEVICE_LOOP_NO_BREAK (devcons, concons)
 	MARK_DEVICE_FRAMES_FACES_CHANGED (XDEVICE (XCAR (devcons)));
     }
-  
+
   update_faces_inheritance (face, property);
   XFACE (face)->dirty = 1;
 }
@@ -1975,7 +1975,7 @@ complex_vars_of_faces (void)
 #endif
     set_specifier_fallback (Fget (Vdefault_face, Qfont, Qnil), inst_list);
   }
-  
+
   set_specifier_fallback (Fget (Vdefault_face, Qunderline, Qnil),
 			 list1 (Fcons (Qnil, Qnil)));
   set_specifier_fallback (Fget (Vdefault_face, Qstrikethru, Qnil),

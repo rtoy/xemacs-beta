@@ -60,14 +60,21 @@ If STREAM is omitted, either current buffer or standard output are used,
 
 ;;;###autoload
 (defmacro profile (&rest forms)
-  "Turn on profiling, execute FORMS and stop profiling.
+  "Turn on profiling, execute FORMS and restore profiling state.
+Profiling state here means that if profiling was not in effect when
+PROFILE was called, it will be turned off after FORMS are evaluated.
+Otherwise, profiling will be left running.
+
 Returns the profiling info, printable by `pretty-print-profiling-info'."
   `(progn
-     (unwind-protect
+     (if (profiling-active-p)
 	 (progn
-	   (start-profiling)
 	   ,@forms)
-       (stop-profiling))
+       (unwind-protect
+	   (progn
+	     (start-profiling)
+	     ,@forms)
+	 (stop-profiling)))
      (get-profiling-info)))
 
 (put 'profile 'lisp-indent-function 0)

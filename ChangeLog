@@ -1,3 +1,45 @@
+1997-07-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta13 is released.
+
+	* info/dir (Packages): Integrate texinfo manual for PH.
+
+1997-07-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+ 	* extents.c (print_extent): Print correctly.
+	
+1997-07-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in (CPP): Add -Wall to default gcc CFLAGS.
+
+1997-07-11  Martin Buchholz  <mrb@eng.sun.com>
+
+	* *Makefile*: More cleanup.
+	- MAKE CFLAGS=-foo now works with recursive invocations on old makes
+	- Nuke ld_call_shared from s&m files
+	- Nuke src/s/*-static.h
+	- Nuke Solaris and DEC OSF static build support.
+	- Nuke SHORTNAMES
+	- Nuke libmld
+	- CLASH_DETECTION configurable, off by default.
+
+	* *.[ch]: Warning elimination, code cleanup, some 64-bit
+	safeguarding.
+
+	* sol2.h: More bullet-proofing for Sun bugs in header files.
+
+	* lib-src/etags.c: etags version 12.19.
+
+	* lisp/x11/x-select.el:
+	* src/xselect.c: Try STRING if selection owner couldn't convert
+	COMPOUND_TEXT. 
+
+	* src/*.c: Change defalt to default_, and in general allow
+	doc-snarfing functions to recognize and ignore trailing `_'
+
+	* src/*.[ch]: Introduce XVECTOR_DATA and XVECTOR_LENGTH macros and 
+	convert source code to use them consistently.
+
 1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta12 is released.

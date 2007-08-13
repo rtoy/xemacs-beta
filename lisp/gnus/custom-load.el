@@ -1,3 +1,4 @@
+(custom-put 'gnus-cache 'custom-loads '())
 (custom-put 'smiley 'custom-loads '())
 (custom-put 'nnmail-various 'custom-loads '("nnmail"))
 (custom-put 'nnmail-procmail 'custom-loads '("nnmail"))

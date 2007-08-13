@@ -61,6 +61,8 @@
 	       :style toggle :selected debug-on-error]
 	      ["Debug On Quit" (setq debug-on-quit (not debug-on-quit))
 	       :style toggle :selected debug-on-quit]
+	      ["Debug on Signal" (setq debug-on-signal (not debug-on-signal))
+	       :style toggle :selected debug-on-signal]
 	      )))
 
 (defvar emacs-lisp-mode-popup-menu nil)
@@ -376,18 +378,42 @@ if that value is non-nil."
     (terpri)))
 
 ;; XEmacs change
+(defcustom eval-interactive-verbose t
+  "*Non-nil means that interactive evaluation can print messages.
+The messages are printed when the expression is treated differently
+using `\\[eval-last-sexp]' and `\\[eval-defun]' than it than it would have been
+treated noninteractively.
+
+The printed messages are \"defvar treated as defconst\" and \"defcustom
+ evaluation forced\".  See `eval-interactive' for more details."
+  :type 'boolean
+  :group 'lisp)
+
 (defun eval-interactive (expr)
-  "Like `eval' except that it transforms defvars to defconsts."
-  ;; by Stig@hackvan.com
+  "Like `eval' except that it transforms defvars to defconsts.
+The evaluation of defcustom forms is forced."
   (cond ((and (consp expr)
 	      (eq (car expr) 'defvar)
 	      (> (length expr) 2))
-	 (eval (cons 'defconst (cdr expr))))
+	 (eval (cons 'defconst (cdr expr)))
+	 (and eval-interactive-verbose
+	      (message "defvar treated as defconst"))
+	 (sit-for 1)
+	 (message "")
+	 (nth 1 expr))
 	((and (consp expr)
 	      (eq (car expr) 'defcustom)
-	      (> (length expr) 2))
-	 (makunbound (nth 1 expr))
-	 (eval expr))
+	      (> (length expr) 2)
+	      (default-boundp (nth 1 expr)))
+	 ;; Force variable to be bound
+	 (set-default (nth 1 expr) (eval (nth 2 expr)))
+	 ;; And evaluate the defcustom
+	 (eval expr)
+	 (and eval-interactive-verbose
+	      (message "defcustom evaluation forced"))
+	 (sit-for 1)
+	 (message "")
+	 (nth 1 expr))
 	(t
 	 (eval expr))))
 
@@ -422,21 +448,12 @@ With argument, print output into current buffer."
 Print value in minibuffer.
 With argument, insert value in current buffer after the defun."
   (interactive "P")
-  ;; XEmacs: FSF version works, so use it
-  (let ((standard-output (if eval-defun-arg-internal (current-buffer) t))
-	(form (save-excursion
-		(end-of-defun)
-		(beginning-of-defun)
-		(read (current-buffer)))))
-    (cond ((and (eq (car form) 'defvar)
-		(cdr-safe (cdr-safe form)))
-	   ;; Force variable to be bound.
-	   (setq form (cons 'defconst (cdr form))))
-	  ((and (eq (car form) 'defcustom)
-		(default-boundp (nth 1 form)))
-	   ;; Force variable to be bound.
-	   (set-default (nth 1 form) (eval (nth 2 form)))))
-    (prin1 (eval form))))
+  (let ((standard-output (if eval-defun-arg-internal (current-buffer) t)))
+    (prin1 (eval-interactive (save-excursion
+			       (end-of-defun)
+			       (beginning-of-defun)
+			       (read (current-buffer)))))))
+
 
 (defun lisp-comment-indent ()
   (if (looking-at "\\s<\\s<\\s<")

@@ -540,13 +540,13 @@ enum external_data_format
   /* Format used for input from the terminal.  This should be controlled
      by the `keyboard-coding-system' variable. */
   FORMAT_KEYBOARD,
-  
+
   /* Format used for the external Unix environment -- argv[], stuff
      from getenv(), stuff from the /etc/passwd file, etc.
 
      Perhaps should be the same as FORMAT_FILENAME. */
   FORMAT_OS,
-  
+
   /* Compound-text format.  This is the standard X format used for
      data stored in properties, selections, and the like.  This is
      an 8-bit no-lock-shift ISO2022 coding system. */
@@ -628,31 +628,31 @@ enum Lisp_Type
 {
   /* Integer.  XINT(obj) is the integer value. */
   Lisp_Int                    /* 0  DTP-FIXNUM */
-  
+
   /* XRECORD_LHEADER (object) points to a struct lrecord_header
      lheader->implementation determines the type (and GC behaviour)
      of the object. */
   ,Lisp_Record                /* 1  DTP-OTHER-POINTER */
-  
+
   /* Cons.  XCONS (object) points to a struct Lisp_Cons. */
   ,Lisp_Cons                  /* 2  DTP-LIST */
-  
+
   /* LRECORD_STRING is NYI */
   /* String.  XSTRING (object) points to a struct Lisp_String.
      The length of the string, and its contents, are stored therein. */
   ,Lisp_String                /* 3  DTP-STRING */
-  
+
 #ifndef LRECORD_VECTOR
   /* Vector of Lisp objects.  XVECTOR(object) points to a struct Lisp_Vector.
      The length of the vector, and its contents, are stored therein. */
   ,Lisp_Vector                /* 4  DTP-SIMPLE-ARRAY */
 #endif
-  
+
 #ifndef LRECORD_SYMBOL
   /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol. */
   ,Lisp_Symbol
 #endif /* !LRECORD_SYMBOL */
-  
+
   ,Lisp_Char			/* 5 DTP-CHAR */
 };
 
@@ -735,7 +735,7 @@ int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 
 #define UNBOUNDP(val) EQ (val, Qunbound)
 #define GC_UNBOUNDP(val) GC_EQ (val, Qunbound)
-  
+
 /*********** cons ***********/
 
 /* In a cons, the markbit of the car is the gc mark bit */
@@ -939,8 +939,11 @@ DECLARE_NONRECORD (vector, Lisp_Vector, struct Lisp_Vector);
 #endif
 
 #define vector_length(v) ((v)->size)
+#define XVECTOR_LENGTH(s) vector_length (XVECTOR (s))
 #define vector_data(v) ((v)->contents)
+#define XVECTOR_DATA(s) vector_data (XVECTOR (s))
 #define vector_next(v) ((v)->contents[(v)->size])
+
 
 /*********** bit vector ***********/
 
@@ -1569,7 +1572,7 @@ extern EMACS_INT gc_cons_threshold;
    and its `val' points to some argument or local variable of the function.
    On exit to the function, the chain is set back to the value it had on
    entry.  This way, no link remains in the chain when the stack frame
-   containing the link disappears. 
+   containing the link disappears.
 
    Every function that can call Feval must protect in this fashion all
    Lisp_Object variables whose contents will be used again. */

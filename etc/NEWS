@@ -138,20 +138,29 @@ On consoles that display only one frame at a time (e.g. TTY consoles),
 creating a new frame with `C-x 5 2' also raises and selects that
 frame.  The behavior of window system frames is unchanged.
 
-** Zmacs region is selectively deactivated when an error is signaled.
+** Zmacs region is not deactivated when an error is signaled.
 
-The behavior of the zmacs region can now be controlled in the event of a
-signaled error.  The new variable `errors-deactivate-region' may be set
-to nil to avoid losing the zmacs region.  When this is in effect, to
-deactivate the region, you have to press C-g explicitly, in the buffer
-where the region is active.  This can be a win under many circumstances,
-but can lead to potentially confusing situations when isearch is in effect.
+The behavior of the zmacs region can now be controlled in the event of
+a signaled error.  The new variable `errors-deactivate-region' may be
+set to nil to revert to the old behaviour.  As before, typing C-g
+deactivate the region.
 
-To control just keeping the region when moving against the endpoints of a
-buffer, the existing variable `signal-error-on-buffer-boundary' can be set
-to nil.
+** Pending-delete changes.
 
-NOTE:  This feature is enabled by default in 20.3beta.
+*** Pending-delete is now a minor mode, with the normal minor-mode
+semantics and toggle functions.  Old functions are left for
+compatibility.
+
+*** Loading pending-del no longer turns on pending-delete mode.  In
+fact, it is no longer necessary to explicitly load pending-del.  All
+you need to do to turn on tpu-edt is run the tpu-edt function.  Here's
+how to run pending-delete instead of loading the file:
+
+  Within XEmacs:   Type      M-x pending-delete <ret>
+                    not      M-x load-library <ret> pending-delete <ret>
+  
+  In .emacs:       Use       (turn-on-pending-delete)
+                   not       (load "pending-del")
 
 ** Abbreviations can now contain non-word characters.
 
@@ -252,6 +261,9 @@ conventions used by other free software.
 ** `tty-erase-char' is a new variable that reports which character
 was set up as the terminal's erase character at the tim Emacs was
 started.
+
+** `insert-file-contents' can now read from a special file,
+as long as the arguments VISIT and REPLACE are nil.
 
 ** `string-to-number' now accepts an optional BASE argument which
 specifies which base to use.  The default base is 10.

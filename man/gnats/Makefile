@@ -50,6 +50,7 @@ $(NAME).dvi: $(srcs) index.texi
 	texi2dvi gnats.texi
 	texi2dvi send-pr.texi
 
+.PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
 	rm -f *.toc *.aux *.log *.cp *.cps *.fn *.fns *.tp *.tps \
               *.vr *.vrs *.pg *.pgs *.ky *.kys

@@ -63,7 +63,7 @@ Lisp_Object Qvariable_documentation;
    this silliness. */
 static int new_backquote_flag, old_backquote_flag;
 Lisp_Object Qbackquote, Qbacktick, Qcomma, Qcomma_at, Qcomma_dot;
-#endif 
+#endif
 Lisp_Object Qvariable_domain;	/* I18N3 */
 Lisp_Object Vvalues, Vstandard_input, Vafter_load_alist;
 Lisp_Object Qcurrent_load_list;
@@ -229,7 +229,7 @@ readchar (Lisp_Object readcharfun)
     {
       Emchar c;
       struct buffer *b = XBUFFER (readcharfun);
- 
+
       if (!BUFFER_LIVE_P (b))
         error ("Reading from killed buffer");
 
@@ -342,7 +342,7 @@ kludge ("read-char", Fread_char, Sread_char, 0, 0, 0, "") ()
 
 
 
-static void readevalloop (Lisp_Object readcharfun, 
+static void readevalloop (Lisp_Object readcharfun,
                           Lisp_Object sourcefile,
                           Lisp_Object (*evalfun) (Lisp_Object),
                           int printflag);
@@ -392,12 +392,12 @@ load_byte_code_version_unwind (Lisp_Object oldval)
 void
 ebolify_bytecode_constants (Lisp_Object vector)
 {
-  int len = vector_length (XVECTOR (vector));
+  int len = XVECTOR_LENGTH (vector);
   int i;
 
   for (i = 0; i < len; i++)
     {
-      Lisp_Object el = vector_data (XVECTOR (vector))[i];
+      Lisp_Object el = XVECTOR_DATA (vector)[i];
 
       /* We don't check for `eq', `equal', and the others that have
 	 bytecode opcodes.  This might lose if someone passes #'eq or
@@ -420,7 +420,7 @@ ebolify_bytecode_constants (Lisp_Object vector)
 	el = Qold_rassq;
       if (EQ (el, Qrassoc))
 	el = Qold_rassoc;
-      vector_data (XVECTOR (vector))[i] = el;
+      XVECTOR_DATA (vector)[i] = el;
     }
 }
 
@@ -605,7 +605,7 @@ encoding detection or end-of-line detection.
       char *foundstr;
       int foundlen;
 
-      fd = locate_file (Vload_path, file, 
+      fd = locate_file (Vload_path, file,
                         ((!NILP (nosuffix)) ? "" :
 			 load_ignore_elc_files ? ".el:" :
 			 ".elc:.el:"),
@@ -760,7 +760,7 @@ encoding detection or end-of-line detection.
       }
     else
       load_byte_code_version = 100; /* no Ebolification needed */
-	    
+
     readevalloop (lispstream, file, Feval, 0);
 #ifdef MULE
     if (!NILP (used_codesys))
@@ -803,7 +803,7 @@ encoding detection or end-of-line detection.
 
   if (!noninteractive)
     PRINT_LOADING_MESSAGE ("done");
-    
+
   UNGCPRO;
   return Qt;
 }
@@ -852,7 +852,7 @@ for details.
     }
   if (!(NILP (mode) || (INTP (mode) && XINT (mode) >= 0)))
     mode = wrong_type_argument (Qnatnump, mode);
-  locate_file (path_list, filename, 
+  locate_file (path_list, filename,
                ((NILP (suffixes)) ? "" :
 		(char *) (XSTRING_DATA (suffixes))),
 	       &tp, (NILP (mode) ? R_OK : XINT (mode)));
@@ -925,22 +925,22 @@ locate_file_in_directory (Lisp_Object path, Lisp_Object str,
   want_size = strlen (suffix) + XSTRING_LENGTH (filename) + 1;
   if (fn_size < want_size)
     fn = (char *) alloca (fn_size = 100 + want_size);
-  
+
   nsuffix = suffix;
-  
+
   /* Loop over suffixes.  */
   while (1)
     {
       char *esuffix = (char *) strchr (nsuffix, ':');
       int lsuffix = ((esuffix) ? (esuffix - nsuffix) : strlen (nsuffix));
-      
+
       /* Concatenate path element/specified name with the suffix.  */
-      strncpy (fn, (char *) XSTRING_DATA (filename), 
+      strncpy (fn, (char *) XSTRING_DATA (filename),
 	       XSTRING_LENGTH (filename));
       fn[XSTRING_LENGTH (filename)] = 0;
       if (lsuffix != 0)  /* Bug happens on CCI if lsuffix is 0.  */
 	strncat (fn, nsuffix, lsuffix);
-      
+
       /* Ignore file if it's a directory.  */
       if (stat (fn, &st) >= 0
 	  && (st.st_mode & S_IFMT) != S_IFDIR)
@@ -954,35 +954,35 @@ locate_file_in_directory (Lisp_Object path, Lisp_Object str,
 #else
 	    fd = open (fn, O_RDONLY, 0);
 #endif
-	  
+
 	  if (fd >= 0)
 	    {
 	      /* We succeeded; return this descriptor and filename.  */
 	      if (storeptr)
 		*storeptr = build_string (fn);
 	      UNGCPRO;
-	      
+
 /* XXX FIX ME
    Not sure about this on NT yet.  Do nothing for now.
    --marcpa */
-#ifndef DOS_NT	      
+#ifndef DOS_NT
 	      /* If we actually opened the file, set close-on-exec flag
 		 on the new descriptor so that subprocesses can't whack
 		 at it.  */
 	      if (mode < 0)
 		(void) fcntl (fd, F_SETFD, FD_CLOEXEC);
 #endif
-	      
+
 	      return fd;
 	    }
 	}
-      
+
       /* Advance to next suffix.  */
       if (esuffix == 0)
 	break;
       nsuffix += lsuffix + 1;
     }
-  
+
   UNGCPRO;
   return -1;
 }
@@ -1015,7 +1015,7 @@ locate_file_without_hash (Lisp_Object path, Lisp_Object str,
       if (absolute)
 	break;
     }
-  
+
   UNGCPRO;
   return -1;
 }
@@ -1031,26 +1031,26 @@ locate_file_construct_suffixed_files (Lisp_Object str, CONST char *suffix)
   char *fn = buf;
   CONST char *nsuffix;
   Lisp_Object suffixtab = Qnil;
-  
+
   /* Calculate maximum size of any filename made from
      this path element/specified file name and any possible suffix.  */
   want_size = strlen (suffix) + XSTRING_LENGTH (str) + 1;
   if (fn_size < want_size)
     fn = (char *) alloca (fn_size = 100 + want_size);
-  
+
   nsuffix = suffix;
-  
+
   while (1)
     {
       char *esuffix = (char *) strchr (nsuffix, ':');
       int lsuffix = ((esuffix) ? (esuffix - nsuffix) : strlen (nsuffix));
-      
+
       /* Concatenate path element/specified name with the suffix.  */
       strncpy (fn, (char *) XSTRING_DATA (str), XSTRING_LENGTH (str));
       fn[XSTRING_LENGTH (str)] = 0;
       if (lsuffix != 0)  /* Bug happens on CCI if lsuffix is 0.  */
 	strncat (fn, nsuffix, lsuffix);
-      
+
       suffixtab = Fcons (build_string (fn), suffixtab);
       /* Advance to next suffix.  */
       if (esuffix == 0)
@@ -1221,7 +1221,7 @@ build_load_history (int loading, Lisp_Object source)
 
 	  /*  If we're loading, remove it. */
 	  if (loading)
-	    {	  
+	    {
 	      if (NILP (prev))
 		Vload_history = Fcdr (tail);
 	      else
@@ -1275,7 +1275,7 @@ unreadpure (void)	/* Used as unwind-protect function in readevalloop */
 #endif /* 0 */
 
 static void
-readevalloop (Lisp_Object readcharfun, 
+readevalloop (Lisp_Object readcharfun,
               Lisp_Object sourcename,
               Lisp_Object (*evalfun) (Lisp_Object),
               int printflag)
@@ -1483,9 +1483,9 @@ STREAM or the value of `standard-input' may be:
 #ifndef standalone
   if (EQ (stream, Qread_char))
     {
-      Lisp_Object val = call1 (Qread_from_minibuffer, 
+      Lisp_Object val = call1 (Qread_from_minibuffer,
 			       build_translated_string ("Lisp expression: "));
-      return (Fcar (Fread_from_string (val, Qnil, Qnil)));
+      return Fcar (Fread_from_string (val, Qnil, Qnil));
     }
 #endif
 
@@ -1539,12 +1539,12 @@ backquote_unwind (Lisp_Object ptr)
 {  /* used as unwind-protect function in read0() */
   int *counter = (int *) get_opaque_ptr (ptr);
   if (--*counter < 0)
-    *counter = 0;  
+    *counter = 0;
   free_opaque_ptr (ptr);
   return Qnil;
 }
 
-#endif 
+#endif
 
 /* Use this for recursive reads, in contexts where internal tokens
    are not allowed.  See also read1(). */
@@ -1600,10 +1600,10 @@ read_escape (Lisp_Object readcharfun)
 #define hyper_modifier (0x100000)
 #define shift_modifier (0x200000)
 /* fsf uses a different modifiers for meta and control.  Possibly
-   byte_compiled code will still work fsfmacs, though... --Stig 
+   byte_compiled code will still work fsfmacs, though... --Stig
 
    #define ctl_modifier   (0x400000)
-   #define meta_modifier  (0x800000)	
+   #define meta_modifier  (0x800000)
 */
 #define FSF_LOSSAGE(mask)						\
       if (puke_on_fsf_keys || ((c = readchar (readcharfun)) != '-'))	\
@@ -1637,8 +1637,8 @@ read_escape (Lisp_Object readcharfun)
       if (c == '?')
 	return 0177;
       else
-        return (c & (0200 | 037));
-      
+        return c & (0200 | 037);
+
     case '0':
     case '1':
     case '2':
@@ -1733,7 +1733,7 @@ read_atom_0 (Lisp_Object readcharfun, Emchar firstchar, int *saw_a_backslash)
   Lstream_put_emchar (XLSTREAM (Vread_buffer_stream), 0);
   Lstream_flush (XLSTREAM (Vread_buffer_stream));
 
-  return (Lstream_byte_count (XLSTREAM (Vread_buffer_stream)) - 1);
+  return Lstream_byte_count (XLSTREAM (Vread_buffer_stream)) - 1;
 }
 
 static Lisp_Object parse_integer (CONST Bufbyte *buf, Bytecount len, int base);
@@ -1788,10 +1788,10 @@ read_atom (Lisp_Object readcharfun,
 		  number = atol (read_buffer);
 		else
 		  abort ();
-		return (make_int (number));
+		return make_int (number);
 	      }
 #else
-              return (parse_integer ((Bufbyte *) read_ptr, len, 10));
+              return parse_integer ((Bufbyte *) read_ptr, len, 10);
 #endif
 	    }
 	}
@@ -1804,7 +1804,7 @@ read_atom (Lisp_Object readcharfun,
   {
     Lisp_Object sym;
     if (uninterned_symbol)
-      sym = (Fmake_symbol ((purify_flag) 
+      sym = (Fmake_symbol ((purify_flag)
 			   ? make_pure_pname ((Bufbyte *) read_ptr, len, 0)
 			   : make_string ((Bufbyte *) read_ptr, len)));
     else
@@ -1820,7 +1820,7 @@ read_atom (Lisp_Object readcharfun,
 	   have packages and then this will be reworked.  --Stig. */
 	XSYMBOL (sym)->value = sym;
       }
-    return (sym);
+    return sym;
   }
 }
 
@@ -1859,7 +1859,7 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
 	c = c - 'a' + 10;
       else
 	goto loser;
-    
+
       if (c < 0 || c >= base)
 	goto loser;
 
@@ -1875,16 +1875,16 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
       goto overflow;
     if (XINT (result) != ((negativland) ? -num : num))
       goto overflow;
-    return (result);
+    return result;
   }
  overflow:
-  return Fsignal (Qinvalid_read_syntax, 
+  return Fsignal (Qinvalid_read_syntax,
                   list3 (build_translated_string
 			 ("Integer constant overflow in reader"),
                          make_string (buf, len),
                          make_int (base)));
  loser:
-  return Fsignal (Qinvalid_read_syntax, 
+  return Fsignal (Qinvalid_read_syntax,
                   list3 (build_translated_string
 			 ("Invalid integer constant in reader"),
                          make_string (buf, len),
@@ -1984,6 +1984,7 @@ read_structure (Lisp_Object readcharfun)
   Lisp_Object list = Qnil;
   Lisp_Object orig_list = Qnil;
   Lisp_Object already_seen = Qnil;
+  int keyword_count;
   struct structure_type *st;
   struct gcpro gcpro1, gcpro2;
 
@@ -2002,44 +2003,41 @@ read_structure (Lisp_Object readcharfun)
 	(continuable_syntax_error
 	 ("structures must have alternating keyword/value pairs"));
   }
-  
+
   st = recognized_structure_type (XCAR (list));
   if (!st)
-    {
-      RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
-			       list2 (build_translated_string
-				      ("unrecognized structure type"),
-				      XCAR (list))));
-    }
+    RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
+			     list2 (build_translated_string
+				    ("unrecognized structure type"),
+				    XCAR (list))));
 
   list = Fcdr (list);
+  keyword_count = Dynarr_length (st->keywords);
   while (!NILP (list))
     {
       Lisp_Object keyword, value;
       int i;
-      struct structure_keyword_entry *en;
-      
+      struct structure_keyword_entry *en = NULL;
+
       keyword = Fcar (list);
       list = Fcdr (list);
       value = Fcar (list);
       list = Fcdr (list);
-      
-      if (!NILP (memq_no_quit (keyword, already_seen)))
-	{
-	  RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
-				   list2 (build_translated_string
-					  ("structure keyword already seen"),
-					  keyword)));
-	}
 
-      for (i = 0; i < Dynarr_length (st->keywords); i++)
+      if (!NILP (memq_no_quit (keyword, already_seen)))
+	RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
+				 list2 (build_translated_string
+					("structure keyword already seen"),
+					keyword)));
+
+      for (i = 0; i < keyword_count; i++)
 	{
 	  en = Dynarr_atp (st->keywords, i);
 	  if (EQ (keyword, en->keyword))
 	    break;
 	}
 
-      if (i == Dynarr_length (st->keywords))
+      if (i == keyword_count)
 	RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
 				   list2 (build_translated_string
 					  ("unrecognized structure keyword"),
@@ -2056,14 +2054,13 @@ read_structure (Lisp_Object readcharfun)
     }
 
   if (st->validate && ! (st->validate) (orig_list, ERROR_ME))
-    RETURN_UNGCPRO
-      (Fsignal (Qinvalid_read_syntax,
-		list2 (build_translated_string
-		       ("invalid structure initializer"),
-		       orig_list)));
+    RETURN_UNGCPRO (Fsignal (Qinvalid_read_syntax,
+			     list2 (build_translated_string
+				    ("invalid structure initializer"),
+				    orig_list)));
 
   RETURN_UNGCPRO ((st->instantiate) (XCDR (orig_list)));
-}  
+}
 
 
 static Lisp_Object read_compiled_function (Lisp_Object readcharfun,
@@ -2097,7 +2094,7 @@ reader_nextchar (Lisp_Object readcharfun)
 	/* Ignore whitespace and control characters */
 	if (c <= 040)
 	  goto retry;
-	return (c);
+	return c;
       }
 
     case ';':
@@ -2114,10 +2111,7 @@ reader_nextchar (Lisp_Object readcharfun)
 static Lisp_Object
 list2_pure (int pure, Lisp_Object a, Lisp_Object b)
 {
-  if (pure)
-    return (pure_cons (a, pure_cons (b, Qnil)));
-  else
-    return (list2 (a, b));
+  return pure ? pure_cons (a, pure_cons (b, Qnil)) : list2 (a, b);
 }
 #endif
 
@@ -2126,7 +2120,7 @@ list2_pure (int pure, Lisp_Object a, Lisp_Object b)
    encountered a misplaced token (e.g. a right bracket, right paren,
    or dot followed by a non-number).  To filter this stuff out,
    use read0(). */
-  
+
 static Lisp_Object
 read1 (Lisp_Object readcharfun)
 {
@@ -2213,12 +2207,12 @@ retry:
 	return read_list (readcharfun, ')', 1, 1);
       }
     case '[':
-      return (read_vector (readcharfun, ']'));
+      return read_vector (readcharfun, ']');
 
     case ')':
     case ']':
       /* #### - huh? these don't do what they seem... */
-      return (noseeum_cons (Qunbound, make_char (c)));
+      return noseeum_cons (Qunbound, make_char (c));
     case '.':
       {
 #ifdef LISP_FLOAT_TYPE
@@ -2231,17 +2225,17 @@ retry:
 
 	/* Can't use isdigit on Emchars */
 	if (c < '0' || c > '9')
-	  return (noseeum_cons (Qunbound, make_char ('.')));
+	  return noseeum_cons (Qunbound, make_char ('.'));
 
 	/* Note that read_atom will loop
 	   at least once, assuring that we will not try to UNREAD
            two characters in a row.
 	   (I think this doesn't matter anymore because there should
 	   be no more danger in unreading multiple characters) */
-        return (read_atom (readcharfun, '.', 0));
+        return read_atom (readcharfun, '.', 0);
 
 #else /* ! LISP_FLOAT_TYPE */
-	return (noseeum_cons (Qunbound, make_char ('.')));
+	return noseeum_cons (Qunbound, make_char ('.'));
 #endif /* ! LISP_FLOAT_TYPE */
       }
 
@@ -2258,18 +2252,18 @@ retry:
 #endif
             /* "#["-- byte-code constant syntax */
             /* purecons #[...] syntax */
-	  case '[': return (read_compiled_function (readcharfun, ']'
-                                                    /*, purify_flag */ ));
+	  case '[': return read_compiled_function (readcharfun, ']'
+						   /*, purify_flag */ );
             /* "#:"-- quasi-implemented gensym syntax */
-	  case ':': return (read_atom (readcharfun, -1, 1));
+	  case ':': return read_atom (readcharfun, -1, 1);
             /* #'x => (function x) */
-	  case '\'': return (list2 (Qfunction, read0 (readcharfun)));
+	  case '\'': return list2 (Qfunction, read0 (readcharfun));
 #if 0
 	    /* RMS uses this syntax for fat-strings.
 	       If we use it for vectors, then obscure bugs happen.
 	     */
             /* "#(" -- Scheme/CL vector syntax */
-	  case '(': return (read_vector (readcharfun, ')'));
+	  case '(': return read_vector (readcharfun, ')');
 #endif
 #if 0 /* FSFmacs */
 	  case '(':
@@ -2283,8 +2277,8 @@ retry:
 		{
 		  if (CONSP (tmp) && UNBOUNDP (XCAR (tmp)))
 		    free_cons (XCONS (tmp));
-		  return (Fsignal (Qinvalid_read_syntax,
-				   list1 (build_string ("#"))));
+		  return Fsignal (Qinvalid_read_syntax,
+				   list1 (build_string ("#")));
 		}
 	      GCPRO1 (tmp);
 	      /* Read the intervals and their properties.  */
@@ -2293,7 +2287,7 @@ retry:
 		  Lisp_Object beg, end, plist;
 		  Emchar ch;
 		  int invalid = 0;
-		  
+
 		  beg = read1 (readcharfun);
 		  if (CONSP (beg) && UNBOUNDP (XCAR (beg)))
 		    {
@@ -2360,15 +2354,15 @@ retry:
 	    }
 	  case '$': return Vload_file_name_internal;
             /* bit vectors */
-	  case '*': return (read_bit_vector (readcharfun));
+	  case '*': return read_bit_vector (readcharfun);
             /* #o10 => 8 -- octal constant syntax */
-	  case 'o': return (read_integer (readcharfun, 8));
+	  case 'o': return read_integer (readcharfun, 8);
             /* #xdead => 57005 -- hex constant syntax */
-	  case 'x': return (read_integer (readcharfun, 16));
+	  case 'x': return read_integer (readcharfun, 16);
             /* #b010 => 2 -- binary constant syntax */
-	  case 'b': return (read_integer (readcharfun, 2));
+	  case 'b': return read_integer (readcharfun, 2);
             /* #s(foobar key1 val1 key2 val2) -- structure syntax */
-	  case 's': return (read_structure (readcharfun));
+	  case 's': return read_structure (readcharfun);
 	  case '<':
 	    {
 	      unreadchar (readcharfun, c);
@@ -2449,7 +2443,7 @@ retry:
 	       future, then commas should be invalid read syntax
 	       outside of backquotes anywhere they're found (i.e.
 	       they must be quoted in symbols) -- Stig */
-	    return (read_atom (readcharfun, c, 0));
+	    return read_atom (readcharfun, c, 0);
 	  }
       }
 #endif
@@ -2463,7 +2457,7 @@ retry:
 
 	if (c == '\\')
 	  c = read_escape (readcharfun);
-	return (make_char (c));
+	return make_char (c);
       }
 
     case '\"':
@@ -2501,7 +2495,7 @@ retry:
 	   return zero instead.  This is for doc strings
 	   that we are really going to find in lib-src/DOC.nn.nn  */
 	if (purify_flag && NILP (Vdoc_file_name) && cancel)
-	  return (Qzero);
+	  return Qzero;
 
 	Lstream_flush (XLSTREAM (Vread_buffer_stream));
 #if 0 /* FSFmacs defun hack */
@@ -2523,7 +2517,7 @@ retry:
 	/* Ignore whitespace and control characters */
 	if (c <= 040)
 	  goto retry;
-	return (read_atom (readcharfun, c, 0));
+	return read_atom (readcharfun, c, 0);
       }
     }
 }
@@ -2543,7 +2537,7 @@ isfloat_string (CONST char *cp)
 {
   int state = 0;
   CONST Bufbyte *ucp = (CONST Bufbyte *) cp;
-  
+
   if (*ucp == '+' || *ucp == '-')
     ucp++;
 
@@ -2605,7 +2599,7 @@ sequence_reader (Lisp_Object readcharfun,
       ch = reader_nextchar (readcharfun);
 
       if (ch == terminator)
-	return (state);
+	return state;
       else
 	unreadchar (readcharfun, ch);
 #ifdef FEATUREP_SYNTAX
@@ -2619,7 +2613,7 @@ sequence_reader (Lisp_Object readcharfun,
 }
 
 
-struct read_list_state 
+struct read_list_state
   {
     Lisp_Object head;
     Lisp_Object tail;
@@ -2640,7 +2634,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
     {
       Lisp_Object tem = elt;
       Emchar ch;
-      
+
       elt = XCDR (elt);
       free_cons (XCONS (tem));
       tem = Qnil;
@@ -2708,7 +2702,7 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
   s->tail = elt;
  done:
   s->length++;
-  return (s);
+  return s;
 }
 
 
@@ -2809,9 +2803,9 @@ read_list (Lisp_Object readcharfun,
 	    }
 	}
     }
-	  
+
   UNGCPRO;
-  return (s.head);
+  return s.head;
 }
 
 static Lisp_Object
@@ -2831,7 +2825,7 @@ read_vector (Lisp_Object readcharfun,
   s.length = 0;
   s.allow_dotted_lists = 0;
   GCPRO2 (s.head, s.tail);
-  
+
   (void) sequence_reader (readcharfun,
                           terminator,
                           &s,
@@ -2847,7 +2841,7 @@ read_vector (Lisp_Object readcharfun,
 #endif
     s.head = make_vector (len, Qnil);
 
-  for (i = 0, p = &(vector_data (XVECTOR (s.head))[0]);
+  for (i = 0, p = &(XVECTOR_DATA (s.head)[0]);
        i < len;
        i++, p++)
   {
@@ -2862,13 +2856,13 @@ read_vector (Lisp_Object readcharfun,
     tem = otem->cdr;
     free_cons (otem);
   }
-  return (s.head);
+  return s.head;
 }
 
 static Lisp_Object
 read_compiled_function (Lisp_Object readcharfun, Emchar terminator)
 {
-  /* Accept compiled functions at read-time so that we don't 
+  /* Accept compiled functions at read-time so that we don't
      have to build them at load-time. */
   Lisp_Object stuff;
   Lisp_Object make_byte_code_args[COMPILED_DOMAIN + 1];
@@ -2941,7 +2935,7 @@ init_lread (void)
    handle things. */
 #if 0
 #ifndef WINDOWSNT
-  /* When Emacs is invoked over network shares on NT, PATH_LOADSEARCH is 
+  /* When Emacs is invoked over network shares on NT, PATH_LOADSEARCH is
      almost never correct, thereby causing a warning to be printed out that 
      confuses users.  Since PATH_LOADSEARCH is always overriden by the
      EMACSLOADPATH environment variable below, disable the warning on NT.  */

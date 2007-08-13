@@ -127,7 +127,7 @@ input methods to relay state information to the user.
   else
     {
       CHECK_STRING (preprompt);
-  
+
       Vminibuf_preprompt = LISP_GETTEXT (preprompt);
     }
   return Qnil;
@@ -152,7 +152,7 @@ Lowest-level interface to minibuffers.  Don't call this.
 			  noseeum_cons (make_int (minibuf_level), Qnil)));
   Vminibuf_prompt = LISP_GETTEXT (prompt);
 
-  /* NOTE: Here (or somewhere around here), in FSFmacs 19.30, 
+  /* NOTE: Here (or somewhere around here), in FSFmacs 19.30,
      choose_minibuf_frame() is called.  This is the only
      place in FSFmacs that it's called any more -- there's
      also a call in xterm.c, but commented out, and 19.28
@@ -173,7 +173,7 @@ Lowest-level interface to minibuffers.  Don't call this.
   enough, because minibuf_window isn't really exported to Lisp.
 
   The comment above choose_minibuf_frame() reads:
-  
+
   Put minibuf on currently selected frame's minibuffer.
   We do this whenever the user starts a new minibuffer
   or when a minibuffer exits.  */
@@ -181,13 +181,13 @@ Lowest-level interface to minibuffers.  Don't call this.
   minibuf_window = FRAME_MINIBUF_WINDOW (selected_frame ());
 
   run_hook (Qminibuffer_setup_hook);
-    
+
   minibuf_level++;
   clear_echo_area (selected_frame (), Qnil, 0);
 
   val = call_command_loop (Qt);
 
-  return (unbind_to (speccount, val));
+  return unbind_to (speccount, val);
 }
 
 
@@ -260,10 +260,10 @@ regexp_ignore_completion_p (CONST Bufbyte *nonreloc,
 	  if (STRINGP (re)
 	      && (fast_string_match (re, nonreloc, reloc, offset,
 				     length, 0, ERROR_ME, 0) < 0))
-	    return (1);
+	    return 1;
 	}
     }
-  return (0);
+  return 0;
 }
 
 
@@ -273,8 +273,8 @@ ignore_completion_p (Lisp_Object completion_string,
                      Lisp_Object pred, Lisp_Object completion)
 {
   if (regexp_ignore_completion_p (0, completion_string, 0, -1))
-    return (1);
-  
+    return 1;
+
   /* Ignore this element if there is a predicate
      and the predicate doesn't like it. */
   if (!NILP (pred))
@@ -285,9 +285,9 @@ ignore_completion_p (Lisp_Object completion_string,
     else
       tem = call1 (pred, completion);
     if (NILP (tem))
-      return (1);
+      return 1;
   }
-  return (0);
+  return 0;
 }
 
 
@@ -320,8 +320,8 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
   Charcount bestmatchsize = 0;
   int list;
   int indice = 0;
-  int obsize = 0;
   int matchcount = 0;
+  int obsize;
   Lisp_Object bucket;
   Charcount slength, blength;
 
@@ -350,8 +350,13 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
   tail = alist;
   if (!list)
     {
-      obsize = vector_length (XVECTOR (alist));
-      bucket = vector_data (XVECTOR (alist))[indice];
+      obsize = XVECTOR_LENGTH (alist);
+      bucket = XVECTOR_DATA (alist)[indice];
+    }
+  else /* warning suppression */
+    {
+      obsize = 0;
+      bucket = Qnil;
     }
 
   while (1)
@@ -392,7 +397,7 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 	    break;
 	  else
 	    {
-	      bucket = vector_data (XVECTOR (alist))[indice];
+	      bucket = XVECTOR_DATA (alist)[indice];
 	      continue;
 	    }
 	}
@@ -458,7 +463,7 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 					  XSTRING_DATA (string),
 					  slength, 0)
 			   && 0 <= scmp_1 (XSTRING_DATA (bestmatch),
-					   XSTRING_DATA (string), 
+					   XSTRING_DATA (string),
 					   slength, 0)))
                       {
 			bestmatch = eltstring;
@@ -519,7 +524,7 @@ the symbol from the obarray.
   Lisp_Object allmatches;
   int list;
   int indice = 0;
-  int obsize = 0;
+  int obsize;
   Lisp_Object bucket;
   Charcount slength;
 
@@ -547,8 +552,13 @@ the symbol from the obarray.
   tail = alist;
   if (!list)
     {
-      obsize = vector_length (XVECTOR (alist));
-      bucket = vector_data (XVECTOR (alist))[indice];
+      obsize = XVECTOR_LENGTH (alist);
+      bucket = XVECTOR_DATA (alist)[indice];
+    }
+  else /* warning suppression */
+    {
+      obsize = 0;
+      bucket = Qnil;
     }
 
   while (1)
@@ -584,14 +594,14 @@ the symbol from the obarray.
 	    break;
 	  else
 	    {
-	      bucket = vector_data (XVECTOR (alist))[indice];
+	      bucket = XVECTOR_DATA (alist)[indice];
 	      continue;
 	    }
 	}
 
       /* Is this element a possible completion? */
 
-      if (STRINGP (eltstring) 
+      if (STRINGP (eltstring)
           && (slength <= string_char_length (XSTRING (eltstring)))
 	  /* Reject alternatives that start with space
 	     unless the input starts with space.  */
@@ -629,7 +639,7 @@ If no minibuffer is active, return nil.
 */
 	 ())
 {
-  return (Fcopy_sequence (Vminibuf_prompt));
+  return Fcopy_sequence (Vminibuf_prompt);
 }
 
 xxDEFUN ("minibuffer-prompt-width", Fminibuffer_prompt_width, 0, 0, 0, /*
@@ -637,7 +647,7 @@ Return the display width of the minibuffer prompt.
 */
 	 ())
 {
-  return (make_int (minibuf_prompt_width));
+  return make_int (minibuf_prompt_width);
 }
 #endif /* 0 */
 
@@ -658,7 +668,7 @@ clear_echo_area_internal (struct frame *f, Lisp_Object label, int from_print,
       Lisp_Object frame;
 
       XSETFRAME (frame, f);
-      return call4 (Qclear_message, label, frame, from_print ? Qt : Qnil, 
+      return call4 (Qclear_message, label, frame, from_print ? Qt : Qnil,
 		    no_restore ? Qt : Qnil);
     }
   else
@@ -698,9 +708,9 @@ echo_area_append (struct frame *f, CONST Bufbyte *nonreloc, Lisp_Object reloc,
      may be valid.  */
   if (length == 0)
     return;
-  
+
   fixup_internal_substring (nonreloc, reloc, offset, &length);
-  
+
   /* also check it here, in case the string was really blank. */
   if (length == 0)
     return;
@@ -715,10 +725,10 @@ echo_area_append (struct frame *f, CONST Bufbyte *nonreloc, Lisp_Object reloc,
 	    nonreloc = XSTRING_DATA (reloc);
 	  obj = make_string (nonreloc + offset, length);
 	}
-      
+
       XSETFRAME (frame, f);
       GCPRO1 (obj);
-      call4 (Qappend_message, label, obj, frame, 
+      call4 (Qappend_message, label, obj, frame,
 	     EQ (label, Qprint) ? Qt : Qnil);
       UNGCPRO;
     }
@@ -748,7 +758,7 @@ echo_area_active (struct frame *f)
      is not empty.  No need to call Lisp code. (Anyway, this function
      is called from redisplay.) */
   struct buffer *echo_buffer = XBUFFER (Vecho_area_buffer);
-  return (BUF_BEGV (echo_buffer) != BUF_ZV (echo_buffer));
+  return BUF_BEGV (echo_buffer) != BUF_ZV (echo_buffer);
 }
 
 Lisp_Object
@@ -760,7 +770,7 @@ echo_area_status (struct frame *f)
       Lisp_Object frame;
 
       XSETFRAME (frame, f);
-      return (call1 (Qcurrent_message_label, frame));
+      return call1 (Qcurrent_message_label, frame);
     }
   else
     return stdout_needs_newline ? Qmessage : Qnil;
@@ -928,7 +938,7 @@ vars_of_minibuf (void)
   /* Added by Jareth Hein (jhod@po.iijnet.or.jp) for input system support */
   staticpro (&Vminibuf_preprompt);
   Vminibuf_preprompt = Qnil;
-								
+
   DEFVAR_LISP ("minibuffer-setup-hook", &Vminibuffer_setup_hook /*
 Normal hook run just after entry to minibuffer.
 */ );

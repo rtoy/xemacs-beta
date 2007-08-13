@@ -5,7 +5,7 @@
 #ifndef NOT_C_CODE
 #include "/usr/include/sys/lc_core.h"
 #include "/usr/include/reg_types.h"
-#endif
+#endif /* C code */
 
 #define re_compile_pattern sys_re_compile_pattern
 #define re_search sys_re_search

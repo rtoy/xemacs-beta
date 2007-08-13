@@ -7,7 +7,7 @@
 ;;         Dan Rich <drich@morpheus.corp.sgi.com>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/12/15
-;; Version: $Id: tm-image.el,v 1.7 1997/06/06 00:57:43 steve Exp $
+;; Version: $Id: tm-image.el,v 1.8 1997/07/13 22:41:52 steve Exp $
 
 ;; Keywords: image, picture, X-Face, MIME, multimedia, mail, news
 
@@ -155,10 +155,10 @@
 	   (gl (image-normalize minor (buffer-string)))
 	   e)
       (delete-region (point-min)(point-max))
-      (cond ((image-invalid-glyph-p gl)
-	     (setq gl nil)
-	     (message "Invalid glyph!")
-	     )
+      (cond ;; ((image-invalid-glyph-p gl)
+	     ;; (setq gl nil)
+	     ;; (message "Invalid glyph!")
+	     ;; )
 	    ((eq (aref gl 0) 'xbm)
 	     (let ((xbm-file
 		    (make-temp-name (expand-file-name "tm" mime/tmp-dir))))

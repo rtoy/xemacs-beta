@@ -43,6 +43,7 @@ dvi: $(NAME).dvi
 ../../info/$(NAME).info: $(srcs)
 	makeinfo -o $@ $(NAME).texi
 
+.PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
 	rm -f *.toc *.aux *.oaux *.log *.cp *.cps *.fn *.fns *.tp *.tps \
               *.vr *.vrs *.pg *.pgs *.ky *.kys

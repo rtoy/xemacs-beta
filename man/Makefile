@@ -41,7 +41,7 @@ SUBDIR = xemacs lispref new-users-guide internals tm auctex gnats
 srcs = cc-mode cl custom ediff efs external-widget forms gnus \
 	hm--html-mode \
 	hyperbole ilisp info ispell mailcrypt message mh-e oo-browser \
-	pcl-cvs psgml psgml-api rmail standards supercite term \
+	pcl-cvs ph psgml psgml-api rmail standards supercite term \
 	termcap texinfo vhdl-mode viper vm w3 widget xemacs-faq
 
 info = $(srcs:%=../info/%.info)
@@ -95,6 +95,7 @@ texinfo.dvi: texinfo.texi
 dvi : $(dvi) FORCE
 	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
 
+.PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
 	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
 	rm -f *.toc *.aux *.log \

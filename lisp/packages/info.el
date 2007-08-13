@@ -297,6 +297,11 @@
 ;; Fixed up Info-next-reference to work sanely when n < 0.
 ;; Added S-tab binding.
 
+;; Modified 1997-07-10 by Karl M. Hegbloom
+;;
+;; Added `Info-minibuffer-history'
+;; (also added to defaults in "lisp/utils/savehist.el")
+
 ;; Code:
 
 (defgroup info nil
@@ -320,6 +325,9 @@ Each element of list is a list (\"(FILENAME)NODENAME\" BUFPOS WINSTART).")
 (defvar Info-keeping-history t
   "Non-nil if Info-find-node should modify Info-history.
 This is for use only by certain internal Info routines.")
+
+(defvar Info-minibuffer-history nil
+  "Minibuffer history for Info.")
 
 (defcustom Info-enable-edit nil
   "*Non-nil means the \\<Info-mode-map>\\[Info-edit] command in Info
@@ -918,11 +926,11 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
 
 (defun Info-goto-bookmark ()
   (interactive)
-  
   (let ((completion-ignore-case nil)
 	(tag (completing-read "Goto tag: "
 			      (Info-build-annotation-completions)
-			      nil t)))
+			      nil t nil
+			      'Info-minibuffer-history)))
     (or (equal tag "") (Info-find-node nil (format "<<%s>>" tag)))))
 
 ;;;###autoload
@@ -953,7 +961,10 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
 (defun Info-read-node-name (prompt &optional default)
   (Info-setup-initial)
   (let* ((completion-ignore-case t)
-	 (nodename (completing-read prompt (Info-build-node-completions))))
+	 (nodename (completing-read prompt
+				    (Info-build-node-completions)
+				    nil nil nil
+				    'Info-minibuffer-history)))
     (if (equal nodename "")
 	(or default
 	    (Info-read-node-name prompt))
@@ -1193,7 +1204,8 @@ NAME may be an abbreviation of the reference name."
 					  (concat "Follow reference named: ("
 						  default ") ")
 					"Follow reference named: ")
-				      completions nil t)))
+				      completions nil t nil
+				      'Info-minibuffer-history)))
 	   (if (and (string= item "") default)
 	       (list default)
 	     (list item)))
@@ -1319,7 +1331,8 @@ Completion is allowed, and the menu item point is on is the default."
 					   (format "Menu item (default %s): "
 						   default)
 					   "Menu item: ")
-				       completions nil t)))
+				       completions nil t nil
+				       'Info-minibuffer-history)))
 	 ;; we rely on the fact that completing-read accepts an input
 	 ;; of "" even when the require-match argument is true and ""
 	 ;; is not a valid possibility

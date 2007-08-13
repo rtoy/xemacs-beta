@@ -67,7 +67,7 @@ mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
       return Qnil;
     }
   ((markobj) (table->zero_entry));
-  return (table->harray);
+  return table->harray;
 }
   
 static void
@@ -86,7 +86,7 @@ print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	    table->type == HASHTABLE_VALUE_CAR_WEAK ? "value-car-weak " :
 	    ""),
            table->fullness,
-           (vector_length (XVECTOR (table->harray)) / LISP_OBJECTS_PER_HENTRY),
+           XVECTOR_LENGTH (table->harray) / LISP_OBJECTS_PER_HENTRY,
            table->header.uid);
   write_c_string (buf, printcharfun);
 }
@@ -95,12 +95,11 @@ static void
 ht_copy_to_c (struct hashtable_struct *ht,
               c_hashtable c_table)
 {
-  int len;
+  int len = XVECTOR_LENGTH (ht->harray);
 
-  c_table->harray = (void *) vector_data (XVECTOR (ht->harray));
+  c_table->harray = (void *) XVECTOR_DATA (ht->harray);
   c_table->zero_set = (!GC_UNBOUNDP (ht->zero_entry));
   c_table->zero_entry = LISP_TO_VOID (ht->zero_entry);
-  len = vector_length (XVECTOR (ht->harray));
   if (len < 0)
     {
       /* #### if alloc.c mark_object() changes, this must change too. */
@@ -111,8 +110,8 @@ ht_copy_to_c (struct hashtable_struct *ht,
       assert (gc_in_progress);
       len = -1 - len;
     }
-  c_table->size = len/LISP_OBJECTS_PER_HENTRY;
-  c_table->fullness = ht->fullness;
+  c_table->size          = len/LISP_OBJECTS_PER_HENTRY;
+  c_table->fullness      = ht->fullness;
   c_table->hash_function = ht->hash_function;
   c_table->test_function = ht->test_function;
   XSETHASHTABLE (c_table->elisp_table, ht);
@@ -126,7 +125,7 @@ ht_copy_from_c (c_hashtable c_table,
   /* C is truly hateful */
   void *vec_addr
     = ((char *) c_table->harray 
-       - ((char *) &(dummy.contents) - (char *) &dummy));
+       - ((char *) &(dummy.contents[0]) - (char *) &dummy));
 
   XSETVECTOR (ht->harray, vec_addr);
   if (c_table->zero_set)
@@ -142,24 +141,24 @@ allocate_hashtable (void)
 {
   struct hashtable_struct *table
     = alloc_lcrecord (sizeof (struct hashtable_struct), lrecord_hashtable);
-  table->harray = Qnil;
-  table->zero_entry = Qunbound;
-  table->fullness = 0;
+  table->harray        = Qnil;
+  table->zero_entry    = Qunbound;
+  table->fullness      = 0;
   table->hash_function = 0;
   table->test_function = 0;
-  return (table);
+  return table;
 }
 
-char *
+void *
 elisp_hvector_malloc (unsigned int bytes, Lisp_Object table)
 {
   Lisp_Object new_vector;
   struct hashtable_struct *ht;
 
   ht = XHASHTABLE (table);
-  assert (bytes > vector_length (XVECTOR (ht->harray)) * sizeof (Lisp_Object));
+  assert (bytes > XVECTOR_LENGTH (ht->harray) * sizeof (Lisp_Object));
   new_vector = make_vector ((bytes / sizeof (Lisp_Object)), Qzero);
-  return ((char *) (vector_data (XVECTOR (new_vector))));
+  return (void *) XVECTOR_DATA (new_vector);
 }
 
 void
@@ -170,9 +169,8 @@ elisp_hvector_free (void *ptr, Lisp_Object table)
   Lisp_Object current_vector = ht->harray;
 #endif
 
-  assert (((void *) vector_data (XVECTOR (current_vector))) == ptr);
+  assert (((void *) XVECTOR_DATA (current_vector)) == ptr);
   ht->harray = Qnil;            /* Let GC do its job */
-  return;
 }
 
 
@@ -181,7 +179,7 @@ Return t if OBJ is a hashtable, else nil.
 */
        (obj))
 {
-  return ((HASHTABLEP (obj)) ? Qt : Qnil);
+  return HASHTABLEP (obj) ? Qt : Qnil;
 }
 
 
@@ -291,7 +289,7 @@ make_lisp_hashtable (int size,
   else
     table->next_weak = Qunbound;
 
-  return (result);
+  return result;
 }
 
 static enum hashtable_test_fun
@@ -366,7 +364,7 @@ as the given table.  The keys and values will not themselves be copied.
       Vall_weak_hashtables = result;
     }
 
-  return (result);
+  return result;
 }
 
 
@@ -374,7 +372,7 @@ DEFUN ("gethash", Fgethash, 2, 3, 0, /*
 Find hash value for KEY in TABLE.
 If there is no corresponding value, return DEFAULT (defaults to nil).
 */
-       (key, table, defalt))
+       (key, table, default_))
 {
   CONST void *vval;
   struct _C_hashtable htbl;
@@ -388,7 +386,7 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
       return val;
     }
   else 
-    return defalt;
+    return default_;
 }
 
 
@@ -430,7 +428,7 @@ Hash KEY to VAL in TABLE.
       ht_copy_from_c (&htbl, XHASHTABLE (table));
       UNGCPRO;
     }
-  return (val);
+  return val;
 }
 
 DEFUN ("clrhash", Fclrhash, 1, 1, 0, /*
@@ -454,7 +452,7 @@ Return number of entries in TABLE.
   struct _C_hashtable htbl;
   CHECK_HASHTABLE (table);
   ht_copy_to_c (XHASHTABLE (table), &htbl);
-  return (make_int (htbl.fullness));
+  return make_int (htbl.fullness);
 }
 
 
@@ -759,8 +757,8 @@ pruning_mapper (CONST void *key, CONST void *contents, void *closure)
   CVOID_TO_LISP (keytem, key);
   CVOID_TO_LISP (valuetem, contents);
 
-  return (! ((*fmh->obj_marked_p) (keytem) &&
-	     (*fmh->obj_marked_p) (valuetem)));
+  return ! ((*fmh->obj_marked_p) (keytem) &&
+	    (*fmh->obj_marked_p) (valuetem));
 }
 
 void
@@ -856,7 +854,7 @@ internal_hash (Lisp_Object obj, int depth)
       CONST struct lrecord_implementation
 	*imp = XRECORD_LHEADER (obj)->implementation;
       if (imp->hash)
-	return ((imp->hash) (obj, depth));
+	return (imp->hash) (obj, depth);
     }
 
   return LISP_HASH (obj);

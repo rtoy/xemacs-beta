@@ -183,7 +183,7 @@ check_mark (void)
   if (NILP (tem) || (XBUFFER (tem) != current_buffer))
     error ("The mark is not set now");
 
-  return (marker_position (current_buffer->mark));
+  return marker_position (current_buffer->mark);
 }
 
 static Lisp_Object
@@ -196,7 +196,7 @@ callint_prompt (CONST Bufbyte *prompt_start, Bytecount prompt_length,
   /* Fformat no longer smashes its arg vector, so no need to copy it. */
   
   if (!strchr ((char *) XSTRING_DATA (s), '%'))
-    return (s);
+    return s;
   GCPRO1 (s);
   RETURN_UNGCPRO (emacs_doprnt_string_lisp (0, s, 0, nargs, args));
 }
@@ -243,11 +243,12 @@ when reading the arguments.
 
   if (!NILP (keys))
     {
-      int i;
+      int i, len;
 
       CHECK_VECTOR (keys);
-      for (i = 0; i < vector_length (XVECTOR (keys)); i++)
-	CHECK_LIVE_EVENT (vector_data (XVECTOR (keys))[i]);
+      len = XVECTOR_LENGTH (keys);
+      for (i = 0; i < len; i++)
+	CHECK_LIVE_EVENT (XVECTOR_DATA (keys)[i]);
     }
 
   /* Save this now, since use of minibuffer will clobber it. */
@@ -330,7 +331,7 @@ when reading the arguments.
       if (EQ (record_flag, Qlambda)) /* XEmacs addition */
 	{
 	  UNGCPRO;
-	  return (specs);
+	  return specs;
 	}
       if (!NILP (record_flag) || i != num_input_chars)
 	{
@@ -504,7 +505,7 @@ when reading the arguments.
     {
       /* Interactive function or no arguments; just call it */
       if (EQ (record_flag, Qlambda))
-	return (Qnil);
+	return Qnil;
       if (!NILP (record_flag))
 	{
 	  Vcommand_history = Fcons (list1 (function), Vcommand_history);
@@ -520,7 +521,7 @@ when reading the arguments.
       }
       if (set_zmacs_region_stays)
 	zmacs_region_stays = 1;
-      return (unbind_to (speccount, fun));
+      return unbind_to (speccount, fun);
     }
 
   /* Read interactive arguments */
@@ -928,7 +929,7 @@ when reading the arguments.
     UNGCPRO;
     if (set_zmacs_region_stays)
       zmacs_region_stays = 1;
-    return (unbind_to (speccount, fun));
+    return unbind_to (speccount, fun);
   }
 }
 
@@ -952,7 +953,7 @@ Its numeric meaning is what you would get from `(interactive \"p\")'.
   else
     val = 1;
 
-  return (make_int (val));
+  return make_int (val);
 
 }
 

@@ -216,7 +216,7 @@ mark_process (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (proc->instream));
   ((markobj) (proc->outstream));
   ((markobj) (proc->filedesc_stream));
-  return (proc->status_symbol);
+  return proc->status_symbol;
 }
 
 static void
@@ -359,7 +359,7 @@ set_process_selected_p (struct Lisp_Process *p, int selected_p)
 int
 network_connection_p (Lisp_Object process)
 {
-  return (GC_CONSP (XPROCESS (process)->pid));
+  return GC_CONSP (XPROCESS (process)->pid);
 }
 #endif
 
@@ -374,7 +374,7 @@ Return t if OBJECT is a process.
 */
        (obj))
 {
-  return ((PROCESSP (obj)) ? Qt : Qnil);
+  return PROCESSP (obj) ? Qt : Qnil;
 }
 
 DEFUN ("process-list", Fprocess_list, 0, 0, 0, /*
@@ -393,7 +393,7 @@ Return the process named NAME, or nil if there is none.
   Lisp_Object tail;
 
   if (GC_PROCESSP (name))
-    return (name);
+    return name;
 
   if (!gc_in_progress)
     /* this only gets called during GC when emacs is going away as a result
@@ -405,7 +405,7 @@ Return the process named NAME, or nil if there is none.
       Lisp_Object proc = XCAR (tail);
       QUIT;
       if (!NILP (Fequal (name, XPROCESS (proc)->name)))
-        return (XCAR (tail));
+        return XCAR (tail);
     }
   return Qnil;
 }
@@ -503,10 +503,10 @@ For a network connection, this value is a cons of
 
   pid = XPROCESS (proc)->pid;
   if (network_connection_p (proc))
-    /* return (Qnil); */
-    return (Fcons (Fcar (pid), Fcdr (pid)));
+    /* return Qnil; */
+    return Fcons (Fcar (pid), Fcdr (pid));
   else
-    return (pid);
+    return pid;
 }
 
 DEFUN ("process-name", Fprocess_name, 1, 1, 0, /*
@@ -584,7 +584,7 @@ make_process_internal (Lisp_Object name)
   XSETPROCESS (val, p);
 
   Vprocess_list = Fcons (val, Vprocess_list);
-  return (val);
+  return val;
 }
 
 #ifdef HAVE_PTYS
@@ -1303,7 +1303,7 @@ static int
 get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 		      Error_behavior errb)
 {
-  struct hostent *host_info_ptr;
+  struct hostent *host_info_ptr = NULL;
 #ifdef TRY_AGAIN
   int count = 0;
 #endif
@@ -1647,7 +1647,7 @@ read_process_output (Lisp_Object proc)
   if (vs)
     {
       if (!vs->iosb[0])
-	return(0);		/* Really weird if it does this */
+	return 0;		/* Really weird if it does this */
       if (!(vs->iosb[0] & 1))
 	return -1;		/* I/O error */
     }
@@ -1705,7 +1705,7 @@ read_process_output (Lisp_Object proc)
 #ifdef VMS
       start_vms_process_read (vs);
 #endif
-      return (nchars);
+      return nchars;
     }
 
   /* If no filter, write into buffer if it isn't dead.  */
@@ -1796,7 +1796,7 @@ read_process_output (Lisp_Object proc)
 #ifdef VMS
   start_vms_process_read (vs);
 #endif
-  return (nchars);
+  return nchars;
 }
 
 /* Sending data to subprocess */
@@ -2031,7 +2031,7 @@ Output from processes can arrive in between bunches.
 
   send_process (proc, Fcurrent_buffer (), 0,
                 st, en - st);
-  return (Qnil);
+  return Qnil;
 }
 
 DEFUN ("process-send-string", Fprocess_send_string, 2, 4, 0, /*
@@ -2056,7 +2056,7 @@ Output from processes can arrive in between bunches.
   len = bto - bfr;
 
   send_process (proc, string, 0, bfr, len);
-  return (Qnil);
+  return Qnil;
 }
 
 #ifdef MULE
@@ -2207,11 +2207,11 @@ signal_name (int signum)
 {
   if (signum >= 0 && signum < NSIG)
 #ifndef VMS
-    return ((CONST char *) sys_siglist[signum]);
+    return (CONST char *) sys_siglist[signum];
 #else
-    return ((CONST char *) sys_errlist[signum]);
+    return (CONST char *) sys_errlist[signum];
 #endif
-  return ((CONST char *) GETTEXT ("unknown signal"));
+  return (CONST char *) GETTEXT ("unknown signal");
 }
 
 /* Compute the Lisp form of the process status from
@@ -2700,7 +2700,7 @@ nil, indicating the current buffer's process.
       else if (EQ (status, Qexit))
 	status = Qclosed;
     }
-  return (status);
+  return status;
 }
 
 DEFUN ("process-exit-status", Fprocess_exit_status, 1, 1, 0, /*
@@ -2710,7 +2710,7 @@ If PROCESS has not yet exited or died, return 0.
        (proc))
 {
   CHECK_PROCESS (proc);
-  return (make_int (XPROCESS (proc)->exit_code));
+  return make_int (XPROCESS (proc)->exit_code);
 }
 
 
@@ -3316,7 +3316,7 @@ Value is t if a query was formerly required.
   tem = XPROCESS (proc)->kill_without_query;
   XPROCESS (proc)->kill_without_query = NILP (require_query_p);
 
-  return (tem ? Qnil : Qt);
+  return tem ? Qnil : Qt;
 }
 
 DEFUN ("process-kill-without-query-p", Fprocess_kill_without_query_p, 1, 1, 0, /*
@@ -3325,7 +3325,7 @@ Whether PROC will be killed without query if running when emacs is exited.
        (proc))
 {
   CHECK_PROCESS (proc);
-  return (XPROCESS (proc)->kill_without_query ? Qt : Qnil);
+  return XPROCESS (proc)->kill_without_query ? Qt : Qnil;
 }
 
 

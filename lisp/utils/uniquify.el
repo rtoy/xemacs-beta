@@ -83,9 +83,11 @@
 
 ;;; User-visible variables
 
-(defgroup uniquify nil
-  "Unique buffer names dependent on file name"
-  :group 'applications)
+(progn
+  (defgroup uniquify nil
+    "Unique buffer names dependent on file name"
+    :group 'applications)
+  )
 
 
 (defcustom uniquify-buffer-name-style 'post-forward

@@ -22,14 +22,16 @@
 
 ## Synched up with: Not synched with FSF.
 
-@SET_MAKE@
-
 all: xemacs
-.PHONY : all release dump-elc dump-elcs all-elc all-elcs lint
+.PHONY : all release dump-elc dump-elcs all-elc all-elcs lint binary
 
 ## For performance and consistency, no built-in rules.
 .SUFFIXES:
 .SUFFIXES: .c .o .i .h
+
+@SET_MAKE@
+SHELL=/bin/sh
+RM = rm -f
 
 lispdir = ${srcdir}/../lisp/
 libsrc = ../lib-src/
@@ -42,6 +44,7 @@ CPP=@CPP@
 CFLAGS=@CFLAGS@
 CPPFLAGS=@CPPFLAGS@
 LDFLAGS=@LDFLAGS@
+RECURSIVE_MAKE=@RECURSIVE_MAKE@
 
 c_switch_general=@c_switch_general@
 c_switch_window_system=@c_switch_window_system@
@@ -56,17 +59,12 @@ ld_libs_all=@ld_libs_all@
 extra_objs=@extra_objs@
 LN_S=@LN_S@
 
-ld_switch_call_shared=@ld_switch_call_shared@
 ld_switch_shared=@ld_switch_shared@
 start_files=@start_files@
 start_flags=@start_flags@
 LD=@ld@
 lib_gcc=@lib_gcc@
 
-## just to be sure the sh is used
-SHELL=/bin/sh
-
-#define NO_SHORTNAMES
 #define NOT_C_CODE
 #include "config.h"
 
@@ -109,10 +107,6 @@ quantify_includes = -I/local/include
 quantify_libs = /local/lib/quantify_stubs.a
 #endif /* QUANTIFY */
 
-#ifdef SHORTNAMES
-SHORT= shortnames
-#endif
-
 #ifdef HAVE_NATIVE_SOUND
 sound_cflags=@sound_cflags@
 #endif
@@ -123,8 +117,7 @@ LWLIB_SRCDIR = ${srcdir}/../lwlib
 lwlib_libs = ../lwlib/liblw.a
 lwlib_deps = $(lwlib_libs)
 $(lwlib_libs) :
-	cd ../lwlib && ${MAKE} ${MFLAGS}
-## LWLIB_LDFLAGS  = -L../lwlib
+	cd ../lwlib && $(RECURSIVE_MAKE)
 
 x_objs=balloon_help.o balloon-x.o console-x.o device-x.o event-Xt.o frame-x.o\
  glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o
@@ -141,7 +134,7 @@ X11_libs= $(LIBX11_LIBS) $(libx11_intl) $(LIBI18N)
 
 cppflags = $(CPPFLAGS) -Demacs -I. $(c_switch_all)
 cflags   = $(CFLAGS) $(cppflags)
-ldflags  = -L. $(ld_switch_all)
+ldflags  = $(ld_switch_all)
 
 .c.o:
 	$(CC) -c $(cflags) $<
@@ -161,6 +154,12 @@ freecheck_objs = free-hook.o
 energize_objs = energize.o $(freecheck_objs)
 #endif /* ENERGIZE */
 
+#ifdef CLASH_DETECTION
+LOCK_OBJ = filelock.o
+#else
+LOCK_OBJ =
+#endif /* CLASH_DETECTION */
+
 ## lastfile must follow all files whose initialized data areas should
 ## be dumped as pure by dump-emacs.
 
@@ -175,7 +174,7 @@ objs=\
  editfns.o elhash.o emacs.o\
  $(energize_objs) eval.o events.o $(extra_objs)\
  event-stream.o extents.o faces.o\
- fileio.o filelock.o filemode.o floatfns.o fns.o font-lock.o\
+ fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o font-lock.o\
  frame.o general.o getloadavg.o glyphs.o\
  $(gui_objs) hash.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) lread.o lstream.o\
@@ -285,7 +284,7 @@ release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 	else true; fi
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -nl -batch -l loadup.el dump
-	@if test ! -f SATISFIED; then $(MAKE) $@; fi
+	@if test ! -f SATISFIED; then $(RECURSIVE_MAKE) $@; fi
 	@$(RM) SATISFIED
 #else /* ! defined (HAVE_SHM) */
 	-if [ -w ${srcdir}/../lisp ]; then \
@@ -293,7 +292,7 @@ release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 	else true; fi
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if test ! -f SATISFIED; then $(MAKE) $@; fi
+	@if test ! -f SATISFIED; then $(RECURSIVE_MAKE) $@; fi
 	@$(RM) SATISFIED
 #endif /* ! defined (HAVE_SHM) */
 	touch release
@@ -301,16 +300,20 @@ release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 
 FRC.DOC:
 
-xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} dump-elcs
+FRC.xemacs:
+
+xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} FRC.xemacs
+	@touch NOBYTECOMPILE
+	-${DUMPENV} ./temacs -batch -l ../prim/update-elc.el
+	if test -f NOBYTECOMPILE || test ! -f xemacs; then \
+		$(RECURSIVE_MAKE) binary; \
+	fi
+	@$(RM) NOBYTECOMPILE
+
+binary: temacs
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if test ! -f SATISFIED; then $(MAKE) $@; fi
-	@$(RM) SATISFIED
-
-xemacs-no-site-file: temacs ${libsrc}DOC $(mo_file) ${other_files} dump-elcs
-	@touch SATISFIED
-	-$(DUMPENV) ./temacs -batch -l loadup.el dump no-site-file
-	@if test ! -f SATISFIED; then $(MAKE) $@; fi
+	@if test ! -f SATISFIED; then $(RECURSIVE_MAKE) $@; fi
 	@$(RM) SATISFIED
 
 obj_src = $(objs:.o=.c)
@@ -318,7 +321,7 @@ obj_src = $(objs:.o=.c)
 #ifdef DYNODUMP
 dynodump_deps = ../dynodump/dynodump.so
 ../dynodump/dynodump.so:
-	cd ../dynodump && ${MAKE} ${MFLAGS}
+	cd ../dynodump && $(RECURSIVE_MAKE)
 #endif /* DYNODUMP */
 
 ${libsrc}DOC: temacs
@@ -333,13 +336,10 @@ ${libsrc}DOC: temacs
 dump_elcs: dump-elcs
 
 dump-elcs: temacs
-	@touch SATISFIED
 	-${DUMPENV} ./temacs -batch -l ../prim/update-elc.el
-	@if test ! -f SATISFIED; then $(MAKE) $@; fi
-	@$(RM) SATISFIED
 
 all-elc all-elcs:
-	cd .. && $(MAKE) all-elc $(MFLAGS)
+	cd .. && $(RECURSIVE_MAKE) all-elc
 
 #ifdef I18N3
 
@@ -363,15 +363,15 @@ ${mo_dir}emacs.mo: ${mo_dir}emacs.po
 	cd ${mo_dir} && ${msgfmt} -o emacs.mo emacs.po
 
 ${libsrc}make-msgfile:
-	cd ${libsrc} && ${MAKE} ${MFLAGS} make-msgfile
+	cd ${libsrc} && $(RECURSIVE_MAKE) make-msgfile
 
 ${libsrc}make-po:
-	cd ${libsrc} && ${MAKE} ${MFLAGS} make-po
+	cd ${libsrc} && $(RECURSIVE_MAKE) make-po
 
 #endif /* I18N3 */
 
 ${libsrc}make-docfile:
-	cd ${libsrc} && ${MAKE} ${MFLAGS} make-docfile
+	cd ${libsrc} && $(RECURSIVE_MAKE) make-docfile
 
 ## Lint Section
 LINT.c=$(LINT) $(LINTFLAGS) $(LINTINCLUDES)
@@ -384,21 +384,23 @@ lint: $(LINTFILES)
 ## end of Lint Section
 
 temacs_deps=\
- $(LOCALCPP) $(SHORT) $(start_files) ${objs} ${otherobjs}\
+ $(LOCALCPP) $(start_files) ${objs} ${otherobjs}\
  $(lwlib_deps) $(dynodump_deps) prefix-args
 
 temacs_link_args=\
- ${start_flags} ${ldflags} $(ld_switch_call_shared)\
+ ${start_flags} ${ldflags}\
  -o $@ ${start_files} ${objs} ${otherobjs} ${LIBES}
 
 temacs: $(temacs_deps)
-	$(LD) $(temacs_link_args)
+	if $(LD) $(temacs_link_args); then \
+		$(RM) xemacs; \
+	fi
 
 rtc_patch.o:
 	rtc_patch_area -o $@
 
 rtcmacs: $(temacs_deps) rtc_patch.o
-	$(RM) temacs; $(MAKE) $(MAKE_FLAGS) temacs RTC_patch_objs=rtc_patch.o
+	$(RM) temacs; $(RECURSIVE_MAKE) temacs RTC_patch_objs=rtc_patch.o
 	mv temacs rtcmacs
 
 rtcrun: rtcmacs
@@ -517,11 +519,6 @@ libextcli_Xlib.so.1: ${external_client_xlib_objs_shared}
 
 prefix-args: ${srcdir}/prefix-args.c config.h
 	$(CC) $(cflags) ${srcdir}/prefix-args.c -o prefix-args
-
-#ifdef SHORTNAMES
-shortnames:
-	cd ${shortnamesdir} && ${MAKE} ${MFLAGS}
-#endif
 
 config.h: ${srcdir}/config.h.in
 puresize_adjust.h: ${srcdir}/puresize.h

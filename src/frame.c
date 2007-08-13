@@ -170,7 +170,7 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct frame *frm = XFRAME (obj);
   char buf[200];
-  
+
   if (print_readably)
     error ("printing unreadable object #<frame %s 0x%x>",
            XSTRING_DATA (frm->name), frm->header.uid);
@@ -297,7 +297,7 @@ setup_frame_without_minibuffer (struct frame *f, Lisp_Object mini_window)
 
   if (!NILP (mini_window))
     CHECK_LIVE_WINDOW (mini_window);
-  
+
   if (!NILP (mini_window)
       && !EQ (DEVICE_CONSOLE (XDEVICE (device)),
 	      FRAME_CONSOLE (XFRAME (XWINDOW (mini_window)->frame))))
@@ -564,9 +564,9 @@ decode_frame (Lisp_Object frame)
 {
   if (NILP (frame))
     return selected_frame ();
-  
+
   CHECK_LIVE_FRAME (frame);
-  return (XFRAME (frame));
+  return XFRAME (frame);
 }
 
 struct frame *
@@ -735,7 +735,7 @@ to that frame.
   return do_switch_frame (frame, no_enter, 0);
 }
 
-/* A load of garbage. */  
+/* A load of garbage. */
 xxDEFUN ("ignore-event", Fignore_event, 0, 0, "", /*
 Do nothing, but preserve any prefix argument already specified.
 This is a suitable binding for iconify-frame and make-frame-visible.
@@ -814,7 +814,7 @@ If omitted, FRAME defaults to the currently selected frame.
 */
        (frame))
 {
-  return (FRAME_ROOT_WINDOW (decode_frame (frame)));
+  return FRAME_ROOT_WINDOW (decode_frame (frame));
 }
 
 DEFUN ("frame-selected-window", Fframe_selected_window, 0, 1, 0, /*
@@ -823,7 +823,7 @@ If omitted, FRAME defaults to the currently selected frame.
 */
        (frame))
 {
-  return (FRAME_SELECTED_WINDOW (decode_frame (frame)));
+  return FRAME_SELECTED_WINDOW (decode_frame (frame));
 }
 
 void
@@ -862,7 +862,7 @@ If omitted, FRAME defaults to the currently selected frame.
 */
        (frame))
 {
-  return (FRAME_DEVICE (decode_frame (frame)));
+  return FRAME_DEVICE (decode_frame (frame));
 }
 
 int
@@ -939,7 +939,7 @@ frame_matches_frametype (Lisp_Object frame, Lisp_Object type)
 	    && !FRAME_MINIBUF_ONLY_P (f));
   if (EQ (type, Qinvisible_iconic_nomini))
     return !FRAME_VISIBLE_P (f) && !FRAME_MINIBUF_ONLY_P (f);
-  
+
   return 1;
 }
 
@@ -1011,7 +1011,7 @@ next_frame_internal (Lisp_Object frame, Lisp_Object frametype,
 #endif
 
 		  /* Decide whether this frame is eligible to be returned.  */
-		  
+
 		  /* If we've looped all the way around without finding any
 		     eligible frames, return the original frame.  */
 		  if (EQ (f, frame))
@@ -1020,7 +1020,7 @@ next_frame_internal (Lisp_Object frame, Lisp_Object frametype,
 		  if (frame_matches_frametype (f, frametype))
 		    return f;
 		}
-	      
+
 	      if (EQ (frame, f))
 		passed++;
 	    }
@@ -1064,10 +1064,10 @@ prev_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
       DEVICE_FRAME_LOOP (frmcons, XDEVICE (device))
 	{
 	  Lisp_Object f = XCAR (frmcons);
-	  
+
 	  if (EQ (frame, f) && !NILP (prev))
 	    return prev;
-	  
+
 	  /* Decide whether this frame is eligible to be returned,
 	     according to frametype.  */
 
@@ -1133,7 +1133,7 @@ on the FRAME's console.  Otherwise, all frames are considered.
 {
   XSETFRAME (frame, decode_frame (frame));
 
-  return (next_frame (frame, frametype, console));
+  return next_frame (frame, frametype, console);
 }
 
 DEFUN ("previous-frame", Fprevious_frame, 0, 3, 0, /*
@@ -1151,7 +1151,7 @@ arguments.
 {
   XSETFRAME (frame, decode_frame (frame));
 
-  return (prev_frame (frame, frametype, console));
+  return prev_frame (frame, frametype, console);
 }
 
 /* Return any frame for which PREDICATE is non-zero, or return Qnil
@@ -1419,7 +1419,7 @@ delete_frame_internal (struct frame *f, int force,
 	    }
 	  /*
 	   * If the new frame we just selected is on a different
-	   * device then we still need to change DEVICE_SELECTED_FRAME(d) 
+	   * device then we still need to change DEVICE_SELECTED_FRAME(d)
 	   * to a live frame, if there are any left on this device.
 	   */
 	  if (!EQ (device, FRAME_DEVICE(XFRAME(next))))
@@ -1493,9 +1493,9 @@ delete_frame_internal (struct frame *f, int force,
   if (EQ (frame, CONSOLE_LAST_NONMINIBUF_FRAME (con)))
     {
       Lisp_Object frmcons, devcons;
-      
+
       set_console_last_nonminibuf_frame (con, Qnil);
-      
+
       CONSOLE_FRAME_LOOP_NO_BREAK (frmcons, devcons, con)
 	{
 	  Lisp_Object ecran = XCAR (frmcons);
@@ -1907,12 +1907,9 @@ actually visible on screen then frame_visible returns 'hidden.
 */
        (frame))
 {
-  int visible;
-  
   struct frame *f = decode_frame (frame);
-  visible = FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f), f->visible);
-  return ( visible ? ( visible > 0 ? Qt : Qhidden )
-			     : Qnil);
+  int visible = FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f), f->visible);
+  return visible ? ( visible > 0 ? Qt : Qhidden ) : Qnil;
 }
 
 DEFUN ("frame-totally-visible-p", Fframe_totally_visible_p, 0, 1, 0, /*
@@ -1923,7 +1920,7 @@ Always returns t for tty frames.
 {
   struct frame *f = decode_frame (frame);
   return (FRAMEMETH_OR_GIVEN (f, frame_totally_visible_p, (f), f->visible)
-			      ? Qt : Qnil);
+	  ? Qt : Qnil);
 }
 
 DEFUN ("frame-iconified-p", Fframe_iconified_p, 0, 1, 0, /*
@@ -1939,7 +1936,7 @@ frame is iconified, it will not be visible.
   if (f->visible)
     return Qnil;
   f->iconified = FRAMEMETH_OR_GIVEN (f, frame_iconified_p, (f), 0);
-  return (f->iconified ? Qt : Qnil);
+  return f->iconified ? Qt : Qnil;
 }
 
 DEFUN ("visible-frame-list", Fvisible_frame_list, 0, 1, 0, /*
@@ -2036,7 +2033,7 @@ store_minibuf_frame_prop (struct frame *f, Lisp_Object val)
       if (FRAME_HAS_MINIBUF_P (f) || FRAME_MINIBUF_ONLY_P (f))
 	signal_simple_error
 	  ("Can't change the surrogate minibuffer of a frame with its own minibuffer", frame);
-      
+
       /* Install the chosen minibuffer window, with proper buffer.  */
       f->minibuffer_window = val;
     }
@@ -2241,12 +2238,12 @@ frames.
 	call3 (Qset_specifier, Fsymbol_value (prop), val, frame);
       if (SYMBOLP (prop) && !NILP (Fget (prop, Qconst_glyph_variable, Qnil)))
 	call3 (Qset_glyph_image, Fsymbol_value (prop), val, frame);
-      if (VECTORP (prop) && vector_length (XVECTOR (prop)) == 2)
+      if (VECTORP (prop) && XVECTOR_LENGTH (prop) == 2)
 	{
-	  Lisp_Object face_prop = vector_data (XVECTOR (prop))[1];
+	  Lisp_Object face_prop = XVECTOR_DATA (prop)[1];
 	  CHECK_SYMBOL (face_prop);
 	  call4 (Qset_face_property,
-		 Fget_face (vector_data (XVECTOR (prop))[0]),
+		 Fget_face (XVECTOR_DATA (prop)[0]),
 		 face_prop, val, frame);
 	}
     }
@@ -2274,7 +2271,7 @@ frames.
 				    Qconst_specifier))
 	  || (SYMBOLP (prop) && !NILP (Fget (prop, Qconst_glyph_variable,
 					     Qnil)))
-	  || (VECTORP (prop) && vector_length (XVECTOR (prop)) == 2)
+	  || (VECTORP (prop) && XVECTOR_LENGTH (prop) == 2)
 	  || FRAMEMETH_OR_GIVEN (f, internal_frame_property_p, (f, prop), 0))
 	*tailp = *next_tailp;
       tailp = next_tailp;
@@ -2290,7 +2287,7 @@ DEFUN ("frame-property", Fframe_property, 2, 3, 0, /*
 Return FRAME's value for property PROPERTY.
 See `set-frame-properties' for the built-in property names.
 */
-       (frame, property, defalt))
+       (frame, property, default_))
 {
   struct frame *f = decode_frame (frame);
 
@@ -2301,7 +2298,7 @@ See `set-frame-properties' for the built-in property names.
 #define FROB(propprop, value) 	\
 do {				\
   if (EQ (property, propprop))	\
-      return (value);		\
+      return value;		\
 } while (0)
 
   FROB (Qname, f->name);
@@ -2321,20 +2318,20 @@ do {				\
 
   if (SYMBOLP (property) && EQ (Fbuilt_in_variable_type (property),
 				Qconst_specifier))
-    return Fspecifier_instance (Fsymbol_value (property), frame, defalt, Qnil);
+    return Fspecifier_instance (Fsymbol_value (property), frame, default_, Qnil);
   if (SYMBOLP (property) && !NILP (Fget (property, Qconst_glyph_variable,
 					 Qnil)))
     {
       Lisp_Object glyph = Fsymbol_value (property);
       CHECK_GLYPH (glyph);
-      return Fspecifier_instance (XGLYPH_IMAGE (glyph), frame, defalt, Qnil);
+      return Fspecifier_instance (XGLYPH_IMAGE (glyph), frame, default_, Qnil);
     }
-  if (VECTORP (property) && vector_length (XVECTOR (property)) == 2)
+  if (VECTORP (property) && XVECTOR_LENGTH (property) == 2)
     {
-      Lisp_Object face_prop = vector_data (XVECTOR (property))[1];
+      Lisp_Object face_prop = XVECTOR_DATA (property)[1];
       CHECK_SYMBOL (face_prop);
       return call3 (Qface_property_instance,
-		    Fget_face (vector_data (XVECTOR (property))[0]),
+		    Fget_face (XVECTOR_DATA (property)[0]),
 		    face_prop, frame);
     }
 
@@ -2348,7 +2345,7 @@ do {				\
     value = external_plist_get (&f->plist, property, 1, ERROR_ME);
     if (!UNBOUNDP (value))
       return value;
-    return defalt;
+    return default_;
   }
 }
 
@@ -2363,7 +2360,7 @@ Do not modify this list; use `set-frame-property' instead.
   struct gcpro gcpro1;
 
   GCPRO1 (result);
-  
+
 #define FROB(propprop, value)				\
 do {							\
   Lisp_Object temtem = (value);				\
@@ -2411,7 +2408,7 @@ Return the height in pixels of FRAME.
        (frame))
 {
   struct frame *f = decode_frame (frame);
-  return (make_int (f->pixheight));
+  return make_int (f->pixheight);
 }
 
 DEFUN ("frame-pixel-width", Fframe_pixel_width, 0, 1, 0, /*
@@ -2420,7 +2417,7 @@ Return the width in pixels of FRAME.
        (frame))
 {
   struct frame *f = decode_frame (frame);
-  return (make_int (f->pixwidth));
+  return make_int (f->pixwidth);
 }
 
 DEFUN ("frame-name", Fframe_name, 0, 1, 0, /*
@@ -2429,7 +2426,7 @@ This is not the same as the `title' of the frame.
 */
        (frame))
 {
-  return (decode_frame (frame)->name);
+  return decode_frame (frame)->name;
 }
 
 DEFUN ("frame-modified-tick", Fframe_modified_tick, 0, 1, 0, /*
@@ -2465,8 +2462,8 @@ but that the idea of the actual height of the frame should not be changed.
   struct frame *f = decode_frame (frame);
   XSETFRAME (frame, f);
   CHECK_INT (rows);
-  
-  internal_set_frame_size (f, FRAME_WIDTH (f), XINT (rows), 
+
+  internal_set_frame_size (f, FRAME_WIDTH (f), XINT (rows),
 			   !NILP (pretend));
   return frame;
 }
@@ -2561,7 +2558,7 @@ frame_conversion_internal (struct frame *f, int pixel_to_char,
       *pixel_height = *char_height * cph + bdr + obh;
     }
 }
-		     
+
 /* This takes the size in pixels of the text area, and returns the number
    of characters that will fit there, taking into account the internal
    border width, and the pixel width of the line terminator glyphs (which
@@ -2704,7 +2701,7 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
 	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top =
 	    new_pixheight - minibuf_height + FRAME_TOP_BORDER_END (f);
-	  
+
 	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f), minibuf_height, 0);
 	}
       else

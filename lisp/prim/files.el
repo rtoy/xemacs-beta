@@ -37,11 +37,11 @@
 
 (defgroup backup nil
   "Backups of edited data files."
-  :group 'data)
+  :group 'files)
 
 (defgroup find-file nil
   "Finding and editing files."
-  :group 'data)
+  :group 'files)
 
 
 ;; XEmacs: In buffer.c
@@ -2283,48 +2283,51 @@ Optional second argument EXITING means ask about certain non-file buffers
   (interactive "P")
   (save-excursion
     (save-window-excursion
-    ;; XEmacs - do not use queried flag
-    (let ((files-done
-	   (map-y-or-n-p
-	    (function
-	     (lambda (buffer)
-	       (and (buffer-modified-p buffer)
-		    (not (buffer-base-buffer buffer))
-		    ;; XEmacs addition:
-		    (not (symbol-value-in-buffer 'save-buffers-skip buffer))
-		    (or
-		     (buffer-file-name buffer)
-		     (and exiting
-			  (progn
-			    (set-buffer buffer)
-			    (and buffer-offer-save (> (buffer-size) 0)))))
-		    (if arg
-			t
-		      (when save-some-buffers-query-display-buffer
-			(when (condition-case nil
-				  (switch-to-buffer buffer t)
-				(error nil))
-			  (delete-other-windows)))
-		      (if (buffer-file-name buffer)
-			  (format "Save file %s? "
-				  (buffer-file-name buffer))
-			(format "Save buffer %s? "
-				(buffer-name buffer)))))))
-	    (function
-	     (lambda (buffer)
-	       (set-buffer buffer)
-	       (condition-case ()
-		   (save-buffer)
-		 (error nil))))
-	    (buffer-list)
-	    '("buffer" "buffers" "save")
-	    ;instead of this we just say "yes all", "no all", etc.
-	    ;"save all the rest"
-	    ;"save only this buffer" "save no more buffers")
-	    ; this is rather bogus. --ben
-	    ; (it makes the dialog box too big, and you get an error
-	    ; "wrong type argument: framep, nil" when you hit q after
-	    ; choosing the option from the dialog box)
+      ;; This can bomb during autoloads generation
+      (when (and (not noninteractive)
+		 save-some-buffers-query-display-buffer)
+	(delete-other-windows))
+      ;; XEmacs - do not use queried flag
+      (let ((files-done
+	     (map-y-or-n-p
+	      (function
+	       (lambda (buffer)
+		 (and (buffer-modified-p buffer)
+		      (not (buffer-base-buffer buffer))
+		      ;; XEmacs addition:
+		      (not (symbol-value-in-buffer 'save-buffers-skip buffer))
+		      (or
+		       (buffer-file-name buffer)
+		       (and exiting
+			    (progn
+			      (set-buffer buffer)
+			      (and buffer-offer-save (> (buffer-size) 0)))))
+		      (if arg
+			  t
+			(when save-some-buffers-query-display-buffer
+			  (condition-case nil
+			      (switch-to-buffer buffer t)
+			    (error nil)))
+			(if (buffer-file-name buffer)
+			    (format "Save file %s? "
+				    (buffer-file-name buffer))
+			  (format "Save buffer %s? "
+				  (buffer-name buffer)))))))
+	      (function
+	       (lambda (buffer)
+		 (set-buffer buffer)
+		 (condition-case ()
+		     (save-buffer)
+		   (error nil))))
+	      (buffer-list)
+	      '("buffer" "buffers" "save")
+	      ;;instead of this we just say "yes all", "no all", etc.
+	      ;;"save all the rest"
+	      ;;"save only this buffer" "save no more buffers")
+	      ;; this is rather bogus. --ben
+	      ;; (it makes the dialog box too big, and you get an error
+	      ;; "wrong type argument: framep, nil" when you hit q after
+	      ;; choosing the option from the dialog box)
 ;	    (list (list ?\C-r (lambda (buf)
 ;				(view-buffer buf)
 ;				(setq view-exit-action
@@ -2334,18 +2337,18 @@ Optional second argument EXITING means ask about certain non-file buffers
 ;				;; Return nil to ask about BUF again.
 ;				nil)
 ;			"display the current buffer"))
-	    ))
-	  (abbrevs-done
-	   (and save-abbrevs abbrevs-changed
-		(progn
-		  (if (or arg
-			  (y-or-n-p (format "Save abbrevs in %s? " abbrev-file-name)))
-		      (write-abbrev-file nil))
-		  ;; Don't keep bothering user if he says no.
-		  (setq abbrevs-changed nil)
-		  t))))
-      (or (> files-done 0) abbrevs-done
-	  (message "(No files need saving)"))))))
+	      ))
+	    (abbrevs-done
+	     (and save-abbrevs abbrevs-changed
+		  (progn
+		    (if (or arg
+			    (y-or-n-p (format "Save abbrevs in %s? " abbrev-file-name)))
+			(write-abbrev-file nil))
+		    ;; Don't keep bothering user if he says no.
+		    (setq abbrevs-changed nil)
+		    t))))
+	(or (> files-done 0) abbrevs-done
+	    (message "(No files need saving)"))))))
 
 
 (defun not-modified (&optional arg)

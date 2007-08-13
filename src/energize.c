@@ -922,7 +922,7 @@ BufposForEnergizePos (EnergizePos ez_pos, BufferInfo *binfo)
     }
   }
 #endif 
-  return (char_pos);
+  return char_pos;
 }
 
 #else /* !I18N4 */
@@ -2318,27 +2318,27 @@ execute_energize_menu (Lisp_Object buffer, Energize_Extent_Data* ext,
     }
   else if (VECTORP (selection))
     {
-      int i;
+      int i, len;
       EId data;
       conn->header->data |= CEChasObjectSelection;
 
       /* writes the length */
-      data = vector_length (XVECTOR (selection));
+      data = len = XVECTOR_LENGTH (selection);
       CWrite (conn, EId, &data);
 
       /* writes the elements */
-      for (i = 0; i < vector_length (XVECTOR (selection)); i++)
+      for (i = 0; i < len; i++)
 	{
-	  if (CONSP (vector_data (XVECTOR (selection)) [i]))
-	    data = lisp_to_word (vector_data (XVECTOR (selection)) [i]);
+	  if (CONSP (XVECTOR_DATA (selection) [i]))
+	    data = lisp_to_word (XVECTOR_DATA (selection) [i]);
 	  else
-	    data = XINT (vector_data (XVECTOR (selection)) [i]);
+	    data = XINT (XVECTOR_DATA (selection) [i]);
 	  CWrite (conn, EId, &data);
 	}
     }
   else if (CONSP (selection))
     {
-      Lisp_Object type = Fcar (selection);
+      Lisp_Object type  = Fcar (selection);
       Lisp_Object value = Fcdr (selection);
       if (EQ (type, intern ("ENERGIZE_OBJECT"))
 	  && STRINGP (value))
@@ -4878,8 +4878,8 @@ edit_mode_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   else if (!strcmp (name, "help"))
     {
       Lisp_Object v = Fmake_vector (make_int (3), Qt);
-      vector_data (XVECTOR (v)) [0] = build_string ("ok");
-      vector_data (XVECTOR (v)) [1] = list1 (Qignore);
+      XVECTOR_DATA (v) [0] = build_string ("ok");
+      XVECTOR_DATA (v) [1] = list1 (Qignore);
       Fpopup_dialog_box (list2 (build_string ("dbx_editmode_help"), v));
     }
   else if (!strcmp (name, "ok"))
@@ -5109,8 +5109,8 @@ search_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   else if (!strcmp (name, "help"))
     {
       Lisp_Object v = Fmake_vector (3, Qt);
-      vector_data (XVECTOR (v)) [0] = build_string ("ok");
-      vector_data (XVECTOR (v)) [1] = list1 (Qignore);
+      XVECTOR_DATA (v) [0] = build_string ("ok");
+      XVECTOR_DATA (v) [1] = list1 (Qignore);
       Fpopup_dialog_box (list2 (build_string ("dbx_search_help"), v));
       return;
     }

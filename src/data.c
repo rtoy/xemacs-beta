@@ -279,7 +279,7 @@ T if OBJECT is a list.  This includes nil.
 */
        (object))
 {
-  return (CONSP (object) || NILP (object)) ? Qt : Qnil;
+  return CONSP (object) || NILP (object) ? Qt : Qnil;
 }
 
 DEFUN ("nlistp", Fnlistp, 1, 1, 0, /*
@@ -287,7 +287,7 @@ T if OBJECT is not a list.  Lists include nil.
 */
        (object))
 {
-  return (CONSP (object) || NILP (object)) ? Qnil : Qt;
+  return CONSP (object) || NILP (object) ? Qnil : Qt;
 }
 
 DEFUN ("symbolp", Fsymbolp, 1, 1, 0, /*
@@ -589,7 +589,7 @@ Return a symbol representing the type of OBJECT.
   if (CHARP    (object)) return Qcharacter;
   if (STRINGP  (object)) return Qstring;
   if (VECTORP  (object)) return Qvector;
-  
+
   assert (LRECORDP (object));
   return intern (XRECORD_LHEADER (object)->implementation->name);
 }
@@ -685,7 +685,7 @@ Set the cdr of CONSCELL to be NEWCDR.  Returns NEWCDR.
 Lisp_Object
 indirect_function (Lisp_Object object, int errorp)
 {
-  Lisp_Object tortoise = object; 
+  Lisp_Object tortoise = object;
   Lisp_Object hare     = object;
 
   for (;;)
@@ -700,7 +700,7 @@ indirect_function (Lisp_Object object, int errorp)
       tortoise = XSYMBOL (tortoise)->function;
 
       if (EQ (hare, tortoise))
-	return (Fsignal (Qcyclic_function_indirection, list1 (object)));
+	return Fsignal (Qcyclic_function_indirection, list1 (object));
     }
 
   if (UNBOUNDP (hare) && errorp)
@@ -743,8 +743,8 @@ IDX starts at 0.
     }
   if (VECTORP (array))
     {
-      if (idxval >= vector_length (XVECTOR (array))) goto lose;
-      return vector_data (XVECTOR (array))[idxval];
+      if (idxval >= XVECTOR_LENGTH (array)) goto lose;
+      return XVECTOR_DATA (array)[idxval];
     }
   else if (BIT_VECTORP (array))
     {
@@ -754,13 +754,13 @@ IDX starts at 0.
   else if (STRINGP (array))
     {
       if (idxval >= string_char_length (XSTRING (array))) goto lose;
-      return (make_char (string_char (XSTRING (array), idxval)));
+      return make_char (string_char (XSTRING (array), idxval));
     }
 #ifdef LOSING_BYTECODE
   else if (COMPILED_FUNCTIONP (array))
     {
       /* Weird, gross compatibility kludge */
-      return (Felt (array, idx));
+      return Felt (array, idx);
     }
 #endif
   else
@@ -793,8 +793,8 @@ ARRAY may be a vector, bit vector, or string.  IDX starts at 0.
 
   if (VECTORP (array))
     {
-      if (idxval >= vector_length (XVECTOR (array))) goto lose;
-      vector_data (XVECTOR (array))[idxval] = newval;
+      if (idxval >= XVECTOR_LENGTH (array)) goto lose;
+      XVECTOR_DATA (array)[idxval] = newval;
     }
   else if (BIT_VECTORP (array))
     {
@@ -837,14 +837,14 @@ compiled_function_interactive (struct Lisp_Compiled_Function *b)
 {
   assert (b->flags.interactivep);
   if (b->flags.documentationp && b->flags.domainp)
-    return (XCAR (XCDR (b->doc_and_interactive)));
+    return XCAR (XCDR (b->doc_and_interactive));
   else if (b->flags.documentationp)
-    return (XCDR (b->doc_and_interactive));
+    return XCDR (b->doc_and_interactive);
   else if (b->flags.domainp)
-    return (XCAR (b->doc_and_interactive));
+    return XCAR (b->doc_and_interactive);
 
   /* if all else fails... */
-  return (b->doc_and_interactive);
+  return b->doc_and_interactive;
 }
 
 /* Caller need not check flags.documentationp first */
@@ -854,13 +854,13 @@ compiled_function_documentation (struct Lisp_Compiled_Function *b)
   if (! b->flags.documentationp)
     return Qnil;
   else if (b->flags.interactivep && b->flags.domainp)
-    return (XCAR (b->doc_and_interactive));
+    return XCAR (b->doc_and_interactive);
   else if (b->flags.interactivep)
-    return (XCAR (b->doc_and_interactive));
+    return XCAR (b->doc_and_interactive);
   else if (b->flags.domainp)
-    return (XCAR (b->doc_and_interactive));
+    return XCAR (b->doc_and_interactive);
   else
-    return (b->doc_and_interactive);
+    return b->doc_and_interactive;
 }
 
 /* Caller need not check flags.domainp first */
@@ -870,13 +870,13 @@ compiled_function_domain (struct Lisp_Compiled_Function *b)
   if (! b->flags.domainp)
     return Qnil;
   else if (b->flags.documentationp && b->flags.interactivep)
-    return (XCDR (XCDR (b->doc_and_interactive)));
+    return XCDR (XCDR (b->doc_and_interactive));
   else if (b->flags.documentationp)
-    return (XCDR (b->doc_and_interactive));
+    return XCDR (b->doc_and_interactive);
   else if (b->flags.interactivep)
-    return (XCDR (b->doc_and_interactive));
+    return XCDR (b->doc_and_interactive);
   else
-    return (b->doc_and_interactive);
+    return b->doc_and_interactive;
 }
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
@@ -913,7 +913,7 @@ Return the byte-opcode string of the compiled-function object.
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  return (XCOMPILED_FUNCTION (function)->bytecodes);
+  return XCOMPILED_FUNCTION (function)->bytecodes;
 }
 
 DEFUN ("compiled-function-constants", Fcompiled_function_constants, 1, 1, 0, /*
@@ -922,7 +922,7 @@ Return the constants vector of the compiled-function object.
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  return (XCOMPILED_FUNCTION (function)->constants);
+  return XCOMPILED_FUNCTION (function)->constants;
 }
 
 DEFUN ("compiled-function-stack-depth", Fcompiled_function_stack_depth, 1, 1, 0, /*
@@ -931,7 +931,7 @@ Return the max stack depth of the compiled-function object.
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  return (make_int (XCOMPILED_FUNCTION (function)->maxdepth));
+  return make_int (XCOMPILED_FUNCTION (function)->maxdepth);
 }
 
 DEFUN ("compiled-function-arglist", Fcompiled_function_arglist, 1, 1, 0, /*
@@ -940,7 +940,7 @@ Return the argument list of the compiled-function object.
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  return (XCOMPILED_FUNCTION (function)->arglist);
+  return XCOMPILED_FUNCTION (function)->arglist;
 }
 
 DEFUN ("compiled-function-interactive", Fcompiled_function_interactive, 1, 1, 0, /*
@@ -984,7 +984,7 @@ a `load'.
        (function))
 {
   CHECK_COMPILED_FUNCTION (function);
-  return (compiled_function_annotation (XCOMPILED_FUNCTION (function)));
+  return compiled_function_annotation (XCOMPILED_FUNCTION (function));
 }
 
 #endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
@@ -998,7 +998,7 @@ This is only meaningful if I18N3 was enabled when emacs was compiled.
   CHECK_COMPILED_FUNCTION (function);
   if (!XCOMPILED_FUNCTION (function)->flags.domainp)
     return Qnil;
-  return (compiled_function_domain (XCOMPILED_FUNCTION (function)));
+  return compiled_function_domain (XCOMPILED_FUNCTION (function));
 }
 
 
@@ -1031,7 +1031,7 @@ arithcompare (Lisp_Object num1, Lisp_Object num2, enum comparison comparison)
 	}
     }
 #endif /* LISP_FLOAT_TYPE */
-      
+
   switch (comparison)
     {
     case equal:         return XINT (num1) == XINT (num2) ? Qt : Qnil;
@@ -1178,10 +1178,10 @@ T if NUMBER is zero.
 
 #ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
-    return (float_data (XFLOAT (number)) == 0.0) ? Qt : Qnil;
+    return float_data (XFLOAT (number)) == 0.0 ? Qt : Qnil;
 #endif /* LISP_FLOAT_TYPE */
 
-  return (XINT (number) == 0) ? Qt : Qnil;
+  return XINT (number) == 0 ? Qt : Qnil;
 }
 
 /* Convert between a 32-bit value and a cons of two 16-bit values.
@@ -1230,16 +1230,11 @@ NUM may be an integer or a floating point number.
       char pigbuf[350];	/* see comments in float_to_string */
 
       float_to_string (pigbuf, float_data (XFLOAT (num)));
-      return build_string (pigbuf);      
+      return build_string (pigbuf);
     }
 #endif /* LISP_FLOAT_TYPE */
 
-  if (sizeof (int) == sizeof (EMACS_INT))
-    sprintf (buffer, "%d", XINT (num));
-  else if (sizeof (long) == sizeof (EMACS_INT))
-    sprintf (buffer, "%ld", (long) XINT (num));
-  else
-    abort ();
+  sprintf (buffer, "%ld", (long) (XINT (num)));
   return build_string (buffer);
 }
 
@@ -1323,7 +1318,7 @@ Floating point numbers always use base 10.
 	  p++;
 	}
       else if (*p == '+')
-	p++;  
+	p++;
       while (1)
 	{
 	  digit = digit_to_number (*p++, b);
@@ -1334,7 +1329,7 @@ Floating point numbers always use base 10.
       return make_int (negative * v);
     }
 }
-  
+
 enum arithop
   { Aadd, Asub, Amult, Adiv, Alogand, Alogior, Alogxor, Amax, Amin };
 
@@ -1346,7 +1341,7 @@ float_arith_driver (double accum, int argnum, enum arithop code, int nargs,
 {
   REGISTER Lisp_Object val;
   double next;
-  
+
   for (; argnum < nargs; argnum++)
     {
       /* using args[argnum] as argument to CHECK_INT_OR_FLOAT_... */
@@ -1439,8 +1434,8 @@ arith_driver (enum arithop code, int nargs, Lisp_Object *args)
 
 #ifdef LISP_FLOAT_TYPE
       if (FLOATP (val)) /* time to do serious math */
-	return (float_arith_driver ((double) accum, argnum, code,
-				    nargs, args));
+	return float_arith_driver ((double) accum, argnum, code,
+				   nargs, args);
 #endif /* LISP_FLOAT_TYPE */
       args[argnum] = val;    /* runs into a compiler bug. */
       next = XINT (args[argnum]);
@@ -1523,7 +1518,7 @@ Both must be integers, characters or markers.
   if (ZEROP (num2))
     Fsignal (Qarith_error, Qnil);
 
-  return (make_int (XINT (num1) % XINT (num2)));
+  return make_int (XINT (num1) % XINT (num2));
 }
 
 /* Note, ANSI *requires* the presence of the fmod() library routine.
@@ -1536,7 +1531,7 @@ fmod (double f1, double f2)
 {
   if (f2 < 0.0)
     f2 = -f2;
-  return (f1 - f2 * floor (f1/f2));
+  return f1 - f2 * floor (f1/f2);
 }
 #endif /* ! HAVE_FMOD */
 
@@ -1564,12 +1559,12 @@ If either argument is a float, a float will be returned.
       if (f2 == 0)
 	Fsignal (Qarith_error, Qnil);
 
-      f1 = fmod (f1, f2); 
+      f1 = fmod (f1, f2);
 
       /* If the "remainder" comes out with the wrong sign, fix it.  */
       if (f2 < 0 ? f1 > 0 : f1 < 0)
 	f1 += f2;
-      return (make_float (f1));
+      return make_float (f1);
     }
 #else /* not LISP_FLOAT_TYPE */
   CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (x);
@@ -1581,14 +1576,14 @@ If either argument is a float, a float will be returned.
 
   if (i2 == 0)
     Fsignal (Qarith_error, Qnil);
-  
+
   i1 %= i2;
 
   /* If the "remainder" comes out with the wrong sign, fix it.  */
   if (i2 < 0 ? i1 > 0 : i1 < 0)
     i1 += i2;
 
-  return (make_int (i1));
+  return make_int (i1);
 }
 
 
@@ -1686,10 +1681,10 @@ Markers and characters are converted to integers.
 
 #ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
-    return (make_float (1.0 + float_data (XFLOAT (number))));
+    return make_float (1.0 + float_data (XFLOAT (number)));
 #endif /* LISP_FLOAT_TYPE */
 
-  return (make_int (XINT (number) + 1));
+  return make_int (XINT (number) + 1);
 }
 
 DEFUN ("1-", Fsub1, 1, 1, 0, /*
@@ -1702,10 +1697,10 @@ Markers and characters are converted to integers.
 
 #ifdef LISP_FLOAT_TYPE
   if (FLOATP (number))
-    return (make_float (-1.0 + (float_data (XFLOAT (number)))));
+    return make_float (-1.0 + (float_data (XFLOAT (number))));
 #endif /* LISP_FLOAT_TYPE */
 
-  return (make_int (XINT (number) - 1));
+  return make_int (XINT (number) - 1);
 }
 
 DEFUN ("lognot", Flognot, 1, 1, 0, /*
@@ -1714,7 +1709,7 @@ Return the bitwise complement of NUMBER.  NUMBER must be an integer.
        (number))
 {
   CHECK_INT (number);
-  return (make_int (~XINT (number)));
+  return make_int (~XINT (number));
 }
 
 
@@ -1753,7 +1748,7 @@ print_weak_list (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (print_readably)
     error ("printing unreadable object #<weak-list>");
-      
+
   write_c_string ("#<weak-list ", printcharfun);
   print_internal (encode_weak_list_type (XWEAK_LIST (obj)->type),
 		  printcharfun, 0);
@@ -1768,8 +1763,8 @@ weak_list_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   struct weak_list *w1 = XWEAK_LIST (o1);
   struct weak_list *w2 = XWEAK_LIST (o2);
 
-  return (w1->type == w2->type) &&
-    internal_equal (w1->list, w2->list, depth + 1);
+  return ((w1->type == w2->type) &&
+	  internal_equal (w1->list, w2->list, depth + 1));
 }
 
 static unsigned long
@@ -2027,7 +2022,7 @@ prune_weak_lists (int (*obj_marked_p) (Lisp_Object))
 		     process cases where a cons points to itself, or
 		     where cons A points to cons B, which points to
 		     cons A.) */
-		 
+
 		  rest2 = XCDR (rest2);
 		  if (go_tortoise)
 		    tortoise = XCDR (tortoise);

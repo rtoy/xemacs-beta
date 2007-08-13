@@ -58,7 +58,7 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
   Bytecount dirname_length;
   Lisp_Object list, name, dirfilename = Qnil;
   Lisp_Object handler;
-  struct re_pattern_buffer *bufp;
+  struct re_pattern_buffer *bufp = NULL;
 
   char statbuf [MAXNAMLEN+2];
   char *statbuf_tail;
@@ -299,7 +299,7 @@ file_name_completion_stat (Lisp_Object dirname, DIRENTRY *dp,
 #else
   value = stat (fullname, st_addr);
 #endif
-  return (value);
+  return value;
 }
 
 static Lisp_Object

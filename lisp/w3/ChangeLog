@@ -2,6 +2,81 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Thu Jul 10 16:40:34 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'd up to custom 1.9949 - added the widget and custom manuals to the
+  distribution.
+
+* lisp/Makefile.in: Fixed all makefile rebuilding rules.
+
+* lisp/w3.el (w3-do-setup): Removed w3-widget-global-map stuff, since the
+  new custom and widget library will not need it at all.
+
+Tue Jul  8 06:46:08 1997  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3-e19.el (w3-mode-version-specifics): Turn back on
+  buffer-access-fontify-functions.  This means that any text you yank out
+  of a Emacs/W3 buffer is guaranteed to be non-read-only.  Unfortunately,
+  this then makes the text in the buffer non-read-only as well. Need to
+  find a way to do something similar for XEmacs.
+
+* lisp/w3-display.el (w3-draw-tree): Make sure everything ends up
+  read-only.
+
+* lisp/w3.el (w3-mode): New variale w3-widget-global-map that inherits
+  from widget-global-map, but overrides return and mouse-button2 to
+  noops.  Removed some modeline cruft.
+
+* lisp/w3-vars.el: Removed old cruft that wasn't executed anymore
+  (widget nav. keybindings, etc.)
+
+* lisp/w3-e19.el (w3-store-in-clipboard): Try to use
+  interprogram-cut-function, as it seems the best way to do this under
+  Emacs 19.
+
+Mon Jul  7 15:50:17 1997  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3.el (w3-reload-all-files): Brute force approach to making
+  sure all of our source files get reloaded.  Walk through the obarray and
+  make anything called w3-* url-* ssl-* base64-* dsssl-* or mm-* 'unbound'
+  and 'funbound'.  I am a little leery of this, as it could tromp on
+  users' personal variables that start with this, but nobody really uses
+  this very often anyway.  Will post prominent warnings in the docs.
+
+Sun Jul  6 15:24:06 1997  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3-e19.el (w3-window-size-change-function): New function fit for
+  use on window-size-change-functions to automatically redraw any visible
+  Emacs/W3 buffers when a frame or window is resized.
+
+* lisp/w3-cus.el (w3-modeline-format): Added 'BAD HTML' indicator to the
+  modeline instead of showing warnings - was a bit too disruptive in
+  casual browsing.
+
+* lisp/w3-menu.el (w3-menu-view-menu): Use it.
+
+* lisp/w3.el (w3-display-errors): New function to display the parsing
+  errors from an HTML page.
+
+* lisp/w3-parse.el: New way of storing warning messages during the parsing
+  phase so they don't jump out at the user immediately.  Much less
+  obtrusive.
+
+Sat Jul  5 15:52:06 1997  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3-display.el: Now keeps a stack of list-style types, so setting
+  the list-style on something like 'ol' or 'ul' will do the right thing.
+
+* lisp/url-news.el (url-news-use-article-mode): New variable for whether
+  to use Gnus' article-mode to display news articles.
+
+* lisp/w3.el (w3-internal-handle-preview): This will now work even if the
+  buffer being previewed isn't associated with a file.
+
+Thu Jul  3 15:51:56 1997  William M. Perry  <wmperry@aventail.com>
+
+* lisp/w3-display.el: Better version of char-before for Emacs 19
+
 Wed Jul  2 10:39:30 1997  William M. Perry  <wmperry@aventail.com>
 
 * Emacs/W3 3.0.93 released

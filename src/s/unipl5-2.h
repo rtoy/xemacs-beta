@@ -61,10 +61,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* #define MAIL_USE_FLOCK */
 
-/* Uniplus 5.2 supports long names in C */
-
-/* #define SHORTNAMES */
-
 /* The file containing the kernel's symbol table is called /unix.  */
 
 #define KERNEL_FILE "/unix"

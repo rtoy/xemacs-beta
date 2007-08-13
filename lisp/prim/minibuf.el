@@ -363,8 +363,8 @@ See also the variable completion-highlight-first-word-only for control over
          (window (minibuffer-window))
          (buffer (if (eq (minibuffer-depth) 0)
                      (window-buffer window)
-                     (get-buffer-create (format " *Minibuf-%d"
-                                                (minibuffer-depth)))))
+		   (get-buffer-create (format " *Minibuf-%d"
+					      (minibuffer-depth)))))
          (frame (window-frame window))
          (mconfig (if (eq frame (selected-frame)) 
                       nil (current-window-configuration frame)))
@@ -376,8 +376,7 @@ See also the variable completion-highlight-first-word-only for control over
 	 (_history_ history))
     (unwind-protect
          (progn
-           (set-buffer buffer)
-           (reset-buffer buffer)
+           (set-buffer (reset-buffer buffer))
            (setq default-directory dir)
            (make-local-variable 'print-escape-newlines)
            (setq print-escape-newlines t)
@@ -481,7 +480,9 @@ See also the variable completion-highlight-first-word-only for control over
 				minibuffer-history-minimum-string-length
 				(< (length val)
 				   minibuffer-history-minimum-string-length))
-			   (set minibuffer-history-variable (cons histval list)))))
+			   (set minibuffer-history-variable
+				(cons histval
+				      (remove histval list))))))
                  (if err (signal (car err) (cdr err)))
                  val))))
       ;; stupid display code requires this for some reason

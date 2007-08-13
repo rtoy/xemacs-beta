@@ -76,7 +76,7 @@ mark_opaque (Lisp_Object obj, void (*markobj) (Lisp_Object))
     assert (!INTP (XOPAQUE (obj)->size_or_chain));
 #endif
   if (INTP (XOPAQUE (obj)->size_or_chain) && XOPAQUE_MARKFUN (obj))
-    return (XOPAQUE_MARKFUN (obj)) (obj, markobj);
+    return XOPAQUE_MARKFUN (obj) (obj, markobj);
   else
     return XOPAQUE (obj)->size_or_chain;
 }
@@ -87,12 +87,11 @@ print_opaque (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   char buf[200];
   if (INTP (XOPAQUE (obj)->size_or_chain))
-    sprintf (buf, "#<INTERNAL EMACS BUG (opaque, size=%d) 0x%x>",
-	     (EMACS_INT) XOPAQUE_SIZE (obj),
-	     (EMACS_INT) XPNTR (obj));
+    sprintf (buf, "#<INTERNAL EMACS BUG (opaque, size=%ld) 0x%p>",
+	     (long) XOPAQUE_SIZE (obj), (void *) XPNTR (obj));
   else
-    sprintf (buf, "#<INTERNAL EMACS BUG (opaque, freed) 0x%x>",
-	     (EMACS_INT) XPNTR (obj));
+    sprintf (buf, "#<INTERNAL EMACS BUG (opaque, freed) 0x%p>",
+	     (void *) XPNTR (obj));
   write_c_string (buf, printcharfun);
 }
 

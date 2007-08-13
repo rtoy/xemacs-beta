@@ -24,8 +24,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef USG5_0
 
-#undef SHORTNAMES
-
 /* Use terminfo instead of termcap.  */
 
 #define TERMINFO

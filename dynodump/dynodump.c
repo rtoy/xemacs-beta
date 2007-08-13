@@ -73,7 +73,9 @@
  * N.B. The above commentary is not quite correct in the flags have been hardwired
  *      to RTLD_SAVREL.
  */
-#pragma ident	"@(#) $Id: dynodump.c,v 1.3 1997/05/29 04:22:30 steve Exp $ - SMI"
+#pragma ident	"@(#) $Id: dynodump.c,v 1.4 1997/07/13 22:40:53 steve Exp $ - SMI"
+
+#define __EXTENSIONS__ 1
 
 #include	<sys/param.h>
 #include	<sys/procfs.h>

@@ -1,46 +1,51 @@
 ;; @(#) crisp.el -- CRiSP/Brief Emacs emulator
 
 ;; Author: Gary D. Foster <Gary.Foster@corp.sun.com>
-;; $Revision: 1.3 $
+;; 1.19
 ;; Keywords: emulations brief crisp
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;; CRiSP is a registered trademark of Foxtrot Systems Ltd.
 
 ;;; Commentary:
 
 ;; Keybindings and minor functions to duplicate the functionality and
-;; finger-feel of the Crisp/Brief editor.  This package is designed to
+;; finger-feel of the CRiSP/Brief editor.  This package is designed to
 ;; facilitate transitioning from Brief to (XE|E)macs with a minimum
 ;; amount of hassles.
 
-;; Enable this package by putting the following in your .emacs
-;; (require 'crisp)
-;; and use M-x crisp-mode to toggle it on or off.
+;; Enable this package by putting (require 'crisp) in your .emacs and
+;; use M-x crisp-mode to toggle it on or off.
 
-;; This package will automatically default to loading the scroll-lock.el
-;; package unless you put (setq crisp-load-scroll-lock nil) in your
-;; .emacs.  If this feature is enabled, it will bind meta-f1 to the
-;; scroll-lock mode toggle.
+;; This package will automatically load the scroll-lock.el package if
+;; you put (setq crisp-load-scroll-lock t) in your .emacs before
+;; loading this package.  If this feature is enabled, it will bind
+;; meta-f1 to the scroll-lock mode toggle.  The scroll-lock package
+;; duplicates the scroll-locking feature in CRiSP.
 
-;; Also, the default keybindings for brief override the meta-x key to
-;; exit the editor.  If you don't like this functionality, you can
-;; prevent this key from being rebound with
-;; (setq crisp-override-meta-x nil) in your .emacs.
+;; Also, the default keybindings for brief/CRiSP override the M-x
+;; key to exit the editor.  If you don't like this functionality, you
+;; can prevent this behavior (or redefine it dynamically) by setting
+;; the value of `crisp-override-meta-x' either in your .emacs or
+;; interactively.  The default setting is nil, which means that M-x will
+;; by default run `execute-extended-command' instead of the command
+;; `save-buffers-kill-emacs'.
 
 ;; Finally, if you want to change the string displayed in the modeline
 ;; when this mode is in effect, override the definition of
@@ -52,43 +57,49 @@
 
 ;; local variables
 
+(defgroup emulations-crisp nil
+  "CRiSP emulator customizable settings."
+  :group 'emulations)
+
 (defvar crisp-mode-map (copy-keymap (current-global-map))
   "Local keymap for CRiSP emulation mode.
 All the bindings are done here instead of globally to try and be
 nice to the world.")
 
-(defvar crisp-mode-modeline-string " *CRiSP*"
-  "String to display in the modeline when CRiSP emulation mode is enabled.")
+(defcustom crisp-mode-modeline-string " *CRiSP*"
+  "*String to display in the modeline when CRiSP emulation mode is enabled."
+  :type 'string
+  :group 'emulations-crisp)
 
 (defvar crisp-mode-original-keymap (copy-keymap (current-global-map))
   "The original keymap before CRiSP emulation mode remaps anything.
 This keymap is restored when CRiSP emulation mode is disabled.")
 
-(defvar crisp-mode-enabled 'nil
+(defvar crisp-mode-enabled nil
   "Track status of CRiSP emulation mode.
 A value of nil means CRiSP mode is not enabled.  A value of t
 indicates CRiSP mode is enabled.")
 
-(defvar crisp-override-meta-x 't
-  "Controls overriding the normal Emacs M-x key binding in the CRiSP emulator.
-Normally the CRiSP emulator rebinds M-x to save-buffers-exit-emacs
-and provides the usual M-x functionality on the F10 key.
+(defcustom crisp-override-meta-x t
+  "*Controls overriding the normal Emacs M-x key binding in the CRiSP emulator.
+Normally the CRiSP emulator rebinds M-x to save-buffers-exit-emacs and
+provides the usual M-x functionality on the F10 key.  If this variable
+is non-nil, M-x will exit Emacs."
+  :type 'boolean
+  :group 'emulations-crisp)
 
-If this variable is nil when you start the CRiSP emulator, it
-does not alter the binding of M-x.")
-
-(defvar crisp-load-scroll-lock 't
+(defvar crisp-load-scroll-lock nil
   "Controls loading of the Scroll Lock in the CRiSP emulator.
 Its Default behavior is to load and enable the Scroll Lock minor mode
 package when enabling the CRiSP emulator.
 
 If this variable is nil when you start the CRiSP emulator, it
-does not load Scroll Lock.")
+does not load the scroll-lock package.")
 
 (defvar crisp-load-hook nil
-  "Hooks to run after loadint the CRiSP emulator package.")
+  "Hooks to run after loading the CRiSP emulator package.")
 
-(defvar crisp-version "crisp.el release 1.1/$Revision: 1.3 $"
+(defconst crisp-version "crisp.el release 1.1/1.19"
   "The release number and RCS version for the CRiSP emulator.")
 
 (if (string-match "XEmacs\\Lucid" emacs-version)
@@ -146,9 +157,7 @@ does not load Scroll Lock.")
 (define-key crisp-mode-map [(meta u)]       'advertised-undo)
 (define-key crisp-mode-map [(f14)]          'advertised-undo)
 (define-key crisp-mode-map [(meta w)]       'save-buffer)
-(if
- (eq crisp-override-meta-x 't)
-  (define-key crisp-mode-map [(meta x)]     'save-buffers-kill-emacs))
+(define-key crisp-mode-map [(meta x)]       'crisp-meta-x-wrapper)
 (define-key crisp-mode-map [(meta ?0)]      (lambda () (interactive) (bookmark-set "0")))
 (define-key crisp-mode-map [(meta ?1)]      (lambda () (interactive) (bookmark-set "1")))
 (define-key crisp-mode-map [(meta ?2)]      (lambda () (interactive) (bookmark-set "2")))
@@ -200,6 +209,16 @@ consecutive use moves point to the end of the buffer."
     (t
      (end-of-line)))
   (setq last-last-command last-command))
+
+(defun crisp-meta-x-wrapper ()
+  "Wrapper function to conditionally override the normal M-x bindings.
+When `crisp-override-meta-x' is non-nil, M-x will exit Emacs (the
+normal CRiSP binding) and when it is nil M-x will run
+`execute-extended-command' (the normal Emacs binding)."
+  (interactive)
+  (if crisp-override-meta-x
+      (save-buffers-kill-emacs)
+    (call-interactively 'execute-extended-command)))
 
 ;; Now enable the mode
 

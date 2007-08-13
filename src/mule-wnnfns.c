@@ -587,7 +587,7 @@ if dai-bunsetsu, NIL if sho-bunsetsu. Return the current offset of zenkouho.
 */
      (bunNo, dai))
 {
-  int		no, offset;
+  int	no, offset;
   int	snum;
   int	uniq_level;
   CHECK_INT (bunNo);
@@ -597,15 +597,16 @@ if dai-bunsetsu, NIL if sho-bunsetsu. Return the current offset of zenkouho.
   if (EQ(Vwnn_uniq_level, Qwnn_no_uniq)) uniq_level = WNN_NO_UNIQ;
   else if (EQ(Vwnn_uniq_level, Qwnn_uniq)) uniq_level = WNN_UNIQ;
   else uniq_level = WNN_UNIQ_KNJ;
-  if (EQ(dai, Qnil))
+  if (NILP (dai))
     {
-      if (offset = jl_zenkouho (wnnfns_buf[snum],no,WNN_USE_MAE, uniq_level) < 0)
+      if ((offset = jl_zenkouho (wnnfns_buf[snum],no,WNN_USE_MAE,
+				 uniq_level)) < 0)
 	return Qnil;
     }
   else
     {
-      if (offset = jl_zenkouho_dai (wnnfns_buf[snum], no, dai_end (no, snum),
-				    WNN_USE_MAE, uniq_level) < 0)
+      if ((offset = jl_zenkouho_dai (wnnfns_buf[snum], no, dai_end (no, snum),
+				     WNN_USE_MAE, uniq_level)) < 0)
 	return Qnil;
     }
   return make_int (offset);
@@ -1908,7 +1909,7 @@ w2m (w_char *wp, unsigned char *mp, unsigned char lb)
   w_char	pzy[10];
   int		i, len;
 
-  while (wc = *wp++)
+  while ((wc = *wp++) != 0)
     {
       switch (wc & 0x8080)
 	{
@@ -1948,7 +1949,7 @@ w2m (w_char *wp, unsigned char *mp, unsigned char lb)
 	  else
 	    *mp++ = lb;
 	  *mp++ = (wc & 0xff00) >> 8;
-	  *mp++ = wc & 0x00ff | 0x80;
+	  *mp++ = (wc & 0x00ff) | 0x80;
 	  break;
 	default:
 	  *mp++ = wc & 0x00ff;
@@ -1963,7 +1964,7 @@ m2w (unsigned char *mp, w_char *wp)
 {
   unsigned int ch;
   
-  while (ch = *mp++)
+  while ((ch = *mp++) != 0)
     {
       if (BUFBYTE_LEADING_BYTE_P (ch))
 	{
@@ -2039,8 +2040,8 @@ w2y (w_char *w)
 void
 c2m (unsigned char *cp, unsigned char *mp, unsigned char lb)
 {
-  unsigned char		ch;
-  while (ch = *cp)
+  unsigned char	ch;
+  while ((ch = *cp) != 0)
     {
       if (ch & 0x80)
 	{

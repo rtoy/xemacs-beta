@@ -24,7 +24,7 @@
 
 ;;; Synched up with: Not in FSF.
 
-;; This code is shared by RMAIL, VM, and GNUS.
+;; This code is shared by RMAIL and VM.
 ;;
 ;; Faces:
 ;;
@@ -41,29 +41,33 @@
 
 (defgroup highlight-headers nil
   "Fancify rfc822 documents."
-  :group 'faces
   :group 'mail
   :group 'news)
 
+(defgroup highlight-headers-faces nil
+  "Faces of highlighted headers."
+  :group 'highlight-headers
+  :group 'faces)
+
 (defface message-headers '((t (:bold t)))
   "Face used for header part before colon."
-  :group 'highlight-headers)
+  :group 'highlight-headers-faces)
 
 (defface message-header-contents '((t (:italic t)))
   "Face used for header part after colon."
-  :group 'highlight-headers)
+  :group 'highlight-headers-faces)
 
 (defface message-highlighted-header-contents '((t (:italic t :bold t)))
   "Face used for contents of \"special\" headers."
-  :group 'highlight-headers)
+  :group 'highlight-headers-faces)
 
 (defface message-cited-text '((t (:italic t)))
   "Face used for cited text."
-  :group 'highlight-headers)
+  :group 'highlight-headers-faces)
 
 (defface x-face '((t (:background "white" :foreground "black")))
   "Face used for X-Face icon."
-  :group 'highlight-headers)
+  :group 'highlight-headers-faces)
 
 ;;(condition-case nil
 ;;    (face-name 'message-addresses)
@@ -76,12 +80,14 @@
 ;;			       (face-underline-p
 ;;				'message-highlighted-header-contents))))))
 
-(defvar highlight-headers-regexp "Subject[ \t]*:"
+(defcustom highlight-headers-regexp "Subject[ \t]*:"
   "*The headers whose contents should be emphasized more.
 The contents of these headers will be displayed in the face 
-`message-highlighted-header-contents' instead of `message-header-contents'.")
+`message-highlighted-header-contents' instead of `message-header-contents'."
+  :type 'regexp
+  :group 'highlight-headers)
 
-(defvar highlight-headers-citation-regexp
+(defcustom highlight-headers-citation-regexp
   (concat "^\\("
 	  (mapconcat 'identity
 	   '("[ \t]*[a-zA-Z0-9_]+>+"	; supercite
@@ -92,43 +98,58 @@ The contents of these headers will be displayed in the face
 	  "\\)[ \t]*")
   "*The pattern to match cited text.
 Text in the body of a message which matches this will be displayed in
-the face `message-cited-text'.")
+the face `message-cited-text'."
+  :type 'regexp
+  :group 'highlight-headers)
 
-(defvar highlight-headers-citation-header-regexp
+(defcustom highlight-headers-citation-header-regexp
   (concat "^In article\\|^In message\\|"
 	  "^[^ \t].*\\(writes\\|wrote\\|said\\):\n"
 	  (substring highlight-headers-citation-regexp 1))
   "*The pattern to match the prolog of a cited block.
 Text in the body of a message which matches this will be displayed in
-the `message-headers' face.")
+the `message-headers' face."
+  :type 'regexp
+  :group 'highlight-headers)
 
-(defvar highlight-headers-highlight-citation-too nil
+(defcustom highlight-headers-highlight-citation-too nil
   "*Whether the whole citation line should go in the `mesage-cited-text' face.
 If nil, the text matched by `highlight-headers-citation-regexp' is in the
-default face, and the remainder of the line is in the message-cited-text face.")
+default face, and the remainder of the line is in the message-cited-text face."
+  :type 'boolean
+  :group 'highlight-headers)
 
-(defvar highlight-headers-max-message-size 10000
+(defcustom highlight-headers-max-message-size 10000
   "*If the message body is larger than this many chars, don't highlight it.
 This is to prevent us from wasting time trying to fontify things like
 uuencoded files and large digests.  If this is nil, all messages will
-be highlighted.")
+be highlighted."
+  :type '(choice integer
+		 (const :tag "Highlight All" nil))
+  :group 'highlight-headers)
 
-(defvar highlight-headers-hack-x-face-p (featurep 'xface)
+(defcustom highlight-headers-hack-x-face-p (featurep 'xface)
   "*If true, then the bitmap in an X-Face header will be displayed
 in the buffer.  This assumes you have the `uncompface' and `icontopbm'
-programs on your path.")
+programs on your path."
+  :type 'boolean
+  :group 'highlight-headers)
 
-(defvar highlight-headers-convert-quietly nil
+(defcustom highlight-headers-convert-quietly nil
   "*Non-nil inhibits the message that is normally displayed when external
 filters are used to convert an X-Face header.  This has no effect if
-XEmacs is compiled with internal support for x-faces.")
+XEmacs is compiled with internal support for x-faces."
+  :type 'boolean
+  :group 'highlight-headers)
 
-(defvar highlight-headers-invert-x-face-data nil 
+(defcustom highlight-headers-invert-x-face-data nil 
   "*If true, causes the foreground and background bits in an X-Face
 header to be flipped before the image is displayed. If you use a
 light foreground color on a dark background color, you probably want
 to set this to t. This assumes that you have the `pnminvert' program
-on your path.  This doesn't presently work with internal xface support.")
+on your path.  This doesn't presently work with internal xface support."
+  :type 'boolean
+  :group 'highlight-headers)
 
 
 ;;;###autoload
@@ -428,8 +449,13 @@ interpreted as cited text.)"
 ;;; "The Internet's new BBS!" -Boardwatch Magazine
 ;;; URL support by jwz@netscape.com
 
-(defvar highlight-headers-mark-urls (string-match "XEmacs" emacs-version)
-  "*Whether to make URLs clickable in message bodies.")
+(defcustom highlight-headers-mark-urls (string-match "XEmacs" emacs-version)
+  "*Whether to make URLs clickable in message bodies."
+  :type 'boolean
+  :group 'highlight-headers)
+
+;; Uh, these should really use browse-url.  They are too lame to be
+;; customized.
 
 (defvar highlight-headers-follow-url-function 'w3-fetch
   "The function to invoke to follow a URL.

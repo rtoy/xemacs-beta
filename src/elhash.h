@@ -51,10 +51,8 @@ enum hashtable_test_fun
 
 Lisp_Object Fmake_hashtable (Lisp_Object size, Lisp_Object test_fun);
 Lisp_Object Fcopy_hashtable (Lisp_Object old_table);
-Lisp_Object Fgethash (Lisp_Object obj, Lisp_Object table, 
-		      Lisp_Object defalt);
-Lisp_Object Fputhash (Lisp_Object obj, Lisp_Object val, 
-		      Lisp_Object table);
+Lisp_Object Fgethash (Lisp_Object obj, Lisp_Object table, Lisp_Object default_);
+Lisp_Object Fputhash (Lisp_Object obj, Lisp_Object val, Lisp_Object table);
 Lisp_Object Fremhash (Lisp_Object obj, Lisp_Object table);
 Lisp_Object Fhashtable_fullness (Lisp_Object table);
 
@@ -64,20 +62,20 @@ Lisp_Object make_lisp_hashtable (int size,
 
 void elisp_maphash (void (*fn) (CONST void *key, void *contents,
 				void *extra_arg),
-		    Lisp_Object table, 
+		    Lisp_Object table,
 		    void *extra_arg);
 
 void elisp_map_remhash (int (*fn) (CONST void *key,
 				   CONST void *contents,
 				   void *extra_arg),
-			Lisp_Object table, 
+			Lisp_Object table,
 			void *extra_arg);
 
 int finish_marking_weak_hashtables (int (*obj_marked_p) (Lisp_Object),
 					   void (*markobj) (Lisp_Object));
 void prune_weak_hashtables (int (*obj_marked_p) (Lisp_Object));
 
-char *elisp_hvector_malloc (unsigned int, Lisp_Object);
+void *elisp_hvector_malloc (unsigned int, Lisp_Object);
 void elisp_hvector_free (void *ptr, Lisp_Object table);
 
 #endif /* _XEMACS_ELHASH_H_ */

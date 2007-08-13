@@ -573,7 +573,7 @@ get_display_block_from_line (struct display_line *dl, enum display_type type)
       for (elt = 0; elt < Dynarr_length (dl->display_blocks); elt++)
 	{
 	  if (Dynarr_at (dl->display_blocks, elt).type == type)
-	    return (Dynarr_atp (dl->display_blocks, elt));
+	    return Dynarr_atp (dl->display_blocks, elt);
 	}
 
       /* There isn't an active block of the desired type, but there
@@ -639,7 +639,7 @@ space_width (struct window *w)
 static int
 tab_pix_width (struct window *w)
 {
-  return (space_width (w) * tab_char_width (w));
+  return space_width (w) * tab_char_width (w);
 }
 
 /* Given a pixel position in a window, return the pixel location of
@@ -2626,7 +2626,7 @@ done:
      this function if we are already at EOB. */
 
   if (data.bi_bufpos == BI_BUF_ZV (b) && bi_start_pos == BI_BUF_ZV (b))
-    return (data.bi_bufpos + 1); /* Yuck! */
+    return data.bi_bufpos + 1; /* Yuck! */
   else
     return data.bi_bufpos;
 }
@@ -2696,7 +2696,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
   data.db->start_pos = dl->bounds.left_in;
   data.db->end_pos = data.pixpos;
 
-  return (data.pixpos - dl->bounds.left_in);
+  return data.pixpos - dl->bounds.left_in;
 }
 
 /* Add a type of glyph to a margin display block. */
@@ -4846,7 +4846,7 @@ point_visible (struct window *w, Bufpos point, int type)
 
 	      if (point >= (dl->bufpos + dl->offset)
 		  && point <= (dl->end_bufpos + dl->offset))
-		return (!dl->clip);
+		return !dl->clip;
 	      else
 		return 1;
 	    }
@@ -4866,7 +4866,7 @@ point_visible (struct window *w, Bufpos point, int type)
 int
 window_half_pixpos (struct window *w)
 {
-  return (WINDOW_TEXT_TOP (w) + (WINDOW_TEXT_HEIGHT (w) >> 1));
+  return WINDOW_TEXT_TOP (w) + (WINDOW_TEXT_HEIGHT (w) >> 1);
 }
 
 /* Return the display line which is currently in the middle of the
@@ -5701,7 +5701,7 @@ window_line_number (struct window *w, int type)
 
   sprintf (window_line_number_buf, "%d", line);
 
-  return (window_line_number_buf);
+  return window_line_number_buf;
 }
 
 /* Given a character representing an object in a modeline
@@ -6278,7 +6278,7 @@ line_start_cache_start (struct window *w)
   if (!Dynarr_length (cache))
     return -1;
   else
-    return (Dynarr_atp (cache, 0)->start);
+    return Dynarr_atp (cache, 0)->start;
 }
 
 /* Return the very last buffer position contained in the given
@@ -6293,7 +6293,7 @@ line_start_cache_end (struct window *w)
   if (!Dynarr_length (cache))
     return -1;
   else
-    return (Dynarr_atp (cache, Dynarr_length (cache) - 1)->end);
+    return Dynarr_atp (cache, Dynarr_length (cache) - 1)->end;
 }
 
 /* Return the index of the line POINT is contained within in window
@@ -6622,9 +6622,9 @@ start_end_of_last_line (struct window *w, Bufpos startp, int end)
 	    {
 	      w->line_cache_validation_override--;
 	      if (end)
-		return (BUF_ZV (b));
+		return BUF_ZV (b);
 	      else
-		return (BUF_BEGV (b));
+		return BUF_BEGV (b);
 	    }
 	  else
 	    {
@@ -6651,7 +6651,7 @@ start_end_of_last_line (struct window *w, Bufpos startp, int end)
 	  if (from >= BUF_ZV (b))
 	    {
 	      w->line_cache_validation_override--;
-	      return (BUF_ZV (b));
+	      return BUF_ZV (b);
 	    }
 
 	  update_line_start_cache (w, from, to, BUF_PT (b), 0);
@@ -6731,7 +6731,7 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
 	  if (cur_pos <= BUF_BEGV (b))
 	    {
 	      w->line_cache_validation_override--;
-	      return (BUF_BEGV (b));
+	      return BUF_BEGV (b);
 	    }
 
 	  win_char_height = window_char_height (w, 0);
@@ -6772,7 +6772,7 @@ start_with_point_on_display_line (struct window *w, Bufpos point, int line)
 	cur_elt -= line;
 
       w->line_cache_validation_override--;
-      return (Dynarr_atp (w->line_start_cache, cur_elt)->start);
+      return Dynarr_atp (w->line_start_cache, cur_elt)->start;
     }
   else
     {
@@ -7318,7 +7318,10 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
   /* This is a safety valve in case this got called with a frame in
      the middle of being deleted. */
   if (!DEVICEP (f->device) || !DEVICE_LIVE_P (XDEVICE (f->device)))
-    device_check_failed = 1;
+    {
+      device_check_failed = 1;
+      d = NULL, cache = NULL; /* Warning suppression */
+    }
   else
     {
       d = XDEVICE (f->device);

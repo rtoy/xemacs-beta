@@ -297,7 +297,7 @@ main (int argc, char *argv[])
 #ifdef SYSV_IPC
   struct msgbuf *msgp;		/* message */
 #endif /* SYSV_IPC */
-  char *tty;
+  char *tty = NULL;
   char buffer[GSERV_BUFSZ + 1];	/* buffer to read pid */
   char result[GSERV_BUFSZ + 1];
   int i;

@@ -23,6 +23,9 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include <config.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -34,8 +37,8 @@ Boston, MA 02111-1307, USA.  */
 #include <scnhdr.h>
 #include <syms.h>
 
-static void fatal_unexec ();
-static void mark_x ();
+static void fatal_unexec (char *, char *);
+static void mark_x (char *);
 
 #define READ(_fd, _buffer, _size, _error_message, _error_arg) \
 	errno = EEOF; \
@@ -141,8 +144,8 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
 
   if (nhdr.fhdr.f_opthdr != sizeof (nhdr.aout))
     {
-      fprintf (stderr, "unexec: input a.out header is %d bytes, not %d.\n",
-	       nhdr.fhdr.f_opthdr, sizeof (nhdr.aout));
+      fprintf (stderr, "unexec: input a.out header is %d bytes, not %ld.\n",
+	       nhdr.fhdr.f_opthdr, (long) (sizeof (nhdr.aout)));
       exit (1);
     }
   if (nhdr.aout.magic != ZMAGIC)
@@ -346,6 +349,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
   close (old);
   close (new);
   mark_x (new_name);
+  return 0;
 }
 
 
@@ -421,8 +425,7 @@ update_dynamic_symbols (old, new_name, new, newsyms, nsyms, symoff, stroff)
  */
 
 static void
-mark_x (name)
-     char *name;
+mark_x (char *name)
 {
   struct stat sbuf;
   int um = umask (777);
@@ -435,9 +438,7 @@ mark_x (name)
 }
 
 static void
-fatal_unexec (s, arg)
-     char *s;
-     char *arg;
+fatal_unexec (char *s, char *arg)
 {
   if (errno == EEOF)
     fputs ("unexec: unexpected end of file, ", stderr);

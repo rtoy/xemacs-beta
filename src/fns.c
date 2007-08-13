@@ -176,7 +176,7 @@ length_with_bytecode_hack (Lisp_Object seq)
   else
     {
       struct Lisp_Compiled_Function *b = XCOMPILED_FUNCTION (seq);
-      
+
       return (b->flags.interactivep ? COMPILED_INTERACTIVE :
 	      b->flags.domainp      ? COMPILED_DOMAIN :
 	      COMPILED_DOC_STRING)
@@ -208,7 +208,7 @@ Return the length of vector, bit vector, list or string SEQUENCE.
   if (STRINGP (obj))
     return make_int (string_char_length (XSTRING (obj)));
   else if (VECTORP (obj))
-    return make_int (vector_length (XVECTOR (obj)));
+    return make_int (XVECTOR_LENGTH (obj));
   else if (BIT_VECTORP (obj))
     return make_int (bit_vector_length (XBIT_VECTOR (obj)));
   else if (CONSP (obj))
@@ -219,11 +219,11 @@ Return the length of vector, bit vector, list or string SEQUENCE.
 	  tail = Fcdr (tail);
 	}
 
-      return (make_int (i));
+      return make_int (i);
     }
   else if (NILP (obj))
     {
-      return (Qzero);
+      return Qzero;
     }
   else
     {
@@ -369,7 +369,7 @@ may be solved.
 #endif /* not I18N2, or MULE */
     /* Can't do i < len2 because then comparison between "foo" and "foo^@"
        won't work right in I18N2 case */
-    return ((end < len2) ? Qt : Qnil);
+    return end < len2 ? Qt : Qnil;
   }
 }
 
@@ -610,7 +610,7 @@ concat (int nargs, Lisp_Object *args,
           check_losing_bytecode ("concat", seq);
           args[argnum] = wrong_type_argument (Qsequencep, seq);
 	}
-      
+
       if (args_mse)
         {
           if (STRINGP (seq))
@@ -722,7 +722,7 @@ concat (int nargs, Lisp_Object *args,
 		  INC_CHARPTR (string_source_ptr);
 		}
 	      else if (VECTORP (seq))
-                elt = vector_data (XVECTOR (seq))[thisindex];
+                elt = XVECTOR_DATA (seq)[thisindex];
 	      else if (BIT_VECTORP (seq))
 		elt = make_int (bit_vector_bit (XBIT_VECTOR (seq),
 						thisindex));
@@ -740,7 +740,7 @@ concat (int nargs, Lisp_Object *args,
 	      tail = XCDR (tail);
 	    }
 	  else if (VECTORP (val))
-	    vector_data (XVECTOR (val))[toindex++] = elt;
+	    XVECTOR_DATA (val)[toindex++] = elt;
 	  else if (BIT_VECTORP (val))
 	    {
 	      CHECK_BIT (elt);
@@ -778,7 +778,7 @@ concat (int nargs, Lisp_Object *args,
   if (!NILP (prev))
     XCDR (prev) = last_tail;
 
-  RETURN_UNGCPRO (val);  
+  RETURN_UNGCPRO (val);
 }
 
 DEFUN ("copy-alist", Fcopy_alist, 1, 1, 0, /*
@@ -834,15 +834,15 @@ are not copied.
     }
   else if (VECTORP (arg) && ! NILP (vecp))
     {
-      int i = vector_length (XVECTOR (arg));
+      int i = XVECTOR_LENGTH (arg);
       int j;
       arg = Fcopy_sequence (arg);
       for (j = 0; j < i; j++)
 	{
-	  Lisp_Object elt = vector_data (XVECTOR (arg)) [j];
+	  Lisp_Object elt = XVECTOR_DATA (arg) [j];
 	  QUIT;
 	  if (CONSP (elt) || VECTORP (elt))
-	    vector_data (XVECTOR (arg)) [j] = Fcopy_tree (elt, vecp);
+	    XVECTOR_DATA (arg) [j] = Fcopy_tree (elt, vecp);
 	}
     }
   return arg;
@@ -870,7 +870,7 @@ Relevant parts of the string-extent-data are copied in the new string.
   val = make_string (XSTRING_DATA (string) + bfr, bto - bfr);
   /* Copy any applicable extent information into the new string: */
   copy_string_extents (val, string, 0, bfr, bto - bfr);
-  return (val);
+  return val;
 }
 
 DEFUN ("subseq", Fsubseq, 2, 3, 0, /*
@@ -898,7 +898,7 @@ If SEQ is a string, relevant parts of the string-extent-data are copied
       check_losing_bytecode ("subseq", seq);
       seq = wrong_type_argument (Qsequencep, seq);
     }
-  
+
   len = XINT (Flength (seq));
   CHECK_INT (from);
   f = XINT (from);
@@ -913,7 +913,7 @@ If SEQ is a string, relevant parts of the string-extent-data are copied
       if (t < 0)
 	t = len + t;
     }
-  
+
   if (!(0 <= f && f <= t && t <= len))
     args_out_of_range_3 (seq, make_int (f), make_int (t));
 
@@ -921,8 +921,8 @@ If SEQ is a string, relevant parts of the string-extent-data are copied
     {
       Lisp_Object result = make_vector (t - f, Qnil);
       int i;
-      Lisp_Object *in_elts = vector_data (XVECTOR (seq));
-      Lisp_Object *out_elts = vector_data (XVECTOR (result));
+      Lisp_Object *in_elts  = XVECTOR_DATA (seq);
+      Lisp_Object *out_elts = XVECTOR_DATA (result);
 
       for (i = f; i < t; i++)
 	out_elts[i - f] = in_elts[i];
@@ -998,7 +998,7 @@ Return element of SEQUENCE at index N.
        * #### sequences, and does error- (bounds-) checking.
        */
       if (CONSP (tem))
-	return (XCAR (tem));
+	return XCAR (tem);
       else
 #if 1
 	/* This is The Way It Has Always Been. */
@@ -1011,7 +1011,7 @@ Return element of SEQUENCE at index N.
   else if (STRINGP (seq)
            || VECTORP (seq)
            || BIT_VECTORP (seq))
-    return (Faref (seq, n));
+    return Faref (seq, n);
 #ifdef LOSING_BYTECODE
   else if (COMPILED_FUNCTIONP (seq))
     {
@@ -1027,20 +1027,20 @@ Return element of SEQUENCE at index N.
         switch (idx)
           {
           case COMPILED_ARGLIST:
-            return (b->arglist);
+            return b->arglist;
           case COMPILED_BYTECODE:
-            return (b->bytecodes);
+            return b->bytecodes;
           case COMPILED_CONSTANTS:
-            return (b->constants);
+            return b->constants;
           case COMPILED_STACK_DEPTH:
-            return (make_int (b->maxdepth));
+            return make_int (b->maxdepth);
           case COMPILED_DOC_STRING:
-	    return (compiled_function_documentation (b));
+	    return compiled_function_documentation (b);
           case COMPILED_DOMAIN:
-	    return (compiled_function_domain (b));
+	    return compiled_function_domain (b);
           case COMPILED_INTERACTIVE:
 	    if (b->flags.interactivep)
-	      return (compiled_function_interactive (b));
+	      return compiled_function_interactive (b);
 	    /* if we return nil, can't tell interactive with no args
 	       from noninteractive. */
 	    goto lose;
@@ -1747,14 +1747,14 @@ See also the function `nreverse', which is used more often.
   return new;
 }
 
-static Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2, 
-                               Lisp_Object lisp_arg, 
+static Lisp_Object list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
+                               Lisp_Object lisp_arg,
                                int (*pred_fn) (Lisp_Object, Lisp_Object,
                                                Lisp_Object lisp_arg));
 
 Lisp_Object
 list_sort (Lisp_Object list,
-           Lisp_Object lisp_arg, 
+           Lisp_Object lisp_arg,
            int (*pred_fn) (Lisp_Object, Lisp_Object,
                            Lisp_Object lisp_arg))
 {
@@ -1783,7 +1783,7 @@ list_sort (Lisp_Object list,
 
 
 static int
-merge_pred_function (Lisp_Object obj1, Lisp_Object obj2, 
+merge_pred_function (Lisp_Object obj1, Lisp_Object obj2,
                      Lisp_Object pred)
 {
   Lisp_Object tmp;
@@ -1798,7 +1798,7 @@ merge_pred_function (Lisp_Object obj1, Lisp_Object obj2,
   tmp = call2 (pred, obj1, obj2);
   unbind_to (speccount, Qnil);
 
-  if (NILP (tmp)) 
+  if (NILP (tmp))
     return -1;
   else
     return 1;
@@ -1816,7 +1816,7 @@ if the first element is \"less\" than the second.
 }
 
 Lisp_Object
-merge (Lisp_Object org_l1, Lisp_Object org_l2, 
+merge (Lisp_Object org_l1, Lisp_Object org_l2,
        Lisp_Object pred)
 {
   return list_merge (org_l1, org_l2, pred, merge_pred_function);
@@ -1824,8 +1824,8 @@ merge (Lisp_Object org_l1, Lisp_Object org_l2,
 
 
 static Lisp_Object
-list_merge (Lisp_Object org_l1, Lisp_Object org_l2, 
-            Lisp_Object lisp_arg, 
+list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
+            Lisp_Object lisp_arg,
             int (*pred_fn) (Lisp_Object, Lisp_Object, Lisp_Object lisp_arg))
 {
   Lisp_Object value;
@@ -1842,7 +1842,7 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
   /* It is sufficient to protect org_l1 and org_l2.
      When l1 and l2 are updated, we copy the new values
      back into the org_ vars.  */
-  
+
   GCPRO4 (org_l1, org_l2, lisp_arg, value);
 
   while (1)
@@ -1897,7 +1897,7 @@ list_merge (Lisp_Object org_l1, Lisp_Object org_l2,
    NIL_MEANS_NOT_PRESENT is as in `plists-eq' etc.
    LAXP means use `equal' for comparisons.
  */
-int 
+int
 plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
 	       int laxp, int depth)
 {
@@ -2072,7 +2072,7 @@ internal_plist_put (Lisp_Object *plist, Lisp_Object property,
 		    Lisp_Object value)
 {
   Lisp_Object tail = *plist;
-  
+
   for (; !NILP (tail); tail = XCDR (XCDR (tail)))
     {
       struct Lisp_Cons *c = XCONS (tail);
@@ -2185,7 +2185,7 @@ advance_plist_pointers (Lisp_Object *plist,
   /* Note that our "fixing" may be more brutal than necessary,
      but it's the user's own problem, not ours. if they went in and
      manually fucked up a plist. */
-  
+
   for (i = 0; i < 2; i++)
     {
       /* This is a standard iteration of a defensive-loop-checking
@@ -2354,11 +2354,11 @@ PLIST is a property list, which is a list of the form
 corresponding to the given PROP, or DEFAULT if PROP is not
 one of the properties on the list.
 */
-       (plist, prop, defalt))           /* Cant spel in C */
+       (plist, prop, default_))
 {
   Lisp_Object val = external_plist_get (&plist, prop, 0, ERROR_ME);
   if (UNBOUNDP (val))
-    return defalt;
+    return default_;
   return val;
 }
 
@@ -2422,7 +2422,7 @@ This means that it's a malformed or circular plist.
 
   return Qnil;
 }
-  
+
 DEFUN ("valid-plist-p", Fvalid_plist_p, 1, 1, 0, /*
 Given a plist, return non-nil if its format is correct.
 If it returns nil, `check-valid-plist' will signal an error when given
@@ -2500,11 +2500,11 @@ using `equal' instead of `eq'.  This function returns the value
 corresponding to the given PROP, or DEFAULT if PROP is not one of the
 properties on the list.
 */
-       (lax_plist, prop, defalt))           /* Cant spel in C */
+       (lax_plist, prop, default_))
 {
   Lisp_Object val = external_plist_get (&lax_plist, prop, 1, ERROR_ME);
   if (UNBOUNDP (val))
-    return defalt;
+    return default_;
   return val;
 }
 
@@ -2628,12 +2628,12 @@ See also `alist-to-plist'.
    invalid property list structure */
 
 static Lisp_Object
-symbol_getprop (Lisp_Object sym, Lisp_Object propname, Lisp_Object defalt)
+symbol_getprop (Lisp_Object sym, Lisp_Object propname, Lisp_Object default_)
 {
   Lisp_Object val = external_plist_get (&XSYMBOL (sym)->plist, propname,
 					0, ERROR_ME);
   if (UNBOUNDP (val))
-    return defalt;
+    return default_;
   return val;
 }
 
@@ -2672,12 +2672,12 @@ string_plist_ptr (struct Lisp_String *s)
 
 Lisp_Object
 string_getprop (struct Lisp_String *s, Lisp_Object property,
-		Lisp_Object defalt)
+		Lisp_Object default_)
 {
   Lisp_Object val = external_plist_get (string_plist_ptr (s), property, 0,
 					ERROR_ME);
   if (UNBOUNDP (val))
-    return defalt;
+    return default_;
   return val;
 }
 
@@ -2704,22 +2704,22 @@ DEFUN ("get", Fget, 2, 3, 0, /*
 Return the value of OBJECT's PROPNAME property.
 This is the last VALUE stored with `(put OBJECT PROPNAME VALUE)'.
 If there is no such property, return optional third arg DEFAULT
-(which defaults to `nil').  OBJECT can be a symbol, face, extent,
+\(which defaults to `nil').  OBJECT can be a symbol, face, extent,
 or string.  See also `put', `remprop', and `object-plist'.
 */
-(object, propname, defalt))           /* Cant spel in C */
+       (object, propname, default_))
 {
   Lisp_Object val;
 
   /* Various places in emacs call Fget() and expect it not to quit,
      so don't quit. */
-  
+
   /* It's easiest to treat symbols specially because they may not
      be an lrecord */
   if (SYMBOLP (object))
-    val = symbol_getprop (object, propname, defalt);
+    val = symbol_getprop (object, propname, default_);
   else if (STRINGP (object))
-    val = string_getprop (XSTRING (object), propname, defalt);
+    val = string_getprop (XSTRING (object), propname, default_);
   else if (LRECORDP (object))
     {
       CONST struct lrecord_implementation
@@ -2728,7 +2728,7 @@ or string.  See also `put', `remprop', and `object-plist'.
 	{
 	  val = (imp->getprop) (object, propname);
 	  if (UNBOUNDP (val))
-	    val = defalt;
+	    val = default_;
 	}
       else
 	goto noprops;
@@ -2869,7 +2869,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   if (EQ_WITH_EBOLA_NOTICE (o1, o2))
     return 1;
   /* Note that (equal 20 20.0) should be nil */
-  else if (XTYPE (o1) != XTYPE (o2)) 
+  else if (XTYPE (o1) != XTYPE (o2))
     return 0;
   else if (CONSP (o1))
     {
@@ -2883,15 +2883,15 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 #ifndef LRECORD_VECTOR
   else if (VECTORP (o1))
     {
-      int indecks;
-      int len = vector_length (XVECTOR (o1));
-      if (len != vector_length (XVECTOR (o2)))
+      int indice;
+      int len = XVECTOR_LENGTH (o1);
+      if (len != XVECTOR_LENGTH (o2))
 	return 0;
-      for (indecks = 0; indecks < len; indecks++)
+      for (indice = 0; indice < len; indice++)
 	{
 	  Lisp_Object v1, v2;
-	  v1 = vector_data (XVECTOR (o1)) [indecks];
-	  v2 = vector_data (XVECTOR (o2)) [indecks];
+	  v1 = XVECTOR_DATA (o1) [indice];
+	  v2 = XVECTOR_DATA (o2) [indice];
 	  if (!internal_equal (v1, v2, depth + 1))
             return 0;
 	}
@@ -2939,7 +2939,7 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   if (HACKEQ_UNSAFE (o1, o2))
     return 1;
   /* Note that (equal 20 20.0) should be nil */
-  else if (XTYPE (o1) != XTYPE (o2)) 
+  else if (XTYPE (o1) != XTYPE (o2))
     return 0;
   else if (CONSP (o1))
     {
@@ -2953,16 +2953,15 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 #ifndef LRECORD_VECTOR
   else if (VECTORP (o1))
     {
-      int indecks;
-      int len = vector_length (XVECTOR (o1));
-      if (len != vector_length (XVECTOR (o2)))
+      int indice;
+      int len = XVECTOR_LENGTH (o1);
+      if (len != XVECTOR_LENGTH (o2))
 	return 0;
-      for (indecks = 0; indecks < len; indecks++)
+      for (indice = 0; indice < len; indice++)
 	{
-	  Lisp_Object v1, v2;
-	  v1 = vector_data (XVECTOR (o1)) [indecks];
-	  v2 = vector_data (XVECTOR (o2)) [indecks];
-	  if (!internal_old_equal (v1, v2, depth + 1))
+	  if (!internal_old_equal (XVECTOR_DATA (o1) [indice],
+				   XVECTOR_DATA (o2) [indice],
+				   depth + 1))
             return 0;
 	}
       return 1;
@@ -2988,7 +2987,7 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	/* EQ-ness of the objects was noticed above */
 	return 0;
       else
-	return ((imp1->equal) (o1, o2, depth));
+	return (imp1->equal) (o1, o2, depth);
     }
 
   return 0;
@@ -3030,7 +3029,7 @@ ARRAY is a vector, bit vector, or string.
  retry:
   if (STRINGP (array))
     {
-      Charcount size;
+      Charcount len;
       Charcount i;
       Emchar charval;
       struct Lisp_String *s;
@@ -3038,32 +3037,32 @@ ARRAY is a vector, bit vector, or string.
       CHECK_IMPURE (array);
       charval = XCHAR (item);
       s = XSTRING (array);
-      size = string_char_length (s);
-      for (i = 0; i < size; i++)
+      len = string_char_length (s);
+      for (i = 0; i < len; i++)
 	set_string_char (s, i, charval);
       bump_string_modiff (array);
     }
   else if (VECTORP (array))
     {
       Lisp_Object *p;
-      int size;
+      int len;
       int i;
       CHECK_IMPURE (array);
-      size = vector_length (XVECTOR (array));
-      p = vector_data (XVECTOR (array));
-      for (i = 0; i < size; i++)
+      len = XVECTOR_LENGTH (array);
+      p = XVECTOR_DATA (array);
+      for (i = 0; i < len; i++)
 	p[i] = item;
     }
   else if (BIT_VECTORP (array))
     {
       struct Lisp_Bit_Vector *v;
-      int size;
+      int len;
       int i;
       CHECK_BIT (item);
       CHECK_IMPURE (array);
       v = XBIT_VECTOR (array);
-      size = bit_vector_length (v);
-      for (i = 0; i < size; i++)
+      len = bit_vector_length (v);
+      for (i = 0; i < len; i++)
 	set_bit_vector_bit (v, i, XINT (item));
     }
   else
@@ -3100,9 +3099,11 @@ Only the last argument is not altered, and need not be a list.
      callers out by protecting the args ourselves to save them
      a lot of temporary-variable grief. */
 
+ again:
+
   GCPRO1 (args[0]);
   gcpro1.nvars = nargs;
-	 
+
   val = Qnil;
 
   for (argnum = 0; argnum < nargs; argnum++)
@@ -3116,7 +3117,10 @@ Only the last argument is not altered, and need not be a list.
       if (argnum + 1 == nargs) break;
 
       if (!CONSP (tem))
-	tem = wrong_type_argument (Qlistp, tem);
+	{
+	  tem = wrong_type_argument (Qlistp, tem);
+	  goto again;
+	}
 
       while (CONSP (tem))
 	{
@@ -3170,7 +3174,7 @@ mapcar1 (int leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
     {
       for (i = 0; i < leni; i++)
 	{
-	  dummy = vector_data (XVECTOR (seq))[i];
+	  dummy = XVECTOR_DATA (seq)[i];
 	  result = call1 (fn, dummy);
 	  if (vals)
 	    vals[i] = result;
@@ -3235,7 +3239,7 @@ Thus, \" \" as SEP results in spaces between the values returned by FN.
 
   for (i = len - 1; i >= 0; i--)
     args[i + i] = args[i];
-      
+
   for (i = 1; i < nargs; i += 2)
     args[i] = sep;
 
@@ -3358,7 +3362,7 @@ Return non-nil if feature expression FEXP is true.
 	  featurep_emacs_version = XINT (Vemacs_major_version) +
 	    (XINT (Vemacs_minor_version) / 100.0);
 	}
-      return (featurep_emacs_version >= d) ? Qt : Qnil;
+      return featurep_emacs_version >= d ? Qt : Qnil;
     }
   else if (CONSP(fexp))
     {

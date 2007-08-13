@@ -148,7 +148,7 @@ cleanup_specifiers (void)
        !NILP (rest);
        rest = XSPECIFIER (rest)->next_specifier)
     {
-      struct Lisp_Specifier *sp = XSPECIFIER (rest);      
+      struct Lisp_Specifier *sp = XSPECIFIER (rest);
       /* This effectively changes the specifier specs.
 	 However, there's no need to call
 	 recompute_cached_specifier_everywhere() or the
@@ -598,7 +598,7 @@ decode_locale_type (Lisp_Object locale_type)
   if (EQ (locale_type, Qframe))  return LOCALE_FRAME;
   if (EQ (locale_type, Qwindow)) return LOCALE_WINDOW;
   if (EQ (locale_type, Qbuffer)) return LOCALE_BUFFER;
-  
+
   signal_simple_error ("Invalid specifier locale type", locale_type);
   return LOCALE_GLOBAL; /* not reached */
 }
@@ -732,7 +732,7 @@ canonicalize_tag_set (Lisp_Object tag_set)
   i = 0;
   LIST_LOOP (rest, tag_set)
     tags[i++] = XCAR (rest);
-    
+
   /* Sort the list of tags.  We use a bubble sort here (copied from
      extent_fragment_update()) -- reduces the function call overhead,
      and is the fastest sort for small numbers of items. */
@@ -896,7 +896,7 @@ setup_device_initial_specifier_tags (struct device *d)
   Lisp_Object device = Qnil;
 
   XSETDEVICE (device, d);
-  
+
   DEVICE_USER_DEFINED_TAGS (d) = Fcopy_alist (Vuser_defined_tags);
 
   /* Now set up the initial values */
@@ -923,7 +923,7 @@ DEVICE defaults to the selected device if omitted.
   struct device *d = decode_device (device);
   Lisp_Object rest, list = Qnil;
   struct gcpro gcpro1;
-  
+
   GCPRO1 (list);
 
   LIST_LOOP (rest, DEVICE_USER_DEFINED_TAGS (d))
@@ -977,7 +977,7 @@ Return the predicate for the given specifier tag.
     return list3 (Qlambda, list1 (Qdevice),
 		  list3 (Qeq, list2 (Qquote, tag),
 			 list2 (Qconsole_type, Qdevice)));
-  
+
   if (valid_device_class_p (tag))
     return list3 (Qlambda, list1 (Qdevice),
 		  list3 (Qeq, list2 (Qquote, tag),
@@ -999,7 +999,7 @@ tag_sets_match_p (Lisp_Object a, Lisp_Object b, int exact_p)
 	    a = XCDR (a);
 	  b = XCDR (b);
 	}
-      
+
       return NILP (a);
     }
   else
@@ -1052,7 +1052,7 @@ check_valid_instantiator (Lisp_Object instantiator,
 	  retval = call_with_suspended_errors
 	    ((lisp_fn_t) call_validate_method,
 	     Qnil, Qspecifier, errb, 2, opaque, instantiator);
-	  
+
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
 	}
@@ -1222,7 +1222,7 @@ decode_how_to_add_specification (Lisp_Object how_to_add)
 	  : (type == LOCALE_BUFFER		\
 	     ? &(XSPECIFIER (specifier)->buffer_specs) \
 	     : 0)))))
-  
+
 static Lisp_Object *
 specifier_get_inst_list (Lisp_Object specifier, Lisp_Object locale,
 			 enum spec_locale_type type)
@@ -1402,7 +1402,7 @@ specifier_remove_spec (Lisp_Object specifier, Lisp_Object locale,
 	/* no inst-pairs left; remove this locale entirely. */
 	*spec_list = remassq_no_quit (locale, *spec_list);
     }
-  
+
   if (was_removed)
     MAYBE_SPECMETH (XSPECIFIER (specifier), after_change, (specifier, locale));
 }
@@ -1421,7 +1421,7 @@ specifier_remove_locale_type (Lisp_Object specifier,
       int was_removed;
       int remove_spec = 0;
       Lisp_Object spec = XCAR (rest);
-      
+
       /* There may be dead objects floating around */
       /* remember, dead windows can become alive again. */
       if (!WINDOWP (XCAR (spec)) && object_dead_p (XCAR (spec)))
@@ -1594,7 +1594,7 @@ specifier_add_spec (Lisp_Object specifier, Lisp_Object locale,
     }
   else
     abort ();
-  
+
   UNGCPRO;
 
   /* call the after-change method */
@@ -1625,7 +1625,7 @@ specifier_copy_locale_type (Lisp_Object specifier, Lisp_Object dest,
   /* This algorithm is O(n^2) in running time.
      It's certainly possible to implement an O(n log n) algorithm,
      but I doubt there's any need to. */
-  
+
   LIST_LOOP (rest, *src_list)
     {
       Lisp_Object spec = XCAR (rest);
@@ -1637,7 +1637,7 @@ specifier_copy_locale_type (Lisp_Object specifier, Lisp_Object dest,
 	   specifier_process_inst_list (XCDR (spec), tag_set, exact_p, 0, 0),
 	   add_meth);
     }
-}      
+}
 
 /* map MAPFUN over the locales in SPECIFIER that are given in LOCALE.
    CLOSURE is passed unchanged to MAPFUN.  LOCALE can be one of
@@ -1835,7 +1835,7 @@ more convenient and should be used instead.
       Lisp_Object crock3 = XCDR (XCAR (rest));
 
       specifier_add_spec (crock1, crock2, crock3, add_meth);
-    }      
+    }
   recompute_cached_specifier_everywhere (specifier);
   return Qnil;
 }
@@ -2037,7 +2037,7 @@ struct copy_specifier_closure
 static int
 copy_specifier_mapfun (Lisp_Object specifier,
 		       Lisp_Object locale,
-		       enum spec_locale_type locale_type,	
+		       enum spec_locale_type locale_type,
 		       Lisp_Object tag_set,
 		       int exact_p,
 		       void *closure)
@@ -2155,7 +2155,7 @@ check_valid_specifier_matchspec (Lisp_Object matchspec,
 	  retval = call_with_suspended_errors
 	    ((lisp_fn_t) call_validate_matchspec_method,
 	     Qnil, Qspecifier, errb, 2, opaque, matchspec);
-	  
+
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
 	}
@@ -2198,7 +2198,7 @@ See `specifier-matching-instance' for a description of matchspecs.
 /* This function is purposely not callable from Lisp.  If a Lisp
    caller wants to set a fallback, they should just set the
    global value. */
-   
+
 void
 set_specifier_fallback (Lisp_Object specifier, Lisp_Object fallback)
 {
@@ -2473,7 +2473,7 @@ will be a string, pixmap, or subwindow.
 
 See also `specifier-matching-instance'.
 */
-       (specifier, domain, defalt, no_fallback))
+       (specifier, domain, default_, no_fallback))
 {
   Lisp_Object instance;
 
@@ -2482,9 +2482,7 @@ See also `specifier-matching-instance'.
 
   instance = specifier_instance (specifier, Qunbound, domain, ERROR_ME, 0,
 				 !NILP (no_fallback), Qzero);
-  if (UNBOUNDP (instance))
-    return defalt;
-  return instance;
+  return UNBOUNDP (instance) ? default_ : instance;
 }
 
 DEFUN ("specifier-matching-instance", Fspecifier_matching_instance, 2, 5, 0, /*
@@ -2510,7 +2508,7 @@ dependent on the particular type of specifier.  Here are some examples:
    font that can display a particular character. (This is what redisplay
    does, in fact.)
 */
-       (specifier, matchspec, domain, defalt, no_fallback))
+       (specifier, matchspec, domain, default_, no_fallback))
 {
   Lisp_Object instance;
 
@@ -2521,9 +2519,7 @@ dependent on the particular type of specifier.  Here are some examples:
 
   instance = specifier_instance (specifier, matchspec, domain, ERROR_ME, 0,
 				 !NILP (no_fallback), Qzero);
-  if (UNBOUNDP (instance))
-    return defalt;
-  return instance;
+  return UNBOUNDP (instance) ? default_ : instance;
 }
 
 DEFUN ("specifier-instance-from-inst-list",
@@ -2534,7 +2530,7 @@ as if INST-LIST existed in a specification in SPECIFIER.  If
 the instantiation fails, DEFAULT is returned.  In most circumstances,
 you should not use this function; use `specifier-instance' instead.
 */
-       (specifier, domain, inst_list, defalt))
+       (specifier, domain, inst_list, default_))
 {
   Lisp_Object val = Qunbound;
   struct Lisp_Specifier *sp = XSPECIFIER (specifier);
@@ -2551,9 +2547,7 @@ you should not use this function; use `specifier-instance' instead.
 					     built_up_list, ERROR_ME, 0,
 					     Qzero);
   UNGCPRO;
-  if (UNBOUNDP (val))
-    return defalt;
-  return val;
+  return UNBOUNDP (val) ? default_ : val;
 }
 
 DEFUN ("specifier-matching-instance-from-inst-list",
@@ -2568,7 +2562,7 @@ but allows for specification-matching as in `specifier-matching-instance'.
 See that function for a description of exactly how the matching process
 works.
 */
-       (specifier, matchspec, domain, inst_list, defalt))
+       (specifier, matchspec, domain, inst_list, default_))
 {
   Lisp_Object val = Qunbound;
   struct Lisp_Specifier *sp = XSPECIFIER (specifier);
@@ -2587,9 +2581,7 @@ works.
 					     built_up_list, ERROR_ME, 0,
 					     Qzero);
   UNGCPRO;
-  if (UNBOUNDP (val))
-    return defalt;
-  return val;
+  return UNBOUNDP (val) ? default_ : val;
 }
 
 
@@ -2815,7 +2807,7 @@ and returns back the Lisp object unchanged when it is instantiated.
 */
        (object))
 {
-  return (GENERIC_SPECIFIERP (object) ? Qt : Qnil);
+  return GENERIC_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 
@@ -2836,7 +2828,7 @@ Return non-nil if OBJECT is an integer specifier.
 */
        (object))
 {
-  return (INTEGER_SPECIFIERP (object) ? Qt : Qnil);
+  return INTEGER_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 /************************************************************************/
@@ -2856,7 +2848,7 @@ Return non-nil if OBJECT is a natnum (non-negative-integer) specifier.
 */
        (object))
 {
-  return (NATNUM_SPECIFIERP (object) ? Qt : Qnil);
+  return NATNUM_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 /************************************************************************/
@@ -2877,7 +2869,7 @@ Return non-nil if OBJECT is a boolean specifier.
 */
        (object))
 {
-  return (BOOLEAN_SPECIFIERP (object) ? Qt : Qnil);
+  return BOOLEAN_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 /************************************************************************/
@@ -2891,7 +2883,7 @@ display_table_validate (Lisp_Object instantiator)
 {
   if (!NILP(instantiator) &&
       (!VECTORP (instantiator) ||
-       XVECTOR (instantiator)->size != DISP_TABLE_SIZE))
+       XVECTOR_LENGTH (instantiator) != DISP_TABLE_SIZE))
     dead_wrong_type_argument (display_table_specifier_methods->predicate_symbol,
 			      instantiator);
 }
@@ -2901,7 +2893,7 @@ Return non-nil if OBJECT is an display-table specifier.
 */
        (object))
 {
-  return (DISPLAYTABLE_SPECIFIERP (object) ? Qt : Qnil);
+  return DISPLAYTABLE_SPECIFIERP (object) ? Qt : Qnil;
 }
 
 

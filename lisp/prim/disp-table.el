@@ -4,7 +4,7 @@
 ;; Copyright (C) 1995 Sun Microsystems.
 
 ;; Author: Howard Gayle
-;; Maintainer: FSF
+;; Maintainer: XEmacs Development Team
 ;; Keywords: i18n
 
 ;; This file is part of XEmacs.
@@ -35,6 +35,7 @@
 
 ;;; Rewritten for XEmacs July 1995, Ben Wing.
 
+
 ;;; Code:
 
 (defun describe-display-table (dt)
@@ -43,14 +44,38 @@
    (lambda ()
      (princ "\nCharacter display glyph sequences:\n")
      (save-excursion
-       (set-buffer standard-output)
        (let ((vector (make-vector 256 nil))
              (i 0))
          (while (< i 256)
            (aset vector i (aref dt i))
-           (setq i (1+ i)))
-         ;;; ### No such function `describe-vector'...
-         (describe-vector vector))))))
+           (incf i))
+	 ;; FSF calls `describe-vector' here, but it is so incredibly
+	 ;; lame a function for that name that I cannot bring myself
+	 ;; to porting it.  Here is what `describe-vector' does:
+	 (terpri)
+	 (let ((old (aref vector 0))
+	       (oldpos 0)
+	       (i 1)
+	       str)
+	   (while (<= i 256)
+	     (when (or (= i 256)
+		       (not (equal old (aref vector i))))
+	       (if (eq oldpos (1- i))
+		   (princ (format "%s\t\t%s\n"
+				  (single-key-description (int-char oldpos))
+				  old))
+		 (setq str (format "%s - %s"
+				   (single-key-description (int-char oldpos))
+				   (single-key-description (int-char (1- i)))))
+		 (princ str)
+		 (princ (make-string (max (- 2 (/ (length str)
+						  tab-width)) 1) ?\t))
+		 (princ old)
+		 (terpri))
+	       (or (= i 256)
+		   (setq old (aref vector i)
+			 oldpos i)))
+	     (incf i))))))))
 
 ;;;###autoload
 (defun describe-current-display-table (&optional domain)

@@ -1819,9 +1819,12 @@ The names of the C arguments will be used as the names of the arguments
 to the Lisp primitive as displayed in its documentation, modulo the same
 concerns described above for @code{F...} names (in particular,
 underscores in the C arguments become dashes in the Lisp arguments).
-There is one additional kludge: A C argument called @code{defalt}
-becomes the Lisp argument @code{default}.  This deliberate misspelling
-is done because @code{default} is a reserved word in the C language.
+
+There is one additional kludge: A trailing `_' on the C argument is
+discarded when forming the Lisp argument.  This allows C language
+reserved words (like @code{default}) or global symbols (like
+@code{dirname}) to be used as argument names without compiler warnings
+or errors.
 
 A Lisp function with @w{@var{max} = @code{UNEVALLED}} is a
 @w{@dfn{special form}}; its arguments are not evaluated.  Instead it

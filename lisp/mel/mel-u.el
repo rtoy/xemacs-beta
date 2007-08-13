@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/10/25
-;; Version: $Id: mel-u.el,v 1.3 1997/03/16 03:05:15 steve Exp $
+;; Version: $Id: mel-u.el,v 1.4 1997/07/13 22:41:32 steve Exp $
 ;; Keywords: uuencode
 
 ;; This file is part of MEL (MIME Encoding Library).
@@ -84,6 +84,10 @@ variable `uuencode-external-decoder'."
 		  t nil nil (cdr uuencode-external-decoder))
 	   (setq filename (expand-file-name filename mime-temp-directory))
 	   (as-binary-input-file (insert-file-contents filename))
+	   ;; The previous line causes the buffer to be made read-only, I
+	   ;; do not pretend to understand the control flow leading to this
+	   ;; but suspect it has something to do with image-mode. -slb
+	   (setq buffer-read-only nil)
 	   (delete-file filename)
 	   ))
       )))

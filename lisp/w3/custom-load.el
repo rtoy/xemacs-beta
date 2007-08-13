@@ -1,3 +1,4 @@
+(custom-put 'url-news 'custom-loads '("url-news"))
 (custom-put 'w3-scripting 'custom-loads '("w3-script"))
 (custom-put 'w3-hooks 'custom-loads '("w3-cus"))
 (custom-put 'w3-display 'custom-loads '("w3-cus"))
@@ -13,6 +14,6 @@
 (custom-put 'url-history 'custom-loads '("url-vars"))
 (custom-put 'url-cache 'custom-loads '("url-cache" "url-vars"))
 (custom-put 'url-file 'custom-loads '("url-cache" "url-vars"))
-(custom-put 'url 'custom-loads '("url-gw" "url-irc" "url-vars" "url"))
+(custom-put 'url 'custom-loads '("url-gw" "url-irc" "url-vars" "url" "url-news"))
 (custom-put 'url-gateway 'custom-loads '("url-gw"))
 (custom-put 'ssl 'custom-loads '("ssl"))

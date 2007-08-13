@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/06/24 13:59:48
-;; Version: 1.40
+;; Created: 1997/07/06 22:24:36
+;; Version: 1.41
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -291,6 +291,7 @@ on that platform."
    "View"
    ["Document Information" w3-document-information t]
    ["Document Source" w3-source-document t]
+   ["Document Errors" w3-display-errors w3-current-badhtml]
    ["Load Images" w3-load-delayed-images w3-delayed-images]
    "----"
    ["Refresh" w3-refresh-buffer w3-current-parse]

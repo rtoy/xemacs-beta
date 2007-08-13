@@ -258,7 +258,7 @@ static Lisp_Object
 restore_audio_port (closure)
      Lisp_Object closure;
 {
-  Lisp_Object * contents = (vector_data (XVECTOR (closure)));
+  Lisp_Object * contents = XVECTOR_DATA (closure);
   saved_device_state[1] = XINT (contents[0]);
   saved_device_state[3] = XINT (contents[1]);
   saved_device_state[5] = XINT (contents[2]);

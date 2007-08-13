@@ -357,73 +357,6 @@ with no args, if that value is non-nil." t nil)
 
 ;;;***
 
-;;;### (autoloads (follow-delete-other-windows-and-split follow-mode turn-off-follow-mode turn-on-follow-mode) "follow" "modes/follow.el")
-
-(add-minor-mode 'follow-mode nil 'follow-mode-map)
-
-(autoload 'turn-on-follow-mode "follow" "\
-Turn on Follow mode. Please see the function `follow-mode'." t nil)
-
-(autoload 'turn-off-follow-mode "follow" "\
-Turn off Follow mode. Please see the function `follow-mode'." t nil)
-
-(autoload 'follow-mode "follow" "\
-Minor mode which combines windows into one tall virtual window.
-
-The feeling of a \"virtual window\" has been accomplished by the use
-of two major techniques:
-
-* The windows always displays adjacent sections of the buffer. 
-  This means that whenever one window is moved, all the
-  others will follow.  (Hence the name Follow Mode.)
-
-* Should the point (cursor) end up outside a window, another 
-  window displaying that point is selected, if possible.  This 
-  makes it possible to walk between windows using normal cursor 
-  movement commands.
-
-Follow mode comes to its prime when used on a large screen and two
-side-by-side window are used. The user can, with the help of Follow
-mode, use two full-height windows as though they would have been
-one. Imagine yourself editing a large function, or section of text,
-and being able to use 144 lines instead of the normal 72... (your
-mileage may vary).
-
-To split one large window into two side-by-side windows, the commands
-`\\[split-window-horizontally]' or `M-x follow-delete-other-windows-and-split' can be used.
-
-Only windows displayed in the same frame follow each-other.
-
-If the variable `follow-intercept-processes' is non-nil, Follow mode
-will listen to the output of processes and redisplay accordingly.
-\(This is the default.)
-
-When Follow mode is switched on, the hook `follow-mode-hook'
-is called.  When turned off, `follow-mode-off-hook' is called.
-
-Keys specific to Follow mode:
-\\{follow-mode-map}" t nil)
-
-(autoload 'follow-delete-other-windows-and-split "follow" "\
-Create two side by side windows and enter Follow Mode.
-
-Execute this command to display as much as possible of the text
-in the selected window.  All other windows, in the current 
-frame, are deleted and the selected window is split in two
-side-by-side windows. Follow Mode is activated, hence the 
-two windows always will display two successive pages.
-\(If one window is moved, the other one will follow.)
-
-If ARG is positive, the leftmost window is selected.  If it negative,
-the rightmost is selected.  If ARG is nil, the leftmost window is
-selected if the original window is the first one in the frame.
-
-To bind this command to a hotkey, place the following line
-in your `~/.emacs' file, replacing [f7] by your favourite key:
-    (global-set-key [f7] 'follow-delete-other-windows-and-split)" t nil)
-
-;;;***
-
 ;;;### (autoloads (fortran-mode) "fortran" "modes/fortran.el")
 
 (defcustom fortran-tab-mode-default nil "*Default tabbing/carriage control style for empty files in Fortran mode.\nA value of t specifies tab-digit style of continuation control.\nA value of nil specifies that continuation lines are marked\nwith a character in column 6." :type 'boolean :group 'fortran-indent)
@@ -680,7 +613,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.4 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.5 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -2037,7 +1970,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.4 $
+vhdl-mode $Revision: 1.5 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

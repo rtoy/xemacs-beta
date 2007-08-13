@@ -1,7 +1,7 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/05/10 23:01:41
-;; Version: 1.26
+;; Created: 1997/07/08 14:00:33
+;; Version: 1.28
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -41,8 +41,13 @@
 (defvar w3-e19-hotlist-menu nil "A menu for hotlists.")
 (defvar w3-e19-links-menu nil "A buffer-local menu for hyperlinks.")
 (defvar w3-e19-nav-menu nil "A buffer-local menu for html based <link> tags.")
+(defvar w3-e19-window-width nil)
+
 (mapcar 'make-variable-buffer-local
-	'(w3-e19-hotlist-menu w3-e19-links-menu w3-e19-nav-menu))
+	'(w3-e19-hotlist-menu
+	  w3-e19-window-width
+	  w3-e19-links-menu
+	  w3-e19-nav-menu))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Functions to build menus of urls
@@ -91,23 +96,33 @@
   )
 
 (defun w3-store-in-clipboard (str)
-  "Store string STR in the Xwindows clipboard"
-  (case (device-type)
-    (x (x-select-text str))
-    (pm (pm-put-clipboard str))
-    (ns (ns-store-pasteboard-internal str))
-    (otherwise nil)))
+  "Store string STR in the system clipboard"
+  (cond
+   ((boundp 'interprogram-cut-function)
+    (if interprogram-cut-function
+	(funcall interprogram-cut-function str t)))
+   (t
+    (case (device-type)
+      (x (x-select-text str))
+      (pm (pm-put-clipboard str))
+      (ns (ns-store-pasteboard-internal str))
+      (otherwise nil)))))
 
 (defun w3-e19-no-read-only (st nd)
   ;; Make sure we don't yank any read-only data out of this buffer
-  (let ((inhibit-read-only t))
+  (let ((inhibit-read-only t)
+	(after-change-functions nil)
+	(after-change-function nil))
+    (put-text-property st nd 'w3-munged-ro t)
     (put-text-property st nd 'read-only nil)))
 
 (defun w3-mode-version-specifics ()
   ;; Emacs 19 specific stuff for w3-mode
   (declare (special w3-face-index w3-display-background-properties))
   (make-local-variable 'track-mouse)
-  ;(set (make-local-variable 'buffer-access-fontify-functions) 'w3-e19-no-read-only)
+  (set (make-local-variable 'buffer-access-fontify-functions) 'w3-e19-no-read-only)
+  (set (make-local-variable 'buffer-access-fontified-property) 'w3-munged-ro)
+  (setq w3-e19-window-width (window-width))
   (if w3-track-mouse (setq track-mouse t))
   (if w3-display-background-properties
       (let ((face (w3-make-face (intern
@@ -138,6 +153,17 @@
       (setq mouse-events (w3-script-find-event-handlers pt 'mouse))
       (if (assq 'onmouseover mouse-events)
 	  (w3-script-evaluate-form (cdr (assq 'onmouseover mouse-events)))))))
+
+(defun w3-window-size-change-function (frame)
+  (let ((first (frame-first-window frame))
+	(cur nil))
+    (while (not (eq cur first))
+      (setq cur (if cur (next-window cur nil frame) first))
+      (save-excursion
+	(set-buffer (window-buffer cur))
+	(if (and (eq major-mode 'w3-mode)
+		 (not (eq (window-width cur) w3-e19-window-width)))
+	    (w3-refresh-buffer))))))
 
 
 (provide 'w3-emacs19)

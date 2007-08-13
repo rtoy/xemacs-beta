@@ -23,13 +23,14 @@
 ## above a certain point in this file are in shell format instead of
 ## in C format.  How the hell is this supposed to work? */
 
-SHELL = /bin/sh
-RM = rm -f
-
 ## For performance and consistency, no built-in rules
 .SUFFIXES:
 .SUFFIXES: .c .o .i .h
 ## ==================== Things "configure" will edit ====================
+
+@SET_MAKE@
+SHELL = /bin/sh
+RM = rm -f
 
 CC=@CC@
 CPP=@CPP@
@@ -37,7 +38,6 @@ CFLAGS=@CFLAGS@
 CPPFLAGS=@CPPFLAGS@
 LDFLAGS=@LDFLAGS@
 ALLOCA=@ALLOCA@
-YACC=@YACC@
 LN_S=@LN_S@
 version=@version@
 
@@ -276,52 +276,56 @@ regex.o: ${srcdir}/../src/regex.c ${srcdir}/../src/regex.h
 	$(CC) -c `echo ${cflags} | sed 's/-Demacs/ /'` \
 		-DINHIBIT_STRING_HEADER ${srcdir}/../src/regex.c
 
-etags: ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) ../src/config.h
-	$(CC) ${cflags} -DVERSION="\"${version}\"" ${srcdir}/etags.c $(GETOPTOBJS) $(REGEXOBJ) $(ldflags) -o etags
+etags_args = -I. ${cflags} -I${srcdir} -I${srcdir}/../src \
+	-DVERSION='"${version}"' ${srcdir}/etags.c \
+	$(GETOPTOBJS) $(REGEXOBJ) $(ldflags)
+etags_deps   = ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) ../src/config.h
 
-## We depend on etags to assure that parallel makes do not write two
-## etags.o files on top of each other.
-ctags: ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) etags
-	$(CC) ${cflags} -DCTAGS -DVERSION="\"${version}\"" ${srcdir}/etags.c $(GETOPTOBJS) $(REGEXOBJ) $(ldflags) -o ctags
+etags: ${etags_deps}
+	$(CC) ${etags_args} -o $@
+## ctags depends on etags to assure that parallel makes do not write
+## two etags.o files on top of each other.
+ctags: ${etags_deps} etags
+	$(CC) -DCTAGS ${etags_args} -o $@
 
 wakeup: ${srcdir}/wakeup.c
-	$(CC) ${cflags} ${srcdir}/wakeup.c $(ldflags) -o wakeup
+	$(CC) ${cflags} ${srcdir}/wakeup.c $(ldflags) -o $@
 
 profile: ${srcdir}/profile.c
-	$(CC) ${cflags} ${srcdir}/profile.c $(ldflags) -o profile
+	$(CC) ${cflags} ${srcdir}/profile.c $(ldflags) -o $@
 
 make-docfile: ${srcdir}/make-docfile.c
-	$(CC) ${cflags} ${srcdir}/make-docfile.c $(ldflags) -o make-docfile
+	$(CC) ${cflags} ${srcdir}/make-docfile.c $(ldflags) -o $@
 
 digest-doc: ${srcdir}/digest-doc.c
-	$(CC) ${cflags} ${srcdir}/digest-doc.c $(ldflags) -o digest-doc
+	$(CC) ${cflags} ${srcdir}/digest-doc.c $(ldflags) -o $@
 
 sorted-doc: ${srcdir}/sorted-doc.c ${ALLOCA}
-	$(CC) ${cflags} ${srcdir}/sorted-doc.c ${ALLOCA} $(ldflags) -o sorted-doc
+	$(CC) ${cflags} ${srcdir}/sorted-doc.c ${ALLOCA} $(ldflags) -o $@
 
 b2m: ${srcdir}/b2m.c ../src/config.h
-	$(CC) ${cflags} ${srcdir}/b2m.c $(ldflags) -o b2m
+	$(CC) ${cflags} ${srcdir}/b2m.c $(ldflags) -o $@
 
 movemail: ${srcdir}/movemail.c ${srcdir}/pop.c ${srcdir}/pop.h ../src/config.h
-	$(CC) ${cflags} ${MOVE_FLAGS} ${srcdir}/movemail.c ${srcdir}/pop.c $(ldflags) ${MOVE_LIBS} -o movemail
+	$(CC) ${cflags} ${MOVE_FLAGS} ${srcdir}/movemail.c ${srcdir}/pop.c $(ldflags) ${MOVE_LIBS} -o $@
 
 cvtmail: ${srcdir}/cvtmail.c
-	$(CC) ${cflags} ${srcdir}/cvtmail.c $(ldflags) -o cvtmail
+	$(CC) ${cflags} ${srcdir}/cvtmail.c $(ldflags) -o $@
 
 fakemail: ${srcdir}/fakemail.c ../src/config.h
-	$(CC) ${cflags} ${srcdir}/fakemail.c $(ldflags) -o fakemail
+	$(CC) ${cflags} ${srcdir}/fakemail.c $(ldflags) -o $@
 
 yow: ${srcdir}/yow.c ../src/paths.h
-	$(CC) ${cflags} ${srcdir}/yow.c $(ldflags) -o yow
+	$(CC) ${cflags} ${srcdir}/yow.c $(ldflags) -o $@
 
 hexl: ${srcdir}/hexl.c
-	$(CC) ${cflags} ${srcdir}/hexl.c $(ldflags) -o hexl
+	$(CC) ${cflags} ${srcdir}/hexl.c $(ldflags) -o $@
 
 make-msgfile: ${srcdir}/make-msgfile.c
-	$(CC) $(cflags) ${srcdir}/make-msgfile.c $(ldflags) -o make-msgfile
+	$(CC) $(cflags) ${srcdir}/make-msgfile.c $(ldflags) -o $@
 
 make-po: ${srcdir}/make-po.c
-	$(CC) $(cflags) ${srcdir}/make-po.c $(ldflags) -o make-po
+	$(CC) $(cflags) ${srcdir}/make-po.c $(ldflags) -o $@
 
 ## Why oh why does HP not include half of the standard X distribution?
 
@@ -329,26 +333,26 @@ ldflags_gnuserv = $(LDFLAGS) $(ld_switch_all) @libs_xauth@ $(ld_libs_general)
 gnuslib.o: ${srcdir}/gnuslib.c ${srcdir}/gnuserv.h ../src/config.h
 	$(CC) -c ${cflags} ${srcdir}/gnuslib.c
 gnuclient: ${srcdir}/gnuclient.c gnuslib.o ${srcdir}/gnuserv.h
-	$(CC) ${cflags} -o $@ ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv}
+	$(CC) ${cflags} ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv} -o $@
 gnuserv: ${srcdir}/gnuserv.c gnuslib.o ${srcdir}/gnuserv.h
-	$(CC) ${cflags} -o $@ ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv}
+	$(CC) ${cflags} ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv} -o $@
 
 ## mmencode binary is used by tm - but is really part of the metamail package
 ## mmencode.c was merged copy of mmencode.c and codes.c of metamail
 mmencode : ${srcdir}/mmencode.c
-	$(CC) ${cflags} ${srcdir}/mmencode.c -o mmencode
+	$(CC) ${cflags} ${srcdir}/mmencode.c -o $@
 
 
 ## The timer utility (timer.c, getdate.y) is not used in XEmacs
 ## because XEmacs provides built-in timer facilities.
 
 make-path: ${srcdir}/make-path.c ../src/config.h
-	$(CC) $(cflags) ${srcdir}/make-path.c -o make-path
+	$(CC) $(cflags) ${srcdir}/make-path.c -o $@
 
 ## These are NOT included in INSTALLABLES or UTILITIES.
 ## See ../src/Makefile.in.in.
 aixcc: ${srcdir}/aixcc.c
-	$(CC) $(cflags) -o aixcc ${srcdir}/aixcc.c
+	$(CC) $(cflags) ${srcdir}/aixcc.c -o $@
 
 aixcc.c: ${srcdir}/aixcc.lex
 	lex ${srcdir}/aixcc.lex

@@ -129,8 +129,8 @@ input:image   { text-decoration: none; }
        dt { font-weight: bold; display: list-item }
        dd { display: list-item; margin-left: 5em; }
        li { display: list-item; margin-left: 5em; }
-    ol li { list-style: decimal; }
-    ul li { list-style: circle; }
+       ol { list-style: decimal; }
+       ul { list-style: circle; }
 
 /* These are to make nested list items look better */
 ul ul,ol ul,ol ol,ul ol { display: line; }

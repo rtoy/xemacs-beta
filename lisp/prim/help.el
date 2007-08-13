@@ -1146,6 +1146,15 @@ unless the function is autoloaded."
 	 ;; Return the text we displayed.
 	 (buffer-string))))))
 
+(defun sorted-key-descriptions (keys &optional separator)
+  "Sort and separate the key descriptions for KEYS.
+The sorting is done by length (shortest bindings first), and the bindings
+are separated with SEPARATOR (`, ' by default)."
+  (mapconcat 'key-description
+	     (sort keys #'(lambda (x y)
+			    (< (length x) (length y))))
+	     (or separator ", ")))
+
 (defun where-is (definition)
   "Print message listing key sequences that invoke specified command.
 Argument is a command definition, usually a symbol with a function definition."
@@ -1153,22 +1162,15 @@ Argument is a command definition, usually a symbol with a function definition."
    (let ((fn (function-called-at-point))
 	 (enable-recursive-minibuffers t)	     
 	 val)
-     ;; #### should use `read-command'
-     (setq val (completing-read (if fn
-				    (format "Where is command (default %s): " fn)
-				  "Where is command: ")
-				obarray 'commandp t nil
-				'read-command-history))
-     (list (if (equal val "")
-	       fn (intern val)))))
+     (setq val (read-command
+		(if fn (format "Where is command (default %s): " fn)
+		  "Where is command: ")))
+     (list (if (equal (symbol-name val) "")
+	       fn val))))
   (let ((keys (where-is-internal definition)))
     (if keys
-	(message "%s is on %s" definition
-                 (mapconcat 'key-description
-                            (sort keys #'(lambda (x y)
-                                           (< (length x) (length y))))
-                            ", "))
-        (message "%s is not on any keys" definition)))
+	(message "%s is on %s" definition (sorted-key-descriptions keys))
+      (message "%s is not on any keys" definition)))
   nil)
 
 ;; Synched with Emacs 19.35

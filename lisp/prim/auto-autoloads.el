@@ -129,7 +129,7 @@ This function works by modifying `process-environment'." t nil)
 
 ;;;***
 
-;;;### (autoloads (apply-macro-to-region-lines kbd-macro-query name-last-kbd-macro) "macros" "prim/macros.el")
+;;;### (autoloads (apply-macro-to-region-lines kbd-macro-query insert-kbd-macro name-last-kbd-macro) "macros" "prim/macros.el")
 
 (autoload 'name-last-kbd-macro "macros" "\
 Assign a name to the last keyboard macro defined.
@@ -137,6 +137,20 @@ Argument SYMBOL is the name to define.
 The symbol's function definition becomes the keyboard macro string.
 Such a \"function\" cannot be called from Lisp, but it is a valid
 editor command." t nil)
+
+(autoload 'insert-kbd-macro "macros" "\
+Insert in buffer the definition of kbd macro NAME, as Lisp code.
+Optional second arg KEYS means also record the keys it is on
+\(this is the prefix argument, when calling interactively).
+
+This Lisp code will, when executed, define the kbd macro with the same
+definition it has now.  If you say to record the keys, the Lisp code
+will also rebind those keys to the macro.  Only global key bindings
+are recorded since executing this Lisp code always makes global
+bindings.
+
+To save a kbd macro, visit a file of Lisp code such as your `~/.emacs',
+use this command, and then save the file." t nil)
 
 (autoload 'kbd-macro-query "macros" "\
 Query user during kbd macro execution.
@@ -233,7 +247,11 @@ If STREAM is omitted, either current buffer or standard output are used,
  depending on whether the function was called interactively or not." t nil)
 
 (autoload 'profile "profile" "\
-Turn on profiling, execute FORMS and stop profiling.
+Turn on profiling, execute FORMS and restore profiling state.
+Profiling state here means that if profiling was not in effect when
+PROFILE was called, it will be turned off after FORMS are evaluated.
+Otherwise, profiling will be left running.
+
 Returns the profiling info, printable by `pretty-print-profiling-info'." nil 'macro)
 
 (autoload 'profile-key-sequence "profile" "\

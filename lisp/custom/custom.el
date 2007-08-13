@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9940
+;; Version: 1.9951
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -195,7 +195,7 @@ The following KEYWORD's are defined:
 :initialize VALUE should be a function used to initialize the
 	variable.  It takes two arguments, the symbol and value
 	given in the `defcustom' call.  The default is
-	`custom-initialize-default' 
+	`custom-initialize-set' 
 :set	VALUE should be a function to set the value of the symbol. 
 	It takes two arguments, the symbol to set and the value to
 	give it.  The default is `set-default'.

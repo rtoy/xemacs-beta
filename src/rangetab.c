@@ -99,9 +99,9 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       if (i > 0)
 	write_c_string (" ", printcharfun);
       if (rte->first == rte->last)
-	sprintf (buf, "%d ", rte->first);
+	sprintf (buf, "%ld ", (long) (rte->first));
       else
-	sprintf (buf, "(%d %d) ", rte->first, rte->last);
+	sprintf (buf, "(%ld %ld) ", (long) (rte->first), (long) (rte->last));
       write_c_string (buf, printcharfun);
       print_internal (rte->val, printcharfun, 1);
     }
@@ -199,7 +199,7 @@ verify_range_table (struct Lisp_Range_Table *rt)
 
 static Lisp_Object
 get_range_table (EMACS_INT pos, int nentries, struct range_table_entry *tab,
-		 Lisp_Object defalt)
+		 Lisp_Object default_)
 {
   int left = 0, right = nentries;
   
@@ -219,7 +219,7 @@ get_range_table (EMACS_INT pos, int nentries, struct range_table_entry *tab,
 	return entry->val;
     }
 
-  return defalt;
+  return default_;
 }
 
 DEFUN ("range-table-p", Frange_table_p, 1, 1, 0, /*
@@ -227,7 +227,7 @@ Return non-nil if OBJECT is a range table.
 */
        (object))
 {
-  return (RANGE_TABLEP (object) ? Qt : Qnil);
+  return RANGE_TABLEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("make-range-table", Fmake_range_table, 0, 0, 0, /*
@@ -272,7 +272,7 @@ DEFUN ("get-range-table", Fget_range_table, 2, 3, 0, /*
 Find value for position POS in TABLE.
 If there is no corresponding value, return DEFAULT (defaults to nil).
 */
-       (pos, table, defalt))
+       (pos, table, default_))
 {
   struct Lisp_Range_Table *rt;
   EMACS_INT po;
@@ -284,7 +284,7 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
   po = XINT (pos);
 
   return get_range_table (po, Dynarr_length (rt->entries),
-			  Dynarr_atp (rt->entries, 0), defalt);
+			  Dynarr_atp (rt->entries, 0), default_);
 }
 
 void
@@ -658,7 +658,7 @@ align_the_damn_table (void *unrangetab)
 
 Lisp_Object
 unified_range_table_lookup (void *unrangetab, EMACS_INT pos,
-			    Lisp_Object defalt)
+			    Lisp_Object default_)
 {
   void *new_dest;
   struct unified_range_table *un;
@@ -667,7 +667,7 @@ unified_range_table_lookup (void *unrangetab, EMACS_INT pos,
   new_dest = (char *) unrangetab + * (char *) unrangetab;
   un = (struct unified_range_table *) new_dest;
 
-  return get_range_table (pos, un->nentries, &un->first, defalt);
+  return get_range_table (pos, un->nentries, &un->first, default_);
 }
 
 /* Return number of entries in a unified range table. */

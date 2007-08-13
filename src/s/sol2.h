@@ -1,5 +1,4 @@
-/* Synched up with: FSF 19.31. */
-
+/* Synched up with: Completely divergent from FSF. */
 #define SOLARIS2 1
 #define POSIX 1
 
@@ -11,35 +10,44 @@
 #define USG5_4
 #endif
 
-#define __EXTENSIONS__ 1
-
 #undef  _POSIX_C_SOURCE
 
-/* Solaris 2.4 math.h doesn't respect __EXTENSIONS__ */
-#ifndef NOT_C_CODE
-
-#if OS_RELEASE <= 54
-#include <math.h>
-#endif /* <= Solaris 2.4 */
-
-/* Fix understandable GCC lossage on Solaris 2.6 */
-#if OS_RELEASE >= 56
-#ifdef __GNUC__
-#define __GNUC_VA_LIST
-#define _VA_LIST_
-#define _VA_LIST va_list
-typedef void *__gnuc_va_list;
-typedef __gnuc_va_list va_list;
-#endif /* GCC */
-#endif /* >= Solaris 2.6 */
-
-#endif /* C code */
+#if OS_RELEASE > 54
+/* There were some bugs with preprocessor symbol interaction, which
+   were not fixed until 2.5. */
+#define __EXTENSIONS__ 1
 
 #undef  _XOPEN_SOURCE
 #define _XOPEN_SOURCE 1
 
 #undef  _XOPEN_SOURCE_EXTENDED
 #define _XOPEN_SOURCE_EXTENDED 1
+#endif /* > Solaris 2.4 */
+
+/* Fix understandable GCC lossage on Solaris 2.6 */
+#if defined(__GNUC__) && OS_RELEASE >= 56 && !defined(NOT_C_CODE)
+
+/* GCC va_list munging is a little messed up */
+#define __GNUC_VA_LIST
+#define _VA_LIST_
+#define _VA_LIST va_list
+typedef void *__gnuc_va_list;
+typedef __gnuc_va_list va_list;
+
+/* Missing prototypes for functions added in Solaris 2.6 */
+#include <sys/types.h>
+struct msghdr;
+struct sockaddr;
+extern int     __xnet_bind    (int, const struct sockaddr *, size_t);
+extern int     __xnet_listen  (int, int);
+extern int     __xnet_connect (int, const struct sockaddr *, size_t);
+extern ssize_t __xnet_recvmsg (int, struct msghdr *, int);
+extern ssize_t __xnet_sendmsg (int, const struct msghdr *, int);
+extern ssize_t __xnet_sendto  (int, const void *, size_t, int, const struct sockaddr *, size_t);
+extern int     __xnet_socket  (int, int, int);
+extern int     __xnet_socketpair (int, int, int, int *);
+extern int     __xnet_getsockopt (int, int, int, void *, size_t *);
+#endif /* GCC && >= Solaris 2.6 && C code */
 
 #include "usg5-4-2.h"	/* XEmacs change from 5-4 to 5-4-2 */
 #undef PC /* Defined in x86 /usr/include/sys/reg.h */
@@ -85,13 +93,6 @@ typedef __gnuc_va_list va_list;
 #define BROKEN_XLISTFONTSWITHINFO
 #endif
 
-/* 2.5 now has random back in libc but we don't want to use it. */
-#if OS_RELEASE >= 55
-#undef HAVE_RANDOM
-/* Apparently not necessary here, and it causes 10% CPU chewage. */
-#undef BROKEN_SIGCHLD
-#endif /* >= SunOS 5.5 */
-
 /* XEmacs addition: Raymond Toy says XEmacs completely misses SIGCHLD
    when compiled with GCC 2.7.0 (but not, apparently, with SunPro C?),
    X11R6, and Solaris 2.4.
@@ -105,8 +106,15 @@ typedef __gnuc_va_list va_list;
 #endif
 
 #if OS_RELEASE < 55
+
+#if __STDC__ == 1 && defined(__SUNPRO_C)
+#define _POSIX_C_SOURCE 1
+#include <setjmp.h>
+#undef _POSIX_C_SOURCE
+#endif /* cc -Xc */
+
 /* Missing prototype, added in Solaris 2.5 */
-extern void *__builtin_alloca(size_t);
+extern void *__builtin_alloca (size_t);
 #endif /* before SunOS 5.5 */
 
 #if OS_RELEASE == 55
@@ -115,40 +123,24 @@ extern void *__builtin_alloca(size_t);
 int getpagesize (void);
 long random (void);
 void srandom (unsigned int seed);
-int usleep(unsigned int useconds);
+int usleep (unsigned int useconds);
 #endif /* SunOS 5.5 */
+
+/* 2.5 now has `random' back in libc but we don't want to use it. */
+#if OS_RELEASE >= 55
+#undef HAVE_RANDOM
+/* Apparently not necessary here, and it causes 10% CPU chewage. */
+#undef BROKEN_SIGCHLD
+#endif /* >= SunOS 5.5 */
 
 #if OS_RELEASE < 56
 /* Missing prototypes, added in Solaris 2.6 */
 struct timeval;
 int utimes (char *file, struct timeval *tvp);
-int gethostname(char *name, int namelen);
+int gethostname (char *name, int namelen);
 #endif /* before SunOS 5.6 */
 
-#if defined(__GNUC__) && OS_RELEASE >= 56
-/* Missing prototypes for functions added in Solaris 2.6 */
-struct msghdr;
-struct sockaddr;
-extern int __xnet_bind(int, const struct sockaddr *, size_t);
-extern int __xnet_listen(int, int);
-extern int __xnet_connect(int, const struct sockaddr *, size_t);
-extern ssize_t __xnet_recvmsg(int, struct msghdr *, int);
-extern ssize_t __xnet_sendmsg(int, const struct msghdr *, int);
-extern ssize_t __xnet_sendto(int, const void *, size_t, int, const struct sockaddr *, size_t);
-extern int __xnet_socket(int, int, int);
-extern int __xnet_socketpair(int, int, int, int *);
-extern int __xnet_getsockopt(int, int, int, void *, size_t *);
-#endif /* GCC && >= SunOS 5.6 */
-
 #include <sys/utsname.h> /* warning: macro redefined: SYS_NMLN */
-
-/* Get non-ANSI functions from ANSI header files in cc -Xc mode.
-   Sun has promised to fix setjmp.h */
-#if __STDC__ == 1 && defined(__SUNPRO_C)
-#define _POSIX_C_SOURCE 1
-#include <setjmp.h>
-#undef _POSIX_C_SOURCE
-#endif /* cc -Xc */
 
 /* XEmacs: Solaris has sigsetjmp but using it leads to core dumps at
    least under 2.4 */

@@ -1,5 +1,9 @@
 ;;; gui.el --- Basic GUI functions for XEmacs.
+
 ;; Copyright (C) 1996 Ben Wing
+
+;; Maintainer: XEmacs Development Team
+;; Keywords: internal
  
 ;; This file is part of XEmacs.
 
@@ -18,10 +22,14 @@
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(defvar dialog-frame-plist '(width 60 height 20)
+(defcustom dialog-frame-plist '(width 60 height 20)
   "Plist of frame properties for initially creating a dialog frame.
 Properties specified here supersede the values given in
-`default-frame-plist'.")
+`default-frame-plist'."
+  :type '(repeat (group :inline t
+			(symbol :tag "Property")
+			(sexp :tag "Value")))
+  :group 'frames)
 
 (defun make-dialog-frame (&optional props parent)
   "Create a frame suitable for use as a dialog box.

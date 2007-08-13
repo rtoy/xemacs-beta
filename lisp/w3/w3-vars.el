@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/07/02 17:41:53
-;; Version: 1.145
+;; Created: 1997/07/12 04:58:34
+;; Version: 1.149
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,7 +34,7 @@
 (require 'wid-edit)			; For `widget-keymap'
 
 (defconst w3-version-number
-  (let ((x "p3.0.93"))
+  (let ((x "p3.0.94"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -42,7 +42,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/07/02 17:41:53"))
+(defconst w3-version-date (let ((x "1997/07/12 04:58:34"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -405,6 +405,7 @@ last character position that was correctly filled.")
 (defvar w3-current-metainfo nil "An assoc list of <meta> tags for this doc.")
 (defvar w3-current-source nil "Source of current document.")
 (defvar w3-current-parse nil "Parsed version of current document.")
+(defvar w3-current-badhtml nil "List of HTML warnings for this page.")
 (defconst w3-default-continuation '(url-uncompress) 
   "Default action to start with - cleans text and uncompresses if necessary.")
 (defvar w3-find-this-link nil "Link to go to within a document.")
@@ -448,6 +449,7 @@ returns.")
     url-current-mime-viewer
     url-current-object
     url-current-referer
+    w3-current-badhtml
     w3-current-parse
     w3-current-isindex
     w3-current-last-buffer
@@ -545,16 +547,16 @@ returns.")
 (define-key w3-mode-map "\M-m"	   'w3-mail-current-document)
 (define-key w3-mode-map "\M-s"	   'w3-save-as)
 (define-key w3-mode-map "\M-\r"    'w3-follow-inlined-image)
-(define-key w3-mode-map "b"	   'w3-widget-backward)
+(define-key w3-mode-map "b"	   'widget-backward)
 (define-key w3-mode-map "c"        'w3-mail-document-author)
 (define-key w3-mode-map "d"        'w3-download-this-url)
-(define-key w3-mode-map "f"	   'w3-widget-forward)
+(define-key w3-mode-map "f"	   'widget-forward)
 (define-key w3-mode-map "g"        'w3-reload-document)
 (define-key w3-mode-map "i"        'w3-document-information)
 (define-key w3-mode-map "k"        'w3-save-url)
 (define-key w3-mode-map "l"        'w3-goto-last-buffer)
 (define-key w3-mode-map "m"        'w3-complete-link)
-(define-key w3-mode-map "n"        'w3-widget-forward)
+(define-key w3-mode-map "n"        'widget-forward)
 (define-key w3-mode-map "o"	   'w3-open-local)
 (define-key w3-mode-map "p"        'w3-print-this-url)
 (define-key w3-mode-map "q"	   'w3-quit)
@@ -568,18 +570,6 @@ returns.")
 (define-key w3-mode-map [(control alt t)] 'url-list-processes)
 (define-key w3-mode-map [(control meta t)] 'url-list-processes)
 
-;; Widget navigation
-(if t
-    nil
-  (define-key w3-mode-map "\r"          'w3-widget-button-press)
-  (define-key w3-mode-map "\n"          'w3-widget-button-press)
-  (define-key w3-mode-map [tab]         'w3-widget-forward)
-  (define-key w3-mode-map "\t"          'w3-widget-forward)
-  (define-key w3-mode-map "\M-\t"       'w3-widget-backward)
-  (define-key w3-mode-map [backtab]     'w3-widget-backward)
-  (define-key w3-mode-map [(shift tab)] 'w3-widget-backward)
-  (define-key w3-mode-map [(meta tab)]  'w3-widget-backward)
-  )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Keyword definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

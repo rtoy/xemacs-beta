@@ -231,7 +231,7 @@ each subgroup being member of the top level group.
 
 The top level group for the package should itself be member of one or
 more of the standard customization groups.  There exists a group for
-each @emph{finder} keyword.  Press @kbd{C-c p} to see a list of finder
+each @emph{finder} keyword.  Press @kbd{C-h p} to see a list of finder
 keywords, and add you group to each of them, using the @code{:group}
 keyword. 
 
@@ -406,6 +406,16 @@ per item.
 Newline and tab should be displayed as @samp{^J} and @samp{^I} in the
 @code{regexp} and @code{file} widgets.  I think this can be done in
 XEmacs by adding a display table to the face.
+
+@item
+Use glyphs to draw the @code{customize-browse} tree.
+
+Add echo and balloon help.  You should be able to read the documentation
+simply by moving the mouse pointer above the name.
+
+Add parent links.
+
+Add colors.
 
 @end itemize
 

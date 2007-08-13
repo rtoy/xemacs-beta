@@ -8,7 +8,8 @@
 
 /* NEWS-OS 5.0.2 */
 
-#define LIBS_MACHINE "-lmld"
+#undef LIBS_MACHINE
+/* #define LIBS_MACHINE "-lmld" */ /* mrb */
 
 #ifdef __GNUC__
 #define C_DEBUG_SWITCH "-g"
@@ -45,7 +46,7 @@
 /* Don't use the definitions in m/mips.h.  */
 #undef LINKER
 #undef LIBS_MACHINE
-#define LIBS_MACHINE "-lmld"
+/* #define LIBS_MACHINE "-lmld" */ /* mrb */
 
 #undef KERNEL_FILE
 #define KERNEL_FILE "/vmunix"

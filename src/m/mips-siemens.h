@@ -129,7 +129,8 @@ NOTE-END  */
 
 /* Alter some of the options used when linking.  */
 
-#define LIBS_MACHINE "-lmld"
+#undef LIBS_MACHINE
+/* #define LIBS_MACHINE "-lmld" */ /* mrb */
 #define START_FILES "pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/crti.o /usr/ccs/lib/values-Xt.o"
 
 #ifdef LIB_STANDARD

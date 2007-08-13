@@ -128,14 +128,14 @@
 (if update-elc-files-to-compile
     (progn
       (setq command-line-args
-;;	    (cons (car command-line-args)
-		  (append
-		   '("-l" "loadup-el.el" "run-temacs"
-		     "-batch" "-q" "-no-site-file"
-		     "-l" "bytecomp" "-f" "batch-byte-compile")
-		   update-elc-files-to-compile)) ;; )
-      (load "loadup-el.el")
-))
+	    (append '("-l" "loadup-el.el" "run-temacs"
+		      "-batch" "-q" "-no-site-file"
+		      "-l" "bytecomp" "-f" "batch-byte-compile")
+		    update-elc-files-to-compile))
+      (load "loadup-el.el"))
+  (condition-case nil
+      (delete-file "./NOBYTECOMPILE")
+    (t nil)))
 
 (kill-emacs)
 

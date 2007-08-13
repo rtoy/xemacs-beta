@@ -4,6 +4,9 @@
  * ----------------------------------------------------------------------------
  */
 
+/* SunOS 5.4+ way to ask for all functions in header files. */
+#define __EXTENSIONS__ 1
+
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>

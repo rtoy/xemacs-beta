@@ -86,7 +86,7 @@ struct database_struct
   Lisp_Object fname;
   XEMACS_DB_TYPE type;
   int mode;
-  int ackcess;
+  int access_;
   int dberrno;
   void *db_handle;
   DB_FUNCS *funcs;
@@ -117,14 +117,14 @@ new_database (void)
 
   dbase->fname = Qnil;
   dbase->db_handle = NULL;
-  dbase->ackcess = 0;
+  dbase->access_ = 0;
   dbase->mode = 0;
   dbase->dberrno = 0;
   dbase->type = DB_UNKNOWN;
 #ifdef MULE
   dbase->coding_system = Fget_coding_system (Qbinary);
 #endif
-  return (dbase);
+  return dbase;
 }
 
 static Lisp_Object
@@ -133,7 +133,7 @@ mark_database (Lisp_Object obj, void (*markobj) (Lisp_Object))
   struct database_struct *dbase = XDATABASE (obj);
 
   ((markobj) (dbase->fname));
-  return (Qnil);
+  return Qnil;
 }
 
 static void
@@ -153,8 +153,8 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       CONST char *perms;
       
       perms = (!dbase->db_handle)        ? "closed"    :
-	(dbase->ackcess & O_WRONLY) ? "writeonly" :
-	  (dbase->ackcess & O_RDWR)   ? "readwrite" : "readonly";
+	(dbase->access_ & O_WRONLY) ? "writeonly" :
+	  (dbase->access_ & O_RDWR)   ? "readwrite" : "readonly";
       
       type = dbase->funcs->get_type (dbase);
       subtype = dbase->funcs->get_subtype (dbase);
@@ -196,7 +196,7 @@ Close database OBJ.
   else
     signal_simple_error ("Attempting to access closed database", obj);
 
-  return (Qnil);
+  return Qnil;
 }
 
 DEFUN ("database-type", Fdatabase_type, 1, 1, 0, /*
@@ -221,7 +221,7 @@ Return the subtype of database OBJ, if any.
   CHECK_DATABASE (obj);
   db = XDATABASE (obj);
   
-  return (intern (db->funcs->get_subtype (db)));
+  return intern (db->funcs->get_subtype (db));
 }
 
 DEFUN ("database-live-p", Fdatabase_live_p, 1, 1, 0, /*
@@ -233,7 +233,7 @@ Return t iff OBJ is an active database, else nil.
   CHECK_DATABASE (obj);
   db = XDATABASE (obj);
 
-  return (DATABASE_LIVE_P (db) ? Qt : Qnil);
+  return DATABASE_LIVE_P (db) ? Qt : Qnil;
 }
 
 DEFUN ("database-file-name", Fdatabase_file_name, 1, 1, 0, /*
@@ -244,7 +244,7 @@ Return the filename associated with the database OBJ.
   struct database_struct *db;
   CHECK_DATABASE (obj);
   db = XDATABASE (obj);
-  return (db->fname);
+  return db->fname;
 }
 
 DEFUN ("databasep", Fdatabasep, 1, 1, 0, /*
@@ -252,7 +252,7 @@ Return t iff OBJ is a database, else nil.
 */
        (obj))
 {
-  return ((DATABASEP (obj)) ? Qt : Qnil);
+  return DATABASEP (obj) ? Qt : Qnil;
 }
 
 #ifdef HAVE_DBM
@@ -312,32 +312,32 @@ dbm_remove (struct database_struct *db, Lisp_Object key)
   datum keydatum;
   keydatum.dptr = (char *) XSTRING_DATA (key);
   keydatum.dsize = XSTRING_LENGTH (key);
-  return (dbm_delete (db->db_handle, keydatum));
+  return dbm_delete (db->db_handle, keydatum);
 }
 
 static Lisp_Object
 dbm_lisp_type (struct database_struct *db)
 {
-  return (Qdbm);
+  return Qdbm;
 }
 
 static CONST char *
 dbm_type (struct database_struct *db)
 {
-  return ("dbm");
+  return "dbm";
 }
 
 static CONST char *
 dbm_subtype (struct database_struct *db)
 {
-  return ("nil");
+  return "nil";
 }
 
 static void *
-new_dbm_file (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
+new_dbm_file (CONST char *file, Lisp_Object subtype, int access_, int mode)
 {
   DBM *db = NULL;
-  db = dbm_open ((char *) file, ackcess, mode);
+  db = dbm_open ((char *) file, access_, mode);
   return (void *) db;
 }
 
@@ -374,13 +374,13 @@ static DB_FUNCS ndbm_func_block =
 static Lisp_Object
 berkdb_lisp_type (struct database_struct *db)
 {
-  return (Qberkeley_db);
+  return Qberkeley_db;
 }
 
 static CONST char *
 berkdb_type (struct database_struct *db)
 {
-  return ("berkeley");
+  return "berkeley";
 }
 
 static CONST char *
@@ -389,22 +389,22 @@ berkdb_subtype (struct database_struct *db)
   DB *temp = (DB *)db->db_handle;
 
   if (!temp)
-    return ("nil");
+    return "nil";
   
   switch (temp->type)
     {
     case DB_BTREE:
-      return ("btree");
+      return "btree";
     case DB_HASH:
-      return ("hash");
+      return "hash";
     case DB_RECNO:
-      return ("recno");
+      return "recno";
     }
-  return ("unknown");
+  return "unknown";
 }
 
 static void *
-berkdb_open (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
+berkdb_open (CONST char *file, Lisp_Object subtype, int access_, int mode)
 {
   DB *db;
   DBTYPE real_subtype;
@@ -418,7 +418,7 @@ berkdb_open (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
   else
     signal_simple_error ("Unsupported subtype", subtype);
 
-  db = dbopen (file, ackcess, mode, real_subtype, NULL);
+  db = dbopen (file, access_, mode, real_subtype, NULL);
 
   return (void *) db;
 }
@@ -442,10 +442,10 @@ berkdb_get (struct database_struct *db, Lisp_Object key)
   status = dbp->get (dbp, &keydatum, &valdatum, 0);
 
   if (!status)
-    return (make_string (valdatum.data, valdatum.size));
+    return make_string (valdatum.data, valdatum.size);
 
   db->dberrno = (status == 1) ? -1 : errno;
-  return (Qnil);
+  return Qnil;
 }
 
 static int
@@ -543,7 +543,7 @@ Return the last error associated with database OBJ.
   
   CHECK_DATABASE (obj);
   db = XDATABASE (obj);
-  return (db->funcs->last_error (db));
+  return db->funcs->last_error (db);
 }
 
 DEFUN ("open-database", Fmake_database, 1, 5, 0, /*
@@ -551,7 +551,7 @@ Open database FILE, using database method TYPE and SUBTYPE, with
 access rights ACCESS and permissions MODE.  ACCESS can be any
 combination of 'r' 'w' and '+', for read, write, and creation flags.
 */
-       (file, type, subtype, ackcess, mode))
+       (file, type, subtype, access_, mode))
 {
   Lisp_Object retval = Qnil;
   int modemask;
@@ -563,15 +563,15 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
 
   CHECK_STRING (file);
 
-  if (NILP (ackcess))
+  if (NILP (access_))
     {
       accessmask = O_RDWR | O_CREAT;
     }
   else
     {
       char *acc;
-      CHECK_STRING (ackcess);
-      acc = (char *) XSTRING_DATA (ackcess);
+      CHECK_STRING (access_);
+      acc = (char *) XSTRING_DATA (access_);
       
       if (strchr (acc, '+'))
 	accessmask |= O_CREAT;
@@ -620,7 +620,7 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
 #endif
   
   signal_simple_error ("Unsupported database type", type);
-  return (Qnil);
+  return Qnil;
 
  db_done:
   db = funcblock->open_file ((char *) XSTRING_DATA (file), subtype,
@@ -628,19 +628,19 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   
   if (!db)
     {
-      return (Qnil);
+      return Qnil;
     }
   
   dbase = new_database ();
   dbase->fname = file;
   dbase->type = the_type;
   dbase->mode = modemask;
-  dbase->ackcess = accessmask;
+  dbase->access_ = accessmask;
   dbase->db_handle = db;
   dbase->funcs = funcblock;
   XSETDATABASE (retval, dbase);
 
-  return (retval);
+  return retval;
 }
 
 DEFUN ("put-database", Fputdatabase, 3, 4, 0, /*
@@ -684,7 +684,7 @@ DEFUN ("get-database", Fgetdatabase, 2, 3, 0, /*
 Find value for KEY in DATABASE.
 If there is no corresponding value, return DEFAULT (defaults to nil).
 */
-       (key, dbase, defalt))
+       (key, dbase, default_))
 {
   Lisp_Object retval;
   struct database_struct *db;
@@ -697,7 +697,7 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
 
   retval = db->funcs->get (db, key);
 
-  return (NILP (retval) ? defalt : retval);
+  return NILP (retval) ? default_ : retval;
 }
 
 DEFUN ("map-database", Fmapdatabase, 2, 2, 0, /*

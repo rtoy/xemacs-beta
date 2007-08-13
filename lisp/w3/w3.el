@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/06/30 05:29:38
-;; Version: 1.134
+;; Created: 1997/07/10 23:41:29
+;; Version: 1.139
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -799,14 +799,32 @@ and convert newlines into spaces."
 	url-setup-done nil
 	w3-hotlist nil
 	url-mime-accept-string nil)
-  (let ((x '(w3 mule-sysdp w3-e19 mm url w3-xemac w3-toolbar font)))
+  (let ((x '(w3 base64 css mule-sysdp w3-e19 mm url w3-xemac
+		w3-e20 dsssl dsssl-flow font images ssl url-auth
+		url-cache url-cookie url-file url-gopher url-gw
+		url-http url-mail url-misc url-news url-ns url-parse
+		url-vars w3-about w3-cus w3-display w3-e20 w3-elisp
+		w3-emulate w3-forms w3-hot w3-imap w3-jscript
+		w3-keyword w3-latex w3-menu w3-mouse w3-parse
+		w3-prefs w3-print w3-props w3-script w3-speak w3-style
+		w3-sysdp w3-toolbar w3-vars w3-widget w3-xemac w3
+		w3-toolbar font)))
     (while x
       (setq features (delq (car x) features)
 	    x (cdr x)))
     (require 'w3))
-  (w3-do-setup)
-  (url-do-setup)
-  )
+  (mapatoms (function
+	     (lambda (sym)
+	       (if (or (string-match "^w3-" (symbol-name sym))
+		       (string-match "^url-" (symbol-name sym))
+		       (string-match "^ssl-" (symbol-name sym))
+		       (string-match "^base64-" (symbol-name sym))
+		       (string-match "^dsssl-" (symbol-name sym))
+		       (string-match "^mm-" (symbol-name sym)))
+		   (progn
+		     (fmakunbound sym)
+		     (makunbound sym))))))
+  (require 'w3))
 
 (defun w3-source-document-at-point ()
   "View source to the document pointed at by link under point"
@@ -1565,11 +1583,17 @@ displayed in a new buffer."
     (insert-buffer buffer)
     (let ((inhibit-read-only t))
       (set-text-properties (point-min) (point-max) nil))
-    (if (not base)
-	(setq url-current-object
-	      (url-generic-parse-url (concat "file:"
-					     (buffer-file-name buffer))))
-      (setq url-current-object base))))
+    (cond
+     (base
+      (setq url-current-object base))      
+     ((buffer-file-name buffer)
+      (setq url-current-object
+	    (url-generic-parse-url (concat "file:"
+					   (buffer-file-name buffer)))))
+     (t
+      (setq url-current-object
+	    (url-generic-parse-url "file:/")
+	    url-current-mime-type "text/html")))))
 
 (defun w3-internal-url (url)
   ;; Handle internal urls (previewed buffers, etc)
@@ -1971,6 +1995,8 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 	 (mapconcat 'identity remember "\n")
 	 "------")))))
 
+(defvar w3-widget-global-map nil)
+
 ;;;###autoload
 (defun w3-do-setup ()
   "Do setup - this is to avoid conflict with user settings when W3 is
@@ -2062,8 +2088,6 @@ dumped with emacs."
       (setq w3-default-homepage
 	    (or (getenv "WWW_HOME")
 		"http://www.cs.indiana.edu/elisp/w3/docs.html")))
-
-  ; Set up the entity definition for PGP and PEM authentication
 
   (run-hooks 'w3-load-hook))
 
@@ -2237,6 +2261,27 @@ With optional ARG, move across that many fields."
       (if choice
 	  (w3-fetch choice)))))
 
+(defun w3-display-errors ()
+  "Display any HTML errors for the current page."
+  (interactive)
+  (let ((w3-notify 'friendly)
+	(inhibit-read-only t)
+	(buffer nil)
+	(todo w3-current-badhtml)
+	(url (url-view-url t)))
+    (if (not todo)
+	(error "No HTML errors on this page!  Amazing, isn't it?"))
+    (save-excursion
+      (set-buffer
+       (get-buffer-create (concat "HTML Errors for: " (or url "???"))))
+      (setq buffer (current-buffer))
+      (erase-buffer)
+      (while todo
+	(goto-char (point-min))
+	(insert "\n" (car todo))
+	(setq todo (cdr todo))))
+    (w3-notify-when-ready buffer)))
+
 (defun w3-mode ()
   "Mode for viewing HTML documents.  If called interactively, will
 display the current buffer as HTML.
@@ -2261,12 +2306,7 @@ Current keymap is:
 	    truncate-lines t
 	    mode-line-format w3-modeline-format)
       (run-hooks 'w3-mode-hook)
-      ;; Avoid calling the global bindings for RET and mouse-2.
-      (make-local-variable 'widget-global-map)
-      (setq widget-global-map  (make-sparse-keymap))
-      (widget-setup)
-      (if w3-current-isindex
-	  (setq mode-line-process "-Searchable")))))
+      (widget-setup))))
 
 (require 'mm)
 (require 'url)

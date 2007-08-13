@@ -160,17 +160,18 @@
 (require 'compile)			; compile-internal and grep-regexp-
 					; alist
 
+(eval-when-compile
+  (require 'dired))
+
 (defconst igrep-version "2.56"
   "Version of igrep.el")
 
 
 ;;; User options:
 
-(progn
-  (defgroup igrep nil
-    "An improved interface to `grep'."
-    :group 'processes)
-  )
+(defgroup igrep nil
+  "An improved interface to `grep'."
+  :group 'processes)
 
 (defcustom igrep-options nil
   "*The options passed by \\[igrep] to `igrep-program', or nil.
@@ -310,17 +311,25 @@ to `completing-read' when `igrep-program' is nil.")
 
 ;;; Commands:
 
-;; ;;;###autoload Not ready to replace compile.el's grep yet.  -sb 
-(defadvice grep (around igrep-interface first (&rest grep-args) activate)
-  "If called interactively, use the \\[igrep] interface instead,
+;; This used to be evaluated at top level.  We consider it evil, so it
+;; goes into a user-callable function.    --hniksic
+;;;###autoload
+(defun igrep-insinuate ()
+  "Replace the `grep' functions with `igrep'."
+  (defadvice grep (around igrep-interface first (&rest grep-args) activate)
+    "If called interactively, use the \\[igrep] interface instead,
 where GREP-ARGS is (PROGRAM EXPRESSION FILES OPTIONS);
 if called programmatically, GREP-ARGS is still (COMMAND)."
-  (interactive (igrep-read-args))
-  (if (interactive-p)
-      (apply (function igrep) grep-args)
-    ad-do-it))
+    (interactive (igrep-read-args))
+    (if (interactive-p)
+	(apply (function igrep) grep-args)
+      ad-do-it))
+  (defalias 'grep-find 'igrep-find)
+  (defalias 'dired-do-grep 'dired-do-igrep)
+  (defalias 'dired-do-grep-find 'dired-do-igrep-find))
 
-(defalias 'grep-find 'igrep-find)
+
+(defvar win32-quote-process-args)	; XEmacs
 
 ;;;###autoload
 (defun igrep (program expression files &optional options)
@@ -519,7 +528,6 @@ on the marked (or next prefix ARG) files."
 	 options))
 
 ;;;###autoload
-(defalias 'dired-do-grep 'dired-do-igrep)
 
 ;; Dired recursive (`find`) commands:
 
@@ -537,9 +545,6 @@ on the marked (or next prefix ARG) directories."
      (nconc igrep-args (list current-prefix-arg))))
   (let ((igrep-find t))
     (dired-do-igrep program expression options arg)))
-
-;;;###autoload
-(defalias 'dired-do-grep-find 'dired-do-igrep-find)
 
 
 ;;; Utilities:

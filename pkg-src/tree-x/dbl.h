@@ -44,9 +44,9 @@ typedef struct _doublebuffer {
 
 /* we need to remember which pixels and planes we allocated           */
 
-   int       mask;
-   long      pixels[DBL_MAX_COLORS];
-   long      planes[DBL_MAX_PLANES];
+   int           mask;
+   unsigned long pixels[DBL_MAX_COLORS];
+   unsigned long planes[DBL_MAX_PLANES];
 
 /* the pixel values one should use when drawing to the viewports      */
 

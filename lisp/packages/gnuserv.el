@@ -1,7 +1,7 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.7
+;; Version: 3.9
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
 ;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
@@ -75,6 +75,9 @@
 ;; Hrvoje Niksic <hniksic@srce.hr> May/1997
 ;;     Completely rewritten.  Now uses `defstruct' and other CL stuff
 ;;     to define clients cleanly.  Many thanks to Dave Gillespie!
+;;
+;; Mike Scheidler <c23mts@eng.delcoelect.com> July, 1997
+;;     Added 'Done' button to the menubar.
 
 
 ;;; Code:
@@ -132,8 +135,8 @@ only argument, and its return value will be interpreted as above."
 
 (defcustom gnuserv-done-function 'kill-buffer 
   "*Function used to remove a buffer after editing.
-It is called with one BUFFER argument.  Functions such as 'kill-buffer' and
-'bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
+It is called with one BUFFER argument.  Functions such as `kill-buffer' and
+`bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
   :type '(radio (function-item kill-buffer)
 		(function-item bury-buffer)
 		(function :tag "Other"))
@@ -141,8 +144,8 @@ It is called with one BUFFER argument.  Functions such as 'kill-buffer' and
 
 (defcustom gnuserv-done-temp-file-function 'kill-buffer
   "*Function used to remove a temporary buffer after editing.
-It is called with one BUFFER argument.  Functions such as 'kill-buffer' and
- 'bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
+It is called with one BUFFER argument.  Functions such as `kill-buffer' and
+`bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
   :type '(radio (function-item kill-buffer)
 		(function-item bury-buffer)
 		(function :tag "Other"))
@@ -438,11 +441,14 @@ If a flag is `view', view the files read-only."
 		     gnuserv-find-file-function)
 		   path)
 	  (goto-line line)
-	  (run-hooks 'gnuserv-visit-hook)
 	  ;; Don't memorize the quick and view buffers.
 	  (unless (or quick view)
 	    (pushnew (current-buffer) (gnuclient-buffers client))
-	    (setq gnuserv-minor-mode t))
+	    (setq gnuserv-minor-mode t)
+	    ;; Add the "Done" button to the menubar, only in this buffer.
+	    (set-buffer-menubar current-menubar)
+	    (add-menu-button nil ["Done" gnuserv-edit t]))
+	  (run-hooks 'gnuserv-visit-hook)
 	  (pop list)))
       (cond
        ((and (or quick view)
@@ -592,11 +598,13 @@ the function will not remove the frames associated with the client."
     (callf2 delq buffer (gnuclient-buffers client))
     (when (null (gnuclient-buffers client))
       (gnuserv-kill-client client)))
-  ;; Get rid of the buffer
+  ;; Get rid of the buffer.
   (save-excursion
     (set-buffer buffer)
     (run-hooks 'gnuserv-done-hook)
     (setq gnuserv-minor-mode nil)
+    ;; Delete the menu button.
+    (delete-menu-item '("Done"))
     (funcall (if (gnuserv-temp-file-p buffer)
 		 gnuserv-done-temp-file-function
 	       gnuserv-done-function)
