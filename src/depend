@@ -82,6 +82,7 @@ data.o: $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h lisp-disunion.h lis
 debug.o: $(LISP_H) bytecode.h debug.h lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h
 device-tty.o: $(LISP_H) buffer.h bufslots.h conslots.h console-stream.h console-tty.h console.h device.h events.h faces.h frame.h frameslots.h lisp-disunion.h lisp-union.h lrecord.h lstream.h mule-charset.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h sysdep.h syssignal.h systime.h systty.h toolbar.h
 device.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h elhash.h events.h faces.h frame.h frameslots.h keymap.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h sysdep.h syssignal.h systime.h toolbar.h window.h winslots.h
+dgif_lib.o: gifrlib.h
 dialog.o: $(LISP_H) conslots.h console.h device.h frame.h frameslots.h lisp-disunion.h lisp-union.h lrecord.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h
 dired.o: $(LISP_H) buffer.h bufslots.h commands.h elhash.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h ndir.h opaque.h regex.h symeval.h symsinit.h sysdir.h sysfile.h
 dll.o: $(LISP_H) buffer.h bufslots.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h symeval.h symsinit.h sysdll.h
@@ -91,7 +92,7 @@ dragdrop.o: $(LISP_H) dragdrop.h lisp-disunion.h lisp-union.h lrecord.h symeval.
 dynarr.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h
 ecrt0.o: config.h
 editfns.o: $(LISP_H) buffer.h bufslots.h commands.h conslots.h console.h device.h events.h extents.h frame.h frameslots.h insdel.h line-number.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h sysdep.h syspwd.h systime.h toolbar.h window.h winslots.h
-eldap.o: $(LISP_H) eldap.h lisp-disunion.h lisp-union.h lrecord.h opaque.h symeval.h symsinit.h sysdep.h
+eldap.o: $(LISP_H) buffer.h bufslots.h eldap.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h opaque.h symeval.h symsinit.h sysdep.h
 elhash.o: $(LISP_H) bytecode.h elhash.h hash.h lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h
 emacs.o: $(LISP_H) backtrace.h buffer.h bufslots.h commands.h conslots.h console.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h paths.h process.h symeval.h symsinit.h sysdep.h sysdll.h sysfile.h syssignal.h systime.h systty.h
 eval.o: $(LISP_H) backtrace.h buffer.h bufslots.h bytecode.h commands.h conslots.h console.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h opaque.h symeval.h symsinit.h
@@ -114,7 +115,8 @@ frame.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h events.h ex
 free-hook.o: $(LISP_H) hash.h lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h
 general.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h
 getloadavg.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h sysfile.h
-glyphs-eimage.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h file-coding.h frame.h frameslots.h glyphs.h imgproc.h insdel.h lisp-disunion.h lisp-union.h lrecord.h lstream.h mule-charset.h objects.h opaque.h scrollbar.h specifier.h symeval.h symsinit.h sysfile.h toolbar.h
+gif_io.o: gifrlib.h
+glyphs-eimage.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h faces.h file-coding.h frame.h frameslots.h gifrlib.h glyphs.h imgproc.h insdel.h lisp-disunion.h lisp-union.h lrecord.h lstream.h mule-charset.h objects.h opaque.h scrollbar.h specifier.h symeval.h symsinit.h sysfile.h toolbar.h
 glyphs.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h elhash.h faces.h frame.h frameslots.h glyphs.h insdel.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h objects.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h window.h winslots.h
 gmalloc.o: config.h getpagesize.h
 gpmevent.o: $(LISP_H) conslots.h console-tty.h console.h device.h events-mod.h events.h gpmevent.h lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h sysdep.h syssignal.h systime.h systty.h
@@ -199,7 +201,7 @@ unexfreebsd.o: config.h
 unexhp9k3.o: config.h sysdep.h
 unexhp9k800.o: config.h
 unexmips.o: config.h getpagesize.h
-unexnt.o: ntheap.h
+unexnt.o: config.h ntheap.h
 unexsunos4.o: config.h
 vm-limit.o: $(LISP_H) lisp-disunion.h lisp-union.h lrecord.h mem-limits.h symeval.h symsinit.h
 widget.o: $(LISP_H) buffer.h bufslots.h insdel.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h symeval.h symsinit.h

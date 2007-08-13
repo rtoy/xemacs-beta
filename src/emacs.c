@@ -3051,6 +3051,7 @@ The configured initial path for info documentation.
  * cores on us when re-started from the dumped executable.
  * This will have to go for 21.1  -- OG.
  */
+void __sti__iflPNGFile_c___(void);
 void __sti__iflPNGFile_c___()
 {
 }

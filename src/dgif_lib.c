@@ -912,7 +912,7 @@ void FreeSavedImages(GifFileType *GifFile)
 * Miscellaneous utility functions					      *
 ******************************************************************************/
 
-int BitSize(int n)
+static int BitSize(int n)
 /* return smallest bitfield size n will fit in */
 {
     register	int i;

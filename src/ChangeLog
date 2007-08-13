@@ -1,3 +1,20 @@
+1999-03-05  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.65 is released
+
+1999-03-02  Paul Keusemann  <pkeusem@visi.com>
+
+	* database.c (berkdb_map): Add flags argument to cursor call (must
+	  be 0 according to docs) required for Berkeley DB 2.6.4 and later.
+
+1999-03-03  Martin Buchholz  <martin@xemacs.org>
+
+	* console.h (struct console_methods): Always use full ANSI prototypes
+
+	* dgif_lib.c (BitSize): Make static.
+
+	* emacs.c (__sti__iflPNGFile_c___): Always use full ANSI prototypes
+
 1999-03-01  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.64 is released

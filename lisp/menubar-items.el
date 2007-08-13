@@ -156,9 +156,9 @@
 	      ;; not implemented yet
 	      ["Set coding system of keyboard"
 	       set-keyboard-coding-system :active nil]
-	      ;; not implemented yet
 	      ["Set coding system of process"
-	       set-current-process-coding-system :active nil]
+	       set-buffer-process-coding-system
+	       :active (get-buffer-process (current-buffer))]
 	      "--"
 	      ["Show character table" view-charset-by-menu]
 	      ;; not implemented yet
@@ -810,6 +810,14 @@
 		       (eq browse-url-browser-function 'browse-url-grail))
 	:active (and (boundp 'browse-url-browser-function)
 		     (fboundp 'browse-url-grail))]
+       ["Kfm" 
+	(customize-set-variable 'browse-url-browser-function
+				'browse-url-kfm)
+	:style radio
+	:selected (and (boundp 'browse-url-browser-function)
+		       (eq browse-url-browser-function 'browse-url-kfm))
+	:active (and (boundp 'browse-url-browser-function)
+		     (fboundp 'browse-url-kfm))]
        )
       "-----"
       ["Edit Faces..." (customize-face nil)]

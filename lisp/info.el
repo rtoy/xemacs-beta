@@ -1537,6 +1537,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
       (let ((compl (Info-build-annotation-completions)))
 	(save-excursion
 	  (save-restriction
+	    (widen)
 	    (if (marker-buffer Info-tag-table-marker)
 		(progn
 		  (set-buffer (marker-buffer Info-tag-table-marker))
@@ -1546,7 +1547,6 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
 			  (cons (list (buffer-substring (match-beginning 1)
 							(match-end 1)))
 				compl))))
-	      (widen)
 	      (goto-char (point-min))
 	      (while (search-forward "\n\^_" nil t)
 		(forward-line 1)

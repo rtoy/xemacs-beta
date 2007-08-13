@@ -351,7 +351,7 @@ x_init_device (struct device *d, Lisp_Object props)
    * Break apart the old XtOpenDisplay call into XOpenDisplay and
    * XtDisplayInitialize so we can figure out whether there
    * are any XEmacs resources in the resource database before
-   * we intitialize Xt.  This is so we can automagically support
+   * we initialize Xt.  This is so we can automagically support
    * both `Emacs' and `XEmacs' application classes.
    */
   slow_down_interrupts ();

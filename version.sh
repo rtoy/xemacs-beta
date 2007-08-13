@@ -1,7 +1,7 @@
 #!/bin/sh
 emacs_major_version=21
 emacs_minor_version=0
-emacs_beta_version=64
+emacs_beta_version=65
 xemacs_codename="20"
 infodock_major_version=4
 infodock_minor_version=0
