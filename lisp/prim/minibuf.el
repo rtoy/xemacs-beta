@@ -158,7 +158,7 @@ minibuffer is reinvoked while it is the selected window.")
     map)
   "Minibuffer keymap used by shell-command and related commands.")
 
-(defvar should-use-dialog-box t
+(defvar use-dialog-box t
   "Variable controlling usage of the dialog box.  If nil, the dialog box
 will never be used, even in response to mouse events.")
 
@@ -2007,11 +2007,11 @@ minibuffer.  This looks at `last-command-event' to see if it was a mouse
 event, and checks whether dialog-support exists and the current device
 supports dialog boxes.
 
-The dialog box is totally disabled if the variable `should-use-dialog-box'
+The dialog box is totally disabled if the variable `use-dialog-box'
 is set to nil."
   (and (featurep 'dialog)
        (device-on-window-system-p)
-       should-use-dialog-box
+       use-dialog-box
        (or force-dialog-box-use
 	   (button-press-event-p last-command-event)
 	   (button-release-event-p last-command-event)

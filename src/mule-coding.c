@@ -1991,6 +1991,9 @@ BUFFER defaults to the current buffer if unspecified.
   struct gcpro gcpro1, gcpro2;
 
   get_buffer_range_char (buf, start, end, &b, &e, 0);
+
+  barf_if_buffer_read_only (buf, b, e);
+
   coding_system = Fget_coding_system (coding_system);
   instream  = make_lisp_buffer_input_stream  (buf, b, e, 0);
   outstream = make_lisp_buffer_output_stream (buf, b, 0);
@@ -2379,6 +2382,9 @@ text.  BUFFER defaults to the current buffer if unspecified.
   struct gcpro gcpro1, gcpro2;
 
   get_buffer_range_char (buf, start, end, &b, &e, 0);
+
+  barf_if_buffer_read_only (buf, b, e);
+
   coding_system = Fget_coding_system (coding_system);
   instream  = make_lisp_buffer_input_stream  (buf, b, e, 0);
   outstream = make_lisp_buffer_output_stream (buf, b, 0);
@@ -2486,7 +2492,7 @@ do {							\
 
 #define ENCODE_SJIS(c1, c2, sj1, sj2)			\
 do {							\
-  int I1 = c1, I2 = sj2;				\
+  int I1 = c1, I2 = c2;					\
   if (I1 & 1)						\
     sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x31 : 0x71),	\
     sj2 = I2 - ((I2 >= 0xe0) ? 0x60 : 0x61);		\

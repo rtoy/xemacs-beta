@@ -3,7 +3,7 @@
 ;;; Copyright (C) 1985-1987, 1991-1994 Free Software Foundation, Inc.
 ;;; Copyright (C) 1996 Ben Wing.
 
-;; Author: Jamie Zawinski <jwz@lucid.com>
+;; Author: Jamie Zawinski <jwz@netscape.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
 ;; Keywords: internal
 
@@ -1224,18 +1224,20 @@ otherwise pop it")
 		(not (eq (car rest) 'new-scope)))
       (setq cell (car rest))
       (if (and (= 0 (logand byte-compile-referenced-bit (cdr cell)))
-	       ;; Don't warn about declared-but-unused arguments, for two
-	       ;; reasons: first, the arglist structure might be imposed by
-	       ;; external forces, and we don't have (declare (ignore x)) yet;
-	       ;; and second, inline expansion produces forms like
+	       ;; Don't warn about declared-but-unused arguments,
+	       ;; for two reasons: first, the arglist structure
+	       ;; might be imposed by external forces, and we don't
+	       ;; have (declare (ignore x)) yet; and second, inline
+	       ;; expansion produces forms like
 	       ;;   ((lambda (arg) (byte-code "..." [arg])) x)
-	       ;; which we can't (ok, well, don't) recognise as containing a
-	       ;; reference to arg, so every inline expansion would generate
-	       ;; a warning.  (If we had `ignore' then inline expansion could
-	       ;; emit an ignore declaration.)
+	       ;; which we can't (ok, well, don't) recognise as
+	       ;; containing a reference to arg, so every inline
+	       ;; expansion would generate a warning.  (If we had
+	       ;; `ignore' then inline expansion could emit an
+	       ;; ignore declaration.)
 	       (= 0 (logand byte-compile-arglist-bit (cdr cell)))
-	       ;; Don't warn about defvars because this is a legitimate special
-	       ;; binding.
+	       ;; Don't warn about defvars because this is a
+	       ;; legitimate special binding.
 	       (not (byte-compile-defvar-p (car cell))))
 	  (setq unreferenced (cons (car cell) unreferenced)))
       (setq rest (cdr rest)))
@@ -1705,7 +1707,7 @@ With argument, insert value in current buffer after the form."
 	       "\n(if (and (boundp 'emacs-version)\n"
 	       "\t (or (and (boundp 'epoch::version) epoch::version)\n"
 	       "\t     (and (not (string-match \"XEmacs\" emacs-version))\n"
-	       "\t          (string-lessp emacs-version \"19.29\"))n"
+	       "\t          (string-lessp emacs-version \"19.29\"))\n"
 	       "\t     (string-lessp emacs-version \"19.14\")))\n"
 	       "    (error \"`"
 	       ;; prin1-to-string is used to quote backslashes.

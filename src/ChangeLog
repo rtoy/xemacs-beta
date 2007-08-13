@@ -1,3 +1,26 @@
+Fri Feb  7 11:36:56 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* mule-coding.c (Fdecode_coding_region): Make explicit call to
+	`barf_if_buffer_read_only'.
+	(Fencode_coding_region): Ditto.
+
+Thu Feb  6 22:39:39 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* extents.c (syms_of_extents): Remove references to replicating
+	extents.
+
+	* extents.h (struct extent): Remove references to replicating
+	extents.
+
+Thu Feb  6 01:11:43 1997  Jareth Hein  <jhod@po.iijnet.or.jp>
+
+	* mule-coding.c (ENCODE_SJIS): Correct typo.
+
+Thu Feb  6 01:10:22 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* frame.c (delete_frame_internal): Protect against deletion of
+	frames with living popup children.
+
 Wed Feb  5 17:13:17 1997  David Moore  <dmoore@UCSD.EDU>
 
 	* emacs.c (main_1): Try to avoid collisions against potentially

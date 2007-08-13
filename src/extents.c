@@ -445,7 +445,6 @@ Lisp_Object Qread_only;
 /* Qhighlight defined in general.c */
 Lisp_Object Qunique;
 Lisp_Object Qduplicable;
-Lisp_Object Qreplicating;
 Lisp_Object Qdetachable;
 Lisp_Object Qpriority;
 Lisp_Object Qmouse_face;
@@ -2959,12 +2958,11 @@ print_extent_1 (char *buf, Lisp_Object extent_obj)
   if (!NILP (extent_read_only (anc))) *bp++ = '%';
   if (!NILP (extent_mouse_face (anc))) *bp++ = 'H';
   if (extent_unique_p (anc)) *bp++ = 'U';
-  else if (extent_replicating_p (anc)) *bp++ = 'R';
   else if (extent_duplicable_p (anc)) *bp++ = 'D';
   if (!NILP (extent_invisible (anc))) *bp++ = 'I';
 
   if (!NILP (extent_read_only (anc)) || !NILP (extent_mouse_face (anc)) ||
-      extent_unique_p (anc) || extent_replicating_p (anc) ||
+      extent_unique_p (anc) ||
       extent_duplicable_p (anc) || !NILP (extent_invisible (anc)))
     *bp++ = ' ';
 
@@ -5078,26 +5076,13 @@ The following symbols have predefined meanings:
                     string into a buffer, the extents are copied back
                     into the buffer.
                     
- replicating        Meaningful only in conjunction with `duplicable'.
-                    If this flag is set, extents that are copied from
-                    buffers into strings are made children of the
-                    original extent.  When the string is pasted back
-                    into a buffer, the same extent (i.e. the `eq'
-                    predicate applies) that was originally in the
-                    buffer will be used if possible -- i.e. if the
-                    extent is detached or the paste location abuts or
-                    overlaps the extent.  This behavior is compatible
-                    with the old "extent replica" behavior and was
-                    apparently required by Energize.
-                    
- unique             Meaningful only in conjunction with `duplicable'
-                    and `replicating'.  When this is set, there may be
-                    only one instance of this extent attached at a
-                    time: if it is copied to the kill ring and then
-                    yanked, the extent is not copied.  If, however, it
-                    is killed (removed from the buffer) and then
-                    yanked, it will be re-attached at the new
-                    position.
+ unique             Meaningful only in conjunction with `duplicable'.
+                    When this is set, there may be only one instance
+                    of this extent attached at a time: if it is copied
+                    to the kill ring and then yanked, the extent is
+                    not copied.  If, however, it is killed (removed
+                    from the buffer) and then yanked, it will be
+                    re-attached at the new position.
                     
  invisible          If the value is non-nil, text under this extent
                     may be treated as not present for the purpose of
@@ -5153,8 +5138,7 @@ The following symbols have predefined meanings:
                     `inside-margin', or `outside-margin') of the extent's
                     begin glyph.
 
- end-glyph-layout   The layout policy of the extent's end glyph.
-*/
+ end-glyph-layout The layout policy of the extent's end glyph.  */
        (extent, property, value))
 {
   /* This function can GC if property is `keymap' */
@@ -5167,8 +5151,6 @@ The following symbols have predefined meanings:
     extent_unique_p (e) = !NILP (value);
   else if (EQ (property, Qduplicable))
     extent_duplicable_p (e) = !NILP (value);
-  else if (EQ (property, Qreplicating))
-    extent_replicating_p (e) = !NILP (value);
   else if (EQ (property, Qinvisible))
     set_extent_invisible (e, value);
   else if (EQ (property, Qdetachable))
@@ -5255,7 +5237,6 @@ See `set-extent-property' for the built-in property names.
   else if (EQ (property, Qend_open))	 RETURN_FLAG (end_open);
   else if (EQ (property, Qunique))	 RETURN_FLAG (unique);
   else if (EQ (property, Qduplicable))	 RETURN_FLAG (duplicable);
-  else if (EQ (property, Qreplicating))	 RETURN_FLAG (replicating);
   else if (EQ (property, Qdetachable))	 RETURN_FLAG (detachable);
 #undef RETURN_FLAG
   /* Support (but don't document...) the obvious antonyms. */
@@ -5358,7 +5339,6 @@ Do not modify this list; use `set-extent-property' instead.
   result = Fcons (sym, Fcons (Qt, result))
   CONS_FLAG (end_open, Qend_open);
   CONS_FLAG (start_open, Qstart_open);
-  CONS_FLAG (replicating, Qreplicating);
   CONS_FLAG (detachable, Qdetachable);
   CONS_FLAG (duplicable, Qduplicable);
   CONS_FLAG (unique, Qunique);
@@ -5618,14 +5598,6 @@ add_string_extents_mapper (EXTENT extent, void *arg)
 				     end + closure->from))
 	return 0;
       e = copy_extent (extent, start, end, closure->string);
-      if (extent_replicating_p (extent))
-	{
-	  Lisp_Object e_obj = Qnil, extent_obj = Qnil;
-
-	  XSETEXTENT (e_obj, e);
-	  XSETEXTENT (extent_obj, extent);
-	  Fset_extent_parent (e_obj, extent_obj);
-	}
     }
 
   return 0;
@@ -5693,62 +5665,12 @@ splice_in_string_extents_mapper (EXTENT extent, void *arg)
   if (!extent_duplicable_p (extent))
     return 0;
 
-  if (!extent_replicating_p (extent))
-    {
-      if (!inside_undo &&
-	  !run_extent_paste_function (extent, new_start, new_end,
-				      closure->buffer))
-	return 0;
-      copy_extent (extent, new_start, new_end, closure->buffer);
-    }
-  else
-    {
-      Bytind parstart = 0;
-      Bytind parend = 0;
-      Lisp_Object parent_obj = extent_parent (extent);
-      EXTENT parent;
+  if (!inside_undo &&
+      !run_extent_paste_function (extent, new_start, new_end,
+				  closure->buffer))
+    return 0;
+  copy_extent (extent, new_start, new_end, closure->buffer);
 
-      if (!EXTENTP (parent_obj))
-	return 0;
-      parent = XEXTENT (parent_obj);
-      if (!EXTENT_LIVE_P (parent))
-	return 0;
-
-      if (!extent_detached_p (parent))
-	{
-	  parstart = extent_endpoint_bytind (parent, 0);
-	  parend = extent_endpoint_bytind (parent, 1);
-	}
-
-/* #### remove this crap */
-#ifdef ENERGIZE
-      /* Energize extents like toplevel-forms can only be pasted 
-	 in the buffer they come from.  This should be parametrized
-	 in the generic extent objects.  Right now just silently
-	 skip the extents if it's not from the same buffer.
-	 */
-      if (!EQ (extent_object (parent), closure->buffer)
-	  && energize_extent_data (parent))
-	return 0;
-#endif
-	  
-      /* If this is a `unique' extent, and it is currently attached
-	 somewhere other than here (non-overlapping), then don't copy
-	 it (that's what `unique' means).  If however it is detached,
-	 or if we are inserting inside/adjacent to the original
-	 extent, then insert_extent() will simply reattach it, which
-	 is what we want.
-	 */
-      if (extent_unique_p (parent)
-	  && !extent_detached_p (parent)
-	  && (!EQ (extent_object (parent), closure->buffer)
-	      || parend > new_end
-	      || parstart < new_start))
-	return 0;
-  
-      insert_extent (parent, new_start, new_end,
-		     closure->buffer, !inside_undo);
-    }
   return 0;
 }
 
@@ -5801,13 +5723,6 @@ copy_string_extents_1_mapper (EXTENT extent, void *arg)
   struct copy_string_extents_1_arg *closure = 
     (struct copy_string_extents_1_arg *) arg;
 
-  if (extent_replicating_p (extent) &&
-      EQ (extent_parent (extent), closure->parent_in_question))
-    {
-      closure->found_extent = extent;
-      return 1; /* stop mapping */
-    }
-
   return 0;
 }
 
@@ -5831,35 +5746,6 @@ copy_string_extents_mapper (EXTENT extent, void *arg)
   new_start = old_start + closure->new_pos - closure->old_pos;
   new_end = old_end + closure->new_pos - closure->old_pos;
 
-  if (extent_replicating_p (extent))
-    {
-      struct copy_string_extents_1_arg closure_1;
-
-      closure_1.parent_in_question = extent_parent (extent);
-      closure_1.found_extent = 0;
-
-      /* When adding a replicating extent, we need to make sure
-	 that there isn't an existing replicating extent referring
-	 to the same parent extent that abuts or overlaps.  If so,
-	 we merge with that extent rather than adding anew. */
-      map_extents_bytind (closure->old_pos, closure->old_pos + closure->length,
-			  copy_string_extents_1_mapper,
-			  (void *) &closure, closure->new_string, 0,
-			  /* get all extents that abut the region */
-			  ME_END_CLOSED | ME_ALL_EXTENTS_CLOSED);
-      if (closure_1.found_extent)
-	{
-	  Bytecount exstart =
-	    extent_endpoint_bytind (closure_1.found_extent, 0);
-	  Bytecount exend =
-	    extent_endpoint_bytind (closure_1.found_extent, 1);
-	  exstart = min (exstart, new_start);
-	  exend = max (exend, new_end);
-	  set_extent_endpoints (closure_1.found_extent, exstart, exend, Qnil);
-	  return 0;
-	}
-    }
-      
   copy_extent (extent,
 	       old_start + closure->new_pos - closure->old_pos,
 	       old_end + closure->new_pos - closure->old_pos,
@@ -6662,7 +6548,6 @@ syms_of_extents (void)
   /* defsymbol (&Qhighlight, "highlight"); in faces.c */
   defsymbol (&Qunique, "unique");
   defsymbol (&Qduplicable, "duplicable");
-  defsymbol (&Qreplicating, "replicating");
   defsymbol (&Qdetachable, "detachable");
   defsymbol (&Qpriority, "priority");
   defsymbol (&Qmouse_face, "mouse-face");

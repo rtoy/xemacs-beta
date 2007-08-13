@@ -1278,6 +1278,29 @@ delete_frame_internal (struct frame *f, int force,
 	}
     }
 
+  /* Test for popup frames hanging around. */
+  /* Deletion of a parent frame with popups is deadly. */
+  {
+    Lisp_Object frmcons, devcons, concons;
+
+    FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
+      {
+	Lisp_Object this = XCAR (frmcons);
+
+
+	if (! EQ (this, frame)
+	    && EQ (frame, DEVMETH_OR_GIVEN(XDEVICE(XCAR(devcons)),
+					   get_frame_parent,
+					   (XFRAME(this)),
+					   Qnil)))
+	  {
+	    /* We've found a popup frame whose parent is this frame. */
+	    signal_simple_error
+	      ("Attempt to delete a frame with live popups", frame);
+	  }
+      }
+  }
+
   /* Before here, we haven't made any dangerous changes (just checked for
      error conditions).  Now run the delete-frame-hook.  Remember that
      user code there could do any number of dangerous things, including

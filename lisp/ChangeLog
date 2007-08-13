@@ -1,3 +1,37 @@
+Fri Feb  7 03:09:32 1997  Alastair Burt <burt@dfki.uni-sb.de>
+
+	* bytecomp/bytecomp.el (byte-compile-insert-header): Correct
+	typo.
+
+Thu Feb  6 17:14:32 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/font-lock.el (font-lock-fontify-keywords-region):
+	Correct bounds checking in case the keywords regexp is not
+	properly anchored.
+
+	* packages/ps-print.el: Update maintainer address.
+
+Thu Feb  6 12:35:39 1997  Bill Dubuque  <wgd@martigny.ai.mit.edu>
+	
+	* cl/cl-macs.el (cl-do-proclaim): Correct addition of bound
+	variables to `byte-compile-bound-variables'.
+
+Thu Feb  6 01:07:56 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* bytecomp/bytecomp.el (byte-compile-warn-about-unused-variables):
+	Reverse previous patch.
+
+	* prim/minibuf.el (use-dialog-box): Rename from
+	should-use-dialog-box.
+	(should-use-dialog-box-p): Use it.
+
+	* bytecomp/bytecomp.el (byte-compile-warn-about-unused-variables):
+	cell is not a cons when the cl declare macro is used.
+
+Wed Feb  5 21:37:13 1997  Hrvoje Niksic  <hniksic@bjesomar.srce.hr>
+
+	* modes/cperl-mode.el: Provide 'cperl-mode.
+
 Tue Feb  4 11:51:25 1997  Greg Klanderman  <greg@alphatech.com>
 
 	* modes/make-mode.el: Remove `makefile-runtime-macros-list' from

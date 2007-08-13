@@ -1158,12 +1158,13 @@ START should be at the beginning of a line."
 	;; Find an occurrence of `matcher' from `start' to `end'.
 	(setq keyword (car keywords) matcher (car keyword))
 	(goto-char start)
-	(while (if (stringp matcher)
-		   (re-search-forward matcher end t)
-		 (funcall matcher end))
+	(while (and (< (point) end)
+		    (if (stringp matcher)
+			(re-search-forward matcher end t)
+		      (funcall matcher end)))
 	  ;; Apply each highlight to this instance of `matcher', which may be
 	  ;; specific highlights or more keywords anchored to `matcher'.
-	(setq highlights (cdr keyword))
+	  (setq highlights (cdr keyword))
 	(while highlights
 	  (if (numberp (car (car highlights)))
 	      (font-lock-apply-highlight (car highlights))

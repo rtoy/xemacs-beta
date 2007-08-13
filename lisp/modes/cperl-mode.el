@@ -32,7 +32,7 @@
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 
-;; $Id: cperl-mode.el,v 1.1.1.1 1996/12/18 22:42:48 steve Exp $
+;; $Id: cperl-mode.el,v 1.2 1997/02/08 03:26:07 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -4526,3 +4526,7 @@ y/SEARCHLIST/REPLACEMENTLIST/
 	    (cperl-get-help)
 	    (setq cperl-help-shown t))))
       (cperl-lazy-install)))
+
+(provide 'cperl-mode)
+
+;;; cperl-mode.el ends here

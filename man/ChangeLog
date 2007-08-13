@@ -1,3 +1,8 @@
+Thu Feb  6 22:57:09 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lispref/extents.texi (Duplicable Extents): replicable extents
+	are history.
+
 Wed Jan 29 19:59:41 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* xemacs-faq.texi (Q1.1.1): Correct typos.
