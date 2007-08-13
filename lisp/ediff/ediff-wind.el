@@ -22,11 +22,8 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
-
-(require 'ediff-init)
-;;(if ediff-xemacs-p
-;;    (nil) (require 'ediff-tbar)
-(defun ediff-compute-toolbar-width () 0)
+	 
+(provide 'ediff-wind)
 
 ;; Compiler pacifier
 (defvar icon-title-format)
@@ -38,7 +35,30 @@
 (defvar right-toolbar-width)
 (defvar default-menubar)
 (defvar frame-icon-title-format)
+(defvar ediff-diff-status)
+
+(eval-when-compile
+  (let ((load-path (cons  "." load-path)))
+    (or (featurep 'ediff-init)
+	(load "ediff-init.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-help)
+	(load "ediff-help.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-util)
+	(load "ediff-util.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-tbar)
+	(load "ediff-tbar.el" 'noerror nil 'nosuffix))
+    ))
 ;; end pacifier
+
+(require 'ediff-init)
+
+;; be careful with ediff-tbar
+(if ediff-xemacs-p
+    (condition-case nil
+	(require 'ediff-tbar)
+      (error
+       (defun ediff-compute-toolbar-width () 0)))
+  (defun ediff-compute-toolbar-width () 0))
 
 
 (defvar ediff-window-setup-function (if (ediff-window-display-p)
@@ -895,7 +915,7 @@ into icons, regardless of the window manager.")
     (modify-frame-parameters ctl-frame adjusted-parameters)
     (make-frame-visible ctl-frame)
     (ediff-make-bottom-toolbar) ; no effect if the toolbar is not requested
-
+    
     ;; This works around a bug in 19.25 and earlier. There, if frame gets
     ;; iconified, the current buffer changes to that of the frame that
     ;; becomes exposed as a result of this iconification.
@@ -1203,8 +1223,5 @@ It assumes that it is called from within the control buffer."
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
 ;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
-
-(provide 'ediff-wind)
-
 
 ;;; ediff-wind.el ends here

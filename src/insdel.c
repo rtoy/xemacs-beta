@@ -500,7 +500,7 @@ get_string_pos_byte (Lisp_Object string, Lisp_Object pos, unsigned int flags)
   Charcount ccpos = get_string_pos_char (string, pos, flags);
   if (ccpos < 0) /* could happen with GB_NO_ERROR_IF_BAD */
     return -1;
-  return charcount_to_bytecount (string_data (XSTRING (string)), ccpos);
+  return charcount_to_bytecount (XSTRING_DATA (string), ccpos);
 }
 
 void
@@ -552,11 +552,11 @@ get_string_range_byte (Lisp_Object string, Lisp_Object from, Lisp_Object to,
 
   get_string_range_char (string, from, to, &s, &e, flags);
   if (s >= 0)
-    *from_out = charcount_to_bytecount (string_data (XSTRING (string)), s);
+    *from_out = charcount_to_bytecount (XSTRING_DATA (string), s);
   else /* could happen with GB_NO_ERROR_IF_BAD */
     *from_out = -1;
   if (e >= 0)
-    *to_out = charcount_to_bytecount (string_data (XSTRING (string)), e);
+    *to_out = charcount_to_bytecount (XSTRING_DATA (string), e);
   else
     *to_out = -1;
 
@@ -634,7 +634,7 @@ Bytind
 buffer_or_string_accessible_end_byte (Lisp_Object object)
 {
   if (STRINGP (object))
-    return string_length (XSTRING (object));
+    return XSTRING_LENGTH (object);
   return BI_BUF_ZV (XBUFFER (object));
 }
 
@@ -666,7 +666,7 @@ Bytind
 buffer_or_string_absolute_end_byte (Lisp_Object object)
 {
   if (STRINGP (object))
-    return string_length (XSTRING (object));
+    return XSTRING_LENGTH (object);
   return BI_BUF_Z (XBUFFER (object));
 }
 
@@ -1435,13 +1435,13 @@ fixup_internal_substring (CONST Bufbyte *nonreloc, Lisp_Object reloc,
       if (nonreloc)
 	*len = strlen ((CONST char *) nonreloc) - offset;
       else
-	*len = string_length (XSTRING (reloc)) - offset;
+	*len = XSTRING_LENGTH (reloc) - offset;
     }
   assert (*len >= 0);
   if (STRINGP (reloc))
     {
-      assert (offset >= 0 && offset <= string_length (XSTRING (reloc)));
-      assert (offset + *len <= string_length (XSTRING (reloc)));
+      assert (offset >= 0 && offset <= XSTRING_LENGTH (reloc));
+      assert (offset + *len <= XSTRING_LENGTH (reloc));
     }
 }
 
@@ -1525,7 +1525,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
 
   /* string may have been relocated up to this point */
   if (STRINGP (reloc))
-    nonreloc = string_data (XSTRING (reloc));
+    nonreloc = XSTRING_DATA (reloc);
 
   ind = bufpos_to_bytind (buf, pos);
   cclen = bytecount_to_charcount (nonreloc + offset, length);
@@ -1544,7 +1544,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
 
   /* string may have been relocated up to this point */
   if (STRINGP (reloc))
-    nonreloc = string_data (XSTRING (reloc));
+    nonreloc = XSTRING_DATA (reloc);
 
   memcpy (BUF_GPT_ADDR (buf), nonreloc + offset, length);
 
@@ -1610,7 +1610,7 @@ buffer_insert_lisp_string_1 (struct buffer *buf, Bufpos pos, Lisp_Object str,
   /* This function can GC */
   assert (STRINGP (str));
   return buffer_insert_string_1 (buf, pos, 0, str, 0,
-				 string_length (XSTRING (str)),
+				 XSTRING_LENGTH (str),
 				 flags);
 }
 
@@ -1656,7 +1656,7 @@ buffer_insert_from_buffer_1 (struct buffer *buf, Bufpos pos,
   /* This function can GC */
   Lisp_Object str = make_string_from_buffer (buf2, pos2, length);
   return buffer_insert_string_1 (buf, pos, 0, str, 0,
-				 string_length (XSTRING (str)), flags);
+				 XSTRING_LENGTH (str), flags);
 }
 
 
@@ -1878,7 +1878,7 @@ make_string_from_buffer (struct buffer *buf, Bufpos pos, Charcount length)
   {
     Bytecount len1 = BI_BUF_GPT (buf) - bi_ind;
     Bufbyte *start1 = BI_BUF_BYTE_ADDRESS (buf, bi_ind);
-    Bufbyte *dest = string_data (XSTRING (val));
+    Bufbyte *dest = XSTRING_DATA (val);
 
     if (len1 < 0)
       {

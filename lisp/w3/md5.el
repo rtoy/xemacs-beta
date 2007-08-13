@@ -131,9 +131,8 @@ Returns a vector of 16 bytes containing the message digest."
       (erase-buffer)
       (insert message)
       (call-process-region (point-min) (point-max)
-			   (or shell-file-name "/bin/sh")
-			   t (current-buffer) nil
-			   "-c" md5-program)
+			   md5-program
+			   t (current-buffer))
       ;; MD5 digest is 32 chars long
       ;; mddriver adds a newline to make neaten output for tty
       ;; viewing, make sure we leave it behind.
@@ -367,7 +366,7 @@ Returns a vector of 16 bytes containing the message digest."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Here begins the merger with the XEmacs API and the md5.el from the URL
-;;; package.  Courtesy wmperry@spry.com
+;;; package.  Courtesy wmperry@cs.indiana.edu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun md5 (object &optional start end)
   "Return the MD5 (a secure message digest algorithm) of an object.

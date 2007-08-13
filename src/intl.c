@@ -208,9 +208,9 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
 
   if (STRINGP (string)) {
 #ifdef DEBUG_XEMACS
-    stderr_out ("\nFgettext (%s) called.\n", string_data (XSTRING (string)));
+    stderr_out ("\nFgettext (%s) called.\n", XSTRING_DATA (string));
 #endif
-    return build_string (gettext ((char *) string_data (XSTRING (string))));
+    return build_string (gettext ((char *) XSTRING_DATA (string)));
   } else {
     return string;
   }
@@ -238,8 +238,8 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
   CHECK_STRING (domain);
   CHECK_STRING (string);
 #ifdef I18N3
-  return build_string (dgettext ((char *) string_data (XSTRING (domain)),
-				 (char *) string_data (XSTRING (string))));
+  return build_string (dgettext ((char *) XSTRING_DATA (domain),
+				 (char *) XSTRING_DATA (string)));
 #else
   return string;
 #endif
@@ -257,8 +257,8 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
   CHECK_STRING (domain);
   CHECK_STRING (pathname);
 #ifdef I18N3
-  return build_string (bindtextdomain ((char *) string_data (XSTRING (domain)),
-				       (char *) string_data (XSTRING (pathname))));
+  return build_string (bindtextdomain ((char *) XSTRING_DATA (domain),
+				       (char *) XSTRING_DATA (pathname)));
 #else
   return Qnil;
 #endif

@@ -1084,7 +1084,7 @@ to make one entry in the kill ring."
    ;;	  (message "Read only text copied to kill ring")
     (setq this-command 'kill-region)
     (barf-if-buffer-read-only)
-    (signal 'text-read-only (list (current-buffer))))
+    (signal 'buffer-read-only (list (current-buffer))))
 
    ;; In certain cases, we can arrange for the undo list and the kill
    ;; ring to share the same string object.  This code does that.

@@ -111,7 +111,7 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   if (print_readably)
     error ("printing unreadable object #<device %s 0x%x>",
-	   string_data (XSTRING (d->name)), d->header.uid);
+	   XSTRING_DATA (d->name), d->header.uid);
 
   sprintf (buf, "#<%s-device", !DEVICE_LIVE_P (d) ? "dead" :
 	   DEVICE_TYPE_NAME (d));

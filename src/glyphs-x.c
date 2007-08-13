@@ -276,11 +276,11 @@ locate_pixmap_file (Lisp_Object name)
   /* Check non-absolute pathnames with a directory component relative to
      the search path; that's the way Xt does it. */
   /* #### Unix-specific */
-  if (string_byte (XSTRING (name), 0) == '/' ||
-      (string_byte (XSTRING (name), 0) == '.' &&
-       (string_byte (XSTRING (name), 1) == '/' ||
-	(string_byte (XSTRING (name), 1) == '.' &&
-	 (string_byte (XSTRING (name), 2) == '/')))))
+  if (XSTRING_BYTE (name, 0) == '/' ||
+      (XSTRING_BYTE (name, 0) == '.' &&
+       (XSTRING_BYTE (name, 1) == '/' ||
+	(XSTRING_BYTE (name, 1) == '.' &&
+	 (XSTRING_BYTE (name, 2) == '/')))))
     {
       if (!NILP (Ffile_readable_p (name)))
 	return name;
@@ -300,7 +300,7 @@ locate_pixmap_file (Lisp_Object name)
     char *path = egetenv ("XBMLANGPATH");
     SubstitutionRec subs[1];
     subs[0].match = 'B';
-    subs[0].substitution = (char *) string_data (XSTRING (name));
+    subs[0].substitution = (char *) XSTRING_DATA (name);
     /* #### Motif uses a big hairy default if $XBMLANGPATH isn't set.
        We don't.  If you want it used, set it. */
     if (path &&
@@ -2297,7 +2297,7 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
   char **data;
   int result;
 
-  result = XpmReadFileToData ((char *) string_data (XSTRING (name)), &data);
+  result = XpmReadFileToData ((char *) XSTRING_DATA (name), &data);
 
   if (result == XpmSuccess)
     {
@@ -2541,7 +2541,7 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
       if (! XAllocColor (dpy, cmap, &color))
 	abort ();  /* it must be allocable since we're just duplicating it */
 
-      symbols [i].name = (char *) string_data (XSTRING (XCAR (cons)));
+      symbols [i].name = (char *) XSTRING_DATA (XCAR (cons));
       symbols [i].pixel = color.pixel;
       symbols [i].value = 0;
       free_cons (XCONS (cons));
@@ -2631,7 +2631,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   result = XpmCreatePixmapFromBuffer (dpy,
 				      RootWindowOfScreen (xs),
-				      (char *) string_data (XSTRING (data)),
+				      (char *) XSTRING_DATA (data),
 				      &pixmap, &mask, &xpmattrs);
 
   if (color_symbols)
@@ -3253,7 +3253,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
 
   if (!STRINGP (data) ||
-      strncmp ("FONT ", (char *) string_data (XSTRING (data)), 5))
+      strncmp ("FONT ", (char *) XSTRING_DATA (data), 5))
     signal_simple_error ("Invalid font-glyph instantiator",
 			 instantiator);
 
@@ -3269,7 +3269,7 @@ font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   generate_cursor_fg_bg (device, &foreground, &background, &fg, &bg);
 
-  count = sscanf ((char *) string_data (XSTRING (data)),
+  count = sscanf ((char *) XSTRING_DATA (data),
 		  "FONT %s %d %s %d %c",
 		  source_name, &source_char,
 		  mask_name, &mask_char, &dummy);
@@ -3602,11 +3602,11 @@ Subwindows are not currently implemented.
   dpy = DisplayOfScreen (LISP_DEVICE_TO_X_SCREEN
 			 (FRAME_DEVICE (XFRAME (sw->frame))));
 
-  property_atom = XInternAtom (dpy, (char *) string_data (XSTRING (property)),
+  property_atom = XInternAtom (dpy, (char *) XSTRING_DATA (property),
 			       False);
   XChangeProperty (dpy, sw->subwindow, property_atom, XA_STRING, 8,
-		   PropModeReplace, string_data (XSTRING (data)),
-		   string_length (XSTRING (data)));
+		   PropModeReplace, XSTRING_DATA (data),
+		   XSTRING_LENGTH (data));
 
   return (property);
 }

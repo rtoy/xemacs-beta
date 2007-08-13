@@ -390,8 +390,8 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 
   if (!NILP (format_reloc))
     {
-      format_nonreloc = string_data (XSTRING (format_reloc));
-      format_length = string_length (XSTRING (format_reloc));
+      format_nonreloc = XSTRING_DATA (format_reloc);
+      format_length = XSTRING_LENGTH (format_reloc);
     }
   if (format_length < 0)
     format_length = (Bytecount) strlen ((CONST char *) format_nonreloc);
@@ -419,7 +419,7 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 
       /* Copy the text before */
       if (!NILP (format_reloc)) /* refetch in case of GC below */
-	format_nonreloc = string_data (XSTRING (format_reloc));
+	format_nonreloc = XSTRING_DATA (format_reloc);
        doprnt_1 (stream, format_nonreloc + spec->text_before,
 		 spec->text_before_len, 0, -1, 0, 0);
 

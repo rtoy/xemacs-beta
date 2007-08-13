@@ -288,9 +288,9 @@ Symbols are also allowed; their print names are used instead.
   CHECK_STRING (s1);
   CHECK_STRING (s2);
 
-  len = string_length (XSTRING (s1));
-  if (len != string_length (XSTRING (s2)) ||
-      memcmp (string_data (XSTRING (s1)), string_data (XSTRING (s2)), len))
+  len = XSTRING_LENGTH (s1);
+  if (len != XSTRING_LENGTH (s2) ||
+      memcmp (XSTRING_DATA (s1), XSTRING_DATA (s2), len))
     return Qnil;
   return Qt;
 }
@@ -696,7 +696,7 @@ concat (int nargs, Lisp_Object *args,
 #endif
 	}
       if (STRINGP (seq))
-	string_source_ptr = string_data (XSTRING (seq));
+	string_source_ptr = XSTRING_DATA (seq);
 
       while (1)
 	{
@@ -870,9 +870,9 @@ Relevant parts of the string-extent-data are copied in the new string.
   CHECK_INT (from);
   get_string_range_char (string, from, to, &ccfr, &ccto,
 			 GB_HISTORICAL_STRING_BEHAVIOR);
-  bfr = charcount_to_bytecount (string_data (XSTRING (string)), ccfr);
-  bto = charcount_to_bytecount (string_data (XSTRING (string)), ccto);
-  val = make_string (string_data (XSTRING (string)) + bfr, bto - bfr);
+  bfr = charcount_to_bytecount (XSTRING_DATA (string), ccfr);
+  bto = charcount_to_bytecount (XSTRING_DATA (string), ccto);
+  val = make_string (XSTRING_DATA (string) + bfr, bto - bfr);
   /* Copy any applicable extent information into the new string: */
   copy_string_extents (val, string, 0, bfr, bto - bfr);
   return (val);
@@ -2793,10 +2793,10 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 #endif /* !LRECORD_VECTOR */
   else if (STRINGP (o1))
     {
-      Bytecount len = string_length (XSTRING (o1));
-      if (len != string_length (XSTRING (o2)))
+      Bytecount len = XSTRING_LENGTH (o1);
+      if (len != XSTRING_LENGTH (o2))
 	return (0);
-      if (memcmp (string_data (XSTRING (o1)), string_data (XSTRING (o2)), len))
+      if (memcmp (XSTRING_DATA (o1), XSTRING_DATA (o2), len))
 	return (0);
       return (1);
     }

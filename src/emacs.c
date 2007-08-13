@@ -43,7 +43,8 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"
 
-#if defined (I18N2) || defined (I18N3) || defined (I18N4)
+#if defined (HAVE_LOCALE_H) && \
+   (defined (I18N2) || defined (I18N3) || defined (I18N4))
 #include <locale.h>
 #endif
 
@@ -265,7 +266,7 @@ memory_warning_signal (int sig)
   /* It might be unsafe to call do_auto_save now.  */
   force_auto_save_soon ();
 }
-#endif
+#endif /* SIGDANGER */
 
 /* Code for dealing with Lisp access to the Unix command line */
 
@@ -363,7 +364,7 @@ main_1 (int argc, char **argv, char **envp)
   
   /* 19-Jun-1995 -baw
    * NeXT secret magic, ripped from Emacs-for-NS by Carl Edman
-   * <cedman@princton.edu>.  Note that even Carl doesn't know what this
+   * <cedman@princeton.edu>.  Note that even Carl doesn't know what this
    * does; it was provided by NeXT, and it presumable makes NS's mallocator
    * work with dumping.  But malloc_jumpstart() and malloc_freezedry() in
    * unexnext.c are both completely undocumented, even in NS header files!
@@ -409,14 +410,10 @@ main_1 (int argc, char **argv, char **envp)
 #ifdef LINK_CRTL_SHARE
 #ifdef SHAREABLE_LIB_BUG
   /* Bletcherous shared libraries! */
-  if (!stdin)
-    stdin = fdopen (0, "r");
-  if (!stdout)
-    stdout = fdopen (1, "w");
-  if (!stderr)
-    stderr = fdopen (2, "w");
-  if (!environ)
-    environ = envp;
+  if (!stdin)  stdin  = fdopen (0, "r");
+  if (!stdout) stdout = fdopen (1, "w");
+  if (!stderr) stderr = fdopen (2, "w");
+  if (!environ) environ = envp;
 #endif /* SHAREABLE_LIB_BUG */
 #endif /* LINK_CRTL_SHARE */
 #endif /* VMS */
@@ -1583,11 +1580,11 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	   to try to make the backtrace-determination process as foolproof
 	   as possible. */
 	if (GC_STRINGP (Vinvocation_name))
-	  name = (char *) string_data (XSTRING (Vinvocation_name));
+	  name = (char *) XSTRING_DATA (Vinvocation_name);
 	else
 	  name = "xemacs";
 	if (GC_STRINGP (Vinvocation_directory))
-	  dir = (char *) string_data (XSTRING (Vinvocation_directory));
+	  dir = (char *) XSTRING_DATA (Vinvocation_directory);
 	if (!dir || dir[0] != '/')
 	  stderr_out ("`which %s`", name);
 	else if (dir[strlen (dir) - 1] != '/')
@@ -1663,7 +1660,7 @@ This function exists on systems that use HAVE_SHM.
   memory_warnings (&my_edata, malloc_warning);
 #endif
   UNGCPRO;
-  map_out_data (string_data (XSTRING (intoname)));
+  map_out_data (XSTRING_DATA (intoname));
 
   purify_flag = opurify;
 
@@ -1703,7 +1700,7 @@ and announce itself normally when it is run.
   if (!NILP (symname))
     {
       CHECK_STRING (symname);
-      if (string_length (XSTRING (symname)) > 0)
+      if (XSTRING_LENGTH (symname) > 0)
 	symname = Fexpand_file_name (symname, Qnil);
       else
 	symname = Qnil;
@@ -1721,7 +1718,7 @@ and announce itself normally when it is run.
   release_breathing_space ();
 
 #ifdef VMS
-  mapout_data (string_data (XSTRING (intoname)));
+  mapout_data (XSTRING_DATA (intoname));
 #else
   /* Tell malloc where start of impure now is */
   /* Also arrange for warnings when nearly out of space.  */
@@ -1733,10 +1730,10 @@ and announce itself normally when it is run.
 
 #if defined (MSDOS) && defined (EMX)
   {
-    int fd = open ((char *) string_data (XSTRING (intoname)),
+    int fd = open ((char *) XSTRING_DATA (intoname),
                    O_WRONLY|O_CREAT|O_TRUNC, S_IREAD|S_IWRITE);
     if (!fd) {
-      error ("Failure operating on %s", string_data (XSTRING (intoname)));
+      error ("Failure operating on %s", XSTRING_DATA (intoname));
     } else {
       _core (fd);
       close (fd);

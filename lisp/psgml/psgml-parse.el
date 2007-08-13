@@ -1,5 +1,5 @@
 ;;;; psgml-parse.el --- Parser for SGML-editing mode with parsing support
-;; $Id: psgml-parse.el,v 1.2 1997/01/04 21:20:07 steve Exp $
+;; $Id: psgml-parse.el,v 1.3 1997/01/11 22:10:17 steve Exp $
 
 ;; Copyright (C) 1994, 1995 Lennart Staflin
 
@@ -1206,7 +1206,7 @@ buffer is assumend to be empty to start with."
     (sgml-pop-entity)
     (erase-buffer)
     ;; For XEmacs-20.0/Mule
-    (setq file-coding-system 'noconv)
+    (setq file-coding-system 'no-conversion)
     (sgml-write-dtd sgml-dtd-info to-file)
     t))
 
@@ -1234,7 +1234,7 @@ buffer is assumend to be empty to start with."
   "Merge the binary coded dtd in the current buffer with the current dtd.
 The current dtd is the variable sgml-dtd-info.  Return t if mereged
 was successfull or nil if failed."
-  (setq file-coding-system 'noconv)
+  (setq file-coding-system 'no-conversion)
   (goto-char (point-min))
   (sgml-read-sexp)			; skip filev
   (let ((dependencies (sgml-read-sexp))
@@ -2368,7 +2368,7 @@ overrides the entity type in entity look up."
     ;; (reported by Jeffrey Friedl <jfriedl@nff.ncl.omron.co.jp>)
     (setq mc-flag nil)
     ;; For XEmacs 20.0/Mule
-    (setq file-coding-system 'noconv)
+    (setq file-coding-system 'no-conversion)
     (when (eq sgml-scratch-buffer (default-value 'sgml-scratch-buffer))
       (make-local-variable 'sgml-scratch-buffer)
       (setq sgml-scratch-buffer nil))

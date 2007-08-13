@@ -138,7 +138,7 @@ print_database (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       subtype = dbase->funcs->get_subtype (dbase);
       
       sprintf (buf, "#<database %s (%s/%s/%s) 0x%x>",
-	       string_data (XSTRING (dbase->fname)), type, subtype, perms,
+	       XSTRING_DATA (dbase->fname), type, subtype, perms,
 	       dbase->header.uid);
       write_c_string (buf, printcharfun);
     }
@@ -264,8 +264,8 @@ dbm_get (struct database_struct *db, Lisp_Object key)
 {
   datum keydatum, valdatum;
   DBM *handle = (DBM *)db->db_handle;
-  keydatum.dptr = (char *) string_data (XSTRING (key));
-  keydatum.dsize = string_length (XSTRING (key));
+  keydatum.dptr = (char *) XSTRING_DATA (key);
+  keydatum.dsize = XSTRING_LENGTH (key);
   valdatum = dbm_fetch (handle, keydatum);
 
   return (valdatum.dptr
@@ -282,10 +282,10 @@ dbm_put (struct database_struct *db,
   DBM *handle = (DBM *)db->db_handle;
   datum keydatum, valdatum;
   
-  valdatum.dptr = (char *) string_data (XSTRING (val));
-  valdatum.dsize = string_length (XSTRING (val));
-  keydatum.dptr = (char *) string_data (XSTRING (key));
-  keydatum.dsize = string_length (XSTRING (key));
+  valdatum.dptr = (char *) XSTRING_DATA (val);
+  valdatum.dsize = XSTRING_LENGTH (val);
+  keydatum.dptr = (char *) XSTRING_DATA (key);
+  keydatum.dsize = XSTRING_LENGTH (key);
 
   return (!dbm_store (handle, keydatum, valdatum,
 		      (NILP (replace)) ? DBM_INSERT : DBM_REPLACE));
@@ -295,8 +295,8 @@ static int
 dbm_remove (struct database_struct *db, Lisp_Object key)
 {
   datum keydatum;
-  keydatum.dptr = (char *) string_data (XSTRING (key));
-  keydatum.dsize = string_length (XSTRING (key));
+  keydatum.dptr = (char *) XSTRING_DATA (key);
+  keydatum.dsize = XSTRING_LENGTH (key);
   return (dbm_delete (db->db_handle, keydatum));
 }
 
@@ -423,8 +423,8 @@ berkdb_get (struct database_struct *db, Lisp_Object key)
   DB *dbp = (DB *) db->db_handle;
   int status = 0;
 
-  keydatum.data = string_data (XSTRING (key));
-  keydatum.size = string_length (XSTRING (key));
+  keydatum.data = XSTRING_DATA (key);
+  keydatum.size = XSTRING_LENGTH (key);
   
   status = dbp->get (dbp, &keydatum, &valdatum, 0);
 
@@ -445,10 +445,10 @@ berkdb_put (struct database_struct *db,
   DB *dbp = (DB *) db->db_handle;
   int status = 0;
 
-  keydatum.data = string_data (XSTRING (key));
-  keydatum.size = string_length (XSTRING (key));
-  valdatum.data = string_data (XSTRING (val));
-  valdatum.size = string_length (XSTRING (val));
+  keydatum.data = XSTRING_DATA   (key);
+  keydatum.size = XSTRING_LENGTH (key);
+  valdatum.data = XSTRING_DATA   (val);
+  valdatum.size = XSTRING_LENGTH (val);
   status = dbp->put (dbp, &keydatum, &valdatum, NILP (replace)
 		     ? R_NOOVERWRITE : 0);
   db->errno = (status == 1) ? -1 : errno;
@@ -462,8 +462,8 @@ berkdb_remove (struct database_struct *db, Lisp_Object key)
   DB *dbp = (DB *) db->db_handle;
   int status;
 
-  keydatum.data = string_data (XSTRING (key));
-  keydatum.size = string_length (XSTRING (key));
+  keydatum.data = XSTRING_DATA   (key);
+  keydatum.size = XSTRING_LENGTH (key);
   
   status = dbp->del (dbp, &keydatum, 0);
   if (!status)
@@ -563,7 +563,7 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
     {
       char *acc;
       CHECK_STRING (ackcess);
-      acc = (char *) string_data (XSTRING (ackcess));
+      acc = (char *) XSTRING_DATA (ackcess);
       
       if (strchr (acc, '+'))
 	accessmask |= O_CREAT;
@@ -615,7 +615,7 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   return (Qnil);
 
  db_done:
-  db = funcblock->open_file ((char *) string_data (XSTRING (file)), subtype,
+  db = funcblock->open_file ((char *) XSTRING_DATA (file), subtype,
 			     accessmask, modemask);
   
   if (!db)

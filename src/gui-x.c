@@ -433,7 +433,7 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 #endif
 
   CHECK_STRING (name);
-  wv->name = (char *) string_data (XSTRING (name));
+  wv->name = (char *) XSTRING_DATA (name);
 
   if (!NILP (suffix))
     {
@@ -459,8 +459,8 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
     {
       CHECK_STRING (keys);
       keys = Fsubstitute_command_keys (keys);
-      if (string_length (XSTRING (keys)) > 0)
-	wv->key = xstrdup ((char *) string_data (XSTRING (keys)));
+      if (XSTRING_LENGTH (keys) > 0)
+	wv->key = xstrdup ((char *) XSTRING_DATA (keys));
       else
 	wv->key = 0;
     }

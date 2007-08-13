@@ -105,7 +105,7 @@ xlwMenuResources[] =
   {XtNmenu, XtCMenu, XtRPointer, sizeof(XtPointer),
      offset(menu.contents), XtRImmediate, (XtPointer)NULL},
   {XtNcursor, XtCCursor, XtRCursor, sizeof(Cursor),
-     offset(menu.cursor_shape), XtRString, (XtPointer)"right_ptr"},
+     offset(menu.cursor_shape), XtRString, (XtPointer) "right_ptr"},
   {XtNhorizontal, XtCHorizontal, XtRInt, sizeof(int),
      offset(menu.horizontal), XtRImmediate, (XtPointer)True},
   {XtNuseBackingStore, XtCUseBackingStore, XtRBoolean, sizeof (Boolean),
@@ -128,9 +128,8 @@ static void XlwMenuInitialize (Widget request, Widget new, ArgList args,
 static void XlwMenuDestroy (Widget w);
 static void XlwMenuClassInitialize (void);
 static void Start (Widget w, XEvent *ev, String *params, Cardinal *num_params);
-static void Drag (Widget w, XEvent *ev, String *params, Cardinal *num_params);
-static void Select (Widget w, XEvent *ev, String *params,
- Cardinal *num_params);
+static void Drag  (Widget w, XEvent *ev, String *params, Cardinal *num_params);
+static void Select(Widget w, XEvent *ev, String *params, Cardinal *num_params);
 
 #ifdef NEED_MOTIF
 static XFontStruct *default_font_of_font_list (XmFontList);
@@ -250,10 +249,9 @@ allocate_nearest_color (Display *display, Colormap screen_colormap,
 	      nearest_delta = delta;
 	    }
 	}
-      color_def->red = cells[nearest].red;
+      color_def->red   = cells[nearest].red;
       color_def->green = cells[nearest].green;
-      color_def->blue = cells[nearest].blue;
-
+      color_def->blue  = cells[nearest].blue;
       free (cells);
       return XAllocColor (display, screen_colormap, color_def);
     }
@@ -273,7 +271,7 @@ push_new_stack (XlwMenuWidget mw, widget_value *val)
     {
       mw->menu.new_stack_length *= 2;
       mw->menu.new_stack =
-	(widget_value**)XtRealloc ((char*)mw->menu.new_stack,
+	(widget_value**)XtRealloc ((char *)mw->menu.new_stack,
 				   mw->menu.new_stack_length *
 				   sizeof (widget_value*));
     }
@@ -302,7 +300,7 @@ make_old_stack_space (XlwMenuWidget mw, int n)
     {
       mw->menu.old_stack_length *= 2;
       mw->menu.old_stack =
-	(widget_value**)XtRealloc ((char*)mw->menu.old_stack,
+	(widget_value**)XtRealloc ((char *)mw->menu.old_stack,
 				   mw->menu.old_stack_length *
 				   sizeof (widget_value*));
     }
@@ -311,9 +309,9 @@ make_old_stack_space (XlwMenuWidget mw, int n)
 static Boolean
 close_to_reference_time(Widget w, Time reference_time, XEvent *ev)
 {
-  return (reference_time &&
-	  (ev->xbutton.time - reference_time
-	      < XtGetMultiClickTime (XtDisplay (w))));
+  return
+    reference_time &&
+    (ev->xbutton.time - reference_time < XtGetMultiClickTime (XtDisplay (w)));
 }
 
 /* Size code */
@@ -439,7 +437,7 @@ parameterize_string (CONST char *string, CONST char *value)
        ntimes++)
     result = &percent[1];
   
-  result = XtMalloc((ntimes * strlen(value)) + strlen(string) + 4);
+  result = XtMalloc ((ntimes * strlen(value)) + strlen(string) + 4);
   result[0] = '\0';
 
   while ((percent = strchr(string, '%')))
@@ -576,7 +574,7 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
       val->toolkit_data = complete_name;
       val->free_toolkit_data = True;
     }
-  return ((XmString) val->toolkit_data);
+  return (XmString) val->toolkit_data;
 }
 
 /* Unused */
@@ -601,8 +599,7 @@ xlw_create_localized_string (Widget w,
 		     name,
 		     name,
 		     nameResource, 1,
-		     NULL, 0
-		     );
+		     NULL, 0);
 
   if (!string)
     string = name;
@@ -657,7 +654,7 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
 	}
       val->free_toolkit_data = True;
     }
-  return (char*)val->toolkit_data;
+  return (char *) val->toolkit_data;
 }
 
 #endif /* !Motif */
@@ -666,8 +663,7 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
  *    Code for drawing strings.
  */
 static void
-string_draw(
-	    XlwMenuWidget mw,
+string_draw(XlwMenuWidget mw,
 	    Window window,
 	    int x, int y,
 	    GC gc,
@@ -676,7 +672,8 @@ string_draw(
 #else
 	    char *string
 #endif
-) {
+)
+{
 #ifdef NEED_MOTIF
   XmStringDraw (XtDisplay (mw), window,
 		mw->menu.font_list,
@@ -709,14 +706,12 @@ binding_draw (XlwMenuWidget mw, Window w, int x, int y, GC gc, char *value)
  *    Low level code for drawing 3-D edges.
  */
 static void
-shadow_rectangle_draw (
-		       Display *dpy,
+shadow_rectangle_draw (Display *dpy,
 		       Window window,
 		       GC top_gc,
 		       GC bottom_gc,
 		       int x, int y, unsigned width, unsigned height,
-		       unsigned thickness
-		       )
+		       unsigned thickness)
 {
   XPoint points [4];
 
@@ -787,8 +782,7 @@ static void
 shadow_draw (XlwMenuWidget mw,
 	     Window window,
 	     int x, int y, unsigned width, unsigned height,
-	     shadow_type type
-	     )
+	     shadow_type type)
 {
   Display *dpy = XtDisplay (mw);
   GC top_gc;
@@ -828,47 +822,39 @@ shadow_draw (XlwMenuWidget mw,
   if (etched)
     {
       unsigned half = thickness/2;
-      shadow_rectangle_draw (
-			     dpy,
+      shadow_rectangle_draw (dpy,
 			     window,
 			     top_gc,
 			     top_gc,
 			     x, y,
 			     width - half, height - half,
-			     thickness - half
-			     );
-      shadow_rectangle_draw (
-			     dpy,
+			     thickness - half);
+      shadow_rectangle_draw (dpy,
 			     window,
 			     bottom_gc,
 			     bottom_gc,
 			     x + half, y + half,
 			     width - half , height - half,
-			     half
-			     );
+			     half);
     }
   else
     {
-      shadow_rectangle_draw (
-			     dpy,
+      shadow_rectangle_draw (dpy,
 			     window,
 			     top_gc,
 			     bottom_gc,
 			     x, y,
 			     width, height,
-			     thickness
-			     );
+			     thickness);
     }
 }
 
 static void 
-arrow_decoration_draw (
-		       XlwMenuWidget mw,
+arrow_decoration_draw (XlwMenuWidget mw,
 		       Window window,
 		       int x, int y,
 		       unsigned width,
-		       Boolean raised
-		       )
+		       Boolean raised)
 {
   Display *dpy = XtDisplay (mw);
   GC top_gc;
@@ -889,12 +875,12 @@ arrow_decoration_draw (
   
   if (raised)
     {
-      top_gc = mw->menu.shadow_bottom_gc;
+      top_gc    = mw->menu.shadow_bottom_gc;
       bottom_gc = mw->menu.shadow_top_gc;
     }
   else
     {
-      top_gc = mw->menu.shadow_top_gc;
+      top_gc    = mw->menu.shadow_top_gc;
       bottom_gc = mw->menu.shadow_bottom_gc;
     }
 
@@ -911,15 +897,13 @@ arrow_decoration_draw (
   points [3].x = x + thickness;
   points [3].y = y + width - thickness;
     
-  XFillPolygon (
-		dpy,
+  XFillPolygon (dpy,
 		window,
 		select_gc,
 		points,
 		4, 
 		Convex,
-		CoordModeOrigin
-		);
+		CoordModeOrigin);
 
   /* left border */
   points [0].x = x;
@@ -959,13 +943,11 @@ arrow_decoration_draw (
 }
 
 static void
-toggle_decoration_draw (
-			XlwMenuWidget mw,
+toggle_decoration_draw (XlwMenuWidget mw,
 			Window window,
 			int x, int y,
 			unsigned width,
-			Boolean set
-			)
+			Boolean set)
 {
   Display *dpy = XtDisplay (mw);
   int thickness = mw->menu.shadow_thickness;
@@ -981,27 +963,23 @@ toggle_decoration_draw (
    *    Fill internal area.
    */
   if (set) 
-    XFillRectangle (
-		    dpy,
+    XFillRectangle (dpy,
 		    window,
 		    select_gc,
 		    x + thickness,
 		    y + thickness,
 		    width - (2*thickness),
-		    width - (2*thickness)
-		    );
+		    width - (2*thickness));
   
   shadow_draw(mw, window, x, y, width, width, type);
 }
 
 static void
-radio_decoration_draw (
-		       XlwMenuWidget mw,
+radio_decoration_draw (XlwMenuWidget mw,
 		       Window window,
 		       int x, int y,
 		       unsigned width,
-		       Boolean enabled
-		       )
+		       Boolean enabled)
 {
   Display *dpy = XtDisplay (mw);
   GC top_gc;
@@ -1021,12 +999,12 @@ radio_decoration_draw (
 
   if (enabled)
     {
-      top_gc = mw->menu.shadow_bottom_gc;
+      top_gc    = mw->menu.shadow_bottom_gc;
       bottom_gc = mw->menu.shadow_top_gc;
     }
   else
     {
-      top_gc = mw->menu.shadow_top_gc;
+      top_gc    = mw->menu.shadow_top_gc;
       bottom_gc = mw->menu.shadow_bottom_gc;
     }
 
@@ -1139,20 +1117,17 @@ radio_decoration_draw (
 		    points,
 		    4, 
 		    Convex,
-		    CoordModeOrigin
-		    );
+		    CoordModeOrigin);
     }
 }
 
 static void
-separator_decoration_draw (
-			   XlwMenuWidget mw,
+separator_decoration_draw (XlwMenuWidget mw,
 			   Window window,
 			   int x, int y,
 			   unsigned width,
 			   Boolean vertical,
-			   shadow_type type
-			   )
+			   shadow_type type)
 {
   Display *dpy = XtDisplay (mw);
   GC top_gc;
@@ -1234,11 +1209,9 @@ separator_decoration_draw (
 	XDrawLine (dpy, window, top_gc, x, y + i, x + width, y + i);
       
       for (i = 0; i < bottom_line_thickness; i++)
-	XDrawLine (
-		   dpy, window, bottom_gc, 
+	XDrawLine (dpy, window, bottom_gc, 
 		   x, y + top_line_thickness + offset + i,
-		   x + width, y + top_line_thickness + offset + i
-		   );
+		   x + width, y + top_line_thickness + offset + i);
       y += (top_line_thickness + offset + bottom_line_thickness + 1);
     }
 
@@ -1343,15 +1316,13 @@ menu_item_type (widget_value *val)
 }
 
 static void
-label_button_size (
-		   XlwMenuWidget mw,
+label_button_size (XlwMenuWidget mw,
 		   widget_value *val,
 		   Boolean in_menubar,
 		   unsigned *toggle_width,
 		   unsigned *label_width,
 		   unsigned *bindings_width,
-		   unsigned *height
-		   )
+		   unsigned *height)
 {
   *height = (mw->menu.font_ascent + mw->menu.font_descent +
 	     2 * mw->menu.vertical_margin +
@@ -1364,8 +1335,7 @@ label_button_size (
 }
 
 static void
-label_button_draw (
-		   XlwMenuWidget mw,
+label_button_draw (XlwMenuWidget mw,
 		   widget_value *val,
 		   Boolean       in_menubar,
 		   Boolean       highlighted,
@@ -1374,8 +1344,7 @@ label_button_draw (
 		   unsigned width,
 		   unsigned height,
 		   unsigned label_offset,
-		   unsigned binding_tab
-		   )
+		   unsigned binding_tab)
 {
   int y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
   
@@ -1385,32 +1354,26 @@ label_button_draw (
   /*
    *    Draw the label string.
    */
-  string_draw (
-	       mw,
+  string_draw (mw,
 	       window,
 	       x + label_offset, y + y_offset, 
 	       mw->menu.foreground_gc,
-	       resource_widget_value (mw, val)
-	       );
+	       resource_widget_value (mw, val));
 }
 
 static void
-push_button_size (
-		  XlwMenuWidget mw,
+push_button_size (XlwMenuWidget mw,
 		  widget_value *val,
 		  Boolean in_menubar,
 		  unsigned *toggle_width,
 		  unsigned *label_width,
 		  unsigned *bindings_width,
-		  unsigned *height
-		  )
+		  unsigned *height)
 {
   /* inherit */
-  label_button_size (
-		     mw, val, in_menubar,
+  label_button_size (mw, val, in_menubar,
 		     toggle_width, label_width, bindings_width,
-		     height
-		     );
+		     height);
   
   /* key bindings to display? */
   if (!in_menubar && val->key)
@@ -1429,8 +1392,7 @@ push_button_size (
 }
 
 static void
-push_button_draw (
-		  XlwMenuWidget mw, 
+push_button_draw (XlwMenuWidget mw,
 		  widget_value *val,
 		  Boolean       in_menubar,
 		  Boolean       highlighted,
@@ -1438,8 +1400,7 @@ push_button_draw (
 		  int x, int y, 
 		  unsigned width, unsigned height,
 		  unsigned      label_offset,
-		  unsigned      binding_offset
-		  )
+		  unsigned      binding_offset)
 {
   int y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
   GC gc;
@@ -1467,13 +1428,11 @@ push_button_draw (
 	gc = mw->menu.inactive_gc;
     }
 
-  string_draw (
-	       mw,
+  string_draw (mw,
 	       window,
 	       x + label_offset, y + y_offset, 
 	       gc,
-	       resource_widget_value(mw, val)
-	       );
+	       resource_widget_value(mw, val));
   
   /*
    *    Draw the keybindings
@@ -1526,22 +1485,18 @@ arrow_decoration_height (XlwMenuWidget mw)
 }
 
 static void
-cascade_button_size (
-		     XlwMenuWidget mw,
+cascade_button_size (XlwMenuWidget mw,
 		     widget_value *val,
 		     Boolean in_menubar,
 		     unsigned *toggle_width,
 		     unsigned *label_width,
 		     unsigned *arrow_width,
-		     unsigned *height
-		     )
+		     unsigned *height)
 {
   /* inherit */
-  label_button_size (
-		     mw, val, in_menubar,
+  label_button_size (mw, val, in_menubar,
 		     toggle_width, label_width, arrow_width,
-		     height
-		     );
+		     height);
   /* we have a pull aside arrow */
   if (!in_menubar)
     {
@@ -1550,8 +1505,7 @@ cascade_button_size (
 }
 
 static void
-cascade_button_draw (
-		     XlwMenuWidget mw, 
+cascade_button_draw (XlwMenuWidget mw, 
 		     widget_value *val,
 		     Boolean       in_menubar,
 		     Boolean       highlighted,
@@ -1559,8 +1513,7 @@ cascade_button_draw (
 		     int x, int y, 
 		     unsigned width, unsigned height,
 		     unsigned      label_offset,
-		     unsigned      binding_offset
-		     )
+		     unsigned      binding_offset)
 {
   shadow_type type;
 
@@ -1593,14 +1546,12 @@ cascade_button_draw (
 	  binding_offset = label_offset + s_width +  mw->menu.shadow_thickness;
 	}
       
-      arrow_decoration_draw (
-			     mw,
+      arrow_decoration_draw (mw,
 			     window,
 			     x + binding_offset + mw->menu.column_spacing,
 			     y + y_offset,
 			     arrow_height,
-			     highlighted
-			     );
+			     highlighted);
     }
   
   /*
@@ -1630,29 +1581,24 @@ toggle_decoration_height(XlwMenuWidget mw)
 }
 
 static void
-toggle_button_size (
-		    XlwMenuWidget mw,
+toggle_button_size (XlwMenuWidget mw,
 		    widget_value *val,
 		    Boolean in_menubar,
 		    unsigned *toggle_width,
 		    unsigned *label_width,
 		    unsigned *bindings_width,
-		    unsigned *height
-		    )
+		    unsigned *height)
 {
   /* inherit */
-  push_button_size (
-		    mw, val, in_menubar,
+  push_button_size (mw, val, in_menubar,
 		    toggle_width, label_width, bindings_width,
-		    height
-		    );
+		    height);
   /* we have a toggle */
   *toggle_width += toggle_decoration_height(mw) + mw->menu.column_spacing;
 }
 
 static void
-toggle_button_draw (
-		    XlwMenuWidget mw, 
+toggle_button_draw (XlwMenuWidget mw,
 		    widget_value *val,
 		    Boolean       in_menubar,
 		    Boolean highlighted,
@@ -1660,8 +1606,7 @@ toggle_button_draw (
 		    int x, int y, 
 		    unsigned width, unsigned height,
 		    unsigned      label_tab,
-		    unsigned      binding_tab
-		    )
+		    unsigned      binding_tab)
 {
   int x_offset;
   int y_offset;
@@ -1691,8 +1636,7 @@ radio_decoration_height(XlwMenuWidget mw)
 }
 
 static void
-radio_button_draw (
-		   XlwMenuWidget mw, 
+radio_button_draw (XlwMenuWidget mw, 
 		   widget_value *val,
 		   Boolean       in_menubar,
 		   Boolean       highlighted,
@@ -1700,8 +1644,7 @@ radio_button_draw (
 		   int x, int y, 
 		   unsigned width, unsigned height,
 		   unsigned      label_tab,
-		   unsigned      binding_tab
-		   )
+		   unsigned      binding_tab)
 {
   int x_offset;
   int y_offset;
@@ -1795,8 +1738,7 @@ separator_size (XlwMenuWidget mw,
 		unsigned *toggle_width,
 		unsigned *label_width,
 		unsigned *rest_width,
-		unsigned *height
-		)
+		unsigned *height)
 {
   *height = separator_decoration_height (mw, val);
   *label_width = 1;
@@ -1812,8 +1754,7 @@ separator_draw (XlwMenuWidget mw,
 		int x, int y, 
 		unsigned width, unsigned height,
 		unsigned      label_tab,
-		unsigned      binding_tab
-		)
+		unsigned      binding_tab)
 {
   unsigned sep_width;
 
@@ -1828,8 +1769,7 @@ separator_draw (XlwMenuWidget mw,
 			     y,
 			     sep_width,
 			     in_menubar,
-			     separator_type(val->value)
-			     );
+			     separator_type(val->value));
 }
 
 static void
@@ -1855,16 +1795,14 @@ size_menu_item (XlwMenuWidget mw,
 		unsigned *height
 )
 {
-
-  void (*function_ptr) (
-			XlwMenuWidget _mw,
+  void (*function_ptr) (XlwMenuWidget _mw,
 			widget_value *_val,
 			Boolean _in_menubar,
 			unsigned *_toggle_width,
 			unsigned *_label_width,
 			unsigned *_rest_width,
-			unsigned *_height
-			);
+			unsigned *_height);
+
   switch (menu_item_type (val))
     {
     case TOGGLE_TYPE:
@@ -1890,27 +1828,23 @@ size_menu_item (XlwMenuWidget mw,
       break;
     }
 
-  (*function_ptr) (
-		   mw,
+  (*function_ptr) (mw,
 		   val,
 		   horizontal,
 		   toggle_width,
 		   label_width,
 		   rest_width,
-		   height
-		   );
+		   height);
 }
 
 static void
-display_menu_item (
-		   XlwMenuWidget mw,
+display_menu_item (XlwMenuWidget mw,
 		   widget_value *val,
 		   window_state *ws,
 		   XPoint *where,
 		   Boolean highlighted,
 		   Boolean horizontal,
-		   Boolean just_compute
-		   )
+		   Boolean just_compute)
 {
   
   int x = where->x /* + mw->menu.shadow_thickness */ ;
@@ -1922,8 +1856,7 @@ display_menu_item (
   unsigned height;
   unsigned label_tab;
   unsigned binding_tab;
-  void (*function_ptr) (
-			XlwMenuWidget _mw,
+  void (*function_ptr) (XlwMenuWidget _mw,
 			widget_value *_val,
 			Boolean _in_menubar,
 			Boolean _highlighted,
@@ -1931,13 +1864,10 @@ display_menu_item (
 			int _x, int _y, 
 			unsigned _width, unsigned _height,
 			unsigned      _label_tab,
-			unsigned      _binding_tab
-			);
+			unsigned      _binding_tab);
 
-  size_menu_item (
-		  mw, val, horizontal,
-		  &toggle_width, &label_width, &binding_width, &height
-		  );
+  size_menu_item (mw, val, horizontal,
+		  &toggle_width, &label_width, &binding_width, &height);
 
   if (horizontal)
     {
@@ -1985,8 +1915,7 @@ display_menu_item (
       return;
     }
 
-  (*function_ptr) (
-		   mw,
+  (*function_ptr) (mw,
 		   val,
 		   horizontal,
 		   highlighted,
@@ -1994,8 +1923,7 @@ display_menu_item (
 		   x, y, 
 		   width, height,
 		   label_tab,
-		   binding_tab
-		   );
+		   binding_tab);
 }
 
 static void
@@ -2006,8 +1934,8 @@ size_menu (XlwMenuWidget mw, int level)
   unsigned	rest_width;
   unsigned	height;
   unsigned	max_toggle_width = 0;
-  unsigned	max_label_width = 0;
-  unsigned	max_rest_width = 0;
+  unsigned	max_label_width  = 0;
+  unsigned	max_rest_width   = 0;
   unsigned	max_height = 0;
   int		horizontal_p = mw->menu.horizontal && (level == 0);
   widget_value*	val;
@@ -2020,15 +1948,13 @@ size_menu (XlwMenuWidget mw, int level)
 
   for (val = mw->menu.old_stack [level]->contents; val; val = val->next)
     {
-      size_menu_item (
-		      mw,
+      size_menu_item (mw,
 		      val,
 		      horizontal_p,
 		      &toggle_width,
 		      &label_width,
 		      &rest_width,
-		      &height
-		      );
+		      &height);
       if (horizontal_p)
 	{
 	  max_label_width += toggle_width + label_width + rest_width;
@@ -2037,12 +1963,12 @@ size_menu (XlwMenuWidget mw, int level)
 	}
       else
 	{
-	  if (toggle_width > max_toggle_width)
-	    max_toggle_width = toggle_width;
-	  if (label_width > max_label_width)
-	    max_label_width = label_width;
-	  if (rest_width > max_rest_width)
-	    max_rest_width = rest_width;
+	  if (max_toggle_width < toggle_width)
+	      max_toggle_width = toggle_width;
+	  if (max_label_width < label_width)
+	      max_label_width = label_width;
+	  if (max_rest_width < rest_width)
+	      max_rest_width = rest_width;
 	  max_height += height;
 	}
     }
@@ -2050,9 +1976,9 @@ size_menu (XlwMenuWidget mw, int level)
   ws->height = max_height;
   ws->width = max_label_width + max_rest_width + max_toggle_width;
   ws->toggle_width = max_toggle_width;
-  ws->label_width = max_label_width;
+  ws->label_width  = max_label_width;
 
-  ws->width += 2 * mw->menu.shadow_thickness;
+  ws->width  += 2 * mw->menu.shadow_thickness;
   ws->height += 2 * mw->menu.shadow_thickness;
 }
 
@@ -2228,7 +2154,7 @@ make_windows_if_needed (XlwMenuWidget mw, int n)
   else
     {
       mw->menu.windows =
-	(window_state *) XtRealloc ((char*)mw->menu.windows,
+	(window_state *) XtRealloc ((char *) mw->menu.windows,
 				    n * sizeof (window_state));
       start_at = mw->menu.windows_length;
     }
@@ -2393,8 +2319,8 @@ motion_event_is_in_menu (XlwMenuWidget mw, XMotionEvent *ev, int level,
   int y = level == 0 ? ws->y : ws->y + mw->menu.shadow_thickness;
   relative_pos->x = ev->x_root - x;
   relative_pos->y = ev->y_root - y;
-  return (x < ev->x_root && ev->x_root < (int) (x + ws->width)
-	  && y < ev->y_root && ev->y_root < (int) (y + ws->height));
+  return (x < ev->x_root && ev->x_root < (int) (x + ws->width) &&
+	  y < ev->y_root && ev->y_root < (int) (y + ws->height));
 }
 
 static Boolean
@@ -2502,7 +2428,7 @@ make_drawing_gcs (XlwMenuWidget mw)
   xgcv.fill_style = FillStippled;
   xgcv.stipple = mw->menu.gray_pixmap;
   mw->menu.inactive_button_gc = XtGetGC ((Widget)mw,
-				  (flags | GCFillStyle | GCStipple),
+					 (flags | GCFillStyle | GCStipple),
 					 &xgcv);
 }
 
@@ -2516,12 +2442,12 @@ release_drawing_gcs (XlwMenuWidget mw)
   XtReleaseGC ((Widget) mw, mw->menu.background_gc);
   XtReleaseGC ((Widget) mw, mw->menu.select_gc);
   /* let's get some segvs if we try to use these... */
-  mw->menu.foreground_gc = (GC) -1;
-  mw->menu.button_gc = (GC) -1;
-  mw->menu.inactive_gc = (GC) -1;
+  mw->menu.foreground_gc      = (GC) -1;
+  mw->menu.button_gc          = (GC) -1;
+  mw->menu.inactive_gc        = (GC) -1;
   mw->menu.inactive_button_gc = (GC) -1;
-  mw->menu.background_gc = (GC) -1;
-  mw->menu.select_gc = (GC) -1;
+  mw->menu.background_gc      = (GC) -1;
+  mw->menu.select_gc          = (GC) -1;
 }
 
 #define MINL(x,y) ((((unsigned long) (x)) < ((unsigned long) (y))) \
@@ -2538,9 +2464,9 @@ make_shadow_gcs (XlwMenuWidget mw)
   int top_frobbed = 0, bottom_frobbed = 0;
 
   if (mw->menu.top_shadow_color == -1)
-    mw->menu.top_shadow_color = mw->core.background_pixel;
+      mw->menu.top_shadow_color = mw->core.background_pixel;
   if (mw->menu.bottom_shadow_color == -1)
-    mw->menu.bottom_shadow_color = mw->menu.foreground;
+      mw->menu.bottom_shadow_color = mw->menu.foreground;
 
   if (mw->menu.top_shadow_color == mw->core.background_pixel ||
       mw->menu.top_shadow_color == mw->menu.foreground)
@@ -2803,10 +2729,9 @@ XlwMenuInitialize (Widget request, Widget new, ArgList args,
 /*  mw->menu.cursor = XCreateFontCursor (display, mw->menu.cursor_shape); */
   mw->menu.cursor = mw->menu.cursor_shape;
   
-  mw->menu.gray_pixmap = XCreatePixmapFromBitmapData (display, window,
-						      (char *) gray_bits,
-						      gray_width,
-						      gray_height, 1, 0, 1);
+  mw->menu.gray_pixmap =
+    XCreatePixmapFromBitmapData (display, window, (char *) gray_bits,
+				 gray_width, gray_height, 1, 0, 1);
   
 #ifdef NEED_MOTIF
   /* The menu.font_list slot came from the *fontList resource (Motif standard.)
@@ -2924,7 +2849,7 @@ XlwMenuDestroy (Widget w)
     }
   
   release_drawing_gcs (mw);
-  release_shadow_gcs (mw);
+  release_shadow_gcs  (mw);
 
   /* this doesn't come from the resource db but is created explicitly
      so we must free it ourselves. */
@@ -2974,8 +2899,8 @@ XlwMenuSetValues (Widget current, Widget request, Widget new, ArgList args,
       || newmw->menu.foreground != oldmw->menu.foreground
       /* For the XEditResource protocol, which may want to change the font. */
 #ifdef NEED_MOTIF
-      || newmw->menu.font_list != oldmw->menu.font_list
-      || newmw->menu.font_list_2 != oldmw->menu.font_list_2
+      || newmw->menu.font_list          != oldmw->menu.font_list
+      || newmw->menu.font_list_2        != oldmw->menu.font_list_2
       || newmw->menu.fallback_font_list != oldmw->menu.fallback_font_list
 #else
       || newmw->menu.font != oldmw->menu.font
@@ -3005,7 +2930,7 @@ XlwMenuResize (Widget w)
 {
   XlwMenuWidget mw = (XlwMenuWidget)w;
 
-  mw->menu.windows [0].width = mw->core.width;
+  mw->menu.windows [0].width  = mw->core.width;
   mw->menu.windows [0].height = mw->core.height;
 }
 
@@ -3167,7 +3092,7 @@ Select (Widget w, XEvent *ev, String *params, Cardinal *num_params)
     }
   
   /* callback */
-  XtCallCallbackList ((Widget)mw, mw->menu.select, (XtPointer)selected_item);
+  XtCallCallbackList ((Widget) mw, mw->menu.select, (XtPointer) selected_item);
 }
 
 
@@ -3187,7 +3112,7 @@ xlw_pop_up_menu (XlwMenuWidget mw, XButtonPressedEvent *event)
   mw->menu.next_release_must_exit = True;
   mw->menu.last_selected_val = NULL;
 
-  XtCallCallbackList ((Widget)mw, mw->menu.open, NULL);
+  XtCallCallbackList ((Widget) mw, mw->menu.open, NULL);
 
   size_menu (mw, 0);
 
@@ -3196,14 +3121,18 @@ xlw_pop_up_menu (XlwMenuWidget mw, XButtonPressedEvent *event)
 
   x -= borderwidth;
   y -= borderwidth;
+  
   if (x < borderwidth)
-    x = borderwidth;
-  if (x + w + 2 * borderwidth > WidthOfScreen (screen))
-    x = WidthOfScreen (screen) - w - 2 * borderwidth;
+      x = borderwidth;
+  
+  if (x > WidthOfScreen (screen) - w - 2 * borderwidth)
+      x = WidthOfScreen (screen) - w - 2 * borderwidth;
+  
   if (y < borderwidth)
-    y = borderwidth;
-  if (y + h + 2 * borderwidth> HeightOfScreen (screen))
-    y = HeightOfScreen (screen) - h - 2 * borderwidth;
+      y = borderwidth;
+  
+  if (y > HeightOfScreen (screen) - h - 2 * borderwidth)
+      y = HeightOfScreen (screen) - h - 2 * borderwidth;
 
   mw->menu.popped_up = True;
   XtConfigureWidget (XtParent (mw), x, y, w, h,
@@ -3237,7 +3166,7 @@ void
 xlw_unmunge_class_resize (Widget w)
 {
   if (w->core.widget_class->core_class.resize != XlwMenuResize)
-    w->core.widget_class->core_class.resize = XlwMenuResize;
+      w->core.widget_class->core_class.resize  = XlwMenuResize;
 }
 #endif /* 0 */
 

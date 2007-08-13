@@ -21,13 +21,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* Note: FSF Makefile.in.in does something weird so that the comments
    above a certain point in this file are in shell format instead of
-   in C format.  I don't know how the hell this is supposed to work. */
+   in C format.  I do not know how the hell this is supposed to work. */
 
-/* Avoid trouble on systems where the `SHELL' variable might be
+/* Avoid trouble on systems where the $SHELL variable might be
    inherited from the environment. */
 SHELL = /bin/sh
 
-/* Some people use these in paths they define.  We don't want their paths
+/* Some people use these in paths they define.  We do not want their paths
    getting changed on them. */
 #undef sparc
 #undef sun
@@ -36,7 +36,7 @@ SHELL = /bin/sh
 #undef NeXT
 #undef mips
 
-/* ==================== Things `configure' will edit ==================== */
+/* ==================== Things "configure" will edit ==================== */
 
 CC=@CC@
 CFLAGS=@CFLAGS@
@@ -52,28 +52,28 @@ configuration=@configuration@
    subdirectories of this directory.  The default values for many of
    the variables below are expressed in terms of this one, so you may
    not need to change them.  This is set with the --prefix option to
-   `../configure'. */
+   "../configure". */
 prefix=@prefix@
 
-/* Like `prefix', but used for architecture-specific files.  This is
-   set with the --exec-prefix option to `../configure'. */
+/* Like "prefix", but used for architecture-specific files.  This is
+   set with the --exec-prefix option to "../configure". */
 exec_prefix=@exec_prefix@
 
 /* Where to install Emacs and other binaries that people will want to
    run directly (like etags).  This is set with the --bindir option
-   to `../configure'. */
+   to "../configure". */
 bindir=@bindir@
 
 /* Where to install and expect executable files to be run by Emacs
    rather than directly by users, and other architecture-dependent
    data.  ${archlibdir} is usually below this.  This is set with the
-   --libdir option to `../configure'. */
+   --libdir option to "../configure". */
 libdir=@libdir@
 
 /* Where to find the source code.  This is set by the configure
-   script's `--srcdir' option.  However, the value of ${srcdir} in
+   "--srcdir" option.  However, the value of ${srcdir} in
    this makefile is not identical to what was specified with --srcdir,
-   since the variable here has `/lib-src' added at the end. */
+   since the variable here has "/lib-src" added at the end. */
 srcdir=@srcdir@
 
 /* ==================== Emacs-specific directories ==================== */
@@ -85,7 +85,7 @@ srcdir=@srcdir@
    This path usually includes the Emacs version and configuration name,
    so that multiple configurations for multiple versions of Emacs may
    be installed at once.  This can be set with the --archlibdir option
-   to `../configure'. */
+   to "../configure". */
 archlibdir=@archlibdir@
 
 /* ==================== Utility Programs for the Build ================= */
@@ -106,11 +106,12 @@ INSTALLABLE_SCRIPTS = rcs-checkin
    which should not be installed in bindir. */
 UTILITIES= make-path wakeup profile make-docfile digest-doc \
 	sorted-doc movemail cvtmail fakemail yow emacsserver hexl \
-	gnuserv
+	gnuserv mmencode
 
-/* Like UTILITIES, but they're not system-dependent, and should not be
+/* Like UTILITIES, but they are not system-dependent, and should not be
    deleted by the distclean target. */
-SCRIPTS= rcs2log vcdiff
+TM_SCRIPTS=tm-au tm-file tm-html tm-image tm-mpeg tm-plain tm-ps tmdecode
+SCRIPTS= rcs2log vcdiff $(TM_SCRIPTS)
 
 EXECUTABLES= ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS}
 
@@ -135,22 +136,22 @@ SOURCES = COPYING ChangeLog Makefile.in.in README aixcc.lex emacs.csh \
    in-place location, it will not get recompiled in the not-in-place
    location.
 
-   The GNU Make `vpath' directive continues this tradition, but at
+   The GNU Make "vpath" directive continues this tradition, but at
    least lets you restrict the classes of files that it applies to.
    This allows us to kludge around the problem. */
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
 vpath %.h @srcdir@
 /* now list files that should NOT be searched in the srcdir.
-   This includes any .c or .h that's built from something else
+   This includes any .c or .h that is built from something else
    (e.g. a .in file). */
 /* none here */
 #else
 VPATH=@srcdir@
 #endif
 
-/* We won't really call alloca;
-   don't let the file name alloca.c get messed up.  */
+/* We will not really call alloca;
+   do not let the file name alloca.c get messed up.  */
 #ifdef alloca
 #undef alloca
 #endif
@@ -233,8 +234,8 @@ LINK_CFLAGS = C_SWITCH_SYSTEM C_SWITCH_MACHINE -Demacs -DHAVE_CONFIG_H \
    -I. -I../src -I${srcdir} -I${srcdir}/../src ${LDFLAGS} ${CFLAGS}
 CPP_CFLAGS = C_SWITCH_SYSTEM C_SWITCH_MACHINE -Demacs -DHAVE_CONFIG_H \
    -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS}
-/* Formerly -Demacs was missing, but it's needed to suppress the
-   defining of malloc to xmalloc.  [Yes it's fucked up.  Blame FSF
+/* Formerly -Demacs was missing, but it is needed to suppress the
+   defining of malloc to xmalloc.  [Yes it is fucked up.  Blame FSF
    for this.] */
 ALLOCA_CFLAGS = C_SWITCH_SYSTEM C_SWITCH_MACHINE -Demacs -DHAVE_CONFIG_H \
    -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS}
@@ -275,7 +276,7 @@ blessmail:
 
 maybe-blessmail: BLESSMAIL
 #ifdef MOVEMAIL_NEEDS_BLESSING
-/* Don't charge ahead and do it!  Let the installer decide.
+/* Do not charge ahead and do it!  Let the installer decide.
 	  ./blessmail ${archlibdir}/movemail  */
 	@if [ `wc -l <blessmail` != 2 ] ; then \
 	  dir=`sed -n -e 's/echo mail directory = \(.*\)/\1/p' blessmail`; \
@@ -374,7 +375,7 @@ regex.o: ${srcdir}/../src/regex.c ${srcdir}/../src/regex.h
 etags: ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) ../src/config.h
 	$(CC) ${ALL_CFLAGS} -DVERSION="\"${version}\"" -DETAGS_REGEXPS ${srcdir}/etags.c $(GETOPTOBJS) $(REGEXOBJ) $(LOADLIBES) -o etags
 
-/* We depend on etags to assure that parallel makes don't write two
+/* We depend on etags to assure that parallel makes do not write two
    etags.o files on top of each other.  */
 ctags: ${srcdir}/etags.c $(GETOPTDEPS) etags
 	$(CC) ${ALL_CFLAGS} -DCTAGS -DVERSION="\"${version}\"" ${srcdir}/etags.c $(GETOPTOBJS) $(LOADLIBES) -o ctags
@@ -418,7 +419,7 @@ emacsclient: ${srcdir}/emacsclient.c ../src/config.h
 hexl: ${srcdir}/hexl.c
 	$(CC) ${ALL_CFLAGS} ${srcdir}/hexl.c $(LOADLIBES) -o hexl
 
-/* Why oh why doesn't HP include half of the standard X distribution? */
+/* Why oh why does HP not include half of the standard X distribution? */
 
 #if defined (HAVE_XAUTH)
 gnuslib.o: ${srcdir}/gnuslib.c ${srcdir}/gnuserv.h ../src/config.h
@@ -444,6 +445,11 @@ gnudoit: ${srcdir}/gnudoit.c gnuslib.o ${srcdir}/gnuserv.h
 gnuserv: ${srcdir}/gnuserv.c gnuslib.o ${srcdir}/gnuserv.h
 	$(CC) ${ALL_CFLAGS} -o gnuserv ${srcdir}/gnuserv.c gnuslib.o $(LOADLIBES)
 #endif /* !HAVE_XAUTH */
+
+/* mmencode binary is used by tm - but is really part of the metamail package */
+/* mmencode.c was merged copy of mmencode.c and codes.c of metamail */
+mmencode : ${srcdir}/mmencode.c
+	$(CC) ${ALL_CFLAGS} ${srcdir}/mmencode.c -o mmencode
 
 /* The timer utility (timer.c, getdate.y) is not used in XEmacs
    because XEmacs provides built-in timer facilities. */

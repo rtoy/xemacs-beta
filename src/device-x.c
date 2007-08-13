@@ -227,7 +227,7 @@ x_init_device (struct device *d, Lisp_Object props)
   make_argc_argv (Vx_initial_argv_list, &argc, &argv);
 
   if (STRINGP (Vx_emacs_application_class) &&
-      string_length (XSTRING (Vx_emacs_application_class)) > 0)
+      XSTRING_LENGTH (Vx_emacs_application_class) > 0)
     GET_C_STRING_CTEXT_DATA_ALLOCA (Vx_emacs_application_class, app_class);
   else
     app_class = "Emacs";
@@ -257,7 +257,7 @@ x_init_device (struct device *d, Lisp_Object props)
   DEVICE_NAME (d) = Fcopy_sequence (DEVICE_NAME (d));
   /* colons and periods can't appear in individual elements of resource
      strings */
-  validify_resource_string ((char *) string_data (XSTRING (DEVICE_NAME (d))));
+  validify_resource_string ((char *) XSTRING_DATA (DEVICE_NAME (d)));
   DEVICE_XT_APP_SHELL (d) = XtAppCreateShell (NULL, app_class,
 					      applicationShellWidgetClass,
 					      dpy, NULL, 0);
@@ -519,7 +519,7 @@ x_error_handler (Display *disp, XErrorEvent *event)
 
       stderr_out ("\n%s: ",
 		  (STRINGP (Vinvocation_name)
-		   ? (char *) string_data (XSTRING (Vinvocation_name))
+		   ? (char *) XSTRING_DATA (Vinvocation_name)
 		   : "xemacs"));
       XmuPrintDefaultErrorMessage (disp, event, stderr);
     }
@@ -587,7 +587,7 @@ x_IO_error_handler (Display *disp)
       stderr_out
 	("\n%s: Fatal I/O Error %d (%s) on display connection \"%s\"\n",
          (STRINGP (Vinvocation_name) ?
-	  (char *) string_data (XSTRING (Vinvocation_name)) : "xemacs"),
+	  (char *) XSTRING_DATA (Vinvocation_name) : "xemacs"),
 	 errno, strerror (errno), DisplayString (disp));
       stderr_out
         ("  after %lu requests (%lu known processed) with %d events remaining.\n",
@@ -780,16 +780,14 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
     {
       strcat (name_out, ".buffer.");
       /* we know buffer is live; otherwise we got an error above. */
-      strcat (name_out,
-	      (CONST char *) string_data (XSTRING (Fbuffer_name (locale))));
+      strcat (name_out, (CONST char *) XSTRING_DATA (Fbuffer_name (locale)));
       strcat (class_out, ".EmacsLocaleType.EmacsBuffer");
     }
   else if (FRAMEP (locale))
     {
       strcat (name_out, ".frame.");
       /* we know frame is live; otherwise we got an error above. */
-      strcat (name_out,
-	      (CONST char *) string_data (XSTRING (Fframe_name (locale))));
+      strcat (name_out, (CONST char *) XSTRING_DATA (Fframe_name (locale)));
       strcat (class_out, ".EmacsLocaleType.EmacsFrame");
     }
   else
@@ -797,8 +795,7 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
       assert (DEVICEP (locale));
       strcat (name_out, ".device.");
       /* we know device is live; otherwise we got an error above. */
-      strcat (name_out,
-	      (CONST char *) string_data (XSTRING (Fdevice_name (locale))));
+      strcat (name_out, (CONST char *) XSTRING_DATA (Fdevice_name (locale)));
       strcat (class_out, ".EmacsLocaleType.EmacsDevice");
     }
   return;
@@ -917,9 +914,9 @@ mean ``unspecified.''
   db = XtDatabase (display);
 
   strcat (name_string, ".");
-  strcat (name_string, (CONST char *) string_data (XSTRING (name)));
+  strcat (name_string, (CONST char *) XSTRING_DATA (name));
   strcat (class_string, ".");
-  strcat (class_string, (CONST char *) string_data (XSTRING (class)));
+  strcat (class_string, (CONST char *) XSTRING_DATA (class));
 
   {
     XrmValue xrm_value;
@@ -1024,7 +1021,7 @@ standard resource specification.
   char *str, *colon_pos;
 
   CHECK_STRING (resource_line);
-  str = (char *) string_data (XSTRING (resource_line));
+  str = (char *) XSTRING_DATA (resource_line);
   if (!(colon_pos = strchr (str, ':')) || strchr (str, '\n'))
   invalid:
     signal_simple_error ("Invalid resource line", resource_line);

@@ -123,12 +123,15 @@
 (defvar toolbar-news-frame nil
   "The frame in which news is displayed.")
 
+(defvar toolbar-news-frame-properties nil
+  "The properties of the frame in which news is displayed.")
+
 (defun toolbar-news ()
   "Run Gnus in a separate frame."
   (interactive)
   (when (or (not toolbar-news-frame)
 	    (not (frame-live-p toolbar-news-frame)))
-    (setq toolbar-news-frame (make-frame))
+    (setq toolbar-news-frame (make-frame toolbar-news-frame-properties))
     (add-hook 'gnus-exit-gnus-hook
 	      (lambda ()
 		(when (frame-live-p toolbar-news-frame)

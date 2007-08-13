@@ -275,7 +275,7 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	error ("printing unreadable object #<killed buffer>");
       else
 	error ("printing unreadable object #<buffer %s>", 
-	       string_data (XSTRING (b->name)));
+	       XSTRING_DATA (b->name));
     }
   else if (!BUFFER_LIVE_P (b))
     write_c_string ("#<killed buffer>", printcharfun);
@@ -318,7 +318,7 @@ static void
 nsberror (Lisp_Object spec)
 {
   if (STRINGP (spec))
-    error ("No buffer named %s", string_data (XSTRING (spec)));
+    error ("No buffer named %s", XSTRING_DATA (spec));
   signal_simple_error ("Invalid buffer argument", spec);
 }
 
@@ -641,7 +641,7 @@ The value is never nil.
   if (!NILP (buf))
     return buf;
 
-  if (string_length (XSTRING (name)) == 0)
+  if (XSTRING_LENGTH (name) == 0)
     error ("Empty string for buffer name is not allowed");
 
   b = allocate_buffer ();
@@ -677,14 +677,13 @@ If BASE is an indirect buffer itself, the base buffer for that buffer
   name = LISP_GETTEXT (name);
   buf = Fget_buffer (name);
   if (!NILP (buf))
-    error ("Buffer name `%s' is in use", string_data (XSTRING (name)));
+    error ("Buffer name `%s' is in use", XSTRING_DATA (name));
 
   base_buffer = Fget_buffer (base_buffer);
   if (NILP (base_buffer))
-    error ("No such buffer: `%s'",
-	   string_data (XSTRING (XBUFFER (base_buffer)->name)));
+    error ("No such buffer: `%s'", XSTRING_DATA (XBUFFER (base_buffer)->name));
 
-  if (string_length (XSTRING (name)) == 0)
+  if (XSTRING_LENGTH (name) == 0)
     error ("Empty string for buffer name is not allowed");
 
   b = allocate_buffer ();
@@ -1090,7 +1089,7 @@ This does not change the name of the visited file (if any).
   CHECK_STRING (newname);
   newname = LISP_GETTEXT (newname);
 
-  if (string_length (XSTRING (newname)) == 0)
+  if (XSTRING_LENGTH (newname) == 0)
     error ("Empty string is invalid as a buffer name");
 
   tem = Fget_buffer (newname);
@@ -1107,7 +1106,7 @@ This does not change the name of the visited file (if any).
 	newname = Fgenerate_new_buffer_name (newname, current_buffer->name);
       else
 	error ("Buffer name \"%s\" is in use",
-	       string_data (XSTRING (newname)));
+	       XSTRING_DATA (newname));
     }
 
   current_buffer->name = newname;
@@ -1287,7 +1286,7 @@ with `delete-process'.
 	(Qyes_or_no_p,
 	 (emacs_doprnt_string_c
 	  ((CONST Bufbyte *) GETTEXT ("Buffer %s modified; kill anyway? "),
-	   Qnil, -1, string_data (XSTRING (b->name)))));
+	   Qnil, -1, XSTRING_DATA (b->name))));
       UNGCPRO;
       if (NILP (killp))
 	return Qnil;
@@ -2391,7 +2390,8 @@ A string is printed verbatim in the modeline except for %-constructs:
   %t -- Under MS-DOS, print T if files is text, B if binary.
   %[ -- print one [ for each recursive editing level.  %] similar.
   %% -- print %.                %- -- print infinitely many dashes.
-Decimal digits after the % specify field width to which to pad.  */ );
+Decimal digits after the % specify field width to which to pad.
+*/ );
 
   DEFVAR_BUFFER_DEFAULTS ("default-major-mode", major_mode /*
 *Major mode for new buffers.  Defaults to `fundamental-mode'.

@@ -1,11 +1,12 @@
-;;; url-mail.el,v --- Mail Uniform Resource Locator retrieval code
+;;; url-mail.el --- Mail Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1996/06/03 15:04:49
-;; Version: 1.5
+;; Created: 1996/10/21 21:27:36
+;; Version: 1.4
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -20,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'url-vars)
@@ -36,33 +38,71 @@
   (interactive "P")
   (or (apply 'mail args)
       (error "Mail aborted")))
+
+(defun url-mail-goto-field (field)
+  (if (not field)
+      (goto-char (point-max))
+    (let ((dest nil)
+	  (lim nil)
+	  (case-fold-search t))
+      (save-excursion
+	(goto-char (point-min))
+	(if (re-search-forward (regexp-quote mail-header-separator) nil t)
+	    (setq lim (match-beginning 0)))
+	(goto-char (point-min))
+	(if (re-search-forward (concat "^" (regexp-quote field) ":") lim t)
+	    (setq dest (match-beginning 0))))
+      (if dest
+	  (progn
+	    (goto-char dest)
+	    (end-of-line))
+	(goto-char lim)
+	(insert (capitalize field) ": ")
+	(save-excursion
+	  (insert "\n"))))))
   
 (defun url-mailto (url)
   ;; Send mail to someone
   (if (not (string-match "mailto:/*\\(.*\\)" url))
       (error "Malformed mailto link: %s" url))
+  (setq url (substring url (match-beginning 1) nil))
   (if (get-buffer url-working-buffer)
       (kill-buffer url-working-buffer))
-  (let ((to (url-unhex-string
-	     (substring url (match-beginning 1) (match-end 1))))
-	(url (url-view-url t)))
+  (let (to args source-url subject func)
+    (if (string-match (regexp-quote "?") url)
+	(setq to (url-unhex-string (substring url 0 (match-beginning 0)))
+	      args (url-parse-query-string
+		    (substring url (match-end 0) nil) t))
+      (setq to (url-unhex-string url)))
+    (setq source-url (url-view-url t))
+    (if (and url-request-data (not (assoc "subject" args)))
+	(setq args (cons (list "subject"
+			       (concat "Automatic submission from "
+				       url-package-name "/"
+				       url-package-version)) args)))
+    (if (and source-url (not (assoc "x-url-from" args)))
+	(setq args (cons (list "x-url-from" source-url) args)))
+    (setq args (cons (list "to" to) args)
+	  subject (cdr-safe (assoc "subject" args)))
     (if (fboundp url-mail-command) (funcall url-mail-command) (mail))
-    (mail-to)
-    (insert (concat to "\nX-URL-From: " url))
-    (mail-subject)
+    (while args
+      (url-mail-goto-field (caar args))
+      (setq func (intern-soft (concat "mail-" (caar args))))
+      (insert (mapconcat 'identity (cdar args) ", "))
+      (setq args (cdr args)))
+    (url-mail-goto-field "X-Mailer")
+    (insert url-package-name "/" url-package-version)
     (if (not url-request-data)
-	nil				; Not automatic posting
-      (insert "Automatic submission from "
-	      url-package-name "/" url-package-version)
+	(if subject
+	    (url-mail-goto-field nil)
+	  (url-mail-goto-field "subject"))
       (if url-request-extra-headers
-	  (progn
-	    (goto-char (point-min))
-	    (insert
-	     (mapconcat
-	      (function
-	       (lambda (x)
-		 (concat (capitalize (car x)) ": " (cdr x) "\n")))
-	      url-request-extra-headers ""))))
+	  (mapconcat
+	   (function
+	    (lambda (x)
+	      (url-mail-goto-field (car x))
+	      (insert (cdr x))))
+	   url-request-extra-headers ""))
       (goto-char (point-max))
       (insert url-request-data)
       (mail-send-and-exit nil))))
@@ -100,13 +140,15 @@
 	  (forward-char 1)		; as the body of the message
 	  (setq body (buffer-substring (point) (point-max)))))
     (if (fboundp url-mail-command) (funcall url-mail-command) (mail))
-    (mail-to)
-    (insert (concat rfc822-addr
-		    (if (and url (not (string= url "")))
-			(concat "\nX-URL-From: " url) "")
-		    "\nX-User-Agent: " url-package-name "/"
-		    url-package-version))
-    (mail-subject)
+    (url-mail-goto-field "to")
+    (insert rfc822-addr)
+    (if (and url (not (string= url "")))
+	(progn
+	  (url-mail-goto-field "X-URL-From")
+	  (insert url)))
+    (url-mail-goto-field "X-Mailer")
+    (insert url-package-name "/" url-package-version)
+    (url-mail-goto-field "subject")
     ;; Massage the subject from URLEncoded garbage
     ;; Note that we do not allow any newlines in the subject,
     ;; as recommended by the Internet Draft on the mailserver
@@ -129,7 +171,8 @@
 	   (mapconcat
 	    (function
 	     (lambda (x)
-	       (concat (capitalize (car x)) ": " (cdr x) "\n")))
+	       (url-mail-goto-field (car x))
+	       (insert (cdr x))))
 	    url-request-extra-headers ""))))
     (goto-char (point-max))
     ;; Massage the body from URLEncoded garbage

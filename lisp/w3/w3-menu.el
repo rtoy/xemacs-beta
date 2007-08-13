@@ -1,11 +1,12 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/07/21 18:29:01
-;; Version: 1.7
+;; Created: 1996/12/31 15:37:49
+;; Version: 1.19
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -20,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'w3-vars)
@@ -37,6 +39,7 @@
 (defvar w3-menu-fsfemacs-view-menu nil)
 (defvar w3-menu-fsfemacs-options-menu nil)
 (defvar w3-menu-fsfemacs-style-menu nil)
+(defvar w3-menu-fsfemacs-search-menu nil)
 (defvar w3-menu-w3-menubar nil)
 (defvar w3-links-menu nil "Menu for w3-mode in XEmacs.")
 (make-variable-buffer-local 'w3-links-menu)
@@ -60,8 +63,9 @@ bookmark	-- Bookmark / hotlist control
 options		-- Various options
 buffers		-- The standard buffers menu
 emacs		-- A toggle button to switch back to normal emacs menus
-style		-- Control fonts and who gets to set them
-help		-- The help 
+style		-- Control style information and who gets to set what
+search          -- Various search engines
+help		-- The help menu
 nil		-- ** special **
 
 If nil appears in the list, it should appear exactly once.  All
@@ -78,7 +82,41 @@ menubar.")
 				(list 'w3-fetch (car (cdr (car hot))))
 				t) hot-menu)
 		hot (cdr hot)))
-	(or hot-menu '(["No Hotlist" undefined nil])))))
+	(or hot-menu '(["No Hotlist" nil nil])))))
+
+(defun w3-menu-html-links-constructor (menu-items)
+  (or menu-items
+      (let ((links (mapcar 'cdr w3-current-links))
+	    (menu nil))
+	(if links
+	    (setq links (delete*
+			 nil
+			 (reduce 'append links)
+			 :test-not (function
+				    (lambda (a b) ; arg order unknown
+				      (member
+				       (car (or a b))
+				       w3-defined-link-types))))))
+	(while links
+	  (let ((name (caar links))
+		(vals (cdar links))
+		(href nil)
+		(new nil))
+	    (if (= (length vals) 1)
+		(setq vals (car vals)
+		      new (vector (or (plist-get vals 'title)
+				      (capitalize name))
+				  (list 'w3-fetch (plist-get vals 'href)) t))
+	      (setq new (cons (capitalize name)
+			      (mapcar (function
+				       (lambda (x)
+					 (setq href (plist-get x 'href))
+					 (vector (or (plist-get x 'title) href)
+						 (list 'w3-fetch href) t)))
+				      vals))))
+	    (setq links (cdr links)
+		  menu (cons new menu))))
+	(or menu '(["None" nil nil])))))
 
 (defun w3-menu-links-constructor (menu-items)
   (or menu-items
@@ -90,13 +128,14 @@ menubar.")
 		href (widget-get widget 'href)
 		menu (cons
 		      (vector (w3-truncate-menu-item
-			       (w3-fix-spaces
-				(buffer-substring
-				 (widget-get widget :from)
-				 (widget-get widget :to))))
+			       (or (widget-get widget 'title)
+				   (w3-fix-spaces
+				    (buffer-substring
+				     (widget-get widget :from)
+				     (widget-get widget :to)))))
 			      (list 'url-maybe-relative href) t) menu)))
 	(setq menu (w3-breakup-menu menu w3-max-menu-length))
-	(or menu '(["No Links" undefined nil])))))
+	(or menu '(["No Links" nil nil])))))
 
 (defun w3-toggle-minibuffer ()
   (interactive)
@@ -217,6 +256,7 @@ menubar.")
    ["View Parse Tree" (w3-display-parse-tree w3-current-parse)
     w3-current-parse]
    ["View Stylesheet" w3-display-stylesheet w3-current-stylesheet]
+   ["Reload Stylesheets" w3-refresh-stylesheets t]
    )
   "W3 menu debug list.")
 
@@ -230,7 +270,10 @@ menubar.")
    "----"
    (if w3-running-xemacs
        '("Links" :filter w3-menu-links-constructor)
-     ["Link..." w3-e19-show-links-menu t])
+     ["Links..." w3-e19-show-links-menu t])
+   (if w3-running-xemacs
+       '("Navigate" :filter w3-menu-html-links-constructor)
+     ["Navigate..." w3-e19-show-navigate-menu t])
    )
   "W3 menu go list.")
 
@@ -294,10 +337,10 @@ menubar.")
    ["Allow Document Stylesheets" (setq w3-honor-stylesheets
 				       (not w3-honor-stylesheets))
     :style toggle :selected w3-honor-stylesheets]
-   ["IE 3.0 Compatible Parsing" (setq w3-style-ie-compatibility
-				      (not w3-style-ie-compatibility))
+   ["IE 3.0 Compatible Parsing" (setq css-ie-compatibility
+				      (not css-ie-compatibility))
     :style toggle :selected (and w3-honor-stylesheets
-				 w3-style-ie-compatibility)]
+				 css-ie-compatibility)]
    ["Honor Color Requests" (setq w3-user-colors-take-precedence
 				 (not w3-user-colors-take-precedence))
     :style toggle :selected (not w3-user-colors-take-precedence)]
@@ -314,6 +357,16 @@ menubar.")
 	"--!here")
     nil)
   "W3 menu buffer list.")
+
+(defconst w3-menu-search-menu
+  (list
+   "Search"
+   ["Yahoo!"    (w3-fetch "http://www.yahoo.com/") t]
+   ["Excite"    (w3-fetch "http://www.excite.com/") t]
+   ["AltaVista" (w3-fetch "http://www.altavista.digital.com/") t]
+   "---"
+   )
+  "W3 search menu")
 
 (defconst w3-menu-emacs-button
   (vector
@@ -363,6 +416,8 @@ menubar.")
 			  w3-menu-options-menu)
 	(easy-menu-define w3-menu-fsfemacs-style-menu (list dummy) nil
 			  w3-menu-style-menu)
+	(easy-menu-define w3-menu-fsfemacs-search-menu (list dummy) nil
+			  w3-menu-search-menu)
 
 	;; block the global menubar entries in the map so that W3
 	;; can take over the menubar if necessary.
@@ -398,6 +453,8 @@ menubar.")
 		  (cons "View" w3-menu-fsfemacs-view-menu))
 		 (style
 		  (cons "Style" w3-menu-fsfemacs-style-menu))
+		 (search
+		  (cons "Search" w3-menu-fsfemacs-search-menu))
 		 (emacs
 		  (cons "[Emacs]" 'w3-menu-toggle-menubar))))
 	      cons
@@ -434,6 +491,7 @@ menubar.")
 	   (go       . w3-menu-go-menu)
 	   (help     . w3-menu-help-menu)
 	   (options  . w3-menu-options-menu)
+	   (search   . w3-menu-search-menu)
 	   (view     . w3-menu-view-menu)
 	   )
 	 )
@@ -580,7 +638,7 @@ menubar.")
 		  w3-preferences-ok-hook
 		  w3-preferences-setup-hook
 		  w3-source-file-hook
-		  w3-style-ie-compatibility
+		  css-ie-compatibility
 		  w3-toolbar-orientation
 		  w3-toolbar-type
 		  w3-use-menus
@@ -608,8 +666,11 @@ menubar.")
   (let* ((glyph (event-glyph e))
 	 (widget (or (and glyph (glyph-property glyph 'widget))
 		     (widget-at (point))))
-	 (href (and widget (widget-get widget 'href)))
-	 (imag (and widget (widget-get widget 'src)))
+	 (parent (and widget (widget-get widget :parent)))
+	 (href (or (and widget (widget-get widget 'href))
+		   (and parent (widget-get parent 'href))))
+	 (imag (or (and widget (widget-get widget 'src))
+		   (and parent (widget-get parent 'src))))
 	 (menu (copy-tree w3-popup-menu))
 	 url val trunc-url)
     (if href

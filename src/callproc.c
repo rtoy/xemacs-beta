@@ -104,8 +104,8 @@ call_process_cleanup (Lisp_Object fdpid)
   /* for MSDOS fdpid is really (fd . tempfile)  */
   Lisp_Object file = Fcdr (fdpid);
   close (XINT (Fcar (fdpid)));
-  if (strcmp (string_data (XSTRING (file)), NULL_DEVICE) != 0)
-    unlink (string_data (XSTRING (file)));
+  if (strcmp (XSTRING_DATA (file), NULL_DEVICE) != 0)
+    unlink (XSTRING_DATA (file));
 #else /* not MSDOS */
   int fd = XINT (Fcar (fdpid));
   int pid = XINT (Fcdr (fdpid));
@@ -196,7 +196,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 #ifdef MSDOS
   char *outf, *tempfile;
   int outfilefd;
-#endif
+#endif /* MSDOS */
   
   CHECK_STRING (args[0]);
 
@@ -206,7 +206,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   /* Without asynchronous processes we cannot have BUFFER == 0.  */
   if (nargs >= 3 && !INTP (args[2]))
     error ("Operating system cannot handle asynchronous subprocesses");
-#endif
+#endif /* NO_SUBPROCESSES */
 
   /* Do this before building new_argv because GC in Lisp code
    *  called by various filename-hacking routines might relocate strings */
@@ -241,8 +241,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
   if (nargs >= 2 && ! NILP (args[1]))
     {
-      infile = Fexpand_file_name (args[1],
-				  current_buffer->directory);
+      infile = Fexpand_file_name (args[1], current_buffer->directory);
       CHECK_STRING (infile);
     }
   else
@@ -287,20 +286,20 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
   display = ((nargs >= 4) ? args[3] : Qnil);
 
-  /* From here we assume we won't GC (unless an error is signalled). */
+  /* From here we assume we won't GC (unless an error is signaled). */
   {
     REGISTER int i;
     for (i = 4; i < nargs; i++)
       {
 	CHECK_STRING (args[i]);
-	new_argv[i - 3] = (char *) string_data (XSTRING (args[i]));
+	new_argv[i - 3] = (char *) XSTRING_DATA (args[i]);
       }
     /* Program name is first command arg */
-    new_argv[0] = (char *) string_data (XSTRING (args[0]));
+    new_argv[0] = (char *) XSTRING_DATA (args[0]);
     new_argv[i - 3] = 0;
   }
 
-  filefd = open ((char *) string_data (XSTRING (infile)), O_RDONLY, 0);
+  filefd = open ((char *) XSTRING_DATA (infile), O_RDONLY, 0);
   if (filefd < 0)
     {
       report_file_error ("Opening process input file",
@@ -313,7 +312,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       report_file_error ("Searching for program",
 			 Fcons (args[0], Qnil));
     }
-  new_argv[0] = (char *) string_data (XSTRING (path));
+  new_argv[0] = (char *) XSTRING_DATA (path);
   
 #ifdef MSDOS
   /* These vars record information from process termination.
@@ -342,7 +341,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       report_file_error ("Opening process output file",
 			 Fcons (tempfile, Qnil));
     }
-#endif
+#endif /* MSDOS */
 
 #ifndef MSDOS
   if (INTP (buffer))
@@ -408,7 +407,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
        parent process, turn it back on if it was really on when you "turned
        it off" */
     int logging_on = cadillac_stop_logging ();
-#endif
+#endif /* EMACS_BTL */
 
     env = environ;
 
@@ -441,12 +440,12 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     else if (STRINGP (error_file))
       {
 #ifdef DOS_NT
-	fd_error = open (string_data (XSTRING (error_file)),
+	fd_error = open (XSTRING_DATA (error_file),
 			 O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
 			 S_IREAD | S_IWRITE);
 #else  /* not DOS_NT */
 	fd_error =
-	  creat ((CONST char *) string_data (XSTRING (error_file)), 0666);
+	  creat ((CONST char *) XSTRING_DATA (error_file), 0666);
 #endif /* not DOS_NT */
       }
 
@@ -478,7 +477,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	   file. */
 	disconnect_controlling_terminal ();
 	child_setup (filefd, fd1, fd_error, new_argv,
-		     (char *) string_data (XSTRING (current_dir)));
+		     (char *) XSTRING_DATA (current_dir));
       }
 #ifdef EMACS_BTL
     else if (logging_on)
@@ -516,7 +515,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	 we don't need to do this, I think because it will then have
 	 the facilities for handling SIGCHLD.  */
       wait_without_blocking ();
-#endif
+#endif /* NO_SUBPROCESSES */
       return Qnil;
     }
 
@@ -535,7 +534,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     record_unwind_protect (call_process_cleanup,
                            Fcons (make_int (fd[0]),
                                   build_string (tempfile)));
-#else
+#else /* not MSDOS */
     record_unwind_protect (call_process_cleanup,
                            Fcons (make_int (fd[0]), make_int (pid)));
 #endif /* not MSDOS */
@@ -733,7 +732,7 @@ child_setup (int in, int out, int err, char **new_argv,
 	 tem = XCDR (tem))
     {
       char **ep = env;
-      char *string = (char *) string_data (XSTRING (XCAR (tem)));
+      char *string = (char *) XSTRING_DATA (XCAR (tem));
       /* See if this string duplicates any string already in the env.
 	 If so, don't put it in.
 	 When an env var has multiple definitions,
@@ -873,18 +872,18 @@ getenv_internal (CONST Bufbyte *var,
       Lisp_Object entry = XCAR (scan);
       
       if (STRINGP (entry)
-	  && string_length (XSTRING (entry)) > varlen
-	  && string_byte (XSTRING (entry), varlen) == '='
+	  && XSTRING_LENGTH (entry) > varlen
+	  && XSTRING_BYTE (entry, varlen) == '='
 #ifdef WINDOWSNT
 	  /* NT environment variables are case insensitive.  */
-	  && ! memicmp (string_data (XSTRING (entry)), var, varlen)
+	  && ! memicmp (XSTRING_DATA (entry), var, varlen)
 #else  /* not WINDOWSNT */
-	  && ! memcmp (string_data (XSTRING (entry)), var, varlen)
+	  && ! memcmp (XSTRING_DATA (entry), var, varlen)
 #endif /* not WINDOWSNT */
 	  )
 	{
-	  *value    = string_data (XSTRING (entry)) + (varlen + 1);
-	  *valuelen = string_length (XSTRING (entry)) - (varlen + 1);
+	  *value    = XSTRING_DATA   (entry) + (varlen + 1);
+	  *valuelen = XSTRING_LENGTH (entry) - (varlen + 1);
 	  return 1;
 	}
     }
@@ -907,15 +906,13 @@ When invoked interactively, prints the value in the echo area.
 
   CHECK_STRING (var);
   GCPRO1 (v);
-  if (getenv_internal (string_data (XSTRING (var)),
-		       string_length (XSTRING (var)),
+  if (getenv_internal (XSTRING_DATA (var), XSTRING_LENGTH (var),
 		       &value, &valuelen))
     v = make_string (value, valuelen);
   if (!NILP (interactivep))
     {
       if (NILP (v))
-	message ("%s not defined in environment",
-		 string_data (XSTRING (var)));
+	message ("%s not defined in environment", XSTRING_DATA (var));
       else
 	message ("\"%s\"", value);
     }
@@ -962,14 +959,14 @@ init_callproc (void)
   if (!initialized)
     {
       Vdata_directory = Qnil;
-      Vdoc_directory = Qnil;
-      Vexec_path = Qnil;
+      Vdoc_directory  = Qnil;
+      Vexec_path      = Qnil;
     }
   else
 #endif
     {
       char *data_dir = egetenv ("EMACSDATA");
-      char *doc_dir = egetenv ("EMACSDOC");
+      char *doc_dir  = egetenv ("EMACSDOC");
     
 #ifdef PATH_DATA
       if (!data_dir)
@@ -1015,7 +1012,7 @@ init_callproc (void)
   if (!NILP (Vexec_directory))
     {
       tempdir = Fdirectory_file_name (Vexec_directory);
-      if (access ((char *) string_data (XSTRING (tempdir)), 0) < 0)
+      if (access ((char *) XSTRING_DATA (tempdir), 0) < 0)
 	{
 	  /* If the hard-coded path is bogus, fail silently.
 	     This will allow the normal heuristics to make an attempt. */
@@ -1023,7 +1020,7 @@ init_callproc (void)
 	  warn_when_safe
 	    (Qpath, Qwarning,
 	     "Warning: machine-dependent data dir (%s) does not exist.\n",
-	     string_data (XSTRING (Vexec_directory)));
+	     XSTRING_DATA (Vexec_directory));
 #else
 	  Vexec_directory = Qnil;
 #endif
@@ -1033,7 +1030,7 @@ init_callproc (void)
   if (!NILP (Vdata_directory))
     {
       tempdir = Fdirectory_file_name (Vdata_directory);
-      if (access ((char *) string_data (XSTRING (tempdir)), 0) < 0)
+      if (access ((char *) XSTRING_DATA (tempdir), 0) < 0)
 	{
 	  /* If the hard-coded path is bogus, fail silently.
 	     This will allow the normal heuristics to make an attempt. */
@@ -1041,7 +1038,7 @@ init_callproc (void)
 	  warn_when_safe
 	    (Qpath, Qwarning,
 	     "Warning: machine-independent data dir (%s) does not exist.\n",
-	     string_data (XSTRING (Vdata_directory)));
+	     XSTRING_DATA (Vdata_directory));
 #else
 	  Vdata_directory = Qnil;
 #endif

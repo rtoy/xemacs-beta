@@ -180,11 +180,12 @@ Commands:
 (define-key help-mode-map "q" 'help-mode-quit)
 
 (defun help-mode-quit ()
-  "Exits from help mode, possiblely restoring the previous window configuration."
+  "Exits from help mode, possibly restoring the previous window configuration."
   (interactive)
   (cond ((local-variable-p 'help-window-config (current-buffer))
          (let ((config help-window-config))
 	   (kill-local-variable 'help-window-config)
+	   (bury-buffer)
 	   (set-window-configuration config)))
         ((one-window-p)
 	 (bury-buffer))

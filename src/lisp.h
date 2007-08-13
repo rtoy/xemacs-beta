@@ -169,7 +169,7 @@ Boston, MA 02111-1307, USA.  */
    macro will realloc BASEVAR as necessary so that it can hold at
    least NEEDED_SIZE objects.  The reallocing is done by doubling,
    which ensures constant amortized time per element. */
-#define DO_REALLOC(basevar, sizevar, needed_size, type)	do	\
+#define DO_REALLOC(basevar, sizevar, needed_size, type)	do		\
 {									\
   /* Avoid side-effectualness. */					\
   /* Dammit! Macros suffer from dynamic scope! */			\
@@ -183,7 +183,8 @@ Boston, MA 02111-1307, USA.  */
     (sizevar) = newsize;						\
   }									\
   if (newsize)								\
-    (basevar) = (type *) xrealloc (basevar, (newsize)*sizeof(type));	\
+    (basevar) = (type *) xrealloc (basevar,				\
+				(newsize)*sizeof(type));		\
 } while (0)
 
 #ifdef ERROR_CHECK_MALLOC
@@ -255,15 +256,14 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef QUANTIFY
 #include "quantify.h"
-#define QUANTIFY_START_RECORDING				\
+#define QUANTIFY_START_RECORDING					\
   do { quantify_start_recording_data (); } while (0)
-#define QUANTIFY_STOP_RECORDING				\
+#define QUANTIFY_STOP_RECORDING						\
   do { quantify_stop_recording_data (); } while (0)
 #else /* !QUANTIFY */
 #define QUANTIFY_START_RECORDING
 #define QUANTIFY_STOP_RECORDING
 #endif /* !QUANTIFY */
-
 
 #ifndef DO_NOTHING
 #define DO_NOTHING do {} while (0)
@@ -398,7 +398,7 @@ typedef unsigned char Extbyte;
 
 /* To the user, a buffer is made up of characters, declared as follows.
    In the non-Mule world, characters and Bufbytes are equivalent.
-   In the Mule world, a characters requires (typically) 1 to 4
+   In the Mule world, a character requires (typically) 1 to 4
    Bufbytes for its representation in a buffer. */
 
 typedef int Emchar;
@@ -852,11 +852,11 @@ DECLARE_NONRECORD (string, Lisp_String, struct Lisp_String);
 # define charcount_to_bytecount(ptr, len) (len)
 
 #define string_length(s) ((s)->_size)
-#define XSTRING_length(s) string_length (XSTRING (s))
+#define XSTRING_LENGTH(s) string_length (XSTRING (s))
 #define string_data(s) ((s)->_data + 0)
-#define XSTRING_data(s) string_data (XSTRING (s))
+#define XSTRING_DATA(s) string_data (XSTRING (s))
 #define string_byte(s, i) ((s)->_data[i] + 0)
-#define XSTRING_byte(s, i) string_byte (XSTRING (s), i)
+#define XSTRING_BYTE(s, i) string_byte (XSTRING (s), i)
 #define string_byte_addr(s, i) (&((s)->_data[i]))
 #define set_string_length(s, len) do { (s)->_size = (len); } while (0)
 #define set_string_data(s, ptr) do { (s)->_data = (ptr); } while (0)
@@ -913,7 +913,7 @@ DECLARE_NONRECORD (vector, Lisp_Vector, struct Lisp_Vector);
 /*********** bit vector ***********/
 
 #if (LONGBITS < 16)
-What the hell?!
+#error What the hell?!
 #elif (LONGBITS < 32)
 # define LONGBITS_LOG2 4
 # define LONGBITS_POWER_OF_2 16
@@ -1638,23 +1638,23 @@ void debug_gcpro_5 (), debug_ungcpro ();
 
 #define GCPRO3(varname1, varname2, varname3) \
  {gcpro1.next = gcprolist; gcpro1.var = &varname1; gcpro1.nvars = 1; \
-  gcpro2.next = &gcpro1; gcpro2.var = &varname2; gcpro2.nvars = 1; \
-  gcpro3.next = &gcpro2; gcpro3.var = &varname3; gcpro3.nvars = 1; \
+  gcpro2.next = &gcpro1;   gcpro2.var = &varname2; gcpro2.nvars = 1; \
+  gcpro3.next = &gcpro2;   gcpro3.var = &varname3; gcpro3.nvars = 1; \
   gcprolist = &gcpro3; }
 
 #define GCPRO4(varname1, varname2, varname3, varname4) \
  {gcpro1.next = gcprolist; gcpro1.var = &varname1; gcpro1.nvars = 1; \
-  gcpro2.next = &gcpro1; gcpro2.var = &varname2; gcpro2.nvars = 1; \
-  gcpro3.next = &gcpro2; gcpro3.var = &varname3; gcpro3.nvars = 1; \
-  gcpro4.next = &gcpro3; gcpro4.var = &varname4; gcpro4.nvars = 1; \
+  gcpro2.next = &gcpro1;   gcpro2.var = &varname2; gcpro2.nvars = 1; \
+  gcpro3.next = &gcpro2;   gcpro3.var = &varname3; gcpro3.nvars = 1; \
+  gcpro4.next = &gcpro3;   gcpro4.var = &varname4; gcpro4.nvars = 1; \
   gcprolist = &gcpro4; }
 
 #define GCPRO5(varname1, varname2, varname3, varname4, varname5) \
  {gcpro1.next = gcprolist; gcpro1.var = &varname1; gcpro1.nvars = 1; \
-  gcpro2.next = &gcpro1; gcpro2.var = &varname2; gcpro2.nvars = 1; \
-  gcpro3.next = &gcpro2; gcpro3.var = &varname3; gcpro3.nvars = 1; \
-  gcpro4.next = &gcpro3; gcpro4.var = &varname4; gcpro4.nvars = 1; \
-  gcpro5.next = &gcpro4; gcpro5.var = &varname5; gcpro5.nvars = 1; \
+  gcpro2.next = &gcpro1;   gcpro2.var = &varname2; gcpro2.nvars = 1; \
+  gcpro3.next = &gcpro2;   gcpro3.var = &varname3; gcpro3.nvars = 1; \
+  gcpro4.next = &gcpro3;   gcpro4.var = &varname4; gcpro4.nvars = 1; \
+  gcpro5.next = &gcpro4;   gcpro5.var = &varname5; gcpro5.nvars = 1; \
   gcprolist = &gcpro5; }
 
 #define UNGCPRO (gcprolist = gcpro1.next)
@@ -1665,28 +1665,28 @@ void debug_gcpro_5 (), debug_ungcpro ();
 
 #define NGCPRO2(varname1, varname2) \
  {ngcpro1.next = gcprolist; ngcpro1.var = &varname1; ngcpro1.nvars = 1; \
-  ngcpro2.next = &ngcpro1; ngcpro2.var = &varname2; ngcpro2.nvars = 1; \
+  ngcpro2.next = &ngcpro1;  ngcpro2.var = &varname2; ngcpro2.nvars = 1; \
   gcprolist = &ngcpro2; }
 
 #define NGCPRO3(varname1, varname2, varname3) \
  {ngcpro1.next = gcprolist; ngcpro1.var = &varname1; ngcpro1.nvars = 1; \
-  ngcpro2.next = &ngcpro1; ngcpro2.var = &varname2; ngcpro2.nvars = 1; \
-  ngcpro3.next = &ngcpro2; ngcpro3.var = &varname3; ngcpro3.nvars = 1; \
+  ngcpro2.next = &ngcpro1;  ngcpro2.var = &varname2; ngcpro2.nvars = 1; \
+  ngcpro3.next = &ngcpro2;  ngcpro3.var = &varname3; ngcpro3.nvars = 1; \
   gcprolist = &ngcpro3; }
 
 #define NGCPRO4(varname1, varname2, varname3, varname4) \
  {ngcpro1.next = gcprolist; ngcpro1.var = &varname1; ngcpro1.nvars = 1; \
-  ngcpro2.next = &ngcpro1; ngcpro2.var = &varname2; ngcpro2.nvars = 1; \
-  ngcpro3.next = &ngcpro2; ngcpro3.var = &varname3; ngcpro3.nvars = 1; \
-  ngcpro4.next = &ngcpro3; ngcpro4.var = &varname4; ngcpro4.nvars = 1; \
+  ngcpro2.next = &ngcpro1;  ngcpro2.var = &varname2; ngcpro2.nvars = 1; \
+  ngcpro3.next = &ngcpro2;  ngcpro3.var = &varname3; ngcpro3.nvars = 1; \
+  ngcpro4.next = &ngcpro3;  ngcpro4.var = &varname4; ngcpro4.nvars = 1; \
   gcprolist = &ngcpro4; }
 
 #define NGCPRO5(varname1, varname2, varname3, varname4, varname5) \
  {ngcpro1.next = gcprolist; ngcpro1.var = &varname1; ngcpro1.nvars = 1; \
-  ngcpro2.next = &ngcpro1; ngcpro2.var = &varname2; ngcpro2.nvars = 1; \
-  ngcpro3.next = &ngcpro2; ngcpro3.var = &varname3; ngcpro3.nvars = 1; \
-  ngcpro4.next = &ngcpro3; ngcpro4.var = &varname4; ngcpro4.nvars = 1; \
-  ngcpro5.next = &ngcpro4; ngcpro5.var = &varname5; ngcpro5.nvars = 1; \
+  ngcpro2.next = &ngcpro1;  ngcpro2.var = &varname2; ngcpro2.nvars = 1; \
+  ngcpro3.next = &ngcpro2;  ngcpro3.var = &varname3; ngcpro3.nvars = 1; \
+  ngcpro4.next = &ngcpro3;  ngcpro4.var = &varname4; ngcpro4.nvars = 1; \
+  ngcpro5.next = &ngcpro4;  ngcpro5.var = &varname5; ngcpro5.nvars = 1; \
   gcprolist = &ngcpro5; }
 
 #define NUNGCPRO (gcprolist = ngcpro1.next)

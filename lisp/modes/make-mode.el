@@ -161,6 +161,12 @@ backslash.  This is done silently.
 IMPORTANT: Please note that enabling this option causes makefile-mode
 to MODIFY A FILE WITHOUT YOUR CONFIRMATION when \'it seems necessary\'.")
 
+;;; those suspicious line warnings are really annoying and
+;;; seem to be generated for every makefile I've ever seen.
+;;; add a simple mechanism to disable them.  -gk
+(defvar makefile-warn-suspicious-lines-p t
+  "In non-nil, warn about suspicious lines when saving the makefile")
+
 (defvar makefile-browser-hook '())
 
 ;;
@@ -619,7 +625,13 @@ Anywhere else just self-inserts."
   (makefile-pickup-macros)
   (if (bolp)
       (call-interactively 'makefile-insert-macro)
-    (self-insert-command arg)))
+    (self-insert-command arg)
+    ;; from here down is new -- if they inserted a macro without using
+    ;; the electric behavior, pick it up anyway   -gk
+    (save-excursion
+      (beginning-of-line)
+      (if (looking-at makefile-macroassign-regex)
+          (makefile-add-this-line-macro)))))
 
 (defun makefile-insert-macro (macro-name)
   "Prepare definition of a new macro."
@@ -719,7 +731,9 @@ Anywhere else just self-inserts."
   (if (not makefile-need-macro-pickup)
       nil
     (setq makefile-need-macro-pickup nil)
-    (setq makefile-macro-table nil)
+    ;; changed the nil in the next line to makefile-runtime-macros-list
+    ;; so you don't have to confirm on every runtime macro entered...  -gk
+    (setq makefile-macro-table makefile-runtime-macros-list) 
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward makefile-macroassign-regex (point-max) t)
@@ -1220,7 +1234,8 @@ and generates the overview, one line per target name."
 
 (defun makefile-warn-suspicious-lines ()
   (let ((dont-save nil))
-    (if (eq major-mode 'makefile-mode)
+    (if (and (eq major-mode 'makefile-mode)
+	     makefile-warn-suspicious-lines-p)  ; -gk
 	(let ((suspicious
 	       (save-excursion
 		 (goto-char (point-min))

@@ -116,83 +116,83 @@ Boston, MA 02111-1307, USA.  */
 #define offset(field) XtOffset(XlwScrollBarWidget, field)
 
 static XtResource resources[] = {
-    { (String) XmNforeground, (String) XmCForeground, XtRPixel, sizeof(Pixel),
+    { XmNforeground, XmCForeground, XtRPixel, sizeof(Pixel),
       offset(sb.foreground), XtRImmediate, (XtPointer) XtDefaultForeground },
 
-    { (String) XmNtopShadowColor, (String) XmCTopShadowColor, XtRPixel,
+    { XmNtopShadowColor, XmCTopShadowColor, XtRPixel,
       sizeof(Pixel), offset(sb.topShadowColor), XtRImmediate, (XtPointer) ~0 },
-    { (String) XmNbottomShadowColor, (String) XmCBottomShadowColor, XtRPixel,
+    { XmNbottomShadowColor, XmCBottomShadowColor, XtRPixel,
       sizeof(Pixel), offset(sb.bottomShadowColor), XtRImmediate,
       (XtPointer)~0 },
 
-    { (String) XmNtopShadowPixmap, (String) XmCTopShadowPixmap, XtRPixmap,
+    { XmNtopShadowPixmap, XmCTopShadowPixmap, XtRPixmap,
       sizeof (Pixmap), offset(sb.topShadowPixmap), XtRImmediate,
       (XtPointer)None},
-    { (String) XmNbottomShadowPixmap, (String) XmCBottomShadowPixmap,
+    { XmNbottomShadowPixmap, XmCBottomShadowPixmap,
       XtRPixmap, sizeof (Pixmap), offset(sb.bottomShadowPixmap),
       XtRImmediate, (XtPointer)None},
 
-    { (String)XmNtroughColor, (String)XmCTroughColor, XtRPixel, sizeof(Pixel),
+    { XmNtroughColor, XmCTroughColor, XtRPixel, sizeof(Pixel),
       offset(sb.troughColor), XtRImmediate, (XtPointer)~0 },
 
-    { (String)XmNshadowThickness, (String)XmCShadowThickness, XtRInt,
+    { XmNshadowThickness, XmCShadowThickness, XtRInt,
       sizeof(int), offset(sb.shadowThickness), XtRImmediate, (XtPointer)2 },
 
-    { (String) XmNborderWidth, (String) XmCBorderWidth, XtRDimension,
+    { XmNborderWidth, XmCBorderWidth, XtRDimension,
       sizeof(Dimension), offset(core.border_width), XtRImmediate,
       (XtPointer)0 },
 
-    { (String) XmNshowArrows, (String) XmCShowArrows, XtRBoolean,
+    { XmNshowArrows, XmCShowArrows, XtRBoolean,
       sizeof(Boolean), offset(sb.showArrows), XtRImmediate, (XtPointer)True },
 
-    { (String) XmNinitialDelay, (String) XmCInitialDelay, XtRInt, sizeof(int),
+    { XmNinitialDelay, XmCInitialDelay, XtRInt, sizeof(int),
       offset(sb.initialDelay), XtRImmediate, (XtPointer) 250 },
-    { (String) XmNrepeatDelay, (String) XmCRepeatDelay, XtRInt, sizeof(int),
+    { XmNrepeatDelay, XmCRepeatDelay, XtRInt, sizeof(int),
       offset(sb.repeatDelay), XtRImmediate, (XtPointer) 50 },
 
-    { (String) XmNorientation, (String) XmCOrientation, XtROrientation,
+    { XmNorientation, XmCOrientation, XtROrientation,
       sizeof(unsigned char), offset(sb.orientation), XtRImmediate,
       (XtPointer) XmVERTICAL },
 
-    { (String) XmNminimum, (String) XmCMinimum, XtRInt, sizeof(int),
+    { XmNminimum, XmCMinimum, XtRInt, sizeof(int),
       offset(sb.minimum), XtRImmediate, (XtPointer) 0},
-    { (String) XmNmaximum, (String) XmCMaximum, XtRInt, sizeof(int),
+    { XmNmaximum, XmCMaximum, XtRInt, sizeof(int),
       offset(sb.maximum), XtRImmediate, (XtPointer) 100},
-    { (String) XmNvalue, (String) XmCValue, XtRInt, sizeof(int),
+    { XmNvalue, XmCValue, XtRInt, sizeof(int),
       offset(sb.value), XtRImmediate, (XtPointer) 0},
-    { (String) XmNsliderSize, (String) XmCSliderSize, XtRInt, sizeof(int),
+    { XmNsliderSize, XmCSliderSize, XtRInt, sizeof(int),
       offset(sb.sliderSize), XtRImmediate, (XtPointer) 10},
-    { (String) XmNincrement, (String) XmCIncrement, XtRInt, sizeof(int),
+    { XmNincrement, XmCIncrement, XtRInt, sizeof(int),
       offset(sb.increment), XtRImmediate, (XtPointer) 1},
-    { (String)XmNpageIncrement, (String)XmCPageIncrement, XtRInt, sizeof(int),
+    { XmNpageIncrement, XmCPageIncrement, XtRInt, sizeof(int),
       offset(sb.pageIncrement), XtRImmediate, (XtPointer) 10},
 
-    { (String) XmNvalueChangedCallback, (String) XmCValueChangedCallback,
+    { XmNvalueChangedCallback, XmCValueChangedCallback,
       XtRCallback, sizeof(XtPointer), offset(sb.valueChangedCBL),
       XtRCallback, NULL},
-    { (String) XmNincrementCallback, (String) XmCIncrementCallback,
+    { XmNincrementCallback, XmCIncrementCallback,
       XtRCallback, sizeof(XtPointer), offset(sb.incrementCBL),
       XtRCallback, NULL},
-    { (String) XmNdecrementCallback, (String) XmCDecrementCallback,
+    { XmNdecrementCallback, XmCDecrementCallback,
       XtRCallback, sizeof(XtPointer), offset(sb.decrementCBL),
       XtRCallback, NULL},
-    { (String) XmNpageIncrementCallback, (String) XmCPageIncrementCallback,
+    { XmNpageIncrementCallback, XmCPageIncrementCallback,
       XtRCallback, sizeof(XtPointer), offset(sb.pageIncrementCBL),
       XtRCallback, NULL},
-    { (String) XmNpageDecrementCallback, (String) XmCPageDecrementCallback,
+    { XmNpageDecrementCallback, XmCPageDecrementCallback,
       XtRCallback, sizeof(XtPointer), offset(sb.pageDecrementCBL),
       XtRCallback, NULL},
-    { (String) XmNtoTopCallback, (String) XmCToTopCallback, XtRCallback,
+    { XmNtoTopCallback, XmCToTopCallback, XtRCallback,
       sizeof(XtPointer), offset(sb.toTopCBL), XtRCallback, NULL},
-    { (String) XmNtoBottomCallback, (String) XmCToBottomCallback, XtRCallback,
+    { XmNtoBottomCallback, XmCToBottomCallback, XtRCallback,
       sizeof(XtPointer), offset(sb.toBottomCBL), XtRCallback, NULL},
-    { (String) XmNdragCallback, (String) XmCDragCallback, XtRCallback,
+    { XmNdragCallback, XmCDragCallback, XtRCallback,
       sizeof(XtPointer), offset(sb.dragCBL), XtRCallback, NULL},
 
-    { (String) XmNknobStyle, (String) XmCKnobStyle, XtRString, sizeof(char *),
+    { XmNknobStyle, XmCKnobStyle, XtRString, sizeof(char *),
       offset(sb.knobStyle), XtRImmediate, NULL},
 
-    { (String) XmNarrowPosition, (String) XmCArrowPosition, XtRString,
+    { XmNarrowPosition, XmCArrowPosition, XtRString,
       sizeof(char *), offset(sb.arrowPosition), XtRImmediate, NULL},
 };
 
@@ -234,13 +234,13 @@ static void Realize(Widget widget, XtValueMask *valuemask, XSetWindowAttributes 
 **
 */
 static XtActionsRec actions[] = {
-    {(String) "Select",		Select},
-    {(String) "PageDownOrRight",PageDownOrRight},
-    {(String) "PageUpOrLeft",	PageUpOrLeft},
-    {(String) "Drag",		Drag},
-    {(String) "Release",	Release},
-    {(String) "Jump",		Jump},
-    {(String) "Abort",		Abort},
+    {"Select",		Select},
+    {"PageDownOrRight",	PageDownOrRight},
+    {"PageUpOrLeft",	PageUpOrLeft},
+    {"Drag",		Drag},
+    {"Release",		Release},
+    {"Jump",		Jump},
+    {"Abort",		Abort},
 };
 
 /************************************************************************
@@ -267,7 +267,7 @@ XlwScrollBarClassRec xlwScrollBarClassRec = {
     /* core_class fields */
     {
     /* superclass          */ (WidgetClass) &coreClassRec,
-    /* class_name          */ (String) "XlwScrollBar",
+    /* class_name          */ "XlwScrollBar",
     /* widget_size         */ sizeof(XlwScrollBarRec),
     /* class_initialize    */ NULL,
     /* class_part_init     */ NULL,
@@ -582,7 +582,7 @@ allocate_nearest_color (Display *display, Colormap screen_colormap,
 	 what X uses for closest color matching with StaticColor visuals.  */
 
       int nearest, x;
-      unsigned long nearest_delta, trial_delta;
+      unsigned long nearest_delta = ULONG_MAX;
 
       int no_cells = XDisplayCells (display, XDefaultScreen (display));
       /* Don't use alloca here because lwlib doesn't have the
@@ -594,17 +594,17 @@ allocate_nearest_color (Display *display, Colormap screen_colormap,
 
       XQueryColors (display, screen_colormap, cells, no_cells);
 
-      for (x = 0; x < no_cells; x++)
+      for (nearest = 0, x = 0; x < no_cells; x++)
 	{
 	  long dred   = (color_def->red   >> 8) - (cells[x].red   >> 8);
 	  long dgreen = (color_def->green >> 8) - (cells[x].green >> 8);
 	  long dblue  = (color_def->blue  >> 8) - (cells[x].blue  >> 8);
-	  trial_delta = dred * dred + dgreen * dgreen + dblue * dblue;
+	  unsigned long delta = dred * dred + dgreen * dgreen + dblue * dblue;
 
-	  if (x == 0 || trial_delta < nearest_delta)
+	  if (delta < nearest_delta)
 	    {
 	      nearest = x;
-	      nearest_delta = trial_delta;
+	      nearest_delta = delta;
 	    }
 	}
       color_def->red   = cells[nearest].red;
@@ -1073,7 +1073,6 @@ verify_values (XlwScrollBarWidget w)
 
   if (w->sb.value > w->sb.maximum - w->sb.sliderSize)
       w->sb.value = w->sb.maximum - w->sb.sliderSize;
-
 }
 
 static int

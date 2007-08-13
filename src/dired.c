@@ -93,9 +93,9 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
     /* XEmacs: this should come before the opendir() because it might error. */
     Lisp_Object name_as_dir = Ffile_name_as_directory (dirname);
     CHECK_STRING (name_as_dir);
-    memcpy (statbuf, ((char *) string_data (XSTRING (name_as_dir))),
-           string_length (XSTRING (name_as_dir)));
-    statbuf_tail = statbuf + string_length (XSTRING (name_as_dir));
+    memcpy (statbuf, ((char *) XSTRING_DATA (name_as_dir)),
+           XSTRING_LENGTH (name_as_dir));
+    statbuf_tail = statbuf + XSTRING_LENGTH (name_as_dir);
   }
 
   /* XEmacs: this should come after Ffile_name_as_directory() to avoid
@@ -126,16 +126,16 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
      an error is signalled while the directory stream is open, we
      have to make sure it gets closed, and setting up an
      unwind_protect to do so would be a pain.  */
-  d = opendir ((char *) string_data (XSTRING (dirfilename)));
+  d = opendir ((char *) XSTRING_DATA (dirfilename));
   if (! d)
     report_file_error ("Opening directory", list1 (dirname));
 
   list = Qnil;
   tail_cons = Qnil;
-  dirname_length = string_length (XSTRING (dirname));
+  dirname_length = XSTRING_LENGTH (dirname);
 #ifndef VMS
   if (dirname_length == 0
-      || !IS_ANY_SEP (string_byte (XSTRING (dirname), dirname_length - 1)))
+      || !IS_ANY_SEP (XSTRING_BYTE (dirname, dirname_length - 1)))
   {
     *filename++ = DIRECTORY_SEP;
     dirname_length++;
@@ -277,11 +277,11 @@ file_name_completion_stat (Lisp_Object dirname, DIRENTRY *dp,
 			   struct stat *st_addr)
 {
   Bytecount len = NAMLEN (dp);
-  Bytecount pos = string_length (XSTRING (dirname));
+  Bytecount pos = XSTRING_LENGTH (dirname);
   int value;
   char *fullname = (char *) alloca (len + pos + 2);
 
-  memcpy (fullname, string_data (XSTRING (dirname)), pos);
+  memcpy (fullname, XSTRING_DATA (dirname), pos);
 #ifndef VMS
   if (!IS_DIRECTORY_SEP (fullname[pos - 1]))
     fullname[pos++] = DIRECTORY_SEP;
@@ -348,7 +348,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
   for (passcount = !!all_flag; NILP (bestmatch) && passcount < 2; passcount++)
     {
       d = opendir ((char *)
-		   string_data (XSTRING (Fdirectory_file_name (dirname))));
+		   XSTRING_DATA (Fdirectory_file_name (dirname)));
       if (!d)
 	report_file_error ("Opening directory", list1 (dirname));
 
@@ -381,9 +381,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 
 	  if (! DIRENTRY_NONEMPTY (dp)
 	      || cclen < file_name_length
-	      || 0 <= scmp (d_name,
-			    string_data (XSTRING (file)),
-			    file_name_length))
+	      || 0 <= scmp (d_name, XSTRING_DATA (file), file_name_length))
 	    continue;
 
           if (file_name_completion_stat (dirname, dp, &st) < 0)
@@ -420,7 +418,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 		      if (skip < 0) continue;
 
 		      if (0 > scmp (charptr_n_addr (d_name, skip),
-				    string_data (XSTRING (elt)),
+				    XSTRING_DATA (elt),
 				    string_char_length (XSTRING (elt))))
 			{
 			  ignored_extension_p = 1;
@@ -464,7 +462,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
           else
             {
               Charcount compare = min (bestmatchsize, cclen);
-              Bufbyte *p1 = string_data (XSTRING (bestmatch));
+              Bufbyte *p1 = XSTRING_DATA (bestmatch);
               Bufbyte *p2 = d_name;
               Charcount matchsize = scmp (p1, p2, compare);
 
@@ -490,9 +488,9 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
                        /* If there is more than one exact match aside from
                           case, and one of them is exact including case,
                           prefer that one.  */
-                       && 0 > scmp_1 (p2, string_data (XSTRING (file)),
+                       && 0 > scmp_1 (p2, XSTRING_DATA (file),
 				      file_name_length, 0)
-                       && 0 <= scmp_1 (p1, string_data (XSTRING (file)),
+                       && 0 <= scmp_1 (p1, XSTRING_DATA (file),
 				       file_name_length, 0)))
                     {
                       bestmatch = make_string (d_name, len);
@@ -578,7 +576,7 @@ Returns nil if the file cannot be opened or if there is no version limit.
   CHECK_STRING (filename);
   fab      = cc$rms_fab;
   xabfhc   = cc$rms_xabfhc;
-  fab.fab$l_fna = string_data (XSTRING (filename));
+  fab.fab$l_fna = XSTRING_DATA (filename);
   fab.fab$b_fns = strlen (fab.fab$l_fna);
   fab.fab$l_xab = (char *) &xabfhc;
   status = sys$open (&fab, 0, 0);
@@ -645,7 +643,7 @@ If file does not exist, returns nil.
   if (!NILP (handler))
     return call2 (handler, Qfile_attributes, filename);
 
-  if (lstat ((char *) string_data (XSTRING (filename)), &s) < 0)
+  if (lstat ((char *) XSTRING_DATA (filename), &s) < 0)
     return Qnil;
 
   GCPRO2 (filename, dirname);
@@ -656,15 +654,14 @@ If file does not exist, returns nil.
 
 #ifdef MSDOS
   {
-    char *tmpnam =
-      (char *) string_data (XSTRING (Ffile_name_nondirectory (filename)));
+    char *tmpnam = (char *) XSTRING_DATA (Ffile_name_nondirectory (filename));
     int l = strlen (tmpnam);
 
     if (l >= 5 
 	&& S_ISREG (s.st_mode)
-	&& (stricmp (&tmpnam[l - 4], ".com") == 0
-	    || stricmp (&tmpnam[l - 4], ".exe") == 0
-	    || stricmp (&tmpnam[l - 4], ".bat") == 0))
+	&& (stricmp (&tmpnam[l - 4], ".com") == 0 ||
+	    stricmp (&tmpnam[l - 4], ".exe") == 0 ||
+	    stricmp (&tmpnam[l - 4], ".bat") == 0))
       {
 	s.st_mode |= S_IEXEC;
       }
@@ -702,7 +699,7 @@ If file does not exist, returns nil.
   {
     struct stat sdir;
 
-    if (!NILP (dirname) && stat ((char *) string_data (XSTRING (dirname)), &sdir) == 0)
+    if (!NILP (dirname) && stat ((char *) XSTRING_DATA (dirname), &sdir) == 0)
       values[9] = (sdir.st_gid != s.st_gid) ? Qt : Qnil;
     else                        /* if we can't tell, assume worst */
       values[9] = Qt;

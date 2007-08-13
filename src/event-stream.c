@@ -823,7 +823,7 @@ execute_help_form (struct command_builder *command_builder,
   command_builder->echo_buf_index = buf_index;
   if (buf_index > 0)
     memcpy (command_builder->echo_buf,
-            string_data (XSTRING (echo)), buf_index + 1); /* terminating 0 */
+            XSTRING_DATA (echo), buf_index + 1); /* terminating 0 */
   UNGCPRO;
 }
 
@@ -1994,10 +1994,10 @@ The returned event will be one of the following types:
       Bytecount len;
       CHECK_STRING (prompt);
 
-      len = string_length (XSTRING (prompt));
+      len = XSTRING_LENGTH (prompt);
       if (command_builder->echo_buf_length < len)
 	len = command_builder->echo_buf_length - 1;
-      memcpy (command_builder->echo_buf, string_data (XSTRING (prompt)), len);
+      memcpy (command_builder->echo_buf, XSTRING_DATA (prompt), len);
       command_builder->echo_buf[len] = 0;
       command_builder->echo_buf_index = len;
       echo_area_message (XFRAME (CONSOLE_SELECTED_FRAME (con)),
@@ -3391,12 +3391,12 @@ lookup_command_event (struct command_builder *command_builder,
 	  {
 	    /* Append keymap prompt to key echo buffer */
 	    int buf_index = command_builder->echo_buf_index;
-	    Bytecount len = string_length (XSTRING (prompt));
+	    Bytecount len = XSTRING_LENGTH (prompt);
 
 	    if (len + buf_index + 1 <= command_builder->echo_buf_length)
 	      {
 		Bufbyte *echo = command_builder->echo_buf + buf_index;
-		memcpy (echo, string_data (XSTRING (prompt)), len);
+		memcpy (echo, XSTRING_DATA (prompt), len);
 		echo[len] = 0;
 	      }
 	    maybe_echo_keys (command_builder, 1);
@@ -4036,7 +4036,7 @@ If FILE is nil, close any open dribble file.
       int fd;
 
       file = Fexpand_file_name (file, Qnil);
-      fd = creat ((char *) string_data (XSTRING (file)), 0666);
+      fd = creat ((char *) XSTRING_DATA (file), 0666);
       if (fd < 0)
 	error ("Unable to create dribble file");
       Vdribble_file = make_filedesc_output_stream (fd, 0, 0, LSTR_CLOSING);

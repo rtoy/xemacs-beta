@@ -69,9 +69,8 @@ static int current_lock_owner_1 (CONST char *);
 
 #ifndef HAVE_LONG_FILE_NAMES
 
-#define MAKE_LOCK_NAME(lock, file)					    \
-  (lock = (char *) alloca (14 + string_length (XSTRING (Vlock_directory)) + \
-			   1),						    \
+#define MAKE_LOCK_NAME(lock, file)					\
+  (lock = (char *) alloca (14 + XSTRING_LENGTH (Vlock_directory) + 1),	\
    fill_in_lock_short_file_name (lock, (file)))
 
 static void
@@ -91,7 +90,7 @@ fill_in_lock_short_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
 
   crc.word[0] = crc.word[1] = 0;
 
-  for (p = string_data (XSTRING (fn)); new = *p++; )
+  for (p = XSTRING_DATA (fn); new = *p++; )
     {
       new += crc.byte[6];
       crc.byte[6] = crc.byte[5] + new;
@@ -107,12 +106,12 @@ fill_in_lock_short_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
     int need_slash = 0;
 
     /* in case lock-directory doesn't end in / */
-    if (string_byte (XSTRING (Vlock_directory),
-		     string_length (XSTRING (Vlock_directory)) - 1) != '/')
+    if (XSTRING_BYTE (Vlock_directory,
+		     XSTRING_LENGTH (Vlock_directory) - 1) != '/')
       need_slash = 1;
 
     sprintf (lockfile, "%s%s%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
-	     (char *) string_data (XSTRING (Vlock_directory)),
+	     (char *) XSTRING_DATA (Vlock_directory),
 	     need_slash ? "/" : "",
 	     crc.byte[0], crc.byte[1], crc.byte[2], crc.byte[3],
 	     crc.byte[4], crc.byte[5], crc.byte[6]);
@@ -122,9 +121,9 @@ fill_in_lock_short_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
 #else /* defined HAVE_LONG_FILE_NAMES */
 
 /* +2 for terminating null and possible extra slash */
-#define MAKE_LOCK_NAME(lock, file)					   \
-  (lock = (char *) alloca (string_length (XSTRING (file)) +		   \
-			   string_length (XSTRING (Vlock_directory)) + 2), \
+#define MAKE_LOCK_NAME(lock, file)					\
+  (lock = (char *) alloca (XSTRING_LENGTH (file) +			\
+			   XSTRING_LENGTH (Vlock_directory) + 2),	\
    fill_in_lock_file_name (lock, (file)))
 
 static void
@@ -135,7 +134,7 @@ fill_in_lock_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
 
   CHECK_STRING (Vlock_directory);
 
-  strcpy (lockfile, (char *) string_data (XSTRING (Vlock_directory)));
+  strcpy (lockfile, (char *) XSTRING_DATA (Vlock_directory));
 
   p = lockfile + strlen (lockfile);
 
@@ -146,7 +145,7 @@ fill_in_lock_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
       p++;
     }
 
-  strcpy (p, (char *) string_data (XSTRING (fn)));
+  strcpy (p, (char *) XSTRING_DATA (fn));
 
   for (; *p; p++)
     {
@@ -239,7 +238,7 @@ lock_file (Lisp_Object fn)
       CHECK_STRING (Vsuperlock_file);
       lock_superlock (lfname);
       lock_file_1 (lfname, O_WRONLY);
-      unlink ((char *) string_data (XSTRING (Vsuperlock_file)));
+      unlink ((char *) XSTRING_DATA (Vsuperlock_file));
       goto done;
     }
   /* User says ignore the lock */
@@ -351,7 +350,7 @@ unlock_file (Lisp_Object fn)
   if (current_lock_owner_1 (lfname) == getpid ())
     unlink (lfname);
 
-  unlink ((char *) string_data (XSTRING (Vsuperlock_file)));
+  unlink ((char *) XSTRING_DATA (Vsuperlock_file));
 }
 
 static void
@@ -361,7 +360,7 @@ lock_superlock (CONST char *lfname)
   DIR *lockdir;
 
   for (i = -20; i < 0 &&
-       (fd = open ((char *) string_data (XSTRING (Vsuperlock_file)),
+       (fd = open ((char *) XSTRING_DATA (Vsuperlock_file),
 		   O_WRONLY | O_EXCL | O_CREAT, 0666)) < 0;
        i++)
     {
@@ -371,7 +370,7 @@ lock_superlock (CONST char *lfname)
       /* This seems to be necessary to prevent Emacs from hanging when the
 	 competing process has already deleted the superlock, but it's still
 	 in the NFS cache.  So we force NFS to synchronize the cache.  */
-      lockdir = opendir ((char *) string_data (XSTRING (Vlock_directory)));
+      lockdir = opendir ((char *) XSTRING_DATA (Vlock_directory));
       if (lockdir)
 	closedir (lockdir);
 
@@ -380,7 +379,7 @@ lock_superlock (CONST char *lfname)
   if (fd >= 0)
     {
 #ifdef USG
-      chmod ((char *) string_data (XSTRING (Vsuperlock_file)), 0666);
+      chmod ((char *) XSTRING_DATA (Vsuperlock_file), 0666);
 #else
       fchmod (fd, 0666);
 #endif

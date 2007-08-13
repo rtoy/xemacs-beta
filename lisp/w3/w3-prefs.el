@@ -1,13 +1,14 @@
 ;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1996/06/30 18:10:45
-;; Version: 1.5
+;; Created: 1996/12/29 01:49:57
+;; Version: 1.12
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
-;;; This file is not part of GNU Emacs, but the same permissions apply.
+;;; This file is part of GNU Emacs.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -20,19 +21,19 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Preferences panels for Emacs-W3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'widget)
-(require 'widget-edit)
 (require 'w3-vars)
 (require 'w3-keyword)
-(require 'w3-widget)
 (require 'w3-toolbar)
+(eval-and-compile
+  (require 'w3-widget))
 
 (defvar w3-preferences-glyph nil)
 (defvar w3-preferences-map nil)
@@ -104,6 +105,7 @@
    (widget-create 'radio
 		  :value (symbol-value 'w3-preferences-temp-w3-toolbar-type)
 		  :notify 'w3-preferences-generic-variable-callback
+		  :format "%v"
 		  (list 'item :format "%t\t" :tag "Pictures" :value 'pictures)
 		  (list 'item :format "%t\t" :tag "Text"     :value 'text)
 		  (list 'item :format "%t" :tag "Both" :value 'both))
@@ -129,6 +131,7 @@
   (widget-put
    (widget-create
     'radio
+    :format "%v"
     :value (symbol-value 'w3-preferences-temp-use-home-page)
     :notify 'w3-preferences-generic-variable-callback
     (list 'item :format "%t\t" :tag "Blank Page" :value nil)
@@ -137,7 +140,7 @@
   (widget-insert "\n\t\tURL: ")
   (widget-put
    (widget-create
-    'field
+    'editable-field
     :value (or (symbol-value 'w3-preferences-temp-w3-default-homepage) "None")
     :notify 'w3-preferences-generic-variable-callback)
    'variable 'w3-preferences-temp-w3-default-homepage)
@@ -271,7 +274,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-preferences-compatibility-variables
   '(
-    (w3-style-ie-compatibility
+    (css-ie-compatibility
      . "Internet Explorer (tm) 3.0 compatible stylesheet parsing")
     (w3-netscape-compatible-comments
      . "Allow Netscape compatible comments")
@@ -345,7 +348,7 @@
 	    port-var (intern (format "w3-%s-proxy-port" (downcase proxy))))
       (widget-insert (format "%10s Proxy: " proxy))
       (widget-put
-       (widget-create 'field
+       (widget-create 'editable-field
 		      :size 20
 		      :value-face 'underline
 		      :notify 'w3-preferences-generic-variable-callback
@@ -353,7 +356,7 @@
        'variable host-var)
       (widget-insert "  Port: ")
       (widget-put
-       (widget-create 'field
+       (widget-create 'editable-field
 		      :size 5
 		      :value-face 'underline
 		      :notify 'w3-preferences-generic-variable-callback
@@ -410,8 +413,8 @@
 
 (defun w3-preferences-notify (widget widget-ignore &optional event)
   (let* ((glyph (and event w3-running-xemacs (event-glyph event)))
-	 (x     (and glyph (w3-glyphp glyph) (event-glyph-x-pixel event)))
-	 (y     (and glyph (w3-glyphp glyph) (event-glyph-y-pixel event)))
+	 (x     (and glyph (widget-glyphp glyph) (event-glyph-x-pixel event)))
+	 (y     (and glyph (widget-glyphp glyph) (event-glyph-y-pixel event)))
 	 (map   (widget-get widget 'usemap))
 	 (value (widget-value widget)))
     (if (and map x y)
@@ -512,15 +515,15 @@
     (w3-preferences-create-panel (caar w3-preferences-panels))
     (goto-char (point-max))
     (widget-insert "\n\n")
-    (widget-create 'push
+    (widget-create 'push-button
 		   :notify 'w3-preferences-ok-callback
 		   :value "Ok")
     (widget-insert "  ")
-    (widget-create 'push
+    (widget-create 'push-button
 		   :notify 'w3-preferences-cancel-callback
 		   :value "Cancel")
     (widget-insert "  ")
-    (widget-create 'push
+    (widget-create 'push-button
 		   :notify 'w3-preferences-reset-callback
 		   :value "Reset")
     (center-region (point-min) w3-preferences-panel-begin-marker)

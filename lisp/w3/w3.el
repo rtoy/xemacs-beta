@@ -1,13 +1,14 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1996/08/19 03:30:47
-;; Version: 1.22
+;; Created: 1996/12/30 20:37:55
+;; Version: 1.48
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
-;;; This file is not part of GNU Emacs, but the same permissions apply.
+;;; This file is part of GNU Emacs.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -20,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -67,7 +69,9 @@
   )
 
 
-(load-library "w3-sysdp")
+(require 'w3-sysdp)
+(require 'mule-sysdp)
+
 (or (featurep 'efs)
     (featurep 'efs-auto)
     (condition-case ()
@@ -75,9 +79,10 @@
       (error nil)))
 
 (require 'cl)
+(require 'css)
 (require 'w3-vars)
 (eval-and-compile
-  (require 'w3-draw))
+  (require 'w3-display))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -286,11 +291,10 @@ See the variable `w3-notify' for the different notification behaviors."
 	(funcall view)))
      ((stringp view)
       (let ((fname (url-generate-unique-filename fmt))
-	    (proc nil)
-	    (file-coding-system url-mule-no-coding-system))
+	    (proc nil))
 	(if (url-file-directly-accessible-p (url-view-url t))
 	    (make-symbolic-link url-current-file fname t)
-	  (write-region (point-min) (point-max) fname))
+	  (mule-write-region-no-coding-system (point-min) (point-max) fname))
 	(if (get-buffer url-working-buffer)
 	    (kill-buffer url-working-buffer))
 	(setq view (mm-viewer-unescape view fname url))
@@ -323,9 +327,7 @@ See the variable `w3-notify' for the different notification behaviors."
 			       (file-name-nondirectory (url-view-url t)))))
 	(require-final-newline nil))
     (set-buffer old-buff)
-    (let ((mc-flag t)
-	  (file-coding-system url-mule-no-coding-system))
-      (write-region (point-min) (point-max) file))
+    (mule-write-region-no-coding-system (point-min) (point-max) file)
     (kill-buffer (current-buffer))))
 
 (defun w3-build-url (protocol)
@@ -386,6 +388,7 @@ hypertext document.  If it is a directory, and url-use-hypertext-dired
 is non-nil, then an HTML directory listing is created on the fly.
 Otherwise, dired-mode is used to visit the buffer."
   (interactive "FLocal file: ")
+  (setq fname (expand-file-name fname))
   (if (not w3-setup-done) (w3-do-setup))
   (w3-fetch (concat "file:" fname)))
 
@@ -426,42 +429,29 @@ to disk."
 (defun w3-url-completion-function (string predicate function)
   (if (not w3-setup-done) (w3-do-setup))
   (cond
-   ((null function)
-    (cond
-     ((get 'url-gethash 'sysdep-defined-this)
-      ;; Cheat!  If we know that these are the sysdep-defined version
-      ;; of hashtables, they are an obarray.
-      (try-completion string url-global-history-hash-table predicate))
-     ((url-hashtablep url-global-history-hash-table)
-      (let ((list nil))
-	(url-maphash (function (lambda (key val)
-				 (setq list (cons (cons (symbol-name key) val)
-						  list))))
-		     url-global-history-hash-table)
-	(try-completion string (nreverse list) predicate)))
-     (t nil)))
+   ((eq function nil)
+    (let ((list nil))
+      (cl-maphash (function (lambda (key val)
+			      (setq list (cons (cons key val)
+					       list))))
+		  url-global-history-hash-table)
+      (try-completion string (nreverse list) predicate)))
    ((eq function t)
-    (cond
-     ((get 'url-gethash 'sysdep-defined-this)
-      ;; Cheat!  If we know that these are the sysdep-defined version
-      ;; of hashtables, they are an obarray.
-      (all-completions string url-global-history-hash-table predicate))
-     ((url-hashtablep url-global-history-hash-table)
-      (let ((stub (concat "^" (regexp-quote string)))
-	    (retval nil))
-	(url-maphash
-	 (function
-	  (lambda (url time)
-	    (setq url (symbol-name url))
-	    (if (string-match stub url)
-		(setq retval (cons url retval)))))
-	 url-global-history-hash-table)
-	retval))
-     (t nil)))
+    (let ((stub (concat "^" (regexp-quote string)))
+	  (retval nil))
+      (cl-maphash
+       (function
+	(lambda (url time)
+	  (if (string-match stub url)
+	      (setq retval (cons url retval)))))
+       url-global-history-hash-table)
+      retval))
    ((eq function 'lambda)
-    (and (url-hashtablep url-global-history-hash-table)
-	 (url-gethash string url-global-history-hash-table)
-	 t))))
+    (and url-global-history-hash-table
+	 (cl-gethash string url-global-history-hash-table)
+	 t))
+   (t
+    (error "w3-url-completion-function very confused."))))
 
 (defun w3-read-url-with-default ()
   (url-do-setup)
@@ -540,12 +530,14 @@ passed to an external viewer as appropriate.  Variable
 		(not (funcall url-confirmation-func
 			      (format "Reuse URL in buffer %s? "
 				      (buffer-name buf)))))))
-	  (let ((cached (url-retrieve url)))
+	  (let* ((status (url-retrieve url))
+		 (cached (car status))
+		 (url-working-buffer (cdr status)))
 	    (if w3-track-last-buffer
 		(setq w3-last-buffer (get-buffer url-working-buffer)))
 	    (if (get-buffer url-working-buffer)
 		(cond
-		 ((and url-be-asynchronous (string-match "^http:" url)
+		 ((and url-be-asynchronous
 		       (not cached))
 		  (save-excursion
 		    (set-buffer url-working-buffer)
@@ -554,7 +546,8 @@ passed to an external viewer as appropriate.  Variable
 		    (setq w3-current-last-buffer lastbuf)))
 		 (t
 		  (w3-add-urls-to-history x url)
-		  (w3-sentinel lastbuf)))))
+		  (w3-sentinel lastbuf)
+		  ))))
 	(if w3-track-last-buffer
 	    (setq w3-last-buffer buf))
 	(let ((w3-notify (if (memq w3-notify '(newframe bully 
@@ -682,7 +675,8 @@ passed to an external viewer as appropriate.  Variable
 					   url-current-mime-headers))
 			  (and (member url-current-type '("file" "ftp"))
 			       (nth 5 (url-file-attributes url)))))
-	     (hdrs url-current-mime-headers))
+	     (hdrs url-current-mime-headers)
+	     (info w3-current-metainfo))
 	(set-buffer (get-buffer-create url-working-buffer))
 	(setq url-current-can-be-cached nil
 	      url-current-type "about"
@@ -698,21 +692,19 @@ passed to an external viewer as appropriate.  Variable
 		"  <title>Document Information</title>\n"
 		" </head>\n"
 		" <body\n"
-		"  <h1 align=\"center\">Document Information</h1>\n"
-		"  <hr>\n"
-		"  <pre>\n"
-		"           Title: " title "\n"
-		"        Location: " url "\n"
-		"   Last Modified: " (or lastmod "None Given") "\n"
-		"  </pre>\n")
+		"  <table border>\n"
+		"   <tr><th colspan=2>Document Information</th></tr>\n"
+		"   <tr><td>Title:</td><td>" title "</td></tr>\n"
+		"   <tr><td>Location:</td><td>" url "</td></tr>\n"
+		"   <tr><td>Last Modified:</td><td>" (or lastmod "None Given")
+		"</td></tr>\n")
 	(if hdrs
 	    (let* ((maxlength (car (sort (mapcar (function (lambda (x)
 							     (length (car x))))
 						 hdrs)
 					 '>)))
-		   (fmtstring (format "%%%ds: %%s" maxlength)))
-	      (insert "  <hr label=\" MetaInformation \" textalign=\"left\">\n"
-		      "  <pre>\n"
+		   (fmtstring (format "   <tr><td align=right>%%%ds:</td><td>%%s</td></tr>" maxlength)))
+	      (insert "  <tr><th>MetaInformation</th></tr>\n"
 		      (mapconcat
 		       (function
 			(lambda (x)
@@ -725,36 +717,27 @@ passed to an external viewer as appropriate.  Variable
 		       (sort hdrs
 			     (function
 			      (lambda (x y) (string-lessp (car x) (car y)))))
-		       "\n")
-		      "  </pre>\n")))
-	(if cur-links
-	    (while cur-links
-	      (let* ((tmp (car cur-links))
-		     (label (car tmp))
-		     (nodes (cdr tmp))
-		     (links nil)
-		     (maxlength (car (sort (mapcar
-					    (function (lambda (x)
-							(length (car x))))
-						   nodes)
-					   '>)))
-		     (fmtstring (format "%%%ds: %%s" maxlength)))
-		(insert "  \n"
-			"  <hr width=\"50%\" label=\" "
-			label " \" align=\"left\" textalign=\"left\">\n"
-			"  <pre>\n")
-		(while nodes
-		  (setq label (car (car nodes))
-			links (cdr (car nodes))
-			nodes (cdr nodes))
-		  (while links
-		    (insert (format "  %15s -- <a href=\"%s\">%s</a>\n"
-				    label (car links) (car links)))
-		    (setq links (cdr links)
-			  label "")))
-		(insert "  </pre>\n"))
-	      (setq cur-links (cdr cur-links))))
-	(insert " </body>\n"
+		       "\n"))))
+
+	;; FIXME!!! Need to reimplement showing rel/rev links for the new
+	;; storage format.
+	
+	(if info
+	    (let* ((maxlength (car (sort (mapcar (function (lambda (x)
+							     (length (car x))))
+						 info)
+					 '>)))
+		   (fmtstring (format "   <tr><td>%%%ds:</td><td>%%s</td></tr>" maxlength)))
+	      (insert "   <tr><th>Miscellaneous Variables</th></tr>\n")
+	      (while info
+		(insert (format fmtstring (capitalize (caar info))
+				(cdar info)) "\n")
+		(setq info (cdr info))
+		)
+	      )
+	  )
+	(insert "  </table>\n"
+		" </body>\n"
 		"</html>\n")))))
 
 (defun w3-truncate-menu-item (string)
@@ -942,7 +925,7 @@ and convert newlines into spaces."
 	url-setup-done nil
 	w3-hotlist nil
 	url-mime-accept-string nil)
-  (let ((x '(w3 w3-mule w3-e19 w3-xem20 mm url w3-xemac w3-toolbar font)))
+  (let ((x '(w3 mule-sysdp w3-e19 mm url w3-xemac w3-toolbar font)))
     (while x
       (setq features (delq (car x) features)
 	    x (cdr x)))
@@ -1008,10 +991,8 @@ and convert newlines into spaces."
 		   (concat "Source for " url " found, reuse? "))
 	  (w3-notify-when-ready (get-buffer url)))))
     (if (not url) nil
-      (setq face (and w3-current-stylesheet (cdr (w3-face-for-element))))
       (set-buffer (get-buffer-create tmp))
       (insert src)
-      (put-text-property (point-min) (point-max) 'face face)
       (put-text-property (point-min) (point-max) 'w3-base url)
       (goto-char (point-min))
       (setq buffer-file-truename nil
@@ -1299,6 +1280,18 @@ ftp.w3.org:/pub/www/doc."
     (buffer-enable-undo)
     (w3-notify-when-ready (get-buffer tmp))))
 
+(defvar w3-mime-list-for-code-conversion
+  '("text/plain" "text/html")
+  "List of MIME types that require Mules' code conversion.")
+
+(defun w3-convert-code-for-mule (mmtype)
+  "Convert current data into the appropriate coding system"
+  (and (or (not mmtype)
+	   (member mmtype w3-mime-list-for-code-conversion))
+       (let* ((c (mule-detect-coding-version (point-min) (point-max)))
+	      (code (or (and (listp c) (car c)) c)))
+	 (mule-code-convert-region (point-min) (point-max) code))))
+
 (defun w3-sentinel (&optional proc string)
   (set-buffer url-working-buffer)
   (if (or (stringp proc)
@@ -1316,18 +1309,12 @@ ftp.w3.org:/pub/www/doc."
 					     (url-file-extension
 					      url-current-file))
 					    "text/html")))))
-  (let ((x (w3-build-continuation))
-	(done-mule-conversion nil))
+  (if (not (string-match "^www:" (or (url-view-url t) "")))
+      (w3-convert-code-for-mule url-current-mime-type))
+      
+  (let ((x (w3-build-continuation)))
     (while x
-      (if (and (featurep 'mule) (not (eq 'url-uncompress (car x)))
-	       (not done-mule-conversion))
-	  (progn
-            (if (string-match "^www:" (url-view-url t))
-                (setq w3-mime-list-for-code-conversion nil))
-	    (w3-convert-code-for-mule url-current-mime-type)
-	    (setq done-mule-conversion t)))
-      (funcall (car x))
-      (setq x (cdr x)))))
+      (funcall (pop x)))))
 
 (defun w3-show-history-list ()
   "Format the url-history-list prettily and show it to the user"
@@ -1357,8 +1344,11 @@ ftp.w3.org:/pub/www/doc."
 	    (url-retrieve url))		; Get the document if necessary
 	(let ((txt w3-current-source))
 	  (set-buffer (get-buffer-create url-working-buffer))
+	  (erase-buffer)
 	  (insert txt)))
       (goto-char (point-min))
+      (if (re-search-forward "<head>" nil t)
+	  (insert "\n"))
       (insert (format "<BASE HREF=\"%s\">\n" url)))
      ((or (equal "Formatted Text" format)
 	  (equal "" format))
@@ -1519,12 +1509,11 @@ ftp.w3.org:/pub/www/doc."
    (w3-running-FSF19  (require 'w3-e19))
    (t
     (error "Unable to determine the capabilities of this emacs.")))
-  (cond
-   ((boundp 'MULE)
-    (require 'w3-mule))
-   ((featurep 'mule)
-    (require 'w3-xem20)
-    ))
+  (if (featurep 'emacspeak)
+      (condition-case ()
+	  (progn
+	    (require 'dtk-css-speech)
+	    (require 'w3-speak))))
   (condition-case ()
       (require 'w3-site-init)
     (error nil)))
@@ -1578,25 +1567,23 @@ ftp.w3.org:/pub/www/doc."
 (defun w3-search ()
   "Perform a search, if this is a searchable index."
   (interactive)
-  (or w3-current-isindex
-      (error "Not a searchable index (via <isindex>)"))
   (let* (querystring			; The string to send to the server
 	 (data
 	  (cond
 	   ((null w3-current-isindex)
-	    (let ((rels (mapcar
-			 (function
-			  (lambda (data)
-			    (if (assoc "rel" data) data)))
-			 w3-current-links))
-		  val)
+	    (let ((rels (cdr-safe (assq 'rel w3-current-links)))
+		  val cur)
 	      (while rels
-		(if (string-match "useindex"
-				  (or (cdr (assoc "rel" (car rels))) ""))
-		    (setq val (cdr (assoc "href" (car rels)))
+		(setq cur (car rels)
+		      rels (cdr rels))
+		(if (and (or (string-match "^isindex$" (car cur))
+			     (string-match "^index$" (car cur)))
+			 (plist-get (cadr cur) 'href))
+		    (setq val (plist-get (cadr cur) 'href)
 			  rels nil))
-		(setq rels (cdr rels)))
-	      (cons val "Search on (+ separates keywords): ")))
+		)
+	      (if val
+		  (cons val "Search on (+ separates keywords): "))))
 	   ((eq w3-current-isindex t)
 	    (cons (url-view-url t) "Search on (+ separates keywords): "))
 	   ((consp w3-current-isindex)
@@ -1742,7 +1729,7 @@ displayed in a new buffer."
 	      "<title> History List For This Session of W3</title>"
 	      "\n\t</head>\n\t<body>\n\t\t<div>\n\t\t\t<h1>"
 	      "History List For This Session of W3</h1>\n\t\t\t<ol>\n")
-      (url-maphash
+      (cl-maphash
        (function
 	(lambda (url desc)
 	  (insert (format "\t\t\t\t<li> <a href=\"%s\">%s</a>\n"
@@ -1965,7 +1952,7 @@ No arg means whole window full.  Arg is number of lines to scroll."
 	(found nil))
     (setq found (cdr-safe (assoc "reply-to" url-current-mime-headers)))
     (if (and found (not (string-match url-nonrelative-link found)))
-	(setq found (concat "mailto:" found)))
+	(setq found (list (concat "mailto:" found))))
     (while (and x (not found))
       (setq y (car x)
 	    x (cdr x)
@@ -2049,16 +2036,19 @@ The arguments FROM, TO, MAPARG, and BUFFER default to the beginning of
 BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
   (let ((cur (point-min))
 	(widget nil)
-	(url nil))
+	(parent nil))
     (while (setq cur (next-single-property-change cur 'button))
-      (setq widget (widget-at cur))
+      (setq widget (widget-at cur)
+	    parent (and widget (widget-get widget :parent)))
       ;; Check to see if its a push widget, its got the correct callback,
       ;; and actually has a URL.  Remember the url as a side-effect of the
       ;; test for later use.
-      (if (and (eq (car widget) 'push)
-	       (eq (widget-get widget :notify) 'w3-follow-hyperlink)
-	       (setq url (widget-get widget 'href)))
-	  (funcall function widget maparg)))))
+      (cond
+       ((and widget (widget-get widget 'href))
+	(funcall function widget maparg))
+       ((and parent (widget-get parent 'href))
+	(funcall function parent maparg))
+       (t nil)))))
 
 (defun w3-emit-image-warnings-if-necessary ()
   (if (and (not w3-delay-image-loads)
@@ -2097,7 +2087,7 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
   (setq w3-user-stylesheet nil
 	w3-face-cache nil)
   (w3-find-default-stylesheets)
-  (w3-style-post-process-stylesheet w3-user-stylesheet))
+  )
 
 (defun w3-find-default-stylesheets ()
   (let* ((lightp (w3-color-light-p 'default))
@@ -2106,6 +2096,7 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 	 (directories (list
 		       data-directory
 		       (concat data-directory "w3/")
+		       (expand-file-name "../../w3" data-directory)
 		       (file-name-directory (locate-library "w3"))
 		       w3-configuration-directory))
 	 (total-found 0)
@@ -2135,10 +2126,8 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 		       (not (file-directory-p cur)) cur))
       (if found
 	  (setq total-found (1+ total-found)
-		w3-user-stylesheet (car
-				    (w3-style-parse-css
-				     (concat "file:" cur) nil
-				     w3-user-stylesheet)))))
+		w3-user-stylesheet (css-parse (concat "file:" cur) nil
+				     w3-user-stylesheet))))
     (setq-default url-be-asynchronous old-asynch)
     (if (= 0 total-found)
 	(w3-warn
@@ -2304,12 +2293,7 @@ dumped with emacs."
 
 (defun w3-mark-link-as-followed (ext dat)
   ;; Mark a link as followed
-  (let* ((st (w3-zone-start ext))
-	 (nd (w3-zone-end ext))
-	 (tag 'a)
-	 (args (list (cons 'class "visited")))
-	 (face (cdr (w3-face-for-element))))
-    (w3-add-zone st nd face dat t)))
+  (message "Reimplement w3-mark-link-as-followed"))
 
 (defun w3-only-links ()
   (let* (result temp)
@@ -2330,8 +2314,10 @@ dumped with emacs."
 	      (file-name-handler-alist nil)
 	      (write-file-hooks nil)
 	      (write-contents-hooks nil)
-	      (mc-flag t)
-	      (file-coding-system url-mule-no-coding-system))
+	      (enable-multibyte-characters t) ; mule 2.4
+	      (buffer-file-coding-system mule-no-coding-system) ; mule 2.4
+	      (file-coding-system mule-no-coding-system) ; mule 2.3
+	      (mc-flag t))		; mule 2.3
 	  (write-file fname)
 	  (message "Download of %s complete." (url-view-url t))
 	  (sit-for 3)
@@ -2388,6 +2374,19 @@ to disk."
      (t
       (w3-fetch href)))))
 
+;;; FIXME!  Need to rewrite these so that we can pass a predicate to 
+(defun w3-widget-forward (arg)
+  "Move point to the next field or button.
+With optional ARG, move across that many fields."
+  (interactive "p")
+  (widget-forward arg))
+
+(defun w3-widget-backward (arg)
+  "Move point to the previous field or button.
+With optional ARG, move across that many fields."
+  (interactive "p")
+  (w3-widget-forward (- arg)))
+
 (defun w3-complete-link ()
   "Choose a link from the current buffer and follow it"
   (interactive)
@@ -2401,8 +2400,8 @@ to disk."
 			 (widget-get link-at-point 'href)
 			 (w3-fix-spaces
 			  (buffer-substring
-			   (car (widget-get link-at-point 'title))
-			   (cdr (widget-get link-at-point 'title))))))
+			   (widget-get link-at-point :from)
+			   (widget-get link-at-point :to)))))
     (w3-map-links (function
 		   (lambda (widget arg)
 		     (setq links-alist	(cons
@@ -2436,17 +2435,6 @@ to disk."
 	(w3-follow-link)
       (w3-fetch (cdr (assoc choice links-alist))))))
 
-(defun w3-widget-motion-hook (widget)
-  (assert widget nil "Bad data to w3-widget-motion-hook!  Bad hook bad!")
-  (case w3-echo-link
-    (text
-     (message "%s" (w3-fix-spaces (buffer-substring (widget-get widget :from)
-						    (widget-get widget :to)))))
-    (url
-     (if (widget-get widget 'href)
-	 (message "%s" (widget-get widget 'href))))
-    (otherwise nil)))
-
 (defun w3-mode ()
   "Mode for viewing HTML documents.  If called interactively, will
 display the current buffer as HTML.
@@ -2466,8 +2454,6 @@ Current keymap is:
       (mapcar (function (lambda (x) (set-variable (car x) (cdr x)))) tmp)
       (w3-mode-version-specifics)
       (w3-menu-install-menus)
-      (make-local-hook 'widget-motion-hook)
-      (add-hook 'widget-motion-hook 'w3-widget-motion-hook)
       (run-hooks 'w3-mode-hook)
       (widget-setup)
       (setq url-current-passwd-count 0
@@ -2477,9 +2463,8 @@ Current keymap is:
 
 (require 'mm)
 (require 'url)
-(require 'url-hash)
 (require 'w3-parse)
-(require 'w3-draw)
+(require 'w3-display)
 (require 'w3-auto)
 (require 'w3-emulate)
 (require 'w3-menu)

@@ -300,7 +300,7 @@ SHORT=
 #     define SOUND_LIBS		${native_sound_lib}
 #     define SOUND_OBJS		sunplay.o
 # else /* !SUNOS4 */
-#   if defined (IRIX4) || defined (IRIX5)
+#   if defined (IRIX4) || defined (IRIX5) || defined (IRIX6)
 #     define SOUND_CFLAGS
 #     define SOUND_LIBS		-laudio
 #     define SOUND_OBJS		sgiplay.o

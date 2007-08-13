@@ -713,7 +713,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	{
 	  CONST char *extprop;
 	  
-	  if (string_length (XSTRING (prop)) == 0)
+	  if (XSTRING_LENGTH (prop) == 0)
 	    continue;
 
 	  GET_C_STRING_CTEXT_DATA_ALLOCA (prop, extprop);
@@ -763,14 +763,14 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 
 	  /* Kludge the width/height so that we interpret them in characters
 	     instead of pixels.  Yuck yuck yuck. */
-	  if (!strcmp ((char *) string_data (XSTRING (str)), "width"))
+	  if (!strcmp ((char *) XSTRING_DATA (str), "width"))
 	    {
 	      CHECK_INT (val);
 	      width = XINT (val);
 	      width_specified_p = True;
 	      continue;
 	    }
-	  if (!strcmp ((char *) string_data (XSTRING (str)), "height"))
+	  if (!strcmp ((char *) XSTRING_DATA (str), "height"))
 	    {
 	      CHECK_INT (val);
 	      height = XINT (val);
@@ -778,14 +778,14 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      continue;
 	    }
 	  /* Further kludge the x/y. */
-	  if (!strcmp ((char *) string_data (XSTRING (str)), "x"))
+	  if (!strcmp ((char *) XSTRING_DATA (str), "x"))
 	    {
 	      CHECK_INT (val);
 	      x = XINT (val);
 	      x_position_specified_p = True;
 	      continue;
 	    }
-	  if (!strcmp ((char *) string_data (XSTRING (str)), "y"))
+	  if (!strcmp ((char *) XSTRING_DATA (str), "y"))
 	    {
 	      CHECK_INT (val);
 	      y = XINT (val);
@@ -794,7 +794,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	    }
 	  /* Have you figured out by now that this entire function is
              one gigantic kludge? */
-	  if (!strcmp ((char *) string_data (XSTRING (str)),
+	  if (!strcmp ((char *) XSTRING_DATA (str),
 		       "internalBorderWidth"))
 	    {
 	      internal_border_width_specified = True;
@@ -803,19 +803,19 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  if (int_p)
 	    {
 	      CHECK_INT (val);
-	      XtVaSetValues (w, (char *) string_data (XSTRING (str)),
+	      XtVaSetValues (w, (char *) XSTRING_DATA (str),
 			     XINT (val), 0);
 	    }
 	  else if (EQ (val, Qt))
 	    XtVaSetValues (w,
 			   /* XtN... */
-			   (char *) string_data (XSTRING (str)),
+			   (char *) XSTRING_DATA (str),
 			   True,
 			   0);
 	  else if (EQ (val, Qnil))
 	    XtVaSetValues (w,
 			   /* XtN... */
-			   (char *) string_data (XSTRING (str)),
+			   (char *) XSTRING_DATA (str),
 			   False,
 			   0);
 	  else
@@ -823,16 +823,16 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	      CHECK_STRING (val);
 	      XtVaSetValues (w, XtVaTypedArg,
 			     /* XtN... */
-			     (char *) string_data (XSTRING (str)),
+			     (char *) XSTRING_DATA (str),
 			     XtRString,
-			     string_data (XSTRING (val)),
-			     string_length (XSTRING (val)) + 1,
+			     XSTRING_DATA (val),
+			     XSTRING_LENGTH (val) + 1,
 			     0);
 	    }
 
 #ifdef HAVE_SCROLLBARS
-	  if (!strcmp ((char *) string_data (XSTRING (str)), "scrollBarWidth")
-	      || !strcmp ((char *) string_data (XSTRING (str)),
+	  if (!strcmp ((char *) XSTRING_DATA (str), "scrollBarWidth")
+	      || !strcmp ((char *) XSTRING_DATA (str),
 			  "scrollBarHeight"))
 	    {
 	      x_update_frame_scrollbars (f);
@@ -1491,7 +1491,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       char *string;
 
       CHECK_STRING (lisp_window_id);
-      string = (char *) (string_data (XSTRING (lisp_window_id)));
+      string = (char *) XSTRING_DATA (lisp_window_id);
       if (string[0] == '0' && (string[1] == 'x' || string[1] == 'X'))
 	sscanf (string+2, "%lxu", &window_id);
 #if 0

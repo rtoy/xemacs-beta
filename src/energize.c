@@ -722,7 +722,7 @@ set_buffer_type_for_emacs_buffer (Lisp_Object emacs_buf, Editor *editor,
 	XSETSTRING (type, XSYMBOL (type)->name);
 
       if (STRINGP (type))
-	type_string = (char *)string_data (XSTRING (type));
+	type_string = (char *) XSTRING_DATA (type);
 
       type_string = copy_string (type_string);
 
@@ -816,7 +816,7 @@ sync_buffer_widechar_map (BufferInfo *binfo)
       wchar_t *buf, t;
 
 #ifdef SANITY_CHECK
-      stderr_out ("rebuilding widechar map for %s\n", string_data (XSTRING (current_buffer->name)));
+      stderr_out ("rebuilding widechar map for %s\n", XSTRING_DATA (current_buffer->name));
 #endif
       
       /* #### this is not gonna compile.  move_gap() is now a private function
@@ -1611,8 +1611,8 @@ read_energize_buffer_data (Connection *conn, CBuffer *cbu, Editor *editor,
   /* make sure that pathname_directory ends with a '/', if it exists */
   if (!NILP (pathname_directory))
     {
-      Bufbyte *str = string_data (XSTRING (pathname_directory));
-      Bytecount size = string_length (XSTRING (pathname_directory));
+      Bufbyte *str = XSTRING_DATA (pathname_directory);
+      Bytecount size = XSTRING_LENGTH (pathname_directory);
       if (str[size - 1] != '/')
 	{
 	  Lisp_Object tmp = make_string (str, size + 1);
@@ -1669,9 +1669,8 @@ read_energize_buffer_data (Connection *conn, CBuffer *cbu, Editor *editor,
   if (!NILP (buffer_name))
     {
       if (modifying_p
-	  && strcmp ((char*)string_data (XSTRING (buffer_name)),
-		     (char*)
-		     string_data (XSTRING (XBUFFER (binfo->emacs_buffer)->name))))
+	  && strcmp ((char*) XSTRING_DATA (buffer_name),
+		     (char*) XSTRING_DATA (XBUFFER (binfo->emacs_buffer)->name)))
 	rename_the_buffer (buffer_name);
     }
 
@@ -2110,7 +2109,7 @@ write_energize_buffer_data (BufferInfo *binfo)
   /* file name */
   file_name = current_buffer->filename;
   if (STRINGP (file_name))
-    CWriteVstring0 (conn, string_data (XSTRING (file_name)));
+    CWriteVstring0 (conn, XSTRING_DATA (file_name));
   else
     CWriteVstring0 (conn, "");
   CWriteVstring0 (conn, "");	/* directory name */
@@ -2138,9 +2137,8 @@ write_energize_buffer_data (BufferInfo *binfo)
       Lisp_Object string = make_string_from_buffer (current_buffer,
 						    BUF_BEG (current_buffer),
 						    BUF_Z (current_buffer));
-      CNeedOutputSize (conn, string_length (XSTRING (string)) + 9);
-      CWriteVstringLen (conn, string_data (XSTRING (string)),
-			string_length (XSTRING (string)));
+      CNeedOutputSize (conn, XSTRING_LENGTH (string) + 9);
+      CWriteVstringLen (conn, XSTRING_DATA (string), XSTRING_LENGTH (string));
     }
 
   /* write the extents */
@@ -2319,8 +2317,8 @@ execute_energize_menu (Lisp_Object buffer, Energize_Extent_Data* ext,
   if (STRINGP (selection))
     {
       conn->header->data |= CEChasCharSelection;
-      CWriteVstringLen (conn, string_data (XSTRING (selection)),
-			string_length (XSTRING (selection)));
+      CWriteVstringLen (conn, XSTRING_DATA (selection),
+			XSTRING_LENGTH (selection));
     }
   else if (VECTORP (selection))
     {
@@ -2350,8 +2348,8 @@ execute_energize_menu (Lisp_Object buffer, Energize_Extent_Data* ext,
 	  && STRINGP (value))
 	{
 	  conn->header->data |= CEChasObjectSelection;
-	  CWriteN (conn, char, string_data (XSTRING (value)),
-		   string_length (XSTRING (value)));
+	  CWriteN (conn, char, XSTRING_DATA (value),
+		   XSTRING_LENGTH (value));
 	}
     }
   else if (!NILP (selection))
@@ -2446,7 +2444,7 @@ list_choices (Lisp_Object buffer, Lisp_Object extent_obj,
 
       if (!NILP (only_name))
 	{
-	  if (!strcmp ((char*) string_data (XSTRING (only_name)), name))
+	  if (!strcmp ((char*) XSTRING_DATA (only_name), name))
 	    {
 	      if (NILP (item))
 		{
@@ -2536,7 +2534,7 @@ Lisp_Object buffer, extent_obj, item, selection, no_confirm;
 
   /* ignore the flags for now */
   execute_energize_menu (buffer, extent_to_data (extent_obj),
-			 (char*)string_data (XSTRING (v->contents [0])),
+			 (char*) XSTRING_DATA (v->contents [0]),
 			 lisp_to_word (v->contents [1]),
 			 XINT (v->contents [3]),
 			 selection,
@@ -2564,7 +2562,7 @@ See also 'energize-list-menu'.
   CHECK_STRING (command);
 
   execute_energize_menu (buffer, extent_to_data (extent_obj),
-			 (char*)string_data (XSTRING (command)), 0, 0, selection,
+			 (char*) XSTRING_DATA (command), 0, 0, selection,
 			 no_confirm);
 
   return Qt;
@@ -2693,7 +2691,7 @@ handle_logging_request (Editor *editor, CLoggingRequest *creq)
   {
     char *execname =
       (STRINGP (Vinvocation_directory))?
-	((char *) string_data (XSTRING (Vinvocation_directory))):0;
+	((char *) XSTRING_DATA (Vinvocation_directory)):0;
 
     switch (creq->type)
       {
@@ -3773,8 +3771,8 @@ Filter called when a request is available from Energize.
 
   if (!NILP (string))
     add_in_connection_input_buffer (energize_connection->conn,
-				    (char *) string_data (XSTRING (string)),
-				    string_length (XSTRING (string)));
+				    (char *) XSTRING_DATA (string),
+				    XSTRING_LENGTH (string));
 
   return process_energize_request_1 ();
 }
@@ -3951,7 +3949,7 @@ Only one connection can be open at a time.
   if (!NILP (energize_arg))
     {
       CHECK_STRING (energize_arg);
-      arg = string_data (XSTRING (energize_arg));
+      arg = XSTRING_DATA (energize_arg);
     }
   else
     arg = 0;
@@ -3959,7 +3957,7 @@ Only one connection can be open at a time.
   if (!NILP (server_name))
     {
       CHECK_STRING (server_name);
-      server = string_data (XSTRING (server_name));
+      server = XSTRING_DATA (server_name);
     }
   else
     server = 0;
@@ -5088,7 +5086,7 @@ DEFUN ("energize-edit-mode-prompt", Fenergize_edit_mode_prompt,
 
   data->name = "otherText";
   data->selected = 0;
-  data->value = (char *) string_data (XSTRING (other_text));
+  data->value = (char *) XSTRING_DATA (other_text);
   data->enabled = (editmode.external == 3);
   lw_modify_all_widgets (dbox_id, data, True);
 

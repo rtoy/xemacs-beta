@@ -23,6 +23,20 @@
 
 ;;; Code:
 
+(provide 'ediff-diff)
+
+;; compiler pacifier
+(defvar ediff-default-variant)
+
+(eval-when-compile
+  (let ((load-path (cons "." load-path)))
+    (or (featurep 'ediff-init)
+	(load "ediff-init.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-util)
+	(load "ediff-util.el" nil nil 'nosuffix))
+    ))
+;; end pacifier
+
 (require 'ediff-init)
 
 
@@ -1203,8 +1217,6 @@ argument to `skip-chars-forward'."
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
 ;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
-
-(provide 'ediff-diff)
 
 
 ;; ediff-diff.el ends here

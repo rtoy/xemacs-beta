@@ -154,8 +154,8 @@ x_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
   int result;
 
   result = x_parse_nearest_color (XDEVICE (device), &color,
-				  string_data (XSTRING (name)),
-				  string_length (XSTRING (name)),
+				  XSTRING_DATA   (name),
+				  XSTRING_LENGTH (name),
 				  errb);
 
   if (!result)
@@ -287,7 +287,8 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
   f->descent = xf->descent;
   f->height = xf->ascent + xf->descent;
   {
-    unsigned int def_char = xf->default_char;
+    /* following change suggested by Ted Phelps <phelps@dstc.edu.au> */
+    unsigned int def_char = 'n'; /*xf->default_char;*/
     int byte1, byte2;
 
   once_more:
@@ -315,11 +316,11 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
        0 width too (unlikely) then just use the max width. */
     if (f->width == 0)
       {
-	if (def_char == 'n')
+	if (def_char == xf->default_char)
 	  f->width = xf->max_bounds.width;
 	else
 	  {
-	    def_char = 'n';
+	    def_char = xf->default_char;
 	    goto once_more;
 	  }
       }
@@ -667,8 +668,7 @@ x_font_instance_truename (struct Lisp_Font_Instance *f, Error_behavior errb)
   if (NILP (FONT_INSTANCE_X_TRUENAME (f)))
     {
       Display *dpy = DEVICE_X_DISPLAY (d);
-      char *name =
-	(char *) string_data (XSTRING (f->name));
+      char *name = (char *) XSTRING_DATA (f->name);
       {
 	FONT_INSTANCE_X_TRUENAME (f) =
 	  x_font_truename (dpy, name, FONT_INSTANCE_X_FONT (f));

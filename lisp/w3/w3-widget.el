@@ -1,14 +1,14 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1996/07/21 18:11:36
-;; Version: 1.3
-;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
+;; Created: 1996/12/29 01:27:32
+;; Version: 1.12
+;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
-;;; This file is not part of GNU Emacs, but the same permissions apply.
+;;; This file is part of GNU Emacs.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -51,32 +52,46 @@
 
 (require 'cl)
 (require 'widget)
-(require 'w3-vars)
-(require 'w3-mouse)
 
-(defvar w3-image-widget-keymap (make-sparse-keymap)
+(defvar widget-image-keymap (make-sparse-keymap)
   "Keymap used over glyphs in an image widget")
 
-(define-key w3-image-widget-keymap (vector w3-mouse-button1)
-  'w3-image-widget-button-press)
-(define-key w3-image-widget-keymap (vector w3-mouse-button2)
-  'w3-image-widget-button-press)
+(defconst widget-mouse-button1 nil)
+(defconst widget-mouse-button2 nil)
+(defconst widget-mouse-button3 nil)
+
+(if (string-match "XEmacs" (emacs-version))
+    (if (featurep 'mouse)
+	(setq widget-mouse-button1 'button1
+	      widget-mouse-button2 'button2
+	      widget-mouse-button3 'button3)
+      (setq widget-mouse-button1 'return
+	    widget-mouse-button2 'return
+	    widget-mouse-button3 'return))
+  (setq widget-mouse-button1 'mouse-1
+	widget-mouse-button2 'mouse-2
+	widget-mouse-button3 'mouse-3))
+
+(define-key widget-image-keymap (vector widget-mouse-button1)
+  'widget-image-button-press)
+(define-key widget-image-keymap (vector widget-mouse-button2)
+  'widget-image-button-press)
   
 (define-widget 'image 'default
   "A fairly complex image widget."
-  :convert-widget 'w3-image-widget-convert
+  :convert-widget 'widget-image-convert
   :value-to-internal (lambda (widget value) value)
   :value-to-external (lambda (widget value) value)
-  :value-set 'w3-image-widget-value-set
-  :create 'w3-image-widget-create
-  :delete 'w3-image-widget-delete
-  :value-create 'w3-image-widget-value-create
-  :value-delete 'w3-image-widget-value-delete
-  :value-get 'w3-image-widget-value-get
-  :notify 'w3-image-widget-notify
+  :value-set 'widget-image-value-set
+  :create 'widget-image-create
+  :delete 'widget-image-delete
+  :value-create 'widget-image-value-create
+  :value-delete 'widget-image-value-delete
+  :value-get 'widget-image-value-get
+  :notify 'widget-image-notify
   )
 
-(defun w3-image-widget-convert (widget)
+(defun widget-image-convert (widget)
   (let ((args (widget-get widget :args)))
     (widget-put widget :args nil)
     (while args
@@ -84,12 +99,12 @@
       (setq args (cddr args)))
     widget))
 
-(defun w3-image-widget-value-get (widget)
+(defun widget-image-value-get (widget)
   (let ((children (widget-get widget :children)))
     (and (car children)
 	 (widget-apply (car children) :value-get))))
 
-(defun w3-image-widget-create (widget)
+(defun widget-image-create (widget)
   ;; Create an image widget at point in the current buffer
   (let ((where (widget-get widget 'where)))
     (cond
@@ -100,20 +115,20 @@
      ((integerp where)
       (setq where (set-marker (make-marker) where)))
      (t
-      (error "IMPOSSIBLE position in w3-image-widget-create: %s" where)))
+      (error "IMPOSSIBLE position in widget-image-create: %s" where)))
     (widget-put widget 'where where))
-  (w3-image-widget-value-create widget))
+  (widget-image-value-create widget))
 
-(defun w3-image-widget-value-set (widget value)
+(defun widget-image-value-set (widget value)
   ;; Recreate widget with new value.
   (save-excursion
-    (w3-image-widget-delete widget)
-    (if (w3-glyphp value)
+    (widget-image-delete widget)
+    (if (widget-glyphp value)
 	(widget-put widget 'glyph value)
       (widget-put widget :value value))
     (widget-apply widget :create)))
 
-(defsubst w3-image-widget-usemap (widget)
+(defsubst widget-image-usemap (widget)
   (let ((usemap (widget-get widget 'usemap)))
     (if (listp usemap)
 	usemap
@@ -121,15 +136,24 @@
 	  (setq usemap (substring usemap 1 nil)))
       (cdr-safe (assoc usemap w3-imagemaps)))))
 
-(defun w3-image-widget-callback (widget widget-ignore &optional event)
+(defun widget-image-callback (widget widget-ignore &optional event)
   (and (widget-get widget 'href) (w3-fetch (widget-get widget 'href))))
-       
-(defun w3-image-widget-value-create (widget)
+
+(defmacro widget-image-create-subwidget (&rest args)
+  (` (widget-create (,@ args)
+		    :parent widget
+		    :help-echo 'widget-image-summarize
+		    'usemap (widget-get widget 'usemap)
+		    'href href
+		    'src (widget-get widget 'src)
+		    'ismap server-map)))
+
+(defun widget-image-value-create (widget)
   ;; Insert the printed representation of the value
   (let (
 	(href (widget-get widget 'href))
 	(server-map (widget-get widget 'ismap))
-	(client-map (w3-image-widget-usemap widget))
+	(client-map (widget-image-usemap widget))
 	(where (or (widget-get widget 'where) (point)))
 	(glyph (widget-get widget 'glyph))
 	(alt (widget-get widget 'alt))
@@ -166,34 +190,39 @@
 				      :tag (or (aref x 3) (aref x 2))
 				      :value (aref x 2)))) client-map)))
 	      (setq real-widget
-		    (apply 'widget-create 'choice
+		    (apply 'widget-create 'menu-choice
 			   :tag (or (widget-get widget :tag) "Imagemap")
 			   :notify (widget-get widget :notify)
-			   :value default options))))
+			   :action (widget-get widget :action)
+			   :value default
+			   :parent widget
+			   :help-echo 'widget-image-summarize
+			   options))))
 	   ((and server-map (stringp href))
 	    (setq real-widget
-		  (widget-create 'push :tag alt
-				 :delete 'widget-default-delete
-				 :value href
-				 :notify (widget-get widget :notify))))
+		  (widget-image-create-subwidget
+		   'push-button :tag alt
+		   :delete 'widget-default-delete
+		   :value href
+		   :action (widget-get widget :action)
+		   :notify (widget-get widget :notify))))
 	   (href
 	    (setq real-widget
-		  (widget-create 'push :tag (or alt "Image")
-				 :value href
-				 :delete 'widget-default-delete
-				 :notify 'w3-image-widget-callback)))
+		  (widget-image-create-subwidget
+		   'push-button :tag (or alt "Image")
+		   :value href
+		   :delete 'widget-default-delete
+		   :action (widget-get widget :action)
+		   :notify 'widget-image-callback)))
 	   (alt
 	    (setq real-widget
-		  (widget-create 'push :tag alt :format "%[%t%]"
-				 :delete 'widget-default-delete
-				 :notify 'w3-image-widget-callback))))
+		  (widget-image-create-subwidget
+		   'push-button :tag alt :format "%[%t%]"
+		   :delete 'widget-default-delete
+		   :action (widget-get widget :action)
+		   :notify 'widget-image-callback))))
 	  (if (not real-widget)
 	      nil
-	    (widget-put real-widget 'usemap (widget-get widget 'usemap))
-	    (widget-put real-widget 'href href)
-	    (widget-put real-widget 'src (widget-get widget 'src))
-	    (widget-put real-widget 'ismap server-map)
-	    (widget-put real-widget :parent widget)
 	    (widget-put widget :children (list real-widget))))
       ;;; Actually use the image
       (let ((extent (or (widget-get widget 'extent)
@@ -201,7 +230,7 @@
 	(set-extent-endpoints extent where where)
 	(widget-put widget 'extent extent)
 	(widget-put widget :children nil)
-	(set-extent-property extent 'keymap w3-image-widget-keymap)
+	(set-extent-property extent 'keymap widget-image-keymap)
 	(set-extent-property extent 'begin-glyph glyph)
 	(set-extent-property extent 'help-echo (cond
 						((and href (or client-map
@@ -211,7 +240,7 @@
 						(t nil)))
 	(set-glyph-property glyph 'widget widget)))))
 
-(defun w3-image-widget-delete (widget)
+(defun widget-image-delete (widget)
   ;; Remove the widget from the buffer
   (let ((extent (widget-get widget 'extent))
 	(child  (car (widget-get widget :children))))
@@ -224,26 +253,62 @@
       nil))))     
 
 (if (fboundp 'mouse-event-p)
-    (fset 'w3-mouse-event-p 'mouse-event-p)
-  (fset 'w3-mouse-event-p 'ignore))
+    (fset 'widget-mouse-event-p 'mouse-event-p)
+  (fset 'widget-mouse-event-p 'ignore))
 
 (if (fboundp 'glyphp)
-    (fset 'w3-glyphp 'glyphp)
-  (fset 'w3-glyphp 'ignore))
+    (fset 'widget-glyphp 'glyphp)
+  (fset 'widget-glyphp 'ignore))
 
-(defun w3-image-widget-button-press (event)
+(defun widget-image-button-press (event)
   (interactive "@e")
-  (let* ((glyph (and event (w3-mouse-event-p event) (event-glyph event)))
+  (let* ((glyph (and event (widget-mouse-event-p event) (event-glyph event)))
 	 (widget (and glyph (glyph-property glyph 'widget))))
-    (w3-image-widget-notify widget widget event)))    
+    (widget-image-notify widget widget event)))    
 
-(defun w3-image-widget-notify (widget widget-changed &optional event)
+(defun widget-image-usemap-default (usemap)
+  (let ((rval (and usemap (car usemap))))
+    (while usemap
+      (if (equal (aref (car usemap) 0) "default")
+	  (setq rval (car usemap)
+		usemap nil))
+      (setq usemap (cdr usemap)))
+    rval))
+
+(defun widget-image-summarize (widget)
+  (if (widget-get widget :parent)
+      (setq widget (widget-get widget :parent)))
+  (let* ((ismap  (widget-get widget 'ismap))
+	 (usemap (widget-image-usemap widget))
+	 (href   (widget-get widget 'href))
+	 (alt    (widget-get widget 'alt))
+	 (value  (widget-value widget))
+	 (i nil))
+    (cond
+     (usemap
+      (setq i (length usemap)
+	    usemap (widget-image-usemap-default usemap))
+      ;; Perhaps we should do something here with showing the # of entries
+      ;; in the imagemap as well as the default href?  Could get too long.
+      (format "Client side imagemap: %s" value))
+     (ismap
+      (format "Server side imagemap: %s" href))
+     ((stringp href)			; Normal hyperlink
+      (format "Image hyperlink: %s" href))
+     ((stringp alt)			; Alternate message was specified
+      (format "Image: %s" alt))
+     ((stringp value)
+      (format "Image: %s" value))
+     (t					; Huh?
+      "A very confused image widget."))))
+
+(defun widget-image-notify (widget widget-changed &optional event)
   ;; Happens when anything changes
-  (let* ((glyph (and event (w3-mouse-event-p event) (event-glyph event)))
+  (let* ((glyph (and event (widget-mouse-event-p event) (event-glyph event)))
 	 (x (and glyph (event-glyph-x-pixel event)))
 	 (y (and glyph (event-glyph-y-pixel event)))
 	 (ismap  (widget-get widget 'ismap))
-	 (usemap (w3-image-widget-usemap widget))
+	 (usemap (widget-image-usemap widget))
 	 (href   (widget-get widget 'href))
 	 (value  (widget-value widget))
 	 )

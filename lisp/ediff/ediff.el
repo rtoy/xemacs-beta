@@ -6,8 +6,8 @@
 ;; Created: February 2, 1994
 ;; Keywords: comparing, merging, patching, version control.
 
-(defconst ediff-version "2.63" "The current version of Ediff")
-(defconst ediff-date "September 12, 1996" "Date of last update")
+(defconst ediff-version "2.64" "The current version of Ediff")
+(defconst ediff-date "January 3, 1997" "Date of last update")  
 
 
 ;; This file is part of GNU Emacs.
@@ -106,17 +106,26 @@
 
 ;;; Code:
 
-(require 'ediff-init)
-;; ediff-mult is always required, because of the registry stuff
-(require 'ediff-mult)
+(provide 'ediff)
 
-(and noninteractive
-     (eval-when-compile
-       (let ((load-path (cons (expand-file-name ".") load-path)))
-	 (load-library "dired")
-	 (load-file "ediff-ptch.el")
-	 (load-file "ediff-vers.el")
-	 (load "pcl-cvs" 'noerror))))
+;; Compiler pacifier
+(eval-when-compile
+  (let ((load-path (cons "." load-path)))
+    (load "dired")
+    (or (featurep 'ediff-init)
+	(load "ediff-init.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-mult)
+	(load "ediff-mult.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-ptch)
+	(load "ediff-ptch.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-vers)
+	(load "ediff-vers.el" nil nil 'nosuffix))
+    (load "pcl-cvs" 'noerror)
+    ))
+;; end pacifier
+
+(require 'ediff-init)
+(require 'ediff-mult)  ; required because of the registry stuff
 
 (defvar ediff-use-last-dir nil
   "*If t, Ediff uses previous directory as default when reading file name.")
@@ -693,7 +702,7 @@ names. Only the files that are under revision control are taken into account."
 	(or (y-or-n-p
 	     "Directory for saving merges is the same as directory A. Sure? ")
 	    (error "Merge of directory revisions aborted")))
-
+    
     (setq file-list
 	  (ediff-get-directory-files-under-revision
 	   jobname regexp dir1 merge-autostore-dir))
@@ -1101,7 +1110,7 @@ buffer."
 ;;;###autoload
 (defun ediff-merge-revisions-with-ancestor (&optional file startup-hooks)
   "Run Ediff by merging two revisions of a file with a common ancestor.
-The file is the optional FILE argument or the file visited by the current
+The file is the the optional FILE argument or the file visited by the current
 buffer."
   (interactive)
   (if (stringp file) (find-file file))
@@ -1273,7 +1282,6 @@ With optional NODE, goes to that node."
 ;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
 
-(provide 'ediff)
 (require 'ediff-util)
 
 ;;; ediff.el ends here

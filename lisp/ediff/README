@@ -12,6 +12,7 @@ ediff.dvi	-- Manual in DVI format
 
 ediff.el    	-- Ediff Emacs Lisp code
 ediff-init.el	-- Ediff Emacs Lisp code
+ediff-help.el	-- Ediff Emacs Lisp code
 ediff-wind.el	-- Ediff Emacs Lisp code
 ediff-util.el	-- Ediff Emacs Lisp code
 ediff-diff.el	-- Ediff Emacs Lisp code

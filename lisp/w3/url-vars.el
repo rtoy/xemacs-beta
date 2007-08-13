@@ -1,11 +1,12 @@
-;;; url-vars.el,v --- Variables for Uniform Resource Locator tool
+;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1996/06/03 15:04:57
-;; Version: 1.13
+;; Created: 1996/12/30 14:25:24
+;; Version: 1.19
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -20,23 +21,16 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst url-version (let ((x "p1.0.41"))
+(defconst url-version (let ((x "Exp"))
 			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))
   "Version # of URL package.")
-
-
-;;; This is so we can use a consistent method of checking for mule support
-;;; Emacs-based mule uses (boundp 'MULE), but XEmacs-based mule uses
-;;; (featurep 'mule) - I choose to use the latter.
-
-(if (boundp 'MULE)
-    (provide 'mule))
 
 (defvar url-current-can-be-cached t
   "*Whether the current URL can be cached.")
@@ -93,10 +87,6 @@ If non-nil and not t, the user will be asked for each refresh request.")
 (defvar url-inhibit-mime-parsing nil
   "Whether to parse out (and delete) the MIME headers from a message.")
 
-(defvar url-forms-based-ftp nil
-  "*If non-nil, local and remote file access of directories will be shown
-as an HTML 3.0 form, allowing downloads of multiple files at once.")
-
 (defvar url-automatic-caching nil
   "*If non-nil, all documents will be automatically cached to the local
 disk.")
@@ -115,7 +105,7 @@ time.")
 (defvar url-broken-resolution nil
   "*Whether to use [ange|efs]-ftp-nslookup-host.")
 
-(defvar url-bug-address "wmperry@spry.com" "Where to send bug reports.")
+(defvar url-bug-address "wmperry@cs.indiana.edu" "Where to send bug reports.")
 
 (defvar url-cookie-confirmation nil
   "*If non-nil, confirmation by the user is required before accepting any
@@ -125,23 +115,6 @@ HTTP cookies.")
   "*Your full email address.  This is what is sent to HTTP/1.0 servers as
 the FROM field.  If not set when url-do-setup is run, it defaults to
 the value of url-pgp/pem-entity.")
-
-(defvar url-mule-retrieval-coding-system (if (featurep 'mule)
-					     (if (boundp '*euc-japan*)
-						 *euc-japan*
-					       'euc-japan-unix)
-					  nil)
-  "Coding system for retrieval, used before hexified.")
-
-(defvar url-mule-no-coding-system (cond
-				   ((and (featurep 'mule)
-					 (string-match "XEmacs" emacs-version))
-				    'noconv)
-				   ((featurep 'mule)
-				    '*noconv*)
-				   (t nil))
-  "*Variable containing a symbol that specifies no coding system is to be used.
-Only used if you are in a Mule-enabled Emacsen.")
 
 (defvar url-directory-index-file "index.html"
   "*The filename to look for when indexing a directory.  If this file
@@ -293,7 +266,12 @@ stylistic level.")
 show when possible.")
 
 (defvar url-standalone-mode nil "*Rely solely on the cache?")
-(defvar url-working-buffer " *URL*" "The buffer to do all the processing in.")
+(defvar url-multiple-p t
+  "*If non-nil, multiple queries are possible through ` *URL-<i>*' buffers")
+(defvar url-default-working-buffer " *URL*" " The default buffer to do all of the processing in.")
+(defvar url-working-buffer url-default-working-buffer " The buffer to do all of the processing in.
+ (It defaults to `url-default-working-buffer' and is bound to ` *URL-<i>*' buffers
+  when used for multiple requests, cf. `url-multiple-p')")
 (defvar url-current-annotation nil "URL of document we are annotating...")
 (defvar url-current-referer nil "Referer of this page.")
 (defvar url-current-content-length nil "Current content length.")
@@ -345,7 +323,7 @@ an assoc list of headers/contents.")
   "String to send to the server in the Accept-encoding: field in HTTP/1.0
 requests.  This is created automatically from mm-content-transfer-encodings.")
 
-(defvar url-mime-language-string "*/*"
+(defvar url-mime-language-string "*"
   "String to send to the server in the Accept-language: field in
 HTTP/1.0 requests.")
 

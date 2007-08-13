@@ -34,10 +34,6 @@ EDIFFelc = ediff-init.elc ediff-help.elc ediff-diff.elc ediff-merg.elc \
            ediff-ptch.elc ediff.elc ediff-hook.elc
 # ediff-tbar.elc
 
-PRELOADS = -l ./ediff-init.el -l ./ediff-help.el -l ./ediff-diff.el \
-           -l ./ediff-wind.el -l ./ediff-merg.el -l ./ediff-mult.el \
-           -l ./ediff-util.el -l ./ediff.el
-# -l ./ediff-tbar.el
 
 all: hello elc goodbye dvi info
 
@@ -80,39 +76,39 @@ ediff-hook.elc: ediff-hook.el
 
 ediff-tbar.elc: ediff-tbar.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-tbar.el
+	$(EMACS) -batch -f batch-byte-compile ediff-tbar.el
 
 ediff-diff.elc: ediff-init.el ediff-diff.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-diff.el
+	$(EMACS) -batch -f batch-byte-compile ediff-diff.el
 
 ediff-merg.elc: ediff-init.el ediff-merg.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-merg.el
+	$(EMACS) -batch -f batch-byte-compile ediff-merg.el
 
 ediff-mult.elc: ediff-init.el ediff-mult.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-mult.el
+	$(EMACS) -batch -f batch-byte-compile ediff-mult.el
 
 ediff-vers.elc: ediff-init.el ediff-vers.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-vers.el
+	$(EMACS) -batch -f batch-byte-compile ediff-vers.el
 
 ediff-ptch.elc: ediff-init.el ediff-ptch.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-ptch.el
+	$(EMACS) -batch -f batch-byte-compile ediff-ptch.el
 
 ediff.elc: ediff-init.el ediff.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff.el
+	$(EMACS) -batch -f batch-byte-compile ediff.el
 
 ediff-util.elc: ediff-init.el ediff-util.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-util.el
+	$(EMACS) -batch -f batch-byte-compile ediff-util.el
 
 ediff-wind.elc: ediff-init.el ediff-wind.el
 	@echo ""
-	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-wind.el
+	$(EMACS) -batch -f batch-byte-compile ediff-wind.el
 
 ediff.dvi: ediff.texi
 	@echo ""
@@ -156,7 +152,7 @@ clean:
 	rm -f ediff*.elc *~ core
 
 distclean: clean
-
+ 
 realclean: clean
 	rm -f *.dvi ediff.info*
 	rm -f ediff.aux ediff.cp ediff.cps ediff.fn ediff.fns ediff.ky \

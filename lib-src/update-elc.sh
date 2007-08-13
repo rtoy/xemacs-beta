@@ -54,7 +54,7 @@ fi
 
 
 REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
-BYTECOMP="$REAL -batch -q -no-site-file -l bytecomp"
+BYTECOMP="$REAL -batch -q -no-site-file "
 echo "Recompiling in `pwd|sed 's|^/tmp_mnt||'`"
 echo "          with $REAL..."
 
@@ -114,7 +114,6 @@ comm -23 $tmp1 $tmp2 | sed '
 \!/tm/!d
 \!/tl/!d
 \!/mel/!d
-\!/url/!d
 \!/viper/!d
 \!/vm/!d
 \!/w3/!d
@@ -152,11 +151,6 @@ fi
 echo Compiling Gnus...
 ( cd lisp/gnus ; make EMACS=$REAL some )
 echo Gnus done.
-
-# This is really part of w3.
-echo Compiling URL...
-( cd lisp/url ; make EMACS=$REAL )
-echo URL done.
 
 # and gee w3 has its own makefile as well
 # (no especial need to use it, though)

@@ -596,7 +596,7 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 	{
 	  char *s;
 	  Lisp_Object filename = IMAGE_INSTANCE_PIXMAP_FILENAME (ii);
-	  s = strrchr ((char *) string_data (XSTRING (filename)), '/');
+	  s = strrchr ((char *) XSTRING_DATA (filename), '/');
 	  if (s)
 	    print_internal (build_string (s + 1), printcharfun, 1);
 	  else
@@ -2430,8 +2430,8 @@ glyph_height_internal (Lisp_Object glyph, Lisp_Object frame_face,
 	struct face_cachel *cachel;
 
 	find_charsets_in_bufbyte_string (charsets,
-					 string_data (XSTRING (string)),
-					 string_length (XSTRING (string)));
+					 XSTRING_DATA   (string),
+					 XSTRING_LENGTH (string));
 
 	if (!NILP (frame_face))
 	  {

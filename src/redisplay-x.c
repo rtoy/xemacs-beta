@@ -462,9 +462,7 @@ x_output_display_block (struct window *w, struct display_line *dl, int block,
 		      Lisp_Object string =
 			XIMAGE_INSTANCE_TEXT_STRING (instance);
 		      convert_bufbyte_string_into_emchar_dynarr
-			(string_data (XSTRING (string)),
-			 string_length (XSTRING (string)),
-			 buf);
+			(XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
 		    
 		      x_output_string (w, dl, buf, xpos,
 				       rb->object.dglyph.xoffset,

@@ -65,8 +65,7 @@ tty_init_device (struct device *d, Lisp_Object props)
   allocate_tty_device_struct (d);
   init_baud_rate (d);
 
-  switch (init_tty_for_redisplay
-	  (d, (char *) string_data (XSTRING (terminal_type))))
+  switch (init_tty_for_redisplay (d, (char *) XSTRING_DATA (terminal_type)))
     {
 #if 0
     case TTY_UNABLE_OPEN_DATABASE:
@@ -77,12 +76,12 @@ tty_init_device (struct device *d, Lisp_Object props)
     case TTY_TYPE_UNDEFINED:
       suppress_early_backtrace = 1;
       error ("Terminal type `%s' undefined (or can't access database?)",
-	     string_data (XSTRING (terminal_type)));
+	     XSTRING_DATA (terminal_type));
       break;
     case TTY_TYPE_INSUFFICIENT:
       suppress_early_backtrace = 1;
       error ("Terminal type `%s' not powerful enough to run Emacs",
-	     string_data (XSTRING (terminal_type)));
+	     XSTRING_DATA (terminal_type));
       break;
     case TTY_SIZE_UNSPECIFIED:
       suppress_early_backtrace = 1;

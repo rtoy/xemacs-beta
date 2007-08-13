@@ -155,7 +155,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
             case '_': *to++ = '\037'; break;
             default:
               return_me = list2 (build_string
-                                 ("Invalid data in documentation file -- ^A followed by weird code"),
+	("Invalid data in documentation file -- ^A followed by weird code"),
                                  make_int (c));
               goto done;
             }
@@ -172,15 +172,15 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 }
 
 #define string_join(dest, s1, s2) \
-  memcpy ((void *) dest, (void *) XSTRING_data (s1), XSTRING_length (s1)); \
-  memcpy ((void *) ((Bufbyte *) dest + XSTRING_length (s1)), \
-          (void *) XSTRING_data (s2), XSTRING_length (s2));  \
-          dest[XSTRING_length (s1) + XSTRING_length (s2)] = '\0'
+  memcpy ((void *) dest, (void *) XSTRING_DATA (s1), XSTRING_LENGTH (s1)); \
+  memcpy ((void *) ((Bufbyte *) dest + XSTRING_LENGTH (s1)), \
+          (void *) XSTRING_DATA (s2), XSTRING_LENGTH (s2));  \
+          dest[XSTRING_LENGTH (s1) + XSTRING_LENGTH (s2)] = '\0'
 
 /* Extract a doc string from a file.  FILEPOS says where to get it.
    (This could actually be byte code instructions/constants instead
    of a doc string.)
-   If it is an integer, use that position in the standard DOC-... file.
+   If it is an integer, use that position in the standard DOC file.
    If it is (FILE . INTEGER), use FILE as the file name
    and INTEGER as the position in that file.
    But if INTEGER is negative, make it positive.
@@ -227,16 +227,11 @@ get_doc_string (Lisp_Object filepos)
       if (!STRINGP (Vdoc_directory))
 	return Qnil;
 
-      minsize = string_length (XSTRING (Vdoc_directory));
+      minsize = XSTRING_LENGTH (Vdoc_directory);
       /* sizeof ("../lib-src/") == 12 */
       if (minsize < 12)
 	minsize = 12;
-      name_nonreloc
-	= (char *) alloca (minsize + string_length (XSTRING (file)) + 8);
-      /*
-      strcpy (name_nonreloc, (char *) string_data (XSTRING (Vdoc_directory)));
-      strcat (name_nonreloc, (char *) string_data (XSTRING (file)));
-      */
+      name_nonreloc = (char *) alloca (minsize + XSTRING_LENGTH (file) + 8);
       string_join (name_nonreloc, Vdoc_directory, file);
       munge_doc_file_name (name_nonreloc);
     }
@@ -244,29 +239,28 @@ get_doc_string (Lisp_Object filepos)
     name_reloc = file;
 
   fd = open (name_nonreloc ? name_nonreloc :
-	     (char *) string_data (XSTRING (name_reloc)), O_RDONLY, 0);
+	     (char *) XSTRING_DATA (name_reloc), O_RDONLY, 0);
   if (fd < 0)
     {
 #ifndef CANNOT_DUMP
       if (purify_flag)
 	{
-	  name_nonreloc
 	    /* sizeof ("../lib-src/") == 12 */
-	    = (char *) alloca (12 + string_length (XSTRING (file)) + 8);
+	  name_nonreloc = (char *) alloca (12 + XSTRING_LENGTH (file) + 8);
 	  /* Preparing to dump; DOC file is probably not installed.
 	     So check in ../lib-src. */
 	  strcpy (name_nonreloc, "../lib-src/");
-	  strcat (name_nonreloc, (char *) string_data (XSTRING (file)));
+	  strcat (name_nonreloc, (char *) XSTRING_DATA (file));
 	  munge_doc_file_name (name_nonreloc);
 
 	  fd = open (name_nonreloc, O_RDONLY, 0);
 	}
-#endif
+#endif /* CANNOT_DUMP */
 
       if (fd < 0)
 	error ("Cannot open doc string file \"%s\"",
 	       name_nonreloc ? name_nonreloc :
-	       (char *) string_data (XSTRING (name_reloc)));
+	       (char *) XSTRING_DATA (name_reloc));
     }
 
   tem = unparesseuxify_doc_string (fd, position, name_nonreloc, name_reloc);
@@ -430,7 +424,7 @@ translation.
 static void
 weird_doc (Lisp_Object sym, CONST char *weirdness, CONST char *type, int pos)
 {
-#ifdef ENERGIZE /* hide kludgery... */
+#if defined(ENERGIZE) || defined(SUNPRO) /* hide kludgery... */
   if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
 #endif
   message ("Note: Strange doc (%s) for %s %s @ %d",
@@ -467,16 +461,16 @@ when doc strings are referred to in the dumped Emacs.
   CHECK_STRING (filename);
 
 #ifndef CANNOT_DUMP
-  name = (char *) alloca (string_length (XSTRING (filename)) + 14);
+  name = (char *) alloca (XSTRING_LENGTH (filename) + 14);
   strcpy (name, "../lib-src/");
 #else /* CANNOT_DUMP */
   CHECK_STRING (Vdoc_directory);
-  name = (char *) alloca (string_length (XSTRING (filename)) 
-                          + string_length (XSTRING (Vdoc_directory))
+  name = (char *) alloca (XSTRING_LENGTH (filename) 
+                          + XSTRING_LENGTH (Vdoc_directory)
                           + 1);
-  strcpy (name, (char *) string_data (XSTRING (Vdoc_directory)));
+  strcpy (name, (char *) XSTRING_DATA (Vdoc_directory));
 #endif /* CANNOT_DUMP */
-  strcat (name, (char *) string_data (XSTRING (filename)));
+  strcat (name, (char *) XSTRING_DATA (filename));
 #ifdef VMS
 #ifndef VMS4_4
   /* For VMS versions with limited file name syntax,
@@ -824,13 +818,13 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
     keymap = Voverriding_local_map;
 #endif
 
-  strlength = string_length (XSTRING (str));
+  strlength = XSTRING_LENGTH (str);
   bsize = strlength;
   buf = (Bufbyte *) xmalloc (bsize);
   bufp = buf;
 
   /* Have to reset strdata every time GC might be called */
-  strdata = string_data (XSTRING (str));
+  strdata = XSTRING_DATA (str);
   for (idx = 0; idx < strlength; )
     {
       Bufbyte *strp = strdata + idx;
@@ -954,7 +948,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 		*b++ = '\n';
 		sprintf (b, GETTEXT (
 		"Uses keymap \"%s\", which is not currently defined."),
-			 (char *) string_data (XSTRING (Fsymbol_name (name))));
+			 (char *) XSTRING_DATA (Fsymbol_name (name)));
 		b += strlen (b);
 		*b++ = '\n';
 		*b++ = 0;
@@ -972,8 +966,8 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 	    goto subst_string;
 
 	  subst_string:
-	    start = string_data (XSTRING (tem));
-	    length = string_length (XSTRING (tem));
+	    start = XSTRING_DATA (tem);
+	    length = XSTRING_LENGTH (tem);
 	  subst:
 	    bsize += length;
 	    new = (Bufbyte *) xrealloc (buf, bsize);
@@ -983,7 +977,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 	    bufp += length;
 
 	    /* Reset STRDATA in case gc relocated it.  */
-	    strdata = string_data (XSTRING (str));
+	    strdata = XSTRING_DATA (str);
 
 	    break;
 	  }

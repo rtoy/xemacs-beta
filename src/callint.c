@@ -189,7 +189,7 @@ callint_prompt (CONST Bufbyte *prompt_start, Bytecount prompt_length,
 
   /* Fformat no longer smashes its arg vector, so no need to copy it. */
   
-  if (!strchr ((char *) string_data (XSTRING (s)), '%'))
+  if (!strchr ((char *) XSTRING_DATA (s), '%'))
     return (s);
   GCPRO1 (s);
   RETURN_UNGCPRO (emacs_doprnt_string_lisp (0, s, 0, nargs, args));
@@ -421,7 +421,7 @@ when reading the arguments.
     for (;;)
       {
 	if (STRINGP (specs))
-	  prompt_data = (CONST char *) string_data (XSTRING (specs));
+	  prompt_data = (CONST char *) XSTRING_DATA (specs);
     
 	if (prompt_data[prompt_index] == '+')
 	  error ("`+' is not used in `interactive' for ordinary commands");
@@ -614,7 +614,7 @@ when reading the arguments.
 	      int shadowing_speccount = specpdl_depth ();
 
 	      specbind (Qcursor_in_echo_area, Qt);
-	      message ("%s", string_data (XSTRING (PROMPT ())));
+	      message ("%s", XSTRING_DATA (PROMPT ()));
 	      tem = (call0 (Qread_char));
               args[argnum] = tem;
               /* visargs[argnum] = Fsingle_key_description (tem); */
@@ -865,7 +865,7 @@ when reading the arguments.
 	if (!prompt_limit)
 	  break;
 	if (STRINGP (specs))
-	  prompt_data = (CONST char *) string_data (XSTRING (specs));
+	  prompt_data = (CONST char *) XSTRING_DATA (specs);
 	prompt_index += prompt_length + 1 + 1; /* +1 to skip spec, +1 for \n */
       }
     unbind_to (speccount, Qnil);

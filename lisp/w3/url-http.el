@@ -1,11 +1,12 @@
-;;; url-http.el,v --- HTTP Uniform Resource Locator retrieval code
+;;; url-http.el --- HTTP Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1996/05/29 15:07:01
-;; Version: 1.19
+;; Created: 1996/12/18 00:38:45
+;; Version: 1.7
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -20,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'url-vars)
@@ -131,6 +133,9 @@
 		       (let ((url-basic-auth-storage
 			      url-proxy-basic-authentication))
 			 (url-get-authentication url nil 'any nil))))
+	 (host (if (boundp 'proxy-info)
+		   (url-host (url-generic-parse-url proxy-info))
+		 url-current-server))
 	 (auth (if (cdr-safe (assoc "Authorization" url-request-extra-headers))
 		   nil
 		 (url-get-authentication (or
@@ -181,7 +186,7 @@
 	   (or url-request-method "GET")
 	   fname
 	   (or url-extensions-header "none")
-	   (or url-current-server "UNKNOWN.HOST.NAME")
+	   (or host "UNKNOWN.HOST.NAME")
 	   (if url-personal-mail-address
 	       (concat "From: " url-personal-mail-address "\r\n")
 	     "")
@@ -215,7 +220,9 @@
   ;; Set up a timer to load URL at optional TIME.  If TIME is unspecified,
   ;; default to 5 seconds.  Only loads document if MUST-BE-VIEWING is the
   ;; current URL when the timer expires."
-  (or time (setq time 5))
+  (if (or (not time)
+	  (<= time 0))
+      (setq time 5))
   (let ((func
 	 (` (lambda ()
 	      (if (equal (url-view-url t) (, must-be-viewing))
@@ -590,12 +597,14 @@ HTTP/1.0 specification for more details." x redir) 'error)
 			    (format "(%s) is malformed.<p>" (url-view-url t)))
 		    (message "%s" process))
 		(progn
+		  (url-process-put process 'url (or proxy-info url))
 		  (process-kill-without-query process)
 		  (process-send-string process request)
 		  (url-lazy-message "Request sent, waiting for response...")
 		  (if url-show-http2-transfer
 		      (progn
 			(make-local-variable 'after-change-functions)
+			(setq url-current-content-length nil)
 			(add-hook 'after-change-functions
 				  'url-after-change-function)))
 		  (if url-be-asynchronous

@@ -198,8 +198,7 @@ lisp_string_equal (CONST void *x1, CONST void *x2)
   Lisp_Object str1, str2;
   CVOID_TO_LISP (str1, x1);
   CVOID_TO_LISP (str2, x2);
-  return !strcmp ((char *) string_data (XSTRING (str1)),
-		  (char *) string_data (XSTRING (str2))); 
+  return !strcmp ((char *) XSTRING_DATA (str1), (char *) XSTRING_DATA (str2));
 }
 
 unsigned long
@@ -207,8 +206,7 @@ lisp_string_hash (CONST void *x)
 {
   Lisp_Object str;
   CVOID_TO_LISP (str, x);
-  return hash_string (string_data (XSTRING (str)),
-		      string_length (XSTRING (str)));
+  return hash_string (XSTRING_DATA (str), XSTRING_LENGTH (str));
 }
 
 #endif /* 0 */
@@ -861,8 +859,7 @@ internal_hash (Lisp_Object obj, int depth)
 		    internal_hash (XCDR (obj), depth + 1));
     }
   else if (STRINGP (obj))
-    return hash_string (string_data (XSTRING (obj)),
-			string_length (XSTRING (obj)));
+    return hash_string (XSTRING_DATA (obj), XSTRING_LENGTH (obj));
 #ifndef LRECORD_VECTOR
   else if (VECTORP (obj))
     {

@@ -132,7 +132,7 @@ init_editfns (void)
 	 in select(), called from getpwnam(). */
       slow_down_interrupts ();
       pw = (struct passwd *)
-	getpwnam ((char *) string_data (XSTRING (Vuser_login_name)));
+	getpwnam ((char *) XSTRING_DATA (Vuser_login_name));
       speed_up_interrupts ();
     }
   
@@ -142,18 +142,17 @@ init_editfns (void)
 				     FORMAT_OS);
   
 #ifdef AMPERSAND_FULL_NAME
-  p = string_data (XSTRING (Vuser_full_name));
+  p = XSTRING_DATA (Vuser_full_name);
   q = (Bufbyte *) strchr ((char *) p, '&');
   /* Substitute the login name for the &, upcasing the first character.  */
   if (q)
     {
       char *r = (char *)
-	alloca (strlen ((char *) p) +
-                string_length (XSTRING (Vuser_login_name)) + 1);
+	alloca (strlen ((char *) p) + XSTRING_LENGTH (Vuser_login_name) + 1);
       Charcount fullname_off = bytecount_to_charcount (p,  q - p);
       memcpy (r, p, q - p);
       r[q - p] = 0;
-      strcat (r, (char *) string_data (XSTRING (Vuser_login_name)));
+      strcat (r, (char *) XSTRING_DATA (Vuser_login_name));
       strcat (r, q + 1);
       Vuser_full_name = build_string (r);
       set_string_char (XSTRING (Vuser_full_name), fullname_off,
@@ -602,9 +601,7 @@ If BUFFER is nil, the current buffer is assumed.
   Lisp_Object buffer;
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  if (BUF_PT (b) == BUF_BEGV (b))
-    return Qt;
-  return Qnil;
+  return BUF_PT (b) == BUF_BEGV (b) ? Qt : Qnil;
 }
 
 DEFUN ("eobp", Feobp, Seobp, 0, 1, 0 /*
@@ -616,9 +613,7 @@ If BUFFER is nil, the current buffer is assumed.
   Lisp_Object buffer;
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  if (BUF_PT (b) == BUF_ZV (b))
-    return Qt;
-  return Qnil;
+  return BUF_PT (b) == BUF_ZV (b) ? Qt : Qnil;
 }
 
 int
@@ -794,16 +789,15 @@ user is returned, or nil.  USER may be either a login name or a uid.
 #ifdef AMPERSAND_FULL_NAME
   if (!NILP (tem))
     {
-      p = (char *) string_data (XSTRING (tem));
+      p = (char *) XSTRING_DATA (tem);
       q = strchr (p, '&');
       /* Substitute the login name for the &, upcasing the first character.  */
       if (q)
 	{
-	  char *r = (char *) alloca (strlen (p) +
-				     string_length (XSTRING (uname)) + 1);
+	  char *r = (char *) alloca (strlen (p) + XSTRING_LENGTH (uname) + 1);
 	  memcpy (r, p, q - p);
 	  r[q - p] = 0;
-	  strcat (r, (char *) string_data (XSTRING (uname)));
+	  strcat (r, (char *) XSTRING_DATA (uname));
 	  /* #### current_buffer dependency! */
 	  r[q - p] = UPCASE (current_buffer, r[q - p]);
 	  strcat (r, q + 1);
@@ -831,7 +825,7 @@ Return the name of the machine you are running on, as a string.
 char *
 get_system_name (void)
 {
-  return xstrdup ((char *) string_data (XSTRING (Vsystem_name)));
+  return xstrdup ((char *) XSTRING_DATA (Vsystem_name));
 }
 
 DEFUN ("emacs-pid", Femacs_pid, Semacs_pid, 0, 0, 0 /*
@@ -985,14 +979,14 @@ characters appearing in the day and month names may be incorrect.
     error ("Invalid time specification");
 
   /* This is probably enough.  */
-  size = string_length (XSTRING (format_string)) * 6 + 50;
+  size = XSTRING_LENGTH (format_string) * 6 + 50;
 
   while (1)
     {
       char *buf = (char *) alloca (size);
       *buf = 1;
       if (emacs_strftime (buf, size,
-			  (CONST char *) string_data (XSTRING (format_string)),
+			  (CONST char *) XSTRING_DATA (format_string),
 			  localtime (&value))
 	  || !*buf)
 	return build_ext_string (buf, FORMAT_BINARY);
@@ -1100,7 +1094,7 @@ If you want them to stand for years in this century, you must do that yourself
       char **oldenv = environ, **newenv;
       
       if (STRINGP (zone))
-	tzstring = (char *) string_data (XSTRING (zone));
+	tzstring = (char *) XSTRING_DATA (zone);
       else if (INTP (zone))
 	{
 	  int abszone = abs (XINT (zone));
@@ -1293,7 +1287,7 @@ If TZ is nil, use implementation-defined default time zone information.
   else
     {
       CHECK_STRING (tz);
-      tzstring = (char *) string_data (XSTRING (tz));
+      tzstring = (char *) XSTRING_DATA (tz);
     }
 
   set_time_zone_rule (tzstring);

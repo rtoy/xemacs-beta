@@ -32,18 +32,17 @@
 
 ;; Stylesheet stuff
 (autoload 'w3-handle-style "w3-style")
-(autoload 'w3-style-parse-css "w3-style")
-(autoload 'w3-generate-stylesheet-faces "w3-style")
+(autoload 'w3-display-stylesheet "w3-style")
 
 ;; Setup stuff
 (autoload 'url-do-setup "url")
 (autoload 'w3-do-setup "w3")
 
 ;; Forms stuff
+(autoload 'w3-form-resurrect-widgets "w3-forms")
 (autoload 'w3-form-add-element "w3-forms")
 (autoload 'w3-do-text-entry "w3-forms")
 (autoload 'w3-do-form-entry "w3-forms")
-(autoload 'widget-at "w3-forms")
 (autoload 'w3-next-widget "w3-forms")
 
 ;; Widget stuff
@@ -53,6 +52,7 @@
 (autoload 'widget-put "widget-edit")
 (autoload 'widget-forward "widget-edit")
 (autoload 'widget-backward "widget-edit")
+(autoload 'widget-at "widget-edit")
 
 ;; Preferences
 (autoload 'w3-preferences-edit "w3-prefs")

@@ -1700,7 +1700,7 @@ describe_event_window (Window window, Display *display)
   f = x_any_window_to_frame (get_device_from_display (display), window);
   if (f) {
     char buf[500];
-    sprintf (buf, " \"%s\"", string_data (XSTRING (f->name)));
+    sprintf (buf, " \"%s\"", XSTRING_DATA (f->name));
     write_string_to_stdio_stream (stderr, 0, (Bufbyte *) buf, 0, strlen (buf),
                                   FORMAT_DISPLAY);
   }

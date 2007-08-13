@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 19.15 beta90
+-- ediff-2.64
+-- viper-2.92
+-- bench.el-1.2
+-- Degenerate extent insertion speedup courtesy of David Moore
+-- decipher.el (from Emacs 19.34)
+-- w3-3.0.43
+-- Miscellaneous bug fixes
+
 to 19.15 beta7
 -- backup-dir 2.0 courtesy of Greg Klanderman
 -- lazy-lock-1.15

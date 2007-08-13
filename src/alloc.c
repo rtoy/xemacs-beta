@@ -2088,12 +2088,11 @@ LENGTH must be an integer and INIT must be a character.
     val = make_uninit_string (len * XINT (length));
     if (len == 1)
       /* Optimize the single-byte case */
-      memset (string_data (XSTRING (val)), XCHAR (init),
-	      string_length (XSTRING (val)));
+      memset (XSTRING_DATA (val), XCHAR (init), XSTRING_LENGTH (val));
     else
       {
 	int i, j, k;
-	Bufbyte *ptr = string_data (XSTRING (val));
+	Bufbyte *ptr = XSTRING_DATA (val);
 
 	k = 0;
 	for (i = 0; i < XINT (length); i++)
@@ -2112,7 +2111,7 @@ make_string (CONST Bufbyte *contents, Bytecount length)
   Lisp_Object val;
   
   val = make_uninit_string (length);
-  memcpy (string_data (XSTRING (val)), contents, length);
+  memcpy (XSTRING_DATA (val), contents, length);
   return (val);
 }
 
@@ -2212,10 +2211,11 @@ mark_lcrecord_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
       struct lrecord_header *lheader = XRECORD_LHEADER (chain);
       struct free_lcrecord_header *free_header =
 	(struct free_lcrecord_header *) lheader;
+
+#ifdef ERROR_CHECK_GC
       CONST struct lrecord_implementation *implementation
 	= lheader->implementation;
 
-#ifdef ERROR_CHECK_GC
       /* There should be no other pointers to the free list. */
       assert (!MARKED_RECORD_HEADER_P (lheader));
       /* Only lcrecords should be here. */
@@ -2227,7 +2227,8 @@ mark_lcrecord_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
       /* So must the size. */
       assert (implementation->static_size == 0
 	      || implementation->static_size == list->size);
-#endif
+#endif /* ERROR_CHECK_GC */
+
       MARK_RECORD_HEADER (lheader);
       chain = free_header->chain;
     }
@@ -3904,7 +3905,7 @@ garbage_collect_1 (void)
       if (!cursor_changed && !FRAME_STREAM_P (f))
 	{
 	  char *msg = (STRINGP (Vgc_message)
-		       ? GETTEXT ((char *) string_data (XSTRING (Vgc_message)))
+		       ? GETTEXT ((char *) XSTRING_DATA (Vgc_message))
 		       : 0);
 	  Lisp_Object args[2], whole_msg;
 	  args[0] = build_string (msg ? msg :
@@ -4051,7 +4052,7 @@ garbage_collect_1 (void)
       else if (!FRAME_STREAM_P (f))
 	{
 	  char *msg = (STRINGP (Vgc_message)
-		       ? GETTEXT ((char *) string_data (XSTRING (Vgc_message)))
+		       ? GETTEXT ((char *) XSTRING_DATA (Vgc_message))
 		       : 0);
 
 	  /* Show "...done" only if the echo area would otherwise be empty. */

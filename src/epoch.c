@@ -104,7 +104,7 @@ print_x_resource (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       sprintf (buf, "#<x-resource %s on ",
 	       (NILP (atom_symbol)
 		? default_string
-		: string_data (XSTRING (Fsymbol_name (atom_symbol)))));
+		: XSTRING_DATA (Fsymbol_name (atom_symbol))));
       write_c_string (buf, printcharfun);
       print_internal (device, printcharfun, escapeflag);
       sprintf (buf, " 0x%x>",(unsigned int) XX_RESOURCE (obj)->xid);
@@ -291,9 +291,9 @@ specifying the base for converting STRING.
     error ("Resource must be an atom");
   xr = XX_RESOURCE (type);
 
-  xid = (XID) strtol ((CONST char *) string_data (XSTRING (string)), &ptr, b);
+  xid = (XID) strtol ((CONST char *) XSTRING_DATA (string), &ptr, b);
 
-  return ((ptr == (char *) string_data (XSTRING (string)))
+  return ((ptr == (char *) XSTRING_DATA (string))
 	  ? Qnil
 	  : make_x_resource (xid, xr->xid, xr->device));
 }
@@ -586,14 +586,14 @@ calculate_vector_property (Lisp_Object vector, unsigned long *count,
       *format = BYTESIZE * sizeof (char);
       *type = XA_STRING;
       for ( i=0, size=0 ; i < length ; ++i )
-	size += (string_length (XSTRING (v->contents[i])) +
+	size += (XSTRING_LENGTH (v->contents[i]) +
 		 1); /* include null */
       addr = (void *) xmalloc (size);
       *count = size;
       for ( i = 0 , size = 0 ; i < length ; ++i )
 	{
-	  tsize = string_length (XSTRING (v->contents[i])) + 1;
-	  memmove (((char *) addr), string_data (XSTRING (v->contents[i])),
+	  tsize = XSTRING_LENGTH (v->contents[i]) + 1;
+	  memmove (((char *) addr), XSTRING_DATA (v->contents[i]),
 		   tsize);
 	  size += tsize;
 	}
@@ -656,15 +656,15 @@ calculate_list_property (Lisp_Object list, unsigned long *count,
       *format = BYTESIZE * sizeof (char);
       *type = XA_STRING;
       for ( i=0, size=0 , tlist=list ; i < length ; ++i, tlist = Fcdr (tlist) )
-	size += string_length (XSTRING (Fcar (tlist))) + 1; /* include null */
+	size += XSTRING_LENGTH (Fcar (tlist)) + 1; /* include null */
       addr = (void *) xmalloc (size);
       *count = size;
       for ( i=0, size=0, tlist=list ; i < length  ;
 	   ++i , tlist = Fcdr (tlist) )
 	{
 	  temp = Fcar (tlist);
-	  tsize = string_length (XSTRING (temp)) + 1;
-	  memmove (((char *) addr), string_data (XSTRING (temp)), tsize);
+	  tsize = XSTRING_LENGTH (temp) + 1;
+	  memmove (((char *) addr), XSTRING_DATA (temp), tsize);
 	  size += tsize;
 	}
       break;
@@ -692,8 +692,8 @@ convert_elisp_to_x (Lisp_Object value, void **addr, unsigned long *count,
     case Lisp_String:
       *format = BYTESIZE;
       *type = XA_STRING;
-      *count = strlen ((CONST char *) string_data (XSTRING (value))) + 1;
-      *addr = (void *) string_data (XSTRING (value));
+      *count = strlen ((CONST char *) XSTRING_DATA (value)) + 1;
+      *addr = (void *) XSTRING_DATA (value);
       break;
 
     case Lisp_Int:

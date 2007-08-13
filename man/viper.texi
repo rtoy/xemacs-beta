@@ -1666,9 +1666,10 @@ The number of columns shifted by @kbd{>} and @kbd{<} commands.
 @item vip-search-wrap-around t
 @itemx :se ws (:se wrapscan)
 If not @code{nil}, search wraps around the end/beginning of buffer.
-@item vip-adjust-window-after-search t
-If not @code{nil}, window will be pulled up or down, as appropriate, if
-search lands near the first (or last) line of the window.
+@item vip-search-scroll-threshold 2
+In search lands within this many lines of the window top or bottom, the
+window will be scrolled up or down by about 1/7-th of its size, to reveal
+the context. If the value is negative---don't scroll.
 @item vip-tags-file-name "TAGS"
 The name of the file used as the tag table.
 @item vip-re-query-replace nil
@@ -1878,7 +1879,7 @@ can include a line like this in your @file{.vip} file:
 @vindex @code{vip-shift-width}
 @vindex @code{buffer-read-only}
 @vindex @code{vip-search-wrap-around}
-@vindex @code{vip-adjust-window-after-search}
+@vindex @code{vip-search-scroll-threshold}
 @vindex @code{vip-search-face}
 @vindex @code{vip-tags-file-name}
 @vindex @code{vip-re-query-replace}

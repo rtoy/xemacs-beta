@@ -1532,6 +1532,20 @@ fi
 ### Eric Raymond says we should accept strings like "sysvr4" to mean
 ### "System V Release 4"; he writes, "The old convention encouraged
 ### confusion between `system' and `release' levels'."
+###
+### We rely on cpp to generate makefiles from Makefile.in.in templates.
+### There is at least one drawback to that. Since cpp generally has
+### built-in macro definitions like `#define unix' or `#define i386',
+### we must be careful to prevent it from substituting these occurences
+### in certain places in the makefiles. Pathnames for architecture-
+### specific files come to mind.
+### This is where CPPFLAGS_MAKEFILEGEN comes in. We try to selectively
+### disable (potentially) predefined macros that we find to be part of
+### the configuration string. 
+### This is but a poor method to help us fight off cpp, but it covers
+### those cases that used to bite me. <mdiers@logware.de>
+
+CPPFLAGS_MAKEFILEGEN=""  # we normally do not need any extra flags
 
 machine='' opsys='' unported=no need_dynodump=no
 case "${canonical}" in
@@ -1808,13 +1822,13 @@ case "${canonical}" in
     machine=hp800 opsys=hpux NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
   hppa*-hp-hpux8*shr* )
-    machine=hp800 opsys=hpux8-shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
+    machine=hp800 opsys=hpux8*shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
   hppa*-hp-hpux8* )
     machine=hp800 opsys=hpux8 NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
   hppa*-hp-hpux9*shr* )
-    machine=hp800 opsys=hpux9-shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
+    machine=hp800 opsys=hpux9*shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
   hppa*-hp-hpux9* )
     machine=hp800 opsys=hpux9 NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
@@ -2260,6 +2274,7 @@ case "${canonical}" in
   ## Intel 386 machines where we don't care about the manufacturer
   i[3-9]86-*-* )
     machine=intel386
+    CPPFLAGS_MAKEFILEGEN="${CPPFLAGS_MAKEFILEGEN} -Ui386"
     case "${canonical}" in
       *-isc1.* | *-isc2.[01]* )	opsys=386-ix ;;
       *-isc2.2* )		opsys=isc2-2 ;;
@@ -2290,8 +2305,8 @@ case "${canonical}" in
 		else
 			NON_GNU_CPP="/lib/cpp -D_XOPEN_SOURCE"  ;
 		fi ;;
-      *-386bsd* )	        opsys=386bsd ;;
-      *-freebsd* )		opsys=freebsd ;;
+      *-386bsd* )               opsys=386bsd ;;
+      *-freebsd* )              opsys=freebsd ;;
       *-nextstep* )		opsys=nextstep ;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -2544,8 +2559,9 @@ fi
 #### Some systems specify a CPP to use unless we are using GCC.
 #### Now that we know whether we are using GCC, we can decide whether
 #### to use that one.
-if [ "x$NON_GNU_CPP" = x ] || [ x$GCC = x1 ]
-then true
+
+if [ "x$GCC" = x1 ] || [ "x$NON_GNU_CPP" = x ] ; then
+  true
 else
   if [ "x$CPP" = x ]; then
     if [ "${with_lcc}" = "yes" ] && [ "${NON_GNU_CPP}" = "yes" ] ; then
@@ -3937,7 +3953,9 @@ if test "${window_system}" != "none" ; then
   if test -d /usr/X386/include; then
     HAVE_XFREE386=yes
     test -z "${C_SWITCH_X_SITE}" && C_SWITCH_X_SITE="-I/usr/X386/include"
-  elif test -d /usr/X11R6/include; then
+  elif test -f /etc/XF86Config -o \
+	    -f /etc/X11/XF86Config -o \
+	    -f /usr/X11R6/lib/X11/XF86Config; then
     HAVE_XFREE386=yes
     test -z "${C_SWITCH_X_SITE}" && C_SWITCH_X_SITE="-I/usr/X11R6/include"
   else
@@ -8496,7 +8514,7 @@ makefile_command='echo "creating src/Makefile";
 ( cd ./src;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8513,7 +8531,7 @@ lwlib_makefile_command='echo "creating lwlib/Makefile";
 ( cd ./lwlib;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8530,7 +8548,7 @@ lib_src_makefile_command='echo "creating lib-src/Makefile";
 ( cd ./lib-src;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8547,7 +8565,7 @@ dynodump_makefile_command='echo "creating dynodump/Makefile";
 ( cd ./dynodump;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8565,7 +8583,7 @@ energize_makefile_command='echo "creating lwlib/energize/Makefile";
 ( cd ./lwlib/energize;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\

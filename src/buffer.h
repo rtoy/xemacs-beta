@@ -98,7 +98,7 @@ struct buffer
        in ordinary buffers.  In indirect buffers, this is not used.  */
     struct buffer_text own_text;
 
-    /* This points to the `struct buffer_text' that used for this buffer.
+    /* This points to the `struct buffer_text' that is used for this buffer.
        In an ordinary buffer, this is the own_text field above.
        In an indirect buffer, this is the own_text field of another buffer.  */
     struct buffer_text *text;
@@ -662,21 +662,21 @@ memind_to_bytind (struct buffer *buf, Memind x)
 
 #define buffer_or_string_bufpos_to_bytind(obj, pos) 			\
   (BUFFERP (obj) ? bufpos_to_bytind (XBUFFER (obj), pos) :		\
-   (Bytind) charcount_to_bytecount (string_data (XSTRING (obj)), pos))
+   (Bytind) charcount_to_bytecount (XSTRING_DATA (obj), pos))
 
 #define buffer_or_string_bytind_to_bufpos(obj, ind) 			\
   (BUFFERP (obj) ? bytind_to_bufpos (XBUFFER (obj), ind) :		\
-   (Bufpos) bytecount_to_charcount (string_data (XSTRING (obj)), ind))
+   (Bufpos) bytecount_to_charcount (XSTRING_DATA (obj), ind))
 
 /* Similar for Bufpos's and Meminds. */
 
 #define buffer_or_string_bufpos_to_memind(obj, pos) 			\
   (BUFFERP (obj) ? bufpos_to_memind (XBUFFER (obj), pos) :		\
-   (Memind) charcount_to_bytecount (string_data (XSTRING (obj)), pos))
+   (Memind) charcount_to_bytecount (XSTRING_DATA (obj), pos))
 
 #define buffer_or_string_memind_to_bufpos(obj, ind) 			\
   (BUFFERP (obj) ? memind_to_bufpos (XBUFFER (obj), ind) :		\
-   (Bufpos) bytecount_to_charcount (string_data (XSTRING (obj)), ind))
+   (Bufpos) bytecount_to_charcount (XSTRING_DATA (obj), ind))
 
 /************************************************************************/
 /*                                                                      */
@@ -1142,7 +1142,7 @@ do						\
   (byte1) = (ch);				\
   (byte2) = 0;					\
 } while (0)
-#define BYTE_ASCII_P(by) 1
+#define BYTE_ASCII_P(byte) 1
 
 
 /************************************************************************/

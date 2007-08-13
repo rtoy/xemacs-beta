@@ -125,7 +125,7 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
 
   CHECK_CONS (desc);
   CHECK_STRING (XCAR (desc));
-  name = (char *) string_data (XSTRING (LISP_GETTEXT (XCAR (desc))));
+  name = (char *) XSTRING_DATA (LISP_GETTEXT (XCAR (desc)));
   desc = XCDR (desc);
   if (!CONSP (desc))
     error ("dialog boxes must have some buttons");
