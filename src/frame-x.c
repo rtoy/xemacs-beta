@@ -540,7 +540,7 @@ do {				\
     {
       Position x, y;
       if (!XtWindow(shell))
-	return make_int (0);
+	return Qzero;
       x_get_top_level_position (XtDisplay (shell), XtWindow (shell), &x, &y);
       FROB (Qleft, make_int (x));
       FROB (Qtop,  make_int (y));

@@ -114,28 +114,30 @@
 ;; Now load files to set up all the different languages/environments
 ;; that Mule knows about.
 
-	#+mule "language/arabic"
-	#+mule "language/chinese"
-	#+mule "language/cyrillic"
-	#+mule "language/english"
-;;	#+mule "language/ethiopic"
-	#+mule "language/european"
-	#+mule "language/greek"
-	#+mule "language/hebrew"
-	#+mule "language/japanese"
-	#+mule "language/korean"
-	#+mule "language/misc-lang"
-;;	#+mule "language/thai"
-	#+mule "language/viet-chars"
-;;	#+mule "language/vietnamese"
+	#+mule "arabic"
+	#+mule "chinese"
+	#+mule "cyrillic"
+	#+mule "english"
+;;	#+mule "ethiopic"
+	#+mule "european"
+	#+mule "greek"
+	#+mule "hebrew"
+	#+mule "japanese"
+	#+mule "korean"
+	#+mule "misc-lang"
+;;	#+mule "thai"
+	#+mule "viet-chars"
+;;	#+mule "vietnamese"
 
 	;; Specialized language support
 	#+(and mule CANNA) "canna-leim"
-	#+(and mule wnn) "egg-leim"
-	#+(and mule wnn) "egg-kwnn-leim"
-	#+(and mule wnn) "egg-cwnn-leim"
-	#+mule "egg-sj3-leim"
-	#+mule "skk-leim"
+;; Egg/Its is now a package with its own dumped-lisp.el file
+;	#+(and mule wnn) "egg-leim"
+;	#+(and mule wnn) "egg-kwnn-leim"
+;	#+(and mule wnn) "egg-cwnn-leim"
+;	#+mule "egg-sj3-leim"
+;; SKK is now a package with its own dumped-lisp.el file
+;	#+mule "skk-leim"
 
 ;; Set up the XEmacs environment for Mule.
 ;; Assumes the existence of various stuff above.

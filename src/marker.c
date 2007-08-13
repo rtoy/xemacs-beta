@@ -296,7 +296,9 @@ unchain_marker (Lisp_Object m)
   if (b == 0)
     return;
 
+#ifdef ERROR_CHECK_GC
   assert (BUFFER_LIVE_P (b));
+#endif
 
   if (marker_next (marker))
     marker_prev (marker_next (marker)) = marker_prev (marker);
@@ -305,7 +307,9 @@ unchain_marker (Lisp_Object m)
   else
     BUF_MARKERS (b) = marker_next (marker);
 
+#ifdef ERROR_CHECK_GC
   assert (marker != XMARKER (b->point_marker));
+#endif
 
   marker->buffer = 0;
 }
@@ -328,8 +332,10 @@ bi_marker_position (Lisp_Object marker)
      positions. */
   pos = memind_to_bytind (buf, m->memind);
 
+#ifdef ERROR_CHECK_BUFPOS
   if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
     abort ();
+#endif
 
   return pos;
 }
@@ -354,8 +360,10 @@ set_bi_marker_position (Lisp_Object marker, Bytind pos)
   if (!buf)
     error ("Marker does not point anywhere");
 
+#ifdef ERROR_CHECK_BUFPOS
   if (pos < BI_BUF_BEG (buf) || pos > BI_BUF_Z (buf))
     abort ();
+#endif
 
   m->memind = bytind_to_memind (buf, pos);
 }

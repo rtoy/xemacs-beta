@@ -603,7 +603,13 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       int pos = (short int) HIWORD(wParam);
       HWND hwndScrollBar = (HWND) lParam;
       mswindows_handle_scrollbar_event (hwndScrollBar, code,  pos);
-      mswindows_enqueue_magic_event (hwnd, XM_BUMPQUEUE);
+
+      if (NILP(mswindows_pump_outstanding_events()))
+	{
+	  /* Error during event pumping - cancel scroll */
+	  SendMessage (hwndScrollBar, WM_CANCELMODE, 0, 0);
+	}
+
       break;     
     }
 

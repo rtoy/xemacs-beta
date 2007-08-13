@@ -1,3 +1,7 @@
+1997-12-18  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (mule_p): Remove skk's special treatment.
+
 1997-12-09  SL Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (ignore_pattern): Correct paths of files that

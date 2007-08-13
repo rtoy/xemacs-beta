@@ -46,6 +46,12 @@
 
 ;;; Code:
 
+(defgroup faces nil
+  "Support for multiple text attributes (fonts, colors, ...)
+Such a collection of attributes is called a \"face\"."
+  :group 'emacs)
+
+
 (defun read-face-name (prompt)
   (let (face)
     (while (= (length face) 0) ; nil or ""

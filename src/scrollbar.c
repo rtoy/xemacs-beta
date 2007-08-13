@@ -858,9 +858,11 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
     hscroll = XINT (value);
 
   /* Can't allow this out of set-window-hscroll's acceptable range. */
+  /* #### What hell on the earth this code limits scroll size to the
+     machine-dependant SHORT size? -- kkm */
   if (hscroll < 0)
     hscroll = 0;
-  else if (hscroll >= (1 << (SHORTBITS - 1)))
+  else if (hscroll >= (1 << (SHORTBITS - 1)) - 1)
     hscroll = (1 << (SHORTBITS - 1)) - 1;
 
   if (hscroll != w->hscroll)

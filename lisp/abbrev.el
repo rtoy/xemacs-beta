@@ -32,6 +32,15 @@
 
 ;;; Code:
 
+(defgroup abbrev nil
+  "Abbreviation handling, typing shortcuts, macros."
+  :tag "Abbreviations"
+  :group 'editing)
+
+(defgroup abbrev-mode nil
+  "Word abbreviations mode."
+  :group 'abbrev)
+
 ;jwz: this is preloaded so don't ;;;###autoload
 (defcustom only-global-abbrevs nil "\
 *Non-nil means user plans to use global abbrevs only.

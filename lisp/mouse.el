@@ -53,6 +53,10 @@
        (global-set-key 'drop2 'mouse-offix-drop)
        (global-set-key 'drop3 'mouse-offix-drop)))
 
+(defgroup mouse nil
+  "Window system-independent mouse support."
+  :group 'editing)
+
 (defcustom mouse-track-rectangle-p nil
   "*If true, then dragging out a region with the mouse selects rectangles
 instead of simple start/end regions."

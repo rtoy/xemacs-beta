@@ -29,7 +29,7 @@ file.
     particular version is implied, "Emacs" will be used.
 
 
-* Changes in XEmacs 20.4
+* Changes in XEmacs 20.5
 ========================
 
 ** XEmacs has been unbundled into constituent installable packages.
@@ -81,7 +81,7 @@ For example,
    (defcustom foo-max 34 "*Maximum number of foo's allowed."
      :type 'integer
      :group 'foo
-     :version "20.4")
+     :version "20.5")
 
 This information is used to control the customize-changed-options
 command.
@@ -97,7 +97,7 @@ or the native C libraries support Japanese localization.  This has
 been available since 20.3, only it hasn't been announced before.
 
 
-* Lisp and internal changes in XEmacs 20.4
+* Lisp and internal changes in XEmacs 20.5
 ==========================================
 
 ** There is initial support for 30-bit integers in elisp (normally,

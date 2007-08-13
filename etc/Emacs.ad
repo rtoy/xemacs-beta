@@ -103,7 +103,7 @@ Emacs.text-cursor*attributeBackground:	Red3
 
 !*topToolBarShadowColor:			Gray90
 !*bottomToolBarShadowColor:		Gray40
-*backgroundToolBarColor:		Gray80
+!*backgroundToolBarColor:		Gray80
 *toolBarShadowThickness:		2
 
 

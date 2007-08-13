@@ -160,7 +160,7 @@ should put XEmacs and its data files.  This defaults to `/usr/local'.
 - XEmacs (and the other utilities users run) go in PREFIXDIR/bin
   (unless the `--exec-prefix' option says otherwise).
 - The architecture-independent files go in PREFIXDIR/lib/xemacs-VERSION
-  (where VERSION is the version number of XEmacs, like `20.3').
+  (where VERSION is the version number of XEmacs, like `20.5').
 - The architecture-dependent files go in
   PREFIXDIR/lib/xemacs-VERSION/CONFIGURATION
   (where CONFIGURATION is the configuration name, like mips-dec-ultrix4.2),

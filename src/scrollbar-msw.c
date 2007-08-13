@@ -33,6 +33,12 @@ Boston, MA 02111-1307, USA.  */
 #include "events.h"
 #include "event-msw.h"
 
+/* This has really different semantics in Windows than in Motif.
+   There's no corresponding method; we just do not change slider
+   size while dragging. It makes the scrollbar look smother and
+   prevents some weird behavior when scrolled near the bottom */
+static int inhibit_slider_size_change = 0;
+
 static void
 mswindows_create_scrollbar_instance (struct frame *f, int vertical,
 				     struct scrollbar_instance *sb)
@@ -108,16 +114,23 @@ mswindows_update_scrollbar_instance_values (struct window *w,
 
   f = XFRAME (w->frame);
 
+#if 0
+  stderr_out ("[%d, %d], page = %d, pos = %d, inhibit = %d\n", new_minimum, new_maximum,
+	      new_slider_size, new_slider_position,inhibit_slider_size_change);
+#endif
+
   /* These might be optimized, but since at least one will change at each
      call, it's probably not worth it. */
-  SCROLLBAR_MSW_INFO (sb).nMin = new_minimum - 1;
-  SCROLLBAR_MSW_INFO (sb).nMax = new_maximum - 1;
-  SCROLLBAR_MSW_INFO (sb).nPage = new_slider_size;
+  SCROLLBAR_MSW_INFO (sb).nMin = new_minimum;
+  SCROLLBAR_MSW_INFO (sb).nMax = new_maximum;
+  SCROLLBAR_MSW_INFO (sb).nPage = new_slider_size + 1; /* for DISABLENOSCROLL */
   SCROLLBAR_MSW_INFO (sb).nPos = new_slider_position;
-  SCROLLBAR_MSW_INFO (sb).fMask = SIF_ALL;
+  SCROLLBAR_MSW_INFO (sb).fMask = (inhibit_slider_size_change 
+				   ? SIF_RANGE | SIF_POS
+				   : SIF_ALL | SIF_DISABLENOSCROLL);
   
   SetScrollInfo(SCROLLBAR_MSW_HANDLE (sb), SB_CTL, &SCROLLBAR_MSW_INFO (sb),
-		TRUE);
+		!pos_changed);
 
   UPDATE_POS_FIELD (scrollbar_x);
   UPDATE_POS_FIELD (scrollbar_y);
@@ -144,6 +157,8 @@ mswindows_update_scrollbar_instance_status (struct window *w,
     SCROLLBAR_MSW_SIZE (sb) = size;
     ShowScrollBar (SCROLLBAR_MSW_HANDLE (sb), SB_CTL,
 		   SCROLLBAR_MSW_SIZE (sb));
+    SCROLLBAR_MSW_INFO(sb).fMask |= SIF_DISABLENOSCROLL;
+    SetScrollInfo(SCROLLBAR_MSW_HANDLE (sb), SB_CTL, &SCROLLBAR_MSW_INFO (sb), TRUE);
     FRAMEMETH (f, set_frame_size, (f, FRAME_WIDTH (f), FRAME_HEIGHT (f)));
   }
 }
@@ -155,41 +170,65 @@ mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos)
   Lisp_Object win;
   struct scrollbar_instance *sb;
   SCROLLINFO scrollinfo;
+  int vert = GetWindowLong (hwnd, GWL_STYLE) & SBS_VERT;
 
   sb = (struct scrollbar_instance *)GetWindowLong (hwnd, GWL_USERDATA);
   win = real_window (sb->mirror, 1);
   f = XFRAME (XWINDOW (win)->frame);
 
+  inhibit_slider_size_change = code == SB_THUMBTRACK;
+
+  /* SB_LINEDOWN == SB_CHARLEFT etc. This is the way they will
+     always be - any Windows is binary compatible backward with 
+     old programs */
+
   switch (code)
     {
     case SB_LINEDOWN:
-      enqueue_misc_user_event(win, Qscrollbar_line_down, win);
+      enqueue_misc_user_event(win,
+			      vert ? Qscrollbar_line_down : Qscrollbar_char_right,
+			      win);
       break;
 	  
     case SB_LINEUP:
-      enqueue_misc_user_event(win, Qscrollbar_line_up, win);
+      enqueue_misc_user_event(win,
+			      vert ? Qscrollbar_line_up : Qscrollbar_char_left,
+			      win);
       break;
 	  
     case SB_PAGEDOWN:
-      enqueue_misc_user_event(win, Qscrollbar_page_down, Fcons (win, Qnil));
+      enqueue_misc_user_event(win,
+			      vert ? Qscrollbar_page_down : Qscrollbar_page_right,
+			      vert ? Fcons (win, Qnil) : win);
       break;
 
     case SB_PAGEUP:
-      enqueue_misc_user_event(win, Qscrollbar_page_up, Fcons (win, Qnil));
+      enqueue_misc_user_event(win,
+			      vert ? Qscrollbar_page_up : Qscrollbar_page_left,
+			      vert ? Fcons (win, Qnil) : win);
       break;
 	  
     case SB_BOTTOM:
-      enqueue_misc_user_event(win, Qscrollbar_to_bottom, win);
+      enqueue_misc_user_event(win,
+			      vert ? Qscrollbar_to_bottom : Qscrollbar_to_right,
+			      win);
       break;
 
     case SB_TOP:
-      enqueue_misc_user_event(win, Qscrollbar_to_top, win);
+      enqueue_misc_user_event(win,
+			      vert ? Qscrollbar_to_top : Qscrollbar_to_left,
+			      win);
       break;
 
     case SB_THUMBTRACK:
     case SB_THUMBPOSITION:
-      enqueue_misc_user_event (win, Qscrollbar_vertical_drag,
-			       Fcons (win, make_int (pos)));
+      scrollinfo.cbSize = sizeof(SCROLLINFO);
+      scrollinfo.fMask = SIF_TRACKPOS;
+      GetScrollInfo (hwnd, SB_CTL, &scrollinfo);
+      enqueue_misc_user_event (win,
+			       (vert ? Qscrollbar_vertical_drag
+				: Qscrollbar_horizontal_drag),
+			       Fcons (win, make_int (scrollinfo.nTrackPos)));
       break;
     }
 }

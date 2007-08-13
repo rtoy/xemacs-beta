@@ -1,3 +1,129 @@
+1997-12-20  SL Baur  <steve@altair.xemacs.org>
+
+	* shadow.el (find-emacs-lisp-shadows): Add _pkg to the list of
+	ignored shadows.
+
+1997-12-18  SL Baur  <steve@altair.xemacs.org>
+
+	* startup.el (set-default-load-path): Make sure lisp and site-lisp 
+	get trailing slashes when added to the load-path.
+
+	* x-init.el (init-x-win): Locate where XEmacs X localization files 
+	are.
+
+1997-12-18  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* x-faces.el: Added support for foregroundToolBarColor
+	  to xpm-color-symbols.
+
+1997-12-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* etags.el (tags-remove-duplicates): Removed.
+	(buffer-tag-table-list): Use `delete-duplicates'.
+
+	* cl-extra.el (coerce): Coerce to bit-vector and weak-list
+ 	correctly.
+	(get*): Defalias to `get'.
+
+	* cl.el (eql): Compare integers with `eq'.
+	(cl-map-extents): Check for `map-extents' first.
+
+1997-12-17  Didier Verna  <verna@inf.enst.fr>
+
+	* leim/quail/latin-pre.el ("french-prefix"): doc string cleanup +
+ 	added the 'numero', 'copyright' and 'trademark' symbols.
+
+	* leim/quail/latin-post.el ("french-postfix"): see above.
+
+1997-12-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* widget.el (define-widget): Check the arguments.
+
+	* cus-edit.el (customize-face): Use `check-argument-type'.
+	(custom-variable-value-create): Use `signal' to signal error.
+	(custom-variable-reset-saved): Ditto.
+	(custom-variable-reset-standard): Ditto.
+	(custom-face-reset-saved): Ditto.
+
+	* wid-edit.el (widget-prompt-value): Use `signal' to signal error.
+	(widget-default-format-handler): Ditto.
+	(widget-checklist-add-item): Ditto.
+	(widget-radio-add-item): Ditto.
+	(widget-editable-list-entry-create): Ditto.
+	(widget-sexp-prompt-value): Ditto.
+
+	* custom.el (custom-declare-variable): Signal errors better.
+	(custom-handle-keyword): Ditto.
+	(custom-declare-group): Ditto.
+
+	* window-xemacs.el (windows): Ditto.
+
+	* menubar.el (menu): Ditto.
+
+	* keydefs.el (keyboard): Ditto.
+
+	* minibuf.el (minibuffer): Ditto.
+
+	* process.el (execute): Ditto.
+
+	* fill.el (fill): Ditto.
+
+	* modeline.el (modeline): Ditto.
+
+	* help.el (help): Ditto.
+
+	* faces.el (faces): Ditto.
+
+	* files.el (files): Ditto.
+
+	* x-init.el (x): Ditto.
+
+	* lisp-mode.el (lisp): Ditto.
+
+	* process.el (processes): Ditto.
+
+	* mouse.el (mouse): Ditto.
+
+	* abbrev.el (abbrev): Moved from cus-edit.
+
+	* font-lock.el (lisp-font-lock-keywords-1): Recognize `defcustom'
+	as variable declaration.
+
+1997-12-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* menubar.el (find-menu-item): Use `check-argument-type'.
+	(find-menu-item): Cosmetic changes.
+
+1997-12-18  SL Baur  <steve@altair.xemacs.org>
+
+	* x-menubar.el (default-menubar): Guard usage of lpr-switches.
+
+1997-12-17  SL Baur  <steve@altair.xemacs.org>
+
+	* startup.el (set-default-load-path): Only search package-path
+	when not running temacs.
+
+	* dumped-lisp.el (preloaded-file-list): Remove Egg/Its dumped lisp 
+	files.
+
+	* loadup.el: Correct commentary.  Reformatting.
+	(really-early-error-handler): Use absolute path to the 
+	first dumped-lisp.el file.
+	(really-early-error-handler): Print full path name of
+	each dumped lisp file (inherited from InfoDock).
+
+	* shadow.el (find-emacs-lisp-shadows): Ignore multiple
+	dumped-lisp.el files.
+
+	* make-docfile.el (preloaded-file-list): Reorder when the
+	package-path is searched.
+	* update-elc.el: Ditto.
+
+	* lisp-mode.el (call-with-condition-handler): Treat the same as
+	`condition-case' for indentation.
+
+	* about.el (about-xemacs): Update release date.
+
 1997-12-17  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* cl-macs.el (case): Signal error if `t' or `otherwise' are seen
@@ -24,10 +150,11 @@
 	* modeline.el (mouse-drag-modeline): Give the modeline a "pressed" 
 	look.
 
-1997-12-16  SL Baur  <steve@altair.xemacs.org>
+1997-12-16  Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 
-	* format.el (format-deannotate-region):  Document me!
-	From Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
+	* format.el (format-deannotate-region):  Bug fix.
+	Deannotating a region containing unknown tags would fail
+	(causing decoding of text/enriched to fail at user level)
 
 1997-12-16  Kyle Jones  <kyle_jones@wonderworks.com>
 

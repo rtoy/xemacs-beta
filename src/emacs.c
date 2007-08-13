@@ -58,6 +58,11 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
+#if defined (_WIN32) && defined (DEBUG_XEMACS)
+/* For DebugBreak in asserf_failed() */
+#include <windows.h>
+#endif
+
 /* For PATH_EXEC */
 #include "paths.h"
 
@@ -2202,7 +2207,9 @@ assert_failed (CONST char *file, int line, CONST char *expr)
   stderr_out ("Fatal error: assertion failed, file %s, line %d, %s\n",
 	      file, line, expr);
 #undef abort	/* avoid infinite #define loop... */
-#ifndef ASSERTIONS_DONT_ABORT
+#if defined (_WIN32) && defined (DEBUG_XEMACS)
+  DebugBreak ();
+#elif !defined (ASSERTIONS_DONT_ABORT)
   abort ();
 #endif
 }

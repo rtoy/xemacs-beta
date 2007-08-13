@@ -113,6 +113,8 @@ See the documentation for `list-load-path-shadows' for further information."
 			      '("subdirs"
 				"auto-autoloads"
 				"custom-load"
+				"dumped-lisp"
+				"_pkg"
 				"lpath")))
 	    ;; File has not been seen yet in this directory.
 	    ;; This test prevents us declaring that XXX.el shadows

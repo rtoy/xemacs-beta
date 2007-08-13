@@ -1785,7 +1785,7 @@ START should be at the beginning of a line."
    ;; about five times slower.
    (list (concat "^(\\(def\\("
 		  ;; Variable declarations.
-		  "\\(const\\(\\|ant\\)\\|ine-key\\(\\|-after\\)\\|var\\)\\|"
+		  "\\(const\\(\\|ant\\)\\|ine-key\\(\\|-after\\)\\|var\\|custom\\)\\|"
 		  ;; Structure declarations.
 		  "\\(class\\|struct\\|type\\)\\|"
 		  ;; Everything else is a function declaration.

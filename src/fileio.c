@@ -383,14 +383,12 @@ use the standard functions without calling themselves recursively.
   else
     inhibited_handlers = Qnil;
 
-  for (chain = Vfile_name_handler_alist; CONSP (chain);
-       chain = XCDR (chain))
+  EXTERNAL_LIST_LOOP (chain, Vfile_name_handler_alist)
     {
       Lisp_Object elt = XCAR (chain);
       if (CONSP (elt))
 	{
-	  Lisp_Object string;
-	  string = XCAR (elt);
+	  Lisp_Object string = XCAR (elt);
 	  if (STRINGP (string)
 	      && (fast_lisp_string_match (string, filename) >= 0))
 	    {
@@ -1255,7 +1253,7 @@ See also the function `substitute-in-file-name'.
 }
 
 #if 0 /* FSFmacs */
-another older version of expand-file-name;
+/* another older version of expand-file-name; */
 #endif
 
 DEFUN ("file-truename", Ffile_truename, 1, 2, 0, /*
@@ -1728,7 +1726,7 @@ A prefix arg makes KEEP-TIME non-nil.
 
   ifd = interruptible_open ((char *) XSTRING_DATA (filename), O_RDONLY, 0);
   if (ifd < 0)
-    report_file_error ("Opening input file", Fcons (filename, Qnil));
+    report_file_error ("Opening input file", list1 (filename));
 
   record_unwind_protect (close_file_unwind, make_int (ifd));
 
@@ -1742,7 +1740,7 @@ A prefix arg makes KEEP-TIME non-nil.
     {
       errno = 0;
       report_file_error ("Input and output files are the same",
-			 Fcons (filename, Fcons (newname, Qnil)));
+			 list2 (filename, newname));
     }
 #endif
 
@@ -1760,7 +1758,7 @@ A prefix arg makes KEEP-TIME non-nil.
 	  /* Get a better looking error message. */
 	  errno = EISDIR;
 #endif /* EISDIR */
-	report_file_error ("Non-regular file", Fcons (filename, Qnil));
+	report_file_error ("Non-regular file", list1 (filename));
 	}
     }
 #endif /* S_ISREG && S_ISLNK */
@@ -1787,7 +1785,7 @@ A prefix arg makes KEEP-TIME non-nil.
 
     /* Closing the output clobbers the file times on some systems.  */
     if (close (ofd) < 0)
-      report_file_error ("I/O error", Fcons (newname, Qnil));
+      report_file_error ("I/O error", list1 (newname));
 
     if (input_file_statable_p)
     {
@@ -1798,7 +1796,7 @@ A prefix arg makes KEEP-TIME non-nil.
         EMACS_SET_SECS_USECS (mtime, st.st_mtime, 0);
         if (set_file_times ((char *) XSTRING_DATA (newname), atime,
 			    mtime))
-	  report_file_error ("I/O error", Fcons (newname, Qnil));
+	  report_file_error ("I/O error", list1 (newname));
       }
 #ifndef MSDOS
       chmod ((CONST char *) XSTRING_DATA (newname),
@@ -2603,7 +2601,7 @@ Only the 12 low bits of MODE are used.
     return call3 (handler, Qset_file_modes, abspath, mode);
 
   if (chmod ((char *) XSTRING_DATA (abspath), XINT (mode)) < 0)
-    report_file_error ("Doing chmod", Fcons (abspath, Qnil));
+    report_file_error ("Doing chmod", list1 (abspath));
 
   return Qnil;
 }
@@ -2853,8 +2851,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       if (fd >= 0) close (fd);
     badopen:
       if (NILP (visit))
-	report_file_error ("Opening input file",
-			   Fcons (filename, Qnil));
+	report_file_error ("Opening input file", list1 (filename));
       st.st_mtime = -1;
       goto notfound;
     }
@@ -3102,8 +3099,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	  /* How much can we scan in the next step?  */
 	  trial = min (curpos, sizeof buffer);
 	  if (lseek (fd, curpos - trial, 0) < 0)
-	    report_file_error ("Setting file position",
-			       Fcons (filename, Qnil));
+	    report_file_error ("Setting file position", list1 (filename));
 
 	  total_read = 0;
 	  while (total_read < trial)
@@ -3111,8 +3107,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	      nread = read_allowing_quit (fd, buffer + total_read,
 					  trial - total_read);
 	      if (nread <= 0)
-		error ("IO error reading %s: %s",
-		       XSTRING_DATA (filename), strerror (errno));
+		report_file_error ("IO error reading file", list1 (filename));
 	      total_read += nread;
 	    }
 	  /* Scan this bufferful from the end, comparing with
@@ -3206,13 +3201,10 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   if (!not_regular)
     {
-      Lisp_Object temp;
-
       total = XINT (end) - XINT (beg);
 
       /* Make sure point-max won't overflow after this insertion.  */
-      XSETINT (temp, total);
-      if (total != XINT (temp))
+      if (total != XINT (make_int (total)))
 	error ("Maximum buffer size exceeded");
     }
   else
@@ -3229,8 +3221,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       )
     {
       if (lseek (fd, XINT (beg), 0) < 0)
-	report_file_error ("Setting file position",
-			   Fcons (filename, Qnil));
+	report_file_error ("Setting file position", list1 (filename));
     }
 
   {
@@ -3431,21 +3422,20 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   if (inserted > 0)
     {
-      Lisp_Object p = Vafter_insert_file_functions;
+      Lisp_Object p;
       struct gcpro ngcpro1;
 
       NGCPRO1 (p);
-      while (!NILP (p))
+      EXTERNAL_LIST_LOOP (p, Vafter_insert_file_functions)
 	{
 	  Lisp_Object insval =
-	    call1 (Fcar (p), make_int (inserted));
+	    call1 (XCAR (p), make_int (inserted));
 	  if (!NILP (insval))
 	    {
 	      CHECK_NATNUM (insval);
 	      inserted = XINT (insval);
 	    }
 	  QUIT;
-	  p = Fcdr (p);
 	}
       NUNGCPRO;
     }
@@ -3625,8 +3615,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       if (!auto_saving) unlock_file (lockname);
       errno = save_errno;
 #endif /* CLASH_DETECTION */
-      report_file_error ("Opening output file",
-			 Fcons (filename, Qnil));
+      report_file_error ("Opening output file", list1 (filename));
     }
 
   {

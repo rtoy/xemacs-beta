@@ -60,6 +60,7 @@ typedef struct {
   Pixel		top_toolbar_shadow_pixel;
   Pixel		bottom_toolbar_shadow_pixel;
   Pixel		background_toolbar_pixel;
+  Pixel		foreground_toolbar_pixel;
   Pixmap	top_toolbar_shadow_pixmap;
   Pixmap	bottom_toolbar_shadow_pixmap;
   Dimension	toolbar_shadow_thickness;

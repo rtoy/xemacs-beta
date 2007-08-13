@@ -1217,7 +1217,8 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
     (when site-lisp
       ;; If the site-lisp dir isn't on the load-path, add it to the end.
       (or (member site-lisp load-path)
-	  (setq load-path (append load-path (list site-lisp))))
+	  (setq load-path (append load-path
+				  (list (file-name-as-directory site-lisp)))))
       ;; Also add any direct subdirectories of the site-lisp directory
       ;; to the load-path.  But don't add dirs whose names begin
       ;; with dot or hyphen.
@@ -1237,7 +1238,8 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
     (when lisp
       ;; If the lisp dir isn't on the load-path, add it to the end.
       (or (member lisp load-path)
-	  (setq load-path (append load-path (list lisp))))
+	  (setq load-path (append load-path
+				  (list (file-name-as-directory lisp)))))
       ;; Also add any direct subdirectories of the lisp directory
       ;; to the load-path.  But don't add dirs whose names begin
       ;; with dot or hyphen.
@@ -1332,7 +1334,9 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 				     lock-directory)))))
 
     (set-default-load-path-warning)
-    (when (and data-directory Info-default-directory-list)
+    (when (and (null (running-temacs-p))
+	       data-directory
+	       Info-default-directory-list)
       (setq data-directory-list (list data-directory))
       (packages-find-packages package-path nil))))
 

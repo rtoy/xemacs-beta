@@ -50,6 +50,28 @@
 
 ;;; Code:
 
+;;; Package versioning
+
+(defvar packages-package-list nil
+  "database of loaded packages and version numbers")
+
+(defun package-provide (name version)
+  (if (not (assq name packages-package-list))
+      (setq packages-package-list
+	    (cons (cons name version) packages-package-list))))
+
+(defun package-require (name version)
+  (let ((pkg (assq name packages-package-list)))
+    (cond ((null pkg)
+	   (error "Package %s has not been loaded into this XEmacsen"
+		  name))
+	  ((< (cdr pkg) version)
+	   (error "Need version %g of package %s, got version %g"
+		  version name (cdr pkg)))
+	  (t t))))
+
+;;; Build time stuff
+
 (defvar autoload-file-name "auto-autoloads.el"
   "Filename that autoloads are expected to be found in.")
 
@@ -68,6 +90,8 @@
 
 (defvar packages-unbytecompiled-lisp
   '("paths.el"
+    "dumped-lisp.el"
+    "dumped-pkg-lisp.el"
     "version.el")
   "Lisp packages that should not be byte compiled.")
 
@@ -184,6 +208,21 @@ This is an internal function.  Do not call it after startup."
 	      (if append-p
 		  (append load-path (list (concat package "/lisp/")))
 		(cons (concat package "/lisp/") load-path)))
+
+	;; Locate and process a dumped-lisp.el file if it exists
+	(if (and (running-temacs-p)
+		 (file-exists-p (concat package "/lisp/dumped-lisp.el")))
+	    (let (package-lisp)
+	      (load (concat package "/lisp/dumped-lisp.el"))
+	      (if package-lisp
+		  (progn
+		    (if (boundp 'preloaded-file-list)
+			(setq preloaded-file-list
+			      (append preloaded-file-list package-lisp)))
+		    (if (fboundp 'load-gc)
+			(setq dumped-lisp-packages
+			      (append dumped-lisp-packages package-lisp)))))))
+
 	(if user-package
 	    (condition-case nil
 		(load (concat package "/lisp/"
@@ -199,6 +238,21 @@ This is an internal function.  Do not call it after startup."
 		  (if append-p
 		      (append load-path (list (concat dir "/")))
 		    (cons (concat dir "/") load-path)))
+
+	    ;; Locate and process a dumped-lisp.el file if it exists
+	    (if (and (running-temacs-p)
+		     (file-exists-p (concat dir "/dumped-lisp.el")))
+		(let (package-lisp)
+		  (load (concat dir "/dumped-lisp.el"))
+		  (if package-lisp
+		      (progn
+			(if (boundp 'preloaded-file-list)
+			    (setq preloaded-file-list
+				  (append preloaded-file-list package-lisp)))
+			(if (fboundp 'load-gc)
+			    (setq dumped-lisp-packages
+				  (append dumped-lisp-packages package-lisp)))))))
+
 	    (if user-package
 		(condition-case nil
 		    (progn

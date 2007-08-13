@@ -36,6 +36,10 @@
 ;; Do not set it to a string containing periods.  X doesn't like that.
 ;(setq x-emacs-application-class "Emacs")
 
+(defgroup x nil
+  "The X Window system."
+  :group 'environment)
+
 ;; selections and active regions
 
 ;; If and only if zmacs-regions is true:
@@ -255,6 +259,11 @@
     ;; (Note that the first frame is created later.)
     (setq x-initial-argv-list (cons (car command-line-args)
                                     command-line-args-left))
+    ;; Locate the app-defaults directory
+    (when (and (boundp 'x-app-defaults-directory)
+	       (null x-app-defaults-directory))
+      (setq x-app-defaults-directory
+	    (locate-data-directory "app-defaults")))
     (make-x-device nil)
     (setq command-line-args-left (cdr x-initial-argv-list))
     (setq x-win-initted t)))

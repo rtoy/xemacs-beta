@@ -203,7 +203,7 @@
     (widget-insert "\n")
     (let* ((emacs-short-version (concat emacs-major-version
 					"." emacs-minor-version))
-	   (emacs-about-version (format "version %s; Jan 1998"
+	   (emacs-about-version (format "version %s; Apr 1998"
 					emacs-short-version)))
       (widget-insert (about-center emacs-about-version))
       (widget-create 'link :help-echo "The latest NEWS of XEmacs"

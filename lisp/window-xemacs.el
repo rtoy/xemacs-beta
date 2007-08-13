@@ -35,6 +35,10 @@
 
 ;;; Code:
 
+(defgroup windows nil
+  "Windows within a frame."
+  :group 'environment)
+
 (defun backward-other-window (arg &optional all-frames device)
   "Select the ARG'th different window on this frame, going backwards.
 This is just like calling `other-window' with the arg negated."

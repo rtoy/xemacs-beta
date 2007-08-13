@@ -40,8 +40,12 @@
 ;; or run interpreted, but not when the compiled code is loaded.
 (eval-when-compile (require 'help-macro))
 
+(defgroup help nil
+  "Support for on-line help systems."
+  :group 'emacs)
+
 (defgroup help-appearance nil
-  "Appearance of help buffers"
+  "Appearance of help buffers."
   :group 'help)
 
 (defvar help-map (let ((map (make-sparse-keymap)))

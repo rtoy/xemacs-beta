@@ -44,76 +44,74 @@
 (defvar preloaded-file-list nil
   "List of files preloaded into the XEmacs binary image.")
 
-(call-with-condition-handler
-      ;; This is awfully damn early to be getting an error, right?
-      'really-early-error-handler
- #'(lambda ()
-     ;; message not defined yet ...
-     (external-debugging-output (format "\nUsing load-path %s" load-path))
+;; This is awfully damn early to be getting an error, right?
+(call-with-condition-handler 'really-early-error-handler
+    #'(lambda ()
+	;; message not defined yet ...
+	(external-debugging-output (format "\nUsing load-path %s" load-path))
 
-     ;; We don't want to have any undo records in the dumped XEmacs.
-     (buffer-disable-undo (get-buffer "*scratch*"))
+	;; We don't want to have any undo records in the dumped XEmacs.
+	(buffer-disable-undo (get-buffer "*scratch*"))
 
-     ;; lread.c (or src/Makefile.in.in) has prepended "${srcdir}/../lisp/"
-     ;; to load-path, which is how this file has been found.  At this point,
-     ;; enough of emacs has been initialized that we can call directory-files
-     ;; and get the rest of the dirs (so that we can dump stuff from modes/
-     ;; and packages/.)
-     ;;
-     (let ((temp-path (expand-file-name "." (car load-path))))
-       (setq source-directory temp-path)
-       (setq load-path (nconc (mapcar
-			       #'(lambda (i) (concat i "/"))
-			       (directory-files temp-path t "^[^-.]"
-						nil 'dirs-only))
-			      (cons (file-name-as-directory temp-path)
-				    load-path))))
+	;; lread.c (or src/Makefile.in.in) has prepended
+	;; "${srcdir}/../lisp/" to load-path, which is how this file
+	;; has been found.  At this point, enough of XEmacs has been
+	;; initialized that we can start dumping "standard" lisp.
+	;; Dumped lisp from external packages is added when we search
+	;; the `package-path'.
+	;; #### This code is duplicated in two other places.
+	(let ((temp-path (expand-file-name "." (car load-path))))
+	  (setq source-directory temp-path)
+	  (setq load-path (nconc (mapcar
+				  #'(lambda (i) (concat i "/"))
+				  (directory-files temp-path t "^[^-.]"
+						   nil 'dirs-only))
+				 (cons (file-name-as-directory temp-path)
+				       load-path))))
 
-     (setq load-warn-when-source-newer t ; set to nil at the end
-	   load-warn-when-source-only  t)
+	(setq load-warn-when-source-newer t ; Used to be set to nil at the end
+	      load-warn-when-source-only  t) ; Set to nil at the end
 
-     ;; Inserted for debugging.  Something is corrupting a single symbol
-     ;; somewhere to have an integer 0 property list.  -slb 6/28/1997.
-     (defun test-atoms ()
-       (mapatoms
-	#'(lambda (symbol)
-	    (condition-case nil
-		(get symbol 'custom-group)
-	      (t (princ
-		  (format "Bad plist in %s, %s\n"
-			  (symbol-name symbol)
-			  (prin1-to-string (object-plist symbol)))))))))
+	;; Inserted for debugging.  Something is corrupting a single symbol
+	;; somewhere to have an integer 0 property list.  -slb 6/28/1997.
+	(defun test-atoms ()
+	  (mapatoms
+	   #'(lambda (symbol)
+	       (condition-case nil
+		   (get symbol 'custom-group)
+		 (t (princ
+		     (format "Bad plist in %s, %s\n"
+			     (symbol-name symbol)
+			     (prin1-to-string (object-plist symbol)))))))))
 
-     ;; garbage collect after loading every file in an attempt to
-     ;; minimize the size of the dumped image (if we don't do this,
-     ;; there will be lots of extra space in the data segment filled
-     ;; with garbage-collected junk)
-     (defmacro load-gc (file)
-       (list 'prog1 (list 'load file)
-	     ;; '(test-atoms)
-	     '(garbage-collect)))
-     ;; Need a minimal number hardcoded to get going for now.
-     ;; (load-gc "backquote")		; needed for defsubst etc.
-     ;; (load-gc "bytecomp-runtime")	; define defsubst
-     ;; (load-gc "subr")		; load the most basic Lisp functions
-     ;; (load-gc "replace")		; match-string used in version.el.
-     ;; (load-gc "version.el")	; Ignore compiled-by-mistake version.elc
-     ;; (load-gc "cl")
-     ;; (load-gc "featurep") ; OBSOLETE now
-     (load "dumped-lisp.el")
-     (let ((dumped-lisp-packages preloaded-file-list)
-	   file)
-       (while (setq file (car dumped-lisp-packages))
-	 (load-gc file)
-	 (setq dumped-lisp-packages (cdr dumped-lisp-packages)))
-       (if (not (featurep 'toolbar))
-	   (progn
-	     ;; else still define a few functions.
-	     (defun toolbar-button-p    (obj) "No toolbar support." nil)
-	     (defun toolbar-specifier-p (obj) "No toolbar support." nil)))
-       (fmakunbound 'load-gc))
-     )) ;; end of call-with-condition-handler
+	;; garbage collect after loading every file in an attempt to
+	;; minimize the size of the dumped image (if we don't do this,
+	;; there will be lots of extra space in the data segment filled
+	;; with garbage-collected junk)
+	(defmacro load-gc (file)
+	  (list 'prog1
+		(list 'load
+		      (list 'locate-file file
+			    'load-path
+			    (list 'if 'load-ignore-elc-files
+				  ".el:"
+				  ".elc:.el:")))
+		;; '(test-atoms)
+		'(garbage-collect)))
 
+	(load (concat default-directory "../lisp/dumped-lisp.el"))
+	(let ((dumped-lisp-packages preloaded-file-list)
+	      file)
+	  (while (setq file (car dumped-lisp-packages))
+	    (load-gc file)
+	    (setq dumped-lisp-packages (cdr dumped-lisp-packages)))
+	  (if (not (featurep 'toolbar))
+	      (progn
+		;; else still define a few functions.
+		(defun toolbar-button-p    (obj) "No toolbar support." nil)
+		(defun toolbar-specifier-p (obj) "No toolbar support." nil)))
+	  (fmakunbound 'load-gc))
+	)) ;; end of call-with-condition-handler
 
 ;; Fix up the preloaded file list
 (setq preloaded-file-list (mapcar #'file-name-sans-extension

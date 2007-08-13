@@ -5852,7 +5852,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	obj = Fsymbol_name (Fprocess_status (obj));
       break;
 
-      /* print name of selected frame (only meaningful under X Windows) */
+      /* Print name of selected frame.  */
     case 'S':
       obj = XFRAME (w->frame)->name;
       break;

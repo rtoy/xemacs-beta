@@ -54,6 +54,9 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 Lisp_Object Vdefault_x_device;
+#if defined(MULE) && (defined(LWLIB_MENUBARS_MOTIF) || defined(HAVE_XIM) || defined (USE_XFONTSET))
+Lisp_Object Vx_app_defaults_directory;
+#endif
 
 /* Qdisplay in general.c */
 Lisp_Object Qx_error;
@@ -284,14 +287,22 @@ x_init_device (struct device *d, Lisp_Object props)
     XrmDatabase db = XtDatabase (dpy); /* ### XtScreenDatabase(dpy) ? */
     CONST char *locale = XrmLocaleOfDatabase (db);
 
-    if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
+    if (STRINGP (Vx_app_defaults_directory) &&
+	XSTRING_LENGTH (Vx_app_defaults_directory) > 0)
+      {
+	GET_C_STRING_FILENAME_DATA_ALLOCA(Vx_app_defaults_directory, data_dir);
+	sprintf (path, "%s%s/%s", data_dir, locale, app_class);
+	if (!access (path, R_OK))
+	  XrmCombineFileDatabase (path, &db, False);
+      }
+    else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	GET_C_STRING_FILENAME_DATA_ALLOCA (Vdata_directory, data_dir);
 	sprintf (path, "%sapp-defaults/%s/%s", data_dir, locale, app_class);
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
       }
-  }
+ }
 #endif /* LWLIB_MENUBARS_MOTIF or HAVE_XIM USE_XFONTSET */
 #endif /* MULE */
 
@@ -1617,6 +1628,14 @@ When this variable is non-nil, XEmacs will commit immediate suicide
 when it gets a sigpipe from the X Server.
 */ );
   x_seppuku_on_epipe = 0;
+
+#if defined(MULE) && (defined(LWLIB_MENUBARS_MOTIF) || defined(HAVE_XIM) || defined (USE_XFONTSET))
+  DEFVAR_LISP ("x-app-defaults-directory", &Vx_app_defaults_directory /*
+Used by the Lisp code to communicate to the low level X initialization
+where the localized init files are.
+*/ );
+  Vx_app_defaults_directory = Qnil;
+#endif
 
   Fprovide (Qx);
 

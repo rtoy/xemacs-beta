@@ -72,21 +72,12 @@
   "Basic text editing facilities."
   :group 'emacs)
 
-(defgroup abbrev nil
-  "Abbreviation handling, typing shortcuts, macros."
-  :tag "Abbreviations"
-  :group 'editing)
-
 (defgroup matching nil
   "Various sorts of searching and matching."
   :group 'editing)
 
 (defgroup emulations nil
   "Emulations of other editors."
-  :group 'editing)
-
-(defgroup mouse nil
-  "Mouse support."
   :group 'editing)
 
 (defgroup outlines nil
@@ -102,11 +93,6 @@
   :tag "Bibliography"
   :group 'external)
 
-(defgroup processes nil
-  "Process, subshell, compilation, and job control support."
-  :group 'external
-  :group 'development)
-
 (defgroup programming nil
   "Support for programming in other languages."
   :group 'emacs)
@@ -115,11 +101,7 @@
   "Specialized modes for editing programming languages."
   :group 'programming)
 
-(defgroup lisp nil
-  "Lisp support, including Emacs Lisp."
-  :group 'languages
-  :group 'development)
-
+;; #### This should be in cc-vars.el
 (defgroup c nil
   "Support for the C language and related languages."
   :group 'languages)
@@ -136,6 +118,7 @@
   "Applications written in Emacs."
   :group 'emacs)
 
+;; #### This should be in calendar.el
 (defgroup calendar nil
   "Calendar and time management support."
   :group 'applications)
@@ -199,20 +182,8 @@
   :group 'environment
   :group 'editing)
 
-(defgroup x nil
-  "The X Window system."
-  :group 'environment)
-
-(defgroup frames nil
-  "Support for Emacs frames and window systems."
-  :group 'environment)
-
 (defgroup data nil
   "Support editing files of data."
-  :group 'emacs)
-
-(defgroup files nil
-  "Support editing files."
   :group 'emacs)
 
 (defgroup wp nil
@@ -223,16 +194,8 @@
   "Code related to the TeX formatter."
   :group 'wp)
 
-(defgroup faces nil
-  "Support for multiple fonts."
-  :group 'emacs)
-
 (defgroup hypermedia nil
   "Support for links between text or other media types."
-  :group 'emacs)
-
-(defgroup help nil
-  "Support for on-line help systems."
   :group 'emacs)
 
 (defgroup local nil
@@ -267,10 +230,6 @@
   :prefix "custom-"
   :group 'customize)
 
-(defgroup abbrev-mode nil
-  "Word abbreviations mode."
-  :group 'abbrev)
-
 (defgroup alloc nil
   "Storage allocation and gc for GNU Emacs Lisp interpreter."
   :tag "Storage Allocation"
@@ -278,14 +237,6 @@
 
 (defgroup undo nil
   "Undoing changes in buffers."
-  :group 'editing)
-
-(defgroup modeline nil
-  "Content of the modeline."
-  :group 'environment)
-
-(defgroup fill nil
-  "Indenting and filling text."
   :group 'editing)
 
 (defgroup editing-basics nil
@@ -296,16 +247,8 @@
   "How characters are displayed in buffers."
   :group 'environment)
 
-(defgroup execute nil
-  "Executing external commands."
-  :group 'processes)
-
 (defgroup installation nil
   "The Emacs installation."
-  :group 'environment)
-
-(defgroup dired nil
-  "Directory editing."
   :group 'environment)
 
 (defgroup limits nil
@@ -316,37 +259,9 @@
   "Debugging Emacs itself."
   :group 'development)
 
-(defgroup minibuffer nil
-  "Controling the behaviour of the minibuffer."
-  :group 'environment)
-
-(defgroup keyboard nil
-  "Input from the keyboard."
-  :group 'environment)
-
-(defgroup mouse nil
-  "Input from the mouse."
-  :group 'environment)
-
-(defgroup menu nil
-  "Input from the menus."
-  :group 'environment)
-
-(defgroup auto-save nil
-  "Preventing accidential loss of data."
-  :group 'files)
-
-(defgroup processes-basics nil
-  "Basic stuff dealing with processes."
-  :group 'processes)
-
 (defgroup mule nil
   "Mule XEmacs internationalization."
   :group 'i18n)
-
-(defgroup windows nil
-  "Windows within a frame."
-  :group 'environment)
 
 
 ;;; Utilities.
@@ -902,8 +817,7 @@ If SYMBOL is nil, customize all faces."
 			    "*Customize Faces*")
     (when (stringp symbol)
       (setq symbol (intern symbol)))
-    (unless (symbolp symbol)
-      (error "Should be a symbol %S" symbol))
+    (check-argument-type 'symbolp symbol)
     (custom-buffer-create (list (list symbol 'custom-face))
 			  (format "*Customize Face: %s*"
 				  (custom-unlispify-tag-name symbol)))))
@@ -917,8 +831,7 @@ If SYMBOL is nil, customize all faces."
       ()
     (if (stringp symbol)
 	(setq symbol (intern symbol)))
-    (unless (symbolp symbol)
-      (error "Should be a symbol %S" symbol))
+    (check-argument-type 'symbolp symbol)
     (custom-buffer-create-other-window
      (list (list symbol 'custom-face))
      (format "*Customize Face: %s*" (custom-unlispify-tag-name symbol)))))
@@ -1930,8 +1843,8 @@ Otherwise, look up symbol in `custom-guess-type-alist'."
 	   ;; Edit mode.
 	   (let* ((format (widget-get type :format))
 		  tag-format value-format)
-	     (unless (string-match ":" format)
-	       (error "Bad format."))
+	     (while (not (string-match ":" format))
+	       (setq format (signal 'error (list "Bad format" format))))
 	     (setq tag-format (substring format 0 (match-end 0)))
 	     (setq value-format (substring format (match-end 0)))
 	     (push (widget-create-child-and-convert
@@ -2094,7 +2007,7 @@ Optional EVENT is the location for the menu."
 	 (set (or (get symbol 'custom-set) 'set-default))
 	  val)
     (cond ((eq state 'hidden)
-	   (error "Cannot set hidden variable."))
+	   (error "Cannot set hidden variable"))
 	  ((setq val (widget-apply child :validate))
 	   (goto-char (widget-get val :from))
 	   (error "%s" (widget-get val :error)))
@@ -2116,7 +2029,7 @@ Optional EVENT is the location for the menu."
 	 (set (or (get symbol 'custom-set) 'set-default))
 	 val)
     (cond ((eq state 'hidden)
-	   (error "Cannot set hidden variable."))
+	   (error "Cannot set hidden variable"))
 	  ((setq val (widget-apply child :validate))
 	   (goto-char (widget-get val :from))
 	   (error "%s" (widget-get val :error)))
@@ -2141,7 +2054,7 @@ Optional EVENT is the location for the menu."
 	(condition-case nil
 	    (funcall set symbol (eval (car (get symbol 'saved-value))))
 	  (error nil))
-      (error "No saved value for %s" symbol))
+      (signal 'error (list "No saved value for variable" symbol)))
     (put symbol 'customized-value nil)
     (widget-put widget :custom-state 'unknown)
     (custom-redraw widget)))
@@ -2152,7 +2065,7 @@ Optional EVENT is the location for the menu."
 	 (set (or (get symbol 'custom-set) 'set-default)))
     (if (get symbol 'standard-value)
 	(funcall set symbol (eval (car (get symbol 'standard-value))))
-      (error "No standard setting known for %S" symbol))
+      (signal 'error (list "No standard setting known for variable" symbol)))
     (put symbol 'customized-value nil)
     (when (get symbol 'saved-value)
       (put symbol 'saved-value nil)
@@ -2500,7 +2413,7 @@ Optional EVENT is the location for the menu."
 	 (child (car (widget-get widget :children)))
 	 (value (get symbol 'saved-face)))
     (unless value
-      (error "No saved value for this face"))
+      (signal 'error (list "No saved value for this face" symbol)))
     (put symbol 'customized-face nil)
     (face-spec-set symbol value)
     (widget-value-set child value)
@@ -2513,7 +2426,7 @@ Optional EVENT is the location for the menu."
 	 (child (car (widget-get widget :children)))
 	 (value (get symbol 'face-defface-spec)))
     (unless value
-      (error "No standard setting for this face"))
+      (signal 'error (list "No standard setting for this face" symbol)))
     (put symbol 'customized-face nil)
     (when (get symbol 'saved-face)
       (put symbol 'saved-face nil)

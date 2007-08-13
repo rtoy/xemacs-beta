@@ -195,6 +195,7 @@ Return the name used to allocate COLOR-INSTANCE.
 DEFUN ("color-instance-rgb-components", Fcolor_instance_rgb_components, 1, 1, 0, /*
 Return a three element list containing the red, green, and blue
 color components of COLOR-INSTANCE, or nil if unknown.
+Component values range from 0-65535.
 */
        (color_instance))
 {

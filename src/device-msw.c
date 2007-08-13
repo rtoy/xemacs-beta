@@ -80,7 +80,7 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   wc.cbClsExtra = 0;
   wc.cbWndExtra = MSWINDOWS_WINDOW_EXTRA_BYTES;
   wc.hInstance = NULL;	/* ? */
-  wc.hIcon = LoadIcon (NULL, XEMACS_CLASS);
+  wc.hIcon = LoadIcon (GetModuleHandle(NULL), XEMACS_CLASS);
   wc.hCursor = LoadCursor (NULL, IDC_ARROW);
   /* Background brush is only used during sizing, when XEmacs cannot
      take over */

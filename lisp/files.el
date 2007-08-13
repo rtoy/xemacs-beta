@@ -40,6 +40,10 @@
 (defvar coding-system-for-read)
 (defvar buffer-file-coding-system)
 
+(defgroup files nil
+  "Support editing files."
+  :group 'emacs)
+
 (defgroup backup nil
   "Backups of edited data files."
   :group 'files)

@@ -8,7 +8,7 @@
 @titlepage
 @title XEmacs FAQ
 @subtitle Frequently asked questions about XEmacs
-@subtitle Last Modified: 1997-11-21 14:09:42 EET
+@subtitle Last Modified: 1997-12-04 02:05:05 EET
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@666.com>
@@ -415,7 +415,7 @@ Getting Started:
 An alternative to GNU Emacs, originally based on an early alpha version
 of FSF's version 19, and has diverged quite a bit since then.  XEmacs
 was known as Lucid Emacs through version 19.10.  Almost all features of
-GNU Emacs are supported in XEmacs The maintainers of XEmacs actively
+GNU Emacs are supported in XEmacs.  The maintainers of XEmacs actively
 track changes to GNU Emacs while also working to add new features.
 
 @node Q1.0.2, Q1.0.3, Q1.0.1, Introduction
@@ -748,6 +748,8 @@ version of the FAQ (listed in alphabetical order):
 @item SL Baur <steve@@xemacs.org>
 
 @item Hrvoje Niksic <hniksic@@srce.hr>
+
+@item Aki Vehtari <Aki.Vehtari@@hut.fi>
 
 @end itemize
 
@@ -1143,7 +1145,7 @@ version incompatibilities better in the future.
 
 Options saved under XEmacs 19.13 are protected by code that specifically
 requires a version 19 XEmacs.  This won't be a problem unless you're
-testing XEmacs v20.  You should consider changing the code to read:
+using XEmacs v20.  You should consider changing the code to read:
 
 @lisp
 (cond
@@ -1401,7 +1403,7 @@ remember as well.
 @end quotation
 
 @quotation
-XEmacs 20.3 will unbundle the lisp hierarchy and allow the installer
+XEmacs 20.5 will unbundle the lisp hierarchy and allow the installer
 to choose exactly how much support code gets installed.
 @end quotation
 
@@ -3071,8 +3073,10 @@ TTY devices should be left to @code{gnuclient}, though.
 
 If you're not running at least XEmacs 19.14, you can't.  Otherwise check
 out the @code{gnuattach} program supplied with XEmacs.  Starting with
-XEmacs 20.3, @code{gnuattach} and @code{gnudoit} functionality will be
+XEmacs 20.3, @code{gnuattach} and @code{gnudoit} functionality is
 provided by @code{gnuclient}.
+
+Also @xref{Q5.0.12}.
 
 @node Q3.5.1, Q3.5.2, Q3.4.2, Customization
 @section How can I bind complex functions (or macros) to keys?
@@ -3163,12 +3167,12 @@ than the default.  How does one do this?
 @end lisp
 
 However, some modes explicitly bind @kbd{Delete}, so you would need to
-add a hook that does @code{local-set-key} for them. If what you want to
+add a hook that does @code{local-set-key} for them.  If what you want to
 do is make the Backspace and Delete keys work more PC/Motif-like, then
 take a look at the @file{delbs.el} package.
 
 New in XEmacs 19.14 is a variable called @code{key-translation-map}
-which makes it easier to bind @kbd{Delete}. @file{delbs.el} is a
+which makes it easier to bind @kbd{Delete}.  @file{delbs.el} is a
 good example of how to do this correctly.
 
 Also @xref{Q3.5.10}.
@@ -3203,10 +3207,10 @@ keys (i.e. @kbd{C-n} and @kbd{C-p}):
 (setq scroll-step 1)
 @end lisp
 
-You can change this also with Customize.
+Starting with XEmacs-20.3 you can also change this with Customize.
 Select from the @code{Options} menu
-@code{Customize->Emacs->Environment->Windows->Scroll Step...}
-or type @kbd{M-x customize RET windows RET}.
+@code{Customize->Emacs->Environment->Windows->Scroll Step...} or type
+@kbd{M-x customize RET windows RET}.
 
 @node Q3.5.6, Q3.5.7, Q3.5.5, Customization
 @section How to map @kbd{Help} key alone on Sun type4 keyboard?
@@ -3237,11 +3241,12 @@ the null binding @code{OpenWindows.KeyboardCommand.Help:}.
 @node Q3.5.7, Q3.5.8, Q3.5.6, Customization
 @section How can you type in special characters in XEmacs?
 
-One way is to use the package @samp{x-compose}.  Then you can use
+One way is to use the package @code{x-compose}.  Then you can use
 sequences like @kbd{Compose " a} to get ä, etc.
 
-Another way is to use the iso-ascii package, provided in XEmacs 19.15
-and later.
+Another way is to use the @code{iso-insert} package, provided in XEmacs
+19.15 and later. Then you can use sequences like @kbd{C-x 8 " a} to get
+ä, etc.
 
 @node Q3.5.8, Q3.5.9, Q3.5.7, Customization
 @section Why does @code{(global-set-key [delete-forward] 'delete-char)} complain?
@@ -3270,7 +3275,7 @@ This bug has been fixed in 19.14.
 @node Q3.5.9, Q3.5.10, Q3.5.8, Customization
 @section How do I make the Delete key delete forward?
 
-Use the @file{delbs} package:
+With XEmacs-20.2 use the @code{delbs} package:
 
 @lisp
 (require 'delbs)
@@ -3278,12 +3283,13 @@ Use the @file{delbs} package:
 
 This will give you the functions @code{delbs-enable-delete-forward} to
 set things up, and @code{delbs-disable-delete-forward} to revert to
-``normal'' behavior.
+``normal'' behavior.  Note that @code{delbackspace} package is obsolete.
 
-You can change this also with Customize.
-Select from the @code{Options} menu
-@code{Customize->Emacs->Editing->Basics->Delete Key Deletes Forward}
-or type @kbd{M-x customize RET editing-basics RET}.
+Starting with XEmacs-20.3 better solution is to set variable
+@code{delete-key-deletes-forward} to t.  You can also change this with
+Customize. Select from the @code{Options} menu
+@code{Customize->Emacs->Editing->Basics->Delete Key Deletes Forward} or
+type @kbd{M-x customize RET editing-basics RET}.
 
 Also @xref{Q3.5.4}.
 
@@ -3320,10 +3326,10 @@ For a 2 pixel bar cursor, use:
 (setq bar-cursor 'anything-else)
 @end lisp
 
-You can also change these with Customize.
+Starting with XEmacs-20.3 you can also change these with Customize.
 Select from the @code{Options} menu
-@code{Customize->Emacs->Environment->Display->Bar Cursor...}
-or type @kbd{M-x customize RET display RET}.
+@code{Customize->Emacs->Environment->Display->Bar Cursor...} or type
+@kbd{M-x customize RET display RET}.
 
 You can use a color to make it stand out better:
 
@@ -3338,10 +3344,10 @@ Emacs*cursorColor:	Red
 (setq bar-cursor nil)
 @end lisp
 
-You can also change this with Customize.
+Starting with XEmacs-20.3 you can also change this with Customize.
 Select from the @code{Options} menu
-@code{Customize->Emacs->Environment->Display->Bar Cursor...}
-or type @kbd{M-x customize RET display RET}.
+@code{Customize->Emacs->Environment->Display->Bar Cursor...} or type
+@kbd{M-x customize RET display RET}.
 
 @node Q3.6.3, Q3.7.1, Q3.6.2, Customization
 @section Can I make the cursor blink?
@@ -3355,7 +3361,7 @@ you can do the following:
 
 This function toggles between a steady cursor and a blinking cursor.
 You may also set this mode from the menu bar by selecting @samp{Options
-=> Frame Appearance => Blinking Cursor}.
+=> Frame Appearance => Blinking Cursor}.  Remember to save options.
 
 @node Q3.7.1, Q3.7.2, Q3.6.3, Customization
 @section How can I turn off Mouse pasting?
@@ -3380,11 +3386,11 @@ use @code{define-key} or @code{global-set-key}.
 @node Q3.7.2, Q3.7.3, Q3.7.1, Customization
 @section How do I set control/meta/etc modifiers on mouse buttons?
 
-Use, for instance, @code{[(meta button1)]}. For example, here is a
-common setting for Common Lisp programmers who use the bundled ilisp
-package, whereby meta-button1 on a function name will find the file
-where the function name was defined, and put you at that location in the
-source file.
+Use, for instance, @code{[(meta button1)]}. For example, here is a common
+setting for Common Lisp programmers who use the bundled @code{ilisp}
+package, whereby meta-button1 on a function name will find the file where
+the function name was defined, and put you at that location in the source
+file.
 
 [Inside a function that gets called by the lisp-mode-hook and
 ilisp-mode-hook]
@@ -3434,6 +3440,11 @@ To get XEmacs to paste at the text cursor, add this your @file{.emacs}:
 (setq mouse-yank-at-point t)
 @end lisp
 
+Starting with XEmacs-20.2 you can also change this with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Editing->Mouse->Yank At Point...} or type
+@kbd{M-x customize RET mouse RET}.
+
 @node Q3.7.7, Q3.7.8, Q3.7.6, Customization
 @section How do I select a rectangular region?
 
@@ -3441,26 +3452,28 @@ Just select the region normally, then use the rectangle commands (e.g.
 @code{kill-rectangle} on it.  The region does not highlight as a
 rectangle, but the commands work just fine.
 
-To actually sweep out rectangular regions with the mouse do the
-following:
+To actually sweep out rectangular regions with the mouse you can use
+@code{mouse-track-do-rectangle} which is assigned to @kbd{M-button1}.
+Then use rectangle commands.
+
+You can also do the following to change default behavior to sweep out
+rectangular regions:
 
 @lisp
 (setq mouse-track-rectangle-p t)
 @end lisp
 
-Aki Vehtari <Aki.Vehtari@@hut.fi> writes:
+Starting with XEmacs-20.2 you can also change this with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Editing->Mouse->Track Rectangle...} or type
+@kbd{M-x customize RET mouse RET}.
 
-@quotation
-To actually sweep out rectangular regions with the mouse you can also
-use @code{mouse-track-do-rectangle} which is assigned to
-@kbd{M-button1}. Then use rectangle commands.
 
 @example
  mouse-track-do-rectangle: (event)
    -- an interactive compiled Lisp function.
  Like `mouse-track' but selects rectangles instead of regions.
 @end example
-@end quotation
 
 @node Q3.7.8, Q3.8.1, Q3.7.7, Customization
 @section Why does @kbd{M-w} take so long?
@@ -3510,6 +3523,11 @@ Add the following to your @file{.emacs} (suit to fit):
 @end lisp
 
 For no limit, use an argument of @samp{nil}.
+
+Starting with XEmacs-20.3 you can also change this with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Environment->Menu->Buffers Menu->Max Size...} or
+type @kbd{M-x customize RET buffers-menu RET}.
 
 @node Q3.8.4, Q3.8.5, Q3.8.3, Customization
 @section Resources like @code{Emacs*menubar*font} are not working?
@@ -3570,6 +3588,9 @@ your @file{.Xdefaults}:
 @example
 Emacs.scrollBarWidth:  0
 @end example
+
+Or select from the @code{Options} menu @code{Frame Appearance->Scrolbars}.
+Remember to save options.
 
 To turn the scrollbar off on a per-frame basis, use the following
 function:
@@ -3665,10 +3686,9 @@ following line to your @file{.emacs} file:
 (setq zmacs-regions nil)
 @end lisp
 
-You can also change these with Customize.
-Select from the @code{Options} menu
-@code{Customize->Emacs->->Editing->Basics->Zmacs Regions}
-or type @kbd{M-x customize RET editing-basics RET}.
+Starting with XEmacs-20.2 you can also change this with Customize. Select
+from the @code{Options} menu @code{Customize->Emacs->Editing->Basics->Zmacs
+Regions} or type @kbd{M-x customize RET editing-basics RET}.
 
 To change the face for selection, look at @code{Options->Customize} on
 the menubar.
@@ -3704,8 +3724,8 @@ Put the following in your @file{.emacs}:
 (setq isearch-highlight nil)
 @end lisp
 
-You can also change these with Customize.
-Type @kbd{M-x customize-variable RET isearch-highlight RET}.
+Starting with XEmacs-20.2 you can also change this with Customize. Type
+@kbd{M-x customize-variable RET isearch-highlight RET}.
 
 Note also that isearch-highlight affects query-replace and ispell.
 Instead of disabling isearch-highlight you may find that a better
@@ -3727,9 +3747,10 @@ Also @xref{Q3.10.1}.
 @node Q3.10.5,  , Q3.10.4, Customization
 @section The region disappears when I hit the end of buffer while scrolling.
 
-How do I turn this feature (if it indeed is a feature) off?
+This has been fixed by default starting with XEmacs-20.3.
 
-Like this:
+With older versions you can turn this feature (if it indeed is a feature)
+off like this:
 
 @lisp
 (defadvice scroll-up (around scroll-up freeze)
@@ -4743,7 +4764,9 @@ and use a telnet session within it.  Everything works fine except that
 now all @samp{^M}'s are filtered out by Emacs.  Fixes?
 
 Use @kbd{M-x rsh} or @kbd{M-x telnet} to open remote sessions rather
-than doing rsh or telnet within the local shell buffer.
+than doing rsh or telnet within the local shell buffer.  Starting with
+XEmacs-20.3 you can also use @kbd{M-x ssh} to open secure remote session
+if you have @code{ssh} installed.
 
 @node Q5.0.8, Q5.0.9, Q5.0.7, Miscellaneous
 @section Why does edt emulation not work?
@@ -4821,6 +4844,12 @@ Starting in 19.15, there is an option to set the gnuserv target to
 the current frame.  See
 @code{Options->"Other Window" Location->Make current frame gnuserv target}
 
+Starting with XEmacs-20.3 you can also change this with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Environment->Gnuserv->Gnuserv Frame...} or type
+@kbd{M-x customize RET gnuserv RET}.
+
+
 @node Q5.0.13, Q5.0.14, Q5.0.12, Miscellaneous
 @section How do I start gnuserv so that each subsequent XEmacs is a client?
 
@@ -4840,6 +4869,8 @@ from the command line to get your existing XEmacs process to open a new
 frame and visit randomfilename in that window. When you're done editing
 randomfilename, hit @kbd{C-x #} to kill the buffer and get rid of the
 frame.
+
+See also man page of gnuclient.
 
 @node Q5.0.14, Q5.0.15, Q5.0.13, Miscellaneous
 @section Strange things are happening in Shell Mode.
@@ -4887,7 +4918,7 @@ enabled by default.  To turn it off, put the following in your
 @node Q5.0.17, Q5.0.18, Q5.0.16, Miscellaneous
 @section How can I get two instances of info?
 
-You can't.  The info package does not provide for multiple info buffers.
+You can't.  The @code{info} package does not provide for multiple info buffers.
 
 @node Q5.0.18, Q5.0.19, Q5.0.17, Miscellaneous
 @section I upgraded to XEmacs 19.14 and gnuserv stopped working.
@@ -5287,6 +5318,12 @@ Add the following line to your @file{.emacs}:
 That will make your XEmacs totally silent -- even the default ding sound 
 (TTY beep on TTY-s) will be gone.
 
+Starting with XEmacs-20.2 you can also change these with Customize.
+Select from the @code{Options} menu
+@code{Customize->Emacs->Environment->Sound->Sound...} or type
+@kbd{M-x customize RET sound RET}.
+
+
 @node Q5.2.2, Q5.2.3, Q5.2.1, Miscellaneous
 @section How do I get funky sounds instead of a boring beep?
 
@@ -5337,7 +5374,7 @@ One way is to add, to @file{.emacs}:
 (put 'if 'lisp-indent-function nil)
 @end lisp
 
-However, note that the package @file{cl-indent.el} that comes with
+However, note that the package @code{cl-indent} that comes with
 XEmacs sets up this kind of indentation by default.  @code{cl-indent}
 also knows about many other CL-specific forms.  To use @code{cl-indent},
 one can do this:
@@ -5386,10 +5423,9 @@ files anymore.
 Font-lock looks nice.  How can I print (WYSIWYG) the highlighted
 document?
 
-The package @file{ps-print.el}, which is now included with XEmacs,
-provides the ability to do this.  The source code contains complete
-instructions on its use, in
-@file{<xemacs_src_root>/lisp/packages/ps-print.el}.
+The package @code{ps-print}, which is now included with XEmacs, provides
+the ability to do this.  The source code contains complete instructions
+on its use, in @file{<xemacs_src_root>/lisp/packages/ps-print.el}.
 
 @node Q5.3.4, Q5.3.5, Q5.3.3, Miscellaneous
 @section Getting @kbd{M-x lpr} to work with postscript printer.
@@ -5518,10 +5554,7 @@ abbrevs (@kbd{C-h i m XEmacs RET m Abbrevs RET}), and then come back and
 read this question/answer again.
 @end quotation
 
-Newsflash: this restriction has been lifted, starting with XEmacs 20.3,
-which is currently in beta.  Hrvoje Niksic <hniksic@@srce.hr> will
-appreciate it if you download a beta, try out whether abbreviations work 
-like you expect them to, and let him know.
+Starting with XEmacs 20.3 this restriction has been lifted.
 
 @node Q5.3.10, Q5.3.11, Q5.3.9, Miscellaneous
 @section How can I get those oh-so-neat X-Face lines?
@@ -5724,12 +5757,21 @@ considered unstable.
 @node Q6.0.2, Q6.0.3, Q6.0.1, Current Events
 @section What is new in 20.3?
 
-XEmacs 20.3 will be released in November 1997.  It will contain many
-bugfixes, and a number of new features, including Autoconf 2 based
-configuration, multiple TTY frames, further customizations, synches with
-GNU Emacs 20, advanced Perl-like regexp features, and more.
+XEmacs 20.3 was released in November 1997. It contains many bugfixes,
+and a number of new features, including Autoconf 2 based configuration,
+additional support for Mule (Multi-language extensions to Emacs), many
+more customizations, multiple frames on TTY-s, support for multiple info
+directories, an enhanced gnuclient, improvements to regexp matching,
+increased MIME support, and many, many synches with GNU Emacs 20.
 
-XEmacs 20.3 will be the first non-beta v20 release, and will be the
+The XEmacs/Mule support has been only seriously tested in a Japanese
+locale, and no doubt many problems still remain.  The support for
+ISO-Latin-1 and Japanese is fairly strong.  MULE support comes at a
+price -- about a 30% slowdown from 19.16.  We're making progress on
+improving performance and XEmacs 20.3 compiled without Mule (which is
+the default) is definitely faster than XEmacs 19.16.
+
+XEmacs 20.3 is the first non-beta v20 release, and will be the
 basis for all further development.
 
 @node Q6.0.3,  , Q6.0.2, Current Events

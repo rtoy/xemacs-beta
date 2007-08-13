@@ -55,7 +55,7 @@ typedef int pid_t;
 
 #define SIZEOF_LONG 4
 #define SIZEOF_INT 4
-#define SIZEOF_SHORT 4
+#define SIZEOF_SHORT 2
 
 /* NOMULTIPLEJOBS should be defined if your system's shell
  does not have "job control" (the ability to stop a program,

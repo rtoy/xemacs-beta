@@ -55,6 +55,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Random globals */
 extern LRESULT WINAPI mswindows_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern Lisp_Object mswindows_pump_outstanding_events (void);
 extern int mswindows_quit_chars_count;
 
 /* These are Lisp integer variables */

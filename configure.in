@@ -2251,7 +2251,8 @@ esac
 
 dnl Enable or disable proper session-management
 AC_CHECKING(for session-management option);
-if test "$with_session" = "yes"; then
+dnl if test "$with_session" = "yes"; then
+if test "$with_session" != "no"; then
   AC_DEFINE(HAVE_SESSION)
 fi
 
@@ -2485,12 +2486,12 @@ dnl ----------------------
 
 test -z "$with_mule" && with_mule=no
 
-if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
-	echo "Attempt to Build with Mule without Mule/Lisp"
-	echo "Please install the XEmacs/Mule tarball or"
-	echo "rerun configure with --with-mule=no"
-	exit 1
-fi
+dnl if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
+dnl	echo "Attempt to Build with Mule without Mule/Lisp"
+dnl	echo "Please install the XEmacs/Mule tarball or"
+dnl	echo "rerun configure with --with-mule=no"
+dnl	exit 1
+dnl fi
 
 if test "$with_mule" = "yes" ; then
   AC_CHECKING(for Mule-related features)

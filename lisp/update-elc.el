@@ -81,13 +81,13 @@
 					  nil 'dirs-only)
 			 (cons temp-path load-path))))
 
-;; At this point we need to have the package path initialized
-(packages-find-packages package-path t t)
 
 ;; (print (prin1-to-string update-elc-files-to-compile))
 
 (let (preloaded-file-list site-load-packages)
   (load (concat default-directory "../lisp/dumped-lisp.el"))
+  ;; At this point we need to have the package path initialized
+  (packages-find-packages package-path t t)
   ;; (print (prin1-to-string preloaded-file-list))
   (load (concat default-directory "../site-packages") t t)
   (setq preloaded-file-list

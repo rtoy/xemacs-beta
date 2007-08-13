@@ -1714,8 +1714,8 @@ Lisp_Object intern (CONST char *);
 Lisp_Object oblookup (Lisp_Object obarray,
 		      CONST Bufbyte *, Bytecount len);
 void map_obarray (Lisp_Object obarray,
-		  void (*fn) (Lisp_Object sym, Lisp_Object arg),
-		  Lisp_Object arg);
+		  int (*fn) (Lisp_Object sym, void *arg),
+		  void *arg);
 Lisp_Object Fboundp (Lisp_Object sym);
 Lisp_Object Ffboundp (Lisp_Object);
 Lisp_Object Ffset (Lisp_Object sym, Lisp_Object val);

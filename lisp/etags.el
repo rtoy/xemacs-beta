@@ -173,17 +173,6 @@ This affects the `tags-search' and `tags-query-replace' commands."
   :group 'etags)
 
 
-;; Auxiliary functions
-
-(defun tags-remove-duplicates (list)
-  "Delete equal duplicates from the list; copies the list."
-  (let (res)
-    (dolist (el list)
-      (unless (member el res)
-	(push el res)))
-    (nreverse res)))
-
-
 ;; Buffer tag tables.
 
 (defun buffer-tag-table-list ()
@@ -239,7 +228,7 @@ the current buffer."
     (when tags-file-name
       (setq result (nconc result (list tags-file-name))))
     (or result (error "Buffer has no associated tag tables"))
-    (tags-remove-duplicates (nreverse result))))
+    (delete-duplicates (nreverse result) :test 'equal)))
 
 ;;;###autoload
 (defun visit-tags-table (file)

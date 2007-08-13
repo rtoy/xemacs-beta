@@ -77,93 +77,106 @@ Lisp_Object oblookup (Lisp_Object, CONST Bufbyte *, Bytecount);
 Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
 
 
+struct abbrev_match_mapper_closure {
+  struct buffer *buf;
+  struct Lisp_Char_Table *chartab;
+  Charcount point, maxlen;
+  struct Lisp_Symbol *found;
+};
+
+/* For use by abbrev_match(): Match SYMBOL's name against buffer text
+   before point, case-insensitively.  When found, return non-zero, so
+   that map_obarray terminates mapping.  */
+static int
+abbrev_match_mapper (Lisp_Object symbol, void *arg)
+{
+  struct abbrev_match_mapper_closure *closure =
+    (struct abbrev_match_mapper_closure *)arg;
+  Charcount abbrev_length;
+  struct Lisp_Symbol *sym = XSYMBOL (symbol);
+  struct Lisp_String *abbrev;
+
+  /* symbol_value should be OK here, because abbrevs are not expected
+     to contain any SYMBOL_MAGIC stuff.  */
+  if (UNBOUNDP (symbol_value (sym)) || NILP (symbol_value (sym)))
+    {
+      /* The symbol value of nil means that abbrev got undefined. */
+      return 0;
+    }
+  abbrev = symbol_name (sym);
+  abbrev_length = string_char_length (abbrev);
+  if (abbrev_length > closure->maxlen)
+    {
+      /* This abbrev is too large -- it wouldn't fit. */
+      return 0;
+    }
+  /* If `bar' is an abbrev, and a user presses `fubar<SPC>', we don't
+     normally want to expand it.  OTOH, if the abbrev begins with
+     non-word syntax (e.g. `#if'), it is OK to abbreviate it anywhere.  */
+  if (abbrev_length < closure->maxlen && abbrev_length > 0
+      && (WORD_SYNTAX_P (closure->chartab, string_char (abbrev, 0)))
+      && (WORD_SYNTAX_P (closure->chartab,
+			 BUF_FETCH_CHAR (closure->buf,
+					 closure->point - (abbrev_length + 1)))))
+    {
+      return 0;
+    }
+  /* Match abbreviation string against buffer text.  */
+  {
+    Bufbyte *ptr = string_data (abbrev);
+    Charcount idx;
+
+    for (idx = 0; idx < abbrev_length; idx++)
+      {
+	if (DOWNCASE (closure->buf,
+		      BUF_FETCH_CHAR (closure->buf,
+				      closure->point - abbrev_length + idx))
+	    != DOWNCASE (closure->buf, charptr_emchar (ptr)))
+	  {
+	    break;
+	  }
+	INC_CHARPTR (ptr);
+      }
+    if (idx == abbrev_length)
+      {
+	/* This is the one. */
+	closure->found = sym;
+	return 1;
+      }
+  }
+  return 0;
+}
+
 /* Match the buffer text against names of symbols in obarray.  Returns
    the matching symbol, or 0 if not found.  */
-
 static struct Lisp_Symbol *
 abbrev_match (struct buffer *buf, Lisp_Object obarray)
 {
-  Bufpos point = BUF_PT (buf);
-  Bufpos maxlen = point - BUF_BEGV (buf);
-  Charcount idx;
+  struct abbrev_match_mapper_closure closure;
 
-  struct Lisp_Char_Table *chartab = XCHAR_TABLE (buf->mirror_syntax_table);
-  struct Lisp_String *abbrev;
-  struct Lisp_Vector *obvec;
-  struct Lisp_Symbol *sym = NULL;
-  Charcount abbrev_length;
-  Lisp_Object tail;
-  int i, found;
+  /* Precalculate some stuff, so mapper function needn't to it in each
+     iteration.  */
+  closure.buf = buf;
+  closure.point = BUF_PT (buf);
+  closure.maxlen = closure.point - BUF_BEGV (buf);
+  closure.chartab = XCHAR_TABLE (buf->mirror_syntax_table);
+  closure.found = 0;
 
-  CHECK_VECTOR (obarray);
-  obvec = XVECTOR (obarray);
+  map_obarray (obarray, abbrev_match_mapper, &closure);
 
-  /* The obarray-traversing code is copied from `map_obarray'. */
-  found = 0;
-  for (i = vector_length (obvec) - 1; i >= 0; i--)
-    {
-      tail = vector_data (obvec)[i];
-      if (SYMBOLP (tail))
-	while (1)
-	  {
-	    sym = XSYMBOL (tail);
-	    if (UNBOUNDP (symbol_value (sym)) || NILP (symbol_value (sym)))
-	      {
-		/* The symbol value of nil means that abbrev got
-                   undefined. */
-		goto next;
-	      }
-	    abbrev = symbol_name (sym);
-	    abbrev_length = string_char_length (abbrev);
-	    if (abbrev_length > maxlen)
-	      {
-		/* This abbrev is too large -- it wouldn't fit. */
-		goto next;
-	      }
-	    /* If `bar' is an abbrev, and a user presses `fubar<SPC>',
-	       we don't normally want to expand it.  OTOH, if the
-	       abbrev begins with non-word syntax, it is OK to
-	       abbreviate it anywhere.  */
-	    if (abbrev_length < maxlen && abbrev_length > 0
-		&& (WORD_SYNTAX_P (chartab, string_char (abbrev, 0)))
-		&& (WORD_SYNTAX_P (chartab,
-				   BUF_FETCH_CHAR (buf, point
-						   - (abbrev_length + 1)))))
-	      {
-		goto next;
-	      }
-	    /* Match abbreviation string against buffer text.  */
-	    for (idx = abbrev_length - 1; idx >= 0; idx--)
-	      {
-		if (DOWNCASE (buf, BUF_FETCH_CHAR (buf, point -
-						   (abbrev_length - idx)))
-		    != DOWNCASE (buf, string_char (abbrev, idx)))
-		  break;
-	      }
-	    if (idx < 0)
-	      {
-		found = 1;
-		break;
-	      }
-	  next:
-	    sym = symbol_next (XSYMBOL (tail));
-	    if (!sym)
-	      break;
-	    XSETSYMBOL (tail, sym);
-	  } /* while */
-      if (found)
-	break;
-    } /* for */
-
-  return found ? sym : 0;
+  return closure.found;
 }
+
+/* Take the word before point (or Vabbrev_start_location, if non-nil),
+   and look it up in OBARRAY, and return the symbol (or zero).  This
+   used to be the default method of searching, with the obvious
+   limitation that the abbrevs may consist only of word characters.
+   It is an order of magnitude faster than the proper abbrev_match(),
+   but then again, vi is an order of magnitude faster than Emacs.
 
-/* Take the word before point, and look it up in OBARRAY, and return
-   the symbol (or nil).  This used to be the default method of
-   searching, with the obvious limitation that the abbrevs may consist
-   only of word characters.  It is an order of magnitued faster than
-   the proper `abbrev_match', but then again, vi is an order of
-   magnitude faster than Emacs.  */
+   This speed difference should be unnoticable, though.  I have tested
+   the degenerated cases of thousands of abbrevs being defined, and
+   abbrev_match() was still fast enough for normal operation.  */
 static struct Lisp_Symbol *
 abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
 {
@@ -179,18 +192,16 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
       wordstart = get_buffer_pos_char (buf, Vabbrev_start_location,
 				       GB_COERCE_RANGE);
       Vabbrev_start_location = Qnil;
-      /*
-       * Previously, abbrev-prefix-mark inserted a dash to indicate the
-       * abbrev start point.  It now uses an extent with a begin
-       * glyph so there's no dash to remove.
-       */
-/*
+      /* Previously, abbrev-prefix-mark crockishly inserted a dash to
+	 indicate the abbrev start point.  It now uses an extent with
+	 a begin glyph so there's no dash to remove.  */
+#if 0
       if (wordstart != BUF_ZV (buf)
-	  && BUF_FETCH_CHAR (buf, wordstart) == '-')
+ 	  && BUF_FETCH_CHAR (buf, wordstart) == '-')
 	{
 	  buffer_delete_range (buf, wordstart, wordstart + 1, 0);
 	}
-*/
+#endif
       wordend = BUF_PT (buf);
     }
   else
@@ -231,7 +242,7 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
   else
     return NULL;
 }
-
+
 /* Return non-zero if OBARRAY contains an interned symbol ` '. */
 static int
 obarray_has_blank_p (Lisp_Object obarray)
@@ -260,11 +271,13 @@ abbrev_count_case (struct buffer *buf, Bufpos pos, Charcount length,
       ++pos;
     }
 }
-
+
 DEFUN ("expand-abbrev", Fexpand_abbrev, 0, 0, "", /*
 Expand the abbrev before point, if any.
 Effective when explicitly called even when `abbrev-mode' is nil.
-Returns t if expansion took place.
+Returns the abbrev symbol, if expansion took place.
+If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
+ returns t.
 */
        ())
 {
@@ -292,9 +305,9 @@ Returns t if expansion took place.
   if (!BUFFERP (Vabbrev_start_location_buffer) ||
       XBUFFER (Vabbrev_start_location_buffer) != buf)
     Vabbrev_start_location = Qnil;
-  /* We use the more general `abbrev_match' if the obarray blank flag
+  /* We use the more general abbrev_match() if the obarray blank flag
      is not set, and Vabbrev_start_location is nil.  Otherwise, use
-     `abbrev_oblookup'. */
+     abbrev_oblookup(). */
 #define MATCHFUN(tbl) ((obarray_has_blank_p (tbl)		 \
 			&& NILP (Vabbrev_start_location))	 \
 		       ? abbrev_match : abbrev_oblookup)
@@ -312,12 +325,15 @@ Returns t if expansion took place.
     return pre_modiff_p;
 
   /* NOTE: we hope that `pre-abbrev-expand-hook' didn't do something
-     nasty, such as changed (or killed) the buffer.  */
+     nasty, such as changed the buffer.  Here we protect against the
+     buffer getting killed.  */
+  if (! BUFFER_LIVE_P (buf))
+    return Qnil;
   point = BUF_PT (buf);
 
   /* OK, we're out of the must-be-fast part.  An abbreviation matched.
      Now find the parameters, insert the expansion, and make it all
-     look pretty. */
+     look pretty.  */
   abbrev_string = symbol_name (abbrev_symbol);
   abbrev_length = string_char_length (abbrev_string);
   abbrev_start = point - abbrev_length;
@@ -327,7 +343,7 @@ Returns t if expansion took place.
 
   count = symbol_plist (abbrev_symbol); /* Gag */
   if (NILP (count))
-    count = make_int (0);
+    count = Qzero;
   else
     CHECK_NATNUM (count);
   symbol_plist (abbrev_symbol) = make_int (1 + XINT (count));
@@ -387,10 +403,10 @@ Returns t if expansion took place.
   if (!NILP (hook) && !UNBOUNDP (hook))
     call0 (hook);
 
-  return Qt;
+  return Vlast_abbrev;
 }
 
-
+
 void
 syms_of_abbrev (void)
 {

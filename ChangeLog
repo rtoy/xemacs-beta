@@ -1,6 +1,37 @@
+1997-12-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta 12 is released.
+
+1997-12-19  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (bitmapdir): Reenable --with-session by default for 
+	testing.
+
+1997-12-18  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* etc/Emacs.ad: Don't specify a default toolbar specific
+	  background color.
+
+1997-12-18  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* etc/toolbar: Added support for foregroundToolBarColor
+	  symbol to most icons. 
+
+1997-12-17  SL Baur  <steve@altair.xemacs.org>
+
+	* info/dir (File): Skk and Gnats are packaged.
+
+	* PROBLEMS (Note): Update version numbers.
+
+	* etc/BETA: Update version numbers.
+
+	* etc/NEWS: Update version number.
+
+	* info/dir (File): Update version number.
+
 1997-12-16  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs-20.4-beta11 is released.
+	* XEmacs 20.5-beta11 is released.
 
 1997-12-14  SL Baur  <steve@altair.xemacs.org>
 
@@ -18,7 +49,7 @@
 
 	* Makefile.in (lisp/finder-inf.el): Add dependency on src/.
 
-	* XEmacs 20-.4-beta10 is released.
+	* XEmacs 20.5-beta10 is released.
 
 1997-12-12  SL Baur  <steve@altair.xemacs.org>
 
@@ -37,11 +68,11 @@
 
 1997-12-09  SL Baur <steve@altair.xemacs.org>
 
-	* XEmacs 20.4-beta9 is released.
+	* XEmacs 20.5-beta9 is released.
 
 1997-12-06  SL Baur <steve@altair.xemacs.org>
 
-	* XEmacs 20.4-beta8 is released.
+	* XEmacs 20.5-beta8 is released.
 
 	* info/dir: update for further packaging.
 	* configure.in: remove `tree-x' from XEmacs build.
@@ -83,7 +114,7 @@
 
 1997-11-27  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs 20.4-beta7 is released.
+	* XEmacs 20.5-beta7 is released.
 
 	* configure.in: When testing for -ltiff, fall back on the extra
 	libraries -ljpeg, and -lz since some -ltiff's need them.
@@ -117,7 +148,7 @@
 
 1997-11-20  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs 20.4-beta6 is released.
+	* XEmacs 20.5-beta6 is released.
 
 1997-11-21  Stephen Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
@@ -165,7 +196,7 @@
 1997-11-15  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-pre3 is released.
-	* XEmacs 20.4-beta5 is released.
+	* XEmacs 20.5-beta5 is released.
 
 1997-11-13  Marc Paquette <marcpa@cam.org>
 
@@ -193,7 +224,7 @@
 
 1997-11-11  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs 20.4-beta4 is released.
+	* XEmacs 20.5-beta4 is released.
 
 1997-11-10  SL Baur  <steve@altair.xemacs.org>
 
@@ -204,7 +235,7 @@
 
 1997-11-08  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs 20.4-beta3 is released.
+	* XEmacs 20.5-beta3 is released.
 	* XEmacs 20.3-pre2 is released.
 
 Wed November 05 23:40:00 1997 <jhar@tardis.ed.ac.uk>
@@ -304,7 +335,7 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 1997-10-31  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs 20.4-beta2 is released.
+	* XEmacs 20.5-beta2 is released.
 
 1997-10-30  SL Baur  <steve@altair.xemacs.org>
 
@@ -438,7 +469,7 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 1997-10-12  SL Baur  <steve@altair.xemacs.org>
 
-	* XEmacs 20.4-beta1 is released.
+	* XEmacs 20.5-beta1 is released.
 
 	* XEmacs 19.16-pre9 is released.
 

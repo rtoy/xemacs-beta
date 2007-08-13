@@ -1,3 +1,11 @@
+1997-12-17  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile (SUBDIR): skk and gnats are packaged.
+
+	* lispref/intro.texi (Acknowledgements): Update to v3.3.
+
+	* lispref/lispref.texi: Update to 20.5/v3.3.
+
 1997-12-10  SL Baur  <steve@altair.xemacs.org>
 
 	* Makefile: Don't stop on errors.

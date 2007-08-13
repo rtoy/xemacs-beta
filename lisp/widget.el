@@ -64,6 +64,8 @@ create identical widgets:
 * (apply 'widget-create CLASS ARGS)
 
 The third argument DOC is a documentation string for the widget."
+  (check-argument-type 'symbolp name)
+  (check-argument-type 'symbolp class)
   (put name 'widget-type (cons class args))
   (put name 'widget-documentation doc)
   name)

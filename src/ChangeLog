@@ -1,3 +1,139 @@
+1997-12-20  Kirill M. Katsnelson <kkm@kis.ru>
+
+	* s/windowsnt.h: SIZEOF_SHORT set to 16 bits instead of 32, to get
+	  real.
+
+	* redisplay-msw.c: (many functions): FillRect replaced with
+	  ExtTextOut where possible, which is much faster.
+	  (mswindows_redisplay_deadbox_maybe): New function which fixes
+	  deadbox, a square bounded by scrollbar ends and window corner
+	  (usually the lower right corner).
+
+	* emacs.c (assert_failed): On Win32 platforms, when assertion
+	  fails, debugger break occurs if DEBUG_XEMACS is defined.
+
+	* event-msw.c (mswindows_pump_outstanding_events): Fixed so two
+	  consequtive Fsignals are not lost.
+
+	* scrollbar-msw.c (mswindows_update_scrollbar_instance_values):
+	  Added SBF_DISABLENOSCROLL flag so the bar is greyed out when
+	  all lines are visible.
+	  (mswindows_update_scrollbar_instance_status): Ditto for freshly
+	  assigned scrollbar.
+
+	* scrollbar.c (Fscrollbar_set_hscroll): Fixed fitting scroll
+	  limits into range.
+
+1997-12-18  Kirill M. Katsnelson <kkm@kis.ru>
+
+	* events-msw.c: Added support for modal event dispatch pump.
+	  This mechanism is for scrollbars and menus.
+
+	* events-msw.h: Public declaration for the pump function.
+
+	* msw-proc.c: Pump scrollbar misc user events through the
+	  brand new pump. Pumps!
+
+	* scrollbar-msw.c: Minor range fixes. Added misc events for
+	  horizontal bar, which did not fix it...
+
+Thu Dec 18 09:53:12 1997    <jsparkes@internetivity.com (Jeff Sparkes)>
+
+	* objects-msw.c (mswindows_print_color_instance): Scale 8 bit RGB
+	  components up to 16 bit X sizes.
+	(mswindows_string_to_color): numeric colors are #RRGGBB not #BBGGRR.
+
+	* objects-msw.c (mswindows_color_instance_rgb_components): ditto
+
+	* objects.c (Fcolor_instance_rgb_components): Document range of
+	  components as 0-65535.
+
+1997-12-18  SL Baur  <steve@altair.xemacs.org>
+
+	* doc.c (verify_doc_mapper): Fix return value and argument list
+	for map_obarray.
+
+	* device-x.c: New variable -- Vx_app_defaults_directory.
+	(x_init_device): Use locale directory searched from package-path.
+
+1997-12-18  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* EmacsFrame.c: Added foregroundToolBarColor and
+	  foreground resources to the resources[] definition.
+	  Moved default gray8o color value from the
+	  bcakgroundToolBarCOlor resource to th background
+	  resource since the override order is now reversed in
+	  toolbar-x.c.  Don't provide a default value for the
+	  foreground resource that the toolbar code looks at.
+
+	* EmacsFrame.h: Define foregroundToolBarColor string
+	  for use in the resoruces code.
+
+	* EmacsFrameP.h: Added foreground_toolbar_pixel slot
+	  to EmacsFramePart struct.
+
+	* toolbar-x.c: Let the toolbar specific background
+	  resource override the global background resource.  Added
+	  support for a toolbar specific foreground resource,
+	  which is not currently used for anything internally.
+
+1997-12-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* redisplay.c (decode_mode_spec): Comment fixup.
+
+	* tooltalk.c (Freceive_tooltalk_message): Ditto.
+
+	* search.c (Freplace_match): Ditto.
+
+	* frame-x.c (x_frame_property): Ditto.
+
+	* console.c (Fcurrent_input_mode): Ditto.
+
+	* callint.c (Fcall_interactively): Ditto.
+
+	* abbrev.c (Fexpand_abbrev): Ditto.
+
+	* dired.c (file_name_completion): Use Qzero instead of
+ 	make_int(0).
+
+	* fileio.c (Finsert_file_contents_internal): Use
+	report_file_error() to report reading error.
+
+	* cmds.c (internal_self_insert): Don't self-insert if the expanded 
+	symbol's hook has a non-nil `no-self-insert' property; synch with
+	FSF 20.2.
+
+	* abbrev.c (Fexpand_abbrev): Return Vlast_abbrev, like in FSF
+ 	20.2.
+
+1997-12-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* abbrev.c (abbrev_match): User map_obarray() instead of
+	crockishly copying it.
+	(abbrev_match_mapper): New function.
+	(Fexpand_abbrev): Check whether `pre-abbrev-expand-hook' has
+	killed the buffer.
+
+	* symbols.c (map_obarray): Accept a void * argument.
+	(mapatoms_1): Adapt.
+	(apropos_accum): Use fast_lisp_string_match().
+	(Fapropos_internal): Don't cons.
+	(map_obarray): Stop mapping if FN returns non-zero.
+
+	* marker.c (unchain_marker): Guard assert() with ERROR_CHECK_GC.
+	(bi_marker_position): Guard assert() with ERROR_CHECK_BUFPOS.
+	(set_bi_marker_position): Ditto.
+
+1997-12-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Finsert_file_contents_internal): Use make_int when
+ 	checking for overflow.
+	(Finsert_file_contents_internal): Use EXTERNAL_LIST_LOOP.
+	(Ffind_file_name_handler): Ditto.
+
+	* dired.c (file_name_completion): Use noseeum_cons.
+	(file_name_completion_unwind): Free the cons.
+
 1997-12-16    <jsparkes@internetivity.com (Jeff Sparkes)> 
  
 	* scrollbar.c: Add HAVE_MS_WINDOWS to scrollbar-page functions.

@@ -35,10 +35,11 @@ Boston, MA 02111-1307, USA.  */
 
 #include "device.h"
 #include "console-msw.h"
+#include "emacsfns.h"
 #include "events.h"
 #include "frame.h"
 #include "process.h"
-
+#include "redisplay.h"
 #include "sysproc.h"
 #include "syswait.h"
 #include "systime.h"
@@ -81,6 +82,14 @@ int mswindows_button2_chord_time;
 
 /* Number of wait handles */
 static mswindows_waitable_count=0;
+
+/* This is the event signaled by the event pump.
+   See mswindows_pump_outstanding_events for comments */
+static Lisp_Object mswindows_error_caught_by_event_pump;
+static int mswindows_in_event_pump;
+
+/* Count of wound timers */
+static int mswindows_pending_timers_count;
 
 static int
 mswindows_user_event_p (struct Lisp_Event* sevt)
@@ -195,6 +204,101 @@ mswindows_cancel_dispatch_event (struct Lisp_Event* match)
 }
 
 /*
+ * This is an unsafe part of event pump, guarded by 
+ * condition_case. See mswindows_pump_outstanding_events
+ */
+static Lisp_Object
+mswindows_unsafe_pump_events (Lisp_Object u_n_u_s_e_d)
+{
+  /* This function can call lisp */
+  Lisp_Object event = Fmake_event (Qnil, Qnil);
+  struct gcpro gcpro1;
+  int do_redisplay = 0;
+  GCPRO1 (event);
+
+  while (detect_input_pending ())
+    {
+      Fnext_event (event, Qnil);
+      Fdispatch_event (event);
+      do_redisplay = 1;
+    }
+
+  if (do_redisplay)
+    redisplay ();
+
+  Fdeallocate_event (event);
+  UNGCPRO;
+  
+  /* Qt becomes return value of mswindows_pump_outstanding_events
+     once we get here */
+  return Qt;
+}
+
+/* See mswindows_pump_outstanding_events */
+static Lisp_Object
+mswindows_event_pump_error_handler (Lisp_Object cons_sig_data,
+				    Lisp_Object u_n_u_s_e_d)
+{
+  mswindows_error_caught_by_event_pump = cons_sig_data;
+  return Qnil;
+}
+
+/*
+ * This function pumps emacs events, while available, by using
+ * next_message/dispatch_message loop. Errors are trapped around
+ * the loop so the function always returns.
+ *
+ * Windows message queue is not looked into during the call,
+ * neither are waitable handles checked. The function pumps
+ * thus only dispatch events already queued, as well as those
+ * resulted in dispatching thereof. This is done by setting
+ * module local variable mswidows_in_event_pump to nonzero.
+ *
+ * Return value is Qt if no errors was trapped, or Qnil if
+ * there was an error.
+ *
+ * In case of error, a cons representing the error, in the
+ * form (SIGNAL . DATA), is stored in the module local variable
+ * mswindows_error_caught_by_event_pump. This error is signaled
+ * again when DispatchMessage returns. Thus, Windows internal
+ * modal loops are protected against throws, which are proven
+ * to corrupt internal Windows structures.
+ *
+ * In case of success, mswindows_error_caught_by_event_pump is
+ * assigned Qnil.
+ *
+ * If the value of mswindows_error_caught_by_event_pump is not
+ * nil already upon entry, the function just returns non-nil.
+ * This situation means that a new event has been queued while
+ * cancleng mode. The event will be dequeued on the next regular
+ * call of next-event; the pump is off since error is caught.
+ * The caller must *unconditionally* cancel modal loop if the
+ * value returned by this function is nil. Otherwise, everything
+ * will become frozen until the modal loop exits under normal
+ * condition (scrollbar drag is released, menu closed etc.)
+ */
+Lisp_Object
+mswindows_pump_outstanding_events (void)
+{
+  /* This function can call lisp */
+
+  Lisp_Object result = Qt;
+
+  if (NILP(mswindows_error_caught_by_event_pump))
+    {
+
+      mswindows_in_event_pump = 1;
+
+      result = condition_case_1 (Qt,
+				 mswindows_unsafe_pump_events, Qnil,
+				 mswindows_event_pump_error_handler, Qnil);
+
+      mswindows_in_event_pump = 0; 
+    }
+  return result;
+}
+
+/*
  * Find a free waitable slot
  */
 static int
@@ -267,6 +371,7 @@ mswindows_wm_timer_callback (HWND hwnd, UINT umsg, UINT id_timer, DWORD dwtime)
   struct Lisp_Event *event = XEVENT (emacs_event);
 
   KillTimer (NULL, id_timer);
+  --mswindows_pending_timers_count;
 
   event->channel = Qnil;
   event->timestamp = dwtime;
@@ -281,7 +386,60 @@ mswindows_drain_windows_queue ()
 {
   MSG msg;
   while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
-    DispatchMessage (&msg);
+    {
+      DispatchMessage (&msg);
+      if (!NILP (mswindows_error_caught_by_event_pump))
+	{
+	  /* Got an error while messages were pumped while
+	     in window procedure - have to resignal */
+	  Lisp_Object sym = XCAR (mswindows_error_caught_by_event_pump);
+	  Lisp_Object data = XCDR (mswindows_error_caught_by_event_pump);
+	  mswindows_error_caught_by_event_pump = Qnil;
+	  Fsignal (sym, data);
+	}
+    }
+}
+
+/* 
+ * This is a special flavour of the mswindows_need_event function,
+ * used while in event pump. Actually, there is only kind of events
+ * allowed while in event pump: a timer.  An attempt to fetch any
+ * other event leads to a dealock, as there's no source of user input
+ * ('cause event pump mirrors windows modal loop, which is a sole
+ * owner of thread message queue).
+ *
+ * To detect this, we use a counter of active timers, and allow
+ * fetching WM_TIMER messages. Instead of trying to fetch a WM_TIMER
+ * which will never come when there are no pending timers, which leads
+ * to deadlock, we simply signal an error.
+ *
+ * The implementation does not honor user_p by design.
+ */
+static void
+mswindows_need_event_in_event_pump (int user_p, int badly_p)
+{
+  MSG msg;
+
+  /* Check if already have one */
+  if (!NILP (mswindows_u_dispatch_event_queue)
+      || !NILP (mswindows_s_dispatch_event_queue))
+    return;
+
+  /* No event is ok */
+  if (!badly_p)
+    return;
+
+  /* We do not check the _u_ queue, because timers go to _s_ */
+  while (NILP (mswindows_s_dispatch_event_queue))
+    {
+      /* We'll deadlock if go waiting */
+      if (mswindows_pending_timers_count == 0)
+	error ("Deadlock due to an attempt to call next-event in a wrong context");
+      
+      /* Fetch and dispatch any pending timers */
+      GetMessage (&msg, NULL, WM_TIMER, WM_TIMER);
+      DispatchMessage (&msg);
+    }
 }
 
 /*
@@ -304,6 +462,12 @@ static void
 mswindows_need_event (int user_p, int badly_p)
 {
   int active;
+
+  if (mswindows_in_event_pump)
+    {
+      mswindows_need_event_in_event_pump (user_p, badly_p);
+      return;
+    }
 
   /* Have to drain Windows message queue first, otherwise, we may miss
      quit char when called from quit_p */
@@ -373,6 +537,7 @@ emacs_mswindows_add_timeout (EMACS_TIME thyme)
     (EMACS_USECS (thyme) + 500) / 1000;
   if (milliseconds < 1)
     milliseconds = 1;
+  ++mswindows_pending_timers_count;
   return SetTimer (NULL, 0, milliseconds, mswindows_wm_timer_callback);
 }
 
@@ -383,6 +548,7 @@ emacs_mswindows_remove_timeout (int id)
   Lisp_Object emacs_event;
 
   KillTimer (NULL, id);
+  --mswindows_pending_timers_count;
 
   /* If there is a dispatch event generated by this
      timeout in the queue, we have to remove it too. */
@@ -572,6 +738,11 @@ vars_of_event_mswindows (void)
   mswindows_s_dispatch_event_queue = Qnil;
   staticpro (&mswindows_s_dispatch_event_queue);
   mswindows_s_dispatch_event_queue_tail = Qnil;
+
+  mswindows_error_caught_by_event_pump = Qnil;
+  staticpro (&mswindows_error_caught_by_event_pump);
+  mswindows_in_event_pump = 0;
+  mswindows_pending_timers_count = 0;
 
   mswindows_event_stream = xnew (struct event_stream);
 

@@ -586,8 +586,9 @@ The current value is assumed to be VALUE, unless UNBOUND is non-nil."
   (setq prompt (format "[%s] %s" (widget-type widget) prompt))
   (setq widget (widget-convert widget))
   (let ((answer (widget-apply widget :prompt-value prompt value unbound)))
-    (unless (widget-apply widget :match answer)
-      (error "Value does not match %S type." (car widget)))
+    (while (not (widget-apply widget :match answer))
+      (setq answer (signal 'error (list "Answer does not match type"
+					answer (widget-type widget)))))
     answer))
 
 (defun widget-get-sibling (widget)
@@ -1704,7 +1705,7 @@ If that does not exists, call the value of `widget-complete-field'."
 		      doc-text)
 		     buttons))))
 	  (t
-	   (error "Unknown escape `%c'" escape)))
+	   (signal 'error (list "Unknown escape" escape))))
     (widget-put widget :buttons buttons)))
 
 (defun widget-default-button-face-get (widget)
@@ -2434,7 +2435,7 @@ when he invoked the menu."
 			     (widget-create-child-value
 			      widget type (car (cdr chosen)))))))
 	       (t
-		(error "Unknown escape `%c'" escape)))))
+		(signal 'error (list "Unknown escape" escape))))))
      ;; Update properties.
      (and button child (widget-put child :button button))
      (and button (widget-put widget :buttons (cons button buttons)))
@@ -2614,7 +2615,7 @@ when he invoked the menu."
 		(unless chosen
 		  (widget-apply child :deactivate)))
 	       (t
-		(error "Unknown escape `%c'" escape)))))
+		(signal 'error (list "Unknown escape" escape))))))
      ;; Update properties.
      (when chosen
        (widget-put widget :choice type))
@@ -2898,7 +2899,7 @@ when he invoked the menu."
 				 widget type value))
 		  (setq child (widget-create-child widget type))))
 	       (t
-		(error "Unknown escape `%c'" escape)))))
+		(signal 'error (list "Unknown escape" escape))))))
      (widget-put widget
 		 :buttons (cons delete
 				(cons insert
@@ -3402,8 +3403,9 @@ It will read a directory name from the minibuffer when invoked."
 	(goto-char (point-min))
 	(let ((answer (read buffer)))
 	  (unless (eobp)
-	    (error "Junk at end of expression: %s"
-		   (buffer-substring (point) (point-max))))
+	    (signal 'error
+		    (list "Junk at end of expression"
+			  (buffer-substring (point) (point-max)))))
 	  answer)))))
 
 (define-widget 'restricted-sexp 'sexp

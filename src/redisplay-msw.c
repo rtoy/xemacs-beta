@@ -289,8 +289,10 @@ mswindows_output_blank (struct window *w, struct display_line *dl, struct rune *
       || !IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (bg_pmap)))
     bg_pmap = Qnil;
 
-  FillRect (FRAME_MSWINDOWS_DC (f), &rect,
-	    COLOR_INSTANCE_MSWINDOWS_BRUSH (XCOLOR_INSTANCE (cachel->background)));
+  /* #### This deals only with solid colors */
+  mswindows_update_gc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil,
+		       cachel->background, Qnil, Qnil);  
+  ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
 }
 
 
@@ -307,11 +309,13 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   struct face_cachel *cachel;
-  Lisp_Object font;
+  Lisp_Object font = Qnil;
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   HBRUSH brush;
   HDC hdc = FRAME_MSWINDOWS_DC (f);
   int real_char_p = (rb->type == RUNE_CHAR && rb->object.chr.ch != '\n');
+  char *p_char = NULL;
+  int n_char = 0;
   RECT rect = { xpos,
 		dl->ypos - dl->ascent,
 		xpos + width,
@@ -331,33 +335,37 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
       font = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
     }
 
-  /* Clear the area */
-  if (focus)
-    cachel = WINDOW_FACE_CACHEL (w,
-		get_builtin_face_cache_index (w, Vtext_cursor_face));
-  else if (!real_char_p)
-    cachel = WINDOW_FACE_CACHEL (w, rb->findex);
+  
+  if (focus && real_char_p)
+    {
+      p_char = (char*) &rb->object.chr.ch;
+      n_char = 1;
+    }
 
-  brush = COLOR_INSTANCE_MSWINDOWS_BRUSH (XCOLOR_INSTANCE (cachel->background));
-  FillRect (hdc, &rect, brush);
+  cachel = WINDOW_FACE_CACHEL (w,
+		get_builtin_face_cache_index (w, Vtext_cursor_face));
+  mswindows_update_gc (hdc, font, cachel->foreground,
+		       cachel->background, Qnil, Qnil);
+  ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE,
+	      &rect, p_char, n_char, NULL);
+
+  if (focus)
+    return;
+
+  InflateRect (&rect, -1, -1);
 
   if (real_char_p)
     {
-      /* XXX FIXME: Need to clip if dl->clip!=0. How rare is this case? */
-      /* Output the underlying character */
-      mswindows_update_gc (hdc, font, cachel->foreground,
-		     cachel->background, Qnil, Qnil);
-      TextOut(hdc, xpos, dl->ypos, (char*) &rb->object.chr.ch, 1);
+      p_char = (char*) &rb->object.chr.ch;
+      n_char = 1;
     }
 
-  if (!focus)
-    {
-      /* Draw hollow rectangle in cursor's background color */
-      cachel = WINDOW_FACE_CACHEL (w,
-		get_builtin_face_cache_index (w, Vtext_cursor_face));
-      brush = COLOR_INSTANCE_MSWINDOWS_BRUSH (XCOLOR_INSTANCE (cachel->background));
-      FrameRect (hdc, &rect, brush);
-    }
+  cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? rb->findex
+				   : get_builtin_face_cache_index (w, Vdefault_face)));
+  mswindows_update_gc (hdc, Qnil, cachel->foreground,
+		       cachel->background, Qnil, Qnil);
+  ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
+	      &rect, p_char, n_char, NULL);
 }
 
 
@@ -437,51 +445,82 @@ mswindows_output_string (struct window *w, struct display_line *dl,
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
       struct Lisp_Font_Instance *fi = XFONT_INSTANCE (font);
       int this_width;
-      int need_clipping;
       RECT rect = { clip_start, dl->ypos - dl->ascent,
 		    clip_end, dl->ypos + dl->descent - dl->clip };
-      HRGN region;
 
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
       mswindows_update_gc (hdc, font, cachel->foreground,
-		     cachel->background, Qnil, Qnil);
+			   NILP(bg_pmap) ? cachel->background : Qnil,
+			   Qnil, Qnil);
 
       this_width = mswindows_text_width_single_run (hdc, cachel, runs + i);
-      need_clipping = (dl->clip || clip_start > xpos ||
-		       clip_end < xpos + this_width);
 
-      if (need_clipping)
-	{
-	  region = CreateRectRgn (rect.left, rect.top,
-				  rect.right, rect.bottom);
-	  SelectClipRgn (hdc, region);
-	}
-
-      /* TextOut only clears the area equal to the height of
-	 the given font.  It is possible that a font is being displayed
-	 on a line taller than it is, so this would cause us to fail to
-	 clear some areas. */
-      if (fi->ascent < dl->ascent || fi->descent < dl->descent-dl->clip)
-	FillRect (hdc, &rect,
-		  COLOR_INSTANCE_MSWINDOWS_BRUSH (XCOLOR_INSTANCE (cachel->background)));
+      /* #### bg_pmap should be output here */
 
       assert (runs[i].dimension == 1);	/* XXX FIXME */
-      TextOut(hdc, xpos, dl->ypos, (char *) runs[i].ptr, runs[i].len);
+      ExtTextOut (hdc, xpos, dl->ypos,
+		  NILP(bg_pmap) ? ETO_CLIPPED | ETO_OPAQUE : ETO_CLIPPED,
+		  &rect, (char *) runs[i].ptr, runs[i].len, NULL); 
 
       /* XXX FIXME? X does underline/strikethrough here
 	 we will do it as part of face's font */
 
-      if (need_clipping)
-	{
-	  SelectClipRgn (hdc, NULL);
-	  DeleteObject (region);
-	}
-
       xpos += this_width;
     }
 }
+
+
+#ifdef HAVE_SCROLLBARS
+/*
+ * This function paints window's deadbox, a rectangle between window
+ * borders and two short edges of both scrollbars.
+ *
+ * Function checks whether deadbox intersects with the rectangle pointed
+ * to by PRC, and paints only the intersection
+ */
+static void
+mswindows_redisplay_deadbox_maybe (CONST struct window *w,
+					      CONST RECT* prc)
+{
+  int sbh = window_scrollbar_height (w);
+  int sbw = window_scrollbar_width (w);
+  RECT rect_dead, rect_paint;
+  struct frame *f;
+  if (sbh == 0 || sbw == 0)
+    return;
+
+  f = XFRAME (WINDOW_FRAME (w));
+  if (f->scrollbar_on_left)
+    {
+      rect_dead.left = WINDOW_LEFT (w);
+      rect_dead.right = WINDOW_LEFT (w) + sbw;
+    }
+  else
+    {
+      rect_dead.left = WINDOW_RIGHT (w) - sbw;
+      rect_dead.right = WINDOW_RIGHT (w);
+    }
+
+  if (f->scrollbar_on_top)
+    {
+      rect_dead.top = WINDOW_TOP (w);
+      rect_dead.bottom = WINDOW_TOP (w) + sbh;
+    }
+  else
+    {
+      int modh = window_modeline_height (w);
+      rect_dead.top = WINDOW_BOTTOM (w) - modh - sbh;
+      rect_dead.bottom = WINDOW_BOTTOM (w) - modh;
+    }
+      
+  if (IntersectRect (&rect_paint, &rect_dead, prc))
+    FillRect (FRAME_MSWINDOWS_DC (f), &rect_paint,
+	      (HBRUSH)GetClassLong (FRAME_MSWINDOWS_HANDLE(f), GCL_HBRBACKGROUND));
+}
+
+#endif /* HAVE_SCROLLBARS */
 
 /*****************************************************************************
  mswindows_redraw_exposed_window
@@ -497,8 +536,11 @@ mswindows_redraw_exposed_window (struct window *w, int x, int y, int width,
 {
   struct frame *f = XFRAME (w->frame);
   int line;
-  int start_x, start_y, end_x, end_y;
   int orig_windows_structure_changed;
+  RECT rect_window = { WINDOW_LEFT (w), WINDOW_TOP (w),
+		       WINDOW_RIGHT (w), WINDOW_BOTTOM (w) };
+  RECT rect_expose = { x, y, x + width, y + height };
+  RECT rect_draw;
 
   display_line_dynarr *cdla = window_display_lines (w, CURRENT_DISP);
 
@@ -514,23 +556,13 @@ mswindows_redraw_exposed_window (struct window *w, int x, int y, int width,
     }
 
   /* If the window doesn't intersect the exposed region, we're done here. */
-  if (x >= WINDOW_RIGHT (w) || (x + width) <= WINDOW_LEFT (w)
-      || y >= WINDOW_BOTTOM (w) || (y + height) <= WINDOW_TOP (w))
-    {
+  if (!IntersectRect (&rect_draw, &rect_window, &rect_expose))
       return;
-    }
-  else
-    {
-      start_x = max (WINDOW_LEFT (w), x);
-      end_x = min (WINDOW_RIGHT (w), (x + width));
-      start_y = max (WINDOW_TOP (w), y);
-      end_y = min (WINDOW_BOTTOM (w), y + height);
 
-      /* We do this to make sure that the 3D modelines get redrawn if
-         they are in the exposed region. */
-      orig_windows_structure_changed = f->windows_structure_changed;
-      f->windows_structure_changed = 1;
-    }
+  /* We do this to make sure that the 3D modelines get redrawn if
+     they are in the exposed region. */
+  orig_windows_structure_changed = f->windows_structure_changed;
+  f->windows_structure_changed = 1;
 
   if (window_needs_vertical_divider (w))
     {
@@ -543,9 +575,9 @@ mswindows_redraw_exposed_window (struct window *w, int x, int y, int width,
       int top_y = cdl->ypos - cdl->ascent;
       int bottom_y = cdl->ypos + cdl->descent;
 
-      if (bottom_y >= start_y)
+      if (bottom_y >= rect_draw.top)
 	{
-	  if (top_y > end_y)
+	  if (top_y > rect_draw.bottom)
 	    {
 	      if (line == 0)
 		continue;
@@ -554,7 +586,8 @@ mswindows_redraw_exposed_window (struct window *w, int x, int y, int width,
 	    }
 	  else
 	    {
-	      output_display_line (w, 0, cdla, line, start_x, end_x);
+	      output_display_line (w, 0, cdla, line,
+				   rect_draw.left, rect_draw.right);
 	    }
 	}
     }
@@ -564,7 +597,11 @@ mswindows_redraw_exposed_window (struct window *w, int x, int y, int width,
   /* If there have never been any face cache_elements created, then this
      expose event doesn't actually have anything to do. */
   if (Dynarr_largest (w->face_cachels))
-    redisplay_clear_bottom_of_window (w, cdla, start_y, end_y);
+    redisplay_clear_bottom_of_window (w, cdla, rect_draw.top, rect_draw.bottom);
+
+#ifdef HAVE_SCROLLBARS
+  mswindows_redisplay_deadbox_maybe (w, &rect_expose);
+#endif
 }
 
 /*****************************************************************************
@@ -977,8 +1014,7 @@ mswindows_output_vertical_divider (struct window *w, int clear)
   /* Draw the divider line */
   color = WINDOW_FACE_CACHEL_BACKGROUND (w, MODELINE_INDEX);
   mswindows_update_gc(FRAME_MSWINDOWS_DC(f), Qnil, Qnil, color, Qnil, Qnil);
-  brush = COLOR_INSTANCE_MSWINDOWS_BRUSH (XCOLOR_INSTANCE (color));
-  FillRect (FRAME_MSWINDOWS_DC(f), &rect, brush);
+  ExtTextOut (FRAME_MSWINDOWS_DC(f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
   if (shadow_width)
     DrawEdge (FRAME_MSWINDOWS_DC(f), &rect,
 	      shadow_width==1 ? BDR_RAISEDINNER : EDGE_RAISED,
@@ -1092,17 +1128,21 @@ mswindows_clear_region (Lisp_Object locale, face_index findex, int x, int y,
 
       /* XX FIXME: Get brush from background_pixmap here */
       assert(0);
+      FillRect (FRAME_MSWINDOWS_DC(f), &rect, brush);
     }
   else
     {
       Lisp_Object color = (w ? WINDOW_FACE_CACHEL_BACKGROUND (w, findex) :
 			   FACE_BACKGROUND (Vdefault_face, locale));
-      brush = COLOR_INSTANCE_MSWINDOWS_BRUSH (XCOLOR_INSTANCE (color));
+      mswindows_update_gc(FRAME_MSWINDOWS_DC(f), Qnil, Qnil, color, Qnil, Qnil);
+      ExtTextOut (FRAME_MSWINDOWS_DC(f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
 
-  FillRect (FRAME_MSWINDOWS_DC(f), &rect, brush);
+#ifdef HAVE_SCROLLBARS
+  if (WINDOWP (locale))
+    mswindows_redisplay_deadbox_maybe (w, &rect);
+#endif
 }
-
 
 /*****************************************************************************
  mswindows_clear_to_window_end

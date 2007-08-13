@@ -33,6 +33,20 @@
 ;;; Code:
 
 
+(defgroup processes nil
+  "Process, subshell, compilation, and job control support."
+  :group 'external
+  :group 'development)
+
+(defgroup processes-basics nil
+  "Basic stuff dealing with processes."
+  :group 'processes)
+
+(defgroup execute nil
+  "Executing external commands."
+  :group 'processes)
+
+
 (defvar shell-command-switch "-c"
   "Switch used to have the shell execute its command line argument.")
 

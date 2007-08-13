@@ -29,6 +29,7 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Qkill_forward_chars;
 Lisp_Object Qself_insert_command;
+Lisp_Object Qno_self_insert;
 
 Lisp_Object Vblink_paren_function;
 
@@ -379,13 +380,31 @@ internal_self_insert (Emchar c1, int noautofill)
 
       if (WORD_SYNTAX_P (syntax_table, c2))
 	{
-	  /* int modiff = BUF_MODIFF (current_buffer); */
-	  Fexpand_abbrev ();
-	  /* We can't trust the value of Fexpand_abbrev,
-	     but if Fexpand_abbrev changed the buffer,
-	     assume it expanded something.  */
-	  /* if (BUF_MODIFF (buf) != modiff)
-	     hairy = 2; */
+	  Lisp_Object sym = Fexpand_abbrev ();
+
+	  /* Here FSFmacs remembers MODIFF, compares it after
+             Fexpand_abbrev() finishes, and updates HAIRY.
+
+	     A synch with Emacs 20.2.  I'm not sure if it's too bogus
+	     to copy, but I guess it can be useful.  If we expanded an
+	     abbrev which has a hook, and the hook has a non-nil
+	     `no-self-insert' property, return right away -- don't
+	     really self-insert.
+
+	     NOTE: we cannot simply check for Vlast_abbrev, because
+	     Fexpand_abbrev() can bail out before setting it to
+	     anything meaningful, leaving us stuck with an old value.
+	     Thus Fexpand_abbrev() was extended to return the actual
+	     abbrev symbol.  */
+	  if (!NILP (sym)
+	      && !NILP (symbol_function (XSYMBOL (sym)))
+	      && SYMBOLP (symbol_function (XSYMBOL (sym))))
+	    {
+	      Lisp_Object prop = Fget (symbol_function (XSYMBOL (sym)),
+				       Qno_self_insert, Qnil);
+	      if (!NILP (prop))
+		return;
+	    }
         }
     }
   if ((c1 == ' ' || c1 == '\n')
@@ -453,6 +472,7 @@ syms_of_cmds (void)
   defsymbol (&Qkill_forward_chars, "kill-forward-chars");
   defsymbol (&Qself_insert_command, "self-insert-command");
   defsymbol (&Qoverwrite_mode_binary, "overwrite-mode-binary");
+  defsymbol (&Qno_self_insert, "no-self-insert");
 
   DEFSUBR (Fforward_char);
   DEFSUBR (Fbackward_char);

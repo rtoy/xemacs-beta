@@ -424,7 +424,7 @@ chapters describe features of XEmacs Lisp that have counterparts in many
 programming languages, and later chapters describe features that are
 peculiar to XEmacs Lisp or relate specifically to editing.
 
-  This is edition 3.2.
+  This is edition 3.3.
 
 @menu
 * Caveats::             Flaws and a request for help.
@@ -859,8 +859,8 @@ author of many of the manual sections, in particular the XEmacs-specific
 sections: events, faces, extents, glyphs, specifiers, toolbar, menubars,
 scrollbars, dialog boxes, devices, consoles, hash tables, range tables,
 char tables, databases, and others.  The section on annotations was
-originally written by Chuck Thompson.  Corrections to v3.1 were done by
-Martin Buchholz, Steve Baur, and Hrvoje Niksic.
+originally written by Chuck Thompson.  Corrections to v3.1 and later were
+done by Martin Buchholz, Steve Baur, and Hrvoje Niksic.
 
   Corrections to the original GNU Emacs Lisp Reference Manual were
 supplied by Karl Berry, Jim Blandy, Bard Bloom, Stephane Boucher, David

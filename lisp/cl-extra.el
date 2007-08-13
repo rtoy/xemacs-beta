@@ -75,6 +75,13 @@ TYPE is a Common Lisp type specifier."
 	((and (eq type 'character) (stringp x) (= (length x) 1)) (aref x 0))
 	((and (eq type 'character) (symbolp x)) (coerce (symbol-name x) type))
 	((eq type 'float) (float x))
+	((eq type 'bit-vector) (if (bit-vector-p x) x
+				 (apply 'bit-vector (append x nil))))
+	((eq type 'weak-list)
+	 (if (weak-list-p x) x
+	   (let ((wl (make-weak-list)))
+	     (set-weak-list-list wl (if (listp x) x (append x nil)))
+	     wl)))
 	((typep x type) x)
 	(t (error "Can't coerce %s to type %s" x type))))
 
@@ -622,14 +629,8 @@ argument VECP, this copies vectors as well as conses."
 
 ;;; Property lists.
 
-(defun get* (sym tag &optional def)    ; See compiler macro in cl-macs.el
-  "Return the value of SYMBOL's PROPNAME property, or DEFAULT if none."
-  (or (get sym tag)
-      (and def
-	   (let ((plist (symbol-plist sym)))
-	     (while (and plist (not (eq (car plist) tag)))
-	       (setq plist (cdr (cdr plist))))
-	     (if plist (car (cdr plist)) def)))))
+;; XEmacs: our `get' groks DEFAULT.
+(defalias 'get* 'get)
 
 (defun getf (plist tag &optional def)
   "Search PROPLIST for property PROPNAME; return its value or DEFAULT.
@@ -683,9 +684,9 @@ The Common Lisp keywords :rehash-size and :rehash-threshold are ignored."
 
 (defun hash-table-p (x)
   "Return t if OBJECT is a hash table."
-  (or (eq (car-safe x) 'cl-hash-table-tag)
-      (and (vectorp x) (= (length x) 4) (eq (aref x 0) cl-lucid-hash-tag))
-      (and (fboundp 'hashtablep) (funcall 'hashtablep x))))
+  (or (and (fboundp 'hashtablep) (funcall 'hashtablep x))
+      (eq (car-safe x) 'cl-hash-table-tag)
+      (and (vectorp x) (= (length x) 4) (eq (aref x 0) cl-lucid-hash-tag))))
 
 (defun cl-not-hash-table (x &optional y &rest z)
   (signal 'wrong-type-argument (list 'hash-table-p (or y x))))

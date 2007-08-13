@@ -36,6 +36,11 @@
 
 ;;; Code:
 
+(defgroup lisp nil
+  "Lisp support, including Emacs Lisp."
+  :group 'languages
+  :group 'development)
+
 (defvar lisp-mode-syntax-table nil "")
 (defvar emacs-lisp-mode-syntax-table nil "")
 (defvar lisp-mode-abbrev-table nil "")
@@ -744,6 +749,7 @@ of the start of the containing expression."
 (put 'if 'lisp-indent-function 2)
 (put 'catch 'lisp-indent-function 1)
 (put 'condition-case 'lisp-indent-function 2)
+(put 'call-with-condition-handler 'lisp-indent-function 2)
 (put 'unwind-protect 'lisp-indent-function 1)
 (put 'save-current-buffer 'lisp-indent-function 0)
 (put 'with-current-buffer 'lisp-indent-function 1)

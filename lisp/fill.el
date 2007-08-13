@@ -38,20 +38,30 @@
 
 ;;; Code:
 
-(defconst fill-individual-varying-indent nil
+(defgroup fill nil
+  "Indenting and filling text."
+  :group 'editing)
+
+(defcustom fill-individual-varying-indent nil
   "*Controls criterion for a new paragraph in `fill-individual-paragraphs'.
 Non-nil means changing indent doesn't end a paragraph.
 That mode can handle paragraphs with extra indentation on the first line,
 but it requires separator lines between paragraphs.
-A value of nil means that any change in indentation starts a new paragraph.")
+A value of nil means that any change in indentation starts a new paragraph."
+  :type 'boolean
+  :group 'fill)
 
-(defconst sentence-end-double-space t
+(defcustom sentence-end-double-space t
   "*Non-nil means a single space does not end a sentence.
 This variable applies only to filling, not motion commands.  To
-change the behavior of motion commands, see `sentence-end'.")
+change the behavior of motion commands, see `sentence-end'."
+  :type 'boolean
+  :group 'fill)
 
-(defconst colon-double-space nil
-  "*Non-nil means put two spaces after a colon when filling.")
+(defcustom colon-double-space nil
+  "*Non-nil means put two spaces after a colon when filling."
+  :type 'boolean
+  :group 'fill)
 
 (defvar fill-paragraph-function nil
   "Mode-specific function to fill a paragraph, or nil if there is none.
@@ -71,21 +81,27 @@ reinserts the fill prefix in each resulting line."
       (message "fill-prefix: \"%s\"" fill-prefix)
     (message "fill-prefix cancelled")))
 
-(defconst adaptive-fill-mode t
-  "*Non-nil means determine a paragraph's fill prefix from its text.")
+(defcustom adaptive-fill-mode t
+  "*Non-nil means determine a paragraph's fill prefix from its text."
+  :type 'boolean
+  :group 'fill)
 
 ;; #### - this is still weak.  Yeah, there's filladapt, but this should
 ;; still be better...  --Stig
-(defconst adaptive-fill-regexp (purecopy "[ \t]*\\([#;>*]+ +\\)?")
+(defcustom adaptive-fill-regexp (purecopy "[ \t]*\\([#;>*]+ +\\)?")
   "*Regexp to match text at start of line that constitutes indentation.
 If Adaptive Fill mode is enabled, whatever text matches this pattern
 on the second line of a paragraph is used as the standard indentation
 for the paragraph.  If the paragraph has just one line, the indentation
-is taken from that line.")
+is taken from that line."
+  :type 'regexp
+  :group 'fill)
 
-(defvar adaptive-fill-function nil
+(defcustom adaptive-fill-function nil
   "*Function to call to choose a fill prefix for a paragraph.
-This function is used when `adaptive-fill-regexp' does not match.")
+This function is used when `adaptive-fill-regexp' does not match."
+  :type 'function
+  :group 'fill)
 
 ;; Added for kinsoku processing. Use this instead of 
 ;; (skip-chars-backward "^ \t\n")

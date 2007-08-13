@@ -136,6 +136,13 @@ Boston, MA 02111-1307, USA.  */
 #define XtCBackgroundToolBarColor "BackgroundToolBarColor"
 #endif
 
+#ifndef XtNforegroundToolBarColor
+#define XtNforegroundToolBarColor "foregroundToolBarColor"
+#endif
+#ifndef XtCForegroundToolBarColor
+#define XtCForegroundToolBarColor "ForegroundToolBarColor"
+#endif
+
 #ifndef XtNtopToolBarShadowPixmap
 #define XtNtopToolBarShadowPixmap "topToolBarShadowPixmap"
 #endif

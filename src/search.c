@@ -1923,8 +1923,7 @@ and you do not need to specify it.)
       Lisp_Object before, after;
 
       speccount = specpdl_depth ();
-      before = Fsubstring (string, make_int (0),
-			   make_int (search_regs.start[0]));
+      before = Fsubstring (string, Qzero, make_int (search_regs.start[0]));
       after = Fsubstring (string, make_int (search_regs.end[0]), Qnil);
 
       /* Do case substitution into NEWTEXT if desired.  */

@@ -91,26 +91,26 @@
 ;; (print (concat "Source directory: " source-directory))
 (require 'packages)
 
-;; We must have some lisp support at this point
-(packages-find-packages package-path t t)
-
 (let (preloaded-file-list)
- (load (concat default-directory "../lisp/dumped-lisp.el"))
- (setq preloaded-file-list
-       (append preloaded-file-list packages-hardcoded-lisp))
- (while preloaded-file-list
-   (let ((arg0 (packages-add-suffix (car preloaded-file-list)))
-	 arg)
-     (setq arg (locate-library arg0))
-     (if (null arg)
-	 (princ (format "Error:  dumped file %s does not exist\n" arg0))
-       (if (null (member arg processed))
-	   (progn
-	     (if (and (null docfile-out-of-date)
-		      (file-newer-than-file-p arg docfile))
-		 (setq docfile-out-of-date t))
-	     (setq processed (cons arg processed)))))
-     (setq preloaded-file-list (cdr preloaded-file-list)))))
+  (load (concat default-directory "../lisp/dumped-lisp.el"))
+  ;; Add package lisp directories to load-path (for autoloads)
+  ;; Add files dumped from lisp packages
+  (packages-find-packages package-path t t)
+  (setq preloaded-file-list
+	(append preloaded-file-list packages-hardcoded-lisp))
+  (while preloaded-file-list
+    (let ((arg0 (packages-add-suffix (car preloaded-file-list)))
+	  arg)
+      (setq arg (locate-library arg0))
+      (if (null arg)
+	  (princ (format "Error:  dumped file %s does not exist\n" arg0))
+	(if (null (member arg processed))
+	    (progn
+	      (if (and (null docfile-out-of-date)
+		       (file-newer-than-file-p arg docfile))
+		  (setq docfile-out-of-date t))
+	      (setq processed (cons arg processed)))))
+      (setq preloaded-file-list (cdr preloaded-file-list)))))
 
 ;; Finally process the list of site-loaded files.
 (if site-file-list

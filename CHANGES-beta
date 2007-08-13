@@ -1,24 +1,35 @@
 							-*- indented-text -*-
-to 20.4 beta11 "Beetal"
+to 20.5 beta12 "Bhuj"
+-- MS Windows NT patches courtesy of Jeff Sparkes and Kirill Katsnelson
+-- userlock.el is now unpackaged
+-- New file callers-of-rpt.el (dependency generator) courtesy of Karl Hegbloom
+-- Gnats is now packaged
+-- SKK is now packaged
+-- Egg/Its is now packaged
+-- FAQ update courtesy of Andreas Kaempf and Aki Vehtari
+-- 20.4 renumbered to 20.5
+-- Miscellaneous bug fixes
+
+to 20.5 beta11 "Beetal"
 -- Patches and bugfixes from Hrvoje Niksic and Kyle Jones
 -- MS Windows updates courtesy of Kirill Katsnelson and Jeff Sparkes
 -- Localized French menus courtesy of Olivier Galibert
 -- Localized Japanese menu update courtesy of IENAGA Kazuyuki
 -- Miscellaneous bug fixes
 
-to 20.4 beta10 "Barbari"
+to 20.5 beta10 "Barbari"
 -- MS Windows NT updates courtesy of Kirill M. Katsnelson
 -- etags.el update courtesy of Hrvoje Niksic
 -- Miscellaneous bug fixes
 
-to 20.4 beta9 "Australian Goat"
+to 20.5 beta9 "Australian Goat"
 -- MS Windows patches for clipboard courtesy of Jonathon Harris
 -- ImageMagick support displays images now courtesy of Jareth Hein
 -- Untested support for kWnn and cWnn (Korean and Chinese input with Egg and
    Wnn added).
 -- Miscellaneous bug fixes
 
-to 20.4 beta8 "Arapawa Island"
+to 20.5 beta8 "Arapawa Island"
 -- build-report 1.35 courtesy of Adrian Aichner
 -- MS Windows stuffs from David Hobley, Jonathon Harris, August Hill,
    Jeff Sparkes
@@ -31,7 +42,7 @@ to 20.4 beta8 "Arapawa Island"
 -- Fixes to x-menubar.el to guard against possibly absent packages
 -- Miscellaneous bug fixes
 
-to 20.4 beta7 "Appenzell"
+to 20.5 beta7 "Appenzell"
 -- Miscellaneous MS Windows patches from David Hobley and Jeff Sparkes
 -- ImageMagick is not autodetected by configure courtesy of IENAGA Kazuyuki
 -- (broken) energize support has been removed courtesy of Jeff Miller
@@ -226,7 +237,7 @@ to 20.4 beta7 "Appenzell"
 -- autoconf-mode.el has been packaged
 -- Miscellaneous bug fixes
 
-to 20.4 beta6 "Angora"
+to 20.5 beta6 "Angora"
 -- New package-path syntax.  A null package indicates where the default lisp
    should go.  This allows specifying packages that must be appended to the
    package path.  Courtesy of Colin Rafferty
@@ -242,14 +253,14 @@ to 20.4 beta6 "Angora"
 -- Toolbar improvements courtesy of Kyle Jones
 -- Miscellaneous bug fixes
 
-to 20.4 beta5 "Anglo-Nubian"
+to 20.5 beta5 "Anglo-Nubian"
 -- CCL synched with Emacs 20.2 courtesy of Olivier Galibert
 -- various updates from Hrvoje Niksic and Kyle Jones
 -- MS Windows updates from Marc Paquette and Jonathon Harris
 -- FAQ update courtesy of Andreas Kaempf
 -- miscellaneous bug fixes
 
-to 20.4 beta4 "American Cashmere"
+to 20.5 beta4 "American Cashmere"
 -- Major changes in portable dumping/Lisp_Object code courtesy of Kyle Jones
 -- Miscellaneous patches from Kyle Jones, Hrvoje Niksic
 -- various build tweaks
@@ -260,7 +271,7 @@ to 20.4 beta4 "American Cashmere"
 -- New Lisp variable:  last-command-event-time courtesy of Kyle Jones
 -- miscellaneous bug fixes
 
-to 20.4 beta3 "Altai Mountain"
+to 20.5 beta3 "Altai Mountain"
 -- query-replace and query-replace-regexp will only replace the region if the
    zmacs region is active.
 -- iso-acc.el has been packaged
@@ -315,7 +326,7 @@ to 20.4 beta3 "Altai Mountain"
 -- Elimination of broken VMS code courtesy of Andreas Jaeger
 -- Miscellaneous bug fixes
 
-to 20.4 beta2 "Alpine"
+to 20.5 beta2 "Alpine"
 -- hm--html-mode has been packaged
 -- viper has been packaged
 -- ediff has been packaged
@@ -381,7 +392,7 @@ to 20.4 beta2 "Alpine"
 -- Hrvoje Niksic updates
 -- Miscellaneous bug fixes
 
-to 20.4 beta1 "Century"
+to 20.5 beta1 "Century"
 -- Version fork, package work will be carried on in this branch
 -- Miscellaneous bug fixes
 

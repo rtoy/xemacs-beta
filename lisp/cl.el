@@ -151,7 +151,7 @@ a future Emacs interpreter will be able to use it.")
 (defun eql (a b)    ; See compiler macro in cl-macs.el
   "T if the two args are the same Lisp object.
 Floating-point numbers of equal value are `eql', but they may not be `eq'."
-  (if (numberp a)
+  (if (floatp a)
       (equal a b)
     (eq a b)))
 
@@ -165,6 +165,8 @@ PLACE may be a symbol, or any generalized variable allowed by `setf'.
 The return value is the incremented value of PLACE."
   (if (symbolp place)
       (list 'setq place (if x (list '+ place x) (list '1+ place)))
+    ;; XEmacs byte-compiler optimizes (+ FOO 1) to (1+ FOO), so this
+    ;; is OK.
     (list 'callf '+ place (or x 1))))
 
 (defmacro decf (place &optional x)
@@ -223,8 +225,12 @@ Keywords supported:  :test :test-not :key"
 
 ;;; Control structures.
 
-;;; These macros are so simple and so often-used that it's better to have
-;;; them all the time than to load them from cl-macs.el.
+;; These macros are so simple and so often-used that it's better to have
+;; them all the time than to load them from cl-macs.el.
+
+;; NOTE: these macros were moved to subr.el in FSF 20.  It is of no
+;; consequence to XEmacs, because we preload this file, and they
+;; should better remain here.
 
 (defmacro when (cond &rest body)
   "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
@@ -235,8 +241,12 @@ Keywords supported:  :test :test-not :key"
   (cons 'if (cons cond (cons nil body))))
 
 (defun cl-map-extents (&rest cl-args)
-  (if (fboundp 'next-overlay-at) (apply 'cl-map-overlays cl-args)
-    (if (fboundp 'map-extents) (apply 'map-extents cl-args))))
+  ;; XEmacs: This used to check for overlays first, but that's wrong
+  ;; because of the new compatibility library.  *duh*
+  (cond ((fboundp 'map-extents)
+	 (apply 'map-extents cl-args))
+	((fboundp 'next-overlay-at)
+	 (apply 'cl-map-overlays cl-args))))
 
 
 ;;; Blocks and exits.
@@ -325,7 +335,10 @@ definitions to shadow the loaded ones for use in file byte-compilation."
   "T if OBJECT is a floating point number.
 On Emacs versions that lack floating-point support, this function
 always returns nil."
-  (and (numberp x) (not (integerp x))))
+  ;;(and (numberp x) (not (integerp x)))
+  ;; XEmacs: use floatp.  XEmacs is always compiled with
+  ;; floating-point, anyway.
+  (floatp x))
 
 (defun plusp (x)
   "T if NUMBER is positive."

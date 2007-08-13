@@ -716,21 +716,37 @@ static CONST colormap_t mswindows_X_color_map[] =
   {"White"			, PALETTERGB (255,255,255)}
 };
 
+static int
+hexval (char c) 
+{
+  if (c >= 'a' && c <= 'f')
+    return c-'a' + 10;
+  return c-'0';
+}
+
+    
 static COLORREF
 mswindows_string_to_color(CONST char *name)
 {
-  int color, i;
-
+  int i;
+  unsigned int r, g, b;
+  
   if (*name == '#')
   {
-    /* mswindows numeric names look like "#BBGGRR" */
+    /* numeric names look like "#RRGGBB" */
+    /* XXX accept other formats? */
     if (strlen(name)!=7)
       return (-1);
     for (i=1; i<7; i++)
-      if (!isxdigit(name[i]))
-	return(-1);
-    if (sscanf(name+1, "%x", &color) == 1)
-      return(0x02000000 | color);	/* See PALETTERGB in docs */
+      {
+	if (!isxdigit(name[i]))
+	  return(-1);
+	name[i] = tolower(name[i]);
+      }
+    r = hexval(name[1]) * 16 + hexval(name[2]);
+    g = hexval(name[3]) * 16 + hexval(name[4]);
+    b = hexval(name[5]) * 16 + hexval(name[6]);
+    return (PALETTERGB (r, g, b));
   }
   else
   {
@@ -774,8 +790,8 @@ mswindows_print_color_instance (struct Lisp_Color_Instance *c,
 {
   char buf[32];
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
-  sprintf (buf, " %06ld=(%02X,%02X,%02X)", color & 0xffffff,
-	   GetRValue(color), GetGValue(color), GetBValue(color));
+  sprintf (buf, " %06ld=(%04X,%04X,%04X)", color & 0xffffff,
+	   GetRValue(color)<<8, GetGValue(color)<<8, GetBValue(color)<<8);
   write_c_string (buf, printcharfun);
 }
 
@@ -808,9 +824,9 @@ static Lisp_Object
 mswindows_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 {
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
-  return (list3 (make_int (GetRValue(color)),
-		 make_int (GetGValue(color)),
-		 make_int (GetBValue(color))));
+  return (list3 (make_int (GetRValue(color)<<8),
+		 make_int (GetGValue(color)<<8),
+		 make_int (GetBValue(color)<<8)));
 }
 
 static int

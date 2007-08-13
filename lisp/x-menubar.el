@@ -237,7 +237,7 @@
 	(setq lpr-switches
 	      (read-expression "Switches for `lpr'/`lp': "
 			       (format "%S" lpr-switches)))
-	(fboundp 'lpr-buffer)]
+	(boundp 'lpr-switches)]
        ("Pretty-Print Paper Size"
 	["Letter"
 	 (setq ps-paper-type 'letter)

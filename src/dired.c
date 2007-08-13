@@ -302,6 +302,7 @@ file_name_completion_unwind (Lisp_Object unwind_obj)
   d = (DIR *)get_opaque_ptr (obj);
   closedir (d);
   free_opaque_ptr (obj);
+  free_cons (XCONS (unwind_obj));
   return Qnil;
 }
 
@@ -351,7 +352,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
      call closedir, but it was wrong, because it made sane handling of
      QUIT impossible and, besides, various utility functions like
      regexp_ignore_completion_p can signal errors.  */
-  unwind_closure = Fcons (Qnil, Qnil);
+  unwind_closure = noseeum_cons (Qnil, Qnil);
   record_unwind_protect (file_name_completion_unwind, unwind_closure);
 
   for (passcount = !!all_flag; NILP (bestmatch) && passcount < 2; passcount++)
@@ -527,7 +528,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
     return bestmatch;
   if (matchcount == 1 && bestmatchsize == file_name_length)
     return Qt;
-  return Fsubstring (bestmatch, make_int (0), make_int (bestmatchsize));
+  return Fsubstring (bestmatch, Qzero, make_int (bestmatchsize));
 }
 
 

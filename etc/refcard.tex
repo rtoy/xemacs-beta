@@ -52,8 +52,8 @@
 % If there were room, it would be nice to see a section on Dired.
 
 \def\versionnumber{2.0 XEmacs}
-\def\year{1995}
-\def\version{February \year\ v\versionnumber}
+\def\year{1998}
+\def\version{April \year\ v\versionnumber}
 
 \def\shortcopyrightnotice{\vskip 1ex plus 2 fill
   \centerline{\small \copyright\ \year\ Free Software Foundation, Inc.
@@ -71,7 +71,8 @@ this card provided the copyright notice and this permission notice
 are preserved on all copies.
 
 For copies of the GNU Emacs manual, write to the Free Software
-Foundation, Inc., 675 Massachusetts Ave, Cambridge MA 02139.
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+USA.
 
 \endgroup}
 
@@ -79,8 +80,8 @@ Foundation, Inc., 675 Massachusetts Ave, Cambridge MA 02139.
 % can be scanned without complaint.
 \def\bye{\par\vfill\supereject\end}
 
-\newdimen\intercolumnskip	%horizontal space between columns
-\newbox\columna			%boxes to hold columns already built
+\newdimen\intercolumnskip       %horizontal space between columns
+\newbox\columna                 %boxes to hold columns already built
 \newbox\columnb
 
 \def\ncolumns{\the\columnsperpage}
@@ -92,7 +93,7 @@ Foundation, Inc., 675 Massachusetts Ave, Cambridge MA 02139.
 
 % This multi-way format was designed by Stephen Gildea October 1986.
 % Note that the 1-column format is fontfamily-independent.
-\if 1\ncolumns			%one-column format uses normal size
+\if 1\ncolumns                  %one-column format uses normal size
   \hsize 4in
   \vsize 10in
   \voffset -.7in
@@ -103,7 +104,7 @@ Foundation, Inc., 675 Massachusetts Ave, Cambridge MA 02139.
 
   \footline{\hss\folio}
   \def\makefootline{\baselineskip10pt\hsize6.5in\line{\the\footline}}
-\else				%2 or 3 columns uses prereduced size
+\else                           %2 or 3 columns uses prereduced size
   \hsize 3.2in
   \vsize 7.95in
   \hoffset -.75in
@@ -128,7 +129,7 @@ Foundation, Inc., 675 Massachusetts Ave, Cambridge MA 02139.
   \normalbaselineskip=.8\normalbaselineskip
   \normallineskip=.8\normallineskip
   \normallineskiplimit=.8\normallineskiplimit
-  \normalbaselines\rm		%make definitions take effect
+  \normalbaselines\rm           %make definitions take effect
 
   \if 2\ncolumns
     \let\maxcolumn=b
@@ -144,16 +145,16 @@ Foundation, Inc., 675 Massachusetts Ave, Cambridge MA 02139.
 
   \intercolumnskip=.46in
   \def\abc{a}
-  \output={%			%see The TeXbook page 257
+  \output={%                    %see The TeXbook page 257
       % This next line is useful when designing the layout.
       %\immediate\write16{Column \folio\abc\space starts with \firstmark}
       \if \maxcolumn\abc \multicolumnformat \global\def\abc{a}
       \else\if a\abc
-	\global\setbox\columna\columnbox \global\def\abc{b}
+        \global\setbox\columna\columnbox \global\def\abc{b}
         %% in case we never use \columnb (two-column mode)
         \global\setbox\columnb\hbox to -\intercolumnskip{}
       \else
-	\global\setbox\columnb\columnbox \global\def\abc{c}\fi\fi}
+        \global\setbox\columnb\columnbox \global\def\abc{c}\fi\fi}
   \def\multicolumnformat{\shipout\vbox{\makeheadline
       \hbox{\box\columna\hskip\intercolumnskip
         \box\columnb\hskip\intercolumnskip\columnbox}
@@ -212,7 +213,7 @@ Foundation, Inc., 675 Massachusetts Ave, Cambridge MA 02139.
 \def\<#1>{{\it #1\/}}
 
 % kbd - argument is characters typed literally.  Like the Texinfo command.
-\def\kbd#1{{\tt#1}\null}	%\null so not an abbrev even if period follows
+\def\kbd#1{{\tt#1}\null}        %\null so not an abbrev even if period follows
 
 % beginexample...endexample - surrounds literal text, such a code example.
 % typeset in a typewriter font with line breaks preserved
@@ -253,7 +254,7 @@ Foundation, Inc., 675 Massachusetts Ave, Cambridge MA 02139.
 
 \title{XEmacs Reference Card}
 
-\centerline{(for version 19)}
+\centerline{(for version 20.5+)}
 
 \section{Starting Emacs}
 

@@ -34,6 +34,10 @@
 
 ;;; Code:
 
+(defgroup menu nil
+  "Input from the menus."
+  :group 'environment)
+
 (defvar default-menubar nil)
 
 ;; this function is considered "part of the lexicon" by many,

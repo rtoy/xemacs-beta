@@ -2,7 +2,7 @@
 static char * replace[] = {
 "33 33 2 1",
 "X	c Gray75 s backgroundToolBarColor",
-"o	c black",
+"o	c black s foregroundToolBarColor",
 "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
 "XXXXXXXXXooXXXXooooXXXXXXXXXXXXXX",

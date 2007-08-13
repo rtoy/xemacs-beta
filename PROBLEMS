@@ -1,7 +1,7 @@
 -*- mode:outline; minor-mode:outl-mouse -*-
 This file describes various problems that have been encountered
 in compiling, installing and running XEmacs.  It has been updated for
-XEmacs 20.3.
+XEmacs 20.5.
 
 This file is large, but we have tried to sort the entries by their
 respective relevance for XEmacs, but may have not succeeded completely
@@ -241,7 +241,7 @@ The comments at the top of emacskeys.sco describe its function, and
 the emacstrs.sco is a suitable candidate for /usr/lib/keyboard/strings
 to take advantage of the keyboard map in emacskeys.sco.
 
-Note: Much of the above entry is probably not valid for XEmacs 20.3
+Note: Much of the above entry is probably not valid for XEmacs 20.5
 and later.
 
 ** Under some versions of OSF XEmacs runs fine if built without
@@ -814,7 +814,7 @@ Richard Cognot <cognot@ensg.u-nancy.fr> writes:
   delayed until mid-june ;-). I think this problem will be an FAQ soon
   after the release otherwise.
 
-Note: The above entry is probably not valid for XEmacs 20.3 and
+Note: The above entry is probably not valid for XEmacs 20.5 and
 later.
 
 ** When Emacs tries to ring the bell, you get an error like

@@ -33,6 +33,11 @@
 
 ;;; Code:
 
+(defgroup keyboard nil
+  "Input from the keyboard."
+  :group 'environment)
+
+
 ;; created by C code
 (defvar global-map (current-global-map) "\
 Default global keymap mapping XEmacs keyboard input into commands.

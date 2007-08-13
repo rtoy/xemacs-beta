@@ -692,7 +692,7 @@ when reading the arguments.
 	      Lisp_Object tem = call4 (Qread_file_name, PROMPT (),
 				       Qnil, /* dir */
 				       Qnil, /* default */
-				       make_int (0) /* must-match */
+				       Qzero /* must-match */
 				       );
               args[argnum] = tem;
 	      arg_from_tty = 1;

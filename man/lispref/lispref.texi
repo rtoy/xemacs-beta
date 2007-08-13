@@ -16,6 +16,7 @@ GNU Emacs Lisp Reference Manual v2.4, June 1995
 XEmacs Lisp Programmer's Manual (for 19.13) Third Edition, July 1995
 XEmacs Lisp Reference Manual (for 19.14 and 20.0) v3.1, March 1996
 XEmacs Lisp Reference Manual (for 19.15 and 20.1, 20.2, 20.3) v3.2, April, May, November 1997
+XEmacs Lisp Reference Manual (for 20.5) v3.3, April 1998
 @c Please REMEMBER to update edition number in *four* places in this file
 @c                 and also in *one* place in intro.texi
 
@@ -75,7 +76,7 @@ instead of in the original English.
 @c and also in the file intro.texi.
 @c This manual documents XEmacs 19.14 and 20.0 and was based on the
 @c documentation for FSF Emacs 19.29 (v2.4).
-@subtitle Version 3.2 (for XEmacs 19.15 and 20.1, 20.2, 20.3), April, May, November 1997
+@subtitle Version 3.3 (for XEmacs 20.5), April 1998
 
 @author by Ben Wing
 @author
@@ -88,9 +89,9 @@ Copyright @copyright{} 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundati
 Copyright @copyright{} 1994, 1995 Sun Microsystems, Inc.
 Copyright @copyright{} 1995, 1996 Ben Wing.
 @sp 2
-Version 3.2 @*
-Revised for XEmacs Versions 19.15 and 20.1, 20.2, 20.3,@*
-April, May 1997.@*
+Version 3.3 @*
+Revised for XEmacs Versions 20.5,@*
+April 1998.@*
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -117,7 +118,7 @@ Cover art by Etienne Suvasa.
 
 @ifinfo
 This Info file contains the third edition of the XEmacs Lisp
-Reference Manual, corresponding to XEmacs versions 19.15 and 20.1.
+Reference Manual, corresponding to XEmacs version 20.5.
 @end ifinfo
 
 @menu

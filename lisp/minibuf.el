@@ -41,7 +41,7 @@
 ;;; Code:
 
 (defgroup minibuffer nil
-  "Minibuffer customizations"
+  "Controling the behaviour of the minibuffer."
   :group 'environment)
 
 

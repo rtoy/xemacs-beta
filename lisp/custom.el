@@ -114,12 +114,11 @@ not using the standard setting.  Otherwise, use the `set-default'."
     (while args 
       (let ((arg (car args)))
 	(setq args (cdr args))
-	(unless (symbolp arg)
-	  (error "Junk in args %S" args))
+	(check-argument-type 'keywordp arg)
 	(let ((keyword arg)
 	      (value (car args)))
 	  (unless args
-	    (error "Keyword %s is missing an argument" keyword))
+	    (signal 'error (list "Keyword is missing an argument" keyword)))
 	  (setq args (cdr args))
 	  (cond ((eq keyword :initialize)
 		 (setq initialize value))
@@ -247,12 +246,11 @@ information."
   (while args
     (let ((arg (car args)))
       (setq args (cdr args))
-      (unless (symbolp arg)
-	(error "Junk in args %S" args))
+      (check-argument-type 'keywordp arg)
       (let ((keyword arg)
 	    (value (car args)))
 	(unless args
-	  (error "Keyword %s is missing an argument" keyword))
+	  (signal 'error (list "Keyword is missing an argument" keyword)))
 	(setq args (cdr args))
 	(cond ((eq keyword :prefix)
 	       (put symbol 'custom-prefix value))
@@ -308,12 +306,11 @@ Third argument TYPE is the custom option type."
   (while args 
     (let ((arg (car args)))
       (setq args (cdr args))
-      (unless (symbolp arg)
-	(error "Junk in args %S" args))
+      (check-argument-type 'keywordp arg)
       (let ((keyword arg)
 	    (value (car args)))
 	(unless args
-	  (error "Keyword %s is missing an argument" keyword))
+	  (signal 'error (list "Keyword is missing an argument" keyword)))
 	(setq args (cdr args))
 	(custom-handle-keyword symbol keyword value type)))))  
 
@@ -331,7 +328,7 @@ Fourth argument TYPE is the custom option type."
 	((eq keyword :tag)
 	 (put symbol 'custom-tag value))
 	(t
-	 (error "Unknown keyword %s" symbol))))  
+	 (signal 'error (list "Unknown keyword" keyword)))))
 
 (defun custom-add-option (symbol option)
   "To the variable SYMBOL add OPTION.

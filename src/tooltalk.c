@@ -327,7 +327,7 @@ This function is the process handler for the ToolTalk connection process.
   UNGCPRO;
 
   /* see comment in event-stream.c about this return value. */
-  return make_int (0);
+  return Qzero;
 }
 
 static Tt_callback_action

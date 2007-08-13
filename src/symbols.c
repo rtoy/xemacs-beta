@@ -366,13 +366,15 @@ hash_string (CONST Bufbyte *ptr, Bytecount len)
   return hash & 07777777777;
 }
 
+/* Map FN over OBARRAY.  The mapping is stopped when FN returns a
+   non-zero value.  */
 void
 map_obarray (Lisp_Object obarray,
-	     void (*fn) (Lisp_Object sym, Lisp_Object arg),
-	     Lisp_Object arg)
+	     int (*fn) (Lisp_Object, void *), void *arg)
 {
   REGISTER int i;
   Lisp_Object tail;
+
   CHECK_VECTOR (obarray);
   for (i = XVECTOR_LENGTH (obarray) - 1; i >= 0; i--)
     {
@@ -381,7 +383,8 @@ map_obarray (Lisp_Object obarray,
 	while (1)
 	  {
 	    struct Lisp_Symbol *next;
-	    (*fn) (tail, arg);
+	    if ((*fn) (tail, arg))
+	      return;
 	    next = symbol_next (XSYMBOL (tail));
 	    if (!next)
 	      break;
@@ -390,10 +393,11 @@ map_obarray (Lisp_Object obarray,
     }
 }
 
-static void
-mapatoms_1 (Lisp_Object sym, Lisp_Object function)
+static int
+mapatoms_1 (Lisp_Object sym, void *arg)
 {
-  call1 (function, sym);
+  call1 (*(Lisp_Object *)arg, sym);
+  return 0;
 }
 
 DEFUN ("mapatoms", Fmapatoms, 1, 2, 0, /*
@@ -406,7 +410,7 @@ OBARRAY defaults to the value of `obarray'.
     obarray = Vobarray;
   obarray = check_obarray (obarray);
 
-  map_obarray (obarray, mapatoms_1, function);
+  map_obarray (obarray, mapatoms_1, &function);
   return Qnil;
 }
 
@@ -415,41 +419,48 @@ OBARRAY defaults to the value of `obarray'.
 /*                              Apropos				      */
 /**********************************************************************/
 
-static void
-apropos_accum (Lisp_Object symbol, Lisp_Object arg)
-{
-  Lisp_Object tem;
-  Lisp_Object string = XCAR (arg);
-  Lisp_Object predicate = XCAR (XCDR (arg));
-  Lisp_Object *accumulation = &(XCDR (XCDR (arg)));
+struct appropos_mapper_closure {
+  Lisp_Object regexp;
+  Lisp_Object predicate;
+  Lisp_Object accumulation;
+};
 
-  tem = Fstring_match (string, Fsymbol_name (symbol), Qnil,
-		       /* #### current-buffer dependence is bogus. */
-		       Fcurrent_buffer ());
-  if (!NILP (tem) && !NILP (predicate))
-    tem = call1 (predicate, symbol);
-  if (!NILP (tem))
-    *accumulation = Fcons (symbol, *accumulation);
+static int
+apropos_mapper (Lisp_Object symbol, void *arg)
+{
+  struct appropos_mapper_closure *closure =
+    (struct appropos_mapper_closure *)arg;
+  Lisp_Object acceptp = Qt;
+  Bytecount match = fast_lisp_string_match (closure->regexp,
+					    Fsymbol_name (symbol));
+  if (match < 0)
+    acceptp = Qnil;
+  else if (!NILP (closure->predicate))
+    acceptp = call1 (closure->predicate, symbol);
+
+  if (!NILP (acceptp))
+    closure->accumulation = Fcons (symbol, closure->accumulation);
+  return 0;
 }
 
 DEFUN ("apropos-internal", Fapropos_internal, 1, 2, 0, /*
 Show all symbols whose names contain match for REGEXP.
-If optional 2nd arg PRED is non-nil, (funcall PRED SYM) is done
+If optional 2nd arg PREDICATE is non-nil, (funcall PRED SYM) is done
 for each symbol and a symbol is mentioned only if that returns non-nil.
 Return list of symbols found.
 */
-       (string, pred))
+       (regexp, predicate))
 {
-  struct gcpro gcpro1;
-  Lisp_Object accumulation;
+  struct appropos_mapper_closure closure;
 
-  CHECK_STRING (string);
-  accumulation = Fcons (string, Fcons (pred, Qnil));
-  GCPRO1 (accumulation);
-  map_obarray (Vobarray, apropos_accum, accumulation);
-  accumulation = Fsort (Fcdr (Fcdr (accumulation)), Qstring_lessp);
-  UNGCPRO;
-  return accumulation;
+  CHECK_STRING (regexp);
+
+  closure.regexp = regexp;
+  closure.predicate = predicate;
+  closure.accumulation = Qnil;
+  map_obarray (Vobarray, apropos_mapper, &closure);
+  closure.accumulation = Fsort (closure.accumulation, Qstring_lessp);
+  return closure.accumulation;
 }
 
 

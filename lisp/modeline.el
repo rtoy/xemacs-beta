@@ -36,7 +36,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defgroup modeline nil
-  "Modeline customizations"
+  "Modeline customizations."
   :group 'environment)
 
 (defcustom drag-modeline-event-lag 150

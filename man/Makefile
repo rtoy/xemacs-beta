@@ -37,7 +37,7 @@ TEXI2DVI = texi2dvi
 RECURSIVE_MAKE = $(MAKE) $(MFLAGS) MAKEINFO='$(MAKEINFO)' TEXI2DVI='$(TEXI2DVI)'
 
 # Subdirectories to make recursively.
-SUBDIR = xemacs lispref new-users-guide internals gnats skk
+SUBDIR = xemacs lispref new-users-guide internals
 
 ../info/%.info : %.texi
 	-$(MAKEINFO) -o $@ $<

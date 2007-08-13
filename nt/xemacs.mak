@@ -501,7 +501,8 @@ TEMACS_OBJS= \
 	$(OUTDIR)\unexnt.obj \
 	$(OUTDIR)\vm-limit.obj \
 	$(OUTDIR)\widget.obj \
-	$(OUTDIR)\window.obj 
+	$(OUTDIR)\window.obj \
+	xemacs.res
 
 # Rules
 
@@ -531,6 +532,9 @@ $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS)
   $(TEMACS_LFLAGS) $(TEMACS_OBJS) $(TEMACS_LIBS)
 <<
 	!$(TEMACS) -batch -l update-elc.el
+
+xemacs.res: xemacs.rc
+	rc xemacs.rc
 
 # MSDEV Source Broswer file. "*.sbr" is too inclusive but this is harmless
 $(TEMACS_BROWSE): $(TEMACS_OBJS)

@@ -646,9 +646,11 @@ kludgily_ignore_lost_doc_p (Lisp_Object sym)
 #endif
 
 
-static void
-verify_doc_mapper (Lisp_Object sym, Lisp_Object closure)
+static int
+verify_doc_mapper (Lisp_Object sym, void *arg)
 {
+  Lisp_Object closure = *(Lisp_Object *)arg;
+
   if (!NILP (Ffboundp (sym)))
     {
       int doc = 0;
@@ -705,6 +707,7 @@ verify_doc_mapper (Lisp_Object sym, Lisp_Object closure)
 	  XCDR (closure) = Qt;
 	}
     }
+  return 0; /* Never stop */
 }
 
 DEFUN ("Verify-documentation", Fverify_documentation, 0, 0, 0, /*
@@ -716,7 +719,7 @@ Writes to stderr if not.
   Lisp_Object closure = Fcons (Qnil, Qnil);
   struct gcpro gcpro1;
   GCPRO1 (closure);
-  map_obarray (Vobarray, verify_doc_mapper, closure);
+  map_obarray (Vobarray, verify_doc_mapper, &closure);
   if (!NILP (Fcdr (closure)))
     message ("\n"
 "This is usually because some files were preloaded by loaddefs.el or\n"

@@ -34,19 +34,17 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 * Menu:
 
-XEmacs 20.4
+XEmacs 20.5
 ===========
 * Info::	Documentation browsing system.
 * XEmacs::	The extensible user-friendly self-documenting text editor.
-		This manual is for XEmacs 20.4.
+		This manual is for XEmacs 20.5.
 * Lispref::	XEmacs Lisp technical reference.
-		This manual is for XEmacs 20.4.
+		This manual is for XEmacs 20.5.
 * New-Users-Guide::
-	        XEmacs User's Guide for XEmacs 20.4.
-* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 20.4.
+	        XEmacs User's Guide for XEmacs 20.5.
+* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 20.5.
 * Internals::	Guide to the internals of XEmacs.
-* send-pr::	Submitting Bug Reports
-* gnats::	GNU Problem Report Management System
 
 Local Packages:
 
@@ -54,7 +52,6 @@ Local Packages:
 * Custom::	Customization Library for Emacs
 * External-Widget::
 		Use XEmacs as a text widget inside of another program.
-* Skk::		Input Method for Japanese.
 * Standards::	The GNU coding standards.
 * Termcap::	The termcap library, which enables application programs
 		to handle all types of character-display terminals.
