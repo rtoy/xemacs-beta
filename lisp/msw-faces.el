@@ -64,8 +64,8 @@
 (defun mswindows-font-canicolize-name (font)
   "Given a mswindows font specification, this returns its name in canonical
 form."
-  (cond ((font-instance-p font)
-	 (let ((name (font-instance-name font)))
+  (if (font-instance-p font)
+      (let ((name (font-instance-name font)))
 	   (cond ((string-match
 		   "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
 		   name) name)
@@ -74,22 +74,29 @@ form."
 		 ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+$" name)
 		  (concat name "::ansi"))
 		 ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*$" name)
-		  (concat name "10::ansi"))
+		  (concat name ":10::ansi"))
 		 ((string-match "^[a-zA-Z ]+$" name)
 		  (concat name ":Normal:10::ansi"))
-		 (t "Courier New:Normal:10::ansi"))))
-	(t "Courier New:Normal:10::ansi")))
+		 (t "Courier New:Normal:10::ansi")))))
 
 (defun mswindows-make-font-bold (font &optional device)
   "Given a mswindows font specification, this attempts to make a bold font.
 If it fails, it returns nil."
   (if (font-instance-p font)
-      (let ((name (mswindows-font-canicolize-name font)))
+      (let ((name (mswindows-font-canicolize-name font))
+	    (oldwidth (font-instance-width font)))
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
-	(make-font-instance (concat
-			     (substring name 0 (match-beginning 1))
-			     "Bold" (substring name (match-end 1)))
-			    device t))))
+	(let ((newfont (make-font-instance
+			(concat (substring name 0 (match-beginning 1))
+				"Bold" (substring name (match-end 1)))
+		       device t)))
+; Hack! on mswindows, bold fonts (even monospaced) are often wider than the
+; equivalent non-bold font. Making the bold font one point smaller usually
+; makes it the same width (maybe at the expense of making it one pixel shorter)
+	  (if (font-instance-p newfont)
+	      (if (> (font-instance-width newfont) oldwidth)
+		  (mswindows-find-smaller-font newfont)
+		newfont))))))
 
 (defun mswindows-make-font-unbold (font &optional device)
   "Given a mswindows font specification, this attempts to make a non-bold font.
@@ -128,18 +135,24 @@ font. If it fails, it returns nil."
   "Given a mswindows font specification, this attempts to make a `bold-italic'
 font. If it fails, it returns nil."
   (if (font-instance-p font)
-      (let ((name (mswindows-font-canicolize-name font)))
+      (let ((name (mswindows-font-canicolize-name font))
+	    (oldwidth (font-instance-width font)))
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
-	(make-font-instance (concat
-			     (substring name 0 (match-beginning 1))
-			     "Bold Italic" (substring name (match-end 1)))
-			    device t))))
+	(let ((newfont (make-font-instance
+			(concat (substring name 0 (match-beginning 1))
+				"Bold Italic" (substring name (match-end 1)))
+		       device t)))
+; Hack! on mswindows, bold fonts (even monospaced) are often wider than the
+; equivalent non-bold font. Making the bold font one point smaller usually
+; makes it the same width (maybe at the expense of making it one pixel shorter)
+	  (if (font-instance-p newfont)
+	      (if (> (font-instance-width newfont) oldwidth)
+		  (mswindows-find-smaller-font newfont)
+		newfont))))))
 
 (defun mswindows-find-smaller-font (font &optional device)
-  "Loads a new, version of the given font (or font name).
-Returns the font if it succeeds, nil otherwise.
-If scalable fonts are available, this returns a font which is 1 point smaller.
-Otherwise, it returns the next smaller version of this font that is defined."
+  "Loads a new version of the given font (or font name) 1 point smaller.
+Returns the font if it succeeds, nil otherwise."
   (if (font-instance-p font)
       (let (old-size (name (mswindows-font-canicolize-name font)))
 	(string-match "^[a-zA-Z ]+:[a-zA-Z ]*:\\([0-9]+\\):" name)
@@ -153,10 +166,8 @@ Otherwise, it returns the next smaller version of this font that is defined."
 				device t)))))
 
 (defun mswindows-find-larger-font (font &optional device)
-  "Loads a new, slightly larger version of the given font (or font name).
-Returns the font if it succeeds, nil otherwise.
-If scalable fonts are available, this returns a font which is 1 point larger.
-Otherwise, it returns the next larger version of this font that is defined."
+  "Loads a new version of the given font (or font name) 1 point larger.
+Returns the font if it succeeds, nil otherwise."
   (if (font-instance-p font)
       (let (old-size (name (mswindows-font-canicolize-name font)))
 	(string-match "^[a-zA-Z ]+:[a-zA-Z ]*:\\([0-9]+\\):" name)

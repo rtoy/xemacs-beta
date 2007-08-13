@@ -3009,7 +3009,7 @@ command_builder_find_leaf_1 (struct command_builder *builder)
   return event_binding (event0, 1);
 }
 
-#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS_LUCID)
+#if defined(HAVE_X_WINDOWS) && defined(LWLIB_MENUBARS_LUCID)
 static void
 menu_move_up (void)
 {
@@ -3495,9 +3495,14 @@ or by actions defined in menu-accelerator-map.
 {
   struct console *con = XCONSOLE (Vselected_console);
   struct frame *f = XFRAME (CONSOLE_SELECTED_FRAME (con));
-  LWLIB_ID id = XPOPUP_DATA (f->menubar_data)->id;
-  widget_value *val = lw_get_all_values (id);
+  LWLIB_ID id;
+  widget_value *val;
 
+  if (NILP (f->menubar_data))
+    error ("Frame has no menubar.");
+    
+  id = XPOPUP_DATA (f->menubar_data)->id;
+  val = lw_get_all_values (id);
   val = val->contents;
   lw_set_menu (FRAME_X_MENUBAR_WIDGET (f), val);
   lw_map_menu (CurrentTime);
@@ -3634,7 +3639,7 @@ command_builder_find_leaf (struct command_builder *builder,
     }
 
   /* if we're currently in a menu accelerator, check there for further events */
-#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS_LUCID)
+#if defined(HAVE_X_WINDOWS) && defined(LWLIB_MENUBARS_LUCID)
   if (lw_menu_active)
     {
       return command_builder_operate_menu_accelerator (builder);
@@ -3647,7 +3652,7 @@ command_builder_find_leaf (struct command_builder *builder,
       if (NILP (result))
 #endif
 	result = command_builder_find_leaf_1 (builder);
-#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS_LUCID)
+#if defined(HAVE_X_WINDOWS) && defined(LWLIB_MENUBARS_LUCID)
       if (NILP (result)
 	  && EQ (Vmenu_accelerator_enabled, Qmenu_fallback))
 	result = command_builder_find_menu_accelerator (builder);
@@ -4853,7 +4858,7 @@ syms_of_event_stream (void)
   DEFSUBR (Fthis_command_keys);
   DEFSUBR (Freset_this_command_lengths);
   DEFSUBR (Fopen_dribble_file);
-#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS_LUCID)
+#if defined(HAVE_X_WINDOWS) && defined(LWLIB_MENUBARS_LUCID)
   DEFSUBR (Faccelerate_menu);
 #endif
 

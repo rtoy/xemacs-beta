@@ -60,6 +60,8 @@ Boston, MA 02111-1307, USA.  */
 #include <magick/magick.h>
 /*#include <image.h>*/
 #include <assert.h>
+
+#define OLDCOMPAT /* allow lisp code using the old names to still function */
 #endif
 
 #define LISP_DEVICE_TO_X_SCREEN(dev)					\
@@ -85,6 +87,17 @@ Lisp_Object Qxface;
 #ifdef HAVE_IMAGEMAGICK
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (imagick);
 Lisp_Object Qimagick;
+
+#ifdef OLDCOMPAT /* old compatibility */
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (tiff);
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (png);
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (gif);
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (jpeg);
+Lisp_Object Qtiff;
+Lisp_Object Qpng;
+Lisp_Object Qgif;
+Lisp_Object Qjpeg;
+#endif
 #endif
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (cursor_font);
@@ -1680,8 +1693,8 @@ imagick_possible_dest_types (void)
 
 struct imagick_unwind_data
 {
-	/* FIXME - what goes here...*/
 	Display *dpy;
+	Colormap cmap;
 	FILE *instream;
 	Image *image;
 	XImage *ximage;
@@ -1707,14 +1720,17 @@ imagick_instantiate_unwind (Lisp_Object unwind_obj)
 		DestroyImage(data->image);
 	}
 
-	if (data->ximage)
-	{
-		if (data->ximage->data)
-		{
+	if (data->ximage) {
+		if (data->ximage->data) {
 			xfree (data->ximage->data);
 			data->ximage->data = NULL;
 		}
 		XDestroyImage (data->ximage);
+	}
+
+	if (data->npixels > 0) {
+	  XFreeColors(data->dpy, data->cmap, data->pixels, data->npixels, 0L);
+	  xfree (data->pixels);
 	}
  
 	return Qnil;
@@ -1725,166 +1741,185 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 					 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 					 int dest_mask, Lisp_Object domain)
 {
-	struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
-	Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
-	Display *dpy;
-	Screen *scr;
-	Visual *visual;
-	Dimension depth;
-	struct imagick_unwind_data unwind;
-	int speccount = specpdl_depth ();
-	ImageInfo image_info;
+  struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  Display *dpy;
+  Screen *scr;
+  Visual *visual;
+  Colormap cmap;
+  Dimension depth;
+  struct imagick_unwind_data unwind;
+  int speccount = specpdl_depth ();
+  ImageInfo image_info;
 
-	/* ImageMagick variables */
+  /* ImageMagick variables */
 
-	/* Basic error checking */
-	if (!DEVICE_X_P (XDEVICE (device)))
-		signal_simple_error ("Not an X device", device);
+  /* Basic error checking */
+  if (!DEVICE_X_P (XDEVICE (device)))
+    signal_simple_error ("Not an X device", device);
 
-	dpy = DEVICE_X_DISPLAY (XDEVICE (device));
-	scr = DefaultScreenOfDisplay (dpy);
-	depth = DEVICE_X_DEPTH (XDEVICE (device));
-	visual = DEVICE_X_VISUAL (XDEVICE (device));
+  dpy = DEVICE_X_DISPLAY (XDEVICE (device));
+  scr = DefaultScreenOfDisplay (dpy);
+  depth = DEVICE_X_DEPTH (XDEVICE (device));
+  visual = DEVICE_X_VISUAL (XDEVICE (device));
+  cmap = DEVICE_X_COLORMAP (XDEVICE(device));
 
-	/* Set up the unwind */
-	memset (&unwind, 0, sizeof (unwind));
-	unwind.dpy = dpy;
-	record_unwind_protect(imagick_instantiate_unwind,make_opaque_ptr(&unwind));
+  /* Set up the unwind */
+  memset (&unwind, 0, sizeof (unwind));
+  unwind.dpy = dpy;
+  unwind.cmap = cmap;
+  record_unwind_protect(imagick_instantiate_unwind,make_opaque_ptr(&unwind));
 
-	/* Write out to a temp file - not sure if ImageMagick supports the
-	** notion of an abstrat 'data source' right now.
-	*/
-	{
-		Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
+  /* Write out to a temp file - not sure if ImageMagick supports the
+  ** notion of an abstract 'data source' right now.
+  ** JH: It doesn't as of 3.9.3
+  */
+  {
+    Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
 
-		assert (!NILP (data));
+    assert (!NILP (data));
 
-		write_lisp_string_to_temp_file (data, unwind.tempfile);
-		unwind.tempfile_needs_to_be_removed = 1;
+    write_lisp_string_to_temp_file (data, unwind.tempfile);
+    unwind.tempfile_needs_to_be_removed = 1;
 
-		if ((unwind.instream = fopen (unwind.tempfile, "rb")) == NULL)
-			report_file_error ("Opening ImageMagick temp file",
-							   list1 (build_string (unwind.tempfile)));
-	}
+    if ((unwind.instream = fopen (unwind.tempfile, "rb")) == NULL)
+      report_file_error ("Opening ImageMagick temp file",
+			 list1 (build_string (unwind.tempfile)));
+  }
 
-	/* Initialize structures and read in the image */
-	GetImageInfo(&image_info);
-	strcpy(image_info.filename,unwind.tempfile);
-	unwind.image = ReadImage(&image_info);
-	if (unwind.image == (Image *) NULL) {
-		signal_simple_error ("Unable to read image.",instantiator);
-	}
+  /* Initialize structures and read in the image */
+  GetImageInfo(&image_info);
+  strcpy(image_info.filename,unwind.tempfile);
+  unwind.image = ReadImage(&image_info);
 
-#if 1
-	DescribeImage(unwind.image,stderr,1);
-#endif
-
-	unwind.ximage = XCreateImage(dpy, visual, depth,
-				     (depth == 1) ? XYPixmap : ZPixmap,
-				     0, 0,
-				     unwind.image->columns,
-				     unwind.image->rows,
-				     XBitmapPad(dpy), 0);
-
-	if (!unwind.ximage) {
-		signal_simple_error("Unable to allocate XImage structure",
-							instantiator);
-	}
-
-	unwind.ximage->data = (char *) xmalloc(unwind.ximage->bytes_per_line *
-										   unwind.ximage->height *
-										   unwind.ximage->depth);
-
-	if (unwind.ximage->data == (char *)NULL) {
-		signal_simple_error("Unable to allocate pixel information",
-							instantiator);
-	}
-
-	/* Need to pull the data from the 'Image' structure in
-	** unwind.image and convert it to an 'XImage' in unwind.ximage
-	**
-	** FIXME IM FUCKED
-	**
-	** WMP 10/30/97
-	*/
-
-	{
-		int i,j,x;
-		unsigned int bytes_per_pixel, scanline_pad;
-		unsigned char *q;
-		RunlengthPacket *p;
-		XColor color;
-
-		unwind.npixels = unwind.image->total_colors;
-		unwind.pixels = xmalloc(unwind.npixels * sizeof(unsigned long));
-		q = (unsigned char *) unwind.ximage->data;
-		x  = 0;
-		memset(unwind.pixels,0,unwind.npixels * sizeof(unsigned long));
-		p = unwind.image->pixels;
-		scanline_pad = unwind.ximage->bytes_per_line -
-			((unwind.ximage->width * unwind.ximage->bits_per_pixel) >> 3);
-
-		/* Convert to multi-byte color-mapped X image. */
-		bytes_per_pixel=unwind.ximage->bits_per_pixel >> 3;
+  if (unwind.image == (Image *) NULL) {
+    signal_simple_error ("Unable to read image.",instantiator);
+  }
 
 #if 1
-          for (i=0; i < unwind.image->packets; i++)
-          {
-			  color.red = p->red;
-			  color.green = p->green;
-			  color.blue = p->blue;
-			  color.flags = DoRed | DoGreen | DoBlue;
-			  allocate_nearest_color (dpy, DefaultColormapOfScreen (scr), visual, &color);
-			  unwind.pixels[i] = color.pixel;
-
-			  for (j=0; j <= ((int) p->length); j++)
-			  {
-				  *q++=(unsigned char) color.pixel;
-				  x++;
-				  if (x == unwind.ximage->width)
-				  {
-					  x=0;
-					  q+=scanline_pad;
-				  }
-			  }
-			  p++;
-          }
-#else
-		for (i=0; i < unwind.image->packets; i++)
-		{
-			pixel = unwind.pixels[p->index];
-			for (k=0; k < bytes_per_pixel; k++)
-			{
-				channel[k]=(unsigned char) pixel;
-				pixel>>=8;
-			}
-			for (j=0; j <= ((int) p->length); j++)
-			{
-				for (k=0; k < bytes_per_pixel; k++)
-					*q++=channel[k];
-				x++;
-				if (x == unwind.ximage->width)
-				{
-					x=0;
-					q+=scanline_pad;
-				}
-			}
-			p++;
-		}
+  /*
+   * For now, force dithering everything, and deal with all images as if they
+   * were PseudoClass images
+   */
+  if (unwind.image->class != PseudoClass) {
+    QuantizeInfo quantize_info;
+    GetQuantizeInfo(&quantize_info);
+    quantize_info.number_colors=256;
+    quantize_info.tree_depth=8;
+    quantize_info.dither=True;
+    quantize_info.colorspace=RGBColorspace;
+    QuantizeImage(&quantize_info, unwind.image);
+    SyncImage(unwind.image);
+    /* #### It would probably be a good idea to sort the colormap by popularity,
+     * so that in case we run out of entries in the map, it will likely be on
+     * the less used colors
+     */
+  } else {
+    CompressColormap(unwind.image);
+    SyncImage(unwind.image);
+  }
+  
 #endif
+
+#if 0
+  DescribeImage(unwind.image,stderr,1);
+#endif
+
+  unwind.ximage = XCreateImage(dpy, visual, depth,
+			       (depth == 1) ? XYPixmap : ZPixmap,
+			       0, 0,
+			       unwind.image->columns,
+			       unwind.image->rows,
+			       XBitmapPad(dpy), 0);
+
+  if (!unwind.ximage) {
+    signal_simple_error("Unable to allocate XImage structure",
+			instantiator);
+  }
+
+  unwind.ximage->data = (char *) xmalloc(unwind.ximage->bytes_per_line *
+					 unwind.ximage->height);
+
+  if (unwind.ximage->data == (char *)NULL) {
+    signal_simple_error("Unable to allocate XImage data information",
+			instantiator);
+  }
+
+  
+  /*
+  ** First pull out all of the colors used, and create a lookup for them
+  */
+
+  if (unwind.image->class == PseudoClass) {
+    int i;
+
+    unwind.npixels = unwind.image->colors;
+    unwind.pixels = xmalloc(unwind.npixels * sizeof(unsigned long));
+    for (i = 0; i < unwind.npixels; i++) {
+      XColor color;
+      /* ImageMagic uses 8bit values for colors, whilst X expects 16bits */
+      color.red = unwind.image->colormap[i].red << 8;
+      color.green = unwind.image->colormap[i].green << 8;
+      color.blue = unwind.image->colormap[i].blue << 8;
+      color.flags = DoRed | DoGreen | DoBlue;
+      allocate_nearest_color (dpy, cmap, visual, &color);
+      unwind.pixels[i] = color.pixel;
+    }
+  }
+  
+  /*
+  ** Need to pull the data from the 'Image' structure in
+  ** unwind.image and convert it to an 'XImage' in unwind.ximage
+  */
+  {
+    int i,j,x,b;
+    unsigned int bytes_per_pixel, scanline_pad;
+    unsigned long pixval;
+    unsigned char *q;
+    RunlengthPacket *p;
+
+    q = (unsigned char *) unwind.ximage->data;
+    x  = 0;
+    p = unwind.image->pixels;
+    scanline_pad = unwind.ximage->bytes_per_line -
+      ((unwind.ximage->width * unwind.ximage->bits_per_pixel) >> 3);
+
+    /* Convert to multi-byte color-mapped X image. */
+    bytes_per_pixel=unwind.ximage->bits_per_pixel >> 3;
+
+    for (i=0; i < unwind.image->packets; i++) {
+      if (unwind.image->class == PseudoClass) 
+	pixval = unwind.pixels[p->index];
+      else
+	{
+	  /* ### NOW what? */
+	  pixval = 0;
 	}
+	
+      for (j=0; j <= ((int) p->length); j++) {
+	for (b=0; b < bytes_per_pixel; b++) 
+	  *q++=(unsigned char) (pixval >> (8*b));
+	x++;
+	if (x == unwind.ximage->width) {
+	  x=0;
+	  q+=scanline_pad;
+	}
+      }
+      p++;
+    }
+  }
 
-	init_image_instance_from_x_image (ii, unwind.ximage, dest_mask,
-									  unwind.pixels, unwind.npixels,
-									  instantiator);
+  init_image_instance_from_x_image (ii, unwind.ximage, dest_mask,
+				    unwind.pixels, unwind.npixels,
+				    instantiator);
 
-	/* And we are done!
-	** Now that we've succeeded, we don't want the pixels
-	** freed right now.  They're kept around in the image instance
-	** structure until it's destroyed.
-	*/
-	unwind.npixels = 0;
-	unbind_to (speccount, Qnil);
+  /* And we are done!
+  ** Now that we've succeeded, we don't want the pixels
+  ** freed right now.  They're kept around in the image instance
+  ** structure until it's destroyed.
+  */
+  unwind.npixels = 0;
+  unbind_to (speccount, Qnil);
 }
 
 #endif /* HAVE_IMAGEMAGICK */
@@ -2804,6 +2839,45 @@ image_instantiator_format_create_glyphs_x (void)
 
   IIFORMAT_VALID_KEYWORD (imagick, Q_data, check_valid_string);
   IIFORMAT_VALID_KEYWORD (imagick, Q_file, check_valid_string);
+
+#ifdef OLDCOMPAT /* old graphics compatibility */
+#define IIFORMAT_USES_METHOD(format, source, m) \
+  (format##_image_instantiator_methods->m##_method = source##_##m)
+
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (tiff, "tiff");
+  IIFORMAT_USES_METHOD (tiff, imagick, validate);
+  IIFORMAT_USES_METHOD (tiff, imagick, normalize);
+  IIFORMAT_USES_METHOD (tiff, imagick, possible_dest_types);
+  IIFORMAT_USES_METHOD (tiff, imagick, instantiate);
+  IIFORMAT_VALID_KEYWORD (tiff, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (tiff, Q_file, check_valid_string);
+
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (png, "png");
+  IIFORMAT_USES_METHOD (png, imagick, validate);
+  IIFORMAT_USES_METHOD (png, imagick, normalize);
+  IIFORMAT_USES_METHOD (png, imagick, possible_dest_types);
+  IIFORMAT_USES_METHOD (png, imagick, instantiate);
+  IIFORMAT_VALID_KEYWORD (png, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (png, Q_file, check_valid_string);
+
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (gif, "gif");
+  IIFORMAT_USES_METHOD (gif, imagick, validate);
+  IIFORMAT_USES_METHOD (gif, imagick, normalize);
+  IIFORMAT_USES_METHOD (gif, imagick, possible_dest_types);
+  IIFORMAT_USES_METHOD (gif, imagick, instantiate);
+  IIFORMAT_VALID_KEYWORD (gif, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (gif, Q_file, check_valid_string);
+
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (jpeg, "jpeg");
+  IIFORMAT_USES_METHOD (jpeg, imagick, validate);
+  IIFORMAT_USES_METHOD (jpeg, imagick, normalize);
+  IIFORMAT_USES_METHOD (jpeg, imagick, possible_dest_types);
+  IIFORMAT_USES_METHOD (jpeg, imagick, instantiate);
+  IIFORMAT_VALID_KEYWORD (jpeg, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (jpeg, Q_file, check_valid_string);
+
+#endif /* old compat */
+
 #endif
 
 #ifdef HAVE_XPM
@@ -2868,6 +2942,13 @@ The default value of this variable defines the logical color names
 
 #ifdef HAVE_IMAGEMAGICK
   Fprovide (Qimagick);
+
+#ifdef OLDCOMPAT
+  Fprovide (Qtiff);
+  Fprovide (Qpng);
+  Fprovide (Qgif);
+  Fprovide (Qjpeg);
+#endif
 #endif
 
 #ifdef HAVE_XFACE

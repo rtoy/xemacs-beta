@@ -155,10 +155,14 @@ This exists as a variable so it can be set locally in certain buffers.")
 
 (defun widget-prettyprint-to-string (object)
   ;; Like pp-to-string, but uses `cl-prettyprint'
-  ;; #### FIX ME!!!!
   (with-current-buffer (get-buffer-create " *widget-tmp*")
     (erase-buffer)
     (cl-prettyprint object)
+    ;; `cl-prettyprint' always surrounds the text with newlines.
+    (when (eq (char-after (point-min)) ?\n)
+      (delete-region (point-min) (1+ (point-min))))
+    (when (eq (char-before (point-max)) ?\n)
+      (delete-region (1- (point-max)) (point-max)))
     (buffer-string)))
 
 (defun widget-clear-undo ()
@@ -3357,10 +3361,7 @@ It will read a directory name from the minibuffer when invoked."
   (let ((pp (if (symbolp value)
 		(prin1-to-string value)
 	      (widget-prettyprint-to-string value))))
-    (while (string-match "\n\\'" pp)
-      (setq pp (substring pp 0 -1)))
-    (if (and (> (length pp) 40)
-	     (not (string-match "\\`\n" pp)))
+    (if (> (length pp) 40)
 	(concat "\n" pp)
       pp)))
 

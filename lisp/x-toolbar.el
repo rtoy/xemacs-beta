@@ -38,7 +38,7 @@
 
 ;; Suppress warning message from bytecompiler
 (eval-when-compile
-  (defvar pending-delete))
+  (defvar pending-delete-mode))
 
 (defgroup toolbar nil
   "Configure XEmacs Toolbar functions and properties"
@@ -46,8 +46,12 @@
 
 
 (defun toolbar-not-configured ()
-  (ding)
-  (message "Configure the item via `M-x customize RET toolbar RET'"))
+  (interactive)
+  ;; Note: we don't use `susbtitute-command-keys' here, because
+  ;; Customize is bound to `C-h C' by default, and that binding is not
+  ;; familiar to people.  This is more descriptive.
+  (error
+   "Configure the item via `M-x customize RET toolbar RET'"))
 
 (defcustom toolbar-open-function 'find-file
   "*Function to call when the open icon is selected."
@@ -118,8 +122,8 @@
 (defun toolbar-paste ()
   (interactive)
   ;; This horrible kludge is for pending-delete to work correctly.
-  (and (boundp 'pending-delete)
-       pending-delete
+  (and (boundp 'pending-delete-mode)
+       pending-delete-mode
        (let ((this-command toolbar-paste-function))
 	 (pending-delete-pre-hook)))
   (call-interactively toolbar-paste-function))
@@ -150,9 +154,9 @@
 
 (defun toolbar-ispell-internal ()
   (interactive)
-     (if (region-active-p)
-	 (ispell-region (region-beginning) (region-end))
-       (ispell-buffer)))
+  (if (region-active-p)
+      (ispell-region (region-beginning) (region-end))
+    (ispell-buffer)))
 
 (defcustom toolbar-ispell-function 'toolbar-ispell-internal
   "*Function to call when the ispell icon is selected."
@@ -219,7 +223,7 @@ Mail readers known by default are vm, gnus, rmail, mh, pine, elm,
   "Run mail in a separate frame."
   (interactive)
   (let ((command (cdr (assq toolbar-mail-reader toolbar-mail-commands-alist))))
-    (if (not command)
+    (or command
 	(error "Uknown mail reader %s" toolbar-mail-reader))
     (if (symbolp command)
 	(call-interactively command)
@@ -229,32 +233,44 @@ Mail readers known by default are vm, gnus, rmail, mh, pine, elm,
 ;; toolbar info variables and defuns
 ;;
 
+(defcustom toolbar-info-use-separate-frame t
+  "*Whether Info is invoked in a separate frame."
+  :type 'boolean
+  :group 'toolbar)
+
+(defcustom toolbar-info-frame-plist
+  ;; Info pages are 80 characters wide, so it makes a good default.
+  `(width 80 ,@(let ((h (plist-get default-frame-plist 'height)))
+		 (and h `(height ,h))))
+  "*The properties of the frame in which news is displayed."
+  :type 'plist
+  :group 'info)
+
+(define-obsolete-variable-alias 'Info-frame-plist
+  'toolbar-info-frame-plist)
+
 (defvar toolbar-info-frame nil
   "The frame in which info is displayed.")
-
-(defcustom Info-frame-plist 
-    (append (list 'width 80)
-	    (let ((h (plist-get default-frame-plist 'height)))
-	      (when h (list 'height h))))
-    "Frame plist for the Info frame."
-  :type '(repeat (group :inline t
-		  (symbol :tag "Property")
-		  (sexp :tag "Value")))
-  :group 'info)
 
 (defun toolbar-info ()
   "Run info in a separate frame."
   (interactive)
-  (if (or (not toolbar-info-frame)
-	  (not (frame-live-p toolbar-info-frame)))
-      (progn
-	(setq toolbar-info-frame (make-frame Info-frame-plist))
-	(select-frame toolbar-info-frame)
-	(raise-frame toolbar-info-frame)))
-  (if (frame-iconified-p toolbar-info-frame)
-      (deiconify-frame toolbar-info-frame))
-  (select-frame toolbar-info-frame)
-  (raise-frame toolbar-info-frame)
+  (when toolbar-info-use-separate-frame
+    (cond ((or (not toolbar-info-frame)
+	       (not (frame-live-p toolbar-info-frame)))
+	   ;; We used to raise frame here, but it's a bad idea,
+	   ;; because raising is a matter of WM policy.  However, we
+	   ;; *must* select it, to ensure that the info buffer goes to
+	   ;; the right frame.
+	   (setq toolbar-info-frame (make-frame toolbar-info-frame-plist))
+	   (select-frame toolbar-info-frame))
+	  (t
+	   ;; However, if the frame already exists, and the user
+	   ;; clicks on info, it's OK to raise it.
+	   (select-frame toolbar-info-frame)
+	   (raise-frame toolbar-info-frame)))
+    (when (frame-iconified-p toolbar-info-frame)
+      (deiconify-frame toolbar-info-frame)))
   (info))
 
 ;;
@@ -269,17 +285,21 @@ Mail readers known by default are vm, gnus, rmail, mh, pine, elm,
     (call-interactively 'gdbsrc)))
 
 (defvar compile-command)
+(defvar toolbar-compile-already-run nil)
 
 (defun toolbar-compile ()
   "Run compile without having to touch the keyboard."
   (interactive)
   (require 'compile)
-  (popup-dialog-box
-   `(,(concat "Compile:\n        " compile-command)
-     ["Compile" (compile compile-command) t]
-     ["Edit command" compile t]
-     nil
-     ["Cancel" (message "Quit") t])))
+  (if toolbar-compile-already-run
+      (compile compile-command)
+    (setq toolbar-compile-already-run t)
+    (popup-dialog-box
+     `(,(concat "Compile:\n        " compile-command)
+       ["Compile" (compile compile-command) t]
+       ["Edit command" compile t]
+       nil
+       ["Cancel" (message "Quit") t]))))
 
 ;;
 ;; toolbar news variables and defuns
@@ -331,12 +351,13 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
 (defvar toolbar-news-frame nil
   "The frame in which news is displayed.")
 
-(defcustom toolbar-news-frame-properties nil
+(defcustom toolbar-news-frame-plist nil
   "*The properties of the frame in which news is displayed."
-  :type '(repeat (group :inline t
-			(symbol :tag "Property")
-			(sexp :tag "Value")))
+  :type 'plist
   :group 'toolbar)
+
+(define-obsolete-variable-alias 'toolbar-news-frame-properties
+  'toolbar-news-frame-plist)
 
 (defun toolbar-gnus ()
   "Run Gnus in a separate frame."
@@ -352,7 +373,6 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
 			(delete-frame toolbar-news-frame))
 		    (setq toolbar-news-frame nil))))
       (select-frame toolbar-news-frame)
-      (raise-frame toolbar-news-frame)
       (gnus))
     (when (framep toolbar-news-frame)
       (when (frame-iconified-p toolbar-news-frame)
@@ -361,12 +381,14 @@ Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine
       (raise-frame toolbar-news-frame))))
 
 (defun toolbar-news ()
-  "Run News (in a separate frame??)."
+  "Run News."
   (interactive)
   (let ((command (assq toolbar-news-reader toolbar-news-commands-alist)))
-    (if (not command)
-	(error "Unknown news reader %s" toolbar-news-reader))
-    (funcall (cdr command))))
+    (or command
+	(error "Uknown news reader %s" toolbar-news-reader))
+    (if (symbolp command)
+	(call-interactively command)
+      (eval command))))
 
 (defvar toolbar-last-win-icon nil "A `last-win' icon set.")
 (defvar toolbar-next-win-icon nil "A `next-win' icon set.")

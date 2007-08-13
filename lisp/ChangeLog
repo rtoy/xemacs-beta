@@ -1,3 +1,44 @@
+1997-12-06  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* dumped-lisp.el, emacs.c, symsinit.h, msw-init.el, 	  nt/xemacs.mak
+	  Created files: msw-select.el, select-msw.c
+	  Copy and paste 8-bit text to/from mswindows clipboard.
+
+	* msw-faces.el: mswindows-make-font-bold[-italic]
+	  Try to make the bold font the same width as the non-bold font.
+
+1997-12-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-prettyprint-to-string): Nix cl-prettyprint's 
+	newlines.
+
+1997-12-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x-toolbar.el (toolbar-not-configured): Use `error'.
+	(toolbar-compile): Restore `toolbar-already-run' feature from
+	19.15.
+	(toolbar-news): Use `eval' on non-symbols.
+	(toolbar-info-frame-plist): Use the new `plist' widget.
+	(toolbar-news-frame-plist): Ditto.
+
+	* font-lock.el (font-lock-fontify-buffer-function): New variable,
+ 	synched with FSF Emacs 20.
+	(font-lock-unfontify-buffer-function): Ditto.
+	(font-lock-fontify-region-function): Ditto.
+	(font-lock-unfontify-region-function): Ditto.
+	(font-lock-inhibit-thing-lock): Ditto.
+
+1997-12-07  SL Baur  <steve@altair.xemacs.org>
+
+	* egg/egg-cwnn-leim.el (egg-pinyin-activate): New file.  Interface 
+	to Chinese Wnn server.
+
+	* egg/egg-kwnn-leim.el: New file.  Interface to Korean Wnn
+	server.
+
+	* dumped-lisp.el (preloaded-file-list): Dump LEIM integration
+	files for kWnn and cWnn.
+
 1997-11-30  Adrian Aichner  <aichner@ecf.teradyne.com>
 
 	* build-report.el:

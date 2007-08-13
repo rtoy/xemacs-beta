@@ -142,15 +142,15 @@
     (goto-char (point-min))
     (let ((regexp (if arg "\\cS\\|\\cK\\|\\cH" "\\cS\\|\\cK")))
       (while (re-search-forward regexp (point-max) (point-max))
-	(let* ((ch (preceding-char))
-	       (ch1 (char-octet ch 0))
-	       (ch2 (char-octet ch 1)))
-	  (cond ((= ?\241 ch1)
+	(let* ((ch (char-to-int (char-before)))
+	       (ch1 (/ ch 256))
+	       (ch2 (mod ch 256)))
+	  (cond ((= 208 ch1)
 		 (let ((val (cdr (assq ch2 *katakana-kigou-alist*))))
 		   (if val (progn
 			     (delete-char -1)
 			     (insert val)))))
-		((or (= ?\242 ch1) (= ?\250 ch1))
+		((or (= 209 ch1) (= 215 ch1))
 		 nil)
 		(t
 		 (let ((val (cdr (assq ch2 *katakana-alist*))))
@@ -233,12 +233,12 @@
 		    (char-to-string ch) *katakana-alist*))
 	  (progn
 	    (delete-char -1)
-	    (insert (make-char 'japanese-jisx0208 ?\045 wk))))
+	    (insert (make-char 'japanese-jisx0208 37 (- wk 128)))))
 	 ((setq wk (search-henkan-alist
 		    (char-to-string ch) *katakana-kigou-alist*))
 	  (progn
 	    (delete-char -1)
-	    (insert (make-char 'japanese-jisx0208 ?\041 wk)))))))))
+	    (insert (make-char 'japanese-jisx0208 33 (- wk 128))))))))))
 
 (defun zenkaku-katakana-paragraph ()
   "zenkaku-katakana paragraph at or after point."

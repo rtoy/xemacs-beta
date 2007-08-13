@@ -23,13 +23,17 @@
        strange with X under NT. Has anyone else experiences with this ?
 
 # Native GUI issues
-    1. Calling mouse_[enter|leave]_frame_hook.
-    2. Cut and paste from/to Windows clipboard.
-    3. Scrollbar
-    4. Menubar
-    5. Palette handling
-    6. Middle mouse button emulation.
-    7. Images
+    0. The entire event model.
+    1. Calling mouse_[enter|leave]_frame_hook
+    2. Can't change bold, italic or bold-italic face fonts
+    3. Bogus delay when setting default- or initial-frame-plist
+    4. Short timeouts don't seem to be very accurate
+    5. Scrollbar
+    6. Menubar
+    7. Palette handling
+    8. Middle mouse button emulation
+    9. Drag'n'drop
+   10. Images
 
 Old Issues. 
 

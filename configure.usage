@@ -106,7 +106,7 @@ Additional features:
 			used on Linux and other systems.  NOTE: We can't
 			guarantee that our TERM support coexists well
 			with standard Internet connections).
---with-database=type (*) Compile with database support.  Valid types are
+--with-database=TYPE (*) Compile with database support.  Valid types are
 			`no' or a comma-separated list of one or more
 			of `dbm', `gnudbm', or `berkdb'.
 --with-sound=native (*)	Compile with native sound support.
@@ -124,7 +124,7 @@ Additional features:
 			are `lockf', `flock', and `file'.
 --package-path=PATH     Directories to search for packages to dump with xemacs.
                         Defaults to `/usr/local/lib/xemacs/packages:~/.xemacs'.
---infodir=dir		Directory to install the XEmacs Info manuals and dir in.
+--infodir=DIR		Directory to install the XEmacs Info manuals and dir in.
     Defaults to: `'.
 --infopath=PATH		Directories to search for Info documents, info dir
 			and localdir files.  This is used to initialize
@@ -170,7 +170,7 @@ Debugging options:
 
 --debug			Compile with support for debugging XEmacs.
 			(Causes code-size increase and little loss of speed.)
---error-checking=TYPE[[,TYPE]]...
+--error-checking=TYPE[,TYPE]...
 			Compile with internal error-checking added.
 			Causes noticeable loss of speed.  Valid types
 			are extents, bufpos, malloc, gc, typecheck.
@@ -196,7 +196,7 @@ Other options:
   			is system-dependent).
 --with-clash-detection	Use lock files to detect multiple edits of the same file.
 			The default is to not do clash detection.
---lockdir=dir		The directory to put clash detection files in, such as
+--lockdir=DIR		The directory to put clash detection files in, such as
 			`/var/lock/emacs'.
     Defaults to `${statedir}/xemacs/lock'.
 --with-system-malloc	Force use of the system malloc, rather than GNU malloc.

@@ -1,3 +1,46 @@
+1997-12-08  Kirill M. Katsnelson <kkm@kis.ru>
+
+	* device.h: device::fdin and device::fdout are now defined for
+	  systems which do not HAVE_UNIXOID_EVENT_LOOP.
+	* device-tty.c, process.c, signal.c: call to signal_fake_event()
+	  bracketed out by #ifdef HAVE_UNIXOID_EVENT_LOOP / #endif
+	  directives.
+	* signal.c: For Win32 systems, longjmp in signal handler excluded
+	* nt.c, syssignal.h, systime.h: emulation for SIGALRM and SIGPROF
+	  and setitimer for Win32 platforms. Profiling now works.
+	* emacs.c: calls to syms_of_profile and vars_of_profile enabled
+	  on Win32 platforms.
+	* ntproc.c: handling of SIGCHLD now done by the common signal
+	  faking mechanism. (To no avail - subprocesses still broken)
+	* s/windowsnt.h: Signal constants added
+	* redisplay-msw.c: "Sticky" beep which blocked XEmacs until the
+	  sound finishes is now repaired
+
+1997-12-06  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* frame-msw.c, msw-proc.c
+	  Further changes to resizing code so that changing default
+	  font, either in .emacs or later, works properly.
+
+	* msw-proc.c
+	  Minor optimization: Mouse movement events aren't generated
+	  while the user is resizing the frame.
+	  Function keys are returned lower-case.
+
+1997-12-09  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c (imagick_instantiate): fix it so that it works
+	properly for PseudoClass files.  Still needs some thinking for
+	full color...  Also added support for old image instantiators
+	in various places using the OLDCOMPAT define
+
+1997-12-08  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* event-stream.c (Faccelerate_menu): Check for the
+	  existence of a menubar associated with the selected frame
+	  before trying to use it.  Signal an error if there is
+	  no menubar.
+
 1997-12-06  P E Jareth Hein  <jareth@camelot-soft.com>
 
 	* device-x.c: Change -privcmap to -privatecolormap.

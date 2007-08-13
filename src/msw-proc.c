@@ -205,6 +205,7 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
   Lisp_Object emacs_event;
   struct Lisp_Event *event;
 
+  static sizing = 0;
   MSG msg = { hwnd, message, wParam, lParam, 0, {0,0} };
   msg.time = GetMessageTime();
 
@@ -316,6 +317,8 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
     break;
 
   case WM_MOUSEMOVE:
+    /* Optimization: don't report mouse movement while size is changind */
+    if (!sizing)
     {
       short x, y;
 
@@ -443,6 +446,11 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
     }
     break;
 
+  case WM_ENTERSIZEMOVE:
+  case WM_EXITSIZEMOVE:
+    sizing = (message == WM_ENTERSIZEMOVE);
+    goto defproc;
+
   defproc:
   default:
     return DefWindowProc (hwnd, message, wParam, lParam);
@@ -496,11 +504,14 @@ mswindows_handle_request (MSG *msg)
 
     style = (NILP(popup)) ? MSWINDOWS_FRAME_STYLE : MSWINDOWS_POPUP_STYLE;
 
-    rect.left = INTP(left) ? XINT(left) : 0;
-    rect.top = INTP(top) ? XINT(top) : 0;
-    char_to_pixel_size (f, INTP(width) ? XINT(width) : 80,
-			INTP(height) ? XINT(height) : 24,
-			&rect.right, &rect.bottom);
+    FRAME_WIDTH (f) = INTP(width) ? XINT(width) : 80;
+    FRAME_HEIGHT (f) = INTP(height) ? XINT(height) : 30;
+    char_to_pixel_size (f, FRAME_WIDTH(f), FRAME_HEIGHT (f),
+			&FRAME_PIXWIDTH (f), &FRAME_PIXHEIGHT (f));
+
+    rect.left = rect.top = 0;
+    rect.right = FRAME_PIXWIDTH (f);
+    rect.bottom = FRAME_PIXHEIGHT (f);
 #ifdef HAVE_MENUBARS
     AdjustWindowRect(&rect, style, TRUE);
 #else
@@ -605,30 +616,30 @@ Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods)
   case VK_RWIN		return KEYSYM ("");
 #endif
   case VK_APPS:		return KEYSYM ("menu");
-  case VK_F1:		return KEYSYM ("F1");
-  case VK_F2:		return KEYSYM ("F2");
-  case VK_F3:		return KEYSYM ("F3");
-  case VK_F4:		return KEYSYM ("F4");
-  case VK_F5:		return KEYSYM ("F5");
-  case VK_F6:		return KEYSYM ("F6");
-  case VK_F7:		return KEYSYM ("F7");
-  case VK_F8:		return KEYSYM ("F8");
-  case VK_F9:		return KEYSYM ("F9");
-  case VK_F10:		return KEYSYM ("F10");
-  case VK_F11:		return KEYSYM ("F11");
-  case VK_F12:		return KEYSYM ("F12");
-  case VK_F13:		return KEYSYM ("F13");
-  case VK_F14:		return KEYSYM ("F14");
-  case VK_F15:		return KEYSYM ("F15");
-  case VK_F16:		return KEYSYM ("F16");
-  case VK_F17:		return KEYSYM ("F17");
-  case VK_F18:		return KEYSYM ("F18");
-  case VK_F19:		return KEYSYM ("F19");
-  case VK_F20:		return KEYSYM ("F20");
-  case VK_F21:		return KEYSYM ("F21");
-  case VK_F22:		return KEYSYM ("F22");
-  case VK_F23:		return KEYSYM ("F23");
-  case VK_F24:		return KEYSYM ("F24");
+  case VK_F1:		return KEYSYM ("f1");
+  case VK_F2:		return KEYSYM ("f2");
+  case VK_F3:		return KEYSYM ("f3");
+  case VK_F4:		return KEYSYM ("f4");
+  case VK_F5:		return KEYSYM ("f5");
+  case VK_F6:		return KEYSYM ("f6");
+  case VK_F7:		return KEYSYM ("f7");
+  case VK_F8:		return KEYSYM ("f8");
+  case VK_F9:		return KEYSYM ("f9");
+  case VK_F10:		return KEYSYM ("f10");
+  case VK_F11:		return KEYSYM ("f11");
+  case VK_F12:		return KEYSYM ("f12");
+  case VK_F13:		return KEYSYM ("f13");
+  case VK_F14:		return KEYSYM ("f14");
+  case VK_F15:		return KEYSYM ("f15");
+  case VK_F16:		return KEYSYM ("f16");
+  case VK_F17:		return KEYSYM ("f17");
+  case VK_F18:		return KEYSYM ("f18");
+  case VK_F19:		return KEYSYM ("f19");
+  case VK_F20:		return KEYSYM ("f20");
+  case VK_F21:		return KEYSYM ("f21");
+  case VK_F22:		return KEYSYM ("f22");
+  case VK_F23:		return KEYSYM ("f23");
+  case VK_F24:		return KEYSYM ("f24");
   default:
     /* Special handling for Ctrl-'@' because '@' lives shifted on varying
      * virtual keys and because Windows doesn't report Ctrl-@ as a WM_CHAR */

@@ -883,6 +883,7 @@ main_1 (int argc, char **argv, char **envp)
       syms_of_event_mswindows ();
       syms_of_frame_mswindows ();
       syms_of_objects_mswindows ();
+      syms_of_select_mswindows ();
 #endif
 
 #ifdef MULE
@@ -1210,6 +1211,7 @@ main_1 (int argc, char **argv, char **envp)
       vars_of_event_mswindows ();
       vars_of_frame_mswindows ();
       vars_of_objects_mswindows ();
+      vars_of_select_mswindows ();
 #endif
 
 #ifdef MULE

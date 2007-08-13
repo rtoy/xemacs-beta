@@ -1,4 +1,11 @@
 							-*- indented-text -*-
+to 20.4 beta9 "Australian Goat"
+-- MS Windows patches for clipboard courtesy of Jonathon Harris
+-- ImageMagick support displays images now courtesy of Jareth Hein
+-- Untested support for kWnn and cWnn (Korean and Chinese input with Egg and
+   Wnn added).
+-- Miscellaneous bug fixes
+
 to 20.4 beta8 "Arapawa Island"
 -- build-report 1.35 courtesy of Adrian Aichner
 -- MS Windows stuffs from David Hobley, Jonathon Harris, August Hill,

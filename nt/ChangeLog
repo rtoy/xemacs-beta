@@ -1,3 +1,10 @@
+Mon December 08 1997 kkm@kis.ru
+
+	* xemacs.mak: added profile.c, removed event-unixod.c
+	* xemacs.mak: removed dangerous defines _IX_86, _X86_,
+	  _MSC_VER
+	* config.h: removed #define HAVE_UNIXOID_EVENT_LOOP
+
 Thu December 04 1997 jhar@tardis.ed.ac.uk
 	
 	* xemacs.mak: Define DEBUG_XEMACS when compiling with debug.

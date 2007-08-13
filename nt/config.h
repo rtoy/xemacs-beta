@@ -133,10 +133,7 @@ Boston, MA 02111-1307, USA.  */
 #define HAVE_WINDOW_SYSTEM
 #endif
 
-/* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events.  */
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY) || defined (HAVE_MS_WINDOWS)
-#define HAVE_UNIXOID_EVENT_LOOP
-#endif
+/* #define HAVE_UNIXOID_EVENT_LOOP removed -- kkm*/
 
 /* Define USER_FULL_NAME to return a string
    that is the user's full name.

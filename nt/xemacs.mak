@@ -284,6 +284,7 @@ DOC_SRC7=\
  $(XEMACS)\src\frame-msw.c \
  $(XEMACS)\src\objects-msw.c \
  $(XEMACS)\src\redisplay-msw.c \
+ $(XEMACS)\src\select-msw.c \
  $(XEMACS)\src\msw-proc.c
 !endif
 
@@ -385,6 +386,7 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\frame-msw.obj \
 	$(OUTDIR)\objects-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
+	$(OUTDIR)\select-msw.obj \
 	$(OUTDIR)\msw-proc.obj
 !endif
 

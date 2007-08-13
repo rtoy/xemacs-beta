@@ -132,6 +132,8 @@
 	;; Specialized language support
 	#+(and mule CANNA) "canna-leim"
 	#+(and mule wnn) "egg-leim"
+	#+(and mule wnn) "egg-kwnn-leim"
+	#+(and mule wnn) "egg-cwnn-leim"
 	#+mule "egg-sj3-leim"
 	#+mule "skk-leim"
 
@@ -159,6 +161,7 @@
 ;; preload the mswindows code.
 	#+mswindows "msw-faces"
 	#+mswindows "msw-init"
+	#+mswindows "msw-select"
 ;; preload the TTY init code.
 	#+tty "tty-init"
 ;;; Formerly in tooltalk/tooltalk-load.el
