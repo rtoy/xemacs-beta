@@ -1,3 +1,11 @@
+2000-05-06  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.10 is released
+
+2000-03-03  Sandra Wambold  <wambold@xemacs.org>
+
+	* xemacs-faq.texi: Added 6.4.1. XEmacs won't start on Windows
+
 2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.9 is released

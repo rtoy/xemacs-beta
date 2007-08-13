@@ -2084,11 +2084,6 @@ struct string_chars_block *current_string_chars_block;
 #define BIG_STRING_FULLSIZE_P(fullsize) ((fullsize) >= STRING_CHARS_BLOCK_SIZE)
 #define BIG_STRING_SIZE_P(size) (BIG_STRING_FULLSIZE_P (STRING_FULLSIZE(size)))
 
-#define CHARS_TO_STRING_CHAR(x) \
-  ((struct string_chars *) \
-   (((char *) (x)) - (slot_offset (struct string_chars, chars[0]))))
-
-
 struct string_chars
 {
   struct Lisp_String *string;
@@ -2117,14 +2112,9 @@ allocate_string_chars_struct (struct Lisp_String *string_it_goes_with,
 {
   struct string_chars *s_chars;
 
-  /* Allocate the string's actual data */
-  if (BIG_STRING_FULLSIZE_P (fullsize))
-    {
-      s_chars = (struct string_chars *) xmalloc (fullsize);
-    }
-  else if (fullsize <=
-           (countof (current_string_chars_block->string_chars)
-            - current_string_chars_block->pos))
+  if (fullsize <=
+      (countof (current_string_chars_block->string_chars)
+       - current_string_chars_block->pos))
     {
       /* This string can fit in the current string chars block */
       s_chars = (struct string_chars *)
@@ -2157,12 +2147,10 @@ Lisp_Object
 make_uninit_string (Bytecount length)
 {
   struct Lisp_String *s;
-  struct string_chars *s_chars;
   EMACS_INT fullsize = STRING_FULLSIZE (length);
   Lisp_Object val;
 
-  if ((length < 0) || (fullsize <= 0))
-    abort ();
+  assert (length >= 0 && fullsize > 0);
 
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, struct Lisp_String, s);
@@ -2170,9 +2158,10 @@ make_uninit_string (Bytecount length)
   set_lheader_implementation (&(s->lheader), lrecord_string);
 #endif
 
-  s_chars = allocate_string_chars_struct (s, fullsize);
+  set_string_data (s, BIG_STRING_FULLSIZE_P (fullsize)
+		   ? xnew_array (Bufbyte, length + 1)
+		   : allocate_string_chars_struct (s, fullsize)->chars);
 
-  set_string_data (s, &(s_chars->chars[0]));
   set_string_length (s, length);
   s->plist = Qnil;
 
@@ -2195,6 +2184,7 @@ static void verify_string_chars_integrity (void);
 void
 resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
 {
+  Bytecount oldfullsize, newfullsize;
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
   verify_string_chars_integrity ();
 #endif
@@ -2213,47 +2203,62 @@ resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
     }
 #endif /* ERROR_CHECK_BUFPOS */
 
-  if (pos >= 0 && delta < 0)
-  /* If DELTA < 0, the functions below will delete the characters
-     before POS.  We want to delete characters *after* POS, however,
-     so convert this to the appropriate form. */
-    pos += -delta;
-
   if (delta == 0)
     /* simplest case: no size change. */
     return;
-  else
-    {
-      Bytecount oldfullsize = STRING_FULLSIZE (string_length (s));
-      Bytecount newfullsize = STRING_FULLSIZE (string_length (s) + delta);
 
-      if (oldfullsize == newfullsize)
+  if (pos >= 0 && delta < 0)
+    /* If DELTA < 0, the functions below will delete the characters
+       before POS.  We want to delete characters *after* POS, however,
+       so convert this to the appropriate form. */
+    pos += -delta;
+
+  oldfullsize = STRING_FULLSIZE (string_length (s));
+  newfullsize = STRING_FULLSIZE (string_length (s) + delta);
+
+  if (BIG_STRING_FULLSIZE_P (oldfullsize))
+    {
+      if (BIG_STRING_FULLSIZE_P (newfullsize))
 	{
-	  /* next simplest case; size change but the necessary
-	     allocation size won't change (up or down; code somewhere
-	     depends on there not being any unused allocation space,
-	     modulo any alignment constraints). */
+	  /* Both strings are big.  We can just realloc().
+	     But careful!  If the string is shrinking, we have to
+	     memmove() _before_ realloc(), and if growing, we have to
+	     memmove() _after_ realloc() - otherwise the access is
+	     illegal, and we might crash. */
+	  Bytecount len = string_length (s) + 1 - pos;
+
+	  if (delta < 0 && pos >= 0)
+	    memmove (string_data (s) + pos + delta, string_data (s) + pos, len);
+	  set_string_data (s, (Bufbyte *) xrealloc (string_data (s),
+						    string_length (s) + delta + 1));
+	  if (delta > 0 && pos >= 0)
+	    memmove (string_data (s) + pos + delta, string_data (s) + pos, len);
+	}
+      else /* String has been demoted from BIG_STRING. */
+	{
+	  Bufbyte *new_data =
+	    allocate_string_chars_struct (s, newfullsize)->chars;
+	  Bufbyte *old_data = string_data (s);
+
 	  if (pos >= 0)
 	    {
-	      Bufbyte *addroff = pos + string_data (s);
-
-	      memmove (addroff + delta, addroff,
-		       /* +1 due to zero-termination. */
-		       string_length (s) + 1 - pos);
+	      memcpy (new_data, old_data, pos);
+	      memcpy (new_data + pos + delta, old_data + pos,
+		      string_length (s) + 1 - pos);
 	    }
+	  set_string_data (s, new_data);
+	  xfree (old_data);
 	}
-      else if (BIG_STRING_FULLSIZE_P (oldfullsize) &&
-	       BIG_STRING_FULLSIZE_P (newfullsize))
+    }
+  else /* old string is small */
+    {
+      if (oldfullsize == newfullsize)
 	{
-	  /* next simplest case; the string is big enough to be malloc()ed
-	     itself, so we just realloc.
-
-	     It's important not to let the string get below the threshold
-	     for making big strings and still remain malloc()ed; if that
-	     were the case, repeated calls to this function on the same
-	     string could result in memory leakage. */
-	  set_string_data (s, (Bufbyte *) xrealloc (string_data (s),
-						    newfullsize));
+	  /* special case; size change but the necessary
+	     allocation size won't change (up or down; code
+	     somewhere depends on there not being any unused
+	     allocation space, modulo any alignment
+	     constraints). */
 	  if (pos >= 0)
 	    {
 	      Bufbyte *addroff = pos + string_data (s);
@@ -2265,58 +2270,52 @@ resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
 	}
       else
 	{
-	  /* worst case.  We make a new string_chars struct and copy
-	     the string's data into it, inserting/deleting the delta
-	     in the process.  The old string data will either get
-	     freed by us (if it was malloc()ed) or will be reclaimed
-	     in the normal course of garbage collection. */
-	  struct string_chars *s_chars =
-	    allocate_string_chars_struct (s, newfullsize);
-	  Bufbyte *new_addr = &(s_chars->chars[0]);
-	  Bufbyte *old_addr = string_data (s);
+	  Bufbyte *old_data = string_data (s);
+	  Bufbyte *new_data =
+	    BIG_STRING_FULLSIZE_P (newfullsize)
+	    ? xnew_array (Bufbyte, string_length (s) + delta + 1)
+	    : allocate_string_chars_struct (s, newfullsize)->chars;
+
 	  if (pos >= 0)
 	    {
-	      memcpy (new_addr, old_addr, pos);
-	      memcpy (new_addr + pos + delta, old_addr + pos,
+	      memcpy (new_data, old_data, pos);
+	      memcpy (new_data + pos + delta, old_data + pos,
 		      string_length (s) + 1 - pos);
 	    }
-	  set_string_data (s, new_addr);
-	  if (BIG_STRING_FULLSIZE_P (oldfullsize))
-	    xfree (old_addr);
-	  else
-	    {
-	      /* We need to mark this chunk of the string_chars_block
-		 as unused so that compact_string_chars() doesn't
-		 freak. */
-	      struct string_chars *old_s_chars =
-		(struct string_chars *) ((char *) old_addr -
-					 sizeof (struct Lisp_String *));
-	      /* Sanity check to make sure we aren't hosed by strange
-	         alignment/padding. */
-	      assert (old_s_chars->string == s);
-	      MARK_STRUCT_AS_FREE (old_s_chars);
-	      ((struct unused_string_chars *) old_s_chars)->fullsize =
-		oldfullsize;
-	    }
+	  set_string_data (s, new_data);
+
+	  {
+	    /* We need to mark this chunk of the string_chars_block
+	       as unused so that compact_string_chars() doesn't
+	       freak. */
+	    struct string_chars *old_s_chars = (struct string_chars *)
+	      ((char *) old_data - offsetof (struct string_chars, chars));
+	    /* Sanity check to make sure we aren't hosed by strange
+	       alignment/padding. */
+	    assert (old_s_chars->string == s);
+	    MARK_STRUCT_AS_FREE (old_s_chars);
+	    ((struct unused_string_chars *) old_s_chars)->fullsize =
+	      oldfullsize;
+	  }
 	}
+    }
 
-      set_string_length (s, string_length (s) + delta);
-      /* If pos < 0, the string won't be zero-terminated.
-	 Terminate now just to make sure. */
-      string_data (s)[string_length (s)] = '\0';
+  set_string_length (s, string_length (s) + delta);
+  /* If pos < 0, the string won't be zero-terminated.
+     Terminate now just to make sure. */
+  string_data (s)[string_length (s)] = '\0';
 
-      if (pos >= 0)
-	{
-	  Lisp_Object string;
+  if (pos >= 0)
+    {
+      Lisp_Object string;
 
-	  XSETSTRING (string, s);
-	  /* We also have to adjust all of the extent indices after the
-	     place we did the change.  We say "pos - 1" because
-	     adjust_extents() is exclusive of the starting position
-	     passed to it. */
-	  adjust_extents (string, pos - 1, string_length (s),
-			  delta);
-	}
+      XSETSTRING (string, s);
+      /* We also have to adjust all of the extent indices after the
+	 place we did the change.  We say "pos - 1" because
+	 adjust_extents() is exclusive of the starting position
+	 passed to it. */
+      adjust_extents (string, pos - 1, string_length (s),
+		      delta);
     }
 
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
@@ -4179,7 +4178,7 @@ sweep_strings (void)
 # define ADDITIONAL_FREE_string(p)				\
   do { int size = string_length (p);				\
        if (BIG_STRING_SIZE_P (size))				\
-	 xfree_1 (CHARS_TO_STRING_CHAR (string_data (p)));	\
+	 xfree (p->_data);					\
      } while (0)
 
 #else
@@ -4199,7 +4198,7 @@ sweep_strings (void)
 # define ADDITIONAL_FREE_string(p)				\
   do { int size = string_length (p);				\
        if (BIG_STRING_SIZE_P (size))				\
-	 xfree_1 (CHARS_TO_STRING_CHAR (string_data (p)));	\
+	 xfree (p->_data);					\
      } while (0)
 
 #endif /* ! LRECORD_STRING */

@@ -322,7 +322,8 @@ If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
   "Collect output to `standard-output' while evaluating FORMS and return
 it as a string."
   ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu> w/ mods from Stig
-  `(with-current-buffer (get-buffer-create " *string-output*")
+  `(with-current-buffer (get-buffer-create
+			 (generate-new-buffer-name " *string-output*"))
      (setq buffer-read-only nil)
      (buffer-disable-undo (current-buffer))
      (erase-buffer)
@@ -371,21 +372,14 @@ See also `with-temp-file' and `with-output-to-string'."
 	 (and (buffer-name ,temp-buffer)
 	      (kill-buffer ,temp-buffer))))))
 
-;; Moved from mule-coding.el.
 (defmacro with-string-as-buffer-contents (str &rest body)
   "With the contents of the current buffer being STR, run BODY.
 Returns the new contents of the buffer, as modified by BODY.
 The original current buffer is restored afterwards."
-  `(let ((tempbuf (get-buffer-create " *string-as-buffer-contents*")))
-     (with-current-buffer tempbuf
-       (unwind-protect
-	   (progn
-	     (buffer-disable-undo (current-buffer))
-	     (erase-buffer)
-	     (insert ,str)
-	     ,@body
-	     (buffer-string))
-	 (erase-buffer tempbuf)))))
+  `(with-temp-buffer
+     (insert ,str)
+     ,@body
+     (buffer-string)))
 
 (defun insert-face (string face)
   "Insert STRING and highlight with FACE.  Return the extent created."

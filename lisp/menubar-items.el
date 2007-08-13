@@ -962,16 +962,20 @@
 (defun maybe-add-init-button ()
   "Don't call this.
 Adds `Load .emacs' button to menubar when starting up with -q."
-  ;; by Stig@hackvan.com
   (cond
    (init-file-user nil)
    ((file-exists-p (expand-file-name ".emacs" "~"))
-    (add-menu-button nil
-		     ["Load .emacs"
-		      (progn (delete-menu-item '("Load .emacs"))
-			     (load-user-init-file (user-login-name)))
-		      ]
-		     "Help"))
+    (add-menu-button
+     nil
+     ["Load .emacs"
+      (progn
+	(mapc #'(lambda (buf)
+		 (with-current-buffer buf
+		   (delete-menu-item '("Load .emacs"))))
+	      (buffer-list))
+	(load-user-init-file (user-login-name)))
+      ]
+     "Help"))
    (t nil)))
 
 (add-hook 'before-init-hook 'maybe-add-init-button)

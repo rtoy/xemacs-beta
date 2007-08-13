@@ -1,3 +1,52 @@
+2000-05-06  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.10 is released
+
+2000-04-29  Martin Buchholz  <martin@xemacs.org>
+
+	* dialog.el (yes-or-no-p-dialog-box): 
+	Fix docstring.
+	Fix following horrible bug in X11 mode with focus-follows-mouse: 
+	  1. Visit two files in two different frames.
+	  2. do File->Revert Buffer in one of those frames.
+	  3. Dialog box appears.
+	  4. Arrange things so that the mouse passes over the *other*
+	     frame, then to the dialog box, and click on "Yes".
+	  5. The file contents end up in the *wrong* buffer!
+	
+
+2000-01-05  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* mule/mule-cmds.el (set-default-coding-systems): Use
+	set-terminal-coding-system and set-keyboard-coding-system.
+	* coding.el (set-terminal-coding-system): Use
+	set-console-tty-output-coding-system.
+	(set-keyboard-coding-system): Use
+	set-console-tty-input-coding-system.
+
+2000-03-03  Vin Shelton  <acs@xemacs.org>
+
+	* menubar-items.el (maybe-add-init-button): Remove the "Load
+	.emacs" button from all menubars.
+
+2000-03-03  SL Baur  <steve@beopen.com>
+
+	* subr.el (with-string-as-buffer-contents): Reimplement using
+	`with-temp-buffer'.  Fixes non-unique buffer name problem, fixes
+	non-deletion of buffer after execution problem.
+	(with-output-to-string): Use unique buffer name.
+
+2000-03-03  Oscar Figueiredo  <oscar@xemacs.org>
+
+	* ldap.el (toplevel): Detect whether XEmacs has was built with
+	internal LDAP support
+	Customize all user variables.
+
+2000-03-03  Kirill 'Big K' Katsnelson  <kkm@dtmx.com>
+
+	* files.el (write-file): Ask for coding system when compiled with
+	file-coding.
+
 2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.9 is released

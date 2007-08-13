@@ -1855,6 +1855,13 @@ reset_decoding_stream (struct decoding_stream *str)
       setup_ccl_program (&str->ccl, CODING_SYSTEM_CCL_DECODE (str->codesys));
     }
 #endif /* MULE */
+  if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_AUTODETECT
+      || CODING_SYSTEM_EOL_TYPE (str->codesys) == EOL_AUTODETECT)
+    {
+      xzero (str->decst);
+      str->decst.eol_type = EOL_AUTODETECT;
+      str->decst.mask = ~0;
+    }
   str->flags = str->ch = 0;
 }
 

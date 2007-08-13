@@ -614,7 +614,7 @@ TAGS tags: FRC.tags
 
 ## We have automated tests!
 testdir = ${srcdir}/tests
-tests   = ${testdir}/basic-lisp.el ${testdir}/database.el
+tests   = ${testdir}/basic-lisp.el ${testdir}/database.el ${testdir}/mule-tests.el
 
 check:
 	src/${PROGNAME} -batch -l ${testdir}/test-emacs.el -f batch-test-emacs ${tests}

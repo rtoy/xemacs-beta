@@ -1232,66 +1232,12 @@ add_control_char_runes (pos_data *data, struct buffer *b)
     }
 }
 
-/* Given a display table entry, call the appropriate functions to
-   display each element of the entry. */
-
 static prop_block_dynarr *
-add_disp_table_entry_runes (pos_data *data, Lisp_Object entry)
+add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 {
   prop_block_dynarr *prop = NULL;
 
-  if (VECTORP (entry))
-    {
-      struct Lisp_Vector *de = XVECTOR (entry);
-      long len = vector_length (de);
-      int elt;
-
-      for (elt = 0; elt < len; elt++)
-	{
-	  if (NILP (de->contents[elt]))
-	    continue;
-	  else if (STRINGP (de->contents[elt]))
-	    {
-	      prop =
-		add_bufbyte_string_runes
-		  (data,
-		   XSTRING_DATA   (de->contents[elt]),
-		   XSTRING_LENGTH (de->contents[elt]),
-		   0);
-	    }
-	  else if (GLYPHP (de->contents[elt]))
-	    {
-	      if (data->start_col)
-		data->start_col--;
-
-	      if (!data->start_col && data->bi_start_col_enabled)
-		{
-		  prop = add_hscroll_rune (data);
-		}
-	      else
-		{
-		  struct glyph_block gb;
-
-		  gb.glyph = de->contents[elt];
-		  gb.extent = Qnil;
-		  prop = add_glyph_rune (data, &gb, BEGIN_GLYPHS, 0, 0);
-		}
-	    }
-	  else if (CHAR_OR_CHAR_INTP (de->contents[elt]))
-	    {
-	      data->ch = XCHAR_OR_CHAR_INT (de->contents[elt]);
-	      prop = add_emchar_rune (data);
-	    }
-	  /* Else blow it off because someone added a bad entry and we
-             don't have any safe way of signaling an error. */
-
-	  /* #### Still need to add any remaining elements to the
-             propagation information. */
-	  if (prop)
-	    return prop;
-	}
-    }
-  else if (STRINGP (entry))
+  if (STRINGP (entry))
     {
       prop = add_bufbyte_string_runes (data,
 				       XSTRING_DATA   (entry),
@@ -1321,10 +1267,79 @@ add_disp_table_entry_runes (pos_data *data, Lisp_Object entry)
       data->ch = XCHAR_OR_CHAR_INT (entry);
       prop = add_emchar_rune (data);
     }
+  else if (CONSP (entry))
+    {
+      if (EQ (XCAR (entry), Qformat)
+	  && CONSP (XCDR (entry))
+	  && STRINGP (XCAR (XCDR (entry))))
+	{
+	  Lisp_Object format = XCAR (XCDR (entry));
+	  Bytind len = XSTRING_LENGTH (format);
+	  Bufbyte *src = XSTRING_DATA (format), *end = src + len;
+	  Bufbyte *result = alloca_array (Bufbyte, len);
+	  Bufbyte *dst = result;
+
+	  while (src < end)
+	    {
+	      Emchar c = charptr_emchar (src);
+	      INC_CHARPTR (src);
+	      if (c != '%' || src == end)
+		dst += set_charptr_emchar (dst, c);
+	      else
+		{
+		  c = charptr_emchar (src);
+		  INC_CHARPTR (src);
+		  switch (c)
+		    {
+		      /*case 'x':
+			dst += long_to_string_base ((char *)dst, data->ch, 16);
+			break;*/
+		    case '%':
+		      dst += set_charptr_emchar (dst, '%');
+		      break;
+		    }
+		}
+	    }
+	  prop = add_bufbyte_string_runes (data, result, dst - result, 0);
+	}
+    }
 
   /* Else blow it off because someone added a bad entry and we don't
-     have any safe way of signaling an error.  Hey, this comment
-     sounds familiar. */
+     have any safe way of signaling an error. */
+  return prop;
+}
+
+/* Given a display table entry, call the appropriate functions to
+   display each element of the entry. */
+
+static prop_block_dynarr *
+add_disp_table_entry_runes (pos_data *data, Lisp_Object entry)
+{
+  prop_block_dynarr *prop = NULL;
+  if (VECTORP (entry))
+    {
+      struct Lisp_Vector *de = XVECTOR (entry);
+      EMACS_INT len = vector_length (de);
+      int elt;
+
+      for (elt = 0; elt < len; elt++)
+	{
+	  if (NILP (vector_data (de)[elt]))
+	    continue;
+	  else
+	    prop = add_disp_table_entry_runes_1 (data, vector_data (de)[elt]);
+	  /* Else blow it off because someone added a bad entry and we
+	     don't have any safe way of signaling an error.  Hey, this
+	     comment sounds familiar. */
+
+	  /* #### Still need to add any remaining elements to the
+	     propagation information. */
+	  if (prop)
+	    return prop;
+	}
+    }
+  else
+    prop = add_disp_table_entry_runes_1 (data, entry);
   return prop;
 }
 
@@ -1750,7 +1765,6 @@ create_text_block (struct window *w, struct display_line *dl,
   struct device *d = XDEVICE (f->device);
 
   pos_data data;
-  struct Lisp_Vector *dt = 0;
 
   /* Don't display anything in the minibuffer if this window is not on
      a selected frame.  We consider all other windows to be active
@@ -1822,6 +1836,8 @@ create_text_block (struct window *w, struct display_line *dl,
 			  ? XCHAR_OR_CHAR_INT (b->ctl_arrow)
 			  : ((EQ (b->ctl_arrow, Qt) || EQ (b->ctl_arrow, Qnil))
 			     ? 255 : 160));
+
+  Lisp_Object face_dt, window_dt;
 
   /* The text display block for this display line. */
   struct display_block *db = get_display_block_from_line (dl, TEXT);
@@ -1961,10 +1977,10 @@ create_text_block (struct window *w, struct display_line *dl,
 	    /* Remember that the extent-fragment routines deal in Bytind's. */
 	    extent_fragment_update (w, data.ef, data.bi_bufpos);
 
+	  get_display_tables (w, data.findex, &face_dt, &window_dt);
+
 	  if (data.bi_bufpos == data.ef->end)
 	    no_more_frags = 1;
-
-	  dt = get_display_table (w, data.findex);
 	}
       initial = 0;
 
@@ -2076,16 +2092,17 @@ create_text_block (struct window *w, struct display_line *dl,
 
       else
 	{
+	  Lisp_Object entry = Qnil;
 	  /* Get the character at the current buffer position. */
 	  data.ch = BI_BUF_FETCH_CHAR (b, data.bi_bufpos);
+	  if (!NILP (face_dt) || !NILP (window_dt))
+	    entry = display_table_entry (data.ch, face_dt, window_dt);
 
 	  /* If there is a display table entry for it, hand it off to
              add_disp_table_entry_runes and let it worry about it. */
-	  if (dt && !NILP (DISP_CHAR_ENTRY (dt, data.ch)))
+	  if (!NILP (entry) && !EQ (entry, make_char (data.ch)))
 	    {
-	      *prop =
-		add_disp_table_entry_runes (&data,
-					    DISP_CHAR_ENTRY (dt, data.ch));
+	      *prop = add_disp_table_entry_runes (&data, entry);
 
 	      if (*prop)
 		goto done;
@@ -4230,6 +4247,9 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
   else
     prop = 0;
 
+  /* Make sure this is set always */
+  /* Note the conversion at end */
+  w->window_end_pos[type] = start_pos;
   while (ypos < yend)
     {
       struct display_line dl;
@@ -4312,10 +4332,14 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
       Dynarr_free (prop);
 
   /* #### More not quite right, but close enough. */
-  /* #### Ben sez: apparently window_end_pos[] is measured
+  /* Ben sez: apparently window_end_pos[] is measured
      as the number of characters between the window end and the
      end of the buffer?  This seems rather weirdo.  What's
-     the justification for this? */
+     the justification for this?
+
+     JV sez: Because BUF_Z (b) would be a good initial value, however
+     that can change. This representation allows initalizing with 0.
+  */
   w->window_end_pos[type] = BUF_Z (b) - w->window_end_pos[type];
 
   if (need_modeline)
@@ -6592,11 +6616,22 @@ point_would_be_visible (struct window *w, Bufpos startp, Bufpos point)
    displayed.  The end of the last line is also know as the window end
    position.
 
+   WARNING: Under some circumstances it is possible that rediplay failed
+   to layout any lines for the windows. In that case this function returns
+   0 as an error condition when may_error is non-zero and a normalized
+   value of startp otherwise.
+   Under normal circumstances this is rare. However it seems that it does
+   occur in the following situation: A mouse event has come in and we need
+   to compute its location in a window. That code (in
+   pixel_to_glyph_translation) already can handle 0 as an error return
+   value. 
+
    #### With a little work this could probably be reworked as just a
    call to start_with_line_at_pixpos. */
 
 static Bufpos
-start_end_of_last_line (struct window *w, Bufpos startp, int end)
+start_end_of_last_line (struct window *w, Bufpos startp, int end,
+                        int may_error)
 {
   struct buffer *b = XBUFFER (w->buffer);
   line_start_cache_dynarr *cache = w->line_start_cache;
@@ -6616,8 +6651,8 @@ start_end_of_last_line (struct window *w, Bufpos startp, int end)
 
   start_elt = point_in_line_start_cache (w, cur_start, 0);
   if (start_elt == -1)
-    abort ();	/* this had better never happen */
-
+      return may_error ? 0 : startp;
+  
   while (1)
     {
       int height = Dynarr_atp (cache, start_elt)->height;
@@ -6680,7 +6715,7 @@ start_end_of_last_line (struct window *w, Bufpos startp, int end)
 Bufpos
 start_of_last_line (struct window *w, Bufpos startp)
 {
-  return start_end_of_last_line (w, startp, 0);
+  return start_end_of_last_line (w, startp, 0 , 0);
 }
 
 /* For the given window W, if display starts at STARTP, what will be
@@ -6690,8 +6725,15 @@ start_of_last_line (struct window *w, Bufpos startp)
 Bufpos
 end_of_last_line (struct window *w, Bufpos startp)
 {
-  return start_end_of_last_line (w, startp, 1);
+  return start_end_of_last_line (w, startp, 1, 0);
 }
+
+static Bufpos
+end_of_last_line_may_error (struct window *w, Bufpos startp)
+{
+  return start_end_of_last_line (w, startp, 1, 1);
+}
+
 
 /* For window W, what does the starting position have to be so that
    the line containing POINT will cover pixel position PIXPOS. */
@@ -7833,7 +7875,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
   if (!MARKERP ((*w)->start[CURRENT_DISP]))
     *closest = 0;
   else
-    *closest = end_of_last_line (*w,
+    *closest = end_of_last_line_may_error (*w,
 				 marker_position ((*w)->start[CURRENT_DISP]));
   *col = 0;
   UPDATE_CACHE_RETURN;

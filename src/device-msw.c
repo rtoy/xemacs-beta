@@ -189,7 +189,10 @@ mswindows_delete_device (struct device *d)
     }
 
 #ifdef HAVE_DRAGNDROP
-  DdeNameService (mswindows_dde_mlid, 0L, 0L, DNS_REGISTER);
+  DdeNameService (mswindows_dde_mlid, 0L, 0L, DNS_UNREGISTER);
+  DdeFreeStringHandle (mswindows_dde_mlid, mswindows_dde_item_open);
+  DdeFreeStringHandle (mswindows_dde_mlid, mswindows_dde_topic_system);
+  DdeFreeStringHandle (mswindows_dde_mlid, mswindows_dde_service);
   DdeUninitialize (mswindows_dde_mlid);
 #endif
 

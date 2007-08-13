@@ -1374,7 +1374,7 @@ No component of the resulting pathname will be a symbolic link, as
 	  resolved_path[rlen + 1] = 0;
 	  rlen = rlen + 1;
 	}
-      return make_ext_string ((Bufbyte *) resolved_path, rlen, FORMAT_BINARY);
+      return make_ext_string ((Bufbyte *) resolved_path, rlen, FORMAT_FILENAME);
     }
 
   toolong:
@@ -2068,7 +2068,6 @@ This is what happens in interactive use with M-x.
   return Qnil;
 }
 
-#ifdef S_IFLNK
 DEFUN ("make-symbolic-link", Fmake_symbolic_link, 2, 3,
        "FMake symbolic link to file: \nFMake symbolic link to file %s: \np", /*
 Make a symbolic link to FILENAME, named LINKNAME.  Both args strings.
@@ -2080,6 +2079,7 @@ This happens for interactive use with M-x.
        (filename, linkname, ok_if_already_exists))
 {
   /* This function can GC.  GC checked 1997.06.04. */
+  /* XEmacs change: run handlers even if local machine doesn't have symlinks */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
@@ -2107,6 +2107,7 @@ This happens for interactive use with M-x.
     RETURN_UNGCPRO (call4 (handler, Qmake_symbolic_link, filename,
 			   linkname, ok_if_already_exists));
 
+#ifdef S_IFLNK
   if (NILP (ok_if_already_exists)
       || INTP (ok_if_already_exists))
     barf_or_query_if_file_exists (linkname, "make it a link",
@@ -2119,10 +2120,11 @@ This happens for interactive use with M-x.
       report_file_error ("Making symbolic link",
 			 list2 (filename, linkname));
     }
+#endif /* S_IFLNK */
+
   UNGCPRO;
   return Qnil;
 }
-#endif /* S_IFLNK */
 
 #ifdef HPUX_NET
 
@@ -2349,11 +2351,13 @@ Otherwise returns nil.
        (filename))
 {
   /* This function can GC.  GC checked 1997.04.10. */
+  /* XEmacs change: run handlers even if local machine doesn't have symlinks */
 #ifdef S_IFLNK
   char *buf;
   int bufsize;
   int valsize;
   Lisp_Object val;
+#endif
   Lisp_Object handler;
   struct gcpro gcpro1;
 
@@ -2368,6 +2372,7 @@ Otherwise returns nil.
   if (!NILP (handler))
     return call2 (handler, Qfile_symlink_p, filename);
 
+#ifdef S_IFLNK
   bufsize = 100;
   while (1)
     {
@@ -4202,9 +4207,7 @@ syms_of_fileio (void)
   DEFSUBR (Fdelete_file);
   DEFSUBR (Frename_file);
   DEFSUBR (Fadd_name_to_file);
-#ifdef S_IFLNK
   DEFSUBR (Fmake_symbolic_link);
-#endif /* S_IFLNK */
 #ifdef HPUX_NET
   DEFSUBR (Fsysnetunam);
 #endif /* HPUX_NET */

@@ -1497,9 +1497,6 @@ otherwise it is an integer representing a ShowWindow flag:
 
   CHECK_STRING (document);
 
-  /* Just get the filename if we were given it. */
-  document = Ffile_name_nondirectory (document);
-
   if (NILP (current_dir))
     current_dir = current_buffer->directory;
 
@@ -1519,7 +1516,11 @@ otherwise it is an integer representing a ShowWindow flag:
   if (STRINGP (document))
     {
       GET_C_STRING_FILENAME_DATA_ALLOCA (document, f);
+#ifdef __CYGWIN32__
+      CYGWIN_WIN32_PATH (f, doc);
+#else
       doc = f;
+#endif
     }
 
   UNGCPRO;
@@ -1537,9 +1538,9 @@ otherwise it is an integer representing a ShowWindow flag:
   if (ret > 32)
     return Qt;
   
-  if (ret == ERROR_FILE_NOT_FOUND || ret == SE_ERR_FNF)
+  if (ret == ERROR_FILE_NOT_FOUND)
     signal_simple_error ("file not found", document);
-  else if (ret == ERROR_PATH_NOT_FOUND || ret == SE_ERR_PNF)
+  else if (ret == ERROR_PATH_NOT_FOUND)
     signal_simple_error ("path not found", current_dir);
   else if (ret == ERROR_BAD_FORMAT)
     signal_simple_error ("bad executable format", document);

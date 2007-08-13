@@ -185,7 +185,7 @@ sysdll.o: config.h sysdll.h
 termcap.o: $(LISP_H) conslots.h console.h device.h lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h
 terminfo.o: config.h
 toolbar.o: $(LISP_H) buffer.h bufslots.h conslots.h console.h device.h frame.h frameslots.h glyphs.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h redisplay.h scrollbar.h specifier.h symeval.h symsinit.h toolbar.h window.h winslots.h
-tooltalk.o: $(LISP_H) buffer.h bufslots.h elhash.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h process.h symeval.h symsinit.h tooltalk.h
+tooltalk.o: $(LISP_H) buffer.h bufslots.h elhash.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h process.h symeval.h symsinit.h syssignal.h tooltalk.h
 tparam.o: config.h
 undo.o: $(LISP_H) buffer.h bufslots.h extents.h lisp-disunion.h lisp-union.h lrecord.h mule-charset.h symeval.h symsinit.h
 unexaix.o: $(LISP_H) getpagesize.h lisp-disunion.h lisp-union.h lrecord.h symeval.h symsinit.h

@@ -1,3 +1,21 @@
+2000-05-06  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.10 is released
+
+2000-03-03  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* xlwscrollbar.c (get_gc): Always check for XmUNSPECIFIED_PIXMAP
+	even if we are only 'compatible' with the Motif resources.
+	(XmUNSPECIFIED_PIXMAP): Define unconditionally.
+
+2000-03-03  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* xlwmenu.h (XmUNSPECIFIED_PIXMAP): Define this we are using Motif
+	compatible resource names.
+
+	* xlwmenu.c (make_shadow_gcs): Always check for XmUNSPECIFIED_PIXMAP
+	even if we are only 'compatible' with the Motif resources.
+
 2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.9 is released

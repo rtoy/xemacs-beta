@@ -94,9 +94,9 @@ The follwing coding systems are set:
   ;;(setq-default buffer-file-coding-system coding-system)
   (set-default-buffer-file-coding-system coding-system)
   ;;(setq default-terminal-coding-system coding-system)
-  (setq terminal-coding-system coding-system)
+  (set-terminal-coding-system coding-system)
   ;;(setq default-keyboard-coding-system coding-system)
-  (setq keyboard-coding-system coding-system)
+  (set-keyboard-coding-system coding-system)
   ;;(setq default-process-coding-system (cons coding-system coding-system))
   (add-hook 'comint-exec-hook
 	    `(lambda ()

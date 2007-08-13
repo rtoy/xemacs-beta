@@ -1,3 +1,132 @@
+2000-05-06  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.10 is released
+
+2000-04-26  Mike Woolley  <mike@bulsara.com>
+
+	* ntheap.c: Changed recreate_heap to limit the amount reserved
+	for the heap to that which is actually available. Also now
+	displays a message box (with some dignostics) in the event that
+	it still can't start.
+
+2000-04-29  Mike Alexander  <mta@arbortext.com>
+
+	* indent.c (vmotion_1): If point_in_line_start_cache fails simply
+	return the input position instead of asserting out.
+
+2000-04-27  SL Baur  <steve@turbolinux.co.jp>
+
+	* Backport of Hrvoje Niksic patch of 29-Nov-1998 to fix a
+	redisplay crash tickled by TurboLinux 6.0.
+
+1998-11-29  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* specifier.c (display_table_validate): Update.
+
+	* redisplay.c (create_text_block): Use them.
+
+	* glyphs.c (display_table_entry): New function.
+	(get_display_tables): Ditto.
+
+	* glyphs.h: declare them.
+
+2000-04-11  Jan Vroonhof  <jan@xemacs.org>
+
+	* process-unix.c (unix_send_process): Guard against process MIA
+	after Faccept_process_output.
+
+2000-04-30  Martin Buchholz  <martin@xemacs.org>
+
+	* alloc.c (allocate_string_chars_struct):
+	(make_uninit_string):
+	(resize_string):
+	(verify_string_chars_integrity):
+	(compact_string_chars): Now only called for small strings.
+	(sweep_strings):
+	Backport of xemacs-21.2 fix of 2000-01-09.
+	String allocation rewrite.
+	Properly handle resizing big strings.
+	Fixes crash when evaluating:
+	(aset (make-string 9003 ??) 1 (make-char 'latin-iso8859-1 57))
+	(CHARS_TO_STRING_CHAR): Remove. No longer needed.
+	Big strings had unused space at beginning.
+
+2000-04-19  Martin Buchholz  <martin@xemacs.org>
+
+	* sysdep.c (get_pty_max_bytes): 
+	Fix hangs on DEC OSF 4.0 when (process-send-string) sends
+	strings longer than 252 bytes.
+
+2000-03-05  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* fileio.c (Fmake_symbolic_link):
+	(Ffile_symlink_p):
+	Run handlers even if local machine doesn't have symlinks.
+
+2000-03-03  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* redisplay.c (regenerate_window): Make sure we set a sane value
+	for end_pos even if we jump out of the loop.
+	(regenerate_window): Answer Ben's question :-).
+	(start_end_of_last_line): Add may_error argument. 
+	(start_of_last_line): 
+	(end_of_last_line): Pass may_error = 0.
+	(end_of_last_line_may_error): New function.
+	(pixel_to_glyph_translation): Use it, so we don't crash in
+	event_to_glyph.
+
+2000-03-03  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* scrollbar-x.c (x_update_vertical_scrollbar_callback): 
+	(x_update_horizontal_scrollbar_callback): Return if no mirror was
+	found. Scrollbar event probably belonged to some old config.
+
+1999-12-30  Yoshiki Hayashi  <t90553@mail.ecc.u-tokyo.ac.jp>
+
+	* file-coding.c (reset_decoding_stream): Clear previous
+	detection state when autodetect.
+
+2000-03-03  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c (signal_ldap_error): New parameter list
+	(print_ldap):
+	(allocate_ldap):
+	(finalize_ldap):
+	(Fldap_status): Use the `ld' field of the Lisp_LDAP structure to
+	test whether the structure has been initialized
+	(Fldap_open): Use `slow_down_interrupts'/`speed_up_interrupts'
+	around `ldap_open'
+	Use the option LDAP_OPT_RESTART to avoid LDAP being wedged by
+	XEmacs interrupts
+	Remove unnecessary `slow_down_interrupts'/`speed_up_interrupts'
+	calls
+	(struct ldap_unwind_struct):
+	(ldap_search_unwind):
+	(Fldap_search_internal): Handle binary values
+	(toplevel): Do not provide `ldap' anymore
+
+	* eldap.h (struct Lisp_LDAP): Deleted the `livep' field of
+	Lisp_LDAP
+	(CHECK_LIVE_LDAP): Take it into account
+
+	* config.h.in: Updated LDAP defines
+
+2000-03-03  Andy Piper <andy@xemacs.org>
+
+	* objects-msw.c: Cygwin patches.
+
+2000-03-03  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	*  device-msw.c (mswindows_delete_device):
+	   Free DDE string handles.
+
+2000-02-19  Martin Buchholz  <martin@xemacs.org>
+
+ 	* fileio.c (Ffile_truename): convert return from realpath() using
+ 	FORMATE_FILENAME, not FORMAT_BINARY.  
+	Fixes obvious bug with non-ASCII symlinks if
+	file-name-coding-system is, for example, iso-8859-2.
+
 2000-02-13  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.9 is released

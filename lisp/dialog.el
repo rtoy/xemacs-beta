@@ -30,31 +30,30 @@
 
 ;;; Code:
 (defun yes-or-no-p-dialog-box (prompt)
-  "Ask user a \"y or n\" question with a popup dialog box.
-Returns t if answer is \"yes\".
+  "Ask user a yes-or-no question with a popup dialog box.
+Return t if the answer is \"yes\".
 Takes one argument, which is the string to display to ask the question."
-  (let ((echo-keystrokes 0)
-	event)	 
-    (popup-dialog-box
-     ;; "Non-violent language please!" says Robin.
-     (cons prompt '(["Yes" yes t] ["No" no t] nil ["Cancel" abort t])))
-;     (cons prompt '(["Yes" yes t] ["No" no t] nil ["Abort" abort t])))
-    (catch 'ynp-done
-      (while t
-	(setq event (next-command-event event))
-	(cond ((and (misc-user-event-p event) (eq (event-object event) 'yes))
-	       (throw 'ynp-done t))
-	      ((and (misc-user-event-p event) (eq (event-object event) 'no))
-	       (throw 'ynp-done nil))
-	      ((and (misc-user-event-p event)
-		    (or (eq (event-object event) 'abort)
-			(eq (event-object event) 'menu-no-selection-hook)))
-	       (signal 'quit nil))
-	      ((button-release-event-p event) ;; don't beep twice
-	       nil)
-	      (t
-	       (beep)
-	       (message "please answer the dialog box")))))))
+  (save-selected-frame
+    (let ((echo-keystrokes 0)
+	  event)	 
+      (popup-dialog-box
+       (cons prompt '(["Yes" yes t] ["No" no t] nil ["Cancel" abort t])))
+      (catch 'ynp-done
+	(while t
+	  (setq event (next-command-event event))
+	  (cond ((and (misc-user-event-p event) (eq (event-object event) 'yes))
+		 (throw 'ynp-done t))
+		((and (misc-user-event-p event) (eq (event-object event) 'no))
+		 (throw 'ynp-done nil))
+		((and (misc-user-event-p event)
+		      (or (eq (event-object event) 'abort)
+			  (eq (event-object event) 'menu-no-selection-hook)))
+		 (signal 'quit nil))
+		((button-release-event-p event);; don't beep twice
+		 nil)
+		(t
+		 (beep)
+		 (message "please answer the dialog box"))))))))
 
 (defun yes-or-no-p-maybe-dialog-box (prompt)
   "Ask user a yes-or-no question.  Return t if answer is yes.
