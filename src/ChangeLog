@@ -1,3 +1,12 @@
+1999-02-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.63 is released
+
+1999-01-22  Andy Piper  <andy@xemacs.org>
+
+	* glyphs-msw.c (xbm_create_bitmap_from_data): make sure bpline is
+	a power of 2.
+
 1999-01-05  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.62 is released

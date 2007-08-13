@@ -1540,7 +1540,7 @@ xbm_create_bitmap_from_data (HDC hdc, char *data,
 			     int mask, COLORREF fg, COLORREF bg)
 {
   int old_width = (width + 7)/8;
-  int new_width = 2*((width + 15)/16);
+  int new_width = BPLINE (2*((width + 15)/16));
   unsigned char *offset;
   void *bmp_buf = 0;
   unsigned char *new_data, *new_offset;

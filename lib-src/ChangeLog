@@ -1,3 +1,17 @@
+1999-02-02  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.63 is released
+
+1999-01-27  Martin Buchholz  <martin@xemacs.org>
+
+	* movemail.c (strerror): Must be NON-static, since it is used by
+	the POP code, which got moved to a separate file.
+
+1999-01-26  Martin Buchholz  <martin@xemacs.org>
+
+	* movemail.c (compile_regex): Sync non-Windows changes from 21.2.
+	Prevent compile errors and warnings.
+
 1999-01-05  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.62 is released
