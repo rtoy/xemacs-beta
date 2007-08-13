@@ -355,6 +355,23 @@ This is to work around a bug in Emacs process signalling.")
 (put 'comint-scroll-show-maximum-output 'permanent-local t)
 (put 'comint-ptyp 'permanent-local t)
 
+(defface comint-input-face '((((class color)
+			      (background dark))
+			     (:foreground "red"))
+			    (((class color)
+			      (background light))
+			     (:foreground "blue"))
+			    (((class mono))
+			     (:bold t))
+			    (((class grayscale))
+			     (:bold t))
+			    (t 
+			     (:bold t)))
+  "How to display user input for comint shells."
+  :group 'comint-input-face)
+
+
+
 (defun comint-mode ()
   "Major mode for interacting with an inferior interpreter.
 Interpreter name is same as buffer name, sans the asterisks.
@@ -1347,7 +1364,9 @@ Similarly for Soar, Scheme, etc."
 	  (set-marker comint-last-input-start pmark)
 	  (set-marker comint-last-input-end (point))
 	  (set-marker (process-mark proc) (point))
+	  (comint-input-done)
 	  (funcall comint-input-sender proc input)
+	  (comint-input-setup)
 	  ;; XEmacs - A kludge to prevent the delay between insert and
 	  ;; process output affecting the display.  A case for a
 	  ;; comint-send-input-hook?
@@ -1355,6 +1374,27 @@ Similarly for Soar, Scheme, etc."
 			      (concat input "\n"))
 	  (comint-output-filter proc "")
 	  )))))
+(defun comint-input-done ()
+  "Finalized comint-input-extent so nothing more is added."
+  (if (not comint-input-extent)
+      (comint-input-setup))
+  (set-extent-property comint-input-extent 'start-closed nil)
+  (set-extent-property comint-input-extent 'end-closed nil)
+  (set-extent-property comint-input-extent 'detachable t)
+  )
+
+(defun comint-input-setup ()
+  "Insure the comint-input-extent is ready."
+  (setq comint-input-extent (make-extent (point) (point-max)))
+  (set-extent-property comint-input-extent 'detachable nil)
+  (set-extent-property comint-input-extent 'start-closed t)
+  (set-extent-property comint-input-extent 'end-closed t)
+  (set-extent-face comint-input-extent 'comint-input-face)
+  )
+
+(defvar comint-input-extent nil
+  "Current extent used for displaying text in buffer.");
+(make-variable-buffer-local 'comint-input-extent)
 
 ;; The purpose of using this filter for comint processes
 ;; is to keep comint-last-input-end from moving forward
@@ -1370,6 +1410,9 @@ Similarly for Soar, Scheme, etc."
 		opoint (point)
 		obeg (point-min)
 		oend (point-max))
+	  ;; Keep stuff being output (before input) from using input-extent
+	  (if comint-input-extent
+	      (set-extent-property comint-input-extent 'start-closed nil))
 	  (let ((buffer-read-only nil)
 		(nchars (length string))
 		(ostart nil))
@@ -1394,6 +1437,11 @@ Similarly for Soar, Scheme, etc."
 	    (set-marker comint-last-output-start ostart)
 	    (set-marker (process-mark process) (point))
 	    (redraw-modeline))
+	  ;; Now insure everything inserted after (user input) is in extent
+	  (if (not comint-input-extent)
+	      (comint-input-setup))
+	  (set-extent-endpoints comint-input-extent (point) (point-max))
+	  (set-extent-property comint-input-extent 'start-closed t)
 
 	  (narrow-to-region obeg oend)
 	  (goto-char opoint)

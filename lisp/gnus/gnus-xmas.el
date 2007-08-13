@@ -142,7 +142,8 @@ It is provided only to ease porting of broken FSF Emacs programs."
 This is ugly, but it works around a bug in `window-displayed-height'.")
 
 (defun gnus-xmas-switch-horizontal-scrollbar-off ()
-  (set-specifier scrollbar-height (cons (current-buffer) 0)))
+  (when (featurep 'scrollbar)
+    (set-specifier scrollbar-height (cons (current-buffer) 0))))
 
 (defun gnus-xmas-summary-recenter ()
   "\"Center\" point in the summary window.
@@ -597,9 +598,9 @@ If it is non-nil, it must be a toolbar.  The five legal values are
 
 (defvar gnus-summary-toolbar
   '([gnus-summary-prev-unread
-     gnus-summary-prev-unread-article t "Prev unread article"]
+     gnus-summary-prev-page-or-article t "Page up"]
     [gnus-summary-next-unread
-     gnus-summary-next-unread-article t "Next unread article"]
+     gnus-summary-next-page t "Page down"]
     [gnus-summary-post-news
      gnus-summary-post-news t "Post an article"]
     [gnus-summary-followup-with-original

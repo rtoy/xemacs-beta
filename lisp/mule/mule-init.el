@@ -30,7 +30,7 @@
 ;;;  makes Chinese the primary environment.
 ;;;  If you are still not satisfied with the settings, you can
 ;;;  override them after the above line.  For instance,
-;;;  	(set-default-file-coding-system 'big5)
+;;;  	(set-default-buffer-file-coding-system 'big5)
 ;;;  makes big5 be used for file I/O by default.
 ;;;  If you are not satisfied with other default settings in this file,
 ;;;  override any of them also in `./lisp/site-init.el'.  For instance,
@@ -67,11 +67,11 @@
 	(cons 'modeline-multibyte-status
 	      (cdr modeline-format))))
 
-(define-key mule-keymap "f" 'set-file-coding-system)
+(define-key mule-keymap "f" 'set-buffer-file-coding-system)
 (define-key mule-keymap "i" 'set-keyboard-coding-system)
 (define-key mule-keymap "d" 'set-terminal-coding-system)
 (define-key mule-keymap "p" 'set-current-process-coding-system)
-(define-key mule-keymap "F" 'set-default-file-coding-system)
+(define-key mule-keymap "F" 'set-default-buffer-file-coding-system)
 (define-key mule-keymap "P" 'set-default-process-coding-system)
 (define-key mule-keymap "c" 'list-coding-system-briefly)
 (define-key mule-keymap "C" 'list-coding-system)

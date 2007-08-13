@@ -608,9 +608,9 @@ If FRAME is omitted or nil, use the selected frame."
   (color-instance-rgb-components (make-color-instance color)))
 (make-compatible 'x-color-values 'color-instance-rgb-components)
 
-;; The name of char-int is unintuitive and silly.
-(define-obsolete-function-alias 'char-int 'char-to-int)
+;; The name of char-int is unintuitive and silly, but in CLtL2.
+(define-compatible-function-alias 'char-int 'char-to-int)
 ;; likewise with int-char.
-(define-obsolete-function-alias 'int-char 'int-to-char)
+(define-compatible-function-alias 'int-char 'int-to-char)
 
 ;;; obsolete.el ends here

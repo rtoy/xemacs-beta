@@ -221,7 +221,7 @@ DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);
 #define XCODING_SYSTEM_CCL_ENCODE(codesys) \
   CODING_SYSTEM_CCL_ENCODE (XCODING_SYSTEM (codesys))
 
-extern Lisp_Object Qfile_coding_system, Qcoding_system_error;
+extern Lisp_Object Qbuffer_file_coding_system, Qcoding_system_error;
 
 extern Lisp_Object Vkeyboard_coding_system;
 extern Lisp_Object Vterminal_coding_system;

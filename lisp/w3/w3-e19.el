@@ -1,7 +1,7 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/18 23:32:51
-;; Version: 1.18
+;; Created: 1997/03/12 20:07:18
+;; Version: 1.19
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,9 +97,15 @@
     (ns-store-pasteboard-internal str))
    (t nil)))
 
+(defun w3-e19-no-read-only (st nd)
+  ;; Make sure we don't yank any read-only data out of this buffer
+  (let ((inhibit-read-only t))
+    (put-text-property st nd 'read-only nil)))
+
 (defun w3-mode-version-specifics ()
   ;; Emacs 19 specific stuff for w3-mode
   (make-local-variable 'track-mouse)
+  (set (make-local-variable 'buffer-access-fontify-functions) 'w3-e19-no-read-only)
   (if w3-track-mouse (setq track-mouse t)))
 
 (defun w3-mouse-handler (e)

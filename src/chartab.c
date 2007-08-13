@@ -1647,12 +1647,12 @@ check_category_table (Lisp_Object obj, Lisp_Object def)
 }   
 
 int
-check_category_at(Emchar ch, Lisp_Object table,
-		  unsigned int designator, unsigned int not)
+check_category_char(Emchar ch, Lisp_Object table,
+		    unsigned int designator, unsigned int not)
 {
   register Lisp_Object temp;
   struct Lisp_Char_Table *ctbl;  
-#if 1 /* ifdef ERROR_CHECK_TYPECHECK */
+#ifdef ERROR_CHECK_TYPECHECK
   if (NILP (Fcategory_table_p (table)))
     signal_simple_error("Expected category table", table);
 #endif
@@ -1665,7 +1665,7 @@ check_category_at(Emchar ch, Lisp_Object table,
 }
 
 DEFUN ("check-category-at", Fcheck_category_at, 2, 4, 0, /*
-Return t if category of a character at POS includes DESIGNATIOR,
+Return t if category of a character at POS includes DESIGNATOR,
 else return nil. Optional third arg specifies which buffer
 (defaulting to current), and fourth specifies the CATEGORY-TABLE,
 (defaulting to the buffer's category table).
@@ -1682,7 +1682,28 @@ else return nil. Optional third arg specifies which buffer
   des = XREALINT(designator);
   ctbl = check_category_table (category_table, Vstandard_category_table);
   ch = BUF_FETCH_CHAR (buf, XINT(pos));
-  return (check_category_at(ch, ctbl, des, 0)
+  return (check_category_char(ch, ctbl, des, 0)
+	  ? Qt : Qnil);
+}
+
+DEFUN ("char-in-category-p", Fchar_in_category_p, 2, 3, 0, /*
+Return t if category of character CHR includes DESIGNATOR, else
+return nil. Optional third arg specifies the CATEGORY-TABLE to use,
+
+which defaults to the system default table.
+*/
+       (chr, designator, category_table))
+{
+  Lisp_Object ctbl;
+  Emchar ch;
+  unsigned int des;
+
+  CHECK_CATEGORY_DESIGNATOR (designator);
+  des = XREALINT(designator);
+  CHECK_CHAR(chr);
+  ch = XCHAR(chr);
+  ctbl = check_category_table (category_table, Vstandard_category_table);
+  return (check_category_char(ch, ctbl, des, 0)
 	  ? Qt : Qnil);
 }
 
@@ -1790,6 +1811,7 @@ syms_of_chartab (void)
   DEFSUBR (Fcopy_category_table);
   DEFSUBR (Fset_category_table);
   DEFSUBR (Fcheck_category_at);
+  DEFSUBR (Fchar_in_category_p);
   DEFSUBR (Fcategory_designator_p);
   DEFSUBR (Fcategory_table_value_p);
 #endif /* MULE */

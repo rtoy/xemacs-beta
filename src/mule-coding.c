@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lstream.h"
 #include "mule-coding.h"
 
-Lisp_Object Qfile_coding_system, Qcoding_system_error;
+Lisp_Object Qbuffer_file_coding_system, Qcoding_system_error;
 
 Lisp_Object Vkeyboard_coding_system;
 Lisp_Object Vterminal_coding_system;
@@ -1373,9 +1373,9 @@ coding_system_from_mask (int mask)
   if (mask == ~0)
     {
       /* If the file was entirely or basically ASCII, use the
-	 default value of `file-coding-system'. */
+	 default value of `buffer-file-coding-system'. */
       Lisp_Object retval =
-	XBUFFER (Vbuffer_defaults)->file_coding_system;
+	XBUFFER (Vbuffer_defaults)->buffer_file_coding_system;
       if (!NILP (retval))
 	{
 	  retval = Ffind_coding_system (retval);
@@ -1383,8 +1383,8 @@ coding_system_from_mask (int mask)
 	    {
 	      warn_when_safe
 		(Qbad_variable, Qwarning,
-		 "Invalid `default-file-coding-system', set to nil");
-	      XBUFFER (Vbuffer_defaults)->file_coding_system = Qnil;
+		 "Invalid `default-buffer-file-coding-system', set to nil");
+	      XBUFFER (Vbuffer_defaults)->buffer_file_coding_system = Qnil;
 	    }
 	}
       if (NILP (retval))
@@ -4569,7 +4569,7 @@ convert_from_external_format (CONST Extbyte *ptr,
 void
 syms_of_mule_coding (void)
 {
-  defsymbol (&Qfile_coding_system, "file-coding-system");
+  defsymbol (&Qbuffer_file_coding_system, "buffer-file-coding-system");
   deferror (&Qcoding_system_error, "coding-system-error",
 	    "Coding-system error", Qio_error);
 

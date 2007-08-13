@@ -52,9 +52,9 @@
   (lambda ()
     (set-coding-category-system 'iso-8-designate 'iso-8859-7)
     (set-coding-priority-list '(iso-8-designate iso-8-1))
-    (set-default-file-coding-system 'iso-8859-7)
+    (set-default-buffer-file-coding-system 'iso-8859-7)
     (setq terminal-coding-system 'iso-8859-7)
     (setq keyboard-coding-system 'iso-8859-7)
-;;    (setq-default quail-current-package
+;;  (setq-default quail-current-package
 ;;		  (assoc "greek" quail-package-alist))))
     ))

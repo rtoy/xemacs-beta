@@ -16,3 +16,6 @@
 #ifndef THIS_IS_MAKEFILE
 #undef C_SWITCH_SYSTEM
 #endif
+
+/* Irix 6.2 doesn't need -lw */
+#undef NEED_LIBW

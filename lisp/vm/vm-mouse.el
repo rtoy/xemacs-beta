@@ -217,7 +217,7 @@
 	       ;; one, whatever that is.
 	       (setq buffer-file-type nil)
 	       (and (vm-xemacs-mule-p)
-		    (set-file-coding-system 'no-conversion nil))
+		    (set-buffer-file-coding-system 'no-conversion nil))
 	       (write-region (point-min) (point-max)
 			     (concat "/tmp/Mosaic." pid)
 			     nil 0)

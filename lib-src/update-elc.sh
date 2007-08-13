@@ -99,7 +99,7 @@ $BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
 # but it depends on nothing (Kyle is like that).
 ignore_dirs="$ignore_dirs vm"
 echo "Compiling in lisp/vm";
-(cd lisp/vm && ${MAKE:-make} EMACS=$EMACS)
+(cd lisp/vm && ${MAKE:-make} EMACS=$EMACS autoload)
 echo "lisp/vm done."
 
 # Prepare for byte-compiling directories with directory-specific instructions

@@ -410,11 +410,11 @@ INPUT and OUTPUT, which should be symbols referring to coding systems."
 (define-program-coding-system nil ".*anno.*" 'junet)
 (define-program-coding-system nil ".*rcvstore.*" 'junet)
 (setq mh-before-send-letter-hook
-      '(lambda () (set-file-coding-system 'junet)))
+      '(lambda () (set-buffer-file-coding-system 'junet)))
 ;; For VM
 (add-hook 'vm-mode-hooks
 	  '(lambda ()
-	     (set-file-coding-system 'junet)))
+	     (set-buffer-file-coding-system 'junet)))
 ;; For Wnn and cWnn
 (define-service-coding-system "wnn" nil 'no-conversion)
 

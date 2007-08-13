@@ -6,7 +6,7 @@
 ;; Version:    1.17
 
 (defconst mine-version-number "1.17" "Emacs Mine version number.")
-(defconst mine-version (format "Emacs Mine v%s by Jacques Duthen © 1997"
+(defconst mine-version (format "XEmacs Mine v%sx by Jacques Duthen © 1997"
 			       mine-version-number)
   "Full Emacs Mine version number.")
 
@@ -484,7 +484,7 @@ When called interactively, displays the version."
 (defun mine-mouse-hit (event)
   "Move point to the position clicked on with the mouse and hit this point."
   (interactive "@e")
-  (if (mine-goto-point (event-point event))
+  (if (mine-goto-point (event-closest-point event))
       (mine-hit-curpoint)
     (mine-message 'mine-msg-click-precisely)))
 

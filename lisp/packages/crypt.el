@@ -1916,7 +1916,7 @@ Sets `crypt-dos-has-ctrl-z'."
               (if crypt-dos-has-ctrl-z (replace-match ""))))))))
 
 (defun crypt-unix-to-dos-region (start end)
-  "Converts region from START to END, from dos to unix format.
+  "Converts region from START to END, from unix to os format.
 Replaces \"\\n\" with \"\\r\\n\" and adds a ^Z at end of file if
 `crypt-dos-has-ctrl-z' is non-nil."
   (save-excursion

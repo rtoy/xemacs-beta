@@ -28,6 +28,9 @@
 ;; All the commands for filling text.  These are documented in the XEmacs
 ;; Reference Manual.
 
+;; 97/3/14 Jareth Hein (jhod@po.iijnet.or.jp) added functions for kinsoku (asian text
+;; line break processing)
+
 ;;; Code:
 
 (defconst fill-individual-varying-indent nil
@@ -77,6 +80,38 @@ is taken from that line.")
   "*Function to call to choose a fill prefix for a paragraph.
 This function is used when `adaptive-fill-regexp' does not match.")
 
+;; Added for kinsoku processing. Use this instead of 
+;; (skip-chars-backward "^ \t\n")
+;; (skip-chars-backward "^ \n" linebeg)
+(defun fill-move-backward-to-break-point (regexp &optional lim)
+  (let ((opoint (point)))
+    ;; 93.8.23 by kawamoto@ics.es.osaka-u.ac.jp
+    ;;  case of first 'word' being longer than fill-column
+    (if (not (re-search-backward regexp lim 'move))
+	nil
+      ;; we have skipped backward SPC or WAN (word-across-newline).  So move point forward again.
+      (forward-char)
+      (if (<= opoint (point))
+	  (forward-char -1)))))
+
+;; Added for kinsoku processing. Use instead of
+;; (re-search-forward "[ \t]" opoint t)
+;; (skip-chars-forward "^ \n")
+;; (skip-chars-forward "^ \n")
+(defun fill-move-forward-to-break-point (regexp &optional lim)
+  (let ((opoint (point)))
+    (if (not (re-search-forward regexp lim 'move))
+	nil
+      (forward-char -1)
+      (if (<= (point) opoint)
+	  (forward-char))))
+  (if (featurep 'mule) (kinsoku-process-extend)))
+
+(defun fill-end-of-sentence-p ()
+  (save-excursion
+    (skip-chars-backward " ]})\"'")
+    (memq (preceding-char) '(?. ?? ?!))))
+
 (defun current-fill-column ()
   "Return the fill-column to use for this line.
 The fill-column to use for a buffer is stored in the variable `fill-column',
@@ -106,9 +141,10 @@ number equals or exceeds the local fill-column - right-margin difference."
 (defun canonically-space-region (beg end)
   "Remove extra spaces between words in region.
 Leave one space between words, two at end of sentences or after colons
-(depending on values of `sentence-end-double-space' and `colon-double-space').
- Remove indentation from each line."
+\(depending on values of `sentence-end-double-space' and `colon-double-space').
+Remove indentation from each line."
   (interactive "r")
+  ;;;### 97/3/14 jhod: Do I have to add anything here for kinsoku?
   (save-excursion
     (goto-char beg)
     ;; XEmacs - (ENE/stig from fa-extras.el): Skip the start of a comment.
@@ -149,6 +185,7 @@ Leave one space between words, two at end of sentences or after colons
 ;; XEmacs -- added DONT-SKIP-FIRST.  Port of older code changes by Stig.
 ;; #### probably this junk is broken -- do-auto-fill doesn't actually use
 ;; it.  If so, it should be removed.
+
 (defun fill-context-prefix (from to &optional first-line-regexp
 				 dont-skip-first)
   "Compute a fill prefix from the text between FROM and TO.
@@ -172,7 +209,9 @@ first line, insist it must match FIRST-LINE-REGEXP."
       (move-to-left-margin)
       ;; XEmacs change
       (let ((start (point))
-	    (eol (save-excursion (end-of-line) (point))))
+	    ; jhod: no longer used?
+	    ;(eol (save-excursion (end-of-line) (point)))
+	    )
 	(setq result
 	      (if (not (looking-at paragraph-start))
 		  (cond ((and adaptive-fill-regexp (looking-at adaptive-fill-regexp))
@@ -319,8 +358,40 @@ space does not end a sentence, so don't break a line there."
 	  (goto-char from)
 	  (skip-chars-forward " \t")
 	  ;; Then change all newlines to spaces.
-	  (subst-char-in-region from (point-max) ?\n ?\ )
-	  (if (and nosqueeze (not (eq justify 'full)))
+	  ;;; 97/3/14 jhod: Kinsoku change
+	  ;; Spacing is not necessary for charcters of no word-separater.
+	  ;; The regexp word-across-newline is used for this check.
+	  (if (not (and (featurep 'mule)
+			(stringp word-across-newline)))
+	      (subst-char-in-region from (point-max) ?\n ?\ )
+	    ;;
+	    ;; WAN     +NL+WAN       --> WAN            + WAN
+	    ;; not(WAN)+NL+WAN       --> not(WAN)       + WAN
+	    ;; WAN     +NL+not(WAN)  --> WAN            + not(WAN)
+	    ;; SPC     +NL+not(WAN)  --> SPC            + not(WAN)
+	    ;; not(WAN)+NL+not(WAN)  --> not(WAN) + SPC + not(WAN)
+	    ;;
+	    (goto-char from)
+	    (end-of-line)
+	    (while (not (eobp))
+	      ;; Insert SPC only when point is between nonWAN.  Insert
+	      ;; before deleting to preserve marker if possible.
+	      (if (or (prog2		; check following char.
+			  (forward-char)	; skip newline
+			  (or (eobp)
+			      (looking-at word-across-newline))
+			(forward-char -1))
+		      (prog2		; check previous char.
+			  (forward-char -1)
+			  (or (eq (following-char) ?\ )
+			      (looking-at word-across-newline))
+			(forward-char)))
+		  nil
+		(insert ?\ ))
+	      (delete-char 1)		; delete newline
+	      (end-of-line)))
+	  ;; end patch
+ 	  (if (and nosqueeze (not (eq justify 'full)))
 	      nil
 	    (canonically-space-region (or squeeze-after (point)) (point-max))
 	    (goto-char (point-max))
@@ -330,14 +401,20 @@ space does not end a sentence, so don't break a line there."
 	  (goto-char (point-min))
 
 	  ;; This is the actual filling loop.
-	  (let ((prefixcol 0) linebeg)
+	  (let ((prefixcol 0) linebeg
+		(re-break-point (if (featurep 'mule)
+				    (concat "[ \n\t]\\|" word-across-newline)
+				  "[ \n\t]")))
 	    (while (not (eobp))
 	      (setq linebeg (point))
 	      (move-to-column (1+ (current-fill-column)))
 	      (if (eobp)
 		  (or nosqueeze (delete-horizontal-space))
 		;; Move back to start of word.
-		(skip-chars-backward "^ \n" linebeg)
+		;; 97/3/14 jhod: Kinsoku
+		;(skip-chars-backward "^ \n" linebeg)
+		(fill-move-backward-to-break-point re-break-point linebeg)
+		;; end patch
 		;; Don't break after a period followed by just one space.
 		;; Move back to the previous place to break.
 		;; The reason is that if a period ends up at the end of a line,
@@ -350,7 +427,12 @@ space does not end a sentence, so don't break a line there."
 				(not (eq (following-char) ?\ ))
 				(eq (char-after (- (point) 2)) ?\.))
 		      (forward-char -2)
-		      (skip-chars-backward "^ \n" linebeg)))
+		      ;; 97/3/14 jhod: Kinsoku
+		      ;(skip-chars-backward "^ \n" linebeg)))
+		      (fill-move-backward-to-break-point re-break-point linebeg)))
+		(if (featurep 'mule) (kinsoku-process))
+		;end patch
+
 		;; If the left margin and fill prefix by themselves
 		;; pass the fill-column. or if they are zero
 		;; but we have no room for even one word,
@@ -373,7 +455,10 @@ space does not end a sentence, so don't break a line there."
 							   (and (looking-at "\\. ")
 								(not (looking-at "\\.  ")))))))
 			(skip-chars-forward " \t")
-			(skip-chars-forward "^ \n\t")
+			;; 94/3/14 jhod: Kinsoku
+			;(skip-chars-forward "^ \n\t")
+			(fill-move-forward-to-break-point re-break-point)
+			;; end patch
 			(setq first nil)))
 		  ;; Normally, move back over the single space between the words.
 		  (forward-char -1))
@@ -401,7 +486,10 @@ space does not end a sentence, so don't break a line there."
 							   (and (looking-at "\\. ")
 								(not (looking-at "\\.  ")))))))
 			(skip-chars-forward " \t")
-			(skip-chars-forward "^ \t\n")
+			;; 97/3/14 jhod: Kinsoku
+			;(skip-chars-forward "^ \t\n")
+			(fill-move-forward-to-break-point re-break-point)
+			;; end patch
 			(setq first nil))))
 		;; Check again to see if we got to the end of the paragraph.
 		(if (save-excursion (skip-chars-forward " \t") (eobp))
@@ -409,6 +497,43 @@ space does not end a sentence, so don't break a line there."
 		  ;; Replace whitespace here with one newline, then indent to left
 		  ;; margin.
 		  (skip-chars-backward " \t")
+		  ;; 97/3/14 jhod: More kinsoku stuff
+		  (if (featurep 'mule)
+		      ;; WAN means chars which match word-across-newline.
+		      ;; (0)     | SPC + SPC* <EOB>	--> NL
+		      ;; (1) WAN | SPC + SPC*		--> WAN + SPC + NL
+		      ;; (2)     | SPC + SPC* + WAN	--> SPC + NL  + WAN
+		      ;; (3) '.' | SPC + nonSPC		--> '.' + SPC + NL + nonSPC
+		      ;; (4) '.' | SPC + SPC		--> '.' + NL
+		      ;; (5)     | SPC*			--> NL
+		      (let ((start (point))	; 92.6.30 by K.Handa
+			    (ch (following-char)))
+			(if (and (= ch ? )
+				 (progn		; not case (0) -- 92.6.30 by K.Handa
+				   (skip-chars-forward " \t")
+				   (not (eobp)))
+				 (or
+				  (progn	; case (1)
+				    (goto-char start)
+				    (forward-char -1)
+				    (looking-at word-across-newline))
+				  (progn	; case (2)
+				    (goto-char start)
+				    (skip-chars-forward " \t")
+				    (and (not (eobp))
+					 (looking-at word-across-newline)
+					 ;; never leave space after the end of sentence
+					 (not (fill-end-of-sentence-p))))
+				  (progn	; case (3)
+				    (goto-char (1+ start))
+				    (and (not (eobp))
+					 (/= (following-char) ? )
+					 (fill-end-of-sentence-p)))))
+			    ;; We should keep one SPACE before NEWLINE. (1),(2),(3)
+			    (goto-char (1+ start))
+			  ;; We should delete all SPACES around break point. (4),(5)
+			  (goto-char start))))
+		  ;; end of patch
 		  (insert ?\n)
 		  ;; Give newline the properties of the space(s) it replaces
 		  (set-text-properties (1- (point)) (point)
@@ -627,6 +752,16 @@ If the mark is not active, this applies to the current paragraph."
 		     (if (region-active-p) (region-end) (point))))
   (set-justification b e 'center t))
 
+;; 97/3/14 jhod: This functions are added for Kinsoku support
+(defun find-space-insertable-point ()
+ "Search backward for a permissable point for inserting justification spaces"
+ (if (boundp 'space-insertable)
+     (if (re-search-backward space-insertable nil t)
+	 (progn (forward-char 1)
+		t)
+       nil)
+   (search-backward " " nil t)))
+
 ;; A line has up to six parts:
 ;;
 ;;           >>>                    hello.  		       
@@ -754,14 +889,15 @@ otherwise it is made canonical."
 		   ;; Ncols is number of additional spaces needed
 		   (if (> ncols 0)
 		       (if (and (not eop)
-				(search-backward " " nil t))
+				;; 97/3/14 jhod: Kinsoku
+				(find-space-insertable-point)) ;(search-backward " " nil t))
 			   (while (> ncols 0)
 			     (let ((nmove (+ 3 (random 3))))
 			       (while (> nmove 0)
-				 (or (search-backward " " nil t)
+				 (or (find-space-insertable-point) ;(search-backward " " nil t)
 				     (progn
 				       (goto-char (point-max))
-				       (search-backward " ")))
+				       (find-space-insertable-point))) ;(search-backward " ")))
 				 (skip-chars-backward " ")
 				 (setq nmove (1- nmove))))
 			     ;; XEmacs change

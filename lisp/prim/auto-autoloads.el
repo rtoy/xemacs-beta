@@ -1059,6 +1059,17 @@ Browse the widget under point." t nil)
 
 ;;;***
 
+;;;### (autoloads (widget-delete widget-create) "wid-edit" "custom/wid-edit.el")
+
+(autoload 'widget-create "wid-edit" "\
+Create widget of TYPE.  
+The optional ARGS are additional keyword arguments." nil nil)
+
+(autoload 'widget-delete "wid-edit" "\
+Delete WIDGET." nil nil)
+
+;;;***
+
 ;;;### (autoloads (edebug-eval-top-level-form def-edebug-spec) "edebug" "edebug/edebug.el")
 
 (autoload 'def-edebug-spec "edebug" "\
@@ -2037,6 +2048,74 @@ If called interactively, display a list of matches." t nil)
 
 (autoload 'psychoanalyze-pinhead "yow" "\
 Zippy goes to the analyst." t nil)
+
+;;;***
+
+;;;### (autoloads (gnats:summ-pr gnats:query-pr gnats:edit-pr gnats:view-pr gnats:gnats-mode) "gnats" "gnats/gnats.el")
+
+(defvar gnats::mode-name nil "\
+Name of the GNATS mode.")
+
+(setq gnats::mode-name 'gnats:gnats-mode)
+
+(fset 'gnats-mode gnats::mode-name)
+
+(autoload 'gnats:gnats-mode "gnats" "\
+Major mode for editing problem reports.
+For information about the form see gnats(1) and pr_form(5).
+
+When you are finished editing the buffer, type \\[gnats:submit-pr] to commit
+your changes to the PR database.  To abort the edit, type
+\\[gnats:unlock-buffer].
+
+Special commands:
+\\{gnats-mode-map}
+Turning on gnats-mode calls the value of the variable gnats-mode-hook,
+if it is not nil." nil nil)
+
+(fset 'view-pr 'gnats:view-pr)
+
+(autoload 'gnats:view-pr "gnats" "\
+Visit the problem report named by the string ID.  While viewing, press
+'e' to edit the currently viewed PR." t nil)
+
+(fset 'edit-pr 'gnats:edit-pr)
+
+(autoload 'gnats:edit-pr "gnats" "\
+Edit the problem report named by the string ID." t nil)
+
+(fset 'query-pr 'gnats:query-pr)
+
+(autoload 'gnats:query-pr "gnats" "\
+Run query-pr, with user-specified args, and collect output in a buffer.
+While query-pr runs asynchronously, you can use the \\[next-error] command
+to find the text that the hits refer to." t nil)
+
+(fset 'summ-pr 'gnats:summ-pr)
+
+(autoload 'gnats:summ-pr "gnats" "\
+Run query-pr, with user-specified args, and display a pretty summary.
+Well, display a summary, at least." t nil)
+
+;;;***
+
+;;;### (autoloads (send-pr:send-pr-mode send-pr:send-pr) "send-pr" "gnats/send-pr.el")
+
+(fset 'send-pr 'send-pr:send-pr)
+
+(autoload 'send-pr:send-pr "send-pr" "\
+Create a buffer and read in the result of `send-pr -P'.
+When finished with editing the problem report use \\[send-pr:submit-pr]
+to send the PR with `send-pr -b -f -'." t nil)
+
+(fset 'send-pr-mode 'send-pr:send-pr-mode)
+
+(autoload 'send-pr:send-pr-mode "send-pr" "\
+Major mode for submitting problem reports.
+For information about the form see gnats(1) and send-pr(1).
+Special commands: \\{send-pr-mode-map}
+Turning on send-pr-mode calls the value of the variable send-pr-mode-hook,
+if it is not nil." t nil)
 
 ;;;***
 
@@ -3248,7 +3327,7 @@ c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
 problem, including a reproducible test case and send the message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `c-mode-hook' is run with no args, if that value is
 bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
@@ -3265,7 +3344,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case, and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `c++-mode-hook' is run with no args, if that
 variable is bound and has a non-nil value.  Also the hook
@@ -3282,7 +3361,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case, and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `objc-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
@@ -3299,7 +3378,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `java-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the common hook
@@ -3311,10 +3390,13 @@ Key bindings:
 \\{java-mode-map}" t nil)
 
 (autoload 'c-set-style "cc-mode" "\
-Set cc-mode variables to use one of several different indentation styles.
+Set CC Mode variables to use one of several different indentation styles.
 STYLENAME is a string representing the desired style from the list of
 styles described in the variable `c-style-alist'.  See that variable
-for details of setting up styles." t nil)
+for details of setting up styles.
+
+The variable `c-indentation-style' always contains the buffer's current
+style name." t nil)
 
 (fset 'set-c-style           'c-set-style)
 
@@ -3758,7 +3840,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.14 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.15 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4125,7 +4207,7 @@ Variables controlling indentation/edit style:
  pascal-case-indent       (default 2)
     Indentation for case statements.
  pascal-auto-newline      (default nil)
-    Non-nil means automatically newline after semicolons and the punctation mark
+    Non-nil means automatically newline after semicolons and the punctuation mark
     after an end.
  pascal-tab-always-indent (default t)
     Non-nil means TAB in Pascal mode should always reindent the current line,
@@ -5110,7 +5192,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.14 $
+vhdl-mode $Revision: 1.15 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5962,7 +6044,7 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]." t nil)
 
 ;;;### (autoloads (diff-backup diff) "diff" "packages/diff.el")
 
-(defvar diff-switches nil "\
+(defvar diff-switches "-c" "\
 *A list of switches (strings) to pass to the diff program.")
 
 (autoload 'diff "diff" "\
@@ -7537,8 +7619,7 @@ With arg, turn time stamping on if and only if arg is positive." t nil)
 
 ;;;### (autoloads (display-time) "time" "packages/time.el")
 
-(defvar display-time-day-and-date nil "\
-*Non-nil means \\[display-time] should display day and date as well as time.")
+(defcustom display-time-day-and-date nil "*Non-nil means \\[display-time] should display day,date and time.\nThis affects the spec 'date in the variable display-time-form-list." :group 'display-time :type 'boolean)
 
 (autoload 'display-time "time" "\
 Display current time, load level, and mail flag in mode line of each buffer.
@@ -8279,6 +8360,48 @@ when this can be done without changing the column they end at.
 Called non-interactively, the region is specified by arguments
 START and END, rather than by the position of point and mark.
 The variable `tab-width' controls the spacing of tab stops." t nil)
+
+;;;***
+
+;;;### (autoloads (with-timeout run-with-idle-timer run-with-timer run-at-time) "timer" "prim/timer.el")
+
+(autoload 'run-at-time "timer" "\
+Perform an action after a delay of SECS seconds.
+Repeat the action every REPEAT seconds, if REPEAT is non-nil.
+TIME should be a string like \"11:23pm\", nil meaning now, a number of seconds
+from now, or a value from `encode-time'.
+REPEAT may be an integer or floating point number.
+The action is to call FUNCTION with arguments ARGS.
+
+This function returns a timer object which you can use in `cancel-timer'." t nil)
+
+(autoload 'run-with-timer "timer" "\
+Perform an action after a delay of SECS seconds.
+Repeat the action every REPEAT seconds, if REPEAT is non-nil.
+SECS and REPEAT may be integers or floating point numbers.
+The action is to call FUNCTION with arguments ARGS.
+
+This function returns a timer object which you can use in `cancel-timer'." t nil)
+
+(autoload 'run-with-idle-timer "timer" "\
+Perform an action the next time Emacs is idle for SECS seconds.
+If REPEAT is non-nil, do this each time Emacs is idle for SECS seconds.
+SECS may be an integer or a floating point number.
+The action is to call FUNCTION with arguments ARGS.
+
+This function returns a timer object which you can use in `cancel-timer'." t nil)
+
+(put 'with-timeout 'lisp-indent-function 1)
+
+(autoload 'with-timeout "timer" "\
+Run BODY, but if it doesn't finish in SECONDS seconds, give up.
+If we give up, we run the TIMEOUT-FORMS and return the value of the last one.
+The call should look like:
+ (with-timeout (SECONDS TIMEOUT-FORMS...) BODY...)
+The timeout is checked whenever Emacs waits for some kind of external
+event (such as keyboard input, input from subprocesses, or a certain time);
+if the program loops without waiting in any way, the timeout will not
+be detected." nil 'macro)
 
 ;;;***
 
@@ -9641,28 +9764,6 @@ the window or buffer configuration at all." t nil)
 
 ;;;***
 
-;;;### (autoloads (y-or-n-p-with-timeout yes-or-no-p-with-timeout with-timeout with-timeout-internal) "with-timeout" "utils/with-timeout.el")
-
-(autoload 'with-timeout-internal "with-timeout" nil nil nil)
-
-(autoload 'with-timeout "with-timeout" "\
-Usage: (with-timeout (seconds &rest timeout-forms) &rest body)
-This is just like progn, but if the given number of seconds expires before
-the body returns, then timeout-forms are evaluated and returned instead.
-The body won't be interrupted in the middle of a computation: the check for 
-the timer expiration only occurs when body does a redisplay, or prompts the
-user for input, or calls accept-process-output." nil 'macro)
-
-(autoload 'yes-or-no-p-with-timeout "with-timeout" "\
-Just like yes-or-no-p, but will time out after TIMEOUT seconds
-if the user has not yes answered, returning DEFAULT-VALUE." nil nil)
-
-(autoload 'y-or-n-p-with-timeout "with-timeout" "\
-Just like y-or-n-p, but will time out after TIMEOUT seconds
-if the user has not yes answered, returning DEFAULT-VALUE." nil nil)
-
-;;;***
-
 ;;;### (autoloads (xbm-button-create) "xbm-button" "utils/xbm-button.el")
 
 (autoload 'xbm-button-create "xbm-button" "\
@@ -9934,17 +10035,6 @@ to disk." nil nil)
 Attempt to follow the hypertext reference under point.
 With prefix-arg P, ignore viewers and dump the link straight
 to disk." t nil)
-
-;;;***
-
-;;;### (autoloads (widget-delete widget-create) "wid-edit" "w3/wid-edit.el")
-
-(autoload 'widget-create "wid-edit" "\
-Create widget of TYPE.  
-The optional ARGS are additional keyword arguments." nil nil)
-
-(autoload 'widget-delete "wid-edit" "\
-Delete WIDGET." nil nil)
 
 ;;;***
 

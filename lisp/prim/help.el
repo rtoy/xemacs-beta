@@ -905,8 +905,8 @@ not an autoload.")
 	(princ (format ".\n  -- loads from \"%s\"" file-name) stream))
     (if home
 	(princ (format ".\n  -- loaded from %s" home)))
-    (princ ".")
-    (terpri)
+    (princ "." stream)
+    (terpri stream)
     (cond (kbd-macro-p
 	   (princ "These characters are executed:\n\n\t" stream)
 	   (princ (key-description def) stream)
@@ -935,7 +935,7 @@ not an autoload.")
 		 (progn
 		   (princ doc stream)
 		   (or (eq ?\n (aref doc (1- (length doc))))
-		       (terpri)))))))))
+		       (terpri stream)))))))))
 
 
 (defun describe-function-arglist (function)
@@ -1137,23 +1137,52 @@ Argument is a command definition, usually a symbol with a function definition."
         (message "%s is not on any keys" definition)))
   nil)
 
-(defun locate-library (library &optional nosuffix)
-  "Show the full path name of XEmacs library LIBRARY.
+;; Synched with Emacs 19.35
+(defun locate-library (library &optional nosuffix path interactive-call)
+  "Show the precise file name of Emacs library LIBRARY.
 This command searches the directories in `load-path' like `M-x load-library'
 to find the file that `M-x load-library RET LIBRARY RET' would load.
 Optional second arg NOSUFFIX non-nil means don't add suffixes `.elc' or `.el'
-to the specified name LIBRARY (a la calling `load' instead of `load-library')."
-  (interactive "sLocate library: \nP")
-  ;; Let's accept both symbols and strings, since they're often equivalent
-  (when (symbolp library)
-    (setq library (symbol-name library)))
-  ;; XEmacs: We have the nifty `locate-file' so we use it.
-  (let ((file (locate-file library load-path (if nosuffix nil ".elc:.el:"))))
-    (when (interactive-p)
-      (if file
-	  (message "Library is file %s" file)
-	(message "No library %s in search path" library)))
-    file))
+to the specified name LIBRARY.
+
+If the optional third arg PATH is specified, that list of directories
+is used instead of `load-path'."
+  (interactive (list (read-string "Locate library: ")
+                     nil nil
+                     t))
+  (let (result)
+    (catch 'answer
+      (mapcar
+       (lambda (dir)
+         (mapcar
+          (lambda (suf)
+            (let ((try (expand-file-name (concat library suf) dir)))
+              (and (file-readable-p try)
+                   (null (file-directory-p try))
+                   (progn
+                     (setq result try)
+                     (throw 'answer try)))))
+          (if nosuffix
+              '("")
+            (let ((basic '(".elc" ".el" ""))
+                  (compressed '(".Z" ".gz" "")))
+              ;; If autocompression mode is on,
+              ;; consider all combinations of library suffixes
+              ;; and compression suffixes.
+              (if (rassq 'jka-compr-handler file-name-handler-alist)
+                  (apply 'nconc
+                         (mapcar (lambda (compelt)
+                                   (mapcar (lambda (baselt)
+                                             (concat baselt compelt))
+                                           basic))
+                                 compressed))
+                basic)))))
+       (or path load-path)))
+    (and interactive-call
+         (if result
+             (message "Library is file %s" result)
+           (message "No library %s in search path" library)))
+    result))
 
 ;; Functions ported from C into Lisp in XEmacs
 

@@ -65,7 +65,7 @@
 ;;; Key bindings for X11 terminals(x11term)
 ;;;
 
-(define-key global-map [f1] 'set-file-coding-system)
+(define-key global-map [f1] 'set-buffer-file-coding-system)
 (define-key global-map [f2] 'edit-dict-item)
 (define-key global-map [f3] 'jis-code-input)
 (define-key global-map [f4] 'toroku-region)
@@ -95,7 +95,7 @@
 
 (define-key global-map "\e[" 'sun-fprefix)
 (define-key sun-fkeymap "["   'backward-paragraph) ; old "\e[" assignment
-(define-key sun-fkeymap "11~" 'set-file-coding-system)	; F1 92.4.16 by K.Handa
+(define-key sun-fkeymap "11~" 'set-buffer-file-coding-system)	; F1 92.4.16 by K.Handa
 (define-key sun-fkeymap "12~" 'edit-dict-item)	        ; F2
 (define-key sun-fkeymap "13~" 'jis-code-input)   	; F3
 (define-key sun-fkeymap "14~" 'toroku-region)		; F4

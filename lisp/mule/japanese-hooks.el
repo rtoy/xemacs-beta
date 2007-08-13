@@ -176,21 +176,36 @@
                 (let ((proc (get-buffer-process (current-buffer))))
                   (set-process-input-coding-system  proc 'euc-japan)
                   (set-process-output-coding-system proc 'euc-japan))))
-    (set-file-coding-system-for-read 'autodetect)
-    (set-default-file-coding-system  'euc-japan)
-    (setq keyboard-coding-system     'euc-japan)
-    (setq terminal-coding-system     'euc-japan)
+    (set-buffer-file-coding-system-for-read 'autodetect)
+    (set-default-buffer-file-coding-system  'euc-japan)
+    (setq keyboard-coding-system            'euc-japan)
+    (setq terminal-coding-system            'euc-japan)
     (when (eq 'x (device-type (selected-device)))
       (x-use-halfwidth-roman-font 'japanese-jisx0208 "jisx0201"))
     
     (when (eq system-type 'ms-dos)
       ;; Shift-JIS is the standard coding system under Japanese MS-DOS
       ;; This isn't really code - just a hint to future implementors
-      (setq keyboard-coding-system       'shift-jis-dos)
-      (setq terminal-coding-system       'shift-jis-dos)
-      (set-default-file-coding-system    'shift-jis-dos)
+      (setq keyboard-coding-system           'shift-jis-dos)
+      (setq terminal-coding-system           'shift-jis-dos)
+      (set-default-buffer-file-coding-system 'shift-jis-dos)
       ;;(set-default-process-coding-system 'shift-jis-dos 'shift-jis-dos)
       )
     ))
 
 (set-coding-category-system 'shift-jis 'shift-jis)
+
+;; stuff for providing gramatic processing of Japanese text
+;; something like this should probably be created for all environments...
+
+(defvar aletter (concat "\\(" ascii-char "\\|" kanji-char "\\)"))
+(defvar kanji-space-insertable (concat 
+	   "、" aletter                   "\\|"
+	   "。" aletter                   "\\|"
+	   aletter "（"                   "\\|"
+	   "）" aletter                   "\\|"
+	   ascii-alphanumeric  kanji-kanji-char "\\|"
+	   kanji-kanji-char    ascii-alphanumeric ))
+
+(defvar space-insertable (concat " " aletter "\\|" kanji-space-insertable)
+ "Regexp for finding points that can have spaces inserted into them for justification")

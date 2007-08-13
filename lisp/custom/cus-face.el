@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.59
+;; Version: 1.63
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -207,8 +207,7 @@ examine the brightness for you."
   (unless (get face 'factory-face)
     (put face 'factory-face spec)
     (when (fboundp 'facep)
-      (unless (and (custom-facep face)
-		   (not (get face 'saved-face)))
+      (unless (custom-facep face)
 	;; If the user has already created the face, respect that.
 	(let ((value (or (get face 'saved-face) spec))
 	      (frames (custom-relevant-frames))
@@ -243,9 +242,11 @@ Control whether an italic font should be used.")
 Control whether the text should be underlined.")
 		set-face-underline-p)
     (:foreground (color :tag "Foreground"
+			:value "black"
 			:help-echo "Set foreground color.")
 		 set-face-foreground)
     (:background (color :tag "Background"
+			:value "white"
 			:help-echo "Set background color.")
 		 set-face-background)
     (:invert (const :format "Invert Face\n" 
@@ -308,14 +309,14 @@ If FRAME is nil, set the default face."
     (let* ((font (apply 'face-font-name face args))
 	   (fontobj (font-create-object font)))
       (set-font-size fontobj size)
-      (apply 'set-face-font face fontobj args)))
+      (apply 'font-set-face-font face fontobj args)))
 
   (defun custom-set-face-font-family (face family &rest args)
     "Set the font of FACE to FAMILY"
     (let* ((font (apply 'face-font-name face args))
 	   (fontobj (font-create-object font)))
       (set-font-family fontobj family)
-      (apply 'set-face-font face fontobj args)))
+      (apply 'font-set-face-font face fontobj args)))
 
   (nconc custom-face-attributes
 	 '((:family (editable-field :format "Font Family: %v"
@@ -461,7 +462,8 @@ See `defface' for the format of SPEC."
 		(now (nth 2 entry)))
 	    (put face 'saved-face spec)
 	    (when now
-	      (put face 'force-face t)
+	      (put face 'force-face t))
+	    (when (or now (custom-facep face))
 	      (when (fboundp 'copy-face)
 		(copy-face 'custom-face-empty face))
 	      (custom-face-display-set face spec))

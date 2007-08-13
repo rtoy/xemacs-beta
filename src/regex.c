@@ -5519,8 +5519,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 	    PREFETCH ();
 	    emch = charptr_emchar ((CONST Bufbyte *) d);
 	    INC_CHARPTR (d);
-	    if (check_category_at(emch, regex_emacs_buffer->category_table,
-				  mcnt, should_succeed))
+	    if (check_category_char(emch, regex_emacs_buffer->category_table,
+				    mcnt, should_succeed))
 	      goto fail;
 	    SET_REGS_MATCHED ();
 	  }

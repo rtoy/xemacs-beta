@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/9/26 (separated from tm-view.el)
-;; Version: $Id: tm-play.el,v 1.3 1997/03/08 23:26:57 steve Exp $
+;; Version: $Id: tm-play.el,v 1.4 1997/03/16 03:05:47 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -273,18 +273,7 @@
 	(cons t (mime-charset-to-coding-system default-mime-charset))
 	))
 
-(cond (running-mule-merged-emacs
-       (defun mime-article::write-region (start end file)
-	 (let ((coding-system-for-write
-		(cdr
-		 (or (assq major-mode mime-article/coding-system-alist)
-		     (assq t mime-article/coding-system-alist)
-		     ))))
-	   (write-region start end file)
-	   ))
-       )
-      ((or (boundp 'MULE)
-	   running-xemacs-with-mule)
+(cond ((boundp 'MULE) ; for MULE 2.3 or older
        (defun mime-article::write-region (start end file)
 	 (let ((file-coding-system
 		(cdr
@@ -294,7 +283,17 @@
 	   (write-region start end file)
 	   ))
        )
-      ((boundp 'NEMACS)
+      ((featurep 'mule) ; for Emacs/mule and XEmacs/mule
+       (defun mime-article::write-region (start end file)
+	 (let ((coding-system-for-write
+		(cdr
+		 (or (assq major-mode mime-article/coding-system-alist)
+		     (assq t mime-article/coding-system-alist)
+		     ))))
+	   (write-region start end file)
+	   ))
+       )
+      ((boundp 'NEMACS) ; for NEmacs
        (defun mime-article::write-region (start end file)
 	 (let ((kanji-fileio-code
 		(cdr
@@ -304,7 +303,7 @@
 	   (write-region start end file)
 	   ))
        )
-      (t
+      (t ; for Emacs 19 or older and XEmacs without mule
        (defalias 'mime-article::write-region 'write-region)
        ))
 
@@ -424,9 +423,7 @@
 ;;; @ rot13-47
 ;;;
 
-(condition-case nil
-    (require 'view-less)
-  (error (require 'view)))
+(require 'view)
 
 (defconst mime-view-text/plain-mode-map (copy-keymap view-mode-map))
 (define-key mime-view-text/plain-mode-map

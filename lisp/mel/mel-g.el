@@ -7,7 +7,7 @@
 ;;	modified by MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Created: 1995/10/25
-;; Version: $Id: mel-g.el,v 1.4 1997/03/08 23:26:22 steve Exp $
+;; Version: $Id: mel-g.el,v 1.5 1997/03/16 03:05:14 steve Exp $
 ;; Keywords: Gzip64, base64, gzip, MIME
 
 ;; This file is not part of MEL (MIME Encoding Library) yet.
@@ -37,14 +37,14 @@
 ;;;
 
 (defvar gzip64-external-encoder
-  (let ((file (file-installed-p "mmencode" exec-path)))
+  (let ((file (exec-installed-p "mmencode")))
     (and file
 	 (` ("sh" "-c" (, (concat "gzip -c | " file))))
 	 ))
   "*list of gzip64 encoder program name and its arguments.")
 
 (defvar gzip64-external-decoder
-  (let ((file (file-installed-p "mmencode" exec-path)))
+  (let ((file (exec-installed-p "mmencode")))
     (and file
 	 (` ("sh" "-c" (, (concat file " -u | gzip -dc"))))
 	 ))

@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/03/03 15:15:42
-;; Version: 1.34
+;; Created: 1997/03/10 15:18:19
+;; Version: 1.36
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -977,9 +977,10 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
   (list r g b) ))
 
 (defsubst font-rgb-color-p (obj)
-  (and (vectorp obj)
-       (= (length obj) 4)
-       (eq (aref obj 0) 'rgb)))
+  (or (and (vectorp obj)
+	   (= (length obj) 4)
+	   (eq (aref obj 0) 'rgb))
+      (string-match "^#[0-9a-fA-F]+$" obj)))
 
 (defsubst font-rgb-color-red (obj) (aref obj 1))
 (defsubst font-rgb-color-green (obj) (aref obj 2))
@@ -1072,15 +1073,21 @@ The variable x-library-search-path is use to locate the rgb.txt file."
   "Return an RGB tuple, given any form of input.  If an error occurs, black
 is returned."
   (case (device-type device)
-   ((x pm win32)
+   ((x pm)
     (apply 'format "#%02x%02x%02x" (font-color-rgb-components color)))
+   (win32
+    (let* ((rgb (font-color-rgb-components color))
+	   (color (apply 'format "#%02x%02x%02x" rgb)))
+      (win32-define-rgb-color (nth 0 rgb) (nth 1 rgb) (nth 2 rgb) color)
+      color))
    (tty
     (apply 'font-tty-find-closest-color (font-color-rgb-components color)))
    (ns
     (let ((vals (mapcar (function (lambda (x) (>> x 8)))
 			(font-color-rgb-components color))))
       (apply 'format "RGB%02x%02x%02xff" vals)))
-   (otherwise "black")))
+   (otherwise
+    color)))
 
 (defun font-set-face-background (&optional face color &rest args)
   (interactive)

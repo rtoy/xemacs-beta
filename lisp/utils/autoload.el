@@ -292,9 +292,11 @@ are used."
 		    (forward-line 1)))
 		  (if dofiles
 		      (setq funlist (cdr funlist)))))))
-	(unless visited
+	;;(unless visited
 	    ;; We created this buffer, so we should kill it.
-	    (kill-buffer (current-buffer)))
+	    ;; Customize needs it later, we don't want to read the file
+	    ;; in twice.
+	    ;;(kill-buffer (current-buffer)))
 	(set-buffer outbuf)
 	(setq output-end (point-marker))))
     (if t ;; done-any
@@ -331,6 +333,30 @@ are used."
   "*File `update-file-autoloads' puts autoloads into.
 A .el file can set this in its local variables section to make its
 autoloads go somewhere else.")
+
+(defvar generated-custom-file
+  (expand-file-name "../lisp/prim/custom-load.el" data-directory)
+  "*File `update-file-autoloads' puts customization into.")
+
+;; Written by Per Abrahamsen
+(defun autoload-snarf-defcustom (file)
+  "Snarf all customizations in the current buffer."
+  (let ((visited (get-file-buffer file)))
+    (save-excursion
+      (set-buffer (or visited (find-file-noselect file)))
+      (when (and file (string-match "\\`\\(.*\\)\\.el\\'" file))
+	(goto-char (point-min))
+	(condition-case nil
+	    (let ((name (file-name-nondirectory (match-string 1 file))))
+	      (while t
+		(let ((expr (read (current-buffer))))
+		  (when (and (listp expr)
+			     (memq (car expr) '(defcustom defface defgroup)))
+		    (eval expr)
+		    (put (nth 1 expr) 'custom-where name)))))
+	  (error nil)))
+      (unless (buffer-modified-p)
+	(kill-buffer (current-buffer))))))
 
 ;;;###autoload
 (defun update-file-autoloads (file)
@@ -370,9 +396,10 @@ autoloads go somewhere else.")
 	  (goto-char (point-max))))	; Append.
 
       ;; Add in new sections for file
-      (generate-file-autoloads file))
+      (generate-file-autoloads file)
+      (autoload-snarf-defcustom file))
 
-      (when (interactive-p) (save-buffer))))
+    (when (interactive-p) (save-buffer))))
 
 ;;;###autoload
 (defun update-autoloads-here ()
@@ -458,6 +485,32 @@ Obsolete autoload entries for files that no longer exist are deleted."
       (unless noninteractive
 	(save-buffer)))))
 
+;; Based on code from Per Abrahamsen
+(defun autoload-save-customization ()
+  (save-excursion
+    (set-buffer (find-file-noselect generated-custom-file))
+    (erase-buffer)
+    (insert
+     (with-output-to-string
+      (mapatoms (lambda (symbol)
+		  (let ((members (get symbol 'custom-group))
+			item where found)
+		    (when members
+		      (princ "(put '")
+		      (princ symbol)
+		      (princ " 'custom-loads '(")
+		      (while members
+			(setq item (car (car members))
+			      members (cdr members)
+			      where (get item 'custom-where))
+			(unless (or (null where)
+				    (member where found))
+			  (when found
+			    (princ " "))
+			  (prin1 where)
+			  (push where found)))
+		      (princ "))\n")))))))))
+
 ;;;###autoload
 (defun batch-update-autoloads ()
   "Update the autoloads for the files or directories on the command line.
@@ -479,6 +532,7 @@ For example, invoke `xemacs -batch -f batch-update-autoloads *.el'."
        ((file-exists-p arg)
 	(update-file-autoloads arg))
        (t (error "No such file or directory: %s" arg))))
+    (autoload-save-customization)
     (save-some-buffers t)
     (message "Done")
     (kill-emacs 0)))

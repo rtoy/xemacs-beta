@@ -52,6 +52,11 @@
 ;; this isn't a user-visible change.  These functions have also been altered
 ;; to use (mark t) for the same reason.
 
+;; 97/3/14 Jareth Hein (jhod@po.iijnet.or.jp) added kinsoku processing (support
+;; for filling of Asian text) into the fill code. This was ripped bleeding from
+;; Mule-2.3, and could probably use some feature additions (like additional wrap
+;; styles, etc)
+
 ;;; Code:
 
 (defun newline (&optional arg)
@@ -2213,6 +2218,11 @@ Setting this variable automatically makes it local to the current buffer.")
 		(fill-point
 		 (let ((opoint (point))
 		       bounce
+		       ;; 97/3/14 jhod: Kinsoku
+		       (re-break-point (if (featurep 'mule)
+					    (concat "[ \t\n]\\|" word-across-newline)
+					"[ \t\n]"))
+		       ;; end patch
 		       (first t))
 		   (save-excursion
 		     (move-to-column (1+ fill-column))
@@ -2229,15 +2239,24 @@ Setting this variable automatically makes it local to the current buffer.")
 						     (and (looking-at "\\. ")
 							  (not (looking-at "\\.  "))))))
 		       (setq first nil)
-		       (skip-chars-backward "^ \t\n")
+		       ;; 97/3/14 jhod: Kinsoku
+		       ; (skip-chars-backward "^ \t\n"))
+		       (fill-move-backward-to-break-point re-break-point)
+		       ;; end patch
 		       ;; If we find nowhere on the line to break it,
 		       ;; break after one word.  Set bounce to t
 		       ;; so we will not keep going in this while loop.
 		       (if (bolp)
 			   (progn
-			     (re-search-forward "[ \t]" opoint t)
+			     ;; 97/3/14 jhod: Kinsoku
+			     ; (re-search-forward "[ \t]" opoint t)
+			     (fill-move-forward-to-break-point re-break-point
+							       opoint)
+			     ;; end patch
 			     (setq bounce t)))
 		       (skip-chars-backward " \t"))
+		     (if (and (featurep 'mule)
+			      (or bounce (bolp))) (kinsoku-process)) ;; 97/3/14 jhod: Kinsoku
 		     ;; Let fill-point be set to the place where we end up.
 		     (point)))))
 
@@ -2256,7 +2275,7 @@ Setting this variable automatically makes it local to the current buffer.")
 	    ;; break the line there.
 	    (if (save-excursion
 		  (goto-char fill-point)
-		  (not (bolp)))
+		  (not (or (bolp) (eolp)))) ; 97/3/14 jhod: during kinsoku processing it is possible to move beyond
 		(let ((prev-column (current-column)))
 		  ;; If point is at the fill-point, do not `save-excursion'.
 		  ;; Otherwise, if a comment prefix or fill-prefix is inserted,
@@ -2264,7 +2283,20 @@ Setting this variable automatically makes it local to the current buffer.")
 		  (if (save-excursion
 			(skip-chars-backward " \t")
 			(= (point) fill-point))
-		      (indent-new-comment-line)
+		      ;; 97/3/14 jhod: Kinsoku processing
+		      ;(indent-new-comment-line)
+		      (let ((spacep (memq (preceding-char) '(?\  ?\t))))
+			(indent-new-comment-line)
+			;; if user type space explicitly, leave SPC
+			;; even if there is no WAN.
+			(if spacep
+			    (save-excursion
+			      (goto-char fill-point)
+			      ;; put SPC except that there is SPC
+			      ;; already or there is sentence end.
+			      (or (memq (following-char) '(?\  ?\t))
+				  (fill-end-of-sentence-p)
+				  (insert ?\ )))))
 		    (save-excursion
 		      (goto-char fill-point)
 		      (indent-new-comment-line)))
@@ -2401,7 +2433,8 @@ for `auto-fill-function' when turning Auto Fill mode on."
   (auto-fill-mode 1))
 
 (defun set-fill-column (arg)
-  "Set `fill-column' to current column, or to argument if given.
+  "Set `fill-column' to specified argument.
+Just \\[universal-argument] as argument means to use the current column
 The variable `fill-column' has a separate value for each buffer."
   (interactive "_P") ; XEmacs
   (cond ((integerp arg)
@@ -2435,6 +2468,9 @@ unless optional argument SOFT is non-nil."
   (interactive)
   (let (comcol comstart)
     (skip-chars-backward " \t")
+    ;; 97/3/14 jhod: Kinsoku processing
+    (if (featurep 'mule)
+	(kinsoku-process))
     (delete-region (point)
 		   (progn (skip-chars-forward " \t")
 			  (point)))
@@ -2447,6 +2483,7 @@ unless optional argument SOFT is non-nil."
     ;; fa-extras, which I'm not gonna do.  His changes are to (1) execute
     ;; the save-excursion below unconditionally, and (2) uncomment the check
     ;; for (not comment-multi-line) further below.  --Stig 
+      ;;### jhod: probably need to fix this for kinsoku processing
       (if (not comment-multi-line)
 	  (save-excursion
 	    (if (and comment-start-skip

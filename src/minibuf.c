@@ -51,6 +51,10 @@ Lisp_Object Vecho_area_buffer;
 /* Prompt to display in front of the minibuffer contents */
 Lisp_Object Vminibuf_prompt;
 
+/* Added on 97/3/14 by Jareth Hein (jhod@po.iijnet.or.jp) for input system support */
+/* String to be displayed in front of prompt of the minibuffer contents */
+Lisp_Object Vminibuf_preprompt;
+
 /* Hook to run just after entry to minibuffer. */
 Lisp_Object Qminibuffer_setup_hook, Vminibuffer_setup_hook;
 
@@ -104,6 +108,25 @@ read_minibuffer_internal_unwind (Lisp_Object unwind_data)
     }
 
   return Qnil;
+}
+
+/* 97/4/13 jhod: Added for input methods */
+DEFUN ("set-minibuffer-preprompt", Fset_minibuffer_preprompt, 1, 1, 0, /*
+Set the minibuffer preprompt string to PREPROMPT. This is used by language
+input methods to relay state information to the user.
+*/
+       (preprompt))
+{
+  if (NILP (preprompt))
+    {
+      Vminibuf_preprompt = Qnil;
+    }
+  else
+    {
+      CHECK_STRING (preprompt);
+  
+      Vminibuf_preprompt = LISP_GETTEXT (preprompt);
+    }
 }
 
 DEFUN ("read-minibuffer-internal", Fread_minibuffer_internal, 1, 1, 0, /*
@@ -232,7 +255,7 @@ regexp_ignore_completion_p (CONST Bufbyte *nonreloc,
 	  Lisp_Object re = XCAR (regexps);
 	  if (STRINGP (re)
 	      && (fast_string_match (re, nonreloc, reloc, offset,
-				     length, 0, ERROR_ME, 0) >= 0))
+				     length, 0, ERROR_ME, 0) < 0))
 	    return (1);
 	}
     }
@@ -865,7 +888,7 @@ syms_of_minibuf (void)
   DEFSUBR (Fminibuffer_prompt);
   DEFSUBR (Fminibuffer_prompt_width);
 #endif
-
+  DEFSUBR (Fset_minibuffer_preprompt);
   DEFSUBR (Fread_minibuffer_internal);
 
   DEFSUBR (Ftry_completion);
@@ -885,6 +908,10 @@ vars_of_minibuf (void)
   staticpro (&Vminibuf_prompt);
   Vminibuf_prompt = Qnil;
 
+  /* Added by Jareth Hein (jhod@po.iijnet.or.jp) for input system support */
+  staticpro (&Vminibuf_preprompt);
+  Vminibuf_preprompt = Qnil;
+								
   DEFVAR_LISP ("minibuffer-setup-hook", &Vminibuffer_setup_hook /*
 Normal hook run just after entry to minibuffer.
 */ );
@@ -895,9 +922,9 @@ Non-nil means don't consider case significant in completion.
 */ );
   completion_ignore_case = 0;
 
-  /* Worthless doc string */
   DEFVAR_LISP ("completion-regexp-list", &Vcompletion_regexp_list /*
 List of regexps that should restrict possible completions.
+Each completion has to match all regexps in this list.
 */ );
   Vcompletion_regexp_list = Qnil;
 }

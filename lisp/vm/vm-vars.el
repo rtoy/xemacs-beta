@@ -590,7 +590,8 @@ Note that under FSF Emacs any fonts you use must be the same size
 as your default font.  XEmacs does not have this limitation.")
 
 (defvar vm-mime-button-face
-    (cond ((fboundp 'find-face)
+    (cond ((and (fboundp 'find-face)
+		(fboundp 'device-type))
 	   (or (and (not (eq (device-type) 'tty)) (find-face 'gui-button-face)
 		    'gui-button-face)
 	       (and (find-face 'bold-italic) 'bold-italic)))

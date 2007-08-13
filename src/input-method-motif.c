@@ -149,13 +149,13 @@ XIM_init_frame (struct frame *f)
 					xim_resources.fontset);
   fontlist = XmFontListAppendEntry (NULL, fontlistEntry);
   XmImRegister (w, 0);
-  XmImVaSetFocusValues (w,
-			XmNfontList,     fontlist,
-			XmNforeground,   xim_resources.fg,
-			XmNbackground,   xim_resources.bg,
-			XmNspotLocation, &spot,
-			/*   XmNlineSpace, 0, */
-			NULL);
+  XmImVaSetValues (w,
+		   XmNfontList,     fontlist,
+		   XmNforeground,   xim_resources.fg,
+		   XmNbackground,   xim_resources.bg,
+		   XmNspotLocation, &spot,
+		   /*   XmNlineSpace, 0, */
+		   NULL);
 
   XmFontListEntryFree (&fontlistEntry);
 }

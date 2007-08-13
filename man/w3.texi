@@ -130,12 +130,48 @@ Indices:
 @vindex w3-default-homepage
 @findex w3
 If installed correctly, starting Emacs-W3 is quite painless.  Just type
-@kbd{M-x w3} in a running Emacs sessions.  This will retrieve the
-default page that has been configured - by default the documentation for
-Emacs-W3 at Indiana University.
+@kbd{M-x w3} in a running Emacs session.  This will retrieve the default
+page that has been configured (@pxref{Preferences Panel}) - by default the
+documentation for Emacs-W3 at Indiana University.
 
 If the default page is not retrieved correctly at startup, you will have
-to do some customization.
+to do some customization (@pxref{Preferences Panel}).
+
+Once started, you can use the mouse and the menu or use the following
+key commands (for more commands and more detail, @pxref{Basic Usage, ,
+Basic Usage}).
+
+@table @asis
+@item move forward 
+press the space bar, 
+
+@item move backwards
+press the backspace key, 
+
+@item move to the next HTML reference on the page
+press the @kbd{TAB} key,
+
+@item move to the previous HTML reference on the page
+press the @kbd{SHIFT} and @kbd{TAB} keys at the same time.  If this does
+not work (some text terminals cannot distinguish between @kbd{TAB} and
+@kbd{SHIFT-TAB}, pressing the @kbd{ALT} and @kbd{TAB} keys should also
+work.
+
+@item follow a link 
+put the cursor over it
+and press the @kbd{RETURN} key, or @*
+click the left mouse button on it,
+
+@item fetch a @sc{url}
+press the @kbd{Control} and @kbd{o} keys at the same time,@*
+type the @sc{url}, and then press the @kbd{RETURN} key,
+
+@item return to the last URL you were at 
+press the @kbd{l} key,
+
+@item quit W3 mode 
+press the @kbd{q} key.
+@end table
 
 @menu
 * Downloading::                 Where to download Emacs-W3.
@@ -3396,18 +3432,37 @@ US by a non-US citizen.  More information can be found at
 ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
 @end table
 
+Currently, an external in order to use SSL from within Emacs-W3.  This
+program should be able to take command line parameters for the hostname
+and port number to connect to, and read/write to standard input/output
+(similar to telnet, but without the annoying status messages).  
+
+The following variables control how the external program is invoked.
+
+@table @code
+@item ssl-program-name
 @vindex ssl-program-name
-Whichever reference implementation is used (I recommend the SSLeay
-distribution, just to thumb a nose at the NSA :), there is a program
-that can be run in a subprocess that takes a hostname and port number on
-the command line, and reads/writes to standard input/output (the
-Netscape implementation comes with one of these by default).  Set the
-variable @code{ssl-program-name} to point to this program.
+The name of the program to run, as a string.
 
+@example
+(setq ssl-program-name "s_client")
+@end example
 
-This should be all the configuration necessary.  In the future, I will
-be distributing a set of patches to Emacs 19.xx and XEmacs 19.xx to
-SSL-enable them, for the sake of speed.
+@item ssl-program-arguments
+@vindex ssl-program-arguments
+This should be used if your SSL program needs command line switches to
+specify any behaviour (certificate file locations, etc).  This is a list
+of strings and symbols.
+
+The special symbols 'host and 'port may be used in the list of arguments
+and will be replaced with the hostname and service/port that will be
+connected to.
+
+@example
+(setq ssl-program-arguments '("-host" host "-port" service "-verify" "4"
+                              "-CApath /usr/local/ssl/certs"))
+@end example
+@end table
 
 @node Mailcap Files, Down with DoubleClick, Installing SSL, Top
 @appendix Mailcap Files

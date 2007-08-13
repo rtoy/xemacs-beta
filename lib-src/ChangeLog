@@ -1,3 +1,7 @@
+Fri Mar 14 17:59:57 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (ignore_dirs): Build VM with `make autoload'.
+
 Wed Mar  5 18:07:57 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* gzip-el.sh: New file.  Courtesy of Jeff Miller and Hrvoje Niksic.

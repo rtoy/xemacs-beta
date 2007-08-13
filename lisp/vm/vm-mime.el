@@ -914,7 +914,7 @@
 	     (make-local-variable 'scroll-in-place)
 	     (setq scroll-in-place nil)
 	     (and (vm-xemacs-mule-p)
-		  (set-file-coding-system 'binary t))
+		  (set-buffer-file-coding-system 'no-conversion t))
 	     (cond ((vm-fsfemacs-19-p)
 		    ;; need to do this outside the let because
 		    ;; loading disp-table initializes
@@ -978,7 +978,7 @@
 (fset 'vm-presentation-mode 'vm-mode)
 (put 'vm-presentation-mode 'mode-class 'special)
 
-(defvar file-coding-system)
+(defvar buffer-file-coding-system)
 
 (defun vm-determine-proper-charset (beg end)
   (save-excursion
@@ -992,8 +992,9 @@
 		     "us-ascii")
 		    ((cdr charsets)
 		     (or (car (cdr
-			       (assoc (coding-system-name file-coding-system)
-				      vm-mime-mule-coding-to-charset-alist)))
+			       (assq (coding-system-name
+				      buffer-file-coding-system)
+				     vm-mime-mule-coding-to-charset-alist)))
 			 "iso-2022-jp"))
 		    (t
 		     (or (car (cdr
@@ -1429,15 +1430,15 @@ in the buffer.  The function is expected to make the message
 	     (vm-mime-transfer-decode-region layout start end)
 	     (setq tempfile (vm-make-tempfile-name))
 	     (let ((buffer-file-type buffer-file-type)
-		   file-coding-system)
+		   buffer-file-coding-system)
 	       ;; Tell DOS/Windows NT whether the file is binary
 	       (setq buffer-file-type (not (vm-mime-text-type-p layout)))
 	       ;; Tell XEmacs/MULE not to mess with the bits unless
 	       ;; this is a text type.
 	       (if (vm-xemacs-mule-p)
 		   (if (vm-mime-text-type-p layout)
-		       (set-file-coding-system 'no-conversion nil)
-		     (set-file-coding-system 'binary t)))
+		       (set-buffer-file-coding-system 'no-conversion nil)
+		     (set-buffer-file-coding-system 'binary t)))
 	       (write-region start end tempfile nil 0))
 	     (delete-region start end)
 	     (save-excursion
@@ -2014,8 +2015,8 @@ in the buffer.  The function is expected to make the message
 	    ;; this is a text type.
 	    (if (vm-xemacs-mule-p)
 		(if (vm-mime-text-type-p layout)
-		    (set-file-coding-system 'no-conversion nil)
-		  (set-file-coding-system 'binary t)))
+		    (set-buffer-file-coding-system 'no-conversion nil)
+		  (set-buffer-file-coding-system 'binary t)))
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
 	    (or (not (file-exists-p file))
@@ -2534,7 +2535,7 @@ and the approriate content-type and boundary markup information is added."
 						       (point-max)))
 	    (if (vm-xemacs-mule-p)
 		(encode-coding-region (point-min) (point-max)
-				      file-coding-system))
+				      buffer-file-coding-system))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -2588,7 +2589,7 @@ and the approriate content-type and boundary markup information is added."
 		   (insert-buffer-substring object)
 		   (delete-char 1)))
 		((stringp object)
-		 (let ((overridding-file-coding-system 'no-conversion))
+		 (let ((coding-system-for-read 'no-conversion))
 		   (insert-file-contents-literally object))))
 	  ;; gather information about the object from the extent.
 	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
@@ -2730,7 +2731,7 @@ and the approriate content-type and boundary markup information is added."
 						     (point-max)))
 	  (if (vm-xemacs-mule-p)
 	      (encode-coding-region (point-min) (point-max)
-				    file-coding-system))
+				    buffer-file-coding-system))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
 			  (point-max))

@@ -341,6 +341,8 @@ extern Lisp_Object Vminibuf_scroll_window;
 
 /* Prompt to display in front of the minibuffer contents, or nil */
 extern Lisp_Object Vminibuf_prompt;
+/* Prompt to display in front of the minibuffer prompt, or nil */
+extern Lisp_Object Vminibuf_preprompt;
 
 /* Depth in minibuffer invocations */
 extern int minibuf_level;

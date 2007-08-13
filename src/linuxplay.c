@@ -297,7 +297,7 @@ static size_t parsewave(void **data,size_t *sz,void **outbuf)
 	  parsestate.wave.state = wvSkipChunk; }
       else if (rq)
 	/* align data length to a multiple of datasize; keep additional data
-	   in "leftover" buffer --- this is neccessary to ensure proper
+	   in "leftover" buffer --- this is necessary to ensure proper
 	   functioning of the sndcnv... routines */
 	waverequire(data,sz,rq);
       return(count); }
@@ -997,7 +997,7 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
   memset(&parsestate,0,sizeof(parsestate));
 
   /* Mainloop: read a block of data, parse its contents, perform all
-               the neccessary conversions and output it to the sound
+               the necessary conversions and output it to the sound
                device; repeat until all data has been processed */
   rrtn = length;
   do {

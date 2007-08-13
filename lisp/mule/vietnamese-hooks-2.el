@@ -266,5 +266,5 @@
     ;; For VSCII users
     ;; (setq coding-category-system 'binary 'vscii)
     (set-coding-priority-list '(no-conversion))
-    (set-default-file-coding-system 'viscii)
+    (set-default-buffer-file-coding-system 'viscii)
     (setq-default quail-current-package (assoc "viqr" quail-package-alist))))

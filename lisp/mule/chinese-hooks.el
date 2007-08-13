@@ -174,7 +174,7 @@
     (set-coding-category-system 'iso-8-2 'euc-china)
     (set-coding-priority-list '(iso-8-2 big5 iso-8-designate))
     (set-pathname-coding-system 'euc-china)
-    (set-default-file-coding-system 'euc-china) ; GB encoding
+    (set-default-buffer-file-coding-system 'euc-china) ; GB encoding
     (setq terminal-coding-system    'euc-china)
     (setq keyboard-coding-system    'euc-china)
     (add-hook 'comint-exec-hook
@@ -182,8 +182,8 @@
                 (let ((proc (get-buffer-process (current-buffer))))
                   (set-process-input-coding-system  proc 'euc-china)
                   (set-process-output-coding-system proc 'euc-china))))
-    (set-file-coding-system-for-read 'autodetect)
-    (set-default-file-coding-system 'euc-china)
+    (set-buffer-file-coding-system-for-read 'autodetect)
+    (set-default-buffer-file-coding-system 'euc-china)
     (setq keyboard-coding-system     'euc-china)
     (setq terminal-coding-system     'euc-china)
     (when (eq 'x (device-type (selected-device)))

@@ -397,11 +397,11 @@ t if OBJECT is a byte-compiled function object.
 
 DEFUN ("characterp", Fcharacterp, 1, 1, 0, /*
 t if OBJECT is a character.
-Unlike in FSF Emacs, a character is its own primitive type.
+Unlike in XEmacs v19 and Emacs, a character is its own primitive type.
 Any character can be converted into an equivalent integer using
 `char-to-int'.  To convert the other way, use `int-to-char'; however,
 only some integers can be converted into characters.  Such an integer
-is called a `char-to-int'; see `char-int-p'.
+is called a `char-int'; see `char-int-p'.
 
 Some functions that work on integers (e.g. the comparison functions
 <, <=, =, /=, etc. and the arithmetic functions +, -, *, etc.)

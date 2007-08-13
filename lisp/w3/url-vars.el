@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/03/07 16:46:48
-;; Version: 1.31
+;; Created: 1997/03/14 06:51:57
+;; Version: 1.35
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,7 +26,7 @@
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst url-version (let ((x "p3.0.65"))
+(defconst url-version (let ((x "p3.0.68"))
 			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))
@@ -313,7 +313,8 @@ has been parsed.")
   "*Maximum number of times a password will be prompted for when a
 protected document is denied by the server.")
 
-(defvar url-temporary-directory "/tmp" "*Where temporary files go.")
+(defvar url-temporary-directory (or (getenv "TMPDIR") "/tmp")
+  "*Where temporary files go.")
 
 (defvar url-show-status t
   "*Whether to show a running total of bytes transferred.  Can cause a

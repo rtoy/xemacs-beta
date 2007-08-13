@@ -7,7 +7,7 @@
 ;;         Dan Rich <drich@morpheus.corp.sgi.com>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/12/15
-;; Version: $Id: tm-image.el,v 1.4 1997/02/15 22:21:29 steve Exp $
+;; Version: $Id: tm-image.el,v 1.5 1997/03/16 03:05:46 steve Exp $
 
 ;; Keywords: image, picture, X-Face, MIME, multimedia, mail, news
 
@@ -90,7 +90,7 @@
        ;;
        ;; X-Face
        ;;
-       (if (file-installed-p uncompface-program exec-path)
+       (if (exec-installed-p uncompface-program)
 	   (add-hook 'mime-viewer/content-header-filter-hook
 		     'x-face-decode-message-header)
 	 )

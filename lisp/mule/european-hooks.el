@@ -82,25 +82,25 @@
    mnemonic "MIME/Ltn-5"
    ))
 
-;(add-hook 'quail-package-alist '("latin-1" "quail/latin"))
-;(add-hook 'quail-package-alist '("latin-2" "quail/latin"))
-;(add-hook 'quail-package-alist '("latin-3" "quail/latin"))
-;(add-hook 'quail-package-alist '("latin-4" "quail/latin"))
-;(add-hook 'quail-package-alist '("latin-5" "quail/latin"))
+;;(add-hook 'quail-package-alist '("latin-1" "quail/latin"))
+;;(add-hook 'quail-package-alist '("latin-2" "quail/latin"))
+;;(add-hook 'quail-package-alist '("latin-3" "quail/latin"))
+;;(add-hook 'quail-package-alist '("latin-4" "quail/latin"))
+;;(add-hook 'quail-package-alist '("latin-5" "quail/latin"))
 
 (define-language-environment 'european
   "European (for Latin-1 through Latin-5)"
   (lambda ()
-    ;(set-coding-category-system 'iso-8-designate 'iso-8859-1)
-    ;(set-coding-priority-list '(iso-8-designate iso-8-1))
-    (set-default-file-coding-system    'binary) ; iso-8859-1
-    ;;(setq locale-coding-system         'binary) ; iso-8859-1
-    (setq process-input-coding-system  'binary) ; iso-8859-1
-    (setq process-output-coding-system 'binary) ; iso-8859-1
-    (set-default-file-coding-system    'binary) ; iso-8859-1
-    (set-file-coding-system-for-read   'binary) ; iso-8859-1
-    ;(setq display-coding-system 'iso-8859-1)
-    ;(setq keyboard-coding-system 'iso-8859-1)
-    ;(setq-default quail-current-package
-    ;              (assoc "latin-1" quail-package-alist))))
+    ;;(set-coding-category-system 'iso-8-designate 'iso-8859-1)
+    ;;(set-coding-priority-list '(iso-8-designate iso-8-1))
+    (set-default-buffer-file-coding-system  'no-conversion) ; iso-8859-1
+    ;;(setq locale-coding-system            'no-conversion) ; iso-8859-1
+    (setq process-input-coding-system       'no-conversion) ; iso-8859-1
+    (setq process-output-coding-system      'no-conversion) ; iso-8859-1
+    (set-default-buffer-file-coding-system  'no-conversion) ; iso-8859-1
+    (set-buffer-file-coding-system-for-read 'no-conversion) ; iso-8859-1
+    ;;(setq display-coding-system 'iso-8859-1)
+    ;;(setq keyboard-coding-system 'iso-8859-1)
+    ;;(setq-default quail-current-package
+    ;;              (assoc "latin-1" quail-package-alist))))
     ))

@@ -1002,6 +1002,7 @@ as BUFFER means use current buffer.
      display).  We still need to make sure redisplay realizes that the
      contents have potentially altered and it needs to do some
      work. */
+  buf = decode_buffer(buffer, 0);
   BUF_MODIFF (buf)++;
   BUF_SAVE_MODIFF (buf) = NILP (flag) ? BUF_MODIFF (buf) : 0;
   MARK_MODELINE_CHANGED;
@@ -2258,7 +2259,7 @@ complex_vars_of_buffer (void)
 #endif
     buffer_local_flags.buffer_file_type = make_int (0x4000);
 #ifdef MULE
-    buffer_local_flags.file_coding_system = make_int (0x8000);
+    buffer_local_flags.buffer_file_coding_system = make_int (0x8000);
 #endif
     
     /* #### Warning, 0x4000000 (that's six zeroes) is the largest number
@@ -2363,7 +2364,7 @@ A string is printed verbatim in the modeline except for %-constructs:
         or print Bottom or All.
   %n -- print Narrow if appropriate.
   %t -- Under MS-DOS, print T if files is text, B if binary.
-  %C -- under XEmacs/Mule, print the mnemonic for `file-coding-system'.
+  %C -- under XEmacs/mule, print the mnemonic for `buffer-file-coding-system'.
   %[ -- print one [ for each recursive editing level.  %] similar.
   %% -- print %.                %- -- print infinitely many dashes.
 Decimal digits after the % specify field width to which to pad.
@@ -2465,21 +2466,21 @@ On other systems, this variable is normally always nil.
 */ );
 
 #ifdef MULE
-  DEFVAR_BUFFER_DEFAULTS ("default-file-coding-system", file_coding_system /*
-Default value of `file-coding-system' for buffers that do not override it.
-This is the same as (default-value 'file-coding-system).
+  DEFVAR_BUFFER_DEFAULTS ("default-buffer-file-coding-system", buffer_file_coding_system /*
+Default value of `buffer-file-coding-system' for buffers that do not override it.
+This is the same as (default-value 'buffer-file-coding-system).
 This value is used both for buffers without associated files and
 for buffers whose files do not have any apparent coding system.
-See `file-coding-system'.
+See `buffer-file-coding-system'.
 */ );
 
-  DEFVAR_BUFFER_LOCAL ("file-coding-system", file_coding_system /*
+  DEFVAR_BUFFER_LOCAL ("buffer-file-coding-system", buffer_file_coding_system /*
 *Current coding system for the current buffer.
 When the buffer is written out into a file, this coding system will
 be used for the encoding.  Automatically buffer-local when set in
 any fashion.  This is normally set automatically when a file is loaded
 in based on the determined coding system of the file (assuming that
-`file-coding-system-for-read' is set to `autodetect', which calls
+`buffer-file-coding-system-for-read' is set to `autodetect', which calls
 for automatic determination of the file's coding system).  Normally the
 modeline indicates the current file coding system using its mnemonic
 abbreviation.
@@ -2506,9 +2507,9 @@ original contents of the buffer, which is not the case with
 data -- there may be stray ESC characters when the file is read by
 another program.
 
-`file-coding-system' does *not* control the coding system used when
-a file is read in.  Use the variables `file-coding-system-for-read'
-and `file-coding-system-alist' for that.  From a Lisp program, if
+`buffer-file-coding-system' does *not* control the coding system used when
+a file is read in.  Use the variables `buffer-file-coding-system-for-read'
+and `buffer-file-coding-system-alist' for that.  From a Lisp program, if
 you wish to unilaterally specify the coding system used for one
 particular operation, you should bind the variable
 `coding-system-for-read' rather than changing the other two

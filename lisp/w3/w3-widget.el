@@ -1,7 +1,7 @@
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1997/03/05 23:37:58
-;; Version: 1.20
+;; Created: 1997/03/11 15:40:22
+;; Version: 1.23
 ;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -55,6 +55,8 @@
 
 (defvar widget-image-keymap (make-sparse-keymap)
   "Keymap used over glyphs in an image widget")
+
+(define-widget-keywords :tab-order)
 
 (defconst widget-mouse-button1 nil)
 (defconst widget-mouse-button2 nil)
@@ -244,7 +246,8 @@
 	   ((and server-map (stringp href))
 	    (setq real-widget
 		  (widget-image-create-subwidget
-		   'push-button :tag alt
+		   'push-button
+		   :tag alt
 		   :delete 'widget-default-delete
 		   :value href
 		   :action (widget-get widget :action)
@@ -261,6 +264,7 @@
 	    (setq real-widget
 		  (widget-image-create-subwidget
 		   'push-button :tag alt :format "%[%t%]"
+		   :tab-order -1
 		   :delete 'widget-default-delete
 		   :action (widget-get widget :action)
 		   :notify 'widget-image-callback))))

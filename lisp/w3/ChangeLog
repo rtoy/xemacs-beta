@@ -1,4 +1,123 @@
+Thu Mar 13 19:54:50 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-cus.el: Added customization support for Emacs-W3
+
+* w3.el (w3-mail-current-document): Use url-mail-command instead of
+  w3-mail-command
+
+Thu Mar 13 11:41:42 1997  Greg Stark  <gsstark@mit.edu>
+
+* w3-prefs.el: Implemented privacy panel
+
+Wed Mar 12 10:25:38 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-e19.el (w3-mode-version-specifics): Use the nasty crufty
+  buffer-access-fontify-functions to make sure that we never yank
+  read-only text out of the Emacs-W3 buffer.
+
+* Synch'd up to Widget 1.62
+
+Wed Mar 12 06:36:41 1997  Paul Stodghill <stodghil@CS.Cornell.EDU>
+
+* base64.el (base64-decode-region): Fixed typo in calling
+  command-on-region.
+
+Tue Mar 11 07:03:48 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-auto.el (w3-use-hotlist): Made autoload interactive
+
+* w3-widget.el (widget-image-value-create): Was a little too aggressive
+  about when to apply the -1 :tab-order property.  Now only images that
+  are not hyperlinks or imagemaps will not be tabbed to.
+
+* w3-prefs.el (w3-preferences-init-proxy-panel): Updated preferences panel
+  for new format of url-proxy-services
+
+* w3-vars.el (w3-hyperlink-menu): Fixed problem with calling wrong
+  bookmark function - would create a bookmark to the current document, not
+  the document under the mouse.
+  (w3-popup-menu): Added a few menu itmes (reload, show images, add bookmark)
+
+* w3-hot.el (w3-hotlist-add-document-at-point): Extract the title
+  correctly for the new widget implementation of hyperlinks.
+
+Mon Mar 10 06:31:48 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-menu.el (w3-menu-options-menu): Fixed problem with XEmacs when
+  building without toolbars - would insert nil in the menu in a very wrong
+  place.
+
+* font.el (font-normalize-color): Under win32, make sure we define the
+  color before we try to use it, since Emacs doesn't support raw #RRGGBB
+  color specifications yet.
+  (font-rgb-color-p): make all #RRGGBB color specs go through
+  font-normalize-color
+
+* Emacs-W3 3.0.67 released
+
+Mon Mar 10 1997  Dave Love  <d.love@dl.ac.uk>
+
+* w3.el (w3-do-setup): Make configuration file loading contingent
+  on init-file-user (i.e. suppressed with -q).
+
+Sun Mar  9 13:09:38 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-widget.el (widget-image-value-create): Set :tab-order to -1 so the
+  latest widget library won't tab to image widgets.
+
+* w3.el (w3-mode): Make sure w3-mode-hook is run last, so that people can
+  turn off truncate-lines if they want.
+
+* ssl.el (open-ssl-stream): ssl-program-arguments is now dynamically
+  evaluated, similar to ps-lpr-switches.  The special symbols 'host' and
+  'port' are available, and bound to the hostname and port#/service we are
+  about to connect to.
+
+* w3-display.el (w3-finish-drawing): Remove all read-only properties on
+  text.
+
+* url-cache.el (url-cache-expired): fixed standalone mode
+
+Sat Mar  8 09:13:59 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.66 released.
+
+* url-cache.el (url-cache-prepare): Threw a condition-case around the
+  make-directory call, just in case we can't create the file for some
+  reason.  Also fixed bug where the file wouldn't be cached until the
+  second time you visited it.
+
+* url.el (url-retrieve-internally): Deal with https asynch
+
+* w3-xemac.el (w3-mode-version-specifics): Don't try to add the toolbar if
+  device-type == 'stream.
+
+* w3-vars.el (w3-temporary-directory): Ditto.
+
+* url-vars.el (url-temporary-directory): Initialize from TMPDIR
+  environment variable.
+
+* w3.el (w3-start-viewer): Ditto.
+
+* md5.el (md5): Ditto.
+
+* mm.el (mm-compose-type): Don't use hardcoded /bin/sh and -c - use
+  shell-file-name and shell-command-switch
+  (mm-viewer-passes-test): ditto.
+
+* w3-sysdp.el: Better device-* functions for Emacs-19 under win32 and OS/2
+
+* w3-display.el (w3-display-node): Better handling for <noframes> support.
+
 Fri Mar  7 06:13:20 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-script.el (w3-script-evaluate-form): protect against bad input during
+  the read-from-string when parsing emacs-lisp scripts.
+
+* w3-auto.el (w3-preferences-edit): Make the autoload for this be
+  interactive so that the user can actually find it!
+
+* Emacs-W3 3.0.65 released.
 
 * w3.el (w3-document-information): Better handling of last-modified
   findings.

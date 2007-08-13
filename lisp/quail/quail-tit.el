@@ -73,7 +73,7 @@
   (let ((buf (get-buffer-create "*tit-work*"))
 	pos
 	;; tit keywords and default values
-	(encode '*euc-china*)
+	(encode 'euc-china)
 	(multichoice t)
 	prompt
 	comment
@@ -92,22 +92,22 @@
       (erase-buffer)
       (if (null (string-match "\\.tit$" tit-file))
 	  (setq tit-file (concat tit-file ".tit")))
-      (let ((file-coding-system-for-read '*noconv*))
+      (let ((coding-system-for-read 'no-conversion))
 	(insert-file-contents tit-file))
 
       (set-visited-file-name (tit-dest-file tit-file dest-dir))
-      (set-file-coding-system '*junet*unix)
-
+      (set-buffer-file-coding-system 'junet-unix)
+      
       ;; convert GB or BIG5 to Mule's internal code
       (save-excursion
 	(if (re-search-forward "^ENCODE:" nil t)
 	    (progn
 	      (skip-chars-forward " \t")
 	      (if (looking-at "GB")
-		  (setq encode '*euc-china*)
-		(setq encode '*big5*)))))
+		  (setq encode 'euc-china)
+		(setq encode 'big5)))))
       (tit-message "Converting %s to Mule's internal code..." encode)
-      (code-convert 1 (point-max) encode '*internal*)
+      (decode-coding-region 1 (point-max) encode)
 
       (goto-char 1)
       ;; setting headers

@@ -1745,9 +1745,9 @@ With argument, insert value in current buffer after the form."
 	    (skip-chars-forward (concat (char-to-string 0) "-"
 					(char-to-string 255)))
 	    (eq (point) (point-max)))
-	  (setq file-coding-system 'no-conversion)
+	  (setq buffer-file-coding-system 'no-conversion)
 	(insert ";;;###coding system: escape-quoted\n")
-	(setq file-coding-system 'escape-quoted)
+	(setq buffer-file-coding-system 'escape-quoted)
 	;; Lazy loading not yet implemented for MULE files
 	;; mrb - Fix this someday.
 	(save-excursion

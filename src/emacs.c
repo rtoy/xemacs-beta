@@ -179,7 +179,7 @@ fatal_error_signal (int sig)
       shut_down_emacs (sig, Qnil);
       stderr_out("\nLisp backtrace follows:\n\n");
       Fbacktrace(Qexternal_debugging_output, Qt);
-      
+# if 0	/* This is evil, rarely useful, and causes grief in some cases. */
       /* Check for Sun-style stack printing via /proc */
       {
         CONST char *pstack = "/usr/proc/bin/pstack";
@@ -192,6 +192,7 @@ fatal_error_signal (int sig)
             system(buf);
           }
       }
+# endif
     }
 #ifdef VMS
   LIB$STOP (SS$_ABORT);

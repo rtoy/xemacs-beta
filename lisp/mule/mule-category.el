@@ -119,16 +119,17 @@ The categories are given by their designators."
 	  (setq a (1+ a)))
 	(nreverse list)))))
 
-(defun char-in-category-p (char category &optional table)
-  "Return non-nil if CHAR is in CATEGORY.
-TABLE defaults to the current buffer's category table.
-Categories are specified by their designators."
-  (or table (setq table (category-table)))
-  (check-argument-type 'category-table-p table)
-  (check-argument-type 'category-designator-p category)
-  (let ((vec (get-char-table char table)))
-    (if (null vec) nil
-      (= 1 (aref vec (- category 32))))))
+;; implimented in c, file chartab.c (97/3/14 jhod@po.iijnet.or.jp)
+;(defun char-in-category-p (char category &optional table)
+;  "Return non-nil if CHAR is in CATEGORY.
+;TABLE defaults to the current buffer's category table.
+;Categories are specified by their designators."
+;  (or table (setq table (category-table)))
+;  (check-argument-type 'category-table-p table)
+;  (check-argument-type 'category-designator-p category)
+;  (let ((vec (get-char-table char table)))
+;    (if (null vec) nil
+;      (= 1 (aref vec (- category 32))))))
 
 (defun describe-category ()
   "Describe the category specifications in the category table.
@@ -173,7 +174,7 @@ The descriptions are inserted in a buffer, which is then displayed."
 		 (and (characterp range)
 		      (characterp first-char)
 		      (eq (char-charset range) (char-charset first-char))
-		      (= (char-int last-char) (1- (char-int range))))
+		      (= (char-to-int last-char) (1- (char-to-int range))))
 		 (and (vectorp range)
 		      (vectorp first-char)
 		      (eq (aref range 0) (aref first-char 0))
@@ -203,7 +204,7 @@ The descriptions are inserted in a buffer, which is then displayed."
 		(if (not already-matched)
 		    (setq already-matched t)
 		  (princ " "))
-		(princ (int-char (+ 32 i)))))
+		(princ (int-to-char (+ 32 i)))))
 	  (setq i (1+ i)))
 	(if (not already-matched)
 	    (princ "(none)")))
@@ -211,7 +212,7 @@ The descriptions are inserted in a buffer, which is then displayed."
 	(while (< i 95)
 	  (if (= 1 (aref code i))
 	      (princ (format "\n\t\tmeaning: %s"
-			    (category-doc-string (int-char (+ 32 i))))))
+			    (category-doc-string (int-to-char (+ 32 i))))))
 	  (setq i (1+ i)))))
     (terpri)))
 
@@ -258,3 +259,28 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
 ;;; break line at any point under a restriction of 'kinsoku'.
 (defvar word-across-newline "\\(\\cj\\|\\cc\\|\\ct\\)"
   "Regular expression of such characters which can be a word across newline.")
+
+(defvar ascii-char "[\40-\176]")
+(defvar ascii-space "[ \t]")
+(defvar ascii-symbols "[\40-\57\72-\100\133-\140\173-\176]")
+(defvar ascii-numeric "[\60-\71]")
+(defvar ascii-English-Upper "[\101-\132]")
+(defvar ascii-English-Lower "[\141-\172]")
+(defvar ascii-alphanumeric "[\60-\71\101-\132\141-\172]")
+
+(defvar kanji-char "\\cj")
+(defvar kanji-space "　")
+(defvar kanji-symbols "\\cS")
+(defvar kanji-numeric "[０-９]")
+(defvar kanji-English-Upper "[Ａ-Ｚ]")
+(defvar kanji-English-Lower  "[ａ-ｚ]")
+(defvar kanji-hiragana "\\cH")
+(defvar kanji-katakana "\\cK")
+(defvar kanji-Greek-Upper "[Α-Ω]")
+(defvar kanji-Greek-Lower "[α-ω]")
+(defvar kanji-Russian-Upper "[А-Я]")
+(defvar kanji-Russian-Lower "[а-я]")
+(defvar kanji-Kanji-1st-Level  "[亜-腕]")
+(defvar kanji-Kanji-2nd-Level  "[弌-瑤]")
+
+(defvar kanji-kanji-char "\\(\\cH\\|\\cK\\|\\cC\\)")

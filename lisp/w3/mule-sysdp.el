@@ -77,7 +77,7 @@
      (if (and (listp code) (not (car code)))
 	 (setq code 'autodetect))
      (decode-coding-region (point-min) (point-max) code)
-     (set-file-coding-system code))
+     (set-buffer-file-coding-system code))
     (otherwise
      nil)))
 

@@ -1,3 +1,53 @@
+Fri Mar 14 18:03:55 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.63 released.
+
+Fri Mar 14 18:00:40 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (custom-help-menu): Use :filter to generate menu on
+	XEmacs. 
+	* cus-edit.el (custom-menu-update): Support use as :filter on
+	XEmacs, popup menu on Emacs.
+
+Tue Mar 11 16:27:50 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.62 released.
+
+Tue Mar 11 11:30:39 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (custom-set-face-font-size): Use
+	`font-set-face-font' instead of `set-face-font'.
+	(custom-set-face-font-family): Ditto.
+
+	* Version 1.61 released.
+
+Tue Mar 11 11:27:19 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (custom-set-faces): If face already exists,
+	overwrite it now.
+
+Mon Mar 10 15:40:29 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (custom-face-attributes): Changed default colors to
+	black and white.
+
+	* wid-edit.el (color-item): Set `:sample-face-get'.
+
+	* cus-face.el (custom-declare-face): Don't initialize an existing
+	saved face. 
+
+	* wid-edit.el (color): Changed default color from "default" to
+	"black". 
+
+	* Version 1.60 released.
+
+Mon Mar 10 11:32:51 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:tab-order): New keyword.
+	* wid-edit.el (widget-move): Use it.
+	* widget.texi (Basic Types): Documented it.
+	Patch by "William M. Perry" <wmperry@aventail.com>.
+
 Sat Mar 08 17:21:12 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.59 released.

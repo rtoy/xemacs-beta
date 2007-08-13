@@ -38,23 +38,8 @@
 ;;; 3) This still doesn't handle tables.
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'w3-cus)
 (require 'w3-print)
-
-(defvar w3-latex-print-links nil
-  "*If non-nil, prints the URLs of hypertext links as endnotes at the end of
-the document.  If `footnote', prints the URL's as footnotes on a page.")
-
-(defvar w3-latex-use-latex2e nil
-  "*If non-nil, configures LaTeX parser to use LaTeX2e syntax.  A `nil' 
-value indicates that LaTeX 2.0.9 compatibility will be used instead.")
-
-(defvar w3-latex-packages nil
-  "*List of LaTeX packages to include.  Currently this is only used if 
-`w3-latex-use-latex2e' is non-nil.")
-
-(defvar w3-latex-use-maketitle nil
-  "*Non-nil makes the LaTeX parser use real LaTeX title pages for
-document titles.")
 
 ;; Internal variables - do not touch!
 (defvar w3-latex-current-url nil "What URL we are formatting")

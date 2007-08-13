@@ -315,7 +315,7 @@ DEFUN ("console-type", Fconsole_type, 0, 1, 0, /*
 Return the type of the specified console (e.g. `x' or `tty').
 Value is `tty' for a tty console (a character-only terminal),
 `x' for a console that is an X display,
-`ns' for a console that is a NeXTstep connection (not yet implemeted),
+`ns' for a console that is a NeXTstep connection (not yet implemented),
 `win32' for a console that is a Windows or Windows NT connection (not yet
   implemented),
 `pc' for a console that is a direct-write MS-DOS connection (not yet
@@ -903,6 +903,9 @@ stuff_buffered_input (Lisp_Object stuffstring)
 # endif
 #endif /* BSD */
 }
+#ifdef HAVE_TTY
+extern Lisp_Object Fconsole_tty_controlling_process(Lisp_Object console);
+#endif
 
 DEFUN ("suspend-console", Fsuspend_console, 0, 1, "", /*
 Suspend a console.  For tty consoles, it sends a signal to suspend
@@ -922,6 +925,7 @@ On such systems, who knows what will happen.
   struct console *c;
   struct gcpro gcpro1;
 
+#ifdef HAVE_TTY
   if (NILP (console))
       console=Fselected_console();
 
@@ -944,6 +948,7 @@ On such systems, who knows what will happen.
   }
 
   UNGCPRO;
+#endif
   return Qnil;
 }
 
@@ -958,6 +963,7 @@ do stuff to the tty to make it sane again.
   struct console *c;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
+#ifdef HAVE_TTY
   GCPRO2 (console, devcons);
 
   c = decode_console(console);
@@ -976,6 +982,7 @@ do stuff to the tty to make it sane again.
   }
 
   UNGCPRO;
+#endif
   return Qnil;
 }
 

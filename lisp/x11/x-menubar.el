@@ -1209,9 +1209,8 @@ options listed in the Options menu.")
   "This function will return a list of all faces that have not been
 'customized'."
   (delq nil (mapcar '(lambda (face)
-		       (if (not (or (get face 'saved-face)
-				   (get face 'factory-face)))
-			  face))
+		       (unless (get face 'saved-face)
+			 face))
 		    (face-list))))
 
 (defun save-options-specifier-spec-list (face property)
@@ -1410,9 +1409,18 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
   (popup-menu
    (cond ((and global-popup-menu mode-popup-menu)
 	  (check-menu-syntax mode-popup-menu)
-	  (let ((title (car mode-popup-menu))
-		(items (cdr mode-popup-menu)))
-	    (append global-popup-menu
+	  (let* ((title (car mode-popup-menu))
+		 (items (cdr mode-popup-menu))
+		 filters)
+	    ;; Strip keywords from local menu for attaching them at the top
+	    (while (not (vectorp (car items)))
+	      (setq items (append filters (list (car items))))
+	      (setq items (cdr items)))
+	    ;; If filters contains a keyword already present in
+	    ;; `global-popup-menu' you will probably lose.
+	    (append (list (car global-popup-menu))
+		    filters
+		    (cdr global-popup-menu)
 		    '("---" "---")
 		    (if popup-menu-titles (list title))
 		    (if popup-menu-titles '("---" "---"))

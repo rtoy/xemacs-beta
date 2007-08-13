@@ -1578,7 +1578,8 @@ extent_endpoint_bufpos (EXTENT extent, int endp)
    descendants. */
 
 static void
-extent_changed_for_redisplay (EXTENT extent, int descendants_too)
+extent_changed_for_redisplay (EXTENT extent, int descendants_too,
+			      int invisibility_change)
 {
   Lisp_Object object;
   Lisp_Object rest;
@@ -1597,7 +1598,8 @@ extent_changed_for_redisplay (EXTENT extent, int descendants_too)
 	     if there are any circularities here, so we sure as hell better
 	     ensure that there aren't. */
 	  LIST_LOOP (rest, XWEAK_LIST_LIST (children))
-	    extent_changed_for_redisplay (XEXTENT (XCAR (rest)), 1);
+	    extent_changed_for_redisplay (XEXTENT (XCAR (rest)), 1,
+					  invisibility_change);
 	}
     }
 
@@ -1626,6 +1628,8 @@ extent_changed_for_redisplay (EXTENT extent, int descendants_too)
     b = XBUFFER (object);
     BUF_FACECHANGE (b)++;
     MARK_EXTENTS_CHANGED;
+    if (invisibility_change)
+      MARK_CLIP_CHANGED;
     buffer_extent_signal_changed_region (b,
 					 extent_endpoint_bufpos (extent, 0),
 					 extent_endpoint_bufpos (extent, 1));
@@ -1638,14 +1642,16 @@ extent_changed_for_redisplay (EXTENT extent, int descendants_too)
    the extent has any displayable attributes. */
 
 static void
-extent_maybe_changed_for_redisplay (EXTENT extent, int descendants_too)
+extent_maybe_changed_for_redisplay (EXTENT extent, int descendants_too,
+				    int invisibility_change)
 {
   /* Retrieve the ancestor for efficiency */
   EXTENT anc = extent_ancestor (extent);
   if (!NILP (extent_face (anc)) || !NILP (extent_begin_glyph (anc)) ||
       !NILP (extent_end_glyph (anc)) || !NILP (extent_mouse_face (anc)) ||
-      !NILP (extent_invisible (anc)))
-    extent_changed_for_redisplay (extent, descendants_too);
+      !NILP (extent_invisible (anc)) || invisibility_change)
+    extent_changed_for_redisplay (extent, descendants_too,
+				  invisibility_change);
 }
 
 static EXTENT
@@ -1793,7 +1799,8 @@ extent_attach (EXTENT extent)
   extent_list_insert (el, extent);
   soe_insert (extent_object (extent), extent);
   /* only this extent changed */
-  extent_maybe_changed_for_redisplay (extent, 0);
+  extent_maybe_changed_for_redisplay (extent, 0,
+				      !NILP (extent_invisible (extent)));
 }
 
 static void
@@ -1806,7 +1813,8 @@ extent_detach (EXTENT extent)
   el = extent_extent_list (extent);
 
   /* call this before messing with the extent. */
-  extent_maybe_changed_for_redisplay (extent, 0);
+  extent_maybe_changed_for_redisplay (extent, 0,
+				      !NILP (extent_invisible (extent)));
   extent_list_delete (el, extent);
   soe_delete (extent_object (extent), extent);
   set_extent_start (extent, -1);
@@ -3512,7 +3520,15 @@ See `extent-parent'.
       e->flags.has_parent = 1;
     }
   /* changing the parent also changes the properties of all children. */
-  extent_maybe_changed_for_redisplay (e, 1);
+  {
+    int old_invis = (!NILP (cur_parent) &&
+		     !NILP (extent_invisible (XEXTENT (cur_parent))));
+    int new_invis = (!NILP (parent) &&
+		     !NILP (extent_invisible (XEXTENT (parent))));
+
+    extent_maybe_changed_for_redisplay (e, 1, new_invis != old_invis);
+  }
+
   return Qnil;
 }
 
@@ -4611,7 +4627,7 @@ set_extent_invisible (EXTENT extent, Lisp_Object value)
   if (!EQ (extent_invisible (extent), value))
     {
       set_extent_invisible_1 (extent, value);
-      extent_changed_for_redisplay (extent, 1);
+      extent_changed_for_redisplay (extent, 1, 1);
     }
 }
 
@@ -4768,18 +4784,16 @@ list.
 */
        (extent, face))
 {
-  EXTENT e;
+  EXTENT e = decode_extent(extent, 0);
   Lisp_Object orig_face = face;
 
-  CHECK_EXTENT (extent);
-  e = XEXTENT (extent);
   /* retrieve the ancestor for efficiency and proper redisplay noting. */
   e = extent_ancestor (e);
 
   face = memoize_extent_face_internal (face);
 
   extent_face (e) = face;
-  extent_changed_for_redisplay (e, 1);
+  extent_changed_for_redisplay (e, 1, 0);
 
   return orig_face;
 }
@@ -4819,7 +4833,7 @@ list.
   face = memoize_extent_face_internal (face);
 
   set_extent_mouse_face (e, face);
-  extent_changed_for_redisplay (e, 1);
+  extent_changed_for_redisplay (e, 1, 0);
 
   return orig_face;
 }
@@ -4841,7 +4855,7 @@ set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
       extent_end_glyph_layout (extent) = layout;
     }
 
-  extent_changed_for_redisplay (extent, 1);
+  extent_changed_for_redisplay (extent, 1, 0);
 }
 
 static Lisp_Object
@@ -4943,7 +4957,7 @@ Access this using the `extent-begin-glyph-layout' function.
   EXTENT e = decode_extent (extent, 0);
   e = extent_ancestor (e);
   extent_begin_glyph_layout (e) = symbol_to_glyph_layout (layout);
-  extent_maybe_changed_for_redisplay (e, 1);
+  extent_maybe_changed_for_redisplay (e, 1, 0);
   return layout;
 }
 
@@ -4956,7 +4970,7 @@ Access this using the `extent-end-glyph-layout' function.
   EXTENT e = decode_extent (extent, 0);
   e = extent_ancestor (e);
   extent_end_glyph_layout (e) = symbol_to_glyph_layout (layout);
-  extent_maybe_changed_for_redisplay (e, 1);
+  extent_maybe_changed_for_redisplay (e, 1, 0);
   return layout;
 }
 
@@ -4995,7 +5009,7 @@ Extents are created with priority 0; priorities may be negative.
   CHECK_INT (pri);
   e = extent_ancestor (e);
   set_extent_priority (e, XINT (pri));
-  extent_maybe_changed_for_redisplay (e, 1);
+  extent_maybe_changed_for_redisplay (e, 1, 0);
   return pri;
 }
 
@@ -5375,14 +5389,14 @@ do_highlight (Lisp_Object extent_obj, int highlight_p)
     {
       /* do not recurse on descendants.  Only one extent is highlighted
 	 at a time. */
-      extent_changed_for_redisplay (XEXTENT (Vlast_highlighted_extent), 0);
+      extent_changed_for_redisplay (XEXTENT (Vlast_highlighted_extent), 0, 0);
     }
   Vlast_highlighted_extent = Qnil;
   if (!NILP (extent_obj)
       && BUFFERP (extent_object (XEXTENT (extent_obj)))
       && highlight_p)
     {
-      extent_changed_for_redisplay (XEXTENT (extent_obj), 0);
+      extent_changed_for_redisplay (XEXTENT (extent_obj), 0, 0);
       Vlast_highlighted_extent = extent_obj;
     }
 }

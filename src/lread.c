@@ -1743,7 +1743,7 @@ read_atom (Lisp_Object readcharfun,
       /* If a token had any backslashes in it, it is disqualified from
 	 being an integer or a float.  This means that 123\456 is a
 	 symbol, as is \123 (which is the way (intern "123") prints).
-	 Also, if token was preceeded by #:, it's always a symbol.
+	 Also, if token was preceded by #:, it's always a symbol.
        */
       char *p = read_ptr + len;
       char *p1 = read_ptr;

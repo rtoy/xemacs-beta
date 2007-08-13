@@ -1048,7 +1048,9 @@ at the initial click position."
   (if zmacs-regions
       (funcall 'default-mouse-track-cleanup-extents-hook)
     (let ((extent default-mouse-track-extent)
-	  (func #'(lambda (e) (set-extent-face e 'primary-selection))))
+	  (func #'(lambda (e)
+		    (and (extent-live-p e)
+			 (set-extent-face e 'primary-selection)))))
       (add-hook 'pre-command-hook 'default-mouse-track-cleanup-extents-hook)
       (if (consp extent)		; rectangle-p
 	  (mapcar func extent)

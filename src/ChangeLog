@@ -1,3 +1,57 @@
+Sat Mar 15 14:21:39 1997  David Moore  <dmoore@ucsd.edu>
+
+	* fileio.c (Fdo_auto_save): Protect against file handlers which
+ 	may kill the buffer being saved or otherwise modify Vbuffer_alist.
+
+Sat Mar 15 15:32:51 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (lisp): Add auto-customize.elc.
+
+Fri Mar 14 19:10:37 1997  David Moore  <dmoore@ucsd.edu>
+
+	* extents.c (extent_changed_for_redisplay): New parameter.
+	(extent_changed_for_redisplay): Notify redisplay if invisible text
+	has become visible.
+	(extent_maybe_changed_for_redisplay): New parameter.
+	(extent_attach): Use it.
+	(extent_detach): Use it.
+	(Fset_extent_parent): Use it.
+	(set_extent_invisible): Use visibility change parameter.
+	(Fset_extent_face): Ditto.
+	(Fset_extent_mouse_face): Ditto.
+	(set_extent_glyph): Ditto.
+	(do_highlight): Ditto.
+
+Thu Mar 13 10:40:37 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* s/sunos4-1-4-shr.h: New file.
+
+	* s/sunos4-1-4.h: New file.
+
+	* s/sunos4-1.h (BROKEN_SIGIO): Define.
+
+Wed Mar 12 14:29:40 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (fatal_error_signal): (mostly) useless check on
+	/usr/proc/bin/pstack removed.
+
+	* s/bsdos3.h: New file for BSDI 3.0.
+
+	* editfns.c (Fchar_equal): Correct DOC string.
+	(Fchar_Equal): (char=) CL Case sensitve comparison added.
+
+	* data.c (Fcharacterp): Make DOC string less confrontational.
+
+Mon Mar 10 23:51:04 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* input-method-motif.c (XIM_init_frame): Fix XIM crash on some
+	versions of X11R6 XIM.
+
+Sun Mar  9 21:46:53 1997  Tomasz J. Cholewo  <t.cholewo@ieee.org>
+
+	* minibuf.c (regexp_ignore_completion_p): Reverse meaning of 
+        completion-regexp-list.
+
 Thu Mar  6 19:15:29 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* data.c (eq_with_ebola_notice): Unobfuscate Ebola warning!!!

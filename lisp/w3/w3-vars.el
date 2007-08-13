@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/07 16:46:48
-;; Version: 1.102
+;; Created: 1997/03/14 06:51:56
+;; Version: 1.108
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,8 +29,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variable definitions for w3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'w3-cus)			; Grab everything that is customized
+
 (defconst w3-version-number
-  (let ((x "p3.0.65"))
+  (let ((x "p3.0.68"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -38,7 +41,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/03/07 16:46:48"))
+(defconst w3-version-date (let ((x "1997/03/14 06:51:56"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -51,215 +54,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; General configuration variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-auto-image-alt t
-  "*Whether emacs-w3 should create an alt attribute for an image that
-is missing it.
-If nil, emacs-w3 will not automatically create an ALT attribute.
-If t, the alt attribute will be [IMAGE(nameofimage)]
-If a string, it should be a string suitable for running through format,
-   with only one %s, which will be replaced with just the filename of the
-   graphic that is not loaded.")
-
-(defvar w3-configuration-directory "~/.w3/"
-  "*Where emacs-w3 can find its configuration files")
-
-(defvar w3-debug-html nil "*Whether to gripe about bad HTML or not.")
-
-(defvar w3-debug-buffer "*HTML Debug*"
-  "*Name of buffer to store debugging information in.")
-
-(defvar w3-default-configuration-file nil
-  "*Where per-user customizations of w3 are kept.")
-
-(defvar w3-default-homepage nil
-  "*The url to open at startup.  It can be any valid URL.
-This will default to the environment variable WWW_HOME if you do not
-set it in your .emacs file. If WWW_HOME is undefined, then it will
-default to  the hypertext documentation for W3 at Indiana University.")
-
-(defvar w3-default-stylesheet nil
-  "*The filename of the users default stylesheet.")
-
-(defvar w3-display-frames nil
-  "*Fetch frames - not optimal.")
-
-(defvar w3-frame-labels '("FRAME(" . ")")
-  "Strings surrounding a frame name")
-
-(defvar w3-frame-regexp "FRAME(\\([^)]+\\))"
-  "Regexp for finding a frame hyperlink")
-
-(defvar w3-frameset-structure nil
-  "Frameset structure")
-
-(defvar w3-frameset-dimensions nil
-  "Frameset dimensions")
-
-(defvar w3-frame-name nil
-  "Frame name")
-
-(defvar w3-base-target nil
-  "Base target name")
-
-(defvar w3-target-window-distances nil
-  "Target window distances")
-
-(defvar w3-do-incremental-display nil
-  "*Whether to do incremental display of pages or not.")
-
 (defvar w3-dump-to-disk nil
   "*If non-nil, all W3 pages loaded will be dumped to disk.")
-
-(defvar w3-echo-link '(title url text name)
-  "*Whether to display the URL of a link when tabbing through links.
-Value is a list of one or more of the following symbols:
-
-  url    == url of the target
-  text   == text of the link
-  title  == title attribute of the link
-  name   == name or id attribute of the link
-
-If none of the information is available, nothing will be shown for the link
-in menus, etc.")
-  
-(defvar w3-horizontal-rule-char ?-
-  "*The character to use to create a horizontal rule.
-Must be the character's code, not a string.  This character is
-replicated across the screen to create a division.")
 
 (defvar w3-fetch-with-default t
   "*Whether `w3-fetch' should determine a good starting URL as a default.")
 
-(defvar w3-hotlist-file nil
-  "*Hotlist filename.
-This should be the name of a file that is stored in either
-NCSA's Mosaic/X or Netscape/X format.  It is used to keep a listing
-of commonly accessed URL's without having to go through 20 levels of
-menus to get to them.")
-
-(defvar w3-icon-directory "http://cs.indiana.edu/elisp/w3/icons/"
-  "*Where to find standard icons.  Must end in a /!")
-
-(defvar w3-icon-format 'xbm
-  "*What file extension icons end in.  This is a symbol, string, or nil.
-If nil, then no file extension is used.")
-
-(defvar w3-indent-level 4
-  "*Default # of spaces to indent instead of using TABs.  This is
-necessary to preserve tabs in PRE segments yet still get smaller
-indentation for lists, etc.")
-
-(defvar w3-keep-old-buffers t
-  "*Whether to keep old buffers around when following links.")
-
-(defvar w3-latex-docstyle "{article}"
-  "*The documentstyle to use when printing/mailing converted HTML
-files in LaTeX.  Good defaults are:
-{article}, [psfig,twocolumn]{article}, etc.")
-
-(defvar w3-mail-command 'mail
-  "*This function will be called whenever w3 needs to send mail.  It should
-enter a mail-mode-like buffer in the current window.
-The commands `mail-to' and `mail-subject' should still work in this
-buffer, and it should use mail-header-separator if possible.")
-
-(defvar w3-max-menu-length 35
-  "*The maximum length of a pulldown menu before it will be split into
-smaller chunks, with the first part as a submenu, followed by the rest
-of the menu.")
-
-(defvar w3-max-menu-width 40 "*The maximum width of a pulldown menu choice.")
-
-(defvar w3-modeline-format
-  '("  " ("W3"
-	(w3-netscape-emulation-minor-mode
-	 " (NS)")
-	(w3-lynx-emulation-minor-mode
-	 " (Lynx)")
-	": "
-	(40 (-40 "%b"))
-	" "
-	(w3-current-isindex "[Searchable]  ")
-	"%p" "  " global-mode-string))
-  "*The modeline format string when in w3 mode")
-
-(defvar w3-mule-attribute 'underline
-  "*How to highlight items in Mule (Multi-Linugual Emacs).")
-
-(defvar w3-netscape-configuration-file nil
-  "*A Netscape-for-X style configuration file.  This file will only be read if
-and only if `w3-use-netscape-configuration-file' is non-nil.")
-
-(defvar w3-netscape-compatible-comments t
-  "*Whether to honor netscape-style <! > comments.
-Ye gods I wish I could turn this off by default.")
-
-(defvar w3-notify 'semibully
-  "*Selects the behavior when w3 page is ready.
-This variable may have one of the following values:
-
-newframe   -- put the w3 page in its own frame
-bully      -- make the w3 page the current buffer and only window
-semibully  -- make the w3 page the current buffer in the same window
-aggressive -- make the w3 page the current buffer in the other window
-friendly   -- display  w3page in other window but don't make current
-polite     -- don't display w3 page, but prints message when ready (beeps)
-quiet      -- like `polite', but don't beep
-meek       -- make no indication that page is ready
-
-Any other value of `w3-notify' is equivalent to `meek'.")
-
-(defvar w3-popup-menu-on-mouse-3 t
-  "*Non-nil value means W3 should provide context-sensitive menus on mouse-3.
-A nil value means W3 should not change the binding of mouse-3.")
-
-(defvar w3-print-command "lpr -h -d"
-  "*Print command for dvi files.
-This is usually lpr -h -d to send it to a postscript printer, but you can set
-it up so that it is any command that takes a dvi file as its last argument.")
-
-(defvar w3-reuse-buffers 'reuse
-  "What to do when following a link will re-fetch a document that has
-already been fetched into a W3 buffer.  Possible values are: nil,
-'yes, and 'no.  Nil means ask the user if we should reuse the buffer.
- A value of 'yes means assume the user wants us to reuse the buffer.
-A value of 'no means assume the user wants us to re-fetch the document.
-
-This will also accept:
-'no 'never 'reload	==> always reload
-'yes 'reuse 'always	==> always reuse
-'ask nil		==> always ask")
-
-(defvar w3-right-margin 2
-  "*Amount of space to leave on right margin of WWW buffers.
-This amount is subtracted from (window-width) for each new WWW buffer
-and used as the new fill-column.")
-
-(defvar w3-maximum-line-length nil
-  "*Maximum length of a line.  If nil, then lines can extend all the way to
-the window margin.")
-
-(defvar w3-temporary-directory "/tmp" "*Where temporary files go.")
-
 (defvar w3-track-last-buffer nil
   "*Whether to track the last w3 buffer to automatically switch to with
  M-x w3.")
-
-(defvar w3-track-mouse t
-  "*Whether to track the mouse and message the url under the mouse.")
-
-(defvar w3-use-netscape-configuration-file nil
-  "*Whether to use a netscape configuration file to determine things like
-home pages, link colors, etc.  If non-nil, then `w3-netscape-configuration-file'
-is read in at startup.")
-
-(defvar w3-honor-stylesheets t
-  "*Whether to let a document specify a CSS stylesheet.")
-
-(defvar w3-user-colors-take-precedence nil
-  "*Whether to let a document define certain colors about itself.
-Like foreground and background colors and pixmaps, color of links and
-visited links, etc.")
 
 (defvar w3-gc-cons-threshold-multiplier 1
   "Amount to temporarily multiply gc-cons-threshold by when parsing HTML.
@@ -268,14 +71,6 @@ garbage collections when parsing an HTML document, which may often speed
 up handling of a large document with many elements.  The disadvantage is
 that it allows Emacs's total memory usage to grow larger, which may result
 in later garbage collections taking more time.")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Hook Variables
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-load-hook nil "*Hooks to be run after loading w3.")
-(defvar w3-mode-hook nil "*Hooks to be run after entering w3-mode.")
-(defvar w3-source-file-hook nil
-  "*Hooks to be run after getting document source.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Figure out what flavor of emacs we are running
@@ -288,43 +83,8 @@ in later garbage collections taking more time.")
   "*In FSF v19 emacs?")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Graphics parsing stuff
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-graphics-list nil
-  "*List of graphics already read in.")
-
-(defvar w3-delay-image-loads nil
-  "*Delay loading images for w3 or not?")
-
-(defvar w3-delayed-images nil
-  "*A buffer-local variable holding positions and urls of images within
-the buffer.")
-
-(defvar w3-image-mappings
-  '(
-    ("image/x-xbitmap"        . xbm)
-    ("image/xbitmap"          . xbm)
-    ("image/xbm"              . xbm)
-    ("image/jpeg"             . jpeg)
-    ("image/gif"              . gif)
-    ("image/png"              . png)
-    ("image/x-fax"            . g3fax)
-    ("image/x-raster"         . rast)
-    ("image/windowdump"       . xwd)
-    ("image/x-icon"           . icon)
-    ("image/portable-graymap" . pgm)
-    ("image/portable-pixmap"  . ppm)
-    ("image/x-pixmap"         . xpm)
-    ("image/x-xpixmap"        . xpm)
-    ("image/pict"             . pict)
-    ("image/x-rgb"            . sgi)
-    ("image/x-sgi"            . sgi)
-    ("image/x-macpaint"       . macpt)
-    ("image/x-targa"          . tga)
-    ("image/tiff"             . tiff)
-    ) "*How to map MIME types to image types for the `image' package.")
-
 ;; Store the database of HTML general entities.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-html-entities 
   '(
     (excl        .  33)
@@ -562,6 +322,11 @@ for the image.")
   '("Emacs-W3 Commands"
     ["Back" w3-history-backward (car (w3-history-find-url-internal (url-view-url t)))]
     ["Forward" w3-history-forward (cdr (w3-history-find-url-internal (url-view-url t)))]
+    "---"
+    ["Reload"       (w3-reload-document) t]
+    ["Show Images"  (w3-load-delayed-images) w3-delayed-images]
+    "---"
+    ["Add bookmark" (w3-hotlist-add-document nil) t]
     )
   "The shorter popup menu.")
 
@@ -578,7 +343,7 @@ the URL of the link.")
 
 (defvar w3-hyperlink-menu
   '(("Open this Link (%s)"        . w3-fetch)
-    ("Add Bookmark for this Link" . w3-hotlist-add-document)
+    ("Add Bookmark for this Link" . w3-hotlist-add-document-at-point)
     ("New Window with this Link"  . w3-fetch-other-frame)
     ("Save Link As..."            . w3-download-url)
     ("Copy this Link Location to Clipboard" . w3-save-url)
@@ -589,20 +354,37 @@ in a popup menu when the mouse is pressed on a hyperlink.  Format is
 the link.  Each label can have exactly one `%s' that will be replaced by
 the URL of the link.")
 
-(defvar w3-documentation-root "http://www.cs.indiana.edu/elisp/w3/docs/"
-  "*Where the w3 documentation lives.  This MUST end in a slash.")
-
-(defvar w3-defined-link-types
-  ;; This is the HTML3.0 list (downcased) plus "made".
-  '("previous" "next" "up" "down" "home" "toc" "index" "glossary"
-    "copyright" "bookmark" "help" "made")
-  "A list of the (lower-case) names which have special significance
-as the values of REL or REV attributes of <link> elements.  They will
-be presented on the toolbar or the links menu, for instance.")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables internal to W3, you should not change any of these
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-graphics-list nil
+  "*List of graphics already read in.")
+
+(defvar w3-delayed-images nil
+  "*A buffer-local variable holding positions and urls of images within
+the buffer.")
+
+(defvar w3-frame-labels '("FRAME(" . ")")
+  "Strings surrounding a frame name")
+
+(defvar w3-frame-regexp "FRAME(\\([^)]+\\))"
+  "Regexp for finding a frame hyperlink")
+
+(defvar w3-frameset-structure nil
+  "Frameset structure")
+
+(defvar w3-frameset-dimensions nil
+  "Frameset dimensions")
+
+(defvar w3-frame-name nil
+  "Frame name")
+
+(defvar w3-base-target nil
+  "Base target name")
+
+(defvar w3-target-window-distances nil
+  "Target window distances")
+
 (defvar w3-form-radio-elements nil "Internal variable - do not touch!")
 (defvar w3-form-elements nil "Internal variable - do not touch!")
 
@@ -611,9 +393,6 @@ be presented on the toolbar or the links menu, for instance.")
 
 (defvar w3-current-stylesheet nil
   "The stylesheet for this document.")
-
-(defvar w3-base-alist nil
-  "An assoc list of named BASE tags in the current document.")
 
 (defvar w3-blinking-buffs nil
   "A list of buffers with blinking text in them.
@@ -625,36 +404,8 @@ displaying blinking text or not.")
   "An internal variable for the new display engine that specifies the
 last character position that was correctly filled.")
 
-(defvar w3-last-tag nil
-  "An internal variable for the new display engine that specifies the
-last tag processed.")
-
 (defvar w3-active-faces nil "The list of active faces.")
 (defvar w3-active-voices nil "The list of active voices.")
-
-(defvar w3-netscape-variable-mappings
-  '(("PRINT_COLOR"	. ps-print-color-p)
-    ("SOCKS_HOST"	. url-socks-host)
-    ("ORGANIZATION"	. url-user-organization)
-    ("EMAIL_ADDRESS"	. url-personal-mail-address)
-    ("REAL_NAME"	. url-user-real-name)
-    ("NEWSGROUP_DESCRIPTIONS" . url-show-newsgroup-descriptions)
-    ("NNTPSERVER"	. url-news-server)
-    ("AUTOLOAD_IMAGES"	. w3-delay-image-loads)
-    ("HOME_DOCUMENT"	. w3-default-homepage)
-    ("UNDERLINE_LINKS"	. w3-underline-links)
-    ("TMPDIR"		. url-temporary-directory))
-  "A mapping from netscape configuration file options to w3 variables.")
-     
-(defvar w3-acceptable-protocols-alist
-  '(("Gopher"                           . "gopher")
-    ("TN3270 (IBM Mainframe emulation)" . "tn3270")
-    ("Interactive Telnet Session"       . "telnet")
-    ("Local file or file over ftp"      . "file")
-    ("File on an http server"           . "http")
-    ("Usenet newsgroup/article"         . "news")
-    ("Mail session"                     . "mailto"))
-  "An assoc list of descriptive labels and the corresponding URL stub.")
 
 (defconst w3-bug-address "wmperry@cs.indiana.edu"
   "Address of current maintainer, where to send bug reports.")
@@ -750,8 +501,6 @@ returns.")
 	   (if (boundp var)
 	       (make-variable-buffer-local var)))) w3-persistent-variables)
 
-(make-variable-buffer-local 'w3-base-alist)
-(make-variable-buffer-local 'w3-last-tag)
 (make-variable-buffer-local 'w3-last-fill-pos)
 (make-variable-buffer-local 'w3-frame-name)
 (make-variable-buffer-local 'w3-active-faces)

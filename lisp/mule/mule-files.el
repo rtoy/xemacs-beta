@@ -26,50 +26,57 @@
 ;;; Derived from mule.el in the original Mule but heavily modified
 ;;; by Ben Wing.
 
+;; 1997/3/11 modified by MORIOKA Tomohiko to sync with Emacs/mule API.
+
 ;;; Code:
 
 ;;;; #### also think more about `binary' vs. `no-conversion'
 
-(setq-default file-coding-system 'iso-2022-8)
-(put 'file-coding-system 'permanent-local t)
+;; Use `no-conversion' instead of `binary', because Emacs/mule does
+;; not have `binary' coding-system.
+
+;; also think more about `internal'.
+
+
+(setq-default buffer-file-coding-system 'iso-2022-8)
+(put 'buffer-file-coding-system 'permanent-local t)
 
 (defvar coding-system-for-write nil
   "Overriding coding system used when writing a file.
 You should *bind* this, not set it.  If this is non-nil, it specifies
 the coding system that will be used when a file is wrote in, and
-overrides `file-coding-system', `insert-file-contents-pre-hook',
-etc.  Use those variables instead of this one for permanent changes
-to the environment.")
+overrides `buffer-file-coding-system',
+`insert-file-contents-pre-hook', etc.  Use those variables instead of
+this one for permanent changes to the environment.")
 
 (defvar coding-system-for-read nil
   "Overriding coding system used when reading a file.
 You should *bind* this, not set it.  If this is non-nil, it specifies
 the coding system that will be used when a file is read in, and
-overrides `file-coding-system-for-read', `file-coding-system-alist',
-etc.  Use those variables instead of this one for permanent changes
-to the environment.")
+overrides `buffer-file-coding-system-for-read',
+`buffer-file-coding-system-alist', etc.  Use those variables instead
+of this one for permanent changes to the environment.")
 
-(defvar file-coding-system-for-read 'autodetect
+(defvar buffer-file-coding-system-for-read 'autodetect
   "Coding system used when reading a file.
 This provides coarse-grained control; for finer-grained control,
-use `file-coding-system-alist'.  From a Lisp program, if you wish
+use `buffer-file-coding-system-alist'.  From a Lisp program, if you wish
 to unilaterally specify the coding system used for one
 particular operation, you should bind the variable
 `coding-system-for-read' rather than setting this variable,
 which is intended to be used for global environment specification.")
 
-(defvar file-coding-system-alist
-  ;;  '(; ("\\.el$" . euc-japan)
+(defvar buffer-file-coding-system-alist
   '(("\\.el$" . iso-2022-8)
     ("\\.info$" . iso-2022-8)
     ("ChangeLog$" . iso-2022-8)
     ("\\.texi$" . iso-2022-8)
-    ("\\.\\(gz\\|Z\\)$" . binary)
+    ("\\.\\(gz\\|Z\\)$" . no-conversion)
     ("/spool/mail/.*$" . convert-mbox-coding-system))
   "Alist specifying the coding system used for particular files.
 Each element of the alist is a cons of a regexp, specifying the files
-to be affected, and a coding system.  This overrides the more
-general specification in `file-coding-system-for-read', but is
+to be affected, and a coding system.  This overrides the more general
+specification in `buffer-file-coding-system-for-read', but is
 overridden by `coding-system-for-read'.
 
 Instead of a coding system you may specify a function, and it will be
@@ -77,44 +84,46 @@ called after the file has been read in to decode the file.  It is
 called with four arguments: FILENAME, VISIT, START, and END, the same
 as the first four arguments to `insert-file-contents'.")
 
-(defun set-file-coding-system (coding-system &optional force)
-  "Set the current `file-coding-system' to CODING-SYSTEM.
+(defun set-buffer-file-coding-system (coding-system &optional force)
+  "Set buffer-file-coding-system of the current buffer to CODING-SYSTEM.
 If optional argument FORCE (interactively, the prefix argument) is not
 given, attempt to match the EOL type of the new coding system to
-the current value of `file-coding-system'."
+the current value of `buffer-file-coding-system'."
   (interactive "zFile coding system: \nP")
   (get-coding-system coding-system) ;; correctness check
   (if (not force)
       (setq coding-system
-	    (subsidiary-coding-system coding-system (coding-system-eol-type
-				       		     file-coding-system))))
-  (setq file-coding-system coding-system)
+	    (subsidiary-coding-system
+	     coding-system
+	     (coding-system-eol-type buffer-file-coding-system))))
+  (setq buffer-file-coding-system coding-system)
   (redraw-modeline t))
 
-(defun set-file-coding-system-for-read (coding-system)
+(defun set-buffer-file-coding-system-for-read (coding-system)
   "Set the coding system used when reading in a file.
-This is equivalent to setting the variable `file-coding-system-for-read'.
-You can also use `file-coding-system-alist' to specify the coding system
-for particular files."
+This is equivalent to setting the variable
+`buffer-file-coding-system-for-read'.  You can also use
+`buffer-file-coding-system-alist' to specify the coding system for
+particular files."
   (interactive "zFile coding system for read: ")
   (get-coding-system coding-system) ;; correctness check
-  (setq file-coding-system-for-read coding-system))
+  (setq buffer-file-coding-system-for-read coding-system))
 
-(defun set-default-file-coding-system (coding-system)
-  "Set the default value of `file-coding-system' to CODING-SYSTEM.
+(defun set-default-buffer-file-coding-system (coding-system)
+  "Set the default value of `buffer-file-coding-system' to CODING-SYSTEM.
 The default value is used both for buffers without associated files
 and for files with no apparent coding system (i.e. primarily ASCII).
-See `file-coding-system' for more information."
+See `buffer-file-coding-system' for more information."
   (interactive "zDefault file coding system: ")
-  (setq-default file-coding-system coding-system)
+  (setq-default buffer-file-coding-system coding-system)
   (redraw-modeline t))
 
-(defun find-file-coding-system-from-filename (filename)
-  "Look up a file in `file-coding-system-alist'.
-The return value will be nil (no applicable entry), a coding system object
-\(the entry specified a coding system), or something else (the entry
-specified a function to be called)."
-  (let ((alist file-coding-system-alist)
+(defun find-buffer-file-coding-system-from-filename (filename)
+  "Look up a file in `buffer-file-coding-system-alist'.
+The return value will be nil (no applicable entry), a coding system
+object (the entry specified a coding system), or something else (the
+entry specified a function to be called)."
+  (let ((alist buffer-file-coding-system-alist)
 	(found nil)
 	(codesys nil))
     (let ((case-fold-search (eq system-type 'vax-vms)))
@@ -194,13 +203,13 @@ Return t if file exists."
 	  (save-excursion
 	    (set-buffer (get-buffer-create " *load*"))
 	    (erase-buffer)
-	    (let ((file-coding-system-for-read 'no-conversion))
+	    (let ((buffer-file-coding-system-for-read 'no-conversion))
 	      (insert-file-contents path nil 1 3001))
 	    (setq __codesys__ (find-coding-system-magic-cookie)))
 	  ;; use string= instead of string-match to keep match-data.
 	  (if (string= ".elc" (downcase (substring path -4)))
 	      ;; if reading a byte-compiled file and we didn't find
-	      ;; a coding-system magic cookie, then use `binary'.
+	      ;; a coding-system magic cookie, then use `no-conversion'.
 	      ;; We need to guarantee that we never do autodetection
 	      ;; on byte-compiled files because confusion here would
 	      ;; be a very bad thing.  Pre-existing byte-compiled
@@ -208,11 +217,12 @@ Return t if file exists."
 	      ;; Also, byte-compiled files always use `lf' to terminate
 	      ;; a line; don't risk confusion here either.
 	      (if (not __codesys__)
-		  (setq __codesys__ 'binary))
-	    ;; otherwise use `file-coding-system-for-read', as normal
-	    ;; #### need to do some looking up in file-coding-system-alist!
+		  (setq __codesys__ 'no-conversion))
+	    ;; otherwise use `buffer-file-coding-system-for-read', as normal
+	    ;; #### need to do some looking up in
+	    ;; ####	buffer-file-coding-system-alist!
 	    (if (not __codesys__)
-		(setq __codesys__ file-coding-system-for-read)))
+		(setq __codesys__ buffer-file-coding-system-for-read)))
 	  ;; now use the internal load to actually load the file.
 	  (load-internal file noerror nomessage nosuffix __codesys__))))))
 
@@ -225,11 +235,11 @@ corresponding arguments in the call to `insert-file-contents'.")
 (defvar insert-file-contents-pre-hook nil
   "A special hook to decide the coding system used for reading in a file.
 
-Before reading a file, `insert-file-contents' calls the functions
-on this hook with arguments FILENAME and VISIT, the same as the
+Before reading a file, `insert-file-contents' calls the functions on
+this hook with arguments FILENAME and VISIT, the same as the
 corresponding arguments in the call to `insert-file-contents'.  In
 these functions, you may refer to the global variable
-`file-coding-system-for-read'.
+`buffer-file-coding-system-for-read'.
 
 The return value of the functions should be either
 
@@ -244,7 +254,7 @@ The return value of the functions should be either
 If any function returns non-nil, the remaining functions are not called.")
 
 (defvar insert-file-contents-error-hook nil
-  "A hook to set `file-coding-system' when a read error has occurred.
+  "A hook to set `buffer-file-coding-system' when a read error has occurred.
 
 When a file error (e.g. nonexistent file) occurs while read a file,
 `insert-file-contents' calls the functions on this hook with three
@@ -256,7 +266,7 @@ After calling this hook, the error is signalled for real and
 propagates to the caller of `insert-file-contents'.")
 
 (defvar insert-file-contents-post-hook nil
-  "A hook to set `file-coding-system' for the current buffer.
+  "A hook to set `buffer-file-coding-system' for the current buffer.
 
 After successful reading, `insert-file-contents' calls the functions
 on this hook with four arguments: FILENAME and VISIT (the same as the
@@ -289,17 +299,18 @@ The coding system used for decoding the file is determined as follows:
 
 1. `coding-system-for-read', if non-nil.
 2. The result of `insert-file-contents-pre-hook', if non-nil.
-3. The matching value for this filename from `file-coding-system-alist',
-   if any.
-4. `file-coding-system-for-read', if non-nil.
+3. The matching value for this filename from
+   `buffer-file-coding-system-alist', if any.
+4. `buffer-file-coding-system-for-read', if non-nil.
 5. The coding system 'no-conversion.
 
-If a local value for `file-coding-system' in the current buffer does
-not exist, it is set to the coding system which was actually used for
-reading.
+If a local value for `buffer-file-coding-system' in the current buffer
+does not exist, it is set to the coding system which was actually used
+for reading.
 
-See also `insert-file-contents-access-hook', `insert-file-contents-pre-hook',
-`insert-file-contents-error-hook', and `insert-file-contents-post-hook'."
+See also `insert-file-contents-access-hook',
+`insert-file-contents-pre-hook', `insert-file-contents-error-hook',
+and `insert-file-contents-post-hook'."
   (let (return-val coding-system used-codesys conversion-func)
     ;; OK, first load the file.
     (condition-case err
@@ -315,14 +326,14 @@ See also `insert-file-contents-access-hook', `insert-file-contents-pre-hook',
 		 (run-special-hook-with-args 'insert-file-contents-pre-hook
 					     filename visit)
 		 ;; #3.
-		 (let ((retval (find-file-coding-system-from-filename
+		 (let ((retval (find-buffer-file-coding-system-from-filename
 				filename)))
 		   (if (or (null retval) (coding-system-p retval))
 		       retval
 		     (setq conversion-func retval)
 		     'no-conversion))
 		 ;; #4.
-		 file-coding-system-for-read
+		 buffer-file-coding-system-for-read
 		 ;; #5.
 		 'no-conversion))
 	  (if (consp coding-system)
@@ -360,7 +371,7 @@ See also `insert-file-contents-access-hook', `insert-file-contents-pre-hook',
 		  (set-buffer-modified-p nil)))))
       (setcar (cdr return-val) (- (marker-position endmark) (point)))
       ;; also call any post-conversion function called for by
-      ;; `file-coding-system-alist'
+      ;; `buffer-file-coding-system-alist'
       (if conversion-func
 	  (unwind-protect
 	      (save-excursion
@@ -371,19 +382,19 @@ See also `insert-file-contents-access-hook', `insert-file-contents-pre-hook',
 		  (set-buffer-auto-saved)
 		  (set-buffer-modified-p nil)))))
       (setcar (cdr return-val) (- (marker-position endmark) (point))))
-    ;; now finally set the buffer's `file-coding-system'.
+    ;; now finally set the buffer's `buffer-file-coding-system'.
     (if (run-special-hook-with-args 'insert-file-contents-post-hook
 				    filename visit return-val)
 	nil
-      (if (local-variable-p 'file-coding-system (current-buffer))
-	  ;; if file-coding-system is already local, just
+      (if (local-variable-p 'buffer-file-coding-system (current-buffer))
+	  ;; if buffer-file-coding-system is already local, just
 	  ;; set its eol type to what was found, if it wasn't
 	  ;; set already.
-	  (set-file-coding-system
-	   (subsidiary-coding-system file-coding-system
+	  (set-buffer-file-coding-system
+	   (subsidiary-coding-system buffer-file-coding-system
 				     (coding-system-eol-type coding-system)))
-	;; otherwise actually set file-coding-system.
-	(set-file-coding-system coding-system)))
+	;; otherwise actually set buffer-file-coding-system.
+	(set-buffer-file-coding-system coding-system)))
     return-val))
 
 (defvar write-region-pre-hook nil
@@ -433,7 +444,7 @@ Kludgy feature: if START is a string, then that string is written
 to the file, instead of any buffer contents, and END is ignored.
 Optional seventh argument CODING-SYSTEM specifies the coding system
   used to encode the text when it is written out, and defaults to
-  the value of `file-coding-system' in the current buffer.
+  the value of `buffer-file-coding-system' in the current buffer.
   Interactively, with a prefix arg, you will be prompted for the
   coding system.
 See also `write-region-pre-hook' and `write-region-post-hook'."
@@ -443,7 +454,7 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
 	    (run-special-hook-with-args
 	     'write-region-pre-hook start end filename append visit lockname)
 	    coding-system
-	    file-coding-system))
+	    buffer-file-coding-system))
   (if (consp coding-system)
       coding-system
     (let ((func

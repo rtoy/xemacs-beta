@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/03/07 16:44:12
-;; Version: 1.93
+;; Created: 1997/03/14 06:39:41
+;; Version: 1.98
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -130,18 +130,13 @@
 ;;; Functions to pass files off to external viewers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun w3-start-viewer (fname cmd &optional view)
-  "Start a subprocess, named FNAME, executing CMD
+  "Start a subprocess, named FNAME, executing CMD.
 If third arg VIEW is non-nil, show the output in a buffer when
 the subprocess exits."
   (if view (save-excursion
 	     (set-buffer (get-buffer-create view))
 	     (erase-buffer)))
-  (let ((proc
-	 (start-process fname view (or shell-file-name
-				       (getenv "ESHELL")
-				       (getenv "SHELL")
-				       "/bin/sh") "-c" cmd)))
-    proc))
+  (start-process fname view shell-file-name shell-command-switch cmd))
 
 (defun w3-viewer-filter (proc string)
   ;; A process filter for asynchronous external viewers
@@ -278,56 +273,6 @@ See the variable `w3-notify' for the different notification behaviors."
     (set-buffer old-buff)
     (mule-write-region-no-coding-system (point-min) (point-max) file)
     (kill-buffer (current-buffer))))
-
-(defun w3-build-url (protocol)
-  "Build a url for PROTOCOL, return it as a string"
-  (interactive (list (cdr (assoc (completing-read
-				  "Protocol: "
-				  w3-acceptable-protocols-alist nil t)
-				 w3-acceptable-protocols-alist))))
-  (let (user host port file)
-    (cond
-     ((null protocol) (error "Protocol is unknown to me!"))
-     ((string= protocol "news")
-      (setq host (read-string "Enter news server name, or blank for default: ")
-	    port (read-string "Enter port number, or blank for default: ")
-	    file (read-string "Newgroup name or Message-ID: ")))
-     ((string= protocol "mailto") (setq file (read-string "E-mail address: ")))
-     ((string= protocol "http")
-      (setq host (read-string "Enter server name: ")
-	    port (read-string "Enter port number, or blank for default: ")
-	    file (read-string "Remote file: "))
-      (and (string= "" port) (setq port nil))
-      (and (string= "" host) (error "Must specify a remote machine!")))
-     ((string= protocol "file")
-      (if (funcall url-confirmation-func "Local file?")
-	  (setq file (read-file-name "Local File: " nil nil t))
-	(setq user (read-string "Login as user (blank=anonymous): ")
-	      host (read-string "Remote machine name: "))
-	(and (string= user "") (setq user "anonymous"))
-	(and (string= host "") (error "Must specify a remote machine!"))
-	(setq file (read-file-name "File: " (format "/%s@%s:" user host)
-				   nil t)
-	      file (substring file (length (format "/%s@%s:" user host))))))
-     ((or (string= protocol "telnet")
-	  (string= protocol "tn3270"))
-      (setq user (read-string "Login as user (blank=none): ")
-	    host (read-string "Remote machine name: ")
-	    port (read-string "Port number (blank=23): "))
-      (and (string= "" port) (setq port nil))
-      (and (string= "" user) (setq user nil))
-      (and (string= "" host) (error "Must specify a host machine!")))
-     ((string= protocol "gopher")
-      (setq host (read-string "Enter server name: ")
-	    port (read-string "Enter port number, or blank for default: ")
-	    file (read-string "Remote file: "))
-      (and (string= "" port) (setq port nil))
-      (and (string= "" host) (error "Must specify a remote machine!"))))
-    (message "%s:%s%s"
-	     protocol
-	     (if (null host) "" (concat "//" host
-					(if (null port) "" (concat ":" port))))
-	     (if (= ?/ (string-to-char file)) file (concat "/" file)))))
 
 ;;;###autoload
 (defun w3-open-local (fname)
@@ -653,7 +598,7 @@ the cdr is the 'next' node."
 			  (nth 5 attributes)))
 	     (hdrs url-current-mime-headers)
 	     (size (or (cdr (assoc "content-length" url-current-mime-headers))
-		       (point-max)))
+		       (buffer-size)))
 	     (info w3-current-metainfo))
 	(set-buffer (get-buffer-create url-working-buffer))
 	(setq url-current-can-be-cached nil)
@@ -967,7 +912,7 @@ and convert newlines into spaces."
 	      (setq content-type "application/x-latex; charset=iso-8859-1")
 	      (w3-parse-tree-to-latex w3-current-parse url)))
 	    (buffer-string))))
-    (funcall w3-mail-command)
+    (funcall url-mail-command)
     (mail-subject)
     (if (and (boundp 'mime/editor-mode-flag) mime/editor-mode-flag)
         (insert format " from <URL: " url ">")
@@ -2008,7 +1953,8 @@ dumped with emacs."
 				       w3-configuration-directory))
 					   
 
-  (if (and w3-default-configuration-file
+  (if (and init-file-user
+	   w3-default-configuration-file
 	   (file-exists-p w3-default-configuration-file))
       (condition-case e
 	  (load w3-default-configuration-file nil t)
@@ -2027,14 +1973,6 @@ dumped with emacs."
 			       "Please consult the `%s' buffer for details."))
 			    w3-default-configuration-file buf-name))))))
 	       
-  (setq w3-netscape-configuration-file
-	(cond
-	 (w3-netscape-configuration-file
-	  w3-netscape-configuration-file)
-	 ((memq system-type '(ms-dos ms-windows))
-	  (expand-file-name "~/NETSCAPE.CFG"))
-	 (t (expand-file-name "~/.netscape/preferences"))))
-
   (if (and (eq w3-user-colors-take-precedence 'guess)
 	   (not (eq (device-type) 'tty))
 	   (not (eq (device-class) 'mono)))
@@ -2050,11 +1988,6 @@ dumped with emacs."
 	    (expand-file-name "history"
 			      w3-configuration-directory)))
 
-  (if (and w3-use-netscape-configuration-file
-	   w3-netscape-configuration-file
-	   (fboundp 'w3-read-netscape-config))
-      (w3-read-netscape-config w3-netscape-configuration-file))
-      
   (add-minor-mode 'w3-netscape-emulation-minor-mode " NS"
 		  w3-netscape-emulation-minor-mode-map)
   (add-minor-mode 'w3-lynx-emulation-minor-mode " Lynx"
@@ -2125,7 +2058,7 @@ dumped with emacs."
 	      (write-file-hooks nil)
 	      (write-contents-hooks nil)
 	      (enable-multibyte-characters t) ; mule 2.4
-	      (buffer-file-coding-system mule-no-coding-system) ; mule 2.4
+	      (coding-system-for-write mule-no-coding-system) ; (X)Emacs/mule
 	      (file-coding-system mule-no-coding-system) ; mule 2.3
 	      (mc-flag t))		; mule 2.3
 	  (write-file fname)
@@ -2275,12 +2208,12 @@ Current keymap is:
       (mapcar (function (lambda (x) (set-variable (car x) (cdr x)))) tmp)
       (w3-mode-version-specifics)
       (w3-menu-install-menus)
-      (run-hooks 'w3-mode-hook)
-      (widget-setup)
       (setq url-current-passwd-count 0
 	    inhibit-read-only nil
 	    truncate-lines t
 	    mode-line-format w3-modeline-format)
+      (run-hooks 'w3-mode-hook)
+      (widget-setup)
       (if w3-current-isindex
 	  (setq mode-line-process "-Searchable")))))
 

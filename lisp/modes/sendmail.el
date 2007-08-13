@@ -286,6 +286,30 @@ actually occur.")
 ;	(setq mail-alias-modtime modtime
 ;	      mail-aliases t))))
 
+;; Courtesy of Per Abrahamsen <abraham@dina.kvl.dk> in an attempt to make
+;; Emacs and XEmacs less stupid about default mail addresses.
+
+;; We trust the administrator if he has set `mail-host-address'.
+(defcustom query-user-mail-address (not mail-host-address)
+  "If non-nil, prompt the user for his mail address."
+  :group 'message
+  :type 'boolean)
+
+(defun user-mail-address ()
+  "Query the user for his mail address, unless it is already known."
+  (interactive)
+  (when query-user-mail-address
+    (setq user-mail-address
+	  (read-string "Your mail address? " (cons user-mail-address 0)))
+    (setq query-user-mail-address nil)
+    ;; TODO: Run sanity check from Gnus here.
+    (when (y-or-n-p "Save address for future sessions? ")
+      (put 'user-mail-address 'saved-value
+	   (list user-mail-address))
+      (put 'query-user-mail-address 'saved-value '(nil))
+      (custom-save-all)))
+  user-mail-address)
+
 (defun mail-setup (to subject in-reply-to cc replybuffer actions)
   (or mail-default-reply-to
       (setq mail-default-reply-to (getenv "REPLYTO")))
@@ -823,6 +847,9 @@ back to the user from the mailer."
 	    (setq mail-do-fcc-cached-timezone
 		  (buffer-substring (point-min) (1- (point-max)))))))))
 
+(eval-when-compile
+  (require 'vm-misc))
+
 (defun mail-do-fcc-rmail-internal (buffer)
   (or (eq major-mode 'rmail-mode) (error "this only works in rmail-mode"))
   (let ((b (point-min))
@@ -841,14 +868,6 @@ back to the user from the mailer."
 	  (insert "\n\C-_"))
       (narrow-to-region b e)
       (rmail-maybe-set-message-counters))))
-
-;;; Load VM into the compilation environment but not the load environment.
-(eval-when-compile
- (or (and (boundp 'loading-vm-kludge) loading-vm-kludge)
-     ;; nastiness to avoid circular provide/require dependency nonsense
-     (fboundp 'vm-spool-files)
-     (let ((loading-vm-kludge t))
-       (require 'vm))))
 
 (defun mail-do-fcc-vm-internal (buffer)
   (or (eq major-mode 'vm-mode) (error "this only works in vm-mode"))

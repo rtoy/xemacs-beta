@@ -1,7 +1,7 @@
 ;;; base64.el,v --- Base64 encoding functions
 ;; Author: Kyle E. Jones
-;; Created: 1997/01/23 00:13:17
-;; Version: 1.4
+;; Created: 1997/03/12 14:37:09
+;; Version: 1.6
 ;; Keywords: extensions
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -102,7 +102,7 @@ base64-encoder-program.")
   (condition-case nil
       (progn
 	(insert-char char count ignored buffer)
-	(fset 'vm-insert-char 'insert-char))
+	(fset 'base64-insert-char 'insert-char))
     (wrong-number-of-arguments
      (fset 'base64-insert-char 'base64-xemacs-insert-char)
      (base64-insert-char char count ignored buffer))))
@@ -129,7 +129,7 @@ base64-encoder-program.")
 	  (buffer-disable-undo work-buffer)
 	  (if base64-decoder-program
 	      (let* ((binary-process-output t) ; any text already has CRLFs
-		     (status (apply 'command-on-region
+		     (status (apply 'base64-run-command-on-region
 				   start end work-buffer
 				   base64-decoder-program
 				   base64-decoder-switches)))

@@ -2427,7 +2427,7 @@ done:
 	      /* If the cursor is past the truncation line then we
                  make it appear on the truncation glyph.  If we've hit
                  the end of the buffer then we also make the cursor
-                 appear unless eob is immediately preceeded by a
+                 appear unless eob is immediately preceded by a
                  newline.  In that case the cursor should actually
                  appear on the next line. */
 	      if (data.cursor_type == CURSOR_ON 
@@ -4233,17 +4233,20 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
 
   bounds = calculate_display_line_boundaries (w, 0);
 
+  /* 97/3/14 jhod: stuff added here to support pre-prompts (used for input systems) */
   if (MINI_WINDOW_P (w)
-      && !NILP (Vminibuf_prompt)
+      && (!NILP (Vminibuf_prompt) || !NILP (Vminibuf_preprompt))
       && !echo_area_active (f)
       && start_pos == BUF_BEGV (b))
     {
       struct prop_block pb;
+      Lisp_Object string;
       prop = Dynarr_new (struct prop_block);
 
+      string = concat2(Vminibuf_preprompt, Vminibuf_prompt);
       pb.type = PROP_MINIBUF_PROMPT;
-      pb.data.p_string.str = XSTRING_DATA   (Vminibuf_prompt);
-      pb.data.p_string.len = XSTRING_LENGTH (Vminibuf_prompt);
+      pb.data.p_string.str = XSTRING_DATA(string);
+      pb.data.p_string.len = XSTRING_LENGTH(string);
       Dynarr_add (prop, pb);
     }
   else
@@ -4328,7 +4331,7 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
     }
 
   if (prop)
-    Dynarr_free (prop);
+      Dynarr_free (prop);
 
   /* #### More not quite right, but close enough. */
   /* #### Ben sez: apparently window_end_pos[] is measured
@@ -5742,7 +5745,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       /* print the file coding system */
     case 'C':
       {
-        Lisp_Object codesys = b->file_coding_system;
+        Lisp_Object codesys = b->buffer_file_coding_system;
         /* Be very careful here not to get an error. */
 	if (NILP (codesys) || SYMBOLP (codesys) || CODING_SYSTEMP (codesys))
           {

@@ -933,7 +933,7 @@ define any semantics for VTYPE, so only the participants in the
 protocol you're using need to agree what types mean (if anything).
 Conventionally \"string\" is used for strings and \"int\" for 32 bit integers.
 Arguments can initialized by providing a value or with
-`set-tooltalk-message-attribute'.  The latter is neccessary if you
+`set-tooltalk-message-attribute'.  The latter is necessary if you
 want to initialize the argument with a string that can contain
 embedded nulls (use 'arg_bval).
 */

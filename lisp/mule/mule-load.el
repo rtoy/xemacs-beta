@@ -30,6 +30,7 @@
 ;;(load-gc "mule-process")
 (load-gc "mule-ccl")
 (load-gc "mule-misc")
+(load-gc "kinsoku")
 (when (featurep 'x)
   (load-gc "mule-x-init"))
 

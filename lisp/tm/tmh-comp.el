@@ -6,7 +6,7 @@
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/2/29 (separated from tm-mh-e.el)
-;; Version: $Id: tmh-comp.el,v 1.3 1997/02/15 22:21:31 steve Exp $
+;; Version: $Id: tmh-comp.el,v 1.4 1997/03/16 03:05:47 steve Exp $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -225,12 +225,9 @@ See also documentation for `\\[mh-send]' function."
 		     (if (get-buffer name)
 			 (throw 'tag (pop-to-buffer name))
 		       )
-		     (let ((file-coding-system-for-read *noconv*)
-			   (filename
-			    (mh-msg-filename msg mh-draft-folder)
-			    ))
+		     (let ((filename (mh-msg-filename msg mh-draft-folder)))
 		       (set-buffer (get-buffer-create name))
-		       (insert-file-contents filename)
+		       (as-binary-input-file (insert-file-contents filename))
 		       (setq buffer-file-name filename)
 		       (setq code-conversion t)
 		       )
@@ -241,9 +238,9 @@ See also documentation for `\\[mh-send]' function."
 		     name))
 		  (t
 		   (prog1
-		       (let ((file-coding-system-for-read *noconv*))
-			 (mh-read-draft "clean-up" (mh-msg-filename msg) nil)
-			 )
+		       (as-binary-input-file
+			(mh-read-draft "clean-up" (mh-msg-filename msg) nil)
+			)
 		     (setq code-conversion t)
 		     ))))
 	   )

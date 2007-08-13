@@ -1,7 +1,7 @@
 ;;; w3-script.el --- Scripting support
 ;; Author: wmperry
-;; Created: 1997/03/07 14:13:39
-;; Version: 1.5
+;; Created: 1997/03/08 01:28:33
+;; Version: 1.6
 ;; Keywords: hypermedia, scripting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -81,10 +81,12 @@ If you are ultra-paranoid, set this to `nil'")
 	 (let ((st 0)
 	       (form nil)
 	       (max (length f)))
-	   (while (and (< st max) (setq form (read-from-string f st)))
-	     (setq st (cdr form)
-		   form (car form))
-	     (w3-elisp-safe-eval form))))
+	   (condition-case ()
+	       (while (and (< st max) (setq form (read-from-string f st)))
+		 (setq st (cdr form)
+		       form (car form))
+		 (w3-elisp-safe-eval form))
+	     (error nil))))
 	(otherwise
 	 (message "Unimplemented scripting language: %S"
 		  w3-current-scripting-language)))))

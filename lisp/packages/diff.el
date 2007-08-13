@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:         diff.el
-;; Version:      $Revision: 1.3 $
+;; Version:      $Revision: 1.4 $
 ;; Author:       This file is based on diff.el by
 ;;               sunpitt!wpmstr!fbresz@Sun.COM 1/27/89.
 ;;               It has been completely rewritten in July 1994 by
@@ -41,7 +41,7 @@
 
 ;; should be in to loaddefs.el now.
 ;;;###autoload
-(defvar diff-switches nil
+(defvar diff-switches "-c"
   "*A list of switches (strings) to pass to the diff program.")
 
 (defvar diff-do-narrow nil

@@ -1,4 +1,29 @@
 							-*- indented-text -*-
+to 20.1 beta7
+-- Update to time.el.
+-- htmlpro DTD, IE3 DTDs added to etc/sgml.
+-- I18N patches and more courtesy of Jareth Hein
+-- Invisibility to visibility extent patch courtesy of David Moore
+   (fixes long-standing Gnus annoyance when unhiding .signature).
+-- cperl-mode-1.31+
+-- Synch to Emacs/mule API
+-- Configure gets --canna-libs and --canna-includes courtesy of YAMAMOTO Toru
+-- w3-3.0.68
+-- Custom-1.63
+-- Define BROKEN_SIGIO for SunOS 4.1
+-- timer.el courtesy of Kyle Jones
+-- itimer.el-1.04
+-- cperl-mode.el-1.31
+-- tm-7.105.2
+-- cc-mode-4.379 courtesy of Barry Warsaw
+-- more about.el hacking
+-- Logo adjusted to be more colormap friendly
+-- efs/dired updates courtesy of Michael Sperber [on hold]
+-- miscellaneous bug fixes
+-- hyperbole fix
+-- Gnus-5.4.26
+-- sit-for, etc.  The Final Solution courtesy of David Moore
+
 to 20.1 beta6
 -- filladapt.el-2.09 courtesy of Kyle Jones
 -- itimer.el-1.03

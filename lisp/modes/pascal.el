@@ -187,7 +187,7 @@
   "*Indentation for case statements.")
 
 (defvar pascal-auto-newline nil
-  "*Non-nil means automatically newline after semicolons and the punctation mark
+  "*Non-nil means automatically newline after semicolons and the punctuation mark
 after an end.")
 
 (defvar pascal-tab-always-indent t
@@ -302,7 +302,7 @@ Variables controlling indentation/edit style:
  pascal-case-indent       (default 2)
     Indentation for case statements.
  pascal-auto-newline      (default nil)
-    Non-nil means automatically newline after semicolons and the punctation mark
+    Non-nil means automatically newline after semicolons and the punctuation mark
     after an end.
  pascal-tab-always-indent (default t)
     Non-nil means TAB in Pascal mode should always reindent the current line,

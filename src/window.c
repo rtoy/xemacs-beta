@@ -2012,7 +2012,7 @@ windows, eventually ending up back at the window you started with.
 }
 
 DEFUN ("previous-window", Fprevious_window, 0, 4, 0, /*
-Return the window preceeding WINDOW in canonical ordering of windows.
+Return the window preceding WINDOW in canonical ordering of windows.
 If omitted, WINDOW defaults to the selected window.
 
 Optional second arg MINIBUF t means count the minibuffer window even

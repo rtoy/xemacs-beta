@@ -1,7 +1,7 @@
 ;;; w3-emulate.el --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/04 19:21:18
-;; Version: 1.11
+;; Created: 1997/03/14 06:12:02
+;; Version: 1.12
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -108,56 +108,6 @@
 (defsubst w3-skip-word ()
   (skip-chars-forward "^ \t\n\r")
   (skip-chars-forward " \t"))
-
-(defun w3-read-netscape-config (&optional fname)
-  "Read in a netscape-style configuration file."
-  (interactive "fNetscape configuration file: ")
-  (if (not (and (file-exists-p fname)
-		(file-readable-p fname)))
-      (error "Could not read %s" fname))
-  (let ((results nil)
-	(tag nil)
-	(val nil)
-	(var nil)
-	(save-pos nil))
-    (save-excursion
-      (set-buffer (get-buffer-create " *w3-tmp*"))
-      (erase-buffer)
-      (insert-file-contents-literally fname)
-      (goto-char (point-min))
-      (skip-chars-forward "^ \t\r\n")	; Skip tag line
-      (skip-chars-forward " \t\r\n")	; Skip blank line(s)
-      (while (not (eobp))
-	(setq save-pos (point))
-	(skip-chars-forward "^:")
-	(upcase-region save-pos (point))
-	(setq tag (buffer-substring save-pos (point)))
-	(skip-chars-forward ":\t ")
-	(setq save-pos (point))
-	(skip-chars-forward "^\r\n")
-	(setq val (if (= save-pos (point))
-		      nil
-		    (buffer-substring save-pos (point))))
-	(cond
-	 ((null val) nil)
-	 ((string-match "^[0-9]+$" val)
-	  (setq val (string-to-int val)))
-	 ((string= "false" (downcase val))
-	  (setq val nil))
-	 ((string= "true" (downcase val))
-	  (setq val t))
-	 (t nil))
-	(skip-chars-forward " \t\n\r")
-	(setq results (cons (cons tag val) results))))
-    (while results
-      (setq tag (car (car results))
-	    val (cdr (car results))
-	    var (cdr-safe (assoc tag w3-netscape-variable-mappings))
-	    results (cdr results))
-      (cond
-       ((eq var 'w3-delay-image-loads) (set var (not val)))
-       (var (set var val))
-       (t nil)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

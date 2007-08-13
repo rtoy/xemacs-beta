@@ -530,11 +530,17 @@ If SILENT, don't prompt the user."
      (concat "Emacs " (substring emacs-version
 				 (match-beginning 1)
 				 (match-end 1))))
-    ((string-match "\\([A-Z]*[Mm][Aa][Cc][Ss]\\)" emacs-version)
+    ((string-match "\\([A-Z]*[Mm][Aa][Cc][Ss]\\)[^(]*\\(\\((beta.*)\\|'\\)\\)?"
+		   emacs-version)
      (concat (substring emacs-version
 			(match-beginning 1)
 			(match-end 1))
-	     (format " %d.%d" emacs-major-version emacs-minor-version)))
+	     (format " %d.%d" emacs-major-version emacs-minor-version)
+	     (if (match-beginning 3)
+		 (substring emacs-version
+			    (match-beginning 3)
+			    (match-end 3))
+	       "")))
     (t emacs-version))))
 
 ;; Written by "Mr. Per Persson" <pp@gnu.ai.mit.edu>.

@@ -32,8 +32,8 @@
 ;;; Code:
 
 ;; XEmacs: Avoid compilation warnings.
-(defvar overriding-file-coding-system)
-(defvar file-coding-system)
+(defvar coding-system-for-read)
+(defvar buffer-file-coding-system)
 
 ;; XEmacs: In buffer.c
 ;(defconst delete-auto-save-files t
@@ -590,7 +590,7 @@ coding system to use when decoding the file.  Interactively,
 with a prefix argument, you will be prompted for the coding system."
   (interactive "FFind file: \nZCoding system: ")
   (if codesys
-      (let ((overriding-file-coding-system
+      (let ((coding-system-for-read
 	     (get-coding-system codesys)))
 	(switch-to-buffer (find-file-noselect filename)))
     (switch-to-buffer (find-file-noselect filename))))
@@ -1689,7 +1689,7 @@ with a prefix argument, you will be prompted for the coding system."
   (set-buffer-modified-p t)
   (setq buffer-read-only nil)
   (if codesys
-      (let ((file-coding-system (get-coding-system codesys)))
+      (let ((buffer-file-coding-system (get-coding-system codesys)))
 	(save-buffer))
     (save-buffer)))
 
@@ -2321,7 +2321,7 @@ coding system to use when encoding the file.  Interactively,
 with a prefix argument, you will be prompted for the coding system."
   (interactive "r\nFAppend to file: \nZCoding system: ")
   (if codesys
-      (let ((file-coding-system (get-coding-system codesys)))
+      (let ((buffer-file-coding-system (get-coding-system codesys)))
 	(write-region start end filename t))
     (write-region start end filename t)))
 

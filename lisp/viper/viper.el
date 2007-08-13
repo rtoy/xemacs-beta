@@ -8,7 +8,7 @@
 
 ;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
-(defconst viper-version "2.93 of February 25, 1997"
+(defconst viper-version "2.93 of March 9, 1997"
   "The current version of Viper")
 
 ;; This file is part of GNU Emacs.
@@ -607,7 +607,9 @@
 		   ;; expert
 		   (define-key vip-insert-basic-map "\C-j" nil)
 		 ;; novice
-		 (define-key vip-insert-basic-map "\C-j" 'vip-autoindent))))
+		 (define-key vip-insert-basic-map "\C-j" 'vip-autoindent)))
+	   (define-key vip-insert-basic-map "\C-m" nil)
+	   (define-key vip-insert-basic-map "\C-j" nil))
 		    
 	 (setq vip-insert-diehard-minor-mode
 	       (not vip-want-emacs-keys-in-insert))
@@ -3837,7 +3839,7 @@ Null string will repeat previous search."
 
 
 (defvar vip-smart-suffix-list
-  '("" "tex" "c" "cc" "el" "java" "html" "pl" "P" "p")
+  '("" "tex" "c" "cc" "C" "el" "java" "html" "htm" "pl" "P" "p")
   "*List of suffixes that Viper automatically tries to append to filenames ending with a `.'.
 This is useful when you the current directory contains files with the same
 prefix and many different suffixes. Usually, only one of the suffixes
@@ -4446,6 +4448,7 @@ One can use `` and '' to temporarily jump 1 step back."
   "Auto Indentation, Vi-style."
   (interactive)
   (let ((col (current-indentation)))
+    (if abbrev-mode (expand-abbrev))
     (if vip-preserve-indent
 	(setq vip-preserve-indent nil)
       (setq vip-current-indent col))

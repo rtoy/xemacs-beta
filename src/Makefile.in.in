@@ -1110,6 +1110,7 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 	${lispdir}mule/mule-charset.elc ${lispdir}mule/mule-files.elc \
 	${lispdir}mule/mule-category.elc ${lispdir}mule/mule-misc.elc \
 	${lispdir}mule/mule-ccl.elc ${lispdir}mule/mule-init.elc \
+	${lispdir}mule/kinsoku.elc \
 	MULE_X11_LISP \
 	${lispdir}mule/arabic-hooks.elc \
 	${lispdir}mule/chinese-hooks.elc \
@@ -1273,7 +1274,7 @@ lisp=   ${lispdir}paths.el \
         ${lispdir}prim/itimer.elc ${lispdir}prim/itimer-autosave.elc \
 	${lispdir}ediff/ediff-hook.elc \
 	${lispdir}custom/widget.elc \
-	${lispdir}custom/custom.elc \
+	${lispdir}custom/custom.elc ${lispdir}prim/custom-load.elc \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \
 	${lispdir}packages/buff-menu.elc DIALOG_LISP MULE_LISP NOMULE_LISP \

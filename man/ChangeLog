@@ -1,3 +1,8 @@
+Wed Mar 12 14:39:43 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lispref/strings.texi (Text Comparison): Correct example for
+	`char-equal'.  Add new function `char='.
+
 Thu Mar  6 13:33:54 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile: Update for new texinfo manual.

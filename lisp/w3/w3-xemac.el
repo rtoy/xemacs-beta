@@ -1,7 +1,7 @@
 ;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/17 23:09:24
-;; Version: 1.15
+;; Created: 1997/03/09 01:59:33
+;; Version: 1.16
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -144,9 +144,11 @@
 	(if (not w3-track-mouse)
 	    (setq inhibit-help-echo nil))
 	(setq mode-motion-hook 'w3-mouse-handler)))
-  (if (eq (device-type) 'tty)
-      nil
-    (w3-add-toolbar-to-buffer))
+  (case (device-type)
+    ((tty stream)			; TTY or batch
+     nil)
+    (otherwise
+     (w3-add-toolbar-to-buffer)))
   (setq mode-popup-menu w3-popup-menu))
 
 (require 'w3-toolbar)

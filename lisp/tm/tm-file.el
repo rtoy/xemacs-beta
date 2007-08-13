@@ -1,10 +1,10 @@
 ;;; tm-file.el --- tm-view internal method for file extraction
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; modified by Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
-;; Version: $Id: tm-file.el,v 1.2 1996/12/28 21:03:14 steve Exp $
+;; Version: $Id: tm-file.el,v 1.3 1997/03/16 03:05:46 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, file, extract
 
 ;; This file is part of tm (Tools for MIME).
@@ -60,17 +60,7 @@
     (save-excursion
       (set-buffer tmp-buf)
       (mime-decode-region (point-min)(point-max) encoding)
-      (let ((coding-system-for-write 'no-conversion)
-	    (mc-flag nil)                   ; for Mule
-	    (file-coding-system
-	     (if (featurep 'mule) *noconv*))
-	    kanji-flag                      ; for NEmacs
-	    (emx-binary-mode t)             ; for OS/2
-	    jka-compr-compression-info-list ; for jka-compr
-	    jam-zcat-filename-list          ; for jam-zcat
-	    require-final-newline)
-	(write-file filename)
-	)
+      (as-binary-output-file (write-file filename))
       (kill-buffer tmp-buf)
       )))
 

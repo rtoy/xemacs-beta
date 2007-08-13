@@ -2368,9 +2368,8 @@ A user event is a key press, button press, button release, or
 /* This is used in accept-process-output, sleep-for and sit-for.
    Before running any process_events in these routines, we set
    recursive_sit_for to Qt, and use this unwind protect to reset it to
-   Qnil upon exit.  When recursive_sit_for is Qt, calling any of these
-   three routines will cause them to return immediately no matter what
-   their arguments were. 
+   Qnil upon exit.  When recursive_sit_for is Qt, calling sit-for will
+   cause it to return immediately.
    
    All of these routines install timeouts, so we clear the installed
    timeout as well.
@@ -2406,13 +2405,6 @@ If the second arg is non-nil, it is the maximum number of seconds to wait:
 If the third arg is non-nil, it is a number of milliseconds that is added
  to the second arg.  (This exists only for compatibility.)
 Return non-nil iff we received any output before the timeout expired.
-
-If a filter function or timeout handler (such as installed by `add-timeout')
- calls any of accept-process-output, sleep-for, or sit-for, those calls
- will return nil immediately (regardless of their arguments) in recursive
- situations.  It is recommended that you never call accept-process-output
- from inside of a process filter function or timer event (either synchronous
- or asynchronous).
 */
        (process, timeout_secs, timeout_msecs))
 {
@@ -2425,10 +2417,6 @@ If a filter function or timeout handler (such as installed by `add-timeout')
   int done = 0;
   struct buffer *old_buffer = current_buffer;
   int count;
-
-  /* Recusive call from a filter function or timeout handler. */
-  if (!NILP(recursive_sit_for))
-    return Qnil;
 
   /* We preserve the current buffer but nothing else.  If a focus
      change alters the selected window then the top level event loop
@@ -2547,12 +2535,8 @@ DEFUN ("sleep-for", Fsleep_for, 1, 1, 0, /*
 Pause, without updating display, for ARG seconds.
 ARG may be a float, meaning pause for some fractional part of a second.
 
-If a filter function or timeout handler (such as installed by `add-timeout')
- calls any of accept-process-output, sleep-for, or sit-for, those calls
- will return nil immediately (regardless of their arguments) in recursive
- situations.  It is recommended that you never call sleep-for from inside
- of a process filter function or timer event (either synchronous or
- asynchronous).
+It is recommended that you never call sleep-for from inside of a process
+ filter function or timer event (either synchronous or asynchronous).
 */
        (seconds))
 {
@@ -2562,10 +2546,6 @@ If a filter function or timeout handler (such as installed by `add-timeout')
   Lisp_Object event = Qnil;
   int count;
   struct gcpro gcpro1;
-
-  /* Recusive call from a filter function or timeout handler. */
-  if (!NILP(recursive_sit_for))
-    return Qnil;
 
   GCPRO1 (event);
 
@@ -2627,12 +2607,8 @@ Redisplay is preempted as always if user input arrives, and does not
  happen if input is available before it starts.
 Value is t if waited the full time with no input arriving.
 
-If a filter function or timeout handler (such as installed by `add-timeout')
- calls any of accept-process-output, sleep-for, or sit-for, those calls
- will return nil immediately (regardless of their arguments) in recursive
- situations.  It is recommended that you never call sit-for from inside
- of a process filter function or timer event (either synchronous or
- asynchronous) with an argument other than 0.
+If sit-for is called from within a process filter function or timer
+ event (either synchronous or asynchronous) it will return immediately.
 */
        (seconds, nodisplay))
 {
@@ -2642,10 +2618,6 @@ If a filter function or timeout handler (such as installed by `add-timeout')
   struct gcpro gcpro1;
   int id;
   int count;
-
-  /* Recusive call from a filter function or timeout handler. */
-  if (!NILP(recursive_sit_for))
-    return Qnil;
 
   /* The unread-command-events count as pending input */
   if (!NILP (Vunread_command_events) || !NILP (Vunread_command_event))
@@ -2667,6 +2639,18 @@ If a filter function or timeout handler (such as installed by `add-timeout')
      don't wait. */
   if (noninteractive || !NILP (Vexecuting_macro))
     return (Qnil);
+
+  /* Recusive call from a filter function or timeout handler. */
+  if (!NILP(recursive_sit_for))
+    {
+      if (!event_stream_event_pending_p (1) && NILP (nodisplay))
+	{
+	  run_pre_idle_hook ();
+	  redisplay ();
+	}
+      return Qnil;
+    }
+
 
   /* Otherwise, start reading events from the event_stream.
      Do this loop at least once even if (sit-for 0) so that we
@@ -3282,7 +3266,7 @@ modify them.
       like command prefixes; they signal this by setting prefix-arg
       to non-nil.
    -- Therefore, we reset this-command-keys when we finish
-      executing a comand, unless prefix-arg is set.
+      executing a command, unless prefix-arg is set.
    -- However, if we ever do a non-local exit out of a command
       loop (e.g. an error in a command), we need to reset
       this-command-keys.  We do this by calling reset_this_command_keys()
@@ -3316,7 +3300,7 @@ push_this_command_keys (Lisp_Object event)
 
 /* The following two functions are used in call-interactively,
    for the @ and e specifications.  We used to just use
-   `current-mouse-event' (i.e. the last mouse event in this-comand-keys),
+   `current-mouse-event' (i.e. the last mouse event in this-command-keys),
    but FSF does it more generally so we follow their lead. */
 
 Lisp_Object
@@ -4657,10 +4641,7 @@ Be sure you do all of the above checking for C-g and focus, too!
       (/ (- (caddr ,end) (caddr ,start)) 1000000.0)))
 
 (defun testee (ignore)
-  ;; All three of these should return immediately.
-  (sit-for 10)
-  (sleep-for 10)
-  (accept-process-output nil 10))
+  (sit-for 10))
 
 (defun test-them ()
   (let ((start (current-time))
@@ -4674,7 +4655,8 @@ Be sure you do all of the above checking for C-g and focus, too!
     (setq end (current-time))
     (test-diff-time start end)))
 
-(test-them) should sit for 15 seconds, not 105 or 96.
-
+(test-them) should sit for 15 seconds.
+Repeat with testee set to sleep-for and accept-process-output.
+These should each delay 36 seconds.
 
 */

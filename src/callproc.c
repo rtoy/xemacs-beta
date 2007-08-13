@@ -55,7 +55,7 @@ Lisp_Object Vbinary_process_output;
 #endif /* DOS_NT */
 
 Lisp_Object Vexec_path, Vexec_directory, Vdata_directory, Vdoc_directory;
-Lisp_Object Vconfigure_info_directory;
+Lisp_Object Vconfigure_info_directory, Vsite_directory;
 
 /* The default base directory XEmacs is installed under. */
 Lisp_Object Vprefix_directory;
@@ -959,6 +959,7 @@ init_callproc (void)
   if (!initialized)
     {
       Vdata_directory = Qnil;
+      Vsite_directory = Qnil;
       Vdoc_directory  = Qnil;
       Vexec_path      = Qnil;
     }
@@ -966,6 +967,7 @@ init_callproc (void)
 #endif
     {
       char *data_dir = egetenv ("EMACSDATA");
+      char *site_dir = egetenv ("EMACSSITE");
       char *doc_dir  = egetenv ("EMACSDOC");
     
 #ifdef PATH_DATA
@@ -975,6 +977,10 @@ init_callproc (void)
 #ifdef PATH_DOC
       if (!doc_dir)
 	doc_dir = (char *) PATH_DOC;
+#endif
+#ifdef PATH_SITE
+      if (!site_dir)
+	site_dir = (char *) PATH_SITE;
 #endif
     
       if (data_dir)
@@ -987,6 +993,11 @@ init_callproc (void)
 	  (build_string (doc_dir));
       else
 	Vdoc_directory = Qnil;
+      if (site_dir)
+	Vsite_directory = Ffile_name_as_directory
+	  (build_string (site_dir));
+      else
+	Vsite_directory = Qnil;
 
       /* Check the EMACSPATH environment variable, defaulting to the
 	 PATH_EXEC path from paths.h.  */
@@ -1041,6 +1052,24 @@ init_callproc (void)
 	     XSTRING_DATA (Vdata_directory));
 #else
 	  Vdata_directory = Qnil;
+#endif
+	}
+    }
+  
+  if (!NILP (Vsite_directory))
+    {
+      tempdir = Fdirectory_file_name (Vsite_directory);
+      if (access ((char *) XSTRING_DATA (tempdir), 0) < 0)
+	{
+	  /* If the hard-coded path is bogus, fail silently.
+	     This will allow the normal heuristics to make an attempt. */
+#if 0
+	  warn_when_safe
+	    (Qpath, Qwarning,
+	     "Warning: machine-independent site dir (%s) does not exist.\n",
+	     XSTRING_DATA (Vsite_directory));
+#else
+	  Vsite_directory = Qnil;
 #endif
 	}
     }
@@ -1130,6 +1159,11 @@ especially executable programs intended for Emacs to invoke.
 
   DEFVAR_LISP ("data-directory", &Vdata_directory /*
 Directory of architecture-independent files that come with XEmacs,
+intended for Emacs to use.
+*/ );
+
+  DEFVAR_LISP ("site-directory", &Vsite_directory /*
+Directory of architecture-independent files that do not come with XEmacs,
 intended for Emacs to use.
 */ );
 

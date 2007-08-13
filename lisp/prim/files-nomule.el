@@ -67,8 +67,9 @@ to the file, instead of any buffer contents, and END is ignored.
 Optional seventh argument CODING-SYSTEM is meaningful only if support
   for Mule is present in XEmacs and specifies the coding system
   used to encode the text when it is written out, and defaults to
-  the value of `file-coding-system' in the current buffer.  When Mule
-  support is not present, the CODING-SYSTEM argument is ignored."
+  the value of `buffer-file-coding-system' in the current buffer.
+  When Mule support is not present, the CODING-SYSTEM argument is
+  ignored."
   (interactive "r\nFWrite region to file: ")
   (write-region-internal start end filename append visit lockname nil))
 

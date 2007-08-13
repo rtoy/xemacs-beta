@@ -403,12 +403,12 @@
 ;; 97.2.4 Created by J.Hein to simulate Mule-2.3
 (defun read-event ()
   "Cheap 'n cheesy event filter to facilitate translation from Mule-2.3"
-  (setq event (make-event))
-  (while (progn
-	   (next-event event)
-	   (not (key-press-event-p event)))
-	    (dispatch-event event))
-  (event-key event))
+  (let ((event (make-event)))
+    (while (progn
+	     (next-event event)
+	     (not (key-press-event-p event)))
+      (dispatch-event event))
+    (event-key event)))
 
 (eval-when-compile (require 'egg-jsymbol))
 
@@ -880,36 +880,6 @@
 ;;;
 ;;;----------------------------------------------------------------------
 
-(defvar ascii-char "[\40-\176]")
-
-(defvar ascii-space "[ \t]")
-(defvar ascii-symbols "[\40-\57\72-\100\133-\140\173-\176]")
-(defvar ascii-numeric "[\60-\71]")
-(defvar ascii-English-Upper "[\101-\132]")
-(defvar ascii-English-Lower "[\141-\172]")
-
-(defvar ascii-alphanumeric "[\60-\71\101-\132\141-\172]")
-
-(defvar kanji-char "\\cj")
-(defvar kanji-space "　")
-(defvar kanji-symbols "\\cS")
-(defvar kanji-numeric "[０-９]")
-(defvar kanji-English-Upper "[Ａ-Ｚ]")
-(defvar kanji-English-Lower  "[ａ-ｚ]")
-;;; Bug fixed by Yoshida@CSK on 88-AUG-24
-(defvar kanji-hiragana "\\cH")
-(defvar kanji-katakana "\\cK")
-;;;
-(defvar kanji-Greek-Upper "[Α-Ω]")
-(defvar kanji-Greek-Lower "[α-ω]")
-(defvar kanji-Russian-Upper "[А-Я]")
-(defvar kanji-Russian-Lower "[а-я]")
-(defvar kanji-Kanji-1st-Level  "[亜-腕]")
-(defvar kanji-Kanji-2nd-Level  "[弌-瑤]")
-
-(defvar kanji-kanji-char "\\(\\cH\\|\\cK\\|\\cC\\)")
-
-(defvar aletter (concat "\\(" ascii-char "\\|" kanji-char "\\)"))
 
 ;;;
 ;;; ひらがな変換
@@ -1680,13 +1650,13 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
     
 (defun fence-self-insert-command ()
   (interactive)
-  (setq ch (event-to-character last-command-event))
-  (cond((or (not egg:*input-mode*)
-	    (null (get-next-map its:*current-map* ch)))
-	(insert ch))
-       (t
-	(insert ch)
-	(its:translate-region (1- (point)) (point) t))))
+  (let ((ch (event-to-character last-command-event)))
+    (cond((or (not egg:*input-mode*)
+	      (null (get-next-map its:*current-map* ch)))
+	  (insert ch))
+	 (t
+	  (insert ch)
+	  (its:translate-region (1- (point)) (point) t)))))
 
 ;;;
 ;;; its: completing-read system
@@ -2193,15 +2163,31 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
            (not (eq new (minibuffer-window))))
       (save-excursion
 	(set-buffer (window-buffer (minibuffer-window)))
-	(setq minibuffer-preprompt nil
-	      egg:*mode-on* (default-value 'egg:*mode-on*)
+	(set-minibuffer-preprompt nil)
+	(setq egg:*mode-on* (default-value 'egg:*mode-on*)
 	      egg:*input-mode* (default-value 'egg:*input-mode*)
 	      egg:*in-fence-mode* (default-value 'egg:*in-fence-mode*))))
   (if (eq new (minibuffer-window))
       (setq minibuffer-window-selected t)
     (setq minibuffer-window-selected nil)))
 
-(setq select-window-hook 'egg:select-window-hook)
+(defun egg:minibuffer-entry-hook ()
+  (setq minibuffer-window-selected t))
+
+(defun egg:minibuffer-exit-hook ()
+  "Call upon exit from minibufffer"
+  (set-minibuffer-preprompt nil)
+  (setq minibuffer-window-selected nil)
+  (save-excursion
+    (set-buffer (window-buffer (minibuffer-window)))
+    (setq egg:*mode-on* (default-value 'egg:*mode-on*)
+	  egg:*input-mode* (default-value 'egg:*input-mode*)
+	  egg:*in-fence-mode* (default-value 'egg:*in-fence-mode*))))
+  
+(if (boundp 'select-window-hook)
+    (add-hook 'select-window-hook 'egg:select-window-hook)
+  (add-hook 'minibuffer-exit-hook 'egg:minibuffer-exit-hook)
+  (add-hook 'minibuffer-entry-hook 'egg:minibuffer-entry-hook))
 
 ;;;
 ;;;
@@ -2257,8 +2243,10 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 		    str)
 	    (aset (nth 2 egg:minibuffer-preprompt) 0
 		  (if its:*previous-map* ?\> ?\]))
-	    (setq minibuffer-preprompt
-		  egg:minibuffer-preprompt))
+	    (set-minibuffer-preprompt (concat
+				   (car egg:minibuffer-preprompt)
+				   (car (nthcdr 1 egg:minibuffer-preprompt))
+				   (car (nthcdr 2 egg:minibuffer-preprompt)))))
 	(setq display-minibuffer-mode t
 	      mode-line-egg-mode-in-minibuffer str))
     (setq display-minibuffer-mode nil

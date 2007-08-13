@@ -102,7 +102,7 @@ Boston, MA 02111-1307, USA.  */
     MARKED_SLOT (category_table);
 
     /* This buffer's coding system. */
-    MARKED_SLOT (file_coding_system);
+    MARKED_SLOT (buffer_file_coding_system);
 #endif /* MULE */
 
     /* Values of several buffer-local variables.

@@ -1916,7 +1916,7 @@ Use %% to put a single % into the output.
 
 DEFUN ("char-equal", Fchar_equal, 2, 3, 0, /*
 Return t if two characters match, optionally ignoring case.
-Both arguments must be characters (i.e. integers).
+Both arguments must be characters (i.e. NOT integers).
 Case is ignored if `case-fold-search' is non-nil in BUFFER.
 If BUFFER is nil, the current buffer is assumed.
 */
@@ -1935,6 +1935,23 @@ If BUFFER is nil, the current buffer is assumed.
       : x1 == x2)
     return Qt;
   return Qnil;
+}
+
+DEFUN ("char=", Fchar_Equal, 2, 3, 0, /*
+Return t if two characters match, case is significant.
+Both arguments must be characters (i.e. NOT integers).
+The optional buffer argument is for symmetry and is ignored.
+*/
+       (c1, c2, buffer))
+{
+  Emchar x1, x2;
+
+  CHECK_CHAR_COERCE_INT (c1);
+  CHECK_CHAR_COERCE_INT (c2);
+  x1 = XCHAR (c1);
+  x2 = XCHAR (c2);
+
+  return x1 == x2 ? Qt : Qnil;
 }
 
 #if 0 /* Undebugged FSFmacs code */
@@ -2061,6 +2078,7 @@ syms_of_editfns (void)
   defsymbol (&Qformat, "format");
 
   DEFSUBR (Fchar_equal);
+  DEFSUBR (Fchar_Equal);
   DEFSUBR (Fgoto_char);
   DEFSUBR (Fstring_to_char);
   DEFSUBR (Fchar_to_string);
@@ -2151,7 +2169,7 @@ More specifically:
 set-mark-command (C-SPC) pushes a mark and activates the region.  Moving the
 cursor with normal motion commands (C-n, C-p, etc) will cause the region
 between point and the recently-pushed mark to be highlighted.  It will
-remain highlighted until some non-motion comand is executed.
+remain highlighted until some non-motion command is executed.
 
 exchange-point-and-mark (\\[exchange-point-and-mark]) activates the region.  So if you mark a
 region and execute a command that operates on it, you can reactivate the

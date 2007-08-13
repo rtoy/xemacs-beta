@@ -37,6 +37,9 @@
 
 (message "Initializing Hyperbole, please wait...")
 
+;; The following line must not be deleted.
+(require 'hyperbole)
+
 ;;; ************************************************************************
 ;;; TIMEZONE SETTING
 ;;; ************************************************************************
@@ -304,10 +307,9 @@ Valid DISPLAY-WHERE-SYMBOLs are:
   (let ((nextstep-suffixes '(("\\.\\(adaptor\\|app\\|bshlf\\|clr\\|concur\\|create\\|diagram\\|dp\\|e?ps\\|frame\\|gif\\|locus\\|Mesa\\|nib\\|project\\|rtf\\|sense\\|tiff\\|tree\\)$" . "open")))
 	(x-suffixes '(("\\.e?ps$" . "ghostview")
 		      ("\\.ps\\.g?[zZ]$" . "zcat %s | ghostview -")
-		      ("\\.\\(gif\\|tiff?\\|xbm\\|pm\\|pbm\\|jpe?g\\)"  . "xv")
+		      ("\\.\\(gif\\|tiff?\\|xpm\\|xbm\\|pm\\|pbm\\|jpe?g\\)"  . "xv")
 		      ("\\.xwd$" . "xwud -noclick -in")
 		      ("\\.ra?s$" . "snapshot -l")
-		      ("\\.xpm$" . "sxpm")
 		      ("\\.\\(fm\\|frame\\|mif\\)$" .
 		       "frame.pl -vn -preader -c -f%s") ;; was "msgfm_driver"
 		      ("\\.\\(doc\\|boo\\)$" . "ileaf")

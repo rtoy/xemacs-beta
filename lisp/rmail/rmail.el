@@ -948,7 +948,7 @@ argument causes us to read a file name and use that file as the inbox."
 	    (if (not (featurep 'mule))
 		(setq size (nth 1 (insert-file-contents tofile)))
 	      ;; At first, read the file without converting coding-system.
-	      (setq size (nth 1 (let (file-coding-system-for-read)
+	      (setq size (nth 1 (let ((coding-system-for-read 'no-conversion))
 				  (insert-file-contents tofile))))
 	      ;; 1996/12/9 by MORIOKA Tomohiko <morioka@jaist.ac.jp>
 	      ;;	Don't code-convert for RMAIL file
