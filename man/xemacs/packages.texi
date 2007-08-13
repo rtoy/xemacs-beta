@@ -130,9 +130,19 @@ like the following to your @file{.emacs} file:
                                package-get-remote))
 @end example
 
-Here, you'd change @code{"/my/path/to/package/binaries"} to be the path
+Here, you'd change @file{/my/path/to/package/binaries} to be the path
 to your local package binaries.  Next, restart XEmacs, and you're ready
 to go (advanced users can just re-evaluate the sexp).
+
+If you are installing from a temporary, one-time directory, you can also 
+add these directory names to @code{package-get-remote} using:
+
+@example
+	M-x pui-add-install-directory
+@end example
+
+Note, however, that any directories added using this function are not
+saved; this information will be lost when you quit XEmacs.
 
 If you're going to install over the network, you only have to insure
 that EFS @ref{(EFS)} works, and that it can get outside a firewall, if
@@ -224,7 +234,7 @@ XEmacs.  Additionally it will update any packages you already have
 installed to the newest version.  Note that if a package is newly
 installed you will have to restart XEmacs for the change to take effect.
 
-You can also install packages manually, using:
+You can also install packages using a semi-manual interface:
 
 @example
 M-x package-get-all <return>
@@ -234,6 +244,66 @@ Enter the name of the package (e.g., @code{prog-modes}), and XEmacs
 will search for the latest version (as listed in the lisp file
 @file{lisp/package-get-base.el}), and install it and any packages that
 it depends upon.
+
+@subsection Manual Binary Package Installation
+
+Pre-compiled, binary packages can be installed in either a system
+package directory (this is determined when XEmacs is compiled), or in a
+subdirectory off your @file{$HOME} directory:
+
+@example
+~/.xemacs/packages
+@end example
+
+XEmacs does not have to be running to install binary packages, although
+XEmacs will not know about any newly-installed packages until you
+restart XEmacs.  Note, however, that installing a newer version of a
+package while XEmacs is running could cause strange errors in XEmacs;
+it's best to exit XEmacs before upgrading an existing package.
+
+To install binary packages manually:
+
+@enumerate
+@item
+Download the package(s) that you want to install.  Each binary package
+will typically be a gzip'd tarball.
+
+@item
+Decide where to install the packages: in the system package directory,
+or in @file{~/.xemacs/packages}.  If you want to install the
+packages in the system package directory, make sure you can write into
+that directory.  If you want to install in your @file{$HOME} directory,
+create the directory, @file{~/.xemacs/packages}.
+
+@item
+Next, @code{cd} to the directory under which you want to install the
+package(s).
+
+@item
+From this directory, uncompress and extract each of the gzip'd tarballs
+that you downloaded in step 1.  Unix and Cygnus cygwin users will
+typically do this using the commands:
+
+@example
+	gunzip < package.tar.gz | tar xvf -
+@end example
+
+Above, replace @file{package.tar.gz} with the filename of the
+package that you downloaded in step 1.
+
+Of course, if you use GNU @code{tar}, you could also use:
+
+@example
+	tar xvzf package.tar.gz
+@end example
+
+@comment What about native MS Windows users???
+
+@item
+That's it.  Quit and restart XEmacs to get it to recognize any new or
+changed packages.
+
+@end enumerate
 
 @node Building Packages, , Using Packages, Packages
 @comment  node-name,  next,  previous,  up

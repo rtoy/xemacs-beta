@@ -1,3 +1,10 @@
+1998-08-31  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* PROBLEMS: Added AIX 4.3 note.
+
+	* configure.in: Better detection of AIX 4.3.
+	AIX xlc can do -g and -Ox at the same time.
+
 1998-09-05  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre12 is released.

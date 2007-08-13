@@ -494,8 +494,8 @@ or if you change your font path, you can call this to re-initialize the menus."
     (when (and family (not (equal family from-family)))
       (setq new-props (append (list :family family) new-props)))
     (when (and size (not (equal size from-size)))
-      (setq new-props (append (list :size (int-to-string
-					  (/ size 10))) new-props)))
+      (setq new-props (append (list :size (concat (int-to-string
+					  (/ size 10)) "pt")) new-props)))
     (custom-set-face-update-spec 'default '((type x)) new-props)
     ;;; WMP - we need to honor font-menu-this-frame-only-p here!      
 ;    (set-face-font 'default new-default-face-font

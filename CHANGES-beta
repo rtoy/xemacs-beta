@@ -1,4 +1,9 @@
 							-*- indented-text -*-
+to 21.0 "Norwegian"
+-- PNG memleak fix from Andy Piper
+-- MS Windows NT directory separator check fix from Jonathan Harris
+-- font-menu fix from Jan Vroonhof
+
 to 21.0 pre12 "Irish Goat"
 -- visual package installer from Darryl Okahata
 -- miscellaneous bug fixes from various people

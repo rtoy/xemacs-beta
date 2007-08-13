@@ -817,6 +817,8 @@ png_instantiate_unwind (Lisp_Object unwind_obj)
   if (data->instream)
     fclose (data->instream);
 
+  if (data->eimage) xfree(data->eimage);
+
   return Qnil;
 }
 

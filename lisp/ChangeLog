@@ -1,3 +1,15 @@
+1998-09-06  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* package-get.el: Fixed broken EFS downloading.  Also, look for
+	  .tar.gz files first, in preference over .tgz files.
+
+	* package-ui.el: Fix display of package version numbers.
+
+1998-08-27  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* x-font-menu.el (font-menu-set-font):  Add "pt" units to size
+	argument.	
+
 1998-09-05  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre12 is released.

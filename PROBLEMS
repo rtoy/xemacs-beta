@@ -112,6 +112,8 @@ libz.a in the X11 binary directory.
 
 
 ** AIX
+*** On AIX 4.3, you must specify --with-dialogs=athena with configure
+
 *** On AIX, you get this compiler error message:
 
     Processing include file ./XMenuInt.h
@@ -135,16 +137,6 @@ you build Emacs:
 
 Then change -lIM to ./libIM.a in the command to link temacs (in
 Makefile).
-
-*** Link failure on IBM AIX 1.3 ptf 0013.
-
-There is a real duplicate definition of the function `_slibc_free' in
-the library /lib/libc_s.a (just do nm on it to verify).  The
-workaround/fix is:
-
-    cd /lib
-    ar xv libc_s.a NLtmtime.o
-    ar dv libc_s.a NLtmtime.o
 
 *** Excessive optimization on AIX 4.2 can lead to compiler failure.
 

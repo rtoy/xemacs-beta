@@ -419,11 +419,23 @@ select packages for installation via the keyboard or mouse."
 		 (if pui-list-verbose
 		     (progn
 		       (setq current-vers (package-get-key pkg-sym :version))
-		       (if (not current-vers)
-			   (setq current-vers "-----"))
+		       (cond
+			( (not current-vers)
+			  (setq current-vers "-----") )
+			( (stringp current-vers)
+			  (setq current-vers
+				(format "%.2f"
+					(string-to-number current-vers))) )
+			( (numberp current-vers)
+			  (setq current-vers (format "%.2f" current-vers)) )
+			)
 		       (insert
-			(format "%s %-15s %-5s  %-5s  %s\n"
-				(car disp) pkg-sym version current-vers desc))
+			(format "%s %-15s %-5.2f  %-5s  %s\n"
+				(car disp) pkg-sym 
+				(if (stringp version)
+				    (string-to-number version)
+				  version)
+				current-vers desc))
 ;;		       (insert
 ;;			(format "\t\t  %-12s  %s\n"
 ;;				(package-get-info-prop info 'author-version)

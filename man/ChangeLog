@@ -1,3 +1,18 @@
+1998-09-03  Darryl Okahata  <darrylo@sr.hp.com>
+
+	* xemacs/packages.texi: Document manually installing binary packages.
+
+1998-09-02  Jeff Miller <jmiller@smart.net>
+
+	* Synch calendar.texi with Emacs 20.3
+
+1998-09-07  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* lispref/searching.texi (Syntax of Regexps): Improved example for 
+	\(?:\) by converting tabs to spaces, moving comments out to a
+	paragraph of text, and using the @r macro in the comments.  I also 
+	spell checked the entire file.
+
 1998-09-05  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre12 is released.

@@ -1,3 +1,19 @@
+1998-09-06  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* process-unix.c (unix_create_process): Reset SIGHUP handler to
+	SIG_DFL. We now try to conserve any inherted SIG_IGN settings
+	in init_signals_very_early. However these should not be passed 
+	on to children attached to the new pty.
+
+1998-08-28  Andy Piper  <andyp@parallax.co.uk>
+
+	* glyphs-eimage.c (png_instantiate_unwind): clean up eimage after use.
+
+1998-09-07  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* fileio.c (file-name-directory, file_name_as_directory):
+	  Don't call CORRECT_DIR_SEPS, even when #defined WINDOWSNT. 
+
 1998-09-05  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre12 is released.

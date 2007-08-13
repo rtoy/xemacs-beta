@@ -328,7 +328,8 @@ Return `t' upon complete success, `nil' if any errors occurred."
 		    )
 		  t))
 	      (setq load-path (cons lispdir load-path)))
-	  (package-get-load-package-file lispdir "auto-autoloads")
+	  (if (not (package-get-load-package-file lispdir "auto-autoloads"))
+	      (package-get-load-package-file lispdir "_pkg"))
 	  t)
       nil)
     ))
@@ -379,8 +380,9 @@ successfully installed but errors occurred during initialization, or
     ;; Ugly.  Is there a better way to do this?
     (setq filenames (cons base-filename nil))
     (if (string-match "^\\(..*\\)\.tar\.gz$" base-filename)
-	(setq filenames (cons (concat (match-string 1 base-filename) ".tgz")
-			      filenames)))
+	(setq filenames (append filenames
+				(list (concat (match-string 1 base-filename)
+					      ".tgz")))))
 
     (setq version (package-get-info-prop this-package 'version))
     (unless (and (eq conflict 'never)
@@ -389,40 +391,57 @@ successfully installed but errors occurred during initialization, or
       ;; and copy it into the staging directory.  Then validate
       ;; the checksum.  Finally, install the package.
       (catch 'done
-	(let (search-filenames current-dir-entry host dir current-filename)
+	(let (search-filenames current-dir-entry host dir current-filename
+			       dest-filename)
 	  ;; In each search directory ...
 	  (while search-dirs
 	    (setq current-dir-entry (car search-dirs)
 		  host (car current-dir-entry)
 		  dir (car (cdr current-dir-entry))
-		  search-filenames filenames)
+		  search-filenames filenames
+		  )
 
 	    ;; Look for one of the possible package filenames ...
 	    (while search-filenames
-	      (setq current-filename (car search-filenames))
-	      (if (null host)
-		  (progn
-		    ;; No host means look on the current system.
-		    (setq full-package-filename
-			  (substitute-in-file-name
-			   (expand-file-name current-filename
-					     (file-name-as-directory dir))))
-		    )
-		;; If the file exists on the remote system ...
-		(if (file-exists-p (package-get-remote-filename
-				    current-dir-entry current-filename))
-		    (progn
-		      ;; Get it
-		      (setq full-package-filename
-			    (package-get-staging-dir current-filename))
-		      (message "Retrieving package `%s' ..." 
-			       current-filename)
-		      (sit-for 0)
-		      (copy-file (package-get-remote-filename current-dir-entry
-							      current-filename)
-				 ))))
+	      (setq current-filename (car search-filenames)
+		    dest-filename (package-get-staging-dir current-filename))
+	      (cond
+	       ;; No host means look on the current system.
+	       ( (null host)
+		 (setq full-package-filename
+		       (substitute-in-file-name
+			(expand-file-name current-filename
+					  (file-name-as-directory dir))))
+		 )
+
+	       ;; If it's already on the disk locally, and the size is
+	       ;; greater than zero ...
+	       ( (and (file-exists-p dest-filename)
+		      (let (attrs)
+			;; file-attributes could return -1 for LARGE files,
+			;; but, hopefully, packages won't be that large.
+			(and (setq attrs (file-attributes dest-filename))
+			     (> (nth 7 attrs) 0))))
+		 (setq full-package-filename dest-filename)
+		 )
+
+	       ;; If the file exists on the remote system ...
+	       ( (file-exists-p (package-get-remote-filename
+				 current-dir-entry current-filename))
+		 ;; Get it
+		 (setq full-package-filename dest-filename)
+		 (message "Retrieving package `%s' ..." 
+			  current-filename)
+		 (sit-for 0)
+		 (copy-file (package-get-remote-filename current-dir-entry
+							 current-filename)
+			    full-package-filename t)
+		 )
+	       )
+
 	      ;; If we found it, we're done.
-	      (if (file-exists-p full-package-filename)
+	      (if (and full-package-filename
+		       (file-exists-p full-package-filename))
 		  (throw 'done nil))
 	      ;; Didn't find it.  Try the next possible filename.
 	      (setq search-filenames (cdr search-filenames))
