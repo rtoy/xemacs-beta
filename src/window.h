@@ -126,6 +126,8 @@ struct window
   Lisp_Object sb_point;
   /* Number of columns display within the window is scrolled to the left. */
   int hscroll;
+  /* Idem for the window's modeline */
+  int modeline_hscroll;
   /* Number saying how recently window was selected */
   Lisp_Object use_time;
   /* text.modified of displayed buffer as of last time display completed */

@@ -67,11 +67,11 @@ Boston, MA 02111-1307, USA.  */
 
 extern void memory_warnings (void *, void (*warnfun) (CONST char *));
 
-#ifndef SYSTEM_MALLOC
+#if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC
 extern void *(*__malloc_hook)(size_t);
 extern void *(*__realloc_hook)(void *, size_t);
 extern void (*__free_hook)(void *);
-#endif  /* not SYSTEM_MALLOC */
+#endif  /* not SYSTEM_MALLOC && not DOUG_LEA_MALLOC */
 
 /* Command line args from shell, as list of strings */
 Lisp_Object Vcommand_line_args;

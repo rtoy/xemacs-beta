@@ -1165,6 +1165,22 @@ the data it can't find.
     return list2 (Qnil, Qnil);
 }
 
+#ifdef LOCALTIME_CACHE
+
+/* These two values are known to load tz files in buggy implementations,
+   i.e. Solaris 1 executables running under either Solaris 1 or Solaris 2.
+   Their values shouldn't matter in non-buggy implementations.
+   We don't use string literals for these strings, 
+   since if a string in the environment is in readonly
+   storage, it runs afoul of bugs in SVR4 and Solaris 2.3.
+   See Sun bugs 1113095 and 1114114, ``Timezone routines
+   improperly modify environment''.  */
+
+static char set_time_zone_rule_tz1[] = "TZ=GMT+0";
+static char set_time_zone_rule_tz2[] = "TZ=GMT+1";
+
+#endif
+
 /* Set the local time zone rule to TZSTRING.
    This allocates memory into `environ', which it is the caller's
    responsibility to free.  */
@@ -1195,6 +1211,40 @@ set_time_zone_rule (char *tzstring)
   environ = newenv;
 
 #ifdef LOCALTIME_CACHE
+  {
+    /* In SunOS 4.1.3_U1 and 4.1.4, if TZ has a value like
+       "US/Pacific" that loads a tz file, then changes to a value like
+       "XXX0" that does not load a tz file, and then changes back to
+       its original value, the last change is (incorrectly) ignored.
+       Also, if TZ changes twice in succession to values that do
+       not load a tz file, tzset can dump core (see Sun bug#1225179).
+       The following code works around these bugs.  */
+
+    if (tzstring)
+      {
+	/* Temporarily set TZ to a value that loads a tz file
+	   and that differs from tzstring.  */
+	char *tz = *newenv;
+	*newenv = (strcmp (tzstring, set_time_zone_rule_tz1 + 3) == 0
+		   ? set_time_zone_rule_tz2 : set_time_zone_rule_tz1);
+	tzset ();
+	*newenv = tz;
+      }
+    else
+      {
+	/* The implied tzstring is unknown, so temporarily set TZ to
+	   two different values that each load a tz file.  */
+	*to = set_time_zone_rule_tz1;
+	to[1] = 0;
+	tzset ();
+	*to = set_time_zone_rule_tz2;
+	tzset ();
+	*to = 0;
+      }
+
+    /* Now TZ has the desired value, and tzset can be invoked safely.  */
+  }
+
   tzset ();
 #endif
 }

@@ -254,7 +254,8 @@ static void generate_formatted_string_db (Lisp_Object format_str,
 					  struct display_line *dl,
 					  struct display_block *db,
 					  face_index findex, int min_pixpos,
-					  int max_pixpos, int type);
+					  int max_pixpos, int type, 
+					  int modeline);
 static Charcount generate_fstring_runes (struct window *w, pos_data *data,
 					 Charcount pos, Charcount min_pos,
 					 Charcount max_pos, Lisp_Object elt,
@@ -3566,8 +3567,9 @@ generate_modeline (struct window *w, struct display_line *dl, int type)
 
   generate_formatted_string_db (b->modeline_format,
 				b->generated_modeline_string, w, dl, db,
-				MODELINE_INDEX, min_pixpos, max_pixpos, type);
-
+				MODELINE_INDEX, min_pixpos, max_pixpos, type,
+				1 /* generate a modeline */);
+  
   /* The modeline is at the bottom of the gutters.  We have to wait to
      set this until we've generated teh modeline in order to account
      for any embedded faces. */
@@ -3578,7 +3580,8 @@ static void
 generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
 			      struct window *w, struct display_line *dl,
 			      struct display_block *db, face_index findex,
-			      int min_pixpos, int max_pixpos, int type)
+			      int min_pixpos, int max_pixpos, int type, 
+			      int modeline)
 {
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
@@ -3604,10 +3607,15 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
   Dynarr_reset (formatted_string_extent_start_dynarr);
   Dynarr_reset (formatted_string_extent_end_dynarr);
 
-  /* This recursively builds up the modeline. */
-  generate_fstring_runes (w, &data, 0, 0, -1, format_str, 0,
-			  max_pixpos - min_pixpos, findex, type);
-
+  /* D. Verna Feb. 1998.
+     This recursively builds up the modeline or the title/icon string.
+     In case of a modeline, we use a negative start position to indicate
+     the current modeline horizontal scroll. */
+  generate_fstring_runes 
+    (w, &data, 
+     (modeline && WINDOW_HAS_MODELINE_P (w)) ? - w->modeline_hscroll : 0, 
+     0, -1, format_str, 0, max_pixpos - min_pixpos, findex, type);
+  
   if (Dynarr_length (db->runes))
     {
       struct rune *rb =
@@ -3677,45 +3685,68 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
     }
 }
 
+/* D. Verna Feb. 1998. Rewrote this function to handle the case of a 
+   scrolled modeline */
 static Charcount
 add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
 				Charcount pos, Charcount min_pos, Charcount max_pos)
 {
   /* This function has been Mule-ized. */
-  Charcount end;
+  Charcount initial_pos = pos;
   CONST Bufbyte *cur_pos = str;
   struct display_block *db = data->db;
-
+  int add_something;
+  
   data->blank_width = space_width (XWINDOW (data->window));
-  while (Dynarr_length (db->runes) < pos)
-    add_blank_rune (data, NULL, 0);
-
-  end = (Dynarr_length (db->runes) +
-	 bytecount_to_charcount (str, strlen ((CONST char *) str)));
-  if (max_pos != -1)
-    end = min (max_pos, end);
-
-  while (pos < end && *cur_pos)
+  add_something = ((pos < min_pos) 
+		   || ((*cur_pos) && (max_pos == -1))
+		   || ((*cur_pos) && (pos < max_pos)));
+  while (add_something)
     {
-      CONST Bufbyte *old_cur_pos = cur_pos;
-      int succeeded;
-
-      data->ch = charptr_emchar (cur_pos);
-      succeeded = (add_emchar_rune (data) != ADD_FAILED);
-      INC_CHARPTR (cur_pos);
-      if (succeeded)
+      if (((initial_pos < 0) && (pos == 1)) || (pos == initial_pos))
+	while (Dynarr_length (db->runes) < pos)
+	  add_blank_rune (data, NULL, 0);
+      
+      if (pos < 0) /* just pretend we're adding something */
 	{
-	  pos++;
-	  data->modeline_charpos++;
-	  data->bytepos += cur_pos - old_cur_pos;
+	  if (*cur_pos)
+	    INC_CHARPTR (cur_pos);
+	  pos += 1;
 	}
+      else /* Maybe add something */
+	{
+	  if (*cur_pos)
+	    {
+	      CONST Bufbyte *old_cur_pos = cur_pos;
+	      int succeeded;
+	      
+	      data->ch = charptr_emchar (cur_pos);
+	      succeeded = (add_emchar_rune (data) != ADD_FAILED);
+	      INC_CHARPTR (cur_pos);
+	      if (succeeded)
+		{
+		  pos += 1;
+		  data->modeline_charpos++;
+		  data->bytepos += cur_pos - old_cur_pos;
+		}
+	    }
+	  else if (data->pixpos + data->blank_width <= data->max_pixpos)
+	    {
+	      add_blank_rune (data, NULL, 0);
+	    }
+	  else /* pretend to add something */
+	    {
+	      if (*cur_pos)
+		INC_CHARPTR (cur_pos);
+	      pos += 1;
+	    }
+	}
+      add_something = ((pos < min_pos) 
+		       || ((*cur_pos) && (max_pos == -1))
+		       || ((*cur_pos) && (pos < max_pos)));
     }
 
-  while (Dynarr_length (db->runes) < min_pos &&
-	 (data->pixpos + data->blank_width <= data->max_pixpos))
-    add_blank_rune (data, NULL, 0);
-
-  return Dynarr_length (db->runes);
+  return pos;
 }
 
 /* #### Urk!  Should also handle begin-glyphs and end-glyphs in
@@ -3729,14 +3760,20 @@ add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
   struct display_block *db = data->db;
   struct glyph_block gb;
 
+  /* D. Verna Feb. 1998.
+     If pos < 0, we're building a scrolled modeline. 
+     The glyph should be hidden. So just skip it. */
+  if (pos < 0)
+    return (pos + 1);
+  
   data->blank_width = space_width (XWINDOW (data->window));
   while (Dynarr_length (db->runes) < pos)
     add_blank_rune (data, NULL, 0);
-
+  
   end = Dynarr_length (db->runes) + 1;
   if (max_pos != -1)
     end = min (max_pos, end);
-
+  
   gb.glyph = glyph;
   gb.extent = Qnil;
   add_glyph_rune (data, &gb, BEGIN_GLYPHS, 0, 0);
@@ -3785,23 +3822,23 @@ tail_recurse:
     {
       /* A string.  Add to the display line and check for %-constructs
          within it. */
-
+      
       Bufbyte *this = XSTRING_DATA (elt);
-
+      
       while ((pos < max_pos || max_pos == -1) && *this)
 	{
 	  Bufbyte *last = this;
-
+	  
 	  while (*this && *this != '%')
 	    this++;
-
+	  
 	  if (this != last)
 	    {
 	      /* The string is just a string. */
 	      Charcount size =
 		bytecount_to_charcount (last, this - last) + pos;
 	      Charcount tmp_max = (max_pos == -1 ? size : min (size, max_pos));
-
+	      
 	      pos = add_string_to_fstring_db_runes (data, last, pos, pos,
 						    tmp_max);
 	    }
@@ -4080,8 +4117,11 @@ generate_formatted_string (struct window *w, Lisp_Object format_str,
   db = get_display_block_from_line (dl, TEXT);
   Dynarr_reset (db->runes);
 
+  /* D. Verna Feb. 1998.
+     Currently, only update_frame_title can make us come here. This is not 
+     to build a modeline */
   generate_formatted_string_db (format_str, result_str, w, dl, db, findex, 0,
-				-1, type);
+				-1, type, 0 /* not a modeline */);
 
   Dynarr_reset (formatted_string_emchar_dynarr);
   while (elt < Dynarr_length (db->runes))

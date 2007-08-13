@@ -522,12 +522,6 @@ accepts other keyword arguments which are passed on to the
 keep both @code{find-thing} and @code{member*} from complaining
 about each others' keywords in the arguments.
 
-In Common Lisp, keywords are recognized by the Lisp parser itself
-and treated as special entities.  In Emacs, keywords are just
-symbols whose names begin with colons, which @code{defun*} has
-arranged to set equal to themselves so that they will essentially
-be self-quoting.
-
 As a (significant) performance optimization, this package
 implements the scan for keyword arguments by calling @code{memq}
 to search for keywords in a ``rest'' argument.  Technically
@@ -5592,26 +5586,12 @@ the @code{lambda} expression is code that can be compiled.
 Lucid Emacs supports @code{#'} notation starting with version 19.8.
 
 @item
-The ``backquote'' feature uses a different syntax in Emacs Lisp.
-
-@example
-(defmacro foo (v &rest body) `(let ((,v 0)) @@,body))  ; Common Lisp
-(defmacro foo (v &rest body) (` (let (((, v) 0)) (@@, body)))  ; Emacs
-@end example
-
-@item
 Reader macros.  Common Lisp includes a second type of macro that
 works at the level of individual characters.  For example, Common
 Lisp implements the quote notation by a reader macro called @code{'},
 whereas Emacs Lisp's parser just treats quote as a special case.
 Some Lisp packages use reader macros to create special syntaxes
 for themselves, which the Emacs parser is incapable of reading.
-
-The lack of reader macros, incidentally, is the reason behind
-Emacs Lisp's unusual backquote syntax.  Since backquotes are
-implemented as a Lisp package and not built-in to the Emacs
-parser, they are forced to use a regular macro named @code{`}
-which is used with the standard function/macro call notation.
 
 @item
 Other syntactic features.  Common Lisp provides a number of
@@ -5620,6 +5600,10 @@ won't understand.  For example, @samp{#| ... |#} is an
 alternate comment notation, and @samp{#+lucid (foo)} tells
 the parser to ignore the @code{(foo)} except in Lucid Common
 Lisp.
+
+The number prefixes `#b', `#o', and `#x', however, are supported
+by the Emacs Lisp parser to represent numbers in binary, octal,
+and hexadecimal notation (or radix), just like in Common Lisp.
 
 @item
 Packages.  In Common Lisp, symbols are divided into @dfn{packages}.

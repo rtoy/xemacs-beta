@@ -291,9 +291,6 @@ Boston, MA 02111-1307, USA.  */
 /* Compile in support for SOCKS? */
 #undef HAVE_SOCKS
 
-/* Compile in support for using the `term' program (e.g. under Linux)? */
-#undef HAVE_TERM
-
 /* Compile in support for X pixmaps via the `xpm' library? */
 #undef HAVE_XPM
 
@@ -464,6 +461,15 @@ Boston, MA 02111-1307, USA.  */
 
    (It's NO_UNION_TYPE instead of USE_UNION_TYPE for historical reasons.) */
 #undef NO_UNION_TYPE
+
+/* The next two options are turned on by --with-gung=yes */
+/* If defined, use a minimal number of tagbits.  This allows usage of more
+   advanced versions of malloc (like the Doug Lea new GNU malloc) and larger
+   integers. */
+#undef USE_MINIMAL_TAGBITS
+
+/* #### Document me. */
+#undef USE_INDEXED_LRECORD_IMPLEMENTATION
 
 /* The configuration script defines opsysfile to be the name of the
    s/...h file that describes the system type you are using.

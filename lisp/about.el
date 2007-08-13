@@ -1352,6 +1352,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Mats Lidell" "mats.lidell@contactor.se")
        (print-short "Matt Liggett" "mliggett@seven.ucs.indiana.edu")
        (print-short "Christian Limpach" "Christian.Limpach@nice.ch")
+       (print-short "Maximilien Lincourt" "max@toonboom.com")
        (print-short "Markus Linnala" "maage@b14b.tupsu.ton.tut.fi")
        (print-short "Robert Lipe" "robertl@arnet.com")
        (print-short "Derrell Lipman" "derrell@vis-av.com")

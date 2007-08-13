@@ -1354,6 +1354,18 @@ Return the number of columns by which WINDOW is scrolled from left margin.
   return make_int (decode_window (window)->hscroll);
 }
 
+DEFUN ("modeline-hscroll", Fmodeline_hscroll, 0, 1, 0, /*
+Return the number of columns by which WINDOW's modeline is scrolled from 
+left margin. If the window has no modeline, return nil.
+*/
+       (window))
+{
+  struct window *w;
+  
+  w = decode_window (window);
+  return (WINDOW_HAS_MODELINE_P (w)) ? make_int (w->modeline_hscroll) : Qnil;
+}
+
 DEFUN ("set-window-hscroll", Fset_window_hscroll, 2, 2, 0, /*
 Set number of columns WINDOW is scrolled from left margin to NCOL.
 NCOL should be zero or positive.
@@ -1371,6 +1383,30 @@ NCOL should be zero or positive.
     MARK_CLIP_CHANGED;	/* FSF marks differently but we aren't FSF. */
   w->hscroll = ncols;
   return ncol;
+}
+
+DEFUN ("set-modeline-hscroll", Fset_modeline_hscroll, 2, 2, 0, /*
+Set number of columns WINDOW's modeline is scrolled from left margin to NCOL.
+NCOL should be zero or positive. If NCOL is negative, it will be forced to 0.
+If the window has no modeline, do nothing and return nil.
+*/
+       (window, ncol))
+{
+  struct window *w;
+  int ncols;
+
+  w = decode_window (window);
+  if (WINDOW_HAS_MODELINE_P (w))
+    {
+      CHECK_INT (ncol);
+      ncols = XINT (ncol);
+      if (ncols < 0) ncols = 0;
+      if (w->modeline_hscroll != ncols)
+	MARK_MODELINE_CHANGED;
+      w->modeline_hscroll = ncols;
+      return ncol;
+    }
+  return Qnil;
 }
 
 #if 0 /* bogus crock */
@@ -3149,6 +3185,7 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
       Vminibuf_scroll_window = window;
       w = XWINDOW (window);
       w->hscroll = 0;
+      w->modeline_hscroll = 0;
       set_marker_restricted (w->start[CURRENT_DISP], make_int (1), buf);
       set_marker_restricted (w->pointm[CURRENT_DISP], make_int (1), buf);
       set_marker_restricted (w->sb_point, make_int (1), buf);
@@ -4477,6 +4514,7 @@ struct saved_window
   int pixel_width;
   int pixel_height;
   int hscroll;
+  int modeline_hscroll;
   int parent_index;           /* index into saved_windows */
   int prev_index;             /* index into saved_windows */
   Lisp_Object dedicated;
@@ -4618,6 +4656,7 @@ saved_window_equal (struct saved_window *win1, struct saved_window *win2)
     win1->pixel_width  == win2->pixel_width &&
     win1->pixel_height == win2->pixel_height &&
     win1->hscroll      == win2->hscroll &&
+    win1->modeline_hscroll == win2->modeline_hscroll &&
     win1->parent_index == win2->parent_index &&
     win1->prev_index   == win2->prev_index &&
     EQ (win1->dedicated, win2->dedicated) &&
@@ -4940,6 +4979,7 @@ by `current-window-configuration' (which see).
 	  WINDOW_WIDTH (w) = WINDOW_WIDTH (p);
 	  WINDOW_HEIGHT (w) = WINDOW_HEIGHT (p);
 	  w->hscroll = p->hscroll;
+	  w->modeline_hscroll = p->modeline_hscroll;
 	  w->display_table = p->display_table;
 	  w->modeline_shadow_thickness = p->modeline_shadow_thickness;
 	  w->has_modeline_p = p->has_modeline_p;
@@ -5207,6 +5247,7 @@ save_window_save (Lisp_Object window, struct window_config *config, int i)
       WINDOW_WIDTH (p) = WINDOW_WIDTH (w);
       WINDOW_HEIGHT (p) = WINDOW_HEIGHT (w);
       p->hscroll = w->hscroll;
+      p->modeline_hscroll = w->modeline_hscroll;
       p->display_table = w->display_table;
       p->modeline_shadow_thickness = w->modeline_shadow_thickness;
       p->has_modeline_p = w->has_modeline_p;
@@ -5465,11 +5506,13 @@ syms_of_window (void)
   DEFSUBR (Fwindow_pixel_height);
   DEFSUBR (Fwindow_pixel_width);
   DEFSUBR (Fwindow_hscroll);
+  DEFSUBR (Fmodeline_hscroll);
 #if 0 /* bogus crock */
   DEFSUBR (Fwindow_redisplay_end_trigger);
   DEFSUBR (Fset_window_redisplay_end_trigger);
 #endif
   DEFSUBR (Fset_window_hscroll);
+  DEFSUBR (Fset_modeline_hscroll);
   DEFSUBR (Fwindow_pixel_edges);
   DEFSUBR (Fwindow_point);
   DEFSUBR (Fwindow_start);

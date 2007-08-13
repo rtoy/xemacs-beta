@@ -1592,6 +1592,9 @@ Integers are written in decimal, with an optional initial minus sign.
 If a sequence of digits is followed by a period and another sequence
 of digits, it is interpreted as a floating point number.
 
+The number prefixes @samp{#b}, @samp{#o}, and @samp{#x} are supported to
+represent numbers in binary, octal, and hexadecimal notation (or radix).
+
 @item Strings
 Lisp string syntax is the same as C string syntax with a few extra
 features.  Use a double-quote character to begin and end a string constant.

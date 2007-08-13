@@ -1,5 +1,15 @@
 1998-02-19  SL Baur  <steve@altair.xemacs.org>
 
+	* XEmacs 20.5-beta27 is released.
+	* XEmacs-20.4-pre4 is released.
+
+	* configure.in (doug_lea_malloc): Requires USE_MINIMAL_TAGBITS.
+	(--with-gung): Implement it.
+
+	* configure.usage (--with-gung): Document.  Turns on
+	USE_MINIMAL_TAGBITS and USE_INDEXED_LRECORD_IMPLEMENTATION.
+	(--with-term): Remove.
+	
 	* XEmacs-20.5-beta26 is released.
 
 1998-02-18  SL Baur  <steve@altair.xemacs.org>

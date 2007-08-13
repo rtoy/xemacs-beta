@@ -1276,7 +1276,6 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
   int count = 0;
 #endif
 
-#ifndef HAVE_TERM
   memset (address, 0, sizeof (*address));
 
   while (1)
@@ -1449,14 +1448,6 @@ Fourth arg SERVICE is name of the service desired, or an integer
     }
 
   speed_up_interrupts ();
-
-#else /* HAVE_TERM */
-  s = connect_server (0);
-  if (s < 0)
-    report_file_error ("error creating socket", Fcons (name, Qnil));
-  send_command (s, C_PORT, 0, "%s:%d", XSTRING_DATA (host), ntohs (port));
-  send_command (s, C_DUMB, 1, 0);
-#endif /* HAVE_TERM */
 
   inch = s;
   outch = dup (s);

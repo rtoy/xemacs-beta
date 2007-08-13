@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 20.5 beta27 "Kinder"
+-- Locale fix courtesy of Kazuyuki IENAGA
+-- Fix for TZSET problem on Sun via Jens Krinke
+-- Another try at modeline scroll, courtesy of Didier Verna
+-- Miscellaneous bug fixes
+
 to 20.5 beta26 "Kiko"
 -- MS Windows patches courtesy of Kirill Katsnelson
 -- Various patches from Kyle Jones

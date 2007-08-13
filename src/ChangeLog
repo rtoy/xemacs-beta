@@ -1,3 +1,33 @@
+1998-02-19  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* emacs.c: declare hooks only if !DOUG_LEA_MALLOC since the
+	declaration conflicts with glibc's own.
+
+1998-02-19  SL Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: Remove HAVE_TERM, add USE_MINIMAL_TAGBITS and
+	USE_INDEXED_LRECORD_IMPLEMENTATION.
+
+	* process.c (Fopen_network_stream_internal): Remove TERM support.
+
+	* sysproc.h: Remove TERM support.
+
+1998-02-20  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* input-method-xfs.c: add setlocale(LC_CTYPE, "") right after
+	setlocale(LC_NUMERIC, "C").  Because, without this, the LC_CTYPE
+	got a side effect of LC_NUMERIC then set to "C".
+
+1998-02-19  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (main): Enable mmap'ing with XEmacs/Mule.
+
+	* redisplay.c (add_string_to_fstring_db_runes): Fix infloop
+	problem with long modelines and glyphs.
+
+	* unexelf.c: The proper way to check for GNU libc is with __GLIBC__.
+	Suggested by Andreas Jaeger <aj@arthur.rhein-neckar.de>
+	
 1998-02-18  SL Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in: Remove all references to prefix-args.

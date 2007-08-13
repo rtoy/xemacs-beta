@@ -75,6 +75,7 @@ Initialize_Locale (void)
     }
 
   setlocale(LC_NUMERIC, "C");
+  setlocale(LC_CTYPE, ""); /* take back CTYPE to previous state */
   
   if (XSetLocaleModifiers ("") == NULL)
     {

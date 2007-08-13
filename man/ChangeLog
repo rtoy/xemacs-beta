@@ -1,3 +1,17 @@
+1998-02-19  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cl.texi (Argument Lists): Keywords are handled specially by
+ 	XEmacs.
+	(Porting Common Lisp): XEmacs backquotes are OK.
+
+1998-02-19  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* xemacs/custom.texi (Init Syntax): document #b, #o, and #x reader
+ 	syntax for integers.
+	From Adrian Aichner <aichner@ecf.teradyne.com>
+	* cl.texi (Porting Common Lisp): ' '
+	* lispref/numbers.texi (Numbers): ' '
+
 1998-02-15  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
 
 	* lispref/searching.texi (Regular Expressions): Document the

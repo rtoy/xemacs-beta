@@ -44,11 +44,6 @@ Boston, MA 02111-1307, USA.  */
 # include <sys/socket.h>
 #endif /* HAVE_SOCKETS */
 
-/* TERM is a poor-man's SLIP, used on Linux.  */
-#ifdef HAVE_TERM
-# include <client.h>
-#endif
-
 /* On some systems, e.g. DGUX, inet_addr returns a 'struct in_addr'. */
 #ifdef HAVE_BROKEN_INET_ADDR
 # define IN_ADDR struct in_addr

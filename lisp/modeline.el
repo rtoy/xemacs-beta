@@ -74,6 +74,8 @@ make the clicked-on window taller or shorter."
 	  (start-event-frame (event-frame event))
 	  (start-event-window (event-window event))
 	  (start-nwindows (count-windows t))
+	  (hscroll-offset
+	   (- (modeline-hscroll (event-window event)) (event-x event)))
 	  (last-timestamp 0)
 	  default-line-height
 	  modeline-height
@@ -141,6 +143,8 @@ make the clicked-on window taller or shorter."
 		  drag-modeline-event-lag)
 	       nil)
 	      (t
+	       (set-modeline-hscroll (event-window event)
+				     (+ hscroll-offset (event-x event)))
 	       (setq last-timestamp (event-timestamp event)
 		     y (event-y-pixel event)
 		     edges (window-pixel-edges start-event-window)
