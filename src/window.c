@@ -2929,10 +2929,15 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
       int pixel_adj_left = new_pixsize - old_pixsize;
       int div_val = old_pixsize << 1;
 
-      /* Sometimes we may get called with our old size.  In that case
-         we don't need to do anything. */
-      if (!pixel_adj_left)
-	return;
+      /*
+       * Previously we bailed out here if there was no size change.
+       * But this broke toolbar updates.  If a toolbar appears or
+       * disappears, windows may not change size, but their top and
+       * left coordinates need to be updated.
+       *
+       * if (!pixel_adj_left)
+       *   return;
+       */
 
       last_pos = first = (set_height ? WINDOW_TOP (w) : WINDOW_LEFT (w));
       last_old_pos = 0;

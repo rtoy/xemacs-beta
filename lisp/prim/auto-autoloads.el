@@ -10,7 +10,7 @@ Describe the True Editor and its minions." t nil)
 
 ;;;### (autoloads (all-hail-emacs all-hail-xemacs praise-be-unto-emacs praise-be-unto-xemacs) "advocacy" "prim/advocacy.el")
 
-(defvar xemacs-praise-sound-file "sounds/im_so_happy.au" "\
+(defvar xemacs-praise-sound-file "im_so_happy.au" "\
 The name of an audio file containing something to play
 when praising XEmacs")
 

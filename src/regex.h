@@ -26,12 +26,6 @@
 /* POSIX says that <sys/types.h> must be included (by the caller) before
    <regex.h>.  */
 
-#if !defined (_POSIX_C_SOURCE) && !defined (_POSIX_SOURCE) && defined (VMS)
-/* VMS doesn't have `size_t' in <sys/types.h>, even though POSIX says it
-   should be there.  */
-#include <stddef.h>
-#endif
-
 
 /* The following bits are used to determine the regexp syntax we
    recognize.  The not-set meaning typically corresponds to the syntax

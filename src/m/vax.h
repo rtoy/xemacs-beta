@@ -76,17 +76,6 @@ NOTE-END  */
 
 #endif /* BSD */
 
-#ifdef VMS
-
-/* Data type of load average, as read out of driver.  */
-
-#define LOAD_AVE_TYPE float
-
-/* Convert that into an integer that is 100 for a load average of 1.0  */
-
-#define LOAD_AVE_CVT(x) ((int) ((x) * 100.0))
-
-#endif /* VMS */
 
 /* Vax sysV has alloca in the PW library.  */
 
@@ -106,10 +95,6 @@ NOTE-END  */
 #ifdef BSD
 #define HAVE_ALLOCA
 #endif /* BSD */
-
-#ifdef VMS
-#define C_ALLOCA
-#endif
 
 #ifdef BSD4_2
 #define HAVE_FTIME

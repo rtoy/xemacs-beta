@@ -146,12 +146,12 @@
 ;; (define-coding-system-alias 'koi8-r 'cyrillic-koi8)
 ;; (define-coding-system-alias 'koi8 'cyrillic-koi8)
 
-(make-coding-system
- 'koi8-r 'ccl
- "Coding-system used for KOI8-R."
- `(decode ,ccl-decode-koi8
-   encode ,ccl-encode-koi8
-   mnemonic "KOI8"))
+;; (make-coding-system
+;;  'koi8-r 'ccl
+;;  "Coding-system used for KOI8-R."
+;;  `(decode ,ccl-decode-koi8
+;;    encode ,ccl-encode-koi8
+;;    mnemonic "KOI8"))
 
 ;;(define-coding-system-alias 'koi8-r 'koi8)
 

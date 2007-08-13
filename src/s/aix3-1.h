@@ -95,7 +95,6 @@ Boston, MA 02111-1307, USA.  */
    is named avenrun.  */
 
 #define LDAV_SYMBOL "avenrun"
-
 /* Special itemss needed to make Emacs run on this system.  */
 
 /* On USG systems the system calls are interruptible by signals

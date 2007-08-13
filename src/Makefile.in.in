@@ -269,7 +269,7 @@ mo_dir = ${etcdir}
 mo_file = ${mo_dir}emacs.mo
 #endif
 
-LOADPATH =  EMACSLOADPATH="${lispdir}prim"
+LOADPATH =  EMACSLOADPATH="${lispdir}"
 DUMPENV = $(LOADPATH)
 
 release: temacs ${libsrc}DOC $(mo_file) ${other_files}
@@ -309,7 +309,7 @@ FRC.update-elc.stamp :
 
 update-elc.stamp : FRC.update-elc.stamp
 	@touch NOBYTECOMPILE
-	${DUMPENV} ./temacs -batch -l ../prim/update-elc.el
+	${DUMPENV} ./temacs -batch -l update-elc.el
 	@if test ! -f $@ -o -f NOBYTECOMPILE; then touch $@; fi; \
 	 $(RM) NOBYTECOMPILE
 
@@ -323,14 +323,14 @@ dynodump_deps = ../dynodump/dynodump.so
 
 ${libsrc}DOC: temacs update-elc.stamp
 	$(RM) ${libsrc}DOC; \
-	${DUMPENV} ./temacs -batch -l ../prim/make-docfile.el -- \
+	${DUMPENV} ./temacs -batch -l make-docfile.el -- \
 		-o ${libsrc}DOC -d ${srcdir} -i ${libsrc}../site-packages \
 		${obj_src} ${mallocdocsrc} ${rallocdocsrc}
 
 dump_elcs: dump-elcs
 
 dump-elcs: temacs
-	-${DUMPENV} ./temacs -batch -l ../prim/update-elc.el
+	-${DUMPENV} ./temacs -batch -l update-elc.el
 
 all-elc all-elcs:
 	cd .. && $(RECURSIVE_MAKE) all-elc

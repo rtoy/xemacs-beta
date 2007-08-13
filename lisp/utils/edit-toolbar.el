@@ -191,7 +191,8 @@ Editing commands:
 
 \\{edit-toolbar-map}"
   (setq mode-popup-menu edit-toolbar-menu)
-  (if current-menubar
+  (if (and (featurep 'menubar))
+      current-menubar
       (progn
 	(set (make-local-variable 'current-menubar)
 	     (copy-sequence current-menubar))

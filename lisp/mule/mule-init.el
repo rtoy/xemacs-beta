@@ -66,22 +66,22 @@
 
 ;; MULE keymap codes were moved to mule-cmds.el.
 
-(define-key help-map "T" 'help-with-tutorial-for-mule)
+;; (define-key help-map "T" 'help-with-tutorial-for-mule)
 
-(defvar help-with-tutorial-language-alist
-  '(("Japanese" . ".jp")
-    ("Korean"   . ".kr")
-    ("Thai"     . ".th")))
+;; (defvar help-with-tutorial-language-alist
+;;  '(("Japanese" . ".jp")
+;;    ("Korean"   . ".kr")
+;;    ("Thai"     . ".th")))
 
-(defun help-with-tutorial-for-mule (language)
-  "Select the Mule learn-by-doing tutorial."
-  (interactive (list (let ((completion-ignore-case t)
-			   lang)
-		       (completing-read
-			"Language: "
-			help-with-tutorial-language-alist))))
-  (setq language (cdr (assoc language help-with-tutorial-language-alist)))
-  (help-with-tutorial (concat "mule/TUTORIAL" (or language ""))))
+;(defun help-with-tutorial-for-mule (language)
+;  "Select the Mule learn-by-doing tutorial."
+;  (interactive (list (let ((completion-ignore-case t)
+;			   lang)
+;		       (completing-read
+;			"Language: "
+;			help-with-tutorial-language-alist))))
+;  (setq language (cdr (assoc language help-with-tutorial-language-alist)))
+;  (help-with-tutorial (concat "mule/TUTORIAL" (or language ""))))
 
 (defvar auto-language-alist
   '(("^ja" . "Japanese")

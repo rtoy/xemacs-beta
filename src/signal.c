@@ -406,19 +406,11 @@ interrupt_signal (int sig)
  */
       sys_suspend ();
 #else
-#ifdef VMS
-      if (sys_suspend () == -1)
-	{
-	  stdout_out ("Not running as a subprocess;\n");
-	  stdout_out ("you can continue or abort.\n");
-	}
-#else /* not VMS */
       /* Perhaps should really fork an inferior shell?
 	 But that would not provide any way to get back
 	 to the original shell, ever.  */
       stdout_out ("No support for stopping a process on this operating system;\n");
       stdout_out ("you can continue or abort.\n");
-#endif /* not VMS */
 #endif /* not SIGTSTP */
       stdout_out ("Auto-save? (y or n) ");
       fflush (stdout);
@@ -426,11 +418,7 @@ interrupt_signal (int sig)
 	Fdo_auto_save (Qnil, Qnil);
       while (c != '\n')
         c = getc (stdin);
-#ifdef VMS
-      stdout_out ("Abort (and enter debugger)? (y or n) ");
-#else /* not VMS */
       stdout_out ("Abort (and dump core)? (y or n) ");
-#endif /* not VMS */
       fflush (stdout);
       if (((c = getc (stdin)) & ~040) == 'Y')
 	abort ();

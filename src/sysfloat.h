@@ -76,16 +76,6 @@ Boston, MA 02111-1307, USA.  */
 # include <errno.h>
 #endif
 
-/* Avoid traps on VMS from sinh and cosh.
-   All the other functions set errno instead.  */
-
-#ifdef VMS
-#undef cosh
-#undef sinh
-#define cosh(x) ((exp(x)+exp(-x))*0.5)
-#define sinh(x) ((exp(x)-exp(-x))*0.5)
-#endif /* VMS */
-
 #ifndef isnan
 # define isnan(x) ((x) != (x))
 #endif

@@ -42,9 +42,9 @@ SUBDIR = xemacs lispref new-users-guide internals gnats
 ../info/%.info : %.texi
 	-$(MAKEINFO) -o $@ $<
 
-srcs = cc-mode cl custom external-widget forms \
-	hyperbole ilisp info ispell oo-browser \
-	pcl-cvs ph standards supercite term \
+srcs = cl custom external-widget forms \
+	info ispell oo-browser \
+	standards supercite term \
 	termcap texinfo vhdl-mode widget xemacs-faq
 
 info = $(srcs:%=../info/%.info)

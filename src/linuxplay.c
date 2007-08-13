@@ -825,6 +825,8 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
 	  fmt != the_fmt) {
   	perror("SNDCTL_DSP_SETFMT");
   	return(0); } }
+    else if (fmt == AFMT_MU_LAW && the_fmt == AFMT_U8 ) {
+      /* the kernel will convert for us */ }
     else {
       perror("SNDCTL_DSP_SETFMT");
       return(0); } }

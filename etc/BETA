@@ -217,9 +217,9 @@ to use an XEmacs shell buffer to run the diff commands, or ...
 M-x cd to the appropriate directory, and issue the command `C-u M-!' from
 within XEmacs.
 
-* XEmacs 20.3 packages
+* XEmacs 20.4 packages
 
-XEmacs 20.3 has added the concept of installable packages searched prior
+XEmacs 20.4 has added the concept of installable packages searched prior
 to dump time when building.
 
 Packages are searched by default under /usr/local/lib/xemacs/packages/.
@@ -254,7 +254,7 @@ A `find . -type d -print' in my top-level package directory reveals:
 
 
 AUCTeX and Gnus have package tarballs in
-	ftp://ftp.xemacs.org/pub/beta/packages-20.3/
+	ftp://ftp.xemacs.org/pub/beta/xemacs-20.4/packages/
 that you can simply untar in a package directory to install.
 
 Karl Hegbloom has a set of packages in
@@ -265,7 +265,7 @@ that work the same way.
 =====================================
 
 The packages directory
-	ftp://ftp.xemacs.org/pub/xemacs/beta/packages-20.3/
+	ftp://ftp.xemacs.org/pub/xemacs/beta/xemacs-20.4/packages/
 
 is divided into subdirectory by the major type of package.
 
@@ -294,7 +294,7 @@ command to install.
 ** Binary package installation (binary-packages)
 ================================================
 
-Prerequisite:  XEmacs 20.3-beta28.
+Prerequisite:  XEmacs 20.4-b1.
 
 Binary packages are complete entities that can be untarred at the top
 level of an XEmacs package hierarchy and work at runtime.  To install files
@@ -304,7 +304,7 @@ and fill in appropriate values to the prompts.
 ** Single file package installation
 ===================================
 
-Prerequisite:  XEmacs 20.3-beta28.
+Prerequisite:  XEmacs 20.4-b1.
 
 These are single file, self-contained lisp packages that don't need a
 separate directory.  To install something from this directory, run

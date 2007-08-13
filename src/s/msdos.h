@@ -38,7 +38,6 @@ Boston, MA 02111-1307, USA.  */
 /* #define BSD4_2 */
 /* #define BSD4_3 */
 /* #define BSD */
-/* #define VMS */
 #ifndef MSDOS
 #define MSDOS
 #endif
@@ -53,7 +52,6 @@ You lose; /* Emacs for DOS must be compiled with DJGPP */
 
 #define DOS_NT	/* MSDOS or WINDOWSNT */
 #undef BSD
-#undef VMS
 
 /* SYSTEM_TYPE should indicate the kind of system you are using.
  It sets the Lisp variable system-type.  */

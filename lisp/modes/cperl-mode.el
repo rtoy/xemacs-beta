@@ -1,14 +1,12 @@
-;;; This code started from the following message of long time ago (IZ):
+;;; cperl-mode.el --- Perl code editing commands for XEmacs
 
-;;;; From: olson@mcs.anl.gov (Bob Olson)
-;;;; Newsgroups: comp.lang.perl
-;;;; Subject: cperl-mode: Another perl mode for Gnuemacs
-;;;; Date: 14 Aug 91 15:20:01 GMT
-
-;; Perl code editing commands for XEmacs
 ;; Copyright (C) 1985-1996 Bob Olson, Ilya Zakharevich
 ;; Copyright (C) 1997 granted to FSF for changes made by
 ;; Karl M. Hegbloom <karlheg@inetarena.com>
+
+;; Author:  Bob Olson, Ilya Zakharevich
+;; Maintainer:  Karl M. Hegbloom <karlheg@inetarena.com>
+;; Keywords:  languages
 
 ;; This file is part of XEmacs. It may be distributed either under the
 ;; same terms as XEmacs, or under the same terms as Perl. You should
@@ -37,11 +35,20 @@
 ;;; Karl M. Hegbloom <karlheg@inetarena.com>
 
 ;; Original Vendor Version Number:  (mostly based on...)
-;; $Id: cperl-mode.el,v 1.15 1997/10/31 14:52:54 steve Exp $
+;; $Id: cperl-mode.el,v 1.16 1997/11/08 23:36:57 steve Exp $
 
 ;; Increment the final digit once per XEmacs-only revision, the other
 ;; for merges.  (sound ok?)
 ;;;  XEmacs Version Number: 1.35-1
+
+;;; Commentary:
+
+;; This code started from the following message of long time ago (IZ):
+
+;; From: olson@mcs.anl.gov (Bob Olson)
+;; Newsgroups: comp.lang.perl
+;; Subject: cperl-mode: Another perl mode for Gnuemacs
+;; Date: 14 Aug 91 15:20:01 GMT
 
 ;; This mode should autoload when you edit a perl file under XEmacs.
 
@@ -417,6 +424,8 @@
 ;;; Regeneration of TAGS was busted.
 ;;; Can use `syntax-table' property when generating TAGS
 ;;;  (governed by  `cperl-use-syntax-table-text-property-for-tags').
+
+;;; Code:
 
 (defconst cperl-xemacs-p (string-match "XEmacs\\|Lucid" emacs-version))
 

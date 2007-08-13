@@ -304,7 +304,11 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
       (insert-char ?\  (let ((l (- 30 (length (format "%S" fn)))))
 			 (if (natnump l) l 0)))
       (and hyper-apropos-show-brief-docs
-	   (setq doc (documentation fn))
+	   (setq doc
+	   ;; A symbol's function slot can point to an unbound symbol.
+	   ;; In that case, `documentation' will fail.
+		 (ignore-errors
+		   (documentation fn)))
 	   (if  (string-match
 		 "^([^\n\t )]+[\t ]*\\([^\n)]+\\)?)\\(:[\t ]*\\|\n?\\'\\)"
 		 doc)

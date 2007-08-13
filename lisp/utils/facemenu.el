@@ -783,9 +783,10 @@ Returns entry if successful."
 (defun facemenu-insert-menu-entry (menu before-entry name function)
   "Insert menu item with name NAME and associated function FUNCTION
 into menu MENU before entry BEFORE-ENTRY."
-  (while (not (eq (cadr menu) before-entry))
-    (setq menu (cdr menu)))
-  (setcdr menu (cons (vector name function t) (cdr menu))))
+  (when (featurep 'menubar)
+    (while (not (eq (cadr menu) before-entry))
+      (setq menu (cdr menu)))
+    (setcdr menu (cons (vector name function t) (cdr menu)))))
 
 (defun facemenu-add-new-face (face)
   "Add a FACE to the appropriate Face menu.

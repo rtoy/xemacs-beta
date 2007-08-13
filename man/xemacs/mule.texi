@@ -9,27 +9,20 @@
 @cindex encoding of characters
 
 @cindex Chinese
-@cindex Devanagari
-@cindex Hindi
-@cindex Marathi
-@cindex Ethiopian
 @cindex Greek
 @cindex IPA
 @cindex Japanese
 @cindex Korean
-@cindex Lao
 @cindex Russian
-@cindex Thai
-@cindex Tibetan
-@cindex Vietnamese
   If you compile XEmacs with mule option, it supports a wide variety of
-world scripts, including Latin alphabet (for some European languages and
-Vietnamese), as well as Arabic, Simplified Chinese (for mainland of
-China), Traditional Chinese (for Taiwan and Hong-Kong), Greek, Hebrew,
-IPA, Japanese (Hiragana, Katakana and Kanji), Korean (Hangul and Hanja)
-and Cyrillic (Beylorussian, Bulgarian, Russian, Serbian and Ukrainian)
-scripts.  These features have been merged from the modified version of
-Emacs known as MULE (for ``MULti-lingual Enhancement to GNU Emacs'').
+world scripts, including Latin script, as well as Arabic script,
+Simplified Chinese script (for mainland of China), Traditional Chinese
+script (for Taiwan and Hong-Kong), Greek script, Hebrew script, IPA
+symbols, Japanese scripts (Hiragana, Katakana and Kanji), Korean scripts
+(Hangul and Hanja) and Cyrillic script (for Beylorussian, Bulgarian,
+Russian, Serbian and Ukrainian).  These features have been merged from
+the modified version of Emacs known as MULE (for ``MULti-lingual
+Enhancement to GNU Emacs'').
 
 @menu
 * Mule Intro::              Basic concepts of Mule.
@@ -437,6 +430,10 @@ system, you can use these commands to specify one:
 Use coding system @var{coding} for the visited file
 in the current buffer.
 
+@item C-x @key{RET} c @var{coding} @key{RET}
+Specify coding system @var{coding} for the immediately following
+command.
+
 @item C-x @key{RET} k @var{coding} @key{RET}
 Use coding system @var{coding} for keyboard input.
 
@@ -457,13 +454,28 @@ file.  You specify which coding system using the minibuffer.  Since this
 command applies to a file you have already visited, it affects only the
 way the file is saved.
 
+@kindex C-x RET c
+@findex universal-coding-system-argument
   Another way to specify the coding system for a file is when you visit
-the file.  If you run some file input commands with the precedent
-@kbd{C-u}, you can specify coding system to read from minibuffer.
+the file.  First use the command @kbd{C-x @key{RET} c}
+(@code{universal-coding-system-argument}); this command uses the
+minibuffer to read a coding system name.  After you exit the minibuffer,
+the specified coding system is used for @emph{the immediately following
+command}.
 
   So if the immediately following command is @kbd{C-x C-f}, for example,
 it reads the file using that coding system (and records the coding
-system for when the file is saved).  Other file commands affected by a
+system for when the file is saved).  Or if the immediately following
+command is @kbd{C-x C-w}, it writes the file using that coding system.
+Other file commands affected by a specified coding system include
+@kbd{C-x C-i} and @kbd{C-x C-v}, as well as the other-window variants of
+@kbd{C-x C-f}.
+
+  In addition, if you run some file input commands with the precedent
+@kbd{C-u}, you can specify coding system to read from minibuffer.  So if
+the immediately following command is @kbd{C-x C-f}, for example, it
+reads the file using that coding system (and records the coding system
+for when the file is saved).  Other file commands affected by a
 specified coding system include @kbd{C-x C-i} and @kbd{C-x C-v}, as well
 as the other-window variants of @kbd{C-x C-f}.
 

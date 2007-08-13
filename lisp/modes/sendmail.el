@@ -513,6 +513,8 @@ Prefix arg means don't delete this window."
   (interactive "P")
   (mail-bury arg))
 
+(defvar rmail-summary-buffer)
+
 (defun mail-bury (arg)
   "Bury this mail buffer."
   (let ((newbuf (other-buffer (current-buffer))))
@@ -859,8 +861,12 @@ back to the user from the mailer."
 	    (setq mail-do-fcc-cached-timezone
 		  (buffer-substring (point-min) (1- (point-max)))))))))
 
-(eval-when-compile
-  (require 'vm-misc))
+;; Can't do this now that VM is unbundled.
+;; The lack of vm-misc is handled in mail-do-fcc-vm-internal.
+;;(eval-when-compile
+;;  (require 'vm-misc))
+
+(defvar rmail-total-messages)
 
 (defun mail-do-fcc-rmail-internal (buffer)
   (or (eq major-mode 'rmail-mode) (error "this only works in rmail-mode"))
@@ -900,24 +906,30 @@ back to the user from the mailer."
 	  (forward-line)
 	  (delete-region (point-min) (point))))
 
-    ;; Largely copied from #'vm-save-message in vm-save.el
-    (vm-save-restriction
-     (widen)
-     (goto-char (point-max))
-     (if foreign-folder-p
-	 (vm-write-string (current-buffer)
-			  (vm-leading-message-separator vm-folder-type)))
-     (insert-buffer-substring buffer)
-     (if foreign-folder-p
-	 (vm-write-string (current-buffer)
-			  (vm-trailing-message-separator vm-folder-type)))
+    ;; Use eval to inhibit compilation of the following code.
+    ;; The code contains macros, and to compile them a (reuqire
+    ;; 'vm-misc) is needed.  When VM stopped being bundled with
+    ;; XEmacs, this require call became impossible.
+    (eval
+     (quote
+      ;; Largely copied from #'vm-save-message in vm-save.el
+      (vm-save-restriction
+       (widen)
+       (goto-char (point-max))
+       (if foreign-folder-p
+	   (vm-write-string (current-buffer)
+			    (vm-leading-message-separator vm-folder-type)))
+       (insert-buffer-substring buffer)
+       (if foreign-folder-p
+	   (vm-write-string (current-buffer)
+			    (vm-trailing-message-separator vm-folder-type)))
 
-     (vm-increment vm-messages-not-on-disk)
-     (vm-set-buffer-modified-p t)
-     (vm-clear-modification-flag-undos)
-     (vm-check-for-killed-summary)
-     (vm-assimilate-new-messages)
-     (vm-update-summary-and-mode-line))))
+       (vm-increment vm-messages-not-on-disk)
+       (vm-set-buffer-modified-p t)
+       (vm-clear-modification-flag-undos)
+       (vm-check-for-killed-summary)
+       (vm-assimilate-new-messages)
+       (vm-update-summary-and-mode-line))))))
 
 ;;(defun mail-sent-via ()
 ;;  "Make a Sent-via header line from each To or CC header line."

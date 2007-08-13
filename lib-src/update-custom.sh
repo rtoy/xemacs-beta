@@ -65,8 +65,8 @@ fi
 # These directories don't have customizations, or are partially broken.
 # If some of the packages listed here are customized, don't forget to
 #  remove the directory!
-ignore_dirs="cl egg eos ilisp its language locale mel mu sunpro term \
-tooltalk iso mailcrypt oobr tl tm mh-e hyperbole electric apel \
+ignore_dirs="cl egg eos its language locale sunpro term \
+tooltalk iso electric \
 hm--html-menus gnats pcl-cvs vm"
 
 # Only use Mule XEmacs to build Mule-specific autoloads & custom-loads.

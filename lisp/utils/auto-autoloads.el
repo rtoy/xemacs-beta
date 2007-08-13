@@ -1002,23 +1002,6 @@ symmetrical ones, and the same character twice for the others." t nil)
 
 ;;;***
 
-;;;### (autoloads (speedbar-get-focus speedbar-frame-mode) "speedbar" "utils/speedbar.el")
-
-(defalias 'speedbar 'speedbar-frame-mode)
-
-(autoload 'speedbar-frame-mode "speedbar" "\
-Enable or disable speedbar.  Positive ARG means turn on, negative turn off.
-nil means toggle.  Once the speedbar frame is activated, a buffer in
-`speedbar-mode' will be displayed.  Currently, only one speedbar is
-supported at a time." t nil)
-
-(autoload 'speedbar-get-focus "speedbar" "\
-Change frame focus to or from the speedbar frame.
-If the selected frame is not speedbar, then speedbar frame is
-selected.  If the speedbar frame is active, then select the attached frame." t nil)
-
-;;;***
-
 ;;;### (autoloads nil "timezone" "utils/timezone.el")
 
 (define-error 'invalid-date "Invalid date string")

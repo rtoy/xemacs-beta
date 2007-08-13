@@ -371,9 +371,18 @@ struct dnd_drop_data
 
 union magic_data
 {
-  char             underlying_tty_event;
+#ifdef HAVE_TTY
+  char		    underlying_tty_event;
+#endif
 #ifdef HAVE_X_WINDOWS
-  XEvent           underlying_x_event;
+  XEvent	    underlying_x_event;
+#endif
+#ifdef HAVE_W32GUI  /* XXX FIXME */
+  struct
+    {
+      int	    message;
+      unsigned long data[4]; /* XXX Big enough for biggest thing? */
+    } underlying_w32_event;
 #endif
 };
 

@@ -41,12 +41,6 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef VMS
-#include <string.h>
-#include <rms.h>
-#include <rmsdef.h>
-#endif
-
 /* The d_nameln member of a struct dirent includes the '\0' character
    on some systems, but not on others.  What's worse, you can't tell
    at compile-time which one it will be, since it really depends on

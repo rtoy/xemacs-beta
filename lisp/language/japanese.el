@@ -218,7 +218,7 @@
 
 (set-language-info-alist
  "Japanese" '((setup-function . setup-japanese-environment)
-	      (tutorial . "TUTORIAL.jp")
+	      (tutorial . "TUTORIAL.ja")
 	      (charset . (japanese-jisx0208 japanese-jisx0208-1978
 			  japanese-jisx0212 latin-jisx0201
 			  katakana-jisx0201))

@@ -439,6 +439,11 @@ MAC_END
 #else
 #define CONSOLE_TYPESYM_TTY_P(typesym) 0
 #endif
+#ifdef HAVE_W32GUI
+#define CONSOLE_TYPESYM_W32_P(typesym) EQ (typesym, Qw32)
+#else
+#define CONSOLE_TYPESYM_W32_P(typesym) 0
+#endif
 #define CONSOLE_TYPESYM_STREAM_P(typesym) EQ (typesym, Qstream)
 
 #define CONSOLE_TYPESYM_WIN_P(typesym) \
@@ -451,6 +456,10 @@ MAC_END
 #define CONSOLE_TTY_P(con) CONSOLE_TYPESYM_TTY_P (CONSOLE_TYPE (con))
 #define CHECK_TTY_CONSOLE(z) CHECK_CONSOLE_TYPE (z, tty)
 #define CONCHECK_TTY_CONSOLE(z) CONCHECK_CONSOLE_TYPE (z, tty)
+
+#define CONSOLE_W32_P(con) CONSOLE_TYPESYM_W32_P (CONSOLE_TYPE (con))
+#define CHECK_W32_CONSOLE(z) CHECK_CONSOLE_TYPE (z, w32)
+#define CONCHECK_W32_CONSOLE(z) CONCHECK_CONSOLE_TYPE (z, w32)
 
 #define CONSOLE_STREAM_P(con) CONSOLE_TYPESYM_STREAM_P (CONSOLE_TYPE (con))
 #define CHECK_STREAM_CONSOLE(z) CHECK_CONSOLE_TYPE (z, stream)
@@ -492,6 +501,9 @@ extern Lisp_Object Qtty, Qstream, Qdead;
 #ifdef HAVE_X_WINDOWS
 extern Lisp_Object Qx;
 #endif /* HAVE_X_WINDOWS */
+#ifdef HAVE_W32GUI
+extern Lisp_Object Qw32;
+#endif /* HAVE_W32GUI */
 
 int valid_console_type_p (Lisp_Object type);
 

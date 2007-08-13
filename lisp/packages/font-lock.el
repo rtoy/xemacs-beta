@@ -1204,7 +1204,9 @@ START should be at the beginning of a line."
   (cond ((and (boundp 'fast-lock-mode) fast-lock-mode)
 	 (fast-lock-mode -1))
 	((and (boundp 'lazy-lock-mode) lazy-lock-mode)
-	 (lazy-lock-mode -1))))
+	 (lazy-lock-mode -1))
+	((and (boundp 'lazy-shot-mode) lazy-shot-mode)
+	 (lazy-shot-mode -1))))
 
 ;; Do something special for these packages after fontifying.  I prefer a hook.
 (defun font-lock-after-fontify-buffer ()

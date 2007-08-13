@@ -22,6 +22,7 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
+/* Sync'ed with Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
 
 /* #define FULL_DEBUG */
 #define EMACSDEBUG
@@ -81,10 +82,10 @@ typedef struct _child_process
 {
   int                   fd;
   int                   pid;
-  int                   is_dos_process;
   HANDLE                char_avail;
   HANDLE                char_consumed;
   HANDLE                thrd;
+  HWND                  hwnd;
   PROCESS_INFORMATION   procinfo;
   volatile int          status;
   char                  chr;
@@ -108,6 +109,9 @@ extern filedesc fd_info [ MAXDESC ];
 #define FILE_READ    0x0001
 #define FILE_WRITE   0x0002
 #define FILE_BINARY  0x0010
+#define FILE_LAST_CR            0x0020
+#define FILE_AT_EOF             0x0040
+#define FILE_SEND_SIGCHLD       0x0080
 #define FILE_PIPE    0x0100
 #define FILE_SOCKET  0x0200
 
@@ -116,6 +120,8 @@ extern void delete_child (child_process *cp);
 
 /* ------------------------------------------------------------------------- */
 
+/* Get long (aka "true") form of file name, if it exists.  */
+extern BOOL win32_get_long_filename (char * name, char * buf, int size);
 
 /* Prepare our standard handles for proper inheritance by child processes.  */
 extern void prepare_standard_handles (int in, int out, 

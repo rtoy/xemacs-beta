@@ -960,7 +960,7 @@ Return the type of CODING-SYSTEM.
   return Qnil; /* not reached */
 }
 
-Lisp_Object coding_system_charset (coding_system, gnum)
+Lisp_Object coding_system_charset (Lisp_Object coding_system, int gnum)
 {
   Lisp_Object cs
     = XCODING_SYSTEM_ISO2022_INITIAL_CHARSET (coding_system, gnum);

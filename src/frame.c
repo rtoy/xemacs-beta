@@ -2199,9 +2199,9 @@ on it, then the value will be used in place of that symbol when looking
 up and setting frame property values.  This allows you to alias one
 frame property name to another.
 
-See the variables `default-x-frame-plist' and `default-tty-frame-plist'
-for a description of the properties recognized for particular types of
-frames.
+See the variables `default-x-frame-plist', `default-tty-frame-plist'
+and `default-w32-frame-plist' for a description of the properties
+recognized for particular types of frames.
 */
        (frame, plist))
 {
@@ -2313,8 +2313,8 @@ do {				\
      This is over-the-top bogosity, because it's inconsistent with
      the semantics of `minibuffer' when passed to `make-frame'.
      Returning Qt makes things consistent. */
-  FROB (Qminibuffer, (FRAME_HAS_MINIBUF_P  (f) ? Qt    :
-		      FRAME_MINIBUF_ONLY_P (f) ? Qonly :
+  FROB (Qminibuffer, (FRAME_MINIBUF_ONLY_P (f) ? Qonly :
+		      FRAME_HAS_MINIBUF_P  (f) ? Qt    :
 		      FRAME_MINIBUF_WINDOW (f)));
   FROB (Qunsplittable, FRAME_NO_SPLIT_P (f) ? Qt : Qnil);
   FROB (Qbuffer_predicate, f->buffer_predicate);
@@ -2381,8 +2381,8 @@ do {							\
      This is over-the-top bogosity, because it's inconsistent with
      the semantics of `minibuffer' when passed to `make-frame'.
      Returning Qt makes things consistent. */
-  FROB (Qminibuffer, (FRAME_HAS_MINIBUF_P  (f) ? Qt    :
-                      FRAME_MINIBUF_ONLY_P (f) ? Qonly :
+  FROB (Qminibuffer, (FRAME_MINIBUF_ONLY_P (f) ? Qonly :
+		      FRAME_HAS_MINIBUF_P  (f) ? Qt    :
 		      FRAME_MINIBUF_WINDOW (f)));
   FROB (Qunsplittable, FRAME_NO_SPLIT_P (f) ? Qt : Qnil);
   FROB (Qbuffer_predicate, f->buffer_predicate);
@@ -2623,6 +2623,10 @@ change_frame_size_1 (struct frame *f, int newheight, int newwidth)
 
   /* #### Chuck -- shouldn't we be checking to see if the frame
      is being "changed" to its existing size, and do nothing if so? */
+  /* No, because it would hose toolbar updates.  The toolbar
+     update code relies on this function to cause window `top' and
+     `left' coordinates to be recomputed even though no frame size
+     change occurs. --kyle */
   if (in_display)
     abort ();
 

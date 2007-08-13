@@ -179,11 +179,18 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
       wordstart = get_buffer_pos_char (buf, Vabbrev_start_location,
 				       GB_COERCE_RANGE);
       Vabbrev_start_location = Qnil;
+      /*
+       * Previously, abbrev-prefix-mark inserted a dash to indicate the
+       * abbrev start point.  It now uses an extent with a begin
+       * glyph so there's no dash to remove.
+       */
+/*
       if (wordstart != BUF_ZV (buf)
 	  && BUF_FETCH_CHAR (buf, wordstart) == '-')
 	{
 	  buffer_delete_range (buf, wordstart, wordstart + 1, 0);
 	}
+*/
       wordend = BUF_PT (buf);
     }
   else

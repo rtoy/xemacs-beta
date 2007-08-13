@@ -8,14 +8,11 @@
 	"cl"
 	"cl-extra"
 	"cl-seq"
-	"cl/auto-autoloads"	; Prevents problems later
-	;;"featurep"
 	"widget"
 	"custom"		; Before the world so everything can be
 				; customized
 	"cus-start"		; for customization of builtin variables
 	"cmdloop"
-;; (or (fboundp 'recursive-edit) (load-gc "cmdloop1"))
 	"keymap"
 	"syntax"
 	"device"
@@ -55,7 +52,7 @@
 	;; (load-gc "hyper-apropos")  Soon...
 	#-mule "files-nomule"
 	"files"
-	"lib-complete"
+	#+xemacs "lib-complete" ; InfoDock uses an older version
 	"format"
 	"indent"
 	"isearch-mode"
@@ -75,34 +72,14 @@
 	"lisp-mode"
 	"text-mode"
 	"fill"
-	;; "cc-mode"		; as FSF goes so go we ..
-	;; "scroll-in-place"	; We're not ready for this :-(
-	;; we no longer load buff-menu automatically.
-	;; it will get autoloaded if needed.
+	"auto-save"		; Added for 20.4
 
-	;; Before this will work again, the different system types will need
-	;; to have features named for them.
-
-;     (cond  ; Differences based on system-type
-;      ((eq system-type 'vax-vms)
-;       (load-gc "vmsproc")
-;       (load-gc "vms-patch"))
-;      ((eq system-type 'windows-nt)
-;       ;; (load-gc "ls-lisp")
 	#+windows-nt "winnt"
-;      ((eq system-type 'ms-dos)
-;       ;; (load-gc "ls-lisp")
-;       (load-gc "dos-fns")
-;       (load-gc "disp-table")))	; needed to setup ibm-pc char set,
-				; see internal.el
 	#+lisp-float-type "float-sup"
 	"itimer"		; for vars auto-save-timeout and
 				; auto-gc-threshold
 	"itimer-autosave"
 	#+toolbar "toolbar"
-;       ;; else still define a few functions.
-;       (defun toolbar-button-p    (obj) "No toolbar support." nil)
-;       (defun toolbar-specifier-p (obj) "No toolbar support." nil))
 	#+scrollbar "scrollbar"
 	#+menubar "menubar"
 	#+dialog "dialog"
@@ -150,7 +127,7 @@
 	#+mule "language/misc-lang"
 ;;	#+mule "language/thai"
 	#+mule "language/viet-chars"
-	#+mule "language/vietnamese"
+;;	#+mule "language/vietnamese"
 
 	;; Specialized language support
 	#+(and mule CANNA) "canna-leim"
@@ -177,6 +154,9 @@
 	#+x "x-misc"
 	#+x "x-init"
 	#+(and x toolbar) "x-toolbar"
+;; preload the w32gui code.
+	#+w32 "w32-faces"
+	#+w32 "w32-init"
 ;; preload the TTY init code.
 	#+tty "tty-init"
 ;;; Formerly in tooltalk/tooltalk-load.el
@@ -190,10 +170,10 @@
 ;; #+energize "energize/energize-load.el"
 ;;; formerly in sunpro/sunpro-load.el
 ;;	#+(and mule sparcworks) "mime-setup"
-	#+sparcworks "cc-mode"
+	#+sparcworks "cc-mode" ; Requires cc-mode package
 	#+sparcworks "sunpro-init"
 	#+sparcworks "ring"
-	#+sparcworks "comint"
+	#+sparcworks "comint" ; Requires comint package
 	#+sparcworks "annotations"
 ;;; formerly in eos/sun-eos-load.el
 ;;	#+sparcworks "sun-eos-init"

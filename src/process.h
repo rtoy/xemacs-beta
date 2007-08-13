@@ -115,11 +115,6 @@ void kick_status_notify (void);
 
 void deactivate_process (Lisp_Object proc);
 
-#ifdef VMS
-void create_process (Lisp_Object process, char **new_argv,
-		     CONST char *current_dir);
-#endif
-
 #ifdef WINDOWSNT
 int
 #else
@@ -137,13 +132,13 @@ Lisp_Object canonicalize_host_name (Lisp_Object host);
 #endif /* not NO_SUBPROCESSES */
 
 /* The name of the file open to get a null file, or a data sink.
-   VMS, MS-DOS, and OS/2 redefine this.  */
+   MS-DOS, and OS/2 redefine this.  */
 #ifndef NULL_DEVICE
 #define NULL_DEVICE "/dev/null"
 #endif
 
 /* A string listing the possible suffixes used for executable files,
-   separated by colons.  VMS, MS-DOS, and OS/2 redefine this.  */
+   separated by colons.  MS-DOS, and OS/2 redefine this.  */
 #ifndef EXEC_SUFFIXES
 #define EXEC_SUFFIXES ""
 #endif

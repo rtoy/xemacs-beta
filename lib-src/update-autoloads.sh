@@ -94,9 +94,11 @@ fi
 # EFS is now packaged
 #make_special efs autoloads
 #make_special eos autoloads # EOS doesn't have custom or autoloads
-make_special hyperbole autoloads
+# Hyperbole is now packaged
+# make_special hyperbole autoloads
 # make_special ilisp autoloads
-make_special oobr HYPB_ELC='' autoloads
+# oobr is now packaged
+# make_special oobr HYPB_ELC='' autoloads
 ## W3 is a package now
 ##make_special w3 autoloads
 

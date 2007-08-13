@@ -2728,7 +2728,10 @@ EndDSCPage\n"))
   (if (and (boundp 'lazy-lock-mode) lazy-lock-mode)
       (if (fboundp 'lazy-lock-fontify-region)
           (lazy-lock-fontify-region start end) ; the new
-        (lazy-lock-fontify-buffer))))	       ; the old
+        (lazy-lock-fontify-buffer)))	       ; the old
+  (if (and (boundp 'lazy-shot-mode) lazy-shot-mode) ;; temporary untill
+      (lazy-shot-fontify-region start end)))        ;;  lazy-shot is renamed
+  
 
 (defun ps-generate-postscript-with-faces (from to)
   ;; Build the reference lists of faces if necessary.

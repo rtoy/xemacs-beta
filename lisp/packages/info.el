@@ -1907,7 +1907,7 @@ This command is designed to be used whether you are already in Info or not."
 (defun Info-elisp-ref (func)
   "Look up an Emacs Lisp function in the Elisp manual in the Info system.
 This command is designed to be used whether you are already in Info or not."
-  (interactive (let ((fn (funcall find-function-function))
+  (interactive (let ((fn (function-at-point))
 		     (enable-recursive-minibuffers t)	     
 		     val)
 		 (setq val (completing-read

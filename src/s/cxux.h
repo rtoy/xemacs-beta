@@ -34,7 +34,6 @@ Boston, MA 02111-1307, USA.  */
 /* #define BSD4_2 */
 /* #define BSD4_3 */
 /* #define BSD */
-/* #define VMS */
 
 #ifndef	_CX_UX
 #define	_CX_UX 1

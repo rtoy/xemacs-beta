@@ -3351,16 +3351,35 @@ Return non-nil if feature FEXP is present in this Emacs.
 Use this to conditionalize execution of lisp code based on the
  presence or absence of emacs or environment extensions.
 FEXP can be a symbol, a number, or a list.
-If a symbol, it will be looked up in the `features' variable, and
- non-nil will be returned if it is found.
-If FEXP is a number, the function will return non-nil if this Emacs
+If it is a symbol, that symbol is looked up in the `features' variable,
+ and non-nil will be returned if found.
+If it is a number, the function will return non-nil if this Emacs
  has an equal or greater version number than FEXP.
-If FEXP is a list whose car is the symbol `and', it will return
+If it is a list whose car is the symbol `and', it will return
  non-nil if all the features in its cdr are non-nil.
-If FEXP is a list whose car is the symbol `or', it will return non-nil
+If it is a list whose car is the symbol `or', it will return non-nil
  if any of the features in its cdr are non-nil.
-If FEXP is a list whose car is the symbol `not', it will return
+If it is a list whose car is the symbol `not', it will return
  non-nil if the feature is not present.
+
+Examples:
+
+  (featurep 'xemacs)
+    => ; Non-nil on XEmacs.
+
+  (featurep '(and xemacs gnus))
+    => ; Non-nil on XEmacs with Gnus loaded.
+
+  (featurep '(or tty-frames (and emacs 19.30)))
+    => ; Non-nil if this Emacs supports TTY frames.
+
+  (featurep '(or (and xemacs 19.15) (and emacs 19.34)))
+    => ; Non-nil on XEmacs 19.15 and later, or FSF Emacs 19.34 and later.
+
+NOTE: The advanced arguments of this function (anything other than a
+symbol) are not yet supported by FSF Emacs.  If you feel they are useful
+for supporting multiple Emacs variants, lobby Richard Stallman at
+<bug-gnu-emacs@prep.ai.mit.edu>.
 */
        (fexp))
 {
@@ -3369,6 +3388,7 @@ If FEXP is a list whose car is the symbol `not', it will return
   return NILP (Fmemq (fexp, Vfeatures)) ? Qnil : Qt;
 #else  /* FEATUREP_SYNTAX */
   extern Lisp_Object Vemacs_major_version, Vemacs_minor_version;
+  extern Lisp_Object Qfeaturep;
   static double featurep_emacs_version;
 
   /* Brute force translation from Erik Naggum's lisp function. */
@@ -3400,7 +3420,7 @@ If FEXP is a list whose car is the symbol `not', it will return
 	  tem = XCDR (fexp);
 	  negate = Fcar (tem);
 	  if (!NILP (tem))
-	    return NILP (Ffeaturep (negate)) ? Qt : Qnil;
+	    return NILP (call1 (Qfeaturep, negate)) ? Qt : Qnil;
 	  else
 	    return Fsignal (Qinvalid_read_syntax, list1 (tem));
 	}
@@ -3408,7 +3428,7 @@ If FEXP is a list whose car is the symbol `not', it will return
 	{
 	  tem = XCDR(fexp);
 	  /* Use Fcar/Fcdr for error-checking. */
-	  while (!NILP (tem) && !NILP (Ffeaturep (Fcar (tem))))
+	  while (!NILP (tem) && !NILP (call1 (Qfeaturep, Fcar (tem))))
 	    {
 	      tem = Fcdr (tem);
 	    }
@@ -3418,7 +3438,7 @@ If FEXP is a list whose car is the symbol `not', it will return
 	{
 	  tem = XCDR (fexp);
 	  /* Use Fcar/Fcdr for error-checking. */
-	  while (!NILP (tem) && NILP (Ffeaturep (Fcar (tem))))
+	  while (!NILP (tem) && NILP (call1 (Qfeaturep, Fcar (tem))))
 	    {
 	      tem = Fcdr (tem);
 	    }

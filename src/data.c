@@ -382,6 +382,19 @@ or nil if it takes an arbitrary number of arguments or is a special form.
     return make_int (nargs);
 }
 
+DEFUN ("subr-interactive", Fsubr_interactive, 1, 1, 0, /*
+Return the interactive spec of the subr object, or nil.
+If non-nil, the return value will be a list whose first element is
+`interactive' and whose second element is the interactive spec.
+*/
+       (subr))
+{
+  CONST char *prompt;
+  CHECK_SUBR (subr);
+  prompt = XSUBR (subr)->prompt;
+  return prompt ? list2 (Qinteractive, build_string (prompt)) : Qnil;
+}
+
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
 t if OBJECT is a byte-compiled function object.
 */
@@ -2303,6 +2316,7 @@ syms_of_data (void)
   DEFSUBR (Fsubrp);
   DEFSUBR (Fsubr_min_args);
   DEFSUBR (Fsubr_max_args);
+  DEFSUBR (Fsubr_interactive);
   DEFSUBR (Fcompiled_function_p);
   DEFSUBR (Ftype_of);
   DEFSUBR (Fcar);

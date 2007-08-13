@@ -55,12 +55,6 @@ extern char *tzname[];	/* RS6000 and others want it this way.  */
 extern long timezone;
 #endif
 
-#ifdef VMS
-#ifdef VAXC
-#include "vmstime.h"
-#endif
-#endif
-
 /* On some configurations (hpux8.0, X11R4), sys/time.h and X11/Xos.h
    disagree about the name of the guard symbol.  */
 #ifdef HPUX

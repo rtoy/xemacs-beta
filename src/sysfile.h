@@ -40,18 +40,6 @@ Boston, MA 02111-1307, USA.  */
 # include <sys/fcntl.h>
 #endif /* NeXT */
 
-#ifdef VMS
-#ifndef __GNUC__
-#include <file.h>
-#endif
-#include <rms.h>
-#include <rmsdef.h>
-#include <fab.h>
-#include <nam.h>
-#include <perror.h>
-#include <stddef.h>
-#endif
-
 #ifdef WINDOWSNT
 #include <io.h>
 #endif
@@ -156,7 +144,7 @@ Boston, MA 02111-1307, USA.  */
 #define S_ISNWK(m) (((m) & S_IFMT) == S_IFNWK)
 #endif
 
-#if !defined (USG) && !defined (VMS) && !defined (WINDOWSNT)
+#if !defined (USG)  && !defined (WINDOWSNT)
 # define HAVE_FSYNC
 #endif
 

@@ -23,30 +23,12 @@ Boston, MA 02111-1307, USA.  */
 	last edit:	09-Jul-1983	D A Gwyn
 */
 
-#ifdef VMS
-#ifndef FAB$C_BID
-#include <fab.h>
-#endif
-#ifndef NAM$C_BID
-#include <nam.h>
-#endif
-#ifndef RMS$_SUC
-#include <rmsdef.h>
-#endif
-#include "vms-dir.h"
-#endif /* VMS */
-
 #define DIRBLKSIZ	512		/* size of directory block */
-#ifdef VMS
-#define MAXNAMLEN	(DIR$S_NAME + 7) /* 80 plus room for version #.  */
-#define MAXFULLSPEC	NAM$C_MAXRSS /* Maximum full spec */
-#else
 #ifdef WINDOWSNT
 #define MAXNAMLEN	255
 #else  /* not WINDOWSNT */
 #define MAXNAMLEN	15		/* maximum filename length */
 #endif /* not WINDOWSNT */
-#endif /* VMS */
 	/* NOTE:  MAXNAMLEN must be one less than a multiple of 4 */
 
 struct direct				/* data from readdir() */

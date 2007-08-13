@@ -697,6 +697,10 @@ main_1 (int argc, char **argv, char **envp)
 	display_use = "x";
 
 #endif /* HAVE_X_WINDOWS */
+#ifdef HAVE_W32GUI
+      if (!noninteractive)
+	display_use = "w32";
+#endif /* HAVE_W32GUI */
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
@@ -875,6 +879,14 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 #endif /* HAVE_X_WINDOWS */
 
+#ifdef HAVE_W32GUI
+      syms_of_console_w32 ();
+      syms_of_device_w32 ();
+      syms_of_event_w32 ();
+      syms_of_frame_w32 ();
+      syms_of_objects_w32 ();
+#endif
+
 #ifdef MULE
       syms_of_mule ();
       syms_of_mule_ccl ();
@@ -961,6 +973,14 @@ main_1 (int argc, char **argv, char **envp)
       console_type_create_toolbar_x ();
 #endif
 #endif /* HAVE_X_WINDOWS */
+
+#ifdef HAVE_W32GUI
+      console_type_create_w32 ();
+      console_type_create_device_w32 ();
+      console_type_create_frame_w32 ();
+      console_type_create_objects_w32 ();
+      console_type_create_redisplay_w32 ();
+#endif
 
       /* Now initialize the specifier types and associated symbols.
          Other than the first function below, the functions may
@@ -1188,6 +1208,14 @@ main_1 (int argc, char **argv, char **envp)
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui_x ();
 #endif
+#endif
+
+#ifdef HAVE_W32GUI
+      vars_of_device_w32 ();
+      vars_of_console_w32 ();
+      vars_of_event_w32 ();
+      vars_of_frame_w32 ();
+      vars_of_objects_w32 ();
 #endif
 
 #ifdef MULE

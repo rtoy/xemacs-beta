@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef BALLOON_HELP_H
 #define BALLOON_HELP_H
 
-#include <X11/Intrinsic.h>
+#include "xintrinsic.h"
 
 void balloon_help_create (Display* dpy,
 			  Pixel fg, Pixel bg, Pixel shine, Pixel shadow,

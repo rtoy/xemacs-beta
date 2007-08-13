@@ -2264,7 +2264,7 @@ echo area while this function is waiting for an event.
 The event returned will be a keyboard, mouse press, or mouse release event.
 If there are non-command events available (mouse motion, sub-process output,
 etc) then these will be executed (with `dispatch-event') and discarded.  This
-function is provided as a convenience; it is equivalent to the lisp code
+function is provided as a convenience; it is rougly equivalent to the lisp code
 
 	(while (progn
 		 (next-event event prompt)
@@ -2274,6 +2274,7 @@ function is provided as a convenience; it is equivalent to the lisp code
 	                  (misc-user-event-p event))))
 	   (dispatch-event event))
 
+but it also makes a provision for displaying keystrokes in the echo area.
 */
        (event, prompt))
 {
@@ -4872,10 +4873,12 @@ vars_of_event_stream (void)
 #ifdef HAVE_X_WINDOWS
   vars_of_event_Xt ();
 #endif
-#if defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS)
+#if defined(HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
   vars_of_event_tty ();
 #endif
-
+#ifdef HAVE_W32GUI
+  vars_of_event_w32 ();
+#endif
 
   recent_keys_ring_index = 0;
   recent_keys_ring_size = 100;
@@ -5278,14 +5281,20 @@ init_event_stream (void)
       if (!strcmp (display_use, "x"))
 	init_event_Xt_late ();
       else
+#elif defined(HAVE_W32GUI)
+      if (!strcmp (display_use, "w32"))
+	init_event_w32_late ();
+      else
 #endif
 	  {
 	    /* For TTY's, use the Xt event loop if we can; it allows
 	       us to later open an X connection. */
 #if defined (HAVE_X_WINDOWS) && !defined (DEBUG_TTY_EVENT_STREAM)
 	    init_event_Xt_late ();
-#else
+#elif defined (HAVE_TTY)
 	    init_event_tty_late ();
+#elif defined(HAVE_W32GUI)
+	    init_event_w32_late ();
 #endif
 	  }
       init_interrupts_late ();

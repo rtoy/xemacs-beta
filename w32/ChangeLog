@@ -1,0 +1,94 @@
+Wed November 05 23:40:00 1997 <jhar@tardis.ed.ac.uk>
+
+	* faces.el: init-other-random-faces
+ 	  Reinstated code that uses (mono x) as a specifer tag, but
+	  conditioned it on (featurep 'x) because x is not a valid
+	  specifier tag under native-win32.
+	
+	* fileio.c: insert-file-contents-internal
+	  Added a bodge to do CRLF->LF conversion of text files,
+	  conditioned on DOS_NT. This is currently only one-way, so all
+	  text files written by XEmacs will be UNIXified. CRLF conversion
+	  is required to make bytecompile work.
+	
+	* w32/xemacs.mak: moved building the DOC file to after the .elcs.
+	
+	* Added file headers to:
+	  w32-faces.el, w32-init.el, console-w32.c, console-w32.h,
+	  device-w32.c, event-w32.c, event-w32.h, frame-w32.c,
+	  objects-w32.c, objects-w32.h, redisplay-w32.c, w32-proc.c
+
+
+Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
+
+	* make-docfile.el: Fixed typo when dumped file does not exist.
+
+	* redisplay-x.c: x_output_vertical_divider:
+	  If HAVE_SCROLLBARS was not defined, coordinate of the right of
+	  the divider was being used unitialised.
+
+	* device.el: make-w32-device added.
+
+	* dumped-lisp: added w32-faces and w32-init to list.
+
+	* faces.el:
+	  - make-face-*: Added calls to appropriate w32 functions
+	    conditioned on (featurep 'w32). Made existing X calls
+	    conditioned on (featurep 'x).
+	  - init-other-random-faces: Hacked out a piece of code which used
+	    (mono x) as a specifier because it made w32 unhappy.
+
+	* console.h: Added Qw32 and CONSOLE_W32* macros, conditioned on
+	  HAVE_W32GUI.
+
+	* emacs.c: Added calls to the following, conditioned on HAVE_W32GUI:
+	  syms_of_*_w32, vars_of_*_w32, console_type_create_*w32.
+
+	* event-stream.c: Conditioned on HAVE_W32GUI:
+	  - vars_of_event_stream calls vars_of_event_w32.
+	  - init_event_stream calls init_event_w32_late.
+
+	* events-mod.h: Removed comment about having alternative making
+	  MOD_* constants for different windowing systems.
+
+	* events.c: Conditioned on HAVE_W32GUI:
+	  - event-equal: Added case for w32 magic events.
+	  - event-hash: Added case for w32 magic events.
+	
+	* events.h: Conditioned on HAVE_W32GUI:
+	  Added struct underlying_w32_event to magic_data.
+
+	* faces.c: complex_vars_of_faces
+	  Added fallbacks for w32 faces, conditioned on HAVE_W32GUI.
+
+	* frame.c: set-frame-properties
+	  Added reference to default-w32-frame-plist to docstring.
+
+	* general.c: Added new Lisp_Object Qw32 and defsymbol.
+
+	* redisplay-output.c: redisplay_update_line
+	  Conditioned reference to stupid_vertical_scrollbar_drag_hack on
+	  HAVE_X_WINDOWS. This will need a proper fix when w32 gets
+	  scrollbars.
+
+	* redisplay-tty.c: init_tty_for_redisplay
+	  Conditioned blocking and unblocking of SIGTTOU on !WIN32 because
+	  these signals don't exist under win32.
+
+	* redisplay.c: init_redisplay
+	  Initialise window system to w32, conditioned on HAVE_W32GUI.
+	  
+	* symsinit.h: Added syms_of_*_w32, vars_of_*_w32 and
+	  init_event_w32_late.
+
+	* sysdep.c: Conditioned various things on WIN32 in addition to
+	  MSDOS.
+	
+	* New files:
+	  w32-faces.el, w32-init.el, console-w32.c, console-w32.h,
+	  device-w32.c, event-w32.c, event-w32.h, frame-w32.c,
+	  objects-w32.c, objects-w32.h, redisplay-w32.c, w32-proc.c
+
+	* Files split from nt to new w32 directory:
+	  ChangeLog, README, Todo, paths.h, config.h, inc/*, runemacs.c,
+	  xemacs.mak.

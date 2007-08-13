@@ -104,7 +104,7 @@
 (eval-when-compile
   ;; We use functions from these modules
   ;; We can't (require 'mh-e) since that wants to load something.
-  (mapcar 'require '(info dired reporter)))
+  (require 'info))
 ;; ----------------------------------------------------------------------------
 ;; USER OPTIONS -- settings you might want to play with.
 ;; ----------------------------------------------------------------------------

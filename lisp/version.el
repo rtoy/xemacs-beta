@@ -1,5 +1,9 @@
-;; Record version number of Emacs.
-;; Copyright (C) 1985, 1991-1994 Free Software Foundation, Inc.
+;; version.el --- Record version number of Emacs.
+
+;; Copyright (C) 1985, 1991-1994, 1997 Free Software Foundation, Inc.
+
+;; Maintainer: XEmacs Development Team
+;; Keywords: internal, dumped
 
 ;; This file is part of XEmacs.
 
@@ -20,18 +24,11 @@
 
 ;;; Synched up with: FSF 19.34.
 
+;;; Commentary:
+
+;; This file is dumped with XEmacs.
+
 ;;; Code:
-
-;;(defconst emacs-version "20.3"
-;;  "Version numbers of this version of XEmacs.")
-
-;;(defconst xemacs-codename "Copenhagen"
-;;  "Release nickname, primarily useful for trial prereleases.
-;;Warning, this variable did not exist in XEmacs versions prior to 20.3")
-
-;;(defconst xemacs-betaname "(beta8)"
-;;  "Non-nil when this is a test (beta) version of XEmacs.
-;;Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
 (defconst xemacs-betaname
   (and emacs-beta-version (format "(beta%d)" emacs-beta-version))

@@ -63,11 +63,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 /* Define first descriptor number available for subprocesses.  */
-#ifdef VMS
-# define FIRST_PROC_DESC 1
-#else /* Not VMS */
-# define FIRST_PROC_DESC 3
-#endif
+#define FIRST_PROC_DESC 3
 
 #ifdef IRIS
 # include <sys/sysmacros.h>	/* for "minor" */

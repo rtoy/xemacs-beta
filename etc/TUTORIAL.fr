@@ -30,8 +30,8 @@ disponibles dans Emacs, les conventions suivantes sont utilisées:
 NOTE IMPORTANTE: pour quitter Emacs, tapez C-x C-c (deux caractères).
 
 Quand vous trouvez les caractères >> au début d'une ligne, cette ligne 
-vous donne des directives pour essayer une commande. Par exemple,
-<<Blank lines inserted here by startup of help-with-tutorial>>
+vous donne des directives pour essayer une commande. Par exemple:
+<<Lignes blanches à but pédagogique. Le texte continue ci-dessous.>>
 >> Maintenant, tapez C-v («view next screen») pour passer à l'écran
    suivant. (Faites le vraiment! Maintenez la touche <Control>
    enfoncée et tapez 'v'). À partir de maintenant, refaites la même

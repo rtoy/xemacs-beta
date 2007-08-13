@@ -33,14 +33,7 @@ extern BOOL ctrl_c_handler (unsigned long type);
 
 #include "ntheap.h"
 
-/* A convenient type for keeping all the info about a mapped file together.  */
-typedef struct file_data {
-    char          *name;
-    unsigned long  size;
-    HANDLE         file;
-    HANDLE         file_mapping;
-    unsigned char *file_base;
-} file_data;
+/* Sync with FSF Emacs 19.34.6 note: struct file_data is now defined in ntheap.h */
 
 enum {
   HEAP_UNINITIALIZED = 1,
@@ -53,10 +46,6 @@ int heap_state = HEAP_UNINITIALIZED;
 
 /* So we can find our heap in the file to recreate it.  */
 unsigned long heap_index_in_executable = UNINIT_LONG;
-
-void open_input_file (file_data *p_file, char *name);
-void open_output_file (file_data *p_file, char *name, unsigned long size);
-void close_file_data (file_data *p_file);
 
 void get_section_info (file_data *p_file);
 void copy_executable_and_dump_data_section (file_data *, file_data *);
@@ -157,7 +146,12 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
   round_heap (get_allocation_unit ());
 
   /* Open the undumped executable file.  */
-  open_input_file (&in_file, in_filename);
+  if (!open_input_file (&in_file, in_filename))
+    {
+      printf ("Failed to open %s (%d)...bailing.\n", 
+	      in_filename, GetLastError ());
+      exit (1);
+    }
 
   /* Get the interesting section info, like start and size of .bss...  */
   get_section_info (&in_file);
@@ -167,7 +161,12 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
   heap_index_in_executable = (unsigned long)
     round_to_next ((unsigned char *) in_file.size, get_allocation_unit ());
   size = heap_index_in_executable + get_committed_heap_size () + bss_size;
-  open_output_file (&out_file, out_filename, size);
+  if (!open_output_file (&out_file, out_filename, size))
+    {
+      printf ("Failed to open %s (%d)...bailing.\n", 
+	      out_filename, GetLastError ());
+      exit (1);
+    }
 
   /* Set the flag (before dumping).  */
   heap_state = HEAP_UNLOADED;
@@ -183,7 +182,7 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
 /* File handling.  */
 
 
-void 
+int
 open_input_file (file_data *p_file, char *filename)
 {
   HANDLE file;
@@ -194,83 +193,59 @@ open_input_file (file_data *p_file, char *filename)
   file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
 		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE) 
-      {
-	printf ("Failed to open %s (%d)...bailing.\n", 
-	       filename, GetLastError ());
-	exit (1);
-      }
+    return FALSE;
 
   size = GetFileSize (file, &upper_size);
   file_mapping = CreateFileMapping (file, NULL, PAGE_READONLY, 
 				    0, size, NULL);
   if (!file_mapping) 
-    {
-      printf ("Failed to create file mapping of %s (%d)...bailing.\n",
-	     filename, GetLastError ());
-      exit (1);
-    }
+    return FALSE;
 
   file_base = MapViewOfFile (file_mapping, FILE_MAP_READ, 0, 0, size);
   if (file_base == 0) 
-    {
-      printf ("Failed to map view of file of %s (%d)...bailing.\n",
-	     filename, GetLastError ());
-      exit (1);
-    }
+    return FALSE;
 
   p_file->name = filename;
   p_file->size = size;
   p_file->file = file;
   p_file->file_mapping = file_mapping;
   p_file->file_base = file_base;
+
+  return TRUE;
 }
 
-void 
+int
 open_output_file (file_data *p_file, char *filename, unsigned long size)
 {
   HANDLE file;
   HANDLE file_mapping;
   void  *file_base;
-  int    i;
 
   file = CreateFile (filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
 		     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE) 
-    {
-      i = GetLastError ();
-      printf ("open_output_file: Failed to open %s (%d).\n", 
-	     filename, i);
-      exit (1);
-    }
+    return FALSE;
   
   file_mapping = CreateFileMapping (file, NULL, PAGE_READWRITE, 
 				    0, size, NULL);
   if (!file_mapping) 
-    {
-      i = GetLastError ();
-      printf ("open_output_file: Failed to create file mapping of %s (%d).\n",
-	     filename, i);
-      exit (1);
-    }
+    return FALSE;
   
   file_base = MapViewOfFile (file_mapping, FILE_MAP_WRITE, 0, 0, size);
   if (file_base == 0) 
-    {
-      i = GetLastError ();
-      printf ("open_output_file: Failed to map view of file of %s (%d).\n",
-	     filename, i);
-      exit (1);
-    }
+    return FALSE;
   
   p_file->name = filename;
   p_file->size = size;
   p_file->file = file;
   p_file->file_mapping = file_mapping;
   p_file->file_base = file_base;
+
+  return TRUE;
 }
 
 /* Close the system structures associated with the given file.  */
-static void
+void
 close_file_data (file_data *p_file)
 {
     UnmapViewOfFile (p_file->file_base);
@@ -318,6 +293,44 @@ get_bss_info_from_map_file (file_data *p_infile, PUCHAR *p_bss_start,
     }
   *p_bss_start = (PUCHAR) start;
   *p_bss_size = (DWORD) len;
+}
+
+/* Return pointer to section header for named section. */
+IMAGE_SECTION_HEADER *
+find_section (char * name, IMAGE_NT_HEADERS * nt_header)
+{
+  PIMAGE_SECTION_HEADER section;
+  int i;
+
+  section = IMAGE_FIRST_SECTION (nt_header);
+
+  for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++)
+    {
+      if (strcmp (section->Name, name) == 0)
+	return section;
+      section++;
+    }
+  return NULL;
+}
+
+/* Return pointer to section header for section containing the given
+   relative virtual address. */
+IMAGE_SECTION_HEADER *
+rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header)
+{
+  PIMAGE_SECTION_HEADER section;
+  int i;
+
+  section = IMAGE_FIRST_SECTION (nt_header);
+
+  for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++)
+    {
+      if (rva >= section->VirtualAddress &&
+	  rva < section->VirtualAddress + section->SizeOfRawData)
+	return section;
+      section++;
+    }
+  return NULL;
 }
 
 static unsigned long

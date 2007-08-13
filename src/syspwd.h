@@ -19,8 +19,5 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not really in FSF. */
 
-#ifdef VMS
-#include "vms-pwd.h"
-#else
 #include <pwd.h>
-#endif
+

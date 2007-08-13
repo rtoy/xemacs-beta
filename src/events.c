@@ -298,6 +298,12 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	return (e1->event.magic.underlying_tty_event ==
 		e2->event.magic.underlying_tty_event);
 #endif
+#ifdef HAVE_W32GUI
+	if (CONSOLE_W32_P (con))
+	return (!memcmp(&e1->event.magic.underlying_w32_event,
+		&e2->event.magic.underlying_w32_event,
+		sizeof(union magic_data)));
+#endif
 	return 1; /* not reached */
       }
 
@@ -364,6 +370,15 @@ event_hash (Lisp_Object obj, int depth)
 #ifdef HAVE_TTY
 	if (CONSOLE_TTY_P (con))
 	  return HASH2 (hash, e->event.magic.underlying_tty_event);
+#endif
+#ifdef HAVE_W32GUI
+	if (CONSOLE_W32_P (con))
+	  return HASH6 (hash, e->event.magic.underlying_w32_event.message,
+			e->event.magic.underlying_w32_event.data[0],
+			e->event.magic.underlying_w32_event.data[1],
+			e->event.magic.underlying_w32_event.data[2],
+			e->event.magic.underlying_w32_event.data[3],
+			);
 #endif
       }
 
@@ -1789,10 +1804,11 @@ is buffer-local, and you must use EVENT's buffer when retrieving
        (event))
 {
   Charcount mbufp;
+  int where;
 
-  event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, &mbufp, 0, 0);
+  where = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, &mbufp, 0, 0);
 
-  return mbufp < 0 ? Qnil : make_int (mbufp);
+  return (mbufp < 0 || where != OVER_MODELINE) ? Qnil : make_int (mbufp);
 }
 
 DEFUN ("event-glyph", Fevent_glyph, 1, 1, 0, /*

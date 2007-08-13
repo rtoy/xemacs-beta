@@ -701,7 +701,6 @@ create_bidirectional_pipe (int *inchannel, int *outchannel,
   return 0;
 }
 
-#ifndef VMS /* VMS version of this function is in vmsproc.c.  */
 
 static Bufbyte
 get_eof_char (struct Lisp_Process *p)
@@ -1083,7 +1082,6 @@ io_failure:
     report_file_error ("Opening pty or pipe", Qnil);
   }
 }
-#endif /* not VMS */
 
 /* This function is the unwind_protect form for Fstart_process_internal.  If
    PROC doesn't have its pid set, then we know someone has signalled
@@ -1121,12 +1119,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   Lisp_Object tem;
   int speccount = specpdl_depth ();
   struct gcpro gcpro1, gcpro2, gcpro3;
-#ifdef VMS
-  char *new_argv;
-  int len;
-#else
   char **new_argv;
-#endif
   int i;
 
   name = args[0];
@@ -1162,28 +1155,6 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 		       list1 (current_buffer->directory));
 #endif /* 0 */
 
-#ifdef VMS
-  /* Make a one member argv with all args concatenated
-     together separated by a blank.  */
-  len = XSTRING_LENGTH (program) + 2;
-  for (i = 3; i < nargs; i++)
-    {
-      tem = args[i];
-      CHECK_STRING (tem);
-      len += XSTRING_LENGTH (tem) + 1;	/* count the blank */
-    }
-  new_argv = (char *) alloca (len);
-  strcpy (new_argv, XSTRING_DATA (program));
-  for (i = 3; i < nargs; i++)
-    {
-      tem = args[i];
-      CHECK_STRING (tem);
-      strcat (new_argv, " ");
-      strcat (new_argv, XSTRING_DATA (tem));
-    }
-  /* Need to add code here to check for program existence on VMS */
-
-#else /* not VMS */
   /* If program file name is not absolute, search our path for it */
   if (!IS_DIRECTORY_SEP (XSTRING_BYTE (program, 0))
       && !(XSTRING_LENGTH (program) > 1
@@ -1216,8 +1187,6 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
       new_argv[i - 2] = (char *) XSTRING_DATA (tem);
     }
   new_argv[i - 2] = 0;
-
-#endif /* not VMS */
 
   proc = make_process_internal (name);
 
@@ -1605,11 +1574,7 @@ read_process_output (Lisp_Object proc)
 {
   /* This function can GC */
   Bytecount nbytes, nchars;
-#ifdef VMS
-  char *chars;
-#else
   Bufbyte chars[1024];
-#endif
   Lisp_Object outstream;
   struct Lisp_Process *p = XPROCESS (proc);
 
@@ -1639,28 +1604,6 @@ read_process_output (Lisp_Object proc)
       return XINT (filter_result);
     }
 
-#ifdef VMS
-  VMS_PROC_STUFF *vs, *get_vms_process_pointer();
-
-  vs = get_vms_process_pointer (XINT (p->pid));
-  if (vs)
-    {
-      if (!vs->iosb[0])
-	return 0;		/* Really weird if it does this */
-      if (!(vs->iosb[0] & 1))
-	return -1;		/* I/O error */
-    }
-  else
-    error ("Could not get VMS process pointer");
-  chars = vs->inputBuffer;
-  nbytes = clean_vms_buffer (chars, vs->iosb[1]);
-  if (nbytes <= 0)
-    {
-      start_vms_process_read (vs); /* Crank up the next read on the process */
-      return 1;			/* Nothing worth printing, say we got 1 */
-    }
-#else /* not VMS */
-
 #if 0 /* FSFmacs */
   /* #### equivalent code from FSFmacs.  Would need some porting
      for Windows NT. */
@@ -1688,7 +1631,6 @@ read_process_output (Lisp_Object proc)
 
   nbytes = Lstream_read (XLSTREAM (p->instream), chars, sizeof (chars));
   if (nbytes <= 0) return nbytes;
-#endif /* not VMS */
 
   nchars = bytecount_to_charcount (chars, nbytes);
   outstream = p->filter;
@@ -1701,9 +1643,6 @@ read_process_output (Lisp_Object proc)
 			     outstream, proc, make_string (chars, nbytes));
       running_asynch_code = 0;
       restore_match_data ();
-#ifdef VMS
-      start_vms_process_read (vs);
-#endif
       return nchars;
     }
 
@@ -1792,9 +1731,6 @@ read_process_output (Lisp_Object proc)
 
       UNGCPRO;
     }
-#ifdef VMS
-  start_vms_process_read (vs);
-#endif
   return nchars;
 }
 
@@ -1836,23 +1772,10 @@ send_process (volatile Lisp_Object proc,
   Lisp_Object defeat_volatile_kludge = proc;
 #endif
 
-#ifdef VMS
-  VMS_PROC_STUFF *vs, *get_vms_process_pointer (int);
-#endif /* VMS */
-
   GCPRO2 (defeat_volatile_kludge, lstream);
 
   if (p->outfd < 0)
     signal_simple_error ("Process not open for writing", proc);
-
-#ifdef VMS
-  vs = get_vms_process_pointer (XINT (p->pid));
-  if (vs == 0)
-    error ("Could not find this process: %x",
-	   XINT (p->pid));
-  else if (write_to_vms_process (vs, buf, len))
-    ;
-#else
 
   if (nonrelocatable)
     lstream =
@@ -1905,7 +1828,6 @@ send_process (volatile Lisp_Object proc,
 	    }
 	}
     }
-#endif /* !VMS */
   else
     { /* We got here from a longjmp() from the SIGPIPE handler */
       signal (SIGPIPE, old_sigpipe);
@@ -1915,13 +1837,8 @@ send_process (volatile Lisp_Object proc,
       p->tick++;
       process_tick++;
       deactivate_process (proc);
-#ifdef VMS
-      error ("Error writing to process %s; closed it",
-	     XSTRING_DATA (p->name));
-#else
       error ("SIGPIPE raised on process %s; closed it",
 	     XSTRING_DATA (p->name));
-#endif
     }
   old_sigpipe = (SIGTYPE (*) (int)) signal (SIGPIPE, send_process_trap);
   Lstream_flush (XLSTREAM (p->outstream));
@@ -2206,11 +2123,8 @@ CONST char *
 signal_name (int signum)
 {
   if (signum >= 0 && signum < NSIG)
-#ifndef VMS
     return (CONST char *) sys_siglist[signum];
-#else
-    return (CONST char *) sys_errlist[signum];
-#endif
+
   return (CONST char *) GETTEXT ("unknown signal");
 }
 
@@ -2882,22 +2796,8 @@ process_send_signal (Lisp_Object process0, int signo,
       break;
 #endif /* ! defined (SIGCONT) */
     case SIGINT:
-#ifdef VMS
-      send_process (proc, Qnil, (Bufbyte *) "\003", 0,
-		    1); /* ^C */
-      goto whoosh;
-#endif
     case SIGQUIT:
-#ifdef VMS
-      send_process (proc, Qnil, (Bufbyte *) "\031", 0,
-		    1); /* ^Y */
-      goto whoosh;
-#endif
     case SIGKILL:
-#ifdef VMS
-      sys$forcex (&(XINT (p->pid)), 0, 1);
-      whoosh:
-#endif
       flush_pending_output (p->infd);
       break;
     }
@@ -3140,9 +3040,6 @@ text to PROCESS after you call this function.
   if (! EQ (XPROCESS (proc)->status_symbol, Qrun))
     error ("Process %s not running", XSTRING_DATA (XPROCESS (proc)->name));
 
-#ifdef VMS
-  send_process (proc, Qnil, (Bufbyte *) "\032", 0, 1);   /* ^Z */
-#else
   if (XPROCESS (proc)->pty_flag)
     {
       /* #### get_eof_char simply doesn't return the correct character
@@ -3161,7 +3058,7 @@ text to PROCESS after you call this function.
       close (XPROCESS (proc)->outfd);
       XPROCESS (proc)->outfd = open (NULL_DEVICE, O_WRONLY, 0);
     }
-#endif /* !VMS */
+
   return process;
 }
 
@@ -3201,16 +3098,6 @@ deactivate_process (Lisp_Object proc)
 	     far as selecting the process for input.  In this
 	     case, p->pid is nil: p->pid is set at the same time that
 	     the process is selected for input. */
-#ifdef VMS
-	  {
-	    VMS_PROC_STUFF *get_vms_process_pointer (), *vs;
-	    if (outchannel >= 0)
-	      sys$dassgn (outchannel);
-	    vs = get_vms_process_pointer (XINT (p->pid));
-	    if (vs)
-	      give_back_vms_process_stuff (vs);
-	  }
-#endif /* VMS */
 	  /* Must call this before setting the file descriptors to 0 */
 	  event_stream_unselect_process (p);
 	}

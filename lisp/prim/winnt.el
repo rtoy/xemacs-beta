@@ -44,22 +44,13 @@
 (define-key global-map [(meta backspace)] 'backward-kill-word)
 (define-key global-map [(control meta backspace)] 'backward-kill-sexp)
 
-;; Show file type (text or binary) on modeline
-(setq-default mode-line-format
-  (list (purecopy "")
-   'mode-line-modified
-   'mode-line-buffer-identification
-   (purecopy "   ")
-   'global-mode-string
-   (purecopy "   %[(")
-   (purecopy "%t:")
-   'mode-name 'mode-line-process 'minor-mode-alist
-   (purecopy "%n")
-   (purecopy ")%]--")
-   (purecopy '(line-number-mode "L%l--"))
-   (purecopy '(column-number-mode "C%c--"))
-   (purecopy '(-3 . "%p"))
-   (purecopy "-%-")))
+(defconst nt-modeline-buffer-type '("%t")
+  "Modeline control for showing buffer type (binary or text).")
+
+(setq-default modeline-format
+  (cons (purecopy "")
+	(cons 'nt-modeline-buffer-type
+	      (cdr modeline-format))))
 
 ;; Ignore case on file-name completion
 (setq completion-ignore-case t)

@@ -562,10 +562,11 @@ See also: variables tar-update-datestamp and tar-anal-blocksize.
   (cond ((string-match "XEmacs" emacs-version)
 	 (require 'mode-motion)
 	 (setq mode-motion-hook 'mode-motion-highlight-line)
-	 (if (and current-menubar (not (assoc "Tar" current-menubar)))
-	     (progn
-	       (set-buffer-menubar (copy-sequence current-menubar))
-	       (add-menu nil "Tar" (cdr tar-menu))))
+	 (when (and (boundp 'current-menubar)
+		    current-menubar
+		    (not (assoc "Tar" current-menubar)))
+	   (set-buffer-menubar (copy-sequence current-menubar))
+	   (add-menu nil "Tar" (cdr tar-menu)))
 	 ))
   (run-hooks 'tar-mode-hook)
   )

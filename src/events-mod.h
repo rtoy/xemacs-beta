@@ -1,10 +1,5 @@
-/* These need to be split up as other windowing systems have different
-   values for these things. Don't really know how to handle this yet.
-   kludge. kludge. kludge.
-*/
+/* The modifiers XEmacs knows about; these appear in key and button events. */
 
-/* The modifiers XEmacs knows about; these appear in key and button events.
- */
 #define MOD_CONTROL	(1<<0)
 #define MOD_META	(1<<1)
 #define MOD_SUPER	(1<<2)

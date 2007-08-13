@@ -140,7 +140,7 @@
 
 (set-language-info-alist
  "Korean" '((setup-function . setup-korean-environment)
-	    (tutorial . "TUTORIAL.kr")
+	    (tutorial . "TUTORIAL.ko")
 	    (charset . (korean-ksc5601))
 	    (coding-system . (iso-2022-kr euc-kr))
 	    (sample-text . "Hangul (한글)	안녕하세요, 안녕하십니까")

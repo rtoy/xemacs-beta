@@ -1,3 +1,5 @@
+Copyright (c) 1997, Adrian Aichner <aichner@ecf.teradyne.com>.
+
 Copyright (c) 1985, 1996 Free Software Foundation, Inc. See end for conditions.
 
 Du betrachtest das Emacs Tutorial.
@@ -21,7 +23,7 @@ M-<chr>	bedeutet: Halte die META-Taste während der Betätigung der
 Wichtig: Tippe C-x C-c, um die Emacs-Sitzung zu beenden (zwei
 Zeichen). Die ">>" am linken Seitenrand deuten auf Anweisungen, die
 Du probieren solltest.  so z.B:
-<<Blank lines inserted here by startup of help-with-tutorial>>
+<<Seitenmitte aus didaktischen Gründen leer. Text wird unten fortgesetzt.>>
 >> Tippe nun C-v (Betrachte nächste Seite) um die nächste Seite zu
 	betrachten.  (Also, halte die CONTROL-Taste gedrückt während
 	Du v tippst.)
@@ -1124,12 +1126,18 @@ Unklares gefunden, schiebe die Schuld nicht auf Dich - beschwere Dich!
 ANFERTIGEN VON KOPIEN
 ---------------------
 
-This tutorial descends from a long line of Emacs tutorials
-starting with the one written by Stuart Cracraft for the original Emacs.
-Ben Wing updated the tutorial for X Windows.
+Dieses Tutorial stammt, über eine lange Linie von Emacs Tutorials, von
+dem von Stuart Cracraft für den ursprünglichen Emacs geschriebenen ab.
+Ben Wing hat das Tutorial für X Windows erweitert.  Martin Buchholz
+und Hrvoje Niksic haben weitere Korrekturen für XEmacs beigetragen.
+Ins Deutsche übertragen wurde es von Adrian Aichner
+<aichner@ecf.teradyne.com>.
 
-This version of the tutorial, like GNU Emacs, is copyrighted, and
-comes with permission to distribute copies on certain conditions:
+Diese Version des Tutorials ist, wie GNU Emacs selbst,
+urheberrechtlich geschützt und erlaubt die Verteilung von Kopien unter
+bestimmten Voraussetzungen:
+
+Copyright (c) 1997, Adrian Aichner <aichner@ecf.teradyne.com>.
 
 Copyright (c) 1985, 1996 Free Software Foundation
 
@@ -1144,7 +1152,8 @@ Copyright (c) 1985, 1996 Free Software Foundation
    under the above conditions, provided also that they
    carry prominent notices stating who last altered them.
 
-The conditions for copying Emacs itself are more complex, but in the
-same spirit.  Please read the file COPYING and then do give copies of
-GNU Emacs to your friends.  Help stamp out software obstructionism
-("ownership") by using, writing, and sharing free software!
+Die Bedingungen zum Kopieren von Emacs sind komplexer, entsprechen
+aber dem selben Geist.  Bitte lies die Datei COPYING und gib doch
+Kopien von GNU Emacs an Freunde weiter.  Hilf mit bei der Beseitigung
+von Software-Verhinderungspolitik ("Besitz") durch das Verwenden,
+Schreiben and Weitergeben von kostenloser Software!

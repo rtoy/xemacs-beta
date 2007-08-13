@@ -592,12 +592,12 @@ INLINE Emchar
 XCHAR_OR_CHAR_INT (Lisp_Object obj)
 {
   assert (CHAR_OR_CHAR_INTP (obj));
-  return XREALINT (obj);
+  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
 }
 
 #else
 
-#define XCHAR_OR_CHAR_INT(obj) XREALINT (obj)
+#define XCHAR_OR_CHAR_INT(obj) (CHARP ((obj)) ? XCHAR ((obj)) : XINT ((obj)))
 
 #endif
 

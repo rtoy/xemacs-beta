@@ -3,10 +3,9 @@
 
 ;;; Code:
 
-(custom-add-loads 'extensions '("auto-show" "strokes"))
+(custom-add-loads 'extensions '("strokes"))
 (custom-add-loads 'message '("sendmail"))
 (custom-add-loads 'prolog '("prolog"))
-(custom-add-loads 'auto-show '("auto-show"))
 (custom-add-loads 'mouse '("outl-mouse" "strokes"))
 (custom-add-loads 'mail-abbrevs '("mail-abbrevs"))
 (custom-add-loads 'pascal '("pascal"))
@@ -20,7 +19,7 @@
 (custom-add-loads 'docs '("texinfo"))
 (custom-add-loads 'lisp-indent '("cl-indent"))
 (custom-add-loads 'tools '("hideshow" "lazy-shot" "make-mode"))
-(custom-add-loads 'lisp '("lisp-mode" "cl-indent" "strokes"))
+(custom-add-loads 'lisp '("cl-indent" "strokes"))
 (custom-add-loads 'reftex '("reftex"))
 (custom-add-loads 'outlines '("hideshow" "outl-mouse" "whitespace-mode"))
 (custom-add-loads 'f90 '("f90"))
@@ -34,7 +33,6 @@
 (custom-add-loads 'frames '("rsz-minibuf"))
 (custom-add-loads 'cperl-electric '("cperl-mode"))
 (custom-add-loads 'verilog '("verilog-mode"))
-(custom-add-loads 'abbrev '("abbrev"))
 (custom-add-loads 'f90-indent '("f90"))
 (custom-add-loads 'strokes '("strokes"))
 (custom-add-loads 'lazy-shot '("lazy-shot"))
@@ -52,7 +50,6 @@
 (custom-add-loads 'cperl-indent '("cperl-mode"))
 (custom-add-loads 'archive-zoo '("arc-mode"))
 (custom-add-loads 'archive-zip '("arc-mode"))
-(custom-add-loads 'display '("auto-show"))
 (custom-add-loads 'faces '("cperl-mode" "lazy-shot"))
 (custom-add-loads 'hideshow '("hideshow"))
 (custom-add-loads 'vhdl '("vhdl-mode"))

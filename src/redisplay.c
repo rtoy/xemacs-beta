@@ -5845,11 +5845,11 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 
       /* indicate TEXT or BINARY */
     case 't':
-#ifdef MSDOS
+#ifdef DOS_NT
       str = NILP (b->buffer_file_type) ? "T" : "B";
-#else /* not MSDOS */
+#else /* not DOS_NT */
       str = "T";
-#endif /* not MSDOS */
+#endif /* not DOS_NT */
       break;
 
       /* print percent of buffer above top of window, or Top, Bot or All */
@@ -8113,6 +8113,16 @@ init_redisplay (void)
       return;
     }
 #endif /* HAVE_X_WINDOWS */
+
+#ifdef HAVE_W32GUI
+  if (!strcmp (display_use, "w32"))
+    {
+      /* Some stuff checks this way early. */
+      Vwindow_system = Qw32;
+      Vinitial_window_system = Qw32;
+      return;
+    }
+#endif /* HAVE_W32GUI */
 
   /* If no window system has been specified, try to use the terminal.  */
   if (!isatty (0))

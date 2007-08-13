@@ -192,6 +192,6 @@ See \\[compile]."
     ;; compilation-parse-errors will find referenced files by ange-ftp.
     (save-excursion
       (set-buffer compilation-last-buffer)
-      (setq comint-file-name-prefix (concat "/" host ":")))))
+      (setq comint-file-name-prefix (concat "/" user "@" host ":")))))
 
 ;;; rcompile.el ends here

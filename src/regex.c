@@ -4063,7 +4063,7 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 #ifdef MULE
                 while (range > lim && *d < 0x80 && !fastmap[translate[*d]])
 #else
-                while (range > lim && !fastmap[translate[*d]])
+                while (range > lim && !fastmap[(unsigned char)translate[*d]])
 #endif
 		  {
 		    d_size = charcount_to_bytecount (d, 1);

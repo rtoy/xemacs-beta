@@ -183,7 +183,7 @@ and not specified different explicitely"
   :group 'display-time
   :type 'boolean)  
 
-(defvar display-time-icons-dir (concat data-directory "time/"))
+(defvar display-time-icons-dir (locate-data-directory "time"))
 
 (defcustom display-time-mail-sign-string " Mail" 
   "The string used as mail indicator in the echo area 
@@ -225,7 +225,7 @@ This can be 'transparent or a string describing the color it should have"
 		 (string :tag "Color")))
 
 (defcustom display-time-mail-balloon 'display-time-mail-balloon
-  "What to use to generate the ballon frame of the \"mail\" glyph
+  "What to use to generate the balloon frame of the \"mail\" glyph
 if balloon-help is loaded. This can be the function
 display-time-mail-balloon, nil or a string."
   :group 'display-time-balloon 
@@ -234,7 +234,7 @@ display-time-mail-balloon, nil or a string."
 		 (string)))
 
 (defcustom display-time-no-mail-balloon "No mail is good mail."
-  "The string used in the ballon frame of the \"no mail\" glyph
+  "The string used in the balloon frame of the \"no mail\" glyph
 if balloon-help is loaded. This can also be nil"
   :group 'display-time-balloon
   :type '(choice (const nil)
@@ -273,13 +273,13 @@ You need to have balloon-help loaded to use this."
 
 (defcustom display-time-mail-balloon-from-width 20
   "The width of the `From:' part of the mail balloon.
-You need to have ballon-help loaded to use this"
+You need to have balloon-help loaded to use this"
   :group 'display-time-balloon
   :type 'number)
 
 (defcustom display-time-mail-balloon-subject-width 25
   "The width of the `Subject:' part of the mail balloon.
-You need to have ballon-help loaded to use this"
+You need to have balloon-help loaded to use this"
   :group 'display-time-balloon
   :type 'number)
 
@@ -288,7 +288,7 @@ You need to have ballon-help loaded to use this"
 This denotes the mail group gnus would decide to put this message in.
 For getting this information, it consults the relevant variables from gnus
 (nnmail-split-methods).
-You need to have ballon-help loaded to use this"
+You need to have balloon-help loaded to use this"
   :group 'display-time-balloon
   :type 'number)
 

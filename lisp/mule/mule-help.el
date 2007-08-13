@@ -55,19 +55,24 @@ With arg, you are asked to select which language."
       (setq buffer-auto-save-file-name nil)
       (insert-file-contents (expand-file-name filename data-directory))
       (goto-char (point-min))
-      (search-forward "\n<<")
-      (beginning-of-line)
-      (delete-region (point) (progn (end-of-line) (point)))
-      (let ((n (- (window-height (selected-window))
-		  (count-lines (point-min) (point))
-		  6)))
-	(if (< n 12)
-	    (newline n)
-	  ;; Some people get confused by the large gap.
-	  (newline (/ n 2))
-	  (insert "[Middle of page left blank for didactic purposes.  "
-		  "Text continues below]")
-	  (newline (- n (/ n 2)))))
+      ;; The 'didactic' blank lines: Possibly insert blank lines
+      ;; around <<nya nya nya>>, and change << >> to [ ].
+      (if (re-search-forward "^<<.+>>")
+	  (let ((n (- (window-height (selected-window))
+		      (count-lines (point-min) (point-at-bol))
+		      6)))
+	    (if (< n 12)
+		(progn (beginning-of-line) (kill-line))
+	      ;; Some people get confused by the large gap
+	      (delete-backward-char 2)
+	      (insert "]")
+	      (beginning-of-line)
+	      (save-excursion
+		(delete-char 2)
+		(insert "["))
+	      (newline (/ n 2))
+	      (next-line 1)
+	      (newline (- n (/ n 2))))))
       (goto-char (point-min))
       (set-buffer-modified-p nil))))
 

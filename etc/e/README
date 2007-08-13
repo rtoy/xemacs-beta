@@ -1,2 +1,0 @@
-Rebuild terminfo files with
-TERMINFO=<Full-Path-To-XEmacs-tree>/etc tic *.ti

@@ -26,7 +26,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "offix-types.h"
 
 /* Xt stuff is defined here */
-#include <X11/Intrinsic.h>
+#include "xintrinsic.h"
 
 void DndInitialize(Widget shell);
 

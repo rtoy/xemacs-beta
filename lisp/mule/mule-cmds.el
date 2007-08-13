@@ -99,13 +99,12 @@ The follwing coding systems are set:
   (setq keyboard-coding-system coding-system)
   ;;(setq default-process-coding-system (cons coding-system coding-system))
   (add-hook 'comint-exec-hook
-	    (lambda ()
-	      (let ((proc (get-buffer-process (current-buffer))))
-		(set-process-input-coding-system  proc coding-system)
-		(set-process-output-coding-system proc coding-system)
-		)))
-  (setq file-name-coding-system coding-system)
-  )
+	    `(lambda ()
+	       (let ((proc (get-buffer-process (current-buffer))))
+		 (set-process-input-coding-system  proc ',coding-system)
+		 (set-process-output-coding-system proc ',coding-system)))
+	    'append)
+  (setq file-name-coding-system coding-system))
 
 (defun prefer-coding-system (coding-system)
   "Add CODING-SYSTEM at the front of the priority list for automatic detection.

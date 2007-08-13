@@ -106,8 +106,8 @@ fi
 # first recompile the byte-compiler, so that the other compiles take place
 # with the latest version (assuming we're compiling the lisp dir of the emacs
 # we're running, which might not be the case, but often is.)
-echo "Checking the byte compiler..."
-$BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
+#echo "Checking the byte compiler..."
+#$BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
 
 # Prepare for byte-compiling directories with directory-specific instructions
 make_special_commands=''
@@ -131,11 +131,14 @@ echo \"lisp/$dir done.\";"
 # make_special efs x20
 make_special eos -k		# not strictly necessary...
 ## make_special gnus  some	# Now this is a package.
-make_special hyperbole elc
+# hyperbole is now packaged
+# make_special hyperbole elc
 # We're not ready for the following, yet.
 #make_special ilisp XEmacsELC=custom-load.elc elc
-make_special ilisp elc
-make_special oobr HYPB_ELC='' elc
+# ilisp is now packaged
+# make_special ilisp elc
+# oobr is now packaged
+# make_special oobr HYPB_ELC='' elc
 ## W3 is a package now.
 #make_special w3 xemacs-w3
 

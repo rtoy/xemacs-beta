@@ -13,8 +13,6 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.9960
-
 @menu
 * Introduction::                
 * User Interface::              
@@ -287,15 +285,10 @@ Interface}).
 (defun widget-example ()
   "Create the widgets from the Widget manual."
   (interactive)
-  (switch-to-buffer "*Widget Example*")
+  (kill-buffer (get-buffer-create "*Widget Example*"))
+  (switch-to-buffer (get-buffer-create "*Widget Example*"))
   (kill-all-local-variables)
   (make-local-variable 'widget-example-repeat)
-  (let ((inhibit-read-only t))
-    (erase-buffer))
-  (let ((all (overlay-lists)))
-    ;; Delete all the overlays.
-    (mapcar 'delete-overlay (car all))
-    (mapcar 'delete-overlay (cdr all)))
   (widget-insert "Here is some documentation.\n\nName: ")
   (widget-create 'editable-field
 		 :size 13

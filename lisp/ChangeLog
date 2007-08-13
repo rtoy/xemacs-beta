@@ -1,3 +1,476 @@
+1997-11-08  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-hackers): New entries.
+
+	* utils/shadow.el (list-load-path-shadows): Supress message when
+	no shadowings are found.
+
+	* loadup.el: Modify algorithm for finding initial lisp directories 
+	since the search now starts from lisp/ not lisp/prim/.
+	* update-elc.el: Ditto.
+	* make-docfile.el: Ditto.
+
+1997-11-07  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/dumped-lisp.el: "lib-complete" is not dumped with InfoDock.
+	* utils/finder.el (finder-known-keywords): New keyword -- `dumped'.
+
+	* version.el:  Cleaned up Lisp comments.
+	* paths.el: Ditto.
+	* x-menubar.el: Ditto.
+	* x-faces.el: Ditto.
+	* x-iso8859-1.el: Ditto.
+	* x-mouse.el: Ditto.
+	* x-select.el: Ditto.
+	* x-scrollbar.el: Ditto.
+	* x-misc.el: Ditto.
+	* x-init.el: Ditto.
+	* x-toolbar.el: Ditto.
+
+	* backquote.el: Moved to top-level.  Cleaned up Lisp comments.
+	* packages.el: Ditto.
+	* subr.el: Ditto.
+	* replace.el: Ditto.
+	* cl.el: Ditto.
+	* cl-extra.el: Ditto.
+	* cl-seq.el: Ditto.
+	* widget.el: Ditto.
+	* custom.el: Ditto.
+	* cus-start.el: Ditto.
+	* cmdloop.el: Ditto.
+	* keymap.el: Ditto.
+	* syntax.el: Ditto.
+	* device.el: Ditto.
+	* console.el: Ditto.
+	* obsolete.el: Ditto.
+	* specifier.el: Ditto.
+	* faces.el: Ditto.
+	* glyphs.el: Ditto.
+	* objects.el: Ditto.
+	* extents.el: Ditto.
+	* events.el: Ditto.
+	* text-props.el: Ditto.
+	* process.el: Ditto.
+	* frame.el: Ditto.
+	* map-ynp.el: Ditto.
+	* simple.el: Ditto.
+	* keydefs.el: Ditto.
+	* abbrev.el: Ditto.
+	* derived.el: Ditto.
+	* minibuf.el: Ditto.
+	* list-mode.el: Ditto.
+	* modeline.el: Ditto.
+	* startup.el: Ditto.
+	* misc.el: Ditto.
+	* help-nomule.el: Ditto.
+	* help.el: Ditto.
+	* files-nomule.el: Ditto.
+	* files.el: Ditto.
+	* lib-complete.el: Ditto.
+	* format.el: Ditto.
+	* indent.el: Ditto.
+	* isearch-mode.el: Ditto.
+	* buffer.el: Ditto.
+	* buff-menu.el: Ditto.
+	* undo-stack.el: Ditto.
+	* window.el: Ditto.
+	* window-xemacs.el: Ditto.
+	* lisp.el: Ditto.
+	* page.el: Ditto.
+	* register.el: Ditto.
+	* iso8859-1.el: Ditto.
+	* paragraphs.el: Ditto.
+	* easymenu.el: Ditto.
+	* lisp-mode.el: Ditto.
+	* text-mode.el: Ditto.
+	* fill.el: Ditto.
+	* auto-save.el: Ditto.
+	* float-sup.el: Ditto.
+	* itimer.el: Ditto.
+	* itimer-autosave.el: Ditto.
+	* toolbar.el: Ditto.
+	* scrollbar.el: Ditto.
+	* menubar.el: Ditto.
+	* dialog.el: Ditto.
+	* gui.el: Ditto.
+	* mode-motion.el: Ditto.
+	* mouse.el: Ditto.
+	* tty-init.el: Ditto.
+	* auto-show.el: Ditto.
+
+1997-11-07  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* modes/abbrev.el (abbrev-prefix-mark): Instead of
+	  inserting a dash to indicate the start of the abbrev,
+	  add an extent with a begin-glyph that contains a dash.
+
+Wed Nov 05 23:40:00 1997 Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* faces.el: init-other-random-faces
+ 	  Reinstated code that uses (mono x) as a specifer tag, but
+	  conditioned it on (featurep 'x) because x is not a valid
+	  specifier tag under native-win32.
+	
+	* Added file headers to:
+	  w32-faces.el, w32-init.el
+
+Sun Nov 01 12:00:00 1997 Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* make-docfile.el: Fixed typo when dumped file does not exist.
+
+	* device.el: make-w32-device added.
+
+	* dumped-lisp: added w32-faces and w32-init to list.
+
+	* faces.el:
+	  - make-face-*: Added calls to appropriate w32 functions
+	    conditioned on (featurep 'w32). Made existing X calls
+	    conditioned on (featurep 'x).
+	  - init-other-random-faces: Hacked out a piece of code which used
+	    (mono x) as a specifier because it made w32 unhappy.
+
+	* New files:
+	  w32-faces.el, w32-init.el
+
+1997-11-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/mouse.el (default-mouse-motion-handler): When over
+ 	modeline, correctly dehighlight the last extent.
+
+1997-11-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/minibuf.el (mouse-read-file-name-1): Ditto.
+
+	* packages/balloon-help.el (balloon-help-make-help-frame): Ditto.
+
+	* games/life.el (life-setup): Check for scrollbars before using
+ 	them.
+
+1997-11-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* hm--html-menus/hm--html-mode.el (hm--html-minor-mode): Ditto.
+
+	* hm--html-menus/hm--html-menu.el ((adapt-xemacsp)): Ditto.
+
+	* comint/gud.el (gdb-install-menubar): Ditto.
+
+	* calendar/calendar.el (calendar-mode): Ditto.
+
+	* auctex/bib-cite.el (bib-cite-initialize): Ditto.
+
+	* utils/floating-toolbar.el (floating-toolbar): Ditto.
+
+	* utils/edit-toolbar.el (edit-toolbar-mode): Ditto.
+
+	* utils/browse-cltl2.el (cltl2-lisp-mode-install): Ditto.
+
+	* modes/view-process-xemacs.el
+ 	(View-process-install-pulldown-menu): Ditto.
+
+	* modes/verilog-mode.el (verilog-mode): Ditto.
+
+	* modes/tcl.el (tcl-mode): Ditto.
+
+	* modes/f90.el (f90-mode): Ditto.
+
+	* packages/emerge.el (emerge-set-keys): Ditto.
+
+	* packages/tar-mode.el (tar-mode): Check for menubars.
+
+1997-11-07  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp/prim/modeline.el (mouse-drag-modeline): Don't
+	  allow the window size to shrink to a size that is not a 
+	  multiple of the height of the default face's font.
+
+	* lisp/prim/modeline.el (mouse-drag-modeline): Don't
+	  discard timeout events.
+
+1997-11-07  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/simple.el (universal-argument-minus): Retain zmacs region.
+
+1997-11-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/hyper-apropos.el (hyper-apropos-grok-functions): Ignore
+	errors when fetching documentation.
+
+	* prim/about.el (about-maintainer-glyph): Handle not having XPM or
+	XBM gracefully.
+
+	* custom/wid-edit.el (widget-glyph-find): Allow glyphs without
+	window-system, when TAG is nil.
+
+1997-11-05  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* mule/mule-cmds.el (set-default-coding-systems): Make
+	add-hook to `comint-exec-hook' be an append, for when the user 
+	changes language environment say.
+
+1997-11-05  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/winnt.el: Use a cleaner method for getting Text/Binary file 
+	type in the mode-line for MS Windows.
+
+1997-11-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/mouse.el: Removed "junk me" functions.
+
+	* prim/mouse.el (default-mouse-motion-handler): Make events over
+	modeline invalidate `point'.
+
+	* prim/mouse.el (mouse-line-length): Use point-at-eol and
+ 	point-at-bol.
+	(default-mouse-track-normalize-point): Highlight the whole symbol
+	only if the mouse is on a symbol-constituent.
+
+	* custom/wid-edit.el (widget-specify-field): Make sure the extent
+	is end-open.
+
+	* prim/keymap.el (next-key-event): Use `next-command-event'.
+
+1997-11-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* utils/easymenu.el (easy-menu-add): Check with `equal' whether
+	the menu already belongs to all-popups.
+
+1997-11-05  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* packages/font-lock.el (font-lock-thing-lock-cleanup):
+	Provisionally add lazy-shot
+
+	* modes/lazy-shot.el (lazy-shot-mode): Unstall lazy-shot only if
+	needed.
+	(lazy-shot-fontify-internal): Functionality put in seperate function.
+	(lazy-shot-lock-extent): Use it.
+	(lazy-shot-fontify-region): Dumb implementation added.
+	(lazy-shot-unstall-after-fontify): Needed to disable lazy
+	fontifying after fontify-buffer.
+	(lazy-shot-unstall): Make sure buffer is left in a fontified state if
+	needed. Take optional argument.
+	
+
+	* packages/ps-print.el (ps-print-ensure-fontified): Added
+	temporary support for lazy-shot.
+
+1997-11-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* utils/text-props.el (set-text-properties): Updated docstring.
+
+1997-11-04  Didier Verna  <verna@inf.enst.fr>
+
+	* mule/mule-cmds.el (set-default-coding-systems): 
+	The coding-system argument to comint-exec-hook wasn't evaluated 
+	before building the lambda expression.
+
+1997-11-04  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* packages/time.el: Change all occurences of ballon to balloon.
+
+1997-11-04  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* prim/help.el (function-at-point-function): Remove this variable.
+	(function-at-point): Remove use of `function-at-point-function'.
+
+	* packages/info.el (Info-elisp-ref): Change call to
+	`find-function-function' to `function-at-point'.
+
+1997-11-04  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* packages/info.el (Info-elisp-ref): Really change call to
+	`find-function-function' to `function-at-point'.
+
+1997-11-04  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/auto-save.el: Updated commentary; changed default
+	autosave fallback to "~/.autosave".  Minor changes to compile
+	without warnings.
+
+1997-11-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/subr.el (function-interactive): New function.
+
+1997-11-03  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/dumped-lisp.el: Dump auto-save with XEmacs.
+
+	* prim/loadup.el: Make sure top level lisp directory gets a
+	trailing slash when added to load-path.
+	* prim/make-docfile.el:  Ditto.
+
+1997-11-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* prim/simple.el (interprogram-cut-function,
+	interprogram-paste-function): New variable (imported from Emacs
+	20.2).
+	(kill-new): Use `interprogram-cut-function' if it is not nil.
+	(current-kill): Use `interprogram-paste-function' if it is not
+	nil.
+
+1997-11-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* locale/ja/locale-start.el (startup-splash-frame-body): Modify to
+	be more natural Japanese.
+
+	* x11/x-menubar.el: Delete "language environment" menu of
+	"Options" menu.
+
+1997-11-02  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/korean.el: Rename TUTORIAL.kr -> TUTORIAL.ko to fit
+	with ISO 639 (two letter language code).
+
+	* prim/dumped-lisp.el: Don't dump language/vietnamese.el because
+	language/viet-util.el was removed temporary.
+
+	* language/japanese.el: Rename TUTORIAL.jp -> TUTORIAL.ja to fit
+	with ISO 639 (two letter language code).
+
+1997-10-31  Pete Ware  <ware@cis.ohio-state.edu>
+
+	* shell.el (shell-chdrive-regexp): New for DOS/NT
+	(shell-mode): Added shell-font-lock-keywrods
+	(shell-mode): Use $PWD for ksh
+	(shell-directory-tracker): Use dirs and dirtrack-toggle.  This may 
+		cause problems at is interferes with "dired"
+	(shell-snarf-envar): NEW
+	(shell-copy-environment-variable): NEW
+
+1997-10-30  Pete Ware  <ware@cis.ohio-state.edu>
+
+	* comint.el (comint-mode-map): Rearranged menus so they have a
+		  meaningful name.
+
+1997-10-30  Pete Ware  <ware@cis.ohio-state.edu>
+
+	* comint.el (comint-find-source-file-hook):
+	(comint-goto-source-line-hook):
+	(comint-find-source-code):
+	(comint-default-find-source-file):
+	(comint-fixup-source-file-name):
+	(comint-default-goto-source-line):  Removed.  compile.el does a
+		better job of this stuff.
+
+	* comint.el
+	(comint-file-name-chars): Support for msdos/nt
+	- Let easymenu deal with whether menubar is available.
+	- Use ^d for delchar or maybe eof.
+	- Use "dumb" as the terminal type if on a system using terminfo
+	(comint-output-filter): Removed replacement of ^M -- use filter
+	(comint-dynamic-complete-as-filename): Don't set
+		file-name-handler-alist to nil.  This makes remote path
+		completion work!
+
+1997-11-02  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/advocacy.el (xemacs-praise-sound-file): Don't default to
+	using a hardcoded directory.
+
+	* eterm/term.el (term-is-xemacs): Match against XEmacs instead of
+	Lucid.
+
+	* eos/sun-eos-toolbar.el (eos::toolbar-icon-directory): Use
+	`locate-data-directory' instead of data-directory.
+	* eterm/term.el (term-exec-1): Ditto.
+	* packages/time.el (display-time-icons-dir): Ditto.
+	* prim/advocacy.el (praise-be-unto-xemacs): Ditto.
+	* prim/sound.el (default-sound-directory): Ditto.
+	* prim/toolbar.el (init-toolbar-location): Ditto.
+
+1997-10-31  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-color-complete): Use
+	`read-color-completion-table' directly.
+
+	* prim/subr.el (rplaca): Warn against the return value.
+	(replace-in-string): Use `wrong-type-argument'.  Use standard
+ 	error message.
+	(functionp): Would bug out on certain types of objects; synch with
+ 	FSF.
+	(with-output-to-string): Use new-style backquotes.
+	(with-temp-buffer): Update docstring references.
+
+	* prim/minibuf.el (reset-buffer): Use `with-current-buffer'.
+	(read-color-completion-table): Ditto.
+	(read-color-completion-table): Complete TTY colors on TTY devices.
+
+	* custom/cus-start.el: Customize `scroll-conservatively'.
+	Customize `help-char' correctly.
+
+1997-11-02  SL Baur  <steve@altair.xemacs.org>
+
+	* packages/desktop.el (toplevel): Don't require dired or reporter
+	when byte compiling.
+
+1997-11-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/keymap.el (synthesize-keysym): Collect a list of
+	characters, instead of consing a string each time.
+	(synthesize-keysym): Better error checking.
+
+	* prim/keymap.el (synthesize-keysym): Don't bug out when reading a 
+	non-character event.
+
+1997-11-02  Tomasz Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* prim/keymap.el (synthesize-keysym): New function bound to C-x @ k.
+
+1997-11-02  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* modes/sendmail.el: Don't (require 'vm-misc).  Change
+	  mail-do-fcc-vm-internal to not compile the chunk of code
+	  that uses VM internal macros.  This prevents the byte
+	  compiler from compiling such references into function
+	  calls that Fbyte_code will complain about later when it
+	  discovers that the references are macros.
+
+	* modes/sendmail.el: added defvars for
+	  rmail-summary-buffer and rmail-total-messages to get
+	  rid of compiler warnings.
+1997-11-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/subr.el (lambda): Moved from `packages.el'.
+
+	* prim/packages.el: Updated commentary.
+	(packages-useful-lisp): Added `cl-macs'.
+
+1997-10-27  Didier Verna  <verna@inf.enst.fr>
+
+	* prim/help-nomule.el (help-with-tutorial): The 'didactic' blank
+	lines message is now taken directly from each tutorial, and thus
+ 	can appear in different languages.
+
+	* mule/mule-help.el (help-with-tutorial): idem
+
+1997-10-26  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* utils/shadowfile.el (shadow-clusters): Customized.
+	(shadow-read-files): replace obsolete `eval-current-buffer'
+	(shadow-parse-fullpath): `efs-ftp-name' doesn't exist.  change to
+	`efs-ftp-path'
+
+1997-11-01  SL Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el:  Change Viper menu item to use
+	`toggle-viper-mode'.
+	Suggested by Michael Kifer <kifer@CS.SunySB.EDU>
+
+	* mule/mule-init.el:  Remove `help-with-tutorial-for-mule'.
+	Suggested by Didier Verna <verna@inf.enst.fr>
+
+	* Disable Cyrillic CCL until CCL engine gets fixed.
+	From: Martin Buchholz <mrb@Eng.Sun.COM>
+
+1997-10-30  Colin Rafferty  <craffert@ml.com>
+
+	* prim/startup.el (command-line-early): Made it recognize
+	--vanilla and --no-packages, as is already done in emacs.c.
+
+1997-10-30  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* modes/cperl-mode.el: Add Commentary and Code statements to
+ 	comment header for finder.
+
 1997-10-30  SL Baur  <steve@altair.xemacs.org>
 
 	* vm/vm-vars.el (vm-image-directory): Use locate-data-directory if 

@@ -61,7 +61,7 @@ Boston, MA 02111-1307, USA.  */
 #endif /* HAVE_IMAGEMAGICK */
 
 #ifdef HAVE_X11_MAGICK_IMAGE_H
-#include <magick.h>
+#include <magick/magick.h>
 /* #include <image.h> */
 #include <assert.h>
 #endif

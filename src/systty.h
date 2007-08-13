@@ -96,7 +96,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Nothing doing */
 
-#elif !defined (VMS)
+#else
 
 /*****              (4) The BSD way              *****/
 
@@ -106,46 +106,8 @@ Boston, MA 02111-1307, USA.  */
 #  include <sgtty.h>
 # endif
 
-#else /* VMS */
 
-/*****              (5) The VMS way              *****/
-
-# include <descrip.h>
-static struct iosb
-{
-  short status;
-  short offset;
-  short termlen;
-  short term;
-} input_iosb;
-
-extern int vms_waiting_for_ast;
-extern int vms_stop_input;
-extern int vms_input_ef;
-extern int vms_timer_ef;
-extern int vms_process_ef;
-extern int vms_input_eflist;
-extern int vms_timer_eflist;
-
-static $DESCRIPTOR (vms_input_dsc, "TT");
-static int vms_terminator_mask[2] = { 0, 0 };
-
-static struct sensemode {
-  short status;
-  unsigned char xmit_baud;
-  unsigned char rcv_baud;
-  unsigned char crfill;
-  unsigned char lffill;
-  unsigned char parity;
-  unsigned char unused;
-  char class;
-  char type;
-  short scr_wid;
-  unsigned long tt_char : 24, scr_len : 8;
-  unsigned long tt2_char;
-} sensemode_iosb;
-
-#endif /* VMS */
+#endif /* HAVE_TERMIOS */
 
 /* XEmacs: I don't think we need the following crap. */
 #ifdef __GNU_LIBRARY__
@@ -158,7 +120,7 @@ static struct sensemode {
 /* Generally useful to include this file: */
 
 /* But Sun OS has broken include files and doesn't want it included */
-#if !defined (VMS) && !defined (DOS_NT) && !defined (WIN32) && !defined (SUNOS4)
+#if !defined (DOS_NT) && !defined (WIN32) && !defined (SUNOS4)
 # include <sys/ioctl.h>
 #endif
 /* UNIPLUS systems may have FIONREAD.  */
@@ -429,15 +391,11 @@ struct emacs_tty {
 #ifdef HAVE_TERMIO
   struct termio main;
 #else /* !HAVE_TERMIO */
-#ifdef VMS
-  struct sensemode main;
-#else /* !VMS */
 #ifdef DOS_NT
   int main;
 #else  /* not DOS_NT */
   struct sgttyb main;
 #endif /* not DOS_NT */
-#endif /* !VMS */
 #endif /* !HAVE_TERMIO */
 #endif /* !HAVE_TCATTR */
 
@@ -483,19 +441,12 @@ struct emacs_tty {
 #define EMACS_TTY_TABS_OK(p) (((p)->main.c_oflag & TABDLY) != TAB3)
 
 #else /* neither HAVE_TERMIO nor HAVE_TERMIOS */
-#ifdef VMS
-
-#define EMACS_TTY_TABS_OK(p) (((p)->main.tt_char & TT$M_MECHTAB) != 0)
-
-#else
-
 #ifdef DOS_NT
 #define EMACS_TTY_TABS_OK(p) 0
 #else /* not DOS_NT */
 #define EMACS_TTY_TABS_OK(p) (((p)->main.sg_flags & XTABS) != XTABS)
 #endif /* not DOS_NT */
 
-#endif /* not def VMS */
 #endif /* not def HAVE_TERMIO */
 #endif /* not def HAVE_TERMIOS */
 

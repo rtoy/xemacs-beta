@@ -14,7 +14,7 @@
 ;;; Code:
 
 (defvar eos::toolbar-icon-directory
-  (file-name-as-directory (expand-file-name "eos" data-directory)))
+  (file-name-as-directory (locate-data-directory "eos")))
 
 (defvar eos::toolbar-run-icon
   (if (featurep 'xpm)

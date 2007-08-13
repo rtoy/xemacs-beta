@@ -25,7 +25,7 @@
 ;; LCD Archive Entry:
 ;; shadowfile|Boris Goldowsky|boris@gnu.ai.mit.edu|
 ;; Helps you keep identical copies of files in multiple places.|
-;; $Date: 1997/02/24 01:14:19 $ |$Revision: 1.2 $|~/misc/shadowfile.el.Z|
+;; $Date: 1997/11/09 07:07:32 $ |$Revision: 1.3 $|~/misc/shadowfile.el.Z|
 
 ;;; Synched up with: FSF 19.30.
 
@@ -86,37 +86,54 @@
 (provide 'shadowfile)
 (require 'efs-auto)
 
+;;; I don't think this is very cool...  hope it works without the setting.
 (setq find-file-visit-truename t)	; makes life easier with symbolic links
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defgroup shadowfile nil
+  "Keep identical copies of files in more than one place."
+  :group 'files
+  :prefix "shadow")
 
-(defvar shadow-noquery nil
+(defcustom shadow-noquery nil
   "*If t, always copy shadow files without asking.
 If nil \(the default), always ask.  If not nil and not t, ask only if there
-is no buffer currently visiting the file.")
+is no buffer currently visiting the file."
+  :type 'boolean
+  :group 'shadowfile)
 
-(defvar shadow-inhibit-message nil
-  "*If nonnil, do not display a message when a file needs copying.")
+(defcustom shadow-inhibit-message nil
+  "*If nonnil, do not display a message when a file needs copying."
+  :type 'boolean
+  :group 'shadowfile)
 
-(defvar shadow-inhibit-overload nil
+(defcustom shadow-inhibit-overload nil
   "If nonnil, shadowfile won't redefine C-x C-c.
 Normally it overloads the function `save-buffers-kill-emacs' to check
-for files have been changed and need to be copied to other systems.")
+for files have been changed and need to be copied to other systems."
+  :type 'boolean
+  :group 'shadowfile)
 
-(defvar shadow-info-file nil
+(defcustom shadow-info-file nil
   "File to keep shadow information in.  
 The shadow-info-file should be shadowed to all your accounts to
-ensure consistency.  Default: ~/.shadows")
+ensure consistency.  Default: ~/.xemacs/shadows"
+  :type '(choice (const :tag "Default" nil)
+		 (file))
+  :group 'shadowfile)
 
-(defvar shadow-todo-file nil
+(defcustom shadow-todo-file nil
   "File to store the list of uncopied shadows in.
 This means that if a remote system is down, or for any reason you cannot or
 decide not to copy your shadow files at the end of one emacs session, it will
 remember and ask you again in your next emacs session.
 This file must NOT be shadowed to any other system, it is host-specific.
-Default: ~/.shadow_todo")
+Default: ~/.xemacs/shadow_todo"
+  :type '(choice (const :tag "Default" nil)
+		 (file))
+  :group 'shadowfile)
 
 ;;; The following two variables should in most cases initialize themselves
 ;;; correctly.  They are provided as variables in case the defaults are wrong
@@ -309,7 +326,7 @@ or leave it alone if it already is one.  Returns nil if the argument is not a
 full efs ftp pathname."
   (if (listp fullpath)
       fullpath
-    (efs-ftp-name fullpath)))
+    (efs-ftp-path fullpath)))
 
 (defun shadow-parse-path (path)
   "Parse any PATH into \(site user path) list.

@@ -112,6 +112,7 @@ struct database
 #define DATABASEP(x) RECORDP (x, database)
 #define GC_DATABASEP(x) GC_RECORDP (x, database)
 #define CHECK_DATABASE(x) CHECK_RECORD (x, database)
+#define CONCHECK_DATABASE(x) CONCHECK_RECORD (x, database)
 #define DATABASE_LIVE_P(x) (x->live_p)
 static Lisp_Object mark_database (Lisp_Object, void (*) (Lisp_Object));
 static void print_database (Lisp_Object, Lisp_Object, int);
@@ -129,7 +130,7 @@ DEFINE_LRECORD_IMPLEMENTATION ("database", database,
 
 
 static struct database *
-new_database (void)
+allocate_database (void)
 {
   struct database *dbase =
     alloc_lcrecord_type (struct database, lrecord_database);
@@ -164,25 +165,22 @@ mark_database (Lisp_Object obj, void (*markobj) (Lisp_Object))
 static void
 print_database (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
+  char buf[64];
   struct database *dbase = XDATABASE (obj);
-  char buf[200];
 
   if (print_readably)
-    {
-      error ("printing unreadable object #<database 0x%x>", dbase->header.uid);
-    }
-  else
-    {
-      sprintf (buf, "#<database \"%s\" (%s/%s/%s) 0x%x>",
-	       XSTRING_DATA (dbase->fname),
-	       dbase->funcs->get_type (dbase),
-	       dbase->funcs->get_subtype (dbase),
-	       (!DATABASE_LIVE_P (dbase)    ? "closed"    :
-		(dbase->access_ & O_WRONLY) ? "writeonly" :
-		(dbase->access_ & O_RDWR)   ? "readwrite" : "readonly"),
-	       dbase->header.uid);
-      write_c_string (buf, printcharfun);
-    }
+    error ("printing unreadable object #<database 0x%x>", dbase->header.uid);
+
+  write_c_string ("#<database \"", printcharfun);
+  print_internal (dbase->fname, printcharfun, 0);
+  sprintf (buf, "\" (%s/%s/%s) 0x%x>",
+	   dbase->funcs->get_type (dbase),
+	   dbase->funcs->get_subtype (dbase),
+	   (!DATABASE_LIVE_P (dbase)    ? "closed"    :
+	    (dbase->access_ & O_WRONLY) ? "writeonly" :
+	    (dbase->access_ & O_RDWR)   ? "readwrite" : "readonly"),
+	   dbase->header.uid);
+  write_c_string (buf, printcharfun);
 }
 
 static void
@@ -638,7 +636,7 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
       if (!dbm)
 	return Qnil;
 
-      dbase = new_database ();
+      dbase = allocate_database ();
       dbase->dbm_handle = dbm;
       dbase->type = DB_DBM;
       dbase->funcs = &ndbm_func_block;
@@ -691,7 +689,7 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
 	return Qnil;
 #endif /* DB_VERSION_MAJOR */
    
-      dbase = new_database ();
+      dbase = allocate_database ();
       dbase->db_handle = db;
       dbase->type = DB_BERKELEY;
       dbase->funcs = &berk_func_block;

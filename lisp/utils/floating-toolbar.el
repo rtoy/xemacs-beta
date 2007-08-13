@@ -190,7 +190,8 @@ that only extent local toolbars should be used; this means the
 		    (specifier-instance left-toolbar-width)
 		  0))
 	       ;; better than nothing
-	       (menubar-height (if current-menubar 22 0)))
+	       (menubar-height (if (and (featurep 'menubar)
+					current-menubar) 22 0)))
 	  (setq x (+ left xleft-toolbar-width (event-x-pixel event))
 		y (+ top xtop-toolbar-height menubar-height
 		     (event-y-pixel event))))

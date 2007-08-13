@@ -1,0 +1,24 @@
+Known Bugs
+----------
+1.  Mouse drags can cause aborts. I think this is because the timeout
+    implementation is broken and can cause the same timeout to go
+    off twice (especially during mouse drags?), which makes XEmacs abort. 
+    Windows95 doesn't appear to provide any one-shot timers (NT does).
+2.  Saving text files doesn't translate LFs back to CRLFs.
+3.  XEmacs starts-up with an error or errors.
+
+
+ToDo
+----
+1.  w32-make-font-foo in w32/w32-faces.el need to be written.
+2.  Calling mouse_[enter|leave]_frame_hook.
+3.  CRLF text file handling.
+4.  Subprocess and socket support.
+5.  Eliminate resizing funnies
+6.  Scrollbar
+7.  Menubar
+8.  Larger color database. Palette handling
+9.  Middle mouse button emulation. Dragging off-frame.
+10. Images
+11. Toolbar
+

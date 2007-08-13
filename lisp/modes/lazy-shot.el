@@ -22,13 +22,13 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with:  Not in FSF (mostly equivalent to lazy-lock 2.06 
-;;; in FSF 19.34).
+;;; Synched up with:  Not in FSF (mostly equivalent to lazy-lock 2.09
+;;; in FSF 20.2).
 
 ;;; Commentary:
 
 ;;; This is an experimental demand based font-lock implemenation.  It
-;;; is almost equal in functionality and interface to lazy-lock 2.06
+;;; is almost equal in functionality and interface to lazy-lock 2.09
 ;;; Does somebody really need defer-locking?
 ;;;
 ;;; To use: put
@@ -116,18 +116,19 @@ taking longer to fontify, you could increase the value of this variable."
   "Toggle Lazy Lock mode.
 With arg, turn Lazy Lock mode on if and only if arg is positive."
   (interactive "P")
-  (set (make-local-variable 'lazy-shot-mode)
-       (and (if arg (> (prefix-numeric-value arg) 0) (not lazy-shot-mode))))
-  (cond ((and lazy-shot-mode (not font-lock-mode))
-	 ;; Turned on `lazy-shot-mode' rather than `font-lock-mode'.
-	 (let ((font-lock-support-mode 'lazy-shot-mode))
-	   (font-lock-mode t)))
-	(lazy-shot-mode
-	 ;; Turn ourselves on.
-	 (lazy-shot-install))
-	(t
-	 ;; Turn ourselves off.
-	 (lazy-shot-unstall))))
+  (let ((was-on lazy-shot-mode))
+    (set (make-local-variable 'lazy-shot-mode)
+	 (and (if arg (> (prefix-numeric-value arg) 0) (not lazy-shot-mode))))
+    (cond ((and lazy-shot-mode (not font-lock-mode))
+	   ;; Turned on `lazy-shot-mode' rather than `font-lock-mode'.
+	   (let ((font-lock-support-mode 'lazy-shot-mode))
+	     (font-lock-mode t)))
+	  (lazy-shot-mode
+	   ;; Turn ourselves on.
+	   (lazy-shot-install))
+	  (was-on
+	   ;; Turn ourselves off.
+	   (lazy-shot-unstall)))))
 
 (custom-add-option 'font-lock-mode-hook 'turn-on-lazy-lock)
 
@@ -151,6 +152,7 @@ This improves efficiency and C-g behavior."
    "Lazy lock the EXTENT when it has become visisble."
    (lazy-shot-lock-extent extent nil))
 
+
 (defun lazy-shot-lock-extent (extent stealth)
   "Font-lock the EXTENT. Called from redisplay-trigger functions and
 stealth locking functions"
@@ -159,22 +161,35 @@ stealth locking functions"
 	   (end   (extent-end-position extent))
 	   (buffer (extent-object extent)))
        (delete-extent extent)
-       (save-excursion
-	 ;; Should inhibit quit here
-        (set-buffer buffer) ;; with-current-buffer is silly here
-	;; This magic should really go into font-lock-fonity-region
-	(goto-char start)
-	(setq start (point-at-bol))
-	(goto-char end)
-	(setq end (point-at-bol 2))
-	(lazy-shot-clean-up-extents start end)
-	(if (or lazy-shot-verbose (and stealth lazy-shot-stealth-verbose))
-	    (display-message 'progress
-	      (format "Lazy-shot fontifying %sfrom %s to %s in %s"
-		      (if stealth "stealthy " "") start end buffer)))
-	;; and a allow quit here
-	(save-match-data
-	  (font-lock-fontify-region start end))))))
+       (lazy-shot-fontify-internal buffer start end
+				      (or lazy-shot-verbose 
+					  (and stealth
+					       lazy-shot-stealth-verbose))
+				      (if stealth "stealthy " "")))))
+
+(defun lazy-shot-fontify-internal (buffer start end verbose message)
+  (save-excursion
+    ;; Should inhibit quit here
+    (set-buffer buffer) ;; with-current-buffer is silly here
+    ;; This magic should really go into font-lock-fonity-region
+    (goto-char start)
+    (setq start (point-at-bol))
+    (goto-char end)
+    (setq end (point-at-bol 2))
+    (lazy-shot-clean-up-extents start end)
+    ;; and a allow quit here
+    (if verbose
+	(display-message 'progress
+	  (format "Lazy-shot fontifying %sfrom %s to %s in %s"
+		     message start end buffer)))
+    (save-match-data
+      (font-lock-fontify-region start end))))
+
+;; Note this is suboptimal but works for now. It is not called that often.
+(defun lazy-shot-fontify-region (start end &optional buffer)
+  (lazy-shot-fontify-internal (or buffer (current-buffer))
+					start end lazy-shot-verbose
+					"on request "))
 
 (defun lazy-shot-stealth-lock (buffer)
   "Find an extent to lazy lock in buffer."
@@ -235,9 +250,15 @@ stealth locking functions"
   (setq font-lock-fontified (and lazy-shot-minimum-size
 				 (>= (buffer-size) lazy-shot-minimum-size))) 
   (lazy-shot-install-extents font-lock-fontified)
-  (lazy-shot-install-timer font-lock-fontified))
+  (lazy-shot-install-timer font-lock-fontified)
+  (add-hook 'font-lock-after-fontify-buffer-hook
+	    'lazy-shot-unstall-after-fontify))
 
-(defun lazy-shot-unstall ()
+;; Kludge needed untill lazy-lock-fontify-region is more intelligent
+(defun lazy-shot-unstall-after-fontify ()
+  (lazy-shot-unstall 1))
+
+(defun lazy-shot-unstall (&optional no-fontify)
   ;; Stop the timer
   (when lazy-shot-stealth-timer
     (delete-itimer lazy-shot-stealth-timer)
@@ -246,14 +267,10 @@ stealth locking functions"
   (map-extents 
      (lambda (e arg) (delete-extent e) nil) 
      nil nil nil nil nil 'initial-redisplay-function 'lazy-shot-redisplay-function)
-  ;;
-  ;; Remove the fontification hooks.
-  (remove-hook 'after-change-functions 'lazy-shot-defer-after-change t)
-  ;;
-  ;; If Font Lock mode is still enabled, reinstall its hook.
-  (when font-lock-mode
-    (add-hook 'after-change-functions 'font-lock-after-change-function nil t)))
-
+  (when (and font-lock-mode (not no-fontify))
+    (save-restriction
+      (widen)
+      (lazy-shot-fontify-region (point-min) (point-max)))))
 
 (provide 'lazy-shot)
 

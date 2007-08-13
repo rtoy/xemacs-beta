@@ -77,7 +77,7 @@ int puke_on_fsf_keys;
 #define FEATUREP_SYNTAX
 
 #ifdef FEATUREP_SYNTAX
-static Lisp_Object Qfeaturep;
+Lisp_Object Qfeaturep;
 #endif
 
 /* non-zero if inside `load' */
@@ -821,9 +821,6 @@ complete_filename_p (Lisp_Object pathname)
 #ifdef ALTOS
 	  || *s == '@'
 #endif
-#ifdef VMS
-	  || strchr (s, ':')
-#endif /* VMS */
 	  );
 }
 #endif /* 0 */
@@ -2967,7 +2964,7 @@ init_lread (void)
     {
       /* loadup.el will frob this some more. */
       /* #### unix-specific */
-      Vload_path = Fcons (build_string ("../lisp/prim"), Vload_path);
+      Vload_path = Fcons (build_string ("../lisp/"), Vload_path);
     }
 #endif /* not CANNOT_DUMP */
   load_in_progress = 0;

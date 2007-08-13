@@ -77,24 +77,6 @@ int _CRTAPI1 _spawnlp (int, const char *, const char *, ...);
 int _CRTAPI1 _getpid (void);
 #endif
 
-/* ------------------------------- */
-/*           VMS includes          */
-/* ------------------------------- */
-
-#ifdef VMS
-#include <ttdef.h>
-#include <tt2def.h>
-#include <iodef.h>
-#include <ssdef.h>
-#include <descrip.h>
-#include <fibdef.h>
-#include <atrdef.h>
-#undef F_SETFL
-#ifndef RAB/*$C_BID   -- suppress compiler warnings */
-#include <rab.h>
-#endif
-#define	MAXIOSIZE (32 * PAGESIZE)	/* Don't I/O more than 32 blocks at a time */
-#endif /* VMS */
 
 /* ------------------------------- */
 /*         TTY definitions         */
@@ -254,10 +236,6 @@ wait_for_termination (int pid)
       if (wait (0) == pid)
 	return;
     }
-#elif defined (VMS)
-  int status = SYS$FORCEX (&pid, 0, 0);
-  return;
-
 #elif defined (HAVE_WAITPID)
   /* Note that, whenever any subprocess terminates (asynch. or synch.),
      the SIGCHLD handler will be called and it will call wait().  Thus
@@ -421,7 +399,6 @@ flush_pending_output (int channel)
 #endif
 }
 
-#ifndef VMS
 #ifndef MSDOS
 #ifndef WINDOWSNT
 /*  Set up the terminal at the other end of a pseudo-terminal that
@@ -533,12 +510,11 @@ child_setup_tty (int out)
 }
 #endif /* WINDOWSNT */
 #endif /* not MSDOS */
-#endif /* not VMS */
 
 #endif /* not NO_SUBPROCESSES */
 
 
-#if !defined (VMS) && !defined (SIGTSTP) && !defined (USG_JOBCTRL)
+#if !defined (SIGTSTP) && !defined (USG_JOBCTRL)
 
 /* Record a signal code and the handler for it.  */
 struct save_signal
@@ -686,7 +662,7 @@ sys_subshell (void)
   restore_signal_handlers (saved_handlers);
 }
 
-#endif /* !defined (VMS) && !defined (SIGTSTP) && !defined (USG_JOBCTRL) */
+#endif /* !defined (SIGTSTP) && !defined (USG_JOBCTRL) */
 
 
 
@@ -694,47 +670,7 @@ sys_subshell (void)
 void
 sys_suspend (void)
 {
-#ifdef VMS
-  /* "Foster" parentage allows emacs to return to a subprocess that attached
-     to the current emacs as a cheaper than starting a whole new process.  This
-     is set up by KEPTEDITOR.COM.  */
-  unsigned long parent_id, foster_parent_id;
-  char *fpid_string;
-
-  fpid_string = getenv ("EMACS_PARENT_PID");
-  if (fpid_string != NULL)
-    {
-      sscanf (fpid_string, "%x", &foster_parent_id);
-      if (foster_parent_id != 0)
-	parent_id = foster_parent_id;
-      else
-	parent_id = getppid ();
-    }
-  else
-    parent_id = getppid ();
-
-  xfree (fpid_string);		/* On VMS, this was malloc'd */
-
-  if (parent_id && parent_id != 0xffffffff)
-    {
-      SIGTYPE (*oldsig)() = (int) signal (SIGINT, SIG_IGN);
-      int status = LIB$ATTACH (&parent_id) & 1;
-      signal (SIGINT, oldsig);
-      return status;
-    }
-  else
-    {
-      struct {
-	int	l;
-	char	*a;
-      } d_prompt;
-      d_prompt.l = sizeof ("Emacs: ");		/* Our special prompt */
-      d_prompt.a = "Emacs: ";			/* Just a reminder */
-      LIB$SPAWN (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &d_prompt, 0);
-      return 1;
-    }
-  return -1;
-#elif defined (SIGTSTP) && !defined (MSDOS)
+#if defined (SIGTSTP) && !defined (MSDOS)
   {
     int pgrp = EMACS_GET_PROCESS_GROUP ();
     EMACS_KILLPG (pgrp, SIGTSTP);
@@ -888,14 +824,8 @@ init_baud_rate (struct device *d)
   assert (DEVICE_TTY_P (d));
   {
     int input_fd = CONSOLE_TTY_DATA (con)->infd;
-#ifdef MSDOS
+#if defined (MSDOS) || defined(WIN32)
     DEVICE_TTY_DATA (d)->ospeed = 15;
-#elif defined (VMS)
-    struct vms_sensemode sg;
-
-    SYS$QIOW (0, input_fd, IO$_SENSEMODE, &sg, 0, 0,
-	      &sg.class, 12, 0, 0, 0, 0 );
-    DEVICE_TTY_DATA (d)->ospeed = sg.xmit_baud;
 #elif defined (HAVE_TERMIOS)
     struct termios sg;
 
@@ -917,7 +847,7 @@ init_baud_rate (struct device *d)
     ioctl (input_fd, TCGETA, &sg);
 # endif
     DEVICE_TTY_DATA (d)->ospeed = sg.c_cflag & CBAUD;
-#else /* neither VMS nor TERMIOS nor TERMIO */
+#else /* neither TERMIOS nor TERMIO */
     struct sgttyb sg;
 
     sg.sg_ospeed = B9600;
@@ -1349,28 +1279,15 @@ emacs_get_tty (int fd, struct emacs_tty *settings)
   if (tcgetattr (fd, &settings->main) < 0)
     return -1;
 
-#else
-#ifdef HAVE_TERMIO
+#elif defined HAVE_TERMIO
   /* The SYSV-style interface?  */
   if (ioctl (fd, TCGETA, &settings->main) < 0)
     return -1;
 
-#else
-#ifdef VMS
-  /* Vehemently Monstrous System?  :-)  */
-  if (! (SYS$QIOW (0, fd, IO$_SENSEMODE, settings, 0, 0,
-		   &settings->main.class, 12, 0, 0, 0, 0)
-	 & 1))
-    return -1;
-
-#else
-#ifndef MSDOS
+#elif !defined MSDOS && !defined(WIN32)
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, TIOCGETP, &settings->main) < 0)
     return -1;
-#endif /* not MSDOS */
-#endif /* not VMS */
-#endif /* HAVE_TERMIO */
 #endif /* HAVE_TCATTR */
 
   /* Suivant - Do we have to get struct ltchars data?  */
@@ -1435,28 +1352,15 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
 	else
 	  continue;
       }
-#else
-#ifdef HAVE_TERMIO
+#elif defined HAVE_TERMIO
   /* The SYSV-style interface?  */
   if (ioctl (fd, flushp ? TCSETAF : TCSETAW, &settings->main) < 0)
     return -1;
 
-#else
-#ifdef VMS
-  /* Vehemently Monstrous System?  :-)  */
-  if (! (SYS$QIOW (0, fd, IO$_SETMODE, &input_iosb, 0, 0,
-		   &settings->main.class, 12, 0, 0, 0, 0)
-	 & 1))
-    return -1;
-
-#else
-#ifndef MSDOS
+#elif !defined(MSDOS) && !defined(WIN32)
   /* I give up - I hope you have the BSD ioctls.  */
   if (ioctl (fd, (flushp) ? TIOCSETP : TIOCSETN, &settings->main) < 0)
     return -1;
-#endif /* not MSDOS */
-#endif /* VMS */
-#endif /* HAVE_TERMIO */
 #endif /* HAVE_TCATTR */
 
   /* Suivant - Do we have to get struct ltchars data?  */
@@ -1636,14 +1540,14 @@ tty_init_sys_modes_on_device (struct device *d)
   tty.main.c_iflag &= ~BRKINT;
 #endif /* AIX */
 #else /* if not HAVE_TERMIO */
-#ifndef MSDOS
+#if !defined(MSDOS) && !defined(WIN32)
   con->tty_erase_char = make_char (tty.main.sg_erase);
   tty.main.sg_flags &= ~(ECHO | CRMOD | XTABS);
   if (TTY_FLAGS (con).meta_key)
     tty.main.sg_flags |= ANYP;
   /* #### should we be using RAW mode here? */
   tty.main.sg_flags |= /* interrupt_input ? RAW : */ CBREAK;
-#endif /* not MSDOS */
+#endif /* not MSDOS or WIN32 */
 #endif /* not HAVE_TERMIO */
 
   /* If going to use CBREAK mode, we must request C-g to interrupt
@@ -1719,14 +1623,6 @@ tty_init_sys_modes_on_device (struct device *d)
   }
 #endif
 #endif
-
-#ifdef VMS
-  /*  Appears to do nothing when in PASTHRU mode.
-      SYS$QIOW (0, input_fd, IO$_SETMODE|IO$M_OUTBAND, 0, 0, 0,
-      interrupt_signal, oob_chars, 0, 0, 0, 0);
-      */
-  queue_kbd_input (0);
-#endif /* VMS */
 
 #if 0 /* We do our own buffering with lstreams. */
 #ifdef _IOFBF
@@ -1834,8 +1730,7 @@ get_tty_device_size (struct device *d, int *widthp, int *heightp)
 	*heightp = size.ws_row;
       }
   }
-#else
-#ifdef TIOCGSIZE
+#elif defined TIOCGSIZE
   {
     /* SunOS - style.  */
     struct ttysize size;
@@ -1848,19 +1743,7 @@ get_tty_device_size (struct device *d, int *widthp, int *heightp)
 	*heightp = size.ts_lines;
       }
   }
-#else
-#ifdef VMS
-  {
-    struct vms_sensemode tty;
-
-    SYS$QIOW (0, input_fd, IO$_SENSEMODE, &tty, 0, 0,
-	      &tty.class, 12, 0, 0, 0, 0);
-    *widthp = tty.scr_wid;
-    *heightp = tty.scr_len;
-  }
-#else
-#ifdef MSDOS
-
+#elif defined MSDOS
   *widthp = FrameCols ();
   *heightp = FrameRows ();
 
@@ -1869,10 +1752,7 @@ get_tty_device_size (struct device *d, int *widthp, int *heightp)
   *widthp = 0;
   *heightp = 0;
 
-#endif /* not MSDOS */
-#endif /* not VMS */
-#endif /* not SunOS-style */
-#endif /* not BSD-style */
+#endif /* not !TIOCGWINSZ */
 }
 
 #endif /* HAVE_TTY */
@@ -1963,9 +1843,6 @@ tty_reset_sys_modes_on_device (struct device *d)
   hft_reset (con);
 #endif
 
-#ifdef VMS
-  stop_vms_input (con);
-#endif
 }
 
 #endif /* HAVE_TTY */
@@ -2141,219 +2018,6 @@ hft_reset (struct console *con)
 #endif /* AIXHFT */
 
 
-/* ------------------------------------------------------ */
-/*                   TTY stuff under VMS                  */
-/* ------------------------------------------------------ */
-
-/***** #### this is all broken ****/
-
-#ifdef VMS
-
-/* Assigning an input channel is done at the start of Emacs execution.
-   This is called each time Emacs is resumed, also, but does nothing
-   because input_chain is no longer zero.  */
-
-void
-init_vms_input (void)
-{
-  /* #### broken. */
-  int status;
-
-  if (input_fd == 0)
-    {
-      status = SYS$ASSIGN (&vms_input_dsc, &input_fd, 0, 0);
-      if (! (status & 1))
-	LIB$STOP (status);
-    }
-}
-
-/* Deassigning the input channel is done before exiting.  */
-
-static void
-stop_vms_input (struct console *con)
-{
-  int input_fd = CONSOLE_TTY_DATA (con)->infd;
-  return SYS$DASSGN (input_fd);
-}
-
-static short vms_input_buffer;
-
-/* Request reading one character into the keyboard buffer.
-   This is done as soon as the buffer becomes empty.  */
-
-static void
-queue_vms_kbd_input (struct console *con)
-{
-  int input_fd = CONSOLE_TTY_DATA (con)->infd;
-  int status;
-  vms_waiting_for_ast = 0;
-  vms_stop_input = 0;
-  status = SYS$QIO (0, input_fd, IO$_READVBLK,
-		    &vms_input_iosb, vms_kbd_input_ast, 1,
-		    &vms_input_buffer, 1, 0, vms_terminator_mask, 0, 0);
-}
-
-static int vms_input_count;
-
-/* Ast routine that is called when keyboard input comes in
-   in accord with the SYS$QIO above.  */
-
-static void
-vms_kbd_input_ast (struct console *con)
-{
-  int c = -1;
-  int old_errno = errno;
-  extern EMACS_TIME *input_available_clear_time;
-
-  if (vms_waiting_for_ast)
-    SYS$SETEF (vms_input_ef);
-  vms_waiting_for_ast = 0;
-  vms_input_count++;
-#ifdef ASTDEBUG
-  if (vms_input_count == 25)
-    exit (1);
-  printf ("Ast # %d,", vms_input_count);
-  printf (" iosb = %x, %x, %x, %x",
-	  vms_input_iosb.offset, vms_input_iosb.status,
-          vms_input_iosb.termlen, vms_input_iosb.term);
-#endif
-  if (vms_input_iosb.offset)
-    {
-      c = vms_input_buffer;
-#ifdef ASTDEBUG
-      printf (", char = 0%o", c);
-#endif
-    }
-#ifdef ASTDEBUG
-  printf ("\n");
-  fflush (stdout);
-  emacs_sleep (1);
-#endif
-  if (! vms_stop_input)
-    queue_vms_kbd_input (con);
-  if (c >= 0)
-    kbd_buffer_store_char (c);
-
-  if (input_available_clear_time)
-    EMACS_SET_SECS_USECS (*input_available_clear_time, 0, 0);
-  errno = old_errno;
-}
-
-#if 0 /* Unused */
-/* Wait until there is something in kbd_buffer.  */
-
-void
-vms_wait_for_kbd_input (void)
-{
-  /* This function can GC */
-  extern int have_process_input, process_exited;
-
-  /* If already something, avoid doing system calls.  */
-  if (detect_input_pending (0))
-    {
-      return;
-    }
-  /* Clear a flag, and tell ast routine above to set it.  */
-  SYS$CLREF (vms_input_ef);
-  vms_waiting_for_ast = 1;
-  /* Check for timing error: ast happened while we were doing that.  */
-  if (!detect_input_pending (0))
-    {
-      /* No timing error: wait for flag to be set.  */
-      set_waiting_for_input (0);
-      SYS$WFLOR (vms_input_ef, vms_input_eflist);
-      clear_waiting_for_input (0);
-      if (!detect_input_pending (0))
-	/* Check for subprocess input availability */
-	{
-	  int dsp = have_process_input || process_exited;
-
-	  SYS$CLREF (vms_process_ef);
-	  if (have_process_input)
-	    process_command_input ();
-	  if (process_exited)
-	    process_exit ();
-	  if (dsp)
-	    {
-	      MARK_MODELINE_CHANGED;
-	      redisplay ();
-	    }
-	}
-    }
-  vms_waiting_for_ast = 0;
-}
-#endif
-
-/* Get rid of any pending QIO, when we are about to suspend
-   or when we want to throw away pending input.
-   We wait for a positive sign that the AST routine has run
-   and therefore there is no I/O request queued when we return.
-   SYS$SETAST is used to avoid a timing error.  */
-
-static void
-vms_end_kbd_input (struct console *con)
-{
-  int input_fd;
-
-  assert (CONSOLE_TTY_P (con));
-  input_fd = CONSOLE_TTY_DATA (con)->infd;
-#ifdef ASTDEBUG
-  printf ("At end_kbd_input.\n");
-  fflush (stdout);
-  emacs_sleep (1);
-#endif
-  if (LIB$AST_IN_PROG ())  /* Don't wait if suspending from kbd_buffer_store_char! */
-    {
-      SYS$CANCEL (input_fd);
-      return;
-    }
-
-  SYS$SETAST (0);
-  /* Clear a flag, and tell ast routine above to set it.  */
-  SYS$CLREF (vms_input_ef);
-  vms_waiting_for_ast = 1;
-  vms_stop_input = 1;
-  SYS$CANCEL (input_fd);
-  SYS$SETAST (1);
-  SYS$WAITFR (vms_input_ef);
-  vms_waiting_for_ast = 0;
-}
-
-#if 0 /* Unused */
-/* Wait for either input available or time interval expiry.  */
-
-void
-vms_input_wait_timeout (int timeval) /* Time to wait, in seconds */
-{
-  int time [2];
-  static int zero = 0;
-  static int large = -10000000;
-
-  LIB$EMUL (&timeval, &large, &zero, time); 	  /* Convert to VMS format */
-
-  /* If already something, avoid doing system calls.  */
-  if (detect_input_pending (0))
-    {
-      return;
-    }
-  /* Clear a flag, and tell ast routine above to set it.  */
-  SYS$CLREF (vms_input_ef);
-  vms_waiting_for_ast = 1;
-  /* Check for timing error: ast happened while we were doing that.  */
-  if (!detect_input_pending (0))
-    {
-      /* No timing error: wait for flag to be set.  */
-      SYS$CANTIM (1, 0);
-      if (SYS$SETIMR (vms_timer_ef, time, 0, 1) & 1) /* Set timer */
-	SYS$WFLOR (vms_timer_ef, vms_timer_eflist);  /* Wait for timer expiry or input */
-    }
-  vms_waiting_for_ast = 0;
-}
-#endif /* 0 */
-
-#endif /* VMS */
-
-
 /************************************************************************/
 /*                    limits of text/data segments                      */
 /************************************************************************/
@@ -2499,23 +2163,15 @@ end_of_data (void)
 
 extern Lisp_Object Vsystem_name;
 
-#if defined (HAVE_SOCKETS) && !defined (VMS)
+#ifdef HAVE_SOCKETS
 # include <sys/socket.h>
 # include <netdb.h>
-#endif /* HAVE_SOCKETS and not VMS */
+#endif /* HAVE_SOCKETS */
 
 void
 init_system_name (void)
 {
-#if defined (VMS)
-  char *sp, *end;
-  if ((sp = egetenv ("SYS$NODE")) == 0)
-    Vsystem_name = build_string ("vax-vms");
-  else if ((end = strchr (sp, ':')) == 0)
-    Vsystem_name = build_string (sp);
-  else
-    Vsystem_name = make_string ((Bufbyte *) sp, end - sp);
-#elif !defined (HAVE_GETHOSTNAME)
+#ifndef HAVE_GETHOSTNAME
   struct utsname uts;
   uname (&uts);
   Vsystem_name = build_string (uts.nodename);
@@ -2584,7 +2240,7 @@ init_system_name (void)
     }
 # endif /* HAVE_SOCKETS */
   Vsystem_name = build_string (hostname);
-#endif /* HAVE_GETHOSTNAME and not VMS */
+#endif /* HAVE_GETHOSTNAME  */
   {
     Bufbyte *p;
     Bytecount i;
@@ -2604,13 +2260,11 @@ init_system_name (void)
 /*                        Emulation of select()                         */
 /************************************************************************/
 
-#ifndef VMS
 #ifndef HAVE_SELECT
 
 ERROR: XEmacs requires a working select().
 
 #endif /* not HAVE_SELECT */
-#endif /* not VMS */
 
 
 /************************************************************************/
@@ -2708,57 +2362,6 @@ sys_do_signal (int signal_number, signal_handler_t action)
 
 #ifndef HAVE_STRERROR
 
-#if defined (VMS) && defined (LINK_CRTL_SHARE) && defined (SHAREABLE_LIB_BUG)
-
-/* Variables declared noshare and initialized in sharable libraries
-   cannot be shared.  The VMS linker incorrectly forces you to use a private
-   version which is uninitialized... If not for this "feature", we
-   could use the C library definition of sys_nerr and sys_errlist. */
-CONST char *sys_errlist[] =
-  {
-    "error 0",
-    "not owner",
-    "no such file or directory",
-    "no such process",
-    "interrupted system call",
-    "I/O error",
-    "no such device or address",
-    "argument list too long",
-    "exec format error",
-    "bad file number",
-    "no child process",
-    "no more processes",
-    "not enough memory",
-    "permission denied",
-    "bad address",
-    "block device required",
-    "mount devices busy",
-    "file exists",
-    "cross-device link",
-    "no such device",
-    "not a directory",
-    "is a directory",
-    "invalid argument",
-    "file table overflow",
-    "too many open files",
-    "not a typewriter",
-    "text file busy",
-    "file too big",
-    "no space left on device",
-    "illegal seek",
-    "read-only file system",
-    "too many links",
-    "broken pipe",
-    "math argument",
-    "result too large",
-    "I/O stream empty",
-    "vax/vms specific error code nontranslatable error"
-  };
-int sys_nerr = countof (sys_errlist);
-
-#endif /* VMS & LINK_CRTL_SHARE & SHAREABLE_LIB_BUG */
-
-
 #if !defined(NeXT) && !defined(__alpha) && !defined(MACH) && !defined(LINUX) && !defined(IRIX) && !defined(__NetBSD__)
 /* Linux added here by Raymond L. Toy <toy@alydar.crd.ge.com> for XEmacs. */
 /* Irix added here by gparker@sni-usa.com for XEmacs. */
@@ -2792,7 +2395,6 @@ strerror (int errnum)
 #define PATHNAME_CONVERT_OUT(path) \
   GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (path, path)
 
-/***** VMS versions are at the bottom of this file *****/
 /***** MSDOS versions are in msdos.c *****/
 
 /***************** low-level calls ****************/
@@ -2869,9 +2471,6 @@ sys_close (int fd)
 int
 sys_read_1 (int fildes, void *buf, unsigned int nbyte, int allow_quit)
 {
-#ifdef VMS
-  return vms_read (fildes, buf, nbyte);
-#else
   int rtnval;
 
   /* No harm in looping regardless of the INTERRUPTIBLE_IO setting. */
@@ -2882,7 +2481,6 @@ sys_read_1 (int fildes, void *buf, unsigned int nbyte, int allow_quit)
 	REALLY_QUIT;
     }
   return rtnval;
-#endif
 }
 
 #ifdef ENCAPSULATE_READ
@@ -2896,9 +2494,6 @@ sys_read (int fildes, void *buf, unsigned int nbyte)
 int
 sys_write_1 (int fildes, CONST void *buf, unsigned int nbyte, int allow_quit)
 {
-#ifdef VMS
-  return vms_write (fildes, buf, nbyte);
-#else
   int rtnval;
   int bytes_written = 0;
   CONST char *b = (CONST char *) buf;
@@ -2923,7 +2518,6 @@ sys_write_1 (int fildes, CONST void *buf, unsigned int nbyte, int allow_quit)
       bytes_written += rtnval;
     }
   return (bytes_written);
-#endif
 }
 
 #ifdef ENCAPSULATE_WRITE
@@ -3035,8 +2629,6 @@ sys_fwrite (CONST void *ptr, size_t size, size_t nitem, FILE *stream)
       items_written += rtnval;
     }
   return (items_written);
-#elif defined (VMS)
-  return vms_fwrite (ptr, size, nitem, stream);
 #else
   return fwrite (ptr, size, nitem, stream);
 #endif
@@ -3172,11 +2764,7 @@ int
 sys_access (CONST char *path, int mode)
 {
   PATHNAME_CONVERT_OUT (path);
-#ifdef VMS
-  return vms_access (path, mode);
-#else
   return access (path, mode);
-#endif
 }
 #endif /* ENCAPSULATE_ACCESS */
 
@@ -3886,14 +3474,12 @@ closedir (DIR *dirp)		/* stream from opendir */
 }
 
 
-#ifndef VMS
 #define DIRSIZ	14
 struct olddir
   {
     ino_t od_ino; 		/* inode */
     char od_name[DIRSIZ];	/* filename */
   };
-#endif /* not VMS */
 
 static struct direct dir_static; /* simulated directory contents */
 
@@ -3901,12 +3487,7 @@ static struct direct dir_static; /* simulated directory contents */
 struct direct *
 readdir (DIR *dirp)	/* stream from opendir */
 {
-#ifndef VMS
   struct olddir *dp;	/* -> directory data */
-#else /* VMS */
-  struct dir$_name *dp; /* -> directory data */
-  struct dir$_version *dv; /* -> version data */
-#endif /* VMS */
 
   for (; ;)
     {
@@ -3917,7 +3498,6 @@ readdir (DIR *dirp)	/* stream from opendir */
 	  && (dirp->dd_size = sys_read (dirp->dd_fd, dirp->dd_buf, DIRBLKSIZ)) <= 0)
 	return 0;
 
-#ifndef VMS
       dp = (struct olddir *) &dirp->dd_buf[dirp->dd_loc];
       dirp->dd_loc += sizeof (struct olddir);
 
@@ -3932,59 +3512,9 @@ readdir (DIR *dirp)	/* stream from opendir */
 	      + dir_static.d_namlen - dir_static.d_namlen % 4;
 	  return &dir_static;	/* -> simulated structure */
 	}
-#else /* VMS */
-      dp = (struct dir$_name *) dirp->dd_buf;
-      if (dirp->dd_loc == 0)
-	dirp->dd_loc = (dp->dir$b_namecount&1) ? dp->dir$b_namecount + 1
-	  : dp->dir$b_namecount;
-      dv = (struct dir$_version *)&dp->dir$t_name[dirp->dd_loc];
-      dir_static.d_ino = dv->dir$w_fid_num;
-      dir_static.d_namlen = dp->dir$b_namecount;
-      dir_static.d_reclen = sizeof (struct direct)
-	- MAXNAMLEN + 3
-	  + dir_static.d_namlen - dir_static.d_namlen % 4;
-      strncpy (dir_static.d_name, dp->dir$t_name, dp->dir$b_namecount);
-      dir_static.d_name[dir_static.d_namlen] = '\0';
-      dirp->dd_loc = dirp->dd_size; /* only one record at a time */
-      return &dir_static;
-#endif /* VMS */
     }
 }
 
-#ifdef VMS
-/* readdirver is just like readdir except it returns all versions of a file
-   as separate entries.  */
-
-/* ARGUSED */
-struct direct *
-readdirver (DIR *dirp)	/* stream from opendir */
-{
-  struct dir$_name *dp; /* -> directory data */
-  struct dir$_version *dv; /* -> version data */
-
-  if (dirp->dd_loc >= dirp->dd_size - sizeof (struct dir$_name))
-    dirp->dd_loc = dirp->dd_size = 0;
-
-  if (dirp->dd_size == 0 	/* refill buffer */
-      && (dirp->dd_size = sys_read (dirp->dd_fd, dirp->dd_buf, DIRBLKSIZ)) <= 0)
-    return 0;
-
-  dp = (struct dir$_name *) dirp->dd_buf;
-  if (dirp->dd_loc == 0)
-    dirp->dd_loc = (dp->dir$b_namecount & 1) ? dp->dir$b_namecount + 1
-		   : dp->dir$b_namecount;
-  dv = (struct dir$_version *) &dp->dir$t_name[dirp->dd_loc];
-  strncpy (dir_static.d_name, dp->dir$t_name, dp->dir$b_namecount);
-  sprintf (&dir_static.d_name[dp->dir$b_namecount], ";%d", dv->dir$w_version);
-  dir_static.d_namlen = strlen (dir_static.d_name);
-  dir_static.d_ino = dv->dir$w_fid_num;
-  dir_static.d_reclen = sizeof (struct direct) - MAXNAMLEN + 3
-			+ dir_static.d_namlen - dir_static.d_namlen % 4;
-  dirp->dd_loc = ((char *) (++dv) - dp->dir$t_name);
-  return &dir_static;
-}
-
-#endif /* VMS */
 
 #endif /* NONSYSTEM_DIR_LIBRARY */
 
@@ -4149,1305 +3679,6 @@ dlclose (void)
 #endif /* USE_DL_STUBS */
 
 
-/************************************************************************/
-/*                     VMS emulation of system calls                    */
-/************************************************************************/
-
-#ifdef VMS
-#include "vms-pwd.h"
-#include <acldef.h>
-#include <chpdef.h>
-#include <jpidef.h>
-
-/* Return as a string the VMS error string pertaining to STATUS.
-   Reuses the same static buffer each time it is called.  */
-
-char *
-vmserrstr (int status)	/* VMS status code */
-{
-  int bufadr[2];
-  short len;
-  static char buf[257];
-
-  bufadr[0] = sizeof buf - 1;
-  bufadr[1] = (int) buf;
-  if (! (SYS$GETMSG (status, &len, bufadr, 0x1, 0) & 1))
-    return "untranslatable VMS error status";
-  buf[len] = '\0';
-  return buf;
-}
-
-#ifdef access
-#undef access
-
-/* The following is necessary because 'access' emulation by VMS C (2.0) does
- * not work correctly.  (It also doesn't work well in version 2.3.)
- */
-
-#ifdef VMS4_4
-
-#define DESCRIPTOR(name,string) struct dsc$descriptor_s name = \
-	{ strlen (string), DSC$K_DTYPE_T, DSC$K_CLASS_S, string }
-
-typedef union {
-    struct {
-	unsigned short s_buflen;
-	unsigned short s_code;
-	char *s_bufadr;
-	unsigned short *s_retlenadr;
-    } s;
-    int end;
-} item;
-#define buflen s.s_buflen
-#define code s.s_code
-#define bufadr s.s_bufadr
-#define retlenadr s.s_retlenadr
-
-#define R_OK 4	/* test for read permission */
-#define W_OK 2	/* test for write permission */
-#define X_OK 1	/* test for execute (search) permission */
-#define F_OK 0	/* test for presence of file */
-
-int
-vms_access (CONST char *path, int mode)
-{
-  static char *user = NULL;
-  char dir_fn[512];
-
-  /* translate possible directory spec into .DIR file name, so brain-dead
-   * access can treat the directory like a file.  */
-  if (directory_file_name (path, dir_fn))
-    path = dir_fn;
-
-  if (mode == F_OK)
-    return access (path, mode);
-  if (user == NULL && (user = (char *) getenv ("USER")) == NULL)
-    return -1;
-  {
-    int stat;
-    int flags;
-    int acces;
-    unsigned short int dummy;
-    item itemlst[3];
-    static int constant = ACL$C_FILE;
-    DESCRIPTOR (path_desc, path);
-    DESCRIPTOR (user_desc, user);
-
-    flags = 0;
-    acces = 0;
-    if ((mode & X_OK) && ((stat = access (path, mode)) < 0 || mode == X_OK))
-      return stat;
-    if (mode & R_OK)
-      acces |= CHP$M_READ;
-    if (mode & W_OK)
-      acces |= CHP$M_WRITE;
-    itemlst[0].buflen = sizeof (int);
-    itemlst[0].code = CHP$_FLAGS;
-    itemlst[0].bufadr = (char *) &flags;
-    itemlst[0].retlenadr = &dummy;
-    itemlst[1].buflen = sizeof (int);
-    itemlst[1].code = CHP$_ACCESS;
-    itemlst[1].bufadr = (char *) &acces;
-    itemlst[1].retlenadr = &dummy;
-    itemlst[2].end = CHP$_END;
-    stat = SYS$CHECK_ACCESS (&constant, &path_desc, &user_desc, itemlst);
-    return stat == SS$_NORMAL ? 0 : -1;
-  }
-}
-
-#else /* not VMS4_4 */
-
-#include <prvdef.h>
-#define	ACE$M_WRITE	2
-#define	ACE$C_KEYID	1
-
-static unsigned short vms_memid, vms_grpid;
-static unsigned int vms_uic;
-
-/* Called from init_sys_modes, so it happens not very often
-   but at least each time Emacs is loaded.  */
-sys_access_reinit (void)
-{
-  vms_uic = 0;
-}
-
-int
-vms_access (CONST char *filename, int type)
-{
-  struct FAB fab;
-  struct XABPRO xab;
-  int status, size, i, typecode, acl_controlled;
-  unsigned int *aclptr, *aclend, aclbuf[60];
-  union prvdef prvmask;
-
-  /* Get UIC and GRP values for protection checking.  */
-  if (vms_uic == 0)
-    {
-      status = LIB$GETJPI (&JPI$_UIC, 0, 0, &vms_uic, 0, 0);
-      if (! (status & 1))
-	return -1;
-      vms_memid = vms_uic & 0xFFFF;
-      vms_grpid = vms_uic >> 16;
-    }
-
-  if (type != 2)		/* not checking write access */
-    return access (filename, type);
-
-  /* Check write protection. */
-
-#define	CHECKPRIV(bit)    (prvmask.bit)
-#define	WRITEABLE(field)  (! ((xab.xab$w_pro >> field) & XAB$M_NOWRITE))
-
-  /* Find privilege bits */
-  status = SYS$SETPRV (0, 0, 0, prvmask);
-  if (! (status & 1))
-    error ("Unable to find privileges: %s", vmserrstr (status));
-  if (CHECKPRIV (PRV$V_BYPASS))
-    return 0;			/* BYPASS enabled */
-  fab = cc$rms_fab;
-  fab.fab$b_fac = FAB$M_GET;
-  fab.fab$l_fna = filename;
-  fab.fab$b_fns = strlen (filename);
-  fab.fab$l_xab = &xab;
-  xab = cc$rms_xabpro;
-  xab.xab$l_aclbuf = aclbuf;
-  xab.xab$w_aclsiz = sizeof (aclbuf);
-  status = SYS$OPEN (&fab, 0, 0);
-  if (! (status & 1))
-    return -1;
-  SYS$CLOSE (&fab, 0, 0);
-  /* Check system access */
-  if (CHECKPRIV (PRV$V_SYSPRV) && WRITEABLE (XAB$V_SYS))
-    return 0;
-  /* Check ACL entries, if any */
-  acl_controlled = 0;
-  if (xab.xab$w_acllen > 0)
-    {
-      aclptr = aclbuf;
-      aclend = &aclbuf[xab.xab$w_acllen / 4];
-      while (*aclptr && aclptr < aclend)
-	{
-	  size = (*aclptr & 0xff) / 4;
-	  typecode = (*aclptr >> 8) & 0xff;
-	  if (typecode == ACE$C_KEYID)
-	    for (i = size - 1; i > 1; i--)
-	      if (aclptr[i] == vms_uic)
-		{
-		  acl_controlled = 1;
-		  if (aclptr[1] & ACE$M_WRITE)
-		    return 0;	/* Write access through ACL */
-		}
-	  aclptr = &aclptr[size];
-	}
-      if (acl_controlled)	/* ACL specified, prohibits write access */
-	return -1;
-    }
-  /* No ACL entries specified, check normal protection */
-  if (WRITEABLE (XAB$V_WLD))	/* World writeable */
-    return 0;
-  if (WRITEABLE (XAB$V_GRP) &&
-      (unsigned short) (xab.xab$l_uic >> 16) == vms_grpid)
-    return 0;			/* Group writeable */
-  if (WRITEABLE (XAB$V_OWN) &&
-      (xab.xab$l_uic & 0xFFFF) == vms_memid)
-    return 0;			/* Owner writeable */
-
-  return -1;	/* Not writeable */
-}
-#endif /* not VMS4_4 */
-#endif /* access */
-
-static char vtbuf[NAM$C_MAXRSS+1];
-
-/* translate a vms file spec to a unix path */
-char *
-sys_translate_vms (char *vfile)
-{
-  char * p;
-  char * targ;
-
-  if (!vfile)
-    return 0;
-
-  targ = vtbuf;
-
-  /* leading device or logical name is a root directory */
-  if (p = strchr (vfile, ':'))
-    {
-      *targ++ = '/';
-      while (vfile < p)
-	*targ++ = *vfile++;
-      vfile++;
-      *targ++ = '/';
-    }
-  p = vfile;
-  if (*p == '[' || *p == '<')
-    {
-      while (*++vfile != *p + 2)
-	switch (*vfile)
-	  {
-	  case '.':
-	    if (vfile[-1] == *p)
-	      *targ++ = '.';
-	    *targ++ = '/';
-	    break;
-
-	  case '-':
-	    *targ++ = '.';
-	    *targ++ = '.';
-	    break;
-
-	  default:
-	    *targ++ = *vfile;
-	    break;
-	  }
-      vfile++;
-      *targ++ = '/';
-    }
-  while (*vfile)
-    *targ++ = *vfile++;
-
-  return vtbuf;
-}
-
-static char utbuf[NAM$C_MAXRSS+1];
-
-/* translate a unix path to a VMS file spec */
-char *
-sys_translate_unix (char *ufile)
-{
-  int slash_seen = 0;
-  char *p;
-  char * targ;
-
-  if (!ufile)
-    return 0;
-
-  targ = utbuf;
-
-  if (*ufile == '/')
-    {
-      ufile++;
-    }
-
-  while (*ufile)
-    {
-      switch (*ufile)
-	{
-	case '/':
-	  if (slash_seen)
-	    if (strchr (&ufile[1], '/'))
-	      *targ++ = '.';
-	    else
-	      *targ++ = ']';
-	  else
-	    {
-	      *targ++ = ':';
-	      if (strchr (&ufile[1], '/'))
-		*targ++ = '[';
-	      slash_seen = 1;
-	    }
-	  break;
-
-	case '.':
-	  if (strncmp (ufile, "./", 2) == 0)
-	    {
-	      if (!slash_seen)
-		{
-		  *targ++ = '[';
-		  slash_seen = 1;
-		}
-	      ufile++;		/* skip the dot */
-	      if (strchr (&ufile[1], '/'))
-		*targ++ = '.';
-	      else
-		*targ++ = ']';
-	    }
-	  else if (strncmp (ufile, "../", 3) == 0)
-	    {
-	      if (!slash_seen)
-		{
-		  *targ++ = '[';
-		  slash_seen = 1;
-		}
-	      *targ++ = '-';
-	      ufile += 2;	/* skip the dots */
-	      if (strchr (&ufile[1], '/'))
-		*targ++ = '.';
-	      else
-		*targ++ = ']';
-	    }
-	  else
-	    *targ++ = *ufile;
-	  break;
-
-	default:
-	  *targ++ = *ufile;
-	  break;
-	}
-      ufile++;
-    }
-  *targ = '\0';
-
-  return utbuf;
-}
-
-char *
-getwd (char *pathname)
-{
-  char *ptr;
-  strcpy (pathname, egetenv ("PATH"));
-
-  ptr = pathname;
-  while (*ptr)
-    {
-      /* #### This is evil.  Smashes (shared) result of egetenv */
-      *ptr = toupper (* (unsigned char *) ptr);
-      ptr++;
-    }
-  return pathname;
-}
-
-int
-getppid (void)
-{
-  long item_code = JPI$_OWNER;
-  unsigned long parent_id;
-  int status;
-
-  if (((status = LIB$GETJPI (&item_code, 0, 0, &parent_id)) & 1) == 0)
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-  return parent_id;
-}
-
-#undef getuid
-unsigned int
-sys_getuid (void)
-{
-  return (getgid () << 16) | getuid ();
-}
-
-int
-vms_read (int fildes, CONST void *buf, unsigned int nbyte)
-{
-  return read (fildes, buf, (nbyte < MAXIOSIZE ? nbyte : MAXIOSIZE));
-}
-
-#if 0
-int
-vms_write (int fildes, CONST void *buf, unsigned int nbyte)
-{
-  int nwrote, rtnval = 0;
-
-  while (nbyte > MAXIOSIZE && (nwrote = write (fildes, buf, MAXIOSIZE)) > 0)
-    {
-      nbyte -= nwrote;
-      buf += nwrote;
-      rtnval += nwrote;
-    }
-  if (nwrote < 0)
-    return rtnval ? rtnval : -1;
-  if ((nwrote = write (fildes, buf, nbyte)) < 0)
-    return rtnval ? rtnval : -1;
-  return (rtnval + nwrote);
-}
-#endif /* 0 */
-
-/*
- *	VAX/VMS VAX C RTL really loses. It insists that records
- *      end with a newline (carriage return) character, and if they
- *	don't it adds one (nice of it isn't it!)
- *
- *	Thus we do this stupidity below.
- */
-
-int
-vms_write (int fildes, CONST void *buf, unsigned int nbytes)
-{
-  char *p;
-  char *e;
-  int sum = 0;
-  struct stat st;
-
-  fstat (fildes, &st);
-  p = buf;
-  while (nbytes > 0)
-    {
-      int len, retval;
-
-      /* Handle fixed-length files with carriage control.  */
-      if (st.st_fab_rfm == FAB$C_FIX
-	  && ((st.st_fab_rat & (FAB$M_FTN | FAB$M_CR)) != 0))
-	{
-	  len = st.st_fab_mrs;
-	  retval = write (fildes, p, min (len, nbytes));
-	  if (retval != len)
-	    return -1;
-	  retval++;	/* This skips the implied carriage control */
-	}
-      else
-	{
-	  e =  p + min (MAXIOSIZE, nbytes) - 1;
-	  while (*e != '\n' && e > p) e--;
-	  if (p == e)		/* Ok.. so here we add a newline... sigh. */
-	    e = p + min (MAXIOSIZE, nbytes) - 1;
-	  len = e + 1 - p;
-	  retval = write (fildes, p, len);
-	  if (retval != len)
-	    return -1;
-	}
-      p += retval;
-      sum += retval;
-      nbytes -= retval;
-    }
-  return sum;
-}
-
-/* Create file NEW copying its attributes from file OLD.  If
-   OLD is 0 or does not exist, create based on the value of
-   vms_stmlf_recfm. */
-
-/* Protection value the file should ultimately have.
-   Set by create_copy_attrs, and use by rename_sansversions.  */
-static unsigned short int vms_fab_final_pro;
-
-int
-creat_copy_attrs (char *old, char *new)
-{
-  struct FAB fab = cc$rms_fab;
-  struct XABPRO xabpro;
-  char aclbuf[256];	/* Choice of size is arbitrary.  See below. */
-  extern int vms_stmlf_recfm;
-
-  if (old)
-    {
-      fab.fab$b_fac = FAB$M_GET;
-      fab.fab$l_fna = old;
-      fab.fab$b_fns = strlen (old);
-      fab.fab$l_xab = (char *) &xabpro;
-      xabpro = cc$rms_xabpro;
-      xabpro.xab$l_aclbuf = aclbuf;
-      xabpro.xab$w_aclsiz = sizeof aclbuf;
-      /* Call $OPEN to fill in the fab & xabpro fields. */
-      if (SYS$OPEN (&fab, 0, 0) & 1)
-	{
-	  SYS$CLOSE (&fab, 0, 0);
-	  fab.fab$l_alq = 0;	/* zero the allocation quantity */
-	  if (xabpro.xab$w_acllen > 0)
-	    {
-	      if (xabpro.xab$w_acllen > sizeof aclbuf)
-		/* If the acl buffer was too short, redo open with longer one.
-		   Wouldn't need to do this if there were some system imposed
-		   limit on the size of an ACL, but I can't find any such. */
-		{
-		  xabpro.xab$l_aclbuf = (char *) alloca (xabpro.xab$w_acllen);
-		  xabpro.xab$w_aclsiz = xabpro.xab$w_acllen;
-		  if (SYS$OPEN (&fab, 0, 0) & 1)
-		    SYS$CLOSE (&fab, 0, 0);
-		  else
-		    old = 0;
-		}
-	    }
-	  else
-	    xabpro.xab$l_aclbuf = 0;
-	}
-      else
-	old = 0;
-    }
-  fab.fab$l_fna = new;
-  fab.fab$b_fns = strlen (new);
-  if (!old)
-    {
-      fab.fab$l_xab = 0;
-      fab.fab$b_rfm = vms_stmlf_recfm ? FAB$C_STMLF : FAB$C_VAR;
-      fab.fab$b_rat = FAB$M_CR;
-    }
-
-  /* Set the file protections such that we will be able to manipulate
-     this file.  Once we are done writing and renaming it, we will set
-     the protections back.  */
-  if (old)
-    vms_fab_final_pro = xabpro.xab$w_pro;
-  else
-    SYS$SETDFPROT (0, &vms_fab_final_pro);
-  xabpro.xab$w_pro &= 0xff0f; /* set O:rewd for now. This is set back later. */
-
-  /* Create the new file with either default attrs or attrs copied
-     from old file. */
-  if (!(SYS$CREATE (&fab, 0, 0) & 1))
-    return -1;
-  SYS$CLOSE (&fab, 0, 0);
-  /* As this is a "replacement" for creat, return a file descriptor
-     opened for writing. */
-  return open (new, O_WRONLY);
-}
-
-int
-vms_creat (CONST char *path, int mode, ...)
-{
-  int rfd;			/* related file descriptor */
-  int fd;			/* Our new file descriptor */
-  int count;
-  struct stat st_buf;
-  char rfm[12];
-  char rat[15];
-  char mrs[13];
-  char fsz[13];
-  extern int vms_stmlf_recfm;
-
-  /* #### there was some weird machine-dependent code to determine how many
-     arguments were passed to this function.  This certainly won't work
-     under ANSI C. */
-  if (count > 2)
-    rfd = fix this;
-  if (count > 2)
-    {
-      /* Use information from the related file descriptor to set record
-	 format of the newly created file. */
-      fstat (rfd, &st_buf);
-      switch (st_buf.st_fab_rfm)
-	{
-	case FAB$C_FIX:
-	  strcpy (rfm, "rfm = fix");
-	  sprintf (mrs, "mrs = %d", st_buf.st_fab_mrs);
-	  strcpy (rat, "rat = ");
-	  if (st_buf.st_fab_rat & FAB$M_CR)
-	    strcat (rat, "cr");
-	  else if (st_buf.st_fab_rat & FAB$M_FTN)
-	    strcat (rat, "ftn");
-	  else if (st_buf.st_fab_rat & FAB$M_PRN)
-	    strcat (rat, "prn");
-	  if (st_buf.st_fab_rat & FAB$M_BLK)
-	    if (st_buf.st_fab_rat & (FAB$M_CR|FAB$M_FTN|FAB$M_PRN))
-	      strcat (rat, ", blk");
-	    else
-	      strcat (rat, "blk");
-	  return creat (name, 0, rfm, rat, mrs);
-
-	case FAB$C_VFC:
-	  strcpy (rfm, "rfm = vfc");
-	  sprintf (fsz, "fsz = %d", st_buf.st_fab_fsz);
-	  strcpy (rat, "rat = ");
-	  if (st_buf.st_fab_rat & FAB$M_CR)
-	    strcat (rat, "cr");
-	  else if (st_buf.st_fab_rat & FAB$M_FTN)
-	    strcat (rat, "ftn");
-	  else if (st_buf.st_fab_rat & FAB$M_PRN)
-	    strcat (rat, "prn");
-	  if (st_buf.st_fab_rat & FAB$M_BLK)
-	    if (st_buf.st_fab_rat & (FAB$M_CR|FAB$M_FTN|FAB$M_PRN))
-	      strcat (rat, ", blk");
-	    else
-	      strcat (rat, "blk");
-	  return creat (name, 0, rfm, rat, fsz);
-
-	case FAB$C_STM:
-	  strcpy (rfm, "rfm = stm");
-	  break;
-
-	case FAB$C_STMCR:
-	  strcpy (rfm, "rfm = stmcr");
-	  break;
-
-	case FAB$C_STMLF:
-	  strcpy (rfm, "rfm = stmlf");
-	  break;
-
-	case FAB$C_UDF:
-	  strcpy (rfm, "rfm = udf");
-	  break;
-
-	case FAB$C_VAR:
-	  strcpy (rfm, "rfm = var");
-	  break;
-	}
-      strcpy (rat, "rat = ");
-      if (st_buf.st_fab_rat & FAB$M_CR)
-	strcat (rat, "cr");
-      else if (st_buf.st_fab_rat & FAB$M_FTN)
-	strcat (rat, "ftn");
-      else if (st_buf.st_fab_rat & FAB$M_PRN)
-	strcat (rat, "prn");
-      if (st_buf.st_fab_rat & FAB$M_BLK)
-	if (st_buf.st_fab_rat & (FAB$M_CR|FAB$M_FTN|FAB$M_PRN))
-	  strcat (rat, ", blk");
-	else
-	  strcat (rat, "blk");
-    }
-  else
-    {
-      strcpy (rfm, vms_stmlf_recfm ? "rfm = stmlf" : "rfm=var");
-      strcpy (rat, "rat=cr");
-    }
-  /* Until the VAX C RTL fixes the many bugs with modes, always use
-     mode 0 to get the user's default protection. */
-  fd = creat (name, 0, rfm, rat);
-  if (fd < 0 && errno == EEXIST)
-    {
-      if (unlink (name) < 0)
-	report_file_error ("delete", build_string (name));
-      fd = creat (name, 0, rfm, rat);
-    }
-  return fd;
-}
-
-/* fwrite to stdout is S L O W.  Speed it up by using fputc...*/
-int
-vms_fwrite (CONST void *ptr, int size, int num, FILE *fp)
-{
-  int tot = num * size;
-
-  while (tot--)
-    fputc (* (CONST char *) ptr++, fp);
-  return (num);
-}
-
-/*
- * The VMS C library routine creat actually creates a new version of an
- * existing file rather than truncating the old version.  There are times
- * when this is not the desired behavior, for instance, when writing an
- * auto save file (you only want one version), or when you don't have
- * write permission in the directory containing the file (but the file
- * itself is writable).  Hence this routine, which is equivalent to
- * "close (creat (fn, 0));" on Unix if fn already exists.
- */
-int
-vms_truncate (char *fn)
-{
-  struct FAB xfab = cc$rms_fab;
-  struct RAB xrab = cc$rms_rab;
-  int status;
-
-  xfab.fab$l_fop = FAB$M_TEF;	/* free allocated but unused blocks on close */
-  xfab.fab$b_fac = FAB$M_TRN | FAB$M_GET; /* allow truncate and get access */
-  xfab.fab$b_shr = FAB$M_NIL;	/* allow no sharing - file must be locked */
-  xfab.fab$l_fna = fn;
-  xfab.fab$b_fns = strlen (fn);
-  xfab.fab$l_dna = ";0";	/* default to latest version of the file */
-  xfab.fab$b_dns = 2;
-  xrab.rab$l_fab = &xfab;
-
-  /* This gibberish opens the file, positions to the first record, and
-     deletes all records from there until the end of file. */
-  if ((SYS$OPEN (&xfab) & 01) == 01)
-    {
-      if ((SYS$CONNECT (&xrab) & 01) == 01 &&
-	  (SYS$FIND (&xrab) & 01) == 01 &&
-	  (SYS$TRUNCATE (&xrab) & 01) == 01)
-	status = 0;
-      else
-	status = -1;
-    }
-  else
-    status = -1;
-  SYS$CLOSE (&xfab);
-  return status;
-}
-
-/* Define this symbol to actually read SYSUAF.DAT.  This requires either
-   SYSPRV or a readable SYSUAF.DAT. */
-
-#ifdef READ_SYSUAF
-/*
- * getuaf.c
- *
- * Routine to read the VMS User Authorization File and return
- * a specific user's record.
- */
-
-static struct UAF vms_retuaf;
-
-static struct UAF *
-get_uaf_name (char *uname)
-{
-  status;
-  struct FAB uaf_fab;
-  struct RAB uaf_rab;
-
-  uaf_fab = cc$rms_fab;
-  uaf_rab = cc$rms_rab;
-  /* initialize fab fields */
-  uaf_fab.fab$l_fna = "SYS$SYSTEM:SYSUAF.DAT";
-  uaf_fab.fab$b_fns = 21;
-  uaf_fab.fab$b_fac = FAB$M_GET;
-  uaf_fab.fab$b_org = FAB$C_IDX;
-  uaf_fab.fab$b_shr = FAB$M_GET|FAB$M_PUT|FAB$M_UPD|FAB$M_DEL;
-  /* initialize rab fields */
-  uaf_rab.rab$l_fab = &uaf_fab;
-  /* open the User Authorization File */
-  status = SYS$OPEN (&uaf_fab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  status = SYS$CONNECT (&uaf_rab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  /* read the requested record - index is in uname */
-  uaf_rab.rab$l_kbf = uname;
-  uaf_rab.rab$b_ksz = strlen (uname);
-  uaf_rab.rab$b_rac = RAB$C_KEY;
-  uaf_rab.rab$l_ubf = (char *)&vms_retuaf;
-  uaf_rab.rab$w_usz = sizeof vms_retuaf;
-  status = SYS$GET (&uaf_rab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  /* close the User Authorization File */
-  status = SYS$DISCONNECT (&uaf_rab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  status = SYS$CLOSE (&uaf_fab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  return &vms_retuaf;
-}
-
-static struct UAF *
-get_uaf_uic (unsigned long uic)
-{
-  status;
-  struct FAB uaf_fab;
-  struct RAB uaf_rab;
-
-  uaf_fab = cc$rms_fab;
-  uaf_rab = cc$rms_rab;
-  /* initialize fab fields */
-  uaf_fab.fab$l_fna = "SYS$SYSTEM:SYSUAF.DAT";
-  uaf_fab.fab$b_fns = 21;
-  uaf_fab.fab$b_fac = FAB$M_GET;
-  uaf_fab.fab$b_org = FAB$C_IDX;
-  uaf_fab.fab$b_shr = FAB$M_GET|FAB$M_PUT|FAB$M_UPD|FAB$M_DEL;
-  /* initialize rab fields */
-  uaf_rab.rab$l_fab = &uaf_fab;
-  /* open the User Authorization File */
-  status = SYS$OPEN (&uaf_fab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  status = SYS$CONNECT (&uaf_rab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  /* read the requested record - index is in uic */
-  uaf_rab.rab$b_krf = 1;	/* 1st alternate key */
-  uaf_rab.rab$l_kbf = (char *) &uic;
-  uaf_rab.rab$b_ksz = sizeof uic;
-  uaf_rab.rab$b_rac = RAB$C_KEY;
-  uaf_rab.rab$l_ubf = (char *)&vms_retuaf;
-  uaf_rab.rab$w_usz = sizeof vms_retuaf;
-  status = SYS$GET (&uaf_rab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  /* close the User Authorization File */
-  status = SYS$DISCONNECT (&uaf_rab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  status = SYS$CLOSE (&uaf_fab);
-  if (!(status&1))
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return 0;
-    }
-  return &vms_retuaf;
-}
-
-static struct passwd vms_retpw;
-
-static struct passwd *
-cnv_uaf_pw (struct UAF *up)
-{
-  char * ptr;
-
-  /* copy these out first because if the username is 32 chars, the next
-     section will overwrite the first byte of the UIC */
-  vms_retpw.pw_uid = up->uaf$w_mem;
-  vms_retpw.pw_gid = up->uaf$w_grp;
-
-  /* I suppose this is not the best sytle, to possibly overwrite one
-     byte beyond the end of the field, but what the heck... */
-  ptr = &up->uaf$t_username[UAF$S_USERNAME];
-  while (ptr[-1] == ' ')
-    ptr--;
-  *ptr = '\0';
-  strcpy (vms_retpw.pw_name, up->uaf$t_username);
-
-  /* the rest of these are counted ascii strings */
-  strncpy (vms_retpw.pw_gecos, &up->uaf$t_owner[1], up->uaf$t_owner[0]);
-  vms_retpw.pw_gecos[up->uaf$t_owner[0]] = '\0';
-  strncpy (vms_retpw.pw_dir, &up->uaf$t_defdev[1], up->uaf$t_defdev[0]);
-  vms_retpw.pw_dir[up->uaf$t_defdev[0]] = '\0';
-  strncat (vms_retpw.pw_dir, &up->uaf$t_defdir[1], up->uaf$t_defdir[0]);
-  vms_retpw.pw_dir[up->uaf$t_defdev[0] + up->uaf$t_defdir[0]] = '\0';
-  strncpy (vms_retpw.pw_shell, &up->uaf$t_defcli[1], up->uaf$t_defcli[0]);
-  vms_retpw.pw_shell[up->uaf$t_defcli[0]] = '\0';
-
-  return &vms_retpw;
-}
-#else /* not READ_SYSUAF */
-static struct passwd vms_retpw;
-#endif /* not READ_SYSUAF */
-
-struct passwd *
-getpwnam (char *name)
-{
-#ifdef READ_SYSUAF
-  struct UAF *up;
-#else
-  char * user;
-  char * dir;
-  unsigned char * full;
-#endif /* READ_SYSUAF */
-  char *ptr = name;
-
-  while (*ptr)
-    {
-      *ptr = toupper (* (unsigned char *) ptr);
-      ptr++;
-    }
-#ifdef READ_SYSUAF
-  if (!(up = get_uaf_name (name)))
-    return 0;
-  return cnv_uaf_pw (up);
-#else
-  if (strcmp (name, getenv ("USER")) == 0)
-    {
-      vms_retpw.pw_uid = getuid ();
-      vms_retpw.pw_gid = getgid ();
-      strcpy (vms_retpw.pw_name, name);
-      if (full = egetenv ("FULLNAME"))
-	strcpy (vms_retpw.pw_gecos, full);
-      else
-	*vms_retpw.pw_gecos = '\0';
-      strcpy (vms_retpw.pw_dir, egetenv ("HOME"));
-      *vms_retpw.pw_shell = '\0';
-      return &vms_retpw;
-    }
-  else
-    return 0;
-#endif /* not READ_SYSUAF */
-}
-
-struct passwd *
-getpwuid (unsigned long uid)
-{
-#ifdef READ_SYSUAF
-  struct UAF * up;
-
-  if (!(up = get_uaf_uic (uid)))
-    return 0;
-  return cnv_uaf_pw (up);
-#else
-  if (uid == sys_getuid ())
-    return getpwnam (egetenv ("USER"));
-  else
-    return 0;
-#endif /* not READ_SYSUAF */
-}
-
-/* return total address space available to the current process.  This is
-   the sum of the current p0 size, p1 size and free page table entries
-   available. */
-int
-vlimit (void)
-{
-  int item_code;
-  unsigned long free_pages;
-  unsigned long frep0va;
-  unsigned long frep1va;
-  status;
-
-  item_code = JPI$_FREPTECNT;
-  if (((status = LIB$GETJPI (&item_code, 0, 0, &free_pages)) & 1) == 0)
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-  free_pages *= 512;
-
-  item_code = JPI$_FREP0VA;
-  if (((status = LIB$GETJPI (&item_code, 0, 0, &frep0va)) & 1) == 0)
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-  item_code = JPI$_FREP1VA;
-  if (((status = LIB$GETJPI (&item_code, 0, 0, &frep1va)) & 1) == 0)
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-
-  return free_pages + frep0va + (0x7fffffff - frep1va);
-}
-
-int
-define_logical_name (char *varname, char *string)
-{
-  struct dsc$descriptor_s strdsc =
-    {strlen (string), DSC$K_DTYPE_T, DSC$K_CLASS_S, string};
-  struct dsc$descriptor_s envdsc =
-    {strlen (varname), DSC$K_DTYPE_T, DSC$K_CLASS_S, varname};
-  struct dsc$descriptor_s lnmdsc =
-    {7, DSC$K_DTYPE_T, DSC$K_CLASS_S, "LNM$JOB"};
-
-  return LIB$SET_LOGICAL (&envdsc, &strdsc, &lnmdsc, 0, 0);
-}
-
-int
-delete_logical_name (char *varname)
-{
-  struct dsc$descriptor_s envdsc =
-    {strlen (varname), DSC$K_DTYPE_T, DSC$K_CLASS_S, varname};
-  struct dsc$descriptor_s lnmdsc =
-    {7, DSC$K_DTYPE_T, DSC$K_CLASS_S, "LNM$JOB"};
-
-  return LIB$DELETE_LOGICAL (&envdsc, &lnmdsc);
-}
-
-execvp (void)
-{
-  error ("execvp system call not implemented");
-}
-
-int
-rename (char *from, char *to)
-{
-  int status;
-  struct FAB from_fab = cc$rms_fab, to_fab = cc$rms_fab;
-  struct NAM from_nam = cc$rms_nam, to_nam = cc$rms_nam;
-  char from_esn[NAM$C_MAXRSS];
-  char to_esn[NAM$C_MAXRSS];
-
-  from_fab.fab$l_fna = from;
-  from_fab.fab$b_fns = strlen (from);
-  from_fab.fab$l_nam = &from_nam;
-  from_fab.fab$l_fop = FAB$M_NAM;
-
-  from_nam.nam$l_esa = from_esn;
-  from_nam.nam$b_ess = sizeof from_esn;
-
-  to_fab.fab$l_fna = to;
-  to_fab.fab$b_fns = strlen (to);
-  to_fab.fab$l_nam = &to_nam;
-  to_fab.fab$l_fop = FAB$M_NAM;
-
-  to_nam.nam$l_esa = to_esn;
-  to_nam.nam$b_ess = sizeof to_esn;
-
-  status = SYS$RENAME (&from_fab, 0, 0, &to_fab);
-
-  if (status & 1)
-    return 0;
-  else
-    {
-      if (status == RMS$_DEV)
-	errno = EXDEV;
-      else
-	errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-}
-
-/* This function renames a file like `rename', but it strips
-   the version number from the "to" filename, such that the "to" file is
-   will always be a new version.  It also sets the file protection once it is
-   finished.  The protection that we will use is stored in vms_fab_final_pro,
-   and was set when we did a creat_copy_attrs to create the file that we
-   are renaming.
-
-   We could use the chmod function, but Eunichs uses 3 bits per user category
-   to describe the protection, and VMS uses 4 (write and delete are separate
-   bits).  To maintain portability, the VMS implementation of `chmod' wires
-   the W and D bits together.  */
-
-
-static char vms_file_written[NAM$C_MAXRSS];
-
-int
-rename_sans_version (char *from, char *to)
-{
-  short int chan;
-  int stat;
-  short int iosb[4];
-  int status;
-  struct fibdef fib;
-  struct FAB to_fab = cc$rms_fab;
-  struct NAM to_nam = cc$rms_nam;
-  struct dsc$descriptor fib_d ={sizeof (fib),0,0,(char*) &fib};
-  struct dsc$descriptor fib_attr[2]
-    = {{sizeof (vms_fab_final_pro),ATR$C_FPRO,0,(char*) &vms_fab_final_pro},{0,0,0,0}};
-  char to_esn[NAM$C_MAXRSS];
-
-  $DESCRIPTOR (disk,to_esn);
-
-  memset (&fib, 0, sizeof (fib));
-
-  to_fab.fab$l_fna = to;
-  to_fab.fab$b_fns = strlen (to);
-  to_fab.fab$l_nam = &to_nam;
-  to_fab.fab$l_fop = FAB$M_NAM;
-
-  to_nam.nam$l_esa = to_esn;
-  to_nam.nam$b_ess = sizeof to_esn;
-
-  status = SYS$PARSE (&to_fab, 0, 0); /* figure out the full file name */
-
-  if (to_nam.nam$l_fnb && NAM$M_EXP_VER)
-    *(to_nam.nam$l_ver) = '\0';
-
-  stat = rename (from, to_esn);
-  if (stat < 0)
-    return stat;
-
-  strcpy (vms_file_written, to_esn);
-
-  to_fab.fab$l_fna = vms_file_written; /* this points to the versionless name */
-  to_fab.fab$b_fns = strlen (vms_file_written);
-
-  /* Now set the file protection to the correct value */
-  SYS$OPEN (&to_fab, 0, 0);	/* This fills in the nam$w_fid fields */
-
-  /* Copy these fields into the fib */
-  fib.fib$r_fid_overlay.fib$w_fid[0] = to_nam.nam$w_fid[0];
-  fib.fib$r_fid_overlay.fib$w_fid[1] = to_nam.nam$w_fid[1];
-  fib.fib$r_fid_overlay.fib$w_fid[2] = to_nam.nam$w_fid[2];
-
-  SYS$CLOSE (&to_fab, 0, 0);
-
-  stat = SYS$ASSIGN (&disk, &chan, 0, 0); /* open a channel to the disk */
-  if (!stat)
-    LIB$SIGNAL (stat);
-  stat = SYS$QIOW (0, chan, IO$_MODIFY, iosb, 0, 0, &fib_d,
-		   0, 0, 0, &fib_attr, 0);
-  if (!stat)
-    LIB$SIGNAL (stat);
-  stat = SYS$DASSGN (chan);
-  if (!stat)
-    LIB$SIGNAL (stat);
-  strcpy (vms_file_written, to_esn); /* We will write this to the terminal*/
-  return 0;
-}
-
-int
-link (char *file, char *new)
-{
-  status;
-  struct FAB fab;
-  struct NAM nam;
-  unsigned short fid[3];
-  char esa[NAM$C_MAXRSS];
-
-  fab = cc$rms_fab;
-  fab.fab$l_fop = FAB$M_OFP;
-  fab.fab$l_fna = file;
-  fab.fab$b_fns = strlen (file);
-  fab.fab$l_nam = &nam;
-
-  nam = cc$rms_nam;
-  nam.nam$l_esa = esa;
-  nam.nam$b_ess = NAM$C_MAXRSS;
-
-  status = SYS$PARSE (&fab);
-  if ((status & 1) == 0)
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-  status = SYS$SEARCH (&fab);
-  if ((status & 1) == 0)
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-
-  fid[0] = nam.nam$w_fid[0];
-  fid[1] = nam.nam$w_fid[1];
-  fid[2] = nam.nam$w_fid[2];
-
-  fab.fab$l_fna = new;
-  fab.fab$b_fns = strlen (new);
-
-  status = SYS$PARSE (&fab);
-  if ((status & 1) == 0)
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-
-  nam.nam$w_fid[0] = fid[0];
-  nam.nam$w_fid[1] = fid[1];
-  nam.nam$w_fid[2] = fid[2];
-
-  nam.nam$l_esa = nam.nam$l_name;
-  nam.nam$b_esl = nam.nam$b_name + nam.nam$b_type + nam.nam$b_ver;
-
-  status = SYS$ENTER (&fab);
-  if ((status & 1) == 0)
-    {
-      errno = EVMSERR;
-      vaxc$errno = status;
-      return -1;
-    }
-
-  return 0;
-}
-
-#ifdef getenv
-/* If any place else asks for the TERM variable,
-   allow it to be overridden with the EMACS_TERM variable
-   before attempting to translate the logical name TERM.  As a last
-   resort, ask for VAX C's special idea of the TERM variable.  */
-#undef getenv
-char *
-sys_getenv (char *name)
-{
-  char *val;
-  static char buf[256];
-  static struct dsc$descriptor_s equiv
-    = {sizeof (buf), DSC$K_DTYPE_T, DSC$K_CLASS_S, buf};
-  static struct dsc$descriptor_s d_name
-    = {0, DSC$K_DTYPE_T, DSC$K_CLASS_S, 0};
-  short eqlen;
-
-  if (!strcmp (name, "TERM"))
-    {
-      val = (char *) getenv ("EMACS_TERM");
-      if (val)
-	return val;
-    }
-
-  d_name.dsc$w_length = strlen (name);
-  d_name.dsc$a_pointer = name;
-  if (LIB$SYS_TRNLOG (&d_name, &eqlen, &equiv) == 1)
-    {
-      char *str = (char *) xmalloc (eqlen + 1);
-      memcpy (str, buf, eqlen);
-      str[eqlen] = '\0';
-      /* This is a storage leak, but a pain to fix.  With luck,
-	 no one will ever notice.  */
-      return str;
-    }
-  return (char *) getenv (name);
-}
-#endif /* getenv */
-
-#ifdef abort
-/* Since VMS doesn't believe in core dumps, the only way to debug this beast is
-   to force a call on the debugger from within the image. */
-#undef abort
-sys_abort (void)
-{
-  reset_all_consoles ();
-  LIB$SIGNAL (SS$_DEBUG);
-}
-#endif /* abort */
-
-#if 0 /* Apparently unused */
-/* The standard `sleep' routine works some other way
-   and it stops working if you have ever quit out of it.
-   This one continues to work.  */
-
-void
-sys_sleep (int timeval)
-{
-  int time [2];
-  static int zero = 0;
-  static int large = -10000000;
-
-  LIB$EMUL (&timeval, &large, &zero, time); 	  /* Convert to VMS format */
-
-  SYS$CANTIM (1, 0);
-  if (SYS$SETIMR (vms_timer_ef, time, 0, 1) & 1) /* Set timer */
-    SYS$WAITFR (vms_timer_ef);	  /* Wait for timer expiry only */
-}
-#endif /* 0 */
-
-void
-bzero (REGISTER char *b, REGISTER int length)
-{
-  short zero = 0;
-  long max_str = 65535;
-
-  while (length > max_str) {
-    (void) LIB$MOVC5 (&zero, &zero, &zero, &max_str, b);
-    length -= max_str;
-    b += max_str;
-  }
-  max_str = length;
-  (void) LIB$MOVC5 (&zero, &zero, &zero, &max_str, b);
-}
-
-/* Saying `void' requires a declaration, above, where bcopy is used
-   and that declaration causes pain for systems where bcopy is a macro.  */
-bcopy (REGISTER char *b1, REGISTER char *b2, REGISTER int length)
-{
-  long max_str = 65535;
-
-  while (length > max_str) {
-    (void) LIB$MOVC3 (&max_str, b1, b2);
-    length -= max_str;
-    b1 += max_str;
-    b2 += max_str;
-  }
-  max_str = length;
-  (void) LIB$MOVC3 (&length, b1, b2);
-}
-
-int
-bcmp (REGISTER char *b1, REGISTER char *b2, REGISTER int length)
-/* This could be a macro! */
-{
-  struct dsc$descriptor_s src1 = {length, DSC$K_DTYPE_T, DSC$K_CLASS_S, b1};
-  struct dsc$descriptor_s src2 = {length, DSC$K_DTYPE_T, DSC$K_CLASS_S, b2};
-
-  return STR$COMPARE (&src1, &src2);
-}
-
-#endif /* VMS */
 
 #ifndef HAVE_STRCASECMP
 /*

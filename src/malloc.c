@@ -151,11 +151,9 @@ what you give them.   Help stamp out software-hoarding!  */
 /* Determine which kind of system this is.  */
 #include <signal.h>
 #ifndef SIGTSTP
-#ifndef VMS
 #ifndef USG
 #define USG
 #endif
-#endif /* not VMS */
 #else /* SIGTSTP */
 #ifdef SIGIO
 #define BSD4_2
@@ -365,12 +363,6 @@ morecore (nu)			/* ask system for more memory */
 
   /* Find current end of memory and issue warning if getting near max */
 
-#ifndef VMS
-  /* Maximum virtual memory on VMS is difficult to calculate since it
-   * depends on several dynamically changing things. Also, alignment
-   * isn't that important. That is why much of the code here is ifdef'ed
-   * out for VMS systems.
-   */
   cp = sbrk (0);
   siz = cp - data_space_start;
 
@@ -402,7 +394,6 @@ morecore (nu)			/* ask system for more memory */
 
   if ((int) cp & 0x3ff)	/* land on 1K boundaries */
     sbrk (1024 - ((int) cp & 0x3ff));
-#endif /* not VMS */
 
  /* Take at least 2k, and figure out how many blocks of the desired size
     we're about to get */
@@ -422,13 +413,11 @@ morecore (nu)			/* ask system for more memory */
   malloc_sbrk_used = siz;
   malloc_sbrk_unused = lim_data - siz;
 
-#ifndef VMS
   if ((int) cp & 7)
     {		/* shouldn't happen, but just in case */
       cp = (char *) (((int) cp + 8) & ~7);
       nblks--;
     }
-#endif /* not VMS */
 
  /* save new header and link the nblks blocks together */
   nextf[nu] = (struct mhead *) cp;
@@ -677,7 +666,6 @@ realloc (mem, n)
   }
 }
 
-#ifndef VMS
 
 char *
 memalign (alignment, size)
@@ -713,7 +701,6 @@ unsigned size;
   return memalign (getpagesize (), size);
 }
 #endif /* not __hpux */
-#endif /* not VMS */
 
 #ifdef MSTATS
 /* Return statistics describing allocation of blocks of size 2**n. */
@@ -838,74 +825,3 @@ get_lim_data ()
 #endif /* BSD4_2 */
 #endif /* not USG */
 
-#ifdef VMS
-/* There is a problem when dumping and restoring things on VMS. Calls
- * to SBRK don't necessarily result in contiguous allocation. Dumping
- * doesn't work when it isn't. Therefore, we make the initial
- * allocation contiguous by allocating a big chunk, and do SBRKs from
- * there. Once Emacs has dumped there is no reason to continue
- * contiguous allocation, malloc doesn't depend on it.
- *
- * There is a further problem of using brk and sbrk while using VMS C
- * run time library routines malloc, calloc, etc. The documentation
- * says that this is a no-no, although I'm not sure why this would be
- * a problem. In any case, we remove the necessity to call brk and
- * sbrk, by calling calloc (to assure zero filled data) rather than
- * sbrk.
- *
- * VMS_ALLOCATION_SIZE is the size of the allocation array. This
- * should be larger than the malloc size before dumping. Making this
- * too large will result in the startup procedure slowing down since
- * it will require more space and time to map it in.
- *
- * The value for VMS_ALLOCATION_SIZE in the following define was determined
- * by running emacs linked (and a large allocation) with the debugger and
- * looking to see how much storage was used. The allocation was 201 pages,
- * so I rounded it up to a power of two.
- */
-#ifndef VMS_ALLOCATION_SIZE
-#define VMS_ALLOCATION_SIZE	(512*256)
-#endif
-
-/* Use VMS RTL definitions */
-#undef sbrk
-#undef brk
-#undef malloc
-int vms_out_initial = 0;
-char vms_initial_buffer[VMS_ALLOCATION_SIZE];
-static char *vms_current_brk = &vms_initial_buffer;
-static char *vms_end_brk = &vms_initial_buffer[VMS_ALLOCATION_SIZE-1];
-
-#include <stdio.h>
-
-char *
-sys_sbrk (incr)
-     int incr;
-{
-  char *sbrk(), *temp, *ptr;
-
-  if (vms_out_initial)
-    {
-      /* out of initial allocation... */
-      if (!(temp = malloc (incr)))
-	temp = (char *) -1;
-    }
-  else
-    {
-      /* otherwise, go out of our area */
-      ptr = vms_current_brk + incr; /* new current_brk */
-      if (ptr <= vms_end_brk)
-	{
-	  temp = vms_current_brk;
-	  vms_current_brk = ptr;
-	}
-      else
-	{
-	  vms_out_initial = 1;	/* mark as out of initial allocation */
-	  if (!(temp = malloc (incr)))
-	    temp = (char *) -1;
-	}
-    }
-  return temp;
-}
-#endif /* VMS */

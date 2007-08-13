@@ -1,9 +1,9 @@
 ;;; paths.el --- define pathnames for use by various Emacs commands.
 
-;; Copyright (C) 1986, 1988, 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1986, 1988, 1993, 1994, 1997 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
-;; Keywords: internal
+;; Keywords: internal, dumped
 
 ;; This file is part of XEmacs.
 
@@ -24,6 +24,8 @@
 ;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
+
+;; This file is dumped with XEmacs.
 
 ;; These are default settings for names of certain files and directories
 ;; that Emacs needs to refer to from time to time.

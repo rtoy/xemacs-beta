@@ -92,7 +92,8 @@
   :type '(repeat  (sexp :tag "Sound")
 		  ))
 
-(defcustom default-sound-directory (concat data-directory "sounds/")
+(defcustom default-sound-directory (file-name-as-directory
+				    (concat data-directory "sounds"))
   "Default directory to load a sound file from."
   :group 'sound
   :type 'directory

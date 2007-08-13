@@ -24,7 +24,7 @@ eller CONTROL vil vi her bruke følgende forkortelser:
 Viktig: for å avslutte Emacs trykker du C-x C-c.  (To tegn.)
 Tegnene ">>" helt til venstre angir en veiledning slik at du kan prøve 
 ut en kommando.  For eksempel:
-<<Blank lines inserted here by startup of help-with-tutorial>>
+<<Blanke linjer, av pedagogiske grunner.  Teksten fortsetter nedenfor>>
 >>  Trykk C-v (View next screen) for å hoppe til neste skjermbilde.
 	(kom igjen, hold ned control-tasten og trykk v).  Fra nå av
 	bør du gjøre dette hver gang du er ferdig med å lese et

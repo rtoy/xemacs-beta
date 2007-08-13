@@ -1,8 +1,8 @@
 ;;; advocacy.el -- blatant XEmacs self promotion
-;; Copyright (C) 1996 Miranova Systems, Inc.
+;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1996 Chuck Thompson <cthomp@xemacs.org>
 
-;; Original Author:  Steve L Baur <steve@miranova.com>
+;; Original Author:  Steve L Baur <steve@altair.xemacs.org>
 
 ;; This file is part of XEmacs.
 
@@ -22,7 +22,7 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;;###autoload
-(defvar xemacs-praise-sound-file "sounds/im_so_happy.au"
+(defvar xemacs-praise-sound-file "im_so_happy.au"
   "The name of an audio file containing something to play
 when praising XEmacs")
 
@@ -57,8 +57,10 @@ when praising XEmacs")
 	   (or (and (file-exists-p xemacs-praise-sound-file)
 		    xemacs-praise-sound-file)
 	       (and (file-exists-p
-		     (concat data-directory xemacs-praise-sound-file))
-		    (concat data-directory xemacs-praise-sound-file)))))
+		     (concat (locate-data-directory "sounds")
+			     xemacs-praise-sound-file))
+		    (concat (locate-data-directory "sounds")
+			    xemacs-praise-sound-file)))))
       (if (and (device-sound-enabled-p) sound-file)
 	  (progn
 	    (sit-for 0)

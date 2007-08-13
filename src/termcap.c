@@ -253,13 +253,8 @@ char PC;
 
 static short speeds[] =
   {
-#ifdef VMS
-    0, 50, 75, 110, 134, 150, -3, -6, -12, -18,
-    -20, -24, -36, -48, -72, -96, -192
-#else /* not VMS */
     0, 50, 75, 110, 135, 150, -2, -3, -6, -12,
     -18, -24, -48, -96, -192, -288, -384, -576, -1152
-#endif /* not VMS */
   };
 
 void
@@ -335,32 +330,6 @@ static char *gobble_line ();
 static int compare_contin ();
 static int name_match ();
 
-#ifdef VMS
-
-#include <rmsdef.h>
-#include <fab.h>
-#include <nam.h>
-
-static int
-legal_filename_p (fn)
-     char *fn;
-{
-  struct FAB fab = cc$rms_fab;
-  struct NAM nam = cc$rms_nam;
-  char esa[NAM$C_MAXRSS];
-
-  fab.fab$l_fna = fn;
-  fab.fab$b_fns = strlen(fn);
-  fab.fab$l_nam = &nam;
-  fab.fab$l_fop = FAB$M_NAM;
-
-  nam.nam$l_esa = esa;
-  nam.nam$b_ess = sizeof esa;
-
-  return SYS$PARSE(&fab, 0, 0) == RMS$_NORMAL;
-}
-
-#endif /* VMS */
 
 /* Find the termcap entry data for terminal type NAME
    and store it in the block that BP points to.
@@ -385,16 +354,10 @@ tgetent (bp, name)
   int c;
   char *tcenv;			/* TERMCAP value, if it contais :tc=.  */
   CONST char *indirect = 0;	/* Terminal type in :tc= in TERMCAP value.  */
-  int filep;
 
   tem = getenv ("TERMCAP");
   if (tem && *tem == 0) tem = 0;
 
-#ifdef VMS
-  filep = tem && legal_filename_p (tem);
-#else
-  filep = tem && (*tem == '/');
-#endif /* VMS */
 
   /* If tem is non-null and starts with / (in the un*x case, that is),
      it is a file name to use instead of /etc/termcap.
@@ -402,7 +365,7 @@ tgetent (bp, name)
      it is the entry itself, but only if
      the name the caller requested matches the TERM variable.  */
 
-  if (tem && !filep && !strcmp (name, (char *) getenv ("TERM")))
+  if (tem && !IS_DIRECTORY_SEP (*tem) && !strcmp (name, (char *) getenv ("TERM")))
     {
       indirect = tgetst1 (find_capability (tem, "tc"), 0);
       if (!indirect)
@@ -423,11 +386,7 @@ tgetent (bp, name)
     indirect = (char *) 0;
 
   if (!tem)
-#ifdef VMS
-    tem = "emacs_library:[etc]termcap.dat";
-#else
     tem = "/etc/termcap";
-#endif
 
   /* Here we know we must search a file and tem has its name.  */
 

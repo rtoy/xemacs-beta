@@ -315,7 +315,8 @@
 
 (defun View-process-install-pulldown-menu ()
   "Installs a pulldown menu for the `View-process-mode'."
-  (if (and current-menubar 
+  (if (and (featurep 'menubar)
+	   current-menubar 
 	   (not (assoc View-process-pulldown-menu-name current-menubar)))
       (progn
 	(set-buffer-menubar (copy-sequence current-menubar))

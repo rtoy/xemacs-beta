@@ -19,6 +19,7 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
+/* Partly sync'ed with 19.36.4 */
 
 #include <config.h>
 #include "lisp.h"
@@ -69,6 +70,10 @@ Lisp_Object Vshell_file_name;
  */
 Lisp_Object Vprocess_environment;
 
+#ifdef DOS_NT
+Lisp_Object Qbuffer_file_type;
+#endif /* DOS_NT */
+
 /* True iff we are about to fork off a synchronous process or if we
    are waiting for it.  */
 volatile int synch_process_alive;
@@ -87,7 +92,6 @@ int synch_process_retcode;
 /* Nonzero if this is termination due to exit.  */
 static int call_process_exited;
 
-#ifndef VMS  /* VMS version is in vmsproc.c.  */
 
 static Lisp_Object
 call_process_kill (Lisp_Object fdpid)
@@ -187,7 +191,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   char *bufptr = buf;
   int bufsize = 16384;
   int speccount = specpdl_depth ();
-  struct gcpro gcpro1;
+  struct gcpro gcpro1, gcpro2;
   char **new_argv = alloca_array (char *, max (2, nargs - 2));
 
   /* File to use for stderr in the child.
@@ -239,6 +243,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     NUNGCPRO;
   }
 
+  GCPRO1 (current_dir);
+
   if (nargs >= 2 && ! NILP (args[1]))
     {
       struct gcpro ngcpro1;
@@ -250,7 +256,9 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   else
     infile = build_string (NULL_DEVICE);
 
-  GCPRO1 (infile);		/* Fexpand_file_name might trash it */
+  UNGCPRO;
+
+  GCPRO2 (infile, current_dir);		/* Fexpand_file_name might trash it */
 
   if (nargs >= 3)
     {
@@ -617,9 +625,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   }
 }
 
-#endif /* VMS */
 
-#ifndef VMS /* VMS version is in vmsproc.c.  */
 
 /* This is the last thing run in a newly forked inferior
    either synchronous or asynchronous.
@@ -771,6 +777,7 @@ child_setup (int in, int out, int err, char **new_argv,
   }
 #ifdef WINDOWSNT
   prepare_standard_handles (in, out, err, handles);
+  set_process_dir (current_dir);
 #else  /* not WINDOWSNT */
   /* Make sure that in, out, and err are not actually already in
      descriptors zero, one, or two; this could happen if Emacs is
@@ -937,7 +944,6 @@ egetenv (CONST char *var)
   else
     return 0;
 }
-#endif /* not VMS */
 
 
 void
@@ -1085,9 +1091,8 @@ init_callproc (void)
   Vprefix_directory = Qnil;
 #endif
 
-#ifdef VMS
-  Vshell_file_name = build_string ("*dcl*");
-#elif defined(WINDOWSNT)
+#ifdef WINDOWSNT
+  /* Sync with FSF Emacs 19.34.6 note: this is not in 19.34.6. --marcpa */
   /*
   ** If NT then we look at COMSPEC for the shell program.
   */
@@ -1114,7 +1119,7 @@ init_callproc (void)
 		Vshell_file_name = build_string ("/WINNT/system32/cmd.exe");
 	}
   }
-#else /* not VMS or WINDOWSNT */
+#else /* not WINDOWSNT */
   sh = (char *) egetenv ("SHELL");
   Vshell_file_name = build_string (sh ? sh : "/bin/sh");
 #endif
@@ -1139,10 +1144,8 @@ set_process_environment (void)
 void
 syms_of_callproc (void)
 {
-#ifndef VMS
   DEFSUBR (Fcall_process_internal);
   DEFSUBR (Fgetenv);
-#endif
 }
 
 void

@@ -555,6 +555,7 @@ update_one_menu_entry (widget_instance* instance, Widget widget,
 		       widget_value* val, Boolean deep_p)
 {
   Arg al [2];
+  int ac;
   Widget menu;
   widget_value* contents;
 

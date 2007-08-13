@@ -1,3 +1,13 @@
+1997-11-02  SL Baur  <steve@altair.xemacs.org>
+
+	* update-custom.sh (dirs): Remove packaged directories.
+
+	* update-elc.sh (ignore_pattern): Hyperbole, oobr and ilisp are
+	now packaged.
+
+	* update-autoloads.sh (mule_p): Hyperbole and oobr are now
+	packaged.
+
 1997-10-30  SL Baur  <steve@altair.xemacs.org>
 
 	* update-autoloads.sh (mule_p): EFS has been packaged.

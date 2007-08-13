@@ -34,7 +34,6 @@ Boston, MA 02111-1307, USA.  */
 #define BSD
 #define UMAX4_2
 #define UMAX
-/* #define VMS */
 
 /* SYSTEM_TYPE should indicate the kind of system you are using.
  It sets the Lisp variable system-type.  */

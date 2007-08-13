@@ -1,3 +1,258 @@
+1997-11-08  SL Baur  <steve@altair.xemacs.org>
+
+	* lread.c (init_lread): start from lisp, not lisp/prim.
+
+	* Makefile.in.in: lisp/prim does exist any more.
+
+1997-11-07  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* abbrev.c (abbrev_lookup): Don't delete dash at the
+	  abbrev start location; abbrev-prefix-mark no longer
+	  inserts one.
+
+Wed November 05 23:40:00 1997 <jhar@tardis.ed.ac.uk>
+
+	* fileio.c: insert-file-contents-internal
+	  Added a bodge to do CRLF->LF conversion of text files,
+	  conditioned on DOS_NT. This is currently only one-way, so all
+	  text files written by XEmacs will be UNIXified. CRLF conversion
+	  is required to make bytecompile work.
+
+	* Added file headers to:
+	  console-w32.c, console-w32.h,
+	  device-w32.c, event-w32.c, event-w32.h, frame-w32.c,
+	  objects-w32.c, objects-w32.h, redisplay-w32.c, w32-proc.c
+
+Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
+
+	* redisplay-x.c: x_output_vertical_divider:
+	  If HAVE_SCROLLBARS was not defined, coordinate of the right of
+	  the divider was being used unitialised.
+
+	* console.h: Added Qw32 and CONSOLE_W32* macros, conditioned on
+	  HAVE_W32GUI.
+
+	* emacs.c: Added calls to the following, conditioned on HAVE_W32GUI:
+	  syms_of_*_w32, vars_of_*_w32, console_type_create_*w32.
+
+	* event-stream.c: Conditioned on HAVE_W32GUI:
+	  - vars_of_event_stream calls vars_of_event_w32.
+	  - init_event_stream calls init_event_w32_late.
+
+	* events-mod.h: Removed comment about having alternative making
+	  MOD_* constants for different windowing systems.
+
+	* events.c: Conditioned on HAVE_W32GUI:
+	  - event-equal: Added case for w32 magic events.
+	  - event-hash: Added case for w32 magic events.
+
+	* events.h: Conditioned on HAVE_W32GUI:
+	  Added struct underlying_w32_event to magic_data.
+
+	* faces.c: complex_vars_of_faces
+	  Added fallbacks for w32 faces, conditioned on HAVE_W32GUI.
+
+	* frame.c: set-frame-properties
+	  Added reference to default-w32-frame-plist to docstring.
+
+	* general.c: Added new Lisp_Object Qw32 and defsymbol.
+
+	* redisplay-output.c: redisplay_update_line
+	  Conditioned reference to stupid_vertical_scrollbar_drag_hack on
+	  HAVE_X_WINDOWS. This will need a proper fix when w32 gets
+	  scrollbars.
+
+	* redisplay-tty.c: init_tty_for_redisplay
+	  Conditioned blocking and unblocking of SIGTTOU on !WIN32 because
+	  these signals don't exist under win32.
+
+	* redisplay.c: init_redisplay
+	  Initialise window system to w32, conditioned on HAVE_W32GUI.
+  
+	* symsinit.h: Added syms_of_*_w32, vars_of_*_w32 and
+	  init_event_w32_late.
+
+	* sysdep.c: Conditioned various things on WIN32 in addition to
+	  MSDOS.
+
+	* New files:
+	  console-w32.c, console-w32.h,
+	  device-w32.c, event-w32.c, event-w32.h, frame-w32.c,
+	  objects-w32.c, objects-w32.h, redisplay-w32.c, w32-proc.c
+
+1997-11-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* doc.c (Fdocumentation_property): GCPRO doc.
+	(Fsubstitute_command_keys): Disallow zero bsize.
+
+1997-11-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* events.c (Fevent_modeline_position): Return nil if event is not
+	over modeline, as the docstring says.
+
+	* utils/facemenu.el (facemenu-insert-menu-entry): Check for
+	menubar availability.
+
+	* utils/easymenu.el (easy-menu-change): Check for menubar
+ 	availability.
+
+	* custom/wid-edit.el (widget-echo-help): Use `help-echo' as label
+ 	for help-echo messages.
+
+1997-11-05  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
+
+	* s/aix3-1.h: Remove ^L character wich confuses AIX make.
+
+1997-11-06  Tomasz Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* event-stream.c (Fnext_command_event): Document keystroke echoing.
+
+1997-11-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fns.c (Ffeaturep): Use call1, to prevent stack thrashing with
+	circular lists.
+	- Update docstring.
+
+1997-11-06  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame-x.c (x_delete_frame): Removed code that
+	  blocked the deletion of popup frames.  No need for it.
+
+1997-11-05  SL Baur  <steve@altair.xemacs.org>
+
+	* balloon_help.h: Replace <X11/Intrinsic.h> with "xintrinsic.h"
+	* balloon_help.c: Ditto.
+	* offix.h: Ditto.
+
+	* mule-coding.c (coding_system_charset): Add prototype.
+
+1997-11-04  Kazuyuki IENAGA  <ienaga@jsys.co.jp>
+
+	* s/freebsd.h: Add HAVE_TIMEZONE_DECL.  Configure will fail at
+	checking for the existence of `extern long timezone'.
+	FreeBSD actualy has the `timezone', but due to its <time.h> and
+	<sys/time.h>, it cannot be recognized by configure.
+
+1997-11-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* data.c (Fsubr_interactive): New function.
+
+1997-11-03  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame.c (change_frame_size_1): Added explanatory
+	  comment.
+
+	* window.c (set_window_pixsize): Don't bail out
+	  before looping over the major children if there is no
+	  size change indicated.  The top and left coordinates
+	  may need to be recomputed, e.g. in toolbar visibility
+	  updates.
+
+1997-11-02  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* fileio.c (Ffile_truename): Make the errno == EACCES case
+	  behave the same as errno == ENOENT.
+
+1997-11-03  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame.c (Fframe_property, Fframe_properties): Check
+	  for minibuffer-onlyness of frame before checking whether
+	  it has a minibuffer.  This makes the minibuffer property
+	  value be reported as 'only when that is appropriate.  The
+	  check order was reversed which resulted in minibuffer-only
+	  frames having the minibuffer property reported as t.
+
+1997-11-02  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* m/vax.h: 
+	* s/cxux.h: 
+	* s/xenix.h: 
+	* s/umax.h: 
+	* s/msdos.h: 
+	* s/template.h: 
+	* termcap.c: 
+	* signal.c: 
+	* lread.c: 
+	* callproc.c
+	* buffer.c: Remove VMS dependent code.
+
+1997-11-02  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* syspwd.h:
+	* systty.h: 
+	* systime.h: 
+	* syssignal.h: 
+	* sysproc.h: 
+	* sysfloat.h: 
+	* sysfile.h: 
+	* regex.h: 
+	* process.h: 
+	* ndir.h: 
+	* mule-mcpath.h: 
+	* getpagesize.h: 
+	* sysdep.h: 
+	* fileio.c:
+	* process.c: Remove old VMS code.
+
+1997-11-02  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c: Use <magick/magick.h> instead of <magick.h>
+
+1997-11-02  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* sysdep.c: 
+	* getloadavg.c: 
+	* malloc.c: Remove old VMS code.
+
+1997-11-02  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* database.c (print_database): Don't use a static buffer to store
+	file name.
+
+	* dired.c (make_directory_hash_table): Ditto.
+
+	* fileio.c (Ffile_truename): Use `make_ext_string' instead of
+ 	`make_string'.
+
+1997-11-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* database.c (CONCHECK_DATABASE): Define.
+
+	* dired.c (Fdirectory_files): Use `make_ext_string' instead of
+ 	`make_string', to avoid crashes under Mule.
+	(file_name_completion): Use `make_ext_string'.
+
+	* database.c (new_database): Renamed to `allocate_database', as
+	per coding conventions.
+
+1997-11-02  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* dired.c: Remove VMS dependent code.
+
+1997-11-01  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* buffer.h: Change XCHAR_OR_CHAR_INT to use XCHAR or
+	  XINT as appropriate instead of using XREALINT.
+
+	* regex.c (re_search_2): cast translate[*d] to
+	  unsigned char when indexing fastmap to avoid sign
+	  change when value has the 0x80 bit set.
+
+1997-10-31  SL Baur  <steve@altair.xemacs.org>
+
+	* linuxplay.c (audio_init): Update for newer Linux kernels.
+	From Robert Bihlmeyer <robbe@orcus.priv.at>
+
+1997-11-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Finsert_file_contents_internal): Fix misleading
+ 	comment.
+
+1997-10-31  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* callproc.c: GC protect current_dir while infile and 
+	  error_file are being initialized.
+
 1997-10-30  SL Baur  <steve@altair.xemacs.org>
 
 	* config.h.in: Remove HAVE_GIF, HAVE_JPEG, HAVE_PNG, HAVE_TIFF and 

@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>
 
-#include <X11/Intrinsic.h>
+#include "xintrinsic.h"
 
 #include "balloon_help.h"
 

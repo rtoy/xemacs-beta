@@ -399,6 +399,9 @@ Compilation options:
 --cflags=FLAGS		Compiler flags. Overrides environment variable CFLAGS.
 --site-includes=PATH	List of directories to search first for header files.
 --site-libraries=PATH	List of directories to search first for libraries.
+--site-prefixes=PATH    List of directories to search for include/ and lib/ 
+                        subdirectories, just after 'site-includes' and 
+                        'site-libraries'.
 --site-runtime-libraries=PATH
 			List of ALL directories to search for dynamically
 			linked libraries at run time.
@@ -731,6 +734,7 @@ while test $# != 0; do
 	x_libraries	| \
 	site_includes	| \
 	site_libraries	| \
+	site_prefixes   | \
 	site_runtime_libraries )
 	  dnl If the value was omitted, get it from the next argument.
 	  if test "$valomitted" = "yes" ; then
@@ -975,6 +979,7 @@ define(COLON_TO_SPACE,
   [case "$[$1]" in *:* [)] [$1]="`echo '' $[$1] | sed -e 's/^ //' -e 's/:/ /g'`";; esac])dnl
 COLON_TO_SPACE(site_includes)
 COLON_TO_SPACE(site_libraries)
+COLON_TO_SPACE(site_prefixes)
 COLON_TO_SPACE(site_runtime_libraries)
 
 dnl with_x is an obsolete synonym for with_x11
@@ -1894,7 +1899,7 @@ if test "$GCC" = "yes"; then
   [[$1_tmp]="$[$1]"; [$1]=""
   for arg in $[$1_tmp]; do
     case "$arg" in
-      -L* | -l* | -R* | -u* | -Wl* | -f* | -B*) [$1]="$[$1] $arg" ;;
+      -L* | -l* | -R* | -u* | -Wl* | -f*) [$1]="$[$1] $arg" ;;
       -Xlinker* ) ;;
       * ) [$1]="$[$1] -Xlinker $arg" ;;
     esac
@@ -1934,7 +1939,7 @@ if test "$unexec" = "unexaix.o"; then
 dnl AIX needs various hacks to make static linking work.
 dnl This can go away if we ever figure out how to get dynamic linking on AIX.
   start_flags="-Wl,-bnso,-bnodelcsect"
-  test "$GCC" = "yes" && start_flags="-B/bin/ ${aixflags}"
+  test "$GCC" = "yes" && start_flags="-B/bin/ ${start_flags}"
   for f in "/lib/syscalls.exp" "$srcdir/src/m/ibmrs6000.inp"; do
     if test -r "$f"; then start_flags="${start_flags},-bI:${f}"; fi
   done
@@ -1959,6 +1964,23 @@ AC_SUBST(lib_gcc)
 dnl ---------------------------------------------------------------
 dnl Add site and system specific flags to compile and link commands
 dnl ---------------------------------------------------------------
+
+dnl All dirs present in site-prefixes will be searched for include/ and lib/
+dnl subdirs. This can avoid specifying both site-includes and site-libraries.
+dnl Those dirs will take precedence over the standard places, but not over
+dnl site-includes and site-libraries.
+
+dnl --site-prefixes (multiple dirs)
+if test -n "$site_prefixes"; then
+  for arg in $site_prefixes; do
+    case "$arg" in 
+	-* ) ;; 
+	* ) argi="-I${arg}/include" ; argl="-L${arg}/lib" ;; 
+    esac
+    XE_APPEND($argi, c_switch_site)
+    XE_APPEND($argl, ld_switch_site)
+  done
+fi
 
 dnl --site-libraries (multiple dirs)
 if test -n "$site_libraries"; then
@@ -2591,7 +2613,7 @@ if test "$with_x11" = "yes"; then
   fi
 
   dnl autodetect ImageMagick
-  test -z "$with_imagick" && { AC_CHECK_HEADER(magick.h,                    ,with_imagick=no) }
+  test -z "$with_imagick" && { AC_CHECK_HEADER(magick/magick.h,                    ,with_imagick=no) }
   test -z "$with_imagick" && { AC_CHECK_LIB(Magick, MogrifyImage,[:],with_imagick=no) }
   test -z "$with_imagick" && with_imagick=yes
   if test "$with_imagick" = "yes"; then
@@ -2795,10 +2817,12 @@ AC_CHECK_FUNCS(acosh asinh atanh cbrt closedir dup2 eaccess fmod fpathconf frexp
 dnl realpath is buggy on linux, decosf and aix4
 
 dnl The realpath() in linux libc (4.6.27) sometimes fails with ELOOP.
+dnl The realpath in ELF linux libc's is O.K.
 dnl For example, call realpath on a file thirty-five or so directories deep
 dnl and you get ELOOP even if no symlinks at all are involved.
+dnl Reports as of 11/1997 indicate BSDi has problems too.
 case "$opsys" in
-  linux* | decosf4-0* | aix4* ) XE_ADD_OBJS(realpath.o) ;;
+  linuxaout* | bsdos3* | freebsd* | decosf4-0* | aix4* ) XE_ADD_OBJS(realpath.o) ;;
   * )
     AC_CHECK_FUNCS(realpath)
     test "$ac_cv_func_realpath" != "yes" && XE_ADD_OBJS(realpath.o) ;;
@@ -3512,6 +3536,9 @@ fi
 if test -n "$site_libraries"; then
   echo "  Additional libraries:                                   $site_libraries"
 fi
+if test -n "$site_prefixes"; then
+  echo "  Additional prefixes:                                    $site_prefixes"
+fi
 if test -n "$runpath"; then
   echo "  Runtime library search path:                            $runpath"
 fi
@@ -3544,7 +3571,7 @@ test "$old_nas" = yes && echo "        nas library lacks error trapping, will pl
 
 test "$with_database_berkdb" = yes && echo "  Compiling in support for Berkeley DB."
 test "$with_database_dbm"    = yes && echo "  Compiling in support for DBM."
-test "$with_database_gnudbm" = yes && echo "  Compiling in support for GNU DBM."
+test "$with_database_gnudbm" = yes && echo "  Compiling in support for DBM."
 
 test "$with_ncurses"  = yes && echo "  Compiling in support for ncurses."
 test "$with_gpm"      = yes && echo "  Compiling in support for GPM (General Purpose Mouse)."

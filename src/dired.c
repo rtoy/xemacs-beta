@@ -40,7 +40,7 @@ Lisp_Object Qfile_name_all_completions;
 Lisp_Object Qfile_attributes;
 
 static Lisp_Object
-close_directory_fd (Lisp_Object unwind_obj)
+close_directory_unwind (Lisp_Object unwind_obj)
 {
   DIR *d = (DIR *)get_opaque_ptr (unwind_obj);
   closedir (d);
@@ -124,7 +124,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   if (! d)
     report_file_error ("Opening directory", list1 (dirname));
 
-  record_unwind_protect (close_directory_fd, make_opaque_ptr ((void *)d));
+  record_unwind_protect (close_directory_unwind, make_opaque_ptr ((void *)d));
 
   list = Qnil;
 
@@ -151,9 +151,10 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 		  char *cur_statbuf_tail = statbuf_tail;
 
 		  /* A trick: we normally use the buffer created by
-                     alloca.  However, if the filename is too big
-                     (meaning MAXNAMLEN lies on the system), we'll use
-                     a malloced buffer, and free it. */
+		     alloca.  However, if the filename is too big
+		     (meaning MAXNAMLEN is wrong or useless on the
+		     system), we'll use a malloced buffer, and free
+		     it. */
 		  if (len > MAXNAMLEN)
 		    {
 		      cur_statbuf = (char *) xmalloc (name_as_dir_length
@@ -180,9 +181,11 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
 
 	      if (!NILP (full))
 		name = concat2 (name_as_dir,
-				make_string ((Bufbyte *)dp->d_name, len));
+				make_ext_string ((Bufbyte *)dp->d_name,
+						 len, FORMAT_BINARY));
 	      else
-		name = make_string ((Bufbyte *)dp->d_name, len);
+		name = make_ext_string ((Bufbyte *)dp->d_name,
+					len, FORMAT_BINARY);
 
 	      list = Fcons (name, list);
 	    }
@@ -269,10 +272,8 @@ file_name_completion_stat (Lisp_Object dirname, DIRENTRY *dp,
   char *fullname = (char *) alloca (len + pos + 2);
 
   memcpy (fullname, XSTRING_DATA (dirname), pos);
-#ifndef VMS
   if (!IS_DIRECTORY_SEP (fullname[pos - 1]))
     fullname[pos++] = DIRECTORY_SEP;
-#endif
 
   memcpy (fullname + pos, dp->d_name, len);
   fullname[pos + len] = 0;
@@ -310,6 +311,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 
   CHECK_STRING (file);
 
+/* #### The following is valid not only for VMS, but for NT too. */
 #ifdef VMS
   /* Filename completion on VMS ignores case, since VMS filesys does.  */
   specbind (Qcompletion_ignore_case, Qt);
@@ -524,56 +526,13 @@ make_directory_hash_table (char *path)
 	{
 	  len = NAMLEN (dp);
 	  if (DIRENTRY_NONEMPTY (dp))
-	    Fputhash (make_string ((Bufbyte *) dp->d_name, len), Qt, hash);
+	    Fputhash (make_ext_string ((Bufbyte *) dp->d_name, len,
+				       FORMAT_BINARY), Qt, hash);
 	}
       closedir (d);
     }
   return hash;
 }
-
-#ifdef VMS
-
-DEFUN ("file-name-all-versions", Ffile_name_all_versions, 2, 2, 0, /*
-Return a list of all versions of file name FILE in directory DIR.
-*/
-       (file, dirname))
-{
-  /* This function can GC */
-  return file_name_completion (file, dirname, 1, 1);
-}
-
-DEFUN ("file-version-limit", Ffile_version_limit, 1, 1, 0, /*
-Return the maximum number of versions allowed for FILE.
-Returns nil if the file cannot be opened or if there is no version limit.
-*/
-       (filename))
-{
-  /* This function can GC */
-  Lisp_Object retval;
-  struct FAB    fab;
-  struct RAB    rab;
-  struct XABFHC xabfhc;
-  int status;
-
-  filename = Fexpand_file_name (filename, Qnil);
-  CHECK_STRING (filename);
-  fab      = cc$rms_fab;
-  xabfhc   = cc$rms_xabfhc;
-  fab.fab$l_fna = XSTRING_DATA (filename);
-  fab.fab$b_fns = strlen (fab.fab$l_fna);
-  fab.fab$l_xab = (char *) &xabfhc;
-  status = sys$open (&fab, 0, 0);
-  if (status != RMS$_NORMAL)	/* Probably non-existent file */
-    return Qnil;
-  sys$close (&fab, 0, 0);
-  if (xabfhc.xab$w_verlimit == 32767)
-    return Qnil;		/* No version limit */
-  else
-    return make_int (xabfhc.xab$w_verlimit);
-}
-
-#endif /* VMS */
-
 
 Lisp_Object
 wasteful_word_to_lisp (unsigned int item)
@@ -713,10 +672,6 @@ syms_of_dired (void)
 
   DEFSUBR (Fdirectory_files);
   DEFSUBR (Ffile_name_completion);
-#ifdef VMS
-  DEFSUBR (Ffile_name_all_versions);
-  DEFSUBR (Ffile_version_limit);
-#endif /* VMS */
   DEFSUBR (Ffile_name_all_completions);
   DEFSUBR (Ffile_attributes);
 }

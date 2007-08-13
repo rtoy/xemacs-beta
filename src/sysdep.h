@@ -25,11 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <setjmp.h>
 
-#if !defined(VMS) || !defined(LINK_CRTL_SHARE) || !defined(SHAREABLE_LIB_BUG)
 extern char **environ;
-#else
-extern noshare char **environ;
-#endif /* VMS sharable environ bug */
 
 struct emacs_tty;
 int emacs_get_tty (int fd, struct emacs_tty *settings);
@@ -153,21 +149,6 @@ int rename (CONST char *from, CONST char *to);
 #ifndef HAVE_DUP2
 int dup2 (int oldd, int newd);
 #endif
-
-#ifdef VMS
-void init_vms_input (void);
-
-int vms_truncate (char *fn);
-int vlimit (void);       /* BTW, name conflicts with unix syscall */
-int define_logical_name (char *varname, char *string)
-int delete_logical_name (char *varname);
-int rename_sans_version (char *from, char *to);
-char *vmserrstr (int status);
-char *sys_translate_vms (char *vfile);
-char *sys_translate_unix (char *ufile);
-int creat_copy_attrs (char *old, char *new);
-int link (char *file, char *new);
-#endif /* VMS */
 
 #ifndef HAVE_STRERROR
 /* X11R6 defines strerror as a macro */

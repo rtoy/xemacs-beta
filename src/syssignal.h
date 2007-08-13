@@ -58,7 +58,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define SIGCHLD as an alias for SIGCLD.  There are many conditionals
    testing SIGCHLD.  */
-#if !defined (VMS) && defined (SIGCLD) && !defined (SIGCHLD)
+#if defined (SIGCLD) && !defined (SIGCHLD)
 # define SIGCHLD SIGCLD
 #endif /* SIGCHLD */
 
@@ -212,11 +212,6 @@ extern signal_handler_t sys_do_signal (int signal_number,
 #define EMACS_KILLPG(gid, signo) kill (-(gid), signo)
 #endif
 #endif
-
-#ifdef VMS
-# define sys_siglist sys_errlist
-# define NSIG sys_nerr
-#endif /* VMS */
 
 #ifndef NSIG
 # define NSIG (SIGUSR2+1) /* guess how many elements are in sys_siglist... */

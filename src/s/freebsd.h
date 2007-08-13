@@ -100,3 +100,10 @@
 /* Needed to avoid hanging when child process writes an error message
    and exits -- enami tsugutomo <enami@ba2.so-net.or.jp>.  */
 #define vfork fork
+
+/* To avoid a failure of configure's check for timezone ... 
+ FreeBSD actualy has `extern long timezone'. */
+#ifndef HAVE_TIMEZONE_DECL
+#define HAVE_TIMEZONE_DECL 1
+#endif
+

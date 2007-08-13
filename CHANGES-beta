@@ -1,4 +1,59 @@
 							-*- indented-text -*-
+to 20.4 beta3 "Altai Mountain"
+-- query-replace and query-replace-regexp will only replace the region if the
+   zmacs region is active.
+-- iso-acc.el has been packaged
+-- iso-ascii.el has been packaged
+-- iso-cvt.el has been packaged
+-- iso-insert.el has been packaged
+-- iso-swed.el has been packaged
+-- iso-syntax.el has been packaged
+-- swedish.el has been packaged
+-- edebug has been packaged
+-- ebuff-menu.el has been packaged
+-- echistory.el has been packaged
+-- ehelp.el has been packaged
+-- electric.el has been packaged
+-- helper.el has been packaged
+-- arc-mode.el has been packaged
+-- ada-stmt.el has been packaged
+-- ada-mode.el has been packaged
+-- fortran.el has been packaged
+-- fortran-misc.el has been packaged
+-- f90.el has been packaged
+-- ksh-mode.el has been packaged
+-- m4-mode.el has been packaged
+-- strokes.el has been packaged
+-- sh-script.el has been packaged
+-- simula.el has been packaged
+-- tcl.el has been packaged
+-- verilog-mode.el has been packaged
+-- view.el has been packaged
+-- vrml-mode.el has been packaged
+-- whitespace-mode.el has been packaged
+-- winmgr-mode.el has been packaged
+-- xpm-mode.el has been packaged
+-- xrdb-mode.el has been packaged
+-- Suppress shadowing message if no shadows were found.
+-- Moved dumped lisp into top-level lisp directory
+-- bug fixes from Didier Verna, Jens-Ulrik Holger Petersen, Martin Buchholz,
+   and Tomasz Cholewo.
+-- Lazy shot updates from Jan Vroonhof
+-- Numerous bug fixes from Hrvoje Niksic
+-- Numerous bug fixes from Kyle Jones
+-- Mule changes courtesy of MORIOKA Tomohiko
+-- speedbar has been packaged (and updated courtesy of Hrvoje Niksic)
+-- Initial Native MS Windows support courtesy of Jonathan Harris
+-- comint has been packaged
+-- pcl-cvs has been packaged
+-- cc-mode has been packaged
+-- ilisp has been packaged
+-- apel has been packaged
+-- hyperbole has been packaged
+-- eterm has been packaged
+-- Elimination of broken VMS code courtesy of Andreas Jaeger
+-- Miscellaneous bug fixes
+
 to 20.4 beta2 "Alpine"
 -- hm--html-mode has been packaged
 -- viper has been packaged
@@ -14,7 +69,7 @@ to 20.4 beta2 "Alpine"
 -- Norwegian tutorial update courtesy of Stig Bjorlykkee
 -- ediff & viper updates courtesy of Michael Kifer
 -- Canna & Wnn integrated with LEIM courtesy of Stephen Turnbull
--- Berkeley DB 2.x support courtesy of Andreas Jaegar
+-- Berkeley DB 2.x support courtesy of Andreas Jaeger
 -- tm has been packaged
 -- calendar has been packaged
 -- Build tweak: finder-inf is not aggressively rebuilt

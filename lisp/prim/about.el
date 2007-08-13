@@ -195,7 +195,9 @@
   (interactive)
   (unless (about-get-buffer "*About XEmacs*")
     (widget-insert (about-center xemacs-logo))
-    (widget-create 'default :format "%t" :tag-glyph xemacs-logo)
+    (widget-create 'default
+		   :format "%t"
+		   :tag-glyph xemacs-logo)
     (widget-insert "\n")
     (let* ((emacs-short-version (concat emacs-major-version
 					"." emacs-minor-version))
@@ -546,14 +548,18 @@ contributed to the XEmacs development from late 1994 to early
 	(setq glyph
 	      (cond ((stringp data)
 		     (make-glyph
-		      (list (vector 'xpm :data data)
-			    (vector 'string :data "[Image]"))))
+		      (if (featurep 'xpm)
+			  `([xpm :data ,data]
+			    [string :data "[Image]"])
+			`([string :data "[Image]"]))))
 		    ((eq data 'error)
 		     (make-glyph [string :data "[Error]"]))
 		    (file
 		     (make-glyph
-		      (list (vector 'xpm :file file)
-			    (vector 'string :data "[Image]"))))
+		      (if (featurep 'xbm)
+			  `([xbm :data ,data]
+			    [string :data "[Image]"])
+			`([string :data "[Image]"]))))
 		    (t
 		     (make-glyph [nothing]))))
 	(set-glyph-property glyph 'baseline 100)
@@ -1303,6 +1309,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Pekka Marjola" "pema@iki.fi")
        (print-short "Simon Marshall" "simon@gnu.ai.mit.edu")
        (print-short "Dave Mason" "dmason@plg.uwaterloo.ca")
+       (print-short "Jason R Mastaler" "jason@4b.org")
        (print-short "Jaye Mathisen" "mrcpu@cdsnet.net")
        (print-short "Jason McLaren" "mclaren@math.mcgill.ca")
        (print-short "Michael McNamara" "mac@silicon-sorcery.com")
@@ -1353,6 +1360,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Cotton Seed" "cottons@cybercom.net")
        (print-short "Axel Seibert" "seiberta@informatik.tu-muenchen.de")
        (print-short "Odd-Magne Sekkingstad" "oddms@ii.uib.no")
+       (print-short "Justin Sheehy" "justin@linus.mitre.org")
        (print-short "John Shen" "zfs60@cas.org")
        (print-short "Murata Shuuichirou" "mrt@mickey.ai.kyutech.ac.jp")
        (print-short "Matt Simmons" "simmonmt@acm.org")

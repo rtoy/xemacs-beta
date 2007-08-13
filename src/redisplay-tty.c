@@ -1102,9 +1102,14 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
   CONSOLE_TTY_DATA (c)->term_entry_buffer = (char *) xmalloc (2044);
   bufptr = CONSOLE_TTY_DATA (c)->term_entry_buffer;
 
+#if !defined(WIN32)
+  /* SIGTT* don't exist under win32 */
   EMACS_BLOCK_SIGNAL (SIGTTOU);
+#endif
   status = tgetent (entry_buffer, terminal_type);
+#if !defined(WIN32)
   EMACS_UNBLOCK_SIGNAL (SIGTTOU);
+#endif
 #if 0
   if (status < 0)
     return TTY_UNABLE_OPEN_DATABASE;

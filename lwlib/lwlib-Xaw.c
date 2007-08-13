@@ -220,7 +220,11 @@ xaw_pop_instance (widget_instance *instance, Boolean up)
 	    Widget topmost = instance->parent;
 	    w = shell->core.width;
 	    h = shell->core.height;
-	    while (topmost->core.parent && XtIsRealized (topmost->core.parent))
+	    while (topmost->core.parent &&
+		   XtIsRealized (topmost->core.parent) &&
+		   /* HAVE_SESSION adds an unmapped parent widget that
+		      we should ignore here. */
+		   topmost->core.parent->core.mapped_when_managed)
 	      topmost = topmost->core.parent;
 	    if (topmost->core.width < w) x = topmost->core.x;
 	    else x = topmost->core.x + ((topmost->core.width - w) / 2);

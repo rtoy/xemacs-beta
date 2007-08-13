@@ -82,10 +82,6 @@ Lisp_Object Vwrite_region_annotations_so_far;
 /* File name in which we write a list of all our auto save files.  */
 Lisp_Object Vauto_save_list_file_name;
 
-/* On VMS, nonzero means write new files with record format stmlf.
-   Zero means use var format.  */
-int vms_stmlf_recfm;
-
 int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Qfile_name_handler_alist;
@@ -396,8 +392,7 @@ DEFUN ("file-name-directory", Ffile_name_directory, 1, 1, 0, /*
 Return the directory component in file name NAME.
 Return nil if NAME does not include a directory.
 Otherwise return a directory spec.
-Given a Unix syntax file name, returns a string ending in slash;
-on VMS, perhaps instead a string ending in `:', `]' or `>'.
+Given a Unix syntax file name, returns a string ending in slash.
 */
        (file))
 {
@@ -420,11 +415,8 @@ on VMS, perhaps instead a string ending in `:', `]' or `>'.
   beg = XSTRING_DATA (file);
   p = beg + XSTRING_LENGTH (file);
 
-  while (p != beg && !IS_ANY_SEP (p[-1])
-#ifdef VMS
-	 && p[-1] != ':' && p[-1] != ']' && p[-1] != '>'
-#endif /* VMS */
-	 ) p--;
+  while (p != beg && !IS_ANY_SEP (p[-1]))
+    p--;
 
   if (p == beg)
     return Qnil;
@@ -483,11 +475,8 @@ or the entire name if it contains no slash.
   beg = XSTRING_DATA (file);
   end = p = beg + XSTRING_LENGTH (file);
 
-  while (p != beg && !IS_ANY_SEP (p[-1])
-#ifdef VMS
-	 && p[-1] != ':' && p[-1] != ']' && p[-1] != '>'
-#endif /* VMS */
-	 ) p--;
+  while (p != beg && !IS_ANY_SEP (p[-1]))
+    p--;
 
   return make_string (p, end - p);
 }
@@ -524,71 +513,12 @@ file_name_as_directory (char *out, char *in)
 
   strcpy (out, in);
 
-#ifdef VMS
-  /* Is it already a directory string? */
-  if (in[size] == ':' || in[size] == ']' || in[size] == '>')
-    return out;
-  /* Is it a VMS directory file name?  If so, hack VMS syntax.  */
-  else if (! strchr (in, '/')
-	   && ((size > 3 && ! strcmp (&in[size - 3], ".DIR"))
-	       || (size > 3 && ! strcmp (&in[size - 3], ".dir"))
-	       || (size > 5 && (! strncmp (&in[size - 5], ".DIR", 4)
-				|| ! strncmp (&in[size - 5], ".dir", 4))
-		   && (in[size - 1] == '.' || in[size - 1] == ';')
-		   && in[size] == '1')))
-    {
-      char *p, *dot;
-      char brack;
-
-      /* x.dir -> [.x]
-	 dir:x.dir --> dir:[x]
-	 dir:[x]y.dir --> dir:[x.y] */
-      p = in + size;
-      while (p != in && *p != ':' && *p != '>' && *p != ']') p--;
-      if (p != in)
-	{
-	  strncpy (out, in, p - in);
-	  out[p - in] = '\0';
-	  if (*p == ':')
-	    {
-	      brack = ']';
-	      strcat (out, ":[");
-	    }
-	  else
-	    {
-	      brack = *p;
-	      strcat (out, ".");
-	    }
-	  p++;
-	}
-      else
-	{
-	  brack = ']';
-	  strcpy (out, "[.");
-	}
-      dot = strchr (p, '.');
-      if (dot)
-	{
-	  /* blindly remove any extension */
-	  size = strlen (out) + (dot - p);
-	  strncat (out, p, dot - p);
-	}
-      else
-	{
-	  strcat (out, p);
-	  size = strlen (out);
-	}
-      out[size++] = brack;
-      out[size] = '\0';
-    }
-#else /* not VMS */
   /* For Unix syntax, Append a slash if necessary */
   if (!IS_ANY_SEP (out[size]))
     {
       out[size + 1] = DIRECTORY_SEP;
       out[size + 2] = '\0';
     }
-#endif /* not VMS */
   return out;
 }
 
@@ -599,7 +529,6 @@ a directory is different from its name as a file.
 The result can be used as the value of `default-directory'
 or passed as second argument to `expand-file-name'.
 For a Unix-syntax file name, just appends a slash.
-On VMS, converts "[X]FOO.DIR" to "[X.FOO]", etc.
 */
        (file))
 {
@@ -622,9 +551,6 @@ On VMS, converts "[X]FOO.DIR" to "[X.FOO]", etc.
 
 /*
  * Convert from directory name to filename.
- * On VMS:
- *       xyzzy:[mukesh.emacs] => xyzzy:[mukesh]emacs.dir.1
- *       xyzzy:[mukesh] => xyzzy:[000000]mukesh.dir.1
  * On UNIX, it's simple: just make sure there is a terminating /
 
  * Value is nonzero if the string output is different from the input.
@@ -634,129 +560,8 @@ static int
 directory_file_name (CONST char *src, char *dst)
 {
   long slen;
-#ifdef VMS
-  long rlen;
-  char * ptr, * rptr;
-  char bracket;
-  struct FAB fab = cc$rms_fab;
-  struct NAM nam = cc$rms_nam;
-  char esa[NAM$C_MAXRSS];
-#endif /* VMS */
 
   slen = strlen (src);
-#ifdef VMS
-  if (! strchr (src, '/')
-      && (src[slen - 1] == ']'
-	  || src[slen - 1] == ':'
-	  || src[slen - 1] == '>'))
-    {
-      /* VMS style - convert [x.y.z] to [x.y]z, [x] to [000000]x */
-      fab.fab$l_fna = src;
-      fab.fab$b_fns = slen;
-      fab.fab$l_nam = &nam;
-      fab.fab$l_fop = FAB$M_NAM;
-
-      nam.nam$l_esa = esa;
-      nam.nam$b_ess = sizeof esa;
-      nam.nam$b_nop |= NAM$M_SYNCHK;
-
-      /* We call SYS$PARSE to handle such things as [--] for us. */
-      if (SYS$PARSE(&fab, 0, 0) == RMS$_NORMAL)
-	{
-	  slen = nam.nam$b_esl;
-	  if (esa[slen - 1] == ';' && esa[slen - 2] == '.')
-	    slen -= 2;
-	  esa[slen] = '\0';
-	  src = esa;
-	}
-      if (src[slen - 1] != ']' && src[slen - 1] != '>')
-	{
-	  /* what about when we have logical_name:???? */
-	  if (src[slen - 1] == ':')
-	    {                   /* Xlate logical name and see what we get */
-	      ptr = strcpy (dst, src); /* upper case for getenv */
-	      while (*ptr)
-		{
-		  *ptr = toupper ((unsigned char) *ptr);
-		  ptr++;
-		}
-	      dst[slen - 1] = 0;        /* remove colon */
-	      if (!(src = egetenv (dst)))
-		return 0;
-	      /* should we jump to the beginning of this procedure?
-		 Good points: allows us to use logical names that xlate
-		 to Unix names,
-		 Bad points: can be a problem if we just translated to a device
-		 name...
-		 For now, I'll punt and always expect VMS names, and hope for
-		 the best! */
-	      slen = strlen (src);
-	      if (src[slen - 1] != ']' && src[slen - 1] != '>')
-		{ /* no recursion here! */
-		  strcpy (dst, src);
-		  return 0;
-		}
-	    }
-	  else
-	    {		/* not a directory spec */
-	      strcpy (dst, src);
-	      return 0;
-	    }
-	}
-      bracket = src[slen - 1];
-
-      /* If bracket is ']' or '>', bracket - 2 is the corresponding
-	 opening bracket.  */
-      ptr = strchr (src, bracket - 2);
-      if (ptr == 0)
-	{ /* no opening bracket */
-	  strcpy (dst, src);
-	  return 0;
-	}
-      if (!(rptr = strrchr (src, '.')))
-	rptr = ptr;
-      slen = rptr - src;
-      strncpy (dst, src, slen);
-      dst[slen] = '\0';
-      if (*rptr == '.')
-	{
-	  dst[slen++] = bracket;
-	  dst[slen] = '\0';
-	}
-      else
-	{
-	  /* If we have the top-level of a rooted directory (i.e. xx:[000000]),
-	     then translate the device and recurse. */
-	  if (dst[slen - 1] == ':'
-	      && dst[slen - 2] != ':'	/* skip decnet nodes */
-	      && strcmp(src + slen, "[000000]") == 0)
-	    {
-	      dst[slen - 1] = '\0';
-	      if ((ptr = egetenv (dst))
-		  && (rlen = strlen (ptr) - 1) > 0
-		  && (ptr[rlen] == ']' || ptr[rlen] == '>')
-		  && ptr[rlen - 1] == '.')
-		{
-		  char * buf = (char *) alloca (strlen (ptr) + 1);
-		  strcpy (buf, ptr);
-		  buf[rlen - 1] = ']';
-		  buf[rlen] = '\0';
-		  return directory_file_name (buf, dst);
-		}
-	      else
-		dst[slen - 1] = ':';
-	    }
-	  strcat (dst, "[000000]");
-	  slen += 8;
-	}
-      rptr++;
-      rlen = strlen (rptr) - 1;
-      strncat (dst, rptr, rlen);
-      dst[slen + rlen] = '\0';
-      strcat (dst, ".DIR.1");
-      return 1;
-    }
-#endif /* VMS */
   /* Process as Unix format: just remove any final slash.
      But leave "/" unchanged; do not change it to "".  */
   strcpy (dst, src);
@@ -783,8 +588,6 @@ This is the name of the file that holds the data for the directory DIR.
 This operation exists because a directory is also a file, but its name as
 a directory is different from its name as a file.
 In Unix-syntax, this function just removes the final slash.
-On VMS, given a VMS-syntax directory name such as "[X.Y]",
-it returns a file name such as "[X]Y.DIR.1".
 */
        (directory))
 {
@@ -804,14 +607,7 @@ it returns a file name such as "[X]Y.DIR.1".
   handler = Ffind_file_name_handler (directory, Qdirectory_file_name);
   if (!NILP (handler))
     return call2_check_string (handler, Qdirectory_file_name, directory);
-#ifdef VMS
-  /* 20 extra chars is insufficient for VMS, since we might perform a
-     logical name translation. an equivalence string can be up to 255
-     chars long, so grab that much extra space...  - sss */
-  buf = (char *) alloca (XSTRING_LENGTH (directory) + 20 + 255);
-#else
   buf = (char *) alloca (XSTRING_LENGTH (directory) + 20);
-#endif
   directory_file_name ((char *) XSTRING_DATA (directory), buf);
   return build_string (buf);
 }
@@ -862,14 +658,6 @@ See also the function `substitute-in-file-name'.
   int tlen;
   Bufbyte *target;
   struct passwd *pw;
-#ifdef VMS
-  Bufbyte * colon = 0;
-  Bufbyte * close = 0;
-  Bufbyte * slash = 0;
-  Bufbyte * brack = 0;
-  int lbrack = 0, rbrack = 0;
-  int dots = 0;
-#endif /* VMS */
 #ifdef DOS_NT
   /* Demacs 1.1.2 91/10/20 Manabu Higashida */
   int drive = -1;
@@ -936,10 +724,6 @@ See also the function `substitute-in-file-name'.
       UNGCPRO;
     }
 
-#ifdef VMS
-  /* Filenames on VMS are always upper case.  */
-  name = Fupcase (name, Fcurrent_buffer ());
-#endif
 #ifdef FILE_SYSTEM_CASE
   name = FILE_SYSTEM_CASE (name);
 #endif
@@ -1004,12 +788,7 @@ See also the function `substitute-in-file-name'.
 
   /* If nm is absolute, flush ...// and detect /./ and /../.
      If no /./ or /../ we can return right away. */
-  if (
-      IS_DIRECTORY_SEP (nm[0])
-#ifdef VMS
-      || strchr (nm, ':')
-#endif /* VMS */
-      )
+  if (IS_DIRECTORY_SEP (nm[0]))
     {
       /* If it turns out that the filename we want to return is just a
 	 suffix of FILENAME, we don't need to go through and edit
@@ -1033,87 +812,10 @@ See also the function `substitute-in-file-name'.
 		  || (p[2] == '.' && (IS_DIRECTORY_SEP (p[3])
 				      || p[3] == 0))))
 	    lose = 1;
-#ifdef VMS
-	  if (p[0] == '\\')
-	    lose = 1;
-	  if (p[0] == '/') {
-	    /* if dev:[dir]/, move nm to / */
-	    if (!slash && p > nm && (brack || colon)) {
-	      nm = (brack ? brack + 1 : colon + 1);
-	      lbrack = rbrack = 0;
-	      brack = 0;
-	      colon = 0;
-	    }
-	    slash = p;
-	  }
-	  if (p[0] == '-')
-#ifndef VMS4_4
-	    /* VMS pre V4.4,convert '-'s in filenames. */
-	    if (lbrack == rbrack)
-	      {
-		if (dots < 2)   /* this is to allow negative version numbers */
-		  p[0] = '_';
-	      }
-	    else
-#endif /* VMS4_4 */
-	      if (lbrack > rbrack &&
-		  ((p[-1] == '.' || p[-1] == '[' || p[-1] == '<') &&
-		   (p[1] == '.' || p[1] == ']' || p[1] == '>')))
-		lose = 1;
-#ifndef VMS4_4
-	      else
-		p[0] = '_';
-#endif /* VMS4_4 */
-	  /* count open brackets, reset close bracket pointer */
-	  if (p[0] == '[' || p[0] == '<')
-	    lbrack++, brack = 0;
-	  /* count close brackets, set close bracket pointer */
-	  if (p[0] == ']' || p[0] == '>')
-	    rbrack++, brack = p;
-	  /* detect ][ or >< */
-	  if ((p[0] == ']' || p[0] == '>') && (p[1] == '[' || p[1] == '<'))
-	    lose = 1;
-	  if ((p[0] == ':' || p[0] == ']' || p[0] == '>') && p[1] == '~')
-	    nm = p + 1, lose = 1;
-	  if (p[0] == ':' && (colon || slash))
-	    /* if dev1:[dir]dev2:, move nm to dev2: */
-	    if (brack)
-	      {
-		nm = brack + 1;
-		brack = 0;
-	      }
-	    /* if /pathname/dev:, move nm to dev: */
-	    else if (slash)
-	      nm = slash + 1;
-	    /* if node::dev:, move colon following dev */
-	    else if (colon && colon[-1] == ':')
-	      colon = p;
-	    /* if dev1:dev2:, move nm to dev2: */
-	    else if (colon && colon[-1] != ':')
-	      {
-		nm = colon + 1;
-		colon = 0;
-	      }
-	  if (p[0] == ':' && !colon)
-	    {
-	      if (p[1] == ':')
-		p++;
-	      colon = p;
-	    }
-	  if (lbrack == rbrack)
-	    if (p[0] == ';')
-	      dots = 2;
-	    else if (p[0] == '.')
-	      dots++;
-#endif /* VMS */
 	  p++;
 	}
       if (!lose)
 	{
-#ifdef VMS
-	  if (strchr (nm, '/'))
-	    return build_string (sys_translate_unix (nm));
-#endif /* VMS */
 #ifndef DOS_NT
 	  if (nm == XSTRING_DATA (name))
 	    return name;
@@ -1129,9 +831,6 @@ See also the function `substitute-in-file-name'.
   if (nm[0] == '~')		/* prefix ~ */
     {
       if (IS_DIRECTORY_SEP (nm[1])
-#ifdef VMS
-	  || nm[1] == ':'
-#endif /* VMS */
 	  || nm[1] == 0)		/* ~ by itself */
 	{
 	  if (!(newdir = (Bufbyte *) egetenv ("HOME")))
@@ -1144,17 +843,10 @@ See also the function `substitute-in-file-name'.
 	  dostounix_filename (newdir);
 #endif /* DOS_NT */
 	  nm++;
-#ifdef VMS
-	  nm++;			/* Don't leave the slash in nm.  */
-#endif /* VMS */
 	}
       else			/* ~user/filename */
 	{
-	  for (p = nm; *p && (!IS_DIRECTORY_SEP (*p)
-#ifdef VMS
-			      && *p != ':'
-#endif /* VMS */
-			      ); p++);
+	  for (p = nm; *p && (!IS_DIRECTORY_SEP (*p)); p++);
 	  o = (Bufbyte *) alloca (p - nm + 1);
 	  memcpy (o, (char *) nm, p - nm);
 	  o [p - nm] = 0;
@@ -1178,11 +870,7 @@ See also the function `substitute-in-file-name'.
 	  if (pw)
 	    {
 	      newdir = (Bufbyte *) pw -> pw_dir;
-#ifdef VMS
-	      nm = p + 1;		/* skip the terminator */
-#else
 	      nm = p;
-#endif /* VMS */
 	    }
 #endif /* not WINDOWSNT */
 
@@ -1192,9 +880,6 @@ See also the function `substitute-in-file-name'.
     }
 
   if (!IS_ANY_SEP (nm[0])
-#ifdef VMS
-      && !strchr (nm, ':')
-#endif /* not VMS */
 #ifdef DOS_NT
       && drive == -1
 #endif /* DOS_NT */
@@ -1244,19 +929,13 @@ See also the function `substitute-in-file-name'.
 
   if (newdir)
     {
-#ifndef VMS
       if (nm[0] == 0 || IS_DIRECTORY_SEP (nm[0]))
 	strcpy ((char *) target, (char *) newdir);
       else
-#endif
       file_name_as_directory ((char *) target, (char *) newdir);
     }
 
   strcat ((char *) target, (char *) nm);
-#ifdef VMS
-  if (strchr (target, '/'))
-    strcpy (target, sys_translate_unix (target));
-#endif /* VMS */
 
   /* Now canonicalize by removing /. and /foo/.. if they appear.  */
 
@@ -1265,48 +944,6 @@ See also the function `substitute-in-file-name'.
 
   while (*p)
     {
-#ifdef VMS
-      if (*p != ']' && *p != '>' && *p != '-')
-	{
-	  if (*p == '\\')
-	    p++;
-	  *o++ = *p++;
-	}
-      else if ((p[0] == ']' || p[0] == '>') && p[0] == p[1] + 2)
-	/* brackets are offset from each other by 2 */
-	{
-	  p += 2;
-	  if (*p != '.' && *p != '-' && o[-1] != '.')
-	    /* convert [foo][bar] to [bar] */
-	    while (o[-1] != '[' && o[-1] != '<')
-	      o--;
-	  else if (*p == '-' && *o != '.')
-	    *--p = '.';
-	}
-      else if (p[0] == '-' && o[-1] == '.' &&
-	       (p[1] == '.' || p[1] == ']' || p[1] == '>'))
-	/* flush .foo.- ; leave - if stopped by '[' or '<' */
-	{
-	  do
-	    o--;
-	  while (o[-1] != '.' && o[-1] != '[' && o[-1] != '<');
-	  if (p[1] == '.')      /* foo.-.bar ==> bar.  */
-	    p += 2;
-	  else if (o[-1] == '.') /* '.foo.-]' ==> ']' */
-	    p++, o--;
-	  /* else [foo.-] ==> [-] */
-	}
-      else
-	{
-#ifndef VMS4_4
-	  if (*p == '-' &&
-	      o[-1] != '[' && o[-1] != '<' && o[-1] != '.' &&
-	      p[1] != ']' && p[1] != '>' && p[1] != '.')
-	    *p = '_';
-#endif /* VMS4_4 */
-	  *o++ = *p++;
-	}
-#else /* not VMS */
       if (!IS_DIRECTORY_SEP (*p))
 	{
 	  *o++ = *p++;
@@ -1354,7 +991,6 @@ See also the function `substitute-in-file-name'.
 	{
 	  *o++ = *p++;
 	}
-#endif /* not VMS */
     }
 
 #ifdef DOS_NT
@@ -1408,9 +1044,6 @@ No component of the resulting pathname will be a symbolic link, as
   if (!NILP (handler))
     return call2_check_string (handler, Qfile_truename, expanded_name);
 
-#ifdef VMS
-  return expanded_name;
-#else
   {
     char resolved_path[MAXPATHLEN];
     char path[MAXPATHLEN];
@@ -1448,7 +1081,7 @@ No component of the resulting pathname will be a symbolic link, as
 		  break;
 
 	      }
-	    else if (errno == ENOENT)
+	    else if (errno == ENOENT || errno == EACCES)
 	      {
 		/* Failed on this component.  Just tack on the rest of
 		   the string and we are done. */
@@ -1488,7 +1121,7 @@ No component of the resulting pathname will be a symbolic link, as
 	  resolved_path[rlen + 1] = 0;
 	  rlen = rlen + 1;
 	}
-      return make_string ((Bufbyte *) resolved_path, rlen);
+      return make_ext_string ((Bufbyte *) resolved_path, rlen, FORMAT_BINARY);
     }
 
   toolong:
@@ -1498,7 +1131,6 @@ No component of the resulting pathname will be a symbolic link, as
     report_file_error ("Finding truename", list1 (expanded_name));
   }
   return Qnil;	/* suppress compiler warning */
-#endif /* not VMS */
 }
 
 
@@ -1510,8 +1142,6 @@ with a character not a letter, digit or underscore; otherwise, enclose
 the entire variable name in braces.
 If `/~' appears, all of FILENAME through that `/' is discarded.
 
-On VMS, `$' substitution is not done; this function does little and only
-duplicates what `expand-file-name' does.
 */
        (string))
 {
@@ -1558,11 +1188,7 @@ duplicates what `expand-file-name' does.
 #endif /* not APOLLO */
 	   )
 	  && p != nm
-	  && (0
-#ifdef VMS
-	      || p[-1] == ':' || p[-1] == ']' || p[-1] == '>'
-#endif /* VMS */
-	      || IS_DIRECTORY_SEP (p[-1])))
+	  && (IS_DIRECTORY_SEP (p[-1])))
 	{
 	  nm = p;
 	  substituted = 1;
@@ -1575,10 +1201,6 @@ duplicates what `expand-file-name' does.
 	}
 #endif /* DOS_NT */
     }
-
-#ifdef VMS
-  return build_string (nm);
-#else
 
   /* See if any variables are substituted into the string
      and find the total length of their values in `total' */
@@ -1718,7 +1340,6 @@ duplicates what `expand-file-name' does.
 
   /* NOTREACHED */
   return Qnil;	/* suppress compiler warning */
-#endif /* not VMS */
 }
 
 /* (directory-file-name (expand-file-name FOO)) */
@@ -1732,14 +1353,6 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
 
   abspath = Fexpand_file_name (filename, defdir);
   GCPRO1 (abspath);
-#ifdef VMS
-  {
-    Bufbyte c =
-      XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 1);
-    if (c == ':' || c == ']' || c == '>')
-      abspath = Fdirectory_file_name (abspath);
-  }
-#else
   /* Remove final slash, if any (unless path is root).
      stat behaves differently depending!  */
   if (XSTRING_LENGTH (abspath) > 1
@@ -1747,7 +1360,6 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
       && !IS_DEVICE_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 2)))
     /* We cannot take shortcuts; they might be wrong for magic file names.  */
     abspath = Fdirectory_file_name (abspath);
-#endif
   UNGCPRO;
   return abspath;
 }
@@ -1913,17 +1525,12 @@ A prefix arg makes KEEP-TIME non-nil.
     }
 #endif /* S_ISREG && S_ISLNK */
 
-#ifdef VMS
-  /* Create the copy file with the same record format as the input file */
-  ofd = sys_creat ((char *) XSTRING_DATA (newname), 0666, ifd);
-#else
 #ifdef MSDOS
   /* System's default file type was set to binary by _fmode in emacs.c.  */
   ofd = creat ((char *) XSTRING_DATA (newname), S_IREAD | S_IWRITE);
 #else /* not MSDOS */
   ofd = creat ((char *) XSTRING_DATA (newname), 0666);
 #endif /* not MSDOS */
-#endif /* VMS */
   if (ofd < 0)
     report_file_error ("Opening output file", list1 (newname));
 
@@ -2008,10 +1615,8 @@ Create a directory.  One argument, a file name string.
   strncpy (dir, (char *) XSTRING_DATA (dirname_),
 	   XSTRING_LENGTH (dirname_) + 1);
 
-#ifndef VMS
   if (dir [XSTRING_LENGTH (dirname_) - 1] == '/')
     dir [XSTRING_LENGTH (dirname_) - 1] = 0;
-#endif
 
 #ifdef WINDOWSNT
   if (mkdir (dir) != 0)
@@ -2295,32 +1900,6 @@ This happens for interactive use with M-x.
 }
 #endif /* S_IFLNK */
 
-#ifdef VMS
-
-DEFUN ("define-logical-name", Fdefine_logical_name, 2, 2,
-       "sDefine logical name: \nsDefine logical name %s as: ", /*
-Define the job-wide logical name NAME to have the value STRING.
-If STRING is nil or a null string, the logical name NAME is deleted.
-*/
-       (varname, string))
-{
-  CHECK_STRING (varname);
-  if (NILP (string))
-    delete_logical_name ((char *) XSTRING_DATA (varname));
-  else
-    {
-      CHECK_STRING (string);
-
-      if (XSTRING_LENGTH (string) == 0)
-        delete_logical_name ((char *) XSTRING_DATA (varname));
-      else
-        define_logical_name ((char *) XSTRING_DATA (varname), (char *) XSTRING_DATA (string));
-    }
-
-  return string;
-}
-#endif /* VMS */
-
 #ifdef HPUX_NET
 
 DEFUN ("sysnetunam", Fsysnetunam, 2, 2, 0, /*
@@ -2364,12 +1943,6 @@ On Unix, this is a name starting with a `/' or a `~'.
   CHECK_STRING (filename);
   ptr = XSTRING_DATA (filename);
   if (IS_DIRECTORY_SEP (*ptr) || *ptr == '~'
-#ifdef VMS
-/* ??? This criterion is probably wrong for '<'.  */
-      || strchr (ptr, ':') || strchr (ptr, '<')
-      || (*ptr == '[' && (ptr[1] != '-' || (ptr[2] != '.' && ptr[2] != ']'))
-	  && ptr[1] != '.')
-#endif /* VMS */
 #ifdef DOS_NT
       || (*ptr != 0 && ptr[1] == ':' && (ptr[2] == '/' || ptr[2] == '\\'))
 #endif
@@ -2550,14 +2123,14 @@ Return t if file FILENAME can be written or created by you.
   GCPRO1 (abspath);
   dir = Ffile_name_directory (abspath);
   UNGCPRO;
-#if defined (VMS) || defined (MSDOS)
+#ifdef MSDOS
   if (!NILP (dir))
     {
       GCPRO1(dir);
       dir = Fdirectory_file_name (dir);
       UNGCPRO;
     }
-#endif /* VMS or MSDOS */
+#endif /* MSDOS */
   return (check_writable (!NILP (dir) ? (char *) XSTRING_DATA (dir)
 			  : "")
 	  ? Qt : Qnil);
@@ -2797,7 +2370,6 @@ created files will not have that permission enabled.
   return make_int ((~ mode) & 0777);
 }
 
-#ifndef VMS
 DEFUN ("unix-sync", Funix_sync, 0, 0, "", /*
 Tell Unix to finish all pending disk updates.
 */
@@ -2808,7 +2380,6 @@ Tell Unix to finish all pending disk updates.
 #endif
   return Qnil;
 }
-#endif /* !VMS */
 
 
 DEFUN ("file-newer-than-file-p", Ffile_newer_than_file_p, 2, 2, 0, /*
@@ -2961,9 +2532,8 @@ positions), even in Mule. (Fixing this is very difficult.)
     }
 
 #ifdef S_IFREG
-  /* This code will need to be changed in order to work on named
-     pipes, and it's probably just not worth it.  So we should at
-     least signal an error.  */
+  /* Signal an error if we are accessing a non-regular file, with
+     REPLACE, BEG or END being non-nil.  */
   if (!S_ISREG (st.st_mode))
     {
       not_regular = 1;
@@ -2990,6 +2560,10 @@ positions), even in Mule. (Fixing this is very difficult.)
   if (!NILP (end))
     CHECK_INT (end);
 
+  /* Here, we should call some form of interruptable_open, so the user
+     can quit gracefully when opening named pipes.  interruptable_open
+     should be just like sys_open in sysdep.c, only it would call QUIT
+     if interrupted by EINTR.  */
   if (fd < 0)
     if ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0)) < 0)
       goto badopen;
@@ -3370,9 +2944,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   struct stat st;
   Lisp_Object fn;
   int speccount = specpdl_depth ();
-#ifdef VMS
-  unsigned char *fname = 0;     /* If non-0, original filename (must rename) */
-#endif /* VMS */
   int visiting_other = STRINGP (visit);
   int visiting = (EQ (visit, Qt) || visiting_other);
   int quietly = (!visiting && !NILP (visit));
@@ -3485,7 +3056,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 #endif /* not DOS_NT */
 
   if (desc < 0)
-#ifndef VMS
     {
 #ifdef DOS_NT
       desc = open ((char *) XSTRING_DATA (fn),
@@ -3496,75 +3066,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 		    ((auto_saving) ? auto_save_mode_bits : 0666));
 #endif /* DOS_NT */
     }
-#else /* VMS */
-  {
-    if (auto_saving)	/* Overwrite any previous version of autosave file */
-      {
-	char *fn_data = XSTRING_DATA (fn);
-	/* if fn exists, truncate to zero length */
-	vms_truncate (fn_data);
-	desc = open (fn_data, O_RDWR, 0);
-	if (desc < 0)
-	  desc = creat_copy_attrs ((STRINGP (current_buffer->filename)
-				    ? (char *)
-				    XSTRING_DATA (current_buffer->filename)
-				    : 0),
-				   fn_data);
-      }
-    else		/* Write to temporary name and rename if no errors */
-      {
-	Lisp_Object temp_name;
-
-	struct gcpro gcpro1, gcpro2, gcpro3;
-	GCPRO3 (start, filename, visit_file);
-	{
-	  struct gcpro gcpro1, gcpro2, gcpro3; /* Don't have GCPRO6 */
-
-	  GCPRO3 (fn, fname, annotations);
-
-	  temp_name = Ffile_name_directory (filename);
-
-	  if (NILP (temp_name))
-	    desc = creat ((char *) XSTRING_DATA (fn), 0666);
-	  else
-	    {
-	      temp_name =
-		Fmake_temp_name (concat2 (temp_name,
-					  build_string ("$$SAVE$$")));
-	      fname = filename;
-	      fn = temp_name;
-	      desc = creat_copy_attrs (fname,
-				       (char *) XSTRING_DATA (fn));
-	      if (desc < 0)
-		{
-		  char *fn_data;
-		  /* If we can't open the temporary file, try creating a new
-		     version of the original file.  VMS "creat" creates a
-		     new version rather than truncating an existing file. */
-		  fn = fname;
-		  fname = Qnil;
-		  fn_data = XSTRING_DATA (fn);
-		  desc = creat (fn_data, 0666);
-#if 0                           /* This can clobber an existing file and fail
-				   to replace it, if the user runs out of
-				   space.  */
-		  if (desc < 0)
-		    {
-		      /* We can't make a new version;
-			 try to truncate and rewrite existing version if any.
-		       */
-		      vms_truncate (fn_data);
-		      desc = open (fn_data, O_RDWR, 0);
-		    }
-#endif /* 0 */
-		}
-	    }
-	  UNGCPRO;
-	}
-	UNGCPRO;
-      }
-  }
-#endif /* VMS */
 
   if (desc < 0)
     {
@@ -3597,27 +3098,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 			       list1 (filename));
 	  }
       }
-
-#ifdef VMS
-/*
- * Kludge Warning: The VMS C RTL likes to insert carriage returns
- * if we do writes that don't end with a carriage return. Furthermore
- * it cannot handle writes of more then 16K. The modified
- * version of "sys_write" in SYSDEP.C (see comment there) copes with
- * this EXCEPT for the last record (iff it doesn't end with a carriage
- * return). This implies that if your buffer doesn't end with a carriage
- * return, you get one free... tough. However it also means that if
- * we make two calls to sys_write (a la the following code) you can
- * get one at the gap as well. The easiest way to fix this (honest)
- * is to move the gap to the next newline (or the end of the buffer).
- * Thus this change.
- *
- * Yech!
- */
-    you lose -- fix this
-    if (GPT > BUF_BEG (current_buffer) && *GPT_ADDR[-1] != '\n')
-      move_gap (find_next_newline (current_buffer, GPT, 1));
-#endif /* VMS */
 
     failure = 0;
 
@@ -3703,21 +3183,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     unbind_to (speccount, Qnil);
   }
 
-
-#ifdef VMS
-  /* If we wrote to a temporary name and had no errors, rename to real name. */
-  if (!NILP (fname))
-    {
-      if (!failure)
-	{
-	  failure = (rename ((char *) XSTRING_DATA (fn),
-			     (char *) XSTRING_DATA (fname))
-		     != 0);
-	  save_errno = errno;
-	}
-      fn = fname;
-    }
-#endif /* VMS */
 
 #if 1 /* defined (VMS) || defined (APOLLO) */
   stat ((char *) XSTRING_DATA (fn), &st);
@@ -4638,9 +4103,6 @@ syms_of_fileio (void)
 #ifdef S_IFLNK
   DEFSUBR (Fmake_symbolic_link);
 #endif /* S_IFLNK */
-#ifdef VMS
-  DEFSUBR (Fdefine_logical_name);
-#endif /* VMS */
 #ifdef HPUX_NET
   DEFSUBR (Fsysnetunam);
 #endif /* HPUX_NET */
@@ -4689,12 +4151,6 @@ If it is t, which is the default, auto-save files are written in the
 same format as a regular save would use.
 */ );
   Vauto_save_file_format = Qt;
-
-  DEFVAR_BOOL ("vms-stmlf-recfm", &vms_stmlf_recfm /*
-*Non-nil means write new files with record format `stmlf'.
-nil means use format `var'.  This variable is meaningful only on VMS.
-*/ );
-  vms_stmlf_recfm = 0;
 
   DEFVAR_LISP ("file-name-handler-alist", &Vfile_name_handler_alist /*
 *Alist of elements (REGEXP . HANDLER) for file names handled specially.

@@ -2492,7 +2492,7 @@ Each buffer has its own value of this variable.
 
   DEFVAR_BUFFER_LOCAL ("buffer-file-type", buffer_file_type /*
     "Non-nil if the visited file is a binary file.
-This variable is meaningful on MS-DOG and Windows NT.
+This variable is meaningful on MS-DOS and Windows NT.
 On those systems, it is automatically local in every buffer.
 On other systems, this variable is normally always nil.
 */ );
@@ -2831,7 +2831,6 @@ init_buffer (void)
   else if (getcwd (buf, MAXPATHLEN) == NULL)
     fatal ("`getcwd' failed: %s\n", strerror (errno));
 
-#ifndef VMS
   /* Maybe this should really use some standard subroutine
      whose definition is filename syntax dependent.  */
   rc = strlen (buf);
@@ -2840,7 +2839,17 @@ init_buffer (void)
       buf[rc] = DIRECTORY_SEP;
       buf[rc + 1] = '\0';
     }
-#endif /* not VMS */
+  /* XEmacs change: store buffer's default directory
+     using prefered (i.e. as defined at compile-time)
+     directory separator. --marcpa */
+#ifdef DOS_NT
+#define CORRECT_DIR_SEPS(s) \
+  do { if ('/' == DIRECTORY_SEP) dostounix_filename (s); \
+       else unixtodos_filename (s); \
+  } while (0)
+    
+  CORRECT_DIR_SEPS(buf);
+#endif
   current_buffer->directory = build_string (buf);
 
 #if 0 /* FSFmacs */

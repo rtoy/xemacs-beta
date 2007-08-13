@@ -155,6 +155,7 @@ Lisp_Object Qunimplemented;
 Lisp_Object Qvalue_assoc;
 Lisp_Object Qvector;
 Lisp_Object Qwarning;
+Lisp_Object Qw32;
 Lisp_Object Qwhite;
 Lisp_Object Qwidth;
 Lisp_Object Qwindow;
@@ -291,6 +292,7 @@ syms_of_general (void)
   defsymbol (&Qwarning, "warning");
   defsymbol (&Qwhite, "white");
   defsymbol (&Qwidth, "width");
+  defsymbol (&Qw32, "w32");
   defsymbol (&Qwindow, "window");
   defsymbol (&Qwindow_system, "window-system");
   defsymbol (&Qx, "x");

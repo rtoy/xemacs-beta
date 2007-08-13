@@ -362,10 +362,13 @@ translation.
        (sym, prop, raw))
 {
   /* This function can GC */
-  REGISTER Lisp_Object doc;
+  REGISTER Lisp_Object doc = Qnil;
 #ifdef I18N3
   REGISTER Lisp_Object domain;
 #endif
+  struct gcpro gcpro1;
+
+  GCPRO1 (doc);
 
   doc = Fget (sym, prop, Qnil);
   if (INTP (doc))
@@ -384,6 +387,7 @@ translation.
 #endif
   if (NILP (raw) && STRINGP (doc))
     doc = Fsubstitute_command_keys (doc);
+  UNGCPRO;
   return doc;
 }
 
@@ -785,7 +789,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 #endif
 
   strlength = XSTRING_LENGTH (str);
-  bsize = strlength;
+  bsize = 1 + strlength;
   buf = (Bufbyte *) xmalloc (bsize);
   bufp = buf;
 

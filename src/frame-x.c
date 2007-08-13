@@ -2511,28 +2511,14 @@ static void
 x_delete_frame (struct frame *f)
 {
   Widget w = FRAME_X_SHELL_WIDGET (f);
-  Lisp_Object popup, frame;
+  Lisp_Object frame;
 
 #ifndef HAVE_SESSION
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_maybe_move_wm_command (f);
 #endif /* HAVE_SESSION */
 
-  /* Frames with the popup property are using other frames as their
-     widget parent.  Deleting them are their parent has already been
-     deleted can lead to crashes. */
   XSETFRAME (frame, f);
-  popup = Fframe_property (frame, Qpopup, Qnil);
-  if (!NILP (popup))
-    {
-      /* If popup isn't nil then it means the frame has that property
-         and the value is supposed to be the parent frame.  The FRAMEP
-         check is to safeguard against it not being a frame. */
-      if (!FRAMEP (popup) || !FRAME_LIVE_P (XFRAME (popup)))
-	popup = Qt;
-      else
-	popup = Qnil;
-    }
 
 #ifdef EXTERNAL_WIDGET
   {
@@ -2548,8 +2534,7 @@ x_delete_frame (struct frame *f)
     x_error_occurred_p (dpy);
   }
 #else
-  if (NILP (popup))
-    XtDestroyWidget (w);
+  XtDestroyWidget (w);
 #endif /* EXTERNAL_WIDGET */
 
   if (FRAME_X_GEOM_FREE_ME_PLEASE (f))
