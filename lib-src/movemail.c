@@ -1,6 +1,6 @@
 /* movemail foo bar -- move file foo to file bar,
    locking file foo the way /bin/mail respects.
-   Copyright (C) 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1986, 1992, 1993, 1994, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -16,10 +16,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs; see the file COPYING.  If not, write to
-the Free the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
-
-/* Synched up with: FSF 19.28. */
 
 /* Important notice: defining MAIL_USE_FLOCK or MAIL_USE_LOCKF *will
    cause loss of mail* if you do it on a system that does not normally
@@ -36,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 /*
  * Modified January, 1986 by Michael R. Gretzinger (Project Athena)
  *
- * Added POP (Post Office Protocol) service.  When compiled -DPOP
+ * Added POP (Post Office Protocol) service.  When compiled -DMAIL_USE_POP
  * movemail will accept input filename arguments of the form
  * "po:username".  This will cause movemail to open a connection to
  * a pop server running on $MAILHOST (environment variable).  Movemail
@@ -49,32 +47,52 @@ Boston, MA 02111-1307, USA.  */
  * New routines in movemail.c:
  *	get_errmsg - return pointer to system error message
  *
+ * Modified August, 1993 by Jonathan Kamens (OpenVision Technologies)
+ *
+ * Move all of the POP code into a separate file, "pop.c".
+ * Use strerror instead of get_errmsg.
+ *
  */
 
 #define NO_SHORTNAMES   /* Tell config not to load remap.h */
 #include <../src/config.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h> /* for time() */
-#include <stdio.h> /* for printf() */
-#include <string.h> /* strcpy() */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <stdio.h>
 #include <errno.h>
 #include <../src/syswait.h>
+#ifdef MAIL_USE_POP
+#include "pop.h"
+#endif
 
 #ifdef MSDOS
 #undef access
 #endif /* MSDOS */
 
+#ifndef DIRECTORY_SEP
+#define DIRECTORY_SEP '/'
+#endif
+#ifndef IS_DIRECTORY_SEP
+#define IS_DIRECTORY_SEP(_c_) ((_c_) == DIRECTORY_SEP)
+#endif
+
+#ifdef WINDOWSNT
+#undef access
+#undef unlink
+#define fork() 0
+#define sys_wait(var) (*(var) = 0)
+/* Unfortunately, Samba doesn't seem to properly lock Unix files even
+   though the locking call succeeds (and indeed blocks local access from
+   other NT programs).  If you have direct file access using an NFS
+   client or something other than Samba, the locking call might work
+   properly - make sure it does before you enable this! */
+#define DISABLE_DIRECT_ACCESS
+#endif /* WINDOWSNT */
+
 #ifdef USG
 #include <fcntl.h>
 #include <unistd.h>
-#if defined (sun)
-#include <stdlib.h>
-#endif /* sun */
 #ifndef F_OK
 #define F_OK 0
 #define X_OK 1
@@ -87,7 +105,7 @@ Boston, MA 02111-1307, USA.  */
 #include <unistd.h>
 #endif
 
-#ifdef XENIX
+#if defined (XENIX) || defined (WINDOWSNT)
 #include <sys/locking.h>
 #endif
 
@@ -109,25 +127,27 @@ extern int lk_open (), lk_close ();
 #undef write
 #undef close
 
-static char *concat (CONST char *s1, CONST char *s2, CONST char *s3);
-static void *xmalloc (unsigned int size);
 #ifndef errno
 extern int errno;
 #endif
+char *strerror ();
 
-static void error (CONST char *s1, CONST char *s2, CONST char *s3);
-static void fatal (CONST char *s1, CONST char *s2);
-static void pfatal_with_name (CONST char *name);
-static void pfatal_and_delete (CONST char *name);
-
-#ifndef HAVE_STRERROR
-char *strerror (int);
-#endif
+void fatal ();
+void error ();
+void pfatal_with_name ();
+void pfatal_and_delete ();
+char *concat ();
+long *xmalloc ();
+int popmail ();
+int pop_retr ();
+int mbx_write ();
+int mbx_delimit_begin ();
+int mbx_delimit_end ();
 
 /* Nonzero means this is name of a lock file to delete on fatal error.  */
 char *delete_lockname;
 
-void
+int
 main (argc, argv)
      int argc;
      char **argv;
@@ -149,7 +169,10 @@ main (argc, argv)
   delete_lockname = 0;
 
   if (argc < 3)
-    fatal ("two arguments required", "");
+    {
+      fprintf (stderr, "Usage: movemail inbox destfile [POP-password]\n");
+      exit(1);
+    }
 
   inname = argv[1];
   outname = argv[2];
@@ -158,17 +181,20 @@ main (argc, argv)
   mmdf_init (argv[0]);
 #endif
 
+  if (*outname == 0)
+    fatal ("Destination file name is empty", 0);
+
   /* Check access to output file.  */
   if (access (outname, F_OK) == 0 && access (outname, W_OK) != 0)
     pfatal_with_name (outname);
 
-  /* Also check that outname's directory is writeable to the real uid.  */
+  /* Also check that outname's directory is writable to the real uid.  */
   {
     char *buf = (char *) xmalloc (strlen (outname) + 1);
     char *p;
     strcpy (buf, outname);
     p = buf + strlen (buf);
-    while (p > buf && p[-1] != '/')
+    while (p > buf && !IS_DIRECTORY_SEP (p[-1]))
       *--p = 0;
     if (p == buf)
       *p++ = '.';
@@ -178,20 +204,18 @@ main (argc, argv)
   }
 
 #ifdef MAIL_USE_POP
-  if (!memcmp (inname, "po:", 3))
+  if (!strncmp (inname, "po:", 3))
     {
-      int status; char *user;
+      int status;
 
-      for (user = &inname[strlen (inname) - 1]; user >= inname; user--)
-	if (*user == ':')
-	  break;
-
-      status = popmail (user, outname);
+      status = popmail (inname + 3, outname, argc > 3 ? argv[3] : NULL);
       exit (status);
     }
 
   setuid (getuid ());
 #endif /* MAIL_USE_POP */
+
+#ifndef DISABLE_DIRECT_ACCESS
 
   /* Check access to input file.  */
   if (access (inname, R_OK | W_OK) != 0)
@@ -199,7 +223,7 @@ main (argc, argv)
 
 #ifndef MAIL_USE_MMDF
 #ifndef MAIL_USE_SYSTEM_LOCK
-  /* Use a lock file named /usr/spool/mail/$USER.lock:
+  /* Use a lock file named after our first argument with .lock appended:
      If it exists, the mail file is locked.  */
   /* Note: this locking mechanism is *required* by the mailer
      (on systems which use it) to prevent loss of mail.
@@ -208,7 +232,7 @@ main (argc, argv)
      WILL occasionally cause loss of mail due to timing errors!
 
      So, if creation of the lock file fails
-     due to access permission on /usr/spool/mail,
+     due to access permission on the mail spool directory,
      you simply MUST change the permission
      and/or make movemail a setgid program
      so it can create lock files properly.
@@ -226,7 +250,7 @@ main (argc, argv)
   tempname = (char *) xmalloc (strlen (inname) + strlen ("EXXXXXX") + 1);
   strcpy (tempname, inname);
   p = tempname + strlen (tempname);
-  while (p != tempname && p[-1] != '/')
+  while (p != tempname && !IS_DIRECTORY_SEP (p[-1]))
     p--;
   *p = 0;
   strcpy (p, "EXXXXXX");
@@ -239,7 +263,12 @@ main (argc, argv)
       /* Give up if cannot do that.  */
       desc = open (tempname, O_WRONLY | O_CREAT | O_EXCL, 0666);
       if (desc < 0)
-        pfatal_with_name ("lock file--see source file lib-src/movemail.c");
+	{
+	  char *message = (char *) xmalloc (strlen (tempname) + 50);
+	  sprintf (message, "%s--see source file lib-src/movemail.c",
+		   tempname);
+	  pfatal_with_name (message);
+	}
       close (desc);
 
       tem = link (tempname, lockname);
@@ -248,12 +277,15 @@ main (argc, argv)
 	break;
       sleep (1);
 
-      /* If lock file is a minute old, unlock it.  */
+      /* If lock file is five minutes old, unlock it.
+	 Five minutes should be good enough to cope with crashes
+	 and wedgitude, and long enough to avoid being fooled
+	 by time differences between machines.  */
       if (stat (lockname, &st) >= 0)
 	{
 	  now = time (0);
-	  if (st.st_ctime < now - 60)
-            unlink (lockname);
+	  if (st.st_ctime < now - 300)
+	    unlink (lockname);
 	}
     }
 
@@ -295,7 +327,11 @@ main (argc, argv)
 #ifdef XENIX
       if (locking (indesc, LK_RLCK, 0L) < 0) pfatal_with_name (inname);
 #else
+#ifdef WINDOWSNT
+      if (locking (indesc, LK_RLCK, -1L) < 0) pfatal_with_name (inname);
+#else
       if (flock (indesc, LOCK_EX) < 0) pfatal_with_name (inname);
+#endif
 #endif
 #endif /* not MAIL_USE_LOCKF */
 #endif /* MAIL_USE_SYSTEM_LOCK */
@@ -328,7 +364,7 @@ main (argc, argv)
 	pfatal_and_delete (outname);
 
 #ifdef MAIL_USE_SYSTEM_LOCK
-#if defined (STRIDE) || defined (XENIX)
+#if defined (STRIDE) || defined (XENIX) || defined (WINDOWSNT)
       /* Stride, xenix have file locking, but no ftruncate.  This mess will do. */
       close (open (inname, O_CREAT | O_TRUNC | O_RDWR, 0666));
 #else
@@ -365,58 +401,57 @@ main (argc, argv)
 #if !defined (MAIL_USE_MMDF) && !defined (MAIL_USE_SYSTEM_LOCK)
   unlink (lockname);
 #endif /* not MAIL_USE_MMDF and not MAIL_USE_SYSTEM_LOCK */
-  exit (0);
+
+#endif /* ! DISABLE_DIRECT_ACCESS */
+
+  return 0;
 }
 
 /* Print error message and exit.  */
 
-static void
+void
 fatal (s1, s2)
-     CONST char *s1, *s2;
+     char *s1, *s2;
 {
   if (delete_lockname)
-  error (s1, s2, "");
     unlink (delete_lockname);
+  error (s1, s2);
   exit (1);
 }
 
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
 
-static void
+void
 error (s1, s2, s3)
-     CONST char *s1, *s2, *s3;
+     char *s1, *s2, *s3;
 {
-  printf ("movemail: ");
-  printf (s1, s2, s3);
-  printf ("\n");
+  fprintf (stderr, "movemail: ");
+  fprintf (stderr, s1, s2, s3);
+  fprintf (stderr, "\n");
 }
 
-static void
+void
 pfatal_with_name (name)
-     CONST char *name;
+     char *name;
 {
-  char *s;
-
-  s = concat ("", strerror (errno), " for %s");
+  char *s = concat ("", strerror (errno), " for %s");
   fatal (s, name);
 }
 
-static void
+void
 pfatal_and_delete (name)
-     CONST char *name;
+     char *name;
 {
-  char *s;
-
-  s = concat ("", strerror (errno), " for %s");
+  char *s = concat ("", strerror (errno), " for %s");
   unlink (name);
   fatal (s, name);
 }
 
 /* Return a newly-allocated string whose contents concatenate those of s1, s2, s3.  */
 
-static char *
+char *
 concat (s1, s2, s3)
-     CONST char *s1, *s2, *s3;
+     char *s1, *s2, *s3;
 {
   int len1 = strlen (s1), len2 = strlen (s2), len3 = strlen (s3);
   char *result = (char *) xmalloc (len1 + len2 + len3 + 1);
@@ -431,13 +466,13 @@ concat (s1, s2, s3)
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
+long *
 xmalloc (size)
-     unsigned int size;
+     unsigned size;
 {
-  void *result = (void *) malloc (size);
+  long *result = (long *) malloc (size);
   if (!result)
-    fatal ("virtual memory exhausted", (char *) 0);
+    fatal ("virtual memory exhausted", 0);
   return result;
 }
 
@@ -445,9 +480,14 @@ xmalloc (size)
 
 #ifdef MAIL_USE_POP
 
+#ifndef WINDOWSNT
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#else
+#undef _WINSOCKAPI_
+#include <winsock.h>
+#endif
 #include <stdio.h>
 #include <pwd.h>
 
@@ -467,344 +507,197 @@ xmalloc (size)
 char *progname;
 FILE *sfi;
 FILE *sfo;
+char ibuffer[BUFSIZ];
+char obuffer[BUFSIZ];
 char Errmsg[80];
 
-static int debug = 0;
-
-char *get_errmsg ();
-char *getenv ();
-int mbx_write ();
-
-int
-popmail (user, outfile)
+popmail (user, outfile, password)
      char *user;
      char *outfile;
+     char *password;
 {
-  char *host;
   int nmsgs, nbytes;
-  char response[128];
   register int i;
   int mbfi;
   FILE *mbf;
-  struct passwd *pw = (struct passwd *) getpwuid (getuid ());
-  if (pw == NULL)
-    fatal ("cannot determine user name");
+  char *getenv ();
+  int mbx_write ();
+  popserver server;
+  extern char *strerror ();
 
-  host = getenv ("MAILHOST");
-  if (host == NULL) 
+  server = pop_open (0, user, password, POP_NO_GETPASS);
+  if (! server)
     {
-      fatal ("no MAILHOST defined");
+      error (pop_error);
+      return (1);
     }
 
-  if (pop_init (host) == NOTOK) 
+  if (pop_stat (server, &nmsgs, &nbytes))
     {
-      fatal (Errmsg);
-    }
-
-  if (getline (response, sizeof response, sfi) != OK) 
-    {
-      fatal (response);
-    }
-
-  if (pop_command ("USER %s", user) == NOTOK 
-      || pop_command ("RPOP %s", pw->pw_name) == NOTOK) 
-    {
-      pop_command ("QUIT");
-      fatal (Errmsg);
-    }
-
-  if (pop_stat (&nmsgs, &nbytes) == NOTOK) 
-    {
-      pop_command ("QUIT");
-      fatal (Errmsg);
+      error (pop_error);
+      return (1);
     }
 
   if (!nmsgs)
-  {
-    pop_command ("QUIT");
-    return 0;
-  }
+    {
+      pop_close (server);
+      return (0);
+    }
 
   mbfi = open (outfile, O_WRONLY | O_CREAT | O_EXCL, 0666);
   if (mbfi < 0)
-  {
-    pop_command ("QUIT");
-    pfatal_and_delete (outfile);
-  }
+    {
+      pop_close (server);
+      error ("Error in open: %s, %s", strerror (errno), outfile);
+      return (1);
+    }
   fchown (mbfi, getuid (), -1);
 
-  if ((mbf = fdopen (mbfi, "w")) == NULL)
+  if ((mbf = fdopen (mbfi, "wb")) == NULL)
     {
-      pop_command ("QUIT");
-      pfatal_and_delete (outfile);
+      pop_close (server);
+      error ("Error in fdopen: %s", strerror (errno));
+      close (mbfi);
+      unlink (outfile);
+      return (1);
     }
 
-  for (i = 1; i <= nmsgs; i++) 
+  for (i = 1; i <= nmsgs; i++)
     {
       mbx_delimit_begin (mbf);
-      if (pop_retr (i, mbx_write, mbf) != OK) 
-        {
-          pop_command ("QUIT");
-          close (mbfi);
-	  unlink (outfile);
-	  fatal (Errmsg);
-        }
+      if (pop_retr (server, i, mbx_write, mbf) != OK)
+	{
+	  error (Errmsg);
+	  close (mbfi);
+	  return (1);
+	}
       mbx_delimit_end (mbf);
       fflush (mbf);
+      if (ferror (mbf))
+	{
+	  error ("Error in fflush: %s", strerror (errno));
+	  pop_close (server);
+	  close (mbfi);
+	  return (1);
+	}
     }
 
+  /* On AFS, a call to write only modifies the file in the local
+   *     workstation's AFS cache.  The changes are not written to the server
+   *      until a call to fsync or close is made.  Users with AFS home
+   *      directories have lost mail when over quota because these checks were
+   *      not made in previous versions of movemail. */
+
+#ifdef BSD
   if (fsync (mbfi) < 0)
     {
-      pop_command ("QUIT");
-      pfatal_and_delete (outfile);
+      error ("Error in fsync: %s", strerror (errno));
+      return (1);
     }
+#endif
 
   if (close (mbfi) == -1)
     {
-      pop_command ("QUIT");
-      pfatal_and_delete (outfile);
+      error ("Error in close: %s", strerror (errno));
+      return (1);
     }
 
-  for (i = 1; i <= nmsgs; i++) 
+  for (i = 1; i <= nmsgs; i++)
     {
-      if (pop_command ("DELE %d", i) == NOTOK) 
-        {
-	  /* Better to ignore this failure.  */
-        }
+      if (pop_delete (server, i))
+	{
+	  error (pop_error);
+	  pop_close (server);
+	  return (1);
+	}
     }
 
-  pop_command ("QUIT");
+  if (pop_quit (server))
+    {
+      error (pop_error);
+      return (1);
+    }
+    
   return (0);
 }
 
-int
-pop_init (host)
-     char *host;
-{
-  register struct hostent *hp;
-  register struct servent *sp;
-  int lport = IPPORT_RESERVED - 1;
-  struct sockaddr_in sin;
-  register int s;
-
-  hp = gethostbyname (host);
-  if (hp == NULL) 
-    {
-      sprintf (Errmsg, "MAILHOST unknown: %s", host);
-      return NOTOK;
-    }
-
-  sp = getservbyname ("pop", "tcp");
-  if (sp == 0) 
-    {
-      strcpy (Errmsg, "tcp/pop: unknown service");
-      return NOTOK;
-    }
-
-  sin.sin_family = hp->h_addrtype;
-  memcpy ((char *)&sin.sin_addr, hp->h_addr, hp->h_length);
-  sin.sin_port = sp->s_port;
-  s = rresvport (&lport);
-  if (s < 0) 
-    {
-      sprintf (Errmsg, "error creating socket: %s", get_errmsg ());
-      return NOTOK;
-    }
-
-  if (connect (s, (char *)&sin, sizeof sin) < 0) 
-    {
-      sprintf (Errmsg, "error during connect: %s", get_errmsg ());
-      close (s);
-      return NOTOK;
-    }
-
-  sfi = fdopen (s, "r");
-  sfo = fdopen (s, "w");
-  if (sfi == NULL || sfo == NULL) 
-    {
-      sprintf (Errmsg, "error in fdopen: %s", get_errmsg ());
-      close (s);
-      return NOTOK;
-    }
-
-  return OK;
-}
-
-int
-pop_command (fmt, a, b, c, d)
-     char *fmt;
-{
-  char buf[128];
-  char errmsg[64];
-
-  sprintf (buf, fmt, a, b, c, d);
-
-  if (debug) fprintf (stderr, "---> %s\n", buf);
-  if (putline (buf, Errmsg, sfo) == NOTOK) return NOTOK;
-
-  if (getline (buf, sizeof buf, sfi) != OK) 
-    {
-      strcpy (Errmsg, buf);
-      return NOTOK;
-    }
-
-  if (debug) fprintf (stderr, "<--- %s\n", buf);
-  if (*buf != '+') 
-    {
-      strcpy (Errmsg, buf);
-      return NOTOK;
-    } 
-  else 
-    {
-      return OK;
-    }
-}
-
-    
-pop_stat (nmsgs, nbytes)
-     int *nmsgs, *nbytes;
-{
-  char buf[128];
-
-  if (debug) fprintf (stderr, "---> STAT\n");
-  if (putline ("STAT", Errmsg, sfo) == NOTOK)
-    return NOTOK;
-
-  if (getline (buf, sizeof buf, sfi) != OK) 
-    {
-      strcpy (Errmsg, buf);
-      return NOTOK;
-    }
-
-  if (debug) fprintf (stderr, "<--- %s\n", buf);
-  if (*buf != '+') 
-    {
-      strcpy (Errmsg, buf);
-      return NOTOK;
-    } 
-  else 
-    {
-      sscanf (buf, "+OK %d %d", nmsgs, nbytes);
-      return OK;
-    }
-}
-
-pop_retr (msgno, action, arg)
+pop_retr (server, msgno, action, arg)
+     popserver server;
      int (*action)();
 {
-  char buf[128];
+  extern char *strerror ();
+  char *line;
+  int ret;
 
-  sprintf (buf, "RETR %d", msgno);
-  if (debug) fprintf (stderr, "%s\n", buf);
-  if (putline (buf, Errmsg, sfo) == NOTOK) return NOTOK;
-
-  if (getline (buf, sizeof buf, sfi) != OK) 
+  if (pop_retrieve_first (server, msgno, &line))
     {
-      strcpy (Errmsg, buf);
-      return NOTOK;
+      strncpy (Errmsg, pop_error, sizeof (Errmsg));
+      Errmsg[sizeof (Errmsg)-1] = '\0';
+      return (NOTOK);
     }
 
-  while (1) 
+  while (! (ret = pop_retrieve_next (server, &line)))
     {
-      switch (multiline (buf, sizeof buf, sfi)) 
-        {
-        case OK:
-          (*action)(buf, arg);
-          break;
-        case DONE:
-          return OK;
-        case NOTOK:
-          strcpy (Errmsg, buf);
-          return NOTOK;
-        }
+      if (! line)
+	break;
+
+      if ((*action)(line, arg) != OK)
+	{
+	  strcpy (Errmsg, strerror (errno));
+	  pop_close (server);
+	  return (NOTOK);
+	}
     }
-}
 
-getline (buf, n, f)
-     char *buf;
-     register int n;
-     FILE *f;
-{
-  register char *p;
-  int c;
-
-  p = buf;
-  while (--n > 0 && (c = fgetc (f)) != EOF)
-    if ((*p++ = c) == '\n') break;
-
-  if (ferror (f)) 
-  {
-    strcpy (buf, "error on connection");
-    return NOTOK;
-  }
-
-  if (c == EOF && p == buf) 
-  {
-    strcpy (buf, "connection closed by foreign host");
-    return DONE;
-  }
-
-  *p = NULL;
-  if (*--p == '\n') *p = NULL;
-  if (*--p == '\r') *p = NULL;
-  return OK;
-}
-
-multiline (buf, n, f)
-     char *buf;
-     register int n;
-     FILE *f;
-{
-  if (getline (buf, n, f) != OK) return NOTOK;
-  if (*buf == '.') 
+  if (ret)
     {
-      if (*(buf+1) == NULL) 
-	return DONE;
-      else 
-        strcpy (buf, buf+1);
+      strncpy (Errmsg, pop_error, sizeof (Errmsg));
+      Errmsg[sizeof (Errmsg)-1] = '\0';
+      return (NOTOK);
     }
-  return OK;
+
+  return (OK);
 }
 
-char *
-get_errmsg ()
-{
-  return strerror (errno);
-}
+/* Do this as a macro instead of using strcmp to save on execution time. */
+#define IS_FROM_LINE(a) ((a[0] == 'F') \
+			 && (a[1] == 'r') \
+			 && (a[2] == 'o') \
+			 && (a[3] == 'm') \
+			 && (a[4] == ' '))
 
-putline (buf, err, f)
-     char *buf;
-     char *err;
-     FILE *f;
-{
-  fprintf (f, "%s\r\n", buf);
-  fflush (f);
-  if (ferror (f)) 
-    {
-      strcpy (err, "lost connection");
-      return NOTOK;
-    }
-  return OK;
-}
-
+int
 mbx_write (line, mbf)
      char *line;
      FILE *mbf;
 {
-  fputs (line, mbf);
-  fputc (0x0a, mbf);
+  if (IS_FROM_LINE (line))
+    {
+      if (fputc ('>', mbf) == EOF)
+	return (NOTOK);
+    }
+  if (fputs (line, mbf) == EOF) 
+    return (NOTOK);
+  if (fputc (0x0a, mbf) == EOF)
+    return (NOTOK);
+  return (OK);
 }
 
+int
 mbx_delimit_begin (mbf)
      FILE *mbf;
 {
-  fputs ("\f\n0, unseen,,\n", mbf);
+  if (fputs ("\f\n0, unseen,,\n", mbf) == EOF)
+    return (NOTOK);
+  return (OK);
 }
 
 mbx_delimit_end (mbf)
      FILE *mbf;
 {
-  putc ('\037', mbf);
+  if (putc ('\037', mbf) == EOF)
+    return (NOTOK);
+  return (OK);
 }
 
 #endif /* MAIL_USE_POP */

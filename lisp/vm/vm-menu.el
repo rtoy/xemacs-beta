@@ -431,6 +431,17 @@
 					   'vm-mouse-send-url-to-netscape)
 	    t]))))
 
+(defconst vm-menu-mailto-url-browser-menu
+  (let ((title (if (vm-menu-fsfemacs-menus-p)
+		   (list "Send Mail using ..."
+			 "Send Mail using ..."
+			 "---"
+			 "---")
+		 (list "Send Mail using ..."))))
+    (append
+     title
+     (list ["VM" (vm-mouse-send-url-at-position (point) 'ignore) t]))))
+
 (defconst vm-menu-subject-menu
   (let ((title (if (vm-menu-fsfemacs-menus-p)
 		   (list "Take Action on Subject..."
@@ -665,6 +676,10 @@ set to the command name so that window configuration will be done."
 	;; url browser menu
 	(vm-easy-menu-define vm-menu-fsfemacs-url-browser-menu (list dummy) nil
 			     vm-menu-url-browser-menu)
+	;; mailto url browser menu
+	(vm-easy-menu-define vm-menu-fsfemacs-mailto-url-browser-menu
+			     (list dummy) nil
+			     vm-menu-url-browser-menu)
 	;; mime dispose menu
 	(vm-easy-menu-define vm-menu-fsfemacs-mime-dispose-menu
 			     (list dummy) nil
@@ -802,6 +817,7 @@ set to the command name so that window configuration will be done."
 
 ;; to quiet the byte-compiler
 (defvar vm-menu-fsfemacs-url-browser-menu)
+(defvar vm-menu-fsfemacs-mailto-url-browser-menu)
 (defvar vm-menu-fsfemacs-mime-dispose-menu)
 
 (defun vm-menu-goto-event (event)
@@ -824,6 +840,15 @@ set to the command name so that window configuration will be done."
 	((and (vm-menu-fsfemacs-menus-p) vm-use-menus)
 	 (vm-menu-popup-fsfemacs-menu
 	  event vm-menu-fsfemacs-url-browser-menu))))
+
+(defun vm-menu-popup-mailto-url-browser-menu (event)
+  (interactive "e")
+  (vm-menu-goto-event event)
+  (cond ((and (vm-menu-xemacs-menus-p) vm-use-menus)
+	 (popup-menu vm-menu-mailto-url-browser-menu))
+	((and (vm-menu-fsfemacs-menus-p) vm-use-menus)
+	 (vm-menu-popup-fsfemacs-menu
+	  event vm-menu-fsfemacs-mailto-url-browser-menu))))
 
 (defun vm-menu-popup-mime-dispose-menu (event)
   (interactive "e")

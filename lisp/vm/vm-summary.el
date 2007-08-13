@@ -930,7 +930,8 @@ mandatory."
   (or (vm-message-id-of m)
       (vm-set-message-id-of
        m
-       (or (vm-get-header-contents m "Message-Id:")
+       (or (let ((id (vm-get-header-contents m "Message-Id:")))
+	     (and id (car (vm-parse id "[^<]*\\(<[^>]+>\\)"))))
 	   ;; try running md5 on the message body to produce an ID
 	   ;; better than nothing.
 	   (save-excursion

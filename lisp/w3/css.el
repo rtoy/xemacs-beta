@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/03/25 03:35:09
-;; Version: 1.33
+;; Created: 1997/04/01 19:21:41
+;; Version: 1.34
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -714,8 +714,62 @@ For a terminal frame, the value is always 1."
   (css-replace-regexp "[ \t\r]+$" "")	; Nuke whitespace at end of line
   (goto-char (point-min)))
 
+(if css-running-xemacs
+    (defun css-color-light-p (color-or-face)
+      (let (face color)
+	(cond
+	 ((or (facep color-or-face)
+	      (and (symbolp color-or-face)
+		   (find-face color-or-face)))
+	  (setq color (specifier-instance (face-background color-or-face))))
+	 ((color-instance-p color-or-face)
+	  (setq color color-or-face))
+	 ((color-specifier-p color-or-face)
+	  (setq color (specifier-instance color-or-face)))
+	 ((stringp color-or-face)
+	  (setq color (make-color-instance color-or-face)))
+	 (t (signal 'wrong-type-argument 'color-or-face-p)))
+	(if color
+	    (not (< (apply '+ (color-instance-rgb-components color))
+		    (/ (apply '+ (color-instance-rgb-components
+				  (make-color-instance "white"))) 3)))
+	  t)))
+  (defun css-color-values (color)
+    (cond
+     ((eq window-system 'x)
+      (x-color-values color))
+     ((eq window-system 'pm)
+      (pm-color-values color))
+     ((eq window-system 'ns)
+      (ns-color-values color))
+     (t nil)))
+  (defun css-color-light-p (color-or-face)
+    (let (colors)
+      (cond
+       ((null window-system)
+	nil)
+       ((facep color-or-face)
+	(setq color-or-face (face-background color-or-face))
+	(if (null color-or-face)
+	    (setq color-or-face (cdr-safe
+				 (assq 'background-color (frame-parameters)))))
+	(setq colors (css-color-values color-or-face)))
+       ((stringp color-or-face)
+	(setq colors (css-color-values color-or-face)))
+       ((font-rgb-color-p color-or-face)
+	(setq colors (list (font-rgb-color-red color-or-face)
+			   (font-rgb-color-green color-or-face)
+			   (font-rgb-color-blue color-or-face))))
+       (t
+	(signal 'wrong-type-argument 'color-or-face-p)))
+      (not (< (apply '+ colors)
+	      (/ (apply '+ (css-color-values "white")) 3)))))
+  )
+
 (defun css-active-device-types (&optional device)
-  (let ((types (list 'all (if css-running-xemacs 'xemacs 'emacs)))
+  (let ((types (list 'all
+		     (if css-running-xemacs 'xemacs 'emacs)
+		     (if (css-color-light-p 'default) 'light 'dark)))
 	(type (device-type device)))
     (cond
      ((featurep 'emacspeak)

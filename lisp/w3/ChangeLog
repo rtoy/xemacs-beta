@@ -2,11 +2,134 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Thu Apr  3 07:22:27 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el: Put in <p> as part of the content-model of <ul/ol> so that
+  <p> at the front of a list doesn't cause a bogus list item to be shown.
+
+* url-http.el (url-parse-mime-headers): Make proxy authentication sort of
+  work again.
+
+* w3-display.el (w3-setup-terminal-chars): Check to see whether face is
+  actually different before trying to set its font to a terminal one.
+
+* url.el (url-buffer-visiting): Better matching of URLs - it was taking
+  the target into account - bad bad bad.
+
+Wed Apr  2 18:05:11 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-add-element): New way to do hidden form
+  fields that retains the order information - damned idiots out there rely
+  on ordering.  !#%!@
+
+* w3.el (w3-fetch): Put some of the logic about _blank/_top frame targets
+  into w3-fetch
+
+* w3-display.el (w3-get-all-face-info): Added in support for the 'face'
+  attribute to specify font-family
+
+Wed Apr  2 13:08:36 1997  Frederic Lepied <Frederic.Lepied@sugix.frmug.org>
+
+* w3-print.el (w3-print-this-url): Need to run LaTeX to get the indices
+  right.
+
+Tue Apr  1 11:20:54 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.78 released
+
+* css.el (css-color-light-p): New function
+  (css-active-device-types): Use it to add a 'dark' or 'light' property to
+  the active device types as necessary
+
+Mon Mar 31 09:07:13 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el: More error transitions for tables (push tr before td/th
+  just after a table)
+
+* w3-display.el (w3-display-node): Use it for body/html attribute handling
+  (w3-fix-color): New function to make sure we don't pass hex values without
+  "#" in front of them.
+
+Sun Mar 30 15:00:59 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-display-node): Now honors alink/vlink/link attributes
+  on the body tag.
+  (w3-fixup-eol-faces): Fixed nuking of faces at end of line to deal with
+  bad underlining behaviour of Emacs 19.
+
+Sun Mar 30 14:28:32 1997  Greg Stark <gsstark@mit.edu>
+
+* w3-e19.el (w3-mode-version-specifics): Fixed buffer read-only errors
+  when trying to set a background face.
+
+Fri Mar 28 10:41:43 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.77 released
+
+* w3-display.el (w3-display-table): Face properties specified on the
+  'table' element now propogate to table cells correctly.
+
+Fri Mar 28 07:53:48 1997  Greg Stark <gsstark@mit.edu>
+
+* w3-forms.el: Make sure we set the button-face on all widgets
+
+Fri Mar 28 07:53:48 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-frames): Use make-frame, not make-frame-command, so it
+  will work on XEmacs.
+
+* w3-e19.el (w3-mode-version-specifics): Now honors background/foreground
+  color requests in Emacs19 by coloring in the whole buffer.  Oh how I
+  wish Emacs 19 had buffer-local faces.
+
+* w3-display.el (w3-display-table): Tables now look better under Emacs 19
+
+Thu Mar 27 08:05:34 1997  William M. Perry  <wmperry@aventail.com>
+
+* font.el (font-x-registry-and-encoding-regexp): got rid of compile
+  warning under Emacs 19
+
+* w3-display.el (w3-display-handle-list-type): manually remove faces on
+  bullet/list items
+  (w3-display-node): We were being a bit rude to inhibit-read-only -
+  sometimes would leave it 't', which is bad bad bad, some might even say
+  pure evil.
+
+* Emacs-W3 3.0.76 released
+
+* Synch'd up to Widget 1.68
+
+* w3-display.el (w3-display-node): Handles 'text' attribute correctly now
+  to set the default foreground when requested.
+
+* mm.el (mm-play-sound-file): Fixed it for new mule stuff
+
+* url-gw.el (url-gateway-nslookup-host): Added autoload for
+  gateway-nslookup-host
+
+* w3-display.el (w3-display-table): Expand each line of a table cell out
+  to the border, so that we get nicely colors backgrounds for table cells
+  now.
+
+* font.el (font-x-registry-and-encoding-regexp): New variable to match the
+  registry and encoding of a font name under X
+  (x-font-create-object): Use it to set the default registry and encoding
+  for font objects we create from font names.
+  (x-font-create-name): Grab the registry and encoding from the default
+  object for this device before defaulting back to '*'
+
+* w3-display.el (w3-setup-terminal-chars): Explicitly specify wildcard
+  registry and encoding for the table-hack-x-face, to deal with changes in
+  the font library.
+
 Wed Mar 26 06:23:51 1997  William M. Perry  <wmperry@aventail.com>
+
+* custom-check: Should work better now, and spit out better instructions
+  for rebuilding correctly.
 
 * Emacs-W3 3.0.75 released
 
-* url.el (url-clean-text): Better matchine of bogus process exited
+* url.el (url-clean-text): Better matching of bogus process exited
   messages.
 
 * font.el (font-rgb-color-p): No longer match "^#xxyyzz" as an rgb-color,
@@ -24,7 +147,7 @@ Tue Mar 25 16:06:28 1997  William M. Perry  <wmperry@aventail.com>
 
 * Emacs-W3 3.0.74 released
 
-Tue Mar 25 15:31:56 1997  Greg Stark <gsstark@great-white>
+Tue Mar 25 15:31:56 1997  Greg Stark <gsstark@mit.edu>
 
 * url-cookie.el (url-cookie-handle-set-cookie): don't deal with #!%@ed
   microsoft web site cookies - they break good, clean, wholesome sites

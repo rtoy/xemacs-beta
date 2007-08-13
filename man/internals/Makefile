@@ -32,7 +32,7 @@ all : info
 info : ../../info/$(NAME).info
 
 ../../info/$(NAME).info: $(srcs) index.texi
-	makeinfo $(NAME).texi
+	$(MAKEINFO) $(NAME).texi
 
 dvi : $(NAME).dvi
 

@@ -26,10 +26,9 @@ SHELL = /bin/sh
 EMACS = xemacs
 EMACSFLAGS = -batch -q -no-site-file 
 
-# Implies makeinfo-1.64
+# NOTE:  You *must* have a patched makeinfo-1.67 or later to rebuild the
+# info tree.
 MAKEINFO = makeinfo
-# Implies makeinfo-1.67
-NEWMAKEINFO = makeinfo-1.67
 
 .SUFFIXES: .info .texi .dvi
 
@@ -69,10 +68,10 @@ auctex: FORCE
 FORCE :
 
 ../info/w3.info : w3.texi
-	-$(NEWMAKEINFO) w3.texi -o ../info/w3.info
+	-$(MAKEINFO) w3.texi -o ../info/w3.info
 
 ../info/texinfo.info : texinfo.texi
-	-$(NEWMAKEINFO) texinfo.texi -o ../info/texinfo.info
+	-$(MAKEINFO) texinfo.texi -o ../info/texinfo.info
 
 
 ../info/vm.info : vm.texi

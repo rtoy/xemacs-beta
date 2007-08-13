@@ -1,7 +1,7 @@
 ;;; ssl.el,v --- ssl functions for emacsen without them builtin
 ;; Author: wmperry
-;; Created: 1997/03/26 00:04:40
-;; Version: 1.13
+;; Created: 1997/03/31 16:22:42
+;; Version: 1.14
 ;; Keywords: comm
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,7 +43,7 @@
 
 (defgroup ssl nil
   "Support for `Secure Sockets Layer' encryption."
-  :group 'emacs)
+  :group 'comm)
   
 (defcustom ssl-certificate-directory "~/.w3/certs/"
   "*Directory to store CA certificates in"
@@ -74,10 +74,13 @@ This means a directory of pem encoded certificates with hash symlinks."
   :group 'ssl
   :type '(choice (const :tag "SSLeay" :value ssleay)))  
 
-(defcustom ssl-certificate-verification-depth 0
+(defcustom ssl-certificate-verification-policy 0
   "*How far up the certificate chain we should verify."
   :group 'ssl
-  :type 'integer)
+  :type '(choice (const :tag "No verification" :value 0)
+		 (const :tag "Verification required" :value 1)
+		 (const :tag "Reject connection if verification fails" :value 3)
+		 (const :tag "SSL_VERIFY_CLIENT_ONCE" :value 5)))
 
 (defcustom ssl-program-name "s_client"
   "*The program to run in a subprocess to open an SSL connection."
@@ -88,7 +91,7 @@ This means a directory of pem encoded certificates with hash symlinks."
   '(;;"-quiet"
     "-host" host
     "-port" service
-    "-verify" (int-to-string ssl-certificate-verification-depth)
+    "-verify" (int-to-string ssl-certificate-verification-policy)
     "-CApath" ssl-certificate-directory
     )
   "*Arguments that should be passed to the program `ssl-program-name'.

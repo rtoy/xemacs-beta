@@ -72,7 +72,7 @@ SOURCES = \
 
 vm:	vm.elc
 
-vm.elc:	noautoload
+vm.elc:	autoload
 
 noautoload:	$(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules included)..."

@@ -2173,17 +2173,20 @@ The folder is not altered and Emacs is still visiting it."
 	   (error nil))
 	 (let (timer)
 	   (and (natnump vm-flush-interval) 
+		(not (vm-timer-using 'vm-flush-itimer-function))
 		(setq timer (run-at-time vm-flush-interval vm-flush-interval
 					 'vm-flush-itimer-function nil))
 		(timer-set-function timer 'vm-flush-itimer-function
 				    (list timer)))
 	   (and (natnump vm-mail-check-interval) 
+		(not (vm-timer-using 'vm-check-mail-itimer-function))
 		(setq timer (run-at-time vm-mail-check-interval
 					 vm-mail-check-interval
 					 'vm-check-mail-itimer-function nil))
 		(timer-set-function timer 'vm-check-mail-itimer-function
 				    (list timer)))
 	   (and (natnump vm-auto-get-new-mail)
+		(not (vm-timer-using 'vm-get-mail-itimer-function))
 		(setq timer (run-at-time vm-auto-get-new-mail
 					 vm-auto-get-new-mail
 					 'vm-get-mail-itimer-function nil))
@@ -2192,6 +2195,15 @@ The folder is not altered and Emacs is still visiting it."
 	(t
 	 (setq vm-flush-interval t
 	       vm-auto-get-new-mail t))))
+
+(defun vm-timer-using (fun)
+  (let ((p timer-list)
+	(done nil))
+    (while (and p (not done))
+      (if (eq (aref (car p) 5) fun)
+	  (setq done t)
+	(setq p (cdr p))))
+    p ))
 
 ;; support for vm-mail-check-interval
 ;; if timer argument is present, this means we're using the Emacs

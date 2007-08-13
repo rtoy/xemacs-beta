@@ -34,7 +34,7 @@ documentation and/or software.
 
 typedef unsigned char *POINTER;/* POINTER defines a generic pointer type */
 typedef unsigned short int UINT2;/* UINT2 defines a two byte word */
-typedef unsigned long  int UINT4;/* UINT4 defines a four byte word */
+typedef unsigned int UINT4;/* UINT4 defines a four byte word */
 
 #define PROTO_LIST(list) list
 #define MD_CTX MD5_CTX

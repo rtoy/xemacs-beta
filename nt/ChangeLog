@@ -1,0 +1,60 @@
+Thu Mar 27 20:56:21 1997  marcpa  (marcpa at MARCPA)
+
+	* Synced with 20.1b9.
+
+Sun Mar 16 00:32:15 1997  marcpa  (marcpa at MARCPA)
+
+	* lisp/eterm/README.term is truncated: is it just me (because
+	I'm on NT) or everyone else sees this ?
+	Answer: it is because it contains a ^Z embedded in it, therefore
+	it needs to be inserted in binary mode in CVS.
+
+Thu Mar 13 00:19:25 1997  marcpa  (marcpa at MARCPA)
+
+	* At end of compilation, there are some unresolved symbols: 
+
+link.exe @C:\TEMP\nma00115.
+sysdep.obj : error LNK2001: unresolved external symbol _vfork
+../src/temacs.exe : warning LNK4088: image being generated due to /FORCE
+option; image may not run
+
+
+Wed Mar 12 23:18:53 1997  marcpa  (marcpa at MARCPA)
+
+	* Need to copy the nt/inc directory David originally submitted or
+	NT code won't compile.
+
+	* Need to copy nt/{config.h,paths.h,ad2c.sed,xemacs.mak} in src.
+
+	* Had to modify XEmacs sources here and there : see the diffs
+	between NT_FIRST_COMPILE and V20_1_beta9.
+
+	* Needed to patch X11R6.3 sources: (include/x11/Xmd.h:155) BOOL is
+	already defined by Windows and is a long, while X wants it to be
+	an unsigned char.
+
+--- Xmd.h~	Thu Jun 08 23:20:40 1995
++++ Xmd.h	Sun Mar 16 13:09:10 1997
+@@ -150,8 +150,9 @@
+ typedef CARD16		BITS16;
+ typedef CARD8		BYTE;
+ 
++#ifndef WIN32
+ typedef CARD8           BOOL;
+-
++#endif
+
+	* cpp.exe not used: cl.exe from VC++4.2 seems to handle everything
+	properly. 
+
+NOTES:
+
+Compilation with nmake -f xemacs.mak.
+
+Using X11R6.3 for NT.
+
+Work started with 20.1b2.
+
+Local Variables:
+mode: change-log
+End:

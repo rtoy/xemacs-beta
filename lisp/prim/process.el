@@ -160,7 +160,7 @@ In either case, the output is inserted after point (leaving mark after it)."
 	  (progn
 	    (require 'background) ; whizzy comint background code
 	    (background (substring command 0 (match-beginning 0))))
-	(shell-command-on-region (point) (point) command nil)))))
+	(shell-command-on-region (point) (point) command output-buffer)))))
 
 ;; We have a sentinel to prevent insertion of a termination message
 ;; in the buffer itself.

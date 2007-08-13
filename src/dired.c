@@ -256,10 +256,14 @@ to the names of directories.
 {
   /* This function can GC */
   Lisp_Object handler;
+  struct gcpro gcpro1;
 
+  GCPRO1 (dirname);
+  dirname = Fexpand_file_name (dirname, Qnil);
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (dirname, Qfile_name_all_completions);
+  UNGCPRO;
   if (!NILP (handler))
     return call3 (handler, Qfile_name_all_completions, file,
 		  dirname);

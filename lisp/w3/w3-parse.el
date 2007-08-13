@@ -1289,12 +1289,17 @@ skip-chars-forward."
                            nil
                            (((li) *include *next))
                            (*retry *next))
+                          ((p)
+                           nil
+                           nil
+                           (*retry *next))
                           ((li)
                            nil
                            ;; Push <LI> before data characters or block
                            ;; elements.
                            ;; Non-SGML.
-                           (((%text %block) li *same error))
+                           (;; ((p) b *same nil)
+                            ((%text %block) li *same error))
                            nil)]))
        ((lh)
         (content-model . [((%text)
@@ -1506,6 +1511,7 @@ skip-chars-forward."
                           ((tbody)
                            nil
                            (((tr) tbody *same)
+                            ((td th) tr *same)
                             ;; error handling
                             ((%body.content) tbody *same error))
                            nil)]))

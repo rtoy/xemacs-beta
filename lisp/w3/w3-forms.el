@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/03/25 23:33:51
-;; Version: 1.81
+;; Created: 1997/04/03 14:23:37
+;; Version: 1.84
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -159,12 +159,11 @@
 		     plist))
 	 (size (w3-form-determine-size el (plist-get plist 'size)))
 	 (node (assoc action w3-form-elements)))
-    (if (and (eq (plist-get plist 'type) 'hidden)
-	     (not (assq '*table-autolayout w3-display-open-element-stack)))
-	(if node
-	    (setcdr node (cons el (cdr node)))
-	  (setq w3-form-elements (cons (cons action (list el))
-				       w3-form-elements))))
+    (if (not (assq '*table-autolayout w3-display-open-element-stack))
+ 	(if node
+ 	    (setcdr node (cons el (cdr node)))
+ 	  (setq w3-form-elements (cons (cons action (list el))
+ 				       w3-form-elements))))
     (if size
 	(set-text-properties (point)
 			     (progn (insert-char ?T size) (point))
@@ -191,10 +190,6 @@
 	    (delete-region st nd)
 	    (if (not (w3-form-element-size info))
 		(w3-form-element-set-size info 20))
-	    (if node
-		(setcdr node (cons info (cdr node)))
-	      (setq w3-form-elements (cons (cons action (list info))
-					   w3-form-elements)))
 	    (w3-form-add-element-internal info face)
 	    (setq st (next-single-property-change st 'w3-form-info)))
 	(setq st (next-single-property-change st 'w3-form-info))))))
@@ -304,6 +299,7 @@
 	  (setq widget (w3-form-element-widget formobj))
 	  (widget-radio-add-item widget
 				 (list 'item
+				       :button-face face
 				       :format "%t"
 				       :tag ""
 				       :value (w3-form-element-value el)))
@@ -319,6 +315,7 @@
 		    :value (w3-form-element-value el)
 		    :action 'w3-form-radio-button-update
 		    (list 'item
+			  :button-face face
 			  :format "%t"
 			  :tag ""
 			  :value (w3-form-element-value el)))
@@ -341,6 +338,8 @@
 
 (defun w3-form-create-image (el face)
   (widget-create 'push-button
+		 :button-face face
+		 :value-face face
 		 :notify 'w3-form-submit/reset-callback
 		 :value (or
 			 (plist-get (w3-form-element-plist el) 'alt)
@@ -371,11 +370,15 @@
 	 (options (mapcar (function (lambda (pair)
 				      (list 'choice-item
 					    :format "%[%t%]" 
+					    :tab-order -1
+					    :button-face face
+					    :value-face face
 					    :menu-tag-get `(lambda (zed) ,(car pair))
 					    :tag (mule-truncate-string (car pair) size ? )
 					    :value (cdr pair))))
 			  w3-form-valid-key-sizes)))
     (apply 'widget-create 'menu-choice
+	   :emacspeak-help 'w3-form-summarize-field
 	   :value 1024
 	   :ignore-case t
 	   :tag "Key Length"
@@ -413,6 +416,7 @@
 
 (defun w3-form-create-multiline (el face)
   (widget-create 'push-button
+		 :button-face face
 		 :notify 'w3-do-text-entry
 		 "Multiline text area"))
 
@@ -615,8 +619,8 @@ This can be used as the :help-echo property of all w3 form entry widgets."
 								"[nothing]"))))
 
 (defun w3-form-summarize-keygen-list (data widget)
-  )
-
+  (format "Submitting this form will generate a %d bit key (not)" 
+	  (widget-value (w3-form-element-widget data))))
 
 (defun w3-form-maybe-submit-by-keypress ()
   (interactive)

@@ -29,6 +29,11 @@
 
 ;; #### This is far from working in XEmacs.
 
+;; added by MORIOKA Tomohiko <morioka@jaist.ac.jp>, 1996/6/18
+(defvar running-xemacs (string-match "XEmacs" emacs-version))
+
+(if running-xemacs (require 'overlay))
+
 ;; added by MORIOKA Tomohiko <morioka@jaist.ac.jp>, 1996/6/7
 (or (fboundp 'minibuffer-prompt-width)
     (defun minibuffer-prompt-width ()
@@ -42,14 +47,6 @@
       (char-after (1- (point)))
       )
     )
-(or (fboundp 'overlayp)
-    (defalias 'overlayp 'extentp)
-    )
-
-;; added by MORIOKA Tomohiko <morioka@jaist.ac.jp>, 1996/6/18
-(defvar running-xemacs (string-match "XEmacs" emacs-version))
-
-(if running-xemacs (require 'overlay))
 
 (if running-xemacs
     (progn

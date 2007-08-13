@@ -1,7 +1,7 @@
 ;;; w3-print.el --- Printing support for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/07 01:05:01
-;; Version: 1.7
+;; Created: 1997/04/02 21:09:14
+;; Version: 1.8
 ;; Keywords: faces, help, printing, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -69,7 +69,7 @@ ps-spool-buffer-with-faces   - spool for later")
 					  w3-temporary-directory) nil 5)
 	  (shell-command
 	   (format
-	    "cd %s ; latex w3-tmp.latex ; %s w3-tmp.dvi ; rm -f w3-tmp*"
+	    "cd %s ; latex w3-tmp.latex ; latex w3-tmp.latex ; %s w3-tmp.dvi ; rm -f w3-tmp*"
 	    w3-temporary-directory
 	    w3-print-command))
 	  (kill-buffer "*Shell Command Output*")))))))

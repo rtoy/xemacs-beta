@@ -72,22 +72,22 @@ REMOVE =  ltx-help.el
 MINMAPSRC = auc-menu.el maniac.el outln-18.el all.el multi-prompt.el
 
 CONTRIB = bib-cite.el tex-jp.el font-latex.el
-CONTRIBELC = bib-cite.elc font-latex.elc
+CONTRIBELC = bib-cite.elc tex-jp.elc font-latex.elc
 
 AUCSRC = auc-old.el tex.el tex-buf.el latex.el tex-info.el multi-prompt.el
 AUCELC = auc-old.elc tex.elc tex-buf.elc latex.elc tex-info.elc \
 	multi-prompt.elc
 
 
-STYLESRC = style/slides.el    style/foils.el    style/amstex.el \
-	   style/article.el   style/book.el     style/letter.el \
-	   style/report.el    style/amsart.el   style/amsbook.el \
-	   style/epsf.el      style/psfig.el    style/latexinfo.el \
-	   style/dutch.el     style/german.el   style/dk.el \
-	   style/j-article.el style/j-book.el   style/j-report.el \
-	   style/jarticle.el  style/jbook.el    style/jreport.el \
-	   style/dinbrief.el  style/virtex.el   style/plfonts.el \
-	   style/plhb.el      style/harvard.el	style/swedish.el
+STYLESRC = ../../etc/auctex/style/slides.el    ../../etc/auctex/style/foils.el    ../../etc/auctex/style/amstex.el \
+	   ../../etc/auctex/style/article.el   ../../etc/auctex/style/book.el     ../../etc/auctex/style/letter.el \
+	   ../../etc/auctex/style/report.el    ../../etc/auctex/style/amsart.el   ../../etc/auctex/style/amsbook.el \
+	   ../../etc/auctex/style/epsf.el      ../../etc/auctex/style/psfig.el    ../../etc/auctex/style/latexinfo.el \
+	   ../../etc/auctex/style/dutch.el     ../../etc/auctex/style/german.el   ../../etc/auctex/style/dk.el \
+	   ../../etc/auctex/style/j-article.el ../../etc/auctex/style/j-book.el   ../../etc/auctex/style/j-report.el \
+	   ../../etc/auctex/style/jarticle.el  ../../etc/auctex/style/jbook.el    ../../etc/auctex/style/jreport.el \
+	   ../../etc/auctex/style/dinbrief.el  ../../etc/auctex/style/virtex.el   ../../etc/auctex/style/plfonts.el \
+	   ../../etc/auctex/style/plhb.el      ../../etc/auctex/style/harvard.el	../../etc/auctex/style/swedish.el
 
 DOCFILES = doc/Makefile doc/auc-tex.texi doc/intro.texi doc/install.texi \
 	doc/changes.texi doc/tex-ref.tex doc/math-ref.tex doc/history.texi
@@ -100,7 +100,7 @@ all:	lisp
 lisp:
 	$(ELC) $(AUCSRC) $(STYLESRC) $(CONTRIB)
 
-some:	$(AUCELC) $(STYLESRC:.el=.elc)
+some:	$(AUCELC) $(CONTRIBELC) $(STYLESRC:.el=.elc)
 
 install:	install-lisp
 

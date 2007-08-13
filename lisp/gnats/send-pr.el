@@ -129,13 +129,14 @@ Returns the final value of default-directory in the buffer."
     ret))
 
 ;; const because it must match the script's value
-(defconst send-pr:datadir (or (gnats::get-config "DATADIR") "/usr/share")
+;; XEmacs, former value was (or (gnats::get-config "DATADIR") "/usr/share")
+(defconst send-pr:datadir data-directory 
   "*Where the `gnats' subdirectory containing category lists lives.")
 
 (defvar send-pr::sites nil
   "List of GNATS support sites; computed at runtime.")
 (defvar send-pr:default-site
-  (or (gnats::get-config "GNATS_SITE") "altair.xemacs.org")
+  (or (gnats::get-config "GNATS_SITE") "xemacs.org")
   "Default site to send bugs to.")
 (defvar send-pr:::site send-pr:default-site
   "The site to which a problem report is currently being submitted, or NIL
@@ -213,7 +214,7 @@ it to send-pr::sites.  With arg, force update."
 		(not (file-readable-p file))
 		(gnats::push (list (file-name-nondirectory file))
 			    send-pr::sites))))
-	 (directory-files (format "%s/gnats" send-pr:datadir) t))
+	 (directory-files (format "%sgnats" send-pr:datadir) t))
 	(setq send-pr::sites (reverse send-pr::sites)))))
 
 (defconst send-pr::pr-buffer-name "*send-pr*"
@@ -305,6 +306,7 @@ to send the PR with `send-pr -b -f -'."
   (let ((elt (assoc site send-pr::template-alist)))
     (if elt
 	(save-excursion (insert (cdr elt)))
+      (setenv "DATADIR" send-pr:datadir)
       (call-process "send-pr" nil t nil "-P" site)
       (save-excursion
 	(setq send-pr::template-alist
@@ -335,6 +337,7 @@ buffer was loaded with emacsclient, in which case save the buffer and exit."
       (message "running send-pr...")
       (let ((oldpr (getenv "GNATS_ROOT")))
 	(setenv "GNATS_ROOT" gnats:root)
+	(setenv "DATADIR" send-pr:datadir)
 	(call-process-region (point-min) (point-max) "send-pr"
 			     nil err-buffer nil send-pr:::site
 			     "-b" "-f" "-")

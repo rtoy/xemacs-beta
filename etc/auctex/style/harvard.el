@@ -1,0 +1,97 @@
+;; harvard.el --- Support for Harvard Citation style package for AUC-TeX
+
+;; Copyright (C) 1994 Berwin Turlach <berwin@core.ucl.ac.be>
+
+;; Version: $Id: harvard.el,v 1.1 1997/04/05 17:56:46 steve Exp $
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 1, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+;;; Commentary:
+
+;; Harvard citation style is from Peter Williams available on the CTAN
+;; servers
+
+;;; Code:
+
+(require 'latex)
+
+(TeX-add-style-hook "harvard"
+ (function
+  (lambda ()
+
+    (LaTeX-add-environments
+     '("thebibliography" LaTeX-env-harvardbib ignore))
+
+    (TeX-add-symbols
+     "harvardand"
+     '("citeasnoun"
+       (TeX-arg-conditional TeX-arg-cite-note-p ([ "Note" ]) nil)
+       TeX-arg-cite)
+     '("possessivecite"
+       (TeX-arg-conditional TeX-arg-cite-note-p ([ "Note" ]) nil)
+       TeX-arg-cite)
+     '("citeaffixed"
+       (TeX-arg-conditional TeX-arg-cite-note-p ([ "Note" ]) nil)
+       TeX-arg-cite "Affix")
+     '("citeyear"
+       (TeX-arg-conditional TeX-arg-cite-note-p ([ "Note" ]) nil)
+       TeX-arg-cite)
+     '("citename"
+       (TeX-arg-conditional TeX-arg-cite-note-p ([ "Note" ]) nil)
+       TeX-arg-cite)
+     '("citationstyle"
+       (TeX-arg-eval completing-read "Citation style: " '(("agsm") ("dcu"))))
+     '("citationmode"
+       (TeX-arg-eval completing-read "Citation mode: "
+                     '(("full") ("abbr") ("default"))))
+     '("harvardparenthesis"
+       (TeX-arg-eval completing-read "Harvardparenthesis: "
+                     '(("round") ("curly") ("angle") ("square"))))
+     '("bibliographystyle"
+       (TeX-arg-eval
+	completing-read "Bibliography style: "
+        '(("agsm") ("dcu") ("jmr") ("jphysicsB") ("kluwer") ("nederlands")))
+       ignore)
+     '("harvarditem" [ "Short citation" ]
+       "Complete citation" "Year" TeX-arg-define-cite))
+
+    (setq TeX-complete-list
+	  (append '(("\\\\citeasnoun{\\([^{}\n\m\\%]*\\)"
+		     1 LaTeX-bibitem-list "}")
+		    ("\\\\citeyear{\\([^{}\n\m\\%]*\\)"
+		     1 LaTeX-bibitem-list "}")
+		    ("\\\\citename{\\([^{}\n\m\\%]*\\)"
+		     1 LaTeX-bibitem-list "}"))
+		  TeX-complete-list))
+
+    (setq LaTeX-item-list
+	  (cons '("thebibliography" . LaTeX-item-harvardbib)
+		LaTeX-item-list)))))
+
+(defun LaTeX-env-harvardbib (environment &optional ignore)
+  "Insert ENVIRONMENT with label for harvarditem."
+  (LaTeX-insert-environment environment
+			    (concat TeX-grop "xx" TeX-grcl))
+  (end-of-line 0)
+  (delete-char 1)
+  (delete-horizontal-space)
+  (LaTeX-insert-item))
+
+;; Analog to LaTeX-item-bib from latex.el
+(defun LaTeX-item-harvardbib ()
+  "Insert a new harvarditem."
+  (TeX-insert-macro "harvarditem"))
+
+;; harvard.el ends here

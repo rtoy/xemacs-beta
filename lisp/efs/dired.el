@@ -377,6 +377,10 @@ The symbols 'rmail and 'vm are the only two allowed values.")
   "*If non-nil dired will revert dired buffers for modified subdirectories.
 See also dired-no-confirm <V>.")
 
+;;;###autoload
+(defvar dired-refresh-automatically t
+  "*If non-nil, refresh dired buffers automatically after file operations.")
+
 ;;; File name regular expressions and extensions.
 
 (defvar dired-trivial-filenames "^\\.\\.?$\\|^#"
@@ -6188,11 +6192,12 @@ with the command \\[tags-loop-continue]."
 
 (defun dired-check-file-name-handler-alist ()
   ;; Verify that dired is installed as the first item in the alist
-  (or (eq (cdr (car file-name-handler-alist)) 'dired-handler-fn)
-      (setq file-name-handler-alist
-	    (cons
-	     '("." . dired-handler-fn)
-	     (dired-remove-from-file-name-handler-alist)))))
+  (and dired-refresh-automatically
+       (or (eq (cdr (car file-name-handler-alist)) 'dired-handler-fn)
+	   (setq file-name-handler-alist
+		 (cons
+		  '("." . dired-handler-fn)
+		  (dired-remove-from-file-name-handler-alist))))))
 
 (defun dired-handler-fn (op &rest args)
   ;; Function to update dired buffers after I/O.

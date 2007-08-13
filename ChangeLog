@@ -1,3 +1,26 @@
+Sat Apr  5 09:11:36 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b11 is released.
+
+Wed Apr  2 15:27:35 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (install-only): New target.  Functionality suggested 
+	by Larry Schwimmer, correct way of doing it suggested by Chuck
+	Thompson.
+
+	* configure.in: Default to "-Olimit 2000" as suggested by Jamie
+	Zawinski for SGI cc and Irix 6.
+
+Tue Apr  1 12:23:13 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Add configuration parameters for Emacs 19.34
+	movemail.c (--with-pop, --with-kerberos, --with-hesiod).
+
+Fri Mar 28 19:58:41 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Remove garbage if [ ... ] constructs and a
+	mispatch.
+
 Thu Mar 27 18:24:19 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.1-b10 is released.

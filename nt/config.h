@@ -79,10 +79,10 @@ Boston, MA 02111-1307, USA.  */
    the user's full name.  If neither this nor any other
    field contains the right thing, use pw_name,
    giving the user's login name, since that is better than nothing.  */
-#if 0
 #define USER_FULL_NAME pw->pw_gecos
-#endif
+#if 0
 #define USER_FULL_NAME unknown
+#endif
 
 /* Define AMPERSAND_FULL_NAME if you use the convention
    that & in the full name stands for the login id.  */

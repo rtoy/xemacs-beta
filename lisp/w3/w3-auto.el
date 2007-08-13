@@ -45,6 +45,9 @@
 (autoload 'widget-backward "wid-edit")
 (autoload 'widget-at "wid-edit")
 
+;; URL stuff
+(autoload 'url-gateway-nslookup-host "url-gw")
+
 ;; Preferences
 (autoload 'w3-preferences-edit "w3-prefs" nil t)
 

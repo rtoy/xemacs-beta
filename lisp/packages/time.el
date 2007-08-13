@@ -2,9 +2,10 @@
 
 ;; Copyright (C) 1985, 86, 87, 93, 94, 1996 Free Software Foundation, Inc.
 
-;; Maintainer: FSF,     XEmacs add-ons (C) by Jens T. Lautenbacher
-;;                      mail <jens@lemming0.lem.uni-karlsruhe.de>
-;;                      for comments/fixes about the enhancements.
+;; Maintainer: FSF for the original version. 
+;;             XEmacs add-ons and rewrite (C) by Jens Lautenbacher
+;;                            mail <jens@lemming0.lem.uni-karlsruhe.de>
+;;                            for comments/fixes about the enhancements.
 
 ;; This file is part of XEmacs.
 
@@ -23,7 +24,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Version: 1.10  (I choose the version number starting at 1.1
+;;; Version: 1.13  (I choose the version number starting at 1.1
 ;;;                to indicate that 1.0 was the old version
 ;;;                before I hacked away on it -jtl)
 
@@ -56,10 +57,21 @@
 
 (require 'itimer)
 
+(defconst display-time-version-number "1.13" "Version number of time.el")
+(defconst display-time-version (format "Time.el version %s for XEmacs"
+				       display-time-version-number)
+  "The full version string for time.el")
+
 (defgroup display-time nil
   "Facilities to display the current time/date/load and a new-mail indicator
 in the XEmacs mode line or echo area."
   :group 'applications)
+
+(defgroup display-time-balloon nil
+  "Fancy add-ons to display-time for using the `balloon-help' feature.
+balloon-help must be loaded before these settings take effect."
+  :group 'display-time)
+
 
 (defcustom display-time-mail-file nil
   "*File name of mail inbox file, for indicating existence of new mail.
@@ -204,7 +216,7 @@ This can be 'transparent or a string describing the color it should have"
   "What to use to generate the ballon frame of the \"mail\" glyph
 if balloon-help is loaded. This can be the function
 display-time-mail-balloon, nil or a string."
-  :group 'display-time 
+  :group 'display-time-balloon 
   :type '(choice (const display-time-mail-balloon)
 		 (const nil)
 		 (string)))
@@ -212,7 +224,7 @@ display-time-mail-balloon, nil or a string."
 (defcustom display-time-no-mail-balloon "No mail is good mail."
   "The string used in the ballon frame of the \"no mail\" glyph
 if balloon-help is loaded. This can also be nil"
-  :group 'display-time 
+  :group 'display-time-balloon
   :type '(choice (const nil)
 		 (string)))
 
@@ -222,36 +234,36 @@ This is only useful if you use gnus to read your mail and have set the variable
 nnmail-split-methods to split your incoming mail into different groups.
 Look at the documentation for gnus. If you don't know what we're talking about,
 don't care and leave this set to nil"
-  :group 'display-time
+  :group 'display-time-balloon
   :type 'boolean)
 
 (defface display-time-mail-balloon-enhance-face '((t (:background  "orange")))
   "Face used for entries in the mail balloon which match the regexp
 display-time-mail-balloon-enhance"
-  :group 'display-time)
+  :group 'display-time-balloon)
 
 (defface display-time-mail-balloon-gnus-group-face '((t (:foreground "blue")))
   "Face used for the gnus group entry in the mail balloon
 if display-time-mail-balloon-show-gnus-group is t (see the documentation there
 before you set it to t)"
-  :group 'display-time)
+  :group 'display-time-balloon)
 
 (defcustom display-time-mail-balloon-max-displayed 10
   "The maximum number of messaged which are displayed in the mail balloon.
 You need to have balloon-help loaded to use this."
-  :group 'display-time
+  :group 'display-time-balloon
   :type 'number)
 
 (defcustom display-time-mail-balloon-from-width 20
   "The width of the `From:' part of the mail balloon.
 You need to have ballon-help loaded to use this"
-  :group 'display-time
+  :group 'display-time-balloon
   :type 'number)
 
 (defcustom display-time-mail-balloon-subject-width 25
   "The width of the `Subject:' part of the mail balloon.
 You need to have ballon-help loaded to use this"
-  :group 'display-time
+  :group 'display-time-balloon
   :type 'number)
 
 (defcustom display-time-mail-balloon-gnus-split-width 10
@@ -260,14 +272,14 @@ This denotes the mail group gnus would decide to put this message in.
 For getting this information, it consults the relevant variables from gnus
 (nnmail-split-methods).
 You need to have ballon-help loaded to use this"
-  :group 'display-time
+  :group 'display-time-balloon
   :type 'number)
 
 (defcustom display-time-mail-balloon-enhance nil
   "A list of regular expressions describing which messages should be highlighted
 in the mail balloon. The regexp will be matched against the complete header block
 of an email. You need to load balloon-help to use this"
-  :group 'display-time
+  :group 'display-time-balloon
   :type '(repeat (string :tag "Regexp")))
 
 (defcustom display-time-mail-balloon-suppress nil
@@ -276,7 +288,7 @@ in the mail balloon. The regexp will be matched against the complete header bloc
 of an email. It will only take effect if the message is not matched already
 by display-time-mail-balloon-enhance.
 You need to load balloon-help to use this"
-  :group 'display-time
+  :group 'display-time-balloon
   :type '(repeat (string :tag "Regexp")))
 
 (defcustom display-time-mail-balloon-enhance-gnus-group nil
@@ -287,7 +299,7 @@ by display-time-mail-balloon-suppress.
 
 This requires display-time-mail-balloon-show-gnus-group to be t
 and balloon-help to be loaded"
-  :group 'display-time 
+  :group 'display-time-balloon
   :type '(repeat (string :tag "Regexp")))
 
 (defcustom display-time-mail-balloon-suppress-gnus-group nil
@@ -298,7 +310,7 @@ by display-time-mail-balloon-enhance or display-time-mail-balloon-enhance-gnus-g
 
 This requires display-time-mail-balloon-show-gnus-group to be t
 and balloon-help to be loaded"
-  :group 'display-time
+  :group 'display-time-balloon
   :type '(repeat (string :tag "Regexp")))
 
 (defvar display-time-spool-file-modification nil)
@@ -439,7 +451,33 @@ display-time-form-list instead of the old display-time-string-form."
 		display-time-display-time-background)
 	  ))))
 
-  (if (featurep 'xpm)
+(defun display-time-init-glyphs ()
+  "This is a hack to have all glyphs be displayed one time at startup.
+It helps avoiding problems with the background color of the glyphs if a
+balloon-help frame is open and a not yet displayed glyph is going to be
+displayed."
+  (let ((i 0)
+	(list '("am" "pm" ":"))
+	elem mlist)
+    (while (< i 10)
+      (push (eval (intern-soft (concat "display-time-"
+				       (number-to-string i)
+				       "-glyph"))) mlist)
+      (setq i (1+ i)))
+    (setq i 0.0)
+    (while (<= i 3.0)
+      (push (eval (intern-soft (concat "display-time-load-"
+				       (number-to-string i)
+				       "-glyph"))) mlist)
+      (setq i (+ i 0.5)))
+    (while (setq elem (pop list))
+      (push (eval (intern-soft (concat "display-time-"
+				       elem "-glyph"))) mlist))
+    (let ((global-mode-string mlist))
+      (redisplay-frame))
+    ))
+
+(if (featurep 'xpm)
     (progn
       (defvar display-time-mail-sign
 	(cons (make-extent nil nil)
@@ -473,7 +511,9 @@ display-time-form-list instead of the old display-time-string-form."
       (defvar display-time-load-3.0-glyph nil)
       (display-time-generate-time-glyphs 'force)
       (display-time-generate-load-glyphs 'force)  
+      (display-time-init-glyphs)
       ))
+
 
 (defun display-time-can-do-graphical-display (&optional textual)
   (and display-time-show-icons-maybe
@@ -541,7 +581,7 @@ display-time-form-list instead of the old display-time-string-form."
 			  (or (featurep 'nnmail) (require 'nnmail))))
 	 (display-time-mail-balloon-gnus-split-width
 	  (if (not show-split) 0
-	    (+ 3 display-time-mail-balloon-gnus-split-width))) ; <space>[...] -> +3
+	    (+ 3 display-time-mail-balloon-gnus-split-width))) ; -><space>... = +3
 	 (mod (nth 5 (file-attributes mail-spool-file)))
 	 header	header-ext)
     (setq header "You have mail:")
@@ -612,7 +652,7 @@ display-time-form-list instead of the old display-time-string-form."
 		      (re-search-forward enhance-reg nil t))))
 	  (if show-split
 	      (save-excursion
-		(setq point (point-min))
+		(goto-char (point-min))
 		(nnmail-article-group '(lambda (name) (setq gnus-group name)))))
 	    
 	  (if enhance () ; this takes prejudice over everything else
@@ -626,7 +666,8 @@ display-time-form-list instead of the old display-time-string-form."
 			  (if (and show-split gnus-group
 				   display-time-mail-balloon-enhance-gnus-group)
 			      (string-match gnus-enhance-reg gnus-group))))
-		  (setq suppress  ;; if we didn't enhance then maybe we have to suppress it?
+		  (setq suppress  ;; if we didn't enhance then maybe we have to
+			          ;; suppress it?
 			(save-excursion
 			  (if (and show-split gnus-group
 				   display-time-mail-balloon-suppress-gnus-group)
@@ -686,12 +727,13 @@ display-time-form-list instead of the old display-time-string-form."
 		  (set-extent-property line-ext 'duplicable t)
 		  (set-extent-property line-ext 'end-open t)))
 	    (push line mail-headers-list))
-	  (setq point (point-max))
+	  (goto-char (point-max))
 	  (setq suppress nil
 		gnus-group nil
 		enhance nil)
 	  (widen)
 	  )))
+    (kill-buffer display-time-temp-buffer)
     (if (> (length mail-headers-list) display-time-mail-balloon-max-displayed)
 	(setq not-displayed (- (length mail-headers-list)
 			       display-time-mail-balloon-max-displayed)))
@@ -903,7 +945,7 @@ mail-text:     The same as above, but will not use a glyph"
             (if display-time-24hr-format "" am-pm))
     load
     (if mail " Mail" ""))
-    "*THIS IS OBSOLETE! It will only be used if display-time-compatible is t.
+    "*It will only be used if display-time-compatible is t.
 A list of expressions governing display of the time in the mode line.
 This expression is a list of expressions that can involve the keywords
 `load', `day', `month', and `year', `12-hours', `24-hours', `minutes',
@@ -917,6 +959,10 @@ For example, the form
     (if time-zone \" (\") time-zone (if time-zone \")\"))
 
 would give mode line times like `94/12/30 21:07:48 (UTC)'.")
+
+(make-obsolete-variable 'display-time-string-forms
+			"You should use the new facilities for `display-time'.
+Look at display-time-form-list.")   
 
 (defun display-time-function ()
   (let* ((now (current-time))

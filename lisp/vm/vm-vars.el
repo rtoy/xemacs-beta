@@ -415,7 +415,7 @@ A non-nil value for this variable means that VM will
 A nil value means VM will not offer any support for composing
 MIME messages.")
 
-(defvar vm-honor-mime-content-disposition nil
+(defvar vm-honor-mime-content-disposition t
   "*Non-nil value means use information from the Content-Disposition header
 to display MIME messages.  The Content-Disposition header
 specifies whether a MIME object should be displayed inline or
@@ -450,11 +450,11 @@ that type are assumed to be included.
 Note that some types are processed specially, and this variable does not
 apply to them.
 
-   Multipart/Digest and Message/RFC822 messages are always
-   displayed as a button to avoid visiting a new folder while the
-   user is moving around in the current folder.
+   multipart/digest, message/news and message/rfc822 messages are
+   always displayed as a button to avoid automatically visiting a
+   new folder while you are moving around in the current folder.
 
-   Message/Partial messages are always displayed as a button,
+   message/partial messages are always displayed as a button,
    because there always needs to be a way to trigger the assembly
    of the parts into a full message.
 
@@ -594,7 +594,7 @@ can only be displayed if you're running under a window system
 e.g. X windows.  So this variable will have no effect if you're
 running Emacs on a tty.
 
-Note that under FSF Emacs any fonts you use must be the same size
+Note that under FSF Emacs any fonts you use must be the same height
 as your default font.  XEmacs does not have this limitation.")
 
 (defvar vm-mime-button-face 'gui-button-face
@@ -610,7 +610,7 @@ such a character is found.
 This variable is unused in XEmacs/MULE.  Since multiple character
 sets can be displayed in a single buffer under MULE, VM will map
 the file coding system of the buffer to a single MIME character
-that can display all the buffer's characters.")
+set that can display all the buffer's characters.")
 
 (defvar vm-mime-8bit-text-transfer-encoding 'quoted-printable
   "*Symbol specifying what kind of transfer encoding to use on 8bit
@@ -2307,7 +2307,10 @@ vm-mouse-send-url-to-mosaic uses this.")
 (defvar vm-mosaic-program-switches nil
   "*List of command line switches to pass to Mosaic.")
 
-(defvar vm-temp-file-directory "/tmp"
+(defvar vm-temp-file-directory
+  (or (and (file-directory-p "/tmp") "/tmp")
+      (and (file-directory-p "C:\\") "C:\\")
+      "/tmp")
   "*Name of a directory where VM can put temporary files.
 This name must not end with a slash.")
 
@@ -2433,6 +2436,17 @@ mail is not sent.")
     (define-key map "8" 'digit-argument)
     (define-key map "9" 'digit-argument)
     (define-key map "-" 'negative-argument)
+    (cond ((fboundp 'set-keymap-name)
+	   (set-keymap-name map 'vm-mode-map)
+	   (set-keymap-name (lookup-key map "l")
+			    "VM mode message labels map")
+	   (set-keymap-name (lookup-key map "V")
+			    "VM mode virtual folders map")
+	   (set-keymap-name (lookup-key map "M")
+			    "VM mode message marks map")
+	   (set-keymap-name (lookup-key map "W")
+			    "VM mode window configuration map")))
+
     map )
   "Keymap for VM mode.")
 
@@ -2449,8 +2463,11 @@ mail is not sent.")
     (define-key map "\C-c\C-y" 'vm-yank-message)
     (define-key map "\C-c\C-s" 'vm-mail-send)
     (define-key map "\C-c\C-c" 'vm-mail-send-and-exit)
+    (cond ((fboundp 'set-keymap-name)
+	   (set-keymap-name map 'vm-mail-mode-map)))
     map )
-  "Keymap for VM Mail mode buffers.")
+  "Keymap for VM Mail mode buffers.
+Its parent keymap is mail-mode-map.")
 
 (defvar vm-edit-message-map
   (let ((map (make-sparse-keymap)))
@@ -2458,6 +2475,8 @@ mail is not sent.")
     (define-key map "\C-c\e" 'vm-edit-message-end)
     (define-key map "\C-c\C-c" 'vm-edit-message-end)
     (define-key map "\C-c\C-]" 'vm-edit-message-abort)
+    (cond ((fboundp 'set-keymap-name)
+	   (set-keymap-name map 'vm-edit-message-map)))
     map )
   "Keymap for the buffers created by VM's vm-edit-message command.")
 
@@ -2913,6 +2932,7 @@ that has a match.")
 (make-variable-buffer-local 'vm-summary-overlay)
 (defvar vm-thread-loop-obarray (make-vector 29 0))
 (defvar vm-delete-duplicates-obarray (make-vector 29 0))
+(defvar vm-image-obarray (make-vector 29 0))
 (defvar vm-mail-mode-map-parented nil)
 (defvar vm-xface-cache (make-vector 29 0))
 (defconst vm-mime-base64-alphabet

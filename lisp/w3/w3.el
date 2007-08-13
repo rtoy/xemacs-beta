@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/03/26 00:02:30
-;; Version: 1.103
+;; Created: 1997/04/03 02:06:01
+;; Version: 1.105
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -421,7 +421,13 @@ With prefix argument, use the URL of the hyperlink under point instead."
        (let ((window-distance (cdr-safe (assq target w3-target-window-distances))))
 	 (if (numberp window-distance)
 	     (other-window window-distance)
-	   (error "target %S not found." target))))
+	   (case target
+	     ((_blank external)
+	      (w3-fetch-other-frame url))
+	     (_top
+	      (delete-other-windows))
+	     (otherwise
+	      (message "target %S not found." target))))))
   (cond
    ((= (string-to-char url) ?#)
     (w3-relative-link url))
@@ -1890,7 +1896,7 @@ BUFFER, the end of BUFFER, nil, and (current-buffer), respectively."
 
 (defun w3-find-default-stylesheets ()
   (setq w3-loaded-stylesheets nil)
-  (let* ((lightp (w3-color-light-p 'default))
+  (let* ((lightp (css-color-light-p 'default))
 	 (longname (if lightp "stylesheet-light" "stylesheet-dark"))
 	 (shortname (if lightp "light.css" "dark.css"))
 	 (directories (list

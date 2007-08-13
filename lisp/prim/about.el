@@ -1049,6 +1049,7 @@
 	  Philip Johnson <johnson@uhics.ics.Hawaii.Edu>
 	  J. Kean Johnston <jkj@paradigm-sa.com>
 	  Andreas Kaempf <andreas@sccon.com>
+	  Amir Katz <amir@ndsoft.com>
 	  Doug Keller <dkeller@vnet.ibm.com>
 	  Hunter Kelly <retnuh@corona>
 	  Gregor Kennedy <gregork@dadd.ti.com>

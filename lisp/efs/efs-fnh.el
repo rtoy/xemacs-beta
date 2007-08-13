@@ -22,6 +22,11 @@
 	  "/"
 	  (substring "#Revision: 1.3 $" 11 -2)))
 
+;;;###autoload
+(defvar allow-remote-paths t
+   "*Set this to nil if you don't want remote paths to access
+remote files.")
+
 ;;;; ----------------------------------------------------------------
 ;;;; Loading emacs version files
 ;;;; ----------------------------------------------------------------

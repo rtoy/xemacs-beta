@@ -1,5 +1,5 @@
 ;;;
-;;; $Id: tl-num.el,v 1.2 1996/12/28 21:03:10 steve Exp $
+;;; $Id: tl-num.el,v 1.3 1997/04/05 19:32:20 steve Exp $
 ;;;
 ;;; by MORIOKA Tomohiko <morioka@jaist.ac.jp>, 1993/10/4
 ;;;
@@ -11,14 +11,14 @@
 ;;; @ n base
 ;;;
 
-(defun char-to-int (chr)
+(defun n-char-to-int (chr)
   "Convert n base character CHR to integer (n <= 36). [tl-num]"
   (cond ((and (<= ?0 chr)(<= chr ?9)) (- chr ?0))
 	((and (<= ?A chr)(<= chr ?Z)) (+ (- chr ?A) 10))
 	((and (<= ?a chr)(<= chr ?z)) (+ (- chr ?a) 10))
 	))
 
-(defun int-to-char (n)
+(defun int-to-n-char (n)
   "Convert integer N to n base character (n <= 36). [tl-num]"
   (if (< n 10)
       (+ ?0 n)
@@ -37,7 +37,7 @@
   "Convert n base char sequence SEQ to number. [tl-num]"
   (foldl (function
 	  (lambda (n chr)
-	    (+ (* n base)(char-to-int chr))
+	    (+ (* n base)(n-char-to-int chr))
 	    ))
 	 0 seq))
 
@@ -52,7 +52,7 @@
 	((and (<= ?a chr)(<= chr ?f)) (+ (- chr ?a) 10))
 	))
 
-(defalias 'number-to-hex-char 'int-to-char)
+(defalias 'number-to-hex-char 'int-to-n-char)
 
 (defun hex-seq-to-int (seq)
   "Convert hex number sequence SEQ to integer. [tl-num]"

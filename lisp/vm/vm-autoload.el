@@ -597,6 +597,8 @@ The folder is not altered and Emacs is still visiting it." t nil)
 
 (autoload (quote vm-start-itimers-if-needed) "vm-folder" nil nil nil)
 
+(autoload (quote vm-timer-using) "vm-folder" nil nil nil)
+
 (autoload (quote vm-check-mail-itimer-function) "vm-folder" nil nil nil)
 
 (autoload (quote vm-get-mail-itimer-function) "vm-folder" nil nil nil)
@@ -802,6 +804,8 @@ set to the command name so that window configuration will be done." nil nil)
 (autoload (quote vm-menu-goto-event) "vm-menu" nil nil nil)
 
 (autoload (quote vm-menu-popup-url-browser-menu) "vm-menu" nil t nil)
+
+(autoload (quote vm-menu-popup-mailto-url-browser-menu) "vm-menu" nil t nil)
 
 (autoload (quote vm-menu-popup-mime-dispose-menu) "vm-menu" nil t nil)
 
@@ -1179,8 +1183,6 @@ for the current directory (.) is inserted." nil nil)
 
 (autoload (quote vm-reencode-mime-encoded-words-in-string) "vm-mime" nil nil nil)
 
-(autoload (quote vm-mime-parse-content-header) "vm-mime" nil nil nil)
-
 (autoload (quote vm-mime-get-header-contents) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-parse-entity) "vm-mime" nil nil nil)
@@ -1272,6 +1274,8 @@ in the buffer.  The function is expected to make the message
 (autoload (quote vm-mime-display-button-multipart/parallel) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-internal-multipart/digest) "vm-mime" nil nil nil)
+
+(autoload (quote vm-mime-display-button-message/rfc822) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-internal-message/rfc822) "vm-mime" nil nil nil)
 
@@ -1394,9 +1398,13 @@ will interactively query you for the file type information." t nil)
 
 (autoload (quote vm-mime-transfer-encode-layout) "vm-mime" nil nil nil)
 
-(autoload (quote vm-mime-encode-composition) "vm-mime" "MIME encode the current buffer.
+(autoload (quote vm-mime-encode-composition) "vm-mime" "MIME encode the current mail composition buffer.
 Attachment tags added to the buffer with vm-mime-attach-file are expanded
 and the approriate content-type and boundary markup information is added." t nil)
+
+(autoload (quote vm-mime-xemacs-encode-composition) "vm-mime" nil nil nil)
+
+(autoload (quote vm-mime-fsfemacs-encode-composition) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-fragment-composition) "vm-mime" nil nil nil)
 
@@ -1472,6 +1480,8 @@ The new version of the list, minus the deleted strings, is returned." nil nil)
 (autoload (quote vm-parse) "vm-misc" nil nil nil)
 
 (autoload (quote vm-parse-addresses) "vm-misc" nil nil nil)
+
+(autoload (quote vm-parse-structured-header) "vm-misc" nil nil nil)
 
 (autoload (quote vm-write-string) "vm-misc" nil nil nil)
 
@@ -2192,7 +2202,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.22.
+This is VM 6.23.
 
 Commands:
    h - summarize folder contents

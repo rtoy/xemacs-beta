@@ -282,10 +282,16 @@ Prefix N scrolls backward N lines."
 	    (if vm-highlight-url-face
 		(set-extent-property e 'face vm-highlight-url-face))
 	    (if vm-url-browser
-		(let ((keymap (make-sparse-keymap)))
+		(let ((keymap (make-sparse-keymap))
+		      (popup-function
+		       (if (save-excursion
+			     (goto-char (match-beginning n))
+			     (looking-at "mailto:"))
+			   'vm-menu-popup-mailto-url-browser-menu
+			 'vm-menu-popup-url-browser-menu)))
 		  (define-key keymap 'button2 'vm-mouse-send-url-at-event)
 		  (if vm-popup-menu-on-mouse-3
-		      (define-key keymap 'button3 'vm-menu-popup-url-browser-menu))
+		      (define-key keymap 'button3 popup-function))
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))
@@ -318,9 +324,17 @@ Prefix N scrolls backward N lines."
 	    (if vm-highlight-url-face
 		(overlay-put o 'face vm-highlight-url-face))
 	    (if vm-url-browser
-		(let ((keymap (make-sparse-keymap)))
+		(let ((keymap (make-sparse-keymap))
+		      (popup-function
+		       (if (save-excursion
+			     (goto-char (match-beginning n))
+			     (looking-at "mailto:"))
+			   'vm-menu-popup-mailto-url-browser-menu
+			 'vm-menu-popup-url-browser-menu)))
 		  (overlay-put o 'mouse-face 'highlight)
 		  (setq keymap (nconc keymap (current-local-map)))
+		  (if vm-popup-menu-on-mouse-3
+		      (define-key keymap [mouse-3] popup-function))
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))

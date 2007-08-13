@@ -1,7 +1,7 @@
 ;;; url-cache.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/03/09 21:09:36
-;; Version: 1.10
+;; Created: 1997/04/03 21:04:08
+;; Version: 1.11
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -150,9 +150,9 @@ FILE can be created or overwritten."
 	      (cons
 	       (user-real-login-name)
 	       (cons (or protocol "file")
-		     (split-string (or hostname "localhost")
-				   (eval-when-compile
-				     (regexp-quote "."))))))
+		     (reverse (split-string (or hostname "localhost")
+					    (eval-when-compile
+					      (regexp-quote ".")))))))
 	     (fname    (url-filename urlobj)))
 	(if (and fname (/= (length fname) 0) (= (aref fname 0) ?/))
 	    (setq fname (substring fname 1 nil)))

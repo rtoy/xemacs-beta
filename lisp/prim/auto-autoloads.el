@@ -1062,7 +1062,11 @@ Browse the widget under point." t nil)
 
 ;;;***
 
-;;;### (autoloads (widget-delete widget-create) "wid-edit" "custom/wid-edit.el")
+;;;### (autoloads (widget-delete widget-create widget-apply) "wid-edit" "custom/wid-edit.el")
+
+(autoload 'widget-apply "wid-edit" "\
+Apply the value of WIDGET's PROPERTY to the widget itself.
+ARGS are passed as extra arguments to the function." nil nil)
 
 (autoload 'widget-create "wid-edit" "\
 Create widget of TYPE.  
@@ -1414,6 +1418,9 @@ Use \\[dired-omit-toggle] to see these files. (buffer local)")
 *Mail reader used by dired for dired-read-mail (\\[dired-read-mail]).
 The symbols 'rmail and 'vm are the only two allowed values.")
 
+(defvar dired-refresh-automatically t "\
+*If non-nil, refresh dired buffers automatically after file operations.")
+
 (define-key ctl-x-map "d" 'dired)
 
 (autoload 'dired "dired" "\
@@ -1478,14 +1485,18 @@ Returns a list (HOST USER PATH), or nil if PATH does not match the format." nil 
 
 ;;;### (autoloads (remote-path-file-handler-function) "efs-dump" "efs/efs-dump.el")
 
-(defvar allow-remote-paths t "\
-*Set this to nil if you don't want remote paths to access
-remote files.")
-
 (or (assoc efs-path-root-regexp file-name-handler-alist) (setq file-name-handler-alist (cons (cons efs-path-root-regexp 'remote-path-file-handler-function) file-name-handler-alist)))
 
 (autoload 'remote-path-file-handler-function "efs-dump" "\
 Function to call special file handlers for remote files." nil nil)
+
+;;;***
+
+;;;### (autoloads nil "efs-fnh" "efs/efs-fnh.el")
+
+(defvar allow-remote-paths t "\
+*Set this to nil if you don't want remote paths to access
+remote files.")
 
 ;;;***
 
@@ -3380,7 +3391,7 @@ non-nil." t nil)
 
 ;;;***
 
-;;;### (autoloads (c-set-style java-mode objc-mode c++-mode c-mode) "cc-mode" "modes/cc-mode.el")
+;;;### (autoloads (c-add-style c-set-style java-mode objc-mode c++-mode c-mode) "cc-mode" "modes/cc-mode.el")
 
 (autoload 'c-mode "cc-mode" "\
 Major mode for editing K&R and ANSI C code.
@@ -3459,6 +3470,17 @@ for details of setting up styles.
 
 The variable `c-indentation-style' always contains the buffer's current
 style name." t nil)
+
+(autoload 'c-add-style "cc-mode" "\
+Adds a style to `c-style-alist', or updates an existing one.
+STYLE is a string identifying the style to add or update.  DESCRIP is
+an association list describing the style and must be of the form:
+
+  ((VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
+
+See the variable `c-style-alist' for the semantics of VARIABLE and
+VALUE.  This function also sets the current style to STYLE using
+`c-set-style' if the optional SET-P flag is non-nil." t nil)
 
 (fset 'set-c-style           'c-set-style)
 
@@ -3902,7 +3924,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.18 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.19 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5257,7 +5279,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.18 $
+vhdl-mode $Revision: 1.19 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -7910,22 +7932,10 @@ gotten from `http://www.cs.brown.edu/people/nwv/'." t nil)
 
 ;;;***
 
-;;;### (autoloads (webster-spell webster-endings webster) "webster" "packages/webster.el")
+;;;### (autoloads (webster-www) "webster-www" "packages/webster-www.el")
 
-(autoload 'webster "webster" "\
-Look up a word in the Webster's dictionary.
-Open a network login connection to a webster host if necessary.
-Communication with host is recorded in a buffer *webster*." t nil)
-
-(autoload 'webster-endings "webster" "\
-Look up endings for a word in the Webster's dictionary.
-Open a network login connection to a webster host if necessary.
-Communication with host is recorded in a buffer *webster*." t nil)
-
-(autoload 'webster-spell "webster" "\
-Look spelling for a word in the Webster's dictionary.
-Open a network login connection to a webster host if necessary.
-Communication with host is recorded in a buffer *webster*." t nil)
+(autoload 'webster-www "webster-www" "\
+Look up a word in the Webster's dictionary at http://www.m-w.com using WWW." t nil)
 
 ;;;***
 
@@ -9093,7 +9103,7 @@ is a list of menu items, as above." nil 'macro)
 
 ;;;***
 
-;;;### (autoloads (insert-kbd-macro format-kbd-macro read-kbd-macro edit-named-kbd-macro edit-last-kbd-macro edit-kbd-macro) "edmacro" "utils/edmacro.el")
+;;;### (autoloads (insert-kbd-macro format-kbd-macro kbd read-kbd-macro edit-named-kbd-macro edit-last-kbd-macro edit-kbd-macro) "edmacro" "utils/edmacro.el")
 
 (define-key ctl-x-map "\C-k" 'edit-kbd-macro)
 
@@ -9126,6 +9136,9 @@ In Lisp, may also be called with a single STRING argument in which case
 the result is returned rather than being installed as the current macro.
 The result will be a string if possible, otherwise an event vector.
 Second argument NEED-VECTOR means to return an event vector always." t nil)
+
+(autoload 'kbd "edmacro" "\
+Convert KEYS to the internal Emacs key representation." nil 'macro)
 
 (autoload 'format-kbd-macro "edmacro" "\
 Return the keyboard macro MACRO as a human-readable string.
@@ -9903,7 +9916,7 @@ is a list of menu items, as above." nil 'macro)
 
 ;;;***
 
-;;;### (autoloads (x-font-build-cache font-default-size-for-device font-default-family-for-device font-default-object-for-device font-default-font-for-device font-create-object) "font" "w3/font.el")
+;;;### (autoloads (x-font-build-cache font-default-size-for-device font-default-encoding-for-device font-default-registry-for-device font-default-family-for-device font-default-object-for-device font-default-font-for-device font-create-object) "font" "w3/font.el")
 
 (autoload 'font-create-object "font" nil nil nil)
 
@@ -9912,6 +9925,10 @@ is a list of menu items, as above." nil 'macro)
 (autoload 'font-default-object-for-device "font" nil nil nil)
 
 (autoload 'font-default-family-for-device "font" nil nil nil)
+
+(autoload 'font-default-registry-for-device "font" nil nil nil)
+
+(autoload 'font-default-encoding-for-device "font" nil nil nil)
 
 (autoload 'font-default-size-for-device "font" nil nil nil)
 
@@ -9932,6 +9949,13 @@ Extract FNAM from the local disk cache" nil nil)
 
 (autoload 'url-cache-expired "url-cache" "\
 Return t iff a cached file has expired." nil nil)
+
+;;;***
+
+;;;### (autoloads (url-gateway-nslookup-host) "url-gw" "w3/url-gw.el")
+
+(autoload 'url-gateway-nslookup-host "url-gw" "\
+Attempt to resolve the given HOSTNAME using nslookup if possible." t nil)
 
 ;;;***
 

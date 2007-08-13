@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/03/26 20:11:33
-;; Version: 1.69
+;; Created: 1997/04/03 15:23:07
+;; Version: 1.70
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/03/26 20:11:33|1.69|Location Undetermined
+;;; 1997/04/03 15:23:07|1.70|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -668,6 +668,7 @@ numbers, etc."
 	  type (url-type data))
     (if (member type '("www" "about" "mailto" "mailserver" "info"))
 	(setq retval url)
+      (url-set-target data nil)
       (setq retval (url-recreate-url data)))
     retval))
 
@@ -677,17 +678,14 @@ numbers, etc."
   (setq url (url-normalize-url url))
   (let ((bufs (buffer-list))
 	(found nil))
-    (if (condition-case ()
-	    (string-match "\\(.*\\)#" url)
-	  (error nil))
-	(setq url (url-match url 1)))
     (while (and bufs (not found))
       (save-excursion
 	(set-buffer (car bufs))
 	(setq found (if (and
 			 (not (string-match " \\*URL-?[0-9]*\\*" (buffer-name (car bufs))))
 			 (memq major-mode '(url-mode w3-mode))
-			 (equal (url-view-url t) url)) (car bufs) nil)
+			 (equal (url-normalize-url (url-view-url t)) url))
+			(car bufs) nil)
 	      bufs (cdr bufs))))
     found))
 

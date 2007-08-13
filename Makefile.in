@@ -20,7 +20,8 @@
 # Boston, MA 02111-1307, USA.
 
 # make all	to compile and build XEmacs.
-# make install	to install it.
+# make install	to build and install it.
+# make install-only	to install after a previous complete build
 # make TAGS	to update tags tables.
 #
 # make clean  or  make mostlyclean
@@ -350,6 +351,8 @@ src/puresize_adjust.h:	${srcdir}/src/puresize.h
 ## don't see the point in avoiding modifying paths.h.  It creates an
 ## inconsistency in the build process.  So we go ahead and depend on
 ## all.  --cet
+
+install-only: ${MAKE_SUBDIR} install-arch-dep install-arch-indep
 
 install: all install-arch-dep install-arch-indep;
 

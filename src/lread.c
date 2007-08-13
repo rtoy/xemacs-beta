@@ -560,6 +560,7 @@ encoding detection or end-of-line detection.
 #ifdef DOS_NT
   int dosmode = O_TEXT;
 #endif /* DOS_NT */
+  struct stat s1, s2;
   GCPRO3 (file, newer, found);
 
   CHECK_STRING (file);
@@ -628,7 +629,7 @@ encoding detection or end-of-line detection.
       else if (load_warn_when_source_newer &&
 	       !memcmp (".elc", foundstr + foundlen - 4, 4))
 	{
-	  struct stat s1, s2;
+/*	  struct stat s1, s2;*/
 	  if (! fstat (fd, &s1))	/* can't fail, right? */
 	    {
 	      int result;
@@ -662,15 +663,15 @@ encoding detection or end-of-line detection.
 
       if (!memcmp (".elc", foundstr + foundlen - 4, 4))
 	reading_elc = 1;
-    }
 
 #ifdef DOS_NT
   /* The file was opened as binary, because that's what we'll
      encounter most of the time.  If we're loading a .el, we need
      to reopen it in text mode. */
-  if (!reading_elc)
-    fd = open (foundstr, O_RDONLY | O_TEXT);
+      if (!reading_elc)
+	fd = open (foundstr, O_RDONLY | O_TEXT);
 #endif /* DOS_NT */
+    }
 
 #define PRINT_LOADING_MESSAGE(done) do {				\
   if (load_ignore_elc_files)						\
@@ -954,11 +955,16 @@ locate_file_in_directory (Lisp_Object path, Lisp_Object str,
 		*storeptr = build_string (fn);
 	      UNGCPRO;
 	      
+/* XXX FIX ME
+   Not sure about this on NT yet.  Do nothing for now.
+   --marcpa */
+#ifndef DOS_NT	      
 	      /* If we actually opened the file, set close-on-exec flag
 		 on the new descriptor so that subprocesses can't whack
 		 at it.  */
 	      if (mode < 0)
 		(void) fcntl (fd, F_SETFD, FD_CLOEXEC);
+#endif
 	      
 	      return fd;
 	    }

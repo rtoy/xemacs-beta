@@ -344,7 +344,7 @@
 			 ((looking-at "\n") ; soft line break
 			  (forward-char))
 			 ((looking-at "\r")
-			  ;; assume the user's goatfucking
+			  ;; assume the user's goatloving
 			  ;; delivery software didn't convert
 			  ;; from Internet's CRLF newline
 			  ;; convention to the local LF
@@ -526,85 +526,7 @@
       (vm-with-string-as-temp-buffer string 'vm-reencode-mime-encoded-words)
     string ))
 
-(defun vm-mime-parse-content-header (string &optional sepchar keep-quotes)
-  (if (null string)
-      ()
-    (let ((work-buffer nil))
-      (save-excursion
-       (unwind-protect
-	   (let ((list nil)
-		 (nonspecials "^\"\\( \t\n\r\f")
-		 start s char sp+sepchar)
-	     (if sepchar
-		 (setq nonspecials (concat nonspecials (list sepchar))
-		       sp+sepchar (concat "\t\f\n\r " (list sepchar))))
-	     (setq work-buffer (generate-new-buffer "*vm-work*"))
-	     (buffer-disable-undo work-buffer)
-	     (set-buffer work-buffer)
-	     (insert string)
-	     (goto-char (point-min))
-	     (skip-chars-forward "\t\f\n\r ")
-	     (setq start (point))
-	     (while (not (eobp))
-	       (skip-chars-forward nonspecials)
-	       (setq char (following-char))
-	       (cond ((looking-at "[ \t\n\r\f]")
-		      (delete-char 1))
-		     ((= char ?\\)
-		      (forward-char 1)
-		      (if (not (eobp))
-			  (forward-char 1)))
-		     ((and sepchar (= char sepchar))
-		      (setq s (buffer-substring start (point)))
-		      (if (or (null (string-match "^[\t\f\n\r ]+$" s))
-			      (not (string= s "")))
-			  (setq list (cons s list)))
-		      (skip-chars-forward sp+sepchar)
-		      (setq start (point)))
-		     ((looking-at " \t\n\r\f")
-		      (skip-chars-forward " \t\n\r\f"))
-		     ((= char ?\")
-		      (let ((done nil))
-			(if keep-quotes
-			    (forward-char 1)
-			  (delete-char 1))
-			(while (not done)
-			  (if (null (re-search-forward "[\\\"]" nil t))
-			      (setq done t)
-			    (setq char (char-after (1- (point))))
-			    (cond ((char-equal char ?\\)
-				   (delete-char -1)
-				   (if (eobp)
-				       (setq done t)
-				     (forward-char 1)))
-				  (t (if (not keep-quotes)
-					 (delete-char -1))
-				     (setq done t)))))))
-		     ((= char ?\()
-		      (let ((done nil)
-			    (pos (point))
-			    (parens 1))
-			(forward-char 1)
-			(while (not done)
-			  (if (null (re-search-forward "[\\()]" nil t))
-			      (setq done t)
-			    (setq char (char-after (1- (point))))
-			    (cond ((char-equal char ?\\)
-				   (if (eobp)
-				       (setq done t)
-				     (forward-char 1)))
-				  ((char-equal char ?\()
-				   (setq parens (1+ parens)))
-				  (t
-				   (setq parens (1- parens)
-					 done (zerop parens))))))
-			(delete-region pos (point))))))
-	     (setq s (buffer-substring start (point)))
-	     (if (and (null (string-match "^[\t\f\n\r ]+$" s))
-		      (not (string= s "")))
-		 (setq list (cons s list)))
-	     (nreverse list))
-	(and work-buffer (kill-buffer work-buffer)))))))
+(fset 'vm-mime-parse-content-header 'vm-parse-structured-header)
 
 (defun vm-mime-get-header-contents (header-name-regexp)
   (let ((contents nil)
@@ -1587,20 +1509,25 @@ in the buffer.  The function is expected to make the message
 (fset 'vm-mime-display-button-multipart/digest
       'vm-mime-display-internal-multipart/digest)
 
+(defun vm-mime-display-button-message/rfc822 (layout)
+  (let ((buffer-read-only nil))
+    (vm-mime-insert-button
+     (format "%-35.35s [%s to display]"
+	     (vm-mime-layout-description layout)
+	     (if (vm-mouse-support-possible-p)
+		 "Click mouse-2"
+	       "Press RETURN"))
+     (function
+      (lambda (layout)
+	(save-excursion
+	  (vm-mime-display-internal-message/rfc822 layout))))
+     layout nil)))
+(fset 'vm-mime-display-button-message/news
+      'vm-mime-display-button-message/rfc822)
+
 (defun vm-mime-display-internal-message/rfc822 (layout)
   (if (vectorp layout)
-      (let ((buffer-read-only nil))
-	(vm-mime-insert-button
-	 (format "%-35.35s [%s to display]"
-		 (vm-mime-layout-description layout)
-		 (if (vm-mouse-support-possible-p)
-		     "Click mouse-2"
-		   "Press RETURN"))
-	 (function
-	  (lambda (layout)
-	    (save-excursion
-	      (vm-mime-display-internal-message/rfc822 layout))))
-	 layout nil))
+      (vm-mime-display-internal-text/plain layout)
     (goto-char (vm-extent-start-position layout))
     (setq layout (vm-extent-property layout 'vm-mime-layout))
     (set-buffer (generate-new-buffer
@@ -1619,8 +1546,6 @@ in the buffer.  The function is expected to make the message
     (vm-display (or vm-presentation-buffer (current-buffer)) t
 		(list this-command) '(vm-mode startup)))
   t )
-(fset 'vm-mime-display-button-message/rfc822
-      'vm-mime-display-internal-message/rfc822)
 (fset 'vm-mime-display-internal-message/news
       'vm-mime-display-internal-message/rfc822)
 
@@ -1877,40 +1802,34 @@ in the buffer.  The function is expected to make the message
 
 (defun vm-mime-set-extent-glyph-for-layout (e layout)
   (if (and (vm-xemacs-p) (fboundp 'make-glyph)
-	   (eq (device-type) 'x) (> (device-bitplanes) 15))
+	   (eq (device-type) 'x) (> (device-bitplanes) 7))
       (let ((type (car (vm-mm-layout-type layout)))
 	    (dir vm-image-directory)
-	    glyph)
-	(setq glyph
-	      (cond ((vm-mime-types-match "text" type)
-		     (make-glyph (vector
-				  'xpm ':file
-				  (expand-file-name "document.xpm" dir))))
-		    ((vm-mime-types-match "image" type)
-		     (make-glyph (vector
-				  'gif ':file
-				  (expand-file-name "mona_stamp.gif" dir))))
-		    ((vm-mime-types-match "audio" type)
-		     (make-glyph (vector
-				  'xpm ':file
-				  (expand-file-name "audio_stamp.xpm" dir))))
-		    ((vm-mime-types-match "video" type)
-		     (make-glyph (vector
-				  'xpm ':file
-				  (expand-file-name "film.xpm" dir))))
-		    ((vm-mime-types-match "message" type)
-		     (make-glyph (vector
-				  'xpm ':file
-				  (expand-file-name "message.xpm" dir))))
-		    ((vm-mime-types-match "application" type)
-		     (make-glyph (vector
-				  'xpm ':file
-				  (expand-file-name "gear.xpm" dir))))
-		    ((vm-mime-types-match "multipart" type)
-		     (make-glyph (vector
-				  'xpm ':file
-				  (expand-file-name "stuffed_box.xpm" dir))))
-		    (t nil)))
+	    (colorful (> (device-bitplanes) 15))
+	    (tuples
+	     '(("text" "document-simple.xpm" "document-colorful.xpm")
+	       ("image" "mona_stamp-simple.xpm" "mona_stamp-colorful.xpm")
+	       ("audio" "audio_stamp-simple.xpm" "audio_stamp-colorful.xpm")
+	       ("video" "film-simple.xpm" "film-colorful.xpm")
+	       ("message" "message-simple.xpm" "message-colorful.xpm")
+	       ("application" "gear-simple.xpm" "gear-colorful.xpm")
+	       ("multipart" "stuffed_box-simple.xpm"
+		"stuffed_box-colorful.xpm")))
+	    glyph file sym p)
+	(setq file (catch 'done
+		     (while tuples
+		       (if (vm-mime-types-match (car (car tuples)) type)
+			   (throw 'done (car tuples))
+			 (setq tuples (cdr tuples))))
+		     nil)
+	      file (and file (if colorful (nth 1 file) (nth 2 file)))
+	      sym (and file (intern file vm-image-obarray))
+	      glyph (and sym (boundp sym) (symbol-value sym))
+	      glyph (or glyph (not file)
+			(make-glyph
+			 (vector 'autodetect
+				 ':data (expand-file-name file dir)))))
+	(and sym (not (boundp sym)) (set sym glyph))
 	(and glyph (set-extent-begin-glyph e glyph)))))
 
 (defun vm-mime-insert-button (caption action layout disposable)
@@ -2350,19 +2269,19 @@ will interactively query you for the file type information."
 	   (setq e (make-extent start end))
 	   (set-extent-property e 'start-open t)
 	   (set-extent-property e 'face vm-mime-button-face)
-	   (vm-set-extent-property e 'duplicable t)
+	   (set-extent-property e 'duplicable t)
 	   (let ((keymap (make-sparse-keymap)))
 	     (if vm-popup-menu-on-mouse-3
 		 (define-key keymap 'button3
 		   'vm-menu-popup-content-disposition-menu))
-	     (vm-set-extent-property e 'keymap keymap)
+	     (set-extent-property e 'keymap keymap)
 	     (set-extent-property e 'balloon-help 'vm-mouse-3-help))
-	   (vm-set-extent-property e 'vm-mime-type type)
-	   (vm-set-extent-property e 'vm-mime-object object)
-	   (vm-set-extent-property e 'vm-mime-parameters params)
-	   (vm-set-extent-property e 'vm-mime-description description)
-	   (vm-set-extent-property e 'vm-mime-disposition disposition)
-	   (vm-set-extent-property e 'vm-mime-encoded mimed)))))
+	   (set-extent-property e 'vm-mime-type type)
+	   (set-extent-property e 'vm-mime-object object)
+	   (set-extent-property e 'vm-mime-parameters params)
+	   (set-extent-property e 'vm-mime-description description)
+	   (set-extent-property e 'vm-mime-disposition disposition)
+	   (set-extent-property e 'vm-mime-encoded mimed)))))
 
 (defun vm-mime-attachment-disposition-at-point ()
   (cond ((vm-fsfemacs-19-p)
@@ -2477,10 +2396,21 @@ will interactively query you for the file type information."
 				    nil)))
 
 (defun vm-mime-encode-composition ()
- "MIME encode the current buffer.
+ "MIME encode the current mail composition buffer.
 Attachment tags added to the buffer with vm-mime-attach-file are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
+  (cond ((vm-xemacs-mule-p)
+	 (vm-mime-xemacs-encode-composition))
+	((vm-xemacs-p)
+	 (vm-mime-xemacs-encode-composition))
+	((vm-fsfemacs-19-p)
+	 (vm-mime-fsfemacs-encode-composition))
+	(t
+	 (error "don't know how to MIME encode composition for %s"
+		(emacs-version)))))
+
+(defun vm-mime-xemacs-encode-composition ()
   (save-restriction
     (widen)
     (if (not (eq major-mode 'mail-mode))
@@ -2494,17 +2424,15 @@ and the approriate content-type and boundary markup information is added."
 	  type encoding charset params description disposition object
 	  opoint-min)
       (mail-text)
-      (setq e-list (if (fboundp 'extent-list)
-		       (extent-list nil (point) (point-max))
-		     (vm-mime-fake-attachment-overlays (point) (point-max)))
+      (setq e-list (extent-list nil (point) (point-max))
 	    e-list (vm-delete (function
 			       (lambda (e)
-				 (vm-extent-property e 'vm-mime-object)))
+				 (extent-property e 'vm-mime-object)))
 			      e-list t)
 	    e-list (sort e-list (function
 				 (lambda (e1 e2)
-				   (< (vm-extent-end-position e1)
-				      (vm-extent-end-position e2))))))
+				   (< (extent-end-position e1)
+				      (extent-end-position e2))))))
       ;; If there's just one attachment and no other readable
       ;; text in the buffer then make the message type just be
       ;; the attachment type rather than sending a multipart
@@ -2512,9 +2440,9 @@ and the approriate content-type and boundary markup information is added."
       (setq just-one (and (= (length e-list) 1)
 			  (looking-at "[ \t\n]*")
 			  (= (match-end 0)
-			     (vm-extent-start-position (car e-list)))
+			     (extent-start-position (car e-list)))
 			  (save-excursion
-			    (goto-char (vm-extent-end-position (car e-list)))
+			    (goto-char (extent-end-position (car e-list)))
 			    (looking-at "[ \t\n]*\\'"))))
       (if (null e-list)
 	  (progn
@@ -2542,9 +2470,9 @@ and the approriate content-type and boundary markup information is added."
 	    (vm-add-mail-mode-header-separator))
 	(while e-list
 	  (setq e (car e-list))
-	  (if (or just-one (= (point) (vm-extent-start-position e)))
+	  (if (or just-one (= (point) (extent-start-position e)))
 	      nil
-	    (narrow-to-region (point) (vm-extent-start-position e))
+	    (narrow-to-region (point) (extent-start-position e))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2558,58 +2486,40 @@ and the approriate content-type and boundary markup information is added."
 	    (insert "Content-Type: text/plain; charset=" charset "\n")
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	    (widen))
-	  (goto-char (vm-extent-start-position e))
+	  (goto-char (extent-start-position e))
 	  (narrow-to-region (point) (point))
-	  (setq object (vm-extent-property e 'vm-mime-object))
+	  (setq object (extent-property e 'vm-mime-object))
 	  ;; insert the object
 	  (cond ((bufferp object)
-		 (if (vm-xemacs-p)
-		     (insert-buffer-substring object)
-		   ;; as of FSF Emacs 19.34, even with the hooks
-		   ;; we've attached to the attachment overlays,
-		   ;; text STILL can be inserted into them when
-		   ;; font-lock is enabled.  Explaining why is
-		   ;; beyond the scope of this comment and I
-		   ;; don't know the answer anyway.  This works
-		   ;; to prevent it.
-		   (insert-before-markers " ")
-		   (forward-char -1)
-		   (insert-buffer-substring object)
-		   (delete-char 1)))
+		 (insert-buffer-substring object))
 		((stringp object)
 		 (let ((coding-system-for-read 'no-conversion))
-		   (if (vm-xemacs-p)
-		       (insert-file-contents-literally object)
-		     (insert-before-markers " ")
-		     (forward-char -1)
-		     (insert-file-contents-literally object)
-		     (goto-char (point-max))
-		     (delete-char -1)))))
+		   (insert-file-contents-literally object))))
 	  ;; gather information about the object from the extent.
-	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
+	  (if (setq already-mimed (extent-property e 'vm-mime-encoded))
 	      (setq layout (vm-mime-parse-entity
 			    nil (list "text/plain" "charset=us-ascii")
 			    "7bit")
-		    type (or (vm-extent-property e 'vm-mime-type)
+		    type (or (extent-property e 'vm-mime-type)
 			     (car (vm-mm-layout-type layout)))
-		    params (or (vm-extent-property e 'vm-mime-parameters)
+		    params (or (extent-property e 'vm-mime-parameters)
 			       (cdr (vm-mm-layout-qtype layout)))
-		    description (vm-extent-property e 'vm-mime-description)
+		    description (extent-property e 'vm-mime-description)
 		    disposition
 		      (if (not
 			   (equal
-			    (car (vm-extent-property e 'vm-mime-disposition))
+			    (car (extent-property e 'vm-mime-disposition))
 			    "unspecified"))
-			  (vm-extent-property e 'vm-mime-disposition)
+			  (extent-property e 'vm-mime-disposition)
 			(vm-mm-layout-qdisposition layout)))
-	    (setq type (vm-extent-property e 'vm-mime-type)
-		  params (vm-extent-property e 'vm-mime-parameters)
-		  description (vm-extent-property e 'vm-mime-description)
+	    (setq type (extent-property e 'vm-mime-type)
+		  params (extent-property e 'vm-mime-parameters)
+		  description (extent-property e 'vm-mime-description)
 		  disposition
 		    (if (not (equal
-			      (car (vm-extent-property e 'vm-mime-disposition))
+			      (car (extent-property e 'vm-mime-disposition))
 			      "unspecified"))
-			(vm-extent-property e 'vm-mime-disposition)
+			(extent-property e 'vm-mime-disposition)
 		      nil)))
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
@@ -2709,11 +2619,11 @@ and the approriate content-type and boundary markup information is added."
 	  (goto-char (point-max))
 	  (widen)
 	  (save-excursion
-	    (goto-char (vm-extent-start-position e))
+	    (goto-char (extent-start-position e))
 	    (vm-assert (looking-at "\\[ATTACHMENT")))
-	  (delete-region (vm-extent-start-position e)
-			 (vm-extent-end-position e))
-	  (vm-detach-extent e)
+	  (delete-region (extent-start-position e)
+			 (extent-end-position e))
+	  (detach-extent e)
 	  (if (looking-at "\n")
 	      (delete-char 1))
 	  (setq e-list (cdr e-list)))
@@ -2726,6 +2636,321 @@ and the approriate content-type and boundary markup information is added."
 	  (if (vm-xemacs-mule-p)
 	      (encode-coding-region (point-min) (point-max)
 				    buffer-file-coding-system))
+	  (setq encoding (vm-determine-proper-content-transfer-encoding
+			  (point)
+			  (point-max))
+		encoding (vm-mime-transfer-encode-region encoding
+							 (point)
+							 (point-max)
+							 t))
+	  (setq 8bit (or 8bit (equal encoding "8bit")))
+	  (setq boundary-positions (cons (point-marker) boundary-positions))
+	  (insert "Content-Type: text/plain; charset=" charset "\n")
+	  (insert "Content-Transfer-Encoding: " encoding "\n\n")
+	  (goto-char (point-max)))
+	(setq boundary (vm-mime-make-multipart-boundary))
+	(mail-text)
+	(while (re-search-forward (concat "^--"
+					  (regexp-quote boundary)
+					  "\\(--\\)?$")
+				  nil t)
+	  (setq boundary (vm-mime-make-multipart-boundary))
+	  (mail-text))
+	(goto-char (point-max))
+	(or just-one (insert "\n--" boundary "--\n"))
+	(while boundary-positions
+	  (goto-char (car boundary-positions))
+	  (insert "\n--" boundary "\n")
+	  (setq boundary-positions (cdr boundary-positions)))
+	(if (and just-one already-mimed)
+	    (progn
+	      (goto-char (vm-mm-layout-header-start layout))
+	      ;; trim headers
+	      (vm-reorder-message-headers
+	       nil '("Content-Description:" "Content-ID:") nil)
+	      ;; remove header/text separator
+	      (goto-char (1- (vm-mm-layout-body-start layout)))
+	      (if (looking-at "\n")
+		  (delete-char 1))
+	      ;; copy remainder to enclosing entity's header section
+	      (insert-buffer-substring (current-buffer)
+				       (vm-mm-layout-header-start layout)
+				       (vm-mm-layout-body-start layout))
+	      (delete-region (vm-mm-layout-header-start layout)
+			     (vm-mm-layout-body-start layout))))
+	(goto-char (point-min))
+	(vm-remove-mail-mode-header-separator)
+	(vm-reorder-message-headers
+	 nil nil "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
+	(vm-add-mail-mode-header-separator)
+	(insert "MIME-Version: 1.0\n")
+	(if (not just-one)
+	    (insert (if vm-mime-avoid-folding-content-type
+			"Content-Type: multipart/mixed; boundary=\""
+		      "Content-Type: multipart/mixed;\n\tboundary=\"")
+		    boundary "\"\n")
+	  (insert "Content-Type: " type)
+	  (if params
+	      (if vm-mime-avoid-folding-content-type
+		  (insert "; " (mapconcat 'identity params "; ") "\n")
+		(insert ";\n\t" (mapconcat 'identity params ";\n\t"))))
+	  (insert "\n"))
+	(if just-one
+	    (and description
+		 (insert "Content-Description: " description "\n")))
+	(if (and just-one disposition)
+	    (progn
+	      (insert "Content-Disposition: " (car disposition))
+	      (if (cdr disposition)
+		  (insert ";\n\t" (mapconcat 'identity
+					     (cdr disposition)
+					     ";\n\t")))
+	      (insert "\n")))
+	(if just-one
+	    (insert "Content-Transfer-Encoding: " encoding "\n")
+	  (if 8bit
+	      (insert "Content-Transfer-Encoding: 8bit\n")
+	    (insert "Content-Transfer-Encoding: 7bit\n")))))))
+
+(defun vm-mime-fsfemacs-encode-composition ()
+  (save-restriction
+    (widen)
+    (if (not (eq major-mode 'mail-mode))
+	(error "Command must be used in a VM Mail mode buffer."))
+    (or (null (vm-mail-mode-get-header-contents "MIME-Version:"))
+	(error "Message is already MIME encoded."))
+    (let ((8bit nil)
+	  (just-one nil)
+	  (boundary-positions nil)
+	  already-mimed layout o o-list boundary
+	  type encoding charset params description disposition object
+	  opoint-min)
+      (mail-text)
+      (setq o-list (vm-mime-fake-attachment-overlays (point) (point-max))
+	    o-list (vm-delete (function
+			       (lambda (o)
+				 (overlay-get o 'vm-mime-object)))
+			      o-list t)
+	    o-list (sort o-list (function
+				 (lambda (e1 e2)
+				   (< (overlay-end e1)
+				      (overlay-end e2))))))
+      ;; If there's just one attachment and no other readable
+      ;; text in the buffer then make the message type just be
+      ;; the attachment type rather than sending a multipart
+      ;; message with one attachment
+      (setq just-one (and (= (length o-list) 1)
+			  (looking-at "[ \t\n]*")
+			  (= (match-end 0)
+			     (overlay-start (car o-list)))
+			  (save-excursion
+			    (goto-char (overlay-end (car o-list)))
+			    (looking-at "[ \t\n]*\\'"))))
+      (if (null o-list)
+	  (progn
+	    (narrow-to-region (point) (point-max))
+	    (setq charset (vm-determine-proper-charset (point-min)
+						       (point-max)))
+	    (if (vm-xemacs-mule-p)
+		(encode-coding-region (point-min) (point-max)
+				      file-coding-system))
+	    (setq encoding (vm-determine-proper-content-transfer-encoding
+			    (point-min)
+			    (point-max))
+		  encoding (vm-mime-transfer-encode-region encoding
+							   (point-min)
+							   (point-max)
+							   t))
+	    (widen)
+	    (vm-remove-mail-mode-header-separator)
+	    (goto-char (point-min))
+	    (vm-reorder-message-headers
+	     nil nil "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
+	    (insert "MIME-Version: 1.0\n")
+	    (insert "Content-Type: text/plain; charset=" charset "\n")
+	    (insert "Content-Transfer-Encoding: " encoding "\n")
+	    (vm-add-mail-mode-header-separator))
+	(while o-list
+	  (setq o (car o-list))
+	  (if (or just-one (= (point) (overlay-start o)))
+	      nil
+	    (narrow-to-region (point) (overlay-start o))
+	    (setq charset (vm-determine-proper-charset (point-min)
+						       (point-max)))
+	    (setq encoding (vm-determine-proper-content-transfer-encoding
+			    (point-min)
+			    (point-max))
+		  encoding (vm-mime-transfer-encode-region encoding
+							   (point-min)
+							   (point-max)
+							   t))
+	    (setq boundary-positions (cons (point-marker) boundary-positions))
+	    (insert "Content-Type: text/plain; charset=" charset "\n")
+	    (insert "Content-Transfer-Encoding: " encoding "\n\n")
+	    (widen))
+	  (goto-char (overlay-start o))
+	  (narrow-to-region (point) (point))
+	  (setq object (overlay-get o 'vm-mime-object))
+	  ;; insert the object
+	  (cond ((bufferp object)
+		 ;; as of FSF Emacs 19.34, even with the hooks
+		 ;; we've attached to the attachment overlays,
+		 ;; text STILL can be inserted into them when
+		 ;; font-lock is enabled.  Explaining why is
+		 ;; beyond the scope of this comment and I
+		 ;; don't know the answer anyway.  This works
+		 ;; to prevent it.
+		 (insert-before-markers " ")
+		 (forward-char -1)
+		 (insert-buffer-substring object)
+		 (delete-char 1))
+		((stringp object)
+		 (insert-before-markers " ")
+		 (forward-char -1)
+		 (insert-file-contents object)
+		 (goto-char (point-max))
+		 (delete-char -1)))
+	  ;; gather information about the object from the extent.
+	  (if (setq already-mimed (overlay-get o 'vm-mime-encoded))
+	      (setq layout (vm-mime-parse-entity
+			    nil (list "text/plain" "charset=us-ascii")
+			    "7bit")
+		    type (or (overlay-get o 'vm-mime-type)
+			     (car (vm-mm-layout-type layout)))
+		    params (or (overlay-get o 'vm-mime-parameters)
+			       (cdr (vm-mm-layout-qtype layout)))
+		    description (overlay-get o 'vm-mime-description)
+		    disposition
+		      (if (not
+			   (equal
+			    (car (overlay-get o 'vm-mime-disposition))
+			    "unspecified"))
+			  (overlay-get o 'vm-mime-disposition)
+			(vm-mm-layout-qdisposition layout)))
+	    (setq type (overlay-get o 'vm-mime-type)
+		  params (overlay-get o 'vm-mime-parameters)
+		  description (overlay-get o 'vm-mime-description)
+		  disposition
+		    (if (not (equal
+			      (car (overlay-get o 'vm-mime-disposition))
+			      "unspecified"))
+			(overlay-get o 'vm-mime-disposition)
+		      nil)))
+	  (cond ((vm-mime-types-match "text" type)
+		 (setq encoding
+		       (vm-determine-proper-content-transfer-encoding
+			(if already-mimed
+			    (vm-mm-layout-body-start layout)
+			  (point-min))
+			(point-max))
+		       encoding (vm-mime-transfer-encode-region
+				 encoding
+				 (if already-mimed
+				     (vm-mm-layout-body-start layout)
+				   (point-min))
+				 (point-max)
+				 t))
+		 (setq 8bit (or 8bit (equal encoding "8bit"))))
+		((or (vm-mime-types-match "message/rfc822" type)
+		     (vm-mime-types-match "message/news" type)
+		     (vm-mime-types-match "multipart" type))
+		 (setq opoint-min (point-min))
+		 (if (not already-mimed)
+		     (setq layout (vm-mime-parse-entity
+				   nil (list "text/plain" "charset=us-ascii")
+				   "7bit")))
+		 ;; MIME messages of type "message" and
+		 ;; "multipart" are required to have a non-opaque
+		 ;; content transfer encoding.  This means that
+		 ;; if the user only wants to send out 7bit data,
+		 ;; then any subpart that contains 8bit data must
+		 ;; have an opaque (qp or base64) 8->7bit
+		 ;; conversion performed on it so that the
+		 ;; enclosing entity can use an non-opqaue
+		 ;; encoding.
+		 ;;
+		 ;; message/partial requires a "7bit" encoding so
+		 ;; force 8->7 conversion in that case.
+		 (let ((vm-mime-8bit-text-transfer-encoding
+			(if (vm-mime-types-match "message/partial" type)
+			    'quoted-printable
+			  vm-mime-8bit-text-transfer-encoding)))
+		   (vm-mime-map-atomic-layouts 'vm-mime-transfer-encode-layout
+					       (vm-mm-layout-parts layout)))
+		 ;; now figure out a proper content trasnfer
+		 ;; encoding value for the enclosing entity.
+		 (re-search-forward "^\n" nil t)
+		 (save-restriction
+		   (narrow-to-region (point) (point-max))
+		   (setq encoding
+			 (vm-determine-proper-content-transfer-encoding
+			  (point-min)
+			  (point-max))))
+		 (setq 8bit (or 8bit (equal encoding "8bit")))
+		 (goto-char (point-max))
+		 (widen)
+		 (narrow-to-region opoint-min (point)))
+		(t
+		 (vm-mime-base64-encode-region
+		  (if already-mimed
+		      (vm-mm-layout-body-start layout)
+		    (point-min))
+		  (point-max))
+		 (setq encoding "base64")))
+	  (if just-one
+	      nil
+	    (goto-char (point-min))
+	    (setq boundary-positions (cons (point-marker) boundary-positions))
+	    (if (not already-mimed)
+		nil
+	      ;; trim headers
+	      (vm-reorder-message-headers
+	       nil (nconc (list "Content-Disposition:" "Content-ID:")
+			  (if description
+			      (list "Content-Description:")
+			    nil))
+	       nil)
+	      ;; remove header/text separator
+	      (goto-char (1- (vm-mm-layout-body-start layout)))
+	      (if (looking-at "\n")
+		  (delete-char 1)))
+	    (insert "Content-Type: " type)
+	    (if params
+		(if vm-mime-avoid-folding-content-type
+		    (insert "; " (mapconcat 'identity params "; ") "\n")
+		  (insert ";\n\t" (mapconcat 'identity params ";\n\t") "\n"))
+	      (insert "\n"))
+	    (and description
+		 (insert "Content-Description: " description "\n"))
+	    (if disposition
+		(progn
+		  (insert "Content-Disposition: " (car disposition))
+		  (if (cdr disposition)
+		      (insert ";\n\t" (mapconcat 'identity
+						 (cdr disposition)
+						 ";\n\t")))
+		  (insert "\n")))
+	    (insert "Content-Transfer-Encoding: " encoding "\n\n"))
+	  (goto-char (point-max))
+	  (widen)
+	  (save-excursion
+	    (goto-char (overlay-start o))
+	    (vm-assert (looking-at "\\[ATTACHMENT")))
+	  (delete-region (overlay-start o)
+			 (overlay-end o))
+	  (delete-overlay o)
+	  (if (looking-at "\n")
+	      (delete-char 1))
+	  (setq o-list (cdr o-list)))
+	;; handle the remaining chunk of text after the last
+	;; extent, if any.
+	(if (or just-one (= (point) (point-max)))
+	    nil
+	  (setq charset (vm-determine-proper-charset (point)
+						     (point-max)))
+	  (if (vm-xemacs-mule-p)
+	      (encode-coding-region (point-min) (point-max)
+				    file-coding-system))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
 			  (point-max))
@@ -2816,7 +3041,7 @@ and the approriate content-type and boundary markup information is added."
       ;; encoding, so verify that everything has been encoded for
       ;; 7bit transmission.
       (let ((vm-mime-8bit-text-transfer-encoding
-	     (if (eq vm-mime-8bit-text-transfer-encoding 'send)
+	     (if (eq vm-mime-8bit-text-transfer-encoding '8bit)
 		 'quoted-printable
 	       vm-mime-8bit-text-transfer-encoding)))
 	(vm-mime-map-atomic-layouts
@@ -2865,6 +3090,7 @@ and the approriate content-type and boundary markup information is added."
 	(vm-increment n)
 	(set-buffer master-buffer)
 	(setq start (point)))
+      (vm-add-mail-mode-header-separator)
       (message "Fragmenting message... done")
       (nreverse buffers))))
 
@@ -2887,6 +3113,7 @@ message."
 	  ;; so vm-mime-encode-composition won't complain
 	  (setq major-mode 'mail-mode)
 	  (vm-insert-region-from-buffer mail-buffer)
+	  (vm-remove-mail-mode-header-separator)
 	  (goto-char (point-min))
 	  (or (vm-mail-mode-get-header-contents "From")
 	      (insert "From: " (user-login-name) "\n"))

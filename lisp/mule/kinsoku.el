@@ -195,12 +195,13 @@
 Uses category \'s\' to check.
 pointで改行すると行頭禁則に触れるかどうかをかえす。
 行頭禁則文字は\'s\'のcategoryで指定する。"
-  (let ((ch (following-char)))
-    (if (or
-	 (and kinsoku-ascii (char-in-category-p ch ?a))
-	 (and kinsoku-jis (char-in-category-p ch ?j))
-	 (and kinsoku-gb (char-in-category-p ch ?c))
-	 (and kinsoku-big5 (char-in-category-p ch ?t)))
+  (let ((ch (char-after)))
+    (if (and ch
+	     (or
+	      (and kinsoku-ascii (char-in-category-p ch ?a))
+	      (and kinsoku-jis (char-in-category-p ch ?j))
+	      (and kinsoku-gb (char-in-category-p ch ?c))
+	      (and kinsoku-big5 (char-in-category-p ch ?t))))
 	(char-in-category-p ch ?s)
       nil)))
 
@@ -209,12 +210,13 @@ pointで改行すると行頭禁則に触れるかどうかをかえす。
 Uses category \'e\' to check.
 pointで改行すると行末禁則に触れるかどうかをかえす。
 行末禁則文字は\'s\'のcategoryで指定する。"
-  (let ((ch (preceding-char)))
-    (if (or
-	 (and kinsoku-ascii (char-in-category-p ch ?a))
-	 (and kinsoku-jis (char-in-category-p ch ?j))
-	 (and kinsoku-gb (char-in-category-p ch ?c))
-	 (and kinsoku-big5 (char-in-category-p ch ?t)))
+  (let ((ch (char-before)))
+    (if (and ch
+	     (or
+	      (and kinsoku-ascii (char-in-category-p ch ?a))
+	      (and kinsoku-jis (char-in-category-p ch ?j))
+	      (and kinsoku-gb (char-in-category-p ch ?c))
+	      (and kinsoku-big5 (char-in-category-p ch ?t))))
 	(char-in-category-p ch ?e)
       nil)))
 
@@ -248,8 +250,9 @@ pointが行末禁則に触れる場合は行を縮めて、禁則に触れない点を探す。
 			   kinsoku-extend-limit
 			 10000)))  ;;; 10000 is deliberatly unreasonably large
 	ch1 ch2)
-    (while (and (<= (+ (current-column)
-		       (char-width (setq ch1 (following-char))))
+    (while (and (setq ch1 (char-after))
+		(<= (+ (current-column)
+		       (char-width ch1 ))
 		    max-column)
 		(not (bolp))
 		(not (eolp))
@@ -257,7 +260,8 @@ pointが行末禁則に触れる場合は行を縮めて、禁則に触れない点を探す。
 		    (kinsoku-bol-p)
 	            ;;; don't break in the middle of an English word
 		    (and (char-in-category-p ch1 ?a)
-			 (char-in-category-p (setq ch2 (preceding-char)) ?a)
+			 (setq ch2 (char-before))
+			 (char-in-category-p ch2 ?a)
 			 (= ?w (char-syntax ch2))
 			 (= ?w (char-syntax ch1)))))
       (forward-char))

@@ -712,4 +712,12 @@ on various systems. */
 # define JMP_BUF jmp_buf
 #endif
 
+/* movemail options */
+/* define to POP3 for mail access */
+#undef MAIL_USE_POP
+/* define to use kerberos for POP authentication */
+#undef KERBEROS
+/* define to use hesiod for getting POP server host */
+#undef HESIOD
+
 #endif /* _CONFIG_H_ */

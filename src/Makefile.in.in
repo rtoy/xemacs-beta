@@ -911,7 +911,7 @@ objs=	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
 	frame.o \
 	general.o getloadavg.o GIF_OBJS glyphs.o GUI_OBJS \
 	hash.o \
-	indent.o insdel.o intl.o \
+	indent.o inline.o insdel.o intl.o \
 	keymap.o $(RTC_PATCH_O) \
 	lread.o lstream.o \
 	macros.o marker.o md5.o MENUBAR_OBJS minibuf.o MOCKLISPOBJS \
@@ -1937,6 +1937,8 @@ glyphs-x.o: mule-charset.h
 glyphs.o: mule-charset.h
 gui-x.o: mule-charset.h
 indent.o: mule-charset.h
+inline.o: mule-charset.h
+inline.o: mule-coding.h
 input-method-xlib.o: mule-charset.h
 input-method-xlib.o: mule-coding.h
 insdel.o: mule-charset.h
@@ -2944,6 +2946,40 @@ indent.o: scrollbar.h
 indent.o: specifier.h
 indent.o: toolbar.h
 indent.o: window.h
+inline.o: $(LWLIBSRCDIR)/lwlib.h
+inline.o: blocktype.h
+inline.o: buffer.h
+inline.o: bufslots.h
+inline.o: bytecode.h
+inline.o: chartab.h
+inline.o: config.h
+inline.o: conslots.h
+inline.o: console-x.h
+inline.o: console.h
+inline.o: device.h
+inline.o: dynarr.h
+inline.o: elhash.h
+inline.o: events.h
+inline.o: extents.h
+inline.o: faces.h
+inline.o: frame.h
+inline.o: frameslots.h
+inline.o: glyphs-x.h
+inline.o: glyphs.h
+inline.o: gui-x.h
+inline.o: keymap.h
+inline.o: lstream.h
+inline.o: objects.h
+inline.o: opaque.h
+inline.o: process.h
+inline.o: redisplay.h
+inline.o: scrollbar.h
+inline.o: specifier.h
+inline.o: syntax.h
+inline.o: systime.h
+inline.o: toolbar.h
+inline.o: window.h
+inline.o: xintrinsic.h
 input-method-xlib.o: EmacsFrame.h
 input-method-xlib.o: blocktype.h
 input-method-xlib.o: buffer.h

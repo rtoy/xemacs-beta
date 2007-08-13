@@ -1,7 +1,7 @@
 ;;; url-gw.el --- Gateway munging for URL loading
 ;; Author: wmperry
-;; Created: 1997/03/26 14:32:29
-;; Version: 1.7
+;; Created: 1997/03/27 21:29:24
+;; Version: 1.8
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -72,6 +72,7 @@ linked Emacs under SunOS 4.x")
   "*If non-NIL then a string naming nslookup program." )
 
 ;; Stolen from ange-ftp
+;;;###autoload
 (defun url-gateway-nslookup-host (host)
   "Attempt to resolve the given HOSTNAME using nslookup if possible."
   (interactive "sHost:  ")

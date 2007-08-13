@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.68
+;; Version: 1.69
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -25,7 +25,9 @@
   (autoload 'Info-goto-node "info")
 
   (when (string-match "XEmacs" emacs-version)
-    (require 'overlay))
+    (condition-case nil
+	(require 'overlay)
+      (error (load-library "x-overlay"))))
   
   (if (string-match "XEmacs" emacs-version)
       ;; XEmacs spell `intangible' as `atomic'.
@@ -453,6 +455,7 @@ later with `widget-put'."
 	 (widget-member (get (car widget) 'widget-type) property))
 	(t nil)))
 
+;;;###autoload
 (defun widget-apply (widget property &rest args)
   "Apply the value of WIDGET's PROPERTY to the widget itself.
 ARGS are passed as extra arguments to the function."
@@ -503,9 +506,10 @@ automatically. This does not work yet."
 IMAGE should either be a glyph, or a name sans extension of an xpm or
 xbm file located in `widget-glyph-directory'.
 
-WARNING: If you call this with a glyph, and you want theuser to be
+WARNING: If you call this with a glyph, and you want the user to be
 able to activate the glyph, make sure it is unique.  If you use the
-same glyph for multiple widgets, "
+same glyph for multiple widgets, activating any of the glyphs will
+cause the last created widget to be activated."
   (cond ((not (and (string-match "XEmacs" emacs-version)
 		   widget-glyph-enable
 		   (fboundp 'make-glyph)

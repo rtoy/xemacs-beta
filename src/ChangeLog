@@ -1,3 +1,19 @@
+Thu Apr  3 08:01:50 1997  Steve Carney  <carney@gvc.dec.com>
+
+	* s/decosf4.0-static.h: New file.
+
+Tue Apr  1 12:22:32 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: MAIL_USE_POP, KERBEROS, HESIOD -- new parameters to 
+	deal with upgraded movemail.c.
+
+Fri Mar 28 19:25:22 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* inline.c: Restore this blasphemous file.
+
+	* Makefile.in.in (inline.o): Restore the bletcherous
+	inline.c.
+
 Tue Mar 25 11:36:08 1997  David Moore  <dmoore@ucsd.edu>
 
 	* fileio.c (barf_or_query_if_file_exists): GC fixes.

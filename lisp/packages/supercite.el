@@ -1,13 +1,13 @@
 ;;; supercite.el --- minor mode for citing mail and news replies
 
-;; Author: 1993 Barry A. Warsaw, Century Computing, Inc. <bwarsaw@cen.com>
-;; Maintainer:    supercite-help@anthem.nlm.nih.gov
+;; Author: 1993 Barry A. Warsaw, Century Computing, Inc. <bwarsaw@python.org>
+;; Maintainer:    supercite-help@python.org
 ;; Created:       February 1993
 ;; Version:       3.1
 ;; Last Modified: 1993/09/22 18:58:46
 ;; Keywords: citation attribution mail news article reply followup
 
-;; supercite.el revision: 3.54
+;; supercite.el revision: 3.55
 
 ;; Copyright (C) 1993 Barry A. Warsaw
 
@@ -34,6 +34,10 @@
 ;; supercite|Barry A. Warsaw|supercite-help@anthem.nlm.nih.gov
 ;; |Mail and news reply citation package
 ;; |1993/09/22 18:58:46|3.1|
+
+;; sb 1997/Apr/02:  Added attribution function sc-header-author-email-writes
+;; which gives attribution in the form -
+;; Steve Baur <steve@altair.xemacs.org> writes:
 
 ;; Code:
 
@@ -340,6 +344,7 @@ Index zero accesses the first function in the list.")
     (sc-header-author-writes)
     (sc-header-verbose)
     (sc-no-blank-line-or-header)
+    (sc-header-author-email-writes)
     )
   "*List of reference header rewrite functions.
 The variable `sc-preferred-header-style' controls which function in
@@ -1506,6 +1511,19 @@ Treats these fields in a similar manner to `sc-header-on-said'."
 			(sc-mail-field "references")
 			" for more details)\n")
 		))))
+
+;; Added by Ateve Baur <steve@altair.xemacs.org> Apr-02-1997.
+(defun sc-header-author-email-writes ()
+  "sc-author <email-addr> writes:"
+  (let ((sc-mumble "")
+	(whofrom (sc-whofrom)))
+    (if whofrom
+	(insert sc-reference-tag-string
+		(sc-hdr "" (sc-mail-field "sc-author") " ")
+		(or (sc-hdr "<" (sc-mail-field "sc-from-address") ">" t)
+		    (sc-hdr "<" (sc-mail-field "sc-reply-address") ">"  t)
+		    "")
+		" writes:\n"))))
 
 
 ;; ======================================================================

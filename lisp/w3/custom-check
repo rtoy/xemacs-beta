@@ -1,5 +1,10 @@
 #!/bin/sh
 EMACS=${1:-emacs}
+
+if [ -n "$WIDGETDIR" ]; then
+    exit 0
+fi
+
 if [ -z "$HOME" ]; then
     HOME=`(cd ; pwd)`
 fi
@@ -8,18 +13,25 @@ if [ -f "${HOME}/.emacs" ]; then
     DOTEMACS="-l ${HOME}/.emacs"
 fi
 
-WITH=`   ${EMACS} -batch ${DOTEMACS}      -eval '(princ (file-truename (locate-library "custom")))'`
-WITHOUT=`${EMACS} -batch -q -no-site-file -eval '(princ (file-truename (locate-library "custom")))'`
+WITH=`   ${EMACS} -batch ${DOTEMACS}      -eval '(princ (file-truename (locate-library "custom")))' 2> /dev/null`
+WITHOUT=`${EMACS} -batch -q -no-site-file -eval '(princ (file-truename (locate-library "custom")))' 2>/dev/null`
+
+# For some reason XEmacs sometimes ends up with a newline at the beginning
+# of the output... this will hopefully strip it out.
+WITH=`echo $WITH | tr '\010\013' ' '`
+WITHOUT=`echo $WITHOUT | tr '\013\010' ' '`
 
 if [ "${WITH}" = "${WITHOUT}" ]; then
     exit 0
 else
+    DIRECTORY=`dirname ${WITH}`
+
     echo "WARNING -- WARNING -- WARNING"
     echo "Found custom in different places with and without ${HOME}/.emacs"
     echo
     echo "This could cause potential problems.  Please recompile with"
     echo "the environment variable WIDGETDIR set correctly.  Try this"
     echo "command:"
-    echo "make WIDGETDIR=${WITH}"
+    echo "make WIDGETDIR=${DIRECTORY}"
     exit 1
 fi

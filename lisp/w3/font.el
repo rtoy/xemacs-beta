@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/03/26 20:08:55
-;; Version: 1.40
+;; Created: 1997/03/28 20:23:52
+;; Version: 1.43
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -75,7 +75,7 @@ a font name from a font structure.")
     (:light       . "light")
     (:demi-light  . "demilight")
     (:medium      . "medium")
-    (:normal      . "normal")
+    (:normal      . "medium")
     (:demi-bold   . "demibold")
     (:bold        . "bold")
     (:extra-bold  . "extrabold"))
@@ -89,7 +89,7 @@ information to use")
     (:demi        . "demi")
     (:book        . "book")
     (:medium      . "medium")
-    (:normal      . "normal")
+    (:normal      . "medium")
     (:demi-bold   . "demibold")
     (:bold        . "bold")
     (:extra-bold  . "extrabold"))
@@ -474,6 +474,15 @@ for use in the 'weight' field of an X font string.")
 	   registry - encoding "\\'"
 	   ))))
 
+(defvar font-x-registry-and-encoding-regexp
+  (or (and font-running-xemacs
+	   (boundp 'x-font-regexp-registry-and-encoding)
+	   (symbol-value 'x-font-regexp-registry-and-encoding))
+      (let ((- "[-?]")
+	    (registry "[^-]*")
+	    (encoding "[^-]+"))
+	(concat - "\\(" registry "\\)" - "\\(" encoding "\\)\\'"))))
+
 (defun x-font-create-object (fontname &optional device)
   (let ((case-fold-search t))
     (if (or (not (stringp fontname))
@@ -515,6 +524,10 @@ for use in the 'weight' field of an X font string.")
 	  (set-font-italic-p retval t))
 	 ((member slant '("o" "O"))
 	  (set-font-oblique-p retval t)))
+	(if (string-match font-x-registry-and-encoding-regexp fontname)
+	    (progn
+	      (set-font-registry retval (match-string 1 fontname))
+	      (set-font-encoding retval (match-string 2 fontname))))
 	retval))))
 
 (defun x-font-families-for-device (&optional device no-resetp)
@@ -566,6 +579,16 @@ for use in the 'weight' field of an X font string.")
   (font-family (font-default-object-for-device device)))
 
 ;;;###autoload
+(defun font-default-registry-for-device (&optional device)
+  (or device (setq device (selected-device)))
+  (font-registry (font-default-object-for-device device)))
+
+;;;###autoload
+(defun font-default-encoding-for-device (&optional device)
+  (or device (setq device (selected-device)))
+  (font-encoding (font-default-object-for-device device)))
+
+;;;###autoload
 (defun font-default-size-for-device (&optional device)
   (or device (setq device (selected-device)))
   ;; face-height isn't the right thing (always 1 pixel too high?)
@@ -582,16 +605,21 @@ for use in the 'weight' field of an X font string.")
 	   (= (font-style fontobj) 0))
       (face-font 'default)
     (or device (setq device (selected-device)))
-    (let ((family (or (font-family fontobj)
-		      (font-default-family-for-device device)
-		      (x-font-families-for-device device)))
-	  (weight (or (font-weight fontobj) :medium))
-	  (style (font-style fontobj))
-	  (size (or (if font-running-xemacs
-			(font-size fontobj))
-		    (font-default-size-for-device device)))
-	  (registry (or (font-registry fontobj) "*"))
-	  (encoding (or (font-encoding fontobj) "*")))
+    (let* ((default (font-default-object-for-device device))
+	   (family (or (font-family fontobj)
+		       (font-family default)
+		       (x-font-families-for-device device)))
+	   (weight (or (font-weight fontobj) :medium))
+	   (style (font-style fontobj))
+	   (size (or (if font-running-xemacs
+			 (font-size fontobj))
+		     (font-size default)))
+	   (registry (or (font-registry fontobj)
+			 (font-registry default)
+			 "*"))
+	   (encoding (or (font-encoding fontobj)
+			 (font-encoding default)
+			 "*")))
       (if (stringp family)
 	  (setq family (list family)))
       (setq weight (font-higher-weight weight

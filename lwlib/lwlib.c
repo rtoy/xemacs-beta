@@ -36,9 +36,15 @@ Boston, MA 02111-1307, USA.  */
 #define alloca __builtin_alloca
 #endif
 
-#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__) && !defined(sinix)
+#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__) && !defined(sinix) && !defined(WINDOWSNT)
 #include <alloca.h>
 #endif
+
+#ifdef WINDOWSNT
+/* NT has an _alloca function prototyped in malloc.h --marcpa */
+#include <malloc.h>
+#endif
+
 
 #ifdef __SUNPRO_C
 void *__builtin_alloca (unsigned int);
@@ -476,11 +482,13 @@ safe_strcmp (CONST char *s1, CONST char *s2)
   return (s1 && s2) ? strcmp (s1, s2) : s1 ? False : !!s2;
 }
 
+#ifndef WINDOWSNT
 static change_type
 max (change_type i1, change_type i2)
 {
   return (int)i1 > (int)i2 ? i1 : i2;
 }
+#endif
 
 
 #if 0

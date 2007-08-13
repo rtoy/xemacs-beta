@@ -172,7 +172,13 @@ Boston, MA 02111-1307, USA.  */
   
 #endif /* !RAW_PURESIZE */
   
-#include <puresize_adjust.h>
+/* Current build process on NT does not generate a puresize_adjust.h */
+/* file. --marcpa */  
+#ifdef WINDOWSNT
+# define PURESIZE_ADJUSTMENT 1000000
+#else
+# include <puresize_adjust.h>
+#endif
 #define PURESIZE ((RAW_PURESIZE) + (PURESIZE_ADJUSTMENT))
 
 

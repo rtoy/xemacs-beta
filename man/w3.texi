@@ -55,7 +55,7 @@ notice identical to this one except for the removal of this paragraph
 @sp 4
 @center Third Edition, Emacs/W3 Version 3.0
 @sp 1
-@center February 1997
+@center March 1997
 @sp 5
 @center William M. Perry
 @center @i{wmperry@@cs.indiana.edu}
@@ -2199,12 +2199,16 @@ Paged presentation for projected presentations.
 For braille tactile feedback devices.
 @item Speech
 Aural presentation.
+@item Light
+The stylesheet will only be applied if the user is using a light background.
+@item Dark
+The stylesheet will only be applied if the user is using a dark background.
 @item Emacs
 The stylesheet will only be applied if the user is running in Emacs 19.
 @item XEmacs
 The stylesheet will only be applied if the user is running in XEmacs 19.
 @item All
-The default value, the style sheet applies to all output devices
+The default value, the style sheet applies to all output devices.
 @end table
 
 @node Speech Properties,  , Media Selection, Properties

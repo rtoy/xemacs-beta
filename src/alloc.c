@@ -2739,7 +2739,12 @@ report_pure_usage (int report_impurities,
 
   if (rc < 0) {
     (void)unlink("SATISFIED");
+				/* Current build process on NT does */
+				/* not know how to restart itself. */
+				/* --marcpa */ 
+#ifndef WINDOWSNT
     fatal ("Pure size adjusted, will restart `make'");
+#endif
   } else if (pure_lossage && die_if_pure_storage_exceeded) {
     fatal ("Pure storage exhausted");
   }

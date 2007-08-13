@@ -1,4 +1,25 @@
 							-*- indented-text -*-
+to 20.1 beta11
+-- Move lisp/auctex/style/*.el to etc/auctex/style/.
+-- regenerated finder database (every lisp file should have a Keywords: line)
+-- VM-6.23
+-- dired-1.15-x4
+-- time-1.13
+-- xmine-1.2
+-- More MS Windows NT patches Courtesy of Marc Paquette
+-- webster-www.el Courtesy of Tomasz Cholewo
+-- webster.el, webster-ucb.el removed from distribution
+-- movemail imported from Emacs 19.34 (With POP/Hesiod/Kerberos support)
+-- Custom-1.69
+-- miscellaneous bug fixes
+-- W3-3.0.79
+-- Gnus-5.4.40
+-- GNATS/send-pr fixes, should work now
+-- edmacro-3.07
+-- configure fixes
+-- cc-mode-4.390
+-- restore inline.c
+
 to 20.1 beta10
 -- custom-1.68 [Beyond 19.15]
 -- W3-3.0.75

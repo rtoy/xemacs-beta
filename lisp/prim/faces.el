@@ -1391,6 +1391,39 @@ you want to add code to do stuff like this, use the create-device-hook."
 		   nil nil 'append)
   )
 
+;; New function with 20.1, suggested by Per Abrahamsen, coded by Kyle Jones.
+(defun set-face-stipple (face pixmap &optional frame)
+  "Change the stipple pixmap of face FACE to PIXMAP.
+This is an Emacs compatibility function; consider using
+set-face-background-pixmap instead.
+
+PIXMAP should be a string, the name of a file of pixmap data.
+The directories listed in the `x-bitmap-file-path' variable are searched.
+Any kind of image file for which XEmacs has builtin support can be used.
+
+Alternatively, PIXMAP may be a list of the form (WIDTH HEIGHT
+DATA) where WIDTH and HEIGHT are the size in pixels, and DATA is
+a string, containing the raw bits of the bitmap.  XBM data is
+expected in this case, other types of image data will not work.
+
+If the optional FRAME argument is provided, change only
+in that frame; otherwise change each frame."
+  (while (not (find-face face))
+    (setq face (signal 'wrong-type-argument (list 'facep face))))
+  (while (cond ((stringp pixmap)
+		(unless (file-readable-p pixmap)
+		  (setq pixmap (vector 'xbm ':file pixmap)))
+		nil)
+	       ((and (consp pixmap) (= (length pixmap) 3))
+		(setq pixmap (vector 'xbm ':data pixmap))
+		nil)
+	       (t t))
+    (setq pixmap (signal 'wrong-type-argument
+			 (list 'stipple-pixmap-p pixmap))))
+  (while (and frame (not (framep frame)))
+    (setq frame (signal 'wrong-type-argument (list 'framep frame))))
+  (set-face-background-pixmap face pixmap frame))
+
 
 ;; Create the remaining standard faces now.  This way, packages that we dump
 ;; can reference these faces as parents.
@@ -1436,3 +1469,5 @@ you want to add code to do stuff like this, use the create-device-hook."
   (set-face-reverse-p   'list-mode-item-selected t 'global 'tty)
   (set-face-reverse-p   'isearch                 t 'global 'tty)
   )
+
+;;; faces.el ends here

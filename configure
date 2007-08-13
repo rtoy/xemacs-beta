@@ -262,6 +262,9 @@ Additional features:
 			to run.
 --usage-tracking	Enable some Sun-internal code.  If you don't
 			know what this is, you don't want it.
+--with-pop		support POP for mail retrieval
+--with-kerberos		support Kerberos-authenticated POP
+--with-hesiod		support Hesiod to get the POP server host
 
 Internationalization options:
 
@@ -420,6 +423,9 @@ while test $# != 0; do
 	with_energize	| \
 	with_sparcworks | \
 	with_tooltalk   | \
+	with_pop	| \
+	with_kerberos	| \
+	with_hesiod	| \
 	external_widget | \
 	extra_verbose   | \
 	const_is_losing | \
@@ -1293,7 +1299,9 @@ case "${canonical}" in
   ## Iris 4D
   mips-sgi-irix3.*      ) machine=iris4d opsys=irix3-3 ;;
   mips-sgi-irix4.*      ) machine=iris4d opsys=irix4-0 ;;
-  mips-sgi-irix6*       ) machine=iris4d opsys=irix6-0 ;;
+  mips-sgi-irix6*       ) machine=iris4d
+			opsys=irix6-0
+			NON_GNU_CC="cc -Olimit 2000" ;;
   mips-sgi-irix5.[3-9]* ) machine=iris4d opsys=irix5-3 ;;
   mips-sgi-irix5.2*     ) machine=iris4d opsys=irix5-2 ;;
   mips-sgi-irix5.1*     ) machine=iris4d opsys=irix5-1 ;;
@@ -1517,7 +1525,7 @@ if test "${dynamic}" = "yes" ; then
   esac
 elif test "${dynamic}" = "no" ; then
   case "${opsys}" in
-    sol2* | decosf1-3 | decosf3-* | linux ) opsys="${opsys}-static" ;;
+    sol2* | decosf1-3 | decosf3-* | decosf4-* | linux ) opsys="${opsys}-static" ;;
   esac
 fi
 
@@ -2688,7 +2696,7 @@ case "${canonical}" in
     # In the IRIX 5.3 ld, only the last -rpath arg has any effect.  This is 
     # fundamentaly incompatible with having separate LD_SWITCH_X_SITE
     # and LD_SWITCH_SITE variables.  Fortunately, SGI fixed this by 6.2.
-    if [ -n "${x_libraries}" ] || [ -n "${site_runtime_libraries}" ]; then
+    if test -n "${x_libraries}" || test -n "${site_runtime_libraries}" ; then
       (echo "WARNING: The IRIX 5 ld ignores all but the last -rpath argument,";
        echo "         so if you need to specify more than one additional";
        echo "         runtime library directory, you will have to do so";
@@ -2880,11 +2888,11 @@ configure___ REAL_CFLAGS=C_DEBUG_SWITCH '${SPECIFIED_CFLAGS}'
 CPP=`eval "echo $CPP"`
 eval `${CPP} -Isrc ${tempcname} \
        | grep 'configure___' \
-       | sed -n -e 's/^configure___ \(^=*=\)\(.*\)$/\1"\2"/p'`
+       | sed -n -e 's/^configure___ \([^=]*=\)\(.*\)$/\1"\2"/p'`
 if test "x$SPECIFIED_CFLAGS" = x ; then
   eval `${CPP} -Isrc -DTHIS_IS_CONFIGURE ${tempcname} \
 	 | grep 'configure___' \
-	 | sed -n -e 's/^configure___ \(^=*=\)\(.*\)$/\1"\2"/p'`
+	 | sed -n -e 's/^configure___ \([^=]*=\)\(.*\)$/\1"\2"/p'`
 else
   REAL_CFLAGS="$CFLAGS"
 fi
@@ -2916,7 +2924,7 @@ LISP_FLOAT_TYPE=yes
 
 #### Add the libraries to LIBS and check for some functions.
 
-]
+
 CPPFLAGS="${C_SWITCH_SITE} $c_switch_system $c_switch_machine $c_switch_x_system $CPPFLAGS"
 DEFS="${C_SWITCH_SITE} $c_switch_system $c_switch_machine $c_switch_x_system $DEFS"
 LIBS="${LD_SWITCH_SITE} $ld_switch_x_system $libsrc_libs $LIBS"
@@ -5881,7 +5889,7 @@ if test "${with_tooltalk}" = "yes" ; then
     case "${arg}" in
 	-L*) if test -f `echo "${arg}/libtt.a" | sed 's/^\-L//'` ; then
 		 dash_r=''
-		 if  "${add_runtime_flag}" = "yes" ; then
+		 if test "${add_runtime_flag}" = "yes" ; then
 		     dash_r=`echo ${arg} | sed "s/^-L */${runtime_arg}/"`
 		 fi
 		 LD_SWITCH_X_SITE="${LD_SWITCH_X_SITE} ${arg} ${dash_r}"
@@ -6849,6 +6857,42 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}MEMORY_USAGE_STATS\${ac_dB}MEMORY_USAGE_STAT
 "
 }
 
+test "${with_pop}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining MAIL_USE_POP"
+echo "#define" MAIL_USE_POP "1" >> confdefs.h
+DEFS="$DEFS -DMAIL_USE_POP=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}MAIL_USE_POP\${ac_dB}MAIL_USE_POP\${ac_dC}1\${ac_dD}
+\${ac_uA}MAIL_USE_POP\${ac_uB}MAIL_USE_POP\${ac_uC}1\${ac_uD}
+\${ac_eA}MAIL_USE_POP\${ac_eB}MAIL_USE_POP\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_kerberos}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining KERBEROS"
+echo "#define" KERBEROS "1" >> confdefs.h
+DEFS="$DEFS -DKERBEROS=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}KERBEROS\${ac_dB}KERBEROS\${ac_dC}1\${ac_dD}
+\${ac_uA}KERBEROS\${ac_uB}KERBEROS\${ac_uC}1\${ac_uD}
+\${ac_eA}KERBEROS\${ac_eB}KERBEROS\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_hesiod}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining HESIOD"
+echo "#define" HESIOD "1" >> confdefs.h
+DEFS="$DEFS -DHESIOD=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HESIOD\${ac_dB}HESIOD\${ac_dC}1\${ac_dD}
+\${ac_uA}HESIOD\${ac_uB}HESIOD\${ac_uC}1\${ac_uD}
+\${ac_eA}HESIOD\${ac_eB}HESIOD\${ac_eC}1\${ac_eD}
+"
+}
+
 
 test "${error_check_extents}" = yes && 
 {
@@ -7001,7 +7045,11 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}NO_UNION_TYPE\${ac_dB}NO_UNION_TYPE\${ac_dC}
 
 
 
-echo "$0 $configure_args" >> Installation
+(
+echo "uname -a: `uname -a`" 
+echo "" 
+echo "$0 $configure_args" 
+) >> Installation
 # Start stdout redirection to '| tee -a Installation'
 (
 echo "
@@ -7030,7 +7078,7 @@ elif test -n "$site_libraries"; then
 elif test -n "$site_runtime_libraries"; then
   echo "  Additional libraries:                                   ${site_runtime_libraries}"
 fi
-if test "$with_wnn"; then
+if test "$with_wnn" = yes ; then
   echo "  Finding WNN includes with:                              ${wnn_includes}"
   echo "  Loading WNN libs with:                                  ${wnn_libraries}"
 fi
@@ -7062,7 +7110,7 @@ test "$with_database_berkdb" = yes && echo "  Compiling in support for Berkeley 
 test "$with_database_dbm"    = yes && echo "  Compiling in support for DBM."
 test "$with_database_gnudbm" = yes && echo "  Compiling in support for GNU DBM."
 
-test "$with_ncurses"  = yes && echo "  Compiling in support for ncurses."
+test "$have_ncurses"  = yes && echo "  Compiling in support for ncurses."
 test "$with_socks"    = yes && echo "  Compiling in support for SOCKS."
 
 test "$with_mule"     = yes && echo "  Compiling in Mule (multi-lingual) support."
@@ -7094,14 +7142,19 @@ test "$with_scrollbars" = athena3d && echo "  Using the Athena-3d scrollbar."
 test "$with_dialogs"    = motif  && echo "  Using the Motif dialog boxes."
 test "$with_dialogs"    = athena && echo "  Using the Athena dialog boxes."
 test "$with_dialogs"    = athena3d && echo "  Using the Athena-3d dialog boxes."
+test "$with_pop"	= yes && "Using POP for mail access"
+test "$with_kerberos"	= yes && "Using Kerberos for POP authentication"
+test "$with_hesiod"	= yes && "Using Hesiod to get POP server host"
 
 test "${use_union_type}"     = yes && echo "  Using the union type for Lisp_Objects."
 test "${debug}"              = yes && echo "  Compiling in extra code for debugging."
 test "${memory_usage_stats}" = yes && echo "  Compiling in code for checking XEmacs memory usage."
 test "$usage_tracking"       = yes && echo "  Compiling with usage tracking active (Sun internal)."
+echo ""
 ) | tee -a Installation
-echo " | tee -a Installation
-"
+echo 'The above configure report is appended to "Installation" file.'
+echo ""
+
 
  
 # Remove any trailing slashes in these variables.

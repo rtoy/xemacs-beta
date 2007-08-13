@@ -1,7 +1,7 @@
 ;;; url-http.el --- HTTP Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/03/03 15:13:11
-;; Version: 1.16
+;; Created: 1997/04/03 20:34:59
+;; Version: 1.17
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -442,7 +442,10 @@ HTTP/1.0 specification for more details." x redir) 'error)
        ((= status 407)			; Proxy authentication required
 	(let* ((y (or (cdr (assoc "proxy-authenticate" result)) "basic"))
 	       (url (url-view-url t))
+	       (urlobj (url-generic-parse-url url))
 	       (url-basic-auth-storage url-proxy-basic-authentication)
+	       (url-using-proxy (url-find-proxy-for-url urlobj
+							(url-host urlobj)))
 	       (type (downcase (if (string-match "[ \t]" y)
 				   (substring y 0 (match-beginning 0))
 				 y))))

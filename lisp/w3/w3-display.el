@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/03/26 15:24:53
-;; Version: 1.157
+;; Created: 1997/04/03 16:32:31
+;; Version: 1.171
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -70,6 +70,7 @@
 (w3-d-s-var-def w3-face-descr)
 (w3-d-s-var-def w3-face-pixmap)
 (w3-d-s-var-def w3-display-css-properties)
+(w3-d-s-var-def w3-display-background-properties)
 
 (eval-when-compile
   (defmacro w3-get-attribute (attr)
@@ -91,6 +92,13 @@
     (`
      (progn
        (w3-get-face-info font-family)
+       ;; This is to handle the 'face' attribute on arbitrary elements
+       (if (cdr-safe (assq 'face (nth 1 node)))
+	   (setf (car w3-face-font-family)
+		 (append (car w3-face-font-family)
+			 (split-string (cdr-safe
+					(assq 'face (nth 1 node)))
+				       " *, *"))))
        (w3-get-face-info font-style)
        (w3-get-face-info font-weight)
        (w3-get-face-info font-variant)
@@ -311,7 +319,7 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 	     (if (>= (setq width (current-column)) fill-column)
 		 nil			; already justified, or error
 	       (beginning-of-line)
-	       (insert-char ?  (- fill-column width))
+	       (insert-char ?  (- fill-column width) t)
 	       (end-of-line)
 	       (if (eobp)
 		   (throw 'fill-exit t))
@@ -363,9 +371,10 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
   (add-text-properties w3-scratch-start-point
 		       (point) (list 'face w3-active-faces
 				     'html-stack w3-display-open-element-stack
-				     'start-open t
-				     'end-open t
-				     'rear-nonsticky t
+				     'start-open nil
+				     'end-open nil
+				     'front-sticky t
+				     'rear-nonsticky nil
 				     'duplicable t))
   (if (car w3-active-voices)
       (add-text-properties w3-scratch-start-point (point)
@@ -450,51 +459,57 @@ If TEMPORARY is non-nil, this face will cease to exist if not in use."
 
   (defmacro w3-display-handle-list-type ()
     (`
-     (case (car break-style)
-       (list-item
-	(let ((list-style (w3-get-style-info 'list-style-type node))
-	      (list-num (if (car w3-display-list-stack)
-			    (incf (car w3-display-list-stack))
-			  1))
-	      (margin (1- (car left-margin-stack)))
-	      (indent (w3-get-style-info 'text-indent node 0)))
-	  (if (> indent 0)
-	      (setq margin (+ margin indent))
-	    (setq margin (max 0 (- margin indent))))
-	  (beginning-of-line)
-	  (case list-style
-	    ((disc circle square)
-	     (insert (format (format "%%%dc" margin)
-			     (or (cdr-safe (assq list-style w3-bullets))
-				 ?o))))
-	    ((decimal lower-roman upper-roman lower-alpha upper-alpha)
-	     (let ((x (case list-style
-			(lower-roman
-			 (w3-decimal-to-roman list-num))
-			(upper-roman
-			 (upcase
-			  (w3-decimal-to-roman list-num)))
-			(lower-alpha
-			 (w3-decimal-to-alpha list-num))
-			(upper-alpha
-			 (upcase
-			  (w3-decimal-to-alpha list-num)))
-			(otherwise
-			 (int-to-string list-num)))))
-	       (insert (format (format "%%%ds." margin) x))
+     (add-text-properties
+      (point)
+      (progn
+	(case (car break-style)
+	  (list-item
+	   (let ((list-style (w3-get-style-info 'list-style-type node))
+		 (list-num (if (car w3-display-list-stack)
+			       (incf (car w3-display-list-stack))
+			     1))
+		 (margin (1- (car left-margin-stack)))
+		 (indent (w3-get-style-info 'text-indent node 0)))
+	     (if (> indent 0)
+		 (setq margin (+ margin indent))
+	       (setq margin (max 0 (- margin indent))))
+	     (beginning-of-line)
+	     (case list-style
+	       ((disc circle square)
+		(insert (format (format "%%%dc" margin)
+				(or (cdr-safe (assq list-style w3-bullets))
+				    ?o))))
+	       ((decimal lower-roman upper-roman lower-alpha upper-alpha)
+		(let ((x (case list-style
+			   (lower-roman
+			    (w3-decimal-to-roman list-num))
+			   (upper-roman
+			    (upcase
+			     (w3-decimal-to-roman list-num)))
+			   (lower-alpha
+			    (w3-decimal-to-alpha list-num))
+			   (upper-alpha
+			    (upcase
+			     (w3-decimal-to-alpha list-num)))
+			   (otherwise
+			    (int-to-string list-num)))))
+		  (insert (format (format "%%%ds." margin) x))
+		  )
+		)
+	       (otherwise
+		(insert (w3-get-pad-string margin)))
 	       )
 	     )
-	    (otherwise
-	     (insert (w3-get-pad-string margin)))
-	    )
+	   )
+	  (otherwise
+	   (insert (w3-get-pad-string (+ (car left-margin-stack)
+					 (w3-get-style-info 'text-indent node 0)))))
 	  )
-	)
-       (otherwise
-	(insert (w3-get-pad-string (+ (car left-margin-stack)
-				      (w3-get-style-info 'text-indent node 0)))))
-       )
-     )
-    )
+	(point))
+      (list 'start-open t
+	    'end-open t
+	    'rear-nonsticky nil
+	    'face 'nil))))
 
   (defmacro w3-display-set-margins ()
     (`
@@ -810,10 +825,16 @@ w3-table-border-chars to one of the the three other vectors"
   (cond
    ((and w3-use-terminal-characters
 	 (eq (device-type) 'x))
-    (if (find-face 'w3-table-hack-x-face) nil
+    (if (and (find-face 'w3-table-hack-x-face)
+	     (face-differs-from-default-p 'w3-table-hack-x-face))
+	nil
       (make-face 'w3-table-hack-x-face)
-      (font-set-face-font 'w3-table-hack-x-face
-			  (make-font :family "terminal")))
+      (if (not (face-differs-from-default-p 'w3-table-hack-x-face))
+	  (font-set-face-font 'w3-table-hack-x-face
+			      (make-font :family "terminal"
+					 :registry "*"
+					 :encoding "*"
+					 ))))
     (cond
      ((not (face-differs-from-default-p 'w3-table-hack-x-face))
       nil)
@@ -1210,6 +1231,7 @@ Can sometimes make the structure of a document clearer")
 	     (rows nil)
 	     (row 0)
 	     (this-rectangle nil)
+	     (inhibit-read-only t)
 	     (i 0)
 	     )
 
@@ -1249,14 +1271,27 @@ Can sometimes make the structure of a document clearer")
 	       (save-restriction
 		 (narrow-to-region (point) (point))
 		 (setq fill-column avgwidth
-		       inhibit-read-only t
 		       w3-last-fill-pos (point-min)
 		       i 0)
 		 ;; skip over columns that have leftover content
 		 (while (and (< i num-cols)
 			     (/= 0 (aref table-rowspans i)))
 		   (setq i (+ i (max 1 (aref table-colspans i)))))
+		 ;; Need to push the properties for the table onto the stack
+		 (setq w3-display-css-properties (css-get
+						  tag
+						  args
+						  w3-current-stylesheet
+						  w3-display-open-element-stack))
+		 (push (w3-face-for-element (list tag args nil)) w3-active-faces)
+		 (push (w3-voice-for-element (list tag args nil)) w3-active-voices)
+		 (push (cons tag args) w3-display-open-element-stack)
 		 (while cols
+		   ;; And need to push these bogus placeholders on there
+		   ;; so that w3-display-node doesn't pop off the real face
+		   ;; or voice we just put in above.
+		   (push nil w3-active-faces)
+		   (push nil w3-active-voices)
 		   (let* ((node (car cols))
 			  (attributes (nth 1 node))
 			  (colspan (string-to-int
@@ -1302,7 +1337,15 @@ Can sometimes make the structure of a document clearer")
 		     (skip-chars-backward " \t\n\r")
 		     (delete-region (point) (point-max))
 		     (if (>= fill-column (current-column))
-			 (insert-char ?  (- fill-column (current-column))))
+			 (insert-char ?  (- fill-column (current-column)) t))
+		     (goto-char (point-min))
+		     ;; This gets our text properties out to the
+		     ;; end of lines for table rows/cells with backgrounds
+		     (while (not (eobp))
+		       (re-search-forward "$" nil t)
+		       (if (>= fill-column (current-column))
+			   (insert-char ?  (- fill-column (current-column)) t))
+		       (or (eobp) (forward-char 1)))
 		     (aset formatted-cols i (extract-rectangle (point-min) (point-max)))
 		     (delete-region (point-min) (point-max))
 		     (let ((j (1- colspan)))
@@ -1315,7 +1358,10 @@ Can sometimes make the structure of a document clearer")
 				 (/= 0 (aref table-rowspans i)))
 		       (setq i (+ i (max 1 (aref table-colspans i)))))
 		     ))
-
+		 (pop w3-display-open-element-stack)
+		 (pop w3-active-faces)
+		 (pop w3-active-voices)
+		 (w3-pop-all-face-info)
 		 ;; finish off the columns
 		 (while (< i num-cols)
 		   (aset table-colwidth i (aref column-dimensions i))
@@ -1388,7 +1434,7 @@ Can sometimes make the structure of a document clearer")
 			(setq i (+ i (max (aref table-colspans i)
 					  (aref prev-colspans  i) 1))))
 		       (t
-			(insert-char ?  (aref table-colwidth i))
+			(insert-char ?  (aref table-colwidth i) t)
 			(setq lflag nil)
 			(setq i (+ i (max (aref table-colspans i)
 					  (aref prev-colspans  i) 1))))))
@@ -1411,7 +1457,7 @@ Can sometimes make the structure of a document clearer")
 	       (while (< i num-cols)
 		 (if (car (aref formatted-cols i))
 		     (insert (pop (aref formatted-cols i))) 
-		   (insert-char ?  (aref table-colwidth i))) 
+		   (insert-char ?  (aref table-colwidth i) t)) 
 		 (w3-insert-terminal-char (w3-table-lookup-char nil t nil t))
 		 (setq i (+ i (max (aref table-colspans i) 1))))
 	       (insert "\n")
@@ -1428,7 +1474,6 @@ Can sometimes make the structure of a document clearer")
 	     (setq prev-colspans (copy-seq table-colspans))
 	 
 	     (and w3-do-incremental-display (w3-pause))
-
 	     )
 	    (caption
 	     (let ((left (length fill-prefix))
@@ -1493,6 +1538,12 @@ Can sometimes make the structure of a document clearer")
     (while rows
       (push (list 'tr nil (pop rows)) items))
     items))
+
+(defun w3-fix-color (color)
+  (if (and color
+	   (string-match "^[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$" color))
+      (concat "#" color)
+    color))
 
 (defun w3-display-normalize-form-info (args)
   (let* ((plist (alist-to-plist args))
@@ -1617,7 +1668,7 @@ Can sometimes make the structure of a document clearer")
 					   (nth 1 node))))
 		(setf (nth 1 node) (cons (cons 'id unique-id) (nth 1 node)))
 		(w3-handle-style (list 'data sheet
-				       'notation "css"))))
+				       'notation "text/css"))))
 	  (setq w3-display-css-properties (css-get
 					   (nth 0 node)
 					   (nth 1 node)
@@ -1827,11 +1878,32 @@ Can sometimes make the structure of a document clearer")
 	    ((html body)
 	     (let ((fore (car (delq nil (copy-list w3-face-color))))
 		   (back (car (delq nil (copy-list w3-face-background-color))))
+		   (alink (w3-get-attribute 'alink))
+		   (vlink (w3-get-attribute 'vlink))
+		   (link  (w3-get-attribute 'link))
+		   (sheet "")
 		   )
-	       (if (and fore font-running-xemacs)
-		   (font-set-face-foreground 'default fore (current-buffer)))
-	       (if (and back font-running-xemacs)
-		   (font-set-face-background 'default back (current-buffer)))
+	       (if link
+		   (setq sheet (format "%sa:link { color: %s }\n" sheet
+				       (w3-fix-color link))))
+	       (if vlink
+		   (setq sheet (format "%sa:visited { color: %s }\n" sheet
+				       (w3-fix-color vlink))))
+	       (if alink
+		   (setq sheet (format "%sa:active { color: %s }\n" sheet
+				       (w3-fix-color alink))))
+	       (if (/= (length sheet) 0)
+		   (w3-handle-style (list 'data sheet
+					  'notation "text/css")))
+	       (if (and (w3-get-attribute 'text) (not fore))
+		   (setf (car w3-face-color) (w3-fix-color
+					      (w3-get-attribute 'text))))
+	       (if (not font-running-xemacs)
+		   (setq w3-display-background-properties (cons fore back))
+		 (if fore
+		     (font-set-face-foreground 'default fore (current-buffer)))
+		 (if back
+		     (font-set-face-background 'default back (current-buffer))))
 	       (w3-handle-content node)))
 	    (*document
 	     (let ((info (mapcar (lambda (x) (cons x (symbol-value x)))
@@ -1860,7 +1932,7 @@ Can sometimes make the structure of a document clearer")
 					    w3-user-stylesheet)
 		     w3-last-fill-pos (point)
 		     fill-prefix "")
-	       (set (make-local-variable 'inhibit-read-only) t))
+	       )
 	     (w3-handle-content node)
 	     )
 	    (*invisible
@@ -2076,7 +2148,7 @@ Can sometimes make the structure of a document clearer")
   (let ((inhibit-read-only t))
     (save-excursion
       (goto-char (point-min))
-      (while (search-forward "[ \t]*\n[ \t]*" nil t)
+      (while (re-search-forward "[ \t]*\n[ \t]*" nil t)
 	(remove-text-properties (match-beginning 0) (match-end 0)
 				'(face nil mouse-face nil) nil)))))
 
@@ -2098,8 +2170,6 @@ Can sometimes make the structure of a document clearer")
   (and (not w3-running-xemacs)
        (not (eq (device-type) 'tty))
        (w3-fixup-eol-faces))
-  (let ((inhibit-read-only t))
-    (remove-text-properties (point-min) (point-max) '(read-only) nil))
   (message "Drawing... done"))
 
 (defun w3-region (st nd)
@@ -2173,7 +2243,7 @@ Can sometimes make the structure of a document clearer")
   (let* ((old-asynch url-be-asynchronous)
 	 (structure (reverse w3-frameset-structure)))
     (if new-frame
-	(select-frame (make-frame-command)))
+	(select-frame (make-frame)))
     (setq-default url-be-asynchronous nil)
     ;; set up frames
     (while structure
@@ -2299,6 +2369,5 @@ For a terminal screen, the value is always 1."
 		(pop star-dimensions))
 	      ;; push + push => in order
 	      dimensions))))))
-
 
 (provide 'w3-display)

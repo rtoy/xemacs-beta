@@ -644,12 +644,15 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 ;; absent under Emacs 19.34.  So vm-frame-per-summary won't work
 ;; quite right under these Emacs versions.  XEmacs 19.15 should
 ;; have a working version of this function.
-(if (and (fboundp 'frame-totally-visible-p)
-	 (vm-xemacs-p)
-	 (or (>= emacs-major-version 20)
-	     (>= emacs-minor-version 15)))
-    (fset 'vm-frame-totally-visible-p 'frame-totally-visible-p)
-  (fset 'vm-frame-totally-visible-p 'vm-frame-visible-p))
+;; 2 April 1997, frame-totallyt-visible-p apparently still broken
+;; under 19.15.  I give it up for now.
+;;(if (and (fboundp 'frame-totally-visible-p)
+;;	 (vm-xemacs-p)
+;;	 (or (>= emacs-major-version 20)
+;;	     (>= emacs-minor-version 15)))
+;;    (fset 'vm-frame-totally-visible-p 'frame-totally-visible-p)
+;;  (fset 'vm-frame-totally-visible-p 'vm-frame-visible-p))
+(fset 'vm-frame-totally-visible-p 'vm-frame-visible-p)
 
 (fset 'vm-window-frame
       (symbol-function

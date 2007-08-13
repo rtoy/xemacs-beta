@@ -1,7 +1,7 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/12 20:07:18
-;; Version: 1.19
+;; Created: 1997/04/01 19:23:18
+;; Version: 1.22
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -104,9 +104,21 @@
 
 (defun w3-mode-version-specifics ()
   ;; Emacs 19 specific stuff for w3-mode
+  (declare (special w3-face-index w3-display-background-properties))
   (make-local-variable 'track-mouse)
   (set (make-local-variable 'buffer-access-fontify-functions) 'w3-e19-no-read-only)
-  (if w3-track-mouse (setq track-mouse t)))
+  (if w3-track-mouse (setq track-mouse t))
+  (if w3-display-background-properties
+      (let ((face (w3-make-face (intern
+				 (format "w3-style-face-%05d" w3-face-index))
+				"An Emacs-W3 face... don't edit by hand." t))
+	    (fore (car w3-display-background-properties))
+	    (inhibit-read-only t)
+	    (back (cdr w3-display-background-properties)))
+	(setq w3-face-index (1+ w3-face-index))
+	(if fore (font-set-face-foreground face fore))
+	(if back (font-set-face-background face back))
+	(fillin-text-property (point-min) (point-max) 'face 'face face))))
 
 (defun w3-mouse-handler (e)
   "Function to message the url under the mouse cursor"
@@ -121,39 +133,6 @@
       (setq mouse-events (w3-script-find-event-handlers pt 'mouse))
       (if (assq 'onmouseover mouse-events)
 	  (w3-script-evaluate-form (cdr (assq 'onmouseover mouse-events)))))))
-
-(defun w3-color-values (color)
-  (cond
-   ((eq window-system 'x)
-    (x-color-values color))
-   ((eq window-system 'pm)
-    (pm-color-values color))
-   ((eq window-system 'ns)
-    (ns-color-values color))
-   (t nil)))
-     
-(defun w3-color-light-p (color-or-face)
-  (let (colors)
-    (cond
-     ((null window-system)
-      nil)
-     ((facep color-or-face)
-      (setq color-or-face (face-background color-or-face))
-      (if (null color-or-face)
-	  (setq color-or-face (cdr-safe
-			       (assq 'background-color (frame-parameters)))))
-      (setq colors (w3-color-values color-or-face)))
-     ((stringp color-or-face)
-      (setq colors (w3-color-values color-or-face)))
-     ((font-rgb-color-p color-or-face)
-      (setq colors (list (font-rgb-color-red color-or-face)
-			 (font-rgb-color-green color-or-face)
-			 (font-rgb-color-blue color-or-face))))
-     (t
-      (signal 'wrong-type-argument 'color-or-face-p)))
-    (not (< (apply '+ colors)
-	    (/ (apply '+ (w3-color-values "white")) 3)))))
-
 
 
 (provide 'w3-emacs19)

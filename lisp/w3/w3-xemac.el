@@ -1,7 +1,7 @@
 ;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/09 01:59:33
-;; Version: 1.16
+;; Created: 1997/04/01 19:23:21
+;; Version: 1.17
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -99,26 +99,6 @@
    ((eq (device-type) 'ns)
     )
    (t nil)))
-
-(defun w3-color-light-p (color-or-face)
-  (let (face color)
-    (cond
-     ((or (facep color-or-face)
-	  (and (symbolp color-or-face)
-	       (find-face color-or-face)))
-      (setq color (specifier-instance (face-background color-or-face))))
-     ((color-instance-p color-or-face)
-      (setq color color-or-face))
-     ((color-specifier-p color-or-face)
-      (setq color (specifier-instance color-or-face)))
-     ((stringp color-or-face)
-      (setq color (make-color-instance color-or-face)))
-     (t (signal 'wrong-type-argument 'color-or-face-p)))
-    (if color
-	(not (< (apply '+ (color-instance-rgb-components color))
-		(/ (apply '+ (color-instance-rgb-components
-			      (make-color-instance "white"))) 3)))
-      t)))
 
 (defun w3-mode-motion-hook (e)
   (let* ((glyph  (event-glyph e))

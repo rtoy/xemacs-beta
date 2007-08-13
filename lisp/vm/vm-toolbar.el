@@ -25,7 +25,7 @@
    (vm-toolbar-any-messages-p)
    "Go to the next message.\n
 The command `vm-toolbar-next-command' is run, which is normally
-bound to `vm-next-message'.
+fbound to `vm-next-message'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-next-command 'some-other-command)"])
@@ -39,7 +39,7 @@ s-expression like this one in your .vm file:
    (vm-toolbar-any-messages-p)
    "Go to the previous message.\n
 The command `vm-toolbar-previous-command' is run, which is normally
-bound to `vm-previous-message'.
+fbound to `vm-previous-message'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-previous-command 'some-other-command)"])
@@ -58,7 +58,7 @@ s-expression like this one in your .vm file:
   [vm-toolbar-file-icon vm-toolbar-file-command (vm-toolbar-any-messages-p)
    "Save the current message to a folder.\n
 The command `vm-toolbar-file-command' is run, which is normally
-bound to `vm-save-message'.
+fbound to `vm-save-message'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-file-command 'some-other-command)"])
@@ -71,7 +71,7 @@ s-expression like this one in your .vm file:
    (vm-toolbar-mail-waiting-p)
    "Retrieve spooled mail for the current folder.\n
 The command `vm-toolbar-getmail-command' is run, which is normally
-bound to `vm-get-new-mail'.
+fbound to `vm-get-new-mail'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-getmail-command 'some-other-command)"])
@@ -85,7 +85,7 @@ s-expression like this one in your .vm file:
    (vm-toolbar-any-messages-p)
    "Print the current message.\n
 The command `vm-toolbar-print-command' is run, which is normally
-bound to `vm-print-message'.
+fbound to `vm-print-message'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-print-command 'some-other-command)"])
@@ -97,7 +97,7 @@ s-expression like this one in your .vm file:
   [vm-toolbar-visit-icon vm-toolbar-visit-command t
    "Visit a different folder.\n
 The command `vm-toolbar-visit-command' is run, which is normally
-bound to `vm-visit-folder'.
+fbound to `vm-visit-folder'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-visit-command 'some-other-command)"])
@@ -111,7 +111,7 @@ s-expression like this one in your .vm file:
    (vm-toolbar-any-messages-p)
    "Reply to the current message.\n
 The command `vm-toolbar-reply-command' is run, which is normally
-bound to `vm-followup-include-text'.
+fbound to `vm-followup-include-text'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-reply-command 'some-other-command)"])
@@ -123,7 +123,7 @@ s-expression like this one in your .vm file:
   [vm-toolbar-compose-icon vm-toolbar-compose-command t
    "Compose a new message.\n
 The command `vm-toolbar-compose-command' is run, which is normally
-bound to `vm-mail'.
+fbound to `vm-mail'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-compose-command 'some-other-command)"])
@@ -141,7 +141,7 @@ documentation for the variables vm-mime-internal-content-types
 and vm-mime-external-content-types-alist to see how to control
 whether you see buttons or objects.\n
 The command `vm-toolbar-decode-mime-command' is run, which is normally
-bound to `vm-decode-mime-messages'.
+fbound to `vm-decode-mime-messages'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-decode-mime-command 'some-other-command)"])
@@ -190,7 +190,7 @@ file then this button will run `recover-file'."])
    (vm-toolbar-can-quit-p)
    "Quit visiting this folder.\n
 The command `vm-toolbar-quit-command' is run, which is normally
-bound to `vm-quit'.
+fbound to `vm-quit'.
 You can make this button run some other command by using a Lisp
 s-expression like this one in your .vm file:
    (fset 'vm-toolbar-quit-command 'some-other-command)"])

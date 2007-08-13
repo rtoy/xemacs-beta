@@ -33,7 +33,7 @@
 ;; file, but instead copy those definitions you need to change to
 ;; `tex-site.el'. 
 
-(defvar TeX-lisp-directory "auctex/"
+(defvar TeX-lisp-directory (concat data-directory "auctex/")
   "*The directory where the AUC TeX lisp files are located.")
 
 ;; Change this to point to the place where the TeX macros are stored

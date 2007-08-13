@@ -468,7 +468,7 @@ Each element is (INDEX . VALUE)")
 (defvar byte-compile-maxdepth 0 "Maximum depth of execution stack.")
 
 
-;;; The byte codes; this information is duplicated in bytecomp.c
+;;; The byte codes; this information is duplicated in bytecode.c
 
 (defconst byte-code-vector nil
   "An array containing byte-code names indexed by byte-code values.")
@@ -2822,7 +2822,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler (1+ byte-add1)	1)
 (byte-defop-compiler (1- byte-sub1)	1)
 (byte-defop-compiler goto-char		1+1)
-(byte-defop-compiler char-after		1+1)
+(byte-defop-compiler char-after		0-1+1)
 (byte-defop-compiler set-buffer		1)
 ;;(byte-defop-compiler set-mark		1) ;; obsolete
 (byte-defop-compiler forward-word	1+1)

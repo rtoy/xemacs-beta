@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.68
+;; Version: 1.69
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -1348,7 +1348,10 @@ Match frames with dark backgrounds.")
 		  widget 'editable-list
 		  :entry-format "%i %d %v"
 		  :value (or (get symbol 'saved-face)
-			     (get symbol 'factory-face))
+			     (get symbol 'factory-face)
+			     ;; Attempt to construct it.
+			     (list (list t (custom-face-attributes-get 
+					    symbol (selected-frame)))))
 		  :insert-button-args '(:help-echo "\
 Insert new display specification here.")
 		  :append-button-args '(:help-echo "\
@@ -1538,12 +1541,12 @@ and so forth.  The remaining group tags are shown with
   :group 'customize)
 
 (defface custom-group-tag-face-1 '((((class color)
-				   (background dark))
-				  (:foreground "pink" :underline t))
-				 (((class color)
-				   (background light))
-				  (:foreground "red" :underline t))
-				 (t (:underline t)))
+				     (background dark))
+				    (:foreground "pink" :underline t))
+				   (((class color)
+				     (background light))
+				    (:foreground "red" :underline t))
+				   (t (:underline t)))
   "Face used for group tags.")
 
 (defface custom-group-tag-face '((((class color)

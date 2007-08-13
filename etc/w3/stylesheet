@@ -30,6 +30,8 @@
 **
 **  emacs - only include this chunk if you are using Emacs 19
 ** xemacs - only include this chunk if you are using XEmacs
+**  light - only include this chunk if you are using a light background
+**   dark - only include this chunk if you are using a dark background
 ******************************************************************************/
 
 /*
@@ -70,10 +72,13 @@ key,code,tt { font-family: monospace }
 
 @media emacs {
 h1,h2,h3,
-h4,h5,h6  { 
-            text-decoration: underline;
-	    color: blue;
-          }
+h4,h5,h6  { text-decoration: underline; }
+       h1 { color: rgb(0,255,255); }   // cyan
+       h2 { color: rgb(70,130,180); }  // steelblue
+       h3 { color: rgb(106,90,205); }  // slateblue
+       h4 { color: rgb(135,206,235); } // skyblue
+       h5 { color: rgb(0,0,128); }     // navy
+       h6 { color: rgb(173,216,230); } // lightblue
 
 strong,em { color: red         }
       dfn { font-style: italic }

@@ -17,7 +17,7 @@ CP    = cp
 
 # Change this to be how to convert texinfo files into info files
 # examples:
-#	$(EMACS) -batch -q -f batch-texinfo-format
+#	$(EMACS) -batch -q -l texinfmt -f batch-texinfo-format
 #	makeinfo
 MAKEINFO      = makeinfo
 

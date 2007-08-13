@@ -86,7 +86,9 @@ void xfree (pointer);
 # endif
 #endif
 
+#ifndef WINDOWSNT
 #define	NULL	0
+#endif
 
 /* Different portions of Emacs need to call different versions of
    malloc.  The Emacs executable needs alloca to call xmalloc, because
@@ -101,7 +103,11 @@ void xfree (pointer);
 #ifndef emacs
 #define malloc xmalloc
 #endif
+#ifndef WINDOWSNT
 extern pointer malloc ();
+#else
+extern void *malloc();
+#endif
 
 /* Define STACK_DIRECTION if you know the direction of stack
    growth for your system; otherwise it will be automatically

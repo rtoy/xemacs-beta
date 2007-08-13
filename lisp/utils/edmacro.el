@@ -5,7 +5,7 @@
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;;         Hrvoje Niksic <hniksic@srce.hr>  -- XEmacs port
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
-;; Version: 3.05
+;; Version: 3.07
 ;; Keywords: abbrev
 
 ;; This file is part of XEmacs.
@@ -53,6 +53,15 @@
 ;; a keyboard macro, and installs it as the "current" macro.
 ;; This and `format-kbd-macro' can also be called directly as
 ;; Lisp functions.
+
+;; The `kbd' macro calls `read-kbd-macro', but it is evaluated at
+;; compile-time.  It is good to use in your programs and
+;; initializations, as you needn't know the internal keysym
+;; representation.  For example:
+;;
+;; (define-key foo-mode-map (kbd "C-c <up>") 'foo-up)
+;; is the equivalent of
+;; (define-key foo-mode-map [(control ?c) up] 'foo-up)
 
 ;; Type `C-h m', or see the documentation for `edmacro-mode' below,
 ;; for information about the format of written keyboard macros.
@@ -206,6 +215,12 @@ Second argument NEED-VECTOR means to return an event vector always."
   (if (stringp start)
       (edmacro-parse-keys start end)
     (setq last-kbd-macro (edmacro-parse-keys (buffer-substring start end)))))
+
+;;;###autoload
+(defmacro kbd (keys)
+  "Convert KEYS to the internal Emacs key representation."
+  `(eval-when-compile
+     (read-kbd-macro ,keys)))
 
 ;;;###autoload
 (defun format-kbd-macro (&optional macro verbose)
@@ -423,6 +438,13 @@ doubt, use whitespace."
 			(?\e . "ESC")
 			(?\  . "SPC")
 			(?\C-? . "DEL")))
+	(modifier-prefix-alist '(("C" . control)
+				 ("M" . meta)
+				 ("S" . shift)
+				 ("Sh" . shift)
+				 ("A" . alt)
+				 ("H" . hyper)
+				 ("s" . super)))
 	;; string-to-symbol-or-char converter
 	(conv #'(lambda (arg)
 		  (if (= (length arg) 1)
@@ -484,26 +506,21 @@ doubt, use whitespace."
 	       (if (/= (length word) 2)
 		   (error "^ must be followed by one character"))
 	       (setq add (list 'control (aref word 0))))
-	      ((string-match "^[MCSsAH]-" word)
-	       ;; Parse C-*
+	      ((string-match "^\\([MCSsAH]\\|Sh\\)-" word)
+	       ;; Parse C-* and stuff
 	       (setq
 		add
 		(list
 		 (let ((pos1 0)
 		       (r1 nil)
-		       follow)
-		   (while (string-match "^[MCSsAH]-" (substring word pos1))
-		     (setq r1 (nconc
-			       r1
-			       (list
-				(cdr (assq (aref word pos1)
-					   '((?C . control)
-					     (?M . meta)
-					     (?S . shift)
-					     (?A . alt)
-					     (?H . hyper)
-					     (?s . super)))))))
-		     (setq pos1 (+ pos1 2)))
+		       follow curpart prefix)
+		   (while (progn (setq curpart (substring word pos1))
+				 (string-match "^\\([MCSsAH]\\|Sh\\)-"
+					       curpart))
+		     (setq prefix (assoc (match-string 1 curpart)
+					 modifier-prefix-alist))
+		     (setq r1 (nconc r1 (list (cdr prefix))))
+		     (callf + pos1 (1+ (length (car prefix)))))
 		   (setq follow (substring word pos1))
 		   (if (equal follow "")
 		       (error "%s must precede a string"

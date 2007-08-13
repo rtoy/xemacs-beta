@@ -24,16 +24,17 @@
 VERSION=3.101
 
 # The submitter-id for your site.
-SUBMITTER=unknown
+SUBMITTER=net
 
 # Where the GNATS directory lives, if at all.
 [ -z "$GNATS_ROOT" ] && 
 GNATS_ROOT=/usr/lib/gnats/gnats-db
 
 # The default mail address for PR submissions. 
-GNATS_ADDR=bugs@altair.xemacs.org
+GNATS_ADDR=bugs@xemacs.org
 
 # Where the gnats category tree lives.
+[ -z "$DATADIR" ] &&
 DATADIR=/usr/share
 
 # If we've been moved around, try using GCC_EXEC_PREFIX.
@@ -48,7 +49,7 @@ DEFAULT_RELEASE="gnats-3.101"
 DEFAULT_ORGANIZATION="XEmacs Users"
 
 # The default site to look for.
-GNATS_SITE=altair.xemacs.org
+GNATS_SITE=xemacs.org
 
 # Newer config information?
 [ -f ${GNATS_ROOT}/gnats-adm/config ] && . ${GNATS_ROOT}/gnats-adm/config

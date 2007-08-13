@@ -938,7 +938,8 @@ not an autoload.")
 	     (if (not (and obsolete aliases))
 		 (progn
 		   (princ doc stream)
-		   (or (eq ?\n (aref doc (1- (length doc))))
+		   (or (equal doc "")
+		       (eq ?\n (aref doc (1- (length doc))))
 		       (terpri stream)))))))))
 
 

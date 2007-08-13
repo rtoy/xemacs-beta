@@ -19,11 +19,6 @@
 	  (substring "#Revision: 1.1 $" 11 -2)))
 
 ;;;###autoload
-(defvar allow-remote-paths t
-   "*Set this to nil if you don't want remote paths to access
-remote files.")
-
-;;;###autoload
 (or (assoc efs-path-root-regexp file-name-handler-alist)
     (setq file-name-handler-alist
 	  (cons
@@ -41,3 +36,5 @@ remote files.")
 		      inhibit-file-name-handlers)))
 	  (inhibit-file-name-operation operation))
       (apply operation args))))
+
+;;; end of efs-dump.el
