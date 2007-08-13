@@ -380,7 +380,6 @@ TEMACS_X_OBJS=\
 	$(OUTDIR)\menubar-x.obj \
 	$(OUTDIR)\objects-x.obj \
 	$(OUTDIR)\redisplay-x.obj \
-	$(OUTDIR)\scrollbar.obj \
 	$(OUTDIR)\scrollbar-x.obj \
 	$(OUTDIR)\xgccache.obj \
 	$(OUTDIR)\xmu.obj \

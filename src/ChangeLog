@@ -1,3 +1,33 @@
+1998-01-27  SL Baur  <steve@altair.xemacs.org>
+
+	* m/powerpc.h: Isolate changes for mklinux from AIX.
+
+1998-01-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* symbols.c (init_symbols_once_early): Decreased default size of
+	Vpure_uninterned_symbol_table to 50.
+
+1998-01-27  SL Baur  <steve@altair.xemacs.org>
+
+	* redisplay-x.c (x_output_string): Correction for handling underlined
+	fonts when XGetFontProperty fails.
+	From Chris Felaco <felaco@iatcmail.ed.ray.com>
+
+1998-01-27  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* alloc.c (Fpurecopy): Store symbols that aren't
+	  interned in Vobarray into Vpure_uninterned_symbol_table.
+
+	* symbols.c (init_symbols_once_early): Initialize
+	  Vpure_uninterned_symbol_table.
+
+	* emacsfns.h: Declare Vpure_uninterned_symbol_table.
+
+1998-01-26  SL Baur  <steve@altair.xemacs.org>
+
+	* alloc.c (report_pure_usage): New macro PURESIZE_SLOP to allow
+	for extra pure space.
+
 1998-01-23  SL Baur  <steve@altair.xemacs.org>
 
 	* sound.c (Fplay_sound_file): Use NILP for comparison of

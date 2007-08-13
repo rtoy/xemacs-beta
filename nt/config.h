@@ -125,6 +125,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define HAVE_XLOCALE_H if X11/Xlocale.h is present. */
 #define HAVE_XLOCALE_H
+#define HAVE_UNIXOID_EVENT_LOOP
 
 #endif /* HAVE_X_WINDOWS */
 
@@ -133,7 +134,7 @@ Boston, MA 02111-1307, USA.  */
 #define HAVE_WINDOW_SYSTEM
 #endif
 
-/* #define HAVE_UNIXOID_EVENT_LOOP removed -- kkm*/
+
 
 /* Define USER_FULL_NAME to return a string
    that is the user's full name.

@@ -974,7 +974,7 @@ x_output_string (struct window *w, struct display_line *dl,
 
 	  xfont = FONT_INSTANCE_X_FONT (XFONT_INSTANCE (font));
 	  if (!XGetFontProperty (xfont, XA_UNDERLINE_POSITION, &upos))
-	    upos = 0;
+	    upos = dl->descent / 2;
 	  if (!XGetFontProperty (xfont, XA_UNDERLINE_THICKNESS, &uthick))
 	    uthick = 1;
 

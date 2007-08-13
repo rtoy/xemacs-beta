@@ -1045,11 +1045,9 @@ Prefix arg means just kill any existing server communications subprocess." t nil
 
 ;;;***
 
-;;;### (autoloads (help-read-key) "help-macro" "lisp/help-macro.el")
+;;;### (autoloads nil "help-macro" "lisp/help-macro.el")
 
 (defcustom three-step-help t "*Non-nil means give more info about Help command in three steps.\nThe three steps are simple prompt, prompt with all options,\nand window listing and describing the options.\nA value of nil means skip the middle step, so that\n\\[help-command] \\[help-command] gives the window that lists the options." :type 'boolean :group 'help-appearance)
-
-(autoload 'help-read-key "help-macro" nil nil nil)
 
 ;;;***
 

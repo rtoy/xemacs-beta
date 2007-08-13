@@ -323,7 +323,8 @@ This is an internal function.  Do not call it after startup."
 	    (if (and (running-temacs-p)
 		     (file-exists-p (concat dir "/dumped-lisp.el")))
 		(let (package-lisp)
-		  (load (concat dir "/dumped-lisp.el"))
+		  (let (preloaded-file-list)
+		    (load (concat dir "/dumped-lisp.el")))
 		  (if package-lisp
 		      (progn
 			(if (boundp 'preloaded-file-list)

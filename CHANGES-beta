@@ -1,4 +1,8 @@
 							-*- indented-text -*-
+to 20.5 beta22 "Grison's Striped"
+-- Port to mklinux courtesy of Kaoru Fukui
+-- Miscellaneous bug fixes
+
 to 20.5 beta21 "Golden Guernsey"
 -- Package interface standard 1.0
 -- Cygwin stuffs from Andy Piper

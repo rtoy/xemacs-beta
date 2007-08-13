@@ -57,6 +57,8 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"		/* for Vbuffer_defaults */
 #include "console.h"
 
+#include "elhash.h"		/* for HASHTABLE_NONWEAK and HASHTABLE_EQ */
+
 Lisp_Object Qad_advice_info, Qad_activate;
 
 Lisp_Object Qget_value, Qset_value, Qbound_predicate, Qmake_unbound;
@@ -3133,9 +3135,16 @@ static struct symbol_value_magic guts_of_unbound_marker =
   { { symbol_value_forward_lheader_initializer, 0, 69},
     SYMVAL_UNBOUND_MARKER };
 
+Lisp_Object Vpure_uninterned_symbol_table;
+
 void
 init_symbols_once_early (void)
 {
+  /* see comment in Fpurecopy() */
+  Vpure_uninterned_symbol_table =
+    make_lisp_hashtable (50, HASHTABLE_NONWEAK, HASHTABLE_EQ);
+  staticpro(&Vpure_uninterned_symbol_table);
+
   Qnil = Fmake_symbol (make_pure_pname ((CONST Bufbyte *) "nil", 3, 1));
   /* Bootstrapping problem: Qnil isn't set when make_pure_pname is
      called the first time. */

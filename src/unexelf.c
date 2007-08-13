@@ -799,9 +799,17 @@ unexec (char *new_name, char *old_name, unsigned int data_start,
       /* Write out the sections. .data and .data1 (and data2, called
 	 ".data" in the strings table) get copied from the current process
 	 instead of the old file.  */
+#ifdef __powerpc__
+      /* The PowerPC has additional 'data' segments which need to be saved */
+      if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data") ||
+	  !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data1") ||
+	  !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sdata") ||
+	  !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sdata1"))
+#else
       if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data")
 	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
 		      ".data1"))
+#endif
 	src = (caddr_t) OLD_SECTION_H (n).sh_addr;
       else
 	src = old_base + OLD_SECTION_H (n).sh_offset;
@@ -864,9 +872,17 @@ unexec (char *new_name, char *old_name, unsigned int data_start,
 	   be no harm in that provided that r_offset is always the first
 	   member.  */
 	nn = section.sh_info;
+#ifdef __powerpc__
+      /* The PowerPC has additional 'data' segments which need to be saved */
+	if (!strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data") ||
+	    !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".data1") ||
+	    !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sdata") ||
+	    !strcmp (old_section_names + NEW_SECTION_H (n).sh_name, ".sdata1"))
+#else
 	if (!strcmp (old_section_names + NEW_SECTION_H (nn).sh_name, ".data")
 	    || !strcmp ((old_section_names + NEW_SECTION_H (nn).sh_name),
 			".data1"))
+#endif
 	  {
 	    Elf32_Addr offset = NEW_SECTION_H (nn).sh_addr -
 	      NEW_SECTION_H (nn).sh_offset;

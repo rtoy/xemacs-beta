@@ -40,7 +40,7 @@
 
 (define-function 'defalias 'define-function)
 (defvar running-xemacs t
-  "Non-nil when the current emacsen is XEmacs.")
+  "Non-nil when the current emacs is XEmacs.")
 (defvar preloaded-file-list nil
   "List of files preloaded into the XEmacs binary image.")
 
@@ -182,7 +182,8 @@
 ;; Dump into the name `xemacs' (only)
 (when (member "dump" command-line-args)
     (message "Dumping under the name xemacs")
-  (condition-case () (delete-file "xemacs") (file-error nil))
+    ;; This is handled earlier in the build process.
+    ;; (condition-case () (delete-file "xemacs") (file-error nil))
   (when (fboundp 'really-free)
     (really-free))
   (dump-emacs "xemacs" "temacs")

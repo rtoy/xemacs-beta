@@ -2783,7 +2783,32 @@ Does not copy symbols.
         else if (FLOATP (obj))
           return make_pure_float (float_data (XFLOAT (obj)));
 #endif /* LISP_FLOAT_TYPE */
-	else if (!SYMBOLP (obj))
+	else if (SYMBOLP (obj))
+	  {
+	    /*
+	     * Symbols can't be made pure (and thus read-only),
+	     * because assigning to their function, value or plist
+	     * slots would produced a SEGV in the dumped XEmacs.  So
+	     * we previously would just return the symbol unchanged.
+	     *
+	     * But purified aggregate objects like lists and vectors
+	     * can contain uninterned symbols.  If there are no
+	     * other non-pure references to the symbol, then the
+	     * symbol is not proteted from garabge colelction
+	     * because the collector does not mark the contents of
+	     * purified objects.  So to protect the symbols, an impure
+	     * reference has to be kept for each uninterned symbol
+	     * that is referenced by a pure object.  All such
+	     * symbols are stored in the hashtable pointed to by
+	     * Vpure_uninterened_symbol_table, which is itself
+	     * staticpro'd.
+	     */
+	    if (EQ (XSYMBOL (obj)->obarray, Vobarray))
+	      return obj;
+	    Fputhash (obj, obj, Vpure_uninterned_symbol_table);
+	    return obj;
+	  }
+	else
           signal_simple_error ("Can't purecopy %S", obj);
       }
     }
@@ -2831,7 +2856,11 @@ report_pure_usage (int report_impurities,
       int lost = (get_PURESIZE() - pureptr) / 1024;
       char buf[200];
       extern Lisp_Object Vemacs_beta_version;
-      int slop = NILP(Vemacs_beta_version) ? 512 : 4;
+      /* This used to be NILP(Vemacs_beta_version) ? 512 : 4; */
+#ifndef PURESIZE_SLOP
+#define PURESIZE_SLOP 4
+#endif
+      int slop = PURESIZE_SLOP;
 
       sprintf (buf, "Purespace usage: %ld of %ld (%d%%",
                pureptr, (long) get_PURESIZE(),

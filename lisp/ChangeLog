@@ -1,3 +1,16 @@
+1998-01-27  SL Baur  <steve@altair.xemacs.org>
+
+	* loadup.el (running-xemacs): Spelling fix.
+
+1998-01-26  Colin Rafferty  <colin@xemacs.org>
+
+	* packages.el (packages-find-packages-1): Don't allow a backwards
+	compatible lisp tree to overwrite `preloaded-file-list'.
+
+1998-01-26  SL Baur  <steve@altair.xemacs.org>
+
+	* loadup.el: Don't delete "xemacs" prior to dumping.
+
 1998-01-24  SL Baur  <steve@altair.xemacs.org>
 
 	* package-info.el (pi-last-mod-date): New function.

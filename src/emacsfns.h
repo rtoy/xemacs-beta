@@ -1715,6 +1715,7 @@ extern Lisp_Object Qnatnum;
 
 /* Defined in symbols.c */
 extern Lisp_Object Vobarray;
+extern Lisp_Object Vpure_uninterned_symbol_table;
 Lisp_Object Fintern (Lisp_Object str, Lisp_Object obarray);
 Lisp_Object Fintern_soft (Lisp_Object str, Lisp_Object obarray);
 int hash_string (CONST Bufbyte *, Bytecount len);

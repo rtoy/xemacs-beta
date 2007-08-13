@@ -1,3 +1,12 @@
+1998-01-27  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta22 is released.
+
+1998-01-26  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/aliases.ksh: New file.  Start tracking useful Maintainer
+	XEmacs commands.
+
 1998-01-25  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta21 is released.
