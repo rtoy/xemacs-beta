@@ -1,3 +1,20 @@
+1997-09-17  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/packages.el (locate-library): Simplify regexp for
+	compression suffixes.
+	Suggested by: Hrvoje Niksic <hniksic@srce.hr>
+	
+1997-09-17  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* ilisp/ilisp-out.el (ilisp-scroll-output): bind `scroll-in-place'
+ 		  to nil around the call to #'scroll-up so that {C-c v}
+ 		  will properly scroll the *output* buffer.
+
+1997-09-17  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* ilisp/ilisp-out.el (ilisp-needed-window-height): make window one
+ 		  line bigger
+
 1997-09-15  Karl M. Hegbloom  <karlheg@inetarena.com>
 
 	* packages/info.el (Info-mouse-track-double-click-hook): follow

@@ -2,6 +2,7 @@
 (custom-put 'psgml-dtd 'custom-loads '("psgml"))
 (custom-put 'html 'custom-loads '("psgml-html"))
 (custom-put 'psgml 'custom-loads '("psgml-html" "psgml"))
+(custom-put 'psgml-html 'custom-loads '("psgml-html"))
 (custom-put 'sgml 'custom-loads '("psgml-html" "psgml"))
 (custom-put 'tempo 'custom-loads '("tempo"))
 (custom-put 'languages 'custom-loads '("psgml"))

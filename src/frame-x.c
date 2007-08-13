@@ -1185,7 +1185,9 @@ x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
 
   if (!DndIsDropMessage(event)) /* the better way */
     {
+#if 0
       stderr_out("DndDropHandler: pseudo drop received (ignore me!)\n");
+#endif
       return;
     }
 
@@ -1195,9 +1197,9 @@ x_offix_drop_event_handler (Widget widget, XtPointer data, XEvent *event,
   GCPRO4 (path, frame, dnd_data, dnd_type);
 
   frame = make_frame ((struct frame *) data);
-
+#if 0
   stderr_out("DndDropHandler: valid drop received (T%d S%u)\n",Type,Size);
-
+#endif
   switch (Type)
     {
     case DndFiles:

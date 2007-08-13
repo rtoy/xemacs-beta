@@ -105,18 +105,7 @@ is used instead of `load-path'."
 		    (and (boundp 'find-file-hooks)
 			 (member 'crypt-find-file-hook find-file-hooks)))
 		".elc:.el:"
-	      ;; The complex expression evaluates to a relatively
-	      ;; short string, so we do it at compile-time.
-	      ;; Nope.  This is run out of temacs and `eval-when-compile' is
-	      ;; a void function.  --sb
-	      (mapconcat #'identity
-			 (apply 'nconc
-				(mapcar (lambda (compelt)
-					  (mapcar (lambda (baselt)
-						    (concat baselt compelt))
-						  '(".elc" ".el" "")))
-					'(".Z" ".gz" "")))
-			 ":")))
+	      ".elc:.elc.gz:elc.Z:.el:.el.gz:.el.Z::.gz:.Z"))
 	  4)))
     (and interactive-call
 	 (if result

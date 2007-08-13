@@ -1,4 +1,8 @@
 							-*- indented-text -*-
+to 20.3 beta22 "Minsk"
+-- Miscellaneous (small) bug fixes
+-- Autoloads regenerated from scratch
+
 to 20.3 beta21 "Bern"
 -- Artificial event creation from Hrvoje Niksic
 -- cl-extra.elc and cl-seq.elc are now dumped with XEmacs

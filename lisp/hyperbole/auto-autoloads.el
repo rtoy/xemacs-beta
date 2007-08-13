@@ -1,5 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (featurep '-autoloads) (error "Already loaded"))
+(if (featurep 'hyperbole-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads (hmail:compose) "hmail" "hyperbole/hmail.el")
 
@@ -342,82 +342,5 @@ With optional prefix arg, REGEXP-P, treats NAME as a regular expression instead
 of a string." t nil)
 
 ;;;***
-
-;;;### (autoloads (kfile:is-p kfile:view kfile:find) "kfile" "kotl/kfile.el")
 
-(autoload 'kfile:find "kfile" "\
-Find a file FILE-NAME containing a kotl or create one if none exists.
-Return the new kview." t nil)
-
-(autoload 'kfile:view "kfile" "\
-View an existing kotl version-2 file FILE-NAME in a read-only mode." t nil)
-
-(autoload 'kfile:is-p "kfile" "\
-Iff current buffer contains an unformatted or formatted koutline, return file format version string, else nil." nil nil)
-
-;;;***
-
-;;;### (autoloads (kimport:text kimport:star-outline kimport:aug-post-outline kimport:file) "kimport" "kotl/kimport.el")
-
-(autoload 'kimport:file "kimport" "\
-Import a buffer or file IMPORT-FROM into the koutline in buffer or file OUTPUT-TO.
-
-Any suffix in IMPORT-FROM's buffer name is used to determine the type of
-importation.  All others are imported as text, one paragraph per cell.
-
-See the documentation for the variable, `kimport:suffix-alist' for
-information on specific importation formats." t nil)
-
-(autoload 'kimport:aug-post-outline "kimport" "\
-Insert Augment outline statements from IMPORT-FROM into koutline OUTPUT-TO.
-Displays and leaves point in OUTPUT-TO.  See documentation for
-`kimport:initialize' for valid values of IMPORT-FROM and OUTPUT-TO and for
-an explanation of where imported cells are placed.
-
-If OUTPUT-TO is a new koutline, the first statement inserted will be the
-first cell.  Otherwise, it will be the successor of the current cell.
-
-Each statement to be imported is delimited by an Augment relative id at the
-end of the statement.  \"1\" = level 1, \"1a\" = level 2 in outline and so
-on." t nil)
-
-(autoload 'kimport:star-outline "kimport" "\
-Insert star outline nodes from IMPORT-FROM into koutline OUTPUT-TO.
-Displays and leaves point in OUTPUT-TO.  See documentation for
-`kimport:initialize' for valid values of IMPORT-FROM and OUTPUT-TO and for
-an explanation of where imported cells are placed.
-
-\"* \" = level 1, \"** \" = level 2 in outline and so on." t nil)
-
-(autoload 'kimport:text "kimport" "\
-Insert text paragraphs from IMPORT-FROM into koutline OUTPUT-TO.
-Displays and leaves point in OUTPUT-TO.  See documentation for
-`kimport:initialize' for valid values of IMPORT-FROM and OUTPUT-TO and for
-an explanation of where imported cells are placed.
-
-Text paragraphs are imported as a sequence of same level cells.  Koutlines
-are imported with their structure intact.
-
-The variable, `paragraph-start,' is used to determine paragraphs." t nil)
-
-;;;***
-
-;;;### (autoloads (klink:create) "klink" "kotl/klink.el")
-
-(autoload 'klink:create "klink" "\
-Insert at point an implicit link to REFERENCE.
-REFERENCE should be a cell-ref or a string containing \"filename, cell-ref\".
-See documentation for `kcell:ref-to-id' for valid cell-ref formats." t nil)
-
-;;;***
-
-;;;### (autoloads (kotl-mode) "kotl-mode" "kotl/kotl-mode.el")
-
-(autoload 'kotl-mode "kotl-mode" "\
-The major mode used to edit and view koutlines.
-It provides the following keys:
-\\{kotl-mode-map}" t nil)
-
-;;;***
-
-(provide '-autoloads)
+(provide 'hyperbole-autoloads)

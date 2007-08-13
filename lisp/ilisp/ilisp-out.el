@@ -133,7 +133,10 @@
 	     (progn
 	       (select-window window)
 	       (set-buffer buffer)
-	       (scroll-up lines))
+               ;; it won't hurt to bind this regardless of
+               ;; whether or not `scroll-in-place' is loaded.
+               (let ((scroll-in-place nil))
+                 (scroll-up lines)))
 	  (select-window old-window)))))
 
 
@@ -203,7 +206,7 @@
     (select-window window)
     (save-excursion
       (set-buffer (window-buffer))
-      (+ 2 (save-excursion 
+      (+ 3 (save-excursion 
 	     (goto-char (point-min))
 	     ;; Any upper bound on the height of an emacs window will
 	     ;; do here.  How about 1000.

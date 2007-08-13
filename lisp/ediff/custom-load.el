@@ -1,3 +1,4 @@
+(custom-put 'environment 'custom-loads '(("ediff-wind")))
 (custom-put 'tools 'custom-loads '("ediff"))
 (custom-put 'ediff-diff 'custom-loads '("ediff-diff"))
 (custom-put 'frames 'custom-loads '("ediff-wind"))

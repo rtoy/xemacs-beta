@@ -2,7 +2,7 @@
 (custom-put 'telnet 'custom-loads '("telnet"))
 (custom-put 'shell 'custom-loads '("shell"))
 (custom-put 'comint-completion 'custom-loads '("comint"))
-(custom-put 'comint 'custom-loads '("comint" "telnet"))
+(custom-put 'comint 'custom-loads '("comint-xemacs" "comint" "telnet"))
 (custom-put 'rlogin 'custom-loads '("rlogin"))
 (custom-put 'shell-faces 'custom-loads '("shell"))
 (custom-put 'shell-directories 'custom-loads '("shell"))

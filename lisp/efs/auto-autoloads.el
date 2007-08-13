@@ -1,5 +1,5 @@
 ;;; DO NOT MODIFY THIS FILE
-(if (featurep '-autoloads) (error "Already loaded"))
+(if (featurep 'efs-autoloads) (error "Already loaded"))
 
 ;;;### (autoloads nil "default-dir" "efs/default-dir.el")
 
@@ -265,4 +265,4 @@ Function to call special file handlers for remote files." nil nil)
 
 ;;;***
 
-(provide '-autoloads)
+(provide 'efs-autoloads)
