@@ -63,7 +63,7 @@ move backward across N balanced expressions."
   (if (and (> arg 0) (looking-at "#s("))
       (goto-char (+ (point) 2)))
   ;; XEmacs change -- don't bomb out if unbalanced sexp
-  (goto-char (or (scan-sexps (point) arg) (buffer-end arg)))
+  (goto-char (or (scan-sexps (point) arg nil t) (buffer-end arg)))
   (if (< arg 0) (backward-prefix-chars))
   ;; XEmacs: evil hack! Skip back over #s so that structures are read
   ;; properly.  the current cheesified syntax tables just aren't up to

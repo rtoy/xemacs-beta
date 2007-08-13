@@ -100,10 +100,7 @@ This can be slightly disconcerting, but some people may prefer it."
 ;;;###autoload
 (defun mwheel-install ()
   "Enable mouse wheel support."
-  (let ((mwheel-running-xemacs (string-match "XEmacs" (emacs-version)))
-	(keys (if mwheel-running-xemacs
-		  '(button4 [(shift button4)] button5 [(shift button5)])
-		'([mouse-4] [S-mouse-4] [mouse-5] [S-mouse-5]))))
+  (let ((keys '([(mouse-4)] [(shift mouse-4)] [(mouse-5)] [(shift mouse-5)])))
     ;; This condition-case is here because Emacs 19 will throw an error
     ;; if you try to define a key that it does not know about.  I for one
     ;; prefer to just unconditionally do a mwheel-install in my .emacs, so

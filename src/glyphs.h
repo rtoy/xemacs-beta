@@ -342,6 +342,8 @@ struct Lisp_Image_Instance
       Lisp_Object fg, bg; /* foreground and background colors,
 			     if this is a colorized mono-pixmap
 			     or a pointer */
+      Lisp_Object auxdata;    /* list or Qnil: any additional data
+				 to be seen from lisp */
     } pixmap; /* used for pointers as well */
     struct
     {
@@ -371,6 +373,7 @@ struct Lisp_Image_Instance
 #define IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y(i) ((i)->u.pixmap.hotspot_y)
 #define IMAGE_INSTANCE_PIXMAP_FG(i) ((i)->u.pixmap.fg)
 #define IMAGE_INSTANCE_PIXMAP_BG(i) ((i)->u.pixmap.bg)
+#define IMAGE_INSTANCE_PIXMAP_AUXDATA(i) ((i)->u.pixmap.auxdata)
 
 #define XIMAGE_INSTANCE_DEVICE(i) \
   IMAGE_INSTANCE_DEVICE (XIMAGE_INSTANCE (i))

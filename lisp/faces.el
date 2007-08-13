@@ -1384,9 +1384,7 @@ and 'global)."
   (loop for face in (face-list) do
 	(init-face-from-resources face 'global))
   ;; Further X frobbing.
-  (case window-system
-    (x (x-init-global-faces))
-    (mswindows (mswindows-init-global-faces)))
+  (x-init-global-faces)
   ;; for bold and the like, make the global specification be bold etc.
   ;; if the user didn't already specify a value.  These will also be
   ;; frobbed further in init-other-random-faces.
@@ -1518,101 +1516,6 @@ you want to add code to do stuff like this, use the create-device-hook."
 	     (face-property-equal 'text-cursor 'default 'foreground device))
     (set-face-foreground 'text-cursor [default background] 'global
 			 nil 'append))
-
-  ;; Set the secondary-selection color unless already specified.
-  (unless (or (face-differs-from-default-p 'highlight device)
-	      (face-background 'highlight 'global))
-    ;; some older servers don't recognize "darkseagreen2"
-    (set-face-background 'highlight
-			 '((color . "darkseagreen2")
-			   (color . "green"))
-			 'global nil 'append)
-    (set-face-background 'highlight "gray53" 'global 'grayscale 'append))
-  (unless (or (face-differs-from-default-p 'highlight device)
-	      (face-background-pixmap 'highlight 'global))
-    (set-face-background-pixmap 'highlight [nothing] 'global 'color 'append)
-    (set-face-background-pixmap 'highlight [nothing] 'global 'grayscale 'append)
-    (set-face-background-pixmap 'highlight "gray1" 'global 'mono 'append))
-  ;; if the highlight face isn't distinguished on this device,
-  ;; at least try inverting it.
-  (unless (face-differs-from-default-p 'highlight device)
-    (invert-face 'highlight device))
-
-  ;; first time through, set the zmacs-region color if it's not already
-  ;; specified.
-  (unless (or (face-differs-from-default-p 'zmacs-region device)
-	      (face-background 'zmacs-region 'global))
-    (set-face-background 'zmacs-region "gray65" 'global 'color)
-    (set-face-background 'zmacs-region "gray65" 'global 'grayscale))
-  (unless (or (face-differs-from-default-p 'zmacs-region device)
-	      (face-background-pixmap 'zmacs-region 'global))
-    (set-face-background-pixmap 'zmacs-region [nothing] 'global 'color)
-    (set-face-background-pixmap 'zmacs-region [nothing] 'global 'grayscale)
-    (set-face-background-pixmap 'zmacs-region "gray3" 'global 'mono))
-  ;; if the zmacs-region face isn't distinguished on this device,
-  ;; at least try inverting it.
-  (unless (face-differs-from-default-p 'zmacs-region device)
-    (invert-face 'zmacs-region device))
-
-  ;; first time through, set the list-mode-item-selected color if it's
-  ;; not already specified.
-  (unless (or (face-differs-from-default-p 'list-mode-item-selected device)
-	      (face-background 'list-mode-item-selected 'global))
-    (set-face-background 'list-mode-item-selected "gray68" 'global 'color)
-    (set-face-background 'list-mode-item-selected "gray68" 'global 'grayscale)
-    (unless (face-foreground 'list-mode-item-selected 'global)
-	    (set-face-background 'list-mode-item-selected
-				 [default foreground] 'global '(mono x))
-	    (set-face-foreground 'list-mode-item-selected
-				 [default background] 'global '(mono x))))
-
-  ;; if the list-mode-item-selected face isn't distinguished on this device,
-  ;; at least try inverting it.
-  (unless (face-differs-from-default-p 'list-mode-item-selected device)
-    (invert-face 'list-mode-item-selected device))
-
-  ;; Set the primary-selection color unless already specified.
-  (unless (or (face-differs-from-default-p 'primary-selection device)
-	      (face-background 'primary-selection 'global))
-    (set-face-background 'primary-selection "gray65" 'global 'color)
-    (set-face-background 'primary-selection "gray65" 'global 'grayscale))
-  (unless (or (face-differs-from-default-p 'secondary-selection device)
-	      (face-background-pixmap 'primary-selection 'global))
-    (set-face-background-pixmap 'primary-selection "gray3" 'global 'mono))
-  ;; If the primary-selection face isn't distinguished on this device,
-  ;; at least try inverting it.
-  (unless (face-differs-from-default-p 'primary-selection device)
-    (invert-face 'primary-selection device))
-
-  ;; Set the secondary-selection color unless already specified.
-  (unless (or (face-differs-from-default-p 'secondary-selection device)
-	      (face-background 'secondary-selection 'global))
-    (set-face-background 'secondary-selection
-			 '((color . "paleturquoise")
-			   (color . "green"))
-			 'global)
-    (set-face-background 'secondary-selection "gray53" 'global
-			 'grayscale))
-  (unless (or (face-differs-from-default-p 'secondary-selection device)
-	      (face-background-pixmap 'secondary-selection 'global))
-    (set-face-background-pixmap 'secondary-selection "gray1" 'global 'mono))
-  ;; If the secondary-selection face isn't distinguished on this device,
-  ;; at least try inverting it.
-  (unless (face-differs-from-default-p 'secondary-selection device)
-    (invert-face 'secondary-selection device))
-
-  ;; Set the isearch color if unless already specified.
-  (unless (or (face-differs-from-default-p 'isearch device)
-	      (face-background 'isearch 'global))
-    ;; TTY's and some older X servers don't recognize "paleturquoise"
-    (set-face-background 'isearch
-			 '((color . "paleturquoise")
-			   (color . "green"))
-			 'global))
-  ;; if the isearch face isn't distinguished (e.g. we're not on a color
-  ;; display), at least try making it bold.
-  (unless (face-differs-from-default-p 'isearch device)
-    (set-face-font 'isearch [bold]))
   )
 
 ;; New function with 20.1, suggested by Per Abrahamsen, coded by Kyle Jones.
@@ -1660,7 +1563,7 @@ in that frame; otherwise change each frame."
 (make-face 'bold-italic "Bold-italic text.")
 (make-face 'underline "Underlined text.")
 (or (face-differs-from-default-p 'underline)
-    (set-face-underline-p 'underline t 'global))
+    (set-face-underline-p 'underline t 'global '(default)))
 (make-face 'zmacs-region "Used on highlightes region between point and mark.")
 (make-face 'isearch "Used on region matched by isearch.")
 (make-face 'list-mode-item-selected
@@ -1676,24 +1579,64 @@ in that frame; otherwise change each frame."
   (set-face-foreground color (symbol-name color) nil 'color))
 
 ;; Make some useful faces.  This happens very early, before creating
-;; the first non-stream device.  We initialize the tty global values here.
-;; We cannot initialize the X global values here because they depend
-;; on having already resourced the global face specs, which happens
-;; when the first X device is created.
+;; the first non-stream device.
+
+(set-face-background 'text-cursor
+		     '(((default x) . "Red3")
+		       ((default mswindows) . "Red3"))
+		     'global)
+
+;; some older servers don't recognize "darkseagreen2"
+(set-face-background 'highlight
+		     '(((default color) . "darkseagreen2")
+		       ((default color) . "green")
+		       ((default grayscale) . "gray53"))
+		     'global)
+(set-face-background-pixmap 'highlight "gray1" 'global '(default mono))
+
+(set-face-background 'zmacs-region "gray65" 'global '(default color))
+(set-face-background 'zmacs-region "gray65" 'global '(default grayscale))
+(set-face-background-pixmap 'zmacs-region "gray3" 'global '(default mono))
+
+(set-face-background 'list-mode-item-selected "gray68" 'global
+		     '(default color))
+(set-face-background 'list-mode-item-selected "gray68" 'global
+		     '(default grayscale))
+(set-face-background 'list-mode-item-selected
+		     [default foreground] 'global '(default mono))
+(set-face-foreground 'list-mode-item-selected
+		     [default background] 'global '(default mono))
+
+(set-face-background 'primary-selection "gray65" 'global '(default color))
+(set-face-background 'primary-selection "gray65" 'global '(default grayscale))
+(set-face-background-pixmap 'primary-selection "gray3" 'global '(default mono))
+
+(set-face-background 'secondary-selection
+		     '(((default color) . "paleturquoise")
+		       ((default color) . "green")
+		       ((default grayscale) . "gray53"))
+		     'global)
+(set-face-background-pixmap 'secondary-selection "gray1" 'global
+			    '(default mono))
+
+(set-face-background 'isearch
+		     '(((default color) . "paleturquoise")
+		       ((default color) . "green"))
+		     'global)
 
 (when (featurep 'tty)
-  (set-face-highlight-p 'bold                    t 'global 'tty)
-  (set-face-underline-p 'italic                  t 'global 'tty)
-  (set-face-highlight-p 'bold-italic             t 'global 'tty)
-  (set-face-underline-p 'bold-italic             t 'global 'tty)
-  (set-face-highlight-p 'highlight               t 'global 'tty)
-  (set-face-reverse-p   'text-cursor             t 'global 'tty)
-  (set-face-reverse-p   'modeline                t 'global 'tty)
-  (set-face-reverse-p   'zmacs-region            t 'global 'tty)
-  (set-face-reverse-p   'primary-selection       t 'global 'tty)
-  (set-face-underline-p 'secondary-selection     t 'global 'tty)
-  (set-face-reverse-p   'list-mode-item-selected t 'global 'tty)
-  (set-face-reverse-p   'isearch                 t 'global 'tty)
+  (set-face-highlight-p 'bold                    t 'global '(default tty))
+  (set-face-underline-p 'italic                  t 'global '(default tty))
+  (set-face-highlight-p 'bold-italic             t 'global '(default tty))
+  (set-face-underline-p 'bold-italic             t 'global '(default tty))
+  (set-face-highlight-p 'highlight               t 'global '(default tty))
+  (set-face-reverse-p   'text-cursor             t 'global '(default tty))
+  (set-face-reverse-p   'modeline                t 'global '(default tty))
+  (set-face-reverse-p   'zmacs-region            t 'global '(default tty))
+  (set-face-reverse-p   'primary-selection       t 'global '(default tty))
+  (set-face-underline-p 'secondary-selection     t 'global '(default tty))
+  (set-face-reverse-p   'list-mode-item-selected t 'global '(default tty))
+  (set-face-reverse-p   'isearch                 t 'global '(default tty))
   )
 
 ;;; faces.el ends here

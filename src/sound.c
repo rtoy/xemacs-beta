@@ -99,9 +99,11 @@ where WAV files are also supported.
 	     to open the file, and use report_file_error() if it
 	     fails.  --hniksic */
 	  if (NILP (Ffile_exists_p (file)))
-	    signal_simple_continuable_error ("File does not exist", file);
+	    file =
+	      signal_simple_continuable_error ("File does not exist", file);
 	  else
-	    signal_simple_continuable_error ("File is unreadable", file);
+	    file =
+	      signal_simple_continuable_error ("File is unreadable", file);
 	}
     }
   UNGCPRO;
@@ -285,11 +287,11 @@ See the variable `sound-alist'.
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d) && STRINGP (sound))
     {
-      Extbyte *soundext;
+      CONST Extbyte *soundext;
       Extcount soundextlen;
 
       GET_STRING_BINARY_DATA_ALLOCA (sound, soundext, soundextlen);
-      if (nas_play_sound_data (soundext, soundextlen, vol))
+      if (nas_play_sound_data ((char*)soundext, soundextlen, vol))
 	return Qnil;
     }
 #endif /* HAVE_NAS_SOUND */
@@ -298,13 +300,13 @@ See the variable `sound-alist'.
   if ((NILP (Vnative_sound_only_on_console) || DEVICE_ON_CONSOLE_P (d))
       && STRINGP (sound))
     {
-      Extbyte *soundext;
+      CONST Extbyte *soundext;
       Extcount soundextlen;
 
       GET_STRING_BINARY_DATA_ALLOCA (sound, soundext, soundextlen);
       /* The sound code doesn't like getting SIGIO interrupts. Unix sucks! */
       stop_interrupts ();
-      play_sound_data (soundext, soundextlen, vol);
+      play_sound_data ((char*)soundext, soundextlen, vol);
       start_interrupts ();
       QUIT;
       return Qnil;
@@ -420,7 +422,7 @@ init_nas_sound (struct device *d)
 static void
 init_native_sound (struct device *d)
 {
-  if (DEVICE_TTY_P (d) || DEVICE_STREAM_P (d))
+  if (DEVICE_TTY_P (d) || DEVICE_STREAM_P (d) || DEVICE_MSWINDOWS_P(d))
     DEVICE_ON_CONSOLE_P (d) = 1;
 #ifdef HAVE_X_WINDOWS
   else

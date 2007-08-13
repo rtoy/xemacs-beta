@@ -132,6 +132,7 @@ struct console_methods
   void (*ring_bell_method) (struct device *, int volume, int pitch,
 			    int duration);
   void (*frame_redraw_cursor_method) (struct frame *f);
+  void (*set_final_cursor_coords_method) (struct frame *, int, int);
 
   /* color methods */
   int (*initialize_color_instance_method) (struct Lisp_Color_Instance *,

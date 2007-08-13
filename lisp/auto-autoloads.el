@@ -1161,6 +1161,13 @@ This command is designed to be used whether you are already in Info or not." t n
 
 ;;;***
 
+;;;### (autoloads (mwheel-install) "mwheel" "lisp/mwheel.el")
+
+(autoload 'mwheel-install "mwheel" "\
+Enable mouse wheel support." nil nil)
+
+;;;***
+
 ;;;### (autoloads (package-admin-add-binary-package package-admin-add-single-file-package) "package-admin" "lisp/package-admin.el")
 
 (autoload 'package-admin-add-single-file-package "package-admin" "\

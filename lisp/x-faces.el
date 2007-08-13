@@ -545,32 +545,38 @@ Otherwise, it returns the next larger version of this font that is defined."
 						    x-tag-set)
       (set-face-background-pixmap face bgp locale nil append))
     (when ulp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-underline-p face)
+      (remove-specifier-specs-matching-tag-set-cdrs (face-property
+						     face 'underline)
 						    locale
 						    tty-tag-set)
       (set-face-underline-p face ulp locale nil append))
     (when stp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-strikethru-p face)
+      (remove-specifier-specs-matching-tag-set-cdrs (face-property
+						     face 'strikethru)
 						    locale
 						    tty-tag-set)
       (set-face-strikethru-p face stp locale nil append))
     (when hp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-highlight-p face)
+      (remove-specifier-specs-matching-tag-set-cdrs (face-property
+						     face 'highlight)
 						    locale
 						    tty-tag-set)
       (set-face-highlight-p face hp locale nil append))
     (when dp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-dim-p face)
+      (remove-specifier-specs-matching-tag-set-cdrs (face-property
+						     face 'dim)
 						    locale
 						    tty-tag-set)
       (set-face-dim-p face dp locale nil append))
     (when bp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-blinking-p face)
+      (remove-specifier-specs-matching-tag-set-cdrs (face-property
+						     face 'blinking)
 						    locale
 						    tty-tag-set)
       (set-face-blinking-p face bp locale nil append))
     (when rp
-      (remove-specifier-specs-matching-tag-set-cdrs (face-reverse-p face)
+      (remove-specifier-specs-matching-tag-set-cdrs (face-property
+						     face 'reverse)
 						    locale
 						    tty-tag-set)
       (set-face-reverse-p face rp locale nil append))

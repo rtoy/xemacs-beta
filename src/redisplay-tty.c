@@ -183,8 +183,19 @@ tty_output_end (struct device *d)
 {
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
 
+  CONSOLE_TTY_CURSOR_X (c) = CONSOLE_TTY_FINAL_CURSOR_X (c);
+  CONSOLE_TTY_CURSOR_Y (c) = CONSOLE_TTY_FINAL_CURSOR_Y (c);
   FORCE_CURSOR_UPDATE (c);
   Lstream_flush (XLSTREAM (CONSOLE_TTY_DATA (c)->outstream));
+}
+
+static void
+tty_set_final_cursor_coords (struct frame *f, int y, int x)
+{
+  struct console *c = XCONSOLE (FRAME_CONSOLE (f));
+
+  CONSOLE_TTY_FINAL_CURSOR_X (c) = x;
+  CONSOLE_TTY_FINAL_CURSOR_Y (c) = y;
 }
 
 /*****************************************************************************
@@ -547,6 +558,8 @@ tty_clear_frame (struct frame *f)
   if (TTY_SE (c).clr_frame)
     {
       OUTPUT1 (c, TTY_SE (c).clr_frame);
+      CONSOLE_TTY_REAL_CURSOR_X (c) = 0;
+      CONSOLE_TTY_REAL_CURSOR_Y (c) = 0;
 #ifdef NOT_SURE
       FRAME_CURSOR_X (f) = 0;
       FRAME_CURSOR_Y (f) = 0;
@@ -956,7 +969,7 @@ tty_redisplay_shutdown (struct console *c)
 			    f->height, f->width, 1);
 
 	  /* And then stick the cursor there. */
-	  cmgoto (f, f->height, 0);
+	  tty_set_final_cursor_coords (f, f->height, 0);
 	  tty_output_end (XDEVICE (dev));
 	}
     }
@@ -1543,4 +1556,5 @@ console_type_create_redisplay_tty (void)
   CONSOLE_HAS_METHOD (tty, output_end);
   CONSOLE_HAS_METHOD (tty, flash);
   CONSOLE_HAS_METHOD (tty, ring_bell);
+  CONSOLE_HAS_METHOD (tty, set_final_cursor_coords);
 }

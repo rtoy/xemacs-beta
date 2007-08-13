@@ -349,7 +349,6 @@ void init_event_stream (void);
 void init_event_tty_late (void);
 void init_event_mswindows_late (void);
 void init_event_unixoid (void);
-void init_gif_err (void);
 void init_lread (void);
 void init_macros (void);
 /* Not named init_process in order to avoid conflict with NS 3.3 */

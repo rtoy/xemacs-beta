@@ -1,0 +1,16 @@
+subdirs=ldap base64 zlib example
+RM=@RM@
+
+all:
+	for x in $(subdirs); do ( cd $$x && make $@ ); done
+
+install clean mostlyclean:
+	for x in $(subdirs); do ( cd $$x && make $@ ); done
+
+distclean:
+	$(RM) Makefile config.*
+	for x in $(subdirs); do ( cd $$x && make $@ ); done
+
+realclean extraclean:
+	$(RM) *~ \#*
+	for x in $(subdirs); do ( cd $$x && make $@ ); done

@@ -102,9 +102,9 @@ Keymap for characters following C-c.")
 (define-key global-map " " 'self-insert-command)
 
 (define-key global-map "\C-a" 'beginning-of-line)
-(define-key global-map "\C-b" 'backward-char)
+(define-key global-map "\C-b" 'backward-char-command)
 (define-key global-map "\C-e" 'end-of-line)
-(define-key global-map "\C-f" 'forward-char)
+(define-key global-map "\C-f" 'forward-char-command)
 (define-key global-map "\C-d" 'delete-char)
 (define-key global-map 'delete 'backward-or-forward-delete-char)
 (define-key global-map '(meta delete) 'backward-or-forward-kill-word)
@@ -421,8 +421,8 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-x<" 'scroll-left)
 (define-key global-map "\C-x>" 'scroll-right)
 
-(define-key global-map "\C-v" 'scroll-up)
-(define-key global-map "\M-v" 'scroll-down)
+(define-key global-map "\C-v" 'scroll-up-command)
+(define-key global-map "\M-v" 'scroll-down-command)
 (define-key global-map "\M-\C-v" 'scroll-other-window)
 ; meta-shift-V, that is.
 (define-key global-map '(meta V) 'scroll-other-window-down)
@@ -507,14 +507,14 @@ Keymap for characters following C-c.")
 ;; files, but these appear to be the standard Motif and PC bindings.
 
 ;; movement by units
-(define-key global-map 'left		'backward-char)
+(define-key global-map 'left		'backward-char-command)
 (define-key global-map 'up		'previous-line)
-(define-key global-map 'right		'forward-char)
+(define-key global-map 'right		'forward-char-command)
 (define-key global-map 'down		'next-line)
 
 ;; movement by pages
-(define-key global-map 'prior		'scroll-down)
-(define-key global-map 'next		'scroll-up)
+(define-key global-map 'prior		'scroll-down-command)
+(define-key global-map 'next		'scroll-up-command)
 
 ;; movement to the limits
 (define-key global-map 'home		'beginning-of-line)
@@ -534,9 +534,9 @@ Keymap for characters following C-c.")
 ;; files, but these appear to be the standard Motif and PC bindings.
 
 ;; potential R6isms
-(define-key global-map 'kp-left		'backward-char)
+(define-key global-map 'kp-left		'backward-char-command)
 (define-key global-map 'kp-up		'previous-line)
-(define-key global-map 'kp-right	'forward-char)
+(define-key global-map 'kp-right	'forward-char-command)
 (define-key global-map 'kp-down		'next-line)
 
 
@@ -560,8 +560,8 @@ Keymap for characters following C-c.")
 (define-key global-map '(control prior)	'scroll-right)
 (define-key global-map '(control next)	'scroll-left)
 ;; potential R6isms
-(define-key global-map 'kp-prior	'scroll-down)
-(define-key global-map 'kp-next		'scroll-up)
+(define-key global-map 'kp-prior	'scroll-down-command)
+(define-key global-map 'kp-next		'scroll-up-command)
 (define-key global-map '(control kp-prior) 'scroll-right)
 (define-key global-map '(control kp-next) 'scroll-left)
 

@@ -150,7 +150,8 @@ database."
 	      "xterm")) ; was "crosshair"
     (set-glyph-image modeline-pointer-glyph
 	  (or (x-get-resource "modeLinePointer" "Cursor" 'string device)
-	      "fleur"))
+;;	      "fleur"))
+	      "sb_v_double_arrow"))
     (set-glyph-image gc-pointer-glyph
 	  (or (x-get-resource "gcPointer" "Cursor" 'string device)
 	      "watch"))

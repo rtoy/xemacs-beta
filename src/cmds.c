@@ -41,16 +41,12 @@ Lisp_Object Vself_insert_face;
 
 /* This is the command that set up Vself_insert_face.  */
 Lisp_Object Vself_insert_face_command;
-
-/* t means beep when movement would take point past (point-min) or */
-/* (point-max) */
-int signal_error_on_buffer_boundary;
 
 DEFUN ("forward-char", Fforward_char, 0, 2, "_p", /*
 Move point right ARG characters (left if ARG negative).
+On attempt to pass end of buffer, stop and signal `end-of-buffer'.
+On attempt to pass beginning of buffer, stop and signal `beginning-of-buffer'.
 On reaching end of buffer, stop and signal error.
-Error signaling is suppressed if `signal-error-on-buffer-boundary'
-is nil.  If BUFFER is nil, the current buffer is assumed.
 */
        (arg, buffer))
 {
@@ -72,18 +68,14 @@ is nil.  If BUFFER is nil, the current buffer is assumed.
     if (new_point < BUF_BEGV (buf))
       {
 	BUF_SET_PT (buf, BUF_BEGV (buf));
-	if (signal_error_on_buffer_boundary)
-	  Fsignal (Qbeginning_of_buffer, Qnil);
-	else
-	  return Qnil;
+	Fsignal (Qbeginning_of_buffer, Qnil);
+	return Qnil;
       }
     if (new_point > BUF_ZV (buf))
       {
 	BUF_SET_PT (buf, BUF_ZV (buf));
-	if (signal_error_on_buffer_boundary)
-	  Fsignal (Qend_of_buffer, Qnil);
-	else
-	  return Qnil;
+	Fsignal (Qend_of_buffer, Qnil);
+	return Qnil;
       }
 
     BUF_SET_PT (buf, new_point);
@@ -94,9 +86,8 @@ is nil.  If BUFFER is nil, the current buffer is assumed.
 
 DEFUN ("backward-char", Fbackward_char, 0, 2, "_p", /*
 Move point left ARG characters (right if ARG negative).
-On attempt to pass beginning or end of buffer, stop and signal error.
-Error signaling is suppressed if `signal-error-on-buffer-boundary'
-is nil.  If BUFFER is nil, the current buffer is assumed.
+On attempt to pass end of buffer, stop and signal `end-of-buffer'.
+On attempt to pass beginning of buffer, stop and signal `beginning-of-buffer'.
 */
        (arg, buffer))
 {
@@ -510,10 +501,4 @@ Function called, if non-nil, whenever a close parenthesis is inserted.
 More precisely, a char with closeparen syntax is self-inserted.
 */ );
   Vblink_paren_function = Qnil;
-
-  DEFVAR_BOOL ("signal-error-on-buffer-boundary", &signal_error_on_buffer_boundary /*
-*t means beep when movement would take point past (point-min) or
-\(point-max).
-*/ );
-  signal_error_on_buffer_boundary = 1;
 }

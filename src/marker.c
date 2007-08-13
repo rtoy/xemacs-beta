@@ -64,21 +64,23 @@ mark_marker (Lisp_Object obj, void (*markobj) (Lisp_Object))
 static void
 print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
+  struct Lisp_Marker *marker = XMARKER (obj);
+  char buf[200];
+
   if (print_readably)
-    error ("printing unreadable object #<marker>");
-      
+    error ("printing unreadable object #<marker 0x%x>", marker);
+
   write_c_string (GETTEXT ("#<marker "), printcharfun);
-  if (!(XMARKER (obj)->buffer))
+  if (!marker->buffer)
     write_c_string (GETTEXT ("in no buffer"), printcharfun);
   else
     {
-      char buf[200];
-      sprintf (buf, "at %d", marker_position (obj));
+      sprintf (buf, "at %d in ", marker_position (obj));
       write_c_string (buf, printcharfun);
-      write_c_string (" in ", printcharfun);
-      print_internal (XMARKER (obj)->buffer->name, printcharfun, 0);
+      print_internal (marker->buffer->name, printcharfun, 0);
     }
-  write_c_string (">", printcharfun);
+  sprintf (buf, " 0x%x>", marker);
+  write_c_string (buf, printcharfun);
 }
 
 static int
@@ -254,7 +256,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object pos, Lisp_Object buffer,
         marker_prev (BUF_MARKERS (b)) = m;
       BUF_MARKERS (b) = m;
     }
-  
+
   return marker;
 }
 
@@ -445,6 +447,46 @@ If TYPE is nil, it means the marker stays behind when you insert text at it.
   return type;
 }
 
+/* #### What is the possible use of this?  It looks quite useless to
+   me, because there is no way to find *which* markers are positioned
+   at POSITION.  Additional bogosity bonus: (buffer-has-markers-at
+   (point)) will always return t because of the `point-marker'.  The
+   same goes for the position of mark.  Bletch!
+
+   Someone should discuss this with Stallman, but I don't have the
+   stomach.  In fact, this function sucks so badly that I'm disabling
+   it by default (although I've debugged it).  If you want to use it,
+   use extents instead.  --hniksic */
+#if 0
+xxDEFUN ("buffer-has-markers-at", Fbuffer_has_markers_at, 1, 1, 0, /*
+Return t if there are markers pointing at POSITION in the current buffer.
+*/
+       (position))
+{
+  struct Lisp_Marker *marker;
+  Memind pos;
+
+  /* A small optimization trick: convert POS to memind now, rather
+     than converting every marker's memory index to bufpos.  */
+  pos = bytind_to_memind (current_buffer,
+			  get_buffer_pos_byte (current_buffer, position,
+					       GB_COERCE_RANGE));
+
+  for (marker = BUF_MARKERS (current_buffer);
+       marker;
+       marker = marker_next (marker))
+    {
+      /* We use marker->memind, so we don't have to go through the
+         unwieldy operation of creating a Lisp_Object for
+         marker_position() every time around.  */
+      if (marker->memind == pos)
+	return Qt;
+    }
+
+  return Qnil;
+}
+#endif /* 0 */
+
 #ifdef MEMORY_USAGE_STATS
 
 int
@@ -476,6 +518,9 @@ syms_of_marker (void)
   DEFSUBR (Fcopy_marker);
   DEFSUBR (Fmarker_insertion_type);
   DEFSUBR (Fset_marker_insertion_type);
+#if 0 /* FSFmacs crock */
+  DEFSUBR (Fbuffer_has_markers_at);
+#endif
 }
 
 void init_buffer_markers (struct buffer *b);

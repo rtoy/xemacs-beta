@@ -1,4 +1,31 @@
 							-*- indented-text -*-
+to 20.5 beta31 "Myotonic"
+-- modules directory with dll examples courtesy of William Perry
+-- Upside-down TIFF fix from Jareth Hein
+-- ldap/eudc fixes from Oscar Figueiredo
+-- file coding changes/cleanup from Kirill Katsnelson
+-- separation of internal motion commands from user keystroke motion commands
+   from Kyle Jones
+-- miscellaneous cursor bug fixes from Kyle Jones
+-- More bug fixes from Kirill Katsnelson
+-- Better error message for unbound major modes from Pete Ware
+-- Updates on DLL support from William Perry
+-- New GIF support from Jareth Hein
+-- Miscellaneous MS windows fixes from Kirill Katsnelson
+-- Scrollable modeline deferred until 21.1
+-- 20.5 is renamed to 21.0
+-- TMPDIR fixes from Glynn Clements
+-- cygwin dll detection fixes from Andy Piper
+-- NT .wav sound support from Andy Piper
+-- Cygwin configuration fixes from Andy Piper
+-- mouse-4, mouse-5 portability keysyms
+-- Options -> Browse Faces now calls customize-face from Kyle Jones
+-- miscellaneous bug fixes
+-- DLL configuration and portability fixes from William Perry
+-- Marker and sound fixes from Hrvoje Niksic
+-- face initialization bug fixes from Kyle Jones
+-- static initializer fix from Kyle Jones
+
 to 20.5 beta30 "Moxotó"
 -- find-gc.el fixes courtesy of Markus Linnala
 -- mousewheel support courtesy of William Perry

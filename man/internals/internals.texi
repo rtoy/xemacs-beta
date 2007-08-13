@@ -1737,24 +1737,18 @@ If all args return nil, return nil.
        (args))
 @{
   /* This function can GC */
-  REGISTER Lisp_Object val;
-  Lisp_Object args_left;
+  Lisp_Object val = Qnil;
   struct gcpro gcpro1;
 
-  if (NILP (args))
-    return Qnil;
+  GCPRO1 (args);
 
-  args_left = args;
-  GCPRO1 (args_left);
-
-  do
+  while (!NILP (args))
     @{
-      val = Feval (Fcar (args_left));
+      val = Feval (XCAR (args));
       if (!NILP (val))
-        break;
-      args_left = Fcdr (args_left);
+	break;
+      args = XCDR (args);
     @}
-  while (!NILP (args_left));
 
   UNGCPRO;
   return val;
@@ -4071,12 +4065,18 @@ speed of anything.
 @item
 The general rule to follow is that caller, not callee, @code{GCPRO}s.
 That is, you should not have to explicitly @code{GCPRO} any Lisp objects
-that are passed in as parameters, but if you create any Lisp objects
-(remember, this happens in all sorts of circumstances, e.g. with
-@code{Fcons()}, etc.), you are responsible for @code{GCPRO}ing the
-objects unless you are @emph{absolutely sure} that there's no
-possibility that a garbage-collection can occur while you need to use
-the object.  Even then, consider @code{GCPRO}ing.
+that are passed in as parameters.
+
+One exception from this rule is if you ever plan to change the parameter
+value, and store a new object in it.  In that case, you @emph{must}
+@code{GCPRO} the parameter, because otherwise the new object will not be
+protected.
+
+So, if you create any Lisp objects (remember, this happens in all sorts
+of circumstances, e.g. with @code{Fcons()}, etc.), you are responsible
+for @code{GCPRO}ing them, unless you are @emph{absolutely sure} that
+there's no possibility that a garbage-collection can occur while you
+need to use the object.  Even then, consider @code{GCPRO}ing.
 
 @item
 A garbage collection can occur whenever anything calls @code{Feval}, or

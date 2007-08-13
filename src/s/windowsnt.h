@@ -125,6 +125,9 @@ typedef int pid_t;
 #define DIRECTORY_SEP XINT (Vdirectory_sep_char)
 #endif
 
+/* XEmacs file I/O for DOS text files requires FILE_CODING */
+#define FILE_CODING
+
 #define DIRECTORY_SEP '\\'
 
 /* Define this to be the separator between devices and paths */
@@ -280,6 +283,11 @@ int kill (int pid, int sig);
 #ifdef HAVE_NTGUI
 #define abort	win32_abort
 #endif
+
+/* Random global functions called everywhere. Implemented in nt.c */
+void dostounix_filename (char *p);
+void unixtodos_filename (char *p);
+char *getwd (char *dir);
 
 /* Setitimer is emulated */
 #define HAVE_SETITIMER

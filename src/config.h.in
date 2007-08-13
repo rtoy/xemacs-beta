@@ -148,6 +148,9 @@ Boston, MA 02111-1307, USA.  */
 #undef THIS_IS_X11R5
 #undef THIS_IS_X11R6
 
+/* Where do we find bitmaps? */
+#undef BITMAPDIR
+
 /* USER_FULL_NAME returns a string that is the user's full name.
    It can assume that the variable `pw' points to the password file
    entry for this user.
@@ -194,7 +197,10 @@ Boston, MA 02111-1307, USA.  */
 /* Use lock files to detect multiple edits of the same file? */
 #undef CLASH_DETECTION
 
-/* Have shared library support (currently only dlopen() supported?  */
+/* Have shared library support */
+#undef HAVE_DLOPEN
+#undef HAVE_SHL_LOAD
+#undef HAVE_DLD_INIT
 #undef HAVE_SHLIB
 
 #undef HAVE_LIBKSTAT
@@ -272,6 +278,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_SIGHOLD
 #undef HAVE_SIGPROCMASK
 #undef HAVE_SIGSETJMP
+#undef HAVE_SNPRINTF
 #undef HAVE_STRCASECMP
 #undef HAVE_STRERROR
 #undef HAVE_TZSET
@@ -279,7 +286,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_USLEEP
 #undef HAVE_UTIMES
 #undef HAVE_WAITPID
-
+#undef HAVE_VSNPRINTF
 #undef HAVE_SOCKETS
 #undef HAVE_SOCKADDR_SUN_LEN
 #undef HAVE_MULTICAST

@@ -750,13 +750,14 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
   extern int cursor_in_echo_area;
 
   /*
-   * Bail if cursor_in_echo_area is non-zero and we're fiddling
-   * with the cursor in a minibuffer window, since that is a
-   * special case that is handled elsewhere and this function
-   * need not handle it.  Return 1 so the caller will assume we
+   * Bail if cursor_in_echo_area is non-zero and we're fiddling with
+   * the cursor in a non-active minibuffer window, since that is a
+   * special case that is handled elsewhere and this function need
+   * not handle it.  Return 1 so the caller will assume we
    * succeeded.
    */
-  if (cursor_in_echo_area && MINI_WINDOW_P (w))
+  if (cursor_in_echo_area && MINI_WINDOW_P (w) &&
+      w != XWINDOW (FRAME_SELECTED_WINDOW (f)))
     return 1;
 
   if (y < 0 || y >= Dynarr_length (cla))
@@ -926,9 +927,16 @@ redraw_cursor_in_window (struct window *w, int run_end_begin_meths)
   struct display_line *dl;
   struct display_block *db;
   struct rune *rb;
+  extern int cursor_in_echo_area;
 
   int x = w->last_point_x[CURRENT_DISP];
   int y = w->last_point_y[CURRENT_DISP];
+
+  if (cursor_in_echo_area && MINI_WINDOW_P (w) &&
+      !echo_area_active (f) && minibuf_level == 0)
+    {
+      MAYBE_DEVMETH (d, set_final_cursor_coords, (f, w->pixel_top, 0));
+    }
 
   if (y < 0 || y >= Dynarr_length (dla))
     return;
@@ -949,6 +957,9 @@ redraw_cursor_in_window (struct window *w, int run_end_begin_meths)
      cursor. */
   if (rb->cursor_type == CURSOR_ON)
     {
+      MAYBE_DEVMETH (d, set_final_cursor_coords,
+		     (f, dl->ypos - 1, rb->xpos));
+
       if (run_end_begin_meths)
 	DEVMETH (d, output_begin, (d));
 

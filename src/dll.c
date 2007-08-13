@@ -37,18 +37,11 @@ Boston, MA 02111-1307, USA.  */
    with a few nice sample modules, a sample Makefile, etc. so people
    can start hacking.
 
-   2) Compatibility concerns.  There are systems without dynamic
-   libraries (Ultrix, to name one).  OK, scrap them, but not all
-   systems out there use the exact dlopen() interface that this file
-   uses.  Bill Perry said he had ready Makefiles for 14 or so systems
-   to do this sort of things portably.  Check it out.  Or, use Gordon
-   Matzigkeit's libtool.
-
-   3) I'm getting coredumps very often -- practically every time I
+   2) I'm getting coredumps very often -- practically every time I
    compile without USE_MINIMAL_TAGBITS, and even with it sometimes.  I
    wasn't able to resolve these.
 
-   4) All of this is sooo simple-minded.  As it gets more complex,
+   3) All of this is sooo simple-minded.  As it gets more complex,
    we'll have to look at how others have done similar things
    (e.g. Perl and Zsh 3.1), to avoid botching it up.  */
 
@@ -58,11 +51,11 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 
 #include <stdio.h>
-#include <dlfcn.h>
+#include "sysdll.h"
 #include <errno.h>
 
 
-DEFUN ("dl-open", Fdl_open, 1, 1, "FShared object: ", /*
+DEFUN ("dll-open", Fdll_open, 1, 1, "FShared object: ", /*
 Load LIBRARY as a shared object file.
 
 After the LIBRARY is dynamically linked with the executable, the
@@ -78,7 +71,7 @@ available for use.
        (library))
 {
   /* This function can GC */
-  void *handle;
+  dll_handle *handle;
   char *file;
   void (*function)();
 
@@ -89,15 +82,12 @@ available for use.
   /* #### Is this right? */
   GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (file, file);
 
-#ifndef RTLD_GLOBAL
-#define RTLD_GLOBAL 0
-#endif
-  handle = dlopen (file, RTLD_LAZY|RTLD_GLOBAL);
+  handle = dll_open (file);
   if (handle == NULL)
     {
       signal_error (Qerror,
 		    list3 (build_translated_string ("Cannot load shared library"),
-			   library, build_translated_string (dlerror ())));
+			   library, build_translated_string (dll_error (handle))));
     }
 
   /* #### This looks unnecessary here, because at this time one
@@ -114,22 +104,22 @@ available for use.
      Should we take care to execute the other two?  My fingers are
      getting itchy!  */
 
-  function = dlsym (handle, "syms_of");
+  function = dll_function (handle, "syms_of");
   if (function)
     (*function) ();
 
-  function = dlsym (handle, "vars_of");
+  function = dll_function (handle, "vars_of");
   if (function)
     (*function) ();
 
-  function = dlsym (handle, "complex_vars_of");
+  function = dll_function (handle, "complex_vars_of");
   if (function)
     (*function) ();
 
   return Qnil;
 }
 
-void syms_of_dlopen ()
+void syms_of_dll ()
 {
-  DEFSUBR (Fdl_open);
+  DEFSUBR (Fdll_open);
 }

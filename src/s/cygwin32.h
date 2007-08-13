@@ -78,6 +78,8 @@ Boston, MA 02111-1307, USA.  */
 #endif
 extern void cygwin32_win32_to_posix_path_list(const char*, char*);
 extern int cygwin32_win32_to_posix_path_list_buf_size(const char*);
+extern void cygwin32_posix_to_win32_path_list(const char*, char*);
+extern int cygwin32_posix_to_win32_path_list_buf_size(const char*);
 struct timeval;
 struct timezone;
 extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
@@ -97,10 +99,8 @@ extern int	ioctl(int, int, ...);
 #define ORDINARY_LINK
 #endif
 
-#define C_SWITCH_SYSTEM -Wno-sign-compare -Wno-implicit
-#undef MOD_ALT
-#undef MOD_CONTROL
-#undef MOD_SHIFT
+#define C_SWITCH_SYSTEM -Wno-sign-compare -Wno-implicit -fno-caller-saves
+#define LIBS_SYSTEM -lwinmm
 
 #define SIF_TRACKPOS	0x0010
 #define FW_BLACK	FW_HEAVY
@@ -114,6 +114,10 @@ extern int	ioctl(int, int, ...);
 #define CBF_FAIL_POKES		0x10000
 #define CBF_FAIL_REQUESTS	0x20000
 #define SZDDESYS_TOPIC		"System"
+#define SND_ASYNC		1
+#define SND_NODEFAULT		2
+#define SND_MEMORY		4
+#define SND_FILENAME		0x2000L
 
 #define TEXT_START -1
 #define TEXT_END -1
@@ -126,6 +130,8 @@ extern int	ioctl(int, int, ...);
 #ifndef HAVE_SOCKETS
 #define HAVE_SOCKETS
 #endif
+#define OBJECTS_SYSTEM	ntplay.o
+#define HAVE_NATIVE_SOUND
 
 #ifndef CYGWIN_B19
 #define TMPF_FIXED_PITCH	0x01
@@ -221,11 +227,7 @@ extern int	ioctl(int, int, ...);
 /* We'll support either convention on NT.  */
 #define IS_DIRECTORY_SEP(_c_) ((_c_) == '/' || (_c_) == '\\')
 #define IS_ANY_SEP(_c_) (IS_DIRECTORY_SEP (_c_) || IS_DEVICE_SEP (_c_))
-
-/* The null device on Windows NT. */
 #define EXEC_SUFFIXES   ".exe:.com:.bat:.cmd:"
-
-#define MODE_LINE_BINARY_TEXT(_b_) (NILP ((_b_)->buffer_file_type) ? "T" : "B")
 
 /* We need a little extra space, see ../../lisp/loadup.el */
 #define SYSTEM_PURESIZE_EXTRA 15000
@@ -233,6 +235,9 @@ extern int	ioctl(int, int, ...);
 #define CYGWIN_CONV_PATH(src, dst) \
 dst = alloca (cygwin32_win32_to_posix_path_list_buf_size(src)); \
 cygwin32_win32_to_posix_path_list(src, dst)
+#define CYGWIN_WIN32_PATH(src, dst) \
+dst = alloca (cygwin32_posix_to_win32_path_list_buf_size(src)); \
+cygwin32_posix_to_win32_path_list(src, dst)
 
 /*
  * stolen from usg.
@@ -258,6 +263,7 @@ cygwin32_win32_to_posix_path_list(src, dst)
 
 #define PTY_TTY_NAME_SPRINTF				\
   {							\
+    extern char* ptsname(int);				\
     char *ptyname;					\
 							\
     if (!(ptyname = ptsname (fd)))			\

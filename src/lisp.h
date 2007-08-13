@@ -502,6 +502,12 @@ typedef struct
   Dynarr_declare (unsigned char);
 } unsigned_char_dynarr;
 
+typedef unsigned long unsigned_long;
+typedef struct
+{
+  Dynarr_declare (unsigned long);
+} unsigned_long_dynarr;
+
 typedef struct
 {
   Dynarr_declare (int);

@@ -4,6 +4,7 @@ PACKAGE_PATH="~/.xemacs;f:/src/xemacs/packages"
 HAVE_X=0
 HAVE_MSW=1
 
+HAVE_FILE_CODING=1
 HAVE_MULE=0
 HAVE_IMAGEMAGICK=0
 
@@ -23,6 +24,10 @@ OPT=-O2 -G5 -Zi
 WARN_CPP_FLAGS = -W3
 
 #------------------------------------------------------------------------------
+
+!if $(HAVE_MULE)
+HAVE_FILE_CODING=1
+!endif
 
 !if $(HAVE_X)
 
@@ -53,6 +58,10 @@ MSW_C_DIRED_OBJ=$(OUTDIR)\dired-msw.obj
 MULE_DEFINES=-DMULE
 !endif
 
+!if $(HAVE_FILE_CODING)
+CODING_DEFINES=-DFILE_CODING
+!endif
+
 !if $(DEBUG_XEMACS)
 DEBUG_DEFINES=-DDEBUG_XEMACS
 DEBUG_FLAGS= -debugtype:both -debug:full
@@ -67,10 +76,10 @@ DEBUG_FLAGS= -debugtype:both -debug:full
 
 INCLUDES=$(X_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib -I"$(MSVCDIR)\include"
 
-DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MSW_C_DIRED_DEFINES) $(MULE_DEFINES) \
-	-DWIN32 -D_WIN32 \
-	-DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs -DHAVE_CONFIG_H \
-	-D_DEBUG
+DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(CODING_DEFINES) $(MULE_DEFINES) \
+	$(MSW_C_DIRED_DEFINES) \
+	-DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs \
+	-DHAVE_CONFIG_H -D_DEBUG
 
 OUTDIR=obj
 
@@ -309,8 +318,13 @@ DOC_SRC7=\
  $(MSW_C_DIRED_SRC)
 !endif
 
-!if $(HAVE_MULE)
+!if $(HAVE_FILE_CODING)
 DOC_SRC8=\
+ $(XEMACS)\src\file-coding.c
+!endif
+
+!if $(HAVE_MULE)
+DOC_SRC9=\
  $(XEMACS)\src\input-method-xlib.c \
  $(XEMACS)\src\mule.c \
  $(XEMACS)\src\mule-charset.c \
@@ -319,7 +333,7 @@ DOC_SRC8=\
 !endif
 
 !if $(DEBUG_XEMACS)
-DOC_SRC9=\
+DOC_SRC10=\
  $(XEMACS)\src\debug.c
 !endif
 
@@ -411,6 +425,11 @@ TEMACS_MSW_OBJS=\
 	$(MSW_C_DIRED_OBJ)
 !endif
 
+!if $(HAVE_FILE_CODING)
+TEMACS_CODING_OBJS=\
+	$(OUTDIR)\file-coding.obj
+!endif
+
 !if $(HAVE_MULE)
 TEMACS_MULE_OBJS=\
 	$(OUTDIR)\input-method-xlib.obj \
@@ -428,6 +447,7 @@ TEMACS_DEBUG_OBJS=\
 TEMACS_OBJS= \
 	$(TEMACS_X_OBJS)\
 	$(TEMACS_MSW_OBJS)\
+	$(TEMACS_CODING_OBJS)\
 	$(TEMACS_MULE_OBJS)\
 	$(TEMACS_DEBUG_OBJS)\
 	$(OUTDIR)\abbrev.obj \
@@ -575,8 +595,12 @@ $(DOC): $(LIB_SRC)\make-docfile.exe
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC7)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC8)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC9)
+	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC10)
 
-update-elc:
+$(LISP)\Installation.el: Installation.el
+	copy Installation.el $(LISP)
+
+update-elc: $(LISP)\Installation.el
 	!$(TEMACS) -batch -l update-elc.el
 
 rebuild: $(TEMACS_DIR)\puresize-adjust.h
@@ -636,7 +660,6 @@ distclean:
 	-del /s /q *.bak *.elc *.orig *.rej
 
 depend:
-	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w2048 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c

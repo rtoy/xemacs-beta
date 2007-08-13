@@ -1,5 +1,5 @@
 #!/bin/sh
-emacs_major_version=20
-emacs_minor_version=5
-emacs_beta_version=30
-xemacs_codename="Moxoto"
+emacs_major_version=21
+emacs_minor_version=0
+emacs_beta_version=31
+xemacs_codename="Myotonic"

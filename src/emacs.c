@@ -333,6 +333,9 @@ make_arg_list_1 (int argc, char **argv, int skip_args)
 	      GetModuleFileName (NULL, full_exe_path, MAX_PATH);
 	      result = Fcons (build_ext_string (full_exe_path, FORMAT_FILENAME),
 			      result);
+#if defined(HAVE_SHLIB)
+	      (void)dll_init(full_exe_path);
+#endif
 	    }
 	  else
 #endif
@@ -844,7 +847,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
       syms_of_dired ();
 #ifdef HAVE_SHLIB
-      syms_of_dlopen ();
+      syms_of_dll ();
 #endif
       syms_of_doc ();
       syms_of_editfns ();
@@ -1531,9 +1534,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_TTY
   init_device_tty ();
 #endif
-#ifdef HAVE_GIF
-  init_gif_err ();
-#endif
   init_console_stream (); /* Create the first console */
 
   /* try to get the actual pathname of the exec file we are running */
@@ -1562,6 +1562,22 @@ main_1 (int argc, char **argv, char **envp, int restart)
     Vinvocation_name = Ffile_name_nondirectory (Vinvocation_directory);
     Vinvocation_directory = Ffile_name_directory (Vinvocation_directory);
   }
+
+#if defined(HAVE_SHLIB) && !defined(WINDOWSNT)
+  /* This is Unix only.  MS Windows NT has a library call that does
+     The Right Thing on that system.  Rumor has it, this must be
+     called for GNU dld in temacs and xemacs.  */
+  {
+    char *buf = (char *)alloca (XSTRING_LENGTH (Vinvocation_directory)
+				+ XSTRING_LENGTH (Vinvocation_name)
+				+ 2);
+    sprintf (buf, "%s/%s", XSTRING_DATA(Vinvocation_directory),
+	     XSTRING_DATA(Vinvocation_name));
+
+    /* All we can do is cry if an error happens, so ignore it. */
+    (void)dll_init(buf);
+  }
+#endif
 
 #if defined (LOCALTIME_CACHE) && defined (HAVE_TZSET)
   /* sun's localtime() has a bug.  it caches the value of the time
@@ -2355,6 +2371,16 @@ and announce itself normally when it is run.
 #define SEPCHAR ':'
 #endif
 
+DEFUN ("parse-colon-path", Fparse_colon_path, 1, 1, 0, /*
+Explode a colon-separated list of paths into a string list.
+*/
+       (cd_path))
+{
+  CHECK_STRING (cd_path);
+
+  return decode_path(XSTRING_DATA(cd_path));
+}
+
 Lisp_Object
 decode_path (CONST char *path)
 {
@@ -2372,9 +2398,13 @@ decode_path (CONST char *path)
       p = strchr (path, SEPCHAR);
       if (!p) p = path + strlen (path);
       lpath = Fcons (((p != path)
-                      ? make_string ((CONST Bufbyte *) path, p - path)
-                      : Qnil),
-                     lpath);
+#if 0
+		      ? Ffile_name_as_directory(make_string ((CONST Bufbyte *) path, p - path))
+#else
+		      ? make_string ((CONST Bufbyte *) path, p - path)
+#endif
+		      : Qnil),
+		     lpath);
       if (*p)
 	path = p + 1;
       else
@@ -2481,6 +2511,8 @@ syms_of_emacs (void)
   DEFSUBR (Fquantify_stop_recording_data);
   DEFSUBR (Fquantify_clear_data);
 #endif /* QUANTIFY */
+
+  DEFSUBR (Fparse_colon_path);
 
   defsymbol (&Qkill_emacs_hook, "kill-emacs-hook");
   defsymbol (&Qsave_buffers_kill_emacs, "save-buffers-kill-emacs");

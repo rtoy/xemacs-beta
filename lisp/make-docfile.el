@@ -89,11 +89,13 @@
 (setq source-directory (concat default-directory "../lisp"))
 ;; (print (concat "Source directory: " source-directory))
 (load "packages.el")
+;; (load "setup-paths.el")
 
 (let (preloaded-file-list)
   (load (concat default-directory "../lisp/dumped-lisp.el"))
   ;; Add package lisp directories to load-path (for autoloads)
   ;; Add files dumped from lisp packages
+  ;(paths-setup-paths)
   (packages-find-packages package-path t t)
   (setq preloaded-file-list
 	(append preloaded-file-list packages-hardcoded-lisp))

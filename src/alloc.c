@@ -4473,9 +4473,7 @@ garbage_collect_1 (void)
       }
 
     mark_redisplay (mark_object);
-#ifndef WINDOWSNT
     mark_profiling_info (mark_object);
-#endif
   }
 
   /* OK, now do the after-mark stuff.  This is for things that

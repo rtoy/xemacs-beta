@@ -5346,6 +5346,8 @@ init_event_stream (void)
 	    init_event_Xt_late ();
 #elif defined (HAVE_TTY)
 	    init_event_tty_late ();
+#elif defined (HAVE_MS_WINDOWS)
+	    init_event_mswindows_late ();
 #endif
 	  }
       init_interrupts_late ();

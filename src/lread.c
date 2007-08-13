@@ -207,6 +207,12 @@ static int saved_doc_string_length;
 static int saved_doc_string_position;
 #endif
 
+/* When errors are signaled, the actual readcharfun should not be used
+   as an argument if it is an lstream, so that lstreams don't escape
+   to the Lisp level.  */
+#define READCHARFUN_MAYBE(x) (LSTREAMP (x)					\
+			      ? (build_string ("internal input stream"))	\
+			      : (x))
 
 
 static DOESNT_RETURN
@@ -569,9 +575,6 @@ encoding detection or end-of-line detection.
   static Lisp_Object last_file_loaded;
   int pure_usage = 0;
 /*#endif*/
-#ifdef DOS_NT
-  int dosmode = O_TEXT;
-#endif /* DOS_NT */
   struct stat s1, s2;
   GCPRO3 (file, newer, found);
 
@@ -673,30 +676,6 @@ encoding detection or end-of-line detection.
 
       if (!memcmp (".elc", foundstr + foundlen - 4, 4))
 	reading_elc = 1;
-
-#ifdef DOS_NT
-  /* The file was opened as binary, because that's what we'll
-     encounter most of the time.  If we're loading a .el, we need
-     to reopen it in text mode. */
-      if (!reading_elc)
-	{
-	  /* #### I would simply call _setmode (fd, O_RDONLY | O_TEXT).
-	     This is ok on NT but maybe breaks DOS. Is there
-	     any "DOS" still alive? - kkm */
-	  close (fd);
-	  fd = open (foundstr, O_RDONLY | O_TEXT);
-	  if (fd < 0)
-	    {
-	      if (NILP (no_error))
-		signal_file_error ("Cannot open load file", file);
-	      else
-		{
-		  UNGCPRO;
-		  return Qnil;
-		}
-	    }
-	}	  
-#endif /* DOS_NT */
     }
 
 #define PRINT_LOADING_MESSAGE(done) do {				\
@@ -980,11 +959,7 @@ locate_file_in_directory (Lisp_Object path, Lisp_Object str,
 	  if (mode >= 0)
 	    fd = access (fn, mode);
 	  else
-#ifdef DOS_NT
-	    fd = open (fn, O_RDONLY | O_BINARY, 0);
-#else
 	    fd = open (fn, O_RDONLY | OPEN_BINARY, 0);
-#endif
 
 	  if (fd >= 0)
 	    {
@@ -993,10 +968,7 @@ locate_file_in_directory (Lisp_Object path, Lisp_Object str,
 		*storeptr = build_string (fn);
 	      UNGCPRO;
 
-/* XXX FIX ME
-   Not sure about this on NT yet.  Do nothing for now.
-   --marcpa */
-#ifndef DOS_NT
+#ifndef WINDOWSNT
 	      /* If we actually opened the file, set close-on-exec flag
 		 on the new descriptor so that subprocesses can't whack
 		 at it.  */
@@ -1908,10 +1880,11 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
     }
 
   {
-    Lisp_Object result = make_int ((negativland) ? -num : num);
+    int int_result = negativland ? -(int)num : (int)num;
+    Lisp_Object result = make_int (int_result);
     if (num && ((XINT (result) < 0) != negativland))
       goto overflow;
-    if (XINT (result) != ((negativland) ? -num : num))
+    if (XINT (result) != int_result)
       goto overflow;
     return result;
   }
@@ -2117,13 +2090,7 @@ reader_nextchar (Lisp_Object readcharfun)
   QUIT;
   c = readchar (readcharfun);
   if (c < 0)
-    {
-      if (LSTREAMP (readcharfun))
-	signal_error (Qend_of_file,
-		      list1 (build_string ("internal input stream")));
-      else
-	signal_error (Qend_of_file, list1 (readcharfun));
-    }
+    signal_error (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
 
   switch (c)
     {
@@ -2537,7 +2504,7 @@ retry:
 	/* Evil GNU Emacs "character" (ie integer) syntax */
 	c = readchar (readcharfun);
 	if (c < 0)
-	  return Fsignal (Qend_of_file, list1 (readcharfun));
+	  return Fsignal (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
 
 	if (c == '\\')
 	  c = read_escape (readcharfun);
@@ -2573,7 +2540,7 @@ retry:
 	    QUIT;
 	  }
 	if (c < 0)
-	  return Fsignal (Qend_of_file, list1 (readcharfun));
+	  return Fsignal (Qend_of_file, list1 (READCHARFUN_MAYBE (readcharfun)));
 
 	/* If purifying, and string starts with \ newline,
 	   return zero instead.  This is for doc strings

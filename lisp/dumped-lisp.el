@@ -1,6 +1,7 @@
 (setq preloaded-file-list
       '("backquote" 		; needed for defsubst etc.
 	"bytecomp-runtime"	; define defsubst
+	;; "setup-paths" ; We're not ready for this
 	"packages"		; Bootstrap run-time lisp environment
 	"subr" 			; load the most basic Lisp functions
 	"replace" 		; match-string used in version.el.
@@ -170,6 +171,7 @@
 	#+x "x-win-xfree86"
 	#+x "x-win-sun"
 ;; preload the mswindows code.
+	#+mswindows "msw-glyphs"
 	#+mswindows "msw-faces"
 	#+mswindows "msw-init"
 	#+mswindows "msw-select"

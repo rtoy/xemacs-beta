@@ -75,7 +75,7 @@ make the clicked-on window taller or shorter."
 	  (start-event-window (event-window event))
 	  (start-nwindows (count-windows t))
 	  (hscroll-delta (face-width 'modeline))
-	  (start-hscroll (modeline-hscroll (event-window event)))
+;;	  (start-hscroll (modeline-hscroll (event-window event)))
 	  (start-x-pixel (event-x-pixel event))
 	  (last-timestamp 0)
 	  default-line-height
@@ -136,7 +136,7 @@ make the clicked-on window taller or shorter."
 	       ;; scroll) nore Y pos (modeline drag) have changed.
 	       (and modeline-click-swaps-buffers
 		    (= depress-line (event-y event))
-		    (= start-hscroll (modeline-hscroll start-event-window))
+;;		    (= start-hscroll (modeline-hscroll start-event-window))
 		    (modeline-swap-buffers event)))
 	      ((button-event-p event)
 	       (setq done t))
@@ -148,11 +148,11 @@ make the clicked-on window taller or shorter."
 		  drag-modeline-event-lag)
 	       nil)
 	      (t
-	       (set-modeline-hscroll start-event-window
-				     (+ (/ (- (event-x-pixel event) 
-					      start-x-pixel)
-					   hscroll-delta)
-					start-hscroll))
+;;		 (set-modeline-hscroll start-event-window
+;;				       (+ (/ (- (event-x-pixel event) 
+;;						start-x-pixel)
+;;					     hscroll-delta)
+;;					  start-hscroll))
 	       (setq last-timestamp (event-timestamp event)
 		     y (event-y-pixel event)
 		     edges (window-pixel-edges start-event-window)

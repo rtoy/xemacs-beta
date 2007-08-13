@@ -120,7 +120,7 @@ $(lwlib_libs) :
 OFFIX_O = @OFFIX_O@
 
 x_objs=balloon_help.o balloon-x.o console-x.o device-x.o event-Xt.o frame-x.o\
- glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o
+ glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o imgproc.o
 
 #ifdef AIX4
 LIBI18N = -li18n
@@ -786,6 +786,7 @@ callproc.o: file-coding.h
 console-tty.o: file-coding.h
 event-Xt.o: file-coding.h
 event-stream.o: file-coding.h
+file-coding.o: config.h
 file-coding.o: buffer.h
 file-coding.o: elhash.h
 file-coding.o: file-coding.h
@@ -806,6 +807,7 @@ mule-canna.o: file-coding.h
 mule-ccl.o: file-coding.h
 #endif
 process.o: file-coding.h
+process-unix.o: file-coding.h
 redisplay-x.o: file-coding.h
 redisplay.o: file-coding.h
 #endif
@@ -1491,8 +1493,6 @@ device.o: sysdep.h
 device.o: systime.h
 device.o: toolbar.h
 device.o: window.h
-dgif_lib.o: config.h
-dgif_lib.o: gif_lib.h
 dialog-x.o: $(LWLIB_SRCDIR)/lwlib.h
 dialog-x.o: EmacsFrame.h
 dialog-x.o: EmacsManager.h
@@ -1916,10 +1916,6 @@ general.o: dynarr.h
 getloadavg.o: blocktype.h
 getloadavg.o: config.h
 getloadavg.o: dynarr.h
-gif_err.o: config.h
-gif_err.o: gif_lib.h
-gifalloc.o: config.h
-gifalloc.o: gif_lib.h
 glyphs-x.o: $(LWLIB_SRCDIR)/lwlib.h
 glyphs-x.o: ${srcdir}/${etcdir}xemacs.xbm
 glyphs-x.o: bitmaps.h
@@ -1934,7 +1930,6 @@ glyphs-x.o: device.h
 glyphs-x.o: dynarr.h
 glyphs-x.o: frame.h
 glyphs-x.o: frameslots.h
-glyphs-x.o: gif_lib.h
 glyphs-x.o: glyphs-x.h
 glyphs-x.o: glyphs.h
 glyphs-x.o: insdel.h
@@ -1947,6 +1942,9 @@ glyphs-x.o: sysfile.h
 glyphs-x.o: toolbar.h
 glyphs-x.o: xintrinsic.h
 glyphs-x.o: xmu.h
+glyphs-x.o: imgproc.h
+imgproc.o: imgproc.h
+imgproc.o: config.h
 glyphs.o: blocktype.h
 glyphs.o: buffer.h
 glyphs.o: bufslots.h
@@ -2316,6 +2314,23 @@ print.o: scrollbar.h
 print.o: specifier.h
 print.o: systty.h
 print.o: toolbar.h
+process-unix.o: config.h
+process-unix.o: buffer.h
+process-unix.o: commands.h
+process-unix.o: events.h
+process-unix.o: frame.h
+process-unix.o: insdel.h
+process-unix.o: lstream.h
+process-unix.o: opaque.h
+process-unix.o: process.h
+process-unix.o: procimpl.h
+process-unix.o: window.h
+process-unix.o: sysfile.h
+process-unix.o: sysproc.h
+process-unix.o: systime.h
+process-unix.o: syssignal.h
+process-unix.o: systty.h
+process-unix.o: syswait.h
 process.o: blocktype.h
 process.o: buffer.h
 process.o: bufslots.h

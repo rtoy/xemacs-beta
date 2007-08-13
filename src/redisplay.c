@@ -247,6 +247,7 @@ static Bufpos generate_display_line (struct window *w, struct display_line *dl,
 static void generate_modeline (struct window *w, struct display_line *dl,
 			       int type);
 static int ensure_modeline_generated (struct window *w, int type);
+#ifdef MODELINE_IS_SCROLLABLE
 static void generate_formatted_string_db (Lisp_Object format_str,
 					  Lisp_Object result_str,
 					  struct window *w,
@@ -261,6 +262,20 @@ static Charcount generate_fstring_runes (struct window *w, pos_data *data,
 					 Lisp_Object elt,
 					 int depth, int max_pixsize,
 					 face_index findex, int type);
+#else /* MODELINE_IS_SCROLLABLE */
+static void generate_formatted_string_db (Lisp_Object format_str,
+					  Lisp_Object result_str,
+					  struct window *w,
+					  struct display_line *dl,
+					  struct display_block *db,
+					  face_index findex, int min_pixpos,
+					  int max_pixpos, int type);
+static Charcount generate_fstring_runes (struct window *w, pos_data *data,
+					 Charcount pos, Charcount min_pos,
+					 Charcount max_pos, Lisp_Object elt,
+					 int depth, int max_pixsize,
+					 face_index findex, int type);
+#endif /* not MODELINE_IS_SCROLLABLE */
 static prop_block_dynarr *add_emchar_rune (pos_data *data);
 static prop_block_dynarr *add_bufbyte_string_runes (pos_data *data,
 						    Bufbyte *c_string,
@@ -1907,15 +1922,10 @@ create_text_block (struct window *w, struct display_line *dl,
     end_glyph_width = GLYPH_CACHEL_WIDTH (w, CONT_GLYPH_INDEX);
   data.max_pixpos -= end_glyph_width;
 
-  if (cursor_in_echo_area)
+  if (cursor_in_echo_area && MINI_WINDOW_P (w) && echo_area_active (f))
     {
-      if (MINI_WINDOW_P (w) && echo_area_active (f))
-	{
-	  data.bi_cursor_bufpos = BI_BUF_ZV (b);
-	  data.cursor_type = CURSOR_ON;
-	}
-      else
-	data.cursor_type = NO_CURSOR;
+      data.bi_cursor_bufpos = BI_BUF_ZV (b);
+      data.cursor_type = CURSOR_ON;
     }
   else if (MINI_WINDOW_P (w) && !active_minibuffer)
     data.cursor_type = NO_CURSOR;
@@ -3565,17 +3575,26 @@ generate_modeline (struct window *w, struct display_line *dl, int type)
   else
     ypos_adj = 0;
 
+#ifdef MODELINE_IS_SCROLLABLE
   generate_formatted_string_db (b->modeline_format,
 				b->generated_modeline_string, w, dl, db,
 				MODELINE_INDEX, min_pixpos, max_pixpos, type,
 				1 /* generate a modeline */);
-  
+#else
+  generate_formatted_string_db (b->modeline_format,
+                                b->generated_modeline_string, w, dl, db,
+                                MODELINE_INDEX, min_pixpos, max_pixpos, type);
+#endif /* not MODELINE_IS_SCROLLABLE */
+
   /* The modeline is at the bottom of the gutters.  We have to wait to
      set this until we've generated teh modeline in order to account
      for any embedded faces. */
   dl->ypos = WINDOW_BOTTOM (w) - dl->descent - ypos_adj;
 }
 
+/* This define is for the experimental horizontal modeline scrolling. It's not
+   functionnal for 20.5, but might be for 21.1 */
+#ifdef MODELINE_IS_SCROLLABLE
 static void
 generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
 			      struct window *w, struct display_line *dl,
@@ -3716,9 +3735,9 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
 	    INC_CHARPTR (cur_pos);
 	  pos += 1;
 	}
-      else /* Maybe add something */
+      else /* pos > 0, things will be visible */
 	{
-	  if (*cur_pos)
+	  if (*cur_pos) /* some stuff to add */
 	    {
 	      CONST Bufbyte *old_cur_pos = cur_pos;
 	      int succeeded;
@@ -3733,11 +3752,15 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
 		  data->bytepos += cur_pos - old_cur_pos;
 		}
 	    }
+	  /* no characters to add */
+	  /* If there 's room enough, add space */
 	  else if (data->pixpos + data->blank_width <= data->max_pixpos)
 	    {
 	      add_blank_rune (data, NULL, 0);
+	      pos += 1;
 	    }
-	  else /* pretend to add something */
+	  /* otherwise, just pretend we added something */
+	  else
 	    {
 	      if (*cur_pos)
 		INC_CHARPTR (cur_pos);
@@ -4014,6 +4037,7 @@ tail_recurse:
 		max_pos = pos - lim;
 	      else
 		max_pos = min (max_pos, pos - lim);
+	      no_limit = 0;
 	    }
           else if (lim > 0)
             {
@@ -4030,7 +4054,6 @@ tail_recurse:
               if (lim > min_pos)
                 min_pos = lim;
             }
-	  no_limit = 0;
           goto tail_recurse;
         }
       else if (STRINGP (car) || CONSP (car))
@@ -4112,6 +4135,500 @@ tail_recurse:
 
   return pos;
 }
+#else /* MODELINE_IS_SCROLLABLE */
+static void
+generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
+                              struct window *w, struct display_line *dl,
+                              struct display_block *db, face_index findex,
+                              int min_pixpos, int max_pixpos, int type)
+{
+  struct frame *f = XFRAME (w->frame);
+  struct device *d = XDEVICE (f->device);
+
+  pos_data data;
+  int c_pixpos;
+
+  memset (&data, 0, sizeof (data));
+  data.d = d;
+  data.db = db;
+  data.dl = dl;
+  data.findex = findex;
+  data.pixpos = min_pixpos;
+  data.max_pixpos = max_pixpos;
+  data.cursor_type = NO_CURSOR;
+  data.last_charset = Qunbound;
+  data.last_findex = DEFAULT_INDEX;
+  data.result_str = result_str;
+  data.is_modeline = 1;
+  XSETWINDOW (data.window, w);
+
+  Dynarr_reset (formatted_string_extent_dynarr);
+  Dynarr_reset (formatted_string_extent_start_dynarr);
+  Dynarr_reset (formatted_string_extent_end_dynarr);
+
+  /* This recursively builds up the modeline. */
+  generate_fstring_runes (w, &data, 0, 0, -1, format_str, 0,
+                          max_pixpos - min_pixpos, findex, type);
+
+  if (Dynarr_length (db->runes))
+    {
+      struct rune *rb =
+        Dynarr_atp (db->runes, Dynarr_length (db->runes) - 1);
+      c_pixpos = rb->xpos + rb->width;
+    }
+  else
+    c_pixpos = min_pixpos;
+
+  /* If we don't reach the right side of the window, add a blank rune
+     to make up the difference.  This usually only occurs if the
+     modeline face is using a proportional width font or a fixed width
+     font of a different size from the default face font. */
+
+  if (c_pixpos < max_pixpos)
+    {
+      data.pixpos = c_pixpos;
+      data.blank_width = max_pixpos - data.pixpos;
+
+      add_blank_rune (&data, NULL, 0);
+    }
+
+  /* Now create the result string and frob the extents into it. */
+  if (!NILP (result_str))
+    {
+      int elt;
+      Bytecount len;
+      Bufbyte *strdata;
+      struct buffer *buf = XBUFFER (WINDOW_BUFFER (w));
+
+      detach_all_extents (result_str);
+      resize_string (XSTRING (result_str), -1,
+                     data.bytepos - XSTRING_LENGTH (result_str));
+
+      strdata = XSTRING_DATA (result_str);
+
+      for (elt = 0, len = 0; elt < Dynarr_length (db->runes); elt++)
+        {
+          if (Dynarr_atp (db->runes, elt)->type == RUNE_CHAR)
+            {
+              len += (set_charptr_emchar
+                      (strdata + len, Dynarr_atp (db->runes,
+                                                  elt)->object.chr.ch));
+            }
+        }
+
+      for (elt = 0; elt < Dynarr_length (formatted_string_extent_dynarr);
+           elt++)
+        {
+          Lisp_Object extent = Qnil;
+          Lisp_Object child;
+
+          XSETEXTENT (extent, Dynarr_at (formatted_string_extent_dynarr, elt));
+          child = Fgethash (extent, buf->modeline_extent_table, Qnil);
+          if (NILP (child))
+            {
+              child = Fmake_extent (Qnil, Qnil, result_str);
+              Fputhash (extent, child, buf->modeline_extent_table);
+            }
+          Fset_extent_parent (child, extent);
+          set_extent_endpoints
+            (XEXTENT (child),
+             Dynarr_at (formatted_string_extent_start_dynarr, elt),
+             Dynarr_at (formatted_string_extent_end_dynarr, elt),
+             result_str);
+        }
+    }
+}
+
+static Charcount
+add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
+                                Charcount pos, Charcount min_pos, Charcount max_pos)
+{
+  /* This function has been Mule-ized. */
+  Charcount end;
+  CONST Bufbyte *cur_pos = str;
+  struct display_block *db = data->db;
+
+  data->blank_width = space_width (XWINDOW (data->window));
+  while (Dynarr_length (db->runes) < pos)
+    add_blank_rune (data, NULL, 0);
+
+  end = (Dynarr_length (db->runes) +
+         bytecount_to_charcount (str, strlen ((CONST char *) str)));
+  if (max_pos != -1)
+    end = min (max_pos, end);
+
+  while (pos < end && *cur_pos)
+    {
+      CONST Bufbyte *old_cur_pos = cur_pos;
+      int succeeded;
+
+      data->ch = charptr_emchar (cur_pos);
+      succeeded = (add_emchar_rune (data) != ADD_FAILED);
+      INC_CHARPTR (cur_pos);
+      if (succeeded)
+        {
+          pos++;
+          data->modeline_charpos++;
+          data->bytepos += cur_pos - old_cur_pos;
+        }
+    }
+
+  while (Dynarr_length (db->runes) < min_pos &&
+         (data->pixpos + data->blank_width <= data->max_pixpos))
+    add_blank_rune (data, NULL, 0);
+
+  return Dynarr_length (db->runes);
+}
+
+/* #### Urk!  Should also handle begin-glyphs and end-glyphs in
+   modeline extents. */
+static Charcount
+add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
+                               Charcount pos, Charcount min_pos, Charcount max_pos)
+{
+  /* This function has been Mule-ized. */
+  Charcount end;
+  struct display_block *db = data->db;
+  struct glyph_block gb;
+
+  data->blank_width = space_width (XWINDOW (data->window));
+  while (Dynarr_length (db->runes) < pos)
+    add_blank_rune (data, NULL, 0);
+
+  end = Dynarr_length (db->runes) + 1;
+  if (max_pos != -1)
+    end = min (max_pos, end);
+
+  gb.glyph = glyph;
+  gb.extent = Qnil;
+  add_glyph_rune (data, &gb, BEGIN_GLYPHS, 0, 0);
+  pos++;
+
+  while (Dynarr_length (db->runes) < pos &&
+         (data->pixpos + data->blank_width <= data->max_pixpos))
+    add_blank_rune (data, NULL, 0);
+
+  return Dynarr_length (db->runes);
+}
+
+/* If max_pos is == -1, it is considered to be infinite.  The same is
+   true of max_pixsize. */
+#define SET_CURRENT_MODE_CHARS_PIXSIZE                                  \
+  if (Dynarr_length (data->db->runes))                                  \
+    cur_pixsize = data->pixpos - Dynarr_atp (data->db->runes, 0)->xpos; \
+  else                                                                  \
+    cur_pixsize = 0;
+
+/* Note that this function does "positions" in terms of characters and
+   not in terms of columns.  This is necessary to make the formatting
+   work correctly when proportional width fonts are used in the
+   modeline. */
+static Charcount
+generate_fstring_runes (struct window *w, pos_data *data, Charcount pos,
+                        Charcount min_pos, Charcount max_pos,
+                        Lisp_Object elt, int depth, int max_pixsize,
+                        face_index findex, int type)
+{
+  /* This function has been Mule-ized. */
+  /* #### The other losing things in this function are:
+
+     -- C zero-terminated-string lossage.
+     -- Non-printable characters should be converted into something
+        appropriate (e.g. ^F) instead of blindly being printed anyway.
+   */
+
+tail_recurse:
+  if (depth > 10)
+    goto invalid;
+
+  depth++;
+
+  if (STRINGP (elt))
+    {
+      /* A string.  Add to the display line and check for %-constructs
+         within it. */
+
+      Bufbyte *this = XSTRING_DATA (elt);
+
+      while ((pos < max_pos || max_pos == -1) && *this)
+        {
+          Bufbyte *last = this;
+
+          while (*this && *this != '%')
+            this++;
+
+          if (this != last)
+            {
+              /* The string is just a string. */
+              Charcount size =
+                bytecount_to_charcount (last, this - last) + pos;
+              Charcount tmp_max = (max_pos == -1 ? size : min (size, max_pos));
+
+              pos = add_string_to_fstring_db_runes (data, last, pos, pos,
+                                                    tmp_max);
+            }
+          else /* *this == '%' */
+            {
+              Charcount spec_width = 0;
+
+              this++; /* skip over '%' */
+
+              /* We can't allow -ve args due to the "%-" construct.
+               * Argument specifies minwidth but not maxwidth
+               * (maxwidth can be specified by
+               * (<negative-number> . <stuff>) modeline elements)
+               */
+              while (isdigit (*this))
+                {
+                  spec_width = spec_width * 10 + (*this - '0');
+                  this++;
+                }
+              spec_width += pos;
+
+              if (*this == 'M')
+                {
+                  pos = generate_fstring_runes (w, data, pos, spec_width,
+                                                max_pos, Vglobal_mode_string,
+                                                depth, max_pixsize, findex,
+                                                type);
+                }
+              else if (*this == '-')
+                {
+                  Charcount num_to_add;
+
+                  if (max_pixsize < 0)
+                    num_to_add = 0;
+                  else if (max_pos != -1)
+                    num_to_add = max_pos - pos;
+                  else
+                    {
+                      int cur_pixsize;
+                      int dash_pixsize;
+                      Bufbyte ch = '-';
+                      SET_CURRENT_MODE_CHARS_PIXSIZE;
+
+                      dash_pixsize =
+                        redisplay_text_width_string (w, findex, &ch, Qnil, 0,
+                                                     1);
+
+                      num_to_add = (max_pixsize - cur_pixsize) / dash_pixsize;
+                      num_to_add++;
+                    }
+
+                  while (num_to_add--)
+                    pos = add_string_to_fstring_db_runes
+                      (data, (CONST Bufbyte *) "-", pos, pos, max_pos);
+                }
+              else if (*this != 0)
+                {
+                  Bufbyte *str;
+                  Emchar ch = charptr_emchar (this);
+                  decode_mode_spec (w, ch, type);
+
+                  str = Dynarr_atp (mode_spec_bufbyte_string, 0);
+                  pos = add_string_to_fstring_db_runes (data,str, pos, pos,
+                                                        max_pos);
+                }
+
+              /* NOT this++.  There could be any sort of character at
+                 the current position. */
+              INC_CHARPTR (this);
+            }
+
+          if (max_pixsize > 0)
+            {
+              int cur_pixsize;
+              SET_CURRENT_MODE_CHARS_PIXSIZE;
+
+              if (cur_pixsize >= max_pixsize)
+                break;
+            }
+        }
+    }
+  else if (SYMBOLP (elt))
+    {
+      /* A symbol: process the value of the symbol recursively
+         as if it appeared here directly. */
+      Lisp_Object tem = symbol_value_in_buffer (elt, w->buffer);
+
+      if (!UNBOUNDP (tem))
+        {
+          /* If value is a string, output that string literally:
+             don't check for % within it.  */
+          if (STRINGP (tem))
+            {
+              pos =
+                add_string_to_fstring_db_runes
+                (data, XSTRING_DATA (tem), pos, min_pos, max_pos);
+            }
+          /* Give up right away for nil or t.  */
+          else if (!EQ (tem, elt))
+            {
+              elt = tem;
+              goto tail_recurse;
+            }
+        }
+    }
+  else if (CONSP (elt))
+    {
+      /* A cons cell: four distinct cases.
+       * If first element is a string or a cons, process all the elements
+       * and effectively concatenate them.
+       * If first element is a negative number, truncate displaying cdr to
+       * at most that many characters.  If positive, pad (with spaces)
+       * to at least that many characters.
+       * If first element is a symbol, process the cadr or caddr recursively
+       * according to whether the symbol's value is non-nil or nil.
+       * If first element is a face, process the cdr recursively
+       * without altering the depth.
+       */
+      Lisp_Object car, tem;
+
+      car = XCAR (elt);
+      if (SYMBOLP (car))
+        {
+          elt = XCDR (elt);
+          if (!CONSP (elt))
+            goto invalid;
+          tem = symbol_value_in_buffer (car, w->buffer);
+          /* elt is now the cdr, and we know it is a cons cell.
+             Use its car if CAR has a non-nil value.  */
+          if (!UNBOUNDP (tem))
+            {
+              if (!NILP (tem))
+                {
+                  elt = XCAR (elt);
+                  goto tail_recurse;
+                }
+            }
+          /* Symbol's value is nil (or symbol is unbound)
+           * Get the cddr of the original list
+           * and if possible find the caddr and use that.
+           */
+          elt = XCDR (elt);
+          if (NILP (elt))
+            ;
+          else if (!CONSP (elt))
+            goto invalid;
+          else
+            {
+              elt = XCAR (elt);
+              goto tail_recurse;
+            }
+        }
+      else if (INTP (car))
+        {
+          Charcount lim = XINT (car);
+
+          elt = XCDR (elt);
+
+          if (lim < 0)
+            {
+              /* Negative int means reduce maximum width.
+               * DO NOT change MIN_PIXPOS here!
+               * (20 -10 . foo) should truncate foo to 10 col
+               * and then pad to 20.
+               */
+              if (max_pos == -1)
+                max_pos = pos - lim;
+              else
+                max_pos = min (max_pos, pos - lim);
+            }
+          else if (lim > 0)
+            {
+              /* Padding specified.  Don't let it be more than
+               * current maximum.
+               */
+              lim += pos;
+              if (max_pos != -1 && lim > max_pos)
+                lim = max_pos;
+              /* If that's more padding than already wanted, queue it.
+               * But don't reduce padding already specified even if
+               * that is beyond the current truncation point.
+               */
+              if (lim > min_pos)
+                min_pos = lim;
+            }
+          goto tail_recurse;
+        }
+      else if (STRINGP (car) || CONSP (car))
+        {
+          int limit = 50;
+          /* LIMIT is to protect against circular lists.  */
+          while (CONSP (elt) && --limit > 0
+                 && (pos < max_pos || max_pos == -1))
+            {
+              pos = generate_fstring_runes (w, data, pos, pos, max_pos,
+                                            XCAR (elt), depth,
+                                            max_pixsize, findex, type);
+              elt = XCDR (elt);
+            }
+        }
+      else if (EXTENTP (car))
+        {
+          struct extent *ext = XEXTENT (car);
+
+          if (EXTENT_LIVE_P (ext))
+            {
+              face_index old_findex = data->findex;
+              Lisp_Object face;
+              Lisp_Object font_inst;
+              face_index new_findex;
+              Bytecount start = data->bytepos;
+
+              face = extent_face (ext);
+              if (FACEP (face))
+                {
+                  /* #### needs to merge faces, sigh */
+                  /* #### needs to handle list of faces */
+                  new_findex = get_builtin_face_cache_index (w, face);
+                  /* !!#### not right; needs to compute the max height of
+                     all the charsets */
+                  font_inst = WINDOW_FACE_CACHEL_FONT (w, new_findex,
+                                                       Vcharset_ascii);
+
+                  data->dl->ascent = max (data->dl->ascent,
+                                          XFONT_INSTANCE (font_inst)->ascent);
+                  data->dl->descent = max (data->dl->descent,
+                                           XFONT_INSTANCE (font_inst)->
+                                           descent);
+                }
+              else
+                new_findex = old_findex;
+
+              data->findex = new_findex;
+              pos = generate_fstring_runes (w, data, pos, pos, max_pos,
+                                            XCDR (elt), depth - 1,
+                                            max_pixsize, new_findex, type);
+              data->findex = old_findex;
+              Dynarr_add (formatted_string_extent_dynarr, ext);
+              Dynarr_add (formatted_string_extent_start_dynarr, start);
+              Dynarr_add (formatted_string_extent_end_dynarr, data->bytepos);
+            }
+        }
+    }
+  else if (GLYPHP (elt))
+    {
+      pos = add_glyph_to_fstring_db_runes (data, elt, pos, pos, max_pos);
+    }
+  else
+    {
+    invalid:
+      pos =
+        add_string_to_fstring_db_runes
+          (data, (CONST Bufbyte *) GETTEXT ("*invalid*"), pos, min_pos,
+           max_pos);
+    }
+
+  if (min_pos > pos)
+    {
+      add_string_to_fstring_db_runes (data, (CONST Bufbyte *) "", pos, min_pos,
+                                      -1);
+    }
+
+  return pos;
+}
+#endif /* not MODELINE_IS_SCROLLABLE */
 
 /* The caller is responsible for freeing the returned string. */
 Bufbyte *
@@ -4126,11 +4643,16 @@ generate_formatted_string (struct window *w, Lisp_Object format_str,
   db = get_display_block_from_line (dl, TEXT);
   Dynarr_reset (db->runes);
 
+#ifdef MODELINE_IS_SCROLLABLE
   /* D. Verna Feb. 1998.
      Currently, only update_frame_title can make us come here. This is not 
      to build a modeline */
   generate_formatted_string_db (format_str, result_str, w, dl, db, findex, 0,
 				-1, type, 0 /* not a modeline */);
+#else /* not MODELINE_IS_SCROLLABLE */
+  generate_formatted_string_db (format_str, result_str, w, dl, db, findex, 0,
+                                -1, type);
+#endif /* not MODELINE_IS_SCROLLABLE */
 
   Dynarr_reset (formatted_string_emchar_dynarr);
   while (elt < Dynarr_length (db->runes))
@@ -5908,11 +6430,8 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 
       /* indicate TEXT or BINARY */
     case 't':
-#ifdef DOS_NT
-      str = NILP (b->buffer_file_type) ? "T" : "B";
-#else /* not DOS_NT */
+      /* #### NT does not use this any more. Now what? */
       str = "T";
-#endif /* not DOS_NT */
       break;
 
       /* print percent of buffer above top of window, or Top, Bot or All */

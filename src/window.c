@@ -4071,23 +4071,18 @@ window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 
 }
 
-extern int signal_error_on_buffer_boundary;
-
 DEFUN ("scroll-up", Fscroll_up, 0, 1, "_P", /*
 Scroll text of current window upward ARG lines; or near full screen if no ARG.
 A near full screen is `next-screen-context-lines' less than a full screen.
 Negative ARG means scroll downward.
 When calling from a program, supply a number as argument or nil.
-
-If `signal-error-on-buffer-boundary' is nil, the usual error and
-loss of zmacs region is suppressed when moving past end of buffer.
+On attempt to scroll past end of buffer, `end-of-buffer' is signaled.
+On attempt to scroll past beginning of buffer, `beginning-of-buffer' is
+signaled.
 */
        (n))
 {
-  Error_behavior errb =
-    signal_error_on_buffer_boundary ? ERROR_ME : ERROR_ME_NOT;
-
-  window_scroll (Fselected_window (Qnil), n, 1, errb);
+  window_scroll (Fselected_window (Qnil), n, 1, ERROR_ME);
   return Qnil;
 }
 
@@ -4096,16 +4091,13 @@ Scroll text of current window downward ARG lines; or near full screen if no ARG.
 A near full screen is `next-screen-context-lines' less than a full screen.
 Negative ARG means scroll upward.
 When calling from a program, supply a number as argument or nil.
-
-If `signal-error-on-buffer-boundary' is nil, the usual error and
-loss of zmacs region is suppressed when moving past end of buffer.
+On attempt to scroll past end of buffer, `end-of-buffer' is signaled.
+On attempt to scroll past beginning of buffer, `beginning-of-buffer' is
+signaled.
 */
        (n))
 {
-  Error_behavior errb =
-    signal_error_on_buffer_boundary ? ERROR_ME : ERROR_ME_NOT;
-
-  window_scroll (Fselected_window (Qnil), n, -1, errb);
+  window_scroll (Fselected_window (Qnil), n, -1, ERROR_ME);
   return Qnil;
 }
 
@@ -5566,13 +5558,17 @@ syms_of_window (void)
   DEFSUBR (Fwindow_pixel_height);
   DEFSUBR (Fwindow_pixel_width);
   DEFSUBR (Fwindow_hscroll);
+#ifdef MODELINE_IS_SCROLLABLE
   DEFSUBR (Fmodeline_hscroll);
+#endif /* MODELINE_IS_SCROLLABLE */
 #if 0 /* bogus crock */
   DEFSUBR (Fwindow_redisplay_end_trigger);
   DEFSUBR (Fset_window_redisplay_end_trigger);
 #endif
   DEFSUBR (Fset_window_hscroll);
+#ifdef MODELINE_IS_SCROLLABLE
   DEFSUBR (Fset_modeline_hscroll);
+#endif /* MODELINE_IS_SCROLLABLE */
   DEFSUBR (Fwindow_pixel_edges);
   DEFSUBR (Fwindow_point);
   DEFSUBR (Fwindow_start);

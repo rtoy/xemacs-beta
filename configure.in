@@ -362,8 +362,6 @@ dnl world have core dumps turned off by default or \"cannot find where the
 dnl core file went\".  At least we should get some useful output ...
 use_assertions="yes"
 dnl the following is set to yes or no later.
-with_gif=""
-dnl the following is set to yes or no later.
 with_toolbars=""
 with_tty=""
 use_union_type="no"
@@ -546,7 +544,7 @@ while test $# != 0; do
 	    * ) USAGE_ERROR(["The \`--$optname' option requires one of these values:
   \`yes', \`no', or \`default'."]) ;;
 	  esac
-	  case "$opt" in use_* ) opt="`echo $opt | sed /use/with/`" ;; esac
+	  case "$opt" in use_* ) opt="`echo $opt | sed s/use/with/`" ;; esac
           eval "$opt=\"$val\""
         ;;
 
@@ -1457,12 +1455,6 @@ if test "$with_clash_detection" = "yes"; then
   XE_ADD_OBJS(filelock.o)
 fi
 
-dnl Autodetected below
-dnl if test "$with_shlib" = "yes"; then
-dnl   AC_DEFINE(HAVE_SHLIB)
-dnl   XE_ADD_OBJS(dlopen.o)
-dnl fi
-
 dnl Choose a compiler from (in order)
 dnl --compiler, env var CC, with_gcc=no && ${NON_GNU_CC:-cc}, AC_PROG_CC
 test -n "$compiler" && CC="$compiler"
@@ -1509,7 +1501,8 @@ AC_TRY_COMPILE([#include <features.h>],[
 #endif
 ], have_glibc=yes, have_glibc=no)
 AC_MSG_RESULT($have_glibc)
-test "$have_glibc" = "yes" && AC_DEFINE(_GNU_SOURCE)
+dnl I'm tired of pop being broken with GLIBC -slb
+dnl test "$have_glibc" = "yes" && AC_DEFINE(_GNU_SOURCE)
 
 AC_MSG_CHECKING(whether we are using SunPro C)
 AC_TRY_COMPILE([],[#ifndef __SUNPRO_C
@@ -2155,30 +2148,6 @@ case "$with_x11" in
   no  ) window_system=none HAVE_X_WINDOWS=no  ;;
 esac
 
-if test "$with_msw" != "no"; then
-  AC_CHECKING(for MS-Windows)
-  AC_CHECK_LIB(gdi32,main,with_msw=yes)
-  if test "$with_msw" = "yes"; then
-    AC_DEFINE(HAVE_MS_WINDOWS)
-    XE_APPEND(-lshell32 -lgdi32 -luser32, libs_system)
-    if test "$window_system" != x11; then
- 	window_system=msw
-	test "$with_scrollbars" != "no" && with_scrollbars=msw \
-	    && XE_ADD_OBJS(scrollbar-msw.o)
-	test "$with_menubars"   != "no" && with_menubars=msw \
-	    && XE_ADD_OBJS(menubar-msw.o)
-	with_dialogs=msw
-	with_toolbars=no
-    else
-	test "$with_scrollbars"   != "no" && XE_ADD_OBJS(scrollbar-msw.o)
-	test "$with_menubars"   != "no" && XE_ADD_OBJS(menubar-msw.o)
-    fi
-    const_is_losing=no
-    with_file_coding=yes
-    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o)
-  fi
-fi
-
 if test "$with_x11" = "yes"; then
   AC_DEFINE(HAVE_X_WINDOWS)
   XE_APPEND(lwlib, MAKE_SUBDIR)
@@ -2226,6 +2195,25 @@ if test "$with_x11" = "yes"; then
     PRINT_VAR(x_libraries x_includes X_CFLAGS X_LIBS X_PRE_LIBS X_EXTRA_LIBS)
     echo
   fi
+
+  dnl Set up bitmaps search path.
+  dnl The original suggestion was to unconditionally to append X11/bitmaps
+  dnl to each element of $x_includes, I'm pretty sure this is the wrong
+  dnl thing to do.  We test for bitmaps and X11/bitmaps directories on each
+  dnl element and add them to BITMAPDIR if they exist.
+  bitmapdirs=
+  if test "$x_includes" != NONE; then
+    for i in $x_includes; do
+      if test -d "$i/bitmaps"; then
+	bitmapdirs="$i/bitmaps:$bitmapdirs"
+      fi
+      if test -d "$i/X11/bitmaps"; then
+	bitmapdirs="$i/X11/bitmaps:$bitmapdirs"
+      fi
+    done
+    bitmapdirs=`echo "$bitmapdirs" | sed s/.$//`
+  fi
+  test ! -z "$bitmapdirs" && AC_DEFINE_UNQUOTED(BITMAPDIR, "$bitmapdirs")
 
   dnl Autodetect defines extracted from X config by xmkmf, e.g. NARROWPROTO
   AC_CHECKING(for X defines extracted by xmkmf)
@@ -2315,6 +2303,30 @@ EOF
   fi
 
 fi dnl $with_x11 = yes
+
+if test "$with_msw" != "no"; then
+  AC_CHECKING(for MS-Windows)
+  AC_CHECK_LIB(gdi32,main,with_msw=yes)
+  if test "$with_msw" = "yes"; then
+    AC_DEFINE(HAVE_MS_WINDOWS)
+    XE_APPEND(-lshell32 -lgdi32 -luser32, libs_system)
+    if test "$window_system" != x11; then
+ 	window_system=msw
+	test "$with_scrollbars" != "no" && with_scrollbars=msw \
+	    && XE_ADD_OBJS(scrollbar-msw.o)
+	test "$with_menubars"   != "no" && with_menubars=msw \
+	    && XE_ADD_OBJS(menubar-msw.o)
+	with_dialogs=msw
+	with_toolbars=no
+    else
+	test "$with_scrollbars"   != "no" && XE_ADD_OBJS(scrollbar-msw.o)
+	test "$with_menubars"   != "no" && XE_ADD_OBJS(menubar-msw.o)
+    fi
+    const_is_losing=no
+    with_file_coding=yes
+    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o)
+  fi
+fi
 
 test -z "$window_system" && window_system="none"
 
@@ -2489,11 +2501,14 @@ if test "$with_x11" = "yes"; then
     XE_PREPEND(-lcompface, libs_x)
   fi
 
-  dnl Built-in GIF support defaults to yes (note: this will be libraried soon)
-  test -z "$with_gif" && with_gif=yes;
+  dnl Autodetect GIFlib
+  AC_MSG_CHECKING(for giflib - no older than 3.1)
+  test -z "$with_gif" && { AC_CHECK_HEADER(gif_lib.h,        ,with_gif=no) }
+  test -z "$with_gif" && { AC_CHECK_LIB(gif, GetGifError,[:] ,with_gif=no) }
+  test -z "$with_gif" && with_gif=yes
   if test "$with_gif" = "yes"; then
     AC_DEFINE(HAVE_GIF)
-    XE_ADD_OBJS(dgif_lib.o gif_err.o gifalloc.o)
+    XE_PREPEND(-lgif, libs_x)
   fi
 
   dnl autodetect JPEG
@@ -2746,7 +2761,7 @@ if test "$need_motif" = "yes" ; then
   XE_COMPUTE_RUNPATH()
 fi
 
-AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp ftime gethostname getpagesize gettimeofday getcwd getwd logb lrand48 matherr mkdir mktime perror poll random rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask strcasecmp strerror tzset ulimit usleep utimes waitpid)
+AC_CHECK_FUNCS(cbrt closedir dup2 eaccess fmod fpathconf frexp ftime gethostname getpagesize gettimeofday getcwd getwd logb lrand48 matherr mkdir mktime perror poll random rename res_init rint rmdir select setitimer setpgid setlocale setsid sigblock sighold sigprocmask snprintf strcasecmp strerror tzset ulimit usleep utimes waitpid vsnprintf)
 
 dnl realpath is buggy on linux, decosf and aix4
 
@@ -3157,7 +3172,10 @@ dnl nor does libc implement it, we are a bit lost :)
 AC_CHECKING(for database support)
 
 if test "$with_database_gnudbm" != "no"; then
-  AC_CHECK_LIB(gdbm, dbm_open, with_database_gnudbm=yes have_libgdbm=yes)
+  AC_CHECK_HEADERS(ndbm.h, have_ndbm_h=yes)
+  if test "$have_ndbm_h" = "yes"; then
+    AC_CHECK_LIB(gdbm, dbm_open, with_database_gnudbm=yes have_libgdbm=yes)
+  fi
   if test "$with_database_gnudbm" != "yes"; then
     AC_CHECK_FUNC(dbm_open, with_database_gnudbm=yes)
       fi
@@ -3231,16 +3249,22 @@ if test "$usage_tracking" = "yes"; then
 fi
 
 dnl autodetect dll support
-test -z "$with_shlib" && { AC_CHECK_HEADER(dlfcn.h, ,with_shlib=no) }
-test -z "$with_shlib" && { AC_CHECK_LIB(dl, dlopen, XE_PREPEND(-ldl, LIBS),
-			   AC_CHECK_LIB(c, dlopen, with_shlib=yes, with_shlib=no)) }
-test -z "$with_shlib" && with_shlib=yes
+AC_CHECK_HEADERS(dlfcn.h, have_dlfcn=yes)
+test -z "$with_shlib" && test ! -z "$have_dlfcn" && { AC_CHECK_LIB(dl,  dlopen,   [ AC_DEFINE(HAVE_DLOPEN) DLL_LIB=dl;  with_shlib=yes]) }
+test -z "$with_shlib" && test ! -z "$have_dlfcn" && { AC_CHECK_LIB(c,   _dlopen,  [ AC_DEFINE(HAVE_DLOPEN) DLL_LIB=;   with_shlib=yes]) }
+test -z "$with_shlib" && test ! -z "$have_dlfcn" && { AC_CHECK_LIB(c,   dlopen,   [ AC_DEFINE(HAVE_DLOPEN) DLL_LIB=;   with_shlib=yes]) }
+test -z "$with_shlib" && { AC_CHECK_LIB(dld, shl_load, [ AC_DEFINE(HAVE_SHL_LOAD) DLL_LIB=dld; with_shlib=yes]) }
+test -z "$with_shlib" && { AC_CHECK_LIB(dld, dld_init, [ AC_DEFINE(HAVE_DLD_INIT) DLL_LIB=dld; with_shlib=yes]) }
 if test "$with_shlib" = "yes"; then
   AC_DEFINE(HAVE_SHLIB)
-  XE_ADD_OBJS(dlopen.o)
+  XE_ADD_OBJS(sysdll.o)
+  XE_ADD_OBJS(dll.o)
+  test ! -z "$DLL_LIB" && XE_PREPEND(-l${DLL_LIB}, LIBS)
+  XE_MAKE_SHAREDLIB
   ld_dynamic_link_flags=
   dnl Fill this in with other values as this gets more testing
   case "$opsys" in
+  hpux*)  ld_dynamic_link_flags="-E" ;;
   linux*) ld_dynamic_link_flags="-rdynamic" ;;
   *) ;;
   esac
@@ -3505,10 +3529,10 @@ elif test "$with_x11" = yes; then
   echo "  --------------------------------------------------------------------"
 fi
 test "$with_xface" = yes && echo "  Compiling in support for X-Face message headers."
-test "$with_gif"   = yes && echo "  Compiling in (built in) support for GIF image conversion."
+test "$with_gif"   = yes && echo "  Compiling in support for GIF image conversion."
 test "$with_jpeg"  = yes && echo "  Compiling in support for JPEG image conversion."
 test "$with_png"   = yes && echo "  Compiling in support for PNG image conversion."
-test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image conversion (not implemented)."
+test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image conversion."
 case "$with_sound" in
   nas    ) echo "  Compiling in network sound (NAS) support." ;;
   native ) echo "  Compiling in native sound support." ;;
@@ -3574,8 +3598,8 @@ echo "  The \`Info-default-directory-list' will be initialized from:"
 echo "  INFOPATH=\"$infopath\""
 test "$use_union_type"     = yes && echo "  Using the union type for Lisp_Objects."
 test "$with_minimal_tagbits" != "no" -o "$with_gung" != "no" && \
-		echo "Using Lisp_Objects with minimal tagbits."
-test "$with_gung" != "no" && echo "Using indexed lrecord implementation."
+		echo "  Using Lisp_Objects with minimal tagbits."
+test "$with_gung" != "no" && echo "  Using indexed lrecord implementation."
 test "$debug"              = yes && echo "  Compiling in extra code for debugging."
 test "$memory_usage_stats" = yes && echo "  Compiling in code for checking XEmacs memory usage."
 test "$usage_tracking"     = yes && echo "  Compiling with usage tracking active (Sun internal)."

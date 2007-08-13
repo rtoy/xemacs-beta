@@ -736,7 +736,7 @@
 	:active (fboundp 'browse-url-grail)]
        )
       "-----"
-      ["Browse Faces..." edit-faces]
+      ["Browse Faces..." (customize-face nil)]
       ("Font"   :filter font-menu-family-constructor)
       ("Size"	:filter font-menu-size-constructor)
       ("Weight"	:filter font-menu-weight-constructor)
@@ -788,7 +788,8 @@
      ("Help"
       ["About XEmacs..." about-xemacs]
       ("Basics"
-       #-infodock ["Installation" describe-installation]
+       ["Installation" describe-installation
+	:active (boundp 'Installation-string)]
        ;; Tutorials.
        ,(if (featurep 'mule)
 	    ;; Mule tutorials.
@@ -1208,10 +1209,15 @@ items by redefining the function `format-buffers-menu-line'."
 ;;; The Options menu
 
 (defvar options-save-faces nil
-  "if t, save-options will save all the face information.
-Set to nil to avoid this. This is recommended on XEmacs 19.15
-and above as we have a much more powerful (read: working) way 
-of changing and saving faces via cu-edit-faces.el & custom.el.")
+  "*Non-nil value means save-options will save information about faces.
+A nil value means save-options will not save face information.
+Set this non-nil only if you use M-x edit-faces to change face
+settings.  If you use M-x customize-face or the \"Browse Faces...\"
+menu entry, you will see a button in the Customize Face buffer that you
+can use to permanently save your face changes.
+
+M-x edit-faces is deprecated.  Support for it and this variable will
+be discontinued in a future release.")
 
 (defconst options-menu-saved-forms
   ;; This is really quite a kludge, but it gets the job done.

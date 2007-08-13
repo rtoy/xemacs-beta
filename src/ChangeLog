@@ -1,3 +1,278 @@
+1998-03-13  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c: fix for upside-down TIFFs.
+
+1998-03-14  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* fileio.c (Finsert_file_contents_internal): Removed all DOS_NT
+	specific code; rely on FILE_CODING streams instead.
+	(Fwrite_region_internal): Ditto.
+	(decide_buffer_type): Function removed.
+	(buf_decide_buffer_type): Function removed.
+	(Many places): References to DOS_NT replaced with WINDOWSNT. MSDOS- 
+	specific code removed.
+
+	* lread.c (Fload_internal): Removed ugly DOS style re-opening a
+	file in text mode. '\r' is perfectly handled in readevallop().
+
+	* redisplay.c (decode_mode_spec): Made %t decode to "T" unconditionally.
+
+	* s/windowsnt.h (FILE_CODING): Define always.
+
+1998-03-15  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* s/windowsnt.h: Added prototypes for generally used functions
+	implemented in nt.c
+
+	* fileio.c (Ffile_readable_p): Conditionalized declared never used
+	variables. 
+	(Fexpand_file_name): Ditto.
+	(check_executable): Ditto.
+
+	* lread.c (parse_integer): Eliminated a warning resulted from
+	applying unary minus to unsigned int.
+
+1998-03-15  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c: (Fldap_search_internal): Print error information from
+	errno when connection fails
+
+1998-03-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lread.c: New macro, to avoid exposing an lstream to Lisp error
+ 	handlers.
+	(reader_nextchar): Use it.
+	(read1): Ditto.
+
+1998-03-15  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* cmds.c (Fforward_char): Dropped support for
+	  signal-error-on-buffer-boundary.  Added details to
+	  doc string.
+
+	  (Fbackward_char): Dropped support for
+	  signal-error-on-buffer-boundary by way of change to
+	  Fforward_char.  Added details to doc string.
+
+	  Definition of signal-error-on-buffer-boundary moved to
+	  lisp/simple.el.
+
+	* window.c (Fscroll_up): Dropped support for
+	  signal-error-on-buffer-boundary.  Added details to
+	  doc string.
+
+	  (Fscroll_down): Dropped support for
+	  signal-error-on-buffer-boundary.  Added details to doc
+	  string.
+
+1998-03-15  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* keydefs.el: Changed keybindings of forward-char,
+	  backward, scroll-up and scroll-down to point to their
+	  -command counterparts.
+
+	* simple.el: New functions: forwarc-char-command,
+	  backwrad-char-command, scroll-up-command,
+	  scroll-down-command which work liek their counterparts
+	  except that they honor the variable
+	  signal-error-on-buffer-boundary.
+
+	  Definition of signal-error-on-buffer-boundary received
+	  from src/cmds.c.
+
+	  defvar declaration added for word-across-newline to avoid
+	  byte-compiler warning about the free variable reference.
+
+1998-03-15  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* redisplay-tty.c (tty_clear_frame): Record that the
+	  real location of teh cursor has been moved to 0,0.
+	  Failure to do this makes the display code believe the
+	  cursor is in a place where it is not.
+
+1998-03-15  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* console.h: Added set_final_cursor_coords method to console 
+	  struct.
+
+	* console-tty.h: Added final_cursor_x and final_cursor_y
+	  slots to console struct.  Added CONSOLE_TTY_FINAL_CURSOR
+	  macros to access them.
+
+	* redisplay.c (create_text_block): No longer
+	  turn off the cursor if computing a block when
+	  cursor_in_echo_area is 0 and the echo area is
+	  inactive.  Needed so that the cursor will not be
+	  frozen in the minibuffer when cursor_in_echo_area
+	  is non-zero.
+
+	* redisplay-output.c (redisplay_move_cursor): Don't
+	  bail if we're moving the cursor in a selected
+	  minibuffer window.  Needed so that simple cursor
+	  optimization can be done in the minibuffer even when
+	  cursor_in_echo_area is non-zero.
+
+	  (redraw_cursor_in_window): Set final cursor coordinates
+	  as a special case for cursor_in_echo_area != 0, since
+	  the buffer switching between minibuffer and echo area
+	  buffer seems to confuse the normal cursor positiong
+	  code otherwise.  Set final cursor coordinates in the
+	  general case before calling output_display_line.
+
+	* redisplay-tty.c: New function tty_set_final_cursor_coords.
+
+	  (tty_output_end): Set logical cursor position to the final
+	  cursor position as specified in CONSOLE_TTY_CURSOR_{X,Y},
+	  and then go to it.
+
+	  (tty_redisplay_shutdown): Changed code to use
+	  tty_set_final_cursor_coords() to go to the bottom
+	  left of the screen instead of using cmgoto()
+
+	  (console_type_create_redisplay_tty): Declare that tty
+	  consoles have the set_final_cursor_coords method.
+
+1998-03-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* emacs.c (main_1): Avoid snprintf(); allocate the buffer
+	dynamically.
+
+1998-03-13  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c (png_instantiate): Added in override support
+	for png backgrounds.
+	
+1998-03-13  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c (png_instantiate): Fixed a bug that was causing
+	overruns when attempting to display transparent pngs
+
+1998-03-13  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c (png_instantiate): Fix brainfart in error handling code.
+
+1998-03-13  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (main_1): Guard call to snprintf.
+
+	* config.h.in: Add HAVE_SNPRINTF.
+
+1998-03-13  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* event-stream.c (init_event_stream): Initialize mswindows event
+	loop in stream mode if no other window systems available. Thanks
+	to Darryl Okahata.
+
+1998-03-04  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* alloc.c (garbage_collect_1): Removed #ifndef WINDOWSNT around
+	mark_profiling_info().
+
+1998-03-11  SL Baur  <steve@altair.xemacs.org>
+
+	* console-tty.c (Fset_console_tty_coding_system): Guard against
+	terminal-coding-system being left unitialized by a locale.
+	From Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+1998-03-11  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* config.h.in: Added in new feature check HAVE_VSNPRINT to check
+	for safe ways to deal with vsprintf and friends.
+
+	* glyphs-x.c (gif_instantiate): Changed gif support to call external
+	library Giflib 3.1.  Altered GIF/JPEG/PNG formats to use new EImage
+	format for dealing with images to better support color handling, and
+	facilitate the change to a device-neutral implementation.  Added TIFF
+	support.
+
+	* Makefile.in.in: Removed all gif related files
+
+	* emacs.c (main_1): Removed reference to init_gif_err
+	* symsinit.h: ditto
+
+	* dgif_lib.c: Removed from the source distribution
+	* gif_err.c: ditto
+	* gif_lib.h: ditto
+	* gifalloc.c: ditto
+
+Mon Mar 09 13:00:55 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* file-coding.c: warning elimination
+
+	* ntplay.c: new file. basic implementation of sound support.
+
+	* redisplay-msw.c (mswindows_update_dc): cachel bug is gone so we
+	don't need this code under cygwin.
+
+	* sheap.c: need large heap slop for byte compiling with three
+	display types.
+
+	* sound.c: eliminate warnings. enable sound under mswindows.
+
+	* s/cygwin32.h: miscellaneous updates for sound support.
+
+1998-03-09  SL Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: Add BITMAPDIR.
+
+	* glyphs-x.c (locate_pixmap_file): Assume BITMAPDIR is a
+	colon-separated path.
+
+	* emacs.c (main_1): Initialize dll support with the path the
+	binary.
+	(make_arg_list_1): Ditto.
+
+	* sysdll.h: Add legalese.
+	* sysdll.c: Ditto.
+
+	* sysdll.c: sysdll.h needs to be included with double quotes not
+	angle brackets.
+	Use RTLD_GLOBAL as an open flag if it exists.
+
+1998-03-09  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
+
+	* eldap.c (Fldap_search_internal): call garbage_collect_1 instead
+	of Fgarbage_collect.  The two are identical except the latter
+	generates some `fresh' garbage :)
+
+1998-03-09  SL Baur  <steve@altair.xemacs.org>
+
+	* keymap.c: Add symbols for mouse-4 and mouse-5.
+	(define_key_check_and_coerce_keysym): Mouse-4, Mouse-5 keysym support.
+	(syms_of_keymap): Ditto.
+
+1998-01-26  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* marker.c (print_marker): Print marker's lheader.uid.
+	(Fbuffer_has_markers_at): New function, synched with FSFmacs 20.2.
+	(Fbuffer_has_markers_at): Disabled by default.
+
+1998-01-25  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* sound.c (Fplay_sound_file): Place the result of continuable
+	error back to FILE.
+
+1998-03-09  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c, config.h.in: New DLL support.
+	* sysdll.h, sysdll.c: New files.
+	* dll.c: renamed from dlopen.c, use interface defined in sysdll.c.
+	From William Perry <wmperry@aventail.com>
+
+	* eldap.h: Fix copyright.
+	* eldap.c: Ditto.
+
+1998-03-08  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Add dependencies for process-unix.o.
+
+1998-03-08  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* glyphs-x.c (write_lisp_string_to_temp_file):
+	  Don't explicitly initialize conversion_out_dynarr, because
+	  doing so may cause it to be put into read-only space
+	  and modifying it later would make XEmacs crash.
+
 1998-03-07  Kyle Jones  <kyle_jones@wonderworks.com>
 
 	* events.h: Add do_backspace_mapping parameter to

@@ -29,9 +29,6 @@
 ;; This file does the magic to parse mswindows font names, and make sure that the
 ;; default and modeline attributes of new frames are specified enough.
 
-(defun mswindows-init-global-faces ()
-  )
-
 ;;; ensure that the default face has some reasonable fallbacks if nothing
 ;;; else is specified.
 (defun mswindows-init-device-faces (device)

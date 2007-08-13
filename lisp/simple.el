@@ -1686,6 +1686,19 @@ The mark is activated unless DONT-ACTIVATE-REGION is non-nil."
     (switch-to-buffer buffer)))
 
 
+(defcustom signal-error-on-buffer-boundary t
+  "*Non-nil value causes XEmacs to beep or signal an error when certain interactive commands would move point past (point-min) or (point-max).
+The commands that honor this variable are
+
+forward-char-command
+backward-char-command
+next-line
+previous-line
+scroll-up-command
+scroll-down-command"
+  :type 'boolean
+  :group 'editing-basics)
+
 ;;; After 8 years of waiting ... -sb
 (defcustom next-line-add-newlines nil  ; XEmacs
   "*If non-nil, `next-line' inserts newline when the point is at end of buffer.
@@ -1693,6 +1706,72 @@ This behavior used to be the default, and is still default in FSF Emacs.
 We think it is an unnecessary and unwanted side-effect."
   :type 'boolean
   :group 'editing-basics)
+
+(defun forward-char-command (&optional arg buffer)
+  "Move point right ARG characters (left if ARG negative) in BUFFER.
+On attempt to pass end of buffer, stop and signal `end-of-buffer'.
+On attempt to pass beginning of buffer, stop and signal `beginning-of-buffer'.
+Error signaling is suppressed if `signal-error-on-buffer-boundary'
+is nil.  If BUFFER is nil, the current buffer is assumed."
+  (interactive "_p")
+  (if signal-error-on-buffer-boundary
+      (forward-char arg buffer)
+    (condition-case nil
+	(forward-char arg buffer)
+      (beginning-of-buffer nil)
+      (end-of-buffer nil))))
+
+(defun backward-char-command (&optional arg buffer)
+  "Move point left ARG characters (right if ARG negative) in BUFFER.
+On attempt to pass end of buffer, stop and signal `end-of-buffer'.
+On attempt to pass beginning of buffer, stop and signal `beginning-of-buffer'.
+Error signaling is suppressed if `signal-error-on-buffer-boundary'
+is nil.  If BUFFER is nil, the current buffer is assumed."
+  (interactive "_p")
+  (if signal-error-on-buffer-boundary
+      (backward-char arg buffer)
+    (condition-case nil
+	(backward-char arg buffer)
+      (beginning-of-buffer nil)
+      (end-of-buffer nil))))
+
+(defun scroll-up-command (&optional n)
+  "Scroll text of current window upward ARG lines; or near full screen if no ARG.
+A near full screen is `next-screen-context-lines' less than a full screen.
+Negative ARG means scroll downward.
+When calling from a program, supply a number as argument or nil.
+On attempt to scroll past end of buffer, `end-of-buffer' is signaled.
+On attempt to scroll past beginning of buffer, `beginning-of-buffer' is
+signaled.
+
+If `signal-error-on-buffer-boundary' is nil, attempts to scroll past buffer
+boundaries do not cause an error to be signaled."
+  (interactive "_P")
+  (if signal-error-on-buffer-boundary
+      (scroll-up n)
+    (condition-case nil
+	(scroll-up n)
+      (beginning-of-buffer nil)
+      (end-of-buffer nil))))
+
+(defun scroll-down-command (&optional n)
+  "Scroll text of current window downward ARG lines; or near full screen if no ARG.
+A near full screen is `next-screen-context-lines' less than a full screen.
+Negative ARG means scroll upward.
+When calling from a program, supply a number as argument or nil.
+On attempt to scroll past end of buffer, `end-of-buffer' is signaled.
+On attempt to scroll past beginning of buffer, `beginning-of-buffer' is
+signaled.
+
+If `signal-error-on-buffer-boundary' is nil, attempts to scroll past buffer
+boundaries do not cause an error to be signaled."
+  (interactive "_P")
+  (if signal-error-on-buffer-boundary
+      (scroll-down n)
+    (condition-case nil
+	(scroll-down n)
+      (beginning-of-buffer nil)
+      (end-of-buffer nil))))
 
 (defun next-line (arg)
   "Move cursor vertically down ARG lines.
@@ -2395,6 +2474,9 @@ Setting this variable automatically makes it local to the current buffer."
 This function is only called during auto-filling of a comment section.
 The function should take a single optional argument which is a flag
 indicating whether soft newlines should be inserted.")
+
+;; defined in mule-base/mule-category.el
+(defvar word-across-newline)
 
 ;; This function is the auto-fill-function of a buffer
 ;; when Auto-Fill mode is enabled.

@@ -1,3 +1,68 @@
+1998-03-16  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0 beta31 is released.
+
+1998-03-16  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* configure.usage (Usage): Correct information about gif, tiff
+	and WNN entries
+
+1998-03-13  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: typo fix in sed command.
+	From P. E. Jareth Hein <jareth@camelot-soft.com>
+
+	* configure.in (all_widgets): Check for snprintf().
+
+1998-03-11  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* configure.in: New gif support
+
+1998-03-10  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (have_glibc): Don't define _GNU_SOURCE for glibc.
+
+Mon Mar 09 13:00:55 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: don't add libc to link list for dlopen ordinary
+	link takes care of this. check for dlfcn.h
+
+1998-03-10  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Examine each directory of X11 include path for
+	inclusion into BITMAPDIR.
+
+1998-03-09  SL Baur  <steve@altair.xemacs.org>
+
+	* aclocal.m4: Add legalese.
+
+Mon Mar 09 13:00:55 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: make sure we have ndbm.h as well as libgdbm.a for
+	database support.
+
+	* configure.in: move msw checking after x checking so that
+	auto-detection works.
+
+1998-03-09  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: New DLL support.
+	* aclocal.m4: New file.
+	From William M. Perry <wmperry@aventail.com>
+
+1998-03-08  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (xemacs_betaname): Align messages for minimal
+	tagbits and indexed lrecords.
+	Suggested by Andreas Jaeger <aj@arthur.rhein-neckar.de>
+
+1998-03-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* etc/Emacs.ad: Example using leading dot resources to
+	  initalize faces changes to use Emacs.foo since the
+	  leading dot syntax doesn't work.  Initialization of
+	  text-cursor face moved to faces.el.
+
 1998-03-07  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta30 is released.

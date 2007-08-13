@@ -1,3 +1,91 @@
+1998-03-16  SL Baur  <steve@altair.xemacs.org>
+
+	* files.el (cdpath-previous): New variable.
+	(cd): Use it.
+	From Bob Weiner <weiner@wave.altrasoft.com>
+
+1998-03-14  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* winnt.el: Removed "%t" from the beginning of
+	modeline-format. From now on, there's no nt-specifics in the modeline.
+
+1998-03-14  SL Baur  <steve@altair.xemacs.org>
+
+	* setup-paths.el (paths-setup-paths-warning): Replace occurrences
+	of `when' with `if'.
+
+1998-03-03  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* msw-glyphs.el: New file. Defines TTY-style glyphs for
+	mswindows. Must be reworked along with glyphs.el, or 
+	merged into it, after there is images support.
+
+	* dumped-lisp.el (preloaded-file-list): Dump msw-glyphs.el when
+	'mswindows. 
+
+1998-03-13  SL Baur  <steve@altair.xemacs.org>
+
+	* faces.el: fix for text cursor initialization.
+	Suggested by Kyle Jones <kyle_jones@wonderworks.com>
+	From Andy Piper <andyp@parallax.co.uk>
+
+1998-03-11  Pete Ware  <ware@cis.ohio-state.edu>
+
+	* files.el (set-auto-mode): If a mode is not fboundp, check to see 
+	if there is an existing package that handles it and warn the user
+	about that mode.
+
+1998-03-02  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* x-menubar.el (default-menubar): Greyed out "Help / Basics /
+	Installation" menu item when Installation-string is not bound.
+
+1998-03-11  SL Baur  <steve@altair.xemacs.org>
+
+	* lisp.el (forward-sexp): Fix for test for balanced sexp.
+	From Jeremiah W. James <jerry@cs.ucsb.edu>
+
+1998-03-10  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* msw-faces.el:
+	* faces.el: Fix face initialization.
+
+1998-03-10  Glynn Clements  <glynn@sensei.co.uk>
+
+	* files.el (backup-enable-predicate): fix breakage introduced 
+	by TMPDIR patch.
+
+1998-03-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* x-faces.el (x-init-face-from-resources): The
+	  TTY face property retrieval functions don't return
+	  specifiers, so use face-property instead.
+
+1998-03-09  SL Baur  <steve@altair.xemacs.org>
+
+	* mwheel.el (mwheel-install): Use portable keysyms and syntax.
+
+1998-03-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* x-menubar.el: Expanded documentation for
+	  option-save-faces.  Changed Options -> Browse Faces
+	  menu entry to invoke customize-face.
+
+1998-03-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* faces.el: Most face initialization moved out of
+	  init-other-random-faces to the top level so that the
+	  initialization happens before Xemacs is dumped.  Much
+	  of the fascist "face-differs-from-default-p or FROB!"
+	  code has been retired in favor of letting the user do
+	  what they want to do.  Face initialization code changed
+	  to use `default' specifier tag so that the settings can
+	  be overridden later if the user wishes it.
+
+1998-03-08  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): Update contributors list.
+
 1998-03-07  Kyle Jones  <kyle_jones@wonderworks.com>
 
 	* specifier.el: Define new specifier tag `default'.

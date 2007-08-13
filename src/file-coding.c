@@ -360,7 +360,7 @@ setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
   int len = string_length (XSYMBOL (CODING_SYSTEM_NAME (codesys))->name);
   char *codesys_name = (char *) alloca (len + 7);
   int mlen = -1;
-  char *codesys_mnemonic;
+  char *codesys_mnemonic=0;
 
   Lisp_Object codesys_name_sym, sub_codesys_obj;
 

@@ -64,6 +64,7 @@
 
 (define-function 'defalias 'define-function)
 (load "packages.el")
+;;; (load "setup-paths.el")
 
 (let ((autol (packages-list-autoloads)))
   ;; (print (prin1-to-string autol))
@@ -87,6 +88,7 @@
 (let (preloaded-file-list site-load-packages)
   (load (concat default-directory "../lisp/dumped-lisp.el"))
   ;; At this point we need to have the package path initialized
+  ;(paths-setup-paths)
   (packages-find-packages package-path t t)
   ;; (print (prin1-to-string preloaded-file-list))
   (load (concat default-directory "../site-packages") t t)

@@ -1,5 +1,5 @@
 /* LDAP client interface for XEmacs.
-   Copyright (C) ***FIXME***
+   Copyright (C) 1998 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -37,6 +37,8 @@ Boston, MA 02111-1307, USA.  */
 /* The entire file is within this conditional */
 
 #include "lisp.h"
+
+#include <errno.h>
 
 #include "eldap.h"
 #include <lber.h>
@@ -293,14 +295,15 @@ an alist of attribute/values.
      check what happens inside that lib. Anyway this should be harmless to
      XEmacs and makes things work. */
 #if defined (HAVE_UMICH_LDAP)
-  Fgarbage_collect ();
+  garbage_collect_1 ();
 #endif
 
   /* Connect to the server and bind */
   message ("Connecting to %s...", ldap_host);
   if ( (ld = ldap_open (ldap_host, LDAP_PORT)) == NULL )
-     signal_simple_error ("Failed connecting to host",
-                          build_string (ldap_host));
+     signal_simple_error_2 ("Failed connecting to host",
+                            build_string (ldap_host),
+                            lisp_strerror (errno));
 
 #if HAVE_LDAP_SET_OPTION
   if (ldap_set_option (ld, LDAP_OPT_DEREF, (void *)&ldap_deref) != LDAP_SUCCESS)

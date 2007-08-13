@@ -58,6 +58,9 @@ struct tty_console
   int real_cursor_x;
   int real_cursor_y;
 
+  int final_cursor_x;
+  int final_cursor_y;
+
   int height;
   int width;
 
@@ -208,6 +211,8 @@ struct tty_console
 #define CONSOLE_TTY_CURSOR_Y(c) (CONSOLE_TTY_DATA (c)->cursor_y)
 #define CONSOLE_TTY_REAL_CURSOR_X(c) (CONSOLE_TTY_DATA (c)->real_cursor_x)
 #define CONSOLE_TTY_REAL_CURSOR_Y(c) (CONSOLE_TTY_DATA (c)->real_cursor_y)
+#define CONSOLE_TTY_FINAL_CURSOR_X(c) (CONSOLE_TTY_DATA (c)->final_cursor_x)
+#define CONSOLE_TTY_FINAL_CURSOR_Y(c) (CONSOLE_TTY_DATA (c)->final_cursor_y)
 
 #define TTY_CM(c) (CONSOLE_TTY_DATA (c)->cm)
 #define TTY_SE(c) (CONSOLE_TTY_DATA (c)->se)

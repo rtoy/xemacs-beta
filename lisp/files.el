@@ -130,11 +130,11 @@ This variable is relevant only if `backup-by-copying' is nil."
 
 (defvar backup-enable-predicate
   '(lambda (name)
-     (not (or (string-equal "/tmp/" (substring name 0 5))
+     (not (or (string-match "^/tmp/" name)
 	      (let ((tmpdir (temp-directory)))
 		(and tmpdir
-		     (string-equal (concat tmpdir "/")
-				   (substring name 0 (1+ (length tmpdir)))))))))
+		     (string-match (concat "^" (regexp-quote tmpdir) "/")
+				   tmpdir))))))
   "Predicate that looks at a file name and decides whether to make backups.
 Called with an absolute file name as argument, it returns t to enable backup.")
 
@@ -386,24 +386,28 @@ with a definition that really does change some file names."
   "Value of the CDPATH environment variable, as a list.
 Not actually set up until the first time you use it.")
 
+(defvar cdpath-previous nil
+  "Prior value of the CDPATH environment variable.")
+
 (defvar path-separator ":"
   "Character used to separate concatenated paths.")
 
-(defun parse-colon-path (cd-path)
-  "Explode a colon-separated list of paths into a string list."
-  (and cd-path
-       (let (cd-list (cd-start 0) cd-colon)
-	 (setq cd-path (concat cd-path path-separator))
-	 (while (setq cd-colon (string-match path-separator cd-path cd-start))
-	   (setq cd-list
-		 (nconc cd-list
-			(list (if (= cd-start cd-colon)
-				   nil
-				(substitute-in-file-name
-				 (file-name-as-directory
-				  (substring cd-path cd-start cd-colon)))))))
-	   (setq cd-start (+ cd-colon 1)))
-	 cd-list)))
+;; Merged with equivalent C Code.
+;(defun parse-colon-path (cd-path)
+;  "Explode a colon-separated list of paths into a string list."
+;  (and cd-path
+;       (let (cd-list (cd-start 0) cd-colon)
+;	 (setq cd-path (concat cd-path path-separator))
+;	 (while (setq cd-colon (string-match path-separator cd-path cd-start))
+;	   (setq cd-list
+;		 (nconc cd-list
+;			(list (if (= cd-start cd-colon)
+;				   nil
+;				(substitute-in-file-name
+;				 (file-name-as-directory
+;				  (substring cd-path cd-start cd-colon)))))))
+;	   (setq cd-start (+ cd-colon 1)))
+;	 cd-list)))
 
 (defun cd-absolute (dir)
   "Change current directory to given absolute file name DIR."
@@ -436,10 +440,11 @@ colon-separated list of directories when resolving a relative directory name."
   (if (file-name-absolute-p dir)
       (cd-absolute (expand-file-name dir))
     ;; XEmacs
-    (if (null cd-path)
-	;;#### Unix-specific
-	(let ((trypath (parse-colon-path (getenv "CDPATH"))))
-	  (setq cd-path (or trypath (list "./")))))
+    (unless (and cd-path (equal (getenv "CDPATH") cdpath-previous))
+      ;;#### Unix-specific
+      (let ((trypath (parse-colon-path
+		      (setq cdpath-previous (getenv "CDPATH")))))
+	(setq cd-path (or trypath (list "./")))))
     (or (catch 'found
 	  (mapcar #'(lambda (x)
 		        (let ((f (expand-file-name (concat x dir))))
@@ -1382,7 +1387,19 @@ If `enable-local-variables' is nil, this function does not check for a
                             (setq alist nil))
                         (setq alist (cdr alist))))))
               (if mode
-                  (funcall mode))
+		  (if (not (fboundp mode))
+		      (progn
+			(if (or (not (boundp 'package-get-base))
+				(not package-get-base))
+			    (load "package-get-base"))
+			(require 'package-get)
+			(let ((name (package-get-package-provider mode)))
+			  (if name
+			      (message "Mode %s is not installed.  Download package %s" mode name)
+			    (message "Mode %s either doesn't exist or is not a known package" mode))
+			  (sit-for 2)
+			  (error "%s" mode)))
+		    (funcall mode)))
               ))))))
 
 (defvar hack-local-variables-hook nil

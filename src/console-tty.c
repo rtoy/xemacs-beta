@@ -238,8 +238,10 @@ CODESYS defaults to the value of `terminal-coding-system'.
   codesys = NILP (codesys) ?
     Vterminal_coding_system :
     Fget_coding_system (codesys);
-  set_encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
+  if (!NILP(codesys)) {
+    set_encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
 	codesys);
+  }
   return Qnil;
 }
 #endif /* MULE */

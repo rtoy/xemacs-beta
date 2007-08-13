@@ -1,3 +1,13 @@
+1998-03-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* internals/internals.texi (GCPROing): Explain when it is
+	necessary to GCPRO function parameters.
+
+1998-03-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* internals/internals.texi (Writing Lisp Primitives): Updated
+	definition of For().
+
 1998-03-01  Aki Vehtari  <Aki.Vehtari@hut.fi>
 
 	* lispref/menus.texi: Use recommended forms in examples.

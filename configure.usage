@@ -80,15 +80,17 @@ Window-system options:
 --with-xface (*)	Compile with support for X-Face mail header
 	  		conversion.  Requires the compface library.
 			Get it from the XEmacs FTP site.
---with-gif		Compile with support for GIF image conversion.
-			This support is built-in and defaults to `yes'.
+--with-gif (*)		Compile with support for GIF image conversion.
+			Requires GifLib 3.1 or greater.  Get it from
+			the XEmacs FTP site.
 --with-jpeg (*)		Compile with support for JPEG image conversion.
 			Requires libjpeg from the Independent JPEG Group.
 			Get it from the XEmacs FTP site.
 --with-png (*)		Compile with support for PNG image conversion.
 			Requires libpng.  Get it from the XEmacs FTP site.
---with-tiff		Compile with support for TIFF image conversion
-			(not yet implemented).
+--with-tiff (*)		Compile with support for TIFF image conversion.
+			Requires Sam Lefflier's libtiff library.
+			Get if from the XEmacs FTP site.
 
 
 TTY options:
@@ -156,9 +158,7 @@ Internationalization options:
 			used in conjunction with Mule support).
 --with-wnn (*)		Compile with support for WNN (a multi-language input method
 			used in conjunction with Mule support).
-			This is beta level code.
---with-wnn6 (*)		Compile with support for WNN version 6
-			This is alpha level code.
+--with-wnn6 (*)		Compile with support for the comercial package WNN version 6
 --with-i18n3		Compile with I18N level 3 (support for message
 			translation).  This doesn't currently work.
 --with-xfs		Compile with XFontSet support for bilingual menubar.
