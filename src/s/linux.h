@@ -167,25 +167,29 @@ Boston, MA 02111-1307, USA.  */
    since libc-4.4.1.  So -lipc was deleted.  */
 #define LIBS_SYSTEM
 
+#if 0 /* these options should either be cross-platform or removed - mrb */
 /* XFree86 is built with -DFUNCPROTO=11 -DNARROWPROTO so we better build
    XEmacs with these switches too so that X functions get called correctly.
    At least XawScrollbarSetThumb needs this. */ 
 #define C_SWITCH_SYSTEM -DFUNCPROTO=11 -DNARROWPROTO -D_BSD_SOURCE
 #endif
+#define C_SWITCH_SYSTEM -DNARROWPROTO -D_BSD_SOURCE
+#endif
+
 
 /* XEmacs change: configure doesn't find this because math.h aliases
    rint to __rint so that it's not found. */
 #define HAVE_RINT 1
 
 #ifdef __ELF__
-#define UNEXEC unexelf.o
+#define UNEXEC "unexelf.o"
 #define UNEXEC_USE_MAP_PRIVATE
 #endif
 
 #ifdef LINUX_QMAGIC
 
 #define HAVE_TEXT_START
-#define UNEXEC unexsunos4.o
+#define UNEXEC "unexsunos4.o"
 #define N_PAGSIZ(x) PAGE_SIZE
 
 #else /* not LINUX_QMAGIC */
@@ -282,3 +286,12 @@ Boston, MA 02111-1307, USA.  */
 #if defined __GLIBC__ && ((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1) || __GLIBC__ > 2)
 # define GETPGRP_NEEDS_ARG
 #endif
+
+/*#ifdef __ELF__*/
+#if 0	/* This is broken -sb */
+/* mrb - Ordinary link is simple and effective */
+#define ORDINARY_LINK
+#undef START_FILES
+#undef LIB_STANDARD
+#undef LIB_GCC
+#endif /* __ELF__ */

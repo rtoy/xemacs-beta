@@ -291,7 +291,13 @@ void m2w (unsigned char *mp, w_char *wp);
 void w2y (w_char *w);
 void c2m (unsigned char *cp, unsigned char *mp, unsigned char lb);
 static void puts2 (char *s);
+static int dai_end (int no, int server);
 static int yes_or_no (unsigned char *s);
+
+ /* Why doesn't wnn have a prototype for these? */
+typedef unsigned int letter;
+int cwnn_yincod_pzy(w_char *, w_char, int);
+int cwnn_pzy_yincod(letter *, letter *, int);
 
 static struct wnn_buf *wnnfns_buf[NSERVER];
 static struct wnn_env *wnnfns_env_norm[NSERVER];
@@ -350,12 +356,12 @@ Return nil if error occurs
       strcpy (langname, "ko_KR");
       break;
     }
-  strncpy (envname, XSTRING (lname)->_data, 32);
-  if (EQ(hname, Qnil)) strcpy (hostname, "");
+  strncpy (envname, (char *) XSTRING_DATA (lname), 32);
+  if (NILP (hname)) strcpy (hostname, "");
   else
     {
       CHECK_STRING (hname);
-      strncpy (hostname, XSTRING (hname)->_data, 32);
+      strncpy (hostname, (char *) XSTRING_DATA (hname), 32);
     }
   CHECK_STRING (lname);
   /* 97/4/16 jhod@po.iijnet.or.jp
@@ -496,12 +502,15 @@ Return information of dictionaries.
     {
       dicinfo--;
       w2m (dicinfo->comment, comment, lb);
-      val = Fcons (Fcons (make_int (dicinfo->dic_no),
-			  list4 (make_string (dicinfo->fname, strlen
-					      (dicinfo->fname)),
-				 make_string (comment, strlen (comment)),
-				 make_int (dicinfo->gosuu),
-				 make_int (dicinfo->nice))), val);
+      /* #### The following has not been Mule-ized!!
+         fname and comment must be ASCII strings! */
+      val =
+	Fcons (Fcons (make_int (dicinfo->dic_no),
+		      list4 (make_string ((Bufbyte *) (dicinfo->fname),
+					  strlen (dicinfo->fname)),
+			     make_string (comment, strlen ((char *) comment)),
+			     make_int (dicinfo->gosuu),
+			     make_int (dicinfo->nice))), val);
     }
   return val;
 }
@@ -512,8 +521,8 @@ Comment string COMMENT
 */ 
      (dicno, comment))
 {
-  w_char		wbuf[512];
-  int	snum;
+  w_char wbuf[512];
+  int snum;
   CHECK_INT (dicno);
   CHECK_STRING (comment);
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
@@ -534,13 +543,13 @@ Switch the translation mode to normal if T, or reverse if NIL.
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (EQ(rev, Qnil))
     {
-      if ((!wnnfns_buf[snum]) || (!wnnfns_env_norm[snum])) return;
+      if ((!wnnfns_buf[snum]) || (!wnnfns_env_norm[snum])) return Qnil;
       jl_env_set (wnnfns_buf[snum], wnnfns_env_norm[snum]);
       wnnfns_norm = 1;
     }
   else
     {
-      if ((!wnnfns_buf[snum]) || (!wnnfns_env_rev[snum])) return;
+      if ((!wnnfns_buf[snum]) || (!wnnfns_env_rev[snum])) return Qnil;
       jl_env_set (wnnfns_buf[snum], wnnfns_env_rev[snum]);
       wnnfns_norm = 0;
     }
@@ -618,7 +627,7 @@ Get kanji string of KOUHO-NUMBER
   if (!wnnfns_buf[snum]) return Qnil;
   jl_get_zenkouho_kanji (wnnfns_buf[snum], XINT (kouhoNo), wbuf);
   w2m (wbuf, kanji_buf, lb);
-  return make_string (kanji_buf, strlen (kanji_buf));
+  return make_string (kanji_buf, strlen ((char *) kanji_buf));
 }
 
 DEFUN ("wnn-server-zenkouho-bun", Fwnn_zenkouho_bun, 0, 0, 0, /*
@@ -743,10 +752,10 @@ Get bunsetsu information specified by BUN-NUMBER.
   for (i = yomilen; i >= jirilen; i--) wbuf[i+1] = wbuf[i];
   wbuf[jirilen] = '+';
   w2m (wbuf, cbuf, lb);
-  val = Fcons (make_string (cbuf, strlen (cbuf)), val);
+  val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
   jl_get_kanji (wnnfns_buf[snum], bun_no, bun_no + 1, wbuf);
   w2m (wbuf, cbuf, lb);
-  val = Fcons (make_string (cbuf, strlen (cbuf)), val);
+  val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
   return val;
 }
 
@@ -780,7 +789,7 @@ Get the pair of kanji and length of bunsetsu specified by BUN-NUMBER.
   no = XINT (bunNo);
   kanji_len = jl_get_kanji (wnnfns_buf[snum], no, no + 1, wbuf);
   w2m (wbuf, kanji_buf, lb);
-  return Fcons (make_string (kanji_buf, strlen (kanji_buf)),
+  return Fcons (make_string (kanji_buf, strlen ((char *) kanji_buf)),
 		make_int (kanji_len));
 }
 
@@ -802,7 +811,7 @@ Get the pair of yomi and length of bunsetsu specified by BUN-NUMBER.
   no = XINT (bunNo);
   yomi_len = jl_get_yomi (wnnfns_buf[snum], no, no + 1, wbuf);
   w2m (wbuf, yomi_buf, lb);
-  return Fcons (make_string (yomi_buf, strlen (yomi_buf)),
+  return Fcons (make_string (yomi_buf, strlen ((char *) yomi_buf)),
 		make_int (yomi_len));
 }
 
@@ -926,11 +935,11 @@ Return list of yomi, kanji, comment, hindo, hinshi.
       val = Fcons (make_int (info_buf->hinshi), val);
       val = Fcons (make_int (info_buf->hindo), val);
       w2m (info_buf->com, cbuf, lb);
-      val = Fcons (make_string (cbuf, strlen (cbuf)), val);
+      val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
       w2m (info_buf->kanji, cbuf, lb);
-      val = Fcons (make_string (cbuf, strlen (cbuf)), val);
+      val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
       w2m (info_buf->yomi, cbuf, lb);
-      val = Fcons (make_string (cbuf, strlen (cbuf)), val);
+      val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
       return val;
     }
 }
@@ -986,7 +995,7 @@ Return list of (kanji hinshi freq dic_no serial).
     {
       wordinfo--;
       w2m (wordinfo->kanji, kanji_buf, lb);
-      val = Fcons (Fcons (make_string (kanji_buf, strlen (kanji_buf)),
+      val = Fcons (Fcons (make_string (kanji_buf, strlen ((char *) kanji_buf)),
 			  list4 (make_int (wordinfo->hinshi),
 				 make_int (wordinfo->hindo),
 				 make_int (wordinfo->dic_no),
@@ -1116,7 +1125,7 @@ Get message string from wnn_perror.
 */
      ())
 {
-  char mbuf[256];
+  unsigned char mbuf[256];
   char 			*msgp;
   int			snum;
   unsigned char		lb;
@@ -1144,8 +1153,8 @@ Get message string from wnn_perror.
   if (!wnnfns_buf[snum]) return Qnil;
 /*  msgp = msg_get (wnn_msg_cat, XINT (errno), 0, 0);*/
   msgp = wnn_perror_lang (langname);
-  c2m (msgp, mbuf, lb);
-  return make_string (mbuf, strlen (mbuf));
+  c2m ((unsigned char *) msgp, mbuf, lb);
+  return make_string (mbuf, strlen ((char *) mbuf));
 }
 
 
@@ -1173,7 +1182,7 @@ For Wnn.
   if ((snum = check_wnn_server_type ()) == -1) return Qnil;
   if (!wnnfns_buf[snum]) return Qnil;
   if (jl_fuzokugo_get (wnnfns_buf[snum], fname) < 0) return Qnil;
-  return make_string (fname, strlen (fname));
+  return make_string ((Bufbyte *) fname, strlen (fname));
 }
 
 
@@ -1238,7 +1247,7 @@ For Wnn.
     {
       area--;
       w2m (*area, cbuf, lb);
-      val = Fcons (make_string (cbuf, strlen (cbuf)), val);
+      val = Fcons (make_string (cbuf, strlen ((char *) cbuf)), val);
     }
   return val;
 }
@@ -1258,7 +1267,7 @@ For Wnn.
   if (!wnnfns_buf[snum]) return Qnil;
   if ((wname = jl_hinsi_name (wnnfns_buf[snum], XINT (no))) == 0) return Qnil;
   w2m (wname, name, lb);
-  return make_string (name, strlen (name));
+  return make_string (name, strlen ((char *) name));
 }
 #ifdef	WNN6
 DEFUN ("wnn-server-fisys-dict-add", Fwnn_fisys_dict_add, 3, MANY, 0, /*
@@ -2004,8 +2013,8 @@ _xp (int x)
 void
 w2y (w_char *w)
 {
-  unsigned long		pbuf[5000], ybuf[5000];
-  unsigned long		*pin;
+  letter		pbuf[5000], ybuf[5000];
+  unsigned int		*pin;
   w_char *y;
   int len;
 
@@ -2049,7 +2058,7 @@ c2m (unsigned char *cp, unsigned char *mp, unsigned char lb)
   *mp = 0;
 }
 
-int
+static int
 dai_end (int no, int server)
 {
   for (no++; no < jl_bun_suu (wnnfns_buf[server])

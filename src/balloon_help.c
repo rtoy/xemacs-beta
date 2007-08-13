@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
  *
  */
 
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "balloon_help.h"
 
-#include "config.h"
 #ifndef WINDOWSNT
 #define max(x,y) (x>y?x:y)
 #endif
@@ -288,66 +288,22 @@ static int
 get_shape (int last_shape, int x, int y, int width, int height,
 	   int screen_width, int screen_height)
 {
-  /* Can we use last_shape */
-  if (SHAPE_CONE_TOP_LEFT == last_shape)
-    {
-      if ((x + width < screen_width) && (y + height < screen_height))
-	{
-	  return last_shape;
-	}
-    }
-  else if (SHAPE_CONE_TOP_RIGHT == last_shape)
-    {
-      if ((x - width > 0) && (y + height < screen_height))
-	{
-	  return last_shape;
-	}
-    }
-  else if (SHAPE_CONE_BOTTOM_LEFT == last_shape)
-    {
-      if ((x + width < screen_width) && (y - height > 0))
-	{
-	  return last_shape;
-	}
-    }
-  else if (SHAPE_CONE_BOTTOM_RIGHT == last_shape)
-    {
-      if ((x - width > 0) && (y - height > 0))
-	{
-	  return last_shape;
-	}
-    }
+  /* Can we use last_shape? */
+  if (((last_shape == SHAPE_CONE_TOP_LEFT) &&
+       (x + width < screen_width) && (y + height < screen_height)) ||
+      ((last_shape == SHAPE_CONE_TOP_RIGHT) &&
+       (x - width > 0) && (y + height < screen_height)) ||
+      ((last_shape == SHAPE_CONE_BOTTOM_LEFT) &&
+       (x + width < screen_width) && (y - height > 0)) ||
+      ((last_shape == SHAPE_CONE_BOTTOM_RIGHT) &&
+       (x - width > 0) && (y - height > 0)))
+    return last_shape;
 
-  /* Try to pick a shape that will not get changed, ie if top left quadrant, top_left */
-  if (x < screen_width / 2)
-    {
-      if (y < screen_height / 2)
-	{
-	  return SHAPE_CONE_TOP_LEFT;
-	}
-      else
-	{
-	  return SHAPE_CONE_BOTTOM_LEFT;
-	}
-    }
-  else
-    {
-      if (y < screen_height / 2)
-	{
-	  return SHAPE_CONE_TOP_RIGHT;
-	}
-      else
-	{
-	  return SHAPE_CONE_BOTTOM_RIGHT;
-	}
-    }
-
-  /* ### if width or height is greater than 1/2 the width or height then we might
-     run off the screen */
-
-  abort ();
-
-  return 0;
+  /* Try to pick a shape that will not get changed,
+     e.g. if top left quadrant, top_left */
+  return (x < screen_width / 2) ?
+    (y < screen_height / 2 ? SHAPE_CONE_TOP_LEFT:  SHAPE_CONE_BOTTOM_LEFT) :
+    (y < screen_height / 2 ? SHAPE_CONE_TOP_RIGHT: SHAPE_CONE_BOTTOM_RIGHT);
 }
 
 static void

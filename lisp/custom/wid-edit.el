@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.9907
+;; Version: 1.9908
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -974,11 +974,11 @@ With optional ARG, move across that many fields."
 (defun widget-kill-line ()
   "Kill to end of field or end of line, whichever is first."
   (interactive)
-  (let ((field (get-char-property (point) 'field))
-	(newline (save-excursion (forward-line 1)))
-	(next (next-single-property-change (point) 'field)))
-    (if (and field (> newline next))
-	(kill-region (point) next)
+  (let* ((field (widget-field-find (point)))
+	 (newline (save-excursion (forward-line 1) (point)))
+	 (end (and field (widget-field-end field))))
+    (if (and field (> newline end))
+	(kill-region (point) end)
       (call-interactively 'kill-line))))
 
 (defcustom widget-complete-field (lookup-key global-map "\M-\t")

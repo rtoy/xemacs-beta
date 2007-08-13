@@ -8,4 +8,4 @@
 #ifdef UNEXEC
 #undef UNEXEC
 #endif
-#define UNEXEC unexsol2-6.o
+#define UNEXEC "unexsol2-6.o"

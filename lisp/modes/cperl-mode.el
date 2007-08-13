@@ -32,7 +32,7 @@
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 
-;; $Id: cperl-mode.el,v 1.8 1997/06/06 00:57:17 steve Exp $
+;; $Id: cperl-mode.el,v 1.9 1997/06/10 03:19:09 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -713,7 +713,7 @@ Imenu in 19.31 is broken. Set `imenu-use-keymap-menu' to t, and remove
   (cperl-define-key "\e\C-q" 'cperl-indent-exp) ; Usually not bound
   ;;(cperl-define-key "\M-q" 'cperl-fill-paragraph)
   ;;(cperl-define-key "\e;" 'cperl-indent-for-comment)
-  (cperl-define-key "\177" 'cperl-electric-backspace)
+  (cperl-define-key 'delete 'cperl-electric-backspace)
   (cperl-define-key "\t" 'cperl-indent-command)
   ;; don't clobber the backspace binding:
   (cperl-define-key "\C-hf" 'cperl-info-on-command [(control h) f])

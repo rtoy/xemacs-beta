@@ -68,6 +68,9 @@ Boston, MA 02111-1307, USA.  */
 #ifndef NeedFunctionPrototypes
 #define NeedFunctionPrototypes 1
 #endif
+#ifndef FUNCPROTO
+#define FUNCPROTO 15
+#endif
 #endif
 
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
@@ -116,6 +119,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_X11_XLOCALE_H
 #undef HAVE_LINUX_VERSION_H
 #undef HAVE_INTTYPES_H
+#undef HAVE_LIMITS_H
 #undef STDC_HEADERS
 #undef TIME_WITH_SYS_TIME
 #undef WORDS_BIGENDIAN
@@ -636,23 +640,25 @@ on various systems. */
 #define LONGBITS (8 * SIZEOF_LONG)
 #endif
 
+#ifndef NOT_C_CODE
 /* Does the keyword `inline' exist?  */
 #undef HAVE_INLINE
 #undef inline
 
-#ifdef HAVE_INLINE
-# ifdef __GNUC__
-#  ifdef DONT_EXTERN_INLINE_FUNCTIONS
-#   define INLINE inline
+# ifdef HAVE_INLINE
+#  ifdef __GNUC__
+#   ifdef DONT_EXTERN_INLINE_FUNCTIONS
+#    define INLINE inline
+#   else
+#    define INLINE extern inline
+#   endif
 #  else
-#   define INLINE extern inline
-#  endif
+#   define INLINE static inline
+#  endif /* __GNUC__ */
 # else
-#  define INLINE static inline
-# endif /* __GNUC__ */
-#else
-# define INLINE static
-#endif /* HAVE_INLINE */
+#  define INLINE static
+# endif /* HAVE_INLINE */
+#endif /* C code */
 
 /* We want to avoid saving the signal mask if possible, because
    that necessitates a system call. */

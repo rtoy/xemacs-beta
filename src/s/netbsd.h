@@ -5,8 +5,6 @@
 /* Get most of the stuff from bsd4.3 */
 #include "bsd4-3.h"
 
-/* limits that lisp.h might have to guess otherwise */
-#include <limits.h>
 #undef BSD
 
 #ifndef NOT_C_CODE

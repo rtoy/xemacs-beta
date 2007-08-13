@@ -28,6 +28,9 @@
 
 ;; 92.3.16 by K.Handa
 ;;(define-its-mode "roma-kata"  " aア" t)
+
+(eval-when-compile (require 'egg))
+
 (its-define-mode "roma-kata"  "ア" t)
 
 (dolist (aa '("k" "s" "t" "h" "y" "r" "w" "g" "z" "d" "b"

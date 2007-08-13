@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_XLWLIB_H_
 #define _XEMACS_XLWLIB_H_
 
-#include "lwlib.h"
+#include "../lwlib/lwlib.h"
 
 widget_value *xmalloc_widget_value (void);
 

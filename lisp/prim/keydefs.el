@@ -95,7 +95,7 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-e" 'end-of-line)
 (define-key global-map "\C-f" 'forward-char)
 (define-key global-map "\C-d" 'delete-char)
-(define-key global-map "\177" 'backspace-or-delete)
+(define-key global-map 'delete 'backspace-or-delete)
 
 ;; FSFmacs files.el
 
@@ -271,7 +271,7 @@ Keymap for characters following C-c.")
 (define-key global-map "\M-f" 'forward-word)
 (define-key global-map "\M-b" 'backward-word)
 (define-key global-map "\M-d" 'kill-word)
-(define-key global-map "\M-\177" 'backward-kill-word)
+;;(define-key global-map "\M-\177" 'backward-kill-word)
 
 (define-key global-map "\M-<" 'beginning-of-buffer)
 (define-key global-map "\M->" 'end-of-buffer)
@@ -337,7 +337,7 @@ Keymap for characters following C-c.")
 (define-key global-map "\M-a" 'backward-sentence)
 (define-key global-map "\M-e" 'forward-sentence)
 (define-key global-map "\M-k" 'kill-sentence)
-(define-key global-map "\C-x\177" 'backward-kill-sentence)
+;;(define-key global-map "\C-x\177" 'backward-kill-sentence)
 
 (define-key global-map "\C-x[" 'backward-page)
 (define-key global-map "\C-x]" 'forward-page)

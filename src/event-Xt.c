@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "console-x.h"
-#include "lwlib.h"
+#include "../lwlib/lwlib.h"
 #include "EmacsFrame.h"
 
 #include "blocktype.h"
@@ -65,7 +65,7 @@ Boston, MA 02111-1307, USA.  */
 #undef MOD_SHIFT
 #endif
 
-#include <events-mod.h>
+#include "events-mod.h"
 
 static void enqueue_Xt_dispatch_event (Lisp_Object event);
 

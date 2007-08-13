@@ -537,7 +537,9 @@ If SILENT, don't prompt the user."
 		 (substring emacs-version
 			    (match-beginning 3)
 			    (match-end 3))
-	       "")))
+	       "")
+	     (if (boundp 'xemacs-codename)
+		 (concat " - \"" xemacs-codename "\""))))
     (t emacs-version))))
 
 ;; Written by "Mr. Per Persson" <pp@gnu.ai.mit.edu>.

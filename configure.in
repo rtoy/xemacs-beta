@@ -342,7 +342,7 @@ with_scrollbars=''
 with_dialogs=''
 const_is_losing='yes'
 puresize=''
-cflags='NO_CFLAGS_DEFINED'
+cflags='UNSPECIFIED'
 dynamic=''
 with_x11=''
 rel_alloc='default'
@@ -370,6 +370,7 @@ dnl the following is set to yes or no later.
 with_gif=""
 dnl the following is set to yes or no later.
 with_toolbars=""
+with_tty=""
 use_union_type="no"
 with_dnet=""
 
@@ -568,9 +569,11 @@ unsuccessful after disturbing the status quo, it removes config.status.
 
 The configure build process also used the following environment variables:
 CC        C compiler to use (but configure flags take precedence)
+CPP       C preprocessor to use (such as /usr/ccs/lib/cpp or cc -E)
 CFLAGS    C compiler compilation flags (such as -O)
-CPPFLAGS  Additional compilation flags (sucha s -I) used only by the preprocessor
-LDFLAGS   Additional linker flags
+CPPFLAGS  Additional compilation flags (such as -I/foo) used only by the preprocessor
+LDFLAGS   Additional linker flags (such as -L/foo)
+LIBS      Additional libraries (such as -lfoo)
 
 For more details on the install process, consult the INSTALL file.
 "
@@ -614,7 +617,7 @@ dnl some shell magic to make 'set x "$arguments"; shift' work portably.
 while test $# != 0; do
   arg="$1"; shift
   case "$arg" in
-
+    --no-create|--no-recursion) ;;
     dnl Anything starting with a hyphen we assume is an option.
     -* )
       dnl Separate the switch name from the value it is being given.
@@ -707,6 +710,7 @@ while test $# != 0; do
 	dnl The cache-file option is ignored (for compatibility with other configures)
 	srcdir		| \
 	compiler	| \
+	cflags		| \
 	puresize	| \
 	cache_file	| \
 	native_sound_lib | \
@@ -886,19 +890,6 @@ while test $# != 0; do
            esac
 	;;
 
-	dnl Has the user specified values to override CFLAGS?
-	cflags )
-	   dnl If the value was omitted, get it from the next argument.
-	   if test "$valomitted" = "yes" ; then
-	      if test "$#" = 0; then
-                USAGE_ERROR("The \`--$optname' option requires a value.");
-	      fi
-	      val="$1"; shift
-	   fi
-	   eval "$opt=\"$val\""
-	   eval "${opt}_specified=1"
-	;;
-
 	dnl --no-create added by autoconf for use by config.status
 	"no_create" ) ;;
 
@@ -1019,11 +1010,10 @@ dnl is still relative.  We do not symlink lock because someone may
 dnl have stuck the source on a read-only partition.  Instead we
 dnl create it as an actual directory later on if it does not already
 dnl exist.
-for dir in lisp etc man info site-lisp
-do
+for dir in lisp etc man info site-lisp; do
   if test ! -d "$dir" ; then
     echo Making symbolic link to "$srcdir/$dir"
-    ${LN_S} "$srcdir/$dir" .
+    ${LN_S} "$srcdir/$dir" "$dir"
   fi
 done
 
@@ -1225,9 +1215,6 @@ case "$canonical" in
   dnl Cubix QBx/386
   i[[3-9]]86-cubix-sysv* ) machine=intel386 opsys=usg5-3 ;;
 
-  dnl Cydra 5
-  cydra*-cydrome-sysv* ) machine=cydra5 opsys=usg5-3 ;;
-
   dnl Data General AViiON Machines
   i586-dg-dgux*R4*   | i586-dg-dgux5.4.4* ) machine=aviion opsys=dgux5-4r4 ;;
   m88k-dg-dgux5.4R3* | m88k-dg-dgux5.4.3* ) opsys=dgux5-4r3 ;;
@@ -1248,9 +1235,6 @@ case "$canonical" in
   dnl Dual machines
   m68*-dual-sysv*    ) machine=dual opsys=usg5-2   ;;
   m68*-dual-uniplus* ) machine=dual opsys=unipl5-2 ;;
-
-  dnl Elxsi 6400
-  elxsi-elxsi-sysv* ) machine=elxsi opsys=usg5-2 ;;
 
   dnl Encore machines
   ns16k-encore-bsd* ) machine=ns16000 opsys=umax ;;
@@ -1436,16 +1420,17 @@ case "$canonical" in
       canonical="`echo \"$canonical\" | sed -e s/sunos5/solaris2/`";;
     esac
 
-    dnl On SunOS 4, use /usr/lib/cpp,     sans dynodump, /bin/ranlib
-    dnl On SunOS 5, use /usr/ccs/lib/cpp, need dynodump, RANLIB not needed
+    dnl On SunOS 4, use /usr/lib/cpp, sans dynodump, /bin/ranlib
+    dnl On SunOS 5, use cc -E,        need dynodump, RANLIB not needed
     dnl But, SunOS 5.6 no longer needs dynodump because it has a similar
     dnl function integrated.
     case "$canonical" in
       *-sunos4* )
-        test -f /usr/lib/cpp     && NON_GNU_CPP=/usr/lib/cpp ;;
+	#test -f /usr/lib/cpp     && NON_GNU_CPP=/usr/lib/cpp ;;
+	: ;;
       *-solaris2* )
-        test -f /usr/ccs/lib/cpp && NON_GNU_CPP=/usr/ccs/lib/cpp
-        RANLIB=':'
+	#test -f /usr/ccs/lib/cpp && NON_GNU_CPP=/usr/ccs/lib/cpp
+	RANLIB=':' ;;
     esac
 
     case "$canonical" in
@@ -1601,10 +1586,13 @@ fi
 dnl Choose a compiler.
 test -n "$CC" && cc_specified=yes
 
-dnl Save the value of CFLAGS that the user specified.
-SPECIFIED_CFLAGS="$CFLAGS"
-
 if test -n "$compiler"; then CC="$compiler"; fi
+
+dnl If we don't set CFLAGS here, AC_PROG_CC will set it.
+dnl But we know better what's good for us, so we do our own
+dnl computation of real CFLAGS later.
+test "$cflags" != "UNSPECIFIED" && CFLAGS="$cflags"
+xe_save_CFLAGS="$CFLAGS"
 
 dnl Some systems specify a CPP or CC to use unless we are using GCC.
 test -n "$NON_GNU_CC"  -a "$with_gcc" = "no" -a -z "$CC"  && CC="$NON_GNU_CC"
@@ -1617,31 +1605,31 @@ elif test "$with_gcc" = "yes" -a "$ac_cv_prog_gcc" = "no" ; then
   CC=gcc
   AC_PROG_CC
 fi
+CFLAGS="$xe_save_CFLAGS"
 
 if test "$GCC" = "yes"; then with_gcc=yes; else with_gcc=no; fi
 test -n "$NON_GNU_CPP" -a "$with_gcc" = "no" -a -z "$CPP" && CPP="$NON_GNU_CPP"
 
 AC_PROG_CPP
 
-case "$canonical" in
-  *-sun-sunos* ) test "$CPP" = "acc -E" && CPP="acc -E -Xs" ;;
-esac
+AC_AIX
+
+AC_MSG_CHECKING(whether we are using SunPro C)
+AC_TRY_COMPILE([],[#ifndef __SUNPRO_C
+#error Not a  SunPro compiler :-(
+#endif
+], __sunpro_c=yes, __sunpro_c=no)
+AC_MSG_RESULT($__sunpro_c)
+
+dnl case "$canonical" in
+dnl   *-sun-sunos* ) test "$CPP" = "acc -E" && CPP="acc -E -Xs" ;;
+dnl esac
 
 dnl --------------------------------------------------------------------
 dnl Extract some information from the operating system and machine files
 dnl --------------------------------------------------------------------
 
 echo "Extracting information from the machine- and system-dependent headers..."
-
-dnl First figure out CFLAGS (which we use for running the compiler here)
-dnl and REAL_CFLAGS (which we use for real compilation).
-dnl The two are the same except on a few systems, where they are made
-dnl different to work around various lossages.  For example,
-dnl GCC 2.5 on Linux needs them to be different because it treats -g
-dnl as implying static linking.
-
-dnl If the CFLAGS env var is specified, we use that value
-dnl instead of the default.
 
 dnl It is not important that this name contain the PID; you cannot run
 dnl two configures in the same directory and have anything work
@@ -1651,7 +1639,7 @@ tempcname="conftest.c"
 dnl CPP_to_sh(CPP_SYMBOL, SH_VAR, DEFAULT_VALUE)
 define([CPP_to_sh],
 [[#]ifndef [$1]
-[#]define [$1]ifelse([$3],,, [ $3])
+[#]define [$1]ifelse([$3],,, [ "$3"])
 [#]endif
 configure___ [$2]=[$1]
 ])
@@ -1680,14 +1668,16 @@ CPP_to_sh(LIBS_MACHINE, libs_machine)
 CPP_to_sh(LIBS_SYSTEM,  libs_system)
 CPP_to_sh(LIBS_TERMCAP, libs_termcap)
 CPP_to_sh(LIB_STANDARD, libs_standard)
-CPP_to_sh(C_SWITCH_SYSTEM,    c_switch_system)
+
 CPP_to_sh(C_SWITCH_MACHINE,   c_switch_machine)
+CPP_to_sh(C_SWITCH_SYSTEM,    c_switch_system)
 CPP_to_sh(C_SWITCH_X_SYSTEM,  c_switch_x_system)
-CPP_to_sh(LD_SWITCH_X_SYSTEM, ld_switch_x_system)
+
+CPP_to_sh(LD_SWITCH_MACHINE,  ld_switch_machine)
 CPP_to_sh(LD_SWITCH_SYSTEM,   ld_switch_system)
+CPP_to_sh(LD_SWITCH_X_SYSTEM, ld_switch_x_system)
+
 CPP_to_sh(UNEXEC, unexec, unexec.o)
-CPP_to_sh(C_DEBUG_SWITCH, c_debug_switch, -g)
-CPP_to_sh(C_OPTIMIZE_SWITCH, c_optimize_switch, -O)
 
 CPP_boolean_to_sh(ORDINARY_LINK, ordinary_link)
 CPP_boolean_to_sh(SYSTEM_MALLOC, system_malloc)
@@ -1695,9 +1685,12 @@ CPP_boolean_to_sh(TERMINFO, have_terminfo)
 CPP_boolean_to_sh(MAIL_USE_FLOCK, mail_use_flock)
 CPP_boolean_to_sh(MAIL_USE_LOCKF, mail_use_lockf)
 
+#if 0
 #ifdef THIS_IS_CONFIGURE
 
 /* Get the CFLAGS for tests in configure.  */
+CPP_to_sh(C_DEBUG_SWITCH, c_debug_switch, -g)
+CPP_to_sh(C_OPTIMIZE_SWITCH, c_optimize_switch, -O)
 #ifdef __GNUC__
 configure___ CFLAGS=C_DEBUG_SWITCH C_OPTIMIZE_SWITCH '$SPECIFIED_CFLAGS'
 #else
@@ -1714,26 +1707,44 @@ configure___ REAL_CFLAGS=C_DEBUG_SWITCH '$SPECIFIED_CFLAGS'
 #endif
 
 #endif /* not THIS_IS_CONFIGURE */
+#endif /* 0 */
 ' > $tempcname
 dnl The value of CPP is a quoted variable reference, so we need to do this
 dnl to get its actual value...
 CPP=`eval "echo $CPP"`
 eval `$CPP -Isrc $tempcname \
-	| sed -n -e "s/ *= */='/" -e "s/ *\$/'/" -e "s/^configure___//p"`
-if test -z "$SPECIFIED_CFLAGS"; then
-  eval `$CPP -Isrc -DTHIS_IS_CONFIGURE $tempcname \
-	| sed -n -e "s/ *= */='/" -e "s/ *\$/'/" -e "s/^configure___//p"`
-else
-  REAL_CFLAGS="$CFLAGS"
-fi
+	| sed -n -e "s/ *=[[ \"]]*/='/" -e "s/[[ \"]]*\$/'/" -e "s/^configure___//p"`
+
+dnl if test -z "$SPECIFIED_CFLAGS"; then
+dnl   eval `$CPP -Isrc -DTHIS_IS_CONFIGURE $tempcname \
+dnl 	| sed -n -e "s/ *=[[ \"]]*/='/" -e "s/[[ \"]]*\$/'/" -e "s/^configure___//p"`
+dnl else
+dnl   REAL_CFLAGS="$CFLAGS"
+dnl fi
 
 rm $tempcname
 
 dnl Non-ordinary link usually requires -lc
 test "$ordinary_link" = "no" -a -z "$libs_standard" && libs_standard="-lc"
 
-dnl override CFLAGS if user wishes
-test "$cflags" != "NO_CFLAGS_DEFINED" && REAL_CFLAGS="$cflags"
+dnl Calculalate value of CFLAGS:
+dnl Use either command line flag, environment var, or autodetection
+if test -z "$CFLAGS"; then
+  dnl Following values of CFLAGS are known to work well.
+  dnl Should we take debugging options into consideration?
+  if   test "$GCC" = "yes"; then
+    CFLAGS="-g -O2"
+    test "$opsys" = "linux" -a "$machine" = "intel386" && \
+      CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
+  elif test "$__sunpro_c" = "yes"; then
+    case "$opsys" in
+      sol2*   ) CFLAGS="-v -xO4" ;;
+      sunos4* ) CFLAGS="-xO3";;
+    esac
+  else
+    CFLAGS="-O" # The only POSIX-approved flag
+  fi
+fi
 
 dnl Add unexec object to link line
 XE_ADD_OBJS($unexec)
@@ -1756,6 +1767,12 @@ if test -n "$site_includes" ; then
     case "$arg" in -* ) ;; * ) arg="-I${arg}" ;; esac
     XE_APPEND($arg, c_switch_site)
   done
+fi
+
+dnl GNU software installs by default into /usr/local/{include,lib}
+if test -d "/usr/local/include" -a -d "/usr/local/lib"; then
+  XE_APPEND("-L/usr/local/lib",    ld_switch_site)
+  XE_APPEND("-I/usr/local/include", c_switch_site)
 fi
 
 dnl Extra system-specific library directories - please add to list
@@ -1879,13 +1896,10 @@ AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_YACC
 
-dnl checks for UNIX variants
-AC_AIX
-
 dnl checks for header files
 AC_CHECK_HEADERS(mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h)
 AC_CHECK_HEADERS(utime.h locale.h libgen.h)
-AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h)
+AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h limits.h)
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
 AC_HEADER_TIME
@@ -1965,6 +1979,7 @@ test -z "$mail_locking" -a "$mail_use_flock" = "yes" && mail_locking=flock
 test -z "$mail_locking" -a "$mail_use_lockf" = "yes" && mail_locking=lockf
 if   test "$mail_locking" = "lockf"; then AC_DEFINE(REAL_MAIL_USE_LOCKF)
 elif test "$mail_locking" = "flock"; then AC_DEFINE(REAL_MAIL_USE_FLOCK)
+else mail_locking="dot-locking"
 fi
 
 dnl Used by getloadavg() - does not require root priveleges
@@ -2115,11 +2130,11 @@ if test "$with_x11" = "yes"; then
   AC_CHECK_LIB(Xext, XShapeSelectInput, XE_PREPEND(-lXext, libs_x))
 
   dnl Require -lXt
-  case "$canonical" in *-sunos4.* ) # Bug workaround
-   ld_switch_x_site="$ld_switch_x_site -u _XtToolkitInitialize" ;;
+  case "$opsys" in dnl SunOS4 bug workaround
+   sunos4* ) XE_PREPEND(-u _XtToolkitInitialize -lXt, libs_x) ;;
+   * ) AC_CHECK_LIB(Xt, XtOpenDisplay, XE_PREPEND(-lXt, libs_x),
+        [AC_MSG_ERROR("Unable to find X11 libraries.")]) ;;
   esac
-  AC_CHECK_LIB(Xt, XtOpenDisplay, XE_PREPEND(-lXt, libs_x),
-    [AC_MSG_ERROR("Unable to find X11 libraries.")])
 
   AC_MSG_CHECKING(the version of X11 being used)
   AC_TRY_RUN([#include <X11/Intrinsic.h>
@@ -2143,17 +2158,17 @@ if test "$with_x11" = "yes"; then
   fi
 
   dnl autodetect -lXmu
-  case "$canonical" in *-sunos4.* ) # Bug workaround
-    ld_switch_x_site="$ld_switch_x_site -u _get_applicationShellWidgetClass" ;;
+  case "$opsys" in dnl SunOS4 bug workaround
+    sunos4* ) XE_PREPEND(-u _get_applicationShellWidgetClass -lXmu, libs_x) ;;
+    * ) if test -z "$with_xmu"; then
+	  AC_CHECK_LIB(Xmu, XmuConvertStandardSelection, with_xmu=yes, with_xmu=no)
+	fi
+	if test "$with_xmu" = "no"; then
+	  XE_ADD_OBJS(xmu.o)
+	else
+	  XE_PREPEND(-lXmu, libs_x)
+	fi ;;
   esac
-  if test -z "$with_xmu"; then
-    AC_CHECK_LIB(Xmu, XmuConvertStandardSelection, with_xmu=yes, with_xmu=no)
-  fi
-  if test "$with_xmu" = "no"; then
-    XE_ADD_OBJS(xmu.o)
-  else
-    XE_PREPEND(-lXmu, libs_x)
-  fi
 
   dnl Autodetect -lXbsd
   dnl #### Someone, please add a better function than main
@@ -2357,13 +2372,26 @@ all_widgets="$with_menubars $with_scrollbars $with_dialogs $with_toolbars"
 
 case "$all_widgets" in *athena* )
   AC_DEFINE(LWLIB_USES_ATHENA)
+  AC_DEFINE(NEED_ATHENA)
+  XE_APPEND(lwlib-Xaw.o, lwlib_objs)
   XE_PREPEND(-lXaw, libs_x) ;;
 esac
 
 case "$all_widgets" in *motif* )
   AC_DEFINE(LWLIB_USES_MOTIF)
+  AC_DEFINE(NEED_MOTIF)
+  XE_APPEND(lwlib-Xm.o, lwlib_objs)
   need_motif=yes ;;
 esac
+
+test "$with_menubars"   = "lucid" && XE_APPEND(xlwmenu.o, lwlib_objs)
+test "$with_scrollbars" = "lucid" && XE_APPEND(xlwscrollbar.o, lwlib_objs)
+case "$all_widgets" in *lucid* )
+  AC_DEFINE(NEED_LUCID)
+  XE_APPEND(lwlib-Xlw.o, lwlib_objs) ;;
+esac
+
+AC_SUBST(lwlib_objs)
 
 case "$with_scrollbars" in athena* ) AC_DEFINE(LWLIB_SCROLLBARS_ATHENA);; esac
 case "$with_dialogs"    in athena* ) AC_DEFINE(LWLIB_DIALOGS_ATHENA)   ;; esac
@@ -2435,7 +2463,7 @@ if test "$with_mule" = "yes" ; then
   dnl Autodetect WNN
   test "$with_wnn6" = "yes" && with_wnn=yes # wnn6 implies wnn support
   test -z "$with_wnn" && { AC_CHECK_HEADER(wnn/jllib.h, ,with_wnn=no) }
-  test -z "$with_wnn" && { AC_CHECK_LIB(wnn,jl_dic_list_e, ,with_wnn=no) }
+  test -z "$with_wnn" && { AC_CHECK_LIB(wnn,jl_dic_list_e, ,[:],with_wnn=no) }
   test -z "$with_wnn" && with_wnn=yes
   if test "$with_wnn" = "yes"; then
     AC_DEFINE(HAVE_WNN)
@@ -2669,9 +2697,6 @@ for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp" ; do
   if test -r $f; then AC_DEFINE_UNQUOTED(AIX_SMT_EXP, -bI:$f) break; fi
 done
 
-dnl Set up the CFLAGS for real compilation, so we can substitute it.
-CFLAGS="$REAL_CFLAGS"
-
 dnl Find out which version of XEmacs this is.
 file="$srcdir/lisp/version.el"
 version=`sed -ne 's/^(defconst emacs-version "\(.*\)".*/\1/p' "$file"`
@@ -2681,7 +2706,7 @@ if test  -z "$version"; then
 fi
 beta=`sed -ne 's/^.*XEmacs Lucid (beta\([[0-9]][[0-9]]*\)).*$/\1/p' "$file"`
 test -n "$beta" && version="${version}-b${beta}"
-AC_DEFINE_UNQUOTED(EMACS_VERSION, $version)
+AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
 main_1_id="`echo main_1_xemacs_${version}_${canonical} | sed 'y/.-/__/'`"
 AC_DEFINE_UNQUOTED(main_1, $main_1_id)
 
@@ -2984,6 +3009,14 @@ done
 AC_SUBST(MAKE_SUBDIR)
 AC_SUBST(SUBDIR_MAKEFILES)
 
+dnl Make s&m symlinks in the src directory, for config.h
+for dir in src/s src/m; do
+  if test ! -d "$dir" ; then
+    echo Making symbolic link to "$srcdir/$dir"
+    ${LN_S} "$srcdir/$dir" "$dir"
+  fi
+done
+
 if test "$extra_verbose" = "yes"; then
   echo ""
   PRINT_VAR(extra_objs,
@@ -3000,15 +3033,13 @@ if test -f $srcdir/src/gdbinit -a ! -f src/gdbinit ; then
 fi
 
 dnl Create top level .sbinit for Sun compilers
-AC_TRY_COMPILE([],[#ifndef __SUNPRO_C
-#error No Sun source browser capability
-#endif
-],[echo "creating .sbinit"; echo ""
-( echo "# For use with Sun WorkShop's Source browser."
-  echo "# See sbquery(1) and sbinit(4) for more information"
-  for dir in $MAKE_SUBDIR; do echo "import $dir"; done
-) > .sbinit
-])
+if test "$__sunpro_c" = "yes"; then
+  echo "creating .sbinit"; echo ""
+  ( echo "# For use with Sun WorkShop's Source browser."
+    echo "# See sbquery(1) and sbinit(4) for more information"
+    for dir in $MAKE_SUBDIR; do echo "import $dir"; done
+  ) > .sbinit
+fi
 
 dnl There are no more compile tests; remove the core they created.
 rm -f core
@@ -3217,23 +3248,24 @@ test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)."
 case  "$with_menubars" in
-  lucid ) echo "  Using the Lucid menubar." ;;
-  motif ) echo "  Using the Motif menubar."
-          echo "  *WARNING*  The Motif menubar is currently buggy."
+  lucid ) echo "  Using Lucid menubars." ;;
+  motif ) echo "  Using Motif menubars."
+          echo "  *WARNING*  The Motif menubar implementation is currently buggy."
           echo "             We recommend using the Lucid menubar instead."
           echo "             Re-run configure with --with-menubars='lucid'." ;;
 esac
 case "$with_scrollbars" in
-  lucid    ) echo "  Using the Lucid scrollbar."     ;;
-  motif    ) echo "  Using the Motif scrollbar."     ;;
-  athena   ) echo "  Using the Athena scrollbar."    ;;
-  athena3d ) echo "  Using the Athena-3d scrollbar." ;;
+  lucid    ) echo "  Using Lucid scrollbars."     ;;
+  motif    ) echo "  Using Motif scrollbars."     ;;
+  athena   ) echo "  Using Athena scrollbars."    ;;
+  athena3d ) echo "  Using Athena-3d scrollbars." ;;
 esac
 case "$with_dialogs" in
-  motif    ) echo "  Using the Motif dialog boxes."     ;;
-  athena   ) echo "  Using the Athena dialog boxes."    ;;
-  athena3d ) echo "  Using the Athena-3d dialog boxes." ;;
+  motif    ) echo "  Using Motif dialog boxes."     ;;
+  athena   ) echo "  Using Athena dialog boxes."    ;;
+  athena3d ) echo "  Using Athena-3d dialog boxes." ;;
 esac
+echo "  movemail will use \"$mail_locking\" for locking mail spool files."
 test "$with_pop"	= yes && echo "  Using POP for mail access"
 test "$with_kerberos"	= yes && echo "  Using Kerberos for POP authentication"
 test "$with_hesiod"	= yes && echo "  Using Hesiod to get POP server host"

@@ -16,7 +16,7 @@
 /* Display Context for the icons */
 #include "console-x.h"
 #include <Xm/DialogS.h>
-#include "lwlib.h"
+#include "../lwlib/lwlib.h"
 #include "objects-x.h"
 
 #include "events.h"

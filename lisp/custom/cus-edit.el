@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9907
+;; Version: 1.9908
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -959,6 +959,7 @@ Reset all visible items in this buffer to their standard settings."
 	(if (= (length options) 1)
 	    (mapcar (lambda (entry)
 		      (widget-create (nth 1 entry)
+				     :documentation-shown t
 				     :custom-state 'unknown
 				     :tag (custom-unlispify-tag-name
 					   (nth 0 entry))
@@ -2556,6 +2557,7 @@ The format is suitable for use with `easy-menu-define'."
 (unless custom-mode-map
   (setq custom-mode-map (make-sparse-keymap))
   (set-keymap-parent custom-mode-map widget-keymap)
+  (suppress-keymap custom-mode-map)
   (define-key custom-mode-map "q" 'bury-buffer))
 
 (easy-menu-define custom-mode-customize-menu 

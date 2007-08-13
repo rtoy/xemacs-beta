@@ -18,37 +18,12 @@
 
 #define POSIX
 
-#ifndef NOT_C_CODE
-/* The standard Solaris library nsl has this function in it which is
-   supposed to only be in the BSD compat stuff.  Yuck.  Of course,
-   there isn't a prototype for it other than in /usr/ucbinclude. */
-int gethostname (char *, size_t);
-/* Another missing prototype, added in Solaris 2.5 */
-extern void *__builtin_alloca(size_t);
-
-/* Get non-ANSI functions from ANSI header files in cc -Xc mode.
-   Sun has promised to fix setjmp.h */
-#if __STDC__ == 1
-#ifndef __GNUC__
-#define _POSIX_C_SOURCE 1
-#include <setjmp.h>
-#undef _POSIX_C_SOURCE
-#endif /* __GNUC__ */
-#endif /* __STDC__ */
-
-/* XEmacs: Solaris include files miss this. */
-struct timeval;
-int utimes (char *file, struct timeval *tvp);
-
-/* XEmacs addition: to this to avoid having problems when we later
-   define INT_MAX etc. */
-#include <limits.h>
-#endif /* C_CODE */
+#ifdef NOT_C_CODE
 
 /* XEmacs change -- some Motif packages need -lgen to get regex and regcmp */
 
 #undef LIBS_SYSTEM
-#define LIBS_SYSTEM -lsocket -lnsl -lelf -lgen -ldl
+#define LIBS_SYSTEM "-lsocket -lnsl -lelf -lgen -ldl"
 
 /* SYSTEM_MALLOC must be defined if dbx/RTC is going to be used.  dbx/RTC does
    not work with a static definition of malloc(). */
@@ -62,13 +37,31 @@ int utimes (char *file, struct timeval *tvp);
    is *not* in 19.29 and is almost certainly incorrect.
  */
 
-/* XEmacs change from Georg.Nikodym@Canada.Sun.COM. */
-#ifdef UNEXEC
 #undef UNEXEC
-#endif
-#define UNEXEC unexsol2.o
+#define UNEXEC "unexsol2.o"
+
+#else /* C_CODE */
+/* The standard Solaris library nsl has this function in it which is
+   supposed to only be in the BSD compat stuff.  Yuck.  Of course,
+   there isn't a prototype for it other than in /usr/ucbinclude. */
+int gethostname (char *, size_t);
+/* Another missing prototype, added in Solaris 2.5 */
+extern void *__builtin_alloca(size_t);
+
+/* XEmacs: Solaris include files miss this. */
+struct timeval;
+int utimes (char *file, struct timeval *tvp);
+
+/* Get non-ANSI functions from ANSI header files in cc -Xc mode.
+   Sun has promised to fix setjmp.h */
+#if __STDC__ == 1 && defined(__SUNPRO_C)
+#define _POSIX_C_SOURCE 1
+#include <setjmp.h>
+#undef _POSIX_C_SOURCE
+#endif /* cc -Xc */
 
 /* XEmacs: Solaris has sigsetjmp but using it leads to core dumps at
    least under 2.4 */
 #undef _setjmp
 #define _setjmp setjmp
+#endif /* C_CODE */

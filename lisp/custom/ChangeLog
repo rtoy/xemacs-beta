@@ -1,3 +1,18 @@
+Wed Jun 04 13:24:36 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9908 released.
+
+Tue Jun  3 02:46:21 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-kill-line): Fixed for overlays.
+	Reported by Hrvoje Niksic <hniksic@srce.hr>.
+
+	* cus-edit.el (custom-buffer-create-internal): Show full
+	documentation string in buffers with only a single item.
+	Suggested by Steven L Baur <steve@xemacs.org>.
+
+	* cus-edit.el (custom-mode-map): Suppress keymap.
+
 Tue Jun 03 02:05:13 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.9907 released.

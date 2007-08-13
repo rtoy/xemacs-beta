@@ -82,14 +82,6 @@
 #define BSD 199506
 #endif
 
-/* FreeBSD defines INT_MAX in /usr/include/limits.h.
-   Unless INT_MAX is already defined in lisp.h, XEmacs goes right
-   ahead and rolls its own.
-   We make sure that the system's definition is used throughout. */
-#ifdef emacs
-#include <limits.h>
-#endif
-
 /* Needed to avoid hanging when child process writes an error message
    and exits -- enami tsugutomo <enami@ba2.so-net.or.jp>.  */
 #define vfork fork

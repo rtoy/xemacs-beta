@@ -373,7 +373,7 @@ wait_for_termination (int pid)
 	       Can you say "race condition"?
 	       
 	       I assume that the system calls sigpause() or sigsuspend()
-	       provide this atomicness.  If you're getting hangs in
+	       to provide this atomicness.  If you're getting hangs in
 	       sigpause()/sigsuspend(), then your OS doesn't
 	       implement this properly (this applies under hpux9,
 	       for example).  Try defining BROKEN_WAIT_FOR_SIGNAL. */
@@ -1324,6 +1324,8 @@ disconnect_controlling_terminal (void)
 
 /* It's wrong to encase these into #ifdef HAVE_TTY because we need
    them for child TTY processes.  */
+/* However, this does break NT support while we don't do child TTY processes */
+#ifndef WINDOWSNT
 
 /* Set *TC to the parameters associated with the terminal FD.
    Return zero if all's well, or -1 if we ran into an error we
@@ -1464,6 +1466,7 @@ emacs_set_tty (int fd, struct emacs_tty *settings, int flushp)
   return 0;
 }
 
+#endif /* WINDOWSNT */
 
 /* ------------------------------------------------------ */
 /*                 Initializing a device                  */

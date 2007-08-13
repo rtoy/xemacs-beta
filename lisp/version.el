@@ -23,9 +23,21 @@
 ;;; Code:
 
 (defconst emacs-version "20.3"
-  "Version numbers of this version of Emacs.")
+  "Version numbers of this version of XEmacs.")
 
-(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta4)")))
+(defconst xemacs-codename "Zagreb"
+  "Release nickname, primarily useful for trial prereleases.
+Warning, this variable did not exist in XEmacs versions prior to 20.3")
+
+(defconst xemacs-betaname "(beta5)"
+  "Non-nil when this is a test (beta) version of XEmacs.
+Warning, this variable did not exist in XEmacs versions prior to 20.3")
+
+(setq emacs-version (purecopy (concat emacs-version
+				      " \""
+				      xemacs-codename
+				      "\" XEmacs Lucid "
+				      xemacs-betaname)))
 
 (defconst emacs-major-version
   (progn (or (string-match "^[0-9]+" emacs-version)

@@ -3025,7 +3025,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
       (byte-compile-subr-wrong-args form 2)
     (byte-compile-form (car (cdr form)))  ;; Push the arguments
     (byte-compile-form (nth 2 form))
-    (if t ;(byte-compile-version-cond byte-compile-emacs19-compatibility)
+    (if (byte-compile-version-cond byte-compile-emacs19-compatibility)
 	(byte-compile-out (get (car form) 'byte-opcode19) 0)
       (byte-compile-out (get (car form) 'byte-opcode) 0))))
 

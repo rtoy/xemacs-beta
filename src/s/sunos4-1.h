@@ -34,7 +34,7 @@ care of it properly?
 /* XEmacs change: -lresolve should be added only if we have RES_INIT,
    not if we don't */
 #ifdef HAVE_RES_INIT
-#define LIBS_SYSTEM -lresolv
+#define LIBS_SYSTEM "-lresolv"
 #endif
 /* #endif */
 

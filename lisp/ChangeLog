@@ -1,3 +1,27 @@
+1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/keydefs.el, modes/cc-mode.el, modes/cperl-mode.el,
+	vm/vm-vars.el:
+	Change usage of \177 to use keysym 'delete.
+	From  Gary D. Foster <Gary.Foster@Corp.Sun.COM>
+
+	* packages/etags.el (tags-loop-scan): Don't pass a straight string 
+	to error as a format string.
+	Reported by Miles Duke <mduke@erdas.com>
+
+	* its/its-kata.el ((require 'egg)): Needed for bytecompilation.
+
+	* its/its-hira.el ((require 'egg)): Needed for bytecompilation.
+
+	* bytecomp/bytecomp.el (byte-compile-two-args-19->20): Correct an
+	ebolifaction.
+	From Kyle Jones <kyle_jones@wonderworks.com>
+
+1997-06-08  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (auto-mode-alist): Restore  bash regexps.
+	From "Barry A. Warsaw" <bwarsaw@CNRI.Reston.VA.US>
+
 1997-06-05  Steven L Baur  <steve@altair.xemacs.org>
 
 	* packages/jka-compr.el (jka-compr-write-region): Use 'binary

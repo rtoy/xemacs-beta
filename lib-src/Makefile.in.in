@@ -53,7 +53,6 @@ ALLOCA=@ALLOCA@
 YACC=@YACC@
 LN_S=@LN_S@
 version=@version@
-configuration=@configuration@
 
 /* ==================== Where To Install Things ==================== */
 
@@ -189,51 +188,7 @@ VPATH=@srcdir@
 
 /* We will not really call alloca;
    do not let the file name alloca.c get messed up.  */
-#ifdef alloca
 #undef alloca
-#endif
-
-/* Some s/*.h files define this to request special libraries.  */
-#ifndef LIBS_SYSTEM
-#define LIBS_SYSTEM
-#endif
-
-/* Some m/*.h files define this to request special libraries.  */
-#ifndef LIBS_MACHINE
-#define LIBS_MACHINE
-#endif
-
-#ifndef LD_SWITCH_X_SYSTEM
-#define LD_SWITCH_X_SYSTEM
-#endif
-
-#ifndef LD_SWITCH_X_SITE
-#define LD_SWITCH_X_SITE
-#endif
-
-#ifndef C_SWITCH_SYSTEM
-#define C_SWITCH_SYSTEM
-#endif
-
-#ifndef C_SWITCH_MACHINE
-#define C_SWITCH_MACHINE
-#endif
-
-#ifndef C_SWITCH_X_SYSTEM
-#define C_SWITCH_X_SYSTEM
-#endif
-
-#ifndef C_SWITCH_X_SITE
-#define C_SWITCH_X_SITE
-#endif
-
-#ifndef C_SWITCH_SITE
-#define C_SWITCH_SITE
-#endif
-
-#ifndef LD_SWITCH_SITE
-#define LD_SWITCH_SITE
-#endif
 
 #undef MOVEMAIL_NEEDS_BLESSING
 #ifndef MAIL_USE_FLOCK
@@ -248,12 +203,6 @@ VPATH=@srcdir@
 #define BLESSMAIL
 #endif
 
-/* #if defined (HAVE_SOCKS) */
-/* #define LIB_SOCKS -lsocks */
-/* #else */
-/* #define LIB_SOCKS */
-/* #endif */
-
 c_switch_general=@c_switch_general@
 c_switch_window_system=@c_switch_window_system@
 c_switch_all=@c_switch_all@
@@ -264,9 +213,6 @@ ld_libs_general=@ld_libs_general@
 ld_libs_window_system=@ld_libs_window_system@
 ld_libs_all=@ld_libs_all@
 
-/* LOADLIBES=LIBS_SYSTEM LIBS_MACHINE LIB_SOCKS LD_SWITCH_SITE */
-/* LOAD_X_LIBES=LD_SWITCH_X_SITE LD_SWITCH_X_SYSTEM */
-/* C_SWITCH_X=C_SWITCH_X_SITE C_SWITCH_X_SYSTEM C_SWITCH_SITE */
 LOADLIBES=$(ld_switch_general) $(ld_libs_general)
 LOAD_X_LIBES=$(ld_switch_window_system)
 C_SWITCH_X=$(c_switch_window_system)
@@ -274,21 +220,9 @@ C_SWITCH_X=$(c_switch_window_system)
 /* We need to #define emacs to get the right versions of some files. */
 
 lib_src_cppflags = -Demacs -I../src -I${srcdir} -I${srcdir}/../src $(CPPFLAGS)
-cflags  = $(CFLAGS) $(lib_src_cppflags) $(c_switch_general)
-ldflags = $(LDFLAGS) $(ld_switch_general) $(ld_libs_general)
-
-/* CPP_CFLAGS =  $(c_switch_general) -Demacs -DHAVE_CONFIG_H \ */
-/*    -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS} */
-/* BASE_CFLAGS = -DHAVE_CONFIG_H \ */
-/*     -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS} */
-/* ALL_CFLAGS = $(BASE_CFLAGS) -Demacs */
-/* LINK_CFLAGS = $(ALL_CFLAGS) -Demacs -DHAVE_CONFIG_H \ */
-/*    -I. -I../src -I${srcdir} -I${srcdir}/../src ${LDFLAGS} ${CFLAGS} */
-/*   Formerly -Demacs was missing, but it is needed to suppress the */
-/*    defining of malloc to xmalloc.  [Yes it is fucked up.  Blame FSF */
-/*    for this.] */
-/* ALLOCA_CFLAGS = -Demacs -DHAVE_CONFIG_H \ */
-/*    -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS} */
+lib_src_cppflags = -Demacs -I../src $(CPPFLAGS)
+cflags  = $(CFLAGS) $(lib_src_cppflags) $(c_switch_all)
+ldflags = $(LDFLAGS) $(ld_switch_all) $(ld_libs_general)
 
 /* This is the default compilation command.
    But we should never rely on it, because some make version

@@ -25,6 +25,7 @@ Boston, MA 02111-1307, USA.  */
    The alternatives to this range from obscure link errors, to obscure
    runtime errors that look a lot like bugs. */
 
+#include <config.h>
 #include "lwlib.h"
 
 #include <X11/Xlib.h>	/* to get XlibSpecificationRelease */

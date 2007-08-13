@@ -21,14 +21,19 @@ Boston, MA 02111-1307, USA.  */
 
 /* Created by devin@lucid.com */
 
+#include <config.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <limits.h>
-
 #include <sys/types.h>
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <X11/Xos.h>
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

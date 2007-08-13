@@ -86,7 +86,7 @@ extern int errno;
 #endif
 
 #ifdef LONG_OPTIONS
-# include <getopt.h>
+# include "getopt.h"
 #else
 # define getopt_long(argc,argv,optstr,lopts,lind) getopt (argc, argv, optstr)
   extern char *optarg;
@@ -94,7 +94,7 @@ extern int errno;
 #endif /* LONG_OPTIONS */
 
 #ifdef ETAGS_REGEXPS
-# include <regex.h>
+# include "../src/regex.h"
 #endif /* ETAGS_REGEXPS */
 
 /* Define CTAGS to make the program "ctags" compatible with the usual one.

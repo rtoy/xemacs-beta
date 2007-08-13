@@ -109,13 +109,49 @@ the form of easy-to-install add-ons.
 * Changes in XEmacs 20.3
 ========================
 
-** Autoconf 2 is supported.
+** XEmacs runs on Windows NT.
+
+Thanks to David Hobley <davidh@wr.com.au> and Marc Paquette
+<marcpa@cam.org>, XEmacs now runs on Windows NT.
+
+For now, you need an X server to be able to run it, but Marc is
+working on a port that implements a native NT device.  We need *your*
+help.
 
 ** Multiple TTY frames are now available.
 
 On consoles that display only one frame at a time (e.g. TTY consoles),
 creating a new frame with `C-x 5 2' also raises and selects that
 frame.  The behavior of window system frames is unchanged.
+
+** C-x n d now runs the new command narrow-to-defun,
+which narrows the accessible parts of the buffer to just
+the current defun.
+
+** The new command C-x 4 0 (kill-buffer-and-window) kills the
+current buffer and deletes the selected window.  It asks for
+confirmation first.
+
+** XEmacs can now save the minibuffer histories from various
+minibuffers.  To use this feature, add the line:
+
+   (savehist-load)
+
+to your .emacs.  This will load the minibuffer histories (if any) at
+startup, as well as instruct XEmacs to save them before exiting.  You
+can use Customize to add or remove the histories being saved.
+
+** Gnuserv changes
+
+*** The Lisp part of gnuserv has been rewritten to allow for more
+flexibility and features.
+
+*** Many new options and variables are now customizable.  Try
+`M-x customize-group RET gnuserv RET'.
+
+*** The `gnuattact' and `gnudoit' programs have been abandoned in
+favor of `gnuclient', which now accepts the standard `-nw',
+`-eval' and `-f' options.
 
 ** Etags changes.
 
@@ -152,6 +188,13 @@ at least M times and as many as N times.
 
 * Lisp and internal changes in XEmacs 20.3
 ==========================================
+
+** Autoconf 2 is supported, making XEmacs more conforming to
+conventions used by other free software.
+
+** tty-erase-char is a new variable that reports which character
+was set up as the terminal's erase character at the tim Emacs was started.
+
 
 
 * Changes in XEmacs 20.2

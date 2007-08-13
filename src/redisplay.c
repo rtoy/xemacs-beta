@@ -7573,7 +7573,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		      else
 			*closest =
 			  Dynarr_atp (db->runes,
-				      Dynarr_length (db->runes) - 1)->bufpos;
+				      Dynarr_length (db->runes) - 2)->bufpos;
 		    }
 
 		  if (dl->modeline)

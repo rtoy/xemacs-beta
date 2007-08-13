@@ -37,7 +37,7 @@ Boston, MA 02111-1307, USA.  */
 #if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
 #endif
-#include <../src/systime.h>
+#include "../src/systime.h"
 
 static struct timeval TV1, TV2;
 static int watch_not_started = 1; /* flag */

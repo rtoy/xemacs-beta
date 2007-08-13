@@ -39,60 +39,35 @@ CC=@CC@
 CFLAGS=@CFLAGS@
 ARCH=@dynodump_arch@
 
-/* Where to find the source code.  This is set by the configure
-   "--srcdir" option.  However, the value of ${srcdir} in
-   this makefile is not identical to what was specified with --srcdir,
-   since the variable here has "/dynodump" added at the end. */
 srcdir=@srcdir@
 
 /* ========================= start of cpp stuff ========================= */
 
 #define NO_SHORTNAMES
-#define THIS_IS_YMAKEFILE
 #define NOT_C_CODE
 #include "../src/config.h"
 
-/* With the traditional VPATH setting, it is not possible to
-   simultaneously compile in-place and in another directory.  The
-   mistaken definition is that *all* dependencies are searched for in
-   the VPATH directory, rather than just the dependencies that are not
-   themselves targets.  Thus, if there is an up-to-date .o file in the
-   in-place location, it will not get recompiled in the not-in-place
-   location.
-
-   The GNU Make "vpath" directive continues this tradition, but at
-   least lets you to restrict the classes of files that it applies to.
-   This allows us to kludge around the problem. */
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
 vpath %.h @srcdir@
-/* now list files that should NOT be searched in the srcdir.
-   This includes any .c or .h that is built from something else
-   (e.g. a .in file). */
-/* none here */
 #else
 VPATH=@srcdir@
 #endif
 
 #ifdef USE_GCC
-# define PIC_ARG -fpic
+pic_arg = -fpic
 #else
-# define PIC_ARG -K pic
+pic_arg = -K pic
 #endif
 
 INCLUDES = -I${srcdir} -I${srcdir}/$(ARCH)
-ALL_CFLAGS = ${CFLAGS} PIC_ARG ${INCLUDES}
+ALL_CFLAGS = ${CFLAGS} ${pic_arg} ${INCLUDES}
 OBJS = _relocate.o dynodump.o syms.o uninit.o
 
 .c.o:
 	$(CC) -c $(ALL_CFLAGS) $<
 
-/* If we do not need dynodump, then do nothing. */
-#ifdef DYNODUMP
 all:: dynodump.so
-#else
-all::
-#endif
 
 dynodump.so: ${srcdir}/_dynodump.h $(OBJS)
 	PATH=/usr/ccs/bin:/bin:$$PATH ld -o dynodump.so -G $(OBJS) -lelf -lmapmalloc

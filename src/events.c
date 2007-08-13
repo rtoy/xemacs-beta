@@ -48,7 +48,7 @@ Boston, MA 02111-1307, USA.  */
 #undef MOD_SHIFT
 #endif
 
-#include <events-mod.h>
+#include "events-mod.h"
 
 /* Where old events go when they are explicitly deallocated.
    The event chain here is cut loose before GC, so these will be freed

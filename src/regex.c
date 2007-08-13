@@ -3249,20 +3249,19 @@ static reg_errcode_t
 compile_extended_range (CONST char **p_ptr, CONST char *pend, char *translate,
 			reg_syntax_t syntax, Lisp_Object rtab)
 {
-  Emchar this_char;
-
-  CONST char *p = *p_ptr;
-  EMACS_INT range_start, range_end;
+  Emchar this_char, range_start, range_end;
+  CONST Bufbyte *p;
   
-  if (p == pend)
+  if (*p_ptr == pend)
     return REG_ERANGE;
 
+  p = (CONST Bufbyte *) *p_ptr;
+  range_end = charptr_emchar (p);
   p--; /* back to '-' */
   DEC_CHARPTR (p); /* back to start of range */
   /* We also want to fetch the endpoints without translating them; the 
      appropriate translation is done in the bit-setting loop below.  */
-  range_start = charptr_emchar ((CONST Bufbyte *) p);
-  range_end = charptr_emchar ((CONST Bufbyte *) (*p_ptr));
+  range_start = charptr_emchar (p);
   INC_CHARPTR (*p_ptr);
 
   /* If the start is after the end, the range is empty.  */
@@ -3637,7 +3636,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	case categoryspec:
 	case notcategoryspec:
 	  bufp->can_be_null = 1;
-	  return;
+	  return 0;
 /* end if category patch */
 #endif /* MULE */
 

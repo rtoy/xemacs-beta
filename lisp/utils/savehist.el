@@ -4,7 +4,7 @@
 
 ;; Author: Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: minibuffer
-;; Version: 0.2
+;; Version: 0.3
 
 ;; This file is part of XEmacs.
 
@@ -75,6 +75,12 @@
     read-expression-history
     ;; shell-command (`M-!')
     shell-command-history
+    ;; compile
+    compile-history
+    ;; find-tag (`M-.')
+    find-tag-history
+    ;; grep
+    grep-history
     ;; Viper stuff
     vip-ex-history vip-search-history
     vip-replace1-history vip-replace2-history
@@ -90,20 +96,17 @@
 
     ;; GNU Emacs-specific:
     ;; Extended commands
-    extended-command-history
-
-    ;; This is not a list, but it's cool to have it anyway, since it's
-    ;; minibuffer history too.
-    compile-command)
+    extended-command-history)
   "*List of symbols to be saved.
-Every symbol should refer to a variable.  The variable will be saved only
-if it is bound is bound, and has a non-nil value.  Thus it is safe to
-specify a superset of the variables a user is expected to want to save.
+Every symbol should refer to a variable.  The variable will be saved
+only if it is bound and has a non-nil value.  Thus it is safe to
+specify a superset of the variables a user is expected to want to
+save.
 
 Default value contains minibuffer history variables used by XEmacs, GNU
-Emacs and Viper (uh-oh).  `compile-command' was added for good measure."
+Emacs and Viper (uh-oh)."
   :type '(repeat (symbol :tag "Variable"))
-  :group 'minibuffer)
+  :group 'savehist)
 
 (defcustom savehist-file "~/.emacs-history"
   "*File name to save minibuffer history to.
@@ -118,6 +121,11 @@ more details."
 If set to nil, the length is unlimited."
   :type '(choice integer
 		 (const :tag "Unlimited" nil))
+  :group 'savehist)
+
+(defcustom savehist-modes 384
+  "*Default permissions of the history file."
+  :type 'integer
   :group 'savehist)
 
 
@@ -135,8 +143,7 @@ at any other time."
   (interactive "P")
   (unless prefix
     (add-hook 'kill-emacs-hook 'savehist-save))
-  (when (file-exists-p savehist-file)
-    (load savehist-file)))
+  (load savehist-file t))
 
 ;;;###autoload
 (defun savehist-save ()
@@ -167,13 +174,14 @@ A variable will be saved if it is bound and non-nil."
 						       savehist-length)))
 		 (current-buffer))
 		(insert ?\n)))
-	    (save-buffer))
+	    (save-buffer)
+	    (set-file-modes savehist-file savehist-modes))
 	(or buffer-exists-p
 	    (kill-buffer (current-buffer)))))))
 
-;; If ARG is a arg with less than N elements, return it, else return
-;; its subsequence of N elements.  If N is nil, always return ARG.  If
-;; ARG is not a list, just return it.
+;; If ARG is a list with less than N elements, return it, else return
+;; its subsequence of N elements.  If N is nil or ARG is not a list,
+;; always return ARG.
 (defun savehist-delimit (arg n)
   (if (and n
 	   (listp arg)

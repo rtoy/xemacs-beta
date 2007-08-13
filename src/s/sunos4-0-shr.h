@@ -16,7 +16,7 @@
 
 /*  Misleading!  Actually gets loaded after crt0.o */
 #undef START_FILES
-#define START_FILES pre-crt0.o
+#define START_FILES "pre-crt0.o"
 
 /*
  *  Kludge!  can't get at symbol "start" in std crt0.o
@@ -31,7 +31,7 @@
 #endif
 
 #undef UNEXEC
-#define UNEXEC	unexsunos4.o
+#define UNEXEC	"unexsunos4.o"
 #ifndef RUN_TIME_REMAP
 #define RUN_TIME_REMAP
 #endif
@@ -55,9 +55,9 @@
    did not work.  With X11R6, it does work; and since normally
    only the dynamic libraries are available, we should use them.  */
 #ifdef __GNUC__
-#define LIBXMU -Xlinker -Bstatic -lXmu -Xlinker -Bdynamic
+#define LIBXMU "-Xlinker -Bstatic -lXmu -Xlinker -Bdynamic"
 #else
-#define LIBXMU -Bstatic -lXmu -Bdynamic
+#define LIBXMU "-Bstatic -lXmu -Bdynamic"
 #endif
 
 #endif  /* not HAVE_X11R6 */

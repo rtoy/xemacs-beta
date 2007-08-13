@@ -1,3 +1,43 @@
+1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
+
+	* keymap.c: Declare Fextent_in_region_p.
+
+	* s/linux.h: Can't use ORDINARY_LINK in linux until usage of -lPW
+	is determined more sensibly.
+
+1997-06-09  Hrvoje Niksic <hniksic@srce.hr>
+
+	* keydefs.c (get_relevant_extent_keymaps): Choose correct keymap
+	at extent boundaries.
+	
+Mon Jun  9 19:35:19 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* redisplay.c (pixel_to_glyph_translation):
+	  Fixed off by one error in computation of closest
+	  position when mouse is in the frame's right-side
+	  border area.
+
+Sat Jun  7 22:07:41 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame.c (delete_frame_internal):
+	  Calling Fselect_frame isn't sufficient to set the
+	  frame device's selected frame if the frame we're
+	  selecting is on a different device.  Call
+	  set_device_selected_frame apprpriately in that case.
+	  Also don't set the frame device's selected frame to a
+	  frame that's on another device.
+
+1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
+
+	* sysdep.c: MS Windows NT doesn't (yet) do child TTY processes.
+	From David Hobley <davidh@wr.com.au>
+	
+Sat Jun  7 22:00:54 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* src/device-x.c (x_delete_device):
+	  Add an EQ check so that we don't set Vdefault_x_device
+	  back to the device we're deleting.
+
 1997-06-05  Steven L Baur  <steve@altair.xemacs.org>
 
 	* frame.c (Fmake_frame): Correct checking of first_frame_on_device.

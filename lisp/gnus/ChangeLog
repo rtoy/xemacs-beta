@@ -1,3 +1,8 @@
+1997-06-09  Steven L Baur  <steve@altair.xemacs.org>
+
+	* gnus-msg.el (gnus-extended-version): Put XEmacs codename in
+	default X-Mailer/X-Newsreader if the symbol exists.
+
 Sat May 31 15:41:09 1997  Lars Magne Ingebrigtsen  <larsi@menja.ifi.uio.no>
 
 	* gnus.el: Gnus v5.4.56 is released.

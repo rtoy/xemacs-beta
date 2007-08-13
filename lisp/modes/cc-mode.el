@@ -1037,7 +1037,7 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   (define-key c-mode-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-map "\C-c\C-u"  'c-up-conditional)
   (define-key c-mode-map "\t"        'c-indent-command)
-  (define-key c-mode-map "\177"      'c-electric-delete)
+  (define-key c-mode-map 'delete     'c-electric-delete)
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-map ","         'c-electric-semi&comma)
   (define-key c-mode-map "*"         'c-electric-star)

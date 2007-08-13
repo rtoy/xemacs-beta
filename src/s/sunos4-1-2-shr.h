@@ -5,9 +5,9 @@
 #ifdef NOT_C_CODE
 # ifdef USE_GCC
   /* of course gcc has to take different args than the rest of the universe */
-#  define LD_SWITCH_SYSTEM -dynamic
+#  define LD_SWITCH_SYSTEM "-dynamic"
 # else
-#  define LD_SWITCH_SYSTEM -Bdynamic
+#  define LD_SWITCH_SYSTEM "-Bdynamic"
 # endif
 #endif
 

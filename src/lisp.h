@@ -39,6 +39,18 @@ Boston, MA 02111-1307, USA.  */
 #include <stdio.h>		/* NULL, etc. */
 #include <ctype.h>
 #include <stdarg.h>
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+/* Define INT_MAX, DBL_DIG if not in limits.h */
+#ifndef INT_MAX
+#define INT_MAX ((int) ((1U << (INTBITS - 1)) - 1))
+#endif
+#ifndef DBL_DIG
+#define DBL_DIG 16
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -290,10 +302,6 @@ DECLARE_DOESNT_RETURN (assert_failed (CONST char *, int, CONST char *));
 #define REGISTER
 #else
 #define REGISTER register
-#endif
-
-#ifndef INT_MAX
-#define INT_MAX ((int) ((1U << (INTBITS - 1)) - 1))
 #endif
 
 #if defined (__GNUC__) && (__GNUC__ >= 2)
@@ -1152,10 +1160,6 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 
 #define float_next(f) ((f)->data.next)
 #define float_data(f) ((f)->data.d)
-
-#ifndef DBL_DIG
-# define DBL_DIG 16
-#endif
 
 #define XFLOATINT(n) extract_float (n)
 

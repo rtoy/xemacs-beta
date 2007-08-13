@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #error database.c being compiled, but HAVE_DATABASE not defined!
 #endif /* HAVE_DATABASE */
 
-#include <database.h>         /* Our include file */
+#include "database.h"         /* Our include file */
 
 #ifdef HAVE_BERKELEY_DB
 /* Work around Berkeley DB's use of int types which are defined

@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 20.3 beta5.
+-- Configure patches continued from Martin Buchholz
+-- Miscellaneous Bug Fixes from various people (see ChangeLogs)
+-- custom-1.9908
+-- Moved mule-doc/demo to etc/HELLO for the mule menu.
+
 to 20.3 beta4.
 -- miscellaneous bug fixes
 -- various about.el additions & updates

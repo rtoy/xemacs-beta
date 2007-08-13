@@ -31,12 +31,12 @@
 # ifndef LD_SWITCH_SYSTEM
 #  ifdef USE_GCC
 /* of course gcc has to take different args than the rest of the universe */
-#   define LD_SWITCH_SYSTEM -static
+#   define LD_SWITCH_SYSTEM "-static"
 #  else
-#   define LD_SWITCH_SYSTEM -Bstatic
+#   define LD_SWITCH_SYSTEM "-Bstatic"
 #  endif
 # endif
-# define UNEXEC unexsunos4.o
+# define UNEXEC "unexsunos4.o"
 #endif
 
 #define RUN_TIME_REMAP
@@ -48,7 +48,7 @@
 
 /* XEmacs change -- Sun CC needs this to default to ANSI */
 #if __SUNPRO_C
-#define C_SWITCH_SYSTEM -Xa
+#define C_SWITCH_SYSTEM "-Xa"
 #endif
 
 /* #### XEmacs: #define of SYSTEM_MALLOC removed.  Is this OK?  FSF says:
@@ -69,7 +69,7 @@
  */
 /* Since lcc is not going to be heavily used anymore if it ever was, I'm
    putting broken-sun.h back in. */
-#include "broken-sun.h"
+#include "../broken-sun.h"
 extern char *strdup ();
 extern char *ttyname (int);
 extern void tzsetwall (void);

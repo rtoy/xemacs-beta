@@ -32,9 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #undef linux
 
 srcdir=@srcdir@
-/* C_SWITCH_X_SITE=@C_SWITCH_X_SITE@ */
-/* C_SWITCH_SITE=@C_SWITCH_SITE@ */
-
 
 SHELL=/bin/sh
 
@@ -49,175 +46,31 @@ RM = rm -f
 AR = ar cq
 @SET_MAKE@
 
-#define THIS_IS_YMAKEFILE
 #define NOT_C_CODE
 #include "../src/config.h"
 
-/* With the traditional VPATH setting, it is not possible to
-   simultaneously compile in-place and in another directory.  The
-   mistaken definition is that *all* dependencies are searched for in
-   the VPATH directory, rather than just the dependencies that are not
-   themselves targets.  Thus, if there is an up-to-date .o file in the
-   in-place location, it will not get recompiled in the not-in-place
-   location.
-
-   The GNU Make "vpath" directive continues this tradition, but at
-   least lets you restrict the classes of files that it applies to.
-   This allows us to kludge around the problem. */
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
 vpath %.h @srcdir@
-/* now list files that should NOT be searched in the srcdir.
-   This includes any .c or .h built from something else
-   (e.g. a .in file). */
-/* none here */
 #else
 VPATH=@srcdir@
 #endif
 
-#ifndef C_SWITCH_MACHINE
-#define C_SWITCH_MACHINE
-#endif
-
-#ifndef C_SWITCH_SYSTEM
-#define C_SWITCH_SYSTEM
-#endif
-
-#ifndef C_SWITCH_X_SYSTEM
-#define C_SWITCH_X_SYSTEM
-#endif
-
-#ifndef C_SWITCH_X_MACHINE
-#define C_SWITCH_X_MACHINE
-#endif
-
-#if defined (CONST_IS_LOSING)
-# define CONST_FLAG -DCONST_IS_LOSING
-#else
-# define CONST_FLAG
-#endif
-
-#if defined (LWLIB_MENUBARS_LUCID)
-# define LWLIB_MENUBARS -DMENUBARS_LUCID
-#else
-# if defined (LWLIB_MENUBARS_MOTIF)
-#  define LWLIB_MENUBARS -DMENUBARS_MOTIF
-# else
-#  define LWLIB_MENUBARS
-# endif
-#endif
-
-#if defined (LWLIB_SCROLLBARS_LUCID)
-# define LWLIB_SCROLLBARS -DSCROLLBARS_LUCID
-#else
-# if defined (LWLIB_SCROLLBARS_MOTIF)
-#  define LWLIB_SCROLLBARS -DSCROLLBARS_MOTIF
-# else
-#  if defined (LWLIB_SCROLLBARS_ATHENA)
-#   define LWLIB_SCROLLBARS -DSCROLLBARS_ATHENA
-#  else
-#   define LWLIB_SCROLLBARS
-#  endif
-# endif
-#endif
-
-#if defined (LWLIB_DIALOGS_MOTIF)
-# define LWLIB_DIALOGS -DDIALOGS_MOTIF
-#else
-# if defined (LWLIB_DIALOGS_ATHENA)
-#  define LWLIB_DIALOGS -DDIALOGS_ATHENA
-# else
-#  define LWLIB_DIALOGS
-# endif
-#endif
-
-#undef NEED_TOOLKIT
-
-/* If Motif was chosen as the tookit for anything, then
-   LWLIB_USES_MOTIF should have gotten defined. */
-#if defined (LWLIB_USES_MOTIF)
-# ifndef NEED_TOOLKIT
-#  define NEED_TOOLKIT
-# endif
-# define NEED_MOTIF -DNEED_MOTIF
-# define MOTIF_SRCS lwlib-Xm.c
-# define MOTIF_OBJS lwlib-Xm.o
-#else
-# define NEED_MOTIF
-# define MOTIF_SRCS
-# define MOTIF_OBJS
-#endif
-
-#if defined (LWLIB_MENUBARS_LUCID) || defined (LWLIB_SCROLLBARS_LUCID)
-# ifndef NEED_TOOLKIT
-#  define NEED_TOOLKIT
-# endif
-# define NEED_LUCID -DNEED_LUCID
-# ifdef LWLIB_MENUBARS_LUCID
-#  define LUCID_MENUBAR_SRCS xlwmenu.c
-#  define LUCID_MENUBAR_OBJS xlwmenu.o
-# else
-#  define LUCID_MENUBAR_SRCS
-#  define LUCID_MENUBAR_OBJS
-# endif
-# ifdef LWLIB_SCROLLBARS_LUCID
-#  define LUCID_SCROLLBAR_SRCS xlwscrollbar.c
-#  define LUCID_SCROLLBAR_OBJS xlwscrollbar.o
-# else
-#  define LUCID_SCROLLBAR_SRCS
-#  define LUCID_SCROLLBAR_OBJS
-# endif
-# define LUCID_SRCS lwlib-Xlw.c LUCID_MENUBAR_SRCS LUCID_SCROLLBAR_SRCS
-# define LUCID_OBJS lwlib-Xlw.o LUCID_MENUBAR_OBJS LUCID_SCROLLBAR_OBJS
-#else
-# define NEED_LUCID
-# define LUCID_SRCS
-# define LUCID_OBJS
-#endif
-
-#if defined (LWLIB_SCROLLBARS_ATHENA) || defined (LWLIB_DIALOGS_ATHENA)
-# ifndef NEED_TOOLKIT
-#  define NEED_TOOLKIT
-# endif
-# define NEED_ATHENA -DNEED_ATHENA
-# define ATHENA_SRCS lwlib-Xaw.c
-# define ATHENA_OBJS lwlib-Xaw.o
-#else
-# define NEED_ATHENA
-# define ATHENA_SRCS
-# define ATHENA_OBJS
-#endif
-
 #ifdef ENERGIZE
-EZ_OBJS = energize/blpsheet.o energize/build.o energize/classbr_ps.o \
-          energize/ctreebr_ps.o energize/debuggerps.o \
-          energize/editmode.o energize/leb_psheet.o \
-          energize/projectdisp.o energize/projectps.o \
-          energize/search.o energize/target.o
+EZ_OBJS =\
+ energize/blpsheet.o energize/build.o energize/classbr_ps.o \
+ energize/ctreebr_ps.o energize/debuggerps.o energize/editmode.o \
+ energize/leb_psheet.o energize/projectdisp.o energize/projectps.o \
+ energize/search.o energize/target.o
 ENERGIZEP = -DENERGIZE
 EZ_SUBDIR = ez_dialog
-#else
-EZ_OBJS =
-ENERGIZEP =
-EZ_SUBDIR =
 #endif
 
-#if defined (HAVE_X_WINDOWS)
-# ifndef NEED_TOOLKIT
-#  define NEED_TOOLKIT
-# endif
-#endif
+lwlib_objs=@lwlib_objs@
 
-SRCS = lwlib.c MOTIF_SRCS LUCID_SRCS ATHENA_SRCS lwlib-utils.c \
-       lwlib-config.c
-OBJS = lwlib.o MOTIF_OBJS LUCID_OBJS ATHENA_OBJS lwlib-utils.o \
-       lwlib-config.o $(EZ_OBJS)
+OBJS = lwlib.o lwlib-utils.o lwlib-config.o $(EZ_OBJS) ${lwlib_objs}
 
-#ifdef NEED_TOOLKIT
 all:: $(EZ_SUBDIR) liblw.a
-#else
-all::
-#endif
 
 c_switch_general=@c_switch_general@
 c_switch_window_system=@c_switch_window_system@
@@ -229,18 +82,14 @@ ld_libs_general=@ld_libs_general@
 ld_libs_window_system=@ld_libs_window_system@
 ld_libs_all=@ld_libs_all@
 
-ALL_CFLAGS = -I. $(c_switch_all) NEED_LUCID NEED_MOTIF NEED_ATHENA \
-	     LWLIB_MENUBARS LWLIB_SCROLLBARS LWLIB_DIALOGS \
-	     $(ENERGIZEP) ${CFLAGS} CONST_FLAG
+ALL_CFLAGS= $(CFLAGS) $(CPPFLAGS) -I. $(c_switch_all) $(ENERGIZEP)
 .c.o:
-	$(CC) -c $(CPPFLAGS) $(ALL_CFLAGS) $<
+	$(CC) -c $(ALL_CFLAGS) $<
 
 liblw.a: $(OBJS)
 	$(RM) $@
 	$(AR) $@ $(OBJS)
-	-if [ -n $(RANLIB) ]; then \
-	  $(RANLIB) $@; \
-	fi
+	-test -n "$(RANLIB)" && $(RANLIB) $@
 
 #ifdef ENERGIZE
 ez_dialog:

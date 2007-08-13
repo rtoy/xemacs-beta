@@ -49,7 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #undef MOD_SHIFT
 #endif
 
-#include <events-mod.h>
+#include "events-mod.h"
 
 
 /* A keymap contains four slots:
@@ -2417,6 +2417,12 @@ get_relevant_keymaps (Lisp_Object keys,
    margin, we should still consult the kemyap of that glyph's extent,
    which may not itself be under the mouse.
  */
+
+extern Lisp_Object Fextent_in_region_p(Lisp_Object extent,
+				       Lisp_Object from,
+				       Lisp_Object to,
+				       Lisp_Object flags);
+
 static void
 get_relevant_extent_keymaps (Lisp_Object pos, Lisp_Object buffer_or_string,
                              Lisp_Object glyph,
@@ -2436,14 +2442,17 @@ get_relevant_extent_keymaps (Lisp_Object pos, Lisp_Object buffer_or_string,
   if (!NILP (pos))
     {
       Lisp_Object extent;
-      for (extent = Fextent_at (pos, buffer_or_string, Qkeymap, Qnil, Qnil);
+      for (extent = Fextent_at (pos, buffer_or_string, Qkeymap, Qnil, Qat);
 	   !NILP (extent);
-	   extent = Fextent_at (pos, buffer_or_string, Qkeymap, extent, Qnil))
+	   extent = Fextent_at (pos, buffer_or_string, Qkeymap, extent, Qat))
 	{
-	  Lisp_Object keymap = Fextent_property (extent, Qkeymap, Qnil);
-	  if (!NILP (keymap))
-	    relevant_map_push (get_keymap (keymap, 1, 1), closure);
-	  QUIT;
+	  if (!NILP (Fextent_in_region_p (extent, pos, pos, Qnil)))
+	    {
+	      Lisp_Object keymap = Fextent_property (extent, Qkeymap, Qnil);
+	      if (!NILP (keymap))
+		relevant_map_push (get_keymap (keymap, 1, 1), closure);
+	      QUIT;
+	    }
 	}
     }
 }

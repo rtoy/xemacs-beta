@@ -27,6 +27,8 @@
 ;; 92.7.6   modified for Mule Ver.0.9.5 by K.Handa <handa@etl.go.jp>
 ;;	New rules added.
 
+(eval-when-compile (require 'egg))
+
 (its-define-mode "roma-kana" "あ" t)
 
 (its-defrule-select-mode-temporally "q" "downcase")
