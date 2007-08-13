@@ -1,7 +1,7 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/04/07 13:24:49
-;; Version: 1.14
+;; Created: 1997/04/16 05:11:58
+;; Version: 1.16
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -136,6 +136,36 @@
 	(urlobj (url-generic-parse-url url))
 	(proxyobj (url-generic-parse-url url-using-proxy)))
     (url-http url-using-proxy url)))
+
+(defvar url-webmail-gateway "w3mail@gmd.de"
+  "*Where to send webmail requests")
+
+(defvar url-webmail-switches '(" " "-uu -z" "-uu -z -s 100"))
+
+(defun url-proxy-via-mail (url)
+  ;; Return URL from a web->mail gateway
+  (let ((urlobj (url-generic-parse-url url)))
+    (funcall url-mail-command)
+    (set (make-local-variable 'inhibit-read-only) t)
+    (goto-char (point-min))
+    (if (search-forward mail-header-separator nil t)
+	(progn
+	  (forward-char 1)
+	  (delete-region (point) (point-max)))
+      (goto-char (point-max)))
+    (if (fboundp 'widget-minor-mode)
+	(widget-minor-mode 1))
+    (apply 'widget-create 'menu-choice
+	   :value " "
+	   :format "%[%t%] %v"
+	   :tag "get"
+	   (mapcar (lambda (x) (list 'choice-item :format "%v" x))
+		   url-webmail-switches))
+    (insert " " url)
+    (if url-request-data
+	(insert "?" url-request-data))
+    (url-mail-goto-field "To")
+    (insert url-webmail-gateway)))
 
 ;; ftp://ietf.org/internet-drafts/draft-masinter-url-data-02.txt
 (defun url-data (url)

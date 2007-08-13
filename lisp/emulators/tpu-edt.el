@@ -7,6 +7,8 @@
 ;; Version: 4.2
 ;; Keywords: emulations
 
+;; Modified for XEmacs by R. Kevin Oberman <oberman@es.net>
+
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -215,8 +217,8 @@
 ;;    ; Repeat the preceding mappings for X-windows.
 ;;    (cond
 ;;     (window-system
-;;      (global-set-key [kp-7] 'tpu-paragraph)                   ; KP7
-;;      (define-key GOLD-map [kp-f1] 'universal-argument)))      ; GOLD-PF1
+;;      (global-set-key [kp_7] 'tpu-paragraph)                   ; KP7
+;;      (define-key GOLD-map [kp_f1] 'universal-argument)))      ; GOLD-PF1
 
 ;;    ; Display the TPU-edt version.
 ;;    (tpu-version)
@@ -524,6 +526,7 @@ Otherwise sets the tpu-match markers to nil and returns nil."
 (defun tpu-show-match-markers nil
   "Show the values of the match markers."
   (interactive)
+  (setq zmacs-region-stays t)
   (if (markerp tpu-match-beginning-mark)
       (let ((beg (marker-position tpu-match-beginning-mark)))
 	(message "(%s, %s) in %s -- current %s in %s"
@@ -607,12 +610,14 @@ Top line is 0.  Counts each text line only once, even if it wraps."
 (defun tpu-drop-breadcrumb (num)
   "Drops a breadcrumb that can be returned to later with goto-breadcrumb."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (put tpu-breadcrumb-plist num (list (current-buffer) (point)))
   (message "Mark %d set." num))
 
 (defun tpu-goto-breadcrumb (num)
   "Returns to a breadcrumb set with drop-breadcrumb."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (cond ((get tpu-breadcrumb-plist num)
 	 (switch-to-buffer (car (get tpu-breadcrumb-plist num)))
 	 (goto-char (tpu-cadr (get tpu-breadcrumb-plist num)))
@@ -665,6 +670,7 @@ With argument, fill and justify."
 (defun tpu-version nil
   "Print the TPU-edt version number."
   (interactive)
+  (setq zmacs-region-stays t)
   (message
    "TPU-edt version %s by Rob Riepel (riepel@networking.stanford.edu)"
    tpu-version))
@@ -672,12 +678,14 @@ With argument, fill and justify."
 (defun tpu-reset-screen-size (height width)
   "Sets the screen size."
   (interactive "nnew screen height: \nnnew screen width: ")
+  (setq zmacs-region-stays t)
   (set-screen-height height)
   (set-screen-width width))
 
 (defun tpu-toggle-newline-and-indent nil
   "Toggle between 'newline and indent' and 'simple newline'."
   (interactive)
+  (setq zmacs-region-stays t)
   (cond (tpu-newline-and-indent-p
          (setq tpu-newline-and-indent-string "")
          (setq tpu-newline-and-indent-p nil)
@@ -704,6 +712,7 @@ With argument, fill and justify."
 (defun tpu-toggle-overwrite-mode nil
   "Switches in and out of overwrite mode"
   (interactive)
+  (setq zmacs-region-stays t)
   (cond (overwrite-mode
 	 (tpu-local-set-key "\177" tpu-saved-delete-func)
 	 (overwrite-mode 0))
@@ -716,6 +725,7 @@ With argument, fill and justify."
   "Insert a character or control code according to
 its ASCII decimal value."
   (interactive "P")
+  (setq zmacs-region-stays t)
   (if overwrite-mode (delete-char 1))
   (insert (if num num 0)))
 
@@ -723,6 +733,7 @@ its ASCII decimal value."
   "Read next input character and insert it.
 This is useful for inserting control characters."
   (interactive "*p")
+  (setq zmacs-region-stays t)
   (let ((char (read-char)) )
     (if overwrite-mode (delete-char num))
     (insert-char char num)))
@@ -734,6 +745,7 @@ This is useful for inserting control characters."
 (defun tpu-include (file)
   "TPU-like include file"
   (interactive "fInclude file: ")
+  (setq zmacs-region-stays t)
   (save-excursion
     (insert-file file)
     (message "")))
@@ -741,12 +753,14 @@ This is useful for inserting control characters."
 (defun tpu-get (file)
   "TPU-like get file"
   (interactive "FFile to get: ")
+  (setq zmacs-region-stays t)
   (find-file file))
 
 (defun tpu-what-line nil
   "Tells what line the point is on,
  and the total number of lines in the buffer."
   (interactive)
+  (setq zmacs-region-stays t)
   (if (eobp)
       (message "You are at the End of Buffer.  The last line is %d."
 	       (count-lines 1 (point-max)))
@@ -935,6 +949,7 @@ This is useful for inserting control characters."
 (defun tpu-help nil
   "Display TPU-edt help."
   (interactive)
+  (setq zmacs-region-stays t)
   ;; Save current window configuration
   (save-window-excursion
     ;; Create and fill help buffer if necessary
@@ -1007,11 +1022,13 @@ This is useful for inserting control characters."
 (defun tpu-insert-escape nil
   "Inserts an escape character, and so becomes the escape-key alias."
   (interactive)
+  (setq zmacs-region-stays t)
   (insert "\e"))
 
 (defun tpu-insert-formfeed nil
   "Inserts a formfeed character."
   (interactive)
+  (setq zmacs-region-stays t)
   (insert "\C-L"))
 
 
@@ -1023,6 +1040,7 @@ This is useful for inserting control characters."
 (defun tpu-end-define-macro-key (key)
   "Ends the current macro definition"
   (interactive "kPress the key you want to use to do what was just learned: ")
+  (setq zmacs-region-stays t)
   (end-kbd-macro nil)
   (global-set-key key last-kbd-macro)
   (global-set-key "\C-r" tpu-saved-control-r))
@@ -1030,6 +1048,7 @@ This is useful for inserting control characters."
 (defun tpu-define-macro-key nil
   "Bind a set of keystrokes to a single key, or key combination."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-saved-control-r (global-key-binding "\C-r"))
   (global-set-key "\C-r" 'tpu-end-define-macro-key)
   (start-kbd-macro nil))
@@ -1054,6 +1073,7 @@ kills modified buffers without asking."
 (defun tpu-write-current-buffers nil
   "Save all modified buffers without exiting."
   (interactive)
+  (setq zmacs-region-stays t)
   (save-some-buffers t))
 
 (defun tpu-next-buffer nil
@@ -1079,12 +1099,14 @@ kills modified buffers without asking."
 (defun tpu-next-window nil
   "Move to the next window."
   (interactive)
+  (setq zmacs-region-stays t)
   (if (one-window-p) (message "There is only one window on screen.")
     (other-window 1)))
 
 (defun tpu-previous-window nil
   "Move to the previous window."
   (interactive)
+  (setq zmacs-region-stays t)
   (if (one-window-p) (message "There is only one window on screen.")
     (select-window (previous-window))))
 
@@ -1095,6 +1117,7 @@ kills modified buffers without asking."
 (defun tpu-toggle-regexp nil
   "Switches in and out of regular expression search and replace mode."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-regexp-p (not tpu-regexp-p))
   (tpu-set-search)
   (and (interactive-p)
@@ -1112,6 +1135,7 @@ kills modified buffers without asking."
   "Search for a string or regular expression.
 The search is performed in the current direction."
   (interactive)
+  (setq zmacs-region-stays t)
   (tpu-set-search)
   (tpu-search-internal ""))
 
@@ -1119,6 +1143,7 @@ The search is performed in the current direction."
   "Search for a string or regular expression.
 The search is begins in the forward direction."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-searching-forward t)
   (tpu-set-search t)
   (tpu-search-internal ""))
@@ -1127,6 +1152,7 @@ The search is begins in the forward direction."
   "Search for a string or regular expression.
 The search is begins in the reverse direction."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-searching-forward nil)
   (tpu-set-search t)
   (tpu-search-internal ""))
@@ -1135,6 +1161,7 @@ The search is begins in the reverse direction."
   "Search for the same string or regular expression as last time.
 The search is performed in the current direction."
   (interactive)
+  (setq zmacs-region-stays t)
   (tpu-search-internal tpu-search-last-string))
 
 ;;  tpu-set-search defines the search functions used by the TPU-edt internal
@@ -1231,6 +1258,7 @@ and backward a character after a failed search.  Arg means end of search."
   "Toggle the TPU-edt search direction.
 Used for reversing a search in progress."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-searching-forward (not tpu-searching-forward))
   (tpu-set-search t)
   (and (interactive-p)
@@ -1240,6 +1268,7 @@ Used for reversing a search in progress."
 (defun tpu-search-forward-exit nil
   "Set search direction forward and exit minibuffer."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-searching-forward t)
   (tpu-set-search t)
   (exit-minibuffer))
@@ -1247,6 +1276,7 @@ Used for reversing a search in progress."
 (defun tpu-search-backward-exit nil
   "Set search direction backward and exit minibuffer."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-searching-forward nil)
   (tpu-set-search t)
   (exit-minibuffer))
@@ -1280,6 +1310,7 @@ Used for reversing a search in progress."
 (defun tpu-toggle-rectangle nil
   "Toggle rectangular mode for remove and insert."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-rectangular-p (not tpu-rectangular-p))
   (setq tpu-rectangle-string (if tpu-rectangular-p " Rect" ""))
   (tpu-update-mode-line)
@@ -1335,6 +1366,7 @@ The text is saved for the tpu-paste command."
   "Copy the selected region to the cut buffer without deleting it.
 The text is saved for the tpu-paste command."
   (interactive)
+  (setq zmacs-region-stays t)
   (cond ((tpu-mark)
 	 (cond (tpu-rectangular-p
 		(save-excursion
@@ -1385,6 +1417,7 @@ argument, delete the selected region too."
 This includes the newline character at the end of each line.
 They are saved for the TPU-edt undelete-lines command."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (forward-line num)
     (if (not (eq (preceding-char) ?\n))
@@ -1398,6 +1431,7 @@ They are saved for the TPU-edt undelete-lines command."
 With argument, delete up to to Nth line-end past point.
 They are saved for the TPU-edt undelete-lines command."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (forward-char 1)
     (end-of-line num)
@@ -1410,6 +1444,7 @@ They are saved for the TPU-edt undelete-lines command."
 With argument, delete up to to Nth line-end past point.
 They are saved for the TPU-edt undelete-lines command."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (tpu-next-beginning-of-line num)
     (setq tpu-last-deleted-lines
@@ -1420,6 +1455,7 @@ They are saved for the TPU-edt undelete-lines command."
   "Delete one or specified number of words after point.
 They are saved for the TPU-edt undelete-words command."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (tpu-forward-to-word num)
     (setq tpu-last-deleted-words
@@ -1430,6 +1466,7 @@ They are saved for the TPU-edt undelete-words command."
   "Delete one or specified number of words before point.
 They are saved for the TPU-edt undelete-words command."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (tpu-backward-to-word num)
     (setq tpu-last-deleted-words
@@ -1440,6 +1477,7 @@ They are saved for the TPU-edt undelete-words command."
   "Delete one or specified number of characters after point.  The last
 character deleted is saved for the TPU-edt undelete-char command."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (while (and (> num 0) (not (eobp)))
     (setq tpu-last-deleted-char (char-after (point)))
     (cond (overwrite-mode
@@ -1457,6 +1495,7 @@ character deleted is saved for the TPU-edt undelete-char command."
   "Insert the last region or rectangle of killed text.
 With argument reinserts the text that many times."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (while (> num 0)
     (cond (tpu-rectangular-p
 	   (let ((beg (point)))
@@ -1472,6 +1511,7 @@ With argument reinserts the text that many times."
   "Insert lines deleted by last TPU-edt line-deletion command.
 With argument reinserts lines that many times."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (while (> num 0)
       (insert tpu-last-deleted-lines)
@@ -1482,6 +1522,7 @@ With argument reinserts lines that many times."
   "Insert words deleted by last TPU-edt word-deletion command.
 With argument reinserts words that many times."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (while (> num 0)
       (insert tpu-last-deleted-words)
@@ -1492,6 +1533,7 @@ With argument reinserts words that many times."
   "Insert character deleted by last TPU-edt character-deletion command.
 With argument reinserts the character that many times."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (while (> num 0)
     (if overwrite-mode (prog1 (forward-char -1) (delete-char 1)))
     (insert tpu-last-deleted-char)
@@ -1613,6 +1655,7 @@ are performed without asking.  Only works in forward direction."
 or each line in the entire buffer if no region is selected."
   (interactive
    (list (tpu-string-prompt "String to add: " 'tpu-add-at-bol-hist)))
+  (setq zmacs-region-stays t)
   (if (string= "" text) (error "No string specified."))
   (cond ((tpu-mark)
 	 (save-excursion
@@ -1631,6 +1674,7 @@ or each line in the entire buffer if no region is selected."
 or each line of the entire buffer if no region is selected."
   (interactive
    (list (tpu-string-prompt "String to add: " 'tpu-add-at-eol-hist)))
+  (set zmacs-region-stays t)
   (if (string= "" text) (error "No string specified."))
   (cond ((tpu-mark)
 	 (save-excursion
@@ -1649,6 +1693,7 @@ or each line of the entire buffer if no region is selected."
 (defun tpu-trim-line-ends nil
   "Removes trailing whitespace from every line in the buffer."
   (interactive)
+  (setq zmacs-region-stays t)
   (picture-clean))
 
 
@@ -1659,16 +1704,19 @@ or each line of the entire buffer if no region is selected."
   "Move to the next character in the current direction.
 A repeat count means move that many characters."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (if tpu-advance (tpu-forward-char num) (tpu-backward-char num)))
 
 (defun tpu-forward-char (num)
   "Move right ARG characters (left if ARG is negative)."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (forward-char num))
 
 (defun tpu-backward-char (num)
   "Move left ARG characters (right if ARG is negative)."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (backward-char num))
 
 
@@ -1685,12 +1733,14 @@ Additional word separators are added to this string.")
   "Move to the beginning of the next word in the current direction.
 A repeat count means move that many words."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (if tpu-advance (tpu-forward-to-word num) (tpu-backward-to-word num)))
 
 (defun tpu-forward-to-word (num)
   "Move forward until encountering the beginning of a word.
 With argument, do this that many times."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (while (and (> num 0) (not (eobp)))
     (let* ((beg (point))
 	   (end (prog2 (end-of-line) (point) (goto-char beg))))
@@ -1708,6 +1758,7 @@ With argument, do this that many times."
   "Move backward until encountering the beginning of a word.
 With argument, do this that many times."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (while (and (> num 0) (not (bobp)))
     (let* ((beg (point))
 	   (end (prog2 (beginning-of-line) (point) (goto-char beg))))
@@ -1725,6 +1776,7 @@ With argument, do this that many times."
 (defun tpu-add-word-separators (separators)
   "Add new word separators for TPU-edt word commands."
   (interactive "sSeparators: ")
+  (setq zmacs-region-stays t)
   (let* ((n 0) (length (length separators)))
     (while (< n length)
       (let ((char (aref separators n))
@@ -1745,12 +1797,14 @@ With argument, do this that many times."
 (defun tpu-reset-word-separators nil
   "Reset word separators to default value."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-word-separator-list nil)
   (setq tpu-skip-chars "^ \t"))
 
 (defun tpu-set-word-separators (separators)
   "Set new word separators for TPU-edt word commands."
   (interactive "sSeparators: ")
+  (setq zmacs-region-stays t)
   (tpu-reset-word-separators)
   (tpu-add-word-separators separators))
 
@@ -1762,6 +1816,7 @@ With argument, do this that many times."
   "Move to next line.
 Prefix argument serves as a repeat count."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (next-line-internal num)
   (setq this-command 'next-line))
 
@@ -1769,6 +1824,7 @@ Prefix argument serves as a repeat count."
   "Move to previous line.
 Prefix argument serves as a repeat count."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (next-line-internal (- num))
   (setq this-command 'previous-line))
 
@@ -1776,6 +1832,7 @@ Prefix argument serves as a repeat count."
   "Move to beginning of line; if at beginning, move to beginning of next line.
 Accepts a prefix argument for the number of lines to move."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (backward-char 1)
   (forward-line (- 1 num)))
 
@@ -1783,12 +1840,14 @@ Accepts a prefix argument for the number of lines to move."
   "Move to the next end of line in the current direction.
 A repeat count means move that many lines."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (if tpu-advance (tpu-next-end-of-line num) (tpu-previous-end-of-line num)))
 
 (defun tpu-next-end-of-line (num)
   "Move to end of line; if at end, move to end of next line.
 Accepts a prefix argument for the number of lines to move."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (forward-char 1)
   (end-of-line num))
 
@@ -1796,11 +1855,13 @@ Accepts a prefix argument for the number of lines to move."
   "Move EOL upward.
 Accepts a prefix argument for the number of lines to move."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (end-of-line (- 1 num)))
 
 (defun tpu-current-end-of-line nil
   "Move point to end of current line."
   (interactive)
+  (setq zmacs-region-stays t)
   (let ((beg (point)))
     (end-of-line)
     (if (= beg (point)) (message "You are already at the end of a line."))))
@@ -1809,18 +1870,21 @@ Accepts a prefix argument for the number of lines to move."
   "Move to the beginning of the next line in the current direction.
 A repeat count means move that many lines."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (if tpu-advance (tpu-forward-line num) (tpu-backward-line num)))
 
 (defun tpu-forward-line (num)
   "Move to beginning of next line.
 Prefix argument serves as a repeat count."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (forward-line num))
 
 (defun tpu-backward-line (num)
   "Move to beginning of previous line.
 Prefix argument serves as repeat count."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (or (bolp) (>= 0 num) (setq num (- num 1)))
   (forward-line (- num)))
 
@@ -1832,6 +1896,7 @@ Prefix argument serves as repeat count."
   "Move to the next paragraph in the current direction.
 A repeat count means move that many paragraphs."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (if tpu-advance
       (tpu-next-paragraph num) (tpu-previous-paragraph num)))
 
@@ -1839,6 +1904,7 @@ A repeat count means move that many paragraphs."
   "Move to beginning of the next paragraph.
 Accepts a prefix argument for the number of paragraphs."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (beginning-of-line)
   (while (and (not (eobp)) (> num 0))
     (if (re-search-forward "^[ \t]*$" nil t)
@@ -1853,6 +1919,7 @@ Accepts a prefix argument for the number of paragraphs."
   "Move to beginning of previous paragraph.
 Accepts a prefix argument for the number of paragraphs."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (end-of-line)
   (while (and (not (bobp)) (> num 0))
     (if (not (and (re-search-backward "^[ \t]*$" nil t)
@@ -1872,6 +1939,7 @@ Accepts a prefix argument for the number of paragraphs."
   "Move to the next page in the current direction.
 A repeat count means move that many pages."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (if tpu-advance (forward-page num) (backward-page num))
   (if (eobp) (recenter -1)))
 
@@ -1883,12 +1951,14 @@ A repeat count means move that many pages."
   "Scroll the display to the next section in the current direction.
 A repeat count means scroll that many sections."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (if tpu-advance (tpu-scroll-window-up num) (tpu-scroll-window-down num)))
 
 (defun tpu-scroll-window-down (num)
   "Scroll the display down to the next section.
 A repeat count means scroll that many sections."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let* ((beg (tpu-current-line))
 	 (height (1- (window-height)))
 	 (lines (* num (/ (* height tpu-percent-scroll) 100))))
@@ -1899,6 +1969,7 @@ A repeat count means scroll that many sections."
   "Scroll the display up to the next section.
 A repeat count means scroll that many sections."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (let* ((beg (tpu-current-line))
 	 (height (1- (window-height)))
 	 (lines (* num (/ (* height tpu-percent-scroll) 100))))
@@ -1909,28 +1980,33 @@ A repeat count means scroll that many sections."
   "Pan right tpu-pan-columns (16 by default).
 Accepts a prefix argument for the number of tpu-pan-columns to scroll."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (scroll-left (* tpu-pan-columns num)))
 
 (defun tpu-pan-left (num)
   "Pan left tpu-pan-columns (16 by default).
 Accepts a prefix argument for the number of tpu-pan-columns to scroll."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (scroll-right (* tpu-pan-columns num)))
 
 (defun tpu-move-to-beginning nil
   "Move cursor to the beginning of buffer, but don't set the mark."
   (interactive)
+  (setq zmacs-region-stays t)
   (goto-char (point-min)))
 
 (defun tpu-move-to-end nil
   "Move cursor to the end of buffer, but don't set the mark."
   (interactive)
+  (setq zmacs-region-stays t)
   (goto-char (point-max))
   (recenter -1))
 
 (defun tpu-goto-percent (perc)
   "Move point to ARG percentage of the buffer."
   (interactive "NGoto-percentage: ")
+  (setq zmacs-region-stays t)
   (if (or (> perc 100) (< perc 0))
       (error "Percentage %d out of range 0 < percent < 100" perc)
     (goto-char (/ (* (point-max) perc) 100))))
@@ -1938,21 +2014,25 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 (defun tpu-beginning-of-window nil
   "Move cursor to top of window."
   (interactive)
+  (setq zmacs-region-stays t)
   (move-to-window-line 0))
 
 (defun tpu-end-of-window nil
   "Move cursor to bottom of window."
   (interactive)
+  (setq zmacs-region-stays t)
   (move-to-window-line -1))
 
 (defun tpu-line-to-bottom-of-window nil
   "Move the current line to the bottom of the window."
   (interactive)
+  (setq zmacs-region-stays t)
   (recenter -1))
 
 (defun tpu-line-to-top-of-window nil
   "Move the current line to the top of the window."
   (interactive)
+  (setq zmacs-region-stays t)
   (recenter 0))
 
 
@@ -1962,6 +2042,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 (defun tpu-advance-direction nil
   "Set TPU Advance mode so keypad commands move forward."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-direction-string " Advance")
   (setq tpu-advance t)
   (setq tpu-reverse nil)
@@ -1971,6 +2052,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 (defun tpu-backup-direction nil
   "Set TPU Backup mode so keypad commands move backward."
   (interactive)
+  (setq zmacs-region-stays t)
   (setq tpu-direction-string " Reverse")
   (setq tpu-advance nil)
   (setq tpu-reverse t)
@@ -2250,7 +2332,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 
 
 ;;;
-;;;  Minibuffer map additions to make KP-enter = RET
+;;;  Minibuffer map additions to make KP_enter = RET
 ;;;
 (define-key minibuffer-local-map "\eOM" 'exit-minibuffer)
 (define-key minibuffer-local-ns-map "\eOM" 'exit-minibuffer)
@@ -2316,6 +2398,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 (defun tpu-toggle-control-keys nil
   "Toggles control key bindings between TPU-edt and Emacs."
   (interactive)
+  (setq zmacs-region-stays t)
   (tpu-reset-control-keys (not tpu-control-keys))
   (and (interactive-p)
        (message "Control keys function with %s bindings."
@@ -2328,18 +2411,21 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 (defun tpu-next-history-element (n)
   "Insert the next element of the minibuffer history into the minibuffer."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (next-history-element n)
   (goto-char (point-max)))
 
 (defun tpu-previous-history-element (n)
   "Insert the previous element of the minibuffer history into the minibuffer."
   (interactive "p")
+  (setq zmacs-region-stays t)
   (previous-history-element n)
   (goto-char (point-max)))
 
 (defun tpu-arrow-history nil
   "Modify minibuffer maps to use arrows for history recall."
   (interactive)
+  (setq zmacs-region-stays t)
   (let ((loc (where-is-internal 'tpu-previous-line)) (cur nil))
     (while (setq cur (car loc))
       (define-key read-expression-map cur 'tpu-previous-history-element)
@@ -2367,6 +2453,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 If FILE is nil, try to load a default file.  The default file names are
 `~/.tpu-lucid-keys' for Lucid emacs, and `~/.tpu-keys' for Emacs."
   (interactive "fX key definition file: ")
+  (setq zmacs-region-stays t)
   (cond (file
 	 (setq file (expand-file-name file)))
 	(tpu-xkeys-file
@@ -2419,6 +2506,7 @@ If FILE is nil, try to load a default file.  The default file names are
 (defun tpu-copy-keyfile (oldname newname)
   "Copy the TPU-edt X key definitions file to the new default name."
   (interactive "fOld name: \nFNew name: ")
+  (setq zmacs-region-stays t)
   (if (not (get-buffer "*TPU-Notice*")) (generate-new-buffer "*TPU-Notice*"))
   (set-buffer "*TPU-Notice*")
   (erase-buffer)

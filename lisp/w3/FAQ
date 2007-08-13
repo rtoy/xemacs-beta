@@ -16,6 +16,24 @@ A: This usually means you compiled W3 in an emacs that could not find
    emacs.  Set the environment variable WIDGETDIR to where your custom
    library lives (ie: ~/lisp/gnus/lisp)
 
+Q: I like being warned about invalid HTML on my own pages, but how can
+   I make Emacs/W3 stop telling me almost everything on the Web is
+   invalid?
+A: You can use the 'file preparation hook', which is run before any
+   parsing is done.
+
+   (defun my-w3-file-prepare-hook ()
+     (setq w3-debug-html
+         (if (or (string= (url-type url-current-object) "file")
+                 (string-match ".*\\.some\\.domain\\.name"
+                               (or (url-host url-current-object) "")))
+             'style
+           nil)))
+   (add-hook 'w3-file-prepare-hook 'my-w3-file-prepare-hook)
+
+   This will turn on stylistic warnings for any local HTML files or
+   files loaded from the `*.some.domain.name' domain.
+
 Courtesy of greg stark <gsstark@mit.edu>
 Q: How do i get Shift-Tab to go backwards on a text terminal or XTerm?
 aka: I hate the new text widgets, I can't go through the links with n and b

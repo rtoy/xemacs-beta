@@ -76,27 +76,44 @@
 
 (provide 'rexx-mode)
 
-(defconst rexx-indent 8
-  "*This variable contains the indentation in rexx-mode.")
+(defgroup rexx nil
+  "Major mode for editing REXX program files"
+  :group 'languages)
 
-(defconst rexx-end-indent 0
-  "*This variable indicates the relative position of the \"end\" in REXX mode.")
 
-(defconst rexx-cont-indent 8
-  "*This variable indicates how far a continued line shall be intended.")
+(defcustom rexx-indent 8
+  "*This variable contains the indentation in rexx-mode."
+  :type 'integer
+  :group 'rexx)
 
-(defconst rexx-comment-col 32
+(defcustom rexx-end-indent 0
+  "*This variable indicates the relative position of the \"end\" in REXX mode."
+  :type 'integer
+  :group 'rexx)
+
+(defcustom rexx-cont-indent 8
+  "*This variable indicates how far a continued line shall be intended."
+  :type 'integer
+  :group 'rexx)
+
+(defcustom rexx-comment-col 32
   "*This variable gives the desired comment column 
-for comments to the right of text.")
+for comments to the right of text."
+  :type 'integer
+  :group 'rexx)
 
-(defconst rexx-tab-always-indent t
+(defcustom rexx-tab-always-indent t
   "*Non-nil means TAB in REXX mode should always reindent the current line,
-regardless of where in the line point is when the TAB command is used.")
+regardless of where in the line point is when the TAB command is used."
+  :type 'boolean
+  :group 'rexx)
 
-(defconst rexx-special-regexp 
+(defcustom rexx-special-regexp 
   ".*\\(,\\|then\\|else\\)[ \t]*\\(/\\*.*\\*/\\)?[ \t]*$"
   "*Regular expression for parsing lines which shall be followed by
-a extra indention")
+a extra indention"
+  :type 'regexp
+  :group 'rexx)
 
 (defconst rexx-font-lock-keywords
   (purecopy

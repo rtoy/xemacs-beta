@@ -55,21 +55,32 @@
 ;;; Variables controlling the display
 ;;;
 
-(defvar enriched-verbose t
-  "*If non-nil, give status messages when reading and writing files.")
+(defgroup enriched nil
+  "Read and save files in text/enriched format"
+  :group 'wp)
 
-(defvar enriched-default-right-margin 10
+
+(defcustom enriched-verbose t
+  "*If non-nil, give status messages when reading and writing files."
+  :type 'boolean
+  :group 'enriched)
+
+(defcustom enriched-default-right-margin 10
   "*Default amount of space to leave on the right edge of the screen.
 This can be increased inside text by changing the 'right-margin text property.
 Measured in character widths.  If the screen is narrower than this, it is
-assumed to be 0.")
+assumed to be 0."
+  :type 'integer
+  :group 'enriched)
 
-(defvar enriched-fill-after-visiting t
+(defcustom enriched-fill-after-visiting t
   "If t, fills paragraphs when reading in enriched documents.
 If nil, only fills when you explicitly request it.  If the value is 'ask, then
 it will query you whether to fill.
 Filling is never done if the current text-width is the same as the value
-stored in the file.")
+stored in the file."
+  :type '(choice (const nil) (const t) (const ask))
+  :group 'enriched)
 
 ;;;
 ;;; Set up faces & display table
@@ -156,11 +167,13 @@ Any property that is neither on this list nor dealt with by
 	  (cons '(enriched-mode " Enriched")
 		minor-mode-alist)))
 
-(defvar enriched-mode-hook nil
+(defcustom enriched-mode-hook nil
   "Functions to run when entering Enriched mode.
 If you set variables in this hook, you should arrange for them to be restored
 to their old values if you leave Enriched mode.  One way to do this is to add
-them and their old values to `enriched-old-bindings'.")
+them and their old values to `enriched-old-bindings'."
+  :type 'hook
+  :group 'enriched)
 
 (defvar enriched-old-bindings nil
   "Store old variable values that we change when entering mode.

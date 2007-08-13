@@ -2,7 +2,47 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Fri Apr 18 13:09:31 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'd up to Widget 1.89
+
+Thu Apr 17 06:20:56 1997  "T. V. Raman" <raman@Adobe.COM>
+
+* default.css (pre/xmp/plaintext/key/code/tt): Changes to default
+  stylesheet for spoken output of normally `monospaced' text.
+
+Tue Apr 15 16:28:11 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-find-specific-link): Don't signal an error in a target anchor
+  (#foo) is not found.
+
+Tue Apr 15 08:22:37 1997  John Palmieri <palmieri@math.mit.edu>
+
+* w3.el (w3-complete-link): protect against errors when hitting return
+  when point isn't on a link
+
+Mon Apr 14 16:18:43 1997  William M. Perry  <wmperry@aventail.com>
+
+* mm.el (mm-parse-mailcaps): Moved ~/.mailcap to the front of the list so
+  that it gets parsed last, and has the highest priority.
+
+Sun Apr 13 20:28:30 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-complete-link): now correctly defaults to following the link
+  at point.
+
+Sat Apr 12 19:35:26 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-speak.el: use widget-at instead of emacspeak-widget-at
+
 Fri Apr 11 07:39:26 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-menu.el (w3-menu-edit-menu): Addded a preferences submenu with all
+  the W3 & URL customization items underneat it.
+
+* css.el (css-split-font-shorthand): Handle bad lists better
+
+* Emacs/W3 3.0.82 released
 
 * Synch'd up with Widget 1.78
 

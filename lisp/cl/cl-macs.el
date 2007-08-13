@@ -1737,6 +1737,21 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 		(nth 3 method) store-temp)
 	  (list 'substring (nth 4 method) from-temp to-temp))))
 
+(define-setf-method values (&rest args)
+  (let ((methods (mapcar #'(lambda (x)
+			     (get-setf-method x cl-macro-environment))
+			 args))
+	(store-temp (gensym "--values-store--")))
+    (list (apply 'append (mapcar 'first methods))
+	  (apply 'append (mapcar 'second methods))
+	  (list store-temp)
+	  (cons 'list
+		(mapcar #'(lambda (m)
+			    (cl-setf-do-store (cons (car (third m)) (fourth m))
+					      (list 'pop store-temp)))
+			methods))
+	  (cons 'list (mapcar 'fifth methods)))))
+
 ;;; Getting and optimizing setf-methods.
 (defun get-setf-method (place &optional env)
   "Return a list of five values describing the setf-method for PLACE.

@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/22 17:31:47
-;; Version: 1.35
+;; Created: 1997/04/17 15:50:07
+;; Version: 1.37
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -261,6 +261,16 @@ on that platform."
    "----"
    ["Search..."			w3-search-forward	t]
    ["Search Again..."		w3-search-again		w3-last-search-item]
+   "----"
+   (list
+    "Preferences"
+    (if (fboundp 'custom-menu-create)
+	(custom-menu-create 'w3)
+      ["W3" ignore nil])
+    (if (fboundp 'custom-menu-create)
+	(custom-menu-create 'url)
+      ["URL" ignore nil])
+    )
    )
   "W3 edit menu list.")
 

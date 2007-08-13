@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/04/11 14:41:10
-;; Version: 1.74
+;; Created: 1997/04/16 05:08:07
+;; Version: 1.75
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/04/11 14:41:10|1.74|Location Undetermined
+;;; 1997/04/16 05:08:07|1.75|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -88,6 +88,7 @@
 (autoload 'url-nfs "url-nfs")
 (autoload 'url-mailserver "url-mail")
 (autoload 'url-mailto "url-mail")
+(autoload 'url-mail "url-mail")
 (autoload 'url-info "url-misc")
 (autoload 'url-shttp "url-http")
 (autoload 'url-https "url-http")

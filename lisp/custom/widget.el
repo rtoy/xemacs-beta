@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.84
+;; Version: 1.89
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -51,7 +51,8 @@
   (autoload 'widget-insert "wid-edit")
   (autoload 'widget-browse "wid-browse" nil t)
   (autoload 'widget-browse-other-window "wid-browse" nil t)
-  (autoload 'widget-browse-at "wid-browse" nil t))
+  (autoload 'widget-browse-at "wid-browse" nil t)
+  (autoload 'widget-minor-mode "wid-browse" nil t))
 
 (defun define-widget (name class doc &rest args)
   "Define a new widget type named NAME from CLASS.

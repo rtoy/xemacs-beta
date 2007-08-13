@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.84
+;; Version: 1.89
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -21,12 +21,14 @@
 
 (require 'widget)
 
-(define-widget-keywords :prefix :tag :load :link :options :type :group)
+(define-widget-keywords :initialize :set :get :require :prefix :tag
+  :load :link :options :type :group) 
 
 ;; These autoloads should be deleted eventually. 
 (unless (fboundp 'load-gc)
   ;; From cus-edit.el
   (autoload 'customize "cus-edit" nil t)
+  (autoload 'customize-other-window "cus-edit" nil t)
   (autoload 'customize-variable "cus-edit" nil t)
   (autoload 'customize-variable-other-window "cus-edit" nil t)
   (autoload 'customize-face "cus-edit" nil t)
@@ -48,14 +50,62 @@
 
 ;;; The `defcustom' Macro.
 
-(defun custom-declare-variable (symbol value doc &rest args)
-  "Like `defcustom', but SYMBOL and VALUE are evaluated as normal arguments."
-  ;; Bind this variable unless it already is bound.
+(defun custom-initialize-default (symbol value)
+  "Initialize SYMBOL with VALUE.
+This will do nothing if symbol already has a default binding.
+Otherwise, if symbol has a `saved-value' property, it will evaluate
+the car of that and used as the default binding for symbol.
+Otherwise, VALUE will be evaluated and used as the default binding for
+symbol."
   (unless (default-boundp symbol)
     ;; Use the saved value if it exists, otherwise the factory setting.
     (set-default symbol (if (get symbol 'saved-value)
 			    (eval (car (get symbol 'saved-value)))
-			  (eval value))))
+			  (eval value)))))
+
+(defun custom-initialize-set (symbol value)
+  "Initialize SYMBOL with VALUE.
+Like `custom-initialize-default', but use the function specified by
+`:set' to initialize SYMBOL."
+  (unless (default-boundp symbol)
+    (funcall (or (get symbol 'custom-set) 'set-default)
+	     symbol 
+	     (if (get symbol 'saved-value)
+		 (eval (car (get symbol 'saved-value)))
+	       (eval value)))))
+
+(defun custom-initialize-reset (symbol value)
+  "Initialize SYMBOL with VALUE.
+Like `custom-initialize-set', but use the function specified by
+`:get' to reinitialize SYMBOL if it is already bound."
+    (funcall (or (get symbol 'custom-set) 'set-default)
+	     symbol 
+	     (cond ((default-boundp symbol)
+		    (funcall (or (get symbol 'custom-get) 'default-value)
+			     symbol))
+		   ((get symbol 'saved-value)
+		    (eval (car (get symbol 'saved-value))))
+		   (t
+		    (eval value)))))
+
+(defun custom-initialize-changed (symbol value)
+  "Initialize SYMBOL with VALUE.
+Like `custom-initialize-reset', but only use the `:set' function if the 
+not using the factory setting.  Otherwise, use the `set-default'."
+  (cond ((default-boundp symbol)
+	 (funcall (or (get symbol 'custom-set) 'set-default)
+		  symbol
+		  (funcall (or (get symbol 'custom-get) 'default-value)
+			   symbol)))
+	((get symbol 'saved-value)
+	 (funcall (or (get symbol 'custom-set) 'set-default)
+		  symbol
+		  (eval (car (get symbol 'saved-value)))))
+	(t
+	 (set-default symbol (eval value)))))
+
+(defun custom-declare-variable (symbol value doc &rest args)
+  "Like `defcustom', but SYMBOL and VALUE are evaluated as normal arguments."
   ;; Remember the factory setting.
   (put symbol 'factory-value (list value))
   ;; Maybe this option was rogue in an earlier version.  It no longer is.
@@ -64,29 +114,42 @@
     (put symbol 'force-value nil))
   (when doc
     (put symbol 'variable-documentation doc))
-  (while args 
-    (let ((arg (car args)))
-      (setq args (cdr args))
-      (unless (symbolp arg)
-	(error "Junk in args %S" args))
-      (let ((keyword arg)
-	    (value (car args)))
-	(unless args
-	  (error "Keyword %s is missing an argument" keyword))
+  (let ((initialize 'custom-initialize-set)
+	(requests nil))
+    (while args 
+      (let ((arg (car args)))
 	(setq args (cdr args))
-	(cond ((eq keyword :type)
-	       (put symbol 'custom-type value))
-	      ((eq keyword :options)
-	       (if (get symbol 'custom-options)
-		   ;; Slow safe code to avoid duplicates.
-		   (mapcar (lambda (option)
-			     (custom-add-option symbol option))
-			   value)
-		 ;; Fast code for the common case.
-		 (put symbol 'custom-options (copy-list value))))
-	      (t
-	       (custom-handle-keyword symbol keyword value
-				      'custom-variable))))))
+	(unless (symbolp arg)
+	  (error "Junk in args %S" args))
+	(let ((keyword arg)
+	      (value (car args)))
+	  (unless args
+	    (error "Keyword %s is missing an argument" keyword))
+	  (setq args (cdr args))
+	  (cond ((eq keyword :initialize)
+		 (setq initialize value))
+		((eq keyword :set)
+		 (put symbol 'custom-set value))
+		((eq keyword :get)
+		 (put symbol 'custom-get value))
+		((eq keyword :require)
+		 (push value requests))
+		((eq keyword :type)
+		 (put symbol 'custom-type value))
+		((eq keyword :options)
+		 (if (get symbol 'custom-options)
+		     ;; Slow safe code to avoid duplicates.
+		     (mapcar (lambda (option)
+			       (custom-add-option symbol option))
+			     value)
+		   ;; Fast code for the common case.
+		   (put symbol 'custom-options (append value nil))))
+		(t
+		 (custom-handle-keyword symbol keyword value
+					'custom-variable))))))
+    (put symbol 'custom-requests requests)
+    ;; Do the actual initialization.
+    (funcall initialize symbol value))
   (run-hooks 'custom-define-hook)
   symbol)
 
@@ -102,12 +165,27 @@ The remaining arguments should have the form
 
 The following KEYWORD's are defined:
 
-:type	VALUE should be a widget type.
+:type	VALUE should be a widget type for editing the symbols value.
+	The default is `sexp'.
 :options VALUE should be a list of valid members of the widget type.
 :group  VALUE should be a customization group.  
         Add SYMBOL to that group.
+:initialize VALUE should be a function used to initialize the
+	variable.  It takes two arguments, the symbol and value
+	given in the `defcustom' call.  The default is
+	`custom-initialize-default' 
+:set	VALUE should be a function to set the value of the symbol. 
+	It takes two arguments, the symbol to set and the value to
+	give it.  The default is `set-default'.
+:get	VALUE should be a function to extract the value of symbol.
+	The function takes one argument, a symbol, and should return
+	the current value for that symbol.  The default is
+	`default-value'. 
+:require VALUE should be a feature symbol.  Each feature will be
+	required after initialization, of the the user have saved this
+	option.
 
-Read the section about customization in the emacs lisp manual for more
+Read the section about customization in the Emacs Lisp manual for more
 information."
   `(eval-and-compile
      (custom-declare-variable (quote ,symbol) (quote ,value) ,doc ,@args)))
@@ -157,7 +235,7 @@ match one of the ITEM.  The following REQ are defined:
 `background' (what color is used for the background text)
   Should be one of `light' or `dark'.
 
-Read the section about customization in the emacs lisp manual for more
+Read the section about customization in the Emacs Lisp manual for more
 information."
   `(custom-declare-face (quote ,face) ,spec ,doc ,@args))
 
@@ -165,6 +243,9 @@ information."
 
 (defun custom-declare-group (symbol members doc &rest args)
   "Like `defgroup', but SYMBOL is evaluated as a normal argument."
+  (while members 
+    (apply 'custom-add-to-group symbol (car members))
+    (setq members (cdr members)))
   (put symbol 'custom-group (nconc members (get symbol 'custom-group)))
   (when doc
     (put symbol 'group-documentation doc))
@@ -206,7 +287,7 @@ The following KEYWORD's are defined:
 :group  VALUE should be a customization group.
         Add SYMBOL to that group.
 
-Read the section about customization in the emacs lisp manual for more
+Read the section about customization in the Emacs Lisp manual for more
 information."
   `(custom-declare-group (quote ,symbol) ,members ,doc ,@args))
 
@@ -287,17 +368,22 @@ the default value for the SYMBOL."
   (while args 
     (let ((entry (car args)))
       (if (listp entry)
-	  (let ((symbol (nth 0 entry))
-		(value (nth 1 entry))
-		(now (nth 2 entry)))
+	  (let* ((symbol (nth 0 entry))
+		 (value (nth 1 entry))
+		 (now (nth 2 entry))
+		 (requests (nth 3 entry))
+		 (set (or (get symbol 'custom-set) 'set-default)))
 	    (put symbol 'saved-value (list value))
 	    (cond (now 
 		   ;; Rogue variable, set it now.
 		   (put symbol 'force-value t)
-		   (set-default symbol (eval value)))
+		   (funcall set symbol (eval value)))
 		  ((default-boundp symbol)
 		   ;; Something already set this, overwrite it.
-		   (set-default symbol (eval value))))
+		   (funcall set symbol (eval value))))
+	    (when requests
+	      (put symbol 'custom-requests requests)
+	      (mapcar 'require requests))
 	    (setq args (cdr args)))
 	;; Old format, a plist of SYMBOL VALUE pairs.
 	(message "Warning: old format `custom-set-variables'")

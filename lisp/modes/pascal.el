@@ -65,6 +65,11 @@
 (defconst pascal-mode-version "2.4"
   "Version of `pascal.el'.")
 
+(defgroup pascal nil
+  "Major mode for editing Pascal source in Emacs"
+  :group 'languages)
+
+
 (defvar pascal-mode-abbrev-table nil
   "Abbrev table in use in Pascal-mode buffers.")
 (define-abbrev-table 'pascal-mode-abbrev-table ())
@@ -180,58 +185,81 @@
   "Additional expressions to highlight in Pascal mode.")
 (put 'pascal-mode 'font-lock-defaults '(pascal-font-lock-keywords nil t))
 
-(defvar pascal-indent-level 3
-  "*Indentation of Pascal statements with respect to containing block.")
+(defcustom pascal-indent-level 3
+  "*Indentation of Pascal statements with respect to containing block."
+  :type 'integer
+  :group 'pascal)
 
-(defvar pascal-case-indent 2
-  "*Indentation for case statements.")
+(defcustom pascal-case-indent 2
+  "*Indentation for case statements."
+  :type 'integer
+  :group 'pascal)
 
-(defvar pascal-auto-newline nil
+(defcustom pascal-auto-newline nil
   "*Non-nil means automatically newline after semicolons and the punctuation mark
-after an end.")
+after an end."
+  :type 'boolean
+  :group 'pascal)
 
-(defvar pascal-tab-always-indent t
+(defcustom pascal-tab-always-indent t
   "*Non-nil means TAB in Pascal mode should always reindent the current line,
-regardless of where in the line point is when the TAB command is used.")
+regardless of where in the line point is when the TAB command is used."
+  :type 'boolean
+  :group 'pascal)
 
-(defvar pascal-auto-endcomments t
+(defcustom pascal-auto-endcomments t
   "*Non-nil means a comment { ... } is set after the ends which ends cases and
-functions. The name of the function or case will be set between the braces.")
+functions. The name of the function or case will be set between the braces."
+  :type 'boolean
+  :group 'pascal)
 
-(defvar pascal-auto-lineup '(all)
+(defcustom pascal-auto-lineup '(all)
   "*List of contexts where auto lineup of :'s or ='s should be done.
 Elements can be of type: 'paramlist', 'declaration' or 'case', which will
 do auto lineup in parameterlist, declarations or case-statements
 respectively. The word 'all' will do all lineups. '(case paramlist) for
 instance will do lineup in case-statements and parameterlist, while '(all)
-will do all lineups.")
+will do all lineups."
+  :type '(repeat (choice (const all)
+			 (const paramlist)
+			 (const declaration)
+			 (const case)))
+  :group 'pascal)
 
-(defvar pascal-toggle-completions nil
+(defcustom pascal-toggle-completions nil
   "*Non-nil means that \\<pascal-mode-map>\\[pascal-complete-label] should \
 not display a completion buffer when
 the label couldn't be completed, but instead toggle the possible completions
-with repeated \\[pascal-complete-label]'s.")
+with repeated \\[pascal-complete-label]'s."
+  :type 'boolean
+  :group 'pascal)
 
-(defvar pascal-type-keywords
+(defcustom pascal-type-keywords
   '("array" "file" "packed" "char" "integer" "real" "string" "record")
   "*Keywords for types used when completing a word in a declaration or parmlist.
 \(eg. integer, real, char.)  The types defined within the Pascal program
-will be completed runtime, and should not be added to this list.")
+will be completed runtime, and should not be added to this list."
+  :type '(repeat (string :tag "Keyword"))
+  :group 'pascal)
 
-(defvar pascal-start-keywords
+(defcustom pascal-start-keywords
   '("begin" "end" "function" "procedure" "repeat" "until" "while"
     "read" "readln" "reset" "rewrite" "write" "writeln")
   "*Keywords to complete when standing at the first word of a statement.
 \(eg. begin, repeat, until, readln.)
 The procedures and variables defined within the Pascal program
-will be completed runtime and should not be added to this list.")
+will be completed runtime and should not be added to this list."
+  :type '(repeat (string :tag "Keyword"))
+  :group 'pascal)
 
-(defvar pascal-separator-keywords
+(defcustom pascal-separator-keywords
   '("downto" "else" "mod" "div" "then")
   "*Keywords to complete when NOT standing at the first word of a statement.
 \(eg. downto, else, mod, then.) 
 Variables and function names defined within the
-Pascal program are completed runtime and should not be added to this list.")
+Pascal program are completed runtime and should not be added to this list."
+  :type '(repeat (string :tag "Keyword"))
+  :group 'pascal)
 
 ;;;
 ;;;  Macros

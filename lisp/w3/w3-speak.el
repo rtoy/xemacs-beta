@@ -75,13 +75,12 @@
 (defadvice w3-widget-forward (after emacspeak pre act comp)
   (when (interactive-p)
     (emacspeak-auditory-icon 'large-movement)
-    (emacspeak-widget-summarize (emacspeak-widget-at  (point )))))
-
+    (emacspeak-widget-summarize (widget-at  (point )))))
 
 (defadvice w3-widget-backward (after emacspeak pre act comp)
   (when (interactive-p)
     (emacspeak-auditory-icon 'large-movement)
-    (emacspeak-widget-summarize (emacspeak-widget-at  (point )))))
+    (emacspeak-widget-summarize (widget-at  (point )))))
 
 (defadvice w3-scroll-up (after emacspeak pre act comp)
   "Provide auditory feedback"

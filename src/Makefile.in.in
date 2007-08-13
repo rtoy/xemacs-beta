@@ -526,7 +526,8 @@ LWLIBSRCDIR = ${srcdir}/$(dot)$(dot)/lwlib
 #define XOBJS console-x.o device-x.o DIALOG_X_OBJS event-Xt.o frame-x.o \
 	      glyphs-x.o GUI_X_OBJS MENUBAR_X_OBJS objects-x.o redisplay-x.o \
               SCROLLBAR_X_OBJS TOOLBAR_X_OBJS INPUT_METHOD_X_OBJS xgccache.o \
-	      xselect.o
+	      xselect.o \
+	      balloon_help.o balloon-x.o
 
 #ifdef HAVE_XMU
 #define XMU_OBJS

@@ -3164,7 +3164,12 @@ dnl #                     Report on what we decided to do                      #
 dnl ############################################################################
 
 (
-echo "uname -a: `uname -a`" 
+if test -f /etc/osversion; then
+	# SONY NEWS-OS
+	echo "osversion: `cat /etc/osversion`"
+eles
+	echo "uname -a: `uname -a`" 
+fi
 echo "" 
 echo "$0 $quoted_arguments" 
 ) >> Installation

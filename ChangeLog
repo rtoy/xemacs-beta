@@ -1,3 +1,12 @@
+Sat Apr 19 16:13:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.2-b1 is released.
+
+Thu Apr 17 21:33:59 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in (beta): SONY NEWS-OS has /etc/osversion and not
+	uname.
+
 Wed Apr 16 17:44:05 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.1 is re-released.

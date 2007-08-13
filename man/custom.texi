@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Customization Library
 
-Version: 1.84
+Version: 1.89
 
 @menu
 * Introduction::                
@@ -492,9 +492,50 @@ The following additional @var{keyword}'s are defined:
 @table @code
 @item :type	
 @var{value} should be a widget type.
+
 @item :options
 @var{value} should be a list of possible members of the specified type.
 For hooks, this is a list of function names.
+
+@item :initialize
+@var{value} should be a function used to initialize the variable.  It
+takes two arguments, the symbol and value given in the @code{defcustom} call.
+Some predefined functions are:
+
+@table @code
+@item custom-initialize-set
+Use the @code{:set} method to initialize the variable.  Do not
+initialize it if already bound.  This is the default @code{:initialize}
+method. 
+
+@item custom-initialize-default
+Always use @code{set-default} to initialize the variable, even if a
+@code{:set} method has been specified.
+
+@item custom-initialize-reset
+If the variable is already bound, reset it by calling the @code{:set}
+method with the value returned by the @code{:get} method.
+
+@item custom-initialize-changed
+Like @code{custom-initialize-reset}, but use @code{set-default} to
+initialize the variable if it is not bound and has not been set
+already. 
+@end table
+
+@item :set 
+@var{value} should be a function to set the value of the symbol.  It
+takes two arguments, the symbol to set and the value to give it.  The
+default is @code{set-default}.
+
+@item :get
+@var{value} should be a function to extract the value of symbol.  The
+function takes one argument, a symbol, and should return the current
+value for that symbol.  The default is @code{default-value}.
+
+@item :require
+@var{value} should be a feature symbol.  Each feature will be required
+after initialization, of the the user have saved this option.
+
 @end table
 
 @xref{Sexp Types,,,widget,The Widget Library}, for information about
@@ -565,7 +606,7 @@ Should be one of @code{light} or @code{dark}.
   
 Internally, custom uses the symbol property @code{factory-face} for the
 program specified default face properties, @code{saved-face} for
-properties saved by the user, and @code{face-doc-string} for the
+properties saved by the user, and @code{face-documentation} for the
 documentation string.@refill
 
 @end defun
@@ -634,11 +675,6 @@ specified.
 @section Wishlist
 
 @itemize @bullet
-@item
-The menu items should be grayed out when the information is
-missing.  I.e. if a variable doesn't have a factory setting, the user
-should not be allowed to select the @samp{Factory} menu item.
-
 @item 
 Better support for keyboard operations in the customize buffer.
 
@@ -663,10 +699,6 @@ Support undo using lmi's @file{gnus-undo.el}.
 Make it possible to append to `choice', `radio', and `set' options.
 
 @item
-Make it possible to customize code, for example to enable or disable a
-global minor mode.
-
-@item
 Ask whether set or modified variables should be saved in
 @code{kill-buffer-hook}. 
 
@@ -688,6 +720,32 @@ Empty customization groups should start open (harder than it looks).
 @item
 Make it possible to include a comment/remark/annotation when saving an
 option.
+
+@item
+Add some direct support for meta variables, i.e. make it possible to
+specify that this variable should be reset when that variable is
+changed. 
+
+@item
+Add tutorial.
+
+@item
+Describe the @code{:type} syntax in this manual.
+
+@item
+Find a place is this manual for the following text:
+
+@strong{Radio vs. Buttons}
+
+Use a radio if you can't find a good way to describe the item in the
+choice menu text.  I.e. it is better to use a radio if you expect the
+user would otherwise manually select each item from the choice menu in
+turn to see what it expands too.
+
+Avoid radios if some of the items expands to complex structures.
+
+I mostly use radios when most of the items are of type
+@code{function-item} or @code{variable-item}.
 
 @end itemize
 

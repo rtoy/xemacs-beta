@@ -72,25 +72,41 @@
 
 ;;;; user defined variables
 
-(defvar remote-compile-host nil
-  "*Host for remote compilations.")
+(defgroup remote-compile nil
+  "Run a compilation on a remote machine"
+  :group 'processes
+  :group 'tools)
 
-(defvar remote-compile-user nil
+
+(defcustom remote-compile-host nil
+  "*Host for remote compilations."
+  :type '(choice string (const nil))
+  :group 'remote-compile)
+
+(defcustom remote-compile-user nil
   "User for remote compilations.
-nil means use the value returned by \\[user-login-name].")
+nil means use the value returned by \\[user-login-name]."
+  :type '(choice string (const nil))
+  :group 'remote-compile)
 
-(defvar remote-compile-run-before nil
+(defcustom remote-compile-run-before nil
   "*Command to run before compilation.
 This can be used for setting up environment variables,
 since rsh does not invoke the shell as a login shell and files like .login
 \(tcsh\) and .bash_profile \(bash\) are not run.
-nil means run no commands.")
+nil means run no commands."
+  :type '(choice string (const nil))
+  :group 'remote-compile)
 
-(defvar remote-compile-prompt-for-host nil
-  "*Non-nil means prompt for host if not available from filename.")
+(defcustom remote-compile-prompt-for-host nil
+  "*Non-nil means prompt for host if not available from filename."
+  :type 'boolean
+  :group 'remote-compile)
 
-(defvar remote-compile-prompt-for-user nil
-  "*Non-nil means prompt for user if not available from filename.")
+(defcustom remote-compile-prompt-for-user nil
+  "*Non-nil means prompt for user if not available from filename."
+  :type 'boolean
+  :group 'remote-compile)
 
 ;;;; internal variables
 

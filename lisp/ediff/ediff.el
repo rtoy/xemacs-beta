@@ -130,9 +130,16 @@
 (require 'ediff-init)
 (require 'ediff-mult)  ; required because of the registry stuff
 
-(defvar ediff-use-last-dir nil
-  "*If t, Ediff uses previous directory as default when reading file name.")
-  
+(defgroup ediff nil
+  "A comprehensive visual interface to diff & patch"
+  :group 'tools)
+
+
+(defcustom ediff-use-last-dir nil
+  "*If t, Ediff uses previous directory as default when reading file name."
+  :type 'boolean
+  :group 'ediff)
+
 (defvar ediff-last-dir-A nil
   "Last directory used by an Ediff command for file-A.")
 (defvar ediff-last-dir-B nil

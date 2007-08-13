@@ -36,26 +36,41 @@
 ;; in years gone by and revised at MIT's Project Athena.
 
 ;;; This can be customized by the user
-(defvar sc-diff-command '("diff")
-  "*The command/flags list to be used in constructing diff commands.")
+
+(defgroup generic-sc nil
+  "Generic interface to source control systems"
+  :prefix "sc-"
+  :group 'tools)
+
+
+(defcustom sc-diff-command '("diff")
+  "*The command/flags list to be used in constructing diff commands."
+  :type '(repeat string)
+  :group 'generic-sc)
 
 ;; Duplicated from pcl-cvs.
 (defvar cvs-program "cvs"
   "*The command name of the cvs program.")
 
-(defvar sc-mode-expert ()
-  "*Treat user as expert; suppress yes-no prompts on some things.")
+(defcustom sc-mode-expert ()
+  "*Treat user as expert; suppress yes-no prompts on some things."
+  :type 'boolean
+  :group 'generic-sc)
 
-(defvar sc-max-log-size 510
-  "*Maximum allowable size of a source control log message.")
+(defcustom sc-max-log-size 510
+  "*Maximum allowable size of a source control log message."
+  :type 'integer
+  :group 'generic-sc)
 
-(defvar sc-ccase-comment-on '(checkout checkout-dir checkin-dir rename
+(defcustom sc-ccase-comment-on '(checkout checkout-dir checkin-dir rename
 				       new-brtype new-branch checkin-merge
 				       create-label label-sources)
   "*Operations on which comments would be appreciated.
 We check the values checkout, checkout-dir, checkin-dir,
 rename, new-brtype, new-branch, create-label,
-and label-sources as symbols.")
+and label-sources as symbols."
+  :type '(repeat symbol)
+  :group 'generic-sc)
 
 (defvar sc-ccase-reserve nil
   "Whether to reserve checkouts or not. By default, this is nil - don't.

@@ -60,8 +60,14 @@
        (defun ediff-compute-toolbar-width () 0)))
   (defun ediff-compute-toolbar-width () 0))
 
+(defgroup ediff-window nil
+  "Ediff window manipulation"
+  :prefix "ediff-"
+  :group 'ediff
+  :group 'frames)
 
-(defvar ediff-window-setup-function (if (ediff-window-display-p)
+
+(defcustom ediff-window-setup-function (if (ediff-window-display-p)
 					'ediff-setup-windows-multiframe
 				      'ediff-setup-windows-plain)
   "*Function called to set up windows.
@@ -82,7 +88,9 @@ The basic guidelines:
        buffer-A, buffer-B, buffer-C, control-buffer
        Buffer C may not be used in jobs that compare only two buffers.
 If you plan to do something fancy, take a close look at how the two
-provided functions are written.")
+provided functions are written."
+  :type 'function
+  :group 'ediff-window)
 
 ;; indicates if we are in a multiframe setup
 (ediff-defvar-local ediff-multiframe nil "")
@@ -103,21 +111,25 @@ provided functions are written.")
 (ediff-defvar-local ediff-window-config-saved "" "")
 
 
-(defvar ediff-split-window-function 'split-window-vertically
+(defcustom ediff-split-window-function 'split-window-vertically
   "*The function used to split the main window between buffer-A and buffer-B.
 You can set it to a horizontal split instead of the default vertical split
 by setting this variable to `split-window-horizontally'.
 You can also have your own function to do fancy splits.
 This variable has no effect when buffer-A/B are shown in different frames.
-In this case, Ediff will use those frames to display these buffers.")
+In this case, Ediff will use those frames to display these buffers."
+  :type 'function
+  :group 'ediff-window)
 
-(defvar ediff-merge-split-window-function 'split-window-horizontally
+(defcustom ediff-merge-split-window-function 'split-window-horizontally
   "*The function used to split the main window between buffer-A and buffer-B.
 You can set it to a vertical split instead of the default horizontal split
 by setting this variable to `split-window-vertically'.
 You can also have your own function to do fancy splits.
 This variable has no effect when buffer-A/B/C are shown in different frames.
-In this case, Ediff will use those frames to display these buffers.")
+In this case, Ediff will use those frames to display these buffers."
+  :type 'function
+  :group 'ediff-window)
 
 (defconst ediff-control-frame-parameters
   (list 
@@ -152,40 +164,50 @@ Do not specify width and height here. These are computed automatically.")
 (defvar ediff-mouse-pixel-threshold 30
   "If the user moves mouse more than this many pixels, Ediff won't warp mouse into control window.")
 
-(defvar ediff-grab-mouse t
+(defcustom ediff-grab-mouse t
   "*If t, Ediff will always grab the mouse and put it in the control frame.
 If 'maybe, Ediff will do it sometimes, but not after operations that require
 relatively long time. If nil, the mouse will be entirely user's
-responsibility.")
+responsibility."
+  :type 'boolean
+  :group 'ediff-window)
 
-(defvar ediff-control-frame-position-function 'ediff-make-frame-position
+(defcustom ediff-control-frame-position-function 'ediff-make-frame-position
   "Function to call to determine the desired location for the control panel.
 Expects three parameters: the control buffer, the desired width and height
 of the control frame. It returns an association list
-of the form \(\(top . <position>\) \(left . <position>\)\)")
+of the form \(\(top . <position>\) \(left . <position>\)\)"
+  :type 'boolean
+  :group 'ediff-window)
 
-(defvar ediff-control-frame-upward-shift (if ediff-xemacs-p 42 14)
+(defcustom ediff-control-frame-upward-shift (if ediff-xemacs-p 42 14)
   "*The upward shift of control frame from the top of buffer A's frame.
 Measured in pixels.
 This is used by the default control frame positioning function,
 `ediff-make-frame-position'. This variable is provided for easy
-customization of the default.")
+customization of the default."
+  :type 'integer
+  :group 'ediff-window)
 
-(defvar ediff-narrow-control-frame-leftward-shift (if ediff-xemacs-p 7 3)
+(defcustom ediff-narrow-control-frame-leftward-shift (if ediff-xemacs-p 7 3)
   "*The leftward shift of control frame from the right edge of buf A's frame.
 Measured in characters.
 This is used by the default control frame positioning function,
 `ediff-make-frame-position' to adjust the position of the control frame
 when it shows the short menu. This variable is provided for easy
-customization of the default.")
+customization of the default."
+  :type 'integer
+  :group 'ediff-window)
 
-(defvar ediff-wide-control-frame-rightward-shift 7
+(defcustom ediff-wide-control-frame-rightward-shift 7
   "*The rightward shift of control frame from the left edge of buf A's frame.
 Measured in characters.
 This is used by the default control frame positioning function,
 `ediff-make-frame-position' to adjust the position of the control frame
 when it shows the full menu. This variable is provided for easy
-customization of the default.")
+customization of the default."
+  :type 'integer
+  :group 'ediff-window)
 
 
 ;; Wide frame display
@@ -209,7 +231,7 @@ the frame used for the wide display.")
 ;; Frame used for the control panel in a windowing system.
 (ediff-defvar-local ediff-control-frame nil "")
 
-(defvar ediff-prefer-iconified-control-frame nil
+(defcustom ediff-prefer-iconified-control-frame nil
   "*If t, keep control panel iconified when help message is off.
 This has effect only on a windowing system.
 If t, hitting `?' to toggle control panel off iconifies it.
@@ -217,7 +239,9 @@ If t, hitting `?' to toggle control panel off iconifies it.
 This is only useful in Emacs and only for certain kinds of window managers,
 such as TWM and its derivatives, since the window manager must permit
 keyboard input to go into icons. XEmacs completely ignores keyboard input
-into icons, regardless of the window manager.")
+into icons, regardless of the window manager."
+  :type 'boolean
+  :group 'ediff-window)
 
 ;;; Functions
 

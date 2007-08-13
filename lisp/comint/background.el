@@ -48,11 +48,20 @@
 (provide 'background)
 (require 'comint)
 
+(defgroup background nil
+  "Fun with background jobs"
+  :group 'processes)
+
+
 ;; user variables
-(defvar background-show t
-  "*If non-nil, background jobs' buffers are shown when they're started.")
-(defvar background-select nil
-  "*If non-nil, background jobs' buffers are selected when they're started.")
+(defcustom background-show t
+  "*If non-nil, background jobs' buffers are shown when they're started."
+  :type 'boolean
+  :group 'background)
+(defcustom background-select nil
+  "*If non-nil, background jobs' buffers are selected when they're started."
+  :type 'boolean
+  :group 'background)
 
 (defun background (command &optional buffer-name)
   "Run COMMAND in the background like csh.  

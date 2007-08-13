@@ -1,4 +1,4 @@
-This directory tree holds version 20.1 of XEmacs, the extensible,
+This directory tree holds version 20.2 of XEmacs, the extensible,
 customizable, self-documenting real-time display editor.
 
 See the file `etc/NEWS' for information on new features and other
@@ -48,7 +48,7 @@ There are several subdirectories:
 `lwlib' holds the C code for the toolkit objects used by XEmacs.
 
 `info' holds the Info documentation tree for XEmacs.
-`man' holds the source code for the XEmacs manual.
+`man' holds the source code for the XEmacs info documentation tree.
 
 `msdos' holds configuration files for compiling XEmacs under MSDOG.
     See the file etc/MSDOS for more information.

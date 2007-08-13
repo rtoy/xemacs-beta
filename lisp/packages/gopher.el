@@ -199,53 +199,84 @@
 	     ))
        ))
 
-(defvar gopher-root-node (vector ?1 "root" "" "ucs_gopher" 70)
-  "The root gopher server, as a gopher object.")
+(defgroup gopher nil
+  "An Emacs gopher client."
+  :group 'hypermedia)
 
-(defvar gopher-directory-mode-hook nil
-  "*Invoked when entering a new gopher directory.")
+
+(defcustom gopher-root-node (vector ?1 "root" "" "ucs_gopher" 70)
+  "The root gopher server, as a gopher object."
+  :type '(vector character string string
+		 (string :tag "Host")
+		 (integer :tag "Port"))
+  :group 'gopher
+  :group 'local)
+
+(defcustom gopher-directory-mode-hook nil
+  "*Invoked when entering a new gopher directory."
+  :type 'hook
+  :group 'gopher)
 (defvar gopher-directory-mode-map (make-keymap)
   "Keymap for gopher-directory-mode.")
 
-(defvar gopher-document-mode-hook nil
-  "*Invoked when showing gopher document.")
+(defcustom gopher-document-mode-hook nil
+  "*Invoked when showing gopher document."
+  :type 'hook
+  :group 'gopher)
 (defvar gopher-document-mode-map (make-keymap)
   "Keymap for gopher-document-mode.")
 
-(defvar gopher-form-mode-hooks nil
-  "*Invoked with entering a gopher form (i.e., for CSO).")
+(defcustom gopher-form-mode-hooks nil
+  "*Invoked with entering a gopher form (i.e., for CSO)."
+  :type 'hook
+  :group 'gopher)
 (defvar gopher-form-mode-map (make-keymap)
   "Keymap for gopher-form-mode.")
 
 (defvar gopher-tmp-buf nil
   "Buffer used to receive output from gopher.")
 
-(defvar gopher-debug-read t
-  "*If non-nil, show the current status about reading the gopher server output.")
+(defcustom gopher-debug-read t
+  "*If non-nil, show the current status about reading the gopher server output."
+  :type 'boolean
+  :group 'gopher)
 
 ;; On some systems (such as SGI Iris), accept-process-output doesn't seem
 ;; to return for the last packet received on a connection.  Turn this on
 ;; to work around the problem, but does anyone know what causes this?
-(defvar gopher-buggy-accept nil
+(defcustom gopher-buggy-accept nil
   "*If non-nil, use sit-for instead of accept-process-output.
-If gopher consistently hangs while fetching an object, try turning this on.")
+If gopher consistently hangs while fetching an object, try turning this on."
+  :type 'boolean
+  :group 'gopher)
 
-(defvar gopher-hostname-aliases
+(defcustom gopher-hostname-aliases
   '(("128.230.33.31" . "oliver.syr.edu"))
   "Emacs can't deal with raw IP addresses used as a hostname.
-Use this to work around...")
+Use this to work around..."
+  :type '(repeat (cons (string :tag "IP Address")
+		       (string :tag "Host Name")))
+  :group 'gopher)
 
-(defvar gopher-port-aliases
+(defcustom gopher-port-aliases
   '(("whois_port" . 43))
   "Some losing hosts send a port name instead of a number.
-Use this table to convert...")
+Use this table to convert..."
+  :type '(repeat (cons (string :tag "Named Port")
+		       (integer :tag "Port Number")))
+  :group 'gopher)
 
 
-(defvar gopher-support-bookmarks nil
+(defcustom gopher-support-bookmarks nil
   "*If nil, do not implement bookmarks. 
 If 'unix or t, read and write bookmarks to ~/.gopherrc. 
 If a filename, read and save vector from there directly (not implemented yet).
-If a vector, treat as a built-in directory.")
+If a vector, treat as a built-in directory."
+  :type '(choice (const :tag "off" nil)
+		 (const t) (const unix)
+		 file
+		 vector)
+  :group 'gopher)
 
 (defconst gopher-bookmarks nil "Internal bookmark directory.")
 (defconst gopher-bookmarks-modified nil "Do bookmarks need to be saved?")
@@ -257,7 +288,7 @@ If a vector, treat as a built-in directory.")
   "Counts each time the bookmark vector is modified.")
 
 
-(defvar gopher-telnet-command
+(defcustom gopher-telnet-command
   (cond ((eq system-type 'vax-vms)
          (if (getenv "DECW$DISPLAY")
              "create/terminal/wait/window=(title=\"telnet\") telnet"))
@@ -268,14 +299,18 @@ If a vector, treat as a built-in directory.")
   "*Command to use to start a telnet session.
 If this is nil, the emacs-lisp telnet package will be used.
 The default setting is to create a terminal window running telnet
-if you've specified an X server, and to use the emacs-lisp telnet otherwise.")
+if you've specified an X server, and to use the emacs-lisp telnet otherwise."
+  :type '(choice (const nil) string)
+  :group 'gopher)
 
 
-(defvar gopher-image-display-command "xv -geometry +200+200"
-  "*The command used to try to display an image object.")
+(defcustom gopher-image-display-command "xv -geometry +200+200"
+  "*The command used to try to display an image object."
+  :type 'string
+  :group 'gopher)
  
 
-(defvar gopher-object-type-alist
+(defcustom gopher-object-type-alist
   '(( ?0   ""          gopher-document-object)
     ( ?1   "/"         gopher-directory-object)
     ( ?2   " <CSO>"    gopher-cso-object)
@@ -301,7 +336,9 @@ of an object's description, to identify it to the user.
 The third element is the function to use to retrieve the object.
 It is called with two arguments: the gopher object to retrieve and
 the buffer which should be returned to when the user is done
-with this object.")
+with this object."
+  :type '(repeat (list character string function))
+  :group 'object)
 
 
 ;;;

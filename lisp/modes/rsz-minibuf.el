@@ -10,7 +10,7 @@
 ;;; Keywords: minibuffer, window, frames, display
 ;;; Status: Known to work in FSF GNU Emacs 19.23 and Lucid Emacs 19.9.
 
-;;; $Id: rsz-minibuf.el,v 1.3 1997/03/08 23:26:27 steve Exp $
+;;; $Id: rsz-minibuf.el,v 1.4 1997/04/19 23:21:04 steve Exp $
 
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -61,36 +61,52 @@
 
 
 ;;;###autoload
-(defvar resize-minibuffer-mode nil
-  "*If non-`nil', resize the minibuffer so its entire contents are visible.")
+
+(defgroup resize-minibuffer nil
+  "Dynamically resize minibuffer to display entire contents"
+  :group 'frames)
+
+
+(defcustom resize-minibuffer-mode nil
+  "*If non-`nil', resize the minibuffer so its entire contents are visible."
+  :type 'boolean
+  :group 'resize-minibuffer)
 
 ;;;###autoload
-(defvar resize-minibuffer-window-max-height nil
+(defcustom resize-minibuffer-window-max-height nil
   "*Maximum size the minibuffer window is allowed to become.
 If less than 1 or not a number, the limit is the height of the frame in
-which the active minibuffer window resides.")
+which the active minibuffer window resides."
+  :type '(choice (const nil) integer)
+  :group 'resize-minibuffer)
 
 ;;;###autoload
-(defvar resize-minibuffer-window-exactly t
+(defcustom resize-minibuffer-window-exactly t
   "*If non-`nil', make minibuffer exactly the size needed to display all its contents.
 Otherwise, the minibuffer window can temporarily increase in size but
-never get smaller while it is active.")
+never get smaller while it is active."
+  :type 'boolean
+  :group 'resize-minibuffer)
 
 
 ;;;###autoload
-(defvar resize-minibuffer-frame nil
-  "*If non-`nil' and the active minibuffer is the sole window in its frame, allow changing the frame height.")
+(defcustom resize-minibuffer-frame nil
+  "*If non-`nil' and the active minibuffer is the sole window in its frame, allow changing the frame height."
+  :type 'boolean
+  :group 'resize-minibuffer)
 
 ;;;###autoload
-(defvar resize-minibuffer-frame-max-height nil
+(defcustom resize-minibuffer-frame-max-height nil
   "*Maximum size the minibuffer frame is allowed to become.
 If less than 1 or not a number, there is no limit.")
 
 ;;;###autoload
-(defvar resize-minibuffer-frame-exactly nil
+(defcustom resize-minibuffer-frame-exactly nil
   "*If non-`nil', make minibuffer frame exactly the size needed to display all its contents.
 Otherwise, the minibuffer frame can temporarily increase in size but
-never get smaller while it is active.")
+never get smaller while it is active."
+  :type 'boolean
+  :group 'resize-minibuffer)
 
 
 ;;;###autoload

@@ -39,8 +39,13 @@
 
 (require 'ediff-init)
 
+(defgroup ediff-diff nil
+  "Diff related utilities"
+  :prefix "ediff-"
+  :group 'ediff)
 
-(defvar ediff-shell
+
+(defcustom ediff-shell
   (cond ((eq system-type 'emx) "cmd") ; OS/2
 	((memq system-type '(ms-dos windows-nt windows-95))
 	 shell-file-name) ; no standard name on MS-DOS
@@ -50,37 +55,53 @@
 .cshrc files are set up correctly, any shell will do.  However, some people
 set $prompt or other things incorrectly, which leads to undesirable output
 messages.  These may cause Ediff to fail.  In such a case, set ediff-shell
-to a shell that you are not using or, better, fix your shell's startup file.")
+to a shell that you are not using or, better, fix your shell's startup file."
+  :type 'string
+  :group 'ediff-diff)
 
 
-(defvar ediff-diff-program "diff"
-  "*Program to use for generating the differential of the two files.")
-(defvar ediff-diff-options ""  
+(defcustom ediff-diff-program "diff"
+  "*Program to use for generating the differential of the two files."
+  :type 'string
+  :group 'ediff-diff)
+(defcustom ediff-diff-options ""  
   "*Options to pass to `ediff-diff-program'. 
 If diff\(1\) is used as `ediff-diff-program', then the most useful options are
 `-w', to ignore space, and `-i', to ignore case of letters.
 At present, the option `-c' is ignored, since Ediff doesn't understand this
-type of output.")
+type of output."
+  :type 'string
+  :group 'ediff-diff)
 
-(defvar ediff-custom-diff-program ediff-diff-program
+(defcustom ediff-custom-diff-program ediff-diff-program
   "*Program to use for generating custom diff output for saving it in a file.
-This output is not used by Ediff internally.")
-(defvar ediff-custom-diff-options "-c"
-  "*Options to pass to `ediff-custom-diff-program'.")
+This output is not used by Ediff internally."
+  :type 'string
+  :group 'ediff-diff)
+(defcustom ediff-custom-diff-options "-c"
+  "*Options to pass to `ediff-custom-diff-program'."
+  :type 'string
+  :group 'ediff-diff)
 
 ;;; Support for diff3
 
 (defvar ediff-match-diff3-line "^====\\(.?\\)$"
   "Pattern to match lines produced by diff3 that describe differences.")
-(defvar ediff-diff3-program "diff3"
+(defcustom ediff-diff3-program "diff3"
   "*Program to be used for three-way comparison.
-Must produce output compatible with Unix's diff3 program.")
-(defvar ediff-diff3-options ""  
-  "*Options to pass to `ediff-diff3-program'.")
-(defvar ediff-diff3-ok-lines-regexp
+Must produce output compatible with Unix's diff3 program."
+  :type 'string
+  :group 'ediff-diff)
+(defcustom ediff-diff3-options ""  
+  "*Options to pass to `ediff-diff3-program'."
+  :type 'string
+  :group 'ediff-diff)
+(defcustom ediff-diff3-ok-lines-regexp
   "^\\([1-3]:\\|====\\|  \\|.*Warning *:\\|.*No newline\\|.*missing newline\\|^\C-m$\\)"
   "*Regexp that matches normal output lines from `ediff-diff3-program'.
-Lines that do not match are assumed to be error messages.")
+Lines that do not match are assumed to be error messages."
+  :type 'regexp
+  :group 'ediff-diff)
 
 ;; keeps the status of the current diff in 3-way jobs.
 ;; the status can be =diff(A), =diff(B), or =diff(A+B)

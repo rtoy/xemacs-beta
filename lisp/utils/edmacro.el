@@ -5,7 +5,7 @@
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;;         Hrvoje Niksic <hniksic@srce.hr>  -- XEmacs port
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
-;; Version: 3.07
+;; Version: 3.09
 ;; Keywords: abbrev
 
 ;; This file is part of XEmacs.
@@ -54,14 +54,16 @@
 ;; This and `format-kbd-macro' can also be called directly as
 ;; Lisp functions.
 
-;; The `kbd' macro calls `read-kbd-macro', but it is evaluated at
-;; compile-time.  It is good to use in your programs and
-;; initializations, as you needn't know the internal keysym
-;; representation.  For example:
+;; The `kbd' function is a shorter name for `read-kbd-macro'.  It is
+;; good to use in your programs and initializations, as you needn't
+;; know the internal keysym representation.  For example:
 ;;
 ;; (define-key foo-mode-map (kbd "C-c <up>") 'foo-up)
+;;
 ;; is the equivalent of
+;;
 ;; (define-key foo-mode-map [(control ?c) up] 'foo-up)
+;;
 
 ;; Type `C-h m', or see the documentation for `edmacro-mode' below,
 ;; for information about the format of written keyboard macros.
@@ -80,7 +82,7 @@
 ;; Emacs 19.18.)  This package does not work with Emacs 18 or
 ;; Lucid Emacs.
 
-;; But it works with XEmacs.  At least the modified version.  -hniksic
+;; Ported to XEmacs.  -hniksic
 
 ;;; Code:
 
@@ -96,6 +98,11 @@
   "*Non-nil if edit-kbd-macro should leave 8-bit characters intact.
 Default nil means to write characters above \\177 in octal notation.")
 
+(if (fboundp 'mapvector)
+    (defalias 'edmacro-mapvector 'mapvector)
+  (defun edmacro-mapvector (fun seq)
+    (map 'vector fun seq)))
+
 (defvar edmacro-mode-map nil)
 (unless edmacro-mode-map
   (setq edmacro-mode-map (make-sparse-keymap))
@@ -106,6 +113,8 @@ Default nil means to write characters above \\177 in octal notation.")
 (defvar edmacro-finish-hook)
 (defvar edmacro-original-buffer)
 
+;; A lot of cruft here, but I got it to work eventually.  Could use
+;; some cleaning up.
 ;;;###autoload
 (defun edit-kbd-macro (keys &optional prefix finish-hook store-hook)
   "Edit a keyboard macro.
@@ -217,10 +226,9 @@ Second argument NEED-VECTOR means to return an event vector always."
     (setq last-kbd-macro (edmacro-parse-keys (buffer-substring start end)))))
 
 ;;;###autoload
-(defmacro kbd (keys)
+(defun kbd (keys)
   "Convert KEYS to the internal Emacs key representation."
-  `(eval-when-compile
-     (read-kbd-macro ,keys)))
+  (read-kbd-macro keys))
 
 ;;;###autoload
 (defun format-kbd-macro (&optional macro verbose)
@@ -421,52 +429,53 @@ doubt, use whitespace."
 ;; accepts a vector (but works with a string too).  Vector may contain
 ;; keypress events.      -hniksic
 (defun edmacro-parse-keys (string &optional ignored)
-  (let ((pos 0)
-	(case-fold-search nil)
-	(word-to-sym '(("NUL" . (control space))
-		       ("RET" . return)
-		       ("LFD" . linefeed)
-		       ("TAB" . tab)
-		       ("ESC" . escape)
-		       ("SPC" . space)
-		       ("BS" . backspace)
-		       ("DEL" . delete)))
-	(char-to-word '((?\0 . "NUL")
-			(?\r . "RET")
-			(?\n . "LFD")
-			(?\t . "TAB")
-			(?\e . "ESC")
-			(?\  . "SPC")
-			(?\C-? . "DEL")))
-	(modifier-prefix-alist '(("C" . control)
-				 ("M" . meta)
-				 ("S" . shift)
-				 ("Sh" . shift)
-				 ("A" . alt)
-				 ("H" . hyper)
-				 ("s" . super)))
-	;; string-to-symbol-or-char converter
-	(conv #'(lambda (arg)
-		  (if (= (length arg) 1)
-		      (aref arg 0)
-		    (if (string-match "^<\\([^>]+\\)>$" arg)
-			(setq arg (match-string 1 arg)))
-		    (let ((match (assoc arg word-to-sym)))
-		      (if match
-			  (cdr match)
-			(intern arg))))))
-	(conv-chars #'(lambda (arg)
-			(let ((match (assoc arg char-to-word)))
-			  (if match
-			      (cdr (assoc (cdr match) word-to-sym))
-			    arg))))
-	res)
+  (let* ((pos 0)
+	 (case-fold-search nil)
+	 (word-to-sym '(("NUL" . (control space))
+			("RET" . return)
+			("LFD" . linefeed)
+			("TAB" . tab)
+			("ESC" . escape)
+			("SPC" . space)
+			("BS" . backspace)
+			("DEL" . delete)))
+	 (char-to-word '((?\0 . "NUL")
+			 (?\r . "RET")
+			 (?\n . "LFD")
+			 (?\t . "TAB")
+			 (?\e . "ESC")
+			 (?\  . "SPC")
+			 (?\C-? . "DEL")))
+	 (modifier-prefix-alist '(("C" . control)
+				  ("M" . meta)
+				  ("S" . shift)
+				  ("Sh" . shift)
+				  ("A" . alt)
+				  ("H" . hyper)
+				  ("s" . super)))
+	 ;; string-to-symbol-or-char converter
+	 (conv (lambda (arg)
+		 (if (= (length arg) 1)
+		     (aref arg 0)
+		   (if (string-match "^<\\([^>]+\\)>$" arg)
+		       (setq arg (match-string 1 arg)))
+		   (let ((match (assoc arg word-to-sym)))
+		     (if match
+			 (cdr match)
+			 (intern arg))))))
+	 (conv-chars (lambda (arg)
+		       (let ((match (assoc arg char-to-word)))
+			 (if match
+			     (cdr (assoc (cdr match) word-to-sym))
+			   arg))))
+	 res)
     (while (and (< pos (length string))
 		(string-match "[^ \t\n\f]+" string pos))
       (let ((word (substring string (match-beginning 0) (match-end 0)))
 	    (times 1)
 	    (force-sym nil)
-	    (add nil))
+	    (add nil)
+	    match)
 	(setq pos (match-end 0))
 	(when (string-match "\\([0-9]+\\)\\*." word)
 	  (setq times (string-to-int (substring word 0 (match-end 1))))
@@ -475,7 +484,8 @@ doubt, use whitespace."
 	  (setq word (match-string 1 word))
 	  (setq force-sym t))
 	(setq match (assoc word word-to-sym))
-	;; Add an element.
+	;; Add an element; `add' holds the list of elements to be
+	;; added.
 	(cond ((string-match "^\\\\[0-7]+" word)
 	       ;; Octal value of character.
 	       (setq add
@@ -496,7 +506,7 @@ doubt, use whitespace."
 		      (mapcar conv-chars (concat (substring word 2 -2) "\r")))
 		     ))
 	      ((or (equal word "REM") (string-match "^;;" word))
-	       ;; Comment.
+	       ;; Comment (discard to EOL) .
 	       (setq pos (string-match "$" string pos)))
 	      (match
 	       ;; Convert to symbol.
@@ -536,7 +546,7 @@ doubt, use whitespace."
 	  (loop repeat times do (setq new (append new add)))
 	  (setq add new))
 	(setq res (nconc res add))))
-    (mapvector 'identity res)))
+    (edmacro-mapvector 'identity res)))
 
 (defun edmacro-conv (char-or-sym add-<>)
   (let ((char-to-word '((?\0 . "NUL")
@@ -569,6 +579,9 @@ doubt, use whitespace."
 		     (cdr found))
 		    ((< char-or-sym 128)
 		     (single-key-description char-or-sym))
+		    ((and edmacro-eight-bits
+			  (>= char-or-sym 128))
+		     (char-to-string char-or-sym))
 		    (t
 		     (format "\\%o" (edmacro-int-char char-or-sym)))))))))
 
@@ -638,15 +651,15 @@ doubt, use whitespace."
 	(if el
 	    (setq new (nconc new (list el))))
 	(incf cnt))
-      (mapvector 'identity new))))
+      (edmacro-mapvector 'identity new))))
 
 ;; Collapse a list of keys into a list of function keys, where
 ;; applicable.
 (defun edmacro-fkeys (keys)
-  (let (new k)
+  (let (new k lookup)
     (while keys
       (setq k (nconc k (list (car keys))))
-      (setq lookup (lookup-key function-key-map (mapvector 'identity k)))
+      (setq lookup (lookup-key function-key-map (edmacro-mapvector 'identity k)))
       (cond ((vectorp lookup)
 	     (setq new (nconc new (mapcar 'identity lookup)))
 	     (setq k nil))
@@ -674,7 +687,7 @@ doubt, use whitespace."
       (and (eq verbose 1)
 	   (setq verbose nil))
 
-      ;; Oh come on -- I want a list!  Much easier to process...
+      ;; We prefer a list -- much easier to process...
       (setq macro (mapcar 'identity macro))
       (setq macro (edmacro-fkeys macro))
       (while macro
@@ -682,10 +695,11 @@ doubt, use whitespace."
 	  (loop do
 		(setq key (nconc key (list (car macro)))
 		      macro (cdr macro)
-		      lookup (lookup-key global-map (mapvector 'identity key)))
+		      lookup (lookup-key global-map (edmacro-mapvector
+						     'identity key)))
 		while
-		(and lookup (not (commandp lookup))))
-	  ;; (lookup-key [?\C-x ?e]) seems to return a vector!
+		(and macro lookup (not (commandp lookup))))
+	  ;; keyboard macro
 	  (if (vectorp lookup)
 	      (setq lookup nil))
 	  (if (and (eq lookup 'self-insert-command)
@@ -751,7 +765,7 @@ doubt, use whitespace."
       (while (< i (length macro))
 	(when (and (consp (setq ev (aref macro i)))
 		   (not (memq (car ev)	; ha ha
-			      '(hyper super control meta alt control shift))))
+			      '(hyper super meta alt control shift))))
 	  (cond ((equal (cadadr ev) '(menu-bar))
 		 (setq macro (vconcat (edmacro-subseq macro 0 i)
 				      (vector 'menu-bar (car ev))

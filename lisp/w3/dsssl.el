@@ -1,7 +1,7 @@
 ;;; dsssl.el --- DSSSL parser
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.12
+;; Created: 1997/04/18 15:44:22
+;; Version: 1.14
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,21 +27,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'cl)
+(require 'dsssl-flow)
 
 (if (not (fboundp 'cl-copy-hashtable))
     (defun cl-copy-hashtable (h)
       (let ((new (make-hash-table)))
 	(cl-maphash (function (lambda (k v) (cl-puthash k v new))) h)
 	new)))
-		  
-;; We need to have this up at the top to avoid compilation warnings in
-;; 'make' in dsssl-eval.  Call me anal.
-(defstruct flow-object
-  (name 'unknown :read-only t)		; Name of this flow object
-  (properties nil)
-  (children nil)
-  (parent nil)
-  )
 
 (defconst dsssl-builtin-functions
   '(not boolean\?  case equal\?  null\?  list\?  list length append
@@ -331,7 +323,7 @@
 	     (setq temp (- temp 2)))
 
 	   ;; Create the actual flow object
-	   (make-flow-object :name type
+	   (make-flow-object :type type
 			     :children children
 			     :properties props)
 	   )

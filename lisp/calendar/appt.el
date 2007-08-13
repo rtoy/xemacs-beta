@@ -157,40 +157,52 @@
 (require 'calendar)
 (require 'diary-lib)
 
-(defvar appt-issue-message t
+(defcustom appt-issue-message t
   "*If T, the diary buffer is checked for appointments.  For an
  appointment warning to be made, the time must be the first thing on
- the line.")
+ the line."
+  :type 'boolean
+  :group 'appt)
 
-(defvar appt-msg-countdown-list '(20 15 10 5 3 1)
+(defcustom appt-msg-countdown-list '(20 15 10 5 3 1)
   "*A list of the intervals in minutes before the appointment when
  the warnings will be given.  That is, if this were the list '(5 3 1),
  then a notification would be given five minutes, three minutes, and
- one minute before the appointment.")
+ one minute before the appointment."
+  :type '(repeat integer)
+  :group 'appt)
 
-(defvar appt-check-time-syntax nil
+(defcustom appt-check-time-syntax nil
   "*Whether all diary entries are intended to beging with time specifications.
 Appt will beep and issue a warning message when encountering unparsable 
-lines.")
+lines."
+  :type 'boolean
+  :group 'appt)
 
-(defvar appt-audible t
+(defcustom appt-audible t
   "*Controls whether appointment announcements should beep.
 Appt uses two sound-types for beeps: `appt' and `appt-final'.
 If this is a number, then that many beeps will occur.
 If this is a cons, the car is how many beeps, and the cdr is the
   delay between them (a float, fraction of a second to sleep.)
-See also the variable `appt-msg-countdown-list'")
+See also the variable `appt-msg-countdown-list'"
+  :type 'boolean
+  :group 'appt)
 
-(defvar appt-display-mode-line t
-  "*Controls if minutes-to-appointment should be displayed on the mode line.")
+(defcustom appt-display-mode-line t
+  "*Controls if minutes-to-appointment should be displayed on the mode line."
+  :type 'boolean
+  :group 'appt)
 
-(defvar appt-announce-method 'appt-window-announce
+(defcustom appt-announce-method 'appt-window-announce
   "*The name of the function used to notify the user of an impending 
 appointment.  This is called with two arguments, the number of minutes
 until the appointment, and the appointment description list.
 
 Reasonable values for this variable are 'appt-window-announce,
-'appt-message-announce, or 'appt-persistent-message-announce.")
+'appt-message-announce, or 'appt-persistent-message-announce."
+  :type 'function
+  :group 'appt)
 
 
 (defvar appt-time-msg-list nil
@@ -247,9 +259,11 @@ messages stay around even if you type something (unlike normal messages)."
     ))
 
 
-(defvar appt-display-duration 5
+(defcustom appt-display-duration 5
   "*The number of seconds an appointment message is displayed in its own 
- window if appt-announce-method is 'appt-window-announce.")
+ window if appt-announce-method is 'appt-window-announce."
+  :type 'integer
+  :group 'appt)
 
 (defun appt-window-announce (min-to-app appt)
   "Set appt-announce-method to the name of this function to cause appointment 
@@ -341,8 +355,10 @@ notifications to be given via messages in a pop-up frame."
 ;;; just adding stuff to the display-time-string -- this causes less
 ;;; flicker.
 
-(defvar appt-mode-line-string ""
-  "*The string displayed in the mode line by the appointment package.")
+(defcustom appt-mode-line-string ""
+  "*The string displayed in the mode line by the appointment package."
+  :type 'string
+  :group 'appt)
 
 (defun appt-display-mode-line (min-to-app)
   "Add an appointment annotation to the mode line."

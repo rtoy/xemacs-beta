@@ -3,7 +3,7 @@
 ;; Copyright (C) 1992, 1994, 1996 Free Software Foundation, Inc.
 
 ;; Author: Francesco Potorti` <pot@cnuce.cnr.it>
-;; Version: $Id: cmacexp.el,v 1.1.1.1 1996/12/18 22:42:45 steve Exp $
+;; Version: $Id: cmacexp.el,v 1.2 1997/04/19 23:21:02 steve Exp $
 ;; Adapted-By: ESR
 ;; Keywords: c
 
@@ -92,13 +92,22 @@
 
 (provide 'cmacexp)
 
-(defvar c-macro-shrink-window-flag nil
-  "*Non-nil means shrink the *Macroexpansion* window to fit its contents.")
+(defgroup c-macro nil
+  "Expand C macros in a region."
+  :group 'c)
 
-(defvar c-macro-prompt-flag nil
-  "*Non-nil makes `c-macro-expand' prompt for preprocessor arguments.")
 
-(defvar c-macro-preprocessor
+(defcustom c-macro-shrink-window-flag nil
+  "*Non-nil means shrink the *Macroexpansion* window to fit its contents."
+  :type 'boolean
+  :group 'c-macro)
+
+(defcustom c-macro-prompt-flag nil
+  "*Non-nil makes `c-macro-expand' prompt for preprocessor arguments."
+  :type 'boolean
+  :group 'c-macro)
+
+(defcustom c-macro-preprocessor
   ;; Cannot rely on standard directory on MS-DOS to find CPP.
   (cond ((eq system-type 'ms-dos) "cpp -C")
 	;; Solaris has it in an unusual place.
@@ -110,10 +119,14 @@
   "The preprocessor used by the cmacexp package.
 
 If you change this, be sure to preserve the `-C' (don't strip comments)
-option, or to set an equivalent one.")
+option, or to set an equivalent one."
+  :type 'string
+  :group 'c-macro)
 
-(defvar c-macro-cppflags ""
-  "*Preprocessor flags used by `c-macro-expand'.")
+(defcustom c-macro-cppflags ""
+  "*Preprocessor flags used by `c-macro-expand'."
+  :type 'string
+  :group 'c-macro)
 
 (defconst c-macro-buffer-name "*Macroexpansion*")
 

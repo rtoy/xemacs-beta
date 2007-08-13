@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          auto-save.el
-;; Version:       $Revision: 1.3 $
+;; Version:       $Revision: 1.4 $
 ;; RCS:           
 ;; Description:   Safer autosaving with support for efs and /tmp.
 ;;                This version of auto-save is designed to work with efs,
@@ -11,7 +11,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst auto-save-version (substring "$Revision: 1.3 $" 11 -2)
+(defconst auto-save-version (substring "$Revision: 1.4 $" 11 -2)
   "Version number of auto-save.")
 
 ;;; Copyright (C) 1992 by Sebastian Kremer <sk@thp.uni-koeln.de>
@@ -268,7 +268,17 @@ See also function `auto-save-file-name-p'."
 	     ;; the next Emacs session (the one after the crash) the
 	     ;; pid will be different, but file-less buffers like
 	     ;; *mail* must be recovered manually anyway.
-	     (name-prefix (if file-name nil (make-temp-name "#%")))
+
+	     ;; jwz: putting the emacs PID in the auto-save file name is bad
+	     ;; news, because that defeats auto-save-recovery of *mail*
+	     ;; buffers -- the (sensible) code in sendmail.el calls
+	     ;; (make-auto-save-file-name) to determine whether there is
+	     ;; unsent, auto-saved mail to recover. If that mail came from a
+	     ;; previous emacs process (far and away the most likely case)
+	     ;; then this can never succeed as the pid differs.
+;;	     (name-prefix (if file-name nil (make-temp-name "#%")))
+	     (name-prefix (if file-name nil "#%"))
+
 	     (save-name (or file-name
 			    ;; Prevent autosave errors.  Buffername
 			    ;; (to become non-dir part of filename) will
@@ -494,10 +504,10 @@ Hashed files (see `auto-save-hash-p') are not understood, use
 	    (t
 	     (setq total (1+ total))
 	     (with-output-to-temp-buffer "*Directory*"
-	       (call-process "ls" nil standard-output nil
-			     "-l" afile (if file (list file))))
+	       (apply 'call-process "ls" nil standard-output nil
+		      "-l" afile (if file (list file))))
 	     (if (yes-or-no-p (format "Recover %s from auto save file? "
-				      file))
+				      (or file "non-file buffer")))
 		 (let* ((obuf (current-buffer))
 			(buf (set-buffer
 			      (if file

@@ -31,7 +31,7 @@ Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
  *	Francesco Potorti` (F.Potorti@cnuce.cnr.it) is the current maintainer.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 11.78";
+char pot_etags_version[] = "@(#) pot revision number is 11.83";
 
 #define	TRUE	1
 #define	FALSE	0
@@ -86,7 +86,7 @@ extern int errno;
 #endif /* ETAGS_REGEXPS */
 
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
- Let it undefined to make the program "etags", which makes emacs-style
+ Leave it undefined to make the program "etags", which makes emacs-style
  tag tables and tags typedefs, #defines and struct/union/enum by default. */
 #ifdef CTAGS
 # undef  CTAGS
@@ -109,8 +109,10 @@ extern int errno;
 #define C_STAR	0x00003		/* C* */
 #define YACC	0x10000		/* yacc file */
 
-#define streq(s,t)	((DEBUG &&!(s)&&!(t)&&(abort(),1)) || !strcmp(s,t))
-#define strneq(s,t,n)	((DEBUG &&!(s)&&!(t)&&(abort(),1)) || !strncmp(s,t,n))
+#define streq(s,t)	((DEBUG && (s) == NULL && (t) == NULL	\
+			  && (abort (), 1)) || !strcmp (s, t))
+#define strneq(s,t,n)	((DEBUG && (s) == NULL && (t) == NULL	\
+			  && (abort (), 1)) || !strncmp (s, t, n))
 
 #define lowcase(c)	tolower ((char)c)
 
@@ -568,7 +570,7 @@ enum argument_type
   at_filename
 };
 
-/* This structure helps us allow mixing of --lang and filenames. */
+/* This structure helps us allow mixing of --lang and file names. */
 typedef struct
 {
   enum argument_type arg_type;
@@ -590,7 +592,7 @@ typedef struct	{
 
 /*
  v1.05 nmm 26-Jun-86 fn_exp - expand specification of list of file names
- returning in each successive call the next filename matching the input
+ returning in each successive call the next file name matching the input
  spec. The function expects that each in_spec passed
  to it will be processed to completion; in particular, up to and
  including the call following that in which the last matching name
@@ -599,7 +601,7 @@ typedef struct	{
  If an error occurs, on return out_spec contains the value
  of in_spec when the error occurred.
 
- With each successive filename returned in out_spec, the
+ With each successive file name returned in out_spec, the
  function's return value is one. When there are no more matching
  names the function returns zero. If on the first call no file
  matches in_spec, or there is any other error, -1 is returned.
@@ -755,7 +757,7 @@ main (argc, argv)
 	  break;
 
 	case 1:
-	  /* This means that a filename has been seen.  Record it. */
+	  /* This means that a file name has been seen.  Record it. */
 	  argbuffer[current_arg].arg_type = at_filename;
 	  argbuffer[current_arg].what = optarg;
 	  ++current_arg;
@@ -1106,12 +1108,12 @@ process_file (file)
 
       if (absolutefn (file))
 	{
-	  /* file is an absolute filename.  Canonicalise it. */
+	  /* file is an absolute file name.  Canonicalise it. */
 	  filename = absolute_filename (file, cwd);
 	}
       else
 	{
-	  /* file is a filename relative to cwd.  Make it relative
+	  /* file is a file name relative to cwd.  Make it relative
 	     to the directory of the tags file. */
 	  filename = relative_filename (file, tagfiledir);
 	}
@@ -2100,16 +2102,28 @@ do {									\
   definedef = dnone;							\
 } while (0)
 
-/* This macro should never be called when tok.valid is FALSE, but
-   we must protect about both invalid input and internal errors. */
-#define make_C_tag(isfun)  do \
-if (tok.valid) {							\
-  char *name = NULL;							\
-  if (CTAGS || tok.named)						\
-    name = savestr (token_name.buffer);					\
-  pfnote (name, isfun, tok.buffer, tok.linelen, tok.lineno, tok.linepos); \
-  tok.valid = FALSE;							\
-} /* else if (DEBUG) abort (); */ while (0)
+
+void
+make_C_tag (isfun, tokp)
+     logical isfun;
+     TOKEN *tokp;
+{
+  char *name = NULL;
+
+  /* This function should never be called when tok.valid is FALSE, but
+     we must protect against invalid input or internal errors. */
+  if (tokp->valid)
+    {
+      if (CTAGS || tokp->named)
+	name = savestr (token_name.buffer);
+      pfnote (name, isfun,
+	      tokp->buffer, tokp->linelen, tokp->lineno, tokp->linepos);
+      tokp->valid = FALSE;
+    }
+  else if (DEBUG)
+    abort ();
+}
+
 
 void
 C_entries (c_ext, inf)
@@ -2370,7 +2384,7 @@ C_entries (c_ext, inf)
 				switch_line_buffers ();
 			    }
 			  else
-			    make_C_tag (is_func);
+			    make_C_tag (is_func, &tok);
 			}
 		      midtoken = FALSE;
 		    }
@@ -2392,7 +2406,7 @@ C_entries (c_ext, inf)
 		      funcdef = finlist;
 		      continue;
 		    case flistseen:
-		      make_C_tag (TRUE);
+		      make_C_tag (TRUE, &tok);
 		      funcdef = fignore;
 		      break;
 		    case ftagseen:
@@ -2427,7 +2441,7 @@ C_entries (c_ext, inf)
 	    {
 	    case  otagseen:
 	      objdef = oignore;
-	      make_C_tag (TRUE);
+	      make_C_tag (TRUE, &tok);
 	      break;
 	    case omethodtag:
 	    case omethodparm:
@@ -2445,7 +2459,7 @@ C_entries (c_ext, inf)
 	      case ftagseen:
 		if (yacc_rules)
 		  {
-		    make_C_tag (FALSE);
+		    make_C_tag (FALSE, &tok);
 		    funcdef = fignore;
 		  }
 		break;
@@ -2461,7 +2475,7 @@ C_entries (c_ext, inf)
 	    switch (typdef)
 	      {
 	      case tend:
-		make_C_tag (FALSE);
+		make_C_tag (FALSE, &tok);
 		/* FALLTHRU */
 	      default:
 		typdef = tnone;
@@ -2484,7 +2498,7 @@ C_entries (c_ext, inf)
 	    {
 	    case omethodtag:
 	    case omethodparm:
-	      make_C_tag (TRUE);
+	      make_C_tag (TRUE, &tok);
 	      objdef = oinbody;
 	      break;
 	    }
@@ -2499,7 +2513,7 @@ C_entries (c_ext, inf)
 	  if (cblev == 0 && typdef == tend)
 	    {
 	      typdef = tignore;
-	      make_C_tag (FALSE);
+	      make_C_tag (FALSE, &tok);
 	      break;
 	    }
 	  if (funcdef != finlist && funcdef != fignore)
@@ -2522,10 +2536,10 @@ C_entries (c_ext, inf)
 		  /* Make sure that the next char is not a '*'.
 		     This handles constructs like:
 		     typedef void OperatorFun (int fun); */
-		  if (*lp != '*')
+		  if (tok.valid && *lp != '*')
 		    {
 		      typdef = tignore;
-		      make_C_tag (FALSE);
+		      make_C_tag (FALSE, &tok);
 		    }
 		  break;
 		} /* switch (typdef) */
@@ -2544,7 +2558,7 @@ C_entries (c_ext, inf)
 	    break;
 	  if (objdef == ocatseen && parlev == 1)
 	    {
-	      make_C_tag (TRUE);
+	      make_C_tag (TRUE, &tok);
 	      objdef = oignore;
 	    }
 	  if (--parlev == 0)
@@ -2559,7 +2573,7 @@ C_entries (c_ext, inf)
 	      if (cblev == 0 && typdef == tend)
 		{
 		  typdef = tignore;
-		  make_C_tag (FALSE);
+		  make_C_tag (FALSE, &tok);
 		}
 	    }
 	  else if (parlev < 0)	/* can happen due to ill-conceived #if's. */
@@ -2579,13 +2593,13 @@ C_entries (c_ext, inf)
 	    case stagseen:
 	    case scolonseen:	/* named struct */
 	      structdef = sinbody;
-	      make_C_tag (FALSE);
+	      make_C_tag (FALSE, &tok);
 	      break;
 	    }
 	  switch (funcdef)
 	    {
 	    case flistseen:
-	      make_C_tag (TRUE);
+	      make_C_tag (TRUE, &tok);
 	      /* FALLTHRU */
 	    case fignore:
 	      funcdef = fnone;
@@ -2594,12 +2608,12 @@ C_entries (c_ext, inf)
 	      switch (objdef)
 		{
 		case otagseen:
-		  make_C_tag (TRUE);
+		  make_C_tag (TRUE, &tok);
 		  objdef = oignore;
 		  break;
 		case omethodtag:
 		case omethodparm:
-		  make_C_tag (TRUE);
+		  make_C_tag (TRUE, &tok);
 		  objdef = oinbody;
 		  break;
 		default:
@@ -2661,7 +2675,7 @@ C_entries (c_ext, inf)
 	case '\0':
 	  if (objdef == otagseen)
 	    {
-	      make_C_tag (TRUE);
+	      make_C_tag (TRUE, &tok);
 	      objdef = oignore;
 	    }
 	  /* If a macro spans multiple lines don't reset its state. */
@@ -3542,7 +3556,7 @@ Prolog_functions (inf)
       else if (len = prolog_pred (dbp, last)) 
 	{
 	  /* Predicate.  Store the function name so that we only
-	   * generates a tag for the first clause.  */
+	     generate a tag for the first clause.  */
 	  if (last == NULL)
 	    last = xnew(len + 1, char);
 	  else if (len + 1 > allocated)
@@ -4399,7 +4413,7 @@ etags_getcwd ()
 #endif /* not HAVE_GETCWD */
 }
 
-/* Return a newly allocated string containing the filename
+/* Return a newly allocated string containing the file name
    of FILE relative to the absolute directory DIR (which
    should end with a slash). */
 char *
@@ -4407,6 +4421,7 @@ relative_filename (file, dir)
      char *file, *dir;
 {
   char *fp, *dp, *abs, *res;
+  int i;
 
   /* Find the common root of file and dir (with a trailing slash). */
   abs = absolute_filename (file, cwd);
@@ -4415,27 +4430,28 @@ relative_filename (file, dir)
   while (*fp++ == *dp++)
     continue;
   fp--, dp--;			/* back to the first differing char */
-  do				/* look at the equal chars until / */
+  do				/* look at the equal chars until '/' */
     fp--, dp--;
   while (*fp != '/');
 
-  /* Build a sequence of "../" strings for the resulting relative filename. */
-  for (dp = etags_strchr (dp + 1, '/'), res = "";
-       dp != NULL;
-       dp = etags_strchr (dp + 1, '/'))
-    {
-      res = concat (res, "../", "");
-    }
+  /* Build a sequence of "../" strings for the resulting relative file name. */
+  i = 0;
+  while ((dp = etags_strchr (dp + 1, '/')) != NULL)
+    i += 1;
+  res = xnew (3*i + strlen (fp + 1) + 1, char);
+  res[0] = '\0';
+  while (i-- > 0)
+    strcat (res, "../");
 
-  /* Add the filename relative to the common root of file and dir. */
-  res = concat (res, fp + 1, "");
+  /* Add the file name relative to the common root of file and dir. */
+  strcat (res, fp + 1);
   free (abs);
 
   return res;
 }
 
 /* Return a newly allocated string containing the
-   absolute filename of FILE given CWD (which should
+   absolute file name of FILE given CWD (which should
    end with a slash). */
 char *
 absolute_filename (file, cwd)
@@ -4444,12 +4460,12 @@ absolute_filename (file, cwd)
   char *slashp, *cp, *res;
 
   if (absolutefn (file))
-    res = concat (file, "", "");
+    res = savestr (file);
 #ifdef DOS_NT
-  /* We don't support non-absolute filenames with a drive
+  /* We don't support non-absolute file names with a drive
      letter, like `d:NAME' (it's too much hassle).  */
   else if (file[1] == ':')
-    fatal ("%s: relative filenames with drive letters not supported", file);
+    fatal ("%s: relative file names with drive letters not supported", file);
 #endif
   else
     res = concat (cwd, file, "");
@@ -4467,24 +4483,16 @@ absolute_filename (file, cwd)
 	      do
 		cp--;
 	      while (cp >= res && !absolutefn (cp));
-	      if (*cp == '/')
-		{
-		  strcpy (cp, slashp + 3);
-		}
+	      if (cp < res)
+		cp = slashp;	/* the absolute name begins with "/.." */
 #ifdef DOS_NT
 	      /* Under MSDOS and NT we get `d:/NAME' as absolute
-		 filename, so the luser could say `d:/../NAME'.
+		 file name, so the luser could say `d:/../NAME'.
 		 We silently treat this as `d:/NAME'.  */
-	      else if (cp[1] == ':')
-		strcpy (cp + 3, slashp + 4);
+	      else if (cp[0] != '/')
+		cp = slashp;
 #endif
-	      else		/* else (cp == res) */
-		{
-		  if (slashp[3] != '\0')
-		    strcpy (cp, slashp + 4);
-		  else
-		    return ".";
-		}
+	      strcpy (cp, slashp + 3);
 	      slashp = cp;
 	      continue;
 	    }
@@ -4497,12 +4505,15 @@ absolute_filename (file, cwd)
 
       slashp = etags_strchr (slashp + 1, '/');
     }
-
-  return res;
+  
+  if (res[0] == '\0')
+    return savestr ("/");
+  else
+    return res;
 }
 
 /* Return a newly allocated string containing the absolute
-   filename of dir where FILE resides given CWD (which should
+   file name of dir where FILE resides given CWD (which should
    end with a slash). */
 char *
 absolute_dirname (file, cwd)
@@ -4520,7 +4531,7 @@ absolute_dirname (file, cwd)
 
   slashp = etags_strrchr (file, '/');
   if (slashp == NULL)
-    return cwd;
+    return savestr (cwd);
   save = slashp[1];
   slashp[1] = '\0';
   res = absolute_filename (file, cwd);

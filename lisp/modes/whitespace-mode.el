@@ -26,7 +26,7 @@
  
 ;;; Commentary:
 
-;; $Id: whitespace-mode.el,v 1.2 1997/02/24 01:13:44 steve Exp $
+;; $Id: whitespace-mode.el,v 1.3 1997/04/19 23:21:05 steve Exp $
 ;; Description:
 ;;
 ;;	This is a minor mode, which highlights whitespaces (blanks and
@@ -87,7 +87,13 @@
 
 ;;; variables:
 
-(defvar whitespace-chars 'tabs-and-blanks
+(defgroup whitespace nil
+  "Minor mode for making whitespace visible"
+  :group 'outlines
+  :group 'matching)
+
+
+(defcustom whitespace-chars 'tabs-and-blanks
   "*Determines, which whitespaces are highlighted.
 Valid values are:
 'tabs-and-blanks => tabs and blanks are highlighted;
@@ -95,54 +101,74 @@ Valid values are:
 'blanks          => only blanks are highlighted;.
 
 Changing this variable during the whitespace-*-mode is active could lead
-to wrong highlighted whitespaces.")
+to wrong highlighted whitespaces."
+  :type '(radio (const tabs-and-blanks)
+		(const tabs)
+		(const blanks))
+  :group 'whitespace)
 
 (make-variable-buffer-local 'whitespace-chars)
 
-(defvar whitespace-mode-hook nil
-  "*Run after the `whitespace-mode' is switched on.")
+(defcustom whitespace-mode-hook nil
+  "*Run after the `whitespace-mode' is switched on."
+  :type 'hook
+  :group 'whitespace)
 
-(defvar whitespace-incremental-mode-hook nil
-  "*Run after the `whitespace-incremental-mode' is switched on.")
+(defcustom whitespace-incremental-mode-hook nil
+  "*Run after the `whitespace-incremental-mode' is switched on."
+  :type 'hook
+  :group 'whitespace)
 
 
 (if (adapt-xemacsp)
 (progn
 
-(defvar whitespace-install-toolbar-icon nil
+(defcustom whitespace-install-toolbar-icon nil
   "Set it to t, if a toolbar icon should be installed during loading this file.
-The icon calls the function 'whitespace-toolbar-function'.")
+The icon calls the function 'whitespace-toolbar-function'."
+  :type 'boolean
+  :group 'whitespace)
 
-(defvar whitespace-install-submenu nil
-  "Set it to t, if a submenu should be installed during loading this file.")
+(defcustom whitespace-install-submenu nil
+  "Set it to t, if a submenu should be installed during loading this file."
+  :type 'boolean
+  :group 'whitespace)
 
 ))
 
 
-(defvar whitespace-toolbar-function 'whitespace-incremental-mode
+(defcustom whitespace-toolbar-function 'whitespace-incremental-mode
   "*The toolbar icon for the whitespace mode calls this function.
-Valid values are: 'whitespace--mode and 'whitespace-incremental-mode.")
+Valid values are: 'whitespace--mode and 'whitespace-incremental-mode."
+  :type 'function
+  :group 'whitespace)
 
-(defvar whitespace-blank-and-tab-search-string "\\( \\)\\|\\(\t\\)"
-  "The regexp used to search for tabs and blanks.")
+(defcustom whitespace-blank-and-tab-search-string "\\( \\)\\|\\(\t\\)"
+  "The regexp used to search for tabs and blanks."
+  :type 'regexp
+  :group 'whitespace)
 
-(defvar whitespace-tab-search-string "\t"
-  "The search string used to find tabs.")
+(defcustom whitespace-tab-search-string "\t"
+  "The search string used to find tabs."
+  :type 'string
+  :group 'whitespace)
 
-(defvar whitespace-blank-search-string " "
-  "The search string used to find blanks.")
+(defcustom whitespace-blank-search-string " "
+  "The search string used to find blanks."
+  :type 'string
+  :group 'whitespace)
 
-;;; Defining faces
-(if (facep 'whitespace-blank-face)
-    nil
-  (make-face 'whitespace-blank-face)
-  (set-face-background 'whitespace-blank-face "LightBlue1"))
+(defface whitespace-blank-face
+  '((t
+     (:background "LightBlue1")))
+  "Face to show blanks with"
+  :group 'whitespace)
 
-(if (facep 'whitespace-tab-face)
-    nil
-  (make-face 'whitespace-tab-face)
-  (set-face-background 'whitespace-tab-face "yellow")
-  (set-face-underline-p 'whitespace-tab-face t))
+(defface whitespace-tab-face
+  '((t
+     (:background "yellow" :underline t)))
+  "Face to show TABs with"
+  :group 'whitespace)
 
 (defun whitespace-show-faces ()
   "Shows the faces used by the `whitespace-mode'."

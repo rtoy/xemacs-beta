@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/04/11 14:49:23
-;; Version: 1.52
+;; Created: 1997/04/18 20:28:20
+;; Version: 1.54
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -38,7 +38,7 @@
     (defmacro defcustom (var value doc &rest args) 
       (` (defvar (, var) (, value) (, doc))))))
 
-(defconst url-version (let ((x "p3.0.82"))
+(defconst url-version (let ((x "p3.0.83"))
 			(if (string-match "State: \\([^ \t\n]+\\)" x)
 			    (substring x (match-beginning 1) (match-end 1))
 			  x))
@@ -261,9 +261,7 @@ buffer, and it should use mail-header-separator if possible."
 Looks like ((\"http\" . \"hostname:portnumber\") ....)  This is set up
 from the ACCESS_proxy environment variables in url-do-setup."
   :type '(repeat (cons (string :tag "Protocol")
-		       (string :tag "Proxy"
-			       :validate widget-field-validate
-			       :valid-regexp "^[a-z.0-9-:]+$")))
+		       (string :tag "Proxy")))
   :group 'url)
 
 (defcustom url-global-history-file nil

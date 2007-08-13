@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/04/01 19:21:41
-;; Version: 1.34
+;; Created: 1997/04/17 13:50:34
+;; Version: 1.36
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -143,7 +143,7 @@
     
     ;; These are for specifying speech properties (Raman-style)
     [voice-family     t              string]
-    [gain             t              integer]
+    [gain             t              symbol]
     [left-volume      t              integer]
     [right-volume     t              integer]
     [pitch            t              integer]
@@ -344,27 +344,29 @@
   ;; [<font-weight> || <font-style>]? <font-size> [ / <line-height> ]? <font-family>
   (let (weight size height family retval)
     (if (not (string-match " *\\([0-9.]+[^ /]+\\)" font))
-	(error "Malformed font shorthand: %s" font))
-    (setq weight (if (/= 0 (match-beginning 0))
-		     (substring font 0 (match-beginning 0)))
-	  size (match-string 1 font)
-	  font (substring font (match-end 0) nil))
-    (if (string-match " */ *\\([^ ]+\\) *" font)
-	;; they specified a line-height as well
-	(setq height (match-string 1 font)
-	      family (substring font (match-end 0) nil))
-      (if (string-match "^[ \t]+" font)
-	  (setq family (substring font (match-end 0) nil))
-	(setq family font)))
-    (if weight
-	(push (cons 'font-weight (css-expand-value 'weight weight)) retval))
-    (if size
-	(push (cons 'font-size (css-expand-length size)) retval))
-    (if height
-	(push (cons 'line-height (css-expand-length height t)) retval))
-    (if family
-	(push (cons 'font-family (css-expand-value 'string-list family)) retval))
-    retval))
+	(progn
+	  (message "Malformed font shorthand: %s" font)
+	  nil)
+      (setq weight (if (/= 0 (match-beginning 0))
+		       (substring font 0 (match-beginning 0)))
+	    size (match-string 1 font)
+	    font (substring font (match-end 0) nil))
+      (if (string-match " */ *\\([^ ]+\\) *" font)
+	  ;; they specified a line-height as well
+	  (setq height (match-string 1 font)
+		family (substring font (match-end 0) nil))
+	(if (string-match "^[ \t]+" font)
+	    (setq family (substring font (match-end 0) nil))
+	  (setq family font)))
+      (if weight
+	  (push (cons 'font-weight (css-expand-value 'weight weight)) retval))
+      (if size
+	  (push (cons 'font-size (css-expand-length size)) retval))
+      (if height
+	  (push (cons 'line-height (css-expand-length height t)) retval))
+      (if family
+	  (push (cons 'font-family (css-expand-value 'string-list family)) retval))
+      retval)))
 
 (if (not (fboundp 'frame-char-height))
     (defun frame-char-height (&optional frame)

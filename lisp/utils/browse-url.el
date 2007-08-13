@@ -348,6 +348,11 @@
 
 (eval-when-compile (require 'dired))
 
+(defgroup browse-url nil
+  "Ask a WWW browser to load a URL."
+  :group 'hypermedia)
+
+
 (defvar browse-url-path-regexp
   "[^]\t\n \"'()<>[^`{}]*[^]\t\n \"'()<>[^`{}.,;]+"
   "A regular expression probably matching the host, path or e-mail
@@ -367,25 +372,35 @@ Hostname matching is stricter in this case than for
 
 
 ;;;###autoload
-(defvar browse-url-browser-function 'browse-url-w3
+(defcustom browse-url-browser-function 'browse-url-w3
   "*Function to display the current buffer in a WWW browser.
 Used by the `browse-url-at-point', `browse-url-at-mouse', and
-`browse-url-of-file' commands.")
+`browse-url-of-file' commands."
+  :type 'function
+  :group 'browse-url)
 
-(defvar browse-url-netscape-command "netscape"
-  "*The name by which to invoke Netscape.")
+(defcustom browse-url-netscape-command "netscape"
+  "*The name by which to invoke Netscape."
+  :type 'string
+  :group 'browse-url)
 
-(defvar browse-url-netscape-arguments nil
-  "*A list of strings to pass to Netscape as arguments.")
+(defcustom browse-url-netscape-arguments nil
+  "*A list of strings to pass to Netscape as arguments."
+  :type '(repeat (string :tag "Argument"))
+  :group 'browse-url)
 
-(defvar browse-url-new-window-p nil
+(defcustom browse-url-new-window-p nil
   "*If non-nil, always open a new browser window.
 Passing an interactive argument to \\[browse-url-netscape] or
 \\[browse-url-cci] reverses the effect of this variable.  Requires
-Netscape version 1.1N or later or XMosaic version 2.5 or later.")
+Netscape version 1.1N or later or XMosaic version 2.5 or later."
+  :type 'boolean
+  :group 'browse-url)
 
-(defvar browse-url-mosaic-arguments nil
-  "*A list of strings to pass to Mosaic as arguments.")
+(defcustom browse-url-mosaic-arguments nil
+  "*A list of strings to pass to Mosaic as arguments."
+  :type '(repeat (string :tag "Argument"))
+  :group 'browse-url)
 
 (defvar browse-url-filename-alist
   '(("^/+" . "file:/"))

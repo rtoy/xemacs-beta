@@ -1,5 +1,5 @@
 ;;; recent-files.el --- Maintain menu of recently opened files.
-;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.1.1.1 1996/12/18 22:42:54 steve Exp $
+;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.2 1997/04/19 23:21:11 steve Exp $
 ;;;
 ;;; Copyright (C) 1994, 1995 Juergen Nickelsen <nickel@cs.tu-berlin.de>
 ;;;
@@ -206,74 +206,124 @@
 
 ;;; User options
 
-(defvar recent-files-number-of-entries 15
-  "*Maximum of non-permanent entries in the recent-files menu.")
+(defgroup recent-files nil
+  "Maintain a menu of recently opened files."
+  :group 'data)
 
-(defvar recent-files-number-of-saved-entries 50
-  "*Maximum of non-permanent entries saved to `recent-files-save-file'.")
+(defgroup recent-files-menu nil
+  "Menu options of recent-files."
+  :prefix "recent-files-"
+  :group 'recent-files)
 
-(defvar recent-files-save-file (expand-file-name "~/.recent-files.el")
-  "*File to save the recent-files list in.")
 
-(defvar recent-files-dont-include nil
-  "*List of regexps for filenames *not* to keep in recent-files.")
+(defcustom recent-files-number-of-entries 15
+  "*Maximum of non-permanent entries in the recent-files menu."
+  :type 'integer
+  :group 'recent-files)
 
-(defvar recent-files-use-full-names t
+(defcustom recent-files-number-of-saved-entries 50
+  "*Maximum of non-permanent entries saved to `recent-files-save-file'."
+  :type 'integer
+  :group 'recent-files)
+
+(defcustom recent-files-save-file (expand-file-name "~/.recent-files.el")
+  "*File to save the recent-files list in."
+  :type 'file
+  :group 'recent-files)
+
+(defcustom recent-files-dont-include nil
+  "*List of regexps for filenames *not* to keep in recent-files."
+  :type '(repeat regexp)
+  :group 'recent-files)
+
+(defcustom recent-files-use-full-names t
   "*If non-nil, use the full pathname of a file in the recent-files menu.
 Otherwise use only the filename part. The `recent-files-filename-replacements'
-are not applied in the latter case.")
+are not applied in the latter case."
+  :type 'boolean
+  :group 'recent-files)
 
-(defvar recent-files-filename-replacements
+(defcustom recent-files-filename-replacements
   (list (cons (expand-file-name "~") "~"))
   "*List of regexp/replacement pairs for filename filenamees.
 If a filename of a filename matches one of the regexps, it is replaced
-by the corresponding replacement.")
+by the corresponding replacement."
+  :type '(repeat (cons regexp (string :tag "Replacement")))
+  :group 'recent-files)
 
-(defvar recent-files-sort-function (function recent-files-dont-sort)
+(defcustom recent-files-sort-function (function recent-files-dont-sort)
   "*Function to sort the recent-files list with.
 The value `recent-files-dont-sort' means to keep the \"most recent on top\"
-order.")
+order."
+  :type 'function
+  :group 'recent-files)
 
-(defvar recent-files-permanent-submenu nil
-  "*If non-nil, put the permanent entries of recent-files into a submenu.")
+(defcustom recent-files-permanent-submenu nil
+  "*If non-nil, put the permanent entries of recent-files into a submenu."
+  :type 'boolean
+  :group 'recent-files-menu)
 
-(defvar recent-files-non-permanent-submenu t
-  "*If non-nil, put the non-permanent entries of recent-files into a submenu.")
+(defcustom recent-files-non-permanent-submenu t
+  "*If non-nil, put the non-permanent entries of recent-files into a submenu."
+  :type 'boolean
+  :group 'recent-files-menu)
 
-(defvar recent-files-commands-submenu nil
-  "*If non-nil, put the commands of recent-files into a submenu.")
+(defcustom recent-files-commands-submenu nil
+  "*If non-nil, put the commands of recent-files into a submenu."
+  :type 'boolean
+  :group 'recent-files-menu)
 
-(defvar recent-files-commands-submenu-title "Commands..."
-  "*Title of the commands submenu of recent-files.")
+(defcustom recent-files-commands-submenu-title "Commands..."
+  "*Title of the commands submenu of recent-files."
+  :type 'string
+  :group 'recent-files-menu)
 
-(defvar recent-files-menu-title "Recent Files"
-  "*Name to be displayed as title of the recent-files menu.")
+(defcustom recent-files-menu-title "Recent Files"
+  "*Name to be displayed as title of the recent-files menu."
+  :type 'string
+  :group 'recent-files-menu)
 
-(defvar recent-files-menu-path nil
+(defcustom recent-files-menu-path nil
   "*Path where to add the recent-files menu.
 A value of nil means add it as top-level menu.
-For more information look up the documentation of `add-menu'.")
+For more information look up the documentation of `add-menu'."
+  :type '(choice (const :tag "Top Level" nil)
+		 (sexp :tag "Menu Path"))
+  :group 'recent-files-menu)
 
-(defvar recent-files-add-menu-before nil
+(defcustom recent-files-add-menu-before nil
   "*Name of the menu before which the recent-files menu shall be added.
 A value of nil means add it as the last menu in recent-files-menu-path.
-For more information look up the documentation of `add-menu'.")
+For more information look up the documentation of `add-menu'."
+  :type '(choice (string :tag "Name")
+		 (const :tag "Last" nil))
+  :group 'recent-files-menu)
 
-(defvar recent-files-actions-on-top nil
-  "*If non-nil, put the actions on top of the recent-files menu.")
+(defcustom recent-files-actions-on-top nil
+  "*If non-nil, put the actions on top of the recent-files menu."
+  :type 'boolean
+  :group 'recent-files-menu)
 
-(defvar recent-files-permanent-first 'sort
+(defcustom recent-files-permanent-first 'sort
   "*Control the placement of entries in the recent-files menu.
 If the value is t, permanent entries are put first.
 If the value is nil, non-permanent entries are put first.
 If the value is neither, the entries are mixed following
-recent-files-sort-function if neither appear in a submenu.") 
+recent-files-sort-function if neither appear in a submenu."
+  :type '(choice (const :tag "Permanent First" t)
+		 (const :tag "Non-Permanent First" nil)
+		 (sexp :tag "Mixed"))
+  :group 'recent-files-menu)
 
-(defvar recent-files-find-file-command (function find-file)
-  "*Command to invoke with an entry of the recent-files list.")
+(defcustom recent-files-find-file-command (function find-file)
+  "*Command to invoke with an entry of the recent-files list."
+  :type 'function
+  :group 'recent-files)
 
-(defvar recent-files-include-save-now nil
-  "*If non-nil, have a menu entry to save the recent-files list immediately.")
+(defcustom recent-files-include-save-now nil
+  "*If non-nil, have a menu entry to save the recent-files list immediately."
+  :type 'boolean
+  :group 'recent-files-menu)
 
 ;;; Internal variables
 
@@ -365,7 +415,7 @@ If the buffer has changed, the menu must be rebuilt.")
   "Return a string identifying the current verion of recent-files.
 If called interactively, show it in the echo area."
   (interactive)
-  (let ((version "$Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.1.1.1 1996/12/18 22:42:54 steve Exp $"))
+  (let ((version "$Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.2 1997/04/19 23:21:11 steve Exp $"))
     (if (interactive-p)
 	(message version)
       version)))

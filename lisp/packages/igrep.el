@@ -166,30 +166,47 @@
 
 ;;; User options:
 
-(defvar igrep-options nil
+(defgroup igrep nil
+  "An improved interface to `grep'."
+  :group 'processes)
+
+
+(defcustom igrep-options nil
   "*The options passed by \\[igrep] to `igrep-program', or nil.
 
 `-n' will automatically be passed to `igrep-program', to generate the
 output expected by \\[next-error] and \\[compile-goto-error].
 `-e' will automatically be passed to `igrep-program', if it supports
-that option.")
+that option."
+  :type '(repeat (string :tag "Option"))
+  :group 'igrep)
 
-(defvar igrep-read-options nil
+(defcustom igrep-read-options nil
   "*If non-nil, `\\[igrep]' always prompts for options;
-otherwise, it only prompts when 1 or 3 `C-u's are given as a prefix arg.")
+otherwise, it only prompts when 1 or 3 `C-u's are given as a prefix arg."
+  :type 'boolean
+  :group 'igrep)
 
-(defvar igrep-read-multiple-files nil
+(defcustom igrep-read-multiple-files nil
   "*If non-nil, `\\[igrep]' always prompts for multiple-files;
-otherwise, it only prompts when 2 or 3 `C-u's are given as a prefix arg.")
+otherwise, it only prompts when 2 or 3 `C-u's are given as a prefix arg."
+  :type 'boolean
+  :group 'igrep)
 
-(defvar igrep-verbose-prompts t
+(defcustom igrep-verbose-prompts t
   "*If t, \\[igrep] prompts for arguments verbosely;
 if not t but non-nil, \\[igrep] prompts for arguments semi-verbosely;
-if nil, \\[igrep] prompts for arguments tersely.")
+if nil, \\[igrep] prompts for arguments tersely."
+  :type 'boolean
+  :group 'igrep)
 
-(defvar igrep-save-buffers 'query
+(defcustom igrep-save-buffers 'query
   "*If t, \\[igrep] first saves each modified file buffer;
-if not t but non-nil, \\[igrep] offers to save each modified file buffer.")
+if not t but non-nil, \\[igrep] offers to save each modified file buffer."
+  :type '(choice (const :tag "Save" t)
+		 (const :tag "Dont Save" nil)
+		 (const :tag "Query" query))
+  :group 'igrep)
 
 (defvar igrep-program-table		; referenced by igrep-use-zgrep
   (let ((exec-directories exec-path)

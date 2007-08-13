@@ -52,21 +52,31 @@
 ;; Originally based on the 19 Dec 88 version of
 ;;   date.el by John Sturdy <mcvax!harlqn.co.uk!jcgs@uunet.uu.net>
 ;; version 2, January 1995: replaced functions with %-escapes
-;; $Id: time-stamp.el,v 1.1.1.2 1996/12/18 22:50:44 steve Exp $
+;; $Id: time-stamp.el,v 1.2 1997/04/19 23:21:12 steve Exp $
 
 ;;; Code:
 
-(defvar time-stamp-active t
+(defgroup time-stamp nil
+  "Maintain last change time stamps in files edited by Emacs."
+  :group 'data
+  :group 'extensions)
+
+
+(defcustom time-stamp-active t
   "*Non-nil to enable time-stamping of buffers by \\[time-stamp].
 Can be toggled by \\[time-stamp-toggle-active].
-See also the variable time-stamp-warn-inactive.")
+See also the variable time-stamp-warn-inactive."
+  :type 'boolean
+  :group 'time-stamp)
 
-(defvar time-stamp-warn-inactive t
+(defcustom time-stamp-warn-inactive t
   "*Non-nil to have \\[time-stamp] warn if a buffer did not get time-stamped.
 A warning is printed if time-stamp-active is nil and the buffer contains
-a time stamp template that would otherwise have been updated.")
+a time stamp template that would otherwise have been updated."
+  :type 'boolean
+  :group 'time-stamp)
 
-(defvar time-stamp-format "%02y/%02m/%02d %02H:%02M:%02S %u"
+(defcustom time-stamp-format "%02y/%02m/%02d %02H:%02M:%02S %u"
   "*Template for the string inserted by \\[time-stamp].
 Value may be a string or a list.  (Lists are supported only for
 backward compatibility.)  A string is used verbatim except
@@ -97,7 +107,9 @@ field width.  Strings are truncated on the right; numbers on the left.
 A leading zero causes numbers to be zero-filled.
 
 For example, to get the format used by the `date' command,
-use \"%3a %3b %2d %02H:%02M:%02S %Z %y\"")
+use \"%3a %3b %2d %02H:%02M:%02S %Z %y\""
+  :type 'string
+  :group 'time-stamp)
 
 
 ;;; Do not change time-stamp-line-limit, time-stamp-start, or

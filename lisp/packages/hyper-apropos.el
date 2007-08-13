@@ -63,23 +63,36 @@
 	   (fset 'pprint 'pp)))
 ;;(require 'tags "etags")
 
+(defgroup hyper-apropos nil
+  "Hypertext emacs lisp documentation interface."
+  :prefix "hypropos-"
+  :group 'docs)
+
 ;;;###autoload
-(defvar hypropos-show-brief-docs t
+(defcustom hypropos-show-brief-docs t
   "*If non-nil, `hyper-apropos' will display some documentation in the
-\"*Hyper Apropos*\" buffer.  Setting this to nil will speed up searches.")
+\"*Hyper Apropos*\" buffer.  Setting this to nil will speed up searches."
+  :type 'boolean
+  :group 'hyper-apropos)
 
-(defvar hypropos-shrink-window nil
-  "*If non-nil, shrink *Hyper Help* buffer if possible.")
+(defcustom hypropos-shrink-window nil
+  "*If non-nil, shrink *Hyper Help* buffer if possible."
+  :type 'boolean
+  :group 'hyper-apropos)
 
-(defvar hypropos-prettyprint-long-values t
-  "*If non-nil, then try to beautify the printing of very long values.")
+(defcustom hypropos-prettyprint-long-values t
+  "*If non-nil, then try to beautify the printing of very long values."
+  :type 'boolean
+  :group 'hyper-apropos)
 
 ;; I changed this to true because I think it's more useful this way. --ben
 
-(defvar hypropos-programming-apropos t
+(defcustom hypropos-programming-apropos t
   "*If non-nil, then `hyper-apropos' takes a bit longer and generates more
 output.  If nil, then only functions that are interactive and variables that
-are user variables are found by `hyper-apropos'.")
+are user variables are found by `hyper-apropos'."
+  :type 'boolean
+  :group 'hyper-apropos)
 
 (defvar hypropos-ref-buffer)
 (defvar hypropos-prev-wconfig)

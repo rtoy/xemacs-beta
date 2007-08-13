@@ -542,6 +542,7 @@ Switch the translation mode to normal if T, or reverse if NIL.
       jl_env_set (wnnfns_buf[snum], wnnfns_env_rev[snum]);
       wnnfns_norm = 0;
     }
+  return Qt;
 }
 
 DEFUN ("wnn-server-henkan-begin", Fwnn_begin_henkan, 1, 1, 0, /*
@@ -2057,7 +2058,6 @@ dai_end (int no, int server)
 static int
 yes_or_no (unsigned char *s)
 {
-  extern Lisp_Object	Fy_or_n_p();
   unsigned char		mbuf[512];
   unsigned char		lb;
   int			len;
@@ -2073,9 +2073,12 @@ yes_or_no (unsigned char *s)
   for (; (mbuf[len] != '(') && (len > 0); len--);
   {
      Lisp_Object yes, str;
+     struct gcpro gcpro1;
 
      str = make_string (mbuf, len);
+     GCPRO1 (str);
      yes = call1(Qyes_or_no_p, str);
+     UNGCPRO;
      if (NILP (yes)) return 0;
      else return (1);
   }
@@ -2084,6 +2087,7 @@ yes_or_no (unsigned char *s)
 static void
 puts2 (char *s)
 {
+#if 0 /* jhod: We don't really need this echoed... */
 #if 0
   Lisp_Object		args[1];
   char			mbuf[512];
@@ -2097,7 +2101,8 @@ puts2 (char *s)
   Fmessage (1, args);
 #else
   message("%s",s);
-#endif  
+#endif
+#endif
 }
 
 int

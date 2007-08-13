@@ -427,14 +427,15 @@ not.")
    ((memq system-type '(ms-dos ms-windows windows-nt))
     (setq path (mapconcat 'expand-file-name '("~/mail.cap" "~/etc/mail.cap")
 			  ";")))
-   (t (setq path (concat "/etc/mailcap:/usr/etc/mailcap:"
-			 "/usr/local/etc/mailcap:"
-			 (expand-file-name "~/.mailcap")))))
+   (t (setq path (mapconcat 'expand-file-name
+			    '("~/.mailcap"
+			      "/etc/mailcap:/usr/etc/mailcap"
+			      "/usr/local/etc/mailcap") ":"))))
   (let ((fnames (reverse
 		 (mm-string-to-tokens path
 				      (if (memq system-type
 						'(ms-dos ms-windows windows-nt))
-					  ? ;
+					  ?;
 					?:))))
 	fname)
     (while fnames
@@ -973,15 +974,16 @@ correspond to.")
    ((memq system-type '(ms-dos ms-windows windows-nt))
     (setq path (mapconcat 'expand-file-name
 			  '("~/mime.typ" "~/etc/mime.typ") ";")))
-   (t (setq path (concat (expand-file-name "~/.mime-types") ":"
-			 "/etc/mime-types:/usr/etc/mime-types:"
-			 "/usr/local/etc/mime-types:"
-			 "/usr/local/www/conf/mime-types"))))
+   (t (setq path (mapconcat 'expand-file-name
+			    '("~/.mime-types"
+			      "/etc/mime-types:/usr/etc/mime-types"
+			      "/usr/local/etc/mime-types"
+			      "/usr/local/www/conf/mime-types") ":"))))
   (let ((fnames (reverse
 		 (mm-string-to-tokens path
 				      (if (memq system-type
 						'(ms-dos ms-windows windows-nt))
-					  ? ;
+					  ?;
 					?:))))
 	fname)
     (while fnames

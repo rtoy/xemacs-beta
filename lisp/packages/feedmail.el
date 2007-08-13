@@ -98,35 +98,49 @@
 ;;;        (autoload 'feedmail-send-it "feedmail")
 ;;;
 
+(defgroup feedmail nil
+  "Outbound mail handling."
+  :group 'mail)
 
-(defvar feedmail-confirm-outgoing nil
+
+(defcustom feedmail-confirm-outgoing nil
   "*If non-nil, gives a y-or-n confirmation prompt after prepping,
-before sending mail.")
+before sending mail."
+  :type 'boolean
+  :group 'feedmail)
 
 
-(defvar feedmail-nuke-bcc t
+(defcustom feedmail-nuke-bcc t
   "*Non-nil means get rid of the BCC: lines from the message header
 text before sending the mail.  In any case, the BCC: lines do
 participate in the composed address list.  You probably want to keep
-them if you're using sendmail (see feedmail-buffer-eating-function).")
+them if you're using sendmail (see feedmail-buffer-eating-function)."
+  :type 'boolean
+  :group 'feedmail)
 
 
-(defvar feedmail-fill-to-cc t
+(defcustom feedmail-fill-to-cc t
   "*Non-nil means do smart filling (line-wrapping) of TO: and CC: header
 lines.  If nil, the lines are left as-is.  The filling is done after
-mail address alias expansion.")
+mail address alias expansion."
+  :type 'boolean
+  :group 'feedmail)
 
 
-(defvar feedmail-fill-to-cc-fill-column default-fill-column
-  "*Fill column used when wrapping mail TO: and CC: lines.")
+(defcustom feedmail-fill-to-cc-fill-column default-fill-column
+  "*Fill column used when wrapping mail TO: and CC: lines."
+  :type 'integer
+  :group 'feedmail)
 
 
-(defvar feedmail-nuke-empty-headers t
+(defcustom feedmail-nuke-empty-headers t
   "*If non-nil, headers with no contents are removed from the outgoing
 email.  A completely empty SUBJECT: header is always removed,
 regardless of the setting of this variable.  The only time you would
 want them left in would be if you used some headers whose presence
-indicated something rather than their contents.")
+indicated something rather than their contents."
+  :type 'boolean
+  :group 'feedmail)
 
 ;;; wjc sez:  I think the use of the SENDER: line is pretty pointless,
 ;;; but I left it in to be compatible with sendmail.el and because
@@ -134,25 +148,29 @@ indicated something rather than their contents.")
 ;;; want a sender line in your mail, just put one in there and don't
 ;;; wait for feedmail to do it for you.
 
-(defvar feedmail-sender-line nil
+(defcustom feedmail-sender-line nil
   "*If nil, no SENDER: header is forced.  If non-nil and the email
 already has a FROM: header, a SENDER: header is forced with this as
 its contents.  You can probably leave this nil, but if you feel like
 using it, a good value would be a fully-qualified domain name form of
 your address.  For example, william.j.carpenter@att.com.  Don't
 include a trailing newline or the keyword SENDER:.  They're
-automatically provided.")
+automatically provided."
+  :type 'boolean
+  :group 'feedmail)
 
 
 ;; user-full-name suggested by kpc@ptolemy.arc.nasa.gov (=Kimball Collins)
-(defvar feedmail-from-line
+(defcustom feedmail-from-line
   (concat (user-login-name) "@" (system-name) " (" (user-full-name) ")")
   "*If non-nil and the email has no FROM: header, one will be forced
 with this as its contents. A good value would be a fully-qualified
 domain name form of your address.  For example, william.j.carpenter@att.com.
 (The default value of this variable is probably not very good, since
 it doesn't have a domain part.)  Don't include a trailing newline or
-the keyword FROM:.  They're automatically provided.")
+the keyword FROM:.  They're automatically provided."
+  :type '(choice (const nil) string)
+  :group 'feedmail)
 
 
 ;;; Here's how I use the GNUS Message-ID generator for mail but not
@@ -174,7 +192,7 @@ the keyword FROM:.  They're automatically provided.")
 ;;;   		 (defun gnus-inews-message-id () nil)
 ;;;   		 ))
 ;;;   
-(defvar feedmail-message-id-generator nil
+(defcustom feedmail-message-id-generator nil
   "*If non-nil, should be a function (called with no arguments) which
 will generate a unique message ID which will be inserted on a
 Message-ID: header.  The message ID should be the return value of the
@@ -186,7 +204,9 @@ When called, the current buffer is the prepped outgoing mail buffer
 (the function may inspect it, but shouldn't modify it).  If the returned
 value doesn't contain any non-whitespace characters, no message ID
 header is generated, so you could generate them conditionally,
-based on the contents of the mail.")
+based on the contents of the mail."
+  :type 'boolean
+  :group 'feedmail)
 
 
 (defun feedmail-confirm-addresses-hook-example ()
@@ -199,7 +219,7 @@ and gets a confirmation.  Use as (setq feedmail-last-chance-hook
 		(error "Sending...gave up in last chance hook"))))
 
 
-(defvar feedmail-last-chance-hook nil
+(defcustom feedmail-last-chance-hook nil
   "*User's last opportunity to modify the message on its way out.  It
 has already had all the header prepping from the standard package.
 The next step after running the hook will be to push the buffer into a
@@ -210,10 +230,12 @@ space-separated, simplified list of addresses which is to be given to
 the subprocess (the hook may change them).  feedmail-error-buffer is
 an empty buffer intended to soak up errors for display to the user.
 If the hook allows interactive activity, the user should not send more
-mail while in the hook since some of the internal buffers will be reused.")
+mail while in the hook since some of the internal buffers will be reused."
+  :type 'hook
+  :group 'feedmail)
 
 ;; XEmacs change: make the default more sensible.
-(defvar feedmail-buffer-eating-function
+(defcustom feedmail-buffer-eating-function
   (if (and (boundp 'sendmail-program)
 	   (string-match "sendmail" sendmail-program))
       'feedmail-buffer-to-sendmail
@@ -225,10 +247,12 @@ the prepped message; (2) a buffer where errors should be directed; and
 addresses.  Two popular choices for this are 'feedmail-buffer-to-binmail
 and 'feedmail-buffer-to-sendmail.  If you use the sendmail form, you
 probably want to set feedmail-nuke-bcc to nil.  If you use the binmail
-form, check the value of feedmail-binmail-template.")
+form, check the value of feedmail-binmail-template."
+  :type 'function
+  :group 'feedmail)
 
 
-(defvar feedmail-binmail-template (if mail-interactive "/bin/mail %s" "/bin/rmail %s")
+(defcustom feedmail-binmail-template (if mail-interactive "/bin/mail %s" "/bin/rmail %s")
   "*Command template for the subprocess which will get rid of the
 mail.  It can result in any command understandable by /bin/sh.  The
 single '%s', if present, gets replaced by the space-separated,
@@ -238,7 +262,9 @@ buffer as stdin.  If you'd like your errors to come back as mail
 instead of immediately in a buffer, try /bin/rmail instead of
 /bin/mail (this can be accomplished by keeping the default nil setting
 of mail-interactive).  You might also like to consult local mail
-experts for any other interesting command line possibilities.")
+experts for any other interesting command line possibilities."
+  :type 'string
+  :group 'feedmail)
 
 
 ;; feedmail-buffer-to-binmail and feedmail-buffer-to-sendmail are the

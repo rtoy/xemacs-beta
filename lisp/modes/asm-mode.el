@@ -51,16 +51,25 @@
 
 ;;; Code:
 
-(defvar asm-comment-char ?;
-  "*The comment-start character assumed by Asm mode.")
+(defgroup asm nil
+  "Assembler programming"
+  :group 'languages)
+
+
+(defcustom asm-comment-char ?;
+  "*The comment-start character assumed by Asm mode."
+  :type 'sexp
+  :group 'asm)
 
 ;; XEmacs change (This is the primary difference, why was this
 ;;  feature removed? -sb)
-(defvar asm-support-c-comments-p t
+(defcustom asm-support-c-comments-p t
   "*Support C style comments.  If t C style comments will be
-supported.  This is mainly for the benefit of font-lock.")
+supported.  This is mainly for the benefit of font-lock."
+  :type 'boolean
+  :group 'asm)
 
-(defvar asm-mode-syntax-table nil
+(defcustom asm-mode-syntax-table nil
   "Syntax table used while in Asm mode.")
 
 (defvar asm-mode-abbrev-table nil

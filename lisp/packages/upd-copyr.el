@@ -34,26 +34,38 @@
 
 ;;; Code:
 
+(defgroup copyright nil
+  "Update the copyright notice in a Lisp file."
+  :group 'maint)
+
+
 ;; #### - this will break if you dump it into emacs
 (defconst copyright-year (substring (current-time-string) -4)
   "String representing the current year.")
 
 ;;;###autoload
-(defvar copyright-do-not-disturb "Free Software Foundation, Inc."
+(defcustom copyright-do-not-disturb "Free Software Foundation, Inc."
   "*If non-nil, the existing copyright holder is checked against this regexp.
 If it does not match, then a new copyright line is added with the copyright
-holder set to the value of `copyright-whoami'.") 
+holder set to the value of `copyright-whoami'."
+  :type '(choice (const nil) string)
+  :group 'copyright) 
 
 ;;;###autoload
-(defvar copyright-whoami nil
-  "*A string containing the name of the owner of new copyright notices.")
+(defcustom copyright-whoami nil
+  "*A string containing the name of the owner of new copyright notices."
+  :type '(choice (const nil) string)
+  :group 'copyright)
 
 ;;;###autoload
-(defvar copyright-notice-file nil
-  "*If non-nil, replace copying notices with this file.")
+(defcustom copyright-notice-file nil
+  "*If non-nil, replace copying notices with this file."
+  :type '(choice (const nil) file)
+  :group 'copyright)
 
-(defvar copyright-files-to-ignore-regex "loaddefs.el$"
-  "*Regular expression for files that should be ignored")
+(defcustom copyright-files-to-ignore-regex "loaddefs.el$"
+  "*Regular expression for files that should be ignored"
+  :type 'regexp)
 
 (defvar current-gpl-version "2"
   "String representing the current version of the GPL.")

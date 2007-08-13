@@ -169,373 +169,85 @@ frames); with any other value the current frame is used.")
 
 ;;;### (autoloads (list-yahrzeit-dates calendar) "calendar" "calendar/calendar.el")
 
-(defvar calendar-week-start-day 0 "\
-*The day of the week on which a week in the calendar begins.
-0 means Sunday (default), 1 means Monday, and so on.")
-
-(defvar calendar-offset 0 "\
-*The offset of the principal month from the center of the calendar window.
-0 means the principal month is in the center (default), -1 means on the left,
-+1 means on the right.  Larger (or smaller) values push the principal month off
-the screen.")
-
-(defvar view-diary-entries-initially nil "\
-*Non-nil means display current date's diary entries on entry.
-The diary is displayed in another window when the calendar is first displayed,
-if the current date is visible.  The number of days of diary entries displayed
-is governed by the variable `number-of-diary-entries'.")
-
-(defvar number-of-diary-entries 1 "\
-*Specifies how many days of diary entries are to be displayed initially.
-This variable affects the diary display when the command M-x diary is used,
-or if the value of the variable `view-diary-entries-initially' is t.  For
-example, if the default value 1 is used, then only the current day's diary
-entries will be displayed.  If the value 2 is used, then both the current
-day's and the next day's entries will be displayed.
-
-The value can also be a vector such as [0 2 2 2 2 4 1]; this value
-says to display no diary entries on Sunday, the display the entries
-for the current date and the day after on Monday through Thursday,
-display Friday through Monday's entries on Friday, and display only
-Saturday's entries on Saturday.
-
-This variable does not affect the diary display with the `d' command
-from the calendar; in that case, the prefix argument controls the
-number of days of diary entries displayed.")
-
-(defvar mark-diary-entries-in-calendar nil "\
-*Non-nil means mark dates with diary entries, in the calendar window.
-The marking symbol is specified by the variable `diary-entry-marker'.")
-
-(defvar view-calendar-holidays-initially nil "\
-*Non-nil means display holidays for current three month period on entry.
-The holidays are displayed in another window when the calendar is first
-displayed.")
-
-(defvar mark-holidays-in-calendar nil "\
-*Non-nil means mark dates of holidays in the calendar window.
-The marking symbol is specified by the variable `calendar-holiday-marker'.")
-
-(defvar all-hebrew-calendar-holidays nil "\
-*If nil, show only major holidays from the Hebrew calendar.
-This means only those Jewish holidays that appear on secular calendars.
-
-If t, show all the holidays that would appear in a complete Hebrew calendar.")
-
-(defvar all-christian-calendar-holidays nil "\
-*If nil, show only major holidays from the Christian calendar.
-This means only those Christian holidays that appear on secular calendars.
-
-If t, show all the holidays that would appear in a complete Christian
-calendar.")
-
-(defvar all-islamic-calendar-holidays nil "\
-*If nil, show only major holidays from the Islamic calendar.
-This means only those Islamic holidays that appear on secular calendars.
-
-If t, show all the holidays that would appear in a complete Islamic
-calendar.")
-
-(defvar calendar-load-hook nil "\
-*List of functions to be called after the calendar is first loaded.
-This is the place to add key bindings to `calendar-mode-map'.")
-
-(defvar initial-calendar-window-hook nil "\
-*List of functions to be called when the calendar window is first opened.
-The functions invoked are called after the calendar window is opened, but
-once opened is never called again.  Leaving the calendar with the `q' command
-and reentering it will cause these functions to be called again.")
-
-(defvar today-visible-calendar-hook nil "\
-*List of functions called whenever the current date is visible.
-This can be used, for example, to replace today's date with asterisks; a
-function `calendar-star-date' is included for this purpose:
-    (setq today-visible-calendar-hook 'calendar-star-date)
-It can also be used to mark the current date with `calendar-today-marker';
-a function is also provided for this:
-    (setq today-visible-calendar-hook 'calendar-mark-today)
-
-The corresponding variable `today-invisible-calendar-hook' is the list of
-functions called when the calendar function was called when the current
-date is not visible in the window.
-
-Other than the use of the provided functions, the changing of any
-characters in the calendar buffer by the hooks may cause the failure of the
-functions that move by days and weeks.")
-
-(defvar today-invisible-calendar-hook nil "\
-*List of functions called whenever the current date is not visible.
-
-The corresponding variable `today-visible-calendar-hook' is the list of
-functions called when the calendar function was called when the current
-date is visible in the window.
-
-Other than the use of the provided functions, the changing of any
-characters in the calendar buffer by the hooks may cause the failure of the
-functions that move by days and weeks.")
-
-(defvar diary-file "~/diary" "\
-*Name of the file in which one's personal diary of dates is kept.
-
-The file's entries are lines in any of the forms
-
-            MONTH/DAY
-            MONTH/DAY/YEAR
-            MONTHNAME DAY
-            MONTHNAME DAY, YEAR
-            DAYNAME
-
-at the beginning of the line; the remainder of the line is the diary entry
-string for that date.  MONTH and DAY are one or two digit numbers, YEAR is
-a number and may be written in full or abbreviated to the final two digits.
-If the date does not contain a year, it is generic and applies to any year.
-DAYNAME entries apply to any date on which is on that day of the week.
-MONTHNAME and DAYNAME can be spelled in full, abbreviated to three
-characters (with or without a period), capitalized or not.  Any of DAY,
-MONTH, or MONTHNAME, YEAR can be `*' which matches any day, month, or year,
-respectively.
-
-The European style (in which the day precedes the month) can be used
-instead, if you execute `european-calendar' when in the calendar, or set
-`european-calendar-style' to t in your .emacs file.  The European forms are
-
-            DAY/MONTH
-            DAY/MONTH/YEAR
-            DAY MONTHNAME
-            DAY MONTHNAME YEAR
-            DAYNAME
-
-To revert to the default American style from the European style, execute
-`american-calendar' in the calendar.
-
-A diary entry can be preceded by the character
-`diary-nonmarking-symbol' (ordinarily `&') to make that entry
-nonmarking--that is, it will not be marked on dates in the calendar
-window but will appear in a diary window.
-
-Multiline diary entries are made by indenting lines after the first with
-either a TAB or one or more spaces.
-
-Lines not in one the above formats are ignored.  Here are some sample diary
-entries (in the default American style):
-
-     12/22/1988 Twentieth wedding anniversary!!
-     &1/1. Happy New Year!
-     10/22 Ruth's birthday.
-     21: Payday
-     Tuesday--weekly meeting with grad students at 10am
-              Supowit, Shen, Bitner, and Kapoor to attend.
-     1/13/89 Friday the thirteenth!!
-     &thu 4pm squash game with Lloyd.
-     mar 16 Dad's birthday
-     April 15, 1989 Income tax due.
-     &* 15 time cards due.
-
-If the first line of a diary entry consists only of the date or day name with
-no trailing blanks or punctuation, then that line is not displayed in the
-diary window; only the continuation lines is shown.  For example, the
-single diary entry
-
-     02/11/1989
-      Bill Blattner visits Princeton today
-      2pm Cognitive Studies Committee meeting
-      2:30-5:30 Lizzie at Lawrenceville for `Group Initiative'
-      4:00pm Jamie Tappenden
-      7:30pm Dinner at George and Ed's for Alan Ryan
-      7:30-10:00pm dance at Stewart Country Day School
-
-will appear in the diary window without the date line at the beginning.  This
-facility allows the diary window to look neater, but can cause confusion if
-used with more than one day's entries displayed.
-
-Diary entries can be based on Lisp sexps.  For example, the diary entry
-
-      %%(diary-block 11 1 1990 11 10 1990) Vacation
-
-causes the diary entry \"Vacation\" to appear from November 1 through November
-10, 1990.  Other functions available are `diary-float', `diary-anniversary',
-`diary-cyclic', `diary-day-of-year', `diary-iso-date', `diary-french-date',
-`diary-hebrew-date', `diary-islamic-date', `diary-mayan-date',
-`diary-yahrzeit', `diary-sunrise-sunset', `diary-phases-of-moon',
-`diary-parasha', `diary-omer', `diary-rosh-hodesh', and
-`diary-sabbath-candles'.  See the documentation for the function
-`list-sexp-diary-entries' for more details.
-
-Diary entries based on the Hebrew and/or the Islamic calendar are also
-possible, but because these are somewhat slow, they are ignored
-unless you set the `nongregorian-diary-listing-hook' and the
-`nongregorian-diary-marking-hook' appropriately.  See the documentation
-for these functions for details.
-
-Diary files can contain directives to include the contents of other files; for
-details, see the documentation for the variable `list-diary-entries-hook'.")
-
-(defvar diary-nonmarking-symbol "&" "\
-*Symbol indicating that a diary entry is not to be marked in the calendar.")
-
-(defvar hebrew-diary-entry-symbol "H" "\
-*Symbol indicating a diary entry according to the Hebrew calendar.")
-
-(defvar islamic-diary-entry-symbol "I" "\
-*Symbol indicating a diary entry according to the Islamic calendar.")
-
-(defvar diary-include-string "#include" "\
-*The string indicating inclusion of another file of diary entries.
-See the documentation for the function `include-other-diary-files'.")
-
-(defvar sexp-diary-entry-symbol "%%" "\
-*The string used to indicate a sexp diary entry in diary-file.
-See the documentation for the function `list-sexp-diary-entries'.")
-
-(defvar abbreviated-calendar-year t "\
-*Interpret a two-digit year DD in a diary entry as either 19DD or 20DD.
-For the Gregorian calendar; similarly for the Hebrew and Islamic calendars.
-If this variable is nil, years must be written in full.")
-
-(defvar european-calendar-style nil "\
-*Use the European style of dates in the diary and in any displays.
-If this variable is t, a date 1/2/1990 would be interpreted as February 1,
-1990.  The accepted European date styles are
-
-            DAY/MONTH
-            DAY/MONTH/YEAR
-            DAY MONTHNAME
-            DAY MONTHNAME YEAR
-            DAYNAME
-
-Names can be capitalized or not, written in full, or abbreviated to three
-characters with or without a period.")
-
-(defvar american-date-diary-pattern '((month "/" day "[^/0-9]") (month "/" day "/" year "[^0-9]") (monthname " *" day "[^,0-9]") (monthname " *" day ", *" year "[^0-9]") (dayname "\\W")) "\
-*List of pseudo-patterns describing the American patterns of date used.
-See the documentation of `diary-date-forms' for an explanation.")
-
-(defvar european-date-diary-pattern '((day "/" month "[^/0-9]") (day "/" month "/" year "[^0-9]") (backup day " *" monthname "\\W+\\<[^*0-9]") (day " *" monthname " *" year "[^0-9]") (dayname "\\W")) "\
-*List of pseudo-patterns describing the European patterns of date used.
-See the documentation of `diary-date-forms' for an explanation.")
-
-(defvar european-calendar-display-form '((if dayname (concat dayname ", ")) day " " monthname " " year) "\
-*Pseudo-pattern governing the way a date appears in the European style.
-See the documentation of calendar-date-display-form for an explanation.")
-
-(defvar american-calendar-display-form '((if dayname (concat dayname ", ")) monthname " " day ", " year) "\
-*Pseudo-pattern governing the way a date appears in the American style.
-See the documentation of `calendar-date-display-form' for an explanation.")
-
-(defvar print-diary-entries-hook 'lpr-buffer "\
-*List of functions called after a temporary diary buffer is prepared.
-The buffer shows only the diary entries currently visible in the diary
-buffer.  The default just does the printing.  Other uses might include, for
-example, rearranging the lines into order by day and time, saving the buffer
-instead of deleting it, or changing the function used to do the printing.")
-
-(defvar list-diary-entries-hook nil "\
-*List of functions called after diary file is culled for relevant entries.
-It is to be used for diary entries that are not found in the diary file.
-
-A function `include-other-diary-files' is provided for use as the value of
-this hook.  This function enables you to use shared diary files together
-with your own.  The files included are specified in the diary file by lines
-of the form
-
-        #include \"filename\"
-
-This is recursive; that is, #include directives in files thus included are
-obeyed.  You can change the \"#include\" to some other string by changing
-the variable `diary-include-string'.  When you use `include-other-diary-files'
-as part of the list-diary-entries-hook, you will probably also want to use the
-function `mark-included-diary-files' as part of `mark-diary-entries-hook'.
-
-For example, you could use
-
-     (setq list-diary-entries-hook
-       '(include-other-diary-files sort-diary-entries))
-     (setq diary-display-hook 'fancy-diary-display)
-
-in your `.emacs' file to cause the fancy diary buffer to be displayed with
-diary entries from various included files, each day's entries sorted into
-lexicographic order.")
-
-(defvar diary-hook nil "\
-*List of functions called after the display of the diary.
-Can be used for appointment notification.")
-
-(defvar diary-display-hook nil "\
-*List of functions that handle the display of the diary.
-If nil (the default), `simple-diary-display' is used.  Use `ignore' for no
-diary display.
-
-Ordinarily, this just displays the diary buffer (with holidays indicated in
-the mode line), if there are any relevant entries.  At the time these
-functions are called, the variable `diary-entries-list' is a list, in order
-by date, of all relevant diary entries in the form of ((MONTH DAY YEAR)
-STRING), where string is the diary entry for the given date.  This can be
-used, for example, a different buffer for display (perhaps combined with
-holidays), or produce hard copy output.
-
-A function `fancy-diary-display' is provided as an alternative
-choice for this hook; this function prepares a special noneditable diary
-buffer with the relevant diary entries that has neat day-by-day arrangement
-with headings.  The fancy diary buffer will show the holidays unless the
-variable `holidays-in-diary-buffer' is set to nil.  Ordinarily, the fancy
-diary buffer will not show days for which there are no diary entries, even
-if that day is a holiday; if you want such days to be shown in the fancy
-diary buffer, set the variable `diary-list-include-blanks' to t.")
-
-(defvar nongregorian-diary-listing-hook nil "\
-*List of functions called for listing diary file and included files.
-As the files are processed for diary entries, these functions are used to cull
-relevant entries.  You can use either or both of `list-hebrew-diary-entries'
-and `list-islamic-diary-entries'.  The documentation for these functions
-describes the style of such diary entries.")
-
-(defvar mark-diary-entries-hook nil "\
-*List of functions called after marking diary entries in the calendar.
-
-A function `mark-included-diary-files' is also provided for use as the
-mark-diary-entries-hook; it enables you to use shared diary files together
-with your own.  The files included are specified in the diary file by lines
-of the form
-        #include \"filename\"
-This is recursive; that is, #include directives in files thus included are
-obeyed.  You can change the \"#include\" to some other string by changing the
-variable `diary-include-string'.  When you use `mark-included-diary-files' as
-part of the mark-diary-entries-hook, you will probably also want to use the
-function `include-other-diary-files' as part of `list-diary-entries-hook'.")
-
-(defvar nongregorian-diary-marking-hook nil "\
-*List of functions called for marking diary file and included files.
-As the files are processed for diary entries, these functions are used to cull
-relevant entries.  You can use either or both of `mark-hebrew-diary-entries'
-and `mark-islamic-diary-entries'.  The documentation for these functions
-describes the style of such diary entries.")
-
-(defvar diary-list-include-blanks nil "\
-*If nil, do not include days with no diary entry in the list of diary entries.
-Such days will then not be shown in the fancy diary buffer, even if they
-are holidays.")
-
-(defvar holidays-in-diary-buffer t "\
-*Non-nil means include holidays in the diary display.
-The holidays appear in the mode line of the diary buffer, or in the
-fancy diary buffer next to the date.  This slows down the diary functions
-somewhat; setting it to nil makes the diary display faster.")
-
-(defvar general-holidays '((holiday-fixed 1 1 "New Year's Day") (holiday-float 1 1 3 "Martin Luther King Day") (holiday-fixed 2 2 "Ground Hog Day") (holiday-fixed 2 14 "Valentine's Day") (holiday-float 2 1 3 "President's Day") (holiday-fixed 3 17 "St. Patrick's Day") (holiday-fixed 4 1 "April Fool's Day") (holiday-float 5 0 2 "Mother's Day") (holiday-float 5 1 -1 "Memorial Day") (holiday-fixed 6 14 "Flag Day") (holiday-float 6 0 3 "Father's Day") (holiday-fixed 7 4 "Independence Day") (holiday-float 9 1 1 "Labor Day") (holiday-float 10 1 2 "Columbus Day") (holiday-fixed 10 31 "Halloween") (holiday-fixed 11 11 "Veteran's Day") (holiday-float 11 4 4 "Thanksgiving")) "\
-*General holidays.  Default value is for the United States.
-See the documentation for `calendar-holidays' for details.")
+(defcustom calendar-week-start-day 0 "*The day of the week on which a week in the calendar begins.\n0 means Sunday (default), 1 means Monday, and so on." :type 'integer :group 'calendar)
+
+(defcustom calendar-offset 0 "*The offset of the principal month from the center of the calendar window.\n0 means the principal month is in the center (default), -1 means on the left,\n+1 means on the right.  Larger (or smaller) values push the principal month off\nthe screen." :type 'integer :group 'calendar)
+
+(defcustom view-diary-entries-initially nil "*Non-nil means display current date's diary entries on entry.\nThe diary is displayed in another window when the calendar is first displayed,\nif the current date is visible.  The number of days of diary entries displayed\nis governed by the variable `number-of-diary-entries'." :type 'boolean :group 'diary)
+
+(defcustom number-of-diary-entries 1 "*Specifies how many days of diary entries are to be displayed initially.\nThis variable affects the diary display when the command M-x diary is used,\nor if the value of the variable `view-diary-entries-initially' is t.  For\nexample, if the default value 1 is used, then only the current day's diary\nentries will be displayed.  If the value 2 is used, then both the current\nday's and the next day's entries will be displayed.\n\nThe value can also be a vector such as [0 2 2 2 2 4 1]; this value\nsays to display no diary entries on Sunday, the display the entries\nfor the current date and the day after on Monday through Thursday,\ndisplay Friday through Monday's entries on Friday, and display only\nSaturday's entries on Saturday.\n\nThis variable does not affect the diary display with the `d' command\nfrom the calendar; in that case, the prefix argument controls the\nnumber of days of diary entries displayed." :type 'integer :group 'diary)
+
+(defcustom mark-diary-entries-in-calendar nil "*Non-nil means mark dates with diary entries, in the calendar window.\nThe marking symbol is specified by the variable `diary-entry-marker'." :type 'boolean :group 'diary)
+
+(defcustom view-calendar-holidays-initially nil "*Non-nil means display holidays for current three month period on entry.\nThe holidays are displayed in another window when the calendar is first\ndisplayed." :type 'boolean :group 'holidays)
+
+(defcustom mark-holidays-in-calendar nil "*Non-nil means mark dates of holidays in the calendar window.\nThe marking symbol is specified by the variable `calendar-holiday-marker'." :type 'boolean :group 'holidays)
+
+(defcustom all-hebrew-calendar-holidays nil "*If nil, show only major holidays from the Hebrew calendar.\nThis means only those Jewish holidays that appear on secular calendars.\n\nIf t, show all the holidays that would appear in a complete Hebrew calendar." :type 'boolean :group 'holidays)
+
+(defcustom all-christian-calendar-holidays nil "*If nil, show only major holidays from the Christian calendar.\nThis means only those Christian holidays that appear on secular calendars.\n\nIf t, show all the holidays that would appear in a complete Christian\ncalendar." :type 'boolean :group 'holidays)
+
+(defcustom all-islamic-calendar-holidays nil "*If nil, show only major holidays from the Islamic calendar.\nThis means only those Islamic holidays that appear on secular calendars.\n\nIf t, show all the holidays that would appear in a complete Islamic\ncalendar." :type 'boolean :group 'holidays)
+
+(defcustom calendar-load-hook nil "*List of functions to be called after the calendar is first loaded.\nThis is the place to add key bindings to `calendar-mode-map'." :type 'hook :group 'calendar)
+
+(defcustom initial-calendar-window-hook nil "*List of functions to be called when the calendar window is first opened.\nThe functions invoked are called after the calendar window is opened, but\nonce opened is never called again.  Leaving the calendar with the `q' command\nand reentering it will cause these functions to be called again." :type 'hook :group 'calendar)
+
+(defcustom today-visible-calendar-hook nil "*List of functions called whenever the current date is visible.\nThis can be used, for example, to replace today's date with asterisks; a\nfunction `calendar-star-date' is included for this purpose:\n    (setq today-visible-calendar-hook 'calendar-star-date)\nIt can also be used to mark the current date with `calendar-today-marker';\na function is also provided for this:\n    (setq today-visible-calendar-hook 'calendar-mark-today)\n\nThe corresponding variable `today-invisible-calendar-hook' is the list of\nfunctions called when the calendar function was called when the current\ndate is not visible in the window.\n\nOther than the use of the provided functions, the changing of any\ncharacters in the calendar buffer by the hooks may cause the failure of the\nfunctions that move by days and weeks." :type 'hook :group 'calendar)
+
+(defcustom today-invisible-calendar-hook nil "*List of functions called whenever the current date is not visible.\n\nThe corresponding variable `today-visible-calendar-hook' is the list of\nfunctions called when the calendar function was called when the current\ndate is visible in the window.\n\nOther than the use of the provided functions, the changing of any\ncharacters in the calendar buffer by the hooks may cause the failure of the\nfunctions that move by days and weeks." :type 'hook :group 'calendar)
+
+(defcustom diary-file "~/diary" "*Name of the file in which one's personal diary of dates is kept.\n\nThe file's entries are lines in any of the forms\n\n            MONTH/DAY\n            MONTH/DAY/YEAR\n            MONTHNAME DAY\n            MONTHNAME DAY, YEAR\n            DAYNAME\n\nat the beginning of the line; the remainder of the line is the diary entry\nstring for that date.  MONTH and DAY are one or two digit numbers, YEAR is\na number and may be written in full or abbreviated to the final two digits.\nIf the date does not contain a year, it is generic and applies to any year.\nDAYNAME entries apply to any date on which is on that day of the week.\nMONTHNAME and DAYNAME can be spelled in full, abbreviated to three\ncharacters (with or without a period), capitalized or not.  Any of DAY,\nMONTH, or MONTHNAME, YEAR can be `*' which matches any day, month, or year,\nrespectively.\n\nThe European style (in which the day precedes the month) can be used\ninstead, if you execute `european-calendar' when in the calendar, or set\n`european-calendar-style' to t in your .emacs file.  The European forms are\n\n            DAY/MONTH\n            DAY/MONTH/YEAR\n            DAY MONTHNAME\n            DAY MONTHNAME YEAR\n            DAYNAME\n\nTo revert to the default American style from the European style, execute\n`american-calendar' in the calendar.\n\nA diary entry can be preceded by the character\n`diary-nonmarking-symbol' (ordinarily `&') to make that entry\nnonmarking--that is, it will not be marked on dates in the calendar\nwindow but will appear in a diary window.\n\nMultiline diary entries are made by indenting lines after the first with\neither a TAB or one or more spaces.\n\nLines not in one the above formats are ignored.  Here are some sample diary\nentries (in the default American style):\n\n     12/22/1988 Twentieth wedding anniversary!!\n     &1/1. Happy New Year!\n     10/22 Ruth's birthday.\n     21: Payday\n     Tuesday--weekly meeting with grad students at 10am\n              Supowit, Shen, Bitner, and Kapoor to attend.\n     1/13/89 Friday the thirteenth!!\n     &thu 4pm squash game with Lloyd.\n     mar 16 Dad's birthday\n     April 15, 1989 Income tax due.\n     &* 15 time cards due.\n\nIf the first line of a diary entry consists only of the date or day name with\nno trailing blanks or punctuation, then that line is not displayed in the\ndiary window; only the continuation lines is shown.  For example, the\nsingle diary entry\n\n     02/11/1989\n      Bill Blattner visits Princeton today\n      2pm Cognitive Studies Committee meeting\n      2:30-5:30 Lizzie at Lawrenceville for `Group Initiative'\n      4:00pm Jamie Tappenden\n      7:30pm Dinner at George and Ed's for Alan Ryan\n      7:30-10:00pm dance at Stewart Country Day School\n\nwill appear in the diary window without the date line at the beginning.  This\nfacility allows the diary window to look neater, but can cause confusion if\nused with more than one day's entries displayed.\n\nDiary entries can be based on Lisp sexps.  For example, the diary entry\n\n      %%(diary-block 11 1 1990 11 10 1990) Vacation\n\ncauses the diary entry \"Vacation\" to appear from November 1 through November\n10, 1990.  Other functions available are `diary-float', `diary-anniversary',\n`diary-cyclic', `diary-day-of-year', `diary-iso-date', `diary-french-date',\n`diary-hebrew-date', `diary-islamic-date', `diary-mayan-date',\n`diary-yahrzeit', `diary-sunrise-sunset', `diary-phases-of-moon',\n`diary-parasha', `diary-omer', `diary-rosh-hodesh', and\n`diary-sabbath-candles'.  See the documentation for the function\n`list-sexp-diary-entries' for more details.\n\nDiary entries based on the Hebrew and/or the Islamic calendar are also\npossible, but because these are somewhat slow, they are ignored\nunless you set the `nongregorian-diary-listing-hook' and the\n`nongregorian-diary-marking-hook' appropriately.  See the documentation\nfor these functions for details.\n\nDiary files can contain directives to include the contents of other files; for\ndetails, see the documentation for the variable `list-diary-entries-hook'." :type 'file :group 'diary)
+
+(defcustom diary-nonmarking-symbol "&" "*Symbol indicating that a diary entry is not to be marked in the calendar." :type 'string :group 'diary)
+
+(defcustom hebrew-diary-entry-symbol "H" "*Symbol indicating a diary entry according to the Hebrew calendar." :type 'string :group 'diary)
+
+(defcustom islamic-diary-entry-symbol "I" "*Symbol indicating a diary entry according to the Islamic calendar." :type 'string :group 'diary)
+
+(defcustom diary-include-string "#include" "*The string indicating inclusion of another file of diary entries.\nSee the documentation for the function `include-other-diary-files'." :type 'string :group 'diary)
+
+(defcustom sexp-diary-entry-symbol "%%" "*The string used to indicate a sexp diary entry in diary-file.\nSee the documentation for the function `list-sexp-diary-entries'." :type 'string :group 'diary)
+
+(defcustom abbreviated-calendar-year t "*Interpret a two-digit year DD in a diary entry as either 19DD or 20DD.\nFor the Gregorian calendar; similarly for the Hebrew and Islamic calendars.\nIf this variable is nil, years must be written in full." :type 'boolean :group 'diary)
+
+(defcustom european-calendar-style nil "*Use the European style of dates in the diary and in any displays.\nIf this variable is t, a date 1/2/1990 would be interpreted as February 1,\n1990.  The accepted European date styles are\n\n            DAY/MONTH\n            DAY/MONTH/YEAR\n            DAY MONTHNAME\n            DAY MONTHNAME YEAR\n            DAYNAME\n\nNames can be capitalized or not, written in full, or abbreviated to three\ncharacters with or without a period." :type 'boolean :group 'diary)
+
+(defcustom american-date-diary-pattern '((month "/" day "[^/0-9]") (month "/" day "/" year "[^0-9]") (monthname " *" day "[^,0-9]") (monthname " *" day ", *" year "[^0-9]") (dayname "\\W")) "*List of pseudo-patterns describing the American patterns of date used.\nSee the documentation of `diary-date-forms' for an explanation." :type '(repeat (choice (cons :tag "Backup" (const backup) (repeat (list :inline t :format "%v" (symbol :tag "Keyword") (choice symbol regexp)))) (repeat (list :inline t :format "%v" (symbol :tag "Keyword") (choice symbol regexp))))) :group 'diary)
+
+(defcustom european-date-diary-pattern '((day "/" month "[^/0-9]") (day "/" month "/" year "[^0-9]") (backup day " *" monthname "\\W+\\<[^*0-9]") (day " *" monthname " *" year "[^0-9]") (dayname "\\W")) "*List of pseudo-patterns describing the European patterns of date used.\nSee the documentation of `diary-date-forms' for an explanation." :type '(repeat (choice (cons :tag "Backup" (const backup) (repeat (list :inline t :format "%v" (symbol :tag "Keyword") (choice symbol regexp)))) (repeat (list :inline t :format "%v" (symbol :tag "Keyword") (choice symbol regexp))))) :group 'diary)
+
+(defcustom european-calendar-display-form '((if dayname (concat dayname ", ")) day " " monthname " " year) "*Pseudo-pattern governing the way a date appears in the European style.\nSee the documentation of calendar-date-display-form for an explanation." :type 'sexp :group 'calendar)
+
+(defcustom american-calendar-display-form '((if dayname (concat dayname ", ")) monthname " " day ", " year) "*Pseudo-pattern governing the way a date appears in the American style.\nSee the documentation of `calendar-date-display-form' for an explanation." :type 'sexp :group 'calendar)
+
+(defcustom print-diary-entries-hook 'lpr-buffer "*List of functions called after a temporary diary buffer is prepared.\nThe buffer shows only the diary entries currently visible in the diary\nbuffer.  The default just does the printing.  Other uses might include, for\nexample, rearranging the lines into order by day and time, saving the buffer\ninstead of deleting it, or changing the function used to do the printing." :type 'hook :group 'diary)
+
+(defcustom list-diary-entries-hook nil "*List of functions called after diary file is culled for relevant entries.\nIt is to be used for diary entries that are not found in the diary file.\n\nA function `include-other-diary-files' is provided for use as the value of\nthis hook.  This function enables you to use shared diary files together\nwith your own.  The files included are specified in the diary file by lines\nof the form\n\n        #include \"filename\"\n\nThis is recursive; that is, #include directives in files thus included are\nobeyed.  You can change the \"#include\" to some other string by changing\nthe variable `diary-include-string'.  When you use `include-other-diary-files'\nas part of the list-diary-entries-hook, you will probably also want to use the\nfunction `mark-included-diary-files' as part of `mark-diary-entries-hook'.\n\nFor example, you could use\n\n     (setq list-diary-entries-hook\n       '(include-other-diary-files sort-diary-entries))\n     (setq diary-display-hook 'fancy-diary-display)\n\nin your `.emacs' file to cause the fancy diary buffer to be displayed with\ndiary entries from various included files, each day's entries sorted into\nlexicographic order." :type 'hook :group 'diary)
+
+(defcustom diary-hook nil "*List of functions called after the display of the diary.\nCan be used for appointment notification." :type 'hook :group 'diary)
+
+(defcustom diary-display-hook nil "*List of functions that handle the display of the diary.\nIf nil (the default), `simple-diary-display' is used.  Use `ignore' for no\ndiary display.\n\nOrdinarily, this just displays the diary buffer (with holidays indicated in\nthe mode line), if there are any relevant entries.  At the time these\nfunctions are called, the variable `diary-entries-list' is a list, in order\nby date, of all relevant diary entries in the form of ((MONTH DAY YEAR)\nSTRING), where string is the diary entry for the given date.  This can be\nused, for example, a different buffer for display (perhaps combined with\nholidays), or produce hard copy output.\n\nA function `fancy-diary-display' is provided as an alternative\nchoice for this hook; this function prepares a special noneditable diary\nbuffer with the relevant diary entries that has neat day-by-day arrangement\nwith headings.  The fancy diary buffer will show the holidays unless the\nvariable `holidays-in-diary-buffer' is set to nil.  Ordinarily, the fancy\ndiary buffer will not show days for which there are no diary entries, even\nif that day is a holiday; if you want such days to be shown in the fancy\ndiary buffer, set the variable `diary-list-include-blanks' to t." :type 'hook :group 'diary)
+
+(defcustom nongregorian-diary-listing-hook nil "*List of functions called for listing diary file and included files.\nAs the files are processed for diary entries, these functions are used to cull\nrelevant entries.  You can use either or both of `list-hebrew-diary-entries'\nand `list-islamic-diary-entries'.  The documentation for these functions\ndescribes the style of such diary entries." :type 'hook :group 'diary)
+
+(defcustom mark-diary-entries-hook nil "*List of functions called after marking diary entries in the calendar.\n\nA function `mark-included-diary-files' is also provided for use as the\nmark-diary-entries-hook; it enables you to use shared diary files together\nwith your own.  The files included are specified in the diary file by lines\nof the form\n        #include \"filename\"\nThis is recursive; that is, #include directives in files thus included are\nobeyed.  You can change the \"#include\" to some other string by changing the\nvariable `diary-include-string'.  When you use `mark-included-diary-files' as\npart of the mark-diary-entries-hook, you will probably also want to use the\nfunction `include-other-diary-files' as part of `list-diary-entries-hook'." :type 'hook :group 'diary)
+
+(defcustom nongregorian-diary-marking-hook nil "*List of functions called for marking diary file and included files.\nAs the files are processed for diary entries, these functions are used to cull\nrelevant entries.  You can use either or both of `mark-hebrew-diary-entries'\nand `mark-islamic-diary-entries'.  The documentation for these functions\ndescribes the style of such diary entries." :type 'hook :group 'diary)
+
+(defcustom diary-list-include-blanks nil "*If nil, do not include days with no diary entry in the list of diary entries.\nSuch days will then not be shown in the fancy diary buffer, even if they\nare holidays." :type 'boolean :group 'diary)
+
+(defcustom holidays-in-diary-buffer t "*Non-nil means include holidays in the diary display.\nThe holidays appear in the mode line of the diary buffer, or in the\nfancy diary buffer next to the date.  This slows down the diary functions\nsomewhat; setting it to nil makes the diary display faster." :type 'boolean :group 'diary)
+
+(defcustom general-holidays '((holiday-fixed 1 1 "New Year's Day") (holiday-float 1 1 3 "Martin Luther King Day") (holiday-fixed 2 2 "Ground Hog Day") (holiday-fixed 2 14 "Valentine's Day") (holiday-float 2 1 3 "President's Day") (holiday-fixed 3 17 "St. Patrick's Day") (holiday-fixed 4 1 "April Fool's Day") (holiday-float 5 0 2 "Mother's Day") (holiday-float 5 1 -1 "Memorial Day") (holiday-fixed 6 14 "Flag Day") (holiday-float 6 0 3 "Father's Day") (holiday-fixed 7 4 "Independence Day") (holiday-float 9 1 1 "Labor Day") (holiday-float 10 1 2 "Columbus Day") (holiday-fixed 10 31 "Halloween") (holiday-fixed 11 11 "Veteran's Day") (holiday-float 11 4 4 "Thanksgiving")) "*General holidays.  Default value is for the United States.\nSee the documentation for `calendar-holidays' for details." :type 'sexp :group 'holidays)
 
 (put 'general-holidays 'risky-local-variable t)
 
-(defvar local-holidays nil "\
-*Local holidays.
-See the documentation for `calendar-holidays' for details.")
+(defcustom local-holidays nil "*Local holidays.\nSee the documentation for `calendar-holidays' for details." :type 'sexp :group 'holidays :group 'local)
 
 (put 'local-holidays 'risky-local-variable t)
 
-(defvar other-holidays nil "\
-*User defined holidays.
-See the documentation for `calendar-holidays' for details.")
+(defcustom other-holidays nil "*User defined holidays.\nSee the documentation for `calendar-holidays' for details." :type 'sexp :group 'holidays)
 
 (put 'other-holidays 'risky-local-variable t)
 
@@ -999,9 +711,12 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-buffer-create customize-apropos customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-buffer-create customize-apropos customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize-other-window customize) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'customize "cus-edit" "\
+Customize SYMBOL, which must be a customization group." t nil)
+
+(autoload 'customize-other-window "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
 
 (autoload 'customize-variable "cus-edit" "\
@@ -1069,7 +784,7 @@ See `defface' for the format of SPEC." nil nil)
 
 ;;;***
 
-;;;### (autoloads (widget-browse-other-window widget-browse widget-browse-at) "wid-browse" "custom/wid-browse.el")
+;;;### (autoloads (widget-minor-mode widget-browse-other-window widget-browse widget-browse-at) "wid-browse" "custom/wid-browse.el")
 
 (autoload 'widget-browse-at "wid-browse" "\
 Browse the widget under point." t nil)
@@ -1079,6 +794,10 @@ Create a widget browser for WIDGET." t nil)
 
 (autoload 'widget-browse-other-window "wid-browse" "\
 Show widget browser for WIDGET in other window." t nil)
+
+(autoload 'widget-minor-mode "wid-browse" "\
+Togle minor mode for traversing widgets.
+With arg, turn widget mode on if and only if arg is positive." t nil)
 
 ;;;***
 
@@ -3681,11 +3400,7 @@ in your `~/.emacs' file, replacing [f7] by your favourite key:
 
 ;;;### (autoloads (fortran-mode) "fortran" "modes/fortran.el")
 
-(defvar fortran-tab-mode-default nil "\
-*Default tabbing/carriage control style for empty files in Fortran mode.
-A value of t specifies tab-digit style of continuation control.
-A value of nil specifies that continuation lines are marked
-with a character in column 6.")
+(defcustom fortran-tab-mode-default nil "*Default tabbing/carriage control style for empty files in Fortran mode.\nA value of t specifies tab-digit style of continuation control.\nA value of nil specifies that continuation lines are marked\nwith a character in column 6." :type 'boolean :group 'fortran-indent)
 
 (autoload 'fortran-mode "fortran" "\
 Major mode for editing Fortran code.
@@ -3922,7 +3637,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.22 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.23 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4587,30 +4302,17 @@ table to convert all REXX keywords into upper case." t nil)
 
 ;;;### (autoloads (resize-minibuffer-mode) "rsz-minibuf" "modes/rsz-minibuf.el")
 
-(defvar resize-minibuffer-mode nil "\
-*If non-`nil', resize the minibuffer so its entire contents are visible.")
+(defgroup resize-minibuffer nil "Dynamically resize minibuffer to display entire contents" :group 'frames)
 
-(defvar resize-minibuffer-window-max-height nil "\
-*Maximum size the minibuffer window is allowed to become.
-If less than 1 or not a number, the limit is the height of the frame in
-which the active minibuffer window resides.")
+(defcustom resize-minibuffer-window-max-height nil "*Maximum size the minibuffer window is allowed to become.\nIf less than 1 or not a number, the limit is the height of the frame in\nwhich the active minibuffer window resides." :type '(choice (const nil) integer) :group 'resize-minibuffer)
 
-(defvar resize-minibuffer-window-exactly t "\
-*If non-`nil', make minibuffer exactly the size needed to display all its contents.
-Otherwise, the minibuffer window can temporarily increase in size but
-never get smaller while it is active.")
+(defcustom resize-minibuffer-window-exactly t "*If non-`nil', make minibuffer exactly the size needed to display all its contents.\nOtherwise, the minibuffer window can temporarily increase in size but\nnever get smaller while it is active." :type 'boolean :group 'resize-minibuffer)
 
-(defvar resize-minibuffer-frame nil "\
-*If non-`nil' and the active minibuffer is the sole window in its frame, allow changing the frame height.")
+(defcustom resize-minibuffer-frame nil "*If non-`nil' and the active minibuffer is the sole window in its frame, allow changing the frame height." :type 'boolean :group 'resize-minibuffer)
 
-(defvar resize-minibuffer-frame-max-height nil "\
-*Maximum size the minibuffer frame is allowed to become.
-If less than 1 or not a number, there is no limit.")
+(defcustom resize-minibuffer-frame-max-height nil "*Maximum size the minibuffer frame is allowed to become.\nIf less than 1 or not a number, there is no limit.")
 
-(defvar resize-minibuffer-frame-exactly nil "\
-*If non-`nil', make minibuffer frame exactly the size needed to display all its contents.
-Otherwise, the minibuffer frame can temporarily increase in size but
-never get smaller while it is active.")
+(defcustom resize-minibuffer-frame-exactly nil "*If non-`nil', make minibuffer frame exactly the size needed to display all its contents.\nOtherwise, the minibuffer frame can temporarily increase in size but\nnever get smaller while it is active." :type 'boolean :group 'resize-minibuffer)
 
 (autoload 'resize-minibuffer-mode "rsz-minibuf" "\
 Enable or disable resize-minibuffer mode.
@@ -5229,13 +4931,23 @@ Variables controlling indentation/edit style:
 
  verilog-indent-level           (default 3)
     Indentation of Verilog statements with respect to containing block.
+ verilog-indent-level-module    (default 3)
+    Absolute indentation of Module level Verilog statements. 
+    Set to 0 to get initial and always statements lined up 
+    on the left side of your screen.
+ verilog-indent-level-declaration    (default 3)
+    Indentation of declarations with respect to containing block. 
+    Set to 0 to get them list right under containing block.
+ verilog-indent-level-behavorial    (default 3)
+    Indentation of first begin in a task or function block
+    Set to 0 to get such code to linedup underneath the task or function keyword
  verilog-cexp-indent            (default 1)
     Indentation of Verilog statements broken across lines.
  verilog-case-indent            (default 2)
     Indentation for case statements.
  verilog-auto-newline           (default nil)
-    Non-nil means automatically newline after semicolons and the punctuation mark
-    after an end.
+    Non-nil means automatically newline after semicolons and the punctation 
+    mark after an end.
  verilog-auto-indent-on-newline (default t)
     Non-nil means automatically indent line after newline
  verilog-tab-always-indent      (default t)
@@ -5251,23 +4963,32 @@ Variables controlling indentation/edit style:
       if (a)
       begin
  verilog-auto-endcomments       (default t)
-    Non-nil means a comment /* ... */ is set after the ends which ends cases, tasks, functions and modules.
+    Non-nil means a comment /* ... */ is set after the ends which ends 
+      cases, tasks, functions and modules.
     The type and name of the object will be set between the braces.
+ verilog-minimum-comment-distance (default 40)
+    Minimum distance between begin and end required before a comment
+    will be inserted.  Setting this variable to zero results in every
+    end aquiring a comment; the default avoids too many redundanet
+    comments in tight quarters. 
  verilog-auto-lineup            (default `(all))
     List of contexts where auto lineup of :'s or ='s should be done.
 
 Turning on Verilog mode calls the value of the variable verilog-mode-hook with
 no args, if that value is non-nil.
 Other useful functions are:
-\\[verilog-complete-word]	-complete word with appropriate possibilities (functions, verilog keywords...)
-\\[verilog-comment-area]	- Put marked area in a comment, fixing nested comments.
-\\[verilog-uncomment-area]	- Uncomment an area commented with \\[verilog-comment-area].
+\\[verilog-complete-word]	-complete word with appropriate possibilities 
+   (functions, verilog keywords...)
+\\[verilog-comment-region]	- Put marked area in a comment, fixing 
+   nested comments.
+\\[verilog-uncomment-region]	- Uncomment an area commented with \\[verilog-comment-region].
 \\[verilog-insert-block]	- insert begin ... end;
 \\[verilog-star-comment]	- insert /* ... */
 \\[verilog-mark-defun]	- Mark function.
 \\[verilog-beg-of-defun]	- Move to beginning of current function.
 \\[verilog-end-of-defun]	- Move to end of current function.
-\\[verilog-label-be]	- Label matching begin ... end, fork ... join and case ... endcase statements;
+\\[verilog-label-be]	- Label matching begin ... end, fork ... join 
+  and case ... endcase statements;
 " t nil)
 
 ;;;***
@@ -5276,7 +4997,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.22 $
+vhdl-mode $Revision: 1.23 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -6791,9 +6512,7 @@ This discards the buffer's undo information." t nil)
 
 ;;;### (autoloads (hypropos-popup-menu hypropos-set-variable hyper-set-variable hypropos-get-doc hypropos-read-variable-symbol hyper-describe-function hyper-describe-variable hyper-describe-face hyper-describe-key-briefly hyper-describe-key hyper-apropos) "hyper-apropos" "packages/hyper-apropos.el")
 
-(defvar hypropos-show-brief-docs t "\
-*If non-nil, `hyper-apropos' will display some documentation in the
-\"*Hyper Apropos*\" buffer.  Setting this to nil will speed up searches.")
+(defcustom hypropos-show-brief-docs t "*If non-nil, `hyper-apropos' will display some documentation in the\n\"*Hyper Apropos*\" buffer.  Setting this to nil will speed up searches." :type 'boolean :group 'hyper-apropos)
 
 (autoload 'hyper-apropos "hyper-apropos" "\
 Display lists of functions and variables matching REGEXP
@@ -7247,12 +6966,9 @@ do (setq lisp-mode-hook 'ledit-from-lisp-mode)" t nil)
 
 ;;;### (autoloads (print-region lpr-region print-buffer lpr-buffer) "lpr" "packages/lpr.el")
 
-(defvar lpr-switches nil "\
-*List of strings to pass as extra options for the printer program.
-See `lpr-command'.")
+(defcustom lpr-switches nil "*List of strings to pass as extra options for the printer program.\nSee `lpr-command'." :type '(repeat (string :tag "Argument")) :group 'lpr)
 
-(defvar lpr-command (if (memq system-type '(usg-unix-v dgux hpux irix)) "lp" "lpr") "\
-*Name of program for printing a file.")
+(defcustom lpr-command (if (memq system-type '(usg-unix-v dgux hpux irix)) "lp" "lpr") "*Name of program for printing a file." :type 'string :group 'lpr)
 
 (autoload 'lpr-buffer "lpr" "\
 Print buffer contents as with Unix command `lpr'.
@@ -7706,16 +7422,11 @@ takes two arguments START and END which specify the range to operate on." t nil)
 
 ;;;### (autoloads (ask-to-update-copyright update-copyright) "upd-copyr" "packages/upd-copyr.el")
 
-(defvar copyright-do-not-disturb "Free Software Foundation, Inc." "\
-*If non-nil, the existing copyright holder is checked against this regexp.
-If it does not match, then a new copyright line is added with the copyright
-holder set to the value of `copyright-whoami'.")
+(defcustom copyright-do-not-disturb "Free Software Foundation, Inc." "*If non-nil, the existing copyright holder is checked against this regexp.\nIf it does not match, then a new copyright line is added with the copyright\nholder set to the value of `copyright-whoami'." :type '(choice (const nil) string) :group 'copyright)
 
-(defvar copyright-whoami nil "\
-*A string containing the name of the owner of new copyright notices.")
+(defcustom copyright-whoami nil "*A string containing the name of the owner of new copyright notices." :type '(choice (const nil) string) :group 'copyright)
 
-(defvar copyright-notice-file nil "\
-*If non-nil, replace copying notices with this file.")
+(defcustom copyright-notice-file nil "*If non-nil, replace copying notices with this file." :type '(choice (const nil) file) :group 'copyright)
 
 (autoload 'update-copyright "upd-copyr" "\
 Update the copyright notice at the beginning of the buffer
@@ -8933,10 +8644,7 @@ For example, invoke `xemacs -batch -f batch-update-autoloads *.el'." nil nil)
 
 ;;;### (autoloads (browse-url-lynx-emacs browse-url-lynx-xterm browse-url-w3 browse-url-iximosaic browse-url-grail browse-url-mosaic browse-url-netscape) "browse-url" "utils/browse-url.el")
 
-(defvar browse-url-browser-function 'browse-url-w3 "\
-*Function to display the current buffer in a WWW browser.
-Used by the `browse-url-at-point', `browse-url-at-mouse', and
-`browse-url-of-file' commands.")
+(defcustom browse-url-browser-function 'browse-url-w3 "*Function to display the current buffer in a WWW browser.\nUsed by the `browse-url-at-point', `browse-url-at-mouse', and\n`browse-url-of-file' commands." :type 'function :group 'browse-url)
 
 (autoload 'browse-url-netscape "browse-url" "\
 Ask the Netscape WWW browser to load URL.
@@ -9092,7 +8800,7 @@ The result will be a string if possible, otherwise an event vector.
 Second argument NEED-VECTOR means to return an event vector always." t nil)
 
 (autoload 'kbd "edmacro" "\
-Convert KEYS to the internal Emacs key representation." nil 'macro)
+Convert KEYS to the internal Emacs key representation." nil nil)
 
 (autoload 'format-kbd-macro "edmacro" "\
 Return the keyboard macro MACRO as a human-readable string.
@@ -9119,19 +8827,7 @@ use this command, and then save the file." t nil)
 
 ;;;### (autoloads (turn-on-eldoc-mode eldoc-mode) "eldoc" "utils/eldoc.el")
 
-(defvar eldoc-mode nil "\
-*If non-nil, show the defined parameters for the elisp function near point.
-
-For the emacs lisp function at the beginning of the sexp which point is
-within, show the defined parameters for the function in the echo area.
-This information is extracted directly from the function or macro if it is
-in pure lisp.  If the emacs function is a subr, the parameters are obtained
-from the documentation string if possible.
-
-If point is over a documented variable, print that variable's docstring
-instead.
-
-This variable is buffer-local.")
+(defcustom eldoc-mode nil "*If non-nil, show the defined parameters for the elisp function near point.\n\nFor the emacs lisp function at the beginning of the sexp which point is\nwithin, show the defined parameters for the function in the echo area.\nThis information is extracted directly from the function or macro if it is\nin pure lisp.  If the emacs function is a subr, the parameters are obtained\nfrom the documentation string if possible.\n\nIf point is over a documented variable, print that variable's docstring\ninstead.\n\nThis variable is buffer-local." :type 'boolean :group 'eldoc)
 
 (autoload 'eldoc-mode "eldoc" "\
 *Enable or disable eldoc mode.

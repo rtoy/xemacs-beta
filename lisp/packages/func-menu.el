@@ -215,6 +215,11 @@
 
 (defconst fume-version "2.45")
 
+(defgroup fume nil
+  "Jump to a function within a buffer."
+  :tag "Func Menu"
+  :group 'tools)
+
 (defconst fume-developer "David Hughes <ukchugd@ukpmr.cs.philips.nl>")
 
 (defun fume-about ()
@@ -394,9 +399,11 @@ the buffer contains more lines than the present window height."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;  Customizable Variables  ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar fume-auto-position-popup t
+(defcustom fume-auto-position-popup t
   "*Set to nil if you don't want the menu to appear in the corner of the window
-in which case it will track the mouse position instead.")
+in which case it will track the mouse position instead."
+  :type 'boolean
+  :group 'fume)
 
 (fume-defvar-local fume-display-in-modeline-p t
   "*Set to nil if you don't want the function name appearing in the modeline.
@@ -409,8 +416,10 @@ Note, this is a buffer-local variable.")
 (defvar fume-buffer-name "*Function List*"
   "Name of buffer used to list functions when fume-list-functions called")
 
-(defvar fume-menubar-menu-name "Functions"
- "*Set this to the string you want to appear in the menubar")
+(defcustom fume-menubar-menu-name "Functions"
+  "*Set this to the string you want to appear in the menubar"
+  :type 'string
+  :group 'fume)
 
 ;;; Bob Weiner <weiner@infodock.com>
 (defvar fume-menu-path nil
@@ -419,33 +428,48 @@ Nil means install it on the menubar itself.  Otherwise, it should be a list
 of strings, each string names a successively deeper menu under which the
 new menu should be located.")
 
-(defvar fume-menubar-menu-location "Buffers"
+(defcustom fume-menubar-menu-location "Buffers"
   "*Set this nil if you want the menu to appear last on the menubar.
-Otherwise set this to the menu you want \"Functions\" to appear in front of.")
+Otherwise set this to the menu you want \"Functions\" to appear in front of."
+  :type '(choice (const :tag "Last" nil) (string :format "%v"))
+  :group 'fume)
 
-(defvar fume-max-items 24
-  "*Maximum number of elements in a function (sub)menu.")
+(defcustom fume-max-items 24
+  "*Maximum number of elements in a function (sub)menu."
+  :type 'integer
+  :group 'fume)
 
-(defvar fume-fn-window-position 3
+(defcustom fume-fn-window-position 3
   "*Number of lines from top of window at which to show function.
-If nil, display function start from the centre of the window.")
+If nil, display function start from the centre of the window."
+  :type '(choice (const :tag "Center" nil) integer)
+  :group 'fume)
 
-(defvar fume-index-method 3
+(defcustom fume-index-method 3
   "*Set this to the method number you want used.
 
 Methods currently supported:
 0 = if you want submenu names to be numbered
 1 = if you want submenu range indicated by first character
 2 = if you want submenu range indicated by first 12 characters
-3 = if you want submenu range indicated by as many characters as needed")
+3 = if you want submenu range indicated by as many characters as needed"
+  :type '(radio (const :tag "Numbered" 0)
+		(const :tag "Indicated by first character" 1)
+		(const :tag "Indicated by first 12 characters" 2)
+		(const :tag "Indicated by as many characters as needed" 3))
+  :group 'fume)
 
-(defvar fume-scanning-message "Scanning buffer... (%3d%%)"
+(defcustom fume-scanning-message "Scanning buffer... (%3d%%)"
   "*Set to nil if you don't want progress messages during manual scanning
-of the buffer.")
+of the buffer."
+  :type '(choice (const :tag "None" nil) string)
+  :group 'fume)
 
-(defvar fume-rescanning-message nil
+(defcustom fume-rescanning-message nil
   "*Set to non-nil if you want progress messages during automatic scanning
-of the buffer. For example \"Re-Scanning buffer...\"")
+of the buffer. For example \"Re-Scanning buffer...\""
+  :type '(choice (const :tag "None" nil) string)
+  :group 'fume)
 
 (defvar fume-rescan-trigger-counter-buffer-size 10000
   "Used to tune the frequency of automatic checks on the buffer.

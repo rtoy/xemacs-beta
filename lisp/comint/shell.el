@@ -110,6 +110,19 @@
 
 (require 'comint)
 
+(defgroup shell nil
+  "Running shell from within Emacs buffers"
+  :group 'processes
+  :group 'unix)
+
+(defgroup shell-directories nil
+  "Directory support in shell mode"
+  :group 'shell)
+
+(defgroup shell-faces nil
+  "Faces in shell buffers"
+  :group 'shell)
+
 ;;;###autoload
 (defvar shell-prompt-pattern (purecopy "^[^#$%>\n]*[#$%>] *")
   "Regexp to match prompts in the inferior shell.
@@ -123,13 +136,15 @@ on lines which don't start with a prompt.
 
 This is a fine thing to set in your `.emacs' file.")
 
-(defvar shell-completion-fignore nil
+(defcustom shell-completion-fignore nil
   "*List of suffixes to be disregarded during file/command completion.
 This variable is used to initialize `comint-completion-fignore' in the shell
 buffer.  The default is nil, for compatibility with most shells.
 Some people like (\"~\" \"#\" \"%\").
 
-This is a fine thing to set in your `.emacs' file.")  
+This is a fine thing to set in your `.emacs' file."
+  :type '(repeat (string :tag "Suffix"))
+  :group 'shell)
 
 ;jwz: turned this off; it's way too broken.
 (defvar shell-delimiter-argument-list nil ;'(?\| ?& ?< ?> ?\( ?\) ?\;
@@ -160,53 +175,75 @@ shell buffer.
 
 This is a fine thing to set in your `.emacs' file.")
 
-(defvar shell-command-regexp "[^;&|\n]+"
+(defcustom shell-command-regexp "[^;&|\n]+"
   "*Regexp to match a single command within a pipeline.
-This is used for directory tracking and does not do a perfect job.")
+This is used for directory tracking and does not do a perfect job."
+  :type 'regexp
+  :group 'shell)
 
-(defvar shell-completion-execonly t
+(defcustom shell-completion-execonly t
   "*If non-nil, use executable files only for completion candidates.
 This mirrors the optional behavior of tcsh.
 
-Detecting executability of files may slow command completion considerably.")
+Detecting executability of files may slow command completion considerably."
+  :type 'boolean
+  :group 'shell)
 
-(defvar shell-multiple-shells nil
-  "*If non-nil, each time shell mode is invoked, a new shell is made")
+(defcustom shell-multiple-shells nil
+  "*If non-nil, each time shell mode is invoked, a new shell is made"
+  :type 'boolean
+  :group 'shell)
 
-(defvar shell-popd-regexp "popd"
-  "*Regexp to match subshell commands equivalent to popd.")
+(defcustom shell-popd-regexp "popd"
+  "*Regexp to match subshell commands equivalent to popd."
+  :type 'regexp
+  :group 'shell-directories)
 
-(defvar shell-pushd-regexp "pushd"
-  "*Regexp to match subshell commands equivalent to pushd.")
+(defcustom shell-pushd-regexp "pushd"
+  "*Regexp to match subshell commands equivalent to pushd."
+  :type 'regexp
+  :group 'shell-directories)
 
-(defvar shell-pushd-tohome nil
+(defcustom shell-pushd-tohome nil
   "*If non-nil, make pushd with no arg behave as \"pushd ~\" (like cd).
-This mirrors the optional behavior of tcsh.")
+This mirrors the optional behavior of tcsh."
+  :type 'boolean
+  :group 'shell-directories)
 
-(defvar shell-pushd-dextract nil
+(defcustom shell-pushd-dextract nil
   "*If non-nil, make \"pushd +n\" pop the nth dir to the stack top.
-This mirrors the optional behavior of tcsh.")
+This mirrors the optional behavior of tcsh."
+  :type 'boolean
+  :group 'shell-directories)
 
-(defvar shell-pushd-dunique nil
+(defcustom shell-pushd-dunique nil
   "*If non-nil, make pushd only add unique directories to the stack.
-This mirrors the optional behavior of tcsh.")
+This mirrors the optional behavior of tcsh."
+  :type 'boolean
+  :group 'shell-directories)
 
-(defvar shell-cd-regexp "cd"
-  "*Regexp to match subshell commands equivalent to cd.")
+(defcustom shell-cd-regexp "cd"
+  "*Regexp to match subshell commands equivalent to cd."
+  :type 'regexp
+  :group 'shell-directories)
 
-(defvar explicit-shell-file-name nil
-  "*If non-nil, is file name to use for explicitly requested inferior shell.")
+(defcustom explicit-shell-file-name nil
+  "*If non-nil, is file name to use for explicitly requested inferior shell."
+  :type '(choice (const :tag "None" nil) file)
+  :group 'shell)
 
-(defvar explicit-csh-args
+(defcustom explicit-csh-args
   (if (eq system-type 'hpux)
       ;; -T persuades HP's csh not to think it is smarter
       ;; than us about what terminal modes to use.
       '("-i" "-T")
     '("-i"))
   "*Args passed to inferior shell by M-x shell, if the shell is csh.
-Value is a list of strings, which may be nil.")
+Value is a list of strings, which may be nil."
+  :type '(repeat (string :tag "Argument"))
+  :group 'shell)
 
-(defvar shell-input-autoexpand 'history
+(defcustom shell-input-autoexpand 'history
   "*If non-nil, expand input command history references on completion.
 This mirrors the optional behavior of tcsh (its autoexpand and histlit).
 
@@ -216,7 +253,9 @@ into the buffer's input ring.  See also `comint-magic-space' and
 `comint-dynamic-complete'.
 
 This variable supplies a default for `comint-input-autoexpand',
-for Shell mode only.")
+for Shell mode only."
+  :type '(choice (const nil) (const input) (const history))
+  :type 'shell)
 
 (defvar shell-dirstack nil
   "List of directories saved by pushd in this buffer's shell.
@@ -247,21 +286,33 @@ Thus, this does not include the shell's current directory.")
       (define-key map "\M-\C-m" 'shell-resync-dirs)
       (setq shell-mode-map map)))
 
-(defvar shell-mode-hook nil
-  "*Hook for customising Shell mode.")
+(defcustom shell-mode-hook nil
+  "*Hook for customising Shell mode."
+  :type 'hook
+  :group 'shell)
 
 
 ;; font-locking
-(defvar shell-prompt-face 'shell-prompt-face
-  "Face for shell prompts.")
-(defvar shell-option-face 'shell-option-face
-  "Face for command line options.")
-(defvar shell-output-face 'shell-output-face
-  "Face for generic shell output.")
-(defvar shell-output-2-face 'shell-output-2-face
-  "Face for grep-like output.")
-(defvar shell-output-3-face 'shell-output-3-face
-  "Face for [N] output where N is a number.")
+(defcustom shell-prompt-face 'shell-prompt-face
+  "Face for shell prompts."
+  :type 'face
+  :group 'shell-faces)
+(defcustom shell-option-face 'shell-option-face
+  "Face for command line options."
+  :type 'face
+  :group 'shell-faces)
+(defcustom shell-output-face 'shell-output-face
+  "Face for generic shell output."
+  :type 'face
+  :group 'shell-faces)
+(defcustom shell-output-2-face 'shell-output-2-face
+  "Face for grep-like output."
+  :type 'face
+  :group 'shell-faces)
+(defcustom shell-output-3-face 'shell-output-3-face
+  "Face for [N] output where N is a number."
+  :type 'face
+  :group 'shell-faces)
 
 (make-face shell-prompt-face)
 (make-face shell-option-face)

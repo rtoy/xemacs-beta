@@ -1,3 +1,11 @@
+Thu Apr 17 17:16:34 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* balloon-x.c: New file from Douglas Keller.
+
+	* balloon_help.c: New file from Douglas Keller.
+
+	* balloon_help.h: New file from Douglas Keller.
+
 Sun Apr 13 09:56:54 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* emacs.c (shut_down_emacs): Advertise using send-pr as the

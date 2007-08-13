@@ -92,6 +92,12 @@
 
 (provide 'ediff-mult)
 
+(defgroup ediff-mult nil
+  "Multi-file and multi-buffer processing in ediff"
+  :prefix "ediff-"
+  :group 'ediff)
+
+
 ;; compiler pacifier
 (eval-when-compile
   (let ((load-path (cons (expand-file-name ".") load-path)))
@@ -163,22 +169,34 @@ directories.")
 ;; The registry of Ediff sessions. A list of control buffers.
 (defvar ediff-session-registry nil)
 
-(defvar ediff-registry-setup-hook nil
-  "*Hooks run just after the registry control panel is set up.")
-(defvar ediff-session-group-setup-hook nil
+(defcustom ediff-registry-setup-hook nil
+  "*Hooks run just after the registry control panel is set up."
+  :type 'hook
+  :group 'ediff-mult)
+(defcustom ediff-session-group-setup-hook nil
   "*Hooks run just after a meta-buffer controlling a session group, such as
-ediff-directories, is run.")
-(defvar ediff-quit-session-group-hook nil
-  "*Hooks run just before exiting a session group.")
-(defvar ediff-show-registry-hook nil
-  "*Hooks run just after the registry buffer is shown.")
-(defvar ediff-show-session-group-hook nil
-  "*Hooks run just after a session group buffer is shown.")
-(defvar ediff-meta-buffer-keymap-setup-hook nil
+ediff-directories, is run."
+  :type 'hook
+  :group 'ediff-mult)
+(defcustom ediff-quit-session-group-hook nil
+  "*Hooks run just before exiting a session group."
+  :type 'hook
+  :group 'ediff-mult)
+(defcustom ediff-show-registry-hook nil
+  "*Hooks run just after the registry buffer is shown."
+  :type 'hook
+  :group 'ediff-mult)
+(defcustom ediff-show-session-group-hook nil
+  "*Hooks run just after a session group buffer is shown."
+  :type 'hook
+  :group 'ediff-mult)
+(defcustom ediff-meta-buffer-keymap-setup-hook nil
   "*Hooks run just after setting up the ediff-meta-buffer-map.
 This keymap controls key bindings in the meta buffer and is a local variable.
 This means that you can set different bindings for different kinds of meta
-buffers.")
+buffers."
+  :type 'hook
+  :group 'ediff-mult)
 
 ;; buffer holding the multi-file patch. local to the meta buffer
 (ediff-defvar-local ediff-meta-patchbufer nil "")

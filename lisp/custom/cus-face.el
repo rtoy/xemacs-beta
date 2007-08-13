@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.84
+;; Version: 1.89
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -37,13 +37,20 @@
 				     'face-font-name
 				   'face-font))
 
+
 (eval-and-compile
-  (unless (fboundp 'frame-property)
-    ;; XEmacs function missing in Emacs.
-    (defun frame-property (frame property &optional default)
-      "Return FRAME's value for property PROPERTY."
-      (or (cdr (assq property (frame-parameters frame)))
-	  default)))
+  (cond ((fboundp 'frame-property)
+	 ;; XEmacs.
+	 (defalias 'custom-frame-parameter 'frame-property))
+	((fboundp 'frame-parameter)
+	 ;; Emacs 19.35.
+	 (defalias 'custom-frame-parameter 'frame-parameter))
+	(t
+	 ;; Old emacsen.
+	 (defun custom-frame-parameter (frame property &optional default)
+	   "Return FRAME's value for property PROPERTY."
+	   (or (cdr (assq property (frame-parameters frame)))
+	       default))))
 
   (unless (fboundp 'face-doc-string)
     ;; XEmacs function missing in Emacs.
@@ -146,12 +153,12 @@ Does nothing when the variable initialize-face-resources is nil."
 ;;    (interactive (list (read-face-name "Reverse face: ")))
 ;;    (let ((fg (or (face-foreground face frame)
 ;;		  (face-foreground 'default frame)
-;;		  (frame-property (or frame (selected-frame))
+;;		  (custom-frame-parameter (or frame (selected-frame))
 ;;				  'foreground-color)
 ;;		  "black"))
 ;;	  (bg (or (face-background face frame)
 ;;		  (face-background 'default frame)
-;;		  (frame-property (or frame (selected-frame))
+;;		  (custom-frame-parameter (or frame (selected-frame))
 ;;				  'background-color)
 ;;		  "white")))
 ;;      (set-face-foreground face bg frame)
@@ -177,7 +184,7 @@ examine the brightness for you."
 	 (mode (cond (bg-resource
 		      (intern (downcase bg-resource)))
 		     ((and (setq color (condition-case ()
-					   (or (frame-property
+					   (or (custom-frame-parameter
 						frame
 						'background-color)
 					       (custom-face-background
@@ -201,16 +208,16 @@ examine the brightness for you."
 	(list 'type (device-type (frame-device frame))
 	      'class (device-class (frame-device frame))
 	      'background (or custom-background-mode
-			      (frame-property frame
+			      (custom-frame-parameter frame
 					      'background-mode)
 			      (custom-background-mode frame))))
     ;; Emacs.
     (defun custom-extract-frame-properties (frame)
       "Return a plist with the frame properties of FRAME used by custom."
       (list 'type window-system
-	    'class (frame-property frame 'display-type)
+	    'class (custom-frame-parameter frame 'display-type)
 	    'background (or custom-background-mode
-			    (frame-property frame 'background-mode)
+			    (custom-frame-parameter frame 'background-mode)
 			    (custom-background-mode frame))))))  
 
 ;;; Declaring a face.
@@ -218,7 +225,9 @@ examine the brightness for you."
 ;;;###autoload
 (defun custom-declare-face (face spec doc &rest args)
   "Like `defface', but FACE is evaluated as a normal argument."
-  (when (fboundp 'load-gc)
+  (when (or (fboundp 'load-gc)		;XEmacs.
+	    ;; Emacs.
+	    (and (boundp purify-flag) purify-flag))
     ;; This should be allowed, somehow.
     (error "Attempt to declare a face during dump"))
   (unless (get face 'factory-face)
@@ -443,7 +452,7 @@ See `defface' for a list of valid keys and values for the plist.")
 If FRAME is nil, return the default frame properties."
   (cond (frame
 	 ;; Try to get from cache.
-	 (let ((cache (frame-property frame 'custom-properties)))
+	 (let ((cache (custom-frame-parameter frame 'custom-properties)))
 	   (unless cache
 	     ;; Oh well, get it then.
 	     (setq cache (custom-extract-frame-properties frame))

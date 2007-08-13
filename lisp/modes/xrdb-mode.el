@@ -67,13 +67,22 @@
 
 
 ;; These variables are available for your customization
-(defvar xrdb-mode-hook nil
-  "*Hook to be run when `xrdb-mode' is entered.")
+(defgroup xrdb nil
+  "Mode for editing X resource database files."
+  :group 'languages)
 
-(defvar xrdb-subdivide-by 'paragraph
+(defcustom xrdb-mode-hook nil
+  "*Hook to be run when `xrdb-mode' is entered."
+  :type 'hook
+  :group 'xrdb)
+
+(defcustom xrdb-subdivide-by 'paragraph
   "*Extent of alignment calculations.
 Can be one of `buffer', `paragraph', `page', or `line'.  Do a
-\\[describe-function] xrdb-indent-buffer RET for more information.")
+\\[describe-function] xrdb-indent-buffer RET for more information."
+  :type '(radio (const buffer) (const paragraph)
+		(const page) (const line))
+  :group 'xrdb)
 
 
 

@@ -1,3 +1,67 @@
+Fri Apr 18 16:45:07 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/skeleton.el (skeleton-pair-insert-maybe): Guard test with
+	existence check on mark-active too.
+	(skeleton-proxy): Ditto.
+	(skeleton-proxy-new): Ditto.
+
+Fri Apr 18 09:26:24 1997  Dave Gillespie <daveg@synaptics.com>
+
+	* cl/cl-macs.el (values): New setf-method.
+
+Thu Apr 17 21:29:57 1997  Bob Weiner <weiner@infodock.com>
+
+	* packages/avoid.el (mouse-avoidance-kbd-command): Correct
+	detection of keypress.
+
+Thu Apr 17 21:20:04 1997  Michael McNamara  <mac@silicon-sorcery.com>
+
+	* modes/verilog-mode.el: Changes to 2.25
+	1) Autoindent a new declaration according to the previous
+	   declaration, if any. Only use the previous one, don't try to re
+	   line things up.
+	2) Include "Customize Verilog-Mode" in the Verilog menu bar. Make it
+	   safe to do so, even if the underlying emacs does not yet support
+	   custom.
+	3) Include keybinding C-c C-b for reporting bugs.
+	4) Include keybinding C-c i for reindenting declarations.
+
+	* modes/verilog-mode.el: Changes to 2.24
+	Cleaned up menubar items; added submit bug report there, for
+	example.
+
+	* modes/verilog-mode.el: Changes to 2.23
+	1) Support custom (XEmacs) or defvar method of customization.
+	2) fix verilog-pretty declarations
+	3) add support so folks turning up the complexity of commenting don't
+	   get errors (they don't get any more complexity either)
+
+	* modes/verilog-mode.el: Changes to 2.22
+	1) Moved installation hints to the web page.
+	2) Added support for XEmacs's custom variable setting package.
+	3) Added variables to separatly control indentation of
+		module level items (always, initial. etc)
+		declarations
+		behavorial (the begin in the task & function declaration
+	4) Attempted to shorten comments and lisp so that the %@* NT
+	   mailers won't turn long comments into extra code.
+	5) Used make-regexp to optimize many regular expressions so that they
+	   are no longer backtrack.
+	6) fixed bugs
+	 a) a newline on a blank line no longer generates two new lines.
+	 b) a semicolon on a comment no longer auto indents
+	 c) lines like ''else if (a) begin''
+	    no longer confuse auto commenter
+	 d) a number of other bugs which fail to come to mind...
+	7) Added support for menu pulldowns on FSF and XEmacs
+	8) Added support for XEmacs v20
+	9) Changed verilog-comment-region to insert comments that Verilog-XL
+	   doesn't b*tch about.
+	10) Eliminated auto lineup of declarations upon typing newline of
+	   semicolon. (Cheers all around) Now instead there is a command, and
+	   also a menu pulldown, which lines up indentations around point.
+	11) Added verilog-submit-bug-report
+
 Mon Apr 14 13:06:10 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* utils/autoload.el (generate-file-autoloads-1): Turn off local

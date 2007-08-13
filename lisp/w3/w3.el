@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/04/07 15:59:56
-;; Version: 1.108
+;; Created: 1997/04/15 23:28:10
+;; Version: 1.111
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1629,9 +1629,9 @@ display-buffer, and using this function"
 	  (goto-char (cdr pos))
 	  (if (and (eolp) (not (eobp)))
 	      (forward-char 1)))
-      (error "Link #%s not found." link))))
+      (message "Link #%s not found." link))))
 
-  (defun w3-force-reload-document ()
+(defun w3-force-reload-document ()
   "Reload the current document.  Take it from the network, even if
 cached and in local mode."
   (let ((url-standalone-mode nil))
@@ -2192,6 +2192,8 @@ With optional ARG, move across that many fields."
 				 (substring link-at-point 0 17) "..."))
 			      "): ")
 		    "Link: ") links-alist nil t))
+    (if (and (string= choice "") link-at-point)
+	(setq choice link-at-point))
     (let ((match (try-completion choice links-alist)))
       (cond
        ((eq t match)			; We have an exact match

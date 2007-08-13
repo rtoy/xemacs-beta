@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.84
+;; Version: 1.89
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -58,7 +58,7 @@ and `end-open' if it should sticky to the front."
     ;; We have the old custom-library, hack around it!
     (defmacro defgroup (&rest args) nil)
     (defmacro defcustom (var value doc &rest args) 
-      `(defvar ,var ,value ,doc))
+      (` (defvar (, var) (, value) (, doc))))
     (defmacro defface (&rest args) nil)
     (define-widget-keywords :prefix :tag :load :link :options :type :group)
     (when (fboundp 'copy-face)
@@ -117,7 +117,7 @@ into the buffer visible in the event's window."
 
 (defface widget-field-face '((((class grayscale color)
 			       (background light))
-			      (:background "light gray"))
+			      (:background "gray85"))
 			     (((class grayscale color)
 			       (background dark))
 			      (:background "dark gray"))
@@ -167,7 +167,9 @@ Larger menus are read through the minibuffer."
   "Choose an item from a list.
 
 First argument TITLE is the name of the list.
-Second argument ITEMS is an alist (NAME . VALUE).
+Second argument ITEMS is an list whose members are either
+ (NAME . VALUE), to indicate selectable items, or just strings to
+ indicate unselectable items.
 Optional third argument EVENT is an input event.
 
 The user is asked to choose between each NAME from the items alist,
@@ -188,7 +190,9 @@ minibuffer."
 			   (mapcar
 			    (function
 			     (lambda (x)
-			       (vector (car x) (list (car x)) t)))
+			       (if (stringp x)
+				   (vector x nil nil) 
+				 (vector (car x) (list (car x)) t))))
 			    items)))))
 	   (setq val (and val
 			  (listp (event-object val))
@@ -196,6 +200,7 @@ minibuffer."
 			  (car (event-object val))))
 	   (cdr (assoc val items))))
 	(t
+	 (setq items (remove-if 'stringp items))
 	 (let ((val (completing-read (concat title ": ") items nil t)))
 	   (if (stringp val)
 	       (let ((try (try-completion val items)))
@@ -371,7 +376,8 @@ This is only meaningful for radio buttons or checkboxes in a list."
 
 (defmacro widget-specify-insert (&rest form)
   ;; Execute FORM without inheriting any text properties.
-  `(save-restriction
+  (`
+   (save-restriction
      (let ((inhibit-read-only t)
 	   result
 	   after-change-functions)
@@ -379,11 +385,11 @@ This is only meaningful for radio buttons or checkboxes in a list."
        (narrow-to-region (- (point) 2) (point))
        (widget-specify-none (point-min) (point-max))
        (goto-char (1+ (point-min)))
-       (setq result (progn ,@form))
+       (setq result (progn (,@ form)))
        (delete-region (point-min) (1+ (point-min)))
        (delete-region (1- (point-max)) (point-max))
        (goto-char (point-max))
-       result)))
+       result))))
 
 (defface widget-inactive-face '((((class grayscale color)
 				  (background dark))
@@ -401,7 +407,8 @@ This is only meaningful for radio buttons or checkboxes in a list."
   (unless (widget-get widget :inactive)
     (let ((overlay (make-overlay from to nil t nil)))
       (overlay-put overlay 'face 'widget-inactive-face)
-      (overlay-put overlay 'evaporate 't)
+      (overlay-put overlay 'evaporate t)
+      (overlay-put overlay 'priority 100)
       (overlay-put overlay (if (string-match "XEmacs" emacs-version)
 			       'read-only
 			     'modification-hooks) '(widget-overlay-inactive))
@@ -783,8 +790,9 @@ ARG may be negative to move backward."
 		       (t
 			(error "No buttons or fields found"))))))
 	(setq button (widget-at (point)))
-	(if (and button (widget-get button :tab-order)
-		 (< (widget-get button :tab-order) 0))
+	(if (or (and button (widget-get button :tab-order)
+		     (< (widget-get button :tab-order) 0))
+		(and button (not (widget-apply button :active))))
 	    (setq arg (1+ arg))))))
   (while (< arg 0)
     (if (= (point-min) (point))
@@ -821,8 +829,9 @@ ARG may be negative to move backward."
 	    (button (goto-char button))
 	    (field (goto-char field)))
       (setq button (widget-at (point)))
-      (if (and button (widget-get button :tab-order)
-	       (< (widget-get button :tab-order) 0))
+      (if (or (and button (widget-get button :tab-order)
+		   (< (widget-get button :tab-order) 0))
+	      (and button (not (widget-apply button :active))))
 	  (setq arg (1- arg)))))
   (widget-echo-help (point))
   (run-hooks 'widget-move-hook))
@@ -1070,7 +1079,8 @@ With optional ARG, move across that many fields."
      (set-marker-insertion-type from t)
      (set-marker-insertion-type to nil)
      (widget-put widget :from from)
-     (widget-put widget :to to))))
+     (widget-put widget :to to)))
+  (widget-clear-undo))
 
 (defun widget-default-format-handler (widget escape)
   ;; We recognize the %h escape by default.
@@ -1132,7 +1142,8 @@ With optional ARG, move across that many fields."
       ;; Kludge: this doesn't need to be true for empty formats.
       (delete-region from to))
     (set-marker from nil)
-    (set-marker to nil)))
+    (set-marker to nil))
+  (widget-clear-undo))
 
 (defun widget-default-value-set (widget value)
   ;; Recreate widget with new value.
@@ -1280,7 +1291,17 @@ With optional ARG, move across that many fields."
 
 (defun widget-info-link-action (widget &optional event)
   "Open the info node specified by WIDGET."
-  (Info-goto-node (widget-value widget)))
+  (Info-goto-node (widget-value widget))
+  ;; Steal button release event.
+  (if (and (fboundp 'button-press-event-p)
+	   (fboundp 'next-command-event))
+      ;; XEmacs
+      (and event
+	   (button-press-event-p event)
+	   (next-command-event))
+    ;; Emacs
+    (when (memq 'down (event-modifiers event))
+      (read-event))))
 
 ;;; The `url-link' Widget.
 
@@ -1490,11 +1511,8 @@ With optional ARG, move across that many fields."
       (widget-value-set widget 
 			(widget-apply current :value-to-external
 				      (widget-get current :value)))
-    (widget-apply widget :notify widget event)
-    (widget-setup)))
-  ;; Notify parent.
-  (widget-apply widget :notify widget event)
-  (widget-clear-undo))
+      (widget-apply widget :notify widget event)
+      (widget-setup))))
 
 (defun widget-choice-validate (widget)
   ;; Valid if we have made a valid choice.
@@ -1550,7 +1568,7 @@ With optional ARG, move across that many fields."
   ;; Toggle value.
   (widget-value-set widget (not (widget-value widget)))
   (widget-apply widget :notify widget event))
-  
+
 ;;; The `checkbox' Widget.
 
 (define-widget 'checkbox 'toggle
