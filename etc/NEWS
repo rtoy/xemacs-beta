@@ -20,13 +20,10 @@ Users interested in some of the details of how XEmacs differs from GNU
 Emacs should read the section "What's Different?" near the end of this
 file.
 
-    N.B.  The term "FSF GNU Emacs" refers to any release of Emacs
-    Version 19 from the Free Software Foundation's GNU Project. (We do
-    not say just "GNU Emacs" because Richard M. Stallman ["RMS"]
-    thinks that this term is too generic; although we sometimes say
-    e.g. "GNU Emacs 19.30" to refer to a specific version of FSF GNU
-    Emacs.  We do not say merely "Emacs", as RMS prefers, because that
-    is clearly an even more generic term.) The term "XEmacs" refers to
+    N.B.  The term "GNU Emacs" refers to any release of Emacs Version
+    19 from the Free Software Foundation's GNU Project.  (We do not
+    say just "Emacs" as Richard M. Stallman ["RMS"] prefers, because
+    it is clearly a more generic term.)  The term "XEmacs" refers to
     this program or to its predecessors "Era" and "Lucid Emacs".  The
     predecessor of all these program is called "Emacs 18".  When no
     particular version is implied, "Emacs" will be used.
@@ -63,8 +60,8 @@ value of the `user-full-name' variable.  The `user-full-name' variable
 is initialized using the environment variable NAME and (failing that)
 the user's system name.
 
-If you specify an argument to the `user-full-name' function, it will
-not respect the `user-full-name' variable.
+The behaviour of the `user-full-name' function with an argument
+specified is unchanged.
 
 ** The new command `M-x customize-changed-options' lets you customize
 all the options whose default values have changed in recent Emacs
@@ -91,8 +88,8 @@ command.
 
 ** XEmacs/Mule (internationalization) changes.
 
-*** Egg/SJ3 input method is supported officially.  Quail and Egg/Skk
-have been available through the generalized Leim since 20.3.
+*** Egg/SJ3 input method is now officially supported.  Quail and
+Egg/Skk have been available through the generalized Leim since 20.3.
 
 *** Localized Japanese menubars are available if XEmacs is built with
 XFONTSET and either the X11 libraries are built with X_LOCALE defined
@@ -102,6 +99,15 @@ been available since 20.3, only it hasn't been announced before.
 
 * Lisp and internal changes in XEmacs 20.4
 ==========================================
+
+** There is initial support for 30-bit integers in elisp (normally,
+integers are only 28 bits wide on 32-bit machines.)  Compile with
+-DUSE_MINIMAL_TAGBITS to test.  With this change, the maximum buffer
+size on 32-bit machines is bumped from 128M to 512M.
+
+** The internal image code now uses the ImageMagick library as an
+interface to various image-related functions.  You still need the
+other libraries to build the image support, though.
 
 ** The XEmacs hashtables now have a consistent read/print syntax.
 This means that a hashtable will be readably printed in a
@@ -135,6 +141,11 @@ automatically applies `format' to its arguments.
 
 ** The new `lwarn' function, analogous to `lmessage', allows printing
 a formatted warning, with a non-default CLASS or LABEL.
+
+** The line number tracking in modeline is now efficient, even for
+very large buffers.  This is achieved by caching the line numbers of
+recent buffer positions, and reusing them.  This cache is used only in
+the buffers where `line-number-mode' is in effect.
 
 
 * Changes in XEmacs 20.3

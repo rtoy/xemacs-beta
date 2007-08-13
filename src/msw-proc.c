@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "events.h"
 #include "event-msw.h"
+#include "redisplay.h"
 
 #ifdef DEBUG_XEMACS
 # include "opaque.h"	/* For the debug functions at the end of this file */
@@ -51,12 +52,9 @@ Boston, MA 02111-1307, USA.  */
 
 static Lisp_Object mswindows_find_frame (HWND hwnd);
 static Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods);
-static int mswindows_modifier_state (void);
+static int mswindows_modifier_state (BYTE* keymap, int has_AltGr);
 static int mswindows_enqueue_timeout (int milliseconds);
 static void mswindows_dequeue_timeout (int interval_id);
-
-/* Virtual keycode of the '@' key */
-static int virtual_at_key = -1;
 
 /* Timeout queue */
 struct mswindows_timeout
@@ -70,69 +68,9 @@ static mswindows_timeout timeout_pool[MSW_TIMEOUT_MAX];
 static mswindows_timeout *timeout_head = NULL;
 static int timeout_mswindows_id;
 
-#if 0
-/*
- * Entry point for the "windows" message-processing thread
- */
-DWORD mswindows_win_thread()
-{
-  /* Hack! Windows doesn't report Ctrl-@ characters so we have to find out
-   * which virtual key generates '@' at runtime */
-  virtual_at_key = VkKeyScan ('@');
-  if (virtual_at_key & 0x200)	/* 0x200 means the control key */
-    /* If you need Ctrl just to generate @, you can't do Ctrl-@ */
-    virtual_at_key = -1;
-  else
-    virtual_at_key &= 0xff;	/* The low byte contains the keycode */
-
-  /* Main windows loop */
-  while (1)
-  {
-    GetMessage (&msg, NULL, 0, 0);
-
-    /*
-     * Process things that don't have an associated window, so wouldn't
-     * get sent to mswindows_wnd_proc
-     */
-
-    /* Request from main thread */
-    if (msg.message>=WM_XEMACS_BASE && msg.message<=WM_XEMACS_END)
-      mswindows_handle_request(&msg);
-
-    /* Timeout(s) */
-    else if (msg.message ==  WM_TIMER)
-    {
-      EnterCriticalSection (&mswindows_dispatch_crit);
-      if (timeout_head!=NULL)
-	--(timeout_head->ticks);
-
-      while (timeout_head!=NULL && timeout_head->ticks==0)
-	{
-	  Lisp_Object emacs_event;
-	  struct Lisp_Event *event;
-	  int id = timeout_head->interval_id;
-
-#ifdef DEBUG_TIMEOUTS
-	  stderr_out("--> %x\n", id);
-#endif
-	  mswindows_dequeue_timeout (id);
-	  emacs_event = Fmake_event (Qnil, Qnil);
-	  event = XEVENT(emacs_event);
-
-	  event->channel = Qnil;
-	  event->timestamp = msg.time;
-	  event->event_type = timeout_event;
-	  event->event.timeout.interval_id = id;
-	  mswindows_enqueue_dispatch_event (emacs_event);
-	}
-      LeaveCriticalSection (&mswindows_dispatch_crit);
-    }
-    else
-      /* Pass on to mswindows_wnd_proc */
-      DispatchMessage (&msg);
-  }
-}
-#endif /* 0 */
+/*----------------------------------------------------------------------------*/
+/* Enqueue helpers                                                            */
+/*----------------------------------------------------------------------------*/
 
 static void
 mswindows_enqueue_magic_event (HWND hwnd, UINT message)
@@ -166,7 +104,7 @@ mswindows_enqueue_mouse_button_event (HWND hwnd, UINT message, POINTS where, DWO
     ((message==WM_RBUTTONDOWN || message==WM_RBUTTONUP) ? 3 : 2);
   event->event.button.x = where.x;
   event->event.button.y = where.y;
-  event->event.button.modifiers = mswindows_modifier_state();
+  event->event.button.modifiers = mswindows_modifier_state (NULL, 0);
       
   if (message==WM_LBUTTONDOWN || message==WM_MBUTTONDOWN ||
       message==WM_RBUTTONDOWN)
@@ -180,6 +118,20 @@ mswindows_enqueue_mouse_button_event (HWND hwnd, UINT message, POINTS where, DWO
       ReleaseCapture ();
     }
   
+  mswindows_enqueue_dispatch_event (emacs_event);
+}
+
+static void
+mswindows_enqueue_keypress_event (HWND hwnd, Lisp_Object keysym, int mods)
+{
+  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+  struct Lisp_Event* event = XEVENT(emacs_event);
+
+  event->channel = mswindows_find_console(hwnd);
+  event->timestamp = GetMessageTime();
+  event->event_type = key_press_event;
+  event->event.key.keysym = keysym;
+  event->event.key.modifiers = mods;
   mswindows_enqueue_dispatch_event (emacs_event);
 }
 
@@ -215,6 +167,30 @@ mswindows_button2_near_enough (POINTS p1, POINTS p2)
   return abs (p1.x - p2.x) < dx && abs (p1.y- p2.y)< dy;
 }
 
+static int
+mswindows_current_layout_has_AltGr ()
+{
+  /* This simple caching mechanism saves 10% of CPU
+     time when a key typed at autorepeat rate of 30 cps! */
+  static HKL last_hkl = 0;
+  static int last_hkl_has_AltGr;
+
+  HKL current_hkl = GetKeyboardLayout (0);
+  if (current_hkl != last_hkl)
+    {
+      int c;
+      last_hkl_has_AltGr = 0;
+      /* In this loop, we query whether a character requires
+	 AltGr to be down to generate it. If at least such one
+	 found, this means that the layout does regard AltGr */
+      for (c = ' '; c <= 0xFF && !last_hkl_has_AltGr; ++c)
+	if (HIBYTE (VkKeyScan (c)) == 6)
+	  last_hkl_has_AltGr = 1;
+      last_hkl = current_hkl;
+    }
+  return last_hkl_has_AltGr;
+}
+
 /*
  * The windows procedure for the window class XEMACS_CLASS
  * Stuffs messages in the mswindows event queue
@@ -247,69 +223,77 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
     {
-      MSG msg = { hwnd, message, wParam, lParam, GetMessageTime(), GetMessagePos() };
-      /* Handle those keys that TranslateMessage won't generate a WM_CHAR for */
+      BYTE keymap[256];
+      int has_AltGr = mswindows_current_layout_has_AltGr ();
+      int mods, ch;
       Lisp_Object keysym;
-      int mods = mswindows_modifier_state();
 
+      GetKeyboardState (keymap);
+      mods = mswindows_modifier_state (keymap, has_AltGr);
+
+      /* Handle those keys that TranslateMessage won't generate a WM_CHAR for */
       if (!NILP (keysym = mswindows_key_to_emacs_keysym(wParam, mods)))
+	mswindows_enqueue_keypress_event (hwnd, keysym, mods);
+      else
 	{
-	  emacs_event = Fmake_event (Qnil, Qnil);
-	  event = XEVENT(emacs_event);
+	  int ch;
+	  int quit_ch = CONSOLE_QUIT_CHAR (XCONSOLE (mswindows_find_console (hwnd)));
+	  BYTE keymap_orig[256];
+	  MSG msg = { hwnd, message, wParam, lParam, GetMessageTime(), GetMessagePos() };
+	  memcpy (keymap_orig, keymap, 256);
 
-          event->channel = mswindows_find_console(hwnd);
-          event->timestamp = GetMessageTime();
-          event->event_type = key_press_event;
-          event->event.key.keysym = keysym;
-	  event->event.key.modifiers = mods;
-	  mswindows_enqueue_dispatch_event (emacs_event);
-	  return (0);
-	}
-      TranslateMessage (&msg);
+	  /* Clear control and alt modifiers out of the keymap */
+	  keymap [VK_RCONTROL] = 0;
+	  keymap [VK_LMENU] = 0;
+	  if (!has_AltGr || !(keymap [VK_LCONTROL] & 0x80) || !(keymap [VK_RMENU] & 0x80)) {
+	    keymap [VK_LCONTROL] = 0;
+	    keymap [VK_CONTROL] = 0;
+	    keymap [VK_RMENU] = 0;
+	    keymap [VK_MENU] = 0;
+	  }
+	  SetKeyboardState (keymap);
+
+	  /* Have some WM_[SYS]CHARS in the queue */
+	  TranslateMessage (&msg);
+
+	  while (PeekMessage (&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)
+		 ||PeekMessage (&msg, hwnd, WM_SYSCHAR, WM_SYSCHAR, PM_REMOVE))
+	    {
+	      ch = msg.wParam;
+	      /* CH is a character code for the key: 
+		 'C' for Shift+C and Ctrl+Shift+C
+		 'c' for c and Ctrl+c */
+
+	      /* #### If locale is not C, US or other latin-1,
+		 isalpha() maybe not what do we mean */
+	      
+	      /* XEmacs doesn't seem to like Shift on non-alpha keys */
+	      if (!isalpha(ch))
+		mods &= ~MOD_SHIFT;
+
+	      /* Un-capitalise alpha control keys */
+	      if ((mods & MOD_CONTROL) && isalpha(ch))
+		ch |= ('A' ^ 'a');
+
+	      /* If a quit char with no modifiers other than control and
+		 shift, then mark it with a fake modifier, which is removed
+		 upon dequeueing the event */
+	      /* #### This might also not withstand localization, if
+		 quit character is not a latin-1 symbol */
+	      if (((quit_ch < ' ' && (mods & MOD_CONTROL) && quit_ch + 'a' - 1 == ch)
+		   || (quit_ch >= ' ' && !(mods & MOD_CONTROL) && quit_ch == ch))
+		  && ((mods  & ~(MOD_CONTROL | MOD_SHIFT)) == 0))
+		{
+		  mods |= FAKE_MOD_QUIT;
+		  ++mswindows_quit_chars_count;
+		}
+
+	      mswindows_enqueue_keypress_event (hwnd, make_char(ch), mods);
+	    } /* while */
+	  SetKeyboardState (keymap_orig);
+	} /* else */
     }
     goto defproc;
-
-  case WM_CHAR:
-  case WM_SYSCHAR:
-    {
-      emacs_event = Fmake_event (Qnil, Qnil);
-      event = XEVENT(emacs_event);
-
-      event->channel = mswindows_find_console(hwnd);
-      event->timestamp = GetMessageTime();
-      event->event_type = key_press_event;
-
-      /* XEmacs doesn't seem to like Shift on non-alpha keys */
-      event->event.key.modifiers = isalpha(wParam) ? 
-				   mswindows_modifier_state() :
-				   mswindows_modifier_state() & ~MOD_SHIFT;
-
-      /* If a quit char with no modifiers other than control and
-	 shift, then mark it with a fake modifier, which is removed
-	 upon dequeueing the event */
-      if (wParam == CONSOLE_QUIT_CHAR (XCONSOLE (mswindows_find_console (hwnd)))
-	  && ((event->event.key.modifiers & ~(MOD_CONTROL | MOD_SHIFT)) == 0))
-	  {
-	    event->event.key.modifiers |= FAKE_MOD_QUIT;
-	    ++mswindows_quit_chars_count;
-	  }
-
-      if (wParam<' ')	/* Control char not already handled under WM_KEYDOWN */
-      {
-	/* Don't capitalise alpha control keys */
-	event->event.key.keysym = isalpha(wParam+'a'-1) ?
-				  make_char(wParam+'a'-1) :
-				  make_char(wParam+'A'-1);
-      }
-      else
-      {
-	/* Assumes that emacs keysym == ASCII code */
-	event->event.key.keysym = make_char(wParam);
-      }
-
-      mswindows_enqueue_dispatch_event (emacs_event);
-    }
-    break;
 
   case WM_MBUTTONDOWN:
   case WM_MBUTTONUP:
@@ -388,10 +372,12 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	KillTimer (hwnd, BUTTON_2_TIMER_ID);
 	msframe->button2_need_lbutton = 0;
 	msframe->button2_need_rbutton = 0;
-	msframe->button2_is_down = 1;
 	if (mswindows_button2_near_enough (msframe->last_click_point, MAKEPOINTS (lParam)))
-	  mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONDOWN,
-						MAKEPOINTS (lParam), GetMessageTime());
+	  {
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONDOWN,
+						  MAKEPOINTS (lParam), GetMessageTime());
+	    msframe->button2_is_down = 1;
+	  }
 	else
 	  {
 	    mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONDOWN,
@@ -417,10 +403,12 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	KillTimer (hwnd, BUTTON_2_TIMER_ID);
 	msframe->button2_need_lbutton = 0;
 	msframe->button2_need_rbutton = 0;
-	msframe->button2_is_down = 1;
 	if (mswindows_button2_near_enough (msframe->last_click_point, MAKEPOINTS (lParam)))
-	  mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONDOWN,
-						MAKEPOINTS (lParam), GetMessageTime());
+	  {
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONDOWN,
+						  MAKEPOINTS (lParam), GetMessageTime());
+	    msframe->button2_is_down = 1;
+	  }
 	else
 	  {
 	    mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONDOWN,
@@ -485,7 +473,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       event->event_type = pointer_motion_event;
       event->event.motion.x = MAKEPOINTS(lParam).x;
       event->event.motion.y = MAKEPOINTS(lParam).y;
-      event->event.motion.modifiers = mswindows_modifier_state();
+      event->event.motion.modifiers = mswindows_modifier_state (NULL, 0);
       
       mswindows_enqueue_dispatch_event (emacs_event);
     }
@@ -607,6 +595,18 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     mswindows_enqueue_magic_event (hwnd, XM_BUMPQUEUE);
     return 0;
 
+  case WM_VSCROLL:
+  case WM_HSCROLL:
+    {
+      /* Direction of scroll is determined by scrollbar instance. */
+      int code = (int) LOWORD(wParam);
+      int pos = (short int) HIWORD(wParam);
+      HWND hwndScrollBar = (HWND) lParam;
+      mswindows_handle_scrollbar_event (hwndScrollBar, code,  pos);
+      mswindows_enqueue_magic_event (hwnd, XM_BUMPQUEUE);
+      break;     
+    }
+
   defproc:
   default:
     return DefWindowProc (hwnd, message, wParam, lParam);
@@ -614,46 +614,34 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   return (0);
 }
 
-
-#if 0
-/*
- * Make a request to the message-processing thread to do things that
- * can't be done in the main thread.
- */
-LPARAM
-mswindows_make_request(UINT message, WPARAM wParam, mswindows_request_type *request)
-{
-  case WM_XEMACS_SETTIMER:
-    {
-      int id;
-      id = mswindows_enqueue_timeout((int) request->thing1);
-      assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, id));
-    }
-    break;
-
-  case WM_XEMACS_KILLTIMER:
-    {
-      mswindows_dequeue_timeout((int) request->thing1);
-      assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, 0));
-    }
-    break;
-
-  default:
-    assert(0);
-  }
-}
-#endif
-
 /* Returns the state of the modifier keys in the format expected by the
  * Lisp_Event key_data, button_data and motion_data modifiers member */
-int mswindows_modifier_state (void)
+int mswindows_modifier_state (BYTE* keymap, int has_AltGr)
 {
-  /* Set high bit of GetKeyState's return value indicates the key is down */
-  return ((GetKeyState (VK_SHIFT)   & 0x8000) ? MOD_SHIFT  : 0) |
-	 ((GetKeyState (VK_CONTROL) & 0x8000) ? MOD_CONTROL: 0) |
-	 ((GetKeyState (VK_MENU)    & 0x8000) ? MOD_META   : 0);
-}
+  int mods = 0;
 
+  if (keymap == NULL)
+    {
+      keymap = (BYTE*) alloca(256);
+      GetKeyboardState (keymap);
+      has_AltGr = mswindows_current_layout_has_AltGr ();
+    }
+
+  if (has_AltGr && (keymap [VK_LCONTROL] & 0x80) && (keymap [VK_RMENU] & 0x80))
+    {
+      mods |= (keymap [VK_LMENU] & 0x80) ? MOD_META : 0;
+      mods |= (keymap [VK_RCONTROL] & 0x80) ? MOD_CONTROL : 0;
+    }
+  else
+    {
+      mods |= (keymap [VK_MENU] & 0x80) ? MOD_META : 0;
+      mods |= (keymap [VK_CONTROL] & 0x80) ? MOD_CONTROL : 0;
+    }
+
+  mods |= (keymap [VK_SHIFT] & 0x80) ? MOD_SHIFT : 0;
+
+  return mods;
+}
 
 /*
  * Translate a mswindows virtual key to a keysym.
@@ -720,158 +708,9 @@ Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods)
   case VK_F22:		return KEYSYM ("f22");
   case VK_F23:		return KEYSYM ("f23");
   case VK_F24:		return KEYSYM ("f24");
-  default:
-    /* Special handling for Ctrl-'@' because '@' lives shifted on varying
-     * virtual keys and because Windows doesn't report Ctrl-@ as a WM_CHAR */
-    if (((mods & (MOD_SHIFT|MOD_CONTROL)) == (MOD_SHIFT|MOD_CONTROL)) &&
-	(mswindows_key == virtual_at_key))
-      return make_char('@');
   }
   return Qnil;
 }
-
-#if 0
-/*
- * Add a timeout to the queue. Returns the id or 0 on failure
- */
-static int mswindows_enqueue_timeout (int milliseconds)
-{
-  static int timeout_last_interval_id;
-  int target_ticks = (milliseconds + MSW_TIMEOUT_GRANULARITY-1) /
-		     MSW_TIMEOUT_GRANULARITY;
-  mswindows_timeout *target;
-  int i;
-
-  /* Find a free timeout */
-  for (i=0; i<MSW_TIMEOUT_MAX; i++)
-    {
-      target = timeout_pool + i;
-      if (target->interval_id == 0)
-	break;
-    }
-
-  /* No free timeout */
-  if (i==MSW_TIMEOUT_MAX)
-    return 0;
-
-  if (++timeout_last_interval_id == 0)
-    ++timeout_last_interval_id;
-
-  if (timeout_head == NULL || timeout_head->ticks >= target_ticks)
-    {
-      /* First or only timeout in the queue (common case) */
-      target->interval_id = timeout_last_interval_id;
-      target->ticks = target_ticks;
-      target->next = timeout_head;
-      timeout_head = target;
-
-      if (target->next == NULL)
-	{
-	  /* Queue was empty - restart the timer */
-	  timeout_mswindows_id = SetTimer (NULL, 0, MSW_TIMEOUT_GRANULARITY,
-					   NULL);
-#ifdef DEBUG_TIMEOUTS
-	  stderr_out("Start\n");
-#endif
-	}
-      else
-	target->next->ticks -= target->ticks;
-    }
-  else
-    {
-      /* Find the timeout before this new one */
-      mswindows_timeout *prev = timeout_head;
-      int tick_count = prev->ticks;	/* Number of ticks up to prev */
-
-      while (prev->next != NULL)
-	{
-	  if (tick_count + prev->next->ticks >= target_ticks)
-	    break;
-	  prev = prev->next;
-	  tick_count += prev->ticks;
-	}
-
-      /* Insert the new timeout in the queue */
-      target->interval_id = timeout_last_interval_id;
-      target->ticks = target_ticks - tick_count;
-      target->next = prev->next;
-      prev->next = target;
-      if (target->next != NULL)
-	target->next->ticks -= target->ticks;
-    }
-#ifdef DEBUG_TIMEOUTS
-  stderr_out("Set %x %d %d\n", timeout_last_interval_id, target_ticks, milliseconds);
-#endif
-  return timeout_last_interval_id;
-}
-
-
-/*
- * Remove a timeout from the queue
- */
-static void mswindows_dequeue_timeout (int interval_id)
-{
-  mswindows_timeout *target;
-  mswindows_timeout *prev;
-
-  target = timeout_head;
-  prev = NULL;
-  while (target != NULL)
-    {
-      if (target->interval_id == interval_id)
-	{
-#ifdef DEBUG_TIMEOUTS
-	  stderr_out("Kil %x %d\n", interval_id, target->ticks);
-#endif
-	  target->interval_id = 0;	/* Mark free */
-
-	  if (prev!=NULL)
-	    {
-	      prev->next = target->next;
-              if (target->next != NULL)
-		target->next->ticks += target->ticks;
-	    }
-	  else if ((timeout_head = target->next) == NULL)
-	    {
-	      /* Queue is now empty - stop the timer */
-	      KillTimer (NULL, timeout_mswindows_id);
-	      timeout_mswindows_id = 0;
-#ifdef DEBUG_TIMEOUTS
-	      stderr_out("Stop\n");
-#endif
-	    }
-	  return;
-	}
-      else
-	{
-	  prev = target;
-	  target = target->next;
-	}
-    }
-
-  /* Ack! the timeout wasn't in the timeout queue which means that it's
-   * probably gone off and is now sitting in the dispatch queue. XEmacs will
-   * be very unhappy if it sees the timeout so we have to fish it out of the
-   * dispatch queue. This only happens if XEmacs can't keep up with events */
-#ifdef DEBUG_TIMEOUTS
-    stderr_out("Kil %x - not found\n", interval_id);
-#endif
-  {
-    Lisp_Object match_event, emacs_event;
-    struct Lisp_Event *event;
-    match_event = Fmake_event (Qnil, Qnil);
-    event = XEVENT(match_event);
-
-    event->channel = Qnil;
-    event->event_type = timeout_event;
-    event->event.timeout.interval_id = interval_id;
-    emacs_event = mswindows_cancel_dispatch_event (match_event);
-    if (!NILP (emacs_event))
-      Fdeallocate_event(emacs_event);
-    Fdeallocate_event(match_event);
-  }
-}
-#endif
 
 /*
  * Find the console that matches the supplied mswindows window handle

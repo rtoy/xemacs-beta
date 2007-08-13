@@ -581,7 +581,7 @@ Customize SYMBOL, which must be a user option variable." t nil)
 
 (autoload 'customize-changed-options "cus-edit" "\
 Customize all user option variables whose default values changed recently.
-This means, in other words, variables defined with a `:new' option." t nil)
+This means, in other words, variables defined with a `:version' keyword." t nil)
 
 (defalias 'customize-variable-other-window 'customize-option-other-window)
 

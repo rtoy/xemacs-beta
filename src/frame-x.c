@@ -2070,7 +2070,13 @@ x_init_frame_2 (struct frame *f, Lisp_Object props)
 
   update_frame_face_values (f);
   x_initialize_frame_size (f);
-  update_frame_title (f);
+  /*
+   * update_frame_title() can't be done here, because some of the
+   * modeline specs depend on the frame's device having a selected
+   * frame, and that may not have been set up yet.  The redisplay
+   * will update the frame title anyway, so nothing is lost.
+   */
+  /* update_frame_title (f); */
 }
 
 static void

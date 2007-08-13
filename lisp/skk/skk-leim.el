@@ -3,9 +3,9 @@
 ;; Murata Shuuichirou <mrt@mickey.ai.kyutech.ac.jp>
 ;;
 ;; Author: Murata Shuuichirou <mrt@mickey.ai.kyutech.ac.jp>
-;; Version: $Id: skk-leim.el,v 1.1 1997/12/02 08:48:38 steve Exp $
+;; Version: $Id: skk-leim.el,v 1.2 1997/12/17 06:27:16 steve Exp $
 ;; Keywords: japanese
-;; Last Modified: $Date: 1997/12/02 08:48:38 $
+;; Last Modified: $Date: 1997/12/17 06:27:16 $
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,6 +32,8 @@
   (skk-mode 1) )
 
 (defun skk-auto-fill-activate (&optional name)
+  (require 'skk-foreword)
+  (require 'skk-vars)
   (setq inactivate-current-input-method-function 'skk-inactivate)
   (skk-mode 1) )
 

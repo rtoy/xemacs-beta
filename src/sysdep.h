@@ -158,6 +158,8 @@ int dup2 (int oldd, int newd);
 CONST char *strerror (int);
 #endif
 
+int interruptible_open (CONST char *path, int oflag, int mode);
+
 #ifndef HAVE_H_ERRNO
 extern int h_errno;
 #endif

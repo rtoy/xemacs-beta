@@ -433,7 +433,7 @@ install-arch-dep: mkdir
                         ${exec_prefix}/lib/xemacs-${version}/lisp; \
 	fi
 
-install-arch-indep: mkdir
+install-arch-indep: mkdir info
 	-@set ${COPYDESTS} ; \
 	 for dir in ${COPYDIR} ; do \
 	   if [ `(cd $$1 && $(pwd))` != `(cd $${dir} && $(pwd))` ] ; then \

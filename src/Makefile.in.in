@@ -116,7 +116,7 @@ $(lwlib_libs) :
 OFFIX_O = @OFFIX_O@
 
 x_objs=balloon_help.o balloon-x.o console-x.o device-x.o event-Xt.o frame-x.o\
- glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o $(OFFIX_O)
+ glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o
 
 #ifdef AIX4
 LIBI18N = -li18n
@@ -244,7 +244,7 @@ other_files=\
 all: ${other_files}
 # endif /* EXTERNAL_WIDGET */
 
-X11_objs = EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o $(external_widget_objs)
+X11_objs =  $(OFFIX_O) EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o EmacsManager.o $(external_widget_objs)
 #endif /* HAVE_X_WINDOWS */
 
 ## define otherobjs as list of object files that make-docfile

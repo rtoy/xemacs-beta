@@ -64,132 +64,137 @@ make the clicked-on window taller or shorter."
       (error "%s must be invoked by a mouse-press" this-command))
   (or (event-over-modeline-p event)
       (error "not over a modeline"))
-  (let ((done nil)
-	(depress-line (event-y event))
-	(start-event-frame (event-frame event))
-	(start-event-window (event-window event))
-	(start-nwindows (count-windows t))
-	(last-timestamp 0)
-	default-line-height
-	modeline-height
-	should-enlarge-minibuffer
-	event min-height minibuffer y top bot edges wconfig growth)
-    (setq minibuffer (minibuffer-window start-event-frame)
-	  default-line-height (face-height 'default start-event-window)
-	  min-height (+ (* window-min-height default-line-height)
-			;; Don't let the window shrink by a
-			;; non-multiple of the default line
-			;; height.  (enlarge-window -1) will do
-			;; this if the difference between the
-			;; current window height and the minimum
-			;; window height is less than the height
-			;; of the default font.  These extra
-			;; lost pixels of height don't come back
-			;; if you grow the window again.  This
-			;; can make it impossible to drag back
-			;; to the exact original size, which is
-			;; disconcerting.
-			(% (window-pixel-height start-event-window)
-			   default-line-height))
+  ;; Give the modeline a "pressed" look.  --hniksic
+  (letf (((specifier-instance modeline-shadow-thickness
+			      (event-window event))
+	  (- (specifier-instance modeline-shadow-thickness
+				 (event-window event)))))
+    (let ((done nil)
+	  (depress-line (event-y event))
+	  (start-event-frame (event-frame event))
+	  (start-event-window (event-window event))
+	  (start-nwindows (count-windows t))
+	  (last-timestamp 0)
+	  default-line-height
 	  modeline-height
+	  should-enlarge-minibuffer
+	  event min-height minibuffer y top bot edges wconfig growth)
+      (setq minibuffer (minibuffer-window start-event-frame)
+	    default-line-height (face-height 'default start-event-window)
+	    min-height (+ (* window-min-height default-line-height)
+			  ;; Don't let the window shrink by a
+			  ;; non-multiple of the default line
+			  ;; height.  (enlarge-window -1) will do
+			  ;; this if the difference between the
+			  ;; current window height and the minimum
+			  ;; window height is less than the height
+			  ;; of the default font.  These extra
+			  ;; lost pixels of height don't come back
+			  ;; if you grow the window again.  This
+			  ;; can make it impossible to drag back
+			  ;; to the exact original size, which is
+			  ;; disconcerting.
+			  (% (window-pixel-height start-event-window)
+			     default-line-height))
+	    modeline-height
 	    (if (specifier-instance has-modeline-p start-event-window)
 		(+ (face-height 'modeline start-event-window)
 		   (* 2 (specifier-instance modeline-shadow-thickness
 					    start-event-window)))
 	      (* 2 (specifier-instance modeline-shadow-thickness
 				       start-event-window))))
-    (if (not (eq (window-frame minibuffer) start-event-frame))
-	(setq minibuffer nil))
-    (if (and (null minibuffer) (one-window-p t))
-	(error "Attempt to resize sole window"))
-    ;; if this is the bottommost ordinary window, then to
-    ;; move its modeline the minibuffer must be enlarged.
-    (setq should-enlarge-minibuffer
-	  (and minibuffer (window-lowest-p start-event-window)))
-    ;; loop reading events
-    (while (not done)
-      (setq event (next-event event))
-      ;; requeue event and quit if this is a misc-user, eval or
-      ;;   keypress event.
-      ;; quit if this is a button press or release event, or if the event
-      ;;   occurred in some other frame.
-      ;; drag if this is a mouse motion event and the time
-      ;;   between this event and the last event is greater than
-      ;;   drag-modeline-event-lag.
-      ;; do nothing if this is any other kind of event.
-      (cond ((or (misc-user-event-p event)
-		 (key-press-event-p event))
-	     (setq unread-command-events (nconc unread-command-events
-						(list event))
-		   done t))
-	    ((button-release-event-p event)
-	     (setq done t)
-	     (if modeline-click-swaps-buffers
-		 (mouse-release-modeline event depress-line)))
-	    ((button-event-p event)
-	     (setq done t))
-	    ((not (motion-event-p event))
-	     (dispatch-event event))
-	    ((not (eq start-event-frame (event-frame event)))
-	     (setq done t))
-	    ((< (abs (- (event-timestamp event) last-timestamp))
-		drag-modeline-event-lag)
-	     nil)
-	    (t
-	     (setq last-timestamp (event-timestamp event)
-		   y (event-y-pixel event)
-		   edges (window-pixel-edges start-event-window)
-		   top (nth 1 edges)
-		   bot (nth 3 edges))
-	     ;; scale back a move that would make the
-	     ;; window too short.
-	     (cond ((< (- y top (- modeline-height)) min-height)
-		    (setq y (+ top min-height (- modeline-height)))))
-	     ;; compute size change needed
-	     (setq growth (- y bot (/ (- modeline-height) 2))
-		   wconfig (current-window-configuration))
-	     ;; grow/shrink minibuffer?
-	     (if should-enlarge-minibuffer
-		 (progn
-		   ;; yes.  scale back shrinkage if it
-		   ;; would make the minibuffer less than 1
-		   ;; line tall.
-		   ;;
-		   ;; also flip the sign of the computed growth,
-		   ;; since if we want to grow the window with the
-		   ;; modeline we need to shrink the minibuffer
-		   ;; and vice versa.
-		   (if (and (> growth 0)
-			    (< (- (window-pixel-height minibuffer)
-				  growth)
-			       default-line-height))
-		       (setq growth
-			     (- (window-pixel-height minibuffer)
-				default-line-height)))
+      (if (not (eq (window-frame minibuffer) start-event-frame))
+	  (setq minibuffer nil))
+      (if (and (null minibuffer) (one-window-p t))
+	  (error "Attempt to resize sole window"))
+      ;; if this is the bottommost ordinary window, then to
+      ;; move its modeline the minibuffer must be enlarged.
+      (setq should-enlarge-minibuffer
+	    (and minibuffer (window-lowest-p start-event-window)))
+      ;; loop reading events
+      (while (not done)
+	(setq event (next-event event))
+	;; requeue event and quit if this is a misc-user, eval or
+	;;   keypress event.
+	;; quit if this is a button press or release event, or if the event
+	;;   occurred in some other frame.
+	;; drag if this is a mouse motion event and the time
+	;;   between this event and the last event is greater than
+	;;   drag-modeline-event-lag.
+	;; do nothing if this is any other kind of event.
+	(cond ((or (misc-user-event-p event)
+		   (key-press-event-p event))
+	       (setq unread-command-events (nconc unread-command-events
+						  (list event))
+		     done t))
+	      ((button-release-event-p event)
+	       (setq done t)
+	       (if modeline-click-swaps-buffers
+		   (mouse-release-modeline event depress-line)))
+	      ((button-event-p event)
+	       (setq done t))
+	      ((not (motion-event-p event))
+	       (dispatch-event event))
+	      ((not (eq start-event-frame (event-frame event)))
+	       (setq done t))
+	      ((< (abs (- (event-timestamp event) last-timestamp))
+		  drag-modeline-event-lag)
+	       nil)
+	      (t
+	       (setq last-timestamp (event-timestamp event)
+		     y (event-y-pixel event)
+		     edges (window-pixel-edges start-event-window)
+		     top (nth 1 edges)
+		     bot (nth 3 edges))
+	       ;; scale back a move that would make the
+	       ;; window too short.
+	       (cond ((< (- y top (- modeline-height)) min-height)
+		      (setq y (+ top min-height (- modeline-height)))))
+	       ;; compute size change needed
+	       (setq growth (- y bot (/ (- modeline-height) 2))
+		     wconfig (current-window-configuration))
+	       ;; grow/shrink minibuffer?
+	       (if should-enlarge-minibuffer
+		   (progn
+		     ;; yes.  scale back shrinkage if it
+		     ;; would make the minibuffer less than 1
+		     ;; line tall.
+		     ;;
+		     ;; also flip the sign of the computed growth,
+		     ;; since if we want to grow the window with the
+		     ;; modeline we need to shrink the minibuffer
+		     ;; and vice versa.
+		     (if (and (> growth 0)
+			      (< (- (window-pixel-height minibuffer)
+				    growth)
+				 default-line-height))
+			 (setq growth
+			       (- (window-pixel-height minibuffer)
+				  default-line-height)))
 		     (setq growth (- growth))))
-	     ;; window grow and shrink by lines not pixels, so
-	     ;; divide the pixel height by the height of the
-	     ;; default face.
-	     (setq growth (/ growth default-line-height))
-	     ;; grow/shrink the window
-	     (enlarge-window growth nil (if should-enlarge-minibuffer
-					    minibuffer
-					  start-event-window))
-	     ;; if this window's growth caused another
-	     ;; window to be deleted because it was too
-	     ;; short, rescind the change.
-	     ;;
-	     ;; if size change caused space to be stolen
-	     ;; from a window above this one, rescind the
-	     ;; change, but only if we didn't grow/shrink
-	     ;; the minibuffer.  minibuffer size changes
-	     ;; can cause all windows to shrink... no way
-	     ;; around it.
-	     (if (or (/= start-nwindows (count-windows t))
-		     (and (not should-enlarge-minibuffer)
-			  (/= top (nth 1 (window-pixel-edges
-					  start-event-window)))))
-		 (set-window-configuration wconfig)))))))
+	       ;; window grow and shrink by lines not pixels, so
+	       ;; divide the pixel height by the height of the
+	       ;; default face.
+	       (setq growth (/ growth default-line-height))
+	       ;; grow/shrink the window
+	       (enlarge-window growth nil (if should-enlarge-minibuffer
+					      minibuffer
+					    start-event-window))
+	       ;; if this window's growth caused another
+	       ;; window to be deleted because it was too
+	       ;; short, rescind the change.
+	       ;;
+	       ;; if size change caused space to be stolen
+	       ;; from a window above this one, rescind the
+	       ;; change, but only if we didn't grow/shrink
+	       ;; the minibuffer.  minibuffer size changes
+	       ;; can cause all windows to shrink... no way
+	       ;; around it.
+	       (if (or (/= start-nwindows (count-windows t))
+		       (and (not should-enlarge-minibuffer)
+			    (/= top (nth 1 (window-pixel-edges
+					    start-event-window)))))
+		   (set-window-configuration wconfig))))))))
 
 ;; from Bob Weiner (bob_weiner@pts.mot.com)
 (defun mouse-release-modeline (event line-num)

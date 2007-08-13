@@ -27,7 +27,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <X11/Xmu/WinUtil.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <values.h>
+#include <limits.h>
 
 /* Local variables */
 static Display		*dpy;		/* current display		*/
@@ -280,13 +280,13 @@ void DndSetData(int Type,unsigned char *Data,unsigned long Size)
   
   /* Set the data */
   AuxData = Data;
-  AuxSize = ( Size <= MAXINT ? (int)Size : MAXINT ); 
+  AuxSize = ( Size <= INT_MAX ? (int)Size : INT_MAX ); 
   XChangeProperty(dpy,root,DndSelection,XA_STRING,8,
 		  PropModeReplace,Data,AuxSize);
   for(Size-=(unsigned long)AuxSize;Size;Size-=(unsigned long)AuxSize)
     {
       Data+=AuxSize;
-      AuxSize = ( (Size<=(MAXINT)) ? (int)Size : (MAXINT) );
+      AuxSize = ( (Size<=(INT_MAX)) ? (int)Size : (INT_MAX) );
 	XChangeProperty(dpy,root,DndSelection,XA_STRING,8,
 			PropModeAppend,Data,AuxSize);
     }
@@ -294,13 +294,13 @@ void DndSetData(int Type,unsigned char *Data,unsigned long Size)
   /* Set the data for old DND version */
   Size = BackSize;
   AuxData = Data;
-  AuxSize = ( Size <= MAXINT ? (int)Size : MAXINT ); 
+  AuxSize = ( Size <= INT_MAX ? (int)Size : INT_MAX ); 
   XChangeProperty(dpy,root,OldDndSelection,XA_STRING,8,
 		  PropModeReplace,Data,AuxSize);
   for(Size-=(unsigned long)AuxSize;Size;Size-=(unsigned long)AuxSize)
     {
       Data+=AuxSize;
-      AuxSize = ( (Size<=(MAXINT)) ? (int)Size : (MAXINT) );
+      AuxSize = ( (Size<=(INT_MAX)) ? (int)Size : (INT_MAX) );
       XChangeProperty(dpy,root,OldDndSelection,XA_STRING,8,
 		      PropModeAppend,Data,AuxSize);
     }

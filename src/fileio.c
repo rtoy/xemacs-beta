@@ -770,20 +770,20 @@ See also the function `substitute-in-file-name'.
 	    /* Detect MSDOS file names with drive specifiers. */
 	    && (IS_DRIVE (XSTRING_BYTE (default_, 0))
 		&& (IS_DEVICE_SEP (XSTRING_BYTE (default_, 1))
-		    && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 2)))))
+		    && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 2))))
 #ifdef WINDOWSNT
-      /* Detect Windows file names in UNC format.  */
-      && ! (XSTRING_LENGTH (default_) >= 2
-	    && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 0))
-	    && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 1)))
+	    /* Detect Windows file names in UNC format.  */
+	    && ! (XSTRING_LENGTH (default_) >= 2
+		  && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 0))
+		  && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 1)))
 #endif
 #else /* not DOS_NT */
 	    /* Detect Unix absolute file names (/... alone is not absolute on
 	       DOS or Windows).  */
 	    && (IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 0))
-		|| IS_DEVICE_SEP (XSTRING_BYTE (default_, 1))))
+		|| IS_DEVICE_SEP (XSTRING_BYTE (default_, 1)))
 #endif /* not DOS_NT */
-      )
+	    ))
     {
       struct gcpro gcpro1;
 
@@ -1116,7 +1116,7 @@ See also the function `substitute-in-file-name'.
 	}
 
       /* Keep only a prefix from newdir if nm starts with slash
-         (//server/share for UNC, nothing otherwise). */
+         (/ /server/share for UNC, nothing otherwise).  */
       if (IS_DIRECTORY_SEP (nm[0]) && collapse_newdir)
 	{
 #ifdef WINDOWSNT
@@ -1726,7 +1726,7 @@ A prefix arg makes KEEP-TIME non-nil.
   else if (stat ((CONST char *) XSTRING_DATA (newname), &out_st) < 0)
     out_st.st_mode = 0;
 
-  ifd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0);
+  ifd = interruptible_open ((char *) XSTRING_DATA (filename), O_RDONLY, 0);
   if (ifd < 0)
     report_file_error ("Opening input file", Fcons (filename, Qnil));
 
@@ -2309,22 +2309,21 @@ See also `file-exists-p' and `file-attributes'.
 */
        (filename))
 {
-  /* This function can GC.  GC checked 1997.04.10. */
-  Lisp_Object abspath;
+  /* This function can GC */
+  Lisp_Object abspath = Qnil;
   Lisp_Object handler;
   int desc;
   struct gcpro gcpro1;
+  GCPRO1 (abspath);
 
   CHECK_STRING (filename);
   abspath = Fexpand_file_name (filename, Qnil);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  GCPRO1 (abspath);
   handler = Ffind_file_name_handler (abspath, Qfile_readable_p);
-  UNGCPRO;
   if (!NILP (handler))
-    return call2 (handler, Qfile_readable_p, abspath);
+    RETURN_UNGCPRO (call2 (handler, Qfile_readable_p, abspath));
 
 #ifdef DOS_NT
   /* Under MS-DOS and Windows, open does not work for directories.  */
@@ -2332,7 +2331,8 @@ See also `file-exists-p' and `file-attributes'.
     return Qt;
   return Qnil;
 #else /* not DOS_NT */
-  desc = open ((char *) XSTRING_DATA (abspath), O_RDONLY, 0);
+  desc = interruptible_open ((char *) XSTRING_DATA (abspath), O_RDONLY, 0);
+  UNGCPRO;
   if (desc < 0)
     return Qnil;
   close (desc);
@@ -2840,12 +2840,15 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   fd = -1;
 
+  if (
 #ifndef APOLLO
-  if (stat ((char *) XSTRING_DATA (filename), &st) < 0)
+      (stat ((char *) XSTRING_DATA (filename), &st) < 0)
 #else /* APOLLO */
-  if ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0)) < 0
-      || fstat (fd, &st) < 0)
+      /* Don't even bother with interruptible_open.  APOLLO sucks. */
+      ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0)) < 0
+       || fstat (fd, &st) < 0)
 #endif /* APOLLO */
+      )
     {
       if (fd >= 0) close (fd);
     badopen:
@@ -2885,13 +2888,12 @@ positions), even in Mule. (Fixing this is very difficult.)
   if (!NILP (end))
     CHECK_INT (end);
 
-  /* Here, we should call some form of interruptable_open, so the user
-     can quit gracefully when opening named pipes.  interruptable_open
-     should be just like sys_open in sysdep.c, only it would call QUIT
-     if interrupted by EINTR.  */
   if (fd < 0)
-    if ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0)) < 0)
-      goto badopen;
+    {
+      if ((fd = interruptible_open ((char *) XSTRING_DATA (filename),
+				    O_RDONLY, 0)) < 0)
+	goto badopen;
+    }
 
   /* Replacement should preserve point as it preserves markers.  */
   if (!NILP (replace))

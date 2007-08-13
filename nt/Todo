@@ -28,7 +28,8 @@
     2. Can't change bold, italic or bold-italic face fonts
     3. Bogus delay when setting default- or initial-frame-plist
     4. Short timeouts don't seem to be very accurate
-    5. Scrollbar
+    5. Scrollbar dragging.  Redisplay isn't called while dragging.
+       Also can't retrieve 32 bit tracking position with GetScrollInfo()
     6. Menubar
     7. Palette handling
     8. Middle mouse button emulation

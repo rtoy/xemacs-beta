@@ -1,3 +1,72 @@
+1997-12-16    <jsparkes@internetivity.com (Jeff Sparkes)> 
+ 
+	* scrollbar.c: Add HAVE_MS_WINDOWS to scrollbar-page functions.
+ 
+	* msw-proc.c: Handle scrolling events.
+ 
+	* frame-msw.c: Initialize scrollbar width and height.  This should
+	  not be necessary, since the window shouldn't be created until
+	  init_frame_2
+ 
+	* emacs.c: Call mswindows scrolbar setup when appropriate.
+ 
+	* scrollbar-msw.c: Created for mswindows-scrollbar support.
+ 
+	* scrollbar-msw.h: Ditto.
+ 
+1997-12-16  Kirill M. Katsnelson <kkm@kis.ru>
+
+	* msw-proc.c: Minor bug in the middle button emulation code
+	  exterminated.
+
+	* msw-proc.c: Character translation procedure reworked, so C-M-char
+	  keys now work properly. Keyboard layouts that use AltGr for
+	  third register characters are detected and handled. The code
+	  has been tested on French and UK keyboard layouts.
+
+	* msw-proc.c: #if 0'ed remains of threaded code are removed.
+
+	* event-msw.c: Mouse motion was incorrectly counted for a user event.
+
+	* event-msw.c: lisp variables beginnig with w32- are renamed to
+	  begin with mswindows-.
+
+1997-12-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Finsert_file_contents_internal): Use it.
+	(Fcopy_file): Ditto.
+
+	* sysdep.c (interruptible_open): New function.
+
+1997-12-16  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame-x.c (x_init_frame_2): Don't call
+	  update_frame_title.  Some modeline specs depend on
+	  f->device->selected_frame being non-nil and that will
+	  not be true during initialization of the first frame on
+	  a device.
+
+1997-12-16  SL Baur  <steve@altair.xemacs.org>
+
+	* fileio.c: clean up paren levels between ifdefs.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-12-15  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c (imagick_instantiate): Remove an assumption that
+	  all machines have LSB XImage support.
+
+1997-12-14  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Makefile.in.in: Moved $(OFFIX_O) from x_objs to
+	  X11_objs to avoid having its initialized global
+	  variables be dumped read-only.
+
+1997-12-14  SL Baur  <steve@altair.xemacs.org>
+
+	* offix.c (DndSetData): Use standard INT_MAX instead of MAXINT.
+	Replace <values.h> with <limits.h>
+
 1997-12-13   Kirill M. Katsnelson <kkm@kis.ru>
 
 	* msw-proc.c: added emulation for middle mouse button by chording

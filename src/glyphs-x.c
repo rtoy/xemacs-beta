@@ -57,9 +57,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 
 #ifdef HAVE_IMAGEMAGICK
-#ifdef SOLARIS2 /* Try to trick magick.h into not including Xos.h */
 #define _XOS_H_
-#endif
 #ifdef MAGICK_HEADERS_ARE_UNDER_X11
 #include <X11/magick/magick.h>
 #else
@@ -1756,7 +1754,7 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   Colormap cmap;
   Dimension depth;
   struct imagick_unwind_data unwind;
-  int speccount = specpdl_depth ();
+  int speccount;
   ImageInfo image_info;
 
   /* ImageMagick variables */
@@ -1775,6 +1773,7 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   memset (&unwind, 0, sizeof (unwind));
   unwind.dpy = dpy;
   unwind.cmap = cmap;
+  speccount = specpdl_depth();
   record_unwind_protect(imagick_instantiate_unwind,make_opaque_ptr(&unwind));
 
   /* Write out to a temp file - not sure if ImageMagick supports the
@@ -1882,7 +1881,7 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     int i,j,x,b;
     unsigned int bytes_per_pixel, scanline_pad;
     unsigned long pixval;
-    unsigned char *q;
+    unsigned char *q, pixar[3];
     RunlengthPacket *p;
 
     q = (unsigned char *) unwind.ximage->data;
@@ -1902,10 +1901,18 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	  /* ### NOW what? */
 	  pixval = 0;
 	}
-	
+
+      for (b=0; b < bytes_per_pixel; b++) {
+	if (unwind.ximage->bitmap_bit_order == LSBFirst) 
+	  pixar[b] = (unsigned char)pixval;
+	else
+	  pixar[bytes_per_pixel - 1 - b] = (unsigned char)pixval;
+	pixval>>=8;
+      }
+
       for (j=0; j <= ((int) p->length); j++) {
 	for (b=0; b < bytes_per_pixel; b++) 
-	  *q++=(unsigned char) (pixval >> (8*b));
+	  *q++= pixar[b];
 	x++;
 	if (x == unwind.ximage->width) {
 	  x=0;

@@ -1076,22 +1076,9 @@ This works by calling the function specified by
   (interactive)
   (funcall custom-buffer-done-function (current-buffer)))
 
-(defun custom-buffer-create-internal (options &optional description)
-  (message "Creating customization buffer...")
-  (custom-mode)
-  (widget-insert "This is a customization buffer")
-  (if description
-      (widget-insert description))
-  (widget-insert ".\n\
-Type RET or click button2 on an active field to invoke its action.
-Invoke ")
-  (widget-create 'info-link
-		 :tag "Help"
-		 :help-echo "Read the online help"
-		 "(XEmacs)Easy Customization")
-  (widget-insert " for more information.\n\n")
+(defun custom-buffer-create-buttons ()
   (message "Creating customization buttons...")
-  (widget-insert "Operate on everything in this buffer:\n ")
+  (widget-insert "\nOperate on everything in this buffer:\n ")
   (widget-create 'push-button
 		 :tag "Set"
 		 :tag-glyph '("set-up" "set-down")
@@ -1142,7 +1129,40 @@ Reset all values in this buffer to their standard settings"
 		 :help-echo "Remove the buffer"
 		 :action (lambda (widget &optional event)
 			   (Custom-buffer-done)))
-  (widget-insert "\n\n")
+  (widget-insert "\n"))
+
+(defcustom custom-novice t
+  "If non-nil, show help message at top of customize buffers."
+  :type 'boolean
+  :group 'custom-buffer)
+
+(defcustom custom-display-global-buttons 'top
+  "If `nil' don't display the global buttons.  If `top' display at the
+beginning of custom buffers.  If `bottom', display at the end."
+  :type '(choice (const top)
+		 (const bottom)
+		 (const :tag "don't" nil))
+  :group 'custom-buffer)
+
+(defun custom-buffer-create-internal (options &optional description)
+  (message "Creating customization buffer...")
+  (custom-mode)
+  (widget-insert "This is a customization buffer")
+  (if description
+      (widget-insert description))
+  (when custom-novice
+      (widget-insert ".\n\
+Type RET or click button2 on an active field to invoke its action.
+Invoke ")
+      (widget-create 'info-link
+		     :tag "Help"
+		     :help-echo "Read the online help"
+		     "(XEmacs)Easy Customization")
+      (widget-insert " for more information."))
+  (widget-insert "\n")
+  (if (equal custom-display-global-buttons 'top)
+      (custom-buffer-create-buttons))
+  (widget-insert "\n")
   (message "Creating customization items...")
   (setq custom-options
 	(if (= (length options) 1)
@@ -1173,6 +1193,8 @@ Reset all values in this buffer to their standard settings"
 		    options))))
   (unless (eq (preceding-char) ?\n)
     (widget-insert "\n"))
+  (if (equal custom-display-global-buttons 'bottom)
+      (custom-buffer-create-buttons))
   (display-message 'progress
 		   (format
 		    "Creating customization items %2d%%...done" 100))

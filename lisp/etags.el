@@ -328,9 +328,9 @@ If appropriate, reverting the buffer, and possibly build a completion-table."
 	  (setq build-completion t))
       (when build-completion
 	(if (ecase tags-build-completion-table
-	      (nil nil)
-	      (t t)
-	      (ask
+	      ((nil) nil)
+	      ((t) t)
+	      ((ask)
 	       ;; don't bother asking for small ones
 	       (or (< (buffer-size) 20000)
 		   (y-or-n-p

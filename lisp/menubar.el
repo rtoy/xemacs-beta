@@ -178,33 +178,38 @@ Returns (ITEM . PARENT), where PARENT is the immediate parent of
  the item found.
 If the item does not exist, the car of the returned value is nil.
 If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
-  (or (listp item-path-list)
-      (signal 'wrong-type-argument (list 'listp item-path-list)))
-  (or parent (setq item-path-list (mapcar 'normalize-menu-item-name item-path-list)))
+  (check-argument-type 'listp item-path-list)
+  (unless parent
+    (setq item-path-list (mapcar 'normalize-menu-item-name item-path-list)))
   (if (not (consp menubar))
       nil
     (let ((rest menubar)
 	  result)
-      (if (stringp (car rest))
-        (setq rest (cdr rest)))
+      (when (stringp (car rest))
+	(setq rest (cdr rest)))
       (while (keywordp (car rest))
 	(setq rest (cddr rest)))
       (while rest
 	(if (and (car rest)
 		 (equal (car item-path-list)
-			(normalize-menu-item-name (if (vectorp (car rest))
-				      (aref (car rest) 0)
-				    (if (stringp (car rest))
-					(car rest)
-				      (car (car rest)))))))
-	    (setq result (car rest) rest nil)
+			(normalize-menu-item-name
+			 (cond ((vectorp (car rest))
+				(aref (car rest) 0))
+			       ((stringp (car rest))
+				(car rest))
+			       (t
+				(caar rest))))))
+	    (setq result (car rest)
+		  rest nil)
 	  (setq rest (cdr rest))))
       (if (cdr item-path-list)
-	  (if (consp result)
-	      (find-menu-item (cdr result) (cdr item-path-list) result)
-	    (if result
-		(signal 'error (list (gettext "not a submenu") result))
-	      (signal 'error (list (gettext "no such submenu") (car item-path-list)))))
+	  (cond ((consp result)
+		 (find-menu-item (cdr result) (cdr item-path-list) result))
+		(result
+		 (signal 'error (list (gettext "not a submenu") result)))
+		(t
+		 (signal 'error (list (gettext "no such submenu")
+				      (car item-path-list)))))
 	(cons result parent)))))
 
 (defun add-menu-item-1 (leaf-p menu-path new-item before)

@@ -76,6 +76,12 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   top = Fplist_get (props, Qtop, Qnil);
   left = Fplist_get (props, Qleft, Qnil);
 
+  /* These shouldn't be here, but the window is created too early.
+     The initialization of scrollbar resources is done between
+     init_frame_1 and init_frame_2 in make_frame.  jsparkes */
+  f->scrollbar_width  = make_int (15);
+  f->scrollbar_height = make_int (15);
+
   f->frame_data = xnew_and_zero (struct mswindows_frame);
   FRAME_WIDTH (f) = INTP(width) ? XINT(width) : 80;
   FRAME_HEIGHT (f) = INTP(height) ? XINT(height) : 30;
@@ -161,7 +167,6 @@ mswindows_set_frame_size (struct frame *f, int cols, int rows)
   MoveWindow (FRAME_MSWINDOWS_HANDLE(f), rect1.left, rect1.top,
  	      rect2.right-rect2.left, rect2.bottom-rect2.top, TRUE);
 }
-
 
 static void
 mswindows_set_frame_position (struct frame *f, int xoff, int yoff)

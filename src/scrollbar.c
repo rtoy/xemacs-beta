@@ -721,7 +721,7 @@ behavior.
      differences down in lwlib because knowledge of XEmacs buffer and
      cursor motion routines is necessary. */
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
-    defined (LWLIB_SCROLLBARS_ATHENA3D)
+    defined (LWLIB_SCROLLBARS_ATHENA3D) || defined(HAVE_MS_WINDOWS)
   window_scroll (window, Qnil, -1, ERROR_ME_NOT);
 #else /* Athena */
   {
@@ -762,7 +762,7 @@ behavior.
      differences down in lwlib because knowledge of XEmacs buffer and
      cursor motion routines is necessary. */
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
-    defined (LWLIB_SCROLLBARS_ATHENA3D)
+    defined (LWLIB_SCROLLBARS_ATHENA3D) || defined (HAVE_MS_WINDOWS)
   window_scroll (window, Qnil, 1, ERROR_ME_NOT);
 #else /* Athena */
   {

@@ -1645,7 +1645,8 @@ DIR defaults to current buffer's directory default."
    'read-file-name-internal))
 
 (defun read-directory-name (prompt
-                            &optional dir default must-match initial-contents)
+                            &optional dir default must-match initial-contents
+			    history)
   "Read directory name, prompting with PROMPT and completing in directory DIR.
 This will prompt with a dialog box if appropriate, according to
  `should-use-dialog-box-p'.
@@ -1660,7 +1661,7 @@ Sixth arg HISTORY specifies the history list to use.  Default is
  `file-name-history'.
 DIR defaults to current buffer's directory default."
   (read-file-name-1 
-    'file-name-history
+    (or history 'file-name-history)
     prompt dir (or default default-directory) must-match initial-contents
     'read-directory-name-internal))
 

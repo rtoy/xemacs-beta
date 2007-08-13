@@ -2360,8 +2360,8 @@ if test "$with_x11" = "yes"; then
   fi
 
   dnl autodetect ImageMagick
-  test -z "$with_imagick" && { AC_CHECK_HEADER(magick/magick.h, ,AC_CHECK_HEADER(X11/magick/magick.h,AC_DEFINE(MAGICK_HEADERS_ARE_UNDER_X11),with_imagick=no)) }
-  test -z "$with_imagick" && {
+  test "$with_imagick" != "no" && { AC_CHECK_HEADER(magick/magick.h, ,AC_CHECK_HEADER(X11/magick/magick.h,AC_DEFINE(MAGICK_HEADERS_ARE_UNDER_X11),with_imagick=no)) }
+  test "$with_imagick" != "no" && {
     dnl check the appropriate libraries for ImageMagick
     imagick_libs=""
     AC_CHECK_LIB(dps, XDPSPixelsPerPoint, XE_APPEND(-ldpstk -ldps, imagick_libs),,,-ldpstk)
@@ -3313,7 +3313,7 @@ elif test "$with_x11" = yes; then
 fi
 test "$with_xface" = yes && echo "  Compiling in support for X-Face message headers."
 test "$with_imagick"  = yes && echo "  Compiling in support for ImageMagick image conversion."
-
+test "$with_imagick" = yes && echo "   Using $imagick_libs for graphics libraries."
 case "$with_sound" in
   nas    ) echo "  Compiling in network sound (NAS) support." ;;
   native ) echo "  Compiling in native sound support." ;;

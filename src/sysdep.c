@@ -2442,6 +2442,37 @@ sys_open (CONST char *path, int oflag, ...)
 }
 #endif /* ENCAPSULATE_OPEN */
 
+/* Like sys_open, only when open() is interrupted by EINTR, check for
+   QUIT.  This allows the callers of this function to be interrupted
+   with C-g when, say, reading from named pipes.  However, this should
+   be used with caution, as it can GC.
+
+   This function will not function as expected on systems where open()
+   is not interrupted by C-g.  However, the worst that can happen is
+   the fallback to simple open().  */
+int
+interruptible_open (CONST char *path, int oflag, int mode)
+{
+  /* This function can GC */
+  size_t len = strlen (path);
+  char *nonreloc = (char *) alloca (len + 1);
+
+  /* Must copy PATH, because it might be the data of a Lisp_String,
+     which could be relocated by GC when checking for QUIT.  */
+  memcpy (nonreloc, path, len + 1);
+
+  /* The same as PATHNAME_CONVERT_OUT in sysdep.c.  */
+  GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (nonreloc, nonreloc);
+
+  for (;;)
+    {
+      int rtnval = open (nonreloc, oflag, mode);
+      if (!(rtnval == -1 && errno == EINTR))
+	return rtnval;
+      /* open() was interrupted.  Was QUIT responsible?  */
+      QUIT;
+    }
+}
 
 #ifdef ENCAPSULATE_CLOSE
 int

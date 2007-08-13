@@ -1,4 +1,22 @@
+1997-12-16  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.4-beta11 is released.
+
+1997-12-14  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Don't bypass graphics library detection
+	if the `--with-imagick' option is given to configure.
+	: Print autodetected graphics libraries to be linked with Imagick.
+
+	* Makefile.in (lisp/finder-inf.el): Reverse previous change.
+
+1997-12-14  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* Makefile.in (install-arch-indep): Build info files if needed.
+
 1997-12-13  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (lisp/finder-inf.el): Add dependency on src/.
 
 	* XEmacs 20-.4-beta10 is released.
 

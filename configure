@@ -5731,7 +5731,7 @@ EOF
     libs_x="-lcompface $libs_x" &&  if test "$extra_verbose" = "yes"; then echo "    Prepending \"-lcompface\" to \$libs_x"; fi
   fi
 
-    test -z "$with_imagick" && { ac_safe=`echo "magick/magick.h" | sed 'y%./+-%__p_%'`
+    test "$with_imagick" != "no" && { ac_safe=`echo "magick/magick.h" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for magick/magick.h""... $ac_c" 1>&6
 echo "configure:5737: checking for magick/magick.h" >&5
 
@@ -5799,7 +5799,7 @@ fi
 
 fi
  }
-  test -z "$with_imagick" && {
+  test "$with_imagick" != "no" && {
         imagick_libs=""
     
 echo $ac_n "checking for XDPSPixelsPerPoint in -ldps""... $ac_c" 1>&6
@@ -10370,7 +10370,7 @@ elif test "$with_x11" = yes; then
 fi
 test "$with_xface" = yes && echo "  Compiling in support for X-Face message headers."
 test "$with_imagick"  = yes && echo "  Compiling in support for ImageMagick image conversion."
-
+test "$with_imagick" = yes && echo "   Using $imagick_libs for graphics libraries."
 case "$with_sound" in
   nas    ) echo "  Compiling in network sound (NAS) support." ;;
   native ) echo "  Compiling in native sound support." ;;

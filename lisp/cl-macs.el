@@ -451,12 +451,18 @@ allowed only in the final clause, and matches if no other keys match.
 Key values are compared by `eql'."
   (let* ((temp (if (cl-simple-expr-p expr 3) expr (gensym)))
 	 (head-list nil)
+	 (last-clause (car (last clauses)))
 	 (body (cons
 		'cond
 		(mapcar
 		 (function
 		  (lambda (c)
-		    (cons (cond ((memq (car c) '(t otherwise)) t)
+		    (cons (cond ((memq (car c) '(t otherwise))
+				 (or (eq c last-clause)
+				     (error
+				      "`%s' is allowed only as the last case clause"
+				      (car c)))
+				 t)
 				((eq (car c) 'ecase-error-flag)
 				 (list 'error "ecase failed: %s, %s"
 				       temp (list 'quote (reverse head-list))))
@@ -474,10 +480,19 @@ Key values are compared by `eql'."
     (if (eq temp expr) body
       (list 'let (list (list temp expr)) body))))
 
+;; #### CL standard also requires `ccase', which signals a continuable
+;; error (`cerror' in XEmacs).  However, I don't think it buys us
+;; anything to introduce it, as there is probably much more CL stuff
+;; missing, and the feature is not essential.  --hniksic
+
 ;;;###autoload
 (defmacro ecase (expr &rest clauses)
   "(ecase EXPR CLAUSES...): like `case', but error if no case fits.
 `otherwise'-clauses are not allowed."
+  (let ((disallowed (or (assq t clauses)
+			(assq 'otherwise clauses))))
+    (if disallowed
+	(error "`%s' is not allowed in ecase" (car disallowed))))
   (list* 'case expr (append clauses '((ecase-error-flag)))))
 
 ;;;###autoload

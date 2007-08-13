@@ -1,4 +1,11 @@
 							-*- indented-text -*-
+to 20.4 beta11 "Beetal"
+-- Patches and bugfixes from Hrvoje Niksic and Kyle Jones
+-- MS Windows updates courtesy of Kirill Katsnelson and Jeff Sparkes
+-- Localized French menus courtesy of Olivier Galibert
+-- Localized Japanese menu update courtesy of IENAGA Kazuyuki
+-- Miscellaneous bug fixes
+
 to 20.4 beta10 "Barbari"
 -- MS Windows NT updates courtesy of Kirill M. Katsnelson
 -- etags.el update courtesy of Hrvoje Niksic

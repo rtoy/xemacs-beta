@@ -87,8 +87,7 @@ mswindows_user_event_p (struct Lisp_Event* sevt)
 {
   return (sevt->event_type == key_press_event
 	  || sevt->event_type == button_press_event
-	  || sevt->event_type == button_release_event
-	  || sevt->event_type == pointer_motion_event);
+	  || sevt->event_type == button_release_event);
 }
 
 /*
@@ -587,7 +586,7 @@ vars_of_event_mswindows (void)
   mswindows_event_stream->unselect_process_cb	= emacs_mswindows_unselect_process;
   mswindows_event_stream->quit_p_cb		= emacs_mswindows_quit_p;
 
-  DEFVAR_BOOL ("w32-dynamic-frame-resize", &mswindows_dynamic_frame_resize /*
+  DEFVAR_BOOL ("mswindows-dynamic-frame-resize", &mswindows_dynamic_frame_resize /*
 *Controls redrawing frame contents during mouse-drag or keyboard resize
 operation. When non-nil, the frame is redrawn while being resized. When
 nil, frame is not redrawn, and exposed areas are filled with default
@@ -598,7 +597,7 @@ Default is t on fast machines, nil on slow.
 */ );
 
 /* The description copied verbatim from nt-emacs. (C) Geoff Voelker */
-  DEFVAR_INT ("w32-mouse-button-tolerance", &mswindows_button2_chord_time /*
+  DEFVAR_INT ("mswindows-mouse-button-tolerance", &mswindows_button2_chord_time /*
 *Analogue of double click interval for faking middle mouse events.
 The value is the minimum time in milliseconds that must elapse between
 left/right button down events before they are considered distinct events.
@@ -608,23 +607,23 @@ If negative or zero, currently set system default is used instead.
 */ );
 
 /* The description copied verbatim from nt-emacs. (C) Geoff Voelker */
-  DEFVAR_INT ("w32-num-mouse-buttons", &mswindows_num_mouse_buttons /*
+  DEFVAR_INT ("mswindows-num-mouse-buttons", &mswindows_num_mouse_buttons /*
 Number of physical mouse buttons.
 */ );
 
-  DEFVAR_INT ("w32-mouse-button-max-skew-x", &mswindows_button2_max_skew_x /*
+  DEFVAR_INT ("mswindows-mouse-button-max-skew-x", &mswindows_button2_max_skew_x /*
 *Maximum horizontal distance in pixels between points in which left and
 right button clicks occured for them to be translated into single
 middle button event. Clicks must occur in time not longer than defined
-by the variable w32-mouse-button-tolerance.
+by the variable mswindows-mouse-button-tolerance.
 If negative or zero, currently set system default is used instead.
 */ );
 
-  DEFVAR_INT ("w32-mouse-button-max-skew-y", &mswindows_button2_max_skew_y /*
+  DEFVAR_INT ("mswindows-mouse-button-max-skew-y", &mswindows_button2_max_skew_y /*
 *Maximum vertical distance in pixels between points in which left and
 right button clicks occured for them to be translated into single
 middle button event. Clicks must occur in time not longer than defined
-by the variable w32-mouse-button-tolerance.
+by the variable mswindows-mouse-button-tolerance.
 If negative or zero, currently set system default is used instead.
 */ );
 

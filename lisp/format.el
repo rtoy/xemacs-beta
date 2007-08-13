@@ -652,9 +652,10 @@ to write these unknown annotations back into the file."
 					  loc (cdr (car extents))))))))
 			(setq alist (cdr alist))))
 		    (setq aalist (cdr aalist)))
-		  (if (not matched)
+		  (unless matched
 		      ;; Didn't find any match for the annotation:
 		      ;; Store as value of text-property `unknown'.
+		      (setcdr (car top-extents) loc)
 		      (let ((extents top-extents)
 			    (start (car (car top-extents)))
 			    (loc (cdr (car top-extents))))

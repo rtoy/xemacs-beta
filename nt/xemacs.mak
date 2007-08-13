@@ -34,7 +34,7 @@ X_LIBS=$(MAGICK_LIBS) Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X11.lib
 !endif
 
 !if $(HAVE_MSW)
-MSW_DEFINES=-DHAVE_MS_WINDOWS
+MSW_DEFINES=-DHAVE_MS_WINDOWS -DHAVE_SCROLLBARS
 !endif
 
 !if $(HAVE_MULE)
@@ -238,6 +238,7 @@ DOC_SRC4=\
  $(XEMACS)\src\redisplay.c \
  $(XEMACS)\src\regex.c \
  $(XEMACS)\src\scrollbar.c \
+ $(XEMACS)\src\scrollbar-msw.c \
  $(XEMACS)\src\search.c \
  $(XEMACS)\src\signal.c \
  $(XEMACS)\src\sound.c 
@@ -485,6 +486,8 @@ TEMACS_OBJS= \
 	$(OUTDIR)\redisplay-output.obj \
 	$(OUTDIR)\redisplay.obj \
 	$(OUTDIR)\regex.obj \
+	$(OUTDIR)\scrollbar.obj \
+	$(OUTDIR)\scrollbar-msw.obj \
 	$(OUTDIR)\search.obj \
 	$(OUTDIR)\signal.obj \
 	$(OUTDIR)\sound.obj \
