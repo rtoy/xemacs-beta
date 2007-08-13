@@ -2089,6 +2089,23 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       UNGCPRO;
       break;     
     }
+
+  case WM_MOUSEWHEEL:
+  {
+	  int keys = LOWORD (wParam);				/* Modifier key flags */
+	  int delta = (short) HIWORD (wParam);		/* Wheel rotation amount */
+      struct gcpro gcpro1, gcpro2;
+
+      if (mswindows_handle_mousewheel_event (mswindows_find_frame (hwnd), keys,  delta))
+	  {
+		  GCPRO2 (emacs_event, fobj);
+		  mswindows_pump_outstanding_events ();	/* Can GC */
+		  UNGCPRO;
+	  }
+	  else
+		  goto defproc;
+      break;     
+  }
 #endif
 
 #ifdef HAVE_MENUBARS

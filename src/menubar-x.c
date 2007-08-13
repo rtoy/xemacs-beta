@@ -674,7 +674,6 @@ make_dummy_xbutton_event (XEvent *dummy,
   if (eev)
     {
       Position shellx, shelly, framex, framey;
-      Widget shell = XtParent (daddy);
       Arg al [2];
       btn->time = eev->timestamp;
       btn->button = eev->event.button.button;
@@ -682,9 +681,16 @@ make_dummy_xbutton_event (XEvent *dummy,
       btn->subwindow = (Window) NULL;
       btn->x = eev->event.button.x;
       btn->y = eev->event.button.y;
-      XtSetArg (al [0], XtNx, &shellx);
-      XtSetArg (al [1], XtNy, &shelly);
-      XtGetValues (shell, al, 2);
+      shellx = shelly = 0;
+#ifndef HAVE_WMCOMMAND
+      {
+	Widget shell = XtParent (daddy);
+
+	XtSetArg (al [0], XtNx, &shellx);
+	XtSetArg (al [1], XtNy, &shelly);
+	XtGetValues (shell, al, 2);
+      }
+#endif      
       XtSetArg (al [0], XtNx, &framex);
       XtSetArg (al [1], XtNy, &framey);
       XtGetValues (daddy, al, 2);

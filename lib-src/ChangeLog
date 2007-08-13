@@ -1,3 +1,11 @@
+1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.7 is released
+
+1999-09-23  Damon Lipparelli <lipp@primus.com>
+
+	* mmencode.c: Make it compile on NT native.
+
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.6 is released

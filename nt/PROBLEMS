@@ -5,9 +5,8 @@ running XEmacs on Windows 95, 98 and NT. It has been updated for
 XEmacs 21.0.
 
 This is the first release of XEmacs on Windows. In testing it has
-proved to be extremely stable in general use (but see the gnus and
-subprocess problems below), but not all features or packages work
-correctly yet.
+proved to be extremely stable in general use (but see the subprocess
+problem below), but not all features or packages work correctly yet.
 
 Use `C-c C-f' to move to the next equal level of outline, and
 `C-c C-b' to move to previous equal level.  `C-h m' will give more
@@ -57,15 +56,6 @@ EMACSPACKAGEPATH environment variable or by the
 SOFTWARE\GNU\XEmacs\EMACSPACKAGEPATH registry entry. You should check
 that these variables, if they exist, point to the actual location of
 your package tree.
-
-** XEmacs sometimes crashes when using gnus
-
-This is a known bug in this release of XEmacs on Windows.
-
-If you want to use gnus anyway, you should minimize any possible data
-loss by saving any modified buffers before you start and ensuring that
-you haven't set gnus-use-dribble-file to nil or disabled the normal
-XEmacs auto-save mechanism.
 
 ** XEmacs doesn't die when shutting down Windows 95 or 98
 

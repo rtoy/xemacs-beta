@@ -3173,7 +3173,7 @@ extent_remprop (Lisp_Object obj, Lisp_Object prop)
       return -1;
     }
 
-  return external_remprop (&ext->plist, prop, 0, ERROR_ME);
+  return external_remprop (extent_plist_addr (ext), prop, 0, ERROR_ME);
 }
 
 static Lisp_Object

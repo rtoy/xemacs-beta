@@ -219,7 +219,7 @@
 (copy-coding-system 'euc-jp 'japanese-euc)
 
 (set-language-info-alist
- "Japanese" '((setup-function . setup-japanese-environment)
+ "Japanese" '((setup-function . setup-japanese-environment-internal)
 	      (tutorial . "TUTORIAL.ja")
 	      (charset . (japanese-jisx0208 japanese-jisx0208-1978
 			  japanese-jisx0212 latin-jisx0201

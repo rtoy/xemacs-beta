@@ -180,6 +180,7 @@ order until the package is found.  As a special case, `site-name' can be
 			 (list :tag "Remote" host-name directory) ))
   :group 'package-get)
 
+;;;###autoload
 (defcustom package-get-download-sites
   '(
     ;; North America
@@ -261,11 +262,16 @@ When nil, updates which are not PGP signed are allowed without confirmation."
 (defun package-get-download-menu ()
   "Build the `Add Download Site' menu."
   (mapcar (lambda (site)
-            (vector (car site)
-               `(package-ui-add-site (quote ,(cdr site)))
-		    :style 'toggle :selected
-		    `(member (quote ,(cdr site)) package-get-remote)))
-          package-get-download-sites))
+	    (vector (car site)
+		    `(if (member (quote ,(cdr site))
+				 package-get-remote)
+			 (setq package-get-remote
+			       (delete (quote ,(cdr site)) package-get-remote))
+		       (package-ui-add-site (quote ,(cdr site))))
+		    :style 'toggle
+		    :selected `(member (quote ,(cdr site))
+				       package-get-remote)))
+	  package-get-download-sites))
 
 ;;;###autoload
 (defun package-get-require-base (&optional force-current)
@@ -1001,6 +1007,10 @@ lead to Emacs accessing remote sites."
 			 (package-get-info-prop (car this-package) 'version))))
 	    (setq this-package (cdr this-package)))))
       (setq packages (cdr packages)))
+    (when (interactive-p)
+      (if found
+          (message "%S" found)
+        (message "No appropriate package found")))
     found))
 
 ;;

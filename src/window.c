@@ -701,6 +701,11 @@ window_full_height_p (struct window *w)
 int
 window_truncation_on (struct window *w)
 {
+    /* Minibuffer windows are never truncated.
+       ### is this the right way ? */
+  if (EQ (w->mini_p, Qt))
+    return 0;
+
   /* Horizontally scrolled windows are truncated. */
   if (w->hscroll)
     return 1;
@@ -718,6 +723,17 @@ window_truncation_on (struct window *w)
 
   return 0;
 }
+
+DEFUN ("window-truncated-p", Fwindow_truncated_p, 0, 1, 0, /*
+Returns Non-Nil iff the window is truncated.
+*/
+       (window))
+{
+  struct window *w = decode_window (window);
+
+  return window_truncation_on (w) ? Qt : Qnil;
+}
+
 
 static int
 have_undivided_common_edge (struct window *w_right, void *closure)
@@ -5570,6 +5586,7 @@ syms_of_window (void)
   DEFSUBR (Fwindow_previous_child);
   DEFSUBR (Fwindow_parent);
   DEFSUBR (Fwindow_lowest_p);
+  DEFSUBR (Fwindow_truncated_p);
   DEFSUBR (Fwindow_highest_p);
   DEFSUBR (Fwindow_leftmost_p);
   DEFSUBR (Fwindow_rightmost_p);

@@ -344,6 +344,7 @@ mandir='${prefix}/man/man1'
 infodir='${datadir}/${PROGNAME}-${version}/info'
 infopath=''
 install_pp=''
+exe_suffix=''
 lispdir='${datadir}/${PROGNAME}-${version}/lisp'
 dnl sitelispdir='${datadir}/xemacs/site-lisp'
 pkgdir='${datadir}/${PROGNAME}-${version}/lisp'
@@ -1032,6 +1033,7 @@ case "$canonical" in
   vax-*-*          ) machine=vax ;;
   mips-dec-*       ) machine=pmax ;;
   mips-sgi-*       ) machine=iris4d ;;
+  mips*-linux      ) machine=mips ;;
   romp-ibm-*       ) machine=ibmrt ;;
   rs6000-ibm-aix*  ) machine=ibmrs6000 ;;
   powerpc-ibm-aix* ) machine=ibmrs6000 ;;
@@ -2462,6 +2464,7 @@ if test "$with_msw" != "no"; then
   if test "$with_msw" = "yes"; then
     AC_DEFINE(HAVE_MS_WINDOWS)
     install_pp="$blddir/lib-src/installexe.sh"
+    exe_suffix=".exe"
     XE_APPEND(-lshell32 -lgdi32 -luser32 -lcomctl32, libs_system)
     test "$with_dragndrop" != no && XE_APPEND(msw, dragndrop_proto)
     if test "$window_system" != x11; then
@@ -2493,6 +2496,7 @@ if test "$with_msw" != "no"; then
 fi
 
 AC_SUBST(install_pp)
+AC_SUBST(exe_suffix)
 
 test -z "$window_system" && window_system="none"
 
@@ -3898,7 +3902,7 @@ if test "$with_site_lisp" = "no"; then
 fi
 
 XE_SPACE(ac_configure_args, $ac_configure_args)
-AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION, "$canonical")
+AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION, "$configuration")
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "$ac_configure_args")
 AC_DEFINE_UNQUOTED(config_machfile,  "$machfile")
 AC_DEFINE_UNQUOTED(config_opsysfile, "$opsysfile")

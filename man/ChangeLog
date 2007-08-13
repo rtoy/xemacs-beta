@@ -1,3 +1,18 @@
+1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.7 is released
+
+1999-08-26    Matthias Neubauer  <neubauer@informatik.uni-tuebingen.de>
+
+	* internals/internals.texi (Garbage Collection - Step by Step):
+	new section in chapter Allocation of Objects in XEmacs Lisp
+
+1999-08-26    Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* custom.texi: Add info extension to @setfilename.
+	* texinfo.texi: Ditto.
+	* widget.texi: Ditto.
+
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.6 is released

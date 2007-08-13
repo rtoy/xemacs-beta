@@ -1,3 +1,66 @@
+1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.7 is released
+
+1999-09-23  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* indent.el (indent-line-to): fix bug: spaces were not replaced
+	with tab if column is multiple of tab-width
+	From dhn@qedinc.com
+
+1999-09-19  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (do-auto-fill): Commented out part of Kinsoku
+	processing.
+
+1999-09-19  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* setup-paths.el (paths-find-doc-directory): Respect value of
+	`configure-doc-directory.'
+
+	* find-paths.el (paths-find-architecture-directory): Give
+ 	precendence `default' argument (which typically comes from
+ 	configure).
+
+1999-09-19  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* files.el (allow-remote-paths): Variable added to core where it
+	belongs.
+
+1999-09-06    Robert Pluim  <rpluim@bigfoot.com>
+
+	* package-get.el (package-get-package-provider): Make sure we
+ 	produce some output, as we can be called interactively.
+
+1999-09-03    Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cl-macs.el (extent-start-position): Fix setf method.
+	(extent-end-position): Ditto.
+
+1999-08-29    Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* auto-show.el (auto-show-truncationp): Remove.
+          (auto-show-should-take-action-p): Use window-truncated-p
+
+1999-08-26    burt@dfki.de (Alastair Burt)
+
+	* derived.el: Apply derived-mode-parent-property.
+
+1999-08-26    Hrvoje Niksic  <hniksic@srce.hr>
+
+	* replace.el (perform-replace): Stop the search after the search
+	limit has been reached.
+
+1999-08-26    Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* bytecomp.el (byte-compile-buffer-substring): Would produce wrong 
+	warning/code for `buffer-substring' with no or one arg.
+
+1999-08-26    Tsukamoto Tetsuo <czkmt@remus.dti.ne.jp>
+
+	* mule/japanese.el: Use setup-japanese-environment-internal as the 
+	setup function.
+
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.6 is released

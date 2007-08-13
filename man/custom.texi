@@ -1,7 +1,7 @@
 \input texinfo.tex
 
 @c %**start of header
-@setfilename ../info/custom
+@setfilename ../info/custom.info
 @settitle The Customization Library
 @iftex
 @afourpaper

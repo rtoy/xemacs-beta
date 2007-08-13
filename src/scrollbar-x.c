@@ -674,19 +674,6 @@ x_scrollbar_pointer_changed_in_window (struct window *w)
 		    0, (Window) NULL);
 }
 
-/* Called directly from x_any_window_to_frame in frame-x.c */
-EMACS_INT
-x_window_is_scrollbar (struct frame *f, Window win)
-{
-  if (!FRAME_X_P (f))
-    return 0;
-
-  if (f->mirror_dirty)
-    update_frame_window_mirror (f);
-  return (EMACS_INT) x_scrollbar_loop (X_WINDOW_IS_SCROLLBAR, f->root_window,
-				 f->root_mirror, 0, win);
-}
-
 /* Make sure that all scrollbars on frame are up-to-date.  Called
    directly from x_set_frame_properties in frame-x.c*/
 void

@@ -3279,7 +3279,17 @@ absolute one."
 	filename
       (error "Apparently circular symlink path"))))
 
+(defcustom allow-remote-paths t
+   "*Set this to nil if you don't want remote paths to access
+remote files."
+   :type 'boolean
+   :group 'files
+   )
+
 ;; Suggested by Michael Kifer <kifer@CS.SunySB.EDU>
+;; #### This is broken. It is assumes it knows
+;;      about all possible remote file systsems.
+;;      This should be a file-name-handler-method.
 (defun file-remote-p (file-name)
   "Test whether FILE-NAME is looked for on a remote system."
   (cond ((not allow-remote-paths) nil)

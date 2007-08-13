@@ -1,3 +1,29 @@
+1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.7 is released
+
+1999-09-23  Andy Piper  <andy@xemacs.org>
+
+	* Makefile.in (install-arch-dep): use exe_suffix for link
+	installation.
+
+	* configure.in: define exe_suffix if we're on ms-windows.
+
+1999-09-19    Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.in (EMACS_CONFIGURATION): Use $configuration, not
+	$canonical, so that installation paths and dynamic path setup will 
+	stay in synch.
+
+1999-09-03    Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+        * configure.in (machine): Recognize MIPS/Linux.
+
+1999-08-26    rpluim@bigfoot.com
+
+	* README.packages: Added hint on how to figure out what packages
+	to get.
+
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.6 is released

@@ -34,6 +34,8 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "tooltalk.h"
 
+#include "syssignal.h"
+
 Lisp_Object Vtooltalk_fd;
 
 #ifdef TT_DEBUG

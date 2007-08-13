@@ -30,6 +30,15 @@ etags, ctags \- generate tag file for Emacs, vi
 [\|\-\-help\|] [\|\-\-version\|]
 .br
 [\|\-\-output=\fItagfile\fP\|] [\|\-\-append\|] [\|\-\-update\|] \fIfile\fP .\|.\|.
+
+.B ootags [\|\-aCDRSVh\|] [\|\-i \fIfile\fP\|] [\|\-l \fIlanguage\fP\|] [\|\-i \fIregexp\fP\|] [\|\-o \fItagfile\fP\|]
+.br
+[\|\-\-c++\|] [\|\-\-no\-defines\|] [\|\-\-ignore\-indentation\|]
+[\|\-\-language=\fIlanguage\fP\|] [\|\-\-regex=\fIregexp\fP\|]
+[\|\-\-no\-regexp\|] [\|\-\-help\|] [\|\-\-version\|]
+[\|\-\-include=\fIfile\fP\|] [\|\-\-output=\fItagfile\fP\|]
+[\|\-\-append\|] \fIfile\fP .\|.\|.
+
 .ad b
 .hy 1
 .SH DESCRIPTION
@@ -38,7 +47,9 @@ understood by
 .BR emacs ( 1 )\c
 \&; the `\|\fBctags\fP\|' program is used to create a similar table in a
 format understood by
-.BR vi ( 1 )\c
+.BR vi ( 1 )\c; the `\|\fBootags\fP\|' program is used to create a
+similar table used by the Altrasoft OO Browser (This manpage may be
+innacurate in regards to ootags).
 \&.  Both forms of the program understand
 the syntax of C, Objective C, C++, Java, Fortran, Pascal, Cobol,
 LaTeX, Scheme, Emacs Lisp/Common Lisp, Postscript, Erlang, Prolog and

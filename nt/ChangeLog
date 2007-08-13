@@ -1,3 +1,21 @@
+1999-09-26  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.1.7 is released
+
+1999-09-23  Vin Shelton  <acs@xemacs.org>
+
+	* PROGLEMS: Remove gnus problem which has been eradicated.
+
+1999-08-26    Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* xemacs.mak (SRCDIR): Add definition.
+	(PROGNAME): Ditto.
+
+1999-08-26    Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* xemacs.mak (.SUFFIXES): Add .texi.
+	(info): Generate info files using XEmacs (no makeinfo.exe needed).
+
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.1.6 is released

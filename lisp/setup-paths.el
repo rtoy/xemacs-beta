@@ -107,7 +107,7 @@
 
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory."
-  (paths-find-architecture-directory roots "lib-src"))
+  (paths-find-architecture-directory roots "lib-src" nil configure-doc-directory))
 
 (defun paths-find-lock-directory (roots)
   "Find the lock directory."

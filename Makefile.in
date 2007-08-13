@@ -393,7 +393,7 @@ install-arch-dep: mkdir
 	else true; fi
 	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}
 	-chmod 0755 ${bindir}/${PROGNAME}-${version}
-	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${PROGNAME}
+	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version}@exe_suffix@ ./${PROGNAME}
 	if test "${prefix}" != "${exec_prefix}"; then \
 	  for dir in \
 		lib/${PROGNAME} \
