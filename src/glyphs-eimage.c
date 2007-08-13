@@ -517,7 +517,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
  *                               GIF                                  *
  **********************************************************************/
 
-#include <gifrlib.h>
+#include "gifrlib.h"
 
 static void
 gif_validate (Lisp_Object instantiator)

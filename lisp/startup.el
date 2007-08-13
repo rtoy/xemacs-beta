@@ -935,7 +935,7 @@ a new format, when variables have changed, etc."
 				 " to see what this means.\n")))
 	`( "\n"))
     (face bold-italic "\
-Copyright (C) 1985-1997 Free Software Foundation, Inc.
+Copyright (C) 1985-1998 Free Software Foundation, Inc.
 Copyright (C) 1990-1994 Lucid, Inc.
 Copyright (C) 1993-1997 Sun Microsystems, Inc. All Rights Reserved.
 Copyright (C) 1994-1996 Board of Trustees, University of Illinois

@@ -50,7 +50,7 @@
 
 ;; People in this list have their individual links from the main page,
 ;; or from the `Legion' page.  If they have an image, it should be
-;; named after the CAR of the list element (baw -> baw.xpm).
+;; named after the CAR of the list element (baw -> baw.png).
 ;;
 ;; If you add to this list, you'll want to update
 ;; `about-maintainer-info' (and maybe `about-hackers'.
@@ -529,45 +529,22 @@ contributed to the XEmacs development from late 1994 to early
 			   (if (memq (device-class)
 				     '(color grayscale))
 			       "" "m")
-			   ".xpm")
+			   ".png")
 		   (locate-data-directory "photos")))
 	    (data nil))
-	(unless (file-exists-p file)
-	  ;; Maybe the file is compressed?
-	  (setq file (concat file ".Z"))
-	  (if (file-exists-p file)
-	      ;; Decompress it.
-	      (condition-case nil
-		  (let ((buffer (get-buffer-create " *image*")))
-		    (unwind-protect
-			(save-excursion
-			  (message "Uncompressing image...")
-			  (set-buffer buffer)
-			  (erase-buffer)
-			  (let ((coding-system-for-read 'binary)
-				(coding-system-for-write 'binary))
-			    (insert-file-contents-literally file)
-			    (call-process-region (point-min) (point-max)
-						 "zcat" t t nil)
-			    (setq data
-				  (buffer-substring (point-min) (point-max))))
-			  (message "Uncompressing image... done"))
-		      (kill-buffer buffer)))
-		(error (setq data 'error)))
-	    (setq file nil)))
 	(setq glyph
 	      (cond ((stringp data)
 		     (make-glyph
-		      (if (featurep 'xpm)
-			  `([xpm :data ,data]
+		      (if (featurep 'png)
+			  `([png :data ,data]
 			    [string :data "[Image]"])
 			`([string :data "[Image]"]))))
 		    ((eq data 'error)
 		     (make-glyph [string :data "[Error]"]))
 		    (file
 		     (make-glyph
-		      (if (featurep 'xpm)
-			  `([xpm :file ,file]
+		      (if (featurep 'png)
+			  `([png :file ,file]
 			    [string :data "[Image]"])
 			`([string :data "[Image]"]))))
 		    (t
@@ -781,7 +758,7 @@ I'm part of the team producing POWER 911, a 911 emergency response
 system written in Modula3:\n")
      (about-url-link 'marcpa "Visit POWER 911")
      (widget-insert "\
-Previously, I worked at Softimage Inc., now a Microsoft company
+\n\nPreviously, I worked at Softimage Inc., now a Microsoft company
 \(eeekkk!), as a UNIX system administrator.  This is where I've been
 converted to NT.
 

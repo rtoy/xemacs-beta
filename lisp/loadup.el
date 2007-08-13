@@ -183,18 +183,15 @@
     (dump-emacs (if (featurep 'infodock) "infodock" "xemacs") "temacs")
     (kill-emacs))
 
+;; Avoid error if user loads some more libraries now.
+(setq purify-flag nil)
+
 (when (member "run-temacs" command-line-args)
   (message "\nBootstrapping from temacs...")
-  (setq purify-flag nil)
-  (setq inhibit-early-packages t)
-  (setq inhibit-autoloads t)
   ;; Remove all args up to and including "run-temacs"
   (apply #'run-emacs-from-temacs (cdr (member "run-temacs" command-line-args)))
   ;; run-emacs-from-temacs doesn't actually return anyway.
   (kill-emacs))
-
-;; Avoid error if user loads some more libraries now.
-(setq purify-flag nil)
 
 ;; XEmacs change
 ;; If you are using 'recompile', then you should have used -l loadup-el.el

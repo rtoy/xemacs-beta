@@ -1,3 +1,32 @@
+1998-08-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre9 is released.
+
+1998-08-09  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* xemacs.mak (install): Win95 fixes:
+	  DOS mkdir doesn't create intermediate directories. xcopy does
+	  so use it to create the install and lock directories.
+	  Removed trailing backslashes from copy commands since DOS
+	  copy doesn't like them.
+
+1998-08-05  Charles G. Waldman <cgw@pgt.com>
+
+	* xemacs.mak: change "copy" to "xcopy" in install target
+
+1998-08-04  Jeff Sparkes  <jsparkes@internetivity.com>
+
+	* xemacs.mak: Link in PNG, TIFF and JPEG in native build.
+
+1998-08-04  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* README: XEmacs has been successfully built with MSVC 4.0.
+	  Mention the vcvars32.bat file installed with the MSVC tools.
+
+1998-08-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre8 is released.
+
 1998-07-19  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre7 is released.

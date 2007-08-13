@@ -2557,7 +2557,14 @@ when reading the arguments.
   debug_on_next_call = 0; /* #### from FSFmacs; correct? */
 
   if (SYMBOLP (cmd) && !NILP (Fget (cmd, Qdisabled, Qnil)))
-    return run_hook (Vdisabled_command_hook);
+    {
+      Lisp_Object tem = Fsymbol_value(Vdisabled_command_hook);
+
+      if (!NILP(tem))
+	{
+	  return Frun_hooks (1, &Vdisabled_command_hook);
+	}
+    }
 
   for (;;)
     {

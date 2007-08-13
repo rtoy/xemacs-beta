@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 21.0 pre9 "Danish Landrace"
+-- miscellaneous patches from Christoph Wedler
+-- German TUTORIAL fix from Adrian Aichner
+-- miscellaneous fixes from Charles Waldman, Martin Buchholz, Michael
+   Sperber
+-- miscellaneous fixes from Jonathan Harris, Colin Rafferty, Kai Haberzettl
+-- cygwin fixes from Andy Piper
+-- Reintegration of in-XEmacs gif support from Jareth Hein
+
 to 21.0 pre8 "Corsican"
 -- XEmacs enhanced button courtesy of Dave Finton
 -- PNG transparency fix from Jareth Hein

@@ -1918,7 +1918,7 @@ if test "$add_runtime_path" = "yes"; then
   AC_MSG_CHECKING("for runtime libraries flag")
   case "$opsys" in
     sol2 ) dash_r="-R" ;;
-    decosf* | linux* ) dash_r="-rpath" ;;
+    decosf* | linux* ) dash_r="-rpath " ;;
     *)
       dash_r=""
       for try_dash_r in "-R" "-R " "-rpath "; do
@@ -2722,22 +2722,21 @@ if test "$window_system" != "none"; then
     fi
   fi
 
+  dnl For a brief period we had the GIF code split out into a separate library,
+  dnl but patent problems, etc. sort of squashed that idea.
+  dnl We default to building with builtin GIF decoding
+  if test "$with_gif" != "no"; then
+    with_gif="yes"
+    AC_DEFINE(HAVE_GIF)
+    XE_ADD_OBJS(dgif_lib.o gif_io.o)
+  fi
+
   dnl Too many stupid linkers can't detect cascaded lib dependencies until runtime
   dnl So we always search for libz compression support.
   if test "$with_png $with_tiff" != "no no"; then
     AC_CHECK_LIB(c,  inflate, [:], [
     AC_CHECK_LIB(z,  inflate, [XE_PREPEND(-lz,  libs_x)],[
     AC_CHECK_LIB(gz, inflate, [XE_PREPEND(-lgz, libs_x)])])])
-  fi
-
-  dnl Autodetect GIFlib
-  AC_MSG_CHECKING(for gifreader)
-  test -z "$with_gif" && { AC_CHECK_HEADER(gifrlib.h,        ,with_gif=no) }
-  test -z "$with_gif" && { AC_CHECK_LIB(gifreader, GetGifError,[:] ,with_gif=no) }
-  test -z "$with_gif" && with_gif=yes
-  if test "$with_gif" = "yes"; then
-    AC_DEFINE(HAVE_GIF)
-    XE_PREPEND(-lgifreader, libs_x)
   fi
 
   dnl autodetect JPEG
@@ -2751,10 +2750,10 @@ if test "$window_system" != "none"; then
 
   dnl autodetect PNG
   if test -z "$with_png"; then
-    AC_MSG_CHECKING(for png.h - no older than 0.96)
+    AC_MSG_CHECKING(for png.h - no older than 1.02)
     AC_EGREP_CPP(yes,
 [#include <png.h>
-#if PNG_LIBPNG_VER >= 96
+#if PNG_LIBPNG_VER >= 10002
 yes
 #endif
 ], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no); with_png=no])
@@ -2778,7 +2777,7 @@ yes
 fi
 
 dnl ----------------------
-dnl Graphics libraries
+dnl X-Specific Graphics libraries
 dnl ----------------------
 
 if test "$with_x11" = "yes"; then
@@ -3925,15 +3924,25 @@ if test "$with_xpm" = yes; then
 elif test "$with_x11" = yes; then
   echo "  --------------------------------------------------------------------"
   echo "  WARNING: Compiling without XPM support."
-  echo "  WARNING: You should strongly considering installing XPM."
+  echo "  WARNING: You should strongly consider installing XPM."
   echo "  WARNING: Otherwise toolbars and other graphics will look suboptimal."
+  echo "  WARNING: (a copy may be found at ftp://ftp.xemacs.org/pub/xemacs/aux)"
+  echo "  --------------------------------------------------------------------"
+fi
+if test "$with_png" = yes; then
+  echo "  Compiling in support for PNG image handling."
+else
+  echo "  --------------------------------------------------------------------"
+  echo "  WARNING: Compiling without PNG image support."
+  echo "  WARNING: You should strongly consider installing the PNG libraries."
+  echo "  WARNING: Otherwise certain images and glyphs may not display."
+  echo "  WARNING: (a copy may be found at ftp://ftp.xemacs.org/pub/xemacs/aux)"
   echo "  --------------------------------------------------------------------"
 fi
 test "$with_xface" = yes && echo "  Compiling in support for X-Face message headers."
-test "$with_gif"   = yes && echo "  Compiling in support for GIF image conversion."
-test "$with_jpeg"  = yes && echo "  Compiling in support for JPEG image conversion."
-test "$with_png"   = yes && echo "  Compiling in support for PNG image conversion."
-test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image conversion."
+test "$with_gif"   = yes && echo "  Compiling in support for (builtin) GIF image handling."
+test "$with_jpeg"  = yes && echo "  Compiling in support for JPEG image handling."
+test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image handling."
 case "$with_sound" in
   nas    ) echo "  Compiling in network sound (NAS) support." ;;
   native ) echo "  Compiling in native sound support." ;;

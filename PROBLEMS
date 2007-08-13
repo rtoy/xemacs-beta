@@ -1351,6 +1351,16 @@ it only if it is undefined.
 Or you could set TERMCAP only when you set TERM--which should not
 happen in a non-login shell.
 
+** The popup menu appears at the buttom/right of my screen.
+
+You probably have something like the following in your ~/.Xdefaults
+
+	Emacs.geometry:		81x56--9--1
+
+Use the following instead
+
+	Emacs*EmacsFrame.geometry:		81x56--9--1
+
 
 * Compatibility problems (with Emacs 18, GNU Emacs, or previous XEmacs/lemacs)
 ==============================================================================

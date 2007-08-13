@@ -1,3 +1,32 @@
+1998-08-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre9 is released.
+
+1998-08-06  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* etc/TUTORIAL.de: Fixing typos and grammatical errors.  Fixing
+	inconsistent usage of RET, <Return>, and <return> (only using
+	<Return> now).  Changing TUTORIAL to TUTORIAL.de throughout
+	itself.  Adding english equivalent to german translation of all
+	concepts used in TUTORIAL.de.
+
+1998-08-07  P. E. Jareth Hein  <jareth@camelot.co.jp>
+
+	* configure.usage (--without-gif): Modify text to reflect status
+	of GIF support
+
+1998-08-04  P. E. Jareth Hein  <jareth@camelot.co.jp>
+
+	* configure.in: add back in the support for the in-core GIF
+	code, change the required PNG library version to 1.0.2, and add
+	a warning if PNG not found, since PNG images are now distributed
+	as part of the core.  Also minor wording changes in things reported
+	to the user.
+
+1998-08-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre8 is released.
+
 1998-07-28  Kai Haberzettl  <khaberz@synnet.de>
 
 	* BETA: Update mailing-list address for build-reports

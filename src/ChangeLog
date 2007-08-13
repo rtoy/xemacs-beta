@@ -1,3 +1,44 @@
+1998-08-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre9 is released.
+
+1998-08-09  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c (mswindows_wnd_proc): Workaround for a Win95 bug:
+	  Manually track the state of the left and right Ctrl and Alt
+	  modifiers.
+
+1998-08-07 Matt Stupple <matts@tibco.com>
+
+	* ntproc.c: don't wait on char_consumed at thread entry.
+	Additionally, to get the 'process' marked as finished, ensure 
+	that the CHILD_ACTIVE macro returns false, so before exiting 
+	close char_avail and set it to NULL, and close other handles 
+	to reduce handle leak problems.
+
+1998-08-09  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* menubar-msw.c (displayable_menu_item): take account of menu
+	  depth when deciding whether to try to display accelerators.
+
+1998-08-04  Andy Piper  <andyp@parallax.co.uk>
+
+	* event-msw.c: use MsgWaitForMultipleObjects if there are no
+	subprocesses.
+
+	* glyphs-msw.c: fix a couple of potential handle leaks.
+
+1998-08-04  P. E. Jareth Hein  <jareth@camelot.co.jp>
+
+	* dgif_lib.c gif_io.c gifrlib.h: New files to put GIF
+	  *decoding ONLY* back into the core.
+	* glyphs-eimage.c: Change referenced header file for GIF
+	  reading to point to the incore version.
+
+1998-08-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre8 is released.
+
 1998-07-29  P. E. Jareth Hein  <jareth@camelot.co.jp>
 
 	* glyphs-eimage.c (png_instantiate): Add proper handling for background

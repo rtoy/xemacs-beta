@@ -63,6 +63,9 @@
 (defvar packages-load-path-depth 1
   "Depth of load-path search in package hierarchies.")
 
+(defvar packages-data-path-depth 1
+  "Depth of data-path search in package hierarchies.")
+
 (defvar early-packages nil
   "Packages early in the load path.")
 
@@ -445,16 +448,25 @@ PACKAGES is a list of package directories."
    packages-load-path-depth))
 
 (defun packages-find-package-exec-path (packages)
+  "Construct the exec-path component for packages.
+PACKAGES is a list of package directories."
   (packages-find-package-library-path packages
 				      (list (paths-construct-path
 					     (list "bin" system-configuration))
 					    "lib-src")))
 
 (defun packages-find-package-info-path (packages)
+  "Construct the info-path component for packages.
+PACKAGES is a list of package directories."
   (packages-find-package-library-path packages '("info")))
 
 (defun packages-find-package-data-path (packages)
-  (packages-find-package-library-path packages '("etc")))
+  "Construct the data-path component for packages.
+PACKAGES is a list of package directories."
+  (paths-find-recursive-load-path
+   (packages-find-package-library-path packages
+				       '("etc"))
+   packages-data-path-depth))
 
 ;; Loading package initialization files
 

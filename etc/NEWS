@@ -306,6 +306,13 @@ add:
 
 to their .emacs file to get version control functionality.
 
+** The EDiff menus are no longer included in the default menubar.
+Users must add:
+
+(require 'ediff-hook)
+
+to their .emacs file to get the menus.
+
 ** An experimental version of dynamic linking is supported.
 
 There is no documentation and we are making no guarantees about what
