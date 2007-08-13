@@ -43,6 +43,7 @@ struct tty_console
   int infd, outfd;
   Lisp_Object instream, outstream;
   Lisp_Object terminal_type;
+  Lisp_Object controlling_process;
   char *term_entry_buffer;
 
   /* Physical location of cursor on this console. */

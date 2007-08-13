@@ -604,7 +604,7 @@ coding system to use when decoding the file.  Interactively,
 with a prefix argument, you will be prompted for the coding system."
   (interactive "FFind file in other window: \nZCoding system: ")
   (if codesys
-      (let ((overriding-file-coding-system
+      (let ((coding-system-for-read
 	     (get-coding-system codesys)))
 	(switch-to-buffer-other-window (find-file-noselect filename)))
     (switch-to-buffer-other-window (find-file-noselect filename))))
@@ -616,7 +616,7 @@ coding system to use when decoding the file.  Interactively,
 with a prefix argument, you will be prompted for the coding system."
   (interactive "FFind file in other frame: \nZCoding system: ")
   (if codesys
-      (let ((overriding-file-coding-system
+      (let ((coding-system-for-read
 	     (get-coding-system codesys)))
 	(switch-to-buffer-other-frame (find-file-noselect filename)))
     (switch-to-buffer-other-frame (find-file-noselect filename))))
@@ -630,7 +630,7 @@ coding system to use when decoding the file.  Interactively,
 with a prefix argument, you will be prompted for the coding system."
   (interactive "fFind file read-only: \nZCoding system: ")
   (if codesys
-      (let ((overriding-file-coding-system
+      (let ((coding-system-for-read
 	     (get-coding-system codesys)))
 	(find-file filename))
     (find-file filename))
@@ -646,7 +646,7 @@ coding system to use when decoding the file.  Interactively,
 with a prefix argument, you will be prompted for the coding system."
   (interactive "fFind file read-only other window: \nZCoding system: ")
   (if codesys
-      (let ((overriding-file-coding-system
+      (let ((coding-system-for-read
 	     (get-coding-system codesys)))
 	(find-file-other-window filename))
     (find-file-other-window filename))
@@ -662,7 +662,7 @@ coding system to use when decoding the file.  Interactively,
 with a prefix argument, you will be prompted for the coding system."
   (interactive "fFind file read-only other frame: \nZCoding system: ")
   (if codesys
-      (let ((overriding-file-coding-system
+      (let ((coding-system-for-read
 	     (get-coding-system codesys)))
 	(find-file-other-frame filename))
     (find-file-other-frame filename))
@@ -733,7 +733,7 @@ with a prefix argument, you will be prompted for the coding system."
 	(progn
 	  (unlock-buffer)
 	  (if codesys
-	      (let ((overriding-file-coding-system
+	      (let ((coding-system-for-read
 		     (get-coding-system codesys)))
 		(find-file filename))
 	    (find-file filename)))
@@ -2305,7 +2305,7 @@ Don't call it from programs!  Use `insert-file-contents' instead.
 				filename)))
   (let ((tem
 	 (if codesys
-	     (let ((overriding-file-coding-system
+	     (let ((coding-system-for-read
 		    (get-coding-system codesys)))
 	       (insert-file-contents filename))
 	   (insert-file-contents filename))))

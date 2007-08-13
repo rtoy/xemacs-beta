@@ -33,7 +33,15 @@
 (setq-default file-coding-system 'iso-2022-8)
 (put 'file-coding-system 'permanent-local t)
 
-(defvar overriding-file-coding-system nil
+(defvar coding-system-for-write nil
+  "Overriding coding system used when writing a file.
+You should *bind* this, not set it.  If this is non-nil, it specifies
+the coding system that will be used when a file is wrote in, and
+overrides `file-coding-system', `insert-file-contents-pre-hook',
+etc.  Use those variables instead of this one for permanent changes
+to the environment.")
+
+(defvar coding-system-for-read nil
   "Overriding coding system used when reading a file.
 You should *bind* this, not set it.  If this is non-nil, it specifies
 the coding system that will be used when a file is read in, and
@@ -47,7 +55,7 @@ This provides coarse-grained control; for finer-grained control,
 use `file-coding-system-alist'.  From a Lisp program, if you wish
 to unilaterally specify the coding system used for one
 particular operation, you should bind the variable
-`overriding-file-coding-system' rather than setting this variable,
+`coding-system-for-read' rather than setting this variable,
 which is intended to be used for global environment specification.")
 
 (defvar file-coding-system-alist
@@ -62,7 +70,7 @@ which is intended to be used for global environment specification.")
 Each element of the alist is a cons of a regexp, specifying the files
 to be affected, and a coding system.  This overrides the more
 general specification in `file-coding-system-for-read', but is
-overridden by `overriding-file-coding-system'.
+overridden by `coding-system-for-read'.
 
 Instead of a coding system you may specify a function, and it will be
 called after the file has been read in to decode the file.  It is
@@ -279,7 +287,7 @@ currently ignored.
 
 The coding system used for decoding the file is determined as follows:
 
-1. `overriding-file-coding-system', if non-nil.
+1. `coding-system-for-read', if non-nil.
 2. The result of `insert-file-contents-pre-hook', if non-nil.
 3. The matching value for this filename from `file-coding-system-alist',
    if any.
@@ -302,7 +310,7 @@ See also `insert-file-contents-access-hook', `insert-file-contents-pre-hook',
 	  (setq coding-system
 		(or
 		 ;; #1.
-		 overriding-file-coding-system
+		 coding-system-for-read
 		 ;; #2.
 		 (run-special-hook-with-args 'insert-file-contents-pre-hook
 					     filename visit)
@@ -382,7 +390,7 @@ See also `insert-file-contents-access-hook', `insert-file-contents-pre-hook',
   "A special hook to decide the coding system used for writing out a file.
 
 Before writing a file, `write-region' calls the functions on this hook
-with arguments START, END, FILENAME, APPEND, VISIT, and CODING-SYTEM,
+with arguments START, END, FILENAME, APPEND, VISIT, and CODING-SYSTEM,
 the same as the corresponding arguments in the call to
 `write-region'.
 
@@ -431,7 +439,8 @@ Optional seventh argument CODING-SYSTEM specifies the coding system
 See also `write-region-pre-hook' and `write-region-post-hook'."
   (interactive "r\nFWrite region to file: \ni\ni\ni\nZCoding-system: ")
   (setq coding-system
-	(or (run-special-hook-with-args
+	(or coding-system-for-write
+	    (run-special-hook-with-args
 	     'write-region-pre-hook start end filename append visit lockname)
 	    coding-system
 	    file-coding-system))

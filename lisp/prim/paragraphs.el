@@ -58,7 +58,7 @@ of text indented by a margin setting.
 The variable `paragraph-separate' specifies how to distinguish
 lines that start paragraphs from lines that separate them.
 
-If the variable `use-hard-newlines' is nonnil, then only lines following a
+If the variable `use-hard-newlines' is non-nil, then only lines following a
 hard newline are considered to match.")
 
 ;; paragraph-start requires a hard newline, but paragraph-separate does not:

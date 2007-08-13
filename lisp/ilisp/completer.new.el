@@ -259,7 +259,7 @@ ANY to segment the strings."
   "Return the best match of STRING in CHOICES with DELIMITERS between
 words and T if it is unique.  A match is unique if it is the only
 possibility or when USE-WORDS the only possibility with the same
-number of words.  The shortest string of multiple possiblities will be
+number of words.  The shortest string of multiple possibilities will be
 the best match."
   (or (if (null (cdr choices)) (cons (car choices) t))
       (let* ((regexp (concat "[^" delimiters "]*[" delimiters "]"))

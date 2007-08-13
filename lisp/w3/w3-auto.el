@@ -37,13 +37,13 @@
 (autoload 'w3-next-widget "w3-forms")
 
 ;; Widget stuff
-(autoload 'widget-setup "widget-edit")
-(autoload 'widget-create "widget-edit")
-(autoload 'widget-get "widget-edit")
-(autoload 'widget-put "widget-edit")
-(autoload 'widget-forward "widget-edit")
-(autoload 'widget-backward "widget-edit")
-(autoload 'widget-at "widget-edit")
+(autoload 'widget-setup "wid-edit")
+(autoload 'widget-create "wid-edit")
+(autoload 'widget-get "wid-edit")
+(autoload 'widget-put "wid-edit")
+(autoload 'widget-forward "wid-edit")
+(autoload 'widget-backward "wid-edit")
+(autoload 'widget-at "wid-edit")
 
 ;; Preferences
 (autoload 'w3-preferences-edit "w3-prefs")

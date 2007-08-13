@@ -1486,6 +1486,7 @@ skip-chars-forward."
         (content-model . [(nil
                            nil
                            (((caption) *include *next)
+                            ((%text) tr *same error)
                             ((col colgroup thead tfoot tbody tr) *retry *next))
                            (*retry *next)) ;error handling
                           ((col colgroup)
@@ -1537,7 +1538,7 @@ skip-chars-forward."
                            nil
                            (((tr tfoot tbody) *close)
                             ;; error handling
-                            ((%body.content) td *same error))
+                            ((%body.content %text) td *same error))
                            nil)])
         (end-tag-omissible . t))
        ((td th)

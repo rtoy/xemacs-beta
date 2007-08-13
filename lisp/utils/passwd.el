@@ -102,7 +102,7 @@ If optional arg DEFAULT is provided, then it is a string to insert as
 the default choice (it is not, of course, displayed.)
 
 If running under X, the keyboard will be grabbed (with XGrabKeyboard())
-to reduce the possibility that evesdropping is occuring.
+to reduce the possibility that eavesdropping is occuring.
 
 When reading a password, all keys self-insert, except for:
 \\<read-passwd-map>

@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/22 15:18:42
-;; Version: 1.97
+;; Created: 1997/03/07 16:46:48
+;; Version: 1.102
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +30,7 @@
 ;;; Variable definitions for w3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst w3-version-number
-  (let ((x "p3.0.62"))
+  (let ((x "p3.0.65"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -38,7 +38,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/02/22 15:18:42"))
+(defconst w3-version-date (let ((x "1997/03/07 16:46:48"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -274,9 +274,6 @@ in later garbage collections taking more time.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-load-hook nil "*Hooks to be run after loading w3.")
 (defvar w3-mode-hook nil "*Hooks to be run after entering w3-mode.")
-(defvar w3-file-prepare-hook nil
-  "*Hooks to be run before preparing a buffer.")
-(defvar w3-file-done-hook nil "*Hooks to be run after preparing a buffer.")
 (defvar w3-source-file-hook nil
   "*Hooks to be run after getting document source.")
 
@@ -808,7 +805,7 @@ returns.")
 (define-key w3-mode-map "\C-o"     'w3-fetch)
 (define-key w3-mode-map "\M-M"     'w3-mail-document-under-point)
 (define-key w3-mode-map "\M-m"	   'w3-mail-current-document)
-(define-key w3-mode-map "\M-s"	   'w3-search)
+(define-key w3-mode-map "\M-s"	   'w3-save-as)
 (define-key w3-mode-map "\M-\r"    'w3-follow-inlined-image)
 (define-key w3-mode-map "\r"       'w3-widget-button-press)
 (define-key w3-mode-map "\n"       'w3-widget-button-press)

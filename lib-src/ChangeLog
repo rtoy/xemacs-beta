@@ -1,3 +1,13 @@
+Wed Mar  5 18:07:57 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* gzip-el.sh: New file.  Courtesy of Jeff Miller and Hrvoje Niksic.
+
+	* update-elc.sh (els): Remove out of date .elcs before building.
+
+Tue Mar  4 18:45:10 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* update-elc.sh (els): No more special treatment for vm.elc.
+
 Wed Feb 26 18:17:59 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* make-docfile.c (next_extra_elc): New function.

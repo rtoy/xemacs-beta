@@ -114,8 +114,8 @@
 ; Change History
 ; 
 ; $Log: pretty-print.el,v $
-; Revision 1.2  1997/01/03 03:10:34  steve
-; Main beta 34 patches
+; Revision 1.3  1997/03/08 23:27:00  steve
+; Patches to Beta6
 ;
 ; Revision 1.4  1993/03/25  14:09:52  bosch
 ; Commands `prettyexpand-sexp' and `prettyexpand-all-sexp' and
@@ -157,7 +157,7 @@
 ;; User level functions
 ;;;###autoload
 (defun pp-function (symbol)
-  "Pretty print the function definition of SYMBOL in a seperate buffer"
+  "Pretty print the function definition of SYMBOL in a separate buffer"
   (interactive 
    (list (pp-read-symbol 'fboundp "Pretty print function definition of: ")))
   (if (compiled-function-p (symbol-function symbol))
@@ -169,14 +169,14 @@
 
 ;;;###autoload
 (defun pp-variable (symbol)
-  "Pretty print the variable value of SYMBOL in a seperate buffer"
+  "Pretty print the variable value of SYMBOL in a separate buffer"
   (interactive
    (list (pp-read-symbol 'boundp "Pretty print variable value of: ")))
   (pp-symbol-cell symbol 'symbol-value))
 
 ;;;###autoload
 (defun pp-plist (symbol)
-  "Pretty print the property list of SYMBOL in a seperate buffer"
+  "Pretty print the property list of SYMBOL in a separate buffer"
   (interactive
    (list (pp-read-symbol 'symbol-plist "Pretty print property list of: ")))
   (pp-symbol-cell symbol 'symbol-plist))

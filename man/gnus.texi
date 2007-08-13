@@ -2005,6 +2005,13 @@ Use the @kbd{G p} command to edit group parameters of a group.
 
 Also @pxref{Topic Parameters}.
 
+Here's an example group parameter list:
+
+@example
+((to-address . "ding@@ifi.uio.no")
+ (auto-expiry . t))
+@end example
+
 
 @node Listing Groups
 @section Listing Groups
@@ -9002,8 +9009,8 @@ Gnus to split the mail the normal way, you could set
 If you use @code{procmail} to split things directory into an @code{nnmh}
 directory (which you shouldn't do), you should set
 @code{nnmail-keep-last-article} to non-@code{nil} to prevent Gnus from
-ever expiring the final article in a mail newsgroup.  This is quite,
-quite important.
+ever expiring the final article (i. e., the article with the highest
+article number) in a mail newsgroup.  This is quite, quite important.
 
 Here's an example setup:  The incoming spools are located in
 @file{~/incoming/} and have @samp{""} as suffixes (i. e., the incoming
@@ -9282,9 +9289,8 @@ variable, which is 1000 by default. (So 1000 @code{Message-ID}s will be
 stored.) If all this sounds scary to you, you can set
 @code{nnmail-treat-duplicates} to @code{warn} (which is what it is by
 default), and @code{nnmail} won't delete duplicate mails.  Instead it
-will generate a brand new @code{Message-ID} for the mail and insert a
-warning into the head of the mail saying that it thinks that this is a
-duplicate of a different message.  
+will insert a warning into the head of the mail saying that it thinks
+that this is a duplicate of a different message.
 
 This variable can also be a function.  If that's the case, the function
 will be called from a buffer narrowed to the message in question with
@@ -13831,6 +13837,7 @@ Jack Vinson.
 
 Also thanks to the following for patches and stuff:
 
+Adrian Aichner,
 Peter Arius, 
 Marc Auslander,
 Chris Bone,
@@ -13841,6 +13848,7 @@ Martin Buchholz,
 Kevin Buhr,
 Alastair Burt,
 Joao Cachopo,
+Zlatko Calusic,
 Massimo Campostrini,
 Michael R. Cook,
 Glenn Coombs, 
@@ -13868,17 +13876,20 @@ Rajappa Iyer,
 Randell Jesup,
 Fred Johansen, 
 Greg Klanderman,
+Karl Kleinpaste,
 Peter Skov Knudsen,
 Shuhei Kobayashi, @c Kobayashi
 Thor Kristoffersen,
 Jens Lautenbacher,
 Carsten Leonhardt,
+James LewisMoss,
 Christian Limpach,
 Markus Linnala,
 Dave Love,
 Tonny Madsen,
 Shlomo Mahlab,
 Nat Makarevitch,
+David Martin,
 Timo Metzemakers,
 Richard Mlynarik,
 Lantz Moore,

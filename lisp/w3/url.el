@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/02/20 15:34:07
-;; Version: 1.57
+;; Created: 1997/03/05 23:37:22
+;; Version: 1.61
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/02/20 15:34:07|1.57|Location Undetermined
+;;; 1997/03/05 23:37:22|1.61|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -119,8 +119,8 @@
 (autoload 'url-is-cached "url-cache")
 (autoload 'url-store-in-cache "url-cache")
 (autoload 'url-is-cached "url-cache")
-(autoload 'url-create-cached-filename "url-cache")
-(autoload 'url-extract-from-cache "url-cache")
+(autoload 'url-cache-create-filename "url-cache")
+(autoload 'url-cache-extract "url-cache")
 (autoload 'url-cache-expired "url-cache")
 
 (require 'md5)
@@ -796,20 +796,21 @@ or 1 second has elapsed."
 	      (and (listp url-privacy-level)
 		   (memq 'os url-privacy-level)))
 	  nil)
+	 ;; First, we handle the inseparable OS/Windowing system
+	 ;; combinations
 	 ((eq system-type 'Apple-Macintosh) "Macintosh")
 	 ((eq system-type 'next-mach) "NeXT")
 	 ((eq system-type 'windows-nt) "Windows-NT; 32bit")
 	 ((eq system-type 'ms-windows) "Windows; 16bit")
 	 ((eq system-type 'ms-dos) "MS-DOS; 32bit")
-	 ((and (eq system-type 'vax-vms) (device-type))
-	  "VMS; X11")
-	 ((eq system-type 'vax-vms) "VMS; TTY")
-	 ((eq (device-type) 'x) "X11")
-	 ((eq (device-type) 'ns) "NeXTStep")
-	 ((eq (device-type) 'pm) "OS/2")
 	 ((eq (device-type) 'win32) "Windows; 32bit")
-	 ((eq (device-type) 'tty) "(Unix?); TTY")
-	 (t "UnkownPlatform")))
+	 ((eq (device-type) 'pm) "OS/2; 32bit")
+	 (t
+	  (case (device-type)
+	    (x "X11")
+	    (ns "OpenStep")
+	    (tty "TTY")
+	    (otherwise nil)))))
 
   (setq url-personal-mail-address (or url-personal-mail-address
 				      user-mail-address
@@ -821,14 +822,17 @@ or 1 second has elapsed."
 	       (memq 'email url-privacy-level)))
       (setq url-personal-mail-address nil))
 
-  (if (or (eq url-privacy-level 'paranoid)
-	  (and (listp url-privacy-level)
-	       (memq 'os url-privacy-level)))
-      (setq url-os-type nil)
-    (let ((vers (emacs-version)))
-      (if (string-match "(\\([^, )]+\\))$" vers)
-	  (setq url-os-type (url-match vers 1))
-	(setq url-os-type (symbol-name system-type))))))
+  (setq url-os-type
+	(cond
+	 ((or (eq url-privacy-level 'paranoid)
+	      (and (listp url-privacy-level)
+		   (memq 'os url-privacy-level)))
+	  nil)
+	 ((boundp 'system-configuration)
+	  system-configuration)
+	 ((boundp 'system-type)
+	  (symbol-name system-type))
+	 (t nil))))
 
 (defun url-handle-no-scheme (url)
   (let ((temp url-registered-protocols)
@@ -1047,6 +1051,8 @@ directly on a symbol."
 	  (setq url (substring url 4 nil)))
       (if (string-match "\\.$" url)
 	  (setq url (substring url 0 -1)))
+      (if (string-match "^www\\." url)
+	  (setq url (concat "http://" url)))
       (if (not (string-match url-nonrelative-link url))
 	  (setq url nil))
       url)))
@@ -1345,8 +1351,7 @@ and decoding any MIME content-transfer-encoding used."
 		   url-current-callback-data))
 	 (t
 	  (funcall url-current-callback-func))))))
-   ((fboundp 'w3-sentinel)
-    (set-variable 'w3-working-buffer buf)
+   ((and (fboundp 'w3-sentinel) (get-buffer buf))
     (w3-sentinel))
    (t
     (message "Retrieval for %s complete." buf))))
@@ -1372,10 +1377,10 @@ and decoding any MIME content-transfer-encoding used."
 		  (setq url-current-mime-type (mm-extension-to-mime
 					       (url-file-extension
 						(url-filename
-						 url-current-object)))))
-	      (if (member status '(401 301 302 303 204))
-		  nil
-		(funcall url-default-retrieval-proc (buffer-name url-working-buffer)))))))))
+ 						 url-current-object))))))))
+      (if (member status '(401 301 302 303 204))
+	  nil
+	(funcall url-default-retrieval-proc (buffer-name url-working-buffer))))))
 
 (defun url-remove-relative-links (name)
   ;; Strip . and .. from pathnames
@@ -1921,11 +1926,11 @@ retrieve a URL by its HTML source.")
     (setq cached (url-is-cached url)
 	  cached (and cached (not (url-cache-expired url cached)))
 	  handler (if cached
-		      'url-extract-from-cache
+		      'url-cache-extract
 		    (car-safe
 		     (cdr-safe (assoc (or type "auto")
 				      url-registered-protocols))))
-	  url (if cached (url-create-cached-filename url) url))
+	  url (if cached (url-cache-create-filename url) url))
     (save-excursion
       (set-buffer (get-buffer-create url-working-buffer))
       (setq url-current-can-be-cached (not no-cache)
@@ -1946,7 +1951,7 @@ retrieve a URL by its HTML source.")
     (cond
      ((and url-be-asynchronous (not cached) (member type '("http" "proxy")))
       nil)
-     (url-be-asynchronous
+     ((and url-be-asynchronous (get-buffer url-working-buffer))
       (funcall url-default-retrieval-proc (buffer-name)))
      ((not (get-buffer url-working-buffer)) nil)
      ((and (not url-inhibit-mime-parsing)

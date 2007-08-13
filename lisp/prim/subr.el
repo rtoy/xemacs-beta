@@ -470,7 +470,7 @@ error using the debugger `r' command.  See also `cerror'."
 (defmacro check-argument-type (predicate argument)
   "Check that ARGUMENT satisfies PREDICATE.
 If not, signal a continuable `wrong-type-argument' error until the
-returned value satifies PREDICATE, and assign the returned value
+returned value satisfies PREDICATE, and assign the returned value
 to ARGUMENT."
   `(if (not (,(eval predicate) ,argument))
        (setq ,argument
@@ -564,7 +564,7 @@ See also: `save-current-buffer' and `save-excursion'."
 ;; to this, so I'm leaving this undefined for now. --ben
 
 ;;; The objection is this: there is more than one way to load the same file.
-;;; "foo", "foo.elc", "foo.el", and "/some/path/foo.elc" are all differrent
+;;; "foo", "foo.elc", "foo.el", and "/some/path/foo.elc" are all different
 ;;; ways to load the exact same code.  `eval-after-load' is too stupid to
 ;;; deal with this sort of thing.  If this sort of feature is desired, then
 ;;; it should work off of a hook on `provide'.  Features are unique and

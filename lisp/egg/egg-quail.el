@@ -7,7 +7,7 @@
 
 (defconst quail-mode-egg-map (make-keymap))
 (set-keymap-parents quail-mode-egg-map (list quail-mode-map))
-(define-key quail-mode-egg-map " " 'quail-henkan-region))
+(define-key quail-mode-egg-map " " 'quail-henkan-region)
 
 (defvar quail-henkan-start nil)
 (make-variable-buffer-local 'quail-henkan-start)
@@ -27,7 +27,7 @@
 (define-key quail-henkan-mode-map "\C-c" 'quail-henkan-quit)
 (define-key quail-henkan-mode-map "\C-g" 'quail-henkan-quit)
 (define-key quail-henkan-mode-map "\177" 'quail-henkan-quit)
-(define-key quail-henkan-mode-map "\eg" 'quail-henkan-quit))
+(define-key quail-henkan-mode-map "\eg" 'quail-henkan-quit)
 
 (defun quail-henkan-mark ()
   "Set mark at the current position to indicate starting point of henkan."

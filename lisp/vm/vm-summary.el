@@ -201,10 +201,10 @@ mandatory."
 		  ;; what we want.
 		  ;;
 		  ;; 1. We need to avoid having the su-start-of
-		  ;;    and su-end-of market clumping together at
+		  ;;    and su-end-of markers clumping together at
 		  ;;    the start position.
 		  ;;
-		  ;; 2. We want the window point market (w->pointm
+		  ;; 2. We want the window point marker (w->pointm
 		  ;;    in the Emacs display code) to move to the
 		  ;;    start of the summary entry if it is
 		  ;;    anywhere within the su-start-of to
@@ -735,7 +735,8 @@ mandatory."
       (vm-set-year-of m (substring date (match-beginning 5) (match-end 5)))
       (if (match-beginning 6)
 	  (vm-set-zone-of m (substring date (match-beginning 6)
-				       (match-end 6)))))
+				       (match-end 6)))
+	(vm-set-zone-of m "")))
      (t
       (setq vector (vm-parse-date date))
       (vm-set-weekday-of m (elt vector 0))

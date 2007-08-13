@@ -7,41 +7,6 @@
 (setq max-specpdl-size (* 10 max-specpdl-size)
       max-lisp-eval-depth (* 10 max-lisp-eval-depth))
 
-(defun hack-dot-emacs ()
-  (interactive)
-  (let* ((args command-line-args-left)
-	 (fname (expand-file-name (nth 0 args)))
-	 (lispdir (nth 1 args)))
-    (setq command-line-args-left (cdr (cdr (cdr command-line-args-left))))
-    (set-buffer (get-buffer-create " *x*"))
-    (erase-buffer)
-    (if (file-exists-p fname)
-	(insert-file-contents fname))
-    (goto-char (point-min))
-    (if (search-forward ";;; Emacs-w3 configuration options" nil t)
-	(message "No changes made.")
-      (goto-char (point-max))
-      (insert "\n;;; Emacs-w3 configuration options\n")
-      (insert "(setq load-path (cons (expand-file-name \""
-	      lispdir "\") load-path))\n")
-      (insert "(autoload 'w3-preview-this-buffer \"w3\" \"WWW Previewer\" t)\n")
-      (insert "(autoload 'w3-follow-url-at-point \"w3\" \"Find document at pt\" t)\n")
-      (insert "(autoload 'w3 \"w3\" \"WWW Browser\" t)\n")
-      (insert "(autoload 'w3-open-local \"w3\" \"Open local file for WWW browsing\" t)\n")
-      (insert "(autoload 'w3-fetch \"w3\" \"Open remote file for WWW browsing\" t)\n")
-      (insert "(autoload 'w3-use-hotlist \"w3\" \"Use shortcuts to view WWW docs\" t)\n")
-      (insert "(autoload 'w3-show-hotlist \"w3\" \"Use shortcuts to view WWW docs\" t)\n")
-      (insert "(autoload 'w3-follow-link \"w3\" \"Follow a hypertext link.\" t)\n")
-      (insert "(autoload 'w3-batch-fetch \"w3\" \"Batch retrieval of URLs\" t)\n")
-      (insert "(autoload 'url-get-url-at-point \"url\" \"Find the url under the cursor\" nil)\n")
-      (insert "(autoload 'url-file-attributes  \"url\" \"File attributes of a URL\" nil)\n")
-      (insert "(autoload 'url-popup-info \"url\" \"Get info on a URL\" t)\n")
-      (insert "(autoload 'url-retrieve   \"url\" \"Retrieve a URL\" nil)\n")
-      (insert "(autoload 'url-buffer-visiting \"url\" \"Find buffer visiting a URL.\" nil)\n")
-      (insert "(autoload 'gopher-dispatch-object \"gopher\" \"Fetch gopher dir\" t)\n")
-      (insert ";;; End of Emacs-w3 configuration options\n")
-      (write-file fname))))
-
 (defun w3-declare-variables (&rest args)
   (while args
     (eval (list 'defvar (car args) nil ""))
@@ -69,6 +34,9 @@
 		      'charset-latin-iso8859-1
 		      'file-coding-system-for-read 'file-coding-system)
 
+;; For TM
+(w3-declare-variables 'mime/editor-mode-flag 'mime-tag-format)
+			  
 ;; For NNTP
 (w3-declare-variables 'nntp-server-buffer 'nntp-server-process 'nntp/connection
 		      'gnus-nntp-server 'nntp-server-name 'nntp-version

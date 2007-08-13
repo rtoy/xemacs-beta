@@ -72,8 +72,9 @@ using a window system."
 (defun delete-text-in-column (from to)
   "Delete the text between column FROM and TO (exclusive) of the current line.
 Nil of FORM or TO means the current column.
-If there's a charcter across the borders, the character is replaced with
-the same width of spaces before deleting."
+
+If there's a character across the borders, the character is replaced
+with the same width of spaces before deleting."
   (save-excursion
     (let (p1 p2)
       (if from

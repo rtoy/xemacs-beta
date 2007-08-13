@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/02/20 00:47:21
-;; Version: 1.28
+;; Created: 1997/03/07 01:12:31
+;; Version: 1.29
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -862,10 +862,8 @@
 	     (import (css-handle-import data))
 	     (media (css-handle-media-directive data active-device-types))
 	     (t (message "Unknown directive in stylesheet: @%s" directive)))))
-	 ;; Giving us some output device information
+	 ;; Giving us some output device information, old way
 	 ((looking-at "[ \t\r]*:\\([^: \n]+\\):")
-	  (message "You are using the old way of specifying device-dependent stylesheets!  Please upgrade!")
-	  (sleep-for 2)
 	  (downcase-region (match-beginning 1) (match-end 1))
 	  (setq device-type (intern (buffer-substring (match-beginning 1)
 						      (match-end 1))))

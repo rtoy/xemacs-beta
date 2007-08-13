@@ -7,7 +7,7 @@
 ;; Version:   2.28 (22 January 97)
 ;; Keywords:  bibtex, cite, auctex, emacs, xemacs
 
-;; RCS $Id: bib-cite.el,v 1.1 1997/02/20 02:17:35 steve Exp $
+;; RCS $Id: bib-cite.el,v 1.2 1997/03/08 23:25:42 steve Exp $
 ;; Note: RCS version number does not correspond to release number.
 
 ;; Everyone is granted permission to copy, modify and redistribute this
@@ -149,7 +149,7 @@
 ;;
 ;;    For multi-file documents, you must be using auctex (so that bib-cite can
 ;;    find the master file) and all \input and \include commands must be first
-;;    on a line (not preceeded by any non-white text).
+;;    on a line (not preceded by any non-white text).
 ;;
 ;;  imenu support  (Suggested key binding: Shift-Mouse-3)  
 ;;
@@ -501,7 +501,7 @@
 ;;   - Add key def for bibtex-mode to create auc-tex's parsing file.
 ;;   - Fix bugs found by <thompson@loon.econ.wisc.edu>
 ;;     - fix bib-get-citation for options 
-;;     - fix bib-get-citation for commas preceeded citation command
+;;     - fix bib-get-citation for commas preceded citation command
 ;;     - better regexp for citations and their keys.
 ;;     - Added @string support for any entry (not just journal entries).
 ;;       (I had to disallow numbers in @string keys because of years.  

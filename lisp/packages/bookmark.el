@@ -1149,7 +1149,7 @@ argument.  If called with two strings, then no prompting is done.  You
 must pass at least OLD when calling from Lisp.
 
 While you are entering the new name, consecutive C-w's insert
-consectutive words from the text of the buffer into the new bookmark
+consecutive words from the text of the buffer into the new bookmark
 name."
   (interactive (bookmark-completing-read "Old bookmark name"))
   (bookmark-maybe-historicize-string old)
@@ -1454,7 +1454,7 @@ deletion, or > if it is flagged for displaying."
     (bookmark-maybe-sort-alist)
     (mapcar
      (lambda (full-record)
-       ;; if a bookmark has an annotation, preceed it with a "*"
+       ;; if a bookmark has an annotation, precede it with a "*"
        ;; in the list of bookmarks.
        (let ((annotation (bookmark-get-annotation
                           (bookmark-name-from-full-record full-record))))
@@ -1481,7 +1481,7 @@ deletion, or > if it is flagged for displaying."
   "Major mode for editing a list of bookmarks.
 Each line describes one of the bookmarks in Emacs.
 Letters do not insert themselves; instead, they are commands.
-Bookmark names preceeded by a \"*\" have annotations.
+Bookmark names preceded by a \"*\" have annotations.
 \\<bookmark-bmenu-mode-map>
 \\[bookmark-bmenu-mark] -- mark bookmark to be displayed.
 \\[bookmark-bmenu-select] -- select bookmark of line point is on.
@@ -2078,7 +2078,7 @@ passed as an argument.  If called with two strings, then no prompting
 is done.  You must pass at least OLD-BOOKMARK when calling from Lisp.
 
 While you are entering the new name, consecutive C-w's insert
-consectutive words from the text of the buffer into the new bookmark
+consecutive words from the text of the buffer into the new bookmark
 name.
 
 Warning: this function only takes an EVENT as argument.  Use the

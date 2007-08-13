@@ -1,7 +1,7 @@
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1997/02/09 06:37:14
-;; Version: 1.18
+;; Created: 1997/03/05 23:37:58
+;; Version: 1.20
 ;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -72,6 +72,9 @@
 	widget-mouse-button2 'mouse-2
 	widget-mouse-button3 'mouse-3))
 
+(defvar widget-image-inaudible-p nil
+  "*Whether to make images inaudible or not.")
+
 (define-key widget-image-keymap (vector widget-mouse-button1)
   'widget-image-button-press)
 (define-key widget-image-keymap (vector widget-mouse-button2)
@@ -126,7 +129,12 @@
     (if (widget-glyphp value)
 	(widget-put widget 'glyph value)
       (widget-put widget :value value))
-    (widget-apply widget :create)))
+    (put-text-property (point)
+		       (progn
+			 (widget-apply widget :create)
+			 (point))
+		       'inaudible
+		       widget-image-inaudible-p)))
 
 (defsubst widget-image-usemap (widget)
   (let ((usemap (widget-get widget 'usemap)))
@@ -137,7 +145,7 @@
       (cdr-safe (assoc usemap w3-imagemaps)))))
 
 (defun widget-image-callback (widget widget-ignore &optional event)
-  (and (widget-get widget 'href) (w3-fetch (widget-get widget 'href))))
+  (and (widget-get widget 'href) (w3-fetch (widget-get widget 'href) (widget-get widget 'target))))
 
 (defmacro widget-image-create-subwidget (&rest args)
   (` (widget-create (,@ args)
@@ -355,15 +363,16 @@ Any other value means ask the user each time.")
 	 (img-src (or (widget-get widget 'src)
 		      (and widget-changed (widget-get widget-changed 'src))))
 	 (value  (widget-value widget))
+	 (target (widget-get widget 'target))
 	 )
     (cond
      ((and glyph usemap)		; Do the client-side imagemap stuff
       (setq href (w3-point-in-map (vector x y) usemap nil))
       (if (stringp href)
-	  (w3-fetch href)
+	  (w3-fetch href target)
 	(message "No destination found for %d,%d" x y)))
      ((and glyph x y ismap)		; Do the server-side imagemap stuff
-      (w3-fetch (format "%s?%d,%d" href x y)))
+      (w3-fetch (format "%s?%d,%d" href x y) target))
      (usemap				; Dummed-down tty client side imap
       (let ((choices (mapcar (function
 			      (lambda (entry)
@@ -373,11 +382,11 @@ Any other value means ask the user each time.")
 	    (choice nil))
 	(setq choice (completing-read "Imagemap: " choices nil t)
 	      choice (cdr-safe (assoc choice choices)))
-	(and (stringp choice) (w3-fetch choice))))
+	(and (stringp choice) (w3-fetch choice target))))
      (ismap				; Do server-side dummy imagemap for tty
-      (w3-fetch (concat href "?0,0")))
+      (w3-fetch (concat href "?0,0") target))
      ((stringp href)			; Normal hyperlink
-      (w3-fetch href))
+      (w3-fetch href target))
      ((stringp img-src)
       (cond
        ((null widget-image-auto-retrieve) nil)

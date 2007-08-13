@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/13 23:04:55
-;; Version: 1.29
+;; Created: 1997/03/04 14:32:11
+;; Version: 1.30
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -642,8 +642,6 @@ on that platform.")
 		  w3-delay-image-loads
 		  w3-do-incremental-display
 		  w3-dump-to-disk
-		  w3-file-done-hook
-		  w3-file-prepare-hook
 		  w3-honor-stylesheets
 		  w3-image-mappings
 		  w3-load-hook

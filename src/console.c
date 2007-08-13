@@ -904,6 +904,81 @@ stuff_buffered_input (Lisp_Object stuffstring)
 #endif /* BSD */
 }
 
+DEFUN ("suspend-console", Fsuspend_console, 0, 1, "", /*
+Suspend a console.  For tty consoles, it sends a signal to suspend
+the process in charge of the tty, and removes the devices and
+frames of that console from the display.
+
+If optional arg CONSOLE is non-nil, it is the console to be suspended.
+Otherwise it is assumed to be the selected console.
+
+Some operating systems cannot stop processes and resume them later.
+On such systems, who knows what will happen.
+*/
+       (console))
+{
+  Lisp_Object devcons;
+  Lisp_Object framecons;
+  struct console *c;
+  struct gcpro gcpro1;
+
+  if (NILP (console))
+      console=Fselected_console();
+
+  GCPRO1 (console);
+
+  c = decode_console(console);
+
+  if (CONSOLE_TTY_P (c)) 
+  {
+    CONSOLE_DEVICE_LOOP (devcons, c)
+      {
+	struct device *d = XDEVICE (XCAR (devcons)); 
+	DEVICE_FRAME_LOOP (framecons, d)
+	  {
+	    Fmake_frame_invisible(XCAR(framecons), Qt);
+	  }
+      }
+    reset_one_console(c);
+    sys_suspend_process(XINT(Fconsole_tty_controlling_process(console)));
+  }
+
+  UNGCPRO;
+  return Qnil;
+}
+
+DEFUN ("resume-console", Fresume_console, 1, 1, "", /*
+Re-initialize a previously suspended console.  For tty consoles,
+do stuff to the tty to make it sane again.
+*/
+       (console))
+{
+  Lisp_Object devcons;
+  Lisp_Object framecons;
+  struct console *c;
+  struct gcpro gcpro1, gcpro2, gcpro3;
+
+  GCPRO2 (console, devcons);
+
+  c = decode_console(console);
+
+  if (CONSOLE_TTY_P(c)) 
+  {
+    CONSOLE_DEVICE_LOOP (devcons, c)
+      {
+	struct device *d = XDEVICE (XCAR (devcons)); 
+	DEVICE_FRAME_LOOP (framecons, d)
+	  {
+	    Fmake_frame_visible(XCAR(framecons));
+	  }
+      }
+    init_one_console(c);
+  }
+
+  UNGCPRO;
+  return Qnil;
+}
+
 DEFUN ("set-input-mode", Fset_input_mode, 3, 5, 0, /*
 Set mode of reading keyboard input.
 First arg is ignored, for backward compatibility.
@@ -1007,7 +1082,9 @@ syms_of_console (void)
   DEFSUBR (Fconsole_enable_input);
   DEFSUBR (Fconsole_disable_input);
   DEFSUBR (Fconsole_on_window_system_p);
-
+  DEFSUBR (Fsuspend_console);
+  DEFSUBR (Fresume_console);
+  
   DEFSUBR (Fsuspend_emacs);
   DEFSUBR (Fset_input_mode);
   DEFSUBR (Fcurrent_input_mode);

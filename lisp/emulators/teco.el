@@ -186,7 +186,7 @@
 ;;	a-z	Treated the same as A-Z
 ;;	{	Not a Teco command
 ;;	|	Conditional 'else'
-;;	}	Not a Teco comand
+;;	}	Not a Teco command
 ;;	~	Not a Teco command
 ;;	DEL	Delete last character typed in
 
@@ -221,7 +221,7 @@
   "Set if we have just executed a digit.")
 
 (defvar teco-exp-exp nil
-  "Expression value preceeding operator.")
+  "Expression value preceding operator.")
 
 (defvar teco-exp-val1 nil
   "Current argument value.")

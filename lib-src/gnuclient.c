@@ -66,6 +66,67 @@ main (int argc, char *argv[])
 static char cwd[MAXPATHLEN+2];	/* current working directory when calculated */
 static char *cp = NULL;		/* ptr into valid bit of cwd above */
 
+#ifdef GNUATTACH
+#include <signal.h>
+
+static pid_t emacs_pid;			/* Process id for emacs process */
+
+void tell_emacs_to_resume(int sig)
+{
+    char buffer[GSERV_BUFSZ+1];
+    int s;					/* socket / msqid to server */
+    int connect_type;           			/* CONN_UNIX, CONN_INTERNET, or
+						 * CONN_IPC */
+
+  /* Why is SYSV so retarded? */
+  /* We want emacs to realize that we are resuming */
+    signal(SIGCONT, tell_emacs_to_resume); 
+
+    connect_type = make_connection (NULL, (u_short) 0, &s);
+
+    sprintf(buffer,"(server-eval '(resume-pid-console %d))", getpid());
+    send_string(s, buffer);
+  
+#ifdef SYSV_IPC
+  if (connect_type == (int) CONN_IPC)
+    disconnect_from_ipc_server (s, msgp, FALSE);
+#else /* !SYSV_IPC */
+  if (connect_type != (int) CONN_IPC)
+    disconnect_from_server (s, FALSE);
+#endif /* !SYSV_IPC */
+}
+
+void pass_signal_to_emacs(int sig)
+{
+  if (kill(emacs_pid, sig) == -1) {
+    fprintf(stderr, "gnuattach: Could not pass signal to emacs process\n");
+    exit(1);
+  }
+}
+
+void initialize_signals()
+{
+  /* Set up signal handler to pass relevant signals to emacs process */
+  signal(SIGHUP, pass_signal_to_emacs);
+  signal(SIGQUIT, pass_signal_to_emacs);
+  signal(SIGILL, pass_signal_to_emacs);
+  signal(SIGTRAP, pass_signal_to_emacs);
+  signal(SIGSEGV, pass_signal_to_emacs);
+  signal(SIGPIPE, pass_signal_to_emacs);
+  signal(SIGTERM, pass_signal_to_emacs);
+#ifdef SIGBUS
+  signal(SIGBUS, pass_signal_to_emacs);
+#endif
+#ifdef SIGIOT
+  signal(SIGIOT, pass_signal_to_emacs);
+#endif
+
+  /* We want emacs to realize that we are resuming */
+  signal(SIGCONT, tell_emacs_to_resume);
+}
+
+#endif /* GNUATTACH */
+
 
 /*
   get_current_working_directory -- return the cwd.
@@ -131,7 +192,7 @@ int
 main (int argc, char *argv[])
 {
   int starting_line = 1;			/* line to start editing at */
-  char command[MAXPATHLEN+50];			/* emacs command buffer */
+  char command[MAXPATHLEN+50];		/* emacs command buffer */
   char fullpath[MAXPATHLEN+1];			/* full pathname to file */
 #ifndef GNUATTACH
   int qflg = 0;					/* quick edit, don't wait for 
@@ -155,6 +216,7 @@ main (int argc, char *argv[])
 #endif /* SYSV_IPC */
 #ifdef GNUATTACH
   char *tty;
+  char buffer[GSERV_BUFSZ+1];		/* buffer to read pid */
 #endif
 
 #ifdef INTERNET_DOMAIN_SOCKETS
@@ -166,11 +228,7 @@ main (int argc, char *argv[])
   while ((c = getopt (argc, argv,
 
 #ifdef INTERNET_DOMAIN_SOCKETS
-# ifdef GNUATTACH
-		      "h:p:r"
-# else
 		      "h:p:r:q"
-# endif
 #else /* !INTERNET_DOMAIN_SOCKETS */
 # ifdef GNUATTACH
 		      ""
@@ -209,13 +267,8 @@ main (int argc, char *argv[])
     {
       fprintf (stderr,
 #ifdef INTERNET_DOMAIN_SOCKETS
-# ifdef GNUATTACH
-	       "usage: %s [-h hostname] [-p port] [-r pathname] "
-	       "[[+line] path] ...\n",
-# else
 	       "usage: %s [-q] [-h hostname] [-p port] [-r pathname] "
 	       "[[+line] path] ...\n",
-# endif
 #else /* !INTERNET_DOMAIN_SOCKETS */
 # ifdef GNUATTACH
 	       "usage: %s [[+line] path] ...\n",
@@ -234,9 +287,35 @@ main (int argc, char *argv[])
       fprintf (stderr, "%s: Not connected to a tty", progname);
       exit (1);
     }
-#endif
 
-#ifdef INTERNET_DOMAIN_SOCKETS
+  /* This next stuff added in an attempt to make handling of
+     the tty do the right thing when dealing with signals.
+     Idea is to pass all the appropriate signals to the emacs process
+     */
+
+  connect_type = make_connection (NULL, (u_short) 0, &s);
+
+  send_string(s,"(server-eval '(emacs-pid))");
+  send_string(s,EOT_STR);
+  
+  if (read_line(s,buffer) == 0) {
+    fprintf(stderr, "%s: Could not establish emacs procces id\n",progname);
+    exit(1);
+  }
+  /* don't do disconnect_from_server becasue we have already read data,
+     and disconnect doesn't do anything else
+   */
+#ifdef SYSV_IPC
+  if (connect_type == (int) CONN_IPC)
+    disconnect_from_ipc_server (s, msgp, FALSE);
+#endif /* !SYSV_IPC */
+
+  emacs_pid = (pid_t)atol(buffer);
+  initialize_signals();
+      
+#endif /*GNUATTACH */ 
+
+#if defined(INTERNET_DOMAIN_SOCKETS) && !defined(GNUATTACH)
   connect_type = make_connection (hostarg, portarg, &s);
 #else
   connect_type = make_connection (NULL, (u_short) 0, &s);
@@ -288,7 +367,8 @@ main (int argc, char *argv[])
       fprintf (stderr, "%s: unknown terminal type\n", progname);
       exit (1);
     }
-  sprintf (command, "(server-tty-edit-files \"%s\" \"%s\" '(", tty, ptr);
+  sprintf (command, "(server-tty-edit-files \"%s\" \"%s\" %d '(", 
+	   tty, ptr, getpid());
   send_string (s, command);
 #else
   if (qflg)

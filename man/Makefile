@@ -23,15 +23,22 @@
 # inherited from the environment.
 SHELL = /bin/sh
 
+EMACS = xemacs
+EMACSFLAGS = -batch -q -no-site-file 
+
+# Implies makeinfo-1.64
+MAKEINFO = makeinfo
+# Implies makeinfo-1.67
+NEWMAKEINFO = makeinfo-1.67
+
 .SUFFIXES: .info .texi .dvi
 
 # Subdirectories to make recursively.
 SUBDIR = xemacs lispref new-users-guide internals tm auctex
 
 ../info/%.info : %.texi
-	makeinfo -o $@ $<
+	-$(MAKEINFO) -o $@ $<
 
-# hyperbole and oo-browser manuals broken - do not TeX properly
 srcs = cc-mode cl custom ediff external-widget forms gnus \
        hyperbole ilisp info ispell mailcrypt message mh-e oo-browser \
        pcl-cvs psgml psgml-api rmail standards supercite term \
@@ -40,23 +47,37 @@ srcs = cc-mode cl custom ediff external-widget forms gnus \
 info = $(srcs:%=../info/%.info)
 dvi  = $(srcs:%=%.dvi)
 
+special = # ../info/w3.info ../info/vm.info ../info/texinfo.info
+
 all  : info
-info : $(info)
-	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
+info : $(info) $(special)
+	-for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
 
 xemacs: FORCE
-	cd $@ && $(MAKE) $(MFLAGS)
+	-cd $@ && $(MAKE) $(MFLAGS)
 lispref: FORCE
-	cd $@ && $(MAKE) $(MFLAGS)
+	-cd $@ && $(MAKE) $(MFLAGS)
 new-users-guide: FORCE
-	cd $@ && $(MAKE) $(MFLAGS)
+	-cd $@ && $(MAKE) $(MFLAGS)
 internals: FORCE
-	cd $@ && $(MAKE) $(MFLAGS)
+	-cd $@ && $(MAKE) $(MFLAGS)
 tm: FORCE
-	cd $@ && $(MAKE) $(MFLAGS)
+	-cd $@ && $(MAKE) $(MFLAGS)
 auctex: FORCE
-	cd $@ && $(MAKE) $(MFLAGS)
+	-cd $@ && $(MAKE) $(MFLAGS)
 FORCE :
+
+../info/w3.info : w3.texi
+	-$(NEWMAKEINFO) w3.texi -o ../info/w3.info
+
+../info/texinfo.info : texinfo.texi
+	-$(NEWMAKEINFO) texinfo.texi -o ../info/texinfo.info
+
+
+../info/vm.info : vm.texi
+	-$(EMACS) $(EMACSFLAGS) -insert vm.texi -l texinfmt \
+		-f texinfo-format-buffer -f save-buffer
+	-mv vm.info* ../info
 
 PERL = perl
 TEXI2DVI = texi2dvi

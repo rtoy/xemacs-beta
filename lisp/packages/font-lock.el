@@ -5,6 +5,7 @@
 ;; Copyright (C) 1996 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com>, for the LISPM Preservation Society.
+;; Minimally merged with FSF 19.34 by Barry Warsaw <bwarsaw@python.org>
 ;; Then (partially) synched with FSF 19.30, leading to:
 ;; Next Author: RMS
 ;; Next Author: Simon Marshall <simon@gnu.ai.mit.edu>
@@ -263,11 +264,17 @@ Each element should be of the form:
  (MATCHER . FACENAME)
  (MATCHER . HIGHLIGHT)
  (MATCHER HIGHLIGHT ...)
+ (eval . FORM)
 
 where HIGHLIGHT should be either MATCH-HIGHLIGHT or MATCH-ANCHORED.
 
+FORM is an expression, whose value should be a keyword element,
+evaluated when the keyword is (first) used in a buffer.  This feature
+can be used to provide a keyword that can only be generated when Font
+Lock mode is actually turned on.
+
 For highlighting single items, typically only MATCH-HIGHLIGHT is required.
-However, if an item or (typically) items is to be hightlighted following the
+However, if an item or (typically) items is to be highlighted following the
 instance of another item (the anchor) then MATCH-ANCHORED may be required.
 
 MATCH-HIGHLIGHT should be of the form:
@@ -483,7 +490,7 @@ This is normally set via `font-lock-defaults'.")
 ;;; Each time a modification happens to a line, we re-fontify the entire line.
 ;;; We do this by first removing the extents (text properties) on the line,
 ;;; and then doing the syntactic and keyword passes again on that line.  (More
-;;; generally, each modified region is extended to include the preceeding and
+;;; generally, each modified region is extended to include the preceding and
 ;;; following BOL or EOL.)
 ;;;
 ;;; This means that, as the user types, we repeatedly go back to the beginning
@@ -555,6 +562,8 @@ See the variable `font-lock-keywords' for customization."
 	  (t
 	   (remove-hook 'after-change-functions
 			'font-lock-after-change-function t)
+	   (setq font-lock-defaults-computed nil
+		 font-lock-keywords nil)
 	   ;; We have no business doing this here, since 
 	   ;; pre-idle-hook is global.	Other buffers may
 	   ;; still be in font-lock mode.  -dkindred@cs.cmu.edu
@@ -1128,10 +1137,6 @@ KEYWORDS should be of the form MATCH-ANCHORED, see `font-lock-keywords'."
     (eval (nth 1 keywords))
     (save-match-data
       ;; Find an occurrence of `matcher' before `limit'.
-      (if (and (not (stringp matcher))
-	       (not (functionp matcher))
-	       (boundp matcher))
-	  (setq matcher (symbol-value matcher)))
       (while (if (stringp matcher)
 		 (re-search-forward matcher limit t)
 	       (funcall matcher limit))
@@ -1162,10 +1167,6 @@ START should be at the beginning of a line."
 	;;
 	;; Find an occurrence of `matcher' from `start' to `end'.
 	(setq keyword (car keywords) matcher (car keyword))
-	(if (and (not (stringp matcher))
-		 (not (functionp matcher))
-		 (boundp matcher))
-	    (setq matcher (symbol-value matcher)))
 	(goto-char start)
 	(while (and (< (point) end)
 		    (if (stringp matcher)
@@ -1210,6 +1211,7 @@ START should be at the beginning of a line."
 ;; Font Lock mode.  So turn the mode back on if necessary.
 (defalias 'font-lock-revert-cleanup 'turn-on-font-lock)
 
+
 (defun font-lock-compile-keywords (&optional keywords)
   ;; Compile `font-lock-keywords' into the form (t KEYWORD ...) where KEYWORD
   ;; is the (MATCHER HIGHLIGHT ...) shown in the variable's doc string.
@@ -1217,20 +1219,21 @@ START should be at the beginning of a line."
     (setq font-lock-keywords 
      (if (eq (car-safe keywords) t)
 	 keywords
-       (cons t
-	(mapcar
-	 (function (lambda (item)
-	    (cond ((nlistp item)
-		   (list item '(0 font-lock-keyword-face)))
-		  ((numberp (cdr item))
-		   (list (car item) (list (cdr item) 'font-lock-keyword-face)))
-		  ((symbolp (cdr item))
-		   (list (car item) (list 0 (cdr item))))
-		  ((nlistp (nth 1 item))
-		   (list (car item) (cdr item)))
-		  (t
-		   item))))
-	 keywords))))))
+       (cons t (mapcar 'font-lock-compile-keyword keywords))))))
+
+(defun font-lock-compile-keyword (keyword)
+  (cond ((nlistp keyword)		; Just MATCHER
+	 (list keyword '(0 font-lock-keyword-face)))
+	((eq (car keyword) 'eval)	; Specified (eval . FORM)
+	 (font-lock-compile-keyword (eval (cdr keyword))))
+	((numberp (cdr keyword))	; Specified (MATCHER . MATCH)
+	 (list (car keyword) (list (cdr keyword) 'font-lock-keyword-face)))
+	((symbolp (cdr keyword))	; Specified (MATCHER . FACENAME)
+	 (list (car keyword) (list 0 (cdr keyword))))
+	((nlistp (nth 1 keyword))	; Specified (MATCHER . HIGHLIGHT)
+	 (list (car keyword) (cdr keyword)))
+	(t				; Hopefully (MATCHER HIGHLIGHT ...)
+	 keyword)))
 
 (defun font-lock-choose-keywords (keywords level)
   ;; Return LEVELth element of KEYWORDS.  A LEVEL of nil is equal to a

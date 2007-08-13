@@ -33,7 +33,7 @@
 This is equivalent to the type of the device's console.
 Value is `tty' for a tty device (a character-only terminal),
 `x' for a device that is a screen on an X display,
-`ns' for a device that is a NeXTstep connection (not yet implemeted),
+`ns' for a device that is a NeXTstep connection (not yet implemented),
 `win32' for a device that is a Windows or Windows NT connection (not yet
   implemented),
 `pc' for a device that is a direct-write MS-DOS screen (not yet implemented),
@@ -43,15 +43,19 @@ Value is `tty' for a tty device (a character-only terminal),
   (if (not (device-live-p device)) 'dead
     (console-type (device-console device))))
 
-(defun make-tty-device (&optional tty terminal-type)
+(defun make-tty-device (&optional tty terminal-type controlling-process)
   "Create a new device on TTY.
   TTY should be the name of a tty device file (e.g. \"/dev/ttyp3\" under
 SunOS et al.), as returned by the `tty' command.  A value of nil means
 use the stdin and stdout as passed to XEmacs from the shell.
   If TERMINAL-TYPE is non-nil, it should be a string specifying the
 type of the terminal attached to the specified tty.  If it is nil,
-the terminal type will be inferred from the TERM environment variable."
-  (make-device 'tty tty (list 'terminal-type terminal-type)))
+the terminal type will be inferred from the TERM environment variable.
+  If CONTROLLING-PROCESS is non-nil, it should be an integer
+specifying the process id of the process in control of the specified tty.  If
+it is nil, it is assumes to be the value returned by emacs-pid."
+  (make-device 'tty tty (list 'terminal-type terminal-type 
+			      'controlling-process controlling-process)))
 
 (defun make-x-device (&optional display)
   "Create a new device connected to DISPLAY."

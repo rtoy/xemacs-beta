@@ -168,11 +168,19 @@ If it fails, it returns nil."
 If it fails, it returns nil."
   (try-font-name (x-frob-font-weight font "medium") device))
 
+(defvar *try-oblique-before-italic-fonts* nil
+  "*If NIL, italic fonts are searched before oblique fonts.  If
+non-NIL, oblique fonts are tried before italic fonts.  This is mostly
+applicable to adobe-courier fonts")
+
 (defun x-make-font-italic (font &optional device)
   "Given an X font specification, this attempts to make an `italic' font.
 If it fails, it returns nil."
-  (or (try-font-name (x-frob-font-slant font "i") device)
-      (try-font-name (x-frob-font-slant font "o") device)))
+  (if *try-oblique-before-italic-fonts*
+      (or (try-font-name (x-frob-font-slant font "o") device)
+	  (try-font-name (x-frob-font-slant font "i") device))
+    (or (try-font-name (x-frob-font-slant font "i") device)
+	(try-font-name (x-frob-font-slant font "o") device))))
 
 (defun x-make-font-unitalic (font &optional device)
   "Given an X font specification, this attempts to make a non-italic font.

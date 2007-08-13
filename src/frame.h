@@ -112,6 +112,16 @@ struct frame
 #include "frameslots.h"
 #undef MARKED_SLOT
 
+    /* Nonzero if frame is currently displayed.
+       Mutally exclusive with iconfied
+       JV: This now a tristate flag:
+Value : Emacs meaning                           :f-v-p : X meaning
+0     : not displayed                           : nil  : unmapped
+>0    : user can access it,needs repainting     : t    : mapped and visible
+<0    : user can access it,needs no repainting  : hidden :mapped and invisible
+     where f-v-p is the return value of frame-visible-p */
+  int visible;
+
   /* one-bit flags: */
 
   /* Are we finished initializing? */
@@ -125,9 +135,6 @@ struct frame
 
   /* Nonzero if last attempt at redisplay on this frame was preempted.  */
   unsigned int display_preempted :1;
-
-  /* Nonzero if frame is currently displayed.  */
-  unsigned int visible :1;
 
   /* Nonzero if window is currently iconified.
      This and visible are mutually exclusive.  */
@@ -332,6 +339,7 @@ extern int frame_changed;
 #define FRAME_CURSOR_X(f) ((f)->cursor_x)
 #define FRAME_CURSOR_Y(f) ((f)->cursor_y)
 #define FRAME_VISIBLE_P(f) ((f)->visible)
+#define FRAME_REPAINT_P(f) ((f)->visible>0)      
 #define FRAME_NO_SPLIT_P(f) ((f)->no_split)
 #define FRAME_ICONIFIED_P(f) ((f)->iconified)
 #define FRAME_FOCUS_FRAME(f) ((f)->focus_frame)

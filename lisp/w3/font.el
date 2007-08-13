@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/02/08 00:56:14
-;; Version: 1.33
+;; Created: 1997/03/03 15:15:42
+;; Version: 1.34
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -376,6 +376,7 @@ for use in the 'weight' field of an X font string.")
 	 (func (car (cdr-safe (assq type font-window-system-mappings)))))
     (and func (fboundp func) (funcall func fontobj device))))
 
+;;;###autoload
 (defun font-create-object (fontname &optional device)
   (let* ((type (device-type device))
 	 (func (car (cdr (cdr-safe (assq type font-window-system-mappings))))))
@@ -536,6 +537,7 @@ for use in the 'weight' field of an X font string.")
 
 (defvar font-default-cache nil)
 
+;;;###autoload
 (defun font-default-font-for-device (&optional device)
   (or device (setq device (selected-device)))
   (if font-running-xemacs
@@ -547,6 +549,7 @@ for use in the 'weight' field of an X font string.")
 	  (aref (get-font-info (aref (cdr (get-fontset-info font)) 0)) 2)
 	font))))
 	  
+;;;###autoload
 (defun font-default-object-for-device (&optional device)
   (let ((font (font-default-font-for-device device)))
     (or (cdr-safe 
@@ -557,10 +560,12 @@ for use in the 'weight' field of an X font string.")
 					 font-default-cache))
 	  (cdr-safe (assoc font font-default-cache))))))
 
+;;;###autoload
 (defun font-default-family-for-device (&optional device)
   (or device (setq device (selected-device)))
   (font-family (font-default-object-for-device device)))
 
+;;;###autoload
 (defun font-default-size-for-device (&optional device)
   (or device (setq device (selected-device)))
   ;; face-height isn't the right thing (always 1 pixel too high?)
@@ -696,6 +701,7 @@ for use in the 'weight' field of an X font string.")
 
 
 ;;; Cache building code
+;;;###autoload
 (defun x-font-build-cache (&optional device)
   (let ((hashtable (make-hash-table :test 'equal :size 15))
 	(fonts (mapcar 'x-font-create-object
@@ -726,47 +732,46 @@ for use in the 'weight' field of an X font string.")
 ;;; Now overwrite the original copy of set-face-font with our own copy that
 ;;; can deal with either syntax.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; ###autoload
 (defun font-set-face-font (&optional face font &rest args)
-  (if (interactive-p)
-      (call-interactively 'font-original-set-face-font)
-    (cond
-     ((and (vectorp font) (= (length font) 12))
-      (let ((font-name (font-create-name font)))
-	(set-face-property face 'font-specification font)
-	(cond
-	 ((null font-name)		; No matching font!
-	  nil)
-	 ((listp font-name)		; For TTYs
-	  (let (cur)
-	    (while font-name
-	      (setq cur (car font-name)
-		    font-name (cdr font-name))
-	      (apply 'set-face-property face (car cur) (cdr cur) args))))
-	 (font-running-xemacs
-	  (apply 'font-original-set-face-font face font-name args)
-	  (apply 'set-face-underline-p face (font-underline-p font) args)
-	  (if (and (or (font-smallcaps-p font) (font-bigcaps-p font))
-		   (fboundp 'set-face-display-table))
-	      (apply 'set-face-display-table
-		     face font-caps-display-table args))
-	  (apply 'set-face-property face 'strikethru (or
-						      (font-linethrough-p font)
-						      (font-strikethru-p font))
-		 args))
-	 (t
-	  (condition-case nil
-	      (apply 'font-original-set-face-font face font-name args)
-	    (error
-	     (let ((args (car-safe args)))
-	       (and (or (font-bold-p font)
-			(memq (font-weight font) '(:bold :demi-bold)))
-		    (make-face-bold face args t))
-	       (and (font-italic-p font) (make-face-italic face args t)))))
-	  (apply 'set-face-underline-p face (font-underline-p font) args)))))
-     (t
-      ;; Let the original set-face-font signal any errors
-      (set-face-property face 'font-specification nil)
-      (apply 'font-original-set-face-font face font args)))))
+  (cond
+   ((and (vectorp font) (= (length font) 12))
+    (let ((font-name (font-create-name font)))
+      (set-face-property face 'font-specification font)
+      (cond
+       ((null font-name)		; No matching font!
+	nil)
+       ((listp font-name)		; For TTYs
+	(let (cur)
+	  (while font-name
+	    (setq cur (car font-name)
+		  font-name (cdr font-name))
+	    (apply 'set-face-property face (car cur) (cdr cur) args))))
+       (font-running-xemacs
+	(apply 'set-face-font face font-name args)
+	(apply 'set-face-underline-p face (font-underline-p font) args)
+	(if (and (or (font-smallcaps-p font) (font-bigcaps-p font))
+		 (fboundp 'set-face-display-table))
+	    (apply 'set-face-display-table
+		   face font-caps-display-table args))
+	(apply 'set-face-property face 'strikethru (or
+						    (font-linethrough-p font)
+						    (font-strikethru-p font))
+	       args))
+       (t
+	(condition-case nil
+	    (apply 'set-face-font face font-name args)
+	  (error
+	   (let ((args (car-safe args)))
+	     (and (or (font-bold-p font)
+		      (memq (font-weight font) '(:bold :demi-bold)))
+		  (make-face-bold face args t))
+	     (and (font-italic-p font) (make-face-italic face args t)))))
+	(apply 'set-face-underline-p face (font-underline-p font) args)))))
+   (t
+    ;; Let the original set-face-font signal any errors
+    (set-face-property face 'font-specification nil)
+    (apply 'set-face-font face font args))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1079,42 +1084,23 @@ is returned."
 
 (defun font-set-face-background (&optional face color &rest args)
   (interactive)
-  (if (interactive-p)
-      (call-interactively 'font-original-set-face-background)
-    (cond
-     ((font-rgb-color-p color)
-      (apply 'font-original-set-face-background face
-	     (font-normalize-color color) args))
-     (t
-      (apply 'font-original-set-face-background face color args)))))
+  (condition-case nil
+      (cond
+       ((font-rgb-color-p color)
+	(apply 'set-face-background face
+	       (font-normalize-color color) args))
+       (t
+	(apply 'set-face-background face color args)))
+    (error nil)))
 
 (defun font-set-face-foreground (&optional face color &rest args)
   (interactive)
-  (if (interactive-p)
-      (call-interactively 'font-original-set-face-foreground)
-    (cond
-     ((font-rgb-color-p color)
-      (apply 'font-original-set-face-foreground face
-	     (font-normalize-color color) args))
-     (t
-      (apply 'font-original-set-face-foreground face color args)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Do the actual overwriting of some functions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro font-overwrite-fn (func)
-  (` (let ((our-func (intern (format "font-%s" (, func))))
-	   (new-func (intern (format "font-original-%s" (, func))))
-	   (old-func (and (fboundp (, func)) (symbol-function (, func)))))
-       (if (not (fboundp new-func))
-	   (progn
-	     (if old-func
-		 (fset new-func old-func)
-	       (fset new-func 'ignore))
-	     (fset (, func) our-func))))))
-
-(font-overwrite-fn 'set-face-foreground)
-(font-overwrite-fn 'set-face-background)
-(font-overwrite-fn 'set-face-font)
+  (condition-case nil
+      (cond
+       ((font-rgb-color-p color)
+	(apply 'set-face-foreground face (font-normalize-color color) args))
+       (t
+	(apply 'set-face-foreground face color args)))
+    (error nil)))
 
 (provide 'font)

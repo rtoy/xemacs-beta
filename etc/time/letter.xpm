@@ -1,7 +1,7 @@
 /* XPM */
 static char * jmail_xpm[] = {
 "18 13 4 1",
-" 	s None	c None",
+" 	s None c None",
 ".	c gray85",
 "X	c yellow",
 "o	c black",

@@ -1,7 +1,7 @@
 ;;; images.el --- Automatic image converters
 ;; Author: wmperry
-;; Created: 1997/02/13 15:01:57
-;; Version: 1.8
+;; Created: 1997/02/26 16:21:01
+;; Version: 1.9
 ;; Keywords: images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -149,12 +149,13 @@ to a suitable internal image format will be carried out."
 	      (while chain
 		(cond
 		 ((stringp (car chain))
-		  (shell-command-on-region (point-min) (point-max)
-					   (concat
-					    "/bin/sh -c '"
-					    (car chain)
-					    " 2> /dev/null"
-					    "'") t))
+		  (let ((file-coding-system mule-no-coding-system))
+		    (call-process-region
+		     (point-min) (point-max)
+		     shell-file-name t
+		     (list (current-buffer) nil)
+		     shell-command-switch
+		     (car chain))))
 		 ((and (symbolp (car chain)) (fboundp (car chain)))
 		  (funcall (car chain) (point-min) (point-max))))
 		(setq chain (cdr chain)))

@@ -112,7 +112,7 @@ generated coding-systems whose 'eol-type properties are 1
 (LF), 2 (CRLF), and 3 (CR).  The names of generated
 coding-systems are NAMEunix, NAMEdos, and NAMEmac respectively.
 
-Just to make an alias of some coding-system, call a fucntion
+Just to make an alias of some coding-system, call a function
 `copy-coding-system'.
 
 FUNCTION copy-coding-system: ORIGINAL ALIAS

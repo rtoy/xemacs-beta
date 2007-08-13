@@ -673,12 +673,12 @@ x_initialize_frame_toolbar_gcs (struct frame *f)
   FRAME_X_TOOLBAR_BLANK_BACKGROUND_GC (f) =
     XtGetGC ((Widget) ef, flags, &gcv);
 
-  if (ef->emacs_frame.top_toolbar_shadow_pixel == -1)
+  if (ef->emacs_frame.top_toolbar_shadow_pixel == 0)
     {
       ef->emacs_frame.top_toolbar_shadow_pixel =
 	ef->emacs_frame.background_toolbar_pixel;
     }
-  if (ef->emacs_frame.bottom_toolbar_shadow_pixel == -1)
+  if (ef->emacs_frame.bottom_toolbar_shadow_pixel == 0)
     {
       ef->emacs_frame.bottom_toolbar_shadow_pixel =
 	ef->emacs_frame.background_toolbar_pixel;

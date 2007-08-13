@@ -496,12 +496,73 @@ Output, if any, is displayed.  The message is not altered."
        (vm-display nil nil '(vm-pipe-message-to-command)
 		   '(vm-pipe-message-to-command)))))
 
-(defun vm-print-message ()
-  "Print the current message."
-  (interactive)
-  (vm-pipe-message-to-command
-   (mapconcat (function identity)
-	      (nconc (list vm-print-command) vm-print-command-switches)
-	      " ")
-   '(64)))
+(defun vm-print-message (count)
+  "Print the current message
+Prefix arg N means print the current message and the next N - 1 messages.
+Prefix arg -N means print the current message and the previous N - 1 messages.
 
+The variables `vm-print-command' controls what command is run to
+print the message, and `vm-print-command-switches' is a list of switches
+to pass to the command.
+
+When invoked on marked messages (via vm-next-command-uses-marks),
+each marked message is printed, one message per vm-print-command invocation.
+
+Output, if any, is displayed.  The message is not altered."
+  (interactive "p")
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer)
+  (vm-check-for-killed-summary)
+  (vm-error-if-folder-empty)
+  (let ((buffer (get-buffer-create "*Shell Command Output*"))
+	(command (mapconcat (function identity)
+			    (nconc (list vm-print-command)
+				   vm-print-command-switches)
+			    " "))
+	(m nil)
+	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
+	(mlist (vm-select-marked-or-prefixed-messages count)))
+    (set-buffer buffer)
+    (erase-buffer)
+    (while mlist
+      (setq m (vm-real-message-of (car mlist)))
+      (set-buffer (vm-buffer-of m))
+      (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
+	  (let ((work-buffer nil))
+	    (unwind-protect
+		(progn
+		  (setq work-buffer (generate-new-buffer "*vm-work*"))
+		  (set-buffer work-buffer)
+		  (vm-insert-region-from-buffer
+		   (vm-buffer-of m) (vm-vheaders-of m) (vm-text-of m))
+		  (vm-decode-mime-encoded-words)
+		  (goto-char (point-max))
+		  (let ((vm-auto-displayed-mime-content-types
+			 '("text" "multipart"))
+			(vm-mime-internal-content-types
+			 '("text" "multipart"))
+			(vm-mime-external-content-types-alist nil))
+		    (vm-decode-mime-layout (vm-mm-layout m)))
+		  (let ((pop-up-windows (and pop-up-windows
+					     (eq vm-mutable-windows t))))
+		    (call-process-region (point-min) (point-max)
+					 (or shell-file-name "sh")
+					 nil buffer nil
+					 shell-command-switch command)))
+	      (and work-buffer (kill-buffer work-buffer))))
+	(save-restriction
+	  (widen)
+	  (narrow-to-region (vm-vheaders-of m) (vm-text-end-of m))
+	  (let ((pop-up-windows (and pop-up-windows
+				     (eq vm-mutable-windows t))))
+	    (call-process-region (point-min) (point-max)
+				 (or shell-file-name "sh")
+				 nil buffer nil
+				 shell-command-switch command))))
+      (setq mlist (cdr mlist)))
+    (set-buffer buffer)
+    (if (not (zerop (buffer-size)))
+	(vm-display buffer t '(vm-pipe-message-to-command)
+		    '(vm-pipe-message-to-command))
+      (vm-display nil nil '(vm-pipe-message-to-command)
+		  '(vm-pipe-message-to-command)))))

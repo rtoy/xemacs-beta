@@ -1,7 +1,7 @@
 ;;; url-http.el --- HTTP Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/02/19 00:50:08
-;; Version: 1.15
+;; Created: 1997/03/03 15:13:11
+;; Version: 1.16
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -399,7 +399,7 @@ HTTP/1.0 specification for more details." x redir) 'error)
 		      "Please notify the server maintainer.")))))
        ((= status 304)			; Cached document is newer
 	(message "Extracting from cache...")
-	(url-extract-from-cache (url-create-cached-filename (url-view-url t))))
+	(url-cache-extract (url-cache-create-filename (url-view-url t))))
        ((= status 305)			; Use proxy in Location: header
 	nil)))
      ((= class 4)			; Client error

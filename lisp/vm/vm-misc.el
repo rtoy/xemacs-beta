@@ -218,10 +218,10 @@ The new version of the list, minus the deleted strings, is returned."
 			      (make-list (- length vlength) fill)))
       vector )))
 
-(defun vm-obarray-to-string-list (obarray)
+(defun vm-obarray-to-string-list (blobarray)
   (let ((list nil))
     (mapatoms (function (lambda (s) (setq list (cons (symbol-name s) list))))
-	      obarray)
+	      blobarray)
     list ))
 
 (defun vm-mapcar (function &rest lists)
@@ -542,6 +542,10 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (fset 'vm-set-extent-property 'overlay-put)
   (fset 'vm-set-extent-property 'set-extent-property))
 
+(if (fboundp 'move-overlay)
+    (fset 'vm-set-extent-endpoints 'move-overlay)
+  (fset 'vm-set-extent-endpoints 'set-extent-endpoints))
+
 (if (fboundp 'make-overlay)
     (fset 'vm-make-extent 'make-overlay)
   (fset 'vm-make-extent 'make-extent))
@@ -674,3 +678,10 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	  (setq found t)
 	(setq list (cdr list))))
     list))
+
+(defmacro vm-assert (expression)
+  (list 'or expression
+	(list 'progn
+	      (list 'setq 'debug-on-error t)
+	      (list 'error "assertion failed: %S"
+		    (list 'quote expression)))))

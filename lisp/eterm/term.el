@@ -2968,7 +2968,7 @@ This is a good place to put keybindings.")
 ;;; want them present in specific modes.
 
 (defvar term-completion-autolist nil
-  "*If non-nil, automatically list possiblities on partial completion.
+  "*If non-nil, automatically list possibilities on partial completion.
 This mirrors the optional behavior of tcsh.")
 
 (defvar term-completion-addsuffix t

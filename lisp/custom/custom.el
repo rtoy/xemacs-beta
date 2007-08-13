@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.50
+;; Version: 1.59
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -311,11 +311,14 @@ the default value for the SYMBOL."
   (remove-hook 'custom-define-hook 'custom-menu-reset)
   (if (string-match "XEmacs" emacs-version)
       (when (fboundp 'add-submenu)
-	(add-submenu '("Help") custom-help-menu))
+	(add-submenu '("Options") custom-help-menu))
     (define-key global-map [menu-bar help-menu customize-menu]
       (cons (car custom-help-menu)
 	    (easy-menu-create-keymaps (car custom-help-menu)
 				      (cdr custom-help-menu))))))
+
+(unless (string-match "XEmacs" emacs-version)
+  (custom-menu-reset))
 
 ;;; The End.
 

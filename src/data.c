@@ -84,7 +84,10 @@ eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
       && (debug_issue_ebola_notices >= 2
 	  || XREALINT (obj1) == XREALINT (obj2)))
     {
-      stderr_out ("Ebola warning!! (");
+      /* Continuing the joke by printing `Ebola warning!!!' confuses */
+      /* too many people.  The message must be printed because Emacs used */
+      /* to work differently for two decades. */
+      stderr_out("Comparison between integer and character is constant nil (");
       Fprinc (obj1, Qexternal_debugging_output);
       stderr_out (" and ");
       Fprinc (obj2, Qexternal_debugging_output);

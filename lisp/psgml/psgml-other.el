@@ -1,5 +1,5 @@
 ;;;; psgml-other.el --- Part of SGML-editing mode with parsing support
-;; $Id: psgml-other.el,v 1.2 1997/01/03 03:10:27 steve Exp $
+;; $Id: psgml-other.el,v 1.3 1997/03/08 23:26:53 steve Exp $
 
 ;; Copyright (C) 1994 Lennart Staflin
 
@@ -146,7 +146,7 @@ if the item is selected."
 
 (defun sgml-set-face-after-change (start end &optional pre-len)
   ;; If inserting in front of an markup overlay, move that overlay.
-  ;; this avoids the overlay beeing deleted and recreated by
+  ;; this avoids the overlay being deleted and recreated by
   ;; sgml-set-face-for.
   (when (and sgml-set-face (not sgml-use-text-properties))
     (loop for o in (overlays-at start)

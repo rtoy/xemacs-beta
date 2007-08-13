@@ -54,6 +54,7 @@
 ;; additions by Ben Wing <wing@666.com> July 1995:
 ;; added support for function aliases, made programmer's apropos be the
 ;; default, various other hacking.
+;; Massive changes by Christoph Wedler <wedler@fmi.uni-passau.de>
 
 ;;; Code:
 
@@ -67,6 +68,9 @@
   "*If non-nil, `hyper-apropos' will display some documentation in the
 \"*Hyper Apropos*\" buffer.  Setting this to nil will speed up searches.")
 
+(defvar hypropos-shrink-window nil
+  "*If non-nil, shrink *Hyper Help* buffer if possible.")
+
 (defvar hypropos-prettyprint-long-values t
   "*If non-nil, then try to beautify the printing of very long values.")
 
@@ -77,6 +81,7 @@
 output.  If nil, then only functions that are interactive and variables that
 are user variables are found by `hyper-apropos'.")
 
+(defvar hypropos-ref-buffer)
 (defvar hypropos-prev-wconfig)
 
 ;; #### - move this to subr.el
@@ -174,7 +179,7 @@ being initialized."
 (defvar hypropos-map (let ((map (make-sparse-keymap)))
 		       (set-keymap-name map 'hypropos-map)
 		       (set-keymap-parents map (list hypropos-help-map))
-		       ;; slightly differrent scrolling...
+		       ;; slightly different scrolling...
 		       (define-key map " "     'hypropos-scroll-up)
 		       (define-key map "b"     'hypropos-scroll-down)
 		       ;; act on the current line...
@@ -201,6 +206,10 @@ This map inherits from `hypropos-help-map.'")
 (defvar hypropos-currently-showing nil)	; symbol documented in help buffer now
 (defvar hypropos-help-history nil)	; chain of symbols followed as links in
 					; help buffer
+(defvar hypropos-face-history nil)
+;;;(defvar hypropos-variable-history nil)
+;;;(defvar hypropos-function-history nil)
+(defvar hypropos-regexp-history nil)
 (defvar hypropos-last-regexp nil)	; regex used for last apropos
 (defconst hypropos-apropos-buf "*Hyper Apropos*")
 (defconst hypropos-help-buf "*Hyper Help*")
@@ -211,7 +220,9 @@ This map inherits from `hypropos-help-map.'")
 in buffer \"*Hyper Apropos*\".  If optional prefix arg is given, then the value
 of `hypropos-programming-apropos' is toggled for this search.
 See also `hyper-apropos-mode'."
-  (interactive "sList symbols matching regexp: \nP")
+  (interactive (list (read-from-minibuffer "List symbols matching regexp: "
+					   nil nil nil 'hypropos-regexp-history)
+		     current-prefix-arg))
   (or (memq major-mode '(hyper-apropos-mode hyper-help-mode))
       (setq hypropos-prev-wconfig (current-window-configuration)))
   (if (string= "" regexp)
@@ -255,7 +266,7 @@ See also `hyper-apropos-mode'."
   (hyper-apropos hypropos-last-regexp nil))
 
 (defun hypropos-grok-functions (fns)
-  (let (fn bind type)
+  (let (fn bind doc type)
     (while (setq fn (car fns))
       (setq bind (symbol-function fn)
 	    type (cond ((subrp bind) ?i)
@@ -269,36 +280,30 @@ See also `hyper-apropos-mode'."
       (insert type (if (commandp fn) "* " "  "))
       (insert-face (format "%-30S" fn) 'hyperlink)
       (and hypropos-show-brief-docs
-	   (if (function-obsolete-p fn)
-	       (insert-face " - Obsolete." 'documentation)
-	     (let ((doc (documentation fn)))
-	       (if (not doc)
-		   (insert-face " - Not documented." 'documentation)
-		 (insert-face (concat " - "
-				      (substring doc 0
-						 (string-match "\n" doc)))
-			      'documentation)))))
+	   (setq doc (documentation fn))
+	   (insert-face (if doc
+			    (concat " - "
+				    (substring doc 0 (string-match "\n" doc)))
+			  " Not documented.")
+			'documentation))
       (insert ?\n)
       (setq fns (cdr fns))
       )))
 
 (defun hypropos-grok-variables (vars)
-  (let (var userp)
+  (let (var doc userp)
     (while (setq var (car vars))
       (setq userp (user-variable-p var)
 	    vars (cdr vars))
       (insert (if userp " * " "   "))
       (insert-face (format "%-30S" var) 'hyperlink)
       (and hypropos-show-brief-docs
-	   (if (variable-obsolete-p var)
-	       (insert-face " - Obsolete." 'documentation)
-	     (let ((doc (documentation-property var 'variable-documentation)))
-	       (if (not doc)
-		   (insert-face " - Not documented." 'documentation)
-		 (insert-face (concat " - "
-				      (substring doc (if userp 1 0)
-						 (string-match "\n" doc)))
-			      'documentation)))))
+	   (setq doc (documentation-property var 'variable-documentation))
+	   (insert-face (if doc
+			    (concat " - " (substring doc (if userp 1 0)
+						     (string-match "\n" doc)))
+			  " - Not documented.")
+			'documentation))
       (insert ?\n)
       )))
 
@@ -345,66 +350,258 @@ General Commands:
 
 ;; ---------------------------------------------------------------------- ;;
 
+;; similar to `describe-key-briefly', copied from prim/help.el by CW
+
 ;;;###autoload
-(defun hyper-describe-variable (symbol)
-  "Hypertext drop-in replacement for `describe-variable'.
+(defun hyper-describe-key (key)
+  (interactive "kDescribe key: ")
+  (hyper-describe-key-briefly key t))
+
+;;;###autoload
+(defun hyper-describe-key-briefly (key &optional show)
+  (interactive "kDescribe key briefly: \nP")
+  (let (menup defn interm final msg)
+    (setq defn (key-or-menu-binding key 'menup))    
+    (if (or (null defn) (integerp defn))
+        (or (numberp show) (message "%s is undefined" (key-description key)))
+      (cond ((stringp defn)
+	     (setq interm defn
+		   final (key-binding defn)))
+	    ((vectorp defn)
+	     (setq interm (append defn nil))
+	     (while (and interm
+			 (member (key-binding (vector (car interm)))
+				 '(universal-argument digit-argument)))
+	       (setq interm (cdr interm)))
+	     (while (and interm
+			 (not (setq final (key-binding (vconcat interm)))))
+	       (setq interm (butlast interm)))
+	     (if final
+		 (setq interm (vconcat interm))
+	       (setq interm defn 
+		     final (key-binding defn)))))
+      (setq msg (format
+		 "%s runs %s%s%s"
+		 ;; This used to say 'This menu item' but it could also
+		 ;; be a scrollbar event.  We can't distinguish at the
+		 ;; moment.
+		 (if menup "This item" (key-description key))
+		 ;;(if (symbolp defn) defn (key-description defn))
+		 (if (symbolp defn) defn (prin1-to-string defn))
+		 (if final (concat ", " (key-description interm) " runs ") "")
+		 (if final
+		     (if (symbolp final) final (prin1-to-string final))
+		   "")))
+      (if (numberp show)
+	  (or (not (symbolp defn))
+	      (memq (symbol-function defn)
+		    '(zkey-init-kbd-macro zkey-init-kbd-fn))
+	      (progn (princ msg) (princ "\n")))
+	(message "%s" msg)
+	(if final (setq defn final))
+	(if (and (or (symbolp defn) (symbolp (setq defn (car-safe defn))))
+		 defn
+		 show)
+	    (hypropos-get-doc defn t))))))
+
+;;;###autoload
+(defun hyper-describe-face (symbol &optional this-ref-buffer)
+  "Describe face..
 See also `hyper-apropos' and `hyper-describe-function'."
   ;; #### - perhaps a prefix arg should suppress the prompt...
-  (interactive 
-   (let* ((v (variable-at-point))
-          (val (let ((enable-recursive-minibuffers t))
+  (interactive
+   (let (v val)
+     (setq v (hypropos-this-symbol))	; symbol under point
+     (or (find-face v)
+	 (setq v (variable-at-point)))
+     (setq val (let ((enable-recursive-minibuffers t))
                  (completing-read
-		  (if v
-		      (format "Describe variable (default %s): " v)
-		    "Describe variable: ")
-		  obarray 'boundp t))))
-     (list (if (string= val "") v (intern-soft val)))))
+		  (concat (if (hypropos-follow-ref-buffer current-prefix-arg)
+			      "Follow face"
+			    "Describe face")
+			  (if v
+			      (format " (default %s): " v)
+			    ": "))
+		  (mapcar (function (lambda (x) (list (symbol-name x))))
+			  (face-list))
+		  nil t nil 'hypropos-face-history)))
+     (list (if (string= val "")
+	       (progn (push (symbol-name v) hypropos-face-history) v)
+	     (intern-soft val))
+	   current-prefix-arg)))
   (if (null symbol)
       (message "Sorry, nothing to describe.")
     (or (memq major-mode '(hyper-apropos-mode hyper-help-mode))
 	(setq hypropos-prev-wconfig (current-window-configuration)))
-    (hypropos-get-doc symbol t)))
+    (hypropos-get-doc symbol t nil this-ref-buffer)))
 
 ;;;###autoload
-(defun hyper-describe-function (symbol)
+(defun hyper-describe-variable (symbol &optional this-ref-buffer)
+  "Hypertext drop-in replacement for `describe-variable'.
+See also `hyper-apropos' and `hyper-describe-function'."
+  ;; #### - perhaps a prefix arg should suppress the prompt...
+  (interactive (list (hypropos-read-variable-symbol
+		      (if (hypropos-follow-ref-buffer current-prefix-arg)
+			  "Follow variable"
+			"Describe variable"))
+		     current-prefix-arg))
+  (if (null symbol)
+      (message "Sorry, nothing to describe.")
+    (or (memq major-mode '(hyper-apropos-mode hyper-help-mode))
+	(setq hypropos-prev-wconfig (current-window-configuration)))
+    (hypropos-get-doc symbol t nil this-ref-buffer)))
+
+(defun hyper-where-is (symbol)
+  "Print message listing key sequences that invoke specified command."
+  (interactive (list (hypropos-read-function-symbol "Where is function")))
+  (if (null symbol)
+      (message "Sorry, nothing to describe.")
+    (where-is symbol)))
+
+;;;###autoload
+(defun hyper-describe-function (symbol &optional this-ref-buffer)
   "Hypertext replacement for `describe-function'.  Unlike `describe-function'
 in that the symbol under the cursor is the default if it is a function.
 See also `hyper-apropos' and `hyper-describe-variable'."
   ;; #### - perhaps a prefix arg should suppress the prompt...
-  (interactive
-   (let (fn val)
-     (setq fn (hypropos-this-symbol))	; symbol under point
-     (or (fboundp fn)
-	 (setq fn (function-called-at-point)))
-     (setq val (let ((enable-recursive-minibuffers t))
-		 (completing-read
-		  (if fn 
-		      (format "Describe function (default %s): " fn)
-		    "Describe function: ")
-		  obarray 'fboundp t)))
-     (list (if (equal val "") fn (intern-soft val)))))
+  (interactive (list (hypropos-read-function-symbol
+		      (if (hypropos-follow-ref-buffer current-prefix-arg)
+			  "Follow function"
+			"Describe function"))
+		     current-prefix-arg))
   (if (null symbol)
       (message "Sorry, nothing to describe.")
     (or (memq major-mode '(hyper-apropos-mode hyper-help-mode))
 	(setq hypropos-prev-wconfig (current-window-configuration)))
-    (hypropos-get-doc symbol t)))
+    (hypropos-get-doc symbol t nil this-ref-buffer)))
+
+;;;###autoload
+(defun hypropos-read-variable-symbol (prompt &optional predicate)
+  "Hypertext drop-in replacement for `describe-variable'.
+See also `hyper-apropos' and `hyper-describe-function'."
+  ;; #### - perhaps a prefix arg should suppress the prompt...
+  (or predicate (setq predicate 'boundp))
+  (let (v val)
+    (setq v (hypropos-this-symbol))	; symbol under point
+    (or (funcall predicate v)
+	(setq v (variable-at-point)))
+    (or (funcall predicate v)
+	(setq v nil))
+    (setq val (let ((enable-recursive-minibuffers t))
+		(completing-read
+		 (concat prompt
+			 (if v
+			     (format " (default %s): " v)
+			   ": "))
+		 obarray predicate t nil 'variable-history)))
+    (if (string= val "")
+	(progn (push (symbol-name v) variable-history) v)
+      (intern-soft val))))
+
+(defun hypropos-read-function-symbol (prompt)
+  "Read function symbol from minibuffer."
+  (let ((fn (hypropos-this-symbol))
+	val)
+    (or (fboundp fn)
+	(setq fn (function-called-at-point)))
+    (setq val (let ((enable-recursive-minibuffers t))
+		(completing-read (if fn
+				     (format "%s (default %s): " prompt fn)
+				   (format "%s: " prompt))
+				 obarray 'fboundp t nil
+				 'function-history)))
+    (if (equal val "")
+	(progn (push (symbol-name fn) function-history) fn)
+      (intern-soft val))))
 
 (defun hypropos-last-help (arg)
   "Go back to the last symbol documented in the *Hyper Help* buffer."
   (interactive "P")
-  (let ((win (get-buffer-window hypropos-help-buf))
-	(n (prefix-numeric-value arg)))
-    (cond ((and (not win) (not arg))
-	   ;; don't alter the help-history, just redisplay
-	   )
-	  ((<= (length hypropos-help-history) n)
+  (let ((win (get-buffer-window hypropos-help-buf)))
+    (or arg (setq arg (if win 1 0)))
+    (cond ((= arg 0))
+	  ((<= (length hypropos-help-history) arg)
 	   ;; go back as far as we can...
 	   (setcdr (nreverse hypropos-help-history) nil))
 	  (t
-	   (setq hypropos-help-history (nthcdr n hypropos-help-history))))
-    (hypropos-get-doc (car hypropos-help-history) t)))
+	   (setq hypropos-help-history (nthcdr arg hypropos-help-history))))
+    (if (or win (> arg 0))
+	(hypropos-get-doc (car hypropos-help-history) t)
+      (display-buffer hypropos-help-buf))))
 
-(defun hypropos-get-doc (&optional symbol force type)
+(defun hypropos-insert-face (string &optional face)
+  "Insert STRING and fontify some parts with face `hyperlink'."
+  (let ((beg (point)) end)
+    (insert-face string (or face 'documentation))
+    (setq end (point))
+    (goto-char beg)
+    (while (re-search-forward
+	    "`\\([-a-zA-Z0-9_][-a-zA-Z0-9_][-a-zA-Z0-9_.]+\\)'"
+	    end 'limit)
+      (set-extent-face (make-extent (match-beginning 1) (match-end 1))
+		       'hyperlink))
+    (goto-char beg)
+    (while (re-search-forward
+	    "M-x \\([-a-zA-Z0-9_][-a-zA-Z0-9_][-a-zA-Z0-9_.]+\\)"
+	    end 'limit)
+      (set-extent-face (make-extent (match-beginning 1) (match-end 1))
+		       'hyperlink))))
+
+(defun hypropos-insert-keybinding (keys string)
+  (if keys
+      (insert "  (" string " bound to \""
+	      (mapconcat 'key-description
+			 (sort keys #'(lambda (x y)
+					(< (length x) (length y))))
+			 "\", \"")
+	      "\")\n")))
+
+(defun hypropos-insert-section-heading (alias-desc &optional desc)
+  (or desc (setq desc alias-desc
+		 alias-desc nil))
+  (if alias-desc
+      (setq desc (concat alias-desc
+			 (if (memq (aref desc 0)
+				   '(?a ?e ?i ?o ?u))
+			     ", an " ", a ")
+			 desc)))
+  (aset desc 0 (upcase (aref desc 0))) ; capitalize
+  (goto-char (point-max))
+  (newline 3) (delete-blank-lines) (newline 2)
+  (hypropos-insert-face desc 'section-heading))
+
+(defun hypropos-insert-value (string symbol val)
+  (insert-face string 'heading)
+  (insert (if (symbol-value symbol)
+	      (if (or (null val) (eq val t) (integerp val))
+		  (prog1
+		      (symbol-value symbol)
+		    (set symbol nil))
+		"see below")
+	    "is void")))
+
+(defun hypropos-follow-ref-buffer (this-ref-buffer) 
+  (and (not this-ref-buffer)
+       (eq major-mode 'hyper-help-mode)
+       hypropos-ref-buffer
+       (buffer-live-p hypropos-ref-buffer)))
+
+(defun hypropos-get-alias (symbol alias-p next-symbol &optional use)
+  "Return (TERMINAL-SYMBOL . ALIAS-DESC)."
+  (let (aliases)
+    (while (funcall alias-p symbol)
+      (setq aliases (cons (if use (funcall use symbol) symbol) aliases))
+      (setq symbol (funcall next-symbol symbol)))
+    (cons symbol
+	  (and aliases
+	       (concat "an alias for `"
+		       (mapconcat 'symbol-name
+				  (nreverse aliases)
+				  "',\nwhich is an alias for `")
+		       "'")))))
+
+;;;###autoload
+(defun hypropos-get-doc (&optional symbol force type this-ref-buffer)
   ;; #### - update this docstring
   "Toggle display of documentation for the symbol on the current line."
   ;; SYMBOL is the symbol to document.  FORCE, if non-nil, means to
@@ -436,167 +633,291 @@ See also `hyper-apropos' and `hyper-describe-variable'."
 		;; otherwise clear the history because it's a new search.
 		(list symbol))))
     (save-excursion
-      (set-buffer (get-buffer-create hypropos-help-buf))
-      (setq buffer-read-only nil)
-      (erase-buffer)
-      (let ((standard-output (current-buffer))
-	    ok beg desc
-	    ftype macrop fndef
-	    keys val doc
-	    obsolete aliases alias-desc)
-	(insert-face (format "`%s'\n\n" symbol) 'major-heading)
+      (if (hypropos-follow-ref-buffer this-ref-buffer)
+	  (set-buffer hypropos-ref-buffer)
+	(setq hypropos-ref-buffer (current-buffer)))
+      (let (standard-output
+	    ok beg
+	    newsym symtype doc obsolete
+	    (local mode-name)
+	    global local-str global-str
+	    font fore back undl
+	    aliases alias-desc desc)
+	(save-excursion
+	  (set-buffer (get-buffer-create hypropos-help-buf))
+	  ;;(setq standard-output (current-buffer))
+	  (setq buffer-read-only nil)
+	  (erase-buffer)
+	  (insert-face (format "`%s'" symbol) 'major-heading)
+	  (insert (format " (buffer: %s, mode: %s)\n"
+			  (buffer-name hypropos-ref-buffer)
+			  local)))
+	;; function ----------------------------------------------------------
 	(and (memq 'function type)
 	     (fboundp symbol)
-	     (progn 
-	       (setq ok t
-		     fndef (symbol-function symbol))
-	       (while (symbolp fndef)
-		 (setq aliases (cons fndef aliases))
-		 (setq fndef (symbol-function fndef)))
-	       (if (eq 'macro (car-safe fndef))
-		   (setq macrop t
-			 fndef (cdr fndef)))
-	       (setq aliases (nreverse aliases))
-	       ;; #### - the gods of internationalization shall strike me down!
-	       (while aliases
-		 (if alias-desc
-		     (setq alias-desc (concat alias-desc ",\nwhich is ")))
-		 (setq alias-desc (concat alias-desc
-					  (format "an alias for `%s'"
-						  (car aliases))))
-		 (setq aliases (cdr aliases)))
-	       (setq ftype (cond ((subrp fndef)                   'subr)
-				 ((compiled-function-p fndef)     'bytecode)
-				 ((eq (car-safe fndef) 'autoload) 'autoload)
-				 ((eq (car-safe fndef) 'lambda)	  'lambda))
+	     (progn
+	       (setq ok t)
+	       (setq aliases (hypropos-get-alias (symbol-function symbol)
+						 'symbolp
+						 'symbol-function)
+		     newsym (car aliases)
+		     alias-desc (cdr aliases))
+	       (if (eq 'macro (car-safe newsym))
+		   (setq desc "macro"
+			 newsym (cdr newsym))
+		 (setq desc "function"))
+	       (setq symtype (cond ((subrp newsym)                   'subr)
+				   ((compiled-function-p newsym)     'bytecode)
+				   ((eq (car-safe newsym) 'autoload) 'autoload)
+				   ((eq (car-safe newsym) 'lambda)   'lambda))
 		     desc (concat (if (commandp symbol) "interactive ")
-				  (cdr (assq ftype
+				  (cdr (assq symtype
 					     '((subr     . "built-in ")
 					       (bytecode . "compiled Lisp ")
 					       (autoload . "autoloaded Lisp ")
 					       (lambda   . "Lisp "))))
-				  (if macrop "macro" "function")
-				  ))
-	       (if alias-desc
-		   (setq desc (concat alias-desc
-				      (if (memq (aref desc 0)
-						'(?a ?e ?i ?o ?u))
-					  ", an " ", a ")
-				      desc)))
-	       (aset desc 0 (upcase (aref desc 0))) ; capitalize
-	       (insert-face desc 'section-heading)
-	       (and (eq ftype 'autoload)
-		    (insert (format ", (autoloaded from \"%s\")"
-				    (nth 1 fndef))))
-	       ;; #### - should also show local binding in some other
-	       ;; buffer so that this function can be used in place of
-	       ;; describe-function and describe-variable.
-	       (if (setq keys (where-is-internal symbol (current-global-map)
-						 nil nil nil))
-		   (insert (format ", (globally bound to %s)"
-				   (mapconcat
-				    #'(lambda (x)
-					(format "\"%s\""
-						(key-description x)))
-				    (sort keys #'(lambda (x y)
-						   (< (length x) (length y))))
-				    ", "))))
-	       (insert ":\n\n")
-	       (setq beg (point)
+				  desc)
+		     local (current-local-map)
+		     global (current-global-map)
+		     obsolete (get symbol 'byte-obsolete-info)
 		     doc (or (documentation symbol) "function not documented"))
-	       (insert-face "arguments: " 'heading)
-	       (cond ((eq ftype 'lambda)
-		      (princ (or (nth 1 fndef) "()")))
-		     ((eq ftype 'bytecode)
-		      (princ (or (if (fboundp 'compiled-function-arglist)
-				     (compiled-function-arglist fndef)
-				   (aref fndef 0)) "()")))
-		     ((and (eq ftype 'subr)
-			   (string-match
-			    "[\n\t ]*\narguments: ?\\((.*)\\)\n?\\'"
-			    doc))
-		      (insert (substring doc
-					 (match-beginning 1)
-					 (match-end 1)))
-		      (setq doc (substring doc 0 (match-beginning 0))))
-		     (t (princ "[not available]")))
-	       (insert "\n\n")
-	       (let ((new
-		      ;; cookbook from bytecomp.el
-		      (get symbol 'byte-obsolete-info)))
-		 (and new
-		      (insert-face
-		       (format "%s is an obsolete function; %s\n\n" symbol
-			       (if (stringp (car new))
-				   (car new)
-				 (format "use %s instead." (car new))))
-		       'warning)))
-	       (insert-face doc 'documentation)
-	       (indent-rigidly beg (point) 1)
-	       (insert"\n\n")
-	       ))
+	       (save-excursion
+		 (set-buffer hypropos-help-buf)
+		 (goto-char (point-max))
+		 (setq standard-output (current-buffer))
+		 (hypropos-insert-section-heading alias-desc desc)
+		 (and (eq symtype 'autoload)
+		      (insert (format ", (autoloaded from \"%s\")"
+				      (nth 1 newsym))))
+		 (insert ":\n")
+		 (if local
+		     (hypropos-insert-keybinding
+		      (where-is-internal symbol (list local) nil nil nil)
+		      "locally"))
+		 (hypropos-insert-keybinding
+		  (where-is-internal symbol (list global) nil nil nil)
+		  "globally")
+		 (insert "\n")
+		 (if obsolete
+		     (hypropos-insert-face
+		      (format "%s is an obsolete function; %s\n\n" symbol
+			      (if (stringp (car obsolete))
+				  (car obsolete)
+				(format "use `%s' instead." (car obsolete))))
+		      'warning))
+		 (setq beg (point))
+		 (insert-face "arguments: " 'heading)
+		 (cond ((eq symtype 'lambda)
+			(princ (or (nth 1 newsym) "()")))
+		       ((eq symtype 'bytecode)
+			(princ (or (aref newsym 0) "()")))
+		       ((and (eq symtype 'subr)
+			     (string-match
+			      "[\n\t ]*\narguments: ?\\((.*)\\)\n?\\'"
+			      doc))
+			(insert (substring doc
+					   (match-beginning 1)
+					   (match-end 1)))
+			(setq doc (substring doc 0 (match-beginning 0))))
+		       ((and (eq symtype 'subr)
+			     (string-match
+			      "[\n\t ]*([^\n\t )]+[\t ]*\\([^\n)]+\\)?)\\(:[\t ]*\\|\n?\\'\\)"
+			      doc))
+			(insert "("
+				(if (match-end 1)
+				    (substring doc
+					       (match-beginning 1)
+					       (match-end 1)))
+				")")
+			(setq doc (substring doc (match-end 0))))
+		       (t (princ "[not available]")))
+		 (insert "\n\n")
+		 (hypropos-insert-face doc)
+		 (insert "\n")
+		 (indent-rigidly beg (point) 2))))
+	;; variable ----------------------------------------------------------
 	(and (memq 'variable type)
-	     (boundp symbol)
+	     (or (boundp symbol) (default-boundp symbol))
 	     (progn 
 	       (setq ok t)
-	       (insert-face (if (user-variable-p symbol)
-				"User variable"
-			      "Variable")
-			    'section-heading)
-	       (and (local-variable-p symbol nil t)
-		    (insert ", local when set"))
-	       (insert ":\n\n")
-	       (setq beg (point)
-		     val (prin1-to-string (symbol-value symbol))
-		     doc (or (documentation-property
-			      symbol 'variable-documentation)
+	       (setq aliases (hypropos-get-alias symbol
+						 'variable-alias
+						 'variable-alias
+						 'variable-alias)
+		     newsym (car aliases)
+		     alias-desc (cdr aliases))
+	       (setq symtype (or (local-variable-p newsym (current-buffer))
+				 (and (local-variable-p newsym
+							(current-buffer) t)
+				      'auto-local))
+		     desc (concat (if (user-variable-p newsym)
+				      "user variable"
+				    "variable")
+				  (cond ((eq symtype t) ", buffer-local")
+					((eq symtype 'auto-local)
+					 ", local when set")))
+		     local (and (boundp newsym)
+				(symbol-value newsym))
+		     local-str (and (boundp newsym)
+				    (prin1-to-string local))
+		     global (and (eq symtype t)
+				 (default-boundp newsym)
+				 (default-value newsym))
+		     global-str (and (eq symtype t)
+				     (default-boundp newsym)
+				     (prin1-to-string global))
+		     obsolete (get symbol 'byte-obsolete-variable)
+		     doc (or (documentation-property symbol
+						     'variable-documentation)
 			     "variable not documented"))
-	       
-	       (let ((ob (get symbol 'byte-obsolete-variable)))
-		 (setq obsolete
-		       (and ob (format "%s is an obsolete variable; %s\n\n"
-				       symbol
-				       (if (stringp ob)
-					   ob
-					 (format "use %s instead." ob))))))
-	       ;; generally, the value of the variable is short and the
-	       ;; documentation of the variable long, so it's desirable
-	       ;; to see all of the value and the start of the
-	       ;; documentation.  Some variables, though, have huge and
-	       ;; nearly meaningless values that force you to page
-	       ;; forward just to find the doc string.  That is
-	       ;; undesirable.
-	       (if (< (length val) 69)	; 80 cols.  docstrings assume this.
-		   (progn (insert-face "value: " 'heading)
-			  (insert (format "%s\n\n" val))
-			  (and obsolete (insert-face obsolete 'warning))
-			  (insert-face doc 'documentation))
-		 (insert "(see below for value)\n\n")
-		 (and obsolete (insert-face obsolete 'warning))
-		 (insert-face doc 'documentation)
-		 (insert "\n\n")
-		 (insert-face "value: " 'heading)
-		 (if hypropos-prettyprint-long-values
-		     (let ((pp-print-readably nil))
-		       (pprint (symbol-value symbol)))
-		   (insert val)))
-	       (indent-rigidly beg (point) 2)
-	       ))
+	       (save-excursion
+		 (set-buffer hypropos-help-buf)
+		 (goto-char (point-max))
+		 (setq standard-output (current-buffer))
+		 (hypropos-insert-section-heading alias-desc desc)
+		 (insert ":\n\n")
+		 (setq beg (point))
+		 (if obsolete
+		     (hypropos-insert-face
+		      (format "%s is an obsolete function; %s\n\n" symbol
+			      (if (stringp obsolete)
+				  obsolete
+				(format "use `%s' instead." obsolete)))
+		      'warning))
+		 ;; generally, the value of the variable is short and the
+		 ;; documentation of the variable long, so it's desirable
+		 ;; to see all of the value and the start of the
+		 ;; documentation.  Some variables, though, have huge and
+		 ;; nearly meaningless values that force you to page
+		 ;; forward just to find the doc string.  That is
+		 ;; undesirable.
+		 (if (and (or (null local-str) (< (length local-str) 69))
+			  (or (null global-str) (< (length global-str) 69)))
+					; 80 cols.  docstrings assume this.
+		     (progn (insert-face "value: " 'heading)
+			    (insert (or local-str "is void"))
+			    (if (eq symtype t)
+				(progn
+				  (insert "\n")
+				  (insert-face "default value: " 'heading)
+				  (insert (or global-str "is void"))))
+			    (insert "\n\n")
+			    (hypropos-insert-face doc))
+		   (hypropos-insert-value "value: " 'local-str local)
+		   (if (eq symtype t)
+		       (progn
+			 (insert ", ")
+			 (hypropos-insert-value "default-value: "
+						'global-str global)))
+		   (insert "\n\n")
+		   (hypropos-insert-face doc)
+		   (if local-str
+		       (progn
+			 (newline 3) (delete-blank-lines) (newline 1)
+			 (insert-face "value: " 'heading)
+			 (if hypropos-prettyprint-long-values
+			     (condition-case nil
+				 (let ((pp-print-readably nil)) (pprint local))
+			       (error (insert local-str)))
+			   (insert local-str))))
+		   (if global-str
+		       (progn
+			 (newline 3) (delete-blank-lines) (newline 1)
+			 (insert-face "default value: " 'heading)
+			 (if hypropos-prettyprint-long-values
+			     (condition-case nil
+				 (let ((pp-print-readably nil)) (pprint global))
+			       (error (insert global-str)))
+			   (insert global-str)))))
+		 (indent-rigidly beg (point) 2))))
+	;; face --------------------------------------------------------------
 	(and (memq 'face type)
 	     (find-face symbol)
 	     (progn
 	       (setq ok t)
+	       (copy-face symbol 'hypropos-temp-face 'global)
+	       (mapcar (function
+			(lambda (property)
+			  (setq symtype (face-property-instance symbol
+								property))
+			  (if symtype
+			      (set-face-property 'hypropos-temp-face
+						 property
+						 symtype))))
+		       built-in-face-specifiers)
+	       (setq font (cons (face-property-instance symbol 'font nil 0 t)
+				(face-property-instance symbol 'font))
+		     fore (cons (face-foreground-instance symbol nil 0 t)
+				(face-foreground-instance symbol))
+		     back (cons (face-background-instance symbol nil 0 t)
+				(face-background-instance symbol))
+		     undl (cons (face-underline-p symbol nil 0 t)
+				(face-underline-p symbol))
+		     doc  (face-doc-string symbol))
 	       ;; #### - add some code here
-	       (insert "Face documentation is \"To be implemented.\"\n\n")
-	       )
-	     )
-	(or ok (insert-face "symbol is not currently bound" 'heading)))
+	       (save-excursion
+		 (set-buffer hypropos-help-buf)
+		 (setq standard-output (current-buffer))
+		 (hypropos-insert-section-heading "Face:\n\n  ")
+		 (insert-face "ABCDEFHIJKLMNOPQRSTUVWXYZ abcdefhijklmnopqrstuvwxyz 0123456789"
+			      'hypropos-temp-face)
+		 (newline 2)
+		 (insert-face "  Font: " 'heading)
+		 (insert (format (if (numberp (car font)) "(%s)\n" "%s\n")
+				 (and (cdr font)
+				      (font-instance-name (cdr font)))))
+		 (insert-face "  Foreground: " 'heading)
+		 (insert (format (if (numberp (car fore)) "(%s)\n" "%s\n")
+				 (and (cdr fore)
+				      (color-instance-name (cdr fore)))))
+		 (insert-face "  Background: " 'heading)
+		 (insert (format (if (numberp (car back)) "(%s)\n" "%s\n")
+				 (and (cdr back)
+				      (color-instance-name (cdr back)))))
+		 (insert-face "  Underline: " 'heading)
+		 (insert (format (if (numberp (car undl)) "(%s)\n" "%s\n")
+				 (cdr undl)))
+		 (if doc
+		     (progn
+		       (newline)
+		       (setq beg (point))
+		       (insert doc)
+		       (indent-rigidly beg (point) 2))))))
+	;; not bound & property list -----------------------------------------
+	(or ok
+	    (save-excursion
+	      (set-buffer hypropos-help-buf)
+	      (hypropos-insert-section-heading
+	       "symbol is not currently bound\n")))
+	(if (and (setq symtype (symbol-plist symbol))
+		 (or (> (length symtype) 2)
+		     (not (memq 'variable-documentation symtype))))
+	    (save-excursion
+	      (set-buffer hypropos-help-buf)
+	      (goto-char (point-max))
+	      (setq standard-output (current-buffer))
+	      (hypropos-insert-section-heading "property-list:\n\n")
+	      (while symtype
+		(if (memq (car symtype)
+			  '(variable-documentation byte-obsolete-info))
+		    (setq symtype (cdr symtype))
+		  (insert-face (concat "  " (symbol-name (car symtype))
+				       ": ")
+			       'heading)
+		  (setq symtype (cdr symtype))
+		  (indent-to 32)
+		  (insert (prin1-to-string (car symtype)) "\n"))
+		(setq symtype (cdr symtype)))))))
+    (save-excursion
+      (set-buffer hypropos-help-buf)
       (goto-char (point-min)) 
       ;; pop up window and shrink it if it's wasting space
-      (shrink-window-if-larger-than-buffer
-       (display-buffer (current-buffer))) 
-      (hyper-help-mode))    )
-  (setq hypropos-currently-showing symbol))
+      (if hypropos-shrink-window
+	  (shrink-window-if-larger-than-buffer
+	   (display-buffer (current-buffer)))
+	(display-buffer (current-buffer)))
+      (hyper-help-mode))
+    (setq hypropos-currently-showing symbol)))
 
 ; -----------------------------------------------------------------------------
 
@@ -737,7 +1058,7 @@ Deletes lines which match PATTERN."
 			(point)))
 		  (en (progn
 			(skip-syntax-forward "w_")
-			(skip-chars-backward ".")
+			(skip-chars-backward ".':") ; : for Local Variables
 			(point))))
 	     (and (not (eq st en))
 		  (intern-soft (buffer-substring st en))))))))
@@ -755,35 +1076,69 @@ Deletes lines which match PATTERN."
 	(t (call-interactively fn))))
 
 ;;;###autoload
-(defun hypropos-set-variable (var val)
+(defun hyper-set-variable (var val &optional this-ref-buffer)
+  (interactive
+   (let ((var (hypropos-read-variable-symbol
+	       (if (hypropos-follow-ref-buffer current-prefix-arg)
+		   "In ref buffer, set user option"
+		 "Set user option")
+	       'user-variable-p)))
+     (list var (hypropos-read-variable-value var) current-prefix-arg)))
+  (hypropos-set-variable var val this-ref-buffer))
+
+;;;###autoload
+(defun hypropos-set-variable (var val &optional this-ref-buffer)
   "Interactively set the variable on the current line."
   (interactive
-   (let ((var (save-excursion
-		(and (eq major-mode 'hypropos-help-mode)
-		     (goto-char (point-min)))
-		(hypropos-this-symbol))))
-     (or (boundp var)
-	 (setq var (completing-read "Set variable: "
-				    obarray 'boundp t)))
-     (hypropos-get-doc var t)
-     (list var
-	   (let ((prop (get var 'variable-interactive))
-		 (print-readably t)
-		 (val (symbol-value var)))
-	     (if prop
-		 (call-interactively (list 'lambda '(arg)
-					   (list 'interactive prop)
-					   'arg))
-	       (eval-minibuffer
-		(format "Set `%s' to value (evaluated): " var)
-		(format (if (or (consp val)
-				(and (symbolp val)
-				     (not (memq val '(t nil)))))
-			    "'%s" "%s")
-			(prin1-to-string val))))))
-     ))
-  (set var val)
-  (hypropos-get-doc var t))
+   (let ((var (hypropos-this-symbol)))
+     (or (and var (boundp var))
+	 (and (setq var (and (eq major-mode 'hyper-help-mode)
+			     (save-excursion
+			       (goto-char (point-min))
+			       (hypropos-this-symbol))))
+	      (boundp var))
+	 (setq var nil))
+     (list var (hypropos-read-variable-value var))))
+  (and var
+       (boundp var)
+       (progn
+	 (if (hypropos-follow-ref-buffer this-ref-buffer)
+	     (save-excursion
+	       (set-buffer hypropos-ref-buffer)
+	       (set var val))
+	   (set var val))
+	 (hypropos-get-doc var t '(variable) this-ref-buffer))))
+
+(defun hypropos-read-variable-value (var &optional this-ref-buffer)
+  (and var
+       (boundp var)
+       (let ((prop (get var 'variable-interactive))
+	     (print-readably t)
+	     val str)
+	 (hypropos-get-doc var t '(variable) current-prefix-arg)
+	 (if prop
+	     (call-interactively (list 'lambda '(arg)
+				       (list 'interactive prop)
+				       'arg))
+	   (setq val (if (hypropos-follow-ref-buffer this-ref-buffer)
+			 (save-excursion
+			   (set-buffer hypropos-ref-buffer)
+			   (symbol-value var))
+		       (symbol-value var))
+		 str (prin1-to-string val))
+	   (eval-minibuffer
+	    (format "Set %s `%s' to value (evaluated): "
+		    (if (user-variable-p var) "user option" "Variable")
+		    var)
+	    (condition-case nil
+		(progn
+		  (read str)
+		  (format (if (or (consp val)
+				  (and (symbolp val)
+				       (not (memq val '(t nil)))))
+			      "'%s" "%s")
+			  str))
+	      (error nil)))))))
 
 ;; ---------------------------------------------------------------------- ;;
 
@@ -886,4 +1241,3 @@ source is found for the \"*Hyper Apropos*\" buffer."
 (provide 'hyper-apropos)
 
 ;; end of hyper-apropos.el
-

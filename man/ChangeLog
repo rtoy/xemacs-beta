@@ -1,3 +1,15 @@
+Thu Mar  6 13:33:54 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile: Update for new texinfo manual.
+
+Tue Mar  4 11:37:42 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile (../info/w3.info): Use special version of makeinfo
+	since this manual is not backwards compatible.
+	Clean up error handling so we only have to type make once to
+	rebuild the info tree.
+	(../info/vm.info): Make sure to continue in the event of error.
+
 Tue Feb 25 20:17:53 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* auctex/Makefile: Added `mostlyclean' and `distclean' target.

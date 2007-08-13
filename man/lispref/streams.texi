@@ -752,7 +752,7 @@ Uninterned symbols are those which are not present in @code{obarray},
 that is, those which were made with @code{make-symbol} or by calling
 @code{intern} with a second argument.
 
-When @code{print-gensym} is true, such symbols will be preceeded by
+When @code{print-gensym} is true, such symbols will be preceded by
 @samp{#:}, which causes the reader to create a new symbol instead of
 interning and returning an existing one.  Beware: The @samp{#:} syntax
 creates a new symbol each time it is seen, so if you print an object

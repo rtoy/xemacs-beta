@@ -1,3 +1,160 @@
+Fri Mar  7 06:13:20 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-document-information): Better handling of last-modified
+  findings.
+
+* w3-forms.el (w3-form-create-image): Try to use the value of an
+  image-input area as the label for the widget we create.
+
+* w3-elisp.el (w3-elisp-safe-eval): Throw a condition-case() around the
+  eval to catch bad forms, etc.
+
+* w3-script.el (w3-script-evaluate-form): Don't signal an error on unknown
+  scripting languages, just show a warning.
+
+Thu Mar  6 08:24:49 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-complete-link): Protect against malformed widgets (null :from
+  or :to).  Is this from delayed image widgets?
+
+* w3-vars.el (w3-mode-map): Changed binding of M-s to w3-save-as instead
+  of w3-search - does anybody use that instead of the forms interface?
+
+* w3.el (w3-document-information): Show document size
+
+* css.el (css-parse): Removed warning about old-style stuff for
+  device-dependent styles - was too annoying.  Need to just remove this
+  support totally for the 3.0 release.
+
+* w3.el (w3-internal-handle-preview): When previewing a buffer, remove all
+  text properties from the document source before doing anything.
+  (w3-mail-current-document): Bind case-fold-search when looking for where
+  to insert the <base> tag.
+  (w3-loaded-stylesheets): New variable to keep track of what stylesheets
+  were loaded at startup.
+
+* url-cache.el (url-cache-create-filename-human-readable): New function to
+  create cached filenames using the old method, that was slightly more
+  human readable.
+
+Wed Mar  5 15:38:00 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.64 released
+
+* w3-parse.el: OH god, finally got raw text inside a <tr> to push a <td>
+  onto the parse tree.  got raw text inside a <table> to push a <tr>
+  onto the parse tee.
+
+* w3-widget.el: Support 'target' in img widgets
+
+Tue Mar  4 07:55:56 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-display-node): Support 'seqnum' attribute
+
+* w3.el (w3-mail-document-author): Fixed for new 'link' representation
+  (w3-document-information): If a document has a 'Last modified: blah' line,
+  use it as the last modified information as a last resort.
+
+* Synch'ed up with widget 1.50
+
+* w3-forms.el: Try to play nice with old and new versions of
+  widget-edit/wid-edit.el
+
+Tue Mar  4 06:23:41 1997  Michael Ernst <mernst@cs.washington.edu>
+
+* url.el (url-get-url-at-point): If a possible URL starts with www., slap
+  on 'http://', as someone probably just forgot it.
+
+Tue Mar  4 06:23:41 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-prefs.el (w3-preferences-hooks-variables): Removed some old variables.
+  (w3-preferences-edit): The preferences panel actually works again.  No
+  longer tries to use an imagemap - a dropdown is good enough dammit.
+
+* w3-vars.el: Removed some old variables
+
+* w3-display.el (w3-display-node): For <a> tags, do not embed a widget in
+  the buffer unless it actually has an 'href' attribute.  This helps a
+  _lot_ with <a name="blah">...</a> constructs.
+
+Tue Mar  4 06:18:06 1997  Toby Speight <tms@ansa.co.uk>
+
+* w3.el (w3-mail-current-document): Allow TM (if it's in use) to choose
+  the appropriate Transfer-Encoding of a mailed document.
+  (w3-mail-current-document): Try real hard to put <base> where it belongs
+  (in the <head>, if that is not found, then just after <html>, otherwise
+  just at the beginning of the document)
+
+Mon Mar  3 07:10:11 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.63 released
+
+* w3-forms.el (w3-form-field-label): Labels are now reimplemented for form
+  fields
+
+* w3-display.el (w3-parse-link): Now honors the old variable
+  w3-honor-stylesheets, which hadn't made it back onto the reimplemented
+  features list yet.
+
+* font.el: Added quite a few autoloads.  Package no longer overwrites the
+  set-face-* functions, as this was deemed evil in the extreme.
+
+* w3-display.el (w3-face-for-element): Use the font-set-face-* functions
+  instead of the raw set-face-* functions.
+
+* w3-widget.el (widget-image-inaudible-p): New variable that controls
+  whether image widgets are rendered inaudible by emacspeak or not.
+  (widget-image-value-set): Use it.
+
+* url-cache.el (url-cache-directory): New variable that controls where you
+  cache files will be stored.  Defaults to "~/.w3/cache"
+  (url-cache-creation-function): New variable that controls what function
+  will be used to create cached filenames.
+  (url-cache-create-filename-using-md5): This is now the default (and
+  only) cache-file-creation function.  Suitably fast under Emacs 19 (lisp
+  implementation), _very_ fast under XEmacs, where it is written in C.
+
+Thu Feb 27 07:27:43 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-sysdp.el: Added alias of make-symbolic-link to copy-file for NTEmacs
+
+* w3-elisp.el: Removed face functions from the safe list.
+
+Wed Feb 26 16:08:08 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+* font.el (font-create-object): Added autoload.
+
+Wed Feb 26 08:17:37 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-region): Fixed typo when binding
+  w3-display-same-buffer - no wonder it wasn't working right.
+
+* images.el (image-normalize): Bind file-coding-system to the appropriate
+  no-conversion so that running subprocesses doesn't munge the data when
+  running under MULE.
+  (image-normalize): Now uses call-process-region instead of
+  shell-command-on-region, and removed the explicit mention of '/bin/sh'
+  and friends.  Uses the ability of call-process-region to specify a
+  separate file to use for stderr - yipeee.
+
+* url.el (url-setup-privacy-info): Slight change as to how url-system-type
+  and url-os-type are set up.  No longer uses nested parens, as this seems
+  to confuse some sites that try to use the User-Agent header as a
+  state-tracker.
+
+Mon Feb 24 10:15:45 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-widget-echo): Make sure that nothing that will be
+  echoed is the empty string.
+
+Sun Feb 23 08:34:18 1997  William M. Perry  <wmperry@aventail.com>
+
+* url-cache.el (url-store-in-cache): fixed stupid bug in caching logic
+
+Sat Feb 22 07:21:29 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.62 released
+
 Thu Feb 20 13:40:22 1997  William M. Perry  <wmperry@aventail.com>
 
 * w3-forms.el (w3-form-summarize-password): By default, don't summarize

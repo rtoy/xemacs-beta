@@ -241,8 +241,8 @@ afterwards in order to not keep the client waiting."
     ;; give window chance to re-display text
     (accept-process-output))))
 
-(defun server-tty-find-file (tty termtype file)
-  (let ((device (make-tty-device tty termtype)))
+(defun server-tty-find-file (tty termtype pid file)
+  (let ((device (make-tty-device tty termtype pid )))
     (select-frame (make-frame nil device))
     (if (not file)
 	(switch-to-buffer (get-buffer-create "*scratch*"))
@@ -344,7 +344,7 @@ the edit is finished."
 		"Type {\\[server-edit]} or select Frame/Delete to finish edit."
 	      "When done with a buffer, type \\[server-edit]."))))
 
-(defun server-tty-edit-files (tty termtype list)
+(defun server-tty-edit-files (tty termtype pid list)
   "For each (line-number . file) pair in LIST, edit the file at line-number.
 Save enough information for (server-kill-buffer) to inform the client when
 the edit is finished."
@@ -352,7 +352,7 @@ the edit is finished."
   (while list
     (let ((line (car (car list)))
 	  (path (cdr (car list))))
-      (server-tty-find-file tty termtype path)
+      (server-tty-find-file tty termtype pid path)
       (server-make-window-visible)
       (let ((old-clients (assq current-client server-clients))
 	    (buffer (current-buffer)))
@@ -449,14 +449,18 @@ new current buffer."
 	;; tell it that it is done, and forget it entirely.
 	(if (cdr client)
 	    nil
-	  (server-write-to-client (car client) nil)
-	  (setq server-clients (delq client server-clients))))
+	  (if (buffer-name buffer)
+	      (save-excursion
+		(set-buffer buffer)
+		(setq server-buffer-clients nil)))
+	  ; Order is important here --
+	  ; server-kill-buffer tries to notify clients that
+	  ; they are done, too, but if we try and notify twice,
+	  ; we are h0zed -- Hunter Kelly 3/3/97
+	  (setq server-clients (delq client server-clients))
+	  (funcall server-done-function buffer)
+	  (server-write-to-client (car client) nil)))
       (setq old-clients (cdr old-clients)))
-    (if (buffer-name buffer)
-	(save-excursion
-	  (set-buffer buffer)
-	  (setq server-buffer-clients nil)))
-   (funcall server-done-function buffer)
     next-buffer))
 
 

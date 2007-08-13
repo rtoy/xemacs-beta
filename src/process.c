@@ -1293,6 +1293,9 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 		      Error_behavior errb)
 {
   struct hostent *host_info_ptr;
+#ifdef TRY_AGAIN
+  int count = 0;
+#endif
 
 #ifndef HAVE_TERM
   memset (address, 0, sizeof (*address));
@@ -1300,6 +1303,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
   while (1)
     {
 #ifdef TRY_AGAIN
+      if (count++ > 10) break;
       h_errno = 0;
 #endif
       /* Some systems can't handle SIGIO/SIGALARM in gethostbyname. */

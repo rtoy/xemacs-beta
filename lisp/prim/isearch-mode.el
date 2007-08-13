@@ -1552,7 +1552,7 @@ currently matches the search-string.")
 
 (defun isearch-no-upper-case-p (string)
   "Return t if there are no upper case chars in string.
-But upper case chars preceeded by \\ do not count since they
+But upper case chars preceded by \\ do not count since they
 have special meaning in a regexp."
   ;; this incorrectly returns t for "\\\\A"
   (let ((case-fold-search nil))

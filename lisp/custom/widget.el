@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.50
+;; Version: 1.59
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -27,7 +27,9 @@
 	     (set (car keywords) (car keywords)))
 	 (setq keywords (cdr keywords)))))))
 
-(define-widget-keywords :tag-glyph :off-glyph :on-glyph :valid-regexp
+(define-widget-keywords :sibling-args :delete-button-args
+  :insert-button-args :append-button-args :button-args 
+  :tag-glyph :off-glyph :on-glyph :valid-regexp
   :secret :sample-face :sample-face-get :case-fold :widget-doc 
   :create :convert-widget :format :value-create :offset :extra-offset
   :tag :doc :from :to :args :value :value-from :value-to :action

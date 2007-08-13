@@ -2511,7 +2511,7 @@ a file is read in.  Use the variables `file-coding-system-for-read'
 and `file-coding-system-alist' for that.  From a Lisp program, if
 you wish to unilaterally specify the coding system used for one
 particular operation, you should bind the variable
-`overriding-file-coding-system' rather than changing the other two
+`coding-system-for-read' rather than changing the other two
 variables just mentioned, which are intended to be used for
 global environment specification.
 */ );

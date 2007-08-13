@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.50
+;; Version: 1.59
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -300,7 +300,8 @@ IF REGEXP is not a string, return it unchanged."
   
 (unless custom-mode-map
   (setq custom-mode-map (make-sparse-keymap))
-  (set-keymap-parent custom-mode-map widget-keymap))
+  (set-keymap-parent custom-mode-map widget-keymap)
+  (define-key custom-mode-map "q" 'bury-buffer))
 
 (easy-menu-define custom-mode-menu 
     custom-mode-map
@@ -518,7 +519,7 @@ that option."
 Push RET or click mouse-2 on the word ")
   (widget-create 'info-link 
 		 :tag "help"
-		 :help-echo "Push me for help."
+		 :help-echo "Read the online help."
 		 "(custom)The Customization Buffer")
   (widget-insert " for more information.\n\n")
   (setq custom-options 
@@ -542,25 +543,26 @@ Push RET or click mouse-2 on the word ")
   (mapcar 'custom-magic-reset custom-options)
   (widget-create 'push-button
 		 :tag "Set"
-		 :help-echo "Push me to set all modifications."
+		 :help-echo "Set all modifications for this session."
 		 :action (lambda (widget &optional event)
 			   (custom-set)))
   (widget-insert " ")
   (widget-create 'push-button
 		 :tag "Save"
-		 :help-echo "Push me to make the modifications default."
+		 :help-echo "\
+Make the modifications default for future sessions."
 		 :action (lambda (widget &optional event)
 			   (custom-save)))
   (widget-insert " ")
   (widget-create 'push-button
 		 :tag "Reset"
-		 :help-echo "Push me to undo all modifications."
+		 :help-echo "Undo all modifications."
 		 :action (lambda (widget &optional event)
 			   (custom-reset event)))
   (widget-insert " ")
   (widget-create 'push-button
 		 :tag "Done"
-		 :help-echo "Push me to bury the buffer."
+		 :help-echo "Bury the buffer."
 		 :action (lambda (widget &optional event)
 			   (bury-buffer)
 			   ;; Steal button release event.
@@ -574,7 +576,8 @@ Push RET or click mouse-2 on the word ")
 			     (when (memq 'down (event-modifiers event))
 			       (read-event)))))
   (widget-insert "\n")
-  (widget-setup))
+  (widget-setup)
+  (goto-char (point-min)))
 
 ;;; Modification of Basic Widgets.
 ;;
@@ -599,7 +602,7 @@ Push RET or click mouse-2 on the word ")
 
 (define-widget 'custom-manual 'info-link
   "Link to the manual entry for this customization option."
-  :help-echo "Push me to read the manual."
+  :help-echo "Read the manual entry for this option."
   :tag "Manual")
 
 ;;; The `custom-magic' Widget.
@@ -771,7 +774,7 @@ The list should be sorted most significant first."
     (when custom-magic-show
       (push (widget-create-child-and-convert widget 'choice-item 
 					     :help-echo "\
-Push me to change the state of this item."
+Change the state of this item."
 					     :format "%[%t%]"
 					     :tag "State")
 	    children)
@@ -789,8 +792,7 @@ Push me to change the state of this item."
 	    (insert-char ?  indent))))
       (push (widget-create-child-and-convert widget 'choice-item 
 					     :button-face face
-					     :help-echo "\
-Push me to change the state."
+					     :help-echo "Change the state."
 					     :format "%[%t%]"
 					     :tag (if lisp 
 						      (concat "(" magic ")")
@@ -809,7 +811,7 @@ Push me to change the state."
 (define-widget 'custom-level 'item
   "The custom level buttons."
   :format "%[%t%]"
-  :help-echo "Push me to expand or collapse this item."
+  :help-echo "Expand or collapse this item."
   :action 'custom-level-action)
 
 (defun custom-level-action (widget &optional event)
@@ -902,7 +904,8 @@ Push me to change the state."
 
 (defun custom-notify (widget &rest args)
   "Keep track of changes."
-  (widget-put widget :custom-state 'modified)
+  (unless (memq (widget-get widget :custom-state) '(nil unknown hidden))
+    (widget-put widget :custom-state 'modified))
   (let ((buffer-undo-list t))
     (custom-magic-reset widget))
   (apply 'widget-default-notify widget args))
@@ -973,7 +976,7 @@ Push me to change the state."
 (define-widget 'custom-variable 'custom
   "Customize variable."
   :format "%l%v%m%h%a"
-  :help-echo "Push me to set or reset this variable."
+  :help-echo "Set or reset this variable."
   :documentation-property 'variable-documentation
   :custom-state nil
   :custom-menu 'custom-variable-menu-create
@@ -1205,22 +1208,16 @@ Optional EVENT is the location for the menu."
 
 ;;; The `custom-face-edit' Widget.
 
-(defvar custom-face-edit-args
-  (mapcar (lambda (att)
-	    (list 'group 
-		  :inline t
-		  (list 'const :format "" :value (nth 0 att)) 
-		  (nth 1 att)))
-	  custom-face-attributes))
-
 (define-widget 'custom-face-edit 'checklist
   "Edit face attributes."
   :format "%t: %v"
   :tag "Attributes"
   :extra-offset 12
+  :button-args '(:help-echo "Control whether this attribute have any effect.")
   :args (mapcar (lambda (att)
 		  (list 'group 
 			:inline t
+			:sibling-args (widget-get (nth 1 att) :sibling-args)
 			(list 'const :format "" :value (nth 0 att)) 
 			(nth 1 att)))
 		custom-face-attributes))
@@ -1231,39 +1228,70 @@ Optional EVENT is the location for the menu."
   "Select a display type."
   :tag "Display"
   :value t
+  :help-echo "Specify frames where the face attributes should be used."
   :args '((const :tag "all" t)
-	  (checklist :offset 0
-		     :extra-offset 9
-		     :args ((group (const :format "Type: " type)
-				   (checklist :inline t
-					      :offset 0
-					      (const :format "X "
-						     x)
-					      (const :format "PM "
-						     pm)
-					      (const :format "Win32 "
-						     win32)
-					      (const :format "DOS "
-						     pc)
-					      (const :format "TTY%n"
-						     tty)))
-			    (group (const :format "Class: " class)
-				   (checklist :inline t
-					      :offset 0
-					      (const :format "Color "
-						     color)
-					      (const :format
-						     "Grayscale "
-						     grayscale)
-					      (const :format "Monochrome%n"
-						     mono)))
-			    (group  (const :format "Background: " background)
-				    (checklist :inline t
-					       :offset 0
-					       (const :format "Light "
-						      light)
-					       (const :format "Dark\n"
-						      dark)))))))
+	  (checklist
+	   :offset 0
+	   :extra-offset 9
+	   :args ((group :sibling-args (:help-echo "\
+Only match the specified window systems.")
+			 (const :format "Type: "
+				type)
+			 (checklist :inline t
+				    :offset 0
+				    (const :format "X "
+					   :sibling-args (:help-echo "\
+The X11 Window System.")
+					   x)
+				    (const :format "PM "
+					   :sibling-args (:help-echo "\
+OS/2 Presentation Manager.")
+					   pm)
+				    (const :format "Win32 "
+					   :sibling-args (:help-echo "\
+Windows NT/95/97.")
+					   win32)
+				    (const :format "DOS "
+					   :sibling-args (:help-echo "\
+Plain MS-DOS.")
+					   pc)
+				    (const :format "TTY%n"
+					   :sibling-args (:help-echo "\
+Plain text terminals.")
+					   tty)))
+		  (group :sibling-args (:help-echo "\
+Only match the frames with the specified color support.")
+			 (const :format "Class: "
+				class)
+			 (checklist :inline t
+				    :offset 0
+				    (const :format "Color "
+					   :sibling-args (:help-echo "\
+Match color frames.")
+					   color)
+				    (const :format "Grayscale "
+					   :sibling-args (:help-echo "\
+Match grayscale frames.")
+					   grayscale)
+				    (const :format "Monochrome%n"
+					   :sibling-args (:help-echo "\
+Match frames with no color support.")
+					   mono)))
+		  (group :sibling-args (:help-echo "\
+Only match frames with the specified intensity.")
+			 (const :format "\
+Background brightness: "
+				background)
+			 (checklist :inline t
+				    :offset 0
+				    (const :format "Light "
+					   :sibling-args (:help-echo "\
+Match frames with light backgrounds.")
+					   light)
+				    (const :format "Dark\n"
+					   :sibling-args (:help-echo "\
+Match frames with dark backgrounds.")
+					   dark)))))))
 
 ;;; The `custom-face' Widget.
 
@@ -1276,9 +1304,9 @@ Optional EVENT is the location for the menu."
   :format "%l%{%t%}: %s%m%h%a%v"
   :format-handler 'custom-face-format-handler
   :sample-face 'custom-face-tag-face
-  :help-echo "Push me to set or reset this face."
+  :help-echo "Set or reset this face."
   :documentation-property '(lambda (face)
-			     (face-documentation face))
+			     (face-doc-string face))
   :value-create 'custom-face-value-create
   :action 'custom-face-action
   :custom-set 'custom-face-set
@@ -1320,6 +1348,12 @@ Optional EVENT is the location for the menu."
 		  :entry-format "%i %d %v"
 		  :value (or (get symbol 'saved-face)
 			     (get symbol 'factory-face))
+		  :insert-button-args '(:help-echo "\
+Insert new display specification here.")
+		  :append-button-args '(:help-echo "\
+Append new display specification here.")
+		  :delete-button-args '(:help-echo "\
+Delete this display specification.")
 		  '(group :format "%v"
 			  custom-display custom-face-edit))))
       (custom-face-state-set widget)
@@ -1526,7 +1560,7 @@ and so forth.  The remaining group tags are shown with
   :format "%l%{%t%}:%L\n%m%h%a%v"
   :sample-face-get 'custom-group-sample-face-get
   :documentation-property 'group-documentation
-  :help-echo "Push me to set or reset all members of this group."
+  :help-echo "Set or reset all members of this group."
   :value-create 'custom-group-value-create
   :action 'custom-group-action
   :custom-set 'custom-group-set
@@ -1809,7 +1843,7 @@ The menu is in a format applicable to `easy-menu-define'."
 		,(widget-apply '(custom-group) :custom-menu 'emacs)
 		,@(cdr (cdr custom-help-menu)))))
     (if (fboundp 'add-submenu)
-	(add-submenu '("Help") menu)
+	(add-submenu '("Options") menu)
       (define-key global-map [menu-bar help-menu customize-menu]
 	(cons (car menu) (easy-menu-create-keymaps (car menu) (cdr menu)))))))
 

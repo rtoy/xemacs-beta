@@ -760,9 +760,27 @@ a new format, when variables have changed, etc."
   ;;                       'startup-presentation-hack-help))
   )
 
+(defun splash-hack-version-string ()
+  (save-excursion
+    (save-restriction
+      (goto-char (point-min))
+      (re-search-forward "^XEmacs" nil t)
+      (narrow-to-region (point-at-bol) (point-at-eol))
+      (goto-char (point-min))
+      (when (re-search-forward " \\[Lucid\\]" nil t)
+	(delete-region (match-beginning 0) (match-end 0)))
+      (when (re-search-forward "[^(].*-.*-" nil t)
+	(delete-region (1+ (match-beginning 0)) (match-end 0))
+	(insert "("))
+      (goto-char (point-max))
+      (search-backward " " nil t)
+      (when (search-forward "." nil t)
+	(delete-region (1- (point)) (point-max))))))
+
 (defun splash-frame-present (l)
   (cond ((stringp l)
-         (insert l))
+         (insert l)
+	 (splash-hack-version-string))
         ((eq (car-safe l) 'face)
          ;; (face name string)
          (let ((p (point)))
@@ -820,10 +838,15 @@ a new format, when variables have changed, etc."
 
 (defun startup-splash-frame-body ()
   `("\n" ,(emacs-version) "\n"
+    ,@(if (string-match "beta" emacs-version)
+	  `( (face (bold blue) ( "This is an Experimental version of XEmacs. "
+				 " Type " (key describe-beta)
+				 " to see what this means.\n")))
+	`( "\n"))
     (face bold-italic "\
-Copyright (C) 1985-1996 Free Software Foundation, Inc.
+Copyright (C) 1985-1997 Free Software Foundation, Inc.
 Copyright (C) 1990-1994 Lucid, Inc.
-Copyright (C) 1993-1996 Sun Microsystems, Inc. All Rights Reserved.
+Copyright (C) 1993-1997 Sun Microsystems, Inc. All Rights Reserved.
 Copyright (C) 1994-1996 Board of Trustees, University of Illinois
 Copyright (C) 1995-1996 Ben Wing\n\n")
     

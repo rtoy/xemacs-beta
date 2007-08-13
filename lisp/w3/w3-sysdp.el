@@ -984,6 +984,9 @@ Returns nil if FUNCTION was already present in HOOK-VAR, else new
    (t 'identity)))			; All others
 
 ;; Misc.
+;; NT doesn't have make-symbolic-link
+(sysdep-defalias 'make-symbolic-link 'copy-file)
+
 (sysdep-defun split-string (string pattern)
   "Return a list of substrings of STRING which are separated by PATTERN."
   (let (parts (start 0))

@@ -888,7 +888,7 @@ Here are some examples of programmatically binding keys:
 @subsubsection Using Strings for Changing Key Bindings 
 
   For backward compatibility, you can still use strings to represent
-key sequences.  Thus you can use comands like the following:
+key sequences.  Thus you can use commands like the following:
 
 @example
 ;;; Bind @code{end-of-line} to @kbd{C-f}

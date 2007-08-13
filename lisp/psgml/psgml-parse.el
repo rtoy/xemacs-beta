@@ -1,5 +1,5 @@
 ;;;; psgml-parse.el --- Parser for SGML-editing mode with parsing support
-;; $Id: psgml-parse.el,v 1.3 1997/01/11 20:14:09 steve Exp $
+;; $Id: psgml-parse.el,v 1.4 1997/03/08 23:26:54 steve Exp $
 
 ;; Copyright (C) 1994, 1995 Lennart Staflin
 
@@ -229,7 +229,7 @@ In case markup closed element this is different from sgml-current-tree.
 Only valid after `sgml-parse-to'.")
 
 (defvar sgml-markup-start nil
-  "Start point of markup beeing parsed.")
+  "Start point of markup being parsed.")
 
 (defvar sgml-conref-flag nil
   "This variable is set by `sgml-parse-attribute-specification-list'

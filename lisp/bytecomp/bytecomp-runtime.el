@@ -197,7 +197,7 @@ Each argument to this macro must be a list of a key and a value.
   warnings	  list of warnings	byte-compile-warnings
   file-format	  emacs19, emacs20	byte-compile-emacs19-compatibility
 
-The value specificed with the `warnings' option must be a list, containing
+The value specified with the `warnings' option must be a list, containing
 some subset of the following flags:
 
   free-vars	references to variables not in the current lexical scope.

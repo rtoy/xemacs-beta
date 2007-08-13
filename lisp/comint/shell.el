@@ -284,12 +284,17 @@ Thus, this does not include the shell's current directory.")
   (remove-hook 'font-lock-mode-hook 'shell-font-lock-mode-hook))
 (add-hook 'font-lock-mode-hook 'shell-font-lock-mode-hook)
 
-(defvar shell-prompt-pattern-for-font-lock shell-prompt-pattern
-  "Pattern to use to font-lock the prompt.
-Defaults to `shell-prompt-pattern'.")
+(defvar shell-prompt-pattern-for-font-lock nil
+  "If non-nil, pattern to use to font-lock the prompt.
+When nil, shell-prompt-pattern will be used.  Set this to a regular
+expression if you want the font-locked pattern to be different then
+the shell's prompt pattern.")
 
 (defvar shell-font-lock-keywords
-  (list (cons 'shell-prompt-pattern-for-font-lock shell-prompt-face)
+  (list '(eval . (cons (if shell-prompt-pattern-for-font-lock
+			   shell-prompt-pattern-for-font-lock
+			 shell-prompt-pattern)
+		       shell-prompt-face))
 	'("[ \t]\\([+-][^ \t\n>]+\\)" 1 shell-option-face)
 	'("^[^ \t\n]+:.*" . shell-output-2-face)
 	'("^\\[[1-9][0-9]*\\]" . shell-output-3-face)

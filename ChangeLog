@@ -1,3 +1,19 @@
+Sat Mar  8 15:19:33 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.1-b6 is released.
+	* XEmacs-19.15-b98 is released.
+
+Wed Mar  5 18:55:36 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (install-arch-indep): Offer to compress lisp sources.
+	(gzip-el): New targe for compressed installed lisp sources.
+
+Tue Mar  4 23:28:37 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* lib-src/update-elc.sh: VM is compiled after the byte-compiler,
+	but before anything else.  More flexible about finding an xemacs
+	to use for byte-compilation (default src/xemacs).  Other minor fixes.
+
 Mon Mar  3 23:57:56 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.1-b5 is released.

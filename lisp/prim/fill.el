@@ -204,7 +204,7 @@ Normally performs justification according to the `current-justification'
 function, but with a prefix arg, does full justification instead.
 
 From a program, optional third arg JUSTIFY can specify any type of
-ustification.  Fourth arg NOSQUEEZE non-nil means not to make spaces
+justification.  Fourth arg NOSQUEEZE non-nil means not to make spaces
 between words canonical before filling.  Fifth arg SQUEEZE-AFTER, if non-nil,
 means don't canonicalize spaces before that position.
 

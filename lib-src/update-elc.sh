@@ -1,42 +1,64 @@
 #!/bin/sh
-# update-elc.sh --- recompile all missing or out-or-date .elc files
+# update-elc.sh --- recompile all missing or out-of-date .elc files
 
 # Author:	Jamie Zawinski, Ben Wing, Martin Buchholz
 # Maintainer:	Martin Buchholz
-# Keywords:	recompile .el .elc
+# Keywords:	recompile byte-compile .el .elc
 
 ### Commentary:
 ##  Recompile all .elc files that need recompilation.  Requires a
-##  working version of 'xemacs'.  Correctly handles the case where the
-##  .elc files are missing; thus you can execute 'rm lisp/*/*.elc'
+##  working version of "xemacs".  Correctly handles the case where the
+##  .elc files are missing; thus you can execute "rm lisp/*/*.elc"
 ##  before running this script.  Run this from the parent of the
-##  `lisp' directory, or another nearby directory.
+##  "lisp" directory, or another nearby directory.
 
-set -eu
+set -e
 
 # Try to find the lisp directory in several places.
-# (Sun workspaces have an `editor' directory)
+# (Sun workspaces have an "editor" directory)
 for dir in  .  ..  ../..  editor  ../editor  ; do
-  if test -d $dir ; then cd $dir ; break ; fi
+  if test -d $dir/lisp/. ; then cd $dir ; break ; fi
 done
 
 if test ! -d lisp/. ; then
-  echo "$0: Cannot find the \`lisp' directory."
+  echo "$0: Cannot find the \"lisp\" directory."
   exit 1
 fi
 
+# Determine xemacs executable to use for compilation.
+if test -n "$XEMACS" ; then
+  EMACS="$XEMACS"
+elif test -x ./src/xemacs ; then
+  EMACS="./src/xemacs"
+elif test -x "$EMACS" ; then
+  :
+else
+  EMACS=xemacs
+fi
+case "$EMACS" in
+  */* ) : ;; # Pathname specified
+  *) # Need to find executable on PATH
+     for dir in `echo $PATH | sed 's/:/ /g'` ; do
+       if test -x "dir/xemacs" ; then
+	 EMACS="$dir/$EMACS"
+	 break
+       fi
+     done ;;
+esac
+# Canonicalize
+EMACS=`cd \`dirname $EMACS\` ; pwd | sed 's:^/tmp_mnt::'`/`basename $EMACS`
+export EMACS
 
-EMACS=${XEMACS:-./src/xemacs}; export EMACS
-REAL=`cd \`dirname $EMACS\` ; pwd | sed 's:^/tmp_mnt::'`/`basename $EMACS`
-BYTECOMP="$REAL -batch -q -no-site-file -l bytecomp"
 echo "Recompiling in `pwd|sed 's:^/tmp_mnt::'`"
-echo "    with $REAL..."
+echo "    with $EMACS..."
 
 prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
+$EMACS -batch -q -no-site-file -l cleantree -f batch-remove-old-elc lisp
+
 # $els  is a list of all .el  files
 # $elcs is a list of all .elc files
-els=/tmp/rcl1.$$ ; elcs=/tmp/rcl2.$$
+els=/tmp/update-elc-1.$$ elcs=/tmp/update-elc-2.$$
 rm -f $els $elcs
 trap "rm -f $els $elcs" 0 1 2 3 15
 find lisp/. $prune_vc -name '*.el'  -print                    | sort > $els
@@ -44,7 +66,7 @@ find lisp/. $prune_vc -name '*.elc' -print | sed 's/elc$/el/' | sort > $elcs
 
 
 echo "Deleting .elc files without .el files..."
-comm -13 $els $elcs | sed -e '\!/vm.el!d' -e '\!/w3.el!d' -e 's/el$/elc/' | \
+comm -13 $els $elcs | sed -e '\!/vm.el!d' -e 's/el$/elc/' | \
  while read file ; do echo rm "$file" ; rm "$file" ; done
 echo "Deleting .elc files without .el files... Done"
 
@@ -55,7 +77,7 @@ ignore_dirs="its quail"	# ### Not ported yet...
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
 echo "Checking for Mule support..."
 lisp_prog='(princ (featurep (quote mule)))'
-mule_p="`$REAL -batch -no-site-file -eval \"$lisp_prog\"`"
+mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
   echo No
   ignore_dirs="$ignore_dirs mule"
@@ -70,7 +92,15 @@ fi
 # with the latest version (assuming we're compiling the lisp dir of the emacs
 # we're running, which might not be the case, but often is.)
 echo "Checking the byte compiler..."
+BYTECOMP="$EMACS -batch -q -no-site-file -l bytecomp"
 $BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
+
+# Byte-compile VM first, because other packages depend on it,
+# but it depends on nothing (Kyle is like that).
+ignore_dirs="$ignore_dirs vm"
+echo "Compiling in lisp/vm";
+(cd lisp/vm && ${MAKE:-make} EMACS=$EMACS)
+echo "lisp/vm done."
 
 # Prepare for byte-compiling directories with directory-specific instructions
 make_special_commands=''
@@ -79,15 +109,14 @@ make_special () {
   ignore_dirs="$ignore_dirs $dir"
   make_special_commands="$make_special_commands \
 echo \"Compiling in lisp/$dir\"; \
-(cd \"lisp/$dir\"; \
-${MAKE:-make} EMACS=$REAL ${1+$*}); \
+(cd \"lisp/$dir\" && ${MAKE:-make} EMACS=$EMACS ${1+$*}); \
 echo \"lisp/$dir done.\";"
 }
 
-make_special vm
-make_special efs
+#make_special vm
 #make_special ediff elc
 #make_special viper elc
+make_special efs
 make_special gnus  some
 make_special w3
 make_special hyperbole elc
@@ -133,6 +162,5 @@ find lisp/* $prune_vc -type d -print | \
  sed "$ignore_pattern" | \
  xargs -t $BYTECOMP -f batch-byte-recompile-directory
 echo "Compiling files with out-of-date .elc... Done"
-
 
 eval "$make_special_commands"

@@ -1,3 +1,145 @@
+Sat Mar 08 17:21:12 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.59 released.
+
+Sat Mar  8 10:16:59 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.texi (editable-list): Documented new keywords.
+	(radio-button-choice): Ditto.
+	(checklist): Ditto.
+
+	* cus-edit.el (custom-face-edit-args): Deleted.
+
+	* wid-edit.el (color-item): Don't make sample a button.
+
+	* widget.el (:insert-button-args): New keyword.
+	(:delete-button-args): Ditto.
+
+	* wid-edit.el (widget-editable-list-entry-create): Use them.
+	* cus-edit.el (custom-face-value-create): Ditto.
+
+	* widget.el (:append-button-args): New keyword.
+	* wid-edit.el (widget-editable-list-format-handler): Use it.
+
+	* cus-edit.el (custom-face-edit): Add `:help-echo' to checkboxes.
+	* cus-face.el (custom-face-attributes): Add `:echo-help'.
+	* wid-edit.el (delete-button): Ditto.
+	(insert-button): Ditto.
+
+	* widget.el (:button-args): New keyword.
+	(:sibling-args): New keyword.
+	* wid-edit.el (widget-checklist-add-item): Support them.
+	(widget-radio-add-item): Ditto.
+
+	* wid-edit.el: (widget-mouse-help): Renamed from
+	`widget-ballon-help'.
+	(widget-specify-button): Support `help-echo'.
+	(widget-glyph-insert-glyph): Ditto.
+	(widget-specify-field-update): Ditto.
+	
+	* wid-edit.el: Minor spelling corrections.
+	Patch by Martin Buchholz <mrb@Eng.Sun.COM>.
+
+Fri Mar 07 21:29:07 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.58 released.
+
+Fri Mar  7 14:55:22 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-buffer-create): Go to top of buffer after
+	creating it. 
+
+	* custom.texi (The Customization Buttons): Documented `[Done]'.
+
+Fri Mar 07 14:40:52 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.57 released.
+
+Fri Mar  7 10:46:48 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el: Removed "Push me" from :help-echo strings.
+	* wid-edit.el: Ditto.
+
+	* wid-edit.el (widget-specify-button): Support ballon-help.
+	(widget-glyph-insert-glyph): Ditto.
+	(widget-balloon-help): New function.
+
+	* Makefile (some): New target.
+
+	* wid-edit.el: A bit of compiler warning avoidance with new target.
+
+	* cus-face.el (custom-face-attributes-set): Renamed from
+	`custom-face-attribites-set'.
+	(custom-face-display-set): Changed caller.
+	(custom-invert-face): Renamed from `reverse-face'.
+	(custom-face-attributes): Changed caller.
+
+Fri Mar  7 04:17:40 1997  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* cus-face.el: Moved variable defintions around a bit to avoid
+	compilation warnings.
+
+Thu Mar 06 16:30:04 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.56 released.
+
+Thu Mar  6 15:40:34 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-notify): Don't modify hidden items.
+
+Wed Mar 05 17:42:47 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.55 released.
+
+Wed Mar  5 17:20:05 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (set-face-doc-string).  Renamed from
+	`set-face-documentation'. 
+	(face-doc-string).  Renamed from `face-documentation'. 
+	(custom-declare-face): Changed caller.
+	* cus-edit.el (custom-face): Changed caller.
+
+Wed Mar 05 17:00:42 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.54 released.
+
+	* cus-face.el (reverse-face): New function.
+	(custom-face-attributes): Use it.
+
+Wed Mar 05 15:08:30 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.53 released.
+
+Wed Mar  5 15:03:58 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (custom-relevant-frames): Don't cache the frames. 
+	(custom-initialize-frame): Ditto.
+
+Wed Mar 05 14:39:19 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.52 released.
+
+Wed Mar  5 14:38:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-choose): Call `try-completion' to make sure
+	case changes are done.
+
+Tue Mar 04 21:04:30 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.51 released.
+
+Tue Mar  4 11:58:02 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.texi, custom.texi: Use @* instead of @br.
+
+	* wid-edit.el (widget-glyph-insert): Allow glyphs as well as file
+	names from `widget-glyph-directory'.
+
+Mon Mar  3 19:38:57 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-mode-map): Bind `bury-buffer' to `q'.
+	Suggested by Neal Becker <neal@ctd.comsat.com>.
+
 Mon Mar 03 18:29:27 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.50 released.

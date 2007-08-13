@@ -993,7 +993,7 @@ argument causes us to read a file name and use that file as the inbox."
 ;; (defun rmail-decode-coding-system (from to)
 ;;   (let (coding-system)
 ;;     ;; At first, detect the coding-system of the region and set it to
-;;     ;; `coding-sytem'.
+;;     ;; `coding-system'.
 ;;     (let ((detected-coding-system (code-detect-region from to))
 ;;           (coding (get-code mail-coding-system)))
 ;;       (if (listp detected-coding-system)

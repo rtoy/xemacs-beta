@@ -1,4 +1,27 @@
 							-*- indented-text -*-
+to 20.1 beta6
+-- filladapt.el-2.09 courtesy of Kyle Jones
+-- itimer.el-1.03
+-- more work on sit-for, etc. courtesy of David Moore
+-- describe-beta command added, etc/BETA, C-h B
+-- updates to hyper-apropos.el courtesy of Christoph Wedler
+-- texinfo manual updated to 2.23
+-- texinfo.tex update to 3.9
+-- Gnus-5.4.23
+-- tm-7.105.1
+-- W3-3.0.65
+-- Custom-1.59
+-- AUCTeX-9.7l
+-- VM-6.19
+-- Build fixes from Martin Buchholz
+-- More work on Linux libc-5/libc-6 portability, it works out of the box now?
+-- more frame visibility patches courtesy of Jan Vroonhof
+-- Synch to MULE patches courtesy of MORIOKA Tomohiko
+-- graphical updates to time.el
+-- gnuattach fixes courtesy of Hunter Kelly
+-- dynamic PURESIZE fixes
+-- miscellaneous bug fixes
+
 to 20.1 beta5
 -- bug fix to gnus-mime.el
 -- custom-1.50

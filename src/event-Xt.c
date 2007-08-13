@@ -1101,7 +1101,8 @@ emacs_Xt_handle_focus_event (XEvent *event)
   handle_focus_event_1 (f, event->type == FocusIn);
 }
 
-/* both MapNotify and VisibilityNotify can cause this */
+/* both MapNotify and VisibilityNotify can cause this
+   JV is_visible has the same semantics as f->visible*/
 static void
 change_frame_visibility (struct frame *f, int is_visible)
 {
@@ -1111,7 +1112,7 @@ change_frame_visibility (struct frame *f, int is_visible)
 
   if (!FRAME_VISIBLE_P (f) && is_visible)
     {
-      FRAME_VISIBLE_P (f) = 1;
+      FRAME_VISIBLE_P (f) = is_visible;
       /* This improves the double flicker when uniconifying a frame
 	 some.  A lot of it is not showing a buffer which has changed
 	 while the frame was iconified.  To fix it further requires
@@ -1128,6 +1129,16 @@ change_frame_visibility (struct frame *f, int is_visible)
       va_run_hook_with_args (Qunmap_frame_hook, 1, frame);
 #ifdef EPOCH
       dispatch_epoch_event (f, event, Qx_unmap);
+#endif
+    }
+  else if (FRAME_VISIBLE_P (f) * is_visible < 0)
+    {
+      FRAME_VISIBLE_P(f) = - FRAME_VISIBLE_P(f);
+      if (FRAME_REPAINT_P(f))
+	      MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
+      va_run_hook_with_args (Qmap_frame_hook, 1, frame);
+#ifdef EPOCH
+      dispatch_epoch_event (f, event, Qx_map);
 #endif
     }
 }
@@ -1352,8 +1363,9 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
 	     factored out some code to change_frame_visibility(). 
 	     This triggers the necessary redisplay and runs
 	     (un)map-frame-hook.  - dkindred@cs.cmu.edu */
+	  /* Changed it again to support the tristate visibility flag */
 	  change_frame_visibility (f, (event->xvisibility.state
-				       != VisibilityFullyObscured));
+				       != VisibilityFullyObscured) ? 1 : -1);
 	}
       break;
       

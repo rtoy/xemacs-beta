@@ -119,7 +119,7 @@ will be used for.
 
 Canonicalizing means converting to the full form for an inst-list, i.e.
 `((TAG-SET . INSTANTIATOR) ...)'.  This function accepts a single
-inst-pair or any abbrevation thereof or a list of (possibly
+inst-pair or any abbreviation thereof or a list of (possibly
 abbreviated) inst-pairs. (See `canonicalize-inst-pair'.)
 
 If NOERROR is non-nil, signal an error if the inst-list is invalid;
@@ -127,7 +127,7 @@ otherwise return t."
 
   ;; OK, the possibilities are:
   ;;
-  ;; a) an inst-pair or various abbrevations thereof
+  ;; a) an inst-pair or various abbreviations thereof
   ;; b) a list of (a)
   (let ((result (canonicalize-inst-pair inst-list specifier-type t)))
     (if (not (eq result t))
@@ -176,7 +176,7 @@ If NOERROR is nil, signal an error if the specification is invalid;
 otherwise return t."
   ;; OK, the possibilities are:
   ;;
-  ;; a) an inst-list or some abbrevation thereof
+  ;; a) an inst-list or some abbreviation thereof
   ;; b) a cons of a locale and an inst-list
   (let ((result (canonicalize-inst-list spec specifier-type t)))
     (if (not (eq result t))

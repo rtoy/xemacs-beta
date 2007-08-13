@@ -2487,7 +2487,7 @@ Input}.
 replaces the spaces between two Ethiopic characters in the specified
 region.  You will be asked the new space character.  Answer by typing 1,
 2 or 3.  1 means the single width ASCII space.  2 means the double width
-Ethiopic blank.  3 means the traditional Ethiopic word separater.  This
+Ethiopic blank.  3 means the traditional Ethiopic word separator.  This
 command is independent from the space selection for keyboard input.
 
 @item @key{[F8]} or @kbd{M-x ethio-input-special-character}

@@ -509,7 +509,7 @@ The cursor moves visually forward."
 	(backward-char 1)))))
 
 (defun delete-direction-forward (dir)
-  "From current point, delete DIR-direction charaters forward.
+  "From current point, delete DIR-direction characters forward.
 Returns the deleted string."
   (let ((p (point)))
     (skip-direction-forward dir)

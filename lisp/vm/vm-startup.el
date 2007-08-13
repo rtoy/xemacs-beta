@@ -63,7 +63,7 @@ See the documentation for vm-mode for more information."
 			    (inhibit-local-variables t)
 			    (enable-local-variables nil)
 			    ;; for XEmacs/Mule
-			    (overriding-file-coding-system 'no-conversion))
+			    (coding-system-for-read 'no-conversion))
 			(message "Reading %s..." file)
 			(prog1 (find-file-noselect file)
 			  ;; update folder history
@@ -275,7 +275,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.16.
+This is VM 6.19.
 
 Commands:
    h - summarize folder contents
@@ -338,7 +338,8 @@ Commands:
    x - exit VM with no change to the folder
 
  M N - use marks; the next vm command will affect only marked messages
-       if it makes sense for the command to do so
+       if it makes sense for the command to do so.  These commands
+       apply and remove marks to messages.
 
        M M - mark the current message
        M U - unmark the current message
@@ -373,7 +374,7 @@ Commands:
  V ? - help for virtual folder commands
 
  C-_ - undo, special undo that retracts the most recent
-             changes in message attributes and labels.  Expunges
+             changes in message attributes and labels.  Expunges,
              message edits, and saves cannot be undone.  C-x u is
              also bound to this command.
 

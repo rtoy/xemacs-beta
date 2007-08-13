@@ -161,10 +161,11 @@ must be either message/* or multipart/digest."
 		  (setq part-list (vm-mm-layout-parts layout))
 		  (while part-list
 		    ;; Maybe we should verify that each part is
-		    ;; of type message/rfc822 in here.  But it
-		    ;; seems more useful to just copy whatever
-		    ;; the contents are and let teh user see the
-		    ;; goop, whatever type it really is.
+		    ;; of type message/rfc822 or message/news in
+		    ;; here.  But it seems more useful to just
+		    ;; copy whatever the contents are and let the
+		    ;; user see the goop, whatever type it really
+		    ;; is.
 		    (insert (vm-leading-message-separator folder-type))
 		    (and ident-header (insert ident-header))
 		    (setq start (point))
@@ -173,7 +174,7 @@ must be either message/* or multipart/digest."
 		    (insert (vm-trailing-message-separator folder-type))
 		    (setq part-list (cdr part-list))))
 		 (t (error
-		     "MIME type is not multipart/digest or message/rfc822")))
+		     "MIME type is not multipart/digest or message/rfc822 or message/news")))
 	   ;; do header conversions.
 	   (let ((vm-folder-type folder-type))
 	     (goto-char (point-min))
@@ -379,8 +380,8 @@ RFC 1153.  Otherwise assume RFC 934 digests."
     (if rfc1153
 	(setq prologue-separator-regexp "^----------------------------------------------------------------------\n"
 	      separator-regexp "^------------------------------\n")
-      (setq prologue-separator-regexp "^-[^ ].*\n"
-	    separator-regexp "^-[^ ].*\n"))
+      (setq prologue-separator-regexp "\\(^-[^ ].*\n+\\)+"
+	    separator-regexp "\\(^-[^ ].*\n+\\)+"))
     (vm-save-restriction
      (save-excursion
        (widen)
@@ -425,10 +426,10 @@ RFC 1153.  Otherwise assume RFC 934 digests."
 		    (save-excursion
 		      (save-match-data
 			(skip-chars-forward "\n")
-			(and (vm-match-header)
-			     (or (vm-digest-get-header-contents "From")
-				 (not (re-search-forward separator-regexp
-							 nil t)))))))
+			(or (and (vm-match-header)
+				 (vm-digest-get-header-contents "From"))
+			    (not (re-search-forward separator-regexp
+						    nil t))))))
 		   (setq prev-sep (point)
 			 after-prev-sep (point))
 		 ;; insert a trailing message separator
@@ -601,6 +602,8 @@ Returns either \"rfc934\", \"rfc1153\" or \"mime\"."
 		 (or (vm-mime-types-match "multipart/digest"
 					  (car (vm-mm-layout-type layout)))
 		     (vm-mime-types-match "message/rfc822"
+					  (car (vm-mm-layout-type layout)))
+		     (vm-mime-types-match "message/news"
 					  (car (vm-mm-layout-type layout)))))
 	    (throw 'return-value "mime"))))
     (save-excursion

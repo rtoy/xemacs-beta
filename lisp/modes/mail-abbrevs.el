@@ -88,7 +88,7 @@
 ;;;     fred, ethyl, larry, curly, moe
 ;;;
 ;;; Aliases may also contain forward references; the alias of "everybody" can
-;;; preceed the aliases of "group1" and "group2".
+;;; precede the aliases of "group1" and "group2".
 ;;;
 ;;; This code also understands the "source" .mailrc command, for reading
 ;;; aliases from some other file as well.

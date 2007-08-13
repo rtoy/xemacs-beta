@@ -299,7 +299,7 @@ Options:
 	(if paren-delay
 	    (add-hook 'post-command-idle-hook 'mic-paren-command-idle-hook)
 	  (add-hook 'post-command-hook 'mic-paren-command-hook)))
-       ;; Check if we (at least) have a post-comand-hook, and use it
+       ;; Check if we (at least) have a post-command-hook, and use it
        ;; (Emacs 19.29 and below)
        ((boundp 'post-command-hook) 
 	(add-hook 'post-command-hook 'mic-paren-command-hook))

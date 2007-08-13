@@ -311,7 +311,7 @@ From program, pass args FROM, TO and JUSTIFY-FLAG."
     ;; modified by  S.Tomura 88-Jun-21
     ;;(subst-char-in-region from (point-max) ?\n ?\ )
     ;; modified by K.Handa 92-Mar-2
-    ;; Spacing is not necessary for charcters of no word-separater.
+    ;; Spacing is not necessary for characters of no word-separator.
     ;; The regexp word-across-newline is used for this check.
     (if (not (stringp word-across-newline))
 	(subst-char-in-region from (point-max) ?\n ?\ )
@@ -499,7 +499,7 @@ From program, pass args FROM, TO and JUSTIFY-FLAG."
     ;; bug fixed by S.Tomura 88-May-25
     ;; modified by  S.Tomura 88-Jun-21
     ;; modified by K.Handa 92-Mar-2
-    ;; Spacing is not necessary for charcters of no word-separater.
+    ;; Spacing is not necessary for characters of no word-separator.
     ;; The regexp word-across-newline is used for this check.
     (if (not (stringp word-across-newline))
 	(subst-char-in-region from (point-max) ?\n ?\ )

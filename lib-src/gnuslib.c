@@ -33,6 +33,7 @@
 static char rcsid [] = "!Header: gnuslib.c,v 2.4 95/02/16 11:57:37 arup alpha !";
 #endif
 
+#include <errno.h>
 #include "gnuserv.h"
 
 #ifdef SYSV_IPC
@@ -216,6 +217,29 @@ void send_string(s,msg)
   }; /* while */ 
 #endif
 } /* send_string */
+
+/*
+  read_line -- read a \n terminated line from a socket
+*/
+int read_line(s,dest)
+     int s;
+     char *dest;
+{
+  char *index = NULL;
+  int length;
+  int offset=0;
+  char buffer[GSERV_BUFSZ+1];
+
+  while ((length=read(s,buffer+offset,1)>0) && buffer[offset]!='\n'
+	 && buffer[offset] != EOT_CHR) {
+    offset += length;
+    if (offset >= GSERV_BUFSZ) 
+      break;
+  }
+  buffer[offset] = '\0';
+  strcpy(dest,buffer);
+  return 1;
+} /* read_line */
 #endif /* INTERNET_DOMAIN_SOCKETS || UNIX_DOMAIN_SOCKETS */
 
 
@@ -405,11 +429,14 @@ void disconnect_from_server(s,echo)
     add_newline = (buffer[length-1] != '\n');
   }; /* while */
 #else
-  while ((length = read(s,buffer,GSERV_BUFSZ)) > 0) {
-    buffer[length] = '\0';
-    if (echo) {
-      fputs(buffer,stdout);
-      add_newline = (buffer[length-1] != '\n');
+  while ((length = read(s,buffer,GSERV_BUFSZ)) > 0 ||
+      (length == -1 && errno == EINTR)) {
+    if (length) {
+      buffer[length] = '\0';
+      if (echo) {
+	fputs(buffer,stdout);
+	add_newline = (buffer[length-1] != '\n');
+      }; /* if */
     }; /* if */
   }; /* while */
 #endif

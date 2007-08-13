@@ -2200,7 +2200,7 @@ x_raise_frame_1 (struct frame *f, int force)
   unsigned int flags;
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
 
-  if (f->visible || force)
+  if (FRAME_VISIBLE_P(f) || force)
     {
       emacs_window = XtWindow (FRAME_X_SHELL_WIDGET (f));
       /* first raises all the dialog boxes, then put emacs just below the 
@@ -2239,7 +2239,7 @@ x_lower_frame (struct frame *f)
   XWindowChanges xwc;
   unsigned int flags;
   
-  if (f->visible)
+  if (FRAME_VISIBLE_P(f))
     {
       xwc.stack_mode = Below;
       flags = CWStackMode;
@@ -2255,7 +2255,7 @@ x_make_frame_visible (struct frame *f)
 {
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
 
-  if (!f->visible)
+  if (!FRAME_VISIBLE_P(f))
     XMapRaised (display, XtWindow (FRAME_X_SHELL_WIDGET (f)));
   else
     x_raise_frame_1 (f, 0);
@@ -2267,7 +2267,7 @@ x_make_frame_invisible (struct frame *f)
 {
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
 
-  if (!f->visible)
+  if (!FRAME_VISIBLE_P(f))
     return;
 
   if (!XWithdrawWindow (display,
@@ -2283,15 +2283,40 @@ x_frame_visible_p (struct frame *f)
   XWindowAttributes xwa;
   int result;
 
+  /* JV:
+     This is bad, very bad :-(
+     It is not compatible with our tristate visible and
+     it should never ever change the visibility for us, this leads to
+     the frame-freeze problem under fvwm because with the pager
+
+     Mappedness != Viewability != Visibility != Emacs f->visible
+
+     This first unequalness is the reason for the frame freezing problem
+     under fvwm (it happens when the frame is another fvwm-page)
+
+     The second unequalness happen when it is on the same fvwm-page
+     but in an invisible part of the visible screen.
+
+     For now we just return the XEmacs internal value --- which might not be up
+     to date. Is that a problem? ---. Otherwise we should
+     use async visibility like in standard Emacs.
+     */
+
+#if 0
   if (!XGetWindowAttributes (display,
 			     XtWindow (FRAME_X_SHELL_WIDGET (f)),
 			     &xwa))
     result = 0;
   else
     result = xwa.map_state == IsViewable;
-     
+  /* In this implementation it should at least be != IsUnmapped
+     JV */
+
   f->visible = result;
   return result;
+#endif
+
+  return f->visible;
 }
 
 static int
@@ -2320,6 +2345,7 @@ x_focus_on_frame (struct frame *f)
 {
   XWindowAttributes xwa;
   Widget shell_widget;
+  int viewable;
 
   assert (FRAME_X_P (f));
 
@@ -2343,9 +2369,15 @@ x_focus_on_frame (struct frame *f)
   if (XGetWindowAttributes (XtDisplay (shell_widget),
 			    XtWindow (shell_widget),
 			    &xwa))
-    f->visible = xwa.map_state == IsViewable;
+    /* JV: it is bad to change the visibility like this, so we don't for the
+       moment, at least change_frame_visibility should be called
+       Note also that under fvwm a frame can me Viewable (and thus Mapped)
+       but still X-invisible 
+    f->visible = xwa.map_state == IsViewable; */
+    viewable = xwa.map_state == IsViewable;
+
       
-  if (f->visible)
+  if (viewable)
     {
       Window focus;
       int revert_to;

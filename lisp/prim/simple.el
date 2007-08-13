@@ -480,7 +480,7 @@ nil means discard it; anything else is stream for print."
 
 ;; XEmacs
 (defun count-lines-buffer (b)
-  "Print number of lines and charcters in the specified buffer."
+  "Print number of lines and characters in the specified buffer."
   (interactive "_b")
   (save-excursion
     (let ((buf (or b (current-buffer)))
@@ -3060,7 +3060,7 @@ See `display-message' for some common labels.  See also `log-message'.")
 
 (defvar log-message-filter-function 'log-message-filter
   "Value must be a function of two arguments: a symbol (label) and 
-a string (messsage).  It should return non-nil to indicate a message
+a string (message).  It should return non-nil to indicate a message
 should be logged.  Possible values include 'log-message-filter and
 'log-message-filter-errors-only.")
 
