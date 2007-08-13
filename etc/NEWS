@@ -112,11 +112,6 @@ denizen of the free software community.
 * Changes in XEmacs 20.2
 ========================
 
-** configure no longer defaults to using --with-xim=motif if Motif libraries
-are linked.
-
-There are many bugs in the Xlib XIM support in X11R6.3.
-
 ** Why XEmacs 20.1 is called 20.2
 
 Testing of XEmacs 20.1 revealed a number of showstopping bugs at the
@@ -142,18 +137,17 @@ revert to the old background color.
 
 ** Default modeline colors are now less of a color-salad.
 
+** The `C-z' key now iconifies only the current X frame.  You can use
+`C-x C-z' to get the old behavior.
+
+On the tty frames `C-z' behaves as before.
+
 ** The command `display-time' now draws a pretty image in the modeline
 when new mail arrives.  It also supports balloon-help messages.
 
 ** Various commands that were previously disabled are now enabled, like
 eval-expression (`M-:') and upcase-region (`C-x C-u')/downcase-region
 (`C-x C-l').
-
-** Numerous causes of crashes have been fixed.  XEmacs should now be
-even more stable than before.
-
-** The XEmacs build process has been changed to make site
-administration easier.  See lisp/site-load.el for details.
 
 ** It is now possible to customize the functions called by XEmacs toolbar.
 
@@ -181,6 +175,17 @@ numbers now number from 1 by default.
 expressions in C mode.
 
 ** The blinking cursor is always "on" during movement.
+
+** The XEmacs build process has been changed to make site
+administration easier.  See lisp/site-load.el for details.
+
+** Numerous causes of crashes have been fixed.  XEmacs should now be
+even more stable than before.
+
+** configure no longer defaults to using --with-xim=motif if Motif libraries
+are linked.
+
+There are many bugs in the Xlib XIM support in X11R6.3.
 
 ** A number of new packages are added, and many packages were
 updated.
@@ -318,7 +323,7 @@ versions, and contains numerous new features.
 ** AUCTeX-9.7k, courtesy of Per Abrahamsen
 
 AUC TeX is a comprehensive customizable integrated environment for
-writing input files for LaTeX using GNU Emacs.
+writing input files for LaTeX using Emacs.
 
 AUC TeX lets you run TeX/LaTeX and other LaTeX-related tools, such as
 a output filters or post processor from inside Emacs.  Especially
@@ -421,24 +426,6 @@ different FTP servers, and integration with dired.
 * Lisp and internal changes in XEmacs 20.2
 ==========================================
 
-** lib-complete.el was MULE-ized.
-
-The commands `find-library', `find-library-other-window' and
-`find-library-other-frame' now take an optional coding system
-argument.
-
-** Experimental support for Lisp reader macros #-, #+.
-
-The Common Lisp reader macros for feature test are now supported.  This
-feature is present for evaluation purposes and is subject to change.
-
-** `values' now has a setf method
-
-** The `C-z' key now iconifies only the current X frame.  You can use
-`C-x C-z' to get the old behavior.
-
-On the tty frames `C-z' behaves as before.
-
 ** `defcustom' and `defgroup' can now be used to specify types and
 placement of the user-settable variables.
 
@@ -529,6 +516,19 @@ added.
 
 Set this to variable to nil to avoid XEmacs usual lossage of zmacs
 region when moving up against a buffer boundary.
+
+** lib-complete.el was MULE-ized.
+
+The commands `find-library', `find-library-other-window' and
+`find-library-other-frame' now take an optional coding system
+argument.
+
+** Experimental support for Lisp reader macros #-, #+.
+
+The Common Lisp reader macros for feature test are now supported.  This
+feature is present for evaluation purposes and is subject to change.
+
+** `values' now has a setf method
 
 ** The `eval-after-load' and `eval-next-after-load' functions are
 now available.

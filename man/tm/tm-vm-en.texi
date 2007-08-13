@@ -5,7 +5,7 @@
 @c %**end of header
 
 @ifinfo
-This file documents tm-vm.el v8.11
+This file documents tm-vm.el v8.12
 
 tm-vm is part of the TM Package.
 
@@ -26,7 +26,7 @@ Copyright 1996 Tomohiko Morioka, Oscar Figueiredo
 @titlepage
 @title tm-vm Manual (English Version)
 @author by Oscar Figueiredo
-@code{$Id: tm-vm-en.texi,v 1.4 1997/04/13 03:14:26 steve Exp $}
+@code{$Id: tm-vm-en.texi,v 1.5 1997/05/14 02:01:53 steve Exp $}
 @page
 
 tm-vm is part of the TM Package.
@@ -48,7 +48,7 @@ tm-vm is an interface between tm and the VM mail user agent that lets
 you read and write multimedia mail on the Internet using the MIME
 standard.
 
-This document applies to release 8.11 of tm-vm.el
+This document applies to release 8.12 of tm-vm.el
 @end ifinfo
 
 @menu
@@ -362,7 +362,7 @@ explicitly if you want to:
 This section documents the user-visible changes in the latest releases
 of tm-vm. For more technical details see the ChangeLog.
 
-@section 8.5 to 8.11
+@section 8.5 to 8.12
 
 @itemize @bullet
 @item
@@ -467,7 +467,7 @@ X-Faces are displayed by default. @pxref{Customization}
 @ifinfo
 @chapter Copyright
 
-This file documents tm-vm 8.11, an interface between tm and the VM mail
+This file documents tm-vm 8.12, an interface between tm and the VM mail
 user agent.
 
 Copyright 1996 Tomohiko Morioka, Oscar Figueiredo

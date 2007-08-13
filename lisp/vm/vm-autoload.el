@@ -85,8 +85,10 @@ the Content-Type header.  Otherwise nil is returned." nil nil)
 
 (autoload (quote vm-mime-burst-message) "vm-digest" "Burst messages from the digest message M.
 M should be a message struct for a real message.
-MIME encoding is expected.  The message content type
-must be either message/* or multipart/digest." nil nil)
+MIME encoding is expected.  Somewhere within the MIME layout
+there must be at least one part of type message/news, message/rfc822 or
+multipart/digest.  If there are multiple parts matching those types,
+all of them will be burst." nil nil)
 
 (autoload (quote vm-mime-burst-layout) "vm-digest" nil nil nil)
 
@@ -1149,9 +1151,13 @@ for the current directory (.) is inserted." nil nil)
 
 (autoload (quote vm-mm-layout-cache) "vm-mime" nil nil nil)
 
+(autoload (quote vm-mm-layout-display-error) "vm-mime" nil nil nil)
+
 (autoload (quote vm-set-mm-layout-type) "vm-mime" nil nil nil)
 
 (autoload (quote vm-set-mm-layout-cache) "vm-mime" nil nil nil)
+
+(autoload (quote vm-set-mm-layout-display-error) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mm-layout) "vm-mime" nil nil nil)
 
@@ -1332,6 +1338,8 @@ in the buffer.  The function is expected to make the message
 (autoload (quote vm-mime-layout-description) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-layout-contains-type) "vm-mime" nil nil nil)
+
+(autoload (quote vm-mime-find-digests-in-layout) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-plain-message-p) "vm-mime" nil nil nil)
 
@@ -2209,7 +2217,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.30.
+This is VM 6.31.
 
 Commands:
    h - summarize folder contents

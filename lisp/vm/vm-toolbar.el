@@ -319,6 +319,9 @@ s-expression like this one in your .vm file:
   (vm-toolbar-initialize)
   (let ((height (+ 4 (glyph-height (car vm-toolbar-help-icon))))
 	(width (+ 4 (glyph-width (car vm-toolbar-help-icon))))
+	(frame (selected-frame))
+	(buffer (current-buffer))
+	(tag-set '(win))
 	(myframe (vm-created-this-frame-p))
 	toolbar )
     ;; glyph-width and glyph-height return 0 at startup sometimes
@@ -336,31 +339,27 @@ s-expression like this one in your .vm file:
     (cond ((eq vm-toolbar-orientation 'right)
 	   (setq vm-toolbar-specifier right-toolbar)
 	   (if myframe
-	       (set-specifier right-toolbar (cons (selected-frame) toolbar)))
-	   (set-specifier right-toolbar (cons (current-buffer) toolbar))
-	   (set-specifier right-toolbar-width
-			  (cons (selected-frame) width)))
+	       (set-specifier right-toolbar toolbar frame tag-set))
+	   (set-specifier right-toolbar toolbar buffer)
+	   (set-specifier right-toolbar-width width frame tag-set))
 	  ((eq vm-toolbar-orientation 'left)
 	   (setq vm-toolbar-specifier left-toolbar)
 	   (if myframe
-	       (set-specifier left-toolbar (cons (selected-frame) toolbar)))
-	   (set-specifier left-toolbar (cons (current-buffer) toolbar))
-	   (set-specifier left-toolbar-width
-			  (cons (selected-frame) width)))
+	       (set-specifier left-toolbar toolbar frame tag-set))
+	   (set-specifier left-toolbar toolbar buffer)
+	   (set-specifier left-toolbar-width width frame tag-set))
 	  ((eq vm-toolbar-orientation 'bottom)
 	   (setq vm-toolbar-specifier bottom-toolbar)
 	   (if myframe
-	       (set-specifier bottom-toolbar (cons (selected-frame) toolbar)))
-	   (set-specifier bottom-toolbar (cons (current-buffer) toolbar))
-	   (set-specifier bottom-toolbar-height
-			  (cons (selected-frame) height)))
+	       (set-specifier bottom-toolbar toolbar frame tag-set))
+	   (set-specifier bottom-toolbar toolbar buffer)
+	   (set-specifier bottom-toolbar-height height frame tag-set))
 	  (t
 	   (setq vm-toolbar-specifier top-toolbar)
 	   (if myframe
-	       (set-specifier top-toolbar (cons (selected-frame) toolbar)))
-	   (set-specifier top-toolbar (cons (current-buffer) toolbar))
-	   (set-specifier top-toolbar-height
-			  (cons (selected-frame) height))))))
+	       (set-specifier top-toolbar toolbar frame tag-set))
+	   (set-specifier top-toolbar toolbar buffer)
+	   (set-specifier top-toolbar-height height frame tag-set)))))
 
 (defun vm-toolbar-make-toolbar-spec ()
   (let ((button-alist '(
@@ -401,7 +400,8 @@ s-expression like this one in your .vm file:
     (let ((tuples
 	   (if (featurep 'xpm)
 	       (list
-		(if (>= (device-bitplanes) 16)
+		(if (and (device-on-window-system-p)
+			 (>= (device-bitplanes) 16))
       '(vm-toolbar-decode-mime-icon "mime-colorful-up.xpm"
 				    "mime-colorful-dn.xpm"
 				    "mime-colorful-xx.xpm")

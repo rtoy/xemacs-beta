@@ -1,3 +1,8 @@
+Mon May 12 13:47:37 1997  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* tm/tm-vm.el: Provide for vm-unsaved-message having been removed
+	in recent versions of VM.
+	
 Fri May  9 10:41:44 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* iso/iso-acc.el (iso-accents-compose): Fix XEmacs 19.14

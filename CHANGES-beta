@@ -1,4 +1,9 @@
 							-*- indented-text -*-
+to 20.2
+-- tm-vm-8.12 + manual
+-- VM-6.31
+-- b2m.c/rcs-checking synch with Emacs/Mule zeta.
+
 to 20.2 beta6
 -- ediff-2.65 Courtesy of Michael Kifer
 -- Gnus-5.4.52

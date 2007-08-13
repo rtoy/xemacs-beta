@@ -2,7 +2,7 @@
 #
 # File:         Makefile
 # Release:      $efs release: 1.15 $
-# Version:      $Revision: 1.6 $
+# Version:      $Revision: 1.7 $
 # RCS:
 # Description:  Makefile for byte-compiling efs and dired.
 # Author:       Andy Norman, HPLabs, Bristol, UK.
@@ -89,7 +89,8 @@ SHELL=/bin/sh
 
 COREOBJS = efs-defun.elc efs-ovwrt.elc efs-fnh.elc efs-cu.elc efs-netrc.elc \
            efs.elc efs-dired.elc efs-report.elc \
-           efs-cp-p.elc
+           efs-cp-p.elc \
+	   efs-dump.elc
 CORESRC = efs-defun.el efs-ovwrt.el efs-fnh.el efs-cu.el efs-netrc.el \
           efs.el efs-dired.el efs-report.el \
           efs-cp-p.el \

@@ -53,7 +53,7 @@ Lisp_Object Vmouse_enter_frame_hook, Qmouse_enter_frame_hook;
 Lisp_Object Vmouse_leave_frame_hook, Qmouse_leave_frame_hook;
 Lisp_Object Vmap_frame_hook, Qmap_frame_hook;
 Lisp_Object Vunmap_frame_hook, Qunmap_frame_hook;
-int  Vallow_deletion_of_last_visible_frame;
+int  allow_deletion_of_last_visible_frame;
 #if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
 Lisp_Object Vdrag_and_drop_functions, Qdrag_and_drop_functions;
 #endif
@@ -1256,7 +1256,7 @@ delete_frame_internal (struct frame *f, int force,
      deleting all frames which were either visible or iconified and thus
      losing any way of communicating with the still running XEmacs process.
      So we put it back.  */
-  if (!force && !Vallow_deletion_of_last_visible_frame &&
+  if (!force && !allow_deletion_of_last_visible_frame &&
       !other_visible_frames_internal (f, called_from_delete_device))
     error ("Attempt to delete the sole visible or iconified frame");
 
@@ -3008,10 +3008,10 @@ One argument, the frame.
   Vunmap_frame_hook = Qnil;
 
   DEFVAR_BOOL ("allow-deletion-of-last-visible-frame",
-	       &Vallow_deletion_of_last_visible_frame /*
+	       &allow_deletion_of_last_visible_frame /*
 *Non-nil means to assume the force option to delete-frame.
 */ );
-  Vallow_deletion_of_last_visible_frame = 0;
+  allow_deletion_of_last_visible_frame = 0;
 
 #if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
   DEFVAR_LISP ("drag-and-drop-functions", &Vdrag_and_drop_functions /*

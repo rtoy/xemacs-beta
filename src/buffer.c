@@ -166,7 +166,7 @@ Lisp_Object Vinhibit_read_only;
 Lisp_Object Vkill_buffer_query_functions;
 
 /* Non-nil means delete a buffer's auto-save file when the buffer is saved. */
-int Vdelete_auto_save_files;
+int delete_auto_save_files;
 
 Lisp_Object Qbuffer_live_p;
 Lisp_Object Qbuffer_or_string_p;
@@ -1384,7 +1384,7 @@ with `delete-process'.
 	&& b->auto_save_modified != 0
 	&& BUF_SAVE_MODIFF (b) < b->auto_save_modified)
       {
-	if (Vdelete_auto_save_files != 0)
+	if (delete_auto_save_files != 0)
 	  {
 	    /* deleting the auto save file might kill b! */
 	    /* #### dmoore - fix this crap, we do this same gcpro and
@@ -2088,10 +2088,10 @@ List of functions called with no args to query before killing a buffer.
 */ );
   Vkill_buffer_query_functions = Qnil;
 
-  DEFVAR_BOOL ("delete-auto-save-files", &Vdelete_auto_save_files /*
+  DEFVAR_BOOL ("delete-auto-save-files", &delete_auto_save_files /*
 *Non-nil means delete auto-save file when a buffer is saved or killed.
 */ );
-  Vdelete_auto_save_files = 1;
+  delete_auto_save_files = 1;
 }
 
 /* DOC is ignored because it is snagged and recorded externally 

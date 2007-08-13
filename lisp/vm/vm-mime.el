@@ -37,11 +37,13 @@
 (defun vm-mm-layout-body-start (e) (aref e 8))
 (defun vm-mm-layout-body-end (e) (aref e 9))
 (defun vm-mm-layout-parts (e) (aref e 10))
-;; if display of MIME part fails, error string will be here.
 (defun vm-mm-layout-cache (e) (aref e 11))
+;; if display of MIME part fails, error string will be here.
+(defun vm-mm-layout-display-error (e) (aref e 12))
 
 (defun vm-set-mm-layout-type (e type) (aset e 0 type))
 (defun vm-set-mm-layout-cache (e c) (aset e 11 c))
+(defun vm-set-mm-layout-display-error (e c) (aset e 12 c))
 
 (defun vm-mm-layout (m)
   (or (vm-mime-layout-of m)
@@ -624,7 +626,7 @@
 				  (vm-headers-of m)
 				  (vm-text-of m)
 				  (vm-text-end-of m)
-				  nil nil )))
+				  nil nil nil )))
 		  ((null type)
 		   (goto-char (point-min))
 		   (or (re-search-forward "^\n\\|\n\\'" nil t)
@@ -635,7 +637,7 @@
 			   (vm-marker (point-min))
 			   (vm-marker (point))
 			   (vm-marker (point-max))
-			   nil nil ))
+			   nil nil nil ))
 		  ((null (string-match "[^/ ]+/[^/ ]+" (car type)))
 		   (vm-mime-error "Malformed MIME content type: %s" (car type)))
 		  ((and (string-match "^multipart/\\|^message/" (car type))
@@ -668,7 +670,7 @@
 				     (narrow-to-region (point) (point-max))
 				     (vm-mime-parse-entity-safe nil c-t
 								c-t-e)))
-				  nil )))
+				  nil nil )))
 		  (t
 		   (goto-char (point-min))
 		   (or (re-search-forward "^\n\\|\n\\'" nil t)
@@ -679,7 +681,7 @@
 				  (vm-marker (point-min))
 				  (vm-marker (point))
 				  (vm-marker (point-max))
-				  nil nil ))))
+				  nil nil nil ))))
 	    (setq p (cdr type)
 		  boundary nil)
 	    (while p
@@ -726,7 +728,7 @@
 		    (vm-marker (point))
 		    (vm-marker (point-max))
 		    (nreverse multipart-list)
-		    nil )))))))
+		    nil nil )))))))
 
 (defun vm-mime-parse-entity-safe (&optional m c-t c-t-e)
   (or c-t (setq c-t '("text/plain" "charset=us-ascii")))
@@ -758,7 +760,7 @@
 	     header
 	     text
 	     text-end
-	     nil nil)))))
+	     nil nil nil)))))
 
 (defun vm-mime-get-xxx-parameter (layout name param-list)
   (let ((match-end (1+ (length name)))
@@ -1051,7 +1053,8 @@
 	      (vm-marker (point))
 	      (vm-marker (point-max))
 	      nil
-	      nil ))))
+	      nil
+	      nil))))
 
 (defun vm-mime-should-display-button (layout dont-honor-content-disposition)
   (if (and vm-honor-mime-content-disposition
@@ -1253,7 +1256,7 @@ in the buffer.  The function is expected to make the message
 		      (vm-mime-display-internal-text/plain layout)))
 		(t (and extent (vm-mime-rewrite-failed-button
 				extent
-				(or (vm-mm-layout-cache layout)
+				(or (vm-mm-layout-display-error layout)
 				    "no external viewer defined for type")))
 		   (vm-mime-display-internal-application/octet-stream
 		    (or extent layout))))
@@ -1285,7 +1288,7 @@ in the buffer.  The function is expected to make the message
 	  (and work-buffer (kill-buffer work-buffer)))
 	(message "Inlining text/html... done")
 	t )
-    (vm-set-mm-layout-cache layout "Need W3 to inline HTML")
+    (vm-set-mm-layout-display-error layout "Need W3 to inline HTML")
     nil ))
 
 (defun vm-mime-display-internal-text/plain (layout &optional no-highlighting)
@@ -1294,7 +1297,7 @@ in the buffer.  The function is expected to make the message
 	(charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
     (if (not (vm-mime-charset-internally-displayable-p charset))
 	(progn
-	  (vm-set-mm-layout-cache
+	  (vm-set-mm-layout-display-error
 	   layout (concat "Undisplayable charset: " charset))
 	  nil)
       (vm-mime-insert-mime-body layout)
@@ -1353,6 +1356,11 @@ in the buffer.  The function is expected to make the message
 		   (if (vm-mime-text-type-p layout)
 		       (set-buffer-file-coding-system 'no-conversion nil)
 		     (set-buffer-file-coding-system 'binary t)))
+               ;; Write an empty tempfile out to disk and set its
+               ;; permissions to 0600, then write the actual buffer
+               ;; contents to tempfile.
+               (write-region start start tempfile nil 0)
+               (set-file-modes tempfile 384)
 	       (write-region start end tempfile nil 0))
 	     (delete-region start end)
 	     (save-excursion
@@ -1535,9 +1543,14 @@ in the buffer.  The function is expected to make the message
 
 (defun vm-mime-display-internal-message/rfc822 (layout)
   (if (vectorp layout)
-      (let ((start (point)))
-	(vm-mime-insert-mime-headers layout)
+      (let ((start (point))
+	    (buffer-read-only nil))
+	(vm-mime-insert-mime-headers (car (vm-mm-layout-parts layout)))
 	(insert ?\n)
+	(save-excursion
+	  (goto-char start)
+	  (vm-reorder-message-headers nil vm-visible-headers
+				      vm-invisible-header-regexp))
 	(save-restriction
 	  (narrow-to-region start (point))
 	  (vm-decode-mime-encoded-words))
@@ -1709,7 +1722,13 @@ in the buffer.  The function is expected to make the message
 	  (setq end (point-marker))
 	  (vm-mime-transfer-decode-region layout start end)
 	  (setq tempfile (vm-make-tempfile-name))
-	  ;; coding system for presentation buffer is binary
+	  ;; Write an empty tempfile out to disk and set its
+	  ;; permissions to 0600, then write the actual buffer
+	  ;; contents to tempfile.
+	  (write-region start start tempfile nil 0)
+	  (set-file-modes tempfile 384)
+	  ;; coding system for presentation buffer is binary so
+	  ;; we don't need to set it here.
 	  (write-region start end tempfile nil 0)
 	  (message "Creating %s glyph..." name)
 	  (setq g (make-glyph
@@ -1761,7 +1780,13 @@ in the buffer.  The function is expected to make the message
 	  (setq end (point-marker))
 	  (vm-mime-transfer-decode-region layout start end)
 	  (setq tempfile (vm-make-tempfile-name))
-	  ;; coding system for presentation buffer is binary
+	  ;; Write an empty tempfile out to disk and set its
+	  ;; permissions to 0600, then write the actual buffer
+	  ;; contents to tempfile.
+	  (write-region start start tempfile nil 0)
+	  (set-file-modes tempfile 384)
+	  ;; coding system for presentation buffer is binary, so
+	  ;; we don't need to set it here.
 	  (write-region start end tempfile nil 0)
 	  (vm-set-mm-layout-cache layout tempfile)
 	  (save-excursion
@@ -2082,6 +2107,24 @@ in the buffer.  The function is expected to make the message
 	    (setq done t)
 	  (setq p (cdr p))))
       result )))
+
+;; breadth first traversal
+(defun vm-mime-find-digests-in-layout (layout)
+  (let ((layout-list (list layout))
+	layout-type
+	(result nil))
+    (while layout-list
+      (setq layout-type (car (vm-mm-layout-type (car layout-list))))
+      (cond ((string-match "^multipart/digest\\|message/\\(rfc822\\|news\\)"
+			   layout-type)
+	     (setq result (nconc result (list (car layout-list)))))
+	    ((vm-mime-composite-type-p layout-type)
+	     (setq layout-list (nconc layout-list
+				      (copy-sequence
+				       (vm-mm-layout-parts
+					(car layout-list)))))))
+      (setq layout-list (cdr layout-list)))
+    result ))
   
 (defun vm-mime-plain-message-p (m)
   (save-match-data
@@ -2843,7 +2886,7 @@ and the approriate content-type and boundary markup information is added."
 		    ;; insert/delete trick needed to avoid
 		    ;; enriched-mode tags from seeping into the
 		    ;; attachment overlays.  I really wish
-		    ;; front-advance / rear-aadvance overlay
+		    ;; front-advance / rear-advance overlay
 		    ;; endpoint properties actually worked.
 		    (goto-char (point-max))
 		    (insert-before-markers "\n")
@@ -3159,6 +3202,7 @@ message."
       (error "Command must be used in a VM Mail mode buffer."))
   (let ((temp-buffer nil)
 	(mail-buffer (current-buffer))
+	(enriched (and (boundp 'enriched-mode) enriched-mode))
 	e-list)
     (unwind-protect
 	(progn
@@ -3166,6 +3210,7 @@ message."
 	  (set-buffer temp-buffer)
 	  ;; so vm-mime-xxxx-encode-composition won't complain
 	  (setq major-mode 'mail-mode)
+	  (set (make-local-variable 'enriched-mode) enriched)
 	  (vm-insert-region-from-buffer mail-buffer)
 	  (goto-char (point-min))
 	  (or (vm-mail-mode-get-header-contents "From")

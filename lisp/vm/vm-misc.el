@@ -432,29 +432,31 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 ;; test for it without just running make-frame.  I'll just
 ;; let it not work for now... someone will complain eventually
 ;; and I'll think of something.
-(defun vm-multiple-frames-possible-p ()
-  (or (and (boundp 'window-system) (not (eq window-system nil)))
-      (and (fboundp 'device-type) (eq (device-type) 'x))))
 
-(defun vm-mouse-support-possible-p ()
-  (vm-multiple-frames-possible-p))
-
+(defun vm-multiple-frames-possible-p () 
+  (cond (vm-xemacs-p 
+         (eq (device-type) 'x)) 
+        (vm-fsfemacs-19-p 
+         (not (eq window-system nil))))) 
+ 
+(defun vm-mouse-support-possible-p () 
+  (vm-multiple-frames-possible-p)) 
+ 
 (defun vm-menu-support-possible-p ()
   (cond (vm-xemacs-p
 	 (featurep 'menubar))
 	(vm-fsfemacs-19-p
 	 (fboundp 'menu-bar-mode))
 	(t nil)))
-
+ 
 (defun vm-toolbar-support-possible-p ()
-  (and vm-xemacs-p
-       (vm-multiple-frames-possible-p)
-       (featurep 'toolbar)))
+  (and vm-xemacs-p (featurep 'toolbar)))
 
 (defun vm-multiple-fonts-possible-p ()
-  (or (eq window-system 'x)
-      (and (fboundp 'device-type)
-	   (eq (device-type) 'x))))
+  (cond (vm-xemacs-p
+	 (eq (device-type) 'x))
+	(vm-fsfemacs-19-p
+	 (eq window-system 'x))))
 
 (defun vm-run-message-hook (message &optional hook-variable)
   (save-excursion

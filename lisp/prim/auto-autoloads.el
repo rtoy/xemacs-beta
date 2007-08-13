@@ -977,7 +977,7 @@ buffer." t nil)
 
 (autoload 'run-ediff-from-cvs-buffer "ediff" "\
 Run Ediff-merge on appropriate revisions of the selected file.
-First run after `M-x cvs-update'. Then place the cursor on a lide describing a
+First run after `M-x cvs-update'. Then place the cursor on a line describing a
 file and then run `run-ediff-from-cvs-buffer'." t nil)
 
 (autoload 'ediff-patch-file "ediff" "\
@@ -3631,7 +3631,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.26 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.27 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4991,7 +4991,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.26 $
+vhdl-mode $Revision: 1.27 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

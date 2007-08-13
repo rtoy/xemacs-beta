@@ -132,13 +132,20 @@ the Content-Type header.  Otherwise nil is returned."
 (defun vm-mime-burst-message (m)
   "Burst messages from the digest message M.
 M should be a message struct for a real message.
-MIME encoding is expected.  The message content type
-must be either message/* or multipart/digest."
+MIME encoding is expected.  Somewhere within the MIME layout
+there must be at least one part of type message/news, message/rfc822 or
+multipart/digest.  If there are multiple parts matching those types,
+all of them will be burst."
   (let ((ident-header nil)
-	(layout (vm-mm-layout m)))
+	(did-burst nil)
+	(list (vm-mime-find-digests-in-layout (vm-mm-layout m))))
     (if vm-digest-identifier-header-format
 	(setq ident-header (vm-sprintf 'vm-digest-identifier-header-format m)))
-    (vm-mime-burst-layout layout ident-header)))
+    (while list
+      (setq did-burst (or did-burst
+			  (vm-mime-burst-layout (car list) ident-header)))
+      (setq list (cdr list)))
+    did-burst))
 
 (defun vm-mime-burst-layout (layout ident-header)
   (let ((work-buffer nil)
@@ -608,12 +615,15 @@ Returns either \"rfc934\", \"rfc1153\" or \"mime\"."
       (set-buffer (vm-buffer-of m))
       (let ((layout (vm-mm-layout m)))
 	(if (and (vectorp layout)
-		 (or (vm-mime-types-match "multipart/digest"
-					  (car (vm-mm-layout-type layout)))
-		     (vm-mime-types-match "message/rfc822"
-					  (car (vm-mm-layout-type layout)))
-		     (vm-mime-types-match "message/news"
-					  (car (vm-mm-layout-type layout)))))
+		 (or (vm-mime-layout-contains-type
+		      layout
+		      "multipart/digest")
+		     (vm-mime-layout-contains-type
+		      layout
+		      "message/rfc822")
+		     (vm-mime-layout-contains-type
+		      layout
+		      "message/news")))
 	    (throw 'return-value "mime"))))
     (save-excursion
       (save-restriction

@@ -32,8 +32,7 @@
 	truncate-lines t)
   ;; horizontal scrollbar off by default
   ;; user can turn it on in summary hook if desired.
-  (and (fboundp 'set-specifier)
-       scrollbar-height
+  (and vm-xemacs-p (featurep 'scrollbar)
        (set-specifier scrollbar-height (cons (current-buffer) 0)))
   (use-local-map vm-summary-mode-map)
   (and (vm-menu-support-possible-p)
