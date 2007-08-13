@@ -9,7 +9,7 @@
 ;;         Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: 1994/10/29
-;; Version: $Revision: 1.4 $
+;; Version: $Revision: 1.5 $
 ;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -103,7 +103,7 @@ These hooks are run in the MIME-Preview buffer.")
 ;;; @@ System/Information variables
 
 (defconst tm-vm/RCS-ID
-  "$Id: tm-vm.el,v 1.4 1997/04/13 03:14:15 steve Exp $")
+  "$Id: tm-vm.el,v 1.5 1997/05/09 03:28:15 steve Exp $")
 (defconst tm-vm/version (get-version-string tm-vm/RCS-ID))
 
 ; Ensure vm-menu-mail-menu gets properly defined *before* tm-vm/vm-emulation-map
@@ -1168,6 +1168,8 @@ vm-included-text-prefix is prepended to every yanked line."
     )))
 
 ;;; @@@ multipart/digest
+
+(fset 'vm-unsaved-message 'message)
 
 (defun tm-vm/enclose-messages (mlist &optional preamble)
   "Enclose the messages in MLIST as multipart/digest.

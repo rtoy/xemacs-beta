@@ -455,8 +455,8 @@ mechanisms for visiting.
 @deffn Command append-to-file start end filename
 This function appends the contents of the region delimited by
 @var{start} and @var{end} in the current buffer to the end of file
-@var{filename}.  If that file does not exist, it is created.  This
-function returns @code{nil}.
+@var{filename}.  If that file does not exist, it is created.  If that
+file exists it is overwritten.  This function returns @code{nil}.
 
 An error is signaled if @var{filename} specifies a nonwritable file,
 or a nonexistent file in a directory where files cannot be created.

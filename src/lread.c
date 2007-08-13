@@ -1847,7 +1847,7 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
   if (p == lim)
     goto loser;
 
-  for (; p < lim; p++)
+  for (; (p < lim) && (*p != '\0'); p++)
     {
       int c = *p;
       unsigned EMACS_INT onum;

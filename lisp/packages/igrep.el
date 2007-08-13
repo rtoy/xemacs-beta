@@ -166,10 +166,11 @@
 
 ;;; User options:
 
-(defgroup igrep nil
-  "An improved interface to `grep'."
-  :group 'processes)
-
+(progn
+  (defgroup igrep nil
+    "An improved interface to `grep'."
+    :group 'processes)
+  )
 
 (defcustom igrep-options nil
   "*The options passed by \\[igrep] to `igrep-program', or nil.

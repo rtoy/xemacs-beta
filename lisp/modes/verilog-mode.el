@@ -1,6 +1,6 @@
 ;;; verilog-mode.el --- major mode for editing verilog source in Emacs
 ;;
-;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/modes/Attic/verilog-mode.el,v 1.3 1997/04/19 23:21:05 steve Exp $
+;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/modes/Attic/verilog-mode.el,v 1.4 1997/05/09 03:28:03 steve Exp $
 
 ;; Copyright (C) 1996 Free Software Foundation, Inc.
 
@@ -70,7 +70,7 @@
 (provide 'verilog-mode)
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "$$Revision: 1.3 $$"
+(defconst verilog-mode-version "$$Revision: 1.4 $$"
   "Version of this verilog mode.")
 
 ;;
@@ -93,16 +93,16 @@
 (defun verilog-customize ()
   "Link to customize screen for Verilog"
   (interactive)
-  (customize 'verilog-mode)
+  (customize 'verilog)
   )
 
-(defgroup verilog-mode nil
+(defgroup verilog nil
   "Faciliates easy editing of Verilog source text"
   :group 'languages)
       
 (defcustom verilog-indent-level 3
   "*Indentation of Verilog statements with respect to containing block."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
@@ -110,45 +110,45 @@
   "* Indentation of Module level Verilog statements. (eg always, initial)
     Set to 0 to get initial and always statements lined up 
     on the left side of your screen."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
 (defcustom verilog-indent-level-declaration 3
   "*Indentation of declarations with respect to containing block. 
     Set to 0 to get them list right under containing block."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
 (defcustom verilog-indent-level-behavorial 3
   "*Absolute indentation of first begin in a task or function block
     Set to 0 to get such code to start at the left side of the screen."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
 (defcustom verilog-cexp-indent 1
   "*Indentation of Verilog statements split across lines."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
 (defcustom verilog-case-indent 2
   "*Indentation for case statements."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
 (defcustom verilog-auto-newline t
   "*Non-nil means automatically newline after semicolons"
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
 (defcustom verilog-auto-indent-on-newline t
   "*Non-nil means automatically indent line after newline"
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
@@ -156,21 +156,21 @@
   "*Non-nil means TAB in Verilog mode should always reindent the
   current line, regardless of where in the line point is when the TAB
   command is used."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 
 (defcustom verilog-indent-begin-after-if t
   "*If true, indent begin statements following if, else, while, for
   and repeat.  otherwise, line them up."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'boolean )
 
 (defcustom verilog-auto-endcomments t
   "*Non-nil means a comment /* ... */ is set after the ends which ends
   cases and functions. The name of the function or case will be set
   between the braces."
-  :group 'verilog-mode
+  :group 'verilog
   :type 'boolean )
 
 (defcustom verilog-minimum-comment-distance 40
@@ -178,7 +178,7 @@
   will be inserted.  Setting this variable to zero results in every
   end aquiring a comment; the default avoids too many redundanet
   comments in tight quarters"
-  :group 'verilog-mode
+  :group 'verilog
   :type 'integer 
   )
 

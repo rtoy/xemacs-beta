@@ -1,0 +1,6 @@
+The compiled dtd's are currently built by hand.  Currently, something like
+the following will work:
+
+../../src/xemacs -batch -q -l psgml-parse.elc -l psgml-dtd.elc -eval "(progn (sgml-set-global) (setq sgml-no-elements 0) (sgml-compile-dtd \"$(pwd)/html.dtd\" \"$(pwd)/cdtd/html\" []))"
+
+Note that the parameters are taken roughly from the ECAT file.

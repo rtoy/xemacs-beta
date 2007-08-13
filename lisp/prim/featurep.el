@@ -41,7 +41,8 @@
 (defun featurep (fexp)
   "Return non-nil if feature expression FEXP is true."
   (typecase fexp
-    (symbol (memq fexp features))       ;original definition
+    (symbol (and (memq fexp features)       ;original definition
+		 t))
     (number (>= (or featurep-emacs-version
                     (setq featurep-emacs-version
                       (+ emacs-major-version

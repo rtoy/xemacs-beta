@@ -105,9 +105,11 @@
   "Data compression utilities"
   :group 'data)
 
-(defgroup jka-compr nil
-  "jka-compr customization"
-  :group 'compression)
+(progn
+  (defgroup jka-compr nil
+    "jka-compr customization"
+    :group 'compression)
+  )
 
 
 (defcustom jka-compr-shell "sh"

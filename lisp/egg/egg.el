@@ -405,12 +405,13 @@ unread-command-events to facilitate translation from Mule-2.3"
   (let ((event (make-event))
 	(ch nil))
     (next-command-event event)
-    (if (and (key-press-event-p event)
-	     (eq 0 (event-modifier-bits event)))
-	(setq ch (event-key event))
-      (if (eq 1 (event-modifier-bits event))
-	  (setq ch (int-to-char (- (char-to-int (event-key event)) 96)))
-	(setq unread-command-events (list event))))
+    (if (key-press-event-p event)
+	(if (eq 0 (event-modifier-bits event))
+	    (setq ch (event-key event))
+	  (if (eq 1 (event-modifier-bits event))
+	      (setq ch (int-to-char (- (char-to-int (event-key event)) 96)))
+	    (setq unread-command-events (list event))))
+      (setq unread-command-events (list event)))
     ch))
 
 (eval-when-compile (require 'egg-jsymbol))
@@ -599,9 +600,6 @@ unread-command-events to facilitate translation from Mule-2.3"
 	(minibuffer (window-buffer (minibuffer-window)))
 	value)
     (save-window-excursion
-      (if (fboundp 'redirect-frame-focus)
-	  (redirect-frame-focus (selected-frame)
-				(window-frame (minibuffer-window))))
       (set-window-buffer (minibuffer-window) menubuffer)
       (select-window (minibuffer-window))
       (set-buffer menubuffer)
@@ -1628,15 +1626,19 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
   (and (characterp ch) (<= ch 127)
        (eq (lookup-key fence-mode-map (char-to-string ch)) 'fence-backward-delete-char)))
     
+(defvar egg:fence-buffer nil "Buffer fence is active in")
+
 (defun fence-self-insert-command ()
   (interactive)
-  (let ((ch (event-to-character last-command-event)))
-    (cond((or (not egg:*input-mode*)
-	      (null (get-next-map its:*current-map* ch)))
-	  (insert ch))
-	 (t
-	  (insert ch)
-	  (its:translate-region (1- (point)) (point) t)))))
+  (if (not (eq (current-buffer) egg:fence-buffer))
+      nil	;; #### This is to bandaid a deep event-handling bug
+    (let ((ch (event-to-character last-command-event)))
+      (cond((or (not egg:*input-mode*)
+		(null (get-next-map its:*current-map* ch)))
+	    (insert ch))
+	   (t
+	    (insert ch)
+	    (its:translate-region (1- (point)) (point) t))))))
 
 ;;;
 ;;; its: completing-read system
@@ -2081,8 +2083,6 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 (defvar egg:*in-fence-mode* nil "T if in fence mode.")
 (make-variable-buffer-local 'egg:*in-fence-mode*)
 (set-default 'egg:*in-fence-mode* nil)
-
-(defvar egg:fence-buffer nil "Buffer fence is active in")
 
 ;;(load-library "its-dump/roma-kana")         ;;;(define-its-mode "roma-kana"        " aあ")
 ;;(load-library "its-dump/roma-kata")         ;;;(define-its-mode "roma-kata"        " aア")
@@ -2583,7 +2583,7 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
   (set-marker egg:*region-end* egg:*region-start*)
   (egg:fence-face-on)
   (goto-char egg:*region-start*)
-  (add-hook 'pre-command-hook 'fence-pre-command-hook)
+  (add-hook 'post-command-hook 'fence-post-command-hook)
   )
 
 (defun henkan-fence-region-or-single-space ()
@@ -2645,7 +2645,7 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
 
 (defun egg:exit-if-empty-region ()
   (if (= egg:*region-start* egg:*region-end*)
-      (fence-exit-mode)))
+      (fence-exit-internal)))
 
 (defun fence-delete-char ()
   (interactive)
@@ -2670,6 +2670,9 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
 
 (defun fence-exit-mode ()
   (interactive)
+  (fence-exit-internal))
+
+(defun fence-exit-internal ()
   (delete-region (- egg:*region-start* (length egg:*fence-open*)) egg:*region-start*)
   (delete-region egg:*region-end* (+ egg:*region-end* (length egg:*fence-close*)))
   (egg:fence-face-off)
@@ -2692,7 +2695,7 @@ correspoding to character position.")
 (defun egg:quit-egg-mode ()
   ;;;(use-global-map egg:*global-map-backup*)
   (use-local-map egg:*local-map-backup*)
-  (remove-hook 'pre-command-hook 'fence-pre-command-hook)
+  (remove-hook 'post-command-hook 'fence-post-command-hook)
   (setq egg:*in-fence-mode* nil)
   (egg:mode-line-display)
   (if overwrite-mode
@@ -2715,25 +2718,18 @@ correspoding to character position.")
   )
 
 (defun fence-cancel-input ()
+  "Cancel all fence operations in the current buffer"
   (interactive)
+  (fence-kill-operation))
+
+(defun fence-kill-operation ()
+  "Internal method to remove fences"
   (delete-region egg:*region-start* egg:*region-end*)
-  (fence-exit-mode))
+  (fence-exit-internal))
 
-(defun fence-mouse-protect ()
-  "Cancel entry in progress if mouse events occur."
-  (if egg:*in-fence-mode*
-      (save-excursion
-	(its:reset-input)
-	(fence-cancel-input))))
-
-(if (boundp 'mouse-track-cleanup-hook)
-    (add-hook 'mouse-track-cleanup-hook 'fence-mouse-protect))
-
-(defun fence-pre-command-hook ()
-  ;; cribbed off of isearch-mode
-  ;;
-  ;; For use as the value of `pre-command-hook' when fence is active.
-  ;; If the command about to be executed is not ours,
+(defun fence-post-command-hook ()
+  ;; For use as the value of `post-command-hook' when fence is active.
+  ;; If we got out of the region specified by the fence,
   ;; kill the fence before that command is executed.
   ;;
   (cond ((not (eq (current-buffer) egg:fence-buffer))
@@ -2745,26 +2741,19 @@ correspoding to character position.")
 	 (save-excursion
 	   (set-buffer egg:fence-buffer)
 	   (its:reset-input)
-	   (fence-cancel-input)))
-	((not (and this-command
-		   (symbolp this-command)
-		   (get this-command 'egg-fence-command)))
-	 (its:reset-input)
-	 (fence-cancel-input))
-	(t
-	 (if (or (not (pos-visible-in-window-safe
-		       (marker-position egg:*region-start*)))
-		 (not (pos-visible-in-window-safe
-		       (marker-position egg:*region-end*))))
-	     (recenter))))
-  )
+	   (fence-kill-operation)))
+	((or (< (point) egg:*region-start*)
+	     (> (point) egg:*region-end*))
+	 (save-excursion
+	   (its:reset-input)
+	   (fence-kill-operation)))))
 
 (defun egg-lang-switch-callback ()
   "Do whatever processing is necessary when the language-environment changes."
   (if egg:*in-fence-mode*
       (progn
 	(its:reset-input)
-	(fence-cancel-input)))
+	(fence-kill-operation)))
   (let ((func (get current-language-environment 'set-egg-environ)))
     (if (not (null func))
       (funcall func)))
@@ -2822,119 +2811,6 @@ correspoding to character position.")
 (define-key fence-mode-map [backspace] 'fence-backward-delete-char)
 (define-key fence-mode-map [right] 'fence-forward-char)
 (define-key fence-mode-map [left] 'fence-backward-char)
-
-(put 'fence-self-insert-command 'egg-fence-command t)
-(put 'fence-hiragana 'egg-fence-command t)
-(put 'fence-katakana 'egg-fence-command t)
-(put 'fence-hankaku 'egg-fence-command t)
-(put 'fence-zenkaku 'egg-fence-command t)
-(put 'its:select-hiragana 'egg-fence-command t)
-(put 'its:select-katakana 'egg-fence-command t)
-(put 'its:select-downcase 'egg-fence-command t)
-(put 'its:select-upcase 'egg-fence-command t)
-(put 'its:select-zenkaku-downcase 'egg-fence-command t)
-(put 'its:select-zenkaku-upcase 'egg-fence-command t)
-(put 'its:minibuffer-completion-help 'egg-fence-command t)
-(put 'henkan-fence-region-or-single-space 'egg-fence-command t)
-(put 'henkan-fence-region 'egg-fence-command t)
-(put 'fence-beginning-of-line 'egg-fence-command t)
-(put 'fence-backward-char 'egg-fence-command t)
-(put 'fence-cancel-input 'egg-fence-command t)
-(put 'fence-delete-char 'egg-fence-command t)
-(put 'fence-end-of-line 'egg-fence-command t)
-(put 'fence-forward-char 'egg-fence-command t)
-(put 'fence-cancel-input 'egg-fence-command t)
-(put 'fence-mode-help-command 'egg-fence-command t)
-(put 'fence-kill-line 'egg-fence-command t)
-(put 'fence-exit-mode 'egg-fence-command t)
-(put 'fence-exit-mode 'egg-fence-command t)
-(put 'fence-exit-mode 'egg-fence-command t)
-(put 'its:select-previous-mode 'egg-fence-command t)
-(put 'fence-transpose-chars 'egg-fence-command t)
-(put 'eval-expression 'egg-fence-command t)
-(put 'fence-toggle-egg-mode 'egg-fence-command t)
-(put 'jis-code-input 'egg-fence-command t)
-(put 'fence-backward-delete-char 'egg-fence-command t)
-(put 'fence-backward-delete-char 'egg-fence-command t)
-(put 'fence-backward-delete-char 'egg-fence-command t)
-(put 'fence-forward-char 'egg-fence-command t)
-(put 'fence-backward-char 'egg-fence-command t)
-(put 'hiragana-region 'egg-fence-command t)
-(put 'hiragana-paragraph 'egg-fence-command t)
-(put 'hiragana-sentance 'egg-fence-command t)
-(put 'katakana-region 'egg-fence-command t)
-(put 'katakana-paragraph 'egg-fence-command t)
-(put 'katakana-sentance 'egg-fence-command t)
-(put 'hankaku-region 'egg-fence-command t)
-(put 'hankaku-paragraph 'egg-fence-command t)
-(put 'hankaku-sentance 'egg-fence-command t)
-(put 'hankaku-word 'egg-fence-command t)
-(put 'zenkaku-region 'egg-fence-command t)
-(put 'zenkaku-paragraph 'egg-fence-command t)
-(put 'zenkaku-sentance 'egg-fence-command t)
-(put 'zenkaku-word 'egg-fence-command t)
-(put 'roma-kana-region 'egg-fence-command t)
-(put 'roma-kana-paragraph 'egg-fence-command t)
-(put 'roma-kana-sentance 'egg-fence-command t)
-(put 'roma-kana-word 'egg-fence-command t)
-(put 'roma-kanji-region 'egg-fence-command t)
-(put 'roma-kanji-paragraph 'egg-fence-command t)
-(put 'roma-kanji-sentance 'egg-fence-command t)
-(put 'roma-kanji-word 'egg-fence-command t)
-(put 'its:select-mode 'egg-fence-command t)
-(put 'its:select-mode-from-menu 'egg-fence-command t)
-(put 'its:next-mode 'egg-fence-command t)
-(put 'its:previous-mode 'egg-fence-command t)
-(put 'its:select-hiragana 'egg-fence-command t)
-(put 'its:select-katakana 'egg-fence-command t)
-(put 'its:select-downcase 'egg-fence-command t)
-(put 'its:select-upcase   'egg-fence-command t)
-(put 'its:select-zenkaku-downcase 'egg-fence-command t)
-(put 'its:select-zenkaku-upcase   'egg-fence-command t)
-(put 'its:select-mode-temporally 'egg-fence-command t)
-(put 'its:select-previous-mode 'egg-fence-command t)
-(put 'fence-toggle-egg-mode 'egg-fence-command t)
-(put 'fence-transpose-chars 'egg-fence-command t)
-(put 'henkan-region 'egg-fence-command t)
-(put 'henkan-paragraph 'egg-fence-command t)
-(put 'henkan-sentance 'egg-fence-command t)
-(put 'henkan-word 'egg-fence-command t)
-(put 'henkan-kakutei 'egg-fence-command t)
-(put 'gyaku-henkan-region 'egg-fence-command t)
-(put 'gyaku-henkan-sentance 'egg-fence-command t)
-(put 'gyaku-henkan-word 'egg-fence-command t)
-(put 'gyaku-henkan-kakutei 'egg-fence-command t)
-(put 'henkan-kakutei-first-char 'egg-fence-command t)
-(put 'henkan-kakutei-before-point 'egg-fence-command t)
-(put 'sai-henkan 'egg-fence-command t)
-(put 'henkan-forward-bunsetu 'egg-fence-command t)
-(put 'henkan-backward-bunsetu 'egg-fence-command t)
-(put 'henkan-first-bunsetu 'egg-fence-command t)
-(put 'henkan-last-bunsetu 'egg-fence-command t)
-(put 'henkan-hiragana 'egg-fence-command t)
-(put 'henkan-katakana 'egg-fence-command t)
-(put 'henkan-next-kouho 'egg-fence-command t)
-(put 'henkan-next-kouho-dai 'egg-fence-command t)
-(put 'henkan-next-kouho-sho 'egg-fence-command t)
-(put 'henkan-previous-kouho 'egg-fence-command t)
-(put 'henkan-previous-kouho-dai 'egg-fence-command t)
-(put 'henkan-previous-kouho-sho 'egg-fence-command t)
-(put 'henkan-bunsetu-chijime-dai 'egg-fence-command t)
-(put 'henkan-bunsetu-chijime-sho 'egg-fence-command t)
-(put 'henkan-bunsetu-nobasi-dai 'egg-fence-command t)
-(put 'henkan-bunsetu-nobasi-sho 'egg-fence-command t)
-(put 'henkan-saishou-bunsetu 'egg-fence-command t)
-(put 'henkan-saichou-bunsetu 'egg-fence-command t)
-(put 'henkan-quit 'egg-fence-command t)
-(put 'henkan-select-kouho-dai 'egg-fence-command t)
-(put 'henkan-select-kouho-sho 'egg-fence-command t)
-(put 'henkan-word-off 'egg-fence-command t)
-(put 'henkan-kakutei-and-self-insert 'egg-fence-command t)
-(put 'henkan-help-command 'egg-fence-command t)
-(put 'toroku-region 'egg-fence-command t)
-(put 'toroku-henkan-mode 'egg-fence-command t)
-(put 'recenter 'egg-fence-command t)
-
 
 ;;;----------------------------------------------------------------------
 ;;;
@@ -2994,6 +2870,37 @@ correspoding to character position.")
 
 (autoload 'busyu-input "egg-busyu" nil t)
 (autoload 'kakusuu-input "egg-busyu" nil t)
+
+;; put us into all existing buffer's modelines
+(if (not (featurep 'egg))
+    (mapc-internal
+     (lambda (buf) 
+       (save-excursion
+	 (set-buffer buf)
+	 (setq modeline-format (cons (list 'display-minibuffer-mode-in-minibuffer
+		 ;;; minibuffer mode in minibuffer
+					   (list 
+					    (list 'its:*previous-map* "<" "[")
+					    'mode-line-egg-mode
+					    (list 'its:*previous-map* ">" "]")
+					    )
+		       ;;;; minibuffer mode in mode line
+					   (list 
+					    (list 'minibuffer-window-selected
+						  (list 'display-minibuffer-mode
+							"m"
+							" ")
+						  " ")
+					    (list 'its:*previous-map* "<" "[")
+					    (list 'minibuffer-window-selected
+						  (list 'display-minibuffer-mode
+							'mode-line-egg-mode-in-minibuffer
+							'mode-line-egg-mode)
+						  'mode-line-egg-mode)
+					    (list 'its:*previous-map* ">" "]")
+					    ))
+				     modeline-format))))
+     (buffer-list)))
 
 (provide 'egg)
 

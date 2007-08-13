@@ -691,15 +691,15 @@
 
 	 ((eq xref 'bw)
 	  (about-face "Bob Weiner" 'bold)
-	  (insert " <weiner@infodock.com>
+	  (insert " <weiner@altrasoft.com>
 
 	Author of the Hyperbole everyday information management
 	hypertext system and the OO-Browser multi-language code
-	browser.  He also designed the InfoDock integrated tool
+	browser.  He also designed the Altrasoft integrated tool
 	framework for software engineers.  It runs atop XEmacs and is
-	available from his firm, InfoDock Associates, which offers custom
+	available from his firm, Altrasoft, which offers custom
 	development and support packages for corporate users of XEmacs,
-	GNU Emacs and InfoDock.  See \"http://www.infodock.com\".
+	GNU Emacs and InfoDock.  See \"http://www.altrasoft.com\".
 	His interests include user interfaces, information management,
 	CASE tools, communications and enterprise integration.")
 
@@ -950,14 +950,14 @@
 	Created the prototype for the toolbars.  Has been the first to make
 	use of many of the new XEmacs graphics features.
 
-	") (about-xref "Bob Weiner" 'bw "Find out more about Bob Weiner") (insert " <weiner@infodock.com>
+	") (about-xref "Bob Weiner" 'bw "Find out more about Bob Weiner") (insert " <weiner@altrasoft.com>
 	Author of the Hyperbole everyday information management
 	hypertext system and the OO-Browser multi-language code
-	browser.  He also designed the InfoDock integrated tool
+	browser.  He also designed the Altrasoft integrated tool
 	framework for software engineers.  It runs atop XEmacs and is
-	available from his firm, InfoDock Associates, which offers custom
+	available from his firm, Altrasoft, which offers custom
 	development and support packages for corporate users of XEmacs,
-	GNU Emacs and InfoDock.  See \"http://www.infodock.com\".
+	GNU Emacs and InfoDock.  See \"http://www.altrasoft.com\".
 	His interests include user interfaces, information management,
 	CASE tools, communications and enterprise integration.
 

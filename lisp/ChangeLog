@@ -1,3 +1,43 @@
+Thu May  8 14:35:34 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* hm--html-menus/hm--html.el: Define obsolete aliases for the
+	previous function spellings.
+0
+	* hm--html-menus/hm--html-keys.el: Define obsolete aliases for the 
+	previous variable spellings.
+
+	* prim/obsolete.el (define-obsolete-variable-alias): Fix docstring 
+	spelling.
+	(define-compatible-variable-alias): Ditto.
+
+	* tm/tm-vm.el (vm-unsaved-message): Symbol doesn't exist any
+	more.
+
+Tue May  6 21:33:19 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* mule/mule-files.el (write-region): Correct docstring.
+
+	* prim/files-nomule.el (write-region): Correct docstring.
+
+Mon May  5 12:26:41 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-xemacs-xref): Infodock Associates is now
+	Altrasoft.
+
+Sat May  3 16:32:47 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* efs/dired.el (dired-chown-program): chown program is in /bin on
+	Linux.
+
+Fri May  2 20:04:35 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* egg/egg.el: paren.el needed at bytecompile time for
+	`pos-visible-in-window-safe' defsubst.
+
+	* pcl-cvs/pcl-cvs.el (cvs-update): Inhibit dialog box usage in
+	call to cvs-do-update as this bombs when this function is invoked
+	from a menu.
+
 Wed Apr 30 18:06:35 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/loadup.el: Put features.elc in the dump list.

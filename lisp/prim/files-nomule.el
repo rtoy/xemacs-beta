@@ -48,6 +48,7 @@ and (2) it puts less data in the undo list."
 
 (defun write-region (start end filename &optional append visit lockname coding-system)
   "Write current region into specified file.
+By default, the file's existing contents are replaced by the specified region.
 When called from a program, takes three arguments:
 START, END and FILENAME.  START and END are buffer positions.
 Optional fourth argument APPEND if non-nil means

@@ -1,4 +1,4 @@
-;;; $Id: hm--html.el,v 1.5 1997/03/28 02:28:42 steve Exp $
+;;; $Id: hm--html.el,v 1.6 1997/05/09 03:28:00 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -844,23 +844,27 @@ This tag must be added between <APPLET> and </APPLET>."
 			       "</DIV>"))
 
 
-(defun hm--html-add-preformated ()
-  "Adds the HTML tags for preformated text at the point in the current buffer."
+(defun hm--html-add-preformatted ()
+  "Adds the HTML tags for preformatted text at the point in the current buffer."
   (interactive)
   (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
 		     "<PRE>"
 		     'hm--html-insert-end-tag-with-newline
 		     "</PRE>"))
+(define-obsolete-function-alias
+  'hm--html-add-preformated
+  'hm--html-add-preformatted)
 
-
-(defun hm--html-add-preformated-to-region ()
-  "Adds the HTML tags for preformated text to the region."
+(defun hm--html-add-preformatted-to-region ()
+  "Adds the HTML tags for preformatted text to the region."
   (interactive)
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
 			       "<PRE>"
 			       'hm--html-insert-end-tag-with-newline
 			       "</PRE>"))
-
+(define-obsolete-function-alias
+  'hm--html-add-preformated-to-region
+  'hm--html-add-preformatted-to-region)
 
 (defun hm--html-add-blockquote ()
   "Adds the HTML tags for blockquote."

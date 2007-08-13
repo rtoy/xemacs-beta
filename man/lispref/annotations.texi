@@ -142,7 +142,7 @@ The newly created annotation is returned.
 
 @defun delete-annotation annotation
 This function removes @var{annotation} from its buffer.  This does not
-modify the buffer text.  The annotation deleted is returned.
+modify the buffer text.
 @end defun
 
 @defun annotationp annotation

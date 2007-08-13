@@ -218,26 +218,38 @@
 
 ;; Tag tables for a buffer
 
+(defgroup etags nil
+  "Etags facility for Emacs"
+  :prefix "tags-"
+  :group 'tools)
+
+
 ;;;###autoload
-(defvar tags-build-completion-table 'ask
+(defcustom tags-build-completion-table 'ask
   "*If this variable is nil, then tags completion is disabled.
 If this variable is t, then things which prompt for tags will do so with 
  completion across all known tags.
 If this variable is the symbol `ask', then you will be asked whether each
  tags table should be added to the completion list as it is read in.
  (With the exception that for very small tags tables, you will not be asked,
- since they can be parsed quickly.)")
+ since they can be parsed quickly.)"
+  :type '(radio (const :tag "Disabled" nil)
+		(const :tag "Complete All" t)
+		(const :tag "Ask" ask))
+  :group 'etags)
 
 ;;;###autoload
-(defvar tags-always-exact nil		; #### - this will eventually be the
+(defcustom tags-always-exact nil	; #### - this will eventually be the
 					; default, but it's a bit too
 					; annoying right now because there's
 					; no fallback to an inexact search
 					; when there is no exact match --Stig
-  "*If this variable is non-nil, then tags always looks for exact matches.")
+  "*If this variable is non-nil, then tags always looks for exact matches."
+  :type 'boolean
+  :group 'etags)
 
 ;;;###autoload
-(defvar tag-table-alist nil
+(defcustom tag-table-alist nil
   "*A list which determines which tags files should be active for a 
 given buffer.  This is not really an association list, in that all 
 elements are checked.  The CAR of each element of this list is a 
@@ -284,27 +296,35 @@ question, then that tags file will always be used as well (after the
 
 If the variable tags-file-name is set, then the tags file it names will apply
 to all buffers (for backwards compatibility.)  It is searched first.
-")
+"
+  :type '(repeat (cons regexp sexp))
+  :group 'etags)
 
-(defvar buffer-tag-table nil
+(defcustom buffer-tag-table nil
   "*The name of one TAGS table to be used for this buffer in addition to the
 TAGS tables that the variable `tag-table-alist' specifies.  You can set this
 with meta-x set-buffer-tag-table.  See the documentation for the variable
-`tag-table-alist' for more information.")
+`tag-table-alist' for more information."
+  :type '(repeat (cons regexp sexp))
+  :group 'etags)
 (make-variable-buffer-local 'buffer-tag-table)
 
-(defvar tags-file-name nil
+(defcustom tags-file-name nil
   "*The name of the tags-table used by all buffers.  This is for backwards
-compatibility, and is largely supplanted by the variable tag-table-alist.")
+compatibility, and is largely supplanted by the variable tag-table-alist."
+  :type '(choice (const nil) string)
+  :group 'etags)
 ;; (setq tags-file-name nil)  ; nuke previous value.  Is this cool?
 
 ;; This will be used if it's loaded; don't force it on those who don't want it.
 ;;(autoload 'symlink-expand-file-name "symlink-fix")
 
 ;; XEmacs change: added tags-auto-read-changed-tag-files
-(defvar tags-auto-read-changed-tag-files nil
+(defcustom tags-auto-read-changed-tag-files nil
   "*If t then always re-read changed TAGS file without prompting, if nil
-then prompt if changed TAGS file should be re-read.")
+then prompt if changed TAGS file should be re-read."
+  :type 'boolean
+  :group 'etags)
 
 (defun buffer-tag-table-list ()
   "Returns a list (ordered) of the tags tables which should be used for 
@@ -1126,9 +1146,11 @@ if the file was newly read in, the value is the filename."
 	   (goto-char (point-min))))
     (and new file)))
 
-(defvar tags-search-nuke-uninteresting-buffers t
+(defcustom tags-search-nuke-uninteresting-buffers t
   "*If t (the default), tags-search and tags-query-replace will only
-keep newly-visited buffers if they contain the search target.")
+keep newly-visited buffers if they contain the search target."
+  :type 'boolean
+  :group 'etags)
 
 ;;;###autoload
 (defun tags-loop-continue (&optional first-time)
@@ -1406,10 +1428,12 @@ If this is a C-defined elisp function, it does something more clever."
 
 (defvar tag-mark-stack1 nil)
 (defvar tag-mark-stack2 nil)
-(defvar tag-mark-stack-max 16
+(defcustom tag-mark-stack-max 16
   "*The maximum number of elements kept on the mark-stack used
 by tags-search.  See also the commands push-tag-mark (\\[push-tag-mark])
-and pop-tag-mark. (\\[pop-tag-mark]).")
+and pop-tag-mark. (\\[pop-tag-mark])."
+  :type 'integer
+  :group 'etags)
 
 (defun push-mark-on-stack (stack-symbol &optional max-size)
   (let ((stack (symbol-value stack-symbol)))

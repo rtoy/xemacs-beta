@@ -72,11 +72,6 @@
   :prefix "paren-"
   :group 'matching)
 
-(defgroup paren-blinking nil
-  "Blinking of matched parens."
-  :prefix "blink-"
-  :group 'paren-matching)
-
 
 (defun newline (&optional arg)
   "Insert a newline, and move to left margin of the new line if it's blank.

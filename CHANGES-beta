@@ -1,5 +1,17 @@
 							-*- indented-text -*-
+to 20.2 beta5
+-- Interface Changes:
+   `allow-deletion-of-last-visible-frame' becomes a boolean
+   `delete-auto-save-files' becomes a boolean
+-- Miscellaneous Customization cleanup from Hrvoje Niksic
+-- Miscellaneous Egg fixes from Jareth Hein
+-- Gnus-5.4.51
+-- etags.c-11.86
+-- Byte compiler optimization backed out for release
+-- Miscellaneous bug fixes
+
 to 20.2 beta4
+-- 1+ Byte compiler optimization courtesy of Jamie Zawinski
 -- Miscellaneous Mule/ Egg/Quail patches courtesy of Jareth Hein
 -- featurep reader macro code introduced and enabled for this beta only.
 -- Do not default with-xim to Motif if Motif libraries are availble

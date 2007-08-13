@@ -1,4 +1,4 @@
-;;; $Id: hm--html-keys.el,v 1.5 1997/03/28 02:28:41 steve Exp $
+;;; $Id: hm--html-keys.el,v 1.6 1997/05/09 03:28:00 steve Exp $
 ;;; 
 ;;; Copyright (C) 1995, 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -216,115 +216,127 @@ It could have the same value as
     [(meta d)] 'hm--html-add-document-division-to-region)
   )
 
-(defvar hm--html-noregion-formating-paragraph-map nil
-  "Noregion sub keymap for inserting paragraph formating elements.")
+(defvar hm--html-noregion-formatting-paragraph-map nil
+  "Noregion sub keymap for inserting paragraph formatting elements.")
+(define-obsolete-variable-alias
+  'hm--html-noregion-formating-paragraph-map
+  'hm--html-noregion-formatting-paragraph-map)
 
-(if hm--html-noregion-formating-paragraph-map
+(if hm--html-noregion-formatting-paragraph-map
     ()
-  (setq hm--html-noregion-formating-paragraph-map (make-sparse-keymap))
-;  (define-key hm--html-noregion-formating-paragraph-map
+  (setq hm--html-noregion-formatting-paragraph-map (make-sparse-keymap))
+;  (define-key hm--html-noregion-formatting-paragraph-map
 ;    "o" 'hm--html-add-plaintext)
-  (define-key hm--html-noregion-formating-paragraph-map
-    "p" 'hm--html-add-preformated)
-  (define-key hm--html-noregion-formating-paragraph-map
+  (define-key hm--html-noregion-formatting-paragraph-map
+    "p" 'hm--html-add-preformatted)
+  (define-key hm--html-noregion-formatting-paragraph-map
     "b" 'hm--html-add-blockquote)
-  (define-key hm--html-noregion-formating-paragraph-map
+  (define-key hm--html-noregion-formatting-paragraph-map
     "\C-b" 'hm--html-add-basefont)
-  (define-key hm--html-noregion-formating-paragraph-map
+  (define-key hm--html-noregion-formatting-paragraph-map
     "f" 'hm--html-add-font)
-  (define-key hm--html-noregion-formating-paragraph-map
+  (define-key hm--html-noregion-formatting-paragraph-map
     "c" 'hm--html-add-center)
-  (define-key hm--html-noregion-formating-paragraph-map
+  (define-key hm--html-noregion-formatting-paragraph-map
     "\C-c" 'hm--html-add-comment)
-;  (define-key hm--html-noregion-formating-paragraph-map
+;  (define-key hm--html-noregion-formatting-paragraph-map
 ;    "l" 'hm--html-add-listing)
-;  (define-key hm--html-noregion-formating-paragraph-map
+;  (define-key hm--html-noregion-formatting-paragraph-map
 ;    "a" 'hm--html-add-abstract)
   )
 
-(defvar hm--html-region-formating-paragraph-map nil
-  "Region sub keymap for inserting paragraph formating elements.")
+(defvar hm--html-region-formatting-paragraph-map nil
+  "Region sub keymap for inserting paragraph formatting elements.")
+(define-obsolete-variable-alias
+  'hm--html-region-formating-paragraph-map
+  'hm--html-region-formatting-paragraph-map)
 
-(if hm--html-region-formating-paragraph-map
+(if hm--html-region-formatting-paragraph-map
     ()
-  (setq hm--html-region-formating-paragraph-map (make-sparse-keymap))
-;  (define-key hm--html-region-formating-paragraph-map
+  (setq hm--html-region-formatting-paragraph-map (make-sparse-keymap))
+;  (define-key hm--html-region-formatting-paragraph-map
 ;    "o" 'hm--html-add-plaintext-to-region)
-  (define-key hm--html-region-formating-paragraph-map
-    "p" 'hm--html-add-preformated-to-region)
-  (define-key hm--html-region-formating-paragraph-map
+  (define-key hm--html-region-formatting-paragraph-map
+    "p" 'hm--html-add-preformatted-to-region)
+  (define-key hm--html-region-formatting-paragraph-map
     "b" 'hm--html-add-blockquote-to-region)
-  (define-key hm--html-region-formating-paragraph-map
+  (define-key hm--html-region-formatting-paragraph-map
     "\C-b" 'hm--html-add-basefont-to-region)
-  (define-key hm--html-region-formating-paragraph-map
+  (define-key hm--html-region-formatting-paragraph-map
     "f" 'hm--html-add-font-to-region)
-  (define-key hm--html-region-formating-paragraph-map
+  (define-key hm--html-region-formatting-paragraph-map
     "c" 'hm--html-add-center-to-region)
-  (define-key hm--html-region-formating-paragraph-map
+  (define-key hm--html-region-formatting-paragraph-map
     "\C-c" 'hm--html-add-comment-to-region)
-;  (define-key hm--html-region-formating-paragraph-map
+;  (define-key hm--html-region-formatting-paragraph-map
 ;    "l" 'hm--html-add-listing-to-region)
-;  (define-key hm--html-region-formating-paragraph-map
+;  (define-key hm--html-region-formatting-paragraph-map
 ;    "a" 'hm--html-add-abstract-to-region)
   )
 
-(defvar hm--html-noregion-formating-word-map nil
-  "Norgion sub keymap for inserting physical text formating elements.")
+(defvar hm--html-noregion-formatting-word-map nil
+  "Norgion sub keymap for inserting physical text formatting elements.")
+(define-obsolete-variable-alias
+  'hm--html-noregion-formating-word-map
+  'hm--html-noregion-formatting-word-map)
 
-(if hm--html-noregion-formating-word-map
+(if hm--html-noregion-formatting-word-map
     ()
-  (setq hm--html-noregion-formating-word-map (make-sparse-keymap))
-  (define-key hm--html-noregion-formating-word-map
+  (setq hm--html-noregion-formatting-word-map (make-sparse-keymap))
+  (define-key hm--html-noregion-formatting-word-map
     "b" 'hm--html-add-bold)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "i" 'hm--html-add-italic)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "u" 'hm--html-add-underline)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "t" 'hm--html-add-fixed)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "s" 'hm--html-add-strikethru)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "\C-p" 'hm--html-add-superscript)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "\C-b" 'hm--html-add-subscript)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "e" 'hm--html-add-emphasized)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "\C-s" 'hm--html-add-strong)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "\M-s" 'hm--html-add-small)
-  (define-key hm--html-noregion-formating-word-map
+  (define-key hm--html-noregion-formatting-word-map
     "\M-b" 'hm--html-add-big)
   )
 
-(defvar hm--html-region-formating-word-map nil
-  "Region sub keymap for inserting word text formating elements.")
+(defvar hm--html-region-formatting-word-map nil
+  "Region sub keymap for inserting word text formatting elements.")
+(define-obsolete-variable-alias
+  'hm--html-region-formating-word-map
+  'hm--html-region-formatting-word-map)
 
-(if hm--html-region-formating-word-map
+(if hm--html-region-formatting-word-map
     ()
-  (setq hm--html-region-formating-word-map (make-sparse-keymap))
-  (define-key hm--html-region-formating-word-map
+  (setq hm--html-region-formatting-word-map (make-sparse-keymap))
+  (define-key hm--html-region-formatting-word-map
     "b" 'hm--html-add-bold-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "i" 'hm--html-add-italic-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "u" 'hm--html-add-underline-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "t" 'hm--html-add-fixed-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "s" 'hm--html-add-strikethru-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "\C-p" 'hm--html-add-superscript-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "\C-b" 'hm--html-add-subscript-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "e" 'hm--html-add-emphasized-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "\C-s" 'hm--html-add-strong-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "\M-s" 'hm--html-add-small-to-region)
-  (define-key hm--html-region-formating-word-map
+  (define-key hm--html-region-formatting-word-map
     "\M-b" 'hm--html-add-big-to-region)
   )
 
@@ -436,9 +448,9 @@ It could have the same value as
   (define-key hm--html-region-sub-map-1 "\C-f" hm--html-region-frame-map)
   (define-key hm--html-region-sub-map-1 "\C-s" hm--html-region-structure-map)
   (define-key hm--html-region-sub-map-1 
-    "\C-p" hm--html-region-formating-paragraph-map)
+    "\C-p" hm--html-region-formatting-paragraph-map)
   (define-key hm--html-region-sub-map-1
-    "\C-w" hm--html-region-formating-word-map)
+    "\C-w" hm--html-region-formatting-word-map)
   )
 
 (defvar hm--html-noregion-sub-map-1 nil
@@ -458,9 +470,9 @@ It could have the same value as
   (define-key hm--html-noregion-sub-map-1 
     "\C-s" hm--html-noregion-structure-map)
   (define-key hm--html-noregion-sub-map-1
-    "\C-p" hm--html-noregion-formating-paragraph-map)
+    "\C-p" hm--html-noregion-formatting-paragraph-map)
   (define-key hm--html-noregion-sub-map-1
-    "\C-w" hm--html-noregion-formating-word-map)
+    "\C-w" hm--html-noregion-formatting-word-map)
   )
 
 (defvar hm--html-region-sub-map nil

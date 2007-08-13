@@ -1,3 +1,24 @@
+Thu May  8 19:10:03 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* frame.c: Change internal type of
+	`allow-deletion-of-last-visible-frame' to boolean.
+
+	* buffer.c: Change internal type of `delete-auto-save-files' to
+	boolean.
+
+Sat May  3 15:28:56 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* redisplay.c: `column-number-start-at-one' is a user customizable
+	variable.
+
+	* event-stream.c (vars_of_event_stream): `focus-follows-mouse' is
+	a user customizable variable.
+
+	* cmds.c (vars_of_cmds): `signal-error-on-buffer-boundary' is a
+	user customizable variable.
+
+	* lread.c (parse_integer): Fix incorrect upper bounds on loop.
+
 Thu May  1 18:59:20 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* glyphs-x.c (Fmake_subwindow): Update error message.

@@ -700,9 +700,11 @@
 
 ;;;; User definable variables.
 
-(defgroup crypt nil
-  "Handling compressed and encrypted files."
-  :group 'data)
+(progn
+  (defgroup crypt nil
+    "Handling compressed and encrypted files."
+    :group 'compression)
+  )
 
 (defcustom crypt-encryption-type 'crypt
   "*Method of encryption.  Must be an element of `crypt-encryption-alist.'

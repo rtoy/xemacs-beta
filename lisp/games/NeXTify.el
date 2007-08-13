@@ -2,7 +2,7 @@
 
 ;; Copyright status unknown
 
-;; Author: Unknown
+;; Author: Jamie Zawinski <jwz@netscape.com>
 ;; Keywords: games
 
 ;; This file is part of XEmacs.
@@ -27,6 +27,7 @@
 ;;; Commentary:
 
 ;;; Code:
+
 (defun SeLF-insert-command (arg)
   "Insert the character you TyPE.
 Whichever character you TyPE to run ThIS command is inserted."

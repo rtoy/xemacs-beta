@@ -221,7 +221,7 @@ setting of this variable.")
 
 ;;;###autoload
 (defvar dired-chown-program
-  (if (memq system-type '(hpux dgux usg-unix-v)) "chown" "/etc/chown")
+  (if (memq system-type '(hpux dgux usg-unix-v linux)) "chown" "/etc/chown")
   "*Name of chown command (usually `chown' or `/etc/chown').")
 
 ;;;###autoload

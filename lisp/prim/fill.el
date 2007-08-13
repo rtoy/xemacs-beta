@@ -392,6 +392,7 @@ space does not end a sentence, so don't break a line there."
 	      (end-of-line)))
 	  ;; end patch
 	  (goto-char from)
+	  (skip-chars-forward " \t")
  	  (if (and nosqueeze (not (eq justify 'full)))
 	      nil
 	    (canonically-space-region (or squeeze-after (point)) (point-max))

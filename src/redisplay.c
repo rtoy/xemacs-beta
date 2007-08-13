@@ -8320,7 +8320,7 @@ See `set-window-redisplay-end-trigger'.
   Vredisplay_end_trigger_functions = Qnil;
 
   DEFVAR_BOOL ("column-number-start-at-one", &column_number_start_at_one /*
-Non-nil means column display number starts at 1.
+*Non-nil means column display number starts at 1.
 */ );
   column_number_start_at_one = 1;
 }

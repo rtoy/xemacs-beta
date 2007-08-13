@@ -46,14 +46,14 @@ as provided for compatibility only."
   (make-compatible oldfun newfun))
 
 (defsubst define-obsolete-variable-alias (oldvar newvar)
-  "Define OLDVAR as an obsolete alias for varction NEWVAR.
+  "Define OLDVAR as an obsolete alias for variable NEWVAR.
 This makes referencing or setting OLDVAR equivalent to referencing or
 setting NEWVAR and marks OLDVAR as obsolete."
   (defvaralias oldvar newvar)
   (make-obsolete-variable oldvar newvar))
 
 (defsubst define-compatible-variable-alias (oldvar newvar)
-  "Define OLDVAR as a compatible alias for varction NEWVAR.
+  "Define OLDVAR as a compatible alias for variable NEWVAR.
 This makes referencing or setting OLDVAR equivalent to referencing or
 setting NEWVAR and marks OLDVAR as provided for compatibility only."
   (defvaralias oldvar newvar)

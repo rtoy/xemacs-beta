@@ -1059,7 +1059,7 @@ To change this variable use \\[dired-do-compress] with a zero prefix.")
 *Switches passed to ls for dired. MUST contain the `l' option.
 Can contain even `F', `b', `i' and `s'.")
 
-(defvar dired-chown-program (if (memq system-type '(hpux dgux usg-unix-v)) "chown" "/etc/chown") "\
+(defvar dired-chown-program (if (memq system-type '(hpux dgux usg-unix-v linux)) "chown" "/etc/chown") "\
 *Name of chown command (usually `chown' or `/etc/chown').")
 
 (defvar dired-gnutar-program nil "\
@@ -3631,7 +3631,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.24 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.25 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4991,7 +4991,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.24 $
+vhdl-mode $Revision: 1.25 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5893,66 +5893,11 @@ Emerge two RCS revisions of a file, with another revision as ancestor." t nil)
 
 ;;;### (autoloads (tags-apropos list-tags tags-query-replace tags-search tags-loop-continue next-file find-tag-other-window find-tag visit-tags-table) "etags" "packages/etags.el")
 
-(defvar tags-build-completion-table 'ask "\
-*If this variable is nil, then tags completion is disabled.
-If this variable is t, then things which prompt for tags will do so with 
- completion across all known tags.
-If this variable is the symbol `ask', then you will be asked whether each
- tags table should be added to the completion list as it is read in.
- (With the exception that for very small tags tables, you will not be asked,
- since they can be parsed quickly.)")
+(defcustom tags-build-completion-table 'ask "*If this variable is nil, then tags completion is disabled.\nIf this variable is t, then things which prompt for tags will do so with \n completion across all known tags.\nIf this variable is the symbol `ask', then you will be asked whether each\n tags table should be added to the completion list as it is read in.\n (With the exception that for very small tags tables, you will not be asked,\n since they can be parsed quickly.)" :type '(radio (const :tag "Disabled" nil) (const :tag "Complete All" t) (const :tag "Ask" ask)) :group 'etags)
 
-(defvar tags-always-exact nil "\
-*If this variable is non-nil, then tags always looks for exact matches.")
+(defcustom tags-always-exact nil "*If this variable is non-nil, then tags always looks for exact matches." :type 'boolean :group 'etags)
 
-(defvar tag-table-alist nil "\
-*A list which determines which tags files should be active for a 
-given buffer.  This is not really an association list, in that all 
-elements are checked.  The CAR of each element of this list is a 
-pattern against which the buffer's file name is compared; if it 
-matches, then the CDR of the list should be the name of the tags
-table to use.  If more than one element of this list matches the
-buffer's file name, then all of the associated tags tables will be
-used.  Earlier ones will be searched first.
-
-If the CAR of elements of this list are strings, then they are treated
-as regular-expressions against which the file is compared (like the
-auto-mode-alist).  If they are not strings, then they are evaluated.
-If they evaluate to non-nil, then the current buffer is considered to
-match.
-
-If the CDR of the elements of this list are strings, then they are
-assumed to name a TAGS file.  If they name a directory, then the string
-\"TAGS\" is appended to them to get the file name.  If they are not 
-strings, then they are evaluated, and must return an appropriate string.
-
-For example:
-  (setq tag-table-alist
-	'((\"/usr/src/public/perl/\" . \"/usr/src/public/perl/perl-3.0/\")
-	 (\"\\\\.el$\" . \"/usr/local/emacs/src/\")
-	 (\"/jbw/gnu/\" . \"/usr15/degree/stud/jbw/gnu/\")
-	 (\"\" . \"/usr/local/emacs/src/\")
-	 ))
-
-This means that anything in the /usr/src/public/perl/ directory should use
-the TAGS file /usr/src/public/perl/perl-3.0/TAGS; and file ending in .el should
-use the TAGS file /usr/local/emacs/src/TAGS; and anything in or below the
-directory /jbw/gnu/ should use the TAGS file /usr15/degree/stud/jbw/gnu/TAGS.
-A file called something like \"/usr/jbw/foo.el\" would use both the TAGS files
-/usr/local/emacs/src/TAGS and /usr15/degree/stud/jbw/gnu/TAGS (in that order)
-because it matches both patterns.
-
-If the buffer-local variable `buffer-tag-table' is set, then it names a tags
-table that is searched before all others when find-tag is executed from this
-buffer.
-
-If there is a file called \"TAGS\" in the same directory as the file in 
-question, then that tags file will always be used as well (after the
-`buffer-tag-table' but before the tables specified by this list.)
-
-If the variable tags-file-name is set, then the tags file it names will apply
-to all buffers (for backwards compatibility.)  It is searched first.
-")
+(defcustom tag-table-alist nil "*A list which determines which tags files should be active for a \ngiven buffer.  This is not really an association list, in that all \nelements are checked.  The CAR of each element of this list is a \npattern against which the buffer's file name is compared; if it \nmatches, then the CDR of the list should be the name of the tags\ntable to use.  If more than one element of this list matches the\nbuffer's file name, then all of the associated tags tables will be\nused.  Earlier ones will be searched first.\n\nIf the CAR of elements of this list are strings, then they are treated\nas regular-expressions against which the file is compared (like the\nauto-mode-alist).  If they are not strings, then they are evaluated.\nIf they evaluate to non-nil, then the current buffer is considered to\nmatch.\n\nIf the CDR of the elements of this list are strings, then they are\nassumed to name a TAGS file.  If they name a directory, then the string\n\"TAGS\" is appended to them to get the file name.  If they are not \nstrings, then they are evaluated, and must return an appropriate string.\n\nFor example:\n  (setq tag-table-alist\n	'((\"/usr/src/public/perl/\" . \"/usr/src/public/perl/perl-3.0/\")\n	 (\"\\\\.el$\" . \"/usr/local/emacs/src/\")\n	 (\"/jbw/gnu/\" . \"/usr15/degree/stud/jbw/gnu/\")\n	 (\"\" . \"/usr/local/emacs/src/\")\n	 ))\n\nThis means that anything in the /usr/src/public/perl/ directory should use\nthe TAGS file /usr/src/public/perl/perl-3.0/TAGS; and file ending in .el should\nuse the TAGS file /usr/local/emacs/src/TAGS; and anything in or below the\ndirectory /jbw/gnu/ should use the TAGS file /usr15/degree/stud/jbw/gnu/TAGS.\nA file called something like \"/usr/jbw/foo.el\" would use both the TAGS files\n/usr/local/emacs/src/TAGS and /usr15/degree/stud/jbw/gnu/TAGS (in that order)\nbecause it matches both patterns.\n\nIf the buffer-local variable `buffer-tag-table' is set, then it names a tags\ntable that is searched before all others when find-tag is executed from this\nbuffer.\n\nIf there is a file called \"TAGS\" in the same directory as the file in \nquestion, then that tags file will always be used as well (after the\n`buffer-tag-table' but before the tables specified by this list.)\n\nIf the variable tags-file-name is set, then the tags file it names will apply\nto all buffers (for backwards compatibility.)  It is searched first.\n" :type '(repeat (cons regexp sexp)) :group 'etags)
 
 (autoload 'visit-tags-table "etags" "\
 Tell tags commands to use tags table file FILE first.

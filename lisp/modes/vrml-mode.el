@@ -45,25 +45,20 @@
 ;;
 
 (defgroup vrml nil
-  "VRML Language"
+  "VRML Language."
   :group 'languages)
-
-(defgroup vrml-mode nil
-  "VRML mode customization"
-  :group 'vrml
-  :prefix "vrml-")
 
 
 (defcustom vrml-indent-level 3
   "*Indentation of VRML statements with respect to containing block."
   :type 'integer
-  :group 'vrml-mode)
+  :group 'vrml)
 
 (defcustom vrml-auto-newline nil
   "*Non-nil means automatically newline before and after braces
 inserted in VRML code."
   :type 'boolean
-  :group 'vrml-mode)
+  :group 'vrml)
 
 (defcustom vrml-tab-always-indent t
   "*Control effect of TAB key.
@@ -82,13 +77,13 @@ to take place:
   :type '(choice (const :tag "on" t)
 		 (const :tag "off" nil)
 		 (const :tag "The Works" other))
-  :group 'vrml-mode)
+  :group 'vrml)
 
 (defcustom vrml-use-hairy-comment-detector t
   "*If not `nil', then the more complicated, but slower, comment
 detecting function is used."
   :type 'boolean
-  :group 'vrml-mode)
+  :group 'vrml)
 
 (defvar vrml-mode-abbrev-table nil
   "Abbrev table used while in VRML mode.")
@@ -138,7 +133,7 @@ detecting function is used."
 (defcustom vrml-mode-hook nil
   "Hook run on entry to VRML mode."
   :type 'hook
-  :group 'vrml-mode)
+  :group 'vrml)
 
 (defvar vrml-keyword-list
   '(

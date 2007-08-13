@@ -1,3 +1,13 @@
+Tue May  6 21:33:06 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lispref/files.texi (Writing to Files): Correct docstring of
+	write-region.
+
+Sun May  4 14:28:32 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lispref/annotations.texi (Annotation Primitives):
+	`delete-annotation' does not return the deleted annotation.
+
 Wed Apr 30 18:13:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* lispref/lispref.texi: Correct release dates.

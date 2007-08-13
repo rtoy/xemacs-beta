@@ -1,6 +1,6 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.5 1997/03/28 02:28:41 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.6 1997/05/09 03:28:00 steve Exp $
 ;;;
 ;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
@@ -132,9 +132,9 @@
 	  ["New line" hm--html-add-line-break t]
 	  ["Horizontal rule" hm--html-add-horizontal-rule t]
 	  )
-	 ("Formating Paragraphs"
+	 ("Formatting Paragraphs"
 ;	  ["Without links" hm--html-add-plaintext t]
-	  ["Preformated" hm--html-add-preformated t]
+	  ["Preformatted" hm--html-add-preformatted t]
           ["Blockquote" hm--html-add-blockquote t]
 	  "----"
 	  ["Basefont..." hm--html-add-basefont t]
@@ -284,9 +284,9 @@
 	  "----"
 	  ["Paragraph Container" hm--html-add-paragraph t]
 	  )
-	 ("Formating Paragraphs"
+	 ("Formatting Paragraphs"
 ;	  ["Without links" hm--html-add-plaintext t]
-	  ["Preformated" hm--html-add-preformated t]
+	  ["Preformatted" hm--html-add-preformatted t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold t]
@@ -357,7 +357,7 @@
 	  )
 	 ("Formatting Paragraphs"
 ;	  ["Without links" hm--html-add-plaintext-to-region t]
-	  ["Preformated" hm--html-add-preformated-to-region t]
+	  ["Preformatted" hm--html-add-preformatted-to-region t]
           ["Blockquote" hm--html-add-blockquote-to-region t]
 	  "----"
 	  ["Font..." hm--html-add-font-to-region t]
@@ -464,7 +464,7 @@
 	  )
 	 ("Formatting Paragraphs"
 ;	  ["Without links" hm--html-add-plaintext-to-region t]
-	  ["Preformated" hm--html-add-preformated-to-region t]
+	  ["Preformatted" hm--html-add-preformatted-to-region t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold-to-region t]

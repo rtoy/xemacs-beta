@@ -87,7 +87,7 @@
 
 (defgroup filladapt nil
   "Enhanced filling"
-  :group 'editing)
+  :group 'fill)
 
 (defvar filladapt-version "2.10"
   "Version string for filladapt.")

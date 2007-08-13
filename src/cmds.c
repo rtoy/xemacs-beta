@@ -492,7 +492,7 @@ More precisely, a char with closeparen syntax is self-inserted.
   Vblink_paren_function = Qnil;
 
   DEFVAR_BOOL ("signal-error-on-buffer-boundary", &signal_error_on_buffer_boundary /*
-t means beep when movement would take point past (point-min) or
+*t means beep when movement would take point past (point-min) or
 \(point-max).
 */ );
   signal_error_on_buffer_boundary = 1;

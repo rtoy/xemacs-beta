@@ -29,20 +29,92 @@
     (list 'quote sexp)))
 
 ;; The file names below are unreliable, as they are from Emacs 19.34.
-(let ((all '(;; abbrev.c 
-	     (abbrev-all-caps abbrev-mode boolean)
-	     (pre-abbrev-expand-hook abbrev-mode hook)
-	     ;; alloc.c
+(let ((all '(;; boolean
+	     (abbrev-all-caps abbrev boolean)
+	     (allow-deletion-of-last-visible-frame frames boolean)
+	     (debug-on-quit debug boolean)
+	     (delete-auto-save-files auto-save boolean)
+	     (delete-exited-processes processes-basics boolean)
+	     (indent-tabs-mode editing-basics boolean)
+	     (load-ignore-elc-files maint boolean)
+	     (load-warn-when-source-newer maint boolean)
+	     (load-warn-when-source-only maint boolean)
+	     (modifier-keys-are-sticky keyboard boolean)
+	     (no-redraw-on-reenter display boolean)
+	     (scroll-on-clipped-lines display boolean)
+	     (truncate-partial-width-windows display boolean)
+	     (visible-bell sound boolean)
+	     (x-allow-sendevents x boolean)
+	     (zmacs-regions editing-basics boolean)
+	     ;; integer
+	     (auto-save-interval auto-save integer)
+	     (bell-volume sound integer)
+	     (echo-keystrokes keyboard integer)
 	     (gc-cons-threshold alloc integer)
-	     ;; buffer.c
-	     (modeline-format modeline sexp) ;Hard to do right.
-	     (default-major-mode internal function)
+	     (next-screen-context-lines display integer)
+	     (scroll-step windows integer)
+	     (window-min-height windows integer)
+	     (window-min-width windows integer)
+	     ;; object
+	     (auto-save-file-format auto-save
+				    (choice (const :tag "Normal" t)
+					    (repeat (symbol :tag "Format"))))
+	     (completion-ignored-extensions minibuffer
+					    (repeat
+					     (string :format "%v")))
+	     (debug-on-error debug  (choice (const :tag "off" nil)
+					    (const :tag "Always" t)
+					    (repeat :menu-tag "When"
+						    :value (nil)
+						    (symbol
+						     :tag "Condition"))))
+	     (debug-on-signal debug (choice (const :tag "off" nil)
+					    (const :tag "Always" t)
+					    (repeat :menu-tag "When"
+						    :value (nil)
+						    (symbol
+						     :tag "Condition"))))
+	     (exec-path processes-basics (repeat
+					  (choice :tag "Directory"
+						  (const :tag "Default" nil)
+						  (directory :format "%v"))))
+	     (file-name-handler-alist data (repeat
+					    (cons regexp
+						  (function :tag "Handler"))))
+	     (shell-file-name execute file)
+	     (stack-trace-on-error debug (choice (const :tag "off" nil)
+					    (const :tag "Always" t)
+					    (repeat :menu-tag "When"
+						    :value (nil)
+						    (symbol
+						     :tag "Condition"))))
+	     (stack-trace-on-signal debug (choice (const :tag "off" nil)
+					    (const :tag "Always" t)
+					    (repeat :menu-tag "When"
+						    :value (nil)
+						    (symbol
+						     :tag "Condition"))))
+	     ;; buffer-local
 	     (case-fold-search matching boolean)
+	     (ctl-arrow display (choice (integer 160)
+					(sexp :tag "160 (default)"
+					      :format "%t\n")))
 	     (fill-column fill integer)
 	     (left-margin fill integer)
 	     (tab-width editing-basics integer)
-	     (ctl-arrow display boolean)
 	     (truncate-lines display boolean)
+	     ;; not documented as user-options, but should still be
+	     ;; customizable:
+	     (default-frame-plist frames (repeat
+					  (list :inline t
+						:format "%v"
+						(symbol :tag "Parameter")
+						(sexp :tag "Value"))))
+	     (help-char keyboard character)
+	     (max-lisp-eval-depth limits integer)
+	     (max-specpdl-size limits integer)
+	     (meta-prefix-char keyboard character)
+	     (parse-sexp-ignore-comments editing-basics boolean)
 	     (selective-display display 
 				(choice (const :tag "off" nil)
 					(integer :tag "space"
@@ -50,66 +122,14 @@
 						 1)
 					(const :tag "on" t)))
 	     (selective-display-ellipses display boolean)
-	     ;; callproc.c
-	     (shell-file-name execute file)
-	     (exec-path execute
-			(repeat (choice (const :tag "default" nil)
-					(file :format "%v"))))
-	     ;; dired.c
-	     (completion-ignored-extensions dired 
-					    (repeat (string :format "%v")))
-	     ;; dispnew.el
-	     (visible-bell display boolean)
-	     (no-redraw-on-reenter display boolean)
-	     ;; eval.c
-	     (max-specpdl-size limits integer)
-	     (max-lisp-eval-depth limits integer)
-	     (stack-trace-on-error debug
-				   (choice (const :tag "off")
-					   (repeat :menu-tag "When"
-						   :value (nil)
-						   (symbol :format "%v"))
-					   (const :tag "always" t)))
-	     (debug-on-error debug 
-			     (choice (const :tag "off")
-				     (repeat :menu-tag "When"
-					     :value (nil)
-					     (symbol :format "%v"))
-				     (const :tag "always" t)))
-	     (debug-on-quit debug choice)
-	     ;; frame.c
-	     (default-frame-plist frames
-	       (repeat (cons :format "%v"
-			     (symbol :tag "Parameter")
-			     (sexp :tag "Value"))))
-	     ;; indent.c
-	     (indent-tabs-mode fill boolean)
-	     ;; keyboard.c
-	     (meta-prefix-char keyboard character)
-	     (auto-save-interval auto-save integer)
-	     (echo-keystrokes minibuffer boolean)
-	     (help-char keyboard character)
-	     ;; lread.c
-	     (load-path environment 
-			(repeat (choice :tag "Directory"
-					(const :tag "default" nil)
-					(directory :format "%v"))))
-	     ;; process.c
-	     (delete-exited-processes proces-basics boolean)
-	     ;; syntax.c
-	     (parse-sexp-ignore-comments editing-basics boolean)
+	     (signal-error-on-buffer-boundary internal boolean)
 	     (words-include-escapes editing-basics boolean)
-	     ;; window.c
-	     (temp-buffer-show-function windows function)
-	     (next-screen-context-lines windows boolean)
-	     (window-min-height windows integer)
-	     (window-min-width windows integer)
-	     ;; xdisp.c
-	     (scroll-step windows integer)
-	     (truncate-partial-width-windows display boolean)
-	     ;; xfns.c
-	     (x-bitmap-file-path installation
-				 (repeat (directory :format "%v")))))
+	     (temp-buffer-show-function
+	      windows (radio (function-item :tag "Temp Buffers Always in Same Frame"
+					    :format "%t\n"
+					    show-temp-buffer-in-current-frame)
+			     (const :tag "Temp Buffers Like Other Buffers" nil)
+			     (function :tag "Other")))))
       this symbol group type)
   (while all 
     (setq this (car all)

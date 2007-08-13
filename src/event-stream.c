@@ -4281,9 +4281,10 @@ Errors running the hook are caught and ignored.
   Vpre_idle_hook = Qnil;
 
   DEFVAR_BOOL ("focus-follows-mouse", &focus_follows_mouse /*
-Variable to control XEmacs behavior with respect to focus changing.
+*Variable to control XEmacs behavior with respect to focus changing.
 If this variable is set to t, then XEmacs will not gratuitously change
-the keyboard focus.
+the keyboard focus.  XEmacs cannot in general detect when this mode is
+use by the window manager, so it is up to the user to set it.
 */ );
   focus_follows_mouse = 0;
 
