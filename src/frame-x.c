@@ -486,6 +486,7 @@ x_get_top_level_position (Display *d, Window w, Position *x, Position *y)
   *y = xwa.y;
 }
 
+#if 0
 static void
 x_smash_bastardly_shell_position (Widget shell)
 {
@@ -501,6 +502,7 @@ x_smash_bastardly_shell_position (Widget shell)
     x_get_top_level_position (XtDisplay (shell), XtWindow (shell),
 			      &shell->core.x, &shell->core.y);
 }
+#endif /* 0 */
 
 static Lisp_Object
 x_frame_property (struct frame *f, Lisp_Object property)
@@ -512,15 +514,26 @@ x_frame_property (struct frame *f, Lisp_Object property)
 #define FROB(propprop, value) 	\
 do {				\
   if (EQ (property, propprop))	\
-    {				\
-      return (value);		\
-    }				\
+    return (value);		\
 } while (0)
 
+#if 0
   if (EQ (property, Qleft) || EQ (property, Qtop))
     x_smash_bastardly_shell_position (shell);
+#endif
+  if (EQ (property, Qleft) || EQ (property, Qtop))
+    {
+      Position x, y;
+      if (!XtWindow(shell))
+	return make_int (0);
+      x_get_top_level_position (XtDisplay (shell), XtWindow (shell), &x, &y);
+      FROB (Qleft, make_int (x));
+      FROB (Qtop,  make_int (y));
+    }
+#if 0
   FROB (Qleft, make_int (shell->core.x));
   FROB (Qtop, make_int (shell->core.y));
+#endif
   FROB (Qborder_width, make_int (w->core.border_width));
   FROB (Qinternal_border_width,
 	make_int (w->emacs_frame.internal_border_width));
@@ -534,7 +547,7 @@ do {				\
 	color_to_string (gw, w->emacs_frame.background_toolbar_pixel));
   FROB (Qtoolbar_shadow_thickness,
 	make_int (w->emacs_frame.toolbar_shadow_thickness));
-#endif
+#endif /* HAVE_TOOLBARS */
   FROB (Qinter_line_space, make_int (w->emacs_frame.interline));
   FROB (Qwindow_id, Fx_window_id (make_frame (f)));
 
@@ -546,23 +559,20 @@ do {				\
 static int
 x_internal_frame_property_p (struct frame *f, Lisp_Object property)
 {
-  if (EQ (property, Qleft)
-      || EQ (property, Qtop)
-      || EQ (property, Qborder_width)
-      || EQ (property, Qinternal_border_width)
-      || EQ (property, Qborder_color)
+  return EQ (property, Qleft)
+    || EQ (property, Qtop)
+    || EQ (property, Qborder_width)
+    || EQ (property, Qinternal_border_width)
+    || EQ (property, Qborder_color)
 #ifdef HAVE_TOOLBARS
-      || EQ (property, Qtop_toolbar_shadow_color)
-      || EQ (property, Qbottom_toolbar_shadow_color)
-      || EQ (property, Qbackground_toolbar_color)
-      || EQ (property, Qtoolbar_shadow_thickness)
+    || EQ (property, Qtop_toolbar_shadow_color)
+    || EQ (property, Qbottom_toolbar_shadow_color)
+    || EQ (property, Qbackground_toolbar_color)
+    || EQ (property, Qtoolbar_shadow_thickness)
 #endif
-      || EQ (property, Qinter_line_space)
-      || EQ (property, Qwindow_id)
-      || STRINGP (property))
-    return 1;
-
-  return 0;
+    || EQ (property, Qinter_line_space)
+    || EQ (property, Qwindow_id)
+    || STRINGP (property);
 }
 
 static Lisp_Object
@@ -572,6 +582,7 @@ x_frame_properties (struct frame *f)
   Widget shell = FRAME_X_SHELL_WIDGET (f);
   EmacsFrame w = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   Widget gw = (Widget) w;
+  Position x, y;
 
 #define FROB(propprop, value)				\
 do {							\
@@ -581,9 +592,19 @@ do {							\
     result = Fcons (temtem, Fcons (propprop, result));	\
 } while (0)
 
+#if 0
   x_smash_bastardly_shell_position (shell);
   FROB (Qleft, make_int (shell->core.x));
   FROB (Qtop, make_int (shell->core.y));
+#endif
+  if (!XtWindow(shell))
+    x = y = 0;
+  else
+    x_get_top_level_position (XtDisplay (shell), XtWindow (shell), &x, &y);
+  
+  FROB (Qleft, make_int (x));
+  FROB (Qtop,  make_int (y));
+
   FROB (Qborder_width, make_int (w->core.border_width));
   FROB (Qinternal_border_width,
 	make_int (w->emacs_frame.internal_border_width));
@@ -597,7 +618,7 @@ do {							\
 	color_to_string (gw, w->emacs_frame.background_toolbar_pixel));
   FROB (Qtoolbar_shadow_thickness,
 	make_int (w->emacs_frame.toolbar_shadow_thickness));
-#endif
+#endif /* HAVE_TOOLBARS */
   FROB (Qinter_line_space, make_int (w->emacs_frame.interline));
   FROB (Qwindow_id, Fx_window_id (make_frame (f)));
 
@@ -618,7 +639,6 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
   Atom encoding = XA_STRING;
   String new_XtValue = (String) value;
   String old_XtValue = NULL;
-  Bufbyte *ptr;
   Arg av[2];
 
   /* ### Caching is device-independent - belongs in update_frame_title. */
@@ -694,7 +714,7 @@ x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
 static void
 x_set_frame_properties (struct frame *f, Lisp_Object plist)
 {
-  int x = 0, y = 0;
+  Position x, y;
   Dimension width = 0, height = 0;
   Bool width_specified_p = False;
   Bool height_specified_p = False;
@@ -781,14 +801,14 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  if (!strcmp ((char *) XSTRING_DATA (str), "x"))
 	    {
 	      CHECK_INT (val);
-	      x = XINT (val);
+	      x = (Position) XINT (val);
 	      x_position_specified_p = True;
 	      continue;
 	    }
 	  if (!strcmp ((char *) XSTRING_DATA (str), "y"))
 	    {
 	      CHECK_INT (val);
-	      y = XINT (val);
+	      y = (Position) XINT (val);
 	      y_position_specified_p = True;
 	      continue;
 	    }
@@ -837,7 +857,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	    {
 	      x_update_frame_scrollbars (f);
 	    }
-#endif
+#endif /* HAVE_SCROLLBARS */
 	}
     }
 
@@ -854,16 +874,26 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
       height = FRAME_HEIGHT (f);
     
     /* Kludge kludge kludge kludge. */
-    if (!x_position_specified_p)
-      x = (int) (FRAME_X_SHELL_WIDGET (f)->core.x);
-    if (!y_position_specified_p)
-      y = (int) (FRAME_X_SHELL_WIDGET (f)->core.y);
+    if (position_specified_p &&
+	(!x_position_specified_p || !y_position_specified_p))
+      {
+	Position dummy;
+	Widget shell = FRAME_X_SHELL_WIDGET (f);
+	x_get_top_level_position (XtDisplay (shell), XtWindow (shell),
+				  (x_position_specified_p ? &dummy : &x),
+				  (y_position_specified_p ? &dummy : &y));
+#if 0
+	x = (int) (FRAME_X_SHELL_WIDGET (f)->core.x);
+	y = (int) (FRAME_X_SHELL_WIDGET (f)->core.y);
+#endif
+      }
       
     if (!f->init_finished)
       {
 	int flags = (size_specified_p ? WidthValue | HeightValue : 0) |
-	  (position_specified_p ? XValue | YValue : 0) |
-	  (x < 0 ? XNegative : 0) | (y < 0 ? YNegative : 0);
+	  (position_specified_p ?
+	   XValue | YValue | (x < 0 ? XNegative : 0) | (y < 0 ? YNegative : 0)
+	   : 0);
 	if (size_specified_p
 	    || position_specified_p
 	    || internal_border_width_specified)
@@ -937,16 +967,131 @@ maybe_set_frame_title_format (Widget shell)
 #include <Dt/Dt.h>
 #include <Dt/Dnd.h>
 
+static Widget CurrentDragWidget = NULL;
+
+static void
+x_cde_destroy_callback (Widget widget, XtPointer clientData,
+			XtPointer callData)
+{
+  xfree (clientData);
+  CurrentDragWidget = NULL;
+}
+
+static void
+x_cde_convert_callback (Widget widget, XtPointer clientData,
+			XtPointer callData)
+{
+  DtDndConvertCallbackStruct *convertInfo =
+    (DtDndConvertCallbackStruct *) callData;
+  char *textdata = (char *) clientData;
+
+  if(convertInfo == NULL)
+    {
+      return;
+    }
+
+  if((convertInfo->dragData->protocol != DtDND_BUFFER_TRANSFER) ||
+     (convertInfo->reason != DtCR_DND_CONVERT_DATA))
+    {
+      return;
+    }
+
+  convertInfo->dragData->data.buffers[0].bp = XtNewString(textdata);
+  convertInfo->dragData->data.buffers[0].size = strlen(textdata);
+  convertInfo->dragData->data.buffers[0].name = NULL;
+  convertInfo->dragData->numItems = 1;
+  convertInfo->status = DtDND_SUCCESS;
+}
+
+
+static XtCallbackRec dnd_convert_cb_rec[2];
+static XtCallbackRec dnd_destroy_cb_rec[2];
+static int drag_not_done = 0;
+
+static Lisp_Object
+abort_current_drag(Lisp_Object arg)
+{
+  if(CurrentDragWidget && drag_not_done)
+    {
+      XmDragCancel(CurrentDragWidget);
+      CurrentDragWidget = NULL;
+    }
+  return arg;
+}
+
+DEFUN ("cde-start-drag-internal", Fcde_start_drag_internal, 1, 1, 0, /*
+Start a CDE drag from a buffer.
+*/
+       (text))
+{
+  if (STRINGP (text))
+    {
+      struct frame *f = decode_x_frame (Fselected_frame (Qnil));
+      XEvent event;
+      Widget Wuh = FRAME_X_TEXT_WIDGET (f);
+      char *Ctext;
+      Display *display = XtDisplayOfObject (Wuh);
+      Window root_window, child_window;
+      int root_x, root_y, win_x, win_y;
+      unsigned int keys_and_buttons;
+
+      if (XQueryPointer (display, RootWindow (display, DefaultScreen (display)),
+			 &root_window, &child_window, &root_x, &root_y,
+			 &win_x, &win_y, &keys_and_buttons) == False)
+	return Qnil;
+
+      Ctext = xstrdup ((char *) XSTRING_DATA (text));
+
+      /*
+       * Eek - XEmacs doesn't keep the old X event around so we have to
+       * build a dummy event.  This is a truly gross hack.
+       */
+
+      event.xbutton.type = ButtonPress;
+      event.xbutton.send_event = False;
+      event.xbutton.display = XtDisplayOfObject(Wuh);
+      event.xbutton.window = XtWindowOfObject(Wuh);
+      event.xbutton.root = XRootWindow(event.xkey.display, 0);
+      event.xbutton.subwindow = 0;
+      event.xbutton.time = 0;
+      event.xbutton.x = win_x;
+      event.xbutton.y = win_y;
+      event.xbutton.x_root = root_x;
+      event.xbutton.y_root = root_y;
+      event.xbutton.state = 0;
+      event.xbutton.button = 1;
+      event.xkey.same_screen = True;
+
+      dnd_convert_cb_rec[0].callback = x_cde_convert_callback;
+      dnd_convert_cb_rec[0].closure  = (XtPointer) Ctext;
+      dnd_convert_cb_rec[1].callback = NULL;
+      dnd_convert_cb_rec[1].closure  = NULL;
+      
+      dnd_destroy_cb_rec[0].callback = x_cde_destroy_callback;
+      dnd_destroy_cb_rec[0].closure  = (XtPointer) Ctext;
+      dnd_destroy_cb_rec[1].callback = NULL;
+      dnd_destroy_cb_rec[1].closure  = NULL;
+
+      CurrentDragWidget =
+      DtDndDragStart (Wuh, &event, DtDND_BUFFER_TRANSFER, 1, XmDROP_COPY,
+		      dnd_convert_cb_rec,
+		      dnd_destroy_cb_rec,
+		      NULL, 0);
+      return Qt;
+    }
+  return Qnil;
+}
+
 void
 x_cde_transfer_callback (Widget widget, XtPointer clientData,
 			 XtPointer callData)
 {
   char *filePath, *buf;
   int ii;
-  Lisp_Object data = Qnil;
-  Lisp_Object path = Qnil;
+  Lisp_Object path  = Qnil;
   Lisp_Object frame = Qnil;
-  struct gcpro gcpro1, gcpro2;
+  Lisp_Object data  = Qnil;
+  struct gcpro gcpro1, gcpro2, gcpro3;
     
   DtDndTransferCallbackStruct *transferInfo =
     (DtDndTransferCallbackStruct *) callData;
@@ -954,7 +1099,7 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
   if (transferInfo == NULL)
     return;
 	
-  GCPRO2 (path, frame);
+  GCPRO3 (path, frame, data);
     
   frame = make_frame ((struct frame *) clientData);
   if (transferInfo->dropData->protocol == DtDND_FILENAME_TRANSFER)
@@ -962,28 +1107,37 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++) 
 	{
 	  filePath = transferInfo->dropData->data.files[ii];
+	  /* ### Mule-izing required */
 	  path = make_string ((Bufbyte *)filePath, strlen (filePath));
 	  va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
 	}
     }
   else if (transferInfo->dropData->protocol == DtDND_BUFFER_TRANSFER)
     {
+      int speccount = specpdl_depth();
+ 
+      record_unwind_protect(abort_current_drag, Qnil);
+      drag_not_done = 1;
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++)
  	{
  	  filePath = transferInfo->dropData->data.buffers[ii].name;
- 	  path = (filePath != NULL) ?
-            make_string ((Bufbyte *)filePath, strlen (filePath)) : Qnil;
+	  /* ### Mule-izing required */
+	  path = (filePath == NULL) ? Qnil
+	    : make_string ((Bufbyte *)filePath, strlen (filePath));
  	  buf = transferInfo->dropData->data.buffers[ii].bp;
  	  data = make_string ((Bufbyte *)buf,
 			      transferInfo->dropData->data.buffers[ii].size);
- 	  va_run_hook_with_args(Qdrag_and_drop_functions, 3, frame, path, data);
+ 	  va_run_hook_with_args(Qdrag_and_drop_functions, 3, frame, path,
+				data);
  	}
+	drag_not_done = 0;
+	unbind_to(speccount, Qnil);
     }
 
   UNGCPRO;
   return;
 }
-#endif
+#endif /* HAVE_CDE */
 
 #ifdef HAVE_OFFIX_DND
 #include <OffiX/DragAndDrop.h>
@@ -1400,7 +1554,7 @@ x_layout_widgets (Widget w, XtPointer client_data, XtPointer call_data)
                             scrollbar_placement == XtTOP_RIGHT);
     f->scrollbar_y_offset = topbreadth + textbord;
   }
-#endif
+#endif /* HAVE_SCROLLBARS */
 
   /* finally the text area */
   XtConfigureWidget (text, text_x, text_y,
@@ -1423,8 +1577,8 @@ x_do_query_geometry (Widget w, XtPointer client_data, XtPointer call_data)
 
   x_get_layout_sizes (f, &topbreadth);
 
-  /* strip away menubar from suggested size, and ask the text widget
-     what size it wants to be */
+  /* Strip away menubar from suggested size, and ask the text widget
+     what size it wants to be.  */
   req.request_mode = mask;
   if (mask & CWWidth)
     req.width = emst->proposed_width - 2*textbord;
@@ -1433,7 +1587,7 @@ x_do_query_geometry (Widget w, XtPointer client_data, XtPointer call_data)
   XtQueryGeometry (text, &req, &repl);
 
   /* Now add the menubar back again */
-  emst->proposed_width = repl.width + 2*textbord;
+  emst->proposed_width  = repl.width  + 2*textbord;
   emst->proposed_height = repl.height + topbreadth + 2*textbord;
 }
 
@@ -1527,7 +1681,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       XtSetArg (av[ac], XtNwindow, window_id); ac++;
     }
   else
-#endif
+#endif /* EXTERNAL_WIDGET */
     {
       XtSetArg (av[ac], XtNinput, True); ac++;
       XtSetArg (av[ac], (String) XtNminWidthCells, 10); ac++;
@@ -1581,7 +1735,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
   
   if (menubar_visible)
     XtManageChild (menubar);
-#endif
+#endif /* HAVE_MENUBARS */
   XtManageChild (text);
   XtManageChild (container);
 }
@@ -1626,7 +1780,7 @@ xemacs_XtPopup (Widget widget)
 /* Does this have to be non-automatic? */
 /* hack frame to respond to dnd messages */
 static XtCallbackRec dnd_transfer_cb_rec[2];
-#endif
+#endif /* HAVE_CDE */
 
 /* create the windows for the specified frame and display them.
    Note that the widgets have already been created, and any
@@ -1681,7 +1835,7 @@ x_popup_frame (struct frame *f)
 		     True,                   /* called on non-maskable events? */
 		     _XEditResCheckMessages, /* the handler */
 		     NULL);
-#endif
+#endif /* HACK_EDITRES */
 
 #ifdef HAVE_CDE
   {
@@ -1697,7 +1851,7 @@ x_popup_frame (struct frame *f)
 			 DtNpreserveRegistration, False,
 			 NULL);
   }
-#endif
+#endif /* HAVE_CDE */
 
 #ifdef HAVE_OFFIX_DND
   {
@@ -1846,6 +2000,8 @@ x_get_frame_parent (struct frame *f)
   Widget parentwid = 0;
   Arg av[1];
 
+  /* We may be passed a dangling deleted frame */
+  /* I do not know how to test for this. -sb */
   XtSetArg (av[0], XtNtransientFor, &parentwid);
   XtGetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
   /* find the frame whose wid is parentwid */
@@ -1862,14 +2018,13 @@ x_get_frame_parent (struct frame *f)
   return Qnil;
 }
 
-DEFUN ("x-window-id", Fx_window_id, Sx_window_id, 0, 1, 0 /*
+DEFUN ("x-window-id", Fx_window_id, 0, 1, 0, /*
 Get the ID of the X11 window.
 This gives us a chance to manipulate the Emacs window from within a
 different program.  Since the ID is an unsigned long, we return it as
 a string.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   char str[255];
   struct frame *f = decode_x_frame (frame);
@@ -1888,14 +2043,14 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
 {
   Widget w = FRAME_X_SHELL_WIDGET (f);
   Display *dpy = XtDisplay (w);
-  Dimension frame_w = DisplayWidth (dpy, DefaultScreen (dpy));
+  Dimension frame_w = DisplayWidth  (dpy, DefaultScreen (dpy));
   Dimension frame_h = DisplayHeight (dpy, DefaultScreen (dpy));
   Dimension shell_w, shell_h, shell_bord;
   int win_gravity;
 
   XtVaGetValues (w,
-		 XtNwidth, &shell_w,
-		 XtNheight, &shell_h,
+		 XtNwidth,       &shell_w,
+		 XtNheight,      &shell_h,
 		 XtNborderWidth, &shell_bord,
 		 0);
 
@@ -1918,24 +2073,21 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
 		 XtNx, xoff,
 		 XtNy, yoff,
 		 0);
+
   /* Sometimes you will find that
 
      (set-frame-position (selected-frame) -50 -50)
 
-     doesn't put the frame where you expect it to:
-     i.e. it's closer to the lower-right corner than
-     it should be, and it appears that the size of
-     the WM decorations was not taken into account.
-     This is *not* a problem with this function.
-     Both mwm and twm have bugs in handling this
-     situation. (mwm ignores the window gravity
-     and always assumes NorthWest, except the first
-     time you map the window; twm gets things almost
-     right, but forgets to account for the border
-     width of the top-level window.) This function
-     does what it's supposed to according to the ICCCM,
-     and I'm not about to hack around window-manager
-     bugs. */
+     doesn't put the frame where you expect it to: i.e. it's closer to
+     the lower-right corner than it should be, and it appears that the
+     size of the WM decorations was not taken into account.  This is
+     *not* a problem with this function.  Both mwm and twm have bugs
+     in handling this situation. (mwm ignores the window gravity and
+     always assumes NorthWest, except the first time you map the
+     window; twm gets things almost right, but forgets to account for
+     the border width of the top-level window.) This function does
+     what it's supposed to according to the ICCCM, and I'm not about
+     to hack around window-manager bugs. */
 
 #if 0
   /* This is not necessary under either mwm or twm */
@@ -2267,7 +2419,10 @@ syms_of_frame_x (void)
   defsymbol (&Qpopup, "popup");
   defsymbol (&Qx_resource_name, "x-resource-name");
 
-  defsubr (&Sx_window_id);
+  DEFSUBR (Fx_window_id);
+#ifdef HAVE_CDE
+  DEFSUBR (Fcde_start_drag_internal);
+#endif
 }
 
 void

@@ -235,7 +235,13 @@
 	  (vm-convert-folder-type-headers nil vm-folder-type)
 	  (goto-char end)
 	  (insert-before-markers (vm-trailing-message-separator))))
-    (write-region start end crash t 0)
+    ;; Set file type to binary for DOS/Windows.  I don't know if
+    ;; this is correct to do or not; it depends on whether the
+    ;; the CRLF or the LF newline convention is used on the inbox
+    ;; associated with this crashbox.  This setting assumes the LF
+    ;; newline convention is used.
+    (let ((buffer-file-type t))
+      (write-region start end crash t 0))
     (delete-region start end)
     t ))
 
@@ -262,7 +268,7 @@
 	  (insert string)
 	  (call-process-region (point-min) (point-max)
 			       "/bin/sh" t buffer nil
-			       "-c" vm-pop-md5-program)
+			       shell-command-switch vm-pop-md5-program)
 	  ;; MD5 digest is 32 chars long
 	  ;; mddriver adds a newline to make neaten output for tty
 	  ;; viewing, make sure we leave it behind.

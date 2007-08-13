@@ -431,12 +431,11 @@ init_free_hook (void)
 
 void really_free_one_entry (void *, int, int *);
 
-DEFUN ("really-free", Freally_free, Sreally_free, 0, 1, "P" /*
+DEFUN ("really-free", Freally_free, 0, 1, "P", /*
 Actually free the storage held by the free() debug hook.
 A no-op if the free hook is disabled.
-*/ )
-     (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   int count[2];
   Lisp_Object lisp_count[2];
@@ -477,7 +476,7 @@ really_free_one_entry (void *key, int contents, int *countp)
 void
 syms_of_free_hook (void)
 {
-  defsubr (&Sreally_free);
+  DEFSUBR (Freally_free);
 }
 
 #else

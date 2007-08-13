@@ -136,8 +136,7 @@ color_instance_hash (Lisp_Object obj, int depth)
 				    LISP_HASH (obj)));
 }
 
-DEFUN ("make-color-instance", Fmake_color_instance, Smake_color_instance,
-       1, 3, 0 /*
+DEFUN ("make-color-instance", Fmake_color_instance, 1, 3, 0, /*
 Creates a new `color-instance' object of the specified color.
 DEVICE specifies the device this object applies to and defaults to the
 selected device.  An error is signalled if the color is unknown or cannot
@@ -149,9 +148,8 @@ The returned object is a normal, first-class lisp object.  The way you
 you drop all pointers to it and allow it to be garbage collected.  When
 these objects are GCed, the underlying window-system data (e.g. X object)
 is deallocated as well.
-*/ )
-  (name, device, no_error)
-  Lisp_Object name, device, no_error;
+*/
+       (name, device, no_error))
 {
   struct Lisp_Color_Instance *c;
   Lisp_Object val;
@@ -178,33 +176,28 @@ is deallocated as well.
   return val;
 }
 
-DEFUN ("color-instance-p", Fcolor_instance_p, Scolor_instance_p, 1, 1, 0 /*
+DEFUN ("color-instance-p", Fcolor_instance_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a color instance.
-*/ )
-  (object)
-  Lisp_Object object;
+*/
+       (object))
 {
   return (COLOR_INSTANCEP (object) ? Qt : Qnil);
 }
 
-DEFUN ("color-instance-name", Fcolor_instance_name, Scolor_instance_name,
-       1, 1, 0 /*
+DEFUN ("color-instance-name", Fcolor_instance_name, 1, 1, 0, /*
 Return the name used to allocate COLOR-INSTANCE.
-*/ )
-  (color_instance)
-  Lisp_Object color_instance;
+*/
+       (color_instance))
 {
   CHECK_COLOR_INSTANCE (color_instance);
   return (XCOLOR_INSTANCE (color_instance)->name);
 }
 
-DEFUN ("color-instance-rgb-components", Fcolor_instance_rgb_components,
-       Scolor_instance_rgb_components, 1, 1, 0 /*
+DEFUN ("color-instance-rgb-components", Fcolor_instance_rgb_components, 1, 1, 0, /*
 Return a three element list containing the red, green, and blue
 color components of COLOR-INSTANCE, or nil if unknown.
-*/ )
-     (color_instance)
-     Lisp_Object color_instance;
+*/
+       (color_instance))
 {
   struct Lisp_Color_Instance *c;
 
@@ -219,8 +212,7 @@ color components of COLOR-INSTANCE, or nil if unknown.
 			       (c));
 }
 
-DEFUN ("valid-color-name-p", Fvalid_color_name_p, Svalid_color_name_p,
-       1, 2, 0 /*
+DEFUN ("valid-color-name-p", Fvalid_color_name_p, 1, 2, 0, /*
 Return true if COLOR names a valid color for the current device.
 
 Valid color names for X are listed in the file /usr/lib/X11/rgb.txt, or
@@ -229,9 +221,8 @@ whatever the equivalent is on your system.
 Valid color names for TTY are those which have an ISO 6429 (ANSI) sequence.
 In addition to being a color this may be one of a number of attributes
 such as `blink'.
-*/ )
-     (color, device)
-     Lisp_Object color, device;
+*/
+       (color, device))
 {
   struct device *d = decode_device (device);
 
@@ -319,8 +310,7 @@ font_instance_hash (Lisp_Object obj, int depth)
 			depth + 1);
 }
 
-DEFUN ("make-font-instance", Fmake_font_instance, Smake_font_instance,
-       1, 3, 0 /*
+DEFUN ("make-font-instance", Fmake_font_instance, 1, 3, 0, /*
 Creates a new `font-instance' object of the specified name.
 DEVICE specifies the device this object applies to and defaults to the
 selected device.  An error is signalled if the font is unknown or cannot
@@ -331,9 +321,8 @@ The returned object is a normal, first-class lisp object.  The way you
 `deallocate' the font is the way you deallocate any other lisp object:
 you drop all pointers to it and allow it to be garbage collected.  When
 these objects are GCed, the underlying X data is deallocated as well.
-*/ )
-  (name, device, no_error)
-  Lisp_Object name, device, no_error;
+*/
+       (name, device, no_error))
 {
   struct Lisp_Font_Instance *f;
   Lisp_Object val;
@@ -370,73 +359,63 @@ these objects are GCed, the underlying X data is deallocated as well.
   return val;
 }
 
-DEFUN ("font-instance-p", Ffont_instance_p, Sfont_instance_p, 1, 1, 0 /*
+DEFUN ("font-instance-p", Ffont_instance_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a font instance.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (FONT_INSTANCEP (object) ? Qt : Qnil);
 }
 
-DEFUN ("font-instance-name", Ffont_instance_name, Sfont_instance_name, 1, 1, 0 /*
+DEFUN ("font-instance-name", Ffont_instance_name, 1, 1, 0, /*
 Return the name used to allocate FONT-INSTANCE.
-*/ )
-     (font_instance)
-     Lisp_Object font_instance;
+*/
+       (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
   return (XFONT_INSTANCE (font_instance)->name);
 }
 
-DEFUN ("font-instance-ascent", Ffont_instance_ascent,
-       Sfont_instance_ascent, 1, 1, 0 /*
+DEFUN ("font-instance-ascent", Ffont_instance_ascent, 1, 1, 0, /*
 Return the ascent in pixels of FONT-INSTANCE.
 The returned value is the maximum ascent for all characters in the font,
 where a character's ascent is the number of pixels above (and including)
 the baseline.
-*/ )
-  (font_instance)
-  Lisp_Object font_instance;
+*/
+       (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
   return make_int (XFONT_INSTANCE (font_instance)->ascent);
 }
 
-DEFUN ("font-instance-descent", Ffont_instance_descent,
-       Sfont_instance_descent, 1, 1, 0 /*
+DEFUN ("font-instance-descent", Ffont_instance_descent, 1, 1, 0, /*
 Return the descent in pixels of FONT-INSTANCE.
 The returned value is the maximum descent for all characters in the font,
 where a character's descent is the number of pixels below the baseline.
 (Many characters to do not have any descent.  Typical characters with a
 descent are lowercase p and lowercase g.)
-*/ )
-  (font_instance)
-  Lisp_Object font_instance;
+*/
+       (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
   return make_int (XFONT_INSTANCE (font_instance)->descent);
 }
 
-DEFUN ("font-instance-width", Ffont_instance_width,
-       Sfont_instance_width, 1, 1, 0 /*
+DEFUN ("font-instance-width", Ffont_instance_width, 1, 1, 0, /*
 Return the width in pixels of FONT-INSTANCE.
 The returned value is the average width for all characters in the font.
-*/ )
-  (font_instance)
-  Lisp_Object font_instance;
+*/
+       (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
   return make_int (XFONT_INSTANCE (font_instance)->width);
 }
 
-DEFUN ("font-instance-proportional-p", Ffont_instance_proportional_p,
-       Sfont_instance_proportional_p, 1, 1, 0 /*
+DEFUN ("font-instance-proportional-p", Ffont_instance_proportional_p, 1, 1, 0, /*
 Return whether FONT-INSTANCE is proportional.
 This means that different characters in the font have different widths.
-*/ )
-  (font_instance)
-  Lisp_Object font_instance;
+*/
+       (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
   return (XFONT_INSTANCE (font_instance)->proportional_p ? Qt : Qnil);
@@ -451,26 +430,22 @@ font_instance_truename_internal (Lisp_Object font_instance,
 			   (f, errb), f->name);
 }
 
-DEFUN ("font-instance-truename", Ffont_instance_truename,
-       Sfont_instance_truename, 1, 1, 0 /*
+DEFUN ("font-instance-truename", Ffont_instance_truename, 1, 1, 0, /*
 Return the canonical name of FONT-INSTANCE.
 Font names are patterns which may match any number of fonts, of which
 the first found is used.  This returns an unambiguous name for that font
 (but not necessarily its only unambiguous name).
-*/ )
-  (font_instance)
-  Lisp_Object font_instance;
+*/
+       (font_instance))
 {
   CHECK_FONT_INSTANCE (font_instance);
   return font_instance_truename_internal (font_instance, ERROR_ME);
 }
 
-DEFUN ("font-instance-properties", Ffont_instance_properties,
-       Sfont_instance_properties, 1, 1, 0 /*
+DEFUN ("font-instance-properties", Ffont_instance_properties, 1, 1, 0, /*
 Return the properties (an alist or nil) of FONT-INSTANCE.
-*/ )
-  (font_instance)
-  Lisp_Object font_instance;
+*/
+       (font_instance))
 {
   struct Lisp_Font_Instance *f;
 
@@ -481,13 +456,12 @@ Return the properties (an alist or nil) of FONT-INSTANCE.
 			     font_instance_properties, (f));
 }
 
-DEFUN ("list-fonts", Flist_fonts, Slist_fonts, 1, 2, 0 /*
+DEFUN ("list-fonts", Flist_fonts, 1, 2, 0, /*
 Return a list of font names matching the given pattern.
 DEVICE specifies which device to search for names, and defaults to the
 currently selected device.
-*/ )
-  (pattern, device)
-  Lisp_Object pattern, device;
+*/
+       (pattern, device))
 {
   CHECK_STRING (pattern);
   XSETDEVICE (device, decode_device (device));
@@ -653,7 +627,7 @@ set_color_attached_to (Lisp_Object obj, Lisp_Object face, Lisp_Object property)
   COLOR_SPECIFIER_FACE_PROPERTY (color) = property;
 }
 
-DEFUN ("color-specifier-p", Fcolor_specifier_p, Scolor_specifier_p, 1, 1, 0 /*
+DEFUN ("color-specifier-p", Fcolor_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a color specifier.
 
 Valid instantiators for color specifiers are:
@@ -669,9 +643,8 @@ Valid instantiators for color specifiers are:
    either `foreground' or `background' (if omitted, defaults to the same
    property that this color specifier is used for; if this specifier is
    not part of a face, the instantiator would not be valid)
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (COLOR_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -791,7 +764,7 @@ set_font_attached_to (Lisp_Object obj, Lisp_Object face, Lisp_Object property)
   FONT_SPECIFIER_FACE_PROPERTY (font) = property;
 }
 
-DEFUN ("font-specifier-p", Ffont_specifier_p, Sfont_specifier_p, 1, 1, 0 /*
+DEFUN ("font-specifier-p", Ffont_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a font specifier.
 
 Valid instantiators for font specifiers are:
@@ -804,9 +777,8 @@ Valid instantiators for font specifiers are:
 -- a vector of no elements (only on TTY's; this means to set no font
    at all, thus using the \"natural\" font of the terminal's text)
 -- a vector of one element (a face to inherit from)
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (FONT_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -938,8 +910,7 @@ set_face_boolean_attached_to (Lisp_Object obj, Lisp_Object face,
   FACE_BOOLEAN_SPECIFIER_FACE_PROPERTY (face_boolean) = property;
 }
 
-DEFUN ("face-boolean-specifier-p", Fface_boolean_specifier_p,
-       Sface_boolean_specifier_p, 1, 1, 0 /*
+DEFUN ("face-boolean-specifier-p", Fface_boolean_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a face-boolean specifier.
 
 Valid instantiators for face-boolean specifiers are
@@ -951,9 +922,8 @@ Valid instantiators for face-boolean specifiers are
    specifier is used for; if this specifier is not part of a face,
    the instantiator would not be valid), and optionally a value which,
    if non-nil, means to invert the sense of the inherited property.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (FACE_BOOLEAN_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -966,28 +936,28 @@ Valid instantiators for face-boolean specifiers are
 void
 syms_of_objects (void)
 {
-  defsubr (&Scolor_specifier_p);
-  defsubr (&Sfont_specifier_p);
-  defsubr (&Sface_boolean_specifier_p);
+  DEFSUBR (Fcolor_specifier_p);
+  DEFSUBR (Ffont_specifier_p);
+  DEFSUBR (Fface_boolean_specifier_p);
 
   defsymbol (&Qcolor_instancep, "color-instance-p");
-  defsubr (&Smake_color_instance);
-  defsubr (&Scolor_instance_p);
-  defsubr (&Scolor_instance_name);
-  defsubr (&Scolor_instance_rgb_components);
-  defsubr (&Svalid_color_name_p);
+  DEFSUBR (Fmake_color_instance);
+  DEFSUBR (Fcolor_instance_p);
+  DEFSUBR (Fcolor_instance_name);
+  DEFSUBR (Fcolor_instance_rgb_components);
+  DEFSUBR (Fvalid_color_name_p);
 
   defsymbol (&Qfont_instancep, "font-instance-p");
-  defsubr (&Smake_font_instance);
-  defsubr (&Sfont_instance_p);
-  defsubr (&Sfont_instance_name);
-  defsubr (&Sfont_instance_ascent);
-  defsubr (&Sfont_instance_descent);
-  defsubr (&Sfont_instance_width);
-  defsubr (&Sfont_instance_proportional_p);
-  defsubr (&Sfont_instance_truename);
-  defsubr (&Sfont_instance_properties);
-  defsubr (&Slist_fonts);
+  DEFSUBR (Fmake_font_instance);
+  DEFSUBR (Ffont_instance_p);
+  DEFSUBR (Ffont_instance_name);
+  DEFSUBR (Ffont_instance_ascent);
+  DEFSUBR (Ffont_instance_descent);
+  DEFSUBR (Ffont_instance_width);
+  DEFSUBR (Ffont_instance_proportional_p);
+  DEFSUBR (Ffont_instance_truename);
+  DEFSUBR (Ffont_instance_properties);
+  DEFSUBR (Flist_fonts);
 
   /* Qcolor, Qfont defined in general.c */
   defsymbol (&Qface_boolean, "face-boolean");

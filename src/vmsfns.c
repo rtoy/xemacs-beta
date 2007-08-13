@@ -265,24 +265,20 @@ Lisp_Object Qdefault_subproc_input_handler;
 
 extern int process_ef;		/* Event flag for subprocess operations */
 
-DEFUN ("default-subprocess-input-handler",
-  Fdefault_subproc_input_handler, Sdefault_subproc_input_handler,
-  2, 2, 0 /*
+DEFUN ("default-subprocess-input-handler", Fdefault_subproc_input_handler, 2, 2, 0, /*
 Default input handler for input from spawned subprocesses.
-*/ )
-  (name, input)
-     Lisp_Object name, input;
+*/
+       (name, input))
 {
   /* Just insert in current buffer */
   buffer_insert1 (current_buffer, input);
   buffer_insert_c_char ('\n');
 }
 
-DEFUN ("spawn-subprocess", Fspawn_subprocess, Sspawn_subprocess, 1, 3, 0 /*
+DEFUN ("spawn-subprocess", Fspawn_subprocess, 1, 3, 0, /*
 Spawn an asynchronous VMS suprocess for command processing.
-*/ )
-  (name, input_handler, exit_handler)
-     Lisp_Object name, input_handler, exit_handler;
+*/
+       (name, input_handler, exit_handler))
 {
   /* This function can GC */
   int status;
@@ -359,13 +355,11 @@ mbx_msg (ptr, msg)
   write_to_mbx (ptr, msg, strlen (msg));
 }
 
-DEFUN ("send-command-to-subprocess",
-  Fsend_command_to_subprocess, Ssend_command_to_subprocess, 2, 2,
-  "sSend command to subprocess: \nsSend subprocess %s command: " /*
+DEFUN ("send-command-to-subprocess", Fsend_command_to_subprocess, 2, 2,
+       "sSend command to subprocess: \nsSend subprocess %s command: ", /*
 Send to VMS subprocess named NAME the string COMMAND.
-*/ )
-  (name, command)
-     Lisp_Object name, command;
+*/
+       (name, command))
 {
   struct process_list * ptr;
 
@@ -380,12 +374,10 @@ Send to VMS subprocess named NAME the string COMMAND.
   return Qnil;
 }
 
-DEFUN ("stop-subprocess", Fstop_subprocess, Sstop_subprocess, 1, 1,
-  "sStop subprocess: " /*
+DEFUN ("stop-subprocess", Fstop_subprocess, 1, 1, "sStop subprocess: ", /*
 Stop VMS subprocess named NAME.
-*/ )
-  (name)
-     Lisp_Object name;
+*/
+       (name))
 {
   struct process_list * ptr;
 
@@ -574,15 +566,14 @@ write_to_mbx (ptr, buf, len)
 	    0, 0, buf, len, 0, 0, 0, 0);
 }
 
-DEFUN ("setprv", Fsetprv, Ssetprv, 1, 3, 0 /*
+DEFUN ("setprv", Fsetprv, 1, 3, 0, /*
 Set or reset a VMS privilege.  First arg is privilege name.
 Second arg is t or nil, indicating whether the privilege is to be
 set or reset.  Default is nil.  Returns t if success, nil if not.
 If third arg is non-nil, does not change privilege, but returns t
 or nil depending upon whether the privilege is already enabled.
-*/ )
-  (priv, value, getprv)
-     Lisp_Object priv, value, getprv;
+*/
+       (priv, value, getprv))
 {
   int prvmask[2], prvlen, newmask[2];
   char * prvname;
@@ -631,7 +622,7 @@ or nil depending upon whether the privilege is already enabled.
 
 #ifdef VMS4_4  /* I don't know whether these functions work in old versions */
 
-DEFUN ("vms-system-info", Fvms_system_info, Svms_system_info, 1, 3, 0 /*
+DEFUN ("vms-system-info", Fvms_system_info, 1, 3, 0, /*
 Retrieve VMS process and system information.
 The first argument (a string) specifies the type of information desired.
 The other arguments depend on the type you select.
@@ -653,9 +644,8 @@ These are the possibilities for the first arg (upper or lower case ok):
     logical     Translates VMS logical name (second argument)
     dcl-symbol  Translates DCL symbol (second argument)
     proclist    Returns list of all PIDs on system (needs WORLD privilege).
-*/ )
-  (type, arg1, arg2)
-     Lisp_Object type, arg1, arg2;
+*/
+       (type, arg1, arg2))
 {
   int i, typelen;
   char * typename;
@@ -916,10 +906,10 @@ vms_proclist (arg1, arg2)
   return (Fsort (retval, intern ("<")));
 }
 
-DEFUN ("shrink-to-icon", Fshrink_to_icon, Sshrink_to_icon, 0, 0, 0 /*
+DEFUN ("shrink-to-icon", Fshrink_to_icon, 0, 0, 0, /*
 If emacs is running in a workstation window, shrink to an icon.
-*/ )
-     ()
+*/
+       ())
 {
   static char result[128];
   static $DESCRIPTOR (result_descriptor, result);
@@ -953,14 +943,14 @@ init_vmsfns (void)
 
 syms_of_vmsfns (void)
 {
-  defsubr (&Sdefault_subproc_input_handler);
-  defsubr (&Sspawn_subprocess);
-  defsubr (&Ssend_command_to_subprocess);
-  defsubr (&Sstop_subprocess);
-  defsubr (&Ssetprv);
+  DEFSUBR (Fdefault_subproc_input_handler);
+  DEFSUBR (Fspawn_subprocess);
+  DEFSUBR (Fsend_command_to_subprocess);
+  DEFSUBR (Fstop_subprocess);
+  DEFSUBR (Fsetprv);
 #ifdef VMS4_4
-  defsubr (&Svms_system_info);
-  defsubr (&Sshrink_to_icon);
+  DEFSUBR (Fvms_system_info);
+  DEFSUBR (Fshrink_to_icon);
 #endif /* VMS4_4 */
   defsymbol (&Qdefault_subproc_input_handler,
 	     "default-subprocess-input-handler");

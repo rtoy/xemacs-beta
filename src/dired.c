@@ -38,7 +38,7 @@ Lisp_Object Qfile_name_completion;
 Lisp_Object Qfile_name_all_completions;
 Lisp_Object Qfile_attributes;
 
-DEFUN ("directory-files", Fdirectory_files, Sdirectory_files, 1, 5, 0 /*
+DEFUN ("directory-files", Fdirectory_files, 1, 5, 0, /*
 Return a list of names of files in DIRECTORY.
 There are four optional arguments:
 If FULL is non-nil, absolute pathnames of the files are returned.
@@ -50,9 +50,8 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
  nil and not t, then only the subdirectories will be returned.  Otherwise,
  if FILES-ONLY is nil (the default) then both files and subdirectories will
  be returned.
-*/ )
-  (dirname, full, match, nosort, files_only)
-     Lisp_Object dirname, full, match, nosort, files_only;
+*/
+       (dirname, full, match, nosort, files_only))
 {
   /* This function can GC */
   DIR *d;
@@ -212,8 +211,7 @@ static Lisp_Object file_name_completion (Lisp_Object file,
                                          Lisp_Object dirname, 
                                          int all_flag, int ver_flag);
 
-DEFUN ("file-name-completion", Ffile_name_completion, Sfile_name_completion,
-  2, 2, 0 /*
+DEFUN ("file-name-completion", Ffile_name_completion, 2, 2, 0, /*
 Complete file name FILE in directory DIR.
 Returns the longest string common to all filenames in DIR
 that start with FILE.
@@ -224,9 +222,8 @@ Filenames which end with any member of `completion-ignored-extensions'
 are not considered as possible completions for FILE unless there is no
 other possible completion.  `completion-ignored-extensions' is not applied
 to the names of directories.
-*/ )
-  (file, dirname)
-     Lisp_Object file, dirname;
+*/
+       (file, dirname))
 {
   /* This function can GC */
   Lisp_Object handler;
@@ -246,8 +243,7 @@ to the names of directories.
   return file_name_completion (file, dirname, 0, 0);
 }
 
-DEFUN ("file-name-all-completions", Ffile_name_all_completions,
-  Sfile_name_all_completions, 2, 2, 0 /*
+DEFUN ("file-name-all-completions", Ffile_name_all_completions, 2, 2, 0, /*
 Return a list of all completions of file name FILE in directory DIR.
 These are all file names in directory DIR which begin with FILE.
 
@@ -255,9 +251,8 @@ Filenames which end with any member of `completion-ignored-extensions'
 are not considered as possible completions for FILE unless there is no
 other possible completion.  `completion-ignored-extensions' is not applied
 to the names of directories.
-*/ )
-  (file, dirname)
-     Lisp_Object file, dirname;
+*/
+       (file, dirname))
 {
   /* This function can GC */
   Lisp_Object handler;
@@ -546,23 +541,20 @@ make_directory_hash_table (char *path)
 
 #ifdef VMS
 
-DEFUN ("file-name-all-versions", Ffile_name_all_versions,
-  Sfile_name_all_versions, 2, 2, 0 /*
+DEFUN ("file-name-all-versions", Ffile_name_all_versions, 2, 2, 0, /*
 Return a list of all versions of file name FILE in directory DIR.
-*/ )
-  (file, dirname)
-     Lisp_Object file, dirname;
+*/
+       (file, dirname))
 {
   /* This function can GC */
   return file_name_completion (file, dirname, 1, 1);
 }
 
-DEFUN ("file-version-limit", Ffile_version_limit, Sfile_version_limit, 1, 1, 0 /*
+DEFUN ("file-version-limit", Ffile_version_limit, 1, 1, 0, /*
 Return the maximum number of versions allowed for FILE.
 Returns nil if the file cannot be opened or if there is no version limit.
-*/ )
-  (filename)
-     Lisp_Object filename;
+*/
+       (filename))
 {
   /* This function can GC */
   Lisp_Object retval;
@@ -601,7 +593,7 @@ wasteful_word_to_lisp (unsigned int item)
   return cons;
 }
 
-DEFUN ("file-attributes", Ffile_attributes, Sfile_attributes, 1, 1, 0 /*
+DEFUN ("file-attributes", Ffile_attributes, 1, 1, 0, /*
 Return a list of attributes of file FILENAME.
 Value is nil if specified file cannot be opened.
 Otherwise, list elements are:
@@ -620,9 +612,8 @@ Otherwise, list elements are:
 11. Device number.
 
 If file does not exist, returns nil.
-*/ )
-  (filename)
-     Lisp_Object filename;
+*/
+       (filename))
 {
   /* This function can GC */
   Lisp_Object values[12];
@@ -738,14 +729,14 @@ syms_of_dired (void)
   defsymbol (&Qfile_name_all_completions, "file-name-all-completions");
   defsymbol (&Qfile_attributes, "file-attributes");
 
-  defsubr (&Sdirectory_files);
-  defsubr (&Sfile_name_completion);
+  DEFSUBR (Fdirectory_files);
+  DEFSUBR (Ffile_name_completion);
 #ifdef VMS
-  defsubr (&Sfile_name_all_versions);
-  defsubr (&Sfile_version_limit);
+  DEFSUBR (Ffile_name_all_versions);
+  DEFSUBR (Ffile_version_limit);
 #endif /* VMS */
-  defsubr (&Sfile_name_all_completions);
-  defsubr (&Sfile_attributes);
+  DEFSUBR (Ffile_name_all_completions);
+  DEFSUBR (Ffile_attributes);
 }
 
 void

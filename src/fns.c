@@ -110,11 +110,10 @@ bit_vector_hash (Lisp_Object obj, int depth)
 			     sizeof (long)));
 }
 
-DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0 /*
+DEFUN ("identity", Fidentity, 1, 1, 0, /*
 Return the argument unchanged.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   return arg;
 }
@@ -122,15 +121,14 @@ Return the argument unchanged.
 extern long get_random (void);
 extern void seed_random (long arg);
 
-DEFUN ("random", Frandom, Srandom, 0, 1, 0 /*
+DEFUN ("random", Frandom, 0, 1, 0, /*
 Return a pseudo-random number.
 All integers representable in Lisp are equally likely.\n\
   On most systems, this is 28 bits' worth.\n\
 With positive integer argument N, return random number in interval [0,N).\n\
 With argument t, set the random number seed from the current time and pid.
-*/ )
-  (limit)
-     Lisp_Object limit;
+*/
+       (limit))
 {
   EMACS_INT val;
   Lisp_Object lispy_val;
@@ -199,11 +197,10 @@ check_losing_bytecode (CONST char *function, Lisp_Object seq)
        function);
 }
 
-DEFUN ("length", Flength, Slength, 1, 1, 0 /*
+DEFUN ("length", Flength, 1, 1, 0, /*
 Return the length of vector, bit vector, list or string SEQUENCE.
-*/ )
-  (obj)
-     Lisp_Object obj;
+*/
+       (obj))
 {
   Lisp_Object tail;
   int i;
@@ -240,14 +237,13 @@ Return the length of vector, bit vector, list or string SEQUENCE.
 /* This does not check for quits.  That is safe
    since it must terminate.  */
 
-DEFUN ("safe-length", Fsafe_length, Ssafe_length, 1, 1, 0 /*
+DEFUN ("safe-length", Fsafe_length, 1, 1, 0, /*
 Return the length of a list, but avoid error or infinite loop.
 This function never gets an error.  If LIST is not really a list,
 it returns 0.  If LIST is circular, it returns a finite value
 which is at least the number of distinct elements.
-*/ )
- (list)
-     Lisp_Object list;
+*/
+       (list))
 {
   Lisp_Object tail, halftail, length;
   int len = 0;
@@ -269,15 +265,14 @@ which is at least the number of distinct elements.
 
 /*** string functions. ***/
 
-DEFUN ("string-equal", Fstring_equal, Sstring_equal, 2, 2, 0 /*
+DEFUN ("string-equal", Fstring_equal, 2, 2, 0, /*
 T if two strings have identical contents.
 Case is significant.  Text properties are ignored.
 (Under XEmacs, `equal' also ignores text properties and extents in
 strings, but this is not the case under FSF Emacs.)
 Symbols are also allowed; their print names are used instead.
-*/ )
-  (s1, s2)
-     Lisp_Object s1, s2;
+*/
+       (s1, s2))
 {
   int len;
 
@@ -296,14 +291,13 @@ Symbols are also allowed; their print names are used instead.
 }
 
 
-DEFUN ("string-lessp", Fstring_lessp, Sstring_lessp, 2, 2, 0 /*
+DEFUN ("string-lessp", Fstring_lessp, 2, 2, 0, /*
 T if first arg string is less than second in lexicographic order.
 If I18N2 support was compiled in, ordering is determined by the locale.
 Case is significant for the default C locale.
 Symbols are also allowed; their print names are used instead.
-*/ )
-  (s1, s2)
-     Lisp_Object s1, s2;
+*/
+       (s1, s2))
 {
   struct Lisp_String *p1, *p2;
   Charcount end, len2;
@@ -352,14 +346,12 @@ Symbols are also allowed; their print names are used instead.
   }
 }
 
-DEFUN ("string-modified-tick", Fstring_modified_tick, Sstring_modified_tick,
-       1, 1, 0 /*
+DEFUN ("string-modified-tick", Fstring_modified_tick, 1, 1, 0, /*
 Return STRING's tick counter, incremented for each change to the string.
 Each string has a tick counter which is incremented each time the contents
 of the string are changed (e.g. with `aset').  It wraps around occasionally.
-*/ )
-  (string)
-  Lisp_Object string;
+*/
+       (string))
 {
   struct Lisp_String *s;
 
@@ -434,20 +426,18 @@ vconcat3 (Lisp_Object s1, Lisp_Object s2, Lisp_Object s3)
   return concat (3, args, c_vector, 0);
 }
 
-DEFUN ("append", Fappend, Sappend, 0, MANY, 0 /*
+DEFUN ("append", Fappend, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a list.
 The result is a list whose elements are the elements of all the arguments.
 Each argument may be a list, vector, bit vector, or string.
 The last argument is not copied, just used as the tail of the new list.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return concat (nargs, args, c_cons, 1);
 }
 
-DEFUN ("concat", Fconcat, Sconcat, 0, MANY, 0 /*
+DEFUN ("concat", Fconcat, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a string.
 The result is a string whose elements are the elements of all the arguments.
 Each argument may be a string or a list or vector of characters (integers).
@@ -456,45 +446,38 @@ Do not use individual integers as arguments!
 The behavior of `concat' in that case will be changed later!
 If your program passes an integer as an argument to `concat',
 you should change it right away not to do so.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return concat (nargs, args, c_string, 0);
 }
 
-DEFUN ("vconcat", Fvconcat, Svconcat, 0, MANY, 0 /*
+DEFUN ("vconcat", Fvconcat, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a vector.
 The result is a vector whose elements are the elements of all the arguments.
 Each argument may be a list, vector, bit vector, or string.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return concat (nargs, args, c_vector, 0);
 }
 
-DEFUN ("bvconcat", Fbvconcat, Sbvconcat, 0, MANY, 0 /*
+DEFUN ("bvconcat", Fbvconcat, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a bit vector.
 The result is a bit vector whose elements are the elements of all the
 arguments.  Each argument may be a list, vector, bit vector, or string.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return concat (nargs, args, c_bit_vector, 0);
 }
 
-DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0 /*
+DEFUN ("copy-sequence", Fcopy_sequence, 1, 1, 0, /*
 Return a copy of a list, vector, bit vector or string.
 The elements of a list or vector are not copied; they are shared
 with the original.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
  again:
   if (NILP (arg)) return arg;
@@ -782,16 +765,15 @@ concat (int nargs, Lisp_Object *args,
   RETURN_UNGCPRO (val);  
 }
 
-DEFUN ("copy-alist", Fcopy_alist, Scopy_alist, 1, 1, 0 /*
+DEFUN ("copy-alist", Fcopy_alist, 1, 1, 0, /*
 Return a copy of ALIST.
 This is an alist which represents the same mapping from objects to objects,
 but does not share the alist structure with ALIST.
 The objects mapped (cars and cdrs of elements of the alist)
 are shared, however.
 Elements of ALIST that are not conses are also shared.
-*/ )
-  (alist)
-     Lisp_Object alist;
+*/
+       (alist))
 {
   Lisp_Object tem;
 
@@ -810,15 +792,14 @@ Elements of ALIST that are not conses are also shared.
   return alist;
 }
 
-DEFUN ("copy-tree", Fcopy_tree, Scopy_tree, 1, 2, 0 /*
+DEFUN ("copy-tree", Fcopy_tree, 1, 2, 0, /*
 Return a copy of a list and substructures.
 The argument is copied, and any lists contained within it are copied
 recursively.  Circularities and shared substructures are not preserved.
 Second arg VECP causes vectors to be copied, too.  Strings and bit vectors
 are not copied.
-*/ )
-   (arg, vecp)
-     Lisp_Object arg, vecp;
+*/
+       (arg, vecp))
 {
   if (CONSP (arg))
     {
@@ -851,15 +832,13 @@ are not copied.
   return arg;
 }
 
-DEFUN ("substring", Fsubstring, Ssubstring, 2, 3, 0 /*
+DEFUN ("substring", Fsubstring, 2, 3, 0, /*
 Return a substring of STRING, starting at index FROM and ending before TO.
 TO may be nil or omitted; then the substring runs to the end of STRING.
 If FROM or TO is negative, it counts from the end.
 Relevant parts of the string-extent-data are copied in the new string.
-*/ )
-  (string, from, to)
-     Lisp_Object string;
-     Lisp_Object from, to;
+*/
+       (string, from, to))
 {
   Charcount ccfr, ccto;
   Bytecount bfr, bto;
@@ -878,7 +857,7 @@ Relevant parts of the string-extent-data are copied in the new string.
   return (val);
 }
 
-DEFUN ("subseq", Fsubseq, Ssubseq, 2, 3, 0 /*
+DEFUN ("subseq", Fsubseq, 2, 3, 0, /*
 Return a subsequence of SEQ, starting at index FROM and ending before TO.
 TO may be nil or omitted; then the subsequence runs to the end of SEQ.
 If FROM or TO is negative, it counts from the end.
@@ -886,10 +865,8 @@ The resulting subsequence is always the same type as the original
  sequence.
 If SEQ is a string, relevant parts of the string-extent-data are copied
  in the new string.
-*/ )
-  (seq, from, to)
-     Lisp_Object seq;
-     Lisp_Object from, to;
+*/
+       (seq, from, to))
 {
   int len, f, t;
 
@@ -965,12 +942,10 @@ If SEQ is a string, relevant parts of the string-extent-data are copied
 }
 
 
-DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0 /*
+DEFUN ("nthcdr", Fnthcdr, 2, 2, 0, /*
 Take cdr N times on LIST, returns the result.
-*/ )
-  (n, list)
-     Lisp_Object n;
-     Lisp_Object list;
+*/
+       (n, list))
 {
   REGISTER int i, num;
   CHECK_INT (n);
@@ -983,21 +958,19 @@ Take cdr N times on LIST, returns the result.
   return list;
 }
 
-DEFUN ("nth", Fnth, Snth, 2, 2, 0 /*
+DEFUN ("nth", Fnth, 2, 2, 0, /*
 Return the Nth element of LIST.
 N counts from zero.  If LIST is not that long, nil is returned.
-*/ )
-  (n, list)
-     Lisp_Object n, list;
+*/
+       (n, list))
 {
   return Fcar (Fnthcdr (n, list));
 }
 
-DEFUN ("elt", Felt, Selt, 2, 2, 0 /*
+DEFUN ("elt", Felt, 2, 2, 0, /*
 Return element of SEQUENCE at index N.
-*/ )
-  (seq, n)
-     Lisp_Object seq, n;
+*/
+       (seq, n))
 {
  retry:
   CHECK_INT_COERCE_CHAR (n); /* yuck! */
@@ -1069,13 +1042,11 @@ Return element of SEQUENCE at index N.
     }
 }
 
-DEFUN ("member", Fmember, Smember, 2, 2, 0 /*
+DEFUN ("member", Fmember, 2, 2, 0, /*
 Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
 The value is actually the tail of LIST whose car is ELT.
-*/ )
-  (elt, list)
-     Lisp_Object elt;
-     Lisp_Object list;
+*/
+       (elt, list))
 {
   REGISTER Lisp_Object tail, tem;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
@@ -1088,13 +1059,11 @@ The value is actually the tail of LIST whose car is ELT.
   return Qnil;
 }
 
-DEFUN ("memq", Fmemq, Smemq, 2, 2, 0 /*
+DEFUN ("memq", Fmemq, 2, 2, 0, /*
 Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
 The value is actually the tail of LIST whose car is ELT.
-*/ )
-  (elt, list)
-     Lisp_Object elt;
-     Lisp_Object list;
+*/
+       (elt, list))
 {
   REGISTER Lisp_Object tail, tem;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
@@ -1118,13 +1087,11 @@ memq_no_quit (Lisp_Object elt, Lisp_Object list)
   return Qnil;
 }
 
-DEFUN ("assoc", Fassoc, Sassoc, 2, 2, 0 /*
+DEFUN ("assoc", Fassoc, 2, 2, 0, /*
 Return non-nil if KEY is `equal' to the car of an element of LIST.
 The value is actually the element of LIST whose car equals KEY.
-*/ )
-  (key, list)
-     Lisp_Object key;
-     Lisp_Object list;
+*/
+       (key, list))
 {
   /* This function can GC. */
   REGISTER Lisp_Object tail, elt, tem;
@@ -1147,14 +1114,12 @@ assoc_no_quit (Lisp_Object key, Lisp_Object list)
   return (unbind_to (speccount, Fassoc (key, list)));
 }
 
-DEFUN ("assq", Fassq, Sassq, 2, 2, 0 /*
+DEFUN ("assq", Fassq, 2, 2, 0, /*
 Return non-nil if KEY is `eq' to the car of an element of LIST.
 The value is actually the element of LIST whose car is KEY.
 Elements of LIST that are not conses are ignored.
-*/ )
-  (key, list)
-     Lisp_Object key;
-     Lisp_Object list;
+*/
+       (key, list))
 {
   REGISTER Lisp_Object tail, elt, tem;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
@@ -1186,13 +1151,11 @@ assq_no_quit (Lisp_Object key, Lisp_Object list)
   return Qnil;
 }
 
-DEFUN ("rassoc", Frassoc, Srassoc, 2, 2, 0 /*
+DEFUN ("rassoc", Frassoc, 2, 2, 0, /*
 Return non-nil if KEY is `equal' to the cdr of an element of LIST.
 The value is actually the element of LIST whose cdr equals KEY.
-*/ )
-  (key, list)
-     Lisp_Object key;
-     Lisp_Object list;
+*/
+       (key, list))
 {
   REGISTER Lisp_Object tail;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
@@ -1207,13 +1170,11 @@ The value is actually the element of LIST whose cdr equals KEY.
   return Qnil;
 }
 
-DEFUN ("rassq", Frassq, Srassq, 2, 2, 0 /*
+DEFUN ("rassq", Frassq, 2, 2, 0, /*
 Return non-nil if KEY is `eq' to the cdr of an element of LIST.
 The value is actually the element of LIST whose cdr is KEY.
-*/ )
-  (key, list)
-     Lisp_Object key;
-     Lisp_Object list;
+*/
+       (key, list))
 {
   REGISTER Lisp_Object tail, elt, tem;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
@@ -1242,16 +1203,14 @@ rassq_no_quit (Lisp_Object key, Lisp_Object list)
 }
 
 
-DEFUN ("delete", Fdelete, Sdelete, 2, 2, 0 /*
+DEFUN ("delete", Fdelete, 2, 2, 0, /*
 Delete by side effect any occurrences of ELT as a member of LIST.
 The modified LIST is returned.  Comparison is done with `equal'.
 If the first member of LIST is ELT, there is no way to remove it by side
 effect; therefore, write `(setq foo (delete element foo))' to be sure
 of changing the value of `foo'.
-*/ )
-  (elt, list)
-     Lisp_Object elt;
-     Lisp_Object list;
+*/
+       (elt, list))
 {
   REGISTER Lisp_Object tail, prev;
 
@@ -1274,16 +1233,14 @@ of changing the value of `foo'.
   return list;
 }
 
-DEFUN ("delq", Fdelq, Sdelq, 2, 2, 0 /*
+DEFUN ("delq", Fdelq, 2, 2, 0, /*
 Delete by side effect any occurrences of ELT as a member of LIST.
 The modified LIST is returned.  Comparison is done with `eq'.
 If the first member of LIST is ELT, there is no way to remove it by side
 effect; therefore, write `(setq foo (delq element foo))' to be sure of
 changing the value of `foo'.
-*/ )
-  (elt, list)
-     Lisp_Object elt;
-     Lisp_Object list;
+*/
+       (elt, list))
 {
   REGISTER Lisp_Object tail, prev;
   REGISTER Lisp_Object tem;
@@ -1371,16 +1328,14 @@ delq_no_quit_and_free_cons (Lisp_Object elt, Lisp_Object list)
   return list;
 }
 
-DEFUN ("remassoc", Fremassoc, Sremassoc, 2, 2, 0 /*
+DEFUN ("remassoc", Fremassoc, 2, 2, 0, /*
 Delete by side effect any elements of LIST whose car is `equal' to KEY.
 The modified LIST is returned.  If the first member of LIST has a car
 that is `equal' to KEY, there is no way to remove it by side effect;
 therefore, write `(setq foo (remassoc key foo))' to be sure of changing
 the value of `foo'.
-*/ )
-  (key, list)
-     Lisp_Object key;
-     Lisp_Object list;
+*/
+       (key, list))
 {
   REGISTER Lisp_Object tail, prev;
 
@@ -1412,16 +1367,14 @@ remassoc_no_quit (Lisp_Object key, Lisp_Object list)
   return (unbind_to (speccount, Fremassoc (key, list)));
 }
 
-DEFUN ("remassq", Fremassq, Sremassq, 2, 2, 0 /*
+DEFUN ("remassq", Fremassq, 2, 2, 0, /*
 Delete by side effect any elements of LIST whose car is `eq' to KEY.
 The modified LIST is returned.  If the first member of LIST has a car
 that is `eq' to KEY, there is no way to remove it by side effect;
 therefore, write `(setq foo (remassq key foo))' to be sure of changing
 the value of `foo'.
-*/ )
-  (key, list)
-     Lisp_Object key;
-     Lisp_Object list;
+*/
+       (key, list))
 {
   REGISTER Lisp_Object tail, prev;
 
@@ -1472,16 +1425,14 @@ remassq_no_quit (Lisp_Object key, Lisp_Object list)
   return list;
 }
 
-DEFUN ("remrassoc", Fremrassoc, Sremrassoc, 2, 2, 0 /*
+DEFUN ("remrassoc", Fremrassoc, 2, 2, 0, /*
 Delete by side effect any elements of LIST whose cdr is `equal' to VALUE.
 The modified LIST is returned.  If the first member of LIST has a car
 that is `equal' to VALUE, there is no way to remove it by side effect;
 therefore, write `(setq foo (remrassoc value foo))' to be sure of changing
 the value of `foo'.
-*/ )
-  (value, list)
-     Lisp_Object value;
-     Lisp_Object list;
+*/
+       (value, list))
 {
   REGISTER Lisp_Object tail, prev;
 
@@ -1505,16 +1456,14 @@ the value of `foo'.
   return list;
 }
 
-DEFUN ("remrassq", Fremrassq, Sremrassq, 2, 2, 0 /*
+DEFUN ("remrassq", Fremrassq, 2, 2, 0, /*
 Delete by side effect any elements of LIST whose cdr is `eq' to VALUE.
 The modified LIST is returned.  If the first member of LIST has a car
 that is `eq' to VALUE, there is no way to remove it by side effect;
 therefore, write `(setq foo (remrassq value foo))' to be sure of changing
 the value of `foo'.
-*/ )
-  (value, list)
-     Lisp_Object value;
-     Lisp_Object list;
+*/
+       (value, list))
 {
   REGISTER Lisp_Object tail, prev;
 
@@ -1565,12 +1514,11 @@ remrassq_no_quit (Lisp_Object value, Lisp_Object list)
   return list;
 }
 
-DEFUN ("nreverse", Fnreverse, Snreverse, 1, 1, 0 /*
+DEFUN ("nreverse", Fnreverse, 1, 1, 0, /*
 Reverse LIST by modifying cdr pointers.
 Returns the beginning of the reversed list.
-*/ )
-  (list)
-     Lisp_Object list;
+*/
+       (list))
 {
   Lisp_Object prev, tail, next;
   struct gcpro gcpro1, gcpro2;
@@ -1591,12 +1539,11 @@ Returns the beginning of the reversed list.
   return prev;
 }
 
-DEFUN ("reverse", Freverse, Sreverse, 1, 1, 0 /*
+DEFUN ("reverse", Freverse, 1, 1, 0, /*
 Reverse LIST, copying.  Returns the beginning of the reversed list.
 See also the function `nreverse', which is used more often.
-*/ )
-  (list)
-     Lisp_Object list;
+*/
+       (list))
 {
   Lisp_Object length;
   Lisp_Object *vec;
@@ -1668,14 +1615,13 @@ merge_pred_function (Lisp_Object obj1, Lisp_Object obj2,
     return 1;
 }
 
-DEFUN ("sort", Fsort, Ssort, 2, 2, 0 /*
+DEFUN ("sort", Fsort, 2, 2, 0, /*
 Sort LIST, stably, comparing elements using PREDICATE.
 Returns the sorted list.  LIST is modified by side effects.
 PREDICATE is called with two elements of LIST, and should return T
 if the first element is \"less\" than the second.
-*/ )
-  (list, pred)
-     Lisp_Object list, pred;
+*/
+       (list, pred))
 {
   return list_sort (list, pred, merge_pred_function);
 }
@@ -1836,7 +1782,7 @@ plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
   return 1;
 }
 
-DEFUN ("plists-eq", Fplists_eq, Splists_eq, 2, 3, 0 /*
+DEFUN ("plists-eq", Fplists_eq, 2, 3, 0, /*
 Return non-nil if property lists A and B are `eq'.
 A property list is an alternating list of keywords and values.
  This function does order-insensitive comparisons of the property lists:
@@ -1846,15 +1792,14 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is ignored.  This feature is a virus that has infected
  old Lisp implementations, but should not be used except for backward
  compatibility.
-*/ )
-  (a, b, nil_means_not_present)
-     Lisp_Object a, b, nil_means_not_present;
+*/
+       (a, b, nil_means_not_present))
 {
   return (plists_differ (a, b, !NILP (nil_means_not_present), 0, -1)
 	  ? Qnil : Qt);
 }
 
-DEFUN ("plists-equal", Fplists_equal, Splists_equal, 2, 3, 0 /*
+DEFUN ("plists-equal", Fplists_equal, 2, 3, 0, /*
 Return non-nil if property lists A and B are `equal'.
 A property list is an alternating list of keywords and values.  This
  function does order-insensitive comparisons of the property lists: For
@@ -1864,16 +1809,15 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is ignored.  This feature is a virus that has infected
  old Lisp implementations, but should not be used except for backward
  compatibility.
-*/ )
-  (a, b, nil_means_not_present)
-     Lisp_Object a, b, nil_means_not_present;
+*/
+       (a, b, nil_means_not_present))
 {
   return (plists_differ (a, b, !NILP (nil_means_not_present), 0, 1)
 	  ? Qnil : Qt);
 }
 
 
-DEFUN ("lax-plists-eq", Flax_plists_eq, Slax_plists_eq, 2, 3, 0 /*
+DEFUN ("lax-plists-eq", Flax_plists_eq, 2, 3, 0, /*
 Return non-nil if lax property lists A and B are `eq'.
 A property list is an alternating list of keywords and values.
  This function does order-insensitive comparisons of the property lists:
@@ -1885,15 +1829,14 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is ignored.  This feature is a virus that has infected
  old Lisp implementations, but should not be used except for backward
  compatibility.
-*/ )
-  (a, b, nil_means_not_present)
-     Lisp_Object a, b, nil_means_not_present;
+*/
+       (a, b, nil_means_not_present))
 {
   return (plists_differ (a, b, !NILP (nil_means_not_present), 1, -1)
 	  ? Qnil : Qt);
 }
 
-DEFUN ("lax-plists-equal", Flax_plists_equal, Slax_plists_equal, 2, 3, 0 /*
+DEFUN ("lax-plists-equal", Flax_plists_equal, 2, 3, 0, /*
 Return non-nil if lax property lists A and B are `equal'.
 A property list is an alternating list of keywords and values.  This
  function does order-insensitive comparisons of the property lists: For
@@ -1905,9 +1848,8 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
  a nil value is ignored.  This feature is a virus that has infected
  old Lisp implementations, but should not be used except for backward
  compatibility.
-*/ )
-  (a, b, nil_means_not_present)
-     Lisp_Object a, b, nil_means_not_present;
+*/
+       (a, b, nil_means_not_present))
 {
   return (plists_differ (a, b, !NILP (nil_means_not_present), 1, 1)
 	  ? Qnil : Qt);
@@ -2216,15 +2158,14 @@ external_remprop (Lisp_Object *plist, Lisp_Object property,
   return 0;
 }
 
-DEFUN ("plist-get", Fplist_get, Splist_get, 2, 3, 0 /*
+DEFUN ("plist-get", Fplist_get, 2, 3, 0, /*
 Extract a value from a property list.
 PLIST is a property list, which is a list of the form
 \(PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
 corresponding to the given PROP, or DEFAULT if PROP is not
 one of the properties on the list.
-*/ )
-     (plist, prop, defalt)           /* Cant spel in C */
-     Lisp_Object plist, prop, defalt;
+*/
+       (plist, prop, defalt))           /* Cant spel in C */
 {
   Lisp_Object val = external_plist_get (&plist, prop, 0, ERROR_ME);
   if (UNBOUNDP (val))
@@ -2232,7 +2173,7 @@ one of the properties on the list.
   return val;
 }
 
-DEFUN ("plist-put", Fplist_put, Splist_put, 3, 3, 0 /*
+DEFUN ("plist-put", Fplist_put, 3, 3, 0, /*
 Change value in PLIST of PROP to VAL.
 PLIST is a property list, which is a list of the form \(PROP1 VALUE1
 PROP2 VALUE2 ...).  PROP is usually a symbol and VAL is any object.
@@ -2240,44 +2181,39 @@ If PROP is already a property on the list, its value is set to VAL,
 otherwise the new PROP VAL pair is added.  The new plist is returned;
 use `(setq x (plist-put x prop val))' to be sure to use the new value.
 The PLIST is modified by side effects.
-*/ )
-     (plist, prop, val)
-     Lisp_Object plist, prop, val;
+*/
+       (plist, prop, val))
 {
   external_plist_put (&plist, prop, val, 0, ERROR_ME);
   return plist;
 }
 
-DEFUN ("plist-remprop", Fplist_remprop, Splist_remprop, 2, 2, 0 /*
+DEFUN ("plist-remprop", Fplist_remprop, 2, 2, 0, /*
 Remove from PLIST the property PROP and its value.
 PLIST is a property list, which is a list of the form \(PROP1 VALUE1
 PROP2 VALUE2 ...).  PROP is usually a symbol.  The new plist is
 returned; use `(setq x (plist-remprop x prop val))' to be sure to use
 the new value.  The PLIST is modified by side effects.
-*/ )
-     (plist, prop)
-     Lisp_Object plist, prop;
+*/
+       (plist, prop))
 {
   external_remprop (&plist, prop, 0, ERROR_ME);
   return plist;
 }
 
-DEFUN ("plist-member", Fplist_member, Splist_member, 2, 2, 0 /*
+DEFUN ("plist-member", Fplist_member, 2, 2, 0, /*
 Return t if PROP has a value specified in PLIST.
-*/ )
-     (plist, prop)
-     Lisp_Object plist, prop;
+*/
+       (plist, prop))
 {
   return UNBOUNDP (Fplist_get (plist, prop, Qunbound)) ? Qnil : Qt;
 }
 
-DEFUN ("check-valid-plist", Fcheck_valid_plist, Scheck_valid_plist,
-       1, 1, 0 /*
+DEFUN ("check-valid-plist", Fcheck_valid_plist, 1, 1, 0, /*
 Given a plist, signal an error if there is anything wrong with it.
 This means that it's a malformed or circular plist.
-*/ )
-     (plist)
-     Lisp_Object plist;
+*/
+       (plist))
 {
   Lisp_Object *tortoise;
   Lisp_Object *hare;
@@ -2298,15 +2234,13 @@ This means that it's a malformed or circular plist.
   return Qnil;
 }
   
-DEFUN ("valid-plist-p", Fvalid_plist_p, Svalid_plist_p,
-       1, 1, 0 /*
+DEFUN ("valid-plist-p", Fvalid_plist_p, 1, 1, 0, /*
 Given a plist, return non-nil if its format is correct.
 If it returns nil, `check-valid-plist' will signal an error when given
 the plist; that means it's a malformed or circular plist or has non-symbols
 as keywords.
-*/ )
-     (plist)
-     Lisp_Object plist;
+*/
+       (plist))
 {
   Lisp_Object *tortoise;
   Lisp_Object *hare;
@@ -2326,8 +2260,7 @@ as keywords.
   return Qt;
 }
 
-DEFUN ("canonicalize-plist", Fcanonicalize_plist, Scanonicalize_plist,
-       1, 2, 0 /*
+DEFUN ("canonicalize-plist", Fcanonicalize_plist, 1, 2, 0, /*
 Destructively remove any duplicate entries from a plist.
 In such cases, the first entry applies.
 
@@ -2339,9 +2272,8 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
 The new plist is returned.  If NIL-MEANS-NOT-PRESENT is given, the
  return value may not be EQ to the passed-in value, so make sure to
  `setq' the value back into where it came from.
-*/ )
-     (plist, nil_means_not_present)
-     Lisp_Object plist, nil_means_not_present;
+*/
+       (plist, nil_means_not_present))
 {
   Lisp_Object head = plist;
 
@@ -2370,7 +2302,7 @@ The new plist is returned.  If NIL-MEANS-NOT-PRESENT is given, the
   return head;
 }
 
-DEFUN ("lax-plist-get", Flax_plist_get, Slax_plist_get, 2, 3, 0 /*
+DEFUN ("lax-plist-get", Flax_plist_get, 2, 3, 0, /*
 Extract a value from a lax property list.
 
 LAX-PLIST is a lax property list, which is a list of the form \(PROP1
@@ -2378,9 +2310,8 @@ VALUE1 PROP2 VALUE2...), where comparions between properties is done
 using `equal' instead of `eq'.  This function returns the value
 corresponding to the given PROP, or DEFAULT if PROP is not one of the
 properties on the list.
-*/ )
-     (lax_plist, prop, defalt)           /* Cant spel in C */
-     Lisp_Object lax_plist, prop, defalt;
+*/
+       (lax_plist, prop, defalt))           /* Cant spel in C */
 {
   Lisp_Object val = external_plist_get (&lax_plist, prop, 1, ERROR_ME);
   if (UNBOUNDP (val))
@@ -2388,7 +2319,7 @@ properties on the list.
   return val;
 }
 
-DEFUN ("lax-plist-put", Flax_plist_put, Slax_plist_put, 3, 3, 0 /*
+DEFUN ("lax-plist-put", Flax_plist_put, 3, 3, 0, /*
 Change value in LAX-PLIST of PROP to VAL.
 LAX-PLIST is a lax property list, which is a list of the form \(PROP1
 VALUE1 PROP2 VALUE2...), where comparions between properties is done
@@ -2397,43 +2328,39 @@ any object.  If PROP is already a property on the list, its value is
 set to VAL, otherwise the new PROP VAL pair is added.  The new plist
 is returned; use `(setq x (lax-plist-put x prop val))' to be sure to
 use the new value.  The LAX-PLIST is modified by side effects.
-*/ )
-     (lax_plist, prop, val)
-     Lisp_Object lax_plist, prop, val;
+*/
+       (lax_plist, prop, val))
 {
   external_plist_put (&lax_plist, prop, val, 1, ERROR_ME);
   return lax_plist;
 }
 
-DEFUN ("lax-plist-remprop", Flax_plist_remprop, Slax_plist_remprop, 2, 2, 0 /*
+DEFUN ("lax-plist-remprop", Flax_plist_remprop, 2, 2, 0, /*
 Remove from LAX-PLIST the property PROP and its value.
 LAX-PLIST is a lax property list, which is a list of the form \(PROP1
 VALUE1 PROP2 VALUE2...), where comparions between properties is done
 using `equal' instead of `eq'.  PROP is usually a symbol.  The new
 plist is returned; use `(setq x (lax-plist-remprop x prop val))' to be
 sure to use the new value.  The LAX-PLIST is modified by side effects.
-*/ )
-     (lax_plist, prop)
-     Lisp_Object lax_plist, prop;
+*/
+       (lax_plist, prop))
 {
   external_remprop (&lax_plist, prop, 1, ERROR_ME);
   return lax_plist;
 }
 
-DEFUN ("lax-plist-member", Flax_plist_member, Slax_plist_member, 2, 2, 0 /*
+DEFUN ("lax-plist-member", Flax_plist_member, 2, 2, 0, /*
 Return t if PROP has a value specified in LAX-PLIST.
 LAX-PLIST is a lax property list, which is a list of the form \(PROP1
 VALUE1 PROP2 VALUE2...), where comparions between properties is done
 using `equal' instead of `eq'.
-*/ )
-     (lax_plist, prop)
-     Lisp_Object lax_plist, prop;
+*/
+       (lax_plist, prop))
 {
   return UNBOUNDP (Flax_plist_get (lax_plist, prop, Qunbound)) ? Qnil : Qt;
 }
 
-DEFUN ("canonicalize-lax-plist", Fcanonicalize_lax_plist,
-       Scanonicalize_lax_plist, 1, 2, 0 /*
+DEFUN ("canonicalize-lax-plist", Fcanonicalize_lax_plist, 1, 2, 0, /*
 Destructively remove any duplicate entries from a lax plist.
 In such cases, the first entry applies.
 
@@ -2445,9 +2372,8 @@ If optional arg NIL-MEANS-NOT-PRESENT is non-nil, then a property with
 The new plist is returned.  If NIL-MEANS-NOT-PRESENT is given, the
  return value may not be EQ to the passed-in value, so make sure to
  `setq' the value back into where it came from.
-*/ )
-     (lax_plist, nil_means_not_present)
-     Lisp_Object lax_plist, nil_means_not_present;
+*/
+       (lax_plist, nil_means_not_present))
 {
   Lisp_Object head = lax_plist;
 
@@ -2478,8 +2404,7 @@ The new plist is returned.  If NIL-MEANS-NOT-PRESENT is given, the
 
 /* In C because the frame props stuff uses it */
 
-DEFUN ("destructive-alist-to-plist", Fdestructive_alist_to_plist,
-       Sdestructive_alist_to_plist, 1, 1, 0 /*
+DEFUN ("destructive-alist-to-plist", Fdestructive_alist_to_plist, 1, 1, 0, /*
 Convert association list ALIST into the equivalent property-list form.
 The plist is returned.  This converts from
 
@@ -2491,9 +2416,8 @@ into
 
 The original alist is destroyed in the process of constructing the plist.
 See also `alist-to-plist'.
-*/ )
-  (alist)
-     Lisp_Object alist;
+*/
+       (alist))
 {
   Lisp_Object head = alist;
   while (!NILP (alist))
@@ -2587,15 +2511,14 @@ string_plist (struct Lisp_String *s)
   return *string_plist_ptr (s);
 }
 
-DEFUN ("get", Fget, Sget, 2, 3, 0 /*
+DEFUN ("get", Fget, 2, 3, 0, /*
 Return the value of OBJECT's PROPNAME property.
 This is the last VALUE stored with `(put OBJECT PROPNAME VALUE)'.
 If there is no such property, return optional third arg DEFAULT
 (which defaults to `nil').  OBJECT can be a symbol, face, extent,
 or string.  See also `put', `remprop', and `object-plist'.
-*/ )
-     (object, propname, defalt)           /* Cant spel in C */
-     Lisp_Object object, propname, defalt;
+*/
+       (object, propname, defalt))           /* Cant spel in C */
 {
   Lisp_Object val;
 
@@ -2630,7 +2553,7 @@ or string.  See also `put', `remprop', and `object-plist'.
   return val;
 }
 
-DEFUN ("put", Fput, Sput, 3, 3, 0 /*
+DEFUN ("put", Fput, 3, 3, 0, /*
 Store OBJECT's PROPNAME property with value VALUE.
 It can be retrieved with `(get OBJECT PROPNAME)'.  OBJECT can be a
 symbol, face, extent, or string.
@@ -2640,11 +2563,8 @@ For the predefined properties for extents, see `set-extent-property'.
 For the predefined properties for faces, see `set-face-property'.
 
 See also `get', `remprop', and `object-plist'.
-*/ )
-  (object, propname, value)
-     Lisp_Object object;
-     Lisp_Object propname;
-     Lisp_Object value;
+*/
+       (object, propname, value))
 {
   CHECK_SYMBOL (propname);
   CHECK_IMPURE (object);
@@ -2680,15 +2600,14 @@ pure_put (Lisp_Object sym, Lisp_Object prop, Lisp_Object val)
   Fput (sym, prop, Fpurecopy (val));
 }
 
-DEFUN ("remprop", Fremprop, Sremprop, 2, 2, 0 /*
+DEFUN ("remprop", Fremprop, 2, 2, 0, /*
 Remove from OBJECT's property list the property PROPNAME and its
 value.  OBJECT can be a symbol, face, extent, or string.  Returns
 non-nil if the property list was actually changed (i.e. if PROPNAME
 was present in the property list).  See also `get', `put', and
 `object-plist'.
-*/ )
-  (object, propname)
-     Lisp_Object object, propname;
+*/
+       (object, propname))
 {
   int retval = 0;
 
@@ -2722,15 +2641,14 @@ was present in the property list).  See also `get', `put', and
   return retval ? Qt : Qnil;
 }
 
-DEFUN ("object-plist", Fobject_plist, Sobject_plist, 1, 1, 0 /*
+DEFUN ("object-plist", Fobject_plist, 1, 1, 0, /*
 Return a property list of OBJECT's props.
 For a symbol this is equivalent to `symbol-plist'.
 Do not modify the property list directly; this may or may not have
 the desired effects. (In particular, for a property with a special
 interpretation, this will probably have no effect at all.)
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (SYMBOLP (object))
     return Fsymbol_plist (object);
@@ -2817,26 +2735,24 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   return (0);
 }
 
-DEFUN ("equal", Fequal, Sequal, 2, 2, 0 /*
+DEFUN ("equal", Fequal, 2, 2, 0, /*
 T if two Lisp objects have similar structure and contents.
 They must have the same data type.
 Conses are compared by comparing the cars and the cdrs.
 Vectors and strings are compared element by element.
 Numbers are compared by value.  Symbols must match exactly.
-*/ )
-  (o1, o2)
-     Lisp_Object o1, o2;
+*/
+       (o1, o2))
 {
   return ((internal_equal (o1, o2, 0)) ? Qt : Qnil);
 }
 
 
-DEFUN ("fillarray", Ffillarray, Sfillarray, 2, 2, 0 /*
+DEFUN ("fillarray", Ffillarray, 2, 2, 0, /*
 Store each element of ARRAY with ITEM.
 ARRAY is a vector, bit vector, or string.
-*/ )
-  (array, item)
-     Lisp_Object array, item;
+*/
+       (array, item))
 {
  retry:
   if (STRINGP (array))
@@ -2894,13 +2810,11 @@ nconc2 (Lisp_Object s1, Lisp_Object s2)
   return Fnconc (2, args);
 }
 
-DEFUN ("nconc", Fnconc, Snconc, 0, MANY, 0 /*
+DEFUN ("nconc", Fnconc, 0, MANY, 0, /*
 Concatenate any number of lists by altering them.
 Only the last argument is not altered, and need not be a list.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   int argnum;
   Lisp_Object tail, tem, val;
@@ -3024,13 +2938,12 @@ mapcar1 (int leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
   UNGCPRO;
 }
 
-DEFUN ("mapconcat", Fmapconcat, Smapconcat, 3, 3, 0 /*
+DEFUN ("mapconcat", Fmapconcat, 3, 3, 0, /*
 Apply FN to each element of SEQ, and concat the results as strings.
 In between each pair of results, stick in SEP.
 Thus, \" \" as SEP results in spaces between the values returned by FN.
-*/ )
-  (fn, seq, sep)
-     Lisp_Object fn, seq, sep;
+*/
+       (fn, seq, sep))
 {
   int len = XINT (Flength (seq));
   int nargs;
@@ -3056,13 +2969,12 @@ Thus, \" \" as SEP results in spaces between the values returned by FN.
   return Fconcat (nargs, args);
 }
 
-DEFUN ("mapcar", Fmapcar, Smapcar, 2, 2, 0 /*
+DEFUN ("mapcar", Fmapcar, 2, 2, 0, /*
 Apply FUNCTION to each element of SEQUENCE, and make a list of the results.
 The result is a list just as long as SEQUENCE.
 SEQUENCE may be a list, a vector, a bit vector, or a string.
-*/ )
-  (fn, seq)
-     Lisp_Object fn, seq;
+*/
+       (fn, seq))
 {
   int len = XINT (Flength (seq));
   Lisp_Object *args = (Lisp_Object *) alloca (len * sizeof (Lisp_Object));
@@ -3072,14 +2984,13 @@ SEQUENCE may be a list, a vector, a bit vector, or a string.
   return Flist (len, args);
 }
 
-DEFUN ("mapc-internal", Fmapc_internal, Smapc_internal, 2, 2, 0 /*
+DEFUN ("mapc-internal", Fmapc_internal, 2, 2, 0, /*
 Apply FUNCTION to each element of SEQUENCE.
 SEQUENCE may be a list, a vector, a bit vector, or a string.
 This function is like `mapcar' but does not accumulate the results,
 which is more efficient if you do not use the results.
-*/ )
-  (fn, seq)
-     Lisp_Object fn, seq;
+*/
+       (fn, seq))
 {
   mapcar1 (XINT (Flength (seq)), 0, fn, seq);
 
@@ -3089,7 +3000,7 @@ which is more efficient if you do not use the results.
 
 /* #### this function doesn't belong in this file! */
 
-DEFUN ("load-average", Fload_average, Sload_average, 0, 0, 0 /*
+DEFUN ("load-average", Fload_average, 0, 0, 0, /*
 Return list of 1 minute, 5 minute and 15 minute load averages.
 Each of the three load averages is multiplied by 100,
 then converted to integer.
@@ -3099,8 +3010,8 @@ shortened list, containing only those averages which are available.
 
 On most systems, this won't work unless the emacs executable is installed
 as setgid kmem (assuming that /dev/kmem is in the group kmem).
-*/ )
-  ()
+*/
+       ())
 {
   double load_ave[10]; /* hey, just in case */
   int loads = getloadavg (load_ave, 3);
@@ -3121,26 +3032,24 @@ as setgid kmem (assuming that /dev/kmem is in the group kmem).
 
 Lisp_Object Vfeatures;
 
-DEFUN ("featurep", Ffeaturep, Sfeaturep, 1, 1, 0 /*
+DEFUN ("featurep", Ffeaturep, 1, 1, 0, /*
 Return t if FEATURE is present in this Emacs.
 Use this to conditionalize execution of lisp code based on the
 presence or absence of emacs or environment extensions.
 Use `provide' to declare that a feature is available.
 This function looks at the value of the variable `features'.
-*/ )
-     (feature)
-     Lisp_Object feature;
+*/
+       (feature))
 {
   CHECK_SYMBOL (feature);
   return NILP (Fmemq (feature, Vfeatures)) ? Qnil : Qt;
 }
 
-DEFUN ("provide", Fprovide, Sprovide, 1, 1, 0 /*
+DEFUN ("provide", Fprovide, 1, 1, 0, /*
 Announce that FEATURE is a feature of the current Emacs.
 This function updates the value of the variable `features'.
-*/ )
-     (feature)
-     Lisp_Object feature;
+*/
+       (feature))
 {
   Lisp_Object tem;
   CHECK_SYMBOL (feature);
@@ -3153,14 +3062,13 @@ This function updates the value of the variable `features'.
   return feature;
 }
 
-DEFUN ("require", Frequire, Srequire, 1, 2, 0 /*
+DEFUN ("require", Frequire, 1, 2, 0, /*
 If feature FEATURE is not loaded, load it from FILENAME.
 If FEATURE is not a member of the list `features', then the feature
 is not loaded; so load the file FILENAME.
 If FILENAME is omitted, the printname of FEATURE is used as the file name.
-*/ )
-     (feature, file_name)
-     Lisp_Object feature, file_name;
+*/
+       (feature, file_name))
 {
   Lisp_Object tem;
   CHECK_SYMBOL (feature);
@@ -3200,71 +3108,71 @@ syms_of_fns (void)
   defsymbol (&Qidentity, "identity");
   defsymbol (&Qyes_or_no_p, "yes-or-no-p");
 
-  defsubr (&Sidentity);
-  defsubr (&Srandom);
-  defsubr (&Slength);
-  defsubr (&Ssafe_length);
-  defsubr (&Sstring_equal);
-  defsubr (&Sstring_lessp);
-  defsubr (&Sstring_modified_tick);
-  defsubr (&Sappend);
-  defsubr (&Sconcat);
-  defsubr (&Svconcat);
-  defsubr (&Sbvconcat);
-  defsubr (&Scopy_sequence);
-  defsubr (&Scopy_alist);
-  defsubr (&Scopy_tree);
-  defsubr (&Ssubstring);
-  defsubr (&Ssubseq);
-  defsubr (&Snthcdr);
-  defsubr (&Snth);
-  defsubr (&Selt);
-  defsubr (&Smember);
-  defsubr (&Smemq);
-  defsubr (&Sassoc);
-  defsubr (&Sassq);
-  defsubr (&Srassoc);
-  defsubr (&Srassq);
-  defsubr (&Sdelete);
-  defsubr (&Sdelq);
-  defsubr (&Sremassoc);
-  defsubr (&Sremassq);
-  defsubr (&Sremrassoc);
-  defsubr (&Sremrassq);
-  defsubr (&Snreverse);
-  defsubr (&Sreverse);
-  defsubr (&Ssort);
-  defsubr (&Splists_eq);
-  defsubr (&Splists_equal);
-  defsubr (&Slax_plists_eq);
-  defsubr (&Slax_plists_equal);
-  defsubr (&Splist_get);
-  defsubr (&Splist_put);
-  defsubr (&Splist_remprop);
-  defsubr (&Splist_member);
-  defsubr (&Scheck_valid_plist);
-  defsubr (&Svalid_plist_p);
-  defsubr (&Scanonicalize_plist);
-  defsubr (&Slax_plist_get);
-  defsubr (&Slax_plist_put);
-  defsubr (&Slax_plist_remprop);
-  defsubr (&Slax_plist_member);
-  defsubr (&Scanonicalize_lax_plist);
-  defsubr (&Sdestructive_alist_to_plist);
-  defsubr (&Sget);
-  defsubr (&Sput);
-  defsubr (&Sremprop);
-  defsubr (&Sobject_plist);
-  defsubr (&Sequal);
-  defsubr (&Sfillarray);
-  defsubr (&Snconc);
-  defsubr (&Smapcar);
-  defsubr (&Smapc_internal);
-  defsubr (&Smapconcat);
-  defsubr (&Sload_average);
-  defsubr (&Sfeaturep);
-  defsubr (&Srequire);
-  defsubr (&Sprovide);
+  DEFSUBR (Fidentity);
+  DEFSUBR (Frandom);
+  DEFSUBR (Flength);
+  DEFSUBR (Fsafe_length);
+  DEFSUBR (Fstring_equal);
+  DEFSUBR (Fstring_lessp);
+  DEFSUBR (Fstring_modified_tick);
+  DEFSUBR (Fappend);
+  DEFSUBR (Fconcat);
+  DEFSUBR (Fvconcat);
+  DEFSUBR (Fbvconcat);
+  DEFSUBR (Fcopy_sequence);
+  DEFSUBR (Fcopy_alist);
+  DEFSUBR (Fcopy_tree);
+  DEFSUBR (Fsubstring);
+  DEFSUBR (Fsubseq);
+  DEFSUBR (Fnthcdr);
+  DEFSUBR (Fnth);
+  DEFSUBR (Felt);
+  DEFSUBR (Fmember);
+  DEFSUBR (Fmemq);
+  DEFSUBR (Fassoc);
+  DEFSUBR (Fassq);
+  DEFSUBR (Frassoc);
+  DEFSUBR (Frassq);
+  DEFSUBR (Fdelete);
+  DEFSUBR (Fdelq);
+  DEFSUBR (Fremassoc);
+  DEFSUBR (Fremassq);
+  DEFSUBR (Fremrassoc);
+  DEFSUBR (Fremrassq);
+  DEFSUBR (Fnreverse);
+  DEFSUBR (Freverse);
+  DEFSUBR (Fsort);
+  DEFSUBR (Fplists_eq);
+  DEFSUBR (Fplists_equal);
+  DEFSUBR (Flax_plists_eq);
+  DEFSUBR (Flax_plists_equal);
+  DEFSUBR (Fplist_get);
+  DEFSUBR (Fplist_put);
+  DEFSUBR (Fplist_remprop);
+  DEFSUBR (Fplist_member);
+  DEFSUBR (Fcheck_valid_plist);
+  DEFSUBR (Fvalid_plist_p);
+  DEFSUBR (Fcanonicalize_plist);
+  DEFSUBR (Flax_plist_get);
+  DEFSUBR (Flax_plist_put);
+  DEFSUBR (Flax_plist_remprop);
+  DEFSUBR (Flax_plist_member);
+  DEFSUBR (Fcanonicalize_lax_plist);
+  DEFSUBR (Fdestructive_alist_to_plist);
+  DEFSUBR (Fget);
+  DEFSUBR (Fput);
+  DEFSUBR (Fremprop);
+  DEFSUBR (Fobject_plist);
+  DEFSUBR (Fequal);
+  DEFSUBR (Ffillarray);
+  DEFSUBR (Fnconc);
+  DEFSUBR (Fmapcar);
+  DEFSUBR (Fmapc_internal);
+  DEFSUBR (Fmapconcat);
+  DEFSUBR (Fload_average);
+  DEFSUBR (Ffeaturep);
+  DEFSUBR (Frequire);
+  DEFSUBR (Fprovide);
 }
 
 void

@@ -134,31 +134,28 @@ x_resource_hash (Lisp_Object obj, int depth)
 /*
  * Epoch equivalent:  epoch::resourcep
  */
-DEFUN ("x-resource-p", Fx_resource_p, Sx_resource_p, 1, 1, 0 /*
+DEFUN ("x-resource-p", Fx_resource_p, 1, 1, 0, /*
 Return non-nil if OBJECT is an X resource object.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (X_RESOURCEP (object) ? Qt : Qnil);
 }
 
-DEFUN ("x-resource-live-p", Fx_resource_live_p, Sx_resource_live_p, 1, 1, 0 /*
+DEFUN ("x-resource-live-p", Fx_resource_live_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a live X resource object.
 That means that the X resource's device is live.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (X_RESOURCEP (object) &&
 	  X_RESOURCE_LIVE_P (XX_RESOURCE (object)) ? Qt : Qnil);
 }
 
-DEFUN ("x-resource-device", Fx_resource_device, Sx_resource_device, 1, 1, 0 /*
+DEFUN ("x-resource-device", Fx_resource_device, 1, 1, 0, /*
 Return the device that OBJECT (an X resource object) exists on.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   CHECK_LIVE_X_RESOURCE (object);
   return XX_RESOURCE (object)->device;
@@ -167,12 +164,10 @@ Return the device that OBJECT (an X resource object) exists on.
 /*
  * Epoch equivalent:  epoch::set-resource-type
 */
-DEFUN ("set-x-resource-type", Fset_x_resource_type, Sset_x_resource_type,
-       2, 2, 0 /*
+DEFUN ("set-x-resource-type", Fset_x_resource_type, 2, 2, 0, /*
 Set the type of RESOURCE to TYPE.  The new type must be an atom.
-*/ )
-     (resource, type)
-     Lisp_Object resource, type;
+*/
+       (resource, type))
 {
   CHECK_LIVE_X_RESOURCE (resource);
   CHECK_LIVE_X_RESOURCE (type);
@@ -219,13 +214,12 @@ get_symbol_or_string_as_symbol (Lisp_Object name)
 /*
  * Epoch equivalent:  epoch::intern-atom
  */
-DEFUN ("x-intern-atom", Fx_intern_atom, Sx_intern_atom, 1, 2, 0 /*
+DEFUN ("x-intern-atom", Fx_intern_atom, 1, 2, 0, /*
 Convert a string or symbol into an atom and return as an X resource.
 Optional argument DEVICE specifies the display connection and defaults
 to the selected device.
-*/ )
-     (name, device)
-     Lisp_Object name, device;
+*/
+       (name, device))
 {
   Atom atom;
   struct device *d = decode_x_device (device);
@@ -238,11 +232,10 @@ to the selected device.
 /*
  * Epoch equivalent:  epoch::unintern-atom
  */
-DEFUN ("x-atom-name", Fx_atom_name, Sx_atom_name, 1, 1, 0 /*
+DEFUN ("x-atom-name", Fx_atom_name, 1, 1, 0, /*
 Return the name of an X atom resource as a string.
-*/ )
-     (atom)
-     Lisp_Object atom;
+*/
+       (atom))
 {
   Lisp_Object val;
 
@@ -260,15 +253,13 @@ Return the name of an X atom resource as a string.
 /*
  * Epoch equivalent:  epoch::string-to-resource
  */
-DEFUN ("string-to-x-resource", Fstring_to_x_resource,
-       Sstring_to_x_resource, 2, 3, 0 /*
+DEFUN ("string-to-x-resource", Fstring_to_x_resource, 2, 3, 0, /*
 Convert a numeric STRING to an X-RESOURCE.
 STRING is assumed to represent a 32-bit numer value. X-RESOURCE must be
 an X atom.  Optional BASE argument should be a number between 2 and 36,
 specifying the base for converting STRING.
-*/ )
-     (string, type, base)
-     Lisp_Object string, type, base;
+*/
+       (string, type, base))
 {
   XID xid;
   struct Lisp_X_Resource *xr;
@@ -301,12 +292,10 @@ specifying the base for converting STRING.
 /*
  * Epoch equivalent:  epoch::resource-to-type
  */
-DEFUN ("x-resource-to-type", Fx_resource_to_type, Sx_resource_to_type,
-       1, 1, 0 /*
+DEFUN ("x-resource-to-type", Fx_resource_to_type, 1, 1, 0, /*
 Return an x-resource of type ATOM whose value is the type of the argument
-*/ )
-     (resource)
-     Lisp_Object resource;
+*/
+       (resource))
 {
   struct Lisp_X_Resource *xr;
 
@@ -337,13 +326,11 @@ long_to_string (unsigned long n, unsigned int base)
 /*
  * Epoch equivalent:  epoch::resource-to-string
  */
-DEFUN ("x-resource-to-string", Fx_resource_to_string, Sx_resource_to_string,
-       1, 2, 0 /*
+DEFUN ("x-resource-to-string", Fx_resource_to_string, 1, 2, 0, /*
 Convert the xid of RESOURCE to a numeric string.
 Optional BASE specifies the base for the conversion (2..36 inclusive)
-*/ )
-     (resource, base)
-     Lisp_Object resource, base;
+*/
+       (resource, base))
 {
   int cbase = 10;
 
@@ -361,13 +348,12 @@ Optional BASE specifies the base for the conversion (2..36 inclusive)
 /*
  * Epoch equivalent:  epoch::xid-of-frame
  */
-DEFUN ("x-id-of-frame", Fx_id_of_frame, Sx_id_of_frame, 0, 1, 0 /*
+DEFUN ("x-id-of-frame", Fx_id_of_frame, 0, 1, 0, /*
 Return the window ID of FRAME as an x-resource.
 This differs from `x-window-id' in that its return value is an
 x-resource rather than a string.
-*/ )
-     (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_x_frame (frame);
 
@@ -408,13 +394,12 @@ epoch_get_window_and_device (Lisp_Object frame, Window *window,
 /*
  * Epoch equivalent:  epoch::query-tree
 */
-DEFUN ("x-query-tree", Fx_query_tree, Sx_query_tree, 0, 1, 0 /*
+DEFUN ("x-query-tree", Fx_query_tree, 0, 1, 0, /*
 Return the portion of the window tree adjacent to FRAME.
 Return value is the list ( ROOT PARENT . CHILDREN ).  The FRAME arg
 can either be a frame object or an x-resource of type window.
-*/ )
-     (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   Window win;
   Window root, parent, *children;
@@ -1032,16 +1017,15 @@ raw_get_property (struct device *d, Window win, Atom prop)
 /*
  * Epoch equivalent:  epoch::get-property
  */
-DEFUN ("x-get-property", Fx_get_property, Sx_get_property, 1, 2, 0 /*
+DEFUN ("x-get-property", Fx_get_property, 1, 2, 0, /*
 Retrieve the X window property for a frame. Arguments are
 PROPERTY: must be a string or an X-resource of type ATOM.
 FRAME: (optional) If present, must be a frame object, a frame id, or
 and X-resource of type WINDOW. Defaults to the current frame.
 Returns the value of the property, or nil if the property couldn't
 be retrieved.
-*/ )
-     (name, frame)
-     Lisp_Object name, frame;
+*/
+       (name, frame))
 {
   Atom prop = None;
   Lisp_Object device;
@@ -1103,14 +1087,13 @@ raw_set_property (Display *dpy, Window win, Atom prop, Lisp_Object value)
   return value;
 }
 
-DEFUN ("x-set-property", Fx_set_property, Sx_set_property, 2, 3, 0 /*
+DEFUN ("x-set-property", Fx_set_property, 2, 3, 0, /*
 Set a named property for a frame. The first argument (required)
 is the name of the property. The second is the value to set the propery
 to. The third (optional) is the frame, default is
 the current frame.
-*/ )
-     (name, value, frame)
-     Lisp_Object name, value, frame;
+*/
+       (name, value, frame))
 {
   Atom prop = None;		/* name of the property */
   Lisp_Object device;
@@ -1151,14 +1134,12 @@ the current frame.
 /*
  * Epoch equivalent:  epoch::send-client-message
  */
-DEFUN ("x-send-client-message", Fx_send_client_message, Sx_send_client_message,
-       1, 5, 0 /*
+DEFUN ("x-send-client-message", Fx_send_client_message, 1, 5, 0, /*
 Send a client message to DEST, marking it as being from SOURCE.
 The message is DATA of TYPE with FORMAT.  If TYPE and FORMAT are omitted,
 they are deduced from DATA.  If SOURCE is nil, the current frame is used.
-*/ )
-     (dest, source, data, type, format)
-     Lisp_Object dest, source, data, type, format;
+*/
+       (dest, source, data, type, format))
 {
   /* !!#### This function has not been Mule-ized */
   int actual_format = 0;
@@ -1343,20 +1324,20 @@ dispatch_epoch_event (struct frame *f, XEvent *event, Lisp_Object type)
 void
 syms_of_epoch (void)
 {
-  defsubr (&Sx_intern_atom);
-  defsubr (&Sx_atom_name);
-  defsubr (&Sstring_to_x_resource);
-  defsubr (&Sx_resource_to_type);
-  defsubr (&Sx_resource_to_string);
-  defsubr (&Sx_id_of_frame);
-  defsubr (&Sx_query_tree);
-  defsubr (&Sx_get_property);
-  defsubr (&Sx_set_property);
-  defsubr (&Sx_send_client_message);
-  defsubr (&Sx_resource_p);
-  defsubr (&Sx_resource_device);
-  defsubr (&Sx_resource_live_p);
-  defsubr (&Sset_x_resource_type);
+  DEFSUBR (Fx_intern_atom);
+  DEFSUBR (Fx_atom_name);
+  DEFSUBR (Fstring_to_x_resource);
+  DEFSUBR (Fx_resource_to_type);
+  DEFSUBR (Fx_resource_to_string);
+  DEFSUBR (Fx_id_of_frame);
+  DEFSUBR (Fx_query_tree);
+  DEFSUBR (Fx_get_property);
+  DEFSUBR (Fx_set_property);
+  DEFSUBR (Fx_send_client_message);
+  DEFSUBR (Fx_resource_p);
+  DEFSUBR (Fx_resource_device);
+  DEFSUBR (Fx_resource_live_p);
+  DEFSUBR (Fset_x_resource_type);
 
   defsymbol (&Qx_resourcep, "x-resource-p");
   defsymbol (&Qx_resource_live_p, "x-resource-live-p");

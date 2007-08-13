@@ -2136,7 +2136,7 @@ Returns a data structure containing the parsed information."
           
             ;; Read the attributes from a start-tag.
             (if w3-p-d-end-tag-p
-                (if (looking-at "[ \t\r\n/]*>")
+                (if (looking-at "[ \t\r\n/]*[<>]")
                     nil
                   ;; This is in here to deal with those idiots who stick
                   ;; attribute/value pairs on end tags.  *sigh*
@@ -2330,6 +2330,19 @@ Returns a data structure containing the parsed information."
                  (setq tag-attributes (cons (cons 'class (list w3-p-s-btdt))
                                             tag-attributes))))
               )
+             (if (not (eq w3-p-d-tag-name 'input))
+                 nil
+               (setq w3-p-s-btdt (concat ":"
+                                         (downcase
+                                          (or (cdr-safe
+                                               (assq 'type tag-attributes))
+                                              "text"))))
+               (if (assq 'class tag-attributes)
+                   (setcdr (assq 'class tag-attributes)
+                           (cons w3-p-s-btdt
+                                 (cdr (assq 'class tag-attributes))))
+                 (setq tag-attributes (cons (cons 'class (list w3-p-s-btdt))
+                                            tag-attributes))))
              )
           
             ;; Process the end of the tag.

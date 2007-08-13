@@ -1,5 +1,5 @@
 ;;; Commands to move around within a VM message
-;;; Copyright (C) 1989, 1990, 1991, 1993, 1994 Kyle E. Jones
+;;; Copyright (C) 1989-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -28,18 +28,24 @@ Prefix argument N means scroll forward N lines."
 	(was-invisible nil))
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
+    (vm-check-for-killed-presentation)
     (vm-error-if-folder-empty)
-    (if (null (vm-get-visible-buffer-window (current-buffer)))
-	(let ((point (point)))
-	  (vm-display (current-buffer) t
-		      '(vm-scroll-forward vm-scroll-backward)
-		      (list this-command 'reading-message))
-	  ;; window start sticks to end of clip region when clip
-	  ;; region moves back past it in the buffer.  fix it.
-	  (let ((w (vm-get-visible-buffer-window (current-buffer))))
+    (and vm-presentation-buffer
+	 (set-buffer vm-presentation-buffer))
+    (let ((point (point))
+	  (w (vm-get-visible-buffer-window (current-buffer))))
+      (if (or (null w)
+	      (not (vm-frame-totally-visible-p (vm-window-frame w))))
+	  (progn
+	    (vm-display (current-buffer) t
+			'(vm-scroll-forward vm-scroll-backward)
+			(list this-command 'reading-message))
+	    ;; window start sticks to end of clip region when clip
+	    ;; region moves back past it in the buffer.  fix it.
+	    (setq w (vm-get-visible-buffer-window (current-buffer)))
 	    (if (= (window-start w) (point-max))
-		(set-window-start w (point-min))))
-	  (setq was-invisible t)))
+		(set-window-start w (point-min)))
+	    (setq was-invisible t))))
     (if (or mp-changed was-invisible
 	    (and (eq vm-system-state 'previewing)
 		 (pos-visible-in-window-p
@@ -103,14 +109,20 @@ Prefix argument N means scroll forward N lines."
 	      (t
 	       (and (> (prefix-numeric-value arg) 0)
 		    (vm-howl-if-eom)))))))
-  (if (not (or vm-startup-message-displayed vm-inhibit-startup-message))
+  (if (not vm-startup-message-displayed)
       (vm-display-startup-message)))
 
 (defun vm-scroll-forward-internal (arg)
   (let ((direction (prefix-numeric-value arg))
 	(w (selected-window)))
     (condition-case error-data
-	(progn (scroll-up arg) nil)
+	(progn
+	  (if (and (> direction 0)
+		   (pos-visible-in-window-p
+		    (vm-text-end-of (car vm-message-pointer))))
+	      (signal 'end-of-buffer nil)
+	    (scroll-up arg))
+	  nil )
       (error
        (if (or (and (< direction 0)
 		    (> (point-min) (vm-text-of (car vm-message-pointer))))
@@ -237,7 +249,7 @@ Prefix N scrolls backward N lines."
   ;; large, search just the head and the tail of the region since
   ;; they tend to contain the interesting text.
   (let ((search-limit vm-url-search-limit)
-	(search-pairs))
+	search-pairs n)
     (if (and search-limit (> (- (point-max) (point-min)) search-limit))
 	(setq search-pairs (list (cons (point-min)
 				       (+ (point-min) (/ search-limit 2)))
@@ -256,14 +268,18 @@ Prefix N scrolls backward N lines."
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
 	  (while (re-search-forward vm-url-regexp (cdr (car search-pairs)) t)
-	    (setq e (make-extent (match-beginning 0) (match-end 0)))
+	    (setq n 1)
+	    (while (null (match-beginning n))
+	      (vm-increment n))
+	    (setq e (make-extent (match-beginning n) (match-end n)))
 	    (set-extent-property e 'vm-url t)
 	    (if vm-highlight-url-face
 		(set-extent-property e 'face vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap)))
 		  (define-key keymap 'button2 'vm-mouse-send-url-at-event)
-		  (define-key keymap 'button3 'vm-menu-popup-url-browser-menu)
+		  (if vm-popup-menu-on-mouse-3
+		      (define-key keymap 'button3 'vm-menu-popup-url-browser-menu))
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))
@@ -288,12 +304,21 @@ Prefix N scrolls backward N lines."
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
 	  (while (re-search-forward vm-url-regexp (cdr (car search-pairs)) t)
-	    (setq o (make-overlay (match-beginning 0) (match-end 0)))
+	    (setq n 1)
+	    (while (null (match-beginning n))
+	      (vm-increment n))
+	    (setq o (make-overlay (match-beginning n) (match-end n)))
 	    (overlay-put o 'vm-url t)
 	    (if vm-highlight-url-face
 		(overlay-put o 'face vm-highlight-url-face))
 	    (if vm-url-browser
-		(overlay-put o 'mouse-face 'highlight)))
+		(let ((keymap (make-sparse-keymap)))
+		  (overlay-put o 'mouse-face 'highlight)
+		  (setq keymap (nconc keymap (current-local-map)))
+		  (define-key keymap "\r"
+		    (function (lambda () (interactive)
+				(vm-mouse-send-url-at-position (point)))))
+		  (overlay-put o 'local-map keymap))))
 	  (setq search-pairs (cdr search-pairs))))))))
 
 (defun vm-energize-headers ()
@@ -324,9 +349,10 @@ Prefix N scrolls backward N lines."
 	  (define-key keymap 'button2
 	    (list 'lambda () '(interactive)
 		  (list 'popup-menu (list 'quote menu))))
-	  (define-key keymap 'button3
-	    (list 'lambda () '(interactive)
-		  (list 'popup-menu (list 'quote menu))))
+	  (if vm-popup-menu-on-mouse-3
+	      (define-key keymap 'button3
+		(list 'lambda () '(interactive)
+		      (list 'popup-menu (list 'quote menu)))))
 	  (set-extent-property e 'keymap keymap)
 	  (set-extent-property e 'balloon-help 'vm-mouse-3-help)
 	  (set-extent-property e 'highlight t))
@@ -410,10 +436,48 @@ Use mouse button 3 to choose a Web browser for the URL."
 	  "Netscape")
 	 (t (symbol-name vm-url-browser)))))
 
-(defun vm-preview-current-message ()
-  (setq vm-system-state 'previewing)
-  (if vm-real-buffers
-      (vm-make-virtual-copy (car vm-message-pointer)))
+(defun vm-energize-urls-in-message-region (&optional start end)
+  (save-excursion
+    (or start (setq start (vm-headers-of (car vm-message-pointer))))
+    (or end (setq end (vm-text-end-of (car vm-message-pointer))))
+    ;; energize the URLs
+    (if (or vm-highlight-url-face vm-url-browser)
+	(save-restriction
+	  (widen)
+	  (narrow-to-region start
+			    end)
+	  (vm-energize-urls)))))
+    
+(defun vm-highlight-headers-maybe ()
+  ;; highlight the headers
+  (if (or vm-highlighted-header-regexp
+	  (and (vm-xemacs-p) vm-use-lucid-highlighting))
+      (save-restriction
+	(widen)
+	(narrow-to-region (vm-headers-of (car vm-message-pointer))
+			  (vm-text-end-of (car vm-message-pointer)))
+	(vm-highlight-headers))))
+
+(defun vm-energize-headers-and-xfaces ()
+  ;; energize certain headers
+  (if (and vm-use-menus (vm-menu-support-possible-p))
+      (save-restriction
+	(widen)
+	(narrow-to-region (vm-headers-of (car vm-message-pointer))
+			  (vm-text-of (car vm-message-pointer)))
+	(vm-energize-headers)))
+  ;; display xfaces, if we can
+  (if (and vm-display-xfaces
+	   (vm-xemacs-p)
+	   (vm-multiple-frames-possible-p)
+	   (featurep 'xface))
+      (save-restriction
+	(widen)
+	(narrow-to-region (vm-headers-of (car vm-message-pointer))
+			  (vm-text-of (car vm-message-pointer)))
+	(vm-display-xface))))
+
+(defun vm-narrow-for-preview ()
   (widen)
   ;; hide as much of the message body as vm-preview-lines specifies
   (narrow-to-region
@@ -425,86 +489,104 @@ Use mouse button 3 to choose a Web browser for the URL."
 	     (goto-char (vm-text-of (car vm-message-pointer)))
 	     (forward-line (if (natnump vm-preview-lines) vm-preview-lines 0))
 	     (point))))
-	  (t (vm-text-end-of (car vm-message-pointer)))))
-  ;; highlight the headers
-  (if (or vm-highlighted-header-regexp
-	  (and (vm-xemacs-p) vm-use-lucid-highlighting))
-      (save-restriction
-	(widen)
-	(narrow-to-region (vm-headers-of (car vm-message-pointer))
-			  (vm-text-end-of (car vm-message-pointer)))
-	(vm-highlight-headers)))
-  ;; energize the URLs
-  (if (or vm-highlight-url-face vm-url-browser)
-      (save-restriction
-	(widen)
-	(narrow-to-region (vm-headers-of (car vm-message-pointer))
-			  (vm-text-end-of (car vm-message-pointer)))
-	(vm-energize-urls)))
-  ;; energize certain headers
-  (if (and vm-use-menus (vm-menu-support-possible-p))
-      (save-restriction
-	(widen)
-	(narrow-to-region (vm-headers-of (car vm-message-pointer))
-			  (vm-text-of (car vm-message-pointer)))
-	(vm-energize-headers)))
+	 (t (vm-text-end-of (car vm-message-pointer))))))
 
-  ;; display xfaces, if we can
-  (if (and vm-display-xfaces
-	   (vm-xemacs-p)
-	   (vm-multiple-frames-possible-p)
-	   (featurep 'xface))
-      (save-restriction
-	(widen)
-	(narrow-to-region (vm-headers-of (car vm-message-pointer))
-			  (vm-text-of (car vm-message-pointer)))
-	(vm-display-xface)))
+(defun vm-preview-current-message ()
+  (vm-save-buffer-excursion
+   (setq vm-system-state 'previewing)
+   (if vm-real-buffers
+       (vm-make-virtual-copy (car vm-message-pointer)))
 
-  (vm-run-message-hook (car vm-message-pointer) 'vm-select-message-hook)
-  (and vm-select-new-message-hook (vm-new-flag (car vm-message-pointer))
-       (vm-run-message-hook (car vm-message-pointer)
-			    'vm-select-new-message-hook))
-  (and vm-select-unread-message-hook (vm-unread-flag (car vm-message-pointer))
-       (vm-run-message-hook (car vm-message-pointer)
-			    'vm-select-unread-message-hook))
+   ;; run the message select hooks.
+   (save-excursion
+     (vm-select-folder-buffer)
+     (vm-run-message-hook (car vm-message-pointer) 'vm-select-message-hook)
+     (and vm-select-new-message-hook (vm-new-flag (car vm-message-pointer))
+	  (vm-run-message-hook (car vm-message-pointer)
+			       'vm-select-new-message-hook))
+     (and vm-select-unread-message-hook
+	  (vm-unread-flag (car vm-message-pointer))
+	  (vm-run-message-hook (car vm-message-pointer)
+			       'vm-select-unread-message-hook)))
 
-  (if vm-honor-page-delimiters
-      (vm-narrow-to-page))
-  (goto-char (vm-text-of (car vm-message-pointer)))
-  ;; If we have a window, set window start appropriately.
-  (let ((w (vm-get-visible-buffer-window (current-buffer))))
-    (if w
-	(progn (set-window-start w (point-min))
-	       (set-window-point w (vm-text-of (car vm-message-pointer))))))
-  (if (or (null vm-preview-lines)
-	  (and (not vm-preview-read-messages)
-	       (not (vm-new-flag (car vm-message-pointer)))
-	       (not (vm-unread-flag (car vm-message-pointer)))))
-      (vm-show-current-message)
-    (vm-update-summary-and-mode-line)))
+   (vm-narrow-for-preview)
+   (if (or vm-mime-display-function
+	   (and vm-display-using-mime
+		(not (vm-mime-plain-message-p (car vm-message-pointer)))))
+       (let ((layout (vm-mm-layout (car vm-message-pointer))))
+	 (vm-make-presentation-copy (car vm-message-pointer))
+	 (vm-save-buffer-excursion
+	  (vm-replace-buffer-in-windows (current-buffer)
+					vm-presentation-buffer))
+	 (set-buffer vm-presentation-buffer)
+	 (setq vm-system-state 'previewing)
+	 (vm-narrow-for-preview))
+     (setq vm-presentation-buffer nil)
+     (and vm-presentation-buffer-handle
+	  (vm-replace-buffer-in-windows vm-presentation-buffer-handle
+					(current-buffer))))
+
+   ;; at this point the current buffer is the presentation buffer
+   ;; if we're using one for this message.
+
+   (vm-energize-urls-in-message-region)
+   (vm-highlight-headers-maybe)
+   (vm-energize-headers-and-xfaces)
+
+   (if vm-honor-page-delimiters
+       (vm-narrow-to-page))
+   (goto-char (vm-text-of (car vm-message-pointer)))
+   ;; If we have a window, set window start appropriately.
+   (let ((w (vm-get-visible-buffer-window (current-buffer))))
+     (if w
+	 (progn (set-window-start w (point-min))
+		(set-window-point w (vm-text-of (car vm-message-pointer))))))
+   (if (or (null vm-preview-lines)
+	   (and (not vm-preview-read-messages)
+		(not (vm-new-flag (car vm-message-pointer)))
+		(not (vm-unread-flag (car vm-message-pointer)))))
+       (vm-show-current-message)
+     (vm-update-summary-and-mode-line))))
 
 (defun vm-show-current-message ()
-  (save-excursion
-    (save-excursion
-      (goto-char (point-min))
-      (widen)
-      (narrow-to-region (point) (vm-text-end-of (car vm-message-pointer))))
-    (if vm-honor-page-delimiters
-	(progn
-	  (if (looking-at page-delimiter)
-	      (forward-page 1))
-	  (vm-narrow-to-page))))
-  ;; don't mark the message as read if the user can't see it!
-  (if (vm-get-visible-buffer-window (current-buffer))
-      (progn
-	(setq vm-system-state 'showing)
-	(cond ((vm-new-flag (car vm-message-pointer))
-	       (vm-set-new-flag (car vm-message-pointer) nil)))
-	(cond ((vm-unread-flag (car vm-message-pointer))
-	       (vm-set-unread-flag (car vm-message-pointer) nil)))
-	(vm-update-summary-and-mode-line)
-	(vm-howl-if-eom))
-    (vm-update-summary-and-mode-line)))
+  (and vm-display-using-mime
+       vm-auto-decode-mime-messages
+       (not vm-mime-decoded)
+       (not (vm-mime-plain-message-p (car vm-message-pointer)))
+       (vm-decode-mime-message))
+  (vm-save-buffer-excursion
+   (save-excursion
+     (save-excursion
+       (goto-char (point-min))
+       (widen)
+       (narrow-to-region (point) (vm-text-end-of (car vm-message-pointer))))
+     (if vm-honor-page-delimiters
+	 (progn
+	   (if (looking-at page-delimiter)
+	       (forward-page 1))
+	   (vm-narrow-to-page))))
+   ;; don't mark the message as read if the user can't see it!
+   (if (vm-get-visible-buffer-window (current-buffer))
+       (progn
+	 (save-excursion
+	   (setq vm-system-state 'showing)
+	   (if vm-mail-buffer
+	       (vm-set-buffer-variable vm-mail-buffer 'vm-system-state
+				       'showing))
+	   ;; We could be in the presentation buffer here.  Since
+	   ;; the presentation buffer's message pointer and sole
+	   ;; message are a mockup, they will cause trouble if
+	   ;; passed into the undo/update system.  So we switch
+	   ;; into the real message buffer to do attribute
+	   ;; updates.
+	   (vm-select-folder-buffer)
+	   (cond ((vm-new-flag (car vm-message-pointer))
+		  (vm-set-new-flag (car vm-message-pointer) nil)))
+	   (cond ((vm-unread-flag (car vm-message-pointer))
+		  (vm-set-unread-flag (car vm-message-pointer) nil))))
+	 (vm-update-summary-and-mode-line)
+	 (vm-howl-if-eom))
+     (vm-update-summary-and-mode-line))))
 
 (defun vm-expose-hidden-headers ()
   "Toggle exposing and hiding message headers that are normally not visible."
@@ -512,7 +594,10 @@ Use mouse button 3 to choose a Web browser for the URL."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
+  (vm-check-for-killed-presentation)
   (vm-error-if-folder-empty)
+  (and vm-presentation-buffer
+       (set-buffer vm-presentation-buffer))
   (vm-display (current-buffer) t '(vm-expose-hidden-headers)
 	      '(vm-expose-hidden-headers reading-message))
   (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
@@ -561,7 +646,10 @@ Use mouse button 3 to choose a Web browser for the URL."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
+  (vm-check-for-killed-presentation)
   (vm-error-if-folder-empty)
+  (and vm-presentation-buffer
+       (set-buffer vm-presentation-buffer))
   (vm-widen-page)
   (push-mark)
   (vm-display (current-buffer) t '(vm-beginning-of-message)
@@ -583,7 +671,10 @@ as necessary."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
+  (vm-check-for-killed-presentation)
   (vm-error-if-folder-empty)
+  (and vm-presentation-buffer
+       (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
       (vm-show-current-message))
   (setq vm-system-state 'reading)

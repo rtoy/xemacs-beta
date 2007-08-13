@@ -104,11 +104,10 @@ DEFINE_LRECORD_IMPLEMENTATION ("toolbar-button", toolbar_button,
 			       0, 0, 0,
 			       struct toolbar_button);
 
-DEFUN ("toolbar-button-p", Ftoolbar_button_p, Stoolbar_button_p, 1, 1, 0 /*
+DEFUN ("toolbar-button-p", Ftoolbar_button_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a toolbar button.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (TOOLBAR_BUTTONP (object) ? Qt : Qnil);
 }
@@ -123,48 +122,40 @@ Return non-nil if OBJECT is a toolbar button.
    way for this to get us in trouble (like if someone decides to
    change the toolbar from a toolbar callback). */
 
-DEFUN ("toolbar-button-callback", Ftoolbar_button_callback,
-       Stoolbar_button_callback, 1, 1, 0 /*
+DEFUN ("toolbar-button-callback", Ftoolbar_button_callback, 1, 1, 0, /*
 Return the callback function associated with the toolbar BUTTON.
-*/ )
-     (button)
-     Lisp_Object button;
+*/
+       (button))
 {
   CHECK_TOOLBAR_BUTTON (button);
 
   return (XTOOLBAR_BUTTON (button)->callback);
 }
 
-DEFUN ("toolbar-button-help-string", Ftoolbar_button_help_string,
-       Stoolbar_button_help_string, 1, 1, 0 /*
+DEFUN ("toolbar-button-help-string", Ftoolbar_button_help_string, 1, 1, 0, /*
 Return the help string function associated with the toolbar BUTTON.
-*/ )
-     (button)
-     Lisp_Object button;
+*/
+       (button))
 {
   CHECK_TOOLBAR_BUTTON (button);
 
   return (XTOOLBAR_BUTTON (button)->help_string);
 }
 
-DEFUN ("toolbar-button-enabled-p", Ftoolbar_button_enabled_p,
-       Stoolbar_button_enabled_p, 1, 1, 0 /*
+DEFUN ("toolbar-button-enabled-p", Ftoolbar_button_enabled_p, 1, 1, 0, /*
 Return t if BUTTON is active.
-*/ )
-     (button)
-     Lisp_Object button;
+*/
+       (button))
 {
   CHECK_TOOLBAR_BUTTON (button);
 
   return (XTOOLBAR_BUTTON (button)->enabled ? Qt : Qnil);
 }
 
-DEFUN ("set-toolbar-button-down-flag", Fset_toolbar_button_down_flag,
-       Sset_toolbar_button_down_flag, 2, 2, 0 /*
+DEFUN ("set-toolbar-button-down-flag", Fset_toolbar_button_down_flag, 2, 2, 0, /*
 Don't touch.
-*/ )
-     (button, flag)
-     Lisp_Object button, flag;
+*/
+       (button, flag))
 {
   struct toolbar_button *tb;
   char old_flag;
@@ -261,14 +252,12 @@ decode_toolbar_position (Lisp_Object position)
   return TOP_TOOLBAR; /* not reached */
 }
 
-DEFUN ("set-default-toolbar-position", Fset_default_toolbar_position,
-       Sset_default_toolbar_position, 1, 1, 0 /*
+DEFUN ("set-default-toolbar-position", Fset_default_toolbar_position, 1, 1, 0, /*
 Set the position that the `default-toolbar' will be displayed at.
 Valid positions are 'top, 'bottom, 'left and 'right.
 See `default-toolbar-position'.
-*/ )
-     (position)
-     Lisp_Object position;
+*/
+       (position))
 {
   enum toolbar_pos cur = decode_toolbar_position (Vdefault_toolbar_position);
   enum toolbar_pos new = decode_toolbar_position (position);
@@ -297,13 +286,12 @@ See `default-toolbar-position'.
   return position;
 }
 
-DEFUN ("default-toolbar-position", Fdefault_toolbar_position,
-       Sdefault_toolbar_position, 0, 0, 0 /*
+DEFUN ("default-toolbar-position", Fdefault_toolbar_position, 0, 0, 0, /*
 Return the position that the `default-toolbar' will be displayed at.
 The `default-toolbar' will only be displayed here if the corresponding
 position-specific toolbar specifier does not provide a value.
-*/ )
-    ()
+*/
+       ())
 {
   return Vdefault_toolbar_position;
 }
@@ -1044,14 +1032,12 @@ check_toolbar_button_keywords (Lisp_Object button, Lisp_Object key,
 /* toolbar button spec is [pixmap-pair function enabled-p help]
 	               or [:style 2d-or-3d :size width-or-height] */
 
-DEFUN ("check-toolbar-button-syntax", Fcheck_toolbar_button_syntax,
-       Scheck_toolbar_button_syntax, 1, 2, 0 /*
+DEFUN ("check-toolbar-button-syntax", Fcheck_toolbar_button_syntax, 1, 2, 0, /*
 Verify the syntax of entry BUTTON in a toolbar description list.
 If you want to verify the syntax of a toolbar description list as a
 whole, use `check-valid-instantiator' with a specifier type of 'toolbar.
-*/ )
-  (button, no_error)
-  Lisp_Object button, no_error;
+*/
+       (button, no_error))
 {
   Lisp_Object *elt, glyphs, value;
   int len;
@@ -1203,8 +1189,7 @@ toolbar_after_change (Lisp_Object specifier, Lisp_Object locale)
   MARK_TOOLBAR_CHANGED;
 }
 
-DEFUN ("toolbar-specifier-p", Ftoolbar_specifier_p,
-       Stoolbar_specifier_p, 1, 1, 0 /*
+DEFUN ("toolbar-specifier-p", Ftoolbar_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a toolbar specifier.
 Toolbar specifiers are used to specify the format of a toolbar.
 The values of the variables `default-toolbar', `top-toolbar',
@@ -1214,9 +1199,8 @@ toolbar specifiers.
 Valid toolbar instantiators are called \"toolbar descriptors\"
 and are lists of vectors.  See `default-toolbar' for a description
 of the exact format.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (TOOLBAR_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -1328,15 +1312,15 @@ syms_of_toolbar (void)
   defsymbol (&Q_size, ":size");	Fset (Q_size, Q_size);
 
   defsymbol (&Qinit_toolbar_from_resources, "init-toolbar-from-resources");
-  defsubr (&Stoolbar_button_p);
-  defsubr (&Stoolbar_button_callback);
-  defsubr (&Stoolbar_button_help_string);
-  defsubr (&Stoolbar_button_enabled_p);
-  defsubr (&Sset_toolbar_button_down_flag);
-  defsubr (&Scheck_toolbar_button_syntax);
-  defsubr (&Sset_default_toolbar_position);
-  defsubr (&Sdefault_toolbar_position);
-  defsubr (&Stoolbar_specifier_p);
+  DEFSUBR (Ftoolbar_button_p);
+  DEFSUBR (Ftoolbar_button_callback);
+  DEFSUBR (Ftoolbar_button_help_string);
+  DEFSUBR (Ftoolbar_button_enabled_p);
+  DEFSUBR (Fset_toolbar_button_down_flag);
+  DEFSUBR (Fcheck_toolbar_button_syntax);
+  DEFSUBR (Fset_default_toolbar_position);
+  DEFSUBR (Fdefault_toolbar_position);
+  DEFSUBR (Ftoolbar_specifier_p);
 }
 
 void

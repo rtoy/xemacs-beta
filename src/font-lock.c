@@ -635,8 +635,7 @@ context_to_symbol (enum syntactic_context context)
   return Qnil;	/* suppress compiler warning */
 }
 
-DEFUN ("buffer-syntactic-context", Fbuffer_syntactic_context,
-       Sbuffer_syntactic_context, 0, 1, 0 /*
+DEFUN ("buffer-syntactic-context", Fbuffer_syntactic_context, 0, 1, 0, /*
 Return the syntactic context of BUFFER at point.
 If BUFFER is nil or omitted, the current buffer is assumed.
 The returned value is one of the following symbols:
@@ -652,9 +651,8 @@ and the function `syntactically-sectionize', which will map a function
 over each syntactic context in a region.
 
 WARNING: this may alter match-data.
-*/ )
-     (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   /* This function can GC */
   struct buffer *buf = decode_buffer (buffer, 0);
@@ -662,14 +660,13 @@ WARNING: this may alter match-data.
   return context_to_symbol (context_cache.context);
 }
 
-DEFUN ("buffer-syntactic-context-depth", Fbuffer_syntactic_context_depth,
-       Sbuffer_syntactic_context_depth, 0, 1, 0 /*
+DEFUN ("buffer-syntactic-context-depth",
+       Fbuffer_syntactic_context_depth, 0, 1, 0, /*
 Return the depth within all parenthesis-syntax delimiters at point.
 If BUFFER is nil or omitted, the current buffer is assumed.
 WARNING: this may alter match-data.
-*/ )
-     (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   /* This function can GC */
   struct buffer *buf = decode_buffer (buffer, 0);
@@ -678,8 +675,7 @@ WARNING: this may alter match-data.
 }
 
 
-DEFUN ("syntactically-sectionize", Fsyntactically_sectionize,
-       Ssyntactically_sectionize, 3, 4, 0 /*
+DEFUN ("syntactically-sectionize", Fsyntactically_sectionize, 3, 4, 0, /*
 Calls FUNCTION for each contiguous syntactic context in the region.
 Calls the given function with four arguments: the start and end of the
 region, a symbol representing the syntactic context, and the current
@@ -688,9 +684,8 @@ depth (as returned by the functions `buffer-syntactic-context' and
 current buffer will be set to BUFFER.
 
 WARNING: this may alter match-data.
-*/ )
-	(function, start, end, buffer)
-	Lisp_Object function, start, end, buffer;
+*/
+       (function, start, end, buffer))
 {
   /* This function can GC */
   Bufpos s, pt, e;
@@ -767,9 +762,9 @@ syms_of_font_lock (void)
   defsymbol (&Qblock_comment, "block-comment");
   defsymbol (&Qbeginning_of_defun, "beginning-of-defun");
 
-  defsubr (&Sbuffer_syntactic_context);
-  defsubr (&Sbuffer_syntactic_context_depth);
-  defsubr (&Ssyntactically_sectionize);
+  DEFSUBR (Fbuffer_syntactic_context);
+  DEFSUBR (Fbuffer_syntactic_context_depth);
+  DEFSUBR (Fsyntactically_sectionize);
 }
 
 void

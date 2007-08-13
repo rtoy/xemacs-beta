@@ -3,14 +3,6 @@
 ;; About pages
 (autoload 'w3-about "w3-about")
 
-;; Annotation handling
-(autoload 'w3-parse-personal-annotations "w3-annotat")
-(autoload 'w3-is-personal-annotation "w3-annotat")
-(autoload 'w3-delete-personal-annotation "w3-annotat")
-(autoload 'w3-personal-annotation-add "w3-annotat")
-(autoload 'w3-annotation-minor-mode "w3-annotat")
-(autoload 'w3-annotation-add "w3-annotat")
-
 ;; Hotlist handling
 (autoload 'w3-read-html-bookmarks "w3-hot")
 (autoload 'w3-hotlist-apropos "w3-hot")
@@ -24,7 +16,6 @@
 (autoload 'w3-hotlist-add-document "w3-hot")
 
 ;; Printing
-(autoload 'w3-print-with-ps-print "w3-print")
 (autoload 'w3-print-this-url "w3-print")
 (autoload 'w3-print-url-under-point "w3-print")
 (autoload 'w3-parse-tree-to-latex "w3-latex")

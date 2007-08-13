@@ -176,11 +176,10 @@ elisp_hvector_free (void *ptr, Lisp_Object table)
 }
 
 
-DEFUN ("hashtablep", Fhashtablep, Shashtablep, 1, 1, 0 /*
+DEFUN ("hashtablep", Fhashtablep, 1, 1, 0, /*
 Return t if OBJ is a hashtable, else nil.
-*/ )
-  (obj)
-  Lisp_Object obj;
+*/
+       (obj))
 {
   return ((HASHTABLEP (obj)) ? Qt : Qnil);
 }
@@ -311,7 +310,7 @@ decode_hashtable_test_fun (Lisp_Object sym)
   return HASHTABLE_EQ; /* not reached */
 }
 
-DEFUN ("make-hashtable", Fmake_hashtable, Smake_hashtable, 1, 2, 0 /*
+DEFUN ("make-hashtable", Fmake_hashtable, 1, 2, 0, /*
 Make a hashtable of initial size SIZE.
 Comparison between keys is done with TEST-FUN, which must be one of
 `eq', `eql', or `equal'.  The default is `eql'; i.e. two keys must
@@ -320,21 +319,19 @@ to be considered equivalent.
 
 See also `make-weak-hashtable', `make-key-weak-hashtable', and
 `make-value-weak-hashtable'.
-*/ )
-  (size, test_fun)
-  Lisp_Object size, test_fun;
+*/
+       (size, test_fun))
 {
   CHECK_NATNUM (size);
   return make_lisp_hashtable (XINT (size), HASHTABLE_NONWEAK,
 			      decode_hashtable_test_fun (test_fun));
 }
 
-DEFUN ("copy-hashtable", Fcopy_hashtable, Scopy_hashtable, 1, 1, 0 /*
+DEFUN ("copy-hashtable", Fcopy_hashtable, 1, 1, 0, /*
 Make a new hashtable which contains the same keys and values
 as the given table.  The keys and values will not themselves be copied.
-*/ )
-  (old_table)
-  Lisp_Object old_table;
+*/
+       (old_table))
 {
   struct _C_hashtable old_htbl;
   struct _C_hashtable new_htbl;
@@ -373,12 +370,11 @@ as the given table.  The keys and values will not themselves be copied.
 }
 
 
-DEFUN ("gethash", Fgethash, Sgethash, 2, 3, 0 /*
+DEFUN ("gethash", Fgethash, 2, 3, 0, /*
 Find hash value for KEY in TABLE.
 If there is no corresponding value, return DEFAULT (defaults to nil).
-*/ )
-  (key, table, defalt)
-  Lisp_Object key, table, defalt; /* One can't even spell correctly in C */
+*/
+       (key, table, defalt))
 {
   CONST void *vval;
   struct _C_hashtable htbl;
@@ -396,11 +392,10 @@ If there is no corresponding value, return DEFAULT (defaults to nil).
 }
 
 
-DEFUN ("remhash", Fremhash, Sremhash, 2, 2, 0 /*
+DEFUN ("remhash", Fremhash, 2, 2, 0, /*
 Remove hash value for KEY in TABLE.
-*/ )
-  (key, table)
-  Lisp_Object key, table;
+*/
+       (key, table))
 {
   struct _C_hashtable htbl;
   CHECK_HASHTABLE (table);
@@ -412,11 +407,10 @@ Remove hash value for KEY in TABLE.
 }
 
 
-DEFUN ("puthash", Fputhash, Sputhash, 3, 3, 0 /*
+DEFUN ("puthash", Fputhash, 3, 3, 0, /*
 Hash KEY to VAL in TABLE.
-*/ )
-  (key, val, table)
-  Lisp_Object key, val, table;
+*/
+       (key, val, table))
 {
   struct hashtable_struct *ht;
   void *vkey = LISP_TO_VOID (key);
@@ -439,11 +433,10 @@ Hash KEY to VAL in TABLE.
   return (val);
 }
 
-DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0 /*
+DEFUN ("clrhash", Fclrhash, 1, 1, 0, /*
 Flush TABLE.
-*/ )
-  (table)
-  Lisp_Object table;
+*/
+       (table))
 {
   struct _C_hashtable htbl;
   CHECK_HASHTABLE (table);
@@ -453,11 +446,10 @@ Flush TABLE.
   return Qnil;
 }
 
-DEFUN ("hashtable-fullness", Fhashtable_fullness, Shashtable_fullness, 1, 1, 0 /*
+DEFUN ("hashtable-fullness", Fhashtable_fullness, 1, 1, 0, /*
 Return number of entries in TABLE.
-*/ )
-  (table)
-  Lisp_Object table;
+*/
+       (table))
 {
   struct _C_hashtable htbl;
   CHECK_HASHTABLE (table);
@@ -506,12 +498,11 @@ lisp_maphash_function (CONST void *void_key,
 }
 
 
-DEFUN ("maphash", Fmaphash, Smaphash, 2, 2, 0 /*
+DEFUN ("maphash", Fmaphash, 2, 2, 0, /*
 Map FUNCTION over entries in TABLE, calling it with two args,
 each key and value in the table.
-*/ )
-  (function, table)
-  Lisp_Object function, table;
+*/
+       (function, table))
 {
   struct _C_hashtable htbl;
   struct gcpro gcpro1, gcpro2;
@@ -567,8 +558,7 @@ elisp_table_op (Lisp_Object table, generic_hashtable_op op, void *arg1,
 
 
 
-DEFUN ("make-weak-hashtable", Fmake_weak_hashtable, Smake_weak_hashtable,
-       1, 2, 0 /*
+DEFUN ("make-weak-hashtable", Fmake_weak_hashtable, 1, 2, 0, /*
 Make a fully weak hashtable of initial size SIZE.
 A weak hashtable is one whose pointers do not count as GC referents:
 for any key-value pair in the hashtable, if the only remaining pointer
@@ -579,43 +569,38 @@ from being collected.
 
 You can also create semi-weak hashtables; see `make-key-weak-hashtable'
 and `make-value-weak-hashtable'.
-*/ )
-  (size, test_fun)
-  Lisp_Object size, test_fun;
+*/
+       (size, test_fun))
 {
   CHECK_NATNUM (size);
   return make_lisp_hashtable (XINT (size), HASHTABLE_WEAK,
 			      decode_hashtable_test_fun (test_fun));
 }
 
-DEFUN ("make-key-weak-hashtable", Fmake_key_weak_hashtable,
-       Smake_key_weak_hashtable, 1, 2, 0 /*
+DEFUN ("make-key-weak-hashtable", Fmake_key_weak_hashtable, 1, 2, 0, /*
 Make a key-weak hashtable of initial size SIZE.
 A key-weak hashtable is similar to a fully-weak hashtable (see
 `make-weak-hashtable') except that a key-value pair will be removed
 only if the key remains unmarked outside of weak hashtables.  The pair
 will remain in the hashtable if the key is pointed to by something other
 than a weak hashtable, even if the value is not.
-*/ )
-  (size, test_fun)
-  Lisp_Object size, test_fun;
+*/
+       (size, test_fun))
 {
   CHECK_NATNUM (size);
   return make_lisp_hashtable (XINT (size), HASHTABLE_KEY_WEAK,
 			      decode_hashtable_test_fun (test_fun));
 }
 
-DEFUN ("make-value-weak-hashtable", Fmake_value_weak_hashtable,
-       Smake_value_weak_hashtable, 1, 2, 0 /*
+DEFUN ("make-value-weak-hashtable", Fmake_value_weak_hashtable, 1, 2, 0, /*
 Make a value-weak hashtable of initial size SIZE.
 A value-weak hashtable is similar to a fully-weak hashtable (see
 `make-weak-hashtable') except that a key-value pair will be removed only
 if the value remains unmarked outside of weak hashtables.  The pair will
 remain in the hashtable if the value is pointed to by something other
 than a weak hashtable, even if the key is not.
-*/ )
-  (size, test_fun)
-  Lisp_Object size, test_fun;
+*/
+       (size, test_fun))
 {
   CHECK_NATNUM (size);
   return make_lisp_hashtable (XINT (size), HASHTABLE_VALUE_WEAK,
@@ -888,18 +873,18 @@ internal_hash (Lisp_Object obj, int depth)
 void
 syms_of_elhash (void)
 {
-  defsubr (&Smake_hashtable);
-  defsubr (&Scopy_hashtable);
-  defsubr (&Shashtablep);
-  defsubr (&Sgethash);
-  defsubr (&Sputhash);
-  defsubr (&Sremhash);
-  defsubr (&Sclrhash);
-  defsubr (&Smaphash);
-  defsubr (&Shashtable_fullness);
-  defsubr (&Smake_weak_hashtable);
-  defsubr (&Smake_key_weak_hashtable);
-  defsubr (&Smake_value_weak_hashtable);
+  DEFSUBR (Fmake_hashtable);
+  DEFSUBR (Fcopy_hashtable);
+  DEFSUBR (Fhashtablep);
+  DEFSUBR (Fgethash);
+  DEFSUBR (Fputhash);
+  DEFSUBR (Fremhash);
+  DEFSUBR (Fclrhash);
+  DEFSUBR (Fmaphash);
+  DEFSUBR (Fhashtable_fullness);
+  DEFSUBR (Fmake_weak_hashtable);
+  DEFSUBR (Fmake_key_weak_hashtable);
+  DEFSUBR (Fmake_value_weak_hashtable);
   defsymbol (&Qhashtablep, "hashtablep");
 }
 

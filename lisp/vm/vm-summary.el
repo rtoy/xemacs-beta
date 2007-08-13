@@ -1,5 +1,5 @@
 ;;; Summary gathering and formatting routines for VM
-;;; Copyright (C) 1989, 1990, 1993, 1994, 1995 Kyle E. Jones
+;;; Copyright (C) 1989-1995 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 	major-mode 'vm-summary-mode
 	mode-line-format vm-mode-line-format
 	;; must come after the setting of major-mode
-	mode-popup-menu (and vm-use-menus
+	mode-popup-menu (and vm-use-menus vm-popup-menu-on-mouse-3
 			     (vm-menu-support-possible-p)
 			     (vm-menu-mode-menu))
 	buffer-read-only t
@@ -38,7 +38,8 @@
   (use-local-map vm-summary-mode-map)
   (and (vm-menu-support-possible-p)
        (vm-menu-install-menus))
-  (and (vm-mouse-support-possible-p)
+  (and vm-mouse-track-summary
+       (vm-mouse-support-possible-p)
        (vm-mouse-xemacs-mouse-p)
        (add-hook 'mode-motion-hook 'mode-motion-highlight-line))
   (if (or vm-frame-per-folder vm-frame-per-summary)
@@ -50,12 +51,12 @@
 (fset 'vm-summary-mode 'vm-mode)
 (put 'vm-summary-mode 'mode-class 'special)
 
-(defun vm-summarize (&optional display)
+(defun vm-summarize (&optional display raise)
   "Summarize the contents of the folder in a summary buffer. 
 The format is as described by the variable vm-summary-format.  Generally
 one line per message is most pleasing to the eye but this is not
 mandatory."
-  (interactive "p")
+  (interactive "p\np")
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (if (null vm-summary-buffer)
@@ -79,20 +80,11 @@ mandatory."
 	(vm-set-summary-redo-start-point t)))
   (if display
       (save-excursion
-	(if vm-frame-per-summary
-	    (let ((w (vm-get-buffer-window vm-summary-buffer)))
-	      (if (null w)
-		  (progn
-		    (vm-goto-new-frame 'summary)
-		    (vm-set-hooks-for-frame-deletion))
-		(save-excursion
-		  (select-window w)
-		  (and vm-warp-mouse-to-new-frame
-		       (vm-warp-mouse-to-frame-maybe (vm-window-frame w)))))))
+	(vm-goto-new-summary-frame-maybe)
 	(vm-display vm-summary-buffer t
 		    '(vm-summarize
 		      vm-summarize-other-frame)
-		    (list this-command))
+		    (list this-command) (not raise))
 	;; need to do this after any frame creation because the
 	;; toolbar sets frame-specific height and width specifiers.
 	(set-buffer vm-summary-buffer)
@@ -118,7 +110,8 @@ mandatory."
 	;; Just for laughs, make the update interval vary.
 	(modulus (+ (% (vm-abs (random)) 11) 10))
 	(mouse-track-func
-	    (and (vm-mouse-support-possible-p)
+	    (and vm-mouse-track-summary
+		 (vm-mouse-support-possible-p)
 		 (vm-mouse-fsfemacs-mouse-p)
 		 (function vm-mouse-set-mouse-track-highlight)))
 	summary)
@@ -188,7 +181,8 @@ mandatory."
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p))
 	    (mouse-track-func
-	     (and (vm-mouse-support-possible-p)
+	     (and vm-mouse-track-summary
+		  (vm-mouse-support-possible-p)
 		  (vm-mouse-fsfemacs-mouse-p)
 		  (function vm-mouse-set-mouse-track-highlight)))
 	    summary)
@@ -203,7 +197,7 @@ mandatory."
 		  (goto-char (vm-su-start-of m))
 		  (setq selected (not (looking-at vm-summary-no-=>)))
 		  ;; We do a little dance to update the text in
-		  ;; order to make the markets in the text do
+		  ;; order to make the markers in the text do
 		  ;; what we want.
 		  ;;
 		  ;; 1. We need to avoid having the su-start-of
@@ -244,7 +238,8 @@ mandatory."
   (if vm-summary-buffer
       (let ((w (vm-get-visible-buffer-window vm-summary-buffer))
 	    (mouse-track-func
-	       (and (vm-mouse-support-possible-p)
+	       (and vm-mouse-track-summary
+		    (vm-mouse-support-possible-p)
 		    (vm-mouse-fsfemacs-mouse-p)
 		    (function vm-mouse-set-mouse-track-highlight)))
 	    (old-window nil))
@@ -299,6 +294,13 @@ mandatory."
 	 (if (and vm-summary-overlay (extent-end-position vm-summary-overlay))
 	     (set-extent-endpoints vm-summary-overlay start end)
 	   (setq vm-summary-overlay (make-extent start end))
+	   ;; the reason this isn't needed under FSF Emacs is
+	   ;; that insert-before-marker also inserts before
+	   ;; overlays!  so a summary update of an entry just
+	   ;; before this overlay in the summary buffer won't
+	   ;; leak into the overlay, but it _will_ leak into an
+	   ;; XEmacs extent.
+	   (set-extent-property vm-summary-overlay 'start-open t)
 	   (set-extent-property vm-summary-overlay 'detachable nil)
 	   (set-extent-property vm-summary-overlay 'face face)))))
 
@@ -493,7 +495,7 @@ mandatory."
     (put format-variable 'vm-compiled-format format)
     (put format-variable 'vm-format-sexp (if list (cons 'list list) sexp))))
 
-(defun vm-get-header-contents (message header-name-regexp)
+(defun vm-get-header-contents (message header-name-regexp &optional clump-sep)
   (let ((contents nil)
 	regexp)
     (setq regexp (concat "^\\(" header-name-regexp "\\)")
@@ -504,12 +506,13 @@ mandatory."
 	(widen)
 	(goto-char (vm-headers-of message))
 	(let ((case-fold-search t))
-	  (while (and (re-search-forward regexp (vm-text-of message) t)
+	  (while (and (or (null contents) clump-sep)
+		      (re-search-forward regexp (vm-text-of message) t)
 		      (save-excursion (goto-char (match-beginning 0))
 				      (vm-match-header)))
 	    (if contents
 		(setq contents
-		      (concat contents ", " (vm-matched-header-contents)))
+		      (concat contents clump-sep (vm-matched-header-contents)))
 	      (setq contents (vm-matched-header-contents))))))
       contents )))
 
@@ -612,18 +615,19 @@ mandatory."
       nil
     (save-excursion
       (set-buffer (vm-buffer-of (vm-real-message-of message)))
-      (save-restriction
-	(widen)
-	(goto-char (vm-start-of message))
-	(let ((case-fold-search nil))
-	  (if (or (looking-at
-		   ;; special case this so that the "remote from blah"
-		   ;; isn't included.
-		   "From [^ \t\n]*[ \t]+\\([^ \t\n].*\\) remote from .*")
-		  (looking-at "From [^ \t\n]*[ \t]+\\([^ \t\n].*\\)"))
-	      (vm-buffer-substring-no-properties
-	       (match-beginning 1)
-	       (match-end 1))))))))
+      (save-excursion
+	(save-restriction
+	  (widen)
+	  (goto-char (vm-start-of message))
+	  (let ((case-fold-search nil))
+	    (if (or (looking-at
+		     ;; special case this so that the "remote from blah"
+		     ;; isn't included.
+		     "From [^ \t\n]*[ \t]+\\([^ \t\n].*\\) remote from .*")
+		    (looking-at "From [^ \t\n]*[ \t]+\\([^ \t\n].*\\)"))
+		(vm-buffer-substring-no-properties
+		 (match-beginning 1)
+		 (match-end 1)))))))))
 
 (defun vm-parse-date (date)
   (let ((weekday "")
@@ -779,20 +783,21 @@ mandatory."
       nil
     (save-excursion
       (set-buffer (vm-buffer-of message))
-      (save-restriction
-	(widen)
-	(goto-char (vm-start-of message))
-	(let ((case-fold-search nil))
-	  (if (looking-at "From \\([^ \t\n]+\\)")
-	      (vm-buffer-substring-no-properties
-	       (match-beginning 1)
-	       (match-end 1))))))))
+      (save-excursion
+	(save-restriction
+	  (widen)
+	  (goto-char (vm-start-of message))
+	  (let ((case-fold-search nil))
+	    (if (looking-at "From \\([^ \t\n]+\\)")
+		(vm-buffer-substring-no-properties
+		 (match-beginning 1)
+		 (match-end 1)))))))))
 
 (defun vm-su-do-author (m)
   (let ((full-name (vm-get-header-contents m "Full-Name:"))
-	(from (or (vm-get-header-contents m "From:")
+	(from (or (vm-get-header-contents m "From:" ", ")
 		  (vm-grok-From_-author m)))
-	pair)
+	pair i)
     (if (and full-name (string-match "^[ \t]*$" full-name))
 	(setq full-name nil))
     (if (null from)
@@ -806,6 +811,9 @@ mandatory."
     (if (string-match "\\`\"\\([^\"]+\\)\"\\'" full-name)
  	(setq full-name
  	      (substring full-name (match-beginning 1) (match-end 1))))
+    (setq full-name (vm-decode-mime-encoded-words-maybe full-name))
+    (while (setq i (string-match "\n" full-name i))
+      (aset full-name i ?\ ))
     (vm-set-full-name-of m full-name)
     (vm-set-from-of m from)))
 
@@ -862,37 +870,29 @@ mandatory."
     (funcall vm-chop-full-name-function address)))
 
 (defun vm-su-do-recipients (m)
-  (let ((mail-use-rfc822 t) names addresses to cc all list)
-    (setq to (or (vm-get-header-contents m "To:")
-		 (vm-get-header-contents m "Apparently-To:")
+  (let ((mail-use-rfc822 t) i names addresses to cc all list full-name)
+    (setq to (or (vm-get-header-contents m "To:" ", ")
+		 (vm-get-header-contents m "Apparently-To:" ", ")
 		 ;; desperation....
 		 (user-login-name))
-	  cc (vm-get-header-contents m "Cc:")
+	  cc (vm-get-header-contents m "Cc:" ", ")
 	  all to
 	  all (if all (concat all ", " cc) cc)
 	  addresses (rfc822-addresses all))
     (setq list (vm-parse-addresses all))
     (while list
-      (cond ((string= (car list) ""))
-	    ((string-match "^\\(\"?\\([^<]+[^ \t\n\"]\\)\"?[ \t\n]+\\)?<\\([^>]+\\)>"
-			   (car list))
-	     (if (match-beginning 2)
-		 (setq names
-		       (cons
-			(substring (car list) (match-beginning 2)
-				   (match-end 2))
-			names))
-	       (setq names
-		     (cons
-		      (substring (car list) (match-beginning 3)
-				 (match-end 3))
-		      names))))
-	    ((string-match "[\000-\177]*(\\([^)]+\\))[\000-\177]*" (car list))
-	     (setq names
-		   (cons (substring (car list) (match-beginning 1)
-				    (match-end 1))
-			 names)))
-	    (t (setq names (cons (car list) names))))
+      ;; Just like vm-su-do-author:
+      (setq full-name (or (nth 0 (funcall vm-chop-full-name-function
+					  (car list)))
+			  (car list)))
+      ;; If double quoted are around the full name, fish the name out.
+      (if (string-match "\\`\"\\([^\"]+\\)\"\\'" full-name)
+	  (setq full-name
+		(substring full-name (match-beginning 1) (match-end 1))))
+      (setq full-name (vm-decode-mime-encoded-words-maybe full-name))
+      (while (setq i (string-match "\n" full-name i))
+	(aset full-name i ?\ ))
+      (setq names (cons full-name names))
       (setq list (cdr list)))
     (setq names (nreverse names)) ; added by jwz for fixed vm-parse-addresses
     (vm-set-to-of m (mapconcat 'identity addresses ", "))
@@ -941,11 +941,11 @@ mandatory."
   (or (vm-subject-of m)
       (vm-set-subject-of
        m
-       (let ((subject (or (vm-get-header-contents m "Subject:") ""))
+       (let ((subject (or (vm-get-header-contents m "Subject:" " ") ""))
 	     (i nil))
-	 (if vm-summary-subject-no-newlines
-	     (while (setq i (string-match "\n" subject i))
-	       (aset subject i ?\ )))
+	 (setq subject (vm-decode-mime-encoded-words-maybe subject))
+	 (while (setq i (string-match "\n" subject i))
+	   (aset subject i ?\ ))
 	 subject ))))
 
 (defun vm-su-summary (m)
@@ -971,8 +971,8 @@ mandatory."
     (while mp
       (vm-set-summary-of (car mp) nil)
       (vm-mark-for-summary-update (car mp))
-      (vm-stuff-attributes (car mp))
       (setq mp (cdr mp)))
+    (vm-stuff-folder-attributes nil)
     (set-buffer-modified-p t)
     (vm-update-summary-and-mode-line))
   (vm-unsaved-message "Fixing your summary... done"))

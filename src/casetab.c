@@ -52,12 +52,11 @@ static void compute_trt_inverse (Lisp_Object trt, Lisp_Object inverse);
 #define STRING256_P(obj) \
   (STRINGP (obj) && string_char_length (XSTRING (obj)) == 256)
 
-DEFUN ("case-table-p", Fcase_table_p, Scase_table_p, 1, 1, 0 /*
+DEFUN ("case-table-p", Fcase_table_p, 1, 1, 0, /*
 Return t iff ARG is a case table.
 See `set-case-table' for more information on these data structures.
-*/ )
-  (table)
-     Lisp_Object table;
+*/
+       (table))
 {
   Lisp_Object down, up, canon, eqv;
   down = Fcar_safe (table);
@@ -83,12 +82,10 @@ check_case_table (Lisp_Object obj)
   return (obj);
 }   
 
-DEFUN ("current-case-table", Fcurrent_case_table, Scurrent_case_table,
-       0, 1, 0 /*
+DEFUN ("current-case-table", Fcurrent_case_table, 0, 1, 0, /*
 Return the case table of BUFFER, which defaults to the current buffer.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   Lisp_Object down, up, canon, eqv;
   struct buffer *buf = decode_buffer (buffer, 0);
@@ -101,12 +98,11 @@ Return the case table of BUFFER, which defaults to the current buffer.
   return Fcons (down, Fcons (up, Fcons (canon, Fcons (eqv, Qnil))));
 }
 
-DEFUN ("standard-case-table", Fstandard_case_table,
-  Sstandard_case_table, 0, 0, 0 /*
+DEFUN ("standard-case-table", Fstandard_case_table, 0, 0, 0, /*
 Return the standard case table.
 This is the one used for new buffers.
-*/ )
-  ()
+*/
+       ())
 {
   return Fcons (Vascii_downcase_table,
 		Fcons (Vascii_upcase_table,
@@ -118,7 +114,7 @@ This is the one used for new buffers.
 static Lisp_Object set_case_table (Lisp_Object table, int standard);
 
 
-DEFUN ("set-case-table", Fset_case_table, Sset_case_table, 1, 1, 0 /*
+DEFUN ("set-case-table", Fset_case_table, 1, 1, 0, /*
 Select a new case table for the current buffer.
 A case table is a list (DOWNCASE UPCASE CANONICALIZE EQUIVALENCES)
  where each element is either nil or a string of length 256.
@@ -133,20 +129,17 @@ CANONICALIZE maps each character to a canonical equivalent;
 EQUIVALENCES is a map that cyclicly permutes each equivalence class
  (of characters with the same canonical equivalent); it may be nil,
  in which case it is deduced from CANONICALIZE.
-*/ )
-  (table)
-     Lisp_Object table;
+*/
+       (table))
 {
   return set_case_table (table, 0);
 }
 
-DEFUN ("set-standard-case-table",
-       Fset_standard_case_table, Sset_standard_case_table, 1, 1, 0 /*
+DEFUN ("set-standard-case-table", Fset_standard_case_table, 1, 1, 0, /*
 Select a new standard case table for new buffers.
 See `set-case-table' for more info on case tables.
-*/ )
-  (table)
-     Lisp_Object table;
+*/
+       (table))
 {
   return set_case_table (table, 1);
 }
@@ -245,11 +238,11 @@ syms_of_casetab (void)
   defsymbol (&Qcase_table_p, "case-table-p");
   defsymbol (&Qtranslate_table, "translate-table");
 
-  defsubr (&Scase_table_p);
-  defsubr (&Scurrent_case_table);
-  defsubr (&Sstandard_case_table);
-  defsubr (&Sset_case_table);
-  defsubr (&Sset_standard_case_table);
+  DEFSUBR (Fcase_table_p);
+  DEFSUBR (Fcurrent_case_table);
+  DEFSUBR (Fstandard_case_table);
+  DEFSUBR (Fset_case_table);
+  DEFSUBR (Fset_standard_case_table);
 }
 
 void

@@ -212,7 +212,7 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
   }
 }
 
-DEFUN ("popup-dialog-box", Fpopup_dialog_box, Spopup_dialog_box, 1, 1, 0 /*
+DEFUN ("popup-dialog-box", Fpopup_dialog_box, 1, 1, 0, /*
 Pop up a dialog box.
 A dialog box description is a list.
 
@@ -241,9 +241,8 @@ following buttons should be flushright instead of flushleft.
 Though the keyword/value syntax is supported for dialog boxes just as in 
 popup menus, the only keyword which is both meaningful and fully implemented
 for dialog box buttons is `:active'.
-*/ )
-     (dbox_desc)
-     Lisp_Object dbox_desc;
+*/
+       (dbox_desc))
 {
   int dbox_id;
   struct frame *f = selected_frame ();
@@ -294,7 +293,7 @@ for dialog box buttons is `:active'.
 void
 syms_of_dialog_x (void)
 {
-  defsubr (&Spopup_dialog_box);
+  DEFSUBR (Fpopup_dialog_box);
 }
 
 void

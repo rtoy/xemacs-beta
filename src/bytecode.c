@@ -258,14 +258,13 @@ Lisp_Object Qbyte_code;
 
 #define TOP (*stackp)
 
-DEFUN ("byte-code", Fbyte_code, Sbyte_code, 3, 3, 0 /*
+DEFUN ("byte-code", Fbyte_code, 3, 3, 0, /*
 Function used internally in byte-compiled code.
 The first argument is a string of byte code; the second, a vector of constants;
 the third, the maximum stack depth used in this function.
 If the third argument is incorrect, Emacs may crash.
-*/ )
-  (bytestr, vector, maxdepth)
-     Lisp_Object bytestr, vector, maxdepth;
+*/
+       (bytestr, vector, maxdepth))
 {
   /* This function can GC */
   struct gcpro gcpro1, gcpro2, gcpro3;
@@ -1219,7 +1218,7 @@ void
 syms_of_bytecode (void)
 {
   defsymbol (&Qbyte_code, "byte-code");
-  defsubr (&Sbyte_code);
+  DEFSUBR (Fbyte_code);
 #ifdef BYTE_CODE_METER
   defsymbol (&Qbyte_code_meter, "byte-code-meter");
 #endif

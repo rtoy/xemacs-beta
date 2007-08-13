@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/31 04:28:42
-;; Version: 1.76
+;; Created: 1997/02/09 06:46:59
+;; Version: 1.82
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +30,7 @@
 ;;; Variable definitions for w3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst w3-version-number
-  (let ((x "p3.0.52"))
+  (let ((x "p3.0.56"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -38,7 +38,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/01/31 04:28:42"))
+(defconst w3-version-date (let ((x "1997/02/09 06:46:59"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -51,15 +51,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; General configuration variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-annotation-mode 'html-mode
-  "*A symbol specifying the major mode to enter when doing annotations.")
-
-(defvar w3-annotation-position 'bottom
-  "*A symbol specifying where personal annotations should appear in a buffer.
-Can be one of the symbols 'top or 'bottom.  If the symbol is eq to 'top, then
-the annotations will appear at the top of the buffer.  If 'bottom, will appear
-at the end of the buffer.")
-
 (defvar w3-auto-image-alt t
   "*Whether emacs-w3 should create an alt attribute for an image that
 is missing it.
@@ -243,11 +234,6 @@ quiet      -- like `polite', but don't beep
 meek       -- make no indication that page is ready
 
 Any other value of `w3-notify' is equivalent to `meek'.")
-
-(defvar w3-personal-annotation-directory nil
-  "*Directory where w3 looks for personal annotations.
-This is a directory that should hold the personal annotations stored in
-a Mosaic-compatible format.")
 
 (defvar w3-ppmtoxbm-command "ppmtopgm | pgmtopbm | pbmtoxbm"
   "*The command used to convert from the portable-pixmap graphics format
@@ -702,10 +688,8 @@ for the image.")
 (defvar w3-navigate-menu nil)
 (defvar w3-popup-menu
   '("Emacs-W3 Commands"
-    ["Back" w3-backward-in-history t]
-    ["Forward" w3-forward-in-history t]
-    "---"
-    ["Add annotation" w3-annotation-add t]
+    ["Back" w3-history-backward (car (w3-history-find-url-internal (url-view-url t)))]
+    ["Forward" w3-history-forward (cdr (w3-history-find-url-internal (url-view-url t)))]
     )
   "The shorter popup menu.")
 
@@ -858,13 +842,10 @@ when it is referenced.")
     ("Mail session"                     . "mailto"))
   "An assoc list of descriptive labels and the corresponding URL stub.")
 
-(defvar w3-annotation-marker "<ncsa-annotation-format-1>")
-(defvar w3-annotation-minor-mode nil "Whether we are in the minor mode.")
 (defconst w3-bug-address "wmperry@cs.indiana.edu"
   "Address of current maintainer, where to send bug reports.")
 (defvar w3-continuation '(url-uncompress url-clean-text)
   "List of functions to call to process a document completely.")
-(defvar w3-current-annotation nil "URL of document we are annotating...")
 (defvar w3-current-isindex nil "Is the current document a searchable index?")
 (defvar w3-current-last-buffer nil "Last W3 buffer seen before this one.")
 (defvar w3-current-links nil "An assoc list of <link> tags for this doc.")
@@ -873,13 +854,11 @@ when it is referenced.")
 (defvar w3-current-parse nil "Parsed version of current document.")
 (defconst w3-default-continuation '(url-uncompress url-clean-text) 
   "Default action to start with - cleans text and uncompresses if necessary.")
-(defvar w3-editing-annotation nil "Are we editing an annotation or not?")
 (defvar w3-find-this-link nil "Link to go to within a document.")
 (defvar w3-hidden-forms nil "List of hidden form areas and their info.")
 (defvar w3-hotlist nil "Default hotlist.")
 (defvar w3-icon-path-cache nil "Cache of where we found icons for entities.")
 (defvar w3-last-buffer nil "The last W3 buffer visited.")
-(defvar w3-personal-annotations nil "Assoc list of personal annotations.")
 (defvar w3-print-next nil "Should we latex & print the next doc?")
 (defvar w3-roman-characters "ivxLCDMVX" "Roman numerals.")
 (defvar w3-setup-done nil "Have we been through setup code yet?")
@@ -921,7 +900,6 @@ returns.")
     url-current-type
     url-current-user
     w3-current-parse
-    w3-current-annotation
     w3-current-isindex
     w3-current-last-buffer
     w3-current-links
@@ -974,7 +952,6 @@ returns.")
 (make-variable-buffer-local 'w3-state-vector)
 (make-variable-buffer-local 'w3-current-stylesheet)
 (make-variable-buffer-local 'w3-base-alist)
-(make-variable-buffer-local 'w3-annotation-minor-mode)
 (make-variable-buffer-local 'w3-last-tag)
 (make-variable-buffer-local 'w3-last-fill-pos)
 (make-variable-buffer-local 'w3-table-info)
@@ -991,8 +968,6 @@ returns.")
 ;;;  Keymap definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-mode-map (make-keymap) "Keymap to use in w3-mode.")
-(defvar w3-annotation-minor-mode-map (make-keymap) "Keymap for annotation.")
-
 (suppress-keymap w3-mode-map)
 
 (define-key w3-mode-map "h" (make-sparse-keymap))
@@ -1009,20 +984,16 @@ returns.")
 (define-key w3-mode-map "hI"       'w3-hotlist-add-document-at-point)
 (define-key w3-mode-map "hR"       'w3-hotlist-refresh)
 
-(define-key w3-mode-map "ai"       'w3-annotation-add)
-(define-key w3-mode-map "ad"       'w3-delete-personal-annotation)
-(define-key w3-mode-map "ae"       'w3-annotation-edit)
-
-(define-key w3-mode-map "HF"       'w3-forward-in-history)
-(define-key w3-mode-map "HB"       'w3-backward-in-history)
+(define-key w3-mode-map "HF"       'w3-history-forward)
+(define-key w3-mode-map "HB"       'w3-history-backward)
 (define-key w3-mode-map "Hv"       'w3-show-history-list)
 
 (define-key w3-mode-map " "	   'w3-scroll-up)
 (define-key w3-mode-map "<"        'beginning-of-buffer)
 (define-key w3-mode-map ">"        'end-of-buffer)
 (define-key w3-mode-map "?"        'w3-help)
-(define-key w3-mode-map "B"        'w3-backward-in-history)
-(define-key w3-mode-map "F"        'w3-forward-in-history)
+(define-key w3-mode-map "B"        'w3-history-backward)
+(define-key w3-mode-map "F"        'w3-history-forward)
 (define-key w3-mode-map "G"        'w3-show-graphics)
 (define-key w3-mode-map "I"        'w3-popup-info)
 (define-key w3-mode-map "K"        'w3-save-this-url)
@@ -1065,12 +1036,11 @@ returns.")
 (define-key w3-mode-map [(control meta t)] 'url-list-processes)
 
 ;; Widget navigation
-(define-key w3-mode-map "\t"       'w3-widget-forward)
+(define-key w3-mode-map "\t"          'w3-widget-forward)
+(define-key w3-mode-map [backtab]     'w3-widget-backward)
 (define-key w3-mode-map [(shift tab)] 'w3-widget-backward)
+(define-key w3-mode-map [(meta tab)]  'w3-widget-backward)
   
-(define-key w3-annotation-minor-mode-map "\C-c\C-c"
-  'w3-personal-annotation-finish)
-
 ;;; This is so we can use a consistent method of checking for mule support
 ;;; Emacs-based mule uses (boundp 'MULE), but XEmacs-based mule uses
 ;;; (featurep 'mule) - I choose to use the latter.

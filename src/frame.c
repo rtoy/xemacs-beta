@@ -365,7 +365,7 @@ make_sure_its_a_fresh_plist (Lisp_Object foolist)
   return foolist;
 }
 
-DEFUN ("make-frame", Fmake_frame, Smake_frame, 0, 2, "" /*
+DEFUN ("make-frame", Fmake_frame, 0, 2, "", /*
 Create a new frame, displaying the current buffer.
 
 Optional argument PROPS is a property list (a list of alternating
@@ -375,9 +375,8 @@ be passed in.)
 
 See `set-frame-properties', `default-x-frame-plist', and
 `default-tty-frame-plist' for the specially-recognized properties.
-*/ )
-     (props, device)
-     Lisp_Object props, device;
+*/
+       (props, device))
 {
   struct frame *f;
   struct device *d;
@@ -610,23 +609,21 @@ unhold_frame_size_changes (void)
 
 
 
-DEFUN ("framep", Fframep, Sframep, 1, 1, 0 /*
+DEFUN ("framep", Fframep, 1, 1, 0, /*
 Return non-nil if OBJECT is a frame.
 Also see `frame-live-p'.
 Note that FSF Emacs kludgily returns a value indicating what type of
 frame this is.  Use the cleaner function `frame-type' for that.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return FRAMEP (object) ? Qt : Qnil;
 }
 
-DEFUN ("frame-live-p", Fframe_live_p, Sframe_live_p, 1, 1, 0 /*
+DEFUN ("frame-live-p", Fframe_live_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a frame which has not been deleted.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return FRAMEP (object) && FRAME_LIVE_P (XFRAME (object)) ? Qt : Qnil;
 }
@@ -649,7 +646,7 @@ select_frame_1 (Lisp_Object frame)
   update_frame_window_mirror (f);
 }
 
-DEFUN ("select-frame", Fselect_frame, Sselect_frame, 1, 1, 0 /*
+DEFUN ("select-frame", Fselect_frame, 1, 1, 0, /*
 Select the frame FRAME.
 Subsequent editing commands apply to its selected window.
 The selection of FRAME lasts until the next time the user does
@@ -659,9 +656,8 @@ function is called.
 Note that this does not actually cause the window-system focus to
 be set to this frame, or the select-frame-hook or deselect-frame-hook
 to be run, until the next time that XEmacs is waiting for an event.
-*/ )
-  (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   CHECK_LIVE_FRAME (frame);
 
@@ -720,8 +716,7 @@ This function selects the selected window of the frame of EVENT.
 If EVENT is frame object, handle it as if it were a switch-frame event
 to that frame.
 */ )
-  (frame, no_enter)
-     Lisp_Object frame, no_enter;
+     (Lisp_Object frame, Lisp_Object no_enter)
 {
   /* Preserve prefix arg that the command loop just cleared.  */
   XCONSOLE (Vselected_console)->prefix_arg = Vcurrent_prefix_arg;
@@ -746,13 +741,12 @@ This is a suitable binding for iconify-frame and make-frame-visible.
 
 #endif
 
-DEFUN ("selected-frame", Fselected_frame, Sselected_frame, 0, 1, 0 /*
+DEFUN ("selected-frame", Fselected_frame, 0, 1, 0, /*
 Return the frame that is now selected on device DEVICE.
 If DEVICE is not specified, the selected device will be used.
 If no frames exist on the device, nil is returned.
-*/ )
-  (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   if (NILP (device) && NILP (Fselected_device (Qnil)))
     return Qnil; /* happens early in temacs */
@@ -777,24 +771,21 @@ frame_first_window (struct frame *f)
   return w;
 }
 
-DEFUN ("active-minibuffer-window", Factive_minibuffer_window,
-       Sactive_minibuffer_window, 0, 0, 0 /*
+DEFUN ("active-minibuffer-window", Factive_minibuffer_window, 0, 0, 0, /*
 Return the currently active minibuffer window, or nil if none.
-*/ )
-  ()
+*/
+       ())
 {
   return minibuf_level ? minibuf_window : Qnil;
 }
 
-DEFUN ("last-nonminibuf-frame", Flast_nonminibuf_frame,
-       Slast_nonminibuf_frame, 0, 1, 0 /*
+DEFUN ("last-nonminibuf-frame", Flast_nonminibuf_frame, 0, 1, 0, /*
 Return the most-recently-selected non-minibuffer-only frame on CONSOLE.
 This will always be the same as (selected-frame device) unless the
 selected frame is a minibuffer-only frame.
 CONSOLE defaults to the selected console if omitted.
-*/ )
-  (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   Lisp_Object result;
 
@@ -808,23 +799,20 @@ CONSOLE defaults to the selected console if omitted.
   return CONSOLE_LAST_NONMINIBUF_FRAME (XCONSOLE (console));
 }
 
-DEFUN ("frame-root-window", Fframe_root_window, Sframe_root_window, 0, 1, 0 /*
+DEFUN ("frame-root-window", Fframe_root_window, 0, 1, 0, /*
 Return the root-window of FRAME.
 If omitted, FRAME defaults to the currently selected frame.
-*/ )
-  (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   return (FRAME_ROOT_WINDOW (decode_frame (frame)));
 }
 
-DEFUN ("frame-selected-window", Fframe_selected_window,
-       Sframe_selected_window, 0, 1, 0 /*
+DEFUN ("frame-selected-window", Fframe_selected_window, 0, 1, 0, /*
 Return the selected window of frame object FRAME.
 If omitted, FRAME defaults to the currently selected frame.
-*/ )
-  (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   return (FRAME_SELECTED_WINDOW (decode_frame (frame)));
 }
@@ -838,14 +826,12 @@ set_frame_selected_window (struct frame *f, Lisp_Object window)
     f->last_nonminibuf_window = window;
 }
 
-DEFUN ("set-frame-selected-window", Fset_frame_selected_window,
-       Sset_frame_selected_window, 2, 2, 0 /*
+DEFUN ("set-frame-selected-window", Fset_frame_selected_window, 2, 2, 0, /*
 Set the selected window of frame object FRAME to WINDOW.
 If FRAME is nil, the selected frame is used.
 If FRAME is the selected frame, this makes WINDOW the selected window.
-*/ )
-  (frame, window)
-     Lisp_Object frame, window;
+*/
+       (frame, window))
 {
   XSETFRAME (frame, decode_frame (frame));
   CHECK_LIVE_WINDOW (window);
@@ -861,13 +847,11 @@ If FRAME is the selected frame, this makes WINDOW the selected window.
 }
 
 
-DEFUN ("frame-device", Fframe_device, Sframe_device,
-       0, 1, 0 /*
+DEFUN ("frame-device", Fframe_device, 0, 1, 0, /*
 Return the device that FRAME is on.
 If omitted, FRAME defaults to the currently selected frame.
-*/ )
-     (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   return (FRAME_DEVICE (decode_frame (frame)));
 }
@@ -1096,8 +1080,7 @@ prev_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
     return prev;
 }
 
-DEFUN ("next-frame", Fnext_frame, Snext_frame,
-       0, 3, 0 /*
+DEFUN ("next-frame", Fnext_frame, 0, 3, 0, /*
 Return the next frame of the right type in the frame list after FRAME.
 FRAMETYPE controls which frames are eligible to be returned; all
 others will be skipped.  Note that if there is only one eligible
@@ -1136,17 +1119,15 @@ device.  If CONSOLE is a console type, return frames only on consoles
 of that type.  If CONSOLE is 'window-system, return any frames on any
 window-system consoles.  If CONSOLE is nil or omitted, return frames only
 on the FRAME's console.  Otherwise, all frames are considered.
-*/ )
-  (frame, frametype, console)
-  Lisp_Object frame, frametype, console;
+*/
+       (frame, frametype, console))
 {
   XSETFRAME (frame, decode_frame (frame));
 
   return (next_frame (frame, frametype, console));
 }
 
-DEFUN ("previous-frame", Fprevious_frame, Sprevious_frame,
-       0, 3, 0 /*
+DEFUN ("previous-frame", Fprevious_frame, 0, 3, 0, /*
 Return the next frame of the right type in the frame list after FRAME.
 FRAMETYPE controls which frames are eligible to be returned; all
 others will be skipped.  Note that if there is only one eligible
@@ -1156,9 +1137,8 @@ returned.
 
 See `next-frame' for an explanation of the FRAMETYPE and CONSOLE
 arguments.
-*/ )
-  (frame, frametype, console)
-     Lisp_Object frame, frametype, console;
+*/
+       (frame, frametype, console))
 {
   XSETFRAME (frame, decode_frame (frame));
 
@@ -1297,6 +1277,29 @@ delete_frame_internal (struct frame *f, int force,
 	    }
 	}
     }
+  /* Test for popup frames hanging around. */
+  /* Deletion of a parent frame with popups is deadly. */
+  {
+    Lisp_Object frmcons, devcons, concons;
+
+    FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
+      {
+	Lisp_Object this = XCAR (frmcons);
+
+
+	if (! EQ (this, frame)
+	    && EQ (frame, DEVMETH_OR_GIVEN(XDEVICE(XCAR(devcons)),
+					   get_frame_parent,
+					   (XFRAME(this)),
+					   Qnil)))
+	  {
+	    /* We've found another frame whose minibuffer is on
+	       this frame. */
+	    signal_simple_error
+	      ("Attempt to delete a frame with live popups", frame);
+	  }
+      }
+  }
 
   /* Before here, we haven't made any dangerous changes (just checked for
      error conditions).  Now run the delete-frame-hook.  Remember that
@@ -1318,7 +1321,7 @@ delete_frame_internal (struct frame *f, int force,
     {
       va_run_hook_with_args (Qdelete_device_hook, 1, device);
       if (!FRAME_LIVE_P (f)) /* Make sure the delete-device-hook didn't */
-	{		     /* go ahead and delete anything. */
+	{		     /*	go ahead and delete anything. */
 	  UNGCPRO;
 	  return;
 	}
@@ -1374,6 +1377,7 @@ delete_frame_internal (struct frame *f, int force,
          First try the same device, then the same console. */
 
       next = DEVMETH_OR_GIVEN (d, get_frame_parent, (f), Qnil);
+
       if (NILP (next) || EQ (next, frame) || ! FRAME_LIVE_P (XFRAME (next)))
 	next = next_frame_internal (frame, Qvisible, device,
 				    called_from_delete_device);
@@ -1545,8 +1549,7 @@ io_error_delete_frame (Lisp_Object frame)
   delete_frame_internal (XFRAME (frame), 1, 0, 1);
 }
 
-DEFUN ("delete-frame", Fdelete_frame, Sdelete_frame,
-       0, 2, "" /*
+DEFUN ("delete-frame", Fdelete_frame, 0, 2, "", /*
 Delete FRAME, permanently eliminating it from use.
 If omitted, FRAME defaults to the selected frame.
 A frame may not be deleted if its minibuffer is used by other frames.
@@ -1554,9 +1557,8 @@ Normally, you cannot delete the last non-minibuffer-only frame (you must
 use `save-buffers-kill-emacs' or `kill-emacs').  However, if optional
 second argument FORCE is non-nil, you can delete the last frame. (This
 will automatically call `save-buffers-kill-emacs'.)
-*/ )
-  (frame, force)
-  Lisp_Object frame, force;
+*/
+       (frame, force))
 {
   /* This function can GC */
   struct frame *f;
@@ -1579,7 +1581,7 @@ will automatically call `save-buffers-kill-emacs'.)
 
 /* Return mouse position in character cell units.  */
 
-DEFUN ("mouse-position", Fmouse_position, Smouse_position, 0, 1, 0 /*
+DEFUN ("mouse-position", Fmouse_position, 0, 1, 0, /*
 Return a list (WINDOW X . Y) giving the current mouse window and position.
 The position is given in character cells, where (0, 0) is the
 upper-left corner of the window.
@@ -1588,9 +1590,8 @@ DEVICE specifies the device on which to read the mouse position, and
 defaults to the selected device.  If the device is a mouseless terminal
 or Emacs hasn't been programmed to read its mouse position, it returns
 the device's selected window for WINDOW and nil for X and Y.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   Lisp_Object val = Fmouse_pixel_position (device);
   int x, y, obj_x, obj_y;
@@ -1651,8 +1652,7 @@ mouse_pixel_position_1 (struct device *d, Lisp_Object *frame,
   return 0;
 }
 
-DEFUN ("mouse-pixel-position", Fmouse_pixel_position,
-       Smouse_pixel_position, 0, 1, 0 /*
+DEFUN ("mouse-pixel-position", Fmouse_pixel_position, 0, 1, 0, /*
 Return a list (WINDOW X . Y) giving the current mouse window and position.
 The position is given in pixel units, where (0, 0) is the
 upper-left corner.
@@ -1661,9 +1661,8 @@ DEVICE specifies the device on which to read the mouse position, and
 defaults to the selected device.  If the device is a mouseless terminal
 or Emacs hasn't been programmed to read its mouse position, it returns
 the device's selected window for WINDOW and nil for X and Y.
-*/ )
-  (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   Lisp_Object frame;
@@ -1701,8 +1700,7 @@ the device's selected window for WINDOW and nil for X and Y.
   return Fcons (window, Fcons (x, y));
 }
 
-DEFUN ("mouse-position-as-motion-event", Fmouse_position_as_motion_event,
-       Smouse_position_as_motion_event, 0, 1, 0 /*
+DEFUN ("mouse-position-as-motion-event", Fmouse_position_as_motion_event, 0, 1, 0, /*
 Return the current mouse position as a motion event.
 This allows you to call the standard event functions such as
 `event-over-toolbar-p' to determine where the mouse is.
@@ -1710,9 +1708,8 @@ This allows you to call the standard event functions such as
 DEVICE specifies the device on which to read the mouse position, and
 defaults to the selected device.  If the mouse position can't be determined
 (e.g. DEVICE is a TTY device), nil is returned instead of an event.
-*/ )
-  (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   Lisp_Object frame;
@@ -1731,7 +1728,7 @@ defaults to the selected device.  If the mouse position can't be determined
     return Qnil;
 }
 
-DEFUN ("set-mouse-position", Fset_mouse_position, Sset_mouse_position, 3, 3, 0 /*
+DEFUN ("set-mouse-position", Fset_mouse_position, 3, 3, 0, /*
 Move the mouse pointer to the center of character cell (X,Y) in WINDOW.
 Note, this is a no-op for an X frame that is not visible.
 If you have just created a frame, you must wait for it to become visible
@@ -1739,9 +1736,8 @@ before calling this function on it, like this.
   (while (not (frame-visible-p frame)) (sleep-for .5))
 Note also: Warping the mouse is contrary to the ICCCM, so be very sure
  that the behavior won't end up being obnoxious!
-*/ )
-  (window, x, y)
-  Lisp_Object window, x, y;
+*/
+       (window, x, y))
 {
   struct window *w;
   int pix_x, pix_y;
@@ -1759,16 +1755,14 @@ Note also: Warping the mouse is contrary to the ICCCM, so be very sure
   return Qnil;
 }
 
-DEFUN ("set-mouse-pixel-position", Fset_mouse_pixel_position,
-       Sset_mouse_pixel_position, 3, 3, 0 /*
+DEFUN ("set-mouse-pixel-position", Fset_mouse_pixel_position, 3, 3, 0, /*
 Move the mouse pointer to pixel position (X,Y) in WINDOW.
 Note, this is a no-op for an X frame that is not visible.
 If you have just created a frame, you must wait for it to become visible
 before calling this function on it, like this.
   (while (not (frame-visible-p frame)) (sleep-for .5))
-*/ )
-  (window, x, y)
-  Lisp_Object window, x, y;
+*/
+       (window, x, y))
 {
   struct window *w;
 
@@ -1783,14 +1777,12 @@ before calling this function on it, like this.
   return Qnil;
 }
 
-DEFUN ("make-frame-visible", Fmake_frame_visible, Smake_frame_visible,
-       0, 1, 0 /*
+DEFUN ("make-frame-visible", Fmake_frame_visible, 0, 1, 0, /*
 Make the frame FRAME visible (assuming it is an X-window).
 If omitted, FRAME defaults to the currently selected frame.
 Also raises the frame so that nothing obscures it.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
 
@@ -1798,8 +1790,7 @@ Also raises the frame so that nothing obscures it.
   return frame;
 }
 
-DEFUN ("make-frame-invisible", Fmake_frame_invisible, Smake_frame_invisible,
-       0, 2, 0 /*
+DEFUN ("make-frame-invisible", Fmake_frame_invisible, 0, 2, 0, /*
 Unconditionally removes frame from the display (assuming it is an X-window).
 If omitted, FRAME defaults to the currently selected frame.
 If what you want to do is iconify the frame (if the window manager uses
@@ -1807,9 +1798,8 @@ icons) then you should call `iconify-frame' instead.
 Normally you may not make FRAME invisible if all other frames are invisible
 and uniconified, but if the second optional argument FORCE is non-nil,
 you may do so.
-*/ )
-     (frame, force)
-     Lisp_Object frame, force;
+*/
+       (frame, force))
 {
   struct frame *f, *sel_frame;
   struct device *d;
@@ -1834,13 +1824,11 @@ you may do so.
   return Qnil;
 }
 
-DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
-       0, 1, "" /*
+DEFUN ("iconify-frame", Ficonify_frame, 0, 1, "", /*
 Make the frame FRAME into an icon, if the window manager supports icons.
 If omitted, FRAME defaults to the currently selected frame.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f, *sel_frame;
   struct device *d;
@@ -1862,58 +1850,50 @@ If omitted, FRAME defaults to the currently selected frame.
   return Qnil;
 }
 
-DEFUN ("deiconify-frame", Fdeiconify_frame, Sdeiconify_frame,
-       0, 1, 0 /*
+DEFUN ("deiconify-frame", Fdeiconify_frame, 0, 1, 0, /*
 Open (de-iconify) the iconified frame FRAME.
 Under X, this is currently the same as `make-frame-visible'.
 If omitted, FRAME defaults to the currently selected frame.
 Also raises the frame so that nothing obscures it.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   return Fmake_frame_visible (frame);
 }
 
 /* FSF returns 'icon for iconized frames.  What a crock! */
 
-DEFUN ("frame-visible-p", Fframe_visible_p, Sframe_visible_p,
-       1, 1, 0 /*
+DEFUN ("frame-visible-p", Fframe_visible_p, 0, 1, 0, /*
 Return t if FRAME is now \"visible\" (actually in use for display).
 A frame that is not visible is not updated, and, if it works through a
 window system, may not show at all.
-*/ )
-  (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
   return (FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f), f->visible)
 			      ? Qt : Qnil);
 }
 
-DEFUN ("frame-totally-visible-p", Fframe_totally_visible_p,
-       Sframe_totally_visible_p, 0, 1, 0 /*
+DEFUN ("frame-totally-visible-p", Fframe_totally_visible_p, 0, 1, 0, /*
 Return T if frame is not obscured by any other X windows, NIL otherwise.
 Always returns t for tty frames.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
   return (FRAMEMETH_OR_GIVEN (f, frame_totally_visible_p, (f), f->visible)
 			      ? Qt : Qnil);
 }
 
-DEFUN ("frame-iconified-p", Fframe_iconified_p, Sframe_iconified_p,
-       1, 1, 0 /*
+DEFUN ("frame-iconified-p", Fframe_iconified_p, 0, 1, 0, /*
 Return t if FRAME is iconified.
 Not all window managers use icons; some merely unmap the window, so this
 function is not the inverse of `frame-visible-p'.  It is possible for a
 frame to not be visible and not be iconified either.  However, if the
 frame is iconified, it will not be visible.
-*/ )
-  (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
   if (f->visible)
@@ -1922,13 +1902,11 @@ frame is iconified, it will not be visible.
   return (f->iconified ? Qt : Qnil);
 }
 
-DEFUN ("visible-frame-list", Fvisible_frame_list, Svisible_frame_list,
-       0, 1, 0 /*
+DEFUN ("visible-frame-list", Fvisible_frame_list, 0, 1, 0, /*
 Return a list of all frames now \"visible\" (being updated).
 If DEVICE is specified only frames on that device will be returned.
-*/ )
-  (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   Lisp_Object devcons, concons;
   struct frame *f;
@@ -1958,15 +1936,14 @@ If DEVICE is specified only frames on that device will be returned.
 }
 
 
-DEFUN ("raise-frame", Fraise_frame, Sraise_frame, 0, 1, "" /*
+DEFUN ("raise-frame", Fraise_frame, 0, 1, "", /*
 Bring FRAME to the front, so it occludes any frames it overlaps.
 If omitted, FRAME defaults to the currently selected frame.
 If FRAME is invisible, make it visible.
 If Emacs is displaying on an ordinary terminal or some other device which
 doesn't support multiple overlapping frames, this function does nothing.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
 
@@ -1976,14 +1953,13 @@ doesn't support multiple overlapping frames, this function does nothing.
   return Qnil;
 }
 
-DEFUN ("lower-frame", Flower_frame, Slower_frame, 0, 1, "" /*
+DEFUN ("lower-frame", Flower_frame, 0, 1, "", /*
 Send FRAME to the back, so it is occluded by any frames that overlap it.
 If omitted, FRAME defaults to the currently selected frame.
 If Emacs is displaying on an ordinary terminal or some other device which
 doesn't support multiple overlapping frames, this function does nothing.
-*/ )
-  (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
 
@@ -2117,8 +2093,7 @@ get_property_alias (Lisp_Object prop)
    But of course.  This stuff needs more work, but it's a lot closer
    to sanity now than before with the horrible frame-params stuff. */
 
-DEFUN ("set-frame-properties", Fset_frame_properties, Sset_frame_properties,
-       2, 2, 0 /*
+DEFUN ("set-frame-properties", Fset_frame_properties, 2, 2, 0, /*
 Change some properties of a frame.
 PLIST is a property list.
 You can also change frame properties individually using `set-frame-property',
@@ -2183,9 +2158,8 @@ frame property name to another.
 See the variables `default-x-frame-plist' and `default-tty-frame-plist'
 for a description of the properties recognized for particular types of
 frames.
-*/ )
-  (frame, plist)
-  Lisp_Object frame, plist;
+*/
+       (frame, plist))
 {
   struct frame *f = decode_frame (frame);
   Lisp_Object tail;
@@ -2270,12 +2244,11 @@ frames.
   return Qnil;
 }
 
-DEFUN ("frame-property", Fframe_property, Sframe_property, 2, 3, 0 /*
+DEFUN ("frame-property", Fframe_property, 2, 3, 0, /*
 Return FRAME's value for property PROPERTY.
 See `set-frame-properties' for the built-in property names.
-*/ )
-  (frame, property, defalt)
-   Lisp_Object frame, property, defalt;
+*/
+       (frame, property, defalt))
 {
   struct frame *f = decode_frame (frame);
 
@@ -2337,12 +2310,11 @@ do {				\
   }
 }
 
-DEFUN ("frame-properties", Fframe_properties, Sframe_properties, 1, 1, 0 /*
+DEFUN ("frame-properties", Fframe_properties, 0, 1, 0, /*
 Return a property list of the properties of FRAME.
 Do not modify this list; use `set-frame-property' instead.
-*/ )
-  (frame)
-   Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
   Lisp_Object result = Qnil;
@@ -2391,38 +2363,34 @@ do {							\
 }
 
 
-DEFUN ("frame-pixel-height", Fframe_pixel_height, Sframe_pixel_height, 0, 1, 0 /*
+DEFUN ("frame-pixel-height", Fframe_pixel_height, 0, 1, 0, /*
 Return the height in pixels of FRAME.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
   return (make_int (f->pixheight));
 }
 
-DEFUN ("frame-pixel-width", Fframe_pixel_width, Sframe_pixel_width, 0, 1, 0 /*
+DEFUN ("frame-pixel-width", Fframe_pixel_width, 0, 1, 0, /*
 Return the width in pixels of FRAME.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   struct frame *f = decode_frame (frame);
   return (make_int (f->pixwidth));
 }
 
-DEFUN ("frame-name", Fframe_name, Sframe_name, 0, 1, 0 /*
+DEFUN ("frame-name", Fframe_name, 0, 1, 0, /*
 Return the name of FRAME (defaulting to the selected frame).
 This is not the same as the `title' of the frame.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   return (decode_frame (frame)->name);
 }
 
-DEFUN ("frame-modified-tick", Fframe_modified_tick, Sframe_modified_tick,
-       0, 1, 0 /*
+DEFUN ("frame-modified-tick", Fframe_modified_tick, 0, 1, 0, /*
 Return FRAME's tick counter, incremented for each change to the frame.
 Each frame has a tick counter which is incremented each time the frame
 is resized, a window is resized, added, or deleted, a face is changed,
@@ -2430,9 +2398,8 @@ is resized, a window is resized, added, or deleted, a face is changed,
 frame, the window-start of a window in the frame has changed, or
 anything else interesting has happened.  It wraps around occasionally.
 No argument or nil as argument means use selected frame as FRAME.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   return make_int (decode_frame (frame)->modiff);
 }
@@ -2446,13 +2413,12 @@ internal_set_frame_size (struct frame *f, int cols, int rows, int pretend)
     FRAMEMETH (f, set_frame_size, (f, cols, rows));
 }
 
-DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 3, 0 /*
+DEFUN ("set-frame-height", Fset_frame_height, 2, 3, 0, /*
 Specify that the frame FRAME has LINES lines.
 Optional third arg non-nil means that redisplay should use LINES lines
 but that the idea of the actual height of the frame should not be changed.
-*/ )
-  (frame, rows, pretend)
-  Lisp_Object frame, rows, pretend;
+*/
+       (frame, rows, pretend))
 {
   struct frame *f = decode_frame (frame);
   XSETFRAME (frame, f);
@@ -2463,13 +2429,12 @@ but that the idea of the actual height of the frame should not be changed.
   return frame;
 }
 
-DEFUN ("set-frame-width", Fset_frame_width, Sset_frame_width, 2, 3, 0 /*
+DEFUN ("set-frame-width", Fset_frame_width, 2, 3, 0, /*
 Specify that the frame FRAME has COLS columns.
 Optional third arg non-nil means that redisplay should use COLS columns
 but that the idea of the actual width of the frame should not be changed.
-*/ )
-  (frame, cols, pretend)
-  Lisp_Object frame, cols, pretend;
+*/
+       (frame, cols, pretend))
 {
   struct frame *f = decode_frame (frame);
   XSETFRAME (frame, f);
@@ -2480,14 +2445,12 @@ but that the idea of the actual width of the frame should not be changed.
   return frame;
 }
 
-DEFUN ("set-frame-size", Fset_frame_size, 
-       Sset_frame_size, 3, 4, 0 /*
+DEFUN ("set-frame-size", Fset_frame_size, 3, 4, 0, /*
 Sets size of FRAME to COLS by ROWS.
 Optional fourth arg non-nil means that redisplay should use COLS by ROWS
 but that the idea of the actual size of the frame should not be changed.
-*/ )
-  (frame, cols, rows, pretend)
-  Lisp_Object frame, cols, rows, pretend;
+*/
+       (frame, cols, rows, pretend))
 {
   struct frame *f = decode_frame (frame);
   XSETFRAME (frame, f);
@@ -2498,15 +2461,13 @@ but that the idea of the actual size of the frame should not be changed.
   return frame;
 }
 
-DEFUN ("set-frame-position", Fset_frame_position, 
-       Sset_frame_position, 3, 3, 0 /*
+DEFUN ("set-frame-position", Fset_frame_position, 3, 3, 0, /*
 Sets position of FRAME in pixels to XOFFSET by YOFFSET.
 This is actually the position of the upper left corner of the frame.
 Negative values for XOFFSET or YOFFSET are interpreted relative to
 the rightmost or bottommost possible position (that stays within the screen).
-*/ )
-  (frame, xoffset, yoffset)
-  Lisp_Object frame, xoffset, yoffset;
+*/
+       (frame, xoffset, yoffset))
 {
   struct frame *f = decode_frame (frame);
   CHECK_INT (xoffset);
@@ -2795,16 +2756,14 @@ update_frame_title (struct frame *f)
 }
 
 
-DEFUN ("set-frame-pointer", Fset_frame_pointer, Sset_frame_pointer,
-       2, 2, 0 /*
+DEFUN ("set-frame-pointer", Fset_frame_pointer, 2, 2, 0, /*
 Set the mouse pointer of FRAME to the given pointer image instance.
 You should not call this function directly.  Instead, set one of
 the variables `text-pointer-glyph', `nontext-pointer-glyph',
 `modeline-pointer-glyph', `selection-pointer-glyph',
 `busy-pointer-glyph', or `toolbar-pointer-glyph'.
-*/ )
-     (frame, image_instance)
-     Lisp_Object frame, image_instance;
+*/
+       (frame, image_instance))
 {
   struct frame *f = decode_frame (frame);
   CHECK_POINTER_IMAGE_INSTANCE (image_instance);
@@ -2917,50 +2876,50 @@ syms_of_frame (void)
   defsymbol (&Qface_property_instance, "face-property-instance");
   defsymbol (&Qframe_property_alias, "frame-property-alias");
 
-  defsubr (&Smake_frame);
-  defsubr (&Sframep);
-  defsubr (&Sframe_live_p);
+  DEFSUBR (Fmake_frame);
+  DEFSUBR (Fframep);
+  DEFSUBR (Fframe_live_p);
 #if 0 /* FSFmacs */
-  defsubr (&Signore_event);
+  DEFSUBR (Fignore_event);
 #endif
-  defsubr (&Sselect_frame);
-  defsubr (&Sselected_frame);
-  defsubr (&Sactive_minibuffer_window);
-  defsubr (&Slast_nonminibuf_frame);
-  defsubr (&Sframe_root_window);
-  defsubr (&Sframe_selected_window);
-  defsubr (&Sset_frame_selected_window);
-  defsubr (&Sframe_device);
-  defsubr (&Snext_frame);
-  defsubr (&Sprevious_frame);
-  defsubr (&Sdelete_frame);
-  defsubr (&Smouse_position);
-  defsubr (&Smouse_pixel_position);
-  defsubr (&Smouse_position_as_motion_event);
-  defsubr (&Sset_mouse_position);
-  defsubr (&Sset_mouse_pixel_position);
-  defsubr (&Smake_frame_visible);
-  defsubr (&Smake_frame_invisible);
-  defsubr (&Siconify_frame);
-  defsubr (&Sdeiconify_frame);
-  defsubr (&Sframe_visible_p);
-  defsubr (&Sframe_totally_visible_p);
-  defsubr (&Sframe_iconified_p);
-  defsubr (&Svisible_frame_list);
-  defsubr (&Sraise_frame);
-  defsubr (&Slower_frame);
-  defsubr (&Sframe_property);
-  defsubr (&Sframe_properties);
-  defsubr (&Sset_frame_properties);
-  defsubr (&Sframe_pixel_height);
-  defsubr (&Sframe_pixel_width);
-  defsubr (&Sframe_name);
-  defsubr (&Sframe_modified_tick);
-  defsubr (&Sset_frame_height);
-  defsubr (&Sset_frame_width);
-  defsubr (&Sset_frame_size);
-  defsubr (&Sset_frame_position);
-  defsubr (&Sset_frame_pointer);
+  DEFSUBR (Fselect_frame);
+  DEFSUBR (Fselected_frame);
+  DEFSUBR (Factive_minibuffer_window);
+  DEFSUBR (Flast_nonminibuf_frame);
+  DEFSUBR (Fframe_root_window);
+  DEFSUBR (Fframe_selected_window);
+  DEFSUBR (Fset_frame_selected_window);
+  DEFSUBR (Fframe_device);
+  DEFSUBR (Fnext_frame);
+  DEFSUBR (Fprevious_frame);
+  DEFSUBR (Fdelete_frame);
+  DEFSUBR (Fmouse_position);
+  DEFSUBR (Fmouse_pixel_position);
+  DEFSUBR (Fmouse_position_as_motion_event);
+  DEFSUBR (Fset_mouse_position);
+  DEFSUBR (Fset_mouse_pixel_position);
+  DEFSUBR (Fmake_frame_visible);
+  DEFSUBR (Fmake_frame_invisible);
+  DEFSUBR (Ficonify_frame);
+  DEFSUBR (Fdeiconify_frame);
+  DEFSUBR (Fframe_visible_p);
+  DEFSUBR (Fframe_totally_visible_p);
+  DEFSUBR (Fframe_iconified_p);
+  DEFSUBR (Fvisible_frame_list);
+  DEFSUBR (Fraise_frame);
+  DEFSUBR (Flower_frame);
+  DEFSUBR (Fframe_property);
+  DEFSUBR (Fframe_properties);
+  DEFSUBR (Fset_frame_properties);
+  DEFSUBR (Fframe_pixel_height);
+  DEFSUBR (Fframe_pixel_width);
+  DEFSUBR (Fframe_name);
+  DEFSUBR (Fframe_modified_tick);
+  DEFSUBR (Fset_frame_height);
+  DEFSUBR (Fset_frame_width);
+  DEFSUBR (Fset_frame_size);
+  DEFSUBR (Fset_frame_position);
+  DEFSUBR (Fset_frame_pointer);
 }
 
 void
@@ -2969,6 +2928,10 @@ vars_of_frame (void)
   /* */
   Vframe_being_created = Qnil;
   staticpro (&Vframe_being_created);
+
+#ifdef HAVE_CDE
+  Vfeatures = Fcons (intern ("cde"), Vfeatures);
+#endif
 
 #if 0 /* FSFmacs stupidity */
   xxDEFVAR_LISP ("emacs-iconified", &Vemacs_iconified /*

@@ -388,12 +388,12 @@ event_hash (Lisp_Object obj, int depth)
    to determine if, for a given button-down event, what the
    binding for the corresponding button-up event is. */
 
-DEFUN ("make-event", Fmake_event, Smake_event, 0, 0, 0 /*
+DEFUN ("make-event", Fmake_event, 0, 0, 0, /*
 Create a new empty event.
 WARNING, the event object returned may be a reused one; see the function
 `deallocate-event'.
-*/ )
-  ()
+*/
+       ())
 {
   Lisp_Object event;
 
@@ -410,16 +410,15 @@ WARNING, the event object returned may be a reused one; see the function
   return event;
 }
 
-DEFUN ("deallocate-event", Fdeallocate_event, Sdeallocate_event, 1, 1, 0 /*
+DEFUN ("deallocate-event", Fdeallocate_event, 1, 1, 0, /*
 Allow the given event structure to be reused.
 You MUST NOT use this event object after calling this function with it.
 You will lose.  It is not necessary to call this function, as event
 objects are garbage-collected like all other objects; however, it may
 be more efficient to explicitly deallocate events when you are sure
 that it is safe to do so.
-*/ )
-    (event)
-    Lisp_Object event;
+*/
+       (event))
 {
   CHECK_EVENT (event);
 
@@ -459,15 +458,14 @@ that it is safe to do so.
   return Qnil;
 }
 
-DEFUN ("copy-event", Fcopy_event, Scopy_event, 1, 2, 0 /*
+DEFUN ("copy-event", Fcopy_event, 1, 2, 0, /*
 Make a copy of the given event object.
 If a second argument is given, the first event is copied into the second
 and the second is returned.  If the second argument is not supplied (or
 is nil) then a new event will be made as with `allocate-event.'  See also
 the function `deallocate-event'.
-*/ )
-     (event1, event2)
-     Lisp_Object event1, event2;
+*/
+       (event1, event2))
 {
   CHECK_LIVE_EVENT (event1);
   if (NILP (event2))
@@ -673,7 +671,6 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
     error ("character-to-event called with a deallocated event!");
 
   c &= 255;
-
   if (c > 127 && c <= 255)
     {
       int meta_flag = 1;
@@ -790,9 +787,7 @@ event_to_character (struct Lisp_Event *event,
   return c;
 }
 
-
-DEFUN ("event-to-character", Fevent_to_character, Sevent_to_character,
-       1, 4, 0 /*
+DEFUN ("event-to-character", Fevent_to_character, 1, 4, 0, /*
 Return the closest ASCII approximation to the given event object.
 If the event isn't a keypress, this returns nil.
 If the ALLOW-EXTRA-MODIFIERS argument is non-nil, then this is lenient in
@@ -809,9 +804,8 @@ If the ALLOW-NON-ASCII argument is non-nil, then characters which are
  the return value being restricted to ASCII.
 Note that specifying both ALLOW-META and ALLOW-NON-ASCII is ambiguous, as
  both use the high bit; `M-x' and `oslash' will be indistinguishable.
-*/ )
-     (event, allow_extra_modifiers, allow_meta, allow_non_ascii)
-     Lisp_Object event, allow_extra_modifiers, allow_meta, allow_non_ascii;
+*/
+       (event, allow_extra_modifiers, allow_meta, allow_non_ascii))
 {
   Emchar c;
   CHECK_LIVE_EVENT (event);
@@ -822,8 +816,7 @@ Note that specifying both ALLOW-META and ALLOW-NON-ASCII is ambiguous, as
   return (c < 0 ? Qnil : make_char (c));
 }
 
-DEFUN ("character-to-event", Fcharacter_to_event, Scharacter_to_event,
-       1, 4, 0 /*
+DEFUN ("character-to-event", Fcharacter_to_event, 1, 4, 0, /*
 Converts a keystroke specifier into an event structure, replete with
 bucky bits.  The keystroke is the first argument, and the event to fill
 in is the second.  This function contains knowledge about what the codes
@@ -850,9 +843,8 @@ in a list containing the character.
 Beware that character-to-event and event-to-character are not strictly
 inverse functions, since events contain much more information than the
 ASCII character set can encode.
-*/ )
-     (ch, event, console, use_console_meta_flag)
-     Lisp_Object ch, event, console, use_console_meta_flag;
+*/
+       (ch, event, console, use_console_meta_flag))
 {
   struct console *con = decode_console (console);
   if (NILP (event))
@@ -1025,20 +1017,18 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
     strncpy (buf, "up", 4);
 }
 
-DEFUN ("eventp", Feventp, Seventp, 1, 1, 0 /*
+DEFUN ("eventp", Feventp, 1, 1, 0, /*
 True if OBJECT is an event object.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return ((EVENTP (object)) ? Qt : Qnil);
 }
 
-DEFUN ("event-live-p", Fevent_live_p, Sevent_live_p, 1, 1, 0 /*
+DEFUN ("event-live-p", Fevent_live_p, 1, 1, 0, /*
 True if OBJECT is an event object that has not been deallocated.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return ((EVENTP (object) && XEVENT (object)->event_type != dead_event)
 	  ? Qt : Qnil);
@@ -1092,7 +1082,7 @@ NEXT-EVENT must be an event object or nil.
 
 #endif /* 0 */
 
-DEFUN ("event-type", Fevent_type, Sevent_type, 1, 1, 0 /*
+DEFUN ("event-type", Fevent_type, 1, 1, 0, /*
 Return the type of EVENT.
 This will be a symbol; one of
 
@@ -1106,9 +1096,8 @@ process		Input is available from a subprocess.
 timeout		A timeout has expired.
 eval		This causes a specified action to occur when dispatched.
 magic		Some window-system-specific event has occurred.
-*/ )
-  (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   CHECK_LIVE_EVENT (event);
   switch (XEVENT (event)->event_type)
@@ -1147,11 +1136,10 @@ magic		Some window-system-specific event has occurred.
     }
 }
 
-DEFUN ("event-timestamp", Fevent_timestamp, Sevent_timestamp, 1, 1, 0 /*
+DEFUN ("event-timestamp", Fevent_timestamp, 1, 1, 0, /*
 Return the timestamp of the given event object.
-*/ )
-     (event)
-  Lisp_Object event;
+*/
+       (event))
 {
   CHECK_LIVE_EVENT (event);
   /* This junk is so that timestamps don't get to be negative, but contain
@@ -1173,22 +1161,20 @@ Return the timestamp of the given event object.
      e = wrong_type_argument ((sym),(e));				\
 }
 
-DEFUN ("event-key", Fevent_key, Sevent_key, 1, 1, 0 /*
+DEFUN ("event-key", Fevent_key, 1, 1, 0, /*
 Return the Keysym of the given key-press event.
 This will be the ASCII code of a printing character, or a symbol.
-*/ )
-     (event)
-  Lisp_Object event;
+*/
+       (event))
 {
   CHECK_EVENT_TYPE (event, key_press_event, Qkey_press_event_p);
   return (XEVENT (event)->event.key.keysym);
 }
 
-DEFUN ("event-button", Fevent_button, Sevent_button, 1, 1, 0 /*
+DEFUN ("event-button", Fevent_button, 1, 1, 0, /*
 Return the button-number of the given mouse-button-press event.
-*/ )
-     (event)
-  Lisp_Object event;
+*/
+       (event))
 {
   CHECK_EVENT_TYPE2 (event, button_press_event, button_release_event,
 		     Qbutton_event_p);
@@ -1199,14 +1185,12 @@ Return the button-number of the given mouse-button-press event.
 #endif /* !HAVE_WINDOW_SYSTEM */
 }
 
-DEFUN ("event-modifier-bits", Fevent_modifier_bits, Sevent_modifier_bits,
-       1, 1, 0 /*
+DEFUN ("event-modifier-bits", Fevent_modifier_bits, 1, 1, 0, /*
 Return a number representing the modifier keys which were down
 when the given mouse or keyboard event was produced.  See also the function
 event-modifiers.
-*/ )
-     (event)
-  Lisp_Object event;
+*/
+       (event))
 {
  again:
   CHECK_LIVE_EVENT (event);
@@ -1224,13 +1208,12 @@ event-modifiers.
     }
 }
 
-DEFUN ("event-modifiers", Fevent_modifiers, Sevent_modifiers, 1, 1, 0 /*
+DEFUN ("event-modifiers", Fevent_modifiers, 1, 1, 0, /*
 Return a list of symbols, the names of the modifier keys
 which were down when the given mouse or keyboard event was produced.
 See also the function event-modifier-bits.
-*/ )
-     (event)
-  Lisp_Object event;
+*/
+       (event))
 {
   int mod = XINT (Fevent_modifier_bits (event));
   Lisp_Object result = Qnil;
@@ -1284,15 +1267,13 @@ event_x_y_pixel_internal (Lisp_Object event, int *x, int *y, int relative)
   return 1;
 }
 
-DEFUN ("event-window-x-pixel", Fevent_window_x_pixel, Sevent_window_x_pixel,
-       1, 1, 0 /*
+DEFUN ("event-window-x-pixel", Fevent_window_x_pixel, 1, 1, 0, /*
 Return the X position in pixels of the given mouse event.
 The value returned is relative to the window the event occurred in.
 This will signal an error if the event is not a mouse-motion, button-press,
 or button-release event.  See also `event-x-pixel'.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int x, y;
 
@@ -1304,15 +1285,13 @@ or button-release event.  See also `event-x-pixel'.
     return make_int (x);
 }
 
-DEFUN ("event-window-y-pixel", Fevent_window_y_pixel, Sevent_window_y_pixel,
-       1, 1, 0 /*
+DEFUN ("event-window-y-pixel", Fevent_window_y_pixel, 1, 1, 0, /*
 Return the Y position in pixels of the given mouse event.
 The value returned is relative to the window the event occurred in.
 This will signal an error if the event is not a mouse-motion, button-press,
 or button-release event.  See also `event-y-pixel'.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int x, y;
 
@@ -1324,15 +1303,13 @@ or button-release event.  See also `event-y-pixel'.
     return make_int (y);
 }
 
-DEFUN ("event-x-pixel", Fevent_x_pixel, Sevent_x_pixel,
-       1, 1, 0 /*
+DEFUN ("event-x-pixel", Fevent_x_pixel, 1, 1, 0, /*
 Return the X position in pixels of the given mouse event.
 The value returned is relative to the frame the event occurred in.
 This will signal an error if the event is not a mouse-motion, button-press,
 or button-release event.  See also `event-window-x-pixel'.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int x, y;
 
@@ -1344,15 +1321,13 @@ or button-release event.  See also `event-window-x-pixel'.
     return make_int (x);
 }
 
-DEFUN ("event-y-pixel", Fevent_y_pixel, Sevent_y_pixel,
-       1, 1, 0 /*
+DEFUN ("event-y-pixel", Fevent_y_pixel, 1, 1, 0, /*
 Return the Y position in pixels of the given mouse event.
 The value returned is relative to the frame the event occurred in.
 This will signal an error if the event is not a mouse-motion, button-press,
 or button-release event.  See also `event-window-y-pixel'.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int x, y;
 
@@ -1472,13 +1447,11 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
   return result;
 }
 
-DEFUN ("event-over-text-area-p", Fevent_over_text_area_p,
-       Sevent_over_text_area_p, 1, 1, 0 /*
+DEFUN ("event-over-text-area-p", Fevent_over_text_area_p, 1, 1, 0, /*
 Return whether the given mouse event occurred over the text area of a window.
 The modeline is not considered to be part of the text area.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -1488,12 +1461,10 @@ The modeline is not considered to be part of the text area.
     return Qnil;
 }
 
-DEFUN ("event-over-modeline-p", Fevent_over_modeline_p, Sevent_over_modeline_p,
-       1, 1, 0 /*
+DEFUN ("event-over-modeline-p", Fevent_over_modeline_p, 1, 1, 0, /*
 Return whether the given mouse event occurred over the modeline of a window.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -1503,12 +1474,10 @@ Return whether the given mouse event occurred over the modeline of a window.
     return Qnil;
 }
 
-DEFUN ("event-over-border-p", Fevent_over_border_p, Sevent_over_border_p,
-       1, 1, 0 /*
+DEFUN ("event-over-border-p", Fevent_over_border_p, 1, 1, 0, /*
 Return whether the given mouse event occurred over an internal border.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -1518,12 +1487,10 @@ Return whether the given mouse event occurred over an internal border.
     return Qnil;
 }
 
-DEFUN ("event-over-toolbar-p", Fevent_over_toolbar_p, Sevent_over_toolbar_p,
-       1, 1, 0 /*
+DEFUN ("event-over-toolbar-p", Fevent_over_toolbar_p, 1, 1, 0, /*
 Return whether the given mouse event occurred over a toolbar.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int result = event_pixel_translation (event, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -1545,25 +1512,23 @@ event_console_or_selected (Lisp_Object event)
   return XCONSOLE (console);
 }
 
-DEFUN ("event-channel", Fevent_channel, Sevent_channel, 1, 1, 0 /*
+DEFUN ("event-channel", Fevent_channel, 1, 1, 0, /*
 Return the channel that the given event occurred on.
 This will be a frame, device, console, or nil for some types
 of events (e.g. eval events).
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   CHECK_LIVE_EVENT (event);
   return EVENT_CHANNEL (XEVENT (event));
 }
 
-DEFUN ("event-window", Fevent_window, Sevent_window, 1, 1, 0 /*
+DEFUN ("event-window", Fevent_window, 1, 1, 0, /*
 Return the window of the given mouse event.
 This may be nil if the event occurred in the border or over a toolbar.
 The modeline is considered to be in the window it represents.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   struct window *w;
   Lisp_Object window;
@@ -1579,14 +1544,13 @@ The modeline is considered to be in the window it represents.
     }
 }
 
-DEFUN ("event-point", Fevent_point, Sevent_point, 1, 1, 0 /*
+DEFUN ("event-point", Fevent_point, 1, 1, 0, /*
 Return the character position of the given mouse event.
 If the event did not occur over a window, or did not occur over text,
 then this returns nil.  Otherwise, it returns an index into the buffer
 visible in the event's window.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   Bufpos bufp;
   struct window *w;
@@ -1601,8 +1565,7 @@ visible in the event's window.
     return make_int (bufp);
 }
 
-DEFUN ("event-closest-point", Fevent_closest_point, Sevent_closest_point,
-       1, 1, 0 /*
+DEFUN ("event-closest-point", Fevent_closest_point, 1, 1, 0, /*
 Return the character position of the given mouse event.
 If the event did not occur over a window or over text, return the
 closest point to the location of the event.  If the Y pixel position
@@ -1613,9 +1576,8 @@ position is to the right of that window, the closest point is the end
 of the line containing the Y position.  If the Y pixel position is
 above a window, return 0.  If it is below a window, return the value
 of (window-end).
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   Bufpos bufp;
 
@@ -1627,12 +1589,11 @@ of (window-end).
     return make_int (bufp);
 }
 
-DEFUN ("event-x", Fevent_x, Sevent_x, 1, 1, 0 /*
+DEFUN ("event-x", Fevent_x, 1, 1, 0, /*
 Return the X position of the given mouse event in characters.
 This is relative to the window the event occurred over.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int char_x;
 
@@ -1641,12 +1602,11 @@ This is relative to the window the event occurred over.
   return make_int (char_x);
 }
 
-DEFUN ("event-y", Fevent_y, Sevent_y, 1, 1, 0 /*
+DEFUN ("event-y", Fevent_y, 1, 1, 0, /*
 Return the Y position of the given mouse event in characters.
 This is relative to the window the event occurred over.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   int char_y;
 
@@ -1655,8 +1615,7 @@ This is relative to the window the event occurred over.
   return make_int (char_y);
 }
 
-DEFUN ("event-modeline-position", Fevent_modeline_position,
-       Sevent_modeline_position, 1, 1, 0 /*
+DEFUN ("event-modeline-position", Fevent_modeline_position, 1, 1, 0, /*
 Return the character position in the modeline that EVENT occurred over.
 EVENT should be a mouse event.  If EVENT did not occur over a modeline,
 nil is returned.  You can determine the actual character that the
@@ -1664,9 +1623,8 @@ event occurred over by looking in `generated-modeline-string' at the
 returned character position.  Note that `generated-modeline-string'
 is buffer-local, and you must use EVENT's buffer when retrieving
 `generated-modeline-string' in order to get accurate results.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   Charcount mbufp;
 
@@ -1678,12 +1636,10 @@ is buffer-local, and you must use EVENT's buffer when retrieving
     return make_int (mbufp);
 }
 
-DEFUN ("event-glyph", Fevent_glyph, Sevent_glyph,
-       1, 1, 0 /*
+DEFUN ("event-glyph", Fevent_glyph, 1, 1, 0, /*
 Return the glyph that the given mouse event occurred over, or nil.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   Lisp_Object glyph;
   struct window *w;
@@ -1698,13 +1654,11 @@ Return the glyph that the given mouse event occurred over, or nil.
     return Qnil;
 }
 
-DEFUN ("event-glyph-extent", Fevent_glyph_extent, Sevent_glyph_extent,
-       1, 1, 0 /*
+DEFUN ("event-glyph-extent", Fevent_glyph_extent, 1, 1, 0, /*
 Return the extent of the glyph that the given mouse event occurred over.
 If the event did not occur over a glyph, nil is returned.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   Lisp_Object extent;
   struct window *w;
@@ -1719,14 +1673,12 @@ If the event did not occur over a glyph, nil is returned.
     return Qnil;
 }
 
-DEFUN ("event-glyph-x-pixel", Fevent_glyph_x_pixel, Sevent_glyph_x_pixel,
-       1, 1, 0 /*
+DEFUN ("event-glyph-x-pixel", Fevent_glyph_x_pixel, 1, 1, 0, /*
 Return the X pixel position of EVENT relative to the glyph it occurred over.
 EVENT should be a mouse event.  If the event did not occur over a glyph,
 nil is returned.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   Lisp_Object extent;
   struct window *w;
@@ -1740,14 +1692,12 @@ nil is returned.
     return Qnil;
 }
 
-DEFUN ("event-glyph-y-pixel", Fevent_glyph_y_pixel, Sevent_glyph_y_pixel,
-       1, 1, 0 /*
+DEFUN ("event-glyph-y-pixel", Fevent_glyph_y_pixel, 1, 1, 0, /*
 Return the Y pixel position of EVENT relative to the glyph it occurred over.
 EVENT should be a mouse event.  If the event did not occur over a glyph,
 nil is returned.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   Lisp_Object extent;
   struct window *w;
@@ -1761,13 +1711,11 @@ nil is returned.
     return Qnil;
 }
 
-DEFUN ("event-toolbar-button", Fevent_toolbar_button, Sevent_toolbar_button,
-       1, 1, 0 /*
+DEFUN ("event-toolbar-button", Fevent_toolbar_button, 1, 1, 0, /*
 Return the toolbar button that the given mouse event occurred over.
 If the event did not occur over a toolbar, nil is returned.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
 #ifdef HAVE_TOOLBARS
   Lisp_Object button;
@@ -1787,22 +1735,20 @@ If the event did not occur over a toolbar, nil is returned.
     return Qnil;
 }
 
-DEFUN ("event-process", Fevent_process, Sevent_process, 1, 1, 0 /*
+DEFUN ("event-process", Fevent_process, 1, 1, 0, /*
 Return the process of the given process-output event.
-*/ )
-     (event)
-  Lisp_Object event;
+*/
+       (event))
 {
   CHECK_EVENT_TYPE (event, process_event, Qprocess_event_p);
   return (XEVENT (event)->event.process.process);
 }
 
-DEFUN ("event-function", Fevent_function, Sevent_function, 1, 1, 0 /*
+DEFUN ("event-function", Fevent_function, 1, 1, 0, /*
 Return the callback function of EVENT.
 EVENT should be a timeout, misc-user, or eval event.
-*/ )
-     (event)
-  Lisp_Object event;
+*/
+       (event))
 {
   CHECK_LIVE_EVENT (event);
   switch (XEVENT (event)->event_type)
@@ -1817,12 +1763,11 @@ EVENT should be a timeout, misc-user, or eval event.
     }
 }
 
-DEFUN ("event-object", Fevent_object, Sevent_object, 1, 1, 0 /*
+DEFUN ("event-object", Fevent_object, 1, 1, 0, /*
 Return the callback function argument of EVENT.
 EVENT should be a timeout, misc-user, or eval event.
-*/ )
-     (event)
-  Lisp_Object event;
+*/
+       (event))
 {
  again:
   CHECK_LIVE_EVENT (event);
@@ -1839,12 +1784,11 @@ EVENT should be a timeout, misc-user, or eval event.
     }
 }
 
-DEFUN ("event-properties", Fevent_properties, Sevent_properties, 1, 1, 0 /*
+DEFUN ("event-properties", Fevent_properties, 1, 1, 0, /*
 Return a list of all of the properties of EVENT.
 This is in the form of a property list (alternating keyword/value pairs).
-*/ )
-  (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   Lisp_Object props = Qnil;
   struct Lisp_Event *e;
@@ -1917,45 +1861,45 @@ This is in the form of a property list (alternating keyword/value pairs).
 void
 syms_of_events (void)
 {
-  defsubr (&Scharacter_to_event);
-  defsubr (&Sevent_to_character);
+  DEFSUBR (Fcharacter_to_event);
+  DEFSUBR (Fevent_to_character);
 
-  defsubr (&Smake_event);
-  defsubr (&Sdeallocate_event);
-  defsubr (&Scopy_event);
-  defsubr (&Seventp);
-  defsubr (&Sevent_live_p);
-  defsubr (&Sevent_type);
-  defsubr (&Sevent_properties);
+  DEFSUBR (Fmake_event);
+  DEFSUBR (Fdeallocate_event);
+  DEFSUBR (Fcopy_event);
+  DEFSUBR (Feventp);
+  DEFSUBR (Fevent_live_p);
+  DEFSUBR (Fevent_type);
+  DEFSUBR (Fevent_properties);
 
-  defsubr (&Sevent_timestamp);
-  defsubr (&Sevent_key);
-  defsubr (&Sevent_button);
-  defsubr (&Sevent_modifier_bits);
-  defsubr (&Sevent_modifiers);
-  defsubr (&Sevent_x_pixel);
-  defsubr (&Sevent_y_pixel);
-  defsubr (&Sevent_window_x_pixel);
-  defsubr (&Sevent_window_y_pixel);
-  defsubr (&Sevent_over_text_area_p);
-  defsubr (&Sevent_over_modeline_p);
-  defsubr (&Sevent_over_border_p);
-  defsubr (&Sevent_over_toolbar_p);
-  defsubr (&Sevent_channel);
-  defsubr (&Sevent_window);
-  defsubr (&Sevent_point);
-  defsubr (&Sevent_closest_point);
-  defsubr (&Sevent_x);
-  defsubr (&Sevent_y);
-  defsubr (&Sevent_modeline_position);
-  defsubr (&Sevent_glyph);
-  defsubr (&Sevent_glyph_extent);
-  defsubr (&Sevent_glyph_x_pixel);
-  defsubr (&Sevent_glyph_y_pixel);
-  defsubr (&Sevent_toolbar_button);
-  defsubr (&Sevent_process);
-  defsubr (&Sevent_function);
-  defsubr (&Sevent_object);
+  DEFSUBR (Fevent_timestamp);
+  DEFSUBR (Fevent_key);
+  DEFSUBR (Fevent_button);
+  DEFSUBR (Fevent_modifier_bits);
+  DEFSUBR (Fevent_modifiers);
+  DEFSUBR (Fevent_x_pixel);
+  DEFSUBR (Fevent_y_pixel);
+  DEFSUBR (Fevent_window_x_pixel);
+  DEFSUBR (Fevent_window_y_pixel);
+  DEFSUBR (Fevent_over_text_area_p);
+  DEFSUBR (Fevent_over_modeline_p);
+  DEFSUBR (Fevent_over_border_p);
+  DEFSUBR (Fevent_over_toolbar_p);
+  DEFSUBR (Fevent_channel);
+  DEFSUBR (Fevent_window);
+  DEFSUBR (Fevent_point);
+  DEFSUBR (Fevent_closest_point);
+  DEFSUBR (Fevent_x);
+  DEFSUBR (Fevent_y);
+  DEFSUBR (Fevent_modeline_position);
+  DEFSUBR (Fevent_glyph);
+  DEFSUBR (Fevent_glyph_extent);
+  DEFSUBR (Fevent_glyph_x_pixel);
+  DEFSUBR (Fevent_glyph_y_pixel);
+  DEFSUBR (Fevent_toolbar_button);
+  DEFSUBR (Fevent_process);
+  DEFSUBR (Fevent_function);
+  DEFSUBR (Fevent_object);
 
   defsymbol (&Qeventp, "eventp");
   defsymbol (&Qevent_live_p, "event-live-p");

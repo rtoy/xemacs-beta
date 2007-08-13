@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.24
+;; Version: 1.30
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 (require 'widget)

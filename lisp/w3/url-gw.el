@@ -1,7 +1,7 @@
 ;;; url-gw.el --- Gateway munging for URL loading
 ;; Author: wmperry
-;; Created: 1997/01/16 14:17:34
-;; Version: 1.3
+;; Created: 1997/02/08 05:29:07
+;; Version: 1.4
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -188,7 +188,6 @@ linked Emacs under SunOS 4.x")
 						    (int-to-string service))))
 
 	;; An attempt to deal with denied connections, and attempt to reconnect
-	(max-retries url-connection-retries)
 	(cur-retries 0)
 	(retry t)
 	(errobj nil)
@@ -198,44 +197,32 @@ linked Emacs under SunOS 4.x")
     (if url-gateway-broken-resolution
 	(setq host (url-nslookup-host host)))
 
-    (while (and (not conn) retry)
-      (condition-case errobj
-	  (setq conn (case gw-method
-		       (ssl
-			(open-ssl-stream name buffer host service))
-		       ((tcp native)
-			(and (eq 'tcp gw-method) (require 'tcp))
-			(open-network-stream name buffer host service))
-		       (socks
-			(socks-open-network-stream name buffer host service))
-		       (telnet
-			(url-open-telnet name buffer host service))
-		       (rlogin
-			(url-open-rlogin name buffer host service))
-		       (otherwise
-			(error "Bad setting of url-gateway-method: %s"
-			       url-gateway-method))))
-	(error
-	 (url-save-error errobj)
-	 (save-window-excursion
-	   (save-excursion
-	     (switch-to-buffer-other-window " *url-error*")
-	     (shrink-window-if-larger-than-buffer)
-	     (goto-char (point-min))
-	     (if (and (re-search-forward "in use" nil t)
-		      (< cur-retries max-retries))
-		 (progn
-		   (setq retry t
-			 cur-retries (1+ cur-retries))
-		   (sleep-for 0.5))
-	       (setq cur-retries 0
-		     retry (funcall url-confirmation-func
-				    (concat "Connection to " host
-					    " failed, retry? "))))
-	     (kill-buffer (current-buffer)))))))
-    (if (not conn)
-	(error "Unable to connect to %s:%s" host service)
-      (mule-inhibit-code-conversion conn)
-      conn)))
+    (condition-case errobj
+	(setq conn (case gw-method
+		     (ssl
+		      (open-ssl-stream name buffer host service))
+		     ((tcp native)
+		      (and (eq 'tcp gw-method) (require 'tcp))
+		      (open-network-stream name buffer host service))
+		     (socks
+		      (socks-open-network-stream name buffer host service))
+		     (telnet
+		      (url-open-telnet name buffer host service))
+		     (rlogin
+		      (url-open-rlogin name buffer host service))
+		     (otherwise
+		      (error "Bad setting of url-gateway-method: %s"
+			     url-gateway-method))))
+      (error
+       (insert "Could not contact host: " host " / "
+	       (if (stringp service) service (int-to-string service))
+	       "\nAttempted using gateway method: "
+	       (symbol-name gw-method)
+	       "\n---- Error was: ----\n")
+       (setq url-current-mime-headers '(("content-type" . "text/plain")))
+       (display-error errobj (current-buffer))))
+    (if conn
+	(mule-inhibit-code-conversion conn))
+    conn))
 
 (provide 'url-gw)

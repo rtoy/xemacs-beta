@@ -206,11 +206,10 @@ extract_float (Lisp_Object num)
 /* Trig functions.  */
 #ifdef LISP_FLOAT_TYPE
 
-DEFUN ("acos", Facos, Sacos, 1, 1, 0 /*
+DEFUN ("acos", Facos, 1, 1, 0, /*
 Return the inverse cosine of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -221,11 +220,10 @@ Return the inverse cosine of ARG.
   return make_float (d);
 }
 
-DEFUN ("asin", Fasin, Sasin, 1, 1, 0 /*
+DEFUN ("asin", Fasin, 1, 1, 0, /*
 Return the inverse sine of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -236,11 +234,10 @@ Return the inverse sine of ARG.
   return make_float (d);
 }
 
-DEFUN ("atan", Fatan, Satan, 1, 2, 0 /*
+DEFUN ("atan", Fatan, 1, 2, 0, /*
 Return the inverse tangent of ARG.
-*/ )
-  (arg1, arg2)
-     Lisp_Object arg1, arg2;
+*/
+       (arg1, arg2))
 {
   double d = extract_float (arg1);
 
@@ -258,33 +255,30 @@ Return the inverse tangent of ARG.
   return make_float (d);
 }
 
-DEFUN ("cos", Fcos, Scos, 1, 1, 0 /*
+DEFUN ("cos", Fcos, 1, 1, 0, /*
 Return the cosine of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = cos (d), "cos", arg);
   return make_float (d);
 }
 
-DEFUN ("sin", Fsin, Ssin, 1, 1, 0 /*
+DEFUN ("sin", Fsin, 1, 1, 0, /*
 Return the sine of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = sin (d), "sin", arg);
   return make_float (d);
 }
 
-DEFUN ("tan", Ftan, Stan, 1, 1, 0 /*
+DEFUN ("tan", Ftan, 1, 1, 0, /*
 Return the tangent of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   double c = cos (d);
@@ -302,34 +296,31 @@ Return the tangent of ARG.
 #if 0 /* Leave these out unless we find there's a reason for them.  */
 /* #ifdef LISP_FLOAT_TYPE */
 
-DEFUN ("bessel-j0", Fbessel_j0, Sbessel_j0, 1, 1, 0 /*
+DEFUN ("bessel-j0", Fbessel_j0, 1, 1, 0, /*
 Return the bessel function j0 of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = j0 (d), "bessel-j0", arg);
   return make_float (d);
 }
 
-DEFUN ("bessel-j1", Fbessel_j1, Sbessel_j1, 1, 1, 0 /*
+DEFUN ("bessel-j1", Fbessel_j1, 1, 1, 0, /*
 Return the bessel function j1 of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = j1 (d), "bessel-j1", arg);
   return make_float (d);
 }
 
-DEFUN ("bessel-jn", Fbessel_jn, Sbessel_jn, 2, 2, 0 /*
+DEFUN ("bessel-jn", Fbessel_jn, 2, 2, 0, /*
 Return the order N bessel function output jn of ARG.
 The first arg (the order) is truncated to an integer.
-*/ )
-  (arg1, arg2)
-     Lisp_Object arg1, arg2;
+*/
+       (arg1, arg2))
 {
   int i1 = extract_float (arg1);
   double f2 = extract_float (arg2);
@@ -338,34 +329,31 @@ The first arg (the order) is truncated to an integer.
   return make_float (f2);
 }
 
-DEFUN ("bessel-y0", Fbessel_y0, Sbessel_y0, 1, 1, 0 /*
+DEFUN ("bessel-y0", Fbessel_y0, 1, 1, 0, /*
 Return the bessel function y0 of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = y0 (d), "bessel-y0", arg);
   return make_float (d);
 }
 
-DEFUN ("bessel-y1", Fbessel_y1, Sbessel_y1, 1, 1, 0 /*
+DEFUN ("bessel-y1", Fbessel_y1, 1, 1, 0, /*
 Return the bessel function y1 of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = y1 (d), "bessel-y0", arg);
   return make_float (d);
 }
 
-DEFUN ("bessel-yn", Fbessel_yn, Sbessel_yn, 2, 2, 0 /*
+DEFUN ("bessel-yn", Fbessel_yn, 2, 2, 0, /*
 Return the order N bessel function output yn of ARG.
 The first arg (the order) is truncated to an integer.
-*/ )
-  (arg1, arg2)
-     Lisp_Object arg1, arg2;
+*/
+       (arg1, arg2))
 {
   int i1 = extract_float (arg1);
   double f2 = extract_float (arg2);
@@ -380,33 +368,30 @@ The first arg (the order) is truncated to an integer.
 #if 0 /* Leave these out unless we see they are worth having.  */
 /* #ifdef LISP_FLOAT_TYPE */
 
-DEFUN ("erf", Ferf, Serf, 1, 1, 0 /*
+DEFUN ("erf", Ferf, 1, 1, 0, /*
 Return the mathematical error function of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = erf (d), "erf", arg);
   return make_float (d);
 }
 
-DEFUN ("erfc", Ferfc, Serfc, 1, 1, 0 /*
+DEFUN ("erfc", Ferfc, 1, 1, 0, /*
 Return the complementary error function of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = erfc (d), "erfc", arg);
   return make_float (d);
 }
 
-DEFUN ("log-gamma", Flog_gamma, Slog_gamma, 1, 1, 0 /*
+DEFUN ("log-gamma", Flog_gamma, 1, 1, 0, /*
 Return the log gamma of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = lgamma (d), "log-gamma", arg);
@@ -419,11 +404,10 @@ Return the log gamma of ARG.
 /* Root and Log functions. */
 
 #ifdef LISP_FLOAT_TYPE
-DEFUN ("exp", Fexp, Sexp, 1, 1, 0 /*
+DEFUN ("exp", Fexp, 1, 1, 0, /*
 Return the exponential base e of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -439,11 +423,10 @@ Return the exponential base e of ARG.
 #endif /* LISP_FLOAT_TYPE */
 
 
-DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0 /*
+DEFUN ("expt", Fexpt, 2, 2, 0, /*
 Return the exponential ARG1 ** ARG2.
-*/ )
-  (arg1, arg2)
-     Lisp_Object arg1, arg2;
+*/
+       (arg1, arg2))
 {
   double f1, f2;
 
@@ -496,12 +479,11 @@ Return the exponential ARG1 ** ARG2.
 }
 
 #ifdef LISP_FLOAT_TYPE
-DEFUN ("log", Flog, Slog, 1, 2, 0 /*
+DEFUN ("log", Flog, 1, 2, 0, /*
 Return the natural logarithm of ARG.
 If second optional argument BASE is given, return log ARG using that base.
-*/ )
-  (arg, base)
-     Lisp_Object arg, base;
+*/
+       (arg, base))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -526,11 +508,10 @@ If second optional argument BASE is given, return log ARG using that base.
 }
 
 
-DEFUN ("log10", Flog10, Slog10, 1, 1, 0 /*
+DEFUN ("log10", Flog10, 1, 1, 0, /*
 Return the logarithm base 10 of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -542,11 +523,10 @@ Return the logarithm base 10 of ARG.
 }
 
 
-DEFUN ("sqrt", Fsqrt, Ssqrt, 1, 1, 0 /*
+DEFUN ("sqrt", Fsqrt, 1, 1, 0, /*
 Return the square root of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -558,11 +538,10 @@ Return the square root of ARG.
 }
 
 
-DEFUN ("cube-root", Fcube_root, Scube_root, 1, 1, 0 /*
+DEFUN ("cube-root", Fcube_root, 1, 1, 0, /*
 Return the cube root of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef HAVE_CBRT
@@ -582,11 +561,10 @@ Return the cube root of ARG.
 #ifdef LISP_FLOAT_TYPE
 /* #if 0  Not clearly worth adding...  */
 
-DEFUN ("acosh", Facosh, Sacosh, 1, 1, 0 /*
+DEFUN ("acosh", Facosh, 1, 1, 0, /*
 Return the inverse hyperbolic cosine of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -601,11 +579,10 @@ Return the inverse hyperbolic cosine of ARG.
   return make_float (d);
 }
 
-DEFUN ("asinh", Fasinh, Sasinh, 1, 1, 0 /*
+DEFUN ("asinh", Fasinh, 1, 1, 0, /*
 Return the inverse hyperbolic sine of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef HAVE_INVERSE_HYPERBOLIC
@@ -616,11 +593,10 @@ Return the inverse hyperbolic sine of ARG.
   return make_float (d);
 }
 
-DEFUN ("atanh", Fatanh, Satanh, 1, 1, 0 /*
+DEFUN ("atanh", Fatanh, 1, 1, 0, /*
 Return the inverse hyperbolic tangent of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -635,11 +611,10 @@ Return the inverse hyperbolic tangent of ARG.
   return make_float (d);
 }
 
-DEFUN ("cosh", Fcosh, Scosh, 1, 1, 0 /*
+DEFUN ("cosh", Fcosh, 1, 1, 0, /*
 Return the hyperbolic cosine of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -650,11 +625,10 @@ Return the hyperbolic cosine of ARG.
   return make_float (d);
 }
 
-DEFUN ("sinh", Fsinh, Ssinh, 1, 1, 0 /*
+DEFUN ("sinh", Fsinh, 1, 1, 0, /*
 Return the hyperbolic sine of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
 #ifdef FLOAT_CHECK_DOMAIN
@@ -665,11 +639,10 @@ Return the hyperbolic sine of ARG.
   return make_float (d);
 }
 
-DEFUN ("tanh", Ftanh, Stanh, 1, 1, 0 /*
+DEFUN ("tanh", Ftanh, 1, 1, 0, /*
 Return the hyperbolic tangent of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = tanh (d), "tanh", arg);
@@ -679,11 +652,10 @@ Return the hyperbolic tangent of ARG.
 
 /* Rounding functions */
 
-DEFUN ("abs", Fabs, Sabs, 1, 1, 0 /*
+DEFUN ("abs", Fabs, 1, 1, 0, /*
 Return the absolute value of ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   CHECK_INT_OR_FLOAT (arg);
 
@@ -703,11 +675,10 @@ Return the absolute value of ARG.
 }
 
 #ifdef LISP_FLOAT_TYPE
-DEFUN ("float", Ffloat, Sfloat, 1, 1, 0 /*
+DEFUN ("float", Ffloat, 1, 1, 0, /*
 Return the floating point number equal to ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   CHECK_INT_OR_FLOAT (arg);
 
@@ -720,12 +691,11 @@ Return the floating point number equal to ARG.
 
 
 #ifdef LISP_FLOAT_TYPE
-DEFUN ("logb", Flogb, Slogb, 1, 1, 0 /*
+DEFUN ("logb", Flogb, 1, 1, 0, /*
 Return largest integer <= the base 2 log of the magnitude of ARG.
 This is the same as the exponent of a float.
-*/ )
-     (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double f = extract_float (arg);
 
@@ -774,11 +744,10 @@ This is the same as the exponent of a float.
 #endif /* LISP_FLOAT_TYPE */
 
 
-DEFUN ("ceiling", Fceiling, Sceiling, 1, 1, 0 /*
+DEFUN ("ceiling", Fceiling, 1, 1, 0, /*
 Return the smallest integer no less than ARG.  (Round toward +inf.)
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   CHECK_INT_OR_FLOAT (arg);
 
@@ -795,12 +764,11 @@ Return the smallest integer no less than ARG.  (Round toward +inf.)
 }
 
 
-DEFUN ("floor", Ffloor, Sfloor, 1, 2, 0 /*
+DEFUN ("floor", Ffloor, 1, 2, 0, /*
 Return the largest integer no greater than ARG.  (Round towards -inf.)
 With optional DIVISOR, return the largest integer no greater than ARG/DIVISOR.
-*/ )
-  (arg, divisor)
-     Lisp_Object arg, divisor;
+*/
+       (arg, divisor))
 {
   CHECK_INT_OR_FLOAT (arg);
 
@@ -852,11 +820,10 @@ With optional DIVISOR, return the largest integer no greater than ARG/DIVISOR.
   return arg;
 }
 
-DEFUN ("round", Fround, Sround, 1, 1, 0 /*
+DEFUN ("round", Fround, 1, 1, 0, /*
 Return the nearest integer to ARG.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   CHECK_INT_OR_FLOAT (arg);
 
@@ -873,12 +840,11 @@ Return the nearest integer to ARG.
   return arg;
 }
 
-DEFUN ("truncate", Ftruncate, Struncate, 1, 1, 0 /*
+DEFUN ("truncate", Ftruncate, 1, 1, 0, /*
 Truncate a floating point number to an integer.
 Rounds the value toward zero.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   CHECK_INT_OR_FLOAT (arg);
 
@@ -895,47 +861,43 @@ Rounds the value toward zero.
 #ifdef LISP_FLOAT_TYPE
 /* #if 1  It's not clear these are worth adding... */
 
-DEFUN ("fceiling", Ffceiling, Sfceiling, 1, 1, 0 /*
+DEFUN ("fceiling", Ffceiling, 1, 1, 0, /*
 Return the smallest integer no less than ARG, as a float.
 \(Round toward +inf.\)
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = ceil (d), "fceiling", arg);
   return make_float (d);
 }
 
-DEFUN ("ffloor", Fffloor, Sffloor, 1, 1, 0 /*
+DEFUN ("ffloor", Fffloor, 1, 1, 0, /*
 Return the largest integer no greater than ARG, as a float.
 \(Round towards -inf.\)
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = floor (d), "ffloor", arg);
   return make_float (d);
 }
 
-DEFUN ("fround", Ffround, Sfround, 1, 1, 0 /*
+DEFUN ("fround", Ffround, 1, 1, 0, /*
 Return the nearest integer to ARG, as a float.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   IN_FLOAT (d = rint (d), "fround", arg);
   return make_float (d);
 }
 
-DEFUN ("ftruncate", Fftruncate, Sftruncate, 1, 1, 0 /*
+DEFUN ("ftruncate", Fftruncate, 1, 1, 0, /*
 Truncate a floating point number to an integral float value.
 Rounds the value toward zero.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   double d = extract_float (arg);
   if (d >= 0.0)
@@ -1021,76 +983,76 @@ syms_of_floatfns (void)
   /* Trig functions.  */
   
 #ifdef LISP_FLOAT_TYPE
-  defsubr (&Sacos);
-  defsubr (&Sasin);
-  defsubr (&Satan);
-  defsubr (&Scos);
-  defsubr (&Ssin);
-  defsubr (&Stan);
+  DEFSUBR (Facos);
+  DEFSUBR (Fasin);
+  DEFSUBR (Fatan);
+  DEFSUBR (Fcos);
+  DEFSUBR (Fsin);
+  DEFSUBR (Ftan);
 #endif /* LISP_FLOAT_TYPE */
 
   /* Bessel functions */
   
 #if 0
-  defsubr (&Sbessel_y0);
-  defsubr (&Sbessel_y1);
-  defsubr (&Sbessel_yn);
-  defsubr (&Sbessel_j0);
-  defsubr (&Sbessel_j1);
-  defsubr (&Sbessel_jn);
+  DEFSUBR (Fbessel_y0);
+  DEFSUBR (Fbessel_y1);
+  DEFSUBR (Fbessel_yn);
+  DEFSUBR (Fbessel_j0);
+  DEFSUBR (Fbessel_j1);
+  DEFSUBR (Fbessel_jn);
 #endif /* 0 */
 
   /* Error functions. */
 
 #if 0
-  defsubr (&Serf);
-  defsubr (&Serfc);
-  defsubr (&Slog_gamma);
+  DEFSUBR (Ferf);
+  DEFSUBR (Ferfc);
+  DEFSUBR (Flog_gamma);
 #endif /* 0 */
 
   /* Root and Log functions. */
 
 #ifdef LISP_FLOAT_TYPE
-  defsubr (&Sexp);
+  DEFSUBR (Fexp);
 #endif /* LISP_FLOAT_TYPE */
-  defsubr (&Sexpt);
+  DEFSUBR (Fexpt);
 #ifdef LISP_FLOAT_TYPE
-  defsubr (&Slog);
-  defsubr (&Slog10);
-  defsubr (&Ssqrt);
-  defsubr (&Scube_root);
+  DEFSUBR (Flog);
+  DEFSUBR (Flog10);
+  DEFSUBR (Fsqrt);
+  DEFSUBR (Fcube_root);
 #endif /* LISP_FLOAT_TYPE */
 
   /* Inverse trig functions. */
 
 #ifdef LISP_FLOAT_TYPE
-  defsubr (&Sacosh);
-  defsubr (&Sasinh);
-  defsubr (&Satanh);
-  defsubr (&Scosh);
-  defsubr (&Ssinh);
-  defsubr (&Stanh);
+  DEFSUBR (Facosh);
+  DEFSUBR (Fasinh);
+  DEFSUBR (Fatanh);
+  DEFSUBR (Fcosh);
+  DEFSUBR (Fsinh);
+  DEFSUBR (Ftanh);
 #endif /* LISP_FLOAT_TYPE */
 
   /* Rounding functions */
 
-  defsubr (&Sabs);
+  DEFSUBR (Fabs);
 #ifdef LISP_FLOAT_TYPE
-  defsubr (&Sfloat);
-  defsubr (&Slogb);
+  DEFSUBR (Ffloat);
+  DEFSUBR (Flogb);
 #endif /* LISP_FLOAT_TYPE */
-  defsubr (&Sceiling);
-  defsubr (&Sfloor);
-  defsubr (&Sround);
-  defsubr (&Struncate);
+  DEFSUBR (Fceiling);
+  DEFSUBR (Ffloor);
+  DEFSUBR (Fround);
+  DEFSUBR (Ftruncate);
 
   /* Float-rounding functions. */
 
 #ifdef LISP_FLOAT_TYPE
-  defsubr (&Sfceiling);
-  defsubr (&Sffloor);
-  defsubr (&Sfround);
-  defsubr (&Sftruncate);
+  DEFSUBR (Ffceiling);
+  DEFSUBR (Fffloor);
+  DEFSUBR (Ffround);
+  DEFSUBR (Fftruncate);
 #endif /* LISP_FLOAT_TYPE */
 }
 

@@ -9,7 +9,7 @@
 ;;         Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: 1994/10/29
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -36,13 +36,16 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'tm-edit)
   (require 'tm-mail)
   (require 'vm)
   (require 'vm-window))
 
+(require 'tm-edit)
 (require 'tm-view)
+(require 'vm-reply)
+(require 'vm-summary)
 (require 'vm-menu)
+(require 'vm-toolbar)
 
 
 ;;; @ Variables
@@ -60,7 +63,9 @@ made available.")
 (defvar tm-vm/use-original-url-button nil
   "*If it is t, use original URL button instead of tm's.")
 
-(defvar tm-vm/automatic-mime-preview t
+(defvar tm-vm/automatic-mime-preview (or (and (boundp 'vm-display-using-mime)
+					      vm-display-using-mime)
+					 t)
   "*If non-nil, automatically process and show MIME messages.")
 
 (defvar tm-vm/strict-mime t
@@ -91,12 +96,54 @@ created to send a digest in multipart/digest type format.
 If `vm-digest-send-type' is \"rfc1521\", tm-vm runs this hook
 instead of `vm-send-digest-hook'.")
 
+(defvar tm-vm/build-mime-preview-buffer-hook nil
+  "*List of functions called each time a MIME Preview buffer is built.
+These hooks are run in the MIME-Preview buffer.")
 
 ;;; @@ System/Information variables
 
 (defconst tm-vm/RCS-ID
-  "$Id: tm-vm.el,v 1.3 1997/02/02 05:06:20 steve Exp $")
+  "$Id: tm-vm.el,v 1.4 1997/02/09 23:51:48 steve Exp $")
 (defconst tm-vm/version (get-version-string tm-vm/RCS-ID))
+
+; Ensure vm-menu-mail-menu gets properly defined *before* tm-vm/vm-emulation-map
+; since it contains a call to vm-menu-initialize-vm-mode-menu-map
+(setq vm-menu-mail-menu
+  (let ((title (if (vm-menu-fsfemacs-menus-p)
+		   (list "Mail Commands"
+			 "Mail Commands"
+			 "---"
+			 "---")
+		 (list "Mail Commands"))))
+    (append
+     title
+     (list ["Send and Exit" vm-mail-send-and-exit (vm-menu-can-send-mail-p)]
+	   ["Send, Keep Composing" vm-mail-send (vm-menu-can-send-mail-p)]
+	   ["Cancel" kill-buffer t]
+	   "----"
+	   "Go to Field:"
+	   "----"
+	   ["      To:" mail-to t]
+	   ["      Subject:" mail-subject	t]
+	   ["      CC:" mail-cc t]
+	   ["      BCC:" mail-bcc t]
+	   ["      Reply-To:" mail-replyto t]
+	   ["      Text" mail-text t]
+	   "----"
+	   ["Yank Original" vm-menu-yank-original vm-reply-list]
+	   ["Fill Yanked Message" mail-fill-yanked-message t]
+	   ["Insert Signature"	mail-signature t]
+	   ["Insert File..." insert-file t]
+	   ["Insert Buffer..."	insert-buffer t])
+     (if tm-vm/attach-to-popup-menus
+	 (list "----"
+	       (cons "MIME Commands" 
+		     (mapcar (function (lambda (item)
+					 (vector (nth 1 item)
+						 (nth 2 item)
+						 t)))
+			     mime-editor/menu-list))))
+     )))
 
 (defvar tm-vm/vm-emulation-map
   (let ((map (make-sparse-keymap)))
@@ -111,16 +158,16 @@ instead of `vm-send-digest-hook'.")
     ;(define-key map "\C-\M-p" 'vm-move-message-backward)
     ;(define-key map "\t" 'vm-goto-message-last-seen)
     ;(define-key map "\r" 'vm-goto-message)
-    ;(define-key map "^" 'vm-goto-parent-message)
+    (define-key map "^" 'vm-goto-parent-message)
     (define-key map "t" 'vm-expose-hidden-headers)
     (define-key map " " 'vm-scroll-forward)
     (define-key map "b" 'vm-scroll-backward)
     (define-key map "\C-?" 'vm-scroll-backward)
-    ;(define-key map "d" 'vm-delete-message)
-    ;(define-key map "\C-d" 'vm-delete-message-backward)
-    ;(define-key map "u" 'vm-undelete-message)
-    ;(define-key map "U" 'vm-unread-message)
-    ;(define-key map "e" 'vm-edit-message)
+    (define-key map "d" 'vm-delete-message)
+    (define-key map "\C-d" 'vm-delete-message-backward)
+    (define-key map "u" 'vm-undelete-message)
+    (define-key map "U" 'vm-unread-message)
+    (define-key map "e" 'vm-edit-message)
     ;(define-key map "a" 'vm-set-message-attributes)
     ;(define-key map "j" 'vm-discard-cached-data)
     ;(define-key map "k" 'vm-kill-subject)
@@ -138,12 +185,12 @@ instead of `vm-send-digest-hook'.")
     (define-key map "g" 'vm-get-new-mail)
     ;(define-key map "G" 'vm-sort-messages)
     (define-key map "v" 'vm-visit-folder)
-    ;(define-key map "s" 'vm-save-message)
+    (define-key map "s" 'vm-save-message)
     ;(define-key map "w" 'vm-save-message-sans-headers)
     ;(define-key map "A" 'vm-auto-archive-messages)
-    ;(define-key map "S" 'vm-save-folder)
+    (define-key map "S" 'vm-save-folder)
     ;(define-key map "|" 'vm-pipe-message-to-command)
-    ;(define-key map "#" 'vm-expunge-folder)
+    (define-key map "#" 'vm-expunge-folder)
     (define-key map "q" 'vm-quit)
     (define-key map "x" 'vm-quit-no-change)
     (define-key map "i" 'vm-iconify-frame)
@@ -155,7 +202,7 @@ instead of `vm-send-digest-hook'.")
     (define-key map ">" 'vm-end-of-message)
     ;(define-key map "\M-s" 'vm-isearch-forward)
     (define-key map "=" 'vm-summarize)
-    ;(define-key map "L" 'vm-load-init-file)
+    (define-key map "L" 'vm-load-init-file)
     ;(define-key map "l" (make-sparse-keymap))
     ;(define-key map "la" 'vm-add-message-labels)
     ;(define-key map "ld" 'vm-delete-message-labels)
@@ -186,13 +233,13 @@ instead of `vm-send-digest-hook'.")
     ;(define-key map "WS" 'vm-save-window-configuration)
     ;(define-key map "WD" 'vm-delete-window-configuration)
     ;(define-key map "W?" 'vm-window-help)
-    ;(define-key map "\C-t" 'vm-toggle-threads-display)
-    ;(define-key map "\C-x\C-s" 'vm-save-buffer)
-    ;(define-key map "\C-x\C-w" 'vm-write-file)
-    ;(define-key map "\C-x\C-q" 'vm-toggle-read-only)
+    (define-key map "\C-t" 'vm-toggle-threads-display)
+    (define-key map "\C-x\C-s" 'vm-save-buffer)
+    (define-key map "\C-x\C-w" 'vm-write-file)
+    (define-key map "\C-x\C-q" 'vm-toggle-read-only)
     ;(define-key map "%" 'vm-change-folder-type)
-    ;(define-key map "\M-C" 'vm-show-copying-restrictions)
-    ;(define-key map "\M-W" 'vm-show-no-warranty)
+    (define-key map "\M-C" 'vm-show-copying-restrictions)
+    (define-key map "\M-W" 'vm-show-no-warranty)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -232,10 +279,15 @@ instead of `vm-send-digest-hook'.")
       fsfmenu))
   "VM's popup menu + MIME specific commands")
 
+
+
 (define-key vm-mode-map "Z" 'tm-vm/view-message)
 (define-key vm-mode-map "T" 'tm-vm/decode-message-header)
 (define-key vm-mode-map "\et" 'tm-vm/toggle-preview-mode)
 
+; Disable VM 6 built-in MIME handling
+(setq vm-display-using-mime nil)
+(setq vm-send-using-mime nil)
 
 ;;; @ MIME encoded-words
 
@@ -259,7 +311,6 @@ If you use tiny-mime patch for VM (by RIKITAKE Kenji
               (cdr ret))
       ret)))
 
-(require 'vm-summary)
 (or (fboundp 'tm:vm-su-subject)
     (fset 'tm:vm-su-subject (symbol-function 'vm-su-subject))
     )
@@ -413,7 +464,9 @@ Current buffer should be VM's folder buffer."
 		 vm-use-menus (vm-menu-support-possible-p))
 	    (progn
 	      (vm-energize-urls)
-	      (vm-energize-headers)))))))
+	      (vm-energize-headers)))
+	(run-hooks 'tm-vm/build-mime-preview-buffer-hook)
+	))))
 
 (defun tm-vm/sync-preview-buffer ()
   "Ensure that the MIME preview buffer, if it exists, actually corresponds to the current message. 
@@ -968,7 +1021,6 @@ command via `mime-viewer/quitting-method-alist'."
 
 ;;; @@ vm-yank-message
 
-(require 'vm-reply)
 
 (defvar tm-vm/yank:message-to-restore nil
   "For internal use by tm-vm only.")
@@ -1237,19 +1289,6 @@ only marked messages will be put into the digest."
 
 ;;; @@@ Menus
 
-;;; modified by Steven L. Baur <steve@miranova.com>
-;;;     1995/12/6 (c.f. [tm-en:209])
-(defun mime-editor/attach-to-vm-mode-menu ()
-  "Arrange to attach MIME editor's popup menu to VM's"
-  (if (boundp 'vm-menu-mail-menu)
-      (progn
-        (setq vm-menu-mail-menu
-              (append vm-menu-mail-menu
-                      (list "----"
-                            mime-editor/popup-menu-for-xemacs)))
-        (remove-hook 'vm-mail-mode-hook 'mime-editor/attach-to-vm-mode-menu)
-        ))
-)
 
 (call-after-loaded
  'tm-edit
@@ -1264,10 +1303,6 @@ only marked messages will be put into the digest."
                              (interactive)
                              (funcall send-mail-function)
                              )))
-    (if (and (string-match "XEmacs\\|Lucid" emacs-version)
-             tm-vm/attach-to-popup-menus)
-        (add-hook 'vm-mail-mode-hook 'mime-editor/attach-to-vm-mode-menu)
-      )
     )))
 
 
@@ -1312,10 +1347,90 @@ only marked messages will be put into the digest."
 	    (vm-menu-popup-mode-menu event))))
 )
 
+(defadvice vm-save-message (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
 
+(defadvice vm-expunge-folder (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
+
+(defadvice vm-save-folder (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
+
+(defadvice vm-goto-parent-message (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
+
+(defadvice vm-delete-message (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
+
+(defadvice vm-delete-message-backward (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
+
+(defadvice vm-undelete-message (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
+
+(defadvice vm-unread-message (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
+
+(defadvice vm-edit-message (around tm-aware activate)
+  "Made TM aware. Callable from the MIME Preview buffer."
+  (if mime::preview/article-buffer
+      (save-excursion
+	(set-buffer mime::preview/article-buffer)
+	ad-do-it)
+    ad-do-it))
+
+
+  
 ;;; @@ VM Toolbar Integration
-
-(require 'vm-toolbar)
 
 ;;; based on vm-toolbar-any-messages-p [vm-toolbar.el]
 (defun tm-vm/check-for-toolbar ()

@@ -91,7 +91,7 @@ static Bufpos
 find_defun_start (struct buffer *buf, Bufpos pos)
 {
   Bufpos tem;
-  Lisp_Object table = buf->syntax_table;
+  Lisp_Object syntaxtab = buf->syntax_table;
 
   /* Use previous finding, if it's valid and applies to this inquiry.  */
   if (buf == find_start_buffer
@@ -110,7 +110,7 @@ find_defun_start (struct buffer *buf, Bufpos pos)
   while (tem > BUF_BEGV (buf))
     {
       /* Open-paren at start of line means we found our defun-start.  */
-      if (SYNTAX (table, BUF_FETCH_CHAR (buf, tem)) == Sopen)
+      if (SYNTAX (syntaxtab, BUF_FETCH_CHAR (buf, tem)) == Sopen)
 	break;
       /* Move to beg of previous line.  */
       tem = find_next_newline (buf, tem, -2);
@@ -126,12 +126,11 @@ find_defun_start (struct buffer *buf, Bufpos pos)
   return find_start_value;
 }
 
-DEFUN ("syntax-table-p", Fsyntax_table_p, Ssyntax_table_p, 1, 1, 0 /*
+DEFUN ("syntax-table-p", Fsyntax_table_p, 1, 1, 0, /*
 Return t if ARG is a syntax table.
 Any vector of 256 elements will do.
-*/ )
-  (obj)
-  Lisp_Object obj;
+*/
+       (obj))
 {
   if (VECTORP (obj) && vector_length (XVECTOR (obj)) == 0400)
     return Qt;
@@ -148,33 +147,30 @@ check_syntax_table (Lisp_Object obj, Lisp_Object def)
   return (obj);
 }
 
-DEFUN ("syntax-table", Fsyntax_table, Ssyntax_table, 0, 1, 0 /*
+DEFUN ("syntax-table", Fsyntax_table, 0, 1, 0, /*
 Return the current syntax table.
 This is the one specified by the current buffer, or by BUFFER if it
 is non-nil.
-*/ )
-  (buffer)
-  Lisp_Object buffer;
+*/
+       (buffer))
 {
   return decode_buffer (buffer, 0)->syntax_table;
 }
 
-DEFUN ("standard-syntax-table", Fstandard_syntax_table,
-   Sstandard_syntax_table, 0, 0, 0 /*
+DEFUN ("standard-syntax-table", Fstandard_syntax_table, 0, 0, 0, /*
 Return the standard syntax table.
 This is the one used for new buffers.
-*/ )
-  ()
+*/
+       ())
 {
   return Vstandard_syntax_table;
 }
 
-DEFUN ("copy-syntax-table", Fcopy_syntax_table, Scopy_syntax_table, 0, 1, 0 /*
+DEFUN ("copy-syntax-table", Fcopy_syntax_table, 0, 1, 0, /*
 Construct a new syntax table and return it.
 It is a copy of the TABLE, which defaults to the standard syntax table.
-*/ )
-  (table)
-     Lisp_Object table;
+*/
+       (table))
 {
   if (NILP (Vstandard_syntax_table))
     /* Can only be null during initialization */
@@ -184,13 +180,12 @@ It is a copy of the TABLE, which defaults to the standard syntax table.
   return Fcopy_sequence (table);
 }
 
-DEFUN ("set-syntax-table", Fset_syntax_table, Sset_syntax_table, 1, 2, 0 /*
+DEFUN ("set-syntax-table", Fset_syntax_table, 1, 2, 0, /*
 Select a new syntax table for BUFFER.
 One argument, a syntax table.
 BUFFER defaults to the current buffer if omitted.
-*/ )
-  (table, buffer)
-     Lisp_Object table, buffer;
+*/
+       (table, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
   table = check_syntax_table (table, Qnil);
@@ -232,27 +227,25 @@ CONST unsigned char syntax_code_spec[] =
     'e', '\0'
   };
 
-DEFUN ("syntax-designator-chars", Fsyntax_designator_chars,
-       Ssyntax_designator_chars, 0, 0, 0 /*
+DEFUN ("syntax-designator-chars", Fsyntax_designator_chars, 0, 0, 0, /*
 Return a string of the recognized syntax designator chars.
 The chars are ordered by their internal syntax codes, which are
 numbered starting at 0.
-*/ )
-  ()
+*/
+       ())
 {
   return Vsyntax_designator_chars_string;
 }
 
-DEFUN ("char-syntax", Fchar_syntax, Schar_syntax, 1, 2, 0 /*
+DEFUN ("char-syntax", Fchar_syntax, 1, 2, 0, /*
 Return the syntax code of CHAR, described by a character.
 For example, if CHAR is a word constituent, the character `?w' is returned.
 The characters that correspond to various syntax codes
 are listed in the documentation of `modify-syntax-entry'.
 Optional second argument TABLE defaults to the current buffer's
 syntax table.
-*/ )
-  (ch, table)
-  Lisp_Object ch, table;
+*/
+       (ch, table))
 {
   CHECK_CHAR_COERCE_INT (ch);
   table = check_syntax_table (table, current_buffer->syntax_table);
@@ -272,13 +265,12 @@ syntax_match (Lisp_Object table, Emchar ch)
     return make_char (stringterm);
 }
 
-DEFUN ("matching-paren", Fmatching_paren, Smatching_paren, 1, 2, 0 /*
+DEFUN ("matching-paren", Fmatching_paren, 1, 2, 0, /*
 Return the matching parenthesis of CHAR, or nil if none.
 Optional second argument TABLE defaults to the current buffer's
 syntax table.
-*/ )
-  (ch, table)
-     Lisp_Object ch, table;
+*/
+       (ch, table))
 {
   int code;
   CHECK_CHAR_COERCE_INT (ch);
@@ -382,14 +374,13 @@ scan_words (struct buffer *buf, Bufpos from, int count)
   return from;
 }
 
-DEFUN ("forward-word", Fforward_word, Sforward_word, 1, 2, "_p" /*
+DEFUN ("forward-word", Fforward_word, 1, 2, "_p", /*
 Move point forward ARG words (backward if ARG is negative).
 Normally returns t.
 If an edge of the buffer is reached, point is left there
 and nil is returned.
-*/ )
-  (count, buffer)
-  Lisp_Object count, buffer;
+*/
+       (count, buffer))
 {
   Bufpos val;
   struct buffer *buf = decode_buffer (buffer, 0);
@@ -586,7 +577,7 @@ find_end_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
    ever complains about this function not working properly, take a look
    at those changes.  --ben */
 
-DEFUN ("forward-comment", Fforward_comment, Sforward_comment, 1, 2, 0 /*
+DEFUN ("forward-comment", Fforward_comment, 1, 2, 0, /*
 Move forward across up to N comments.  If N is negative, move backward.
 Stop scanning if we find something other than a comment or whitespace.
 Set point to where scanning stops.
@@ -594,9 +585,8 @@ If N comments are found as expected, with nothing except whitespace
 between them, return t; otherwise return nil.
 Point is set in either case.
 Optional argument BUFFER defaults to the current buffer.
-*/ )
-  (n, buffer)
-  Lisp_Object n, buffer;
+*/
+       (n, buffer))
 {
   Bufpos from;
   Bufpos stop;
@@ -1090,7 +1080,7 @@ char_quoted (struct buffer *buf, Bufpos pos)
   return quoted;
 }
 
-DEFUN ("scan-lists", Fscan_lists, Sscan_lists, 3, 5, 0 /*
+DEFUN ("scan-lists", Fscan_lists, 3, 5, 0, /*
 Scan from character number FROM by COUNT lists.
 Returns the character number of the position thus found.
 
@@ -1110,9 +1100,8 @@ of in the current buffer.
 
 If optional arg NOERROR is non-nil, scan-lists will return nil instead of
 signalling an error.
-*/ )
-  (from, count, depth, buffer, no_error)
-     Lisp_Object from, count, depth, buffer, no_error;
+*/
+       (from, count, depth, buffer, no_error))
 {
   struct buffer *buf;
 
@@ -1125,7 +1114,7 @@ signalling an error.
 		     !NILP (no_error));
 }
 
-DEFUN ("scan-sexps", Fscan_sexps, Sscan_sexps, 2, 4, 0 /*
+DEFUN ("scan-sexps", Fscan_sexps, 2, 4, 0, /*
 Scan from character number FROM by COUNT balanced expressions.
 If COUNT is negative, scan backwards.
 Returns the character number of the position thus found.
@@ -1142,9 +1131,8 @@ of in the current buffer.
 
 If optional arg NOERROR is non-nil, scan-sexps will return nil instead of
 signalling an error.
-*/ )
-  (from, count, buffer, no_error)
-     Lisp_Object from, count, buffer, no_error;
+*/
+       (from, count, buffer, no_error))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
   CHECK_INT (from);
@@ -1153,15 +1141,13 @@ signalling an error.
   return scan_lists (buf, XINT (from), XINT (count), 0, 1, !NILP (no_error));
 }
 
-DEFUN ("backward-prefix-chars", Fbackward_prefix_chars, Sbackward_prefix_chars,
-  0, 1, 0 /*
+DEFUN ("backward-prefix-chars", Fbackward_prefix_chars, 0, 1, 0, /*
 Move point backward over any number of chars with prefix syntax.
 This includes chars with \"quote\" or \"prefix\" syntax (' or p).
 
 Optional arg BUFFER defaults to the current buffer.
-*/ )
-  (buffer)
-  Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
   Bufpos beg = BUF_BEGV (buf);
@@ -1452,7 +1438,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
   *stateptr = state;
 }
 
-DEFUN ("parse-partial-sexp", Fparse_partial_sexp, Sparse_partial_sexp, 2, 7, 0 /*
+DEFUN ("parse-partial-sexp", Fparse_partial_sexp, 2, 7, 0, /*
 Parse Lisp syntax starting at FROM until TO; return status of parse at TO.
 Parsing stops at TO or when certain criteria are met;
  point is set to where parsing stops.
@@ -1476,9 +1462,8 @@ Fifth arg STATE is an eight-element list like what this function returns.
 It is used to initialize the state of the parse.  Its second and third
 elements are ignored.
 Sixth arg COMMENTSTOP non-nil means stop at the start of a comment.
-*/ )
-  (from, to, targetdepth, stopbefore, oldstate, commentstop, buffer)
-     Lisp_Object from, to, targetdepth, stopbefore, oldstate, commentstop, buffer;
+*/
+       (from, to, targetdepth, stopbefore, oldstate, commentstop, buffer))
 {
   struct lisp_parse_state state;
   int target;
@@ -1532,24 +1517,24 @@ syms_of_syntax (void)
 {
   defsymbol (&Qsyntax_table_p, "syntax-table-p");
 
-  defsubr (&Ssyntax_table_p);
-  defsubr (&Ssyntax_table);
-  defsubr (&Sstandard_syntax_table);
-  defsubr (&Scopy_syntax_table);
-  defsubr (&Sset_syntax_table);
-  defsubr (&Ssyntax_designator_chars);
-  defsubr (&Schar_syntax);
-  defsubr (&Smatching_paren);
-  /* defsubr (&Smodify_syntax_entry); now in Lisp. */
-  /* defsubr (&Sdescribe_syntax); now in Lisp. */
+  DEFSUBR (Fsyntax_table_p);
+  DEFSUBR (Fsyntax_table);
+  DEFSUBR (Fstandard_syntax_table);
+  DEFSUBR (Fcopy_syntax_table);
+  DEFSUBR (Fset_syntax_table);
+  DEFSUBR (Fsyntax_designator_chars);
+  DEFSUBR (Fchar_syntax);
+  DEFSUBR (Fmatching_paren);
+  /* DEFSUBR (Fmodify_syntax_entry); now in Lisp. */
+  /* DEFSUBR (Fdescribe_syntax); now in Lisp. */
 
-  defsubr (&Sforward_word);
+  DEFSUBR (Fforward_word);
 
-  defsubr (&Sforward_comment);
-  defsubr (&Sscan_lists);
-  defsubr (&Sscan_sexps);
-  defsubr (&Sbackward_prefix_chars);
-  defsubr (&Sparse_partial_sexp);
+  DEFSUBR (Fforward_comment);
+  DEFSUBR (Fscan_lists);
+  DEFSUBR (Fscan_sexps);
+  DEFSUBR (Fbackward_prefix_chars);
+  DEFSUBR (Fparse_partial_sexp);
 }
 
 void

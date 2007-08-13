@@ -984,11 +984,10 @@ DECLARE_FIXED_TYPE_ALLOC (cons, struct Lisp_Cons);
 /* #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_cons 20000 */
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_cons 2000
 
-DEFUN ("cons", Fcons, Scons, 2, 2, 0 /*
+DEFUN ("cons", Fcons, 2, 2, 0, /*
 Create a new cons, give it CAR and CDR as components, and return it.
-*/ )
-  (car, cdr)
-     Lisp_Object car, cdr;
+*/
+       (car, cdr))
 {
   /* This cannot GC. */
   Lisp_Object val = Qnil;
@@ -1017,13 +1016,11 @@ noseeum_cons (Lisp_Object car, Lisp_Object cdr)
   return val;
 }
 
-DEFUN ("list", Flist, Slist, 0, MANY, 0 /*
+DEFUN ("list", Flist, 0, MANY, 0, /*
 Return a newly created list with specified arguments as elements.
 Any number of arguments, even zero arguments, are allowed.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   Lisp_Object len, val, val_tail;
 
@@ -1089,11 +1086,10 @@ list6 (Lisp_Object obj0, Lisp_Object obj1, Lisp_Object obj2, Lisp_Object obj3,
   return Fcons (obj0, list5 (obj1, obj2, obj3, obj4, obj5));
 }
 
-DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0 /*
+DEFUN ("make-list", Fmake_list, 2, 2, 0, /*
 Return a newly created list of length LENGTH, with each element being INIT.
-*/ )
-     (length, init)
-     Lisp_Object length, init;
+*/
+       (length, init))
 {
   Lisp_Object val;
   int size;
@@ -1195,12 +1191,11 @@ make_vector (EMACS_INT length, Lisp_Object init)
   return (vector);
 }
 
-DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0 /*
+DEFUN ("make-vector", Fmake_vector, 2, 2, 0, /*
 Return a newly created vector of length LENGTH, with each element being INIT.
 See also the function `vector'.
-*/ )
-     (length, init)
-     Lisp_Object length, init;
+*/
+       (length, init))
 {
   if (!INTP (length) || XINT (length) < 0)
     length = wrong_type_argument (Qnatnump, length);
@@ -1208,13 +1203,11 @@ See also the function `vector'.
   return (make_vector (XINT (length), init));
 }
 
-DEFUN ("vector", Fvector, Svector, 0, MANY, 0 /*
+DEFUN ("vector", Fvector, 0, MANY, 0, /*
 Return a newly created vector with specified arguments as elements.
 Any number of arguments, even zero arguments, are allowed.
-*/ )
-     (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   Lisp_Object vector = Qnil;
   int elt;
@@ -1403,12 +1396,11 @@ make_bit_vector_from_byte_vector (unsigned char *bytevec, EMACS_INT length)
   return bit_vector;
 }
 
-DEFUN ("make-bit-vector", Fmake_bit_vector, Smake_bit_vector, 2, 2, 0 /*
+DEFUN ("make-bit-vector", Fmake_bit_vector, 2, 2, 0, /*
 Return a newly created bit vector of length LENGTH.
 Each element is set to INIT.  See also the function `bit-vector'.
-*/ )
-     (length, init)
-     Lisp_Object length, init;
+*/
+       (length, init))
 {
   if (!INTP (length) || XINT (length) < 0)
     length = wrong_type_argument (Qnatnump, length);
@@ -1416,13 +1408,11 @@ Each element is set to INIT.  See also the function `bit-vector'.
   return (make_bit_vector (XINT (length), init));
 }
 
-DEFUN ("bit-vector", Fbit_vector, Sbit_vector, 0, MANY, 0 /*
+DEFUN ("bit-vector", Fbit_vector, 0, MANY, 0, /*
 Return a newly created bit vector with specified arguments as elements.
 Any number of arguments, even zero arguments, are allowed.
-*/ )
-     (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   Lisp_Object bit_vector = Qnil;
   int elt;
@@ -1483,7 +1473,7 @@ make_compiled_function (int make_pure)
   return (new);
 }
 
-DEFUN ("make-byte-code", Fmake_byte_code, Smake_byte_code, 4, MANY, 0 /*
+DEFUN ("make-byte-code", Fmake_byte_code, 4, MANY, 0, /*
 Create a compiled-function object.
 Usage: (arglist instructions constants stack-size
 	&optional doc-string interactive-spec)
@@ -1494,10 +1484,8 @@ that this function was defined with `(interactive)'.  If the arg is not
 specified, then that means the function is not interactive.
 This is terrible behavior which is retained for compatibility with old
 `.elc' files which expected these semantics.
-*/ )
-     (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
 /*   In a non-insane world this function would have this arglist...
      (arglist, instructions, constants, stack_size, doc_string, interactive)
@@ -1658,12 +1646,11 @@ This is terrible behavior which is retained for compatibility with old
 DECLARE_FIXED_TYPE_ALLOC (symbol, struct Lisp_Symbol);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_symbol 1000
 
-DEFUN ("make-symbol", Fmake_symbol, Smake_symbol, 1, 1, 0 /*
+DEFUN ("make-symbol", Fmake_symbol, 1, 1, 0, /*
 Return a newly allocated uninterned symbol whose name is NAME.
 Its value and function definition are void, and its property list is nil.
-*/ )
-  (str)
-     Lisp_Object str;
+*/
+       (str))
 {
   Lisp_Object val;
   struct Lisp_Symbol *p;
@@ -1742,10 +1729,10 @@ allocate_event (void)
 DECLARE_FIXED_TYPE_ALLOC (marker, struct Lisp_Marker);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_marker 1000
 
-DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0 /*
+DEFUN ("make-marker", Fmake_marker, 0, 0, 0, /*
 Return a newly allocated marker which does not point at any place.
-*/ )
-  ()
+*/
+       ())
 {
   Lisp_Object val;
   struct Lisp_Marker *p;
@@ -2070,12 +2057,11 @@ resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
 #endif
 }
 
-DEFUN ("make-string", Fmake_string, Smake_string, 2, 2, 0 /*
+DEFUN ("make-string", Fmake_string, 2, 2, 0, /*
 Return a newly created string of length LENGTH, with each element being INIT.
 LENGTH must be an integer and INIT must be a character.
-*/ )
-  (length, init)
-     Lisp_Object length, init;
+*/
+       (length, init))
 {
   Lisp_Object val;
 
@@ -2520,13 +2506,12 @@ alloc_pure_lrecord (int size, struct lrecord_implementation *implementation)
 
 
 
-DEFUN ("purecopy", Fpurecopy, Spurecopy, 1, 1, 0 /*
+DEFUN ("purecopy", Fpurecopy, 1, 1, 0, /*
 Make a copy of OBJECT in pure storage.
 Recursively copies contents of vectors and cons cells.
 Does not copy symbols.
-*/ )
-     (obj)
-     Lisp_Object obj;
+*/
+       (obj))
 {
   int i;
   if (!purify_flag)
@@ -4112,7 +4097,7 @@ gc_plist_hack (CONST char *name, int value, Lisp_Object tail)
     (pl) = gc_plist_hack ((name), s, (pl));				\
   }
 
-DEFUN ("garbage-collect", Fgarbage_collect, Sgarbage_collect, 0, 0, "" /*
+DEFUN ("garbage-collect", Fgarbage_collect, 0, 0, "", /*
 Reclaim storage for Lisp objects no longer needed.
 Returns info on amount of space in use:
  ((USED-CONSES . FREE-CONSES) (USED-SYMS . FREE-SYMS)
@@ -4122,8 +4107,8 @@ Returns info on amount of space in use:
   more detailed information.
 Garbage collection happens automatically if you cons more than
 `gc-cons-threshold' bytes of Lisp data since previous garbage collection.
-*/ )
-  ()
+*/
+       ())
 {
   Lisp_Object pl = Qnil;
   Lisp_Object ret[6];
@@ -4230,24 +4215,24 @@ Garbage collection happens automatically if you cons more than
 }
 #undef HACK_O_MATIC
 
-DEFUN ("consing-since-gc", Fconsing_since_gc, Sconsing_since_gc, 0, 0, "" /*
+DEFUN ("consing-since-gc", Fconsing_since_gc, 0, 0, "", /*
 Return the number of bytes consed since the last garbage collection.
 \"Consed\" is a misnomer in that this actually counts allocation
 of all different kinds of objects, not just conses.
 
 If this value exceeds `gc-cons-threshold', a garbage collection happens.
-*/ )
-  ()
+*/
+       ())
 {
   return (make_int (consing_since_gc));
 }
   
-DEFUN ("memory-limit", Fmemory_limit, Smemory_limit, 0, 0, "" /*
+DEFUN ("memory-limit", Fmemory_limit, 0, 0, "", /*
 Return the address of the last byte Emacs has allocated, divided by 1024.
 This may be helpful in debugging Emacs's memory usage.
 The value is divided by 1024 to make sure it will fit in a lisp integer.
-*/ )
-  ()
+*/
+       ())
 {
   return (make_int ((EMACS_INT) sbrk (0) / 1024));
 }
@@ -4497,21 +4482,21 @@ syms_of_alloc (void)
   defsymbol (&Qpost_gc_hook, "post-gc-hook");
   defsymbol (&Qgarbage_collecting, "garbage-collecting");
 
-  defsubr (&Scons);
-  defsubr (&Slist);
-  defsubr (&Svector);
-  defsubr (&Sbit_vector);
-  defsubr (&Smake_byte_code);
-  defsubr (&Smake_list);
-  defsubr (&Smake_vector);
-  defsubr (&Smake_bit_vector);
-  defsubr (&Smake_string);
-  defsubr (&Smake_symbol);
-  defsubr (&Smake_marker);
-  defsubr (&Spurecopy);
-  defsubr (&Sgarbage_collect);
-  defsubr (&Smemory_limit);
-  defsubr (&Sconsing_since_gc);
+  DEFSUBR (Fcons);
+  DEFSUBR (Flist);
+  DEFSUBR (Fvector);
+  DEFSUBR (Fbit_vector);
+  DEFSUBR (Fmake_byte_code);
+  DEFSUBR (Fmake_list);
+  DEFSUBR (Fmake_vector);
+  DEFSUBR (Fmake_bit_vector);
+  DEFSUBR (Fmake_string);
+  DEFSUBR (Fmake_symbol);
+  DEFSUBR (Fmake_marker);
+  DEFSUBR (Fpurecopy);
+  DEFSUBR (Fgarbage_collect);
+  DEFSUBR (Fmemory_limit);
+  DEFSUBR (Fconsing_since_gc);
 }
 
 void

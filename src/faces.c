@@ -631,23 +631,21 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 }
 
 
-DEFUN ("facep", Ffacep, Sfacep, 1, 1, 0 /*
+DEFUN ("facep", Ffacep, 1, 1, 0, /*
 Return non-nil if OBJECT is a face.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (FACEP (object) ? Qt : Qnil);
 }
 
-DEFUN ("find-face", Ffind_face, Sfind_face, 1, 1, 0 /*
+DEFUN ("find-face", Ffind_face, 1, 1, 0, /*
 Retrieve the face of the given name.
 If FACE-OR-NAME is a face object, it is simply returned.
 Otherwise, FACE-OR-NAME should be a symbol.  If there is no such face,
 nil is returned.  Otherwise the associated face object is returned.
-*/ )
-     (face_or_name)
-     Lisp_Object face_or_name;
+*/
+       (face_or_name))
 {
   Lisp_Object retval;
 
@@ -664,13 +662,12 @@ nil is returned.  Otherwise the associated face object is returned.
   return Fgethash (face_or_name, Vtemporary_faces_cache, Qnil);
 }
 
-DEFUN ("get-face", Fget_face, Sget_face, 1, 1, 0 /*
+DEFUN ("get-face", Fget_face, 1, 1, 0, /*
 Retrieve the face of the given name.
 Same as `find-face' except an error is signalled if there is no such
 face instead of returning nil.
-*/ )
-     (name)
-     Lisp_Object name;
+*/
+       (name))
 {
   Lisp_Object face = Ffind_face (name);
 
@@ -679,21 +676,19 @@ face instead of returning nil.
   return face;
 }
 
-DEFUN ("face-name", Fface_name, Sface_name, 1, 1, 0 /*
+DEFUN ("face-name", Fface_name, 1, 1, 0, /*
 Return the name of the given face.
-*/ )
-     (face)
-     Lisp_Object face;
+*/
+       (face))
 {
   return (XFACE (Fget_face (face))->name);
 }
 
-DEFUN ("built-in-face-specifiers", Fbuilt_in_face_specifiers,
-       Sbuilt_in_face_specifiers, 0, 0, 0 /*
+DEFUN ("built-in-face-specifiers", Fbuilt_in_face_specifiers, 0, 0, 0, /*
 Return a list of all built-in face specifier properties.
 Don't modify this list!
-*/ )
-  ()
+*/
+       ())
 {
   return Vbuilt_in_face_specifiers;
 }
@@ -762,14 +757,13 @@ default_face_height_and_width (Lisp_Object domain,
   default_face_font_info (domain, 0, 0, height, width, 0);
 }
 
-DEFUN ("face-list", Fface_list, Sface_list, 0, 1, 0 /*
+DEFUN ("face-list", Fface_list, 0, 1, 0, /*
 Return a list of the names of all defined faces.
 If TEMPORARY is nil, only the permanent faces are included.
 If it is t, only the temporary faces are included.  If it is any
 other non-nil value both permanent and temporary are included.
-*/ )
-     (temporary)
-     Lisp_Object temporary;
+*/
+       (temporary))
 {
   Lisp_Object face_list = Qnil;
 
@@ -788,14 +782,13 @@ other non-nil value both permanent and temporary are included.
   return face_list;
 }
 
-DEFUN ("make-face", Fmake_face, Smake_face, 1, 3, 0 /*
+DEFUN ("make-face", Fmake_face, 1, 3, 0, /*
 Defines and returns a new FACE described by DOC-STRING.
 You can modify the font, color, etc of a face with the set-face- functions.
 If the face already exists, it is unmodified.
 If TEMPORARY is non-nil, this face will cease to exist if not in use.
-*/ )
-     (name, doc_string, temporary)
-     Lisp_Object name, doc_string, temporary;
+*/
+       (name, doc_string, temporary))
 {
   /* This function can GC if initialized is non-zero */
   struct Lisp_Face *f;
@@ -1753,13 +1746,12 @@ face_property_was_changed (Lisp_Object face, Lisp_Object property,
   XFACE (face)->dirty = 1;
 }
 
-DEFUN ("copy-face", Fcopy_face, Scopy_face, 2, 6, 0 /*
+DEFUN ("copy-face", Fcopy_face, 2, 6, 0, /*
 Defines and returns a new face which is a copy of an existing one,
 or makes an already-existing face be exactly like another. LOCALE,
 TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
-*/ )
-     (old_face, new_name, locale, tag_set, exact_p, how_to_add)
-     Lisp_Object old_face, new_name, locale, tag_set, exact_p, how_to_add;
+*/
+       (old_face, new_name, locale, tag_set, exact_p, how_to_add))
 {
   struct Lisp_Face *fold, *fnew;
   Lisp_Object new_face = Qnil;
@@ -1829,14 +1821,14 @@ syms_of_faces (void)
   defsymbol (&Qright_margin, "right-margin");
   defsymbol (&Qtext_cursor, "text-cursor");
 
-  defsubr (&Sfacep);
-  defsubr (&Sfind_face);
-  defsubr (&Sget_face);
-  defsubr (&Sface_name);
-  defsubr (&Sbuilt_in_face_specifiers);
-  defsubr (&Sface_list);
-  defsubr (&Smake_face);
-  defsubr (&Scopy_face);
+  DEFSUBR (Ffacep);
+  DEFSUBR (Ffind_face);
+  DEFSUBR (Fget_face);
+  DEFSUBR (Fface_name);
+  DEFSUBR (Fbuilt_in_face_specifiers);
+  DEFSUBR (Fface_list);
+  DEFSUBR (Fmake_face);
+  DEFSUBR (Fcopy_face);
 
   defsymbol (&Qfacep, "facep");
   defsymbol (&Qforeground, "foreground");

@@ -1,5 +1,5 @@
 ;;; Commands to undo message attribute changes in VM
-;;; Copyright (C) 1989, 1990, 1993, 1994 Kyle E. Jones
+;;; Copyright (C) 1989-1995 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by

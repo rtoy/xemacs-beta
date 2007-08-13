@@ -1,5 +1,5 @@
 ;;; Macros and functions dealing with accessing VM message struct fields
-;;; Copyright (C) 1989, 1990, 1991, 1993, 1994, 1995 Kyle E. Jones
+;;; Copyright (C) 1989-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -81,6 +81,11 @@
 ;; summary for unmirrored virtual message
 (defmacro vm-virtual-summary-of (message)
   (list 'aref (list 'aref message 1) 15))
+;; MIME layout information; types, ids, positions, etc. of all MIME entities
+(defmacro vm-mime-layout-of (message)
+  (list 'aref (list 'aref message 1) 16))
+(defmacro vm-mime-encoded-header-flag-of (message)
+  (list 'aref (list 'aref message 1) 17))
 ;; message attribute vector
 (defmacro vm-attributes-of (message) (list 'aref message 2))
 (defmacro vm-new-flag (message) (list 'aref (list 'aref message 2) 0))
@@ -202,6 +207,10 @@
   (list 'aset (list 'aref message 1) 14 data))
 (defmacro vm-set-virtual-summary-of (message summ)
   (list 'aset (list 'aref message 1) 15 summ))
+(defmacro vm-set-mime-layout-of (message layout)
+  (list 'aset (list 'aref message 1) 16 layout))
+(defmacro vm-set-mime-encoded-header-flag-of (message flag)
+  (list 'aset (list 'aref message 1) 17 flag))
 (defmacro vm-set-attributes-of (message attrs) (list 'aset message 2 attrs))
 ;; The other routines in attributes group are part of the undo system.
 (defun vm-set-edited-flag-of (message flag)

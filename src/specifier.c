@@ -364,14 +364,12 @@ valid_specifier_type_p (Lisp_Object type)
   return 0;
 }
 
-DEFUN ("valid-specifier-type-p", Fvalid_specifier_type_p,
-       Svalid_specifier_type_p, 1, 1, 0 /*
+DEFUN ("valid-specifier-type-p", Fvalid_specifier_type_p, 1, 1, 0, /*
 Given a SPECIFIER-TYPE, return non-nil if it is valid.
 Valid types are 'generic, 'integer, boolean, 'color, 'font, 'image,
 'face-boolean, and 'toolbar.
-*/ )
-     (specifier_type)
-     Lisp_Object specifier_type;
+*/
+       (specifier_type))
 {
   if (valid_specifier_type_p (specifier_type))
     return Qt;
@@ -379,11 +377,10 @@ Valid types are 'generic, 'integer, boolean, 'color, 'font, 'image,
     return Qnil;
 }
 
-DEFUN ("specifier-type-list", Fspecifier_type_list, Sspecifier_type_list,
-       0, 0, 0 /*
+DEFUN ("specifier-type-list", Fspecifier_type_list, 0, 0, 0, /*
 Return a list of valid specifier types.
-*/ )
-     ()
+*/
+       ())
 {
   return Fcopy_sequence (Vspecifier_type_list);
 }
@@ -429,7 +426,7 @@ make_specifier (struct specifier_methods *spec_meths)
   return specifier;
 }
 
-DEFUN ("make-specifier", Fmake_specifier, Smake_specifier, 1, 1, 0 /*
+DEFUN ("make-specifier", Fmake_specifier, 1, 1, 0, /*
 Create a new specifier.
 
 A specifier is an object that can be used to keep track of a property
@@ -451,9 +448,8 @@ For more information on particular types of specifiers, see the functions
 `generic-specifier-p', `integer-specifier-p', `boolean-specifier-p',
 `color-specifier-p', `font-specifier-p', `image-specifier-p',
 `face-boolean-specifier-p', and `toolbar-specifier-p'.
-*/ )
-     (type)
-     Lisp_Object type;
+*/
+       (type))
 {
   /* This function can GC */
   struct specifier_methods *meths = decode_specifier_type (type,
@@ -462,27 +458,25 @@ For more information on particular types of specifiers, see the functions
   return make_specifier (meths);
 }
 
-DEFUN ("specifierp", Fspecifierp, Sspecifierp, 1, 1, 0 /*
+DEFUN ("specifierp", Fspecifierp, 1, 1, 0, /*
 Return non-nil if OBJECT is a specifier.
 
 A specifier is an object that can be used to keep track of a property
 whose value can be per-buffer, per-window, per-frame, or per-device,
 and can further be restricted to a particular console-type or device-class.
 See `make-specifier'.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (!SPECIFIERP (object))
     return Qnil;
   return Qt;
 }
 
-DEFUN ("specifier-type", Fspecifier_type, Sspecifier_type, 1, 1, 0 /*
+DEFUN ("specifier-type", Fspecifier_type, 1, 1, 0, /*
 Return the type of SPECIFIER.
-*/ )
-     (specifier)
-     Lisp_Object specifier;
+*/
+       (specifier))
 {
   CHECK_SPECIFIER (specifier);
   return intern (XSPECIFIER (specifier)->methods->name);
@@ -493,14 +487,12 @@ Return the type of SPECIFIER.
 /*                       Locales and domains                            */
 /************************************************************************/
 
-DEFUN ("valid-specifier-locale-p", Fvalid_specifier_locale_p,
-       Svalid_specifier_locale_p, 1, 1, 0 /*
+DEFUN ("valid-specifier-locale-p", Fvalid_specifier_locale_p, 1, 1, 0, /*
 Return non-nil if LOCALE is a valid specifier locale.
 Valid locales are a device, a frame, a window, a buffer, and 'global.
 (nil is not valid.)
-*/ )
-     (locale)
-     Lisp_Object locale;
+*/
+       (locale))
 {
   /* This cannot GC. */
   if ((DEVICEP (locale) && DEVICE_LIVE_P (XDEVICE (locale))) ||
@@ -515,16 +507,13 @@ Valid locales are a device, a frame, a window, a buffer, and 'global.
     return Qnil;
 }
 
-DEFUN ("valid-specifier-domain-p",
-       Fvalid_specifier_domain_p,
-       Svalid_specifier_domain_p, 1, 1, 0 /*
+DEFUN ("valid-specifier-domain-p", Fvalid_specifier_domain_p, 1, 1, 0, /*
 Return non-nil if DOMAIN is a valid specifier domain.
 A domain is used to instance a specifier (i.e. determine the specifier's
 value in that domain).  Valid domains are a window, frame, or device.
 (nil is not valid.)
-*/ )
-     (domain)
-     Lisp_Object domain;
+*/
+       (domain))
 {
   /* This cannot GC. */
   if ((DEVICEP (domain) && DEVICE_LIVE_P (XDEVICE (domain))) ||
@@ -535,16 +524,13 @@ value in that domain).  Valid domains are a window, frame, or device.
     return Qnil;
 }
 
-DEFUN ("valid-specifier-locale-type-p",
-       Fvalid_specifier_locale_type_p,
-       Svalid_specifier_locale_type_p, 1, 1, 0 /*
+DEFUN ("valid-specifier-locale-type-p", Fvalid_specifier_locale_type_p, 1, 1, 0, /*
 Given a specifier LOCALE-TYPE, return non-nil if it is valid.
 Valid locale types are 'global, 'device, 'frame, 'window, and 'buffer.
 (Note, however, that in functions that accept either a locale or a locale
 type, 'global is considered an individual locale.)
-*/ )
-     (locale_type)
-     Lisp_Object locale_type;
+*/
+       (locale_type))
 {
   /* This cannot GC. */
   if (EQ (locale_type, Qglobal) ||
@@ -568,13 +554,10 @@ check_valid_locale_or_locale_type (Lisp_Object locale)
   signal_simple_error ("Invalid specifier locale or locale type", locale);
 }
 
-DEFUN ("specifier-locale-type-from-locale",
-       Fspecifier_locale_type_from_locale,
-       Sspecifier_locale_type_from_locale, 1, 1, 0 /*
+DEFUN ("specifier-locale-type-from-locale", Fspecifier_locale_type_from_locale, 1, 1, 0, /*
 Given a specifier LOCALE, return its type.
-*/ )
-     (locale)
-     Lisp_Object locale;
+*/
+       (locale))
 {
   /* This cannot GC. */
   if (NILP (Fvalid_specifier_locale_p (locale)))
@@ -664,14 +647,11 @@ decode_domain (Lisp_Object domain)
 /*                                 Tags                                 */
 /************************************************************************/
 
-DEFUN ("valid-specifier-tag-p", Fvalid_specifier_tag_p,
-       Svalid_specifier_tag_p,
-       1, 1, 0 /*
+DEFUN ("valid-specifier-tag-p", Fvalid_specifier_tag_p, 1, 1, 0, /*
 Return non-nil if TAG is a valid specifier tag.
 See also `valid-specifier-tag-set-p'.
-*/ )
-     (tag)
-     Lisp_Object tag;
+*/
+       (tag))
 {
   if (valid_console_type_p (tag) ||
       valid_device_class_p (tag) ||
@@ -680,9 +660,7 @@ See also `valid-specifier-tag-set-p'.
   return Qnil;
 }
 
-DEFUN ("valid-specifier-tag-set-p", Fvalid_specifier_tag_set_p,
-       Svalid_specifier_tag_set_p,
-       1, 1, 0 /*
+DEFUN ("valid-specifier-tag-set-p", Fvalid_specifier_tag_set_p, 1, 1, 0, /*
 Return non-nil if TAG-SET is a valid specifier tag set.
 
 A specifier tag set is an entity that is attached to an instantiator
@@ -707,9 +685,8 @@ all tags in the tag set attached to that instantiator.
 
 Most of the time, a tag set is not specified, and the instantiator
 gets a null tag set, which matches all devices.
-*/ )
-     (tag_set)
-     Lisp_Object tag_set;
+*/
+       (tag_set))
 {
   Lisp_Object rest;
 
@@ -785,15 +762,13 @@ canonicalize_tag_set (Lisp_Object tag_set)
   return Flist (j, tags);
 }
 
-DEFUN ("canonicalize-tag-set", Fcanonicalize_tag_set,
-       Scanonicalize_tag_set, 1, 1, 0 /*
+DEFUN ("canonicalize-tag-set", Fcanonicalize_tag_set, 1, 1, 0, /*
 Canonicalize the given tag set.
 Two canonicalized tag sets can be compared with `equal' to see if they
 represent the same tag set. (Specifically, canonicalizing involves
 sorting by symbol name and removing duplicates.)
-*/ )
-     (tag_set)
-     Lisp_Object tag_set;
+*/
+       (tag_set))
 {
   if (NILP (Fvalid_specifier_tag_set_p (tag_set)))
     signal_simple_error ("Invalid tag set", tag_set);
@@ -826,17 +801,13 @@ device_matches_specifier_tag_set_p (Lisp_Object device, Lisp_Object tag_set)
   return 1;
 }
 
-DEFUN ("device-matches-specifier-tag-set-p",
-       Fdevice_matches_specifier_tag_set_p,
-       Sdevice_matches_specifier_tag_set_p,
-       2, 2, 0 /*
+DEFUN ("device-matches-specifier-tag-set-p", Fdevice_matches_specifier_tag_set_p, 2, 2, 0, /*
 Return non-nil if DEVICE matches specifier tag set TAG-SET.
 This means that DEVICE matches each tag in the tag set. (Every
 tag recognized by XEmacs has a predicate associated with it that
 specifies which devices match it.)
-*/ )
-     (device, tag_set)
-     Lisp_Object device, tag_set;
+*/
+       (device, tag_set))
 {
   CHECK_LIVE_DEVICE (device);
 
@@ -846,8 +817,7 @@ specifies which devices match it.)
   return device_matches_specifier_tag_set_p (device, tag_set) ? Qt : Qnil;
 }
 
-DEFUN ("define-specifier-tag", Fdefine_specifier_tag, Sdefine_specifier_tag,
-       1, 2, 0 /*
+DEFUN ("define-specifier-tag", Fdefine_specifier_tag, 1, 2, 0, /*
 Define a new specifier tag.
 If PREDICATE is specified, it should be a function of one argument
 (a device) that specifies whether the tag matches that particular
@@ -856,9 +826,8 @@ device.  If PREDICATE is omitted, the tag matches all devices.
 You can redefine an existing user-defined specifier tag.  However,
 you cannot redefine the built-in specifier tags (the device types
 and classes) or the symbols nil, t, 'all, or 'global.
-*/ )
-     (tag, predicate)
-     Lisp_Object tag, predicate;
+*/
+       (tag, predicate))
 {
   Lisp_Object assoc, devcons, concons;
   int recompute = 0;
@@ -944,15 +913,11 @@ setup_device_initial_specifier_tags (struct device *d)
     }
 }
 
-DEFUN ("device-matching-specifier-tag-list",
-       Fdevice_matching_specifier_tag_list,
-       Sdevice_matching_specifier_tag_list,
-       0, 1, 0 /*
+DEFUN ("device-matching-specifier-tag-list", Fdevice_matching_specifier_tag_list, 0, 1, 0, /*
 Return a list of all specifier tags matching DEVICE.
 DEVICE defaults to the selected device if omitted.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   Lisp_Object rest, list = Qnil;
@@ -973,12 +938,11 @@ DEVICE defaults to the selected device if omitted.
   RETURN_UNGCPRO (list);
 }
 
-DEFUN ("specifier-tag-list", Fspecifier_tag_list, Sspecifier_tag_list,
-       0, 0, 0 /*
+DEFUN ("specifier-tag-list", Fspecifier_tag_list, 0, 0, 0, /*
 Return a list of all currently-defined specifier tags.
 This includes the built-in ones (the device types and classes).
-*/ )
-     ()
+*/
+       ())
 {
   Lisp_Object list = Qnil, rest;
   struct gcpro gcpro1;
@@ -995,13 +959,10 @@ This includes the built-in ones (the device types and classes).
   RETURN_UNGCPRO (list);
 }
 
-DEFUN ("specifier-tag-predicate", Fspecifier_tag_predicate,
-       Sspecifier_tag_predicate,
-       1, 1, 0 /*
+DEFUN ("specifier-tag-predicate", Fspecifier_tag_predicate, 1, 1, 0, /*
 Return the predicate for the given specifier tag.
-*/ )
-     (tag)
-     Lisp_Object tag;
+*/
+       (tag))
 {
   /* The return value of this function must be GCPRO'd. */
   CHECK_SYMBOL (tag);
@@ -1100,13 +1061,10 @@ check_valid_instantiator (Lisp_Object instantiator,
   return Qt;
 }
 
-DEFUN ("check-valid-instantiator", Fcheck_valid_instantiator,
-       Scheck_valid_instantiator,
-       2, 2, 0 /*
+DEFUN ("check-valid-instantiator", Fcheck_valid_instantiator, 2, 2, 0, /*
 Signal an error if INSTANTIATOR is invalid for SPECIFIER-TYPE.
-*/ )
-     (instantiator, specifier_type)
-     Lisp_Object instantiator, specifier_type;
+*/
+       (instantiator, specifier_type))
 {
   struct specifier_methods *meths = decode_specifier_type (specifier_type,
 							   ERROR_ME);
@@ -1114,12 +1072,10 @@ Signal an error if INSTANTIATOR is invalid for SPECIFIER-TYPE.
   return check_valid_instantiator (instantiator, meths, ERROR_ME);
 }
 
-DEFUN ("valid-instantiator-p", Fvalid_instantiator_p, Svalid_instantiator_p,
-       2, 2, 0 /*
+DEFUN ("valid-instantiator-p", Fvalid_instantiator_p, 2, 2, 0, /*
 Return non-nil if INSTANTIATOR is valid for SPECIFIER-TYPE.
-*/ )
-     (instantiator, specifier_type)
-     Lisp_Object instantiator, specifier_type;
+*/
+       (instantiator, specifier_type))
 {
   struct specifier_methods *meths = decode_specifier_type (specifier_type,
 							   ERROR_ME);
@@ -1156,24 +1112,20 @@ check_valid_inst_list (Lisp_Object inst_list, struct specifier_methods *meths,
   return Qt;
 }
 
-DEFUN ("check-valid-inst-list", Fcheck_valid_inst_list, Scheck_valid_inst_list,
-       2, 2, 0 /*
+DEFUN ("check-valid-inst-list", Fcheck_valid_inst_list, 2, 2, 0, /*
 Signal an error if INST-LIST is invalid for specifier type TYPE.
-*/ )
-     (inst_list, type)
-     Lisp_Object inst_list, type;
+*/
+       (inst_list, type))
 {
   struct specifier_methods *meths = decode_specifier_type (type, ERROR_ME);
 
   return check_valid_inst_list (inst_list, meths, ERROR_ME);
 }
 
-DEFUN ("valid-inst-list-p", Fvalid_inst_list_p, Svalid_inst_list_p,
-       2, 2, 0 /*
+DEFUN ("valid-inst-list-p", Fvalid_inst_list_p, 2, 2, 0, /*
 Return non-nil if INST-LIST is valid for specifier type TYPE.
-*/ )
-     (inst_list, type)
-     Lisp_Object inst_list, type;
+*/
+       (inst_list, type))
 {
   struct specifier_methods *meths = decode_specifier_type (type, ERROR_ME);
 
@@ -1209,24 +1161,20 @@ check_valid_spec_list (Lisp_Object spec_list, struct specifier_methods *meths,
   return Qt;
 }
 
-DEFUN ("check-valid-spec-list", Fcheck_valid_spec_list, Scheck_valid_spec_list,
-       2, 2, 0 /*
+DEFUN ("check-valid-spec-list", Fcheck_valid_spec_list, 2, 2, 0, /*
 Signal an error if SPEC-LIST is invalid for specifier type TYPE.
-*/ )
-     (spec_list, type)
-     Lisp_Object spec_list, type;
+*/
+       (spec_list, type))
 {
   struct specifier_methods *meths = decode_specifier_type (type, ERROR_ME);
 
   return check_valid_spec_list (spec_list, meths, ERROR_ME);
 }
 
-DEFUN ("valid-spec-list-p", Fvalid_spec_list_p, Svalid_spec_list_p,
-       2, 2, 0 /*
+DEFUN ("valid-spec-list-p", Fvalid_spec_list_p, 2, 2, 0, /*
 Return non-nil if SPEC-LIST is valid for specifier type TYPE.
-*/ )
-     (spec_list, type)
-     Lisp_Object spec_list, type;
+*/
+       (spec_list, type))
 {
   struct specifier_methods *meths = decode_specifier_type (type, ERROR_ME);
 
@@ -1776,8 +1724,7 @@ map_specifier (Lisp_Object specifier, Lisp_Object locale,
   return retval;
 }
 
-DEFUN ("add-spec-to-specifier", Fadd_spec_to_specifier, Sadd_spec_to_specifier,
-       2, 5, 0 /*
+DEFUN ("add-spec-to-specifier", Fadd_spec_to_specifier, 2, 5, 0, /*
 Add a specification to SPECIFIER.
 The specification maps from LOCALE (which should be a buffer, window,
 frame, device, or 'global, and defaults to 'global) to INSTANTIATOR,
@@ -1815,9 +1762,8 @@ It should be one of
 
 You can retrieve the specifications for a particular locale or locale type
 with the function `specifier-spec-list' or `specifier-specs'.
-*/ )
-     (specifier, instantiator, locale, tag_set, how_to_add)
-     Lisp_Object specifier, instantiator, locale, tag_set, how_to_add;
+*/
+       (specifier, instantiator, locale, tag_set, how_to_add))
 {
   enum spec_add_meth add_meth;
   Lisp_Object inst_list;
@@ -1841,8 +1787,7 @@ with the function `specifier-spec-list' or `specifier-specs'.
   RETURN_UNGCPRO (Qnil);
 }
 
-DEFUN ("add-spec-list-to-specifier", Fadd_spec_list_to_specifier,
-       Sadd_spec_list_to_specifier, 2, 3, 0 /*
+DEFUN ("add-spec-list-to-specifier", Fadd_spec_list_to_specifier, 2, 3, 0, /*
 Add a spec-list (a list of specifications) to SPECIFIER.
 The format of a spec-list is
 
@@ -1868,9 +1813,8 @@ the existing ones, and has the same semantics as for
 
 In many circumstances, the higher-level function `set-specifier' is
 more convenient and should be used instead.
-*/ )
-     (specifier, spec_list, how_to_add)
-     Lisp_Object specifier, spec_list, how_to_add;
+*/
+       (specifier, spec_list, how_to_add))
 {
   enum spec_add_meth add_meth;
   Lisp_Object rest;
@@ -1949,8 +1893,7 @@ specifier_spec_list_mapfun (Lisp_Object specifier,
    violate our assertion that the specs contained in the actual
    specifier lists are all valid. */
 
-DEFUN ("specifier-spec-list", Fspecifier_spec_list, Sspecifier_spec_list,
-       1, 4, 0 /*
+DEFUN ("specifier-spec-list", Fspecifier_spec_list, 1, 4, 0, /*
 Return the spec-list of specifications for SPECIFIER in LOCALE.
 
 If LOCALE is a particular locale (a buffer, window, frame, device,
@@ -1974,9 +1917,8 @@ subset of (or possibly equal to) the instantiator's tag set are returned.
 no instantiators will be screened out.) If EXACT-P is non-nil, however,
 TAG-SET must be equal to an instantiator's tag set for the instantiator
 to be returned.
-*/ )
-     (specifier, locale, tag_set, exact_p)
-     Lisp_Object specifier, locale, tag_set, exact_p;
+*/
+       (specifier, locale, tag_set, exact_p))
 {
   struct specifier_spec_list_closure cl;
   struct gcpro gcpro1, gcpro2;
@@ -1991,8 +1933,7 @@ to be returned.
 }
 
 
-DEFUN ("specifier-specs", Fspecifier_specs, Sspecifier_specs,
-       1, 4, 0 /*
+DEFUN ("specifier-specs", Fspecifier_specs, 1, 4, 0, /*
 Return the specification(s) for SPECIFIER in LOCALE.
 
 If LOCALE is a single locale or is a list of one element containing a
@@ -2013,9 +1954,8 @@ in Lisp programs, and is as follows:
    'any, a one-element list containing nil will be returned rather
    than just nil, to distinguish this case from there being no
    instantiators at all.
-*/ )
-     (specifier, locale, tag_set, exact_p)
-     Lisp_Object specifier, locale, tag_set, exact_p;
+*/
+       (specifier, locale, tag_set, exact_p))
 {
   if (!NILP (Fvalid_specifier_locale_p (locale)) ||
       (CONSP (locale) && !NILP (Fvalid_specifier_locale_p (XCAR (locale))) &&
@@ -2054,8 +1994,7 @@ remove_specifier_mapfun (Lisp_Object specifier,
   return 0;
 }
 
-DEFUN ("remove-specifier", Fremove_specifier,
-       Sremove_specifier, 1, 4, 0 /*
+DEFUN ("remove-specifier", Fremove_specifier, 1, 4, 0, /*
 Remove specification(s) for SPECIFIER.
 
 If LOCALE is a particular locale (a buffer, window, frame, device,
@@ -2077,9 +2016,8 @@ The default value of nil is a subset of all tag sets, so in this case
 no instantiators will be screened out. If EXACT-P is non-nil, however,
 TAG-SET must be equal to an instantiator's tag set for the instantiator
 to be removed.
-*/ )
-     (specifier, locale, tag_set, exact_p)
-     Lisp_Object specifier, locale, tag_set, exact_p;
+*/
+       (specifier, locale, tag_set, exact_p))
 {
   CHECK_SPECIFIER (specifier);
   map_specifier (specifier, locale, remove_specifier_mapfun, tag_set,
@@ -2120,8 +2058,7 @@ copy_specifier_mapfun (Lisp_Object specifier,
   return 0;
 }
 
-DEFUN ("copy-specifier", Fcopy_specifier, Scopy_specifier,
-       1, 6, 0 /*
+DEFUN ("copy-specifier", Fcopy_specifier, 1, 6, 0, /*
 Copy SPECIFIER to DEST, or create a new one if DEST is nil.
 
 If DEST is nil or omitted, a new specifier will be created and the
@@ -2147,9 +2084,8 @@ Optional argument HOW-TO-ADD specifies what to do with existing
 specifications in DEST.  If nil, then whichever locales or locale types
 are copied will first be completely erased in DEST.  Otherwise, it is
 the same as in `add-spec-to-specifier'.
-*/ )
-     (specifier, dest, locale, tag_set, exact_p, how_to_add)
-     Lisp_Object specifier, dest, locale, tag_set, exact_p, how_to_add;
+*/
+       (specifier, dest, locale, tag_set, exact_p, how_to_add))
 {
   struct gcpro gcpro1;
   struct copy_specifier_closure cl;
@@ -2234,14 +2170,11 @@ check_valid_specifier_matchspec (Lisp_Object matchspec,
     }
 }
 
-DEFUN ("check-valid-specifier-matchspec", Fcheck_valid_specifier_matchspec,
-       Scheck_valid_specifier_matchspec,
-       2, 2, 0 /*
+DEFUN ("check-valid-specifier-matchspec", Fcheck_valid_specifier_matchspec, 2, 2, 0, /*
 Signal an error if MATCHSPEC is invalid for SPECIFIER-TYPE.
 See `specifier-matching-instance' for a description of matchspecs.
-*/ )
-     (matchspec, specifier_type)
-     Lisp_Object matchspec, specifier_type;
+*/
+       (matchspec, specifier_type))
 {
   struct specifier_methods *meths = decode_specifier_type (specifier_type,
 							   ERROR_ME);
@@ -2249,14 +2182,11 @@ See `specifier-matching-instance' for a description of matchspecs.
   return check_valid_specifier_matchspec (matchspec, meths, ERROR_ME);
 }
 
-DEFUN ("valid-specifier-matchspec-p", Fvalid_specifier_matchspec_p,
-       Svalid_specifier_matchspec_p,
-       2, 2, 0 /*
+DEFUN ("valid-specifier-matchspec-p", Fvalid_specifier_matchspec_p, 2, 2, 0, /*
 Return non-nil if MATCHSPEC is valid for SPECIFIER-TYPE.
 See `specifier-matching-instance' for a description of matchspecs.
-*/ )
-     (matchspec, specifier_type)
-     Lisp_Object matchspec, specifier_type;
+*/
+       (matchspec, specifier_type))
 {
   struct specifier_methods *meths = decode_specifier_type (specifier_type,
 							   ERROR_ME);
@@ -2282,8 +2212,7 @@ set_specifier_fallback (Lisp_Object specifier, Lisp_Object fallback)
   recompute_cached_specifier_everywhere (specifier);
 }
 
-DEFUN ("specifier-fallback", Fspecifier_fallback, Sspecifier_fallback,
-       1, 1, 0 /*
+DEFUN ("specifier-fallback", Fspecifier_fallback, 1, 1, 0, /*
 Return the fallback value for SPECIFIER.
 Fallback values are provided by the C code for certain built-in
 specifiers to make sure that instancing won't fail even if all
@@ -2302,9 +2231,8 @@ any other inst-list, a specifier of the same type as SPECIFIER
 When you instance a specifier, you can explicitly request that the
 fallback not be consulted. (The C code does this, for example, when
 merging faces.) See `specifier-instance'.
-*/ )
-     (specifier)
-     Lisp_Object specifier;
+*/
+       (specifier))
 {
   CHECK_SPECIFIER (specifier);
   return Fcopy_tree (XSPECIFIER (specifier)->fallback, Qt);
@@ -2495,8 +2423,7 @@ specifier_instance_no_quit (Lisp_Object specifier, Lisp_Object matchspec,
 			     1, no_fallback, depth);
 }
 
-DEFUN ("specifier-instance", Fspecifier_instance, Sspecifier_instance,
-       1, 4, 0 /*
+DEFUN ("specifier-instance", Fspecifier_instance, 1, 4, 0, /*
 Instantiate SPECIFIER (return its value) in DOMAIN.
 If no instance can be generated for this domain, return DEFAULT.
 
@@ -2542,9 +2469,8 @@ value will be a font-instance object.  For glyphs, the returned value
 will be a string, pixmap, or subwindow.
 
 See also `specifier-matching-instance'.
-*/ )
-       (specifier, domain, defalt, no_fallback)
-       Lisp_Object specifier, domain, defalt, no_fallback;
+*/
+       (specifier, domain, defalt, no_fallback))
 {
   Lisp_Object instance;
 
@@ -2558,8 +2484,7 @@ See also `specifier-matching-instance'.
   return instance;
 }
 
-DEFUN ("specifier-matching-instance", Fspecifier_matching_instance,
-       Sspecifier_matching_instance, 2, 5, 0 /*
+DEFUN ("specifier-matching-instance", Fspecifier_matching_instance, 2, 5, 0, /*
 Return an instance for SPECIFIER in DOMAIN that matches MATCHSPEC.
 If no instance can be generated for this domain, return DEFAULT.
 
@@ -2581,9 +2506,8 @@ dependent on the particular type of specifier.  Here are some examples:
    (This only makes sense with Mule support.) This makes it easy to choose a
    font that can display a particular character. (This is what redisplay
    does, in fact.)
-*/ )
-       (specifier, matchspec, domain, defalt, no_fallback)
-       Lisp_Object specifier, matchspec, domain, defalt, no_fallback;
+*/
+       (specifier, matchspec, domain, defalt, no_fallback))
 {
   Lisp_Object instance;
 
@@ -2599,16 +2523,15 @@ dependent on the particular type of specifier.  Here are some examples:
   return instance;
 }
 
-DEFUN ("specifier-instance-from-inst-list", Fspecifier_instance_from_inst_list,
-       Sspecifier_instance_from_inst_list, 3, 4, 0 /*
+DEFUN ("specifier-instance-from-inst-list",
+       Fspecifier_instance_from_inst_list, 3, 4, 0, /*
 Attempt to convert a particular inst-list into an instance.
 This attempts to instantiate INST-LIST in the given DOMAIN,
 as if INST-LIST existed in a specification in SPECIFIER.  If
 the instantiation fails, DEFAULT is returned.  In most circumstances,
 you should not use this function; use `specifier-instance' instead.
-*/ )
-     (specifier, domain, inst_list, defalt)
-     Lisp_Object specifier, domain, inst_list, defalt;
+*/
+       (specifier, domain, inst_list, defalt))
 {
   Lisp_Object val = Qunbound;
   struct Lisp_Specifier *sp = XSPECIFIER (specifier);
@@ -2631,8 +2554,7 @@ you should not use this function; use `specifier-instance' instead.
 }
 
 DEFUN ("specifier-matching-instance-from-inst-list",
-       Fspecifier_matching_instance_from_inst_list,
-       Sspecifier_matching_instance_from_inst_list, 4, 5, 0 /*
+       Fspecifier_matching_instance_from_inst_list, 4, 5, 0, /*
 Attempt to convert a particular inst-list into an instance.
 This attempts to instantiate INST-LIST in the given DOMAIN
 (as if INST-LIST existed in a specification in SPECIFIER),
@@ -2642,9 +2564,8 @@ This function is analogous to `specifier-instance-from-inst-list'
 but allows for specification-matching as in `specifier-matching-instance'.
 See that function for a description of exactly how the matching process
 works.
-*/ )
-     (specifier, matchspec, domain, inst_list, defalt)
-     Lisp_Object specifier, matchspec, domain, inst_list, defalt;
+*/
+       (specifier, matchspec, domain, inst_list, defalt))
 {
   Lisp_Object val = Qunbound;
   struct Lisp_Specifier *sp = XSPECIFIER (specifier);
@@ -2814,8 +2735,7 @@ recompute_cached_specifier_everywhere (Lisp_Object specifier)
     }
 }
 
-DEFUN ("set-specifier-dirty-flag", Fset_specifier_dirty_flag,
-       Sset_specifier_dirty_flag, 1, 1, 0 /*
+DEFUN ("set-specifier-dirty-flag", Fset_specifier_dirty_flag, 1, 1, 0, /*
 Force recomputation of any caches associated with SPECIFIER.
 Note that this automatically happens whenever you change a specification
  in SPECIFIER; you do not have to call this function then.
@@ -2824,9 +2744,8 @@ One example of where this function is useful is when you have a
  evaluated.  Calling `set-specifier-dirty-flag' on the
  toolbar specifier will force the `active-p' fields to be
  recomputed.
-*/ )
-  (specifier)
-     Lisp_Object specifier;
+*/
+       (specifier))
 {
   CHECK_SPECIFIER (specifier);
   recompute_cached_specifier_everywhere (specifier);
@@ -2885,15 +2804,13 @@ DEFINE_SPECIFIER_TYPE (generic);
 
 #endif /* 0 */
 
-DEFUN ("generic-specifier-p", Fgeneric_specifier_p,
-       Sgeneric_specifier_p, 1, 1, 0 /*
+DEFUN ("generic-specifier-p", Fgeneric_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a generic specifier.
 
 A generic specifier allows any kind of Lisp object as an instantiator,
 and returns back the Lisp object unchanged when it is instantiated.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (GENERIC_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -2911,12 +2828,10 @@ integer_validate (Lisp_Object instantiator)
   CHECK_INT (instantiator);
 }
 
-DEFUN ("integer-specifier-p", Finteger_specifier_p,
-       Sinteger_specifier_p, 1, 1, 0 /*
+DEFUN ("integer-specifier-p", Finteger_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is an integer specifier.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (INTEGER_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -2933,12 +2848,10 @@ natnum_validate (Lisp_Object instantiator)
   CHECK_NATNUM (instantiator);
 }
 
-DEFUN ("natnum-specifier-p", Fnatnum_specifier_p,
-       Snatnum_specifier_p, 1, 1, 0 /*
+DEFUN ("natnum-specifier-p", Fnatnum_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a natnum (non-negative-integer) specifier.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (NATNUM_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -2956,12 +2869,10 @@ boolean_validate (Lisp_Object instantiator)
     signal_simple_error ("Must be t or nil", instantiator);
 }
 
-DEFUN ("boolean-specifier-p", Fboolean_specifier_p,
-       Sboolean_specifier_p, 1, 1, 0 /*
+DEFUN ("boolean-specifier-p", Fboolean_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is an boolean specifier.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (BOOLEAN_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -2982,52 +2893,52 @@ syms_of_specifier (void)
   /* Qinteger, Qboolean, Qgeneric defined in general.c */
   defsymbol (&Qnatnum, "natnum");
 
-  defsubr (&Svalid_specifier_type_p);
-  defsubr (&Sspecifier_type_list);
-  defsubr (&Smake_specifier);
-  defsubr (&Sspecifierp);
-  defsubr (&Sspecifier_type);
+  DEFSUBR (Fvalid_specifier_type_p);
+  DEFSUBR (Fspecifier_type_list);
+  DEFSUBR (Fmake_specifier);
+  DEFSUBR (Fspecifierp);
+  DEFSUBR (Fspecifier_type);
 
-  defsubr (&Svalid_specifier_locale_p);
-  defsubr (&Svalid_specifier_domain_p);
-  defsubr (&Svalid_specifier_locale_type_p);
-  defsubr (&Sspecifier_locale_type_from_locale);
+  DEFSUBR (Fvalid_specifier_locale_p);
+  DEFSUBR (Fvalid_specifier_domain_p);
+  DEFSUBR (Fvalid_specifier_locale_type_p);
+  DEFSUBR (Fspecifier_locale_type_from_locale);
 
-  defsubr (&Svalid_specifier_tag_p);
-  defsubr (&Svalid_specifier_tag_set_p);
-  defsubr (&Scanonicalize_tag_set);
-  defsubr (&Sdevice_matches_specifier_tag_set_p);
-  defsubr (&Sdefine_specifier_tag);
-  defsubr (&Sdevice_matching_specifier_tag_list);
-  defsubr (&Sspecifier_tag_list);
-  defsubr (&Sspecifier_tag_predicate);
+  DEFSUBR (Fvalid_specifier_tag_p);
+  DEFSUBR (Fvalid_specifier_tag_set_p);
+  DEFSUBR (Fcanonicalize_tag_set);
+  DEFSUBR (Fdevice_matches_specifier_tag_set_p);
+  DEFSUBR (Fdefine_specifier_tag);
+  DEFSUBR (Fdevice_matching_specifier_tag_list);
+  DEFSUBR (Fspecifier_tag_list);
+  DEFSUBR (Fspecifier_tag_predicate);
 
-  defsubr (&Scheck_valid_instantiator);
-  defsubr (&Svalid_instantiator_p);
-  defsubr (&Scheck_valid_inst_list);
-  defsubr (&Svalid_inst_list_p);
-  defsubr (&Scheck_valid_spec_list);
-  defsubr (&Svalid_spec_list_p);
-  defsubr (&Sadd_spec_to_specifier);
-  defsubr (&Sadd_spec_list_to_specifier);
-  defsubr (&Sspecifier_spec_list);
-  defsubr (&Sspecifier_specs);
-  defsubr (&Sremove_specifier);
-  defsubr (&Scopy_specifier);
+  DEFSUBR (Fcheck_valid_instantiator);
+  DEFSUBR (Fvalid_instantiator_p);
+  DEFSUBR (Fcheck_valid_inst_list);
+  DEFSUBR (Fvalid_inst_list_p);
+  DEFSUBR (Fcheck_valid_spec_list);
+  DEFSUBR (Fvalid_spec_list_p);
+  DEFSUBR (Fadd_spec_to_specifier);
+  DEFSUBR (Fadd_spec_list_to_specifier);
+  DEFSUBR (Fspecifier_spec_list);
+  DEFSUBR (Fspecifier_specs);
+  DEFSUBR (Fremove_specifier);
+  DEFSUBR (Fcopy_specifier);
 
-  defsubr (&Scheck_valid_specifier_matchspec);
-  defsubr (&Svalid_specifier_matchspec_p);
-  defsubr (&Sspecifier_fallback);
-  defsubr (&Sspecifier_instance);
-  defsubr (&Sspecifier_matching_instance);
-  defsubr (&Sspecifier_instance_from_inst_list);
-  defsubr (&Sspecifier_matching_instance_from_inst_list);
-  defsubr (&Sset_specifier_dirty_flag);
+  DEFSUBR (Fcheck_valid_specifier_matchspec);
+  DEFSUBR (Fvalid_specifier_matchspec_p);
+  DEFSUBR (Fspecifier_fallback);
+  DEFSUBR (Fspecifier_instance);
+  DEFSUBR (Fspecifier_matching_instance);
+  DEFSUBR (Fspecifier_instance_from_inst_list);
+  DEFSUBR (Fspecifier_matching_instance_from_inst_list);
+  DEFSUBR (Fset_specifier_dirty_flag);
 
-  defsubr (&Sgeneric_specifier_p);
-  defsubr (&Sinteger_specifier_p);
-  defsubr (&Snatnum_specifier_p);
-  defsubr (&Sboolean_specifier_p);
+  DEFSUBR (Fgeneric_specifier_p);
+  DEFSUBR (Finteger_specifier_p);
+  DEFSUBR (Fnatnum_specifier_p);
+  DEFSUBR (Fboolean_specifier_p);
 
   /* Symbols pertaining to specifier creation.  Specifiers are created
      in the syms_of() functions. */

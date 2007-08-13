@@ -398,8 +398,7 @@ child_setup (in, out, err, new_argv, env)
     chdir (XSTRING_DATA (current_buffer->directory));
 }
 
-DEFUN ("call-process-internal", Fcall_process_internal,
-       Scall_process_internal, 1, MANY, 0 /*
+DEFUN ("call-process-internal", Fcall_process_internal, 1, MANY, 0, /*
 Call PROGRAM synchronously in a separate process.
 Program's input comes from file INFILE (nil means null device, `NLA0:').
 Insert output in BUFFER before point; t means current buffer;
@@ -408,10 +407,8 @@ Fourth arg DISPLAY non-nil means redisplay buffer as output is inserted.
 Remaining arguments are strings passed as command arguments to PROGRAM.
 This function waits for PROGRAM to terminate, unless BUFFER is 0;
 if you quit, the process is killed.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   /* This function can GC */
   Lisp_Object display, buffer, path;
@@ -762,7 +759,7 @@ child_sig (VMS_PROC_STUFF *vs)
 void
 syms_of_vmsproc (void)
 {
-  defsubr (&Scall_process_internal);
+  DEFSUBR (Fcall_process_internal);
 }
 
 void

@@ -292,22 +292,20 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
   
 
-DEFUN ("bufferp", Fbufferp, Sbufferp, 1, 1, 0 /*
+DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
 T if OBJECT is an editor buffer.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (BUFFERP (object))
     return Qt;
   return Qnil;
 }
 
-DEFUN ("buffer-live-p", Fbuffer_live_p, Sbuffer_live_p, 1, 1, 0 /*
+DEFUN ("buffer-live-p", Fbuffer_live_p, 1, 1, 0, /*
 T if OBJECT is an editor buffer that has not been deleted.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)))
     return Qt;
@@ -322,15 +320,14 @@ nsberror (Lisp_Object spec)
   signal_simple_error ("Invalid buffer argument", spec);
 }
 
-DEFUN ("buffer-list", Fbuffer_list, Sbuffer_list, 0, 1, 0 /*
+DEFUN ("buffer-list", Fbuffer_list, 0, 1, 0, /*
 Return a list of all existing live buffers.
 The order is specific to the selected frame; if the optional FRAME
 argument is provided, the ordering for that frame is returned instead.
 If the FRAME argument is t, then the global (non-frame) ordering is
 returned instead.
-*/ )
-  (frame)
-  Lisp_Object frame;
+*/
+       (frame))
 {
   Lisp_Object list;
   if (EQ (frame, Qt))
@@ -389,14 +386,13 @@ decode_buffer (Lisp_Object buffer, int allow_string)
   return XBUFFER (buffer);
 }
 
-DEFUN ("decode-buffer", Fdecode_buffer, Sdecode_buffer, 1, 1, 0 /*
+DEFUN ("decode-buffer", Fdecode_buffer, 1, 1, 0, /*
 Validate BUFFER or if BUFFER is nil, return the current buffer.
 If BUFFER is a valid buffer or a string representing a valid buffer,
 the corresponding buffer object will be returned.  Otherwise an error
 will be signaled.
-*/ )
-  (buffer)
-  Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
   XSETBUFFER (buffer, b);
@@ -426,13 +422,12 @@ assoc_ignore_text_properties (register Lisp_Object key, Lisp_Object list)
 
 #endif
 
-DEFUN ("get-buffer", Fget_buffer, Sget_buffer, 1, 1, 0 /*
+DEFUN ("get-buffer", Fget_buffer, 1, 1, 0, /*
 Return the buffer named NAME (a string).
 If there is no live buffer named NAME, return nil.
 NAME may also be a buffer; if so, the value is that buffer.
-*/ )
-  (name)
-     Lisp_Object name;
+*/
+       (name))
 {
 #ifdef I18N3
   /* #### Doc string should indicate that the buffer name will get
@@ -449,7 +444,7 @@ NAME may also be a buffer; if so, the value is that buffer.
 }
 
 
-DEFUN ("get-file-buffer", Fget_file_buffer, Sget_file_buffer, 1, 1, 0 /*
+DEFUN ("get-file-buffer", Fget_file_buffer, 1, 1, 0, /*
 Return the buffer visiting file FILENAME (a string).
 The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
 If there is no such live buffer, return nil.
@@ -462,9 +457,8 @@ done on each buffer's value of `buffer-file-truename' instead of
 `buffer-file-name'.  Otherwise, if `find-file-use-truenames' is non-nil,
 FILENAME will be converted to its truename and used for searching, but
 the search will still be done on `buffer-file-name'.
-*/ )
-  (filename)
-     Lisp_Object filename;
+*/
+       (filename))
 {
   /* This function can GC */
   REGISTER Lisp_Object tail, buf, tem;
@@ -617,15 +611,14 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   return buf;
 }
 
-DEFUN ("get-buffer-create", Fget_buffer_create, Sget_buffer_create, 1, 1, 0 /*
+DEFUN ("get-buffer-create", Fget_buffer_create, 1, 1, 0, /*
 Return the buffer named NAME, or create such a buffer and return it.
 A new buffer is created if there is no live buffer named NAME.
 If NAME starts with a space, the new buffer does not keep undo information.
 If NAME is a buffer instead of a string, then it is the value returned.
 The value is never nil.
-*/ )  
-  (name)
-     Lisp_Object name;
+*/
+       (name))
 {
   /* This function can GC */
   Lisp_Object buf;
@@ -654,18 +647,16 @@ The value is never nil.
   return finish_init_buffer (b, name);
 }
 
-DEFUN ("make-indirect-buffer",
-       Fmake_indirect_buffer, Smake_indirect_buffer, 2, 2,
-       "bMake indirect buffer (to buffer): \nBName of indirect buffer: " /*
+DEFUN ("make-indirect-buffer", Fmake_indirect_buffer, 2, 2,
+       "bMake indirect buffer (to buffer): \nBName of indirect buffer: ", /*
 Create and return an indirect buffer for buffer BASE, named NAME.
 BASE should be an existing buffer (or buffer name).
 NAME should be a string which is not the name of an existing buffer.
 If BASE is an indirect buffer itself, the base buffer for that buffer
  is made the base buffer for the newly created buffer. (Thus, there will
  never be indirect buffers whose base buffers are themselves indirect.)
-*/ )
-  (base_buffer, name)
-     Lisp_Object base_buffer, name;
+*/
+       (base_buffer, name))
 {
   error ("make-indirect-buffer not yet implemented, oops");
   return Qnil;
@@ -731,9 +722,7 @@ reset_buffer_local_variables (struct buffer *b, int first_time)
    and set-visited-file-name ought to be able to use this to really
    rename the buffer properly.  */
 
-DEFUN ("generate-new-buffer-name", Fgenerate_new_buffer_name,
-       Sgenerate_new_buffer_name,
-  1, 2, 0 /*
+DEFUN ("generate-new-buffer-name", Fgenerate_new_buffer_name, 1, 2, 0, /*
 Return a string that is the name of no existing buffer based on NAME.
 If there is no live buffer named NAME, then return NAME.
 Otherwise modify name by appending `<NUMBER>', incrementing NUMBER
@@ -741,9 +730,8 @@ until an unused name is found, and then return that name.
 Optional second argument IGNORE specifies a name that is okay to use
 \(if it is in the sequence to be tried)
 even if a buffer with that name exists.
-*/ )
- (name, ignore)
-     Lisp_Object name, ignore;
+*/
+       (name, ignore))
 {
   REGISTER Lisp_Object gentemp, tem;
   int count;
@@ -779,12 +767,11 @@ even if a buffer with that name exists.
 }
 
 
-DEFUN ("buffer-name", Fbuffer_name, Sbuffer_name, 0, 1, 0 /*
+DEFUN ("buffer-name", Fbuffer_name, 0, 1, 0, /*
 Return the name of BUFFER, as a string.
 With no argument or nil as argument, return the name of the current buffer.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   /* For compatibility, we allow a dead buffer here.
      Earlier versions of Emacs didn't provide buffer-live-p. */
@@ -794,12 +781,11 @@ With no argument or nil as argument, return the name of the current buffer.
   return XBUFFER (buffer)->name;
 }
 
-DEFUN ("buffer-file-name", Fbuffer_file_name, Sbuffer_file_name, 0, 1, 0 /*
+DEFUN ("buffer-file-name", Fbuffer_file_name, 0, 1, 0, /*
 Return name of file BUFFER is visiting, or nil if none.
 No argument or nil as argument means use the current buffer.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   /* For compatibility, we allow a dead buffer here.  Yuck! */
   if (NILP (buffer))
@@ -808,13 +794,11 @@ No argument or nil as argument means use the current buffer.
   return XBUFFER (buffer)->filename;
 }
 
-DEFUN ("buffer-base-buffer", Fbuffer_base_buffer, Sbuffer_base_buffer,
-       0, 1, 0 /*
+DEFUN ("buffer-base-buffer", Fbuffer_base_buffer, 0, 1, 0, /*
 Return the base buffer of indirect buffer BUFFER.
 If BUFFER is not indirect, return nil.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
   struct buffer *base = buf->base_buffer;
@@ -826,15 +810,12 @@ If BUFFER is not indirect, return nil.
   return base_buffer;
 }
 
-DEFUN ("buffer-indirect-children", Fbuffer_indirect_children,
-       Sbuffer_indirect_children,
-       0, 1, 0 /*
+DEFUN ("buffer-indirect-children", Fbuffer_indirect_children, 0, 1, 0, /*
 Return a list of all indirect buffers whose base buffer is BUFFER.
 If BUFFER is indirect, the return value will always be nil; see
 `make-indirect-buffer'.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
 
@@ -876,16 +857,14 @@ map_over_sharing_buffers (struct buffer *buf,
   return 0;
 }
 
-DEFUN ("buffer-local-variables", Fbuffer_local_variables,
-  Sbuffer_local_variables, 0, 1, 0 /*
+DEFUN ("buffer-local-variables", Fbuffer_local_variables, 0, 1, 0, /*
 Return an alist of variables that are buffer-local in BUFFER.
 Most elements look like (SYMBOL . VALUE), describing one variable.
 For a symbol that is locally unbound, just the symbol appears in the value.
 Note that storing new VALUEs in these elements doesn't change the variables.
 No argument or nil as argument means use current buffer as BUFFER.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
   Lisp_Object result = Qnil;
@@ -929,14 +908,11 @@ No argument or nil as argument means use current buffer as BUFFER.
   return (result);
 }
 
-DEFUN ("buffer-dedicated-frame", Fbuffer_dedicated_frame,
-       Sbuffer_dedicated_frame,
-       0, 1, 0 /*
+DEFUN ("buffer-dedicated-frame", Fbuffer_dedicated_frame, 0, 1, 0, /*
 Return the frame dedicated to this BUFFER, or nil if there is none.
 No argument or nil as argument means use current buffer as BUFFER.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
 
@@ -948,14 +924,11 @@ No argument or nil as argument means use current buffer as BUFFER.
   return buf->dedicated_frame;
 }
 
-DEFUN ("set-buffer-dedicated-frame", Fset_buffer_dedicated_frame,
-       Sset_buffer_dedicated_frame,
-       2, 2, 0 /*
+DEFUN ("set-buffer-dedicated-frame", Fset_buffer_dedicated_frame, 2, 2, 0, /*
 For this BUFFER, set the FRAME dedicated to it.
 FRAME must be a frame or nil.
-*/ )
-  (buffer, frame)
-     Lisp_Object buffer, frame;
+*/
+       (buffer, frame))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
 
@@ -967,27 +940,23 @@ FRAME must be a frame or nil.
 
 
 
-DEFUN ("buffer-modified-p", Fbuffer_modified_p, Sbuffer_modified_p,
-  0, 1, 0 /*
+DEFUN ("buffer-modified-p", Fbuffer_modified_p, 0, 1, 0, /*
 Return t if BUFFER was modified since its file was last read or saved.
 No argument or nil as argument means use current buffer as BUFFER.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
 
   return BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf) ? Qt : Qnil;
 }
 
-DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, Sset_buffer_modified_p,
-  1, 2, 0 /*
+DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, 1, 2, 0, /*
 Mark BUFFER as modified or unmodified according to FLAG.
 A non-nil FLAG means mark the buffer modified.  No argument or nil
 as BUFFER means use current buffer.
-*/ )
-  (flag, buffer)
-     Lisp_Object flag, buffer;
+*/
+       (flag, buffer))
 {
   /* This function can GC */
   Lisp_Object fn;
@@ -1050,23 +1019,21 @@ as BUFFER means use current buffer.
   return flag;
 }
 
-DEFUN ("buffer-modified-tick", Fbuffer_modified_tick, Sbuffer_modified_tick,
-  0, 1, 0 /*
+DEFUN ("buffer-modified-tick", Fbuffer_modified_tick, 0, 1, 0, /*
 Return BUFFER's tick counter, incremented for each change in text.
 Each buffer has a tick counter which is incremented each time the text in
 that buffer is changed.  It wraps around occasionally.
 No argument or nil as argument means use current buffer as BUFFER.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
 
   return make_int (BUF_MODIFF (buf));
 }
 
-DEFUN ("rename-buffer", Frename_buffer, Srename_buffer, 1, 2,
-       "sRename buffer (to new name): \nP" /*
+DEFUN ("rename-buffer", Frename_buffer, 1, 2,
+       "sRename buffer (to new name): \nP", /*
 Change current buffer's name to NEWNAME (a string).
 If second arg UNIQUE is nil or omitted, it is an error if a
 buffer named NEWNAME already exists.
@@ -1075,9 +1042,8 @@ If UNIQUE is non-nil, come up with a new name using
 Interactively, one can set UNIQUE with a prefix argument.
 Returns the name we actually gave the buffer.
 This does not change the name of the visited file (if any).
-*/ )
-  (newname, unique)
-     Lisp_Object newname, unique;
+*/
+       (newname, unique))
 {
   /* This function can GC */
   Lisp_Object tem, buf;
@@ -1128,7 +1094,7 @@ This does not change the name of the visited file (if any).
   return current_buffer->name;
 }
 
-DEFUN ("other-buffer", Fother_buffer, Sother_buffer, 0, 3, 0 /*
+DEFUN ("other-buffer", Fother_buffer, 0, 3, 0, /*
 Return most recently selected buffer other than BUFFER.
 Buffers not visible in windows are preferred to visible buffers,
 unless optional third argument VISIBLE-OK is non-nil.
@@ -1141,9 +1107,8 @@ is t, then the global ordering is returned.
 
 Note: In FSF Emacs, this function takes two arguments: BUFFER and
 VISIBLE-OK.
-*/ )
-  (buffer, frame, visible_ok)
-     Lisp_Object buffer, frame, visible_ok;
+*/
+       (buffer, frame, visible_ok))
 {
   /* This function can GC */
   Lisp_Object tail, buf, notsogood, tem;
@@ -1200,12 +1165,11 @@ VISIBLE-OK.
 
 /* XEmacs change: Make this argument required because this is a dangerous
    function. */
-DEFUN ("buffer-disable-undo", Fbuffer_disable_undo, Sbuffer_disable_undo, 1, 1, "" /*
+DEFUN ("buffer-disable-undo", Fbuffer_disable_undo, 1, 1, "", /*
 Make BUFFER stop keeping undo information.
 Any undo records it already has are discarded.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   /* Allowing nil is an RMSism */
   struct buffer *real_buf = decode_buffer (buffer, 1);
@@ -1213,13 +1177,11 @@ Any undo records it already has are discarded.
   return Qnil;
 }
 
-DEFUN ("buffer-enable-undo", Fbuffer_enable_undo, Sbuffer_enable_undo,
-       0, 1, "" /*
+DEFUN ("buffer-enable-undo", Fbuffer_enable_undo, 0, 1, "", /*
 Start keeping undo information for buffer BUFFER.
 No argument or nil as argument means do this for the current buffer.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   /* Allowing nil is an RMSism */
   struct buffer *real_buf = decode_buffer (buffer, 1);
@@ -1229,7 +1191,7 @@ No argument or nil as argument means do this for the current buffer.
   return Qnil;
 }
 
-DEFUN ("kill-buffer", Fkill_buffer, Skill_buffer, 1, 1, "bKill buffer: " /*
+DEFUN ("kill-buffer", Fkill_buffer, 1, 1, "bKill buffer: ", /*
 Kill the buffer BUFNAME.
 The argument may be a buffer or may be the name of a buffer.
 An argument of nil means kill the current buffer.
@@ -1243,9 +1205,8 @@ when the hook functions are called.
 
 Any processes that have this buffer as the `process-buffer' are killed
 with `delete-process'.
-*/ )
-  (bufname)
-     Lisp_Object bufname;
+*/
+       (bufname))
 {
   /* This function can GC */
   Lisp_Object buf;
@@ -1429,8 +1390,7 @@ with `delete-process'.
   return Qt;
 }
 
-DEFUN ("record-buffer", Frecord_buffer,
-       Srecord_buffer, 1, 1, 0 /*
+DEFUN ("record-buffer", Frecord_buffer, 1, 1, 0, /*
 Place buffer BUF first in the buffer order.
 Call this function when a buffer is selected \"visibly\".
 
@@ -1438,9 +1398,8 @@ This function changes the global buffer order and the per-frame buffer
 order for the selected frame.  The buffer order keeps track of recency
 of selection so that `other-buffer' will return a recently selected
 buffer.  See `other-buffer' for more information.
-*/ )
-  (buf)
-     Lisp_Object buf;
+*/
+       (buf))
 {
   REGISTER Lisp_Object lynk, prev;
   struct frame *f = selected_frame ();
@@ -1479,14 +1438,12 @@ buffer.  See `other-buffer' for more information.
   return Qnil;
 }
 
-DEFUN ("set-buffer-major-mode", Fset_buffer_major_mode,
-       Sset_buffer_major_mode, 1, 1, 0 /*
+DEFUN ("set-buffer-major-mode", Fset_buffer_major_mode, 1, 1, 0, /*
 Set an appropriate major mode for BUFFER, according to `default-major-mode'.
 Use this function before selecting the buffer, since it may need to inspect
 the current buffer's major mode.
-*/ )
-  (buf)
-     Lisp_Object buf;
+*/
+       (buf))
 {
   int speccount = specpdl_depth ();
   REGISTER Lisp_Object function, tem;
@@ -1520,10 +1477,10 @@ switch_to_buffer (Lisp_Object bufname, Lisp_Object norecord)
 }
 
 
-DEFUN ("current-buffer", Fcurrent_buffer, Scurrent_buffer, 0, 0, 0 /*
+DEFUN ("current-buffer", Fcurrent_buffer, 0, 0, 0, /*
 Return the current buffer as a Lisp object.
-*/ )
-  ()
+*/
+       ())
 {
   Lisp_Object buf;
   XSETBUFFER (buf, current_buffer);
@@ -1614,16 +1571,15 @@ set_buffer_internal (struct buffer *b)
     }
 }
 
-DEFUN ("set-buffer", Fset_buffer, Sset_buffer, 1, 1, 0 /*
+DEFUN ("set-buffer", Fset_buffer, 1, 1, 0, /*
 Make the buffer BUFNAME current for editing operations.
 BUFNAME may be a buffer or the name of an existing buffer.
 See also `save-excursion' when you want to make a buffer current temporarily.
 This function does not display the buffer, so its effect ends
 when the current command terminates.
 Use `switch-to-buffer' or `pop-to-buffer' to switch buffers permanently.
-*/ )
-  (bufname)
-     Lisp_Object bufname;
+*/
+       (bufname))
 {
   Lisp_Object buffer;
   buffer = get_buffer (bufname, 0);
@@ -1634,8 +1590,7 @@ Use `switch-to-buffer' or `pop-to-buffer' to switch buffers permanently.
 }
 
 
-DEFUN ("barf-if-buffer-read-only", Fbarf_if_buffer_read_only,
-				   Sbarf_if_buffer_read_only, 0, 3, 0 /*
+DEFUN ("barf-if-buffer-read-only", Fbarf_if_buffer_read_only, 0, 3, 0, /*
 Signal a `buffer-read-only' error if the buffer is read-only.
 Optional argument BUFFER defaults to the current buffer.
 
@@ -1649,9 +1604,8 @@ closed on both ends); otherwise, the range checked is (START, END)
 (open on both ends), except that extents that lie completely within
 [START, END] are not checked.  See `extent-in-region-p' for a fuller
 discussion.
-*/ )
-  (buffer, start, end)
-  Lisp_Object buffer, start, end;
+*/
+       (buffer, start, end))
 {
   struct buffer *b = decode_buffer (buffer, 0);
   Bufpos s, e;
@@ -1689,7 +1643,7 @@ bury_buffer_1 (Lisp_Object buffer, Lisp_Object before,
     *buffer_alist = lynk;
 }
 
-DEFUN ("bury-buffer", Fbury_buffer, Sbury_buffer, 0, 2, "" /*
+DEFUN ("bury-buffer", Fbury_buffer, 0, 2, "", /*
 Put BUFFER at the end of the list of all buffers.
 There it is the least likely candidate for `other-buffer' to return;
 thus, the least likely buffer for \\[switch-to-buffer] to select by default.
@@ -1698,9 +1652,8 @@ Also, if BUFFER is nil or omitted, remove the current buffer from the
 selected window if it is displayed there.
 If BEFORE is non-nil, it specifies a buffer before which BUFFER
 will be placed, instead of being placed at the end.
-*/ )
-  (buffer, before)
-     Lisp_Object buffer, before;
+*/
+       (buffer, before))
 {
   /* This function can GC */
   struct buffer *buf = decode_buffer (buffer, 1);
@@ -1726,14 +1679,13 @@ will be placed, instead of being placed at the end.
 }
 
 
-DEFUN ("erase-buffer", Ferase_buffer, Serase_buffer, 0, 1, "*" /*
+DEFUN ("erase-buffer", Ferase_buffer, 0, 1, "*", /*
 Delete the entire contents of the BUFFER.
 Any clipping restriction in effect (see `narrow-to-region') is removed,
 so the buffer is truly empty after this.
 BUFFER defaults to the current buffer if omitted.
-*/ )
-     (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   /* This function can GC */
   struct buffer *b = decode_buffer (buffer, 1);
@@ -1762,8 +1714,7 @@ BUFFER defaults to the current buffer if omitted.
 
 
 
-DEFUN ("kill-all-local-variables", Fkill_all_local_variables,
-       Skill_all_local_variables, 0, 0, 0 /*
+DEFUN ("kill-all-local-variables", Fkill_all_local_variables, 0, 0, 0, /*
 Switch to Fundamental mode by killing current buffer's local variables.
 Most local variable bindings are eliminated so that the default values
 become effective once more.  Also, the syntax table is set from
@@ -1780,8 +1731,8 @@ a non-nil `permanent-local' property are not eliminated by this function.
 
 The first thing this function does is run
 the normal hook `change-major-mode-hook'.
-*/ )
-  ()
+*/
+       ())
 {
   /* This function can GC */
   run_hook (Qchange_major_mode_hook);
@@ -1836,8 +1787,7 @@ compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
   stats->extents += compute_buffer_extent_usage (b, ovstats);
 }
 
-DEFUN ("buffer-memory-usage", Fbuffer_memory_usage, Sbuffer_memory_usage,
-  1, 1, 0 /*
+DEFUN ("buffer-memory-usage", Fbuffer_memory_usage, 1, 1, 0, /*
 Return stats about the memory usage of buffer BUFFER.
 The values returned are in the form an alist of usage types and byte
 counts.  The byte counts attempt to encompass all the memory used
@@ -1855,9 +1805,8 @@ by a nil.  Each slice represents a particular view of the memory, a
 particular way of partitioning it into groups.  Within a slice, there
 is no overlap between the groups of memory, and each slice collectively
 represents all the memory concerned.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer_stats stats;
   struct overhead_stats ovstats;
@@ -1914,41 +1863,41 @@ syms_of_buffer (void)
 
   defsymbol (&Qswitch_to_buffer, "switch-to-buffer");
 
-  defsubr (&Sbufferp);
-  defsubr (&Sbuffer_live_p);
-  defsubr (&Sbuffer_list);
-  defsubr (&Sdecode_buffer);
-  defsubr (&Sget_buffer);
-  defsubr (&Sget_file_buffer);
-  defsubr (&Sget_buffer_create);
-  defsubr (&Smake_indirect_buffer);
+  DEFSUBR (Fbufferp);
+  DEFSUBR (Fbuffer_live_p);
+  DEFSUBR (Fbuffer_list);
+  DEFSUBR (Fdecode_buffer);
+  DEFSUBR (Fget_buffer);
+  DEFSUBR (Fget_file_buffer);
+  DEFSUBR (Fget_buffer_create);
+  DEFSUBR (Fmake_indirect_buffer);
 
-  defsubr (&Sgenerate_new_buffer_name);
-  defsubr (&Sbuffer_name);
-  defsubr (&Sbuffer_file_name);
-  defsubr (&Sbuffer_base_buffer);
-  defsubr (&Sbuffer_indirect_children);
-  defsubr (&Sbuffer_local_variables);
-  defsubr (&Sbuffer_dedicated_frame);
-  defsubr (&Sset_buffer_dedicated_frame);
-  defsubr (&Sbuffer_modified_p);
-  defsubr (&Sset_buffer_modified_p);
-  defsubr (&Sbuffer_modified_tick);
-  defsubr (&Srename_buffer);
-  defsubr (&Sother_buffer);
-  defsubr (&Sbuffer_disable_undo);
-  defsubr (&Sbuffer_enable_undo);
-  defsubr (&Skill_buffer);
-  defsubr (&Serase_buffer);
-  defsubr (&Srecord_buffer);
-  defsubr (&Sset_buffer_major_mode);
-  defsubr (&Scurrent_buffer);
-  defsubr (&Sset_buffer);
-  defsubr (&Sbarf_if_buffer_read_only);
-  defsubr (&Sbury_buffer);
-  defsubr (&Skill_all_local_variables);
+  DEFSUBR (Fgenerate_new_buffer_name);
+  DEFSUBR (Fbuffer_name);
+  DEFSUBR (Fbuffer_file_name);
+  DEFSUBR (Fbuffer_base_buffer);
+  DEFSUBR (Fbuffer_indirect_children);
+  DEFSUBR (Fbuffer_local_variables);
+  DEFSUBR (Fbuffer_dedicated_frame);
+  DEFSUBR (Fset_buffer_dedicated_frame);
+  DEFSUBR (Fbuffer_modified_p);
+  DEFSUBR (Fset_buffer_modified_p);
+  DEFSUBR (Fbuffer_modified_tick);
+  DEFSUBR (Frename_buffer);
+  DEFSUBR (Fother_buffer);
+  DEFSUBR (Fbuffer_disable_undo);
+  DEFSUBR (Fbuffer_enable_undo);
+  DEFSUBR (Fkill_buffer);
+  DEFSUBR (Ferase_buffer);
+  DEFSUBR (Frecord_buffer);
+  DEFSUBR (Fset_buffer_major_mode);
+  DEFSUBR (Fcurrent_buffer);
+  DEFSUBR (Fset_buffer);
+  DEFSUBR (Fbarf_if_buffer_read_only);
+  DEFSUBR (Fbury_buffer);
+  DEFSUBR (Fkill_all_local_variables);
 #ifdef MEMORY_USAGE_STATS
-  defsubr (&Sbuffer_memory_usage);
+  DEFSUBR (Fbuffer_memory_usage);
 #endif
 
   deferror (&Qprotected_field, "protected-field",

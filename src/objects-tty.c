@@ -35,15 +35,13 @@ Lisp_Object Vtty_dynamic_color_fg;
 Lisp_Object Vtty_dynamic_color_bg;
 #endif
 
-DEFUN ("register-tty-color", Fregister_tty_color, Sregister_tty_color, 3, 3,
-       0 /*
+DEFUN ("register-tty-color", Fregister_tty_color, 3, 3, 0, /*
 Register COLOR as a recognized TTY color.
 COLOR should be a string.
 Strings FG-STRING and BG-STRING should specify the escape sequences to
  set the foreground and background to the given color, respectively.
-*/ )
-     (color, fg_string, bg_string)
-     Lisp_Object color, fg_string, bg_string;
+*/
+       (color, fg_string, bg_string))
 {
   CHECK_STRING (color);
   CHECK_STRING (fg_string);
@@ -57,12 +55,10 @@ Strings FG-STRING and BG-STRING should specify the escape sequences to
   return Qnil;
 }
 
-DEFUN ("unregister-tty-color", Funregister_tty_color, Sunregister_tty_color,
-       1, 1, 0 /*
+DEFUN ("unregister-tty-color", Funregister_tty_color, 1, 1, 0, /*
 Unregister COLOR as a recognized TTY color.
-*/ )
-  (color)
-     Lisp_Object color;
+*/
+       (color))
 {
   CHECK_STRING (color);
 
@@ -71,14 +67,13 @@ Unregister COLOR as a recognized TTY color.
   return Qnil;
 }
 
-DEFUN ("find-tty-color", Ffind_tty_color, Sfind_tty_color, 1, 1, 0 /*
+DEFUN ("find-tty-color", Ffind_tty_color, 1, 1, 0, /*
 Look up COLOR in the list of registered TTY colors.
 If it is found, return a list (FG-STRING BG-STRING) of the escape
 sequences used to set the foreground and background to the color, respectively.
 If it is not found, return nil.
-*/ )
-  (color)
-     Lisp_Object color;
+*/
+       (color))
 {
   Lisp_Object result;
 
@@ -91,10 +86,10 @@ If it is not found, return nil.
     return Qnil;
 }
 
-DEFUN ("tty-color-list", Ftty_color_list, Stty_color_list, 0, 0, 0 /*
+DEFUN ("tty-color-list", Ftty_color_list, 0, 0, 0, /*
 Return a list of the registered TTY colors.
-*/ )
-  ()
+*/
+       ())
 {
   Lisp_Object result = Qnil;
   Lisp_Object rest;
@@ -113,15 +108,13 @@ Return a list of the registered TTY colors.
    dynamic color settings apply to *all* text in the default color,
    not just the text output after the escape sequence has been given. */
 
-DEFUN ("set-tty-dynamic-color-specs", Fset_tty_dynamic_color_specs,
-       Sset_tty_dynamic_color_specs, 2, 2, 0 /*
+DEFUN ("set-tty-dynamic-color-specs", Fset_tty_dynamic_color_specs, 2, 2, 0, /*
 Set the dynamic color specifications for TTY's.
 FG and BG should be either nil or vaguely printf-like strings,
 where each occurrence of %s is replaced with the color name and each
 occurrence of %% is replaced with a single % character.
-*/ )
-  (fg, bg)
-  Lisp_Object fg, bg;
+*/
+       (fg, bg))
 {
   if (!NILP (fg))
     CHECK_STRING (fg);
@@ -134,12 +127,11 @@ occurrence of %% is replaced with a single % character.
   return Qnil;
 }
 
-DEFUN ("tty-dynamic-color-specs", Ftty_dynamic_color_specs,
-       Stty_dynamic_color_specs, 0, 0, 0 /*
+DEFUN ("tty-dynamic-color-specs", Ftty_dynamic_color_specs, 0, 0, 0, /*
 Return the dynamic color specifications for TTY's as a list of (FG BG).
 See `set-tty-dynamic-color-specs'.
-*/ )
-  ()
+*/
+       ())
 {
   return list2 (Vtty_dynamic_color_fg, Vtty_dynamic_color_bg);
 }
@@ -280,13 +272,13 @@ tty_list_fonts (Lisp_Object pattern, Lisp_Object device)
 void
 syms_of_objects_tty (void)
 {
-  defsubr (&Sregister_tty_color);
-  defsubr (&Sunregister_tty_color);
-  defsubr (&Sfind_tty_color);
-  defsubr (&Stty_color_list);
+  DEFSUBR (Fregister_tty_color);
+  DEFSUBR (Funregister_tty_color);
+  DEFSUBR (Ffind_tty_color);
+  DEFSUBR (Ftty_color_list);
 #if 0
-  defsubr (&Sset_tty_dynamic_color_specs);
-  defsubr (&Stty_dynamic_color_specs);
+  DEFSUBR (Fset_tty_dynamic_color_specs);
+  DEFSUBR (Ftty_dynamic_color_specs);
 #endif
 }
 

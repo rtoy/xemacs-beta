@@ -1,4 +1,180 @@
+Sat Feb  8 13:54:43 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.56 released.  Getting closer!
+
+* w3-forms.el (w3-form-summarize-radio-button): Finally, a decent
+  summarization of radio buttons
+  Fixed typo in specifying summarizer for hidden form fields.
+  (w3-form-keymap): Bind C-a and C-e by default.
+
+* w3-widget.el (widget-image-value-create): When using emacspeak, show
+  client side imagemaps as a table.  Need a more general solution for
+  this, but this makes us nicer than IE again. :)
+
+* Updated to widget 1.30
+
+Fri Feb  7 16:49:55 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-handle-string-content): Make sure faces text
+  properties are closed, so that things don't bleed over.
+  (w3-fixup-eol-faces): New function for Emacs 19 that removes face
+  information at newlines, so that underlining will not extend from the
+  end of a line to the window edges - very ugly.
+
+* w3-menu.el (w3-menu-initialize-w3-mode-menu-map): Don't support 'emacs
+  in w3-use-menus under Emacs in Windows 95/NT.
+
+* w3-display.el (w3-finalize-image-download): Deal with bad images better.
+  (w3-finish-drawing): Better protection of putting images in.
+
+* url-gw.el (url-open-stream): Don't auto-retry connections.  Don't throw
+  an error if you fail to connect to a site.  This is for image loadings
+  that fail for some reason or another.
+
+* css.el (css-expand-length): better handling of float values and 'ex'
+  unit type.
+
+* font.el (x-font-create-object): Unconditionally make case-fold-search
+  non-nil so that we don't lose big-time.  This was the cause of the very
+  weird font-spatial-to-canonical lossage under XEmacs with font sizes of
+  something like '+12pt'
+
+* w3.el (w3-view-this-url): Use widget-echo-help if we didn't find a URL
+  under point.
+
+Fri Feb  7 15:22:25 1997  Charles Levert <charles@comm.polymtl.ca>
+
+* w3-widget.el (widget-image-notify): Bad data being fed to w3-fetch if a
+  client-side imagemap had an alt attribute (but only if the <map> came
+  _after_ the use.
+
+Fri Feb  7 15:22:25 1997  William M. Perry  <wmperry@aventail.com>
+
+* font.el (font-spatial-to-canonical): protect against bad input to this
+  function.
+
+Fri Feb  7 15:19:36 1997  Toby Speight <tms@ansa.co.uk>
+
+* w3-parse.el (w3-parse-buffer): Parser didn't allow for the fact that
+  TAGC is optional on end-tags as well as on start-tags (i.e. "<b<i>
+  bold-italic</i</b>" is legal).
+
+Fri Feb  7 06:28:37 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-keymap): Now inherits from widget-keymap, with a
+  few exceptions.
+
+* url.el (url-uncompress): This function now no longer looks at the file
+  extension to determine a compression/encoding method.  This is so that
+  doing searches on `foo.tar.gz' will not bogusly cause the decompression
+  steps to run.  Ick!
+
+* url-file.el (url-insert-possibly-compressed-file): This function no
+  longer atempts to decompress the file after loading it in.  Instead, it
+  sets an appropriate content-transfer-encoding header based on the
+  filename, so that this will allow url-uncompress to work correctly on the
+  buffer.
+
+Thu Feb  6 06:24:26 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-print.el (w3-postscript-print-function): New variable to control what
+  function is used to generate postscript output.
+  (w3-print-this-url): Use it.
+
+* w3-display.el (w3-handle-string-content): Make all inserted text
+  read-only
+
+* w3-forms.el (w3-form-use-old-style): New variable to control whether to
+  use the old-style interaction with form fields instead of the 'type
+  directly into the buffer' method
+  (w3-form-determine-size): Use it.
+  (w3-form-create-integer): Use it.
+  (w3-form-create-float): Use it.
+  (w3-form-create-text): Use it.
+  (w3-form-create-password): Use it.
+  (w3-revert-form): Fixed error with 'reset' buttons on forms that had
+  hidden form fields.
+
+* w3-vars.el (w3-mode-map): Define [backtab] by default
+
+* w3-display.el (w3-size-of-tree): Removed some warnings
+(w3-display-table-dimensions): ditto
+
+* Updated to widget 1.26
+
+* default.css: Some default formatting changes for input fields.
+  Everything is underlined by default except submit/reset/image/button
+  fields, so that they are a little easier to spot.
+
+* w3-parse.el (w3-parse-buffer): Now slaps pseudo-elements into input
+  fields so that stylesheets can access them.
+
+Wed Feb  5 14:42:12 1997  William M. Perry  <wmperry@aventail.com>
+
+* Updated to widget 1.24
+
+* Happy birthday Jenny P.
+
+Tue Feb  4 08:21:03 1997  William M. Perry  <wmperry@aventail.com>
+
+* font.el (x-font-create-name): Better checking/optimizing of when to just
+  return the default font.
+
+* w3-forms.el: Make use of the new information, and pass it down to the
+  widget library appropriately.
+
+* w3-display.el (w3-display-node): Now passes in the entire list of active
+  faces to form creation functions.
+
+Mon Feb  3 07:26:18 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-emulate.el (w3-lynx-emulation-minor-mode-map): Lots of new
+  keybindings for lynx emulation minor mode.
+
+* Emacs-W3 3.0.55 released
+
+* w3-forms.el (w3-form-determine-size): Fixed _STUPID_ problem where
+  option lists would lose everything but the first option in them.  I'm a
+  dumbass.  Sort modifies its list parameter! ICK ICK ICK.
+
+* url.el (url-after-change-function): Show prettier status messages.
+  Sizes are converted to bytes, k, or M, depending on how big the file
+  is.
+
+* w3.txi: Lots of documentation changes - volunteers welcome.
+
+* Removed personal annotation support, since it wasn't shown with the new
+  display engine, it needs to be rethought, and nobody had complained in
+  the entire beta cycle.
+
+* w3.el (w3-history-find-url-internal): Redid the history mechanism.
+  Toolbar and menu entries are now grayed out appropriately.
+
+* url-http.el (url-create-mime-request): Fixed cookie support if not going
+  through a proxy gateway.
+
+Sun Feb  2 22:05:41 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-display-table): Fix for negative colwidth
+
+Fri Jan 31 14:28:54 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-fetch): Fixed targetted links (http://blah/#foo)
+
+Fri Jan 31 11:20:47 1997  Alf-Ivar Holm <alfh@ifi.uio.no>
+
+* w3.el (w3-mail-current-document): Fixed problem with calling
+  w3-parse-buffer with too many arguments when mailing LaTeX-ified
+  files.
+
+Fri Jan 31 11:19:37 1997  Cord Kielhorn <kielhorn@thphy.uni-duesseldorf.de>
+
+* css.el (css-expand-length): Fixed bad regexps for percentage and
+  character based lengths
+
 Thu Jan 30 20:27:06 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.52 released
 
 * w3-display.el (w3-handle-image): When doing table auto layout, don't
   start loading the images.

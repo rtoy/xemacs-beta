@@ -91,6 +91,12 @@ static void skip_white (FILE *);
 static void read_lisp_symbol (FILE *, char *);
 static int scan_lisp_file (CONST char *filename, CONST char *mode);
 
+#define C_IDENTIFIER_CHAR_P(c) \
+ (('A' <= c && c <= 'Z') || \
+  ('a' <= c && c <= 'z') || \
+  ('0' <= c && c <= '9') || \
+  (c == '_'))
+
 /* Name this program was invoked with.  */
 char *progname;
 
@@ -338,24 +344,31 @@ write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
       char c = *p;
       int ident_start = 0;
 
+      /* Add support for ANSI prototypes. Hop over
+	 "Lisp_Object" string (the only C type allowed in DEFUNs) */
+      static char lo[] = "Lisp_Object";
+      if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
+	  (strncmp (p, lo, sizeof (lo) - 1) == 0) &&
+	  isspace(*(p + sizeof (lo) - 1)))
+	{
+	  p += (sizeof (lo) - 1);
+	  while (isspace (*p))
+	    p++;
+	  c = *p;
+	}
+      
       /* Notice when we start printing a new identifier.  */
-      if ((('A' <= c && c <= 'Z')
-	   || ('a' <= c && c <= 'z')
-	   || ('0' <= c && c <= '9')
-	   || c == '_')
-	  != in_ident)
+      if (C_IDENTIFIER_CHAR_P (c) != in_ident)
 	{
 	  if (!in_ident)
 	    {
 	      in_ident = 1;
 	      ident_start = 1;
-
 #if 0
 	      /* XEmacs - This goes along with the change above. */
 	      if (need_space)
 		putc (' ', out);
-#endif 
-
+#endif
 	      if (minargs == 0 && maxargs > 0)
 		fprintf (out, "&optional ");
 	      just_spaced = 1;
@@ -377,10 +390,7 @@ write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
 	 `defalt'; unmangle that here.  */
       if (ident_start
 	  && strncmp (p, "defalt", 6) == 0
-	  && ! (('A' <= p[6] && p[6] <= 'Z')
-		|| ('a' <= p[6] && p[6] <= 'z')
-		|| ('0' <= p[6] && p[6] <= '9')
-		|| p[6] == '_'))
+	  && ! C_IDENTIFIER_CHAR_P (p[6]))
 	{
 	  fprintf (out, "DEFAULT");
 	  p += 5;
@@ -496,8 +506,9 @@ scan_c_file (CONST char *filename, CONST char *mode)
 	  if (c != 'F')
 	    continue;
 	  c = getc (infile);
-	  defunflag = c == 'U';
+	  defunflag = (c == 'U');
 	  defvarflag = 0;
+	  c = getc (infile);
 	}
       else continue;
 
@@ -514,7 +525,7 @@ scan_c_file (CONST char *filename, CONST char *mode)
       c = read_c_string (infile, -1, 0);
 
       if (defunflag)
-	commas = 5;
+	commas = 4;
       else if (defvarperbufferflag)
 	commas = 2;
       else if (defvarflag)
@@ -531,7 +542,8 @@ scan_c_file (CONST char *filename, CONST char *mode)
 		{
 		  do
 		    c = getc (infile);
-		  while (c == ' ' || c == '\n' || c == '\t');
+		  while (c == ' ' || c == '\n' || c == '\t')
+		    ;
 		  if (c < 0)
 		    goto eof;
 		  ungetc (c, infile);
@@ -585,12 +597,14 @@ scan_c_file (CONST char *filename, CONST char *mode)
 	  if (defunflag && maxargs != -1)
 	    {
 	      char argbuf[1024], *p = argbuf;
+#if 0 /* For old DEFUN's only */
 	      while (c != ')')
 		{
 		  if (c < 0)
 		    goto eof;
 		  c = getc (infile);
 		}
+#endif
 	      /* Skip into arguments.  */
 	      while (c != '(')
 		{
@@ -813,8 +827,17 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 	      /* Skip until the first newline; remember the two previous chars. */
 	      while (c != '\n' && c >= 0)
 		{
+		  /* ### Kludge -- Ignore any ESC x x ISO2022 sequences */
+		  if (c == 27)
+		    {
+		      getc (infile);
+		      getc (infile);
+		      goto nextchar;
+		    }
+		  
 		  c2 = c1;
 		  c1 = c;
+		nextchar:
 		  c = getc (infile);
 		}
 	  
@@ -933,7 +956,7 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 	    {
 	      /* If the next three characters aren't `dquote bslash newline'
 		 then we're not reading a docstring.  */
-	      if ((c = getc (infile)) != '"' ||
+	      if ((c = getc (infile)) != '"'  ||
 		  (c = getc (infile)) != '\\' ||
 		  (c = getc (infile)) != '\n')
 		{
@@ -946,7 +969,7 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 	    }
 	}
 
-#ifdef DEBUG
+#if 0 /* causes crash */
       else if (! strcmp (buffer, "if") ||
 	       ! strcmp (buffer, "byte-code"))
 	;

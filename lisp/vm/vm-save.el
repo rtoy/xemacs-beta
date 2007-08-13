@@ -142,7 +142,7 @@ The saved messages are flagged as `filed'."
       (intern (buffer-name) vm-buffers-needing-display-update)
       (vm-update-summary-and-mode-line))
     (if (zerop archived)
-	(message "No messages archived")
+	(message "No messages were archived")
       (message "%d message%s archived"
 	       archived (if (= 1 archived) "" "s")))))
 
@@ -486,7 +486,7 @@ Output, if any, is displayed.  The message is not altered."
 	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t))))
 	  (call-process-region (point-min) (point-max)
 			       (or shell-file-name "sh")
-			       nil buffer nil "-c" command)))
+			       nil buffer nil shell-command-switch command)))
       (setq mlist (cdr mlist)))
      (set-buffer buffer)
      (if (not (zerop (buffer-size)))

@@ -405,13 +405,12 @@ unlock_all_files (void)
 }
 
 
-DEFUN ("lock-buffer", Flock_buffer, Slock_buffer, 0, 1, 0 /*
+DEFUN ("lock-buffer", Flock_buffer, 0, 1, 0, /*
 Lock FILE, if current buffer is modified.
 FILE defaults to current buffer's visited file,
 or else nothing is done if current buffer isn't visiting a file.
-*/ )
-  (fn)
-     Lisp_Object fn;
+*/
+       (fn))
 {
   /* This function can GC */
   if (NILP (fn))
@@ -423,11 +422,11 @@ or else nothing is done if current buffer isn't visiting a file.
   return Qnil;    
 }
 
-DEFUN ("unlock-buffer", Funlock_buffer, Sunlock_buffer, 0, 0, 0 /*
+DEFUN ("unlock-buffer", Funlock_buffer, 0, 0, 0, /*
 Unlock the file visited in the current buffer,
 if it should normally be locked.
-*/ )
-  ()
+*/
+       ())
 {
   if (BUF_SAVE_MODIFF (current_buffer) < BUF_MODIFF (current_buffer)
       && STRINGP (current_buffer->file_truename))
@@ -446,12 +445,11 @@ unlock_buffer (struct buffer *buffer)
     unlock_file (buffer->file_truename);
 }
 
-DEFUN ("file-locked-p", Ffile_locked_p, Sfile_locked_p, 0, 1, 0 /*
+DEFUN ("file-locked-p", Ffile_locked_p, 0, 1, 0, /*
 Return nil if the FILENAME is not locked,
 t if it is locked by you, else a string of the name of the locker.
-*/ )
-  (fn)
-  Lisp_Object fn;
+*/
+       (fn))
 {
   /* This function can GC */
   REGISTER char *lfname;
@@ -478,9 +476,9 @@ void
 syms_of_filelock (void)
 {
   /* This function can GC */
-  defsubr (&Sunlock_buffer);
-  defsubr (&Slock_buffer);
-  defsubr (&Sfile_locked_p);
+  DEFSUBR (Funlock_buffer);
+  DEFSUBR (Flock_buffer);
+  DEFSUBR (Ffile_locked_p);
 
   defsymbol (&Qask_user_about_supersession_threat,
              "ask-user-about-supersession-threat");

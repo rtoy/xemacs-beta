@@ -445,7 +445,6 @@ Lisp_Object Qread_only;
 /* Qhighlight defined in general.c */
 Lisp_Object Qunique;
 Lisp_Object Qduplicable;
-Lisp_Object Qreplicating;
 Lisp_Object Qdetachable;
 Lisp_Object Qpriority;
 Lisp_Object Qmouse_face;
@@ -2959,12 +2958,11 @@ print_extent_1 (char *buf, Lisp_Object extent_obj)
   if (!NILP (extent_read_only (anc))) *bp++ = '%';
   if (!NILP (extent_mouse_face (anc))) *bp++ = 'H';
   if (extent_unique_p (anc)) *bp++ = 'U';
-  else if (extent_replicating_p (anc)) *bp++ = 'R';
   else if (extent_duplicable_p (anc)) *bp++ = 'D';
   if (!NILP (extent_invisible (anc))) *bp++ = 'I';
 
   if (!NILP (extent_read_only (anc)) || !NILP (extent_mouse_face (anc)) ||
-      extent_unique_p (anc) || extent_replicating_p (anc) ||
+      extent_unique_p (anc) ||
       extent_duplicable_p (anc) || !NILP (extent_invisible (anc)))
     *bp++ = ' ';
 
@@ -3222,80 +3220,71 @@ extent_endpoint_external (Lisp_Object extent_obj, int endp)
     return make_int (extent_endpoint_bufpos (extent, endp));
 }
 
-DEFUN ("extentp", Fextentp, Sextentp, 1, 1, 0 /*
+DEFUN ("extentp", Fextentp, 1, 1, 0, /*
 T if OBJECT is an extent.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (EXTENTP (object))
     return Qt;
   return Qnil;
 }
  
-DEFUN ("extent-live-p", Fextent_live_p, Sextent_live_p, 1, 1, 0 /*
+DEFUN ("extent-live-p", Fextent_live_p, 1, 1, 0, /*
 T if OBJECT is an extent and the extent has not been destroyed.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (EXTENTP (object) && EXTENT_LIVE_P (XEXTENT (object)))
     return Qt;
   return Qnil;
 }
 
-DEFUN ("extent-detached-p", Fextent_detached_p, Sextent_detached_p, 1, 1, 0 /*
+DEFUN ("extent-detached-p", Fextent_detached_p, 1, 1, 0, /*
 T if EXTENT is detached.
-*/ )
-  (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   if (extent_detached_p (decode_extent (extent, 0)))
     return Qt;
   return Qnil;
 }
 
-DEFUN ("extent-object", Fextent_object, Sextent_object, 1, 1, 0 /*
+DEFUN ("extent-object", Fextent_object, 1, 1, 0, /*
 Return object (buffer or string) EXTENT refers to.
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   return extent_object (decode_extent (extent, 0));
 }
 
-DEFUN ("extent-start-position", Fextent_start_position, 
-       Sextent_start_position, 1, 1, 0 /*
+DEFUN ("extent-start-position", Fextent_start_position, 1, 1, 0, /*
 Return start position of EXTENT, or nil if EXTENT is detached.
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   return extent_endpoint_external (extent, 0);
 }
 
-DEFUN ("extent-end-position", Fextent_end_position, 
-       Sextent_end_position, 1, 1, 0 /*
+DEFUN ("extent-end-position", Fextent_end_position, 1, 1, 0, /*
 Return end position of EXTENT, or nil if EXTENT is detached.
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   return extent_endpoint_external (extent, 1);
 }
 
-DEFUN ("extent-length", Fextent_length, Sextent_length, 1, 1, 0 /*
+DEFUN ("extent-length", Fextent_length, 1, 1, 0, /*
 Return length of EXTENT in characters.
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   EXTENT e = decode_extent (extent, DE_MUST_BE_ATTACHED);
   return make_int (extent_endpoint_bufpos (e, 1)
 		   - extent_endpoint_bufpos (e, 0));
 }
 
-DEFUN ("next-extent", Fnext_extent, Snext_extent, 1, 1, 0 /*
+DEFUN ("next-extent", Fnext_extent, 1, 1, 0, /*
 Find next extent after EXTENT.
 If EXTENT is a buffer return the first extent in the buffer; likewise
  for strings.
@@ -3308,9 +3297,8 @@ If you want to perform an operation on a series of extents, use
  extents in a buffer.
 Note: The display order is not necessarily the order that `map-extents'
  processes extents in!
-*/ )
-  (extent)
-   Lisp_Object extent;
+*/
+       (extent))
 {
   Lisp_Object val;
   EXTENT next;
@@ -3326,14 +3314,13 @@ Note: The display order is not necessarily the order that `map-extents'
   return (val);
 }
 
-DEFUN ("previous-extent", Fprevious_extent, Sprevious_extent, 1, 1, 0 /*
+DEFUN ("previous-extent", Fprevious_extent, 1, 1, 0, /*
 Find last extent before EXTENT.
 If EXTENT is a buffer return the last extent in the buffer; likewise
  for strings.
 This function is analogous to `next-extent'.
-*/ )
-  (extent)
-   Lisp_Object extent;
+*/
+       (extent))
 {
   Lisp_Object val;
   EXTENT prev;
@@ -3351,13 +3338,12 @@ This function is analogous to `next-extent'.
 
 #ifdef DEBUG_XEMACS
 
-DEFUN ("next-e-extent", Fnext_e_extent, Snext_e_extent, 1, 1, 0 /*
+DEFUN ("next-e-extent", Fnext_e_extent, 1, 1, 0, /*
 Find next extent after EXTENT using the \"e\" order.
 If EXTENT is a buffer return the first extent in the buffer; likewise
  for strings.
-*/ )
-  (extent)
-   Lisp_Object extent;
+*/
+       (extent))
 {
   Lisp_Object val;
   EXTENT next;
@@ -3373,14 +3359,13 @@ If EXTENT is a buffer return the first extent in the buffer; likewise
   return (val);
 }
 
-DEFUN ("previous-e-extent", Fprevious_e_extent, Sprevious_e_extent, 1, 1, 0 /*
+DEFUN ("previous-e-extent", Fprevious_e_extent, 1, 1, 0, /*
 Find last extent before EXTENT using the \"e\" order.
 If EXTENT is a buffer return the last extent in the buffer; likewise
  for strings.
 This function is analogous to `next-e-extent'.
-*/ )
-  (extent)
-   Lisp_Object extent;
+*/
+       (extent))
 {
   Lisp_Object val;
   EXTENT prev;
@@ -3398,15 +3383,13 @@ This function is analogous to `next-e-extent'.
 
 #endif
 
-DEFUN ("next-extent-change", Fnext_extent_change, Snext_extent_change,
-       1, 2, 0 /*
+DEFUN ("next-extent-change", Fnext_extent_change, 1, 2, 0, /*
 Return the next position after POS where an extent begins or ends.
 If POS is at the end of the buffer or string, POS will be returned;
  otherwise a position greater than POS will always be returned.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (pos, object)
-     Lisp_Object pos, object;
+*/
+       (pos, object))
 {
   Lisp_Object obj = decode_buffer_or_string (object);
   Bytind bpos;
@@ -3416,15 +3399,13 @@ If BUFFER is nil, the current buffer is assumed.
   return make_int (buffer_or_string_bytind_to_bufpos (obj, bpos));
 }
 
-DEFUN ("previous-extent-change", Fprevious_extent_change,
-       Sprevious_extent_change, 1, 2, 0 /*
+DEFUN ("previous-extent-change", Fprevious_extent_change, 1, 2, 0, /*
 Return the last position before POS where an extent begins or ends.
 If POS is at the beginning of the buffer or string, POS will be returned;
  otherwise a position less than POS will always be returned.
 If OBJECT is nil, the current buffer is assumed.
-*/ )
-  (pos, object)
-     Lisp_Object pos, object;
+*/
+       (pos, object))
 {
   Lisp_Object obj = decode_buffer_or_string (object);
   Bytind bpos;
@@ -3439,29 +3420,27 @@ If OBJECT is nil, the current buffer is assumed.
 /*		    	parent and children stuff			*/
 /************************************************************************/
 
-DEFUN ("extent-parent", Fextent_parent, Sextent_parent, 1, 1, 0 /*
+DEFUN ("extent-parent", Fextent_parent, 1, 1, 0, /*
 Return the parent (if any) of EXTENT.
 If an extent has a parent, it derives all its properties from that extent
 and has no properties of its own. (The only \"properties\" that the
 extent keeps are the buffer/string it refers to and the start and end
 points.) It is possible for an extent's parent to itself have a parent.
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 /* do I win the prize for the strangest split infinitive? */
 {
   EXTENT e = decode_extent (extent, 0);
   return extent_parent (e);
 }
 
-DEFUN ("extent-children", Fextent_children, Sextent_children, 1, 1, 0 /*
+DEFUN ("extent-children", Fextent_children, 1, 1, 0, /*
 Return a list of the children (if any) of EXTENT.
 The children of an extent are all those extents whose parent is that extent.
 This function does not recursively trace children of children.
 \(To do that, use `extent-descendants'.)
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   EXTENT e = decode_extent (extent, 0);
   Lisp_Object children = extent_children (e);
@@ -3501,12 +3480,11 @@ add_extent_to_children_list (EXTENT e, Lisp_Object child)
   XWEAK_LIST_LIST (children) = Fcons (child, XWEAK_LIST_LIST (children));
 }
 
-DEFUN ("set-extent-parent", Fset_extent_parent, Sset_extent_parent, 2, 2, 0 /*
+DEFUN ("set-extent-parent", Fset_extent_parent, 2, 2, 0, /*
 Set the parent of EXTENT to PARENT (may be nil).
 See `extent-parent'.
-*/ )
-     (extent, parent)
-     Lisp_Object extent, parent;
+*/
+       (extent, parent))
 {
   EXTENT e = decode_extent (extent, 0);
   Lisp_Object cur_parent = extent_parent (e);
@@ -3703,7 +3681,7 @@ destroy_extent (EXTENT extent)
   extent_object (extent) = Qt;
 }
 
-DEFUN ("make-extent", Fmake_extent, Smake_extent, 2, 3, 0 /*
+DEFUN ("make-extent", Fmake_extent, 2, 3, 0, /*
 Make an extent for the range [FROM, TO) in BUFFER-OR-STRING.
 BUFFER-OR-STRING defaults to the current buffer.  Insertions at point
 TO will be outside of the extent; insertions at FROM will be inside the
@@ -3712,9 +3690,8 @@ behave.) You can change the behavior of insertions at the endpoints
 using `set-extent-property'.  The extent is initially detached if both
 FROM and TO are nil, and in this case BUFFER-OR-STRING defaults to nil,
 meaning the extent is in no buffer and no string.
-*/ )
-  (from, to, buffer_or_string)
-   Lisp_Object from, to, buffer_or_string;
+*/
+       (from, to, buffer_or_string))
 {
   Lisp_Object extent_obj = Qnil;
   Lisp_Object obj;
@@ -3737,12 +3714,11 @@ meaning the extent is in no buffer and no string.
   return extent_obj;
 }
 
-DEFUN ("copy-extent", Fcopy_extent, Scopy_extent, 1, 2, 0 /*
+DEFUN ("copy-extent", Fcopy_extent, 1, 2, 0, /*
 Make a copy of EXTENT.  It is initially detached.
 Optional argument BUFFER-OR-STRING defaults to EXTENT's buffer or string.
-*/ )
-  (extent, buffer_or_string)
-   Lisp_Object extent, buffer_or_string;
+*/
+       (extent, buffer_or_string))
 {
   EXTENT ext = decode_extent (extent, 0);
 
@@ -3755,13 +3731,12 @@ Optional argument BUFFER-OR-STRING defaults to EXTENT's buffer or string.
   return extent;
 }
 
-DEFUN ("delete-extent", Fdelete_extent, Sdelete_extent, 1, 1, 0 /*
+DEFUN ("delete-extent", Fdelete_extent, 1, 1, 0, /*
 Remove EXTENT from its buffer and destroy it.
 This does not modify the buffer's text, only its display properties.
 The extent cannot be used thereafter.
-*/ )
-  (extent)
-   Lisp_Object extent;
+*/
+       (extent))
 {
   EXTENT ext;
 
@@ -3776,7 +3751,7 @@ The extent cannot be used thereafter.
   return Qnil;
 }
 
-DEFUN ("detach-extent", Fdetach_extent, Sdetach_extent, 1, 1, 0 /*
+DEFUN ("detach-extent", Fdetach_extent, 1, 1, 0, /*
 Remove EXTENT from its buffer in such a way that it can be re-inserted.
 An extent is also detached when all of its characters are all killed by a
 deletion, unless its `detachable' property has been unset.
@@ -3788,9 +3763,8 @@ face changes, and attachment via `make-extent' and `set-extent-endpoints'
 are not recorded.  This means that extent changes which are to be undo-able
 must be performed by character editing, or by insertion and detachment of
 duplicable extents.
-*/ )
-  (extent)
-   Lisp_Object extent;
+*/
+       (extent))
 {
   EXTENT ext = decode_extent (extent, 0);
 
@@ -3803,17 +3777,15 @@ duplicable extents.
   return extent;
 }
 
-DEFUN ("set-extent-endpoints", Fset_extent_endpoints, Sset_extent_endpoints,
-       3, 4, 0 /*
+DEFUN ("set-extent-endpoints", Fset_extent_endpoints, 3, 4, 0, /*
 Set the endpoints of EXTENT to START, END.
 If START and END are null, call detach-extent on EXTENT.
 BUFFER-OR-STRING specifies the new buffer or string that the extent should
 be in, and defaults to EXTENT's buffer or string. (If nil, and EXTENT
 is in no buffer and no string, it defaults to the current buffer.)
 See documentation on `detach-extent' for a discussion of undo recording.
-*/ )
-  (extent, start, end, buffer_or_string)
-   Lisp_Object extent, start, end, buffer_or_string;
+*/
+       (extent, start, end, buffer_or_string))
 {
   EXTENT ext;
   Bytind s, e;
@@ -3900,14 +3872,12 @@ decode_map_extents_flags (Lisp_Object flags)
   return retval;
 }
 
-DEFUN ("extent-in-region-p", Fextent_in_region_p, Sextent_in_region_p,
-       1, 4, 0 /*
+DEFUN ("extent-in-region-p", Fextent_in_region_p, 1, 4, 0, /*
 Return whether EXTENT overlaps a specified region.
 This is equivalent to whether `map-extents' would visit EXTENT when called
 with these args.
-*/ )
-     (extent, from, to, flags)
-     Lisp_Object extent, from, to, flags;
+*/
+       (extent, from, to, flags))
 {
   EXTENT ext;
   Lisp_Object obj;
@@ -3961,7 +3931,7 @@ slow_map_extents_function (EXTENT extent, void *arg)
     return 1;
 }
 
-DEFUN ("map-extents", Fmap_extents, Smap_extents, 1, 8, 0 /*
+DEFUN ("map-extents", Fmap_extents, 1, 8, 0, /*
 Map FUNCTION over the extents which overlap a region in OBJECT.
 OBJECT is normally a buffer or string but could be an extent (see below).
 The region is normally bounded by [FROM, TO) (i.e. the beginning of the
@@ -4033,9 +4003,8 @@ At most one of `start-in-region', `end-in-region',
 If optional arg PROPERTY is non-nil, only extents with that property set
 on them will be visited.  If optional arg VALUE is non-nil, only extents
 whose value for that property is `eq' to VALUE will be visited.
-*/ )
-  (function, object, from, to, maparg, flags, property, value)
-  Lisp_Object function, object, from, to, maparg, flags, property, value;
+*/
+       (function, object, from, to, maparg, flags, property, value))
 {
   /* This function can GC */
   struct slow_map_extents_arg closure;
@@ -4166,8 +4135,7 @@ slow_map_extent_children_function (EXTENT extent, void *arg)
     return 1;
 }
 
-DEFUN ("map-extent-children", Fmap_extent_children, Smap_extent_children,
-       1, 8, 0 /*
+DEFUN ("map-extent-children", Fmap_extent_children, 1, 8, 0, /*
 Map FUNCTION over the extents in the region from FROM to TO.
 FUNCTION is called with arguments (extent, MAPARG).  See `map-extents'
 for a full discussion of the arguments FROM, TO, and FLAGS.
@@ -4180,9 +4148,8 @@ inside E but end before E's end.
 Thus, this function may be used to walk a tree of extents in a buffer:
 	(defun walk-extents (buffer &optional ignore)
 	 (map-extent-children 'walk-extents buffer))
-*/ )
-     (function, object, from, to, maparg, flags, property, value)
-     Lisp_Object function, object, from, to, maparg, flags, property, value;
+*/
+       (function, object, from, to, maparg, flags, property, value))
 {
   /* This function can GC */
   struct slow_map_extent_children_arg closure;
@@ -4368,7 +4335,7 @@ extent_at_bytind (Bytind position, Lisp_Object object, Lisp_Object property,
   return extent_obj;
 }
 
-DEFUN ("extent-at", Fextent_at, Sextent_at, 1, 5, 0 /*
+DEFUN ("extent-at", Fextent_at, 1, 5, 0, /*
 Find \"smallest\" extent at POS in OBJECT having PROPERTY set.
 Normally, an extent is \"at\" POS if it overlaps the region (POS, POS+1);
  i.e. if it covers the character after POS. (However, see the definition
@@ -4395,9 +4362,8 @@ nil or `after'		An extent is at POS if it covers the character
 Note that in all cases, the start-openness and end-openness of the extents
 considered is ignored.  If you want to pay attention to those properties,
 you should use `map-extents', which gives you more control.
-*/ )
-     (pos, object, property, before, at_flag)
-     Lisp_Object pos, object, property, before, at_flag;
+*/
+       (pos, object, property, before, at_flag))
 {
   Bytind position;
   EXTENT before_extent;
@@ -4776,13 +4742,12 @@ canonicalize_extent_property (Lisp_Object prop, Lisp_Object value)
   return value;
 }
 
-DEFUN ("extent-face", Fextent_face, Sextent_face, 1, 1, 0 /*
+DEFUN ("extent-face", Fextent_face, 1, 1, 0, /*
 Return the name of the face in which EXTENT is displayed, or nil
 if the extent's face is unspecified.  This might also return a list
 of face names.
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   Lisp_Object face;
 
@@ -4792,14 +4757,13 @@ of face names.
   return external_of_internal_memoized_face (face);
 }
 
-DEFUN ("set-extent-face", Fset_extent_face, Sset_extent_face, 2, 2, 0 /*
+DEFUN ("set-extent-face", Fset_extent_face, 2, 2, 0, /*
 Make the given EXTENT have the graphic attributes specified by FACE.
 FACE can also be a list of faces, and all faces listed will apply,
 with faces earlier in the list taking priority over those later in the
 list.
-*/ )
-     (extent, face)
-     Lisp_Object extent, face;
+*/
+       (extent, face))
 {
   EXTENT e;
   Lisp_Object orig_face = face;
@@ -4818,13 +4782,12 @@ list.
 }
 
 
-DEFUN ("extent-mouse-face", Fextent_mouse_face, Sextent_mouse_face, 1, 1, 0 /*
+DEFUN ("extent-mouse-face", Fextent_mouse_face, 1, 1, 0, /*
 Return the face used to highlight EXTENT when the mouse passes over it.
 The return value will be a face name, a list of face names, or nil
 if the extent's mouse face is unspecified.
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   Lisp_Object face;
 
@@ -4834,15 +4797,13 @@ if the extent's mouse face is unspecified.
   return external_of_internal_memoized_face (face);
 }
 
-DEFUN ("set-extent-mouse-face", Fset_extent_mouse_face, Sset_extent_mouse_face,
-       2, 2, 0 /*
+DEFUN ("set-extent-mouse-face", Fset_extent_mouse_face, 2, 2, 0, /*
 Set the face used to highlight EXTENT when the mouse passes over it.
 FACE can also be a list of faces, and all faces listed will apply,
 with faces earlier in the list taking priority over those later in the
 list.
-*/ )
-     (extent, face)
-     Lisp_Object extent, face;
+*/
+       (extent, face))
 {
   EXTENT e;
   Lisp_Object orig_face = face;
@@ -4934,56 +4895,47 @@ set_extent_glyph_1 (Lisp_Object extent_obj, Lisp_Object glyph, int endp,
   return glyph;
 }
 
-DEFUN ("set-extent-begin-glyph", Fset_extent_begin_glyph, 
-       Sset_extent_begin_glyph, 2, 3, 0 /*
+DEFUN ("set-extent-begin-glyph", Fset_extent_begin_glyph, 2, 3, 0, /*
 Display a bitmap, subwindow or string at the beginning of EXTENT.
 BEGIN-GLYPH must be a glyph object.  The layout policy defaults to `text'.
-*/ )
-  (extent, begin_glyph, layout)
-   Lisp_Object extent, begin_glyph, layout;
+*/
+       (extent, begin_glyph, layout))
 {
   return set_extent_glyph_1 (extent, begin_glyph, 0, layout);
 }
 
-DEFUN ("set-extent-end-glyph", Fset_extent_end_glyph, 
-       Sset_extent_end_glyph, 2, 3, 0 /*
+DEFUN ("set-extent-end-glyph", Fset_extent_end_glyph, 2, 3, 0, /*
 Display a bitmap, subwindow or string at the end of the EXTENT.
 END-GLYPH must be a glyph object.  The layout policy defaults to `text'.
-*/ )
-  (extent, end_glyph, layout)
-   Lisp_Object extent, end_glyph, layout;
+*/
+       (extent, end_glyph, layout))
 {
   return set_extent_glyph_1 (extent, end_glyph, 1, layout);
 }
 
-DEFUN ("extent-begin-glyph", Fextent_begin_glyph, Sextent_begin_glyph,
-       1, 1, 0 /*
+DEFUN ("extent-begin-glyph", Fextent_begin_glyph, 1, 1, 0, /*
 Return the glyph object displayed at the beginning of EXTENT.
 If there is none, nil is returned.
-*/ )
-     (extent_obj)
-     Lisp_Object extent_obj;
+*/
+       (extent_obj))
 {
   return extent_begin_glyph (decode_extent (extent_obj, 0));
 }
 
-DEFUN ("extent-end-glyph", Fextent_end_glyph, Sextent_end_glyph, 1, 1, 0 /*
+DEFUN ("extent-end-glyph", Fextent_end_glyph, 1, 1, 0, /*
 Return the glyph object displayed at the end of EXTENT.
 If there is none, nil is returned.
-*/ )
-     (extent_obj)
-     Lisp_Object extent_obj;
+*/
+       (extent_obj))
 {
   return extent_end_glyph (decode_extent (extent_obj, 0));
 }
 
-DEFUN ("set-extent-begin-glyph-layout", Fset_extent_begin_glyph_layout,
-       Sset_extent_begin_glyph_layout, 2, 2, 0 /*
+DEFUN ("set-extent-begin-glyph-layout", Fset_extent_begin_glyph_layout, 2, 2, 0, /*
 Set the layout policy of the given extent's begin glyph.
 Access this using the `extent-begin-glyph-layout' function.
-*/ )
-	(extent, layout)
-	Lisp_Object extent, layout;
+*/
+       (extent, layout))
 {
   EXTENT e = decode_extent (extent, 0);
   e = extent_ancestor (e);
@@ -4992,13 +4944,11 @@ Access this using the `extent-begin-glyph-layout' function.
   return layout;
 }
 
-DEFUN ("set-extent-end-glyph-layout", Fset_extent_end_glyph_layout,
-       Sset_extent_end_glyph_layout, 2, 2, 0 /*
+DEFUN ("set-extent-end-glyph-layout", Fset_extent_end_glyph_layout, 2, 2, 0, /*
 Set the layout policy of the given extent's end glyph.
 Access this using the `extent-end-glyph-layout' function.
-*/ )
-	(extent, layout)
-	Lisp_Object extent, layout;
+*/
+       (extent, layout))
 {
   EXTENT e = decode_extent (extent, 0);
   e = extent_ancestor (e);
@@ -5007,41 +4957,35 @@ Access this using the `extent-end-glyph-layout' function.
   return layout;
 }
 
-DEFUN ("extent-begin-glyph-layout", Fextent_begin_glyph_layout,
-       Sextent_begin_glyph_layout, 1, 1, 0 /*
+DEFUN ("extent-begin-glyph-layout", Fextent_begin_glyph_layout, 1, 1, 0, /*
 Return the layout policy associated with the given extent's begin glyph.
 Set this using the `set-extent-begin-glyph-layout' function.
-*/ )
-	(extent)
-	Lisp_Object extent;
+*/
+       (extent))
 {
   EXTENT e = decode_extent (extent, 0);
   return glyph_layout_to_symbol (extent_begin_glyph_layout (e));
 }
 
-DEFUN ("extent-end-glyph-layout", Fextent_end_glyph_layout,
-       Sextent_end_glyph_layout, 1, 1, 0 /*
+DEFUN ("extent-end-glyph-layout", Fextent_end_glyph_layout, 1, 1, 0, /*
 Return the layout policy associated with the given extent's end glyph.
 Set this using the `set-extent-end-glyph-layout' function.
-*/ )
-	(extent)
-	Lisp_Object extent;
+*/
+       (extent))
 {
   EXTENT e = decode_extent (extent, 0);
   return glyph_layout_to_symbol (extent_end_glyph_layout (e));
 }
 
-DEFUN ("set-extent-priority", Fset_extent_priority, Sset_extent_priority,
-       2, 2, 0 /*
+DEFUN ("set-extent-priority", Fset_extent_priority, 2, 2, 0, /*
 Changes the display priority of EXTENT.
 When the extent attributes are being merged for display, the priority
 is used to determine which extent takes precedence in the event of a
 conflict (two extents whose faces both specify font, for example: the
 font of the extent with the higher priority will be used).
 Extents are created with priority 0; priorities may be negative.
-*/ )
-	(extent, pri)
-	Lisp_Object extent, pri;
+*/
+       (extent, pri))
 {
   EXTENT e = decode_extent (extent, 0);
 
@@ -5052,18 +4996,16 @@ Extents are created with priority 0; priorities may be negative.
   return pri;
 }
 
-DEFUN ("extent-priority", Fextent_priority, Sextent_priority, 1, 1, 0 /*
+DEFUN ("extent-priority", Fextent_priority, 1, 1, 0, /*
 Return the display priority of EXTENT; see `set-extent-priority'.
-*/ )
-     (extent)
-     Lisp_Object extent;
+*/
+       (extent))
 {
   EXTENT e = decode_extent (extent, 0);
   return make_int (extent_priority (e));
 }
 
-DEFUN ("set-extent-property", Fset_extent_property, Sset_extent_property,
-       3, 3, 0 /*
+DEFUN ("set-extent-property", Fset_extent_property, 3, 3, 0, /*
 Change a property of an extent.
 PROPERTY may be any symbol; the value stored may be accessed with
  the `extent-property' function.
@@ -5134,26 +5076,13 @@ The following symbols have predefined meanings:
                     string into a buffer, the extents are copied back
                     into the buffer.
                     
- replicating        Meaningful only in conjunction with `duplicable'.
-                    If this flag is set, extents that are copied from
-                    buffers into strings are made children of the
-                    original extent.  When the string is pasted back
-                    into a buffer, the same extent (i.e. the `eq'
-                    predicate applies) that was originally in the
-                    buffer will be used if possible -- i.e. if the
-                    extent is detached or the paste location abuts or
-                    overlaps the extent.  This behavior is compatible
-                    with the old "extent replica" behavior and was
-                    apparently required by Energize.
-                    
- unique             Meaningful only in conjunction with `duplicable'
-                    and `replicating'.  When this is set, there may be
-                    only one instance of this extent attached at a
-                    time: if it is copied to the kill ring and then
-                    yanked, the extent is not copied.  If, however, it
-                    is killed (removed from the buffer) and then
-                    yanked, it will be re-attached at the new
-                    position.
+ unique             Meaningful only in conjunction with `duplicable'.
+                    When this is set, there may be only one instance
+                    of this extent attached at a time: if it is copied
+                    to the kill ring and then yanked, the extent is
+                    not copied.  If, however, it is killed (removed
+                    from the buffer) and then yanked, it will be
+                    re-attached at the new position.
                     
  invisible          If the value is non-nil, text under this extent
                     may be treated as not present for the purpose of
@@ -5209,10 +5138,8 @@ The following symbols have predefined meanings:
                     `inside-margin', or `outside-margin') of the extent's
                     begin glyph.
 
- end-glyph-layout   The layout policy of the extent's end glyph.
-*/ )
-     (extent, property, value)
-     Lisp_Object extent, property, value;
+ end-glyph-layout The layout policy of the extent's end glyph.  */
+       (extent, property, value))
 {
   /* This function can GC if property is `keymap' */
   EXTENT e = decode_extent (extent, 0);
@@ -5224,8 +5151,6 @@ The following symbols have predefined meanings:
     extent_unique_p (e) = !NILP (value);
   else if (EQ (property, Qduplicable))
     extent_duplicable_p (e) = !NILP (value);
-  else if (EQ (property, Qreplicating))
-    extent_replicating_p (e) = !NILP (value);
   else if (EQ (property, Qinvisible))
     set_extent_invisible (e, value);
   else if (EQ (property, Qdetachable))
@@ -5293,12 +5218,11 @@ The following symbols have predefined meanings:
   return value;
 }
 
-DEFUN ("extent-property", Fextent_property, Sextent_property, 2, 3, 0 /*
+DEFUN ("extent-property", Fextent_property, 2, 3, 0, /*
 Return EXTENT's value for property PROPERTY.
 See `set-extent-property' for the built-in property names.
-*/ )
-  (extent, property, defalt)
-   Lisp_Object extent, property, defalt;
+*/
+       (extent, property, defalt))
 {
   EXTENT e = decode_extent (extent, 0);
   CHECK_SYMBOL (property);
@@ -5313,7 +5237,6 @@ See `set-extent-property' for the built-in property names.
   else if (EQ (property, Qend_open))	 RETURN_FLAG (end_open);
   else if (EQ (property, Qunique))	 RETURN_FLAG (unique);
   else if (EQ (property, Qduplicable))	 RETURN_FLAG (duplicable);
-  else if (EQ (property, Qreplicating))	 RETURN_FLAG (replicating);
   else if (EQ (property, Qdetachable))	 RETURN_FLAG (detachable);
 #undef RETURN_FLAG
   /* Support (but don't document...) the obvious antonyms. */
@@ -5358,12 +5281,11 @@ See `set-extent-property' for the built-in property names.
     }
 }
 
-DEFUN ("extent-properties", Fextent_properties, Sextent_properties, 1, 1, 0 /*
+DEFUN ("extent-properties", Fextent_properties, 1, 1, 0, /*
 Return a property list of the attributes of the given extent.
 Do not modify this list; use `set-extent-property' instead.
-*/ )
-  (extent)
-   Lisp_Object extent;
+*/
+       (extent))
 {
   EXTENT e, anc;
   Lisp_Object result, face, anc_obj = Qnil;
@@ -5417,7 +5339,6 @@ Do not modify this list; use `set-extent-property' instead.
   result = Fcons (sym, Fcons (Qt, result))
   CONS_FLAG (end_open, Qend_open);
   CONS_FLAG (start_open, Qstart_open);
-  CONS_FLAG (replicating, Qreplicating);
   CONS_FLAG (detachable, Qdetachable);
   CONS_FLAG (duplicable, Qduplicable);
   CONS_FLAG (unique, Qunique);
@@ -5462,15 +5383,13 @@ do_highlight (Lisp_Object extent_obj, int highlight_p)
     }
 }
 
-DEFUN ("force-highlight-extent", Fforce_highlight_extent, 
-       Sforce_highlight_extent, 1, 2, 0 /*
+DEFUN ("force-highlight-extent", Fforce_highlight_extent, 1, 2, 0, /*
 Highlight or unhighlight the given extent.
 If the second arg is non-nil, it will be highlighted, else dehighlighted.
 This is the same as `highlight-extent', except that it will work even
 on extents without the `mouse-face' property.
-*/ )
-     (extent_obj, highlight_p)
-     Lisp_Object extent_obj, highlight_p;
+*/
+       (extent_obj, highlight_p))
 {
   if (NILP (extent_obj))
     highlight_p = Qnil;
@@ -5480,15 +5399,14 @@ on extents without the `mouse-face' property.
   return Qnil;
 }
 
-DEFUN ("highlight-extent", Fhighlight_extent, Shighlight_extent, 1, 2, 0 /*
+DEFUN ("highlight-extent", Fhighlight_extent, 1, 2, 0, /*
 Highlight the given extent, if it is highlightable
 \(that is, if it has the `mouse-face' property).
 If the second arg is non-nil, it will be highlighted, else dehighlighted.
 Highlighted extents are displayed as if they were merged with the face
 or faces specified by the `mouse-face' property.
-*/ )
-     (extent_obj, highlight_p)
-     Lisp_Object extent_obj, highlight_p;
+*/
+       (extent_obj, highlight_p))
 {
   if (EXTENTP (extent_obj) && NILP (extent_mouse_face (XEXTENT (extent_obj))))
     return Qnil;
@@ -5616,7 +5534,7 @@ insert_extent (EXTENT extent, Bytind new_start, Bytind new_end,
     }
 }
 
-DEFUN ("insert-extent", Finsert_extent, Sinsert_extent, 1, 5, 0 /*
+DEFUN ("insert-extent", Finsert_extent, 1, 5, 0, /*
 Insert EXTENT from START to END in BUFFER-OR-STRING.
 BUFFER-OR-STRING defaults to the current buffer if omitted.
 This operation does not insert any characters,
@@ -5626,9 +5544,8 @@ Returns the newly-inserted extent.
 The fourth arg, NO-HOOKS, can be used to inhibit the running of the
  extent's `paste-function' property if it has one.
 See documentation on `detach-extent' for a discussion of undo recording.
-*/ )
-  (extent, start, end, no_hooks, buffer_or_string)
-   Lisp_Object extent, start, end, no_hooks, buffer_or_string;
+*/
+       (extent, start, end, no_hooks, buffer_or_string))
 {
   EXTENT ext = decode_extent (extent, 0);
   Lisp_Object copy;
@@ -5681,14 +5598,6 @@ add_string_extents_mapper (EXTENT extent, void *arg)
 				     end + closure->from))
 	return 0;
       e = copy_extent (extent, start, end, closure->string);
-      if (extent_replicating_p (extent))
-	{
-	  Lisp_Object e_obj = Qnil, extent_obj = Qnil;
-
-	  XSETEXTENT (e_obj, e);
-	  XSETEXTENT (extent_obj, extent);
-	  Fset_extent_parent (e_obj, extent_obj);
-	}
     }
 
   return 0;
@@ -5756,62 +5665,12 @@ splice_in_string_extents_mapper (EXTENT extent, void *arg)
   if (!extent_duplicable_p (extent))
     return 0;
 
-  if (!extent_replicating_p (extent))
-    {
-      if (!inside_undo &&
-	  !run_extent_paste_function (extent, new_start, new_end,
-				      closure->buffer))
-	return 0;
-      copy_extent (extent, new_start, new_end, closure->buffer);
-    }
-  else
-    {
-      Bytind parstart = 0;
-      Bytind parend = 0;
-      Lisp_Object parent_obj = extent_parent (extent);
-      EXTENT parent;
+  if (!inside_undo &&
+      !run_extent_paste_function (extent, new_start, new_end,
+				  closure->buffer))
+    return 0;
+  copy_extent (extent, new_start, new_end, closure->buffer);
 
-      if (!EXTENTP (parent_obj))
-	return 0;
-      parent = XEXTENT (parent_obj);
-      if (!EXTENT_LIVE_P (parent))
-	return 0;
-
-      if (!extent_detached_p (parent))
-	{
-	  parstart = extent_endpoint_bytind (parent, 0);
-	  parend = extent_endpoint_bytind (parent, 1);
-	}
-
-/* #### remove this crap */
-#ifdef ENERGIZE
-      /* Energize extents like toplevel-forms can only be pasted 
-	 in the buffer they come from.  This should be parametrized
-	 in the generic extent objects.  Right now just silently
-	 skip the extents if it's not from the same buffer.
-	 */
-      if (!EQ (extent_object (parent), closure->buffer)
-	  && energize_extent_data (parent))
-	return 0;
-#endif
-	  
-      /* If this is a `unique' extent, and it is currently attached
-	 somewhere other than here (non-overlapping), then don't copy
-	 it (that's what `unique' means).  If however it is detached,
-	 or if we are inserting inside/adjacent to the original
-	 extent, then insert_extent() will simply reattach it, which
-	 is what we want.
-	 */
-      if (extent_unique_p (parent)
-	  && !extent_detached_p (parent)
-	  && (!EQ (extent_object (parent), closure->buffer)
-	      || parend > new_end
-	      || parstart < new_start))
-	return 0;
-  
-      insert_extent (parent, new_start, new_end,
-		     closure->buffer, !inside_undo);
-    }
   return 0;
 }
 
@@ -5864,13 +5723,6 @@ copy_string_extents_1_mapper (EXTENT extent, void *arg)
   struct copy_string_extents_1_arg *closure = 
     (struct copy_string_extents_1_arg *) arg;
 
-  if (extent_replicating_p (extent) &&
-      EQ (extent_parent (extent), closure->parent_in_question))
-    {
-      closure->found_extent = extent;
-      return 1; /* stop mapping */
-    }
-
   return 0;
 }
 
@@ -5894,35 +5746,6 @@ copy_string_extents_mapper (EXTENT extent, void *arg)
   new_start = old_start + closure->new_pos - closure->old_pos;
   new_end = old_end + closure->new_pos - closure->old_pos;
 
-  if (extent_replicating_p (extent))
-    {
-      struct copy_string_extents_1_arg closure_1;
-
-      closure_1.parent_in_question = extent_parent (extent);
-      closure_1.found_extent = 0;
-
-      /* When adding a replicating extent, we need to make sure
-	 that there isn't an existing replicating extent referring
-	 to the same parent extent that abuts or overlaps.  If so,
-	 we merge with that extent rather than adding anew. */
-      map_extents_bytind (closure->old_pos, closure->old_pos + closure->length,
-			  copy_string_extents_1_mapper,
-			  (void *) &closure, closure->new_string, 0,
-			  /* get all extents that abut the region */
-			  ME_END_CLOSED | ME_ALL_EXTENTS_CLOSED);
-      if (closure_1.found_extent)
-	{
-	  Bytecount exstart =
-	    extent_endpoint_bytind (closure_1.found_extent, 0);
-	  Bytecount exend =
-	    extent_endpoint_bytind (closure_1.found_extent, 1);
-	  exstart = min (exstart, new_start);
-	  exend = max (exend, new_end);
-	  set_extent_endpoints (closure_1.found_extent, exstart, exend, Qnil);
-	  return 0;
-	}
-    }
-      
   copy_extent (extent,
 	       old_start + closure->new_pos - closure->old_pos,
 	       old_end + closure->new_pos - closure->old_pos,
@@ -6048,7 +5871,7 @@ get_text_property_1 (Lisp_Object pos, Lisp_Object prop, Lisp_Object object,
   }
 }
 
-DEFUN ("get-text-property", Fget_text_property, Sget_text_property, 2, 4, 0 /*
+DEFUN ("get-text-property", Fget_text_property, 2, 4, 0, /*
 Returns the value of the PROP property at the given position.
 Optional arg OBJECT specifies the buffer or string to look in, and
  defaults to the current buffer.
@@ -6056,14 +5879,13 @@ Optional arg AT-FLAG controls what it means for a property to be \"at\"
  a position, and has the same meaning as in `extent-at'.
 This examines only those properties added with `put-text-property'.
 See also `get-char-property'.
-*/ )
-     (pos, prop, object, at_flag)
-     Lisp_Object pos, prop, object, at_flag;
+*/
+       (pos, prop, object, at_flag))
 {
   return get_text_property_1 (pos, prop, object, at_flag, 1);
 }
 
-DEFUN ("get-char-property", Fget_char_property, Sget_char_property, 2, 4, 0 /*
+DEFUN ("get-char-property", Fget_char_property, 2, 4, 0, /*
 Returns the value of the PROP property at the given position.
 Optional arg OBJECT specifies the buffer or string to look in, and
  defaults to the current buffer.
@@ -6071,9 +5893,8 @@ Optional arg AT-FLAG controls what it means for a property to be \"at\"
  a position, and has the same meaning as in `extent-at'.
 This examines properties on all extents.
 See also `get-text-property'.
-*/ )
-     (pos, prop, object, at_flag)
-     Lisp_Object pos, prop, object, at_flag;
+*/
+       (pos, prop, object, at_flag))
 {
   return get_text_property_1 (pos, prop, object, at_flag, 0);
 }
@@ -6388,15 +6209,14 @@ put_text_prop (Bytind start, Bytind end, Lisp_Object object,
   return closure.changed_p;
 }
 
-DEFUN ("put-text-property", Fput_text_property, Sput_text_property, 4, 5, 0 /*
+DEFUN ("put-text-property", Fput_text_property, 4, 5, 0, /*
 Adds the given property/value to all characters in the specified region.
 The property is conceptually attached to the characters rather than the
 region.  The properties are copied when the characters are copied/pasted.
 Fifth argument OBJECT is the buffer or string containing the text, and
 defaults to the current buffer.
-*/ )
-     (start, end, prop, value, object)
-     Lisp_Object start, end, prop, value, object;
+*/
+       (start, end, prop, value, object))
 {
   /* This function can GC */
   Bytind s, e;
@@ -6408,17 +6228,16 @@ defaults to the current buffer.
   return prop;
 }
 
-DEFUN ("put-nonduplicable-text-property", Fput_nonduplicable_text_property,
-       Sput_nonduplicable_text_property, 4, 5, 0 /*
+DEFUN ("put-nonduplicable-text-property",
+       Fput_nonduplicable_text_property, 4, 5, 0, /*
 Adds the given property/value to all characters in the specified region.
 The property is conceptually attached to the characters rather than the
 region, however the properties will not be copied when the characters
 are copied.
 Fifth argument OBJECT is the buffer or string containing the text, and
 defaults to the current buffer.
-*/ )
-     (start, end, prop, value, object)
-     Lisp_Object start, end, prop, value, object;
+*/
+       (start, end, prop, value, object))
 {
   /* This function can GC */
   Bytind s, e;
@@ -6430,16 +6249,14 @@ defaults to the current buffer.
   return prop;
 }
 
-DEFUN ("add-text-properties", Fadd_text_properties, Sadd_text_properties,
-       3, 4, 0 /*
+DEFUN ("add-text-properties", Fadd_text_properties, 3, 4, 0, /*
 Add properties to the characters from START to END.
 The third argument PROPS is a property list specifying the property values
 to add.  The optional fourth argument, OBJECT, is the buffer or string
 containing the text and defaults to the current buffer.  Returns t if
 any property was changed, nil otherwise.
-*/ )
-	(start, end, props, object)
-	Lisp_Object start, end, props, object;
+*/
+       (start, end, props, object))
 {
   /* This function can GC */
   int changed = 0;
@@ -6460,18 +6277,15 @@ any property was changed, nil otherwise.
 
 
 DEFUN ("add-nonduplicable-text-properties",
-       Fadd_nonduplicable_text_properties,
-       Sadd_nonduplicable_text_properties,
-       3, 4, 0 /*
+       Fadd_nonduplicable_text_properties, 3, 4, 0, /*
 Add nonduplicable properties to the characters from START to END.
 (The properties will not be copied when the characters are copied.)
 The third argument PROPS is a property list specifying the property values
 to add.  The optional fourth argument, OBJECT, is the buffer or string
 containing the text and defaults to the current buffer.  Returns t if
 any property was changed, nil otherwise.
-*/ )
-	(start, end, props, object)
-	Lisp_Object start, end, props, object;
+*/
+       (start, end, props, object))
 {
   /* This function can GC */
   int changed = 0;
@@ -6490,16 +6304,14 @@ any property was changed, nil otherwise.
   return (changed ? Qt : Qnil);
 }
 
-DEFUN ("remove-text-properties", Fremove_text_properties,
-       Sremove_text_properties, 3, 4, 0 /*
+DEFUN ("remove-text-properties", Fremove_text_properties, 3, 4, 0, /*
 Remove the given properties from all characters in the specified region.
 PROPS should be a plist, but the values in that plist are ignored (treated
 as nil).  Returns t if any property was changed, nil otherwise.
 Fourth argument OBJECT is the buffer or string containing the text, and
 defaults to the current buffer.
-*/ )
-	(start, end, props, object)
-	Lisp_Object start, end, props, object;
+*/
+       (start, end, props, object))
 {
   /* This function can GC */
   int changed = 0;
@@ -6529,12 +6341,11 @@ defaults to the current buffer.
    the rest of the put-text-prop code here, I moved this as well for 
    completeness. 
  */
-DEFUN ("text-prop-extent-paste-function", Ftext_prop_extent_paste_function,
-       Stext_prop_extent_paste_function, 3, 3, 0 /*
+DEFUN ("text-prop-extent-paste-function",
+       Ftext_prop_extent_paste_function, 3, 3, 0, /*
 Used as the `paste-function' property of `text-prop' extents.
-*/ )
-     (extent, from, to)
-     Lisp_Object extent, from, to;
+*/
+       (extent, from, to))
 {
   /* This function can GC */
   Lisp_Object prop, val;
@@ -6543,9 +6354,15 @@ Used as the `paste-function' property of `text-prop' extents.
   if (NILP (prop))
     signal_simple_error ("internal error: no text-prop", extent);
   val = Fextent_property (extent, prop, Qnil);
+#if 0
+  /* removed by bill perry, 2/9/97
+  ** This little bit of code would not allow you to have a text property
+  ** with a value of Qnil.  This is bad bad bad.
+  */
   if (NILP (val))
     signal_simple_error_2 ("internal error: no text-prop",
 			   extent, prop);
+#endif
   Fput_text_property (from, to, prop, val, Qnil);
   return Qnil; /* important! */
 }
@@ -6554,8 +6371,7 @@ Used as the `paste-function' property of `text-prop' extents.
    to use it in connection with invisible extents (at least currently).
    If this changes, consider moving this back into Lisp. */
 
-DEFUN ("next-single-property-change", Fnext_single_property_change,
-       Snext_single_property_change, 2, 4, 0 /*
+DEFUN ("next-single-property-change", Fnext_single_property_change, 2, 4, 0, /*
 Return the position of next property change for a specific property.
 Scans characters forward from POS till it finds a change in the PROP
  property, then returns the position of the change.  The optional third
@@ -6571,9 +6387,8 @@ If two or more extents with conflicting non-nil values for PROP overlap
  a particular character, it is undefined which value is considered to be
  the value of PROP. (Note that this situation will not happen if you always
  use the text-property primitives.)
-*/ )
-  (pos, prop, object, limit)
-     Lisp_Object pos, prop, object, limit;
+*/
+       (pos, prop, object, limit))
 {
   Bufpos bpos;
   Bufpos blim;
@@ -6623,8 +6438,8 @@ If two or more extents with conflicting non-nil values for PROP overlap
 
 /* See comment on previous function about why this is written in C. */
 
-DEFUN ("previous-single-property-change", Fprevious_single_property_change,
-       Sprevious_single_property_change, 2, 4, 0 /*
+DEFUN ("previous-single-property-change",
+       Fprevious_single_property_change, 2, 4, 0, /*
 Return the position of next property change for a specific property.
 Scans characters backward from POS till it finds a change in the PROP
  property, then returns the position of the change.  The optional third
@@ -6640,9 +6455,8 @@ If two or more extents with conflicting non-nil values for PROP overlap
  a particular character, it is undefined which value is considered to be
  the value of PROP. (Note that this situation will not happen if you always
  use the text-property primitives.)
-*/ )
-  (pos, prop, object, limit)
-     Lisp_Object pos, prop, object, limit;
+*/
+       (pos, prop, object, limit))
 {
   Bufpos bpos;
   Bufpos blim;
@@ -6740,7 +6554,6 @@ syms_of_extents (void)
   /* defsymbol (&Qhighlight, "highlight"); in faces.c */
   defsymbol (&Qunique, "unique");
   defsymbol (&Qduplicable, "duplicable");
-  defsymbol (&Qreplicating, "replicating");
   defsymbol (&Qdetachable, "detachable");
   defsymbol (&Qpriority, "priority");
   defsymbol (&Qmouse_face, "mouse-face");
@@ -6762,73 +6575,73 @@ syms_of_extents (void)
   defsymbol (&Qtext_prop_extent_paste_function,
 	     "text-prop-extent-paste-function");
 
-  defsubr (&Sextentp);
-  defsubr (&Sextent_live_p);
-  defsubr (&Sextent_detached_p);
-  defsubr (&Sextent_start_position);
-  defsubr (&Sextent_end_position);
-  defsubr (&Sextent_object);
-  defsubr (&Sextent_length);
+  DEFSUBR (Fextentp);
+  DEFSUBR (Fextent_live_p);
+  DEFSUBR (Fextent_detached_p);
+  DEFSUBR (Fextent_start_position);
+  DEFSUBR (Fextent_end_position);
+  DEFSUBR (Fextent_object);
+  DEFSUBR (Fextent_length);
 #if 0
-  defsubr (&Sstack_of_extents);
+  DEFSUBR (Fstack_of_extents);
 #endif
 
-  defsubr (&Smake_extent);
-  defsubr (&Scopy_extent);
-  defsubr (&Sdelete_extent);
-  defsubr (&Sdetach_extent);
-  defsubr (&Sset_extent_endpoints);
-  defsubr (&Snext_extent);
-  defsubr (&Sprevious_extent);
+  DEFSUBR (Fmake_extent);
+  DEFSUBR (Fcopy_extent);
+  DEFSUBR (Fdelete_extent);
+  DEFSUBR (Fdetach_extent);
+  DEFSUBR (Fset_extent_endpoints);
+  DEFSUBR (Fnext_extent);
+  DEFSUBR (Fprevious_extent);
 #if DEBUG_XEMACS
-  defsubr (&Snext_e_extent);
-  defsubr (&Sprevious_e_extent);
+  DEFSUBR (Fnext_e_extent);
+  DEFSUBR (Fprevious_e_extent);
 #endif
-  defsubr (&Snext_extent_change);
-  defsubr (&Sprevious_extent_change);
+  DEFSUBR (Fnext_extent_change);
+  DEFSUBR (Fprevious_extent_change);
 
-  defsubr (&Sextent_parent);
-  defsubr (&Sextent_children);
-  defsubr (&Sset_extent_parent);
+  DEFSUBR (Fextent_parent);
+  DEFSUBR (Fextent_children);
+  DEFSUBR (Fset_extent_parent);
 
-  defsubr (&Sextent_in_region_p);
-  defsubr (&Smap_extents);
-  defsubr (&Smap_extent_children);
-  defsubr (&Sextent_at);
+  DEFSUBR (Fextent_in_region_p);
+  DEFSUBR (Fmap_extents);
+  DEFSUBR (Fmap_extent_children);
+  DEFSUBR (Fextent_at);
 
-  defsubr (&Sextent_face);
-  defsubr (&Sset_extent_face);
-  defsubr (&Sextent_mouse_face);
-  defsubr (&Sset_extent_mouse_face);
-  defsubr (&Sset_extent_begin_glyph);
-  defsubr (&Sset_extent_end_glyph);
-  defsubr (&Sextent_begin_glyph);
-  defsubr (&Sextent_end_glyph);
-  defsubr (&Sset_extent_begin_glyph_layout);
-  defsubr (&Sset_extent_end_glyph_layout);
-  defsubr (&Sextent_begin_glyph_layout);
-  defsubr (&Sextent_end_glyph_layout);
-  defsubr (&Sset_extent_priority);
-  defsubr (&Sextent_priority);
-  defsubr (&Sset_extent_property);
-  defsubr (&Sextent_property);
-  defsubr (&Sextent_properties);
+  DEFSUBR (Fextent_face);
+  DEFSUBR (Fset_extent_face);
+  DEFSUBR (Fextent_mouse_face);
+  DEFSUBR (Fset_extent_mouse_face);
+  DEFSUBR (Fset_extent_begin_glyph);
+  DEFSUBR (Fset_extent_end_glyph);
+  DEFSUBR (Fextent_begin_glyph);
+  DEFSUBR (Fextent_end_glyph);
+  DEFSUBR (Fset_extent_begin_glyph_layout);
+  DEFSUBR (Fset_extent_end_glyph_layout);
+  DEFSUBR (Fextent_begin_glyph_layout);
+  DEFSUBR (Fextent_end_glyph_layout);
+  DEFSUBR (Fset_extent_priority);
+  DEFSUBR (Fextent_priority);
+  DEFSUBR (Fset_extent_property);
+  DEFSUBR (Fextent_property);
+  DEFSUBR (Fextent_properties);
 
-  defsubr (&Shighlight_extent);
-  defsubr (&Sforce_highlight_extent);
+  DEFSUBR (Fhighlight_extent);
+  DEFSUBR (Fforce_highlight_extent);
 
-  defsubr (&Sinsert_extent);
+  DEFSUBR (Finsert_extent);
 
-  defsubr (&Sget_text_property);
-  defsubr (&Sget_char_property);
-  defsubr (&Sput_text_property);
-  defsubr (&Sput_nonduplicable_text_property);
-  defsubr (&Sadd_text_properties);
-  defsubr (&Sadd_nonduplicable_text_properties);
-  defsubr (&Sremove_text_properties);
-  defsubr (&Stext_prop_extent_paste_function);
-  defsubr (&Snext_single_property_change);
-  defsubr (&Sprevious_single_property_change);
+  DEFSUBR (Fget_text_property);
+  DEFSUBR (Fget_char_property);
+  DEFSUBR (Fput_text_property);
+  DEFSUBR (Fput_nonduplicable_text_property);
+  DEFSUBR (Fadd_text_properties);
+  DEFSUBR (Fadd_nonduplicable_text_properties);
+  DEFSUBR (Fremove_text_properties);
+  DEFSUBR (Ftext_prop_extent_paste_function);
+  DEFSUBR (Fnext_single_property_change);
+  DEFSUBR (Fprevious_single_property_change);
 }
 
 void

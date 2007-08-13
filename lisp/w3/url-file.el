@@ -1,7 +1,7 @@
 ;;; url-file.el --- File retrieval code
 ;; Author: wmperry
-;; Created: 1997/01/24 14:32:50
-;; Version: 1.9
+;; Created: 1997/02/07 14:29:24
+;; Version: 1.10
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,40 +44,44 @@
 	(coding-system-for-read mule-no-coding-system))
     (setq compressed 
 	  (cond
-	   ((file-exists-p fname) nil)
+	   ((file-exists-p fname)
+	    (if (string-match "\\.\\(z\\|gz\\|Z\\)$" fname)
+		(case (intern (match-string 1 fname))
+		  ((z gz)
+		   (setq url-current-mime-headers (cons
+						   (cons
+						    "content-transfer-encoding"
+						    "gzip")
+						   url-current-mime-headers)))
+		  (Z
+		   (setq url-current-mime-headers (cons
+						   (cons
+						    "content-transfer-encoding"
+						    "compress")
+						   url-current-mime-headers))))
+	      nil))
 	   ((file-exists-p (concat fname ".Z"))
-	    (setq fname (concat fname ".Z")))
+	    (setq fname (concat fname ".Z")
+		  url-current-mime-headers (cons (cons
+						  "content-transfer-encoding"
+						  "compress")
+						 url-current-mime-headers)))
 	   ((file-exists-p (concat fname ".gz"))
-	    (setq fname (concat fname ".gz")))
+	    (setq fname (concat fname ".gz")
+		  url-current-mime-headers (cons (cons
+						  "content-transfer-encoding"
+						  "gzip")
+						 url-current-mime-headers)))
 	   ((file-exists-p (concat fname ".z"))
-	    (setq fname (concat fname ".z")))
+	    (setq fname (concat fname ".z")
+		  url-current-mime-headers (cons (cons
+						  "content-transfer-encoding"
+						  "gzip")
+						 url-current-mime-headers)))
 	   (t
 	    (error "File not found %s" fname))))
-    (if (or (not compressed) url-inhibit-uncompression)
-	(apply 'insert-file-contents fname args)
-      (let* ((extn (url-file-extension fname))
-	     (code (cdr-safe (assoc extn url-uncompressor-alist)))
-	     (decoder (cdr-safe (assoc code mm-content-transfer-encodings))))
-	(cond
-	 ((null decoder) 
-	  (apply 'insert-file-contents fname args))
-	 ((stringp decoder)
-	  (apply 'insert-file-contents fname args)
-	  (message "Decoding...")
-	  (call-process-region (point-min) (point-max) decoder t t nil)
-	  (message "Decoding... done."))
-	 ((listp decoder)
-	  (apply 'call-process-region (point-min) (point-max)
-		 (car decoder) t t t (cdr decoder)))
-	 ((and (symbolp decoder) (fboundp decoder))
-	  (apply 'insert-file-contents fname args)
-	  (message "Decoding...")
-	  (funcall decoder (point-min) (point-max))
-	  (message "Decoding... done."))
-	 (t
-	  (error "Malformed entry for %s in `mm-content-transfer-encodings'"
-		 code))))))
-  (set-buffer-modified-p nil))
+    (apply 'insert-file-contents fname args)
+    (set-buffer-modified-p nil)))
 
 (defun url-format-directory (dir)
   ;; Format the files in DIR into hypertext

@@ -889,135 +889,7 @@ Usage: emacs -batch *.el -f custom-make-dependencies > deps.el" nil nil)
 
 ;;;***
 
-;;;### (autoloads (custom-set-faces custom-set-variables custom-initialize-faces custom-add-to-group defgroup custom-declare-group defface custom-declare-face defcustom custom-declare-variable) "custom" "custom/custom.el")
-
-(autoload 'custom-declare-variable "custom" "\
-Like `defcustom', but SYMBOL and VALUE are evaluated as notmal arguments." nil nil)
-
-(autoload 'defcustom "custom" "\
-Declare SYMBOL as a customizable variable that defaults to VALUE.
-DOC is the variable documentation.
-
-Neither SYMBOL nor VALUE needs to be quoted.
-If SYMBOL is not already bound, initialize it to VALUE.
-The remaining arguments should have the form
-
-   [KEYWORD VALUE]... 
-
-The following KEYWORD's are defined:
-
-:type	VALUE should be a widget type.
-:options VALUE should be a list of valid members of the widget type.
-:group  VALUE should be a customization group.  
-        Add SYMBOL to that group.
-
-Read the section about customization in the emacs lisp manual for more
-information." nil 'macro)
-
-(autoload 'custom-declare-face "custom" "\
-Like `defface', but FACE is evaluated as a normal argument." nil nil)
-
-(autoload 'defface "custom" "\
-Declare FACE as a customizable face that defaults to SPEC.
-FACE does not need to be quoted.
-
-Third argument DOC is the face documentation.
-
-If FACE has been set with `custom-set-face', set the face attributes
-as specified by that function, otherwise set the face attributes
-according to SPEC.
-
-The remaining arguments should have the form
-
-   [KEYWORD VALUE]...
-
-The following KEYWORD's are defined:
-
-:group  VALUE should be a customization group.
-        Add FACE to that group.
-
-SPEC should be an alist of the form ((DISPLAY ATTS)...).
-
-ATTS is a list of face attributes and their values.  The possible
-attributes are defined in the variable `custom-face-attributes'.
-Alternatively, ATTS can be a face in which case the attributes of that
-face is used.
-
-The ATTS of the first entry in SPEC where the DISPLAY matches the
-frame should take effect in that frame.  DISPLAY can either be the
-symbol `t', which will match all frames, or an alist of the form
-\((REQ ITEM...)...)
-
-For the DISPLAY to match a FRAME, the REQ property of the frame must
-match one of the ITEM.  The following REQ are defined:
-
-`type' (the value of (window-system))
-  Should be one of `x' or `tty'.
-
-`class' (the frame's color support)
-  Should be one of `color', `grayscale', or `mono'.
-
-`background' (what color is used for the background text)
-  Should be one of `light' or `dark'.
-
-Read the section about customization in the emacs lisp manual for more
-information." nil 'macro)
-
-(autoload 'custom-declare-group "custom" "\
-Like `defgroup', but SYMBOL is evaluated as a normal argument." nil nil)
-
-(autoload 'defgroup "custom" "\
-Declare SYMBOL as a customization group containing MEMBERS.
-SYMBOL does not need to be quoted.
-
-Third arg DOC is the group documentation.
-
-MEMBERS should be an alist of the form ((NAME WIDGET)...) where
-NAME is a symbol and WIDGET is a widget is a widget for editing that
-symbol.  Useful widgets are `custom-variable' for editing variables,
-`custom-face' for edit faces, and `custom-group' for editing groups.
-
-The remaining arguments should have the form
-
-   [KEYWORD VALUE]... 
-
-The following KEYWORD's are defined:
-
-:group  VALUE should be a customization group.
-        Add SYMBOL to that group.
-
-Read the section about customization in the emacs lisp manual for more
-information." nil 'macro)
-
-(autoload 'custom-add-to-group "custom" "\
-To existing GROUP add a new OPTION of type WIDGET,
-If there already is an entry for that option, overwrite it." nil nil)
-
-(autoload 'custom-initialize-faces "custom" "\
-Initialize all custom faces for FRAME.
-If FRAME is nil or omitted, initialize them for all frames." nil nil)
-
-(autoload 'custom-set-variables "custom" "\
-Initialize variables according to user preferences.  
-
-The arguments should be a list where each entry has the form:
-
-  (SYMBOL VALUE [NOW])
-
-The unevaluated VALUE is stored as the saved value for SYMBOL.
-If NOW is present and non-nil, VALUE is also evaluated and bound as
-the default value for the SYMBOL." nil nil)
-
-(autoload 'custom-set-faces "custom" "\
-Initialize faces according to user preferences.
-The arguments should be a list where each entry has the form:
-
-  (FACE SPEC [NOW])
-
-SPEC will be stored as the saved value for FACE.  If NOW is present
-and non-nil, FACE will also be created according to SPEC.
-
-See `defface' for the format of SPEC." nil nil)
+;;;### (autoloads nil "custom" "custom/custom.el")
 
 ;;;***
 
@@ -3674,7 +3546,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.5 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.6 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4891,7 +4763,7 @@ First column's text    sSs  Second column's text
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.5 $
+vhdl-mode $Revision: 1.6 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

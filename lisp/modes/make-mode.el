@@ -1107,7 +1107,9 @@ Insertion takes place at point."
   (setq makefile-browser-client (current-buffer))
   (makefile-pickup-targets)
   (makefile-pickup-macros)
-  (makefile-browse makefile-target-table makefile-macro-table))
+  (makefile-browse makefile-target-table
+                   ;; take out the runtime macros which were added for completion sake -gk
+                   (set-difference makefile-macro-table makefile-runtime-macros-list)))
 
 
 

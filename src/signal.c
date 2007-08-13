@@ -343,16 +343,14 @@ alarm (unsigned int howlong)
 }
 #endif
 
-DEFUN ("waiting-for-user-input-p", Fwaiting_for_user_input_p,
-       Swaiting_for_user_input_p,
-       0, 0, 0 /*
+DEFUN ("waiting-for-user-input-p", Fwaiting_for_user_input_p, 0, 0, 0, /*
 Return non-nil if XEmacs is waiting for input from the user.
 This is intended for use by asynchronous timeout callbacks and by
 asynchronous process output filters and sentinels (not yet implemented
 in XEmacs).  It will always be nil if XEmacs is not inside of
 an asynchronout timeout or process callback.
-*/ )
-       ()
+*/
+       ())
 {
   return ((waiting_for_user_input_p) ? Qt : Qnil);
 }
@@ -740,7 +738,7 @@ init_signals_very_early (void)
 void
 syms_of_signal (void)
 {
-  defsubr (&Swaiting_for_user_input_p);
+  DEFSUBR (Fwaiting_for_user_input_p);
 }
 
 void

@@ -48,6 +48,8 @@ Boston, MA 02111-1307, USA.  */
 				   a core widget directly.  We could
 				   use XtVaGetValues(), but ... */
 
+static void enqueue_Xt_dispatch_event (Lisp_Object event);
+
 static struct event_stream *Xt_event_stream;
 
 /* With the new event model, all events go through XtDispatchEvent()
@@ -89,7 +91,6 @@ static CONST String x_fallback_resources[] =
 
 void emacs_Xt_mapping_action (Widget w, XEvent *event);
 void debug_process_finalization (struct Lisp_Process *p);
-Lisp_Object dequeue_Xt_dispatch_event (void);
 void emacs_Xt_event_handler (Widget wid, XtPointer closure, XEvent *event,
 			     Boolean *continue_to_dispatch);
 
@@ -294,8 +295,7 @@ x_reset_modifier_mapping (struct device *d)
 	   assigned to a key that is not one of the above, but OpenWindows
 	   assigns modifier bits to a couple of random function keys for
 	   no reason that I can discern, so printing a warning here would
-	   be annoying.
-	 */
+	   be annoying. */
 	}
       }
     }
@@ -306,8 +306,7 @@ x_reset_modifier_mapping (struct device *d)
 
   /* If there was no Meta key, then try using the Alt key instead.
      If there is both a Meta key and an Alt key, then the Alt key
-     is not disturbed and remains an Alt key.
-   */
+     is not disturbed and remains an Alt key. */
   if (! meta_bit && alt_bit)
     meta_bit = alt_bit, alt_bit = 0;
 
@@ -316,8 +315,7 @@ x_reset_modifier_mapping (struct device *d)
      generate the same modifier bit (which is an error), then we don't
      interpret that bit as Meta, because we can't make XLookupString()
      not interpret it as Mode_switch; and interpreting it as both would
-     be totally wrong.
-   */
+     be totally wrong. */
   if (mode_bit)
     {
       CONST char *warn = 0;
@@ -363,7 +361,7 @@ x_reset_modifier_mapping (struct device *d)
 "	assigning the key a different modifier bit.  You must also make that\n"
 "	key generate an appropriate keysym (Control_L, Meta_L, etc).");
 
-  /* Don\'t need to say anything more for warned_about_duplicate_modifiers. */
+  /* No need to say anything more for warned_about_duplicate_modifiers. */
 
   if (warned_about_overlapping_modifiers || warned_about_predefined_modifiers)
     warn_when_safe (Qkey_mapping, Qwarning, "\n"
@@ -466,8 +464,7 @@ x_handle_sticky_modifiers (XEvent *ev, struct device *d)
 	   to provide an obvious way to distinguish these cases.
 	   So we assume that if the release and the next press
 	   occur at the same time, the key was actually auto-
-	   repeated.  Under Open-Windows, at least, this works.
-	   */
+	   repeated.  Under Open-Windows, at least, this works. */
 	xd->release_time = key_event_p ? ev->xkey.time : ev->xbutton.time;
     }
   else                          /* Modifier key pressed */
@@ -535,9 +532,9 @@ clear_sticky_modifiers (struct device *d)
   struct x_device *xd = DEVICE_X_DATA (d);
 
   xd->need_to_add_mask = 0;
-  xd->last_downkey = 0;
-  xd->release_time = 0;
-  xd->down_mask = 0;
+  xd->last_downkey     = 0;
+  xd->release_time     = 0;
+  xd->down_mask        = 0;
 }
 
 static int
@@ -547,8 +544,7 @@ keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
   /* Eeeeevil hack.  Don't apply Caps_Lock to things that aren't alphabetic
      characters, where "alphabetic" means something more than simply A-Z.
      That is, if Caps_Lock is down, typing ESC doesn't produce Shift-ESC.
-     But if shift-lock is down, then it does.
-   */
+     But if shift-lock is down, then it does. */
   if (xd->lock_interpretation == XK_Shift_Lock)
     return 1;
   
@@ -566,8 +562,8 @@ keysym_obeys_caps_lock_p (KeySym sym, struct device *d)
    decided that Xt event handlers never get MappingNotify events.
    O'Reilly Xt Programming Manual 9.1.2 says:
    
-     MappingNotify is automatically handled by Xt, so it isn't passed
-     to event handlers and you don't need to worry about it.
+   MappingNotify is automatically handled by Xt, so it isn't passed
+   to event handlers and you don't need to worry about it.
 
    Of course, we DO worry about it, so we need a special translation. */
 void
@@ -581,8 +577,7 @@ emacs_Xt_mapping_action (Widget w, XEvent* event)
   /* xmodmap generates about a billion MappingKeyboard events, followed
      by a single MappingModifier event, so it might be worthwhile to
      take extra MappingKeyboard events out of the queue before requesting
-     the current keymap from the server.
-     */
+     the current keymap from the server. */
   switch (event->xmapping.request)
     {
     case MappingKeyboard:  x_reset_key_mapping      (d); break;
@@ -607,13 +602,12 @@ x_to_emacs_keysym_sunos_bug (Lisp_Object *return_value_sunos_bug, /* #### */
                              XEvent *event, int simple_p)
 #else /* !SUNOS_GCC_L0_BUG */
 static Lisp_Object
-x_to_emacs_keysym (XEvent *event, int simple_p)
+x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 #endif /* !SUNOS_GCC_L0_BUG */
      /* simple_p means don't try too hard (ASCII only) */
 {
   char *name;
   KeySym keysym = 0;
-  /* struct device *d = get_device_from_display (event->xany.display); */
   /* Apparently it's necessary to specify a dummy here (rather than
      passing in 0) to avoid crashes on German IRIX */
   char dummy[256];
@@ -625,35 +619,33 @@ x_to_emacs_keysym (XEvent *event, int simple_p)
 
   /* ### FIX this by replacing with calls to XmbLookupString.
      XLookupString should never be called. --mrb */
-  XLookupString (&event->xkey, dummy, 200, &keysym, 0);
-
-  /* &DEVICE_X_X_COMPOSE_STATUS (d)); */
+  XLookupString (event, dummy, 200, &keysym, 0);
 
   if (keysym >= XK_exclam && keysym <= XK_asciitilde)
     /* We must assume that the X keysym numbers for the ASCII graphic
        characters are the same as their ASCII codes.  */
-    return (make_char (keysym));
+    return make_char (keysym);
 
   switch (keysym)
     {
       /* These would be handled correctly by the default case, but by
 	 special-casing them here we don't garbage a string or call intern().
 	 */
-    case XK_BackSpace:	return (QKbackspace);
-    case XK_Tab:	return (QKtab);
-    case XK_Linefeed:	return (QKlinefeed);
-    case XK_Return:	return (QKreturn);
-    case XK_Escape:	return (QKescape);
-    case XK_space:	return (QKspace);
-    case XK_Delete:	return (QKdelete);
-    case 0:		return (Qnil);
+    case XK_BackSpace:	return QKbackspace;
+    case XK_Tab:	return QKtab;
+    case XK_Linefeed:	return QKlinefeed;
+    case XK_Return:	return QKreturn;
+    case XK_Escape:	return QKescape;
+    case XK_space:	return QKspace;
+    case XK_Delete:	return QKdelete;
+    case 0:		return Qnil;
       /* This kludge prevents bogus Xlib compose conversions.
          Don't ask why. The following case must be removed when we
          switch to using XmbLookupString */
-    case XK_Multi_key: XLookupString (&event->xkey, dummy, 200, &keysym, 0);
+    case XK_Multi_key: XLookupString (event, dummy, 200, &keysym, 0);
       /* Fallthrough!! */
     default:
-      if (simple_p) return (Qnil);
+      if (simple_p) return Qnil;
       /* #### without return_value_sunos_bug, %l0 (GCC struct return pointer)
        * ####  gets roached (top 8 bits cleared) around this call.
        */
@@ -663,16 +655,17 @@ x_to_emacs_keysym (XEvent *event, int simple_p)
 	{
 	  char buf [255];
 	  sprintf (buf, "unknown_keysym_0x%X", (int) keysym);
-	  return (KEYSYM (buf));
+	  return KEYSYM (buf);
 	}
       /* If it's got a one-character name, that's good enough. */
-      if (!name[1]) return (make_char (name[0]));
+      if (!name[1])
+	return make_char (name[0]);
       
       /* If it's in the "Keyboard" character set, downcase it.
 	 The case of those keysyms is too totally random for us to
 	 force anyone to remember them.
 	 The case of the other character sets is significant, however.
-	 */
+       */
       if ((((unsigned int) keysym) & (~0xFF)) == ((unsigned int) 0xFF00))
 	{
 	  char buf [255];
@@ -685,9 +678,9 @@ x_to_emacs_keysym (XEvent *event, int simple_p)
 	    }
 	  }
 	  *s2 = 0;
-	  return (KEYSYM (buf));
+	  return KEYSYM (buf);
 	}
-      return (KEYSYM (name));
+      return KEYSYM (name);
     }
 #ifdef SUNOS_GCC_L0_BUG
 # undef return
@@ -748,129 +741,127 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
     case ButtonPress:
     case ButtonRelease:
       {
-        unsigned int modifiers = 0;
-        int shift_p;
-        int lock_p;
-        Bool key_event_p = (x_event->type == KeyPress);
-        unsigned int *state =
-          key_event_p ? &x_event->xkey.state : &x_event->xbutton.state;
-	
-        /* If this is a synthetic KeyPress or Button event, and the user
-           has expressed a disinterest in this security hole, then drop
-           it on the floor. */
-        if ((key_event_p
-             ? x_event->xkey.send_event
-             : x_event->xbutton.send_event)
+	unsigned int modifiers = 0;
+	int shift_p, lock_p;
+	Bool key_event_p = (x_event->type == KeyPress);
+	unsigned int *state =
+	  key_event_p ? &x_event->xkey.state : &x_event->xbutton.state;
+
+	/* If this is a synthetic KeyPress or Button event, and the user
+	   has expressed a disinterest in this security hole, then drop
+	   it on the floor. */
+	if ((key_event_p
+	     ? x_event->xkey.send_event
+	     : x_event->xbutton.send_event)
 #ifdef EXTERNAL_WIDGET
-            /* ben: events get sent to an ExternalShell using XSendEvent.
-               This is not a perfect solution. */
-            && !FRAME_X_EXTERNAL_WINDOW_P (
-              x_any_window_to_frame (d, x_event->xany.window))
+	    /* ben: events get sent to an ExternalShell using XSendEvent.
+	       This is not a perfect solution. */
+	    && !FRAME_X_EXTERNAL_WINDOW_P
+	    (x_any_window_to_frame (d, x_event->xany.window))
 #endif
-            && !x_allow_sendevents)
-          return 0;
+	    && !x_allow_sendevents)
+	  return 0;
 
-        DEVICE_X_MOUSE_TIMESTAMP (d) =
-          DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d) =
-          key_event_p ? x_event->xkey.time : x_event->xbutton.time;
+	DEVICE_X_MOUSE_TIMESTAMP (d) =
+	  DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (d) =
+	  key_event_p ? x_event->xkey.time : x_event->xbutton.time;
 
-        x_handle_sticky_modifiers (x_event, d);
+	x_handle_sticky_modifiers (x_event, d);
+	
+	if (*state & ControlMask)    modifiers |= MOD_CONTROL;
+	if (*state & xd->MetaMask)   modifiers |= MOD_META;
+	if (*state & xd->SuperMask)  modifiers |= MOD_SUPER;
+	if (*state & xd->HyperMask)  modifiers |= MOD_HYPER;
+	if (*state & xd->AltMask)    modifiers |= MOD_ALT;
 
-        if (*state & ControlMask)    modifiers |= MOD_CONTROL;
-        if (*state & xd->MetaMask)   modifiers |= MOD_META;
-        if (*state & xd->SuperMask)  modifiers |= MOD_SUPER;
-        if (*state & xd->HyperMask)  modifiers |= MOD_HYPER;
-        if (*state & xd->AltMask)    modifiers |= MOD_ALT;
+	/* Ignore the Caps_Lock key if:
+	   - any other modifiers are down, so that Caps_Lock doesn't
+	     turn C-x into C-X, which would suck.
+	   - the event was a mouse event. */
+	if (modifiers || ! key_event_p)
+	  *state &= (~LockMask);
 
-        /* Ignore the Caps_Lock key if:
-           - any other modifiers are down, so that Caps_Lock doesn't
-             turn C-x into C-X, which would suck.
-           - the event was a mouse event. */
-        if (modifiers || ! key_event_p)
-          *state &= (~LockMask);
+	shift_p = *state & ShiftMask;
+	lock_p  = *state & LockMask;
 
-        shift_p = *state & ShiftMask;
-        lock_p  = *state & LockMask;
+	if (shift_p || lock_p)
+	  modifiers |= MOD_SHIFT;
 
-        if (shift_p || lock_p)
-          modifiers |= MOD_SHIFT;
+	if (key_event_p)
+	  {
+	    Lisp_Object keysym;
+	    XKeyEvent *ev = &x_event->xkey;
+	    KeyCode keycode = ev->keycode;
 
-        if (key_event_p)
-          {
-            Lisp_Object keysym;
-            XKeyEvent *ev = &x_event->xkey;
-            KeyCode keycode = ev->keycode;
+	    if (x_key_is_modifier_p (keycode, d)) /* it's a modifier key */
+	      return 0;
 
+	    /* This used to compute the frame from the given X window and
+	       store it here, but we really don't care about the frame. */
+	    emacs_event->channel = DEVICE_CONSOLE (d);
+	    keysym = x_to_emacs_keysym (&x_event->xkey, 0);
 
-            if (x_key_is_modifier_p (keycode, d)) /* it's a modifier key */
-              return 0;
+	    /* If the emacs keysym is nil, then that means that the
+	       X keysym was NoSymbol, which probably means that
+	       we're in the midst of reading a Multi_key sequence,
+	       or a "dead" key prefix.  Ignore it. */
+	    if (NILP (keysym))
+	      return 0;
 
-            /* This used to compute the frame from the given X window and
-               store it here, but we really don't care about the frame. */
-            emacs_event->channel = DEVICE_CONSOLE (d);
-            keysym = x_to_emacs_keysym (x_event, 0);
-	      
-            /* If the emacs keysym is nil, then that means that the
-               X keysym was NoSymbol, which probably means that
-               we're in the midst of reading a Multi_key sequence,
-               or a "dead" key prefix.  Ignore it. */
-            if (NILP (keysym))
-              return 0;
-	      
-            /* More Caps_Lock garbage: Caps_Lock should *only* add the
-               shift modifier to two-case keys (that is, A-Z and
-               related characters). So at this point (after looking up
-               the keysym) if the keysym isn't a dual-case alphabetic,
-               and if the caps lock key was down but the shift key
-               wasn't, then turn off the shift modifier.  Gag barf */
-            /* #### type lossage: assuming equivalence of emacs and
-               X keysyms */
-            /* !!#### maybe fix for Mule */
-            if (lock_p && !shift_p &&
-                ! (CHAR_OR_CHAR_INTP (keysym)
-                   && keysym_obeys_caps_lock_p
-                   ((KeySym) XCHAR_OR_CHAR_INT (keysym), d)))
-              modifiers &= (~MOD_SHIFT);
-	      
-            /* If this key contains two distinct keysyms, that is,
-               "shift" generates a different keysym than the
-               non-shifted key, then don't apply the shift modifier
-               bit: it's implicit.  Otherwise, if there would be no
-               other way to tell the difference between the shifted
-               and unshifted version of this key, apply the shift bit.
-               Non-graphics, like Backspace and F1 get the shift bit
-               in the modifiers slot.  Neither the characters "a",
-               "A", "2", nor "@" normally have the shift bit set.
-               However, "F1" normally does. */
-            if (modifiers & MOD_SHIFT)
-              {
-                int Mode_switch_p = *state & xd->ModeMask;
-                KeySym bot = XLookupKeysym (ev, Mode_switch_p ? 2 : 0);
-                KeySym top = XLookupKeysym (ev, Mode_switch_p ? 3 : 1);
-                if (top && bot && top != bot)
-                  modifiers &= ~MOD_SHIFT;
-              }
-            emacs_event->event_type	     = key_press_event;
-            emacs_event->timestamp	     = ev->time;
-            emacs_event->event.key.modifiers = modifiers;
-            emacs_event->event.key.keysym    = keysym;
-          }
-        else                    /* Mouse press/release event */
-          {
-            XButtonEvent *ev = &x_event->xbutton;
-            struct frame *frame = x_window_to_frame (d, ev->window);
-            if (! frame)
-              return 0;	/* not for us */
-            XSETFRAME (emacs_event->channel, frame);
-            
-            emacs_event->event_type = (x_event->type == ButtonPress) ?
-              button_press_event : button_release_event;
-            
-            emacs_event->event.button.modifiers = modifiers;
-            emacs_event->timestamp		= ev->time;
-            emacs_event->event.button.button	= ev->button;
-            emacs_event->event.button.x		= ev->x;
-            emacs_event->event.button.y		= ev->y;
+	    /* More Caps_Lock garbage: Caps_Lock should *only* add the
+	       shift modifier to two-case keys (that is, A-Z and
+	       related characters). So at this point (after looking up
+	       the keysym) if the keysym isn't a dual-case alphabetic,
+	       and if the caps lock key was down but the shift key
+	       wasn't, then turn off the shift modifier.  Gag barf */
+	    /* #### type lossage: assuming equivalence of emacs and
+	       X keysyms */
+	    /* !!#### maybe fix for Mule */
+	    if (lock_p && !shift_p &&
+		! (CHAR_OR_CHAR_INTP (keysym)
+		   && keysym_obeys_caps_lock_p
+		   ((KeySym) XCHAR_OR_CHAR_INT (keysym), d)))
+	      modifiers &= (~MOD_SHIFT);
+
+	    /* If this key contains two distinct keysyms, that is,
+	       "shift" generates a different keysym than the
+	       non-shifted key, then don't apply the shift modifier
+	       bit: it's implicit.  Otherwise, if there would be no
+	       other way to tell the difference between the shifted
+	       and unshifted version of this key, apply the shift bit.
+	       Non-graphics, like Backspace and F1 get the shift bit
+	       in the modifiers slot.  Neither the characters "a",
+	       "A", "2", nor "@" normally have the shift bit set.
+	       However, "F1" normally does. */
+	    if (modifiers & MOD_SHIFT)
+	      {
+		int Mode_switch_p = *state & xd->ModeMask;
+		KeySym bot = XLookupKeysym (ev, Mode_switch_p ? 2 : 0);
+		KeySym top = XLookupKeysym (ev, Mode_switch_p ? 3 : 1);
+		if (top && bot && top != bot)
+		  modifiers &= ~MOD_SHIFT;
+	      }
+	    emacs_event->event_type	     = key_press_event;
+	    emacs_event->timestamp	     = ev->time;
+	    emacs_event->event.key.modifiers = modifiers;
+	    emacs_event->event.key.keysym    = keysym;
+	  }
+	else                    /* Mouse press/release event */
+	  {
+	    XButtonEvent *ev = &x_event->xbutton;
+	    struct frame *frame = x_window_to_frame (d, ev->window);
+	    if (! frame)
+	      return 0;	/* not for us */
+	    XSETFRAME (emacs_event->channel, frame);
+
+	    emacs_event->event_type = (x_event->type == ButtonPress) ?
+	      button_press_event : button_release_event;
+
+	    emacs_event->event.button.modifiers = modifiers;
+            emacs_event->timestamp              = ev->time;
+            emacs_event->event.button.button    = ev->button;
+            emacs_event->event.button.x	        = ev->x;
+            emacs_event->event.button.y	        = ev->y;
           }
       }
     break;
@@ -1141,7 +1132,7 @@ handle_client_message (struct frame *f, XEvent *event)
 	 this is so that clicking on the close-box will make emacs prompt
 	 using a dialog box instead of the minibuffer if there are unsaved
 	 buffers.
-	 */
+       */
       enqueue_misc_user_event (frame, Qeval,
 			       list3 (Qdelete_frame, frame, Qt));
     }
@@ -1261,14 +1252,14 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       break;
       
     case VisibilityNotify: /* window visiblity has changed */
-     if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
+      if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
  	FRAME_X_TOTALLY_VISIBLE_P (f) =
  	  (event->xvisibility.state == VisibilityUnobscured);
-       break;
+      break;
       
     case ConfigureNotify:
 #ifdef HAVE_XIM
-      XIC_SetGeometry (f);
+      XIM_SetGeometry (f);
 #endif
       /* ### If the following code fails to work, simply always call
          x_smash_bastardly_shell_position always.  In this case we no
@@ -1777,6 +1768,7 @@ describe_event (XEvent *event)
 	describe_event_window (ev->window, ev->display);
 	stderr_out ("   subwindow: %ld\n", ev->subwindow);
 	stderr_out ("   state: ");
+	/* Complete list of modifier key masks */
 	if (state & ShiftMask)   stderr_out ("Shift ");
 	if (state & LockMask)    stderr_out ("Lock ");
 	if (state & ControlMask) stderr_out ("Control ");
@@ -1785,13 +1777,6 @@ describe_event (XEvent *event)
 	if (state & Mod3Mask)    stderr_out ("Mod3 ");
 	if (state & Mod4Mask)    stderr_out ("Mod4 ");
 	if (state & Mod5Mask)    stderr_out ("Mod5 ");
-#if 0 /* Apparently these don't exist? */
-	if (state & MetaMask)    stderr_out ("Meta ");
-	if (state & SuperMask)   stderr_out ("Super ");
-	if (state & HyperMask)   stderr_out ("Hyper ");
-	if (state & AltMask)     stderr_out ("Alt ");
-	if (state & ModeMask)    stderr_out ("Mode_switch ");
-#endif
 	
 	if (! state)
 	  stderr_out ("vanilla\n");
@@ -1800,17 +1785,6 @@ describe_event (XEvent *event)
 	if (x_key_is_modifier_p (ev->keycode, d))
 	  stderr_out ("   Modifier key");
 	stderr_out ("   keycode: 0x%x\n", ev->keycode);
-	keysym = x_to_emacs_keysym (event, 0);
-	if (CHAR_OR_CHAR_INTP (keysym))
-	  {
-            Emchar c = XCHAR_OR_CHAR_INT (keysym);
-	    if (c > 32 && c < 127)
-	      stderr_out ("   keysym: %c\n", c);
-	    else
-	      stderr_out ("   keysym: %d\n", c);
-	  }
-	else
-	  stderr_out ("   keysym: %s\n", string_data (XSYMBOL (keysym)->name));
       }
     break;
     
@@ -1928,7 +1902,7 @@ enqueue_Xt_dispatch_event (Lisp_Object event)
   enqueue_event (event, &dispatch_event_queue, &dispatch_event_queue_tail);
 }
 
-Lisp_Object
+static Lisp_Object
 dequeue_Xt_dispatch_event (void)
 {
   return dequeue_event (&dispatch_event_queue, &dispatch_event_queue_tail);
@@ -2081,7 +2055,7 @@ quit_char_predicate (Display *display, XEvent *event, XPointer data)
   /* This duplicates some code that exists elsewhere, but it's relatively
      fast and doesn't cons.
    */
-  keysym = x_to_emacs_keysym (event, 1);
+  keysym = x_to_emacs_keysym (&event->xkey, 1);
   if (NILP (keysym)) return 0;
   if (CHAR_OR_CHAR_INTP (keysym))
     c = XCHAR_OR_CHAR_INT (keysym);

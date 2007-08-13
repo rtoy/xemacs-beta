@@ -97,7 +97,7 @@ sigprof_handler (int signo)
   }
 }
 
-DEFUN ("start-profiling", Fstart_profiling, Sstart_profiling, 0, 1, 0 /*
+DEFUN ("start-profiling", Fstart_profiling, 0, 1, 0, /*
 Start profiling, with profile queries every MICROSECS.
 If MICROSECS is nil or omitted, the value of `default-profiling-interval'
 is used.
@@ -106,10 +106,9 @@ You can retrieve the recorded profiling info using `get-profiling-info'.
 
 Starting and stopping profiling does not clear the currently recorded
 info.  Thus you can start and stop as many times as you want and everything
-will be properly accumulated.  
-*/ )
-  (microsecs)
-     Lisp_Object microsecs;
+will be properly accumulated.
+*/
+       (microsecs))
 {
   int msecs;
   struct itimerval foo;
@@ -141,10 +140,10 @@ will be properly accumulated.
   return Qnil;
 }
 
-DEFUN ("stop-profiling", Fstop_profiling, Sstop_profiling, 0, 0, 0 /*
+DEFUN ("stop-profiling", Fstop_profiling, 0, 0, 0, /*
 Stop profiling.
-*/ )
-  ()
+*/
+       ())
 {
   struct itimerval foo;
 
@@ -179,11 +178,10 @@ get_profiling_info_maphash (CONST void *void_key,
 			  closure->accum);
 }
 
-DEFUN ("get-profiling-info", Fget_profiling_info, Sget_profiling_info,
-       0, 0, 0 /*
+DEFUN ("get-profiling-info", Fget_profiling_info, 0, 0, 0, /*
 Return the profiling info as an alist.
-*/ )
-  ()
+*/
+       ())
 {
   struct get_profiling_info_closure closure;
 
@@ -221,22 +219,20 @@ mark_profiling_info (void (*markfun) (Lisp_Object))
     maphash (mark_profiling_info_maphash, big_profile_table, &closure);
 }
 
-DEFUN ("clear-profiling-info", Fclear_profiling_info, Sclear_profiling_info,
-       0, 0, 0 /*
+DEFUN ("clear-profiling-info", Fclear_profiling_info, 0, 0, 0, /*
 Clear out the recorded profiling info.
-*/ )
-  ()
+*/
+       ())
 {
   if (big_profile_table)
     clrhash (big_profile_table);
   return Qnil;
 }
 
-DEFUN ("profiling-active-p", Fprofiling_active_p, Sprofiling_active_p,
-       0, 0, 0 /*
+DEFUN ("profiling-active-p", Fprofiling_active_p, 0, 0, 0, /*
 Return non-nil if profiling information is currently being recorded.
-*/ )
-  ()
+*/
+       ())
 {
   return profiling_active ? Qt : Qnil;
 }
@@ -244,11 +240,11 @@ Return non-nil if profiling information is currently being recorded.
 void
 syms_of_profile (void)
 {
-  defsubr (&Sstart_profiling);
-  defsubr (&Sstop_profiling);
-  defsubr (&Sget_profiling_info);
-  defsubr (&Sclear_profiling_info);
-  defsubr (&Sprofiling_active_p);
+  DEFSUBR (Fstart_profiling);
+  DEFSUBR (Fstop_profiling);
+  DEFSUBR (Fget_profiling_info);
+  DEFSUBR (Fclear_profiling_info);
+  DEFSUBR (Fprofiling_active_p);
 }
 
 void

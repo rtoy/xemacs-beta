@@ -473,7 +473,7 @@ restore_file_domain (Lisp_Object val)
 }
 #endif /* I18N3 */
 
-DEFUN ("load-internal", Fload_internal, Sload_internal, 1, 4, 0 /*
+DEFUN ("load-internal", Fload_internal, 1, 4, 0, /*
 Execute a file of Lisp code named FILE.
 First try FILE with `.elc' appended, then try with `.el',
  then try FILE unmodified.
@@ -485,9 +485,8 @@ Print messages at start and end of loading unless
 If optional fourth arg NOSUFFIX is non-nil, don't try adding
  suffixes `.elc' or `.el' to the specified name FILE.
 Return t if file exists.
-*/ )
-  (file, no_error, nomessage, nosuffix)
-     Lisp_Object file, no_error, nomessage, nosuffix;
+*/
+       (file, no_error, nomessage, nosuffix))
 {
   /* This function can GC */
   int fd = -1;
@@ -727,7 +726,7 @@ complete_filename_p (Lisp_Object pathname)
 }
 #endif /* 0 */
 
-DEFUN ("locate-file", Flocate_file, Slocate_file, 2, 4, 0 /*
+DEFUN ("locate-file", Flocate_file, 2, 4, 0, /*
 Search for FILENAME through PATH-LIST, expanded by one of the optional
 SUFFIXES (string of suffixes separated by \":\"s), checking for access
 MODE (0|1|2|4 = exists|executable|writeable|readable), default readable.
@@ -738,9 +737,8 @@ the face of a changing and unpredictable environment, but can occasionally
 get tripped up.  In this case, you will have to call
 `locate-file-clear-hashing' to get it back on track.  See that function
 for details.
-*/ )
-  (filename, path_list, suffixes, mode)
-     Lisp_Object filename, path_list, suffixes, mode;
+*/
+       (filename, path_list, suffixes, mode))
 {
   /* This function can GC */
   Lisp_Object tp;
@@ -1058,8 +1056,7 @@ locate_file (Lisp_Object path, Lisp_Object str, CONST char *suffix,
   return val;
 }
 
-DEFUN ("locate-file-clear-hashing", Flocate_file_clear_hashing,
-       Slocate_file_clear_hashing, 1, 1, 0 /*
+DEFUN ("locate-file-clear-hashing", Flocate_file_clear_hashing, 1, 1, 0, /*
 Clear the hash records for the specified list of directories.
 `locate-file' uses a hashing scheme to speed lookup, and will correctly
 track the following environmental changes:
@@ -1072,9 +1069,8 @@ track the following environmental changes:
 `locate-file' will primarily get confused if you add a file that shadows
 (i.e. has the same name as) another file further down in the directory list.
 In this case, you must call `locate-file-clear-hashing'.
-*/ )
-  (path)
-     Lisp_Object path;
+*/
+       (path))
 {
   Lisp_Object pathtail;
 
@@ -1261,7 +1257,7 @@ readevalloop (Lisp_Object readcharfun,
 
 #ifndef standalone
 
-DEFUN ("eval-buffer", Feval_buffer, Seval_buffer, 0, 2, "bBuffer: " /*
+DEFUN ("eval-buffer", Feval_buffer, 0, 2, "bBuffer: ", /*
 Execute BUFFER as Lisp code.
 Programs can pass two arguments, BUFFER and PRINTFLAG.
 BUFFER is the buffer to evaluate (nil means use current buffer).
@@ -1271,9 +1267,8 @@ nil means discard it; anything else is stream for print.
 If there is no error, point does not move.  If there is an error,
 point remains at the end of the last character read from the buffer.
 Execute BUFFER as Lisp code.
-*/ )
-  (bufname, printflag)
-     Lisp_Object bufname, printflag;
+*/
+       (bufname, printflag))
 {
   /* This function can GC */
   int speccount = specpdl_depth ();
@@ -1315,7 +1310,7 @@ point remains at the end of the last character read from the buffer.
 }
 #endif
 
-DEFUN ("eval-region", Feval_region, Seval_region, 2, 3, "r" /*
+DEFUN ("eval-region", Feval_region, 2, 3, "r", /*
 Execute the region as Lisp code.
 When called from programs, expects two arguments,
 giving starting and ending indices in the current buffer
@@ -1329,9 +1324,8 @@ point remains at the end of the last character read from the buffer.
 Note:  Before evaling the region, this function narrows the buffer to it.
 If the code being eval'd should happen to trigger a redisplay you may
 see some text temporarily disappear because of this.
-*/ )
-  (b, e, printflag)
-     Lisp_Object b, e, printflag;
+*/
+       (b, e, printflag))
 {
   /* This function can GC */
   int speccount = specpdl_depth ();
@@ -1359,7 +1353,7 @@ see some text temporarily disappear because of this.
 
 #endif /* standalone */
 
-DEFUN ("read", Fread, Sread, 0, 1, 0 /*
+DEFUN ("read", Fread, 0, 1, 0, /*
 Read one Lisp expression as text from STREAM, return as Lisp object.
 If STREAM is nil, use the value of `standard-input' (which see).
 STREAM or the value of `standard-input' may be:
@@ -1369,9 +1363,8 @@ STREAM or the value of `standard-input' may be:
      call it with a char as argument to push a char back)
  a string (takes text from string, starting at the beginning)
  t (read text line using minibuffer and use it).
-*/ )
-  (stream)
-     Lisp_Object stream;
+*/
+       (stream))
 {
   if (NILP (stream))
     stream = Vstandard_input;
@@ -1396,14 +1389,13 @@ STREAM or the value of `standard-input' may be:
   return read0 (stream);
 }
 
-DEFUN ("read-from-string", Fread_from_string, Sread_from_string, 1, 3, 0 /*
+DEFUN ("read-from-string", Fread_from_string, 1, 3, 0, /*
 Read one Lisp expression which is represented as text by STRING.
 Returns a cons: (OBJECT-READ . FINAL-STRING-INDEX).
 START and END optionally delimit a substring of STRING from which to read;
  they default to 0 and (length STRING) respectively.
-*/ )
-  (string, start, end)
-     Lisp_Object string, start, end;
+*/
+       (string, start, end))
 {
   Bytecount startval, endval;
   Lisp_Object tem;
@@ -2854,15 +2846,15 @@ init_lread (void)
 void
 syms_of_lread (void)
 {
-  defsubr (&Sread);
-  defsubr (&Sread_from_string);
-  defsubr (&Sload_internal);
-  defsubr (&Slocate_file);
-  defsubr (&Slocate_file_clear_hashing);
-  defsubr (&Seval_buffer);
-  defsubr (&Seval_region);
+  DEFSUBR (Fread);
+  DEFSUBR (Fread_from_string);
+  DEFSUBR (Fload_internal);
+  DEFSUBR (Flocate_file);
+  DEFSUBR (Flocate_file_clear_hashing);
+  DEFSUBR (Feval_buffer);
+  DEFSUBR (Feval_region);
 #ifdef standalone
-  defsubr (&Sread_char);
+  DEFSUBR (Fread_char);
 #endif
 
   defsymbol (&Qstandard_input, "standard-input");

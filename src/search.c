@@ -314,21 +314,20 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   return val;
 }
 
-DEFUN ("looking-at", Flooking_at, Slooking_at, 1, 2, 0 /*
+DEFUN ("looking-at", Flooking_at, 1, 2, 0, /*
 Return t if text after point matches regular expression REGEXP.
 This function modifies the match data that `match-beginning',
 `match-end' and `match-data' access; save and restore the match
 data if you want to preserve them.
 
 Optional argument BUFFER defaults to the current buffer.
-*/ )
-  (regexp, buffer)
-     Lisp_Object regexp, buffer;
+*/
+       (regexp, buffer))
 {
   return looking_at_1 (regexp, decode_buffer (buffer, 0), 0);
 }
 
-DEFUN ("posix-looking-at", Fposix_looking_at, Sposix_looking_at, 1, 2, 0 /*
+DEFUN ("posix-looking-at", Fposix_looking_at, 1, 2, 0, /*
 Return t if text after point matches regular expression REGEXP.
 Find the longest match, in accord with Posix regular expression rules.
 This function modifies the match data that `match-beginning',
@@ -336,9 +335,8 @@ This function modifies the match data that `match-beginning',
 data if you want to preserve them.
 
 Optional argument BUFFER defaults to the current buffer.
-*/ )
-  (regexp, buffer)
-     Lisp_Object regexp, buffer;
+*/
+       (regexp, buffer))
 {
   return looking_at_1 (regexp,  decode_buffer (buffer, 0), 1);
 }
@@ -394,7 +392,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   return make_int (bytecount_to_charcount (XSTRING_DATA (string), val));
 }
 
-DEFUN ("string-match", Fstring_match, Sstring_match, 2, 4, 0 /*
+DEFUN ("string-match", Fstring_match, 2, 4, 0, /*
 Return index of start of first match for REGEXP in STRING, or nil.
 If third arg START is non-nil, start search at that index in STRING.
 For index of first char beyond the match, do (match-end 0).
@@ -404,14 +402,13 @@ matched by parenthesis constructs in the pattern.
 Optional arg BUFFER controls how case folding is done (according to
 the value of `case-fold-search' in that buffer and that buffer's case
 tables) and defaults to the current buffer.
-*/ )
-  (regexp, string, start, buffer)
-     Lisp_Object regexp, string, start, buffer;
+*/
+       (regexp, string, start, buffer))
 {
   return string_match_1 (regexp, string, start, decode_buffer (buffer, 0), 0);
 }
 
-DEFUN ("posix-string-match", Fposix_string_match, Sposix_string_match, 2, 4, 0 /*
+DEFUN ("posix-string-match", Fposix_string_match, 2, 4, 0, /*
 Return index of start of first match for REGEXP in STRING, or nil.
 Find the longest match, in accord with Posix regular expression rules.
 If third arg START is non-nil, start search at that index in STRING.
@@ -422,9 +419,8 @@ matched by parenthesis constructs in the pattern.
 Optional arg BUFFER controls how case folding is done (according to
 the value of `case-fold-search' in that buffer and that buffer's case
 tables) and defaults to the current buffer.
-*/ )
-  (regexp, string, start, buffer)
-     Lisp_Object regexp, string, start, buffer;
+*/
+       (regexp, string, start, buffer))
 {
   return string_match_1 (regexp, string, start, decode_buffer (buffer, 0), 1);
 }
@@ -846,7 +842,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   }
 }
 
-DEFUN ("skip-chars-forward", Fskip_chars_forward, Sskip_chars_forward, 1, 3, 0 /*
+DEFUN ("skip-chars-forward", Fskip_chars_forward, 1, 3, 0, /*
 Move point forward, stopping before a char not in STRING, or at pos LIM.
 STRING is like the inside of a `[...]' in a regular expression
 except that `]' is never special and `\\' quotes `^', `-' or `\\'.
@@ -855,28 +851,26 @@ With arg \"^a-zA-Z\", skips nonletters stopping before first letter.
 Returns the distance traveled, either zero or positive.
 
 Optional argument BUFFER defaults to the current buffer.
-*/ )
-  (string, lim, buffer)
-     Lisp_Object string, lim, buffer;
+*/
+       (string, lim, buffer))
 {
   return skip_chars (decode_buffer (buffer, 0), 1, 0, string, lim);
 }
 
-DEFUN ("skip-chars-backward", Fskip_chars_backward, Sskip_chars_backward, 1, 3, 0 /*
+DEFUN ("skip-chars-backward", Fskip_chars_backward, 1, 3, 0, /*
 Move point backward, stopping after a char not in STRING, or at pos LIM.
 See `skip-chars-forward' for details.
 Returns the distance traveled, either zero or negative.
 
 Optional argument BUFFER defaults to the current buffer.
-*/ )
-  (string, lim, buffer)
-     Lisp_Object string, lim, buffer;
+*/
+       (string, lim, buffer))
 {
   return skip_chars (decode_buffer (buffer, 0), 0, 0, string, lim);
 }
 
 
-DEFUN ("skip-syntax-forward", Fskip_syntax_forward, Sskip_syntax_forward, 1, 3, 0 /*
+DEFUN ("skip-syntax-forward", Fskip_syntax_forward, 1, 3, 0, /*
 Move point forward across chars in specified syntax classes.
 SYNTAX is a string of syntax code characters.
 Stop before a char whose syntax is not in SYNTAX, or at position LIM.
@@ -884,14 +878,13 @@ If SYNTAX starts with ^, skip characters whose syntax is NOT in SYNTAX.
 This function returns the distance traveled, either zero or positive.
 
 Optional argument BUFFER defaults to the current buffer.
-*/ )
-  (syntax, lim, buffer)
-     Lisp_Object syntax, lim, buffer;
+*/
+       (syntax, lim, buffer))
 {
   return skip_chars (decode_buffer (buffer, 0), 1, 1, syntax, lim);
 }
 
-DEFUN ("skip-syntax-backward", Fskip_syntax_backward, Sskip_syntax_backward, 1, 3, 0 /*
+DEFUN ("skip-syntax-backward", Fskip_syntax_backward, 1, 3, 0, /*
 Move point backward across chars in specified syntax classes.
 SYNTAX is a string of syntax code characters.
 Stop on reaching a char whose syntax is not in SYNTAX, or at position LIM.
@@ -899,9 +892,8 @@ If SYNTAX starts with ^, skip characters whose syntax is NOT in SYNTAX.
 This function returns the distance traveled, either zero or negative.
 
 Optional argument BUFFER defaults to the current buffer.
-*/ )
-  (syntax, lim, buffer)
-     Lisp_Object syntax, lim, buffer;
+*/
+       (syntax, lim, buffer))
 {
   return skip_chars (decode_buffer (buffer, 0), 0, 1, syntax, lim);
 }
@@ -1554,8 +1546,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
   }
 }
 
-DEFUN ("search-backward", Fsearch_backward, Ssearch_backward, 1, 5,
-  "sSearch backward: " /*
+DEFUN ("search-backward", Fsearch_backward, 1, 5, "sSearch backward: ", /*
 Search backward from point for STRING.
 Set point to the beginning of the occurrence found, and return point.
 An optional second argument bounds the search; it is a buffer position.
@@ -1566,14 +1557,13 @@ Optional fourth argument is repeat count--search for successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
  defaults to the current buffer.
 See also the functions `match-beginning', `match-end' and `replace-match'.
-*/ )
-  (string, bound, no_error, count, buffer)
-     Lisp_Object string, bound, no_error, count, buffer;
+*/
+       (string, bound, no_error, count, buffer))
 {
   return search_command (string, bound, no_error, count, buffer, -1, 0, 0);
 }
 
-DEFUN ("search-forward", Fsearch_forward, Ssearch_forward, 1, 5, "sSearch: " /*
+DEFUN ("search-forward", Fsearch_forward, 1, 5, "sSearch: ", /*
 Search forward from point for STRING.
 Set point to the end of the occurrence found, and return point.
 An optional second argument bounds the search; it is a buffer position.
@@ -1585,16 +1575,14 @@ Optional fourth argument is repeat count--search for successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
  defaults to the current buffer.
 See also the functions `match-beginning', `match-end' and `replace-match'.
-*/ )
-  (string, bound, no_error, count, buffer)
-     Lisp_Object string, bound, no_error, count, buffer;
+*/
+       (string, bound, no_error, count, buffer))
 {
   return search_command (string, bound, no_error, count, buffer, 1, 0, 0);
 }
 
-DEFUN ("word-search-backward", Fword_search_backward, Sword_search_backward,
-       1, 5,
-  "sWord search backward: " /*
+DEFUN ("word-search-backward", Fword_search_backward, 1, 5,
+       "sWord search backward: ", /*
 Search backward from point for STRING, ignoring differences in punctuation.
 Set point to the beginning of the occurrence found, and return point.
 An optional second argument bounds the search; it is a buffer position.
@@ -1604,16 +1592,14 @@ Optional third argument, if t, means if fail just return nil (no error).
 Optional fourth argument is repeat count--search for successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
  defaults to the current buffer.
-*/ )
-  (string, bound, no_error, count, buffer)
-     Lisp_Object string, bound, no_error, count, buffer;
+*/
+       (string, bound, no_error, count, buffer))
 {
   return search_command (wordify (buffer, string), bound, no_error, count,
 			 buffer, -1, 1, 0);
 }
 
-DEFUN ("word-search-forward", Fword_search_forward, Sword_search_forward, 1, 5,
-  "sWord search: " /*
+DEFUN ("word-search-forward", Fword_search_forward, 1, 5, "sWord search: ", /*
 Search forward from point for STRING, ignoring differences in punctuation.
 Set point to the end of the occurrence found, and return point.
 An optional second argument bounds the search; it is a buffer position.
@@ -1623,16 +1609,15 @@ Optional third argument, if t, means if fail just return nil (no error).
 Optional fourth argument is repeat count--search for successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
  defaults to the current buffer.
-*/ )
-  (string, bound, no_error, count, buffer)
-     Lisp_Object string, bound, no_error, count, buffer;
+*/
+       (string, bound, no_error, count, buffer))
 {
   return search_command (wordify (buffer, string), bound, no_error, count,
 			 buffer, 1, 1, 0);
 }
 
-DEFUN ("re-search-backward", Fre_search_backward, Sre_search_backward, 1, 5,
-  "sRE search backward: " /*
+DEFUN ("re-search-backward", Fre_search_backward, 1, 5,
+       "sRE search backward: ", /*
 Search backward from point for match for regular expression REGEXP.
 Set point to the beginning of the match, and return point.
 The match found is the one starting last in the buffer
@@ -1645,15 +1630,13 @@ Optional fourth argument is repeat count--search for successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
  defaults to the current buffer.
 See also the functions `match-beginning', `match-end' and `replace-match'.
-*/ )
-  (regexp, bound, no_error, count, buffer)
-     Lisp_Object regexp, bound, no_error, count, buffer;
+*/
+       (regexp, bound, no_error, count, buffer))
 {
   return search_command (regexp, bound, no_error, count, buffer, -1, 1, 0);
 }
 
-DEFUN ("re-search-forward", Fre_search_forward, Sre_search_forward, 1, 5,
-  "sRE search: " /*
+DEFUN ("re-search-forward", Fre_search_forward, 1, 5, "sRE search: ", /*
 Search forward from point for regular expression REGEXP.
 Set point to the end of the occurrence found, and return point.
 An optional second argument bounds the search; it is a buffer position.
@@ -1664,16 +1647,14 @@ Optional fourth argument is repeat count--search for successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
  defaults to the current buffer.
 See also the functions `match-beginning', `match-end' and `replace-match'.
-*/ )
-  (regexp, bound, no_error, count, buffer)
-     Lisp_Object regexp, bound, no_error, count, buffer;
+*/
+       (regexp, bound, no_error, count, buffer))
 {
   return search_command (regexp, bound, no_error, count, buffer, 1, 1, 0);
 }
 
-DEFUN ("posix-search-backward", Fposix_search_backward, Sposix_search_backward,
-       1, 5,
-  "sPosix search backward: " /*
+DEFUN ("posix-search-backward", Fposix_search_backward, 1, 5,
+       "sPosix search backward: ", /*
 Search backward from point for match for regular expression REGEXP.
 Find the longest match in accord with Posix regular expression rules.
 Set point to the beginning of the match, and return point.
@@ -1687,16 +1668,14 @@ Optional fourth argument is repeat count--search for successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
  defaults to the current buffer.
 See also the functions `match-beginning', `match-end' and `replace-match'.
-*/ )
-  (regexp, bound, no_error, count, buffer)
-     Lisp_Object regexp, bound, no_error, count, buffer;
+*/
+       (regexp, bound, no_error, count, buffer))
 {
   return search_command (regexp, bound, no_error, count, buffer, -1, 1, 1);
 }
 
-DEFUN ("posix-search-forward", Fposix_search_forward, Sposix_search_forward,
-       1, 5,
-  "sPosix search: " /*
+DEFUN ("posix-search-forward", Fposix_search_forward, 1, 5,
+       "sPosix search: ", /*
 Search forward from point for regular expression REGEXP.
 Find the longest match in accord with Posix regular expression rules.
 Set point to the end of the occurrence found, and return point.
@@ -1708,9 +1687,8 @@ Optional fourth argument is repeat count--search for successive occurrences.
 Optional fifth argument BUFFER specifies the buffer to search in and
  defaults to the current buffer.
 See also the functions `match-beginning', `match-end' and `replace-match'.
-*/ )
-  (regexp, bound, no_error, count, buffer)
-     Lisp_Object regexp, bound, no_error, count, buffer;
+*/
+       (regexp, bound, no_error, count, buffer))
 {
   return search_command (regexp, bound, no_error, count, buffer, 1, 1, 1);
 }
@@ -1727,7 +1705,7 @@ free_created_dynarrs (Lisp_Object cons)
   return Qnil;
 }
 
-DEFUN ("replace-match", Freplace_match, Sreplace_match, 1, 5, 0 /*
+DEFUN ("replace-match", Freplace_match, 1, 5, 0, /*
 Replace text matched by last search with NEWTEXT.
 If second arg FIXEDCASE is non-nil, do not alter case of replacement text.
 Otherwise maybe capitalize the whole text, or maybe just word initials,
@@ -1761,9 +1739,8 @@ the buffer to be used for syntax-table and case-table lookup and
 defaults to the current buffer. (When fourth argument is not a string,
 the buffer that the match occurred in has automatically been remembered
 and you do not need to specify it.)
-*/ )
-  (newtext, fixedcase, literal, string, strbuffer)
-     Lisp_Object newtext, fixedcase, literal, string, strbuffer;
+*/
+       (newtext, fixedcase, literal, string, strbuffer))
 {
   /* This function has been Mule-ized. */
   /* This function can GC */
@@ -2203,38 +2180,36 @@ match_limit (Lisp_Object num, int beginningp)
 		                    : search_regs.end[n]));
 }
 
-DEFUN ("match-beginning", Fmatch_beginning, Smatch_beginning, 1, 1, 0 /*
+DEFUN ("match-beginning", Fmatch_beginning, 1, 1, 0, /*
 Return position of start of text matched by last regexp search.
 NUM, specifies which parenthesized expression in the last regexp.
  Value is nil if NUMth pair didn't match, or there were less than NUM pairs.
 Zero means the entire text matched by the whole regexp or whole string.
-*/ )
-  (num)
-     Lisp_Object num;
+*/
+       (num))
 {
   return match_limit (num, 1);
 }
 
-DEFUN ("match-end", Fmatch_end, Smatch_end, 1, 1, 0 /*
+DEFUN ("match-end", Fmatch_end, 1, 1, 0, /*
 Return position of end of text matched by last regexp search.
 NUM specifies which parenthesized expression in the last regexp.
  Value is nil if NUMth pair didn't match, or there were less than NUM pairs.
 Zero means the entire text matched by the whole regexp or whole string.
-*/ )
-  (num)
-     Lisp_Object num;
+*/
+       (num))
 {
   return match_limit (num, 0);
 } 
 
-DEFUN ("match-data", Fmatch_data, Smatch_data, 0, 0, 0 /*
+DEFUN ("match-data", Fmatch_data, 0, 0, 0, /*
 Return a list containing all info on what the last regexp search matched.
 Element 2N is `(match-beginning N)'; element 2N + 1 is `(match-end N)'.
 All the elements are markers or nil (nil if the Nth pair didn't match)
 if the last match was on a buffer; integers or nil if a string was matched.
 Use `store-match-data' to reinstate the data in this list.
-*/ )
-  ()
+*/
+       ())
 {
   /* This function has been Mule-ized. */
   Lisp_Object *data;
@@ -2282,12 +2257,11 @@ Use `store-match-data' to reinstate the data in this list.
 }
 
 
-DEFUN ("store-match-data", Fstore_match_data, Sstore_match_data, 1, 1, 0 /*
+DEFUN ("store-match-data", Fstore_match_data, 1, 1, 0, /*
 Set internal data on last search match from elements of LIST.
 LIST should have been created by calling `match-data' previously.
-*/ )
-  (list)
-     Lisp_Object list;
+*/
+       (list))
 {
   /* This function has been Mule-ized. */
   register int i;
@@ -2409,11 +2383,10 @@ restore_match_data (void)
 
 /* Quote a string to inactivate reg-expr chars */
 
-DEFUN ("regexp-quote", Fregexp_quote, Sregexp_quote, 1, 1, 0 /*
+DEFUN ("regexp-quote", Fregexp_quote, 1, 1, 0, /*
 Return a regexp string which matches exactly STRING and nothing else.
-*/ )
-  (str)
-     Lisp_Object str;
+*/
+       (str))
 {
   /* This function has been Mule-ized. */
   register Bufbyte *in, *out, *end;
@@ -2454,28 +2427,28 @@ syms_of_search (void)
   deferror (&Qsearch_failed, "search-failed", "Search failed", Qerror);
   deferror (&Qinvalid_regexp, "invalid-regexp", "Invalid regexp", Qerror);
 
-  defsubr (&Slooking_at);
-  defsubr (&Sposix_looking_at);
-  defsubr (&Sstring_match);
-  defsubr (&Sposix_string_match);
-  defsubr (&Sskip_chars_forward);
-  defsubr (&Sskip_chars_backward);
-  defsubr (&Sskip_syntax_forward);
-  defsubr (&Sskip_syntax_backward);
-  defsubr (&Ssearch_forward);
-  defsubr (&Ssearch_backward);
-  defsubr (&Sword_search_forward);
-  defsubr (&Sword_search_backward);
-  defsubr (&Sre_search_forward);
-  defsubr (&Sre_search_backward);
-  defsubr (&Sposix_search_forward);
-  defsubr (&Sposix_search_backward);
-  defsubr (&Sreplace_match);
-  defsubr (&Smatch_beginning);
-  defsubr (&Smatch_end);
-  defsubr (&Smatch_data);
-  defsubr (&Sstore_match_data);
-  defsubr (&Sregexp_quote);
+  DEFSUBR (Flooking_at);
+  DEFSUBR (Fposix_looking_at);
+  DEFSUBR (Fstring_match);
+  DEFSUBR (Fposix_string_match);
+  DEFSUBR (Fskip_chars_forward);
+  DEFSUBR (Fskip_chars_backward);
+  DEFSUBR (Fskip_syntax_forward);
+  DEFSUBR (Fskip_syntax_backward);
+  DEFSUBR (Fsearch_forward);
+  DEFSUBR (Fsearch_backward);
+  DEFSUBR (Fword_search_forward);
+  DEFSUBR (Fword_search_backward);
+  DEFSUBR (Fre_search_forward);
+  DEFSUBR (Fre_search_backward);
+  DEFSUBR (Fposix_search_forward);
+  DEFSUBR (Fposix_search_backward);
+  DEFSUBR (Freplace_match);
+  DEFSUBR (Fmatch_beginning);
+  DEFSUBR (Fmatch_end);
+  DEFSUBR (Fmatch_data);
+  DEFSUBR (Fstore_match_data);
+  DEFSUBR (Fregexp_quote);
 }
 
 void

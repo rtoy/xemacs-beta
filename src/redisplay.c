@@ -105,6 +105,10 @@ typedef struct position_redisplay_data_type
 			       Used to optimize some lookups -- we
 			       only have to do some things when
 			       the charset changes. */
+  face_index last_findex;   /* The face index of the previous character.
+			       Needed to ensure the validity of the
+			       last_charset optimization. */
+  
   int last_char_width;	/* The width of the previous character. */
   int font_is_bogus;	/* If true, it means we couldn't instantiate
 			   the font for this charset, so we substitute
@@ -847,7 +851,8 @@ add_emchar_rune (pos_data *data)
   else
     {
       Lisp_Object charset = CHAR_CHARSET (data->ch);
-      if (!EQ (charset, data->last_charset))
+      if (!EQ (charset, data->last_charset) ||
+	  data->findex != data->last_findex)
 	{
 	  /* OK, we need to do things the hard way. */
 	  struct window *w = XWINDOW (data->window);
@@ -873,8 +878,8 @@ add_emchar_rune (pos_data *data)
 	    data->last_char_width = -1;
 	  data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
 	  data->new_descent = max (data->new_descent, (int) fi->descent);
-	  /* The following line causes display goobers and I don't know why */
-	  /*data->last_charset = charset;*/
+	  data->last_charset = charset;
+	  data->last_findex = data->findex;
 	}
 
       width = data->last_char_width;
@@ -1874,6 +1879,7 @@ create_text_block (struct window *w, struct display_line *dl,
   data.bi_bufpos = bi_start_pos;
   data.pixpos = dl->bounds.left_in;
   data.last_charset = Qunbound;
+  data.last_findex = DEFAULT_INDEX;
   data.result_str = Qnil;
 
   /* Set the right boundary adjusting it to take into account any end
@@ -2640,6 +2646,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
   data.cursor_x = -1;
   data.findex = DEFAULT_INDEX;
   data.last_charset = Qunbound;
+  data.last_findex = DEFAULT_INDEX;
   data.result_str = Qnil;
 
   Dynarr_reset (data.db->runes);
@@ -3567,6 +3574,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
   data.max_pixpos = max_pixpos;
   data.cursor_type = NO_CURSOR;
   data.last_charset = Qunbound;
+  data.last_findex = DEFAULT_INDEX;
   data.result_str = result_str;
   data.is_modeline = 1;
   XSETWINDOW (data.window, w);
@@ -7715,11 +7723,10 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 /*									   */
 /***************************************************************************/
 
-DEFUN ("redisplay-echo-area", Fredisplay_echo_area, Sredisplay_echo_area,
-       0, 0, 0 /*
+DEFUN ("redisplay-echo-area", Fredisplay_echo_area, 0, 0, 0, /*
 Ensure that all minibuffers are correctly showing the echo area.
-*/ )
-     ()
+*/
+       ())
 {
   Lisp_Object devcons, concons;
 
@@ -7757,15 +7764,14 @@ restore_disable_preemption_value (Lisp_Object value)
   return Qnil;
 }
 
-DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 0, 2, 0 /*
+DEFUN ("redraw-frame", Fredraw_frame, 0, 2, 0, /*
 Clear frame FRAME and output again what is supposed to appear on it.
 FRAME defaults to the selected frame if omitted.
 Normally, redisplay is preempted as normal if input arrives.  However,
 if optional second arg NO-PREEMPT is non-nil, redisplay will not stop for
 input and is guaranteed to proceed to completion.
-*/ )
-     (frame, no_preempt)
-     Lisp_Object frame, no_preempt;
+*/
+       (frame, no_preempt))
 {
   struct frame *f = decode_frame (frame);
   int count = specpdl_depth ();
@@ -7783,7 +7789,7 @@ input and is guaranteed to proceed to completion.
   return unbind_to (count, Qnil);
 }
 
-DEFUN ("redisplay-frame", Fredisplay_frame, Sredisplay_frame, 0, 2, 0 /*
+DEFUN ("redisplay-frame", Fredisplay_frame, 0, 2, 0, /*
 Ensure that FRAME's contents are correctly displayed.
 This differs from `redraw-frame' in that it only redraws what needs to
 be updated, as opposed to unconditionally clearing and redrawing
@@ -7792,9 +7798,8 @@ FRAME defaults to the selected frame if omitted.
 Normally, redisplay is preempted as normal if input arrives.  However,
 if optional second arg NO-PREEMPT is non-nil, redisplay will not stop for
 input and is guaranteed to proceed to completion.
-*/ )
-     (frame, no_preempt)
-     Lisp_Object frame, no_preempt;
+*/
+       (frame, no_preempt))
 {
   struct frame *f = decode_frame (frame);
   int count = specpdl_depth ();
@@ -7811,15 +7816,14 @@ input and is guaranteed to proceed to completion.
   return unbind_to (count, Qnil);
 }
 
-DEFUN ("redraw-device", Fredraw_device, Sredraw_device, 0, 2, 0 /*
+DEFUN ("redraw-device", Fredraw_device, 0, 2, 0, /*
 Clear device DEVICE and output again what is supposed to appear on it.
 DEVICE defaults to the selected device if omitted.
 Normally, redisplay is preempted as normal if input arrives.  However,
 if optional second arg NO-PREEMPT is non-nil, redisplay will not stop for
 input and is guaranteed to proceed to completion.
-*/ )
-     (device, no_preempt)
-     Lisp_Object device, no_preempt;
+*/
+       (device, no_preempt))
 {
   struct device *d = decode_device (device);
   Lisp_Object frmcons;
@@ -7841,7 +7845,7 @@ input and is guaranteed to proceed to completion.
   return unbind_to (count, Qnil);
 }
 
-DEFUN ("redisplay-device", Fredisplay_device, Sredisplay_device, 0, 2, 0 /*
+DEFUN ("redisplay-device", Fredisplay_device, 0, 2, 0, /*
 Ensure that DEVICE's contents are correctly displayed.
 This differs from `redraw-device' in that it only redraws what needs to
 be updated, as opposed to unconditionally clearing and redrawing
@@ -7850,9 +7854,8 @@ DEVICE defaults to the selected device if omitted.
 Normally, redisplay is preempted as normal if input arrives.  However,
 if optional second arg NO-PREEMPT is non-nil, redisplay will not stop for
 input and is guaranteed to proceed to completion.
-*/ )
-     (device, no_preempt)
-     Lisp_Object device, no_preempt;
+*/
+       (device, no_preempt))
 {
   struct device *d = decode_device (device);
   int count = specpdl_depth ();
@@ -7872,24 +7875,21 @@ input and is guaranteed to proceed to completion.
 /* Big lie.  Big lie.  This will force all modelines to be updated
    regardless if the all flag is set or not.  It remains in existence
    solely for backwards compatibility. */
-DEFUN ("redraw-modeline", Fredraw_modeline, Sredraw_modeline, 0, 1, 0 /*
+DEFUN ("redraw-modeline", Fredraw_modeline, 0, 1, 0, /*
 Force the modeline of the current buffer to be redisplayed.
 With optional non-nil ALL, force redisplay of all modelines.
-*/ )
-       (all)
-       Lisp_Object all;
+*/
+       (all))
 {
   MARK_MODELINE_CHANGED;
   return Qnil;
 }
 
-DEFUN ("force-cursor-redisplay", Fforce_cursor_redisplay,
-       Sforce_cursor_redisplay, 0, 1, 0 /*
+DEFUN ("force-cursor-redisplay", Fforce_cursor_redisplay, 0, 1, 0, /*
 Force an immediate update of the cursor on FRAME.
 FRAME defaults to the selected frame if omitted.
-*/ )
-  (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   redisplay_redraw_cursor (decode_frame (frame), 1);
   return Qnil;
@@ -8113,13 +8113,13 @@ syms_of_redisplay (void)
   defsymbol (&Qredisplay_end_trigger_functions,
 	     "redisplay-end-trigger-functions");
 
-  defsubr (&Sredisplay_echo_area);
-  defsubr (&Sredraw_frame);
-  defsubr (&Sredisplay_frame);
-  defsubr (&Sredraw_device);
-  defsubr (&Sredisplay_device);
-  defsubr (&Sredraw_modeline);
-  defsubr (&Sforce_cursor_redisplay);
+  DEFSUBR (Fredisplay_echo_area);
+  DEFSUBR (Fredraw_frame);
+  DEFSUBR (Fredisplay_frame);
+  DEFSUBR (Fredraw_device);
+  DEFSUBR (Fredisplay_device);
+  DEFSUBR (Fredraw_modeline);
+  DEFSUBR (Fforce_cursor_redisplay);
 }
 
 void

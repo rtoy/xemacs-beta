@@ -943,23 +943,19 @@ EnergizePosForBufpos (Bufpos emacs_pos, BufferInfo *binfo)
 #endif /* !I18N4 */
 
 
-DEFUN ("energize-update-menubar", Fenergize_update_menubar,
-       Senergize_update_menubar, 0, 1, 0 /*
+DEFUN ("energize-update-menubar", Fenergize_update_menubar, 0, 1, 0, /*
 obsolete
-*/ )
-     (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   return Qnil;
 }
 
 
-DEFUN ("energize-extent-menu-p", Fenergize_extent_menu_p,
-       Senergize_extent_menu_p, 1, 1, 0 /*
+DEFUN ("energize-extent-menu-p", Fenergize_extent_menu_p, 1, 1, 0, /*
 Whether the extent has a set of commands defined by Energize.
-*/ )
-     (extent_obj)
-     Lisp_Object extent_obj;
+*/
+       (extent_obj))
 {
   CHECK_EXTENT (extent_obj);
 
@@ -2478,8 +2474,7 @@ list_choices (Lisp_Object buffer, Lisp_Object extent_obj,
   return NILP (only_name) ? item_list : item;
 }
 
-DEFUN ("energize-list-menu", Fenergize_list_menu,
-       Senergize_list_menu, 3, 4, 0 /*
+DEFUN ("energize-list-menu", Fenergize_list_menu, 3, 4, 0, /*
 Request the set of menu options from the Energize server that are
 appropriate to the buffer and the extent.  Extent can be (), in which case
 the options are requested for the whole buffer.	 Selection-p tells
@@ -2491,9 +2486,8 @@ The list is (buffer extent or () <item1> ... <itemN>).
 where <itemI> is (name id1 id2 flags); idI is (high . low).
 If optional argument only-name is provided only the item with name only-name
 is returned, or () if no such item exists.
-*/ )
-     (buffer, extent_obj, selection_p, only_name)
-     Lisp_Object buffer, extent_obj, selection_p, only_name;
+*/
+       (buffer, extent_obj, selection_p, only_name))
 {
   Lisp_Object res;
   CHECK_BUFFER (buffer);
@@ -2509,17 +2503,15 @@ is returned, or () if no such item exists.
   return res;
 }
 
-DEFUN ("energize-execute-menu-item", Fenergize_execute_menu_item,
-       Senergize_execute_menu_item, 3, 5, 0 /*
+DEFUN ("energize-execute-menu-item", Fenergize_execute_menu_item, 3, 5, 0, /*
 Item is a vector received by energize-list-menu.  Sends a request to
 execute the code associated to this menu inside the Energize server.
 Optional fourth argument is a string or a vector to be used as the selection
 for entry disabled because they need the selection.
 Optional fifth argument, if non NIL, tells Energize to not request 
 confirmation before executing the command.
-*/ )
-(buffer, extent_obj, item, selection, no_confirm)
-Lisp_Object buffer, extent_obj, item, selection, no_confirm;
+*/
+       (buffer, extent_obj, item, selection, no_confirm))
 {
   struct Lisp_Vector *v;
 
@@ -2543,8 +2535,8 @@ Lisp_Object buffer, extent_obj, item, selection, no_confirm;
   return Qt;
 }
 
-DEFUN ("energize-execute-command-internal", Fenergize_execute_command_internal,
-       Senergize_execute_command_internal, 3, 5, 0 /*
+DEFUN ("energize-execute-command-internal",
+       Fenergize_execute_command_internal, 3, 5, 0, /*
 Command is a string naming an energize command.	 Sends a request to
 execute this command inside the Energize server.
 Optional fourth argument is a string or a vector to be used as the selection.
@@ -2552,9 +2544,8 @@ Optional fifth argument, if non NIL, tells Energize to not request
 confirmation before executing the command.
 
 See also 'energize-list-menu'.
-*/ )
-     (buffer, extent_obj, command, selection, no_confirm)
-     Lisp_Object buffer, extent_obj, command, selection, no_confirm;
+*/
+       (buffer, extent_obj, command, selection, no_confirm))
 {
   if (!energize_connection || !energize_connection->conn) return Qnil;
 
@@ -2570,14 +2561,11 @@ See also 'energize-list-menu'.
 
 /********************************* kill buffer interface ****************/
 
-DEFUN ("energize-buffer-type-internal",
-       Fenergize_buffer_type, Senergize_buffer_type,
-       1, 1, 0 /*
+DEFUN ("energize-buffer-type-internal", Fenergize_buffer_type, 1, 1, 0, /*
 Return a symbol denoting the buffer type if buffer is an Energize
 buffer, else it returns NIL.
-*/ )
-	(buffer)
-	Lisp_Object buffer;
+*/
+       (buffer))
 {
   if (!energize_connection) return Qnil;
 
@@ -2585,14 +2573,11 @@ buffer, else it returns NIL.
   return get_buffer_type_for_emacs_buffer (buffer, energize_connection);
 }
 
-DEFUN ("set-energize-buffer-type-internal",
-       Fset_energize_buffer_type_internal,
-       Sset_energize_buffer_type_internal, 2, 2, 0 /*
+DEFUN ("set-energize-buffer-type-internal", Fset_energize_buffer_type_internal, 2, 2, 0, /*
 Return the type symbol which is the new buffer-type, if the buffer is
 an Energize buffer and the type is non-NIL symbol, else it returns NIL.
-*/ )
-   (buffer, type)
-    Lisp_Object buffer, type;
+*/
+       (buffer, type))
 {
   BufferInfo *binfo;
 
@@ -2609,11 +2594,10 @@ an Energize buffer and the type is non-NIL symbol, else it returns NIL.
       set_buffer_type_for_emacs_buffer (buffer, energize_connection, type);
 }
 
-DEFUN ("energize-buffer-p", Fenergize_buffer_p, Senergize_buffer_p, 1, 1, 0 /*
+DEFUN ("energize-buffer-p", Fenergize_buffer_p, 1, 1, 0, /*
 Whether buffer is an Energize buffer.
-*/ )
-  (buffer)
-  Lisp_Object buffer;
+*/
+       (buffer))
 {
   BufferInfo *binfo;
 
@@ -2627,11 +2611,10 @@ Whether buffer is an Energize buffer.
     return Qt;
 }
 
-DEFUN ("energize-buffer-id", Fenergize_buffer_id, Senergize_buffer_id, 1, 1, 0 /*
+DEFUN ("energize-buffer-id", Fenergize_buffer_id, 1, 1, 0, /*
 Return (high . low) if buffer is an Energize buffer, otherwise nil.
-*/ )
-     (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   BufferInfo *binfo;
 
@@ -2645,12 +2628,10 @@ Return (high . low) if buffer is an Energize buffer, otherwise nil.
     return word_to_lisp (binfo->id);
 }
 
-DEFUN ("energize-request-kill-buffer", Fenergize_request_kill_buffer,
-       Senergize_request_kill_buffer, 1, 1, 0 /*
+DEFUN ("energize-request-kill-buffer", Fenergize_request_kill_buffer, 1, 1, 0, /*
 Sends a request to energize for killing buffer.
-*/ )
-   (buffer)
-   Lisp_Object buffer;
+*/
+       (buffer))
 {
   BufferInfo *binfo;
 
@@ -3747,13 +3728,10 @@ make_energize_connection (Editor *editor, int fdin, int fdout)
   return conn;
 }
 
-DEFUN ("handle-energize-request", Fhandle_energize_request,
-       Shandle_energize_request,
-       2, 2, 0 /*
+DEFUN ("handle-energize-request", Fhandle_energize_request, 2, 2, 0, /*
 Filter called when a request is available from Energize.
-*/ )
-     (proc, string)
-     Lisp_Object proc, string;
+*/
+       (proc, string))
 {
   if (!NILP (string))
     CHECK_STRING (string);
@@ -3837,7 +3815,7 @@ connect_to_energize (char *server_str, char *arg)
 #endif
 	    abort ();
 
-	  XSETSUBR (fil, &Shandle_energize_request);
+	  XSETSUBR (fil, &SFhandle_energize_request);
 	  set_process_filter (lp, fil, 1);
 
 	  Venergize_kernel_busy = Qnil;
@@ -3932,16 +3910,13 @@ close_energize_connection ()
 }
 
 
-DEFUN ("connect-to-energize-internal",
-       Fconnect_to_energize_internal, Sconnect_to_energize_internal, 0, 2, 0 /*
+DEFUN ("connect-to-energize-internal", Fconnect_to_energize_internal, 0, 2, 0, /*
 Usage: (connect-to-energize-internal <server-name> <energizearg>)
 Energizearg representing two 32 bit Energize ids that will be passed
 to the Energize server when opening the Energize connection.
 Only one connection can be open at a time.
-*/ )
-
-  (server_name, energize_arg)
-  Lisp_Object server_name, energize_arg;
+*/
+       (server_name, energize_arg))
 {
   unsigned char *server;
   unsigned char *arg;
@@ -3970,11 +3945,10 @@ Only one connection can be open at a time.
   return Qnil;
 }
 
-DEFUN ("close-connection-to-energize", Fclose_connection_to_energize,
-       Sclose_connection_to_energize, 0, 0, 0 /*
+DEFUN ("close-connection-to-energize", Fclose_connection_to_energize, 0, 0, 0, /*
 Close the open Energize connection, if any.
-*/ )
-     ()
+*/
+       ())
 {
   if (!energize_connection) return Qnil;
 
@@ -4126,12 +4100,10 @@ restore_energize_extent_state (EXTENT extent)
   set_extent_attributes_index (extent, ext);
 }
 
-DEFUN ("extent-to-generic-id", Fextent_to_generic_id, Sextent_to_generic_id,
-       1, 1, 0 /*
+DEFUN ("extent-to-generic-id", Fextent_to_generic_id, 1, 1, 0, /*
 Return Energize ID of buffer of EXTENT.
-*/ )
-     (extent_obj)
-     Lisp_Object extent_obj;
+*/
+       (extent_obj))
 {
   CHECK_EXTENT (extent_obj);
   return word_to_lisp (energize_extent_data_id
@@ -4365,13 +4337,10 @@ mark_all_extents_as_unmodified (BufferInfo *binfo)
 
 /* Send the BufferModified events for the current buffer.
  * Handles both global buffer modified and extents modified. */
-DEFUN ("energize-send-buffer-modified", Fenergize_send_buffer_modified,
-       Senergize_send_buffer_modified,
-       3, 3, 0 /*
+DEFUN ("energize-send-buffer-modified", Fenergize_send_buffer_modified, 3, 3, 0, /*
 Send a BufferModified request for the current buffer.
-*/ )
-     (state, from, to)
-     Lisp_Object state, from, to; /* dont use ANSI arglists in DEFUNs */
+*/
+       (state, from, to))
 {
   int modifiedp = NILP (state)? 0 : 1;
   Lisp_Object buffer;
@@ -4422,11 +4391,11 @@ Send a BufferModified request for the current buffer.
   return Qnil;
 }
 
-DEFUN ("energize-barf-if-buffer-locked", Fenergize_barf_if_buffer_locked,
-       Senergize_barf_if_buffer_locked, 0, 0, 0 /*
+DEFUN ("energize-barf-if-buffer-locked",
+       Fenergize_barf_if_buffer_locked, 0, 0, 0, /*
 Error if the buffer is locked.
-*/ )
-     ()
+*/
+       ())
 {
   Lisp_Object buffer;
   XSETBUFFER (buffer, current_buffer);
@@ -4443,13 +4412,10 @@ Error if the buffer is locked.
 }
 
 
-DEFUN ("energize-send-region", Fenergize_send_region,
-       Senergize_send_region,
-       2, 2, 0 /*
+DEFUN ("energize-send-region", Fenergize_send_region, 2, 2, 0, /*
 Send region as user input
-*/ )
-     (start, end)
-     Lisp_Object start, end;
+*/
+       (start, end))
 {
   BufferInfo *binfo;
   Lisp_Object b;
@@ -4485,12 +4451,10 @@ Send region as user input
   return Qnil;
 }
 
-DEFUN ("connected-to-energize-p", Fconnected_to_energize_p,
-       Sconnected_to_energize_p,
-       0, 0, 0 /*
+DEFUN ("connected-to-energize-p", Fconnected_to_energize_p, 0, 0, 0, /*
 Return nil if no connection to Energize.
-*/ )
-     ()
+*/
+       ())
 {
   if (!energize_connection ||
       !energize_connection->conn ||
@@ -4501,12 +4465,11 @@ Return nil if no connection to Energize.
     return Qt;
 }
 
-DEFUN ("energize-user-input-buffer-mark", Fenergize_user_input_buffer_mark,
-       Senergize_user_input_buffer_mark, 0, 1, 0 /*
+DEFUN ("energize-user-input-buffer-mark",
+       Fenergize_user_input_buffer_mark, 0, 1, 0, /*
 Return the mark associated to the given Energize buffer.
-*/ )
-     (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   BufferInfo *binfo;
 
@@ -4590,15 +4553,13 @@ notify_energize_sheet_hidden (EId id)
     }
 }
 
-DEFUN ("energize-query-buffer", Fenergize_query_buffer,
-       Senergize_query_buffer, 1, 2, 0 /*
+DEFUN ("energize-query-buffer", Fenergize_query_buffer, 1, 2, 0, /*
 Ask Energize to create a buffer containing the file filename.
 Returns the buffer or NIL if Energize cannot create the buffer.
 If second argument just-ask is T, just ask if Energize
 already knows about the file and returns T if yes, NIL otherwise.
-*/ )
-     (filename, just_ask)
-     Lisp_Object filename, just_ask;
+*/
+       (filename, just_ask))
 {
   struct Lisp_String *filename_str;
   CEditorRequest *creq;
@@ -4645,11 +4606,10 @@ already knows about the file and returns T if yes, NIL otherwise.
 }
 
 
-DEFUN ("energize-protocol-level", Fenergize_protocol_level,
-       Senergize_protocol_level, 0, 0, 0 /*
+DEFUN ("energize-protocol-level", Fenergize_protocol_level, 0, 0, 0, /*
 Return the Energize protocol level.
-*/ )
-     ()
+*/
+       ())
 {
   return
     energize_connection
@@ -4659,12 +4619,10 @@ Return the Energize protocol level.
 }
 
 
-DEFUN ("energize-psheets-visible-p", Fenergize_psheets_visible_p,
-       Senergize_psheets_visible_p, 0, 1, 0 /*
+DEFUN ("energize-psheets-visible-p", Fenergize_psheets_visible_p, 0, 1, 0, /*
 Whether the (optional) frame currently has open psheets.
-*/ )
-     (frame)
-     Lisp_Object frame;
+*/
+       (frame))
 {
   if (NILP (frame))
     XSETFRAME (frame, XFRAME(Fselected_frame(Qnil)));
@@ -4674,12 +4632,10 @@ Whether the (optional) frame currently has open psheets.
   return Qnil;
 }
 
-DEFUN ("energize-buffer-has-psheets-p", Fenergize_buffer_has_psheets_p,
-       Senergize_buffer_has_psheets_p, 0, 1, 0 /*
+DEFUN ("energize-buffer-has-psheets-p", Fenergize_buffer_has_psheets_p, 0, 1, 0, /*
 Whether the buffer has psheets associated with it.
-*/ )
-     (buf)
-     Lisp_Object buf;
+*/
+       (buf))
 {
   int count;
   if (NILP (buf))
@@ -4736,11 +4692,10 @@ desired_psheet_buffer (struct frame *f)
 
 /* This function is invoked when the user clicks on the "sheet" button.
  */
-DEFUN ("energize-toggle-psheet", Fenergize_toggle_psheet,
-       Senergize_toggle_psheet, 0, 0, "" /*
+DEFUN ("energize-toggle-psheet", Fenergize_toggle_psheet, 0, 0, "", /*
 
-*/ )
-     ()
+*/
+       ())
 {
   struct frame *frame = XFRAME(Fselected_frame(Qnil));
   Lisp_Object buffer = Fwindow_buffer (Fselected_window (Qnil));
@@ -4995,12 +4950,10 @@ editmode_done (void *arg)
 
 extern LWLIB_ID new_lwlib_id (void);
 
-DEFUN ("energize-edit-mode-prompt", Fenergize_edit_mode_prompt,
-       Senergize_edit_mode_prompt, 6, 6, 0 /*
+DEFUN ("energize-edit-mode-prompt", Fenergize_edit_mode_prompt, 6, 6, 0, /*
 
-*/ )
-     (external, edit_mode, view_mode, other_text, window, split)
-     Lisp_Object external, edit_mode, view_mode, other_text, window, split;
+*/
+       (external, edit_mode, view_mode, other_text, window, split))
 {
   int dbox_id;
   struct frame *f = selected_frame ();
@@ -5238,10 +5191,10 @@ search_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 }
 
 
-DEFUN ("energize-search", Fenergize_search, Senergize_search, 0, 0, "" /*
+DEFUN ("energize-search", Fenergize_search, 0, 0, "", /*
 Pop up the search-and-replace dialog box.
-*/ )
-     ()
+*/
+       ())
 {
   int dbox_id;
   struct frame *f = selected_frame ();
@@ -5317,32 +5270,32 @@ Pop up the search-and-replace dialog box.
 void
 syms_of_energize (void)
 {
-  defsubr (&Senergize_send_buffer_modified);
-  defsubr (&Senergize_list_menu);
-  defsubr (&Senergize_execute_menu_item);
-  defsubr (&Senergize_execute_command_internal);
-  defsubr (&Sconnect_to_energize_internal);
-  defsubr (&Sconnected_to_energize_p);
-  defsubr (&Sclose_connection_to_energize);
-  defsubr (&Shandle_energize_request);
-  defsubr (&Senergize_buffer_p);
-  defsubr (&Senergize_buffer_type);
-  defsubr (&Sset_energize_buffer_type_internal);
-  defsubr (&Senergize_buffer_id);
-  defsubr (&Senergize_request_kill_buffer);
-  defsubr (&Senergize_send_region);
-  defsubr (&Senergize_user_input_buffer_mark);
-  defsubr (&Senergize_update_menubar);
-  defsubr (&Senergize_extent_menu_p);
-  defsubr (&Senergize_query_buffer);
-  defsubr (&Senergize_barf_if_buffer_locked);
-  defsubr (&Senergize_psheets_visible_p);
-  defsubr (&Senergize_buffer_has_psheets_p);
-  defsubr (&Senergize_toggle_psheet);
-  defsubr (&Senergize_protocol_level);
-  defsubr (&Senergize_edit_mode_prompt);
-  defsubr (&Senergize_search);
-  defsubr (&Sextent_to_generic_id);
+  DEFSUBR (Fenergize_send_buffer_modified);
+  DEFSUBR (Fenergize_list_menu);
+  DEFSUBR (Fenergize_execute_menu_item);
+  DEFSUBR (Fenergize_execute_command_internal);
+  DEFSUBR (Fconnect_to_energize_internal);
+  DEFSUBR (Fconnected_to_energize_p);
+  DEFSUBR (Fclose_connection_to_energize);
+  DEFSUBR (Fhandle_energize_request);
+  DEFSUBR (Fenergize_buffer_p);
+  DEFSUBR (Fenergize_buffer_type);
+  DEFSUBR (Fset_energize_buffer_type_internal);
+  DEFSUBR (Fenergize_buffer_id);
+  DEFSUBR (Fenergize_request_kill_buffer);
+  DEFSUBR (Fenergize_send_region);
+  DEFSUBR (Fenergize_user_input_buffer_mark);
+  DEFSUBR (Fenergize_update_menubar);
+  DEFSUBR (Fenergize_extent_menu_p);
+  DEFSUBR (Fenergize_query_buffer);
+  DEFSUBR (Fenergize_barf_if_buffer_locked);
+  DEFSUBR (Fenergize_psheets_visible_p);
+  DEFSUBR (Fenergize_buffer_has_psheets_p);
+  DEFSUBR (Fenergize_toggle_psheet);
+  DEFSUBR (Fenergize_protocol_level);
+  DEFSUBR (Fenergize_edit_mode_prompt);
+  DEFSUBR (Fenergize_search);
+  DEFSUBR (Fextent_to_generic_id);
 
   defsymbol (&Qenergize_create_buffer_hook, "energize-create-buffer-hook");
   defsymbol (&Qenergize_buffer_modified_hook, "energize-buffer-modified-hook");

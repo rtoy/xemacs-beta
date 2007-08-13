@@ -1,7 +1,7 @@
 ;;; w3-print.el --- Printing support for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.6
+;; Created: 1997/02/07 01:05:01
+;; Version: 1.7
 ;; Keywords: faces, help, printing, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -25,77 +25,12 @@
 ;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-use-ps-print nil
-  "*If non-nil, then printing will be done via the ps-print package by
-James C. Thompson <thompson@wg2.waii.com>.")
-
-(defun w3-face-type (face)
-  "Return a list specifying what a face looks like.  ie: '(bold italic)"
-  (let ((font (or (face-font face) (face-font 'default)))
-	(retval nil))
-    (if (not (stringp font))
-	(setq font
-	      (cond
-	       ((and (fboundp 'fontp) (not (fontp font))) nil)
-	       ((fboundp 'font-truename) (font-truename font))
-	       ((fboundp 'font-name) (font-name font))
-	       (t nil))))
-    (cond
-     ((not font) nil)
-     ((string-match "^-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-" font)
-      (let ((wght (substring font (match-beginning 3) (match-end 3)))
-	    (slnt (substring font (match-beginning 4) (match-end 4))))
-	(if (string-match "bold" wght)
-	    (setq retval (cons 'bold retval)))
-	(if (or (string-match "i" slnt) (string-match "o" slnt))
-	    (setq retval (cons 'italic retval)))
-	(if (and (fboundp 'face-underline-p)
-		 (face-underline-p face))
-	    (setq retval (cons 'underline retval)))))
-     ((and (symbolp face) (string-match "bold" (symbol-name face)))
-      (setq retval '(bold)))
-     ((and (symbolp face) (string-match "italic" (symbol-name face)))
-      (setq retval '(italic)))
-     (t nil))
-    retval))
-
-(defun w3-print-with-ps-print (&optional buffer function)
-  "Print a buffer using `ps-print-buffer-with-faces'.
-This function wraps `ps-print-buffer-with-faces' so that the w3 faces
-will be correctly listed in ps-bold-faces and ps-italic-faces"
-  (interactive)
-  (require 'ps-print)
-  (setq buffer (or buffer (current-buffer))
-	function (or function 'ps-print-buffer-with-faces))
-  (let ((ps-bold-faces ps-bold-faces)
-	(ps-italic-faces ps-italic-faces)
-	(inhibit-read-only t)
-	(ps-underline-faces (cond
-			     ((boundp 'ps-underline-faces)
-			      (symbol-value 'ps-underline-faces))
-			     ((boundp 'ps-underlined-faces)
-			      (symbol-value 'ps-underlined-faces))
-			     (t nil)))
-	(ps-underlined-faces nil)
-	(ps-left-header '(ps-get-buffer-name url-view-url))
-	(faces (face-list))
-	(data nil)
-	(face nil))
-    (if (string< ps-print-version "1.6")
-	(while faces
-	  (setq face (car faces)
-		data (w3-face-type face)
-		faces (cdr faces))
-	  (if (and (memq 'bold data) (not (memq face ps-bold-faces)))
-	      (setq ps-bold-faces (cons face ps-bold-faces)))
-	  (if (and (memq 'italic data) (not (memq face ps-italic-faces)))
-	      (setq ps-italic-faces (cons face ps-italic-faces)))
-	  (if (and (memq 'underline data) (not (memq face ps-underline-faces)))
-	      (setq ps-underline-faces (cons face ps-underline-faces))))
-      (setq ps-underlined-faces ps-underline-faces))
-    (save-excursion
-      (set-buffer buffer)
-      (funcall function))))
+(defvar w3-postscript-print-function 'ps-print-buffer-with-faces
+  "*Name of the function to use to print a buffer as PostScript.
+This should take no arguments, and act on the current buffer.
+Possible values include:
+ps-print-buffer-with-faces   - print immediately
+ps-spool-buffer-with-faces   - spool for later")
 
 (defun w3-print-this-url (&optional url format)
   "Print out the current document (in LaTeX format)"
@@ -125,7 +60,7 @@ will be correctly listed in ps-bold-faces and ps-italic-faces"
 	    (equal "" format))
 	(lpr-buffer))
        ((equal "PostScript" format)
-	(w3-print-with-ps-print (current-buffer)))
+	(funcall w3-postscript-print-function))
        ((equal "LaTeX'd" format)
  	(w3-parse-tree-to-latex w3-current-parse url)
 	(save-window-excursion

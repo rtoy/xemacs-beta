@@ -1,7 +1,7 @@
 ;;; w3-toolbar.el --- Toolbar functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.7
+;; Created: 1997/02/03 15:38:24
+;; Version: 1.8
 ;; Keywords: mouse, toolbar
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -79,8 +79,8 @@ Only has any meaning in XEmacs 19.12 when w3-toolbar-orientation is
 not `none'.")
 
 (defvar w3-toolbar
-  '([w3-toolbar-back-icon w3-backward-in-history t "Back in history"]
-    [w3-toolbar-forw-icon w3-forward-in-history t "Forward in history"]
+  '([w3-toolbar-back-icon w3-history-backward (car (w3-history-find-url-internal (url-view-url t))) "Back in history"]
+    [w3-toolbar-forw-icon w3-history-forward (cdr (w3-history-find-url-internal (url-view-url t))) "Forward in history"]
     [w3-toolbar-home-icon w3 t "Go home"]
     [:style 2d :size 5]
     [w3-toolbar-reld-icon w3-reload-document t "Reload document"]

@@ -168,14 +168,12 @@ x_get_composed_input (XKeyPressedEvent *x_key_event, XIC context,
 Lisp_Object Qdomain;
 Lisp_Object Qdefer_gettext;
 
-DEFUN ("ignore-defer-gettext", Fignore_defer_gettext, Signore_defer_gettext,
-       1, 1, 0 /*
+DEFUN ("ignore-defer-gettext", Fignore_defer_gettext, 1, 1, 0, /*
 If OBJ is of the form (defer-gettext \"string\"), return the string.
 The purpose of the defer-gettext symbol is to identify strings which
 are translated when they are referenced instead of when they are defined.
-*/ )
-  (obj)
-     Lisp_Object obj;
+*/
+       (obj))
 {
   if (CONSP (obj) && SYMBOLP (Fcar (obj)) && EQ (Fcar (obj), Qdefer_gettext))
     return Fcar (Fcdr (obj));
@@ -183,12 +181,11 @@ are translated when they are referenced instead of when they are defined.
     return obj;
 }
 
-DEFUN ("gettext", Fgettext, Sgettext, 1, 1, 0 /*
+DEFUN ("gettext", Fgettext, 1, 1, 0, /*
 Look up STRING in the default message domain and return its translation.
 This function does nothing if I18N3 was not enabled when Emacs was compiled.
-*/ )
-  (string)
-     Lisp_Object string;
+*/
+       (string))
 {
 #ifdef I18N3
   /* #### What should happen here is:
@@ -228,12 +225,11 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
 
 #endif
 
-DEFUN ("dgettext", Fdgettext, Sdgettext, 2, 2, 0 /*
+DEFUN ("dgettext", Fdgettext, 2, 2, 0, /*
 Look up STRING in the specified message domain and return its translation.
 This function does nothing if I18N3 was not enabled when Emacs was compiled.
-*/ )
-  (domain, string)
-     Lisp_Object domain, string;
+*/
+       (domain, string))
 {
   CHECK_STRING (domain);
   CHECK_STRING (string);
@@ -245,14 +241,13 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
 #endif
 }
 
-DEFUN ("bind-text-domain", Fbind_text_domain, Sbind_text_domain, 2, 2, 0 /*
+DEFUN ("bind-text-domain", Fbind_text_domain, 2, 2, 0, /*
 Associate a pathname with a message domain.
 Here's how the path to message files is constructed under SunOS 5.0:
   {pathname}/{LANG}/LC_MESSAGES/{domain}.mo
 This function does nothing if I18N3 was not enabled when Emacs was compiled.
-*/ )
-  (domain, pathname)
-     Lisp_Object domain, pathname;
+*/
+       (domain, pathname))
 {
   CHECK_STRING (domain);
   CHECK_STRING (pathname);
@@ -266,7 +261,7 @@ This function does nothing if I18N3 was not enabled when Emacs was compiled.
 
 extern int load_in_progress;
 
-DEFUN ("set-domain", Fset_domain, Sset_domain, 1, 1, 0 /*
+DEFUN ("set-domain", Fset_domain, 1, 1, 0, /*
 Specify the domain used for translating messages in this source file.
 The domain declaration may only appear at top-level, and should preceed
 all function and variable definitions.
@@ -274,9 +269,8 @@ all function and variable definitions.
 The presence of this declaration in a compiled file effectively sets the
 domain of all functions and variables which are defined in that file.
 Bug: it has no effect on source (.el) files, only compiled (.elc) files.
-*/ )
-     (domain_name)
-     Lisp_Object domain_name;
+*/
+       (domain_name))
 {
   CHECK_STRING (domain_name);
   if (load_in_progress)
@@ -319,11 +313,11 @@ syms_of_intl (void)
      menu_item_descriptor_to_widget_value(). */
   defsymbol (&Qdefer_gettext, "defer-gettext");
 
-  defsubr (&Signore_defer_gettext);
-  defsubr (&Sgettext);
-  defsubr (&Sdgettext);
-  defsubr (&Sbind_text_domain);
-  defsubr (&Sset_domain);
+  DEFSUBR (Fignore_defer_gettext);
+  DEFSUBR (Fgettext);
+  DEFSUBR (Fdgettext);
+  DEFSUBR (Fbind_text_domain);
+  DEFSUBR (Fset_domain);
 }
 
 void

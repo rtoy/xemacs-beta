@@ -42,13 +42,12 @@ Lisp_Object Vself_insert_face;
 Lisp_Object Vself_insert_face_command;
 
 
-DEFUN ("forward-char", Fforward_char, Sforward_char, 0, 2, "_p" /*
+DEFUN ("forward-char", Fforward_char, 0, 2, "_p", /*
 Move point right ARG characters (left if ARG negative).
 On reaching end of buffer, stop and signal error.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 1);
 
@@ -82,13 +81,12 @@ If BUFFER is nil, the current buffer is assumed.
   return Qnil;
 }
 
-DEFUN ("backward-char", Fbackward_char, Sbackward_char, 0, 2, "_p" /*
+DEFUN ("backward-char", Fbackward_char, 0, 2, "_p", /*
 Move point left ARG characters (right if ARG negative).
 On attempt to pass beginning or end of buffer, stop and signal error.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   if (NILP (arg))
     arg = make_int (1);
@@ -99,7 +97,7 @@ If BUFFER is nil, the current buffer is assumed.
   return Fforward_char (arg, buffer);
 }
 
-DEFUN ("forward-line", Fforward_line, Sforward_line, 0, 2, "_p" /*
+DEFUN ("forward-line", Fforward_line, 0, 2, "_p", /*
 Move ARG lines forward (backward if ARG is negative).
 Precisely, if point is on line I, move to the start of line I + ARG.
 If there isn't room, go as far as possible (no error).
@@ -108,9 +106,8 @@ that is ARG - number of lines moved; if backward, ARG + number moved.
 With positive ARG, a non-empty line at the end counts as one line
   successfully moved (for the return value).
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 1);
   Bufpos pos2 = BUF_PT (buf);
@@ -137,14 +134,13 @@ If BUFFER is nil, the current buffer is assumed.
   return make_int (negp ? - shortage : shortage);
 }
 
-DEFUN ("point-at-bol", Fpoint_at_bol, Spoint_at_bol, 0, 2, 0 /*
+DEFUN ("point-at-bol", Fpoint_at_bol, 0, 2, 0, /*
 Return the character position of the first character on the current line.
 With argument N not nil or 1, move forward N - 1 lines first.
 If scan reaches end of buffer, return that position.
 This function does not move point.
-*/ )
-       (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
   register int orig, end;
@@ -163,15 +159,13 @@ This function does not move point.
   return make_int (end);
 }
 
-DEFUN ("beginning-of-line", Fbeginning_of_line, Sbeginning_of_line,
-  0, 2, "_p" /*
+DEFUN ("beginning-of-line", Fbeginning_of_line, 0, 2, "_p", /*
 Move point to beginning of current line.
 With argument ARG not nil or 1, move forward ARG - 1 lines first.
 If scan reaches end of buffer, stop there without error.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
 
@@ -179,14 +173,13 @@ If BUFFER is nil, the current buffer is assumed.
   return Qnil;
 }
 
-DEFUN ("point-at-eol", Fpoint_at_eol, Spoint_at_eol, 0, 2, 0 /*
+DEFUN ("point-at-eol", Fpoint_at_eol, 0, 2, 0, /*
 Return the character position of the last character on the current line.
 With argument N not nil or 1, move forward N - 1 lines first.
 If scan reaches end of buffer, return that position.
 This function does not move point.
-*/ )
-       (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 1);
 
@@ -201,15 +194,13 @@ This function does not move point.
 					     XINT (arg) - (XINT (arg) <= 0)));
 }
 
-DEFUN ("end-of-line", Fend_of_line, Send_of_line,
-  0, 2, "_p" /*
+DEFUN ("end-of-line", Fend_of_line, 0, 2, "_p", /*
 Move point to end of current line.
 With argument ARG not nil or 1, move forward ARG - 1 lines first.
 If scan reaches end of buffer, stop there without error.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
 
@@ -217,14 +208,13 @@ If BUFFER is nil, the current buffer is assumed.
   return Qnil;
 }
 
-DEFUN ("delete-char", Fdelete_char, Sdelete_char, 1, 2, "*p\nP" /*
+DEFUN ("delete-char", Fdelete_char, 1, 2, "*p\nP", /*
 Delete the following ARG characters (previous, with negative arg).
 Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
 Interactively, ARG is the prefix arg, and KILLFLAG is set if
 ARG was explicitly specified.
-*/ )
-  (arg, killflag)
-     Lisp_Object arg, killflag;
+*/
+       (arg, killflag))
 {
   /* This function can GC */
   Bufpos pos;
@@ -257,15 +247,13 @@ ARG was explicitly specified.
   return Qnil;
 }
 
-DEFUN ("delete-backward-char", Fdelete_backward_char, Sdelete_backward_char,
-  1, 2, "*p\nP" /*
+DEFUN ("delete-backward-char", Fdelete_backward_char, 1, 2, "*p\nP", /*
 Delete the previous ARG characters (following, with negative ARG).
 Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
 Interactively, ARG is the prefix arg, and KILLFLAG is set if
 ARG was explicitly specified.
-*/ )
-  (arg, killflag)
-     Lisp_Object arg, killflag;
+*/
+       (arg, killflag))
 {
   /* This function can GC */
   CHECK_INT (arg);
@@ -274,12 +262,11 @@ ARG was explicitly specified.
 
 static void internal_self_insert (Emchar ch, int noautofill);
 
-DEFUN ("self-insert-command", Fself_insert_command, Sself_insert_command, 1, 1, "*p" /*
+DEFUN ("self-insert-command", Fself_insert_command, 1, 1, "*p", /*
 Insert the character you type.
 Whichever character you type to run this command is inserted.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   /* This function can GC */
   int n;
@@ -436,12 +423,10 @@ internal_self_insert (Emchar c1, int noautofill)
 
 /* (this comes from Mule but is a generally good idea) */
 
-DEFUN ("self-insert-internal", Fself_insert_internal, Sself_insert_internal,
-       1, 1, 0 /*
+DEFUN ("self-insert-internal", Fself_insert_internal, 1, 1, 0, /*
 Invoke `self-insert-command' as if CH is entered from keyboard.
-*/ )
-  (ch)
-     Lisp_Object ch;
+*/
+       (ch))
 {
   /* This function can GC */
   CHECK_CHAR_COERCE_INT (ch);
@@ -458,20 +443,20 @@ syms_of_cmds (void)
   defsymbol (&Qself_insert_command, "self-insert-command");
   defsymbol (&Qoverwrite_mode_binary, "overwrite-mode-binary");
 
-  defsubr (&Sforward_char);
-  defsubr (&Sbackward_char);
-  defsubr (&Sforward_line);
-  defsubr (&Sbeginning_of_line);
-  defsubr (&Send_of_line);
+  DEFSUBR (Fforward_char);
+  DEFSUBR (Fbackward_char);
+  DEFSUBR (Fforward_line);
+  DEFSUBR (Fbeginning_of_line);
+  DEFSUBR (Fend_of_line);
 
-  defsubr (&Spoint_at_bol);
-  defsubr (&Spoint_at_eol);
+  DEFSUBR (Fpoint_at_bol);
+  DEFSUBR (Fpoint_at_eol);
 
-  defsubr (&Sdelete_char);
-  defsubr (&Sdelete_backward_char);
+  DEFSUBR (Fdelete_char);
+  DEFSUBR (Fdelete_backward_char);
 
-  defsubr (&Sself_insert_command);
-  defsubr (&Sself_insert_internal);
+  DEFSUBR (Fself_insert_command);
+  DEFSUBR (Fself_insert_internal);
 }
 
 void

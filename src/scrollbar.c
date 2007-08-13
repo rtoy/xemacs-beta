@@ -675,14 +675,13 @@ scrollbar_reset_cursor (Lisp_Object win, Lisp_Object orig_pt)
     }
 }
 
-DEFUN ("scrollbar-line-up", Fscrollbar_line_up, Sscrollbar_line_up, 1, 1, 0 /*
+DEFUN ("scrollbar-line-up", Fscrollbar_line_up, 1, 1, 0, /*
 Function called when the line-up arrow on the scrollbar is clicked.
 This is the little arrow at the top of the scrollbar.  One argument, the
 scrollbar's window.  You can advise this function to change the scrollbar
 behavior.
-*/ )
-     (window)
-     Lisp_Object window;
+*/
+       (window))
 {
   CHECK_LIVE_WINDOW (window);
   window_scroll (window, make_int (1), -1, ERROR_ME_NOT);
@@ -690,15 +689,13 @@ behavior.
   return Qnil;
 }
 
-DEFUN ("scrollbar-line-down", Fscrollbar_line_down, Sscrollbar_line_down,
-       1, 1, 0 /*
+DEFUN ("scrollbar-line-down", Fscrollbar_line_down, 1, 1, 0, /*
 Function called when the line-down arrow on the scrollbar is clicked.
 This is the little arrow at the bottom of the scrollbar.  One argument, the
 scrollbar's window.  You can advise this function to change the scrollbar
 behavior.
-*/ )
-     (window)
-     Lisp_Object window;
+*/
+       (window))
 {
   CHECK_LIVE_WINDOW (window);
   window_scroll (window, make_int (1), 1, ERROR_ME_NOT);
@@ -706,17 +703,15 @@ behavior.
   return Qnil;
 }
 
-DEFUN ("scrollbar-page-up", Fscrollbar_page_up, Sscrollbar_page_up,
-       1, 1, 0 /*
+DEFUN ("scrollbar-page-up", Fscrollbar_page_up, 1, 1, 0, /*
 Function called when the user gives the \"page-up\" scrollbar action.
 (The way this is done can vary from scrollbar to scrollbar.) One argument,
 a cons containing the scrollbar's window and a value (#### document me!
 This value is nil for Motif/Lucid scrollbars and a number for Athena
 scrollbars).  You can advise this function to change the scrollbar
 behavior.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   Lisp_Object window = Fcar (object);
 
@@ -749,17 +744,15 @@ behavior.
   return Qnil;
 }
 
-DEFUN ("scrollbar-page-down", Fscrollbar_page_down, Sscrollbar_page_down,
-       1, 1, 0 /*
+DEFUN ("scrollbar-page-down", Fscrollbar_page_down, 1, 1, 0, /*
 Function called when the user gives the \"page-down\" scrollbar action.
 (The way this is done can vary from scrollbar to scrollbar.) One argument,
 a cons containing the scrollbar's window and a value (#### document me!
 This value is nil for Motif/Lucid scrollbars and a number for Athena
 scrollbars).  You can advise this function to change the scrollbar
 behavior.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   Lisp_Object window = Fcar (object);
 
@@ -783,15 +776,13 @@ behavior.
   return Qnil;
 }
 
-DEFUN ("scrollbar-to-top", Fscrollbar_to_top, Sscrollbar_to_top,
-       1, 1, 0 /*
+DEFUN ("scrollbar-to-top", Fscrollbar_to_top, 1, 1, 0, /*
 Function called when the user gives the \"to-top\" scrollbar action.
 (The way this is done can vary from scrollbar to scrollbar.). One argument,
 the scrollbar's window.  You can advise this function to change the
 scrollbar behavior.
-*/ )
-     (window)
-     Lisp_Object window;
+*/
+       (window))
 {
   Lisp_Object orig_pt;
 
@@ -803,15 +794,13 @@ scrollbar behavior.
   return Qnil;
 }
 
-DEFUN ("scrollbar-to-bottom", Fscrollbar_to_bottom, Sscrollbar_to_bottom,
-       1, 1, 0 /*
+DEFUN ("scrollbar-to-bottom", Fscrollbar_to_bottom, 1, 1, 0, /*
 Function called when the user gives the \"to-bottom\" scrollbar action.
 (The way this is done can vary from scrollbar to scrollbar.). One argument,
 the scrollbar's window.  You can advise this function to change the
 scrollbar behavior.
-*/ )
-     (window)
-     Lisp_Object window;
+*/
+       (window))
 {
   Lisp_Object orig_pt;
 
@@ -823,15 +812,13 @@ scrollbar behavior.
   return Qnil;
 }
 
-DEFUN ("scrollbar-vertical-drag", Fscrollbar_vertical_drag,
-       Sscrollbar_vertical_drag, 1, 1, 0 /*
+DEFUN ("scrollbar-vertical-drag", Fscrollbar_vertical_drag, 1, 1, 0, /*
 Function called when the user drags the vertical scrollbar thumb.
 One argument, a cons containing the scrollbar's window and a value
 between point-min and point-max.  You can advise this function to
 change the scrollbar behavior.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   Bufpos start_pos;
   Lisp_Object orig_pt;
@@ -847,13 +834,11 @@ change the scrollbar behavior.
   return Qnil;
 }
 
-DEFUN ("scrollbar-set-hscroll", Fscrollbar_set_hscroll, Sscrollbar_set_hscroll,
-       2, 2, 0 /*
+DEFUN ("scrollbar-set-hscroll", Fscrollbar_set_hscroll, 2, 2, 0, /*
 Sets WINDOW's hscroll position to VALUE.
 This ensures that VALUE is in the proper range for the horizontal scrollbar.
-*/ )
-	(window, value)
-	Lisp_Object window, value;
+*/
+       (window, value))
 {
   struct window *w;
   int hscroll, wcw, max_len;
@@ -911,15 +896,15 @@ syms_of_scrollbar (void)
 
   /* #### All these functions should be moved into Lisp.
      See comment above. */
-  defsubr (&Sscrollbar_line_up);
-  defsubr (&Sscrollbar_line_down);
-  defsubr (&Sscrollbar_page_up);
-  defsubr (&Sscrollbar_page_down);
-  defsubr (&Sscrollbar_to_top);
-  defsubr (&Sscrollbar_to_bottom);
-  defsubr (&Sscrollbar_vertical_drag);
+  DEFSUBR (Fscrollbar_line_up);
+  DEFSUBR (Fscrollbar_line_down);
+  DEFSUBR (Fscrollbar_page_up);
+  DEFSUBR (Fscrollbar_page_down);
+  DEFSUBR (Fscrollbar_to_top);
+  DEFSUBR (Fscrollbar_to_bottom);
+  DEFSUBR (Fscrollbar_vertical_drag);
 
-  defsubr (&Sscrollbar_set_hscroll);
+  DEFSUBR (Fscrollbar_set_hscroll);
 }
 
 void

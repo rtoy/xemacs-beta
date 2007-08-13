@@ -1,7 +1,7 @@
 ;;; url-http.el --- HTTP Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/01/26 03:56:59
-;; Version: 1.11
+;; Created: 1997/02/08 05:29:12
+;; Version: 1.13
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -133,7 +133,7 @@
 		       (let ((url-basic-auth-storage
 			      url-proxy-basic-authentication))
 			 (url-get-authentication url nil 'any nil))))
-	 (proxy-obj (if (boundp 'proxy-info)
+	 (proxy-obj (if (and (boundp 'proxy-info) proxy-info)
 			(url-generic-parse-url proxy-info)))
 	 (real-fname (if proxy-obj (url-filename proxy-obj) fname))
 	 (host (or (and proxy-obj (url-host proxy-obj))
@@ -583,21 +583,8 @@ HTTP/1.0 specification for more details." x redir) 'error)
 	    (let ((process
 		   (url-open-stream "WWW" url-working-buffer server
 				   (string-to-int port))))
-	      (if (stringp process)
-		  (progn
-		    (set-buffer url-working-buffer)
-		    (erase-buffer)
-		    (setq url-current-mime-type "text/html"
-			  url-current-mime-viewer 
-			  (mm-mime-info "text/html" nil 5))
-		    (insert "<title>ERROR</title>\n"
-			    "<h1>ERROR - Could not establish connection</h1>"
-			    "<p>"
-			    "The browser could not establish a connection "
-			    (format "to %s:%s.<P>" server port)
-			    "The server is either down, or the URL"
-			    (format "(%s) is malformed.<p>" (url-view-url t)))
-		    (message "%s" process))
+	      (if (not (processp process))
+		  nil
 		(progn
 		  (url-process-put process 'url (or proxy-info url))
 		  (process-kill-without-query process)

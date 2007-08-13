@@ -49,16 +49,15 @@ Lisp_Object Vexecuting_macro;
 int executing_macro_index;
 
 
-DEFUN ("start-kbd-macro", Fstart_kbd_macro, Sstart_kbd_macro, 1, 1, "P" /*
+DEFUN ("start-kbd-macro", Fstart_kbd_macro, 1, 1, "P", /*
 Record subsequent keyboard and menu input, defining a keyboard macro.
 The commands are recorded even as they are executed.
 Use \\[end-kbd-macro] to finish recording and make the macro available.
 Use \\[name-last-kbd-macro] to give it a permanent name.
 Non-nil arg (prefix arg) means append to last macro defined;
  This begins by re-executing that macro as if you typed it again.
-*/ )
-  (append)
-     Lisp_Object append;
+*/
+       (append))
 {
   /* This function can GC */
   struct console *con = XCONSOLE (Vselected_console);
@@ -88,7 +87,7 @@ Non-nil arg (prefix arg) means append to last macro defined;
   return Qnil;
 }
 
-DEFUN ("end-kbd-macro", Fend_kbd_macro, Send_kbd_macro, 0, 1, "P" /*
+DEFUN ("end-kbd-macro", Fend_kbd_macro, 0, 1, "P", /*
 Finish defining a keyboard macro.
 The definition was started by \\[start-kbd-macro].
 The macro is now available for use via \\[call-last-kbd-macro],
@@ -98,9 +97,8 @@ under that name.
 With numeric arg, repeat macro now that many times,
 counting the definition just completed as the first repetition.
 An argument of zero means repeat until error.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   /* This function can GC */
   struct console *con = XCONSOLE (Vselected_console);
@@ -196,11 +194,10 @@ finalize_kbd_macro_chars (struct console *con)
   con->kbd_macro_end = con->kbd_macro_ptr;
 }
 
-DEFUN ("cancel-kbd-macro-events", Fcancel_kbd_macro_events,
-       Scancel_kbd_macro_events, 0, 0, 0 /*
+DEFUN ("cancel-kbd-macro-events", Fcancel_kbd_macro_events, 0, 0, 0, /*
 Cancel the events added to a keyboard macro for this command.
-*/ )
-  ()
+*/
+       ())
 {
   struct console *con = XCONSOLE (Vselected_console);
 
@@ -209,17 +206,15 @@ Cancel the events added to a keyboard macro for this command.
   return Qnil;
 }
 
-DEFUN ("call-last-kbd-macro", Fcall_last_kbd_macro, Scall_last_kbd_macro,
-  0, 1, "p" /*
+DEFUN ("call-last-kbd-macro", Fcall_last_kbd_macro, 0, 1, "p", /*
 Call the last keyboard macro that you defined with \\[start-kbd-macro].
 
 A prefix argument serves as a repeat count.  Zero means repeat until error.
 
 To make a macro permanent so you can call it even after
 defining others, use \\[name-last-kbd-macro].
-*/ )
-  (prefix)
-     Lisp_Object prefix;
+*/
+       (prefix))
 {
   /* This function can GC */
   struct console *con = XCONSOLE (Vselected_console);
@@ -245,13 +240,12 @@ pop_kbd_macro (Lisp_Object info)
   return Qnil;
 }
 
-DEFUN ("execute-kbd-macro", Fexecute_kbd_macro, Sexecute_kbd_macro, 1, 2, 0 /*
+DEFUN ("execute-kbd-macro", Fexecute_kbd_macro, 1, 2, 0, /*
 Execute MACRO as string of editor command characters.
 If MACRO is a symbol, its function definition is used.
 COUNT is a repeat count, or nil for once, or 0 for infinite loop.
-*/ )
-  (macro, prefixarg)
-     Lisp_Object macro, prefixarg;
+*/
+       (macro, prefixarg))
 {
   /* This function can GC */
   Lisp_Object final;
@@ -295,11 +289,11 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
 void
 syms_of_macros (void)
 {
-  defsubr (&Sstart_kbd_macro);
-  defsubr (&Send_kbd_macro);
-  defsubr (&Scall_last_kbd_macro);
-  defsubr (&Sexecute_kbd_macro);
-  defsubr (&Scancel_kbd_macro_events);
+  DEFSUBR (Fstart_kbd_macro);
+  DEFSUBR (Fend_kbd_macro);
+  DEFSUBR (Fcall_last_kbd_macro);
+  DEFSUBR (Fexecute_kbd_macro);
+  DEFSUBR (Fcancel_kbd_macro_events);
   defsymbol (&Qexecute_kbd_macro, "execute-kbd-macro");
 }
 

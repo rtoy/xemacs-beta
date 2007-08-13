@@ -286,13 +286,12 @@ read_doc_string (Lisp_Object filepos)
   return Fread (string);
 }
 
-DEFUN ("documentation", Fdocumentation, Sdocumentation, 1, 2, 0 /*
+DEFUN ("documentation", Fdocumentation, 1, 2, 0, /*
 Return the documentation string of FUNCTION.
 Unless a non-nil second argument is given, the
 string is passed through `substitute-command-keys'.
-*/ )
-  (function, raw)
-     Lisp_Object function, raw;
+*/
+       (function, raw))
 {
   /* This function can GC */
   Lisp_Object fun;
@@ -384,16 +383,14 @@ string is passed through `substitute-command-keys'.
   return doc;
 }
 
-DEFUN ("documentation-property", Fdocumentation_property, 
-       Sdocumentation_property, 2, 3, 0 /*
+DEFUN ("documentation-property", Fdocumentation_property, 2, 3, 0, /*
 Return the documentation string that is SYMBOL's PROP property.
 This is like `get', but it can refer to strings stored in the
 `doc-directory/DOC' file; and if the value is a string, it is passed
 through `substitute-command-keys'.  A non-nil third argument avoids this
 translation.
-*/ )
-  (sym, prop, raw)
-     Lisp_Object sym, prop, raw;
+*/
+       (sym, prop, raw))
 {
   /* This function can GC */
   REGISTER Lisp_Object doc;
@@ -432,17 +429,15 @@ weird_doc (Lisp_Object sym, CONST char *weirdness, CONST char *type, int pos)
 }
 
 
-DEFUN ("Snarf-documentation", Fsnarf_documentation, Ssnarf_documentation,
-  1, 1, 0 /*
+DEFUN ("Snarf-documentation", Fsnarf_documentation, 1, 1, 0, /*
 Used during Emacs initialization, before dumping runnable Emacs,
 to find pointers to doc strings stored in `.../lib-src/DOC' and
 record them in function definitions.
 One arg, FILENAME, a string which does not include a directory.
 The file is written to `../lib-src', and later found in `exec-directory'
 when doc strings are referred to in the dumped Emacs.
-*/ )
-  (filename)
-     Lisp_Object filename;
+*/
+       (filename))
 {
   /* !!#### This function has not been Mule-ized */
   int fd;
@@ -736,12 +731,11 @@ verify_doc_mapper (Lisp_Object sym, Lisp_Object closure)
     }
 }
 
-DEFUN ("Verify-documentation", Fverify_documentation, Sverify_documentation,
-       0, 0, 0 /*
+DEFUN ("Verify-documentation", Fverify_documentation, 0, 0, 0, /*
 Used to make sure everything went well with Snarf-documentation.
 Writes to stderr if not.
-*/ )
-     ()
+*/
+       ())
 {
   Lisp_Object closure = Fcons (Qnil, Qnil);
   struct gcpro gcpro1;
@@ -756,8 +750,7 @@ Writes to stderr if not.
 }
 
 
-DEFUN ("substitute-command-keys", Fsubstitute_command_keys,
-  Ssubstitute_command_keys, 1, 1, 0 /*
+DEFUN ("substitute-command-keys", Fsubstitute_command_keys, 1, 1, 0, /*
 Substitute key descriptions for command names in STRING.
 Return a new string which is STRING with substrings of the form \\=\\[COMMAND]
 replaced by either:  a keystroke sequence that will invoke COMMAND,
@@ -768,9 +761,8 @@ Substrings of the form \\=\\<MAPVAR> specify to use the value of MAPVAR
 as the keymap for future \\=\\[COMMAND] substrings.
 \\=\\= quotes the following character and is discarded;
 thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ into the output.
-*/ )
-  (str)
-     Lisp_Object str;
+*/
+       (str))
 {
   /* This function can GC */
   Bufbyte *buf;
@@ -1001,11 +993,11 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 void
 syms_of_doc (void)
 {
-  defsubr (&Sdocumentation);
-  defsubr (&Sdocumentation_property);
-  defsubr (&Ssnarf_documentation);
-  defsubr (&Sverify_documentation);
-  defsubr (&Ssubstitute_command_keys);
+  DEFSUBR (Fdocumentation);
+  DEFSUBR (Fdocumentation_property);
+  DEFSUBR (Fsnarf_documentation);
+  DEFSUBR (Fverify_documentation);
+  DEFSUBR (Fsubstitute_command_keys);
 }
 
 void

@@ -827,8 +827,7 @@ Lisp_Object Qmm_addrlist_size;
 #define MLVAL(x) (make_int (meter[x]))
 static int meter[N_Meterables];
 
-DEFUN ("mmap-allocator-status", Fmmap_allocator_status,
-       Smmap_allocator_status, 0, 0, 0 /*
+DEFUN ("mmap-allocator-status", Fmmap_allocator_status, 0, 0, 0, /*
 Return some information about mmap-based allocator.
 
   mmap-addrlist-size: number of entries in address picking list. 
@@ -841,8 +840,8 @@ Return some information about mmap-based allocator.
   mmap-average-bumpval: average increase in size demanded to re-alloc.
   mmap-wastage: total number of bytes allocated, but not currently in use.
   mmap-live-pages: total number of pages live.
-*/ )
-     ()
+*/
+       ())
 {
   Lisp_Object result;
 
@@ -1279,7 +1278,7 @@ syms_of_ralloc (void)
   defsymbol (&Qmm_addr_looked_up, "mmap-had-to-look-up-address");
   defsymbol (&Qmm_hash_worked, "mmap-hash-table-worked");
   defsymbol (&Qmm_addrlist_size, "mmap-addrlist-size");
-  defsubr (&Smmap_allocator_status);
+  DEFSUBR (Fmmap_allocator_status);
 #endif /* MMAP_METERING */
 }
 

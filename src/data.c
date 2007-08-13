@@ -105,16 +105,14 @@ dead_wrong_type_argument (Lisp_Object predicate, Lisp_Object value)
   signal_error (Qwrong_type_argument, list2 (predicate, value));
 }
 
-DEFUN ("wrong-type-argument", Fwrong_type_argument, Swrong_type_argument,
-       2, 2, 0 /*
+DEFUN ("wrong-type-argument", Fwrong_type_argument, 2, 2, 0, /*
 Signal an error until the correct type value is given by the user.
 This function loops, signalling a continuable `wrong-type-argument' error
 with PREDICATE and VALUE as the data associated with the error and then
 calling PREDICATE on the returned value, until the value gotten satisfies
 PREDICATE.  At that point, the gotten value is returned.
-*/ )
-  (predicate, value)
-     Lisp_Object predicate, value;
+*/
+       (predicate, value))
 {
   return wrong_type_argument (predicate, value);
 }
@@ -185,110 +183,98 @@ make_char (Emchar num)
 
 /* Data type predicates */
 
-DEFUN ("eq", Feq, Seq, 2, 2, 0 /*
+DEFUN ("eq", Feq, 2, 2, 0, /*
 T if the two args are the same Lisp object.
-*/ )
-  (obj1, obj2)
-     Lisp_Object obj1, obj2;
+*/
+       (obj1, obj2))
 {
   return EQ (obj1, obj2) ? Qt : Qnil;
 }
 
-DEFUN ("null", Fnull, Snull, 1, 1, 0 /*
+DEFUN ("null", Fnull, 1, 1, 0, /*
 T if OBJECT is nil.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return NILP (object) ? Qt : Qnil;
 }
 
-DEFUN ("consp", Fconsp, Sconsp, 1, 1, 0 /*
+DEFUN ("consp", Fconsp, 1, 1, 0, /*
 T if OBJECT is a cons cell.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return CONSP (object) ? Qt : Qnil;
 }
 
-DEFUN ("atom", Fatom, Satom, 1, 1, 0 /*
+DEFUN ("atom", Fatom, 1, 1, 0, /*
 T if OBJECT is not a cons cell.  This includes nil.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return CONSP (object) ? Qnil : Qt;
 }
 
-DEFUN ("listp", Flistp, Slistp, 1, 1, 0 /*
+DEFUN ("listp", Flistp, 1, 1, 0, /*
 T if OBJECT is a list.  This includes nil.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (CONSP (object) || NILP (object)) ? Qt : Qnil;
 }
 
-DEFUN ("nlistp", Fnlistp, Snlistp, 1, 1, 0 /*
+DEFUN ("nlistp", Fnlistp, 1, 1, 0, /*
 T if OBJECT is not a list.  Lists include nil.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (CONSP (object) || NILP (object)) ? Qnil : Qt;
 }
 
-DEFUN ("symbolp", Fsymbolp, Ssymbolp, 1, 1, 0 /*
+DEFUN ("symbolp", Fsymbolp, 1, 1, 0, /*
 T if OBJECT is a symbol.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return SYMBOLP (object) ? Qt : Qnil;
 }
 
-DEFUN ("keywordp", Fkeywordp, Skeywordp, 1, 1, 0 /*
+DEFUN ("keywordp", Fkeywordp, 1, 1, 0, /*
 T if OBJECT is a keyword.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return KEYWORDP (object) ? Qt : Qnil;
 }
 
-DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0 /*
+DEFUN ("vectorp", Fvectorp, 1, 1, 0, /*
 T if OBJECT is a vector.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return VECTORP (object) ? Qt : Qnil;
 }
 
-DEFUN ("bit-vector-p", Fbit_vector_p, Sbit_vector_p, 1, 1, 0 /*
+DEFUN ("bit-vector-p", Fbit_vector_p, 1, 1, 0, /*
 T if OBJECT is a bit vector.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return BIT_VECTORP (object) ? Qt : Qnil;
 }
 
-DEFUN ("stringp", Fstringp, Sstringp, 1, 1, 0 /*
+DEFUN ("stringp", Fstringp, 1, 1, 0, /*
 T if OBJECT is a string.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return STRINGP (object) ? Qt : Qnil;
 }
 
-DEFUN ("arrayp", Farrayp, Sarrayp, 1, 1, 0 /*
+DEFUN ("arrayp", Farrayp, 1, 1, 0, /*
 T if OBJECT is an array (string, vector, or bit vector).
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (VECTORP     (object) ||
 	  STRINGP     (object) ||
@@ -296,11 +282,10 @@ T if OBJECT is an array (string, vector, or bit vector).
     ? Qt : Qnil;
 }
 
-DEFUN ("sequencep", Fsequencep, Ssequencep, 1, 1, 0 /*
+DEFUN ("sequencep", Fsequencep, 1, 1, 0, /*
 T if OBJECT is a sequence (list or array).
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (CONSP       (object) ||
 	  NILP        (object) ||
@@ -310,40 +295,36 @@ T if OBJECT is a sequence (list or array).
     ? Qt : Qnil;
 }
 
-DEFUN ("markerp", Fmarkerp, Smarkerp, 1, 1, 0 /*
+DEFUN ("markerp", Fmarkerp, 1, 1, 0, /*
 T if OBJECT is a marker (editor pointer).
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return MARKERP (object) ? Qt : Qnil;
 }
 
-DEFUN ("subrp", Fsubrp, Ssubrp, 1, 1, 0 /*
+DEFUN ("subrp", Fsubrp, 1, 1, 0, /*
 T if OBJECT is a built-in function.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return SUBRP (object) ? Qt : Qnil;
 }
 
-DEFUN ("subr-min-args", Fsubr_min_args, Ssubr_min_args, 1, 1, 0 /*
+DEFUN ("subr-min-args", Fsubr_min_args, 1, 1, 0, /*
 Return minimum number of args built-in function SUBR may be called with.
-*/ )
-  (subr)
-     Lisp_Object subr;
+*/
+       (subr))
 {
   CHECK_SUBR (subr);
   return make_int (XSUBR (subr)->min_args);
 }
 
-DEFUN ("subr-max-args", Fsubr_max_args, Ssubr_max_args, 1, 1, 0 /*
+DEFUN ("subr-max-args", Fsubr_max_args, 1, 1, 0, /*
 Return maximum number of args built-in function SUBR may be called with,
 or nil if it takes an arbitrary number of arguments or is a special form.
-*/ )
-  (subr)
-     Lisp_Object subr;
+*/
+       (subr))
 {
   int nargs;
   CHECK_SUBR (subr);
@@ -354,108 +335,96 @@ or nil if it takes an arbitrary number of arguments or is a special form.
     return make_int (nargs);
 }
 
-DEFUN ("compiled-function-p", Fcompiled_function_p, Scompiled_function_p, 1, 1, 0 /*
+DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
 t if OBJECT is a byte-compiled function object.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return COMPILED_FUNCTIONP (object) ? Qt : Qnil;
 }
 
 
-DEFUN ("characterp", Fcharacterp, Scharacterp, 1, 1, 0 /*
+DEFUN ("characterp", Fcharacterp, 1, 1, 0, /*
 t if OBJECT is a character.
 A character is an integer that can be inserted into a buffer with
 `insert-char'.  All integers are considered valid characters and are
 modded with 256 to get the actual character to use.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return CHARP (object) ? Qt : Qnil;
 }
 
-DEFUN ("char-or-string-p", Fchar_or_string_p, Schar_or_string_p, 1, 1, 0 /*
+DEFUN ("char-or-string-p", Fchar_or_string_p, 1, 1, 0, /*
 t if OBJECT is a character or a string.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return CHAR_OR_CHAR_INTP (object) || STRINGP (object) ? Qt : Qnil;
 }
 
-DEFUN ("integerp", Fintegerp, Sintegerp, 1, 1, 0 /*
+DEFUN ("integerp", Fintegerp, 1, 1, 0, /*
 t if OBJECT is an integer.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return INTP (object) ? Qt : Qnil;
 }
 
-DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p,
-       1, 1, 0 /*
+DEFUN ("integer-or-marker-p", Finteger_or_marker_p, 1, 1, 0, /*
 t if OBJECT is an integer or a marker (editor pointer).
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return INTP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
-DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0 /*
+DEFUN ("natnump", Fnatnump, 1, 1, 0, /*
 t if OBJECT is a nonnegative integer.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return NATNUMP (object) ? Qt : Qnil;
 }
 
-DEFUN ("bitp", Fbitp, Sbitp, 1, 1, 0 /*
+DEFUN ("bitp", Fbitp, 1, 1, 0, /*
 t if OBJECT is a bit (0 or 1).
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return BITP (object) ? Qt : Qnil;
 }
 
-DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0 /*
+DEFUN ("numberp", Fnumberp, 1, 1, 0, /*
 t if OBJECT is a number (floating point or integer).
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return INT_OR_FLOATP (object) ? Qt : Qnil;
 }
 
-DEFUN ("number-or-marker-p", Fnumber_or_marker_p, Snumber_or_marker_p, 1, 1, 0 /*
+DEFUN ("number-or-marker-p", Fnumber_or_marker_p, 1, 1, 0, /*
 t if OBJECT is a number or a marker.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return INT_OR_FLOATP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 #ifdef LISP_FLOAT_TYPE
-DEFUN ("floatp", Ffloatp, Sfloatp, 1, 1, 0 /*
+DEFUN ("floatp", Ffloatp, 1, 1, 0, /*
 t if OBJECT is a floating point number.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return FLOATP (object) ? Qt : Qnil;
 }
 #endif /* LISP_FLOAT_TYPE */
 
-DEFUN ("type-of", Ftype_of, Stype_of, 1, 1, 0 /*
+DEFUN ("type-of", Ftype_of, 1, 1, 0, /*
 Return a symbol representing the type of OBJECT.
-*/ )
-  (object)
-    Lisp_Object object;
+*/
+       (object))
 {
   if (CONSP    (object)) return Qcons;
   if (SYMBOLP  (object)) return Qsymbol;
@@ -471,12 +440,11 @@ Return a symbol representing the type of OBJECT.
 
 /* Extract and set components of lists */
 
-DEFUN ("car", Fcar, Scar, 1, 1, 0 /*
+DEFUN ("car", Fcar, 1, 1, 0, /*
 Return the car of LIST.  If arg is nil, return nil.
 Error if arg is not nil and not a cons cell.  See also `car-safe'.
-*/ )
-  (list)
-     Lisp_Object list;
+*/
+       (list))
 {
   while (1)
     {
@@ -489,21 +457,19 @@ Error if arg is not nil and not a cons cell.  See also `car-safe'.
     }
 }
 
-DEFUN ("car-safe", Fcar_safe, Scar_safe, 1, 1, 0 /*
+DEFUN ("car-safe", Fcar_safe, 1, 1, 0, /*
 Return the car of OBJECT if it is a cons cell, or else nil.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return CONSP (object) ? XCAR (object) : Qnil;
 }
 
-DEFUN ("cdr", Fcdr, Scdr, 1, 1, 0 /*
+DEFUN ("cdr", Fcdr, 1, 1, 0, /*
 Return the cdr of LIST.  If arg is nil, return nil.
 Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
-*/ )
-  (list)
-     Lisp_Object list;
+*/
+       (list))
 {
   while (1)
     {
@@ -516,20 +482,18 @@ Error if arg is not nil and not a cons cell.  See also `cdr-safe'.
     }
 }
 
-DEFUN ("cdr-safe", Fcdr_safe, Scdr_safe, 1, 1, 0 /*
+DEFUN ("cdr-safe", Fcdr_safe, 1, 1, 0, /*
 Return the cdr of OBJECT if it is a cons cell, or else  nil.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return CONSP (object) ? XCDR (object) : Qnil;
 }
 
-DEFUN ("setcar", Fsetcar, Ssetcar, 2, 2, 0 /*
+DEFUN ("setcar", Fsetcar, 2, 2, 0, /*
 Set the car of CONSCELL to be NEWCAR.  Returns NEWCAR.
-*/ )
-  (conscell, newcar)
-     Lisp_Object conscell, newcar;
+*/
+       (conscell, newcar))
 {
   if (!CONSP (conscell))
     conscell = wrong_type_argument (Qconsp, conscell);
@@ -539,11 +503,10 @@ Set the car of CONSCELL to be NEWCAR.  Returns NEWCAR.
   return newcar;
 }
 
-DEFUN ("setcdr", Fsetcdr, Ssetcdr, 2, 2, 0 /*
+DEFUN ("setcdr", Fsetcdr, 2, 2, 0, /*
 Set the cdr of CONSCELL to be NEWCDR.  Returns NEWCDR.
-*/ )
-  (conscell, newcdr)
-     Lisp_Object conscell, newcdr;
+*/
+       (conscell, newcdr))
 {
   if (!CONSP (conscell))
     conscell = wrong_type_argument (Qconsp, conscell);
@@ -588,7 +551,7 @@ indirect_function (Lisp_Object object, int errorp)
   return hare;
 }
 
-DEFUN ("indirect-function", Findirect_function, Sindirect_function, 1, 1, 0 /*
+DEFUN ("indirect-function", Findirect_function, 1, 1, 0, /*
 Return the function at the end of OBJECT's function chain.
 If OBJECT is a symbol, follow all function indirections and return
 the final function binding.
@@ -596,23 +559,20 @@ If OBJECT is not a symbol, just return it.
 Signal a void-function error if the final symbol is unbound.
 Signal a cyclic-function-indirection error if there is a loop in the
 function chain of symbols.
-*/ )
-  (object)
-    Lisp_Object object;
+*/
+       (object))
 {
   return indirect_function (object, 1);
 }
 
 /* Extract and set vector and string elements */
 
-DEFUN ("aref", Faref, Saref, 2, 2, 0 /*
+DEFUN ("aref", Faref, 2, 2, 0, /*
 Return the element of ARRAY at index INDEX.
 ARRAY may be a vector, bit vector, string, or byte-code object.
 IDX starts at 0.
-*/ )
-  (array, idx)
-     Lisp_Object array;
-     Lisp_Object idx;
+*/
+       (array, idx))
 {
   int idxval;
 
@@ -654,13 +614,11 @@ IDX starts at 0.
     }
 }
 
-DEFUN ("aset", Faset, Saset, 3, 3, 0 /*
+DEFUN ("aset", Faset, 3, 3, 0, /*
 Store into the element of ARRAY at index IDX the value NEWVAL.
 ARRAY may be a vector, bit vector, or string.  IDX starts at 0.
-*/ )
-  (array, idx, newval)
-     Lisp_Object array;
-     Lisp_Object idx, newval;
+*/
+       (array, idx, newval))
 {
   int idxval;
 
@@ -792,58 +750,48 @@ set_compiled_function_documentation (struct Lisp_Compiled_Function *b,
     b->doc_and_interactive = new;
 }
 
-DEFUN ("compiled-function-instructions", Fcompiled_function_instructions,
-       Scompiled_function_instructions, 1, 1, 0 /*
+DEFUN ("compiled-function-instructions", Fcompiled_function_instructions, 1, 1, 0, /*
 Return the byte-opcode string of the compiled-function object.
-*/ )
-     (function)
-     Lisp_Object function;
+*/
+       (function))
 {
   CHECK_COMPILED_FUNCTION (function);
   return (XCOMPILED_FUNCTION (function)->bytecodes);
 }
 
-DEFUN ("compiled-function-constants", Fcompiled_function_constants,
-       Scompiled_function_constants, 1, 1, 0 /*
+DEFUN ("compiled-function-constants", Fcompiled_function_constants, 1, 1, 0, /*
 Return the constants vector of the compiled-function object.
-*/ )
-     (function)
-     Lisp_Object function;
+*/
+       (function))
 {
   CHECK_COMPILED_FUNCTION (function);
   return (XCOMPILED_FUNCTION (function)->constants);
 }
 
-DEFUN ("compiled-function-stack-depth", Fcompiled_function_stack_depth,
-       Scompiled_function_stack_depth, 1, 1, 0 /*
+DEFUN ("compiled-function-stack-depth", Fcompiled_function_stack_depth, 1, 1, 0, /*
 Return the max stack depth of the compiled-function object.
-*/ )
-     (function)
-     Lisp_Object function;
+*/
+       (function))
 {
   CHECK_COMPILED_FUNCTION (function);
   return (make_int (XCOMPILED_FUNCTION (function)->maxdepth));
 }
 
-DEFUN ("compiled-function-arglist", Fcompiled_function_arglist,
-       Scompiled_function_arglist, 1, 1, 0 /*
+DEFUN ("compiled-function-arglist", Fcompiled_function_arglist, 1, 1, 0, /*
 Return the argument list of the compiled-function object.
-*/ )
-     (function)
-     Lisp_Object function;
+*/
+       (function))
 {
   CHECK_COMPILED_FUNCTION (function);
   return (XCOMPILED_FUNCTION (function)->arglist);
 }
 
-DEFUN ("compiled-function-interactive", Fcompiled_function_interactive,
-       Scompiled_function_interactive, 1, 1, 0 /*
+DEFUN ("compiled-function-interactive", Fcompiled_function_interactive, 1, 1, 0, /*
 Return the interactive spec of the compiled-function object, or nil.
 If non-nil, the return value will be a list whose first element is
 `interactive' and whose second element is the interactive spec.
-*/ )
-     (function)
-     Lisp_Object function;
+*/
+       (function))
 {
   CHECK_COMPILED_FUNCTION (function);
   if (!XCOMPILED_FUNCTION (function)->flags.interactivep)
@@ -853,12 +801,10 @@ If non-nil, the return value will be a list whose first element is
 		 (XCOMPILED_FUNCTION (function))));
 }
 
-DEFUN ("compiled-function-doc-string", Fcompiled_function_doc_string,
-       Scompiled_function_doc_string, 1, 1, 0 /*
+DEFUN ("compiled-function-doc-string", Fcompiled_function_doc_string, 1, 1, 0, /*
 Return the doc string of the compiled-function object, if available.
-*/ )
-     (function)
-     Lisp_Object function;
+*/
+       (function))
 {
   CHECK_COMPILED_FUNCTION (function);
   if (!XCOMPILED_FUNCTION (function)->flags.interactivep)
@@ -870,8 +816,7 @@ Return the doc string of the compiled-function object, if available.
 
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
 
-DEFUN ("compiled-function-annotation", Fcompiled_function_annotation,
-       Scompiled_function_annotation, 1, 1, 0 /*
+DEFUN ("compiled-function-annotation", Fcompiled_function_annotation, 1, 1, 0, /*
 Return the annotation of the compiled-function object, or nil.
 The annotation is a piece of information indicating where this
 compiled-function object came from.  Generally this will be
@@ -879,9 +824,8 @@ a symbol naming a function; or a string naming a file, if the
 compiled-function object was not defined in a function; or nil,
 if the compiled-function object was not created as a result of
 a `load'.
-*/ )
-     (function)
-     Lisp_Object function;
+*/
+       (function))
 {
   CHECK_COMPILED_FUNCTION (function);
   return (compiled_function_annotation (XCOMPILED_FUNCTION (function)));
@@ -889,13 +833,11 @@ a `load'.
 
 #endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
 
-DEFUN ("compiled-function-domain", Fcompiled_function_domain,
-       Scompiled_function_domain, 1, 1, 0 /*
+DEFUN ("compiled-function-domain", Fcompiled_function_domain, 1, 1, 0, /*
 Return the domain of the compiled-function object, or nil.
 This is only meaningful if I18N3 was enabled when emacs was compiled.
-*/ )
-     (function)
-     Lisp_Object function;
+*/
+       (function))
 {
   CHECK_COMPILED_FUNCTION (function);
   if (!XCOMPILED_FUNCTION (function)->flags.domainp)
@@ -948,70 +890,63 @@ arithcompare (Lisp_Object num1, Lisp_Object num2, enum comparison comparison)
   return Qnil;	/* suppress compiler warning */
 }
 
-DEFUN ("=", Feqlsign, Seqlsign, 2, 2, 0 /*
+DEFUN ("=", Feqlsign, 2, 2, 0, /*
 T if two args, both numbers or markers, are equal.
-*/ )
-  (num1, num2)
-     Lisp_Object num1, num2;
+*/
+       (num1, num2))
 {
   return arithcompare (num1, num2, equal);
 }
 
-DEFUN ("<", Flss, Slss, 2, 2, 0 /*
+DEFUN ("<", Flss, 2, 2, 0, /*
 T if first arg is less than second arg.
 Both must be numbers or markers.
-*/ )
-  (num1, num2)
-     Lisp_Object num1, num2;
+*/
+       (num1, num2))
 {
   return arithcompare (num1, num2, less);
 }
 
-DEFUN (">", Fgtr, Sgtr, 2, 2, 0 /*
+DEFUN (">", Fgtr, 2, 2, 0, /*
 T if first arg is greater than second arg.
 Both must be numbers or markers.
-*/ )
-  (num1, num2)
-     Lisp_Object num1, num2;
+*/
+       (num1, num2))
 {
   return arithcompare (num1, num2, grtr);
 }
 
-DEFUN ("<=", Fleq, Sleq, 2, 2, 0 /*
+DEFUN ("<=", Fleq, 2, 2, 0, /*
 T if first arg is less than or equal to second arg.
 Both must be numbers or markers.
-*/ )
-  (num1, num2)
-     Lisp_Object num1, num2;
+*/
+       (num1, num2))
 {
   return arithcompare (num1, num2, less_or_equal);
 }
 
-DEFUN (">=", Fgeq, Sgeq, 2, 2, 0 /*
+DEFUN (">=", Fgeq, 2, 2, 0, /*
 T if first arg is greater than or equal to second arg.
 Both must be numbers or markers.
-*/ )
-  (num1, num2)
-     Lisp_Object num1, num2;
+*/
+       (num1, num2))
 {
   return arithcompare (num1, num2, grtr_or_equal);
 }
 
-DEFUN ("/=", Fneq, Sneq, 2, 2, 0 /*
+DEFUN ("/=", Fneq, 2, 2, 0, /*
 T if first arg is not equal to second arg.
 Both must be numbers or markers.
-*/ )
-  (num1, num2)
-     Lisp_Object num1, num2;
+*/
+       (num1, num2))
 {
   return arithcompare (num1, num2, notequal);
 }
 
-DEFUN ("zerop", Fzerop, Szerop, 1, 1, 0 /*
+DEFUN ("zerop", Fzerop, 1, 1, 0, /*
 T if NUMBER is zero.
-*/ )
-  (number)
-     Lisp_Object number;
+*/
+       (number))
 {
   CHECK_INT_OR_FLOAT (number);
 
@@ -1052,13 +987,12 @@ lisp_to_word (Lisp_Object item)
 }
 
 
-DEFUN ("number-to-string", Fnumber_to_string, Snumber_to_string, 1, 1, 0 /*
+DEFUN ("number-to-string", Fnumber_to_string, 1, 1, 0, /*
 Convert NUM to a string by printing it in decimal.
 Uses a minus sign if negative.
 NUM may be an integer or a floating point number.
-*/ )
-  (num)
-     Lisp_Object num;
+*/
+       (num))
 {
   char buffer[VALBITS];
 
@@ -1083,13 +1017,12 @@ NUM may be an integer or a floating point number.
   return build_string (buffer);
 }
 
-DEFUN ("string-to-number", Fstring_to_number, Sstring_to_number, 1, 1, 0 /*
+DEFUN ("string-to-number", Fstring_to_number, 1, 1, 0, /*
 Convert STRING to a number by parsing it as a decimal number.
 This parses both integers and floating point numbers.
 It ignores leading spaces and tabs.
-*/ )
-  (string)
-     Lisp_Object string;
+*/
+       (string))
 {
   Lisp_Object value;
   char *p;
@@ -1253,57 +1186,48 @@ arith_driver (enum arithop code, int nargs, Lisp_Object *args)
   return val;
 }
 
-DEFUN ("+", Fplus, Splus, 0, MANY, 0 /*
+DEFUN ("+", Fplus, 0, MANY, 0, /*
 Return sum of any number of arguments.
 The arguments should all be numbers or markers.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Aadd, nargs, args);
 }
 
-DEFUN ("-", Fminus, Sminus, 0, MANY, 0 /*
+DEFUN ("-", Fminus, 0, MANY, 0, /*
 Negate number or subtract numbers or markers.
 With one arg, negates it.  With more than one arg,
 subtracts all but the first from the first.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Asub, nargs, args);
 }
 
-DEFUN ("*", Ftimes, Stimes, 0, MANY, 0 /*
+DEFUN ("*", Ftimes, 0, MANY, 0, /*
 Return product of any number of arguments.
 The arguments should all be numbers or markers.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Amult, nargs, args);
 }
 
-DEFUN ("/", Fquo, Squo, 2, MANY, 0 /*
+DEFUN ("/", Fquo, 2, MANY, 0, /*
 Return first argument divided by all the remaining arguments.
 The arguments must be numbers or markers.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Adiv, nargs, args);
 }
 
-DEFUN ("%", Frem, Srem, 2, 2, 0 /*
+DEFUN ("%", Frem, 2, 2, 0, /*
 Return remainder of first arg divided by second.
 Both must be integers or markers.
-*/ )
-  (num1, num2)
-     Lisp_Object num1, num2;
+*/
+       (num1, num2))
 {
   CHECK_INT_COERCE_CHAR_OR_MARKER (num1);
   CHECK_INT_COERCE_CHAR_OR_MARKER (num2);
@@ -1329,14 +1253,13 @@ fmod (double f1, double f2)
 #endif /* ! HAVE_FMOD */
 
 
-DEFUN ("mod", Fmod, Smod, 2, 2, 0 /*
+DEFUN ("mod", Fmod, 2, 2, 0, /*
 Return X modulo Y.
 The result falls between zero (inclusive) and Y (exclusive).
 Both X and Y must be numbers or markers.
 If either argument is a float, a float will be returned.
-*/ )
-  (x, y)
-     Lisp_Object x, y;
+*/
+       (x, y))
 {
   EMACS_INT i1, i2;
 
@@ -1381,70 +1304,59 @@ If either argument is a float, a float will be returned.
 }
 
 
-DEFUN ("max", Fmax, Smax, 1, MANY, 0 /*
+DEFUN ("max", Fmax, 1, MANY, 0, /*
 Return largest of all the arguments.
 All arguments must be numbers or markers.
 The value is always a number; markers are converted to numbers.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Amax, nargs, args);
 }
 
-DEFUN ("min", Fmin, Smin, 1, MANY, 0 /*
+DEFUN ("min", Fmin, 1, MANY, 0, /*
 Return smallest of all the arguments.
 All arguments must be numbers or markers.
 The value is always a number; markers are converted to numbers.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Amin, nargs, args);
 }
 
-DEFUN ("logand", Flogand, Slogand, 0, MANY, 0 /*
+DEFUN ("logand", Flogand, 0, MANY, 0, /*
 Return bitwise-and of all the arguments.
 Arguments may be integers, or markers converted to integers.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Alogand, nargs, args);
 }
 
-DEFUN ("logior", Flogior, Slogior, 0, MANY, 0 /*
+DEFUN ("logior", Flogior, 0, MANY, 0, /*
 Return bitwise-or of all the arguments.
 Arguments may be integers, or markers converted to integers.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Alogior, nargs, args);
 }
 
-DEFUN ("logxor", Flogxor, Slogxor, 0, MANY, 0 /*
+DEFUN ("logxor", Flogxor, 0, MANY, 0, /*
 Return bitwise-exclusive-or of all the arguments.
 Arguments may be integers, or markers converted to integers.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   return arith_driver (Alogxor, nargs, args);
 }
 
-DEFUN ("ash", Fash, Sash, 2, 2, 0 /*
+DEFUN ("ash", Fash, 2, 2, 0, /*
 Return VALUE with its bits shifted left by COUNT.
 If COUNT is negative, shifting is actually to the right.
 In this case, the sign bit is duplicated.
-*/ )
-  (value, count)
-     Lisp_Object value, count;
+*/
+       (value, count))
 {
   CHECK_INT_COERCE_CHAR (value);
   CHECK_INT (count);
@@ -1454,13 +1366,12 @@ In this case, the sign bit is duplicated.
 		 XINT (value) >> -XINT (count));
 }
 
-DEFUN ("lsh", Flsh, Slsh, 2, 2, 0 /*
+DEFUN ("lsh", Flsh, 2, 2, 0, /*
 Return VALUE with its bits shifted left by COUNT.
 If COUNT is negative, shifting is actually to the right.
 In this case,  zeros are shifted in on the left.
-*/ )
-  (value, count)
-     Lisp_Object value, count;
+*/
+       (value, count))
 {
   Lisp_Object val;
 
@@ -1474,12 +1385,11 @@ In this case,  zeros are shifted in on the left.
   return val;
 }
 
-DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0 /*
+DEFUN ("1+", Fadd1, 1, 1, 0, /*
 Return NUMBER plus one.  NUMBER may be a number or a marker.
 Markers are converted to integers.
-*/ )
-  (number)
-     Lisp_Object number;
+*/
+       (number))
 {
   CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (number);
 
@@ -1491,12 +1401,11 @@ Markers are converted to integers.
   return (make_int (XINT (number) + 1));
 }
 
-DEFUN ("1-", Fsub1, Ssub1, 1, 1, 0 /*
+DEFUN ("1-", Fsub1, 1, 1, 0, /*
 Return NUMBER minus one.  NUMBER may be a number or a marker.
 Markers are converted to integers.
-*/ )
-  (number)
-     Lisp_Object number;
+*/
+       (number))
 {
   CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER (number);
 
@@ -1508,11 +1417,10 @@ Markers are converted to integers.
   return (make_int (XINT (number) - 1));
 }
 
-DEFUN ("lognot", Flognot, Slognot, 1, 1, 0 /*
+DEFUN ("lognot", Flognot, 1, 1, 0, /*
 Return the bitwise complement of NUMBER.  NUMBER must be an integer.
-*/ )
-  (number)
-     Lisp_Object number;
+*/
+       (number))
 {
   CHECK_INT (number);
   return (make_int (~XINT (number)));
@@ -1872,16 +1780,15 @@ encode_weak_list_type (enum weak_list_type type)
   return Qnil; /* not reached */
 }
 
-DEFUN ("weak-list-p", Fweak_list_p, Sweak_list_p, 1, 1, 0 /*
+DEFUN ("weak-list-p", Fweak_list_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a weak list.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return WEAK_LISTP (object) ? Qt : Qnil;
 }
 
-DEFUN ("make-weak-list", Fmake_weak_list, Smake_weak_list, 0, 1, 0 /*
+DEFUN ("make-weak-list", Fmake_weak_list, 0, 1, 0, /*
 Create a new weak list.
 A weak list object is an object that contains a list.  This list behaves
 like any other list except that its elements do not count towards
@@ -1904,9 +1811,8 @@ to `simple'.  Recognized types are
 		and the car is not pointed to.
 `value-assoc'	Objects in the list disappear if they are conses
 		and the cdr is not pointed to.
-*/ )
-  (type)
-     Lisp_Object type;
+*/
+       (type))
 {
   if (NILP (type))
     type = Qsimple;
@@ -1914,32 +1820,28 @@ to `simple'.  Recognized types are
   return make_weak_list (decode_weak_list_type (type));
 }
 
-DEFUN ("weak-list-type", Fweak_list_type, Sweak_list_type, 1, 1, 0 /*
+DEFUN ("weak-list-type", Fweak_list_type, 1, 1, 0, /*
 Return the type of the given weak-list object.
-*/ )
-  (weak)
-     Lisp_Object weak;
+*/
+       (weak))
 {
   CHECK_WEAK_LIST (weak);
   return encode_weak_list_type (XWEAK_LIST (weak)->type);
 }
 
-DEFUN ("weak-list-list", Fweak_list_list, Sweak_list_list, 1, 1, 0 /*
+DEFUN ("weak-list-list", Fweak_list_list, 1, 1, 0, /*
 Return the list contained in a weak-list object.
-*/ )
-  (weak)
-     Lisp_Object weak;
+*/
+       (weak))
 {
   CHECK_WEAK_LIST (weak);
   return XWEAK_LIST_LIST (weak);
 }
 
-DEFUN ("set-weak-list-list", Fset_weak_list_list, Sset_weak_list_list,
-       2, 2, 0 /*
+DEFUN ("set-weak-list-list", Fset_weak_list_list, 2, 2, 0, /*
 Change the list contained in a weak-list object.
-*/ )
-  (weak, new_list)
-     Lisp_Object weak, new_list;
+*/
+       (weak, new_list))
 {
   CHECK_WEAK_LIST (weak);
   XWEAK_LIST_LIST (weak) = new_list;
@@ -2090,90 +1992,90 @@ syms_of_data (void)
 
   defsymbol (&Qweak_listp, "weak-list-p");
 
-  defsubr (&Swrong_type_argument);
+  DEFSUBR (Fwrong_type_argument);
 
-  defsubr (&Seq);
-  defsubr (&Snull);
-  defsubr (&Slistp);
-  defsubr (&Snlistp);
-  defsubr (&Sconsp);
-  defsubr (&Satom);
-  defsubr (&Schar_or_string_p);
-  defsubr (&Scharacterp);
-  defsubr (&Sintegerp);
-  defsubr (&Sinteger_or_marker_p);
-  defsubr (&Snumberp);
-  defsubr (&Snumber_or_marker_p);
+  DEFSUBR (Feq);
+  DEFSUBR (Fnull);
+  DEFSUBR (Flistp);
+  DEFSUBR (Fnlistp);
+  DEFSUBR (Fconsp);
+  DEFSUBR (Fatom);
+  DEFSUBR (Fchar_or_string_p);
+  DEFSUBR (Fcharacterp);
+  DEFSUBR (Fintegerp);
+  DEFSUBR (Finteger_or_marker_p);
+  DEFSUBR (Fnumberp);
+  DEFSUBR (Fnumber_or_marker_p);
 #ifdef LISP_FLOAT_TYPE
-  defsubr (&Sfloatp);
+  DEFSUBR (Ffloatp);
 #endif /* LISP_FLOAT_TYPE */
-  defsubr (&Snatnump);
-  defsubr (&Ssymbolp);
-  defsubr (&Skeywordp);
-  defsubr (&Sstringp);
-  defsubr (&Svectorp);
-  defsubr (&Sbitp);
-  defsubr (&Sbit_vector_p);
-  defsubr (&Sarrayp);
-  defsubr (&Ssequencep);
-  defsubr (&Smarkerp);
-  defsubr (&Ssubrp);
-  defsubr (&Ssubr_min_args);
-  defsubr (&Ssubr_max_args);
-  defsubr (&Scompiled_function_p);
-  defsubr (&Stype_of);
-  defsubr (&Scar);
-  defsubr (&Scdr);
-  defsubr (&Scar_safe);
-  defsubr (&Scdr_safe);
-  defsubr (&Ssetcar);
-  defsubr (&Ssetcdr);
-  defsubr (&Sindirect_function);
-  defsubr (&Saref);
-  defsubr (&Saset);
+  DEFSUBR (Fnatnump);
+  DEFSUBR (Fsymbolp);
+  DEFSUBR (Fkeywordp);
+  DEFSUBR (Fstringp);
+  DEFSUBR (Fvectorp);
+  DEFSUBR (Fbitp);
+  DEFSUBR (Fbit_vector_p);
+  DEFSUBR (Farrayp);
+  DEFSUBR (Fsequencep);
+  DEFSUBR (Fmarkerp);
+  DEFSUBR (Fsubrp);
+  DEFSUBR (Fsubr_min_args);
+  DEFSUBR (Fsubr_max_args);
+  DEFSUBR (Fcompiled_function_p);
+  DEFSUBR (Ftype_of);
+  DEFSUBR (Fcar);
+  DEFSUBR (Fcdr);
+  DEFSUBR (Fcar_safe);
+  DEFSUBR (Fcdr_safe);
+  DEFSUBR (Fsetcar);
+  DEFSUBR (Fsetcdr);
+  DEFSUBR (Findirect_function);
+  DEFSUBR (Faref);
+  DEFSUBR (Faset);
 
-  defsubr (&Scompiled_function_instructions);
-  defsubr (&Scompiled_function_constants);
-  defsubr (&Scompiled_function_stack_depth);
-  defsubr (&Scompiled_function_arglist);
-  defsubr (&Scompiled_function_interactive);
-  defsubr (&Scompiled_function_doc_string);
-  defsubr (&Scompiled_function_domain);
+  DEFSUBR (Fcompiled_function_instructions);
+  DEFSUBR (Fcompiled_function_constants);
+  DEFSUBR (Fcompiled_function_stack_depth);
+  DEFSUBR (Fcompiled_function_arglist);
+  DEFSUBR (Fcompiled_function_interactive);
+  DEFSUBR (Fcompiled_function_doc_string);
+  DEFSUBR (Fcompiled_function_domain);
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
-  defsubr (&Scompiled_function_annotation);
+  DEFSUBR (Fcompiled_function_annotation);
 #endif
 
-  defsubr (&Snumber_to_string);
-  defsubr (&Sstring_to_number);
-  defsubr (&Seqlsign);
-  defsubr (&Slss);
-  defsubr (&Sgtr);
-  defsubr (&Sleq);
-  defsubr (&Sgeq);
-  defsubr (&Sneq);
-  defsubr (&Szerop);
-  defsubr (&Splus);
-  defsubr (&Sminus);
-  defsubr (&Stimes);
-  defsubr (&Squo);
-  defsubr (&Srem);
-  defsubr (&Smod);
-  defsubr (&Smax);
-  defsubr (&Smin);
-  defsubr (&Slogand);
-  defsubr (&Slogior);
-  defsubr (&Slogxor);
-  defsubr (&Slsh);
-  defsubr (&Sash);
-  defsubr (&Sadd1);
-  defsubr (&Ssub1);
-  defsubr (&Slognot);
+  DEFSUBR (Fnumber_to_string);
+  DEFSUBR (Fstring_to_number);
+  DEFSUBR (Feqlsign);
+  DEFSUBR (Flss);
+  DEFSUBR (Fgtr);
+  DEFSUBR (Fleq);
+  DEFSUBR (Fgeq);
+  DEFSUBR (Fneq);
+  DEFSUBR (Fzerop);
+  DEFSUBR (Fplus);
+  DEFSUBR (Fminus);
+  DEFSUBR (Ftimes);
+  DEFSUBR (Fquo);
+  DEFSUBR (Frem);
+  DEFSUBR (Fmod);
+  DEFSUBR (Fmax);
+  DEFSUBR (Fmin);
+  DEFSUBR (Flogand);
+  DEFSUBR (Flogior);
+  DEFSUBR (Flogxor);
+  DEFSUBR (Flsh);
+  DEFSUBR (Fash);
+  DEFSUBR (Fadd1);
+  DEFSUBR (Fsub1);
+  DEFSUBR (Flognot);
 
-  defsubr (&Sweak_list_p);
-  defsubr (&Smake_weak_list);
-  defsubr (&Sweak_list_type);
-  defsubr (&Sweak_list_list);
-  defsubr (&Sset_weak_list_list);
+  DEFSUBR (Fweak_list_p);
+  DEFSUBR (Fmake_weak_list);
+  DEFSUBR (Fweak_list_type);
+  DEFSUBR (Fweak_list_list);
+  DEFSUBR (Fset_weak_list_list);
 }
 
 void

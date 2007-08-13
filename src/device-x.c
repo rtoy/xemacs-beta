@@ -612,7 +612,7 @@ x_IO_error_handler (Display *disp)
   return 0;
 }
 
-DEFUN ("x-debug-mode", Fx_debug_mode, Sx_debug_mode, 1, 2, 0 /*
+DEFUN ("x-debug-mode", Fx_debug_mode, 1, 2, 0, /*
 With a true arg, make the connection to the X server synchronous.
 With false, make it asynchronous.  Synchronous connections are much slower,
 but are useful for debugging. (If you get X errors, make the connection
@@ -623,9 +623,8 @@ If DEVICE is not specified, the selected device is assumed.
 
 Calling this function is the same as calling the C function `XSynchronize',
 or starting the program with the `-sync' command line argument.
-*/ )
-    (arg, device)
-    Lisp_Object arg, device;
+*/
+       (arg, device))
 {
   struct device *d = decode_x_device (device);
 
@@ -801,7 +800,7 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
   return;
 }
 
-DEFUN ("x-get-resource", Fx_get_resource, Sx_get_resource, 3, 6, 0 /*
+DEFUN ("x-get-resource", Fx_get_resource, 3, 6, 0, /*
 Retrieve an X resource from the resource manager.
 
 The first arg is the name of the resource to retrieve, such as \"font\".
@@ -882,9 +881,8 @@ found.  If the third arg is `string', a string is returned, and if it is
 `integer', an integer is returned.  If the third arg is `boolean', then the
 returned value is the list (t) for true, (nil) for false, and is nil to
 mean ``unspecified.''
-*/ )
-     (name, class, type, locale, device, no_error)
-     Lisp_Object name, class, type, locale, device, no_error;
+*/
+       (name, class, type, locale, device, no_error))
 {
   /* #### fixed limit, could be overflowed */
   char name_string[2048], class_string[2048];
@@ -985,8 +983,7 @@ mean ``unspecified.''
   return Qnil;	/* shut up compiler */
 }
 
-DEFUN ("x-get-resource-prefix", Fx_get_resource_prefix,
-       Sx_get_resource_prefix, 1, 2, 0 /*
+DEFUN ("x-get-resource-prefix", Fx_get_resource_prefix, 1, 2, 0, /*
 Return the resource prefix for LOCALE on DEVICE.
 The resource prefix is the strings used to prefix resources if
 the LOCALE and DEVICE arguments were passed to `x-get-resource'.
@@ -995,9 +992,8 @@ For example, if LOCALE is a frame, the returned value might be
 \(\"xemacs.frame.FRAME-NAME\" . \"Emacs.EmacsLocaleType.EmacsFrame\").
 If no valid X device for resourcing can be obtained, this function
 returns nil. (In such a case, `x-get-resource' would always return nil.)
-*/ )
-  (locale, device)
-  Lisp_Object locale, device;
+*/
+       (locale, device))
 {
   /* #### fixed limit, could be overflowed */
   char name[1024], class[1024];
@@ -1009,13 +1005,12 @@ returns nil. (In such a case, `x-get-resource' would always return nil.)
   return Fcons (build_string (name), build_string (class));
 }
 
-DEFUN ("x-put-resource", Fx_put_resource, Sx_put_resource, 1, 2, 0 /*
+DEFUN ("x-put-resource", Fx_put_resource, 1, 2, 0, /*
 Add a resource to the resource database for DEVICE.
 RESOURCE-LINE specifies the resource to add and should be a
 standard resource specification.
-*/ )
-     (resource_line, device)
-     Lisp_Object resource_line, device;
+*/
+       (resource_line, device))
 {
   struct device *d = decode_device (device);
   char *str, *colon_pos;
@@ -1045,23 +1040,21 @@ standard resource specification.
 /*                   display information functions                      */
 /************************************************************************/
 
-DEFUN ("default-x-device", Fdefault_x_device, Sdefault_x_device, 0, 0, 0 /*
+DEFUN ("default-x-device", Fdefault_x_device, 0, 0, 0, /*
 Return the default X device for resourcing.
 This is the first-created X device that still exists.
-*/ )
-     ()
+*/
+       ())
 {
   return Vdefault_x_device;
 }
 
-DEFUN ("x-display-visual-class", Fx_display_visual_class,
-       Sx_display_visual_class, 0, 1, 0 /*
+DEFUN ("x-display-visual-class", Fx_display_visual_class, 0, 1, 0, /*
 Return the visual class of the X display `device' is on.
 The returned value will be one of the symbols `static-gray', `gray-scale',
 `static-color', `pseudo-color', `true-color', or `direct-color'.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   switch (DefaultVisualOfScreen
 	  (DefaultScreenOfDisplay (get_x_display (device)))->class)
@@ -1127,11 +1120,10 @@ x_device_color_cells (struct device *d)
   return DisplayCells (dpy, DefaultScreen (dpy));
 }
 
-DEFUN ("x-server-vendor", Fx_server_vendor, Sx_server_vendor, 0, 1, 0 /*
+DEFUN ("x-server-vendor", Fx_server_vendor, 0, 1, 0, /*
 Return the vendor ID string of the X server `device' on.
-*/ )
-     (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   Display *dpy = get_x_display (device);
   char *vendor = ServerVendor (dpy);
@@ -1142,14 +1134,13 @@ Return the vendor ID string of the X server `device' on.
     return (build_string (""));
 }
 
-DEFUN ("x-server-version", Fx_server_version, Sx_server_version, 0, 1, 0 /*
+DEFUN ("x-server-version", Fx_server_version, 0, 1, 0, /*
 Return the version numbers of the X server `device' is on.
 The returned value is a list of three integers: the major and minor
 version numbers of the X Protocol in use, and the vendor-specific release
 number.  See also `x-server-vendor'.
-*/ )
-     (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   Display *dpy = get_x_display (device);
 
@@ -1158,14 +1149,12 @@ number.  See also `x-server-vendor'.
 		make_int (VendorRelease (dpy)));
 }
 
-DEFUN ("x-valid-keysym-name-p", Fx_valid_keysym_name_p, Sx_valid_keysym_name_p,
-       1, 1, 0 /*
+DEFUN ("x-valid-keysym-name-p", Fx_valid_keysym_name_p, 1, 1, 0, /*
 Return true if KEYSYM names a keysym that the X library knows about.
 Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 /usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-*/ )
-     (keysym)
-     Lisp_Object keysym;
+*/
+       (keysym))
 {
   CONST char *keysym_ext;
   
@@ -1176,16 +1165,14 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
   return Qnil;
 }
 
-DEFUN ("x-keysym-on-keyboard-p", Fx_keysym_on_keyboard_p, Sx_keysym_on_keyboard_p,
-       1, 2, 0 /*
+DEFUN ("x-keysym-on-keyboard-p", Fx_keysym_on_keyboard_p, 1, 2, 0, /*
 Return true if KEYSYM names a key on the keyboard of DEVICE.
 More precisely, return true if pressing a physical key
 on the keyboard of DEVICE without any modifier keys generates KEYSYM.
 Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 /usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-*/ )
-     (keysym, device)
-     Lisp_Object keysym, device;
+*/
+       (keysym, device))
 {
   struct device *d = decode_device(device);
   CONST char *keysym_string;
@@ -1219,7 +1206,7 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 /*                          grabs and ungrabs                           */
 /************************************************************************/
 
-DEFUN ("x-grab-pointer", Fx_grab_pointer, Sx_grab_pointer, 0, 3, 0 /*
+DEFUN ("x-grab-pointer", Fx_grab_pointer, 0, 3, 0, /*
 Grab the pointer and restrict it to its current window.
 If optional DEVICE argument is nil, the default device will be used.
 If optional CURSOR argument is non-nil, change the pointer shape to that
@@ -1228,9 +1215,8 @@ If optional CURSOR argument is non-nil, change the pointer shape to that
 If the second optional argument IGNORE-KEYBOARD is non-nil, ignore all
   keyboard events during the grab.
 Returns t if the grab is successful, nil otherwise.
-*/ )
-  (device, cursor, ignore_keyboard)
-     Lisp_Object device, cursor, ignore_keyboard;
+*/
+       (device, cursor, ignore_keyboard))
 {
   Window w;
   int pointer_mode, result;
@@ -1266,13 +1252,12 @@ Returns t if the grab is successful, nil otherwise.
   return ((result == GrabSuccess) ? Qt : Qnil);
 }
 
-DEFUN ("x-ungrab-pointer", Fx_ungrab_pointer, Sx_ungrab_pointer, 0, 1, 0 /*
+DEFUN ("x-ungrab-pointer", Fx_ungrab_pointer, 0, 1, 0, /*
 Release a pointer grab made with `x-grab-pointer'.
 If optional first arg DEVICE is nil the default device is used.
 If it is t the pointer will be released on all X devices.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   if (!EQ (device, Qt))
     {
@@ -1295,15 +1280,14 @@ If it is t the pointer will be released on all X devices.
   return Qnil;
 }
 
-DEFUN ("x-grab-keyboard", Fx_grab_keyboard, Sx_grab_keyboard, 0, 1, 0 /*
+DEFUN ("x-grab-keyboard", Fx_grab_keyboard, 0, 1, 0, /*
 Grab the keyboard on the given device (defaulting to the selected one).
 So long as the keyboard is grabbed, all keyboard events will be delivered
 to emacs -- it is not possible for other X clients to eavesdrop on them.
 Ungrab the keyboard with `x-ungrab-keyboard' (use an unwind-protect).
 Returns t if the grab was successful; nil otherwise.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_x_device (device);
   Window w = XtWindow (FRAME_X_TEXT_WIDGET (device_selected_frame (d)));
@@ -1334,11 +1318,10 @@ Returns t if the grab was successful; nil otherwise.
     return Qnil;
 }
 
-DEFUN ("x-ungrab-keyboard", Fx_ungrab_keyboard, Sx_ungrab_keyboard, 0, 1, 0 /*
+DEFUN ("x-ungrab-keyboard", Fx_ungrab_keyboard, 0, 1, 0, /*
 Release a keyboard grab made with `x-grab-keyboard'.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   Display *dpy = get_x_display (device);
   XUngrabKeyboard (dpy, CurrentTime);
@@ -1353,22 +1336,22 @@ Release a keyboard grab made with `x-grab-keyboard'.
 void
 syms_of_device_x (void)
 {
-  defsubr (&Sx_debug_mode);
-  defsubr (&Sx_get_resource);
-  defsubr (&Sx_get_resource_prefix);
-  defsubr (&Sx_put_resource);
+  DEFSUBR (Fx_debug_mode);
+  DEFSUBR (Fx_get_resource);
+  DEFSUBR (Fx_get_resource_prefix);
+  DEFSUBR (Fx_put_resource);
 
-  defsubr (&Sdefault_x_device);
-  defsubr (&Sx_display_visual_class);
-  defsubr (&Sx_server_vendor);
-  defsubr (&Sx_server_version);
-  defsubr (&Sx_valid_keysym_name_p);
-  defsubr (&Sx_keysym_on_keyboard_p);
+  DEFSUBR (Fdefault_x_device);
+  DEFSUBR (Fx_display_visual_class);
+  DEFSUBR (Fx_server_vendor);
+  DEFSUBR (Fx_server_version);
+  DEFSUBR (Fx_valid_keysym_name_p);
+  DEFSUBR (Fx_keysym_on_keyboard_p);
 
-  defsubr (&Sx_grab_pointer);
-  defsubr (&Sx_ungrab_pointer);
-  defsubr (&Sx_grab_keyboard);
-  defsubr (&Sx_ungrab_keyboard);
+  DEFSUBR (Fx_grab_pointer);
+  DEFSUBR (Fx_ungrab_pointer);
+  DEFSUBR (Fx_grab_keyboard);
+  DEFSUBR (Fx_ungrab_keyboard);
 
   defsymbol (&Qx_error, "x-error");
   defsymbol (&Qinit_pre_x_win, "init-pre-x-win");

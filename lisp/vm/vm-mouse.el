@@ -1,5 +1,5 @@
 ;;; Mouse related functions and commands
-;;; Copyright (C) 1995 Kyle E. Jones
+;;; Copyright (C) 1995-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -48,14 +48,11 @@
 	 (beginning-of-line)
 	 (if (let ((vm-follow-summary-cursor t))
 	       (vm-follow-summary-cursor))
-	     (progn
-	       (vm-select-folder-buffer)
-	       (vm-preview-current-message))
+	     nil
 	   (setq this-command 'vm-scroll-forward)
 	   (call-interactively 'vm-scroll-forward)))
-	((memq major-mode '(vm-mode vm-virtual-mode))
-	 (cond ((and (vm-mouse-fsfemacs-mouse-p) vm-url-browser)
-		(vm-mouse-popup-or-select event))))))
+	((memq major-mode '(vm-mode vm-virtual-mode vm-presentation-mode))
+	 (vm-mouse-popup-or-select event))))
 
 (defun vm-mouse-button-3 (event)
   (interactive "e")
@@ -73,12 +70,15 @@
 	       (vm-menu-popup-mode-menu event))
 	      ((eq major-mode 'vm-mode)
 	       (vm-menu-popup-context-menu event))
+	      ((eq major-mode 'vm-presentation-mode)
+	       (vm-menu-popup-context-menu event))
 	      ((eq major-mode 'vm-virtual-mode)
 	       (vm-menu-popup-context-menu event))
 	      ((eq major-mode 'mail-mode)
 	       (vm-menu-popup-mode-menu event))))))
 
 (defun vm-mouse-3-help (object)
+  nil
   "Use mouse button 3 to see a menu of options.")
 
 (defun vm-mouse-get-mouse-track-string (event)
@@ -114,25 +114,33 @@
   (cond ((vm-mouse-fsfemacs-mouse-p)
 	 (set-buffer (window-buffer (posn-window (event-start event))))
 	 (goto-char (posn-point (event-start event)))
-	 (let (o-list o menu (found nil))
+	 (let (o-list (found nil))
 	   (setq o-list (overlays-at (point)))
 	   (while (and o-list (not found))
 	     (cond ((overlay-get (car o-list) 'vm-url)
 		    (setq found t)
-		    (vm-mouse-send-url-at-event event)))
+		    (vm-mouse-send-url-at-event event))
+		   ((overlay-get (car o-list) 'vm-mime-function)
+		    (setq found t)
+		    (funcall (overlay-get (car o-list) 'vm-mime-function)
+			     (car o-list))))
 	     (setq o-list (cdr o-list)))
 	   (and (not found) (vm-menu-popup-context-menu event))))
 	;; The XEmacs code is not actually used now, since all
 	;; selectable objects are handled by an extent keymap
 	;; binding that points to a more specific function.  But
 	;; this might come in handy later if I want selectable
-	;; objects that don't have an extent attached.
+	;; objects that don't have an extent or extent keymap
+	;; attached.
 	((vm-mouse-xemacs-mouse-p)
 	 (set-buffer (window-buffer (event-window event)))
 	 (and (event-point event) (goto-char (event-point event)))
-	 (if (extent-at (point) (current-buffer) 'vm-url)
-	     (vm-mouse-send-url-at-event event)
-	   (vm-menu-popup-context-menu event)))))
+	 (let (e)
+	   (cond ((extent-at (point) (current-buffer) 'vm-url)
+		  (vm-mouse-send-url-at-event event))
+		 ((setq e (extent-at (point) nil 'vm-mime-function))
+		  (funcall (extent-property e 'vm-mime-function) e))
+		 (t (vm-menu-popup-context-menu event)))))))
 
 (defun vm-mouse-send-url-at-event (event)
   (interactive "e")
@@ -146,35 +154,39 @@
 	 (vm-mouse-send-url-at-position (posn-point (event-start event))))))
 
 (defun vm-mouse-send-url-at-position (pos &optional browser)
-  (cond ((vm-mouse-xemacs-mouse-p)
-	 (let ((e (extent-at pos (current-buffer) 'vm-url))
-	       url)
-	   (if (null e)
-	       nil
-	     (setq url (buffer-substring (extent-start-position e)
-					 (extent-end-position e)))
-	     (vm-mouse-send-url url browser))))
-	((vm-mouse-fsfemacs-mouse-p)
-	 (let (o-list url o)
-	   (setq o-list (overlays-at pos))
-	   (while (and o-list (null (overlay-get (car o-list) 'vm-url)))
-	     (setq o-list (cdr o-list)))
-	   (if (null o-list)
-	       nil
-	     (setq o (car o-list))
-	     (setq url (vm-buffer-substring-no-properties
-			(overlay-start o)
-			(overlay-end o)))
-	     (vm-mouse-send-url url browser))))))
+  (save-restriction
+    (widen)
+    (cond ((vm-mouse-xemacs-mouse-p)
+	   (let ((e (extent-at pos (current-buffer) 'vm-url))
+		 url)
+	     (if (null e)
+		 nil
+	       (setq url (buffer-substring (extent-start-position e)
+					   (extent-end-position e)))
+	       (vm-mouse-send-url url browser))))
+	  ((vm-mouse-fsfemacs-mouse-p)
+	   (let (o-list url o)
+	     (setq o-list (overlays-at pos))
+	     (while (and o-list (null (overlay-get (car o-list) 'vm-url)))
+	       (setq o-list (cdr o-list)))
+	     (if (null o-list)
+		 nil
+	       (setq o (car o-list))
+	       (setq url (vm-buffer-substring-no-properties
+			  (overlay-start o)
+			  (overlay-end o)))
+	       (vm-mouse-send-url url browser)))))))
 
 (defun vm-mouse-send-url (url &optional browser)
-  (let ((browser (or browser vm-url-browser)))
-    (cond ((symbolp browser)
-	   (funcall browser url))
-	  ((stringp browser)
-	   (vm-unsaved-message "Sending URL to %s..." browser)
-	   (vm-run-background-command browser url)
-	   (vm-unsaved-message "Sending URL to %s... done" browser)))))
+  (if (string-match "^mailto:" url)
+      (vm-mail-to-mailto-url url)
+    (let ((browser (or browser vm-url-browser)))
+      (cond ((symbolp browser)
+	     (funcall browser url))
+	    ((stringp browser)
+	     (vm-unsaved-message "Sending URL to %s..." browser)
+	     (vm-run-background-command browser url)
+	     (vm-unsaved-message "Sending URL to %s... done" browser))))))
 
 (defun vm-mouse-send-url-to-netscape (url &optional new-netscape new-window)
   (vm-unsaved-message "Sending URL to Netscape...")
@@ -221,7 +233,7 @@
 	((vm-mouse-fsfemacs-mouse-p)
 	 (if (null (lookup-key vm-mode-map [mouse-2]))
 	     (define-key vm-mode-map [mouse-2] 'vm-mouse-button-2))
-	 (if (null (lookup-key vm-mode-map [down-mouse-3]))
+	 (if vm-popup-menu-on-mouse-3
 	     (progn
 	       (define-key vm-mode-map [mouse-3] 'ignore)
 	       (define-key vm-mode-map [down-mouse-3] 'vm-mouse-button-3))))))
@@ -231,6 +243,31 @@
 
 (defun vm-run-command (command &rest arg-list)
   (apply (function call-process) command nil nil nil arg-list))
+
+;; return t on zero exit status
+;; return (exit-status . stderr-string) on nonzero exit status
+(defun vm-run-command-on-region (start end output-buffer command
+				       &rest arg-list)
+  (let ((tempfile nil) status errstring)
+    (unwind-protect
+	(progn
+	  (setq tempfile (vm-make-tempfile-name))
+	  (setq status
+		(apply 'call-process-region
+		       start end command nil
+		       (list output-buffer tempfile)
+		       nil arg-list))
+	  (cond ((equal status 0) t)
+		((zerop (save-excursion
+			  (set-buffer (find-file-noselect tempfile))
+			  (buffer-size)))
+		 t)
+		(t (save-excursion
+		     (set-buffer (find-file-noselect tempfile))
+		     (setq errstring (buffer-string))
+		     (kill-buffer nil)
+		     (cons status errstring)))))
+      (vm-error-free-call 'delete-file tempfile))))
 
 ;; stupid yammering compiler
 (defvar vm-mouse-read-file-name-prompt)
@@ -266,8 +303,9 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-file-name-history history)
     (setq vm-mouse-read-file-name-prompt prompt)
     (setq vm-mouse-read-file-name-return-value nil)
-    (save-excursion
-      (vm-goto-new-frame 'completion))
+    (if (and vm-frame-per-completion (vm-multiple-frames-possible-p))
+	(save-excursion
+	  (vm-goto-new-frame 'completion)))
     (switch-to-buffer (current-buffer))
     (vm-mouse-read-file-name-event-handler)
     (save-excursion
@@ -321,7 +359,9 @@ HISTORY argument is ignored."
     (vm-mouse-set-mouse-track-highlight start (point))
     (vm-set-region-face start (point) 'italic)
     (insert ?\n ?\n)
-    (setq list (directory-files default-directory))
+    (setq list (vm-delete-backup-file-names
+		(vm-delete-auto-save-file-names
+		 (directory-files default-directory))))
     (vm-show-list list 'vm-mouse-read-file-name-event-handler)
     (setq buffer-read-only t)))
 
@@ -351,8 +391,9 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-string-completion-list completion-list)
     (setq vm-mouse-read-string-multi-word multi-word)
     (setq vm-mouse-read-string-return-value nil)
-    (save-excursion
-      (vm-goto-new-frame 'completion))
+    (if (and vm-frame-per-completion (vm-multiple-frames-possible-p))
+	(save-excursion
+	  (vm-goto-new-frame 'completion)))
     (switch-to-buffer (current-buffer))
     (vm-mouse-read-string-event-handler)
     (save-excursion
@@ -369,7 +410,7 @@ HISTORY argument is ignored."
 (defun vm-mouse-read-string-event-handler (&optional string)
   (let ((key-doc  "Click here for keyboard interface.")
 	(bs-doc   "      .... to go back one word.")
-	(done-doc "      .... to when you're done.")
+	(done-doc "      .... when you're done.")
 	start list)
     (if string
 	(cond ((equal string key-doc)

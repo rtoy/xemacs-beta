@@ -106,12 +106,11 @@ marker_hash (Lisp_Object obj, int depth)
 
 /* Operations on markers. */
 
-DEFUN ("marker-buffer", Fmarker_buffer, Smarker_buffer, 1, 1, 0 /*
+DEFUN ("marker-buffer", Fmarker_buffer, 1, 1, 0, /*
 Return the buffer that MARKER points into, or nil if none.
 Returns nil if MARKER points into a dead buffer.
-*/ )
-  (marker)
-     Lisp_Object marker;
+*/
+       (marker))
 {
   Lisp_Object buf;
   CHECK_MARKER (marker);
@@ -125,12 +124,11 @@ Returns nil if MARKER points into a dead buffer.
   return Qnil;
 }
 
-DEFUN ("marker-position", Fmarker_position, Smarker_position, 1, 1, 0 /*
+DEFUN ("marker-position", Fmarker_position, 1, 1, 0, /*
 Return the position MARKER points at, as a character number.
 Returns `nil' if marker doesn't point anywhere.
-*/ )
-  (marker)
-     Lisp_Object marker;
+*/
+       (marker))
 {
   CHECK_MARKER (marker);
   if (XMARKER (marker)->buffer)
@@ -261,7 +259,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object pos, Lisp_Object buffer,
 }
 
 
-DEFUN ("set-marker", Fset_marker, Sset_marker, 2, 3, 0 /*
+DEFUN ("set-marker", Fset_marker, 2, 3, 0, /*
 Position MARKER before character number NUMBER in BUFFER.
 BUFFER defaults to the current buffer.
 If NUMBER is nil, makes marker point nowhere.
@@ -269,9 +267,8 @@ Then it no longer slows down editing in any buffer.
 If this marker was returned by (point-marker t), then changing its position
 moves point.  You cannot change its buffer or make it point nowhere.
 Returns MARKER.
-*/ )
-  (marker, number, buffer)
-     Lisp_Object marker, number, buffer;
+*/
+       (marker, number, buffer))
 {
   return set_marker_internal (marker, number, buffer, 0);
 }
@@ -399,15 +396,14 @@ copy_marker_1 (Lisp_Object marker, Lisp_Object type, int noseeum)
   RETURN_NOT_REACHED (Qnil) /* not reached */
 }
 
-DEFUN ("copy-marker", Fcopy_marker, Scopy_marker, 1, 2, 0 /*
+DEFUN ("copy-marker", Fcopy_marker, 1, 2, 0, /*
 Return a new marker pointing at the same place as MARKER.
 If argument is a number, makes a new marker pointing
 at that position in the current buffer.
 The optional argument TYPE specifies the insertion type of the new marker;
 see `marker-insertion-type'.
-*/ )
-  (marker, type)
-     Lisp_Object marker, type;
+*/
+       (marker, type))
 {
   return copy_marker_1 (marker, type, 0);
 }
@@ -418,26 +414,22 @@ noseeum_copy_marker (Lisp_Object marker, Lisp_Object type)
   return copy_marker_1 (marker, type, 1);
 }
 
-DEFUN ("marker-insertion-type", Fmarker_insertion_type,
-       Smarker_insertion_type, 1, 1, 0 /*
+DEFUN ("marker-insertion-type", Fmarker_insertion_type, 1, 1, 0, /*
 Return insertion type of MARKER: t if it stays after inserted text.
 nil means the marker stays before text inserted there.
-*/ )
-  (marker)
-     register Lisp_Object marker;
+*/
+       (marker))
 {
   CHECK_MARKER (marker);
   return XMARKER (marker)->insertion_type ? Qt : Qnil;
 }
 
-DEFUN ("set-marker-insertion-type", Fset_marker_insertion_type,
-       Sset_marker_insertion_type, 2, 2, 0 /*
+DEFUN ("set-marker-insertion-type", Fset_marker_insertion_type, 2, 2, 0, /*
 Set the insertion-type of MARKER to TYPE.
 If TYPE is t, it means the marker advances when you insert text at it.
 If TYPE is nil, it means the marker stays behind when you insert text at it.
-*/ )
-  (marker, type)
-     Lisp_Object marker, type;
+*/
+       (marker, type))
 {
   CHECK_MARKER (marker);
 
@@ -470,12 +462,12 @@ compute_buffer_marker_usage (struct buffer *b, struct overhead_stats *ovstats)
 void
 syms_of_marker (void)
 {
-  defsubr (&Smarker_position);
-  defsubr (&Smarker_buffer);
-  defsubr (&Sset_marker);
-  defsubr (&Scopy_marker);
-  defsubr (&Smarker_insertion_type);
-  defsubr (&Sset_marker_insertion_type);
+  DEFSUBR (Fmarker_position);
+  DEFSUBR (Fmarker_buffer);
+  DEFSUBR (Fset_marker);
+  DEFSUBR (Fcopy_marker);
+  DEFSUBR (Fmarker_insertion_type);
+  DEFSUBR (Fset_marker_insertion_type);
 }
 
 void init_buffer_markers (struct buffer *b);

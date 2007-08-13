@@ -39,19 +39,14 @@ Lisp_Object Vusage_tracking;
 #include <ut.h>
 #endif
 
-DEFUN  ("ut-log-text", 
-	Fut_log_text, 
-	Sut_log_text, 
-	1, MANY, 0 /*
+DEFUN ("ut-log-text", Fut_log_text, 1, MANY, 0, /*
 Log a usage-tracking message if `usage-tracking' is non-nil.
 Args are the same as to `format'.  Returns whether the message was
 actually logged.  If usage-tracking support was not compiled in, this
 function has no effect and always returns `nil'.  See function
 `has-usage-tracking-p'.
-*/ )
-     (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
 #ifdef USAGE_TRACKING
   Lisp_Object xs;
@@ -78,7 +73,7 @@ function has no effect and always returns `nil'.  See function
 void
 syms_of_sunpro (void)
 {
-  defsubr (&Sut_log_text);
+  DEFSUBR (Fut_log_text);
 }
 
 void

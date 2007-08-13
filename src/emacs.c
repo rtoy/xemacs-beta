@@ -64,6 +64,12 @@ Boston, MA 02111-1307, USA.  */
 
 extern void memory_warnings (void *, void (*warnfun) (CONST char *));
 
+#ifndef SYSTEM_MALLOC
+extern void *(*__malloc_hook)(size_t);
+extern void *(*__realloc_hook)(void *, size_t);
+extern void (*__free_hook)(void *);
+#endif  /* not SYSTEM_MALLOC */
+
 /* Command line args from shell, as list of strings */
 Lisp_Object Vcommand_line_args;
 
@@ -336,19 +342,19 @@ init_cmdargs (int argc, char **argv, int skip_args)
   Vcommand_line_args = make_arg_list_1 (argc, argv, skip_args);
 }
 
-DEFUN ("invocation-name", Finvocation_name, Sinvocation_name, 0, 0, 0 /*
+DEFUN ("invocation-name", Finvocation_name, 0, 0, 0, /*
 Return the program name that was used to run XEmacs.
 Any directory names are omitted.
-*/ )
-  ()
+*/
+       ())
 {
   return Fcopy_sequence (Vinvocation_name);
 }
 
-DEFUN ("invocation-directory", Finvocation_directory, Sinvocation_directory, 0, 0, 0 /*
+DEFUN ("invocation-directory", Finvocation_directory, 0, 0, 0, /*
 Return the directory name in which the Emacs executable was located.
-*/ )
-  ()
+*/
+       ())
 {
   return Fcopy_sequence (Vinvocation_directory);
 }
@@ -431,12 +437,21 @@ main_1 (int argc, char **argv, char **envp)
   int skip_args = 0;
   Lisp_Object load_me;
   int inhibit_window_system;
+#ifdef NeXT
+  extern int malloc_cookie;
+#endif
+
+#ifndef SYSTEM_MALLOC
+  /* Make sure that any libraries we link against haven't installed a 
+     hook for a gmalloc of a potentially incompatible version. */
+  __malloc_hook = NULL;
+  __realloc_hook = NULL;
+  __free_hook = NULL;
+#endif /* not SYSTEM_MALLOC */
 
   noninteractive = 0;
 
 #ifdef NeXT
-  extern int malloc_cookie;
-  
   /* 19-Jun-1995 -baw
    * NeXT secret magic, ripped from Emacs-for-NS by Carl Edman
    * <cedman@princeton.edu>.  Note that even Carl doesn't know what this
@@ -660,7 +675,7 @@ main_1 (int argc, char **argv, char **envp)
          if the display was specified on the command line. */
       if ((dpy = getenv ("DISPLAY")) && dpy[0])
 	display_use = "x";
-
+      
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_NEXTSTEP
@@ -1392,7 +1407,7 @@ main_1 (int argc, char **argv, char **envp)
   /* NOTREACHED */
 }
 
-
+
 /* Sort the args so we can find the most important ones
    at the beginning of argv.  */
 
@@ -1462,7 +1477,7 @@ static struct standard_args standard_args[] =
   { "-reverse", 0, 5, 0 },
   { "-hb", "--horizontal-scroll-bars", 5, 0 },
   { "-vb", "--vertical-scroll-bars", 5, 0 },
-
+  
   /* These have the same priority as ordinary file name args,
      so they are not reordered with respect to those.  */
   { "-L", "--directory", 0, 1 },
@@ -1585,7 +1600,7 @@ sort_args (int argc, char **argv)
 	  if (options[from] > 0)
 	    from += options[from];
 	}
-
+	    
       if (best < 0)
 	abort ();
 
@@ -1613,33 +1628,29 @@ static int run_temacs_args_size;
 
 extern int gc_in_progress;
 
-DEFUN ("running-temacs-p",
-       Frunning_temacs_p, Srunning_temacs_p, 0, 0, 0 /*
+DEFUN ("running-temacs-p", Frunning_temacs_p, 0, 0, 0, /*
 True if running temacs.  This means we are in the dumping stage.
 This is false during normal execution of the `xemacs' program, and
 becomes false once `run-emacs-from-temacs' is run.
-*/ )
-  ()
+*/
+       ())
 {
   return run_temacs_argc >= 0 ? Qt : Qnil;
 }
 
-DEFUN ("run-emacs-from-temacs",
-       Frun_emacs_from_temacs, Srun_emacs_from_temacs, 0, MANY, 0 /*
+DEFUN ("run-emacs-from-temacs", Frun_emacs_from_temacs, 0, MANY, 0, /*
 Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
-*/ )
+*/
 /* If this function is called from startup.el, it will be possible to run
    temacs as an editor using 'temacs -batch -l loadup.el run-temacs', instead
    of having to dump an emacs and then run that (when debugging emacs itself,
-   this can be much faster). [Actually, the speed difference isn't that
+   this can be much faster)). [Actually, the speed difference isn't that
    much as long as your filesystem is local, and you don't end up with
    a dumped version in case you want to rerun it.  This function is most
    useful when used as part of the `make all-elc' command. --ben]
    This will \"restart\" emacs with the specified command-line arguments.
  */
-    (nargs, args)
-    int nargs;
-    Lisp_Object *args;
+       (int nargs, Lisp_Object *args))
 {
   int ac;
   Extbyte *wampum;
@@ -1726,12 +1737,12 @@ main (int argc, char **argv, char **envp)
 	 However, on both my systems environ is a plain old global
 	 variable initialized to zero.  _environ is the one that
 	 contains pointers to the actual environment.
-
+	
 	 Since we can't figure out the difference (and we're hours
 	 away from a release), this takes a very cowardly approach and
 	 is bracketed with both a system specific preprocessor test
 	 and a runtime "do you have this problem" test
-
+	
 	 06/20/96 robertl@dgii.com */
       {
 	extern char *_environ;
@@ -1747,7 +1758,7 @@ main (int argc, char **argv, char **envp)
 }
 
 
-DEFUN ("kill-emacs", Fkill_emacs, Skill_emacs, 0, 1, "P" /*
+DEFUN ("kill-emacs", Fkill_emacs, 0, 1, "P", /*
 Exit the XEmacs job and kill it.  Ask for confirmation, without argument.
 If ARG is an integer, return ARG as the exit program code.
 If ARG is a string, stuff it as keyboard input.
@@ -1755,9 +1766,8 @@ If ARG is a string, stuff it as keyboard input.
 The value of `kill-emacs-hook', if not void,
 is a list of functions (of no args),
 all of which are called before XEmacs is actually killed.
-*/ )
-  (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   /* This function can GC */
   struct gcpro gcpro1;
@@ -1920,12 +1930,11 @@ extern char my_edata[];
 
 #ifdef HAVE_SHM
 
-DEFUN ("dump-emacs-data", Fdump_emacs_data, Sdump_emacs_data, 1, 1, 0 /*
+DEFUN ("dump-emacs-data", Fdump_emacs_data, 1, 1, 0, /*
 Dump current state of XEmacs into data file FILENAME.
 This function exists on systems that use HAVE_SHM.
-*/ )
-  (intoname)
-     Lisp_Object intoname;
+*/
+       (intoname))
 {
   /* This function can GC */
   int opurify;
@@ -1959,7 +1968,7 @@ This function exists on systems that use HAVE_SHM.
 
 #else /* not HAVE_SHM */
 
-DEFUN ("dump-emacs", Fdump_emacs, Sdump_emacs, 2, 2, 0 /*
+DEFUN ("dump-emacs", Fdump_emacs, 2, 2, 0, /*
 Dump current state of XEmacs into executable file FILENAME.
 Take symbols from SYMFILE (presumably the file you executed to run XEmacs).
 This is used in the file `loadup.el' when building XEmacs.
@@ -1967,9 +1976,8 @@ This is used in the file `loadup.el' when building XEmacs.
 Remember to set `command-line-processed' to nil before dumping
 if you want the dumped XEmacs to process its command line
 and announce itself normally when it is run.
-*/ )
-  (intoname, symname)
-     Lisp_Object intoname, symname;
+*/
+       (intoname, symname))
 {
   /* This function can GC */
   struct gcpro gcpro1, gcpro2;
@@ -2099,10 +2107,10 @@ decode_env_path (CONST char *evarname, CONST char *defalt)
   return Fnreverse (lpath);
 }
 
-DEFUN ("noninteractive", Fnoninteractive, Snoninteractive, 0, 0, 0 /*
+DEFUN ("noninteractive", Fnoninteractive, 0, 0, 0, /*
 Non-nil return value means XEmacs is running without interactive terminal.
-*/ )
-  ()
+*/
+       ())
 {
   return ((noninteractive) ? Qt : Qnil);
 }
@@ -2128,31 +2136,30 @@ assert_failed (CONST char *file, int line, CONST char *expr)
 #endif /* USE_ASSERTIONS */
 
 #ifdef QUANTIFY
-DEFUN ("quantify-start-recording-data", Fquantify_start_recording_data,
-       Squantify_start_recording_data, 0, 0, 0 /*
+DEFUN ("quantify-start-recording-data",
+       Fquantify_start_recording_data, 0, 0, 0, /*
 Start recording Quantify data.
-*/)
-  ()
+*/
+       ())
 {
   quantify_start_recording_data ();
   return Qnil;
 }
 
-DEFUN ("quantify-stop-recording-data", Fquantify_stop_recording_data,
-       Squantify_stop_recording_data, 0, 0, 0 /*
+DEFUN ("quantify-stop-recording-data",
+       Fquantify_stop_recording_data, 0, 0, 0, /*
 Stop recording Quantify data.
-*/)
-  ()
+*/
+       ())
 {
   quantify_stop_recording_data ();
   return Qnil;
 }
 
-DEFUN ("quantify-clear-data", Fquantify_clear_data,
-       Squantify_clear_data, 0, 0, 0 /*
+DEFUN ("quantify-clear-data", Fquantify_clear_data, 0, 0, 0, /*
 Clear all Quantify data.
-*/)
-  ()
+*/
+       ())
 {
   quantify_clear_data ();
   return Qnil;
@@ -2164,23 +2171,23 @@ syms_of_emacs (void)
 {
 #ifndef CANNOT_DUMP
 #ifdef HAVE_SHM
-  defsubr (&Sdump_emacs_data);
+  DEFSUBR (Fdump_emacs_data);
 #else
-  defsubr (&Sdump_emacs);
+  DEFSUBR (Fdump_emacs);
 #endif
 #endif /* !CANNOT_DUMP */
 
-  defsubr (&Srun_emacs_from_temacs);
-  defsubr (&Srunning_temacs_p);
-  defsubr (&Sinvocation_name);
-  defsubr (&Sinvocation_directory);
-  defsubr (&Skill_emacs);
-  defsubr (&Snoninteractive);
+  DEFSUBR (Frun_emacs_from_temacs);
+  DEFSUBR (Frunning_temacs_p);
+  DEFSUBR (Finvocation_name);
+  DEFSUBR (Finvocation_directory);
+  DEFSUBR (Fkill_emacs);
+  DEFSUBR (Fnoninteractive);
 
 #ifdef QUANTIFY
-  defsubr (&Squantify_start_recording_data);
-  defsubr (&Squantify_stop_recording_data);
-  defsubr (&Squantify_clear_data);
+  DEFSUBR (Fquantify_start_recording_data);
+  DEFSUBR (Fquantify_stop_recording_data);
+  DEFSUBR (Fquantify_clear_data);
 #endif /* QUANTIFY */
 
   defsymbol (&Qkill_emacs_hook, "kill-emacs-hook");

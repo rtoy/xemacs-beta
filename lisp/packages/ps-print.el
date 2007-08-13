@@ -3,7 +3,7 @@
 ;; Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
 ;; Author:     Jim Thompson (was <thompson@wg2.waii.com>)
-;; Maintainer: Jacques Duthen <duthen@cegelec-red.fr>
+;; Maintainer: Jacques Duthen <duthen@club-internet.fr>
 ;; Keywords:   print, PostScript
 ;; Time-stamp: <97/01/29 23:21:25 tjchol01>
 ;; Version:    3.05
@@ -2445,15 +2445,16 @@ EndDSCPage\n"))
   (/ x-color-value ps-print-color-scale))
 
 (defun ps-color-values (x-color)
-  (cond ((fboundp 'x-color-values)
+  (cond ((fboundp 'color-instance-rgb-components)
+	 (if (ps-color-device)
+	     (color-instance-rgb-components
+	      (if (color-instance-p x-color) x-color
+		(if (color-specifier-p x-color)
+		    (make-color-instance (color-name x-color))
+		  (make-color-instance x-color))))
+	   (error "No available function to determine X color values.")))
+	((fboundp 'x-color-values)
 	 (x-color-values x-color))
-	((and (fboundp 'color-instance-rgb-components)
-	      (ps-color-device))
-	 (color-instance-rgb-components
-	  (if (color-instance-p x-color) x-color
-	    (if (color-specifier-p x-color)
-		(make-color-instance (color-name x-color))
-	      (make-color-instance x-color)))))
 	(t (error "No available function to determine X color values."))))
 
 (defun ps-face-attributes (face)

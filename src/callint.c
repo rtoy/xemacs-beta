@@ -75,7 +75,7 @@ Lisp_Object Qread_string;
 Lisp_Object Qevents_to_keys;
 
 /* ARGSUSED */
-DEFUN ("interactive", Finteractive, Sinteractive, 0, UNEVALLED, 0 /*
+DEFUN ("interactive", Finteractive, 0, UNEVALLED, 0, /*
 Specify a way of parsing arguments for interactive use of a function.
 For example, write
   (defun foo (arg) \"Doc string\" (interactive \"p\") ...use arg...)
@@ -132,9 +132,8 @@ If the string begins with `_', then this command will not cause the region
  set to t when the command exits successfully.
 You may use any of `@', `*' and `_' at the beginning of the string;
  they are processed in the order that they appear.
-*/ )
-  (args)
-     Lisp_Object args;
+*/
+       (args))
 {
   return Qnil;
 }
@@ -197,8 +196,7 @@ callint_prompt (CONST Bufbyte *prompt_start, Bytecount prompt_length,
 
 /* `lambda' for RECORD-FLAG is an XEmacs addition. */
 
-DEFUN ("call-interactively", Fcall_interactively, Scall_interactively,
-       1, 3, 0 /*
+DEFUN ("call-interactively", Fcall_interactively, 1, 3, 0, /*
 Call FUNCTION, reading args according to its interactive calling specs.
 Return the value FUNCTION returns.
 The function contains a specification of how to do the argument reading.
@@ -216,9 +214,8 @@ the minibuffer.
 
 The argument KEYS specifies the value to use instead of (this-command-keys)
 when reading the arguments.
-*/ )
-  (function, record_flag, keys)
-     Lisp_Object function, record_flag, keys;
+*/
+       (function, record_flag, keys))
 {
   /* This function can GC */
   int speccount = specpdl_depth ();
@@ -907,14 +904,12 @@ when reading the arguments.
   }
 }
 
-DEFUN ("prefix-numeric-value", Fprefix_numeric_value, Sprefix_numeric_value,
-  1, 1, 0 /*
+DEFUN ("prefix-numeric-value", Fprefix_numeric_value, 1, 1, 0, /*
 Return numeric meaning of raw prefix argument ARG.
 A raw prefix argument is what you get from `(interactive \"P\")'.
 Its numeric meaning is what you would get from `(interactive \"p\")'.
-*/ )
-  (raw)
-     Lisp_Object raw;
+*/
+       (raw))
 {
   int val;
 
@@ -962,9 +957,9 @@ syms_of_callint (void)
   defsymbol (&Qmouse_leave_buffer_hook, "mouse-leave-buffer-hook");
 #endif
 
-  defsubr (&Sinteractive);
-  defsubr (&Scall_interactively);
-  defsubr (&Sprefix_numeric_value);
+  DEFSUBR (Finteractive);
+  DEFSUBR (Fcall_interactively);
+  DEFSUBR (Fprefix_numeric_value);
 }
 
 void

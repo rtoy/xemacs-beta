@@ -216,11 +216,11 @@ free_popup_widget_value_tree (widget_value *wv)
   free_widget_value (wv);
 }
 
-DEFUN ("popup-up-p", Fpopup_up_p, Spopup_up_p, 0, 0, 0 /*
+DEFUN ("popup-up-p", Fpopup_up_p, 0, 0, 0, /*
 Return t if a popup menu or dialog box is up, nil otherwise.
 See `popup-menu' and `popup-dialog-box'.
-*/ )
-     ()
+*/
+       ())
 {
   return popup_up_p ? Qt : Qnil;
 }
@@ -594,7 +594,7 @@ void
 syms_of_gui_x (void)
 {
 #ifdef HAVE_POPUPS
-  defsubr (&Spopup_up_p);
+  DEFSUBR (Fpopup_up_p);
   defsymbol (&Qmenu_no_selection_hook, "menu-no-selection-hook");
 #endif
 }

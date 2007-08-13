@@ -189,12 +189,10 @@ decode_tty_console (Lisp_Object console)
   return XCONSOLE (console);
 }
 
-DEFUN ("console-tty-terminal-type", Fconsole_tty_terminal_type,
-       Sconsole_tty_terminal_type, 0, 1, 0 /*
+DEFUN ("console-tty-terminal-type", Fconsole_tty_terminal_type, 0, 1, 0, /*
 Return the terminal type of TTY console CONSOLE.
-*/ )
-     (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   return CONSOLE_TTY_DATA (decode_tty_console (console))->terminal_type;
 }
@@ -239,7 +237,7 @@ tty_canonicalize_device_connection (Lisp_Object connection,
 void
 syms_of_console_tty (void)
 {
-  defsubr (&Sconsole_tty_terminal_type);
+  DEFSUBR (Fconsole_tty_terminal_type);
   defsymbol (&Qterminal_type, "terminal-type");
 }
 

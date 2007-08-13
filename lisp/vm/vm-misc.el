@@ -1,5 +1,5 @@
 ;;; Miscellaneous functions for VM
-;;; Copyright (C) 1989, 1990, 1991, 1993, 1994 Kyle E. Jones
+;;; Copyright (C) 1989-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -131,6 +131,13 @@ The new version of the list, minus the deleted strings, is returned."
 	   (vm-set-su-end-of (car mp) nil)
 	   (setq mp (cdr mp))))))
 
+(defun vm-check-for-killed-presentation ()
+  (and (bufferp vm-presentation-buffer-handle)
+       (null (buffer-name vm-presentation-buffer-handle))
+       (progn
+	 (setq vm-presentation-buffer-handle nil
+	       vm-presentation-buffer nil))))
+
 (defun vm-check-for-killed-folder ()
   (and (bufferp vm-mail-buffer) (null (buffer-name vm-mail-buffer))
        (setq vm-mail-buffer nil)))
@@ -237,6 +244,15 @@ The new version of the list, minus the deleted strings, is returned."
 	(setq prev p p (cdr p))))
     list ))
 
+(defun vm-delete-directory-file-names (list)
+  (vm-delete 'file-directory-p list))
+
+(defun vm-delete-backup-file-names (list)
+  (vm-delete 'backup-file-name-p list))
+
+(defun vm-delete-auto-save-file-names (list)
+  (vm-delete 'auto-save-file-name-p list))
+
 (defun vm-delete-duplicates (list &optional all hack-addresses)
   "Delete duplicate equivalent strings from the list.
 If ALL is t, then if there is more than one occurrence of a string in the list,
@@ -317,11 +333,17 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	   return-value ))
 	((vectorp object) (apply 'vector (mapcar 'vm-copy object)))
 	((stringp object) (copy-sequence object))
+	((markerp object) (copy-marker object))
 	(t object)))
 
 (defun vm-xemacs-p ()
   (let ((case-fold-search nil))
     (string-match "XEmacs" emacs-version)))
+
+(defun vm-xemacs-mule-p ()
+  (and (vm-xemacs-p)
+       (fboundp 'set-file-coding-system)
+       (fboundp 'decode-coding-region)))
 
 (defun vm-fsfemacs-19-p ()
   (and (string-match "^19" emacs-version)
@@ -490,3 +512,100 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (defun vm-buffer-string-no-properties ()
   (vm-buffer-substring-no-properties (point-min) (point-max)))
+
+(defun vm-insert-region-from-buffer (buffer &optional start end)
+  (let ((target-buffer (current-buffer)))
+    (set-buffer buffer)
+    (save-restriction
+      (widen)
+      (or start (setq start (point-min)))
+      (or end (setq end (point-max)))
+      (set-buffer target-buffer)
+      (insert-buffer-substring buffer start end)
+      (set-buffer buffer))
+    (set-buffer target-buffer)))
+
+(if (fboundp 'overlay-get)
+    (fset 'vm-extent-property 'overlay-get)
+  (fset 'vm-extent-property 'extent-property))
+
+(if (fboundp 'overlay-put)
+    (fset 'vm-set-extent-property 'overlay-put)
+  (fset 'vm-set-extent-property 'set-extent-property))
+
+(if (fboundp 'make-overlay)
+    (fset 'vm-make-extent 'make-overlay)
+  (fset 'vm-make-extent 'make-extent))
+
+(if (fboundp 'overlay-end)
+    (fset 'vm-extent-end-position 'overlay-end)
+  (fset 'vm-extent-end-position 'extent-end-position))
+
+(if (fboundp 'overlay-start)
+    (fset 'vm-extent-start-position 'overlay-start)
+  (fset 'vm-extent-start-position 'extent-start-position))
+
+(if (fboundp 'delete-overlay)
+    (fset 'vm-detach-extent 'delete-overlay)
+  (fset 'vm-detach-extent 'detach-extent))
+
+(if (fboundp 'overlay-properties)
+    (fset 'vm-extent-properties 'overlay-properties)
+  (fset 'vm-extent-properties 'extent-properties))
+
+(defun vm-copy-extent (e)
+  (let ((props (vm-extent-properties e))
+	(ee (vm-make-extent (vm-extent-start-position e)
+			    (vm-extent-end-position e))))
+    (while props
+      (vm-set-extent-property ee (car props) (car (cdr props)))
+      (setq props (cdr props)))))
+
+(defun vm-make-tempfile-name ()
+  (let ((done nil) (pid (emacs-pid)) filename)
+    (while (not done)
+      (setq filename (format "%s/vm%d.%d" vm-temp-file-directory pid
+			     vm-tempfile-counter)
+	    vm-tempfile-counter (1+ vm-tempfile-counter)
+	    done (not (file-exists-p filename))))
+    filename ))
+
+(defun vm-insert-char (char &optional count ignored buffer)
+  (condition-case nil
+      (progn
+	(insert-char char count ignored buffer)
+	(fset 'vm-insert-char 'insert-char))
+    (wrong-number-of-arguments
+     (fset 'vm-insert-char 'vm-xemacs-compatible-insert-char)
+     (vm-insert-char char count ignored buffer))))
+
+(defun vm-xemacs-compatible-insert-char (char &optional count ignored buffer)
+  (if (and buffer (eq buffer (current-buffer)))
+      (insert-char char count)
+    (save-excursion
+      (set-buffer buffer)
+      (insert-char char count))))
+
+(defun vm-symbol-lists-intersect-p (list1 list2)
+  (catch 'done
+    (while list1
+      (and (memq (car list1) list2)
+	   (throw 'done t))
+      (setq list1 (cdr list1)))
+    nil ))
+
+(defun vm-set-buffer-variable (buffer var value)
+  (save-excursion
+    (set-buffer buffer)
+    (set var value)))
+
+(defsubst vm-with-string-as-temp-buffer (string function)
+  (let ((work-buffer nil))
+    (unwind-protect
+	(save-excursion
+	  (setq work-buffer (generate-new-buffer " *work*"))
+	  (set-buffer work-buffer)
+	  (insert string)
+	  (funcall function)
+	  (buffer-string))
+      (and work-buffer (kill-buffer work-buffer)))))

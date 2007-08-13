@@ -75,7 +75,8 @@ struct extent
       unsigned int unused9	: 1;  /* 9   unused                          */
       unsigned int unique	: 1;  /* 10  there may be only one attached  */
       unsigned int duplicable	: 1;  /* 11  copied to strings by kill/undo  */
-      unsigned int replicating	: 1;  /* 12  invoke old extent-replica behav.*/
+      unsigned int REPLICATING	: 1;  /* 12  invoke old extent-replica behav.*/
+				      /* Not used any more */
       unsigned int detachable	: 1;  /* 13  extent detaches if text deleted */
       unsigned int internal	: 1;  /* 14  used by map-extents etc.        */
       unsigned int unused15	: 1;  /* 15  unused			     */
@@ -283,7 +284,6 @@ MAC_END
 #define extent_end_open_p(e)	extent_normal_field (e, end_open)
 #define extent_unique_p(e)	extent_normal_field (e, unique)
 #define extent_duplicable_p(e)	extent_normal_field (e, duplicable)
-#define extent_replicating_p(e)	extent_normal_field (e, replicating)
 #define extent_detachable_p(e)	extent_normal_field (e, detachable)
 #define extent_internal_p(e)	extent_normal_field (e, internal)
 

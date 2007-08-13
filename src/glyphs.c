@@ -140,15 +140,14 @@ valid_image_instantiator_format_p (Lisp_Object format)
   return 0;
 }
 
-DEFUN ("valid-image-instantiator-format-p", Fvalid_image_instantiator_format_p,
-       Svalid_image_instantiator_format_p, 1, 1, 0 /*
+DEFUN ("valid-image-instantiator-format-p",
+       Fvalid_image_instantiator_format_p, 1, 1, 0, /*
 Given an IMAGE-INSTANTIATOR-FORMAT, return non-nil if it is valid.
 Valid formats are some subset of 'nothing, 'string, 'formatted-string, 'xpm,
 'xbm, 'xface, 'gif, 'jpeg, 'png, 'tiff, 'cursor-font, 'font, 'autodetect,
 and 'subwindow, depending on how XEmacs was compiled.
-*/ )
-     (image_instantiator_format)
-     Lisp_Object image_instantiator_format;
+*/
+       (image_instantiator_format))
 {
   if (valid_image_instantiator_format_p (image_instantiator_format))
     return Qt;
@@ -156,12 +155,11 @@ and 'subwindow, depending on how XEmacs was compiled.
     return Qnil;
 }
 
-DEFUN ("image-instantiator-format-list", Fimage_instantiator_format_list,
-       Simage_instantiator_format_list,
-       0, 0, 0 /*
+DEFUN ("image-instantiator-format-list",
+       Fimage_instantiator_format_list, 0, 0, 0, /*
 Return a list of valid image-instantiator formats.
-*/ )
-     ()
+*/
+       ())
 {
   return Fcopy_sequence (Vimage_instantiator_format_list);
 }
@@ -187,8 +185,7 @@ get_image_conversion_list (Lisp_Object console_type)
 }
 
 DEFUN ("set-console-type-image-conversion-list",
-       Fset_console_type_image_conversion_list,
-       Sset_console_type_image_conversion_list, 2, 2, 0 /*
+       Fset_console_type_image_conversion_list, 2, 2, 0, /*
 Set the image-conversion-list for consoles of the given TYPE.
 The image-conversion-list specifies how image instantiators that
 are strings should be interpreted.  Each element of the list should be
@@ -203,9 +200,8 @@ added to an image specifier, not when the specifier is actually
 instantiated.  Therefore, changing the image-conversion-list only affects
 newly-added instantiators.  Existing instantiators in glyphs and image
 specifiers will not be affected.
-*/ )
-     (console_type, list)
-     Lisp_Object console_type, list;
+*/
+       (console_type, list))
 {
   Lisp_Object tail;
   Lisp_Object *imlist = get_image_conversion_list (console_type);
@@ -258,15 +254,13 @@ specifiers will not be affected.
 }
 
 DEFUN ("console-type-image-conversion-list",
-       Fconsole_type_image_conversion_list,
-       Sconsole_type_image_conversion_list, 1, 1, 0 /*
+       Fconsole_type_image_conversion_list, 1, 1, 0, /*
 Return the image-conversion-list for devices of the given TYPE.
 The image-conversion-list specifies how to interpret image string
 instantiators for the specified console type.  See
 `set-console-type-image-conversion-list' for a description of its syntax.
-*/ )
-     (console_type)
-     Lisp_Object console_type;
+*/
+       (console_type))
 {
   return Fcopy_tree (*get_image_conversion_list (console_type), Qt);
 }
@@ -920,14 +914,12 @@ valid_image_instance_type_p (Lisp_Object type)
   return 0;
 }
 
-DEFUN ("valid-image-instance-type-p", Fvalid_image_instance_type_p,
-       Svalid_image_instance_type_p, 1, 1, 0 /*
+DEFUN ("valid-image-instance-type-p", Fvalid_image_instance_type_p, 1, 1, 0, /*
 Given an IMAGE-INSTANCE-TYPE, return non-nil if it is valid.
 Valid types are some subset of 'nothing, 'text, 'mono-pixmap, 'color-pixmap,
 'pointer, and 'subwindow, depending on how XEmacs was compiled.
-*/ )
-     (image_instance_type)
-     Lisp_Object image_instance_type;
+*/
+       (image_instance_type))
 {
   if (valid_image_instance_type_p (image_instance_type))
     return Qt;
@@ -935,12 +927,10 @@ Valid types are some subset of 'nothing, 'text, 'mono-pixmap, 'color-pixmap,
     return Qnil;
 }
 
-DEFUN ("image-instance-type-list", Fimage_instance_type_list,
-       Simage_instance_type_list,
-       0, 0, 0 /*
+DEFUN ("image-instance-type-list", Fimage_instance_type_list, 0, 0, 0, /*
 Return a list of valid image-instance types.
-*/ )
-     ()
+*/
+       ())
 {
   return Fcopy_sequence (Vimage_instance_type_list);
 }
@@ -995,8 +985,7 @@ make_image_instance_1 (Lisp_Object data, Lisp_Object device,
   RETURN_UNGCPRO (ii);
 }
 
-DEFUN ("make-image-instance", Fmake_image_instance, Smake_image_instance,
-       1, 4, 0 /*
+DEFUN ("make-image-instance", Fmake_image_instance, 1, 4, 0, /*
 Create a new `image-instance' object.
 
 Image-instance objects encapsulate the way a particular image (pixmap,
@@ -1054,9 +1043,8 @@ NO-ERROR controls what happens when the image cannot be generated.
 If nil, an error message is generated.  If t, no messages are
 generated and this function returns nil.  If anything else, a warning
 message is generated and this function returns nil.
-*/ )
-  (data, device, dest_types, no_error)
-  Lisp_Object data, device, dest_types, no_error;
+*/
+       (data, device, dest_types, no_error))
 {
   Error_behavior errb = decode_error_behavior_flag (no_error);
 
@@ -1065,46 +1053,39 @@ message is generated and this function returns nil.
 				     3, data, device, dest_types);
 }
 
-DEFUN ("image-instance-p", Fimage_instance_p, Simage_instance_p, 1, 1, 0 /*
+DEFUN ("image-instance-p", Fimage_instance_p, 1, 1, 0, /*
 Return non-nil if OBJECT is an image instance.
-*/ )
-  (object)
-  Lisp_Object object;
+*/
+       (object))
 {
   return (IMAGE_INSTANCEP (object) ? Qt : Qnil);
 }
 
-DEFUN ("image-instance-type", Fimage_instance_type, Simage_instance_type,
-       1, 1, 0 /*
+DEFUN ("image-instance-type", Fimage_instance_type, 1, 1, 0, /*
 Return the type of the given image instance.
 The return value will be one of 'nothing, 'text, 'mono-pixmap,
 'color-pixmap, 'pointer, or 'subwindow.
-*/ )
-  (image_instance)
-  Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
   return encode_image_instance_type (XIMAGE_INSTANCE_TYPE (image_instance));
 }
 
-DEFUN ("image-instance-name", Fimage_instance_name,
-       Simage_instance_name, 1, 1, 0 /*
+DEFUN ("image-instance-name", Fimage_instance_name, 1, 1, 0, /*
 Return the name of the given image instance.
-*/ )
-  (image_instance)
-  Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
   return (XIMAGE_INSTANCE_NAME (image_instance));
 }
 
-DEFUN ("image-instance-string", Fimage_instance_string,
-       Simage_instance_string, 1, 1, 0 /*
+DEFUN ("image-instance-string", Fimage_instance_string, 1, 1, 0, /*
 Return the string of the given image instance.
 This will only be non-nil for text image instances.
-*/ )
-  (image_instance)
-  Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
   if (XIMAGE_INSTANCE_TYPE (image_instance) == IMAGE_TEXT)
@@ -1113,12 +1094,10 @@ This will only be non-nil for text image instances.
     return Qnil;
 }
 
-DEFUN ("image-instance-file-name", Fimage_instance_file_name,
-       Simage_instance_file_name, 1, 1, 0 /*
+DEFUN ("image-instance-file-name", Fimage_instance_file_name, 1, 1, 0, /*
 Return the file name from which IMAGE-INSTANCE was read, if known.
-*/ )
-  (image_instance)
-  Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1134,12 +1113,10 @@ Return the file name from which IMAGE-INSTANCE was read, if known.
     }
 }
 
-DEFUN ("image-instance-mask-file-name", Fimage_instance_mask_file_name,
-       Simage_instance_mask_file_name, 1, 1, 0 /*
+DEFUN ("image-instance-mask-file-name", Fimage_instance_mask_file_name, 1, 1, 0, /*
 Return the file name from which IMAGE-INSTANCE's mask was read, if known.
-*/ )
-  (image_instance)
-  Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1155,13 +1132,11 @@ Return the file name from which IMAGE-INSTANCE's mask was read, if known.
     }
 }
 
-DEFUN ("image-instance-depth", Fimage_instance_depth,
-       Simage_instance_depth, 1, 1, 0 /*
+DEFUN ("image-instance-depth", Fimage_instance_depth, 1, 1, 0, /*
 Return the depth of the image instance.
 This is 0 for a bitmap, or a positive integer for a pixmap.
-*/ )
-     (image_instance)
-     Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1177,12 +1152,10 @@ This is 0 for a bitmap, or a positive integer for a pixmap.
     }
 }
 
-DEFUN ("image-instance-height", Fimage_instance_height,
-       Simage_instance_height, 1, 1, 0 /*
+DEFUN ("image-instance-height", Fimage_instance_height, 1, 1, 0, /*
 Return the height of the image instance, in pixels.
-*/ )
-     (image_instance)
-     Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1198,12 +1171,10 @@ Return the height of the image instance, in pixels.
     }
 }
 
-DEFUN ("image-instance-width", Fimage_instance_width,
-       Simage_instance_width, 1, 1, 0 /*
+DEFUN ("image-instance-width", Fimage_instance_width, 1, 1, 0, /*
 Return the width of the image instance, in pixels.
-*/ )
-     (image_instance)
-     Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1219,17 +1190,15 @@ Return the width of the image instance, in pixels.
     }
 }
 
-DEFUN ("image-instance-hotspot-x", Fimage_instance_hotspot_x,
-       Simage_instance_hotspot_x, 1, 1, 0 /*
+DEFUN ("image-instance-hotspot-x", Fimage_instance_hotspot_x, 1, 1, 0, /*
 Return the X coordinate of the image instance's hotspot, if known.
 This is a point relative to the origin of the pixmap.  When an image is
  used as a mouse pointer, the hotspot is the point on the image that sits
  over the location that the pointer points to.  This is, for example, the
  tip of the arrow or the center of the crosshairs.
 This will always be nil for a non-pointer image instance.
-*/ )
-     (image_instance)
-     Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1245,17 +1214,15 @@ This will always be nil for a non-pointer image instance.
     }
 }
 
-DEFUN ("image-instance-hotspot-y", Fimage_instance_hotspot_y,
-       Simage_instance_hotspot_y, 1, 1, 0 /*
+DEFUN ("image-instance-hotspot-y", Fimage_instance_hotspot_y, 1, 1, 0, /*
 Return the Y coordinate of the image instance's hotspot, if known.
 This is a point relative to the origin of the pixmap.  When an image is
  used as a mouse pointer, the hotspot is the point on the image that sits
  over the location that the pointer points to.  This is, for example, the
  tip of the arrow or the center of the crosshairs.
 This will always be nil for a non-pointer image instance.
-*/ )
-     (image_instance)
-     Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1271,14 +1238,12 @@ This will always be nil for a non-pointer image instance.
     }
 }
 
-DEFUN ("image-instance-foreground", Fimage_instance_foreground,
-       Simage_instance_foreground, 1, 1, 0 /*
+DEFUN ("image-instance-foreground", Fimage_instance_foreground, 1, 1, 0, /*
 Return the foreground color of IMAGE-INSTANCE, if applicable.
 This will be a color instance or nil. (It will only be non-nil for
 colorized mono pixmaps and for pointers.)
-*/ )
-  (image_instance)
-  Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1294,14 +1259,12 @@ colorized mono pixmaps and for pointers.)
     }
 }
 
-DEFUN ("image-instance-background", Fimage_instance_background,
-       Simage_instance_background, 1, 1, 0 /*
+DEFUN ("image-instance-background", Fimage_instance_background, 1, 1, 0, /*
 Return the background color of IMAGE-INSTANCE, if applicable.
 This will be a color instance or nil. (It will only be non-nil for
 colorized mono pixmaps and for pointers.)
-*/ )
-  (image_instance)
-  Lisp_Object image_instance;
+*/
+       (image_instance))
 {
   CHECK_IMAGE_INSTANCE (image_instance);
 
@@ -1318,16 +1281,14 @@ colorized mono pixmaps and for pointers.)
 }
 
 
-DEFUN ("colorize-image-instance", Fcolorize_image_instance,
-       Scolorize_image_instance, 3, 3, 0 /*
+DEFUN ("colorize-image-instance", Fcolorize_image_instance, 3, 3, 0, /*
 Make the image instance be displayed in the given colors.
 This function returns a new image instance that is exactly like the
 specified one except that (if possible) the foreground and background
 colors and as specified.  Currently, this only does anything if the image
 instance is a mono pixmap; otherwise, the same image instance is returned.
-*/ )
-  (image_instance, foreground, background)
-  Lisp_Object image_instance, foreground, background;
+*/
+       (image_instance, foreground, background))
 {
   Lisp_Object new;
   Lisp_Object device;
@@ -1790,7 +1751,7 @@ image_going_to_add (Lisp_Object specifier, Lisp_Object locale,
   return retlist;
 }
 
-DEFUN ("image-specifier-p", Fimage_specifier_p, Simage_specifier_p, 1, 1, 0 /*
+DEFUN ("image-specifier-p", Fimage_specifier_p, 1, 1, 0, /*
 Return non-nil if OBJECT is an image specifier.
 
 An image specifier is used for images (pixmaps and the like).  It is used
@@ -1950,9 +1911,8 @@ the filename retained using a :file keyword.  This implies that the
 file must exist when the instantiator is added to the image, but does
 not need to exist at any other time (e.g. it may safely be a temporary
 file).
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (IMAGE_SPECIFIERP (object) ? Qt : Qnil);
 }
@@ -2216,13 +2176,11 @@ valid_glyph_type_p (Lisp_Object type)
   return 0;
 }
 
-DEFUN ("valid-glyph-type-p", Fvalid_glyph_type_p,
-       Svalid_glyph_type_p, 1, 1, 0 /*
+DEFUN ("valid-glyph-type-p", Fvalid_glyph_type_p, 1, 1, 0, /*
 Given a GLYPH-TYPE, return non-nil if it is valid.
 Valid types are `buffer', `pointer', and `icon'.
-*/ )
-     (glyph_type)
-     Lisp_Object glyph_type;
+*/
+       (glyph_type))
 {
   if (valid_glyph_type_p (glyph_type))
     return Qt;
@@ -2230,18 +2188,15 @@ Valid types are `buffer', `pointer', and `icon'.
     return Qnil;
 }
 
-DEFUN ("glyph-type-list", Fglyph_type_list,
-       Sglyph_type_list,
-       0, 0, 0 /*
+DEFUN ("glyph-type-list", Fglyph_type_list, 0, 0, 0, /*
 Return a list of valid glyph types.
-*/ )
-     ()
+*/
+       ())
 {
   return Fcopy_sequence (Vglyph_type_list);
 }
 
-DEFUN ("make-glyph-internal", Fmake_glyph_internal, Smake_glyph_internal,
-       0, 1, 0 /*
+DEFUN ("make-glyph-internal", Fmake_glyph_internal, 0, 1, 0, /*
 Create a new, uninitialized glyph.
 
 TYPE specifies the type of the glyph; this should be one of `buffer',
@@ -2261,15 +2216,14 @@ image can be instantiated as `pointer'.
 `icon' glyphs can be used to specify the icon used when a frame is
 iconified.  Their image can be instantiated as `mono-pixmap' and
 `color-pixmap'.
-*/ )
-     (type)
-     Lisp_Object type;
+*/
+       (type))
 {
   enum glyph_type typeval = decode_glyph_type (type, ERROR_ME);
   return allocate_glyph (typeval, 0);
 }
 
-DEFUN ("glyphp", Fglyphp, Sglyphp, 1, 1, 0 /*
+DEFUN ("glyphp", Fglyphp, 1, 1, 0, /*
 Return non-nil if OBJECT is a glyph.
 
 A glyph is an object used for pixmaps and the like.  It is used
@@ -2277,20 +2231,17 @@ in begin-glyphs and end-glyphs attached to extents, in marginal and textual
 annotations, in overlay arrows (overlay-arrow-* variables), in toolbar
 buttons, and the like.  Its image is described using an image specifier --
 see `image-specifier-p'.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return GLYPHP (object) ? Qt : Qnil;
 }
 
-DEFUN ("glyph-type", Fglyph_type, Sglyph_type,
-       1, 1, 0 /*
+DEFUN ("glyph-type", Fglyph_type, 1, 1, 0, /*
 Return the type of the given glyph.
 The return value will be one of 'buffer, 'pointer, or 'icon.
-*/ )
-  (glyph)
-  Lisp_Object glyph;
+*/
+       (glyph))
 {
   CHECK_GLYPH (glyph);
   switch (XGLYPH_TYPE (glyph))
@@ -2372,13 +2323,12 @@ glyph_width (Lisp_Object glyph, Lisp_Object frame_face,
     }
 }
 
-DEFUN ("glyph-width", Fglyph_width, Sglyph_width, 1, 2, 0 /*
+DEFUN ("glyph-width", Fglyph_width, 1, 2, 0, /*
 Return the width of GLYPH on WINDOW.
 This may not be exact as it does not take into account all of the context
 that redisplay will.
-*/ )
-     (glyph, window)
-     Lisp_Object glyph, window;
+*/
+       (glyph, window))
 {
   XSETWINDOW (window, decode_window (window));
   CHECK_GLYPH (glyph);
@@ -2502,13 +2452,12 @@ glyph_height (Lisp_Object glyph, Lisp_Object frame_face,
 				RETURN_HEIGHT);
 }
 
-DEFUN ("glyph-ascent", Fglyph_ascent, Sglyph_ascent, 1, 2, 0 /*
+DEFUN ("glyph-ascent", Fglyph_ascent, 1, 2, 0, /*
 Return the ascent value of GLYPH on WINDOW.
 This may not be exact as it does not take into account all of the context
 that redisplay will.
-*/ )
-     (glyph, window)
-     Lisp_Object glyph, window;
+*/
+       (glyph, window))
 {
   XSETWINDOW (window, decode_window (window));
   CHECK_GLYPH (glyph);
@@ -2516,13 +2465,12 @@ that redisplay will.
   return (make_int (glyph_ascent (glyph, Qnil, DEFAULT_INDEX, window)));
 }
 
-DEFUN ("glyph-descent", Fglyph_descent, Sglyph_descent, 1, 2, 0 /*
+DEFUN ("glyph-descent", Fglyph_descent, 1, 2, 0, /*
 Return the descent value of GLYPH on WINDOW.
 This may not be exact as it does not take into account all of the context
 that redisplay will.
-*/ )
-     (glyph, window)
-     Lisp_Object glyph, window;
+*/
+       (glyph, window))
 {
   XSETWINDOW (window, decode_window (window));
   CHECK_GLYPH (glyph);
@@ -2531,13 +2479,12 @@ that redisplay will.
 }
 
 /* This is redundant but I bet a lot of people expect it to exist. */
-DEFUN ("glyph-height", Fglyph_height, Sglyph_height, 1, 2, 0 /*
+DEFUN ("glyph-height", Fglyph_height, 1, 2, 0, /*
 Return the height of GLYPH on WINDOW.
 This may not be exact as it does not take into account all of the context
 that redisplay will.
-*/ )
-     (glyph, window)
-     Lisp_Object glyph, window;
+*/
+       (glyph, window))
 {
   XSETWINDOW (window, decode_window (window));
   CHECK_GLYPH (glyph);
@@ -2795,10 +2742,10 @@ syms_of_glyphs (void)
 {
   /* image instantiators */
 
-  defsubr (&Simage_instantiator_format_list);
-  defsubr (&Svalid_image_instantiator_format_p);
-  defsubr (&Sset_console_type_image_conversion_list);
-  defsubr (&Sconsole_type_image_conversion_list);
+  DEFSUBR (Fimage_instantiator_format_list);
+  DEFSUBR (Fvalid_image_instantiator_format_p);
+  DEFSUBR (Fset_console_type_image_conversion_list);
+  DEFSUBR (Fconsole_type_image_conversion_list);
 
   defkeyword (&Q_file, ":file");
   defkeyword (&Q_data, ":data");
@@ -2806,7 +2753,7 @@ syms_of_glyphs (void)
 
   /* image specifiers */
 
-  defsubr (&Simage_specifier_p);
+  DEFSUBR (Fimage_specifier_p);
   /* Qimage in general.c */
 
   /* image instances */
@@ -2820,23 +2767,23 @@ syms_of_glyphs (void)
   defsymbol (&Qpointer_image_instance_p, "pointer-image-instance-p");
   defsymbol (&Qsubwindow_image_instance_p, "subwindow-image-instance-p");
 
-  defsubr (&Smake_image_instance);
-  defsubr (&Simage_instance_p);
-  defsubr (&Simage_instance_type);
-  defsubr (&Svalid_image_instance_type_p);
-  defsubr (&Simage_instance_type_list);
-  defsubr (&Simage_instance_name);
-  defsubr (&Simage_instance_string);
-  defsubr (&Simage_instance_file_name);
-  defsubr (&Simage_instance_mask_file_name);
-  defsubr (&Simage_instance_depth);
-  defsubr (&Simage_instance_height);
-  defsubr (&Simage_instance_width);
-  defsubr (&Simage_instance_hotspot_x);
-  defsubr (&Simage_instance_hotspot_y);
-  defsubr (&Simage_instance_foreground);
-  defsubr (&Simage_instance_background);
-  defsubr (&Scolorize_image_instance);
+  DEFSUBR (Fmake_image_instance);
+  DEFSUBR (Fimage_instance_p);
+  DEFSUBR (Fimage_instance_type);
+  DEFSUBR (Fvalid_image_instance_type_p);
+  DEFSUBR (Fimage_instance_type_list);
+  DEFSUBR (Fimage_instance_name);
+  DEFSUBR (Fimage_instance_string);
+  DEFSUBR (Fimage_instance_file_name);
+  DEFSUBR (Fimage_instance_mask_file_name);
+  DEFSUBR (Fimage_instance_depth);
+  DEFSUBR (Fimage_instance_height);
+  DEFSUBR (Fimage_instance_width);
+  DEFSUBR (Fimage_instance_hotspot_x);
+  DEFSUBR (Fimage_instance_hotspot_y);
+  DEFSUBR (Fimage_instance_foreground);
+  DEFSUBR (Fimage_instance_background);
+  DEFSUBR (Fcolorize_image_instance);
 
   /* Qnothing defined as part of the "nothing" image-instantiator
      type. */
@@ -2858,15 +2805,15 @@ syms_of_glyphs (void)
 
   defsymbol (&Qconst_glyph_variable, "const-glyph-variable");
 
-  defsubr (&Sglyph_type);
-  defsubr (&Svalid_glyph_type_p);
-  defsubr (&Sglyph_type_list);
-  defsubr (&Sglyphp);
-  defsubr (&Smake_glyph_internal);
-  defsubr (&Sglyph_width);
-  defsubr (&Sglyph_ascent);
-  defsubr (&Sglyph_descent);
-  defsubr (&Sglyph_height);
+  DEFSUBR (Fglyph_type);
+  DEFSUBR (Fvalid_glyph_type_p);
+  DEFSUBR (Fglyph_type_list);
+  DEFSUBR (Fglyphp);
+  DEFSUBR (Fmake_glyph_internal);
+  DEFSUBR (Fglyph_width);
+  DEFSUBR (Fglyph_ascent);
+  DEFSUBR (Fglyph_descent);
+  DEFSUBR (Fglyph_height);
 
   /* Qbuffer defined in general.c. */
   /* Qpointer defined above */

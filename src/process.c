@@ -360,28 +360,26 @@ connected_via_filedesc_p (struct Lisp_Process *p)
   return p->connected_via_filedesc_p;
 }
 
-DEFUN ("processp", Fprocessp, Sprocessp, 1, 1, 0 /*
+DEFUN ("processp", Fprocessp, 1, 1, 0, /*
 Return t if OBJECT is a process.
-*/ )
-  (obj)
-     Lisp_Object obj;
+*/
+       (obj))
 {
   return ((PROCESSP (obj)) ? Qt : Qnil);
 }
 
-DEFUN ("process-list", Fprocess_list, Sprocess_list, 0, 0, 0 /*
+DEFUN ("process-list", Fprocess_list, 0, 0, 0, /*
 Return a list of all processes.
-*/ )
-  ()
+*/
+       ())
 {
   return Fcopy_sequence (Vprocess_list);
 }
 
-DEFUN ("get-process", Fget_process, Sget_process, 1, 1, 0 /*
+DEFUN ("get-process", Fget_process, 1, 1, 0, /*
 Return the process named NAME, or nil if there is none.
-*/ )
-  (name)
-     Lisp_Object name;
+*/
+       (name))
 {
   Lisp_Object tail;
 
@@ -403,12 +401,11 @@ Return the process named NAME, or nil if there is none.
   return Qnil;
 }
 
-DEFUN ("get-buffer-process", Fget_buffer_process, Sget_buffer_process, 1, 1, 0 /*
+DEFUN ("get-buffer-process", Fget_buffer_process, 1, 1, 0, /*
 Return the (or, a) process associated with BUFFER.
 BUFFER may be a buffer or the name of one.
-*/ )
-  (name)
-     Lisp_Object name;
+*/
+       (name))
 {
   Lisp_Object buf, tail, proc;
 
@@ -475,14 +472,13 @@ get_process (Lisp_Object name)
   return Qnil; /* warning suppression */
 }
 
-DEFUN ("process-id", Fprocess_id, Sprocess_id, 1, 1, 0 /*
+DEFUN ("process-id", Fprocess_id, 1, 1, 0, /*
 Return the process id of PROCESS.
 This is the pid of the Unix process which PROCESS uses or talks to.
 For a network connection, this value is a cons of
  (foreign-network-port . foreign-host-name).
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   Lisp_Object pid;
   CHECK_PROCESS (proc);
@@ -495,25 +491,23 @@ For a network connection, this value is a cons of
     return (pid);
 }
 
-DEFUN ("process-name", Fprocess_name, Sprocess_name, 1, 1, 0 /*
+DEFUN ("process-name", Fprocess_name, 1, 1, 0, /*
 Return the name of PROCESS, as a string.
 This is the name of the program invoked in PROCESS,
 possibly modified to make it unique among process names.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
   return XPROCESS (proc)->name;
 }
 
-DEFUN ("process-command", Fprocess_command, Sprocess_command, 1, 1, 0 /*
+DEFUN ("process-command", Fprocess_command, 1, 1, 0, /*
 Return the command that was executed to start PROCESS.
 This is a list of strings, the first string being the program executed
 and the rest of the strings being the arguments given to it.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
   return XPROCESS (proc)->command;
@@ -1084,8 +1078,7 @@ start_process_unwind (Lisp_Object proc)
   return Qnil;
 }
 
-DEFUN ("start-process-internal", Fstart_process_internal,
-       Sstart_process_internal, 3, MANY, 0 /*
+DEFUN ("start-process-internal", Fstart_process_internal, 3, MANY, 0, /*
 Start a program in a subprocess.  Return the process object for it.
 Args are NAME BUFFER PROGRAM &rest PROGRAM-ARGS
 NAME is name for process.  It is modified if necessary to make it unique.
@@ -1098,10 +1091,8 @@ Third arg is program file name.  It is searched for as in the shell.
 Remaining arguments are strings to give program as arguments.
 INCODE and OUTCODE specify the coding-system objects used in input/output
  from/to the process.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   /* !!#### This function has not been Mule-ized */
   /* This function can GC */
@@ -1350,9 +1341,7 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
    connection has no PID; you cannot signal it.  All you can do is
    deactivate and close it via delete-process */
 
-DEFUN ("open-network-stream-internal", Fopen_network_stream_internal,
-       Sopen_network_stream_internal, 
-       4, 4, 0 /*
+DEFUN ("open-network-stream-internal", Fopen_network_stream_internal, 4, 4, 0, /*
 Open a TCP connection for a service to a host.
 Returns a subprocess-object to represent the connection.
 Input and output work as for subprocesses; `delete-process' closes it.
@@ -1366,9 +1355,8 @@ BUFFER is the buffer (or buffer-name) to associate with the process.
 Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
  specifying a port number to connect to.
-*/ )
-   (name, buffer, host, service)
-      Lisp_Object name, buffer, host, service;
+*/
+       (name, buffer, host, service))
 {
   /* !!#### This function has not been Mule-ized */
   /* This function can GC */
@@ -1528,12 +1516,10 @@ canonicalize_host_name (Lisp_Object host)
 }
 
 
-DEFUN ("set-process-window-size", Fset_process_window_size,
-  Sset_process_window_size, 3, 3, 0 /*
+DEFUN ("set-process-window-size", Fset_process_window_size, 3, 3, 0, /*
 Tell PROCESS that it has logical window size HEIGHT and WIDTH.
-*/ )
-  (proc, height, width)
-     Lisp_Object proc, height, width;
+*/
+       (proc, height, width))
 {
   CHECK_PROCESS (proc);
   CHECK_NATNUM (height);
@@ -1878,24 +1864,21 @@ send_process (volatile Lisp_Object proc,
   UNGCPRO;
 }
 
-DEFUN ("process-tty-name", Fprocess_tty_name, Sprocess_tty_name, 1, 1, 0 /*
+DEFUN ("process-tty-name", Fprocess_tty_name, 1, 1, 0, /*
 Return the name of the terminal PROCESS uses, or nil if none.
 This is the terminal that the process itself reads and writes on,
 not the name of the pty that Emacs uses to talk with that terminal.
-*/ )
-     (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
   return XPROCESS (proc)->tty_name;
 }
 
-DEFUN ("set-process-buffer", Fset_process_buffer, Sset_process_buffer,
-  2, 2, 0 /*
+DEFUN ("set-process-buffer", Fset_process_buffer, 2, 2, 0, /*
 Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
-*/ )
-  (proc, buffer)
-     Lisp_Object proc, buffer;
+*/
+       (proc, buffer))
 {
   CHECK_PROCESS (proc);
   if (!NILP (buffer))
@@ -1904,25 +1887,21 @@ Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
   return buffer;
 }
 
-DEFUN ("process-buffer", Fprocess_buffer, Sprocess_buffer,
-  1, 1, 0 /*
+DEFUN ("process-buffer", Fprocess_buffer, 1, 1, 0, /*
 Return the buffer PROCESS is associated with.
 Output from PROCESS is inserted in this buffer
 unless PROCESS has a filter.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
   return XPROCESS (proc)->buffer;
 }
 
-DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
-  1, 1, 0 /*
+DEFUN ("process-mark", Fprocess_mark, 1, 1, 0, /*
 Return the marker for the end of the last output from PROCESS.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
 #ifdef ENERGIZE
@@ -1946,45 +1925,39 @@ set_process_filter (Lisp_Object proc, Lisp_Object filter, int filter_does_read)
   XPROCESS (proc)->filter_does_read = filter_does_read;
 }
 
-DEFUN ("set-process-filter", Fset_process_filter, Sset_process_filter,
-  2, 2, 0 /*
+DEFUN ("set-process-filter", Fset_process_filter, 2, 2, 0, /*
 Give PROCESS the filter function FILTER; nil means no filter.
 t means stop accepting output from the process.
 When a process has a filter, each time it does output
 the entire string of output is passed to the filter.
 The filter gets two arguments: the process and the string of output.
 If the process has a filter, its buffer is not used for output.
-*/ )
-  (proc, filter)
-     Lisp_Object proc, filter;
+*/
+       (proc, filter))
 {
   set_process_filter (proc, filter, 0);
   return filter;
 }
 
-DEFUN ("process-filter", Fprocess_filter, Sprocess_filter,
-  1, 1, 0 /*
+DEFUN ("process-filter", Fprocess_filter, 1, 1, 0, /*
 Return the filter function of PROCESS; nil if none.
 See `set-process-filter' for more info on filter functions.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
   return XPROCESS (proc)->filter;
 }
 
-DEFUN ("process-send-region", Fprocess_send_region, Sprocess_send_region,
-  3, 3, 0 /*
+DEFUN ("process-send-region", Fprocess_send_region, 3, 3, 0, /*
 Send current contents of region as input to PROCESS.
 PROCESS may be a process name or an actual process.
 Called from program, takes three arguments, PROCESS, START and END.
 If the region is more than 500 or so characters long,
 it is sent in several bunches.  This may happen even for shorter regions.
 Output from processes can arrive in between bunches.
-*/ )
-  (process, start, end)
-     Lisp_Object process, start, end;
+*/
+       (process, start, end))
 {
   /* This function can GC */
   Lisp_Object proc = get_process (process);
@@ -1997,17 +1970,15 @@ Output from processes can arrive in between bunches.
   return (Qnil);
 }
 
-DEFUN ("process-send-string", Fprocess_send_string, Sprocess_send_string,
-  2, 4, 0 /*
+DEFUN ("process-send-string", Fprocess_send_string, 2, 4, 0, /*
 Send PROCESS the contents of STRING as input.
 PROCESS may be a process name or an actual process.
 Optional arguments FROM and TO specify part of STRING, see `substring'.
 If STRING is more than 500 or so characters long,
 it is sent in several bunches.  This may happen even for shorter strings.
 Output from processes can arrive in between bunches.
-*/ )
-  (process, string, from, to)
-     Lisp_Object process, string, from, to;
+*/
+       (process, string, from, to))
 {
   /* This function can GC */
   Lisp_Object proc;
@@ -2070,27 +2041,23 @@ exec_sentinel (Lisp_Object proc, Lisp_Object reason)
   unbind_to (speccount, Qnil);
 }
 
-DEFUN ("set-process-sentinel", Fset_process_sentinel, Sset_process_sentinel,
-  2, 2, 0 /*
+DEFUN ("set-process-sentinel", Fset_process_sentinel, 2, 2, 0, /*
 Give PROCESS the sentinel SENTINEL; nil for none.
 The sentinel is called as a function when the process changes state.
 It gets two arguments: the process, and a string describing the change.
-*/ )
-  (proc, sentinel)
-     Lisp_Object proc, sentinel;
+*/
+       (proc, sentinel))
 {
   CHECK_PROCESS (proc);
   XPROCESS (proc)->sentinel = sentinel;
   return sentinel;
 }
 
-DEFUN ("process-sentinel", Fprocess_sentinel, Sprocess_sentinel,
-  1, 1, 0 /*
+DEFUN ("process-sentinel", Fprocess_sentinel, 1, 1, 0, /*
 Return the sentinel of PROCESS; nil if none.
 See `set-process-sentinel' for more info on sentinels.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
   return XPROCESS (proc)->sentinel;
@@ -2544,7 +2511,7 @@ status_notify (void)
   UNGCPRO;
 }
 
-DEFUN ("process-status", Fprocess_status, Sprocess_status, 1, 1, 0 /*
+DEFUN ("process-status", Fprocess_status, 1, 1, 0, /*
 Return the status of PROCESS.
 This is a symbol, one of these:
 
@@ -2557,9 +2524,8 @@ closed -- for a network stream connection that is closed.
 nil -- if arg is a process name and no such process exists.
 PROCESS may be a process, a buffer, the name of a process or buffer, or
 nil, indicating the current buffer's process.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   Lisp_Object status;
 
@@ -2582,13 +2548,11 @@ nil, indicating the current buffer's process.
   return (status);
 }
 
-DEFUN ("process-exit-status", Fprocess_exit_status, Sprocess_exit_status,
-       1, 1, 0 /*
+DEFUN ("process-exit-status", Fprocess_exit_status, 1, 1, 0, /*
 Return the exit status of PROCESS or the signal number that killed it.
 If PROCESS has not yet exited or died, return 0.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
   return (make_int (XPROCESS (proc)->exit_code));
@@ -2805,7 +2769,7 @@ process_send_signal (Lisp_Object process0, int signo,
 #endif /* ! defined (TIOCSIGSEND) */
 }
 
-DEFUN ("interrupt-process", Finterrupt_process, Sinterrupt_process, 0, 2, 0 /*
+DEFUN ("interrupt-process", Finterrupt_process, 0, 2, 0, /*
 Interrupt process PROCESS.  May be process or name of one.
 Nil or no arg means current buffer's process.
 Second arg CURRENT-GROUP non-nil means send signal to
@@ -2813,21 +2777,19 @@ the current process-group of the process's controlling terminal
 rather than to the process's own process group.
 If the process is a shell, this means interrupt current subjob
 rather than the shell.
-*/ )
-  (process, current_group)
-     Lisp_Object process, current_group;
+*/
+       (process, current_group))
 {
   /* This function can GC */
   process_send_signal (process, SIGINT, !NILP (current_group), 0);
   return process;
 }
 
-DEFUN ("kill-process", Fkill_process, Skill_process, 0, 2, 0 /*
+DEFUN ("kill-process", Fkill_process, 0, 2, 0, /*
 Kill process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.
-*/ )
-  (process, current_group)
-     Lisp_Object process, current_group;
+*/
+       (process, current_group))
 {
   /* This function can GC */
   process_send_signal (process, SIGKILL, !NILP (current_group),
@@ -2835,12 +2797,11 @@ See function `interrupt-process' for more details on usage.
   return process;
 }
 
-DEFUN ("quit-process", Fquit_process, Squit_process, 0, 2, 0 /*
+DEFUN ("quit-process", Fquit_process, 0, 2, 0, /*
 Send QUIT signal to process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.
-*/ )
-  (process, current_group)
-     Lisp_Object process, current_group;
+*/
+       (process, current_group))
 {
   /* This function can GC */
   process_send_signal (process, SIGQUIT, !NILP (current_group),
@@ -2848,12 +2809,11 @@ See function `interrupt-process' for more details on usage.
   return process;
 }
 
-DEFUN ("stop-process", Fstop_process, Sstop_process, 0, 2, 0 /*
+DEFUN ("stop-process", Fstop_process, 0, 2, 0, /*
 Stop process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.
-*/ )
-  (process, current_group)
-     Lisp_Object process, current_group;
+*/
+       (process, current_group))
 {
   /* This function can GC */
 #ifndef SIGTSTP
@@ -2865,12 +2825,11 @@ See function `interrupt-process' for more details on usage.
   return process;
 }
 
-DEFUN ("continue-process", Fcontinue_process, Scontinue_process, 0, 2, 0 /*
+DEFUN ("continue-process", Fcontinue_process, 0, 2, 0, /*
 Continue process PROCESS.  May be process or name of one.
 See function `interrupt-process' for more details on usage.
-*/ )
-  (process, current_group)
-     Lisp_Object process, current_group;
+*/
+       (process, current_group))
 {
   /* This function can GC */
 #ifdef SIGCONT
@@ -2882,14 +2841,13 @@ See function `interrupt-process' for more details on usage.
   return process;
 }
 
-DEFUN ("signal-process", Fsignal_process, Ssignal_process,
-  2, 2, "nProcess number: \nnSignal code: " /*
+DEFUN ("signal-process", Fsignal_process, 2, 2,
+       "nProcess number: \nnSignal code: ", /*
 Send the process with process id PID the signal with code SIGCODE.
 PID must be an integer.  The process need not be a child of this Emacs.
 SIGCODE may be an integer, or a symbol whose name is a signal name.
-*/ )
-  (pid, sigcode)
-     Lisp_Object pid, sigcode;
+*/
+       (pid, sigcode))
 {
   CHECK_INT (pid);
 
@@ -3012,16 +2970,15 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.
 #endif
 }
 
-DEFUN ("process-send-eof", Fprocess_send_eof, Sprocess_send_eof, 0, 1, 0 /*
+DEFUN ("process-send-eof", Fprocess_send_eof, 0, 1, 0, /*
 Make PROCESS see end-of-file in its input.
 PROCESS may be a process, a buffer, the name of a process or buffer, or
 nil, indicating the current buffer's process.
 If PROCESS is a network connection, or is a process communicating
 through a pipe (as opposed to a pty), then you cannot send any more
 text to PROCESS after you call this function.
-*/ )
-  (process)
-     Lisp_Object process;
+*/
+       (process))
 {
   /* This function can GC */
   Lisp_Object proc;
@@ -3122,12 +3079,11 @@ remove_process (Lisp_Object proc)
   deactivate_process (proc);
 }
 
-DEFUN ("delete-process", Fdelete_process, Sdelete_process, 1, 1, 0 /*
+DEFUN ("delete-process", Fdelete_process, 1, 1, 0, /*
 Delete PROCESS: kill it and forget about it immediately.
 PROCESS may be a process or the name of one, or a buffer name.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   /* This function can GC */
   struct Lisp_Process *p;
@@ -3197,14 +3153,12 @@ count_active_processes (void)
 }
 #endif /* Unused */
 
-DEFUN ("process-kill-without-query", Fprocess_kill_without_query,
-  Sprocess_kill_without_query, 1, 2, 0 /*
+DEFUN ("process-kill-without-query", Fprocess_kill_without_query, 1, 2, 0, /*
 Say no query needed if PROCESS is running when Emacs is exited.
 Optional second argument if non-nil says to require a query.
 Value is t if a query was formerly required.
-*/ )
-  (proc, require_query_p)
-     Lisp_Object proc, require_query_p;
+*/
+       (proc, require_query_p))
 {
   int tem;
 
@@ -3215,12 +3169,10 @@ Value is t if a query was formerly required.
   return (tem ? Qnil : Qt);
 }
 
-DEFUN ("process-kill-without-query-p", Fprocess_kill_without_query_p,
-  Sprocess_kill_without_query_p, 1, 1, 0 /*
+DEFUN ("process-kill-without-query-p", Fprocess_kill_without_query_p, 1, 1, 0, /*
 Whether PROC will be killed without query if running when emacs is exited.
-*/ )
-  (proc)
-     Lisp_Object proc;
+*/
+       (proc))
 {
   CHECK_PROCESS (proc);
   return (XPROCESS (proc)->kill_without_query ? Qt : Qnil);
@@ -3275,41 +3227,41 @@ syms_of_process (void)
   defsymbol (&Qopen, "open");
   defsymbol (&Qclosed, "closed");
 
-  defsubr (&Sprocessp);
-  defsubr (&Sget_process);
-  defsubr (&Sget_buffer_process);
-  defsubr (&Sdelete_process);
-  defsubr (&Sprocess_status);
-  defsubr (&Sprocess_exit_status);
-  defsubr (&Sprocess_id);
-  defsubr (&Sprocess_name);
-  defsubr (&Sprocess_tty_name);
-  defsubr (&Sprocess_command);
-  defsubr (&Sset_process_buffer);
-  defsubr (&Sprocess_buffer);
-  defsubr (&Sprocess_mark);
-  defsubr (&Sset_process_filter);
-  defsubr (&Sprocess_filter);
-  defsubr (&Sset_process_window_size);
-  defsubr (&Sset_process_sentinel);
-  defsubr (&Sprocess_sentinel);
-  defsubr (&Sprocess_kill_without_query);
-  defsubr (&Sprocess_kill_without_query_p);
-  defsubr (&Sprocess_list);
-  defsubr (&Sstart_process_internal);
+  DEFSUBR (Fprocessp);
+  DEFSUBR (Fget_process);
+  DEFSUBR (Fget_buffer_process);
+  DEFSUBR (Fdelete_process);
+  DEFSUBR (Fprocess_status);
+  DEFSUBR (Fprocess_exit_status);
+  DEFSUBR (Fprocess_id);
+  DEFSUBR (Fprocess_name);
+  DEFSUBR (Fprocess_tty_name);
+  DEFSUBR (Fprocess_command);
+  DEFSUBR (Fset_process_buffer);
+  DEFSUBR (Fprocess_buffer);
+  DEFSUBR (Fprocess_mark);
+  DEFSUBR (Fset_process_filter);
+  DEFSUBR (Fprocess_filter);
+  DEFSUBR (Fset_process_window_size);
+  DEFSUBR (Fset_process_sentinel);
+  DEFSUBR (Fprocess_sentinel);
+  DEFSUBR (Fprocess_kill_without_query);
+  DEFSUBR (Fprocess_kill_without_query_p);
+  DEFSUBR (Fprocess_list);
+  DEFSUBR (Fstart_process_internal);
 #ifdef HAVE_SOCKETS
-  defsubr (&Sopen_network_stream_internal);
+  DEFSUBR (Fopen_network_stream_internal);
 #endif /* HAVE_SOCKETS */
-  defsubr (&Sprocess_send_region);
-  defsubr (&Sprocess_send_string);
-  defsubr (&Sinterrupt_process);
-  defsubr (&Skill_process);
-  defsubr (&Squit_process);
-  defsubr (&Sstop_process);
-  defsubr (&Scontinue_process);
-  defsubr (&Sprocess_send_eof);
-  defsubr (&Ssignal_process);
-/*  defsubr (&Sprocess_connection); */
+  DEFSUBR (Fprocess_send_region);
+  DEFSUBR (Fprocess_send_string);
+  DEFSUBR (Finterrupt_process);
+  DEFSUBR (Fkill_process);
+  DEFSUBR (Fquit_process);
+  DEFSUBR (Fstop_process);
+  DEFSUBR (Fcontinue_process);
+  DEFSUBR (Fprocess_send_eof);
+  DEFSUBR (Fsignal_process);
+/*  DEFSUBR (Fprocess_connection); */
 }
 
 void

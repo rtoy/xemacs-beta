@@ -251,6 +251,8 @@ static void maybe_kbd_translate (Lisp_Object event);
    Chained through event_next()
    command_event_queue_tail is a pointer to the last-added element.
  */
+static Lisp_Object process_event_queue;
+static Lisp_Object process_event_queue_tail;
 static Lisp_Object command_event_queue;
 static Lisp_Object command_event_queue_tail;
 
@@ -857,11 +859,11 @@ detect_input_pending (void)
   return 0;
 }
 
-DEFUN ("input-pending-p", Finput_pending_p, Sinput_pending_p, 0, 0, 0 /*
+DEFUN ("input-pending-p", Finput_pending_p, 0, 0, 0, /*
 T if command input is currently available with no waiting.
 Actually, the value is nil only if we can be sure that no input is available.
-*/ )
-  ()
+*/
+       ())
 {
   return ((detect_input_pending ()) ? Qt : Qnil);
 }
@@ -1294,7 +1296,7 @@ lisp_number_to_milliseconds (Lisp_Object secs, int allow_0)
   return msecs;
 }
 
-DEFUN ("add-timeout", Fadd_timeout, Sadd_timeout, 3, 4, 0 /*
+DEFUN ("add-timeout", Fadd_timeout, 3, 4, 0, /*
 Add a timeout, to be signaled after the timeout period has elapsed.
 SECS is a number of seconds, expressed as an integer or a float.
 FUNCTION will be called after that many seconds have elapsed, with one
@@ -1327,9 +1329,8 @@ running Lisp code, use `add-async-timeout'.
 WARNING: if you are thinking of calling add-timeout from inside of a
 callback function as a way of resignalling a timeout, think again.  There
 is a race condition.  That's why the RESIGNAL argument exists.
-*/ )
-     (secs, function, object, resignal)
-     Lisp_Object secs, function, object, resignal;
+*/
+       (secs, function, object, resignal))
 {
   unsigned long msecs = lisp_number_to_milliseconds (secs, 0);
   unsigned long msecs2 = (NILP (resignal) ? 0 :
@@ -1342,7 +1343,7 @@ is a race condition.  That's why the RESIGNAL argument exists.
   return lid;
 }
 
-DEFUN ("disable-timeout", Fdisable_timeout, Sdisable_timeout, 1, 1, 0 /*
+DEFUN ("disable-timeout", Fdisable_timeout, 1, 1, 0, /*
 Disable a timeout from signalling any more.
 ID should be a timeout id number as returned by `add-timeout'.  If ID
 corresponds to a one-shot timeout that has already signalled, nothing
@@ -1350,16 +1351,15 @@ will happen.
 
 It will not work to call this function on an id number returned by
 `add-async-timeout'.  Use `disable-async-timeout' for that.
-*/ )
-     (id)
-     Lisp_Object id;
+*/
+       (id))
 {
   CHECK_INT (id);
   event_stream_disable_wakeup (XINT (id), 0);
   return Qnil;
 }
 
-DEFUN ("add-async-timeout", Fadd_async_timeout, Sadd_async_timeout, 3, 4, 0 /*
+DEFUN ("add-async-timeout", Fadd_async_timeout, 3, 4, 0, /*
 Add an asynchronous timeout, to be signaled after an interval has elapsed.
 SECS is a number of seconds, expressed as an integer or a float.
 FUNCTION will be called after that many seconds have elapsed, with one
@@ -1408,9 +1408,8 @@ to nil.
 WARNING: if you are thinking of calling `add-async-timeout' from inside of a
 callback function as a way of resignalling a timeout, think again.  There
 is a race condition.  That's why the RESIGNAL argument exists.
-*/ )
-     (secs, function, object, resignal)
-     Lisp_Object secs, function, object, resignal;
+*/
+       (secs, function, object, resignal))
 {
   unsigned long msecs = lisp_number_to_milliseconds (secs, 0);
   unsigned long msecs2 = (NILP (resignal) ? 0 :
@@ -1423,8 +1422,7 @@ is a race condition.  That's why the RESIGNAL argument exists.
   return lid;
 }
 
-DEFUN ("disable-async-timeout", Fdisable_async_timeout,
-       Sdisable_async_timeout, 1, 1, 0 /*
+DEFUN ("disable-async-timeout", Fdisable_async_timeout, 1, 1, 0, /*
 Disable an asynchronous timeout from signalling any more.
 ID should be a timeout id number as returned by `add-async-timeout'.  If ID
 corresponds to a one-shot timeout that has already signalled, nothing
@@ -1432,9 +1430,8 @@ will happen.
 
 It will not work to call this function on an id number returned by
 `add-timeout'.  Use `disable-timeout' for that.
-*/ )
-     (id)
-     Lisp_Object id;
+*/
+       (id))
 {
   CHECK_INT (id);
   event_stream_disable_wakeup (XINT (id), 1);
@@ -1445,6 +1442,19 @@ It will not work to call this function on an id number returned by
 /**********************************************************************/
 /*                    enqueuing and dequeuing events                  */
 /**********************************************************************/
+
+/* Add an event to the back of the process_event_queue */
+void
+enqueue_process_event (Lisp_Object event)
+{
+  enqueue_event (event, &process_event_queue, &process_event_queue_tail);
+}
+
+Lisp_Object
+dequeue_process_event (void)
+{
+  return dequeue_event (&process_event_queue, &process_event_queue_tail);
+}
 
 /* Add an event to the back of the command-event queue: it will be the next
    event read after all pending events.   This only works on keyboard,
@@ -1491,16 +1501,14 @@ enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object)
   enqueue_command_event (event);
 }
 
-DEFUN ("enqueue-eval-event", Fenqueue_eval_event, Senqueue_eval_event,
-       2, 2, 0 /*
+DEFUN ("enqueue-eval-event", Fenqueue_eval_event, 2, 2, 0, /*
 Add an eval event to the back of the eval event queue.
 When this event is dispatched, FUNCTION (which should be a function
 of one argument) will be called with OBJECT as its argument.
 See `next-event' for a description of event types and how events
 are received.
-*/ )
-  (function, object)
-     Lisp_Object function, object;
+*/
+       (function, object))
 {
   Lisp_Object event;
 
@@ -1837,7 +1845,8 @@ in_single_console_state (void)
 Charcount num_input_chars;
 
 static void
-next_event_internal (Lisp_Object target_event, int allow_queued)
+next_event_internal (Lisp_Object target_event, int allow_queued,
+                     int allow_deferred)
 {
   struct gcpro gcpro1;
   /* QUIT;   This is incorrect - the caller must do this because some
@@ -1857,6 +1866,21 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
       if (debug_emacs_events)
 	{
 	  write_c_string ("(command event queue) ",
+			  Qexternal_debugging_output);
+	  print_internal (target_event, Qexternal_debugging_output, 1);
+	  write_c_string ("\n", Qexternal_debugging_output);
+	}
+#endif
+    }
+  else if (allow_deferred && !NILP (process_event_queue))
+    {
+      Lisp_Object event = dequeue_process_event ();
+      Fcopy_event (event, target_event);
+      Fdeallocate_event (event);
+#ifdef DEBUG_EMACS
+      if (debug_emacs_events)
+	{
+	  write_c_string ("(process event queue) ",
 			  Qexternal_debugging_output);
 	  print_internal (target_event, Qexternal_debugging_output, 1);
 	  write_c_string ("\n", Qexternal_debugging_output);
@@ -1929,7 +1953,7 @@ static void push_recent_keys (Lisp_Object event);
 static void dribble_out_event (Lisp_Object event);
 static void execute_internal_event (Lisp_Object event);
 
-DEFUN ("next-event", Fnext_event, Snext_event, 0, 2, 0 /*
+DEFUN ("next-event", Fnext_event, 0, 2, 0, /*
 Return the next available event.
 Pass this object to `dispatch-event' to handle it.
 In most cases, you will want to use `next-command-event', which returns
@@ -1965,9 +1989,8 @@ The returned event will be one of the following types:
    happened (such as an focus-change notification) that must be handled
    synchronously with other events.  `dispatch-event' knows what to do with
    these events.
-*/ )
-     (event, prompt)
-     Lisp_Object event, prompt;
+*/
+       (event, prompt))
 {
   /* This function can GC */
   /* #### We start out using the selected console before an event
@@ -2100,7 +2123,7 @@ The returned event will be one of the following types:
 	{
 	  run_pre_idle_hook ();
 	  redisplay ();
-	  next_event_internal (event, 1);
+	  next_event_internal (event, 1, 1);
 	  Vquit_flag = Qnil; /* Read C-g as an event. */
 	  store_this_key = 1;
 	}
@@ -2213,8 +2236,7 @@ The returned event will be one of the following types:
   return (event);
 }
 
-DEFUN ("next-command-event", Fnext_command_event, Snext_command_event,
-       0, 2, 0 /*
+DEFUN ("next-command-event", Fnext_command_event, 0, 2, 0, /*
 Return the next available \"user\" event.
 Pass this object to `dispatch-event' to handle it.
 
@@ -2236,9 +2258,8 @@ function is provided as a convenience; it is equivalent to the lisp code
 	                  (misc-user-event-p event))))
 	   (dispatch-event event))
 
-*/ )
-     (event, prompt)
-    Lisp_Object event, prompt;
+*/
+       (event, prompt))
 {
   /* This function can GC */
   struct gcpro gcpro1;
@@ -2267,13 +2288,13 @@ reset_current_events (struct command_builder *command_builder)
     deallocate_event_chain (event);
 }
 
-DEFUN ("discard-input", Fdiscard_input, Sdiscard_input, 0, 0, 0 /*
+DEFUN ("discard-input", Fdiscard_input, 0, 0, 0, /*
 Discard any pending \"user\" events.
 Also cancel any kbd macro being defined.
 A user event is a key press, button press, button release, or
 \"other-user\" event (menu selection or scrollbar action).
-*/ )
-  ()
+*/
+       ())
 {
   /* This throws away user-input on the queue, but doesn't process any
      events.  Calling dispatch_event() here leads to a race condition.
@@ -2303,7 +2324,7 @@ A user event is a key press, button press, button release, or
       /* This will take stuff off the command_event_queue, or read it
 	 from the event_stream, but it will not block.
        */
-      next_event_internal (event, 1);
+      next_event_internal (event, 1, 1);
       Vquit_flag = Qnil; /* Treat C-g as a user event (ignore it).
 			    It is vitally important that we reset
 			    Vquit_flag here.  Otherwise, if we're
@@ -2360,12 +2381,12 @@ A user event is a key press, button press, button release, or
 /* #### Is (accept-process-output nil 3) supposed to be like (sleep-for 3)?
  */
 
-DEFUN ("accept-process-output", Faccept_process_output, Saccept_process_output,
-       0, 3, 0 /*
+DEFUN ("accept-process-output", Faccept_process_output, 0, 3, 0, /*
 Allow any pending output from subprocesses to be read by Emacs.
 It is read into the process' buffers or given to their filter functions.
 Non-nil arg PROCESS means do not return until some output has been received
- from PROCESS.
+ from PROCESS. Nil arg PROCESS means do not return until some output has
+ been received from any process.
 If the second arg is non-nil, it is the maximum number of seconds to wait:
  this function will return after that much time even if no input has arrived
  from PROCESS.  This argument may be a float, meaning wait some fractional
@@ -2373,9 +2394,8 @@ If the second arg is non-nil, it is the maximum number of seconds to wait:
 If the third arg is non-nil, it is a number of milliseconds that is added
  to the second arg.  (This exists only for compatibility.)
 Return non-nil iff we received any output before the timeout expired.
-*/ )
-     (process, timeout_secs, timeout_msecs)
-     Lisp_Object process, timeout_secs, timeout_msecs;
+*/
+       (process, timeout_secs, timeout_msecs))
 {
   /* This function can GC */
   struct gcpro gcpro1, gcpro2;
@@ -2383,6 +2403,7 @@ Return non-nil iff we received any output before the timeout expired.
   Lisp_Object result = Qnil;
   int timeout_id;
   int timeout_enabled = 0;
+  int done = 0;
   struct buffer *old_buffer = current_buffer;
 
   /* We preserve the current buffer but nothing else.  If a focus
@@ -2395,7 +2416,7 @@ Return non-nil iff we received any output before the timeout expired.
 
   GCPRO2 (event, process);
 
-  if (!NILP (process) && (!NILP (timeout_secs) || !NILP (timeout_msecs)))
+  if (!NILP (timeout_secs) || !NILP (timeout_msecs))
     {
       unsigned long msecs = 0;
       if (!NILP (timeout_secs))
@@ -2414,7 +2435,10 @@ Return non-nil iff we received any output before the timeout expired.
 
   event = Fmake_event ();
 
-  while (!NILP (process)
+  while (!done &&
+         ((NILP (process) && timeout_enabled) ||
+          (NILP (process) && event_stream_event_pending_p (0)) ||
+          (!NILP (process))))
 	 /* Calling detect_input_pending() is the wrong thing here, because
 	    that considers the Vunread_command_events and command_event_queue.
 	    We don't need to look at the command_event_queue because we are
@@ -2429,13 +2453,13 @@ Return non-nil iff we received any output before the timeout expired.
 	    loop will process it, and I don't think that there is ever a
 	    time when one calls accept-process-output with a nil argument
 	    and really need the processes to be handled. */
-	 || (!EQ (result, Qt) && event_stream_event_pending_p (0)))
     {
       /* If our timeout has arrived, we move along. */
       if (timeout_enabled && !event_stream_wakeup_pending_p (timeout_id, 0))
 	{
 	  timeout_enabled = 0;
-	  process = Qnil;	/* We're  done. */
+          done = 1;             /* We're  done. */
+          continue;             /* Don't call next_event_internal */
 	}
 
       QUIT;	/* next_event_internal() does not QUIT, so check for ^G
@@ -2443,7 +2467,7 @@ Return non-nil iff we received any output before the timeout expired.
 		   less likely that the filter will actually be aborted.
 		 */
 
-      next_event_internal (event, 0);
+      next_event_internal (event, 0, 1);
       /* If C-g was pressed while we were waiting, Vquit_flag got
 	 set and next_event_internal() also returns C-g.  When
 	 we enqueue the C-g below, it will get discarded.  The
@@ -2452,9 +2476,10 @@ Return non-nil iff we received any output before the timeout expired.
 	{
 	case process_event:
 	  {
-	    if (EQ (XEVENT (event)->event.process.process, process))
+	    if (NILP (process) ||
+                EQ (XEVENT (event)->event.process.process, process))
 	      {
-		process = Qnil;
+                done = 1;
 		/* RMS's version always returns nil when proc is nil,
 		   and only returns t if input ever arrived on proc. */
 		result = Qt;
@@ -2469,6 +2494,7 @@ Return non-nil iff we received any output before the timeout expired.
 	case pointer_motion_event:
 	case magic_event:
           {
+          EXECUTE_INTERNAL:
             execute_internal_event (event);
             break;
           }
@@ -2490,12 +2516,11 @@ Return non-nil iff we received any output before the timeout expired.
   return result;
 }
 
-DEFUN ("sleep-for", Fsleep_for, Ssleep_for, 1, 1, 0 /*
+DEFUN ("sleep-for", Fsleep_for, 1, 1, 0, /*
 Pause, without updating display, for ARG seconds.
 ARG may be a float, meaning pause for some fractional part of a second.
-*/ )
-  (seconds)
-     Lisp_Object seconds;
+*/
+       (seconds))
 {
   /* This function can GC */
   unsigned long msecs = lisp_number_to_milliseconds (seconds, 1);
@@ -2521,15 +2546,22 @@ ARG may be a float, meaning pause for some fractional part of a second.
 	 consumer as well.  We don't care about command and eval-events
 	 anyway.
        */
-      next_event_internal (event, 0); /* blocks */
+      next_event_internal (event, 0, 0); /* blocks */
       /* See the comment in accept-process-output about Vquit_flag */
       switch (XEVENT_TYPE (event))
 	{
+        case process_event:
+          {
+            /* Avoid calling filter functions recursively by squirreling
+               away process events */
+            enqueue_process_event (Fcopy_event (event, Qnil));
+            goto DONE_LABEL;
+          }
+
 	case timeout_event:
 	  /* We execute the event even if it's ours, and notice that it's
 	     happened above. */
 	case pointer_motion_event:
-	case process_event:
 	case magic_event:
           {
           EXECUTE_INTERNAL:
@@ -2549,16 +2581,15 @@ ARG may be a float, meaning pause for some fractional part of a second.
   return Qnil;
 }
 
-DEFUN ("sit-for", Fsit_for, Ssit_for, 1, 2, 0 /*
+DEFUN ("sit-for", Fsit_for, 1, 2, 0, /*
 Perform redisplay, then wait ARG seconds or until user input is available.
 ARG may be a float, meaning a fractional part of a second.
 Optional second arg non-nil means don't redisplay, just wait for input.
 Redisplay is preempted as always if user input arrives, and does not
 happen if input is available before it starts.
 Value is t if waited the full time with no input arriving.
-*/ )
-  (seconds, nodisplay)
-     Lisp_Object seconds, nodisplay;
+*/
+       (seconds, nodisplay))
 {
   /* This function can GC */
   unsigned long msecs = lisp_number_to_milliseconds (seconds, 1);
@@ -2627,7 +2658,7 @@ Value is t if waited the full time with no input arriving.
 	 consumer as well.  In fact, we know there's nothing on the
 	 command_event_queue that we didn't just put there.
        */
-      next_event_internal (event, 0); /* blocks */
+      next_event_internal (event, 0, 0); /* blocks */
       /* See the comment in accept-process-output about Vquit_flag */
 
       if (command_event_p (event))
@@ -2643,6 +2674,14 @@ Value is t if waited the full time with no input arriving.
 	    enqueue_command_event (Fcopy_event (event, Qnil));
 	    break;
 	  }
+
+        case process_event:
+          {
+            /* Avoid recursive calls to process filters */
+            enqueue_process_event (Fcopy_event (event, Qnil));
+            break;
+          }
+          
 	case timeout_event:
 	  /* We execute the event even if it's ours, and notice that it's
 	     happened above. */
@@ -2697,7 +2736,7 @@ wait_delaying_user_input (int (*predicate) (void *arg), void *predicate_arg)
 	 command_event_queue; there are only user and eval-events there,
 	 and we'd just have to put them back anyway.
        */
-      next_event_internal (event, 0);
+      next_event_internal (event, 0, 1);
       /* See the comment in accept-process-output about Vquit_flag */
       if (command_event_p (event)
           || (XEVENT_TYPE (event) == eval_event)
@@ -2795,14 +2834,12 @@ execute_internal_event (Lisp_Object event)
 #endif
 		 )
 	  {
-	    /* Currently, we rely on SIGCHLD to indicate that
-	       the process has terminated.  Unfortunately, it
-	       appears that on some systems the SIGCHLD gets
-	       missed some of the time.  So, we put in am
-	       additional check in status_notify() to see
-	       whether a process has terminated.  We have to
-	       tell status_notify() to enable that check, and
-	       we do so now. */
+	    /* Currently, we rely on SIGCHLD to indicate that the
+	       process has terminated.  Unfortunately, on some systems
+	       the SIGCHLD gets missed some of the time.  So we put an
+	       additional check in status_notify() to see whether a
+	       process has terminated.  We must tell status_notify()
+	       to enable that check, and we do so now. */
 	    kick_status_notify ();
 	  }
 	else
@@ -3132,12 +3169,12 @@ command_builder_find_leaf (struct command_builder *builder,
 Lisp_Object recent_keys_ring;
 int recent_keys_ring_index;
 
-DEFUN ("recent-keys", Frecent_keys, Srecent_keys, 0, 0, 0 /*
+DEFUN ("recent-keys", Frecent_keys, 0, 0, 0, /*
 Return vector of last 100 or so keyboard or mouse button events read.
 This copies the event objects into a new vector; it is safe to keep and
 modify them.
-*/ )
-  ()
+*/
+       ())
 {
   struct gcpro gcpro1;
   Lisp_Object val = Qnil;
@@ -3617,7 +3654,7 @@ post_command_hook (void)
 }
 
 
-DEFUN ("dispatch-event", Fdispatch_event, Sdispatch_event, 1, 1, 0 /*
+DEFUN ("dispatch-event", Fdispatch_event, 1, 1, 0, /*
 Given an event object as returned by `next-event', execute it.
 
 Key-press, button-press, and button-release events get accumulated
@@ -3637,9 +3674,8 @@ Process events cause the subprocess's output to be read and acted upon
 appropriately (see `start-process').
 
 Magic events are handled as necessary.
-*/ )
-     (event)
-     Lisp_Object event;
+*/
+       (event))
 {
   /* This function can GC */
   struct command_builder *command_builder;
@@ -3845,7 +3881,7 @@ Magic events are handled as necessary.
   return (Qnil);
 }
 
-DEFUN ("read-key-sequence", Fread_key_sequence, Sread_key_sequence, 1, 3, 0 /*
+DEFUN ("read-key-sequence", Fread_key_sequence, 1, 3, 0, /*
 Read a sequence of keystrokes or mouse clicks.
 Returns a vector of the event objects read.  The vector and the event
 objects it contains are freshly created (and will not be side-effected
@@ -3878,9 +3914,8 @@ related function.
 `read-key-sequence' checks `function-key-map' for function key
 sequences, where they wouldn't conflict with ordinary bindings.  See
 `function-key-map' for more details.
-*/ )
-  (prompt, continue_echo, dont_downcase_last)
-     Lisp_Object prompt, continue_echo, dont_downcase_last;
+*/
+       (prompt, continue_echo, dont_downcase_last))
 {
   /* This function can GC */
   struct console *con = XCONSOLE (Vselected_console); /* #### correct?
@@ -3936,12 +3971,12 @@ sequences, where they wouldn't conflict with ordinary bindings.  See
   RETURN_UNGCPRO (unbind_to (speccount, result));
 }
 
-DEFUN ("this-command-keys", Fthis_command_keys, Sthis_command_keys, 0, 0, 0 /*
+DEFUN ("this-command-keys", Fthis_command_keys, 0, 0, 0, /*
 Return a vector of the keyboard or mouse button events that were used
 to invoke this command.  This copies the vector and the events; it is safe
 to keep and modify them.
-*/ )
-   ()
+*/
+       ())
 {
   Lisp_Object event;
   Lisp_Object result;
@@ -3959,8 +3994,7 @@ to keep and modify them.
   return (result);
 }
 
-DEFUN ("reset-this-command-lengths", Freset_this_command_lengths,
-  Sreset_this_command_lengths, 0, 0, 0 /*
+DEFUN ("reset-this-command-lengths", Freset_this_command_lengths, 0, 0, 0, /*
 Used for complicated reasons in `universal-argument-other-key'.
 
 `universal-argument-other-key' rereads the event just typed.
@@ -3972,8 +4006,8 @@ That is not right.
 Calling this function directs the translated event to replace
 the original event, so that only one version of the event actually
 appears in the echo area and in the value of `this-command-keys.'.
-*/ )
-  ()
+*/
+       ())
 {
   /* #### I don't understand this at all, so currently it does nothing.
      If there is ever a problem, maybe someone should investigate. */
@@ -4015,13 +4049,12 @@ dribble_out_event (Lisp_Object event)
   Lstream_flush (XLSTREAM (Vdribble_file));
 }
 
-DEFUN ("open-dribble-file", Fopen_dribble_file, Sopen_dribble_file, 1, 1,
-  "FOpen dribble file: " /*
+DEFUN ("open-dribble-file", Fopen_dribble_file, 1, 1,
+       "FOpen dribble file: ", /*
 Start writing all keyboard characters to a dribble file called FILE.
 If FILE is nil, close any open dribble file.
-*/ )
-  (file)
-     Lisp_Object file;
+*/
+       (file))
 {
   /* This function can GC */
   /* XEmacs change: always close existing dribble file. */
@@ -4059,24 +4092,24 @@ syms_of_event_stream (void)
             "Undefined keystroke sequence", Qerror);
   defsymbol (&Qcommand_execute, "command-execute");
 
-  defsubr (&Srecent_keys);
-  defsubr (&Sinput_pending_p);
-  defsubr (&Senqueue_eval_event);
-  defsubr (&Snext_event);
-  defsubr (&Snext_command_event);
-  defsubr (&Sdiscard_input);
-  defsubr (&Ssit_for);
-  defsubr (&Ssleep_for);
-  defsubr (&Saccept_process_output);
-  defsubr (&Sadd_timeout);
-  defsubr (&Sdisable_timeout);
-  defsubr (&Sadd_async_timeout);
-  defsubr (&Sdisable_async_timeout);
-  defsubr (&Sdispatch_event);
-  defsubr (&Sread_key_sequence);
-  defsubr (&Sthis_command_keys);
-  defsubr (&Sreset_this_command_lengths);
-  defsubr (&Sopen_dribble_file);
+  DEFSUBR (Frecent_keys);
+  DEFSUBR (Finput_pending_p);
+  DEFSUBR (Fenqueue_eval_event);
+  DEFSUBR (Fnext_event);
+  DEFSUBR (Fnext_command_event);
+  DEFSUBR (Fdiscard_input);
+  DEFSUBR (Fsit_for);
+  DEFSUBR (Fsleep_for);
+  DEFSUBR (Faccept_process_output);
+  DEFSUBR (Fadd_timeout);
+  DEFSUBR (Fdisable_timeout);
+  DEFSUBR (Fadd_async_timeout);
+  DEFSUBR (Fdisable_async_timeout);
+  DEFSUBR (Fdispatch_event);
+  DEFSUBR (Fread_key_sequence);
+  DEFSUBR (Fthis_command_keys);
+  DEFSUBR (Freset_this_command_lengths);
+  DEFSUBR (Fopen_dribble_file);
 
   defsymbol (&Qpre_command_hook, "pre-command-hook");
   defsymbol (&Qpost_command_hook, "post-command-hook");
@@ -4122,6 +4155,10 @@ vars_of_event_stream (void)
   command_event_queue = Qnil;
   staticpro (&command_event_queue);
   command_event_queue_tail = Qnil;
+
+  process_event_queue = Qnil;
+  staticpro (&process_event_queue);
+  process_event_queue_tail = Qnil;
 
   Vlast_selected_frame = Qnil;
   staticpro (&Vlast_selected_frame);

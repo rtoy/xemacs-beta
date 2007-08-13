@@ -94,12 +94,10 @@ xemacs_debug_loop (enum debug_loop op, Lisp_Object class, Lisp_Object type)
 #undef FROB
 }
 
-DEFUN ("add-debug-class-to-check", Fadd_debug_class_to_check,
-       Sadd_debug_class_to_check, 1, 1, 0 /*
+DEFUN ("add-debug-class-to-check", Fadd_debug_class_to_check, 1, 1, 0, /*
 Add a debug class to the list of active classes.
-*/ )
-     (class)
-     Lisp_Object class;
+*/
+       (class))
 {
   if (NILP (xemacs_debug_loop (VALIDATE, class, Qnil)))
     error ("No such debug class exists");
@@ -109,12 +107,10 @@ Add a debug class to the list of active classes.
   return (xemacs_debug_loop (ACTIVE, Qnil, Qnil));
 }
 
-DEFUN ("delete-debug-class-to-check", Fdelete_debug_class_to_check,
-       Sdelete_debug_class_to_check, 1, 1, 0 /*
+DEFUN ("delete-debug-class-to-check", Fdelete_debug_class_to_check, 1, 1, 0, /*
 Delete a debug class from the list of active classes.
-*/ )
-     (class)
-     Lisp_Object class;
+*/
+       (class))
 {
   if (NILP (xemacs_debug_loop (VALIDATE, class, Qnil)))
     error ("No such debug class exists");
@@ -124,30 +120,27 @@ Delete a debug class from the list of active classes.
   return (xemacs_debug_loop (ACTIVE, Qnil, Qnil));
 }
 
-DEFUN ("debug-classes-being-checked", Fdebug_classes_being_checked,
-       Sdebug_classes_being_checked, 0, 0, 0 /*
+DEFUN ("debug-classes-being-checked", Fdebug_classes_being_checked, 0, 0, 0, /*
 Return a list of active debug classes.
-*/ )
-     ()
+*/
+       ())
 {
   return (xemacs_debug_loop (ACTIVE, Qnil, Qnil));
 }
 
-DEFUN ("debug-classes-list", Fdebug_classes_list, Sdebug_classes_list, 0, 0, 0 /*
+DEFUN ("debug-classes-list", Fdebug_classes_list, 0, 0, 0, /*
 Return a list of all defined debug classes.
-*/ )
-     ()
+*/
+       ())
 {
   return (xemacs_debug_loop (LIST, Qnil, Qnil));
 }
 
-DEFUN ("set-debug-classes-to-check", Fset_debug_classes_to_check,
-       Sset_debug_classes_to_check, 1, 1, 0 /*
+DEFUN ("set-debug-classes-to-check", Fset_debug_classes_to_check, 1, 1, 0, /*
 Set which classes of debug statements should be active.
 CLASSES should be a list of debug classes.
-*/ )
-     (classes)
-     Lisp_Object classes;
+*/
+       (classes))
 {
   Lisp_Object rest;
 
@@ -167,14 +160,12 @@ CLASSES should be a list of debug classes.
   return (xemacs_debug_loop (ACTIVE, Qnil, Qnil));
 }
 
-DEFUN ("set-debug-class-types-to-check", Fset_debug_class_types_to_check,
-       Sset_debug_class_types_to_check, 2, 2, 0 /*
+DEFUN ("set-debug-class-types-to-check", Fset_debug_class_types_to_check, 2, 2, 0, /*
 For the given debug CLASS, set which TYPES are actually interesting.
 TYPES should be an integer representing the or'd value of all desired types.
 Lists of defined types and their values are located in the source code.
-*/ )
-     (class, type)
-     Lisp_Object class, type;
+*/
+       (class, type))
 {
   CHECK_INT (type);
   if (NILP (xemacs_debug_loop (VALIDATE, class, Qnil)))
@@ -185,12 +176,10 @@ Lists of defined types and their values are located in the source code.
   return (xemacs_debug_loop (TYPE, class, Qnil));
 }
 
-DEFUN ("debug-types-being-checked", Fdebug_types_being_checked,
-       Sdebug_types_being_checked, 1, 1, 0 /*
+DEFUN ("debug-types-being-checked", Fdebug_types_being_checked, 1, 1, 0, /*
 For the given CLASS, return the associated type value.
-*/ )
-     (class)
-     Lisp_Object class;
+*/
+       (class))
 {
   if (NILP (xemacs_debug_loop (VALIDATE, class, Qnil)))
     error ("Invalid debug class");
@@ -209,13 +198,13 @@ syms_of_debug (void)
   defsymbol (&Qdevices, "devices");
   /* defsymbol (&Qbyte_code, "byte-code"); in bytecode.c */
 
-  defsubr (&Sadd_debug_class_to_check);
-  defsubr (&Sdelete_debug_class_to_check);
-  defsubr (&Sdebug_classes_being_checked);
-  defsubr (&Sdebug_classes_list);
-  defsubr (&Sset_debug_classes_to_check);
-  defsubr (&Sset_debug_class_types_to_check);
-  defsubr (&Sdebug_types_being_checked);
+  DEFSUBR (Fadd_debug_class_to_check);
+  DEFSUBR (Fdelete_debug_class_to_check);
+  DEFSUBR (Fdebug_classes_being_checked);
+  DEFSUBR (Fdebug_classes_list);
+  DEFSUBR (Fset_debug_classes_to_check);
+  DEFSUBR (Fset_debug_class_types_to_check);
+  DEFSUBR (Fdebug_types_being_checked);
 }
 
 void

@@ -365,14 +365,13 @@ Lisp_Object Qmd5;
    from their internal representation, and thus their MD5 hash would
    be different. */
      
-DEFUN ("md5", Fmd5, Smd5, 1, 3, 0 /*
+DEFUN ("md5", Fmd5, 1, 3, 0, /*
 Return the MD5 (a secure message digest algorithm) of an object.
 OBJECT is either a string or a buffer.
 Optional arguments START and END denote buffer positions for computing the
 hash of a portion of OBJECT.
-*/ )
-       (object, start, end)
-       Lisp_Object object, start, end;
+*/
+       (object, start, end))
 {
   MD_CTX context;
   unsigned char digest[16];
@@ -422,7 +421,7 @@ hash of a portion of OBJECT.
 void
 syms_of_md5 (void)
 {
-  defsubr (&Smd5);
+  DEFSUBR (Fmd5);
   defsymbol (&Qmd5, "md5");
 }
 

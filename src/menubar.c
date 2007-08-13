@@ -91,7 +91,7 @@ menubar_visible_p_changed_in_frame (Lisp_Object specifier, struct frame *f,
   update_frame_menubars (f);
 }
 
-DEFUN ("popup-menu", Fpopup_menu, Spopup_menu, 1, 2, 0 /*
+DEFUN ("popup-menu", Fpopup_menu, 1, 2, 0, /*
 Pop up the given menu.
 A menu description is a list of menu items, strings, and submenus.
 
@@ -169,9 +169,8 @@ For example:
  [ \"Read Only\"     toggle-read-only :style toggle :selected buffer-read-only ]
 
 See menubar.el for many more examples.
-*/ )
-     (menu_desc, event)
-     Lisp_Object menu_desc, event;
+*/
+       (menu_desc, event))
 {
   struct frame *f = decode_frame(Qnil);
   MAYBE_FRAMEMETH (f, popup_menu, (menu_desc,event));
@@ -182,7 +181,7 @@ void
 syms_of_menubar (void)
 {
   defsymbol (&Qcurrent_menubar, "current-menubar");
-  defsubr (&Spopup_menu);
+  DEFSUBR (Fpopup_menu);
 }
 
 void

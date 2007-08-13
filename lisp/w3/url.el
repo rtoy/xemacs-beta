@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/01/29 14:32:36
-;; Version: 1.48
+;; Created: 1997/02/07 14:30:25
+;; Version: 1.51
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/01/29 14:32:36|1.48|Location Undetermined
+;;; 1997/02/07 14:30:25|1.51|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,7 +44,11 @@
 	(require 'ange-ftp)
       (error nil)))
 
-(require 'w3-sysdp)
+(eval-and-compile
+  (if (not (and (string-match "XEmacs" emacs-version)
+		(or (> emacs-major-version 19)
+		    (>= emacs-minor-version 14))))
+      (require 'w3-sysdp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Functions that might not exist in old versions of emacs
@@ -277,6 +281,15 @@
       (round (* 100 (/ x (float y))))
     (/ (* x 100) y)))
 
+(defun url-pretty-length (n)
+  (cond
+   ((< n 1024)
+    (format "%d bytes" n))
+   ((< n (* 1024 1024))
+    (format "%dk" (/ n 1024.0)))
+   (t
+    (format "%2.2fM" (/ n (* 1024 1024.0))))))
+
 (defun url-after-change-function (&rest args)
   ;; The nitty gritty details of messaging the HTTP/1.0 status messages
   ;; in the minibuffer."
@@ -311,22 +324,25 @@
     (cond
      ((and url-current-content-length (> url-current-content-length 1)
 	   url-current-mime-type)
-      (url-lazy-message "Reading [%s]... %d of %d bytes (%d%%)"
+      (url-lazy-message "Reading [%s]... %s of %s (%d%%)"
 			url-current-mime-type
-			current-length
-			url-current-content-length
+			(url-pretty-length current-length)
+			(url-pretty-length url-current-content-length)
 			(url-percentage current-length
 					url-current-content-length)))
      ((and url-current-content-length (> url-current-content-length 1))
-      (url-lazy-message "Reading... %d of %d bytes (%d%%)"
-			current-length url-current-content-length
+      (url-lazy-message "Reading... %s of %s (%d%%)"
+			(url-pretty-length current-length)
+			(url-pretty-length url-current-content-length)
 			(url-percentage current-length
 					url-current-content-length)))
      ((and (/= 1 current-length) url-current-mime-type)
-      (url-lazy-message "Reading [%s]... %d bytes"
-			url-current-mime-type current-length))
+      (url-lazy-message "Reading [%s]... %s"
+			url-current-mime-type
+			(url-pretty-length current-length)))
      ((/= 1 current-length)
-      (url-lazy-message "Reading... %d bytes." current-length))
+      (url-lazy-message "Reading... %s."
+			(url-pretty-length current-length)))
      (t (url-lazy-message "Waiting for response...")))))
 
 (defun url-insert-entities-in-string (string)
@@ -1527,8 +1543,6 @@ and decoding any MIME content-transfer-encoding used."
 			     url-current-mime-headers)))
 	     (code-2 (cdr-safe
 		      (assoc "content-encoding" url-current-mime-headers)))
-	     (code-3 (and (not code-1) (not code-2)
-			  (cdr-safe (assoc extn url-uncompressor-alist))))
 	     (done nil)
 	     (default-process-coding-system
 	       (cons mule-no-coding-system mule-no-coding-system)))
@@ -1539,23 +1553,22 @@ and decoding any MIME content-transfer-encoding used."
 			       (cdr-safe
 				(assoc code mm-content-transfer-encodings)))
 		  done (cons code done))
-	    (cond
-	     ((null decoder) nil)
-	     ((stringp decoder)
-	      (message "Decoding...")
-	      (call-process-region (point-min) (point-max) decoder t t nil)
-	      (message "Decoding... done."))
-	     ((listp decoder)
-	      (apply 'call-process-region (point-min) (point-max)
-		     (car decoder) t t nil (cdr decoder)))
-	     ((and (symbolp decoder) (fboundp decoder))
-	      (message "Decoding...")
-	      (funcall decoder (point-min) (point-max))
-	      (message "Decoding... done."))
-	     (t
-	      (error "Bad entry for %s in `mm-content-transfer-encodings'"
-		     code)))))
-	 (list code-1 code-2 code-3))))
+	    (if (not decoder)
+		nil
+	      (message "Decoding (%s)..." code)
+	      (cond
+	       ((stringp decoder)
+		(call-process-region (point-min) (point-max) decoder t t nil))
+	       ((listp decoder)
+		(apply 'call-process-region (point-min) (point-max)
+		       (car decoder) t t nil (cdr decoder)))
+	       ((and (symbolp decoder) (fboundp decoder))
+		(funcall decoder (point-min) (point-max)))
+	       (t
+		(error "Bad entry for %s in `mm-content-transfer-encodings'"
+		       code)))
+	      (message "Decoding (%s)... done." code))))
+	 (list code-1 code-2))))
   (set-buffer-modified-p nil))
 
 (defun url-filter (proc string)

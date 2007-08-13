@@ -7,7 +7,7 @@
 ;;         Dan Rich <drich@morpheus.corp.sgi.com>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/12/15
-;; Version: $Id: tm-image.el,v 1.3 1996/12/29 00:15:14 steve Exp $
+;; Version: $Id: tm-image.el,v 1.4 1997/02/09 23:51:47 steve Exp $
 
 ;; Keywords: mail, news, MIME, multimedia, image, picture, X-Face
 
@@ -224,14 +224,15 @@
     (mime-decode-region beg end encoding)
     (let ((data (buffer-string))
 	  (minor (assoc-value ctype mime-viewer/image-converter-alist))
-	  gl)
+	  gl e)
       (delete-region (point-min)(point-max))
       (while (progn
 	       (setq gl (make-glyph (vector minor :data data)))
 	       (eq (image-instance-type (glyph-image-instance gl))
 		   'text)
 	       ))
-      (make-annotation gl (point) 'text)
+      (setq e (make-extent (point) (point)))
+      (set-extent-end-glyph e gl)
       )
     (insert "\n")
     ))

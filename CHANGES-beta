@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 19.15 beta93
+-- VM-6.13 Courtesy of Kyle Jones
+-- Custom-1.30
+-- Replicating extents are history
+-- tm-7.103.5
+-- Miscellaneous bug fixes
+-- Synch to 20.0 patches
+
 to 19.15 beta92
 -- gnus-5.4.11
 -- tm-7.103.1

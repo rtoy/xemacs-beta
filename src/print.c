@@ -375,12 +375,11 @@ write_c_string (CONST char *str, Lisp_Object stream)
 }
 
 
-DEFUN ("write-char", Fwrite_char, Swrite_char, 1, 2, 0 /*
+DEFUN ("write-char", Fwrite_char, 1, 2, 0, /*
 Output character CH to stream STREAM.
 STREAM defaults to the value of `standard-output' (which see).
-*/ )
-  (ch, stream)
-     Lisp_Object ch, stream;
+*/
+       (ch, stream))
 {
   /* This function can GC */
   Bufbyte str[MAX_EMCHAR_LEN];
@@ -440,8 +439,7 @@ internal_with_output_to_temp_buffer (CONST char *bufname,
   return unbind_to (speccount, arg);
 }
 
-DEFUN ("with-output-to-temp-buffer", Fwith_output_to_temp_buffer, Swith_output_to_temp_buffer,
-       1, UNEVALLED, 0 /*
+DEFUN ("with-output-to-temp-buffer", Fwith_output_to_temp_buffer, 1, UNEVALLED, 0, /*
 Bind `standard-output' to buffer BUFNAME, eval BODY, then show that buffer.
 The buffer is cleared out initially, and marked as unmodified when done.
 All output done by BODY is inserted in that buffer by default.
@@ -451,9 +449,8 @@ If BODY does not finish normally, the buffer BUFNAME is not displayed.
 
 If variable `temp-buffer-show-function' is non-nil, call it at the end
 to get the buffer displayed.  It gets one argument, the buffer to display.
-*/ )
-  (args)
-     Lisp_Object args;
+*/
+       (args))
 {
   /* This function can GC */
   struct gcpro gcpro1;
@@ -481,12 +478,11 @@ to get the buffer displayed.  It gets one argument, the buffer to display.
 }
 #endif /* not standalone */
 
-DEFUN ("terpri", Fterpri, Sterpri, 0, 1, 0 /*
+DEFUN ("terpri", Fterpri, 0, 1, 0, /*
 Output a newline to STREAM.
 If STREAM is omitted or nil, the value of `standard-output' is used.
-*/ )
-  (stream)
-     Lisp_Object stream;
+*/
+       (stream))
 {
   /* This function can GC */
   Bufbyte str[1];
@@ -495,14 +491,13 @@ If STREAM is omitted or nil, the value of `standard-output' is used.
   return Qt;
 }
 
-DEFUN ("prin1", Fprin1, Sprin1, 1, 2, 0 /*
+DEFUN ("prin1", Fprin1, 1, 2, 0, /*
 Output the printed representation of OBJECT, any Lisp object.
 Quoting characters are printed when needed to make output that `read'
 can handle, whenever this is possible.
 Output stream is STREAM, or value of `standard-output' (which see).
-*/ )
-  (object, stream)
-     Lisp_Object object, stream;
+*/
+       (object, stream))
 {
   /* This function can GC */
   Lisp_Object the_stream = Qnil;
@@ -520,14 +515,13 @@ Output stream is STREAM, or value of `standard-output' (which see).
 /* a buffer which is used to hold output being built by prin1-to-string */
 Lisp_Object Vprin1_to_string_buffer;
 
-DEFUN ("prin1-to-string", Fprin1_to_string, Sprin1_to_string, 1, 2, 0 /*
+DEFUN ("prin1-to-string", Fprin1_to_string, 1, 2, 0, /*
 Return a string containing the printed representation of OBJECT,
 any Lisp object.  Quoting characters are used when needed to make output
 that `read' can handle, whenever this is possible, unless the optional
 second argument NOESCAPE is non-nil.
-*/ )
-  (object, noescape)
-     Lisp_Object object, noescape;
+*/
+       (object, noescape))
 {
   /* This function can GC */
   Lisp_Object old = Fcurrent_buffer ();
@@ -552,14 +546,13 @@ second argument NOESCAPE is non-nil.
   return (object);
 }
 
-DEFUN ("princ", Fprinc, Sprinc, 1, 2, 0 /*
+DEFUN ("princ", Fprinc, 1, 2, 0, /*
 Output the printed representation of OBJECT, any Lisp object.
 No quoting characters are used; no delimiters are printed around
 the contents of strings.
 Output stream is STREAM, or value of standard-output (which see).
-*/ )
-  (obj, stream)
-     Lisp_Object obj, stream;
+*/
+       (obj, stream))
 {
   /* This function can GC */
   Lisp_Object the_stream = Qnil;
@@ -574,14 +567,13 @@ Output stream is STREAM, or value of standard-output (which see).
   return (obj);
 }
 
-DEFUN ("print", Fprint, Sprint, 1, 2, 0 /*
+DEFUN ("print", Fprint, 1, 2, 0, /*
 Output the printed representation of OBJECT, with newlines around it.
 Quoting characters are printed when needed to make output that `read'
 can handle, whenever this is possible.
 Output stream is STREAM, or value of `standard-output' (which see).
-*/ )
-  (obj, stream)
-     Lisp_Object obj, stream;
+*/
+       (obj, stream))
 {
   /* This function can GC */
   Lisp_Object the_stream = Qnil;
@@ -1160,16 +1152,14 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 int alternate_do_pointer;
 char alternate_do_string[5000];
 
-DEFUN ("alternate-debugging-output", Falternate_debugging_output,
-       Salternate_debugging_output, 1, 1, 0 /*
+DEFUN ("alternate-debugging-output", Falternate_debugging_output, 1, 1, 0, /*
 Append CHARACTER to the array `alternate_do_string'.
 This can be used in place of `external-debugging-output' as a function
 to be passed to `print'.  Before calling `print', set `alternate_do_pointer'
 to 0.
 
-*/ )
-  (character)
-     Lisp_Object character;
+*/
+       (character))
 {
   Bufbyte str[MAX_EMCHAR_LEN];
   Bytecount len;
@@ -1185,8 +1175,7 @@ to 0.
   return character;
 }
 
-DEFUN ("external-debugging-output", Fexternal_debugging_output,
-       Sexternal_debugging_output, 1, 3, 0 /*
+DEFUN ("external-debugging-output", Fexternal_debugging_output, 1, 3, 0, /*
 Write CHAR-OR-STRING to stderr or stdout.
 If optional arg STDOUT-P is non-nil, write to stdout; otherwise, write
 to stderr.  You can use this function to write directly to the terminal.
@@ -1194,9 +1183,8 @@ This function can be used as the STREAM argument of Fprint() or the like.
 
 If you have opened a termscript file (using `open-termscript'), then
 the output also will be logged to this file.
-*/ )
-  (char_or_string, stdout_p, device)
-     Lisp_Object char_or_string, stdout_p, device;
+*/
+       (char_or_string, stdout_p, device))
 {
   FILE *file = 0;
   struct console *con = 0;
@@ -1241,13 +1229,11 @@ the output also will be logged to this file.
   return char_or_string;
 }
 
-DEFUN ("open-termscript", Fopen_termscript, Sopen_termscript,
-  1, 1, "FOpen termscript file: " /*
+DEFUN ("open-termscript", Fopen_termscript, 1, 1, "FOpen termscript file: ", /*
 Start writing all terminal output to FILE as well as the terminal.
 FILE = nil means just close any termscript file currently open.
-*/ )
-  (file)
-     Lisp_Object file;
+*/
+       (file))
 {
   /* This function can GC */
   if (termscript != 0)
@@ -1407,19 +1393,19 @@ syms_of_print (void)
   defsymbol (&Qprint_length, "print-length");
 
   defsymbol (&Qprint_string_length, "print-string-length");
-  defsubr (&Sprin1);
-  defsubr (&Sprin1_to_string);
-  defsubr (&Sprinc);
-  defsubr (&Sprint);
-  defsubr (&Sterpri);
-  defsubr (&Swrite_char);
-  defsubr (&Salternate_debugging_output);
+  DEFSUBR (Fprin1);
+  DEFSUBR (Fprin1_to_string);
+  DEFSUBR (Fprinc);
+  DEFSUBR (Fprint);
+  DEFSUBR (Fterpri);
+  DEFSUBR (Fwrite_char);
+  DEFSUBR (Falternate_debugging_output);
   defsymbol (&Qalternate_debugging_output, "alternate-debugging-output");
-  defsubr (&Sexternal_debugging_output);
-  defsubr (&Sopen_termscript);
+  DEFSUBR (Fexternal_debugging_output);
+  DEFSUBR (Fopen_termscript);
   defsymbol (&Qexternal_debugging_output, "external-debugging-output");
 #ifndef standalone
-  defsubr (&Swith_output_to_temp_buffer);
+  DEFSUBR (Fwith_output_to_temp_buffer);
 #endif /* not standalone */
 }
 

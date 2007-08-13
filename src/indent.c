@@ -199,7 +199,7 @@ current_column (struct buffer *buf)
   return column_at_point (buf, BUF_PT (buf), 1);
 }
 
-DEFUN ("current-column", Fcurrent_column, Scurrent_column, 0, 1, 0 /*
+DEFUN ("current-column", Fcurrent_column, 0, 1, 0, /*
 Return the horizontal position of point.  Beginning of line is column 0.
 This is calculated by adding together the widths of all the displayed
  representations of the character between the start of the previous line
@@ -210,22 +210,20 @@ Ignores finite width of frame, which means that this function may return
 Whether the line is visible (if `selective-display' is t) has no effect;
  however, ^M is treated as end of line when `selective-display' is t.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (buffer)
-     Lisp_Object buffer;
+*/
+       (buffer))
 {
   return (make_int (current_column (decode_buffer (buffer, 0))));
 }
 
 
-DEFUN ("indent-to", Findent_to, Sindent_to, 1, 3, "NIndent to column: " /*
+DEFUN ("indent-to", Findent_to, 1, 3, "NIndent to column: ", /*
 Indent from point with tabs and spaces until COLUMN is reached.
 Optional second argument MIN says always do at least MIN spaces
  even if that goes past COLUMN; by default, MIN is zero.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (col, minimum, buffer)
-     Lisp_Object col, minimum, buffer;
+*/
+       (col, minimum, buffer))
 {
   /* This function can GC */
   int mincol;
@@ -310,14 +308,12 @@ bi_spaces_at_point (struct buffer *b, Bytind bi_pos)
 }
 
 
-DEFUN ("current-indentation", Fcurrent_indentation, Scurrent_indentation,
-  0, 1, 0 /*
+DEFUN ("current-indentation", Fcurrent_indentation, 0, 1, 0, /*
 Return the indentation of the current line.
 This is the horizontal position of the character
 following any initial whitespace.
-*/ )
-  (buffer)
-  Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
   Bufpos pos = find_next_newline (buf, BUF_PT (buf), -1);
@@ -331,7 +327,7 @@ following any initial whitespace.
 }
 
 
-DEFUN ("move-to-column", Fmove_to_column, Smove_to_column, 1, 3, 0 /*
+DEFUN ("move-to-column", Fmove_to_column, 1, 3, 0, /*
 Move point to column COLUMN in the current line.
 The column of a character is calculated by adding together the widths
 as displayed of the previous characters in the line.
@@ -346,9 +342,8 @@ A non-nil second (optional) argument FORCE means, if the line
 is too short to reach column COLUMN then add spaces/tabs to get there,
 and if COLUMN is in the middle of a tab character, change it to spaces.
 Returns the actual column that it moved to.
-*/ )
-  (column, force, buffer)
-     Lisp_Object column, force, buffer;
+*/
+       (column, force, buffer))
 {
   /* This function can GC */
   Bufpos pos;
@@ -607,7 +602,7 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
   RETURN_NOT_REACHED(0)	/* shut up compiler */
 }
 
-DEFUN ("vertical-motion", Fvertical_motion, Svertical_motion, 1, 2, 0 /*
+DEFUN ("vertical-motion", Fvertical_motion, 1, 2, 0, /*
 Move to start of frame line LINES lines down.
 If LINES is negative, this is moving up.
 
@@ -623,9 +618,8 @@ Sets point to position found; this may be start of line
 Returns number of lines moved; may be closer to zero than LINES
  if beginning or end of buffer was reached.
 Optional second argument is WINDOW to move in.
-*/ )
-  (lines, window)
-     Lisp_Object lines, window;
+*/
+       (lines, window))
 {
   if (NILP (window))
     window = Fselected_window (Qnil);
@@ -651,14 +645,14 @@ Optional second argument is WINDOW to move in.
 void
 syms_of_indent (void)
 {
-  defsubr (&Scurrent_indentation);
-  defsubr (&Sindent_to);
-  defsubr (&Scurrent_column);
-  defsubr (&Smove_to_column);
+  DEFSUBR (Fcurrent_indentation);
+  DEFSUBR (Findent_to);
+  DEFSUBR (Fcurrent_column);
+  DEFSUBR (Fmove_to_column);
 #if 0 /* #### */
-  defsubr (&Scompute_motion);
+  DEFSUBR (Fcompute_motion);
 #endif
-  defsubr (&Svertical_motion);
+  DEFSUBR (Fvertical_motion);
 }
 
 void

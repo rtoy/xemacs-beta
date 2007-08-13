@@ -222,21 +222,20 @@ get_range_table (EMACS_INT pos, int nentries, struct range_table_entry *tab,
   return defalt;
 }
 
-DEFUN ("range-table-p", Frange_table_p, Srange_table_p, 1, 1, 0 /*
+DEFUN ("range-table-p", Frange_table_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a range table.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   return (RANGE_TABLEP (object) ? Qt : Qnil);
 }
 
-DEFUN ("make-range-table", Fmake_range_table, Smake_range_table, 0, 0, 0 /*
+DEFUN ("make-range-table", Fmake_range_table, 0, 0, 0, /*
 Make a new, empty range table.
 You can manipulate it using `put-range-table', `get-range-table',
 `remove-range-table', and `clear-range-table'.
-*/ )
-  ()
+*/
+       ())
 {
   struct Lisp_Range_Table *rt;
   Lisp_Object obj;
@@ -248,12 +247,11 @@ You can manipulate it using `put-range-table', `get-range-table',
   return obj;
 }
 
-DEFUN ("copy-range-table", Fcopy_range_table, Scopy_range_table, 1, 1, 0 /*
+DEFUN ("copy-range-table", Fcopy_range_table, 1, 1, 0, /*
 Make a new range table which contains the same values for the same
 ranges as the given table.  The values will not themselves be copied.
-*/ )
-  (old_table)
-  Lisp_Object old_table;
+*/
+       (old_table))
 {
   struct Lisp_Range_Table *rt, *rtnew;
   Lisp_Object obj = Qnil;
@@ -270,12 +268,11 @@ ranges as the given table.  The values will not themselves be copied.
   return obj;
 }
 
-DEFUN ("get-range-table", Fget_range_table, Sget_range_table, 2, 3, 0 /*
+DEFUN ("get-range-table", Fget_range_table, 2, 3, 0, /*
 Find value for position POS in TABLE.
 If there is no corresponding value, return DEFAULT (defaults to nil).
-*/ )
-  (pos, table, defalt)
-  Lisp_Object pos, table, defalt;/* Man kann in C nicht selber buchstabieren */
+*/
+       (pos, table, defalt))
 {
   struct Lisp_Range_Table *rt;
   EMACS_INT po;
@@ -414,11 +411,10 @@ put_range_table (Lisp_Object table, EMACS_INT first,
     }
 }
 
-DEFUN ("put-range-table", Fput_range_table, Sput_range_table, 4, 4, 0 /*
+DEFUN ("put-range-table", Fput_range_table, 4, 4, 0, /*
 Set the value for range (START, END) to be VAL in TABLE.
-*/ )
-  (start, end, val, table)
-     Lisp_Object start, end, val, table;
+*/
+       (start, end, val, table))
 {
   EMACS_INT first, last;
 
@@ -435,32 +431,29 @@ Set the value for range (START, END) to be VAL in TABLE.
   return Qnil;
 }
 
-DEFUN ("remove-range-table", Fremove_range_table, Sremove_range_table, 3, 3, 0 /*
+DEFUN ("remove-range-table", Fremove_range_table, 3, 3, 0, /*
 Remove the value for range (START, END) in TABLE.
-*/ )
-  (start, end, table)
-     Lisp_Object start, end, table;
+*/
+       (start, end, table))
 {
   return Fput_range_table (start, end, Qunbound, table);
 }
 
-DEFUN ("clear-range-table", Fclear_range_table, Sclear_range_table, 1, 1, 0 /*
+DEFUN ("clear-range-table", Fclear_range_table, 1, 1, 0, /*
 Flush TABLE.
-*/ )
-  (table)
-     Lisp_Object table;
+*/
+       (table))
 {
   CHECK_RANGE_TABLE (table);
   Dynarr_reset (XRANGE_TABLE (table)->entries);
   return Qnil;
 }
 
-DEFUN ("map-range-table", Fmap_range_table, Smap_range_table, 2, 2, 0 /*
+DEFUN ("map-range-table", Fmap_range_table, 2, 2, 0, /*
 Map FUNCTION over entries in TABLE, calling it with three args,
 the beginning and end of the range and the corresponding value.
-*/ )
-  (function, table)
-     Lisp_Object function, table;
+*/
+       (function, table))
 {
   error ("not yet implemented");
   return Qnil;
@@ -723,14 +716,14 @@ syms_of_rangetab (void)
   defsymbol (&Qrange_tablep, "range-table-p");
   defsymbol (&Qrange_table, "range-table");
 
-  defsubr (&Srange_table_p);
-  defsubr (&Smake_range_table);
-  defsubr (&Scopy_range_table);
-  defsubr (&Sget_range_table);
-  defsubr (&Sput_range_table);
-  defsubr (&Sremove_range_table);
-  defsubr (&Sclear_range_table);
-  defsubr (&Smap_range_table);
+  DEFSUBR (Frange_table_p);
+  DEFSUBR (Fmake_range_table);
+  DEFSUBR (Fcopy_range_table);
+  DEFSUBR (Fget_range_table);
+  DEFSUBR (Fput_range_table);
+  DEFSUBR (Fremove_range_table);
+  DEFSUBR (Fclear_range_table);
+  DEFSUBR (Fmap_range_table);
 }
 
 void

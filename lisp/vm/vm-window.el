@@ -1,5 +1,5 @@
 ;;; Window management code for VM
-;;; Copyright (C) 1989, 1990, 1991, 1993, 1994, 1995 Kyle E. Jones
+;;; Copyright (C) 1989-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -17,7 +17,8 @@
 
 (provide 'vm-window)
 
-(defun vm-display (buffer display commands configs)
+(defun vm-display (buffer display commands configs
+		   &optional do-not-raise)
 ;; the clearinghouse VM display function.
 ;;
 ;; First arg BUFFER non-nil is a buffer to display or undisplay.
@@ -62,11 +63,13 @@
 ;; configuration is done, and only then if the value of
 ;; this-command is found in the COMMANDS list.
   (vm-save-buffer-excursion
-   (let ((w (and buffer (vm-get-buffer-window buffer))))
+   (let* ((w (and buffer (vm-get-buffer-window buffer)))
+	  (wf (and w (vm-window-frame w))))
      (and buffer (set-buffer buffer))
-     (and w display (vm-raise-frame (vm-window-frame w)))
-     (and w display (not (eq (vm-selected-frame) (vm-window-frame w)))
-	  (vm-select-frame (vm-window-frame w)))
+     (if (and w display (not do-not-raise))
+	 (vm-raise-frame wf))
+     (if (and w display (not (eq (vm-selected-frame) wf)))
+	 (vm-select-frame wf))
      (cond ((and buffer display)
 	    (if (and vm-display-buffer-hook
 		     (null (vm-get-visible-buffer-window buffer)))
@@ -155,12 +158,16 @@
 	       (setq message vm-mail-buffer)))
 	    ((eq major-mode 'vm-mode)
 	     (setq message (current-buffer)))
+	    ((eq major-mode 'vm-presentation-mode)
+	     (setq message vm-mail-buffer))
 	    ((eq major-mode 'vm-virtual-mode)
 	     (setq message (current-buffer)))
 	    ((eq major-mode 'mail-mode)
 	     (if (or (null vm-mail-buffer) (null (buffer-name vm-mail-buffer)))
 		 (throw 'done nil)
-	       (setq message vm-mail-buffer)))
+	       (setq message vm-mail-buffer
+		     ;; assume that the proximity implies affinity
+		     composition (current-buffer))))
 	    ((eq vm-system-state 'editing)
 	     (if (or (null vm-mail-buffer) (null (buffer-name vm-mail-buffer)))
 		 (throw 'done nil)
@@ -169,6 +176,9 @@
 	    ;; not in a VM related buffer, bail...
 	    (t (throw 'done nil)))
       (set-buffer message)
+      (vm-check-for-killed-presentation)
+      (if vm-presentation-buffer
+	  (setq message vm-presentation-buffer))
       ;; if this configuration is already the current one, don't
       ;; set it up again.
       (if (or (and vm-mutable-frames (eq (car config) vm-window-configuration))
@@ -395,7 +405,8 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	      (progn
 		(condition-case nil
 		    (progn
-		      (vm-delete-frame delete-me)
+		      (if (vm-created-this-frame-p delete-me)
+			  (vm-delete-frame delete-me))
 		      (if (eq delete-me start)
 			  (setq start nil)))
 		  (error nil))
@@ -473,21 +484,31 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 
 (defun vm-set-hooks-for-frame-deletion ()
   (make-local-variable 'vm-undisplay-buffer-hook)
-  (make-local-variable 'kill-buffer-hook)
   (add-hook 'vm-undisplay-buffer-hook 'vm-delete-buffer-frame)
   (add-hook 'kill-buffer-hook 'vm-delete-buffer-frame))
 
+(defun vm-created-this-frame-p (&optional frame)
+  (memq (or frame (vm-selected-frame)) vm-frame-list))
+
 (defun vm-delete-buffer-frame ()
-  (save-excursion
-    (let ((w (vm-get-visible-buffer-window (current-buffer)))
-	  (b (current-buffer)))
-      (and w (eq (vm-selected-frame) (vm-window-frame w))
-	   (vm-error-free-call 'vm-delete-frame (vm-window-frame w)))
-      (and w (let ((vm-mutable-frames t))
-	       (vm-delete-windows-or-frames-on b)))))
-  ;; do it only once
-  (remove-hook 'vm-undisplay-buffer-hook 'vm-delete-buffer-frame)
-  (remove-hook 'kill-buffer-hook 'vm-delete-buffer-frame))
+  ;; kludge.  we only want to this to run on VM related buffers
+  ;; but this function is generally on a global hook.  Check for
+  ;; vm-undisplay-buffer-hook set; this is a good sign that this
+  ;; is a VM buffer.
+  (if vm-undisplay-buffer-hook
+      (save-excursion
+	;; run once only per buffer.
+	(remove-hook 'vm-undisplay-buffer-hook 'vm-delete-buffer-frame)
+	(let* ((w (vm-get-visible-buffer-window (current-buffer)))
+	       (b (current-buffer))
+	       (wf (and w (vm-window-frame w))))
+	  (and w (eq (vm-selected-frame) wf) (vm-created-this-frame-p wf)
+	       (vm-error-free-call 'vm-delete-frame wf))
+	  (and w (let ((vm-mutable-frames t))
+		   (vm-delete-windows-or-frames-on b)))))))
+
+(defun vm-register-frame (frame)
+  (setq vm-frame-list (cons frame vm-frame-list)))
 
 (defun vm-goto-new-frame (&rest types)
   (let ((params nil))
@@ -503,8 +524,41 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	   (select-screen (make-screen params)))
 	  ((fboundp 'new-screen)
 	   (select-screen (new-screen params))))
+    (vm-register-frame (vm-selected-frame))
     (and vm-warp-mouse-to-new-frame
 	 (vm-warp-mouse-to-frame-maybe (vm-selected-frame)))))
+
+(defun vm-goto-new-summary-frame-maybe ()
+  (if (and vm-frame-per-summary (vm-multiple-frames-possible-p))
+      (let ((w (vm-get-buffer-window vm-summary-buffer)))
+	(if (null w)
+	    (progn
+	      (vm-goto-new-frame 'summary)
+	      (vm-set-hooks-for-frame-deletion))
+	  (save-excursion
+	    (select-window w)
+	    (and vm-warp-mouse-to-new-frame
+		 (vm-warp-mouse-to-frame-maybe (vm-window-frame w))))))))
+
+(defun vm-goto-new-folder-frame-maybe (&rest types)
+  (if (and vm-frame-per-folder (vm-multiple-frames-possible-p))
+      (let ((w (or (vm-get-buffer-window (current-buffer))
+		   ;; summary == folder for the purpose
+		   ;; of frame reuse.
+		   (and vm-summary-buffer
+			(vm-get-buffer-window vm-summary-buffer))
+		   ;; presentation == folder for the purpose
+		   ;; of frame reuse.
+		   (and vm-presentation-buffer
+			(vm-get-buffer-window vm-presentation-buffer)))))
+	(if (null w)
+	    (progn
+	      (apply 'vm-goto-new-frame types)
+	      (vm-set-hooks-for-frame-deletion))
+	  (save-excursion
+	    (select-window w)
+	    (and vm-warp-mouse-to-new-frame
+		 (vm-warp-mouse-to-frame-maybe (vm-window-frame w))))))))
 
 (defun vm-warp-mouse-to-frame-maybe (&optional frame)
   (or frame (setq frame (vm-selected-frame)))
@@ -576,6 +630,22 @@ Run the hooks in vm-iconify-frame-hook before doing so."
        (cond ((fboundp 'frame-visible-p) 'frame-visible-p)
 	     ((fboundp 'screen-visible-p) 'screen-visible-p)
 	     (t 'ignore))))
+
+(if (fboundp 'frame-iconified-p)
+    (fset 'vm-frame-iconified-p 'frame-iconified-p)
+  (defun vm-frame-iconified-p (&optional frame)
+    (eq (vm-frame-visible-p frame) 'icon)))
+
+;; frame-totally-visible-p is broken under XEmacs 19.14 and is
+;; absent under Emacs 19.34.  So vm-frame-per-summary won't work
+;; quite right under these Emacs versions.  XEmacs 19.15 should
+;; have a working version of this function.
+(if (and (fboundp 'frame-totally-visible-p)
+	 (vm-xemacs-p)
+	 (or (>= emacs-major-version 20)
+	     (>= emacs-minor-version 15)))
+    (fset 'vm-frame-totally-visible-p 'frame-totally-visible-p)
+  (fset 'vm-frame-totally-visible-p 'vm-frame-visible-p))
 
 (fset 'vm-window-frame
       (symbol-function

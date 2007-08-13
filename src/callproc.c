@@ -151,8 +151,7 @@ report_fork_error (char *string, Lisp_Object data)
 }
 #endif /* unused */
 
-DEFUN ("call-process-internal", Fcall_process_internal,
-       Scall_process_internal, 1, MANY, 0 /*
+DEFUN ("call-process-internal", Fcall_process_internal, 1, MANY, 0, /*
 Call PROGRAM synchronously in separate process, with coding-system specified.
 Arguments are
  (PROGRAM &optional INFILE BUFFER DISPLAY &rest ARGS).
@@ -173,10 +172,8 @@ Otherwise it waits for PROGRAM to terminate and returns a numeric exit status
  or a signal description string.
 If you quit, the process is killed with SIGINT, or SIGKILL if you
  quit again.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   /* This function can GC */
   Lisp_Object infile, buffer, current_dir, display, path;
@@ -294,26 +291,17 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	CHECK_STRING (args[i]);
 	new_argv[i - 3] = (char *) XSTRING_DATA (args[i]);
       }
-    /* Program name is first command arg */
-    new_argv[0] = (char *) XSTRING_DATA (args[0]);
-    new_argv[i - 3] = 0;
+    new_argv[nargs - 3] = 0;
   }
 
-  filefd = open ((char *) XSTRING_DATA (infile), O_RDONLY, 0);
-  if (filefd < 0)
-    {
-      report_file_error ("Opening process input file",
-			 Fcons (infile, Qnil));
-    }
-
   if (NILP (path))
-    {
-      close (filefd);
-      report_file_error ("Searching for program",
-			 Fcons (args[0], Qnil));
-    }
+    report_file_error ("Searching for program", Fcons (args[0], Qnil));
   new_argv[0] = (char *) XSTRING_DATA (path);
   
+  filefd = open ((char *) XSTRING_DATA (infile), O_RDONLY, 0);
+  if (filefd < 0)
+    report_file_error ("Opening process input file", Fcons (infile, Qnil));
+
 #ifdef MSDOS
   /* These vars record information from process termination.
      Clear them now before process can possibly terminate,
@@ -664,7 +652,7 @@ child_setup (int in, int out, int err, char **new_argv,
 #if !defined (NO_SUBPROCESSES)
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
-#endif
+#endif /* not NO_SUBPROCESSES */
   close_load_descs ();
 
   /* Note that use of alloca is always safe here.  It's obvious for systems
@@ -891,13 +879,12 @@ getenv_internal (CONST Bufbyte *var,
   return 0;
 }
 
-DEFUN ("getenv", Fgetenv, Sgetenv, 1, 2, "sEnvironment variable: \np" /*
+DEFUN ("getenv", Fgetenv, 1, 2, "sEnvironment variable: \np", /*
 Return the value of environment variable VAR, as a string.
 VAR is a string, the name of the variable.
 When invoked interactively, prints the value in the echo area.
-*/ )
-     (var, interactivep)
-     Lisp_Object var, interactivep;
+*/
+       (var, interactivep))
 {
   Bufbyte *value;
   Bytecount valuelen;
@@ -1092,8 +1079,8 @@ void
 syms_of_callproc (void)
 {
 #ifndef VMS
-  defsubr (&Scall_process_internal);
-  defsubr (&Sgetenv);
+  DEFSUBR (Fcall_process_internal);
+  DEFSUBR (Fgetenv);
 #endif
 }
 

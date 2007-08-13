@@ -132,13 +132,11 @@ valid_device_class_p (Lisp_Object class)
   return !NILP (memq_no_quit (class, Vdevice_class_list));
 }
 
-DEFUN ("valid-device-class-p", Fvalid_device_class_p, Svalid_device_class_p,
-       1, 1, 0 /*
+DEFUN ("valid-device-class-p", Fvalid_device_class_p, 1, 1, 0, /*
 Given a DEVICE-CLASS, return t if it is valid.
 Valid classes are 'color, 'grayscale, and 'mono.
-*/ )
-     (device_class)
-     Lisp_Object device_class;
+*/
+       (device_class))
 {
   if (valid_device_class_p (device_class))
     return Qt;
@@ -146,11 +144,10 @@ Valid classes are 'color, 'grayscale, and 'mono.
     return Qnil;
 }
 
-DEFUN ("device-class-list", Fdevice_class_list, Sdevice_class_list,
-       0, 0, 0 /*
+DEFUN ("device-class-list", Fdevice_class_list, 0, 0, 0, /*
 Return a list of valid device classes.
-*/ )
-     ()
+*/
+       ())
 {
   return Fcopy_sequence (Vdevice_class_list);
 }
@@ -220,24 +217,22 @@ make_device (struct device *d)
   return device;
 }
 
-DEFUN ("dfw-device", Fdfw_device, Sdfw_device, 1, 1, 0 /*
+DEFUN ("dfw-device", Fdfw_device, 1, 1, 0, /*
 Given a device, frame, or window, return the associated device.
 Return nil otherwise.
-*/ )
-     (obj)
-     Lisp_Object obj;
+*/
+       (obj))
 {
   return DFW_DEVICE (obj);
 }
 
 
-DEFUN ("selected-device", Fselected_device, Sselected_device, 0, 1, 0 /*
+DEFUN ("selected-device", Fselected_device, 0, 1, 0, /*
 Return the device which is currently active.
 If optional CONSOLE is non-nil, return the device that would be currently
 active if CONSOLE were the selected console.
-*/ )
-  (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   if (NILP (console) && NILP (Vselected_console))
     return Qnil; /* happens early in temacs */
@@ -259,16 +254,15 @@ select_device_1 (Lisp_Object device)
   select_console_1 (DEVICE_CONSOLE (dev));
 }
 
-DEFUN ("select-device", Fselect_device, Sselect_device, 1, 1, 0 /*
+DEFUN ("select-device", Fselect_device, 1, 1, 0, /*
 Select the device DEVICE.
 Subsequent editing commands apply to its console, selected frame,
 and selected window.
 The selection of DEVICE lasts until the next time the user does
 something to select a different device, or until the next time this
 function is called.
-*/ )
-  (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   CHECK_LIVE_DEVICE (device);
 
@@ -290,14 +284,12 @@ set_device_selected_frame (struct device *d, Lisp_Object frame)
   d->_selected_frame = frame;
 }
 
-DEFUN ("set-device-selected-frame", Fset_device_selected_frame,
-       Sset_device_selected_frame, 2, 2, 0 /*
+DEFUN ("set-device-selected-frame", Fset_device_selected_frame, 2, 2, 0, /*
 Set the selected frame of device object DEVICE to FRAME.
 If DEVICE is nil, the selected device is used.
 If DEVICE is the selected device, this makes FRAME the selected frame.
-*/ )
-  (device, frame)
-     Lisp_Object device, frame;
+*/
+       (device, frame))
 {
   XSETDEVICE (device, decode_device (device));
   CHECK_LIVE_FRAME (frame);
@@ -312,54 +304,49 @@ If DEVICE is the selected device, this makes FRAME the selected frame.
   return frame;
 }
 
-DEFUN ("devicep", Fdevicep, Sdevicep, 1, 1, 0 /*
+DEFUN ("devicep", Fdevicep, 1, 1, 0, /*
 Return non-nil if OBJECT is a device.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (!DEVICEP (object))
     return Qnil;
   return Qt;
 }
 
-DEFUN ("device-live-p", Fdevice_live_p, Sdevice_live_p, 1, 1, 0 /*
+DEFUN ("device-live-p", Fdevice_live_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a device that has not been deleted.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (!DEVICEP (object) || !DEVICE_LIVE_P (XDEVICE (object)))
     return Qnil;
   return Qt;
 }
 
-DEFUN ("device-name", Fdevice_name, Sdevice_name, 0, 1, 0 /*
+DEFUN ("device-name", Fdevice_name, 0, 1, 0, /*
 Return the name of the specified device.
 DEVICE defaults to the selected device if omitted.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   return DEVICE_NAME (decode_device (device));
 }
 
-DEFUN ("device-connection", Fdevice_connection, Sdevice_connection, 0, 1, 0 /*
+DEFUN ("device-connection", Fdevice_connection, 0, 1, 0, /*
 Return the connection of the specified device.
 DEVICE defaults to the selected device if omitted.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   return DEVICE_CONNECTION (decode_device (device));
 }
 
-DEFUN ("device-console", Fdevice_console, Sdevice_console, 0, 1, 0 /*
+DEFUN ("device-console", Fdevice_console, 0, 1, 0, /*
 Return the console of the specified device.
 DEVICE defaults to the selected device if omitted.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   return DEVICE_CONSOLE (decode_device (device));
 }
@@ -433,7 +420,7 @@ find_device_of_type (struct console_methods *meths, Lisp_Object canon)
   return Qnil;
 }
 
-DEFUN ("find-device", Ffind_device, Sfind_device, 1, 2, 0 /*
+DEFUN ("find-device", Ffind_device, 1, 2, 0, /*
 Look for an existing device attached to connection CONNECTION.
 Return the device if found; otherwise, return nil.
 
@@ -441,9 +428,8 @@ If TYPE is specified, only return devices of that type; otherwise,
 return devices of any type. (It is possible, although unlikely,
 that two devices of different types could have the same connection
 name; in such a case, the first device found is returned.)
-*/ )
-  (connection, type)
-     Lisp_Object connection, type;
+*/
+       (connection, type))
 {
   Lisp_Object canon = Qnil;
   struct gcpro gcpro1;
@@ -482,7 +468,7 @@ name; in such a case, the first device found is returned.)
     }
 }
 
-DEFUN ("get-device", Fget_device, Sget_device, 1, 2, 0 /*
+DEFUN ("get-device", Fget_device, 1, 2, 0, /*
 Look for an existing device attached to connection CONNECTION.
 Return the device if found; otherwise, signal an error.
 
@@ -490,9 +476,8 @@ If TYPE is specified, only return devices of that type; otherwise,
 return devices of any type. (It is possible, although unlikely,
 that two devices of different types could have the same connection
 name; in such a case, the first device found is returned.)
-*/ )
-  (connection, type)
-     Lisp_Object connection, type;
+*/
+       (connection, type))
 {
   Lisp_Object device = Ffind_device (connection, type);
   if (NILP (device))
@@ -505,7 +490,7 @@ name; in such a case, the first device found is returned.)
   return device;
 }
 
-DEFUN ("make-device", Fmake_device, Smake_device, 2, 3, 0 /*
+DEFUN ("make-device", Fmake_device, 2, 3, 0, /*
 Create a new device of type TYPE, attached to connection CONNECTION.
 
 The valid values for CONNECTION are device-specific; however,
@@ -521,9 +506,8 @@ device creation.
 If CONNECTION specifies an already-existing device connection, that
 device is simply returned; no new device is created, and PROPS
 have no effect.
-*/ )
-     (type, connection, props)
-     Lisp_Object type, connection, props;
+*/
+       (type, connection, props))
 {
   /* This function can GC */
   struct device *d;
@@ -831,52 +815,45 @@ io_error_delete_device (Lisp_Object device)
   delete_device_internal (XDEVICE (device), 1, 0, 1);
 }
 
-DEFUN ("delete-device", Fdelete_device, Sdelete_device, 1, 2, 0 /*
+DEFUN ("delete-device", Fdelete_device, 1, 2, 0, /*
 Delete DEVICE, permanently eliminating it from use.
 Normally, you cannot delete the last non-minibuffer-only frame (you must
 use `save-buffers-kill-emacs' or `kill-emacs').  However, if optional
 second argument FORCE is non-nil, you can delete the last frame. (This
 will automatically call `save-buffers-kill-emacs'.)
-*/ )
-     (device, force)
-     Lisp_Object device, force;
+*/
+       (device, force))
 {
   CHECK_DEVICE (device);
   delete_device_internal (XDEVICE (device), !NILP (force), 0, 0);
   return Qnil;
 }
 
-DEFUN ("device-frame-list", Fdevice_frame_list, Sdevice_frame_list,
-       0, 1, 0 /*
+DEFUN ("device-frame-list", Fdevice_frame_list, 0, 1, 0, /*
 Return a list of all frames on DEVICE.
 If DEVICE is nil, the selected device will be used.
-*/ )
-  (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   return Fcopy_sequence (DEVICE_FRAME_LIST (decode_device (device)));
 }
 
-DEFUN ("device-class", Fdevice_class, Sdevice_class,
-       0, 1, 0 /*
+DEFUN ("device-class", Fdevice_class, 0, 1, 0, /*
 Return the class (color behavior) of DEVICE.
 This will be one of 'color, 'grayscale, or 'mono.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   return DEVICE_CLASS (decode_device (device));
 }
 
-DEFUN ("set-device-class", Fset_device_class, Sset_device_class,
-       2, 2, 0 /*
+DEFUN ("set-device-class", Fset_device_class, 2, 2, 0, /*
 Set the class (color behavior) of DEVICE.
 CLASS should be one of 'color, 'grayscale, or 'mono.
 This is only allowed on device such as TTY devices, where the color
 behavior cannot necessarily be determined automatically.
-*/ )
-     (device, class)
-     Lisp_Object device, class;
+*/
+       (device, class))
 {
   struct device *d = decode_device (device);
   XSETDEVICE (device, d);
@@ -888,12 +865,10 @@ behavior cannot necessarily be determined automatically.
   return Qnil;
 }
 
-DEFUN ("device-pixel-width", Fdevice_pixel_width, Sdevice_pixel_width,
-       0, 1, 0 /*
+DEFUN ("device-pixel-width", Fdevice_pixel_width, 0, 1, 0, /*
 Return the width in pixels of DEVICE, or nil if unknown.
-*/ )
-     (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   int retval;
@@ -905,12 +880,10 @@ Return the width in pixels of DEVICE, or nil if unknown.
   return make_int (retval);
 }
 
-DEFUN ("device-pixel-height", Fdevice_pixel_height, Sdevice_pixel_height,
-       0, 1, 0 /*
+DEFUN ("device-pixel-height", Fdevice_pixel_height, 0, 1, 0, /*
 Return the height in pixels of DEVICE, or nil if unknown.
-*/ )
-     (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   int retval;
@@ -922,12 +895,10 @@ Return the height in pixels of DEVICE, or nil if unknown.
   return make_int (retval);
 }
 
-DEFUN ("device-mm-width", Fdevice_mm_width, Sdevice_mm_width,
-       0, 1, 0 /*
+DEFUN ("device-mm-width", Fdevice_mm_width, 0, 1, 0, /*
 Return the width in millimeters of DEVICE, or nil if unknown.
-*/ )
-     (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   int retval;
@@ -939,12 +910,10 @@ Return the width in millimeters of DEVICE, or nil if unknown.
   return make_int (retval);
 }
 
-DEFUN ("device-mm-height", Fdevice_mm_height, Sdevice_mm_height,
-       0, 1, 0 /*
+DEFUN ("device-mm-height", Fdevice_mm_height, 0, 1, 0, /*
 Return the height in millimeters of DEVICE, or nil if unknown.
-*/ )
-     (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   int retval;
@@ -956,12 +925,10 @@ Return the height in millimeters of DEVICE, or nil if unknown.
   return make_int (retval);
 }
 
-DEFUN ("device-bitplanes", Fdevice_bitplanes, Sdevice_bitplanes,
-       0, 1, 0 /*
+DEFUN ("device-bitplanes", Fdevice_bitplanes, 0, 1, 0, /*
 Return the number of bitplanes of DEVICE, or nil if unknown.
-*/ )
-     (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   int retval;
@@ -973,12 +940,10 @@ Return the number of bitplanes of DEVICE, or nil if unknown.
   return make_int (retval);
 }
 
-DEFUN ("device-color-cells", Fdevice_color_cells, Sdevice_color_cells,
-       0, 1, 0 /*
+DEFUN ("device-color-cells", Fdevice_color_cells, 0, 1, 0, /*
 Return the number of color cells of DEVICE, or nil if unknown.
-*/ )
-     (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device (device);
   int retval;
@@ -990,14 +955,12 @@ Return the number of color cells of DEVICE, or nil if unknown.
   return make_int (retval);
 }
 
-DEFUN ("set-device-baud-rate", Fset_device_baud_rate, Sset_device_baud_rate,
-       2, 2, 0 /*
+DEFUN ("set-device-baud-rate", Fset_device_baud_rate, 2, 2, 0, /*
 Set the output baud rate of DEVICE to RATE.
 On most systems, changing this value will affect the amount of padding
 and other strategic decisions made during redisplay.
-*/ )
-     (device, rate)
-     Lisp_Object device, rate;
+*/
+       (device, rate))
 {
   CHECK_INT (rate);
 
@@ -1006,12 +969,10 @@ and other strategic decisions made during redisplay.
   return rate;
 }
 
-DEFUN ("device-baud-rate", Fdevice_baud_rate, Sdevice_baud_rate,
-       0, 1, 0 /*
+DEFUN ("device-baud-rate", Fdevice_baud_rate, 0, 1, 0, /*
 Return the output baud rate of DEVICE.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
   return make_int (DEVICE_BAUD_RATE (decode_device (device)));
 }
@@ -1072,33 +1033,33 @@ call_critical_lisp_code (struct device *d, Lisp_Object function,
 void
 syms_of_device (void)
 {
-  defsubr (&Svalid_device_class_p);
-  defsubr (&Sdevice_class_list);
+  DEFSUBR (Fvalid_device_class_p);
+  DEFSUBR (Fdevice_class_list);
 
-  defsubr (&Sdfw_device);
-  defsubr (&Sselected_device);
-  defsubr (&Sselect_device);
-  defsubr (&Sset_device_selected_frame);
-  defsubr (&Sdevicep);
-  defsubr (&Sdevice_live_p);
-  defsubr (&Sdevice_name);
-  defsubr (&Sdevice_connection);
-  defsubr (&Sdevice_console);
-  defsubr (&Sfind_device);
-  defsubr (&Sget_device);
-  defsubr (&Smake_device);
-  defsubr (&Sdelete_device);
-  defsubr (&Sdevice_frame_list);
-  defsubr (&Sdevice_class);
-  defsubr (&Sset_device_class);
-  defsubr (&Sdevice_pixel_width);
-  defsubr (&Sdevice_pixel_height);
-  defsubr (&Sdevice_mm_width);
-  defsubr (&Sdevice_mm_height);
-  defsubr (&Sdevice_bitplanes);
-  defsubr (&Sdevice_color_cells);
-  defsubr (&Sset_device_baud_rate);
-  defsubr (&Sdevice_baud_rate);
+  DEFSUBR (Fdfw_device);
+  DEFSUBR (Fselected_device);
+  DEFSUBR (Fselect_device);
+  DEFSUBR (Fset_device_selected_frame);
+  DEFSUBR (Fdevicep);
+  DEFSUBR (Fdevice_live_p);
+  DEFSUBR (Fdevice_name);
+  DEFSUBR (Fdevice_connection);
+  DEFSUBR (Fdevice_console);
+  DEFSUBR (Ffind_device);
+  DEFSUBR (Fget_device);
+  DEFSUBR (Fmake_device);
+  DEFSUBR (Fdelete_device);
+  DEFSUBR (Fdevice_frame_list);
+  DEFSUBR (Fdevice_class);
+  DEFSUBR (Fset_device_class);
+  DEFSUBR (Fdevice_pixel_width);
+  DEFSUBR (Fdevice_pixel_height);
+  DEFSUBR (Fdevice_mm_width);
+  DEFSUBR (Fdevice_mm_height);
+  DEFSUBR (Fdevice_bitplanes);
+  DEFSUBR (Fdevice_color_cells);
+  DEFSUBR (Fset_device_baud_rate);
+  DEFSUBR (Fdevice_baud_rate);
 
   defsymbol (&Qdevicep, "devicep");
   defsymbol (&Qdevice_live_p, "device-live-p");

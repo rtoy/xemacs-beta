@@ -110,7 +110,7 @@ Boston, MA 02111-1307, USA.  */
 /* Extra amount of purespace needed for Sunpro builds. */
 
 #ifdef SUNPRO
-# define SUNPRO_PURESIZE_EXTRA 40000
+# define SUNPRO_PURESIZE_EXTRA 135000
 #else
 # define SUNPRO_PURESIZE_EXTRA 0
 #endif

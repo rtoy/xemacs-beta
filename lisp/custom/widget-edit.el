@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.24
+;; Version: 1.30
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -190,6 +190,20 @@ minibuffer."
 				      items nil t)
 		     items)))))
 
+(defun widget-get-sibling (widget)
+  "Get the item WIDGET is assumed to toggle.
+This is only meaningful for radio buttons or checkboxes in a list."
+  (let* ((parent (widget-get widget :parent))
+	 (children (widget-get parent :children))
+	 child)
+    (catch 'child
+      (while children
+	(setq child (car children)
+	      children (cdr children))
+	(when (eq (widget-get child :button) widget)
+	  (throw 'child child)))
+      nil)))
+
 ;;; Widget text specifications.
 ;; 
 ;; These functions are for specifying text properties. 
@@ -288,9 +302,9 @@ minibuffer."
 
     (unless (widget-get widget :size)
       (add-text-properties to (1+ to) (list 'field widget
-					    'face face
-					    'local-map map
-					    'keymap map)))))
+					    'face face)))
+    (add-text-properties to (1+ to) (list 'local-map map
+					  'keymap map))))
 
 (defun widget-specify-button (widget from to)
   ;; Specify button for WIDGET between FROM and TO.
@@ -331,6 +345,10 @@ minibuffer."
        result)))
 
 ;;; Widget Properties.
+
+(defsubst widget-name (widget)
+  "Return the name of WIDGET, asymbol."
+  (car widget))
 
 (defun widget-put (widget property value)
   "In WIDGET set PROPERTY to VALUE.
@@ -491,6 +509,7 @@ Recommended as a parent keymap for modes using widgets.")
 
 (unless widget-keymap 
   (setq widget-keymap (make-sparse-keymap))
+  (define-key widget-keymap "\C-k" 'widget-kill-line)
   (define-key widget-keymap "\t" 'widget-forward)
   (define-key widget-keymap "\M-\t" 'widget-backward)
   (define-key widget-keymap [(shift tab)] 'widget-backward)
@@ -512,6 +531,8 @@ Recommended as a parent keymap for modes using widgets.")
 (unless widget-field-keymap 
   (setq widget-field-keymap (copy-keymap widget-keymap))
   (define-key widget-field-keymap "\C-m" 'widget-field-activate)
+  (define-key widget-field-keymap "\C-a" 'widget-beginning-of-line)
+  (define-key widget-field-keymap "\C-e" 'widget-end-of-line)
   (set-keymap-parent widget-field-keymap global-map))
 
 (defvar widget-text-keymap nil
@@ -519,6 +540,8 @@ Recommended as a parent keymap for modes using widgets.")
 
 (unless widget-text-keymap 
   (setq widget-text-keymap (copy-keymap widget-keymap))
+  (define-key widget-text-keymap "\C-a" 'widget-beginning-of-line)
+  (define-key widget-text-keymap "\C-e" 'widget-end-of-line)
   (set-keymap-parent widget-text-keymap global-map))
 
 (defun widget-field-activate (pos &optional event)
@@ -624,6 +647,61 @@ With optional ARG, move across that many fields."
   (interactive "p")
   (run-hooks 'widget-backward-hook)
   (widget-move (- arg)))
+
+(defun widget-beginning-of-line ()
+  "Go to beginning of field or beginning of line, whichever is first."
+  (interactive)
+  (let ((bol (save-excursion (beginning-of-line) (point)))
+	(prev (previous-single-property-change (point) 'field)))
+    (goto-char (max bol (or prev bol)))))
+
+(defun widget-end-of-line ()
+  "Go to end of field or end of line, whichever is first."
+  (interactive)
+  (let ((bol (save-excursion (end-of-line) (point)))
+	(prev (next-single-property-change (point) 'field)))
+    (goto-char (min bol (or prev bol)))))
+
+(defun widget-kill-line ()
+  "Kill to end of field or end of line, whichever is first."
+  (interactive)
+  (let ((field (get-text-property (point) 'field))
+	(newline (save-excursion (search-forward "\n")))
+	(next (next-single-property-change (point) 'field)))
+    (if (and field (> newline next))
+	(kill-region (point) next)
+      (call-interactively 'kill-line))))
+
+(defun widget-identify (pos)
+  "Identify the widget under point."
+  (interactive "d")
+  (let* ((field (get-text-property pos 'field))
+	 (button (get-text-property pos 'button))
+	 (doc (get-text-property pos 'widget-doc))
+	 (widget (or field button doc)))
+    (with-output-to-temp-buffer "*Widget Identity*"
+      (princ (cond (field "This is an editable text area.\n")
+		   (button "This is an active area.\n")
+		   (doc "This is documentation text.\n")
+		   (t "This is unidentified text.\n")))
+      (while widget
+	(princ "It is part of a `")
+	(princ (car widget))
+	(princ "' widget (value: ")
+	(prin1 (condition-case nil
+		   (widget-value widget)
+		 (error 'error)))
+	(princ ").\n")
+	(when (eq (car widget) 'radio-button)
+	  (let ((sibling (widget-get-sibling widget)))
+	    (if (not sibling)
+		(princ "It doesn't seem to control anything.\n")
+	      (princ "The value of its sibling is: ")
+	      (prin1 (condition-case nil
+			 (widget-value sibling)
+		       (error 'error)))
+	      (princ ".\n"))))
+	(setq widget (widget-get widget :parent))))))
 
 ;;; Setting up the buffer.
 
@@ -1231,36 +1309,33 @@ With optional ARG, move across that many fields."
 
 ;;; The `toggle' Widget.
 
-(define-widget 'toggle 'menu-choice
+(define-widget 'toggle 'item
   "Toggle between two states."
-  :convert-widget 'widget-toggle-convert-widget
-  :format "%v"
+  :format "%[%v%]\n"
+  :value-create 'widget-toggle-value-create
+  :action 'widget-toggle-action
+  :match (lambda (widget value) t)
   :on "on"
   :off "off")
 
-(defun widget-toggle-convert-widget (widget)
-  ;; Create the types representing the `on' and `off' states.
-  (let ((on-type (widget-get widget :on-type))
-	(off-type (widget-get widget :off-type)))
-    (unless on-type
-      (setq on-type
-	    (list 'choice-item 
-		  :value t
-		  :match (lambda (widget value) value)
-		  :tag (widget-get widget :on))))
-    (unless off-type
-      (setq off-type
-	    (list 'choice-item :value nil :tag (widget-get widget :off))))
-    (widget-put widget :args (list on-type off-type)))
-  widget)
+(defun widget-toggle-value-create (widget)
+  ;; Insert text representing the `on' and `off' states.
+  (if (widget-value widget)
+      (insert (widget-get widget :on))
+    (insert (widget-get widget :off))))
 
+(defun widget-toggle-action (widget &optional event)
+  ;; Toggle value.
+  (widget-value-set widget (not (widget-value widget)))
+  (widget-apply widget :notify widget event))
+  
 ;;; The `checkbox' Widget.
 
 (define-widget 'checkbox 'toggle
   "A checkbox toggle."
-  :convert-widget 'widget-item-convert-widget
-  :on-type '(choice-item :format "%[[X]%]" t)
-  :off-type  '(choice-item :format "%[[ ]%]" nil))
+  :format "%[%v%]"
+  :on "[X]"
+  :off "[ ]")
 
 ;;; The `checklist' Widget.
 
@@ -1427,11 +1502,12 @@ With optional ARG, move across that many fields."
 (define-widget 'radio-button 'toggle
   "A radio button for use in the `radio' widget."
   :notify 'widget-radio-button-notify
-  :on-type '(choice-item :format "%[(*)%]" t)
-  :off-type '(choice-item :format "%[( )%]" nil))
+  :format "%[%v%]"
+  :on "(*)"
+  :off "( )")
 
 (defun widget-radio-button-notify (widget child &optional event)
-  ;; Notify the parent.
+  ;; Tell daddy.
   (widget-apply (widget-get widget :parent) :action widget event))
 
 ;;; The `radio-button-choice' Widget.
@@ -2074,7 +2150,7 @@ It will read a directory name from the minibuffer when activated."
 (define-widget 'boolean 'toggle
   "To be nil or non-nil, that is the question."
   :tag "Boolean"
-  :format "%{%t%}: %v")
+  :format "%{%t%}: %[%v%]")
 
 ;;; The `color' Widget.
 

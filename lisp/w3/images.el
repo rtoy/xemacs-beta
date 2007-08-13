@@ -1,7 +1,7 @@
 ;;; images.el --- Automatic image converters
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.6
+;; Created: 1997/02/06 15:26:06
+;; Version: 1.7
 ;; Keywords: images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +30,10 @@
 ;;; The emacsen compatibility package - load it up before anything else
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
-  (require 'w3-sysdp))
+  (if (not (and (string-match "XEmacs" emacs-version)
+		(or (> emacs-major-version 19)
+		    (>= emacs-minor-version 14))))
+      (require 'w3-sysdp)))
 
 (defvar image-temp-stack nil "Do no touch - internal storage.")
 (defvar image-converters nil "Storage for the image converters.")

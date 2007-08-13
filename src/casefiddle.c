@@ -75,34 +75,32 @@ casify_object (struct buffer *buf, enum case_action flag, Lisp_Object obj)
     }
 }
 
-DEFUN ("upcase", Fupcase, Supcase, 1, 2, 0 /*
+DEFUN ("upcase", Fupcase, 1, 2, 0, /*
 Convert argument to upper case and return that.
 The argument may be a character or string.  The result has the same type.
 The argument object is not altered--the value is a copy.
 See also `capitalize', `downcase' and `upcase-initials'.
 Optional second arg BUFFER specifies which buffer's case tables to use,
  and defaults to the current buffer.
-*/ )
-  (obj, buffer)
-     Lisp_Object obj, buffer;
+*/
+       (obj, buffer))
 {
   return casify_object (decode_buffer (buffer, 0), CASE_UP, obj);
 }
 
-DEFUN ("downcase", Fdowncase, Sdowncase, 1, 2, 0 /*
+DEFUN ("downcase", Fdowncase, 1, 2, 0, /*
 Convert argument to lower case and return that.
 The argument may be a character or string.  The result has the same type.
 The argument object is not altered--the value is a copy.
 Optional second arg BUFFER specifies which buffer's case tables to use,
  and defaults to the current buffer.
-*/ )
-  (obj, buffer)
-     Lisp_Object obj, buffer;
+*/
+       (obj, buffer))
 {
   return casify_object (decode_buffer (buffer, 0), CASE_DOWN, obj);
 }
 
-DEFUN ("capitalize", Fcapitalize, Scapitalize, 1, 2, 0 /*
+DEFUN ("capitalize", Fcapitalize, 1, 2, 0, /*
 Convert argument to capitalized form and return that.
 This means that each word's first character is upper case
 and the rest is lower case.
@@ -110,25 +108,23 @@ The argument may be a character or string.  The result has the same type.
 The argument object is not altered--the value is a copy.
 Optional second arg BUFFER specifies which buffer's case tables to use,
  and defaults to the current buffer.
-*/ )
-  (obj, buffer)
-     Lisp_Object obj, buffer;
+*/
+       (obj, buffer))
 {
   return casify_object (decode_buffer (buffer, 0), CASE_CAPITALIZE, obj);
 }
 
 /* Like Fcapitalize but change only the initials.  */
 
-DEFUN ("upcase-initials", Fupcase_initials, Supcase_initials, 1, 2, 0 /*
+DEFUN ("upcase-initials", Fupcase_initials, 1, 2, 0, /*
 Convert the initial of each word in the argument to upper case.
 Do not change the other letters of each word.
 The argument may be a character or string.  The result has the same type.
 The argument object is not altered--the value is a copy.
 Optional second arg BUFFER specifies which buffer's case tables to use,
  and defaults to the current buffer.
-*/ )
-  (obj, buffer)
-     Lisp_Object obj, buffer;
+*/
+       (obj, buffer))
 {
   return casify_object (decode_buffer (buffer, 0), CASE_CAPITALIZE_UP, obj);
 }
@@ -176,47 +172,44 @@ casify_region (struct buffer *buf, enum case_action flag, Lisp_Object b,
   end_multiple_change (buf, mccount);
 }
 
-DEFUN ("upcase-region", Fupcase_region, Supcase_region, 2, 3, "r" /*
+DEFUN ("upcase-region", Fupcase_region, 2, 3, "r", /*
 Convert the region to upper case.  In programs, wants two arguments.
 These arguments specify the starting and ending character numbers of
  the region to operate on.  When used as a command, the text between
  point and the mark is operated on.
 See also `capitalize-region'.
 Optional third arg BUFFER defaults to the current buffer.
-*/ )
-  (b, e, buffer)
-     Lisp_Object b, e, buffer;
+*/
+       (b, e, buffer))
 {
   /* This function can GC */
   casify_region (decode_buffer (buffer, 1), CASE_UP, b, e);
   return Qnil;
 }
 
-DEFUN ("downcase-region", Fdowncase_region, Sdowncase_region, 2, 3, "r" /*
+DEFUN ("downcase-region", Fdowncase_region, 2, 3, "r", /*
 Convert the region to lower case.  In programs, wants two arguments.
 These arguments specify the starting and ending character numbers of
  the region to operate on.  When used as a command, the text between
  point and the mark is operated on.
 Optional third arg BUFFER defaults to the current buffer.
-*/ )
-  (b, e, buffer)
-     Lisp_Object b, e, buffer;
+*/
+       (b, e, buffer))
 {
   /* This function can GC */
   casify_region (decode_buffer (buffer, 1), CASE_DOWN, b, e);
   return Qnil;
 }
 
-DEFUN ("capitalize-region", Fcapitalize_region, Scapitalize_region, 2, 3, "r" /*
+DEFUN ("capitalize-region", Fcapitalize_region, 2, 3, "r", /*
 Convert the region to capitalized form.
 Capitalized form means each word's first character is upper case
  and the rest of it is lower case.
 In programs, give two arguments, the starting and ending
  character positions to operate on.
 Optional third arg BUFFER defaults to the current buffer.
-*/ )
-  (b, e, buffer)
-     Lisp_Object b, e, buffer;
+*/
+       (b, e, buffer))
 {
   /* This function can GC */
   casify_region (decode_buffer (buffer, 1), CASE_CAPITALIZE, b, e);
@@ -225,16 +218,14 @@ Optional third arg BUFFER defaults to the current buffer.
 
 /* Like Fcapitalize_region but change only the initials.  */
 
-DEFUN ("upcase-initials-region", Fupcase_initials_region,
-       Supcase_initials_region, 2, 3, "r" /*
+DEFUN ("upcase-initials-region", Fupcase_initials_region, 2, 3, "r", /*
 Upcase the initial of each word in the region.
 Subsequent letters of each word are not changed.
 In programs, give two arguments, the starting and ending
  character positions to operate on.
 Optional third arg BUFFER defaults to the current buffer.
-*/ )
-  (b, e, buffer)
-     Lisp_Object b, e, buffer;
+*/
+       (b, e, buffer))
 {
   casify_region (decode_buffer (buffer, 1), CASE_CAPITALIZE_UP, b, e);
   return Qnil;
@@ -255,14 +246,13 @@ operate_on_word (struct buffer *buf, Lisp_Object arg, int *newpoint)
   return (make_int (farend));
 }
 
-DEFUN ("upcase-word", Fupcase_word, Supcase_word, 1, 2, "p" /*
+DEFUN ("upcase-word", Fupcase_word, 1, 2, "p", /*
 Convert following word (or ARG words) to upper case, moving over.
 With negative argument, convert previous words but do not move.
 See also `capitalize-word'.
 Optional second arg BUFFER defaults to the current buffer.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   /* This function can GC */
   Lisp_Object beg, end;
@@ -276,13 +266,12 @@ Optional second arg BUFFER defaults to the current buffer.
   return Qnil;
 }
 
-DEFUN ("downcase-word", Fdowncase_word, Sdowncase_word, 1, 2, "p" /*
+DEFUN ("downcase-word", Fdowncase_word, 1, 2, "p", /*
 Convert following word (or ARG words) to lower case, moving over.
 With negative argument, convert previous words but do not move.
 Optional second arg BUFFER defaults to the current buffer.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   /* This function can GC */
   Lisp_Object beg, end;
@@ -296,15 +285,14 @@ Optional second arg BUFFER defaults to the current buffer.
   return Qnil;
 }
 
-DEFUN ("capitalize-word", Fcapitalize_word, Scapitalize_word, 1, 2, "p" /*
+DEFUN ("capitalize-word", Fcapitalize_word, 1, 2, "p", /*
 Capitalize the following word (or ARG words), moving over.
 This gives the word(s) a first character in upper case
  and the rest lower case.
 With negative argument, capitalize previous words but do not move.
 Optional second arg BUFFER defaults to the current buffer.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
+*/
+       (arg, buffer))
 {
   /* This function can GC */
   Lisp_Object beg, end;
@@ -322,15 +310,15 @@ Optional second arg BUFFER defaults to the current buffer.
 void
 syms_of_casefiddle (void)
 {
-  defsubr (&Supcase);
-  defsubr (&Sdowncase);
-  defsubr (&Scapitalize);
-  defsubr (&Supcase_initials);
-  defsubr (&Supcase_region);
-  defsubr (&Sdowncase_region);
-  defsubr (&Scapitalize_region);
-  defsubr (&Supcase_initials_region);
-  defsubr (&Supcase_word);
-  defsubr (&Sdowncase_word);
-  defsubr (&Scapitalize_word);
+  DEFSUBR (Fupcase);
+  DEFSUBR (Fdowncase);
+  DEFSUBR (Fcapitalize);
+  DEFSUBR (Fupcase_initials);
+  DEFSUBR (Fupcase_region);
+  DEFSUBR (Fdowncase_region);
+  DEFSUBR (Fcapitalize_region);
+  DEFSUBR (Fupcase_initials_region);
+  DEFSUBR (Fupcase_word);
+  DEFSUBR (Fdowncase_word);
+  DEFSUBR (Fcapitalize_word);
 }

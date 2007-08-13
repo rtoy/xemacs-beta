@@ -77,12 +77,12 @@ Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
 /* Expand the word before point, if it is an abbrev.
    Returns Qt if an expansion is done. */
 
-DEFUN ("expand-abbrev", Fexpand_abbrev, Sexpand_abbrev, 0, 0, "" /*
+DEFUN ("expand-abbrev", Fexpand_abbrev, 0, 0, "", /*
 Expand the abbrev before point, if there is an abbrev there.
 Effective when explicitly called even when `abbrev-mode' is nil.
 Returns t if expansion took place.
-*/ )
-  ()
+*/
+       ())
 {
   /* This function can GC */
   REGISTER Bufbyte *buffer, *p;
@@ -225,7 +225,7 @@ void
 syms_of_abbrev (void)
 {
   defsymbol (&Qpre_abbrev_expand_hook, "pre-abbrev-expand-hook");
-  defsubr (&Sexpand_abbrev);
+  DEFSUBR (Fexpand_abbrev);
 }
 
 void

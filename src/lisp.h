@@ -1365,10 +1365,8 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
     as a null-terminated C string.
  `Fname' should be the C equivalent of `lname', using only characters
     valid in a C identifier, with an "F" prepended.
- `sname' should be the name for the C constant structure
-    that records information on this function for internal use.
-    By convention, it should be the same as `fnname' but with S instead of F.
-    It's too bad that C macros can't compute this from `fnname'.
+    The name of the C constant structure that records information
+    on this function for internal use is "S" concatenated with Fname.
  `minargs' should be a number, the minimum number of arguments allowed.
  `maxargs' should be a number, the maximum number of arguments allowed,
     or else MANY or UNEVALLED.
@@ -1393,17 +1391,19 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 
 /* Can't be const, because then subr->doc is read-only and
    Snarf_documentation chokes */
-#define DEFUN(lname, Fname, sname, minargs, maxargs, prompt)		\
-  Lisp_Object Fname ( DEFUN__ ## maxargs ) ; /* See below */		\
-  static struct Lisp_Subr sname						\
-     = { { lrecord_subr }, minargs, maxargs, prompt, 0, lname, (lisp_fn_t) Fname }; \
-  Lisp_Object Fname
+
+#define DEFUN(lname, Fname, minargs, maxargs, prompt, arglist)		\
+  Lisp_Object Fname (DEFUN_ ## maxargs arglist) ; /* See below */	\
+  static struct Lisp_Subr S##Fname = { {lrecord_subr},			\
+	minargs, maxargs, prompt, 0, lname, (lisp_fn_t) Fname };	\
+  Lisp_Object Fname (DEFUN_##maxargs arglist)
+
 
 /* Heavy ANSI C preprocessor hackery to get DEFUN to declare a
    prototype that matches maxargs, and add the obligatory
    `Lisp_Object' type declaration to the formal C arguments.  */
 
-#define DEFUN_MANY(named_int, named_Lisp_Object) int named_int, Lisp_Object *named_Lisp_Object
+#define DEFUN_MANY(named_int, named_Lisp_Object) named_int, named_Lisp_Object
 #define DEFUN_UNEVALLED(args) Lisp_Object args
 #define DEFUN_0() void
 #define DEFUN_1(a)					 Lisp_Object a
@@ -1414,18 +1414,6 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 #define DEFUN_6(a,b,c,d,e,f)	 DEFUN_5(a,b,c,d,e),	 Lisp_Object f
 #define DEFUN_7(a,b,c,d,e,f,g)	 DEFUN_6(a,b,c,d,e,f),	 Lisp_Object g
 #define DEFUN_8(a,b,c,d,e,f,g,h) DEFUN_7(a,b,c,d,e,f,g), Lisp_Object h
-
-#define DEFUN__MANY		DEFUN_MANY(argc,argv)
-#define DEFUN__UNEVALLED	DEFUN_UNEVALLED(args)
-#define DEFUN__0		DEFUN_0()
-#define DEFUN__1		DEFUN_1(a)
-#define DEFUN__2		DEFUN_2(a,b)
-#define DEFUN__3		DEFUN_3(a,b,c)
-#define DEFUN__4		DEFUN_4(a,b,c,d)
-#define DEFUN__5		DEFUN_5(a,b,c,d,e)
-#define DEFUN__6		DEFUN_6(a,b,c,d,e,f)
-#define DEFUN__7		DEFUN_7(a,b,c,d,e,f,g)
-#define DEFUN__8		DEFUN_8(a,b,c,d,e,f,g,h)
 
 /* WARNING: If you add defines here for higher values of maxargs,
    make sure to also fix the clauses in primitive_funcall(),
@@ -1477,6 +1465,12 @@ void signal_quit (void);
 /* Check quit-flag and quit if it is non-nil.  Also do any other things
    that might have gotten queued until it was safe. */
 #define QUIT do { if (INTERNAL_QUITP) signal_quit (); } while (0)
+
+/*
+#define QUIT \
+  do {if (!NILP (Vquit_flag) && NILP (Vinhibit_quit)) \
+    { Vquit_flag = Qnil; Fsignal (Qquit, Qnil); }} while (0)
+*/
 
 #define REALLY_QUIT do { if (INTERNAL_REALLY_QUITP) signal_quit (); } while (0)
 

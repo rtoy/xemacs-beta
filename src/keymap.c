@@ -765,16 +765,15 @@ make_keymap (int size)
   return (result);
 }
 
-DEFUN ("make-keymap", Fmake_keymap, Smake_keymap, 0, 1, 0 /*
+DEFUN ("make-keymap", Fmake_keymap, 0, 1, 0, /*
 Construct and return a new keymap object.
 All entries in it are nil, meaning \"command undefined\".
 
 Optional argument NAME specifies a name to assign to the keymap,
 as in `set-keymap-name'.  This name is only a debugging convenience;
 it is not used except when printing the keymap.
-*/ )
-  (name)
-     Lisp_Object name;
+*/
+       (name))
 {
   Lisp_Object keymap = make_keymap (60);
   if (!NILP (name))
@@ -782,8 +781,7 @@ it is not used except when printing the keymap.
   return keymap;
 }
 
-DEFUN ("make-sparse-keymap", Fmake_sparse_keymap, Smake_sparse_keymap,
-       0, 1, 0 /*
+DEFUN ("make-sparse-keymap", Fmake_sparse_keymap, 0, 1, 0, /*
 Construct and return a new keymap object.
 All entries in it are nil, meaning \"command undefined\".  The only
 difference between this function and make-keymap is that this function
@@ -793,9 +791,8 @@ entries).  As keymaps dynamically resize, the distinction is not great.
 Optional argument NAME specifies a name to assign to the keymap,
 as in `set-keymap-name'.  This name is only a debugging convenience;
 it is not used except when printing the keymap.
-*/ )
-  (name)
-     Lisp_Object name;
+*/
+       (name))
 {
   Lisp_Object keymap = make_keymap (8);
   if (!NILP (name))
@@ -803,14 +800,13 @@ it is not used except when printing the keymap.
   return keymap;
 }
 
-DEFUN ("keymap-parents", Fkeymap_parents, Skeymap_parents, 1, 1, 0 /*
+DEFUN ("keymap-parents", Fkeymap_parents, 1, 1, 0, /*
 Return the `parent' keymaps of the given keymap, or nil.
 The parents of a keymap are searched for keybindings when a key sequence
 isn't bound in this one.  `(current-global-map)' is the default parent
 of all keymaps.
-*/ )
-     (keymap)
-     Lisp_Object keymap;
+*/
+       (keymap))
 {
   keymap = get_keymap (keymap, 1, 1);
   return (Fcopy_sequence (XKEYMAP (keymap)->parents));
@@ -824,14 +820,13 @@ traverse_keymaps_noop (Lisp_Object keymap, void *arg)
   return (Qnil);
 }
 
-DEFUN ("set-keymap-parents", Fset_keymap_parents, Sset_keymap_parents, 2, 2, 0 /*
+DEFUN ("set-keymap-parents", Fset_keymap_parents, 2, 2, 0, /*
 Sets the `parent' keymaps of the given keymap.
 The parents of a keymap are searched for keybindings when a key sequence
 isn't bound in this one.  `(current-global-map)' is the default parent
 of all keymaps.
-*/ )
-     (keymap, parents)
-     Lisp_Object keymap, parents;
+*/
+       (keymap, parents))
 {
   /* This function can GC */
   Lisp_Object k;
@@ -865,13 +860,12 @@ of all keymaps.
   return (parents);
 }
 
-DEFUN ("set-keymap-name", Fset_keymap_name, Sset_keymap_name, 2, 2, 0 /*
+DEFUN ("set-keymap-name", Fset_keymap_name, 2, 2, 0, /*
 Set the `name' of the KEYMAP to NEW-NAME.
 The name is only a debugging convenience; it is not used except
 when printing the keymap.
-*/ )
-     (keymap, new_name)
-     Lisp_Object keymap, new_name;
+*/
+       (keymap, new_name))
 {
   keymap = get_keymap (keymap, 1, 1);
 
@@ -879,26 +873,24 @@ when printing the keymap.
   return (new_name);
 }
 
-DEFUN ("keymap-name", Fkeymap_name, Skeymap_name, 1, 1, 0 /*
+DEFUN ("keymap-name", Fkeymap_name, 1, 1, 0, /*
 Return the `name' of KEYMAP.
 The name is only a debugging convenience; it is not used except
 when printing the keymap.
-*/ )
-     (keymap)
-     Lisp_Object keymap;
+*/
+       (keymap))
 {
   keymap = get_keymap (keymap, 1, 1);
 
   return (XKEYMAP (keymap)->name);
 }
 
-DEFUN ("set-keymap-prompt", Fset_keymap_prompt, Sset_keymap_prompt, 2, 2, 0 /*
+DEFUN ("set-keymap-prompt", Fset_keymap_prompt, 2, 2, 0, /*
 Sets the `prompt' of KEYMAP to string NEW-PROMPT, or `nil'
 if no prompt is desired.  The prompt is shown in the echo-area
 when reading a key-sequence to be looked-up in this keymap.
-*/ )
-     (keymap, new_prompt)
-     Lisp_Object keymap, new_prompt;
+*/
+       (keymap, new_prompt))
 {
   keymap = get_keymap (keymap, 1, 1);
   
@@ -916,13 +908,12 @@ keymap_prompt_mapper (Lisp_Object keymap, void *arg)
 }
 
 
-DEFUN ("keymap-prompt", Fkeymap_prompt, Skeymap_prompt, 1, 2, 0 /*
+DEFUN ("keymap-prompt", Fkeymap_prompt, 1, 2, 0, /*
 Return the `prompt' of the given keymap.
 If non-nil, the prompt is shown in the echo-area
 when reading a key-sequence to be looked-up in this keymap.
-*/ )
-     (keymap, use_inherited)
-     Lisp_Object keymap, use_inherited;
+*/
+       (keymap, use_inherited))
 {
   /* This function can GC */
   Lisp_Object prompt;
@@ -936,16 +927,14 @@ when reading a key-sequence to be looked-up in this keymap.
 			      keymap_prompt_mapper, 0));
 }
 
-DEFUN ("set-keymap-default-binding",
-       Fset_keymap_default_binding, Sset_keymap_default_binding, 2, 2, 0 /*
+DEFUN ("set-keymap-default-binding", Fset_keymap_default_binding, 2, 2, 0, /*
 Sets the default binding of KEYMAP to COMMAND, or `nil'
 if no default is desired.  The default-binding is returned when
 no other binding for a key-sequence is found in the keymap.
 If a keymap has a non-nil default-binding, neither the keymap's
 parents nor the current global map are searched for key bindings.
-*/ )
-     (keymap, command)
-     Lisp_Object keymap, command;
+*/
+       (keymap, command))
 {
   /* This function can GC */
   keymap = get_keymap (keymap, 1, 1);
@@ -954,28 +943,25 @@ parents nor the current global map are searched for key bindings.
   return (command);
 }
 
-DEFUN ("keymap-default-binding",
-       Fkeymap_default_binding, Skeymap_default_binding, 1, 1, 0 /*
+DEFUN ("keymap-default-binding", Fkeymap_default_binding, 1, 1, 0, /*
 Return the default binding of KEYMAP, or `nil' if it has none.
 The default-binding is returned when no other binding for a key-sequence
 is found in the keymap.
 If a keymap has a non-nil default-binding, neither the keymap's
 parents nor the current global map are searched for key bindings.
-*/ )
-     (keymap)
-     Lisp_Object keymap;
+*/
+       (keymap))
 {
   /* This function can GC */
   keymap = get_keymap (keymap, 1, 1);
   return (XKEYMAP (keymap)->default_binding);
 }
 
-DEFUN ("keymapp", Fkeymapp, Skeymapp, 1, 1, 0 /*
+DEFUN ("keymapp", Fkeymapp, 1, 1, 0, /*
 Return t if ARG is a keymap object.
 The keymap may be autoloaded first if necessary.
-*/ )
-  (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   /* This function can GC */
   Lisp_Object tem = get_keymap (object, 0, 1);
@@ -1195,14 +1181,13 @@ copy_keymap (Lisp_Object keymap)
   return keymap;
 }
 
-DEFUN ("copy-keymap", Fcopy_keymap, Scopy_keymap, 1, 1, 0 /*
+DEFUN ("copy-keymap", Fcopy_keymap, 1, 1, 0, /*
 Return a copy of the keymap KEYMAP.
 The copy starts out with the same definitions of KEYMAP,
 but changing either the copy or KEYMAP does not affect the other.
 Any key definitions that are subkeymaps are recursively copied.
-*/ )
-  (keymap)
-     Lisp_Object keymap;
+*/
+       (keymap))
 {
   /* This function can GC */
   keymap = get_keymap (keymap, 1, 1);
@@ -1235,11 +1220,10 @@ keymap_fullness (Lisp_Object keymap)
   return (fullness);
 }
 
-DEFUN ("keymap-fullness", Fkeymap_fullness, Skeymap_fullness, 1, 1, 0 /*
+DEFUN ("keymap-fullness", Fkeymap_fullness, 1, 1, 0, /*
 Return the number of bindings in the keymap.
-*/ )
-     (keymap)
-  Lisp_Object keymap;
+*/
+       (keymap))
 {
   /* This function can GC */
   return (make_int (keymap_fullness
@@ -1593,16 +1577,12 @@ meta_prefix_char_p (CONST struct key_data *key)
   return event_matches_key_specifier_p (&event, Vmeta_prefix_char);
 }
 
-DEFUN ("event-matches-key-specifier-p",
-       Fevent_matches_key_specifier_p,
-       Sevent_matches_key_specifier_p,
-       2, 2, 0 /*
+DEFUN ("event-matches-key-specifier-p", Fevent_matches_key_specifier_p, 2, 2, 0, /*
 Return non-nil if EVENT matches KEY-SPECIFIER.
 This can be useful, e.g., to determine if the user pressed `help-char' or
 `quit-char'.
-*/ )
-  (event, key_specifier)
-     Lisp_Object event, key_specifier;
+*/
+       (event, key_specifier))
 {
   CHECK_LIVE_EVENT (event);
   return (event_matches_key_specifier_p (XEVENT (event), key_specifier)
@@ -1718,7 +1698,7 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   signal_simple_error (buf, mpc_binding);
 }
 
-DEFUN ("define-key", Fdefine_key, Sdefine_key, 3, 3, 0 /*
+DEFUN ("define-key", Fdefine_key, 3, 3, 0, /*
 Define key sequence KEYS, in KEYMAP, as DEF.
 KEYMAP is a keymap object.
 KEYS is the sequence of keystrokes to bind, described below.
@@ -1818,11 +1798,8 @@ it is possible to redefine only one of those sequences like so:
 Of course, all of this applies only when running under a window system.  If
 you're talking to XEmacs through a TTY connection, you don't get any of
 these features.
-*/ )
-  (keymap, keys, def)
-     Lisp_Object keymap;
-     Lisp_Object keys;
-     Lisp_Object def;
+*/
+       (keymap, keys, def))
 {
   /* This function can GC */
   int idx;
@@ -2177,7 +2154,7 @@ lookup_events (Lisp_Object event_head, int nmaps, Lisp_Object keymaps[],
   return (tem);
 }
 
-DEFUN ("lookup-key", Flookup_key, Slookup_key, 2, 3, 0 /*
+DEFUN ("lookup-key", Flookup_key, 2, 3, 0, /*
 In keymap KEYMAP, look up key-sequence KEYS.  Return the definition.
 Nil is returned if KEYS is unbound.  See documentation of `define-key'
 for valid key definitions and key-sequence specifications.
@@ -2185,9 +2162,8 @@ A number is returned if KEYS is \"too long\"; that is, the leading
 characters fail to be a valid sequence of prefix characters in KEYMAP.
 The number is how many characters at the front of KEYS
 it takes to reach a non-prefix command.
-*/ )
-  (keymap, keys, accept_default)
-     Lisp_Object keymap, keys, accept_default;
+*/
+       (keymap, keys, accept_default))
 {
   /* This function can GC */
   if (VECTORP (keys))
@@ -2495,7 +2471,7 @@ get_relevant_minor_maps (Lisp_Object buffer, struct relevant_maps *closure)
 }
 
 /* #### Would map-current-keymaps be a better thing?? */
-DEFUN ("current-keymaps", Fcurrent_keymaps, Scurrent_keymaps, 0, 1, 0 /*
+DEFUN ("current-keymaps", Fcurrent_keymaps, 0, 1, 0, /*
 Return a list of the current keymaps that will be searched for bindings.
 This lists keymaps such as the current local map and the minor-mode maps,
  but does not list the parents of those keymaps.
@@ -2503,9 +2479,8 @@ EVENT-OR-KEYS controls which keymaps will be listed.
 If EVENT-OR-KEYS is a mouse event (or a vector whose last element is a
  mouse event), the keymaps for that mouse event will be listed (see
  `key-binding').  Otherwise, the keymaps for key presses will be listed.
-*/ )
-  (event_or_keys)
-     Lisp_Object event_or_keys;
+*/
+       (event_or_keys))
 {
   /* This function can GC */
   struct gcpro gcpro1;
@@ -2525,7 +2500,7 @@ If EVENT-OR-KEYS is a mouse event (or a vector whose last element is a
   return (Flist (nmaps, gubbish));
 }
 
-DEFUN ("key-binding", Fkey_binding, Skey_binding, 1, 2, 0 /*
+DEFUN ("key-binding", Fkey_binding, 1, 2, 0, /*
 Return the binding for command KEYS in current keymaps.
 KEYS is a string, a vector of events, or a vector of key-description lists
 as described in the documentation for the `define-key' function.
@@ -2553,9 +2528,8 @@ For mouse-clicks, the order of keymaps searched is:
 
 Note that if `overriding-local-map' or `overriding-terminal-local-map'
 is non-nil, *only* those two maps and the current global map are searched.
-*/ )
-  (keys, accept_default)
-    Lisp_Object keys, accept_default;
+*/
+       (keys, accept_default))
 {
   /* This function can GC */
   int i;
@@ -2666,11 +2640,10 @@ munging_key_map_event_binding (Lisp_Object event0,
 /*               Setting/querying the global and local maps             */
 /************************************************************************/
 
-DEFUN ("use-global-map", Fuse_global_map, Suse_global_map, 1, 1, 0 /*
+DEFUN ("use-global-map", Fuse_global_map, 1, 1, 0, /*
 Select KEYMAP as the global keymap.
-*/ )
-  (keymap)
-     Lisp_Object keymap;
+*/
+       (keymap))
 {
   /* This function can GC */
   keymap = get_keymap (keymap, 1, 1);
@@ -2678,13 +2651,12 @@ Select KEYMAP as the global keymap.
   return Qnil;
 }
 
-DEFUN ("use-local-map", Fuse_local_map, Suse_local_map, 1, 2, 0 /*
+DEFUN ("use-local-map", Fuse_local_map, 1, 2, 0, /*
 Select KEYMAP as the local keymap in BUFFER.
 If KEYMAP is nil, that means no local keymap.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (keymap, buffer)
-     Lisp_Object keymap, buffer;
+*/
+       (keymap, buffer))
 {
   /* This function can GC */
   struct buffer *b = decode_buffer (buffer, 0);
@@ -2696,21 +2668,20 @@ If BUFFER is nil, the current buffer is assumed.
   return Qnil;
 }
 
-DEFUN ("current-local-map", Fcurrent_local_map, Scurrent_local_map, 0, 1, 0 /*
+DEFUN ("current-local-map", Fcurrent_local_map, 0, 1, 0, /*
 Return BUFFER's local keymap, or nil if it has none.
 If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (buffer)
-  Lisp_Object buffer;
+*/
+       (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 0);
   return b->keymap;
 }
 
-DEFUN ("current-global-map", Fcurrent_global_map, Scurrent_global_map, 0, 0, 0 /*
+DEFUN ("current-global-map", Fcurrent_global_map, 0, 0, 0, /*
 Return the current global keymap.
-*/ )
-  ()
+*/
+       ())
 {
   return (Vcurrent_global_map);
 }
@@ -2951,7 +2922,7 @@ map_keymap (Lisp_Object keymap_table, int sort_first,
     }
 }
 
-DEFUN ("map-keymap", Fmap_keymap, Smap_keymap, 2, 3, 0 /*
+DEFUN ("map-keymap", Fmap_keymap, 2, 3, 0, /*
 Apply FUNCTION to each element of KEYMAP.
 FUNCTION will be called with two arguments: a key-description list, and
 the binding.  The order in which the elements of the keymap are passed to
@@ -2969,9 +2940,8 @@ If the optional third argument SORT-FIRST is non-nil, then the elements of
 the keymap will be passed to the mapper function in a canonical order.
 Otherwise, they will be passed in hash (that is, random) order, which is
 faster.
-*/ )
-     (function, keymap, sort_first)
-    Lisp_Object function, keymap, sort_first;
+*/
+       (function, keymap, sort_first))
 {
   /* This function can GC */
   struct gcpro gcpro1, gcpro2;
@@ -3069,17 +3039,15 @@ accessible_keymaps_keymap_mapper (Lisp_Object thismap, void *arg)
 }
 
 
-DEFUN ("accessible-keymaps", Faccessible_keymaps, Saccessible_keymaps,
-  1, 2, 0 /*
+DEFUN ("accessible-keymaps", Faccessible_keymaps, 1, 2, 0, /*
 Find all keymaps accessible via prefix characters from STARTMAP.
 Returns a list of elements of the form (KEYS . MAP), where the sequence
 KEYS starting from STARTMAP gets you to MAP.  These elements are ordered
 so that the KEYS increase in length.  The first element is ([] . STARTMAP).
 An optional argument PREFIX, if non-nil, should be a key sequence;
 then the value includes only maps for prefixes that start with PREFIX.
-*/ )
-  (startmap, prefix)
-     Lisp_Object startmap, prefix;
+*/
+       (startmap, prefix))
 {
   /* This function can GC */
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
@@ -3148,13 +3116,12 @@ then the value includes only maps for prefixes that start with PREFIX.
 /*              Pretty descriptions of key sequences                    */
 /************************************************************************/
 
-DEFUN ("key-description", Fkey_description, Skey_description, 1, 1, 0 /*
+DEFUN ("key-description", Fkey_description, 1, 1, 0, /*
 Return a pretty description of key-sequence KEYS.
 Control characters turn into \"C-foo\" sequences, meta into \"M-foo\"
  spaces are put between sequence elements, etc.
-*/ )
-  (keys)
-     Lisp_Object keys;
+*/
+       (keys))
 {
   if (INTP (keys) || CONSP (keys) || SYMBOLP (keys) || EVENTP (keys))
     {
@@ -3188,15 +3155,13 @@ Control characters turn into \"C-foo\" sequences, meta into \"M-foo\"
   return Fkey_description (wrong_type_argument (Qsequencep, keys));
 }
 
-DEFUN ("single-key-description", Fsingle_key_description,
-       Ssingle_key_description, 1, 1, 0 /*
+DEFUN ("single-key-description", Fsingle_key_description, 1, 1, 0, /*
 Return a pretty description of command character KEY.
 Control characters turn into C-whatever, etc.
 This differs from `text-char-description' in that it returns a description
 of a key read from the user rather than a character from a buffer.
-*/ )
-  (key)
-     Lisp_Object key;
+*/
+       (key))
 {
   if (SYMBOLP (key))
     key = Fcons (key, Qnil); /* sleaze sleaze */
@@ -3261,16 +3226,14 @@ of a key read from the user rather than a character from a buffer.
     (wrong_type_argument (intern ("char-or-event-p"), key));
 }
 
-DEFUN ("text-char-description", Ftext_char_description, Stext_char_description,
-       1, 1, 0 /*
+DEFUN ("text-char-description", Ftext_char_description, 1, 1, 0, /*
 Return a pretty description of file-character CHR.
 Unprintable characters turn into \"^char\" or \\NNN, depending on the value
 of the `ctl-arrow' variable.
 This differs from `single-key-description' in that it returns a description
 of a character from a buffer rather than a key read from the user.
-*/ )
-  (chr)
-     Lisp_Object chr;
+*/
+       (chr))
 {
   Bufbyte buf[200];
   Bufbyte *p;
@@ -3336,7 +3299,7 @@ static Lisp_Object
 where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
                    Lisp_Object firstonly, char *target_buffer);
 
-DEFUN ("where-is-internal", Fwhere_is_internal, Swhere_is_internal, 1, 5, 0 /*
+DEFUN ("where-is-internal", Fwhere_is_internal, 1, 5, 0, /*
 Return list of keys that invoke DEFINITION in KEYMAPS.
 KEYMAPS can be either a keymap (meaning search in that keymap and the
 current global keymap) or a list of keymaps (meaning search in exactly
@@ -3351,9 +3314,8 @@ If optional 3rd arg FIRSTONLY is non-nil, return a vector representing
 If optional 4th arg NOINDIRECT is non-nil, don't follow indirections
  to other keymaps or slots.  This makes it possible to search for an
  indirect definition itself.
-*/ )
-  (definition, keymaps, firstonly, noindirect, event_or_keys)
-     Lisp_Object definition, keymaps, firstonly, noindirect, event_or_keys;
+*/
+       (definition, keymaps, firstonly, noindirect, event_or_keys))
 {
   /* This function can GC */
   Lisp_Object maps[100];
@@ -3705,8 +3667,7 @@ where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
 /*                         Describing keymaps                           */
 /************************************************************************/
 
-DEFUN ("describe-bindings-internal",
-       Fdescribe_bindings_internal, Sdescribe_bindings_internal, 1, 5, 0 /*
+DEFUN ("describe-bindings-internal", Fdescribe_bindings_internal, 1, 5, 0, /*
 Insert a list of all defined keys and their definitions in MAP.
 Optional second argument ALL says whether to include even \"uninteresting\"
 definitions (ie symbols with a non-nil `suppress-keymap' property.
@@ -3715,9 +3676,8 @@ of map; if a binding is present in any shadowing map, it is not printed.
 Fourth argument PREFIX, if non-nil, should be a key sequence;
 only bindings which start with that key sequence will be printed.
 Fifth argument MOUSE-ONLY-P says to only print bindings for mouse clicks.
-*/ )
-  (map, all, shadow, prefix, mouse_only_p)
-  Lisp_Object map, all, shadow, prefix, mouse_only_p;
+*/
+       (map, all, shadow, prefix, mouse_only_p))
 {
   /* This function can GC */
   describe_map_tree (map, NILP (all), shadow, prefix,
@@ -4164,38 +4124,38 @@ syms_of_keymap (void)
   defsymbol (&Qmodeline_map, "modeline-map");
   defsymbol (&Qtoolbar_map, "toolbar-map");
 
-  defsubr (&Skeymap_parents);
-  defsubr (&Sset_keymap_parents);
-  defsubr (&Skeymap_name);
-  defsubr (&Sset_keymap_name);
-  defsubr (&Skeymap_prompt);
-  defsubr (&Sset_keymap_prompt);
-  defsubr (&Skeymap_default_binding);
-  defsubr (&Sset_keymap_default_binding);
+  DEFSUBR (Fkeymap_parents);
+  DEFSUBR (Fset_keymap_parents);
+  DEFSUBR (Fkeymap_name);
+  DEFSUBR (Fset_keymap_name);
+  DEFSUBR (Fkeymap_prompt);
+  DEFSUBR (Fset_keymap_prompt);
+  DEFSUBR (Fkeymap_default_binding);
+  DEFSUBR (Fset_keymap_default_binding);
 
-  defsubr (&Skeymapp);
-  defsubr (&Smake_keymap);
-  defsubr (&Smake_sparse_keymap);
+  DEFSUBR (Fkeymapp);
+  DEFSUBR (Fmake_keymap);
+  DEFSUBR (Fmake_sparse_keymap);
 
-  defsubr (&Scopy_keymap);
-  defsubr (&Skeymap_fullness);
-  defsubr (&Smap_keymap);
-  defsubr (&Sevent_matches_key_specifier_p);
-  defsubr (&Sdefine_key);
-  defsubr (&Slookup_key);
-  defsubr (&Skey_binding);
-  defsubr (&Suse_global_map);
-  defsubr (&Suse_local_map);
-  defsubr (&Scurrent_local_map);
-  defsubr (&Scurrent_global_map);
-  defsubr (&Scurrent_keymaps);
-  defsubr (&Saccessible_keymaps);
-  defsubr (&Skey_description);
-  defsubr (&Ssingle_key_description);
-  defsubr (&Swhere_is_internal);
-  defsubr (&Sdescribe_bindings_internal);
+  DEFSUBR (Fcopy_keymap);
+  DEFSUBR (Fkeymap_fullness);
+  DEFSUBR (Fmap_keymap);
+  DEFSUBR (Fevent_matches_key_specifier_p);
+  DEFSUBR (Fdefine_key);
+  DEFSUBR (Flookup_key);
+  DEFSUBR (Fkey_binding);
+  DEFSUBR (Fuse_global_map);
+  DEFSUBR (Fuse_local_map);
+  DEFSUBR (Fcurrent_local_map);
+  DEFSUBR (Fcurrent_global_map);
+  DEFSUBR (Fcurrent_keymaps);
+  DEFSUBR (Faccessible_keymaps);
+  DEFSUBR (Fkey_description);
+  DEFSUBR (Fsingle_key_description);
+  DEFSUBR (Fwhere_is_internal);
+  DEFSUBR (Fdescribe_bindings_internal);
 
-  defsubr (&Stext_char_description);
+  DEFSUBR (Ftext_char_description);
 
   defsymbol (&Qcontrol, "control");
   defsymbol (&Qctrl, "ctrl");

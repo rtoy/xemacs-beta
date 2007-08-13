@@ -47,7 +47,6 @@ h4,h5,h6  {
 ** Since Emacs-19 doesn't handle mixed-sized fonts very well just yet,
 ** we only use them under XEmacs.  Hopefully, this will change soon.
 */
-
 @media xemacs {
       h1  { font-size : +12pt }
       h2  { font-size : +6pt  }
@@ -72,7 +71,6 @@ key,code,tt { font-family: monospace }
 @media emacs {
 h1,h2,h3,
 h4,h5,h6  { 
-            font-style: small-caps;
             text-decoration: underline;
 	    color: blue;
           }
@@ -86,6 +84,21 @@ strong,em { color: red         }
        p  { display: block }
  pre,xmp  { display: block; white-space: pre; }
 blockquote{ display: block; margin-left: 5; margin-right: 5; }
+
+/*
+** How to draw form elements.
+** This is an extension in Emacs-W3 (and perhaps soon E-Scape)
+** Since there are so many different types of input fields, you should be
+** able to control formatting based on that.  Enter pseudo-classes.
+**
+** This functionality will be removed as soon as the W3C comes up with
+** the standard way to do this, perhaps in CSS level 2.
+*/
+input { text-decoration: underline; }
+input:submit { color: green;  text-decoration: none; }
+input:reset  { color: red;    text-decoration: none; }
+input:button { color: yellow; text-decoration: none; }
+input:image  { text-decoration: none; }
 
 /*
 ** List formatting instructions
@@ -136,7 +149,6 @@ ul ul,ol ul,ol ol,ul ol { display: line; }
 ** Hypertext link coloring
 */
 
-a         { cursor: hand2  }
 a:link    { color: #FF0000 }
 a:visited { color: #B22222 }
 a:active  { color: #FF0000 }

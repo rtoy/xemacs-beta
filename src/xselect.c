@@ -1053,12 +1053,10 @@ selection_reply_done (void *ignore)
 static Lisp_Object Qx_selection_reply_timeout_internal;
 
 DEFUN ("x-selection-reply-timeout-internal",
-       Fx_selection_reply_timeout_internal,
-       Sx_selection_reply_timeout_internal, 1, 1, 0 /*
+       Fx_selection_reply_timeout_internal, 1, 1, 0, /*
 
-*/ )
-     (arg)
-     Lisp_Object arg;
+*/
+       (arg))
 {
   selection_reply_timed_out = 1;
   reading_selection_reply = 0;
@@ -1652,16 +1650,13 @@ x_handle_selection_notify (XSelectionEvent *event)
 }
 
 
-DEFUN ("x-own-selection-internal",
-       Fx_own_selection_internal, Sx_own_selection_internal,
-  2, 2, 0 /*
+DEFUN ("x-own-selection-internal", Fx_own_selection_internal, 2, 2, 0, /*
 Assert an X selection of the given TYPE with the given VALUE.
 TYPE is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
 VALUE is typically a string, or a cons of two markers, but may be
 anything that the functions on selection-converter-alist know about.
-*/ )
-  (selection_name, selection_value)
-     Lisp_Object selection_name, selection_value;
+*/
+       (selection_name, selection_value))
 {
   CHECK_SYMBOL (selection_name);
   if (NILP (selection_value)) error ("selection-value may not be nil.");
@@ -1674,14 +1669,12 @@ anything that the functions on selection-converter-alist know about.
    simply return our selection value.  If we are not the owner, this
    will block until all of the data has arrived.
  */
-DEFUN ("x-get-selection-internal",
-       Fx_get_selection_internal, Sx_get_selection_internal, 2, 2, 0 /*
+DEFUN ("x-get-selection-internal", Fx_get_selection_internal, 2, 2, 0, /*
 Return text selected from some X window.
 SELECTION is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
 TYPE is the type of data desired, typically STRING.
-*/ )
-  (selection_symbol, target_type)
-     Lisp_Object selection_symbol, target_type;
+*/
+       (selection_symbol, target_type))
 {
   /* This function can GC */
   Lisp_Object val = Qnil;
@@ -1723,13 +1716,10 @@ TYPE is the type of data desired, typically STRING.
   return val;
 }
 
-DEFUN ("x-disown-selection-internal",
-       Fx_disown_selection_internal, Sx_disown_selection_internal, 1, 2, 0 /*
+DEFUN ("x-disown-selection-internal", Fx_disown_selection_internal, 1, 2, 0, /*
 If we own the named selection, then disown it (make there be no selection).
-*/ )
-     (selection, timeval)
-     Lisp_Object selection;
-     Lisp_Object timeval;
+*/
+       (selection, timeval))
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
@@ -1773,15 +1763,13 @@ If we own the named selection, then disown it (make there be no selection).
 }
 
 
-DEFUN ("x-selection-owner-p",
-       Fx_selection_owner_p, Sx_selection_owner_p, 0, 1, 0 /*
+DEFUN ("x-selection-owner-p", Fx_selection_owner_p, 0, 1, 0, /*
 Whether the current emacs process owns the given X Selection.
 The arg should be the name of the selection in question, typically one of
 the symbols PRIMARY, SECONDARY, or CLIPBOARD.  (For convenience, the symbol
 nil is the same as PRIMARY, and t is the same as SECONDARY.)
-*/ )
-     (selection)
-     Lisp_Object selection;
+*/
+       (selection))
 {
   CHECK_SYMBOL (selection);
   if (EQ (selection, Qnil)) selection = QPRIMARY;
@@ -1792,15 +1780,13 @@ nil is the same as PRIMARY, and t is the same as SECONDARY.)
   return Qt;
 }
 
-DEFUN ("x-selection-exists-p",
-       Fx_selection_exists_p, Sx_selection_exists_p, 0, 1, 0 /*
+DEFUN ("x-selection-exists-p", Fx_selection_exists_p, 0, 1, 0, /*
 Whether there is an owner for the given X Selection.
 The arg should be the name of the selection in question, typically one of
 the symbols PRIMARY, SECONDARY, or CLIPBOARD.  (For convenience, the symbol
 nil is the same as PRIMARY, and t is the same as SECONDARY.)
-*/ )
-     (selection)
-     Lisp_Object selection;
+*/
+       (selection))
 {
   Window owner;
   struct device *d = decode_x_device (Qnil);
@@ -1846,12 +1832,10 @@ initialize_cut_buffers (Display *display, Window window)
                                    (symbol))); \
   }
 
-DEFUN ("x-get-cutbuffer-internal", Fx_get_cutbuffer_internal,
-       Sx_get_cutbuffer_internal, 1, 1, 0 /*
+DEFUN ("x-get-cutbuffer-internal", Fx_get_cutbuffer_internal, 1, 1, 0, /*
 Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
-*/ )
-     (cutbuffer)
-     Lisp_Object cutbuffer;
+*/
+       (cutbuffer))
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
@@ -1885,12 +1869,10 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
 }
 
 
-DEFUN ("x-store-cutbuffer-internal", Fx_store_cutbuffer_internal,
-       Sx_store_cutbuffer_internal, 2, 2, 0 /*
+DEFUN ("x-store-cutbuffer-internal", Fx_store_cutbuffer_internal, 2, 2, 0, /*
 Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
-*/ )
-     (cutbuffer, string)
-     Lisp_Object cutbuffer, string;
+*/
+       (cutbuffer, string))
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
@@ -1927,13 +1909,11 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
 }
 
 
-DEFUN ("x-rotate-cutbuffers-internal", Fx_rotate_cutbuffers_internal,
-       Sx_rotate_cutbuffers_internal, 1, 1, 0 /*
+DEFUN ("x-rotate-cutbuffers-internal", Fx_rotate_cutbuffers_internal, 1, 1, 0, /*
 Rotate the values of the cutbuffers by the given number of steps;
 positive means move values forward, negative means backward.
-*/ )
-     (n)
-     Lisp_Object n;
+*/
+       (n))
 {
   struct device *d = decode_x_device (Qnil);
   Display *display = DEVICE_X_DISPLAY (d);
@@ -1967,22 +1947,22 @@ positive means move values forward, negative means backward.
 void
 syms_of_xselect (void)
 {
-  defsubr (&Sx_get_selection_internal);
-  defsubr (&Sx_own_selection_internal);
-  defsubr (&Sx_disown_selection_internal);
-  defsubr (&Sx_selection_owner_p);
-  defsubr (&Sx_selection_exists_p);
+  DEFSUBR (Fx_get_selection_internal);
+  DEFSUBR (Fx_own_selection_internal);
+  DEFSUBR (Fx_disown_selection_internal);
+  DEFSUBR (Fx_selection_owner_p);
+  DEFSUBR (Fx_selection_exists_p);
 
 #ifdef CUT_BUFFER_SUPPORT
-  defsubr (&Sx_get_cutbuffer_internal);
-  defsubr (&Sx_store_cutbuffer_internal);
-  defsubr (&Sx_rotate_cutbuffers_internal);
+  DEFSUBR (Fx_get_cutbuffer_internal);
+  DEFSUBR (Fx_store_cutbuffer_internal);
+  DEFSUBR (Fx_rotate_cutbuffers_internal);
 #endif /* CUT_BUFFER_SUPPORT */
 
   /* Unfortunately, timeout handlers must be lisp functions. */
   defsymbol (&Qx_selection_reply_timeout_internal,
              "x-selection-reply-timeout-internal");
-  defsubr (&Sx_selection_reply_timeout_internal);
+  DEFSUBR (Fx_selection_reply_timeout_internal);
 
   defsymbol (&QPRIMARY, "PRIMARY");
   defsymbol (&QSECONDARY, "SECONDARY");

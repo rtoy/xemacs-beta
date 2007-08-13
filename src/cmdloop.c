@@ -88,12 +88,10 @@ default_error_handler (Lisp_Object data)
   return (unbind_to (speccount, Qt));
 }
 
-DEFUN ("really-early-error-handler", Freally_early_error_handler,
-       Sreally_early_error_handler, 1, 1, 0 /*
+DEFUN ("really-early-error-handler", Freally_early_error_handler, 1, 1, 0, /*
 You should almost certainly not be using this.
-*/ )
-  (x)
-  Lisp_Object x;
+*/
+       (x))
 {
   /* This is an error handler used when we're running temacs and when
      we're in the early stages of XEmacs.  No errors ought to be
@@ -308,13 +306,13 @@ recursive_edit_unwind (Lisp_Object buffer)
   return Qnil;
 }
 
-DEFUN ("recursive-edit", Frecursive_edit, Srecursive_edit, 0, 0, "" /*
+DEFUN ("recursive-edit", Frecursive_edit, 0, 0, "", /*
 Invoke the editor command loop recursively.
 To get out of the recursive edit, a command can do `(throw 'exit nil)';
 that tells this function to return.
 Alternately, `(throw 'exit t)' makes this function signal an error.
-*/ )
-  ()
+*/
+       ())
 {
   /* This function can GC */
   Lisp_Object val;
@@ -472,11 +470,11 @@ command_loop_1 (Lisp_Object dummy)
    command loop, this will return only when the user specifies
    a new command loop by changing the command-loop variable. */
 
-DEFUN ("command-loop-1", Fcommand_loop_1, Scommand_loop_1, 0, 0, 0 /*
+DEFUN ("command-loop-1", Fcommand_loop_1, 0, 0, 0, /*
 Invoke the internals of the canonical editor command loop.
 Don't call this unless you know what you're doing.
-*/ )
-  ()
+*/
+       ())
 {
   /* This function can GC */
   Lisp_Object event = Fmake_event ();
@@ -566,10 +564,10 @@ syms_of_cmdloop (void)
   defsymbol (&Qtop_level, "top-level");
 
 #ifndef LISP_COMMAND_LOOP
-  defsubr (&Srecursive_edit);
+  DEFSUBR (Frecursive_edit);
 #endif
-  defsubr (&Sreally_early_error_handler);
-  defsubr (&Scommand_loop_1);
+  DEFSUBR (Freally_early_error_handler);
+  DEFSUBR (Fcommand_loop_1);
 }
 
 void

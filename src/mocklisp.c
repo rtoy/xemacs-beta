@@ -35,11 +35,10 @@ Lisp_Object Qmocklisp_arguments;
 Lisp_Object Vmocklisp_arguments;
 
 #if 0 /* Now in lisp code ("macrocode...") */
-xxDEFUN ("ml-defun", Fml_defun, Sml_defun, 0, UNEVALLED, 0 /*
+xxDEFUN ("ml-defun", ml_defun, 0, UNEVALLED, 0 /*
 Define mocklisp functions
 */ )
- (args)
-    Lisp_Object args;
+     (Lisp_Object args)
 {
  Lisp_Object elt;
 
@@ -54,11 +53,10 @@ Define mocklisp functions
 #endif /* 0 */
 
 
-DEFUN ("ml-if", Fml_if, Sml_if, 0, UNEVALLED, 0 /*
+DEFUN ("ml-if", Fml_if, 0, UNEVALLED, 0, /*
 Mocklisp version of `if'.
-*/ )
-  (args)
-     Lisp_Object args;
+*/
+       (args))
 {
   /* This function can GC */
   Lisp_Object val;
@@ -82,11 +80,10 @@ Mocklisp version of `if'.
 }
 
 #if 0 /* Now converted to regular "while" by hairier conversion code. */
-xxDEFUN ("ml-while", Fml_while, Sml_while, 1, UNEVALLED, 0 /*
+xxDEFUN ("ml-while", ml_while, 1, UNEVALLED, 0 /*
 while  for mocklisp programs
 */ )
-  (args)
-     Lisp_Object args;
+     (Lisp_Object args)
 {
   Lisp_Object test, body, tem;
   struct gcpro gcpro1, gcpro2;
@@ -163,12 +160,10 @@ True if currently executing mocklisp function was called interactively.
 
 
 /* ???  Isn't this the same as `provide-prefix-arg' from mlsupport.el? */
-DEFUN ("ml-provide-prefix-argument", Fml_provide_prefix_argument, Sml_provide_prefix_argument,
-  2, UNEVALLED, 0 /*
+DEFUN ("ml-provide-prefix-argument", Fml_provide_prefix_argument, 2, UNEVALLED, 0, /*
 Evaluate second argument, using first argument as prefix arg value.
-*/ )
-  (args)
-     Lisp_Object args;
+*/
+       (args))
 {
   /* This function can GC */
   struct gcpro gcpro1;
@@ -178,13 +173,10 @@ Evaluate second argument, using first argument as prefix arg value.
   return Feval (Fcar (Fcdr (args)));
 }
 
-DEFUN ("ml-prefix-argument-loop", Fml_prefix_argument_loop,
-       Sml_prefix_argument_loop,
-       0, UNEVALLED, 0 /*
+DEFUN ("ml-prefix-argument-loop", Fml_prefix_argument_loop, 0, UNEVALLED, 0, /*
 
-*/ )
-  (args)
-     Lisp_Object args;
+*/
+       (args))
 {
   /* This function can GC */
   Lisp_Object tem;
@@ -214,12 +206,11 @@ DEFUN ("ml-prefix-argument-loop", Fml_prefix_argument_loop,
 
 #if 0
 /* now in lisp code */
-DEFUN ("ml-substr", Fml_substr, Sml_substr, 3, 3, 0 /*
+DEFUN ("ml-substr", Fml_substr, 3, 3, 0, /*
 Return a substring of STRING, starting at index FROM and of length LENGTH.
 If either FROM or LENGTH is negative, the length of STRING is added to it.
-*/ )
-  (string, from, to)
-     Lisp_Object string, from, to;
+*/
+       (string, from, to))
 {
   CHECK_STRING (string);
   CHECK_INT (from);
@@ -235,14 +226,12 @@ If either FROM or LENGTH is negative, the length of STRING is added to it.
 
 
 /* now in lisp code */
-DEFUN ("insert-string", Finsert_string, Sinsert_string, 0, MANY, 0 /*
+DEFUN ("insert-string", Finsert_string, 0, MANY, 0, /*
 Mocklisp-compatibility insert function.
 Like the function `insert' except that any argument that is a number
 is converted into a string by expressing it in decimal.
-*/ )
-  (nargs, args)
-     int nargs;
-     Lisp_Object *args;
+*/
+       (int nargs, Lisp_Object *args))
 {
   int argnum;
   Lisp_Object tem;
@@ -277,16 +266,16 @@ syms_of_mocklisp (void)
   defsymbol (&Qmocklisp, "mocklisp");
   defsymbol (&Qmocklisp_arguments, "mocklisp-arguments");
 
-/*defsubr (&Sml_defun);*/
-  defsubr (&Sml_if);
-/*defsubr (&Sml_while);*/
-/*defsubr (&Sml_nargs);*/
-/*defsubr (&Sml_arg);*/
-/*defsubr (&Sml_interactive);*/
-  defsubr (&Sml_provide_prefix_argument);
-  defsubr (&Sml_prefix_argument_loop);
-/*defsubr (&Sml_substr);*/
-/*defsubr (&Sinsert_string);*/
+/*DEFSUBR (Fml_defun);*/
+  DEFSUBR (Fml_if);
+/*DEFSUBR (Fml_while);*/
+/*DEFSUBR (Fml_nargs);*/
+/*DEFSUBR (Fml_arg);*/
+/*DEFSUBR (Fml_interactive);*/
+  DEFSUBR (Fml_provide_prefix_argument);
+  DEFSUBR (Fml_prefix_argument_loop);
+/*DEFSUBR (Fml_substr);*/
+/*DEFSUBR (Finsert_string);*/
 }
 
 void

@@ -66,16 +66,14 @@ extern char *nas_init_play (Display *);
 Lisp_Object Qnas;
 #endif
 
-DEFUN ("play-sound-file", Fplay_sound_file, Splay_sound_file,
-       1, 3, "fSound file name: " /*
+DEFUN ("play-sound-file", Fplay_sound_file, 1, 3, "fSound file name: ", /*
 Play the named sound file on DEVICE's speaker at the specified volume
 (0-100, default specified by the `bell-volume' variable).
 The sound file must be in the Sun/NeXT U-LAW format except under Linux
 where WAV files are also supported.
   DEVICE defaults to the selected device.
-*/ )
-     (file, volume, device)
-   Lisp_Object file, volume, device;
+*/
+       (file, volume, device))
 {
   /* This function can GC */
   int vol;
@@ -227,12 +225,11 @@ parse_sound_alist_elt (Lisp_Object elt,
     }
 }
 
-DEFUN ("play-sound", Fplay_sound, Splay_sound, 1, 3, 0 /*
+DEFUN ("play-sound", Fplay_sound, 1, 3, 0, /*
 Play a sound of the provided type.
 See the variable `sound-alist'.
-*/ )
-     (sound, volume, device)
-     Lisp_Object sound, volume, device;
+*/
+       (sound, volume, device))
 {
   int looking_for_default = 0;
   /* variable `sound' is anything that can be a cdr in sound-alist */
@@ -308,11 +305,10 @@ See the variable `sound-alist'.
   return Qnil;
 }
 
-DEFUN ("device-sound-enabled-p", Fdevice_sound_enabled_p, Sdevice_sound_enabled_p, 0, 1, 0 /*
+DEFUN ("device-sound-enabled-p", Fdevice_sound_enabled_p, 0, 1, 0, /*
 Return T iff DEVICE is able to play sound.  Defaults to selected device.
-*/ )
-  (device)
-  Lisp_Object device;
+*/
+       (device))
 {
   struct device *d = decode_device(device);
 
@@ -327,16 +323,15 @@ Return T iff DEVICE is able to play sound.  Defaults to selected device.
   return Qnil;
 }
 
-DEFUN ("ding", Fding, Sding, 0, 3, 0 /*
+DEFUN ("ding", Fding, 0, 3, 0, /*
 Beep, or flash the frame.
 Also, unless an argument is given,
 terminate any keyboard macro currently executing.
 When called from lisp, the second argument is what sound to make, and
 the third argument is the device to make it in (defaults to the selected
 device).
-*/ )
-  (arg, sound, device)
-  Lisp_Object arg, sound, device;
+*/
+       (arg, sound, device))
 {
   struct device *d = decode_device (device);
 
@@ -352,13 +347,10 @@ device).
   return Qnil;
 }
 
-DEFUN ("wait-for-sounds", Fwait_for_sounds, Swait_for_sounds,
-       0, 1, 0 /*
+DEFUN ("wait-for-sounds", Fwait_for_sounds, 0, 1, 0, /*
 Wait for all sounds to finish playing on DEVICE.
-*/ )
-  (device)
-     Lisp_Object device;
-
+*/
+       (device))
 {
 #ifdef HAVE_NAS_SOUND
   struct device *d = decode_device (device);
@@ -371,12 +363,10 @@ Wait for all sounds to finish playing on DEVICE.
   return Qnil;
 }
 
-DEFUN ("connected-to-nas-p", Fconnected_to_nas_p, Sconnected_to_nas_p,
-       0, 1, 0 /*
+DEFUN ("connected-to-nas-p", Fconnected_to_nas_p, 0, 1, 0, /*
 t if connected to NAS server for sounds on DEVICE.
-*/ )
-     (device)
-     Lisp_Object device;
+*/
+       (device))
 {
 #ifdef HAVE_NAS_SOUND
   struct device *d = decode_device (device);
@@ -501,12 +491,12 @@ syms_of_sound (void)
   defsymbol (&Qnas, "nas");
 #endif
 
-  defsubr (&Splay_sound_file);
-  defsubr (&Splay_sound);
-  defsubr (&Sding);
-  defsubr (&Swait_for_sounds);
-  defsubr (&Sconnected_to_nas_p);
-  defsubr (&Sdevice_sound_enabled_p);
+  DEFSUBR (Fplay_sound_file);
+  DEFSUBR (Fplay_sound);
+  DEFSUBR (Fding);
+  DEFSUBR (Fwait_for_sounds);
+  DEFSUBR (Fconnected_to_nas_p);
+  DEFSUBR (Fdevice_sound_enabled_p);
 }
 
 

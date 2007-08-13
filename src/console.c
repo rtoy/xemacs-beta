@@ -204,13 +204,11 @@ valid_console_type_p (Lisp_Object type)
   return 0;
 }
 
-DEFUN ("valid-console-type-p", Fvalid_console_type_p, Svalid_console_type_p,
-       1, 1, 0 /*
+DEFUN ("valid-console-type-p", Fvalid_console_type_p, 1, 1, 0, /*
 Given a CONSOLE-TYPE, return t if it is valid.
 Valid types are 'x, 'tty, and 'stream.
-*/ )
-     (console_type)
-     Lisp_Object console_type;
+*/
+       (console_type))
 {
   if (valid_console_type_p (console_type))
     return Qt;
@@ -218,30 +216,28 @@ Valid types are 'x, 'tty, and 'stream.
     return Qnil;
 }
 
-DEFUN ("console-type-list", Fconsole_type_list, Sconsole_type_list,
-       0, 0, 0 /*
+DEFUN ("console-type-list", Fconsole_type_list, 0, 0, 0, /*
 Return a list of valid console types.
-*/ )
-     ()
+*/
+       ())
 {
   return Fcopy_sequence (Vconsole_type_list);
 }
 
-DEFUN ("cdfw-console", Fcdfw_console, Scdfw_console, 1, 1, 0 /*
+DEFUN ("cdfw-console", Fcdfw_console, 1, 1, 0, /*
 Given a console, device, frame, or window, return the associated console.
 Return nil otherwise.
-*/ )
-     (obj)
-     Lisp_Object obj;
+*/
+       (obj))
 {
   return CDFW_CONSOLE (obj);
 }
 
 
-DEFUN ("selected-console", Fselected_console, Sselected_console, 0, 0, 0 /*
+DEFUN ("selected-console", Fselected_console, 0, 0, 0, /*
 Return the console which is currently active.
-*/ )
-     ()
+*/
+       ())
 {
   return Vselected_console;
 }
@@ -268,15 +264,14 @@ select_console_1 (Lisp_Object console)
     Vwindow_system = Qnil;
 }
 
-DEFUN ("select-console", Fselect_console, Sselect_console, 1, 1, 0 /*
+DEFUN ("select-console", Fselect_console, 1, 1, 0, /*
 Select the console CONSOLE.
 Subsequent editing commands apply to its selected device, selected frame,
 and selected window.  The selection of CONSOLE lasts until the next time
 the user does something to select a different console, or until the next
 time this function is called.
-*/ )
-  (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   CHECK_LIVE_CONSOLE (console);
 
@@ -296,29 +291,27 @@ set_console_last_nonminibuf_frame (struct console *con,
   con->_last_nonminibuf_frame = frame;
 }
 
-DEFUN ("consolep", Fconsolep, Sconsolep, 1, 1, 0 /*
+DEFUN ("consolep", Fconsolep, 1, 1, 0, /*
 Return non-nil if OBJECT is a console.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (!CONSOLEP (object))
     return Qnil;
   return Qt;
 }
 
-DEFUN ("console-live-p", Fconsole_live_p, Sconsole_live_p, 1, 1, 0 /*
+DEFUN ("console-live-p", Fconsole_live_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a console that has not been deleted.
-*/ )
-     (object)
-     Lisp_Object object;
+*/
+       (object))
 {
   if (!CONSOLEP (object) || !CONSOLE_LIVE_P (XCONSOLE (object)))
     return Qnil;
   return Qt;
 }
 
-DEFUN ("console-type", Fconsole_type, Sconsole_type, 0, 1, 0 /*
+DEFUN ("console-type", Fconsole_type, 0, 1, 0, /*
 Return the type of the specified console (e.g. `x' or `tty').
 Value is `tty' for a tty console (a character-only terminal),
 `x' for a console that is an X display,
@@ -329,9 +322,8 @@ Value is `tty' for a tty console (a character-only terminal),
   implemented),
 `stream' for a stream console (which acts like a stdio stream), and
 `dead' for a deleted console.
-*/ )
-     (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   /* don't call decode_console() because we want to allow for dead
      consoles. */
@@ -341,22 +333,19 @@ Value is `tty' for a tty console (a character-only terminal),
   return CONSOLE_TYPE (XCONSOLE (console));
 }
 
-DEFUN ("console-name", Fconsole_name, Sconsole_name, 0, 1, 0 /*
+DEFUN ("console-name", Fconsole_name, 0, 1, 0, /*
 Return the name of the specified console.
-*/ )
-     (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   return CONSOLE_NAME (decode_console (console));
 }
 
-DEFUN ("console-connection", Fconsole_connection, Sconsole_connection,
-       0, 1, 0 /*
+DEFUN ("console-connection", Fconsole_connection, 0, 1, 0, /*
 Return the connection of the specified console.
 CONSOLE defaults to the selected console if omitted.
-*/ )
-     (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   return CONSOLE_CONNECTION (decode_console (console));
 }
@@ -403,7 +392,7 @@ find_console_of_type (struct console_methods *meths, Lisp_Object canon)
   return Qnil;
 }
 
-DEFUN ("find-console", Ffind_console, Sfind_console, 1, 2, 0 /*
+DEFUN ("find-console", Ffind_console, 1, 2, 0, /*
 Look for an existing console attached to connection CONNECTION.
 Return the console if found; otherwise, return nil.
 
@@ -411,9 +400,8 @@ If TYPE is specified, only return consoles of that type; otherwise,
 return consoles of any type. (It is possible, although unlikely,
 that two consoles of different types could have the same connection
 name; in such a case, the first console found is returned.)
-*/ )
-  (connection, type)
-     Lisp_Object connection, type;
+*/
+       (connection, type))
 {
   Lisp_Object canon = Qnil;
   struct gcpro gcpro1;
@@ -453,7 +441,7 @@ name; in such a case, the first console found is returned.)
     }
 }
 
-DEFUN ("get-console", Fget_console, Sget_console, 1, 2, 0 /*
+DEFUN ("get-console", Fget_console, 1, 2, 0, /*
 Look for an existing console attached to connection CONNECTION.
 Return the console if found; otherwise, signal an error.
 
@@ -461,9 +449,8 @@ If TYPE is specified, only return consoles of that type; otherwise,
 return consoles of any type. (It is possible, although unlikely,
 that two consoles of different types could have the same connection
 name; in such a case, the first console found is returned.)
-*/ )
-  (connection, type)
-     Lisp_Object connection, type;
+*/
+       (connection, type))
 {
   Lisp_Object console = Ffind_console (connection, type);
   if (NILP (console))
@@ -739,46 +726,41 @@ io_error_delete_console (Lisp_Object console)
   delete_console_internal (XCONSOLE (console), 1, 0, 1);
 }
 
-DEFUN ("delete-console", Fdelete_console, Sdelete_console, 1, 2, 0 /*
+DEFUN ("delete-console", Fdelete_console, 1, 2, 0, /*
 Delete CONSOLE, permanently eliminating it from use.
 Normally, you cannot delete the last non-minibuffer-only frame (you must
 use `save-buffers-kill-emacs' or `kill-emacs').  However, if optional
 second argument FORCE is non-nil, you can delete the last frame. (This
 will automatically call `save-buffers-kill-emacs'.)
-*/ )
-     (console, force)
-     Lisp_Object console, force;
+*/
+       (console, force))
 {
   CHECK_CONSOLE (console);
   delete_console_internal (XCONSOLE (console), !NILP (force), 0, 0);
   return Qnil;
 }
 
-DEFUN ("console-list", Fconsole_list, Sconsole_list, 0, 0, 0 /*
+DEFUN ("console-list", Fconsole_list, 0, 0, 0, /*
 Return a list of all consoles.
-*/ )
-     ()
+*/
+       ())
 {
   return Fcopy_sequence (Vconsole_list);
 }
 
-DEFUN ("console-device-list", Fconsole_device_list, Sconsole_device_list,
-       0, 1, 0 /*
+DEFUN ("console-device-list", Fconsole_device_list, 0, 1, 0, /*
 Return a list of all devices on CONSOLE.
 If CONSOLE is nil, the selected console will be used.
-*/ )
-  (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   return Fcopy_sequence (CONSOLE_DEVICE_LIST (decode_console (console)));
 }
 
-DEFUN ("console-enable-input", Fconsole_enable_input, Sconsole_enable_input,
-       1, 1, 0 /*
+DEFUN ("console-enable-input", Fconsole_enable_input, 1, 1, 0, /*
 Enable input on console CONSOLE.
-*/ )
-  (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   struct console *con = decode_console (console);
   if (!con->input_enabled)
@@ -786,13 +768,10 @@ Enable input on console CONSOLE.
   return Qnil;
 }
 
-DEFUN ("console-disable-input", Fconsole_disable_input,
-       Sconsole_disable_input,
-       1, 1, 0 /*
+DEFUN ("console-disable-input", Fconsole_disable_input, 1, 1, 0, /*
 Disable input on console CONSOLE.
-*/ )
-  (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   struct console *con = decode_console (console);
   if (con->input_enabled)
@@ -800,14 +779,12 @@ Disable input on console CONSOLE.
   return Qnil;
 }
 
-DEFUN ("console-on-window-system-p", Fconsole_on_window_system_p,
-       Sconsole_on_window_system_p, 0, 1, 0 /*
+DEFUN ("console-on-window-system-p", Fconsole_on_window_system_p, 0, 1, 0, /*
 Return non-nil if this console is on a window system.
 This generally means that there is support for the mouse, the menubar,
 the toolbar, glyphs, etc.
-*/ )
-     (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   struct console *con = decode_console (console);
 
@@ -837,7 +814,7 @@ unwind_init_sys_modes (Lisp_Object console)
   return Qnil;
 }
 
-DEFUN ("suspend-emacs", Fsuspend_emacs, Ssuspend_emacs, 0, 1, "" /*
+DEFUN ("suspend-emacs", Fsuspend_emacs, 0, 1, "", /*
 Stop Emacs and return to superior process.  You can resume later.
 On systems that don't have job control, run a subshell instead.
 
@@ -850,9 +827,8 @@ Otherwise, suspend normally and after resumption call
 
 Some operating systems cannot stop the Emacs process and resume it later.
 On such systems, Emacs will start a subshell and wait for it to exit.
-*/ )
-  (stuffstring)
-     Lisp_Object stuffstring;
+*/
+       (stuffstring))
 {
   int speccount = specpdl_depth ();
   struct gcpro gcpro1;
@@ -928,7 +904,7 @@ stuff_buffered_input (Lisp_Object stuffstring)
 #endif /* BSD */
 }
 
-DEFUN ("set-input-mode", Fset_input_mode, Sset_input_mode, 3, 5, 0 /*
+DEFUN ("set-input-mode", Fset_input_mode, 3, 5, 0, /*
 Set mode of reading keyboard input.
 First arg is ignored, for backward compatibility.
 Second arg FLOW non-nil means use ^S/^Q flow control for output to terminal
@@ -941,9 +917,8 @@ Optional fourth arg QUIT if non-nil specifies character to use for quitting.
 Optional fifth arg CONSOLE specifies console to make changes to; nil means
  the selected console.
 See also `current-input-mode'.
-*/ )
-  (ignored, flow, meta, quit, console)
-     Lisp_Object ignored, flow, meta, quit, console;
+*/
+       (ignored, flow, meta, quit, console))
 {
   struct console *con = decode_console (console);
   int meta_key = 1;
@@ -976,8 +951,7 @@ See also `current-input-mode'.
   return Qnil;
 }
 
-DEFUN ("current-input-mode", Fcurrent_input_mode, Scurrent_input_mode,
-       0, 1, 0 /*
+DEFUN ("current-input-mode", Fcurrent_input_mode, 0, 1, 0, /*
 Return information about the way Emacs currently reads keyboard input.
 Optional arg CONSOLE specifies console to return information about; nil means
  the selected console.
@@ -992,9 +966,8 @@ The value is a list of the form (nil FLOW META QUIT), where
 FLOW, and META are only meaningful for TTY consoles.
 The elements of this list correspond to the arguments of
 `set-input-mode'.
-*/ )
-  (console)
-     Lisp_Object console;
+*/
+       (console))
 {
   Lisp_Object val[4];
   struct console *con = decode_console (console);
@@ -1016,28 +989,28 @@ The elements of this list correspond to the arguments of
 void
 syms_of_console (void)
 {
-  defsubr (&Svalid_console_type_p);
-  defsubr (&Sconsole_type_list);
-  defsubr (&Scdfw_console);
-  defsubr (&Sselected_console);
-  defsubr (&Sselect_console);
-  defsubr (&Sconsolep);
-  defsubr (&Sconsole_live_p);
-  defsubr (&Sconsole_type);
-  defsubr (&Sconsole_name);
-  defsubr (&Sconsole_connection);
-  defsubr (&Sfind_console);
-  defsubr (&Sget_console);
-  defsubr (&Sdelete_console);
-  defsubr (&Sconsole_list);
-  defsubr (&Sconsole_device_list);
-  defsubr (&Sconsole_enable_input);
-  defsubr (&Sconsole_disable_input);
-  defsubr (&Sconsole_on_window_system_p);
+  DEFSUBR (Fvalid_console_type_p);
+  DEFSUBR (Fconsole_type_list);
+  DEFSUBR (Fcdfw_console);
+  DEFSUBR (Fselected_console);
+  DEFSUBR (Fselect_console);
+  DEFSUBR (Fconsolep);
+  DEFSUBR (Fconsole_live_p);
+  DEFSUBR (Fconsole_type);
+  DEFSUBR (Fconsole_name);
+  DEFSUBR (Fconsole_connection);
+  DEFSUBR (Ffind_console);
+  DEFSUBR (Fget_console);
+  DEFSUBR (Fdelete_console);
+  DEFSUBR (Fconsole_list);
+  DEFSUBR (Fconsole_device_list);
+  DEFSUBR (Fconsole_enable_input);
+  DEFSUBR (Fconsole_disable_input);
+  DEFSUBR (Fconsole_on_window_system_p);
 
-  defsubr (&Ssuspend_emacs);
-  defsubr (&Sset_input_mode);
-  defsubr (&Scurrent_input_mode);
+  DEFSUBR (Fsuspend_emacs);
+  DEFSUBR (Fset_input_mode);
+  DEFSUBR (Fcurrent_input_mode);
 
   defsymbol (&Qconsolep, "consolep");
   defsymbol (&Qconsole_live_p, "console-live-p");

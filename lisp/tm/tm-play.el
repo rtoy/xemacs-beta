@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/9/26 (separated from tm-view.el)
-;; Version: $Id: tm-play.el,v 1.3 1997/02/04 02:36:07 steve Exp $
+;; Version: $Id: tm-play.el,v 1.4 1997/02/09 23:51:47 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -355,10 +355,11 @@
 		  (progn
 		    (or (file-exists-p total-file)
 			(save-excursion
-			  (set-buffer (find-file-noselect total-file))
+			  (set-buffer
+			   (get-buffer-create mime/temp-buffer-name))
 			  (erase-buffer)
 			  (insert total)
-			  (save-buffer)
+			  (write-file total-file)
 			  (kill-buffer (current-buffer))
 			  ))
 		    (string-to-number total)
@@ -366,13 +367,14 @@
 		(and (file-exists-p total-file)
 		     (save-excursion
 		       (set-buffer (find-file-noselect total-file))
-		       (and (re-search-forward "[0-9]+" nil t)
-			    (string-to-number
-			     (buffer-substring (match-beginning 0)
-					       (match-end 0)))
-			    )
-		       (kill-buffer (current-buffer))
-		       ))
+		       (prog1
+			   (and (re-search-forward "[0-9]+" nil t)
+				(string-to-number
+				 (buffer-substring (match-beginning 0)
+						   (match-end 0)))
+				)
+			 (kill-buffer (current-buffer))
+			 )))
 		)))
       (if (and total (> total 0))
 	  (catch 'tag
@@ -383,9 +385,9 @@
 		(let ((i 1))
 		  (while (<= i total)
 		    (setq file (concat root-dir "/" (int-to-string i)))
-		    (if (not (file-exists-p file))
+		    (or (file-exists-p file)
 			(throw 'tag nil)
-		      )
+			)
 		    (as-binary-input-file (insert-file-contents file))
 		    (goto-char (point-max))
 		    (setq i (1+ i))
@@ -422,6 +424,25 @@
 ;;; @ rot13-47
 ;;;
 
+(require 'view)
+
+(defconst mime-view-text/plain-mode-map (copy-keymap view-mode-map))
+(define-key mime-view-text/plain-mode-map
+  "q" (function mime-view-text/plain-exit))
+
+(defun mime-view-text/plain-mode ()
+  "\\{mime-view-text/plain-mode-map}"
+  (setq buffer-read-only t)
+  (setq major-mode 'mime-view-text/plain-mode)
+  (setq mode-name "MIME-View text/plain")
+  (use-local-map mime-view-text/plain-mode-map)
+  )
+
+(defun mime-view-text/plain-exit ()
+  (interactive)
+  (kill-buffer (current-buffer))
+  )
+
 (defun mime-article/decode-caesar (beg end cal)
   (let* ((cnum (mime-article/point-content-number beg))
 	 (cur-buf (current-buffer))
@@ -432,7 +453,14 @@
 	 (mode major-mode)
 	 str)
     (setq str (buffer-substring beg end))
-    (switch-to-buffer new-name)
+    (let ((pwin (or (get-buffer-window mother)
+		    (get-largest-window)))
+	  (buf (get-buffer-create new-name))
+	  )
+      (set-window-buffer pwin buf)
+      (set-buffer buf)
+      (select-window pwin)
+      )
     (setq buffer-read-only nil)
     (erase-buffer)
     (insert str)
@@ -450,7 +478,8 @@
       (goto-char (point-max))
       (tm:caesar-region)
       )
-    (view-mode)
+    (set-buffer-modified-p nil)
+    (mime-view-text/plain-mode)
     ))
 
 

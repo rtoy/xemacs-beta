@@ -243,12 +243,12 @@ record_property_change (Bufpos beg, Charcount length,
 #endif /* FSFmacs */
 
 
-DEFUN ("undo-boundary", Fundo_boundary, Sundo_boundary, 0, 0, 0 /*
+DEFUN ("undo-boundary", Fundo_boundary, 0, 0, 0, /*
 Mark a boundary between units of undo.
 An undo command will stop at this point,
 but another undo command will undo to the previous boundary.
-*/ )
-  ()
+*/
+       ())
 {
   if (EQ (current_buffer->undo_list, Qt))
     return Qnil;
@@ -360,12 +360,11 @@ truncate_undo_list (Lisp_Object list, int minsize, int maxsize)
     return Qnil;
 }
 
-DEFUN ("primitive-undo", Fprimitive_undo, Sprimitive_undo, 2, 2, 0 /*
+DEFUN ("primitive-undo", Fprimitive_undo, 2, 2, 0, /*
 Undo COUNT records from the front of the list LIST.
 Return what remains of the list.
-*/ )
-  (count, list)
-     Lisp_Object count, list;
+*/
+       (count, list))
 {
   struct gcpro gcpro1, gcpro2;
   Lisp_Object next = Qnil;
@@ -544,8 +543,8 @@ Return what remains of the list.
 void
 syms_of_undo (void)
 {
-  defsubr (&Sprimitive_undo);
-  defsubr (&Sundo_boundary);
+  DEFSUBR (Fprimitive_undo);
+  DEFSUBR (Fundo_boundary);
   defsymbol (&Qinhibit_read_only, "inhibit-read-only");
 }
 

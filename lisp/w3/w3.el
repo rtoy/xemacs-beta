@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/01/29 06:25:59
-;; Version: 1.61
+;; Created: 1997/02/08 00:49:52
+;; Version: 1.72
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -560,12 +560,15 @@ With prefix argument, use the URL of the hyperlink under point instead."
 		  (save-excursion
 		    (set-buffer url-working-buffer)
 		    (if x
-			(w3-add-urls-to-history x (url-view-url t)))
+			(w3-history-push x (url-view-url t)))
 		    (setq w3-current-last-buffer lastbuf)))
 		 (t
-		  (w3-add-urls-to-history x url)
+		  (w3-history-push x url)
 		  (w3-sentinel lastbuf)
-		  ))))
+		  (if (string-match "#\\(.*\\)" url)
+		      (progn
+			(push-mark (point) t)
+			(w3-find-specific-link (match-string 1 url))))))))
 	(if w3-track-last-buffer
 	    (setq w3-last-buffer buf))
 	(let ((w3-notify (if (memq w3-notify '(newframe bully 
@@ -584,59 +587,58 @@ With prefix argument, use the URL of the hyperlink under point instead."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; History for forward/back buttons
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-node-history nil "History for forward and backward jumping")
+(defvar w3-history-stack nil
+  "History stack viewing history.
+This is an assoc list, with the oldest items first.
+Each element is a cons cell of (url . timeobj), where URL
+is the normalized URL (default ports removed, etc), and TIMEOBJ is
+a standard Emacs time.  See the `current-time' function documentation
+for information on this format.")
 
-(defun w3-plot-course ()
-  "Show a map of where the user has been in this session of W3. !!!!NYI!!!"
-  (interactive)
-  (error "Sorry, w3-plot-course is not yet implemented."))
+(defun w3-history-find-url-internal (url)
+  "Search in the history list for URL.
+Returns a cons cell, where the car is the 'back' node, and
+the cdr is the 'next' node."
+  (let* ((node (assoc url w3-history-stack))
+	 (next (cadr (memq node w3-history-stack)))
+	 (last nil)
+	 (temp nil)
+	 (todo w3-history-stack))
+    ;; Last node is a little harder to find without using back links
+    (while (and (not last) todo)
+      (if (string= (caar todo) url)
+	  (setq last (or temp 'none))
+	(setq temp (pop todo))))
+    (cons (if (not (symbolp last)) last)
+	  next)))
 
-(defun w3-forward-in-history ()
+(defun w3-history-forward ()
   "Go forward in the history from this page"
   (interactive)
-  (let* ((thisurl (url-view-url t))
-	 (node (assoc (if (string= "" thisurl) (current-buffer) thisurl)
-		      w3-node-history))
-	 (url (cdr node))
-	 (w3-reuse-buffers 'yes))
-    (cond
-     ((null url) (error "No forward found for %s" thisurl))
-     ((and (bufferp url) (buffer-name url))
-      (switch-to-buffer url))
-     ((stringp url)
-      (w3-fetch url))
-     ((bufferp url)
-      (setq w3-node-history (delete node w3-node-history))
-      (error "Killed buffer in history, removed."))
-     (t
-      (error "Something is very wrong with the history!")))))
+  (let ((next (cadr (w3-history-find-url-internal (url-view-url t))))
+	(w3-reuse-buffers 'yes))
+    (if next
+	(w3-fetch next))))
 
-(defun w3-backward-in-history ()
+(defun w3-history-backward ()
   "Go backward in the history from this page"
   (interactive)
-  (let* ((thisurl (url-view-url t))
-	 (node (rassoc (if (string= thisurl "") (current-buffer) thisurl)
-			  w3-node-history))
-	 (url (car node))
-	 (w3-reuse-buffers 'yes))
-    (cond
-     ((null url) (error "No backward found for %s" thisurl))
-     ((and (bufferp url) (buffer-name url))
-      (switch-to-buffer url))
-     ((stringp url)
-      (w3-fetch url))
-     ((bufferp url)
-      (setq w3-node-history (delete node w3-node-history))
-      (error "Killed buffer in history, removed."))
-     (t
-      (error "Something is very wrong with the history!")))))
+  (let ((last (caar (w3-history-find-url-internal (url-view-url t))))
+	(w3-reuse-buffers 'yes))
+    (if last
+	(w3-fetch last))))
 
-(defun w3-add-urls-to-history (referer url)
+(defun w3-history-push (referer url)
   "REFERER is the url we followed this link from.  URL is the link we got to."
-  (let ((node (assoc referer w3-node-history)))
-    (if node
-	(setcdr node url)
-      (setq w3-node-history (cons (cons referer url) w3-node-history)))))
+  (if (not referer)
+      (setq w3-history-stack (list (cons url (current-time))))
+    (let ((node (memq (assoc referer w3-history-stack) w3-history-stack)))
+      (if node
+	  (setcdr node (list (cons url (current-time))))))))
+
+(defalias 'w3-add-urls-to-history 'w3-history-push)
+(defalias 'w3-backward-in-history 'w3-history-backward)
+(defalias 'w3-forward-in-history 'w3-history-forward)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1067,16 +1069,14 @@ and convert newlines into spaces."
 	      (let ((ps-spool-buffer-name " *w3-temp*"))
 		(if (get-buffer ps-spool-buffer-name)
 		    (kill-buffer ps-spool-buffer-name))
-		(w3-print-with-ps-print (current-buffer)
-					'ps-spool-buffer-with-faces)
+		(ps-spool-buffer-with-faces)
 		(set-buffer ps-spool-buffer-name)))
 	     ((equal "PostScript" format)
 	      (let ((ps-spool-buffer-name " *w3-temp*"))
 		(if (get-buffer ps-spool-buffer-name)
 		    (kill-buffer ps-spool-buffer-name))
 		(setq content-type "application/postscript")
-		(w3-print-with-ps-print (current-buffer)
-					'ps-spool-buffer-with-faces)
+		(ps-spool-buffer-with-faces)
 		(set-buffer ps-spool-buffer-name)))
 	     ((and under (equal "Formatted Text" format))
 	      (setq content-type "text/plain; charset=iso-8859-1")
@@ -1089,7 +1089,7 @@ and convert newlines into spaces."
 		(setq-default url-be-asynchronous nil)
 		(url-retrieve url)
 		(setq-default url-be-asynchronous old-asynch)
-		(w3-parse-tree-to-latex (w3-parse-buffer (current-buffer) t)
+		(w3-parse-tree-to-latex (w3-parse-buffer (current-buffer))
 					url)))
 	     ((equal "LaTeX Source" format)
 	      (setq content-type "application/x-latex; charset=iso-8859-1")
@@ -1270,20 +1270,6 @@ ftp.w3.org:/pub/www/doc."
   (interactive)
   (w3-fetch (concat "www://preview/" (buffer-name))))
 
-(defun w3-edit-source ()
-  "Edit the html document just retrieved"
-  (set-buffer url-working-buffer)
-  (let ((ttl (format "Editing %s Annotation: %s"
-		     (cond
-		      ((eq w3-editing-annotation 'group) "Group")
-		      ((eq w3-editing-annotation 'personal) "Personal")
-		      (t "Unknown"))
-		     (url-basepath url-current-file t)))
-	(str (buffer-string)))
-    (set-buffer (get-buffer-create ttl))
-    (insert str)
-    (kill-buffer url-working-buffer)))
-
 (defun w3-source ()
   "Show the source of a file"
   (let ((tmp (buffer-name (generate-new-buffer "Document Source"))))
@@ -1328,7 +1314,8 @@ ftp.w3.org:/pub/www/doc."
   (if (not (string-match "^www:" (or (url-view-url t) "")))
       (w3-convert-code-for-mule url-current-mime-type))
       
-  (let ((x (w3-build-continuation)))
+  (let ((x (w3-build-continuation))
+	(url (url-view-url t)))
     (while x
       (funcall (pop x)))))
 
@@ -1377,8 +1364,7 @@ ftp.w3.org:/pub/www/doc."
 	(let ((ps-spool-buffer-name " *w3-temp*"))
 	  (if (get-buffer ps-spool-buffer-name)
 	      (kill-buffer ps-spool-buffer-name))
-	  (w3-print-with-ps-print (current-buffer)
-				  'ps-spool-buffer-with-faces)
+	  (ps-spool-buffer-with-faces)
 	  (set-buffer ps-spool-buffer-name)))
        ((equal "LaTeX Source" format)
 	(w3-parse-tree-to-latex w3-current-parse url)
@@ -1910,6 +1896,8 @@ cached and in local mode."
       (message "%s" (url-truncate-url-for-viewing href)))
      (no-show
       nil)
+     (widget
+      (widget-echo-help (point)))
      (t
       nil))))
 
@@ -2232,8 +2220,6 @@ dumped with emacs."
       
   (add-minor-mode 'w3-netscape-emulation-minor-mode " NS"
 		  w3-netscape-emulation-minor-mode-map)
-  (add-minor-mode 'w3-annotation-minor-mode " Annotating"
-		  w3-annotation-minor-mode-map)
   (add-minor-mode 'w3-lynx-emulation-minor-mode " Lynx"
 		  w3-lynx-emulation-minor-mode-map)
   
@@ -2256,27 +2242,21 @@ dumped with emacs."
 				     (expand-file-name "~/mosaic.mnu"))
 	  w3-hotlist-file (or w3-hotlist-file
 			      (expand-file-name "~/mosaic.hot"))
-	  w3-personal-annotation-directory (or w3-personal-annotation-directory
-					       (expand-file-name
-						"~/mosaic.ann"))))
+	  ))
    ((memq system-type '(axp-vms vax-vms))
     (setq w3-documents-menu-file
 	  (or w3-documents-menu-file
 	      (expand-file-name "decw$system_defaults:documents.menu"))
 	  w3-hotlist-file (or w3-hotlist-file
 			      (expand-file-name "~/mosaic.hotlist-default"))
-	  w3-personal-annotation-directory
-	  (or w3-personal-annotation-directory
-	      (expand-file-name "~/mosaic-annotations/"))))
+	  ))
    (t 
     (setq w3-documents-menu-file
 	  (or w3-documents-menu-file
 	      (expand-file-name "/usr/local/lib/mosaic/documents.menu"))
 	  w3-hotlist-file (or w3-hotlist-file
 			      (expand-file-name "~/.mosaic-hotlist-default"))
-	  w3-personal-annotation-directory
-	  (or w3-personal-annotation-directory
-	      (expand-file-name "~/.mosaic-personal-annotations")))))
+	  )))
   
   (if (eq w3-delimit-emphasis 'guess)
       (setq w3-delimit-emphasis
@@ -2299,9 +2279,6 @@ dumped with emacs."
 
   ; Load in the hotlist if they haven't set it already
   (or w3-hotlist (w3-parse-hotlist))
-
-  ; Load in their personal annotations if they haven't set them already
-  (or w3-personal-annotations (w3-parse-personal-annotations))
 
   ; Set the default home page, honoring their defaults, then
   ; the standard WWW_HOME, then default to the documentation @ IU
@@ -2483,6 +2460,7 @@ Current keymap is:
       (run-hooks 'w3-mode-hook)
       (widget-setup)
       (setq url-current-passwd-count 0
+	    inhibit-read-only nil
 	    truncate-lines t
 	    mode-line-format w3-modeline-format)
       (if (and w3-current-isindex (equal url-current-type "http"))

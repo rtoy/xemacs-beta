@@ -58,10 +58,10 @@ Lisp_Object Qappend_message, Qcurrent_message_label,
             Qclear_message, Qdisplay_message;
 
 
-DEFUN ("minibuffer-depth", Fminibuffer_depth, Sminibuffer_depth, 0, 0, 0 /*
+DEFUN ("minibuffer-depth", Fminibuffer_depth, 0, 0, 0, /*
 Return current depth of activations of minibuffer, a nonnegative integer.
-*/ )
-  ()
+*/
+       ())
 {
   return make_int (minibuf_level);
 }
@@ -106,13 +106,10 @@ read_minibuffer_internal_unwind (Lisp_Object unwind_data)
   return Qnil;
 }
 
-DEFUN ("read-minibuffer-internal", 
-       Fread_minibuffer_internal, Sread_minibuffer_internal, 
-       1, 1, 0 /*
+DEFUN ("read-minibuffer-internal", Fread_minibuffer_internal, 1, 1, 0, /*
 Lowest-level interface to minibuffers.  Don't call this.
-*/ )
-  (prompt)
-     Lisp_Object prompt;
+*/
+       (prompt))
 {
   /* This function can GC */
   int speccount = specpdl_depth ();
@@ -269,7 +266,7 @@ ignore_completion_p (Lisp_Object completion_string,
 
 
 
-DEFUN ("try-completion", Ftry_completion, Stry_completion, 2, 3, 0 /*
+DEFUN ("try-completion", Ftry_completion, 2, 3, 0, /*
 Return common substring of all completions of STRING in ALIST.
 Each car of each element of ALIST is tested to see if it begins with STRING.
 All that match are compared together; the longest initial sequence
@@ -288,9 +285,8 @@ If optional third argument PREDICATE is non-nil,
 it is used to test each possible match.
 The match is a candidate only if PREDICATE returns non-nil.
 The argument given to PREDICATE is the alist element or the symbol from the obarray.
-*/ )
-  (string, alist, pred)
-     Lisp_Object string, alist, pred;
+*/
+       (string, alist, pred))
 {
   /* This function can GC */
   Lisp_Object bestmatch, tail;
@@ -472,7 +468,7 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 }
 
 
-DEFUN ("all-completions", Fall_completions, Sall_completions, 2, 3, 0 /*
+DEFUN ("all-completions", Fall_completions, 2, 3, 0, /*
 Search for partial matches to STRING in ALIST.
 Each car of each element of ALIST is tested to see if it begins with STRING.
 The value is a list of all the strings from ALIST that match.
@@ -488,9 +484,8 @@ it is used to test each possible match.
 The match is a candidate only if PREDICATE returns non-nil.
 The argument given to PREDICATE is the alist element or
 the symbol from the obarray.
-*/ )
-  (string, alist, pred)
-     Lisp_Object string, alist, pred;
+*/
+       (string, alist, pred))
 {
   /* This function can GC */
   Lisp_Object tail;
@@ -865,16 +860,16 @@ syms_of_minibuf (void)
 
   defsymbol (&Qcompletion_ignore_case, "completion-ignore-case");
 
-  defsubr (&Sminibuffer_depth);
+  DEFSUBR (Fminibuffer_depth);
 #if 0
-  defsubr (&Sminibuffer_prompt);
-  defsubr (&Sminibuffer_prompt_width);
+  DEFSUBR (Fminibuffer_prompt);
+  DEFSUBR (Fminibuffer_prompt_width);
 #endif
 
-  defsubr (&Sread_minibuffer_internal);
+  DEFSUBR (Fread_minibuffer_internal);
 
-  defsubr (&Stry_completion);
-  defsubr (&Sall_completions);
+  DEFSUBR (Ftry_completion);
+  DEFSUBR (Fall_completions);
 
   defsymbol (&Qappend_message, "append-message");
   defsymbol (&Qclear_message, "clear-message");

@@ -391,7 +391,8 @@ automatically, and you are prompted to fill in the variable parts.")))
 
 
 (defun skeleton-internal-1 (element &optional literal)
-  (cond ((char-or-string-p element)
+  (cond ((or (integerp element)
+	     (char-or-string-p element))
 	 (if (and (integerp element)	; -num
 		  (< element 0))
 	     (if skeleton-untabify

@@ -105,7 +105,7 @@
 			  ; defined there.
      (load-gc "help")
      (load-gc "buff-menu")
-     (load-gc "w3-sysdp")
+     ;; (load-gc "w3-sysdp")
      (load-gc "font") ; required by widget
      (load-gc "widget")
      (load-gc "custom") ; Before loaddefs so that defcustom exists.

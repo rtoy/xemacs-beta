@@ -1,5 +1,5 @@
 ;;; VM user and internal variable initialization
-;;; Copyright (C) 1989, 1990, 1991, 1993, 1994, 1995 Kyle E. Jones
+;;; Copyright (C) 1989-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,11 +21,10 @@
   "*Startup file for VM that is loaded the first time you run VM
 in an Emacs session.")
 
-(defvar vm-options-file "~/.vm.options"
+(defvar vm-preferences-file "~/.vm.preferences"
   "*Secondary startup file for VM, loaded after vm-init-file.
 This file is written and overwritten by VM and is not meant for
-users to edit directly.  Use the Options menu to change what
-appears in this file.")
+users to edit directly.")
 
 (defvar vm-primary-inbox "~/INBOX"
   "*Mail is moved from the system mailbox to this file for reading.")
@@ -136,6 +135,39 @@ environmental variables MAILPATH or MAIL if either of these
 variables are defined and no particular value for vm-spool-files
 has been specified.")
 
+(defvar vm-spool-file-suffixes nil
+  "*List of suffixes to be used to create possible spool file names
+for folders.  Example:
+
+  (setq vm-spool-file-suffixes '(\".spool\" \"-\"))
+
+If you visit a folder ~/mail/beekeeping, when VM attempts to
+retrieve new mail for that folder it will look for mail in
+~/mail/beekeeping.spool and ~/mail/beekeeping- in addition to
+scanning vm-spool-files for matches.
+
+The value of vm-spool-files-suffixes will not be used unless
+vm-crash-box-suffix is also defined, since a crash box is
+required for all mail retrieval from spool files.")
+
+(defvar vm-crash-box-suffix nil
+  "*String suffix used to create possible crash box file names for folders.
+When VM uses vm-spool-file-suffixes to create a spool file name,
+it will append the value of vm-crash-box-suffix to the folder's
+file name to create a crash box name.")
+
+(defvar vm-make-spool-file-name nil
+  "*Non-nil value should be a function that returns a spool file name
+for a folder.  The function will be called with one argument, the
+folder's file name.  If the folder does not have a file name,
+the function will not be called.")
+
+(defvar vm-make-crash-box-name nil
+  "*Non-nil value should be a function that returns a crash box file name
+for a folder.  The function will be called with one argument, the
+folder's file name.  If the folder does not have a file name,
+the function will not be called.")
+
 (defvar vm-pop-md5-program "md5"
   "*Program that reads a message on its standard input and writes an
 MD5 digest on its output.")
@@ -155,9 +187,7 @@ If the value is a number, then it specifies how often (in
 seconds) VM should check for new mail and try to retrieve it.
 This is done asynchronously and may occur while you are editing
 other files.  It should not disturb your editing, except perhaps
-for a pause while the work is being done.  The `itimer' package
-must be installed for this to work.  Otherwise a numeric value is
-the same as a value of t.")
+for a pause while the check is being done.")
 
 (defvar vm-default-folder-type
   (cond ((not (boundp 'system-configuration))
@@ -282,9 +312,13 @@ FSF Emacs always uses VM's builtin highlighting code.")
 
 (defvar vm-highlighted-header-face 'bold
   "*Face to be used to highlight headers.
-This variable is ignored under Lucid Emacs.
-See the documentation for the function `highlight-headers'
-to find out how to customize header highlighting under Lucid Emacs.")
+The header to highlight are sepcified by the vm-highlighted-header-regexp
+variable.
+
+This variable is ignored under XEmacs if vm-use-lucid-highlighting is
+nil.  XEmacs' highlight-headers package is used instead.  See the
+documentation for the function `highlight-headers' to find out how to
+customize header highlighting using this package.")
 
 (defvar vm-preview-lines 0
   "*Non-nil value N causes VM to display the visible headers + N lines of text
@@ -300,6 +334,290 @@ messages are immediately flagged as read.")
 (defvar vm-preview-read-messages nil
   "*Non-nil value means to preview messages even if they've already been read.
 A nil value causes VM to preview messages only if new or unread.")
+
+(defvar vm-display-using-mime t
+  "*Non-nil value means VM should display messages using MIME.
+MIME (Multipurpose Internet Mail Extensions) is a set of
+extensions to the standard Internet message format that allows
+reliable tranmission and reception of arbitrary data including
+images, audio and video as well as traditional text.
+
+A non-nil value for this variable means that VM will recognize
+MIME encoded messages and display them as specified by the
+various MIME standards specifications.
+
+A nil value means VM will not display MIME messages any
+differently than any other message.")
+
+;; try to avoid bad interaction with TM
+(defvar vm-send-using-mime (not (featurep 'mime-setup))
+  "*Non-nil value means VM should support sending messages using MIME.
+MIME (Multipurpose Internet Mail Extensions) is a set of
+extensions to the standard Internet message format that allows
+reliable tranmission and reception of arbitrary data including
+images, audio and video as well as traditional text.
+
+A non-nil value for this variable means that VM will
+
+  - allow you to attach files and messages to your outbound message.
+  - analyze the composition buffer when you send off a message and
+    encode it as needed.
+
+A nil value means VM will not offer any support for composing
+MIME messages.")
+
+(defvar vm-honor-mime-content-disposition nil
+  "*Non-nil value means use information from the Content-Disposition header
+to display MIME messages.  The Content-Disposition header
+specifies whether a MIME object should be displayed inline or
+treated as an attachment.  For VM, ``inline'' display means
+displaying the object in the Emacs buffer, if possible.
+Attachments will be displayed as a button that you can use
+mouse-2 to activate or mouse-3 to pull up a menu of options.")
+
+(defvar vm-auto-decode-mime-messages nil
+  "*Non-nil value causes MIME decoding to occur automatically
+when a message containing MIME objects is exposed.  A nil value
+means that you will have to run the `vm-decode-mime-message'
+command (normally bound to `D') manually to decode and display
+MIME objects.")
+
+(defvar vm-auto-displayed-mime-content-types '("text" "multipart")
+  "*List of MIME content types that should be displayed immediately
+after decoding.  Other types will be displayed as a button that
+the user must activate to display the object.
+
+A value of t means that all types should be displayed immediately.
+A nil value means never display MIME objects immediately; only use buttons.
+
+If the value is a list, it should be a list of strings, which
+should all be types or type/subtype pairs.  Example:
+
+ (setq vm-auto-displayed-mime-content-types '(\"text\" \"image/jpeg\"))
+
+If a top-level type is listed without a subtype, all subtypes of
+that type are assumed to be included.
+
+Note that some types are processed specially, and this variable does not
+apply to them.
+
+   Multipart/Digest and Message/RFC822 messages are always
+   displayed as a button to avoid visiting a new folder while the
+   user is moving around in the current folder.
+
+   Message/Partial messages are always displayed as a button,
+   because there always needs to be a way to trigger the assembly
+   of the parts into a full message.
+
+Any type that cannot be displayed internally or externally will
+be displayed as a button that allows you to save the body to a
+file.")
+
+(defvar vm-mime-internal-content-types t
+  "*List of MIME content types that should be displayed internally
+if Emacs is capable of doing so.  A value of t means that VM
+should always display an object internally if possible.  A nil
+value means never display MIME objects internally, which means VM
+have to run an external viewer to display MIME objects.
+
+If the value is a list, it should be a list of strings.  Example:
+
+ (setq vm-mime-internal-content-types '(\"text\" \"image/jpeg\"))
+
+If a top-level type is listed without a subtype, all subtypes of
+that type are assumed to be included.
+
+Note that all multipart types are always handled internally.
+There is no need to list them here.")
+
+(defvar vm-mime-external-content-types-alist nil
+  "*Alist of MIME content types and the external programs used to display them.
+If VM cannot display a type internally or has been instructed not
+to (see the documentation for the vm-mime-internal-content-types
+variable) it will try to launch an external program to display that
+type.
+
+The alist format is
+
+ ( (TYPE PROGRAM ARG ARG ... ) ... )
+
+TYPE is a string specifying a MIME type or type/subtype pair.
+Example \"text\" or \"image/jpeg\".  If a top-level type is
+listed without a subtype, all subtypes of that type are assumed
+to be included.
+
+PROGRAM is a string naming a program to run to display an object.
+Any ARGS will be passed to the program as arguments.  The octets
+that compose the object will be written into a file and the name
+of the file will be passed to the program as its last argument.
+
+Example:
+
+ (setq vm-mime-external-content-types-alist
+       '(
+	 (\"text/html\" 	\"netscape\")
+	 (\"image/gif\" 	\"xv\")
+	 (\"image/jpeg\" 	\"xv\")
+	 (\"video/mpeg\" 	\"mpeg_play\")
+	 (\"video\" 		\"xanim\")
+	)
+ )
+
+The first matching list element will be used.
+
+No multipart message will ever be sent to an external viewer.")
+
+(defvar vm-mime-type-converter-alist nil
+  "*Alist of MIME types and programs that can convert between them.
+If VM cannot display a content type, it will scan this list to
+see if the type can be converted into a type that it can display.
+
+The alist format is
+
+ ( (START-TYPE END-TYPE COMMAND-LINE ) ... )
+
+START-TYPE is a string specifying a MIME type or type/subtype pair.
+Example \"text\" or \"image/jpeg\".  If a top-level type is
+listed without a subtype, all subtypes of that type are assumed
+to be included.
+
+END-TYPE must be an exact type/subtype pair.  This is the type
+to which START-TYPE will be converted.
+
+COMMAND-LINE is a string giving a command line to be passed to
+the shell.  The octets that compose the object will be written to
+the standard input of the shell command.
+
+Example:
+
+ (setq vm-mime-type-converter-alist
+       '(
+	 (\"image/jpeg\"	\"image/gif\"	\"jpeg2gif\")
+	 (\"text/html\"		\"text/plain\"	\"striptags\")
+	)
+ )
+
+The first matching list element will be used.")
+
+(defvar vm-mime-alternative-select-method 'best-internal
+  "*Value tells how to choose which multipart/alternative part to display.
+A MIME message of type multipart/alternative has multiple message
+parts containing the same information, but each part may be
+formatted differently.  VM will display only one of the parts.
+This variable tells VM how to choose which part to display.
+
+A value of 'best means choose the part that is the most faithful to
+the sender's original content that can be displayed.
+
+A value of 'best-internal means choose the best part that can be
+displayed internally, i.e. with the built-in capabilities of Emacs.
+If none of the parts can be displayed internally, behavior reverts to
+that of 'best.")
+
+(defvar vm-mime-button-face
+    (cond ((fboundp 'find-face)
+	   (or (and (not (eq (device-type) 'tty)) (find-face 'gui-button-face)
+		    'gui-button-face)
+	       (and (find-face 'bold-italic) 'bold-italic)))
+	  ((fboundp 'facep)
+	   (or (and (facep 'gui-button-face) 'gui-button-face)
+	       (and (facep 'bold-italic) 'bold-italic))))
+  "*Face used for text in buttons that trigger the display of MIME objects.")
+
+(defvar vm-mime-8bit-composition-charset "iso-8859-1"
+  "*Character set that VM should assume if it finds non-US-ASCII characters
+in a composition buffer.  Composition buffers are assumed to use
+US-ASCII unless the buffer contains a byte with the high bit set.
+This variable specifies what character set VM should assume if
+such a character is found.")
+
+(defvar vm-mime-8bit-text-transfer-encoding 'quoted-printable
+  "*Symbol specifying what kind of transfer encoding to use on 8bit
+text.  Characters with the high bit set cannot safely pass
+through all mail gateways and mail transport software.  MIME has
+two transfer encodings that convert 8-bit data to 7-bit for same
+transport. Quoted-printable leaves the text mostly readable even
+if the recipent does not have a MIME-capable mail reader.  BASE64
+is unreadable with a MIME-capable mail reader, unless your name
+is U3BvY2s=.
+
+A value of 'quoted-printable, means to use quoted-printable encoding.
+A value of 'base64 means to use BASE64 encoding.
+A value of '8bit means to send the message as is.
+
+Note that this only applies to textual MIME content types.  Images, audio,
+video, etc. will always use BASE64 encoding.
+
+Note that lines of 1000 characters or longer will automatically
+trigger BASE64 encoding.  Carriage returns (ascii code 13) in the
+text will also trigger BASE64 encoding.")
+
+(defvar vm-mime-attachment-auto-type-alist
+  '(
+    ("\\.jpe?g"		.	"image/jpeg")
+    ("\\.gif"		.	"image/gif")
+    ("\\.png"		.	"image/png")
+    ("\\.tiff"		.	"image/tiff")
+    ("\\.htm?l"		.	"text/html")
+    ("\\.au"		.	"audio/basic")
+    ("\\.mpe?g" 	.	"video/mpeg")
+    ("\\.ps"		.	"application/postscript")
+   )
+  "*Alist used to guess a MIME content type based on a file name.
+The list format is 
+
+  ((REGEXP . TYPE) ...)
+
+REGEXP is a string that specifies a regular expression.
+TYPE is a string specifying a MIME content type.
+
+When a non-MIME file is attached to a MIME composition buffer,
+this list will be scanned until a REGEXP matches the file's name.
+The corresponding TYPE will be offered as a default when you are
+prompted for the file's type.")
+
+(defvar vm-mime-max-message-size nil
+  "*Largest MIME message that VM should send without fragmentation.
+The value should be a integer which specifies the size in bytes.
+A message larger than this value will be split into multiple parts
+for transmission using the MIME message/partial type.")
+
+(defvar vm-mime-attachment-save-directory nil
+  "*Non-nil value is a default directory for saving MIME attachments.
+When VM prompts you for a target file name when saving a MIME body,
+any relative pathnames will be relative to this directory.")
+
+(defvar vm-mime-avoid-folding-content-type nil
+  "*Non-nil means don't send folded Content-Type headers in MIME messages.
+`Folded' headers are headers broken into multiple lines as specified
+in RFC822 for readability and to avoid excessive line lengths.  At
+least one major UNIX vendor ships a version of sendmail that believes
+a folded Content-Type header is a syntax error, and returns any such
+message to sender.  A typical error message from such a sendmail
+version is,
+
+553 header syntax error, line \" charset=us-ascii\"
+
+If you see one of these, setting vm-mime-avoid-folding-content-type
+non-nil may let your mail get through.")
+
+(defvar vm-mime-base64-decoder-program nil
+  "*Non-nil value should be a string that names a MIME base64 decoder.
+The program should expect to read base64 data on its standard
+input and write the converted data to its standard output.")
+
+(defvar vm-mime-base64-decoder-switches nil
+  "*List of command line flags passed to the command named by
+vm-mime-base64-decoder-program.")
+
+(defvar vm-mime-base64-encoder-program nil
+  "*Non-nil value should be a string that names a MIME base64 encoder.
+The program should expect arbitrary data on its standard
+input and write base64 data to its standard output.")
+
+(defvar vm-mime-base64-encoder-switches nil
+  "*List of command line flags passed to the command named by
+vm-mime-base64-encoder-program.")
 
 (defvar vm-auto-next-message t
   "*Non-nil value causes VM to use vm-next-message to advance to the next
@@ -421,7 +739,7 @@ of the change in its internal memory and doesn't insert the
 changed data into the folder buffer until a particular message or
 the whole folder is saved to disk.  This makes normal Emacs
 auto-saving useless for VM folder buffers because the information
-you'd want to auto-save, i.e. the attribute changes, isn't in
+you'd want to auto-save, i.e. the attribute changes are not in
 the buffer when it is auto-saved.
 
 Setting vm-flush-interval to a numeric value will cause the VM's
@@ -755,17 +1073,23 @@ order in that case, with headers not matching any in the
 vm-forwarded-headers list appearing last in the header section of
 the forwarded message.")
 
-(defvar vm-forwarding-digest-type "rfc934"
+(defvar vm-forwarding-digest-type "mime"
   "*Non-nil value should be a string that specifies the type of
 message encapsulation format to use when forwarding a message.
 Legal values of this variable are:
 
 \"rfc934\"
 \"rfc1153\"
+\"mime\"
 nil
 
 A nil value means don't use a digest, just mark the beginning and
 end of the forwarded message.")
+
+(defvar vm-burst-digest-messages-inherit-labels t
+  "*Non-nil values means messages from a digest inherit the digest's labels.
+Labels are added to messages with vm-add-message-labels, normally
+bound to `l a'.")
 
 (defvar vm-digest-preamble-format "\"%s\" (%F)"
   "*String which specifies the format of the preamble lines generated by 
@@ -784,25 +1108,39 @@ ambient value of fill-column.   A nil value suppresses centering.")
   "*Header to insert into messages burst from a digest.
 Value should be a format string of the same type as vm-summary-format that describes a header to be inserted into each message burst from a digest.  The format string must end with a newline.")
 
-(defvar vm-digest-burst-type "rfc934"
+(defvar vm-digest-burst-type "guess"
   "*Value specifies the default digest type offered by vm-burst-digest
 when it asks you what type of digest you want to unpack.  Allowed
 values of this variable are:
 
    \"rfc934\"
    \"rfc1153\"
+   \"mime\"
    \"guess\"
+
+rfc1153 digests have a preamble, followed by a line of exactly 70
+dashes, with digested messages separated by lines of exactly 30 dashes.
+
+rfc934 digests separate messages on any line that begins with a few
+dashes, but doesn't require lines with only dashes or lines with a
+specific number of dashes.  In the text of the message, any line
+beginning with dashes is textually modified to be preceeded by a dash
+and a space to prevent confusion with message separators.
+
+MIME digests use whatever boundary that is specified by the
+boundary parameter in the Content-Type header of the digest.
 
 If the value is \"guess\", and you take the default
 response when vm-burst-digest queries you, VM will try to guess
 the digest type.")
 
-(defvar vm-digest-send-type "rfc934"
+(defvar vm-digest-send-type "mime"
   "*String that specifies the type of digest vm-send-digest will use.
 Legal values of this variable are:
 
 \"rfc934\"
 \"rfc1153\"
+\"mime\"
 
 ")
 
@@ -896,8 +1234,56 @@ appearance in that case, with headers not matching any in the
 vm-rfc1153-digest-headers list appearing last in the headers of
 the digestified messages.")
 
-(defvar vm-resend-bounced-headers
+(defvar vm-mime-digest-headers
   '("Resent-"
+    "From:" "Sender:"
+    "To:" "Cc:"
+    "Subject:"
+    "Date:"
+    "Message-ID:"
+    "Keywords:"
+    "MIME-Version:"
+    "Content-")
+  "*List of headers that should be appear in MIME digests
+created by VM.  These should be listed in the order you wish them
+to appear in the messages in the digest.  Regular expressions are
+allowed.  There's no need to anchor patterns with \"^\", as
+searches always start at the beginning of a line.  Put a colon at
+the end of patterns to get exact matches.  (E.g. \"Date\" matches
+\"Date\" and \"Date-Sent\".)  Header names are always matched
+case insensitively.
+
+If the value of vm-mime-digest-discard-header-regexp is nil, the headers
+matched by vm-mime-digest-headers are the only headers that will be
+kept.
+
+If vm-mime-digest-discard-header-regexp is non-nil, then only
+headers matched by that variable will be discarded; all others
+will be kept.  vm-mime-digest-headers determines the order of
+appearance in that case, with headers not matching any in the
+vm-mime-digest-headers list appearing last in the headers
+of the digestified messages.")
+
+(defvar vm-mime-digest-discard-header-regexp nil
+  "*Non-nil value should be a regular expression header that tells
+which headers should not appear in MIME digests created
+by VM.  This variable along with vm-mime-digest-headers
+determines which headers are kept and which are discarded.
+
+If the value of vm-mime-digest-discard-header-regexp is nil, the headers
+matched by vm-mime-digest-headers are the only headers that will be
+kept.
+
+If vm-mime-digest-discard-header-regexp is non-nil, then only
+headers matched by this variable will be discarded; all others
+will be kept.  vm-mime-digest-headers determines the order of
+appearance in that case, with headers not matching any in the
+vm-mime-digest-headers list appearing last in the headers
+of the digestified messages.")
+
+(defvar vm-resend-bounced-headers
+  '("MIME-Version:" "Content-"
+    "Resent-"
     "From:" "Sender:" "Reply-To:"
     "To:" "Cc:"
     "Subject:"
@@ -966,7 +1352,7 @@ the message.")
 (defvar vm-resend-discard-header-regexp "\\(\\(X400-\\)?Received:\\|Resent-\\)"
   "*Non-nil value should be a regular expression that tells
 what headers should not appear in a resent message.  This
-variable along with vm-resend-bounced-headers determines which
+variable along with vm-resend-headers determines which
 headers are kept and which headers are discarded.
 
 If the value of vm-resend-discard-header-regexp is nil,
@@ -1045,7 +1431,7 @@ The field width may be followed by a `.' and a number specifying
 the maximum allowed length of the substituted string.  If the
 string is longer than this value the right end of the string is
 truncated.  If the value is negative, the string is truncated on
-on the left instead of the right.
+the left instead of the right.
 
 The summary format need not be one line per message but it must end with
 a newline, otherwise the message pointer will not be displayed correctly
@@ -1060,6 +1446,10 @@ variable's value has no effect on existing summary buffers.")
 (defvar vm-summary-highlight-face 'bold
   "*Face to use to highlight the summary entry for the current message.
 Nil means don't highlight the current message's summary entry.")
+
+(defvar vm-mouse-track-summary t
+  "*Non-nil value means highlight summary lines as the mouse passes
+over them.")
 
 (defvar vm-summary-show-threads nil
   "*Non-nil value means VM should display and maintain
@@ -1121,10 +1511,6 @@ keep arrow centered.  A value of nil means VM will never bother centering
 the arrow.  A value that is not nil and not t causes VM to center the
 arrow only if the summary window is not the only existing window.")
 
-(defvar vm-summary-subject-no-newlines t
-  "*Non-nil value means VM should replace newlines with spaces in the subject
-displayed in the summary.")
-
 (defvar vm-subject-ignored-prefix "^\\(re: *\\)+"
   "*Non-nil value should be a regular expression that matches
 strings at the beginning of the Subject header that you want VM to ignore
@@ -1176,6 +1562,12 @@ This variable has no meaning if you're not running Emacs native
 under X Windows or some other window system that allows multiple
 Emacs frames.")
 
+(defvar vm-raise-frame-at-startup t
+  "*Specifies whether VM should raise its frame at startup.
+A value of nil means never raise the frame.
+A value of t means always raise the frame.
+Other values are reserved for future use.")
+
 (defvar vm-frame-per-folder t
   "*Non-nil value causes the folder visiting commands to visit in a new frame.
 Nil means the commands will use the current frame.  This variable
@@ -1216,6 +1608,24 @@ This variable has no meaning if you're not running Emacs native
 under X Windows or some other window system that allows multiple
 Emacs frames.")
 
+(defvar vm-frame-per-completion t
+  "*Non-nil value causes VM to open a new frame on mouse
+initiated completing reads.  A mouse initiated completing read
+occurs when you invoke a VM command using the mouse, either with a
+menu or a toolbar button.  That command must then prompt you for
+information, and there must be a limited set of proper responses.
+
+If these conditions are met and vm-frame-per-completion's value
+is non-nil, VM will create a new frame containing a list of
+responses that you can select with the mouse.
+
+A nil value means the current frame will be used to display the
+list of choices.
+
+This variable has no meaning if you're not running Emacs native
+under X Windows or some other window system that allows multiple
+Emacs frames.")
+
 (defvar vm-frame-parameter-alist nil
   "*Non-nil value is an alist of types and lists of frame parameters.
 This list tells VM what frame parameters to associate with each
@@ -1223,12 +1633,15 @@ new frame it creates of a specific type.
 
 The alist should be of this form
 
-((SYMBOL PARAMLIST) (SYMBOL2 PARAMLIST2) ...)
+  ((SYMBOL PARAMLIST) (SYMBOL2 PARAMLIST2) ...)
 
-SYMBOL must be one of `composition', `edit', `folder',
-`primary-folder' or `summary'.  It specifies the type of frame
-that the following PARAMLIST applies to.
+SYMBOL must be one of `completion', `composition', `edit',
+`folder', `primary-folder' or `summary'.  It specifies the type
+of frame that the following PARAMLIST applies to.
 
+`completion' specifies parameters for frames that display list of
+   choices generated by a mouse-initiated completing read.
+   (See vm-frame-per-completion.)
 `composition' specifies parameters for mail composition frames.
 `edit' specifies parameters for message edit frames
    (e.g. created by vm-edit-message-other-frame)
@@ -1236,7 +1649,7 @@ that the following PARAMLIST applies to.
    `vm-visit-' commands.
 `primary-folder' specifies parameters for the frame created by running
    `vm' without any arguments.
-`summary' specifies parameters for frames to display a summary buffer
+`summary' specifies parameters for frames that display a summary buffer
    (e.g. created by vm-summarize-other-frame)
 
 PARAMLIST is a list of pairs as described in the documentation for
@@ -1258,18 +1671,19 @@ Value should be a list of symbols that will determine which
 toolbar buttons will appears and in what order.  Valid symbol
 value within the list are:
 
-autofile
-compose
-delete/undelete
-file
-help
-next
-previous
-print
-quit
-reply
-visit
-nil
+    autofile
+    compose
+    delete/undelete
+    file
+    help
+    mime
+    next
+    previous
+    print
+    quit
+    reply
+    visit
+    nil
 
 If nil appears in the list, it should appear exactly once.  All
 buttons after nil in the list will be displayed flushright in
@@ -1301,8 +1715,16 @@ must be set non-nil for a toolbar to appear, however.
 
 Consider this variable experimental; it may not be supported forever.")
 
-(defvar vm-use-menus '(folder motion send mark label sort
-		       virtual undo dispose emacs nil help)
+(defvar vm-use-menus 
+  (nconc (list 'folder 'motion 'send 'mark 'label 'sort 'virtual)
+	 (cond ((string-match ".*-.*-\\(win95\\|nt\\)" system-configuration)
+		nil)
+	       (t (list 'undo)))
+	 (list 'dispose)
+	 (cond ((string-match ".*-.*-\\(win95\\|nt\\)" system-configuration)
+		nil)
+	       (t (list 'emacs)))
+	 (list nil 'help))
   "*Non-nil value causes VM to provide a menu interface.
 A value that is a list causes VM to install its own menubar.
 A value of 1 causes VM to install a \"VM\" item in the Emacs menubar.
@@ -1333,6 +1755,10 @@ This variable only has meaning in Emacs environments where menus
 are provided, which usually means Emacs has to be running under a
 window system.")
 
+(defvar vm-popup-menu-on-mouse-3 t
+  "*Non-nil value means VM should provide context-sensitive menus on mouse-3.
+A nil value means VM should not change the binding of mouse-3.")
+
 (defvar vm-warp-mouse-to-new-frame nil
   "*Non-nil value causes VM to move the mouse cursor into newly created frames.
 This is useful to give the new frame the focus under some window managers
@@ -1340,34 +1766,31 @@ that randomly place newly created frames.
 
 Nil means don't move the mouse cursor.")
 
-;; if browse-url is around (always will be in XEmacs 19.14 or later) use it;
-;; otherwise do our own support.
-(if (boundp 'browse-url-browser-function)
-    (defvaralias 'vm-url-browser 'browse-url-browser-function)
-  (defvar vm-url-browser
-    (cond ((fboundp 'w3-fetch-other-frame)
-	   'w3-fetch-other-frame)
-	  ((fboundp 'w3-fetch)
-	   'w3-fetch)
-	  (t 'vm-mouse-send-url-to-netscape))
-    "*Non-nil value means VM should enable URL passing.
-This means that VM will search for URLs (Universal Resource
+(defvar vm-url-browser
+  (cond ((fboundp 'w3-fetch-other-frame)
+	 'w3-fetch-other-frame)
+	((fboundp 'w3-fetch)
+	 'w3-fetch)
+	(t 'vm-mouse-send-url-to-netscape))
+  "*Non-nil value means VM should enable URL passing.
+This means that VM will search for URLs (Uniform Resource
 Locators) in messages and make it possible for you to pass them
 to a World Wide Web browser.
 
 Clicking mouse-2 on the URL will send it to the browser.
 
-Clicking mouse-3 on the URL will pop up a menu of browsers and
-you can pick which one you want to use.
+By default clicking mouse-3 on the URL will pop up a menu of
+browsers and you can pick which one you want to use.  If
+vm-popup-menu-on-mouse-3 is set to nil, you will not see the menu.
 
 Moving point to a character within the URL and pressing RETURN
-will send the URL to the browser (Only in XEmacs).
+will send the URL to the browser.
 
 If the value of vm-url-browser is a string, it should specify
 name of an external browser to run.  The URL will be passed to
 the program as its first argument.
 
-If the value of vm-url-browser is a symbol, if should specifiy a
+If the value of vm-url-browser is a symbol, it should specify a
 Lisp function to call.  The URL will be passed to the program as
 its first and only argument.  Use
 
@@ -1380,7 +1803,7 @@ for Netscape, and
 for Mosaic.  The advantage of using them is that they will display
 an URL using on existing Mosaic or Netscape process, if possible.
 
-A nil value means VM should not enable URL passing to browsers."))
+A nil value means VM should not enable URL passing to browsers.")
 
 (defvar vm-highlight-url-face 'bold-italic
   "*Non-nil value should be a face to use display URLs found in messages.
@@ -1465,6 +1888,14 @@ honor the value of vm-circular-folders.  A value that is not t
 and not nil means that motion should be done as if
 vm-circular-folders is set to nil.")
 
+(defvar vm-move-after-killing nil
+  "*Non-nil value causes VM's `k' command to automatically invoke
+vm-next-message or vm-previous-message after killing messages, to try
+to move past the deleted messages.  A value of t means motion
+should honor the value of vm-circular-folders.  A value that is
+not t and not nil means that motion should be done as if
+vm-circular-folders is set to nil.")
+
 (defvar vm-delete-after-saving nil
   "*Non-nil value causes VM automatically to mark messages for deletion
 after successfully saving them to a folder.")
@@ -1516,7 +1947,7 @@ folder itself undisturbed.")
   "*Command VM uses to print messages.")
 
 (defvar vm-print-command-switches lpr-switches
-  "*Command line flags passed to the command named by vm-print-command.
+  "*List of command line flags passed to the command named by vm-print-command.
 VM uses vm-print-command to print messages.")
 
 (defvar vm-berkeley-mail-compatibility
@@ -1528,13 +1959,9 @@ Mail.")
 (defvar vm-strip-reply-headers nil
   "*Non-nil value causes VM to strip away all comments and extraneous text
 from the headers generated in reply messages.  If you use the \"fakemail\"
-program as distributed with Emacs, you probably want to set this variable to
+program as distributed with Emacs, you probably want to set this variable
 to t, because as of Emacs v18.52 \"fakemail\" could not handle unstripped
 headers.")
-
-(defvar vm-inhibit-startup-message nil
-  "*Non-nil causes VM not to display its copyright notice, disclaimers
-etc. when started in the usual way.")
 
 (defvar vm-select-new-message-hook nil
   "*List of hook functions called every time a message with the 'new'
@@ -1701,6 +2128,17 @@ confusing.")
 (defvar vm-menu-setup-hook nil
   "*List of hook functions that are run just after all menus are initialized.")
 
+(defvar vm-mime-display-function nil
+  "*If non-nil, this should name a function to be called inside 
+vm-decode-mime-message to do the MIME display the current
+message.  The function is called with no arguments, and at the
+time of the call the current buffer will be the `presentation'
+buffer for the folder, which is a temporary buffer that VM uses
+for the display of MIME messages.  A copy of the current message
+will be in the presentation buffer at that time.  The normal work
+that vm-decode-mime-message would do is not done, because this
+function is expected to subsume all of it.")
+
 (defvar mail-yank-hooks nil
   "Hooks called after a message is yanked into a mail composition.
 
@@ -1756,6 +2194,10 @@ vm-mouse-send-url-to-netscape uses this.")
   "*Name of program to use to run Mosaic.
 vm-mouse-send-url-to-mosaic uses this.")
 
+(defvar vm-temp-file-directory "/tmp"
+  "*Name of a directory where VM can put temporary files.
+This name must not end with a slash.")
+
 (defvar vm-tale-is-an-idiot nil
   "*Non-nil value causes vm-mail-send to check multi-line recipient
 headers of outbound mail for lines that don't end with a
@@ -1785,6 +2227,7 @@ mail is not sent.")
     (define-key map " " 'vm-scroll-forward)
     (define-key map "b" 'vm-scroll-backward)
     (define-key map "\C-?" 'vm-scroll-backward)
+    (define-key map "D" 'vm-decode-mime-message)
     (define-key map "d" 'vm-delete-message)
     (define-key map "\C-d" 'vm-delete-message-backward)
     (define-key map "u" 'vm-undelete-message)
@@ -1849,6 +2292,8 @@ mail is not sent.")
     (define-key map "Ms" 'vm-unmark-messages-same-subject)
     (define-key map "MA" 'vm-mark-messages-same-author)
     (define-key map "Ma" 'vm-unmark-messages-same-author)
+    (define-key map "MR" 'vm-mark-summary-region)
+    (define-key map "Mr" 'vm-unmark-summary-region)
     (define-key map "M?" 'vm-mark-help)
     (define-key map "W" (make-sparse-keymap))
     (define-key map "WW" 'vm-apply-window-configuration)
@@ -1884,6 +2329,10 @@ mail is not sent.")
 (defvar vm-mail-mode-map 
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-v" vm-mode-map)
+    (define-key map "\C-c\C-p" 'vm-mime-preview-composition)
+    (define-key map "\C-c\C-e" 'vm-mime-encode-composition)
+    (define-key map "\C-c\C-a" 'vm-mime-attach-file)
+    (define-key map "\C-c\C-m" 'vm-mime-attach-mime-file)
     (define-key map "\C-c\C-y" 'vm-yank-message)
     (define-key map "\C-c\C-s" 'vm-mail-send)
     (define-key map "\C-c\C-c" 'vm-mail-send-and-exit)
@@ -1931,6 +2380,12 @@ mail is not sent.")
 (make-variable-buffer-local 'vm-last-message-pointer)
 (defvar vm-mail-buffer nil)
 (make-variable-buffer-local 'vm-mail-buffer)
+(defvar vm-presentation-buffer nil)
+(make-variable-buffer-local 'vm-presentation-buffer)
+(defvar vm-presentation-buffer-handle nil)
+(make-variable-buffer-local 'vm-presentation-buffer-handle)
+(defvar vm-mime-decoded nil)
+(make-variable-buffer-local 'vm-mime-decoded)
 (defvar vm-summary-buffer nil)
 (make-variable-buffer-local 'vm-summary-buffer)
 (defvar vm-summary-pointer nil)
@@ -1958,6 +2413,7 @@ mail is not sent.")
 (make-variable-buffer-local 'vm-modification-counter)
 (defvar vm-flushed-modification-counter nil)
 (make-variable-buffer-local 'vm-flushed-modification-counter)
+(defvar vm-tempfile-counter 0)
 (defvar vm-messages-needing-summary-update nil)
 (defvar vm-buffers-needing-display-update nil)
 (defvar vm-numbering-redo-start-point nil)
@@ -2010,7 +2466,8 @@ mail is not sent.")
 (defconst vm-supported-folder-types
   '("From_" "From_-with-Content-Length" "mmdf" "babyl"))
 (defconst vm-supported-window-configurations
-  '(("default")
+  '(
+    ("default")
     ("startup")
     ("quitting")
     ("composing-message")
@@ -2018,113 +2475,135 @@ mail is not sent.")
     ("marking-message")
     ("reading-message")
     ("searching-message")
+    ("vm")
+    ("vm-add-message-labels")
+    ("vm-apply-virtual-folder")
+    ("vm-auto-archive-messages")
+    ("vm-beginning-of-message")
+    ("vm-burst-digest")
+    ("vm-burst-mime-digest")
+    ("vm-burst-rfc1153-digest")
+    ("vm-burst-rfc934-digest")
+    ("vm-change-folder-type")
+    ("vm-clear-all-marks")
+    ("vm-continue-composing-message")
+    ("vm-create-virtual-folder")
+    ("vm-decode-mime-message")
     ("vm-delete-message")
     ("vm-delete-message-backward")
-    ("vm-undelete-message")
-    ("vm-kill-subject")
-    ("vm-expunge-folder")
-    ("vm-burst-digest")
-    ("vm-burst-rfc934-digest")
-    ("vm-burst-rfc1153-digest")
-    ("vm-edit-message")
+    ("vm-delete-message-labels")
     ("vm-discard-cached-data")
-    ("vm-edit-message-end")
+    ("vm-edit-message")
     ("vm-edit-message-abort")
-    ("vm-unread-message")
-    ("vm-quit-no-change")
+    ("vm-edit-message-end")
+    ("vm-edit-message-other-frame")
+    ("vm-end-of-message")
+    ("vm-expose-hidden-headers")
+    ("vm-expunge-folder")
+    ("vm-followup")
+    ("vm-followup-include-text")
+    ("vm-followup-include-text-other-frame")
+    ("vm-followup-other-frame")
+    ("vm-forward-message")
+    ("vm-forward-message-all-headers")
+    ("vm-forward-message-all-headers-other-frame")
+    ("vm-forward-message-other-frame")
+    ("vm-get-new-mail")
+    ("vm-goto-message")
+    ("vm-goto-message-last-seen")
+    ("vm-goto-parent-message")
+    ("vm-help")
+    ("vm-isearch-forward")
+    ("vm-kill-subject")
+    ("vm-load-init-file")
+    ("vm-mail")
+    ("vm-mail-other-frame")
+    ("vm-mail-other-window")
+    ("vm-mail-send")
+    ("vm-mail-send-and-exit")
+    ("vm-mark-all-messages")
+    ("vm-mark-help")
+    ("vm-mark-matching-messages")
+    ("vm-mark-message")
+    ("vm-mark-messages-same-author")
+    ("vm-mark-messages-same-subject")
+    ("vm-mark-summary-region")
+    ("vm-mark-thread-subtree")
+    ("vm-mode")
+    ("vm-move-message-backward")
+    ("vm-move-message-backward-physically")
+    ("vm-move-message-forward")
+    ("vm-move-message-forward-physically")
+    ("vm-next-command-uses-marks")
+    ("vm-next-message")
+    ("vm-next-message-no-skip")
+    ("vm-next-message-no-skip")
+    ("vm-next-message-same-subject")
+    ("vm-next-unread-message")
+    ("vm-other-frame")
+    ("vm-other-window")
+    ("vm-pipe-message-to-command")
+    ("vm-previous-message")
+    ("vm-previous-message-no-skip")
+    ("vm-previous-message-no-skip")
+    ("vm-previous-message-same-subject")
+    ("vm-previous-unread-message")
     ("vm-quit")
-    ("vm-save-buffer")
-    ("vm-write-file")
-    ("vm-save-folder")
+    ("vm-quit-just-bury")
+    ("vm-quit-just-iconify")
+    ("vm-quit-no-change")
+    ("vm-reply")
+    ("vm-reply-include-text")
+    ("vm-reply-include-text-other-frame")
+    ("vm-reply-other-frame")
+    ("vm-resend-bounced-message")
+    ("vm-resend-bounced-message-other-frame")
+    ("vm-resend-message")
+    ("vm-resend-message-other-frame")
     ("vm-save-and-expunge-folder")
+    ("vm-save-buffer")
+    ("vm-save-folder")
+    ("vm-save-message")
+    ("vm-save-message-sans-headers")
+    ("vm-scroll-backward")
+    ("vm-scroll-forward")
+    ("vm-send-digest")
+    ("vm-send-digest-other-frame")
+    ("vm-send-mime-digest")
+    ("vm-send-mime-digest-other-frame")
+    ("vm-send-rfc1153-digest")
+    ("vm-send-rfc1153-digest-other-frame")
+    ("vm-send-rfc934-digest")
+    ("vm-send-rfc934-digest-other-frame")
+    ("vm-set-message-attributes")
+    ("vm-show-copying-restrictions")
+    ("vm-show-no-warranty")
+    ("vm-sort-messages")
+    ("vm-submit-bug-report")
+    ("vm-summarize")
+    ("vm-summarize-other-frame")
+    ("vm-toggle-read-only")
+    ("vm-toggle-threads-display")
+    ("vm-undelete-message")
+    ("vm-undo")
+    ("vm-unmark-matching-messages")
+    ("vm-unmark-message")
+    ("vm-unmark-messages-same-author")
+    ("vm-unmark-messages-same-subject")
+    ("vm-unmark-summary-region")
+    ("vm-unmark-thread-subtree")
+    ("vm-unread-message")
+    ("vm-virtual-help")
     ("vm-visit-folder")
     ("vm-visit-folder-other-frame")
     ("vm-visit-folder-other-window")
-    ("vm-help")
-    ("vm-get-new-mail")
-    ("vm-load-init-file")
-    ("vm")
-    ("vm-other-frame")
-    ("vm-other-window")
-    ("vm-toggle-read-only")
-    ("vm-mode")
-    ("vm-show-copying-restrictions")
-    ("vm-show-no-warranty")
-    ("vm-clear-all-marks")
-    ("vm-mark-all-messages")
-    ("vm-mark-message")
-    ("vm-unmark-message")
-    ("vm-mark-messages-same-subject")
-    ("vm-unmark-messages-same-subject")
-    ("vm-mark-messages-same-author")
-    ("vm-unmark-messages-same-author")
-    ("vm-mark-matching-messages")
-    ("vm-unmark-matching-messages")
-    ("vm-mark-thread-subtree")
-    ("vm-unmark-thread-subtree")
-    ("vm-next-command-uses-marks")
-    ("vm-mark-help")
-    ("vm-submit-bug-report")
-    ("vm-goto-message")
-    ("vm-goto-message-last-seen")
-    ("vm-next-message")
-    ("vm-previous-message")
-    ("vm-next-message-no-skip")
-    ("vm-previous-message-no-skip")
-    ("vm-next-unread-message")
-    ("vm-previous-unread-message")
-    ("vm-scroll-forward")
-    ("vm-scroll-backward")
-    ("vm-expose-hidden-headers")
-    ("vm-beginning-of-message")
-    ("vm-end-of-message")
-    ("vm-yank-message-other-folder")
-    ("vm-yank-message")
-    ("vm-mail-send-and-exit")
-    ("vm-mail-send")
-    ("vm-reply")
-    ("vm-reply-include-text")
-    ("vm-followup")
-    ("vm-followup-include-text")
-    ("vm-forward-message")
-    ("vm-forward-message-all-headers")
-    ("vm-mail")
-    ("vm-resend-bounced-message")
-    ("vm-resend-message")
-    ("vm-send-digest")
-    ("vm-send-rfc934-digest")
-    ("vm-send-rfc1153-digest")
-    ("vm-reply-other-frame")
-    ("vm-reply-include-text-other-frame")
-    ("vm-followup-other-frame")
-    ("vm-followup-include-text-other-frame")
-    ("vm-forward-message-other-frame")
-    ("vm-forward-message-all-headers-other-frame")
-    ("vm-mail-other-frame")
-    ("vm-mail-other-window")
-    ("vm-resend-bounced-message-other-frame")
-    ("vm-resend-message-other-frame")
-    ("vm-send-digest-other-frame")
-    ("vm-send-rfc934-digest-other-frame")
-    ("vm-send-rfc1153-digest-other-frame")
-    ("vm-continue-composing-message")
-    ("vm-auto-archive-messages")
-    ("vm-save-message")
-    ("vm-save-message-sans-headers")
-    ("vm-pipe-message-to-command")
-    ("vm-isearch-forward")
-    ("vm-move-message-forward")
-    ("vm-move-message-backward")
-    ("vm-move-message-forward-physically")
-    ("vm-move-message-backward-physically")
-    ("vm-sort-messages")
-    ("vm-toggle-threads-display")
-    ("vm-summarize")
-    ("vm-summarize-other-frame")
-    ("vm-undo")
     ("vm-visit-virtual-folder")
     ("vm-visit-virtual-folder-other-frame")
-    ("vm-visit-virtual-folder-other-window")))
+    ("vm-visit-virtual-folder-other-window")
+    ("vm-write-file")
+    ("vm-yank-message")
+    ("vm-yank-message-other-folder")
+))
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
     "author" "reversed-author"
@@ -2182,7 +2661,7 @@ mail is not sent.")
     "unanswered"))
 
 (defvar vm-key-functions nil)
-(defconst vm-digest-type-alist '(("rfc934") ("rfc1153")))
+(defconst vm-digest-type-alist '(("rfc934") ("rfc1153") ("mime")))
 (defvar vm-completion-auto-correct t
   "Non-nil means that minibuffer-complete-file should aggressively erase
 the trailing part of a word that caused completion to fail, and retry
@@ -2195,11 +2674,12 @@ Should be just a list of strings, not an alist or an obarray.")
 append a space to words that complete unambiguously.")
 (defconst vm-attributes-vector-length 9)
 (defconst vm-cache-vector-length 20)
-(defconst vm-softdata-vector-length 16)
+(defconst vm-softdata-vector-length 18)
 (defconst vm-location-data-vector-length 6)
 (defconst vm-mirror-data-vector-length 5)
 (defconst vm-startup-message-lines
   '("Please use \\[vm-submit-bug-report] to report bugs."
+    "For discussion about the VM mail reader, see the gnu.emacs.vm.info newsgroup"
     "You may give out copies of VM.  Type \\[vm-show-copying-restrictions] to see the conditions"
     "VM comes with ABSOLUTELY NO WARRANTY; type \\[vm-show-no-warranty] for full details"
     "In Stereo (where available)"))
@@ -2207,7 +2687,7 @@ append a space to words that complete unambiguously.")
 ;; for the mode line
 (defvar vm-mode-line-format
   '("" "  %&%& "
-    ("VM: "
+    ("VM " vm-version ": "
      (vm-folder-read-only "read-only ")
      (vm-virtual-folder-definition (vm-virtual-mirror "mirrored "))
      "%b"
@@ -2277,7 +2757,6 @@ append a space to words that complete unambiguously.")
 (defvar vm-forward-list nil)
 (defvar vm-redistribute-list nil)
 (defvar current-itimer nil)
-(defvar mode-popup-menu nil)
 (defvar current-menubar nil)
 (defvar scrollbar-height nil)
 (defvar top-toolbar nil)
@@ -2292,8 +2771,11 @@ append a space to words that complete unambiguously.")
 ;; is loaded before highlight-headers.el
 (defvar highlight-headers-regexp "Subject[ \t]*:")
 (defvar vm-url-regexp
-  "\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]"
-  "Regular expression that matches an absolute URL.")
+  "<URL:\\([^>]+\\)>\\|\\(\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
+  "Regular expression that matches an absolute URL.
+The URL itself must be matched by a \\(..\\) grouping.
+VM will extract the URL by copying the lowest number grouping
+that has a match.")
 (defconst vm-month-alist
   '(("jan" "January" "1")
     ("feb" "February" "2")
@@ -2322,3 +2804,115 @@ append a space to words that complete unambiguously.")
 (defvar vm-delete-duplicates-obarray (make-vector 29 0))
 (defvar vm-mail-mode-map-parented nil)
 (defvar vm-xface-cache (make-vector 29 0))
+(defconst vm-mime-base64-alphabet
+  (concat
+   [
+     65  66  67  68  69  70  71  72  73  74  75  76  77
+     78  79  80  81  82  83  84  85  86  87  88  89  90
+     97  98  99 100 101 102 103 104 105 106 107 108 109
+    110 111 112 113 114 115 116 117 118 119 120 121 122
+     48  49  50  51  52  53  54  55  56  57  43  47
+   ]
+  ))
+(defconst vm-mime-base64-alphabet-decoding-vector
+  [
+     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+     0  0  0  0  0  0  0  0  0  0  0 62  0  0  0 63
+    52 53 54 55 56 57 58 59 60 61  0  0  0  0  0  0
+     0  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14
+    15 16 17 18 19 20 21 22 23 24 25  0  0  0  0  0
+     0 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40
+    41 42 43 44 45 46 47 48 49 50 51  0  0  0  0  0
+  ])
+
+;;(defconst vm-mime-base64-alphabet-decoding-alist
+;;  '(
+;;    ( 65 . 00) ( 66 . 01) ( 67 . 02) ( 68 . 03) ( 69 . 04) ( 70 . 05)
+;;    ( 71 . 06) ( 72 . 07) ( 73 . 08) ( 74 . 09) ( 75 . 10) ( 76 . 11)
+;;    ( 77 . 12) ( 78 . 13) ( 79 . 14) ( 80 . 15) ( 81 . 16) ( 82 . 17)
+;;    ( 83 . 18) ( 84 . 19) ( 85 . 20) ( 86 . 21) ( 87 . 22) ( 88 . 23)
+;;    ( 89 . 24) ( 90 . 25) ( 97 . 26) ( 98 . 27) ( 99 . 28) (100 . 29)
+;;    (101 . 30) (102 . 31) (103 . 32) (104 . 33) (105 . 34) (106 . 35)
+;;    (107 . 36) (108 . 37) (109 . 38) (110 . 39) (111 . 40) (112 . 41)
+;;    (113 . 42) (114 . 43) (115 . 44) (116 . 45) (117 . 46) (118 . 47)
+;;    (119 . 48) (120 . 49) (121 . 50) (122 . 51) ( 48 . 52) ( 49 . 53)
+;;    ( 50 . 54) ( 51 . 55) ( 52 . 56) ( 53 . 57) ( 54 . 58) ( 55 . 59)
+;;    ( 56 . 60) ( 57 . 61) ( 43 . 62) ( 47 . 63)
+;;   ))
+;;
+;;(defvar vm-mime-base64-alphabet-decoding-vector
+;;  (let ((v (make-vector 123 nil))
+;;	(p vm-mime-base64-alphabet-decoding-alist))
+;;    (while p
+;;      (aset v (car (car p)) (cdr (car p)))
+;;      (setq p (cdr p)))
+;;    v ))
+
+(defvar vm-message-garbage-alist nil)
+(make-variable-buffer-local 'vm-message-garbage-alist)
+(defvar vm-folder-garbage-alist nil)
+(make-variable-buffer-local 'vm-folder-garbage-alist)
+(defconst vm-mime-header-list '("MIME-Version:" "Content-"))
+(defconst vm-mime-xemacs-mule-charset-alist
+  '(
+    ("us-ascii"		no-conversion)
+    ("iso-8859-1"	no-conversion)
+    ("iso-8859-2"	iso-8859-2)
+    ("iso-8859-3"	iso-8859-3)
+    ("iso-8859-4"	iso-8859-4)
+    ("iso-8859-5"	iso-8859-5)
+    ("iso-8859-6"	iso-8859-6)
+    ("iso-8859-7"	iso-8859-7)
+    ("iso-8859-8"	iso-8859-8)
+    ("iso-8859-9"	iso-8859-9)
+    ("iso-2022-jp"	iso-2022-jp)
+    ;; probably not correct, but probably better than nothing.
+    ("iso-2022-jp-2"	iso-2022-jp)
+    ("iso-2022-int-1"	iso-2022-int-1)
+    ("iso-2022-kr"	iso-2022-kr)
+    ("euc-kr"		iso-2022-kr)
+   ))
+(defconst vm-mime-charset-completion-alist
+  '(
+    ("us-ascii")
+    ("iso-8859-1")
+    ("iso-8859-2")
+    ("iso-8859-3")
+    ("iso-8859-4")
+    ("iso-8859-5")
+    ("iso-8859-6")
+    ("iso-8859-7")
+    ("iso-8859-8")
+    ("iso-8859-9")
+    ("iso-2022-jp")
+    ("iso-2022-jp-2")
+    ("iso-2022-int-1")
+    ("iso-2022-kr")
+   ))
+(defconst vm-mime-type-completion-alist
+  '(
+    ("text/plain")
+    ("text/enriched")
+    ("text/html")
+    ("audio/basic")
+    ("image/jpeg")
+    ("image/png")
+    ("image/gif")
+    ("image/tiff")
+    ("video/mpeg")
+    ("application/postscript")
+    ("application/octet-stream")
+    ("message/rfc822")
+   ))
+(defconst vm-mime-encoded-word-regexp
+  "=\\?\\([^?]+\\)\\?\\([BQ]\\)\\?\\([^?]+\\)\\?=")
+;; for MS-DOS and Windows NT
+;;    nil value means text file
+;;      t value means binary file
+;; presumably it controls whether LF -> CRLF mapping is done
+;; when writing to files.
+(defvar buffer-file-type)
+(defvar vm-frame-list nil)
+(if (not (boundp 'shell-command-switch))
+    (defvar shell-command-switch "-c"))

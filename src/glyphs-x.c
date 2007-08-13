@@ -3516,8 +3516,7 @@ subwindow_hash (Lisp_Object obj, int depth)
 /* #### These are completely un-re-implemented in 19.14.  Get it done
    for 19.15. */
 
-DEFUN ("make-subwindow", Fmake_subwindow, Smake_subwindow,
-       0, 3, 0 /*
+DEFUN ("make-subwindow", Fmake_subwindow, 0, 3, 0, /*
 Creates a new `subwindow' object of size WIDTH x HEIGHT.
 The default is a window of size 1x1, which is also the minimum allowed
 window size.  Subwindows are per-frame.  A buffer being shown in two
@@ -3528,9 +3527,8 @@ display the window.  If the frame is not specified, the selected frame
 is used.
 
 Subwindows are not currently implemented.
-*/ )
-  (width, height, frame)
-  Lisp_Object width, height, frame;
+*/
+       (width, height, frame))
 {
   Display *dpy;
   Screen *xs;
@@ -3591,13 +3589,11 @@ Subwindows are not currently implemented.
 }
 
 /* #### Should this function exist? */
-DEFUN ("change-subwindow-property", Fchange_subwindow_property,
-       Schange_subwindow_property, 3, 3, 0 /*
+DEFUN ("change-subwindow-property", Fchange_subwindow_property, 3, 3, 0, /*
 For the given SUBWINDOW, set PROPERTY to DATA, which is a string.
 Subwindows are not currently implemented.
-*/ )
-  (subwindow, property, data)
-  Lisp_Object subwindow, property, data;
+*/
+       (subwindow, property, data))
 {
   Atom property_atom;
   struct Lisp_Subwindow *sw;
@@ -3620,59 +3616,51 @@ Subwindows are not currently implemented.
   return (property);
 }
 
-DEFUN ("subwindowp", Fsubwindowp, Ssubwindowp, 1, 1, 0 /*
+DEFUN ("subwindowp", Fsubwindowp, 1, 1, 0, /*
 Return non-nil if OBJECT is a subwindow.
 Subwindows are not currently implemented.
-*/ )
-  (object)
-  Lisp_Object object;
+*/
+       (object))
 {
   return (SUBWINDOWP (object) ? Qt : Qnil);
 }
 
-DEFUN ("subwindow-width", Fsubwindow_width, Ssubwindow_width,
-       1, 1, 0 /*
+DEFUN ("subwindow-width", Fsubwindow_width, 1, 1, 0, /*
 Width of SUBWINDOW.
 Subwindows are not currently implemented.
-*/ )
-  (subwindow)
-  Lisp_Object subwindow;
+*/
+       (subwindow))
 {
   CHECK_SUBWINDOW (subwindow);
   return (make_int (XSUBWINDOW (subwindow)->width));
 }
 
-DEFUN ("subwindow-height", Fsubwindow_height, Ssubwindow_height,
-       1, 1, 0 /*
+DEFUN ("subwindow-height", Fsubwindow_height, 1, 1, 0, /*
 Height of SUBWINDOW.
 Subwindows are not currently implemented.
-*/ )
-  (subwindow)
-  Lisp_Object subwindow;
+*/
+       (subwindow))
 {
   CHECK_SUBWINDOW (subwindow);
   return (make_int (XSUBWINDOW (subwindow)->height));
 }
 
-DEFUN ("subwindow-xid", Fsubwindow_xid, Ssubwindow_xid, 1, 1, 0 /*
+DEFUN ("subwindow-xid", Fsubwindow_xid, 1, 1, 0, /*
 Return the xid of SUBWINDOW as a number.
 Subwindows are not currently implemented.
-*/ )
-  (subwindow)
-  Lisp_Object subwindow;
+*/
+       (subwindow))
 {
   CHECK_SUBWINDOW (subwindow);
   return (make_int (XSUBWINDOW (subwindow)->subwindow));
 }
 
-DEFUN ("resize-subwindow", Fresize_subwindow, Sresize_subwindow,
-       1, 3, 0 /*
+DEFUN ("resize-subwindow", Fresize_subwindow, 1, 3, 0, /*
 Resize SUBWINDOW to WIDTH x HEIGHT.
 If a value is nil that parameter is not changed.
 Subwindows are not currently implemented.
-*/ )
-  (subwindow, width, height)
-  Lisp_Object subwindow, width, height;
+*/
+       (subwindow, width, height))
 {
   int neww, newh;
   struct Lisp_Subwindow *sw;
@@ -3698,13 +3686,11 @@ Subwindows are not currently implemented.
   return subwindow;
 }
 
-DEFUN ("force-subwindow-map", Fforce_subwindow_map,
-       Sforce_subwindow_map, 1, 1, 0 /*
+DEFUN ("force-subwindow-map", Fforce_subwindow_map, 1, 1, 0, /*
 Generate a Map event for SUBWINDOW.
 Subwindows are not currently implemented.
-*/ )
-     (subwindow)
-     Lisp_Object subwindow;
+*/
+       (subwindow))
 {
   CHECK_SUBWINDOW (subwindow);
 
@@ -3724,14 +3710,14 @@ syms_of_glyphs_x (void)
 {
   defsymbol (&Qsubwindowp, "subwindowp");
 
-  defsubr (&Smake_subwindow);
-  defsubr (&Schange_subwindow_property);
-  defsubr (&Ssubwindowp);
-  defsubr (&Ssubwindow_width);
-  defsubr (&Ssubwindow_height);
-  defsubr (&Ssubwindow_xid);
-  defsubr (&Sresize_subwindow);
-  defsubr (&Sforce_subwindow_map);
+  DEFSUBR (Fmake_subwindow);
+  DEFSUBR (Fchange_subwindow_property);
+  DEFSUBR (Fsubwindowp);
+  DEFSUBR (Fsubwindow_width);
+  DEFSUBR (Fsubwindow_height);
+  DEFSUBR (Fsubwindow_xid);
+  DEFSUBR (Fresize_subwindow);
+  DEFSUBR (Fforce_subwindow_map);
 
   defkeyword (&Q_mask_file, ":mask-file");
   defkeyword (&Q_mask_data, ":mask-data");

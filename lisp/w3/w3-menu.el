@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/21 20:54:49
-;; Version: 1.25
+;; Created: 1997/02/08 05:30:56
+;; Version: 1.27
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,8 +44,8 @@
 (defvar w3-links-menu nil "Menu for w3-mode in XEmacs.")
 (make-variable-buffer-local 'w3-links-menu)
 
-(defvar w3-use-menus '(file edit view go bookmark options
-		       buffers style emacs nil help)
+(defvar w3-use-menus '(file edit view go bookmark options buffers style
+			    emacs nil help)
   "*Non-nil value causes W3 to provide a menu interface.
 A value that is a list causes W3 to install its own menubar.
 A value of 1 causes W3 to install a \"W3\" item in the Emacs menubar.
@@ -70,7 +70,11 @@ nil		-- ** special **
 
 If nil appears in the list, it should appear exactly once.  All
 menus after nil in the list will be displayed flushright in the
-menubar.")
+menubar.
+
+NOTE!  The current port of Emacs to Windows NT/95 does not support
+buttons in the menubar, so the 'emacs' keyword is currently ignored
+on that platform.")
 
 (defun w3-menu-hotlist-constructor (menu-items)
   (or (cdr w3-html-bookmarks)
@@ -226,7 +230,6 @@ menubar.")
     ["PostScript" (w3-mail-current-document nil "PostScript") t]
     ["LaTeX Source" (w3-mail-current-document nil "LaTeX Source") t]
     )
-   ["Add Annotation" w3-annotation-add w3-personal-annotation-directory]
    (if w3-running-xemacs
        "---:shadowDoubleEtchedIn"
      "---")
@@ -277,8 +280,8 @@ menubar.")
 (defconst w3-menu-go-menu
   (list
    "Go"
-   ["Forward" w3-forward-in-history t]
-   ["Backward" w3-backward-in-history t]
+   ["Forward" w3-history-forward (cdr (w3-history-find-url-internal (url-view-url t)))]
+   ["Back" w3-history-backward (car (w3-history-find-url-internal (url-view-url t)))]
    ["Home" w3 w3-default-homepage]
    ["View History..." w3-show-history-list url-keep-history]
    "----"
@@ -466,7 +469,13 @@ menubar.")
 		 (search
 		  (cons "Search" w3-menu-fsfemacs-search-menu))
 		 (emacs
-		  (cons "[Emacs]" 'w3-menu-toggle-menubar))))
+		  ;; FIXME!!! Currently, win32 doesn't support buttons
+		  ;; in menubars, so we hack around it and ignore the
+		  ;; 'emacs keyword on that platform.  REMOVE THIS CODE
+		  ;; as soon as that is fixed.  19.35 timeframe?
+		  (if (eq (device-type) 'win32)
+		      nil
+		    (cons "[Emacs]" 'w3-menu-toggle-menubar)))))
 	      cons
 	      (vec (vector 'rootmenu 'w3 nil))
 	      ;; menus appear in the opposite order that we

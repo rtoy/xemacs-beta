@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/01/31 04:26:17
-;; Version: 1.115
+;; Created: 1997/02/08 06:51:44
+;; Version: 1.123
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -365,7 +365,12 @@ as the bullet character.")
 			 (point)))))
   (goto-char (point-max))
   (add-text-properties w3-scratch-start-point
-		       (point) (list 'face w3-active-faces 'duplicable t))
+		       (point) (list 'face w3-active-faces
+				     'start-open t
+				     'end-open t
+				     'rear-nonsticky t
+				     'duplicable t
+				     'read-only t))
   (if (car w3-active-voices)
       (add-text-properties w3-scratch-start-point (point)
 			   (list 'personality (car w3-active-voices))))
@@ -618,43 +623,47 @@ as the bullet character.")
 (defun w3-maybe-start-image-download (widget)
   (let* ((src (widget-get widget 'src))
 	 (cached-glyph (w3-image-cached-p src)))
-    (if (and cached-glyph (widget-glyphp cached-glyph))
-	(setq w3-image-widgets-waiting (cons widget w3-image-widgets-waiting))
-      (cond
-       ((or w3-delay-image-loads	; Delaying images
-	    (not (fboundp 'valid-specifier-domain-p)) ; Can't do images
-	    (eq (device-type) 'tty))	; Why bother?
-	(w3-add-delayed-graphic widget))
-       ((not (w3-image-loadable-p src nil)) ; Hey, we can't load it!
-	(w3-warn 'images (format "Skipping image %s" (url-basepath src t)))
-	(w3-add-delayed-graphic widget))
-       (t				; Grab the images
-	(let (
-	      (url-request-method "GET")
-	      (old-asynch url-be-asynchronous)
-	      (url-request-data nil)
-	      (url-request-extra-headers nil)
-	      (url-source t)
-	      (url-mime-accept-string (substring
-				       (mapconcat
-					(function
-					 (lambda (x)
-					   (if x
-					       (concat (car x) ",")
-					     "")))
-					w3-allowed-image-types "")
-				       0 -1))
-	      (url-working-buffer (generate-new-buffer-name " *W3GRAPH*")))
-	  (setq-default url-be-asynchronous t)
-	  (setq w3-graphics-list (cons (cons src (make-glyph))
-				       w3-graphics-list))
-	  (save-excursion
-	    (set-buffer (get-buffer-create url-working-buffer))
-	    (setq url-current-callback-data (list widget)
-		  url-be-asynchronous t
-		  url-current-callback-func 'w3-finalize-image-download)
-	    (url-retrieve src))
-	  (setq-default url-be-asynchronous old-asynch)))))))
+    (cond
+     ((and cached-glyph
+	   (widget-glyphp cached-glyph)
+	   (not (eq 'nothing
+		    (image-instance-type
+		     (glyph-image-instance cached-glyph)))))
+      (setq w3-image-widgets-waiting (cons widget w3-image-widgets-waiting)))
+     ((or w3-delay-image-loads		; Delaying images
+	  (not (fboundp 'valid-specifier-domain-p)) ; Can't do images
+	  (eq (device-type) 'tty))	; Why bother?
+      (w3-add-delayed-graphic widget))
+     ((not (w3-image-loadable-p src nil)) ; Hey, we can't load it!
+      (w3-warn 'images (format "Skipping image %s" (url-basepath src t)))
+      (w3-add-delayed-graphic widget))
+     (t					; Grab the images
+      (let (
+	    (url-request-method "GET")
+	    (old-asynch url-be-asynchronous)
+	    (url-request-data nil)
+	    (url-request-extra-headers nil)
+	    (url-source t)
+	    (url-mime-accept-string (substring
+				     (mapconcat
+				      (function
+				       (lambda (x)
+					 (if x
+					     (concat (car x) ",")
+					   "")))
+				      w3-allowed-image-types "")
+				     0 -1))
+	    (url-working-buffer (generate-new-buffer-name " *W3GRAPH*")))
+	(setq-default url-be-asynchronous t)
+	(setq w3-graphics-list (cons (cons src (make-glyph))
+				     w3-graphics-list))
+	(save-excursion
+	  (set-buffer (get-buffer-create url-working-buffer))
+	  (setq url-current-callback-data (list widget)
+		url-be-asynchronous t
+		url-current-callback-func 'w3-finalize-image-download)
+	  (url-retrieve src))
+	(setq-default url-be-asynchronous old-asynch))))))
 
 (defun w3-finalize-image-download (widget)
   (let ((glyph nil)
@@ -794,6 +803,7 @@ as the bullet character.")
  	  (setq st (min (point-max) (1+ nd))))))))
 
 (defun w3-size-of-tree (tree minmax)
+  (declare (special args))
   (save-excursion
     (save-restriction
       (narrow-to-region (point) (point))
@@ -839,6 +849,7 @@ as the bullet character.")
 
 (defun w3-display-table-dimensions (node)
   ;; fill-column sets maximum width
+  (declare (special args))
   (let (min-vector
 	max-vector
 	rows cols
@@ -1299,7 +1310,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		   (setq this-rectangle (aref formatted-cols i))
 		   (if (> height (length this-rectangle))
 		       (let ((colspan-fill-line
-			      (make-string (aref table-colwidth i) ? )))
+			      (make-string (abs (aref table-colwidth i)) ? )))
 			 (case valign
 			   ((center middle)
 			    (aset formatted-cols i
@@ -1481,6 +1492,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	(content-stack (list (list node)))
 	(right-margin-stack (list fill-column))
 	(left-margin-stack (list 0))
+	(inhibit-read-only t)
 	node
 	insert-before
 	insert-after
@@ -1808,25 +1820,25 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 					       w3-current-form-number)
 					 args))
 	       (w3-handle-content node)))
-	    (keygen
-	     (w3-form-add-element 'keygen
-				  (or (w3-get-attribute 'name)
-				      (w3-get-attribute 'id)
-				      "keygen")
-				  nil	; value
-				  nil	; size
-				  nil	; maxlength
-				  nil   ; default
-				  w3-display-form-id ; action
-				  nil	; options
-				  w3-current-form-number
-				  (w3-get-attribute 'id) ; id
-				  nil	; checked
-				  (car w3-active-faces)))
+;	    (keygen
+;	     (w3-form-add-element 'keygen
+;				  (or (w3-get-attribute 'name)
+;				      (w3-get-attribute 'id)
+;				      "keygen")
+;				  nil	; value
+;				  nil	; size
+;				  nil	; maxlength
+;				  nil   ; default
+;				  w3-display-form-id ; action
+;				  nil	; options
+;				  w3-current-form-number
+;				  (w3-get-attribute 'id) ; id
+;				  nil	; checked
+;				  (car w3-active-faces)))
 	    (input
 	     (w3-form-add-element
 	      (w3-display-normalize-form-info args)
-	      (car w3-active-faces))
+	      w3-active-faces)
 	     (w3-handle-empty-tag)
 	     )
 	    (select
@@ -1870,7 +1882,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		     (w3-handle-content node))
 		 (setq plist (plist-put plist 'type 'option)
 		       plist (plist-put plist 'options options))
-		 (w3-form-add-element plist (car w3-active-faces))
+		 (w3-form-add-element plist w3-active-faces)
 		 ;; This should really not be necessary, but some versions
 		 ;; of the widget library leave point _BEFORE_ the menu
 		 ;; widget instead of after.
@@ -1882,7 +1894,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 			    (apply 'concat (nth 2 node)))))
 	       (setq plist (plist-put plist 'type 'multiline)
 		     plist (plist-put plist 'value value))
-	       (w3-form-add-element plist (car w3-active-faces)))
+	       (w3-form-add-element plist w3-active-faces))
 	     (w3-handle-empty-tag)
 	     )
 	    (style
@@ -1954,34 +1966,46 @@ Should be run before restoring w3-table-border-chars to ascii characters."
     (- nd st)))
 
 
+(defun w3-fixup-eol-faces ()
+  ;; Remove 'face property at end of lines - underlining screws up stuff
+  (let ((inhibit-read-only t))
+    (save-excursion
+      (goto-char (point-min))
+      (while (search-forward "\n" nil t)
+	(put-text-property (match-beginning 0) (match-end 0) 'face nil)))))
+
 (defsubst w3-finish-drawing ()
-  (if (and (boundp 'w3-image-widgets-waiting) w3-image-widgets-waiting)
-      (let (url glyph widget)
-	(while w3-image-widgets-waiting
-	  (setq widget (car w3-image-widgets-waiting)
-		w3-image-widgets-waiting (cdr w3-image-widgets-waiting)
-		url (widget-get widget 'src)
-		glyph (cdr-safe (assoc url w3-graphics-list)))
-	  (widget-value-set widget glyph)))
-    ;;(w3-handle-annotations)
-    ;;(w3-handle-headers)
-    )
+  (let (url glyph widget)
+    (while w3-image-widgets-waiting
+      (setq widget (car w3-image-widgets-waiting)
+	    w3-image-widgets-waiting (cdr w3-image-widgets-waiting)
+	    url (widget-get widget 'src)
+	    glyph (cdr-safe (assoc url w3-graphics-list)))
+      (condition-case nil
+	  (widget-value-set widget glyph)
+	(error nil))))
+  (and (not w3-running-xemacs)
+       (not (eq (device-type) 'tty))
+       (w3-fixup-eol-faces))
+  ;;(w3-handle-headers)
   )
 
 (defun w3-region (st nd)
   (if (not w3-setup-done) (w3-do-setup))
   (let* ((source (buffer-substring st nd))
-	 (w3-display-same-buffer t)
+	 (w3-dislplay-same-buffer t)
 	 (parse nil))
-    (save-excursion
-      (set-buffer (get-buffer-create " *w3-region*"))
-      (erase-buffer)
-      (insert source)
-      (setq parse (w3-parse-buffer (current-buffer))))
-    (narrow-to-region st nd)
-    (delete-region (point-min) (point-max))
-    (w3-draw-tree parse)
-    (w3-finish-drawing)))
+    (save-window-excursion
+      (save-excursion
+	(set-buffer (get-buffer-create " *w3-region*"))
+	(erase-buffer)
+	(insert source)
+	(setq parse (w3-parse-buffer (current-buffer))))
+      (narrow-to-region st nd)
+      (delete-region (point-min) (point-max))
+      (w3-draw-tree parse)
+      (w3-finish-drawing)
+      (widen))))
 
 (defun w3-refresh-buffer ()
   (interactive)

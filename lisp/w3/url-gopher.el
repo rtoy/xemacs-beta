@@ -1,7 +1,7 @@
 ;;; url-gopher.el --- Gopher Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.4
+;; Created: 1997/02/08 05:25:58
+;; Version: 1.5
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -270,8 +270,8 @@ title, type, selector string, server, port, gopher-plus?"
 	  url-current-type "gopher")
     (if (> (length selector) 0)
 	(setq selector (substring selector 1 nil)))
-    (if (stringp proc)
-	(message "%s" proc)
+    (if (not (processp proc))
+	nil
       (save-excursion
 	(process-send-string proc (concat selector "\r\n"))
 	(while (and (or (not wait-for)
