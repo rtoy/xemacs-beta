@@ -180,6 +180,9 @@ alarm_signal (int signo)
 	 it needs to stay the way it is. */
       quit_check_signal_happened = 1;
 
+#ifdef _WIN32
+      can_break_system_calls = 0;
+#else
       /* can_break_system_calls is set when we want to break out of
 	 non-interruptible system calls. */
       if (can_break_system_calls)
@@ -192,6 +195,7 @@ alarm_signal (int signo)
 	  EMACS_REESTABLISH_SIGNAL (signo, alarm_signal);
 	  LONGJMP (break_system_call_jump, 0);
 	}
+#endif
 
       EMACS_REESTABLISH_SIGNAL (signo, alarm_signal);
       SIGRETURN;
@@ -207,7 +211,10 @@ alarm_signal (int signo)
      went off.  Rather than put the code in to compute this
      specially, we just set this flag.  Should fix this. */
   quit_check_signal_happened = 1;
+
+#ifdef HAVE_UNIXOID_EVENT_LOOP
   signal_fake_event ();
+#endif
 
   EMACS_REESTABLISH_SIGNAL (signo, alarm_signal);
   SIGRETURN;
@@ -438,7 +445,9 @@ interrupt_signal (int sig)
       /* Else request quit when it's safe */
       Vquit_flag = Qt;
       sigint_happened = 1;
+#ifdef HAVE_UNIXOID_EVENT_LOOP
       signal_fake_event ();
+#endif
     }
   errno = old_errno;
   SIGRETURN;

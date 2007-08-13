@@ -2856,7 +2856,9 @@ static Lisp_Object funcall_lambda (Lisp_Object fun,
                                    int nargs, Lisp_Object args[]);
 static Lisp_Object apply_lambda (Lisp_Object fun,
                                  int nargs, Lisp_Object args);
+#if 0 /* #### Not called anymore */
 static Lisp_Object funcall_subr (struct Lisp_Subr *sub, Lisp_Object args[]);
+#endif
 
 static int in_warnings;
 
@@ -3551,11 +3553,13 @@ primitive_funcall (lisp_fn_t fn, int nargs, Lisp_Object args[])
   return Qnil;	/* suppress compiler warning */
 }
 
+#if 0 /* #### Not called anymore */
 static Lisp_Object
 funcall_subr (struct Lisp_Subr *subr, Lisp_Object args[])
 {
   return primitive_funcall (subr_function (subr), subr->max_args, args);
 }
+#endif
 
 /* FSFmacs has an extra arg EVAL_FLAG.  If false, some of
    the statements below are not done.  But it's always true

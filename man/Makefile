@@ -89,20 +89,20 @@ texinfo.dvi: texinfo.texi
 
 .PHONY: dvi
 dvi : $(dvi)
-	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
+	-for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 
 .PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
-	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
+	-for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 	rm -f *.toc *.aux *.log \
 	      *.cp *.cps *.fn *.fns *.ky *.kys *.pg *.pgs *.vr *.vrs *.tp *.tps
 clean: mostlyclean
-	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
+	-for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 	rm -f *.o core *.dvi
 distclean: clean
-	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
+	-for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 realclean: distclean
-	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
+	-for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 extraclean: distclean
-	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
+	-for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 	-rm -f *~ \#*

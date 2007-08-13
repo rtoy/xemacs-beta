@@ -870,7 +870,7 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bgoto_char:
-	  TOP = Fgoto_char (TOP, Fcurrent_buffer ());
+	  TOP = Fgoto_char (TOP, Qnil);
 	  break;
 
 	case Binsert:
@@ -894,16 +894,16 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bchar_after:
-	  TOP = Fchar_after (TOP, Fcurrent_buffer ());
+	  TOP = Fchar_after (TOP, Qnil);
 	  break;
 
 	case Bfollowing_char:
-	  v1 = Ffollowing_char (Fcurrent_buffer ());
+	  v1 = Ffollowing_char (Qnil);
 	  PUSH (v1);
 	  break;
 
 	case Bpreceding_char:
-	  v1 = Fpreceding_char (Fcurrent_buffer ());
+	  v1 = Fpreceding_char (Qnil);
 	  PUSH (v1);
 	  break;
 
@@ -913,23 +913,23 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bindent_to:
-	  TOP = Findent_to (TOP, Qnil, Fcurrent_buffer ());
+	  TOP = Findent_to (TOP, Qnil, Qnil);
 	  break;
 
 	case Beolp:
-	  PUSH (Feolp (Fcurrent_buffer ()));
+	  PUSH (Feolp (Qnil));
 	  break;
 
 	case Beobp:
-	  PUSH (Feobp (Fcurrent_buffer ()));
+	  PUSH (Feobp (Qnil));
 	  break;
 
 	case Bbolp:
-	  PUSH (Fbolp (Fcurrent_buffer ()));
+	  PUSH (Fbolp (Qnil));
 	  break;
 
 	case Bbobp:
-	  PUSH (Fbobp (Fcurrent_buffer ()));
+	  PUSH (Fbobp (Qnil));
 	  break;
 
 	case Bcurrent_buffer:
@@ -950,25 +950,25 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bforward_char:
-	  TOP = Fforward_char (TOP, Fcurrent_buffer ());
+	  TOP = Fforward_char (TOP, Qnil);
 	  break;
 
 	case Bforward_word:
-	  TOP = Fforward_word (TOP, Fcurrent_buffer ());
+	  TOP = Fforward_word (TOP, Qnil);
 	  break;
 
 	case Bskip_chars_forward:
 	  v1 = POP;
-	  TOP = Fskip_chars_forward (TOP, v1, Fcurrent_buffer ());
+	  TOP = Fskip_chars_forward (TOP, v1, Qnil);
 	  break;
 
 	case Bskip_chars_backward:
 	  v1 = POP;
-	  TOP = Fskip_chars_backward (TOP, v1, Fcurrent_buffer ());
+	  TOP = Fskip_chars_backward (TOP, v1, Qnil);
 	  break;
 
 	case Bforward_line:
-	  TOP = Fforward_line (TOP, Fcurrent_buffer ());
+	  TOP = Fforward_line (TOP, Qnil);
 	  break;
 
 	case Bchar_syntax:
@@ -986,25 +986,25 @@ If the third argument is incorrect, Emacs may crash.
 
 	case Bbuffer_substring:
 	  v1 = POP;
-	  TOP = Fbuffer_substring (TOP, v1, Fcurrent_buffer ());
+	  TOP = Fbuffer_substring (TOP, v1, Qnil);
 	  break;
 
 	case Bdelete_region:
 	  v1 = POP;
-	  TOP = Fdelete_region (TOP, v1, Fcurrent_buffer ());
+	  TOP = Fdelete_region (TOP, v1, Qnil);
 	  break;
 
 	case Bnarrow_to_region:
 	  v1 = POP;
-	  TOP = Fnarrow_to_region (TOP, v1, Fcurrent_buffer ());
+	  TOP = Fnarrow_to_region (TOP, v1, Qnil);
 	  break;
 
 	case Bwiden:
-	  PUSH (Fwiden (Fcurrent_buffer ()));
+	  PUSH (Fwiden (Qnil));
 	  break;
 
 	case Bend_of_line:
-	  TOP = Fend_of_line (TOP, Fcurrent_buffer ());
+	  TOP = Fend_of_line (TOP, Qnil);
 	  break;
 
 	case Bset_marker:
@@ -1022,11 +1022,11 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bupcase:
-	  TOP = Fupcase (TOP, Fcurrent_buffer ());
+	  TOP = Fupcase (TOP, Qnil);
 	  break;
 
 	case Bdowncase:
-	  TOP = Fdowncase (TOP, Fcurrent_buffer ());
+	  TOP = Fdowncase (TOP, Qnil);
 	break;
 
 	case Bstringeqlsign:

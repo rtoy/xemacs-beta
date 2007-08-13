@@ -35,6 +35,17 @@
 ;; that interferes with completion.  Use `customize-' for commands
 ;; that the user will run with M-x, and `Custom-' for interactive commands.
 
+;; NOTE: In many places within this file we use `mapatoms', which is
+;; very slow in an average XEmacs because of the large number of
+;; symbols requiring a large number of funcalls -- XEmacs with Gnus
+;; can grow to some 17000 symbols without ever doing anything fancy.
+;; It would probably pay off to make a hashtable of symbols known to
+;; Custom, similar to custom-group-hash-table.
+
+;; This is not top priority, because none of the functions that do
+;; mapatoms are speed-critical (the one that was now uses
+;; custom-group-hash-table), but it would be nice to have.
+
 
 ;;; Code:
 
@@ -377,7 +388,7 @@ Return a list suitable for use in `interactive'."
 		obarray (lambda (symbol)
 			  (and (boundp symbol)
 			       (or (get symbol 'custom-type)
-				   (user-variable-p symbol))))))
+				   (user-variable-p symbol)))) t))
      (list (if (equal val "")
 	       (if (symbolp v) v nil)
 	     (intern val)))))
@@ -828,6 +839,41 @@ The default group is `Emacs'."
   (custom-buffer-create (list (list symbol 'custom-variable))
 			(format "*Customize Variable: %s*"
 				(custom-unlispify-tag-name symbol))))
+
+;;;###autoload
+(defun customize-changed-options (since-version)
+  "Customize all user option variables whose default values changed recently.
+This means, in other words, variables defined with a `:version' keyword."
+  (interactive "sCustomize options changed, since version (default all versions): ")
+  (if (equal since-version "")
+      (setq since-version nil))
+  (let ((found nil))
+    (mapatoms (lambda (symbol)
+		(and (boundp symbol)
+		     (let ((version (get symbol 'custom-version)))
+		       (and version
+			    (or (null since-version)
+				(customize-version-lessp since-version version))))
+		     (push (list symbol 'custom-variable) found))))
+    (unless found
+      (error "No user options have changed defaults %s"
+	     (if since-version
+		 (format "since XEmacs %s" since-version)
+	       "in recent Emacs versions")))
+    (custom-buffer-create (custom-sort-items found t nil)
+			  "*Customize Changed Options*")))
+
+(defun customize-version-lessp (version1 version2)
+  (let (major1 major2 minor1 minor2)
+    (string-match "\\([0-9]+\\)[.]\\([0-9]+\\)" version1)
+    (setq major1 (read (match-string 1 version1)))
+    (setq minor1 (read (match-string 2 version1)))
+    (string-match "\\([0-9]+\\)[.]\\([0-9]+\\)" version2)
+    (setq major2 (read (match-string 1 version2)))
+    (setq minor2 (read (match-string 2 version2)))
+    (or (< major1 major2)
+	(and (= major1 major2)
+	     (< minor1 minor2)))))
 
 ;;;###autoload
 (defalias 'customize-variable-other-window 'customize-option-other-window)

@@ -70,6 +70,20 @@ struct mswindows_frame
 
   /* DC for this win32 window */
   HDC hdc;
+
+  /* Time of last click event, for button 2 emul */
+  DWORD last_click_time;
+
+  /* Coordinates of last click event, screen-relative */
+  POINTS last_click_point;
+
+  /* Misc flags */
+  int button2_need_lbutton : 1;
+  int button2_need_rbutton : 1;
+  int button2_is_down : 1;
+  int ignore_next_lbutton_up : 1;
+  int ignore_next_rbutton_up : 1;
+  int sizing : 1;
 };
 
 #define FRAME_MSWINDOWS_DATA(f) FRAME_TYPE_DATA (f, mswindows)

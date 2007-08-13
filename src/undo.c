@@ -431,7 +431,8 @@ Return what remains of the list.
 #ifdef CLASH_DETECTION
 		  Funlock_buffer ();
 #endif /* CLASH_DETECTION */
-		  Fset_buffer_modified_p (Qnil, Fcurrent_buffer ()); /* may GC under ENERGIZE */
+		  /* may GC under ENERGIZE: */
+		  Fset_buffer_modified_p (Qnil, Qnil);
 		}
 	      else if (EXTENTP (car))
 		{
@@ -473,8 +474,8 @@ Return what remains of the list.
 		    error ("Changes to be undone are outside visible portion of buffer");
 		  /* Set point first thing, so that undoing this undo
 		     does not send point back to where it is now.  */
-		  Fgoto_char (car, Fcurrent_buffer ());
-		  Fdelete_region (car, cdr, Fcurrent_buffer ());
+		  Fgoto_char (car, Qnil);
+		  Fdelete_region (car, cdr, Qnil);
 		}
 	      else if (STRINGP (car) && INTP (cdr))
 		{

@@ -228,4 +228,14 @@ extern CONST char *sys_siglist[];
 extern SIGTYPE memory_warning_signal (int sig);
 #endif
 
+#ifdef _WIN32
+/* Prototypes for signal functions, see nt.c */
+typedef void (__cdecl *msw_sighandler) (int);
+msw_sighandler msw_sigset (int sig, msw_sighandler handler);
+int msw_sighold (int nsig);
+int msw_sigrelse (int nsig);
+int msw_sigpause (int nsig);
+int msw_raise (int nsig);
+#endif /* _WIN32 */
+
 #endif /* _XEMACS_SYSSIGNAL_H_ */

@@ -5565,14 +5565,12 @@ redisplay_device (struct device *d)
   return 0;
 }
 
-#ifndef WINDOWSNT
 static Lisp_Object
 restore_profiling_redisplay_flag (Lisp_Object val)
 {
   profiling_redisplay_flag = XINT (val);
   return Qnil;
 }
-#endif /* WINDOWSNT */
 
 /* Ensure that all windows on all frames on all devices are displaying
    the current contents of their respective buffers. */
@@ -5584,14 +5582,12 @@ redisplay_without_hooks (void)
   int size_change_failed = 0;
   int count = specpdl_depth ();
 
-#ifndef WINDOWSNT
   if (profiling_active)
     {
       record_unwind_protect (restore_profiling_redisplay_flag,
 			     make_int (profiling_redisplay_flag));
       profiling_redisplay_flag = 1;
     }
-#endif /* WINDOWSNT */
 
   if (asynch_device_change_pending)
     handle_asynch_device_change ();

@@ -2451,7 +2451,8 @@ Don't call it from programs!  Use `insert-file-contents' instead.
   (if (file-directory-p filename)
       (signal 'file-error (list "Opening input file" "file is a directory"
 				filename)))
-  (let ((tem
+  (let* (format-alist ; format.el only confuses people in this context
+	 (tem
 	 (if codesys
 	     (let ((coding-system-for-read
 		    (get-coding-system codesys)))

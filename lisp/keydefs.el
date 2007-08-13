@@ -213,6 +213,8 @@ Keymap for characters following C-c.")
 ;; Changed from C-x ESC so that function keys work following C-x.
 (define-key global-map "\C-x\e\e" 'repeat-complex-command)
 ;(define-key global-map "\C-x\e" 'repeat-complex-command)
+;; From Emacs 20.
+(define-key global-map "\C-x\M-:" 'repeat-complex-command)
 (define-key global-map "\C-xu" 'advertised-undo)
 ;; Many people are used to typing C-/ on X terminals and getting C-_.
 (define-key global-map '(control /) 'undo)

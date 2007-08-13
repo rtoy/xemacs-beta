@@ -111,6 +111,8 @@ Initialize_Locale (void)
         }
     }
 
+  setlocale(LC_NUMERIC, "C");
+
   if (XSetLocaleModifiers ("") == NULL)
     {
       stderr_out ("XSetLocaleModifiers(\"\") failed\n");
@@ -766,19 +768,19 @@ describe_XIC (XIC xic)
 
   stderr_out ("\nInput method context attributes:\n");
   stderr_out ("Style: "); describe_XIMStyle (style);
-  stderr_out ("Client window: %x\n", client_win);
-  stderr_out ("Focus window: %x\n",  focus_win);
+  stderr_out ("Client window: %lx\n", (unsigned long int)client_win);
+  stderr_out ("Focus window: %lx\n",  (unsigned long int)focus_win);
   stderr_out ("Preedit:\n");
   describe_XRectangle ("  Area", p_area);
   describe_XRectangle ("  Area needed", p_needed);
-  stderr_out ("  foreground: %x\n", p_fg);
-  stderr_out ("  background: %x\n", p_bg);
+  stderr_out ("  foreground: %lx\n", (unsigned long int)p_fg);
+  stderr_out ("  background: %lx\n", (unsigned long int)p_bg);
   stderr_out ("  fontset: "); describe_XFontSet (p_fontset);
   stderr_out ("Status:\n");
   describe_XRectangle ("  Area", s_area);
   describe_XRectangle ("  Area needed", s_needed);
-  stderr_out ("  foreground: %x\n", s_fg);
-  stderr_out ("  background: %x\n", s_bg);
+  stderr_out ("  foreground: %lx\n", (unsigned long int)s_fg);
+  stderr_out ("  background: %lx\n", (unsigned long int)s_bg);
   stderr_out ("  fontset: \n"); describe_XFontSet (s_fontset);
   stderr_out ("XNResourceName: %s\n",  resourceName  ? resourceName  : "NULL");
   stderr_out ("XNResourceClass: %s\n", resourceClass ? resourceClass : "NULL");

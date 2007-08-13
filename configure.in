@@ -1642,8 +1642,9 @@ if test -z "$CFLAGS"; then
   dnl Should we take debugging options into consideration?
   if   test "$GCC" = "yes"; then
     CFLAGS="-g -O2 -Wall -Wno-switch"
-    test "$opsys $machine" = "linux intel386" && \
-      CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
+    dnl I'm not convinced this is a good idea any more. -sb
+    dnl test "$opsys $machine" = "linux intel386" && \
+      dnl CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
   elif test "$__sunpro_c" = "yes"; then
     case "$opsys" in
       sol2    ) CFLAGS="-v -xO4" ;;
@@ -2359,7 +2360,7 @@ if test "$with_x11" = "yes"; then
   fi
 
   dnl autodetect ImageMagick
-  test -z "$with_imagick" && { AC_CHECK_HEADER(magick/magick.h,                    ,with_imagick=no) }
+  test -z "$with_imagick" && { AC_CHECK_HEADER(magick/magick.h, ,AC_CHECK_HEADER(X11/magick/magick.h,AC_DEFINE(MAGICK_HEADERS_ARE_UNDER_X11),with_imagick=no)) }
   test -z "$with_imagick" && {
     dnl check the appropriate libraries for ImageMagick
     imagick_libs=""
@@ -2369,6 +2370,7 @@ if test "$with_x11" = "yes"; then
     AC_CHECK_LIB(jbig, jbg_dec_init, XE_APPEND(-ljbig, imagick_libs))
     AC_CHECK_LIB(jpeg, jpeg_read_header, XE_APPEND(-ljpeg, imagick_libs))
     AC_CHECK_LIB(mpeg, OpenMPEG, XE_APPEND(-lmpeg, imagick_libs))
+    AC_CHECK_LIB(ttf, TT_Init_FreeType, XE_APPEND(-lttf, imagick_libs))
     AC_CHECK_LIB(png, png_create_read_struct, XE_APPEND(-lpng, imagick_libs),
       AC_CHECK_LIB(png, png_create_read_struct, XE_APPEND(-lpng -lz, imagick_libs),,-lz))
     AC_CHECK_LIB(tiff, TIFFOpen, XE_APPEND(-ltiff, imagick_libs),

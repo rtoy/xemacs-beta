@@ -1493,7 +1493,7 @@ Make point value in WINDOW be at position POS in WINDOW's buffer.
 
   CHECK_INT_COERCE_MARKER (pos);
   if (w == XWINDOW (Fselected_window (Qnil)))
-    Fgoto_char (pos, Fcurrent_buffer ());
+    Fgoto_char (pos, Qnil);
   else
     set_marker_restricted (w->pointm[CURRENT_DISP], pos, w->buffer);
 
@@ -4901,7 +4901,7 @@ by `current-window-configuration' (which see).
 		     when the window configuration was recorded.  */
 		  if (!EQ (p->buffer, new_current_buffer) &&
 		      XBUFFER (p->buffer) == current_buffer)
-		    Fgoto_char (w->pointm[CURRENT_DISP], Fcurrent_buffer ());
+		    Fgoto_char (w->pointm[CURRENT_DISP], Qnil);
 		}
 	      else if (NILP (w->buffer) ||
 		       !BUFFER_LIVE_P (XBUFFER (w->buffer)))

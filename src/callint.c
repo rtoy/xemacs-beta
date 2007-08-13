@@ -145,16 +145,25 @@ You may use any of `@', `*' and `_' at the beginning of the string;
   return Qnil;
 }
 
-/* Quotify EXPR: if EXPR is constant, return it.
-   If EXPR is not constant, return (quote EXPR).  */
-static Lisp_Object
-quotify_arg (Lisp_Object expr)
+/* Originally, this was just a function -- but `custom' used a
+   garden-variety version, so why not make it a subr?  */
+/* #### Move it to another file! */
+DEFUN ("quote-maybe", Fquote_maybe, 1, 1, 0, /*
+Quote EXPR iff it is not self quoting.
+*/
+       (expr))
 {
-  return (INTP    (expr) ||
-	  CHARP   (expr) ||
-	  STRINGP (expr) ||
-	  NILP    (expr) ||
-	  EQ (Qt, expr)) ? expr : Fcons (Qquote, Fcons (expr, Qnil));
+  return ((NILP (expr)
+	   || EQ (expr, Qt)
+	   || INTP (expr)
+	   || FLOATP (expr)
+	   || CHARP (expr)
+	   || STRINGP (expr)
+	   || VECTORP (expr)
+	   || KEYWORDP (expr)
+	   || BIT_VECTORP (expr)
+	   || (CONSP (expr) && EQ(XCAR (expr), Qlambda)))
+	  ? expr : list2 (Qquote, expr));
 }
 
 /* Modify EXPR by quotifying each element (except the first).  */
@@ -166,7 +175,7 @@ quotify_args (Lisp_Object expr)
   for (tail = expr; CONSP (tail); tail = ptr->cdr)
     {
       ptr = XCONS (tail);
-      ptr->car = quotify_arg (ptr->car);
+      ptr->car = Fquote_maybe (ptr->car);
     }
   return expr;
 }
@@ -909,7 +918,7 @@ when reading the arguments.
 	    if (!NILP (varies[argnum]))
 	      visargs[argnum] = list1 (varies[argnum]);
 	    else
-	      visargs[argnum] = quotify_arg (args[argnum]);
+	      visargs[argnum] = Fquote_maybe (args[argnum]);
 	  }
 	Vcommand_history = Fcons (Fcons (args[-1], Flist (argcount, visargs)),
 				  Vcommand_history);
@@ -984,6 +993,7 @@ syms_of_callint (void)
 #endif
 
   DEFSUBR (Finteractive);
+  DEFSUBR (Fquote_maybe);
   DEFSUBR (Fcall_interactively);
   DEFSUBR (Fprefix_numeric_value);
 }

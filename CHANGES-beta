@@ -1,4 +1,9 @@
 							-*- indented-text -*-
+to 20.4 beta10 "Barbari"
+-- MS Windows NT updates courtesy of Kirill M. Katsnelson
+-- etags.el update courtesy of Hrvoje Niksic
+-- Miscellaneous bug fixes
+
 to 20.4 beta9 "Australian Goat"
 -- MS Windows patches for clipboard courtesy of Jonathon Harris
 -- ImageMagick support displays images now courtesy of Jareth Hein

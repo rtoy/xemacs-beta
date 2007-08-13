@@ -53,39 +53,24 @@ Boston, MA 02111-1307, USA.  */
 #define MSW_TIMEOUT_GRANULARITY 25
 #define MSW_TIMEOUT_MAX	32
 
-/* Random globals shared between main and message-processing thread */
-extern DWORD mswindows_main_thread_id;
-extern DWORD mswindows_win_thread_id;
-extern CRITICAL_SECTION mswindows_dispatch_crit;
+/* Random globals */
+extern LRESULT WINAPI mswindows_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern int mswindows_quit_chars_count;
 
-
-/*
- * Communication between main and windows thread
- */
-#define WM_XEMACS_BASE		(WM_APP + 0)
-#define WM_XEMACS_ACK		(WM_XEMACS_BASE + 0x00)
-#define WM_XEMACS_CREATEWINDOW	(WM_XEMACS_BASE + 0x01)
-#define WM_XEMACS_DESTROYWINDOW	(WM_XEMACS_BASE + 0x02)
-#define WM_XEMACS_SETTIMER	(WM_XEMACS_BASE + 0x03)
-#define WM_XEMACS_KILLTIMER	(WM_XEMACS_BASE + 0x04)
-#define WM_XEMACS_END		(WM_XEMACS_BASE + 0x10)
-
-typedef struct mswindows_request_type
-{
-  void *thing1;
-  void *thing2;
-} mswindows_request_type;
-
-LPARAM mswindows_make_request(UINT message, WPARAM wParam, mswindows_request_type *request);
-void mswindows_handle_request(MSG *msg);
-
+/* These are Lisp integer variables */
+/* Jonsthan, these need not to be globals after merge -- kkm */
+extern int mswindows_dynamic_frame_resize;
+extern int mswindows_num_mouse_buttons;
+extern int mswindows_button2_max_skew_x;
+extern int mswindows_button2_max_skew_y;
+extern int mswindows_button2_chord_time;
 
 /*
  * Event generating stuff
  */
 
 /* The number of things we can wait on */
-#define MAX_WAITABLE 256
+#define MAX_WAITABLE (MAXIMUM_WAIT_OBJECTS - 1)
 
 typedef enum mswindows_waitable_type
 {
@@ -117,10 +102,8 @@ void mswindows_remove_waitable(mswindows_waitable_info_type *info);
 /*
  * Some random function declarations in msw-proc.c
  */
-DWORD mswindows_win_thread();
 extern void mswindows_enqeue_dispatch_event (Lisp_Object event);
-Lisp_Object mswindows_cancel_dispatch_event (Lisp_Object event);
-
+Lisp_Object mswindows_cancel_dispatch_event (struct Lisp_Event* event);
 
 /*
  * Inside mswindows magic events
@@ -132,5 +115,23 @@ Lisp_Object mswindows_cancel_dispatch_event (Lisp_Object event);
 #define EVENT_MSWINDOWS_MAGIC_DATA(e)	\
 	(*((RECT *) (&(EVENT_MSWINDOWS_MAGIC_EVENT(e).data))))
 
+/*
+ * Messages and magic events IDs
+ */
+#define XM_BUMPQUEUE	(WM_USER + 101)
+#define XM_MAPFRAME	(WM_USER + 102)
+#define XM_UNMAPFRAME	(WM_USER + 103)
+
+/*
+ * Window LONGs indices
+ */
+#define XWL_FRAMEOBJ	0
+
+/* This must be number of the above long multiplied by 4 */
+#define MSWINDOWS_WINDOW_EXTRA_BYTES 4
+
+/* Fake key modifiers which attached to a quit char event.
+   Removed upon dequeueing an event */
+#define FAKE_MOD_QUIT	0x80
 
 #endif /* _XEMACS_EVENT_MSW_H_ */

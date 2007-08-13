@@ -522,7 +522,7 @@ Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS" t nil
 
 ;;;***
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all customize-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-variable customize-other-window customize customize-save-variable customize-set-variable customize-set-value) "cus-edit" "lisp/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all customize-save-customized customize-browse custom-buffer-create-other-window custom-buffer-create customize-apropos-groups customize-apropos-faces customize-apropos-options customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-changed-options customize-variable customize-other-window customize customize-save-variable customize-set-variable customize-set-value) "cus-edit" "lisp/cus-edit.el")
 
 (autoload 'customize-set-value "cus-edit" "\
 Set VARIABLE to VALUE.  VALUE is a Lisp object.
@@ -578,6 +578,10 @@ Customize SYMBOL, which must be a customization group." t nil)
 
 (autoload 'customize-variable "cus-edit" "\
 Customize SYMBOL, which must be a user option variable." t nil)
+
+(autoload 'customize-changed-options "cus-edit" "\
+Customize all user option variables whose default values changed recently.
+This means, in other words, variables defined with a `:new' option." t nil)
 
 (defalias 'customize-variable-other-window 'customize-option-other-window)
 
@@ -724,16 +728,10 @@ With prefix argument, enable European character display iff arg is positive." t 
 
 ;;;***
 
-;;;### (autoloads (tags-apropos list-tags tags-query-replace tags-search tags-loop-continue next-file find-tag-other-window find-tag visit-tags-table) "etags" "lisp/etags.el")
-
-(defcustom tags-build-completion-table 'ask "*If this variable is nil, then tags completion is disabled.\nIf this variable is t, then things which prompt for tags will do so with \n completion across all known tags.\nIf this variable is the symbol `ask', then you will be asked whether each\n tags table should be added to the completion list as it is read in.\n (With the exception that for very small tags tables, you will not be asked,\n since they can be parsed quickly.)" :type '(radio (const :tag "Disabled" nil) (const :tag "Complete All" t) (const :tag "Ask" ask)) :group 'etags)
-
-(defcustom tags-always-exact nil "*If this variable is non-nil, then tags always looks for exact matches." :type 'boolean :group 'etags)
-
-(defcustom tag-table-alist nil "*A list which determines which tags files are active for a buffer.\nThis is not really an association list, in that all elements are\nchecked.  The CAR of each element of this list is a pattern against\nwhich the buffer's file name is compared; if it matches, then the CDR\nof the list should be the name of the tags table to use.  If more than\none element of this list matches the buffer's file name, then all of\nthe associated tags tables will be used.  Earlier ones will be\nsearched first.\n\nIf the CAR of elements of this list are strings, then they are treated\nas regular-expressions against which the file is compared (like the\nauto-mode-alist).  If they are not strings, then they are evaluated.\nIf they evaluate to non-nil, then the current buffer is considered to\nmatch.\n\nIf the CDR of the elements of this list are strings, then they are\nassumed to name a TAGS file.  If they name a directory, then the string\n\"TAGS\" is appended to them to get the file name.  If they are not \nstrings, then they are evaluated, and must return an appropriate string.\n\nFor example:\n  (setq tag-table-alist\n	'((\"/usr/src/public/perl/\" . \"/usr/src/public/perl/perl-3.0/\")\n	 (\"\\\\.el$\" . \"/usr/local/emacs/src/\")\n	 (\"/jbw/gnu/\" . \"/usr15/degree/stud/jbw/gnu/\")\n	 (\"\" . \"/usr/local/emacs/src/\")\n	 ))\n\nThis means that anything in the /usr/src/public/perl/ directory should use\nthe TAGS file /usr/src/public/perl/perl-3.0/TAGS; and file ending in .el should\nuse the TAGS file /usr/local/emacs/src/TAGS; and anything in or below the\ndirectory /jbw/gnu/ should use the TAGS file /usr15/degree/stud/jbw/gnu/TAGS.\nA file called something like \"/usr/jbw/foo.el\" would use both the TAGS files\n/usr/local/emacs/src/TAGS and /usr15/degree/stud/jbw/gnu/TAGS (in that order)\nbecause it matches both patterns.\n\nIf the buffer-local variable `buffer-tag-table' is set, then it names a tags\ntable that is searched before all others when find-tag is executed from this\nbuffer.\n\nIf there is a file called \"TAGS\" in the same directory as the file in \nquestion, then that tags file will always be used as well (after the\n`buffer-tag-table' but before the tables specified by this list.)\n\nIf the variable tags-file-name is set, then the tags file it names will apply\nto all buffers (for backwards compatibility.)  It is searched first.\n" :type '(repeat (cons (choice :value "" (regexp :tag "Buffer regexp") (function :tag "Expression")) (string :tag "Tag file or directory"))) :group 'etags)
+;;;### (autoloads (tags-apropos list-tags tags-query-replace tags-search tags-loop-continue next-file tag-complete-symbol find-tag-other-window find-tag visit-tags-table) "etags" "lisp/etags.el")
 
 (autoload 'visit-tags-table "etags" "\
-Tell tags commands to use tags table file FILE first.
+Tell tags commands to use tags table file FILE when all else fails.
 FILE should be the name of a file created with the `etags' program.
 A directory name is ok too; it means file TAGS in that directory." t nil)
 
@@ -782,6 +780,9 @@ Variables of note:
   make-tags-files-invisible	whether tags tables should be very hidden
   tag-mark-stack-max		how many tags-based hops to remember" t nil)
 
+(autoload 'tag-complete-symbol "etags" "\
+The function used to do tags-completion (using 'tag-completion-predicate)." t nil)
+
 (autoload 'next-file "etags" "\
 Select next file among files in current tag table(s).
 
@@ -821,100 +822,35 @@ with the command \\[tags-loop-continue].
 See documentation of variable `tag-table-alist'." t nil)
 
 (autoload 'list-tags "etags" "\
-Display list of tags in file FILE.
-FILE should not contain a directory spec
-unless it has one in the tag table." t nil)
+Display list of tags in FILE." t nil)
 
 (autoload 'tags-apropos "etags" "\
 Display list of all tags in tag table REGEXP matches." t nil)
+
+(define-key esc-map "*" 'pop-tag-mark)
 
 ;;;***
 
 ;;;### (autoloads (font-lock-set-defaults-1 font-lock-fontify-buffer turn-off-font-lock turn-on-font-lock font-lock-mode) "font-lock" "lisp/font-lock.el")
 
-(defvar font-lock-auto-fontify t "\
-*Whether font-lock should automatically fontify files as they're loaded.
-This will only happen if font-lock has fontifying keywords for the major
-mode of the file.  You can get finer-grained control over auto-fontification
-by using this variable in combination with `font-lock-mode-enable-list' or
-`font-lock-mode-disable-list'.")
+(defcustom font-lock-auto-fontify t "*Whether font-lock should automatically fontify files as they're loaded.\nThis will only happen if font-lock has fontifying keywords for the major\nmode of the file.  You can get finer-grained control over auto-fontification\nby using this variable in combination with `font-lock-mode-enable-list' or\n`font-lock-mode-disable-list'." :type 'boolean :group 'font-lock)
 
-(defvar font-lock-mode-enable-list nil "\
-*List of modes to auto-fontify, if `font-lock-auto-fontify' is nil.")
+(defcustom font-lock-mode-enable-list nil "*List of modes to auto-fontify, if `font-lock-auto-fontify' is nil." :type '(repeat (symbol :tag "Mode")) :group 'font-lock)
 
-(defvar font-lock-mode-disable-list nil "\
-*List of modes not to auto-fontify, if `font-lock-auto-fontify' is t.")
+(defcustom font-lock-mode-disable-list nil "*List of modes not to auto-fontify, if `font-lock-auto-fontify' is t." :type '(repeat (symbol :tag "Mode")) :group 'font-lock)
 
-(defvar font-lock-use-colors '(color) "\
-*Specification for when Font Lock will set up color defaults.
-Normally this should be '(color), meaning that Font Lock will set up
-color defaults that are only used on color displays.  Set this to nil
-if you don't want Font Lock to set up color defaults at all.  This
-should be one of
+(defcustom font-lock-use-colors '(color) "*Specification for when Font Lock will set up color defaults.\nNormally this should be '(color), meaning that Font Lock will set up\ncolor defaults that are only used on color displays.  Set this to nil\nif you don't want Font Lock to set up color defaults at all.  This\nshould be one of\n\n-- a list of valid tags, meaning that the color defaults will be used\n   when all of the tags apply. (e.g. '(color x))\n-- a list whose first element is 'or and whose remaining elements are\n   lists of valid tags, meaning that the defaults will be used when\n   any of the tag lists apply.\n-- nil, meaning that the defaults should not be set up at all.\n\n(If you specify face values in your init file, they will override any\nthat Font Lock specifies, regardless of whether you specify the face\nvalues before or after loading Font Lock.)\n\nSee also `font-lock-use-fonts'.  If you want more control over the faces\nused for fontification, see the documentation of `font-lock-mode' for\nhow to do it." :type 'sexp :group 'font-lock)
 
--- a list of valid tags, meaning that the color defaults will be used
-   when all of the tags apply. (e.g. '(color x))
--- a list whose first element is 'or and whose remaining elements are
-   lists of valid tags, meaning that the defaults will be used when
-   any of the tag lists apply.
--- nil, meaning that the defaults should not be set up at all.
+(defcustom font-lock-use-fonts '(or (mono) (grayscale)) "*Specification for when Font Lock will set up non-color defaults.\n\nNormally this should be '(or (mono) (grayscale)), meaning that Font\nLock will set up non-color defaults that are only used on either mono\nor grayscale displays.  Set this to nil if you don't want Font Lock to\nset up non-color defaults at all.  This should be one of\n\n-- a list of valid tags, meaning that the non-color defaults will be used\n   when all of the tags apply. (e.g. '(grayscale x))\n-- a list whose first element is 'or and whose remaining elements are\n   lists of valid tags, meaning that the defaults will be used when\n   any of the tag lists apply.\n-- nil, meaning that the defaults should not be set up at all.\n\n(If you specify face values in your init file, they will override any\nthat Font Lock specifies, regardless of whether you specify the face\nvalues before or after loading Font Lock.)\n\nSee also `font-lock-use-colors'.  If you want more control over the faces\nused for fontification, see the documentation of `font-lock-mode' for\nhow to do it." :type 'sexp :group 'font-lock)
 
-\(If you specify face values in your init file, they will override any
-that Font Lock specifies, regardless of whether you specify the face
-values before or after loading Font Lock.)
-
-See also `font-lock-use-fonts'.  If you want more control over the faces
-used for fontification, see the documentation of `font-lock-mode' for
-how to do it.")
-
-(defvar font-lock-use-fonts '(or (mono) (grayscale)) "\
-*Specification for when Font Lock will set up non-color defaults.
-
-Normally this should be '(or (mono) (grayscale)), meaning that Font
-Lock will set up non-color defaults that are only used on either mono
-or grayscale displays.  Set this to nil if you don't want Font Lock to
-set up non-color defaults at all.  This should be one of
-
--- a list of valid tags, meaning that the non-color defaults will be used
-   when all of the tags apply. (e.g. '(grayscale x))
--- a list whose first element is 'or and whose remaining elements are
-   lists of valid tags, meaning that the defaults will be used when
-   any of the tag lists apply.
--- nil, meaning that the defaults should not be set up at all.
-
-\(If you specify face values in your init file, they will override any
-that Font Lock specifies, regardless of whether you specify the face
-values before or after loading Font Lock.)
-
-See also `font-lock-use-colors'.  If you want more control over the faces
-used for fontification, see the documentation of `font-lock-mode' for
-how to do it.")
-
-(defvar font-lock-maximum-decoration nil "\
-*If non-nil, the maximum decoration level for fontifying.
-If nil, use the minimum decoration (equivalent to level 0).
-If t, use the maximum decoration available.
-If a number, use that level of decoration (or if not available the maximum).
-If a list, each element should be a cons pair of the form (MAJOR-MODE . LEVEL),
-where MAJOR-MODE is a symbol or t (meaning the default).  For example:
- ((c++-mode . 2) (c-mode . t) (t . 1))
-means use level 2 decoration for buffers in `c++-mode', the maximum decoration
-available for buffers in `c-mode', and level 1 decoration otherwise.")
+(defcustom font-lock-maximum-decoration t "*If non-nil, the maximum decoration level for fontifying.\nIf nil, use the minimum decoration (equivalent to level 0).\nIf t, use the maximum decoration available.\nIf a number, use that level of decoration (or if not available the maximum).\nIf a list, each element should be a cons pair of the form (MAJOR-MODE . LEVEL),\nwhere MAJOR-MODE is a symbol or t (meaning the default).  For example:\n ((c++-mode . 2) (c-mode . t) (t . 1))\nmeans use level 2 decoration for buffers in `c++-mode', the maximum decoration\navailable for buffers in `c-mode', and level 1 decoration otherwise." :type '(choice (const :tag "default" nil) (const :tag "maximum" t) (integer :tag "level" 1) (repeat :menu-tag "mode specific" :tag "mode specific" :value ((t . t)) (cons :tag "Instance" (radio :tag "Mode" (const :tag "all" t) (symbol :tag "name")) (radio :tag "Decoration" (const :tag "default" nil) (const :tag "maximum" t) (integer :tag "level" 1))))) :group 'font-lock)
 
 (define-obsolete-variable-alias 'font-lock-use-maximal-decoration 'font-lock-maximum-decoration)
 
-(defvar font-lock-maximum-size (* 250 1024) "\
-*If non-nil, the maximum size for buffers for fontifying.
-Only buffers less than this can be fontified when Font Lock mode is turned on.
-If nil, means size is irrelevant.
-If a list, each element should be a cons pair of the form (MAJOR-MODE . SIZE),
-where MAJOR-MODE is a symbol or t (meaning the default).  For example:
- ((c++-mode . 256000) (c-mode . 256000) (rmail-mode . 1048576))
-means that the maximum size is 250K for buffers in `c++-mode' or `c-mode', one
-megabyte for buffers in `rmail-mode', and size is irrelevant otherwise.")
+(defcustom font-lock-maximum-size (* 250 1024) "*If non-nil, the maximum size for buffers for fontifying.\nOnly buffers less than this can be fontified when Font Lock mode is turned on.\nIf nil, means size is irrelevant.\nIf a list, each element should be a cons pair of the form (MAJOR-MODE . SIZE),\nwhere MAJOR-MODE is a symbol or t (meaning the default).  For example:\n ((c++-mode . 256000) (c-mode . 256000) (rmail-mode . 1048576))\nmeans that the maximum size is 250K for buffers in `c++-mode' or `c-mode', one\nmegabyte for buffers in `rmail-mode', and size is irrelevant otherwise." :type '(choice (const :tag "none" nil) (integer :tag "size") (repeat :menu-tag "mode specific" :tag "mode specific" :value ((t)) (cons :tag "Instance" (radio :tag "Mode" (const :tag "all" t) (symbol :tag "name")) (radio :tag "Size" (const :tag "none" nil) (integer :tag "size"))))) :group 'font-lock)
 
 (defvar font-lock-keywords nil "\
-*A list of the keywords to highlight.
+A list of the keywords to highlight.
 Each element should be of the form:
 
  MATCHER
@@ -1102,9 +1038,11 @@ Prefix arg means just kill any existing server communications subprocess." t nil
 
 ;;;***
 
-;;;### (autoloads nil "help-macro" "lisp/help-macro.el")
+;;;### (autoloads (help-read-key) "help-macro" "lisp/help-macro.el")
 
 (defcustom three-step-help t "*Non-nil means give more info about Help command in three steps.\nThe three steps are simple prompt, prompt with all options,\nand window listing and describing the options.\nA value of nil means skip the middle step, so that\n\\[help-command] \\[help-command] gives the window that lists the options." :type 'boolean :group 'help-appearance)
+
+(autoload 'help-read-key "help-macro" nil nil nil)
 
 ;;;***
 

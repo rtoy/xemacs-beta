@@ -29,13 +29,13 @@
 
 ;; Byte compile the .EL files necessary to dump out xemacs.
 ;; Use this file like this:
-;;
+
 ;; temacs -batch -l ../lisp/update-elc.el $lisp
-;;
+
 ;; where $lisp comes from the Makefile.  .elc files listed in $lisp will
 ;; cause the corresponding .el file to be compiled.  .el files listed in
 ;; $lisp will be ignored.
-;;
+
 ;; (the idea here is that you can bootstrap if your .ELC files
 ;; are missing or badly out-of-date)
 
@@ -81,13 +81,8 @@
 					  nil 'dirs-only)
 			 (cons temp-path load-path))))
 
-;(load "backquote")
-;(load "bytecomp-runtime")
-;(load "subr")
-;(load "replace")
-;(load "version.el")
-;(load "cl")
-;(load "featurep")
+;; At this point we need to have the package path initialized
+(packages-find-packages package-path t t)
 
 ;; (print (prin1-to-string update-elc-files-to-compile))
 

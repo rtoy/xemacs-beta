@@ -3143,15 +3143,45 @@ extent_getprop (Lisp_Object obj, Lisp_Object prop)
 static int
 extent_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value)
 {
-  error ("Not yet implemented"); /* #### */
-  return 0;
+  Fset_extent_property (obj, prop, value);
+  return 1;
 }
 
 static int
 extent_remprop (Lisp_Object obj, Lisp_Object prop)
 {
-  error ("Not yet implemented"); /* #### */
-  return 0;
+  EXTENT ext = XEXTENT (obj);
+
+  /* This list is taken from Fset_extent_property, and should be kept
+     in synch.  */
+  if (EQ (prop, Qread_only)
+      || EQ (prop, Qunique)
+      || EQ (prop, Qduplicable)
+      || EQ (prop, Qinvisible)
+      || EQ (prop, Qdetachable)
+      || EQ (prop, Qdetached)
+      || EQ (prop, Qdestroyed)
+      || EQ (prop, Qpriority)
+      || EQ (prop, Qface)
+      || EQ (prop, Qinitial_redisplay_function)
+      || EQ (prop, Qmouse_face)
+      || EQ (prop, Qhighlight)
+      || EQ (prop, Qbegin_glyph_layout)
+      || EQ (prop, Qend_glyph_layout)
+      || EQ (prop, Qglyph_layout)
+      || EQ (prop, Qbegin_glyph)
+      || EQ (prop, Qend_glyph)
+      || EQ (prop, Qstart_open)
+      || EQ (prop, Qend_open)
+      || EQ (prop, Qstart_closed)
+      || EQ (prop, Qend_closed)
+      || EQ (prop, Qkeymap))
+    {
+      /* #### Is this correct, anyway?  */
+      return -1;
+    }
+
+  return external_remprop (&ext->plist, prop, 0, ERROR_ME);
 }
 
 static Lisp_Object

@@ -1320,6 +1320,7 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
   else if (SYMBOLP (key))
     {
       CONST char *str = 0;
+#if 0 /* obsolete keynames */
       if (brief)
 	{
 	  if      (EQ (key, QKlinefeed))  str = "LFD";
@@ -1330,6 +1331,7 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
 	  else if (EQ (key, QKspace))     str = "SPC";
 	  else if (EQ (key, QKbackspace)) str = "BS";
 	}
+#endif
       if (str)
 	{
 	  int i = strlen (str);

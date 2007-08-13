@@ -41,13 +41,12 @@ Boston, MA 02111-1307, USA.  */
 
 Lisp_Object Qinit_pre_mswindows_win, Qinit_post_mswindows_win;
 
-DWORD mswindows_main_thread_id;
-DWORD mswindows_win_thread_id;
-
 static void
 mswindows_init_device (struct device *d, Lisp_Object props)
 {
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
+  WNDCLASS wc;
+  mswindows_waitable_info_type info;
   HWND desktop;
   HDC hdc;
   MSG msg;
@@ -56,19 +55,6 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
   init_baud_rate (d);
   init_one_device (d);
-
-  /* Ensure our message queue is created */
-  PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE);
-
-  mswindows_main_thread_id = GetCurrentThreadId ();
-#if 0
-  DuplicateHandle (GetCurrentProcess (), GetCurrentThread (), 
-		   GetCurrentProcess (), &hMainThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
-#endif
-  handle = CreateThread (NULL, 0, 
-			 (LPTHREAD_START_ROUTINE) mswindows_win_thread,
-			 0, 0, &mswindows_win_thread_id);
-  AttachThreadInput (mswindows_main_thread_id, mswindows_win_thread_id, TRUE);
 
   d->device_data = xnew_and_zero (struct mswindows_device);
 
@@ -87,8 +73,21 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   ReleaseDC(desktop, hdc);
 
   DEVICE_CLASS(d) = Qcolor;
-  /* Wait for windows thread to be ready */
-  GetMessage (&msg, NULL, WM_XEMACS_ACK, WM_XEMACS_ACK);
+
+  /* Register the main window class */
+  wc.style = CS_OWNDC;	/* One DC per window */
+  wc.lpfnWndProc = (WNDPROC) mswindows_wnd_proc;
+  wc.cbClsExtra = 0;
+  wc.cbWndExtra = MSWINDOWS_WINDOW_EXTRA_BYTES;
+  wc.hInstance = NULL;	/* ? */
+  wc.hIcon = LoadIcon (NULL, XEMACS_CLASS);
+  wc.hCursor = LoadCursor (NULL, IDC_ARROW);
+  /* Background brush is only used during sizing, when XEmacs cannot
+     take over */
+  wc.hbrBackground = (HBRUSH)(COLOR_APPWORKSPACE + 1);
+  wc.lpszMenuName = NULL;
+  wc.lpszClassName = XEMACS_CLASS;
+  RegisterClass(&wc);		/* XXX FIXME: Should use RegisterClassEx */
 }
 
 static int

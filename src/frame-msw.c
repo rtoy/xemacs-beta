@@ -38,6 +38,18 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "events.h"
 
+#define MSWINDOWS_FRAME_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_OVERLAPPEDWINDOW
+#define MSWINDOWS_POPUP_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_CAPTION|WS_POPUP
+
+#define MSWINDOWS_FRAME_EXSTYLE WS_EX_OVERLAPPEDWINDOW
+#define MSWINDOWS_POPUP_EXSTYLE WS_EX_OVERLAPPEDWINDOW
+
+#ifdef HAVE_MENUBARS
+#define ADJR_MENUFLAG TRUE
+#else
+#define ADJR_MENUFLAG FALSE
+#endif
+
 /* Default properties to use when creating frames.  */
 Lisp_Object Vdefault_mswindows_frame_plist;
 /* Lisp_Object Qname, Qheight, Qwidth, Qinitially_unmapped, Qpopup, Qtop, Qleft; */
@@ -46,21 +58,57 @@ Lisp_Object Qinitially_unmapped, Qpopup;
 static void
 mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 {
-  mswindows_request_type request = { f, &props };
   Lisp_Object device = FRAME_DEVICE (f);
   struct device *d = XDEVICE (device);
   Lisp_Object lisp_window_id, initially_unmapped;
-  initially_unmapped = Fplist_get (props, Qinitially_unmapped, Qnil);
+  Lisp_Object name, height, width, popup, top, left;
+  Lisp_Object frame_obj;
+  int pixel_width, pixel_height;
+  RECT rect;
+  DWORD style, exstyle;
+  HWND hwnd;
 
-#if 0
-  if (NILP (DEVICE_SELECTED_FRAME (d)) &&	/* first frame on the device */
-      NILP (initially_unmapped))
-    f->visible = 1;
-#endif
+  initially_unmapped = Fplist_get (props, Qinitially_unmapped, Qnil);
+  name = Fplist_get (props, Qname, Qnil);
+  height = Fplist_get (props, Qheight, Qnil);
+  width = Fplist_get (props, Qwidth, Qnil);
+  popup = Fplist_get (props, Qpopup, Qnil);
+  top = Fplist_get (props, Qtop, Qnil);
+  left = Fplist_get (props, Qleft, Qnil);
 
   f->frame_data = xnew_and_zero (struct mswindows_frame);
-  FRAME_MSWINDOWS_HANDLE(f) = (HWND)mswindows_make_request(WM_XEMACS_CREATEWINDOW,
-					       0, &request);
+  FRAME_WIDTH (f) = INTP(width) ? XINT(width) : 80;
+  FRAME_HEIGHT (f) = INTP(height) ? XINT(height) : 30;
+  char_to_pixel_size (f, FRAME_WIDTH(f), FRAME_HEIGHT (f),
+		      &FRAME_PIXWIDTH (f), &FRAME_PIXHEIGHT (f));
+
+  style = (NILP(popup)) ? MSWINDOWS_FRAME_STYLE : MSWINDOWS_POPUP_STYLE;
+  exstyle = (NILP(popup)) ? MSWINDOWS_FRAME_EXSTYLE : MSWINDOWS_POPUP_EXSTYLE;
+  rect.left = rect.top = 0;
+  rect.right = FRAME_PIXWIDTH (f);
+  rect.bottom = FRAME_PIXHEIGHT (f);
+
+  FRAME_MSWINDOWS_DATA(f)->button2_need_lbutton = 0;
+  FRAME_MSWINDOWS_DATA(f)->button2_need_rbutton = 0;
+  FRAME_MSWINDOWS_DATA(f)->button2_is_down = 0;
+  FRAME_MSWINDOWS_DATA(f)->ignore_next_lbutton_up = 0;
+  FRAME_MSWINDOWS_DATA(f)->ignore_next_rbutton_up = 0;
+  FRAME_MSWINDOWS_DATA(f)->sizing = 0;
+
+  AdjustWindowRectEx(&rect, style, ADJR_MENUFLAG, exstyle);
+
+  FRAME_MSWINDOWS_HANDLE(f) =
+    CreateWindowEx (exstyle,
+		    XEMACS_CLASS,
+		    STRINGP(f->name) ? XSTRING_DATA(f->name) :
+		    	(STRINGP(name) ? XSTRING_DATA(name) : XEMACS_CLASS),
+		    style,
+		    INTP(left) ? XINT(left) : CW_USEDEFAULT,
+		    INTP(top) ? XINT(top) : CW_USEDEFAULT,
+		    rect.right-rect.left, rect.bottom-rect.top,
+		    NULL, NULL, NULL, NULL);
+  XSETFRAME (frame_obj, f);
+  SetWindowLong (FRAME_MSWINDOWS_HANDLE(f), XWL_FRAMEOBJ, (LONG)frame_obj);
   FRAME_MSWINDOWS_DC(f) = GetDC(FRAME_MSWINDOWS_HANDLE(f));
   SetTextAlign(FRAME_MSWINDOWS_DC(f), TA_BASELINE|TA_LEFT|TA_NOUPDATECP);
 }
@@ -91,8 +139,8 @@ mswindows_delete_frame (struct frame *f)
 {
   if (f->frame_data)
     {
-      mswindows_request_type request = { f };
-      mswindows_make_request(WM_XEMACS_DESTROYWINDOW, 0, &request);
+      ReleaseDC(FRAME_MSWINDOWS_HANDLE(f), FRAME_MSWINDOWS_DC(f));
+      DestroyWindow(FRAME_MSWINDOWS_HANDLE(f));
     }
 }
 
@@ -104,8 +152,12 @@ mswindows_set_frame_size (struct frame *f, int cols, int rows)
   GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect1);
   rect2.left = rect2.top = 0;
   char_to_pixel_size (f, cols, rows, &rect2.right, &rect2.bottom);
-  AdjustWindowRect (&rect2, GetWindowLong (FRAME_MSWINDOWS_HANDLE(f),
-					   GWL_STYLE), FALSE);
+
+  AdjustWindowRectEx (&rect2,
+		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
+		      GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
+		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
+		    
   MoveWindow (FRAME_MSWINDOWS_HANDLE(f), rect1.left, rect1.top,
  	      rect2.right-rect2.left, rect2.bottom-rect2.top, TRUE);
 }
@@ -265,8 +317,11 @@ mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
       if (!y_specified_p)
 	y = rect.top;
 
-      AdjustWindowRect (&rect, GetWindowLong (FRAME_MSWINDOWS_HANDLE(f),
-					      GWL_STYLE), FALSE);
+      AdjustWindowRectEx (&rect,
+			  GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_STYLE),
+			  GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
+			  GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
+
       MoveWindow (FRAME_MSWINDOWS_HANDLE(f), x, y, pixel_width, pixel_height,
 		  (width_specified_p || height_specified_p));
     }

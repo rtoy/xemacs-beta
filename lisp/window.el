@@ -278,20 +278,16 @@ or if the window is the only window of its frame."
   (or window (setq window (selected-window)))
   (save-excursion
     (set-buffer (window-buffer window))
-    (let* ((w (selected-window))	;save-window-excursion can't win
-	   (buffer-file-name buffer-file-name)
-	   (p (point))
-	   (n 0)
-	   (ignore-final-newline
-	    ;; If buffer ends with a newline, ignore it when counting height
-	    ;; unless point is after it.
-	    (and (not (eobp))
-		 (eq ?\n (char-after (1- (point-max))))))
-	   (buffer-read-only nil)
-	   (modified (buffer-modified-p))
-	   (buffer (current-buffer))
-	   (mini (frame-property (window-frame window) 'minibuffer))
-	   (edges (window-pixel-edges (selected-window))))
+    (let ((n 0)
+	  (test-pos
+	   (- (point-max)
+	      ;; If buffer ends with a newline, ignore it when counting
+	      ;; height unless point is after it.
+	      (if (and (not (eobp))
+		       (eq ?\n (char-after (1- (point-max)))))
+		  1 0)))
+	  (mini (frame-property (window-frame window) 'minibuffer))
+	  (edges (window-pixel-edges (selected-window))))
       (if (and (< 1 (let ((frame (selected-frame)))
 		      (select-frame (window-frame window))
 		      (unwind-protect
@@ -307,33 +303,20 @@ or if the window is the only window of its frame."
 		   (< (nth 3 edges)
 		      (nth 1 (window-pixel-edges mini)))
 		   (> (nth 1 edges)
-		      ;FSFmacs (frame-property (window-frame window)
-		      ;			       'menu-bar-lines params)
 		      0)))
-	  (unwind-protect
-	      (let ((shrinkee (or window w)))
-		(set-buffer (window-buffer shrinkee))
-		(goto-char (point-min))
-		(while (pos-visible-in-window-p
-			(- (point-max)
-			   (if ignore-final-newline 1 0))
-			shrinkee)
-		  ;; defeat file locking... don't try this at home, kids!
-		  (setq buffer-file-name nil)
-		  (insert ?\n) (setq n (1+ n)))
-		(if (> n 0)
-		    (shrink-window (min (1- n)
-					(- (window-height shrinkee)
-					   window-min-height))
-				   nil
-				   shrinkee)))
-	    (delete-region (point-min) (point))
-	    (set-buffer-modified-p modified)
-	    (goto-char p)
-	    ;; (select-window w) ; Emacs
-	    ;; Make sure we unbind buffer-read-only
-	    ;; with the proper current buffer.
-	    (set-buffer buffer))))))
+	  (progn
+	    (save-window-excursion
+	      (goto-char (point-min))
+	      (while (and (window-live-p window)
+			  (pos-visible-in-window-p test-pos window))
+		(shrink-window 1 nil window)
+		(setq n (1+ n))))
+	    (if (> n 0)
+		(shrink-window (min (1- n)
+				    (- (window-height window)
+				       (1+ window-min-height)))
+			       nil
+			       window)))))))
 
 (defun kill-buffer-and-window ()
   "Kill the current buffer and delete the selected window."

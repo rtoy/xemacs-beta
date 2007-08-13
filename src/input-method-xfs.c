@@ -41,7 +41,7 @@ void
 Initialize_Locale (void)
 {
   char *locale;
-  
+
   XtSetLanguageProc (NULL, (XtLanguageProc) NULL, NULL);
   if ((locale = setlocale (LC_ALL, "")) == NULL)
     {
@@ -73,6 +73,8 @@ Initialize_Locale (void)
           return;
         }
     }
+
+  setlocale(LC_NUMERIC, "C");
   
   if (XSetLocaleModifiers ("") == NULL)
     {

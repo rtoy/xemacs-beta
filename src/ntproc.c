@@ -45,6 +45,7 @@ Boston, MA 02111-1307, USA.
 #include "nt.h"
 #include "ntheap.h" /* From 19.34.6 */
 #include "systime.h"
+#include "syssignal.h"
 #include "syswait.h"
 #include "process.h"
 /*#include "w32term.h"*/ /* From 19.34.6: sync in ? --marcpa */
@@ -105,26 +106,7 @@ void _DebPrint (const char *fmt, ...)
 }
 #endif
 
-typedef void (_CALLBACK_ *signal_handler)(int);
-
-/* Signal handlers...SIG_DFL == 0 so this is initialized correctly.  */
-static signal_handler sig_handlers[NSIG];
-
-/* Fake signal implementation to record the SIGCHLD handler.  */
-signal_handler 
-sys_signal (int sig, signal_handler handler)
-{
-  signal_handler old;
-  
-  if (sig != SIGCHLD)
-    {
-      errno = EINVAL;
-      return SIG_ERR;
-    }
-  old = sig_handlers[sig];
-  sig_handlers[sig] = handler;
-  return old;
-}
+/* sys_signal moved to nt.c. It's now called msw_signal... */
 
 /* Defined in <process.h> which conflicts with the local copy */
 #define _P_NOWAIT 1
@@ -1205,18 +1187,17 @@ count_children:
 	  if (cp->fd >= 0 && (fd_info[cp->fd].flags & FILE_AT_EOF) == 0)
 	    fd_info[cp->fd].flags |= FILE_SEND_SIGCHLD;
 	  /* SIG_DFL for SIGCHLD is ignore */
-	  else if (sig_handlers[SIGCHLD] != SIG_DFL &&
-		      sig_handlers[SIGCHLD] != SIG_IGN)
-		    {
+	  else 
+	    {
 #ifdef FULL_DEBUG
-		      DebPrint (("select calling SIGCHLD handler for pid %d\n",
-				 cp->pid));
+	      DebPrint (("select is raising SIGCHLD handler for pid %d\n",
+			 cp->pid));
 #endif
-		      dead_child = cp;
-		      sig_handlers[SIGCHLD] (SIGCHLD);
-		      dead_child = NULL;
-		    }
-		}
+	      dead_child = cp;
+	      msw_raise (SIGCHLD);
+	      dead_child = NULL;
+	    }
+	}
       else if (fdindex[active] == 0)
 	{
 	  /* Keyboard input available */

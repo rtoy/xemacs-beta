@@ -224,4 +224,22 @@ extern int set_file_times (char *filename, EMACS_TIME atime, EMACS_TIME mtime);
 extern void get_process_times (double *user_time, double *system_time,
 			       double *real_time);
 
+#ifdef _WIN32
+
+/* setitimer emulation for Win32 (see nt.c) */
+
+struct itimerval
+{
+  struct timeval it_value;
+  struct timeval it_interval;
+};
+
+int setitimer (int kind, const struct itimerval* itnew,
+	       struct itimerval* itold);
+
+#define ITIMER_REAL 1
+#define ITIMER_PROF 2
+
+#endif /* _WIN32 */
+
 #endif /* _XEMACS_SYSTIME_H_ */

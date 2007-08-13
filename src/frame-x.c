@@ -2031,7 +2031,6 @@ x_init_frame_1 (struct frame *f, Lisp_Object props)
 {
   /* This function can GC */
   Lisp_Object device = FRAME_DEVICE (f);
-  struct device *d = XDEVICE (device);
   Lisp_Object lisp_window_id;
   Lisp_Object popup;
 

@@ -66,9 +66,7 @@ Lisp_Object Qdelq;
 Lisp_Object Qdevice;
 Lisp_Object Qdimension;
 Lisp_Object Qdisplay;
-#ifdef HAVE_OFFIX_DND
 Lisp_Object Qdnd_data;
-#endif
 Lisp_Object Qdoc_string;
 Lisp_Object Qdynarr_overhead;
 Lisp_Object Qempty;
@@ -109,6 +107,7 @@ Lisp_Object Qmessage;
 Lisp_Object Qminus;
 Lisp_Object Qmodifiers;
 Lisp_Object Qmotion;
+Lisp_Object Qmswindows;
 Lisp_Object Qname;
 Lisp_Object Qnone;
 Lisp_Object Qnot;
@@ -137,12 +136,14 @@ Lisp_Object Qold_rassoc;
 Lisp_Object Qold_rassq;
 Lisp_Object Qsearch;
 Lisp_Object Qsimple;
+Lisp_Object Qsize;
 Lisp_Object Qspace;
 Lisp_Object Qspecifier;
 Lisp_Object Qstream;
 Lisp_Object Qstring;
 Lisp_Object Qsymbol;
 Lisp_Object Qsyntax;
+Lisp_Object Qtest;
 Lisp_Object Qtext;
 Lisp_Object Qtimeout;
 Lisp_Object Qtimestamp;
@@ -155,7 +156,6 @@ Lisp_Object Qunimplemented;
 Lisp_Object Qvalue_assoc;
 Lisp_Object Qvector;
 Lisp_Object Qwarning;
-Lisp_Object Qmswindows;
 Lisp_Object Qwhite;
 Lisp_Object Qwidth;
 Lisp_Object Qwindow;
@@ -202,9 +202,7 @@ syms_of_general (void)
   defsymbol (&Qdevice, "device");
   defsymbol (&Qdimension, "dimension");
   defsymbol (&Qdisplay, "display");
-#ifdef HAVE_OFFIX_DND
   defsymbol (&Qdnd_data, "dnd-data");
-#endif
   defsymbol (&Qdoc_string, "doc-string");
   defsymbol (&Qdynarr_overhead, "dynarr-overhead");
   defsymbol (&Qempty, "empty");
@@ -242,9 +240,10 @@ syms_of_general (void)
   defsymbol (&Qmemory, "memory");
   defsymbol (&Qmenubar, "menubar");
   defsymbol (&Qmessage, "message");
+  defsymbol (&Qminus, "-");
   defsymbol (&Qmodifiers, "modifiers");
   defsymbol (&Qmotion, "motion");
-  defsymbol (&Qminus, "-");
+  defsymbol (&Qmswindows, "mswindows");
   defsymbol (&Qname, "name");
   defsymbol (&Qnone, "none");
   defsymbol (&Qnot, "not");
@@ -272,12 +271,14 @@ syms_of_general (void)
   defsymbol (&Qold_rassq, "old-rassq");
   defsymbol (&Qsearch, "search");
   defsymbol (&Qsimple, "simple");
+  defsymbol (&Qsize, "size");
   defsymbol (&Qspace, "space");
   defsymbol (&Qspecifier, "specifier");
   defsymbol (&Qstream, "stream");
   defsymbol (&Qstring, "string");
   defsymbol (&Qsymbol, "symbol");
   defsymbol (&Qsyntax, "syntax");
+  defsymbol (&Qtest, "test");
   defsymbol (&Qtext, "text");
   defsymbol (&Qtimeout, "timeout");
   defsymbol (&Qtimestamp, "timestamp");
@@ -292,7 +293,6 @@ syms_of_general (void)
   defsymbol (&Qwarning, "warning");
   defsymbol (&Qwhite, "white");
   defsymbol (&Qwidth, "width");
-  defsymbol (&Qmswindows, "mswindows");
   defsymbol (&Qwindow, "window");
   defsymbol (&Qwindow_system, "window-system");
   defsymbol (&Qx, "x");

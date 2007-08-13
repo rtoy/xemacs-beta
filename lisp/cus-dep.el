@@ -154,7 +154,7 @@ Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS"
 	      (with-temp-file cusload-file
 		(insert ";;; " cusload-base-file
 			" --- automatically extracted custom dependencies\n"
-			"\n\n;;; Code:\n\n")
+			"\n;;; Code:\n\n")
 		(mapatoms
 		 (lambda (sym)
 		   (let ((members (get sym 'custom-group))

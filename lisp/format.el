@@ -210,7 +210,6 @@ For most purposes, consider using `format-encode-region' instead."
 	  (funcall to-fn from to orig-buf)))))
 
 (defun format-decode (format length &optional visit-flag)
-  ;; This function is called by insert-file-contents whenever a file is read.
   "Decode text from any known FORMAT.
 FORMAT is a symbol appearing in `format-alist' or a list of such symbols, 
 or nil, in which case this function tries to guess the format of the data by
@@ -225,7 +224,9 @@ formats.
 
 Returns the new length of the decoded region.
 
-For most purposes, consider using `format-decode-region' instead."
+For most purposes, consider using `format-decode-region' instead.
+
+This function is called by insert-file-contents whenever a file is read."
   (let ((mod (buffer-modified-p))
 	(begin (point))
 	(end (+ (point) length)))

@@ -1,6 +1,7 @@
 /* Lisp interface to hash tables.
    Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1997 Free Software Foundation, Inc.
 
 This file is part of XEmacs.
 
@@ -27,7 +28,8 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "bytecode.h"
 
-Lisp_Object Qhashtablep;
+Lisp_Object Qhashtablep, Qhashtable;
+Lisp_Object Qweak, Qkey_weak, Qvalue_weak, Qnon_weak;
 
 #define LISP_OBJECTS_PER_HENTRY (sizeof (hentry) / sizeof (Lisp_Object))/* 2 */
 
@@ -69,28 +71,287 @@ mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (table->zero_entry));
   return table->harray;
 }
+
+/* Printing hashtables.
+
+   This is non-trivial, because we use a readable structure-style
+   syntax for hashtables.  This means that a typical hashtable will be
+   readably printed in the form of:
+
+   #s(hashtable size 2 data (key1 value1 key2 value2))
+
+   The supported keywords are `type' (non-weak (or nil), weak,
+   key-weak and value-weak), `test' (eql (or nil), eq or equal),
+   `size' (a natnum or nil) and `data' (a list).
+
+   If `print-readably' is non-nil, then a simpler syntax is used; for
+   instance:
+
+   #<hashtable size 2/13 data (key1 value1 key2 value2) 0x874d>
+
+   The data is truncated to four pairs, and the rest is shown with
+   `...'.  The actual printer is non-consing.  */
+
+struct print_mapper_arg {
+  EMACS_INT count;		/* Used to implement the truncation
+				   for non-readable printing, as well
+				   as to avoid the unnecessary space
+				   at the beginning.  */
+  Lisp_Object printcharfun;
+};
+
+static void
+print_hashtable_data_mapper (void *key, void *contents, void *arg)
+{
+  Lisp_Object keytem, valuetem;
+  struct print_mapper_arg *closure = (struct print_mapper_arg *)arg;
+
+  if (closure->count < 4 || print_readably)
+    {
+      CVOID_TO_LISP (keytem, key);
+      CVOID_TO_LISP (valuetem, contents);
+
+      if (closure->count)
+	write_c_string (" ", closure->printcharfun);
+
+      print_internal (keytem, closure->printcharfun, 1);
+      write_c_string (" ", closure->printcharfun);
+      print_internal (valuetem, closure->printcharfun, 1);
+    }
+  ++closure->count;
+}
+
+/* Print the data of the hashtable.  This maps through a Lisp
+   hashtable and prints key/value pairs using PRINTCHARFUN.  */
+static void
+print_hashtable_data (Lisp_Object hashtable, Lisp_Object printcharfun)
+{
+  struct print_mapper_arg closure;
+  closure.count = 0;
+  closure.printcharfun = printcharfun;
+
+  write_c_string (" data (", printcharfun);
+  elisp_maphash (print_hashtable_data_mapper, hashtable, &closure);
+  write_c_string ((!print_readably && closure.count > 4) ? " ...)" : ")",
+		  printcharfun);
+}
+
+/* Needed for tests.  */
+static int lisp_object_eql_equal (CONST void *x1, CONST void *x2);
+static int lisp_object_equal_equal (CONST void *x1, CONST void *x2);
 
 static void
 print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   struct hashtable *table = XHASHTABLE (obj);
-  char buf[200];
+  char buf[128];
+
+  write_c_string (print_readably ? "#s(hashtable" : "#<hashtable",
+		  printcharfun);
+  if (table->type != HASHTABLE_NONWEAK)
+    {
+      sprintf (buf, " type %s",
+	       (table->type == HASHTABLE_WEAK ? "weak" :
+		table->type == HASHTABLE_KEY_WEAK ? "key-weak" :
+		table->type == HASHTABLE_VALUE_WEAK ? "value-weak" :
+		"you-d-better-not-see-this"));
+      write_c_string (buf, printcharfun);
+    }
+  /* These checks are way kludgy... */
+  if (table->test_function == NULL)
+    write_c_string (" test eq", printcharfun);
+  else if (table->test_function == lisp_object_equal_equal)
+    write_c_string (" test equal", printcharfun);
+  else if (table->test_function == lisp_object_eql_equal)
+      ;
+  else
+    abort ();
+  if (table->fullness || !print_readably)
+    {
+      if (print_readably)
+	sprintf (buf, " size %d", table->fullness);
+      else
+	sprintf (buf, " size %u/%ld", table->fullness,
+		 XVECTOR_LENGTH (table->harray) / LISP_OBJECTS_PER_HENTRY);
+      write_c_string (buf, printcharfun);
+    }
+  if (table->fullness)
+    print_hashtable_data (obj, printcharfun);
   if (print_readably)
-    error ("printing unreadable object #<hashtable 0x%x>",
-	   table->header.uid);
-  sprintf (buf, GETTEXT ("#<%shashtable %d/%ld 0x%x>"),
-	   (table->type == HASHTABLE_WEAK ? "weak " :
-	    table->type == HASHTABLE_KEY_WEAK ? "key-weak " :
-	    table->type == HASHTABLE_VALUE_WEAK ? "value-weak " :
-	    table->type == HASHTABLE_KEY_CAR_WEAK ? "key-car-weak " :
-	    table->type == HASHTABLE_VALUE_CAR_WEAK ? "value-car-weak " :
-	    ""),
-           table->fullness,
-           XVECTOR_LENGTH (table->harray) / LISP_OBJECTS_PER_HENTRY,
-           table->header.uid);
-  write_c_string (buf, printcharfun);
+    write_c_string (")", printcharfun);
+  else
+    {
+      sprintf (buf, " 0x%x>", table->header.uid);
+      write_c_string (buf, printcharfun);
+    }
 }
 
+
+/* Pretty reading of hashtables.
+
+   Here we use the existing structures mechanism (which is,
+   unfortunately, pretty cumbersome) for validating and instantiating
+   the hashtables.  The idea is that the side-effect of reading a
+   #s(hashtable PLIST) object is creation of a hashtable with desired
+   properties, and that the hashtable is returned.  */
+
+/* Validation functions: each keyword provides its own validation
+   function.  The errors should maybe be continuable, but it is
+   unclear how this would cope with ERRB.  */
+static int
+hashtable_type_validate (Lisp_Object keyword, Lisp_Object value,
+			 Error_behavior errb)
+{
+  if (!(NILP (value)
+	|| EQ (value, Qnon_weak)
+	|| EQ (value, Qweak)
+	|| EQ (value, Qkey_weak)
+	|| EQ (value, Qvalue_weak)))
+    {
+      maybe_signal_simple_error ("Invalid hashtable type", value,
+				 Qhashtable, errb);
+      return 0;
+    }
+  return 1;
+}
+
+static int
+hashtable_test_validate (Lisp_Object keyword, Lisp_Object value,
+			 Error_behavior errb)
+{
+  if (!(NILP (value)
+	|| EQ (value, Qeq)
+	|| EQ (value, Qeql)
+	|| EQ (value, Qequal)))
+    {
+      maybe_signal_simple_error ("Invalid hashtable test", value,
+				 Qhashtable, errb);
+      return 0;
+    }
+  return 1;
+}
+
+static int
+hashtable_size_validate (Lisp_Object keyword, Lisp_Object value,
+			 Error_behavior errb)
+{
+  if (!NATNUMP (value))
+    {
+      maybe_signal_error (Qwrong_type_argument, list2 (Qnatnump, value),
+			  Qhashtable, errb);
+      return 0;
+    }
+  return 1;
+}
+
+static int
+hashtable_data_validate (Lisp_Object keyword, Lisp_Object value,
+			 Error_behavior errb)
+{
+  int num = 0;
+  Lisp_Object tail;
+
+  /* #### Doesn't respect ERRB!  */
+  EXTERNAL_LIST_LOOP (tail, value)
+    {
+      ++num;
+      QUIT;
+    }
+  if (num & 1)
+    {
+      maybe_signal_simple_error
+	("Hashtable data must have alternating keyword/value pairs", value,
+	 Qhashtable, errb);
+      return 0;
+    }
+  return 1;
+}
+
+/* The actual instantiation of hashtable.  This does practically no
+   error checking, because it relies on the fact that the paranoid
+   functions above have error-checked everything to the last details.
+   If this assumption is wrong, we will get a crash immediately (with
+   error-checking compiled in), and we'll know if there is a bug in
+   the structure mechanism.  So there.  */
+static Lisp_Object
+hashtable_instantiate (Lisp_Object plist)
+{
+  /* I'm not sure whether this can GC, but better safe than sorry.  */
+  Lisp_Object hashtab = Qnil;
+  Lisp_Object type = Qnil, test = Qnil, size = Qnil, data = Qnil;
+  Lisp_Object key, value;
+  struct gcpro gcpro1;
+  GCPRO1 (hashtab);
+
+  while (!NILP (plist))
+    {
+      key = XCAR (plist);
+      plist = XCDR (plist);
+      value = XCAR (plist);
+      plist = XCDR (plist);
+      if (EQ (key, Qtype))
+	type = value;
+      else if (EQ (key, Qtest))
+	test = value;
+      else if (EQ (key, Qsize))
+	size = value;
+      else if (EQ (key, Qdata))
+	data = value;
+      else
+	abort ();
+    }
+  if (NILP (type))
+    type = Qnon_weak;
+  if (NILP (size))
+    {
+      /* Divide by two, because data is a plist. */
+      XSETINT (size, XINT (Flength (data)) / 2);
+    }
+
+  /* Create the hashtable.  */
+  if (EQ (type, Qnon_weak))
+    hashtab = Fmake_hashtable (size, test);
+  else if (EQ (type, Qweak))
+    hashtab = Fmake_weak_hashtable (size, test);
+  else if (EQ (type, Qkey_weak))
+    hashtab = Fmake_key_weak_hashtable (size, test);
+  else if (EQ (type, Qvalue_weak))
+    hashtab = Fmake_value_weak_hashtable (size, test);
+  else
+    abort ();
+
+  /* And fill it with data.  */
+  while (!NILP (data))
+    {
+      key = XCAR (data);
+      data = XCDR (data);
+      value = XCAR (data);
+      data = XCDR (data);
+      Fputhash (key, value, hashtab);
+    }
+
+  UNGCPRO;
+  return hashtab;
+}
+
+/* Initialize the hashtable as a structure type.  This is called from
+   emacs.c.  */
+void
+structure_type_create_hashtable (void)
+{
+  struct structure_type *st;
+
+  st = define_structure_type (Qhashtable, 0, hashtable_instantiate);
+  define_structure_type_keyword (st, Qtype, hashtable_type_validate);
+  define_structure_type_keyword (st, Qtest, hashtable_test_validate);
+  define_structure_type_keyword (st, Qsize, hashtable_size_validate);
+  define_structure_type_keyword (st, Qdata, hashtable_data_validate);
+}
+
+/* Basic conversion and allocation functions. */
+
+/* Create a C hashtable from the data in the Lisp hashtable.  The
+   actual vector is not copied, nor are the keys or values copied.  */
 static void
 ht_copy_to_c (struct hashtable *ht, c_hashtable c_table)
 {
@@ -453,6 +714,7 @@ Return number of entries in HASHTABLE.
 static void
 verify_function (Lisp_Object function, CONST char *description)
 {
+  /* #### Unused DESCRIPTION?  */
   if (SYMBOLP (function))
   {
     if (NILP (function))
@@ -464,7 +726,7 @@ verify_function (Lisp_Object function, CONST char *description)
     return;
   else if (CONSP (function))
   {
-    Lisp_Object funcar = Fcar (function);
+    Lisp_Object funcar = XCAR (function);
     if ((SYMBOLP (funcar)) && (EQ (funcar, Qlambda) ||
 			       EQ (funcar, Qautoload)))
       return;
@@ -717,7 +979,6 @@ finish_marking_weak_hashtables (int (*obj_marked_p) (Lisp_Object),
 	   (The remhash above has taken care of zero_entry.)
 	   */
 	struct Lisp_Vector *ptr = XVECTOR (XHASHTABLE (rest)->harray);
-	int len = vector_length (ptr);
 #ifdef LRECORD_VECTOR
 	if (! MARKED_RECORD_P(XHASHTABLE(rest)->harray))
 	  {
@@ -725,6 +986,7 @@ finish_marking_weak_hashtables (int (*obj_marked_p) (Lisp_Object),
 	    did_mark = 1;
 	  }
 #else
+	int len = vector_length (ptr);
 	if (len >= 0)
 	  {
 	    ptr->size = -1 - len;
@@ -879,6 +1141,11 @@ syms_of_elhash (void)
   DEFSUBR (Fmake_key_weak_hashtable);
   DEFSUBR (Fmake_value_weak_hashtable);
   defsymbol (&Qhashtablep, "hashtablep");
+  defsymbol (&Qhashtable, "hashtable");
+  defsymbol (&Qweak, "weak");
+  defsymbol (&Qkey_weak, "key-weak");
+  defsymbol (&Qvalue_weak, "value-weak");
+  defsymbol (&Qnon_weak, "non-weak");
 }
 
 void

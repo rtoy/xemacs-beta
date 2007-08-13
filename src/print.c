@@ -417,7 +417,7 @@ temp_output_buffer_setup (CONST char *bufname)
   Fset_buffer (Fget_buffer_create (build_string (bufname)));
 
   current_buffer->read_only = Qnil;
-  Ferase_buffer (Fcurrent_buffer ());
+  Ferase_buffer (Qnil);
 
   XSETBUFFER (buf, current_buffer);
   specbind (Qstandard_output, buf);

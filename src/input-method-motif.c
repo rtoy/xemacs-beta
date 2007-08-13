@@ -73,6 +73,8 @@ Initialize_Locale (void)
         }
     }
 
+  setlocale(LC_NUMERIC, "C");
+
   if (XSetLocaleModifiers ("") == NULL)
     {
       stderr_out ("XSetLocaleModifiers(\"\") failed\n");

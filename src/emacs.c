@@ -827,9 +827,7 @@ main_1 (int argc, char **argv, char **envp)
 #if !defined (NO_SUBPROCESSES)
       syms_of_process ();
 #endif
-#ifndef WINDOWSNT
       syms_of_profile ();
-#endif
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
       syms_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
@@ -1009,6 +1007,7 @@ main_1 (int argc, char **argv, char **envp)
       structure_type_create_chartab ();
       structure_type_create_faces ();
       structure_type_create_rangetab ();
+      structure_type_create_hashtable ();
 
       /* Now initialize the image instantiator formats and associated symbols.
          Other than the first function below, the functions may
@@ -1153,9 +1152,7 @@ main_1 (int argc, char **argv, char **envp)
 #ifndef NO_SUBPROCESSES
       vars_of_process ();
 #endif
-#ifndef WINDOWSNT
       vars_of_profile ();
-#endif
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
       vars_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */

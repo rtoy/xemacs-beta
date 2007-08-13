@@ -13,8 +13,8 @@ in that task.  The file is divided into four parts:
  - Mule issues
 
 Use `C-c C-f' to move to the next equal level of outline, and
-`C-c C-f' to move to previous equal level.  `C-h m' will give more
-advice about the Outline mode.
+`C-c C-b' to move to previous equal level.  `C-h m' will give more
+info about the Outline mode.
 
 Also, Try finding the things you need using one of the search commands
 XEmacs provides (e.g. `C-s').
@@ -29,7 +29,7 @@ A general advice:
 ===============================
 
 ** Don't use -O2 with gcc 2.7.2 under Linux without also using
-   `-fno-strength-reduce'.
+`-fno-strength-reduce'.
 
 gcc will generate incorrect code otherwise.  This bug is present in at
 least 2.6.x and 2.7.[0-2].  This bug has been fixed in GCC 2.7.2.1 and
@@ -1281,7 +1281,7 @@ variable are not pointing at an Emacs18 lisp directory.  This will
 cripple emacs.
 
 ** Some packages that worked before now cause the error
-   Wrong type argument: arrayp, #<face ... >
+Wrong type argument: arrayp, #<face ... >
 
 Code which uses the `face' accessor functions must be recompiled with
 xemacs 19.9 or later.  The functions whose callers must be recompiled
@@ -1306,21 +1306,33 @@ that comes with bbdb and use the one that comes with XEmacs.
 * MULE issues
 =============
 
+** A reminder: XEmacs/Mule work does not currently receive *any*
+funding, and all work is done by volunteers.  If you think you can
+help, please contact the XEmacs maintainers.
+
+** XEmacs/Mule doesn't work on a tty.
+
+This is a major problem, which we plan to address in a future release
+of XEmacs.  Basically, XEmacs should have primitives to be told
+whether the terminal can handle international output, and which
+locale.  Also, it should be able to do approximations of characters to
+the nearest supported by the locale.
+
 ** Internationalized (Asian) Isearch doesn't work.
 
 Currently, Isearch doesn't directly support any of the input methods
 that are not XIM based (like egg, canna and quail) (and there are
-potential problems with XIM version too...). This is something
-we are working on, but for the moment, if you're using egg there is a
-workaround. Hitting <RET> right after C-s to invoke Isearch will put
-Isearch in string mode, where a complete string can be typed into the
-minibuffer and then processed by Isearch afterwards. Since egg is now
-supported in the minibuffer using string mode you can now use egg to
-input your Japanese, Korean or Chinese string, then hit return to send 
-that to Isearch and then use standard Isearch commands from there.
+potential problems with XIM version too...).  If you're using egg
+there is a workaround.  Hitting <RET> right after C-s to invoke
+Isearch will put Isearch in string mode, where a complete string can
+be typed into the minibuffer and then processed by Isearch afterwards.
+Since egg is now supported in the minibuffer using string mode you can
+now use egg to input your Japanese, Korean or Chinese string, then hit
+return to send that to Isearch and then use standard Isearch commands
+from there.
 
-** Using egg or canna and mousing around while in 'fence' mode screws
-up my buffer.
+** Using egg and mousing around while in 'fence' mode screws up my
+buffer.
 
 Don't do this. The fence modes of egg and canna are currently very
 modal, and messing with where they expect point to be and what they
@@ -1330,3 +1342,35 @@ fence, but worst case can trash other buffers too. We've tried to
 protect against this where we can, but there still are many ways to
 shoot yourself in the foot. So just finish what you are typing into
 the fence before reaching for the mouse.
+
+** Not all languages in Quail are supported like Devanagari and Indian
+languages, Lao and Tibetan.
+
+Quail requires more work and testing.  Although it has been ported to
+XEmacs, it works really well for Japanese and for the European
+languages.
+
+** Right-to-left mode is not yet implemented, so languages like
+Arabic, Hebrew and Thai don't work.
+
+Getting this right requires more work.  It may be implemented in a
+future XEmacs version, but don't hold your breath.  If you know
+someone who is ready to implement this, please let us know.
+
+** We need more developers and native language testers.  It's extremely
+difficult (and not particularly productive) to address languages that
+nobody is using and testing.
+
+** The kWnn and cWnn support for Chinese and Korean needs developers
+and testers.  It probably doesn't work.
+
+** There are no `native XEmacs' TUTORIALs for any Asian languages,
+including Japanese.  FSF Emacs and XEmacs tutorials are quite similar, 
+so it should be sufficient to skim through the differences and apply
+them to the Japanese version.
+
+** We only have localized menus translated for Japanese, and the
+Japanese menus are developing bitrot (the Mule menu appears in
+English).
+
+** XIM is untested for any language other than Japanese.

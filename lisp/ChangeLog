@@ -1,3 +1,124 @@
+1997-12-13  SL Baur  <steve@altair.xemacs.org>
+
+	* help.el (describe-function-arglist): Restore.
+	(describe-function-1): Correct typo.
+	From Jamie Zawinski <jwz@netscape.com>
+
+1997-12-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cus-dep.el (Custom-make-dependencies): Cut a newline.
+
+	* cus-edit.el (customize-changed-options): Handle output more nicely.
+	(customize-changed-options): Mention `:version' instead of `:new'.
+	(customize-changed-options): Use `push'.
+
+1997-12-12  Colin Rafferty  <colin@xemacs.org>
+
+	* window.el (shrink-window-if-larger-than-buffer): Modified the
+	algorithm so that is calculates the amount it can shrink the
+	buffer by shrinking the buffer itself first.
+
+1997-12-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* undo-stack.el (trunc-stack-bottom): Don't terminate error
+	message with a period.
+
+	* cus-start.el: Synch quoter with `custom-quote'.
+
+	* custom.el (custom-add-load): Update custom-group-hash-table.
+
+1997-12-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* mouse.el (mouse-track-run-hook): Understand `make-local-hook'
+ 	convention.
+
+	* custom.el (custom-add-version): New function, from FSF.
+	(custom-handle-keyword): Use it.
+
+	* cus-edit.el (custom-variable-prompt): Require match.
+	(customize-changed-options): New function, from FSF.
+	(customize-version-lessp): Ditto.
+
+	* cus-edit.el (custom-quote): Defalias to `quote-maybe'.
+	(customize-set-variable): Use `quote-maybe'.
+	(customize-save-variable): Ditto.
+	(custom-variable-value-create): Ditto.
+	(custom-variable-set): Ditto.
+	(custom-variable-save): Ditto.
+
+	* cus-start.el: Use `quote-maybe'.
+
+1997-12-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (fsf:do-auto-fill): Comment out.
+
+	* simple.el (set-goal-column): Be careful about the format
+	argument to message.
+
+	* cl-macs.el: New setf methods for: buffer-dedicated-frame,
+ 	console-type-image-conversion-list, default-toolbar-position,
+ 	device-class, extent-begin-glyph, extent-begin-glyph-layout,
+ 	extent-end-glyph, extent-end-glyph-layout, extent-keymap,
+ 	extent-parent, extent-properties, frame-selected-window,
+ 	itimer-function, itimer-function-arguments, itimer-is-idle,
+ 	itimer-recorded-run-time, itimer-restart, itimer-uses-arguments,
+ 	itimer-value, keymap-parents, marker-insertion-type,
+ 	mouse-pixel-position, trunc-stack-length, trunc-stack-stack,
+ 	undoable-stack-max and weak-list-list.
+
+1997-12-12  SL Baur  <steve@altair.xemacs.org>
+
+	* keydefs.el (global-map): Import C-x M-: keybinding for
+	`repeat-complex-command' from Emacs 20.
+
+1997-12-11  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* mule/mule-debug.el (list-charsets): Make it work.  Better
+	formatting.
+
+1997-12-11  SL Baur  <steve@altair.xemacs.org>
+
+	* files.el (insert-file): Don't use format.el settings.
+
+	* format.el (format-decode): Update docstring.
+
+1997-12-09  SL Baur  <steve@altair.xemacs.org>
+
+	* make-docfile.el (package-path): Set load-path from package path
+	before collecting the files to dump.
+	* update-elc.el (package-path): Ditto.
+
+	* loadup.el: Comment changes, cleanup.
+
+1997-12-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* etags.el (tags-loop-continue): Avoid giant `progn' in while test.
+	(next-file): Use `pop'.
+
+1997-12-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* etags.el (find-tag-internal): Set the initial fuzz offset to 100
+ 	instead of 1000.
+	(find-tag-internal): Use `letf'.
+	(tags-delete): Removed -- was unused.
+	(set-buffer-tag-table): Use `expland-file-name'.
+	(get-tag-table-buffer): Use `ecase'.
+	(add-to-tag-completion-table): Mark the filename messages with
+ 	progress.
+	(add-to-tag-completion-table): Use `char-after' instead of
+ 	`following-char'.
+	(add-to-tag-completion-table): Use `match-string'.
+	(complete-symbol): Use `error' instead of message+ding.
+	(complete-symbol): Use `skip-syntax-forward'.
+	(tag-complete-symbol): Autoload.
+	(pop-mark-from-stack): Use `buffer-live-p'.
+	(pop-tag-mark): Autoload the `M-*' binding.
+	(list-tags): Made it work.
+
+1997-12-09  SL Baur  <steve@altair.xemacs.org>
+
+	* x-toolbar.el (toolbar-news): Fix typo.
+
 1997-12-06  Jonathan Harris <jhar@tardis.ed.ac.uk>
 
 	* dumped-lisp.el, emacs.c, symsinit.h, msw-init.el, 	  nt/xemacs.mak

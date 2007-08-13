@@ -297,6 +297,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Compile in support for ImageMagick (all image formats) */
 #undef HAVE_IMAGEMAGICK
+#undef MAGICK_HEADERS_ARE_UNDER_X11
 
 /* Do you have the Xmu library?
    This should always be the case except on losing HP-UX systems. */

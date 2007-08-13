@@ -355,7 +355,6 @@ Lisp_Object Qinsert_file_contents;
 Lisp_Object Qwrite_region;
 Lisp_Object Qverify_visited_file_modtime;
 Lisp_Object Qset_visited_file_modtime;
-Lisp_Object Qset_buffer_modtime;
 
 /* If FILENAME is handled specially on account of its syntax,
    return its handler function.  Otherwise, return nil.  */
@@ -4126,85 +4125,6 @@ An argument specifies the modification time value to use
 
   return Qnil;
 }
-
-DEFUN ("set-buffer-modtime", Fset_buffer_modtime, 1, 2, 0, /*
-Update BUFFER's recorded modification time from the associated
-file's modtime, if there is an associated file. If not, use the
-current time. In either case, if the optional arg TIME is supplied,
-it will be used if it is either an integer or a cons of two integers.
-*/
-       (buf, in_time))
-{
-  /* This function can call lisp */
-  unsigned long time_to_use = 0;
-  int set_time_to_use = 0;
-  struct stat st;
-
-  CHECK_BUFFER (buf);
-
-  if (!NILP (in_time))
-    {
-      if (INTP (in_time))
-        {
-          time_to_use = XINT (in_time);
-          set_time_to_use = 1;
-        }
-      else if ((CONSP (in_time)) &&
-               (INTP (Fcar (in_time))) &&
-               (INTP (Fcdr (in_time))))
-	{
-	  time_t the_time;
-	  lisp_to_time (in_time, &the_time);
-	  time_to_use = (unsigned long) the_time;
-          set_time_to_use = 1;
-        }
-    }
-
-  if (!set_time_to_use)
-    {
-      Lisp_Object filename = Qnil;
-      struct gcpro gcpro1;
-      GCPRO1 (filename);
-      /* #### dmoore - do we need to protect XBUFFER (buf)->filename?
-	 What if a ^(*&^&*^*& handler renames a buffer?  I think I'm
-	 getting a headache now. */
-
-      if (STRINGP (XBUFFER (buf)->filename))
-        filename = Fexpand_file_name (XBUFFER (buf)->filename, Qnil);
-      else
-        filename = Qnil;
-
-      if (!NILP (filename) && !NILP (Ffile_exists_p (filename)))
-        {
-	  Lisp_Object handler;
-
-	  /* If the file name has special constructs in it,
-	     call the corresponding file handler.  */
-	  handler = Ffind_file_name_handler (filename, Qset_buffer_modtime);
-	  UNGCPRO;
-	  if (!NILP (handler))
-	    /* The handler can find the file name the same way we did. */
-	    return (call2 (handler, Qset_buffer_modtime, Qnil));
-	  else
-	    {
-	      if (stat ((char *) XSTRING_DATA (filename), &st) >= 0)
-		time_to_use = st.st_mtime;
-	      else
-		time_to_use = time ((time_t *) 0);
-	    }
-        }
-      else
-	{
-	  UNGCPRO;
-  	  time_to_use = time ((time_t *) 0);
-	}
-    }
-
-  XBUFFER (buf)->modtime = time_to_use;
-
-  return Qnil;
-}
-
 
 static Lisp_Object
 auto_save_error (Lisp_Object condition_object, Lisp_Object ignored)
@@ -4618,7 +4538,6 @@ syms_of_fileio (void)
   defsymbol (&Qwrite_region, "write-region");
   defsymbol (&Qverify_visited_file_modtime, "verify-visited-file-modtime");
   defsymbol (&Qset_visited_file_modtime, "set-visited-file-modtime");
-  defsymbol (&Qset_buffer_modtime, "set-buffer-modtime");
 #ifdef DOS_NT
   defsymbol (&Qfind_buffer_file_type, "find-buffer-file-type");
 #endif /* DOS_NT */
@@ -4687,7 +4606,6 @@ syms_of_fileio (void)
   DEFSUBR (Fclear_visited_file_modtime);
   DEFSUBR (Fvisited_file_modtime);
   DEFSUBR (Fset_visited_file_modtime);
-  DEFSUBR (Fset_buffer_modtime);
 
   DEFSUBR (Fdo_auto_save);
   DEFSUBR (Fset_buffer_auto_saved);

@@ -1869,9 +1869,10 @@ The goal column is stored in the variable `goal-column'."
         (setq goal-column nil)
         (display-message 'command "No goal column"))
     (setq goal-column (current-column))
-    (message (substitute-command-keys
-	      "Goal column %d (use \\[set-goal-column] with an arg to unset it)")
-	     goal-column))
+    (lmessage 'command
+	"Goal column %d (use %s with an arg to unset it)"
+      goal-column
+      (substitute-command-keys "\\[set-goal-column]")))
   nil)
 
 ;; deleted FSFmacs terminal randomness hscroll-point-visible stuff.
@@ -2490,99 +2491,99 @@ indicating whether soft newlines should be inserted.")
 
 ;; Put FSF one in until I can one or the other working properly, then the
 ;; other one is history.
-(defun fsf:do-auto-fill ()
-  (let (fc justify
-	   ;; bol
-	   give-up
-	   (fill-prefix fill-prefix))
-    (if (or (not (setq justify (current-justification)))
-	    (null (setq fc (current-fill-column)))
-	    (and (eq justify 'left)
-		 (<= (current-column) fc))
-	    (save-excursion (beginning-of-line) 
-			    ;; (setq bol (point))
-			    (and auto-fill-inhibit-regexp
-				 (looking-at auto-fill-inhibit-regexp))))
-	nil ;; Auto-filling not required
-      (if (memq justify '(full center right))
-	  (save-excursion (unjustify-current-line)))
+;(defun fsf:do-auto-fill ()
+;  (let (fc justify
+;	   ;; bol
+;	   give-up
+;	   (fill-prefix fill-prefix))
+;    (if (or (not (setq justify (current-justification)))
+;	    (null (setq fc (current-fill-column)))
+;	    (and (eq justify 'left)
+;		 (<= (current-column) fc))
+;	    (save-excursion (beginning-of-line) 
+;			    ;; (setq bol (point))
+;			    (and auto-fill-inhibit-regexp
+;				 (looking-at auto-fill-inhibit-regexp))))
+;	nil ;; Auto-filling not required
+;      (if (memq justify '(full center right))
+;	  (save-excursion (unjustify-current-line)))
 
-      ;; Choose a fill-prefix automatically.
-      (if (and adaptive-fill-mode
-	       (or (null fill-prefix) (string= fill-prefix "")))
-	  (let ((prefix
-		 (fill-context-prefix
-		  (save-excursion (backward-paragraph 1) (point))
-		  (save-excursion (forward-paragraph 1) (point))
-		  ;; Don't accept a non-whitespace fill prefix
-		  ;; from the first line of a paragraph.
-		  "^[ \t]*$")))
-	    (and prefix (not (equal prefix ""))
-		 (setq fill-prefix prefix))))
+;      ;; Choose a fill-prefix automatically.
+;      (if (and adaptive-fill-mode
+;	       (or (null fill-prefix) (string= fill-prefix "")))
+;	  (let ((prefix
+;		 (fill-context-prefix
+;		  (save-excursion (backward-paragraph 1) (point))
+;		  (save-excursion (forward-paragraph 1) (point))
+;		  ;; Don't accept a non-whitespace fill prefix
+;		  ;; from the first line of a paragraph.
+;		  "^[ \t]*$")))
+;	    (and prefix (not (equal prefix ""))
+;		 (setq fill-prefix prefix))))
 
-      (while (and (not give-up) (> (current-column) fc))
-	;; Determine where to split the line.
-	(let ((fill-point
-	       (let ((opoint (point))
-		     bounce
-		     (first t))
-		 (save-excursion
-		   (move-to-column (1+ fc))
-		   ;; Move back to a word boundary.
-		   (while (or first
-			      ;; If this is after period and a single space,
-			      ;; move back once more--we don't want to break
-			      ;; the line there and make it look like a
-			      ;; sentence end.
-			      (and (not (bobp))
-				   (not bounce)
-				   sentence-end-double-space
-				   (save-excursion (forward-char -1)
-						   (and (looking-at "\\. ")
-							(not (looking-at "\\.  "))))))
-		     (setq first nil)
-		     (skip-chars-backward "^ \t\n")
-		     ;; If we find nowhere on the line to break it,
-		     ;; break after one word.  Set bounce to t
-		     ;; so we will not keep going in this while loop.
-		     (if (bolp)
-			 (progn
-			   (re-search-forward "[ \t]" opoint t)
-			   (setq bounce t)))
-		     (skip-chars-backward " \t"))
-		   ;; Let fill-point be set to the place where we end up.
-		   (point)))))
-	  ;; If that place is not the beginning of the line,
-	  ;; break the line there.
-	  (if (save-excursion
-		(goto-char fill-point)
-		(not (bolp)))
-	      (let ((prev-column (current-column)))
-		;; If point is at the fill-point, do not `save-excursion'.
-		;; Otherwise, if a comment prefix or fill-prefix is inserted,
-		;; point will end up before it rather than after it.
-		(if (save-excursion
-		      (skip-chars-backward " \t")
-		      (= (point) fill-point))
-		    (funcall comment-line-break-function t)
-		  (save-excursion
-		    (goto-char fill-point)
-		    (funcall comment-line-break-function t)))
-		;; Now do justification, if required
-		(if (not (eq justify 'left))
-		    (save-excursion 
-		      (end-of-line 0)
-		      (justify-current-line justify nil t)))
-		;; If making the new line didn't reduce the hpos of
-		;; the end of the line, then give up now;
-		;; trying again will not help.
-		(if (>= (current-column) prev-column)
-		    (setq give-up t)))
-	    ;; No place to break => stop trying.
-	    (setq give-up t))))
-      ;; Justify last line.
-      (justify-current-line justify t t)
-      t)))
+;      (while (and (not give-up) (> (current-column) fc))
+;	;; Determine where to split the line.
+;	(let ((fill-point
+;	       (let ((opoint (point))
+;		     bounce
+;		     (first t))
+;		 (save-excursion
+;		   (move-to-column (1+ fc))
+;		   ;; Move back to a word boundary.
+;		   (while (or first
+;			      ;; If this is after period and a single space,
+;			      ;; move back once more--we don't want to break
+;			      ;; the line there and make it look like a
+;			      ;; sentence end.
+;			      (and (not (bobp))
+;				   (not bounce)
+;				   sentence-end-double-space
+;				   (save-excursion (forward-char -1)
+;						   (and (looking-at "\\. ")
+;							(not (looking-at "\\.  "))))))
+;		     (setq first nil)
+;		     (skip-chars-backward "^ \t\n")
+;		     ;; If we find nowhere on the line to break it,
+;		     ;; break after one word.  Set bounce to t
+;		     ;; so we will not keep going in this while loop.
+;		     (if (bolp)
+;			 (progn
+;			   (re-search-forward "[ \t]" opoint t)
+;			   (setq bounce t)))
+;		     (skip-chars-backward " \t"))
+;		   ;; Let fill-point be set to the place where we end up.
+;		   (point)))))
+;	  ;; If that place is not the beginning of the line,
+;	  ;; break the line there.
+;	  (if (save-excursion
+;		(goto-char fill-point)
+;		(not (bolp)))
+;	      (let ((prev-column (current-column)))
+;		;; If point is at the fill-point, do not `save-excursion'.
+;		;; Otherwise, if a comment prefix or fill-prefix is inserted,
+;		;; point will end up before it rather than after it.
+;		(if (save-excursion
+;		      (skip-chars-backward " \t")
+;		      (= (point) fill-point))
+;		    (funcall comment-line-break-function t)
+;		  (save-excursion
+;		    (goto-char fill-point)
+;		    (funcall comment-line-break-function t)))
+;		;; Now do justification, if required
+;		(if (not (eq justify 'left))
+;		    (save-excursion 
+;		      (end-of-line 0)
+;		      (justify-current-line justify nil t)))
+;		;; If making the new line didn't reduce the hpos of
+;		;; the end of the line, then give up now;
+;		;; trying again will not help.
+;		(if (>= (current-column) prev-column)
+;		    (setq give-up t)))
+;	    ;; No place to break => stop trying.
+;	    (setq give-up t))))
+;      ;; Justify last line.
+;      (justify-current-line justify t t)
+;      t)))
 
 (defvar normal-auto-fill-function 'do-auto-fill
   "The function to use for `auto-fill-function' if Auto Fill mode is turned on.
@@ -3218,15 +3219,11 @@ Otherwise, this function always returns false."
       (downcase-region (region-beginning) (region-end))
     (downcase-word arg)))
 
-;;;
-;;; Most of the zmacs code is now in elisp.  The only thing left in C
-;;; are the variables zmacs-regions, zmacs-region-active-p and
-;;; zmacs-region-stays plus the function zmacs_update_region which
-;;; calls the lisp level zmacs-update-region.  It must remain since it
-;;; must be called by core C code.
-;;;
-;;; Huh?  Why couldn't "core C code" just use
-;;; call0(Qzmacs_update_region)??? -hniksic
+;; Most of the zmacs code is now in elisp.  The only thing left in C
+;; are the variables zmacs-regions, zmacs-region-active-p and
+;; zmacs-region-stays plus the function zmacs_update_region which
+;; simply calls the lisp level zmacs-update-region.  It must remain
+;; for convenience, since it is called by core C code.
 
 (defvar zmacs-activate-region-hook nil
   "Function or functions called when the region becomes active;
@@ -3638,6 +3635,7 @@ by default--see the `log-message-ignore-labels' variable):
     error         default label used for reporting errors
   * progress      progress indicators like \"Converting... 45%\"
   * prompt        prompt-like messages like \"I-search: foo\"
+  * command       helper command messages like \"Mark set\"
   * no-log        messages that should never be logged"
   (clear-message label frame stdout-p t)
   (append-message label message frame stdout-p))

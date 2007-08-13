@@ -162,17 +162,7 @@
 	     (case-replace matching boolean)
 	     (query-replace-highlight matching boolean)
 	     (list-matching-lines-default-context-lines matching integer)))
-      this symbol group type
-      (quoter (lambda (sexp)
-		;; A copy of `custom-quote'
-		(if (or (memq sexp '(t nil))
-			(keywordp sexp)
-			(eq (car-safe sexp) 'lambda)
-			(stringp sexp)
-			(numberp sexp)
-			(characterp sexp))
-		    sexp
-		  (list 'quote sexp)))))
+      this symbol group type)
   (while all
     (setq this (car all)
 	  all (cdr all)
@@ -186,7 +176,7 @@
 	    (message "Intrinsic `%S' not bound" symbol))
       ;; This is called before any user can have changed the value.
       (put symbol 'standard-value 
-	   (list (funcall quoter (default-value symbol))))
+	   (list (quote-maybe (default-value symbol))))
       ;; Add it to the right group.
       (custom-add-to-group group symbol 'custom-variable)
       ;; Set the type.

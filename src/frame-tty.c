@@ -69,8 +69,8 @@ tty_init_frame_3 (struct frame *f)
 static void
 tty_select_frame_if_unhidden (Lisp_Object frame)
 {
-    if (FRAME_REPAINT_P (XFRAME (frame)))
-      select_frame_1 (frame);
+  if (FRAME_REPAINT_P (XFRAME (frame)))
+    select_frame_1 (frame);
 }
 
 static void
@@ -160,11 +160,9 @@ static void
 tty_raise_frame_no_select (struct frame *f)
 {
   struct frame *o;
-  struct device *d = XDEVICE (FRAME_DEVICE (f));
-  Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
-  Lisp_Object tail = frame_list;
+  Lisp_Object tail;
 
-  while (CONSP (tail))
+  LIST_LOOP (tail, DEVICE_FRAME_LIST (XDEVICE (FRAME_DEVICE (f))))
     {
       o = XFRAME (XCAR (tail));
       if (o != f && FRAME_REPAINT_P(o))
@@ -172,7 +170,6 @@ tty_raise_frame_no_select (struct frame *f)
 	   tty_make_frame_hidden (o);
 	   break;
 	}
-      tail = XCDR (tail);
     }
   tty_make_frame_unhidden (f);
 }
@@ -187,27 +184,21 @@ tty_raise_frame (struct frame *f)
 static void
 tty_lower_frame (struct frame *f)
 {
-  struct frame *o;
-  struct device *d = XDEVICE (FRAME_DEVICE (f));
-  Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
-  Lisp_Object tail;
-  Lisp_Object new;
+  Lisp_Object frame_list = DEVICE_FRAME_LIST (XDEVICE (FRAME_DEVICE (f)));
+  Lisp_Object tail, new;
 
   if (!FRAME_REPAINT_P (f))
     return;
 
-  tail = frame_list;
-  while (CONSP (tail))
+  LIST_LOOP (tail, frame_list)
     {
-      o = XFRAME (XCAR (tail));
-      if (o == f)
+      if (f == XFRAME (XCAR (tail)))
 	break;
-      tail = XCDR (tail);
     }
 
-  /* to lower this frame another frame has to be raised.
-     return if there is no other frame. */
-  if (!CONSP (tail) && EQ(frame_list, tail))
+  /* To lower this frame, another frame has to be raised.  Return if
+     there is no other frame. */
+  if (NILP (tail) && EQ(frame_list, tail))
     return;
 
   tty_make_frame_hidden (f);
@@ -222,10 +213,10 @@ tty_lower_frame (struct frame *f)
 static void
 tty_delete_frame (struct frame *f)
 {
-    struct device *d = XDEVICE (FRAME_DEVICE (f));
+  struct device *d = XDEVICE (FRAME_DEVICE (f));
 
-    if (!NILP (DEVICE_SELECTED_FRAME (d)))
-      tty_raise_frame (XFRAME (DEVICE_SELECTED_FRAME (d)));
+  if (!NILP (DEVICE_SELECTED_FRAME (d)))
+    tty_raise_frame (XFRAME (DEVICE_SELECTED_FRAME (d)));
 }
 
 /************************************************************************/

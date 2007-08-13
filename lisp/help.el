@@ -936,7 +936,7 @@ When run interactively, it defaults to any function found by
 	     (princ "a symbol with a void (unbound) function definition." stream))
             (t
              nil)))
-    (princ "\n")
+    (princ "\n" stream)
     (if autoload-file
 	(princ (format "  -- autoloads from \"%s\"\n" autoload-file) stream))
     (or file-name
@@ -1000,24 +1000,26 @@ When run interactively, it defaults to any function found by
 		 (terpri stream))))))))
 
 
-;;; ## this doesn't seem to be used for anything
-;; (defun describe-function-arglist (function)
-;;   (interactive (list (or (function-at-point)
-;; 			 (error "no function call at point"))))
-;;   (let ((b nil))
-;;     (unwind-protect
-;; 	(save-excursion
-;; 	  (set-buffer (setq b (get-buffer-create " *arglist*")))
-;; 	  (buffer-disable-undo b)
-;; 	  (erase-buffer)
-;; 	  (describe-function-1 function b t)
-;; 	  (goto-char (point-min))
-;; 	  (end-of-line)
-;; 	  (or (eobp) (delete-char 1))
-;; 	  (just-one-space)
-;; 	  (end-of-line)
-;; 	  (message (buffer-substring (point-min) (point))))
-;;       (and b (kill-buffer b)))))
+;;; this doesn't seem to be used for anything
+;;; Wrong!  Obnoxious, whining people who complain very LOUDLY on Usenet
+;;; are binding this to keys.
+(defun describe-function-arglist (function)
+  (interactive (list (or (function-at-point)
+			 (error "no function call at point"))))
+  (let ((b nil))
+    (unwind-protect
+	(save-excursion
+	  (set-buffer (setq b (get-buffer-create " *arglist*")))
+	  (buffer-disable-undo b)
+	  (erase-buffer)
+	  (describe-function-1 function b t)
+	  (goto-char (point-min))
+	  (end-of-line)
+	  (or (eobp) (delete-char 1))
+	  (just-one-space)
+	  (end-of-line)
+	  (message (buffer-substring (point-min) (point))))
+      (and b (kill-buffer b)))))
 
 
 (defun variable-at-point ()

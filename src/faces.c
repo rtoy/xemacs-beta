@@ -319,15 +319,7 @@ face_validate (Lisp_Object data, Error_behavior errb)
       valw = Fcar (data);
       data = Fcdr (data);
       if (EQ (keyw, Qname))
-	{
-	  if (name_seen)
-	    {
-	      maybe_signal_simple_error ("Duplicate face name given", valw,
-					 Qface, errb);
-	      return 0;
-	    }
-	  name_seen = 1;
-	}
+	name_seen = 1;
       else
 	abort ();
     }
@@ -467,6 +459,8 @@ mark_all_faces_as_clean (void)
   mark_all_faces_internal (0);
 }
 
+/* Currently unused (see the comment in face_property_was_changed()).  */
+#if 0
 /* #### OBSOLETE ME, PLEASE.  Maybe.  Maybe this is just as good as
    any other solution. */
 struct face_inheritance_closure
@@ -561,6 +555,7 @@ update_faces_inheritance (Lisp_Object face, Lisp_Object property)
 
   UNGCPRO;
 }
+#endif /* 0 */
 
 Lisp_Object
 face_property_matching_instance (Lisp_Object face, Lisp_Object property,

@@ -121,7 +121,9 @@ tty_device_size_change_signal (int signo)
 {
   int old_errno = errno;
   asynch_device_change_pending++;
+#ifdef HAVE_UNIXOID_EVENT_LOOP
   signal_fake_event ();
+#endif
   EMACS_REESTABLISH_SIGNAL (SIGWINCH, tty_device_size_change_signal);
   errno = old_errno;
   SIGRETURN;

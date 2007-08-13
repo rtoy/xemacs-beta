@@ -57,9 +57,16 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 
 #ifdef HAVE_IMAGEMAGICK
+#ifdef SOLARIS2 /* Try to trick magick.h into not including Xos.h */
+#define _XOS_H_
+#endif
+#ifdef MAGICK_HEADERS_ARE_UNDER_X11
+#include <X11/magick/magick.h>
+#else
 #include <magick/magick.h>
+#endif
 /*#include <image.h>*/
-#include <assert.h>
+/*#include <assert.h>*/
 
 #define OLDCOMPAT /* allow lisp code using the old names to still function */
 #endif
@@ -1099,7 +1106,7 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
 
       specbind (Qinhibit_quit, Qt);
       set_buffer_internal (XBUFFER (temp_buffer));
-      Ferase_buffer (Fcurrent_buffer ());
+      Ferase_buffer (Qnil);
 
       buffer_insert_c_string (current_buffer, "/* XPM */\r");
       buffer_insert_c_string (current_buffer, "static char *pixmap[] = {\r");
@@ -1116,7 +1123,7 @@ pixmap_to_lisp_data (Lisp_Object name, int ok_if_data_invalid)
 	    buffer_insert_c_string (current_buffer, "\"};\r");
 	}
 
-      retval = Fbuffer_substring (Qnil, Qnil, Fcurrent_buffer ());
+      retval = Fbuffer_substring (Qnil, Qnil, Qnil);
       XpmFree (data);
 
       set_buffer_internal (old_buffer);

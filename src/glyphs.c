@@ -400,10 +400,10 @@ make_string_from_file (Lisp_Object file)
   temp_buffer = Fget_buffer_create (build_string (" *pixmap conversion*"));
   GCPRO1 (temp_buffer);
   set_buffer_internal (XBUFFER (temp_buffer));
-  Ferase_buffer (Fcurrent_buffer ());
+  Ferase_buffer (Qnil);
   specbind (intern ("format-alist"), Qnil);
   Finsert_file_contents_internal (file, Qnil, Qnil, Qnil, Qnil, Qnil, Qnil);
-  data = Fbuffer_substring (Qnil, Qnil, Fcurrent_buffer ());
+  data = Fbuffer_substring (Qnil, Qnil, Qnil);
   unbind_to (count, Qnil);
   UNGCPRO;
   return data;

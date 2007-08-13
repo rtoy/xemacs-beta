@@ -1273,12 +1273,14 @@ extern Lisp_Object Qold_rassoc;
 extern Lisp_Object Qold_rassq;
 extern Lisp_Object Qsearch;
 extern Lisp_Object Qsimple;
+extern Lisp_Object Qsize;
 extern Lisp_Object Qspace;
 extern Lisp_Object Qspecifier;
 extern Lisp_Object Qstream;
 extern Lisp_Object Qstring;
 extern Lisp_Object Qsymbol;
 extern Lisp_Object Qsyntax;
+extern Lisp_Object Qtest;
 extern Lisp_Object Qtext;
 extern Lisp_Object Qtimeout;
 extern Lisp_Object Qtimestamp;
@@ -1522,6 +1524,7 @@ void write_string_to_stdio_stream (FILE *stream, struct console *con,
 				   Bytecount len,
 				   enum external_data_format fmt);
 extern Lisp_Object Vprin1_to_string_buffer;
+Lisp_Object Fdisplay_error(Lisp_Object error_object, Lisp_Object stream);
 Lisp_Object Fprin1 (Lisp_Object obj, Lisp_Object printcharfun);
 Lisp_Object Fprinc (Lisp_Object obj, Lisp_Object printcharfun);
 Lisp_Object Fprint (Lisp_Object obj, Lisp_Object printcharfun);

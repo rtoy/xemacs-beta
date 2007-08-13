@@ -1,3 +1,156 @@
+1997-12-13   Kirill M. Katsnelson <kkm@kis.ru>
+
+	* msw-proc.c: added emulation for middle mouse button by chording
+	  left and right buttons
+	* event-msw.c: added lisp variables for resize behavior and middle
+ 	  button emulation thresholds
+	* msw-proc.c: {un}map-frame-hook now are not called directly from
+	  the window procedure, rather from magic event handler.
+	* Formulated golden rule for calling lisp from window procedure:
+	  "NOOOOOO!". May be violated under circumstances although.
+	* frame-msw.c: corrected problem with setting frame width and height
+	  properties, introduced by 95-style look.
+
+1997-12-12  SL Baur  <steve@altair.xemacs.org>
+
+	* input-method-xlib.c (describe_XIC): Add casts, use unsigned long 
+	int.
+
+	* eval.c (funcall_subr): Ifdef out as it is now unused.
+
+	* emacsfns.h: Declare Fdisplay_error.
+
+	* callint.c (Fquote_maybe): Don't use `==' on Lisp_Objects.
+
+1997-12-12  Michael Sperber  <sperber@informatik.uni-tuebingen.de>
+
+	* fileio.c: Removed stillborn set-buffer-modtime.
+
+1997-12-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* elhash.c (hashtable_instantiate): If SIZE is nil, set it to
+	length of DATA.
+	(print_hashtable): Would bogusly print #(hashtable).
+	(verify_function): Use XCAR.
+
+1997-12-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* elhash.c (print_hashtable_data_mapper): Use a C structure
+	instead of consing.
+
+1997-12-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* callint.c (quotify_arg): Don't quotify vectors, keywords,
+ 	bit-vectors and lambdas.
+	(Fquote_maybe): New subr, from quotify_arg.
+	(quotify_args): Use it.
+	(Fcall_interactively): Ditto.
+
+1997-12-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* window.c (Fset_window_point): Ditto for Fgoto_char.
+	(Fset_window_configuration): Ditto.
+
+	* undo.c (Fprimitive_undo): Ditto for Fset_buffer_modified_p,
+	Fgoto_char and Fdelete_region.
+
+	* print.c (temp_output_buffer_setup): Ditto.
+
+	* glyphs.c (make_string_from_file): Ditto.
+
+	* glyphs-x.c (pixmap_to_lisp_data): Ditto for Ferase_buffer.
+	(pixmap_to_lisp_data): Ditto for Fbuffer_substring.
+
+	* bytecode.c (Fbyte_code): Use Qnil instead of Fcurrent_buffer()
+ 	when calling functions that use decode_buffer() internally -- it
+ 	is faster.
+
+	Change done for Fgoto_char, Fchar_after, Ffollowing_char,
+ 	Fpreceding_char, Findent_to, Feolp, Feobp, Fbolp, Fbobp,
+ 	Fforward_char, Fforward_word, Fskip_chars_forward,
+ 	Fskip_chars_backward, Fforward_line, Fbuffer_substring,
+ 	Fdelete_region, Fnarrow_to_region, Fwiden, Fend_of_line, Fupcase
+ 	and Fdowncase.
+
+1997-12-11 Jonathan Harris <jhar@tardis.ed.ac.uk>, Kirill M. Katsnelson <kkm@kis.ru>
+
+	* The first collegial patch in the xemacs-nt history. Well...
+	* device-msw.c, event-msw.c, event-msw.h, frame-msw.c, msw-proc.c:
+	  xemacs is now single-threaded application. Due to this, the
+	  problem with crash during input events in GC got resolved.
+	* xemacs frames are given "95ish" look with raised border.
+	* stop character (ctrl+g) now works. SIGINT (ctrl+c or ctrl+break
+	  at the console) is still broken although.
+	* frame "as lisp object" is now stored in window-associated space
+	  provided by the system. This enables obtaining frame object given
+	  window handle in constant time.
+	* mswindows_cancel_dispatch_event() now has limited handling
+	  for key_press_event's in addition to timeout_event's.
+
+1997-12-11  SL Baur  <steve@altair.xemacs.org>
+
+	* intl.c (init_intl_very_early): Force LC_NUMERIC to "C".
+	* input-method-xfs.c (Initialize_Locale): Ditto.
+	* input-method-motif.c (Initialize_Locale): Ditto.
+	* input-method-xlib.c (Initialize_Locale): Ditto.
+	Suggested by Didier Verna <verna@inf.enst.fr> and
+	Martin Buchholz <martin@xemacs.org>
+	
+1997-12-10  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* config.h.in: #undef MAGICK_HEADERS_ARE_UNDER_X11
+
+	* glyphs-x.c: #ifdef MAGICK_HEADERS_ARE_UNDER_X11 added.
+
+1997-12-11  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c (_XOS_H_): Try to avoid including Xos.h on Solaris.
+	Suggested by Samuel Tardieu <sam@inf.enst.fr>
+
+1997-12-11  David Hobley <davidh@wr.com.au>
+
+	* pure.c: Removed WINDOWSNT conditional.
+
+1997-12-10  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Doc changes, update dependencies.
+
+	* frame-x.c (x_init_frame_1): Remove unused variable.
+
+	* fns.c (internal_equal): Guard label with ifdef.
+	(internal_old_equal): Ditto.
+
+	* symsinit.h: Declare structure_type_create_hashtable.
+
+	* elhash.c (finish_marking_weak_hashtables): Move unused variable
+	so gcc doesn't complain about it.
+
+	* elhash.h: Declare new weak hashtables.
+
+	* elhash.c (print_hashtable): Fix format.
+
+1997-12-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* frame-tty.c (tty_raise_frame_no_select): Use LIST_LOOP.
+	(tty_lower_frame): Ditto.
+
+	* faces.c (face_validate): Don't check for doubly defined
+	keywords; the reader does that.
+
+	* emacs.c (main_1): Call structure_type_create_hashtable().
+
+	* general.c (syms_of_general): Added Qtest and Qsize.
+
+	* elhash.c (structure_type_create_hashtable): New function.
+	(hashtable_type_validate): Ditto.
+	(hashtable_test_validate): Ditto.
+	(hashtable_size_validate): Ditto.
+	(hashtable_data_validate): Ditto.
+	(hashtable_instantiate): Ditto.
+
+	* extents.c (extent_putprop): Made it work.
+	(extent_remprop): Ditto.
+
 1997-12-08  Kirill M. Katsnelson <kkm@kis.ru>
 
 	* device.h: device::fdin and device::fdout are now defined for

@@ -33,10 +33,12 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
-#include <sys/time.h>
 
 /* must include CRT headers *before* config.h */
 #include "config.h"
+#include "systime.h"
+#include "syssignal.h"
+
 #undef access
 #undef chdir
 #undef chmod
@@ -66,6 +68,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <pwd.h>
 
 #include <windows.h>
+#include <mmsystem.h>
 
 #ifdef HAVE_SOCKETS	/* TCP connection support, if kernel can do it */
 #include <sys/socket.h>
@@ -555,28 +558,11 @@ win32_get_long_filename (char * name, char * buf, int size)
 /* Routines that are no-ops on NT but are defined to get Emacs to compile.  */
 
 int 
-sigsetmask (int signal_mask) 
-{ 
-  return 0;
-}
-
-int 
-sigblock (int sig) 
-{ 
-  return 0;
-}
-
-int 
 setpgrp (int pid, int gid) 
 { 
   return 0;
 }
 
-int 
-alarm (int seconds) 
-{ 
-  return 0;
-}
 
 int 
 unrequest_sigio (void) 
@@ -2803,5 +2789,227 @@ tty_canonicalize_device_connection (Lisp_Object connection,
   return Vstdio_str;
 }
 #endif
+
+/*--------------------------------------------------------------------*/
+/* Signal support                                                     */
+/*--------------------------------------------------------------------*/
+
+/* We need MS-defined signal and raise here */
+#undef signal
+#undef raise
+
+#define sigmask(nsig) (1U << nsig)
+
+/* We can support as many signals as fit into word */
+#define SIG_MAX 32
+
+/* Signal handlers. Initial value = 0 = SIG_DFL */
+static void (__cdecl *signal_handlers[SIG_MAX])(int) = {0};
+
+/* Signal block mask: bit set to 1 means blocked */
+unsigned signal_block_mask = 0;
+
+/* Signal pending mask: bit set to 1 means sig is pending */
+unsigned signal_pending_mask = 0;
+
+msw_sighandler msw_sigset (int nsig, msw_sighandler handler)
+{
+  /* We delegate some signals to the system function */
+  if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
+    {
+      signal (nsig, handler);
+      return;
+    }
+
+  if (nsig < 0 || nsig > SIG_MAX)
+    {
+      errno = EINVAL;
+      return;
+    }
+
+  /* Store handler ptr */
+  signal_handlers[nsig] = handler;
+}
+  
+int msw_sighold (int nsig)
+{
+  if (nsig < 0 || nsig > SIG_MAX)
+    return errno = EINVAL;
+
+  signal_block_mask |= sigmask(nsig);
+  return 0;
+}
+
+int msw_sigrelse (int nsig)
+{
+  if (nsig < 0 || nsig > SIG_MAX)
+    return errno = EINVAL;
+
+  signal_block_mask &= ~sigmask(nsig);
+
+  if (signal_pending_mask & sigmask(nsig))
+    msw_raise (nsig);
+
+  return 0;
+}
+
+int msw_sigpause (int nsig)
+{
+  /* This is currently not called, because the only
+     call to sigpause inside XEmacs is with SIGCHLD
+     parameter. Just in case, we put an assert here,
+     so anyone who will add a call to sigpause will
+     be surprised (or surprise someone else...) */
+  assert (0);
+  return 0;
+}
+
+int msw_raise (int nsig)
+{
+  /* We delegate some raises to the system routine */
+  if (nsig == SIGFPE || nsig == SIGABRT || nsig == SIGINT)
+    return raise (nsig);
+
+  if (nsig < 0 || nsig > SIG_MAX)
+    return errno = EINVAL;
+
+  /* If the signal is blocked, remember to issue later */
+  if (signal_block_mask & sigmask(nsig))
+    {
+      signal_pending_mask |= sigmask(nsig);
+      return 0;
+    }
+
+  if (signal_handlers[nsig] == SIG_IGN)
+    return 0;
+
+  if (signal_handlers[nsig] != SIG_DFL)
+    {
+      (*signal_handlers[nsig])(nsig);
+      return 0;
+    }
+
+  /* Default signal actions */
+  if (nsig == SIGALRM || nsig == SIGPROF)
+    exit (3);
+
+  /* Other signals are ignored by default */
+}
+
+/*--------------------------------------------------------------------*/
+/* Async timers                                                       */
+/*--------------------------------------------------------------------*/
+
+/* We emulate two timers, one for SIGALRM, another for SIGPROF.
+
+   itimerproc() function has an implementation limitation: it does
+   not allow to set *both* interval and period. If an attempt is
+   made to set both, and then they are unequal, the function
+   asserts.
+
+   Minimum timer resolution on Win32 systems varies, and is greater
+   than or equal than 1 ms. The resolution is always wrapped not to
+   attempt to get below the system defined limit.
+   */
+
+/* Timer precision, denominator of one fraction: for 100 ms
+   interval, request 10 ms precision
+   */
+const int timer_prec = 10;
+
+/* Last itimevals, as set by calls to setitimer */
+static struct itimerval it_alarm;
+static struct itimerval it_prof;
+
+/* Timer IDs as returned by MM */
+MMRESULT tid_alarm = 0;
+MMRESULT tid_prof = 0;
+
+static void CALLBACK timer_proc (UINT uID, UINT uMsg, DWORD dwUser,
+				 DWORD dw1, DWORD dw2)
+{
+  /* Just raise a signal indicated by dwUser parameter */
+  msw_raise (dwUser);
+}
+
+/* Divide time in ms specified by IT by DENOM. Return 1 ms
+   if division results in zero */
+static UINT period (const struct itimerval* it, UINT denom)
+{
+  static TIMECAPS time_caps;
+
+  UINT res;
+  const struct timeval* tv = 
+    (it->it_value.tv_sec == 0 && it->it_value.tv_usec == 0)
+    ? &it->it_interval : &it->it_value;
+  
+  /* Zero means stop timer */
+  if (tv->tv_sec == 0 && tv->tv_usec == 0)
+    return 0;
+  
+  /* Conver to ms and divide by denom */
+  res = (tv->tv_sec * 1000 + (tv->tv_usec + 500) / 1000) / denom;
+  
+  /* Converge to minimum timer resolution */
+  if (time_caps.wPeriodMin == 0)
+      timeGetDevCaps (&time_caps, sizeof(time_caps));
+
+  if (res < time_caps.wPeriodMin)
+    res = time_caps.wPeriodMin;
+
+  return res;
+}
+
+static int setitimer_helper (const struct itimerval* itnew,
+			     struct itimerval* itold, struct itimerval* itcurrent,
+			     MMRESULT* tid, DWORD sigkind)
+{
+  UINT delay, resolution, event_type;
+
+  /* First stop the old timer */
+  if (*tid)
+    {
+      timeKillEvent (*tid);
+      timeEndPeriod (period (itcurrent, timer_prec));
+      *tid = 0;
+    }
+
+  /* Return old itimerval if requested */
+  if (itold)
+    *itold = *itcurrent;
+
+  *itcurrent = *itnew;
+
+  /* Determine if to start new timer */
+  delay = period (itnew, 1);
+  if (delay)
+    {
+      resolution = period (itnew, timer_prec);
+      event_type = (itnew->it_value.tv_sec == 0 && itnew->it_value.tv_usec == 0)
+	? TIME_ONESHOT : TIME_PERIODIC;
+      timeBeginPeriod (resolution);
+      *tid = timeSetEvent (delay, resolution, timer_proc, sigkind, event_type);
+    }
+
+  return !delay || *tid;
+}
+ 
+int setitimer (int kind, const struct itimerval* itnew,
+	       struct itimerval* itold)
+{
+  /* In this version, both interval and value are allowed
+     only if they are equal. */
+  assert ((itnew->it_value.tv_sec == 0 && itnew->it_value.tv_usec == 0)
+	  || (itnew->it_interval.tv_sec == 0 && itnew->it_interval.tv_usec == 0)
+	  || (itnew->it_value.tv_sec == itnew->it_interval.tv_sec &&
+	      itnew->it_value.tv_usec == itnew->it_interval.tv_usec));
+
+  if (kind == ITIMER_REAL)
+    return setitimer_helper (itnew, itold, &it_alarm, &tid_alarm, SIGALRM);
+  else if (kind == ITIMER_PROF)
+    return setitimer_helper (itnew, itold, &it_prof, &tid_prof, SIGPROF);
+  else
+    return errno = EINVAL;
+}
 
 /* end of nt.c */

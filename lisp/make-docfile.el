@@ -92,15 +92,7 @@
 (require 'packages)
 
 ;; We must have some lisp support at this point
-
-;(load "backquote")
-;(load "bytecomp-runtime")
-;(load "subr")
-;(load "replace")
-;(load "version.el")
-;(load "cl")
-
-;; (load "featurep")
+(packages-find-packages package-path t t)
 
 (let (preloaded-file-list)
  (load (concat default-directory "../lisp/dumped-lisp.el"))

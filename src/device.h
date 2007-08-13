@@ -191,7 +191,7 @@ struct device
   unsigned int on_console_p :1;
   unsigned int connected_to_nas_p :1;
 
-#ifdef HAVE_UNIXOID_EVENT_LOOP
+
   /* File descriptors for input and output.  Much of the time
      (but not always) these will be the same.  For an X device,
      these both hold the file descriptor of the socket used
@@ -200,6 +200,11 @@ struct device
      is used for I/O. */
   int infd, outfd;
 
+  /* infd and outfd are moved outside HAVE_UNIXOID_EVENT_LOOP conditionals,
+     because Win32, presumably the first port which does not use select()
+     polling, DOES have handles for a console device. -- kkm */
+
+#ifdef HAVE_UNIXOID_EVENT_LOOP
   /* holds some data necessary for SIGIO control.  Perhaps this should
      be inside of device_data; but it is used for both TTY's and X
      device.  Perhaps it should be conditionalized on SIGIO; but

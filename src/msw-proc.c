@@ -25,46 +25,6 @@ Boston, MA 02111-1307, USA.  */
    Jonathan Harris, November 1997 for 20.4.
  */
 
-/*
- * Comment:
- *
- * X on UNIX may be bad, but the win32 API really really really sucks.
- *
- * Windows user-input type events are stored in a per-thread message queue
- * and retrieved using GetMessage(). It is not possible to wait on this
- * queue and on other events (eg process input) simultaneously. Also, the
- * main event-handling code in windows (the "windows procedure") is called
- * asynchronously when windows has certain other types of events ("nonqueued
- * messages") to deliver. The documentation doesn't appear to specify the
- * context in which the windows procedure is called, but I assume that the
- * thread that created the window is temporarily highjacked for this purpose
- * when it calls GetMessage (a bit like X callbacks?).
- *
- * We spawn off a single thread to deal with both queued and non-queued
- * events. The thread turns both kinds of events into emacs_events and stuffs
- * them in a queue which XEmacs reads at its leisure. This file contains the
- * code for that thread.
- *
- * Unfortunately, under win32 a seemingly-random selection of resources are
- * owned by the thread that created/asked for them and not by the process. In
- * particular, only the thread that created a window can retrieve messages
- * destined for that window ("GetMessage does not retrieve messages for
- * windows that belong to other threads..."). This means that our message-
- * processing thread also has to do all window creation, deletion and various
- * other random stuff. We handle this bogosity by getting the main XEmacs
- * thread to send special user-defined messages to the message-processing
- * thread to instruct it to create windows etc.
- *
- * More bogosity: Windows95 doesn't offer any one-shot timers, only a
- * periodic timer. Worse, if you don't want a periodic timer to be associated
- * with a particular mswindows window (we don't) your periodic timers don't
- * have unique ids associated with them. We get round this lameness by
- * setting off a single periodic timer and we use this to schedule timeouts
- * manually. Implementing basic stuff like one-shot timers at the application
- * level is not particularly efficient, but Windows95 leaves us no choice.
- */
-
-
 #include <config.h>
 #include "lisp.h"
 
@@ -80,11 +40,15 @@ Boston, MA 02111-1307, USA.  */
 # undef DEBUG_TIMEOUTS
 #endif
 
-#define MSWINDOWS_FRAME_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_TILEDWINDOW
-#define MSWINDOWS_POPUP_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_CAPTION|WS_POPUP
+#ifdef HAVE_MENUBARS
+#define ADJR_MENUFLAG TRUE
+#else
+#define ADJR_MENUFLAG FALSE
+#endif
 
-static LRESULT WINAPI mswindows_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-static Lisp_Object mswindows_find_console (HWND hwnd);
+/* Timer ID used for button2 emulation */
+#define BUTTON_2_TIMER_ID 1
+
 static Lisp_Object mswindows_find_frame (HWND hwnd);
 static Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods);
 static int mswindows_modifier_state (void);
@@ -92,7 +56,7 @@ static int mswindows_enqueue_timeout (int milliseconds);
 static void mswindows_dequeue_timeout (int interval_id);
 
 /* Virtual keycode of the '@' key */
-static int virtual_at_key;
+static int virtual_at_key = -1;
 
 /* Timeout queue */
 struct mswindows_timeout
@@ -106,37 +70,12 @@ static mswindows_timeout timeout_pool[MSW_TIMEOUT_MAX];
 static mswindows_timeout *timeout_head = NULL;
 static int timeout_mswindows_id;
 
+#if 0
 /*
  * Entry point for the "windows" message-processing thread
  */
 DWORD mswindows_win_thread()
 {
-  WNDCLASS wc;
-  MSG msg;
-  mswindows_waitable_info_type info;
-
-  /* Register the main window class */
-  wc.style = CS_OWNDC;	/* One DC per window */
-  wc.lpfnWndProc = (WNDPROC) mswindows_wnd_proc;
-  wc.cbClsExtra = 0;
-  wc.cbWndExtra = 0;	/* ? */
-  wc.hInstance = NULL;	/* ? */
-  wc.hIcon = LoadIcon (NULL, XEMACS_CLASS);
-  wc.hCursor = LoadCursor (NULL, IDC_ARROW);
-  wc.hbrBackground = NULL; /* GetStockObject (WHITE_BRUSH); */
-  wc.lpszMenuName = NULL;	/* XXX FIXME? Add a menu? */
-  wc.lpszClassName = XEMACS_CLASS;
-  RegisterClass(&wc);		/* XXX FIXME: Should use RegisterClassEx */
-
-  info.type = mswindows_waitable_type_dispatch;
-  mswindows_add_waitable(&info);
-
-  /* Ensure our message queue is created XXX FIXME: Is this necessary? */
-  PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE);
-
-  /* Notify the main thread that we're ready */
-  assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, 0));
-
   /* Hack! Windows doesn't report Ctrl-@ characters so we have to find out
    * which virtual key generates '@' at runtime */
   virtual_at_key = VkKeyScan ('@');
@@ -193,68 +132,167 @@ DWORD mswindows_win_thread()
       DispatchMessage (&msg);
   }
 }
+#endif /* 0 */
+
+static void
+mswindows_enqueue_magic_event (HWND hwnd, UINT message)
+{
+  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+  struct Lisp_Event* event = XEVENT (emacs_event);
+
+  event->channel = mswindows_find_frame (hwnd);
+  event->timestamp = GetMessageTime();
+  event->event_type = magic_event;
+  EVENT_MSWINDOWS_MAGIC_TYPE (event) = message;
+
+  mswindows_enqueue_dispatch_event (emacs_event);
+}
+
+static void
+mswindows_enqueue_mouse_button_event (HWND hwnd, UINT message, POINTS where, DWORD when)
+{
+
+  /* We always use last message time, because mouse button
+     events may get delayed, and XEmacs double click
+     recognition will fail */
+
+  Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
+  struct Lisp_Event* event = XEVENT(emacs_event);
+
+  event->channel = mswindows_find_frame(hwnd);
+  event->timestamp = when;
+  event->event.button.button =
+    (message==WM_LBUTTONDOWN || message==WM_LBUTTONUP) ? 1 :
+    ((message==WM_RBUTTONDOWN || message==WM_RBUTTONUP) ? 3 : 2);
+  event->event.button.x = where.x;
+  event->event.button.y = where.y;
+  event->event.button.modifiers = mswindows_modifier_state();
+      
+  if (message==WM_LBUTTONDOWN || message==WM_MBUTTONDOWN ||
+      message==WM_RBUTTONDOWN)
+    {
+      event->event_type = button_press_event;
+      SetCapture (hwnd);
+    }
+  else
+    {
+      event->event_type = button_release_event;
+      ReleaseCapture ();
+    }
+  
+  mswindows_enqueue_dispatch_event (emacs_event);
+}
+
+static void
+mswindows_set_chord_timer (HWND hwnd)
+{
+  int interval;
+
+  /* We get half system threshold as it seems to
+     long before drag-selection is shown */
+  if (mswindows_button2_chord_time <= 0)
+    interval = GetDoubleClickTime () / 2;
+  else
+    interval = mswindows_button2_chord_time;
+
+  SetTimer (hwnd, BUTTON_2_TIMER_ID, interval, 0);
+}
+
+static int
+mswindows_button2_near_enough (POINTS p1, POINTS p2)
+{
+  int dx, dy;
+  if (mswindows_button2_max_skew_x <= 0)
+    dx = GetSystemMetrics (SM_CXDOUBLECLK) / 2;
+  else
+    dx = mswindows_button2_max_skew_x;
+
+  if (mswindows_button2_max_skew_y <= 0)
+    dy = GetSystemMetrics (SM_CYDOUBLECLK) / 2;
+  else
+    dy = mswindows_button2_max_skew_y;
+
+  return abs (p1.x - p2.x) < dx && abs (p1.y- p2.y)< dy;
+}
 
 /*
  * The windows procedure for the window class XEMACS_CLASS
  * Stuffs messages in the mswindows event queue
  */
-static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
-				   LPARAM lParam)
+LRESULT WINAPI
+mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   /* Note: Remember to initialise these before use */
   Lisp_Object emacs_event;
   struct Lisp_Event *event;
-
-  static sizing = 0;
-  MSG msg = { hwnd, message, wParam, lParam, 0, {0,0} };
-  msg.time = GetMessageTime();
-
-#ifdef DEBUG_MESSAGES
-  stderr_out("Message %04x, wParam=%04x, lParam=%08lx\n", message, wParam, lParam);
-#endif
+  Lisp_Object fobj;
+  struct frame *frame;
+  struct mswindows_frame* msframe;
+  
   switch (message)
   {
+  case WM_ERASEBKGND:
+    /* Erase background only during non-dynamic sizing */
+    msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+    if (msframe->sizing && !mswindows_dynamic_frame_resize)
+      goto defproc;
+    return 1;
+
+  case WM_CLOSE:
+    fobj = mswindows_find_frame (hwnd);
+    enqueue_misc_user_event (fobj, Qeval, list3 (Qdelete_frame, fobj, Qt));
+    mswindows_enqueue_magic_event (hwnd, XM_BUMPQUEUE);
+    break;
+
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
     {
+      MSG msg = { hwnd, message, wParam, lParam, GetMessageTime(), GetMessagePos() };
       /* Handle those keys that TranslateMessage won't generate a WM_CHAR for */
       Lisp_Object keysym;
       int mods = mswindows_modifier_state();
 
       if (!NILP (keysym = mswindows_key_to_emacs_keysym(wParam, mods)))
 	{
-          EnterCriticalSection (&mswindows_dispatch_crit);
 	  emacs_event = Fmake_event (Qnil, Qnil);
 	  event = XEVENT(emacs_event);
 
           event->channel = mswindows_find_console(hwnd);
-          event->timestamp = msg.time;
+          event->timestamp = GetMessageTime();
           event->event_type = key_press_event;
           event->event.key.keysym = keysym;
 	  event->event.key.modifiers = mods;
 	  mswindows_enqueue_dispatch_event (emacs_event);
-          LeaveCriticalSection (&mswindows_dispatch_crit);
 	  return (0);
 	}
+      TranslateMessage (&msg);
     }
-    TranslateMessage (&msg);  /* Maybe generates WM_[SYS]CHAR in message queue */
     goto defproc;
 
   case WM_CHAR:
   case WM_SYSCHAR:
     {
-      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
       event->channel = mswindows_find_console(hwnd);
-      event->timestamp = msg.time;
+      event->timestamp = GetMessageTime();
       event->event_type = key_press_event;
 
       /* XEmacs doesn't seem to like Shift on non-alpha keys */
       event->event.key.modifiers = isalpha(wParam) ? 
 				   mswindows_modifier_state() :
 				   mswindows_modifier_state() & ~MOD_SHIFT;
+
+      /* If a quit char with no modifiers other than control and
+	 shift, then mark it with a fake modifier, which is removed
+	 upon dequeueing the event */
+      if (wParam == CONSOLE_QUIT_CHAR (XCONSOLE (mswindows_find_console (hwnd)))
+	  && ((event->event.key.modifiers & ~(MOD_CONTROL | MOD_SHIFT)) == 0))
+	  {
+	    event->event.key.modifiers |= FAKE_MOD_QUIT;
+	    ++mswindows_quit_chars_count;
+	  }
 
       if (wParam<' ')	/* Control char not already handled under WM_KEYDOWN */
       {
@@ -270,95 +308,200 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
       }
 
       mswindows_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
-  case WM_LBUTTONDOWN:
   case WM_MBUTTONDOWN:
-  case WM_RBUTTONDOWN:
-  case WM_LBUTTONUP:
   case WM_MBUTTONUP:
+    /* Real middle mouse button has nothing to do with emulated one:
+       if one wants to exercise fingers playing chords on the mouse,
+       he is allowed to do that! */
+    mswindows_enqueue_mouse_button_event (hwnd, message,
+					  MAKEPOINTS (lParam), GetMessageTime());
+    break;
+    
+  case WM_LBUTTONUP:
+    msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+    msframe->last_click_time =  GetMessageTime();
+
+    KillTimer (hwnd, BUTTON_2_TIMER_ID);
+    msframe->button2_need_lbutton = 0;
+    if (msframe->ignore_next_lbutton_up)
+      {
+	msframe->ignore_next_lbutton_up = 0;
+      }
+    else if (msframe->button2_is_down)
+      {
+	msframe->button2_is_down = 0;
+	msframe->ignore_next_rbutton_up = 1;
+	mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONUP,
+					      MAKEPOINTS (lParam), GetMessageTime());
+      }
+    else
+      {
+	if (msframe->button2_need_rbutton)
+	  {
+	    msframe->button2_need_rbutton = 0;
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONDOWN,
+						  MAKEPOINTS (lParam), GetMessageTime());
+	  }
+	mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONUP,
+					      MAKEPOINTS (lParam), GetMessageTime());
+      }
+    break;
+
   case WM_RBUTTONUP:
-    {
-      /* XXX FIXME: Do middle button emulation */
-      short x, y;
+    msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+    msframe->last_click_time =  GetMessageTime();
 
-      EnterCriticalSection (&mswindows_dispatch_crit);
-      emacs_event = Fmake_event (Qnil, Qnil);
-      event = XEVENT(emacs_event);
+    KillTimer (hwnd, BUTTON_2_TIMER_ID);
+    msframe->button2_need_rbutton = 0;
+    if (msframe->ignore_next_rbutton_up)
+      {
+	msframe->ignore_next_rbutton_up = 0;
+      }
+    else if (msframe->button2_is_down)
+      {
+	msframe->button2_is_down = 0;
+	msframe->ignore_next_lbutton_up = 1;
+	mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONUP,
+					      MAKEPOINTS (lParam), GetMessageTime());
+      }
+    else
+      {
+	if (msframe->button2_need_lbutton)
+	  {
+	    msframe->button2_need_lbutton = 0;
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONDOWN,
+						  MAKEPOINTS (lParam), GetMessageTime());
+	  }
+	mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONUP,
+					      MAKEPOINTS (lParam), GetMessageTime());
+      }
+    break;
 
-      event->channel = mswindows_find_frame(hwnd);
-      event->timestamp = msg.time;
-      event->event.button.button =
-	(message==WM_LBUTTONDOWN || message==WM_LBUTTONUP) ? 1 :
-	 ((message==WM_RBUTTONDOWN || message==WM_RBUTTONUP) ? 3 : 2);
-      x = LOWORD (lParam);
-      y = HIWORD (lParam);
-      event->event.button.x = x;
-      event->event.button.y = y;
-      event->event.button.modifiers = mswindows_modifier_state();
-      
-      if (message==WM_LBUTTONDOWN || message==WM_MBUTTONDOWN ||
-	  message==WM_RBUTTONDOWN)
-	{
-	  event->event_type = button_press_event;
-	  SetCapture (hwnd);
-	}
-      else
-	{
-	  event->event_type = button_release_event;
-	  ReleaseCapture ();
-	}
+  case WM_LBUTTONDOWN:
+    msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
 
-      mswindows_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&mswindows_dispatch_crit);
-    }
+    if (msframe->button2_need_lbutton)
+      {
+	KillTimer (hwnd, BUTTON_2_TIMER_ID);
+	msframe->button2_need_lbutton = 0;
+	msframe->button2_need_rbutton = 0;
+	msframe->button2_is_down = 1;
+	if (mswindows_button2_near_enough (msframe->last_click_point, MAKEPOINTS (lParam)))
+	  mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONDOWN,
+						MAKEPOINTS (lParam), GetMessageTime());
+	else
+	  {
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONDOWN,
+			msframe->last_click_point, msframe->last_click_time);
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONDOWN,
+						  MAKEPOINTS (lParam), GetMessageTime());
+	  }
+      }
+    else
+      {
+	mswindows_set_chord_timer (hwnd);
+	msframe->button2_need_rbutton = 1;
+	msframe->last_click_point = MAKEPOINTS (lParam);
+      }
+    msframe->last_click_time =  GetMessageTime();
+    break;
+
+  case WM_RBUTTONDOWN:
+    msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+
+    if (msframe->button2_need_rbutton)
+      {
+	KillTimer (hwnd, BUTTON_2_TIMER_ID);
+	msframe->button2_need_lbutton = 0;
+	msframe->button2_need_rbutton = 0;
+	msframe->button2_is_down = 1;
+	if (mswindows_button2_near_enough (msframe->last_click_point, MAKEPOINTS (lParam)))
+	  mswindows_enqueue_mouse_button_event (hwnd, WM_MBUTTONDOWN,
+						MAKEPOINTS (lParam), GetMessageTime());
+	else
+	  {
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONDOWN,
+				msframe->last_click_point, msframe->last_click_time);
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONDOWN,
+						  MAKEPOINTS (lParam), GetMessageTime());
+	  }
+      }
+    else
+      {
+	mswindows_set_chord_timer (hwnd);
+	msframe->button2_need_lbutton = 1;
+	msframe->last_click_point = MAKEPOINTS (lParam);
+      }
+    msframe->last_click_time =  GetMessageTime();
+    break;
+	
+  case WM_TIMER:
+    if (wParam == BUTTON_2_TIMER_ID)
+      {
+	msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+	KillTimer (hwnd, BUTTON_2_TIMER_ID);
+
+	if (msframe->button2_need_lbutton)
+	  {
+	    msframe->button2_need_lbutton = 0;
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_RBUTTONDOWN,
+				msframe->last_click_point, msframe->last_click_time);
+	  }
+	else if (msframe->button2_need_rbutton)
+	  {
+	    msframe->button2_need_rbutton = 0;
+	    mswindows_enqueue_mouse_button_event (hwnd, WM_LBUTTONDOWN,
+				msframe->last_click_point, msframe->last_click_time);
+	  }
+      }
+    else
+      assert ("Spurious timer fired" == 0);
     break;
 
   case WM_MOUSEMOVE:
     /* Optimization: don't report mouse movement while size is changind */
-    if (!sizing)
+    msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+    if (!msframe->sizing)
     {
-      short x, y;
+      /* When waiting for the second mouse button to finish
+	 button2 emulation, and have moved too far, just pretend
+	 as if timer has expired. This impoves drag-select feedback */
+      if ((msframe->button2_need_lbutton || msframe->button2_need_rbutton)
+	  && !mswindows_button2_near_enough (msframe->last_click_point,
+					     MAKEPOINTS (lParam)))
+	{
+	  KillTimer (hwnd, BUTTON_2_TIMER_ID);
+	  SendMessage (hwnd, WM_TIMER, BUTTON_2_TIMER_ID, 0);
+	}
 
-      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
       event->channel = mswindows_find_frame(hwnd);
-      event->timestamp = msg.time;
+      event->timestamp = GetMessageTime();
       event->event_type = pointer_motion_event;
-      x = LOWORD (lParam);
-      y = HIWORD (lParam);
-      event->event.motion.x = x;
-      event->event.motion.y = y;
+      event->event.motion.x = MAKEPOINTS(lParam).x;
+      event->event.motion.y = MAKEPOINTS(lParam).y;
       event->event.motion.modifiers = mswindows_modifier_state();
       
       mswindows_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
   case WM_PAINT:
-    if (GetUpdateRect(hwnd, NULL, FALSE))
     {
       PAINTSTRUCT paintStruct;
+      
+      frame = XFRAME (mswindows_find_frame (hwnd));
 
-      EnterCriticalSection (&mswindows_dispatch_crit);
-      emacs_event = Fmake_event (Qnil, Qnil);
-      event = XEVENT(emacs_event);
-
-      event->channel = mswindows_find_frame(hwnd);
-      event->timestamp = msg.time;
-      event->event_type = magic_event;
       BeginPaint (hwnd, &paintStruct);
-      EVENT_MSWINDOWS_MAGIC_TYPE(event) = message;
-      EVENT_MSWINDOWS_MAGIC_DATA(event) = paintStruct.rcPaint;
+      mswindows_redraw_exposed_area (frame,
+			paintStruct.rcPaint.left, paintStruct.rcPaint.top,
+			paintStruct.rcPaint.right, paintStruct.rcPaint.bottom);
       EndPaint (hwnd, &paintStruct);
-
-      mswindows_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
@@ -367,42 +510,46 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
     if (wParam==SIZE_RESTORED || wParam==SIZE_MAXIMIZED || wParam==SIZE_MINIMIZED)
     {
       RECT rect;
-      EnterCriticalSection (&mswindows_dispatch_crit);
-      emacs_event = Fmake_event (Qnil, Qnil);
-      event = XEVENT(emacs_event);
+      int columns, rows;
 
-      event->channel = mswindows_find_frame(hwnd);
-      event->timestamp = msg.time;
-      event->event_type = magic_event;
+      fobj = mswindows_find_frame (hwnd);
+      frame = XFRAME (fobj);
+      msframe  = FRAME_MSWINDOWS_DATA (frame);
+
+      /* We cannot handle frame map and unmap hooks right in
+	 this routine, because these may throw. We queue
+	 magic events to run these hooks instead - kkm */
+
       if (wParam==SIZE_MINIMIZED)
-	rect.left = rect.top = rect.right = rect.bottom = -1;
+	{
+	  /* Iconified */
+	  FRAME_VISIBLE_P (frame) = 0;
+	  mswindows_enqueue_magic_event (hwnd, XM_UNMAPFRAME);
+	  Fframe_iconified_p (fobj);
+	}
       else
-	GetClientRect(hwnd, &rect);
-      EVENT_MSWINDOWS_MAGIC_TYPE(event) = message;
-      EVENT_MSWINDOWS_MAGIC_DATA(event) = rect;
+	{
+	  int was_visible = FRAME_VISIBLE_P (frame);
+	  if (!msframe->sizing && !was_visible)
+	    mswindows_enqueue_magic_event (hwnd, XM_MAPFRAME);
+	  
+	  GetClientRect(hwnd, &rect);
+      	  FRAME_VISIBLE_P(frame) = 1;
+	  FRAME_PIXWIDTH(frame) = rect.right;
+	  FRAME_PIXHEIGHT(frame) = rect.bottom;
+	  pixel_to_char_size (frame, rect.right, rect.bottom, &columns, &rows);
+	  change_frame_size (frame, rows, columns, 1);
 
-      mswindows_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&mswindows_dispatch_crit);
+	  if (mswindows_dynamic_frame_resize)
+	    redisplay ();
+	}
     }
     break;
 
   /* Misc magic events which only require that the frame be identified */
   case WM_SETFOCUS:
   case WM_KILLFOCUS:
-  case WM_CLOSE:
-    {
-      EnterCriticalSection (&mswindows_dispatch_crit);
-      emacs_event = Fmake_event (Qnil, Qnil);
-      event = XEVENT (emacs_event);
-
-      event->channel = mswindows_find_frame (hwnd);
-      event->timestamp = msg.time;
-      event->event_type = magic_event;
-      EVENT_MSWINDOWS_MAGIC_TYPE (event) = message;
-
-      mswindows_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&mswindows_dispatch_crit);
-    }
+    mswindows_enqueue_magic_event (hwnd, message);
     break;
 
   case WM_WINDOWPOSCHANGING:
@@ -416,7 +563,9 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
       {
 	RECT ncsize = { 0, 0, 0, 0 };
 	int pixwidth, pixheight;
-	AdjustWindowRect (&ncsize, GetWindowLong (hwnd, GWL_STYLE), FALSE);
+ 	AdjustWindowRectEx (&ncsize, GetWindowLong (hwnd, GWL_STYLE),
+ 			    GetMenu(hwnd) != NULL,
+			    GetWindowLong (hwnd, GWL_EXSTYLE));
 
 	round_size_to_char (XFRAME (mswindows_find_frame (hwnd)),
 			    wp->cx - (ncsize.right - ncsize.left),
@@ -447,9 +596,16 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
     break;
 
   case WM_ENTERSIZEMOVE:
+    msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+    msframe->sizing = 1;
+    return 0;
+
   case WM_EXITSIZEMOVE:
-    sizing = (message == WM_ENTERSIZEMOVE);
-    goto defproc;
+    msframe  = FRAME_MSWINDOWS_DATA (XFRAME (mswindows_find_frame (hwnd)));
+    msframe->sizing = 0;
+    /* Queue noop event */
+    mswindows_enqueue_magic_event (hwnd, XM_BUMPQUEUE);
+    return 0;
 
   defproc:
   default:
@@ -459,6 +615,7 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
 }
 
 
+#if 0
 /*
  * Make a request to the message-processing thread to do things that
  * can't be done in the main thread.
@@ -466,94 +623,17 @@ static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
 LPARAM
 mswindows_make_request(UINT message, WPARAM wParam, mswindows_request_type *request)
 {
-  MSG msg;
-  assert(PostThreadMessage (mswindows_win_thread_id, message, wParam,
-			    (LPARAM) request));
-  GetMessage (&msg, NULL, WM_XEMACS_ACK, WM_XEMACS_ACK);
-  return (msg.lParam);
-}
-
-
-/* 
- * Handle a request from the main thread to do things that have to be
- * done in the message-processing thread.
- */
-static void
-mswindows_handle_request (MSG *msg)
-{
-  mswindows_request_type *request = (mswindows_request_type *) msg->lParam;
-
-  switch (msg->message)
-  {
-  case WM_XEMACS_CREATEWINDOW:
-    {
-    struct frame *f = request->thing1;
-    Lisp_Object *props = request->thing2;
-    Lisp_Object name, height, width, popup, top, left;
-    int pixel_width, pixel_height;
-    RECT rect;
-    DWORD style;
-    HWND hwnd;
-
-    name = Fplist_get (*props, Qname, Qnil);
-    height = Fplist_get (*props, Qheight, Qnil);
-    width = Fplist_get (*props, Qwidth, Qnil);
-    popup = Fplist_get (*props, Qpopup, Qnil);
-    top = Fplist_get (*props, Qtop, Qnil);
-    left = Fplist_get (*props, Qleft, Qnil);
-
-    style = (NILP(popup)) ? MSWINDOWS_FRAME_STYLE : MSWINDOWS_POPUP_STYLE;
-
-    FRAME_WIDTH (f) = INTP(width) ? XINT(width) : 80;
-    FRAME_HEIGHT (f) = INTP(height) ? XINT(height) : 30;
-    char_to_pixel_size (f, FRAME_WIDTH(f), FRAME_HEIGHT (f),
-			&FRAME_PIXWIDTH (f), &FRAME_PIXHEIGHT (f));
-
-    rect.left = rect.top = 0;
-    rect.right = FRAME_PIXWIDTH (f);
-    rect.bottom = FRAME_PIXHEIGHT (f);
-#ifdef HAVE_MENUBARS
-    AdjustWindowRect(&rect, style, TRUE);
-#else
-    AdjustWindowRect(&rect, style, FALSE);
-#endif
-
-    hwnd = CreateWindow (XEMACS_CLASS,
-	STRINGP(f->name) ? XSTRING_DATA(f->name) :
-	  (STRINGP(name) ? XSTRING_DATA(name) : XEMACS_CLASS),
-	style,
-	INTP(left) ? XINT(left) : CW_USEDEFAULT,
-	INTP(top) ? XINT(top) : CW_USEDEFAULT,
-	rect.right-rect.left, rect.bottom-rect.top,
-	NULL, NULL, NULL, NULL);
-    assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, (LPARAM) hwnd));
-    }
-    return;
-
-  case WM_XEMACS_DESTROYWINDOW:
-    {
-      struct frame *f = request->thing1;
-      ReleaseDC(FRAME_MSWINDOWS_HANDLE(f), FRAME_MSWINDOWS_DC(f));
-      DestroyWindow(FRAME_MSWINDOWS_HANDLE(f));
-      assert (PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, 0));
-    }
-    break;
-
   case WM_XEMACS_SETTIMER:
     {
       int id;
-      EnterCriticalSection (&mswindows_dispatch_crit);
       id = mswindows_enqueue_timeout((int) request->thing1);
-      LeaveCriticalSection (&mswindows_dispatch_crit);
       assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, id));
     }
     break;
 
   case WM_XEMACS_KILLTIMER:
     {
-      EnterCriticalSection (&mswindows_dispatch_crit);
       mswindows_dequeue_timeout((int) request->thing1);
-      LeaveCriticalSection (&mswindows_dispatch_crit);
       assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, 0));
     }
     break;
@@ -562,7 +642,7 @@ mswindows_handle_request (MSG *msg)
     assert(0);
   }
 }
-
+#endif
 
 /* Returns the state of the modifier keys in the format expected by the
  * Lisp_Event key_data, button_data and motion_data modifiers member */
@@ -650,7 +730,7 @@ Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods)
   return Qnil;
 }
 
-
+#if 0
 /*
  * Add a timeout to the queue. Returns the id or 0 on failure
  */
@@ -791,12 +871,12 @@ static void mswindows_dequeue_timeout (int interval_id)
     Fdeallocate_event(match_event);
   }
 }
-
+#endif
 
 /*
  * Find the console that matches the supplied mswindows window handle
  */
-static Lisp_Object
+Lisp_Object
 mswindows_find_console (HWND hwnd)
 {
   Lisp_Object concons;
@@ -817,19 +897,7 @@ mswindows_find_console (HWND hwnd)
 static Lisp_Object
 mswindows_find_frame (HWND hwnd)
 {
-  Lisp_Object frmcons, devcons, concons;
-
-  FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
-    {
-      struct frame *f;
-      Lisp_Object frame = XCAR (frmcons);
-      f = XFRAME (frame);
-      if (FRAME_TYPE_P(f, mswindows))	    /* Might be a stream-type frame */
-	if (FRAME_MSWINDOWS_HANDLE(f)==hwnd)
-	  return frame;
-    }
-  assert(0);  /* XXX Can't happen! we only get messages for our windows */
-  return Qnil;
+  return (Lisp_Object) GetWindowLong (hwnd, XWL_FRAMEOBJ);
 }
 
 

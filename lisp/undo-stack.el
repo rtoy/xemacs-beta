@@ -129,7 +129,7 @@
 
 ;;; Code:
 
-(define-error 'trunc-stack-bottom "Bottom of stack reached.")
+(define-error 'trunc-stack-bottom "Bottom of stack reached")
 
 (defsubst trunc-stack-stack (stack)
   ;; return the list representing the trunc-stack's elements.

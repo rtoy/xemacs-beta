@@ -382,121 +382,6 @@ Display cursor at that position for a second."
   (interactive))
 
 
-;;
-;; Commands for the scroll bar.
-;;
-
-;; this stuff has never ever been used and should be junked.
-
-;; Vertical bar
-
-;(defun mouse-scroll-down (nlines)
-;  "Junk me, please."
-;  (interactive "@p")
-;  (scroll-down nlines))
-
-;(defun mouse-scroll-up (nlines)
-;  "Junk me, please."
-;  (interactive "@p")
-;  (scroll-up nlines))
-
-;(defun mouse-scroll-down-full ()
-;  "Junk me, please."
-;  (interactive "@")
-;  (scroll-down nil))
-
-;(defun mouse-scroll-up-full ()
-;  "Junk me, please."
-;  (interactive "@")
-;  (scroll-up nil))
-
-;(defun mouse-scroll-move-cursor (nlines)
-;  "Junk me, please."
-;  (interactive "@p")
-;  (move-to-window-line nlines))
-
-;(defun mouse-scroll-absolute (event)
-;  "Junk me, please."
-;  (interactive "@e")
-;  (let* ((position (event-x event))
-;	 (length (event-y event))
-;	 (size (buffer-size))
-;	 (scale-factor (max 1 (/ 8000000 size)))
-;	 (newpos (* (/ (* (/ size scale-factor) position) length)
-;		    scale-factor)))
-;    (goto-char newpos)
-;    (recenter '(4))))
-
-;; These scroll while the invoking button is depressed.
-
-;(defvar scrolled-lines 0)
-;(defvar scroll-speed 1)
-
-;(defun incr-scroll-down (event)
-;  "Junk me, please."
-;  (interactive "@e")
-;  (setq scrolled-lines 0)
-;  (incremental-scroll scroll-speed))
-
-;(defun incr-scroll-up (event)
-;  "Junk me, please."
-;  (interactive "@e")
-;  (setq scrolled-lines 0)
-;  (incremental-scroll (- scroll-speed)))
-
-;(defun incremental-scroll (n)
-;  "Junk me, please."
-;  (let ((down t))
-;    (while down
-;      (sit-for mouse-track-scroll-delay)
-;      (cond ((input-pending-p)
-;	     (let ((event (next-command-event)))
-;	       (if (or (button-press-event-p event)
-;		       (button-release-event-p event))
-;		   (setq down nil))
-;	       (dispatch-event event))))
-;      (setq scrolled-lines (1+ (* scroll-speed scrolled-lines)))
-;      (scroll-down n))))
-
-;(defun incr-scroll-stop (event)
-;  "Junk me, please."
-;  (interactive "@e")
-;  (setq scrolled-lines 0)
-;  (sleep-for 1))
-
-
-;(defun mouse-scroll-left (ncolumns)
-;  "Junk me, please."
-;  (interactive "@p")
-;  (scroll-left ncolumns))
-
-;(defun mouse-scroll-right (ncolumns)
-;  "Junk me, please."
-;  (interactive "@p")
-;  (scroll-right ncolumns))
-
-;(defun mouse-scroll-left-full ()
-;  "Junk me, please."
-;  (interactive "@")
-;  (scroll-left nil))
-
-;(defun mouse-scroll-right-full ()
-;  "Junk me, please."
-;  (interactive "@")
-;  (scroll-right nil))
-
-;(defun mouse-scroll-move-cursor-horizontally (ncolumns)
-;  "Junk me, please."
-;  (interactive "@p")
-;  (move-to-column ncolumns))
-
-;(defun mouse-scroll-absolute-horizontally (event)
-;  "Junk me, please."
-;  (interactive "@e")
-;  (set-window-hscroll (selected-window) 33))
-
-
-
 ;;; mouse/selection tracking
 ;;; generalized mouse-track
 
@@ -653,23 +538,40 @@ produce a number.")
 			 (copy-event event)))))
 
 (defun mouse-track-run-hook (hook event &rest args)
-  ;; ugh, can't use run-special-hook-with-args because we
-  ;; have to get the value using symbol-value-in-buffer.
-  ;; Doing a save-excursion/set-buffer is wrong because
-  ;; the hook might want to change the buffer, but just
-  ;; doing a set-buffer is wrong because the hook might
-  ;; not want to change the buffer.
+  ;; ugh, can't use run-hook-with-args-until-success because we have
+  ;; to get the value using symbol-value-in-buffer.  Doing a
+  ;; save-excursion/set-buffer is wrong because the hook might want to
+  ;; change the buffer, but just doing a set-buffer is wrong because
+  ;; the hook might not want to change the buffer.
+  ;; #### What we need here is a Lisp interface to
+  ;; run_hook_with_args_in_buffer.  Here is a poor man's version.
   (let ((buffer (event-buffer event)))
-    (if mouse-grabbed-buffer (setq buffer mouse-grabbed-buffer))
-    (if buffer
-	(let ((value (symbol-value-in-buffer hook buffer nil)))
-	  (if (and (listp value) (not (eq (car value) 'lambda)))
-	      (let (retval)
-		(while (and value
-			    (not (setq retval (apply (car value) event args))))
-		  (setq value (cdr value)))
-		retval)
-	    (apply value event args))))))
+    (and mouse-grabbed-buffer (setq buffer mouse-grabbed-buffer))
+    (when buffer
+      (let ((value (symbol-value-in-buffer hook buffer nil)))
+	(if (and (listp value) (not (eq (car value) 'lambda)))
+	    ;; List of functions.
+	    (let (retval)
+	      (while (and value (null retval))
+		;; Found `t': should process default value.  We could
+		;; splice it into the buffer-local value, but that
+		;; would cons, which is not a good thing for
+		;; mouse-track hooks.
+		(if (eq (car value) t)
+		    (let ((global (default-value hook)))
+		      (if (and (listp global) (not (eq (car global) 'lambda)))
+			  ;; List of functions.
+			  (while (and global
+				      (null (setq retval
+						  (apply (car global) event args))))
+			    (pop global))
+			;; lambda
+			(setq retval (apply (car global) event args))))
+		  (setq retval (apply (car value) event args)))
+		(pop value))
+	      retval)
+	  ;; lambda
+	  (apply value event args))))))
 
 (defun mouse-track-scroll-undefined (random)
   ;; the old implementation didn't actually define this function,

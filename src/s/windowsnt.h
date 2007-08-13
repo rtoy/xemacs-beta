@@ -28,6 +28,11 @@ Boston, MA 02111-1307, USA.  */
 #define DOS_NT 	/* MSDOS or WINDOWSNT */
 #endif
 
+/* In case non-Microsoft compiler is used, we fake _MSC_VER */
+#ifndef _MSC_VER
+#define _MSC_VER  1
+#endif
+
 typedef unsigned short mode_t;
 typedef long ptrdiff_t;
 typedef int pid_t;
@@ -223,7 +228,6 @@ typedef int pid_t;
 #define spawnve sys_spawnve
 #define wait    sys_wait
 #define kill    sys_kill
-#define signal  sys_signal
 
 #define select  sys_select
 
@@ -258,6 +262,17 @@ typedef int pid_t;
 #define abort	win32_abort
 #endif
 
+/* Setitimer is emulated */
+#define HAVE_SETITIMER
+
+/* We now have emulation for some signals */
+#define HAVE_SIGHOLD
+#define sigset(s,h) msw_sigset(s,h)
+#define sighold(s) msw_sighold(s)
+#define sigrelse(s) msw_sigrelse(s)
+#define sigpause(s) msw_sigpause(s)
+#define signal sigset
+
 /* Defines that we need that aren't in the standard signal.h  */
 #define SIGHUP  1               /* Hang up */
 #define SIGQUIT 3               /* Quit process */
@@ -266,6 +281,7 @@ typedef int pid_t;
 #define SIGPIPE 13              /* Write on pipe with no readers */
 #define SIGALRM 14              /* Alarm */
 #define SIGCHLD 18              /* Death of child */
+#define SIGPROF 29		/* Profiling timer exp */
 
 /* For integration with MSDOS support.  */
 #define getdisk()               (_getdrive () - 1)

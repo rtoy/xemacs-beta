@@ -43,11 +43,11 @@
     (princ
      "NAME                 REGISTRY        BYTES CHARS FINAL GRAPHIC DIR\n")
     (princ
-     "--------------------------------------------------------------------")
+     "--------------------------------------------------------------------\n")
     (dolist (charset (charset-list))
       (setq charset (get-charset charset))
       (princ (format
-	      "%20s %15s %5d %5d %5d %7d %s\n"
+	      "%-20.20s %-15.15s %5d %5d %5d %-7d %s\n"
 	      (charset-name charset)
 	      (charset-registry  charset)
 	      (charset-dimension charset)
@@ -56,7 +56,7 @@
 	      (charset-graphic   charset)
 	      (charset-direction charset)))
       (princ "        ")
-      (princ "%s\n" (charset-doc-string charset)))))
+      (princ (format "%s\n" (charset-doc-string charset))))))
 
 ;    (princ "## CCL PROGRAM TO CONVERT INTERNAL TO EXTERNAL CODE\n")
 ;    (princ "NAME                 CCL-PROGRAMS\n")

@@ -2360,7 +2360,9 @@ sigchld_handler (int signo)
 #else
   sigchld_happened++;
 #endif
+#ifdef HAVE_UNIXOID_EVENT_LOOP
   signal_fake_event ();
+#endif
   /* WARNING - must come after wait3() for USG systems */
   EMACS_REESTABLISH_SIGNAL (signo, sigchld_handler);
   SIGRETURN;

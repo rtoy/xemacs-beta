@@ -1,6 +1,6 @@
 XEMACS=..
 LISP=$(XEMACS)\lisp
-PACKAGE_PATH="~/.xemacs;h:/src/xemacs/packages"
+PACKAGE_PATH="~/.xemacs;f:/src/xemacs/packages"
 HAVE_X=0
 HAVE_MSW=1
 
@@ -43,6 +43,7 @@ MULE_DEFINES=-DMULE
 
 !if $(DEBUG_XEMACS)
 DEBUG_DEFINES=-DDEBUG_XEMACS
+DEBUG_FLAGS= -debugtype:both -debug:full
 !endif
 
 !include "..\version.sh"
@@ -55,9 +56,8 @@ DEBUG_DEFINES=-DDEBUG_XEMACS
 INCLUDES=$(X_INCLUDES) -I$(XEMACS)\nt\inc -I$(XEMACS)\src -I$(XEMACS)\lwlib -I"$(MSVCDIR)\include"
 
 DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) -DWIN32 -D_WIN32 \
-	-D_M_IX86 -D_X86_ \
 	-DWIN32_LEAN_AND_MEAN -DWINDOWSNT -Demacs -DHAVE_CONFIG_H \
-	-D_MSC_VER=999 -D_DEBUG
+	-D_DEBUG
 
 OUTDIR=obj
 
@@ -71,7 +71,8 @@ $(OUTDIR)\nul:
 XEMACS_INCLUDES=\
  $(XEMACS)\src\config.h \
  $(XEMACS)\src\Emacs.ad.h \
- $(XEMACS)\src\paths.h
+ $(XEMACS)\src\paths.h \
+ $(XEMACS)\src\puresize-adjust.h
 
 $(XEMACS)\src\config.h:	config.h
 	!copy config.h $(XEMACS)\src
@@ -81,6 +82,9 @@ $(XEMACS)\src\Emacs.ad.h:	Emacs.ad.h
 
 $(XEMACS)\src\paths.h:	paths.h
 	!copy paths.h $(XEMACS)\src
+
+$(XEMACS)\src\puresize-adjust.h:	puresize-adjust.h
+	!copy puresize-adjust.h $(XEMACS)\src
 
 #------------------------------------------------------------------------------
 
@@ -120,7 +124,7 @@ LWLIB_OBJS= \
 	$(OUTDIR)\xlwscrollbar.obj
 
 $(LWLIB): $(LWLIB_OBJS)
-	link.exe -lib -nologo -debugtype:both -out:$@ $(LWLIB_OBJS)
+	link.exe -lib -nologo $(DEBUG_FLAGS) -out:$@ $(LWLIB_OBJS)
 
 $(OUTDIR)\lwlib-config.obj:	$(LWLIB_SRC)\lwlib-config.c
 	 $(CC) $(LWLIB_FLAGS) $**
@@ -153,8 +157,8 @@ LIB_SRC_FLAGS=$(INCLUDES) $(DEFINES) -ML
 LIB_SRC_LIBS= kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libc.lib
 LIB_SRC_LFLAGS=-nologo $(LIB_SRC_LIBS) -base:0x1000000\
- -subsystem:console -pdb:none -debugtype:both -machine:I386\
- -nodefaultlib -out:$@ -debug:full
+ -subsystem:console -pdb:none $(DEBUG_FLAGS) -machine:I386\
+ -nodefaultlib -out:$@
 
 DOC=$(LIB_SRC)\DOC
 DOC_SRC1=\
@@ -187,7 +191,6 @@ DOC_SRC2=\
  $(XEMACS)\src\emacs.c \
  $(XEMACS)\src\eval.c \
  $(XEMACS)\src\event-stream.c \
- $(XEMACS)\src\event-unixoid.c \
  $(XEMACS)\src\events.c \
  $(XEMACS)\src\extents.c \
  $(XEMACS)\src\faces.c \
@@ -227,6 +230,7 @@ DOC_SRC4=\
  $(XEMACS)\src\opaque.c \
  $(XEMACS)\src\print.c \
  $(XEMACS)\src\process.c \
+ $(XEMACS)\src\profile.c \
  $(XEMACS)\src\pure.c \
  $(XEMACS)\src\rangetab.c \
  $(XEMACS)\src\realpath.c \
@@ -321,7 +325,7 @@ $(RUNEMACS): $(OUTDIR)\runemacs.obj
 $(OUTDIR)\runemacs.obj:	$(XEMACS)\nt\runemacs.c
 	$(CC) -nologo -ML -w $(OPT) -c \
 	-D_DEBUG -DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN \
-	-D_M_IX86 -D_X86_ -Demacs -DHAVE_CONFIG_H -D_MSC_VER=999 \
+	-D_X86_ -Demacs -DHAVE_CONFIG_H \
 	$** -Fo$@
 
 SUPPORT_PROGS=$(MAKE_DOCFILE) $(RUNEMACS)
@@ -336,10 +340,10 @@ TEMACS_BROWSE=$(TEMACS_DIR)\temacs.bsc
 TEMACS_SRC=$(XEMACS)\src
 TEMACS_LIBS=$(LASTFILE) $(LWLIB) $(X_LIBS) kernel32.lib user32.lib gdi32.lib \
  winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib \
- uuid.lib wsock32.lib libc.lib
-TEMACS_LFLAGS=-nologo $(LIBRARIES) -base:0x1000000\
+ uuid.lib wsock32.lib winmm.lib libc.lib
+TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS) -base:0x1000000\
  -stack:0x800000 -entry:_start -subsystem:console\
- -pdb:$(TEMACS_DIR)\temacs.pdb -map:$(TEMACS_DIR)\temacs.map -debug:full\
+ -pdb:$(TEMACS_DIR)\temacs.pdb -map:$(TEMACS_DIR)\temacs.map \
  -heap:0x00100000 -out:$@
 TEMACS_CPP_FLAGS= $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DEMACS_MAJOR_VERSION=$(emacs_major_version) \
@@ -437,7 +441,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\emacs.obj \
 	$(OUTDIR)\eval.obj \
 	$(OUTDIR)\event-stream.obj \
-	$(OUTDIR)\event-unixoid.obj \
 	$(OUTDIR)\events.obj \
 	$(OUTDIR)\extents.obj \
 	$(OUTDIR)\faces.obj \
@@ -475,6 +478,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\opaque.obj \
 	$(OUTDIR)\print.obj \
 	$(OUTDIR)\process.obj \
+	$(OUTDIR)\profile.obj \
 	$(OUTDIR)\pure.obj \
 	$(OUTDIR)\rangetab.obj \
 	$(OUTDIR)\realpath.obj \
@@ -510,6 +514,8 @@ $(OUTDIR)\TopLevelEmacsShell.obj:	$(TEMACS_SRC)\EmacsShell-sub.c
 
 $(OUTDIR)\TransientEmacsShell.obj: $(TEMACS_SRC)\EmacsShell-sub.c
 	$(CC) $(TEMACS_FLAGS) -DDEFINE_TRANSIENT_EMACS_SHELL $** -Fo$@
+
+$(OUTDIR)\pure.obj: $(TEMACS_SRC)\pure.c $(TEMACS_SRC)\puresize-adjust.h
 
 #$(TEMACS_SRC)\Emacs.ad.h: $(XEMACS)\etc\Emacs.ad
 #	!"sed -f ad2c.sed < $(XEMACS)\etc\Emacs.ad > $(TEMACS_SRC)\Emacs.ad.h"
@@ -551,14 +557,23 @@ $(DOC): $(LIB_SRC)\make-docfile.exe
 update-elc: $(LOADPATH)\startup.el
 	!$(TEMACS) -batch -l update-elc.el
 
-dump-xemacs:
-	cd $(TEMACS_DIR)
-	!$(TEMACS) -batch -l loadup.el dump
+rebuild: $(TEMACS_DIR)\puresize-adjust.h
+        !nmake -f xemacs.mak dump-xemacs
+
+# This rule dumps xemacs and then checks to see if a rebuild is required due
+# to changing PURESPACE requirements.
+dump-xemacs: $(TEMACS)
+        !touch rebuild
+        cd $(TEMACS_DIR)
+        !$(TEMACS) -batch -l loadup.el dump
+        cd $(XEMACS)\nt
+        !nmake -f xemacs.mak rebuild
 
 #------------------------------------------------------------------------------
 
 # use this rule to build the complete system
 all: $(LASTFILE) $(LWLIB) $(SUPPORT_PROGS) $(TEMACS) $(TEMACS_BROWSE) $(DOC) dump-xemacs
+	-del rebuild
 
 # use this rule to install the system
 install:

@@ -189,4 +189,5 @@
 ;;	#+sparcworks "sun-eos-debugger-extra"
 ;;	#+sparcworks "sun-eos-menubar"
 	"loaddefs"		; <=== autoloads get loaded here
+	"cc-mode"
 ))

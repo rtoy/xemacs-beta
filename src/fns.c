@@ -2879,7 +2879,9 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 {
   if (depth > 200)
     error ("Stack overflow in equal");
+#ifndef LRECORD_CONS
  do_cdr:
+#endif
   QUIT;
   if (EQ_WITH_EBOLA_NOTICE (o1, o2))
     return 1;
@@ -2952,7 +2954,9 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 {
   if (depth > 200)
     error ("Stack overflow in equal");
+#ifndef LRECORD_CONS
  do_cdr:
+#endif
   QUIT;
   if (HACKEQ_UNSAFE (o1, o2))
     return 1;

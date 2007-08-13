@@ -713,14 +713,9 @@ mswindows_flash (struct device *d)
 static void
 mswindows_ring_bell (struct device *d, int volume, int pitch, int duration)
 {
-  /* XXX FIXME: I'm guessing pitch=Hz and duration is milliseconds */
-
-  if ((pitch|duration) == -1)	/* Pitch and/or duration may be bogus */
-    MessageBeep(-1);		/* Default system sound via speaker */
-  else
-    Beep(pitch, duration);
+  /* Beep does not work at all, anyways! -kkm */
+  MessageBeep (MB_OK);
 }
-
 
 /*****************************************************************************
  mswindows_output_display_block

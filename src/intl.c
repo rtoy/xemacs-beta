@@ -296,6 +296,7 @@ init_intl_very_early (void)
 {
 #if defined (I18N2) || defined (I18N3) || defined (I18N4)
   setlocale (LC_ALL, "");
+  setlocale(LC_NUMERIC, "C");
 #endif
 
 #ifdef I18N3
