@@ -69,7 +69,8 @@ Point is at the end of the segment of this line within the rectangle."
 	  (if (< begextra 0)
 	      (setq endextra (+ endextra begextra)
 		    begextra 0))
-          (apply function startpos begextra endextra extra-args))
+	  (if (< endextra 0) (setq endextra 0))
+	  (apply function startpos begextra endextra extra-args))
 	(forward-line 1)))
     (- endcol startcol)))
 

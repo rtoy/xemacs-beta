@@ -489,6 +489,30 @@ even in case of abnormal exit (throw or error).
 			 
   return unbind_to (speccount, Fprogn (args));
 }
+
+Lisp_Object
+save_current_buffer_restore(Lisp_Object buffer)
+{
+  struct buffer *buf = XBUFFER (buffer);
+  if (!BUFFER_LIVE_P (buf))
+    return Qnil;
+  set_buffer_internal (buf);
+  return Qnil;
+}
+
+DEFUN ("save-current-buffer", Fsave_current_buffer, 0, UNEVALLED, 0, /*
+Save the current buffer; execute BODY; restore the current buffer.
+Executes BODY just like `progn'.
+*/
+  (args))
+{
+  /* This function can GC */
+  int speccount = specpdl_depth ();
+
+  record_unwind_protect (save_current_buffer_restore, Fcurrent_buffer ());
+
+  return unbind_to (speccount, Fprogn (args));
+}
 
 DEFUN ("buffer-size", Fbufsize, 0, 1, 0, /*
 Return the number of characters in BUFFER.
@@ -2100,6 +2124,7 @@ syms_of_editfns (void)
   DEFSUBR (Fregion_beginning);
   DEFSUBR (Fregion_end);
   DEFSUBR (Fsave_excursion);
+  DEFSUBR (Fsave_current_buffer);
 
   DEFSUBR (Fbufsize);
   DEFSUBR (Fpoint_max);

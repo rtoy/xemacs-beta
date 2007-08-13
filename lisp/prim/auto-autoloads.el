@@ -3918,7 +3918,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.32 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.33 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5260,7 +5260,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.32 $
+vhdl-mode $Revision: 1.33 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5528,14 +5528,6 @@ Environment file name.  See also the file \"br-help\"." t nil)
 ;;;***
 
 ;;;### (autoloads (add-log-current-defun change-log-mode add-change-log-entry-other-window add-change-log-entry find-change-log prompt-for-change-log-name) "add-log" "packages/add-log.el")
-
-(defcustom change-log-default-name nil "*Name of a change log file for \\[add-change-log-entry]." :type '(choice (const :tag "default" nil) string) :group 'change-log)
-
-(defcustom add-log-current-defun-function nil "*If non-nil, function to guess name of current function from surrounding text.\n\\[add-change-log-entry] calls this function (if nil, `add-log-current-defun'\ninstead) with no arguments.  It returns a string or nil if it cannot guess." :type 'boolean :group 'change-log)
-
-(defcustom add-log-full-name nil "*Full name of user, for inclusion in ChangeLog daily headers.\nThis defaults to the value returned by the `user-full-name' function." :type '(choice (const :tag "Default" nil) string) :group 'change-log)
-
-(defcustom add-log-mailing-address nil "*Electronic mail address of user, for inclusion in ChangeLog daily headers.\nThis defaults to the value of `user-mail-address'." :type '(choice (const :tag "Default" nil) string) :group 'change-log)
 
 (autoload 'prompt-for-change-log-name "add-log" "\
 Prompt for a change log name." nil nil)

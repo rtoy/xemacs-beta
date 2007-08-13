@@ -739,7 +739,7 @@ The order of elements is the reverse of the order in the buffer.")
 	   ;; the proper column.
 	   (goto-char (, temp-bolm))
 	   (and (not (, temp-fnlp))
-		(not (eq (following-char) 0)) (memq (following-char) '(?\n ?\r))
+		(memq (char-after (point)) '(?\n ?\r))
 		;; The line containing the point got deleted. Note that this
 		;; logic only works if we don't delete null lines, but we never
 		;; do.

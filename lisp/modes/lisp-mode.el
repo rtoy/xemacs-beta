@@ -202,9 +202,6 @@
    ;; XEmacs changes
    (set-keymap-name shared-lisp-mode-map 'shared-lisp-mode-map)
    (define-key shared-lisp-mode-map "\M-;" 'lisp-indent-for-comment)
-;; GDF - don't rebind the DEL key
-;;  (define-key shared-lisp-mode-map "\177" 'backward-delete-char-untabify)
-
    (define-key shared-lisp-mode-map "\e\C-q" 'indent-sexp))
 
 (defvar emacs-lisp-mode-map ()
@@ -713,6 +710,10 @@ of the start of the containing expression."
 (put 'catch 'lisp-indent-function 1)
 (put 'condition-case 'lisp-indent-function 2)
 (put 'unwind-protect 'lisp-indent-function 1)
+(put 'save-current-buffer 'lisp-indent-function 0)
+(put 'with-current-buffer 'lisp-indent-function 1)
+(put 'with-temp-file 'lisp-indent-function 1)
+(put 'with-output-to-string 'lisp-indent-function 0)
 (put 'with-output-to-temp-buffer 'lisp-indent-function 1)
 
 (defun indent-sexp (&optional endpos)

@@ -861,6 +861,11 @@ Lisp_Object Fput_text_property (Lisp_Object start,
 				Lisp_Object prop,
 				Lisp_Object value,
 				Lisp_Object object);
+Lisp_Object Fextent_in_region_p(Lisp_Object extent,
+				Lisp_Object from,
+				Lisp_Object to,
+				Lisp_Object flags);
+
 extern Lisp_Object Qdetached, Qdestroyed, Qbegin_glyph, Qend_glyph;
 extern Lisp_Object Qstart_open, Qend_open, Qread_only;
 extern Lisp_Object Qunique, Qduplicable;

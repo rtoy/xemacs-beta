@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9908
+;; Version: 1.9916
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -332,11 +332,14 @@ If FRAME is nil, use the default face."
       (setq att (car atts)
 	    atts (cdr atts)
 	    get (nth 3 att))
-      (when get 
-	(let ((answer (funcall get face frame)))
-	  (unless (equal answer (funcall get 'default frame))
-	    (when (widget-apply (nth 1 att) :match answer)
-	      (setq result (cons (nth 0 att) (cons answer result))))))))
+      (condition-case nil
+	  ;; This may fail if w3 doesn't exists.
+	  (when get 
+	    (let ((answer (funcall get face frame)))
+	      (unless (equal answer (funcall get 'default frame))
+		(when (widget-apply (nth 1 att) :match answer)
+		  (setq result (cons (nth 0 att) (cons answer result)))))))
+	(error nil)))
     result))
 
 (defun custom-set-face-bold (face value &optional frame)

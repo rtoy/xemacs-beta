@@ -1,7 +1,7 @@
 \input texinfo.tex
 
 @c %**start of header
-@setfilename custom
+@setfilename ../info/custom
 @settitle The Customization Library
 @iftex
 @afourpaper
@@ -36,12 +36,12 @@ Groups, variables, and faces all share these common keywords:
 Add @var{symbol} to that group. 
 @item :link
 @var{value} should be a widget type. 
-Add @var{value} to the extrenal links for this customization option.
+Add @var{value} to the external links for this customization option.
 Useful widget types include @code{custom-manual}, @code{info-link}, and
 @code{url-link}. 
 @item :load
-Add @var{value} to the files that should be loaded nefore displaying
-this customization option.  The value should be iether a string, which
+Add @var{value} to the files that should be loaded before displaying
+this customization option.  The value should be either a string, which
 should be a string which will be loaded with @code{load-library} unless
 present in @code{load-history}, or a symbol which will be loaded with
 @code{require}. 
@@ -143,7 +143,8 @@ value for that symbol.  The default is @code{default-value}.
 
 @item :require
 @var{value} should be a feature symbol.  Each feature will be required
-after initialization, of the the user have saved this option.
+when the `defcustom' is evaluated, or when Emacs is started if the user
+has saved this option. 
 
 @end table
 
@@ -157,7 +158,7 @@ specified default value, @code{saved-value} for a value saved by the
 user, and @code{variable-documentation} for the documentation string.
 
 Use @code{custom-add-option} to specify that a specific function is
-useful as an meber of a hook.
+useful as an member of a hook.
 
 @defun custom-add-option symbol option
 To the variable @var{symbol} add @var{option}.
@@ -322,7 +323,7 @@ Suggested by Jens Lautenbacher
 @samp{<jens@@lemming0.lem.uni-karlsruhe.de>}.@refill
 
 @item
-Explain why it is necessary that all choices have differnet default
+Explain why it is necessary that all choices have different default
 values.
 
 @item

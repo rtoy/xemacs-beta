@@ -1066,13 +1066,15 @@ used."
 		     max-lines))
 	;; not so good if there are over 20 or 30 options, but then, if
 	;; there are that many you don't want to scan them all anyway...
+	(when (integerp count)
+	  (setq count (int-char count)))
 	(while (memq count command-characters) ; skip command characters.
-	  (setq count (1+ count)
+	  (setq count (int-char (1+ count))
 		skipped (1+ skipped)))
 	(insert "(" count ") " (car choices) "  ")
 	(setq choices (cdr choices)
 	      count (1+ count)))
-      (setq count (- count ?0 skipped)))
+      (setq count (int-char (- count ?0 skipped))))
 
     ;; Assure word is visible
     (if (not (pos-visible-in-window-p end))
@@ -1124,7 +1126,7 @@ used."
 				   (read-char-exclusive)
 				 (read-char))
 			  skipped 0)
-		    (if (or quit-flag (= char ?\C-g)) ; C-g is like typing X
+		    (if (or quit-flag (eq char ?\C-g)) ; C-g is like typing X
 			(setq char ?X
 			      quit-flag nil)))
 		  ;; Adjust num to array offset skipping command characters.
@@ -1136,36 +1138,36 @@ used."
 		    (setq num (- char ?0 skipped)))
 
 		  (cond
-		   ((= char ? ) nil)	; accept word this time only
-		   ((= char ?i)		; accept and insert word into pers dict
+		   ((eq char ? ) nil)	; accept word this time only
+		   ((eq char ?i)	; accept and insert word into pers dict
 		    (process-send-string ispell-process (concat "*" word "\n"))
 		    (setq ispell-pdict-modified-p '(t)) ; dictionary modified!
 		    nil)
-		   ((or (= char ?a) (= char ?A)) ; accept word without insert
+		   ((or (eq char ?a) (eq char ?A)) ; accept word without insert
 		    (process-send-string ispell-process (concat "@" word "\n"))
 		    (if (null ispell-pdict-modified-p)
 			(setq ispell-pdict-modified-p
 			      (list ispell-pdict-modified-p)))
-		    (if (= char ?A) 0))	; return 0 for ispell-add buffer-local
-		   ((or (= char ?r) (= char ?R)) ; type in replacement
-		    (if (or (= char ?R) ispell-query-replace-choices)
+		    (if (eq char ?A) 0)) ; return 0 for ispell-add buffer-local
+		   ((or (eq char ?r) (eq char ?R)) ; type in replacement
+		    (if (or (eq char ?R) ispell-query-replace-choices)
 			(list (read-string "Query-replacement for: " word) t)
 		      (cons (read-string "Replacement for: " word) nil)))
-		   ((or (= char ??)
+		   ((or (eq char ??)
 			;; XEmacs change: help-char may not be an int.
 			(eq char (event-to-character
 				  (character-to-event help-char)))
-			(= char ?\C-h))
+			(eq char ?\C-h))
 		    (ispell-help)
 		    t)
 		   ;; Quit and move point back.
-		   ((= char ?x)
+		   ((eq char ?x)
 		    (ispell-pdict-save ispell-silently-savep)
 		    (message "Exited spell-checking")
 		    (setq ispell-quit t)
 		    nil)
 		   ;; Quit and preserve point.
-		   ((= char ?X)
+		   ((eq char ?X)
 		    (ispell-pdict-save ispell-silently-savep)
 		    (message "%s"
 		     (substitute-command-keys
@@ -1174,7 +1176,7 @@ used."
 		    (setq ispell-quit (max (point-min)
 					   (- (point) (length word))))
 		    nil)
-		   ((= char ?q)
+		   ((eq char ?q)
 		    (if (y-or-n-p "Really kill Ispell process? ")
 			(progn
 			  (ispell-kill-ispell t) ; terminate process.
@@ -1182,7 +1184,7 @@ used."
 						(point))
 				ispell-pdict-modified-p nil))
 		      t))		; continue if they don't quit.
-		   ((= char ?l)
+		   ((eq char ?l)
 		    (let ((new-word (read-string
 				     "Lookup string (`*' is wildcard): "
 				     word))
@@ -1212,7 +1214,7 @@ used."
 					       new-line)
 					     max-lines))
 				(while (memq count command-characters)
-				  (setq count (1+ count)
+				  (setq count (int-char (1+ count))
 					skipped (1+ skipped)))
 				(insert "(" count ") " (car choices) "  ")
 				(setq choices (cdr choices)
@@ -1235,12 +1237,12 @@ used."
 				  (setq line new-line)))
 			    (select-window (next-window)))))
 		    t)			; reselect from new choices
-		   ((= char ?u)
+		   ((eq char ?u)
 		    (process-send-string ispell-process
 					 (concat "*" (downcase word) "\n"))
 		    (setq ispell-pdict-modified-p '(t)) ; dictionary modified!
 		    nil)
-		   ((= char ?m)		; type in what to insert
+		   ((eq char ?m)	; type in what to insert
 		    (process-send-string
 		     ispell-process (concat "*" (read-string "Insert: " word)
 					    "\n"))
@@ -1250,11 +1252,11 @@ used."
 		    (if ispell-query-replace-choices ; Query replace flag
 			(list (nth num miss) 'query-replace)
 		      (nth num miss)))
-		   ((= char ?\C-l)
+		   ((eq char ?\C-l)
 		    (redraw-display) t)
-		   ((= char ?\C-r)
+		   ((eq char ?\C-r)
 		    (save-window-excursion (recursive-edit)) t)
-		   ((= char ?\C-z)
+		   ((eq char ?\C-z)
 		    (funcall (key-binding "\C-z"))
 		    t)
 		   (t (ding) t))))))

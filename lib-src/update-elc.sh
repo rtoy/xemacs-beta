@@ -76,7 +76,7 @@ lisp_prog='(princ (featurep (quote mule)))'
 mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
   echo No
-  ignore_dirs="$ignore_dirs its egg mule leim"
+  ignore_dirs="$ignore_dirs its egg mule language leim"
 else
   echo Yes
 fi
@@ -137,6 +137,20 @@ ignore_pattern="$ignore_pattern"'
 \!/site-init.el$!d
 \!/version.el$!d
 \!/sunpro/sunpro-load.el$!d
+\!/language/devanagari.el$!d
+\!/language/ethiopic.el$!d
+\!/language/indian.el$!d
+\!/language/lao-util.el$!d
+\!/language/lao.el$!d
+\!/language/tibetan.el$!d
+\!/language/vietnamese.el$!d
+\!/leim/quail/devanagari.el$!d
+\!/leim/quail/ethiopic.el$!d
+\!/leim/quail/japanese.el$!d
+\!/leim/quail/lao.el$!d
+\!/leim/quail/lrt.el$!d
+\!/leim/quail/thai.el$!d
+\!/leim/quail/viqr.el$!d
 '
 
 echo "Compiling files without .elc..."

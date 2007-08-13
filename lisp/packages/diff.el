@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:         diff.el
-;; Version:      $Revision: 1.5 $
+;; Version:      $Revision: 1.6 $
 ;; Author:       This file is based on diff.el by
 ;;               sunpitt!wpmstr!fbresz@Sun.COM 1/27/89.
 ;;               It has been completely rewritten in July 1994 by
@@ -125,7 +125,8 @@
   (define-key diff-mode-map "w" 'diff-find-file-other-frame)
   (define-key diff-mode-map "\C-c\C-c" 'diff-find-file-other-window)
   (define-key diff-mode-map " " 'diff-advertised-scroll-up)
-  (define-key diff-mode-map "\177" 'diff-advertised-scroll-down)
+  (define-key diff-mode-map 'backspace 'diff-advertised-scroll-down)
+  (define-key diff-mode-map 'delete 'diff-advertised-scroll-down)
   (define-key diff-mode-map "\C-n" 'diff-next-line)
   (define-key diff-mode-map "\C-p" 'diff-previous-line)
   (define-key diff-mode-map "\M->" 'diff-end-of-buffer)

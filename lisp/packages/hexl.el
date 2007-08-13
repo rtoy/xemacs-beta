@@ -697,8 +697,10 @@ This discards the buffer's undo information."
   (define-key hexl-mode-map [deletechar] 'undefined)
   (define-key hexl-mode-map [deleteline] 'undefined)
   (define-key hexl-mode-map [insertline] 'undefined)
+  (define-key hexl-mode-map [(shift backspace)] 'undefined)
   (define-key hexl-mode-map [(shift delete)] 'undefined)
-  (define-key hexl-mode-map "\177" 'undefined)
+  (define-key hexl-mode-map 'backspace 'undefined)
+  (define-key hexl-mode-map 'delete 'undefined)
 
   (define-key hexl-mode-map "\C-a" 'hexl-beginning-of-line)
   (define-key hexl-mode-map "\C-b" 'hexl-backward-char)

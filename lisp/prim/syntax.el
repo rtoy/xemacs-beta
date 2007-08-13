@@ -392,7 +392,7 @@ This is similar to `map-char-table', but works only on syntax tables, and
   (interactive)
   ;alg stolen from etag.el
   (save-excursion
-	(if (not (memq (char-syntax (char-before)) '(?w ?_)))
+	(if (or (bobp) (not (memq (char-syntax (char-before)) '(?w ?_))))
 	    (while (not (looking-at "\\sw\\|\\s_\\|\\'"))
 	      (forward-char 1)))
 	(while (looking-at "\\sw\\|\\s_")

@@ -155,7 +155,8 @@ Lisp_Object Qbyte_code;
 #define Bbobp 0157
 #define Bcurrent_buffer 0160
 #define Bset_buffer 0161
-#define Bread_char 0162 /* No longer generated as of v19 */
+#define Bsave_current_buffer 0162 /* was Bread_char, but no longer
+				     generated as of v19 */
 #define Bmemq 0163 /* was Bset_mark, but no longer generated as of v18 */
 #define Binteractive_p 0164 /* Needed since interactive-p takes unevalled args */
 
@@ -941,9 +942,14 @@ If the third argument is incorrect, Emacs may crash.
 	  TOP = Fset_buffer (TOP);
 	  break;
 
-	case Bread_char:
-	  error ("read-char is an obsolete byte code");
-	  break;
+	case Bsave_current_buffer:
+	  {
+	    Lisp_Object save_current_buffer_restore (Lisp_Object);
+
+	    record_unwind_protect (save_current_buffer_restore,
+				   Fcurrent_buffer ());
+	    break;
+	  }
 
 	case Binteractive_p:
 	  PUSH (Finteractive_p ());

@@ -1,3 +1,81 @@
+1997-06-14  Steven L Baur  <steve@altair.xemacs.org>
+
+	* bytecomp/bytecomp.el (byte-compile-file): Suppress unavoidable
+	Ebola notices.
+
+1997-06-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* bytecomp/bytecomp.el (batch-byte-compile): Suppress unavoidable
+	Ebola notices.
+	(batch-byte-recompile-directory): Ditto.
+
+	* utils/lib-complete.el (read-library): Look for .el.gz if not
+	using Mule.
+	(get-library-path): Ditto.
+	Suggested by Jonathan Doughty <jwd@mitre.org>
+
+	* packages/add-log.el: Restore backwards compatible date behavior
+	as an option.
+	Eliminate XEmacs specific autoloads.
+	From Hrvoje Niksic <hniksic@srce.hr>
+	
+	* efs/dired.el (dired-save-excursion): Ebola cleanup.
+
+	* packages/hyper-apropos.el: Massive cleanup, Customize.
+	From Hrvoje Niksic <hniksic@srce.hr> 
+
+Fri Jun 13 13:20:39 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* prim/syntax.el (symbol-near-point):
+	  Check for bobp and avoid (char-syntax (char-before)) if 
+	  there.
+
+1997-06-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/rect.el (operate-on-rectangle): Correct boundary error.
+	From Bob Weiner <weiner@altrasoft.com>
+
+1997-06-12  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/ispell.el (ispell-command-loop): De-Ebolify.
+
+	* x11/x-iso8859-1.el: Added Grave keysym.
+	From Heiko Muenkel <muenkel@tnt.uni-hannover.de>
+
+	* modes/make-mode.el (makefile-browse): Shouldn't be interactive.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* prim/files.el (interpreter-mode-alist): ksh-mode is obsoleted by 
+	sh-script.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-06-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/subr.el (with-current-buffer): New macro.
+	(with-temp-file): Ditto.
+
+	* bytecomp/byte-optimize.el (byte-optimize-form-code-walker): Test 
+	for `save-current-buffer'.
+
+	* bytecomp/bytecomp.el: Recognize `save-current-buffer'.
+
+	* edebug/edebug.el: Register with-current-buffer and others.
+
+	* modes/lisp-mode.el: Added specs for save-current-buffer,
+ 	with-output-to-string, with-current-buffer, with-temp-file and
+ 	with-output-to-temp-buffer.
+
+1997-06-13  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* gnus/smiley.el (smiley-deformed-regexp-alist): Modify regexp for
+	horizontal smiley faces.
+	(smiley-nosey-regexp-alist): Add horizontal smiley faces.
+
+1997-06-13  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* leim/quail.el (quail-get-translation): Don't use
+	`string-to-vector' for XEmacs.
+
 1997-06-11  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/help.el (function-called-at-point): Use char-(after|before)

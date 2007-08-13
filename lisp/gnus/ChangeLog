@@ -1,3 +1,9 @@
+1997-06-13  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* smiley.el (smiley-deformed-regexp-alist): Modify regexp for
+	horizontal smiley faces.
+	(smiley-nosey-regexp-alist): Add horizontal smiley faces.
+
 1997-06-10  Steven L Baur  <steve@altair.xemacs.org>
 
 	* nntp.el (nntp-wait-for): Replace following-char with char-after.

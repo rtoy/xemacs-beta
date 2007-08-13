@@ -29,7 +29,7 @@
 ;; LCD Archive Entry:
 ;; edebug|Daniel LaLiberte|liberte@cs.uiuc.edu
 ;; |A source level debugger for Emacs Lisp.
-;; |$Date: 1997/04/24 03:59:43 $|$Revision: 1.5 $|~/modes/edebug.el|
+;; |$Date: 1997/06/14 20:30:57 $|$Revision: 1.6 $|~/modes/edebug.el|
 
 ;; This minor mode allows programmers to step through Emacs Lisp
 ;; source code while executing functions.  You can also set
@@ -87,7 +87,7 @@
 ;;; Code:
 
 (defconst edebug-version
-  (let ((raw-version "$Revision: 1.5 $"))
+  (let ((raw-version "$Revision: 1.6 $"))
     (substring raw-version (string-match "[0-9.]*" raw-version)
 	       (match-end 0))))
      
@@ -2163,6 +2163,14 @@ expressions; a `progn' form will be returned enclosing these forms."
 (def-edebug-spec dont-compile t)
 (def-edebug-spec eval-when-compile t)
 (def-edebug-spec eval-and-compile t)
+
+(def-edebug-spec save-selected-window t)
+(def-edebug-spec save-current-buffer t)
+(def-edebug-spec save-match-data t)
+(def-edebug-spec with-output-to-string t)
+(def-edebug-spec with-current-buffer t)
+(def-edebug-spec with-temp-file t)
+(def-edebug-spec with-temp-buffer t)
 
 ;; Anything else?
 

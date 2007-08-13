@@ -24,7 +24,7 @@
 ;; LCD Archive Entry:
 ;; ksh-mode|Gary F. Ellison|Gary.F.Ellison@ATT.COM
 ;; |Mode for editing sh/ksh/bash scripts
-;; |$Date: 1997/05/23 01:36:24 $|$Revision: 1.3 $|~/modes/ksh-mode.el.Z|
+;; |$Date: 1997/06/14 20:31:11 $|$Revision: 1.4 $|~/modes/ksh-mode.el.Z|
 
 ;; Author: Gary F. Ellison <Gary.F.Ellison@ATT.COM>
 ;;                   AT&T  Laboratories
@@ -33,10 +33,10 @@
 ;;
 ;; Maintainer: Gary F. Ellison <Gary.F.Ellison@ATT.COM>
 ;; Created: Fri Jun 19
-;; $Revision: 1.3 $
+;; $Revision: 1.4 $
 ;; Keywords: shell, korn, bourne, sh, ksh, bash
 ;;
-;; Delta On   $Date: 1997/05/23 01:36:24 $
+;; Delta On   $Date: 1997/06/14 20:31:11 $
 ;; Last Modified By: Gary Ellison
 ;; Last Modified On: Mon Sep 11 12:26:47 1995
 ;; Update Count    : 35
@@ -231,7 +231,7 @@
 ;;    Conception of this mode.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst ksh-mode-version "$Revision: 1.3 $"
+(defconst ksh-mode-version "$Revision: 1.4 $"
   "*Version numbers of this version of ksh-mode")
 
 ;;
@@ -459,7 +459,6 @@ while, for, until, and select")
   (setq ksh-mode-map (make-sparse-keymap))
   (define-key ksh-mode-map "\t"    'ksh-indent-command)
 ;;  (define-key ksh-mode-map "\t"    'ksh-indent-line)
-;;  (define-key ksh-mode-map "\177"    'backward-delete-char-untabify)
   (define-key ksh-mode-map "\C-j"    'reindent-then-newline-and-indent)
   (define-key ksh-mode-map "\e\t"    'ksh-complete-symbol)
   (define-key ksh-mode-map "\C-c\t"    'ksh-completion-init-and-pickup)
@@ -468,7 +467,7 @@ while, for, until, and select")
 
 ;;;###autoload
 (defun ksh-mode ()
-  "ksh-mode $Revision: 1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
+  "ksh-mode $Revision: 1.4 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}

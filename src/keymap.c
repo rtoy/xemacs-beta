@@ -2418,11 +2418,6 @@ get_relevant_keymaps (Lisp_Object keys,
    which may not itself be under the mouse.
  */
 
-extern Lisp_Object Fextent_in_region_p(Lisp_Object extent,
-				       Lisp_Object from,
-				       Lisp_Object to,
-				       Lisp_Object flags);
-
 static void
 get_relevant_extent_keymaps (Lisp_Object pos, Lisp_Object buffer_or_string,
                              Lisp_Object glyph,

@@ -2077,10 +2077,9 @@ At end of the node's text, moves to the next node."
   (define-key Info-mode-map "\t" 'Info-next-reference)
   (define-key Info-mode-map "\e\t" 'Info-prev-reference)
   (define-key Info-mode-map "\r" 'Info-follow-nearest-node)
-  (define-key Info-mode-map "\177" 'Info-scroll-prev)
   ;; XEmacs addition
-  (define-key Info-mode-map [backspace] 'Info-scroll-prev)
-
+  (define-key Info-mode-map 'backspace 'Info-scroll-prev)
+  (define-key Info-mode-map 'delete 'Info-scroll-prev)
   (define-key Info-mode-map 'button2 'Info-follow-clicked-node)
   (define-key Info-mode-map 'button3 'Info-select-node-menu))
 

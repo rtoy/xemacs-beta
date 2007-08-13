@@ -88,8 +88,6 @@
   (define-key pascal-mode-map "\t"       'electric-pascal-tab)
   (define-key pascal-mode-map "\M-\t"    'pascal-complete-word)
   (define-key pascal-mode-map "\M-?"     'pascal-show-completions)
-;; GDF - don't rebind the delete key.
-;;  (define-key pascal-mode-map "\177"     'backward-delete-char-untabify)
   (define-key pascal-mode-map "\M-\C-h"  'pascal-mark-defun)
   (define-key pascal-mode-map "\C-c\C-b" 'pascal-insert-block)
   (define-key pascal-mode-map "\M-*"     'pascal-star-comment)

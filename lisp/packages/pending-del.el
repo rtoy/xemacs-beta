@@ -75,6 +75,8 @@ t enables all messages")
 ;; Support the XEmacs 20.3 'delete functions
 
 (put 'backward-or-forward-delete-char 'pending-delete 'supersede)
+(put 'cperl-electric-backspace 'pending-delete 'supersede)
+(put 'cperl-electric-delete 'pending-delete 'supersede)
 
 ;; Don't delete for these.  They're more problematic than helpful.
 ;;

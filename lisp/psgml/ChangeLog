@@ -1,3 +1,8 @@
+1997-06-14  Steven L Baur  <steve@altair.xemacs.org>
+
+	* psgml-parse.el (sgml-read-model): Ebola vaccine.
+	From Andrew J Cosgriff <Andrew.Cosgriff@cc.monash.edu.au>
+
 Wed Apr 23 11:28:10 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* psgml-charent.el (sgml-display-char-list-filename): Move

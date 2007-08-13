@@ -77,7 +77,10 @@ int debug_issue_ebola_notices;
 
 int debug_ebola_backtrace_length;
 
+#if 0
+/*#ifndef LRECORD_SYMBOL*/
 #include "backtrace.h"
+#endif
 
 int
 eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
@@ -86,12 +89,13 @@ eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
       && (debug_issue_ebola_notices >= 2
 	  || XREALINT (obj1) == XREALINT (obj2)))
     {
+#if 0
+/*#ifndef LRECORD_SYMBOL*/
       struct backtrace *bt = backtrace_list;
       char *p;
       /* Continuing the joke by printing `Ebola warning!!!' confuses */
       /* too many people.  The message must be printed because Emacs used */
       /* to work differently for two decades. */
-#ifndef LRECORD_SYMBOL
       /* temporary hack that will probably be around too long -slb */
       if (XTYPE(*bt->function) == Lisp_Symbol)
 	{
@@ -100,7 +104,9 @@ eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
 	      !strcmp(p, "byte-compile-constants-vector") ||
 	      !strcmp(p, "byte-optimize-minus") ||
 	      !strcmp(p, "byte-optimize-plus") ||
-	      !strcmp(p, "byte-decompile-bytecode-1")) goto sc;
+	      !strcmp(p, "byte-decompile-bytecode-1") ||
+	      !strcmp(p, "byte-optimize-logmumble") ||
+	      !strcmp(p, "byte-compile-push-constant")) goto sc;
 	}
 #endif
       stderr_out("Comparison between integer and character is constant nil (");

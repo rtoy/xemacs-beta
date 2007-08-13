@@ -202,6 +202,23 @@ defaults to the current time.
 ** The PATTERN argument to `split-string' is now optional and defaults
 to whitespace ("[ \f\t\n\r\v]+").
 
+** The new macro `with-current-buffer' lets you evaluate an expression
+conveniently with a different current buffer.  It looks like this:
+
+  (with-current-buffer BUFFER BODY-FORMS...)
+
+BUFFER is the expression that says which buffer to use.
+BODY-FORMS say what to do in that buffer.
+
+** The new primitive `save-current-buffer' saves and restores the
+choice of current buffer, like `save-excursion', but without saving or
+restoring the value of point or the mark.  `with-current-buffer'
+works using `save-current-buffer'.
+
+** The new macro `with-temp-file' lets you do some work in a new buffer and
+write the output to a specified file.  Like `progn', it returns the value
+of the last form.
+
 
 
 * Changes in XEmacs 20.2

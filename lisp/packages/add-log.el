@@ -32,18 +32,17 @@
 (defgroup change-log nil
   "Change log maintenance"
   :group 'tools
+  :group 'maint
   :prefix "change-log-"
   :prefix "add-log-")
 
 
-;;;###autoload
 (defcustom change-log-default-name nil
   "*Name of a change log file for \\[add-change-log-entry]."
   :type '(choice (const :tag "default" nil)
 		 string)
   :group 'change-log)
 
-;;;###autoload
 (defcustom add-log-current-defun-function nil
   "\
 *If non-nil, function to guess name of current function from surrounding text.
@@ -52,7 +51,6 @@ instead) with no arguments.  It returns a string or nil if it cannot guess."
   :type 'boolean
   :group 'change-log)
 
-;;;###autoload
 (defcustom add-log-full-name nil
   "*Full name of user, for inclusion in ChangeLog daily headers.
 This defaults to the value returned by the `user-full-name' function."
@@ -60,11 +58,6 @@ This defaults to the value returned by the `user-full-name' function."
 		 string)
   :group 'change-log)
 
-;; XEmacs;
-;; So that the dump-time value doesn't go into loaddefs.el with the autoload.
-(or add-log-full-name (setq add-log-full-name (user-full-name)))
-
-;;;###autoload
 (defcustom add-log-mailing-address nil
   "*Electronic mail address of user, for inclusion in ChangeLog daily headers.
 This defaults to the value of `user-mail-address'."
@@ -72,10 +65,16 @@ This defaults to the value of `user-mail-address'."
 		 string)
   :group 'change-log)
 
-;; XEmacs:
-;; So that the dump-time value doesn't go into loaddefs.el with the autoload.
-(or add-log-mailing-address
-    (setq add-log-mailing-address (user-mail-address)))
+(defcustom add-log-time-format 'iso8601-time-string
+  "*Function that defines the time format.
+For example, `iso8601-time-string' (time in international ISO 8601 format)
+and `current-time-string' are valid values."
+  :type '(radio (const :tag "International ISO 8601 format" iso8601-time-string)
+		(const :tag "Old format, as returned by `current-time-string'"
+		       current-time-string)
+		(function :tag "Other"))
+  :group 'change-log)
+
 
 (defvar change-log-font-lock-keywords
   '(;;
@@ -129,6 +128,20 @@ If nil, use local time.")
 		  ((not (zerop mm)) "%c%02d:%02d")
 		  (t "%c%02d"))
 	    sign hh mm ss)))
+
+(defun iso8601-time-string ()
+  (if change-log-time-zone-rule
+      (let ((tz (getenv "TZ"))
+	    (now (current-time)))
+	(unwind-protect
+	    (progn
+	      (set-time-zone-rule
+	       change-log-time-zone-rule)
+	      (concat
+	       (format-time-string "%Y-%m-%d " now)
+	       (iso8601-time-zone now)))
+	  (set-time-zone-rule tz)))
+    (format-time-string "%Y-%m-%d")))
 
 (defun change-log-name ()
   (or change-log-default-name
@@ -211,6 +224,7 @@ current buffer to the complete file name."
   (set (make-local-variable 'change-log-default-name) file-name)
   file-name)
 
+
 ;;;###autoload
 (defun add-change-log-entry (&optional whoami file-name other-window new-entry)
   "Find change log file and add an entry for today.
@@ -259,18 +273,7 @@ never append to an existing entry.  Today's date is calculated according to
 	(change-log-mode))
     (undo-boundary)
     (goto-char (point-min))
-    (let ((new-entry (concat (if change-log-time-zone-rule
-				 (let ((tz (getenv "TZ"))
-				       (now (current-time)))
-				   (unwind-protect
-				       (progn
-					 (set-time-zone-rule
-					  change-log-time-zone-rule)
-					 (concat
-					  (format-time-string "%Y-%m-%d " now)
-					  (iso8601-time-zone now)))
-				     (set-time-zone-rule tz)))
-			       (format-time-string "%Y-%m-%d"))
+    (let ((new-entry (concat (funcall add-log-time-format)
 			     "  " add-log-full-name
 			     "  <" add-log-mailing-address ">")))
       (if (looking-at (regexp-quote new-entry))

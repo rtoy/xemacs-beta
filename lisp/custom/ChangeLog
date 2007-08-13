@@ -1,6 +1,133 @@
-1997-06-06  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+Sat Jun 14 21:31:09 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
-	* wid-edit.el: Add widget `coding-system' for mule.
+	* Version 1.9916 released.
+
+Sat Jun 14 18:24:36 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-tabable-at): New function.
+	(widget-move): Use it.
+	* wid-edit.el (widget-after-change): Reimplemented :secret.
+
+	* wid-edit.el (widget-field-add-space): New option.
+	(widget-specify-field): Use it.
+	(widget-field-end): Ditto.
+
+	* Version 1.9915 released.
+
+Sat Jun 14 12:12:38 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-leave-text): New function.
+	(widget-convert-text): Use it.
+	(documentation-link): New widget.
+	(widget-documentation-link-action): New function.
+	(widget-documentation-links): New option.
+	(widget-documentation-link-regexp): New option.
+	(widget-documentation-link-p): New option.
+	(widget-documentation-link-type): New option.
+	(widget-documentation-link-add): New function.
+	(widget-documentation-string-value-create): Use it.
+
+	* all: Synched with FSF.
+
+Fri Jun 13 20:25:55 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9914 released.
+
+1997-06-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+        * wid-edit.el: Add widget `coding-system' for mule.
+
+Fri Jun 13 14:28:41 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-convert-text): New function.
+	(widget-convert-button): Ditto.
+
+	* custom.texi: Use ../info/custom as file name.
+	(Declaring Variables): Reformulation.
+	Ispelled.
+	* widget.texi: Use ../info/widget as file name.
+	Ispelled.
+	
+Thu Jun 12 19:22:22 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9913 released.
+
+Thu Jun 12 12:15:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-field-buffer): Don't assume an overlay
+	exists. 
+	(widget-field-start): Ditto.
+	(widget-field-end): Ditto.
+
+	* cus-face.el (custom-face-attributes-get): Protect against
+	missing w3 font functions.
+
+	* Version 1.9912 released.
+
+Thu Jun 12 12:14:30 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-magic-faces): New group.
+	Added magic faces.
+	
+Wed Jun 11 20:15:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9911 released.
+
+Wed Jun 11 14:35:58 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-buffer): New group.
+	(custom-menu): New group
+	Updated options.
+	* wid-edit.el (widget-faces): New group.
+	Updated all faces.
+
+	* wid-edit.el (widget-map-buttons): New function.
+	Written by William M. Perry  <wmperry@aventail.com>.
+
+	* Version 1.9910 released.
+
+Wed Jun 11 13:35:16 1997  Simon Marshall  <simon@gnu.ai.mit.edu>
+
+	* cus-edit.el (custom-buffer-sort-predicate):
+	(custom-menu-sort-predicate): Default to ignore.  Rewrite :type form.
+	(custom-buffer-order-predicate):
+	(custom-menu-order-predicate): New variables.
+	(custom-buffer-sort-alphabetically):
+	(custom-menu-sort-alphabetically): Functions deleted.
+	(custom-sort-items-alphabetically): New function.  Like deleted
+	functions, except that A and B must be the same custom type.
+	(custom-sort-groups-first):
+	(custom-sort-groups-last): New functions.  Like deleted functions,
+	except that only A and B custom types are compared. 
+	(custom-group-value-create):
+	(custom-menu-create): Also sort members using custom-*-order-predicate.
+	But sort the copy of the stored sequence to prevent changing the stored
+	value, and don't store the sorted copy.
+
+Wed Jun 11 11:10:18 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9909 released.
+
+Wed Jun 11 10:13:05 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-specify-inactive): Don't set `mouse-face'.
+	(widget-setup): Don't use markers.
+
+Tue Jun 10 13:55:38 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-default-format-handler): Cleanup.
+	(widget-documentation-string-value-create): Also use documentation
+ 	properties on single line documentation strings.
+
+Mon Jun  9 06:21:49 1997  William M. Perry  <wmperry@aventail.com>
+
+	* wid-browse.el (widget-minor-mode): Fixed mistake in
+	  widget-minor-mode - it had semantics of non-interactive calling
+	  reveresed.
+
+Wed Jun  4 13:44:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
 
 Wed Jun 04 13:24:36 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 

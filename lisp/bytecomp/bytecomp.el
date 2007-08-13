@@ -577,7 +577,9 @@ Each element is (INDEX . VALUE)")
 (byte-defop 111  1 byte-bobp)
 (byte-defop 112  1 byte-current-buffer)
 (byte-defop 113  0 byte-set-buffer)
-(byte-defop 114  1 byte-read-char-OBSOLETE) ;obsolete as of v19
+(byte-defop 114  0 byte-save-current-buffer
+  "To make a binding to record the current buffer.")
+;;(byte-defop 114  1 byte-read-char-OBSOLETE) ;obsolete as of v19
 (byte-defop 115 -1 byte-memq) ; new as of v20
 (byte-defop 116  1 byte-interactive-p)
 
@@ -1477,6 +1479,7 @@ With prefix arg (noninteractively: 2nd arg), load the file after compiling."
       (message "Compiling %s..." filename))
   (let (;;(byte-compile-current-file (file-name-nondirectory filename))
 	(byte-compile-current-file filename)
+	(debug-issue-ebola-notices 0) ; Hack -slb
 	target-file input-buffer output-buffer
 	byte-compile-dest-file)
     (setq target-file (byte-compile-dest-file filename))
@@ -3527,6 +3530,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler-1 unwind-protect)
 (byte-defop-compiler-1 condition-case)
 (byte-defop-compiler-1 save-excursion)
+(byte-defop-compiler-1 save-current-buffer)
 (byte-defop-compiler-1 save-restriction)
 (byte-defop-compiler-1 save-window-excursion)
 (byte-defop-compiler-1 with-output-to-temp-buffer)
@@ -3611,6 +3615,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 
 (defun byte-compile-save-restriction (form)
   (byte-compile-out 'byte-save-restriction 0)
+  (byte-compile-body-do-effect (cdr form))
+  (byte-compile-out 'byte-unbind 1))
+
+(defun byte-compile-save-current-buffer (form)
+  (byte-compile-out 'byte-save-current-buffer 0)
   (byte-compile-body-do-effect (cdr form))
   (byte-compile-out 'byte-unbind 1))
 
@@ -3957,7 +3966,8 @@ For example, invoke \"emacs -batch -f batch-byte-compile $emacs/ ~/*.el\""
   (defvar command-line-args-left)	;Avoid 'free variable' warning
   (if (not noninteractive)
       (error "`batch-byte-compile' is to be used only with -batch"))
-  (let ((error nil))
+  (let ((error nil)
+	(debug-issue-ebola-notices 0)) ; Hack -slb
     (while command-line-args-left
       (if (file-directory-p (expand-file-name (car command-line-args-left)))
 	  (let ((files (directory-files (car command-line-args-left)))
@@ -4011,7 +4021,8 @@ For example, invoke `xemacs -batch -f batch-byte-recompile-directory .'."
       (error "batch-byte-recompile-directory is to be used only with -batch"))
   (or command-line-args-left
       (setq command-line-args-left '(".")))
-  (let ((byte-recompile-directory-ignore-errors-p t))
+  (let ((byte-recompile-directory-ignore-errors-p t)
+	(debug-issue-ebola-notices 0))
     (while command-line-args-left
       (byte-recompile-directory (car command-line-args-left))
       (setq command-line-args-left (cdr command-line-args-left))))

@@ -32,7 +32,7 @@
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 
-;; $Id: cperl-mode.el,v 1.10 1997/06/11 19:25:59 steve Exp $
+;; $Id: cperl-mode.el,v 1.11 1997/06/14 20:31:09 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -713,7 +713,8 @@ Imenu in 19.31 is broken. Set `imenu-use-keymap-menu' to t, and remove
   (cperl-define-key "\e\C-q" 'cperl-indent-exp) ; Usually not bound
   ;;(cperl-define-key "\M-q" 'cperl-fill-paragraph)
   ;;(cperl-define-key "\e;" 'cperl-indent-for-comment)
-  (cperl-define-key 'delete 'cperl-electric-backspace)
+  (cperl-define-key 'backspace 'cperl-electric-backspace)
+  (cperl-define-key 'delete 'cperl-electric-delete)
   (cperl-define-key "\t" 'cperl-indent-command)
   ;; don't clobber the backspace binding:
   (cperl-define-key "\C-hf" 'cperl-info-on-command [(control h) f])
@@ -1548,7 +1549,23 @@ If not, or if we are not at the end of marking range, would self-insert."
 
 (defun cperl-electric-backspace (arg)
   "Backspace-untabify, or remove the whitespace inserted by an electric key."
-  (interactive "*P")
+  (interactive "*p")
+  (if (and cperl-auto-newline 
+	   (memq last-command '(cperl-electric-semi 
+				cperl-electric-terminator
+				cperl-electric-lbrace))
+	   (memq (preceding-char) '(?  ?\t ?\n)))
+      (let (p)
+	(if (eq last-command 'cperl-electric-lbrace) 
+	    (skip-chars-forward " \t\n"))
+	(setq p (point))
+	(skip-chars-backward " \t\n")
+	(delete-region (point) p))
+    (backward-delete-char-untabify arg)))
+
+(defun cperl-electric-delete (arg)
+  "Backspace-untabify, or remove the whitespace inserted by an electric key."
+  (interactive "*p")
   (if (and cperl-auto-newline 
 	   (memq last-command '(cperl-electric-semi 
 				cperl-electric-terminator
@@ -1561,8 +1578,8 @@ If not, or if we are not at the end of marking range, would self-insert."
 	(skip-chars-backward " \t\n")
 	(delete-region (point) p))
     (if (fboundp 'backward-or-forward-delete-char)
-	(backward-or-forward-delete-char (prefix-numeric-value arg))
-      (backward-delete-char-untabify (prefix-numeric-value arg)))))
+	(backward-or-forward-delete-char arg)
+      (backward-delete-char-untabify arg))))
 
 (defun cperl-inside-parens-p ()
   (condition-case ()

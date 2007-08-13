@@ -1873,7 +1873,7 @@ LT-1: How can I input ISO 8859 characters?
      the following two lines in your .emacs.
 
      (load "quail/latin")
-     (quail-use-package "german")
+     (quail-use-package "quail-german")
 
   2) If you want to use the azerty layout for French, include the
      following two lines in your .emacs.

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Keywords: encoded-word, MIME, multilingual, header, mail, news
 
 ;; This file is part of tm (Tools for MIME).
@@ -35,7 +35,7 @@
 ;;;
 
 (defconst tm-ew-e/RCS-ID
-  "$Id: tm-ew-e.el,v 1.3 1997/06/11 19:26:16 steve Exp $")
+  "$Id: tm-ew-e.el,v 1.4 1997/06/14 20:31:38 steve Exp $")
 (defconst mime-eword/encoder-version (get-version-string tm-ew-e/RCS-ID))
 
 

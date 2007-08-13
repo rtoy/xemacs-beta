@@ -1,5 +1,5 @@
 ;;;; psgml-parse.el --- Parser for SGML-editing mode with parsing support
-;; $Id: psgml-parse.el,v 1.5 1997/03/16 03:05:41 steve Exp $
+;; $Id: psgml-parse.el,v 1.6 1997/06/14 20:31:36 steve Exp $
 
 ;; Copyright (C) 1994, 1995 Lennart Staflin
 
@@ -1035,7 +1035,7 @@ or 2: two octets (n,m) interpreted as  (n-t-1)*256+m+t."
 	 (sgml-read-nodes (make-vector n nil)))
     (loop for i below n do (aset sgml-read-nodes i (sgml-make-state)))
     (loop for e across sgml-read-nodes do
-	  (cond ((eq 255 (sgml-read-peek))	; a and-node
+	  (cond ((eq ?\377 (sgml-read-peek))	; a and-node
 		 (sgml-read-octet)		; skip
 		 (setf (sgml-and-node-next e) (sgml-read-node-ref))
 		 (setf (sgml-and-node-dfas e) (sgml-read-model-seq)))

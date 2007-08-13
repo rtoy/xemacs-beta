@@ -1,3 +1,9 @@
+1997-06-13  Steven L Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (mule_p): Ignore lisp/language when building
+	non-Mule.
+	(ignore_pattern): Ignore Languages we don't support yet.
+
 1997-06-02  Steven L Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (ignore_dirs): Handle ported Quail (LEIM).

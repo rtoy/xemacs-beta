@@ -120,8 +120,6 @@
   (define-key perl-mode-map "\e\C-e" 'perl-end-of-function)
   (define-key perl-mode-map "\e\C-h" 'mark-perl-function)
   (define-key perl-mode-map "\e\C-q" 'indent-perl-exp)
-;; GDF - Don't rebind the delete key  
-;;  (define-key perl-mode-map "\177" 'backward-delete-char-untabify)
   (define-key perl-mode-map "\t" 'perl-indent-command))
 
 (autoload 'c-macro-expand "cmacexp"

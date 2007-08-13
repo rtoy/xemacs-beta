@@ -98,8 +98,6 @@ detecting function is used."
       (define-key vrml-mode-map "{" 'vrml-electric-brace)
       (define-key vrml-mode-map "}" 'vrml-electric-brace)
       (define-key vrml-mode-map "\e\C-q" 'indent-vrml-exp)
-;; GDF - why does EVERYONE want to rebind the DEL key?  *sigh*
-;;      (define-key vrml-mode-map "\177" 'backward-delete-char-untabify)
       (define-key vrml-mode-map "\t" 'vrml-indent-command)
       (define-key vrml-mode-map "\M-;" 'vrml-indent-for-comment)
       ))

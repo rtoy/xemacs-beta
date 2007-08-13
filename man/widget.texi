@@ -1,7 +1,7 @@
 \input texinfo.tex
 
 @c %**start of header
-@setfilename widget
+@setfilename ../info/widget
 @settitle The Emacs Widget Library
 @iftex
 @afourpaper
@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.9908
+Version: 1.9916
 
 @menu
 * Introduction::                
@@ -343,7 +343,7 @@ Interface}).
 		 :notify (lambda (widget &rest ignore)
 			   (message "You selected %s"
 				    (widget-value widget)))
-		 '(item "One") '(item "Anthor One.") '(item "A Final One."))
+		 '(item "One") '(item "Another One.") '(item "A Final One."))
   (widget-insert "\n")
   (widget-create 'push-button
 		 :notify (lambda (&rest ignore) 
@@ -604,7 +604,7 @@ image, with either a @samp{.xpm} (if supported) or @samp{.xbm} extension.
 @end deffn
 
 @deffn{User Option} widget-glyph-enable
-If non-nil, allow glyphs to appear on displayes where they are supported.
+If non-nil, allow glyphs to appear on displays where they are supported.
 @end deffn
 
 
@@ -738,7 +738,7 @@ which matches everything.
 @item :keymap
 Keymap used in the editable field.  The default value is
 @code{widget-field-keymap}, which allows you to use all the normal
-editing commands, even if the buffers major mode supress some of them.
+editing commands, even if the buffers major mode suppress some of them.
 Pressing return invokes the function specified by @code{:action}. 
 @end table
 
@@ -1525,7 +1525,7 @@ doesn't provide any support for widgets themselves.  This is mostly
 intended to be useful for programmers doing experiments. 
 
 @deffn Command widget-minor-mode
-Togle minor mode for traversing widgets.
+Toggle minor mode for traversing widgets.
 With arg, turn widget mode on if and only if arg is positive.
 @end deffn
 
@@ -1571,7 +1571,7 @@ menus in Open Look.
 Finish @code{:tab-order}.
 
 @item
-Make indentation work with glyphs and propertional fonts.
+Make indentation work with glyphs and proportional fonts.
 
 @item
 Add commands to show overview of object and class hierarchies to the

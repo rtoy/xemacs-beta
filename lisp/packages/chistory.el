@@ -142,7 +142,8 @@ The buffer is left in Command History mode."
   (define-key command-history-map "x" 'command-history-repeat)
   (define-key command-history-map "\n" 'next-line)
   (define-key command-history-map "\r" 'next-line)
-  (define-key command-history-map "\177" 'previous-line))
+  (define-key command-history-map 'backspace 'previous-line)
+  (define-key command-history-map 'delete 'previous-line))
 
 (defun command-history-repeat ()
   "Repeat the command shown on the current line.

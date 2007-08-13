@@ -565,8 +565,6 @@ quoted for Tcl."
   ;; FIXME.
   (define-key tcl-mode-map "\e\C-h" 'tcl-mark-defun)
   (define-key tcl-mode-map "\e\C-q" 'indent-tcl-exp)
-;; GDF - Don't mess with the DEL key
-;;  (define-key tcl-mode-map "\177" 'backward-delete-char-untabify)
   (define-key tcl-mode-map "\t" 'tcl-indent-command)
   (define-key tcl-mode-map "\M-;" 'tcl-indent-for-comment)
   (define-key tcl-mode-map "\M-\C-x" 'tcl-eval-defun)
@@ -591,8 +589,6 @@ quoted for Tcl."
     'comint-dynamic-list-filename-completions)
   (define-key inferior-tcl-mode-map "\e\C-a" 'tcl-beginning-of-defun)
   (define-key inferior-tcl-mode-map "\e\C-e" 'tcl-end-of-defun)
-;; GDF - Don't mess with the DEL key
-;;  (define-key inferior-tcl-mode-map "\177" 'backward-delete-char-untabify)
   (define-key inferior-tcl-mode-map "\M-\C-x" 'tcl-eval-defun)
   (define-key inferior-tcl-mode-map "\C-c\C-b" 'tcl-submit-bug-report)
   (define-key inferior-tcl-mode-map "\C-c\C-i" 'tcl-help-on-word)

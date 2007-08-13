@@ -1,9 +1,22 @@
 							-*- indented-text -*-
+to 20.3 beta7.
+-- Miscellaneous Ebola fixes
+-- hyper-apropos update courtesy of Hrvoje Niksic
+-- Make lib-complete deal with compressed .el files when not using Mule.
+   (Patch based on code from Jonathan Doughty)
+-- Gnus refcard update courtesy of Vladimir Alexiev
+-- Various fixes from Kyle Jones
+-- ph.el-1.2.1.1 Courtesy of Oscar Figueiredo
+-- custom-1.9916
+-- `with-current-buffer', etc. ported from Emacs 20.1 courtesy of Hrvoje
+   Niksic
+-- Miscellaneous bug fixes
+
 to 20.3 beta6.
 -- Configure updates courtesy of Martin Buchholz
 -- Mule updates courtesy of MORIOKA Tomohiko
--- Lots of Ebola cleanup, but much remains.
--- Miscellaneous bug fixes.
+-- Lots of Ebola cleanup, but much remains
+-- Miscellaneous bug fixes
 
 to 20.3 beta5.
 -- Configure patches continued from Martin Buchholz

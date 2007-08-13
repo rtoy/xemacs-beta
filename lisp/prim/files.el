@@ -1173,14 +1173,14 @@ REGEXP and search the list again for another match.")
 
 (defconst interpreter-mode-alist
   '(("^#!.*csh"	  . sh-mode)
-    ("^#!.*sh\\b" . ksh-mode)
+    ("^#!.*sh\\b" . sh-mode)
     ("^#!.*\\b\\(scope\\|wish\\|tcl\\|expect\\)" . tcl-mode)
     ("perl"   . perl-mode)
     ("python" . python-mode)
     ("awk\\b" . awk-mode)
     ("rexx"   . rexx-mode)
     ("scm"    . scheme-mode)
-    ("^:"     . ksh-mode))
+    ("^:"     . sh-mode))
   "Alist mapping interpreter names to major modes.
 This alist is used to guess the major mode of a file based on the
 contents of the first line.  This line often contains something like:

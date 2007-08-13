@@ -333,6 +333,33 @@ it as a string."
 	   (buffer-string)
 	 (erase-buffer)))))
 
+(defmacro with-current-buffer (buffer &rest body)
+  "Execute the forms in BODY with BUFFER as the current buffer.
+The value returned is the value of the last form in BODY.
+See also `with-temp-buffer'."
+  `(save-current-buffer
+    (set-buffer ,buffer)
+    ,@body))
+
+(defmacro with-temp-file (file &rest forms)
+  "Create a new buffer, evaluate FORMS there, and write the buffer to FILE.
+The value of the last form in FORMS is returned, like `progn'.
+See also `with-temp-buffer'."
+  (let ((temp-file (make-symbol "temp-file"))
+	(temp-buffer (make-symbol "temp-buffer")))
+    `(let ((,temp-file ,file)
+	   (,temp-buffer
+	    (get-buffer-create (generate-new-buffer-name " *temp file*"))))
+       (unwind-protect
+	   (prog1
+	       (with-current-buffer ,temp-buffer
+                  ,@forms)
+	     (with-current-buffer ,temp-buffer
+               (widen)
+	       (write-region (point-min) (point-max) ,temp-file nil 0)))
+	 (and (buffer-name ,temp-buffer)
+	      (kill-buffer ,temp-buffer))))))
+
 (defmacro with-temp-buffer (&rest forms)
   "Create a temporary buffer, and evaluate FORMS there like `progn'."
   (let ((temp-buffer (make-symbol "temp-buffer")))
@@ -523,16 +550,6 @@ yourself.]"
 This function accepts any number of arguments, but ignores them."
   (interactive)
   nil)
-
-(defmacro save-current-buffer (&rest forms)
-  "Restore the current buffer setting after executing FORMS.
-Does not restore the values of point and mark.
-See also: `save-excursion'."
-  ;; by Stig@hackvan.com
-  (` (let ((_cur_buf_ (current-buffer)))
-       (unwind-protect
-	   (progn (,@ forms))
-	 (set-buffer _cur_buf_)))))
 
 (defmacro eval-in-buffer (buffer &rest forms)
   "Evaluate FORMS in BUFFER.

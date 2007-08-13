@@ -914,34 +914,35 @@ On such systems, who knows what will happen.
 */
        (console))
 {
-  Lisp_Object devcons;
-  Lisp_Object framecons;
   struct console *c;
-  struct gcpro gcpro1;
 
 #ifdef HAVE_TTY
-  if (NILP (console))
-      console=Fselected_console();
-
-  GCPRO1 (console);
-
-  c = decode_console(console);
+  c = decode_console (console);
 
   if (CONSOLE_TTY_P (c)) 
   {
-    CONSOLE_DEVICE_LOOP (devcons, c)
+    /*
+     * hide all the unhidden frames so the display code won't update
+     * them while the console is suspended.
+     */
+    Lisp_Object device = CONSOLE_SELECTED_DEVICE (c);
+    if (!NILP (device))
       {
-	struct device *d = XDEVICE (XCAR (devcons)); 
-	DEVICE_FRAME_LOOP (framecons, d)
+	struct device *d = XDEVICE (device);
+	Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
+	while (CONSP (frame_list))
 	  {
-	    Fmake_frame_invisible(XCAR(framecons), Qt);
+	    struct frame *f = XFRAME (XCAR (frame_list));
+	    if (FRAME_REPAINT_P (f))
+	      f->visible = -1;
+	    frame_list = XCDR (frame_list);
 	  }
       }
-    reset_one_console(c);
+    reset_one_console (c);
+    event_stream_unselect_console (c);
     sys_suspend_process(XINT(Fconsole_tty_controlling_process(console)));
   }
 
-  UNGCPRO;
 #endif
   return Qnil;
 }
@@ -952,27 +953,28 @@ do stuff to the tty to make it sane again.
 */
        (console))
 {
-  Lisp_Object devcons;
-  Lisp_Object framecons;
   struct console *c;
-  struct gcpro gcpro1, gcpro2, gcpro3;
 
 #ifdef HAVE_TTY
-  GCPRO2 (console, devcons);
+  c = decode_console (console);
 
-  c = decode_console(console);
-
-  if (CONSOLE_TTY_P(c)) 
+  if (CONSOLE_TTY_P (c)) 
   {
-    CONSOLE_DEVICE_LOOP (devcons, c)
+    /* raise the selected frame */
+    Lisp_Object device = CONSOLE_SELECTED_DEVICE (c);
+    if (!NILP (device))
       {
-	struct device *d = XDEVICE (XCAR (devcons)); 
-	DEVICE_FRAME_LOOP (framecons, d)
+	struct device *d = XDEVICE (device);
+	Lisp_Object frame = DEVICE_SELECTED_FRAME (d);
+	if (!NILP (frame))
 	  {
-	    Fmake_frame_visible(XCAR(framecons));
+	    /* force the frame to be cleared */
+	    SET_FRAME_CLEAR (XFRAME (frame));
+	    Fraise_frame (frame);
 	  }
       }
-    init_one_console(c);
+    init_one_console (c);
+    event_stream_select_console (c);
 #ifdef SIGWINCH
     /* The same as in Fsuspend_emacs: it is possible that a size
        change occurred while we were suspended.  Assume one did just
@@ -981,7 +983,6 @@ do stuff to the tty to make it sane again.
 #endif
   }
 
-  UNGCPRO;
 #endif
   return Qnil;
 }
