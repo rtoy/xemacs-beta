@@ -1,4 +1,8 @@
 							-*- indented-text -*-
+to 19.16 pre4 -- "Bronx"
+-- etc/Joke files restored
+-- Various build patches from Darrell Kindred
+
 to 19.16 pre3 -- "Manhattan"
 -- NEWS file updated
 -- a couple of synchs with XEmacs 20.2

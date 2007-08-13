@@ -19,3 +19,9 @@
 
 /* Irix 6.2 doesn't need -lw */
 #undef NEED_LIBW
+
+/* Irix 5 has this defined in inttypes.h, but you can't include
+ * both inttypes.h and sys/types.h.  This is fixed by Irix 6.2. 
+ * This should probably be set by configure.
+ */
+#define HAVE_UINTPTR_T 1

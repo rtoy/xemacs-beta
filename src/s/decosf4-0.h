@@ -25,8 +25,16 @@
 #define regmatch_t sys_regmatch_t
 
 #define SYSTEM_MALLOC
-#define HAVE_RENAME
+#define HAVE_RENAME 1
 
 /* Digital Unix 4.0 has a realpath, but it's buggy.  And I
    *do* mean buggy. */
 #undef HAVE_REALPATH
+
+/* With -std1 we get more ansified compilation. */
+#undef C_SWITCH_SYSTEM
+#ifdef __GNUC__
+# define C_SWITCH_SYSTEM -D_BSD
+#else
+# define C_SWITCH_SYSTEM -std1 -D_BSD
+#endif 

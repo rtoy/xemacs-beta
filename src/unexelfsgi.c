@@ -545,6 +545,12 @@ extern void fatal(char *, ...);
 	   (n)++; } while (0)
 typedef unsigned char byte;
 
+/* IRIX 5 defines this only in inttypes.h, and you can't include both 
+ * inttypes.h and sys/types.h.  This is fixed by IRIX 6.2. */
+#ifndef HAVE_UINTPTR_T
+typedef unsigned long int       uintptr_t;
+#endif
+
 /* Round X up to a multiple of Y.  */
 
 int

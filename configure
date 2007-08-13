@@ -1606,6 +1606,7 @@ case "${canonical}" in
   ## XEmacs: Add switch for Digital Unix version 4 (srivasta@pilgrim.umass.edu)
   alpha-dec-osf4* )
     machine=alpha opsys=decosf4-0
+    NON_GNU_CPP="/lib/cpp"
   ;;
 
   alpha-*-linux* )

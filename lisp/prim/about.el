@@ -1137,6 +1137,7 @@
 	  Tore Olsen <toreo@colargol.idb.hist.no>
 	  Greg Onufer <Greg.Onufer@eng.sun.com>
 	  Achim Oppelt <aoppelt@theorie3.physik.uni-erlangen.de>
+	  Rebecca Ore <rebecca.ore@op.net>
 	  Sudeep Kumar Palat <palat@idt.unit.no>
 	  Marc Paquette <Marc.Paquette@Softimage.com>
 	  Jens-U H Petersen <petersen@kurims.kyoto-u.ac.jp>
