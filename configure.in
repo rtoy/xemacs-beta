@@ -2461,9 +2461,20 @@ if test "${window_system}" = "none" ; then
   fi
 fi
 test -z "${with_png}" && { AC_HEADER_CHECK(png.h, , with_png="no") }
-test -z "${with_png}" && { AC_HAVE_LIBRARY(-lpng, , with_png="no") }
-test -z "${with_png}" && { AC_HAVE_LIBRARY(-lz,  with_png="yes") }
-test -z "${with_png}" && { AC_HAVE_LIBRARY(-lgz, with_png="gnuz", with_png="no") }
+test -z "${with_png}" && { AC_FUNC_CHECK(pow, , with_png="no") }
+if test -z "${with_png}" ; then
+  AC_HAVE_LIBRARY(-lz, with_png="yes")
+  test -z "${with_png}" && { AC_HAVE_LIBRARY(-lgz, with_png="gnuz", with_png="no") }
+  if test "${with_png}" != "no"; then
+    png_save_libs="${LIBS}"
+    case "${with_png}" in
+      yes  ) LIBS="${LIBS} -lz" ;;
+      gnuz ) LIBS="${LIBS} -lgz" ;;
+    esac
+    AC_HAVE_LIBRARY(-lpng, , with_png="no")
+    LIBS="$png_save_libs"
+  fi
+fi
 case "${with_png}" in
   yes  ) AC_DEFINE(HAVE_PNG) ;;
   gnuz ) AC_DEFINE(HAVE_PNG) AC_DEFINE(HAVE_PNG_GNUZ) ;;

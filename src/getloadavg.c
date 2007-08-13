@@ -1,21 +1,24 @@
 /* Get the system load averages.
    Copyright (C) 1985, 86, 87, 88, 89, 91, 92, 93, 1994, 1995
-   	Free Software Foundation, Inc.
+	Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+This file is part of XEmacs.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+XEmacs is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
-   USA.  */
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
+
 
 /* Compile-time symbols that this file uses:
 
@@ -94,7 +97,6 @@ extern int errno;
 #endif
 
 #ifndef HAVE_GETLOADAVG
-
 
 /* The existing Emacs configuration files define a macro called
    LOAD_AVE_CVT, which accepts a value of type LOAD_AVE_TYPE, and
@@ -517,9 +519,7 @@ static kvm_t *kd;
    or -1 if an error occurred.  */
 
 int
-getloadavg (loadavg, nelem)
-     double loadavg[];
-     int nelem;
+getloadavg (double loadavg[], int nelem)
 {
   int elem = 0;			/* Return value.  */
 
@@ -890,7 +890,7 @@ getloadavg (loadavg, nelem)
       nl[0].n_un.n_name = LDAV_SYMBOL;
       nl[1].n_un.n_name = 0;
 #else /* not NLIST_NAME_UNION */
-      nl[0].n_name = LDAV_SYMBOL;
+      nl[0].n_name = (char *) LDAV_SYMBOL;
       nl[1].n_name = 0;
 #endif /* not NLIST_NAME_UNION */
 #endif /* NLIST_STRUCT */
@@ -1002,9 +1002,7 @@ getloadavg (loadavg, nelem)
 
 #ifdef TEST
 void
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   int naptime = 0;
 

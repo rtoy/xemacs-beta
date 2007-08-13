@@ -1734,7 +1734,7 @@ image_going_to_add (Lisp_Object specifier, Lisp_Object locale,
 	((lisp_fn_t) normalize_image_instantiator,
 	 Qnil, Qimage, ERROR_ME_NOT, 3, instantiator, contype,
 	 make_int (XIMAGE_SPECIFIER_ALLOWED (specifier)));
-      
+
       if (!NILP (newinst))
 	{
 	  Lisp_Object newtag;

@@ -65,12 +65,18 @@ this string.")
   "*User defined LaTeX block names.
 Combined with `standard-latex-block-names' for minibuffer completion.")
 
+(defvar tex-latex-document-regex "documentstyle\\|documentclass"
+  "matches the first command of a LaTeX document")
+
 (defvar slitex-run-command "slitex"
   "*Command used to run SliTeX subjob.
 If this string contains an asterisk (*), it will be replaced by the
 filename; if not, the name of the file, preceded by blank, will be added to
 this string.")
 
+(defvar tex-slitex-document-regex "documentstyle{slides}"
+  "Matches the first command of a slitex document")
+  
 (defvar tex-bibtex-command "bibtex"
   "*Command used by `tex-bibtex-file' to gather bibliographic data.
 If this string contains an asterisk (*), it will be replaced by the
@@ -215,8 +221,8 @@ is used."
 				    (beginning-of-line)
 				    (search-forward "%" search-end t))))))
       (if (and slash (not comment))
-	  (setq mode (if (looking-at "documentstyle")
-                         (if (looking-at "documentstyle{slides}")
+	  (setq mode (if (looking-at tex-latex-document-regex)
+                         (if (looking-at tex-slitex-document-regex)
                              'slitex-mode
                            'latex-mode)
 		       'plain-tex-mode))))

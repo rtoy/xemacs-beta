@@ -3899,30 +3899,33 @@ else
 fi
 rm -f conftest*
  }
-test -z "${with_png}" && { ac_save_LIBS="${LIBS}"
-LIBS="${LIBS} -lpng"
-ac_have_lib=""
-test -n "$silent" || echo "checking for -lpng"
+test -z "${with_png}" && { test -n "$silent" || echo "checking for pow"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
-
+#include <ctype.h>
 int main() { return 0; }
-int t() { main();; return 0; }
+int t() { 
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_pow) || defined (__stub___pow)
+choke me
+#else
+/* Override any gcc2 internal prototype to avoid an error.  */
+extern char pow(); pow();
+#endif
+; return 0; }
 EOF
 if eval $ac_compile; then
+  :
+else
   rm -rf conftest*
-  ac_have_lib="1"
-
+  with_png="no"
 fi
 rm -f conftest*
-LIBS="${ac_save_LIBS}"
-if test -n "${ac_have_lib}"; then
-   :; 
-else
-   :; with_png="no"
-fi
  }
-test -z "${with_png}" && { ac_save_LIBS="${LIBS}"
+if test -z "${with_png}" ; then
+  ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lz"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lz"
@@ -3944,8 +3947,8 @@ if test -n "${ac_have_lib}"; then
 else
    :; 
 fi
- }
-test -z "${with_png}" && { ac_save_LIBS="${LIBS}"
+
+  test -z "${with_png}" && { ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lgz"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lgz"
@@ -3968,6 +3971,38 @@ else
    :; with_png="no"
 fi
  }
+  if test "${with_png}" != "no"; then
+    png_save_libs="${LIBS}"
+    case "${with_png}" in
+      yes  ) LIBS="${LIBS} -lz" ;;
+      gnuz ) LIBS="${LIBS} -lgz" ;;
+    esac
+    ac_save_LIBS="${LIBS}"
+LIBS="${LIBS} -lpng"
+ac_have_lib=""
+test -n "$silent" || echo "checking for -lpng"
+cat > conftest.${ac_ext} <<EOF
+#include "confdefs.h"
+
+int main() { return 0; }
+int t() { main();; return 0; }
+EOF
+if eval $ac_compile; then
+  rm -rf conftest*
+  ac_have_lib="1"
+
+fi
+rm -f conftest*
+LIBS="${ac_save_LIBS}"
+if test -n "${ac_have_lib}"; then
+   :; 
+else
+   :; with_png="no"
+fi
+
+    LIBS="$png_save_libs"
+  fi
+fi
 case "${with_png}" in
   yes  ) 
 {

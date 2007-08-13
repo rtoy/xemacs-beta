@@ -1,3 +1,11 @@
+Thu Jan 23 01:40:53 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* psgml/psgml-html.el (html-mode): Set up friendlier syntax
+	table.
+
+	* psgml/psgml.el (sgml-running-xemacs): Remove
+	sgml-mode-syntax-table since it has been superseded.
+
 Thu Jan  9 13:32:01 1997  Jacques Duthen Prestataire  <duthen@cegelec-red.fr>
 
 	* ps-print.el: Merge patch from [simon] Oct 8, 1996 Simon Marshall

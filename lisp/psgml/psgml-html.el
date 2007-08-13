@@ -198,6 +198,14 @@ More specifically:
 
   (set (make-local-variable 'sgml-custom-markup)
        '(("<A>" "<A HREF=\"\">\r</a>")))
+
+  ;; Set up the syntax table.
+  (modify-syntax-entry ?< "(>" html-mode-syntax-table)
+  (modify-syntax-entry ?> ")<" html-mode-syntax-table)
+  (modify-syntax-entry ?\" ".   " html-mode-syntax-table)
+  (modify-syntax-entry ?\\ ".   " html-mode-syntax-table)
+  (modify-syntax-entry ?'  "w   " html-mode-syntax-table)
+
   ; sigh ...  need to call this now to get things working.
   (sgml-build-custom-menus)
   (add-submenu nil sgml-html-menu "SGML")

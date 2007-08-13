@@ -58,7 +58,7 @@ static int vertical_drag_in_progress;
 static int
 x_inhibit_scrollbar_thumb_size_change (void)
 {
-  /* Doeesn't work with Athena */
+  /* Doesn't work with Athena */
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
   return inhibit_thumb_size_change;
 #else
@@ -597,8 +597,9 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
       SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) = data->slider_value;
       SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance) =
 	XINT (Fwindow_start (win));
-#endif
+#else
       stupid_vertical_scrollbar_drag_hack = 0;
+#endif
       break;
 
     case SCROLLBAR_DRAG:

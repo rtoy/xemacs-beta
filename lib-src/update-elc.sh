@@ -54,9 +54,16 @@ ignore_dirs="egg its quail"	# ### Not ported yet...
 
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
 echo "Checking for Mule support..."
-lisp_prog='(when (featurep (quote mule)) (message "yes"))'
-if test -z `$REAL -batch -no-site-file -eval "$lisp_prog" 2>&1` ; then
+lisp_prog='(princ (featurep (quote mule)))'
+mule_p="`$REAL -batch -no-site-file -eval \"$lisp_prog\"`"
+if test "$mule_p" = nil ; then
+  echo No
   ignore_dirs="$ignore_dirs mule"
+elif test "$mule_p" = t; then
+  echo Yes
+else
+  echo "Error determining presence of mule support"
+  exit 1;
 fi
 
 # first recompile the byte-compiler, so that the other compiles take place

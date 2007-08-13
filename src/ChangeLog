@@ -1,3 +1,8 @@
+Thu Jan 23 10:41:19 1997  Steven L. Baur  <steve@altair.xemacs.org>
+
+	* puresize.h: Increase SUNPRO usage to reflect tm & cc-mode.
+	Decrease BASE_PURESIZE and increase MULE_PURESIZE_EXTRA.
+
 Wed Jan 22 21:09:52 1997  Steven L Baur  <steve@altair.xemacs.org>
 	* puresize.h (BASE_PURESIZE): Tighten up.
 

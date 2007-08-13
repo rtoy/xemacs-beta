@@ -383,7 +383,7 @@ massage_resource_name (CONST char *in, char *out)
 	{
 	  *out++ = firstp ? tolower (ch) : toupper (ch);
 	  firstp = False;
-	  while ((ch = massaged_resource_char[(unsigned char) *in++]) != NULL)
+	  while ((ch = massaged_resource_char[(unsigned char) *in++]) != '\0')
 	    *out++ = ch;
 	  if (!*(in-1))		/* Overshot the NULL byte? */
 	    break;

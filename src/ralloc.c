@@ -1266,18 +1266,18 @@ void
 syms_of_ralloc (void)
 {
 #ifdef MMAP_METERING
-  defsymbol (&Qmm_times_mapped, "mmap-times-mapped" );
-  defsymbol (&Qmm_pages_mapped, "mmap-pages-mapped" );
-  defsymbol (&Qmm_times_unmapped, "mmap-times-unmapped" );
-  defsymbol (&Qmm_times_remapped, "mmap-times-remapped" );
-  defsymbol (&Qmm_didnt_copy, "mmap-didnt-copy" );
-  defsymbol (&Qmm_pages_copied, "mmap-pages-copied" );
-  defsymbol (&Qmm_average_bumpval, "mmap-average-bumpval" );
-  defsymbol (&Qmm_wastage, "mmap-wastage" );
-  defsymbol (&Qmm_live_pages, "mmap-live-pages" );
-  defsymbol (&Qmm_addr_looked_up, "mmap-had-to-look-up-address" );
-  defsymbol (&Qmm_hash_worked, "mmap-hash-table-worked" );
-  defsymbol (&Qmm_addrlist_size, "mmap-addrlist-size" );
+  defsymbol (&Qmm_times_mapped, "mmap-times-mapped");
+  defsymbol (&Qmm_pages_mapped, "mmap-pages-mapped");
+  defsymbol (&Qmm_times_unmapped, "mmap-times-unmapped");
+  defsymbol (&Qmm_times_remapped, "mmap-times-remapped");
+  defsymbol (&Qmm_didnt_copy, "mmap-didnt-copy");
+  defsymbol (&Qmm_pages_copied, "mmap-pages-copied");
+  defsymbol (&Qmm_average_bumpval, "mmap-average-bumpval");
+  defsymbol (&Qmm_wastage, "mmap-wastage");
+  defsymbol (&Qmm_live_pages, "mmap-live-pages");
+  defsymbol (&Qmm_addr_looked_up, "mmap-had-to-look-up-address");
+  defsymbol (&Qmm_hash_worked, "mmap-hash-table-worked");
+  defsymbol (&Qmm_addrlist_size, "mmap-addrlist-size");
   DEFSUBR (Fmmap_allocator_status);
 #endif /* MMAP_METERING */
 }

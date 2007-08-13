@@ -784,9 +784,9 @@ DECLARE_NONRECORD (cons, Lisp_Cons, struct Lisp_Cons);
 /* For a list that's known to be in valid list format, where we may
    be deleting the current element out of the list --
    will abort() if the list is not in valid format */
-#define LIST_LOOP_DELETING(consvar, nextconsvar, list)		\
-  for (consvar = list;						\
-       !NILP (consvar) ? (nextconsvar = XCDR (consvar), 1) : 0;	\
+#define LIST_LOOP_DELETING(consvar, nextconsvar, list)			\
+  for (consvar = list;							\
+       !NILP (consvar) ? (nextconsvar = XCDR (consvar), 1) : 0;		\
        consvar = nextconsvar)
 
 /* For a list that may not be in valid list format --
@@ -1060,7 +1060,7 @@ DECLARE_NONRECORD (symbol, Lisp_Symbol, struct Lisp_Symbol);
 /*********** subr ***********/
 
 typedef Lisp_Object (*lisp_fn_t) (Lisp_Object, ...);
-     
+
 struct Lisp_Subr
 {
   struct lrecord_header lheader;
@@ -1169,24 +1169,24 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 /* These are always continuable because they change their arguments
    even when no error is signalled. */
 
-#define CHECK_INT_OR_FLOAT_COERCE_MARKER(x) do		\
-{ if (INTP (x) || FLOATP (x))				\
-     ;							\
-   else if (MARKERP (x))				\
-     x = make_int (marker_position (x));		\
-    else						\
-     x = wrong_type_argument (Qnumber_or_marker_p, x);	\
+#define CHECK_INT_OR_FLOAT_COERCE_MARKER(x) do				\
+{ if (INTP (x) || FLOATP (x))						\
+    ;									\
+  else if (MARKERP (x))							\
+    x = make_int (marker_position (x));					\
+  else									\
+    x = wrong_type_argument (Qnumber_or_marker_p, x);			\
 } while (0)
 
-#define CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER(x) do		\
-{ if (INTP (x) || FLOATP (x))					\
-     ;								\
-   else if (CHARP (x))						\
-     x = make_int (XCHAR (x));					\
-   else if (MARKERP (x))					\
-     x = make_int (marker_position (x));			\
-    else							\
-     x = wrong_type_argument (Qnumber_char_or_marker_p, x);	\
+#define CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER(x) do			\
+{ if (INTP (x) || FLOATP (x))						\
+    ;									\
+  else if (CHARP (x))							\
+    x = make_int (XCHAR (x));						\
+  else if (MARKERP (x))							\
+    x = make_int (marker_position (x));					\
+  else									\
+    x = wrong_type_argument (Qnumber_char_or_marker_p, x);		\
 } while (0)
 
 # define INT_OR_FLOATP(x) (INTP (x) || FLOATP (x))
@@ -1246,33 +1246,33 @@ XINT (Lisp_Object obj)
   do { if (!NATNUMP (x)) x = wrong_type_argument (Qnatnump, x); } while (0)
 
 /* next three always continuable because they coerce their arguments. */
-#define CHECK_INT_COERCE_CHAR(x) do			\
-{ if (INTP (x))						\
-    ;							\
-  else if (CHARP (x))					\
-    x = make_int (XCHAR (x));				\
-  else							\
-    x = wrong_type_argument (Qinteger_or_char_p, x);	\
+#define CHECK_INT_COERCE_CHAR(x) do					\
+{ if (INTP (x))								\
+    ;									\
+  else if (CHARP (x))							\
+    x = make_int (XCHAR (x));						\
+  else									\
+    x = wrong_type_argument (Qinteger_or_char_p, x);			\
 } while (0)
 
-#define CHECK_INT_COERCE_MARKER(x) do			\
-{ if (INTP (x))						\
-    ;							\
-  else if (MARKERP (x))					\
-    x = make_int (marker_position (x));			\
-  else							\
-    x = wrong_type_argument (Qinteger_or_marker_p, x);	\
+#define CHECK_INT_COERCE_MARKER(x) do					\
+{ if (INTP (x))								\
+    ;									\
+  else if (MARKERP (x))							\
+    x = make_int (marker_position (x));					\
+  else									\
+    x = wrong_type_argument (Qinteger_or_marker_p, x);			\
 } while (0)
 
-#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do			\
-{ if (INTP (x))							\
-    ;								\
-  else if (CHARP (x))						\
-    x = make_int (XCHAR (x));					\
-  else if (MARKERP (x))						\
-    x = make_int (marker_position (x));				\
-  else								\
-    x = wrong_type_argument (Qinteger_char_or_marker_p, x);	\
+#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do				\
+{ if (INTP (x))								\
+    ;									\
+  else if (CHARP (x))							\
+    x = make_int (XCHAR (x));						\
+  else if (MARKERP (x))							\
+    x = make_int (marker_position (x));					\
+  else									\
+    x = wrong_type_argument (Qinteger_char_or_marker_p, x);		\
 } while (0)
 
 /*********** pure space ***********/
@@ -1444,7 +1444,7 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 #define DEFUN_6(a,b,c,d,e,f)	 DEFUN_5(a,b,c,d,e),	 Lisp_Object f
 #define DEFUN_7(a,b,c,d,e,f,g)	 DEFUN_6(a,b,c,d,e,f),	 Lisp_Object g
 #define DEFUN_8(a,b,c,d,e,f,g,h) DEFUN_7(a,b,c,d,e,f,g), Lisp_Object h
-			
+
 /* WARNING: If you add defines here for higher values of maxargs,
    make sure to also fix the clauses in primitive_funcall(),
    and change the define of SUBR_MAX_ARGS above.  */
@@ -1473,23 +1473,23 @@ int check_quit (void);
 void signal_quit (void);
 
 /* Nonzero if ought to quit now.  */
-#define QUITP						\
-  ((quit_check_signal_happened ? check_quit () : 0),	\
-   (!NILP (Vquit_flag) && (NILP (Vinhibit_quit)		\
-       || EQ (Vquit_flag, Qcritical))))
+#define QUITP								\
+  ((quit_check_signal_happened ? check_quit () : 0),			\
+   (!NILP (Vquit_flag) && (NILP (Vinhibit_quit)				\
+			   || EQ (Vquit_flag, Qcritical))))
 
 /* QUIT used to call QUITP, but there are some places where QUITP
    is called directly, and check_what_happened() should only be called
    when Emacs is actually ready to quit because it could do things
    like switch threads. */
-#define INTERNAL_QUITP						\
-  ((something_happened ? check_what_happened () : 0),		\
-   (!NILP (Vquit_flag) &&					\
+#define INTERNAL_QUITP							\
+  ((something_happened ? check_what_happened () : 0),			\
+   (!NILP (Vquit_flag) &&						\
     (NILP (Vinhibit_quit) || EQ (Vquit_flag, Qcritical))))
 
-#define INTERNAL_REALLY_QUITP					\
-  (check_what_happened (),					\
-   (!NILP (Vquit_flag) &&					\
+#define INTERNAL_REALLY_QUITP						\
+  (check_what_happened (),						\
+   (!NILP (Vquit_flag) &&						\
     (NILP (Vinhibit_quit) || EQ (Vquit_flag, Qcritical))))
 
 /* Check quit-flag and quit if it is non-nil.  Also do any other things
@@ -1595,7 +1595,7 @@ struct gcpro
 #ifdef DEBUG_GCPRO
 
 void debug_gcpro1 ();
-void debug_gcpro2 (),
+void debug_gcpro2 ();
 void debug_gcpro3 ();
 void debug_gcpro4 ();
 void debug_gcpro5 ();
@@ -1758,39 +1758,39 @@ void debug_ungcpro();
 #endif
 
 /* Evaluate expr, UNGCPRO, and then return the value of expr.  */
-#define RETURN_UNGCPRO(expr) do	\
-{					\
-  Lisp_Object ret_ungc_val = (expr);	\
-  UNGCPRO;				\
-  RETURN__ ret_ungc_val;		\
+#define RETURN_UNGCPRO(expr) do						\
+{									\
+  Lisp_Object ret_ungc_val = (expr);					\
+  UNGCPRO;								\
+  RETURN__ ret_ungc_val;						\
 } while (0)
 
 /* Evaluate expr, NUNGCPRO, UNGCPRO, and then return the value of expr.  */
-#define RETURN_NUNGCPRO(expr) do	\
-{					\
-  Lisp_Object ret_ungc_val = (expr);	\
-  NUNGCPRO;				\
-  UNGCPRO;				\
-  RETURN__ ret_ungc_val;		\
+#define RETURN_NUNGCPRO(expr) do					\
+{									\
+  Lisp_Object ret_ungc_val = (expr);					\
+  NUNGCPRO;								\
+  UNGCPRO;								\
+  RETURN__ ret_ungc_val;						\
 } while (0)
 
 /* Evaluate expr, NNUNGCPRO, NUNGCPRO, UNGCPRO, and then return the
    value of expr.  */
-#define RETURN_NNUNGCPRO(expr)	do	\
-{					\
-  Lisp_Object ret_ungc_val = (expr);	\
-  NNUNGCPRO;				\
-  NUNGCPRO;				\
-  UNGCPRO;				\
-  RETURN__ ret_ungc_val;		\
+#define RETURN_NNUNGCPRO(expr) do					\
+{									\
+  Lisp_Object ret_ungc_val = (expr);					\
+  NNUNGCPRO;								\
+  NUNGCPRO;								\
+  UNGCPRO;								\
+  RETURN__ ret_ungc_val;						\
 } while (0)
 
 /* Evaluate expr, return it if it's not Qunbound. */
-#define RETURN_IF_NOT_UNBOUND(expr) do	\
-{					\
-  Lisp_Object ret_nunb_val = (expr);	\
-  if (!UNBOUNDP (ret_nunb_val))		\
-    RETURN__ ret_nunb_val;	 	\
+#define RETURN_IF_NOT_UNBOUND(expr) do					\
+{									\
+  Lisp_Object ret_nunb_val = (expr);					\
+  if (!UNBOUNDP (ret_nunb_val))						\
+    RETURN__ ret_nunb_val;	 					\
 } while (0)
 
 /* Call staticpro (&var) to protect static variable `var'. */
