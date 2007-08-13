@@ -594,7 +594,7 @@ sys_subshell (void)
   pid = -1;
 #else /* not WINDOWSNT */
 
-  pid = vfork ();
+  pid = fork ();
 
   if (pid == -1)
     error ("Can't spawn subshell");

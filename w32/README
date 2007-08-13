@@ -2,55 +2,74 @@
 
 			     David Hobley
 			    Marc Paquette
-			   Jonathan Harris
+			   Jonathon Harris
 
-Currently XEmacs for win32 is in an early stage of development.
+Currently XEmacs for Win32 is in an early stage of development. 
 
 The port was made much easier by the groundbreaking work of Geoff Voelker
 and others who worked on the GNU Emacs port to NT. Their version is available
 from http://www.cs.washington.edu/homes/voelker/ntemacs.html
 
-(jhar) I split the native-win32 build directory off from the nt build
-directory. This is probably(?) a bad thing and I intend to try to merge the
-w32 changes back in.
-
 To get it working you will need:
 
 1.  You will need Visual C++ V4.2 or later to compile everything. Personally we
     have tested V4.2 and V5.0.
-2.  Grab the latest XEmacs beta from ftp.xemacs.org if necessary. All
-    native-win32 support is in the w32/ subdirectory.
+2.  Grab the latest XEmacs beta from ftp.xemacs.org if necessary. All Win32
+    support is in the nt/ subdirectory.
 3.  Edit the xemacs.mak file and ensure variables point to the correct place.
     Note that Visual C++ assumes a couple of environment variables INCLUDE and
     LIB to be set which specify the location of the includes and libraries.
-4.  Copy the files config.h and paths.h from w32/ to src/.
-    "nmake -f xemacs.mak distclean" will delete these files, so always edit
-    them in the w32 direvctory and copy them over.
-5.  "nmake -f xemacs.mak"		Build temacs.exe.
-    "nmake -f xemacs.mak dump-elcs"	Update the .elc files.
-    "nmake -f xemacs.mak dump-xemacs"	Build xemacs.exe.
-6.  Ensure your HOME environment variable is set correctly.
-7.  The build process creates debugging and "Source Browser" information for
+    At this point you can select X or Win32 native support.
+4.  Run make. I simply use nmake -f xemacs.mak. This will build temacs, the
+    DOC file, if startup.elc does not exist it will update the elc's and
+    then it will dump xemacs.
+5.  The build process creates debugging and "Source Browser" information for
     use with MS DevStudio. To use this create a new "console" project and set
     the Project/Settings/Debug executable name to the full path of
     src\xemacs.exe. Remember to close the Source Browser file in DevStudio
     before rebuilding.
-8.  If you're going to edit sources I recommend that you first get a copy of
+6.  If you're going to edit sources I recommend that you first get a copy of
     makedepend and make a list of dependencies in the makefile by doing
     "nmake -f xemacs.mak depend". I (jhar) have a hacked-up copy of X11R5
     makedepend which I can distribute if anyone wants it. Is there a real
     version anywhere which handles '\' as the path delimiter?
 
+If you want support for X you will need:
 
+1.  An X server. MI/X is available on the Internet for free; It is 
+    available from:  http://www.microimages.com/www/html/freestuf/mixdlfrm.htm
+2.  The MIT X11R6.3 libraries available from: ftp.x.org
+3.  You'll need to compile the MIT libraries without multi-thread support.
+    To do this, there is an example Win32.cf and site.def provided which
+    set the relevant flags. You will also need to apply the patch in 
+    nt/X11.patch in the xc/lib/X11 directory which will fix the DLL definition
+    file. Once compiled and installed, you will need to apply the following
+    patch to Xmd.h. This is messy and better solutions would be appreciated. 
+
+--- Xmd.h~	Thu Jun 08 23:20:40 1995
++++ Xmd.h	Sun Mar 16 13:09:10 1997
+@@ -150,8 +150,9 @@
+ typedef CARD16		BITS16;
+ typedef CARD8		BYTE;
+ 
++#ifndef WIN32
+ typedef CARD8           BOOL;
+-
++#endif
+ 
 Known Problems:
 Please look at the TODO list for the current list of problems and people 
 working on them.
 
-David Hobley   david_hobley@optusvision.com.au -- work email.
-               davidh@wr.com.au                -- home account.
+Any other problems you need clarified, please email us and we will endeavour
+to provide any assistance we can:
 
-Marc Paquette  marcpa@cam.org                  -- home account.
+The XEmacs NT Mailing List: xemacs-nt@xemacs.org
+Subscribe address:          xemacs-nt-request@xemacs.org
 
-August Hill    awhill@inlink.com
+David Hobley
+Marc Paquette
+August Hill
+Jonathon Harris
 
-Jonathan Harris jhar@tardis.ed.ac.uk
+and others.

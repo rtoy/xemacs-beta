@@ -346,6 +346,12 @@ With arg, repeat, or kill forward to Nth end of sentence if negative arg -N."
 ;   nil t))
   (mark-something 'mark-end-of-sentence 'forward-sentence arg))
 
+(defun mark-end-of-line (arg)
+  "Put mark at end of line.  Arg works as in `end-of-line'."
+  (interactive "p")
+  (mark-something 'mark-end-of-line 'end-of-line arg))
+
+
 (defun transpose-sentences (arg)
   "Interchange this (next) and previous sentence."
   (interactive "*p")

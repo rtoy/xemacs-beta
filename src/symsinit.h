@@ -204,6 +204,7 @@ void vars_of_device (void);
 void vars_of_device_w32 (void);
 void vars_of_device_x (void);
 void vars_of_dialog (void);
+void vars_of_dialog_x (void);
 void vars_of_dired (void);
 void vars_of_doc (void);
 void vars_of_editfns (void);

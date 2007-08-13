@@ -1,3 +1,77 @@
+1997-11-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* help.el (help-for-help): Use `make-help-screen'.
+	* help-macro.el:  New file.
+
+1997-11-10  SL Baur  <steve@altair.xemacs.org>
+
+	* x-menubar.el (options-menu-saved-forms):
+	`current-language-environment' is a variable now.
+
+	* packages/add-log.el (TopLevel): Require 'fortran only if it is
+	available.
+
+	* modes/lazy-shot.el (lazy-shot-unstall): Add guard on removing
+	the timer because the timer may not have been installed first.
+
+1997-11-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/frame.el (default-deselect-frame-hook): Dehighlight the
+	currently highlighted extent.
+
+1997-11-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/help.el (describe-variable): Add proper spacing.
+
+1997-11-10  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/browse-url.el (TopLevel): Guard against term not being in
+	the load path.
+	(browse-url-lynx-emacs): Attach guards against term not being in
+	the load path.
+
+1997-11-09  SL Baur  <steve@altair.xemacs.org>
+
+	* packages/autoinsert.el: Fix bottom of lisp file template.
+
+1997-11-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* gui.el: For gui-button-face, set
+	  foreground/background colors only on X devices.
+	  Previously they were set for all devices.
+
+1997-11-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/extents.el (extent-keymap): New function.
+
+1997-11-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* specifier.el: Define specifier tags for the
+	  device types that do not have compiled in support.
+	  This allows device type specific properties to be set
+	  in specifiers even if the device type isn't supported
+	  in the current binary.
+
+1997-11-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-glyph-pointer-glyph): New variable.
+	(widget-glyph-insert-glyph): Use it.
+
+1997-11-09  SL Baur  <steve@altair.xemacs.org>
+
+	* files.el (find-file-noselect): Guard against dired not being
+	available.
+
+1997-11-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* gui.el: Set the reverse-p property on
+	  gui-button-face so that it will likely look different
+	  than the default face on ttys.
+
+1997-11-09  SL Baur  <steve@altair.xemacs.org>
+
+	* x-menubar.el (default-menubar): Strokes has been packaged.
+
 1997-11-08  SL Baur  <steve@altair.xemacs.org>
 
 	* prim/about.el (about-hackers): New entries.

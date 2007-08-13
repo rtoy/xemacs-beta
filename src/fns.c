@@ -2738,7 +2738,7 @@ or string.  See also `put', `remprop', and `object-plist'.
   else if (LRECORDP (object))
     {
       CONST struct lrecord_implementation
-	*imp = XRECORD_LHEADER (object)->implementation;
+	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
       if (imp->getprop)
 	{
 	  val = (imp->getprop) (object, propname);
@@ -2780,7 +2780,7 @@ See also `get', `remprop', and `object-plist'.
   else if (LRECORDP (object))
     {
       CONST struct lrecord_implementation
-	*imp = XRECORD_LHEADER (object)->implementation;
+	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
       if (imp->putprop)
 	{
 	  if (! (imp->putprop) (object, propname, value))
@@ -2825,7 +2825,7 @@ was present in the property list).  See also `get', `put', and
   else if (LRECORDP (object))
     {
       CONST struct lrecord_implementation
-	*imp = XRECORD_LHEADER (object)->implementation;
+	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
       if (imp->remprop)
 	{
 	  retval = (imp->remprop) (object, propname);
@@ -2861,7 +2861,7 @@ interpretation, this will probably have no effect at all.)
   else if (LRECORDP (object))
     {
       CONST struct lrecord_implementation
-	*imp = XRECORD_LHEADER (object)->implementation;
+	*imp = XRECORD_LHEADER_IMPLEMENTATION (object);
       if (imp->plist)
 	return (imp->plist) (object);
       else
@@ -2928,8 +2928,8 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   else if (LRECORDP (o1))
     {
       CONST struct lrecord_implementation
-	*imp1 = XRECORD_LHEADER (o1)->implementation,
-	*imp2 = XRECORD_LHEADER (o2)->implementation;
+	*imp1 = XRECORD_LHEADER_IMPLEMENTATION (o1),
+	*imp2 = XRECORD_LHEADER_IMPLEMENTATION (o2);
       if (imp1 != imp2)
 	return 0;
       else if (imp1->equal == 0)
@@ -3000,8 +3000,8 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   else if (LRECORDP (o1))
     {
       CONST struct lrecord_implementation
-	*imp1 = XRECORD_LHEADER (o1)->implementation,
-	*imp2 = XRECORD_LHEADER (o2)->implementation;
+	*imp1 = XRECORD_LHEADER_IMPLEMENTATION (o1),
+	*imp2 = XRECORD_LHEADER_IMPLEMENTATION (o2);
       if (imp1 != imp2)
 	return 0;
       else if (imp1->equal == 0)

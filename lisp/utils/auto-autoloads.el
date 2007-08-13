@@ -233,10 +233,6 @@ Return the value of the configuration parameter CONFIG_SYMBOL." nil nil)
 
 ;;;***
 
-;;;### (autoloads nil "easymenu" "utils/easymenu.el")
-
-;;;***
-
 ;;;### (autoloads (edit-toolbar) "edit-toolbar" "utils/edit-toolbar.el")
 
 (autoload 'edit-toolbar "edit-toolbar" "\

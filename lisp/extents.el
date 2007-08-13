@@ -95,4 +95,8 @@ EXTENT, until no more children can be found."
   "Set EXTENT's `keymap' property to KEYMAP."
   (set-extent-property extent 'keymap keymap))
 
+(defun extent-keymap (extent)
+  "Return EXTENT's `keymap' property."
+  (extent-property extent 'keymap))
+
 ;;; extents.el ends here

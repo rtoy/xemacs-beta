@@ -1,3 +1,10 @@
+1997-11-10  SL Baur  <steve@altair.xemacs.org>
+
+	* info/dir: remove packaged entries.
+	From Glynn Clements <glynn@sensei.co.uk>
+
+	* configure.in: Puke and die if NAS sound is selected without X.
+
 1997-11-08  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.4-beta3 is released.

@@ -208,6 +208,7 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 #include "lstream.h"
 #include "redisplay.h"
+#include "line-number.h"
 
 /* We write things this way because it's very important the
    MAX_BYTIND_GAP_SIZE_3 is a multiple of 3. (As it happens,
@@ -2438,6 +2439,8 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
 	make_gap (buf, length - BUF_GAP_SIZE (buf));
     }
 
+  insert_invalidate_line_number_cache (buf, pos, nonreloc + offset, length);
+
   record_insert (buf, pos, cclen);
   BUF_MODIFF (buf)++;
   MARK_BUFFERS_CHANGED;
@@ -2624,6 +2627,8 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
   bi_from = bufpos_to_bytind (buf, from);
   bi_to = bufpos_to_bytind (buf, to);
   bc_numdel = bi_to - bi_from;
+
+  delete_invalidate_line_number_cache (buf, from, to);
 
   if (to == BUF_Z (buf) &&
       bi_from > BI_BUF_GPT (buf))

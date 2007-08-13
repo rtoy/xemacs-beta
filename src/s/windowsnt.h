@@ -209,6 +209,8 @@ typedef int pid_t;
 #endif
 #endif
 
+#include <stdio.h>
+
 
 /* IO calls that are emulated or shadowed */
 #define pipe    sys_pipe
@@ -226,6 +228,7 @@ typedef int pid_t;
 #define select  sys_select
 
 /* map to MSVC names */
+#define chdir     _chdir
 #define execlp    _execlp
 #define execvp    _execvp
 #define fcloseall _fcloseall

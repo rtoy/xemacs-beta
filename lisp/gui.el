@@ -89,8 +89,9 @@ Normally it also has no modelines, menubars, or toolbars."
 (make-face 'gui-button-face "Face used for gui buttons")
 (if (not (face-differs-from-default-p 'gui-button-face))
     (progn
-      (set-face-background 'gui-button-face "grey75")
-      (set-face-foreground 'gui-button-face "black")))
+      (set-face-reverse-p 'gui-button-face t)
+      (set-face-background 'gui-button-face "grey75" nil '(x color))
+      (set-face-foreground 'gui-button-face "black" nil '(x color))))
 
 (defun make-gui-button (string &optional action user-data)
   "Make a GUI button whose label is STRING and whose action is ACTION.

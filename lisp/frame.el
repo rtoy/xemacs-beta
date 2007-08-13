@@ -813,7 +813,8 @@ For use as the value of `select-frame-hook'."
 (defun default-deselect-frame-hook ()
   "Implements the `auto-lower-frame' variable.
 For use as the value of `deselect-frame-hook'."
-  (if auto-lower-frame (lower-frame (selected-frame))))
+  (if auto-lower-frame (lower-frame (selected-frame)))
+  (highlight-extent nil nil))
 
 (or select-frame-hook
     (add-hook 'select-frame-hook 'default-select-frame-hook))

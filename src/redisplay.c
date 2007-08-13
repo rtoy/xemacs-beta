@@ -56,6 +56,7 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "toolbar.h"
 #include "window.h"
+#include "line-number.h"
 
 #ifdef MULE
 #include "mule-coding.h"
@@ -5674,33 +5675,35 @@ redisplay (void)
 #endif /* INHIBIT_REDISPLAY_HOOKS */
 }
 
-/* Inefficiently determine the line number of the line point is on and
-   return it as a string.  Always do this regardless of whether
-   line_number_mode is true. */
 
-static char window_line_number_buf[100];
+static char window_line_number_buf[16];
+
+/* Efficiently determine the window line number, and return a pointer
+   to its printed representation.  Do this regardless of whether
+   line-number-mode is on.  The first line in the buffer is counted as
+   1.  If narrowing is in effect, the lines are counted from the
+   beginning of the visible portion of the buffer.  */
 static char *
 window_line_number (struct window *w, int type)
 {
   struct device *d = XDEVICE (XFRAME (w->frame)->device);
   struct buffer *b = XBUFFER (w->buffer);
-  Bufpos end =
+  Bufpos pos =
     (((w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
       EQ(DEVICE_CONSOLE(d), Vselected_console) &&
       XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
       EQ(DEVICE_SELECTED_FRAME(d), w->frame))
      ? BUF_PT (b)
      : marker_position (w->pointm[type]));
-  int lots = 999999999;
-  int shortage, line;
+  EMACS_INT line;
 
-  scan_buffer (b, '\n', end, 0, -lots, &shortage, 0);
-  line = lots - shortage + 1;
+  line = buffer_line_number (b, pos, 1);
 
-  sprintf (window_line_number_buf, "%d", line);
+  sprintf (window_line_number_buf, "%d", line + 1);
 
   return window_line_number_buf;
 }
+
 
 /* Given a character representing an object in a modeline
    specification, return a string (stored into the global array

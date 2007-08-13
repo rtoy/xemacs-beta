@@ -50,24 +50,14 @@ XEmacs 20.4
 
 Local Packages:
 
-* CC-MODE::	Mode for editing C, C++, and Objective-C code.
 * CL::		A Common Lisp compatibility package for Emacs-Lisp.
 * Custom::	Customization Library for Emacs
-* Ediff::	A Visual Interface to Unix Diff and Patch Utilities.
-* EFS::		Transparent remote file access via FTP
 * External-Widget::
 		Use XEmacs as a text widget inside of another program.
 * Forms::	A package for editing databases by filling in forms.
-* HM--HTML-Mode::  HTML Editing Mode.
-* Hyperbole::	A programmable information management and hypertext system.
-* ILISP::	Multi-dialect inferior LISP interface.
 * Ispell::	Interactive spelling corrector.
-* Mailcrypt::	Emacs interface to cryptographic functions for mail and news.
 * OO-Browser::	The Multi-Language Object-Oriented Browser.
-* PCL-CVS::	An XEmacs-based front end to CVS.
 * PH::		Client interface to the CCSO white pages directory system
-* PSGML::	A powerful mode for HTML and other SGML documents.
-* PSGML-API::	PSGML, the API documentation.
 * Standards::	The GNU coding standards.
 * Supercite::	Lets you cite parts of messages you're replying to.
 * Term::	ANSI-compatible terminal emulator.
@@ -75,16 +65,6 @@ Local Packages:
 		to handle all types of character-display terminals.
 * Texinfo::	With one source file, make either a printed manual (through
 		TeX) or an Info file (through texinfo).
-* Viper::	A VI Plan for Emacs Rescue and a venomous VI PERil.
 * Vhdl-mode::	A major mode for editing VHDL files.
 * Widget::	An Emacs Lisp widget library
-* tm-en::	Tools for Mime (English version)
-* tm-mh-e-en::	Tools for Mime for MH-E (English version)
-* gnus-mime-en::
-		Tools for Mime for Gnus (English version)
-* tm-vm-en::    Tools for Mime for VM
-* tm-ja::	Tools for Mime (Japanese version)
-* tm-mh-e-ja::	Tools for Mime for MH-E (Japanese version)
-* gnus-mime-ja::
-		Tools for Mime for Gnus (Japanese version)
 * Locals:

@@ -56,7 +56,7 @@ static XColor	        Black,White;    /* For the cursors              */
 typedef struct
 {	
   int	Width,Height;
-  char	*ImageData,*MaskData;
+  unsigned char	*ImageData,*MaskData;
   int	HotSpotX,HotSpotY;
   Pixmap	ImagePixmap,MaskPixmap;
   Cursor	CursorID;

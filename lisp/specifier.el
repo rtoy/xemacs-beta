@@ -405,4 +405,20 @@ is no possibility for ambiguity and no need to go through the function
 
 (define-specifier-tag 'win 'device-on-window-system-p)
 
+;; Add tags for device types that don't have support compiled
+;; into the binary that we're about to dump.  This will prevent
+;; code like
+;;
+;; (set-face-foreground 'default "black" nil '(x color))
+;;
+;; from producing an error if no X support was compiled in.
+
+(or (valid-specifier-tag-p 'x)
+    (define-specifier-tag 'x (lambda (dev) (eq (device-type dev) 'x))))
+(or (valid-specifier-tag-p 'tty)
+    (define-specifier-tag 'tty (lambda (dev) (eq (device-type dev) 'tty))))
+(or (valid-specifier-tag-p 'mswindows)
+    (define-specifier-tag 'mswindows (lambda (dev)
+				       (eq (device-type dev) 'mswindows))))
+
 ;;; specifier.el ends here

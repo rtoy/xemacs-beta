@@ -30,8 +30,10 @@
 ;;; Code:
 
 ;; XEmacs: the byte-compiler warns on `beginning-of-fortran-subprogram'.
-(eval-when-compile
-  (require 'fortran))
+(condition-case nil
+    (eval-when-compile
+      (require 'fortran))
+  (t nil))
 
 (defgroup change-log nil
   "Change log maintenance"

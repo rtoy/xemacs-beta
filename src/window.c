@@ -2926,7 +2926,6 @@ set_window_pixsize (Lisp_Object window, int new_pixsize, int nodelete,
   else if (!NILP (major_kid))
     {
       int last_pos, last_old_pos, pos, old_pos, first;
-      int pixel_adj_left = new_pixsize - old_pixsize;
       int div_val = old_pixsize << 1;
 
       /*

@@ -3109,7 +3109,8 @@ Lisp_Object Qnull_pointer;
 
 /* some losing systems can't have static vars at function scope... */
 static struct symbol_value_magic guts_of_unbound_marker =
-  { { { lrecord_symbol_value_forward }, 0, 69}, SYMVAL_UNBOUND_MARKER };
+  { { symbol_value_forward_lheader_initializer, 0, 69},
+    SYMVAL_UNBOUND_MARKER };
 
 void
 init_symbols_once_early (void)

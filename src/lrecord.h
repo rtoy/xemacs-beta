@@ -29,23 +29,25 @@ Boston, MA 02111-1307, USA.  */
    implemented but only a few bits required in a Lisp object for
    type information. (The tradeoff is that each object has its
    type marked in it, thereby increasing its size.) The first
-   four bytes of all lrecords is a pointer to a struct
-   lrecord_implementation, which contains methods describing
-   how to process this object.
+   four bytes of all lrecords is either a pointer to a struct
+   lrecord_implementation, which contains methods describing how
+   to process this object, or an index into an array of pointers
+   to struct lrecord_implementations plus some other data bits.
 
    lrecords are of two types: straight lrecords, and lcrecords.
    Straight lrecords are used for those types of objects that
-   have their own allocation routines (typically allocated out
-   of 2K chunks of memory).  These objects have a
-   `struct lrecord_header' at the top, containing only the
-   implementation pointer.  There are special routines in alloc.c
-   to deal with each such object type.
+   have their own allocation routines (typically allocated out of
+   2K chunks of memory).  These objects have a `struct
+   lrecord_header' at the top, containing only the bits needed to
+   find the lrecord_implementation for the object.  There are
+   special routines in alloc.c to deal with each such object
+   type.
 
    Lcrecords are used for less common sorts of objects that don't
    do their own allocation.  Each such object is malloc()ed
    individually, and the objects are chained together through
    a `next' pointer.  Lcrecords have a `struct lcrecord_header'
-   at the top, which contains an implementation pointer and
+   at the top, which contains a `struct lrecord_header' and
    a `next' pointer, and are allocated using alloc_lcrecord().
 
    Creating a new lcrecord type is fairly easy; just follow the
@@ -80,9 +82,33 @@ struct lrecord_header
      type-code table dynamically rather that pre-defining them.)
      I think I remember that Elk Lisp does something like this.
      Gee, I wonder if some cretin has patented it? */
+
+  /*
+   * If USE_INDEXED_LRECORD_IMPLEMENTATION is defined, we are
+   * implementing the scheme described in the 'It would be better
+   * ...' paragraph above.
+   */
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+  /* index into lrecord_implementations_table[] */
+  unsigned type:8;
+  /* 1 if the object is marked during GC, 0 otherwise. */
+  unsigned mark:1;
+  /* 1 if the object was resides in pure (read-only) space */
+  unsigned pure:1;
+#else
   CONST struct lrecord_implementation *implementation;
+#endif
 };
-#define set_lheader_implementation(header,imp) (header)->implementation=(imp)
+
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+# define set_lheader_implementation(header,imp) \
+	do { (header)->type = lrecord_type_index((imp)) \
+	     (header)->mark = 0;			\
+	     (header)->pure = 0;			\
+	} while (0)
+#else
+# define set_lheader_implementation(header,imp) (header)->implementation=(imp)
+#endif
 
 struct lcrecord_header
 {
@@ -178,23 +204,48 @@ struct lrecord_implementation
   int basic_p;
 };
 
+extern CONST struct lrecord_implementation *lrecord_implementations_table[];
+
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+# define XRECORD_LHEADER_IMPLEMENTATION(obj) \
+   (lrecord_implementations_table[XRECORD_LHEADER (obj)->type])
+# define LHEADER_IMPLEMENTATION(lh) (lrecord_implementations_table[(lh)->type])
+#else
+# define XRECORD_LHEADER_IMPLEMENTATION(obj) \
+   (XRECORD_LHEADER (obj)->implementation)
+# define LHEADER_IMPLEMENTATION(lh) ((lh)->implementation)
+#endif
+
 extern int gc_in_progress;
 
-#define MARKED_RECORD_P(obj) (gc_in_progress &&				\
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+# define MARKED_RECORD_P(obj) (gc_in_progress && XRECORD_LHEADER (obj)->mark)
+#else
+# define MARKED_RECORD_P(obj) (gc_in_progress &&			\
   XRECORD_LHEADER (obj)->implementation->finalizer ==			\
   this_marks_a_marked_record)
+#endif
 
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
 
-/* moved here from alloc.c so that lisp.h macros can use them. */
-#define MARKED_RECORD_HEADER_P(lheader) \
+# define MARKED_RECORD_HEADER_P(lheader) (lheader)->mark
+# define MARK_RECORD_HEADER(lheader) (lheader)->mark = 1
+# define UNMARK_RECORD_HEADER(lheader) (lheader)->mark = 0
+
+#else /* ! USE_INDEXED_LRECORD_IMPLEMENTATION */
+
+# define MARKED_RECORD_HEADER_P(lheader) \
   (((lheader)->implementation->finalizer) == this_marks_a_marked_record)
-#define UNMARKABLE_RECORD_HEADER_P(lheader) \
-  (((lheader)->implementation->marker) == this_one_is_unmarkable)
-#define MARK_RECORD_HEADER(lheader) \
+# define MARK_RECORD_HEADER(lheader) \
   do { (((lheader)->implementation)++); } while (0)
-#define UNMARK_RECORD_HEADER(lheader) \
+# define UNMARK_RECORD_HEADER(lheader) \
   do { (((lheader)->implementation)--); } while (0)
 
+#endif /* ! USE_INDEXED_LRECORD_IMPLEMENTATION */
+
+#define UNMARKABLE_RECORD_HEADER_P(lheader) \
+  ((LHEADER_IMPLEMENTATION (lheader)->marker) \
+   == this_one_is_unmarkable)
 
 /* Declaring the following structures as const puts them in the
    text (read-only) segment, which makes debugging inconvenient
@@ -273,8 +324,15 @@ CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name[2] =	\
 
 #define LRECORDP(a) (XTYPE ((a)) == Lisp_Type_Record)
 #define XRECORD_LHEADER(a) ((struct lrecord_header *) XPNTR (a))
-#define RECORD_TYPEP(x, ty) \
+
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+# define RECORD_TYPEP(x, ty) \
+  (LRECORDP (x) && \
+   lrecord_implementations_table[XRECORD_LHEADER (x)->type] == (ty))
+#else
+# define RECORD_TYPEP(x, ty) \
   (LRECORDP (x) && XRECORD_LHEADER (x)->implementation == (ty))
+#endif
 
 /* NOTE: the DECLARE_LRECORD() must come before the associated
    DEFINE_LRECORD_*() or you will get compile errors.

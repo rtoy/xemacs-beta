@@ -632,6 +632,11 @@ automatically."
 		       (repeat :tag "Suffixes"
 			       (string :format "%v")))))
 
+(defvar widget-glyph-pointer-glyph
+  (make-pointer-glyph [cursor-font :data "hand2"])
+  "Glyph to be used as the mouse pointer shape over glyphs.
+Use `set-glyph-image' to change this.")
+
 (defvar widget-glyph-cache nil
   "Cache of glyphs associated with strings (files).")
 
@@ -740,6 +745,7 @@ glyphs used when the widget is pushed and inactive, respectively."
     (set-extent-property extent 'start-open t)
     (set-extent-property extent 'end-open t)
     (set-extent-property extent 'keymap map)
+    (set-extent-property extent 'pointer widget-glyph-pointer-glyph)
     (set-extent-end-glyph extent glyph)
     (unless (or (stringp help-echo) (null help-echo))
       (setq help-echo 'widget-mouse-help))

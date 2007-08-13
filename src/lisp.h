@@ -1532,9 +1532,15 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 /* Can't be const, because then subr->doc is read-only and
    Snarf_documentation chokes */
 
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+# define subr_lheader_initializer { 0, 0, 0 }
+#else
+# define subr_lheader_initializer { lrecord_subr }
+#endif
+
 #define DEFUN(lname, Fname, minargs, maxargs, prompt, arglist)		\
   Lisp_Object Fname (DEFUN_##maxargs arglist) ; /* See below */	\
-  static struct Lisp_Subr S##Fname = { {lrecord_subr},			\
+  static struct Lisp_Subr S##Fname = { subr_lheader_initializer,	\
 	minargs, maxargs, prompt, 0, lname, (lisp_fn_t) Fname };	\
   Lisp_Object Fname (DEFUN_##maxargs arglist)
 

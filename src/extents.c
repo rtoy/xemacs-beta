@@ -3006,7 +3006,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_c_string (" ", printcharfun);
     }
 
-  sprintf (buf, "0x%p", ext);
+  sprintf (buf, "0x%lx", (unsigned long int) ext);
   write_c_string (buf, printcharfun);
 }
 

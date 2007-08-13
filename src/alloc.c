@@ -505,6 +505,8 @@ allocate_lisp_storage (int size)
  */
 static struct lcrecord_header *all_lcrecords;
 
+int lrecord_type_index (CONST struct lrecord_implementation *implementation);
+
 void *
 alloc_lcrecord (int size, CONST struct lrecord_implementation *implementation)
 {
@@ -520,7 +522,7 @@ alloc_lcrecord (int size, CONST struct lrecord_implementation *implementation)
     abort ();
 
   lcheader = (struct lcrecord_header *) allocate_lisp_storage (size);
-  lcheader->lheader.implementation = implementation;
+  set_lheader_implementation(&(lcheader->lheader), implementation);
   lcheader->next = all_lcrecords;
 #if 1                           /* mly prefers to see small ID numbers */
   lcheader->uid = lrecord_uid_counter++;
@@ -579,8 +581,10 @@ disksave_object_finalization_1 (void)
 
   for (header = all_lcrecords; header; header = header->next)
     {
-      if (header->lheader.implementation->finalizer && !header->free)
-	((header->lheader.implementation->finalizer) (header, 1));
+      if (LHEADER_IMPLEMENTATION(&header->lheader)->finalizer &&
+	  !header->free)
+	((LHEADER_IMPLEMENTATION(&header->lheader)->finalizer)
+	 (header, 1));
     }
 }
 
@@ -611,9 +615,14 @@ this_one_is_unmarkable (Lisp_Object obj, void (*markobj) (Lisp_Object))
 int
 gc_record_type_p (Lisp_Object frob, CONST struct lrecord_implementation *type)
 {
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+  return (XGCTYPE (frob) == Lisp_Type_Record
+          && XRECORD_LHEADER_IMPLEMENTATION (frob) == type);
+#else
   return (XGCTYPE (frob) == Lisp_Type_Record
           && (XRECORD_LHEADER (frob)->implementation == type ||
               XRECORD_LHEADER (frob)->implementation == type + 1));
+#endif
 }
 
 
@@ -1159,7 +1168,7 @@ make_float (double float_value)
   struct Lisp_Float *f;
 
   ALLOCATE_FIXED_TYPE (float, struct Lisp_Float, f);
-  f->lheader.implementation = lrecord_float;
+  set_lheader_implementation (&(f->lheader), lrecord_float);
   float_next (f) = ((struct Lisp_Float *) -1);
   float_data (f) = float_value;
   XSETFLOAT (val, f);
@@ -1559,6 +1568,9 @@ make_compiled_function (int make_pure)
     {
       b = (struct Lisp_Compiled_Function *) (PUREBEG + pureptr);
       set_lheader_implementation (&(b->lheader), lrecord_compiled_function);
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+      b->lheader.pure = 1;
+#endif
       pureptr += size;
       bump_purestat (&purestat_bytecode, size);
     }
@@ -2364,7 +2376,7 @@ mark_lcrecord_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
 #ifdef ERROR_CHECK_GC
       CONST struct lrecord_implementation *implementation
-	= lheader->implementation;
+	= LHEADER_IMPLEMENTATION(lheader);
 
       /* There should be no other pointers to the free list. */
       assert (!MARKED_RECORD_HEADER_P (lheader));
@@ -2415,7 +2427,7 @@ allocate_managed_lcrecord (Lisp_Object lcrecord_list)
       struct lrecord_header *lheader =
 	(struct lrecord_header *) free_header;
       CONST struct lrecord_implementation *implementation
-	= lheader->implementation;
+	= LHEADER_IMPLEMENTATION (lheader);
 
       /* There should be no other pointers to the free list. */
       assert (!MARKED_RECORD_HEADER_P (lheader));
@@ -2452,7 +2464,7 @@ free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord)
   struct lrecord_header *lheader =
     (struct lrecord_header *) free_header;
   CONST struct lrecord_implementation *implementation
-    = lheader->implementation;
+    = LHEADER_IMPLEMENTATION (lheader);
 
 #ifdef ERROR_CHECK_GC
   /* Make sure the size is correct.  This will catch, for example,
@@ -2509,6 +2521,9 @@ make_pure_string (CONST Bufbyte *data, Bytecount length,
   s = (struct Lisp_String *) (PUREBEG + pureptr);
 #ifdef LRECORD_STRING
   set_lheader_implementation (&(s->lheader), lrecord_string);
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+  s->lheader.pure = 1;
+#endif
 #endif
   set_string_length (s, length);
   if (no_need_to_copy_data)
@@ -2565,6 +2580,9 @@ pure_cons (Lisp_Object car, Lisp_Object cdr)
   c = (struct Lisp_Cons *) (PUREBEG + pureptr);
 #ifdef LRECORD_CONS
   set_lheader_implementation (&(c->lheader), lrecord_cons);
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+  c->lheader.pure = 1;
+#endif
 #endif
   pureptr += sizeof (struct Lisp_Cons);
   bump_purestat (&purestat_cons, sizeof (struct Lisp_Cons));
@@ -2625,6 +2643,9 @@ make_pure_float (double num)
 
   f = (struct Lisp_Float *) (PUREBEG + pureptr);
   set_lheader_implementation (&(f->lheader), lrecord_float);
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+  f->lheader.pure = 1;
+#endif
   pureptr += sizeof (struct Lisp_Float);
   bump_purestat (&purestat_float, sizeof (struct Lisp_Float));
 
@@ -2652,6 +2673,9 @@ make_pure_vector (EMACS_INT len, Lisp_Object init)
   v = (struct Lisp_Vector *) (PUREBEG + pureptr);
 #ifdef LRECORD_VECTOR
   set_lheader_implementation (&(v->header.lheader), lrecord_vector);
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+  v->header.lheader.pure = 1;
+#endif
 #endif
   pureptr += size;
   bump_purestat (&purestat_vector_all, size);
@@ -3002,7 +3026,7 @@ mark_object (Lisp_Object obj)
       {
 	struct lrecord_header *lheader = XRECORD_LHEADER (obj);
 	CONST struct lrecord_implementation *implementation
-	  = lheader->implementation;
+	  = LHEADER_IMPLEMENTATION (lheader);
 
 	if (! MARKED_RECORD_HEADER_P (lheader) &&
 	    ! UNMARKABLE_RECORD_HEADER_P (lheader))
@@ -3209,7 +3233,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
       {
 	struct lrecord_header *lheader = XRECORD_LHEADER (obj);
 	CONST struct lrecord_implementation *implementation
-	  = lheader->implementation;
+	  = LHEADER_IMPLEMENTATION (lheader);
 
 #ifdef LRECORD_STRING
 	if (STRINGP (obj))
@@ -3293,10 +3317,10 @@ static int gc_count_short_string_total_size;
 /* This will be used more extensively In The Future */
 static int last_lrecord_type_index_assigned;
 
-static CONST struct lrecord_implementation *lrecord_implementations_table[128];
+CONST struct lrecord_implementation *lrecord_implementations_table[128];
 #define max_lrecord_type (countof (lrecord_implementations_table) - 1)
 
-static int
+int
 lrecord_type_index (CONST struct lrecord_implementation *implementation)
 {
   int type_index = *(implementation->lrecord_type_index);
@@ -3344,7 +3368,8 @@ reset_lcrecord_stats (void)
 static void
 tick_lcrecord_stats (CONST struct lrecord_header *h, int free_p)
 {
-  CONST struct lrecord_implementation *implementation = h->implementation;
+  CONST struct lrecord_implementation *implementation =
+    LHEADER_IMPLEMENTATION (h);
   int type_index = lrecord_type_index (implementation);
 
   if (((struct lcrecord_header *) h)->free)
@@ -3396,8 +3421,8 @@ sweep_lcrecords_1 (struct lcrecord_header **prev, int *used)
       struct lrecord_header *h = &(header->lheader);
       if (!MARKED_RECORD_HEADER_P (h) && ! (header->free))
 	{
-	  if (h->implementation->finalizer)
-	    ((h->implementation->finalizer) (h, 0));
+	  if (LHEADER_IMPLEMENTATION (h)->finalizer)
+	    ((LHEADER_IMPLEMENTATION (h)->finalizer) (h, 0));
 	}
     }
 
@@ -4804,6 +4829,24 @@ init_alloc_once_early (void)
     {
       lrecord_implementations_table[iii] = 0;
     }
+
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+  /*
+   * If USE_INDEXED_LRECORD_IMPLEMENTATION is defined, all the staticly
+   * defined subr lrecords were initialized with lheader->type == 0.
+   * See subr_lheader_initializer in lisp.h.  Force type index 0 to be
+   * assigned to lrecord_subr so that those predefined indexes match
+   * reality.
+   */
+  (void) lrecord_type_index (lrecord_subr);
+  assert (*(lrecord_subr[0].lrecord_type_index) == 0);
+  /*
+   * The same is true for symbol_value_forward objects, except the
+   * type is 1.
+   */
+  (void) lrecord_type_index (lrecord_symbol_value_forward);
+  assert (*(lrecord_symbol_value_forward[0].lrecord_type_index) == 1);
+#endif
 
   symbols_initialized = 0;
 

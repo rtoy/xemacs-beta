@@ -1447,9 +1447,11 @@ static DOESNT_RETURN
 throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 		   Lisp_Object sig, Lisp_Object data)
 {
+#if 0
   /* die if we recurse more than is reasonable */
   if (++throw_level > 20)
     abort();
+#endif
 
   /* If bomb_out_p is t, this is being called from Fsignal as a
      "last resort" when there is no handler for this error and

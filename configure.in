@@ -2707,6 +2707,12 @@ if test "$with_x11" = "yes"; then
   test "$with_dialogs"    != "no"      && XE_ADD_OBJS(dialog-x.o)
   test "$with_toolbars"   != "no"      && XE_ADD_OBJS(toolbar-x.o)
   test "$all_widgets" != "no no no no" && XE_ADD_OBJS(gui-x.o)
+else
+  if test \( "$with_sound" = "nas" \) -o \( "$with_sound" = "both" \); then
+    echo "Attempt to Build NAS sound without X"
+    echo "Please remove NAS configuration or build with X"
+    exit 1
+  fi
 fi
 
 dnl ----------------------

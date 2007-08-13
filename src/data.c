@@ -592,7 +592,7 @@ Return a symbol representing the type of OBJECT.
   if (VECTORP  (object)) return Qvector;
 
   assert (LRECORDP (object));
-  return intern (XRECORD_LHEADER (object)->implementation->name);
+  return intern (XRECORD_LHEADER_IMPLEMENTATION (object)->name);
 }
 
 

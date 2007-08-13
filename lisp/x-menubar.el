@@ -579,7 +579,9 @@
 	    (strokes-mode)
 	  (beep)
 	  (message "This option requires a window system."))
-	:style toggle :selected (and strokes-mode window-system)])
+	:style toggle :selected (and (fboundp strokes-mode)
+				     strokes-mode
+				     window-system)])
       ("Open URLs With"
        ["Emacs-W3" (setq browse-url-browser-function 'browse-url-w3)
 	:style radio
@@ -1293,7 +1295,7 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
      ;; Mule-specific:
      (if (featurep 'mule)
 	 `(if (featurep 'mule)
-	      (set-language-environment ',(current-language-environment))))
+	      (set-language-environment ',current-language-environment)))
      ))
   "The variables to save; or forms to evaluate to get forms to write out.
 This is used by `save-options-menu-settings' and should mirror the

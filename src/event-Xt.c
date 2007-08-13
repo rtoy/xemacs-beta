@@ -1,5 +1,5 @@
 /* The event_stream interface for X11 with Xt, and/or tty frames.
-   Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1991-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1996 Ben Wing.
 
@@ -1101,7 +1101,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	  {
 	    unsigned int state, modifiers = 0, button=0;
 	    struct frame *frame = x_any_window_to_frame (d, ev->window);
-	    unsigned char *data;
+	    Extbyte *data;
 	    unsigned long size, dtype;
 	    Lisp_Object l_type = Qnil, l_data = Qnil;
 	    Lisp_Object l_dndlist = Qnil, l_item = Qnil;
@@ -1149,7 +1149,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 		  while (*data)
 		    {
 		      len = strlen ((char*) data);
-		      l_item = make_ext_string ((char*) data, len,
+		      l_item = make_ext_string (data, len,
 						FORMAT_FILENAME);
 		      /* order is irrelevant */
 		      l_dndlist = Fcons (l_item, l_dndlist);
@@ -1160,7 +1160,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	      case DndText:
 	      case DndMIME:
 		/* is there a better way to format this ? */
-		l_dndlist = make_ext_string ((char*) data, strlen(data),
+		l_dndlist = make_ext_string (data, strlen((char *)data),
 					     FORMAT_BINARY);
 		break;
 	      case DndFile:
@@ -1168,15 +1168,15 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	      case DndLink:
 	      case DndExe:
 	      case DndURL: /* this could also break with FORMAT_FILENAME */
-		l_dndlist = make_ext_string ((char*) data, strlen(data),
+		l_dndlist = make_ext_string (data, strlen((char *)data),
 					     FORMAT_FILENAME);
 		break;
 	      default: /* Unknown, RawData and any other type */
-		l_dndlist = make_ext_string ((char*) data, size,
+		l_dndlist = make_ext_string (data, size,
 					     FORMAT_BINARY);
 		break;
 	      }
-	    
+
 	    l_type=make_int(dtype);
 
 	    emacs_event->event.dnd_drop.data = Fcons (l_type, Fcons (l_dndlist, Qnil));

@@ -843,7 +843,9 @@ in an Xterm window."
   (interactive (browse-url-interactive-arg "Lynx URL: "))
   (start-process (concat "lynx" url) nil "xterm" "-e" "lynx" url))
 
-(eval-when-compile (require 'term))
+(condition-case nil
+    (eval-when-compile (require 'term))
+  (t nil))
 
 ;; --- Lynx in an Emacs "term" window ---
 
@@ -855,13 +857,15 @@ Default to the URL around or before point.  Run a new Lynx process in
 an Emacs buffer."
   (interactive (browse-url-interactive-arg "Lynx URL: "))
   (let ((system-uses-terminfo t))	; Lynx uses terminfo
-    (if (fboundp 'make-term)
-	(let ((term-term-name "vt100"))
-	  (set-buffer (make-term "browse-url" "lynx" nil url))
-	  (term-mode)
-	  (term-char-mode)
-	  (switch-to-buffer "*browse-url*"))
-      (terminal-emulator "*browse-url*" "lynx" (list url)))))
+    (cond ((fboundp 'make-term)
+	   (let ((term-term-name "vt100"))
+	     (set-buffer (make-term "browse-url" "lynx" nil url))
+	     (term-mode)
+	     (term-char-mode)
+	     (switch-to-buffer "*browse-url*")))
+	  ((fboundp 'terminal-emulator)
+	   (terminal-emulator "*browse-url*" "lynx" (list url)))
+	  (t (error "No terminal emulation in this XEmacs")))))
 
 (provide 'browse-url)
 

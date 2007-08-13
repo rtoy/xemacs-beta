@@ -36,6 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "insdel.h"
 #include "window.h"
+#include "line-number.h"
 
 #include "systime.h"
 #include "sysdep.h"
@@ -1740,6 +1741,7 @@ widen_buffer (struct buffer *b, int no_clip)
       /* Changing the buffer bounds invalidates any recorded current
          column.  */
       invalidate_current_column ();
+      narrow_line_number_cache (b);
     }
 }
 
@@ -1786,6 +1788,7 @@ or markers) bounding the text that should remain visible.
   MARK_CLIP_CHANGED;
   /* Changing the buffer bounds invalidates any recorded current column.  */
   invalidate_current_column ();
+  narrow_line_number_cache (buf);
   zmacs_region_stays = 0;
   return Qnil;
 }
@@ -1844,6 +1847,7 @@ save_restriction_restore (Lisp_Object data)
       {
 	local_clip_changed = 1;
 	SET_BOTH_BUF_BEGV (buf, start, bi_start);
+	narrow_line_number_cache (buf);
       }
     if (BUF_ZV (buf) != end)
       {

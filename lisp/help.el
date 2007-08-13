@@ -36,10 +36,9 @@
 
 ;;; Code:
 
-;#### FSFmacs 
 ;; Get the macro make-help-screen when this is compiled,
 ;; or run interpreted, but not when the compiled code is loaded.
-;(eval-when-compile (require 'help-macro))
+(eval-when-compile (require 'help-macro))
 
 (defgroup help-appearance nil
   "Appearance of help buffers"
@@ -684,9 +683,10 @@ The number of messages shown is controlled by `view-lossage-message-count'."
 	   (setq count (1+ count))))))))
 
 (define-function 'help 'help-for-help)
-;; #### FSF calls `make-help-screen' here.  We need to port `help-macro.el'.
-(defun help-for-help ()
-  "You have typed \\[help-for-help], the help character.  Type a Help option:
+
+(make-help-screen help-for-help
+  "A B C F I K L M N P S T V W C-c C-d C-f C-i C-k C-n C-w;  ? for more help:"
+  "Type a Help option:
 \(Use SPC or DEL to scroll through this text.  Type \\<help-map>\\[help-quit] to exit the Help command.)
 
 \\[hyper-apropos]	Type a substring; it shows a hypertext list of
@@ -697,6 +697,7 @@ The number of messages shown is controlled by `view-lossage-message-count'."
 \\[describe-bindings]	Table of all key bindings.
 \\[describe-key-briefly]	Type a command key sequence;
         it displays the function name that sequence runs.
+\\[customize]	Customize Emacs options.
 \\[Info-goto-emacs-command-node]	Type a function name; it displays the Info node for that command.
 \\[describe-function]	Type a function name; it shows its documentation.
 \\[Info-elisp-ref]	Type a function name; it jumps to the full documentation
@@ -719,55 +720,8 @@ The number of messages shown is controlled by `view-lossage-message-count'."
 \\[where-is]	Type a command name; it displays which keystrokes invoke that command.
 \\[describe-distribution]	XEmacs ordering information.
 \\[describe-no-warranty]	Information on absence of warranty for XEmacs.
-\\[describe-copying]      XEmacs copying permission (General Public License)."
-  (interactive)
-  (let ((help-key (copy-event last-command-event))
-	event char)
-    (message (gettext "A B C F I K L M N P S T V W C-c C-d C-n C-w.  Type %s again for more help: ")
-	     ;; arrgh, no room for "C-i C-k C-f" !!
-	     (single-key-description help-key))
-    (setq event (next-command-event)
-	  char (event-to-character event))
-    (if (or (equal event help-key)
-	    (eq char ??)
-	    (eq 'help-command (key-binding event)))
-	(save-window-excursion
-	  (switch-to-buffer "*Help*")
-	  ;; #### I18N3 should mark buffer as output-translating
-	  (delete-other-windows)
-	  (let ((buffer-read-only nil))
-	    (erase-buffer)
-	    (insert (documentation 'help-for-help)))
-	  (goto-char (point-min))
-	  (while (or (equal event help-key)
-		     (eq char ??)
-		     (eq 'help-command (key-binding event))
-		     (eq char ?\ )
-		     (eq 'scroll-up (key-binding event))
-		     (eq char ?\177)
-		     (and (not (eq char ?b))
-			  (eq 'scroll-down (key-binding event))))
-	    (if (or (eq char ?\ )
-		    (eq 'scroll-up (key-binding event)))
-		(scroll-up))
-	    (if (or (eq char ?\177)
-		    (and (not (eq char ?b))
-			 (eq 'scroll-down (key-binding event))))
-		(scroll-down))
-	    ;; write this way for I18N3 snarfing
-	    (if (pos-visible-in-window-p (point-max))
-		(message "A B C F I K L M N P S T V W C-c C-d C-n C-w C-i C-k C-f: ")
-	      (message "A B C F I K L M N P S T V W C-c C-d C-n C-w C-i C-k C-f or Space to scroll: "))
-	    (let ((cursor-in-echo-area t))
-	      (setq event (next-command-event event)
-		    char (or (event-to-character event) event))))))
-    (let ((defn (or (lookup-key help-map (vector event))
- 		    (and (numberp char)
- 			 (lookup-key help-map (make-string 1 (downcase char)))))))
-      (message nil)
-      (if defn
- 	  (call-interactively defn)
- 	(ding)))))
+\\[describe-copying]	XEmacs copying permission (General Public License)."
+  help-map)
 
 (defun function-called-at-point ()
   "Return the function which is called by the list containing point.
@@ -1146,10 +1100,10 @@ When run interactively, it defaults to any function found by
 		 ;; I18N3 Need gettext due to concat
 		 (setq aliases
 		       (concat aliases 
-			       (format "\n     which is an alias for `%s',"
+			       (format "\n     which is an alias for `%s', "
 				       (symbol-name newvar))))
 	       (setq aliases
-		     (format "an alias for `%s',"
+		     (format "an alias for `%s', "
 			     (symbol-name newvar))))
 	     (setq variable newvar)))
 	 (if aliases

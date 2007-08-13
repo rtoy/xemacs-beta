@@ -995,9 +995,11 @@ default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 
   if (print_readably)
     error ("printing unreadable object #<%s 0x%x>",
-	   header->lheader.implementation->name, header->uid);
+	   LHEADER_IMPLEMENTATION (&header->lheader)->name,
+	   header->uid);
 
-  sprintf (buf, "#<%s 0x%x>", header->lheader.implementation->name,
+  sprintf (buf, "#<%s 0x%x>",
+	   LHEADER_IMPLEMENTATION (&header->lheader)->name,
 	   header->uid);
   write_c_string (buf, printcharfun);
 }
@@ -1008,7 +1010,7 @@ internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 {
   char buf[200];
   sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (%s) 0x%p>",
-	   XRECORD_LHEADER (obj)->implementation->name,
+	   XRECORD_LHEADER_IMPLEMENTATION (obj)->name,
 	   (void *) XPNTR (obj));
   write_c_string (buf, printcharfun);
 }
@@ -1191,8 +1193,8 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 #endif
 
 	GCPRO2 (obj, printcharfun);
-	if (lheader->implementation->printer)
-	  ((lheader->implementation->printer)
+	if (LHEADER_IMPLEMENTATION (lheader)->printer)
+	  ((LHEADER_IMPLEMENTATION (lheader)->printer)
 	   (obj, printcharfun, escapeflag));
 	else
 	  default_object_printer (obj, printcharfun, escapeflag);
@@ -1546,7 +1548,7 @@ void
 debug_print (Lisp_Object debug_print_obj)
 {
   debug_print_no_newline (debug_print_obj);
-  stderr_out ("\n");
+  stderr_out ("\r\n");
   fflush (stderr);
 }
 

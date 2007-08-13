@@ -1,3 +1,8 @@
+1997-11-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lispref/extents.texi (Intro to Extents): Minor correction.
+	(Extent Properties): Document `extent-keymap'.
+
 1997-11-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
 
 	* xemacs/mule.texi (Mule): Modify description about supported

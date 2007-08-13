@@ -2097,7 +2097,7 @@ List of functions called with no args to query before killing a buffer.
    makes debugging unbelievably more bearable) */
 #define DEFVAR_BUFFER_LOCAL(lname, field_name) do {			\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
      (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
       SYMVAL_CURRENT_BUFFER_FORWARD }, 0 };				\
       defvar_buffer_local ((lname), &I_hate_C);				\
@@ -2105,7 +2105,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun) do {	\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
      (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
       SYMVAL_CURRENT_BUFFER_FORWARD }, magicfun };			\
       defvar_buffer_local ((lname), &I_hate_C);				\
@@ -2113,7 +2113,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_CONST_BUFFER_LOCAL(lname, field_name) do {		\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
      (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
       SYMVAL_CONST_CURRENT_BUFFER_FORWARD }, 0 };			\
       defvar_buffer_local ((lname), &I_hate_C);				\
@@ -2121,7 +2121,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_CONST_BUFFER_LOCAL_MAGIC(lname, field_name, magicfun) do{\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
      (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
       SYMVAL_CONST_CURRENT_BUFFER_FORWARD }, magicfun };		\
       defvar_buffer_local ((lname), &I_hate_C);				\
@@ -2144,7 +2144,7 @@ defvar_buffer_local (CONST char *namestring,
  *  by make-docfile */
 #define DEFVAR_BUFFER_DEFAULTS(lname, field_name) do {			\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
      (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
       SYMVAL_DEFAULT_BUFFER_FORWARD }, 0 };				\
       defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\
@@ -2152,7 +2152,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_BUFFER_DEFAULTS_MAGIC(lname, field_name, magicfun) do {	\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
      (struct lcrecord_header *) &(buffer_local_flags.field_name), 69 },	\
       SYMVAL_DEFAULT_BUFFER_FORWARD }, magicfun };			\
       defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\

@@ -3,7 +3,7 @@
 
 ;;; Code:
 
+(custom-add-loads 'crisp '("crisp"))
 (custom-add-loads 'emulations '("crisp"))
-(custom-add-loads 'emulations-crisp '("crisp"))
 
 ;;; custom-load.el ends here

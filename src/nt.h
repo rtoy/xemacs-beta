@@ -40,8 +40,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* File descriptor set emulation.  */
 
-/* MSVC runtime library has limit of 64 descriptors by default */
-#define FD_SETSIZE  64
+/* The MSVC multithreaded statically-linked runtime library has limit
+   of 256 descriptors by default (the single-threaded static library
+   has a limit of 64 descriptors, and the DLL versions both have a
+   limit of 512).  Beware.  Should this be set to 512?  */
+#define FD_SETSIZE  256
 typedef struct {
   unsigned int bits[FD_SETSIZE / 32];
 } fd_set;

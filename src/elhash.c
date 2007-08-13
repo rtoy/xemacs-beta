@@ -850,7 +850,7 @@ internal_hash (Lisp_Object obj, int depth)
   else if (LRECORDP (obj))
     {
       CONST struct lrecord_implementation
-	*imp = XRECORD_LHEADER (obj)->implementation;
+	*imp = XRECORD_LHEADER_IMPLEMENTATION (obj);
       if (imp->hash)
 	return (imp->hash) (obj, depth);
     }

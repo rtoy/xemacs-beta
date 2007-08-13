@@ -1461,8 +1461,15 @@ sys_mktemp (char * template)
 int
 sys_open (const char * path, int oflag, int mode)
 {
+  int		fd;
+
   /* Force all file handles to be non-inheritable. */
-  return _open (map_win32_filename (path, NULL), oflag | _O_NOINHERIT, mode);
+  fd = _open (map_win32_filename (path, NULL), oflag | _O_NOINHERIT, mode);
+  if (fd >= 0)
+    {
+      fd_info[fd].cp = 0;
+    }
+  return (fd);
 }
 
 int
@@ -1740,7 +1747,8 @@ stat (const char * path, struct stat * buf)
       BY_HANDLE_FILE_INFORMATION info;
 
       /* No access rights required to get info.  */
-      fh = CreateFile (name, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+      fh = CreateFile (name, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+		       OPEN_EXISTING, 0, NULL);
 
       if (GetFileInformationByHandle (fh, &info))
 	{

@@ -65,6 +65,7 @@
     (hniksic  "Hrvoje Niksic"     "hniksic@srce.hr")
     (jareth   "Jareth Hein"       "jhod@camelot-soft.com")
     (jens     "Jens Lautenbacher" "jens@lemcbed.lem.uni-karlsruhe.de")
+    (juhp     "Jens-Ulrik Holger Petersen" "petersen@kurims.kyoto-u.ac.jp")
     (jwz      "Jamie Zawinski"    "jwz@netscape.com")
     (kazz     "IENAGA Kazuyuki"   "ienaga@jsys.co.jp")
     (kyle     "Kyle Jones"        "kyle_jones@wonderworks.com")
@@ -99,6 +100,7 @@
     (cc-mode   . "http://www.python.org/ftp/emacs/")
     (dkindred  . "http://www.cs.cmu.edu/People/dkindred/me.html")
     (dmoore    . "http://oj.egbt.org/dmoore/")
+    (juhp      . "http://www.kurims.kyoto-u.ac.jp/~petersen/")
     (jwz       . "http://people.netscape.com/jwz/")
     (kazz      . "http://www.imasy.or.jp/~kazz/")
     (kyle      . "http://www.wonderworks.com/kyle/")
@@ -942,6 +944,24 @@ python, etc...
 To see some of these have a look at ")
      (about-url-link 'ograf "one of my homepages")
      (widget-insert ".\n"))
+    (juhp
+     (widget-insert "\
+I started using XEmacs-20 as my work-environment in June 1997.  I
+became a beta developer shortly after that (\"it seems like a good
+idea at the time...\" :-), so far contributing mainly bug fixes,
+\"find-func.el\" and improvements to \"help.el\".
+
+My current dreams for XEmacs: move to using guile as the Lisp engine
+and gtk as the default X toolkit.
+
+I have been a postdoctoral researcher at the Research Institute for
+Mathematical Sciences, Kyoto University, since August 1994, doing
+research in mathematical physics (representation theory of quantum
+groups).  Though now I seem to be heading for other things.
+
+My homepage is ")
+     (about-url-link 'juhp "Visit Jens' homepage")
+     (widget-insert ".\n"))
 
 ))
 
@@ -997,8 +1017,8 @@ To see some of these have a look at ")
     (widget-insert
      "\n
 Like most free software, XEmacs is a collaborative effort.  These are
-some of the contributors we have no doubt forgotten someone; we
-apologize!  You can see some of our faces further below.\n\n")
+some of the contributors.  We have no doubt forgotten someone; we
+apologize!  You can see some of our faces under the links.\n\n")
     (about-show-linked-info 'vladimir "\
 Former technical lead for XEmacs at Sun Microsystems.  He is now with
 Microtec Research Inc., working on embedded systems development tools.\n")
@@ -1136,6 +1156,8 @@ RPM package.\n")
     (about-show-linked-info 'ograf "\
 Is currently working on the integration of OffiX and CDE drag-and-drop
 into the event system of XEmacs.\n")
+    (about-show-linked-info 'juhp "\
+Author of \"find-func.el\".\n")
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)
@@ -1335,7 +1357,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Achim Oppelt" "aoppelt@theorie3.physik.uni-erlangen.de")
        (print-short "Rebecca Ore" "rebecca.ore@op.net")
        (print-short "Sudeep Kumar Palat" "palat@idt.unit.no")
-       (print-short "Jens-U H Petersen" "petersen@kurims.kyoto-u.ac.jp")
        (print-short "Joel Peterson" "tarzan@aosi.com")
        (print-short "Thomas A. Peterson" "tap@src.honeywell.com")
        (print-short "Tibor Polgar" "tlp00@eng.amdahl.com")

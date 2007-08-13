@@ -171,7 +171,7 @@ objs=\
  fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o font-lock.o\
  frame.o general.o getloadavg.o glyphs.o\
  $(gui_objs) hash.o indent.o insdel.o intl.o\
- keymap.o $(RTC_patch_objs) lread.o lstream.o\
+ keymap.o $(RTC_patch_objs) line-number.o lread.o lstream.o\
  macros.o marker.o md5.o minibuf.o objects.o opaque.o\
  print.o process.o profile.o pure.o\
  rangetab.o redisplay.o redisplay-output.o regex.o\

@@ -20,6 +20,7 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
+/* More syncing: FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
 
 #include <config.h>
 #include "lisp.h"
@@ -49,8 +50,34 @@ Boston, MA 02111-1307, USA.  */
 #include <netio.h>
 #ifdef HPUX_PRE_8_0
 #include <errnet.h>
-#endif
+#endif /* HPUX_PRE_8_0 */
 #endif /* HPUX */
+
+#ifdef WINDOWSNT
+#define NOMINMAX 1
+#include <windows.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#endif /* not WINDOWSNT */
+
+#ifdef DOS_NT
+#define CORRECT_DIR_SEPS(s) \
+  do { if ('/' == DIRECTORY_SEP) dostounix_filename (s); \
+    else unixtodos_filename (s); \
+  } while (0)
+/* On Windows, drive letters must be alphabetic - on DOS, the Netware
+   redirector allows the six letters between 'Z' and 'a' as well. */
+#ifdef MSDOS
+#define IS_DRIVE(x) ((x) >= 'A' && (x) <= 'z')
+#endif
+#ifdef WINDOWSNT
+#define IS_DRIVE(x) isalpha (x)
+#endif
+/* Need to lower-case the drive letter, or else expanded
+   filenames will sometimes compare inequal, because
+   `expand-file-name' doesn't always down-case the drive letter.  */
+#define DRIVE_LETTER(x) (tolower (x))
+#endif /* DOS_NT */
 
 /* Nonzero during writing of auto-save files */
 static int auto_saving;
@@ -85,6 +112,26 @@ Lisp_Object Vauto_save_list_file_name;
 int disable_auto_save_when_buffer_shrinks;
 
 Lisp_Object Qfile_name_handler_alist;
+
+#ifdef DOS_NT
+/* Until we can figure out how to deal with the functions in this file in
+   a civilized fashion, this will remain #ifdef'ed out. -slb */
+/* Syncing with FSF 19.34.6 note: although labelled as NT-specific, these
+   two lisp variables are compiled in even when not defined(DOS_NT).
+   Need to check if we should bracket them between #ifdef's.
+   --marcpa */
+/* On NT, specifies the directory separator character, used (eg.) when
+   expanding file names.  This can be bound to / or \.
+
+   This needs to be initialized statically, because file name functions
+   are called during initialization.  */
+Lisp_Object Vdirectory_sep_char = '/';
+
+/* For the benefit of backwards compatability with earlier versions of
+   Emacs on DOS_NT, provide a way to disable the REPLACE option support
+   in insert-file-contents.  */
+Lisp_Object Vinsert_file_contents_allow_replace;
+#endif /* DOS_NT */
 
 /* These variables describe handlers that have "already" had a chance
    to handle the current operation.
@@ -415,8 +462,12 @@ Given a Unix syntax file name, returns a string ending in slash.
   beg = XSTRING_DATA (file);
   p = beg + XSTRING_LENGTH (file);
 
-  while (p != beg && !IS_ANY_SEP (p[-1]))
-    p--;
+  while (p != beg && !IS_ANY_SEP (p[-1])
+#ifdef DOS_NT
+	 /* only recognise drive specifier at beginning */
+	 && !(p[-1] == ':' && p == beg + 2)
+#endif
+    ) p--;
 
   if (p == beg)
     return Qnil;
@@ -425,29 +476,17 @@ Given a Unix syntax file name, returns a string ending in slash.
   /* (NT does the right thing.)  */
   if (p == beg + 2 && beg[1] == ':')
     {
-      int drive = (*beg) - 'a';
       /* MAXPATHLEN+1 is guaranteed to be enough space for getdefdir.  */
-      Bufbyte *res = (Bufbyte *) alloca (MAXPATHLEN + 5);
-      unsigned char *res1;
-#ifdef WINDOWSNT
-      res1 = res;
-      /* The NT version places the drive letter at the beginning already.  */
-#else /* not WINDOWSNT */
-      /* On MSDOG we must put the drive letter in by hand.  */
-      res1 = res + 2;
-#endif /* not WINDOWSNT */
-      if (getdefdir (drive + 1, res))
+      Bufbyte *res = alloca (MAXPATHLEN + 1);
+      if (getdefdir (toupper (*beg) - 'A' + 1, res))
 	{
-#ifdef MSDOS
-	  res[0] = drive + 'a';
-	  res[1] = ':';
-#endif /* MSDOS */
-	  if (IS_DIRECTORY_SEP (res[strlen ((char *) res) - 1]))
+	  if (!IS_DIRECTORY_SEP (res[strlen ((char *) res) - 1]))
 	    strcat ((char *) res, "/");
 	  beg = res;
 	  p = beg + strlen ((char *) beg);
 	}
     }
+  CORRECT_DIR_SEPS (beg);
 #endif /* DOS_NT */
   return make_string (beg, p - beg);
 }
@@ -475,8 +514,12 @@ or the entire name if it contains no slash.
   beg = XSTRING_DATA (file);
   end = p = beg + XSTRING_LENGTH (file);
 
-  while (p != beg && !IS_ANY_SEP (p[-1]))
-    p--;
+  while (p != beg && !IS_ANY_SEP (p[-1])
+#ifdef DOS_NT
+	 /* only recognise drive specifier at beginning */
+	 && !(p[-1] == ':' && p == beg + 2)
+#endif
+    ) p--;
 
   return make_string (p, end - p);
 }
@@ -551,7 +594,7 @@ For a Unix-syntax file name, just appends a slash.
 
 /*
  * Convert from directory name to filename.
- * On UNIX, it's simple: just make sure there is a terminating /
+ * On UNIX, it's simple: just make sure there isn't a terminating /
 
  * Value is nonzero if the string output is different from the input.
  */
@@ -575,10 +618,13 @@ directory_file_name (CONST char *src, char *dst)
       && IS_DIRECTORY_SEP (dst[slen - 1])
 #ifdef DOS_NT
       && !IS_ANY_SEP (dst[slen - 2])
-#endif
+#endif /* DOS_NT */
       )
     dst[slen - 1] = 0;
-#endif
+#endif /* APOLLO */
+#ifdef DOS_NT
+  CORRECT_DIR_SEPS (dst);
+#endif /* DOS_NT */
   return 1;
 }
 
@@ -633,6 +679,9 @@ so there is no danger of generating a name being used by another process.
   /* !!#### does mktemp() Mule-encapsulate? */
   mktemp ((char *) data);
 
+#ifdef DOS_NT
+  CORRECT_DIR_SEPS (XSTRING_DATA (val));
+#endif /* DOS_NT */
   return val;
 }
 
@@ -659,10 +708,9 @@ See also the function `substitute-in-file-name'.
   Bufbyte *target;
   struct passwd *pw;
 #ifdef DOS_NT
-  /* Demacs 1.1.2 91/10/20 Manabu Higashida */
-  int drive = -1;
-  int relpath = 0;
-  Bufbyte *tmp, *defdir;
+  int drive = 0;
+  int collapse_newdir = 1;
+  int length;
 #endif /* DOS_NT */
   Lisp_Object handler;
 
@@ -712,10 +760,28 @@ See also the function `substitute-in-file-name'.
 
      The EQ test avoids infinite recursion.  */
   if (! NILP(default_) && !EQ (default_, name)
-      /* This saves time in a common case.  */
+      /* Save time in some common cases - as long as default_directory
+	 is not relative, it can be canonicalized with name below (if it
+	 is needed at all) without requiring it to be expanded now.  */
       && ! (XSTRING_LENGTH (default_) >= 3
+#ifdef DOS_NT
+	    /* Detect MSDOS file names with drive specifiers. */
+	    && (IS_DRIVE (XSTRING_BYTE (default_, 0))
+		&& (IS_DEVICE_SEP (XSTRING_BYTE (default_, 1))
+		    IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 2)))))
+#ifdef WINDOWSNT
+      /* Detect Windows file names in UNC format.  */
+      && ! (XSTRING_LENGTH (default_) >= 2
+	    && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 0))
+	    && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 1)))
+#endif
+#else /* not DOS_NT */
+	    /* Detect Unix absolute file names (/... alone is not absolute on
+	       DOS or Windows).  */
 	    && (IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 0))
-		|| IS_DEVICE_SEP (XSTRING_BYTE (default_, 1)))))
+		|| IS_DEVICE_SEP (XSTRING_BYTE (default_, 1))))
+#endif /* not DOS_NT */
+      )
     {
       struct gcpro gcpro1;
 
@@ -732,29 +798,45 @@ See also the function `substitute-in-file-name'.
      pointing into name should be safe during all of this, though. */
   nm = XSTRING_DATA (name);
 
-#ifdef MSDOS
-  /* First map all backslashes to slashes.  */
-  dostounix_filename (nm = strcpy (alloca (strlen (nm) + 1), nm));
-#endif
-
 #ifdef DOS_NT
-  /* Now strip drive name. */
+  /* We will force directory separators to be either all \ or /, so make
+     a local copy to modify, even if there ends up being no change. */
+  nm = strcpy (alloca (strlen (nm) + 1), nm);
+
+  /* Find and remove drive specifier if present; this makes nm absolute
+     even if the rest of the name appears to be relative. */
   {
     Bufbyte *colon = strrchr (nm, ':');
     if (colon)
+      /* Only recognize colon as part of drive specifier if there is a
+	 single alphabetic character preceeding the colon (and if the
+	 character before the drive letter, if present, is a directory
+	 separator); this is to support the remote system syntax used by
+	 ange-ftp, and the "po:username" syntax for POP mailboxes. */
+      look_again:
       if (nm == colon)
 	nm++;
-      else
+      else if (IS_DRIVE (colon[-1])
+	       && (colon == nm + 1 || IS_DIRECTORY_SEP (colon[-2])))
 	{
 	  drive = colon[-1];
 	  nm = colon + 1;
-	  if (!IS_DIRECTORY_SEP (*nm))
-	    {
-	      defdir = alloca (MAXPATHLEN + 1);
-	      relpath = getdefdir (tolower (drive) - 'a' + 1, defdir);
-	    }
+	}
+      else
+	{
+	  while (--colon >= nm)
+	    if (colon[0] == ':')
+	      goto look_again;
 	}
   }
+
+#ifdef WINDOWSNT
+  /* If we see "c://somedir", we want to strip the first slash after the
+     colon when stripping the drive letter.  Otherwise, this expands to
+     "//somedir".  */
+  if (drive && IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
+    nm++;
+#endif /* WINDOWSNT */
 #endif /* DOS_NT */
 
   /* We *don't* want to handle // and /~ that way.  */
@@ -784,11 +866,25 @@ See also the function `substitute-in-file-name'.
 
       p++;
     }
-#endif
 
-  /* If nm is absolute, flush ...// and detect /./ and /../.
-     If no /./ or /../ we can return right away. */
-  if (IS_DIRECTORY_SEP (nm[0]))
+#endif /* 0 */
+
+#ifdef WINDOWSNT
+  /* Discard any previous drive specifier if nm is now in UNC format. */
+  if (IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
+    {
+      drive = 0;
+    }
+#endif /* WINDOWSNT */
+
+  /* If nm is absolute, look for /./ or /../ sequences; if none are
+     found, we can probably return right away.  We will avoid allocating
+     a new string if name is already fully expanded.  */
+  if (IS_DIRECTORY_SEP (nm[0])
+#ifdef WINDOWSNT
+      && (drive || IS_DIRECTORY_SEP (nm[1]))
+#endif
+      )
     {
       /* If it turns out that the filename we want to return is just a
 	 suffix of FILENAME, we don't need to go through and edit
@@ -816,15 +912,51 @@ See also the function `substitute-in-file-name'.
 	}
       if (!lose)
 	{
-#ifndef DOS_NT
+#ifdef DOS_NT
+	  /* Make sure directories are all separated with / or \ as
+	     desired, but avoid allocation of a new string when not
+	     required. */
+	  CORRECT_DIR_SEPS (nm);
+#ifdef WINDOWSNT
+	  if (IS_DIRECTORY_SEP (nm[1]))
+	    {
+	      if (strcmp (nm, XSTRING_DATA (name)) != 0)
+		name = build_string (nm);
+	    }
+	  else
+#endif
+	    /* drive must be set, so this is okay */
+	    if (strcmp (nm - 2, XSTRING_DATA (name)) != 0)
+	      {
+		name = make_string (nm - 2, p - nm + 2);
+		XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
+		XSTRING_DATA (name)[1] = ':';
+	      }
+	  return name;
+#else /* not DOS_NT */
+	  /* Unix */
 	  if (nm == XSTRING_DATA (name))
 	    return name;
 	  return build_string ((char *) nm);
-#endif /* not DOS_NT */
+#endif /* DOS_NT */
 	}
     }
 
-  /* Now determine directory to start with and put it in newdir */
+  /* At this point, nm might or might not be an absolute file name.  We
+     need to expand ~ or ~user if present, otherwise prefix nm with
+     default_directory if nm is not absolute, and finally collapse /./
+     and /foo/../ sequences.
+
+     We set newdir to be the appropriate prefix if one is needed:
+	- the relevant user directory if nm starts with ~ or ~user
+	- the specified drive's working dir (DOS/NT only) if nm does not
+	  start with /
+	- the value of default_directory.
+
+     Note that these prefixes are not guaranteed to be absolute (except
+     for the working dir of a drive).  Therefore, to ensure we always
+     return an absolute name, if the final prefix is not absolute we
+     append it to the current working directory.  */
 
   newdir = 0;
 
@@ -835,6 +967,10 @@ See also the function `substitute-in-file-name'.
 	{
 	  if (!(newdir = (Bufbyte *) egetenv ("HOME")))
 	    newdir = (Bufbyte *) "";
+/* Syncing with FSF 19.34.6 note: this is not in FSF.  Since it is dated 1995,
+   I doubt it is coming from XEmacs.  I (#if 0) it but let the code
+   stay there just in case. --marcpa */
+#if 0
 #ifdef DOS_NT
  	  /* Problem when expanding "~\" if HOME is not on current drive.
  	     Ulrich Leodolter, Wed Jan 11 10:20:35 1995 */
@@ -842,7 +978,11 @@ See also the function `substitute-in-file-name'.
  	    drive = newdir[0];
 	  dostounix_filename (newdir);
 #endif /* DOS_NT */
+#endif /* 0 */
 	  nm++;
+#ifdef DOS_NT
+	  collapse_newdir = 0;
+#endif /* DOS_NT */
 	}
       else			/* ~user/filename */
 	{
@@ -851,6 +991,12 @@ See also the function `substitute-in-file-name'.
 	  memcpy (o, (char *) nm, p - nm);
 	  o [p - nm] = 0;
 
+/* Syncing with FSF 19.34.6 note: FSF uses getpwnam even on NT, which does
+   not work.  The following works only if ~USER names the user who runs
+   this instance of XEmacs.  While NT is single-user (for the moment) you
+   still can have multiple user profiles users defined, each with its
+   HOME.  Therefore, the following should be reworked to handle this case.  
+   --marcpa */
 #ifdef  WINDOWSNT
 	  /*
 	  ** Now if the file given is "~foo/file" and HOME="c:/", then we
@@ -858,7 +1004,7 @@ See also the function `substitute-in-file-name'.
 	  ** The variable o has "~foo", so we can use the length of
 	  ** that string to offset nm.  August Hill, 31 Aug 1998.
 	  */
-	  newdir = (unsigned char *) egetenv ("HOME");
+	  newdir = (Bufbyte *) egetenv ("HOME");
 	  dostounix_filename (newdir);
 	  nm += strlen(o) + 1;
 #else  /* not WINDOWSNT */
@@ -879,10 +1025,39 @@ See also the function `substitute-in-file-name'.
 	}
     }
 
-  if (!IS_ANY_SEP (nm[0])
 #ifdef DOS_NT
-      && drive == -1
+  /* On DOS and Windows, nm is absolute if a drive name was specified;
+     use the drive's current directory as the prefix if needed.  */
+  if (!newdir && drive)
+    {
+      /* Get default directory if needed to make nm absolute. */
+      if (!IS_DIRECTORY_SEP (nm[0]))
+	{
+	  newdir = alloca (MAXPATHLEN + 1);
+	  if (!getdefdir (toupper (drive) - 'A' + 1, newdir))
+	    newdir = NULL;
+	}
+      if (!newdir)
+	{
+	  /* Either nm starts with /, or drive isn't mounted. */
+	  newdir = alloca (4);
+	  newdir[0] = DRIVE_LETTER (drive);
+	  newdir[1] = ':';
+	  newdir[2] = '/';
+	  newdir[3] = 0;
+	}
+    }
 #endif /* DOS_NT */
+
+  /* Finally, if no prefix has been specified and nm is not absolute,
+     then it must be expanded relative to default_directory. */
+  if (1
+#ifndef DOS_NT
+      && !IS_ANY_SEP (nm[0])
+#endif /* not DOS_NT */
+#ifdef WINDOWSNT
+      && !(IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
+#endif
       && !newdir
       && STRINGP (default_))
     {
@@ -890,20 +1065,88 @@ See also the function `substitute-in-file-name'.
     }
 
 #ifdef DOS_NT
-  if (newdir == 0 && relpath)
-    newdir = defdir;
+  if (newdir)
+    {
+      /* First ensure newdir is an absolute name. */
+      if (
+	  /* Detect MSDOS file names with drive specifiers.  */
+	  ! (IS_DRIVE (newdir[0])
+	     && IS_DEVICE_SEP (newdir[1]) && IS_DIRECTORY_SEP (newdir[2]))
+#ifdef WINDOWSNT
+	  /* Detect Windows file names in UNC format.  */
+	  && ! (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
+#endif
+	  )
+	{
+	  /* Effectively, let newdir be (expand-file-name newdir cwd).
+	     Because of the admonition against calling expand-file-name
+	     when we have pointers into lisp strings, we accomplish this
+	     indirectly by prepending newdir to nm if necessary, and using
+	     cwd (or the wd of newdir's drive) as the new newdir. */
+
+	  if (IS_DRIVE (newdir[0]) && newdir[1] == ':')
+	    {
+	      drive = newdir[0];
+	      newdir += 2;
+	    }
+	  if (!IS_DIRECTORY_SEP (nm[0]))
+	    {
+	      char * tmp = alloca (strlen (newdir) + strlen (nm) + 2);
+	      file_name_as_directory (tmp, newdir);
+	      strcat (tmp, nm);
+	      nm = tmp;
+	    }
+	  newdir = alloca (MAXPATHLEN + 1);
+	  if (drive)
+	    {
+	      if (!getdefdir (toupper (drive) - 'A' + 1, newdir))
+		newdir = "/";
+	    }
+	  else
+	    getwd (newdir);
+	}
+
+      /* Strip off drive name from prefix, if present. */
+      if (IS_DRIVE (newdir[0]) && newdir[1] == ':')
+	{
+	  drive = newdir[0];
+	  newdir += 2;
+	}
+
+      /* Keep only a prefix from newdir if nm starts with slash
+         (//server/share for UNC, nothing otherwise). */
+      if (IS_DIRECTORY_SEP (nm[0]) && collapse_newdir)
+	{
+#ifdef WINDOWSNT
+	  if (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
+	    {
+	      newdir = strcpy (alloca (strlen (newdir) + 1), newdir);
+	      p = newdir + 2;
+	      while (*p && !IS_DIRECTORY_SEP (*p)) p++;
+	      p++;
+	      while (*p && !IS_DIRECTORY_SEP (*p)) p++;
+	      *p = 0;
+	    }
+	  else
+#endif
+	    newdir = "";
+	}
+    }
 #endif /* DOS_NT */
   if (newdir != 0)
     {
-      /* Get rid of any slash at the end of newdir.  */
+      /* Get rid of any slash at the end of newdir, unless newdir is
+	 just // (an incomplete UNC name).  */
       int length = strlen ((char *) newdir);
       /* Adding `length > 1 &&' makes ~ expand into / when homedir
 	 is the root dir.  People disagree about whether that is right.
 	 Anyway, we can't take the risk of this change now.  */
-#ifdef DOS_NT
-      if (newdir[1] != ':' && length > 1)
+      /* Syncing with FSF 19.34.6 note: FSF does the above. */
+      if (IS_DIRECTORY_SEP (newdir[length - 1])
+#ifdef WINDOWSNT
+	  && !(length == 2 && IS_DIRECTORY_SEP (newdir[0]))
 #endif
-      if (IS_DIRECTORY_SEP (newdir[length - 1]))
+	  )
 	{
 	  Bufbyte *temp = (Bufbyte *) alloca (length);
 	  memcpy (temp, newdir, length - 1);
@@ -924,7 +1167,7 @@ See also the function `substitute-in-file-name'.
   target += 2;
 #else  /* not DOS_NT */
   target = (Bufbyte *) alloca (tlen);
-#endif /* not DOS_NT */
+#endif /* DOS_NT */
   *target = 0;
 
   if (newdir)
@@ -953,7 +1196,7 @@ See also the function `substitute-in-file-name'.
 	       /* // at start of filename is meaningful in Apollo
 		  and WindowsNT systems */
 	       && o != target
-#endif /* APOLLO */
+#endif /* APOLLO || WINDOWSNT */
 	       )
 	{
 	  o = target;
@@ -977,13 +1220,11 @@ See also the function `substitute-in-file-name'.
 	{
 	  while (o != target && (--o) && !IS_DIRECTORY_SEP (*o))
 	    ;
-#if defined (APOLLO) || defined (WINDOWSNT)
-	  if (o == target + 1
-	      && IS_DIRECTORY_SEP (o[-1]) && IS_DIRECTORY_SEP (o[0]))
-	    ++o;
-	  else
-#endif /* APOLLO || WINDOWSNT */
-	  if (o == target && IS_ANY_SEP (*o))
+	  if (o == target && IS_ANY_SEP (*o)
+#ifdef DOS_NT
+	      && p[3] == 0
+#endif
+	      )
 	    ++o;
 	  p += 3;
 	}
@@ -994,18 +1235,18 @@ See also the function `substitute-in-file-name'.
     }
 
 #ifdef DOS_NT
-  /* at last, set drive name. */
-  if (target[1] != ':'
+  /* At last, set drive name. */
 #ifdef WINDOWSNT
-      /* Allow network paths that look like "\\foo" */
-      && !(IS_DIRECTORY_SEP (target[0]) && IS_DIRECTORY_SEP (target[1]))
+  /* Except for network file name.  */
+  if (!(IS_DIRECTORY_SEP (target[0]) && IS_DIRECTORY_SEP (target[1])))
 #endif /* WINDOWSNT */
-      )
     {
+      if (!drive) abort ();
       target -= 2;
-      target[0] = (drive < 0 ? getdisk () + 'A' : drive);
+      target[0] = DRIVE_LETTER (drive);
       target[1] = ':';
     }
+  CORRECT_DIR_SEPS (target);
 #endif /* DOS_NT */
 
   return make_string (target, o - target);
@@ -1165,9 +1406,10 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 				      string);
 
   nm = XSTRING_DATA (string);
-#ifdef MSDOS
-  dostounix_filename (nm = strcpy (alloca (strlen (nm) + 1), nm));
-  substituted = !strcmp (nm, XSTRING_DATA (string));
+#ifdef DOS_NT
+  nm = strcpy (alloca (strlen (nm) + 1), nm);
+  CORRECT_DIR_SEPS (nm);
+  substituted = (strcmp (nm, XSTRING_DATA (string)) != 0);
 #endif
   endp = nm + XSTRING_LENGTH (string);
 
@@ -1175,17 +1417,14 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 
   for (p = nm; p != endp; p++)
     {
-      if ((p[0] == '~' ||
-#ifdef APOLLO
-	   /* // at start of file name is meaningful in Apollo system */
-	   (p[0] == '/' && p - 1 != nm)
-#else /* not APOLLO */
-#ifdef WINDOWSNT
-	   (IS_DIRECTORY_SEP (p[0]) && p - 1 != nm)
-#else /* not WINDOWSNT */
-	   p[0] == '/'
-#endif /* not WINDOWSNT */
-#endif /* not APOLLO */
+      if ((p[0] == '~'
+#if defined (APOLLO) || defined (WINDOWSNT)
+	   /* // at start of file name is meaningful in Apollo and
+	      WindowsNT systems */
+	   || (IS_DIRECTORY_SEP (p[0]) && p - 1 != nm)
+#else /* not (APOLLO || WINDOWSNT) */
+	   || IS_DIRECTORY_SEP (p[0])
+#endif /* not (APOLLO || WINDOWSNT) */
 	   )
 	  && p != nm
 	  && (IS_DIRECTORY_SEP (p[-1])))
@@ -1194,7 +1433,9 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 	  substituted = 1;
 	}
 #ifdef DOS_NT
-      if (p[0] && p[1] == ':')
+      /* see comment in expand-file-name about drive specifiers */
+      else if (IS_DRIVE (p[0]) && p[1] == ':'
+	       && p > nm && IS_DIRECTORY_SEP (p[-1]))
 	{
 	  nm = p;
 	  substituted = 1;
@@ -1309,22 +1550,18 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 
   for (p = xnm; p != x; p++)
     if ((p[0] == '~'
-#ifdef APOLLO
-	 /* // at start of file name is meaningful in Apollo system */
-	 || (p[0] == '/' && p - 1 != xnm)
-#else /* not APOLLO */
-#ifdef WINDOWSNT
+#if defined (APOLLO) || defined (WINDOWSNT)
 	 || (IS_DIRECTORY_SEP (p[0]) && p - 1 != xnm)
-#else /* not WINDOWSNT */
-	 || p[0] == '/'
-#endif /* not WINDOWSNT */
-#endif /* not APOLLO */
+#else /* not (APOLLO || WINDOWSNT) */
+	 || IS_DIRECTORY_SEP (p[0])
+#endif /* APOLLO || WINDOWSNT */
 	 )
 	/* don't do p[-1] if that would go off the beginning --jwz */
 	&& p != nm && p > xnm && IS_DIRECTORY_SEP (p[-1]))
       xnm = p;
 #ifdef DOS_NT
-    else if (p[0] && p[1] == ':')
+    else if (IS_DRIVE (p[0]) && p[1] == ':'
+	     && p > nm && IS_DIRECTORY_SEP (p[-1]))
 	xnm = p;
 #endif
 
@@ -1342,7 +1579,8 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   return Qnil;	/* suppress compiler warning */
 }
 
-/* (directory-file-name (expand-file-name FOO)) */
+/* A slightly faster and more convenient way to get
+   (directory-file-name (expand-file-name FOO)).  */
 
 Lisp_Object
 expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
@@ -1752,9 +1990,9 @@ This is what happens in interactive use with M-x.
     barf_or_query_if_file_exists (newname, "rename to it",
 				  INTP (ok_if_already_exists), 0);
 
-#ifdef WINDOWSNT
-  if (!MoveFile (XSTRING (filename)->_data, XSTRING (newname)->_data))
-#else  /* not WINDOWSNT */
+/* Syncing with FSF 19.34.6 note: FSF does not have conditional code for
+   WINDOWSNT here; I've removed it.  --marcpa */
+
     /* FSFmacs only calls rename() here under BSD 4.1, and calls
        link() and unlink() otherwise, but that's bogus.  Sometimes
        rename() succeeds where link()/unlink() fail, and we have
@@ -1762,15 +2000,8 @@ This is what happens in interactive use with M-x.
        if necessary. */
   if (0 > rename ((char *) XSTRING_DATA (filename),
 		  (char *) XSTRING_DATA (newname)))
-#endif /* not WINDOWSNT */
     {
-#ifdef  WINDOWSNT
-      /* Why two?  And why doesn't MS document what MoveFile will return?  */
-      if (GetLastError () == ERROR_FILE_EXISTS
-	  || GetLastError () == ERROR_ALREADY_EXISTS)
-#else  /* not WINDOWSNT */
       if (errno == EXDEV)
-#endif /* not WINDOWSNT */
 	{
 	  Fcopy_file (filename, newname,
 		      /* We have already prompted if it was an integer,
@@ -1826,10 +2057,12 @@ This is what happens in interactive use with M-x.
       || INTP (ok_if_already_exists))
     barf_or_query_if_file_exists (newname, "make it a new name",
 				  INTP (ok_if_already_exists), 0);
-#ifdef WINDOWSNT
+/* Syncing with FSF 19.34.6 note: FSF does not report a file error
+   on NT here. --marcpa */
+#if 0 /* defined(WINDOWSNT) */
   /* Windows does not support this operation.  */
   report_file_error ("Adding new name", Flist (2, &filename));
-#else /* not WINDOWSNT */
+#else /* not 0 -- defined(WINDOWSNT) */
 
   unlink ((char *) XSTRING_DATA (newname));
   if (0 > link ((char *) XSTRING_DATA (filename),
@@ -1838,7 +2071,7 @@ This is what happens in interactive use with M-x.
       report_file_error ("Adding new name",
 			 list2 (filename, newname));
     }
-#endif /* not WINDOWSNT */
+#endif /* 0 -- defined(WINDOWSNT) */
 
   UNGCPRO;
   return Qnil;
@@ -1865,7 +2098,7 @@ This happens for interactive use with M-x.
   /* If the link target has a ~, we must expand it to get
      a truly valid file name.  Otherwise, do not expand;
      we want to permit links to relative file names.  */
-  if (XSTRING_BYTE (filename, 0) == '~') /* #### Un*x-specific */
+  if (XSTRING_BYTE (filename, 0) == '~')
     filename = Fexpand_file_name (filename, Qnil);
   linkname = Fexpand_file_name (linkname, Qnil);
 
@@ -1944,7 +2177,7 @@ On Unix, this is a name starting with a `/' or a `~'.
   ptr = XSTRING_DATA (filename);
   if (IS_DIRECTORY_SEP (*ptr) || *ptr == '~'
 #ifdef DOS_NT
-      || (*ptr != 0 && ptr[1] == ':' && (ptr[2] == '/' || ptr[2] == '\\'))
+      || (IS_DRIVE (*ptr) && ptr[1] == ':' && IS_DIRECTORY_SEP (ptr[2]))
 #endif
       )
     return Qt;
@@ -1963,12 +2196,16 @@ check_executable (char *filename)
   struct stat st;
   if (stat (filename, &st) < 0)
     return 0;
+#if defined (WINDOWSNT)
+  return ((st.st_mode & S_IEXEC) != 0);
+#else
   return (S_ISREG (st.st_mode)
 	  && len >= 5
 	  && (stricmp ((suffix = filename + len-4), ".com") == 0
 	      || stricmp (suffix, ".exe") == 0
 	      || stricmp (suffix, ".bat") == 0)
 	  || (st.st_mode & S_IFMT) == S_IFDIR);
+#endif /* not WINDOWSNT */
 #else /* not DOS_NT */
 #ifdef HAVE_EACCESS
   return eaccess (filename, 1) >= 0;
@@ -2084,11 +2321,18 @@ See also `file-exists-p' and `file-attributes'.
   if (!NILP (handler))
     return call2 (handler, Qfile_readable_p, abspath);
 
+#ifdef DOS_NT
+  /* Under MS-DOS and Windows, open does not work for directories.  */
+  if (access (XSTRING_DATA (abspath), 0) == 0)
+    return Qt;
+  return Qnil;
+#else /* not DOS_NT */
   desc = open ((char *) XSTRING_DATA (abspath), O_RDONLY, 0);
   if (desc < 0)
     return Qnil;
   close (desc);
   return Qt;
+#endif /* not DOS_NT */
 }
 
 /* Having this before file-symlink-p mysteriously caused it to be forgotten
@@ -2238,10 +2482,28 @@ searchable directory.
     return call2 (handler, Qfile_accessible_directory_p,
 		  filename);
 
+#if !defined(DOS_NT)
   if (NILP (Ffile_directory_p (filename)))
       return (Qnil);
   else
     return Ffile_executable_p (filename);
+#else
+  {
+    int tem;
+    struct gcpro gcpro1;
+    /* It's an unlikely combination, but yes we really do need to gcpro:
+       Suppose that file-accessible-directory-p has no handler, but
+       file-directory-p does have a handler; this handler causes a GC which
+       relocates the string in `filename'; and finally file-directory-p
+       returns non-nil.  Then we would end up passing a garbaged string
+       to file-executable-p.  */
+    GCPRO1 (filename);
+    tem = (NILP (Ffile_directory_p (filename))
+	   || NILP (Ffile_executable_p (filename)));
+    UNGCPRO;
+    return tem ? Qnil : Qt;
+  }
+#endif /* !defined(DOS_NT) */
 }
 
 DEFUN ("file-regular-p", Ffile_regular_p, 1, 1, 0, /*
@@ -2299,10 +2561,13 @@ Return mode bits of FILE, as an integer.
 
   if (stat ((char *) XSTRING_DATA (abspath), &st) < 0)
     return Qnil;
+  /* Syncing with FSF 19.34.6 note: not in FSF, #if 0'ed out here. */
+#if 0
 #ifdef DOS_NT
   if (check_executable (XSTRING (abspath)->_data))
     st.st_mode |= S_IEXEC;
 #endif /* DOS_NT */
+#endif /* 0 */
 
   return make_int (st.st_mode & 07777);
 }
@@ -2430,6 +2695,56 @@ otherwise, if FILE2 does not exist, the answer is t.
 
 #ifdef DOS_NT
 Lisp_Object Qfind_buffer_file_type;
+
+/* Return 1 if buffer is text, 0 if binary.  */
+static int
+decide_buffer_type (unsigned char * buffer, int nbytes)
+{
+  /* Buffer is binary if we find any LF chars not preceeded by CR or if
+     the buffer doesn't contain at least 1 line.  */
+  unsigned lines = 0;
+  unsigned char *p, *q;
+
+  for (p = buffer; nbytes > 0 && (q = memchr (p, '\n', nbytes)) != NULL;
+       p = q + 1 )
+    {
+      nbytes -= (q + 1 - p);
+      lines++;
+      if (q > buffer && q[-1] != '\r')
+	return 0;
+    }
+
+  /* If we haven't seen any line endings yet, return -1 (meaning type is
+     undecided) so we can examine the next bufferful as well.  */
+  return (lines > 0) ? 1 : -1;
+}
+
+/* XEmacs addition: like decide_buffer_type(), but working on a XEmacs buffer:
+   first arg is a byte index position instead of a char pointer;
+   we check each char sequentially. --marcpa */
+static int
+buf_decide_buffer_type (struct buffer *buf, Bytind start, int nbytes)
+{
+  /* Buffer is binary if we find any LF chars not preceeded by CR or if
+     the buffer doesn't contain at least 1 line.  */
+  unsigned lines = 0;
+  Bytind cur = start;
+
+  while (nbytes)
+    {
+      if (BI_BUF_FETCH_CHAR(buf, cur) == '\n')
+	{
+	  lines++;
+	  if (cur != start && BI_BUF_FETCH_CHAR(buf, cur - 1) != '\r')
+	    return 0;
+	}
+      nbytes--;
+    }
+
+  /* If we haven't seen any line endings yet, return -1 (meaning type is
+     undecided) so we can examine the next bufferful as well.  */
+  return (lines > 0) ? 1 : -1;
+}
 #endif /* DOS_NT */
 
 /* Stack sizes > 2**16 is a good way to elicit compiler bugs */
@@ -2470,6 +2785,11 @@ positions), even in Mule. (Fixing this is very difficult.)
   struct buffer *buf = current_buffer;
   Lisp_Object curbuf;
   int not_regular = 0;
+#ifdef DOS_NT
+  int crlf_conversion_required = 0;
+  unsigned crlf_count = 0;
+  unsigned lf_count = 0;
+#endif
 
   if (buf->base_buffer && ! NILP (visit))
     error ("Cannot do file visiting in an indirect buffer");
@@ -2586,17 +2906,30 @@ positions), even in Mule. (Fixing this is very difficult.)
 	  if (XINT (end) != st.st_size)
 	    error ("Maximum buffer size exceeded");
 	}
+
+#ifdef DOS_NT
+      /* Permit old behaviour if desired.  */
+      if (NILP (Vinsert_file_contents_allow_replace) && !NILP (replace))
+	{
+	  replace = Qnil;
+	  /* Surely this was never right!  */
+	  /* XSETFASTINT (beg, 0);
+	     XSETFASTINT (end, st.st_size); */
+	  buffer_delete_range (buf, BUF_BEGV(buf), BUF_ZV(buf),
+			       !NILP (visit) ? INSDEL_NO_LOCKING : 0);
+	}
+#endif /* DOS_NT */
     }
 
   /* If requested, replace the accessible part of the buffer
      with the file contents.  Avoid replacing text at the
      beginning or end of the buffer that matches the file contents;
      that preserves markers pointing to the unchanged parts.  */
-#if !defined (DOS_NT) && !defined (MULE)
+#if !defined (MULE)
   /* The replace-mode code currently only works when the assumption
-     'one byte == one char' holds true.  This fails under MSDOS and
-     Windows NT (because newlines are represented as CR-LF in text
-     files) and under Mule because files may contain multibyte characters. */
+     'one byte == one char' holds true.  This fails Mule because
+     files may contain multibyte characters.  It holds under Windows NT
+     provided we convert CRLF into LF. */
 # define FSFMACS_SPEEDY_INSERT
 #endif
 #ifndef FSFMACS_SPEEDY_INSERT
@@ -2612,6 +2945,38 @@ positions), even in Mule. (Fixing this is very difficult.)
       Bufpos same_at_start = BUF_BEGV (buf);
       Bufpos same_at_end = BUF_ZV (buf);
       int overlap;
+#ifdef DOS_NT
+      /* Syncing with 19.34.6 note: same_at_start_in_file and
+	 same_at_end_in_file are not in XEmacs 20.4.
+	 First try to introduce them as-is and see what happens.
+	 Might be necessary to use constructs like
+	 st.st_size - (BUF_ZV (buf) - same_at_end)
+	 instead.
+	 --marcpa
+      */
+      /* Offset into the file where discrepancy begins.  */
+      int same_at_start_in_file = 0;
+      /* Offset into the file where discrepancy ends.  */
+      int same_at_end_in_file = st.st_size;
+      /* DOS_NT only: is there a `\r' character left in the buffer? */
+      int cr_left_in_buffer = 0;
+      /* DOS_NT only: was `\n' the first character in previous bufferful?  */
+      int last_was_lf = 0;
+
+      /* Demacs 1.1.1 91/10/16 HIRANO Satoshi, MW July 1993 */
+      /* Determine file type (text/binary) from its name.
+	 Note that the buffer_file_type changes here when the file
+	 being inserted is not of the same type as the original buffer.  */
+      current_buffer->buffer_file_type = call1 (Qfind_buffer_file_type, filename);
+      if (NILP (current_buffer->buffer_file_type))
+	crlf_conversion_required = 1;
+      else if (current_buffer->buffer_file_type != Qt)
+	/* Use heuristic to decide whether file is text or binary (based
+	   on the first bufferful) if buffer-file-type is not nil or t.
+	   If no decision is made (because no line endings were ever
+	   seen) then let buffer-file-type default to nil.  */
+	crlf_conversion_required = -1;
+#endif /* DOS_NT */
 
       /* Count how many chars at the start of the file
 	 match the text at the beginning of the buffer.  */
@@ -2619,7 +2984,16 @@ positions), even in Mule. (Fixing this is very difficult.)
 	{
 	  int nread;
 	  Bufpos bufpos;
-
+#ifdef DOS_NT
+	      if (cr_left_in_buffer)
+		{
+		  nread = read_allowing_quit (fd, buffer + 1, sizeof(buffer) - 1);
+		  cr_left_in_buffer = 0;
+		  if (nread >= 0)
+		    nread++;
+		}
+	      else
+#endif /* DOS_NT */
 	  nread = read_allowing_quit (fd, buffer, sizeof buffer);
 	  if (nread < 0)
 	    error ("IO error reading %s: %s",
@@ -2627,17 +3001,73 @@ positions), even in Mule. (Fixing this is very difficult.)
 	  else if (nread == 0)
 	    break;
 	  bufpos = 0;
+#ifdef DOS_NT
+	  /* If requested, we do a simple check on the first bufferful
+	     to decide whether the file is binary or text.  (If text, we
+	     count LF and CRLF occurences to determine whether the file
+	     was in Unix or DOS format.)  */
+	  if (crlf_conversion_required < 0)
+	    {
+	      crlf_conversion_required = decide_buffer_type (buffer, nread);
+	      current_buffer->buffer_file_type =
+		crlf_conversion_required ? Qnil : Qt;
+	    }
+
+	  /* DOS_NT text files require that we ignore a `\r' before a `\n'.  */
+	  if (crlf_conversion_required > 0)
+	    while (bufpos < nread && same_at_start < BUF_ZV (buf))
+	      {
+		int filec = buffer[bufpos];
+		int bufc  = BUF_FETCH_CHAR (buf, same_at_start);
+
+		if (filec == '\n')
+		  lf_count++;
+
+		if (filec == bufc)
+		  same_at_start++, bufpos++, same_at_start_in_file++;
+		else if (filec == '\r' && bufc == '\n')
+		  {
+		    /* If the `\r' is the last character in this buffer,
+		       it will be examined with the next bufferful.  */
+		    if (bufpos == nread)
+		      {
+			buffer[0] = filec;
+			cr_left_in_buffer = 1;
+		      }
+		    else if (buffer[bufpos + 1] == bufc)
+		      {
+			bufpos += 2;
+			same_at_start_in_file += 2;
+			same_at_start++;
+			crlf_count++;
+			lf_count++;
+		      }
+		    else
+		      break;
+		  }
+		else
+		  break;
+	      }
+	  else
+#endif /* DOS_NT */
 	  while (bufpos < nread && same_at_start < BUF_ZV (buf)
 		 && BUF_FETCH_CHAR (buf, same_at_start) == buffer[bufpos])
+#ifdef DOS_NT
+	    same_at_start_in_file++,
+#endif
 	    same_at_start++, bufpos++;
 	  /* If we found a discrepancy, stop the scan.
-	     Otherwise loop around and scan the next bufferfull.  */
+	     Otherwise loop around and scan the next bufferful.  */
 	  if (bufpos != nread)
 	    break;
 	}
       /* If the file matches the buffer completely,
 	 there's no need to replace anything.  */
+#ifdef DOS_NT
+      if (same_at_start_in_file == st.st_size)
+#else
       if (same_at_start - BUF_BEGV (buf) == st.st_size)
+#endif /* DOS_NT */
 	{
 	  close (fd);
           unbind_to (speccount, Qnil);
@@ -2654,7 +3084,11 @@ positions), even in Mule. (Fixing this is very difficult.)
 	  Bufpos bufpos, curpos, trial;
 
 	  /* At what file position are we now scanning?  */
+#ifdef DOS_NT
+	  curpos = same_at_end_in_file;
+#else
 	  curpos = st.st_size - (BUF_ZV (buf) - same_at_end);
+#endif /* DOS_NT */
 	  /* If the entire file matches the buffer tail, stop the scan.  */
 	  if (curpos == 0)
 	    break;
@@ -2674,17 +3108,64 @@ positions), even in Mule. (Fixing this is very difficult.)
 		       XSTRING_DATA (filename), strerror (errno));
 	      total_read += nread;
 	    }
-	  /* Scan this bufferfull from the end, comparing with
+	  /* Scan this bufferful from the end, comparing with
 	     the Emacs buffer.  */
 	  bufpos = total_read;
+#ifdef DOS_NT
+	  /* DOS_NT text files require that we ignore a `\r' before a `\n'.  */
+	  if (crlf_conversion_required)
+#endif /* DOS_NT */
 	  /* Compare with same_at_start to avoid counting some buffer text
 	     as matching both at the file's beginning and at the end.  */
+#if !defined(DOS_NT)
 	  while (bufpos > 0 && same_at_end > same_at_start
 		 && BUF_FETCH_CHAR (buf, same_at_end - 1) ==
 		 buffer[bufpos - 1])
 	    same_at_end--, bufpos--;
+#else /* DOS_NT */
+ 	  while (bufpos > 0 && same_at_end > same_at_start
+		       && same_at_end_in_file > same_at_start_in_file)
+		  {
+		    int filec = buffer[bufpos - 1];
+		    int bufc  = BUF_FETCH_CHAR (buf, same_at_end - 1);
+
+		    /* Account for `\n' in previous bufferful.  */
+		    if (last_was_lf && filec == '\r')
+		      {
+			same_at_end_in_file--, bufpos--;
+			last_was_lf = 0;
+			crlf_count++;
+		      }
+		    else if (filec == bufc)
+		      {
+			last_was_lf = 0;
+			same_at_end--, same_at_end_in_file--, bufpos--;
+			if (bufc == '\n')
+			  {
+			    lf_count++;
+			    if (bufpos <= 0)
+			      last_was_lf = 1;
+			    else if (same_at_end_in_file <= same_at_start_in_file)
+			      break;
+			    else if (buffer[bufpos - 1] == '\r')
+			      same_at_end_in_file--, bufpos--, crlf_count++;
+			  }
+		      }
+		    else
+		      {
+			last_was_lf = 0;
+			break;
+		      }
+		  }
+	      else
+		while (bufpos > 0 && same_at_end > same_at_start
+		       && same_at_end_in_file > same_at_start_in_file
+ 		 && BUF_FETCH_CHAR (buf, same_at_end - 1) ==
+ 		 buffer[bufpos - 1])
+		  same_at_end--, same_at_end_in_file--, bufpos--;
+#endif /* !defined(DOS_NT) */
 	  /* If we found a discrepancy, stop the scan.
-	     Otherwise loop around and scan the preceding bufferfull.  */
+	     Otherwise loop around and scan the preceding bufferful.  */
 	  if (bufpos != 0)
 	    break;
 	  /* If display current starts at beginning of line,
@@ -2701,8 +3182,13 @@ positions), even in Mule. (Fixing this is very difficult.)
 	same_at_end += overlap;
 
       /* Arrange to read only the nonmatching middle part of the file.  */
+#ifdef DOS_NT
+	  beg = make_int (same_at_start_in_file);
+	  end = make_int (same_at_end_in_file);
+#else
       beg = make_int (same_at_start - BUF_BEGV (buf));
       end = make_int (st.st_size - (BUF_ZV (buf) - same_at_end));
+#endif /* DOS_NT */
 
       buffer_delete_range (buf, same_at_start, same_at_end,
 			   !NILP (visit) ? INSDEL_NO_LOCKING : 0);
@@ -2775,6 +3261,85 @@ positions), even in Mule. (Fixing this is very difficult.)
 	      saverrno = errno;
 	    break;
 	  }
+#ifdef DOS_NT
+	    /* XEmacs (--marcpa) change: FSF does buffer_insert_raw_string_1() first
+	       then checks if conversion is needed, calling lisp
+	       (find-buffer-file-type) which can call a user-function that
+	       might look at the unconverted buffer to decide if
+	       conversion is needed.
+	       I removed the possibility for lisp functions called from
+	       find-buffer-file-type to look at the buffer's content, for
+	       simplicity reasons: it is easier to do the CRLF -> LF
+	       conversion on read_buf than on buffer contents because
+	       BUF_FETCH_CHAR does not return a pointer to an unsigned
+	       char memory location, and because we must cope with bytind
+	       VS bufpos in XEmacs, thus complicating crlf_to_lf().
+	       This decision (of doing Lstream_read(), crlf_to_lf() then
+	       buffer_insert_raw_string_1()) is debatable.
+	       --marcpa
+	       */
+	    /* Following FSF note no longer apply now.  See comment above.
+	       --marcpa*/
+	    /* For compatability with earlier versions that did not support the
+	       REPLACE funtionality, we call find-buffer-file-type after inserting
+	       the contents to allow it to inspect the inserted data.  (This was
+	       not intentional usage, but proved to be quite useful.)  */
+	    if (NILP (replace))
+	      {
+		/* Demacs 1.1.1 91/10/16 HIRANO Satoshi, MW July 1993 */
+		/* Determine file type (text/binary) from its name.
+		   Note that the buffer_file_type changes here when the file
+		   being inserted is not of the same type as the original buffer.  */
+		current_buffer->buffer_file_type = call1 (Qfind_buffer_file_type, filename);
+		if (NILP (current_buffer->buffer_file_type))
+		  crlf_conversion_required = 1;
+		else if (current_buffer->buffer_file_type != Qt)
+		  /* Use heuristic to decide whether file is text or binary (based
+		     on the first bufferful) if buffer-file-type is not nil or t.
+		     If no decision is made (because no line endings were ever
+		     seen) then let buffer-file-type default to nil.  */
+		  crlf_conversion_required = -1;
+	      }
+
+	    /* If requested, we check the inserted data to decide whether the file
+	       is binary or text.  (If text, we count LF and CRLF occurences to
+	       determine whether the file was in Unix or DOS format.)  */
+	    if (crlf_conversion_required < 0)
+	      {
+		crlf_conversion_required =
+		  decide_buffer_type (read_buf, this_len);
+		current_buffer->buffer_file_type =
+		  crlf_conversion_required ? Qnil : Qt;
+	      }
+
+	    /* Demacs 1.1.1 91/10/16 HIRANO Satoshi, MW July 1993 */
+	    /* Remove CRs from CR-LFs if the file is deemed to be a text file.  */
+	    if (crlf_conversion_required)
+	      {
+		int reduced_size
+		  = this_len - crlf_to_lf (this_len, read_buf,
+					   &lf_count);
+		crlf_count += reduced_size;
+		/* XEmacs (--marcpa) change: No need for this since we havent
+		   inserted in buffer yet. */
+#if 0
+		ZV -= reduced_size;
+		Z -= reduced_size;
+		GPT -= reduced_size;
+		GAP_SIZE += reduced_size;
+		inserted -= reduced_size;
+#endif
+		this_len -= reduced_size;
+
+		/* Change buffer_file_type back to binary if Unix eol format.  */
+		if (crlf_count == 0 && lf_count > 0)
+		  current_buffer->buffer_file_type = Qt;
+	      }
+
+	    /* Make crlf_count and lf_count available for inspection.  */
+	    Fset (intern ("buffer-file-lines"), make_int (lf_count));
+	    Fset (intern ("buffer-file-dos-lines"), make_int (crlf_count));
+#endif /* DOS_NT */
 
 	cc_inserted = buffer_insert_raw_string_1 (buf, cur_point, read_buf,
 						  this_len,
@@ -2792,25 +3357,6 @@ positions), even in Mule. (Fixing this is very difficult.)
 #endif /* MULE */
     NUNGCPRO;
   }
-
-#if 0
-/* XXXX Why the #### ? Bogus anyway. If they are there, display em! */
-#ifdef DOS_NT
-  /* Determine file type from name and remove LFs from CR-LFs if the file
-     is deemed to be a text file.  */
-  {
-    struct gcpro gcpro1;
-    GCPRO1 (filename);
-    buf->buffer_file_type
-      = call1_in_buffer (buf, Qfind_buffer_file_type, filename);
-    UNGCPRO;
-    if (NILP (buf->buffer_file_type))
-      {
-	buffer_do_msdos_crlf_to_lf (buf, ####);
-      }
-  }
-#endif
-#endif /* 0 */
 
   /* Close the file/stream */
   unbind_to (speccount, Qnil);
@@ -2958,12 +3504,10 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
      to protect the current_buffer from being destroyed, but the
      multiple return points make this a pain in the butt. */
 
-#if 0
 #ifdef DOS_NT
   int buffer_file_type
     = NILP (current_buffer->buffer_file_type) ? O_TEXT : O_BINARY;
 #endif /* DOS_NT */
-#endif /* 0 */
 
 #ifdef MULE
   codesys = Fget_coding_system (codesys);
@@ -3050,7 +3594,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   if (!NILP (append))
 #ifdef DOS_NT
     desc = open ((char *) XSTRING_DATA (fn),
-                       (O_WRONLY | O_BINARY), 0);
+                       (O_WRONLY | buffer_file_type), 0);
 #else /* not DOS_NT */
     desc = open ((char *) XSTRING_DATA (fn), O_WRONLY, 0);
 #endif /* not DOS_NT */
@@ -3059,7 +3603,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     {
 #ifdef DOS_NT
       desc = open ((char *) XSTRING_DATA (fn),
-                   (O_WRONLY | O_TRUNC | O_CREAT | O_BINARY),
+                   (O_WRONLY | O_TRUNC | O_CREAT | buffer_file_type),
                    (S_IREAD | S_IWRITE));
 #else /* not DOS_NT */
       desc = creat ((char *) XSTRING_DATA (fn),
@@ -4221,4 +4765,24 @@ delete a large chunk of the buffer and don't notice it until too late.
 Saving the buffer normally turns auto-save back on.
 */ );
   disable_auto_save_when_buffer_shrinks = 1;
+#ifdef DOS_NT
+  DEFVAR_LISP ("directory-sep-char", &Vdirectory_sep_char /*
+    *Directory separator character for built-in functions that return file names.
+The value should be either ?/ or ?\\ (any other value is treated as ?\\).
+This variable affects the built-in functions only on Windows,
+on other platforms, it is initialized so that Lisp code can find out
+what the normal separator is.
+*/ );
+  Vdirectory_sep_char = '/';
+
+  DEFVAR_LISP ("insert-file-contents-allow-replace", &Vinsert_file_contents_allow_replace /*
+    *Allow REPLACE option of insert-file-contents to preserve markers.
+If non-nil, the REPLACE option works as described, preserving markers.
+If nil, the REPLACE option is implemented by deleting the visible region
+then inserting the file contents as if REPLACE was nil.
+
+This option is only meaningful on Windows.
+*/ );
+  Vinsert_file_contents_allow_replace = Qt;
+#endif
 }

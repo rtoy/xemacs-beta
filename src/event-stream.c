@@ -180,6 +180,10 @@ Lisp_Object last_point_position_buffer;
 /* A (16bit . 16bit) representation of the time of the last-command-event. */
 Lisp_Object Vlast_input_time;
 
+/* A (16bit 16bit usec) representation of the time
+   of the last-command-event. */
+Lisp_Object Vlast_command_event_time;
+
 /* Character to recognize as the help char.  */
 Lisp_Object Vhelp_char;
 
@@ -347,7 +351,7 @@ static Lisp_Object command_event_queue;
 static Lisp_Object command_event_queue_tail;
 
 /* Nonzero means echo unfinished commands after this many seconds of pause. */
-static int echo_keystrokes;
+static Lisp_Object Vecho_keystrokes;
 
 /* The number of keystrokes since the last auto-save. */
 static int keystrokes_since_auto_save;
@@ -702,20 +706,26 @@ static void
 maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
 {
   /* This function can GC */
+  double echo_keystrokes;
   struct frame *f = selected_frame ();
   /* Message turns off echoing unless more keystrokes turn it on again. */
   if (echo_area_active (f) && !EQ (Qcommand, echo_area_status (f)))
     return;
 
+  if (INTP (Vecho_keystrokes) || FLOATP (Vecho_keystrokes))
+    echo_keystrokes = extract_float (Vecho_keystrokes);
+  else
+    echo_keystrokes = 0;
+
   if (minibuf_level == 0
-      && echo_keystrokes > 0
+      && echo_keystrokes > 0.0
       && !lw_menu_active)
     {
       if (!no_snooze)
 	{
 	  /* #### C-g here will cause QUIT.  Setting dont_check_for_quit
 	     doesn't work.  See check_quit. */
-	  if (NILP (Fsit_for (make_int (echo_keystrokes), Qnil)))
+	  if (NILP (Fsit_for (Vecho_keystrokes, Qnil)))
 	    /* input came in, so don't echo. */
 	    return;
 	}
@@ -2217,6 +2227,14 @@ The returned event will be one of the following types:
       Vlast_input_time = Fcons (Qnil, Qnil);
     XCAR (Vlast_input_time) = make_int ((EMACS_SECS (t) >> 16) & 0xffff);
     XCDR (Vlast_input_time) = make_int ((EMACS_SECS (t) >> 0)  & 0xffff);
+    if (!CONSP (Vlast_command_event_time))
+      Vlast_command_event_time = list3 (Qnil, Qnil, Qnil);
+    XCAR (Vlast_command_event_time) =
+      make_int ((EMACS_SECS (t) >> 16) & 0xffff);
+    XCAR (XCDR (Vlast_command_event_time)) =
+      make_int ((EMACS_SECS (t) >> 0)  & 0xffff);
+    XCAR (XCDR (XCDR (Vlast_command_event_time)))
+      = make_int (EMACS_USECS (t));
   }
 
   /* If this key came from the keyboard or from a keyboard macro, then
@@ -4918,10 +4936,10 @@ vars_of_event_stream (void)
 
   recursive_sit_for = Qnil;
 
-  DEFVAR_INT ("echo-keystrokes", &echo_keystrokes /*
+  DEFVAR_LISP ("echo-keystrokes", &Vecho_keystrokes /*
 *Nonzero means echo unfinished commands after this many seconds of pause.
 */ );
-  echo_keystrokes = 1;
+  Vecho_keystrokes = make_int (1);
 
   DEFVAR_INT ("auto-save-interval", &auto_save_interval /*
 *Number of keyboard input characters between auto-saves.
@@ -5049,6 +5067,17 @@ represented as a cons of two 16-bit integers.  This is destructively
 modified, so copy it if you want to keep it.
 */ );
   Vlast_input_time = Qnil;
+
+  DEFVAR_LISP ("last-command-event-time", &Vlast_command_event_time /*
+The time (in seconds since Jan 1, 1970) of the last-command-event,
+represented as a list of three integers.  The first integer contains
+the most significant 16 bits of the number of seconds, and the second
+integer contains the least significant 16 bits.  The third integer
+contains the remainder number of microseconds, if the current system
+supports microsecond clock resolution.  This list is destructively
+modified, so copy it if you want to keep it.
+*/ );
+  Vlast_command_event_time = Qnil;
 
   DEFVAR_LISP ("unread-command-events", &Vunread_command_events /*
 List of event objects to be read as next command input events.

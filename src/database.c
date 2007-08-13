@@ -649,8 +649,10 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
     {
       DBTYPE real_subtype;
       DB *db;
+#if DB_VERSION_MAJOR != 1
       int status;
-      
+#endif
+
       if (EQ (subtype, Qhash) || NILP (subtype))
 	real_subtype = DB_HASH;
       else if (EQ (subtype, Qbtree))

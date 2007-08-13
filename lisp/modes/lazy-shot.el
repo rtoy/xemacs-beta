@@ -260,7 +260,7 @@ stealth locking functions"
 
 (defun lazy-shot-unstall (&optional no-fontify)
   ;; Stop the timer
-  (when lazy-shot-stealth-timer
+  (when (and (boundp 'lazy-shot-stealth-timer) lazy-shot-stealth-timer)
     (delete-itimer lazy-shot-stealth-timer)
     (setq lazy-shot-stealth-timer nil))
   ;; Remove the extents.

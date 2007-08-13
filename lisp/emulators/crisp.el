@@ -2,10 +2,28 @@
 
 ;; Author: Gary D. Foster <Gary.Foster@corp.sun.com>
 ;; Created: 01 Mar 1996
-;; Version: 1.21
+;; Version: $Revision: 1.7 $
 ;; Keywords: emulations brief crisp
 ;; X-Modified-by:
-;;	crisp.el,v
+;;	$Log: crisp.el,v $
+;;	Revision 1.7  1997/11/12 07:09:59  steve
+;;	Patches to beta4
+;;	
+;;	Revision 1.23  1997/11/11 19:47:02  gfoster
+;;	Merged changes suggested by Hrvoje Niksic
+;;	   make crisp-mode-map a sparse keymap parented from current-global-map
+;;	   don't copy the keymap in (crisp-mode-original-keymap)
+;;	   declare last-last-command to shut up the byte-compiler
+;;	   make (crisp-mode) honor ARG
+;;
+;;	Revision 1.22  1997/11/11 19:37:44  gfoster
+;;	kp-add/minus now copy/kill the current line if there is no highlighted
+;;	region.  These also honor the universal prefix argument conventions.
+;;
+;;	Revision 1.21  1997/10/16 18:52:54  gfoster
+;;	Fixed bogus XEmacs/Lucid string-match checking
+;;	made modeline entry mouse2-able
+;;
 ;;	Revision 1.20  1997/08/22 18:49:11  gfoster
 ;;	Added next-buffer/previous-buffer keybindings (bound to M-n/M-p)
 ;;	Added crisp-unbury-buffer function
@@ -69,11 +87,13 @@
 
 ;; local variables
 
-(defgroup emulations-crisp nil
+(defgroup crisp nil
   "CRiSP emulator customizable settings."
   :group 'emulations)
 
-(defvar crisp-mode-map (copy-keymap (current-global-map))
+(defvar crisp-mode-map (let ((map (make-sparse-keymap)))
+			 (set-keymap-parent map (current-global-map))
+			 map)
   "Local keymap for CRiSP emulation mode.
 All the bindings are done here instead of globally to try and be
 nice to the world.")
@@ -81,9 +101,9 @@ nice to the world.")
 (defcustom crisp-mode-modeline-string " *CRiSP*"
   "*String to display in the modeline when CRiSP emulation mode is enabled."
   :type 'string
-  :group 'emulations-crisp)
+  :group 'crisp)
 
-(defvar crisp-mode-original-keymap (copy-keymap (current-global-map))
+(defvar crisp-mode-original-keymap (current-global-map)
   "The original keymap before CRiSP emulation mode remaps anything.
 This keymap is restored when CRiSP emulation mode is disabled.")
 
@@ -98,7 +118,7 @@ Normally the CRiSP emulator rebinds M-x to save-buffers-exit-emacs and
 provides the usual M-x functionality on the F10 key.  If this variable
 is non-nil, M-x will exit Emacs."
   :type 'boolean
-  :group 'emulations-crisp)
+  :group 'crisp)
 
 (defvar crisp-load-scroll-lock nil
   "Controls loading of the Scroll Lock in the CRiSP emulator.
@@ -111,8 +131,11 @@ does not load the scroll-lock package.")
 (defvar crisp-load-hook nil
   "Hooks to run after loading the CRiSP emulator package.")
 
-(defconst crisp-version "crisp.el release 1.1/1.21"
+(defconst crisp-version "crisp.el release 1.1/$Revision: 1.7 $"
   "The release number and RCS version for the CRiSP emulator.")
+
+;; Silence the byte-compiler.
+(defvar last-last-command)
 
 ;; and now the keymap defines
 
@@ -147,8 +170,8 @@ does not load the scroll-lock package.")
 (define-key crisp-mode-map [(meta f10)]      'compile)
 
 (define-key crisp-mode-map [(SunF37)]          'kill-buffer)
-(define-key crisp-mode-map [(kp-add)]       'x-copy-primary-selection)
-(define-key crisp-mode-map [(kp-subtract)]  'x-kill-primary-selection)
+(define-key crisp-mode-map [(kp-add)]       'crisp-copy-line)
+(define-key crisp-mode-map [(kp-subtract)]  'crisp-kill-line)
 (define-key crisp-mode-map [(insert)]       'x-yank-clipboard-selection)
 (define-key crisp-mode-map [(f16)]          'x-copy-primary-selection) ; copy on Sun5 kbd
 (define-key crisp-mode-map [(f20)]          'x-kill-primary-selection) ; cut on Sun5 kbd 
@@ -186,6 +209,34 @@ does not load the scroll-lock package.")
 
 (define-key crisp-mode-map [(home)] 'crisp-home)
 (define-key crisp-mode-map [(end)] 'crisp-end)
+
+(defun crisp-mark-line (arg)
+  "Put mark at the end of line.  Arg works as in `end-of-line'."
+  (interactive "p")
+  (mark-something 'crisp-mark-line 'end-of-line arg))
+
+(defun crisp-kill-line (arg)
+  "Mark and kill line(s).
+Marks the entire current line (honoring prefix arguments), copies the
+region to the kill ring and clipboard, and then deletes it."
+  (interactive "*p")
+  (if zmacs-region-active-p
+      (x-kill-primary-selection)
+    (beginning-of-line)
+    (crisp-mark-line arg)
+    (x-kill-primary-selection)))
+
+(defun crisp-copy-line (arg)
+  "Mark and copy entire current line (honoring prefix arguments), copies the
+region to the kill ring and clipboard, and then deactivates the region."
+  (interactive "*p")
+  (let ((curpos (point)))
+    (if zmacs-region-active-p
+	(x-copy-primary-selection)
+      (beginning-of-line)
+      (crisp-mark-line arg)
+      (x-copy-primary-selection)
+      (goto-char curpos))))
 
 (defun crisp-home ()
   "\"Home\" the point, the way CRiSP would do it.
@@ -235,10 +286,13 @@ normal CRiSP binding) and when it is nil M-x will run
 
 ;; Now enable the mode
 
-(defun crisp-mode ()
-  "Toggle CRiSP emulation minor mode."
-  (interactive nil)
-  (setq crisp-mode-enabled (not crisp-mode-enabled))
+(defun crisp-mode (&optional arg)
+  "Toggle CRiSP emulation minor mode.
+With ARG, turn CRiSP mode on if ARG is positive, off otherwise."
+  (interactive "P")
+  (setq crisp-mode-enabled (if (null arg)
+			       (not crisp-mode-enabled)
+			     (> (prefix-numeric-value arg) 0)))
   (cond
    ((eq crisp-mode-enabled 't)
     (use-global-map crisp-mode-map)
@@ -250,7 +304,7 @@ normal CRiSP binding) and when it is nil M-x will run
    ((eq crisp-mode-enabled 'nil)
     (use-global-map crisp-mode-original-keymap))))
 
-(if (string-match "\\(XEmacs\\|Lucid\\)" emacs-version)
+(if (fboundp 'add-minor-mode)
     (add-minor-mode 'crisp-mode-enabled 'crisp-mode-modeline-string
 		    nil nil 'crisp-mode)
   (or (assq 'crisp-mode-enabled minor-mode-alist)

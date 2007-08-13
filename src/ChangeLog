@@ -1,3 +1,128 @@
+1997-11-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* event-stream.c: Make echo_keystrokes a Lisp_Object.
+	(maybe_echo_keys): Adapt to that.
+
+1997-11-11  SL Baur  <steve@altair.xemacs.org>
+
+	* eval.c (throw_or_bomb_out): Remove abort.
+	Suggested by: Kyle Jones  <kyle_jones@wonderworks.com>
+
+1997-11-11  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Added support for referencing lrecord_implementations
+	  via an index in an lrecord_header rather than a raw
+	  pointer.  Also added a mark bit and a pure bit.
+
+	* alloc.c: Made lrecord_type_index() and
+	   lrecord_implementations_table[] global, previously they
+	   were static.  Used new XRECORD_LHEADER_IMPLEMENTATION
+	   and LHEADER_IMPLEMENTATION macros to access
+	   lrecord_implementations found in Lisp_Objects and
+	   lrecord_headers instead of referencing ->implementation.
+
+	   (gc_record_type_p): For USE_INDEXED_LRECORD_IMPLEMENTATION,
+	   there's no need to check for equality to type or type + 1.
+	   lrecords are no longer marked by incrementing the
+	   implementation pointer.
+
+	   (init_alloc_once_early): Initialized subr and
+	   symbol_value_forward lrecord indexes early so that the
+	   staticly defined subrs and symbol_value_forward object
+	   indexes match the lrecord_implementations_table.
+
+	* buffer.c: Used symbol_value_forward_lheader_initializer in
+	   various DEFVAR* macros.  Used new XRECORD_LHEADER_IMPLEMENTATION
+	   macro.
+
+	* elhash.c: Used new XRECORD_LHEADER_IMPLEMENTATION
+	   macro.
+
+	* fns.c: Used new XRECORD_LHEADER_IMPLEMENTATION macro.
+
+	* lisp.h: Defined subr_lheader_initializer macro, used it in
+	   DEFUN macro.
+
+	* lrecord.h: For USE_INDEXED_LRECORD_IMPLEMENTATION,
+	   changed lrecord_header to contain an index into
+	   lrecord_implementations_table[], plus a mark bit and a pure
+	   bit.  Added support code for this.  Defined new
+	   XRECORD_LHEADER_IMPLEMENTATION and LHEADER_IMPLEMENTATION
+	   macros to be used to find the lrecord_implementation
+	   of a Lisp_Object.
+
+	* print.c: Used new XRECORD_LHEADER_IMPLEMENTATION and
+	   LHEADER_IMPLEMENTATION macros.
+
+	* symbols.c: Used symbol_value_forward_lheader_initializer in
+	   definition of guts_of_unbound_marker.
+
+	* symeval.h: Defined symbol_value_forward_lheader_initializer
+	   macro.  Used symbol_value_forward_lheader_initializer in various
+	   macros.  Used new XRECORD_LHEADER_IMPLEMENTATION macro.
+
+
+1997-11-10  SL Baur  <steve@altair.xemacs.org>
+
+	* window.c (set_window_pixsize): Remove unused variable.
+
+	* extents.c (print_extent_1): Fix type check error in sprintf.
+
+	* doc.c (Fsnarf_documentation): Remove unused label weird_function.
+
+	* symsinit.h: Restore declaration of vars_of_dialog_x.
+
+	* database.c (Fopen_database): Fix unused variable message.
+
+	* sysdep.c (sys_subshell): vfork() is a demented, obsolete hack.
+
+	* offix.c (struct): Make ImageData, MaskData be unsigned char *.
+
+	* event-Xt.c (x_event_to_emacs_event): Clean up typecasting.
+	* frame-x.c (Foffix_start_drag_internal): Ditto.
+
+1997-11-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* extents.c (print_extent_1): Use %lx instead of %p
+	  to get the same output on all compilers.
+
+1997-11-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* line-number.c: Use markers.
+
+	* redisplay.c (window_line_number): Restored.
+
+	* line-number.c (allocate_line_number_cache): Account for
+ 	narrowing.
+	(buffer_line_number): New function.
+
+	* line-number.c (get_nearest_line_number): New function.
+	(window_line_number): Use it.
+	(narrow_line_number_cache): New function.
+	(invalidate_line_number_cache): Ditto.
+	(insert_invalidate_line_number_cache): Ditto.
+	(delete_invalidate_line_number_cache): Ditto.
+	(add_line_number): Ditto.
+
+	* editfns.c (widen_buffer): Update line number cache.
+	(Fnarrow_to_region): Ditto.
+	(save_restriction_restore): Ditto.
+
+	* insdel.c (buffer_insert_string_1): Invalidate cache for
+ 	insertion.
+	(buffer_delete_range): Invalidate cache for deletion.
+
+	* line-number.c: New file.
+	(window_line_number): Moved from redisplay.c.
+
+	* print.c (debug_print): Print a carriage return, too.
+
+	* bufslots.h: New slot `line_number_cache'.
+
+1997-11-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* event-stream.c: New Lisp variable:  last-command-event-time.
+
 1997-11-08  SL Baur  <steve@altair.xemacs.org>
 
 	* lread.c (init_lread): start from lisp, not lisp/prim.

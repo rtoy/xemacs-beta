@@ -1,4 +1,15 @@
 							-*- indented-text -*-
+to 20.4 beta4 "American Cashmere"
+-- Major changes in portable dumping/Lisp_Object code courtesy of Kyle Jones
+-- Miscellaneous patches from Kyle Jones, Hrvoje Niksic
+-- various build tweaks
+-- help-macro ported from Emacs 20 courtesy of Hrvoje Niksic
+-- Fix compiler warnings
+-- MS Windows patches from Marc Paquette and Darryl Okahata
+-- Change pointer glyph over custom buttons courtesy of Hrvoje Niksic
+-- New Lisp variable:  last-command-event-time courtesy of Kyle Jones
+-- miscellaneous bug fixes
+
 to 20.4 beta3 "Altai Mountain"
 -- query-replace and query-replace-regexp will only replace the region if the
    zmacs region is active.

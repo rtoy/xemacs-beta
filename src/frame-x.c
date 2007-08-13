@@ -1,5 +1,5 @@
 /* Functions for the X window system.
-   Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1992-5, 1997 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996 Ben Wing.
 
 This file is part of XEmacs.
@@ -1224,7 +1224,7 @@ Start a OffiX drag from a buffer.
 		}
 	      len = XSTRING_LENGTH (XCAR (run)) + 1;
 	      dnd_data = xrealloc (dnd_data, dnd_len + len);
-	      strcpy (dnd_data + dnd_len - 1, XSTRING_DATA (XCAR (run)));
+	      strcpy (dnd_data + dnd_len - 1, (CONST char *)XSTRING_DATA (XCAR (run)));
 	      dnd_len += len;
 	      run = XCDR (run);
 	    }
@@ -1239,7 +1239,7 @@ Start a OffiX drag from a buffer.
 	    return Qnil;
 
 	  /* and whats with MULE data ??? */
-	  dnd_data = XSTRING_DATA (data);
+	  dnd_data = (char *)XSTRING_DATA (data);
 	  dnd_len  = XSTRING_LENGTH (data) + 1; /* the zero */
 
 	}
@@ -1275,7 +1275,7 @@ Start a OffiX drag from a buffer.
       x_event.xbutton.button = lisp_event->event.button.button;
       x_event.xkey.same_screen = True;
 
-      DndSetData(dnd_typ, dnd_data, dnd_len);
+      DndSetData(dnd_typ, (unsigned char *)dnd_data, dnd_len);
       if (dnd_dealloc)
 	xfree (dnd_data);
 

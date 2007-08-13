@@ -404,14 +404,6 @@ corresponding bookmark function from Lisp (the one without the
 
 ;;;***
 
-;;;### (autoloads nil "buff-menu" "packages/buff-menu.el")
-
-(defvar list-buffers-directory nil)
-
-(make-variable-buffer-local 'list-buffers-directory)
-
-;;;***
-
 ;;;### (autoloads (command-history-mode list-command-history repeat-matching-complex-command) "chistory" "packages/chistory.el")
 
 (autoload 'repeat-matching-complex-command "chistory" "\

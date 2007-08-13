@@ -170,14 +170,6 @@ Find directly the function at point in the other window." t nil)
 
 ;;;***
 
-;;;### (autoloads nil "itimer-autosave" "prim/itimer-autosave.el")
-
-;;;***
-
-;;;### (autoloads nil "loaddefs" "prim/loaddefs.el")
-
-;;;***
-
 ;;;### (autoloads (apply-macro-to-region-lines kbd-macro-query insert-kbd-macro name-last-kbd-macro) "macros" "prim/macros.el")
 
 (autoload 'name-last-kbd-macro "macros" "\

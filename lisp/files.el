@@ -964,7 +964,7 @@ If NOWARN is non-nil, warning messages about several potential
 problems will be suppressed."
   (setq filename (abbreviate-file-name (expand-file-name filename)))
   (if (file-directory-p filename)
-      (if find-file-run-dired
+      (if (and (fboundp 'dired-noselect) find-file-run-dired)
 	  (dired-noselect (if find-file-use-truenames
 			      (abbreviate-file-name (file-truename filename))
 			    filename))

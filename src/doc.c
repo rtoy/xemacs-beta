@@ -607,7 +607,6 @@ when doc strings are referred to in the dumped Emacs.
                     {
                       /* Otherwise the function is undefined or
                          otherwise weird.   Ignore it. */
-                    weird_function:
                       weird_doc (sym, GETTEXT ("weird function"),
 				 GETTEXT ("function"), pos);
                       goto weird;

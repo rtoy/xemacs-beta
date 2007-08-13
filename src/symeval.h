@@ -76,7 +76,7 @@ struct symbol_value_magic
 };
 #define SYMBOL_VALUE_MAGIC_P(x)				\
   (LRECORDP (x)						\
-   && (XRECORD_LHEADER (x)->implementation->printer	\
+   && (XRECORD_LHEADER_IMPLEMENTATION (x)->printer	\
        == print_symbol_value_magic))
 #define XSYMBOL_VALUE_MAGIC_TYPE(v) \
 	(((struct symbol_value_magic *) XPNTR (v))->type)
@@ -300,9 +300,16 @@ extern void deferror (Lisp_Object *symbol, CONST char *name,
 extern void defvar_mumble (CONST char *names,
                            CONST void *magic, int sizeof_magic);
 
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+# define symbol_value_forward_lheader_initializer { 1, 0, 0 }
+#else
+# define symbol_value_forward_lheader_initializer \
+   { lrecord_symbol_value_forward }
+#endif
+
 #define DEFVAR_HEADER(lname, c_location, forward_type) do {	\
   static CONST struct symbol_value_forward I_hate_C		\
-   = { { { { lrecord_symbol_value_forward },			\
+   = { { { symbol_value_forward_lheader_initializer,		\
 	   (struct lcrecord_header *) (c_location), 69 },	\
          forward_type }, 0 };					\
   defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));	\
@@ -310,7 +317,7 @@ extern void defvar_mumble (CONST char *names,
 
 #define DEFVAR_MAGIC_HEADER(lname, c_location, forward_type, magicfun) do {	\
   static CONST struct symbol_value_forward I_hate_C				\
-   = { { { { lrecord_symbol_value_forward },					\
+   = { { { symbol_value_forward_lheader_initializer,				\
 	   (struct lcrecord_header *) (c_location), 69 }, 			\
          forward_type }, magicfun };						\
   defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));			\
