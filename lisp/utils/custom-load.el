@@ -1,6 +1,6 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Thu Oct  2 17:05:58 1997
+;; Created by SL Baur on Sat Oct  4 18:11:53 1997
 
 ;;; Code:
 
@@ -25,7 +25,7 @@
 (custom-put 'detached-minibuf 'custom-loads '("detached-minibuf"))
 (custom-put 'languages 'custom-loads '("crontab"))
 (custom-put 'edmacro 'custom-loads '("edmacro"))
-(custom-put 'faces 'custom-loads '("highlight-headers"))
+(custom-put 'faces 'custom-loads '("font" "highlight-headers"))
 (custom-put 'passwd 'custom-loads '("passwd"))
 (custom-put 'browse-url 'custom-loads '("browse-url"))
 (custom-put 'processes 'custom-loads '("passwd"))

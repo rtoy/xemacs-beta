@@ -1,11 +1,12 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Thu Oct  2 17:05:53 1997
+;; Created by SL Baur on Sat Oct  4 18:11:48 1997
 
 ;;; Code:
 
 (custom-put 'mouse 'custom-loads '("mouse"))
-(custom-put 'minibuffer 'custom-loads '("minibuf"))
+(custom-put 'minibuffer 'custom-loads '("minibuf" "simple"))
+(custom-put 'log-message 'custom-loads '("simple"))
 (custom-put 'environment 'custom-loads '("frame" "minibuf" "modeline" "sound"))
 (custom-put 'sound 'custom-loads '("sound"))
 (custom-put 'auto-save 'custom-loads '("files"))
@@ -15,6 +16,7 @@
 (custom-put 'lisp 'custom-loads '("lisp"))
 (custom-put 'help 'custom-loads '("help"))
 (custom-put 'keyboard 'custom-loads '("cmdloop"))
+(custom-put 'warnings 'custom-loads '("simple"))
 (custom-put 'backup 'custom-loads '("files"))
 (custom-put 'frames 'custom-loads '("frame" "window-xemacs" "gui"))
 (custom-put 'abbrev 'custom-loads '("files"))

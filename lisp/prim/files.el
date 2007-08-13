@@ -1195,7 +1195,7 @@ run `normal-mode' explicitly."
     ("\\.py\\'" . python-mode)
     ("\\.texi\\(nfo\\)?\\'" . texinfo-mode)
     ("\\.ad[abs]\\'" . ada-mode)
-    ("\\.l\\(i?sp\\)?\\'" . lisp-mode)
+    ("\\.c?l\\(i?sp\\)?\\'" . lisp-mode)
     ("\\.p\\(as\\)?\\'" . pascal-mode)
     ("\\.ltx\\'" . latex-mode)
     ("\\.[sS]\\'" . asm-mode)
@@ -2200,7 +2200,8 @@ After saving the buffer, run `after-save-hook'."
 	  ;; delete it now.
 	  (delete-auto-save-file-if-necessary recent-save)
 	  ;; Support VC `implicit' locking.
-	  (vc-after-save)
+	  (when (fboundp 'vc-after-save)
+	    (vc-after-save))
 	  (run-hooks 'after-save-hook))
       (display-message 'no-log "(No changes need to be saved)"))))
 

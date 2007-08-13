@@ -58,7 +58,10 @@ have built, try to build those packages so that the generated
 libraries are statically linked.
 
 Use the --site-includes and --site-libraries options when building
-XEmacs to allow configure to find the external software packages.
+XEmacs to allow configure to find the external software packages. 
+If you link with dynamic (``.so'') external package libraries, which
+is not recommended, you will also need to add the library directories
+to the --site-runtime-libraries option.
 
 
 3) In the top level directory of the XEmacs distribution, run the
@@ -94,12 +97,33 @@ enclosing the list in quotes.  All the external packages you want to
 use with XEmacs (e.g. xpm, wnn, ...) described later should have their 
 include and library directories defined using these options.
 
-The `--site-runtime-libraries=DIR' option specifies additional
-directories to search for shared libraries at run time.  This may be
-necessary on some systems, or if you expect some of the libraries used 
-to build XEmacs to be in a different directory at run time than at
-build time.  Usually this will add a `-R' to each directory specified
-and use that when linking XEmacs.
+The `--site-runtime-libraries=DIR' option specifies directories to
+search for shared libraries at run time.  This may be necessary if you
+link with dynamic libraries that are installed in non-standard
+directories, or if you expect some of the libraries used to build
+XEmacs to be in a different directory at run time than at build time.
+Usually this will add a `-R' to each directory specified and use that
+when linking XEmacs.  If you use this option, you must specify ALL of
+the directories containing shared libraries at run time, including
+system directories.
+
+Rationale: Some people think that directories in --site-libraries
+should be automatically used to update --site-runtime-libraries.
+Here's a real-life scenario that explains why this is not done: You
+build binaries for your company using static libs in
+/net/toy/hack/lib.  XEmacs adds /net/toy/hack/lib to the runpath of
+the executable you've built.  Since there are only static libs there,
+the system runtime loader will look in this dir, and ignore it,
+causing only a .01 second delay in starting XEmacs.  You leave the
+company for a job at a small Silicon Valley startup.  Time passes.
+The next guy who inherits your machine objects to working on a machine
+named `toy', and gets the sysadmin to rename the machine `godzilla'.
+The SA forgets to remove the old entry for `toy' from the hosts file.
+Now the system loader will still try to access /net/toy/, and the
+automounter will hang trying to access /net/toy.  XEmacs suddenly
+takes 30 seconds longer to start up, no one can figure out why, and
+everyone at your old company curses your name, thinking that you've
+put a time bomb into XEmacs.  And they're right!
 
 The `--with-gcc' option specifies that the build process should
 compile XEmacs using GCC.  The `--compiler' option allows you to

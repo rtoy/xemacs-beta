@@ -194,8 +194,6 @@ dnl CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
 dnl ac_cpp='$CPP $CPPFLAGS'
 dnl ac_compile='${CC-cc} -c $CFLAGS $CPPFLAGS conftest.$ac_ext 1>&AC_FD_CC'
 dnl ac_link='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&AC_FD_CC'
-dnl # $c_switch_x_machine  $c_switch_x_system
-dnl # $ld_switch_x_machine $ld_switch_x_system
 xe_cppflags='$CPPFLAGS $c_switch_site $c_switch_machine $c_switch_system $c_switch_x_site $X_CFLAGS'
 xe_ldflags='$LDFLAGS $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_x_site $ld_switch_run'
 xe_libs='$ld_call_shared $xe_check_libs $X_EXTRA_LIBS $libs_x $X_PRE_LIBS $LIBS $libs_machine $libs_system $libs_standard'
@@ -1743,11 +1741,9 @@ CPP_to_sh(OBJECTS_SYSTEM,  objects_system)
 
 CPP_to_sh(C_SWITCH_MACHINE,   c_switch_machine)
 CPP_to_sh(C_SWITCH_SYSTEM,    c_switch_system)
-CPP_to_sh(C_SWITCH_X_SYSTEM,  c_switch_x_system)
 
 CPP_to_sh(LD_SWITCH_MACHINE,  ld_switch_machine)
 CPP_to_sh(LD_SWITCH_SYSTEM,   ld_switch_system)
-CPP_to_sh(LD_SWITCH_X_SYSTEM, ld_switch_x_system)
 
 CPP_to_sh(UNEXEC, unexec, unexec.o)
 
@@ -1838,8 +1834,7 @@ dnl For debugging...
 test "$extra_verbose" = "yes" && \
   PRINT_VAR(libs_machine libs_system libs_termcap libs_standard
   objects_machine objects_system c_switch_machine c_switch_system
-  c_switch_x_system ld_switch_machine ld_switch_system
-  ld_switch_x_system unexec ld_switch_shared
+  ld_switch_machine ld_switch_system unexec ld_switch_shared
   ld lib_gcc ld_text_start_addr start_files ordinary_link
   have_terminfo mail_use_flock mail_use_lockf) && echo ""
 
@@ -2593,7 +2588,7 @@ if test "$with_x11" = "yes"; then
   test -z "$with_tiff" && with_tiff=no
   if test "$with_tiff" = "yes"; then
     AC_DEFINE(HAVE_TIFF)
-    XE_PREPEND(-ltiff, libs_x)
+    XE_PREPEND($tiff_libs, libs_x)
   fi
 
   dnl Autodetect -lXaw
@@ -3082,7 +3077,7 @@ fi
 case "$with_sound" in both | nas )
   AC_DEFINE(HAVE_NAS_SOUND)
   XE_ADD_OBJS(nas.o)
-  XE_PREPEND(-laudio, LIBS)
+  XE_PREPEND(-laudio, libs_x)
   dnl If the nas library does not contain the error jump point,
   dnl then we force safer behaviour.
   AC_EGREP_HEADER(AuXtErrorJump,audio/Xtutil.h,,[AC_DEFINE(NAS_NO_ERROR_JUMP)])

@@ -48,7 +48,6 @@
 ;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
 	"startup"		; For initialization of
 				;  `emacs-user-extension-dir'
-	"loaddefs"		; <=== autoloads get loaded here
 	"misc"
 	;; (load-gc "profile")
 	"help"
@@ -178,7 +177,7 @@
 	#+tooltalk "tooltalk/tooltalk-macros"
 	#+tooltalk "tooltalk/tooltalk-util"
 	#+tooltalk "tooltalk/tooltalk-init"
-	"vc-hooks"
+	;; "vc-hooks"		; Packaged.  Available in two versions.
 	"ediff-hook"
 	"fontl-hooks"
 	"auto-show"
@@ -198,4 +197,5 @@
 ;;	#+sparcworks "sun-eos-debugger"
 ;;	#+sparcworks "sun-eos-debugger-extra"
 ;;	#+sparcworks "sun-eos-menubar"
+	"loaddefs"		; <=== autoloads get loaded here
 ))

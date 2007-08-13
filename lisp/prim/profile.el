@@ -35,8 +35,8 @@
 ;; and looking at the current Lisp function, at the time of each tick.
 ;; The output of this process is an alist with keys being the
 ;; functions, and values being the number of ticks per function.  From
-;; this, `pretty-print-profiling-info' easily extracts the total
-;; number of ticks, and the percentage CPU time of each function.
+;; this, `profiling-results' easily extracts the total number of
+;; ticks, and the percentage CPU time of each function.
 
 ;; Unless stated otherwise, profiling info is being accumulated (the
 ;; current info is returned by `get-profiling-info').  Use
@@ -51,7 +51,7 @@
 
 ;; A typical profiling session consists of using `clear-profiling-info'
 ;; followed by `profile' or `profile-key-sequence', followed by
-;; `pretty-print-profiling-info'.
+;; `profiling-results'.
 
 ;; For instance, to see where Gnus spends time when generating Summary
 ;; buffer, go to the group buffer, and press `M-x clear-profiling-info'
@@ -61,7 +61,7 @@
 ;;; Code:
 
 ;;;###autoload
-(defun pretty-print-profiling-info (&optional info stream)
+(defun profiling-results (&optional info stream)
   "Print profiling info INFO to STREAM in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
  `get-profiling-info'.
@@ -108,7 +108,10 @@ If STREAM is omitted, either a *Profiling Results* buffer or standard
 	     (interactive-p))
     (goto-char (point-min))))
 
-;; Is it really necessary for this to be a macro?
+;; Support the old name for a while.
+(define-obsolete-function-alias 'pretty-print-profiling-info
+  'profile-results)
+
 ;;;###autoload
 (defmacro profile (&rest forms)
   "Turn on profiling, execute FORMS and restore profiling state.
@@ -116,7 +119,7 @@ Profiling state here means that if profiling was not in effect when
 PROFILE was called, it will be turned off after FORMS are evaluated.
 Otherwise, profiling will be left running.
 
-Returns the profiling info, printable by `pretty-print-profiling-info'."
+Returns the profiling info, printable by `profiling-results'."
   `(progn
      (if (profiling-active-p)
 	 (progn

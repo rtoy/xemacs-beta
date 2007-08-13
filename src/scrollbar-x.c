@@ -287,6 +287,11 @@ x_update_scrollbar_instance_status (struct window *w, int active, int size,
     }
   else if (managed)
     {
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
+      /* This isn't needed with Athena Scrollbars.  It might not be needed */
+      /* with Motif scrollbars (it is apparently needed with Lesstif). */
+      XtUngrabKeyboard (SCROLLBAR_X_WIDGET (instance), CurrentTime);
+#endif
       XtUnmanageChild (SCROLLBAR_X_WIDGET (instance));
     }
 }

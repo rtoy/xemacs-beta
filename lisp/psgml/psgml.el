@@ -1,5 +1,5 @@
 ;;; psgml.el --- SGML-editing mode with parsing support
-;; $Id: psgml.el,v 1.8 1997/09/03 02:55:43 steve Exp $
+;; $Id: psgml.el,v 1.9 1997/10/05 01:15:30 steve Exp $
 
 ;; Copyright (C) 1993, 1994, 1995, 1996 Lennart Staflin
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -889,6 +889,7 @@ as that may change."
 (define-key sgml-mode-map "\e\C-@"   'sgml-mark-element)
 ;;(define-key sgml-mode-map [?\M-\C-\ ] 'sgml-mark-element)
 (define-key sgml-mode-map "\e\C-h"   'sgml-mark-current-element)
+(define-key sgml-mode-map [(meta backspace)] (lookup-key (current-global-map) [(meta backspace)]))
 (define-key sgml-mode-map "\e\C-t"   'sgml-transpose-element)
 (define-key sgml-mode-map "\M-\t"    'sgml-complete)
 

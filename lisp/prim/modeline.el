@@ -1,6 +1,6 @@
 ;;; modeline.el --- modeline hackery.
 
-;; Copyright (C) 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1988, 1992-1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
 ;; This file is part of XEmacs.
@@ -21,6 +21,10 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
+
+;;; Commentary:
+
+;;; Code:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                     General mouse modeline stuff                    ;;;
@@ -467,7 +471,7 @@ Normally nil in most modes, since there is no process to display.")
 (defvar modeline-modified-map (make-sparse-keymap 'modeline-modified-map)
   "Keymap consulted for mouse-clicks on the modeline-modified string.")
 (define-key modeline-modified-map 'button2
-  (make-modeline-command-wrapper 'vc-toggle-read-only))
+  (make-modeline-command-wrapper 'modeline-toggle-read-only))
 
 (defvar modeline-modified-extent (make-extent nil nil)
   "Extent covering the modeline-modified string.")
@@ -509,3 +513,20 @@ Normally nil in most modes, since there is no process to display.")
   (purecopy '(column-number-mode "C%c--"))
   (purecopy '(-3 . "%p"))
   (purecopy "-%-")))
+
+;;; Added for XEmacs 20.3.  Provide wrapper for vc since it may not always be
+;;; present, and its symbols are not visible this early in the dump if it
+;;; is.
+
+(defun modeline-toggle-read-only ()
+  "Change whether this buffer is visiting its file read-only.
+With arg, set read-only iff arg is positive.
+This function is designed to be called when the read-only indicator on the
+modeline is clicked.  It will call `vc-toggle-read-only' if available,
+otherwise it will call the usual `toggle-read-only'."
+  (interactive)
+  (if (fboundp 'vc-toggle-read-only)
+      (vc-toggle-read-only)
+    (toggle-read-only)))
+
+;;; modeline.el ends here

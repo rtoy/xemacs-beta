@@ -460,6 +460,7 @@ Concatenate all the arguments and make the result a list.
 The result is a list whose elements are the elements of all the arguments.
 Each argument may be a list, vector, bit vector, or string.
 The last argument is not copied, just used as the tail of the new list.
+Also see: `nconc'.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1351,6 +1352,7 @@ The modified LIST is returned.  Comparison is done with `equal'.
 If the first member of LIST is ELT, there is no way to remove it by side
 effect; therefore, write `(setq foo (delete element foo))' to be sure
 of changing the value of `foo'.
+Also see: `remove'.
 */
        (elt, list))
 {
@@ -1721,6 +1723,7 @@ remrassq_no_quit (Lisp_Object value, Lisp_Object list)
 DEFUN ("nreverse", Fnreverse, 1, 1, 0, /*
 Reverse LIST by modifying cdr pointers.
 Returns the beginning of the reversed list.
+Also see: `reverse'.
 */
        (list))
 {
@@ -3097,6 +3100,7 @@ nconc2 (Lisp_Object s1, Lisp_Object s2)
 DEFUN ("nconc", Fnconc, 0, MANY, 0, /*
 Concatenate any number of lists by altering them.
 Only the last argument is not altered, and need not be a list.
+Also see: `append'.
 */
        (int nargs, Lisp_Object *args))
 {

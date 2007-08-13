@@ -46,7 +46,7 @@ srcs = cc-mode cl custom ediff efs external-widget forms \
 	hm--html-mode \
 	hyperbole ilisp info ispell mailcrypt mh-e oo-browser \
 	pcl-cvs ph psgml psgml-api rmail standards supercite term \
-	termcap texinfo vhdl-mode viper vm w3 widget xemacs-faq
+	termcap texinfo vhdl-mode viper vm widget xemacs-faq
 
 info = $(srcs:%=../info/%.info)
 dvi  = $(srcs:%=%.dvi)

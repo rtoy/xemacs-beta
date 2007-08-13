@@ -38,13 +38,14 @@
 	    (frames (relevant-custom-frames))
 	    frame)
 	;; Create global face.
-	(make-face face)
+	(make-empty-face face)
 	(face-display-set face value)
 	;; Create frame local faces
 	(while frames
 	  (setq frame (car frames)
 		frames (cdr frames))
-	  (face-display-set face value frame))))
+	  (face-display-set face value frame))
+	(init-face-from-resources face)))
     (when (and doc (null (face-doc-string face)))
       (set-face-doc-string face doc))
     (custom-handle-all-keywords face args 'custom-face)
@@ -256,7 +257,7 @@ See `defface' for the format of SPEC."
 	      (put face 'force-face t))
 	    (when (or now (find-face face))
 	      (unless (find-face face)
-		(make-face face))
+		(make-empty-face face))
 	      (face-spec-set face spec))
 	    (setq args (cdr args)))
 	;; Old format, a plist of FACE SPEC pairs.

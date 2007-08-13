@@ -80,6 +80,14 @@
   :prefix "paren-"
   :group 'matching)
 
+(defgroup log-message nil
+  "Messages logging and display customizations."
+  :group 'minibuffer)
+
+(defgroup warnings nil
+  "Warnings customizations."
+  :group 'minibuffer)
+
 
 (defun newline (&optional arg)
   "Insert a newline, and move to left margin of the new line if it's blank.
@@ -876,25 +884,23 @@ Repeating \\[universal-argument] without digits or minus sign
 ;; A subsequent C-u means to multiply the factor by 4 if we've typed
 ;; nothing but C-u's; otherwise it means to terminate the prefix arg.
 (defun universal-argument-more (arg)
-  (interactive "P")
+  (interactive "_P")			; XEmacs
   (if (consp arg)
       (setq prefix-arg (list (* 4 (car arg))))
     (setq prefix-arg arg)
     (setq overriding-terminal-local-map nil))
-  (setq zmacs-region-stays t)	; XEmacs
   (setq universal-argument-num-events (length (this-command-keys))))
 
 (defun negative-argument (arg)
   "Begin a negative numeric argument for the next command.
 \\[universal-argument] following digits or minus sign ends the argument."
-  (interactive "P")
+  (interactive "_P")			; XEmacs
   (cond ((integerp arg)
 	  (setq prefix-arg (- arg)))
 	 ((eq arg '-)
 	  (setq prefix-arg nil))
 	 (t
 	  (setq prefix-arg '-)))
-  (setq zmacs-region-stays t)	; XEmacs
   (setq universal-argument-num-events (length (this-command-keys)))
   (setq overriding-terminal-local-map universal-argument-map))
 
@@ -902,7 +908,7 @@ Repeating \\[universal-argument] without digits or minus sign
 (defun digit-argument (arg)
   "Part of the numeric argument for the next command.
 \\[universal-argument] following digits or minus sign ends the argument."
-  (interactive "P")
+  (interactive "_P")			; XEmacs
   (let* ((event last-command-event)
 	 (key (and (key-press-event-p event)
 		   (event-key event)))
@@ -918,7 +924,6 @@ Repeating \\[universal-argument] without digits or minus sign
 	     (setq prefix-arg (if (zerop digit) '- (- digit))))
 	    (t
 	     (setq prefix-arg digit)))
-      (setq zmacs-region-stays t)
       (setq universal-argument-num-events (length (this-command-keys)))
       (setq overriding-terminal-local-map universal-argument-map))))
 
@@ -933,9 +938,8 @@ Repeating \\[universal-argument] without digits or minus sign
 ;; Anything else terminates the argument and is left in the queue to be
 ;; executed as a command.
 (defun universal-argument-other-key (arg)
-  (interactive "P")
+  (interactive "_P")			; XEmacs
   (setq prefix-arg arg)
-  (setq zmacs-region-stays t)	; XEmacs
   (let* ((key (this-command-keys))
 	 ;; FSF calls silly function `listify-key-sequence' here.
 	  (keylist (append key nil)))
@@ -946,7 +950,7 @@ Repeating \\[universal-argument] without digits or minus sign
   (setq overriding-terminal-local-map nil))
 
 
-;; XEmacs -- shouldn't these functions keep the zmacs region active?
+;; XEmacs -- keep zmacs-region active.
 (defun forward-to-indentation (arg)
   "Move forward ARG lines and position at first nonblank character."
   (interactive "_p")
@@ -1012,40 +1016,7 @@ when given no argument at the beginning of a line."
 ;;; not the X selection.  But if that were provided, it should be called (and
 ;;; behave as) yank-hooks instead.  -- jwz
 
-;(defvar interprogram-cut-function nil
-;  "Function to call to make a killed region available to other programs.
-;
-;Most window systems provide some sort of facility for cutting and
-;pasting text between the windows of different programs.
-;This variable holds a function that XEmacs calls whenever text
-;is put in the kill ring, to make the new kill available to other
-;programs.
-;
-;The function takes one or two arguments.
-;The first argument, TEXT, is a string containing
-;the text which should be made available.
-;The second, PUSH, if non-nil means this is a \"new\" kill;
-;nil means appending to an \"old\" kill.")
-;
-;(defvar interprogram-paste-function nil
-;  "Function to call to get text cut from other programs.
-;
-;Most window systems provide some sort of facility for cutting and
-;pasting text between the windows of different programs.
-;This variable holds a function that Emacs calls to obtain
-;text that other programs have provided for pasting.
-;
-;The function should be called with no arguments.  If the function
-;returns nil, then no other program has provided such text, and the top
-;of the Emacs kill ring should be used.  If the function returns a
-;string, that string should be put in the kill ring as the latest kill.
-;
-;Note that the function should return a string only if a program other
-;than Emacs has provided a string for pasting; if Emacs provided the
-;most recent string, the function should return nil.  If it is
-;difficult to tell whether Emacs or some other program provided the
-;current string, it is probably good enough to return nil if the string
-;is equal (according to `string=') to the last text Emacs provided.")
+;; [... code snipped ...]
 
 (defcustom kill-hooks nil
   "*Functions run when something is added to the XEmacs kill ring.
@@ -1118,13 +1089,11 @@ yanking point\; just return the Nth kill forward."
 
 ;;;; Commands for manipulating the kill ring.
 
-;;FSFmacs
+;; In FSF killing read-only text just pastes it into kill-ring.  Which
+;; is a very bad idea -- see Jamie's comment below.
+
 ;(defvar kill-read-only-ok nil
 ;  "*Non-nil means don't signal an error for killing read-only text.")
-
-;(put 'text-read-only 'error-conditions
-;     '(text-read-only buffer-read-only error))
-;(put 'text-read-only 'error-message "Text is read-only")
 
 (defun kill-region (beg end &optional verbose) ; verbose is XEmacs addition
   "Kill between point and mark.
@@ -1328,7 +1297,7 @@ See also the command \\[yank-pop]."
       ;; This is like exchange-point-and-mark, but doesn't activate the mark.
       ;; It is cleaner to avoid activation, even though the command
       ;; loop would deactivate the mark because we inserted text.
-      ;; (But doesn't work in XEmacs)
+      ;; (But it's an unnecessary kludge in XEmacs.)
       ;(goto-char (prog1 (mark t)
 		   ;(set-marker (mark-marker) (point) (current-buffer)))))
       (exchange-point-and-mark t))
@@ -1643,7 +1612,9 @@ The mark is activated unless DONT-ACTIVATE-REGION is non-nil."
 
 ;;; After 8 years of waiting ... -sb
 (defcustom next-line-add-newlines nil  ; XEmacs
-  "*If non-nil, `next-line' inserts newline to avoid `end of buffer' error."
+  "*If non-nil, `next-line' inserts newline when the point is at end of buffer.
+This behavior used to be the default, and is still default in FSF Emacs.
+We think it is an unnecessary and unwanted side-effect."
   :type 'boolean
   :group 'editing-basics)
 
@@ -1716,7 +1687,7 @@ The beginning of a blank line does not count as the end of a line."
 
 (defcustom goal-column nil
   "*Semipermanent goal column for vertical motion, as set by \\[set-goal-column], or nil."
-  :type '(choice integer (const nil))
+  :type '(choice integer (const :tag "None" nil))
   :group 'editing-basics)
 (make-variable-buffer-local 'goal-column)
 
@@ -1817,7 +1788,8 @@ Use with care, as it slows down movement significantly.  Outline mode sets this.
 
 ;;; Many people have said they rarely use this feature, and often type
 ;;; it by accident.  Maybe it shouldn't even be on a key.
-(put 'set-goal-column 'disabled t)
+;; It's not on a key, as of 20.2.  So no need for this.
+;(put 'set-goal-column 'disabled t)
 
 (defun set-goal-column (arg)
   "Set the current horizontal position as a goal for \\[next-line] and \\[previous-line].
@@ -2549,7 +2521,7 @@ indicating whether soft newlines should be inserted.")
 	    (setq give-up t))))
       ;; Justify last line.
       (justify-current-line justify t t)
-      t))) 
+      t)))
 
 (defvar normal-auto-fill-function 'do-auto-fill
   "The function to use for `auto-fill-function' if Auto Fill mode is turned on.
@@ -3191,6 +3163,8 @@ Otherwise, this function always returns false."
 ;;; calls the lisp level zmacs-update-region.  It must remain since it
 ;;; must be called by core C code.
 ;;;
+;;; Huh?  Why couldn't "core C code" just use
+;;; call0(Qzmacs_update_region)??? -hniksic
 
 (defvar zmacs-activate-region-hook nil
   "Function or functions called when the region becomes active;
@@ -3374,8 +3348,10 @@ from the echo area at the bottom of the frame.  The label of the removed
 message is passed as the first argument, and the text of the message
 as the second argument.")
 
-(defvar log-message-max-size 50000
-  "Maximum size of the \" *Message-Log*\" buffer.  See `log-message'.")
+(defcustom log-message-max-size 50000
+  "Maximum size of the \" *Message-Log*\" buffer.  See `log-message'."
+  :type 'integer
+  :group 'log-message)
 (make-compatible-variable 'message-log-max 'log-message-max-size)
 
 ;; We used to reject quite a lot of stuff here, but it was a bad idea,
@@ -3392,7 +3368,7 @@ as the second argument.")
 ;; So, I left only a few of the really useless ones on this kill-list.
 ;;
 ;;                                            --hniksic
-(defvar log-message-ignore-regexps
+(defcustom log-message-ignore-regexps
   '(;; Note: adding entries to this list slows down messaging
     ;; significantly.  Wherever possible, use message lables.
 
@@ -3421,12 +3397,16 @@ See `log-message'.
 
 Ideally, packages which generate messages which might need to be ignored
 should label them with 'progress, 'prompt, or 'no-log, so they can be 
-filtered by the log-message-ignore-labels.")
+filtered by the log-message-ignore-labels."
+  :type '(repeat regexp)
+  :group 'log-message)
 
-(defvar log-message-ignore-labels 
+(defcustom log-message-ignore-labels 
   '(help-echo command progress prompt no-log garbage-collecting auto-saving)
   "List of symbols indicating labels of messages which shouldn't be logged.
-See `display-message' for some common labels.  See also `log-message'.")
+See `display-message' for some common labels.  See also `log-message'."
+  :type '(repeat (symbol :tag "Label"))
+  :group 'log-message)
 
 ;;Subsumed by view-lossage
 ;; Not really, I'm adding it back by popular demand. -slb
@@ -3606,9 +3586,7 @@ The FRAME argument is currently unused."
 
 ;;; may eventually be frame-dependent
 (defun current-message-label (&optional frame)
-  (if message-stack
-      (car (car message-stack))
-    nil))
+  (car (car message-stack)))
 
 (defun message (fmt &rest args)
   "Print a one-line message at the bottom of the frame.
@@ -3631,7 +3609,7 @@ minibuffer contents show."
 ;;;;;; warning stuff
 ;;;;;;
 
-(defvar log-warning-minimum-level 'info
+(defcustom log-warning-minimum-level 'info
   "Minimum level of warnings that should be logged.
 The warnings in levels below this are completely ignored, as if they never
 happened.
@@ -3644,9 +3622,13 @@ See also `display-warning-minimum-level'.
 
 You can also control which warnings are displayed on a class-by-class
 basis.  See `display-warning-suppressed-classes' and
-`log-warning-suppressed-classes'.")
+`log-warning-suppressed-classes'."
+  :type '(choice (const emergency) (const alert) (const critical)
+		 (const error) (const warning) (const notice)
+		 (const info) (const debug))
+  :group 'warnings)
 
-(defvar display-warning-minimum-level 'info
+(defcustom display-warning-minimum-level 'info
   "Minimum level of warnings that should be displayed.
 The warnings in levels below this are completely ignored, as if they never
 happened.
@@ -3659,7 +3641,11 @@ See also `log-warning-minimum-level'.
 
 You can also control which warnings are displayed on a class-by-class
 basis.  See `display-warning-suppressed-classes' and
-`log-warning-suppressed-classes'.")
+`log-warning-suppressed-classes'."
+  :type '(choice (const emergency) (const alert) (const critical)
+		 (const error) (const warning) (const notice)
+		 (const info) (const debug))
+  :group 'warnings)
 
 (defvar log-warning-suppressed-classes nil
   "List of classes of warnings that shouldn't be logged or displayed.
@@ -3673,7 +3659,7 @@ warnings are not displayed but are still unobtrusively logged.
 
 See also `log-warning-minimum-level' and `display-warning-minimum-level'.")
 
-(defvar display-warning-suppressed-classes nil
+(defcustom display-warning-suppressed-classes nil
   "List of classes of warnings that shouldn't be displayed.
 If any of the CLASS symbols associated with a warning is the same as
 any of the symbols listed here, the warning will not be displayed.
@@ -3681,7 +3667,9 @@ The warning will still logged in the *Warnings* buffer (unless also
 contained in `log-warning-suppressed-classes'), but the buffer will
 not be automatically popped up.
 
-See also `log-warning-minimum-level' and `display-warning-minimum-level'.")
+See also `log-warning-minimum-level' and `display-warning-minimum-level'."
+  :type '(repeat symbol)
+  :group 'warnings)
 
 (defvar warning-count 0
   "Count of the number of warning messages displayed so far.")
@@ -3797,7 +3785,7 @@ The C code calls this periodically, right before redisplay."
     (set-marker warning-marker (point-max buffer) buffer)))
 
 (defun emacs-name ()
-  "Return the printable name of this instance of GNU Emacs."
+  "Return the printable name of this instance of Emacs."
   (cond ((featurep 'infodock) "InfoDock")
 	((featurep 'xemacs) "XEmacs")
 	(t "Emacs")))

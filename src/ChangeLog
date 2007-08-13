@@ -1,13 +1,22 @@
-1997-08-13  Yves BLUSSEAU  <hk444@cleveland.freenet.edu>
+1997-10-03  SL Baur  <steve@altair.xemacs.org>
 
-	* efs/efs.el (efs-set-file-modes): Fix a bug that cause an error
-	when using the efs-set-file-modes function on a remote station with
-	a FTP daemon that don't support the QUOTE function.
+	* lisp.h: Nuke register declarations.
 
-1997-10-02  Colin Rafferty  <craffert@ml.com>
+1997-10-03  Karl M. Hegbloom  <karlheg@inetarena.com>
 
-	* prim/frame.el (default-drag-and-drop-functions): Fixed a typo
-		  that was calling `data' rather than looking at it.
+	* window.c (Frecenter): Correct variable names in docstring.
+
+1997-10-03  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* fns.c: Add some cross references between destructive and
+ 	non-destructive versions of similar functions.
+
+Fri Oct  3 12:28:08 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp-disunion.h: Move markbit to be between the
+	  type bits and the value bits.  Previously it was always 
+	  the sign bit of a EMACS_INT, unless modified by a
+	  #define in a machine dependent .h file.
 
 1997-10-02  Hrvoje Niksic  <hniksic@srce.hr>
 

@@ -326,8 +326,22 @@ Keywords supported:  :key :count :start :end :from-end"
 
 (or (and (fboundp 'delete) (subrp (symbol-function 'delete)))
     (defalias 'delete (function (lambda (x y) (delete* x y ':test 'equal)))))
-(defun remove (x y) (remove* x y ':test 'equal))
-(defun remq (x y) (if (memq x y) (delq x (copy-list y)) y))
+
+(defun remove (cl-item cl-seq)
+  "Remove all occurrences of ITEM in SEQ, testing with `equal'
+This is a non-destructive function; it makes a copy of SEQ if necessary
+to avoid corrupting the original SEQ.
+Also see: `remove*', `delete', `delete*'"
+  (remove* cl-item cl-seq ':test 'equal))
+
+(defun remq (cl-elt cl-list)
+  "Remove all occurances of ELT in LIST, comparing with `eq'.
+This is a non-destructive function; it makes a copy of LIST to avoid
+corrupting the original LIST.
+Also see: `delq', `delete', `delete*', `remove', `remove*'."
+  (if (memq cl-elt cl-list)
+      (delq cl-elt (copy-list cl-list))
+    cl-list))
 
 (defun remove-duplicates (cl-seq &rest cl-keys)
   "Return a copy of SEQ with all duplicate elements removed.

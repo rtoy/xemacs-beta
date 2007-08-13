@@ -41,7 +41,7 @@ typedef EMACS_INT Lisp_Object;
    is a "large" one, one which was separately malloc'd
    rather than being part of a string block.  */
 
-#define MARKBIT (1UL << ((VALBITS) + (GCTYPEBITS)))
+#define MARKBIT (1UL << (VALBITS))
 
 
 /* These macros extract various sorts of values from a Lisp_Object.
@@ -51,7 +51,7 @@ typedef EMACS_INT Lisp_Object;
 /* One needs to override this if there must be high bits set in data space
    (doing the result of the below & ((1 << (GCTYPE + 1)) - 1) would work
    on all machines, but would penalize machines which don't need it) */
-#define XTYPE(a) ((enum Lisp_Type) ((a) >> VALBITS))
+#define XTYPE(a) ((enum Lisp_Type) (((EMACS_UINT)(a)) >> ((VALBITS) + 1)))
 
 #define EQ(x,y) ((x) == (y))
 #define GC_EQ(x,y) (XGCTYPE (x) == XGCTYPE (y) && XPNTR (x) == XPNTR (y))
@@ -94,7 +94,7 @@ extern int pure_size;
    individual settor macros (XSETCONS, XSETBUFFER, etc.) instead. */
 
 #define XSETOBJ(var, type_tag, value)			\
- ((void) ((var) = (((EMACS_INT) (type_tag) << VALBITS)	\
+ ((void) ((var) = (((EMACS_INT) (type_tag) << ((VALBITS) + 1))	\
                  + ((EMACS_INT) (value) & VALMASK))))
 
 /* During garbage collection, XGCTYPE must be used for extracting types
@@ -104,15 +104,10 @@ extern int pure_size;
    Outside of garbage collection, all mark bits are always zero.  */
 
 #ifndef XGCTYPE
-# define XGCTYPE(a) ((enum Lisp_Type) (((a) >> VALBITS) & GCTYPEMASK))
+# define XGCTYPE(a) XTYPE(a)
 #endif
 
-#if ((VALBITS) + (GCTYPEBITS)) == ((LONGBITS) - 1L)
-/* Make XMARKBIT faster if mark bit is sign bit.  */
-# define XMARKBIT(a) ((a) < 0L)
-#else
 # define XMARKBIT(a) ((a) & (MARKBIT))
-#endif /* markbit is sign bit */
 
 # define XMARK(a) ((void) ((a) |= (MARKBIT)))
 # define XUNMARK(a) ((void) ((a) &= (~(MARKBIT))))

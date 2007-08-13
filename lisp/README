@@ -71,7 +71,7 @@ These are the main subdirectories:
 
 	x11		X Window System-specific code.
 
-	games		Various ways to waste time.
+	games		Various fun sorts of things.
 
 	packages	Random other utilities that are not primarily about
 			editing text.  For example, code for automatically
@@ -80,7 +80,8 @@ These are the main subdirectories:
 
 Some packages are fairly large; those have been given their own	directories:
 
-	auctex		A package for editing TeX documents.
+	auctex		A package for editing TeX documents. [Available as
+			installable package]
 
 	bytecomp	The XEmacs-lisp compiler.
 
@@ -104,8 +105,6 @@ Some packages are fairly large; those have been given their own	directories:
 	electric	The "electric" commands; these implement temporary
 			windows for help, list-buffers, etc.
 
-	energize	An interface to the Lucid Energize system.
-
 	eos		An interface to Sun's SparcWorks product.
 
 	eterm		A merge of the comint shell mode with an
@@ -114,7 +113,8 @@ Some packages are fairly large; those have been given their own	directories:
 	gnats		Interface to XEmacs bug reporting system based on
 			Cygnus GNATS.
 
-	gnus		A network news and mail reader.
+	gnus		A network news and mail reader.  [Available as
+			installable package]
 
 	hm--html-menus	Menu interface to html-mode.
 
@@ -125,7 +125,11 @@ Some packages are fairly large; those have been given their own	directories:
 
 	iso		ISO Latin language support.
 
-	its		MULE Input Method.
+	its		MULE Input Method.  [Requires installing LEIM at
+			XEmacs build]
+
+	language	MULE non-English language support.  [Requires
+			installing LEIM at XEmacs build]
 
 	locale		IE18N stuff.
 
@@ -138,7 +142,8 @@ Some packages are fairly large; those have been given their own	directories:
 	mu		Message Utilities library (part of the Tools for
 			MIME).
 
-	mule		Multi-lingual extensions for XEmacs.
+	mule		Multi-lingual extensions for XEmacs.  [Requires
+			installing LEIM at XEmacs build]
 
 	oobr		An Object-Oriented class browser.
 
@@ -147,7 +152,8 @@ Some packages are fairly large; those have been given their own	directories:
 	psgml		General purpose SGML editing support with extra
 			support for editing HTML.
 
-	quail		MULE Input Method. [NOT WORKING IN 20.1]
+	quail		MULE Input Method.  [Requires installing LEIM at
+			XEmacs build]
 
 	rmail		A BABYL-format mail reader.
 
@@ -164,4 +170,5 @@ Some packages are fairly large; those have been given their own	directories:
 
 	vm		View Mail, an UNIX-format alternative to RMAIL.
 
-	w3		A World Wide Web interface.
+	w3		A World Wide Web interface.  [Available as installable
+			package]

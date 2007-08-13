@@ -96,7 +96,8 @@ make_special efs autoloads
 make_special hyperbole autoloads
 # make_special ilisp autoloads
 make_special oobr HYPB_ELC='' autoloads
-make_special w3 autoloads
+## W3 is a package now
+##make_special w3 autoloads
 
 dirs=
 for dir in lisp/*; do

@@ -427,12 +427,18 @@ install-arch-indep: mkdir
 	    ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
 	    chmod 0644 ${mandir}/$${page}${manext} ; \
 	  done
-	if test "${prefix}" != "${exec_prefix}"; then : extreme bogosity follows; \
-	   test ! -d ${prefix}/bin && \
-		$(LN_S) ${exec_prefix}/bin ${prefix}/bin; \
-	   test ! -d ${prefix}/lib/xemacs-${version}/${configuration} && \
-		${LN_S} ${exec_prefix}/lib/xemacs-${version}/${configuration} \
-			     ${prefix}/lib/xemacs-${version}/${configuration}; \
+	if test "${prefix}" != "${exec_prefix}"; then \
+           test ! -d ${exec_prefix}/lib/xemacs && \
+                $(LN_S) ${prefix}/lib/xemacs ${exec_prefix}/lib/xemacs; \
+           test ! -d ${exec_prefix}/lib/xemacs-${version}/etc && \
+                $(LN_S) ${prefix}/lib/xemacs-${version}/etc \
+                        ${exec_prefix}/lib/xemacs-${version}/etc; \
+           test ! -d ${exec_prefix}/lib/xemacs-${version}/info && \
+                $(LN_S) ${prefix}/lib/xemacs-${version}/info \
+                        ${exec_prefix}/lib/xemacs-${version}/info; \
+           test ! -d ${exec_prefix}/lib/xemacs-${version}/lisp && \
+                $(LN_S) ${prefix}/lib/xemacs-${version}/lisp \
+                        ${exec_prefix}/lib/xemacs-${version}/lisp; \
 	fi
 	@echo "If you would like to save approximately 15M of disk space, do"
 	@echo "make gzip-el"

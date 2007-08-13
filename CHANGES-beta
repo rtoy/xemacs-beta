@@ -1,5 +1,9 @@
 							-*- indented-text -*-
 to 20.3 beta26 "Riga"
+-- register declarations nuked by default
+-- Miscellaneous patches from Martin Buchholz, Karl Hegbloom and Hrvoje Niksic
+-- VC is now an XEmacs package
+-- W3 is now an XEmacs package
 -- Miscellaneous bug fixes
 
 to 20.3 beta25 "Prague"

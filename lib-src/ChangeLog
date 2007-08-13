@@ -1,3 +1,7 @@
+1997-10-04  SL Baur  <steve@altair.xemacs.org>
+
+	* update-autoloads.sh (mule_p): W3 is a package now.
+
 1997-09-30  SL Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (ignore_pattern): Don't attempt bytecompiling

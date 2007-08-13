@@ -1158,13 +1158,15 @@ See `defface' for information about SPEC."
   (if frame
       (progn
 	(reset-face face frame)
-	(face-display-set face spec frame))
+	(face-display-set face spec frame)
+	(init-face-from-resources face frame))
     (let ((frames (relevant-custom-frames)))
       (reset-face face)
       (face-display-set face spec)
       (while frames
 	(face-display-set face spec (car frames))
-	(pop frames)))))
+	(pop frames))
+      (init-face-from-resources face))))
 
 (defun face-display-set (face spec &optional frame)
   "Set FACE to the attributes to the first matching entry in SPEC.

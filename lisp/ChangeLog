@@ -1,3 +1,79 @@
+1997-09-29  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* prim/files.el (auto-mode-alist): make `.cl' a lisp-mode
+ 	extension for Franz Allegro CL.
+
+1997-10-05  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/simple.el: Minor docstring and comment changes.  Customized 
+	some more.
+
+1997-10-04  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* utils/xemacs-build-report.el (xemacs-build-report): Placed to
+	maintenance group.
+	(xemacs-create-build-report): Added an autoload cookie.
+
+	* prim/profile.el (profiling-results): Renamed from
+ 	`pretty-print-profiling-info'.
+
+1997-10-03  Karl M. Hegbloom  <Karl M. Hegbloom <karlheg@inetarena.com>>
+
+	* custom/cus-edit.el (custom-save-all): Bind `auto-mode-alist' to
+ 	nil around the init file handling to prevent unnecessary automagic
+ 	processing.
+
+1997-10-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/faces.el (face-spec-set): Invoke `init-face-from-resources'.
+
+	* custom/cus-face.el (custom-set-faces): Revert to using
+ 	`make-empty-face'.
+	(custom-declare-face): Ditto.
+
+1997-10-04  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/modeline.el (modeline-modified-map): Call wrapper function
+	over `vc-toggle-read-only'.
+	(modeline-toggle-read-only): New function.
+
+	* prim/files.el (basic-save-buffer): Put guard on call to
+	`vc-after-save' since someone may wish not to install the vc
+	package.
+
+	* prim/fill.el (sentence-end-double-space): Fix docstring.
+
+	* cl/cl-seq.el (remq): Reformat and add doc-string.
+	Suggested by: Karl M. Hegbloom <karlheg@inetarena.com>
+	
+1997-10-03  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/func-menu.el: change the countups from message's to
+ 	display-message 'progress's so they don't dump in the lossage
+ 	buffer.
+
+1997-10-03  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* psgml/psgml.el (sgml-mode-map): Bind (meta backspace) to
+ 	'backward-kill-word so it works as expected. "\e\C-h" will still
+ 	do 'sgml-mark-current-element.
+
+1997-08-13  Yves BLUSSEAU  <hk444@cleveland.freenet.edu>
+
+	* efs/efs.el (efs-set-file-modes): Fix a bug that cause an error
+	when using the efs-set-file-modes function on a remote station with
+	a FTP daemon that don't support the QUOTE function.
+
+1997-10-02  Colin Rafferty  <craffert@ml.com>
+
+	* prim/frame.el (default-drag-and-drop-functions): Fixed a typo
+		  that was calling `data' rather than looking at it.
+
+1997-10-04  SL Baur  <steve@altair.xemacs.org>
+
+	* cl/cl-seq.el (remove): Add docstring.
+	Suggested by Karl M Hegbloom <karlheg@inetarena.com>
+
 1997-10-02  Colin Rafferty  <craffert@ml.com>
 
 	* prim/simple.el (set-fill-column): Used format to create the

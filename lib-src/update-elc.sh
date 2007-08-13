@@ -142,7 +142,8 @@ make_special hyperbole elc
 #make_special ilisp XEmacsELC=custom-load.elc elc
 make_special ilisp elc
 make_special oobr HYPB_ELC='' elc
-make_special w3 xemacs-w3
+## W3 is a package now.
+#make_special w3 xemacs-w3
 
 for dir in $ignore_dirs ; do
   ignore_pattern="${ignore_pattern}/\\/$dir\\//d

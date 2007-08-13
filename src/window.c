@@ -4129,10 +4129,10 @@ Default for ARG is window width minus 2.
 }
 
 DEFUN ("recenter", Frecenter, 0, 2, "_P", /*
-Center point in WINDOW and redisplay frame.  With ARG, put point on line ARG.
+Center point in WINDOW and redisplay frame.  With N, put point on line N.
 The desired position of point is always relative to the window.
 Just C-u as prefix means put point in the center of the window.
-No arg (i.e., it is nil) erases the entire frame and then
+No N (i.e., it is nil) erases the entire frame and then
 redraws with point in the center of the window.
 If WINDOW is nil, the selected window is used.
 */

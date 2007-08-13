@@ -78,7 +78,6 @@ Local Packages:
 * Viper::	A VI Plan for Emacs Rescue and a venomous VI PERil.
 * Vhdl-mode::	A major mode for editing VHDL files.
 * VM::		View Mail, a replacement for Rmail.
-* W3::		A browser for the World Wide Web global hypertext system.
 * Widget::	An Emacs Lisp widget library
 * tm-en::	Tools for Mime (English version)
 * tm-mh-e-en::	Tools for Mime for MH-E (English version)
@@ -89,3 +88,4 @@ Local Packages:
 * tm-mh-e-ja::	Tools for Mime for MH-E (Japanese version)
 * gnus-mime-ja::
 		Tools for Mime for Gnus (Japanese version)
+* Locals:

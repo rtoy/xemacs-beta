@@ -1,3 +1,24 @@
+1997-10-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta27 is released.
+
+1997-10-03  Damon Lipparelli  <lipp@primus.com>
+
+	* Makefile.in (install-arch-indep): When --prefix !=
+	--exec-prefix, symlink the system-independent bits into the
+	system-dependent directory structure (rather than the other way
+	around).
+
+1997-10-03  Martin Buchholz  <mrb@eng.sun.com>
+
+	* lib-src/etags.c:  etags 12.28 + prototypization
+	* INSTALL:  Better document --site-runtime-libraries 
+	* src/scrollbar-x.c (x_update_scrollbar_instance_status): 
+	  FIX: M-x scroll-left; horizontal scrollbar appears; drag it
+	  left; scrollbar disappears; keyboard inoperative.
+	* configure.in:  Remove left-over references to *_switch_x_*
+	  - NAS libaudio is part of $libs_x, not $LIBS
+
 1997-10-02  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta26 is released.

@@ -309,11 +309,12 @@ DECLARE_DOESNT_RETURN (assert_failed (CONST char *, int, CONST char *));
 # endif
 #endif
 
-#ifdef DEBUG_XEMACS
+/*#ifdef DEBUG_XEMACS*/
 #define REGISTER
-#else
-#define REGISTER register
-#endif
+#define register
+/*#else*/
+/*#define REGISTER register*/
+/*#endif*/
 
 #if defined (__GNUC__) && (__GNUC__ >= 2)
 /* Entomological studies have revealed that the following junk is

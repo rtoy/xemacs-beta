@@ -206,7 +206,6 @@
 (eval-when-compile
   (byte-compiler-options
     (optimize t)
-    (new-bytecodes t)
     (warnings (- free-vars unresolved))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -227,7 +226,8 @@
 (defun fume-about ()
   (interactive)
   (sit-for 0)
-  (message "Func-Menu version %s, © 1996 %s" fume-version fume-developer))
+  (display-message 'no-log
+     (format "Func-Menu version %s, © 1996 %s" fume-version fume-developer)))
 
 (defconst fume-running-xemacs (string-match "XEmacs\\|Lucid" emacs-version))
 
@@ -1888,9 +1888,9 @@ If optional arg POPMENU is non-nil, brings up the function-menu."
     (save-excursion
       (goto-char (point-min))
       (cond (fume-scanning-message
-             (message fume-scanning-message 0))
+             (display-message 'progress (format fume-scanning-message 0)))
             (fume-rescanning-message
-             (message fume-rescanning-message)))
+             (display-message 'progress fume-rescanning-message)))
       (while (setq fnam
                    (condition-case ()
                        (funcall find buffer-to-scan)
@@ -1909,11 +1909,11 @@ If optional arg POPMENU is non-nil, brings up the function-menu."
                (if fume-found-function-hook
                    (save-excursion (run-hooks 'fume-found-function-hook)))))
         (if fume-scanning-message
-            (message fume-scanning-message (fume-relative-position))))
+            (display-message 'progress (format fume-scanning-message (fume-relative-position)))))
       (cond (fume-scanning-message
-             (message "%s done" (format fume-scanning-message 100)))
+             (display-message 'progress (format "%s done" (format fume-scanning-message 100))))
             (fume-rescanning-message
-             (message "%s done" fume-rescanning-message)))
+             (display-message 'progress (format "%s done" fume-rescanning-message))))
       ;; make a copy of flst sorted by position in buffer
       (setq fume-modeline-funclist
             (nreverse
@@ -2081,7 +2081,7 @@ the basic menu of functions."
                        fume-menubar-menu-location))
 
                      ((and fume-not-tty ; trap tty segmentation faults...
-                           (not (popup-menu-up-p)))
+                           (not (popup-up-p)))
                       (or (fume-update-menubar-entry)
                           (setq function-menu
                                 (cons
@@ -2197,14 +2197,15 @@ With prefix arg, jumps to function in a different window."
   (interactive)
   (fume-about)
   (sit-for 1)
-  (message "SPC=%s, p=%s, n=%s, o=%s, G=%s, RET=%s,    q=%s"
-           "this"
-           "previous"
-           "next"
-           "other win"
-           "one win"
-           "this win"
-           "quit"))
+  (display-message 'prompt
+		   (format "SPC=%s, p=%s, n=%s, o=%s, G=%s, RET=%s,    q=%s"
+			   "this"
+			   "previous"
+			   "next"
+			   "other win"
+			   "one win"
+			   "this win"
+			   "quit")))
 
 (defun fume-list-functions-quit ()
   (interactive)

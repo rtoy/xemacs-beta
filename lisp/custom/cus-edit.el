@@ -2930,7 +2930,8 @@ explicitly load that file for the settings to take effect."
 (defun custom-save-delete (symbol)
   "Delete the call to SYMBOL form `custom-file'.
 Leave point at the location of the call, or after the last expression."
-  (let ((find-file-hooks nil))
+  (let ((find-file-hooks nil)
+	(auto-mode-alist nil))
     (set-buffer (find-file-noselect custom-file)))
   (goto-char (point-min))
   (catch 'found
@@ -3037,7 +3038,8 @@ Leave point at the location of the call, or after the last expression."
   (let ((inhibit-read-only t))
     (custom-save-variables)
     (custom-save-faces)
-    (let ((find-file-hooks nil))
+    (let ((find-file-hooks nil)
+	  (auto-mode-alist))
       (with-current-buffer (find-file-noselect custom-file)
 	(save-buffer)))))
 
