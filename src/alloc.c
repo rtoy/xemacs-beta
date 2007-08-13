@@ -67,7 +67,10 @@ Boston, MA 02111-1307, USA.  */
 /* Define this to use malloc/free with no freelist for all datatypes,
    the hope being that some debugging tools may help detect
    freed memory references */
-/* #define ALLOC_NO_POOLS */
+#ifdef USE_DEBUG_MALLOC	/* Taking the above comment at face value -slb */
+#include <dmalloc.h>
+#define ALLOC_NO_POOLS
+#endif
 
 #include "puresize.h"
 
@@ -364,6 +367,10 @@ memory_full (void)
 
 /* like malloc and realloc but check for no memory left, and block input. */
 
+#ifdef xmalloc
+#undef xmalloc
+#endif
+
 void *
 xmalloc (int size)
 {
@@ -382,6 +389,10 @@ xmalloc_and_zero (int size)
   memset (val, 0, size);
   return val;
 }
+
+#ifdef xrealloc
+#undef xrealloc
+#endif
 
 void *
 xrealloc (void *block, int size)
@@ -451,6 +462,10 @@ deadbeef_memory (void *ptr, unsigned long size)
 
 #define deadbeef_memory(ptr, size)
 
+#endif
+
+#ifdef xstrdup
+#undef xstrdup
 #endif
 
 char *
@@ -1599,9 +1614,12 @@ This is terrible behavior which is retained for compatibility with old
       b->annotated = Vload_file_name_internal_the_purecopy;
     else if (!NILP (Vload_file_name_internal))
       {
+	struct gcpro gcpro1;
+	GCPRO1(val);		/* don't let val or b get reaped */
 	Vload_file_name_internal_the_purecopy =
 	  Fpurecopy (Ffile_name_nondirectory (Vload_file_name_internal));
 	b->annotated = Vload_file_name_internal_the_purecopy;
+	UNGCPRO;
       }
 #endif
 

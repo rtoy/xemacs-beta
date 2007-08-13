@@ -55,6 +55,7 @@ Lisp_Object Vbinary_process_output;
 #endif /* DOS_NT */
 
 Lisp_Object Vexec_path, Vexec_directory, Vdata_directory, Vdoc_directory;
+Lisp_Object Vdata_directory_list;
 Lisp_Object Vconfigure_info_directory, Vsite_directory;
 
 /* The default base directory XEmacs is installed under. */
@@ -1157,17 +1158,23 @@ Each element is a string (directory name) or nil (try default directory).
 
   DEFVAR_LISP ("exec-directory", &Vexec_directory /*
 Directory of architecture-dependent files that come with XEmacs,
-especially executable programs intended for Emacs to invoke.
+especially executable programs intended for XEmacs to invoke.
 */ );
 
   DEFVAR_LISP ("data-directory", &Vdata_directory /*
 Directory of architecture-independent files that come with XEmacs,
-intended for Emacs to use.
+intended for XEmacs to use.
 */ );
+
+  DEFVAR_LISP ("data-directory-list", &Vdata_directory_list /*
+List of directories of architecture-independent files that come with XEmacs
+or were installed as packages, and are intended for XEmacs to use.
+*/ );
+  Vdata_directory_list = Qnil;
 
   DEFVAR_LISP ("site-directory", &Vsite_directory /*
 Directory of architecture-independent files that do not come with XEmacs,
-intended for Emacs to use.
+intended for XEmacs to use.
 */ );
 
   /* FSF puts the DOC file into data-directory.  They do a bunch of

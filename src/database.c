@@ -652,9 +652,10 @@ non-nil, replace any existing entry in the database.
   struct database_struct *db;
   int status;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-  
+
   CHECK_DATABASE (dbase);
   CHECK_STRING (key);
+  CHECK_STRING (val);
   db = XDATABASE (dbase);
   if (!DATABASE_LIVE_P (db))
     signal_simple_error ("Attempting to access closed database", dbase);

@@ -217,7 +217,7 @@ extern Lisp_Object Qmouse_leave_buffer_hook;
 
 /* Defined in callproc.c */
 extern Lisp_Object Vexec_path, Vexec_directory, Vdata_directory,
-		   Vdoc_directory, Vsite_directory;
+  Vdata_directory_list, Vdoc_directory, Vsite_directory;
 
 
 /* Defined in casefiddle.c */
@@ -534,7 +534,8 @@ SIGTYPE fatal_error_signal (int sig);
 Lisp_Object make_arg_list (int argc, char **argv);
 void make_argc_argv (Lisp_Object argv_list, int *argc, char ***argv);
 void free_argc_argv (char **argv);
-Lisp_Object decode_env_path (CONST char *evarname, CONST char *def);
+Lisp_Object decode_env_path (CONST char *evarname, CONST char *default_);
+Lisp_Object decode_path (CONST char *path);
 /* Nonzero means don't do interactive redisplay and don't change tty modes */
 extern int noninteractive;
 Lisp_Object Fkill_emacs (Lisp_Object arg);

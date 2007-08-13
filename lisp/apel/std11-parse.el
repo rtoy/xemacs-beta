@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Keywords: mail, news, RFC 822, STD 11
 ;; Version:
-;;	$Id: std11-parse.el,v 1.1 1997/06/03 04:18:36 steve Exp $
+;;	$Id: std11-parse.el,v 1.2 1997/07/26 22:09:37 steve Exp $
 
 ;; This file is part of MU (Message Utilities).
 
@@ -162,12 +162,12 @@
   (let (token itl parsed token-value)
     (while (and lal
 		(setq token (car lal))
-		(if (and (setq token-value (cdr token))
-			 (find-non-ascii-charset-string token-value)
-			 )
-		    (setq token nil)
-		  (std11-ignored-token-p token)
-		  ))
+		(or (std11-ignored-token-p token)
+		    (if (and (setq token-value (cdr token))
+			     (find-non-ascii-charset-string token-value)
+			     )
+			(setq token nil)
+		      )))
       (setq lal (cdr lal))
       (setq itl (cons token itl))
       )

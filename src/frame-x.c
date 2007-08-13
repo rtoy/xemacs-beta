@@ -365,7 +365,11 @@ x_wm_maybe_move_wm_command (struct frame *f)
       if (NILP (rest))
 	return;
       f = XFRAME (XCAR (rest));
+
+#ifndef HAVE_WINDOWMAKER
       x_wm_maybe_store_wm_command (f);
+#endif /* HAVE_WINDOWMAKER */
+
     }
 }
 
@@ -1865,7 +1869,11 @@ x_popup_frame (struct frame *f)
       {
 	/* tell the window manager about us. */
 	x_wm_store_class_hints (shell_widget, XtName (frame_widget));
+
+#ifndef HAVE_WINDOWMAKER
 	x_wm_maybe_store_wm_command (f);
+#endif /* HAVE_WINDOWMAKER */
+
 	x_wm_hack_wm_protocols (shell_widget);
       }
 
@@ -2439,8 +2447,10 @@ x_delete_frame (struct frame *f)
   Widget w = FRAME_X_SHELL_WIDGET (f);
   Lisp_Object popup, frame;
 
+#ifndef HAVE_WINDOWMAKER
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_maybe_move_wm_command (f);
+#endif /* HAVE_WINDOWMAKER */
 
   /* Frames with the popup property are using other frames as their
      widget parent.  Deleting them are their parent has already been

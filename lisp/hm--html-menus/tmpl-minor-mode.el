@@ -1,65 +1,75 @@
 ;;; tmpl-minor-mode.el --- Template Minor Mode
-;;;
-;;; $Id: tmpl-minor-mode.el,v 1.5 1997/05/29 23:49:44 steve Exp $
-;;;
-;;; Copyright (C) 1993 - 1997  Heiko Muenkel
-;;; email: muenkel@tnt.uni-hannover.de
-;;;
-;;; Keywords: data tools
-;;;
-;;;  This program is free software; you can redistribute it and/or modify
-;;;  it under the terms of the GNU General Public License as published by
-;;;  the Free Software Foundation; either version 2, or (at your option)
-;;;  any later version.
-;;;
-;;;  This program is distributed in the hope that it will be useful,
-;;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;  GNU General Public License for more details.
-;;;
-;;;  You should have received a copy of the GNU General Public License
-;;;  along with this program; if not, write to the Free Software
-;;;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-;;;
-;;; 
+
+;; Copyright (C) 1993 - 1997  Heiko Muenkel
+
+;; Author: Heiko Muenkel <muenkel@tnt.uni-hannover.de>
+;; Keywords: data tools
+
+;; $Id: tmpl-minor-mode.el,v 1.6 1997/07/26 22:09:46 steve Exp $
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your
+;; option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; See the file COPYING. if not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA
+
+;;; Synched up with: Not part of Emacs.
+
 ;;; Commentary:
-;;;
-;;;	This file contains functions to expand templates.
-;;;	Look at the file templates-syntax.doc for the syntax of the 
-;;;	templates.
-;;;	There are the following 2 interactive functions to expand
-;;;	templates:
-;;;		tmpl-expand-templates-in-region
-;;;		tmpl-expand-templates-in-buffer
-;;;	The following two interactive functions are to escape the 
-;;;	unescaped special template signs:
-;;;		tmpl-escape-tmpl-sign-in-region
-;;;		tmpl-escape-tmpl-sign-in-buffer
-;;;	The following function ask for a name of a template file, inserts
-;;;	the template file and expands the templates:
-;;;		tmpl-insert-template-file
-;;;	If you want to use keystrokes to call the above functions, you must
-;;;	switch the minor mode tmpl-mode on with `tmpl-minor-mode'. After
-;;;	that, the following keys are defined:
-;;;		`C-c x' 	= tmpl-expand-templates-in-region
-;;;		`C-c C-x' 	= tmpl-expand-templates-in-buffer
-;;;		`C-c ESC'	= tmpl-escape-tmpl-sign-in-region
-;;;		`C-c C-ESC'	= tmpl-escape-tmpl-sign-in-buffer
-;;; 	Type again `M-x tmpl-minor-mode' to switch the template minor mode off.
-;;;
-;;;	This file needs also the file adapt.el !
-;;;
-;;; Installation: 
-;;;   
-;;;	Put this file in one of your lisp directories and the following
-;;;	lisp command in your .emacs:
-;;;		(load-library "templates")
-;;;
+
+;; Description:
+;;	This file contains functions to expand templates.
+;;	Look at the file templates-syntax.doc for the syntax of the 
+;;	templates.
+;;	There are the following 2 interactive functions to expand
+;;	templates:
+;;		tmpl-expand-templates-in-region
+;;		tmpl-expand-templates-in-buffer
+;;	The following two interactive functions are to escape the 
+;;	unescaped special template signs:
+;;		tmpl-escape-tmpl-sign-in-region
+;;		tmpl-escape-tmpl-sign-in-buffer
+;;	The following function ask for a name of a template file, inserts
+;;	the template file and expands the templates:
+;;		tmpl-insert-template-file
+;;	If you want to use keystrokes to call the above functions, you must
+;;	switch the minor mode tmpl-mode on with `tmpl-minor-mode'. After
+;;	that, the following keys are defined:
+;;		`C-c x' 	= tmpl-expand-templates-in-region
+;;		`C-c C-x' 	= tmpl-expand-templates-in-buffer
+;;		`C-c ESC'	= tmpl-escape-tmpl-sign-in-region
+;;		`C-c C-ESC'	= tmpl-escape-tmpl-sign-in-buffer
+;; 	Type again `M-x tmpl-minor-mode' to switch the template minor mode off.
+
+;;	This file needs also the file adapt.el !
+
+
+;; Installation: 
+
+;;	Put this file in one of your lisp directories and the following
+;;	lisp command in your .emacs:
+;;		(load-library "templates")
+
+;;; Code:
 
 (require 'adapt)
 
+(defgroup tmpl-minor nil
+  "A package for inserting and expanding templates."
+  :group 'data)
 
-(defvar tmpl-template-dir-list nil
+(defcustom tmpl-template-dir-list nil
   "*A list of directories with the template files.
 If it is nil, then the default-directory will be used. 
 If more than one directory is given, then the
@@ -68,22 +78,30 @@ template filenames should differ in all directories.
 This variable is used in the commands for inserting templates.
 Look at `tmpl-insert-template-file-from-fixed-dirs' and
 at `tmpl-insert-template-file'. The command `tmpl-insert-template-file'
-uses only the car of the list (if it is a list).")
+uses only the car of the list (if it is a list)."
+  :group 'tmpl-minor
+  :type '(choice (const :tag "default-directory" :value nil)
+		 (repeat directory)))
 
-(defvar tmpl-automatic-expand t
+(defcustom tmpl-automatic-expand t
   "*An inserted template will be automaticly expanded, if this is t.
 
 This variable is used in the commands for inserting templates.
 Look at `tmpl-insert-template-file-from-fixed-dirs' and
-at `tmpl-insert-template-file'.")
+at `tmpl-insert-template-file'."
+  :group 'tmpl-minor
+  :type 'boolean)
 
-(defvar tmpl-filter-regexp ".*\\.tmpl$"
+
+(defcustom tmpl-filter-regexp ".*\\.tmpl$"
   "*Regexp for filtering out non template files in a directory.
 It is used in `tmpl-insert-template-file-from-fixed-dirs' to allow
 only the selecting of files, which are matching the regexp. 
 If it is nil, then the Filter \".*\\.tmpl$\" is used.
 Set it to \".*\" if you want to disable the filter function or
-use the command `tmpl-insert-template-file'.")
+use the command `tmpl-insert-template-file'."
+  :group 'tmpl-minor
+  :type 'string)
 
 (defvar tmpl-history-variable-name 'tmpl-history-variable
   "The name of the history variable.
@@ -95,8 +113,10 @@ Not used in the Emacs 19.")
 (defvar tmpl-history-variable nil
   "The history variable. See also `tmpl-history-variable-name'.")
 
-(defvar tmpl-sign "\000" "Sign which marks a template expression.")
-
+(defcustom tmpl-sign "\000"
+  "Sign which marks a template expression."
+  :group 'tmpl-minor
+  :type 'string)
 
 (defvar tmpl-name-lisp "LISP" "Name of the lisp templates.")
 
@@ -136,22 +156,6 @@ Not used in the Emacs 19.")
     (save-excursion
       (beginning-of-line)
       (1+ (count-lines 1 (point))))))
-
-
-;(defun mapcar* (f &rest args)
-;  "Apply FUNCTION to successive cars of all ARGS, until one ends.
-;Return the list of results."
-;  (if (not (memq 'nil args))              ; If no list is exhausted,
-;      (cons (apply f (mapcar 'car args))  ; Apply function to CARs.
-;	    (apply 'mapcar* f             ; Recurse for rest of elements.
-;		   (mapcar 'cdr args)))))
-;
-;(defmacro tmpl-error (&rest args)
-;  "Widen the buffer and signal an error.
-;Making error message by passing all args to `error',
-;which passes all args to format."
-;  (widen)
-;  (error args))
 
 
 (defun tmpl-search-next-template-sign (&optional dont-unescape)
@@ -241,25 +245,6 @@ without the tmpl-sign. The point is set after the `tmpl-sign'."
 TEMPLATE-ATTRIBUTE-LIST is the attribute list of the template."
   (end-of-line)
   (template-delete-template begin-of-template template-attribute-list))
-;  (tmpl-save-excursion
-;    (if (or (not (assoc tmpl-attribute-dont-delete template-attribute-list))
-;	    (not (car (cdr (assoc tmpl-attribute-dont-delete 
-;				  template-attribute-list)))))
-;	(if (and (assoc tmpl-attribute-delete-line template-attribute-list)
-;		 (car (cdr (assoc tmpl-attribute-delete-line
-;				  template-attribute-list))))
-;	    ;; Delete the whole line
-;	    (let ((end-of-region (progn (end-of-line) (point)))
-;		  (start-of-region begin-of-template)) ; ausgetauscht
-;	      (delete-region start-of-region end-of-region)
-;	      (delete-char 1))
-;	  ;; Delete only the comment
-;	  (let ((end-of-region (progn
-;				 (end-of-line)
-;				 (point)))
-;		(start-of-region (progn (goto-char begin-of-template)
-;					(point))))
-;	    (delete-region start-of-region end-of-region))))))
   
 
 (defun tmpl-get-template-argument ()
@@ -517,7 +502,6 @@ HISTROY-VARIABLE contains the last template file names."
 				 "Directory with Templatefiles: "
 				 (car directories))))))
     (unless (or (not history-variable)
-;		(string= answer (car internal-history)))
 		(string= file (car (eval history-variable))))
       (set history-variable (cons file (eval history-variable))))
     file))
@@ -593,18 +577,6 @@ now be used instead of the args TEMPLATE-DIR and AUTOMATIC-EXPAND."
       (tmpl-expand-templates-in-buffer))
   file)
 
-;(defun tmpl-insert-template-file (&optional template-dir automatic-expand)
-;  "Insert a template file and expand it, if AUTOMATIC-EXPAND is t.
-;The TEMPLATE-DIR is the directory with the template files."
-;  (interactive)
-;  (insert-file
-;   (expand-file-name
-;    (read-file-name "Templatefile: "
-;		    template-dir
-;		    nil
-;		    t)))
-;  (if automatic-expand
-;      (tmpl-expand-templates-in-buffer)))
 
 ;;; General utilities, which are useful in a template file
 (defun tmpl-util-indent-region (begin end)
@@ -699,3 +671,5 @@ now be used instead of the args TEMPLATE-DIR and AUTOMATIC-EXPAND."
 
 
 (provide 'tmpl-minor-mode)
+
+;;; tmpl-minor-mode ends here

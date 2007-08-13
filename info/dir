@@ -57,13 +57,11 @@ Packages:
 * External-Widget::
 		Use XEmacs as a text widget inside of another program.
 * Forms::	A package for editing databases by filling in forms.
-* Gnus::	A netnews and mail reader for XEmacs.
 * HM--HTML-Mode::  HTML Editing Mode.
 * Hyperbole::	A programmable information management and hypertext system.
 * ILISP::	Multi-dialect inferior LISP interface.
 * Ispell::	Interactive spelling corrector.
 * Mailcrypt::	Emacs interface to cryptographic functions for mail and news.
-* Message::	Emacs message composition mode.
 * MH-E::	Emacs interface to MH, a mail-handling package.
 * OO-Browser::	The Multi-Language Object-Oriented Browser.
 * PCL-CVS::	An XEmacs-based front end to CVS.
@@ -85,9 +83,11 @@ Packages:
 * Widget::	An Emacs Lisp widget library
 * tm-en::	Tools for Mime (English version)
 * tm-mh-e-en::	Tools for Mime for MH-E (English version)
-* gnus-mime-en::Tools for Mime for Gnus (English version)
+* gnus-mime-en::
+		Tools for Mime for Gnus (English version)
 * tm-vm-en::    Tools for Mime for VM
 * tm-ja::	Tools for Mime (Japanese version)
 * tm-mh-e-ja::	Tools for Mime for MH-E (Japanese version)
-* gnus-mime-ja::Tools for Mime for Gnus (Japanese version)
+* gnus-mime-ja::
+		Tools for Mime for Gnus (Japanese version)
 * Locals:

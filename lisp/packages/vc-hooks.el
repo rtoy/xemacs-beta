@@ -4,6 +4,7 @@
 
 ;; Author:     Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Maintainer: Andre Spiegel <spiegel@inf.fu-berlin.de>
+;; Maintainer: (ClearCase) Rod Whitby <rwhitby@geocities.com>
 ;; XEmacs conversion: Steve Baur <steve@altair.xemacs.org>
 
 ;; This file is part of GNU Emacs.
@@ -29,6 +30,15 @@
 ;; It takes care VC-related activities that are done when you visit a file,
 ;; so that vc.el itself is loaded only when you use a VC command.
 ;; See the commentary of vc.el.
+
+;; Rudimentary ClearCase support by Rod Whitby <rwhitby@geocities.com>.
+;; I (Rod Whitby) intend to maintain the rudimentary functionality that is
+;; currently in this file.  At some time in the future (don't hold your
+;; breath), I intend to merge the functionality of the cc-vc package
+;; (separately available from /rtfm.mit.edu:/pub/cc-vc/) into this file.
+;; I am not the maintainer of cc-vc, nor am I the maintainer of the
+;; non-ClearCase parts of this file.
+;;
 
 ;;; Code:
 

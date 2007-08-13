@@ -5,7 +5,7 @@
 ;; Author: Eric M. Ludlam <zappo@gnu.ai.mit.edu>
 ;; Version: 0.5
 ;; Keywords: file, tags, tools
-;; X-RCS: $Id: speedbar.el,v 1.2 1997/06/29 23:13:33 steve Exp $
+;; X-RCS: $Id: speedbar.el,v 1.3 1997/07/26 22:09:58 steve Exp $
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -672,8 +672,9 @@ directories.")
 
 ;;; Mode definitions/ user commands
 ;;
-;;###autoload
+;;;###autoload
 (defalias 'speedbar 'speedbar-frame-mode)
+;;;###autoload
 (defun speedbar-frame-mode (&optional arg)
   "Enable or disable speedbar.  Positive ARG means turn on, negative turn off.
 nil means toggle.  Once the speedbar frame is activated, a buffer in
@@ -722,7 +723,8 @@ supported at a time."
 	(let ((params (cons (cons 'height (frame-height))
 			    speedbar-frame-parameters)))
 	  (setq speedbar-frame
-		(if (< emacs-major-version 20) ;a bug is fixed in v20 & later
+		(if (or speedbar-xemacsp
+			(< emacs-major-version 20)) ;a bug is fixed in v20 & later
 		    (make-frame params)
 		  (let ((x-pointer-shape x-pointer-top-left-arrow)
 			(x-sensitive-text-pointer-shape x-pointer-hand2))
@@ -761,7 +763,9 @@ supported at a time."
 (defun speedbar-frame-width ()
   "Return the width of the speedbar frame in characters.
 nil if it doesn't exist."
-  (and speedbar-frame (cdr (assoc 'width (frame-parameters speedbar-frame)))))
+  (and speedbar-frame
+       (frame-live-p speedbar-frame)
+       (cdr (assoc 'width (frame-parameters speedbar-frame)))))
 
 (defun speedbar-mode ()
   "Major mode for managing a display of directories and tags.
@@ -887,7 +891,8 @@ and the existence of packages."
 		    ;; The trailer
 		    speedbar-easymenu-definition-trailer)))
     (easy-menu-define speedbar-menu-map speedbar-key-map "Speedbar menu" md)
-    (if speedbar-xemacsp (set-buffer-menubar (list km)))))
+    ;; (if speedbar-xemacsp (set-buffer-menubar (list km)))
+))
 
 
 ;;; User Input stuff
@@ -910,6 +915,7 @@ mode-line.  This is only useful for non-XEmacs"
     ;;(message "X: Pixel %d Char Pixels %d On char %d" xp cpw oc)
     ))
 
+;;;###autoload
 (defun speedbar-get-focus ()
   "Change frame focus to or from the speedbar frame.
 If the selected frame is not speedbar, then speedbar frame is

@@ -567,53 +567,10 @@ Decode XPM image between START and END." nil nil)
 
 ;;;***
 
-;;;### (autoloads (imenu imenu-add-to-menubar) "imenu" "modes/imenu.el")
-
-(defvar imenu-generic-expression nil "\
-The regex pattern to use for creating a buffer index.
-
-If non-nil this pattern is passed to `imenu-create-index-with-pattern'
-to create a buffer index.
-
-It is an alist with elements that look like this: (MENU-TITLE
-REGEXP INDEX). 
-
-MENU-TITLE is a string used as the title for the submenu or nil if the
-entries are not nested.
-
-REGEXP is a regexp that should match a construct in the buffer that is
-to be displayed in the menu; i.e., function or variable definitions,
-etc.  It contains a substring which is the name to appear in the
-menu.  See the info section on Regexps for more information.
-
-INDEX points to the substring in REGEXP that contains the name (of the
-function, variable or type) that is to appear in the menu.
-
-For emacs-lisp-mode for example PATTERN would look like:
-
-'((nil \"^\\\\s-*(def\\\\(un\\\\|subst\\\\|macro\\\\|advice\\\\)\\\\s-+\\\\([-A-Za-z0-9+]+\\\\)\" 2)
-  (\"*Vars*\" \"^\\\\s-*(def\\\\(var\\\\|const\\\\)\\\\s-+\\\\([-A-Za-z0-9+]+\\\\)\" 2)
-  (\"*Types*\" \"^\\\\s-*(def\\\\(type\\\\|struct\\\\|class\\\\|ine-condition\\\\)\\\\s-+\\\\([-A-Za-z0-9+]+\\\\)\" 2))
-
-The variable is buffer-local.")
-
-(make-variable-buffer-local 'imenu-generic-expression)
-
-(autoload 'imenu-add-to-menubar "imenu" "\
-Adds an `imenu' entry to the menu bar for the current buffer.
-NAME is a string used to name the menu bar item.
-See the command `imenu' for more information." t nil)
-
-(autoload 'imenu "imenu" "\
-Jump to a place in the buffer chosen using a buffer menu or mouse menu.
-See `imenu-choose-buffer-index' for more information." t nil)
-
-;;;***
-
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.5 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.6 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -979,8 +936,8 @@ Variables controlling indentation/edit style:
  pascal-case-indent       (default 2)
     Indentation for case statements.
  pascal-auto-newline      (default nil)
-    Non-nil means automatically newline after semicolons and the punctuation mark
-    after an end.
+    Non-nil means automatically newline after semicolons and the punctuation
+    mark after an end.
  pascal-tab-always-indent (default t)
     Non-nil means TAB in Pascal mode should always reindent the current line,
     regardless of where in the line point is when the TAB command is used.
@@ -1602,7 +1559,7 @@ with your script for an edit-interpret-debug cycle." t nil)
 
 ;;;***
 
-;;;### (autoloads (strokes-mode strokes-list-strokes strokes-load-user-strokes strokes-help strokes-describe-stroke strokes-do-complex-stroke strokes-do-stroke strokes-read-complex-stroke strokes-read-stroke strokes-global-set-stroke) "strokes" "modes/strokes.el")
+;;;### (autoloads (strokes-mode strokes-list-strokes strokes-edit-strokes strokes-load-user-strokes strokes-help strokes-describe-stroke strokes-do-complex-stroke strokes-do-stroke strokes-read-complex-stroke strokes-read-stroke strokes-global-set-stroke) "strokes" "modes/strokes.el")
 
 (defvar strokes-mode nil "\
 Non-nil when `strokes' is globally enabled")
@@ -1653,9 +1610,21 @@ Load user-defined strokes from file named by `strokes-file'." t nil)
 
 (defalias 'load-user-strokes 'strokes-load-user-strokes)
 
+(autoload 'strokes-edit-strokes "strokes" "\
+Edit strokes in a pop-up buffer containing strokes and their definitions.
+If STROKES-MAP is not given, `strokes-global-map' will be used instead.
+
+Editing commands:
+
+\\{edit-faces-mode-map}" t nil)
+
+(defalias 'edit-strokes 'strokes-edit-strokes)
+
 (autoload 'strokes-list-strokes "strokes" "\
-Pop up a buffer containing a listing of all strokes defined in STROKE-MAP.
-If STROKE-MAP is not given, `strokes-global-map' will be used instead." t nil)
+Pop up a buffer containing an alphabetical listing of strokes in STROKES-MAP.
+With CHRONOLOGICAL prefix arg (\\[universal-argument]) list strokes
+chronologically by command name.
+If STROKES-MAP is not given, `strokes-global-map' will be used instead." t nil)
 
 (defalias 'list-strokes 'strokes-list-strokes)
 
@@ -1970,7 +1939,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.5 $
+vhdl-mode $Revision: 1.6 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

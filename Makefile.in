@@ -414,6 +414,13 @@ install-arch-indep: mkdir
 	    ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
 	    chmod 0644 ${mandir}/$${page}${manext} ; \
 	  done
+	if test ! -d ${prefix}/bin; then \
+		$(LN_S) ${exec_prefix}/bin ${prefix}/bin; \
+	fi
+	if test ! -d ${prefix}/lib/xemacs-${version}/${configuration}; then \
+		${LN_S} ${exec_prefix}/lib/xemacs-${version}/${configuration} \
+			${prefix}/lib/xemacs-${version}/${configuration}; \
+	fi
 	@echo "If you would like to save approximately 15M of disk space, do"
 	@echo "make gzip-el"
 	@echo "or you may run "

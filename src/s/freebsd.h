@@ -33,8 +33,8 @@
 #define LIBS_SYSTEM "-lutil"
 #endif
 
-/* Kludge to work around setlocale(LC_ALL,...) not working before 01/1997 */
-#if __FreeBSD_version < 199701
+/* Kludge to work around setlocale(LC_ALL,...) not working after 01/1997 */
+#if __FreeBSD_version >= 199701
 #include <X11/Xlocale.h>
 #define setlocale(locale_category, locale_spec) setlocale(LC_CTYPE, locale_spec)
 #endif
@@ -72,7 +72,7 @@
 #endif /* NO_SHARED_LIBS */
 
 #define HAVE_GETLOADAVG
-/* #define NO_TERMIO */ /* mrb */
+/* #define NO_TERMIO */ /* detected in configure */
 #define DECLARE_GETPWUID_WITH_UID_T
 
 /* freebsd uses OXTABS instead of the expected TAB3. */

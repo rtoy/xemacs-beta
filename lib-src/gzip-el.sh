@@ -1,7 +1,7 @@
 #! /bin/sh
 ### gzip-el.sh --- compress superfluous installed source lisp
 
-# Author:	Jeff Miller <jmiller@bay1.bayserve.net>
+# Author:	Jeff Miller <jmiller@smart.net>
 # Author:	Hrvoje Niksic <hniksic@srce.hr>
 # Maintainer:	Steve Baur <steve@altair.xemacs.org>
 # Created:	13 Feb 1997

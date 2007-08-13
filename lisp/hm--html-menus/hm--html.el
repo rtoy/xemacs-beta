@@ -1,4 +1,4 @@
-;;; $Id: hm--html.el,v 1.8 1997/06/06 00:57:04 steve Exp $
+;;; $Id: hm--html.el,v 1.9 1997/07/26 22:09:45 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -2943,7 +2943,7 @@ feature."
       (newline)
       (indent-according-to-mode)
       (forward-line -1)
-      (unless (= (util-return-end-of-line) (point))
+      (unless (= (hm--html-return-end-of-line) (point))
 	(end-of-line)
 	(newline))
       (newline)
@@ -4054,8 +4054,6 @@ A prefix arg is used as no of ROWS."
 	(hm--html-greater-than)
 	(setq hm--just-insert-greater-than nil))
     (insert ?>)
-    ;; Next line added by Bob Weiner, Altrasoft, 11/21/96.
-    #+infodock (if id-html-auto-indent (indent-according-to-mode))
     (setq hm--just-insert-greater-than t)))
 
 
@@ -4238,14 +4236,18 @@ First, the system config file (detemined by the environment variable
 HTML_CONFIG_FILE; normaly hm--html-configuration.el(c)) is loaded.
 At second a site config file is loaded, if the environment variable
 HTML_SITE_CONFIG_FILE or the lisp variable `hm--html-site-config-file'
-is set to such a file.
+is set to such a file and if the emacs wasn't started with the 
+flag -no-site-file.
 At least the user config file (determined by the environment variable
 HTML_USER_CONFIG_FILE; normaly the file ~/.hm--html-configuration.el(c)).
 If no HTML_CONFIG_FILE exists, then the file hm--html-configuration.el(c)
 is searched in one of the lisp load path directories.
 If no HTML_USER_CONFIG_FILE exists, then the variable 
 `hm--html-user-config-file' is checked. If this variable is nil or the file
-also doesn't exist, then the file ~/.hm--html-configuration.el(c) is used."
+also doesn't exist, then the file ~/.hm--html-configuration.el(c) is used.
+In this case it is possible to use another home directory by using the -u
+flag for the emacs start. In all cases, the loading of the user configuration
+file can be avoided by using the -q flag."
   (interactive)
   ;; at first the system config file
   (if (and (stringp (getenv "HTML_CONFIG_FILE"))
@@ -4256,34 +4258,51 @@ also doesn't exist, then the file ~/.hm--html-configuration.el(c) is used."
     (load-library "hm--html-configuration"))
 
   ;; at second the site config file
-  (if (and (stringp (getenv "HTML_SITE_CONFIG_FILE"))
-	      (file-exists-p
-	       (expand-file-name
-		(getenv "HTML_SITE_CONFIG_FILE"))))
-      (load-file (expand-file-name (getenv "HTML_SITE_CONFIG_FILE")))
-    (when (and (boundp 'hm--html-site-config-file)
-	       (stringp hm--html-site-config-file)
-	       (file-exists-p (expand-file-name hm--html-site-config-file)))
-      (load-file (expand-file-name hm--html-site-config-file))))
+  (when (or (and (boundp 'site-start-file) ;XEmacs
+		 site-start-file)
+	    (and (boundp 'site-run-file) ; Emacs 19
+		 site-run-file))
+    (if (and (stringp (getenv "HTML_SITE_CONFIG_FILE"))
+	     (file-exists-p
+	      (expand-file-name
+	       (getenv "HTML_SITE_CONFIG_FILE"))))
+	(load-file (expand-file-name (getenv "HTML_SITE_CONFIG_FILE")))
+      (when (and (boundp 'hm--html-site-config-file)
+		 (stringp hm--html-site-config-file)
+		 (file-exists-p (expand-file-name hm--html-site-config-file)))
+	(load-file (expand-file-name hm--html-site-config-file)))))
   
-  ;; and now the user config file 
-  (cond ((and (stringp (getenv "HTML_USER_CONFIG_FILE"))
-	      (file-exists-p
-	       (expand-file-name
-		(getenv "HTML_USER_CONFIG_FILE"))))
-	 (load-file (expand-file-name (getenv "HTML_USER_CONFIG_FILE"))))
-	((and (boundp 'hm--html-user-config-file)
-	      (stringp hm--html-user-config-file)
-	      (file-exists-p (expand-file-name hm--html-user-config-file)))
-	 (load-file (expand-file-name hm--html-user-config-file)))
-	((file-exists-p (expand-file-name "~/.hm--html-configuration.elc"))
-	 (load-file (expand-file-name "~/.hm--html-configuration.elc")))
-	((file-exists-p (expand-file-name "~/.hm--html-configuration.el"))
-	 (load-file (expand-file-name "~/.hm--html-configuration.el")))
-	(t
-	 (message (concat "WARNING: No HTML User Config File ! "
-			  "Look at hm--html-load-config-files !")))
-	)
+  ;; and now the user config file
+  (when init-file-user ; may be something should be done for reloading
+    (cond ((and (stringp (getenv "HTML_USER_CONFIG_FILE"))
+		(file-exists-p
+		 (expand-file-name
+		  (getenv "HTML_USER_CONFIG_FILE"))))
+	   (load-file (expand-file-name (getenv "HTML_USER_CONFIG_FILE"))))
+	  ((and (boundp 'hm--html-user-config-file)
+		(stringp hm--html-user-config-file)
+		(file-exists-p (expand-file-name hm--html-user-config-file)))
+	   (load-file (expand-file-name hm--html-user-config-file)))
+	  ((file-exists-p (expand-file-name 
+			   (concat "~"
+				   init-file-user
+				   "/.hm--html-configuration.elc")))
+	   (load-file (expand-file-name
+		       (concat "~"
+			       init-file-user
+			       "~/.hm--html-configuration.elc"))))
+	  ((file-exists-p (expand-file-name 
+			   (concat "~"
+				   init-file-user
+				   "~/.hm--html-configuration.el")))
+	   (load-file (expand-file-name 
+		       (concat "~"
+			       init-file-user
+			       "~/.hm--html-configuration.el"))))
+	  (t
+	   (message (concat "WARNING: No HTML User Config File ! "
+			    "Look at hm--html-load-config-files !")))
+	  ))
   )
 			  
 

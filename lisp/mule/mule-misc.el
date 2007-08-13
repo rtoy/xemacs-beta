@@ -216,8 +216,8 @@ Returns nil if `set-language-environment' has not been called."
    (list (intern (completing-read "Language environment: "
 				  obarray 'language-environment-p
 				  'require-match))))
-  (when (not (string= (charset-registry 'ascii) "ISO8859-1"))
-    (set-charset-registry 'ascii "ISO8859-1"))
+  (when (not (string= (charset-registry 'ascii) "iso8859-1"))
+    (set-charset-registry 'ascii "iso8859-1"))
   (let ((func (get env 'set-lang-environ)))
     (if (not (null func))
 	(funcall func)))

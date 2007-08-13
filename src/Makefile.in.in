@@ -184,6 +184,7 @@ rallocdocsrc = ralloc.c
 rallocobjs = ralloc.o
 #endif
 
+malloclib =
 #ifndef SYSTEM_MALLOC
 # ifdef GNU_MALLOC  /* New GNU malloc */
 #  ifdef ERROR_CHECK_MALLOC
@@ -200,6 +201,9 @@ mallocdocsrc =
 #else /* SYSTEM_MALLOC */
 mallocobjs =
 mallocdocsrc =
+#ifdef USE_DEBUG_MALLOC
+malloclib = -ldmalloc
+#endif /* USE_DEBUG_MALLOC */
 #endif /* SYSTEM_MALLOC */
 
 #ifdef HAVE_X_WINDOWS
@@ -258,7 +262,7 @@ X11_objs = EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o 
 ## should not be told about.
 otherobjs = $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
 
-LIBES = $(lwlib_libs) $(quantify_libs) $(ld_libs_all) $(lib_gcc)
+LIBES = $(lwlib_libs) $(quantify_libs) $(malloclib) $(ld_libs_all) $(lib_gcc)
 
 #ifdef I18N3
 mo_dir = ${etcdir}

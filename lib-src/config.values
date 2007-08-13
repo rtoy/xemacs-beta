@@ -1,11 +1,11 @@
-CFLAGS "-m486 -O4 -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2 -fomit-frame-pointer -Wall"
+CFLAGS "-m486 -Wall -O4 -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2 -fomit-frame-pointer"
 CPPFLAGS ""
 CXXFLAGS ""
 DEFS "-DHAVE_CONFIG_H"
 LDFLAGS ""
 LIBS "-ldb -lgdbm -lgpm -lncurses -lintl -lm "
-exec_prefix "${prefix}"
-prefix "/usr/local"
+exec_prefix "/usr/src/junk2"
+prefix "/usr/src/junk1"
 program_transform_name "s,x,x,"
 bindir "${exec_prefix}/bin"
 sbindir "${exec_prefix}/sbin"
@@ -43,7 +43,7 @@ SRC_SUBDIR_DEPS " lwlib"
 INSTALL_ARCH_DEP_SUBDIR " lib-src pkg-src/tree-x"
 MAKE_SUBDIR " lib-src lwlib pkg-src/tree-x src"
 SUBDIR_MAKEFILES "lib-src/Makefile lwlib/Makefile pkg-src/tree-x/Makefile src/Makefile"
-version "20.3-b14"
+version "20.3-b15"
 configuration "i586-pc-linux"
 canonical "i586-pc-linux"
 srcdir "/b/XEmacs/xemacs-20.0"
@@ -58,7 +58,7 @@ etcdir_user_defined "no"
 lockdir "${statedir}/xemacs/lock"
 lockdir_user_defined "no"
 archlibdir "${libdir}/xemacs-${version}/${configuration}"
-archlibdir_user_defined "no"
+archlibdir_user_defined "yes"
 docdir ""
 bitmapdir ""
 extra_objs "debug.o unexelf.o dgif_lib.o gif_err.o gifalloc.o menubar.o scrollbar.o dialog.o toolbar.o gui.o menubar-x.o scrollbar-x.o dialog-x.o toolbar-x.o gui-x.o mule.o mule-ccl.o mule-charset.o mule-coding.o mule-wnnfns.o mule-canna.o realpath.o inline.o console-tty.o device-tty.o event-tty.o frame-tty.o objects-tty.o redisplay-tty.o cm.o terminfo.o gpmevent.o event-unixoid.o database.o"
@@ -84,13 +84,13 @@ top_srcdir "$top_srcdir"
 INSTALL "$INSTALL"
 EMACS_MAJOR_VERSION 20
 EMACS_MINOR_VERSION 3
-EMACS_BETA_VERSION 14
-XEMACS_CODENAME "Vienna"
-EMACS_VERSION "20.3-b14"
+EMACS_BETA_VERSION 15
+XEMACS_CODENAME "Berlin"
+EMACS_VERSION "20.3-b15"
 DEBUG_XEMACS t
 USE_ASSERTIONS t
 MEMORY_USAGE_STATS t
-CANONICAL_VERSION 20_3_b14_i586_pc_linux
+CANONICAL_VERSION 20_3_b15_i586_pc_linux
 HAVE_SYS_TIMEB_H t
 HAVE_SYS_TIME_H t
 HAVE_UNISTD_H t
@@ -219,7 +219,7 @@ DB_H_PATH "db.h"
 HAVE_BERKELEY_DB t
 HAVE_DATABASE t
 EMACS_CONFIGURATION "i586-pc-linux"
-EMACS_CONFIG_OPTIONS " '--cflags=-m486 -O4 -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2 -fomit-frame-pointer -Wall' --with-sound=no --error-checking=none --debug=yes --with-mule=yes --with-dialogs=athena3d --with-scrollbars=athena3d --use-union-type=yes --with-xim=no --mail-locking=file"
+EMACS_CONFIG_OPTIONS " '--cflags=-m486 -Wall -O4 -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2 -fomit-frame-pointer' --with-sound=no --error-checking=none --debug=yes --with-mule=yes --with-dialogs=athena3d --with-scrollbars=athena3d --use-union-type=yes --with-xim=no --mail-locking=file --prefix=/usr/src/junk1 --exec-prefix=/usr/src/junk2"
 config_machfile "m/intel386.h"
 config_opsysfile "s/linux.h"
 LD_SWITCH_X_SITE ""

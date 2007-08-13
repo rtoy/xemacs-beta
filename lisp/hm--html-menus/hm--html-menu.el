@@ -1,6 +1,6 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.7 1997/05/29 23:49:42 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.8 1997/07/26 22:09:45 steve Exp $
 ;;;
 ;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
@@ -751,6 +751,8 @@ menus to the psgml popup menu."
 		    ((eq (event-object event) 'menu-no-selection-hook)
 		     nil)
 		    ((commandp (event-object event))            ; for the 
+		     (set-mark hm--html-mark)			;
+		     (goto-char hm--html-point)			;
 		     (call-interactively (event-object event))  ; hm--html-menu
 		     (signal 'quit nil))                        ; items
 		    (t
@@ -765,7 +767,35 @@ menus to the psgml popup menu."
 		   (message "please make a choice from the menu."))))
 	  value))
       )
-;  Fuer den Emacs 19 fehlt hier noch etwas !!!
+
+  ;; For the Emacs 19
+  (defun hm--html-add-major-menu-to-minor-menus ()
+    "Adds an entry to get the general major menu in the minor mode menus.
+This function is only used in the Emacs 19."
+    (define-key  hm--html-menu-noregion-novice-map
+      [mouse-major-mode-menu]
+      '("Major Mode Menu" . mouse-major-mode-menu))
+    (define-key  hm--html-menu-noregion-expert-map
+      [mouse-major-mode-menu]
+      '("Major Mode Menu" . mouse-major-mode-menu))
+    (define-key  hm--html-menu-region-novice-map
+      [mouse-major-mode-menu]
+      '("Major Mode Menu" . mouse-major-mode-menu))
+    (define-key  hm--html-menu-region-expert-map
+      [mouse-major-mode-menu]
+      '("Major Mode Menu" . mouse-major-mode-menu)))
+
+  (defun hm--html-remove-major-menu-from-minor-menus ()
+    "Removes the entry to get the general major menu in the minor mode menus.
+This function is only used in the Emacs 19."
+    (define-key  hm--html-menu-noregion-novice-map
+      [mouse-major-mode-menu] 'undefined)
+    (define-key  hm--html-menu-noregion-expert-map
+      [mouse-major-mode-menu] 'undefined)
+    (define-key  hm--html-menu-region-novice-map
+      [mouse-major-mode-menu] 'undefined)
+    (define-key  hm--html-menu-region-expert-map
+      [mouse-major-mode-menu] 'undefined))
   )
 
 (if (adapt-xemacsp)
@@ -774,30 +804,52 @@ menus to the psgml popup menu."
       (defun hm--html-popup-minor-html-menu (event)
 	"Pops the HTML- menu up, if no region is active."
 	(interactive "@e")
-	(if hm--html-use-psgml
-	    (let ((hm--html-popup-menu (if hm--html-expert
-					   hm--html-menu-noregion-expert
-					 hm--html-menu-noregion-novice)))
-	      (sgml-tags-menu event))
-	  (if hm--html-expert
-	      (popup-menu hm--html-menu-noregion-expert)
-	    (popup-menu hm--html-menu-noregion-novice))
-	  ))
+	(if (eq major-mode 'html-mode)
+	    (if hm--html-use-psgml
+		(let ((hm--html-popup-menu (if hm--html-expert
+					       hm--html-menu-noregion-expert
+					     hm--html-menu-noregion-novice))
+		      (hm--html-point (point))
+		      (hm--html-mark (mark)))
+		  (sgml-tags-menu event))
+	      (if hm--html-expert
+		  (popup-menu hm--html-menu-noregion-expert)
+		(popup-menu hm--html-menu-noregion-novice))
+	      )
+	  (popup-menu (append  ;mode-popup-menu
+			       ;'("===")
+			       (if hm--html-expert
+				   hm--html-menu-noregion-expert
+				 hm--html-menu-noregion-novice)
+			       (list "==="
+				     (car mode-popup-menu)
+				     "===")
+			       (cdr mode-popup-menu)
+			       ))))
+	    
       
       
       (defun hm--html-popup-minor-html-menu-region (event)
 	"Pops the HTML- menu up, if a region is active."
 	(interactive "@e")
-	(if hm--html-use-psgml
-	    (let ((hm--html-popup-menu (if hm--html-expert
-					   hm--html-menu-region-expert
-					 hm--html-menu-region-novice)))
-	      (sgml-tags-menu event))
-	  (if hm--html-expert
-	      (popup-menu hm--html-menu-region-expert)
-	    (popup-menu hm--html-menu-region-novice))
-	  ))
-
+	(if (eq major-mode 'html-mode)
+	    (if hm--html-use-psgml
+		(let ((hm--html-popup-menu (if hm--html-expert
+					       hm--html-menu-region-expert
+					     hm--html-menu-region-novice))
+		      (hm--html-point (point))
+		      (hm--html-mark (mark)))
+		  (sgml-tags-menu event))
+	      (if hm--html-expert
+		  (popup-menu hm--html-menu-region-expert)
+		(popup-menu hm--html-menu-region-novice))
+	      )
+	  (popup-menu (append  mode-popup-menu
+			       '("---")
+			       (if hm--html-expert
+				   hm--html-menu-noregion-expert
+				 hm--html-menu-noregion-novice)))))
+      
       ))
 
 

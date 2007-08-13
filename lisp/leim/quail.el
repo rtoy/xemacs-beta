@@ -1481,7 +1481,7 @@ All possible translations of the current key and whole possible longer keys
 (defun quail-completion-list-translations (map key indent)
   (let ((translations
 	 (quail-get-translation (car map) key (length key))))
-    (if (integerp translations)
+    (if (characterp translations)
 	(insert "(1/1) 1." translations "\n")
       ;; We need only vector part.
       (setq translations (cdr translations))

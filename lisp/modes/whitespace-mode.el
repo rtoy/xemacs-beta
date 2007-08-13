@@ -26,7 +26,7 @@
  
 ;;; Commentary:
 
-;; $Id: whitespace-mode.el,v 1.3 1997/04/19 23:21:05 steve Exp $
+;; $Id: whitespace-mode.el,v 1.4 1997/07/26 22:09:50 steve Exp $
 ;; Description:
 ;;
 ;;	This is a minor mode, which highlights whitespaces (blanks and
@@ -561,31 +561,20 @@ static char * whitespace[] = {
 
 (if (and (adapt-xemacsp)
 	 whitespace-install-toolbar-icon
-	 (featurep 'toolbar) 
+	 (featurep 'toolbar)
 	 (eq (device-type (selected-device)) 'x))
-    (add-spec-list-to-specifier 
-     default-toolbar
-     '((global 
-	(nil
-	 [toolbar-file-icon     find-file       t       "Open a file"   ]
-	 [toolbar-folder-icon   dired           t       "View directory"]
-	 [toolbar-disk-icon     save-buffer     t       "Save buffer"   ]
-	 [toolbar-printer-icon  print-buffer    t       "Print buffer"  ]
-	 [toolbar-cut-icon      x-kill-primary-selection   t "Kill region"]
-	 [toolbar-copy-icon     x-copy-primary-selection   t "Copy region"]
-	 [toolbar-paste-icon    
-	  x-yank-clipboard-selection t "Paste from clipboard"]
-	 [toolbar-undo-icon     undo            t       "Undo edit"     ]
-	 [toolbar-replace-icon  query-replace   t       "Replace text"  ]
-	 [toolbar-wspace-icon  
-	  whitespace-toolbar-function t "Toggle whitespace mode"]
-	 nil
-	 [toolbar-compile-icon  toolbar-compile t       "Compile"       ]
-	 [toolbar-debug-icon    toolbar-debug   t       "Debug"         ]
-	 [toolbar-spell-icon    toolbar-ispell  t       "Spellcheck"    ]
-	 [toolbar-mail-icon     toolbar-mail    t       "Mail"          ]
-	 [toolbar-news-icon     toolbar-news    t       "News"          ]
-	 [toolbar-info-icon     toolbar-info    t       "Information"   ]
-	 )))))
+    (let ((tb (mapcar #'(lambda (e)
+			  (elt e 1)) (specifier-instance default-toolbar))))
+      (and (not (member 'whitespace-toolbar-function tb))
+	   (toolbar-add-item
+	    [toolbar-wspace-icon whitespace-toolbar-function
+				 t "Toggle whitespace mode"]
+	    (let ((n (or
+		      (position 'toolbar-replace tb)
+		      (position 'toolbar-undo tb)
+		      (position 'toolbar-paste tb)
+		      (position 'toolbar-copy tb)
+		      (position 'toolbar-cut tb))))
+	      (if n (1+ n) (length tb)))))))
 
 ;;; whitespace-mode.el ends here

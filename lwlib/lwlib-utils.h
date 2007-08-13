@@ -17,4 +17,7 @@ XtWidgetBeingDestroyedP (Widget widget);
 
 void XtSafelyDestroyWidget (Widget);
 
+#ifdef USE_DEBUG_MALLOC
+#include <dmalloc.h>
+#endif
 #endif /* _LWLIB_UTILS_H_ */

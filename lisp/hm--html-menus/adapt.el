@@ -1,4 +1,4 @@
-;;; $Id: adapt.el,v 1.4 1997/05/29 23:49:41 steve Exp $
+;;; $Id: adapt.el,v 1.5 1997/07/26 22:09:44 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -451,6 +451,37 @@ In the Emacs 19, the argument FACE could not be a list of faces."
 
       (if (not (fboundp 'read-directory-name))
 	  (defalias 'read-directory-name 'read-file-name))
+
+      (if (not (fboundp 'define-obsolete-function-alias))
+	  (defsubst define-obsolete-function-alias (oldfun newfun)
+	    "Define OLDFUN as an obsolete alias for function NEWFUN.
+This makes calling OLDFUN equivalent to calling NEWFUN and marks OLDFUN
+as obsolete."
+	    (define-function oldfun newfun)
+	    (make-obsolete oldfun newfun)))
+
+      (if (not (fboundp 'define-obsolete-variable-alias))
+	  (defsubst define-obsolete-variable-alias (oldvar newvar)
+	    "Define OLDVAR as an obsolete alias for varction NEWVAR.
+This makes referencing or setting OLDVAR equivalent to referencing or
+setting NEWVAR and marks OLDVAR as obsolete.
+
+It is not full implemented in the Emacs 19, because of the lack of
+the function defvaralias.y"
+	    ;;(defvaralias oldvar newvar) <- doesn't exist in the Emacs 19.34
+	    (make-obsolete-variable oldvar newvar)))
+
+      (if (not (fboundp 'defgroup))
+	  (defmacro defgroup (symbol members doc &rest args)
+	    "Dummy definition. Used, if the custom package isn't installed.
+The dummy definition makes nothing, it returns only nil."
+	    nil))
+
+      (if (not (fboundp 'defcustom))
+	  (defmacro defcustom (symbol value doc &rest args)
+	    "Simulates the defcustom definition from the custom package.
+It calles a `defvar' with the arguments SYMBOL, VALUE and DOC."
+	    `(defvar ,symbol ,value ,doc)))
 
 	
       ))

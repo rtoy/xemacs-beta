@@ -1,8 +1,48 @@
+20.07.97
+	-- BUILDED the version 5.8 of the package --
+19.07.97
+	The minor mode (hm--html-minor-mode) in the Emacs 19 has now
+	an entry to get the major mode menu - propably not the best
+	solution, but better than nothing.
+	Updated the Texinfo documentation.
+17.07.97
+	Added dummy definitions for defgroup and defcustom for the
+	Emacs 19.
+	The variable `site-run-file' is now used, if `site-start-file'
+	doesn't exists (for Emacs 19 compatibility).
+	Fixed a bug in the minor mode popup menu, which occured
+	in the XEmacs together with the html-mode of the psgml
+	package.
+15.07.97
+	The minor mode (hm--html-minor-mode) could now be used in many
+	other (non html) major modes in the XEmacs, like the java-mode
+	or the perl-mode. In these modes, in the XEmacs it adds it's
+	own popup menu at the beginning of the major mode menu.
+06.07.97
+	Changed the file header of hm--html-mode.el, 
+	internal-drag-and-drop.el and tmpl-minor-mode.el.
+	They should now be compliant with standards.
+	The mouse pointer in the XEmacs changes now it's shape,
+	during the drag and drop.
+01.07.97
+	The package uses now the customisation stuff.
+	Applied a patch from Dave Love <d.love@dl.ac.uk>, which fixed
+	some font-lock bugs.
+	Fixed a bug in `hm--html-insert-modified-line'. Thanks to 
+	David M. Cook <dmcook@cts.com>, who reported this bug.
+	The package respects now the emacs flags -q, -u and
+	-no-site-file. -u is only respected, if the user config
+	file isn't given neither by the environment variable nor by the
+	lisp variable.
+31.05.97
+	Added the functions `define-obsolete-variable-alias' and
+	`define-obsolete-variable-alias' for the Emacs 19 to the file
+	adapt.el. This fixed a load bug in the Emacs 19.
 24.05.97
 	Added `hm--html-automatic-create-title-date' and changed the
 	variable `hm--html-automatic-new-date' to
 	`hm--html-automatic-update-title-date'. `hm--html-automatic-new-date'
-	is no an obsolete variable and will be deleted in the future.
+	is now an obsolete variable and will be deleted in the future.
 	Applied a patch from Luca Pisati <pisati@nichimen.com>, which
 	fixed a bug in `hm--html-indent-region'. 
 	Fixed a bug in the `hm--html-minor-region-mode-map'. Thanks to
@@ -12,6 +52,7 @@
 	Changed `hm--html-indent-line' so that the indentation leaves the
 	point now at the old text position, if it was behind the
 	indentation column.
+	-- BUILDED the version 5.7 of the package --
 23.05.97
 	Changed the special character entities &circumflex to &circ,
 	thanks to Guylaine Prat <prat@cisi.cnes.fr>, for the bug report.

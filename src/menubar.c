@@ -178,22 +178,11 @@ See menubar.el for many more examples.
   return Qnil;
 }
 
-DEFUN ("accelerate-menu", Faccelerate_menu, 0, 0, "_", /*
-Make the menubar active.  Menu items can be selected using menu accelerators
-or by actions defined in menu-accelerator-map.
-*/
-       ())
-{
-  event_menu_accelerate ();
-  return Qnil;
-}
-
 void
 syms_of_menubar (void)
 {
   defsymbol (&Qcurrent_menubar, "current-menubar");
   DEFSUBR (Fpopup_menu);
-  DEFSUBR (Faccelerate_menu);
 }
 
 void

@@ -1,3 +1,13 @@
+1997-07-21  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (make_special_commands): Remove processing for
+	Gnus and AUCTeX.
+
+1997-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (mule_p): Do not attempt to bytecompile
+	char-table.el and chartblxmas.el.
+
 1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (cc-mode): Don't give cc-mode special treatment.

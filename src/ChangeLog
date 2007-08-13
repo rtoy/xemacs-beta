@@ -1,3 +1,48 @@
+1997-07-25  David Moore  <dmoore@ucsd.edu>
+
+	* alloc.c (Fmake_byte_code): GC protect newly allocated function
+	when looking up filename.
+
+1997-07-25  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Added support for linking with dmalloc.
+
+1997-07-25  P E Jareth Hein  <jareth@camelot-soft.com>
+
+	* xselect.c (x_atom_to_symbol): Fixed a memory corruption bug
+ 	where a possibly MULEified string was getting freed before use.
+
+1997-07-21  SL Baur  <steve@altair.xemacs.org>
+
+	* callproc.c: New variable Vdata_directory_list.
+	* emacsfns.h: Declare it.
+
+	* fns.c (Frequire): Undo previous change.
+
+	* print.c (print_internal): Handle circular objects like Emacs
+	handles them (and as documented in the Lispref).
+
+	* database.c (Fputdatabase): Complain when `val' is not a string.
+
+	* event-stream.c (command_builder_find_leaf): Guard menubar
+	accelerator stuffs with HAVE_MENUBAR.
+	* gui-x.c (popup_selection_callback): Ditto.
+
+1997-07-20  SL Baur  <steve@altair.xemacs.org>
+
+	* event-stream.c (menu_move_up): Guard menubar accelerator code
+	with HAVE_MENUBARS.
+
+	* emacs.c (decode_path): New function, derived from latter portion
+	of decode_env_path.
+	(decode_env_path): Break out the naughty bits -- shouldn't do
+	getenv and separator parsing in one function.
+	New variable Vpackage_path.
+	(vars_of_emacs): Use it.
+
+	* editfns.c (Fstring_to_char): Return nil instead of `0' for empty 
+	string.
+
 1997-07-10  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* fileio.c (Finsert_file_contents_internal): Handle non-regular

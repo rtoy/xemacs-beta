@@ -418,6 +418,9 @@ Window-system options:
 --x-includes=DIR 	Search for X header files in DIR.
 --x-libraries=DIR	Search for X libraries in DIR.
 --with-toolbars=no	Don't compile with any toolbar support.
+--with-wm		Compile with realized leader window for proper
+			creation of the ApplicationIcon with the
+			WindowMaker windowmanager (SESSION MANAGEMENT).
 --with-menubars=TYPE	Use TYPE menubars (lucid, motif, or no).  The Lucid
 			widgets emulate Motif (mostly) but are faster.
 			*WARNING*  The Motif menubar is currently broken.
@@ -508,6 +511,9 @@ Internationalization options:
 			This is alpha level code.
 --with-i18n3		Compile with I18N level 3 (support for message
 			translation).  This doesn't currently work.
+--with-xfs		Compile with XFontSet support for bilingual menubar.
+			Can't use this option with --with-xim=motif or xlib.
+			And should have --with-menubars=lucid.
 
 
 Debugging options:
@@ -542,6 +548,7 @@ Other options:
 			The default is to not do clash detection.
 --use-system-malloc	Force use of the system malloc, rather than GNU
 			malloc.
+--use-debug-malloc	Use the debugging malloc package.
 
 You may also specify any of the \`path' variables found in
 Makefile.in, including --bindir, --libdir, --lispdir, --datadir, and
@@ -655,6 +662,7 @@ while test $# != 0; do
 	with_jpeg	| \
 	with_png	| \
 	with_tiff	| \
+	with_wm		| \
 	with_xmu	| \
 	with_quantify	| \
 	with_toolbars	| \
@@ -719,6 +727,7 @@ while test $# != 0; do
 
 	dnl Options that take "yes", "no", or "default" values
 	rel_alloc | \
+	use_debug_malloc | \
 	use_system_malloc )
 	  case "$val" in
 	    y | ye | yes )	val=yes ;;
@@ -782,6 +791,17 @@ while test $# != 0; do
 	  esac
           eval "$opt=\"$val\""
         ;;
+
+        dnl XFontSet support?
+	"with_xfs" )
+	  case "$val" in
+	  y | ye | yes )                val=yes   ;;
+	  n | no | non | none )         val=no    ;;
+	  * ) USAGE_ERROR(["The \`--$optname' option must have one of these values:
+ \`yes', or \`no'."]) ;;
+	  esac
+	  eval "$opt=\"$val\""
+	;;
 
         dnl Mail locking specification
 	"mail_locking" )
@@ -1596,8 +1616,8 @@ else dnl "$dynamic" = "no"
   esac
 fi
 
-canonical_version=`echo ${version}_${canonical} | sed 'y/.-/__/'`
-AC_DEFINE_UNQUOTED(CANONICAL_VERSION, $canonical_version)
+stack_trace_eye_catcher=`echo xemacs_${version}_${canonical} | sed 'y/.-/__/'`
+AC_DEFINE_UNQUOTED(STACK_TRACE_EYE_CATCHER, $stack_trace_eye_catcher)
 
 machfile="m/${machine}.h"
 opsysfile="s/${opsys}.h"
@@ -2040,11 +2060,15 @@ GNU_MALLOC=yes
 if test "$system_malloc" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
-  (The GNU allocators don't work with this system configuration.)"
+  (The GNU allocators don't work with this system configuration)."
 elif test "$use_system_malloc" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
-  (User chose not to use GNU allocators.)"
+  (User chose not to use GNU allocators)."
+elif test "$use_debug_malloc" = "yes" ; then
+  GNU_MALLOC=no
+  GNU_MALLOC_reason="
+  (User chose to use Debugging Malloc)."
 fi
 
 dnl Some other nice autoconf tests.  If you add a test here which
@@ -2139,10 +2163,6 @@ AC_SYS_LONG_FILE_NAMES
 
 dnl -lm is required by LISP_FLOAT_TYPE, among other things
 AC_CHECK_LIB(m, sqrt)
-
-dnl -lPW might be needed on some systems
-dnl But they break more other systems.
-dnl AC_CHECK_LIB(PW, main)
 
 dnl Floating operation support is now unconditional
 AC_DEFINE(LISP_FLOAT_TYPE)
@@ -2365,7 +2385,7 @@ if test "$window_system" = "none" ; then
   if test "$with_tty" = "no" ; then
     AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
   fi
-  for feature in tooltalk cde offix \
+  for feature in tooltalk cde offix wm \
                  menubars scrollbars toolbars dialogs xim xmu \
                  tiff png jpeg gif compface xpm
   do
@@ -2390,6 +2410,12 @@ case "$x_libraries" in *X11R4* )
   test "$opsys" = "hpux9"     && opsysfile="s/hpux9-x11r4.h"
   test "$opsys" = "hpux9-shr" && opsysfile="s/hpux9shxr4.h"
 esac
+
+dnl Check for WindowMaker
+AC_CHECKING(for WindowMaker option);
+if test "$with_wm" = "yes"; then
+  AC_DEFINE(HAVE_WINDOWMAKER)
+fi
 
 dnl Autodetect Xauth
 dnl -lXau is only used by gnuclient, so use a special variable for Xauth X libs
@@ -2661,6 +2687,18 @@ if test "$with_mule" = "yes" ; then
       need_motif=yes
       XE_ADD_OBJS(input-method-motif.o)
     fi
+    if test "$with_xfs" = "yes"; then
+      with_xfs=no
+    fi
+  else dnl "with_xim" = "no"
+    case "$with_xfs" in  "yes" )
+      AC_CHECKING(for XFontSet)
+      AC_CHECK_LIB(X11, XmbDrawString, [:], with_xfs=no)
+    esac
+    if test "$with_xfs" = "yes" && test "$with_menubars" = "lucid"; then
+      AC_DEFINE(USE_XFONTSET)
+      XE_ADD_OBJS(input-method-xfs.o)
+    fi
   fi dnl with_xim
 
   dnl Autodetect WNN
@@ -2817,9 +2855,9 @@ if test "$ac_cv_c_inline" != "no"; then
 fi
 
 dnl HP-UX has a working alloca in libPW.
-case "$opsys" in hpux* )
- AC_CHECK_FUNC(alloca, [:], [AC_CHECK_LIB(PW, alloca)])
-esac
+dnl case "${GCC}${opsys}" in hpux* )
+dnl  AC_CHECK_FUNC(alloca, [:], [AC_CHECK_LIB(PW, alloca)])
+dnl esac
 
 AC_FUNC_ALLOCA
 test -n "$ALLOCA" && XE_ADD_OBJS($ALLOCA)
@@ -3354,6 +3392,8 @@ test -n "$puresize" && AC_DEFINE_UNQUOTED(RAW_PURESIZE, $puresize)
 
 if   test "$GNU_MALLOC"        = "yes"; then AC_DEFINE(GNU_MALLOC)
 elif test "$use_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
+elif test "$use_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
+					     AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
 test "$with_i18n3"         = "yes" && AC_DEFINE(I18N3)
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
@@ -3451,6 +3491,7 @@ test "$with_mule"     = yes && echo "  Compiling in Mule (multi-lingual) support
 test "$with_xim"      != no && echo "  Compiling in XIM (X11R5+ I18N input method) support."
 test "$with_xim" = motif    && echo "    Using Motif to provide XIM support."
 test "$with_xim" = xlib     && echo "    Using raw Xlib to provide XIM support."
+test "$with_xfs" = yes      && echo "    Using XFontSet to provide bilingual menubar."
 test "$with_canna"    = yes && echo "  Compiling in support for Canna on Mule."
 if test "$with_wnn" = yes; then
   echo "  Compiling in support for the WNN input method on Mule."
@@ -3463,6 +3504,7 @@ test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)."
+test "$with_wm"       = yes && echo "  Compiling in support for WindowMaker."
 case  "$with_menubars" in
   lucid ) echo "  Using Lucid menubars." ;;
   motif ) echo "  Using Motif menubars."

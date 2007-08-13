@@ -1,6 +1,7 @@
 (setq dumped-lisp-packages
       '("backquote" 		; needed for defsubst etc.
 	"bytecomp-runtime"	; define defsubst
+	"packages"		; Bootstrap run-time lisp environment
 	"subr" 			; load the most basic Lisp functions
 	"replace" 		; match-string used in version.el.
 	"version.el"		; Ignore compiled-by-mistake version.elc

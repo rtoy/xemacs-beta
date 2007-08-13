@@ -1,71 +1,77 @@
 ;;; hm--html-mode --- Major mode for editing HTML documents for the WWW
-;;;
-;;; Keywords: hypermedia languages help docs wp
-;;;
-;;; $Id: hm--html-mode.el,v 1.6 1997/05/29 23:49:43 steve Exp $
-;;;
-;;; Copyright (C) 1996, 1997 Heiko Muenkel
-;;; email: muenkel@tnt.uni-hannover.de
-;;;
-;;;  This program is free software; you can redistribute it and/or modify
-;;;  it under the terms of the GNU General Public License as published by
-;;;  the Free Software Foundation; either version 2, or (at your option)
-;;;  any later version.
-;;;
-;;;  This program is distributed in the hope that it will be useful,
-;;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;  GNU General Public License for more details.
-;;;
-;;;  You should have received a copy of the GNU General Public License
-;;;  along with this program; if not, write to the Free Software
-;;;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-;;;
-;;; Commentary:
-;;; Description:
-;;;
-;;;	This file defines the hm--html-mode, a mode for editing html
-;;;	files. It is the main file of the package hm--html-menus.
-;;;	Previous releases had used the file html-mode.el from Marc
-;;;	Andreessen. In that times the mode was called html-mode. I've
-;;;	changed the name of the mode to distinquish it from other
-;;;	html modes. But feel free to set a 
-;;;		(defalias 'hm--html-mode 'html-mode)
-;;;	to get back the old name of the mode.
-;;;
-;;;	In the earlier releases of the package the main file was
-;;;	hm--html-menu.el. This has been changed to hm--html-mode.el.
-;;; 
-;;; Installation: 
-;;;   
-;;;	Put this file and all the other files of the package
-;;;	in one of your load path directories and the
-;;;	following lines in your .emacs:
-;;;	
-;;;	(autoload 'hm--html-mode "hm--html-mode" "HTML major mode." t)
-;;;
-;;;	(or (assoc "\\.html$" auto-mode-alist)
-;;;         (setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
-;;;				        auto-mode-alist)))
-;;;	If there is already another html-mode (like psgml in the XEmacs
-;;;	19.14, then you must put the following instead of the last form
-;;;	in your .emacs:
-;;;	(setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
-;;;				        auto-mode-alist))
-;;;
-;;;	But you can also use the hm--html-minor-mode as an addition to
-;;;	the psgml html modes. For that you've to put the following line in
-;;;	your .emacs:
-;;;	(add-hook 'html-mode-hook 'hm--html-minor-mode)
-;;;
-;;;	Note: This works only in an XEmacs version greater than 19.14 and
-;;;	also not in the XEmacs 20.0.
-;;;
-;;;	Look at the file hm--html-configuration for further installation
-;;;     points.
-;;;	
-;;;
 
+;; Copyright (C) 1996, 1997 Heiko Muenkel
+
+;; Author: Heiko Muenkel <muenkel@tnt.uni-hannover.de>
+;; Keywords: hypermedia languages help docs wp
+
+;; $Id: hm--html-mode.el,v 1.7 1997/07/26 22:09:45 steve Exp $
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your
+;; option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; See the file COPYING. if not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA
+
+;;; Synched up with: Not part of Emacs.
+
+;;; Commentary:
+
+;; Description:
+
+;;	This file defines the hm--html-mode, a mode for editing html
+;;	files. It is the main file of the package hm--html-menus.
+;;	Previous releases had used the file html-mode.el from Marc
+;;	Andreessen. In that times the mode was called html-mode. I've
+;;	changed the name of the mode to distinquish it from other
+;;	html modes. But feel free to set a 
+;;		(defalias 'hm--html-mode 'html-mode)
+;;	to get back the old name of the mode.
+
+;;	In the earlier releases of the package the main file was
+;;	hm--html-menu.el. This has been changed to hm--html-mode.el.
+
+
+;; Installation: 
+
+;;	Put this file and all the other files of the package
+;;	in one of your load path directories and the
+;;	following lines in your .emacs:
+
+;;	(autoload 'hm--html-mode "hm--html-mode" "HTML major mode." t)
+
+;;	(or (assoc "\\.html$" auto-mode-alist)
+;;         (setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
+;;				        auto-mode-alist)))
+;;	If there is already another html-mode (like psgml in the XEmacs
+;;	19.14, then you must put the following instead of the last form
+;;	in your .emacs:
+;;	(setq auto-mode-alist (cons '("\\.html$" . hm--html-mode) 
+;;				        auto-mode-alist))
+
+;;	But you can also use the hm--html-minor-mode as an addition to
+;;	the psgml html modes. For that you've to put the following line in
+;;	your .emacs:
+;;	(add-hook 'html-mode-hook 'hm--html-minor-mode)
+
+;;	Note: This works only in an XEmacs version greater than 19.14 and
+;;	also not in the XEmacs 20.0.
+
+;;	Look at the file hm--html-configuration for further installation
+;;      points.
+
+;;; Code:
 
 (require 'font-lock)
 (require 'cl)
@@ -99,7 +105,7 @@
 
 (defconst hm--html-menus-package-name "hm--html-menus")
 
-(defconst hm--html-menus-package-version "5.7")
+(defconst hm--html-menus-package-version "5.8")
   
 
 ;;; Generate the help buffer faces
@@ -160,14 +166,22 @@ if that value is non-nil."
   (hm--install-html-menu hm--html-mode-pulldown-menu-name)
   (make-variable-buffer-local 'write-file-hooks)
   (add-hook 'write-file-hooks 'hm--html-maybe-new-date-and-changed-comment)
-  (put major-mode 'font-lock-defaults '((hm--html-font-lock-keywords
-					 hm--html-font-lock-keywords-1
-					 hm--html-font-lock-keywords-2)
-					t
-					t
-					nil
-					nil
-					))
+  (if (adapt-xemacsp)
+      (put major-mode 'font-lock-defaults '((hm--html-font-lock-keywords
+					     hm--html-font-lock-keywords-1
+					     hm--html-font-lock-keywords-2)
+					    t
+					    t
+					    nil
+					    nil))
+    (make-local-variable 'font-lock-defaults)
+    (setq font-lock-defaults '((hm--html-font-lock-keywords
+				hm--html-font-lock-keywords-1
+				hm--html-font-lock-keywords-2)
+			       t
+			       t
+			       nil
+			       nil)))
   (run-hooks 'hm--html-mode-hook))
 
 ;;;; Minor Modes
@@ -240,10 +254,15 @@ With arg, turn hm--html-minor-mode on iff arg is positive."
 	(if (null arg) (not hm--html-minor-mode)
 	  (> (prefix-numeric-value arg) 0)))
   (if hm--html-minor-mode
-      (hm--install-html-menu hm--html-minor-mode-pulldown-menu-name)
-    (if (and current-menubar (assoc hm--html-minor-mode-pulldown-menu-name
-				    current-menubar))
-	(delete-menu-item (list hm--html-minor-mode-pulldown-menu-name))))
+      (progn
+	(hm--install-html-menu hm--html-minor-mode-pulldown-menu-name)
+	(when (adapt-emacs19p)
+	  (hm--html-add-major-menu-to-minor-menus)))
+    (when (and current-menubar (assoc hm--html-minor-mode-pulldown-menu-name
+				      current-menubar))
+      (delete-menu-item (list hm--html-minor-mode-pulldown-menu-name)))
+    (when (adapt-emacs19p)
+      (hm--html-remove-major-menu-from-minor-menus)))
   )
   
 
@@ -324,3 +343,6 @@ or for the `deactivate-mark-hook'."
 
 ;;; Announce the feature hm--html-configuration
 (provide 'hm--html-mode)
+
+
+;;; hm--html-mode.el ends here

@@ -35,27 +35,28 @@
 
 ;;;; Lisp language features.
 
-(defmacro lambda (&rest cdr)
-  "Return a lambda expression.
-A call of the form (lambda ARGS DOCSTRING INTERACTIVE BODY) is
-self-quoting; the result of evaluating the lambda expression is the
-expression itself.  The lambda expression may then be treated as a
-function, i.e., stored as the function value of a symbol, passed to
-funcall or mapcar, etc.
+;; Moved to packages.el
+;(defmacro lambda (&rest cdr)
+;  "Return a lambda expression.
+;A call of the form (lambda ARGS DOCSTRING INTERACTIVE BODY) is
+;self-quoting; the result of evaluating the lambda expression is the
+;expression itself.  The lambda expression may then be treated as a
+;function, i.e., stored as the function value of a symbol, passed to
+;funcall or mapcar, etc.
 
-ARGS should take the same form as an argument list for a `defun'.
-DOCSTRING is an optional documentation string.
- If present, it should describe how to call the function.
- But documentation strings are usually not useful in nameless functions.
-INTERACTIVE should be a call to the function `interactive', which see.
-It may also be omitted.
-BODY should be a list of lisp expressions."
-  ;; Note that this definition should not use backquotes; subr.el should not
-  ;; depend on backquote.el.
-  ;; #### - I don't see why.  So long as backquote.el doesn't use anything
-  ;; from subr.el, there's no problem with using backquotes here.  --Stig 
-  ;;(list 'function (cons 'lambda cdr)))
-  `(function (lambda ,@cdr)))
+;ARGS should take the same form as an argument list for a `defun'.
+;DOCSTRING is an optional documentation string.
+; If present, it should describe how to call the function.
+; But documentation strings are usually not useful in nameless functions.
+;INTERACTIVE should be a call to the function `interactive', which see.
+;It may also be omitted.
+;BODY should be a list of lisp expressions."
+;  ;; Note that this definition should not use backquotes; subr.el should not
+;  ;; depend on backquote.el.
+;  ;; #### - I don't see why.  So long as backquote.el doesn't use anything
+;  ;; from subr.el, there's no problem with using backquotes here.  --Stig 
+;  ;;(list 'function (cons 'lambda cdr)))
+;  `(function (lambda ,@cdr)))
 
 (defmacro defun-when-void (&rest args)
   "Define a function, just like `defun', unless it's already defined.

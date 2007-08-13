@@ -247,14 +247,16 @@ x_atom_to_symbol (struct device *d, Atom atom)
 #endif
 
   {
+    Lisp_Object newsym;
     CONST char *intstr;
     char *str = XGetAtomName (display, atom);
 
     if (! str) return Qnil;
 
     GET_C_CHARPTR_INT_CTEXT_DATA_ALLOCA (str, intstr);
+    newsym = intern (intstr);
     XFree (str);
-    return intern (intstr);
+    return newsym;
   }
 }
 

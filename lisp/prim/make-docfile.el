@@ -156,13 +156,28 @@
       (setq exec-path (list (concat default-directory "../lib-src")))
 
       ;; (locate-file-clear-hashing nil)
-      (apply 'call-process-internal
-	     ;; (concat default-directory "../lib-src/make-docfile")
-	     "make-docfile"
-	     nil
-	     t
-	     nil
-	     (append options processed))
+      (if (eq system-type 'berkeley-unix)
+	  ;; Suboptimal, but we have a unresolved bug somewhere in the
+	  ;; low-level process code
+	  (call-process-internal
+	   "/bin/csh"
+	   nil
+	   t
+	   nil
+	   "-fc"
+	   (mapconcat
+	    'identity
+	    (append
+	     (list (concat default-directory "../lib-src/make-docfile"))
+	     options processed)
+	    " "))
+	(apply 'call-process-internal
+	       ;; (concat default-directory "../lib-src/make-docfile")
+	       "make-docfile"
+	       nil
+	       t
+	       nil
+	       (append options processed)))
 
       (princ "Spawning make-docfile ...done\n")
       ;; (write-region-internal (point-min) (point-max) "/tmp/DOC")

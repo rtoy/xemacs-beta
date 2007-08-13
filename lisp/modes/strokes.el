@@ -1,10 +1,11 @@
-;;; strokes.el	Sat May 24 14:18:08 1997
+;;; strokes.el	-- Control XEmacs through mouse strokes --
+;;  Mon Jun  2 12:40:41 EDT 1997
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 
 ;; Author: David Bakhash <cadet@mit.edu>
 ;; Maintainer: David Bakhash <cadet@mit.edu>
-;; Version: 2.3-beta
+;; Version: 2.3
 ;; Created: 12 April 1997
 ;; Keywords: lisp, mouse, extensions
 
@@ -158,11 +159,23 @@
 ;; which "remove the pencil from the paper" so to speak, so one character
 ;; can have multiple strokes.
 
+;; You can read more about strokes at:
+
+;; http://www.mit.edu/people/cadet/strokes-help.html 
+
+;; If you're interested in using strokes for writing English into XEmacs
+;; using strokes, then you'll want to read about it on the web page above
+;; or just download from http://www.mit.edu/people/cadet/strokes-abc.el,
+;; which is nothing but a file with some helper commands for inserting
+;; alphanumerics and punctuation.
+
 ;; Great thanks to Rob Ristroph for his generosity in letting me use his
 ;; PC to develop this, Jason Johnson for his help in algorithms, Euna
 ;; Kim for her help in Korean, and massive thanks to the helpful guys
 ;; on the help instance on athena (zeno, jered, amu, gsstark, ghudson, etc)
 ;; Special thanks to Steve Baur and Hrvoje Niksic for all their help.
+;; And even more thanks to Dave Gillespie for all the elisp help--he
+;; is responsible for helping me use the cl macros at (near) max speed.
 
 ;; Tasks: (what I'm getting ready for future version)...
 ;; 2) use 'strokes-read-complex-stroke for korean, etc.
@@ -253,10 +266,12 @@
 
 (autoload 'reporter-submit-bug-report "reporter")
 (autoload 'mail-position-on-field "sendmail")
+(eval-when-compile
+  (mapc 'require '(xpm-mode pp annotations reporter advice)))
 
 ;;; Constants...
 
-(defconst strokes-version "2.3-beta")
+(defconst strokes-version "2.3")
 
 (defconst strokes-bug-address "cadet@mit.edu")
 
@@ -264,6 +279,23 @@
   "Symbol representing a stroke lift event for complex strokes.
 Complex strokes are those which contain two or more simple strokes.
 This will be useful for when XEmacs understands Chinese.")
+
+(defconst strokes-xpm-header "/* XPM */
+static char * stroke_xpm[] = {
+/* width height ncolors cpp [x_hot y_hot] */
+\"33 33 9 1 26 23\",
+/* colors */
+\" 	c #D9D9D9D9D9D9\",
+\"*	s iconColor1	m black	c black\",
+\"R	c #FFFF00000000\",
+\"O	c #FFFF80000000\",
+\"Y	c #FFFFFFFF0000\",
+\"G	c #0000FFFF0000\",
+\"B	c #00000000FFFF\",
+\"P	c #FFFF0000FFFF\",
+\".	c #45458B8B0000\",
+/* pixels */\n"
+  "The header to all xpm buffers created by strokes")
 
 ;;; user variables...
 
@@ -364,6 +396,17 @@ corresponding interactive function")
 
 (defvar strokes-load-hook nil
   "Function or functions to be called when `strokes' is loaded.")
+
+(defvar edit-strokes-menu
+  '("Edit-Strokes"
+    ["Add stroke..." strokes-global-set-stroke t]
+    ["Delete stroke..." strokes-edit-delete-stroke t]
+    ["Change stroke"	strokes-smaller	t]
+    ["Change definition"	strokes-larger	t]
+    ["[Re]List Strokes chronologically"	strokes-list-strokes	t]
+    ["[Re]List Strokes alphabetically"	strokes-list-strokes	t]
+    ["Quit"		strokes-edit-quit		t]
+    ))
 
 ;;; Macros...
 
@@ -482,6 +525,7 @@ and which is an interactive funcion of one event argument:
 (strokes-fix-button2-command 'dired-o-w-mouse-toggle)
 (strokes-fix-button2-command 'isearch-yank-x-selection)
 (strokes-fix-button2-command 'occur-mode-mouse-goto)
+(strokes-fix-button2-command 'cvs-mouse-find-file)
 
 ;;; I can fix the customize widget button click, but then
 ;;; people will get confused when they try to customize
@@ -637,10 +681,10 @@ The return value is a list ((xmin . ymin) (xmax . ymax))."
   "Returns a list with no consecutive redundant entries."
   ;; defun a grande vitesse grace a Dave G.
   (loop for element on entries
-        if (not (equal (car element) (cadr element))) 
+        if (not (equal (car element) (cadr element)))
         collect (car element)))
 ;;  (loop for element on entries
-;;        nconc (if (not (equal (car el) (cadr el))) 
+;;        nconc (if (not (equal (car el) (cadr el)))
 ;;                  (list (car el)))))
 ;; yet another (orig) way of doing it...
 ;;  (if entries
@@ -663,6 +707,7 @@ The return value is a list ((xmin . ymin) (xmax . ymax))."
 POSITIONS is a list of positions and stroke-lifts.
 Optional GRID-RESOLUTION may be used in place of STROKES-GRID-RESOLUTION.
 The grid is a square whose dimesion is [0,GRID-RESOLUTION)."
+  (or grid-resolution (setq grid-resolution strokes-grid-resolution))
   (let ((stroke-extent (strokes-get-stroke-extent positions)))
     (mapcar (function
 	     (lambda (pos)
@@ -855,15 +900,16 @@ Optional EVENT is currently not used, but hopefully will be soon."
 			  (when point
 			    (goto-char point)
 			    (subst-char-in-region point (1+ point) ?\  strokes-character))
-			  (setq pix-locs (cons (cons (event-x-pixel event)
-						     (event-y-pixel event))
-					       pix-locs))))
+			  (push (cons (event-x-pixel event)
+				      (event-y-pixel event))
+				pix-locs)))
 		    (setq event (next-event event))))
 	      ;; protected
 	      ;; clean up strokes buffer and then bury it.
-	      (subst-char-in-region (point-min) (point-max) strokes-character ?\ )
-	      (goto-char (point-min))
-	      (bury-buffer)))
+	      (when (equal (buffer-name) strokes-buffer-name)
+		(subst-char-in-region (point-min) (point-max) strokes-character ?\ )
+		(goto-char (point-min))
+		(bury-buffer))))
 	;; Otherwise, don't use strokes buffer and read stroke silently
 	(if prompt
 	    (progn
@@ -874,9 +920,9 @@ Optional EVENT is currently not used, but hopefully will be soon."
 	(setq event (next-event))
 	(while (not (button-release-event-p event))
 	  (if (mouse-event-p event)
-	      (setq pix-locs (cons (cons (event-x-pixel event)
-					 (event-y-pixel event))
-				   pix-locs)))
+	      (push (cons (event-x-pixel event)
+			  (event-y-pixel event))
+		    pix-locs))
 	  (setq event (next-event event))))
       (setq grid-locs (strokes-renormalize-to-grid (nreverse pix-locs)))
       (strokes-fill-stroke (strokes-eliminate-consecutive-redundancies grid-locs)))))
@@ -901,6 +947,7 @@ Optional EVENT is currently not used, but hopefully will be soon."
 	      (setq event (next-event event))))
 	(unwind-protect
 	    (progn
+	      (setq event (next-event event prompt))
 	      (while (not (and (button-press-event-p event)
 			       (eq (event-button event) 3)))
 		(while (not (button-release-event-p event))
@@ -909,11 +956,11 @@ Optional EVENT is currently not used, but hopefully will be soon."
 			(when point
 			  (goto-char point)
 			  (subst-char-in-region point (1+ point) ?\ strokes-character))
-			(setq pix-locs (cons (cons (event-x-pixel event)
-						   (event-y-pixel event))
-					     pix-locs))))
+			(push (cons (event-x-pixel event)
+				    (event-y-pixel event))
+			      pix-locs)))
 		  (setq event (next-event event prompt)))
-		(setq pix-locs (cons strokes-lift pix-locs))
+		(push strokes-lift pix-locs)
 		(while (not (button-press-event-p event))
 		  (dispatch-event event)
 		  (setq event (next-event event prompt))))
@@ -922,9 +969,10 @@ Optional EVENT is currently not used, but hopefully will be soon."
 	      (strokes-fill-stroke
 	       (strokes-eliminate-consecutive-redundancies grid-locs)))
 	  ;; protected
-	  (subst-char-in-region (point-min) (point-max) strokes-character ?\ )
-	  (goto-char (point-min))
-	  (bury-buffer))))))
+	  (when (equal (buffer-name) strokes-buffer-name)
+	    (subst-char-in-region (point-min) (point-max) strokes-character ?\ )
+	    (goto-char (point-min))
+	    (bury-buffer)))))))
 
 (defun strokes-execute-stroke (stroke)
   "Given STROKE, execute the command which corresponds to it.
@@ -1078,10 +1126,14 @@ the command
 
 > M-x list-strokes
 
-Your strokes will be displayed in from most recent down, and the
-beginning of each simple stroke will be marked by a color dot.  Since
-you may have several simple strokes in a complex stroke, the dot
-colors are arranged in the rainbow color sequence, `ROYGBIV'.
+Your strokes will be displayed in alphabetical order (based on command
+names) and the beginning of each simple stroke will be marked by a
+color dot.  Since you may have several simple strokes in a complex
+stroke, the dot colors are arranged in the rainbow color sequence,
+`ROYGBIV'.  If you want a listing of your strokes from most recent
+down, then use a prefix argument:
+
+> C-u M-x list-strokes
 
 Your strokes are stored as you enter them.  They get saved in a file
 called ~/.strokes, along with other strokes configuration variables.
@@ -1158,10 +1210,9 @@ o A problem with strokes happens when you resize windows.  If you
 (defsubst strokes-fill-current-buffer-with-whitespace ()
   "Erase the contents of the current buffer and fill it with whitespace"
   (erase-buffer)
-  (loop for i from 1 to (frame-height) do
-	(progn
-	  (insert-char ?\  (1- (frame-width)))
-	  (newline)))
+  (loop repeat (frame-height) do
+	(insert-char ?\  (1- (frame-width)))
+	(newline))
   (goto-char (point-min)))
 
 (defun strokes-update-window-configuration ()
@@ -1268,48 +1319,43 @@ Returns value of `strokes-use-strokes-buffer'."
 	(if arg (> (prefix-numeric-value arg) 0)
 	  (not strokes-use-strokes-buffer))))
 
-(defun strokes-xpm-for-stroke (stroke &optional bufname)
-  "Create an xpm pixmap for the given stroke in buffer `*strokes-xpm*'.
+(defun strokes-xpm-for-stroke (&optional stroke bufname b/w-only)
+  "Create an xpm pixmap for the given STROKE in buffer `*strokes-xpm*'.
+If STROKE is not supplied, then `strokes-last-stroke' will be used.
 Optional BUFNAME to name something else.
 The pixmap will contain time information via rainbow dot colors
-where each individual strokes begins."
+where each individual strokes begins.
+Optional B/W-ONLY non-nil will create a mono pixmap, not intended
+for trying to figure out the order of strokes, but rather for reading
+the stroke as a character in some language."
+  (interactive)
   (save-excursion
     (let ((buf (get-buffer-create (or bufname "*strokes-xpm*")))
 	  (stroke (strokes-eliminate-consecutive-redundancies
 		   (strokes-fill-stroke
-		    (strokes-renormalize-to-grid stroke 31))))
+		    (strokes-renormalize-to-grid (or stroke
+						     strokes-last-stroke)
+						 31))))
 	  (lift-flag t)
-	  (rainbow-chars (list ?R ?O ?Y ?G ?B ?P)) ; ROYGBIV w/o indigo
-	  (header (format "/* XPM */
-static char * stroke_xpm[] = {
-/* width height ncolors cpp [x_hot y_hot] */
-\"33 33 9 1 26 23\",
-/* colors */
-\" 	c #FFFFFFFFFFFF\",
-\"*	s iconColor1	m black	c black\",
-\"R	c #FFFF00000000\",
-\"O	c #FFFF80000000\",
-\"Y	c #FFFFFFFF0000\",
-\"G	c #0000FFFF0000\",
-\"B	c #00000000FFFF\",
-\"P	c #FFFF0000FFFF\",
-\".	c #45458B8B0000\",
-/* pixels */")))
+	  (rainbow-chars (list ?R ?O ?Y ?G ?B ?P))) ; ROYGBIV w/o indigo
       (set-buffer buf)
       (erase-buffer)
-      (insert header)
+      (insert strokes-xpm-header)
       (loop repeat 33 do
-	    (newline)
 	    (insert-char ?\")
 	    (insert-char ?\  33)
 	    (insert "\",")
-	    finally (insert "}\n"))
+	    (newline)
+	    finally
+	    (forward-line -1)
+	    (end-of-line)
+	    (insert "}\n"))
       (loop for point in stroke
 	    for x = (car-safe point)
 	    for y = (cdr-safe point) do
 	    (cond ((consp point)
 		   ;; draw a point, and possibly a starting-point
-		   (if lift-flag
+		   (if (and lift-flag (not b/w-only))
 		       ;; mark starting point with the appropriate color
 		       (let ((char (or (car rainbow-chars) ?\.)))
 			 (loop for i from 0 to 2 do
@@ -1326,27 +1372,149 @@ static char * stroke_xpm[] = {
 		     (subst-char-in-region (point) (1+ (point)) ?\  ?\*)))
 		  ((strokes-lift-p point)
 		   ;; a lift--tell the loop to X out the next point...
-		   (setq lift-flag t)))))))
+		   (setq lift-flag t))))
+      (when (interactive-p)
+	(require 'xpm-mode)
+	(pop-to-buffer "*strokes-xpm*")
+	;;	(xpm-mode 1)
+	(xpm-show-image)
+	(goto-char (point-min))))))
+
+;;; Strokes Edit stuff...
+
+(defun strokes-edit-quit ()
+  (interactive)
+  (or (one-window-p t 0)
+      (delete-window))
+  (kill-buffer "*Strokes List*"))
+
+(define-derived-mode edit-strokes-mode list-mode
+  "Edit-Strokes"
+  "Major mode for `edit-strokes' and `list-strokes' buffers.
+
+Editing commands:
+
+\\{edit-strokes-mode-map}"
+  (setq truncate-lines nil
+	auto-show-mode nil		; don't want problems here either
+	mode-popup-menu edit-strokes-menu) ; what about extent-specific stuff?
+  (and (featurep 'menubar)
+       current-menubar
+       (set (make-local-variable 'current-menubar)
+	    (copy-sequence current-menubar))
+       (add-submenu nil edit-strokes-menu)))
+
+(let ((map edit-strokes-mode-map))
+  (define-key map "<" 'beginning-of-buffer)
+  (define-key map ">" 'end-of-buffer)
+  ;;  (define-key map "c" 'strokes-copy-other-face)
+  ;;  (define-key map "C" 'strokes-copy-this-face)
+  ;;  (define-key map "s" 'strokes-smaller)
+  ;;  (define-key map "l" 'strokes-larger)
+  ;;  (define-key map "b" 'strokes-bold)
+  ;;  (define-key map "i" 'strokes-italic)
+  (define-key map "e" 'strokes-list-edit)
+  ;;  (define-key map "f" 'strokes-font)
+  ;;  (define-key map "u" 'strokes-underline)
+  ;;  (define-key map "t" 'strokes-truefont)
+  ;;  (define-key map "F" 'strokes-foreground)
+  ;;  (define-key map "B" 'strokes-background)
+  ;;  (define-key map "D" 'strokes-doc-string)
+  (define-key map "a" 'strokes-global-set-stroke)
+  (define-key map "d" 'strokes-list-delete-stroke)
+  ;;  (define-key map "n" 'strokes-list-next)
+  ;;  (define-key map "p" 'strokes-list-prev)
+  ;;  (define-key map " " 'strokes-list-next)
+  ;;  (define-key map "\C-?" 'strokes-list-prev)
+  (define-key map "g" 'strokes-list-strokes) ; refresh display
+  (define-key map "q" 'strokes-edit-quit)
+  (define-key map [(control c) (control c)] 'bury-buffer))
 
 ;;;###autoload
-(defun strokes-list-strokes (&optional stroke-map)
-  "Pop up a buffer containing a listing of all strokes defined in STROKE-MAP.
-If STROKE-MAP is not given, `strokes-global-map' will be used instead."
-  (interactive)
+(defun strokes-edit-strokes (&optional chronological strokes-map)
+  ;; ### DEAL WITH THE 2nd ARGUMENT ISSUE! ###
+  "Edit strokes in a pop-up buffer containing strokes and their definitions.
+If STROKES-MAP is not given, `strokes-global-map' will be used instead.
+
+Editing commands:
+
+\\{edit-faces-mode-map}"
+  (interactive "P")
+  (pop-to-buffer (get-buffer-create "*Strokes List*"))
+  (reset-buffer (current-buffer))	; handy function from minibuf.el
+  (setq strokes-map (or strokes-map
+			strokes-global-map
+			(progn
+			  (strokes-load-user-strokes)
+			  strokes-global-map)))
+  (or chronological
+      (setq strokes-map (sort (copy-sequence strokes-map)
+			      'strokes-alphabetic-lessp)))
+  ;;  (push-window-configuration)
+  (insert
+   "Command                                     Stroke\n"
+   "-------                                     ------")
+  (loop for def in strokes-map
+	for i from 0 to (1- (length strokes-map)) do
+	(let ((stroke (car def))
+	      (command-name (symbol-name (cdr def))))
+	  (strokes-xpm-for-stroke stroke " *strokes-xpm*")
+	  (newline 2)
+	  (insert-char ?\ 45)
+	  (beginning-of-line)
+	  (insert command-name)
+	  (beginning-of-line)
+	  (forward-char 45)
+	  (set (intern (format "strokes-list-annotation-%d" i))
+	       (make-annotation (make-glyph
+				 (list
+				  (vector 'xpm
+					  :data (buffer-substring
+						 (point-min " *strokes-xpm*")
+						 (point-max " *strokes-xpm*")
+						 " *strokes-xpm*"))
+				  [string :data "[Stroke]"]))
+				(point) 'text))
+	  (set-annotation-data (symbol-value (intern (format "strokes-list-annotation-%d" i)))
+			       def))
+	finally do (kill-region (1+ (point)) (point-max)))
+  (edit-strokes-mode)
+  (goto-char (point-min)))
+
+;;;###autoload
+(defalias 'edit-strokes 'strokes-edit-strokes)
+
+;;;###autoload
+(defun strokes-list-strokes (&optional chronological strokes-map)
+  "Pop up a buffer containing an alphabetical listing of strokes in STROKES-MAP.
+With CHRONOLOGICAL prefix arg \(\\[universal-argument]\) list strokes
+chronologically by command name.
+If STROKES-MAP is not given, `strokes-global-map' will be used instead."
+  (interactive "P")
+  (setq strokes-map (or strokes-map
+			strokes-global-map
+			(progn
+			  (strokes-load-user-strokes)
+			  strokes-global-map)))
+  (if (not chronological)
+      ;; then alphabetize the strokes based on command names...
+      (setq strokes-map (sort (copy-sequence strokes-map)
+			      'strokes-alphabetic-lessp)))
   (push-window-configuration)
   (set-buffer (get-buffer-create "*Strokes List*"))
   (setq buffer-read-only nil)
   (erase-buffer)
   (insert
    "Command                                     Stroke\n"
-   "-------                                     ------\n\n")
-  (loop for def in (or stroke-map strokes-global-map) do
+   "-------                                     ------")
+  (loop for def in strokes-map do
 	(let ((stroke (car def))
-	      (command (cdr def)))
+	      (command-name (symbol-name (cdr def))))
 	  (strokes-xpm-for-stroke stroke " *strokes-xpm*")
-	  (insert-char ?\ 60)
+	  (newline 2)
+	  (insert-char ?\ 45)
 	  (beginning-of-line)
-	  (insert (symbol-name command))
+	  (insert command-name)
 	  (beginning-of-line)
 	  (forward-char 45)
 	  (make-annotation (make-glyph
@@ -1357,15 +1525,22 @@ If STROKE-MAP is not given, `strokes-global-map' will be used instead."
 					    (point-max " *strokes-xpm*")
 					    " *strokes-xpm*"))
 			     [string :data "[Image]"]))
-			   (point) 'text)
-	  (newline 2)))
+			   (point) 'text))
+	finally do (kill-region (1+ (point)) (point-max)))
   (view-buffer "*Strokes List*" t)
   (goto-char (point-min))
-;;  (define-key
-;;    (current-local-map (get-buffer "*Strokes List*"))
-;;    [(q)]
-;;    'pop-window-configuration))
-  )
+  (define-key view-minor-mode-map [(q)] (lambda ()
+					  (interactive)
+					  (view-quit)
+					  (pop-window-configuration)
+					  ;; (bury-buffer "*Strokes List*")
+					  (define-key view-minor-mode-map [(q)] 'view-quit))))
+
+(defun strokes-alphabetic-lessp (stroke1 stroke2)
+  "T iff command name for STROKE1 is less than STROKE2's in lexicographic order."
+  (let ((command-name-1 (symbol-name (cdr stroke1)))
+	(command-name-2 (symbol-name (cdr stroke2))))
+    (string-lessp command-name-1 command-name-2)))
 
 ;;;###autoload
 (defalias 'list-strokes 'strokes-list-strokes)
@@ -1417,6 +1592,324 @@ new strokes with
   (redraw-modeline))
 
 (add-minor-mode 'strokes-mode strokes-modeline-string nil nil 'strokes-mode)
+
+(unless (find-face 'strokes-char-face)
+  (copy-face 'default 'strokes-char-face)
+  (set-face-background 'strokes-char-face "lightgray"))
+
+(defconst strokes-char-value-hashtable (make-hashtable 62) ;
+					; (make-char-table
+					; 'syntax)
+					; in 20.*
+  ;; ### This will become a char-table for XEmacs-20 !!! ###
+  "The table which stores values for the character keys.")
+(puthash ?0 0 strokes-char-value-hashtable) ; (put-char-table ?0 0
+					; strokes-value-chartable)
+					; in 20.*
+(puthash ?1 1 strokes-char-value-hashtable)
+(puthash ?2 2 strokes-char-value-hashtable)
+(puthash ?3 3 strokes-char-value-hashtable)
+(puthash ?4 4 strokes-char-value-hashtable)
+(puthash ?5 5 strokes-char-value-hashtable)
+(puthash ?6 6 strokes-char-value-hashtable)
+(puthash ?7 7 strokes-char-value-hashtable)
+(puthash ?8 8 strokes-char-value-hashtable)
+(puthash ?9 9 strokes-char-value-hashtable)
+(puthash ?a 10 strokes-char-value-hashtable)
+(puthash ?b 11 strokes-char-value-hashtable)
+(puthash ?c 12 strokes-char-value-hashtable)
+(puthash ?d 13 strokes-char-value-hashtable)
+(puthash ?e 14 strokes-char-value-hashtable)
+(puthash ?f 15 strokes-char-value-hashtable)
+(puthash ?g 16 strokes-char-value-hashtable)
+(puthash ?h 17 strokes-char-value-hashtable)
+(puthash ?i 18 strokes-char-value-hashtable)
+(puthash ?j 19 strokes-char-value-hashtable)
+(puthash ?k 20 strokes-char-value-hashtable)
+(puthash ?l 21 strokes-char-value-hashtable)
+(puthash ?m 22 strokes-char-value-hashtable)
+(puthash ?n 23 strokes-char-value-hashtable)
+(puthash ?o 24 strokes-char-value-hashtable)
+(puthash ?p 25 strokes-char-value-hashtable)
+(puthash ?q 26 strokes-char-value-hashtable)
+(puthash ?r 27 strokes-char-value-hashtable)
+(puthash ?s 28 strokes-char-value-hashtable)
+(puthash ?t 29 strokes-char-value-hashtable)
+(puthash ?u 30 strokes-char-value-hashtable)
+(puthash ?v 31 strokes-char-value-hashtable)
+(puthash ?w 32 strokes-char-value-hashtable)
+(puthash ?x 33 strokes-char-value-hashtable)
+(puthash ?y 34 strokes-char-value-hashtable)
+(puthash ?z 35 strokes-char-value-hashtable)
+(puthash ?A 36 strokes-char-value-hashtable)
+(puthash ?B 37 strokes-char-value-hashtable)
+(puthash ?C 38 strokes-char-value-hashtable)
+(puthash ?D 39 strokes-char-value-hashtable)
+(puthash ?E 40 strokes-char-value-hashtable)
+(puthash ?F 41 strokes-char-value-hashtable)
+(puthash ?G 42 strokes-char-value-hashtable)
+(puthash ?H 43 strokes-char-value-hashtable)
+(puthash ?I 44 strokes-char-value-hashtable)
+(puthash ?J 45 strokes-char-value-hashtable)
+(puthash ?K 46 strokes-char-value-hashtable)
+(puthash ?L 47 strokes-char-value-hashtable)
+(puthash ?M 48 strokes-char-value-hashtable)
+(puthash ?N 49 strokes-char-value-hashtable)
+(puthash ?O 50 strokes-char-value-hashtable)
+(puthash ?P 51 strokes-char-value-hashtable)
+(puthash ?Q 52 strokes-char-value-hashtable)
+(puthash ?R 53 strokes-char-value-hashtable)
+(puthash ?S 54 strokes-char-value-hashtable)
+(puthash ?T 55 strokes-char-value-hashtable)
+(puthash ?U 56 strokes-char-value-hashtable)
+(puthash ?V 57 strokes-char-value-hashtable)
+(puthash ?W 58 strokes-char-value-hashtable)
+(puthash ?X 59 strokes-char-value-hashtable)
+(puthash ?Y 60 strokes-char-value-hashtable)
+(puthash ?Z 61 strokes-char-value-hashtable)
+
+(defconst strokes-base64-chars
+  ;; I can easily have made this a vector of single-character strings,
+  ;; like (vector "0" "1" "2" ...), and then the program would run
+  ;; faster since it wouldn't then have to call `char-to-string' when it
+  ;; did the `concat'.  I left them as chars here because I want
+  ;; *them* to change `concat' so that it accepts chars and deals with
+  ;; them properly. i.e. the form: (concat "abc" ?T "xyz") should
+  ;; return "abcTxyz" NOT "abc84xyz" (XEmacs 19.*) and NOT an error
+  ;; (XEmacs 20.*).
+  ;;  (vector "0" "1" "2" "3" "4" "5" "6" "7" "8" "9"
+  ;;	  "a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o"
+  ;;	  "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z" "A" "B" "C" "D"
+  ;;	  "E" "F" "G" "H" "I" "J" "K" "L" "M" "N" "O" "P" "Q" "R" "S"
+  ;;	  "T" "U" "V" "W" "X" "Y" "Z")
+  (vector ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9
+	  ?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m ?n ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x ?y ?z
+	  ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M ?N ?O ?P ?Q ?R ?S ?T ?U ?V ?W ?X ?Y ?Z)
+  "Character vector for fast lookup of base-64 encoding of numbers in [0,61].")
+
+(defsubst strokes-xpm-char-on-p (char)
+  ;; ### CAUTION: `char-equal' may need to change to `char=' ###
+  "Non-nil if CHAR represents an `on' bit in the xpm."
+  (char-equal char ?*))
+
+(defsubst strokes-xpm-char-bit-p (char)
+  "Non-nil if CHAR represents an `on' or `off' bit in the xpm."
+  ;; ### CAUTION: `char-equal' may need to change to `char=' ###
+  (or (char-equal char ?\ )
+      (char-equal char ?*)))
+
+;;(defsubst strokes-xor (a b)  ### Should I make this an inline function? ###
+;;  "T iff one and only one of A and B is non-nil; otherwise, returns nil.
+;;NOTE: Don't use this as a numeric xor since it treats all non-nil
+;;      values as t including `0' (zero)."
+;;  (eq (null a) (not (null b))))
+
+(defsubst strokes-xpm-encode-length-as-string (length)
+  "Given some LENGTH in [0,62) do a fast lookup of it's encoding."
+  (char-to-string (aref strokes-base64-chars length)))
+		   
+(defsubst strokes-xpm-decode-char (character)
+  "Given a CHARACTER, do a fast lookup to find its corresponding integer value."
+  ;; ### NOTE: for XEmacs-20.* this will need to be changed to deal w/
+  ;; char-tables !!! ###
+  (gethash character strokes-char-value-hashtable)) ; (get-char-table
+					; character
+					; strokes-value-chartable)
+		   
+(defun strokes-xpm-to-compressed-string (&optional xpm-buffer)
+  "Convert the xpm in XPM-BUFFER into a compressed string representing the stroke.
+XPM-BUFFER is an optional argument, and defaults to `*strokes-xpm*'."
+  (save-excursion
+    (set-buffer (setq xpm-buffer (or xpm-buffer "*strokes-xpm*")))
+    (goto-char (point-min))
+    (search-forward "/* pixels */")	; skip past header junk
+    (forward-char 2)
+    ;; a note for below:
+    ;; the `current-char' is the char being counted -- NOT the char at (point)
+    ;; which happens to be called `char-at-point'
+    (let ((compressed-string "+/")	; initialize the output
+	  (count 0)			; keep a current count of
+					; `current-char'
+	  (last-char-was-on-p t)       	; last entered stream
+					; represented `on' bits
+	  (current-char-is-on-p nil)	; current stream represents `on' bits
+	  (char-at-point (char-after)))	; read the first char
+      (while (not (char-equal char-at-point ?})) ; a `}' denotes the
+					; end of the pixmap
+	(cond ((zerop count)		; must restart counting
+	       ;; check to see if the `char-at-point' is an actual pixmap bit
+	       (when (strokes-xpm-char-bit-p char-at-point)
+		 (setq count 1
+		       current-char-is-on-p (strokes-xpm-char-on-p char-at-point)))	       
+	       (forward-char 1))
+	      ((= count 61)		; maximum single char's
+					; encoding length
+	       (setq compressed-string (concat compressed-string
+					       ;; add a zero-length
+					       ;; encoding when
+					       ;; necessary
+					       (when (eq last-char-was-on-p
+							 current-char-is-on-p)
+						 ;; "0"
+						 (strokes-xpm-encode-length-as-string 0))
+					       (strokes-xpm-encode-length-as-string 61))
+		     last-char-was-on-p current-char-is-on-p
+		     count 0))		; note that we just set
+					; count=0 and *don't* advance
+					; (point)
+	      ((strokes-xpm-char-bit-p char-at-point) ; an actual xpm bit
+	       (if (eq current-char-is-on-p
+		       (strokes-xpm-char-on-p char-at-point))
+		   ;; yet another of the same bit-type, so we continue
+		   ;; counting...
+		   (progn
+		     (incf count)
+		     (forward-char 1))
+		 ;; otherwise, it's the opposite bit-type, so we do a
+		 ;; write and then restart count ### NOTE (for myself
+		 ;; to be aware of) ### I really should advance
+		 ;; (point) in this case instead of letting another
+		 ;; iteration go through and letting the case: count=0
+		 ;; take care of this stuff for me.  That's why
+		 ;; there's no (forward-char 1) below.
+		 (setq compressed-string (concat compressed-string
+						 ;; add a zero-length
+						 ;; encoding when
+						 ;; necessary
+						 (when (eq last-char-was-on-p
+							   current-char-is-on-p)
+						   ;; "0"
+						   (strokes-xpm-encode-length-as-string 0))
+						 (strokes-xpm-encode-length-as-string count))
+		       count 0
+		       last-char-was-on-p current-char-is-on-p)))
+	      (t			; ELSE it's some other useless
+					; char, like `"' or `,'
+	       (forward-char 1)))
+	(setq char-at-point (char-after)))
+      (concat compressed-string
+	      (when (> count 0)
+		(concat (when (eq last-char-was-on-p
+				  current-char-is-on-p)
+			  ;; "0"
+			  (strokes-xpm-encode-length-as-string 0))
+			(strokes-xpm-encode-length-as-string count)))
+	      "/"))))
+
+(defun strokes-strokify-buffer (&optional buffer)
+  "Decode stroke strings in BUFFER and display their corresponding glyphs.
+BUFFER defaults to the current buffer."
+  (interactive)
+  ;;  (interactive "*bStrokify buffer: ")
+  (save-excursion
+    (set-buffer (or buffer (setq buffer (current-buffer))))
+    (if (interactive-p)
+	(message "Strokifying %s..." buffer))
+    (goto-char (point-min))
+    (let (ext string)
+      ;; The comment below is what i'd have to do if I wanted to deal with
+      ;; random newlines in the midst of the compressed strings.
+      ;; If I do this, I'll also have to change `strokes-xpm-to-compress-string'
+      ;; to deal with the newline, and possibly other whitespace stuff.  YUCK!
+      ;;      (while (re-search-forward "\\+/\\(\\w\\|
+      ;;\\)+/" nil t nil (get-buffer buffer))
+      (while (re-search-forward "\\+/\\w+/" nil t nil (get-buffer buffer))
+	(setq string (buffer-substring (+ 2 (match-beginning 0))
+				       (1- (match-end 0))))
+	(strokes-xpm-for-compressed-string string " *strokes-xpm*")
+	(replace-match " ")
+	(setq ext (make-extent (1- (point)) (point)))
+	(set-extent-property ext 'type 'stroke-glyph)
+	(set-extent-property ext 'start-open t)
+	(set-extent-property ext 'end-open t)
+	(set-extent-property ext 'detachable t)
+	(set-extent-property ext 'duplicable t)
+	(set-extent-property ext 'data string)
+	(set-extent-face ext 'strokes-char-face)
+	(set-extent-end-glyph ext (make-glyph
+				   (list
+				    (vector 'xpm
+					    :data (buffer-substring
+						   (point-min " *strokes-xpm*")
+						   (point-max " *strokes-xpm*")
+						   " *strokes-xpm*"))
+				    [string :data "[Stroke]"])))))
+    (if (interactive-p)
+	(message "Strokifying %s...done" buffer))))
+
+(defun strokes-unstrokify-buffer (&optional buffer)
+  "Convert the glyphs in BUFFER to thier base-64 ASCII representations.
+BUFFER defaults to the current buffer"
+  ;; ### NOTE !!! ### (for me)
+  ;; For later on, you can/should make the inserted strings atomic
+  ;; extents, so that the users have a clue that they shouldn't be
+  ;; editing inside them.  Plus, if you make them extents, you can
+  ;; very easily just hide the glyphs, so if you unstrokify, and the
+  ;; restrokify, then those that already are glyphed don't need to be
+  ;; re-calculated, etc.  It's just nicer that way.  The only things
+  ;; to worry about is cleanup (i.e. do the glyphs get gc'd when the
+  ;; buffer is killed?
+  ;;  (interactive "*bUnstrokify buffer: ")
+  (interactive)
+  (save-excursion
+    (set-buffer (setq buffer (or buffer (current-buffer))))
+    ;;      (map-extents
+    ;;       (lambda (ext buf)
+    ;;	 (when (eq (extent-property ext 'type) 'stroke-glyph)
+    ;;	   (goto-char (extent-start-position ext))
+    ;;	   (delete-char 1)  ; ### What the hell do I do here? ###
+    ;;	   (insert "+/" (extent-property ext 'data) "/")
+    ;;       (delete-extent ext))))))
+    (let (start)
+      (map-extents
+       (lambda (ext buf)
+	 (when (eq (extent-property ext 'type) 'stroke-glyph)
+	   (setq start (goto-char (extent-start-position ext)))
+;;	   (insert "+/" (extent-property ext 'data) "/")
+	   (insert-string "+/")
+	   (insert-string (extent-property ext 'data))
+	   (insert-string "/")
+	   (delete-char 1)
+	   (set-extent-endpoints ext start (point))
+	   (set-extent-property ext 'type 'stroke-string)
+	   (set-extent-property ext 'atomic t)
+;;	   (set-extent-property ext 'read-only t)
+	   (set-extent-face ext 'strokes-char-face)
+	   (set-extent-property ext 'stroke-glyph (extent-end-glyph ext))
+	   (set-extent-end-glyph ext nil)))))))
+
+(defun strokes-xpm-for-compressed-string (compressed-string &optional bufname)
+  "Convert the stroke represented by COMPRESSED-STRING into an xpm.
+Store xpm in buffer BUFNAME if supplied \(default is `*strokes-xpm*'\)"
+  (save-excursion
+    (or bufname (setq bufname "*strokes-xpm*"))
+    (erase-buffer (set-buffer (get-buffer-create bufname)))
+    (insert compressed-string)
+    (goto-char (point-min))
+    (let ((current-char-is-on-p nil))
+      (while (not (eobp))
+	(insert-char
+	 (if current-char-is-on-p
+	     ?*
+	   ?\ )
+	 (strokes-xpm-decode-char (char-after)))
+	(delete-char 1)
+	(setq current-char-is-on-p (not current-char-is-on-p)))
+      (goto-char (point-min))
+      (loop repeat 33 do
+	    (insert-char ?\")
+	    (forward-char 33)
+	    (insert "\",\n"))
+      (goto-char (point-min))
+      (insert strokes-xpm-header))))
+
+(defun strokes-compose-complex-stroke ()
+  (interactive "*")
+  (let ((strokes-grid-resolution 33))
+    (strokes-read-complex-stroke)
+    (strokes-xpm-for-stroke nil nil t)
+    (insert (strokes-xpm-to-compressed-string))
+    (strokes-strokify-buffer)))
 
 (provide 'strokes)
 (run-hooks 'strokes-load-hook)

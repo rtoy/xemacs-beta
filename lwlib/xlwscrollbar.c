@@ -82,6 +82,10 @@ Boston, MA 02111-1307, USA.  */
 #include "xlwscrollbarP.h"
 #include "xlwscrollbar.h"
 
+#ifdef USE_DEBUG_MALLOC
+#include <dmalloc.h>
+#endif
+
 #define DBUG(x)
 
 #define MINL(x,y) ((((unsigned long) (x)) < ((unsigned long) (y))) \

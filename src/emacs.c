@@ -94,6 +94,9 @@ Lisp_Object Vemacs_minor_version;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 
+/* Package directories built in at configure time */
+Lisp_Object Vpackage_path;
+
 /* The name under which XEmacs was invoked, with any leading directory
    names discarded.  */
 Lisp_Object Vinvocation_name;
@@ -451,10 +454,7 @@ argmatch (char **argv, int argc, char *sstr, char *lstr,
 }
 
 /* Make stack traces always identify version + configuration */
-/* C makes this bizarre circumlocution necessary. */
-#define PASTE_1(x,y) PASTE_2(x,y)
-#define PASTE_2(x,y) x##y
-#define main_1 PASTE_1(main_, CANONICAL_VERSION)
+#define main_1 STACK_TRACE_EYE_CATCHER
 
 static DOESNT_RETURN
 main_1 (int argc, char **argv, char **envp)
@@ -2139,18 +2139,12 @@ and announce itself normally when it is run.
 #endif
 
 Lisp_Object
-decode_env_path (CONST char *evarname, CONST char *default_)
+decode_path (CONST char *path)
 {
-  REGISTER CONST char *path = 0;
   REGISTER CONST char *p;
   Lisp_Object lpath = Qnil;
 
-  if (evarname)
-    path = (char *) egetenv (evarname);
-  if (!path)
-    path = default_;
-  if (!path)
-    return Qnil;
+  if (!path || !strlen(path)) return Qnil;
 
 #if defined (MSDOS) || defined (WIN32)
   dostounix_filename (path);
@@ -2170,6 +2164,20 @@ decode_env_path (CONST char *evarname, CONST char *default_)
 	break;
     }
   return Fnreverse (lpath);
+}
+
+Lisp_Object
+decode_env_path (CONST char *evarname, CONST char *default_)
+{
+  REGISTER CONST char *path = 0;
+  if (evarname)
+    path = (char *) egetenv (evarname);
+  if (!path)
+    path = default_;
+  if (!path)
+    return Qnil;
+  else
+    return decode_path(path);
 }
 
 DEFUN ("noninteractive", Fnoninteractive, 0, 0, 0, /*
@@ -2347,6 +2355,14 @@ Codename of this version of Emacs (a string).
 #define XEMACS_CODENAME "Noname"
 #endif
   Vxemacs_codename = Fpurecopy (build_string (XEMACS_CODENAME));
+
+  DEFVAR_LISP ("package-path", &Vpackage_path /*
+List of directories configured for package searching.
+*/ );
+#ifndef PACKAGE_PATH
+#define PACKAGE_PATH "/etc/xemacs:~/.xemacs"
+#endif
+  Vpackage_path = decode_path(PACKAGE_PATH);
 
   DEFVAR_BOOL ("noninteractive", &noninteractive1 /*
 Non-nil means XEmacs is running without interactive terminal.

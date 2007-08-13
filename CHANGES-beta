@@ -1,4 +1,21 @@
 							-*- indented-text -*-
+to 20.3 beta15 "Berlin"
+-- cc-mode-5.14
+-- hm--html-menus-5.8
+-- Gnus-5.4.64 is packaged
+-- AUCTeX-9.7p is packaged
+-- Initial implementation of Packages
+-- Handling of printing circular objects synched with Emacs 19.34
+-- mel-6.10.1 [Formerly part of tm] Courtesy of MORIOKA Tomohiko
+-- apel-3.4 [Formerly part of tm] Courtesy of MORIOKA Tomohiko
+-- Fix for installing XEmacs with separate --prefix, --exec-prefix directories
+-- New configure option --pkg-dir [list] enabled, contents available via
+   the Lisp variable `package-path' (default is "/etc/xemacs:~/.xemacs))
+-- Advisory message added to *scratch* at startup
+-- Gnus-5.4.64
+-- strokes.el-2.3
+-- Miscellaneous bug fixes
+
 to 20.3 beta14 "Vienna"
 -- VM-6.33
 -- Miscellaneous Martin Buchholz patches to configure

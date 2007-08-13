@@ -2167,7 +2167,7 @@ Put this on write-file-hooks." nil nil)
 
 ;;;***
 
-;;;### (autoloads (vc-update-change-log vc-rename-file vc-cancel-version vc-revert-buffer vc-print-log vc-retrieve-snapshot vc-create-snapshot vc-directory vc-insert-headers vc-version-other-window vc-diff vc-checkout vc-register vc-next-action vc-find-binary) "vc" "packages/vc.el")
+;;;### (autoloads (vc-update-change-log vc-rename-file vc-cancel-version vc-revert-buffer vc-print-log vc-retrieve-snapshot vc-create-snapshot vc-directory vc-insert-headers vc-version-other-window vc-version-diff vc-diff vc-checkout vc-register vc-next-action vc-find-binary) "vc" "packages/vc.el")
 
 (defvar vc-before-checkin-hook nil "\
 *Normal hook (list of functions) run before a file gets checked in.  
@@ -2230,6 +2230,11 @@ Normally this compares the current file and buffer with the most recent
 checked in version of that file.  This uses no arguments.
 With a prefix argument, it reads the file name to use
 and two version designators specifying which versions to compare." t nil)
+
+(autoload 'vc-version-diff "vc" "\
+For FILE, report diffs between two stored versions REL1 and REL2 of it.
+If FILE is a directory, generate diffs between versions for all registered
+files in or below it." t nil)
 
 (autoload 'vc-version-other-window "vc" "\
 Visit version REV of the current buffer in another window.

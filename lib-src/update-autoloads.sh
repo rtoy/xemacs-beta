@@ -70,15 +70,15 @@ else
 	echo Yes
 fi
 
-if test "$mule_p" = nil ; then
-	make_special auctex autoloads
-else
-	make_special auctex autoloads MULE_EL=tex-jp.elc
-fi
+## AUCTeX is a Package now
+# if test "$mule_p" = nil ; then
+# 	make_special auctex autoloads
+# else
+# 	make_special auctex autoloads MULE_EL=tex-jp.elc
+# fi
 #make_special cc-mode autoloads
 make_special efs autoloads
 #make_special eos autoloads # EOS doesn't have custom or autoloads
-#make_special gnus autoloads
 make_special hyperbole autoloads
 # make_special ilisp autoloads
 make_special oobr HYPB_ELC='' autoloads

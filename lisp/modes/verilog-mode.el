@@ -1,6 +1,6 @@
 ;;; verilog-mode.el --- major mode for editing verilog source in Emacs
 ;;
-;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/modes/Attic/verilog-mode.el,v 1.6 1997/06/14 20:31:18 steve Exp $
+;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/modes/Attic/verilog-mode.el,v 1.7 1997/07/26 22:09:50 steve Exp $
 
 ;; Copyright (C) 1996 Free Software Foundation, Inc.
 
@@ -70,7 +70,7 @@
 (provide 'verilog-mode)
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "$$Revision: 1.6 $$"
+(defconst verilog-mode-version "$$Revision: 1.7 $$"
   "Version of this verilog mode.")
 
 ;;
@@ -2973,7 +2973,7 @@ Verilog program are completed runtime and should not be added to this list.")
   (save-excursion
     (let ((verilog-all nil))
       ;; Set buffer to use for searching labels. This should be set
-      ;; within functins which use verilog-completions
+      ;; within functions which use verilog-completions
       (set-buffer verilog-buffer-to-use)
 
       ;; Determine what should be completed
@@ -3157,7 +3157,7 @@ With optional second arg non-nil, STR is the complete name of the instruction."
 	  match)
 
       ;; Set buffer to use for searching labels. This should be set
-      ;; within functins which use verilog-completions
+      ;; within functions which use verilog-completions
       (set-buffer verilog-buffer-to-use)
 
       (let ((verilog-str verilog-str))

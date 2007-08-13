@@ -1,0 +1,166 @@
+1997-07-14  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* emu: Version 7.44 was released.
+	* APEL: Version 3.4 was released.
+
+1997-07-13  MORIOKA Tomohiko  <morioka@mousai>
+
+	* std11-parse.el (std11-parse-ascii-token): Allow non-ASCII
+ 	characters in comments.
+
+1997-06-28  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* file-detect.el: Add autoload comments for function `add-path',
+	`add-latest-path', `get-latest-path', `file-installed-p',
+	`exec-installed-p', `module-installed-p' and variable
+	`exec-suffix-list'.
+
+Sat May 10 19:39:12 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* README.en (What's APEL?): Add std11 and mule-caesar.el.
+
+
+1997-05-09  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* emu: Version 7.43.1 was released.
+	* APEL: Version 3.3.2 was released.
+
+Fri May  9 01:23:44 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* APEL-ELS: Add mule-caesar.el.
+
+	* mule-caesar.el: New file.
+
+
+1997-04-30  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* emu: Version 7.43 was released.
+	* APEL: Version 3.3.1 was released.
+
+Wed Apr 30 12:40:32 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile: add `release'.
+
+Mon Apr 28 16:47:30 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile: `TARFILE' was abolished.
+
+Thu Apr  3 17:14:39 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* APEL-ELS: std11.el and std11-parse.el were moved from mu/.
+
+
+1997-03-20  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* APEL: Version 3.3 was released.
+	
+	* APEL-CFG (EMU_PREFIX, EMU_DIR): New variables.
+	* APEL-MK: install emu.
+
+Thu Mar 20 06:09:03 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile: Add README.en.
+
+Thu Mar 20 06:08:29 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* file-detect.el: Header and DOC-strings were modified.
+
+Thu Mar 20 06:03:51 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* README.en: New file.
+
+Thu Mar 20 05:48:02 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* filename.el: Add DOC-strings.
+
+	* APEL-MK (install-apel): Use `compile-apel'.
+
+	* Makefile (install): Don't depend on `elc'.
+
+Thu Mar 20 02:04:19 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* APEL-MK: Setting for load-path and requiring install were moved
+ 	from APEL-CFG.
+
+	(install-apel): Compile apel-modules.
+
+	* APEL-CFG: Setting for load-path and requiring install were moved
+ 	to APEL-MK.
+
+
+1997-03-14  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* APEL: Version 3.2 was released.
+
+Fri Mar 14 09:54:04 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* file-detect.el (get-latest-path): Check directory is exist or not.
+
+Fri Mar 14 09:25:15 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* APEL-ELS: Add install.el.
+
+Fri Mar 14 07:24:37 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile, APEL-MK, APEL-CFG: New file.
+
+1997-03-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* atype.el (field-unify): fixed.
+
+1997-03-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* filename.el (filename-filters): Use `exec-installed-p' instead
+ 	of `file-installed-p' to search "kakasi".
+
+1997-03-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* file-detect.el (module-installed-p): Use function
+ 	`exec-installed-p'.
+
+	* file-detect.el (exec-suffix-list): New variable.
+	(exec-installed-p): New function.
+
+1997-03-04  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* APEL-ELS (apel-modules): Add filename.el.
+
+	* APEL-ELS: Initial revision
+
+1997-03-04  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* filename.el (filename-replacement-alist): Don't use function
+ 	`string-to-char-list' and `expand-char-ranges'; Don't require
+ 	tl-str.
+	(filename-special-filter): Use function `assoc-if' instead of
+ 	`ASSOC'; Require cl instead of tl-list.
+	(poly-funcall): New inline-function; copied from tl-list.el.
+
+1997-03-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* atype.el: Alias `fetch-field', `fetch-field-value', `put-field'
+ 	and `delete-field' were abolished.
+
+	Don't require tl-str and tl-list.
+
+	Require alist.
+
+	(field-unify): Don't use function `symbol-concat'.
+	(assoc-unify): Use function `assoc' directly; use function
+ 	`put-alist' directly; use function `del-alist' directly.
+
+	* atype.el: Function `put-fields' was abolished.
+
+	* atype.el: tl-atype.el was renamed to atype.el.
+
+1997-03-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* atype.el: tl-atype.el was renamed to atype.el.
+
+1997-03-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* file-detect.el (file-installed-p): Fixed DOC-string.
+
+1997-02-28  Tomohiko Morioka  <tmorioka@mule.etl.go.jp>
+
+	* alist.el: New module; separated from tl-list.el.

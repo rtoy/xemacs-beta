@@ -194,6 +194,7 @@ Convert arg CH to a one-character string containing that character.
 
 DEFUN ("string-to-char", Fstring_to_char, 1, 1, 0, /*
 Convert arg STRING to a character, the first character of that string.
+An empty string will return the constant `nil'.
 */
        (str))
 {
@@ -203,8 +204,10 @@ Convert arg STRING to a character, the first character of that string.
   p = XSTRING (str);
   if (string_length (p) != 0)
     return make_char (string_char (p, 0));
-  else                          /* #### Gag me! */
-    return Qzero;
+  else
+    /* This used to return Qzero.  That is broken, broken, broken. */
+    /* It might be kinder to signal an error directly. -slb */
+    return Qnil;
 }
 
 

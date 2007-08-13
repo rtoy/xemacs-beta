@@ -48,6 +48,13 @@
  :type 'boolean
  :group 'minibuffer)
 
+(defcustom minibuffer-history-uniquify t
+  "*Non-nil means when adding an item to a minibuffer history, remove
+previous occurances of the same item from the history list first,
+rather than just consing the new element onto the front of the list."
+  :type 'boolean
+  :group 'minibuffer)
+
 (defvar minibuffer-completion-table nil
   "Alist or obarray used for completion in the minibuffer.
 This becomes the ALIST argument to `try-completion' and `all-completions'.
@@ -481,8 +488,9 @@ See also the variable completion-highlight-first-word-only for control over
 				(< (length val)
 				   minibuffer-history-minimum-string-length))
 			   (set minibuffer-history-variable
-				(cons histval
-				      (remove histval list))))))
+				(if minibuffer-history-uniquify
+				    (cons histval (remove histval list))
+				  (cons histval list))))))
                  (if err (signal (car err) (cdr err)))
                  val))))
       ;; stupid display code requires this for some reason
@@ -2062,7 +2070,7 @@ Prompt with string PROMPT."
 You should *bind* this, not set it.  This is useful if you're doing
 something mousy but which wasn't actually invoked using the mouse."
   :type 'boolean
-  :group 'minubuffer)
+  :group 'minibuffer)
 
 ;; We include this here rather than dialog.el so it is defined
 ;; even when dialog boxes are not present.

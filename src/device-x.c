@@ -303,6 +303,25 @@ x_init_device (struct device *d, Lisp_Object props)
   XIM_init_device(d);
 #endif /* HAVE_XIM */
 
+#ifdef HAVE_WINDOWMAKER
+  XtVaSetValues(DEVICE_XT_APP_SHELL (d),
+                XtNmappedWhenManaged, False,
+                XtNwidth, 1,
+                XtNheight, 1,
+                NULL);
+  XtRealizeWidget(DEVICE_XT_APP_SHELL (d));
+  {
+    int argc;
+    char **argv;
+
+    make_argc_argv (Vcommand_line_args, &argc, &argv);
+    XSetCommand (XtDisplay (DEVICE_XT_APP_SHELL (d)),
+                 XtWindow (DEVICE_XT_APP_SHELL (d)), argv, argc);
+    free_argc_argv (argv);
+
+  }
+#endif /* HAVE_WINDOWMAKER */
+
   Vx_initial_argv_list = make_arg_list (argc, argv);
   free_argc_argv (argv);
 

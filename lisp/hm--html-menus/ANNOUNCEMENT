@@ -1,9 +1,9 @@
 Hello,
 
-I've written a new version (5.7) of my html package for the XEmacs 
+I've written a new version (5.8) of my html package for the XEmacs 
 and the GNU Emacs 19. The name of the package is:
 
-		 hm--html-menus-5.7.tar.gz
+		 hm--html-menus-5.8.tar.gz
 
 With this package it is very easy to write html pages for the World Wide 
 Web (WWW). Eg: In most cases the user gets help to construct a specific 
@@ -11,37 +11,33 @@ link by examples or by a completition list with possible input strings.
 It is also possible to insert links and images by just clicking on its
 source and destination (drag and drop feature).
 
-The biggest new features compared with release 5.0 are:
-- commands to insert all elements, which are used by HTML 3.2.
-- a better drag and drop interface to insert links with the mouse
-- help feature for the drag and drop commands
-- there's now also a default drag and drop table for other modes
-- a better interface for inserting template files
-- indentation
-- better font lock stuff
-- a site specific configuration file
-  (look at the variable hm--html-site-config-file)
-- a better syntax table from Bob Weiner
-- a lot of bug fixes
-- a Texinfo ducomentation
-- automatic update of the created, changed and title date is more
-  flexible
-- a visible modified line could be inserted and updated automaticly
+The biggest new features compared with release 5.7 are:
+- use of the customize package for customization
+- the header of the main files should no be 'package finder' compatible
+- in the XEmacs a drag and drop mouse pointer will be used
+  during drag and drop
+- the minor mode (hm--html-minor-mode) could now be used in many
+  other major modes
+- better popup menu support for the hm--html-minor-mode in the
+  Emacs 19
+- the emacs start up options -u, -q, -no-site-file are now
+  respected
+- some bug fixes
 Read the NEWS file to see news in detail...
 
-You should find hm--html-menus-5.7.tar.gz on the following ftp server:
+You should find hm--html-menus-5.8.tar.gz on the following ftp server:
 	sunsite.unc.edu in /pub/Linux/apps/editors/emacs/
 	ftp.tnt.uni-hannover.de in /pub/editors/xemacs/contrib
 
 It may take some time, before the package is copied by the ftp admins
 from the incoming directories to the above listed directories.
 
-There is also a html documentation about the package. You can find it on:
+There is a html documentation about the package. You can find it on:
 http://www.tnt.uni-hannover.de/~muenkel/software/own/hm--html-menus/overview.html
 
 This package provides also a minor mode (hm--html-minor-mode), which
-can be used together with another html major mode, like the psgml-html
-mode in the XEmacs 19.15.
+can be used together with other html major modes, like the psgml-html
+mode or other major edit modes, like the perl-mode.
 
 The package provides functions to insert the following stuff in html-pages:
 1. Anchors:
@@ -104,10 +100,10 @@ With the pulldown menu, you can do the following things:
 - preview html documents with the xmosaic
 - preview html documents with the w3 package for the XEmacs and emacs
 
-You can insert links and images by clicking with Meta Button1 on its
-source and then on its destination. For this drag and drop interface
-the following destinations and links are supported:
-- the inclusion of an GIF- or JPEG- image by clicking on its name
+You can insert links and images by clicking with Meta Control Button1
+on its source and then on its destination. For this drag and drop
+interface the following destinations and links are supported: - the
+inclusion of an GIF- or JPEG- image by clicking on its name
   in a dired buffer
 - a file or relative link to any other file by clicking on its name
   in a dired buffer

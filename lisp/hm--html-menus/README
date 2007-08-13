@@ -1,4 +1,4 @@
-This README file describes the emacs lisp package hm--html-menus-5.7.
+This README file describes the emacs lisp package hm--html-menus-5.8.
 
 The package provides functions and various popup and pulldown menus
 for a html mode called hm--html-mode, a mode for writing html pages.
@@ -90,6 +90,8 @@ tmpl-minor-mode.el		: provides functions for the tmpl-minor-mode;
 command-description.html.tmpl	: Templatefile for the use with the
 				  tmpl-minor-mode;
 frame.html.tmpl			: Templatefile, provides a simple frame;
+drop				: xbm file with the drag and drop mouse pointer
+dropmsk				: xbm file with mask for the d&d mouse pointer
 doc/hm--html-mode.texinfo	: Package documentation in the Texinfo format;
 doc/umlaute.texinfo		: Texinfo include file for german vowel 
 				  mutation (deutsche Umlaute);
@@ -109,7 +111,16 @@ of your XEmacs or Emacs 19.
 1. 	Put all the *.el files in one of your xemacs (or emacs) lisp load
         directories (i.e. lisp/packages).
 
-2.	Put the following in your .emacs (or default.el or site-init.el):
+2.	For XEmacs only: Put the files drop and dropmask in the
+	directory specified by the lisp variable `idd-data-directory'.
+	By default this directory is <prefix>/lib/xemacs-<version>/etc/idd.
+	(eg: if you've installed the Xemacs 19.15 in /usr/local, it is
+	/usr/local/xemacs/lib/xemacs-19.15/etc/idd).
+	If you'd like to put the files in another directory, then you must
+	set the variable `idd-data-directory' to this directory (eg: 
+	(setq idd-data-directory "/usr/local/data")
+
+3.	Put the following in your .emacs (or default.el or site-init.el):
 
 	(autoload 'hm--html-mode "hm--html-mode" "HTML major mode." t)
 	(autoload 'hm--html-minor-mode "hm--html-mode" "HTML minor mode." t)
@@ -163,17 +174,17 @@ of your XEmacs or Emacs 19.
 	line (works only in XEmacs version >= 19.15 and != 20.0)
 	(add-hook 'html-mode-hook 'hm--html-minor-mode)
 
-3.	Set (if you want) the environment variable HTML_CONFIG_FILE 
+4.	Set (if you want) the environment variable HTML_CONFIG_FILE 
 	to the html system configuration file i.e.:	
 	setenv HTML_CONFIG_FILE /usr/xemacs/lisp/hm--html-configuration.el
 
-4.	Set (if you want) the environment variable HTML_USER_CONFIG_FILE to 
+5.	Set (if you want) the environment variable HTML_USER_CONFIG_FILE to 
 	the html user configuration file i.e.:
 	setenv HTML_USER_CONFIG_FILE ~/.hm--html-configuration.el
 	And put the file .hm--html-configuration.el in your Home directory.
 	An example for this user specific file is given below.
 
-5.	Check the files hm--html-configuration.el and 
+6.	Check the files hm--html-configuration.el and 
 	.hm--html-configuration.el whether all variables are set suitable for 
 	you and your site or not. You can make changes in both of these files
 	and you can also create a site specific configuration file, called
@@ -200,18 +211,18 @@ of your XEmacs or Emacs 19.
 		html-view-mosaic-command
 		w3-default-homepage
 
-6.	If you want to use templatefiles, you should put these files
+7.	If you want to use templatefiles, you should put these files
 	in the directory to which `hm--html-template-dir' points.
 	You can use the file command-description.html.tmpl as
 	an example.
 
-7.	If you don't want to use the feature of adding html comments
+8.	If you don't want to use the feature of adding html comments
 	about the creation date and author and with a change log, then
 	you should set the following three variables to nil:
  		 hm--html-automatic-changed-comment
 		 hm--html-automatic-created-comment
 
-8.      If you don't want to set a date in the title line, than you should
+9.      If you don't want to set a date in the title line, than you should
         set the following to nil:
 		 hm--html-automatic-new-date
 
@@ -258,13 +269,9 @@ at these parts, if you have any questions.
 Look at first at the configuration files, if you have problems with
 this package!
 
+You should also look at the Texinfo documentation of this package.
 
-Sorry, I know that the documentation of this package isn't so good as
-it should be, but at the moment I've not the time to make a better
-one.
-
-There is also a (small) html documentation about the package. You can 
-find it on:
+There is a html documentation about the package. You can find it on:
 http://www.tnt.uni-hannover.de/~muenkel/software/own/hm--html-menus/overview.html
 
 

@@ -47,6 +47,10 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include "xlwmenuP.h"
 
+#ifdef USE_DEBUG_MALLOC
+#include <dmalloc.h>
+#endif
+
 /* simple, naieve integer maximum */
 #ifndef max
 #define max(a,b) ((a)>(b)?(a):(b))

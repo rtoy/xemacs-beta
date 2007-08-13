@@ -1,3 +1,22 @@
+1997-07-25  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi: Describe support for idl-mode
+
+	* cc-mode.texi:
+	Document c-initialization-hook.  Also rewrite the "Getting Connected"
+	section on byte compiling the source.
+
+1997-07-21  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* lispref/streams.texi: "Output Streams", change `last-output'
+	result list from integers to characters.
+
+	* lispref/minibuf.texi: "Object from Minibuffer", correction.
+
+	* lispref/minibuf.texi: "Minibuffer History", add
+ 	`Info-minibuffer-history', `Manual-page-minibuffer-history', and
+ 	short paragraph refering to `M-x apropos'.
+
 1997-07-17  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile: makeinfo-1.68 is verified to work.

@@ -1282,7 +1282,7 @@ buffer_or_string_stack_of_extents_force (Lisp_Object object)
 
 #ifdef SOE_DEBUG
 
-static char *print_extent_1 (char *buf, Lisp_Object extent);
+static void print_extent_1 (char *buf, Lisp_Object extent);
 
 static void
 print_extent_2 (EXTENT e)
@@ -2939,7 +2939,7 @@ mark_extent (Lisp_Object obj, void (*markobj) (Lisp_Object))
   return extent->plist;
 }
 
-static char *
+static void
 print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   EXTENT ext = XEXTENT (obj);

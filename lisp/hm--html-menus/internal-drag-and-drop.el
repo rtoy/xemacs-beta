@@ -1,89 +1,111 @@
-;;; $Id: internal-drag-and-drop.el,v 1.4 1997/05/29 23:49:44 steve Exp $
-;;; 
-;;; Copyright (C) 1996, 1997 Heiko Muenkel
-;;; email: muenkel@tnt.uni-hannover.de
-;;;
-;;;  This program is free software; you can redistribute it and/or modify
-;;;  it under the terms of the GNU General Public License as published by
-;;;  the Free Software Foundation; either version 1, or (at your option)
-;;;  any later version.
-;;;
-;;;  This program is distributed in the hope that it will be useful,
-;;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;  GNU General Public License for more details.
-;;;
-;;;  You should have received a copy of the GNU General Public License
-;;;  along with this program; if not, write to the Free Software
-;;;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-;;;
-;;; 
-;;; Description:
-;;;
-;;;	This package provides functions to define and call internal
-;;;	drag and drop actions in the emacs. One could start such an 
-;;;	action by clicking with the mouse in the source buffer and 
-;;;	then in the destination buffer. The action could depend on
-;;;	the points where you've clicked with the mouse, on the state
-;;;	of the region, the point, the mark and any other properties
-;;;	of the source and the destination buffers. The actions are
-;;;	defined by the variable `idd-actions', which is a buffer local
-;;;	variable. The following is an example for the hm--html-mode:
-;;;	(defvar hm--html-idd-actions
-;;;	  '((nil (((idd-if-major-mode-p . dired-mode)
-;;;		   (idd-if-dired-file-on-line-p 
-;;;				. ".*\\.\\(gif\\)\\|\\(jpq\\)"))
-;;;		  hm--html-idd-add-include-image-from-dired-line)
-;;;		 (((idd-if-major-mode-p . dired-mode)
-;;;		   (idd-if-dired-no-file-on-line-p . nil))
-;;;		  hm--html-idd-add-file-link-to-file-on-dired-line)
-;;;		 (((idd-if-major-mode-p . dired-mode)
-;;;		   (idd-if-dired-no-file-on-line-p . t))
-;;;		  hm--html-idd-add-file-link-to-directory-of-buffer)
-;;;		 (((idd-if-major-mode-p . w3-mode)
-;;;		   (idd-if-url-at-point-p . t))
-;;;		  hm--html-idd-add-html-link-from-w3-buffer-point)
-;;;		 (((idd-if-major-mode-p . w3-mode))
-;;;		  hm--html-idd-add-html-link-to-w3-buffer)
-;;;		 (((idd-if-local-file-p . t))
-;;;		  hm--html-idd-add-file-link-to-buffer)))
-;;;	Look at the variable `idd-actions' for further descriptions.
-;;;
-;;;	
-;;; 
-;;; Installation: 
-;;;   
-;;;	Put this file in one of your load path directories.
-;;;	
-;;;	Put the following in your .emacs:
-;;;	(autoload 'idd-mouse-drag-and-drop "internal-drag-and-drop"
-;;;	   "Performs a drag and drop action.
-;;;         At first you must click on the source and 
-;;;         after that on the destination."
-;;;	   t)
-;;;	
-;;;	Define actions in the variable `idd-actions'.
-;;;
-;;;	The variable `idd-global-mouse-keys' defines the mouse keys,
-;;;	which are bound to the drag and drop command.
-;;;
-;;;	The variable `idd-global-help-mouse-keys' defines the mouse keys,
-;;;	which are bound to the drag and drop help command.
-;;;
-;;;	The variable `idd-drag-and-drop-mouse-binding-type' determines
-;;;	if you've to hold a mouse button down during moving the mouse
-;;;	from the source to the destination or not.
-;;;
-;;;	Emacs 19 users should read carefully the whole comments of
-;;;	`idd-drag-and-drop-mouse-binding-type', `idd-global-mouse-keys'
-;;;	and `idd-global-help-mouse-keys', if they would like to change
-;;;	any of these variables or the mouse bindings!
-;;;
+;;; internal-drag-and-drop.el --- Internal drag and drop interface
+
+;; Copyright (C) 1996, 1997 Heiko Muenkel
+
+;; Author: Heiko Muenkel <muenkel@tnt.uni-hannover.de>
+;; Keywords: mouse
+
+;; $Id: internal-drag-and-drop.el,v 1.5 1997/07/26 22:09:46 steve Exp $
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your
+;; option) any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; See the file COPYING.  if not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with:  Not part of Emacs.
+
+;;; Commentary:
+
+;; Description:
+
+;;	This package provides functions to define and call internal
+;;	drag and drop actions in the emacs. One could start such an 
+;;	action by clicking with the mouse in the source buffer and 
+;;	then in the destination buffer. The action could depend on
+;;	the points where you've clicked with the mouse, on the state
+;;	of the region, the point, the mark and any other properties
+;;	of the source and the destination buffers. The actions are
+;;	defined by the variable `idd-actions', which is a buffer local
+;;	variable. The following is an example for the hm--html-mode:
+;;	(defvar hm--html-idd-actions
+;;	  '((nil (((idd-if-major-mode-p . dired-mode)
+;;		   (idd-if-dired-file-on-line-p 
+;;				. ".*\\.\\(gif\\)\\|\\(jpq\\)"))
+;;		  hm--html-idd-add-include-image-from-dired-line)
+;;		 (((idd-if-major-mode-p . dired-mode)
+;;		   (idd-if-dired-no-file-on-line-p . nil))
+;;		  hm--html-idd-add-file-link-to-file-on-dired-line)
+;;		 (((idd-if-major-mode-p . dired-mode)
+;;		   (idd-if-dired-no-file-on-line-p . t))
+;;		  hm--html-idd-add-file-link-to-directory-of-buffer)
+;;		 (((idd-if-major-mode-p . w3-mode)
+;;		   (idd-if-url-at-point-p . t))
+;;		  hm--html-idd-add-html-link-from-w3-buffer-point)
+;;		 (((idd-if-major-mode-p . w3-mode))
+;;		  hm--html-idd-add-html-link-to-w3-buffer)
+;;		 (((idd-if-local-file-p . t))
+;;		  hm--html-idd-add-file-link-to-buffer)))
+;;	Look at the variable `idd-actions' for further descriptions.
+
+
+;; Installation: 
+
+;;	Put this file in one of your load path directories.
+
+;;	Put the following in your .emacs:
+;;	(autoload 'idd-mouse-drag-and-drop "internal-drag-and-drop"
+;;	   "Performs a drag and drop action.
+;;         At first you must click on the source and 
+;;         after that on the destination."
+;;	   t)
+
+;;	Define actions in the variable `idd-actions'.
+
+;;	The variable `idd-global-mouse-keys' defines the mouse keys,
+;;	which are bound to the drag and drop command.
+
+;;	The variable `idd-global-help-mouse-keys' defines the mouse keys,
+;;	which are bound to the drag and drop help command.
+
+;;	The variable `idd-drag-and-drop-mouse-binding-type' determines
+;;	if you've to hold a mouse button down during moving the mouse
+;;	from the source to the destination or not.
+
+;;	Emacs 19 users should read carefully the whole comments of
+;;	`idd-drag-and-drop-mouse-binding-type', `idd-global-mouse-keys'
+;;	and `idd-global-help-mouse-keys', if they would like to change
+;;	any of these variables or the mouse bindings!
+
+;;; Code:
 
 (require 'adapt)
 (require 'cl)
 
-(defvar idd-drag-and-drop-mouse-binding-type 'click
+(defgroup idd-drag-and-drop nil
+  "This package provides functions to define and call internal
+drag and drop actions in the emacs. One could start such an 
+action by clicking with the mouse in the source buffer and 
+then in the destination buffer. The action could depend on
+the points where you've clicked with the mouse, on the state
+of the region, the point, the mark and any other properties
+of the source and the destination buffers. The actions are
+defined by the variable `idd-actions', which is a buffer local
+variable."
+  :group 'mouse)
+
+(defcustom idd-drag-and-drop-mouse-binding-type 'click
   "*The type of the drag and drop mouse binding.
 The value maybe `click' or `press-button-during-move'.
 A value of `click' means, that you've to click over the source, leave
@@ -100,7 +122,12 @@ be started with that type of mouse binding.
 Note: In the Emacs 19 you'll have to change also the keybindings of
 the drag and drop commands, if you change this variable. Look at the
 variables `idd-global-mouse-keys' and `idd-global-help-mouse-keys' for
-this.")
+this."
+  :group 'idd-drag-and-drop
+  :type '(choice (const :tag "Click on source and destination"
+			:value click)
+		 (const :tag "Press button during mouse move"
+			:value press-button-during-move)))
 
 (defvar idd-global-mouse-keys (if (adapt-emacs19p)
 				  (if (eq idd-drag-and-drop-mouse-binding-type
@@ -148,25 +175,25 @@ is set to `click'. If you set `idd-drag-and-drop-mouse-binding-type'
 before loading the package internal-drag-and-drop, the mouse will
 be bind in the right way.")
 
-(defvar idd-actions '((((idd-if-region-active-p . nil))
-		       (((idd-if-region-active-p . t))
-			idd-action-copy-region))
-
-		      (((idd-if-region-active-p . t))
-		       (((idd-if-region-active-p . t))
-			idd-action-copy-replace-region))
-
-		      (((idd-if-region-active-p . nil)
-			(idd-if-modifiers-p . nil))
-		       (((idd-if-region-active-p . t))
-			idd-action-move-region))
-
-		      (((idd-if-region-active-p . t)
-			(idd-if-modifiers-p . nil))
-		       (((idd-if-region-active-p . t))
-			idd-action-move-replace-region))
-		      )
-  "The list with actions, depending on the source and the destination.
+(defcustom idd-actions '((((idd-if-region-active-p . nil))
+			  (((idd-if-region-active-p . t))
+			   idd-action-copy-region))
+			 
+			 (((idd-if-region-active-p . t))
+			  (((idd-if-region-active-p . t))
+			   idd-action-copy-replace-region))
+			 
+			 (((idd-if-region-active-p . nil)
+			   (idd-if-modifiers-p . nil))
+			  (((idd-if-region-active-p . t))
+			   idd-action-move-region))
+			 
+			 (((idd-if-region-active-p . t)
+			   (idd-if-modifiers-p . nil))
+			  (((idd-if-region-active-p . t))
+			   idd-action-move-replace-region))
+			 )
+  "*The list with actions, depending on the source and the destination.
 The list looks like:
   '((<destination-specification-1> (<source-specification-1> <action-1-1>)
                                    (<source-specification-2> <action-1-2>)
@@ -214,13 +241,59 @@ specified by `idd-if-major-mode-p'.
 <action> ist a function, which has two arguments, the first specifies the
 source and the second the destination. Look at the function definition
 of `idd-action-copy-region' and `idd-action-copy-replace-region'. They are 
-examples for such actions.")
+examples for such actions."
+  :group 'idd-drag-and-drop
+  :type 'list)
 
 (make-variable-buffer-local 'idd-actions)
 
-(defvar idd-help-instead-of-action nil
+(defcustom idd-help-instead-of-action nil
   "*If this variable is t, then a help buffer is displayed.
-No action will be performed if this variable is t.")
+No action will be performed if this variable is t.
+
+Note: You can also use the help mouse key instead of setting
+this to t."
+  :group 'idd-drag-and-drop
+  :type 'boolean)
+
+(defcustom idd-mouse-pointer-image "drop"
+  "*The name of the image used as mouse pointer during drag and drop.
+The image must be in the directory `idd-data-directory'.
+Run the command `idd-make-drag-and-drop-pointer-glyph' after changing
+this variable."
+  :group 'idd-drag-and-drop
+  :type 'file)
+
+(defcustom idd-data-directory (file-name-as-directory 
+			       (expand-file-name "idd" data-directory))
+  "Data directory for the file `idd-mouse-pointer-image'.
+Run the command `idd-make-drag-and-drop-pointer-glyph' after changing
+this variable."
+  :group 'idd-drag-and-drop
+  :type 'directory)
+
+(defcustom idd-overwrite-mouse-pointers 
+  (if (adapt-xemacsp) 
+      '(text-pointer-glyph
+	nontext-pointer-glyph
+	selection-pointer-glyph)
+    nil)
+  "*A list with pointer glyph variables, which should be overwritten
+by the idd-drag-and-drop-pointer-glyph. If it is nil, the pointer
+wont be changed. Currently it must be nil in the Emacs."
+  :group 'idd-drag-and-drop
+  :type '(repeat lisp))
+
+(defvar idd-drag-and-drop-pointer-glyph nil
+;  (if idd-overwrite-mouse-pointers
+;      (make-pointer-glyph 
+;       (vector 'autodetect :data idd-mouse-pointer-image))
+;    nil)
+  "The shape of the mouse-pointer when internal drag and drop is active.")
+
+(defvar idd-original-pointer-image-instances nil
+  "Internal variable. Alist with the saved images instances of the pointers.
+This list is used to restore the old mouse pointers.")
 
 (defvar idd-help-start-action-keymap nil
   "Keymap used in an extent in the help buffer to start the action.")
@@ -241,6 +314,49 @@ It returns a value (1 in general) if both are matching or nil."
   (eval (list (car specification)
 	      'source-or-destination
 	      '(cdr specification))))
+
+(defun idd-get-old-pointer-image-instances (mouse-pointers)
+  "Returns an alist with the pointer variables and there image instances."
+  (cond ((not mouse-pointers) nil)
+	(t (cons (cons (car mouse-pointers)
+		       (glyph-image-instance (eval (car mouse-pointers))))
+		 (idd-get-old-pointer-image-instances (cdr mouse-pointers))))))
+
+(defun idd-set-drag-and-drop-pointer-glyphs-1 (mouse-pointers
+					       drag-and-drop-pointer-glyph)
+  "Internal function."
+  (cond ((not mouse-pointers))
+	(t (set-glyph-image (eval (car mouse-pointers))
+			    (glyph-image-instance drag-and-drop-pointer-glyph))
+	   (idd-set-drag-and-drop-pointer-glyphs-1 (cdr mouse-pointers)
+						   drag-and-drop-pointer-glyph)
+	   )))
+
+(defun idd-set-drag-and-drop-pointer-glyphs ()
+  "Set the shape of some pointers to the drag and drop shape.
+Only the pointers in the list `idd-overwrite-mouse-pointers' are
+used."
+  (unless (or idd-original-pointer-image-instances
+	      (not idd-overwrite-mouse-pointers))
+    (setq idd-original-pointer-image-instances
+	  (idd-get-old-pointer-image-instances idd-overwrite-mouse-pointers))
+    (idd-set-drag-and-drop-pointer-glyphs-1 idd-overwrite-mouse-pointers
+					    idd-drag-and-drop-pointer-glyph)))
+
+(defun idd-restore-original-pointer-glyphs-1 (pointer-alist)
+  "Internal function."
+  (cond ((not pointer-alist))
+	(t (set-glyph-image (eval (car (car pointer-alist)))
+			    (cdr (car pointer-alist)))
+	   (idd-restore-original-pointer-glyphs-1 (cdr pointer-alist)))))
+
+(defun idd-restore-original-pointer-glyphs ()
+  "Restores the original pointer shapes."
+  (interactive)
+  (when idd-overwrite-mouse-pointers
+    (idd-restore-original-pointer-glyphs-1
+     idd-original-pointer-image-instances)
+    (setq idd-original-pointer-image-instances nil)))
 
 (defun idd-compare-specifications-1 (source-or-destination
 				     specifications
@@ -678,6 +794,7 @@ The disadvantage of this command compared with the command
 `idd-mouse-drag-and-drop-click' is, that you can't select a
 destination region."
   (interactive "@e")
+  (idd-set-drag-and-drop-pointer-glyphs)
   (let ((drag-and-drop-message 
 	 "Drag&Drop: Leave the button over the destination!")
 	(source (idd-get-source-or-destination-alist source-event))
@@ -702,7 +819,8 @@ destination region."
 	     (idd-call-action (idd-get-action source destination idd-actions)
 			      source
 			      destination)))
-	  (t (message "Wrong event! Exit drag and drop.") nil))))
+	  (t (message "Wrong event! Exit drag and drop.") nil)))
+  (idd-restore-original-pointer-glyphs))
 
 (defun idd-mouse-drag-and-drop-click (source-event)
   "Performs a drag and drop action.
@@ -710,6 +828,7 @@ At first you must click on the source and after that on the destination.
 This must be bind to a mouse button. The SOURCE-EVENT must be a 
 button-press-event."
   (interactive "@e")
+  (idd-set-drag-and-drop-pointer-glyphs)
   (let ((drag-and-drop-message "Drag&Drop: Click on the destination!")
 	(source (idd-get-source-or-destination-alist source-event))
 	(destination nil)
@@ -756,7 +875,8 @@ button-press-event."
     ;;    (setq idd-last-source source)
     ;;    (setq idd-last-destination destination)
 
-    ))
+    )
+  (idd-restore-original-pointer-glyphs))
 
 (defun idd-help-start-action (event)
   "Used to start the action from the help buffer."
@@ -768,6 +888,34 @@ button-press-event."
 		   idd-help-source
 		   idd-help-destination)
   (delete-extent idd-help-start-extent))
+
+(if (adapt-xemacsp)
+    (progn
+
+      (defun idd-make-drag-and-drop-pointer-glyph ()
+	"Creates the drag and drop pointer glyph.
+You've to rerun this, if you change either the variable
+`idd-data-directory' or `idd-mouse-pointer-image'."
+	(interactive)
+	(let ((mouse-pointer-image (if (and idd-data-directory
+					    idd-mouse-pointer-image)
+				       (expand-file-name
+					(file-name-nondirectory
+					 idd-mouse-pointer-image)
+					idd-data-directory)
+				     idd-mouse-pointer-image)))
+	  (if (and mouse-pointer-image
+		   (file-exists-p mouse-pointer-image))
+	      (setq idd-drag-and-drop-pointer-glyph 
+		    (make-pointer-glyph 
+		     (vector 'autodetect :data mouse-pointer-image)))
+	    (setq idd-drag-and-drop-pointer-glyph (make-pointer-glyph))
+	    (message 
+	     "Warning: Can't find drag and drop mouse pointer image!"))))
+      
+      (idd-make-drag-and-drop-pointer-glyph)
+      
+      ))
 
 ;; keymap for help buffer extents
 (if (not idd-help-start-action-keymap)
@@ -790,3 +938,5 @@ button-press-event."
 
 
 (provide 'internal-drag-and-drop)
+
+;;; internal-drag-and-drop ends here

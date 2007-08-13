@@ -66,7 +66,7 @@ Boston, MA 02111-1307, USA.  */
 
 
 /* Used to identify the XEmacs version in stack traces. */
-#undef CANONICAL_VERSION
+#undef STACK_TRACE_EYE_CATCHER
 
 /* Allow the configurer to specify (additional) package directories. */
 #undef PACKAGE_PATH
@@ -85,6 +85,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Use the system malloc? */
 #undef USE_SYSTEM_MALLOC
+
+/* Use a debugging malloc? */
+#undef USE_DEBUG_MALLOC
 
 /* Compile in TTY support? */
 #undef HAVE_TTY
@@ -406,6 +409,9 @@ Boston, MA 02111-1307, USA.  */
 /* Compile in support for OffiX Drag and Drop?  Requires libdnd. */
 #undef HAVE_OFFIX_DND
 
+/* Compile in support for WindowMaker Application Icons. */
+#undef HAVE_WINDOWMAKER
+
 /* Define this if you want Mule support (multi-byte character support).
    There may be some performance penalty, although it should be small
    if you're working with ASCII files. */
@@ -416,6 +422,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_XIM
 #undef XIM_XLIB
 #undef XIM_MOTIF
+#undef USE_XFONTSET
 
 /* Non-XIM input methods for use with Mule. */
 #undef HAVE_CANNA

@@ -1029,6 +1029,7 @@ See `make-face-smaller' for the semantics of the LOCALE argument."
 
 (defun invert-face (face &optional locale)
   "Swap the foreground and background colors of the face."
+  (interactive (list (read-face-name "Invert face: ")))
   (if (valid-specifier-domain-p locale)
       (let ((foreface (face-foreground-instance face locale)))
 	(set-face-foreground face (face-background-instance face locale)

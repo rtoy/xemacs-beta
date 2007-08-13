@@ -1899,7 +1899,9 @@ Info-annotations-path) is to be edited; default is 1."
     (bury-buffer (current-buffer))
     (if (and (featurep 'toolbar)
 	     (eq toolbar-info-frame (selected-frame)))
-	(delete-frame toolbar-info-frame)
+	(condition-case ()
+	    (delete-frame toolbar-info-frame)
+	  (error (bury-buffer)))
       (switch-to-buffer (other-buffer (current-buffer))))))
 
 (defun Info-undefined ()
@@ -2343,7 +2345,8 @@ The locations are of the format used in Info-history, i.e.
 ;;	       (not (string-match "\\<Index\\>" Info-current-node))
 ;;	       (< (- (point-max) (point)) 10000)
 	       )
-	  (while (re-search-forward "^\\* \\([^:\t\n]*\\):" nil t)
+	  (while (re-search-forward
+		  "^\\* \\([^\t\n]*\\):?:[ \t\n]" nil t)
 	    (Info-highlight-region (match-beginning 1) (match-end 1)
 				   'info-node ;lucid
 				   )))

@@ -310,10 +310,14 @@
 (if noninteractive
     (eval-when-compile
       (let ((load-path (cons (expand-file-name ".") load-path)))
+	(or (featurep 'viper-init)
+	    (load "viper-init.el" nil nil 'nosuffix))
 	(or (featurep 'viper-cmd)
 	    (load "viper-cmd.el" nil nil 'nosuffix))
 	)))
 ;; end pacifier
+
+(require 'viper-init)
 
 ;; better be defined before Viper custom group.
 (defvar vip-custom-file-name (vip-convert-standard-file-name "~/.viper")

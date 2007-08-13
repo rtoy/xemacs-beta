@@ -87,6 +87,7 @@ don't define this value."
 ;;;
 ;;;
 
+;;;###autoload
 (defun smtpmail-send-it ()
   (require 'mail-utils)
   (let ((errbuf (if mail-interactive

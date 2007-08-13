@@ -1,0 +1,530 @@
+1997-07-25  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.10.1 was released.
+
+1997-07-14  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-u.el (uuencode-external-decode-region): Use
+	`inhibit-read-only' instead of `(setq buffer-read-only nil)'.
+
+1997-07-09  Steven L Baur  <steve@altair.xemacs.org>
+
+	* mel-u.el (uuencode-external-decode-region): Force
+	buffer-read-only nil because it gets changed magically to t during
+	the call to `insert-file-contents'.
+
+
+1997-07-14  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.10 was released.
+
+1997-07-14  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel.el: Add autoload comments for command `mime-encode-region',
+	`mime-decode-region' and `mime-insert-encoded-file'.
+
+1997-07-13  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (quoted-printable-internal-encoding-limit): Change
+	initial value; 0 for XEmacs/mule; 1000 if mmencode is found;
+	otherwise nil; Don't use `quoted-printable-internal-encode-region'
+	for XEmacs/mule.
+
+	* mel-q.el: Use `start' instead of `beg' for argument.
+
+	* mel-q.el (quoted-printable-internal-encode-region): New
+	implementation.
+
+	* mel-q.el (quoted-printable-quote-char): Change to `defsubst';
+	use `aref'.
+
+	* mel-q.el: Abolish unused function `byte-to-hex-string'.
+
+1997-07-01  Steven L Baur  <steve@altair.xemacs.org>
+
+	* mel/mel-q.el (q-encoding-encode-string): Fix Ebola-ified
+ 	comparison. (cf. [xemacs-beta:10342][tm-en:1367])
+
+
+1997-05-15  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.9.1 was released.
+
+Thu May 15 05:43:48 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* README.en (make install): Add LISPDIR.
+
+Tue May 13 14:59:52 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile (LISPDIR): New variable.
+
+	* MEL-MK (config-mel): set LISPDIR.
+
+	* MEL-CFG: Setting for load-path is modified.
+
+
+1997-04-30  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.9 was released.
+
+Wed Apr 30 17:29:02 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* README.en (q-encoding-encode-string, q-encoding-decode-string):
+ 	Modify documentation.
+
+Wed Apr 30 17:24:32 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel.el, mel-q.el (q-encoding-encode-string,
+ 	q-encoding-decode-string): Add DOC-string.
+
+Wed Apr 30 17:14:46 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel.el (base64-insert-encoded-file,
+ 	quoted-printable-insert-encoded-file): Modify DOC-string.
+
+	* mel-q.el (quoted-printable-insert-encoded-file): Add DOC-string.
+
+Wed Apr 30 17:09:57 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (quoted-printable-encode-region,
+ 	quoted-printable-decode-region): Add DOC-string.
+
+	* mel.el: Add autoload for `quoted-printable-encode-string' and
+ 	`quoted-printable-decode-string'.
+
+	* mel-q.el (quoted-printable-encode-string,
+ 	quoted-printable-decode-string): Add DOC-string.
+
+Wed Apr 30 13:23:00 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel.el (base64-insert-encoded-file): DOC-string was modified.
+
+	* mel-b.el (base64-insert-encoded-file): Add DOC-string.
+
+Wed Apr 30 13:15:12 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el (base64-encode-region, base64-decode-region): Add
+ 	DOC-string.
+
+Wed Apr 30 13:01:16 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel.el (base64-encode-string, base64-decode-string): Add
+ 	DOC-string.
+
+	* mel-b.el (base64-encode-string, base64-decode-string): Add
+ 	DOC-string.
+
+	* mel.el: autoload for `q-encoding-encode-string-for-text',
+ 	`q-encoding-encode-string-for-comment' and
+ 	`q-encoding-encode-string-for-phrase' were abolished.
+
+Tue Apr 29 11:47:35 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* README.en: New file.
+
+
+1997-03-14  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.3 was released.
+
+Fri Mar 14 07:40:13 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL-MK (config-mel): New function; load "MEL-CFG".
+
+	* MEL-CFG: New file.
+
+Wed Mar 12 06:31:16 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL-MK: mk-mel was renamed to MEL-MK.
+
+Mon Mar 10 15:15:09 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-u.el: Variable `mime/tmp-dir' was abolished.
+
+	Require mel.
+
+	(uuencode-external-decoder): Use variable `mime-temp-directory'
+ 	instead of `mime/tmp-dir'.
+
+	(uuencode-external-decode-region): Use variable
+ 	`mime-temp-directory' instead of `mime/tmp-dir'.
+
+	* mel.el (mime-temp-directory): New variable.
+
+	* mel-u.el (uuencode-external-decode-region): Use
+ 	`as-binary-input-file'.
+
+
+1997-03-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.2.3 was released.
+
+	* mel-g.el (gzip64-external-encoder, gzip64-external-decoder): Use
+ 	`exec-installed-p' instead of `file-installed-p' to search
+ 	mmencode.
+
+
+1997-03-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.2.2 was released.
+
+	* mel-g.el (gzip64-external-encoder, gzip64-external-decoder):
+ 	Search mmencode from `exec-path'. (cf. [xemacs-beta:3730])
+
+
+Wed Jan  1 11:01:44 1997  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.2.1 was released.
+
+Wed Dec 28 13:57:22 1996  Martin Buchholz   <mrb@Eng.Sun.COM>
+
+	* mk-mel: Use variable `default-directory' instead of `(getenv
+ 	"PWD")'. (cf. [tm-en:1084])
+
+	* Makefile: A makefile command like `cd some-dir; do-something' is
+ 	generally better written as: `cd some-dir && do-something' since
+ 	if the cd fails (usually because of a coding or file-system error)
+ 	the do-something is not executed in the wrong
+ 	directory. (cf. [tm-en:1084])
+
+
+Wed Dec 25 06:30:59 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.2 was released.
+
+	* mel.el (mime-encoding-method-alist, mime-decoding-method-alist,
+ 	mime-file-encoding-method-alist): Add DOC-string.
+
+Wed Dec 25 01:08:47 1996  Steven L Baur     <steve@miranova.com>
+
+	* mel.el: to decode `x-uuencode'. (cf. [tm-en:1062])
+
+
+Thu Oct 31 16:05:41 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.0.1 was released.
+
+Mon Oct 28 12:53:09 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (quoted-printable-insert-encoded-file): New constant.
+	(q-encoding-encode-string): New implementation; Function
+ 	`q-encoding-encode-string-for-text',
+ 	`q-encoding-encode-string-for-comment' and
+ 	`q-encoding-encode-string-for-phrase' were abolished.
+
+
+Mon Sep 23 16:53:19 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 6.0 was released.
+
+	* mel.el (mime-file-encoding-method-alist): Use function
+ 	`insert-binary-file-contents-literally'.
+
+
+Fri Aug 23 07:31:32 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 5.6.1 was released.
+
+Thu Aug 22 14:49:14 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL-ELS: Variable `mel-el-files' and `mel-elc-files' were
+ 	abolished.
+
+Thu Aug 22 14:47:45 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mk-mel: Variable `el-file-mode' was abolished.
+	Function `install-el', `install-el-files', `install-elc' and
+ 	`install-elc-files' were abolished.
+	(install-mel): Use function `install-elisp-modules'.
+
+Mon Aug 19 16:55:27 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mk-mel (compile-mel): Use function `compile-elisp-modules'.
+
+Mon Aug 19 16:53:14 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL-ELS (mel-modules): changed to list of symbols.
+
+	* mk-mel: mel-els was renamed to MEL-ELS.
+
+
+Thu Jun 27 22:28:57 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 5.6 was released.
+
+Wed Jun 26 16:25:13 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-g.el (gzip64-external-encode-region): regularize line break
+ 	code (for OS/2).
+
+Wed Jun 26 16:23:39 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-g.el (gzip64-external-encode-region): Use macro
+ 	`as-binary-process'.
+	(gzip64-external-decode-region): Use macro `as-binary-process'.
+
+Wed Jun 26 16:21:11 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-u.el (uuencode-external-encode-region): regularize line
+ 	break code (for OS/2).
+
+Wed Jun 26 16:18:39 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-u.el (uuencode-external-encode-region): Use macro
+ 	`as-binary-process'.
+	(uuencode-external-decode-region): Use macro `as-binary-process'.
+
+Wed Jun 26 16:13:39 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (quoted-printable-external-encode-region): Use macro
+ 	`as-binary-process'.
+	(quoted-printable-external-decode-region): Use macro
+ 	`as-binary-process'.
+
+	* mel-b.el (base64-external-encode-region): Use macro
+ 	`as-binary-process'.
+	(base64-external-decode-region): Use macro `as-binary-process'.
+
+Wed Jun 12 05:30:23 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 5.5 was released.
+
+Mon Jun 10 05:06:27 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (q-encoding-printable-char-p): New function.
+
+	(q-encoding-encoded-length): Use function
+ 	`q-encoding-printable-char-p'.
+
+
+Sun Jun  9 04:10:08 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 5.4 was released.
+
+Fri Jun  7 14:06:59 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-g.el (gzip64-external-encode-region): fixed.
+	(gzip64-external-decode-region): fixed.
+
+Fri Jun  7 14:04:09 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (quoted-printable-external-encode-region): fixed.
+	(quoted-printable-external-decode-region): fixed.
+
+Fri Jun  7 12:12:47 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-u.el (uuencode-external-encode-region): fixed.
+	(uuencode-external-decode-region): fixed.
+
+Thu Jun  6 08:46:55 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel.el (mime-file-encoding-method-alist): New variable.
+	(mime-insert-encoded-file): New function.
+
+	* mel-g.el (gzip64-external-encode-region): fixed
+ 	`default-process-coding-system'.
+
+	(gzip64-external-decode-region): fixed
+ 	`default-process-coding-system'.
+
+Thu Jun  6 07:51:30 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-u.el (uuencode-external-encode-region): fixed
+	`default-process-coding-system'.
+
+	(uuencode-external-decode-region): fixed
+	`default-process-coding-system'.
+
+Thu Jun  6 07:48:44 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (quoted-printable-external-encode-region): fixed
+ 	`default-process-coding-system'.
+
+	(quoted-printable-external-decode-region): fixed
+ 	`default-process-coding-system'.
+
+Thu Jun  6 07:09:23 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el (base64-external-encode-region): fixed
+ 	`default-process-coding-system'.
+
+	(base64-external-decode-region): fixed
+ 	`default-process-coding-system'.
+
+
+Mon Jun  3 14:43:47 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 5.2 was released.
+
+Wed May 29 12:54:45 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-g.el: Don't use function `define-program-coding-system' and
+ 	`define-program-kanji-code'.
+	(gzip64-external-encode-region): set for process code.
+	(gzip64-external-decode-region): set for process code.
+
+Wed May 29 12:49:41 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-u.el: Don't use function `define-program-coding-system' and
+ 	`define-program-kanji-code'.
+	(uuencode-external-encode-region): set for process code.
+	(uuencode-external-decode-region): set for process code.
+
+Wed May 29 12:40:12 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el: Don't use function `define-program-coding-system' and
+	`define-program-kanji-code'.
+	(quoted-printable-external-encode-region): set for process code.
+	(quoted-printable-external-decode-region): set for process code.
+
+Wed May 29 10:54:01 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el: Don't use function `define-program-coding-system' and
+ 	`define-program-kanji-code'.
+	(base64-external-encode-region): set for process code.
+	(base64-external-decode-region): set for process code.
+
+Wed May 29 08:10:15 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-g.el (gzip64-insert-encoded-file): New function.
+
+Wed May 29 08:00:01 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-g.el: Shuhei KOBAYASHI's address was changed.
+
+	* mel-u.el (uuencode-insert-encoded-file): New function.
+
+Wed May 29 07:30:48 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (quoted-printable-insert-encoded-file): New function.
+
+	* mel-b.el (base64-insert-encoded-file): New function.
+
+
+Tue May 28 03:31:13 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 5.0 was released.
+
+	* mel.el: Function `mime/encode-region' and `mime/decode-region'
+ 	were abolished.
+
+
+Thu May 23 01:32:04 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 4.7.1 was released.
+
+Wed May 22 02:20:35 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel.el (mime-encode-region): New function; Order of arguments
+ 	was changed.
+	(mime-decode-region): New function; Order of arguments was
+ 	changed.
+	(mime/encode-region): New implementation.
+	(mime/decode-region): New implementation.
+
+
+Wed May 15 21:19:12 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 4.7 was released.
+
+	* mel-b.el (base64-internal-decode-region): fixed about last line
+ 	which does not have line break.
+
+
+Tue May 14 02:43:41 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 4.6 was released.
+
+Sun May 12 17:43:04 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el (base64-decode-1): New spec; Argument was changed;
+ 	Return string instead of list of characters.
+	(base64-decode-string): modified for new spec of function
+ 	`base64-decode-1'.
+	(base64-internal-decode-region): fixed.
+
+Sun May 12 17:05:17 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el (base64-encode-1): New spec; Argument was changed;
+ 	Return string instead of list of characters.
+	(base64-encode-string): modified for new spec of function
+ 	`base64-encode-1'.
+	(base64-internal-decode-region): fixed.
+
+Sun May 12 16:17:11 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el: Function `base64-encode-chars' was abolished.
+	(base64-encode-1): New spec; use function `base64-num-to-char.
+	(base64-encode-string): Use function `base64-encode-1' instead of
+ 	`base64-encode-chars'.
+
+Sun May 12 15:50:26 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el: Function `base64-decode-chars' was abolished.
+	(base64-decode-1): New spec; use function `base64-char-to-num'.
+	(base64-decode-string): Use function `base64-decode-1' instead of
+ 	`base64-decode-chars'.
+
+
+Sat May 11 08:12:23 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 4.2 was released.
+
+	* mel-b.el (base64-encode-1): don't use function `base64-mask'.
+  	Function `base64-mask' was abolished.
+
+Sat May 11 07:52:05 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el (base64-decode-1): don't use function `base64-mask'.
+
+Sat May 11 06:35:20 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-b.el (base64-internal-decode-region): New implementation.
+
+
+Wed Mar 13 16:40:46 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 3.5 was released.
+
+Mon Mar 11 14:29:31 1996  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-q.el (byte-to-hex-string): New function.
+
+Tue Mar 12 11:19:02 1996  Shuhei KOBAYASHI  <shuhei@cmpt01.phys.tohoku.ac.jp>
+
+        * mel-els (mel-modules): "mel-g" was added. (cf.[tm-ja:1661])
+
+        * mel.el: gzip64 support was added. (cf.[tm-ja:1661])
+
+        * mel-g.el: New file.
+        gzip64 encoder/decoder. `gzip64' is an experimental encoding.
+	(cf.[tm-ja:1661])
+
+
+Mon Mar  4 09:13:20 1996  Morioka Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: Version 3.3.1 was released.
+
+	* mel-els: New module
+
+	* mk-mel: use mel-els file.
+
+Thu Jan 18 10:26:38 1996  Morioka Tomohiko  <morioka@jaist.ac.jp>
+
+	* Makefile: Yoshiyuki Yamagami <yamagami@hb.nmcc.co.jp>'s patch
+ 	was applied to specify `-no-site-file' option. (cf. [tm-ja:1474])
+
+Thu Jan 18 01:55:25 1996  Yoshiyuki Yamagami <yamagami@hb.nmcc.co.jp>
+
+	* Makefile: specify `-no-site-file' option (cf. [tm-ja:1474])
+
+
+Wed Jan  9 19:09:44 1996  Morioka Tomohiko  <morioka@jaist.ac.jp>
+
+	* MEL: version 3.3 was released.
+
+Tue Jan  9 18:25:22 1996  Morioka Tomohiko  <morioka@jaist.ac.jp>
+
+	* mel-u.el (uuencode-external-decode-region):
+	don't display uuencode output.
+	(cf. [tm-en:253])

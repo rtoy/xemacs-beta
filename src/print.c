@@ -54,6 +54,10 @@ Lisp_Object Qalternate_debugging_output;
 /* Avoid actual stack overflow in print.  */
 static int print_depth;
 
+/* Detect most circularities to print finite output.  */
+#define PRINT_CIRCLE 200
+Lisp_Object being_printed[PRINT_CIRCLE];
+
 /* Maximum length of list or vector to print in full; noninteger means
    effectively infinity */
 
@@ -901,9 +905,25 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
      output. */
 #endif
 
+  /* Detect circularities and truncate them.
+     No need to offer any alternative--this is better than an error.  */
+  if (CONSP (obj) || VECTORP (obj) || COMPILED_FUNCTIONP (obj))
+    {
+      int i;
+      for (i = 0; i < print_depth; i++)
+	if (EQ (obj, being_printed[i]))
+	  {
+	    sprintf (buf, "#%d", i);
+	    write_c_string (buf, printcharfun);
+	    return;
+	  }
+    }
+
+
+  being_printed[print_depth] = obj;
   print_depth++;
 
-  if (print_depth > 200)
+  if (print_depth > PRINT_CIRCLE)
     error ("Apparently circular structure being printed");
 
   switch (XTYPE (obj))

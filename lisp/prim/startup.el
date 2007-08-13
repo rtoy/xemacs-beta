@@ -469,6 +469,15 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
     
     (nreverse new-args)))
 
+(defconst initial-scratch-message "\
+;; If you want to create a file, don't type the text in this buffer.
+;; This buffer is for notes you don't want to save, and for Lisp evaluation.
+;; If you want to create a file, first visit that file with C-x C-f,
+;; then enter the text in that file's own buffer.
+
+"
+  "Initial message displayed in *scratch* buffer at startup.")
+
 (defun command-line ()
   (let ((command-line-args-left (cdr command-line-args)))
 
@@ -512,12 +521,12 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
     ;;; Load init files.
     (load-init-file)
     
-    ;; If *scratch* exists and init file didn't change its mode, initialize it.
-    (when (get-buffer "*scratch*")
-      (save-excursion
-	(set-buffer "*scratch*")
-	(when (eq major-mode 'fundamental-mode)
-	  (funcall initial-major-mode))))
+    (with-current-buffer (get-buffer "*scratch*")
+      (erase-buffer)
+      ;; (insert initial-scratch-message)
+      (set-buffer-modified-p nil)
+      (when (eq major-mode 'fundamental-mode)
+	(funcall initial-major-mode)))
 
     ;; Load library for our terminal type.
     ;; User init file can set term-file-prefix to nil to prevent this.
@@ -675,11 +684,11 @@ a new format, when variables have changed, etc."
 		(sit-for 0)
 		(setq unread-command-event (next-command-event)))
 	    (when timeout (disable-timeout timeout))
-	    (save-excursion
+	    (with-current-buffer (get-buffer "*scratch*")
+	      (erase-buffer)
+	      (insert initial-scratch-message)
 	      ;; In case the XEmacs server has already selected
 	      ;; another buffer, erase the one our message is in.
-	      (set-buffer (get-buffer "*scratch*"))
-	      (erase-buffer)
 	      (set-buffer-modified-p nil)))))
     
     ;; Command-line-options exist
@@ -1001,6 +1010,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
     (concat "lib/xemacs-" version)))
 
 (defun find-emacs-root-internal-1 (path lisp-p)
+  (prin1 (format "f-e-r-i-1:  %s\n" path))
   (let ((dir (file-name-directory path)))
     (or
      ;;
@@ -1089,12 +1099,13 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
   ;; XEmacs can run (kind of) if the lisp directory is omitted, which
   ;; some people might want to do for space reasons.
   (or (find-emacs-root-internal-1 path t)
-      (find-emacs-root-internal-1 path nil)
+      ;; (find-emacs-root-internal-1 path nil)
       ;; If we don't succeed we are going to crash and burn for sure.
       ;; Try some paths relative to prefix-directory if it isn't nil.
       ;; This is definitely necessary in cases such as when we're used
       ;; as a login shell since we can't determine the invocation
       ;; directory in that case.
+
       (find-emacs-root-internal-1
        (format "%s/bin/%s" prefix-directory invocation-name) t)
       (find-emacs-root-internal-1
@@ -1103,6 +1114,12 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
        (format "%s/lib/%s" prefix-directory invocation-name) t)
       (find-emacs-root-internal-1
        (format "%s/lib/%s" prefix-directory invocation-name) nil)
+
+      ;; We're desperate -- try the prefix-directory correctly.
+      (find-emacs-root-internal-1
+       (format "%s/%s/foo" prefix-directory (startup-make-version-dir)) t)
+      (find-emacs-root-internal-1
+       (format "%s/%s/foo" prefix-directory (startup-make-version-dir)) nil)
       ))
 
 (defun set-default-load-path ()
@@ -1227,7 +1244,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 		      (list lisp)
 		    )
 		  ))
-    
+
     ;; 1997/03/06 by Jeff Miller <jmiller@bayserve.net>
     ;; initialize 'site-directory'.  This is the site-lisp dir used by 
     ;; XEmacs
@@ -1252,8 +1269,6 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 	      (and (string= etc (expand-file-name "etc" root))
 		   (not (string= data-directory etc))))
       (setq data-directory (file-name-as-directory etc)))
-
-
 
     ;; If `configure' specified an info dir, use it.
     (or (boundp 'Info-default-directory-list)
@@ -1284,7 +1299,10 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 		   (expand-file-name "!!!SuperLock!!!"
 				     lock-directory)))))
 
-    (set-default-load-path-warning)))
+    (set-default-load-path-warning)
+    (when (and data-directory Info-default-directory-list)
+      (setq data-directory-list (list data-directory))
+      (packages-find-packages package-path nil))))
 
 
 (defun set-default-load-path-warning ()

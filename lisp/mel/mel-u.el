@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/10/25
-;; Version: $Id: mel-u.el,v 1.4 1997/07/13 22:41:32 steve Exp $
+;; Version: $Id: mel-u.el,v 1.5 1997/07/26 22:09:47 steve Exp $
 ;; Keywords: uuencode
 
 ;; This file is part of MEL (MIME Encoding Library).
@@ -87,8 +87,11 @@ variable `uuencode-external-decoder'."
 	   ;; The previous line causes the buffer to be made read-only, I
 	   ;; do not pretend to understand the control flow leading to this
 	   ;; but suspect it has something to do with image-mode. -slb
-	   (setq buffer-read-only nil)
-	   (delete-file filename)
+	   ;;	Use `inhibit-read-only' to avoid to force
+	   ;;	buffer-read-only nil. - tomo.
+	   (let ((inhibit-read-only t))
+	     (delete-file filename)
+	     )
 	   ))
       )))
 

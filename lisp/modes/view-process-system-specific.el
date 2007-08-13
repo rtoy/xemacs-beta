@@ -7,7 +7,7 @@
 
 ;; This file is part of XEmacs.
 
-;;; $Id: view-process-system-specific.el,v 1.2 1997/06/26 02:31:06 steve Exp $
+;;; $Id: view-process-system-specific.el,v 1.3 1997/07/26 22:09:50 steve Exp $
 
 ;;  XEmacs is free software; you can redistribute it and/or modify it
 ;;  under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 
 (defvar View-process-specific-system-list
   '(("linux" nil "bsd"
-     nil
+     View-process-field-name-descriptions-linux
      View-process-kill-signals-linux)
     ("sunos" "4" "bsd"
      View-process-field-name-descriptions-sunos4
@@ -149,18 +149,19 @@ it with \"kill -l\" in a shell.")
   '(("SIGHUP" "1") ("SIGINT" "2") ("SIGQUIT" "3") ("SIGILL" "4") 
     ("SIGTRAP" "5") ("SIGIOT" "6") ("SIGBUS" "7") ("SIGFPE" "8") 
     ("SIGKILL" "9") ("SIGUSR1" "10") ("SIGSEGV" "11") ("SIGUSR2" "12") 
-    ("SIGPIPE" "13") ("SIGALRM" "14") ("SIGTERM" "15") ("SIGCHLD" "17") 
-    ("SIGCONT" "18") ("SIGSTOP" "19") ("SIGTSTP" "20") ("SIGTTIN" "21") 
-    ("SIGTTOU" "22") ("SIGIO" "23") ("SIGXCPU" "24") ("SIGXFSZ" "25") 
-    ("SIGVTALRM" "26") ("SIGPROF" "27") ("SIGWINCH" "28") ("SIGPWR" "30") 
+    ("SIGPIPE" "13") ("SIGALRM" "14") ("SIGTERM" "15") ("SIGSTKFLT" "16")
+    ("SIGCHLD" "17") ("SIGCONT" "18") ("SIGSTOP" "19") ("SIGTSTP" "20")
+    ("SIGTTIN" "21") ("SIGTTOU" "22") ("SIGURG" "23") ("SIGXCPU" "24")
+    ("SIGXFSZ" "25") ("SIGVTALRM" "26") ("SIGPROF" "27") ("SIGWINCH" "28")
+    ("SIGIO" "29") ("SIGPWR" "30") 
     ("1" "1") ("2" "2") ("3" "3") ("4" "4") ("5" "5") ("6" "6") ("7" "7") 
     ("8" "8") ("9" "9") ("10" "10") ("11" "11") ("12" "12") ("13" "13") 
-    ("14" "14") ("15" "15") ("17" "17") ("18" "18") ("19" "19") 
+    ("14" "14") ("15" "15") ("16" "16") ("17" "17") ("18" "18") ("19" "19") 
     ("20" "20") ("21" "21") ("22" "22") ("23" "23") ("24" "24") 
-    ("25" "25") ("26" "26") ("27" "27") ("28" "28") ("30" "30"))
+    ("25" "25") ("26" "26") ("27" "27") ("28" "28") ("29" "29") ("30" "30"))
   "An alist with the possible signals for the kill command for linux.
 It may be that you've other signals on your system. Try to test
-it with \"kill -l\" in a shell.")
+it with \"kill -l\" in a shell, or better, see <asm/signal.h>")
 
 ;; all Linux signals
 ;(defvar View-process-kill-signals
@@ -229,6 +230,70 @@ it with \"kill -l\" in a shell.")
     ("WCHAN" "Event on which process is waiting. ")
     )
   "Help list with the descriptions of ps fields for BSD systems.")
+
+(defvar View-process-field-name-descriptions-linux
+  '(
+    ("USER" "Effective user id.") ("UID" "Effective user id.")
+    ("RUSER" "Real user id.") ("RUID" "Real user id.")
+    ("SUSER" "Saved user id.") ("SUID" "Saved user id.")
+    ("FSUSER" "Filesystem user id.") ("FSUID" "Filesystem user id.")
+    ("GROUP" "Effective group id.") ("GID" "Effective group id.")
+    ("RGROUP" "Real group id.") ("RGID" "Real group id.")
+    ("SGROUP" "Saved group id.") ("SGID" "Saved group id.")
+    ("FSGROUP" "Filesystem group id.") ("FSGID" "Filesystem group id.")
+    ("PID" "Process id.") ("PPID" "Parent process id.")
+    ("PGID" "Process group id.") ("TPGID" "Terminal process group id, (-1 if none).")
+    ("SID" "Session id.")
+    ("NI" "Nice.") ("PRI" "Priority.")
+    ("TIME" "CPU time, both user and system, in seconds.")
+    ("CTIME" "Cumulative CPU time, both user and system, in seconds.")
+    ("ELAPSED" "Time between process start and now, in seconds.")
+    ("UTIME" "User time, in seconds.") ("CUTIME" "Cumulative user time, in seconds.")
+    ("STIME" "System time, in seconds.") ("CSTIME" "Cumulative system time, in seconds.")
+    ("%CPU" "Percent cpu.")
+    ("TT" "Controlling tty, or ? if none.")
+    ("COMMAND" "The command name of the process.")
+    ("VSZ" "Virtual size.") ("RSS" "Resident set size.")
+    ("%MEM" "Percentage of real memory, derived from RSS.")
+    ("STAT" ("State: "
+	     ("R" "'R'=runnable. ")
+	     ("S" "'S'=sleeping. ")
+	     ("D" "'D'=un-interruptible wait (eg disk or NFS I/O). ")
+	     ("T" "'T'=stopped or traced. ")
+	     ("Z" "'Z'=zombie (terminated). ")
+	     ("W" "'W'=no resident pages. ")
+	     ("SW" "'S'=sleeping. 'W'=no resident pages. ")
+	     ("SW<" "'S'=sleeping. 'W'=no resident pages. '<'=Nice < 0 (super priveledged task) ")
+	     ("N" "'N'=Nice > 0 (lower priority) ")
+	     ("<" "'<'=Nice < 0 (super priveledged task) ")
+	     (">" "'>'=exceeded soft limit. ")))
+    ("START" "Starting time.") ("FLAGS" "Process flags <linux/sched.h>.")
+    ("MINFL" "Minor page faults.") ("MAJFL" "Major page faults.")
+    ("TMOUT" "Timeout.") ("ALARM" "Alarm.")
+    ("S_CODE" "Address of start of code segment.")
+    ("E_CODE" "Address of end of code segment.")
+    ("STACKP" "Address of the process's stack bottom.")
+    ("ESP" "Stack pointer.") ("EIP" "Stack pointer.")
+    ("WCHAN" "Wait channel in which process is sleeping. ")
+    ("BLOCKED" "Blocked signals mask.")
+    ("IGNORED" "Ignored signals mask.")
+    ("CATCHED" "Catched signals mask.")
+    ("SIGNAL" "Pending signals mask.")
+    ("ENVIRONMENT" "Process environment.")
+    ("LCK" "Pages locked in i/o, kb.")
+    ("DATA" "Data size.") ("STACK" "Stack size.")
+    ("EXE" "Executable size.") ("LIB" "Library size.")
+    ("SIZE" "The virtual size of the process.")
+    ("RES" "The resident size of the process.")
+    ("SHRD" "The size of all shared pages, (lib, code, data).")
+    ("TRS" "Text resident size.")
+    ("DRS" "Data resident size.")
+    ("DT" "Dirty pages.")
+    ("LRS" "Library resident size. (a.out).")
+    ("SWAP" "Non-resident size of the process.")
+    )
+  "Help list with the descriptions of ps fields for Linux systems.
+See: `manual-entry' ps_fields(7), ps(1), and top(1) for more information.")
 
 (defvar View-process-field-name-descriptions-system-v
   '(

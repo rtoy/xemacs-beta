@@ -4,7 +4,7 @@
 @settitle HM HTML Mode
 @setchapternewpage odd
 @comment %**end of header (This is for running Texinfo on a region.)
-@comment $Id: hm--html-mode.texi,v 1.3 1997/05/29 23:50:32 steve Exp $
+@comment $Id: hm--html-mode.texi,v 1.4 1997/07/26 22:10:08 steve Exp $
 @ifinfo
 This file documents the Elisp package @code{hm--html-menus}.
 
@@ -40,12 +40,12 @@ of in the original English.
 @end iftex
 @titlepage
 @sp 10
-@center @titlefont{The Elisp Package hm---html-menus}
+@center @titlefont{The Elisp Package hm{-}{-}html{-}menus}
 
 @sp 4
 @center by Heiko Münkel
 @sp 4
-@center Version 5.7, May 1997
+@center Version 5.8, July 1997
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1997 Heiko Münkel
@@ -91,7 +91,7 @@ of in the original English.
 * Installation::                How to install the package
 * Customization::               How to customize the package
 * Add New Elements::            How to add new HTML elements
-* Use With psgml-html::         Use this package as an add-on minor mode
+* Use With Other Major Modes::  
 * Internal Drag And Drop::      The HTML independent drag and drop package
 * Template Minor Mode::         The HTML independent template package
 * Hints For Emacs 19 Users::    Missing features in the Emacs 19 
@@ -132,16 +132,17 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 @findex hm--html-mode 
 @findex hm--html-minor-mode 
 
-This document describes the Elisp package @emph{hm---html-menus 5.7}.
+This document describes the Elisp package @emph{hm---html-menus 5.8}.
 
 The version of the document is:@*
-$Id: hm--html-mode.texi,v 1.3 1997/05/29 23:50:32 steve Exp $
+$Id: hm--html-mode.texi,v 1.4 1997/07/26 22:10:08 steve Exp $
 
 The package provides commands and various popup and pulldown menus for
 an HTML mode called @dfn{hm---html-mode}, a mode for writing HTML pages
 for the World Wide Web (WWW).  It also provides a minor mode
-(@dfn{hm---html-minor-mode}), which can be used together with another
-HTML major mode, like the psgml-html modes in XEmacs 19.14.
+(@dfn{hm---html-minor-mode}), which can be used together with other HTML
+major modes, like the psgml-html mode in XEmacs 19.14 or other major
+edit modes, like the perl-mode.
 
 You can easily view the HTML documents by calling the browsers w3 (a
 nice elisp package from William M. Perry), Netscape, or Mosaic directly
@@ -211,6 +212,10 @@ The NEWS and Change log file.
 @itemx adapt.el
 Provides (emulates XEmacs) functions for the use of this package with
 GNU Emacs 19.
+@itemx drop
+An xbm file with the drag and drop mouse pointer in the XEmacs.
+@itemx dropmsk
+An xbm file with the mask for the drag and drop mouse pointer in the XEmacs.
 @itemx hm--html.el
 Provides functions to write html pages. It defines all commands which
 insert html elements and entities.
@@ -270,6 +275,17 @@ Texinfo include file for German vowel mutation (deutsche Umlaute).
 @enumerate
 @item Put all the *.el files in one of your XEmacs (or emacs) lisp load
 directories (e.g. site-lisp/hm--html-menus).
+
+@item @emph{For XEmacs only}: Put the files @file{drop} and @file{dropmsk}
+in the directory specified by the lisp variable
+@code{idd-data-directory}. By default it is
+@file{<prefix>/lib/xemacs-<version>/etc/idd} (eg: if you have installed
+the XEmacs 19.15 at your site in @file{/usr/local}, then it is the
+directory @file{/usr/local/xemacs/lib/xemacs-19.15/etc/idd}.
+
+If you'd like to put the files in another directory, then you must set
+the variable @code{idd-data-directory} to this directory (eg:
+@code{(setq idd-data-directory "/usr/local/data")})
 
 @item Put the following in your .emacs (or default.el or site-init.el):
 @lisp
@@ -365,6 +381,16 @@ any further customization. But it contains a lot of user variables to
 adapt the package better to your special needs. How to do this is
 described in this chapter.
 
+Since the XEmacs 19.15 and 20.2 a special package can be used for the
+customization of lisp packages. This package uses now also this
+feature. Therefore you can set all user variables with the help of the
+Customize submenu, which can be selected in the Option menu.  If you use
+it, the variables will currently be saved in a special customization
+file and not in one of the configuration files (@pxref{Customization
+(Configuration) Files, Customization (Configuration) Files}) of this
+package. Please look at the @file{NEWS} file or the info manuals of the
+XEmacs to find out more about the customization package.
+
 @menu
 * Customization (Configuration) Files::  
 * Customization Variables::     
@@ -437,6 +463,9 @@ tries first to load a compiled version of the file.
 
 The environment variables overwrite the lisp variables.
 
+You can prevent the loading of the site specific customization file
+by starting the emacs with the -no-site-file flag.
+
 You can also put the site specific customization in any standard emacs
 customization file like, @file{default.el}. But an advantage to
 using @file{hm--site-configuration-file.el} is that it is very likely
@@ -461,6 +490,13 @@ the environment variable @code{HTML_USER_CONFIG_FILE} or the lisp
 variable @code{hm--html-user-config-file} to the name of the file and
 its path. If you write the filename without its extension (.el), emacs
 tries first to load a compiled version of the file.
+
+If neither the environment variable nor the lisp variable is set, the
+variable @code{init-file-user} will be respected. This means, that
+you'll get the @file{~other-user/.hm--html-configuration.el}, if you've
+started the emacs with the options @code{-u other-user}. In all cases,
+no user specific customization file will be loaded, if the @code{-q}
+option was given to the emacs.
 
 You can also put the user specific customization in your
 @file{.emacs}. It's up to you to decide which way is better.
@@ -949,7 +985,7 @@ strings.
 @cindex date 
 @cindex changed comment 
 @cindex created comment 
-@vindex hm--html-automatic-new-date 
+@vindex hm--html-automatic-update-title-date
 @vindex hm--html-automatic-changed-comment 
 @vindex hm--html-automatic-create-modified-line 
 @vindex hm--html-automatic-update-modified-line 
@@ -1093,10 +1129,10 @@ the @code{hm--html-mode}.
 @itemize @bullet
 @item
 @code{hm--html-minor-mode-prefix-key}: The prefix key for the key tables
-in @code{hm--html-minor-mode}.
+in the minor mode @code{hm--html-minor-mode}.
 @item
-@code{hm--html-mode-prefix-key}: The prefix key for the hm--html keys in
-@code{hm--html-mode}.
+@code{hm--html-mode-prefix-key}: The prefix key for the keys in the
+major mode @code{hm--html-mode}.
 @end itemize
 
 
@@ -1220,7 +1256,7 @@ these elements.
 @end itemize
 
 
-@node Add New Elements, Use With psgml-html, Customization, Top
+@node Add New Elements, Use With Other Major Modes, Customization, Top
 @comment  node-name,  next,  previous,  up
 @chapter  Add New Elements
 @cindex add new html elements 
@@ -1318,17 +1354,23 @@ the Netscape element frame) and so on. These "groups" are the same as
 the submenu groups.
 
 
-@node Use With psgml-html, Internal Drag And Drop, Add New Elements, Top
+@node Use With Other Major Modes, Internal Drag And Drop, Add New Elements, Top
 @comment  node-name,  next,  previous,  up
-@chapter  Use With psgml-html
-@cindex use with other HTML modes 
+@chapter  Use With Other Major Modes
+@cindex use with other major modes 
+@cindex use with psgml-html
+@cindex psgml-html
 @findex hm--html-minor-mode 
 
 The package provides a minor mode called @code{hm--html-minor-mode},
-which could be used to join the features of this package with another
-HTML package. Currently this is only tested with the psgml-html mode in
-XEmacs. Please let me know if it works or not with other packages
-or in Emacs 19.
+which could be used to join the features of this package with other HTML
+packages or use it's features in other major edit modes. This is
+usefull, if you'd like to extend another HTML mode or if you'll write
+program code, which contain HTML parts.
+
+Currently this is tested with the psgml-html mode, the @code{perl-mode}
+and the @code{java-mode}. Please let me know if it works or not with
+other packages.
 
 If you'd like to use the minor mode in psgml-html mode,
 put the following line in your @file{.emacs}:
@@ -1344,7 +1386,7 @@ versions you must either call the minor mode by hand or change the
 lisp file of the psgml-html mode.
 
 
-@node Internal Drag And Drop, Template Minor Mode, Use With psgml-html, Top
+@node Internal Drag And Drop, Template Minor Mode, Use With Other Major Modes, Top
 @comment  node-name,  next,  previous,  up
 @chapter  Internal Drag And Drop
 @cindex drag and drop 
@@ -1377,6 +1419,14 @@ the destination buffers. The actions are defined by the variable
 @cindex customization
 @cindex configuration 
 
+Since the XEmacs 19.15 and 20.2 a special package can be used for the
+customization of lisp packages. The internal drag and drop package uses
+now also this feature. Therefore you can set all user variables with the
+help of the Customize submenu, which can be selected in the Option menu.
+If you use it, the variables will currently be saved in a special
+customization file. Please look at the @file{NEWS} file or the info
+manuals of the XEmacs to find out more about the customization package.
+
 The internal drag and drop functions may be used in all
 modes. Therefore their general customization isn't done in
 @file{hm--html-configuration.el}. Its variables are defined in the file
@@ -1389,6 +1439,7 @@ customization variables.
 @menu
 * Defining The Drag And Drop Actions::  
 * The Mouse Bindings::          
+* The Drag And Drop Mouse Pointer::  
 @end menu
 
 @node Defining The Drag And Drop Actions, The Mouse Bindings, Drag And Drop Customization, Drag And Drop Customization
@@ -1495,7 +1546,7 @@ The following is an example for @code{hm--html-mode}:
 @end lisp
 
 
-@node The Mouse Bindings,  , Defining The Drag And Drop Actions, Drag And Drop Customization
+@node The Mouse Bindings, The Drag And Drop Mouse Pointer, Defining The Drag And Drop Actions, Drag And Drop Customization
 @comment  node-name,  next,  previous,  up
 @subsection  The Mouse Bindings
 @cindex mouse bindings 
@@ -1556,6 +1607,51 @@ compared with the @code{click} type is that you can't select a destination
 region, and therefore a drag and drop action depending on a selected
 region can't be started with that type of mouse binding.
 @end itemize
+
+@node The Drag And Drop Mouse Pointer,  , The Mouse Bindings, Drag And Drop Customization
+@comment  node-name,  next,  previous,  up
+@subsection  The Drag And Drop Mouse Pointer
+@cindex mouse pointer glyph 
+@vindex idd-mouse-pointer-image 
+@vindex idd-data-directory 
+@vindex idd-overwrite-mouse-pointers
+@vindex idd-drag-and-drop-pointer-glyph
+@findex idd-make-drag-and-drop-pointer-glyph 
+
+In the XEmacs the mouse pointer glyph (shape) can be set to any
+glyph. This is used during the drag and drop command to indicate, that
+the command is active. There exists the following three variables to
+customize this:
+
+@itemize @bullet
+@item
+@code{idd-mouse-pointer-image}: The name of the xbm file with the mouse
+pointer image. By default this is the file @file{drop}. There exists
+also a file called @file{dropmsk}, which contains the mask image. The
+mask file is loaded automaticly.
+
+@item
+@code{idd-data-directory}: The name fo the directory, where the file
+@code{idd-mouse-pointer-image} is searched. By default this is the
+subdirectory @file{idd} in the XEmacs install directory
+@code{data-directory}.
+
+@item
+@code{idd-overwrite-mouse-pointers}: A list with pointer glyph
+variables, which should be overwritten by the
+@code{idd-drag-and-drop-pointer-glyph}. If it is nil, the pointer wont
+be changed. Currently it must be nil in the Emacs.
+@end itemize
+
+If one of the variables @code{idd-mouse-pointer-image} or
+@code{idd-data-directory} is changed, the command
+@code{idd-make-drag-and-drop-pointer-glyph} must be called. This command
+builds the mouse pointer glyph, which is stored in
+@code{idd-drag-and-drop-pointer-glyph}.
+
+I don't know how to set the the mouse pointer in the Emacs to a drag and
+drop image. Any hints for doing this are welcome.
+
 
 @node The Drag And Drop Commands,  , Drag And Drop Customization, Internal Drag And Drop
 @comment  node-name,  next,  previous,  up
@@ -1879,10 +1975,18 @@ commands to expand templates.
 @vindex tmpl-sign 
 @vindex tmpl-minor-mode-map 
 
+Since the XEmacs 19.15 and 20.2 a special package can be used for the
+customization of lisp packages. The internal drag and drop package uses
+now also this feature. Therefore you can set all user variables with the
+help of the Customize submenu, which can be selected in the Option menu.
+If you use it, the variables will currently be saved in a special
+customization file. Please look at the @file{NEWS} file or the info
+manuals of the XEmacs to find out more about the customization package.
+
 Templates may be used for all editing modes, not only for
-@code{hm--html-mode}. Therefore their general customization isn't done in
-@file{hm--html-configuration.el}. Template variables are defined in the file
-@file{tmpl-minor-mode.el} instead. You can set them in your
+@code{hm--html-mode}. Therefore their general customization isn't done
+in @file{hm--html-configuration.el}. Template variables are defined in
+the file @file{tmpl-minor-mode.el} instead. You can set them in your
 @file{.emacs} or in one of the other emacs init files (e.g.
 @file{default.el}). The following are the main variables for
 customization.
@@ -2101,6 +2205,11 @@ the Emacs 19.34.
 The history variable determined by @code{tmpl-history-variable-name}
 isn't used, because the function @code{read-file-name} doesn't support
 it in the Emacs 19.
+
+@item
+The mouse pointer shape (glyph) wont be changed in the Emacs 19 during a
+drag and drop command. For that a way is needed to set the mouse pointer
+shape to an image.
 @end itemize
 
 

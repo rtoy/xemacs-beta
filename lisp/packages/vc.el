@@ -4,6 +4,7 @@
 
 ;; Author:     Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Maintainer: Andre Spiegel <spiegel@inf.fu-berlin.de>
+;; Maintainer: (ClearCase) Rod Whitby <rwhitby@geocities.com>
 ;; XEmacs conversion: Steve Baur <steve@altair.xemacs.org>
 
 ;; This file is part of GNU Emacs.
@@ -66,7 +67,14 @@
 ;;
 ;; Developer's notes on some concurrency issues are included at the end of
 ;; the file.
-
+;;
+;; Rudimentary ClearCase support by Rod Whitby <rwhitby@geocities.com>.
+;; I (Rod Whitby) intend to maintain the rudimentary functionality that is
+;; currently in this file.  At some time in the future (don't hold your
+;; breath), I intend to merge the functionality of the cc-vc package
+;; (separately available from /rtfm.mit.edu:/pub/cc-vc/) into this file.
+;; I am not the maintainer of cc-vc, nor am I the maintainer of the
+;; non-ClearCase parts of this file.
 ;;; Code:
 
 (require 'vc-hooks)
@@ -1164,6 +1172,7 @@ and two version designators specifying which versions to compare."
 	  (shrink-window-if-larger-than-buffer)))
       (not unchanged))))
 
+;;;###autoload
 (defun vc-version-diff (file rel1 rel2)
   "For FILE, report diffs between two stored versions REL1 and REL2 of it.
 If FILE is a directory, generate diffs between versions for all registered

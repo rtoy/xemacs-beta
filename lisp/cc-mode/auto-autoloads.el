@@ -9,7 +9,9 @@ Syntax table used in c-mode buffers.")
 
 ;;;***
 
-;;;### (autoloads (java-mode objc-mode c++-mode c-mode) "cc-mode" "cc-mode/cc-mode.el")
+;;;### (autoloads (idl-mode java-mode objc-mode c++-mode c-mode c-initialize-cc-mode) "cc-mode" "cc-mode/cc-mode.el")
+
+(autoload 'c-initialize-cc-mode "cc-mode" nil nil nil)
 
 (autoload 'c-mode "cc-mode" "\
 Major mode for editing K&R and ANSI C code.
@@ -79,6 +81,23 @@ set styles in `c-mode-common-hook'.
 
 Key bindings:
 \\{java-mode-map}" t nil)
+
+(autoload 'idl-mode "cc-mode" "\
+Major mode for editing CORBA's IDL code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+idl-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook variable `idl-mode-hook' is run with no args, if that
+variable is bound and has a non-nil value.  Also the hook
+`c-mode-common-hook' is run first.
+
+Key bindings:
+\\{idl-mode-map}" t nil)
 
 ;;;***
 

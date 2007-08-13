@@ -3021,7 +3021,7 @@ command_builder_find_leaf_1 (struct command_builder *builder)
   return event_binding (event0, 1);
 }
 
-#ifdef HAVE_X_WINDOWS
+#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS)
 static void
 menu_move_up (void)
 {
@@ -3498,8 +3498,12 @@ command_builder_find_menu_accelerator (struct command_builder *builder)
   return Qnil;
 }
 
-void
-event_menu_accelerate ()
+
+DEFUN ("accelerate-menu", Faccelerate_menu, 0, 0, "_", /*
+Make the menubar active.  Menu items can be selected using menu accelerators
+or by actions defined in menu-accelerator-map.
+*/
+       ())
 {
   struct console *con = XCONSOLE (Vselected_console);
   struct frame *f = XFRAME (CONSOLE_SELECTED_FRAME (con));
@@ -3515,8 +3519,10 @@ event_menu_accelerate ()
   /* menu accelerator keys don't go into keyboard macros */
   if (!NILP (con->defining_kbd_macro) && NILP (Vexecuting_macro))
     con->kbd_macro_ptr = con->kbd_macro_end;
+  
+  return Qnil;
 }
-#endif /* HAVE_X_WINDOWS */
+#endif /* HAVE_X_WINDOWS && HAVE_MENUBARS */
 
 /* See if we can do function-key-map or key-translation-map translation
    on the current events in the command builder.  If so, do this, and
@@ -3646,7 +3652,7 @@ command_builder_find_leaf (struct command_builder *builder,
     return Qnil;
 
   /* if we're currently in a menu accelerator, check there for further events */
-#ifdef HAVE_X_WINDOWS
+#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBAR)
   if (lw_menu_active)
     {
       result = command_builder_operate_menu_accelerator (builder);
@@ -3660,7 +3666,7 @@ command_builder_find_leaf (struct command_builder *builder,
       if (NILP (result))
 #endif
 	result = command_builder_find_leaf_1 (builder);
-#ifdef HAVE_X_WINDOWS
+#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBAR)
       if (NILP (result)
 	  && EQ (Vmenu_accelerator_enabled, Qmenu_fallback))
 	result = command_builder_find_menu_accelerator (builder);
@@ -4858,6 +4864,7 @@ syms_of_event_stream (void)
   DEFSUBR (Fthis_command_keys);
   DEFSUBR (Freset_this_command_lengths);
   DEFSUBR (Fopen_dribble_file);
+  DEFSUBR (Faccelerate_menu);
 
   defsymbol (&Qpre_command_hook, "pre-command-hook");
   defsymbol (&Qpost_command_hook, "post-command-hook");

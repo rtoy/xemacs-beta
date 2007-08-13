@@ -69,14 +69,18 @@ echo done.
 
 # Compute patterns to ignore when searching for files
 ignore_dirs=""
+ignore_pattern=''
 
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
 echon "Checking for Mule support..."
 lisp_prog='(princ (featurep (quote mule)))'
 mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
-  echo No
-  ignore_dirs="$ignore_dirs its egg mule language leim"
+	echo No
+	ignore_dirs="$ignore_dirs its egg mule language leim"
+	ignore_pattern='\!/tl/char-table.el$!d
+\!/tl/chartblxmas.el$!d
+'
 else
   echo Yes
 fi
@@ -105,18 +109,16 @@ echo \"Compiling in lisp/$dir\"; \
 echo \"lisp/$dir done.\";"
 }
 
-#make_special vm
-#make_special ediff elc
-#make_special viper elc
-if test "$mule_p" = nil ; then
-	make_special auctex some
-else
-	make_special auctex some MULE_ELC=tex-jp.elc
-fi
+## AUCTeX is a package now
+# if test "$mule_p" = nil ; then
+# 	make_special auctex some
+# else
+# 	make_special auctex some MULE_ELC=tex-jp.elc
+# fi
 #make_special cc-mode all
 make_special efs x20
 make_special eos -k		# not strictly necessary...
-make_special gnus  some
+## make_special gnus  some	# Now this is a package.
 make_special hyperbole elc
 # We're not ready for the following, yet.
 #make_special ilisp XEmacsELC=custom-load.elc elc
@@ -124,7 +126,6 @@ make_special ilisp elc
 make_special oobr HYPB_ELC='' elc
 make_special w3 xemacs-w3
 
-ignore_pattern=''
 for dir in $ignore_dirs ; do
   ignore_pattern="${ignore_pattern}/\\/$dir\\//d
 /\\/$dir\$/d
@@ -139,7 +140,6 @@ ignore_pattern="$ignore_pattern"'
 \!/prim/loadup.el$!d
 \!/prim/loadup-el.el$!d
 \!/prim/update-elc.el$!d
-\!/prim/packages.el$!d
 \!/prim/list-autoloads.el$!d
 \!/prim/dumped-lisp.el$!d
 \!/prim/make-docfile.el$!d
