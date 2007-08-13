@@ -2424,7 +2424,7 @@ done:
 	      /* If the cursor is past the truncation line then we
                  make it appear on the truncation glyph.  If we've hit
                  the end of the buffer then we also make the cursor
-                 appear unless eob is immediately preceeded by a
+                 appear unless eob is immediately preceded by a
                  newline.  In that case the cursor should actually
                  appear on the next line. */
 	      if (data.cursor_type == CURSOR_ON 

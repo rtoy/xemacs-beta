@@ -50,3 +50,6 @@ care of it properly?
 #if !defined(HAVE_STRERROR) && defined(__SUNPRO_C)
 #define HAVE_STRERROR
 #endif
+
+/* This appears to be broken on SunOS4.1.[123] */
+#define BROKEN_SIGIO

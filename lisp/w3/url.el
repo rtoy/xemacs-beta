@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/03/05 23:37:22
-;; Version: 1.61
+;; Created: 1997/03/09 06:19:51
+;; Version: 1.62
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/03/05 23:37:22|1.61|Location Undetermined
+;;; 1997/03/09 06:19:51|1.62|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1598,6 +1598,9 @@ just return the URL, don't show it in the minibuffer."
   (let ((count 0))
     (cl-maphash (function
 		 (lambda (key value)
+		   (while (string-match "[\r\n]+" key)
+		     (setq key (concat (substring key 0 (match-beginning 0))
+				       (substring key (match-end 0) nil))))
 		   (setq count (1+ count))
 		   (insert "(cl-puthash \"" key "\""
 			   (if (not (stringp value)) " '" "")
@@ -1949,7 +1952,8 @@ retrieve a URL by its HTML source.")
 	      "<p><address>William Perry</address><br>"
 	      "<address>" url-bug-address "</address>"))
     (cond
-     ((and url-be-asynchronous (not cached) (member type '("http" "proxy")))
+     ((and url-be-asynchronous (not cached)
+	   (member type '("http" "https" "proxy")))
       nil)
      ((and url-be-asynchronous (get-buffer url-working-buffer))
       (funcall url-default-retrieval-proc (buffer-name)))

@@ -158,7 +158,7 @@
     (toggle-read-only 0)
 
     (let ((rest (if who-to-load (list who-to-load)
-		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi)))
+		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens)))
 	  (got-error nil))
       (while rest
 	(let* ((who (car rest))
@@ -202,33 +202,35 @@
 (defun about-add-mosaic ()
   (goto-char (point-min))
   (about-load-mosaic)
-
+)
   ;; HERE TO PLACE ADDITIONAL MUGSHOTS
 
-  (goto-char (point-max))
-  (insert "\n   ")
+;; This is losing badly to a redisplay glitch, and it doesn't scale up.
 
-  (let ((rest '(steve mrb cthomp wing stig linebreak jwz mly vladimir linebreak baw piper bw linebreak wmperry kyle larsi))
-	(got-error nil))
-    (while rest
-      (if (eq (car rest) 'linebreak)
-	  (insert "\n\n  ")
-	(let* ((who (car rest))
-	       (b (get-buffer "About XEmacs"))
-	       (p (symbol-value-in-buffer who b nil)))
-	  (or (glyphp p) (setq p nil))
-	  (and p
-	       (let ((e (make-extent (point) (point))))
-		 (set-extent-begin-glyph e p)
-		 (set-extent-property e 'keymap about-xref-map)
-		 (set-extent-property e 'xref who)))
-	  (insert " ")
-	  (sit-for 0)))
-      (setq rest (cdr rest)))
-    (insert "\n")
-    (goto-char (point-min))
-    (or got-error (message nil)))
-  )
+;  (goto-char (point-max))
+;  (insert "\n   ")
+
+;  (let ((rest '(steve mrb cthomp wing stig linebreak jwz mly vladimir linebreak baw piper bw linebreak wmperry kyle larsi jens))
+;	(got-error nil))
+;    (while rest
+;      (if (eq (car rest) 'linebreak)
+;	  (insert "\n\n  ")
+;	(let* ((who (car rest))
+;	       (b (get-buffer "About XEmacs"))
+;	       (p (symbol-value-in-buffer who b nil)))
+;	  (or (glyphp p) (setq p nil))
+;	  (and p
+;	       (let ((e (make-extent (point) (point))))
+;		 (set-extent-begin-glyph e p)
+;		 (set-extent-property e 'keymap about-xref-map)
+;		 (set-extent-property e 'xref who)))
+;	  (insert " ")
+;	  (sit-for 0)))
+;      (setq rest (cdr rest)))
+;    (insert "\n")
+;    (goto-char (point-min))
+;    (or got-error (message nil)))
+;  )
 
 (defun about-xemacs-xref ()
   (interactive "@")
@@ -293,6 +295,7 @@
 			       ((eq xref 'mrb) "About Martin Buchholz")
 			       ((eq xref 'kyle) "About Kyle Jones")
 			       ((eq xref 'larsi) "About Lars Magne Ingebrigtsen")
+			       ((eq xref 'jens) "About Jens Lautenbacher")
 			       ((eq xref 'others) "About Everyone")
 			       ((eq xref 'features) "New XEmacs Features")
 			       ((eq xref 'history) "XEmacs History")
@@ -770,6 +773,25 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'jens)
+	  (about-face "Jens Lautenbacher" 'bold)
+	  (insert " <jens@lemcbed.lem.uni-karlsruhe.de>
+
+	Jens did the artwork for graphics added to XEmacs 20.1 and 19.15.
+
+	I'm currently working at the University of Karlsruhe, Germany
+	on getting my diploma thesis on Supersymmetry (uuh, that's
+	physics) done.  After that (and all the remaining exams) I'm
+	looking forward to make a living out of my hobbies --
+	computers (and graphics). But because I have no deadline for
+	the exams and XEmacs betas are released at a high rate this
+	may take some time...")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -840,6 +862,15 @@
 	  Physics, working on an SCI project connected with CASCADE and
 	  CERN and stuff.
 	  See \"http://www.ifi.uio.no/~larsi/\"
+
+	") (about-xref "Jens Lautenbacher" 'jens "Find out more about Jens Lautenbacher") (insert " <jens@lemcbed.lem.uni-karlsruhe.de>
+	I'm currently working at the University of Karlsruhe, Germany
+	on getting my diploma thesis on Supersymmetry (uuh, that's
+	physics) done.  After that (and all the remaining exams) I'm
+	looking forward to make a living out of my hobbies --
+	computers (and graphics). But because I have no deadline for
+	the exams and XEmacs betas are released at a high rate this
+	may take some time...
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	  Unofficial maintainer of the xemacs-beta list of extant

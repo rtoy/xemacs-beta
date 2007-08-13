@@ -217,7 +217,7 @@ extern Lisp_Object Qmouse_leave_buffer_hook;
 
 /* Defined in callproc.c */
 extern Lisp_Object Vexec_path, Vexec_directory, Vdata_directory,
-		   Vdoc_directory;
+		   Vdoc_directory, Vsite_directory;
 
 
 /* Defined in casefiddle.c */

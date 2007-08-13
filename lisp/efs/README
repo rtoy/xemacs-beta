@@ -1,0 +1,28 @@
+This version of EFS was modified for integration with XEmacs by
+Mike Sperber <sperber@informatik.uni-tuebingen.de>.
+He is the current maintainer of this version of EFS.
+
+A Few Things That You Should Know About EFS:
+--------------------------------------------
+
+For documentation, see the first page of the file efs.el.  If you
+access FTP via a gateway, then be sure to read the documentation in
+efs.el on how to configure efs to use a gateway.  To find the section
+on user customization variables in efs.el, search for the first
+occurrence of the string ">>>>".  TeXinfo documentation is
+forthcoming.
+
+The file CHANGES contains a description of changes to EFS from the
+previous release to this release.  It also tells you where you can get
+the latest version of efs.
+
+The file LISTS contains a description of mailing lists relevant to
+efs.  It too tells you where you can get the latest version of efs.
+We encourage users to join these lists.
+
+EFS and archie.el:
+------------------
+
+To use archie.el (by Jack Repenning) with efs, you need at least
+archie.el V3.0.1.  Problems using efs with archie may be posted to the
+efs mailing lists.

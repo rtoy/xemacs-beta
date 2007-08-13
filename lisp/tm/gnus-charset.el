@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-charset.el,v 1.3 1997/01/04 21:20:10 steve Exp $
+;;	$Id: gnus-charset.el,v 1.4 1997/03/16 05:55:40 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -149,7 +149,7 @@
      ))
   (defun gnus-prepare-save-mail-function ()
     (setq file-coding-system *noconv*
-	  coding-system-for-write 'no-conversion)
+	  buffer-file-coding-system 'no-conversion)
     )
   (add-hook 'nnmail-prepare-save-mail-hook
 	    'gnus-prepare-save-mail-function)

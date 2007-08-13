@@ -1574,7 +1574,7 @@ Uninterned symbols are those which are not present in `obarray', that is,
 those which were made with `make-symbol' or by calling `intern' with a
 second argument.
 
-When print-gensym is true, such symbols will be preceeded by \"#:\", which
+When print-gensym is true, such symbols will be preceded by \"#:\", which
 causes the reader to create a new symbol instead of interning and returning
 an existing one.  Beware: the #: syntax creates a new symbol each time it is
 seen, so if you print an object which contains two pointers to the same

@@ -2151,7 +2151,7 @@ More specifically:
 set-mark-command (C-SPC) pushes a mark and activates the region.  Moving the
 cursor with normal motion commands (C-n, C-p, etc) will cause the region
 between point and the recently-pushed mark to be highlighted.  It will
-remain highlighted until some non-motion comand is executed.
+remain highlighted until some non-motion command is executed.
 
 exchange-point-and-mark (\\[exchange-point-and-mark]) activates the region.  So if you mark a
 region and execute a command that operates on it, you can reactivate the

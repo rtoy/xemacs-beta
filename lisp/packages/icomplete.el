@@ -4,7 +4,7 @@
 
 ;;; Author: Ken Manheimer <klm@nist.gov>
 ;;; Maintainer: Ken Manheimer <klm@nist.gov>
-;;; Version: $Id: icomplete.el,v 1.1.1.3 1996/12/18 03:53:27 steve Exp $
+;;; Version: $Id: icomplete.el,v 1.2 1997/03/16 05:55:27 steve Exp $
 ;;; Created: Mar 1993 klm@nist.gov - first release to usenet
 ;;; Keywords: help, abbrev
 
@@ -129,17 +129,19 @@ a command.")
 (defun icomplete-get-keys (func-name)
   "Return the keys `func-name' is bound to as a string."
   (when (commandp func-name)
-    (let* ((sym (intern func-name))
-	   (keys (where-is-internal sym)))
-      (concat "<"
-	      (if keys
-		  (mapconcat 'key-description
-			     (sort '([next] [kp_next] [(control v)])
-				   #'(lambda (x y)
-				       (< (length x) (length y))))
-			     ", ")
-		"Unbound")
-	      ">"))))
+    (save-excursion
+      (let* ((sym (intern func-name))
+	     (buf (set-buffer (window-buffer owindow)))
+	     (keys (where-is-internal sym (current-local-map buf))))
+	(concat "<"
+		(if keys
+		    (mapconcat 'key-description
+			       (sort '([next] [kp_next] [(control v)])
+				     #'(lambda (x y)
+					 (< (length x) (length y))))
+			       ", ")
+		  "Unbound")
+		">")))))
 
 ;;;_ > icomplete-mode (&optional prefix)
 ;;;###autoload

@@ -4121,6 +4121,9 @@ auto_save_error (Lisp_Object condition_object, Lisp_Object ignored)
   /* This function can GC */
   if (gc_in_progress)
     return Qnil;
+  /* Don't try printing an error message after everything is gone! */
+  if (preparing_for_armageddon)
+    return Qnil;
   clear_echo_area (selected_frame (), Qauto_saving, 1);
   Fding (Qt, Qauto_save_error, Qnil);
   message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
@@ -4196,17 +4199,19 @@ Non-nil second argument means save only current buffer.
        (no_message, current_only))
 {
   /* This function can GC */
-  struct buffer *old = current_buffer, *b;
+  struct buffer *b;
   Lisp_Object tail, buf;
   int auto_saved = 0;
   int do_handled_files;
   Lisp_Object oquit = Qnil;
   Lisp_Object listfile = Qnil;
+  Lisp_Object old;
   int listdesc = -1;
   int speccount = specpdl_depth ();
-  struct gcpro gcpro1, gcpro2;
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
-  GCPRO2 (oquit, listfile);
+  XSETBUFFER (old, current_buffer);
+  GCPRO3 (oquit, listfile, old);
   check_quit (); /* make Vquit_flag accurate */
   /* Ordinarily don't quit within this function,
      but don't make it impossible to quit (in case we get hung in I/O).  */
@@ -4358,14 +4363,36 @@ Non-nil second argument means save only current buffer.
 		  write (listdesc, "\n", 1);
 		}
 
-	      condition_case_1 (Qt,
-				auto_save_1, Qnil,
-				auto_save_error, Qnil);
+	      /* dmoore - In a bad scenario we've set b=XBUFFER(buf)
+		 based on values in Vbuffer_alist.  auto_save_1 may
+		 cause lisp handlers to run.  Those handlers may kill
+		 the buffer and then GC.  Since the buffer is killed,
+		 it's no longer in Vbuffer_alist so it might get reaped
+		 by the GC.  We also need to protect tail. */
+	      /* #### There is probably a lot of other code which has
+		 pointers into buffers which may get blown away by
+		 handlers. */
+	      {
+		struct gcpro gcpro1, gcpro2;
+		GCPRO2 (buf, tail);
+		condition_case_1 (Qt,
+				  auto_save_1, Qnil,
+				  auto_save_error, Qnil);
+		UNGCPRO;
+	      }
+	      /* Handler killed our saved current-buffer!  Pick any. */
+	      if (!BUFFER_LIVE_P (XBUFFER (old)))
+		XSETBUFFER (old, current_buffer);
+
+	      set_buffer_internal (XBUFFER (old));
 	      auto_saved++;
+	      
+	      /* Handler killed their own buffer! */
+	      if (!BUFFER_LIVE_P(b))
+		continue;
+
 	      b->auto_save_modified = BUF_MODIFF (b);
 	      b->save_length = make_int (BUF_SIZE (b));
-	      set_buffer_internal (old);
-
 	      EMACS_GET_TIME (after_time);
 	      /* If auto-save took more than 60 seconds,
 		 assume it was an NFS failure that got a timeout.  */

@@ -393,9 +393,9 @@ hash of a portion of OBJECT."
 		   (md5-encode (buffer-string))
 		   "")
 		(call-process-region (point-min) (point-max)
-				     (or shell-file-name "/bin/sh")
+				     shell-file-name
 				     t buffer nil
-				     "-c" md5-program)
+				     shell-command-switch md5-program)
 		;; MD5 digest is 32 chars long
 		;; mddriver adds a newline to make neaten output for tty
 		;; viewing, make sure we leave it behind.
@@ -404,5 +404,3 @@ hash of a portion of OBJECT."
       (and buffer (kill-buffer buffer) nil))))
 
 (provide 'md5)
-
-;;; md5.el ends here ----------------------------------------------------------

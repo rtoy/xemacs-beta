@@ -99,7 +99,7 @@
 (put 'gnus-article 'custom-loads '("gnus-cite" "gnus-art"))
 (put 'gnus-group-foreign 'custom-loads '("gnus-group"))
 (put 'programming 'custom-loads '("cus-edit"))
-(put 'mesage-sending 'custom-loads '("message"))
+(put 'message-sending 'custom-loads '("message"))
 (put 'nnmail-prepare 'custom-loads '("nnmail"))
 (put 'picons 'custom-loads '("gnus-picon"))
 (put 'gnus-article-signature 'custom-loads '("gnus-art"))

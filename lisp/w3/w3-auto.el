@@ -11,7 +11,7 @@
 (autoload 'w3-hotlist-rename-entry "w3-hot")
 (autoload 'w3-hotlist-append "w3-hot")
 (autoload 'w3-parse-hotlist "w3-hot")
-(autoload 'w3-use-hotlist "w3-hot")
+(autoload 'w3-use-hotlist "w3-hot" nil t)
 (autoload 'w3-hotlist-add-document-at-point "w3-hot")
 (autoload 'w3-hotlist-add-document "w3-hot")
 
@@ -46,7 +46,7 @@
 (autoload 'widget-at "wid-edit")
 
 ;; Preferences
-(autoload 'w3-preferences-edit "w3-prefs")
+(autoload 'w3-preferences-edit "w3-prefs" "" t)
 
 (defvar widget-field-new nil)
 

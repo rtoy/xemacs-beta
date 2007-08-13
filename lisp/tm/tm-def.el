@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-def.el,v 1.5 1997/02/16 01:29:30 steve Exp $
+;; Version: $Id: tm-def.el,v 1.6 1997/03/16 05:55:41 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, definition
 
 ;; This file is part of tm (Tools for MIME).
@@ -118,12 +118,12 @@
   "Create a button between FROM and TO with callback FUNC and data DATA."
   (and tm:button-face
        (tl:overlay-put (tl:make-overlay from to) 'face tm:button-face))
-  (tl:add-text-properties from to
-			  (append (and tm:mouse-face
-				       (list 'mouse-face tm:mouse-face))
-				  (list 'tm-callback func)
-				  (and data (list 'tm-data data))
-				  ))
+  (add-text-properties from to
+		       (append (and tm:mouse-face
+				    (list 'mouse-face tm:mouse-face))
+			       (list 'tm-callback func)
+			       (and data (list 'tm-data data))
+			       ))
   )
 
 (defvar tm:mother-button-dispatcher nil)

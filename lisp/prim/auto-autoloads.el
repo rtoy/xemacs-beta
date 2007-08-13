@@ -959,6 +959,17 @@ Browse the widget under point." t nil)
 
 ;;;***
 
+;;;### (autoloads (widget-delete widget-create) "wid-edit" "custom/wid-edit.el")
+
+(autoload 'widget-create "wid-edit" "\
+Create widget of TYPE.  
+The optional ARGS are additional keyword arguments." nil nil)
+
+(autoload 'widget-delete "wid-edit" "\
+Delete WIDGET." nil nil)
+
+;;;***
+
 ;;;### (autoloads (edebug-eval-top-level-form def-edebug-spec) "edebug" "edebug/edebug.el")
 
 (autoload 'def-edebug-spec "edebug" "\
@@ -3150,7 +3161,7 @@ c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
 problem, including a reproducible test case and send the message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `c-mode-hook' is run with no args, if that value is
 bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
@@ -3167,7 +3178,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case, and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `c++-mode-hook' is run with no args, if that
 variable is bound and has a non-nil value.  Also the hook
@@ -3184,7 +3195,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case, and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `objc-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
@@ -3201,7 +3212,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `java-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the common hook
@@ -3213,10 +3224,13 @@ Key bindings:
 \\{java-mode-map}" t nil)
 
 (autoload 'c-set-style "cc-mode" "\
-Set cc-mode variables to use one of several different indentation styles.
+Set CC Mode variables to use one of several different indentation styles.
 STYLENAME is a string representing the desired style from the list of
 styles described in the variable `c-style-alist'.  See that variable
-for details of setting up styles." t nil)
+for details of setting up styles.
+
+The variable `c-indentation-style' always contains the buffer's current
+style name." t nil)
 
 (fset 'set-c-style           'c-set-style)
 
@@ -3660,7 +3674,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.11 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.13 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4027,7 +4041,7 @@ Variables controlling indentation/edit style:
  pascal-case-indent       (default 2)
     Indentation for case statements.
  pascal-auto-newline      (default nil)
-    Non-nil means automatically newline after semicolons and the punctation mark
+    Non-nil means automatically newline after semicolons and the punctuation mark
     after an end.
  pascal-tab-always-indent (default t)
     Non-nil means TAB in Pascal mode should always reindent the current line,
@@ -4932,7 +4946,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.11 $
+vhdl-mode $Revision: 1.13 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5784,7 +5798,7 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]." t nil)
 
 ;;;### (autoloads (diff-backup diff) "diff" "packages/diff.el")
 
-(defvar diff-switches nil "\
+(defvar diff-switches "-c" "\
 *A list of switches (strings) to pass to the diff program.")
 
 (autoload 'diff "diff" "\
@@ -7359,8 +7373,7 @@ With arg, turn time stamping on if and only if arg is positive." t nil)
 
 ;;;### (autoloads (display-time) "time" "packages/time.el")
 
-(defvar display-time-day-and-date nil "\
-*Non-nil means \\[display-time] should display day and date as well as time.")
+(defcustom display-time-day-and-date nil "*Non-nil means \\[display-time] should display day,date and time.\nThis affects the spec 'date in the variable display-time-form-list." :group 'display-time :type 'boolean)
 
 (autoload 'display-time "time" "\
 Display current time, load level, and mail flag in mode line of each buffer.
@@ -9479,28 +9492,6 @@ the window or buffer configuration at all." t nil)
 
 ;;;***
 
-;;;### (autoloads (y-or-n-p-with-timeout yes-or-no-p-with-timeout with-timeout with-timeout-internal) "with-timeout" "utils/with-timeout.el")
-
-(autoload 'with-timeout-internal "with-timeout" nil nil nil)
-
-(autoload 'with-timeout "with-timeout" "\
-Usage: (with-timeout (seconds &rest timeout-forms) &rest body)
-This is just like progn, but if the given number of seconds expires before
-the body returns, then timeout-forms are evaluated and returned instead.
-The body won't be interrupted in the middle of a computation: the check for 
-the timer expiration only occurs when body does a redisplay, or prompts the
-user for input, or calls accept-process-output." nil 'macro)
-
-(autoload 'yes-or-no-p-with-timeout "with-timeout" "\
-Just like yes-or-no-p, but will time out after TIMEOUT seconds
-if the user has not yes answered, returning DEFAULT-VALUE." nil nil)
-
-(autoload 'y-or-n-p-with-timeout "with-timeout" "\
-Just like y-or-n-p, but will time out after TIMEOUT seconds
-if the user has not yes answered, returning DEFAULT-VALUE." nil nil)
-
-;;;***
-
 ;;;### (autoloads (xbm-button-create) "xbm-button" "utils/xbm-button.el")
 
 (autoload 'xbm-button-create "xbm-button" "\
@@ -9772,17 +9763,6 @@ to disk." nil nil)
 Attempt to follow the hypertext reference under point.
 With prefix-arg P, ignore viewers and dump the link straight
 to disk." t nil)
-
-;;;***
-
-;;;### (autoloads (widget-delete widget-create) "wid-edit" "w3/wid-edit.el")
-
-(autoload 'widget-create "wid-edit" "\
-Create widget of TYPE.  
-The optional ARGS are additional keyword arguments." nil nil)
-
-(autoload 'widget-delete "wid-edit" "\
-Delete WIDGET." nil nil)
 
 ;;;***
 

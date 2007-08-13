@@ -1,7 +1,7 @@
 ;;; url-cache.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/03/06 16:25:51
-;; Version: 1.7
+;; Created: 1997/03/09 21:09:36
+;; Version: 1.10
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -53,7 +53,9 @@ FILE can be created or overwritten."
    ((file-directory-p file)
     nil)
    (t
-    (make-directory (file-name-directory file) t))))
+    (condition-case ()
+	(or (make-directory (file-name-directory file) t) t)
+      (error nil)))))
 
 (defvar url-cache-ignored-protocols
   '("www" "about" "https" "mailto")
@@ -62,6 +64,8 @@ FILE can be created or overwritten."
 (defun url-cache-cachable-p (obj)
   ;; return t iff the current buffer is cachable
   (cond
+   ((not url-automatic-caching)		; User doesn't want to cache
+    nil)
    ((null obj)				; Something horribly confused
     nil)
    ((member (url-type obj) url-cache-ignored-protocols)
@@ -138,7 +142,7 @@ FILE can be created or overwritten."
 (defun url-cache-create-filename-human-readable (url)
   "Return a filename in the local cache for URL"
   (if url
-      (let* ((url url)
+      (let* ((url (if (vectorp url) (url-recreate-url url) url))
 	     (urlobj (url-generic-parse-url url))
 	     (protocol (url-type urlobj))
 	     (hostname (url-host urlobj))
@@ -197,6 +201,7 @@ FILE can be created or overwritten."
  Very fast if you are in XEmacs, suitably fast otherwise."
   (if url
       (let* ((checksum (md5 url))
+	     (url (if (vectorp url) (url-recreate-url url) url))
 	     (urlobj (url-generic-parse-url url))
 	     (protocol (url-type urlobj))
 	     (hostname (url-host urlobj))
@@ -236,23 +241,18 @@ FILE can be created or overwritten."
 ;;;###autoload
 (defun url-cache-expired (url mod)
   "Return t iff a cached file has expired."
-  (if (not (string-match url-nonrelative-link url))
-      t
-    (let* ((urlobj (url-generic-parse-url url))
-	   (type (url-type urlobj)))
-      (cond
-       (url-standalone-mode
-	(not (file-exists-p (url-cache-create-filename urlobj))))
-       ((string= type "http")
-	(if (not url-standalone-mode) t
-	  (not (file-exists-p (url-cache-create-filename urlobj)))))
-       ((not (fboundp 'current-time))
-	t)
-       ((member type '("file" "ftp"))
-	(if (or (equal mod '(0 0)) (not mod))
-	      (return t)
-	    (or (> (nth 0 mod) (nth 0 (current-time)))
-		(> (nth 1 mod) (nth 1 (current-time))))))
-       (t nil)))))
+  (let* ((urlobj (if (vectorp url) url (url-generic-parse-url url)))
+	 (type (url-type urlobj)))
+    (cond
+     (url-standalone-mode
+      (not (file-exists-p (url-cache-create-filename url))))
+     ((string= type "http")
+      t)
+     ((member type '("file" "ftp"))
+      (if (or (equal mod '(0 0)) (not mod))
+	  (return t)
+	(or (> (nth 0 mod) (nth 0 (current-time)))
+	    (> (nth 1 mod) (nth 1 (current-time))))))
+     (t nil))))
 
 (provide 'url-cache)

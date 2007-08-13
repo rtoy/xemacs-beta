@@ -77,10 +77,10 @@ Override this for your own timestamp styles.")
     "  </head>\n"
     "\n"
     "  <body>\n"
-    "      <h1>" (s title) "</h1>\n\n"
+    "    <h1>" (s title) "</h1>\n\n"
     p
-    "\n\n      <hr>\n"
-    "      <address>" html-helper-address-string "</address>\n"
+    "\n\n    <hr>\n"
+    "    <address>" html-helper-address-string "</address>\n"
     (html-helper-return-created-string)
     html-helper-timestamp-start
     html-helper-timestamp-end

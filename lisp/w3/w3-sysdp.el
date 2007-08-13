@@ -658,11 +658,13 @@ will automatically call `save-buffers-kill-emacs'.)"
   (cond
    ((eq window-system 'x) (car-safe (x-list-fonts fontname)))
    ((eq window-system 'ns) (car-safe (ns-list-fonts fontname)))
+   ((eq window-system 'win32) (car-safe (x-list-fonts fontname)))
+   ((eq window-system 'pm) (car-safe (x-list-fonts fontname)))
    (t nil)))
 
 (sysdep-defalias 'device-pixel-width
   (cond
-   ((and (eq window-system 'x) (fboundp 'x-display-pixel-width))
+   ((and (memq window-system '(x win32 pm)) (fboundp 'x-display-pixel-width))
     'x-display-pixel-width)
    ((and (eq window-system 'ns) (fboundp 'ns-display-pixel-width))
     'ns-display-pixel-width)
@@ -670,7 +672,7 @@ will automatically call `save-buffers-kill-emacs'.)"
 
 (sysdep-defalias 'device-pixel-height
   (cond
-   ((and (eq window-system 'x) (fboundp 'x-display-pixel-height))
+   ((and (memq window-system '(x win32 pm)) (fboundp 'x-display-pixel-height))
     'x-display-pixel-height)
    ((and (eq window-system 'ns) (fboundp 'ns-display-pixel-height))
     'ns-display-pixel-height)
@@ -678,7 +680,7 @@ will automatically call `save-buffers-kill-emacs'.)"
 
 (sysdep-defalias 'device-mm-width
   (cond
-   ((and (eq window-system 'x) (fboundp 'x-display-mm-width))
+   ((and (memq window-system '(x win32 pm)) (fboundp 'x-display-mm-width))
     'x-display-mm-width)
    ((and (eq window-system 'ns) (fboundp 'ns-display-mm-width))
     'ns-display-mm-width)
@@ -686,7 +688,7 @@ will automatically call `save-buffers-kill-emacs'.)"
 
 (sysdep-defalias 'device-mm-height
   (cond
-   ((and (eq window-system 'x) (fboundp 'x-display-mm-height))
+   ((and (memq window-system '(x win32 pm)) (fboundp 'x-display-mm-height))
     'x-display-mm-height)
    ((and (eq window-system 'ns) (fboundp 'ns-display-mm-height))
     'ns-display-mm-height)
@@ -694,7 +696,7 @@ will automatically call `save-buffers-kill-emacs'.)"
 
 (sysdep-defalias 'device-bitplanes
   (cond
-   ((and (eq window-system 'x) (fboundp 'x-display-planes))
+   ((and (memq window-system '(x win32 pm)) (fboundp 'x-display-planes))
     'x-display-planes)
    ((and (eq window-system 'ns) (fboundp 'ns-display-planes))
     'ns-display-planes)
@@ -747,7 +749,7 @@ will automatically call `save-buffers-kill-emacs'.)"
 	  ((string-match "color" val) 'color)
 	  ((string-match "gray-scale" val) 'grayscale)
 	  (t 'mono))))))
-   (t (function (lambda (&optional device) 'mono)))))
+   (t (function (lambda (&optional device) 'color)))))
 
 (sysdep-defun device-class-list ()
   "Returns a list of valid device classes."
@@ -786,7 +788,6 @@ Value is `tty' for a tty device (a character-only terminal),
 (sysdep-defun valid-device-type-p (type)
   "Given a TYPE, return t if it is valid."
   (memq type (device-type-list)))
-
 
 ;; Extent stuff
 (sysdep-fset 'delete-extent 'delete-overlay)

@@ -1,7 +1,7 @@
 ;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/04 14:33:41
-;; Version: 1.16
+;; Created: 1997/03/14 06:31:17
+;; Version: 1.19
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,7 +43,8 @@
 				(cookies       . "HTTP Cookies")
 				(hooks         . "Various Hooks")
 				(compatibility . "Compatibility")
-				(proxy         . "Proxy")))
+				(proxy         . "Proxy")
+				(privacy       . "Privacy")))
 
 (defun w3-preferences-generic-variable-callback (widget &rest ignore)
   (condition-case ()
@@ -218,7 +219,7 @@
     (while todo
       (setq cur (car todo)
 	    todo (cdr todo)
-	    doc (get cur 'variable-documentation))
+	    doc (documentation-property cur 'variable-documentation)) ;; (get cur 'variable-documentation))
       (if (string-match "^\\*" doc)
 	  (setq doc (substring doc 1 nil)))
       (setq pt (point))
@@ -287,18 +288,23 @@
 	(proxy nil)
 	(host-var nil)
 	(port-var nil)
-	(urlobj nil))
+	(host nil)
+	(port nil)
+	(proxy-entry nil))
     (widget-insert "\n")
     (while proxies
       (setq proxy (car proxies)
 	    proxies (cdr proxies)
 	    host-var (intern (format "w3-%s-proxy-host" (downcase proxy)))
 	    port-var (intern (format "w3-%s-proxy-port" (downcase proxy)))
-	    urlobj (url-generic-parse-url
-		    (cdr-safe
-		     (assoc (downcase proxy) url-proxy-services))))
-      (set (make-local-variable host-var) (or (url-host urlobj) ""))
-      (set (make-local-variable port-var) (or (url-port urlobj) "")))))
+	    proxy-entry (cdr-safe (assoc (downcase proxy) url-proxy-services)))
+      (if (and proxy-entry (string-match "\\(.*\\):\\([0-9]+\\)" proxy-entry))
+	  (setq host (match-string 1 proxy-entry)
+		port (match-string 2 proxy-entry))
+	(setq host proxy-entry
+	      port nil))
+      (set (make-local-variable host-var) (or host ""))
+      (set (make-local-variable port-var) (or port "")))))
 
 (defun w3-preferences-create-proxy-panel ()
   (let ((proxies '("FTP" "Gopher" "HTTP" "Security" "WAIS" "SHTTP" "News"))
@@ -352,10 +358,124 @@
 	    port (symbol-value port-var))
       (if (and host (/= 0 (length host)))
 	  (setq new-proxy-services (cons (cons (downcase proxy)
-					       (format "http://%s:%s/" host
+					       (format "%s:%s" host
 						       (or port "80")))
 					 new-proxy-services))))
     (setq url-proxy-services new-proxy-services)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Privacy panel
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defsubst w3-preferences-privacy-bits-sort (bits) 
+  (sort bits (function (lambda (a b)
+			 (memq b (memq a '(email os lastloc agent cookie)))))))
+
+(defvar url-valid-privacy-levels
+  '((paranoid . (email os lastloc agent cookie))
+    (high     . (email lastloc))
+    (low      . (lastloc))
+    (none     . nil)))
+
+(defvar w3-preferences-privacy-bit-widgets nil)
+(defvar w3-preferences-privacy-level-widget nil)
+(defvar w3-preferences-temp-url-privacy-level nil)
+;; darnit i just noticed the checklist widget, this should probably be
+;; reimplemented with that instead of checkboxes, but i've almost finished.
+(defun w3-preferences-privacy-bit-callback (widget &rest ignore)
+  (let ((privacy-bits (if (listp w3-preferences-temp-url-privacy-level)
+  			  w3-preferences-temp-url-privacy-level
+  			(copy-list (cdr-safe (assq w3-preferences-temp-url-privacy-level url-valid-privacy-levels)))))
+  	(bit (widget-get widget 'bit))
+  	(val (widget-value widget)))
+    (if val
+  	(setq privacy-bits (delq bit privacy-bits))
+      (setq privacy-bits (w3-preferences-privacy-bits-sort (cons bit (delq bit privacy-bits)))))
+    (setq w3-preferences-temp-url-privacy-level
+  	  (or (car (rassoc privacy-bits url-valid-privacy-levels))
+  	      privacy-bits))
+    (widget-value-set w3-preferences-privacy-level-widget 
+  		      (if (listp w3-preferences-temp-url-privacy-level)
+  			  'custom
+  			w3-preferences-temp-url-privacy-level))
+    ))
+
+
+(defun w3-preferences-privacy-level-callback (widget &rest ignore)
+  (let* ((val (widget-value widget))
+  	 (privacy-bits (cdr-safe (assq val url-valid-privacy-levels))))
+    (if (eq val 'custom) nil
+      (setq w3-preferences-temp-url-privacy-level val)
+      (mapcar (function (lambda (bit)
+  			  (widget-value-set (cdr bit)
+  					    (not (memq (car bit)
+  						       privacy-bits)))))
+  	      w3-preferences-privacy-bit-widgets))
+    ))
+
+(defun w3-preferences-init-privacy-panel ()
+  (w3-preferences-create-temp-variables '(url-privacy-level
+					  url-cookie-confirmation))
+  (setq w3-preferences-privacy-bit-widgets nil)
+  (setq w3-preferences-privacy-level-widget nil))
+
+(defsubst w3-preferences-create-privacy-bit-widget (bit bit-text current-bits)
+  (let ((bit-widget (widget-create 
+		     'checkbox
+		     :value (not (memq bit current-bits))
+		     :notify 'w3-preferences-privacy-bit-callback
+		     )))
+    (widget-put bit-widget 'bit bit)
+    (setq w3-preferences-privacy-bit-widgets (cons (cons bit bit-widget)
+						   w3-preferences-privacy-bit-widgets))
+    (widget-insert " " bit-text "\n")))
+
+
+(defun w3-preferences-create-privacy-panel ()
+  (let ((privacy-bits (if (listp url-privacy-level)
+			  url-privacy-level
+			(cdr-safe (assq url-privacy-level url-valid-privacy-levels)))))
+    (widget-insert "\n")
+    (widget-insert "General Privacy Level: ")
+    ;;; XXX something is weird with case folding in the following widget if you
+    ;;; type an option in lower case it accepts it but doesn't do anything
+    (setq w3-preferences-privacy-level-widget
+	  (widget-create 
+	   'choice
+	   :value (if (listp w3-preferences-temp-url-privacy-level)
+		      'custom
+		    w3-preferences-temp-url-privacy-level)
+	    :notify 'w3-preferences-privacy-level-callback
+	   :format "%v"
+	   :tag "Privacy Level"
+	   (list 'choice-item :format "%[%t%]" :tag "Paranoid" :value 'paranoid)
+	   (list 'choice-item :format "%[%t%]" :tag "High"     :value 'high)
+	   (list 'choice-item :format "%[%t%]" :tag "Low"      :value 'low)
+	   (list 'choice-item :format "%[%t%]" :tag "None"     :value 'none)
+	   (list 'choice-item :format "%[%t%]" :tag "Custom"   :value 'custom)))
+    (widget-put w3-preferences-privacy-level-widget 'variable 'w3-preferences-temp-url-privacy-level)
+    
+    (widget-insert "\n(controls the options below)\n\nSend the following information with each request:\n")
+    (setq w3-preferences-privacy-bit-widgets nil)
+    (w3-preferences-create-privacy-bit-widget 'email   "E-mail address" privacy-bits)
+    (w3-preferences-create-privacy-bit-widget 'lastloc "Last location visited" privacy-bits)
+    (w3-preferences-create-privacy-bit-widget 'os      "Operating system information" privacy-bits)
+    (w3-preferences-create-privacy-bit-widget 'agent   "User agent information" privacy-bits)
+    (w3-preferences-create-privacy-bit-widget 'cookie  "Accept cookies" privacy-bits)
+    (widget-insert "    ")
+    (widget-put
+     (widget-create 
+      'checkbox
+      :value (symbol-value 'w3-preferences-temp-url-cookie-confirmation)
+      :notify 'w3-preferences-generic-variable-callback)
+     'variable 'w3-preferences-temp-url-cookie-confirmation)
+    (widget-insert " Ask before accepting cookies\n"))
+  (widget-setup))
+  
+(defun w3-preferences-save-privacy-panel ()
+  (w3-preferences-restore-variables '(url-privacy-level
+				      url-cookie-confirmation))
+  (url-setup-privacy-info))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -458,6 +578,7 @@
 	 (window-conf (current-window-configuration)))
     (delete-other-windows)
     (set-buffer prefs-buffer)
+    (set (make-local-variable 'widget-push-button-gui) nil)
     (w3-preferences-init-all-panels)
     (set-window-buffer (selected-window) prefs-buffer)
     (make-local-variable 'widget-field-face)

@@ -458,7 +458,7 @@ If N, return the Nth ancestor instead."
     (let ((ids (inline (gnus-split-references references))))
       (car (last ids (or n 1))))))
 
-(defun gnus-buffer-live-p (buffer)
+(defsubst gnus-buffer-live-p (buffer)
   "Say whether BUFFER is alive or not."
   (and buffer
        (get-buffer buffer)

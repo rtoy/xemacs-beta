@@ -728,7 +728,7 @@ not.")
       (eval test))
      (t
       (setq test (mm-unescape-mime-test test type-info)
-	    test (list "/bin/sh" nil nil nil "-c" test)
+	    test (list shell-file-name nil nil nil shell-command-switch test)
 	    status (apply 'call-process test))
       (= 0 status)))))
 
@@ -1042,9 +1042,9 @@ correspond to.")
       (setq comp (concat (substring comp 0 (match-end 1)) fnam
 			 (substring comp (match-end 0) nil))
 	    usef t))
-    (call-process (or shell-file-name
-		      (getenv "ESHELL") (getenv "SHELL") "/bin/sh")
-		  nil (if usef nil buff) nil "-c" comp)
+    (call-process shell-file-name nil
+		  (if usef nil buff)
+		  nil shell-command-switch comp)
     (setq retval
 	  (concat
 	   (if typeit (concat "Content-type: " type "\r\n\r\n") "")

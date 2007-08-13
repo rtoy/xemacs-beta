@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-sum-mime.el,v 1.4 1997/02/02 05:06:18 steve Exp $
+;;	$Id: gnus-sum-mime.el,v 1.5 1997/03/16 05:55:40 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -94,6 +94,29 @@
   (function gnus-summary-preview-mime-message))
 (define-key gnus-summary-mode-map "\e\r"
   (function gnus-summary-scroll-down))
+
+
+;;; @ for tm-partial
+;;;
+
+(defun gnus-mime-partial-preview-function ()
+  (gnus-summary-preview-mime-message (gnus-summary-article-number))
+  )
+
+(call-after-loaded
+ 'tm-partial
+ (function
+  (lambda ()
+    (set-atype 'mime/content-decoding-condition
+	       '((type . "message/partial")
+		 (method . mime-article/grab-message/partials)
+		 (major-mode . gnus-original-article-mode)
+		 (summary-buffer-exp . gnus-summary-buffer)
+		 ))
+    (set-alist 'tm-partial/preview-article-method-alist
+	       'gnus-original-article-mode
+	       'gnus-mime-partial-preview-function)
+    )))
 
 
 ;;; @ end

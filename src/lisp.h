@@ -274,11 +274,12 @@ Boston, MA 02111-1307, USA.  */
    assert checks take is measurable so let's not include them in
    production binaries. */
 
+#define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
+
 #ifdef USE_ASSERTIONS
 /* Highly dubious kludge */
 /*   (thanks, Jamie, I feel better now -- ben) */
 DECLARE_DOESNT_RETURN (assert_failed (CONST char *, int, CONST char *));
-# define abort() (assert_failed (__FILE__, __LINE__, "abort()"))
 # define assert(x) ((x) ? (void) 0 : assert_failed (__FILE__, __LINE__, #x))
 #else
 # ifdef DEBUG_XEMACS

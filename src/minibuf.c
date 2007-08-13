@@ -232,7 +232,7 @@ regexp_ignore_completion_p (CONST Bufbyte *nonreloc,
 	  Lisp_Object re = XCAR (regexps);
 	  if (STRINGP (re)
 	      && (fast_string_match (re, nonreloc, reloc, offset,
-				     length, 0, ERROR_ME, 0) >= 0))
+				     length, 0, ERROR_ME, 0) < 0))
 	    return (1);
 	}
     }
@@ -895,9 +895,9 @@ Non-nil means don't consider case significant in completion.
 */ );
   completion_ignore_case = 0;
 
-  /* Worthless doc string */
   DEFVAR_LISP ("completion-regexp-list", &Vcompletion_regexp_list /*
 List of regexps that should restrict possible completions.
+Each completion has to match all regexps in this list.
 */ );
   Vcompletion_regexp_list = Qnil;
 }

@@ -1160,7 +1160,7 @@ lisp=   ${lispdir}paths.el \
         ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP EPOCH_LISP \
         ${lispdir}prim/itimer.elc ${lispdir}prim/itimer-autosave.elc \
 	${lispdir}ediff/ediff-hook.elc \
-	${lispdir}custom/widget.elc \
+	${lispdir}custom/widget.elc ${lispdir}prim/custom-load.elc \
 	${lispdir}custom/custom.elc \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \

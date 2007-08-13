@@ -293,32 +293,34 @@ Example:  (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 
 (defun modeline-minor-mode-menu (event)
   (interactive "e")
-  (popup-menu-and-execute-in-window
-   (cons (format "Minor Mode Commands for %S:"
-		 (buffer-name (event-buffer event)))
-	 (apply 'nconc
-		(mapcar
-		 #'(lambda (x)
-		     (let* ((toggle-sym (car x))
-			    (toggle-fun
-			     (or (get toggle-sym
-				      'modeline-toggle-function)
-				 (and (fboundp toggle-sym)
-				      (commandp toggle-sym)
-				      toggle-sym))))
-		       (if (not toggle-fun) nil
-			 (list (vector
-				(concat (if (and (boundp toggle-sym)
-						 (symbol-value toggle-sym))
-					    "turn off " "turn on ")
-					(if (symbolp toggle-fun)
-					    (symbol-name toggle-fun)
-					  (symbol-name toggle-sym)))
-				
-				toggle-fun
-				t)))))
-		 minor-mode-alist)))
-   event))
+  (save-excursion
+    (set-buffer (event-buffer event))
+    (popup-menu-and-execute-in-window
+     (cons (format "Minor Mode Commands for %S:"
+		   (buffer-name (event-buffer event)))
+	   (apply 'nconc
+		  (mapcar
+		   #'(lambda (x)
+		       (let* ((toggle-sym (car x))
+			      (toggle-fun
+			       (or (get toggle-sym
+					'modeline-toggle-function)
+				   (and (fboundp toggle-sym)
+					(commandp toggle-sym)
+					toggle-sym))))
+			 (if (not toggle-fun) nil
+			   (list (vector
+				  (concat (if (and (boundp toggle-sym)
+						   (symbol-value toggle-sym))
+					      "turn off " "turn on ")
+					  (if (symbolp toggle-fun)
+					      (symbol-name toggle-fun)
+					    (symbol-name toggle-sym)))
+
+				  toggle-fun
+				  t)))))
+		   minor-mode-alist)))
+     event)))
 
 (defvar modeline-minor-mode-map (make-sparse-keymap 'modeline-minor-mode-map)
   "Keymap consulted for mouse-clicks on the minor-mode modeline list.")

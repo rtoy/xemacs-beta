@@ -996,6 +996,7 @@ as BUFFER means use current buffer.
      display).  We still need to make sure redisplay realizes that the
      contents have potentially altered and it needs to do some
      work. */
+  buf = decode_buffer(buffer, 0);
   BUF_MODIFF (buf)++;
   BUF_SAVE_MODIFF (buf) = NILP (flag) ? BUF_MODIFF (buf) : 0;
   MARK_MODELINE_CHANGED;

@@ -535,8 +535,12 @@ into icons, regardless of the window manager.")
     
     (if use-same-frame
 	(let ((window-min-height 1))
-	  ;; avoid dedicated and non-splittable windows
-	  (ediff-skip-unsuitable-frames)
+	  (if (and (eq frame-A frame-B)
+		   (eq frame-B frame-C)
+		   (frame-live-p frame-A))
+	      (select-frame frame-A)
+	    ;; avoid dedicated and non-splittable windows
+	    (ediff-skip-unsuitable-frames))
 	  (delete-other-windows)
 	  (setq merge-window-lines
 		(max 2 (round (* (window-height) merge-window-share))))
@@ -698,8 +702,10 @@ into icons, regardless of the window manager.")
     
     (if use-same-frame
 	(let (wind-width-or-height) ; this affects 3way setups only
-	  ;; avoid dedicated and non-splittable windows
-	  (ediff-skip-unsuitable-frames)
+	  (if (and (eq frame-A frame-B) (frame-live-p frame-A))
+	      (select-frame frame-A)
+	    ;; avoid dedicated and non-splittable windows
+	    (ediff-skip-unsuitable-frames))
 	  (delete-other-windows)
 	  (switch-to-buffer buf-A)
 	  (setq wind-A (selected-window))

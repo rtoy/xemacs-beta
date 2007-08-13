@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.59
+;; Version: 1.63
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -1835,17 +1835,23 @@ The menu is in a format applicable to `easy-menu-define'."
       item)))
 
 ;;;###autoload
-(defun custom-menu-update ()
+(defun custom-menu-update (event)
   "Update customize menu."
-  (interactive)
+  (interactive "e")
   (add-hook 'custom-define-hook 'custom-menu-reset)
-  (let ((menu `(,(car custom-help-menu)
-		,(widget-apply '(custom-group) :custom-menu 'emacs)
+  (let* ((emacs (widget-apply '(custom-group) :custom-menu 'emacs))
+	 (menu `(,(car custom-help-menu)
+		,emacs
 		,@(cdr (cdr custom-help-menu)))))
     (if (fboundp 'add-submenu)
-	(add-submenu '("Options") menu)
-      (define-key global-map [menu-bar help-menu customize-menu]
-	(cons (car menu) (easy-menu-create-keymaps (car menu) (cdr menu)))))))
+	(progn 
+	  (add-submenu '("Options") menu)
+	  (cdr emacs))
+      (let ((map (easy-menu-create-keymaps (car menu) (cdr menu))))
+	(define-key global-map [menu-bar help-menu customize-menu]
+	  (cons (car menu) map))
+	(when (fboundp 'x-popup-menu)
+	  (x-popup-menu event map))))))
 
 ;;; Dependencies.
 

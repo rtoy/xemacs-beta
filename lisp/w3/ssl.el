@@ -1,7 +1,7 @@
 ;;; ssl.el,v --- ssl functions for emacsen without them builtin
 ;; Author: wmperry
-;; Created: 1996/05/28 01:20:06
-;; Version: 1.2
+;; Created: 1997/03/09 23:02:56
+;; Version: 1.8
 ;; Keywords: comm
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,10 +29,13 @@
 (defvar ssl-program-name "ssl"
   "*The program to run in a subprocess to open an SSL connection.")
 
-(defvar ssl-program-arguments nil
+(defvar ssl-program-arguments '(host port)
   "*Arguments that should be passed to the program `ssl-program-name'.
 This should be used if your SSL program needs command line switches to
-specify any behaviour (certificate file locations, etc).")
+specify any behaviour (certificate file locations, etc).
+The special symbols 'host and 'port may be used in the list of arguments
+and will be replaced with the hostname and service/port that will be connected
+to.")
 
 (defun open-ssl-stream (name buffer host service)
   "Open a SSL connection for a service to a host.
@@ -47,16 +50,14 @@ BUFFER is the buffer (or buffer-name) to associate with the process.
  with any buffer
 Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
- specifying a port number to connect to."
-  (let ((proc (apply 'start-process
-		     name
-		     buffer
-		     ssl-program-name
-		     (append ssl-program-arguments
-			     (list host 
-				   (if (stringp service)
-				       service
-				     (int-to-string service)))))))
+specifying a port number to connect to."
+  (if (integerp service) (setq service (int-to-string service)))
+  (let* ((process-connection-type t)
+	 (port service)
+	 (proc (eval
+		(`
+		 (start-process name buffer ssl-program-name
+				(,@ ssl-program-arguments))))))
     (process-kill-without-query proc)
     proc))
 

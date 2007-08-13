@@ -45,7 +45,7 @@
 ;;
 ;; See the doc strings of these functions for more information.
 
-(defvar itimer-version "1.03"
+(defvar itimer-version "1.04"
   "Version number of the itimer package.")
 
 (defvar itimer-list nil
@@ -183,7 +183,7 @@ This function is called each time ITIMER expires."
 
 (defun itimer-is-idle (itimer)
   "Returns non-nil if ITIMER is an idle timer.
-Normal timers eexpire after a set interval.  Idle timers expire
+Normal timers expire after a set interval.  Idle timers expire
 only after Emacs has been idle for a specific interval.  ``Idle''
 means no command events within the interval."
   (check-itimer itimer)
@@ -220,7 +220,7 @@ Returns VALUE."
     ;; timeout value would expire before we would normally
     ;; wakeup, wakeup now and recompute a new wakeup time.
     (or (and (< value itimer-next-wakeup)
-	     (get-itimer (itimer-name itimer))
+	     (and (itimer-name itimer) (get-itimer (itimer-name itimer)))
 	     (progn (itimer-driver-wakeup)
 		    (setcar (cdr itimer) value)
 		    (itimer-driver-wakeup)
@@ -694,24 +694,25 @@ x      start a new itimer
 	;; allow keyboard quit to occur, but catch and report it.
 	;; provide the variable `current-itimer' in case the function
 	;; is interested.
-	(condition-case condition-data
-	    (save-match-data
-	      (let* ((current-itimer itimer)
-		     (quit-flag nil)
-		     (inhibit-quit nil)
-		     itimer itimers time-elapsed)
-		(if (itimer-uses-arguments current-itimer)
-		    (apply (itimer-function current-itimer)
-			   (itimer-function-arguments current-itimer))
-		  (funcall (itimer-function current-itimer)))))
-	  (error (message "itimer \"%s\" signaled: %s" (itimer-name itimer)
-			  (prin1-to-string condition-data)))
-	  (quit (message "itimer \"%s\" quit" (itimer-name itimer))))
-	;; restart the itimer if we should, otherwise delete it.
-	(if (null (itimer-restart itimer))
-	    (delete-itimer itimer)
-	  (set-itimer-value-internal itimer (itimer-restart itimer))
-	  (setq next-wakeup (min next-wakeup (itimer-value itimer)))))
+	(unwind-protect
+	    (condition-case condition-data
+		(save-match-data
+		  (let* ((current-itimer itimer)
+			 (quit-flag nil)
+			 (inhibit-quit nil)
+			 itimer itimers time-elapsed)
+		    (if (itimer-uses-arguments current-itimer)
+			(apply (itimer-function current-itimer)
+			       (itimer-function-arguments current-itimer))
+		      (funcall (itimer-function current-itimer)))))
+	      (error (message "itimer \"%s\" signaled: %s" (itimer-name itimer)
+			      (prin1-to-string condition-data)))
+	      (quit (message "itimer \"%s\" quit" (itimer-name itimer))))
+	  ;; restart the itimer if we should, otherwise delete it.
+	  (if (null (itimer-restart itimer))
+	      (delete-itimer itimer)
+	    (set-itimer-value-internal itimer (itimer-restart itimer))
+	    (setq next-wakeup (min next-wakeup (itimer-value itimer))))))
       (setq itimers (cdr itimers)))
     ;; if user is editing itimers, update displayed info
     (if (eq major-mode 'itimer-edit-mode)
@@ -728,8 +729,11 @@ x      start a new itimer
 	     (process-send-string itimer-process "3\n"))
     ;; if there are no active itimers, return quickly.
     (if itimer-list
-	(setq itimer-next-wakeup
-	      (itimer-run-expired-timers (string-to-int string)))
+	(let ((wakeup nil))
+	  (unwind-protect
+	      (setq wakeup (itimer-run-expired-timers (string-to-int string)))
+	    (and (null wakeup) (process-send-string process "1\n")))
+	  (setq itimer-next-wakeup wakeup))
       (setq itimer-next-wakeup 600))
     ;; tell itimer-process when to wakeup again
     (process-send-string itimer-process
@@ -818,10 +822,12 @@ x      start a new itimer
   (let* ((inhibit-quit t)
 	 (now (current-time))
 	 (elapsed (itimer-time-difference now itimer-timer-last-wakeup))
-	 sleep)
-    (setq itimer-timer-last-wakeup now
-	  sleep (itimer-run-expired-timers elapsed)
-	  itimer-next-wakeup sleep
+	 (sleep nil))
+    (setq itimer-timer-last-wakeup now)
+    (unwind-protect
+	(setq sleep (itimer-run-expired-timers elapsed))
+      (and (null sleep) (add-timeout 1 'itimer-timer-driver nil nil)))
+    (setq itimer-next-wakeup sleep
 	  itimer-timer (add-timeout sleep 'itimer-timer-driver nil nil))))
 
 (defun itimer-driver-start ()

@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/03/06 04:12:42
-;; Version: 1.144
+;; Created: 1997/03/14 06:33:15
+;; Version: 1.147
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -440,14 +440,6 @@ as the bullet character.")
 
 ;; Various macros
 (eval-when-compile
-  (defmacro w3-expand-url (url)
-    (`
-     (url-expand-file-name (, url)
-			   (cdr-safe
-			    (assoc
-			     (cdr-safe
-			      (assq 'base args)) w3-base-alist)))))
-
   (defmacro w3-handle-empty-tag ()
     (`
      (progn
@@ -1684,7 +1676,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		     (if cols
 			 (setq w3-frameset-dimensions (push cols w3-frameset-dimensions))))
 		   (w3-handle-content node))
-	       (w3-handle-empty-tag)))
+	       (w3-handle-content node)))
 	    (frame
 	     (if w3-display-frames
 		 (let* ((href (or (w3-get-attribute 'src)
@@ -1705,7 +1697,8 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 					(list
 					 (car w3-frame-labels)
 					 name
-					 (cdr w3-frame-labels)))))))))))
+					 (cdr w3-frame-labels)))))))))
+	       (w3-handle-empty-tag)))
 	    (noframes
 	     (if w3-display-frames
 		 (w3-handle-empty-tag)
@@ -2070,9 +2063,9 @@ Should be run before restoring w3-table-border-chars to ascii characters."
   (and (not w3-running-xemacs)
        (not (eq (device-type) 'tty))
        (w3-fixup-eol-faces))
-  (message "Drawing... done")
-  ;;(w3-handle-headers)
-  )
+  (let ((inhibit-read-only t))
+    (put-text-property (point-min) (point-max) 'read-only nil))
+  (message "Drawing... done"))
 
 (defun w3-region (st nd)
   (if (not w3-setup-done) (w3-do-setup))

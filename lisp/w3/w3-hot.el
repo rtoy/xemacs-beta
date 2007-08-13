@@ -1,7 +1,7 @@
 ;;; w3-hot.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/02/18 23:36:48
-;; Version: 1.12
+;; Created: 1997/03/11 15:04:05
+;; Version: 1.13
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -316,15 +316,15 @@ visited or interesting items you have found on the World Wide Web."
 (defun w3-hotlist-add-document-at-point (pref-arg)
   "Add the document pointed to by the hyperlink under point to the hotlist."
   (interactive "P")
-  (let ((url (w3-view-this-url t)) title)
+  (let ((url (w3-view-this-url t))
+	(widget (widget-at (point)))
+	(title nil))
     (or url (error "No link under point."))
-    (setq title (get-text-property (point) 'title))
-    (if (and title
-	     (marker-buffer (car title))
-	     (marker-buffer (cdr title)))
-	(setq title (buffer-substring-no-properties (car title) (cdr title)))
-      (setq title "None"))
-    (w3-hotlist-add-document pref-arg title url)))
+    (if (and (widget-get widget :from)
+	     (widget-get widget :to))
+	(setq title (buffer-substring (widget-get widget :from)
+				      (widget-get widget :to))))
+    (w3-hotlist-add-document pref-arg (or title url) url)))
 
 (defun w3-hotlist-add-document (pref-arg &optional the-title the-url)
   "Add this documents url to the hotlist"

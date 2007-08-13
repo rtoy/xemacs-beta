@@ -2400,7 +2400,8 @@ for `auto-fill-function' when turning Auto Fill mode on."
   (auto-fill-mode 1))
 
 (defun set-fill-column (arg)
-  "Set `fill-column' to current column, or to argument if given.
+  "Set `fill-column' to specified argument.
+Just \\[universal-argument] as argument means to use the current column
 The variable `fill-column' has a separate value for each buffer."
   (interactive "_P") ; XEmacs
   (cond ((integerp arg)

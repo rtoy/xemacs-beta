@@ -180,6 +180,7 @@ fatal_error_signal (int sig)
       stderr_out("\nLisp backtrace follows:\n\n");
       Fbacktrace(Qexternal_debugging_output, Qt);
       
+# if 0	/* This is evil, rarely useful, and causes grief in some cases. */
       /* Check for Sun-style stack printing via /proc */
       {
         CONST char *pstack = "/usr/proc/bin/pstack";
@@ -192,6 +193,7 @@ fatal_error_signal (int sig)
             system(buf);
           }
       }
+# endif
     }
 #ifdef VMS
   LIB$STOP (SS$_ABORT);
@@ -2120,7 +2122,6 @@ Non-nil return value means XEmacs is running without interactive terminal.
    in one session without having to recompile. */
 /* #define ASSERTIONS_DONT_ABORT */
 
-#ifdef USE_ASSERTIONS
 /* This highly dubious kludge ... shut up Jamie, I'm tired of your slagging. */
 
 DOESNT_RETURN
@@ -2133,7 +2134,6 @@ assert_failed (CONST char *file, int line, CONST char *expr)
   abort ();
 #endif
 }
-#endif /* USE_ASSERTIONS */
 
 #ifdef QUANTIFY
 DEFUN ("quantify-start-recording-data",

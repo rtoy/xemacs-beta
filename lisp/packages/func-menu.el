@@ -385,9 +385,10 @@ the buffer contains more lines than the present window height."
 (defun fume-add-submenu (menu-name submenu before)
   (apply fume-add-submenu (fume-munge-menu-args menu-name submenu before)))
 
+;; this seems to really be `should I try to change the menubar'
 (defconst fume-not-tty
-  (or (and (fboundp 'device-type) (not (eq 'tty (device-type))))
-      (and (symbol-value 'window-system) t))) ; obsolete test
+  (or (featurep 'menubar)     ;; XEmacs
+      (featurep 'menu-bar)))  ;; GNU Emacs  
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;  Customizable Variables  ;;;;;;;;;;;;;;;;;;;;;;;;

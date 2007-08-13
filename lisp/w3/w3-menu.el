@@ -1,7 +1,7 @@
 ;;; w3-menu.el --- Menu functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/04 14:32:11
-;; Version: 1.30
+;; Created: 1997/03/13 19:25:10
+;; Version: 1.32
 ;; Keywords: menu, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -318,11 +318,11 @@ on that platform.")
 	(if (and w3-running-xemacs (featurep 'toolbar))
 	    ["Show Toolbar" w3-toggle-toolbar
 	     :style toggle :selected (w3-toolbar-active)]
-	  nil)
+	  ["Show Toolbar" w3-toggle-toolbar nil])
 	(if w3-running-xemacs
 	    ["Show Location" w3-toggle-location
 	     :style toggle :selected (w3-location-active)]
-	  nil)
+	  ["Show Location" w3-toggle-location nil])
 	(if w3-running-xemacs
 	    ["Show Status Bar" w3-toggle-minibuffer
 	     :style toggle
@@ -634,6 +634,7 @@ on that platform.")
 		  url-be-asynchronous
 		  url-honor-refresh-requests
 		  url-privacy-level
+		  url-cookie-confirmation
 		  url-proxy-services
 		  url-standalone-mode
 		  url-use-hypertext-gopher

@@ -849,8 +849,8 @@ a new format, when variables have changed, etc."
 (defun startup-splash-frame-body ()
   `("\n" ,(emacs-version) "\n"
     ,@(if (string-match "beta" emacs-version)
-	  `( (face (bold blue) ( "This is an Experimental version of XEmacs."
-				 "Type " (key describe-beta)
+	  `( (face (bold blue) ( "This is an Experimental version of XEmacs. "
+				 " Type " (key describe-beta)
 				 " to see what this means.\n")))
 	`( "\n"))
     (face bold-italic "\
@@ -893,7 +893,7 @@ XEmacs, by either running the command `xemacs-mule', or by using the X resource
     "To get out of XEmacs, type " (key save-buffers-kill-emacs) ".\n"
     "Type " (key help-with-tutorial) " for a tutorial on using XEmacs.\n"
     "Type " (key info) " to enter Info, "
-    "which you can use to read online documentation.\n\n"
+    "which you can use to read online documentation.\n"
     (face (bold red) ( "\
 For tips and answers to frequently asked questions, see the XEmacs FAQ.
 \(It's on the Help menu, or type " (key xemacs-local-faq) " [a capital F!].\)"))))
@@ -1215,6 +1215,13 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 		      (list lisp)
 		    )
 		  ))
+
+    ;; 1997/03/06 by Jeff Miller <jmiller@bayserve.net>
+    ;; initialize 'site-directory'.  This is the site-lisp dir used by 
+    ;; XEmacs
+     (if site-lisp
+        (setq site-directory (file-name-as-directory site-lisp))
+         )
 
     ;; If running from the build directory, always prefer the exec-directory
     ;; that is here over the one that came from paths.h.

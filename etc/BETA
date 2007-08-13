@@ -35,6 +35,24 @@ list itself, they should be brought to the attention of the Mailing
 List manager Chuck Thompson <cthomp@xemacs.org>.
 
 
+** Beta Release Schedule
+========================
+
+The URL ftp://ftp.xemacs.org/pub/beta/README always contains the best
+estimate of when the next beta XEmacs will be released.  For weekend
+betas the release time is generally in the vicinity of 2PM to 5PM US
+Pacific Time (Universal Time minus 8 hours).  For weekday betas, the
+release time is generally in the vicinity of 8PM to Midnight US
+Pacific Time on the listed day.
+
+While 19.15 and 20.x are in parallel development, a simultaneous
+release day implies a release of 20.x first, followed a few hours
+later by 19.15.
+
+Betas are nominally a week apart, scheduled on every Saturday.
+Midweek releases are made when a serious enough problem warrants it.
+
+
 ** Reporting Problems
 =====================
 

@@ -114,9 +114,8 @@ value of this flag.")
   "Maximum number of saved comments in the comment ring.")
 
 ;;; XEmacs - This is dumped into loaddefs.el already.
-;; Not any more! -sb
-(defvar diff-switches "-c"
-  "*A string or list of strings specifying switches to be passed to diff.")
+;(defvar diff-switches "-c"
+;  "*A string or list of strings specifying switches to be passed to diff.")
 
 ;;;###autoload
 (defvar vc-checkin-hook nil

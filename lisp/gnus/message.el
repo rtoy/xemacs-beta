@@ -93,6 +93,11 @@
   "Composing Mail Messages"
   :group 'message)
 
+(defgroup message-faces nil
+  "Faces used for message composing."
+  :group 'message
+  :group 'faces)
+
 (defcustom message-directory "~/Mail/"
   "*Directory from which all other mail file variables are derived."
   :group 'message-various
@@ -398,7 +403,7 @@ might set this variable to '(\"-f\" \"you@some.where\")."
 	(t '(nnspool "")))
   "Method used to post news."
   :group 'message-news
-  :group 'mesage-sending
+  :group 'message-sending
   ;; This should be the `gnus-select-method' widget, but that might
   ;; create a dependence to `gnus.el'.
   :type 'sexp)
@@ -614,7 +619,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t :italic t)))
   "Face used for displaying From headers."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defface message-header-cc-face
   '((((class color)
@@ -626,7 +631,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t)))
   "Face used for displaying Cc headers."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defface message-header-subject-face
   '((((class color)
@@ -638,7 +643,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t)))
   "Face used for displaying subject headers."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defface message-header-newsgroups-face
   '((((class color)
@@ -650,7 +655,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t :italic t)))
   "Face used for displaying newsgroups headers."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defface message-header-other-face
   '((((class color)
@@ -662,7 +667,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t :italic t)))
   "Face used for displaying newsgroups headers."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defface message-header-name-face
   '((((class color)
@@ -674,7 +679,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t)))
   "Face used for displaying header names."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defface message-header-xheader-face
   '((((class color)
@@ -686,7 +691,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t)))
   "Face used for displaying X-Header headers."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defface message-separator-face
   '((((class color)
@@ -698,7 +703,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t)))
   "Face used for displaying the separator."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defface message-cited-text-face
   '((((class color)
@@ -710,7 +715,7 @@ Defaults to `text-mode-abbrev-table'.")
     (t
      (:bold t)))
   "Face used for displaying cited text names."
-  :group 'message-headers)
+  :group 'message-faces)
 
 (defvar message-font-lock-keywords
   (let* ((cite-prefix "A-Za-z")

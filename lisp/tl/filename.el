@@ -3,7 +3,7 @@
 ;; Copyright (C) 1996 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: filename.el,v 1.2 1996/12/29 00:15:09 steve Exp $
+;; Version: $Id: filename.el,v 1.3 1997/03/16 05:55:39 steve Exp $
 ;; Keywords: string, file name
 
 ;; This file is part of tl (Tiny Library).
@@ -43,7 +43,7 @@
 
 (defvar filename-filters
   (nconc
-   (and (file-installed-p "kakasi" exec-path)
+   (and (exec-installed-p "kakasi")
 	'(filename-japanese-to-roman-string)
 	)
    '(filename-special-filter
