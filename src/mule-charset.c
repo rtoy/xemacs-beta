@@ -58,6 +58,8 @@ Lisp_Object Vcharset_chinese_big5_2;
 Lisp_Object Vcharset_chinese_cns11643_1;
 Lisp_Object Vcharset_chinese_cns11643_2;
 Lisp_Object Vcharset_korean_ksc5601;
+
+#ifdef ENABLE_COMPOSITE_CHARS
 Lisp_Object Vcharset_composite;
 
 /* Hashtables for composite chars.  One maps string representing
@@ -66,14 +68,16 @@ Lisp_Object Vcharset_composite;
 Lisp_Object Vcomposite_char_char2string_hashtable;
 Lisp_Object Vcomposite_char_string2char_hashtable;
 
+static int composite_char_row_next;
+static int composite_char_col_next;
+
+#endif /* ENABLE_COMPOSITE_CHARS */
+
 /* Table of charsets indexed by leading byte. */
 Lisp_Object charset_by_leading_byte[128];
 
 /* Table of charsets indexed by type/final-byte/direction. */
 Lisp_Object charset_by_attributes[4][128][2];
-
-static int composite_char_row_next;
-static int composite_char_col_next;
 
 /* Table of number of bytes in the string representation of a character
    indexed by the first byte of that representation.
@@ -277,6 +281,8 @@ non_ascii_valid_char_p (Emchar ch)
       if (f2 < 0x20 || f3 < 0x20)
 	return 0;
 
+
+#ifdef ENABLE_COMPOSITE_CHARS
       if (f1 + FIELD1_TO_OFFICIAL_LEADING_BYTE == LEADING_BYTE_COMPOSITE)
 	{
 	  if (UNBOUNDP (Fgethash (make_int (ch),
@@ -285,6 +291,7 @@ non_ascii_valid_char_p (Emchar ch)
 	    return 0;
 	  return 1;
 	}
+#endif /* ENABLE_COMPOSITE_CHARS */
 
       if (f2 != 0x20 && f2 != 0x7F && f3 != 0x20 && f3 != 0x7F)
 	return 1;
@@ -461,7 +468,7 @@ make_charset (int id, Lisp_Object name, Bufbyte leading_byte, unsigned char rep_
 				CHARSET_TYPE (cs) == CHARSET_TYPE_96) ? 1 : 2;
   CHARSET_CHARS         (cs) = (CHARSET_TYPE (cs) == CHARSET_TYPE_94 ||
 				CHARSET_TYPE (cs) == CHARSET_TYPE_94X94) ? 94 : 96;
-    
+
   if (final)
     {
       /* some charsets do not have final characters.  This includes
@@ -1068,6 +1075,7 @@ N defaults to 0 if omitted.
 }
 
 
+#ifdef ENABLE_COMPOSITE_CHARS
 /************************************************************************/
 /*                     composite character functions                    */
 /************************************************************************/
@@ -1113,7 +1121,7 @@ composite_char_string (Emchar ch)
   return str;
 }
 
-DEFUN ("make-composite-char", Fmake_composite_char, 1, 1, 0, /*
+xxDEFUN ("make-composite-char", Fmake_composite_char, 1, 1, 0, /*
 Convert a string into a single composite character.
 The character is the result of overstriking all the characters in
 the string.
@@ -1125,7 +1133,7 @@ the string.
 					   XSTRING_LENGTH (string)));
 }
 
-DEFUN ("composite-char-string", Fcomposite_char_string, 1, 1, 0, /*
+xxDEFUN ("composite-char-string", Fcomposite_char_string, 1, 1, 0, /*
 Return a string of the characters comprising a composite character.
 */
        (ch))
@@ -1138,6 +1146,7 @@ Return a string of the characters comprising a composite character.
     signal_simple_error ("Must be composite char", ch);
   return composite_char_string (emch);
 }
+#endif /* ENABLE_COMPOSITE_CHARS */
 
 
 /************************************************************************/
@@ -1167,8 +1176,10 @@ syms_of_mule_charset (void)
   DEFSUBR (Fchar_charset);
   DEFSUBR (Fchar_octet);
 
+#ifdef ENABLE_COMPOSITE_CHARS
   DEFSUBR (Fmake_composite_char);
   DEFSUBR (Fcomposite_char_string);
+#endif
 
   defsymbol (&Qcharsetp, "charsetp");
   defsymbol (&Qregistry, "registry");
@@ -1397,6 +1408,8 @@ complex_vars_of_mule_charset (void)
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("KS C5601 (Hangul and Korean Hanja)"),
 		  build_string ("ksc5601"));
+
+#ifdef ENABLE_COMPOSITE_CHARS
   /* #### For simplicity, we put composite chars into a 96x96 charset.
      This is going to lead to problems because you can run out of
      room, esp. as we don't yet recycle numbers. */
@@ -1416,5 +1429,6 @@ complex_vars_of_mule_charset (void)
     make_lisp_hashtable (500, HASHTABLE_NONWEAK, HASHTABLE_EQ);
   staticpro (&Vcomposite_char_string2char_hashtable);
   staticpro (&Vcomposite_char_char2string_hashtable);
+#endif /* ENABLE_COMPOSITE_CHARS */
 
 }

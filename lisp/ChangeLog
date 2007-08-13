@@ -1,3 +1,31 @@
+1999-03-12  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.66 is released
+
+1999-02-19  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* x-faces.el (x-init-global-faces): Add default tag to specifiers, 
+	so they can be overridden by x-init-face-from-resources.
+	Additionally specify the font name also with an x tag.
+
+1999-03-08  Andy Piper  <andy@xemacs.org>
+
+	* package-get.el (package-get-base): autoload.
+
+	* menubar-items.el (default-menubar): add update menu item. Fix
+	custom menu to only be activated when package-base is available.
+
+	* package-get.el (package-get-custom): don't load
+	package-get-custom as it is auto-generated. Fix group definition.
+
+1999-03-05  Didier Verna  <verna@inf.enst.fr>
+
+	* cus-dep.el (Custom-make-dependencies): use `prin1-to-string'
+	instead of `symbol-name' (Thanks Kyle).
+
+	* cus-edit.el (custom-save-variables): use `prin1' instead of
+	princ to write symbols.
+
 1999-03-05  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.65 is released

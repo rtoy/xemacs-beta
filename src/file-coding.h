@@ -305,20 +305,26 @@ extern Lisp_Object Vterminal_coding_system;
 					     CODING_STATE_SS2 overrides; but
 					     this probably indicates an error
 					     in the text encoding. */
+#ifdef ENABLE_COMPOSITE_CHARS
 #define CODING_STATE_COMPOSITE  (1 << 8)  /* If set, we're currently processing
 					     a composite character (i.e. a
 					     character constructed by
 					     overstriking two or more
 					     characters). */
+#endif /* ENABLE_COMPOSITE_CHARS */
 
 
 /* CODING_STATE_ISO2022_LOCK is the mask of flags that remain on until
    explicitly turned off when in the ISO2022 encoder/decoder.  Other flags are
    turned off at the end of processing each character or escape sequence. */
+#ifdef ENABLE_COMPOSITE_CHARS
 # define CODING_STATE_ISO2022_LOCK \
   (CODING_STATE_END | CODING_STATE_COMPOSITE | CODING_STATE_R2L)
-#define CODING_STATE_BIG5_LOCK \
-  CODING_STATE_END
+#else
+# define CODING_STATE_ISO2022_LOCK (CODING_STATE_END | CODING_STATE_R2L)
+#endif
+
+#define CODING_STATE_BIG5_LOCK CODING_STATE_END
 
 /* Flags indicating what we've seen so far when parsing an
    ISO2022 escape sequence. */
@@ -369,8 +375,10 @@ enum iso_esc_flag
 			   character must be ]. */
 
   /* Full sequences. */
+#ifdef ENABLE_COMPOSITE_CHARS
   ISO_ESC_START_COMPOSITE, /* Private usage for START COMPOSING */
-  ISO_ESC_END_COMPOSITE, /* Private usage for END COMPOSING */
+  ISO_ESC_END_COMPOSITE,   /* Private usage for END COMPOSING */
+#endif /* ENABLE_COMPOSITE_CHARS */
   ISO_ESC_SINGLE_SHIFT, /* We've seen a complete single-shift sequence. */
   ISO_ESC_LOCKING_SHIFT,/* We've seen a complete locking-shift sequence. */
   ISO_ESC_DESIGNATE,	/* We've seen a complete designation sequence. */
@@ -505,7 +513,9 @@ void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
 #ifndef MULE
 #define MIN_LEADING_BYTE		0x80
 /* These need special treatment in a string and/or character */
+#ifdef ENABLE_COMPOSITE_CHARS
 #define LEADING_BYTE_COMPOSITE		0x80 /* for a composite character */
+#endif
 #define LEADING_BYTE_CONTROL_1		0x8F /* represent normal 80-9F */
 #define LEADING_BYTE_LATIN_ISO8859_1	0x81 /* Right half of ISO 8859-1 */
 #define BYTE_C1_P(c) ((unsigned int) ((unsigned int) (c) - 0x80) < 0x20)

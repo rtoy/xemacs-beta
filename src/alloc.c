@@ -636,78 +636,93 @@ gc_record_type_p (Lisp_Object frob, CONST struct lrecord_implementation *type)
 }
 
 
-/**********************************************************************/
-/*			  Debugger support			      */
-/**********************************************************************/
-/* Give gdb/dbx enough information to decode Lisp Objects.
-   We make sure certain symbols are defined, so gdb doesn't complain
-   about expressions in src/gdbinit.  Values are randomly chosen.
-   See src/gdbinit or src/dbxrc to see how this is used.  */
+/************************************************************************/
+/*			  Debugger support				*/
+/************************************************************************/
+/* Give gdb/dbx enough information to decode Lisp Objects.  We make
+   sure certain symbols are always defined, so gdb doesn't complain
+   about expressions in src/gdbinit.  See src/gdbinit or src/dbxrc to
+   see how this is used.  */
 
-enum dbg_constants
-{
 #ifdef USE_MINIMAL_TAGBITS
-  dbg_valmask = (EMACS_INT) (((1UL << VALBITS) - 1) << GCBITS),
-  dbg_typemask = (EMACS_INT) ((1UL << GCTYPEBITS) - 1),
-  dbg_USE_MINIMAL_TAGBITS = 1,
-  dbg_Lisp_Type_Int = 100,
-#else /* ! USE_MIMIMAL_TAGBITS */
-  dbg_valmask = (EMACS_INT) ((1UL << VALBITS) - 1),
-  dbg_typemask = (EMACS_INT) (((1UL << GCTYPEBITS) - 1) << (VALBITS + GCMARKBITS)),
-  dbg_USE_MINIMAL_TAGBITS = 0,
-  dbg_Lisp_Type_Int = Lisp_Type_Int,
-#endif /* ! USE_MIMIMAL_TAGBITS */
+EMACS_UINT dbg_valmask = ((1UL << VALBITS) - 1) << GCBITS;
+EMACS_UINT dbg_typemask = (1UL << GCTYPEBITS) - 1;
+unsigned char dbg_USE_MINIMAL_TAGBITS = 1;
+unsigned char Lisp_Type_Int = 100;
+#else
+EMACS_UINT dbg_valmask = (1UL << VALBITS) - 1;
+EMACS_UINT dbg_typemask = ((1UL << GCTYPEBITS) - 1) << (VALBITS + GCMARKBITS);
+unsigned char dbg_USE_MINIMAL_TAGBITS = 0;
+#endif
+
+#ifdef USE_UNION_TYPE
+unsigned char dbg_USE_UNION_TYPE = 1;
+#else
+unsigned char dbg_USE_UNION_TYPE = 0;
+#endif
+
 #ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
-  dbg_USE_INDEXED_LRECORD_IMPLEMENTATION = 1,
+unsigned char dbg_USE_INDEXED_LRECORD_IMPLEMENTATION = 1;
 #else
-  dbg_USE_INDEXED_LRECORD_IMPLEMENTATION = 0,
+unsigned char dbg_USE_INDEXED_LRECORD_IMPLEMENTATION = 0;
 #endif
-  dbg_Lisp_Type_Char = Lisp_Type_Char,
-  dbg_Lisp_Type_Record = Lisp_Type_Record,
+
 #ifdef LRECORD_CONS
-  dbg_Lisp_Type_Cons = 101,
+unsigned char Lisp_Type_Cons = 101;
 #else
-  dbg_Lisp_Type_Cons = Lisp_Type_Cons,
-  lrecord_cons = 201,
+unsigned char lrecord_cons;
 #endif
+
 #ifdef LRECORD_STRING
-  dbg_Lisp_Type_String = 102,
+unsigned char Lisp_Type_String = 102;
 #else
-  dbg_Lisp_Type_String = Lisp_Type_String,
-  lrecord_string = 202,
+unsigned char lrecord_string;
 #endif
+
 #ifdef LRECORD_VECTOR
-  dbg_Lisp_Type_Vector = 103,
+unsigned char Lisp_Type_Vector = 103;
 #else
-  dbg_Lisp_Type_Vector = Lisp_Type_Vector,
-  lrecord_vector = 203,
+unsigned char lrecord_vector;
 #endif
+
 #ifdef LRECORD_SYMBOL
-  dbg_Lisp_Type_Symbol = 104,
+unsigned char Lisp_Type_Symbol = 104;
 #else
-  dbg_Lisp_Type_Symbol = Lisp_Type_Symbol,
-  lrecord_symbol = 204,
+unsigned char lrecord_symbol;
 #endif
+
 #ifndef MULE
-  lrecord_char_table_entry = 205,
-  lrecord_charset          = 206,
-  lrecord_coding_system    = 207,
+unsigned char lrecord_char_table_entry;
+unsigned char lrecord_charset;
+#ifndef FILE_CODING
+unsigned char lrecord_coding_system;
 #endif
+#endif
+
 #ifndef HAVE_TOOLBARS
-  lrecord_toolbar_button   = 208,
+unsigned char lrecord_toolbar_button;
 #endif
-#ifndef HAVE_TOOLTALK
-  lrecord_tooltalk_message = 210,
-  lrecord_tooltalk_pattern = 211,
+
+#ifndef TOOLTALK
+unsigned char lrecord_tooltalk_message;
+unsigned char lrecord_tooltalk_pattern;
 #endif
+
 #ifndef HAVE_DATABASE
-  lrecord_database = 212,
+unsigned char lrecord_database;
 #endif
-  dbg_valbits = VALBITS,
-  dbg_gctypebits = GCTYPEBITS
-  /* If we don't have an actual object of this enum, pgcc (and perhaps
-     other compilers) might optimize away the entire type declaration :-( */
-} dbg_dummy;
+
+unsigned char dbg_valbits = VALBITS;
+unsigned char dbg_gctypebits = GCTYPEBITS;
+
+/* Macros turned into functions for ease of debugging.
+   Debuggers don't know about macros! */
+int dbg_eq (Lisp_Object obj1, Lisp_Object obj2);
+int
+dbg_eq (Lisp_Object obj1, Lisp_Object obj2)
+{
+  return EQ (obj1, obj2);
+}
 
 
 /**********************************************************************/
@@ -4314,6 +4329,10 @@ disksave_object_finalization (void)
   Vexec_path = Qnil;
   Vload_path = Qnil;
   /* Vdump_load_path = Qnil; */
+  /* Release hash tables for locate_file */
+  Fset (intern ("early-package-load-path"), Qnil);
+  Fset (intern ("late-package-load-path"),  Qnil);
+  Fset (intern ("last-package-load-path"),  Qnil);
   uncache_home_directory();
 
 #if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \

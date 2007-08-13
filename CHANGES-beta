@@ -1,6 +1,11 @@
 							-*- indented-text -*-
+to 21.0.66 "20 minutes to Nikko"
+-- build fixes from Martin Buchholz
+-- various patches from Andy Piper and Jan Vroonhof
+-- alist.el synched with APEL-9.13 from MORIOKA Tomohiko
+
 to 21.0.65 "20 minutes to Nikko"
--- Fix for new Berkeley DB library from Paul Keusemann/Gregory Neal Shapiro
+-- Fix for new Berkeley DB library from Paul Keusemann/Gregory Neil Shapiro
 -- Various package-ui fixes from Jan Vroonhof
 -- Fix for doubled font-locking during buffer reversion
 -- KFM browsing support from Neal Becker

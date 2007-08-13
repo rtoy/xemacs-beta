@@ -237,10 +237,16 @@
                   (package-get-download-menu)))
        ["Update Package Index" package-get-update-base]
        ["List & Install" pui-list-packages]
-       ("Using Custom"
-	("Select" :filter (lambda (&rest junk)
-			  (cdr (custom-menu-create 'packages))))
-	["Update" package-get-custom])
+       ["Update Installed Packages" package-get-update-all]
+       ;; hack-o-matic, we can't force a laod of package-base here
+       ;; since it triggers dialog box interactions which we can't
+       ;; deal while using a menu
+       ("Using Custom" 
+	:filter (lambda (&rest junk)
+		  (if package-get-base
+		      (cdr (custom-menu-create 'packages))
+		    '(["Please load Package Index" (lamda (&rest junk) ()) nil]))))
+       
        ["Help" (Info-goto-node "(xemacs)Packages")])
 
       "---"
