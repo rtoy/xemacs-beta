@@ -3,8 +3,8 @@
 ;; Author:        1994-1997 Barry A. Warsaw
 ;; Maintainer:    tools-help@python.org
 ;; Created:       May 1994
-;; Version:       1.17
-;; Last Modified: 1997/02/21 22:28:59
+;; Version:       1.21
+;; Last Modified: 1997/02/24 03:34:56
 ;; Keywords:      data languages
 
 ;; Copyright (C) 1994 Barry A. Warsaw
@@ -46,7 +46,22 @@
 ;;  don't intend to do any work on it any more... unless I lose my
 ;;  place in paradise.  I promise to be good, Steve.  :-) :-)"
 ;;
-;; I have fallen from grace.
+;; I have fallen from grace and have been kicked out of paradise.  So
+;; has Steve Jobs apparently :-)
+;;
+;; To use, put the following in your .emacs:
+;;
+;; (autoload 'xrdb-mode "xrdb-mode" "Mode for editing X resource files" t)
+;;
+;; You may also want something like:
+;;
+;; (setq auto-mode-alist
+;;       (append '(("\\.Xdefaults$" . xrdb-mode)
+;;                 ("\\.Xenvironment$" . xrdb-mode)
+;;                 ("\\.Xresources$" . xrdb-mode)
+;;                 )
+;;               auto-mode-alist))
+
 
 ;; Code:
 
@@ -338,21 +353,28 @@ With optional \\[universal-argument], queries for alignment subdivision."
 
 
 ;; faces and font-locking
-(require 'font-lock)
+(defvar xrdb-option-name-face 'xrdb-option-name-face
+  "Face for option name on a line in an X resource db file")
+(defvar xrdb-option-value-face 'xrdb-option-value-face
+  "Face for option value on a line in an X resource db file")
+
 (make-face 'xrdb-option-name-face)
 (make-face 'xrdb-option-value-face)
-(or (face-differs-from-default-p 'xrdb-option-name-face)
-    (copy-face 'font-lock-keyword-face 'xrdb-option-name-face))
-(or (face-differs-from-default-p 'xrdb-option-value-face)
-    (copy-face 'font-lock-string-face 'xrdb-option-value-face))
+
+(defun xrdb-font-lock-mode-hook ()
+  (or (face-differs-from-default-p 'xrdb-option-name-face)
+      (copy-face 'font-lock-keyword-face 'xrdb-option-name-face))
+  (or (face-differs-from-default-p 'xrdb-option-value-face)
+      (copy-face 'font-lock-string-face 'xrdb-option-value-face))
+  (remove-hook 'font-lock-mode-hook 'xrdb-font-lock-mode-hook))
+(add-hook 'font-lock-mode-hook 'xrdb-font-lock-mode-hook)
 
 (defvar xrdb-font-lock-keywords
   (list '("^[ \t]*\\([^\n:]*:\\)[ \t]*\\(.*\\)$"
 	  (1 xrdb-option-name-face)
 	  (2 xrdb-option-value-face)))
-  "Additional expressions to highlight in Xrdb mode.")
-
-(put 'xrdb-mode 'font-lock-defaults '(xrdb-font-lock-keywords nil))
+  "Additional expressions to highlight in X resource db mode.")
+(put 'xrdb-mode 'font-lock-defaults '(xrdb-font-lock-keywords))
 
 
 
@@ -380,7 +402,7 @@ With optional \\[universal-argument], queries for alignment subdivision."
 
 ;; submitting bug reports
 
-(defconst xrdb-version "1.17"
+(defconst xrdb-version "1.21"
   "xrdb-mode version number.")
 
 (defconst xrdb-mode-help-address "tools-help@python.org"

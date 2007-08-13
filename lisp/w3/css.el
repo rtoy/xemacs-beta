@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/02/08 05:24:49
-;; Version: 1.27
+;; Created: 1997/02/20 00:47:21
+;; Version: 1.28
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -356,10 +356,14 @@
       (if (string-match "^[ \t]+" font)
 	  (setq family (substring font (match-end 0) nil))
 	(setq family font)))
-    (if weight (setq retval (cons (cons 'font-weight weight) retval)))
-    (if size   (setq retval (cons (cons 'font-size size) retval)))
-    (if height (setq retval (cons (cons 'line-height height) retval)))
-    (if family (setq retval (cons (cons 'font-family family) retval)))
+    (if weight
+	(push (cons 'font-weight (css-expand-value 'weight weight)) retval))
+    (if size
+	(push (cons 'font-size (css-expand-length size)) retval))
+    (if height
+	(push (cons 'line-height (css-expand-length height)) retval))
+    (if family
+	(push (cons 'font-family (css-expand-value 'string-list family)) retval))
     retval))
 
 (defun css-expand-length (spec)
@@ -404,6 +408,8 @@
 
 (defun css-expand-color (color)
   (cond
+   ((string-match "^\\(transparent\\|none\\)$" color)
+    (setq color nil))
    ((string-match "^#" color)
     (let (r g b)
       (cond
@@ -519,7 +525,7 @@
 			      top center bottom left right) cur)
 	       )
 	      (t
-	       (setq color cur))))
+	       (setq color (css-expand-value 'color cur)))))
 	   (setq value (list (cons 'background-color color)
 			     (cons 'background-image image)
 			     (cons 'background-repeat repeat)
@@ -529,10 +535,10 @@
 	 ;; [style | variant | weight]? size[/line-height]? family
 	 (setq value (css-split-font-shorthand value)))
 	(border				; width | style | color
-	 ;; FIX
+	 ;; FIXME
 	 )
 	(border-shorthand		; width | style | color
-	 ;; FIX
+	 ;; FIXME
 	 )
 	(list-style			; CSS, Section 5.6.6
 	 ;; keyword | position | url
@@ -597,6 +603,7 @@
 	results				; Assoc list of results
 	name-pos			; Start of XXXX= position
 	val-pos				; Start of value position
+	(case-fold-search t)
 	)
     (save-excursion
       (if (stringp st)

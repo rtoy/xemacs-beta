@@ -317,7 +317,7 @@ Line editing keys are:
 	      (set-buffer input-buffer)
 	      (while t
 		(erase-buffer)
-		(vm-unsaved-message "%s%s" prompt
+		(message "%s%s" prompt
 				    (vm-truncate-string xxx (buffer-size)))
 		(while (not (memq (setq char (read-char)) '(?\C-m ?\C-j)))
 		  (if (setq form
@@ -333,11 +333,11 @@ Line editing keys are:
 			  (eval form)
 			(error t))
 		    (insert char))
-		  (vm-unsaved-message "%s%s" prompt
+		  (message "%s%s" prompt
 				      (vm-truncate-string xxx (buffer-size))))
 		(cond ((and confirm string)
 		       (cond ((not (string= string (buffer-string)))
-			      (vm-unsaved-message
+			      (message
 			       (concat prompt
 				       (vm-truncate-string xxx (buffer-size))
 				       " [Mismatch... try again.]"))
@@ -347,13 +347,13 @@ Line editing keys are:
 			     (t (throw 'return-value string))))
 		      (confirm
 		       (setq string (buffer-string))
-		       (vm-unsaved-message
+		       (message
 			(concat prompt
 				(vm-truncate-string xxx (buffer-size))
 				" [Retype to confirm...]"))
 		       (sit-for 2))
 		      (t
-		       (vm-unsaved-message "")
+		       (message "")
 		       (throw 'return-value (buffer-string))))))
 	  (and input-buffer (kill-buffer input-buffer)))))))
 

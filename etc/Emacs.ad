@@ -76,13 +76,13 @@ Emacs.text-cursor*attributeBackground:	Red3
 *XmScrollBar*Background:		Gray75
 
 !
-! The Lucid Scrollbar supports two added resources, KnobStyle is either
+! The Lucid Scrollbar supports two added resources, SliderStyle is either
 ! "plain" (default) or "dimple".  Dimple puts a small dimple in the middle
-! of the knob that depresses when the knob is clicked on.  ArrowPosition is
+! of the slider that depresses when the slider is clicked on.  ArrowPosition is
 ! either "opposite" (default) or "same".  Opposite puts the arrows at opposite
 ! of the scrollbar, same puts both arrows at the same end, like the Amiga.
 !
-! Emacs*XlwScrollBar.KnobStyle:      dimple
+! Emacs*XlwScrollBar.SliderStyle:    dimple
 ! Emacs*XlwScrollBar.ArrowPosition:  opposite
 
 

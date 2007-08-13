@@ -1,4 +1,29 @@
 							-*- indented-text -*-
+to 19.15 beta96
+-- New XEmacs logo Courtesy of Jens Lautenbacher
+-- New default color coordination Courtesy of Hrvoje Niksic
+-- time.el updated for XEmacs Courtesy of Jens Lautenbacher
+-- Gnus-5.4.16
+-- some historical files removed from etc for space
+-- id-select.el-1.4.5
+-- M-: (eval-expression) is now enabled by default
+-- Freeze frame fixes Courtesy of Jan Vroonhof and Darrell Kindred
+-- PURESIZE is now a dynamic computation
+-- hyperbole-4.022
+-- Customized edit-faces Courtesy of Jens Lautenbacher
+-- W3-3.0.62
+-- AUCTeX-9.7k
+-- mic-paren.el-1.3.1 Courtesy of Mikael Sjödin
+-- hm--html-menus-5.3
+-- custom-1.46
+-- site-load.el preconfigured to work with DOC string generation
+-- python-mode.el-2.90
+-- balloon-help-1.04
+-- xrdb-mode.el-1.21
+-- Dynamic computation of PURESIZE during build
+-- itimer.el-1.01 Courtesy of Kyle Jones
+-- miscellaneous fixes.
+
 to 19.15 beta'95
 -- hm--html-menus-5.2
 -- redo.el-1.01

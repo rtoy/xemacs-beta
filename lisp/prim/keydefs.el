@@ -68,9 +68,11 @@ Keymap for characters following C-c.")
 ;; FSFmacs casefiddle.c
 
 (define-key global-map "\C-x\C-u" 'upcase-region)
-(put 'upcase-region 'disabled t)
+;; This is silly with zmacs regions
+;(put 'upcase-region 'disabled t)
 (define-key global-map "\C-x\C-l" 'downcase-region)
-(put 'downcase-region 'disabled t)
+;; This is silly with zmacs regions
+;(put 'downcase-region 'disabled t)
 (define-key global-map "\M-u" 'upcase-region-or-word)
 (define-key global-map "\M-l" 'downcase-region-or-word)
 (define-key global-map "\M-c" 'capitalize-region-or-word)
@@ -197,7 +199,9 @@ Keymap for characters following C-c.")
 ;; Define ESC ESC : like ESC : for people who type ESC ESC out of habit.
 (define-key global-map "\M-\e:" 'eval-expression)
 ;(define-key global-map "\M-\e" 'eval-expression)
-(put 'eval-expression 'disabled t)
+;; Do we really need to disable this now that it is harder to type
+;; by accident?
+;; (put 'eval-expression 'disabled t)
 ;; Changed from C-x ESC so that function keys work following C-x.
 (define-key global-map "\C-x\e\e" 'repeat-complex-command)
 ;(define-key global-map "\C-x\e" 'repeat-complex-command)

@@ -827,7 +827,7 @@ not an autoload.")
 	 file-name
          (doc (or (documentation function)
                   (gettext "not documented")))
-	 aliases kbd-macro-p fndef macrop)
+	 aliases home kbd-macro-p fndef macrop)
     (while (symbolp def)
       (or (eq def function)
 	  (if aliases
@@ -837,6 +837,8 @@ not an autoload.")
 					    (symbol-name def))))
 	    (setq aliases (format "an alias for %s, " (symbol-name def)))))
       (setq def (symbol-function def)))
+    (if (compiled-function-p def)
+	(setq home (compiled-function-annotation def)))
     (if (eq 'macro (car-safe def))
 	(setq fndef (cdr def)
 	      macrop t)
@@ -896,6 +898,8 @@ not an autoload.")
 	(setq file-name (describe-function-find-file function)))
     (if file-name
 	(princ (format ".\n  -- loads from \"%s\"" file-name) stream))
+    (if home
+	(princ (format ".\n  -- loaded from %s" home)))
     (princ ".")
     (terpri)
     (cond (kbd-macro-p

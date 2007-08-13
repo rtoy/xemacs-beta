@@ -116,7 +116,7 @@ SCRIPTS= rcs2log vcdiff $(TM_SCRIPTS)
 EXECUTABLES= ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS}
 
 SOURCES = COPYING ChangeLog Makefile.in.in README aixcc.lex emacs.csh \
-	makedoc.com *.[chy] rcs2log vcdiff
+	makedoc.com *.[chy] $(SCRIPTS)
 
 /* ========================== start of cpp stuff ======================= */
 
@@ -262,10 +262,22 @@ vcdiff: force
 	  rm -f vcdiff ; ${LN_S} ${srcdir}/vcdiff . ;	\
 	fi
 
-$(TM_SCRIPTS): force
-	@if [ ! -r $@ ] ; then			\
-	  rm -f $@ ; ${LN_S} ${srcdir}/$@ . ;	\
-	fi
+tm-au :
+	${LN_S} ${srcdir}/$@ $@
+tm-file :
+	${LN_S} ${srcdir}/$@ $@
+tm-html :
+	${LN_S} ${srcdir}/$@ $@
+tm-image :
+	${LN_S} ${srcdir}/$@ $@
+tm-mpeg :
+	${LN_S} ${srcdir}/$@ $@
+tm-plain :
+	${LN_S} ${srcdir}/$@ $@
+tm-ps :
+	${LN_S} ${srcdir}/$@ $@
+tmdecode :
+	${LN_S} ${srcdir}/$@ $@
 
 force:
 #else /* ultrix */

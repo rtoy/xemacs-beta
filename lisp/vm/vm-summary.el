@@ -142,10 +142,10 @@ mandatory."
 		(vm-set-su-end-of (car mp) (point))
 		(setq mp (cdr mp) n (1+ n))
 		(if (zerop (% n modulus))
-		    (vm-unsaved-message "Generating summary... %d" n)))
+		    (message "Generating summary... %d" n)))
 	      ;; now convert the ints to markers.
 	      (if (>= n modulus)
-		  (vm-unsaved-message "Generating summary markers... "))
+		  (message "Generating summary markers... "))
 	      (setq mp m-list)
 	      (while mp
 		(and mouse-track-func (funcall mouse-track-func
@@ -157,7 +157,7 @@ mandatory."
 	  (set-buffer-modified-p modified))
 	(run-hooks 'vm-summary-redo-hook)))
     (if (>= n modulus)
-	(vm-unsaved-message "Generating summary... done"))))
+	(message "Generating summary... done"))))
 
 (defun vm-do-needed-summary-rebuild ()
   (if (and vm-summary-redo-start-point vm-summary-buffer)
@@ -986,7 +986,7 @@ mandatory."
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
-  (vm-unsaved-message "Fixing your summary...")
+  (message "Fixing your summary...")
   (let ((mp vm-message-list))
     (while mp
       (vm-set-summary-of (car mp) nil)
@@ -995,7 +995,7 @@ mandatory."
     (vm-stuff-folder-attributes nil)
     (set-buffer-modified-p t)
     (vm-update-summary-and-mode-line))
-  (vm-unsaved-message "Fixing your summary... done"))
+  (message "Fixing your summary... done"))
 
 (defun vm-su-thread-indent (m)
   (if (natnump vm-summary-thread-indent-level)

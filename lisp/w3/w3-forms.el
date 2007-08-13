@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/02/13 23:10:23
-;; Version: 1.70
+;; Created: 1997/02/20 21:40:42
+;; Version: 1.73
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -501,6 +501,7 @@
 (put 'option    'w3-summarize-function 'w3-form-summarize-option-list)
 (put 'keygen    'w3-summarize-function 'w3-form-summarize-keygen-list)
 (put 'image	'w3-summarize-function 'w3-form-summarize-image)
+(put 'password  'w3-summarize-function 'w3-form-summarize-password)
 (put 'hidden    'w3-summarize-function 'ignore)
 
 (defun w3-form-summarize-field (widget &rest ignore)
@@ -525,7 +526,7 @@ This can be used as the :help-echo property of all w3 form entry widgets."
     ;; more closely follow the widget-y way of just returning the string
     ;; instead of having the underlying :help-echo or :emacspeak-help
     ;; implementation do it.
-    (message "%s" msg)))
+    (and msg (message "%s" msg))))
 
 (defsubst w3-form-field-label (data)
   ;;; FIXXX!!! Need to reimplement using the new forms implementation!
@@ -538,6 +539,12 @@ This can be used as the :help-echo property of all w3 form entry widgets."
 	(value (widget-value (w3-form-element-widget data))))
     (format "Text field %s set to: %s" (or label (concat "called " name))
 	    value)))
+
+(defun w3-form-summarize-password (data widget)
+  (let ((label (w3-form-field-label data))
+	(name  (w3-form-element-name data)))
+    (format "Password field %s is a secret.  Shhh."
+	    (or label (concat "called " name)))))
 
 (defun w3-form-summarize-multiline (data widget)
   (let ((name (w3-form-element-name data))
@@ -580,8 +587,11 @@ This can be used as the :help-echo property of all w3 form entry widgets."
 	(label (w3-form-field-label data))
 	(cur-value (widget-value (w3-form-element-widget data)))
 	(this-value (widget-value (widget-get-sibling widget))))
-    (format "Radio button %s is %s, could be %s" (or label name) cur-value
-	    this-value)))
+    (if (equal this-value cur-value)
+	(format "Radio group %s has  %s pressed"
+		(or label name) this-value)
+      (format "Press this  to change radio group %s from %s to %s" (or label name) cur-value
+	      this-value))))
 
 (defun w3-form-summarize-file-browser (data widget)
   (let ((name (w3-form-element-name data))
@@ -856,9 +866,6 @@ This can be used as the :help-echo property of all w3 form entry widgets."
 		(concat nam " " val))))
 	   (w3-form-encode-helper result) "\n"))
     query))
-
-(defun w3-form-encode-application/x-w3-wais (result)
-  (cdr (car (w3-form-encode-helper result))))
 
 (defun w3-form-encode-application/x-gopher-query (result)
   (concat "\t" (cdr (car (w3-form-encode-helper result)))))

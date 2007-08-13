@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/02/07 14:30:25
-;; Version: 1.51
+;; Created: 1997/02/20 15:34:07
+;; Version: 1.57
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/02/07 14:30:25|1.51|Location Undetermined
+;;; 1997/02/20 15:34:07|1.57|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,11 +97,8 @@
 (autoload 'url-telnet "url-misc")
 (autoload 'url-tn3270 "url-misc")
 (autoload 'url-proxy "url-misc")
-(autoload 'url-x-exec "url-misc")
 (autoload 'url-news "url-news")
 (autoload 'url-nntp "url-news")
-(autoload 'url-decode-pgp/pem "url-pgp")
-(autoload 'url-wais "url-wais")
 
 (autoload 'url-open-stream "url-gw")
 (autoload 'url-mime-response-p "url-http")
@@ -119,6 +116,13 @@
 (autoload 'url-cookie-generate-header-lines "url-cookie")
 (autoload 'url-cookie-handle-set-cookie "url-cookie")
 
+(autoload 'url-is-cached "url-cache")
+(autoload 'url-store-in-cache "url-cache")
+(autoload 'url-is-cached "url-cache")
+(autoload 'url-create-cached-filename "url-cache")
+(autoload 'url-extract-from-cache "url-cache")
+(autoload 'url-cache-expired "url-cache")
+
 (require 'md5)
 (require 'base64)
 
@@ -132,9 +136,6 @@
      nil)				; Don't load if no alist
     ((rassq 'url-file-handler file-name-handler-alist)
      nil)				; Don't load twice
-    ((and (string-match "XEmacs\\|Lucid" emacs-version)
-	  (< url-emacs-minor-version 11)) ; Don't load in lemacs 19.10
-     nil)
     (t
      (setq file-name-handler-alist
 	   (let ((new-handler (cons
@@ -566,7 +567,8 @@ If file does not exist, returns nil."
 				       1 0 0 (cons 0 0) (cons 0 0) (cons 0 0)
 				       -1 (mm-extension-to-mime
 					   (url-file-extension
-					    url-current-file))
+					    (url-filename
+					     url-current-object)))
 				       nil 0 0)))
 		 (kill-buffer " *url-temp*"))))))
 	  ((member type '("ftp" "file"))
@@ -809,15 +811,10 @@ or 1 second has elapsed."
 	 ((eq (device-type) 'tty) "(Unix?); TTY")
 	 (t "UnkownPlatform")))
 
-  ;; Set up the entity definition for PGP and PEM authentication
-  (setq url-pgp/pem-entity (or url-pgp/pem-entity
-			       user-mail-address
-			       (format "%s@%s"  (user-real-login-name)
-				       (system-name))))
-  
   (setq url-personal-mail-address (or url-personal-mail-address
-				      url-pgp/pem-entity
-				      user-mail-address))
+				      user-mail-address
+				      (format "%s@%s"  (user-real-login-name)
+					      (system-name))))
 
   (if (or (memq url-privacy-level '(paranoid high))
 	  (and (listp url-privacy-level)
@@ -907,11 +904,8 @@ dumped with emacs."
     (url-register-protocol 'irc        nil 'url-identity-expander "6667")
     (url-register-protocol 'data       nil 'url-identity-expander)
     (url-register-protocol 'rlogin)
-    (url-register-protocol 'shttp      nil nil "80")
     (url-register-protocol 'telnet)
     (url-register-protocol 'tn3270)
-    (url-register-protocol 'wais)
-    (url-register-protocol 'x-exec)
     (url-register-protocol 'proxy)
     (url-register-protocol 'auto 'url-handle-no-scheme)
 
@@ -971,16 +965,11 @@ dumped with emacs."
 				     noproxy "") "\\)"))
 		      url-proxy-services))))
 
-    ;; Set the url-use-transparent with decent defaults
-    (if (not (eq (device-type) 'tty))
-	(setq url-use-transparent nil))
-    (and url-use-transparent (require 'transparent))
-  
     ;; Set the password entry funtion based on user defaults or guess
     ;; based on which remote-file-access package they are using.
     (cond
      (url-passwd-entry-func nil)	; Already been set
-     ((boundp 'read-passwd)		; Use secure password if available
+     ((fboundp 'read-passwd)		; Use secure password if available
       (setq url-passwd-entry-func 'read-passwd))
      ((or (featurep 'efs)		; Using EFS
 	  (featurep 'efs-auto))		; or autoloading efs
@@ -992,8 +981,9 @@ dumped with emacs."
 	       (not (string-match "Lucid" (emacs-version)))))
       (setq url-passwd-entry-func 'ange-ftp-read-passwd))
      (t
-      (url-warn 'security
-		"Can't determine how to read passwords, winging it.")))
+      (url-warn
+       'security
+       "(url-setup): Can't determine how to read passwords, winging it.")))
   
     ;; Set up the news service if they haven't done so
     (setq url-news-server
@@ -1025,249 +1015,6 @@ dumped with emacs."
     (url-setup-privacy-info)
     (run-hooks 'url-load-hook)
     (setq url-setup-done t)))
-
-(defun url-cache-file-writable-p (file)
-  "Follows the documentation of file-writable-p, unlike file-writable-p."
-  (and (file-writable-p file)
-       (if (file-exists-p file)
-           (not (file-directory-p file))
-         (file-directory-p (file-name-directory file)))))
-                
-(defun url-prepare-cache-for-file (file)
-  "Makes it possible to cache data in FILE.
-Creates any necessary parent directories, deleting any non-directory files
-that would stop this.  Returns nil if parent directories can not be
-created.  If FILE already exists as a non-directory, it changes
-permissions of FILE or deletes FILE to make it possible to write a new
-version of FILE.  Returns nil if this can not be done.  Returns nil if
-FILE already exists as a directory.  Otherwise, returns t, indicating that
-FILE can be created or overwritten."
-
-  ;; COMMENT: We don't delete directories because that requires
-  ;; recursively deleting the directories's contents, which might
-  ;; eliminate a substantial portion of the cache.
-
-  (cond
-   ((url-cache-file-writable-p file)
-    t)
-   ((file-directory-p file)
-    nil)
-   (t
-    (catch 'upcff-tag
-      (let ((dir (file-name-directory file))
-            dir-parent dir-last-component)
-        (if (string-equal dir file)
-            ;; *** Should I have a warning here?
-            ;; FILE must match a pattern like /foo/bar/, indicating it is a
-            ;; name only suitable for a directory.  So presume we won't be
-            ;; able to overwrite FILE and return nil.
-            (throw 'upcff-tag nil))
-        
-        ;; Make sure the containing directory exists, or throw a failure
-        ;; if we can't create it.
-        (if (file-directory-p dir)
-            nil
-          (or (fboundp 'make-directory)
-              (throw 'upcff-tag nil))
-          (make-directory dir t)
-          ;; make-directory silently fails if there is an obstacle, so
-          ;; we must verify its results.
-          (if (file-directory-p dir)
-              nil
-            ;; Look at prefixes of the path to find the obstacle that is
-            ;; stopping us from making the directory.  Unfortunately, there
-            ;; is no portable function in Emacs to find the parent directory
-            ;; of a *directory*.  So this code may not work on VMS.
-            (while (progn
-                     (if (eq ?/ (aref dir (1- (length dir))))
-                         (setq dir (substring dir 0 -1))
-                       ;; Maybe we're on VMS where the syntax is different.
-                       (throw 'upcff-tag nil))
-                     (setq dir-parent (file-name-directory dir))
-                     (not (file-directory-p dir-parent)))
-              (setq dir dir-parent))
-            ;; We have found the longest path prefix that exists as a
-            ;; directory.  Deal with any obstacles in this directory.
-            (if (file-exists-p dir)
-                (condition-case nil
-                    (delete-file dir)
-                  (error (throw 'upcff-tag nil))))
-            (if (file-exists-p dir)
-                (throw 'upcff-tag nil))
-            ;; Try making the directory again.
-            (setq dir (file-name-directory file))
-            (make-directory dir t)
-            (or (file-directory-p dir)
-                (throw 'upcff-tag nil))))
-
-        ;; The containing directory exists.  Let's see if there is
-        ;; something in the way in this directory.
-        (if (url-cache-file-writable-p file)
-            (throw 'upcff-tag t)
-          (condition-case nil
-              (delete-file file)
-            (error (throw 'upcff-tag nil))))
-
-        ;; The return value, if we get this far.
-        (url-cache-file-writable-p file))))))
-       
-(defun url-store-in-cache (&optional buff)
-  "Store buffer BUFF in the cache"
-  (if (or (not (get-buffer buff))
-	  (member url-current-type '("www" "about" "https" "shttp"
-					 "news" "mailto"))
-	  (and (member url-current-type '("file" "ftp" nil))
-	       (not url-current-server))
-	  )
-      nil
-    (save-excursion
-      (and buff (set-buffer buff))
-      (let* ((fname (url-create-cached-filename (url-view-url t)))
-             (fname-hdr (concat (if (memq system-type '(ms-windows ms-dos os2))
-                                    (url-file-extension fname t)
-                                  fname) ".hdr"))
-	     (info (mapcar (function (lambda (var)
-				       (cons (symbol-name var)
-					     (symbol-value var))))
-			   '( url-current-content-length
-			      url-current-file
-			      url-current-isindex
-			      url-current-mime-encoding
-			      url-current-mime-headers
-			      url-current-mime-type
-			      url-current-port
-			      url-current-server
-			      url-current-type
-			      url-current-user
-			      ))))
-	(cond ((and (url-prepare-cache-for-file fname)
-		    (url-prepare-cache-for-file fname-hdr))
-	       (write-region (point-min) (point-max) fname nil 5)
-	       (set-buffer (get-buffer-create " *cache-tmp*"))
-	       (erase-buffer)
-	       (insert "(setq ")
-	       (mapcar
-		(function
-		 (lambda (x)
-		   (insert (car x) " "
-			   (cond ((null (setq x (cdr x))) "nil")
-				 ((stringp x) (prin1-to-string x))
-				 ((listp x) (concat "'" (prin1-to-string x)))
-				 ((numberp x) (int-to-string x))
-				 (t "'???")) "\n")))
-		info)
-	       (insert ")\n")
-	       (write-region (point-min) (point-max) fname-hdr nil 5)))))))
-	
-	     
-(defun url-is-cached (url)
-  "Return non-nil if the URL is cached."
-  (let* ((fname (url-create-cached-filename url))
-	 (attribs (file-attributes fname)))
-    (and fname				; got a filename
-	 (file-exists-p fname)		; file exists
-	 (not (eq (nth 0 attribs) t))	; Its not a directory
-	 (nth 5 attribs))))		; Can get last mod-time
-    
-(defun url-create-cached-filename-using-md5 (url)
-  (if url
-      (expand-file-name (md5 url)
-			(concat url-temporary-directory "/"
-				(user-real-login-name)))))
-
-(defun url-create-cached-filename (url)
-  "Return a filename in the local cache for URL"
-  (if url
-      (let* ((url url)
-	     (urlobj (if (vectorp url)
-			 url
-		       (url-generic-parse-url url)))
-	     (protocol (url-type urlobj))
-	     (hostname (url-host urlobj))
-	     (host-components
-	      (cons
-	       (user-real-login-name)
-	       (cons (or protocol "file")
-		     (nreverse
-		      (delq nil
-			    (mm-string-to-tokens
-			     (or hostname "localhost") ?.))))))
-	     (fname    (url-filename urlobj)))
-	(if (and fname (/= (length fname) 0) (= (aref fname 0) ?/))
-	    (setq fname (substring fname 1 nil)))
-	(if fname
-	    (let ((slash nil))
-	      (setq fname
-		    (mapconcat
-		     (function
-		      (lambda (x)
-			(cond
-			 ((and (= ?/ x) slash)
-			  (setq slash nil)
-			  "%2F")
-			 ((= ?/ x)
-			  (setq slash t)
-			  "/")
-			 (t
-			  (setq slash nil)
-			  (char-to-string x))))) fname ""))))
-
-	(if (and fname (memq system-type '(ms-windows ms-dos windows-nt))
-		 (string-match "\\([A-Za-z]\\):[/\\]" fname))
-	    (setq fname (concat (url-match fname 1) "/"
-				(substring fname (match-end 0)))))
-	
-	(setq fname (and fname
-			 (mapconcat
-			  (function (lambda (x)
-				      (if (= x ?~) "" (char-to-string x))))
-			  fname ""))
-	      fname (cond
-		     ((null fname) nil)
-		     ((or (string= "" fname) (string= "/" fname))
-		      url-directory-index-file)
-		     ((= (string-to-char fname) ?/)
-		      (if (string= (substring fname -1 nil) "/")
-			  (concat fname url-directory-index-file)
-			(substring fname 1 nil)))
-		     (t
-		      (if (string= (substring fname -1 nil) "/")
-			  (concat fname url-directory-index-file)
-			fname))))
-
-	;; Honor hideous 8.3 filename limitations on dos and windows
-	;; we don't have to worry about this in Windows NT/95 (or OS/2?)
-	(if (and fname (memq system-type '(ms-windows ms-dos)))
-	    (let ((base (url-file-extension fname t))
-		  (ext  (url-file-extension fname nil)))
-	      (setq fname (concat (substring base 0 (min 8 (length base)))
-				  (substring ext  0 (min 4 (length ext)))))
-	      (setq host-components
-		    (mapcar
-		     (function
-		      (lambda (x)
-			(if (> (length x) 8)
-			    (concat 
-			     (substring x 0 8) "."
-			     (substring x 8 (min (length x) 11)))
-			  x)))
-		     host-components))))
-
-	(and fname
-	     (expand-file-name fname
-			       (expand-file-name
-				(mapconcat 'identity host-components "/")
-				url-temporary-directory))))))
-
-(defun url-extract-from-cache (fnam)
-  "Extract FNAM from the local disk cache"
-  (set-buffer (get-buffer-create url-working-buffer))
-  (erase-buffer)
-  (setq url-current-mime-viewer nil)
-  (insert-file-contents-literally fnam)
-  (load (concat (if (memq system-type '(ms-windows ms-dos os2))
-		    (url-file-extension fnam t)
-		  fnam) ".hdr") t t)) 
 
 ;;;###autoload
 (defun url-get-url-at-point (&optional pt)
@@ -1536,8 +1283,7 @@ and decoding any MIME content-transfer-encoding used."
   "Do any necessary uncompression on `url-working-buffer'"
   (set-buffer url-working-buffer)
   (if (not url-inhibit-uncompression)
-      (let* ((extn (url-file-extension url-current-file))
-	     (decoder nil)
+      (let* ((decoder nil)
 	     (code-1 (cdr-safe
 		      (assoc "content-transfer-encoding"
 			     url-current-mime-headers)))
@@ -1582,6 +1328,7 @@ and decoding any MIME content-transfer-encoding used."
 
 (defun url-default-callback (buf)
   (url-download-minor-mode nil)
+  (url-store-in-cache)
   (cond
    ((save-excursion (set-buffer buf)
 		    (and url-current-callback-func
@@ -1624,10 +1371,11 @@ and decoding any MIME content-transfer-encoding used."
 	      (if (not url-current-mime-type)
 		  (setq url-current-mime-type (mm-extension-to-mime
 					       (url-file-extension
-						url-current-file)))))))
-	  (if (member status '(401 301 302 303 204))
-	      nil
-	(funcall url-default-retrieval-proc (buffer-name url-working-buffer))))))
+						(url-filename
+						 url-current-object)))))
+	      (if (member status '(401 301 302 303 204))
+		  nil
+		(funcall url-default-retrieval-proc (buffer-name url-working-buffer)))))))))
 
 (defun url-remove-relative-links (name)
   ;; Strip . and .. from pathnames
@@ -1682,54 +1430,11 @@ WIDTH defaults to the current frame width."
   "View the current document's URL.  Optional argument NO-SHOW means
 just return the URL, don't show it in the minibuffer."
   (interactive)
-  (let ((url ""))
-    (cond
-     ((equal url-current-type "gopher")
-      (setq url (format "%s://%s%s/%s"
-			url-current-type url-current-server
-			(if (or (null url-current-port)
-				(string= "70" url-current-port)) ""
-			  (concat ":" url-current-port))
-			url-current-file)))
-     ((equal url-current-type "news")
-      (setq url (concat "news:"
-			(if (not (equal url-current-server
-					url-news-server))
-			    (concat "//" url-current-server
-				    (if (or (null url-current-port)
-					    (string= "119" url-current-port))
-					""
-				      (concat ":" url-current-port)) "/"))
-			url-current-file)))
-     ((equal url-current-type "about")
-      (setq url (concat "about:" url-current-file)))
-     ((member url-current-type '("http" "shttp" "https"))
-      (setq url (format  "%s://%s%s/%s" url-current-type url-current-server
-			 (if (or (null url-current-port)
-				 (string= "80" url-current-port))
-			     ""
-			   (concat ":" url-current-port))
-			 (if (and url-current-file
-				  (= ?/ (string-to-char url-current-file)))
-			     (substring url-current-file 1 nil)
-			   url-current-file))))
-     ((equal url-current-type "ftp")
-      (setq url (format "%s://%s%s/%s" url-current-type
-			(if (and url-current-user
-				 (not (string= "anonymous" url-current-user)))
-			    (concat url-current-user "@") "")
-			url-current-server
-			(if (and url-current-file
-				 (= ?/ (string-to-char url-current-file)))
-			    (substring url-current-file 1 nil)
-			  url-current-file))))
-     ((and (member url-current-type '("file" nil)) url-current-file)
-      (setq url (format "file:%s" url-current-file)))
-     ((equal url-current-type "www")
-      (setq url (format "www:/%s/%s" url-current-server url-current-file)))
-     (t
-      (setq url nil)))
-    (if (not no-show) (message "%s" url) url)))
+  (if (not url-current-object)
+      nil
+    (if no-show
+	(url-recreate-url url-current-object)
+      (message "%s" (url-recreate-url url-current-object)))))
 
 (defun url-parse-Netscape-history (fname)
   ;; Parse a Netscape/X style global history list.
@@ -2114,14 +1819,7 @@ retrieve a URL by its HTML source.")
 	(url-lazy-message "Retrieving %s..." url)
 	(apply 'call-process url-external-retrieval-program
 	       nil t nil args)
-	(url-lazy-message "Retrieving %s... done" url)
-	(if (and type urlobj)
-	    (setq url-current-server (url-host urlobj)
-		  url-current-type (url-type urlobj)
-		  url-current-port (url-port urlobj)
-		  url-current-file (url-filename urlobj)))
-	(if (member url-current-file '("/" ""))
-	    (setq url-current-mime-type "text/html"))))))
+	(url-lazy-message "Retrieving %s... done" url)))))
 
 (defun url-get-normalized-date (&optional specified-time)
   ;; Return a 'real' date string that most HTTP servers can understand.
@@ -2151,28 +1849,6 @@ retrieve a URL by its HTML source.")
 	    (aref parsed 3) " " (or (aref parsed 4)
 				    (concat "[" (nth 1 (current-time-zone))
 					    "]")))))
-
-;;;###autoload
-(defun url-cache-expired (url mod)
-  "Return t iff a cached file has expired."
-  (if (not (string-match url-nonrelative-link url))
-      t
-    (let* ((urlobj (url-generic-parse-url url))
-	   (type (url-type urlobj)))
-      (cond
-       (url-standalone-mode
-	(not (file-exists-p (url-create-cached-filename urlobj))))
-       ((string= type "http")
-	(if (not url-standalone-mode) t
-	  (not (file-exists-p (url-create-cached-filename urlobj)))))
-       ((not (fboundp 'current-time))
-	t)
-       ((member type '("file" "ftp"))
-	(if (or (equal mod '(0 0)) (not mod))
-	      (return t)
-	    (or (> (nth 0 mod) (nth 0 (current-time)))
-		(> (nth 1 mod) (nth 1 (current-time))))))
-       (t nil)))))
 
 (defun url-get-working-buffer-name ()
   "Get a working buffer name such as ` *URL-<i>*' without a live process and empty"
@@ -2224,95 +1900,79 @@ retrieve a URL by its HTML source.")
       nil))))
 
 (defun url-retrieve-internally (url &optional no-cache)
-  (let ((url-working-buffer (if (and url-multiple-p
-				     (string-equal
-				      (if (bufferp url-working-buffer)
-					  (buffer-name url-working-buffer)
-					url-working-buffer)
-				      url-default-working-buffer))
-				(url-get-working-buffer-name)
-			      url-working-buffer)))
-    (if (get-buffer url-working-buffer)
-	(save-excursion
-	  (set-buffer url-working-buffer)
-	  (erase-buffer)
-	  (setq url-current-can-be-cached (not no-cache))
-	  (set-buffer-modified-p nil)))
-    (let* ((urlobj (url-generic-parse-url url))
-	   (type (url-type urlobj))
-	   (url-using-proxy (if (url-host urlobj)
-				(url-find-proxy-for-url urlobj
-							(url-host urlobj))
-			      nil))
-	   (handler nil)
-	   (original-url url)
-	   (cached nil)
-	   (tmp url-current-file))
-      (if url-using-proxy (setq type "proxy"))
-      (setq cached (url-is-cached url)
-	    cached (and cached (not (url-cache-expired url cached)))
-	    handler (if cached 'url-extract-from-cache
-		      (car-safe
-		       (cdr-safe (assoc (or type "auto")
-					url-registered-protocols))))
-	    url (if cached (url-create-cached-filename url) url))
-      (save-excursion
-	(set-buffer (get-buffer-create url-working-buffer))
-	(setq url-current-can-be-cached (not no-cache)))
-					;    (if url-be-asynchronous
-					;	(url-download-minor-mode t))
-      (if (and handler (fboundp handler))
-	  (funcall handler url)
-	(set-buffer (get-buffer-create url-working-buffer))
-	(setq url-current-file tmp)
-	(erase-buffer)
-	(insert "<title> Link Error! </title>\n"
-		"<h1> An error has occurred... </h1>\n"
-		(format "The link type `<code>%s</code>'" type)
-		" is unrecognized or unsupported at this time.<p>\n"
-		"If you feel this is an error, please "
-		"<a href=\"mailto://" url-bug-address "\">send me mail.</a>"
-		"<p><address>William Perry</address><br>"
-		"<address>" url-bug-address "</address>")
-	(setq url-current-file "error.html"))
-      (if (and
-	   (not url-be-asynchronous)
-	   (get-buffer url-working-buffer))
-	  (progn
-	    (set-buffer url-working-buffer)
-
-	    (url-clean-text)))
-      (cond
-       ((equal type "wais") nil)
-       ((and url-be-asynchronous (not cached) (member type '("http" "proxy")))
-	nil)
-       (url-be-asynchronous
-	(funcall url-default-retrieval-proc (buffer-name)))
-       ((not (get-buffer url-working-buffer)) nil)
-       ((and (not url-inhibit-mime-parsing)
-	     (or cached (url-mime-response-p t)))
-	(or cached (url-parse-mime-headers nil t))))
-      (if (and (or (not url-be-asynchronous)
-		   (not (equal type "http")))
-	       (not url-current-mime-type))
-	  (if (url-buffer-is-hypertext)
-	      (setq url-current-mime-type "text/html")
-	    (setq url-current-mime-type (mm-extension-to-mime
-					 (url-file-extension
-					  url-current-file)))))
-      (if (and url-automatic-caching url-current-can-be-cached
-	       (not url-be-asynchronous))
-	  (save-excursion
-	    (url-store-in-cache url-working-buffer)))
-      (if (not url-global-history-hash-table)
-	  (setq url-global-history-hash-table (make-hash-table :size 131
-							       :test 'equal)))
-      (if (not (string-match "^about:" original-url))
-	  (progn
-	    (setq url-history-changed-since-last-save t)
-	    (cl-puthash original-url (current-time)
-			url-global-history-hash-table)))
-      (cons cached url-working-buffer))))
+  (let* ((url-working-buffer (if (and url-multiple-p
+				      (string-equal
+				       (if (bufferp url-working-buffer)
+					   (buffer-name url-working-buffer)
+					 url-working-buffer)
+				       url-default-working-buffer))
+				 (url-get-working-buffer-name)
+			       url-working-buffer))
+	 (urlobj (url-generic-parse-url url))
+	 (type (url-type urlobj))
+	 (url-using-proxy (if (url-host urlobj)
+			      (url-find-proxy-for-url urlobj
+						      (url-host urlobj))
+			    nil))
+	 (handler nil)
+	 (original-url url)
+	 (cached nil))
+    (if url-using-proxy (setq type "proxy"))
+    (setq cached (url-is-cached url)
+	  cached (and cached (not (url-cache-expired url cached)))
+	  handler (if cached
+		      'url-extract-from-cache
+		    (car-safe
+		     (cdr-safe (assoc (or type "auto")
+				      url-registered-protocols))))
+	  url (if cached (url-create-cached-filename url) url))
+    (save-excursion
+      (set-buffer (get-buffer-create url-working-buffer))
+      (setq url-current-can-be-cached (not no-cache)
+	    url-current-object urlobj))
+    (if (and handler (fboundp handler))
+	(funcall handler url)
+      (set-buffer (get-buffer-create url-working-buffer))
+      (erase-buffer)
+      (setq url-current-mime-type "text/html")
+      (insert "<title> Link Error! </title>\n"
+	      "<h1> An error has occurred... </h1>\n"
+	      (format "The link type `<code>%s</code>'" type)
+	      " is unrecognized or unsupported at this time.<p>\n"
+	      "If you feel this is an error in Emacs-W3, please "
+	      "<a href=\"mailto://" url-bug-address "\">send me mail.</a>"
+	      "<p><address>William Perry</address><br>"
+	      "<address>" url-bug-address "</address>"))
+    (cond
+     ((and url-be-asynchronous (not cached) (member type '("http" "proxy")))
+      nil)
+     (url-be-asynchronous
+      (funcall url-default-retrieval-proc (buffer-name)))
+     ((not (get-buffer url-working-buffer)) nil)
+     ((and (not url-inhibit-mime-parsing)
+	   (or cached (url-mime-response-p t)))
+      (or cached (url-parse-mime-headers nil t))))
+    (if (and (or (not url-be-asynchronous)
+		 (not (equal type "http")))
+	     url-current-object
+	     (not url-current-mime-type))
+	(if (url-buffer-is-hypertext)
+	    (setq url-current-mime-type "text/html")
+	  (setq url-current-mime-type (mm-extension-to-mime
+				       (url-file-extension
+					(url-filename
+					 url-current-object))))))
+    (if (not url-be-asynchronous)
+	(url-store-in-cache url-working-buffer))
+    (if (not url-global-history-hash-table)
+	(setq url-global-history-hash-table (make-hash-table :size 131
+							     :test 'equal)))
+    (if (not (string-match "^\\(about\\|www\\):" original-url))
+	(progn
+	  (setq url-history-changed-since-last-save t)
+	  (cl-puthash original-url (current-time)
+		      url-global-history-hash-table)))
+    (cons cached url-working-buffer)))
 
 ;;;###autoload
 (defun url-retrieve (url &optional no-cache expected-md5)
@@ -2331,12 +1991,6 @@ be honored before this function exits."
   (if (and url (string-match "^url:" url))
       (setq url (substring url (match-end 0) nil)))
   (let ((status (url-retrieve-internally url no-cache)))
-    (if (and expected-md5 url-check-md5s)
-	(let ((cur-md5 (md5 (current-buffer))))
-	  (if (not (string= cur-md5 expected-md5))
-	      (and (not (funcall url-confirmation-func
-				 "MD5s do not match, use anyway? "))
-		   (error "MD5 error.")))))
     status))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

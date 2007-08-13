@@ -57,7 +57,7 @@
 
 (provide 'balloon-help)
 
-(defvar balloon-help-version "1.03"
+(defvar balloon-help-version "1.04"
   "Version string for Balloon Help.")
 
 (defvar balloon-help-mode t
@@ -80,6 +80,9 @@
 
 (defvar balloon-help-border-color "black"
   "*The color for displaying balloon help frame's border.")
+
+(defvar balloon-help-border-width 2
+  "*The width of the balloon help frame's border.")
 
 (defvar balloon-help-use-sound nil
   "*Non-nil value means play a sound to herald the appearance
@@ -206,14 +209,20 @@ used as the help message."
 	       (top (cdr (assq 'top params)))
 	       (left (cdr (assq 'left params)))
 	       (xtop-toolbar-height
-		(if (specifier-instance top-toolbar)
-		    (specifier-instance top-toolbar-height)
+		(if (and (specifier-instance top-toolbar-visible-p frame)
+			 (specifier-instance top-toolbar frame))
+		    (specifier-instance top-toolbar-height frame)
 		  0))
 	       (xleft-toolbar-width
-		(if (specifier-instance left-toolbar)
-		    (specifier-instance left-toolbar-width)
+		(if (and (specifier-instance left-toolbar-visible-p frame)
+			 (specifier-instance left-toolbar frame))
+		    (specifier-instance left-toolbar-width frame)
 		  0))
-	       (menubar-height (if current-menubar 22 0)))
+	       (menubar-height
+		(if (and buffer
+			 (specifier-instance menubar-visible-p)
+			 (save-excursion (set-buffer buffer) current-menubar))
+		    22 0)))
 	  (setq balloon-help-help-object-x
 		(+ left xleft-toolbar-width (event-x-pixel event))
 		balloon-help-help-object-y
@@ -335,6 +344,11 @@ used as the help message."
 	(and (not done) (setq lines (1+ lines))))
       (set-frame-size balloon-help-frame (+ 1 longest) lines))))
 
+(defun balloon-help-make-junk-frame ()
+  (let ((window-min-height 1)
+	(window-min-width 1))
+    (make-frame '(minibuffer t initially-unmapped t width 1 height 1))))
+
 (defun balloon-help-make-help-frame ()
   (save-excursion
     (setq balloon-help-bar-cursor bar-cursor)
@@ -349,11 +363,11 @@ used as the help message."
 			       ;; try to evade frame decorations
 			       (cons 'name (or balloon-help-frame-name
 					       "xclock"))
-			       '(border-width . 2)
+			       (cons 'border-width balloon-help-border-width)
 			       (cons 'border-color balloon-help-border-color)
 			       (cons 'top y)
 			       (cons 'left x)
-			       (cons 'popup (selected-frame))
+			       (cons 'popup (balloon-help-make-junk-frame))
 			       '(width . 3)
 			       '(height . 1)))))
       (set-face-font 'default balloon-help-font frame)
@@ -373,6 +387,9 @@ used as the help message."
       (set-specifier bottom-toolbar (cons frame nil))
       (set-specifier scrollbar-width (cons frame 0))
       (set-specifier scrollbar-height (cons frame 0))
+      (and (boundp 'text-cursor-visible-p)
+	   (specifierp text-cursor-visible-p)
+	   (set-specifier text-cursor-visible-p (cons frame nil)))
       (set-specifier modeline-shadow-thickness (cons frame 0))
       (set-face-background 'modeline balloon-help-background frame)
       frame )))
@@ -392,4 +409,5 @@ used as the help message."
 (add-hook 'pre-command-hook 'balloon-help-pre-command-hook)
 (add-hook 'post-command-hook 'balloon-help-post-command-hook)
 (add-hook 'mouse-leave-frame-hook 'balloon-help-mouse-leave-frame-hook)
-(add-hook 'deselect-frame-hook 'balloon-help-deselect-frame-hook)
+;; loses with ClickToFocus under fvwm
+;;(add-hook 'deselect-frame-hook 'balloon-help-deselect-frame-hook)

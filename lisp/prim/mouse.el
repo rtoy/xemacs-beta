@@ -1036,12 +1036,24 @@ at the initial click position."
   (setq default-mouse-track-down-event (copy-event event))
   nil)
 
-(defun default-mouse-track-cleanup-hook ()
+(defun default-mouse-track-cleanup-extents-hook ()
+  (remove-hook 'pre-command-hook 'default-mouse-track-cleanup-extents-hook)
   (let ((extent default-mouse-track-extent))
     (if (consp extent) ; rectangle-p
 	(mapcar 'delete-extent extent)
       (if extent
 	  (delete-extent extent)))))
+
+(defun default-mouse-track-cleanup-hook ()
+  (if zmacs-regions
+      (funcall 'default-mouse-track-cleanup-extents-hook)
+    (let ((extent default-mouse-track-extent)
+	  (func #'(lambda (e) (set-extent-face e 'primary-selection))))
+      (add-hook 'pre-command-hook 'default-mouse-track-cleanup-extents-hook)
+      (if (consp extent)		; rectangle-p
+	  (mapcar func extent)
+	(if extent
+	    (funcall func extent))))))
 
 (defun default-mouse-track-cleanup-extent ()
   (let ((dead-func

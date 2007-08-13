@@ -1,7 +1,7 @@
 ;;; w3-about.el --- About pages for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.7
+;; Created: 1997/02/18 23:36:35
+;; Version: 1.8
 ;; Keywords: hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,9 +35,7 @@
       (save-excursion
 	(set-buffer (get-buffer-create url-working-buffer))
 	(erase-buffer)
-	(setq url-current-type "about"
-	      url-current-file node
-	      url-current-mime-viewer (mm-mime-info "text/html" nil 5)
+	(setq url-current-mime-viewer (mm-mime-info "text/html" nil 5)
 	      url-current-mime-headers '(("content-type" . "text/html")))
 	(cond
 	 ((string= "" node)

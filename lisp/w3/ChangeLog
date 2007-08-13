@@ -1,4 +1,129 @@
+Thu Feb 20 13:40:22 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-summarize-password): By default, don't summarize
+  password entry boxes.
+
+Thu Feb 20 07:33:59 1997  Thierry Emery <Thierry.Emery@aar.alcatel-alsthom.fr>
+
+* w3-display.el (w3-frames): Better support for Frames
+
+Thu Feb 20 07:33:59 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3.el (w3-complete-link): Fixed bug in using try-completion to make sure
+  we have a match before passing a URL off to w3-fetch.
+
+* Synch'd up to widget 1.44
+
+* url.el (url-default-callback): Caching works in asynch mode now.
+
+Wed Feb 19 05:48:40 1997  William M. Perry  <wmperry@aventail.com>
+
+* css.el (css-split-font-shorthand): Make sure that the subelements of the
+  'font' shorthand property get run through the property value-expansion
+  routines before getting returned.  This royally screwed up font-family,
+  font-weight, and friends.
+  (css-expand-color):  Now recognizes 'transparent' and 'none' as special
+  color names.
+  (css-expand-value): When dealing with color-shorthand, make sure
+  everything gets run through the value-expansion routines as well.  Ack.
+
+* w3-elisp.el (w3-elisp-safe-function): You can now supply a validation
+  function for the arguments of a script-enabled function, its no longer a
+  binary operation on just the function name.  You can also give it a
+  variable name, and the value of that variable at the time of execution
+  is what controls whether it is safe or not.
+
+* w3.el (w3-download-url): Finally fixed bug where w3-download-url would
+  not save in the correct directory if you just accepted the default
+  pathname it offered.
+
+* url-cache.el (url-cache-ignored-protocols): New variable controlling
+  what protocols we should never cache to disk.
+  (url-cache-cachable-p): use it.
+
+* w3.txi: Updated all nodes and menus, a few stylistic changes
+
+* w3-elisp.el: Added read-access to devices, frames, windows, buffers, and
+  property-lists.  Also added function, lambda, point, and list accessors
+  (member, memq, assoc)
+
+* w3-display.el (w3-display-node): Bind widget-push-button-gui to nil in
+  w3-display-node so that images don't run into the
+  visible-portion-of-buffer-is-not-modifiable-bug.  Ick.
+
+* w3-elisp.el: Don't allow access to 'set'-type text-property functions
+  from scripts.
+
+Tue Feb 18 15:11:08 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.61 released
+
+* w3.txi (Supported URLs): added sections on each protocol supported -
+  needs lots of fleshing out.
+
+* url-misc.el (url-info): Info URL loader now unhex's the target, so that
+  you can have something like info:w3.info#Getting%20Started
+
+* url.el (url-do-setup): Removed secure-http (SHTTP) handler - who the
+  hell cares anymore, it lost.
+
+* w3-display.el (w3-display-node): Correctly calculates right margin as
+  documented (from window-width and right-margin)
+
+* w3.el: Removed w3-batch-fetch
+
+* url-vars.el: Removed lots of old variables
+
+* url-misc.el: Removed x-exec URL handler - no interest anymore.
+
+* w3-script.el (w3-script-evaluate-form): Use it.
+(w3-do-scripting): New variable to control whether to do _any_ scripting
+or not.
+
+* The URL package now stores the current parsed URL object instead of 5 or
+  6 separate variables.
+
+* dist.Makefile: Removed old pgp and wais support, it was gross and
+  apparently nobody was using it.
+
+Tue Feb 18 06:13:03 1997  "T. V. Raman" <raman@adobe.com>
+
+* w3-forms.el (w3-form-summarize-radio-button): Better radio button
+  summarizer.
+
+Tue Feb 18 06:13:03 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-finish-drawing): Moved #blah target finding in here,
+  where it belongs.
+
+* w3-vars.el (w3-mode-map): Added binding for raw '\t' instead of relying
+  on [tab].  Apparently this keysym isn't aliased under Emacs 19 on a
+  TTY.
+
+Mon Feb 17 15:10:38 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-elisp.el: Interface to Emacs-Lisp for safe scripting.
+
+* w3-script.el: Basic client-side scripting has been implemented.
+
+* w3-xemac.el (w3-mouse-handler): Ditto
+
+* w3-e19.el (w3-mouse-handler): Plugged in handling of the onMouseOver event
+
+* w3-display.el (w3-handle-string-content): Now adds a text property that
+  contains w3-display-open-element-stack, so that from anywhere in the
+  buffer you can find out where you are in the parse tree.
+
+* default.css (input): ome default stylesheet updates for input fields on
+  TTYs
+
+Sun Feb 16 09:01:18 1997  Shuji Narazaki <narazaki@InetQ.or.jp>
+
+* mule-sysdp.el: Updated for mule 3.0
+
 Sat Feb 15 15:35:15 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.60 released
 
 * w3-display.el (w3-display-node): use it.
 

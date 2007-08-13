@@ -184,7 +184,7 @@ echo Ilisp done.
 
 # AUC TeX requires special treatment
 echo Compiling AUC TeX...
-( cd lisp/auctex ; make -f Makefile EMACS=$REAL )
+( cd lisp/auctex ; make some -f Makefile EMACS=$REAL )
 echo AUC TeX done.
 
 #

@@ -1,4 +1,4 @@
-;;; $Id: hm--html-keys.el,v 1.3 1997/02/22 22:07:10 steve Exp $
+;;; $Id: hm--html-keys.el,v 1.4 1997/03/02 03:43:16 steve Exp $
 ;;; 
 ;;; Copyright (C) 1995, 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -57,7 +57,6 @@ It could have the same value as
   (define-key hm--html-noregion-anchor-map "\C-f" 'hm--html-add-ftp-link)
   (define-key hm--html-noregion-anchor-map "n" 'hm--html-add-news-link)
   (define-key hm--html-noregion-anchor-map "m" 'hm--html-add-mail-link)
-;  (define-key hm--html-noregion-anchor-map "\C-m" 'hm--html-add-mailto-link)
   (define-key hm--html-noregion-anchor-map 
     [(control m)] 'hm--html-add-mailto-link)
   (define-key hm--html-noregion-anchor-map "w" 'hm--html-add-direct-wais-link)
@@ -86,8 +85,6 @@ It could have the same value as
     "\C-f" 'hm--html-add-ftp-link-to-region)
   (define-key hm--html-region-anchor-map "n" 'hm--html-add-news-link-to-region)
   (define-key hm--html-region-anchor-map "m" 'hm--html-add-mail-link-to-region)
-;  (define-key hm--html-region-anchor-map 
-;    "\C-m" 'hm--html-add-mailto-link-to-region)
   (define-key hm--html-region-anchor-map
     [(control m)] 'hm--html-add-mailto-link-to-region)
   (define-key hm--html-region-anchor-map 
@@ -111,6 +108,7 @@ It could have the same value as
     ()
   (setq	hm--html-noregion-frame-map (make-sparse-keymap))
   (define-key hm--html-noregion-frame-map "f" 'hm--html-add-full-html-frame)
+  (define-key hm--html-noregion-frame-map [(control d)] 'hm--html-add-doctype)
   (define-key hm--html-noregion-frame-map [(control h)] 'hm--html-add-html) 
   (define-key hm--html-noregion-frame-map [(meta h)] 'hm--html-add-head)
   (define-key hm--html-noregion-frame-map "b" 'hm--html-add-body)
@@ -118,7 +116,10 @@ It could have the same value as
     [(control t)] 'hm--html-add-title-and-header)
   (define-key hm--html-noregion-frame-map "t" 'hm--html-add-title)
   (define-key hm--html-noregion-frame-map "h" 'hm--html-add-header)
+  (define-key hm--html-noregion-frame-map "m" 'hm--html-add-meta)
   (define-key hm--html-noregion-frame-map "n" 'hm--html-add-normal-node-link)
+  (define-key hm--html-noregion-frame-map "i" 'hm--html-add-isindex)
+  (define-key hm--html-noregion-frame-map [(meta d)] 'hm--html-add-base)
   (define-key hm--html-noregion-frame-map "a" 'hm--html-add-address)
   (define-key hm--html-noregion-frame-map "s" 'hm--html-add-signature)
   (define-key hm--html-noregion-frame-map 
@@ -178,6 +179,8 @@ It could have the same value as
   (define-key hm--html-noregion-structure-map "p" 'hm--html-add-paragraph)
   (define-key hm--html-noregion-structure-map 
     "\C-p" 'hm--html-add-paragraph-separator)
+  (define-key hm--html-noregion-structure-map
+    [(meta d)] 'hm--html-add-document-division)
   (define-key hm--html-noregion-structure-map "\C-m" 'hm--html-add-line-break)
   (define-key hm--html-noregion-structure-map 
     "h" 'hm--html-add-horizontal-rule)
@@ -196,21 +199,21 @@ It could have the same value as
   (define-key hm--html-region-structure-map 
     "o" 'hm--html-add-numberlist-to-region)
   (define-key hm--html-region-structure-map 
-    "d" 'hm--html-add-directory-list-to-region)
+    "d" 'hm--html-add-directorylist-to-region)
   (define-key hm--html-region-structure-map 
     "\C-dl" 'hm--html-add-description-list-to-region)
   (define-key hm--html-region-structure-map 
     "\C-dt" 'hm--html-add-description-title-to-region)
   (define-key hm--html-region-structure-map 
     "\C-de" 'hm--html-add-description-entry-to-region)
-;  (define-key hm--html-region-structure-map 
-;    "\C-d\C-t" 'html-add-description-title-and-entry-to-region))
   (define-key hm--html-region-structure-map
     "\C-tt" 'hm--html-add-table-to-region)
   (define-key hm--html-region-structure-map 
     "\C-t\C-t" 'hm--html-add-table-title-to-region)
   (define-key hm--html-region-structure-map 
     "p" 'hm--html-add-paragraph-to-region)
+  (define-key hm--html-region-structure-map
+    [(meta d)] 'hm--html-add-document-division-to-region)
   )
 
 (defvar hm--html-noregion-formating-paragraph-map nil
@@ -219,16 +222,24 @@ It could have the same value as
 (if hm--html-noregion-formating-paragraph-map
     ()
   (setq hm--html-noregion-formating-paragraph-map (make-sparse-keymap))
+;  (define-key hm--html-noregion-formating-paragraph-map
+;    "o" 'hm--html-add-plaintext)
   (define-key hm--html-noregion-formating-paragraph-map
-    "o" 'hm--html-add-plaintext)
-  (define-key hm--html-noregion-formating-paragraph-map
-    "w" 'hm--html-add-preformated)
+    "p" 'hm--html-add-preformated)
   (define-key hm--html-noregion-formating-paragraph-map
     "b" 'hm--html-add-blockquote)
   (define-key hm--html-noregion-formating-paragraph-map
-    "l" 'hm--html-add-listing)
+    "C-b" 'hm--html-add-basefont)
   (define-key hm--html-noregion-formating-paragraph-map
-    "a" 'hm--html-add-abstract)
+    "f" 'hm--html-add-font)
+  (define-key hm--html-noregion-formating-paragraph-map
+    "c" 'hm--html-add-center)
+  (define-key hm--html-noregion-formating-paragraph-map
+    "C-c" 'hm--html-add-comment-to-region)
+;  (define-key hm--html-noregion-formating-paragraph-map
+;    "l" 'hm--html-add-listing)
+;  (define-key hm--html-noregion-formating-paragraph-map
+;    "a" 'hm--html-add-abstract)
   )
 
 (defvar hm--html-region-formating-paragraph-map nil
@@ -237,16 +248,24 @@ It could have the same value as
 (if hm--html-region-formating-paragraph-map
     ()
   (setq hm--html-region-formating-paragraph-map (make-sparse-keymap))
+;  (define-key hm--html-region-formating-paragraph-map
+;    "o" 'hm--html-add-plaintext-to-region)
   (define-key hm--html-region-formating-paragraph-map
-    "o" 'hm--html-add-plaintext-to-region)
-  (define-key hm--html-region-formating-paragraph-map
-    "w" 'hm--html-add-preformated-to-region)
+    "p" 'hm--html-add-preformated-to-region)
   (define-key hm--html-region-formating-paragraph-map
     "b" 'hm--html-add-blockquote-to-region)
   (define-key hm--html-region-formating-paragraph-map
-    "l" 'hm--html-add-listing-to-region)
+    "C-b" 'hm--html-add-basefont-to-region)
   (define-key hm--html-region-formating-paragraph-map
-    "a" 'hm--html-add-abstract-to-region)
+    "f" 'hm--html-add-font-to-region)
+  (define-key hm--html-region-formating-paragraph-map
+    "c" 'hm--html-add-center-to-region)
+  (define-key hm--html-region-formating-paragraph-map
+    "C-c" 'hm--html-add-comment-to-region)
+;  (define-key hm--html-region-formating-paragraph-map
+;    "l" 'hm--html-add-listing-to-region)
+;  (define-key hm--html-region-formating-paragraph-map
+;    "a" 'hm--html-add-abstract-to-region)
   )
 
 (defvar hm--html-noregion-formating-word-map nil
@@ -315,11 +334,18 @@ It could have the same value as
 (if hm--html-noregion-include-map
     ()
   (setq hm--html-noregion-include-map (make-sparse-keymap))
-  (define-key hm--html-noregion-include-map "t" 'hm--html-add-image-top)
-  (define-key hm--html-noregion-include-map "m" 'hm--html-add-image-middle)
-  (define-key hm--html-noregion-include-map "b" 'hm--html-add-image-bottom)
+  (define-key hm--html-noregion-include-map
+    [(control i) (t)] 'hm--html-add-image-top)
+  (define-key hm--html-noregion-include-map
+    [(control i) (m)] 'hm--html-add-image-middle)
+  (define-key hm--html-noregion-include-map
+    [(control i) (b)] 'hm--html-add-image-bottom)
+  (define-key hm--html-noregion-include-map "i" 'hm--html-add-image)
+  (define-key hm--html-noregion-include-map [(meta i)] 'hm--html-add-image-map)
+  (define-key hm--html-noregion-include-map "m" 'hm--html-add-map)
+  (define-key hm--html-noregion-include-map [(control a)] 'hm--html-add-area)
   (define-key hm--html-noregion-include-map "a" 'hm--html-add-applet)
-  (define-key hm--html-noregion-include-map "p" 'hm--html-add-applet)
+  (define-key hm--html-noregion-include-map "p" 'hm--html-add-applet-parameter)
   )
 
 (defvar hm--html-region-include-map nil
@@ -328,6 +354,8 @@ It could have the same value as
 (if hm--html-region-include-map
     ()
   (setq hm--html-region-include-map (make-sparse-keymap))
+  (define-key hm--html-region-include-map "m" 'hm--html-add-map-to-region)
+  (define-key hm--html-region-include-map "a" 'hm--html-add-applet-to-region)
   )
 
 ;(defvar hm--html-noregion-text-elements-map nil

@@ -98,7 +98,7 @@ The saved messages are flagged as `filed'."
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
-  (vm-unsaved-message "Archiving...")
+  (message "Archiving...")
   (let ((auto-folder)
 	(archived 0))
     (unwind-protect
@@ -135,7 +135,7 @@ The saved messages are flagged as `filed'."
 		   (if (not (string-equal auto-folder "/dev/null"))
 		       (vm-save-message auto-folder))
 		   (vm-increment archived)
-		   (vm-unsaved-message "%d archived, still working..."
+		   (message "%d archived, still working..."
 				       archived)))
 	    (setq done (eq vm-message-pointer stop-point)
 		  vm-message-pointer (cdr vm-message-pointer))))

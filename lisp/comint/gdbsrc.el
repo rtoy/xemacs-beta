@@ -373,19 +373,22 @@ containing c source code."
 (defun gdb-call-from-src (command)
   "Send associated gdb process COMMAND displaying source in this window."
   (setq gdbsrc-call-p t)
-  (let ((buf (or gdbsrc-associated-buffer current-gdb-buffer)))
-    (or (buffer-name buf)
-	(error "GDB buffer deleted"))
-    (pop-to-buffer buf))
-  (goto-char (point-max))
-  (beginning-of-line)
-  ;; Go past gdb prompt 
-  (re-search-forward
-   gdb-prompt-pattern (save-excursion (end-of-line) (point))  t)
-  ;; Delete any not-supposed-to-be-there text
-  (delete-region (point) (point-max)) 
-  (insert command)
-  (comint-send-input))
+    (let ((src-win (selected-window))
+	  (buf (or gdbsrc-associated-buffer current-gdb-buffer)))
+      (or (buffer-name buf)
+	  (error "GDB buffer deleted"))
+      (pop-to-buffer buf)
+      (goto-char (point-max))
+      (beginning-of-line)
+      ;; Go past gdb prompt 
+      (re-search-forward
+       gdb-prompt-pattern (save-excursion (end-of-line) (point))  t)
+      ;; Delete any not-supposed-to-be-there text
+      (delete-region (point) (point-max)) 
+      (insert command)
+      (comint-send-input)
+      (select-window src-win)
+      ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/02/15 23:38:28
-;; Version: 1.128
+;; Created: 1997/02/20 21:48:44
+;; Version: 1.135
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -367,6 +367,7 @@ as the bullet character.")
   (goto-char (point-max))
   (add-text-properties w3-scratch-start-point
 		       (point) (list 'face w3-active-faces
+				     'html-stack w3-display-open-element-stack
 				     'start-open t
 				     'end-open t
 				     'rear-nonsticky t
@@ -414,7 +415,8 @@ as the bullet character.")
 	(pop check)))))
 
 (defun w3-follow-hyperlink (widget &rest ignore)
-  (let* ((target (widget-get widget 'target))
+  (let* ((target (or (widget-get widget 'target)
+		     w3-base-target))
 	 (href (widget-get widget 'href)))
     (if target (setq target (intern (downcase target))))
     (case target
@@ -424,6 +426,11 @@ as the bullet character.")
        (delete-other-windows)
        (w3-fetch href))
       (otherwise
+       (and target
+	    (let ((window-distance (cdr-safe (assq target w3-target-window-distances))))
+	      (if (numberp window-distance)
+		  (other-window window-distance)
+		(error "target %S not found." target))))
        (w3-fetch href)))))
 
 (defun w3-balloon-help-callback (object &optional event)
@@ -1497,6 +1504,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	(right-margin-stack (list fill-column))
 	(left-margin-stack (list 0))
 	(inhibit-read-only t)
+	(widget-push-button-gui nil)
 	node
 	insert-before
 	insert-after
@@ -1648,26 +1656,37 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	     (w3-handle-empty-tag))
 	    (frameset
 	     (if w3-display-frames
-		 (w3-handle-content node)
+		 (progn
+		   (push 'frameset w3-frameset-structure)
+		   (let ((cols (assq 'cols args))
+			 (rows (assq 'rows args)))
+		     (if rows
+			 (setq w3-frameset-dimensions (push rows w3-frameset-dimensions)))
+		     (if cols
+			 (setq w3-frameset-dimensions (push cols w3-frameset-dimensions))))
+		   (w3-handle-content node))
 	       (w3-handle-empty-tag)))
 	    (frame
-	     (let* ((href (or (w3-get-attribute 'src)
-			      (w3-get-attribute 'href)))
-		    (name (or (w3-get-attribute 'name)
-			      (w3-get-attribute 'title)
-			      (w3-get-attribute 'alt)
-			      "Unknown frame name")))
-	       (w3-handle-content
-		(list tag args
-		      (list
-		       (list 'p nil
-			     (list
-			      (list 'a
-				    (cons (cons 'href href)
-					  args)
-				    (list
-				     "Fetch frame: "
-				     name)))))))))
+	     (if w3-display-frames
+		 (let* ((href (or (w3-get-attribute 'src)
+				  (w3-get-attribute 'href)))
+			(name (or (w3-get-attribute 'name)
+				  (w3-get-attribute 'title)
+				  (w3-get-attribute 'alt)
+				  "Unknown frame name")))
+		   (push 'frame w3-frameset-structure)
+		   (w3-handle-content
+		    (list tag args
+			  (list
+			   (list 'p nil
+				 (list
+				  (list 'a
+					(cons (cons 'href href)
+					      args)
+					(list
+					 (car w3-frame-labels)
+					 name
+					 (cdr w3-frame-labels)))))))))))
 	    (noframes
 	     (if w3-display-frames
 		 (w3-handle-empty-tag)
@@ -1775,11 +1794,12 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		   (set-buffer (generate-new-buffer "Untitled")))
 	       (setq w3-current-form-number 0
 		     w3-display-open-element-stack nil
-		     w3-last-fill-pos (point-min)
-		     fill-column (min (- (or w3-strict-width (window-width))
-					 w3-right-margin)
-				      (or w3-maximum-line-length
-					  (window-width))))
+		     w3-last-fill-pos (point-min))
+	       (setcar right-margin-stack
+		       (min (- (or w3-strict-width (window-width))
+			       w3-right-margin)
+			    (or w3-maximum-line-length
+				(window-width))))
 	       (switch-to-buffer (current-buffer))
 	       (buffer-disable-undo (current-buffer))
 	       (mapcar (function (lambda (x) (set (car x) (cdr x)))) info)
@@ -1790,10 +1810,6 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	       (setq w3-current-stylesheet (css-copy-stylesheet
 					    w3-user-stylesheet)
 		     w3-last-fill-pos (point)
-		     fill-column (min (- (or w3-strict-width (window-width))
-					 w3-right-margin)
-				      (or w3-maximum-line-length
-					  (window-width)))
 		     fill-prefix "")
 	       (set (make-local-variable 'inhibit-read-only) t))
 	     (w3-handle-content node)
@@ -1840,6 +1856,9 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 		 (rename-buffer (generate-new-buffer-name
 				 (w3-fix-spaces potential-title)))))
 	     (w3-handle-empty-tag))
+	    (base
+	     (setq w3-base-target (cdr-safe (assq 'target args)))
+	     (w3-handle-content node))
 	    (form
 	     (setq w3-current-form-number (1+ w3-current-form-number))
 	     (let* (
@@ -2016,9 +2035,15 @@ Should be run before restoring w3-table-border-chars to ascii characters."
       (condition-case nil
 	  (widget-value-set widget glyph)
 	(error nil))))
+  (if (and url-current-object (url-target url-current-object))
+      (progn
+	(push-mark (point) t)
+	(w3-find-specific-link (url-target url-current-object)))
+    (goto-char (point-min)))
   (and (not w3-running-xemacs)
        (not (eq (device-type) 'tty))
        (w3-fixup-eol-faces))
+  (message "Drawing... done")
   ;;(w3-handle-headers)
   )
 
@@ -2067,7 +2092,6 @@ Should be run before restoring w3-table-border-chars to ascii characters."
     (w3-finish-drawing)
     (w3-mode)
     (set-buffer-modified-p nil)
-    (goto-char (point-min))
     (if url-keep-history
 	(let ((url (url-view-url t)))
 	  (if (not url-history-list)
@@ -2076,5 +2100,133 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	  (if (fboundp 'w3-shuffle-history-menu)
 	      (w3-shuffle-history-menu)))))
   )
+
+(defun w3-frames (&optional new-frame)
+  "Set up and fetch W3 frames. With optional prefix, do so in a new frame."
+  (interactive "P")
+  (let* ((old-asynch url-be-asynchronous)
+	 (structure (reverse w3-frameset-structure))
+	 (dims (or (reverse w3-frameset-dimensions)
+		   t)))
+    (if new-frame
+	(select-frame (make-frame-command)))
+    (goto-char (point-min))
+    (setq-default url-be-asynchronous nil)
+    ;; set up frames
+    (while (and structure dims)
+      (let* ((current-dims (list (car dims)))
+	     (cols (cdr-safe (assq 'cols current-dims)))
+	     (rows (cdr-safe (assq 'rows current-dims))))
+	(if (eq (car structure) 'frameset)
+	    (pop structure))
+	;; columns ?
+	(if cols
+	    (setq cols (w3-decode-frameset-dimensions cols (window-width)))
+	  ;; rows ?
+	  (if rows
+	      (setq rows (w3-decode-frameset-dimensions rows (window-height)))
+	    ;; default: columns of equal width
+	    (let ((nb-windows 0))
+	      (save-excursion
+		(while (re-search-forward w3-frame-regexp nil t)
+		  (setq nb-windows (1+ nb-windows))))
+	      (let ((fwidth (/ (window-width) nb-windows)))
+		(while (> nb-windows 0)
+		  (push fwidth cols)
+		  (setq nb-windows (1- nb-windows)))))))
+	(while (eq (car structure) 'frame)
+	  (if (re-search-forward w3-frame-regexp nil t)
+	      (progn
+		(if (cdr cols)
+		    (split-window-horizontally (min (car cols)
+						    (- (window-width) 12)))
+		  (if (cdr rows)
+		      (split-window-vertically (min (car rows)
+						    (- (window-height) 12)))))
+		(pop cols)
+		(pop rows)
+		(goto-char (+ (match-beginning 0) 5))
+		(let ((name (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+		      (w3-notify 'semibully))
+		  (w3-widget-button-press)
+		  (setq w3-frame-name name
+			w3-target-window-distances nil))
+		(other-window 1)))
+	  (pop structure)))
+      (if (consp dims)
+	  (pop dims)
+	(setq dims nil)))
+    ;; compute target window distances
+    (let ((origin-buffer (current-buffer))
+	  (stop nil))
+      (while (not stop)
+	(or w3-target-window-distances
+	    (setq w3-target-window-distances
+		  (w3-compute-target-window-distances)))
+	(other-window 1)
+	(if (eq (current-buffer) origin-buffer)
+	    (setq stop t))))
+    (setq-default url-be-asynchronous old-asynch)))
+
+(defun w3-compute-target-window-distances ()
+  "Compute an alist of target names and window distances"
+  (let ((origin-buffer (current-buffer))
+	(distance 0)
+	(stop nil)
+	(window-distances nil))
+    (while (not stop)
+      (if w3-frame-name
+	  (push (cons (intern (downcase w3-frame-name)) distance)
+		window-distances))
+      (other-window 1)
+      (setq distance (1+ distance))
+      (if (eq (current-buffer) origin-buffer)
+	  (setq stop t)))
+    window-distances))
+
+(defun w3-decode-frameset-dimensions (dims available-dimension)
+  "Returns numbers of lines or columns in Emacs, computed from specified frameset dimensions"
+  (let ((dimensions nil))
+    (if dims
+	(let ((nb-stars 0)
+	      (remaining-available-dimension available-dimension))
+	  (while (string-match "\\(\\*\\|[0-9]+%?\\)" dims)
+	    (let ((match (substring dims (match-beginning 1) (match-end 1))))
+	      (setq dims (substring dims (match-end 1)))
+	      (cond ((string-match "\\*" match)
+		     ;; * : divide rest equally
+		     (push '* dimensions)
+		     (setq nb-stars (1+ nb-stars)))
+		    (t
+		     (cond ((string-match "\\([0-9]+\\)%" match)
+			    ;; percentage of available height
+			    (push (/ (* (car (read-from-string (substring match 0 -1)))
+					available-dimension)
+				     100)
+				  dimensions))
+			   (t
+			    ;; absolute number: pixel height
+			    (push (max (1+ (/ (car (read-from-string match))
+					      (frame-char-height)))
+				       window-min-height)
+				  dimensions)))
+		     (setq remaining-available-dimension
+			   (- remaining-available-dimension (car dimensions)))))))
+	  (if (zerop nb-stars)
+	      ;; push => reverse order
+	      (reverse dimensions)
+	    ;; substitute numbers for *
+	    (let ((star-replacement (/ remaining-available-dimension nb-stars))
+		    (star-dimensions dimensions))
+		(setq dimensions nil)
+		(while star-dimensions
+		  (push (if (eq '* (car star-dimensions))
+			    star-replacement
+			  (car star-dimensions))
+			dimensions)
+		  (pop star-dimensions))
+		;; push + push => in order
+		dimensions))))))
+
 
 (provide 'w3-display)

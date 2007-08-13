@@ -1,6 +1,6 @@
 \input texinfo.tex
 
-@c $Id: widget.texi,v 1.4 1997/02/22 22:08:28 steve Exp $
+@c $Id: widget.texi,v 1.5 1997/03/02 03:44:16 steve Exp $
 
 @c %**start of header
 @setfilename widget
@@ -15,7 +15,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.44
+Version: 1.46
 
 @menu
 * Introduction::                

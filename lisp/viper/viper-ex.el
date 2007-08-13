@@ -1878,6 +1878,7 @@ Please contact your system administrator. "
 	(beg (car (cdr ex-addresses))) 
 	(orig-buf (current-buffer))
 	(orig-buf-file-name (buffer-file-name))
+	(orig-buf-name (buffer-name))
 	(buff-changed-p (buffer-modified-p))
 	temp-buf writing-same-file region
 	file-exists writing-whole-file)
@@ -1929,7 +1930,13 @@ Please contact your system administrator. "
 		     (save-buffer))
 		 ;; restore the buffer file name
 		 (set-visited-file-name orig-buf-file-name)
-		 (set-buffer-modified-p buff-changed-p))
+		 (set-buffer-modified-p buff-changed-p)
+		 ;; If the buffer wasn't visiting a file, restore buffer name.
+		 ;; Name could've been changed by packages such as uniquify.
+		 (or orig-buf-file-name
+		     (progn
+		       (unlock-buffer)
+		       (rename-buffer orig-buf-name))))
 	       (save-restriction
 		 (widen)
 		 (ex-write-info

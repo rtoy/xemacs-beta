@@ -1363,7 +1363,6 @@ of the digestified messages.")
 
 (defvar vm-resend-bounced-headers
   '("MIME-Version:" "Content-"
-    "Resent-"
     "From:" "Sender:" "Reply-To:"
     "To:" "Cc:"
     "Subject:"

@@ -1,6 +1,6 @@
 ;;; hm--html-configuration.el - Configurationfile for the html-mode
 ;;;
-;;; $Id: hm--html-configuration.el,v 1.3 1997/02/22 22:07:09 steve Exp $
+;;; $Id: hm--html-configuration.el,v 1.4 1997/03/02 03:43:16 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -616,6 +616,8 @@ done this.")
      (:hm--html-optional-attributes (size color)))
     ("map" (:hm--html-two-element-tag t)
      (:hm--html-required-attributes (name)))
+    ("style" (:hm--html-two-element-tag t))
+    ("script" (:hm--html-two-element-tag t))
     )
   "An alist with tag names known by the `hm--html-mode'.
 CURRENTLY THIS LIST CONTAINS NOT ALL TAGS!!!!.

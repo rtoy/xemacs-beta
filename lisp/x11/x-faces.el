@@ -495,7 +495,7 @@ Otherwise, it returns the next larger version of this font that is defined."
   (or (face-foreground 'default 'global)
       (set-face-foreground 'default "black" 'global 'x))
   (or (face-background 'default 'global)
-      (set-face-background 'default "white" 'global 'x)))
+      (set-face-background 'default "gray80" 'global 'x)))
 
 ;;; x-init-device-faces is responsible for initializing default
 ;;; values for faces on a newly created device.
@@ -577,8 +577,8 @@ Otherwise, it returns the next larger version of this font that is defined."
 	    (progn
 	      (or fg (set-face-foreground 'default "white" device))
 	      (or bg (set-face-background 'default "black" device)))
-	  (or fg (set-face-foreground 'default "black" device))
-	  (or bg (set-face-background 'default "white" device)))))
+	  (or fg (set-face-foreground 'default "white" device))
+	  (or bg (set-face-background 'default "black" device)))))
 
   ;; Don't look at reverseVideo now or initialize the modeline.  This
   ;; is done on a per-frame basis at the appropriate time.

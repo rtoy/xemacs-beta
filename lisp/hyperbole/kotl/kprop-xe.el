@@ -6,14 +6,15 @@
 ;; KEYWORDS:     outlines, wp
 ;;
 ;; AUTHOR:       Bob Weiner
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    7/27/93
-;; LAST-MOD:     30-Oct-95 at 21:21:20 by Bob Weiner
+;; LAST-MOD:     28-Feb-97 at 23:41:02 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1993, 1994, 1995  Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1994, 1995, 1997  Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -92,7 +93,8 @@ The optional fourth argument, OBJECT, is the string or buffer containing the
 text.  Text inserted before or after this region does not inherit the added
 properties."
   ;; Don't use text properties internally because they don't work as desired
-  ;; when copied to a string and then reinserted.
+  ;; when copied to a string and then reinserted, at least in some versions
+  ;; of XEmacs.
   (let ((extent (make-extent start end object)))
     (if (null extent)
 	(error "(kproperty:put): No extent at %d-%d to add properties %s" 
@@ -100,7 +102,7 @@ properties."
     (if (/= (mod (length property-list) 2) 0)
 	(error "(kproperty:put): Property-list has odd number of elements, %s"
 	       property-list))
-    (set-extent-property extent 'text-prop t)
+    (set-extent-property extent 'text-prop (car property-list))
     (set-extent-property extent 'duplicable t)
     (set-extent-property extent 'start-open t)
     (set-extent-property extent 'end-open t)

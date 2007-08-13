@@ -4600,10 +4600,19 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
                   = *p2 == (unsigned char) endline ? '\n' : p2[2];
 #endif
 
+#if 1
+                /* dmoore@ucsd.edu - emacs 19.34 uses this: */
+
                 if ((re_opcode_t) p1[3] == exactn
-		    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[4]
-			  && (p2[1 + p1[4] / BYTEWIDTH]
-			      & (1 << (p1[4] % BYTEWIDTH)))))
+                    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[5]
+                          && (p2[2 + p1[5] / BYTEWIDTH]
+                              & (1 << (p1[5] % BYTEWIDTH)))))
+#else
+                if ((re_opcode_t) p1[3] == exactn
+                    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[4]
+                          && (p2[1 + p1[4] / BYTEWIDTH]
+                              & (1 << (p1[4] % BYTEWIDTH)))))
+#endif
                   {
   		    p[-3] = (unsigned char) pop_failure_jump;
                     DEBUG_PRINT3 ("  %c != %c => pop_failure_jump.\n",

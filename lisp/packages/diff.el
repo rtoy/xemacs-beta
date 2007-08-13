@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:         diff.el
-;; Version:      $Revision: 1.2 $
+;; Version:      $Revision: 1.3 $
 ;; Author:       This file is based on diff.el by
 ;;               sunpitt!wpmstr!fbresz@Sun.COM 1/27/89.
 ;;               It has been completely rewritten in July 1994 by
@@ -40,6 +40,7 @@
 ;;; User Variables
 
 ;; should be in to loaddefs.el now.
+;;;###autoload
 (defvar diff-switches nil
   "*A list of switches (strings) to pass to the diff program.")
 
@@ -479,6 +480,7 @@ All normal editing commands are turned off.  Instead, these are available:
 
 ;;; The main command.
 
+;;;###autoload
 (defun diff (old new &optional switches)
   "Find and display the differences between OLD and NEW files.
 Interactively you are prompted with the current buffer's file name for NEW
@@ -570,6 +572,7 @@ and what appears to be its backup for OLD."
 	(error nil))
       (set-buffer curr-buff))))
 
+;;;###autoload
 (defun diff-backup (file &optional switches)
   "Diff this file with its backup file or vice versa.
 Uses the latest backup, if there are several numerical backups.

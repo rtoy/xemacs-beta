@@ -908,7 +908,8 @@ Customize SYMBOL, which must be a customization group." t nil)
 Customize SYMBOL, which must be a variable." t nil)
 
 (autoload 'customize-face "custom-edit" "\
-Customize FACE." t nil)
+Customize SYMBOL, which should be a face name or nil.
+If SYMBOL is nil, customize all faces." t nil)
 
 (autoload 'customize-customized "custom-edit" "\
 Customize all already customized user options." t nil)
@@ -3637,7 +3638,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.8 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.9 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4909,7 +4910,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.8 $
+vhdl-mode $Revision: 1.9 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5709,6 +5710,12 @@ This operates on the output from the \\[compile] command." t nil)
 
 ;;;***
 
+;;;### (autoloads (cu-edit-faces) "cu-edit-faces" "packages/cu-edit-faces.el")
+
+(autoload 'cu-edit-faces "cu-edit-faces" nil t nil)
+
+;;;***
+
 ;;;### (autoloads (dabbrev-expand dabbrev-completion) "dabbrev" "packages/dabbrev.el")
 
 (define-key global-map [(meta /)] 'dabbrev-expand)
@@ -5750,6 +5757,24 @@ The variable `dabbrev-backward-only' may be used to limit the
 direction of search to backward if set non-nil.
 
 See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]." t nil)
+
+;;;***
+
+;;;### (autoloads (diff-backup diff) "diff" "packages/diff.el")
+
+(defvar diff-switches nil "\
+*A list of switches (strings) to pass to the diff program.")
+
+(autoload 'diff "diff" "\
+Find and display the differences between OLD and NEW files.
+Interactively you are prompted with the current buffer's file name for NEW
+and what appears to be its backup for OLD." t nil)
+
+(autoload 'diff-backup "diff" "\
+Diff this file with its backup file or vice versa.
+Uses the latest backup, if there are several numerical backups.
+If this file is a backup, diff it with its original.
+The backup file is the first file given to `diff'." t nil)
 
 ;;;***
 
@@ -6128,12 +6153,13 @@ MATCH-HIGHLIGHT should be of the form:
 
  (MATCH FACENAME OVERRIDE LAXMATCH)
 
-Where MATCHER can be either the regexp to search for, or the function name to
-call to make the search (called with one argument, the limit of the search).
-MATCH is the subexpression of MATCHER to be highlighted.  FACENAME is either
-a symbol naming a face, or an expression whose value is the face name to use.
-If you want FACENAME to be a symbol that evaluates to a face, use a form
-like \"(progn sym)\".
+Where MATCHER can be either the regexp to search for, a variable
+containing the regexp to search for, or the function to call to make
+the search (called with one argument, the limit of the search).  MATCH
+is the subexpression of MATCHER to be highlighted.  FACENAME is either
+a symbol naming a face, or an expression whose value is the face name
+to use.  If you want FACENAME to be a symbol that evaluates to a face,
+use a form like \"(progn sym)\".
 
 OVERRIDE and LAXMATCH are flags.  If OVERRIDE is t, existing fontification may
 be overwritten.  If `keep', only parts not already fontified are highlighted.
@@ -7679,7 +7705,7 @@ This function works by modifying `process-environment'." t nil)
 
 ;;;***
 
-;;;### (autoloads nil "itimer" "prim/itimer.el")
+;;;### (autoloads nil "itimer-autosave" "prim/itimer-autosave.el")
 
 ;;;***
 
@@ -9533,7 +9559,26 @@ is a list of menu items, as above." nil 'macro)
 
 ;;;***
 
-;;;### (autoloads (url-retrieve url-cache-expired url-popup-info url-get-url-at-point url-buffer-visiting url-normalize-url url-file-attributes) "url" "w3/url.el")
+;;;### (autoloads (url-cache-expired url-extract-from-cache url-create-cached-filename url-is-cached url-store-in-cache) "url-cache" "w3/url-cache.el")
+
+(autoload 'url-store-in-cache "url-cache" "\
+Store buffer BUFF in the cache" nil nil)
+
+(autoload 'url-is-cached "url-cache" "\
+Return non-nil if the URL is cached." nil nil)
+
+(autoload 'url-create-cached-filename "url-cache" "\
+Return a filename in the local cache for URL" nil nil)
+
+(autoload 'url-extract-from-cache "url-cache" "\
+Extract FNAM from the local disk cache" nil nil)
+
+(autoload 'url-cache-expired "url-cache" "\
+Return t iff a cached file has expired." nil nil)
+
+;;;***
+
+;;;### (autoloads (url-retrieve url-popup-info url-get-url-at-point url-buffer-visiting url-normalize-url url-file-attributes) "url" "w3/url.el")
 
 (autoload 'url-file-attributes "url" "\
 Return a list of attributes of URL.
@@ -9571,9 +9616,6 @@ directly on a symbol." nil nil)
 (autoload 'url-popup-info "url" "\
 Retrieve the HTTP/1.0 headers and display them in a temp buffer." nil nil)
 
-(autoload 'url-cache-expired "url" "\
-Return t iff a cached file has expired." nil nil)
-
 (autoload 'url-retrieve "url" "\
 Retrieve a document over the World Wide Web.
 The document should be specified by its fully specified
@@ -9596,7 +9638,7 @@ visited or interesting items you have found on the World Wide Web." t nil)
 
 ;;;***
 
-;;;### (autoloads (w3-follow-link w3-follow-link-other-frame w3-do-setup w3 w3-preview-this-buffer w3-batch-fetch w3-follow-url-at-point w3-follow-url-at-point-other-frame w3-maybe-follow-link w3-maybe-follow-link-mouse w3-fetch w3-fetch-other-frame w3-find-file w3-open-local) "w3" "w3/w3.el")
+;;;### (autoloads (w3-follow-link w3-follow-link-other-frame w3-do-setup w3 w3-preview-this-buffer w3-follow-url-at-point w3-follow-url-at-point-other-frame w3-maybe-follow-link w3-maybe-follow-link-mouse w3-fetch w3-fetch-other-frame w3-find-file w3-open-local) "w3" "w3/w3.el")
 
 (autoload 'w3-open-local "w3" "\
 Find a local file, and interpret it as a hypertext document.
@@ -9633,17 +9675,6 @@ Follow the URL under PT, defaults to link under (point)" t nil)
 
 (autoload 'w3-follow-url-at-point "w3" "\
 Follow the URL under PT, defaults to link under (point)" t nil)
-
-(autoload 'w3-batch-fetch "w3" "\
-Fetch all the URLs on the command line and save them to files in
-the current directory.  The first argument after the -f w3-batch-fetch
-on the command line should be a string specifying how to save the
-information retrieved.  If it is \"html\", then the page will be
-unformatted when it is written to disk.  If it is \"text\", then the
-page will be formatted before it is written to disk.  If it is
-\"binary\" it will not mess with the file extensions, and just save
-the data in raw binary format.  If none of those, the default is
-\"text\", and the first argument is treated as a normal URL." nil nil)
 
 (autoload 'w3-preview-this-buffer "w3" "\
 See what this buffer will look like when its formatted as HTML.

@@ -132,7 +132,7 @@
 	  (progn
 	    (set-buffer (setq work-buffer (get-buffer-create "*vm-wconfig*")))
 	    ;; for XEmacs/MULE
-	    (and (fboundp 'set-file-coding-system)
+	    (and (vm-xemacs-mule-p)
 		 (set-file-coding-system 'no-conversion))
 	    (erase-buffer)
 	    (print vm-window-configurations (current-buffer))

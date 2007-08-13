@@ -2,6 +2,3 @@
 This directory contains some text files of documentation for XEmacs or
 of interest to XEmacs users, some programs used by or with XEmacs, and
 the file of on-line documentation for XEmacs.
-
-`termcap.dat' is for VMS.  It is a copy of the `/etc/termcap' file
-used on Unix.

@@ -173,7 +173,7 @@ ignored."
   ;; all folder buffers.
   (vm-update-summary-and-mode-line)
   (if (not shaddap)
-      (vm-unsaved-message "Expunging..."))
+      (message "Expunging..."))
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
 	(mp vm-message-list)
 	(virtual (eq major-mode 'vm-virtual-mode))

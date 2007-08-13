@@ -27,88 +27,104 @@ Boston, MA 02111-1307, USA.  */
 /*
 ** Widget class
 */
-typedef struct {
-	int dummy_field;	/* keep compiler happy */
+typedef struct
+{
+  int dummy_field;	/* keep compiler happy */
 } XlwScrollBarClassPart;
 
-typedef struct _XlwScrollbarClassRec {
-    CoreClassPart	  core_class;
-    XlwScrollBarClassPart scrollbar_class;
+typedef struct _XlwScrollbarClassRec
+{
+  CoreClassPart	core_class;
+  XlwScrollBarClassPart scrollbar_class;
 } XlwScrollBarClassRec;
 
 
 /*
 ** Widget instance
 */
-typedef struct {
+typedef struct
+{
+  /* resources */
+  XtCallbackList valueChangedCBL;
+  XtCallbackList incrementCBL;
+  XtCallbackList decrementCBL;
+  XtCallbackList pageIncrementCBL;
+  XtCallbackList pageDecrementCBL;
+  XtCallbackList toTopCBL;
+  XtCallbackList toBottomCBL;
+  XtCallbackList dragCBL;
 
-    /* resources */
-    XtCallbackList	valueChangedCBL;
-    XtCallbackList	incrementCBL;
-    XtCallbackList	decrementCBL;
-    XtCallbackList	pageIncrementCBL;
-    XtCallbackList	pageDecrementCBL;
-    XtCallbackList	toTopCBL;
-    XtCallbackList	toBottomCBL;
-    XtCallbackList	dragCBL;
+  Pixel		foreground;
 
-    Pixel		foreground;
+  Pixel		topShadowColor;
+  Pixel		bottomShadowColor;
 
-    Pixel		topShadowColor;
-    Pixel		bottomShadowColor;
+  Pixel		troughColor;
 
-    Pixel		troughColor;
+  Pixel		armColor;
+  Pixel		armTopShadowColor;
+  Pixel		armBottomShadowColor;
 
-    Pixel		armColor;
-    Pixel		armTopShadowColor;
-    Pixel		armBottomShadowColor;
+  Pixmap	topShadowPixmap;
+  Pixmap	bottomShadowPixmap;
 
-    Pixmap		topShadowPixmap;
-    Pixmap		bottomShadowPixmap;
+  int		shadowThickness;
 
-    int			shadowThickness;
+  Boolean	showArrows;
 
-    Boolean		showArrows;
+  int		minimum;
+  int		maximum;
+  int		sliderSize;
+  int		value;
+  int		pageIncrement;
+  int		increment;
 
-    int			minimum;
-    int			maximum;
-    int			sliderSize;
-    int			value;
-    int			pageIncrement;
-    int			increment;
+  int		initialDelay;
+  int		repeatDelay;
 
-    int			initialDelay;
-    int			repeatDelay;
+  unsigned char	orientation;
 
-    unsigned char	orientation;
+  char		*sliderStyle;
+  char		*arrowPosition;
 
-    char		*knobStyle;
-    char		*arrowPosition;
+  /* private */
+  Pixmap	grayPixmap;
 
-    /* private */
-    Pixmap		grayPixmap;
+  GC		backgroundGC;
+  GC		topShadowGC;
+  GC		bottomShadowGC;
 
-    GC			backgroundGC;
-    GC			topShadowGC;
-    GC			bottomShadowGC;
+  int		above, ss, below;
+  int		lastY;
 
-    int			above, ss, below;
-    int			lastY;
+  enum {
+    ARM_NONE,
+    ARM_SLIDER,
+    ARM_UP,
+    ARM_DOWN,
+    ARM_PAGEUP,
+    ARM_PAGEDOWN
+  } 		armed;
 
-    int			armed;
+  enum {
+    FORCED_SCROLL_NONE,
+    FORCED_SCROLL_DOWNRIGHT,
+    FORCED_SCROLL_UPLEFT
+  } 		forced_scroll;
 
-    int			savedValue;
+  int		savedValue;
 
-    Boolean		fullRedrawNext;
+  Boolean	fullRedrawNext;
 
-    Boolean		timerActive;
-    XtIntervalId	timerId;
+  Boolean	timerActive;
+  XtIntervalId	timerId;
 
 } XlwScrollBarPart;
 
-typedef struct _XlwScrollBarRec {
-    CorePart          core;
-    XlwScrollBarPart  sb;
+typedef struct _XlwScrollBarRec
+{
+  CorePart          core;
+  XlwScrollBarPart  sb;
 } XlwScrollBarRec;
 
-#endif
+#endif /* _XlwScrollBarP_h */

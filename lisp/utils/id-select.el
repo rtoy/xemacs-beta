@@ -1,6 +1,6 @@
 ;;!emacs
 ;;
-;; LCD-ENTRY:    id-select.el|InfoDock Associates|elisp@infodock.com|Syntactical region selecting|12/02/96|1.4.3|
+;; LCD-ENTRY:    id-select.el|InfoDock Associates|elisp@infodock.com|Syntactical region selecting|02/28/97|1.4.5|
 ;;
 ;; FILE:         id-select.el
 ;; SUMMARY:      Select larger and larger syntax-driven regions in a buffer.
@@ -9,15 +9,16 @@
 ;;
 ;; AUTHOR:       Bob Weiner
 ;;
-;; ORG:          InfoDock Associates.  We sell corporate support and development
-;;               contracts for InfoDock, Emacs and XEmacs.
+;; ORG:          InfoDock Associates.  We sell corporate support and
+;;               development contracts for InfoDock, Emacs and XEmacs.
 ;;               E-mail: <info@infodock.com>  Web: http://www.infodock.com
 ;;               Tel: +1 408-243-3300
 ;;
-;; ORIG-DATE:    19-Oct-96 at 02:25:27
-;; LAST-MOD:      2-Dec-96 at 19:45:28 by Bob Weiner
 ;;
-;; Copyright (C) 1996  InfoDock Associates
+;; ORIG-DATE:    19-Oct-96 at 02:25:27
+;; LAST-MOD:     28-Feb-97 at 15:36:39 by Bob Weiner
+;;
+;; Copyright (C) 1996, 1997  InfoDock Associates
 ;;
 ;; This file is part of InfoDock.
 ;; It is available for use and distribution under the terms of the GNU Public
@@ -62,11 +63,15 @@
 ;;   for the variable, mouse-track-click-hook, for how this is done.)  A
 ;;   single click of the left button will remove the region and reset point.
 ;;
-;;   The function, id-select-thing, may be bound to a key, {C-c s}, seems to
-;;   be a reasonable choice, to provide the same syntax-driven region
-;;   selection functionality.  Use {C-g} to unmark the region when done.
-;;   Use, id-select-thing-with-mouse, if you want to bind this to a mouse key
-;;   and thereby use single clicks instead of double clicks.
+;;   The function, id-select-thing, may be bound to a key to provide the same
+;;   syntax-driven region selection functionality. {C-c C-m} is a
+;;   reasonable site-wide choice since this key is seldom used and it
+;;   mnemonically indicates marking something.  {C-c s} may be preferred as a
+;;   personal binding.
+;;
+;;   Use {C-g} to unmark the region when done.  Use,
+;;   id-select-thing-with-mouse, if you want to bind this to a mouse key and
+;;   thereby use single clicks instead of double clicks.
 ;;
 ;;   Three other commands are also provided:
 ;;    id-select-and-copy-thing - mark and copy the syntactical unit to the
@@ -141,6 +146,18 @@
 ;;           (define-key html-mode-map "\C-c." 'id-select-goto-matching-tag)
 ;;           )))
 ;;
+;;   If you are incredibly academic and you use the Miranda programming
+;;   language with a literate programming style (where code is preceded by a
+;;   > character in the first column, you'll want to change the line in
+;;   mira.el that reads:
+;;           (modify-syntax-entry ?> ".")
+;;   to:
+;;           (modify-syntax-entry ?> " ")
+;;
+;;   in order to make this package recognize the indented expressions of the
+;;   language.  If you don't use the literate style, no changes should be
+;;   necessary.
+;;
 ;; DESCRIP-END.
 
 ;;; ************************************************************************
@@ -160,8 +177,8 @@
   "*List of textual modes where paragraphs may be outdented or indented.")
 
 (defvar id-select-indent-modes
-  (append '(asm-mode csh-mode eiffel-mode ksh-mode python-mode pascal-mode
-	    sather-mode)
+  (append '(asm-mode csh-mode eiffel-mode ksh-mode miranda-mode python-mode
+	    pascal-mode sather-mode)
 	  id-select-text-modes)
   "*List of language major modes which use mostly indentation to define syntactic structure.")
 
@@ -169,16 +186,17 @@
   '((csh-mode    "\\(\\|then\\|elsif\\|else\\)[ \t]*$")
     (eiffel-mode "\\(\\|then\\|else if\\|else\\)[ \t]*$")
     (ksh-mode    "\\(\\|then\\|elif\\|else\\)[ \t]*$")
+    (miranda-mode "[ \t>]*$")
     (pascal-mode "\\(\\|then\\|else\\)[ \t]*$")
     (python-mode "[ \t]*$")
     (sather-mode "\\(\\|then\\|else if\\|else\\)[ \t]*$")
     ;;
-    (fundamental-mode "[^ \t\n]")
-    (kotl-mode "[^ \t\n]")
-    (indented-text-mode "[^ \t\n]")
+    (fundamental-mode "[^ \t\n*]")
+    (kotl-mode "[^ \t\n*]")
+    (indented-text-mode "[^ \t\n*]")
     (Info-mode "[^ \t\n]")
-    (outline-mode "[^\\*]")
-    (text-mode  "[^ \t\n]")
+    (outline-mode "[^*]")
+    (text-mode  "[^ \t\n*]")
     )
   "List of (major-mode . non-terminator-line-regexp) elements used to avoid early dropoff when marking indented code.")
 
@@ -536,6 +554,22 @@ Assumes point is befor any non-whitespace character on the line."
 			  (regexp-quote comment-start)
 			  (regexp-quote comment-end))))))))
 
+(defun id-select-back-to-indentation ()
+  "Move point to the first non-whitespace character on this line and return point.
+This respects the current syntax table definition of whitespace, whereas
+`back-to-indentation' does not.  This is relevant in literate programming and
+mail and news reply modes."
+  (goto-char (min (progn (end-of-line) (point))
+		  (progn (beginning-of-line)
+			 (skip-syntax-forward " ")
+			 (point)))))
+
+(defun id-select-bigger-thing ()
+  "Select a bigger object where point is."
+  (prog1
+      (id-select-thing)
+    (setq this-command 'select-thing)))
+
 (defun id-select-region-bigger-p (old-region new-region)
   "Return t if OLD-REGION is smaller than NEW-REGION and NEW-REGION partially overlaps OLD-REGION, or if OLD-REGION is uninitialized."
   (if (null (car old-region))
@@ -551,12 +585,6 @@ Assumes point is befor any non-whitespace character on the line."
 		      (min (cdr old-region) (car old-region)))
 		  (<= (min (cdr new-region) (car new-region))
 		      (max (cdr old-region) (car old-region))))))))
-
-(defun id-select-bigger-thing ()
-  "Select a bigger object where point is."
-  (prog1
-      (id-select-thing)
-    (setq this-command 'select-thing)))
 
 (defun id-select-reset ()
   ;; Reset syntactic selection.
@@ -661,7 +689,7 @@ list, id-select-brace-modes."
 	(if (or at-def-brace
 		;; At the start of a definition:
 		;; Must be at the first non-whitespace character in the line.
-		(and (= (point) (save-excursion (back-to-indentation) (point)))
+		(and (= (point) (save-excursion (id-select-back-to-indentation)))
 		     ;; Must be on an alpha or symbol-constituent character.
 		     ;; Also allow ~ for C++ destructors. 
 		     (looking-at "[a-zA-z~]\\|\\s_")
@@ -677,7 +705,8 @@ list, id-select-brace-modes."
 	      (setq id-select-previous 'brace-def-or-declaration)
 	      ;; Handle declarations and definitions embedded within classes.
 	      (if (and (= (following-char) ?{)
-		       (/= (point) (save-excursion (back-to-indentation) (point))))
+		       (/= (point) (save-excursion
+				     (id-select-back-to-indentation))))
 		  (setq at-def-brace nil))
 	      ;;
 	      (if at-def-brace nil (beginning-of-line))
@@ -741,7 +770,7 @@ list, id-select-indent-modes."
 		 ;; or symbol-constituent character.
 		 (t (looking-at "[a-zA-z]\\|\\s_")))
 	   ;; Must be at the first non-whitespace character in the line.
-	   (= (point) (save-excursion (back-to-indentation) (point))))
+	   (= (point) (save-excursion (id-select-back-to-indentation))))
 	  (let* ((start-col (current-column))
 		 (opoint (if (eq major-mode 'kotl-mode)
 			     (progn (kotl-mode:to-valid-position) (point))
@@ -749,7 +778,7 @@ list, id-select-indent-modes."
 	    (while
 		(and (zerop (forward-line 1))
 		     (bolp)
-		     (or (progn (back-to-indentation)
+		     (or (progn (id-select-back-to-indentation)
 				(> (current-column) start-col))
 			 ;; If in a text mode, allow outdenting, otherwise
 			 ;; only include special lines here indented to the
@@ -846,7 +875,7 @@ included in the list, id-select-brace-modes."
       (goto-char pos)
       (if (and (= (following-char) ?#)
 	       ;; Must be at the first non-whitespace character in the line.
-	       (= (point) (save-excursion (back-to-indentation) (point))))
+	       (= (point) (save-excursion (id-select-back-to-indentation))))
 	  (progn
 	    ;; Skip past continuation lines that end with a backslash.
 	    (while (and (looking-at ".*\\\\\\s-*$")
@@ -871,9 +900,11 @@ included in the list, id-select-brace-modes."
 	       ?\ )
 	    (id-select-set-region pos (1+ pos))
 	  (goto-char pos)
-	  (id-select-set-region
-	   (save-excursion (backward-sexp) (point))
-	   (progn (forward-sexp) (point)))))))
+	  (condition-case ()
+	      (id-select-set-region
+	       (save-excursion (backward-sexp) (point))
+	       (progn (forward-sexp) (point)))
+	    (error nil))))))
 
 (defun id-select-comment (pos)
   "Return rest of line from POS to newline."

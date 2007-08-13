@@ -1,7 +1,7 @@
 ;;; url-news.el --- News Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.6
+;; Created: 1997/02/18 23:35:11
+;; Version: 1.7
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -60,8 +60,6 @@
 				      "")
 				  "[ \t,\n<>]+")))))
 	 (date  (cdr (assoc "date" url-current-mime-headers))))
-    (setq url-current-file ""
- 	  url-current-type "")
     (if (or (not (string-match "text/" typ))
  	    (string-match "text/html" typ))
  	nil				; Let natural content-type take over
@@ -253,12 +251,7 @@
       (gnus)
       (kill-buffer url-working-buffer))
      (t					; Whole newsgroup
-      (url-news-fetch-newsgroup article host)))
-    (setq url-current-type "news"
-	  url-current-server host
-	  url-current-user (url-user urlobj)
-	  url-current-port port
-	  url-current-file article)))
+      (url-news-fetch-newsgroup article host)))))
 
 (defun url-nntp (url)
   ;; Find a news reference
@@ -282,11 +275,6 @@
       (gnus)
       (kill-buffer url-working-buffer))
      (t					; Whole newsgroup
-      (url-news-fetch-newsgroup article)))
-    (setq url-current-type "news"
-	  url-current-server host
-	  url-current-user (url-user urlobj)
-	  url-current-port port
-	  url-current-file article)))
+      (url-news-fetch-newsgroup article)))))
 
 (provide 'url-news)

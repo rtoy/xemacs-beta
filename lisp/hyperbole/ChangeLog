@@ -1,3 +1,11 @@
+Sat Feb 22 14:30:14 1997  Bob Weiner  <weiner@infodock.com>
+
+* hypb.el (hypb:ida-logo-keymap): Added conditional for Emacs keybinding.
+
+==============================================================================
+V4.022 changes ^^^^:
+==============================================================================
+
 Fri Feb 21 17:49:01 1997  Bob Weiner  <weiner@infodock.com>
 
 * hmouse-reg.el (hmouse-get-bindings): 

@@ -274,12 +274,13 @@ MATCH-HIGHLIGHT should be of the form:
 
  (MATCH FACENAME OVERRIDE LAXMATCH)
 
-Where MATCHER can be either the regexp to search for, or the function name to
-call to make the search (called with one argument, the limit of the search).
-MATCH is the subexpression of MATCHER to be highlighted.  FACENAME is either
-a symbol naming a face, or an expression whose value is the face name to use.
-If you want FACENAME to be a symbol that evaluates to a face, use a form
-like \"(progn sym)\".
+Where MATCHER can be either the regexp to search for, a variable
+containing the regexp to search for, or the function to call to make
+the search (called with one argument, the limit of the search).  MATCH
+is the subexpression of MATCHER to be highlighted.  FACENAME is either
+a symbol naming a face, or an expression whose value is the face name
+to use.  If you want FACENAME to be a symbol that evaluates to a face,
+use a form like \"(progn sym)\".
 
 OVERRIDE and LAXMATCH are flags.  If OVERRIDE is t, existing fontification may
 be overwritten.  If `keep', only parts not already fontified are highlighted.
@@ -1127,6 +1128,10 @@ KEYWORDS should be of the form MATCH-ANCHORED, see `font-lock-keywords'."
     (eval (nth 1 keywords))
     (save-match-data
       ;; Find an occurrence of `matcher' before `limit'.
+      (if (and (not (stringp matcher))
+	       (not (functionp matcher))
+	       (boundp matcher))
+	  (setq matcher (symbol-value matcher)))
       (while (if (stringp matcher)
 		 (re-search-forward matcher limit t)
 	       (funcall matcher limit))
@@ -1157,6 +1162,10 @@ START should be at the beginning of a line."
 	;;
 	;; Find an occurrence of `matcher' from `start' to `end'.
 	(setq keyword (car keywords) matcher (car keyword))
+	(if (and (not (stringp matcher))
+		 (not (functionp matcher))
+		 (boundp matcher))
+	    (setq matcher (symbol-value matcher)))
 	(goto-char start)
 	(while (and (< (point) end)
 		    (if (stringp matcher)
@@ -2518,31 +2527,6 @@ The name is assumed to begin with a capital letter.")
    '("`.*`" . font-lock-type-face)
    ))
   "Additional expressions to highlight in sh-mode.")
-
-(defconst python-font-lock-keywords
-  (purecopy
-   (list
-    (cons (concat "\\b\\("
-                  (mapconcat 'identity
-                             '("access"     "del"        "from"
-                               "lambda"     "return"     "and"
-                               "elif"       "global"     "not"
-                               "try:"       "break "     "else:"
-                               "if"         "or"         "while"
-                               "except"     "except:"    "import"
-                               "pass"       "continue"   "finally:"
-                               "in"         "print"      "for"
-                               "is"         "raise")
-                             "\\|")
-                  "\\)[ \n\t(]")
-          1)
-    '("\\bclass[ \t]+\\([a-zA-Z_]+[a-zA-Z0-9_]*\\)"
-      1 font-lock-type-face)
-    '("\\bdef[ \t]+\\([a-zA-Z_]+[a-zA-Z0-9_]*\\)"
-      1 font-lock-function-name-face)
-    ))
-  "Additional expressions to highlight in Python mode.")
-
 
 
 ;; Install ourselves:

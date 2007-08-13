@@ -655,11 +655,11 @@ print_error_message (data, stream)
   if (STRINGP (errmsg))
     Fprinc (errmsg, stream);
   else
-    write_string_1 ("Peculiar error", 14, stream);
+    write_string_1 ((CONST Bufbyte *)"Peculiar error", 14, stream);
 
   for (i = 0; CONSP (tail); tail = Fcdr (tail), i++)
     {
-      write_string_1 (i ? ", " : ": ", 2, stream);
+      write_string_1 ((CONST Bufbyte *)(i ? ", " : ": "), 2, stream);
       if (!NILP (file_error))
 	Fprinc (Fcar (tail), stream);
       else

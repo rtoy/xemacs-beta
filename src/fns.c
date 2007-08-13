@@ -123,9 +123,9 @@ extern void seed_random (long arg);
 
 DEFUN ("random", Frandom, 0, 1, 0, /*
 Return a pseudo-random number.
-All integers representable in Lisp are equally likely.\n\
-  On most systems, this is 28 bits' worth.\n\
-With positive integer argument N, return random number in interval [0,N).\n\
+All integers representable in Lisp are equally likely.
+  On most systems, this is 28 bits' worth.
+With positive integer argument N, return random number in interval [0,N).
 With argument t, set the random number seed from the current time and pid.
 */
        (limit))

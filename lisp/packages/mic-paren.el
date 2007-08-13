@@ -1,8 +1,11 @@
-;;; mic-paren.el --- highlight matching paren.
-;;; Version 1.2 - 96-09-19
-;;; Copyright (C) 1996 Mikael Sjödin (mic@docs.uu.se)
+;;; mic-paren.el --- highlight matching parenthesises.
+;;; Version 1.3.1 - 97-02-27
+;;; Copyright (C) 1997 Mikael Sjödin (mic@docs.uu.se)
 ;;;
 ;;; Author: Mikael Sjödin  --  mic@docs.uu.se
+;;; Additional code by: Vinicius Jose Latorre <vinicius@cpqd.br>
+;;;                     Steven L Baur <steve@altair.xemacs.org>
+;;;                      
 ;;; Keywords: languages, faces
 ;;;
 ;;; This file is NOT part of GNU Emacs.
@@ -34,6 +37,7 @@
 ;;;         (require 'mic-paren))
 ;;; o Restart your Emacs. mic-paren is now installed and activated!
 ;;; o To list the possible customisation enter `C-h f paren-activate'
+;;;
 
 ;;; ----------------------------------------------------------------------
 ;;; Long Description:
@@ -60,9 +64,25 @@
 ;;;
 ;;; mic-paren.el is developed and tested under Emacs 19.28 - 19.34.  It should
 ;;; work on earlier and forthcoming Emacs versions.  XEmacs compatibility has
-;;; been provided by Steven L Baur <steve@altair.xemacs.org>.
+;;; been provided by Steven L Baur <steve@altair.xemacs.org>.  Jan Dubois
+;;; (jaduboi@ibm.net) provided help to get mic-paren to work in OS/2.
 ;;;
 ;;; This file can be obtained from http://www.docs.uu.se/~mic/emacs.html
+
+;;; ----------------------------------------------------------------------
+;;; Versions:
+;;;
+;;; v1.3.1  Some spelling corrected (from Vinicius Jose Latorre
+;;;	    <vinicius@cpqd.br> and Steven L Baur <steve@altair.xemacs.org>)
+;;;
+;;; v1.3    Added code from Vinicius Jose Latorre <vinicius@cpqd.br> to
+;;;	    highlight unmathced parenthesises (useful in minibuffer)
+;;;
+;;; v1.2.1  Fixed stuff to work with OS/2 emx-emacs
+;;;           - checks if x-display-color-p is bound before calling it
+;;;           - changed how X/Lucid Emacs is deteced
+;;;         Added automatic load of the timer-feature (+ variable to disable
+;;;         the loading) 
 
 ;;; ======================================================================
 ;;; User Options:
@@ -166,12 +186,25 @@ deactivated.")
 
 ;;; ------------------------------
 
-(defvar paren-face (if (x-display-color-p) 'highlight 'underline)
+(defvar paren-dont-load-timer (not (string-match "XEmacs\\|Lucid"
+						 emacs-version))
+  "*If non-nil mic-paren will not try to load the timer-feature when loaded.
+
+(I have no idea why Emacs user ever want to set this to non-nil but I hate
+packages which loads/activates stuff I don't want to use so I provide this way
+to prevent the loading if someone doesn't want timers to be loaded.)")
+
+;;; ------------------------------
+
+(defvar paren-face (if (and (fboundp 'x-display-color-p)
+			    (x-display-color-p)) 
+		       'highlight 'underline)
   "*Face to use for showing the matching parenthesis.")
 
 ;;; ------------------------------
 
-(defvar paren-mismatch-face (if (x-display-color-p)
+(defvar paren-mismatch-face (if (and (fboundp 'x-display-color-p)
+				     (x-display-color-p))
 				(let ((fn 'paren-mismatch-face))
 				  (copy-face 'default fn)
 				  (set-face-background fn "DeepPink")
@@ -179,19 +212,28 @@ deactivated.")
 			      'modeline)
   "*Face to use when highlighting a mismatched parenthesis.")
 
+;;; ------------------------------
+
+(defvar paren-no-match-face (if (x-display-color-p)
+				(let ((fn 'paren-no-match-face))
+				  (copy-face 'default fn)
+				  (set-face-background fn "yellow")
+				  fn)
+			      'default)
+  "*Face to use when highlighting an unmatched parenthesis.")
+
 ;;; ======================================================================
 ;;; User Functions:
 
-;; XEmacs compatibility (by Steven L Baur <steve@altair.xemacs.org>)
+;; XEmacs compatibility (mainly by Steven L Baur <steve@altair.xemacs.org>)
 (eval-and-compile
-  (if (fboundp 'make-extent)
+  (if (string-match "\\(Lucid\\|XEmacs\\)" emacs-version)
       (progn
 	(fset 'mic-make-overlay 'make-extent)
 	(fset 'mic-delete-overlay 'delete-extent)
 	(fset 'mic-overlay-put 'set-extent-property)
 	(defun mic-cancel-timer (timer) (delete-itimer timer))
-	(defun mic-run-with-idle-timer (secs repeat function &rest args)
-	  (start-itimer "mic-paren-idle" function secs nil))
+	(fset 'mic-run-with-idle-timer 'start-itimer)
 	)
     (fset 'mic-make-overlay 'make-overlay)
     (fset 'mic-delete-overlay 'delete-overlay)
@@ -366,10 +408,10 @@ cleaning-up."
 	       (error nil))))
 
 	 ;; If match found
-	 ;;    highlight and/or print messages
+	 ;;    highlight expression and/or print messages
 	 ;; else
+	 ;;    highlight unmatched paren
 	 ;;    print no-match message
-	 ;;    remove any old highlights
 	 (if open
 	     (let ((mismatch (/= (matching-paren (preceding-char)) 
 				 (char-after open)))
@@ -420,6 +462,10 @@ cleaning-up."
 	       (and mismatch
 		    paren-ding-unmatched
 		    (ding)))
+	   (setq mic-paren-backw-overlay
+		 (mic-make-overlay (1- (point)) (point)))
+	   (mic-overlay-put mic-paren-backw-overlay
+			    'face paren-no-match-face)
 	   (and paren-message-no-match
 		(not (window-minibuffer-p (selected-window)))
 		(message "No opening parenthesis found"))
@@ -451,10 +497,10 @@ cleaning-up."
 		 (setq close (scan-sexps (point) 1))
 	       (error nil))))
 	 ;; If match found
-	 ;;    highlight and/or print messages
+	 ;;    highlight expression and/or print messages
 	 ;; else
+	 ;;    highlight unmatched paren
 	 ;;    print no-match message
-	 ;;    remove any old highlights
 	 (if close
 	     (let ((mismatch (/= (matching-paren (following-char)) 
 				 (char-after (1- close))))
@@ -496,6 +542,10 @@ cleaning-up."
 	       (and mismatch
 		    paren-ding-unmatched
 		    (ding)))
+	   (setq mic-paren-forw-overlay
+		 (mic-make-overlay (point) (1+ (point))))
+	   (mic-overlay-put mic-paren-forw-overlay
+			    'face paren-no-match-face)
 	   (and paren-message-no-match
 		(not (window-minibuffer-p (selected-window)))
 		(message "No closing parenthesis found"))
@@ -562,6 +612,13 @@ cleaning-up."
 
 ;;; ======================================================================
 ;;; Initialisation when loading:
+
+;;; Try to load the timer feature if its not already loaded
+(or paren-dont-load-timer
+    (featurep 'timer)
+    (condition-case ()
+	(require 'timer)
+      (error nil)))
 
 
 (or paren-dont-activate-on-load

@@ -1156,10 +1156,10 @@ More precisely, a regexp to match any one such character.")
 
 ;;; In-line functions
 
-(or (fboundp 'ediff-file-remote-p) ; user supplied his own function
+(or (fboundp 'ediff-file-remote-p) ; user supplied his own function: use it
     (defun ediff-file-remote-p (file-name)
-      (car (cond ((featurep 'efs) (efs-ftp-path file-name))
-		 ((fboundp 'file-remote-p) (efs-ftp-path file-name))
+      (car (cond ((featurep 'efs-auto) (efs-ftp-path file-name))
+		 ((fboundp 'file-remote-p) (file-remote-p file-name))
 		 (t (require 'ange-ftp)
 		    ;; Can happen only in Emacs, since XEmacs has file-remote-p
 		    (ange-ftp-ftp-name file-name))))))

@@ -1,6 +1,6 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.3 1997/02/22 22:07:11 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.4 1997/03/02 03:43:16 steve Exp $
 ;;;
 ;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
@@ -133,16 +133,18 @@
 	  ["Horizontal rule" hm--html-add-horizontal-rule t]
 	  )
 	 ("Formating Paragraphs"
-	  ["Without links" hm--html-add-plaintext t]
-	  ["With links" hm--html-add-preformated t]
+;	  ["Without links" hm--html-add-plaintext t]
+	  ["Preformated" hm--html-add-preformated t]
+          ["Blockquote" hm--html-add-blockquote t]
 	  "----"
 	  ["Basefont..." hm--html-add-basefont t]
 	  ["Font..." hm--html-add-font t]
-          ["Blockquote" hm--html-add-blockquote t]
-	  ["Listing" hm--html-add-listing t]
-	  ["Abstract" hm--html-add-abstract t]
-	  "----"
 	  ["Center" hm--html-add-center t]
+	  ["Style" hm--html-add-style t]
+	  "----"
+	  ["HTML Comment" hm--html-add-comment t]
+;	  ["Listing" hm--html-add-listing t]
+;	  ["Abstract" hm--html-add-abstract t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold t]
@@ -155,7 +157,6 @@
 	  "----"
 	  ["Underline" hm--html-add-underline t]
 	  ["Strikethru" hm--html-add-strikethru t]
-	  ;;	  ["Render" hm--html-add-render t]
 	  "----"
 ;          ["Emphasized" hm--html-add-emphasized t]
 ;          ["Strong" hm--html-add-strong t]
@@ -173,6 +174,7 @@
 	   )
 ;; All the following commands are still implemented, but most
 ;; of them are not defined in HTM 3.2
+;; You've to load hm--html-not-standard.el to use them
 ;	  ("Computing"
 ;	   ["Definition" hm--html-add-definition t]
 ;	   ["Keyboard" hm--html-add-keyboard t]
@@ -203,8 +205,8 @@
 ;	  "----"
 ;	  ["Footnote" hm--html-add-footnote t]
 ;	  ["Margin" hm--html-add-margin t]
-	  "----"
-	  ["HTML Comment" hm--html-add-comment t]
+;	  "----"
+;	  ["HTML Comment" hm--html-add-comment t]
 	  )
 	 ("Include"
 	  ["Top aligned image..." hm--html-add-image-top t]
@@ -222,6 +224,7 @@
 	  "----"
 	  ["Applet..." hm--html-add-applet t]
 	  ["Parameter..." hm--html-add-applet-parameter t]
+	  ["Script" hm--html-add-script t]
 ;	  "----"
 ;	  ["File..."  hm--html-add-server-side-include-file t]
 ;	  ["Command..." hm--html-add-server-side-include-command t]
@@ -282,8 +285,8 @@
 	  ["Paragraph Container" hm--html-add-paragraph t]
 	  )
 	 ("Formating Paragraphs"
-	  ["Without links" hm--html-add-plaintext t]
-	  ["With links" hm--html-add-preformated t]
+;	  ["Without links" hm--html-add-plaintext t]
+	  ["Preformated" hm--html-add-preformated t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold t]
@@ -353,15 +356,17 @@
 	  ["Document division" hm--html-add-document-division-to-region t]
 	  )
 	 ("Formatting Paragraphs"
-	  ["Without links" hm--html-add-plaintext-to-region t]
-	  ["With links" hm--html-add-preformated-to-region t]
+;	  ["Without links" hm--html-add-plaintext-to-region t]
+	  ["Preformated" hm--html-add-preformated-to-region t]
+          ["Blockquote" hm--html-add-blockquote-to-region t]
 	  "----"
 	  ["Font..." hm--html-add-font-to-region t]
-          ["Blockquote" hm--html-add-blockquote-to-region t]
-	  ["Listing" hm--html-add-listing-to-region t]
-	  ["Abstract" hm--html-add-abstract-to-region t]
-	  "----"
 	  ["Center" hm--html-add-center-to-region t]
+	  ["Style" hm--html-add-style-to-region t]
+	  "----"
+	  ["HTML Comment" hm--html-add-comment-to-region t]
+;	  ["Listing" hm--html-add-listing-to-region t]
+;	  ["Abstract" hm--html-add-abstract-to-region t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold-to-region t]
@@ -422,13 +427,14 @@
 ;	  "----"
 ;	  ["Footnote" hm--html-add-footnote-to-region t]
 ;	  ["Margin" hm--html-add-margin-to-region t]
-	  "----"
-	  ["HTML Comment" hm--html-add-comment-to-region t]
+;	  "----"
+;	  ["HTML Comment" hm--html-add-comment-to-region t]
 	  )
 	 ("Include"
 	  ["Map..." hm--html-add-map-to-region t]
 	  "----"
 	  ["Applet..." hm--html-add-applet-to-region t]
+	  ["Script" hm--html-add-script-to-region t]
 	  )
 	 ("Forms"
 	  ["Form..." hm--html-add-form-to-region t])
@@ -457,8 +463,8 @@
 	  ["Menu" hm--html-add-menu-to-region t]
 	  )
 	 ("Formatting Paragraphs"
-	  ["Without links" hm--html-add-plaintext-to-region t]
-	  ["With links" hm--html-add-preformated-to-region t]
+;	  ["Without links" hm--html-add-plaintext-to-region t]
+	  ["Preformated" hm--html-add-preformated-to-region t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold-to-region t]
@@ -483,7 +489,6 @@
 	  :active t
 	  :style radio
 	  :selected hm--html-expert]
-;	 ["Marcs menu" hm--html-use-marcs-menu t]
 	 )
 	["Reload config files" hm--html-load-config-files t]
 	["Templates (fixed dirs) ..."
@@ -529,7 +534,7 @@
       (if (and current-menubar (not (assoc menu-name current-menubar)))
 	  (progn
 	    (set-buffer-menubar (copy-sequence current-menubar))
-	    (add-menu nil menu-name (cdr hm--html-pulldown-menu))))) 
+	    (add-submenu nil (cons menu-name (cdr hm--html-pulldown-menu)) "HTML"))))
 
   (defun hm--install-html-menu (menu-name)
     (if (eq major-mode 'hm--html-mode)
@@ -543,16 +548,6 @@
 			"The hm--html-minor-mode pulldown menu."
 			(cons menu-name
 			      (cdr hm--html-pulldown-menu))))
-;    (easy-menu-define hm--html-region-menu-map
-;		      hm--html-region-mode-map
-;		      "The hm--html-mode pulldown menu, if a region is active."
-;		      (cons menu-name
-;			    (cdr hm--html-pulldown-menu)))
-;    (if (and current-menubar (not (assoc "HTML" current-menubar)))
-;	(progn
-;	  (set-buffer-menubar current-menubar)
-;	  ))
-;    (add-menu nil "HTML" (cdr hm--html-pulldown-menu))
     ))
 
 (if (adapt-emacs19p)
@@ -584,60 +579,22 @@
 	(x-popup-menu nil hm--html-menu-region-novice-map))
 
 
-;      (defun hm--html-emacs19-popup-menu (menu event)
-;	(let ((pos (posn-x-y (event-end event)))
-;	      (window (posn-window (event-start event)))
-;	      (answer))
-;	  (while menu
-;	    (setq answer (x-popup-menu (list (list (car pos) (cdr pos))
-;					     window)
-;				       menu))
-;	    (setq cmd (lookup-key menu (apply 'vector answer)))
-;	    (setq menu nil)
-;	    (and cmd
-;		 (if (keymapp cmd)
-;		     (setq menu cmd)
-;		   (call-interactively cmd))))))
-
-;      (defun hm--html-popup-menu (event)
-;	"Pops the HTML- menu up, if no region is active."
-;	(interactive "@e")
-;	(if hm--html-expert
-;	    (hm--html-emacs19-popup-menu hm--html-menu-noregion-expert-map
-;					 event)
-;	  (hm--html-emacs19-popup-menu hm--html-menu-noregion-novice-map
-;				       event)))
-
-;      (defun hm--html-popup-menu-region (event)
-;	"Pops the HTML- menu up, if a region is active."
-;	(interactive "@e")
-;	(if hm--html-expert
-;	    (hm--html-emacs19-popup-menu hm--html-menu-region-expert-map
-;					 event)
-;	  (hm--html-emacs19-popup-menu hm--html-menu-region-novice-map
-;				       event)))
       )
 
   (defun hm--html-popup-menu (event)
     "Pops the HTML- menu up, if no region is active."
     (interactive "@e")
-;  (if hm--html-marc
-;      (popup-menu html-menu)
     (if hm--html-expert
 	(popup-menu hm--html-menu-noregion-expert)
       (popup-menu hm--html-menu-noregion-novice)))
-;)
 
 
   (defun hm--html-popup-menu-region (event)
     "Pops the HTML- menu up, if a region is active."
     (interactive "@e")
-;  (if hm--html-marc
-;      (popup-menu html-menu)
     (if hm--html-expert
 	(popup-menu hm--html-menu-region-expert)
       (popup-menu hm--html-menu-region-novice)))
-;)
   )
 
 
@@ -648,9 +605,6 @@
 	"Changes the HTML popup menu to the novice menu."
 	(interactive)
 	(setq hm--html-expert nil)
-;  (setq hm--html-marc nil)
-;  (define-key html-mode-map '(button3) 'hm--popup-html-menu)
-;  (define-key html-region-mode-map '(button3) 'hm--popup-html-menu)
 	)	
 
 
@@ -658,9 +612,6 @@
 	"Changes the HTML popup menu to the expert menu."
 	(interactive)
 	(setq hm--html-expert t)
-;  (setq hm--html-marc nil)
-;  (define-key html-mode-map '(button3) 'hm--popup-html-menu)
-;  (define-key html-region-mode-map '(button3) 'hm--popup-html-menu)
 	)
       )
 
@@ -706,45 +657,6 @@
     )
   )
 
-;(defun hm--html-use-marcs-menu ()
-;  "Changes the HTML popup menu to Marc Andreessens menu."
-;  (interactive)
-;  (setq hm--html-marc t)
-;  )
-
-
-;(define-key html-mode-map '(button3) 'hm--popup-html-menu)
-;(define-key html-region-mode-map '(button3) 'hm--popup-html-menu)
-
-;(add-hook 'html-mode-hook 'hm--install-html-menu)
-
-
-;(defun sgml-popup-menu (event title entries)
-;  "Display a popup menu."
-;  (setq entries
-;	(loop for ent in entries collect
-;	      (vector (car ent)
-;		      (list 'setq 'value (list 'quote (cdr ent)))
-;		      t)))
-;  (cond ((> (length entries) sgml-max-menu-size)
-;	 (setq entries
-;	       (loop for i from 1 while entries collect
-;		     (let ((submenu
-;			    (subseq entries 0 (min (length entries)
-;						   sgml-max-menu-size))))
-;		       (setq entries (nthcdr sgml-max-menu-size
-;					     entries))
-;		       (cons
-;			(format "%s '%s'-'%s'"
-;				title
-;				(sgml-range-indicator (aref (car submenu) 0))
-;				(sgml-range-indicator
-;				 (aref (car (last submenu)) 0)))
-;			submenu))))))  
-;;  (sgml-xemacs-get-popup-value (cons title entries)))
-;  (sgml-xemacs-get-popup-value (append hm--html-popup-menu
-;				       (list "--" "--" title "==")
-;				       entries)))
 
 (defvar hm--html-use-psgml t
   "Set this to t, if functions from the psgml-mode should be used.")
@@ -833,10 +745,6 @@ menus to the psgml popup menu."
 	  ))
 
       ))
-
-
-;(defvar hm--html-menu-load-hook nil
-;  "*Hook variable to execute functions after loading the file hm--html-menu.")
 
 
 (run-hooks 'hm--html-menu-load-hook)

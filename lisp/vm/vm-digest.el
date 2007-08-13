@@ -534,7 +534,7 @@ all marked messages will be burst."
 	    (setq digest-type (vm-guess-digest-type m))
 	    (if (null digest-type)
 		(error "Couldn't guess digest type."))))
-      (vm-unsaved-message "Bursting %s digest..." digest-type)
+      (message "Bursting %s digest..." digest-type)
       (cond
        ((cond ((equal digest-type "mime")
 	       (vm-mime-burst-message m))

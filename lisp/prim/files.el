@@ -1260,7 +1260,7 @@ If `enable-local-variables' is nil, this function does not check for a
 	;; Parse the -*- line into the `result' alist.
 	(cond ((not (search-forward "-*-" end t))
 	       ;; doesn't have one.
-	       nil)
+	       (setq force t))
 	      ((looking-at "[ \t]*\\([^ \t\n\r:;]+\\)\\([ \t]*-\\*-\\)")
 	       ;; Antiquated form: "-*- ModeName -*-".
 	       (setq result

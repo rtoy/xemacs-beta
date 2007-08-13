@@ -1,7 +1,7 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/19 20:04:48
-;; Version: 1.16
+;; Created: 1997/02/18 23:32:51
+;; Version: 1.18
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -31,6 +31,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'w3-forms)
 (require 'font)
+(require 'w3-script)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Help menu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -98,35 +100,21 @@
 (defun w3-mode-version-specifics ()
   ;; Emacs 19 specific stuff for w3-mode
   (make-local-variable 'track-mouse)
-  (if w3-track-mouse (setq track-mouse t))
-  '(if (or (memq (device-type) '(x pm ns)))
-      (w3-build-FSF19-menu)))
+  (if w3-track-mouse (setq track-mouse t)))
 
 (defun w3-mouse-handler (e)
   "Function to message the url under the mouse cursor"
   (interactive "e")
   (let* ((pt (posn-point (event-start e)))
 	 (good (eq (posn-window (event-start e)) (selected-window)))
-	 (widget (and good pt (number-or-marker-p pt) (widget-at pt)))
-	 (link (and widget (or (widget-get widget 'href)
-			       (widget-get widget 'name))))
-	 (form (and widget (widget-get widget :w3-form-data)))
-	 (imag nil) ; (nth 1 (memq 'w3graphic props))))
-	 )
-    (cond
-     (link (message "%s" (w3-widget-echo widget)))
-     (form
-      (cond
-       ((eq 'submit (w3-form-element-type form))
-	(message "Submit form to %s"
-		 (cdr-safe (assq 'action (w3-form-element-action form)))))
-       ((eq 'reset (w3-form-element-type form))
-	(message "Reset form contents"))
-       (t
-	(message "Form entry (name=%s, type=%s)" (w3-form-element-name form)
-		 (w3-form-element-type form)))))
-     (imag (message "Inlined image (%s)" (car imag)))
-     (t (message "")))))
+	 (mouse-events nil))
+    (if (not (and good pt (number-or-marker-p pt)))
+	nil
+      (widget-echo-help pt)
+      ;; Need to handle onmouseover, on mouseout
+      (setq mouse-events (w3-script-find-event-handlers pt 'mouse))
+      (if (assq 'onmouseover mouse-events)
+	  (w3-script-evaluate-form (cdr (assq 'onmouseover mouse-events)))))))
 
 (defun w3-color-values (color)
   (cond

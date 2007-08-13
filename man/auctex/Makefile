@@ -74,3 +74,7 @@ clean: allways
 
 
 allways:
+
+mostlyclean: clean
+
+distclean: clean

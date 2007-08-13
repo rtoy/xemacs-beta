@@ -69,10 +69,6 @@
 		      'charset-latin-iso8859-1
 		      'file-coding-system-for-read 'file-coding-system)
 
-;; For Mailcrypt
-(w3-declare-variables 'mc-pgp-path 'mc-pgp-key-begin-line 'mc-ripem-pubkeyfile
-		      'mc-default-scheme 'mc-flag)
-
 ;; For NNTP
 (w3-declare-variables 'nntp-server-buffer 'nntp-server-process 'nntp/connection
 		      'gnus-nntp-server 'nntp-server-name 'nntp-version

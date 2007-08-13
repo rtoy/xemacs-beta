@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 /* If PURESIZE is already defined then the user overrode it at
    configure time. */
 #ifndef PURESIZE
-
+#if 0
 /* Basic amount of purespace to use, in the absence of extra
    things configured in. */
 
@@ -120,6 +120,10 @@ Boston, MA 02111-1307, USA.  */
 		  (SYSTEM_PURESIZE_EXTRA) + (MULE_PURESIZE_EXTRA) +	  \
 		  (TOOLTALK_PURESIZE_EXTRA) + (ENERGIZE_PURESIZE_EXTRA) + \
 		  (SUNPRO_PURESIZE_EXTRA))
+
+#endif
+
+# include "PURESIZE.h"
 
 #endif /* !PURESIZE */
 

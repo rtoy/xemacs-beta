@@ -153,7 +153,7 @@
 	   (vm-mime-qp-decode-region start end)))))
 
 (defun vm-mime-base64-decode-region (start end &optional crlf)
-  (vm-unsaved-message "Decoding base64...")
+  (message "Decoding base64...")
   (let ((work-buffer nil)
 	(done nil)
 	(counter 0)
@@ -219,11 +219,11 @@
 	  (insert-buffer-substring work-buffer)
 	  (delete-region (point) end))
       (and work-buffer (kill-buffer work-buffer))))
-  (vm-unsaved-message "Decoding base64... done"))
+  (message "Decoding base64... done"))
 
 (defun vm-mime-base64-encode-region (start end &optional crlf B-encoding)
   (and (> (- end start) 200)
-       (vm-unsaved-message "Encoding base64..."))
+       (message "Encoding base64..."))
   (let ((work-buffer nil)
 	(counter 0)
 	(cols 0)
@@ -244,7 +244,13 @@
 				   vm-mime-base64-encoder-program
 				   vm-mime-base64-encoder-switches)))
 		(if (not (eq status t))
-		    (vm-mime-error "%s" (cdr status))))
+		    (vm-mime-error "%s" (cdr status)))
+		(if B-encoding
+		    (progn
+		      ;; if we're B encoding, strip out the line breaks
+		      (goto-char (point-min))
+		      (while (search-forward "\n" nil t)
+			(delete-char -1)))))
 	    (setq inputpos start)
 	    (while (< inputpos end)
 	      (setq bits (+ bits (char-after inputpos)))
@@ -286,13 +292,13 @@
 	  (insert-buffer-substring work-buffer)
 	  (delete-region (point) end)
 	  (and (> (- end start) 200)
-	       (vm-unsaved-message "Encoding base64... done"))
+	       (message "Encoding base64... done"))
 	  (- end start))
       (and work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-mime-qp-decode-region (start end)
   (and (> (- end start) 200)
-       (vm-unsaved-message "Decoding quoted-printable..."))
+       (message "Decoding quoted-printable..."))
   (let ((work-buffer nil)
 	(buf (current-buffer))
 	(case-fold-search nil)
@@ -354,11 +360,11 @@
 	  (delete-region (point) end))
       (and work-buffer (kill-buffer work-buffer))))
   (and (> (- end start) 200)
-       (vm-unsaved-message "Decoding quoted-printable... done")))
+       (message "Decoding quoted-printable... done")))
 
 (defun vm-mime-qp-encode-region (start end &optional Q-encoding)
   (and (> (- end start) 200)
-       (vm-unsaved-message "Encoding quoted-printable..."))
+       (message "Encoding quoted-printable..."))
   (let ((work-buffer nil)
 	(buf (current-buffer))
 	(cols 0)
@@ -402,7 +408,7 @@
 	  (insert-buffer-substring work-buffer)
 	  (delete-region (point) end)
 	  (and (> (- end start) 200)
-	       (vm-unsaved-message "Encoding quoted-printable... done"))
+	       (message "Encoding quoted-printable... done"))
 	  (- end start))
       (and work-buffer (kill-buffer work-buffer)))))
 
@@ -480,13 +486,11 @@
 	(or pos (setq pos (point-max) done t))
 	(if charset
 	    (progn
-	      (message " pos = %d start = %d" pos start)
 	      (if (setq coding (get-text-property start 'vm-coding))
 		  (progn
 		    (setq old-size (buffer-size))
 		    (encode-coding-region start pos coding)
 		    (setq pos (+ pos (- (buffer-size) old-size)))))
-	      (message " pos = %d start = %d" pos start)
 	      (setq pos
 		    (+ start 
 		       (if (setq q-encoding
@@ -494,7 +498,6 @@
 					       charset))
 			   (vm-mime-Q-encode-region start pos)
 			 (vm-mime-B-encode-region start pos))))
-	      (message " pos = %d start = %d" pos start)
 	      (goto-char pos)
 	      (insert "?=")
 	      (setq pos (point))
@@ -605,7 +608,7 @@
   (let ((case-fold-search t) version type qtype encoding id description
 	disposition qdisposition boundary boundary-regexp start
 	multipart-list c-t c-t-e done p returnval)
-    (and m (vm-unsaved-message "Parsing MIME message..."))
+    (and m (message "Parsing MIME message..."))
     (prog1
     (catch 'return-value
       (save-excursion
@@ -788,7 +791,7 @@
 		    (vm-marker (point-max))
 		    (nreverse multipart-list)
 		    nil )))))
-    (and m (vm-unsaved-message "Parsing MIME message... done"))
+    (and m (message "Parsing MIME message... done"))
     )))
 
 (defun vm-mime-parse-entity-safe (&optional m c-t c-t-e)
@@ -882,7 +885,7 @@
 		   ;; Tell XEmacs/MULE not to mess with the text on writes.
 		   buffer-read-only t
 		   mode-line-format vm-mode-line-format)
-	     (and (fboundp 'set-file-coding-system)
+	     (and (vm-xemacs-mule-p)
 		  (set-file-coding-system 'binary t))
 	     (cond ((vm-fsfemacs-19-p)
 		    ;; need to do this outside the let because
@@ -1079,7 +1082,7 @@
 
 (defun vm-mime-convert-undisplayable-layout (layout)
   (let ((ooo (vm-mime-can-convert (car (vm-mm-layout-type layout)))))
-    (vm-unsaved-message "Converting %s to %s..."
+    (message "Converting %s to %s..."
 			(car (vm-mm-layout-type layout))
 			(nth 1 ooo))
     (save-excursion
@@ -1095,7 +1098,7 @@
       (insert "Content-Type: " (nth 1 ooo) "\n")
       (insert "Content-Transfer-Encoding: binary\n\n")
       (set-buffer-modified-p nil)
-      (vm-unsaved-message "Converting %s to %s... done"
+      (message "Converting %s to %s... done"
 			(car (vm-mm-layout-type layout))
 			(nth 1 ooo))
       (vector (list (nth 1 ooo))
@@ -1220,7 +1223,7 @@ in the buffer.  The function is expected to make the message
 	    (vm-preview-current-message)))
       (let ((layout (vm-mm-layout (car vm-message-pointer)))
 	    (m (car vm-message-pointer)))
-	(vm-unsaved-message "Decoding MIME message...")
+	(message "Decoding MIME message...")
 	(cond ((stringp layout)
 	       (error "Invalid MIME message: %s" layout)))
 	(if (vm-mime-plain-message-p m)
@@ -1251,7 +1254,7 @@ in the buffer.  The function is expected to make the message
 			(setq vm-mime-decoded 'decoded))
 	(intern (buffer-name vm-mail-buffer) vm-buffers-needing-display-update)
 	(vm-update-summary-and-mode-line)
-	(vm-unsaved-message "Decoding MIME message... done"))))
+	(message "Decoding MIME message... done"))))
   (vm-display nil nil '(vm-decode-mime-message)
 	      '(vm-decode-mime-message reading-message)))
 
@@ -1322,7 +1325,7 @@ in the buffer.  The function is expected to make the message
 ;;(defun vm-mime-display-internal-text/html (layout)
 ;;  (let ((buffer-read-only nil)
 ;;	(work-buffer nil))
-;;    (vm-unsaved-message "Inlining text/html, be patient...")
+;;    (message "Inlining text/html, be patient...")
 ;;    ;; w3-region is not as tame as we would like.
 ;;    ;; make sure the yoke is firmly attached.
 ;;    (unwind-protect
@@ -1337,7 +1340,7 @@ in the buffer.  The function is expected to make the message
 ;;		(w3-region (point-min) (point-max)))))
 ;;	  (insert-buffer-substring work-buffer))
 ;;      (and work-buffer (kill-buffer work-buffer)))
-;;    (vm-unsaved-message "Inlining text/html... done")
+;;    (message "Inlining text/html... done")
 ;;    t ))
 
 (defun vm-mime-display-internal-text/plain (layout &optional ignore-urls)
@@ -1361,7 +1364,7 @@ in the buffer.  The function is expected to make the message
   (let ((start (point)) end
 	(buffer-read-only nil)
 	(enriched-verbose t))
-    (vm-unsaved-message "Decoding text/enriched, be patient...")
+    (message "Decoding text/enriched, be patient...")
     (vm-mime-insert-mime-body layout)
     (setq end (point-marker))
     (vm-mime-transfer-decode-region layout start end)
@@ -1374,7 +1377,7 @@ in the buffer.  The function is expected to make the message
     (enriched-decode start end)
     (vm-energize-urls-in-message-region start end)
     (goto-char end)
-    (vm-unsaved-message "Decoding text/enriched... done")
+    (message "Decoding text/enriched... done")
     t ))
 
 (defun vm-mime-display-external-generic (layout)
@@ -1398,7 +1401,7 @@ in the buffer.  The function is expected to make the message
 	       (setq buffer-file-type (not (vm-mime-text-type-p layout)))
 	       ;; Tell XEmacs/MULE not to mess with the bits unless
 	       ;; this is a text type.
-	       (if (fboundp 'set-file-coding-system)
+	       (if (vm-xemacs-mule-p)
 		   (if (vm-mime-text-type-p layout)
 		       (set-file-coding-system 'no-conversion nil)
 		     (set-file-coding-system 'binary t)))
@@ -1409,7 +1412,7 @@ in the buffer.  The function is expected to make the message
 	       (setq vm-folder-garbage-alist
 		     (cons (cons tempfile 'delete-file)
 			   vm-folder-garbage-alist)))))
-      (vm-unsaved-message "Launching %s..." (mapconcat 'identity
+      (message "Launching %s..." (mapconcat 'identity
 						       program-list
 						       " "))
       (setq process
@@ -1417,7 +1420,7 @@ in the buffer.  The function is expected to make the message
 		   (format "view %25s" (vm-mime-layout-description layout))
 		   nil (append program-list (list tempfile))))
       (process-kill-without-query process t)
-      (vm-unsaved-message "Launching %s... done" (mapconcat 'identity
+      (message "Launching %s... done" (mapconcat 'identity
 							    program-list
 							    " "))
       (save-excursion
@@ -1617,7 +1620,7 @@ in the buffer.  The function is expected to make the message
 	    (save-excursion
 	      (vm-mime-display-internal-message/partial layout))))
 	 layout nil))
-    (vm-unsaved-message "Assembling message...")
+    (message "Assembling message...")
     (let ((parts nil)
 	  (missing nil)
 	  (work-buffer nil)
@@ -1721,7 +1724,7 @@ in the buffer.  The function is expected to make the message
       (goto-char (point-max))
       (insert (vm-trailing-message-separator))
       (set-buffer-modified-p nil)
-      (vm-unsaved-message "Assembling message... done")
+      (message "Assembling message... done")
       (vm-save-buffer-excursion
        (vm-goto-new-folder-frame-maybe 'folder)
        (vm-mode))
@@ -1747,14 +1750,14 @@ in the buffer.  The function is expected to make the message
 	  (setq tempfile (vm-make-tempfile-name))
 	  ;; coding system for presentation buffer is binary
 	  (write-region start end tempfile nil 0)
-	  (vm-unsaved-message "Creating %s glyph..." name)
+	  (message "Creating %s glyph..." name)
 	  (setq g (make-glyph
 		   (list (vector feature ':file tempfile)
 			 (vector 'string
 				 ':data
 				 (format "[Unknown %s image encoding]\n"
 					 name)))))
-	  (vm-unsaved-message "")
+	  (message "")
 	  (vm-set-mm-layout-cache layout g)
 	  (save-excursion
 	    (vm-select-folder-buffer)
@@ -1967,7 +1970,7 @@ in the buffer.  The function is expected to make the message
 	    (setq buffer-file-type (not (vm-mime-text-type-p layout)))
 	    ;; Tell XEmacs/MULE not to mess with the bits unless
 	    ;; this is a text type.
-	    (if (fboundp 'set-file-coding-system)
+	    (if (vm-xemacs-mule-p)
 		(if (vm-mime-text-type-p layout)
 		    (set-file-coding-system 'no-conversion nil)
 		  (set-file-coding-system 'binary t)))
@@ -2036,37 +2039,41 @@ in the buffer.  The function is expected to make the message
 	 (and work-buffer (kill-buffer work-buffer))))))
 
 (defun vm-mime-layout-description (layout)
-  (if (vm-mm-layout-description layout)
-      (vm-mime-scrub-description (vm-mm-layout-description layout))
-    (let ((type (car (vm-mm-layout-type layout)))
-	  name)
-      (cond ((vm-mime-types-match "multipart/digest" type)
-	     (let ((n (length (vm-mm-layout-parts layout))))
-	       (format "digest (%d message%s)" n (if (= n 1) "" "s"))))
-	    ((vm-mime-types-match "multipart/alternative" type)
-	     "multipart alternative")
-	    ((vm-mime-types-match "multipart" type)
-	     (let ((n (length (vm-mm-layout-parts layout))))
-	       (format "multipart message (%d part%s)" n (if (= n 1) "" "s"))))
-	    ((vm-mime-types-match "text/plain" type)
-	     (format "plain text%s"
-		     (let ((charset (vm-mime-get-parameter layout "charset")))
-		       (if charset
-			   (concat ", " charset)
-			 ""))))
-	    ((vm-mime-types-match "text/enriched" type)
-	     "enriched text")
-	    ((vm-mime-types-match "text/html" type)
-	     "HTML")
-	    ((vm-mime-types-match "image/gif" type)
-	     "GIF image")
-	    ((vm-mime-types-match "image/jpeg" type)
-	     "JPEG image")
-	    ((and (vm-mime-types-match "application/octet-stream" type)
-		  (setq name (vm-mime-get-parameter layout "name"))
-		  (save-match-data (not (string-match "^[ \t]*$" name))))
-	     name)
-	    (t type)))))
+  (let ((type (car (vm-mm-layout-type layout)))
+	description name)
+    (setq description
+	  (if (vm-mm-layout-description layout)
+	      (vm-mime-scrub-description (vm-mm-layout-description layout))))
+    (concat
+     (if description description "")
+     (if description ", " "")
+     (cond ((vm-mime-types-match "multipart/digest" type)
+	    (let ((n (length (vm-mm-layout-parts layout))))
+	      (format "digest (%d message%s)" n (if (= n 1) "" "s"))))
+	   ((vm-mime-types-match "multipart/alternative" type)
+	    "multipart alternative")
+	   ((vm-mime-types-match "multipart" type)
+	    (let ((n (length (vm-mm-layout-parts layout))))
+	      (format "multipart message (%d part%s)" n (if (= n 1) "" "s"))))
+	   ((vm-mime-types-match "text/plain" type)
+	    (format "plain text%s"
+		    (let ((charset (vm-mime-get-parameter layout "charset")))
+		      (if charset
+			  (concat ", " charset)
+			""))))
+	   ((vm-mime-types-match "text/enriched" type)
+	    "enriched text")
+	   ((vm-mime-types-match "text/html" type)
+	    "HTML")
+	   ((vm-mime-types-match "image/gif" type)
+	    "GIF image")
+	   ((vm-mime-types-match "image/jpeg" type)
+	    "JPEG image")
+	   ((and (vm-mime-types-match "application/octet-stream" type)
+		 (setq name (vm-mime-get-parameter layout "name"))
+		 (save-match-data (not (string-match "^[ \t]*$" name))))
+	    name)
+	   (t type)))))
 
 (defun vm-mime-layout-contains-type (layout type)
   (if (vm-mime-types-match type (car (vm-mm-layout-type layout)))
@@ -2304,7 +2311,7 @@ will interactively query you for the file type information."
   (let ((o-list nil)
 	(done nil)
 	(pos start)
-	object pos props o)
+	object props o)
     (save-excursion
       (save-restriction
 	(narrow-to-region start end)
@@ -2426,7 +2433,7 @@ and the approriate content-type and boundary markup information is added."
 	    (narrow-to-region (point) (point-max))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
-	    (if (fboundp 'encode-coding-region)
+	    (if (vm-xemacs-mule-p)
 		(encode-coding-region (point-min) (point-max)
 				      file-coding-system))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2596,7 +2603,7 @@ and the approriate content-type and boundary markup information is added."
 	    nil
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
-	  (if (fboundp 'encode-coding-region)
+	  (if (vm-xemacs-mule-p)
 	      (encode-coding-region (point-min) (point-max)
 				    file-coding-system))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2678,7 +2685,7 @@ and the approriate content-type and boundary markup information is added."
 (defun vm-mime-fragment-composition (size)
   (save-restriction
     (widen)
-    (vm-unsaved-message "Fragmenting message...")
+    (message "Fragmenting message...")
     (let ((buffers nil)
 	  (id (vm-mime-make-multipart-boundary))
 	  (n 1)
@@ -2738,7 +2745,7 @@ and the approriate content-type and boundary markup information is added."
 	(vm-increment n)
 	(set-buffer master-buffer)
 	(setq start (point)))
-      (vm-unsaved-message "Fragmenting message... done")
+      (message "Fragmenting message... done")
       (nreverse buffers))))
 
 (defun vm-mime-preview-composition ()
@@ -2755,25 +2762,11 @@ message."
 	e-list)
     (unwind-protect
 	(progn
-	  (mail-text)
-	  (setq e-list (if (fboundp 'extent-list)
-			   (extent-list nil (point) (point-max))
-			 (overlays-in (point) (point-max)))
-		e-list (vm-delete (function
-				   (lambda (e)
-				     (vm-extent-property e 'vm-mime-object)))
-				  e-list t)
-		e-list (sort e-list (function
-				     (lambda (e1 e2)
-				       (< (vm-extent-end-position e1)
-					  (vm-extent-end-position e2))))))
 	  (setq temp-buffer (generate-new-buffer "composition preview"))
 	  (set-buffer temp-buffer)
 	  ;; so vm-mime-encode-composition won't complain
 	  (setq major-mode 'mail-mode)
 	  (vm-insert-region-from-buffer mail-buffer)
-	  (if (vm-fsfemacs-19-p)
-	      (mapcar 'vm-copy-extent e-list))
 	  (goto-char (point-min))
 	  (or (vm-mail-mode-get-header-contents "From")
 	      (insert "From: " (or user-mail-address (user-login-name)) "\n"))

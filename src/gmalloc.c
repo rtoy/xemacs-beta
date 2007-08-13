@@ -351,7 +351,9 @@ Boston, MA 02111-1307, USA.
 #if defined (__GNU_LIBRARY__) || defined (_LIBC)
 #include <stddef.h>
 #include <sys/cdefs.h>
+#if ! (defined (__GLIBC__) && (__GLIBC__ >= 2))
 extern size_t __getpagesize __P ((void));
+#endif
 #else
 #include "getpagesize.h"
 #define	 __getpagesize()	getpagesize()

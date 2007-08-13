@@ -159,6 +159,7 @@
      (when (featurep 'lisp-float-type)
        (load-gc "float-sup"))
      (load-gc "itimer") ; for vars auto-save-timeout and auto-gc-threshold
+     (load-gc "itimer-autosave")
      (if (featurep 'toolbar)
          (load-gc "toolbar")
        ;; else still define a few functions.

@@ -31,14 +31,16 @@
   (case mule-sysdep-version
     (2.3 *euc-japan*)
     (2.4 'coding-system-euc-japan)
+    (3.0 'euc-japan)
     (xemacs 'euc-japan)
     (otherwise nil))
   "Default retrieval coding system for packages that use this package.")
 
 (defconst mule-no-coding-system
   (case mule-sysdep-version
-    (2.4 'no-conversion)
     (2.3 *noconv*)
+    (2.4 'no-conversion)
+    (3.0 'no-conversion)
     (xemacs 'no-conversion)
     (otherwise nil))
   "Coding system that means no coding system should be used.")
@@ -46,8 +48,8 @@
 (defun mule-detect-coding-version (st nd)
   (case mule-sysdep-version
     (2.3 (code-detect-region (point-min) (point-max)))
-    (2.4 (detect-coding-region (point-min) (point-max)))
-    (xemacs (detect-coding-region (point-min) (point-max)))
+    ((2.4 3.0 xemacs)
+     (detect-coding-region (point-min) (point-max)))
     (otherwise nil)))
 
 (defun mule-code-convert-region (st nd code)
@@ -55,13 +57,20 @@
       (setq code (car code)))
   (case mule-sysdep-version
     (2.3
-     (setq mc-flag t)
+     (set 'mc-flag t)
      (code-convert-region (point-min) (point-max) code *internal*)
      (set-file-coding-system code))
     (2.4
      (setq enable-multibyte-characters t)
      (if (memq code '(autodetect coding-system-automatic))
 	 nil
+       (decode-coding-region st nd code)
+       (set-buffer-file-coding-system code)))
+    (3.0
+     (setq enable-multibyte-characters t)
+     (if (memq code '(autodetect automatic-conversion))
+	 nil
+       (or code (setq code 'automatic-conversion))
        (decode-coding-region st nd code)
        (set-buffer-file-coding-system code)))
     (xemacs
@@ -79,7 +88,7 @@
 	(set 'mc-flag nil)
 	(set 'enable-multibyte-characters nil)))
   (case mule-sysdep-version
-    ((2.4 2.3)
+    ((3.0 2.4 2.3)
      (set-process-coding-system proc mule-no-coding-system
 				mule-no-coding-system))
     (xemacs
@@ -101,7 +110,7 @@
   (case mule-sysdep-version
     (2.3
      (code-convert-string str *internal* mule-retrieval-coding-system))
-    ((2.4 xemacs)
+    ((2.4 3.0 xemacs)
      (encode-coding-string str mule-retrieval-coding-system))
     (otherwise
      str)))
@@ -109,7 +118,7 @@
 (defun mule-decode-string (str)
   (and str
        (case mule-sysdep-version
-	 ((2.4 xemacs)
+	 ((2.4 3.0 xemacs)
 	  (decode-coding-string str mule-retrieval-coding-system))
 	 (2.3
 	  (code-convert-string str *internal* mule-retrieval-coding-system))
@@ -121,7 +130,7 @@
  If width of the truncated string is less than LEN, and if a character PAD is
  defined, add padding end of it."
   (case mule-sysdep-version
-    (2.4
+    ((2.4 3.0)
      (let ((cl (string-to-vector str)) (n 0) (sw 0))
        (if (<= (string-width str) len) str
 	 (while (<= (setq sw (+ (char-width (aref cl n)) sw)) len)
@@ -149,11 +158,12 @@
     (case mule-sysdep-version
       (2.3 (make-character lc-ltn1 char))
       (2.4 (make-char charset-latin-iso8859-1 char))
+      (3.0 (make-char 'latin-iso8859-1 char))
       (xemacs char)
       (otherwise char))))
 
 (case mule-sysdep-version
-  ((2.3 2.4 xemacs) nil)
+  ((2.3 2.4 3.0 xemacs) nil)
   (otherwise (fset 'string-width 'length)))
 
 (and

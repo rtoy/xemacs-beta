@@ -43,6 +43,17 @@ Boston, MA 02111-1307, USA.  */
 
 #include <math.h>
 
+#ifdef HAVE_MATHERR
+/* Work around symbol conflict on Linux/glibc */
+#ifndef DOMAIN
+/* SysV matherr is not defined if _BSD_SOURCE is used, and on Linux X11 */
+/* is compiled with _BSD_SOURCE which can also change the size of other */
+/* types.  The configure test for matherr is broken. */
+/* Bah.  Good riddance to bad rubbish. */
+#undef HAVE_MATHERR
+#endif
+#endif
+
 #ifdef NO_MATHERR
 #undef HAVE_MATHERR
 #endif

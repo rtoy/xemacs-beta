@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     6-Oct-91 at 03:42:38
-;; LAST-MOD:     19-Feb-97 at 12:18:08 by Bob Weiner
+;; LAST-MOD:     22-Feb-97 at 14:30:10 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -566,9 +566,14 @@ Without file, logo is prepended to the current buffer."
 
 (defvar hypb:ida-logo-keymap
   (let ((map (make-sparse-keymap)))
-    (define-key map 'button1  'hypb:ida-home-page)
-    (define-key map 'button2  'hypb:ida-home-page)
-    (define-key map '(return) 'hypb:ida-home-page)
+    (cond (hyperb:emacs19-p
+	   (define-key map [button-1]  'hypb:ida-home-page)
+	   (define-key map [button-2]  'hypb:ida-home-page)
+	   (define-key map "\C-m"      'hypb:ida-home-page))
+	  (hyperb:lemacs-p
+	   (define-key map 'button1  'hypb:ida-home-page)
+	   (define-key map 'button2  'hypb:ida-home-page)
+	   (define-key map '(return) 'hypb:ida-home-page)))
     map)
   "Keymap used when on the InfoDock Associates logo glyph.")
 

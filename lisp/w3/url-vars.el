@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/02/10 16:15:19
-;; Version: 1.27
+;; Created: 1997/02/18 23:35:21
+;; Version: 1.28
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -50,18 +50,20 @@ each item in the list will be an argument to the url-current-callback-func.")
 				      url-current-callback-func
 				      url-current-can-be-cached
 				      url-current-content-length
-				      url-current-file
 				      url-current-isindex
 				      url-current-mime-encoding
 				      url-current-mime-headers
 				      url-current-mime-type
 				      url-current-mime-viewer
 				      url-current-object
-				      url-current-port
 				      url-current-referer
-				      url-current-server
-				      url-current-type
-				      url-current-user
+
+				      ;; obsolete
+				      ;; url-current-file
+				      ;; url-current-port
+				      ;; url-current-server
+				      ;; url-current-type
+				      ;; url-current-user
 				      ))
 
 (defvar url-cookie-storage nil         "Where cookies are stored.")
@@ -78,16 +80,6 @@ If nil, no refresh requests will be honored.
 If t, all refresh requests will be honored.
 If non-nil and not t, the user will be asked for each refresh request.")
 
-(defvar url-emacs-minor-version
-  (if (boundp 'emacs-minor-version)
-      (symbol-value 'emacs-minor-version)
-    (if (string-match "^[0-9]+\\.\\([0-9]+\\)" emacs-version)
-	(string-to-int
-	 (substring emacs-version
-		    (match-beginning 1) (match-end 1)))
-      0))
-  "What minor version of emacs we are using.")
-
 (defvar url-inhibit-mime-parsing nil
   "Whether to parse out (and delete) the MIME headers from a message.")
 
@@ -101,29 +93,21 @@ disk.")
 returns non-nil if the second time is 'too old' when compared to the first
 time.")
 
-(defvar url-check-md5s nil
-  "*Whether to check md5s of retrieved documents or not.")
-
-(defvar url-expected-md5 nil "What md5 we expect to see.")
-
-(defvar url-bug-address "wmperry@cs.indiana.edu" "Where to send bug reports.")
+(defvar url-bug-address "wmperry@cs.indiana.edu"
+  "Where to send bug reports.")
 
 (defvar url-cookie-confirmation nil
-  "*If non-nil, confirmation by the user is required before accepting any
-HTTP cookies.")
+  "*If non-nil, confirmation by the user is required to accept HTTP cookies.")
 
 (defvar url-personal-mail-address nil
-  "*Your full email address.  This is what is sent to HTTP/1.0 servers as
-the FROM field.  If not set when url-do-setup is run, it defaults to
-the value of url-pgp/pem-entity.")
+  "*Your full email address.
+This is what is sent to HTTP/1.0 servers as the FROM field in an HTTP/1.0
+request.")
 
 (defvar url-directory-index-file "index.html"
   "*The filename to look for when indexing a directory.  If this file
 exists, and is readable, then it will be viewed instead of
 automatically creating the directory listing.")
-
-(defvar url-pgp/pem-entity nil
-  "*The users PGP/PEM id - usually their email address.")
 
 (defvar url-privacy-level 'none
   "*How private you want your requests to be.
@@ -158,10 +142,6 @@ updated.  Call the function `url-setup-privacy-info' after modifying this
 variable.
 ")
 
-(defvar url-uudecode-program "uudecode" "*The UUdecode executable.")
-
-(defvar url-uuencode-program "uuencode" "*The UUencode executable.")
-
 (defvar url-history-list nil "List of urls visited this session.")
 
 (defvar url-inhibit-uncompression nil "Do not do decompression if non-nil.")
@@ -173,32 +153,18 @@ If eq to `t', then the list is saved to disk at the end of each emacs
 session.")
 
 (defvar url-uncompressor-alist '((".z"  . "x-gzip")
-				(".gz" . "x-gzip")
-				(".uue" . "x-uuencoded")
-				(".hqx" . "x-hqx")
-				(".Z"  . "x-compress"))
+				 (".gz" . "x-gzip")
+				 (".uue" . "x-uuencoded")
+				 (".hqx" . "x-hqx")
+				 (".Z"  . "x-compress"))
   "*An assoc list of file extensions and the appropriate
 content-transfer-encodings for each.")
-
-(defvar url-xterm-command "xterm -title %s -ut -e %s %s %s"
-  "*Command used to start an xterm window.")
-
-(defvar url-tn3270-emulator "tn3270"
-  "The client to run in a subprocess to connect to a tn3270 machine.")
-
-(defvar url-use-transparent nil
-  "*Whether to use the transparent package by Brian Tompsett instead of
-the builtin telnet functions.  Using transparent allows you to have full
-vt100 emulation in the telnet and tn3270 links.")
 
 (defvar url-mail-command 'url-mail
   "*This function will be called whenever url needs to send mail.  It should
 enter a mail-mode-like buffer in the current window.
 The commands mail-to and mail-subject should still work in this
 buffer, and it should use mail-header-separator if possible.")
-
-(defvar url-local-exec-path nil
-  "*A list of possible locations for x-exec scripts.")
 
 (defvar url-proxy-services nil
   "*An assoc list of access types and servers that gateway them.
@@ -270,23 +236,18 @@ show when possible.")
 (defvar url-multiple-p t
   "*If non-nil, multiple queries are possible through ` *URL-<i>*' buffers")
 (defvar url-default-working-buffer " *URL*" " The default buffer to do all of the processing in.")
-(defvar url-working-buffer url-default-working-buffer " The buffer to do all of the processing in.
- (It defaults to `url-default-working-buffer' and is bound to ` *URL-<i>*' buffers
-  when used for multiple requests, cf. `url-multiple-p')")
+(defvar url-working-buffer url-default-working-buffer
+  "The buffer to do all of the processing in.
+It defaults to `url-default-working-buffer' and is bound to *URL-<i>*
+buffers when used for multiple requests, cf. `url-multiple-p'")
 (defvar url-current-referer nil "Referer of this page.")
 (defvar url-current-content-length nil "Current content length.")
-(defvar url-current-file nil "Filename of current document.")
 (defvar url-current-isindex nil "Is the current document a searchable index?")
 (defvar url-current-mime-encoding nil "MIME encoding of current document.")
 (defvar url-current-mime-headers nil "An alist of MIME headers.")
 (defvar url-current-mime-type nil "MIME type of current document.")
 (defvar url-current-mime-viewer nil "How to view the current MIME doc.")
-(defvar url-current-nntp-server nil "What nntp server currently opened.")
 (defvar url-current-passwd-count 0 "How many times password has failed.")
-(defvar url-current-port nil "Port # of the current document.")
-(defvar url-current-server nil "Server of the current document.")
-(defvar url-current-user nil "Username for ftp login.")
-(defvar url-current-type nil "We currently in http or file mode?")
 (defvar url-gopher-types "0123456789+gIThws:;<"
   "A string containing character representations of all the gopher types.")
 (defvar url-mime-separator-chars (mapcar 'identity
@@ -320,11 +281,11 @@ an assoc list of headers/contents.")
 (defvar url-request-method nil "The method to use for the next request.")
 
 (defvar url-mime-encoding-string nil
-  "String to send to the server in the Accept-encoding: field in HTTP/1.0
+  "*String to send to the server in the Accept-encoding: field in HTTP/1.0
 requests.  This is created automatically from mm-content-transfer-encodings.")
 
 (defvar url-mime-language-string "*"
-  "String to send to the server in the Accept-language: field in
+  "*String to send to the server in the Accept-language: field in
 HTTP/1.0 requests.")
 
 (defvar url-mime-accept-string nil
@@ -351,24 +312,6 @@ has been parsed.")
 (defvar url-max-password-attempts 5
   "*Maximum number of times a password will be prompted for when a
 protected document is denied by the server.")
-
-(defvar url-wais-to-mime
-  '(
-    ("WSRC" . "application/x-wais-source") 	; A database description
-    ("TEXT" . "text/plain")			; plain text
-    )
-  "An assoc list of wais doctypes and their corresponding MIME
-content-types.")
-
-(defvar url-waisq-prog "waisq"
-  "*Name of the waisq executable on this system.  This should be the
-waisq program from think.com's wais8-b5.1 distribution.")
-
-(defvar url-wais-gateway-server "www.ncsa.uiuc.edu"
-  "*The machine name where the WAIS gateway lives.")
-
-(defvar url-wais-gateway-port "8001"
-  "*The port # of the WAIS gateway.")
 
 (defvar url-temporary-directory "/tmp" "*Where temporary files go.")
 
@@ -417,16 +360,11 @@ will lose the gopher+ support, and inlined searching.")
   "^\\([-a-zA-Z0-9+.]+:\\)"
   "A regular expression that will match an absolute URL.")
 
-(defvar url-configuration-directory nil
-  "*Where the URL configuration files can be found.")
-
 (defvar url-confirmation-func 'y-or-n-p
   "*What function to use for asking yes or no functions.  Possible
 values are 'yes-or-no-p or 'y-or-n-p, or any function that takes a
 single argument (the prompt), and returns t only if a positive answer
 is gotten.")
-
-(defvar url-find-this-link nil "Link to go to within a document.")
 
 (defvar url-gateway-method 'native
   "*The type of gateway support to use.
@@ -445,7 +383,7 @@ Currently supported methods:
 ")
 
 (defvar url-running-xemacs (string-match "XEmacs" emacs-version)
-  "*In XEmacs?.")
+  "*Got XEmacs?")
 
 (defvar url-default-ports '(("http"   .  "80")
 			    ("gopher" .  "70")

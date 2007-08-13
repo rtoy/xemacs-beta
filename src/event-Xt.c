@@ -1221,7 +1221,7 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       break;
       
     case VisibilityNotify: /* window visiblity has changed */
-      if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
+#if 0 /* This causes all kinds of strange behavior I don't like. -sb */
 	{
 	  /* Note that the fvwm pager only sends VisibilityNotify when
 	     changing pages. Is this all we need to do ? JV */
@@ -1230,6 +1230,10 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
 	  FRAME_X_TOTALLY_VISIBLE_P (f) =
 	    (event->xvisibility.state == VisibilityUnobscured);
 	}
+#else
+        FRAME_X_TOTALLY_VISIBLE_P (f) =
+	  (event->xvisibility.state == VisibilityUnobscured);
+#endif
       break;
       
     case ConfigureNotify:

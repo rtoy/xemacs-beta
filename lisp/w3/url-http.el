@@ -1,7 +1,7 @@
 ;;; url-http.el --- HTTP Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/02/08 05:29:12
-;; Version: 1.13
+;; Created: 1997/02/19 00:50:08
+;; Version: 1.15
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -137,7 +137,7 @@
 			(url-generic-parse-url proxy-info)))
 	 (real-fname (if proxy-obj (url-filename proxy-obj) fname))
 	 (host (or (and proxy-obj (url-host proxy-obj))
-		   url-current-server))
+		   (url-host url-current-object)))
 	 (auth (if (cdr-safe (assoc "Authorization" url-request-extra-headers))
 		   nil
 		 (url-get-authentication (or
@@ -197,10 +197,8 @@
 	   url-mime-accept-string
 	   (url-http-user-agent-string)
 	   (or auth "")
-	   (url-cookie-generate-header-lines host
-					     real-fname
-					     (string-match "https"
-							   url-current-type))
+	   (url-cookie-generate-header-lines
+	    host real-fname (equal "https" (url-type url-current-object)))
 	   (or proxy-auth "")
 	   (if (and (not no-cache)
 		    (member url-request-method '("GET" nil)))
@@ -415,11 +413,6 @@ HTTP/1.0 specification for more details." x redir) 'error)
 				   (substring y 0 (match-beginning 0))
 				 y))))
 	  (cond
-	   ((or (equal "pem" type) (equal "pgp" type))
-	    (if (string-match "entity=\"\\([^\"]+\\)\"" y)
-		(url-fetch-with-pgp url-current-file
-				    (url-match y 1) (intern type))
-	      (error "Could not find entity in %s!" type)))
 	   ((url-auth-registered type)
 	    (let ((args y)
 		  (ctr (1- (length y)))
@@ -454,11 +447,6 @@ HTTP/1.0 specification for more details." x redir) 'error)
 				   (substring y 0 (match-beginning 0))
 				 y))))
 	  (cond
-	   ((or (equal "pem" type) (equal "pgp" type))
-	    (if (string-match "entity=\"\\([^\"]+\\)\"" y)
-		(url-fetch-with-pgp url-current-file
-				    (url-match y 1) (intern type))
-	      (error "Could not find entity in %s!" type)))
 	   ((url-auth-registered type)
 	    (let ((args y)
 		  (ctr (1- (length y)))
@@ -540,8 +528,6 @@ HTTP/1.0 specification for more details." x redir) 'error)
   (let* ((urlobj (url-generic-parse-url url))
 	 (ref-url (or url-current-referer (url-view-url t))))
     (url-clear-tmp-buffer)
-    (setq url-current-type (if (boundp 'url-this-is-ssl)
-			       "https" "http"))
     (let* ((server (url-host urlobj))
 	   (port   (url-port urlobj))
 	   (file   (or proxy-info (url-recreate-with-attributes urlobj)))
@@ -560,18 +546,6 @@ HTTP/1.0 specification for more details." x redir) 'error)
 		"way, or an incorrect URL was manually entered (more likely)."
 		)))
 	    (error "Malformed URL: `%s'" url)))
-      (if proxy-info
-	  (let ((x (url-generic-parse-url url)))
-	    (setq url-current-server (url-host urlobj)
-		  url-current-port (url-port urlobj)
-		  url-current-file (url-filename urlobj)
-		  url-find-this-link (url-target urlobj)
-		  request (url-create-mime-request file ref-url)))
-	(setq url-current-server server
-	      url-current-port port
-	      url-current-file file
-	      url-find-this-link dest
-	      request (url-create-mime-request file ref-url)))
       (if (or (not (member port url-bad-port-list))
 	      (funcall url-confirmation-func
 		       (concat
@@ -579,6 +553,7 @@ HTTP/1.0 specification for more details." x redir) 'error)
 			port
 			" - continue? ")))
 	  (progn
+	    (setq request (url-create-mime-request file ref-url))
 	    (url-lazy-message "Contacting %s:%s" server port)
 	    (let ((process
 		   (url-open-stream "WWW" url-working-buffer server
@@ -612,10 +587,6 @@ HTTP/1.0 specification for more details." x redir) 'error)
 	(progn
 	  (ding)
 	  (url-warn 'security "Aborting connection to bad port..."))))))
-
-(defun url-shttp (url)
-  ;; Retrieve a URL via Secure-HTTP
-  (error "Secure-HTTP not implemented yet."))
 
 (defun url-https (url)
   ;; Retrieve a URL via SSL

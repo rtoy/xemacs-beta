@@ -327,7 +327,7 @@ folder in the order in which the messages arrived."
 	     (setq key-funcs (cons 'vm-sort-compare-physical-order-r key-funcs)))
 	    (t (error "Unknown key: %s" key)))
       (setq key-list (cdr key-list)))
-    (vm-unsaved-message "Sorting...")
+    (message "Sorting...")
     (let ((vm-key-functions (nreverse key-funcs)))
       (setq new-message-list (sort (copy-sequence old-message-list)
 				   'vm-sort-compare-xxxxxx))
@@ -337,7 +337,7 @@ folder in the order in which the messages arrived."
 	  (setq vm-key-functions '(vm-sort-compare-physical-order)
 		physical-order-list (sort (copy-sequence old-message-list)
 					  'vm-sort-compare-xxxxxx))))
-    (vm-unsaved-message "Sorting... done")
+    (message "Sorting... done")
     (let ((inhibit-quit t))
       (setq mp-old old-message-list
 	    mp-new new-message-list)
@@ -377,7 +377,7 @@ folder in the order in which the messages arrived."
 	    ;; order header from being stuffed later.
 	    (vm-remove-message-order)
 	    (setq vm-message-order-changed nil)
-	    (vm-unsaved-message "Moving messages... ")
+	    (message "Moving messages... ")
 	    (widen)
 	    (setq mp-old physical-order-list
 		  mp-new new-message-list)
@@ -400,7 +400,7 @@ folder in the order in which the messages arrived."
 		  ;; mp-old down one message by inserting a
 		  ;; message in front of it.
 		  (setq mp-new (cdr mp-new)))))
-	    (vm-unsaved-message "Moving messages... done")
+	    (message "Moving messages... done")
 	    (vm-set-buffer-modified-p t)
 	    (vm-clear-modification-flag-undos))
 	(if (and order-did-change (not vm-folder-read-only))

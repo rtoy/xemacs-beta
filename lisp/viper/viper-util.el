@@ -53,6 +53,14 @@
 
 ;;; XEmacs support
 
+;; A fix for NeXT Step
+;; Should probably be eliminated in later versions.
+(if (and (vip-window-display-p) (eq (vip-device-type) 'ns))
+    (progn
+      (fset 'x-display-color-p (symbol-function 'ns-display-color-p))
+      (fset 'x-color-defined-p (symbol-function 'ns-color-defined-p))
+      ))
+
 (if vip-xemacs-p
     (progn
       (fset 'vip-read-event (symbol-function 'next-command-event))
@@ -84,6 +92,7 @@
 	 (fset 'vip-get-face (symbol-function 'internal-get-face))
 	 (fset 'vip-color-defined-p (symbol-function 'x-color-defined-p))
 	 )))
+
 
 (fset 'vip-characterp
       (symbol-function

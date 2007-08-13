@@ -282,11 +282,7 @@ Lstream_delete (Lstream *lstr)
 static void
 signal_simple_internal_error (CONST char *reason, Lisp_Object obj)
 {
-#ifdef DEBUG_XEMACS
-  abort ();
-#else
   signal_simple_error (reason, obj);
-#endif
 }
 
 void

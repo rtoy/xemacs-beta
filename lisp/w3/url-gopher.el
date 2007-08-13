@@ -1,7 +1,7 @@
 ;;; url-gopher.el --- Gopher Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/02/08 05:25:58
-;; Version: 1.5
+;; Created: 1997/02/18 23:34:30
+;; Version: 1.6
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -244,14 +244,14 @@ title, type, selector string, server, port, gopher-plus?"
       (erase-buffer)
       (insert "<title>"
 	      (cond
-	       ((or (string= "" url-current-file)
-		    (string= "1/" url-current-file)
-		    (string= "1" url-current-file))
-		(concat "Gopher root at " url-current-server))
+	       ((or (string= "" (url-filename url-current-object))
+		    (string= "1/" (url-filename url-current-object))
+		    (string= "1" (url-filename url-current-object)))
+		(concat "Gopher root at " (url-host url-current-object)))
 	       ((string-match (format "^[%s]+/" url-gopher-types)
-			      url-current-file)
-		(substring url-current-file 2 nil))
-	       (t url-current-file))
+			      (url-filename url-current-object))
+		(substring (url-filename url-current-object) 2 nil))
+	       (t (url-filename url-current-object)))
 	      "</title><ol>"
 	      (mapconcat 'url-format-gopher-link objs "")
 	      "</ol>"))))
@@ -264,10 +264,6 @@ title, type, selector string, server, port, gopher-plus?"
 	(len nil)
 	(parsed nil))
     (url-clear-tmp-buffer)
-    (setq url-current-file selector
-	  url-current-port port
-	  url-current-server host
-	  url-current-type "gopher")
     (if (> (length selector) 0)
 	(setq selector (substring selector 1 nil)))
     (if (not (processp proc))
@@ -447,11 +443,7 @@ title, type, selector string, server, port, gopher-plus?"
 	  (setq type "text/html"
 		url-current-mime-viewer (mm-mime-info type nil 5))))
     (setq url-current-mime-type (or type "text/plain")
-	  url-current-mime-viewer (mm-mime-info type nil 5)
-	  url-current-file file
-	  url-current-port port
-	  url-current-server host
-	  url-current-type "gopher")))
+	  url-current-mime-viewer (mm-mime-info type nil 5))))
 
 (defun url-gopher (url)
   ;; Handle gopher URLs
